@@ -1,3 +1,44 @@
+2003-05-07  Love Hörnquist Åstrand  <lha@it.su.se>
+
+	* gssapi.h: 1.27->1.28:
+	if __cplusplus, wrap the extern variable (just to be safe) and
+	functions in extern "C" { }
+
+2003-04-30  Love Hörnquist Åstrand  <lha@it.su.se>
+
+	* gssapi.3: more about the des3 mic mess
+	
+	* verify_mic.c 1.19->1.20 : (verify_mic_des3): always check if the
+	mic is the correct mic or the mic that old heimdal would have
+	generated
+	
+2003-04-29  Jacques Vidrine  <nectar@kth.se>
+
+	* verify_mic.c: 1.18->1.19: verify_mic_des3: If MIC verification
+	fails, retry using the `old' MIC computation (with zero IV).
+	
+2003-04-28  Love Hörnquist Åstrand  <lha@it.su.se>
+
+	* compat.c (_gss_DES3_get_mic_compat): default to use compat
+	
+	* gssapi.3: 1.5->1.6: document [gssapi]correct_des3_mic and
+	[gssapi]broken_des3_mic
+
+	* compat.c: 1.2->1.4:
+	(gss_krb5_compat_des3_mci): return a value
+	(gss_krb5_compat_des3_mic): enable turning on/off des3 mic compat
+	(_gss_DES3_get_mic_compat): handle [gssapi]correct_des3_mic too
+
+	* gssapi.h: 1.26->1.27:
+	(gss_krb5_compat_des3_mic): new function, turn on/off des3 mic compat
+	(GSS_C_KRB5_COMPAT_DES3_MIC): cpp symbol that exists if
+	gss_krb5_compat_des3_mic exists
+	
+2003-04-23  Love Hörnquist Åstrand  <lha@it.su.se>
+
+	* Makefile.am: 1.44->1.45: test_acquire_cred_LDADD: use
+	libgssapi.la not ./libgssapi.la (makes make -jN work)
+	
 2003-04-16  Love Hörnquist Åstrand  <lha@it.su.se>
 
 	* gssapi.3: spelling

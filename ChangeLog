@@ -1,5 +1,10 @@
 2001-08-10  Assar Westerlund  <assar@sics.se>
 
+	* Release 0.4d
+
+2001-08-10  Assar Westerlund  <assar@sics.se>
+
+	* configure.in: check for openpty
 	* lib/hdb/Makefile.am (libhdb_la_LDFLAGS): update to 7:4:0
 
 2001-08-08  Assar Westerlund  <assar@sics.se>
@@ -11,10 +16,6 @@
 
 	* lib/krb5/Makefile.am (man_MANS): add some missing man pages
 	* fix-export: fix the sed expression for finding the man pages
-
-2001-07-31  Assar Westerlund  <assar@sics.se>
-
-	* Release 0.4d
 
 2001-07-31  Assar Westerlund  <assar@sics.se>
 

@@ -156,7 +156,6 @@ AM_CONDITIONAL(have_glob_h, test "$ac_cv_func_glob_working" = yes)
 AC_CHECK_FUNCS([				\
 	asnprintf				\
 	asprintf				\
-	atexit					\
 	cgetent					\
 	getconfattr				\
 	getprogname				\
@@ -164,7 +163,6 @@ AC_CHECK_FUNCS([				\
 	getspnam				\
 	initstate				\
 	issetugid				\
-	on_exit					\
 	random					\
 	setprogname				\
 	setstate				\

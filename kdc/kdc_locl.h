@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997-2002 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997-2003 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -62,11 +62,17 @@ extern krb5_boolean encode_as_rep_as_tgs_rep;
 extern krb5_boolean check_ticket_addresses;
 extern krb5_boolean allow_null_ticket_addresses;
 extern krb5_boolean allow_anonymous;
+enum { TRPOLICY_ALWAYS_CHECK,
+       TRPOLICY_ALLOW_PER_PRINCIPAL, 
+       TRPOLICY_ALWAYS_HONOUR_REQUEST };
+extern int trpolicy;
+extern int enable_v4_cross_realm;
 
 #ifdef KRB4
 extern char *v4_realm;
 extern int enable_v4;
 extern int enable_524;
+extern int enable_v4_cross_realm;
 extern krb5_boolean enable_kaserver;
 #endif
 

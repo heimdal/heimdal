@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998 - 2002 Kungliga Tekniska Högskolan
+ * Copyright (c) 1998 - 2004 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -72,7 +72,7 @@ print_version(const char *progname)
 	}
     }
     fprintf(stderr, "%s (%s)\n", progname, msg);
-    fprintf(stderr, "Copyright (c) 1999-2002 Kungliga Tekniska Högskolan\n");
+    fprintf(stderr, "Copyright (c) 1999-2004 Kungliga Tekniska Högskolan\n");
     fprintf(stderr, "Send bug-reports to %s\n", PACKAGE_BUGREPORT);
     if(num_args != 0)
 	free(msg);

@@ -130,7 +130,7 @@ libkrb5_la_SOURCES =				\
 	write_message.c				\
 	$(ERR_FILES)
 
-libkrb5_la_LDFLAGS = -version-info 18:3:1
+libkrb5_la_LDFLAGS = -version-info 18:4:1
 
 $(libkrb5_la_OBJECTS): $(srcdir)/krb5-protos.h $(srcdir)/krb5-private.h
 

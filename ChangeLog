@@ -1,4 +1,166 @@
+2004-04-01  Johan Danielsson  <joda@pdc.kth.se>
+
+	* Release 0.5.3
+
+2004-03-31  Love Hörnquist Åstrand <lha@it.su.se>
+
+	* kdc/kerberos4.c: 1.46: stop the client from renewing tickets
+	into the future From: Jeffrey Hutzelman <jhutz@cmu.edu>
+	
+2004-02-16  Love Hörnquist Åstrand <lha@it.su.se>
+
+	* lib/krb5/ticket.c: 1.8: spelling in last commit
+	1.7: (krb5_copy_ticket): free all data when failing, copy data to
+	right memory, the later pointed out by Luke Howard.
+	
+	* lib/krb5/ticket.c: 1.85: (unparse_name): len can't be zero, so,
+	don't check for that 1.84: (unparse_name): make sure there are
+	space for a NUL, set *name to NULL when there is a failure (so
+	caller can't get hold of a freed pointer)
+
+	* lib/krb5/principal.c: 1.85: (unparse_name): len can't be zero,
+	so, don't check for that 1.84: (unparse_name): make sure there are
+	space for a NUL, set *name to NULL when there is a failure (so
+	caller can't get hold of a freed pointer)
+
+	* lib/krb5/crypto.c: 1.92: (decrypt_internal_derived): move up
+	padsize to avoid memory leak 1.91: require cipher-text to be
+	padded to padsize s/padsize/blocksize/
+	
+	* lib/asn1/gen_free.c: 1.11: set free'd poiners to NULL
+	
+	* lib/asn1/der_length.c: part of 1.16: Fix len_unsigned for
+	certain negative integers, it got the length wrong, fix from
+	Panasas, Inc.
+
+	* lib/asn1/der_free.c: 1.10: set free'd poiners to NULL
+
+	* include/make_crypto.c: 1.6: avoid redefining
+	OPENSSL_DES_LIBDES_COMPATIBILITY
+
+	* kdc/kdc_locl.h: 1.60: change enforce_transited_policy to a
+	tri-state variable 1.59: add flag to always check transited policy
+	
+	* lib/krb5/verify_krb5_conf.c: part of 1.15: (check_log):
+	find_value() returns -1 when key isn't found 1.18: add missing "
+	within #if 0, from stefan sokoll <stefansokoll@yahoo.de>
+
+	* lib/krb5/transited.c:
+	1.14: (krb5_domain_x500_encode): always zero out encoding to make
+	sure it have a defined value on failure
+	1.13: (krb5_domain_x500_encode): if num_realms == 0, set encoding
+	and return
+	(avoids malloc(0)), check return value for malloc
+	1.12: (krb5_domain_x500_decode): set *num_realms to zero not
+	num_realms 
+	1.11: (krb5_domain_x500_decode): handle zero length tr
+	data; (krb5_check_transited): new function that does more useful stuff
+	
+	* lib/krb5/transited.c: 1.51: (krb5_decrypt_ticket): try to verify
+	transited realms, unless the transited-policy-checked flag is set
+	
+	* lib/krb5/rd_req.c: 1.51: (krb5_decrypt_ticket): try to verify
+	transited realms, unless the transited-policy-checked flag is set
+	
+	* kdc/kerberos5.c:
+	1.155: make sure that the server realm and the krbtgt second
+	component are identical; get rpath from the capaths section
+	1.154: change logic for when to check transited policy to a
+	tri-state model involving per principal flags (to be implemented)
+	1.153: (fix_transited_encoding): always print cross-realm information
+	1.152: (fix_transited_encoding): set transited type
+	1.151: always check transited policy if flag set either globally
+	or on principal
+	1.150: (fix_transited_encoding): also verify with policy, unless
+	asked not to
+	1.148: (as_rep): remove usused variable
+	(tgs_rep2): don't use a temporary ret-variable, ret is reset later
+	1.147: (*): handle krb5_unparse_name returning non-zero
+	1.145: fix some more memory leaks
+	1.144: (as_rep): when the second enctype_to_string failes,
+	remember to free memory from the first enctype_to_string
+
+	* kdc/kdc_locl.h:
+	1.60: change enforce_transited_policy to a tri-state variable
+	1.59: add flag to always check transited policy
+
+	* kdc/kdc.8: 1.25: document recent changes
+	1.24: document enforce-transited-policy
+	1.23: s/kerberos/Kerberos/
+
+	* kdc/kaserver.c: 1.23: (do_getticket): if times data is shorter
+	then 8 byte, request is mailformed.
+	1.22: (do_authenticate): if request length is less then 8, its a
+	bad request and fail. Pointed out by Marco Foglia <marco@foglia.org>
+
+	* kdc/connect.: 1.93: (handle_tcp): handle recvfrom returning 0
+	(connection closed)
+	1.92: (grow_descr): increment the size after we succeed to
+	allocate the space
+
+	* kdc/config.c: 1.49: change enforce_transited_policy to a
+	tri-state variable; 1.48: add flag to always check transited policy
+
+2003-03-18  Johan Danielsson  <joda@pdc.kth.se>
+
+	* kdc/524.c: also free some memory
+
+	* kdc/524.c (do_524): if not doing cross-realm, return an error to
+	the client also
+
+2003-03-17  Assar Westerlund  <assar@kth.se>
+
+	* Release 0.5.2
+
+2003-03-17  Assar Westerlund  <assar@kth.se>
+
+	* kdc/kdc.8: document --kerberos4-cross-realm
+	* kdc/kerberos4.c: pay attention to enable_v4_cross_realm
+	* kdc/kdc_locl.h (enable_v4_cross_realm): add
+	* kdc/524.c (encode_524_response): check the enable_v4_cross_realm
+	flag before giving out v4 tickets for foreign v5 principals
+	* kdc/config.c: add --enable-kerberos4-cross-realm option (default
+	to off)
+
+2002-10-21  Johan Danielsson  <joda@pdc.kth.se>
+
+	* lib/krb5/store_emem.c: pull up 1.13; limit how much we allocate
+
+	* lib/krb5/principal.c: pull up 1.82; don't allow trailing
+	backslashes in components
+
+	* lib/krb5/keytab_keyfile.c: pull up 1.15; more strcspn
+
+	* lib/krb5/keytab_any.c: pull up 1.7; properly close the open
+	keytabs
+
+	* kdc/connect.c: pull up 1.87; check that %-quotes are followed by
+	two hex digits
+
+	* lib/krb5/prompter_posix.c: pull up 1.7; use strcspn to convert
+	the newline to NUL in fgets results.
+
+	* lib/krb5/kuserok.c: pull up 1.6; use strcspn to convert the
+	newline to NUL in fgets results.
+
+	* lib/krb5/keytab_file.c: pull up 1.12; check return value from
+	start_seq_get
+
+	* lib/krb5/context.c: pull up 1.82; return ENXIO instead of ENOENT
+	when "unconfigured"
+
+	* lib/krb5/changepw.c: pull up 1.38; fix reply length check
+	calculation
+
+	* kuser/klist.c: pull up 1.68; allow tokens up to size of buffer
+
+	* kdc/kaserver.c: pull up 1.21; make sure life is positive
+
+	* fix-export: pull up 1.28; remove autom4ate.cache
+
 2002-09-10  Johan Danielsson  <joda@pdc.kth.se>
+
+	* Release 0.5
 
 	* include/make_crypto.c: don't use function macros if possible
 

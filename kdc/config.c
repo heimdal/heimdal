@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997-2002 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997-2004 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -64,6 +64,8 @@ krb5_boolean encode_as_rep_as_tgs_rep; /* bug compatibility */
 krb5_boolean check_ticket_addresses;
 krb5_boolean allow_null_ticket_addresses;
 krb5_boolean allow_anonymous;
+int trpolicy;
+static const char *trpolicy_str;
 
 static struct getarg_strings addresses_str;	/* addresses to listen on */
 krb5_addresses explicit_addresses;
@@ -72,6 +74,7 @@ krb5_addresses explicit_addresses;
 char *v4_realm;
 int enable_v4 = -1;
 int enable_524 = -1;
+int enable_v4_cross_realm = -1;
 int enable_kaserver = -1;
 #endif
 
@@ -104,6 +107,10 @@ static struct getargs args[] = {
     },
     {	"524",		0, 	arg_negative_flag, &enable_524,
 	"don't respond to 524 requests" 
+    },
+    {	"kerberos4-cross-realm",	0, 	arg_flag,
+	&enable_v4_cross_realm,
+	"respond to kerberos 4 requests from foreign realms" 
     },
     { 
 	"v4-realm",	'r',	arg_string, &v4_realm, 
@@ -287,9 +294,8 @@ configure(int argc, char **argv)
 
     get_dbinfo();
     
-    if(max_request_str){
+    if(max_request_str)
 	max_request = parse_bytes(max_request_str, NULL);
-    }
 
     if(max_request == 0){
 	p = krb5_config_get_string (context,
@@ -334,9 +340,17 @@ configure(int argc, char **argv)
     if(enable_v4 == -1)
 	enable_v4 = krb5_config_get_bool_default(context, NULL, TRUE, "kdc", 
 					 "enable-kerberos4", NULL);
+    if(enable_v4_cross_realm == -1)
+	enable_v4_cross_realm =
+	    krb5_config_get_bool_default(context, NULL,
+					 FALSE, "kdc", 
+					 "enable-kerberos4-cross-realm",
+					 NULL);
     if(enable_524 == -1)
 	enable_524 = krb5_config_get_bool_default(context, NULL, enable_v4, 
 						  "kdc", "enable-524", NULL);
+#else
+#define enable_v4 0
 #endif
 
     if(enable_http == -1)
@@ -352,14 +366,34 @@ configure(int argc, char **argv)
     allow_anonymous = 
 	krb5_config_get_bool(context, NULL, "kdc", 
 			     "allow-anonymous", NULL);
+    trpolicy_str = 
+	krb5_config_get_string_default(context, NULL, "always-check", "kdc", 
+				       "transited-policy", NULL);
+    if(strcasecmp(trpolicy_str, "always-check") == 0)
+	trpolicy = TRPOLICY_ALWAYS_CHECK;
+    else if(strcasecmp(trpolicy_str, "allow-per-principal") == 0)
+	trpolicy = TRPOLICY_ALLOW_PER_PRINCIPAL;
+    else if(strcasecmp(trpolicy_str, "always-honour-request") == 0)
+	trpolicy = TRPOLICY_ALWAYS_HONOUR_REQUEST;
+    else {
+	kdc_log(0, "unknown transited-policy: %s, reverting to always-check", 
+		trpolicy_str);
+	trpolicy = TRPOLICY_ALWAYS_CHECK;
+    }
+	
+	krb5_config_get_bool_default(context, NULL, TRUE, "kdc", 
+				     "enforce-transited-policy", NULL);
 #ifdef KRB4
     if(v4_realm == NULL){
 	p = krb5_config_get_string (context, NULL, 
 				    "kdc",
 				    "v4-realm",
 				    NULL);
-	if(p)
+	if(p != NULL) {
 	    v4_realm = strdup(p);
+	    if (v4_realm == NULL)
+		krb5_errx(context, 1, "out of memory");
+	}
     }
     if (enable_kaserver == -1)
 	enable_kaserver = krb5_config_get_bool_default(context, NULL, FALSE,
@@ -394,6 +428,8 @@ configure(int argc, char **argv)
 #ifdef KRB4
     if(v4_realm == NULL){
 	v4_realm = malloc(40); /* REALM_SZ */
+	if (v4_realm == NULL)
+	    krb5_errx(context, 1, "out of memory");
 	krb_get_lrealm(v4_realm, 1);
     }
 #endif

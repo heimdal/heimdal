@@ -140,6 +140,12 @@ krb5_parse_name(krb5_context context,
 		c = '\b';
 	    else if(c == '0')
 		c = '\0';
+	    else if(c == '\0') {
+		krb5_set_error_string (context,
+				       "trailing \\ in principal name");
+		ret = KRB5_PARSE_MALFORMED;
+		goto exit;
+	    }
 	}else if(c == '/' || c == '@'){
 	    if(got_realm){
 		krb5_set_error_string (context,
@@ -315,14 +321,17 @@ unparse_name(krb5_context context,
 	    len += 2*plen;
 	len++;
     }
+    len++;
     *name = malloc(len);
-    if(len != 0 && *name == NULL) {
+    if(*name == NULL) {
 	krb5_set_error_string (context, "malloc: out of memory");
 	return ENOMEM;
     }
     ret = unparse_name_fixed(context, principal, *name, len, short_flag);
-    if(ret)
+    if(ret) {
 	free(*name);
+	*name = NULL;
+    }
     return ret;
 }
 

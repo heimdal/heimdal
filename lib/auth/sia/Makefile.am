@@ -106,5 +106,8 @@ CLEANFILES = $(MOD) $(OBJS) so_locations
 
 SUFFIXES += .c .o
 
-.c.o:
-	$(COMPILE) -c $<
+# XXX inline COMPILE since automake wont add it
+ .c.o:
+	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
+	$(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) \
+	-c `test -f '$<' || echo '$(srcdir)/'`$<

@@ -402,6 +402,10 @@ do_authenticate (struct rx_header *hdr,
 
     unparse_auth_args (sp, &name, &instance, &start_time, &end_time,
 		       &request, &max_seq_len);
+    if (request.length < 8) {
+	make_error_reply (hdr, KABADREQUEST, reply);
+	goto out;
+    }
 
     snprintf (client_name, sizeof(client_name), "%s.%s@%s",
 	      name, instance, v4_realm);
@@ -477,6 +481,10 @@ do_authenticate (struct rx_header *hdr,
 
     /* life */
     max_life = end_time - kdc_time;
+    /* end_time - kdc_time can sometimes be non-positive due to slight
+       time skew between client and server. Let's make sure it is postive */
+    if(max_life < 1)
+	max_life = 1;
     if (client_entry->max_life)
 	max_life = min(max_life, *client_entry->max_life);
     if (server_entry->max_life)
@@ -596,6 +604,11 @@ do_getticket (struct rx_header *hdr,
 
     unparse_getticket_args (sp, &kvno, &auth_domain, &aticket,
 			    &name, &instance, &times, &max_seq_len);
+    if (times.length < 8) {
+	make_error_reply (hdr, KABADREQUEST, reply);
+	goto out;
+	
+    }
 
     snprintf (server_name, sizeof(server_name),
 	      "%s.%s@%s", name, instance, v4_realm);
@@ -710,6 +723,10 @@ do_getticket (struct rx_header *hdr,
 
     /* life */
     max_life = end_time - kdc_time;
+    /* end_time - kdc_time can sometimes be non-positive due to slight
+       time skew between client and server. Let's make sure it is postive */
+    if(max_life < 1)
+	max_life = 1;
     if (krbtgt_entry->max_life)
 	max_life = min(max_life, *krbtgt_entry->max_life);
     if (server_entry->max_life)

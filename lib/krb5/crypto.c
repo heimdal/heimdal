@@ -2449,6 +2449,11 @@ decrypt_internal_derived(krb5_context context,
 	return EINVAL;		/* XXX - better error code? */
     }
 
+    if (((len - checksum_sz) % et->blocksize) != 0) {
+	krb5_clear_error_string(context);
+	return KRB5_BAD_MSIZE;
+    }
+
     p = malloc(len);
     if(len != 0 && p == NULL) {
 	krb5_set_error_string(context, "malloc: out of memory");
@@ -2517,6 +2522,11 @@ decrypt_internal(krb5_context context,
     size_t checksum_sz, l;
     struct encryption_type *et = crypto->et;
     
+    if ((len % et->blocksize) != 0) {
+	krb5_clear_error_string(context);
+	return KRB5_BAD_MSIZE;
+    }
+
     checksum_sz = CHECKSUMSIZE(et->checksum);
     p = malloc(len);
     if(len != 0 && p == NULL) {
@@ -2578,6 +2588,11 @@ decrypt_internal_special(krb5_context context,
     char *cdata = (char *)data;
     char *tmp;
     krb5_error_code ret;
+
+    if ((len % et->blocksize) != 0) {
+	krb5_clear_error_string(context);
+	return KRB5_BAD_MSIZE;
+    }
 
     tmp = malloc (sz);
     if (tmp == NULL) {

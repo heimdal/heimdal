@@ -1,6 +1,6 @@
 .\" $Id$
 .\"
-.Dd August 22, 2002
+.Dd October 22, 2003
 .Dt KDC 8
 .Os HEIMDAL
 .Sh NAME
@@ -15,17 +15,19 @@
 .Op Fl p | Fl -no-require-preauth
 .Op Fl -max-request= Ns Ar size
 .Op Fl H | Fl -enable-http
+.Op Fl -no-524
+.Op Fl -kerberos4
+.Op Fl -kerberos4-cross-realm
 .Oo Fl r Ar string \*(Ba Xo
 .Fl -v4-realm= Ns Ar string
 .Xc
 .Oc
-.Op Fl K | Fl -no-kaserver
-.Op Fl r Ar realm
-.Op Fl -v4-realm= Ns Ar realm
-.Oo Fl P Ar string \*(Ba Xo
-.Fl -ports= Ns Ar string
+.Op Fl K | Fl -kaserver
+.Oo Fl P Ar portspec \*(Ba Xo
+.Fl -ports= Ns Ar portspec
 .Xc
 .Oc
+.Op Fl -detach
 .Op Fl -addresses= Ns Ar list of addresses
 .Sh DESCRIPTION
 .Nm
@@ -66,13 +68,22 @@ willing to handle.
 .Xc
 Makes the kdc listen on port 80 and handle requests encapsulated in HTTP.
 .It Xo
-.Fl K ,
-.Fl -no-kaserver
+.Fl -no-524
 .Xc
-Disables kaserver emulation (in case it's compiled in).
+don't respond to 524 requests
 .It Xo
-.Fl r Ar realm ,
-.Fl -v4-realm= Ns Ar realm
+.Fl -kerberos4
+.Xc
+respond to Kerberos 4 requests
+.It Xo
+.Fl -kerberos4-cross-realm
+.Xc
+respond to Kerberos 4 requests from foreign realms.
+This is a known security hole and should not be enabled unless you
+understand the consequences and are willing to live with them.
+.It Xo
+.Fl r Ar string ,
+.Fl -v4-realm= Ns Ar string
 .Xc
 What realm this server should act as when dealing with version 4
 requests. The database can contain any number of realms, but since the
@@ -82,10 +93,16 @@ explicitly specified. The default is whatever is returned by
 This option is only availabe if the KDC has been compiled with version
 4 support.
 .It Xo
-.Fl P Ar string ,
-.Fl -ports= Ns Ar string
+.Fl K ,
+.Fl -kaserver
 .Xc
-Specifies the set of ports the KDC should listen on.  It is given as a
+Enable kaserver emulation (in case it's compiled in).
+.It Xo
+.Fl P Ar portspec ,
+.Fl -ports= Ns Ar portspec
+.Xc
+Specifies the set of ports the KDC should listen on.
+It is given as a
 white-space separated list of services or port numbers.
 .It Fl -addresses= Ns Ar list of addresses
 The list of addresses to listen for requests on.  By default, the kdc
@@ -128,6 +145,27 @@ Permit tickets with no addresses.  This option is only relevant when
 check-ticket-addresses is TRUE.
 .It Li allow-anonymous = Va boolean
 Permit anonymous tickets with no addresses.
+.It Li transited-policy = Xo
+.Li always-check \*(Ba
+.Li allow-per-principal |
+.Li always-honour-request
+.Xc
+This controls how KDC requests with the
+.Li disable-transited-check
+flag are handled. It can be one of:
+.Bl -tag -width "xxx" -offset indent
+.It Li always-check
+Always check transited encoding, this is the default.
+.It Li allow-per-principal
+Currently this is identical to
+.Li always-check .
+In a future release, it will be possible to mark a principal as able
+to handle unchecked requests.
+.It Li always-honour-request
+Always do what the client asked.
+In a future release, it will be possible to force a check per
+principal.
+.El
 .It encode_as_rep_as_tgs_rep = Va boolean
 Encode AS-Rep as TGS-Rep to be bug-compatible with old DCE code.  The
 Heimdal clients allow both.

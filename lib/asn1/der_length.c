@@ -50,21 +50,28 @@ len_unsigned (unsigned val)
 static size_t
 len_int (int val)
 {
-  size_t ret = 0;
-
-  if (val == 0)
-    return 1;
-  while (val > 255 || val < -255) {
-    ++ret;
-    val /= 256;
-  }
-  if (val != 0) {
-    ++ret;
-    if ((signed char)val != val)
-      ++ret;
-    val /= 256;
-  }
-  return ret;
+    unsigned char q;
+    size_t ret = 0;
+ 
+    if (val >= 0) {
+	do {
+	    q = val % 256;
+	    ret++;
+	    val /= 256;
+	} while(val);
+	if(q >= 128)
+    ret++;
+    } else {
+	val = ~val;
+	do {
+	    q = ~(val % 256);
+	    ret++;
+	    val /= 256;
+	} while(val);
+	if(q < 128)
+	    ret++;
+    }
+    return ret;
 }
 
 static size_t

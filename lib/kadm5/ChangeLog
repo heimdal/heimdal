@@ -1,3 +1,16 @@
+2004-02-16  Love Hörnquist Åstrand <lha@it.su.se>
+
+	* ipropd_slave.c: 1.29: (receive_everything): switch close and
+	rename From: Alf Wachsmann <alfw@SLAC.Stanford.EDU>
+	
+	* chpass_s.c: from 1.14->1.15:
+	(change): fix same-password-again by decrypting keys and setting
+	an error code. From: Buck Huppmann <buckh@pobox.com>
+
+2002-10-21  Johan Danielsson  <joda@pdc.kth.se>
+
+	* ipropd_slave.c: pull up 1.27; use a temporary database
+
 2002-08-26  Assar Westerlund  <assar@kth.se>
 
 	* ipropd_slave.c (receive_everything): type-correctness calling

@@ -263,12 +263,12 @@ check_log(krb5_context context, const char *path, char *data)
 	    strlcpy(severity, "ERR", sizeof(severity));
  	if(*facility == '\0')
 	    strlcpy(facility, "AUTH", sizeof(facility));
-	if(find_value(severity, syslogvals) == NULL) {
+	if(find_value(severity, syslogvals) == -1) {
 	    krb5_warnx(context, "%s: unknown syslog facility \"%s\"", 
 		       path, facility);
 	    ret++;
 	}
-	if(find_value(severity, syslogvals) == NULL) {
+	if(find_value(severity, syslogvals) == -1) {
 	    krb5_warnx(context, "%s: unknown syslog severity \"%s\"", 
 		       path, severity);
 	    ret++;
@@ -432,8 +432,8 @@ struct entry log_strings[] = {
 
 #if 0
 struct entry kdcdefaults_entries[] = {
-    { "kdc_ports, krb5_config_string, mit_entry },
-    { "v4_mode, krb5_config_string, mit_entry },
+    { "kdc_ports", krb5_config_string, mit_entry },
+    { "v4_mode", krb5_config_string, mit_entry },
     { NULL }
 };
 #endif

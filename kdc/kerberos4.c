@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997 - 2002 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997 - 2004 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -194,7 +194,7 @@ do_version4(unsigned char *buf,
     char *name = NULL, *inst = NULL, *realm = NULL;
     char *sname = NULL, *sinst = NULL;
     int32_t req_time;
-    time_t max_life;
+    time_t max_life, max_end, actual_end, issue_time;
     u_int8_t life;
     char client_name[256];
     char server_name[256];
@@ -430,6 +430,13 @@ do_version4(unsigned char *buf,
 	    goto out2;
 	}
 
+	if (!enable_v4_cross_realm && strcmp(realm, v4_realm) != 0) {
+	    kdc_log(0, "krb4 Cross-realm %s -> %s disabled", realm, v4_realm);
+	    make_err_reply(reply, KERB_ERR_PRINCIPAL_UNKNOWN, 
+			   "Can't hop realms");
+	    goto out2;
+	}
+
 	if(strcmp(sname, "changepw") == 0){
 	    kdc_log(0, "Bad request for changepw ticket");
 	    make_err_reply(reply, KERB_ERR_PRINCIPAL_UNKNOWN, 
@@ -478,30 +485,36 @@ do_version4(unsigned char *buf,
 	    goto out2;
 	}
 
-	max_life = krb_life_to_time(ad.time_sec, ad.life);
-	max_life = min(max_life, krb_life_to_time(kdc_time, life));
-	life = min(life, krb_time_to_life(kdc_time, max_life));
-	max_life = krb_life_to_time(0, life);
-#if 0
-	if(client->max_life)
-	    max_life = min(max_life, *client->max_life);
-#endif
-	if(server->max_life)
-	    max_life = min(max_life, *server->max_life);
+	max_end = krb_life_to_time(ad.time_sec, ad.life);
+	max_end = min(max_end, krb_life_to_time(kdc_time, life));
+	life = min(life, krb_time_to_life(kdc_time, max_end));
 	
+	issue_time = kdc_time;
+	actual_end = krb_life_to_time(issue_time, life);
+	while (actual_end > max_end && life > 1) {
+	    /* move them into the next earlier lifetime bracket */
+	    life--;
+	    actual_end = krb_life_to_time(issue_time, life);
+	}
+	if (actual_end > max_end) {
+	    /* if life <= 1 and it's still too long, backdate the ticket */
+	    issue_time -= actual_end - max_end;
+	}
+
 	{
 	    KTEXT_ST cipher, ticket;
 	    KTEXT r;
 	    des_cblock session;
 	    des_new_random_key(&session);
 	    krb_create_ticket(&ticket, 0, ad.pname, ad.pinst, ad.prealm,
-			      addr->sin_addr.s_addr, &session, life, kdc_time,
+			      addr->sin_addr.s_addr, &session, life, 
+			      issue_time,
 			      sname, sinst, skey->key.keyvalue.data);
 	    
 	    create_ciph(&cipher, session, sname, sinst, v4_realm,
 			life, server->kvno % 256, &ticket,
-			kdc_time, &ad.session);
-
+			issue_time, &ad.session);
+	    
 	    memset(&session, 0, sizeof(session));
 	    memset(ad.session, 0, sizeof(ad.session));
 

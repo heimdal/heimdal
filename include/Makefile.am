@@ -5,6 +5,7 @@ include $(top_srcdir)/Makefile.am.common
 SUBDIRS = kadm5
 
 noinst_PROGRAMS = bits
+CHECK_LOCAL =
 
 INCLUDES = -DHOST=\"$(CANONICAL_HOST)\"
 
@@ -32,6 +33,7 @@ CLEANFILES =		\
 	heim_err.h	\
 	kafs.h		\
 	krb5-protos.h	\
+	krb5-private.h	\
 	krb5-types.h	\
 	krb5.h		\
 	krb5_err.h	\

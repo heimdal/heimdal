@@ -398,6 +398,8 @@ krb5_get_init_creds_password(krb5_context context,
     krb5_data password_data;
     int done;
 
+    memset(&kdc_reply, 0, sizeof(kdc_reply));
+
     ret = get_init_creds_common(context, creds, client, start_time,
 				in_tkt_service, options,
 				&addrs, &etypes, &this_cred, &pre_auth_types,
@@ -486,8 +488,8 @@ krb5_get_init_creds_password(krb5_context context,
 		      data);
 out:
     memset (buf, 0, sizeof(buf));
-    if (ret == 0)
-	krb5_free_kdc_rep (context, &kdc_reply);
+
+    krb5_free_kdc_rep (context, &kdc_reply);
 
     free (pre_auth_types);
     free (etypes);

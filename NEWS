@@ -1,3 +1,7 @@
+Changes in release 0.4b
+
+ * Update shared library version numbers.
+
 Changes in release 0.4a
 
  * corrected key used for checksum in mk_safe, unfortunately this

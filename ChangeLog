@@ -1,3 +1,11 @@
+2001-07-03  Assar Westerlund  <assar@sics.se>
+
+	* Release 0.4b
+
+2001-07-03  Assar Westerlund  <assar@sics.se>
+
+	* Release 0.4a
+
 2001-07-02  Johan Danielsson  <joda@pdc.kth.se>
 
 	* kuser/kinit.c: make this compile without krb4 support

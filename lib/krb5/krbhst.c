@@ -123,38 +123,26 @@ srv_find_realm(krb5_context context, char ***res, int *count,
 
 /*
  * lookup the servers for realm `realm', looking for the config string
- * `conf_string' in krb5.conf.
- * return a malloc-ed list of servers in hostlist or NULL if ther are none
- */
-
-static void
-get_krbhst_conf (krb5_context context,
-		 const krb5_realm *realm,
-		 const char *conf_string,
-		 char ***hostlist)
-{
-    *hostlist = krb5_config_get_strings(context, NULL, 
-					"realms", *realm, conf_string, NULL);
-}
-
-/*
- * lookup the servers for realm `realm', looking for the config string
  * `conf_string' in krb5.conf or for `serv_string' in SRV records.
  * return a malloc-ed list of servers in hostlist.
  */
 
 static krb5_error_code
-get_krbhst_dns (krb5_context context,
-		const krb5_realm *realm,
-		const char *serv_string,
-		char ***hostlist,
-		krb5_boolean fallback)
+get_krbhst (krb5_context context,
+	    const krb5_realm *realm,
+	    const char *conf_string,
+	    const char *serv_string,
+	    char ***hostlist)
 {
-    char **res = *hostlist;
-    int count = 0;
+    char **res, **r;
+    int count;
     krb5_error_code ret;
 
-    if(context->srv_lookup) {
+    res = krb5_config_get_strings(context, NULL, 
+				  "realms", *realm, conf_string, NULL);
+    for(r = res, count = 0; r && *r; r++, count++);
+
+    if(count == 0 && context->srv_lookup) {
 	char *s[] = { "udp", "tcp", "http" }, **q;
 	for(q = s; q < s + sizeof(s) / sizeof(s[0]); q++) {
 	    ret = srv_find_realm(context, &res, &count, *realm, *q,
@@ -166,7 +154,7 @@ get_krbhst_dns (krb5_context context,
 	}
     }
 
-    if(fallback && count == 0) {
+    if(count == 0) {
 	char buf[1024];
 	snprintf(buf, sizeof(buf), "kerberos.%s", *realm);
 	ret = add_string(context, &res, &count, buf);
@@ -174,34 +162,10 @@ get_krbhst_dns (krb5_context context,
 	    krb5_config_free_strings(res);
 	    return ret;
 	}
-	++count;
     }
-    if (count)
-	add_string(context, &res, &count, NULL);
+    add_string(context, &res, &count, NULL);
     *hostlist = res;
     return 0;
-}
-
-/*
- * lookup the servers for realm `realm', looking for the config string
- * `conf_string' in krb5.conf or for `serv_string' in SRV records.
- * return a malloc-ed list of servers in hostlist.
- */
-
-static krb5_error_code
-get_krbhst (krb5_context context,
-	    const krb5_realm *realm,
-	    const char *conf_string,
-	    const char *serv_string,
-	    char ***hostlist,
-	    krb5_boolean fallback)
-{
-    krb5_error_code ret = 0;
-
-    get_krbhst_conf(context, realm, conf_string, hostlist);
-    if (*hostlist == NULL)
-	ret = get_krbhst_dns(context, realm, serv_string, hostlist, fallback);
-    return ret;
 }
 
 /*
@@ -213,9 +177,8 @@ krb5_get_krb_admin_hst (krb5_context context,
 			const krb5_realm *realm,
 			char ***hostlist)
 {
-    *hostlist = NULL;
     return get_krbhst (context, realm, "admin_server", "kerberos-adm",
-		       hostlist, TRUE);
+		       hostlist);
 }
 
 /*
@@ -227,39 +190,14 @@ krb5_get_krb_changepw_hst (krb5_context context,
 			   const krb5_realm *realm,
 			   char ***hostlist)
 {
-    krb5_error_code ret = 0;
+    krb5_error_code ret;
 
-    *hostlist = NULL;
-    get_krbhst_conf (context, realm, "kpasswd_server",
-		     hostlist);
-    if (*hostlist == NULL)
-	ret = get_krbhst (context, realm, "admin_server", "kpasswd",
-			  hostlist, TRUE);
-    return ret;
-}
-
-/*
- * set `hostlist' to a malloced list of 524 servers (per default the
- * KDCs)
- */
-
-krb5_error_code
-krb5_get_krb524hst (krb5_context context,
-		    const krb5_realm *realm,
-		    char ***hostlist)
-{
-    krb5_error_code ret = 0;
-
-    *hostlist = NULL;
-    get_krbhst_conf (context, realm, "krb524_server", hostlist);
-    if (*hostlist == NULL) {
-	ret = get_krbhst (context, realm, "krb524_server", "krb524", hostlist,
-			  FALSE);
-	if (ret)
-	    return ret;
-	if (*hostlist == NULL)
-	    return krb5_get_krbhst(context, realm, hostlist);
-    }
+    ret = get_krbhst (context, realm, "kpasswd_server", "kpasswd",
+		      hostlist);
+    if (ret)
+	return ret;
+    ret = get_krbhst (context, realm, "admin_server", "kpasswd",
+		      hostlist);
     return ret;
 }
 
@@ -272,8 +210,7 @@ krb5_get_krbhst (krb5_context context,
 		 const krb5_realm *realm,
 		 char ***hostlist)
 {
-    *hostlist = NULL;
-    return get_krbhst (context, realm, "kdc", "kerberos", hostlist, TRUE);
+    return get_krbhst (context, realm, "kdc", "kerberos", hostlist);
 }
 
 /*

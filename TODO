@@ -74,8 +74,6 @@ rewrite the lookup of KDCs to handle kerberos-<n> and not do any DNS
 requests if the information can be found locally.  this requires stop
 using krb5_get_krbhst.
 
-pay attention to priority and weight from SRV rr
-
 the replay cache is, in its current state, not very useful
 
 always generates a new subkey in an authenticator
@@ -87,12 +85,6 @@ OTP?
 make checksum/encryption type configuration more realm-specific.  make
 some simple way of handling the w2k situtation
 
-crypto: allow scatter/gather creation of checksums
-
-verify_user: handle non-secure verification failing because of
-host->realm mapping
-
-figure out how forwardable/no-addresses and other init_creds related
-settings are supposed to be set in /etc/krb5.conf and how they are read
+crypto: allow scather/gather creation of checksums
 
 ** lib/roken

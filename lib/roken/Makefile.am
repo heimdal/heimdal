@@ -18,8 +18,7 @@ nodist_make_roken_SOURCES = make-roken.c
 
 check_PROGRAMS = parse_bytes-test \
 		strpftime-test \
-		getaddrinfo-test \
-		base64-test
+		getaddrinfo-test
 
 TESTS = $(check_PROGRAMS)
 
@@ -30,7 +29,6 @@ common_LDADD = libroken.la $(LIB_crypt)
 strpftime_test_SOURCES = strpftime-test.c strftime.c strptime.c snprintf.c
 ##snprintf_test_SOURCES  = snprintf-test.c snprintf.c
 ##snprintf_test_LDADD    = $(common_LDADD) -lm
-base64_test_LDADD = $(common_LDADD)
 getaddrinfo_test_LDADD = $(common_LDADD)
 parse_bytes_test_LDADD = $(common_LDADD)
 

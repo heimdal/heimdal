@@ -1,23 +1,4 @@
-2001-05-29  Assar Westerlund  <assar@sics.se>
-
-	* base64-test.c (main): initialize numerr
-
-2001-05-28  Johan Danielsson  <joda@pdc.kth.se>
-
-	* base64.c: clean up the decode mess somewhat
-
-	* base64-test.c: base64 tests
-
-2001-05-18  Johan Danielsson  <joda@pdc.kth.se>
-
-	* roken.h.in: just use standard C types with bswap*
-
-	* bswap.c: just use standard C types
-
 2001-05-17  Assar Westerlund  <assar@sics.se>
-
-	* roken.h.in: include all the headers that AC_GROK_TYPES tries for
-	finding u_int17_t et al
 
 	* Makefile.am: bump version to 12:0:3
 	* roken.h.in: re-add set_progname and get_progname for backwards

@@ -1241,11 +1241,9 @@ static int addarg(struct arg_val*, char*);
  * function will turn us into the login process.
  */
 
-void
-start_login(char *host, int autologin, char *name)
+void start_login(char *host, int autologin, char *name)
 {
     struct arg_val argv;
-    char *user;
 
 #ifdef HAVE_UTMPX_H
     char id_buf[3];
@@ -1294,10 +1292,6 @@ start_login(char *host, int autologin, char *name)
     addarg(&argv, "-h");
     addarg(&argv, host);
     addarg(&argv, "-p");
-    if(name[0])
-	user = name;
-    else
-	user = getenv("USER");
 #ifdef AUTHENTICATION
     if (auth_level < 0 || autologin != AUTH_VALID) {
 	if(!no_warn)
@@ -1307,18 +1301,24 @@ start_login(char *host, int autologin, char *name)
 	    addarg(&argv, "-a");
 	    addarg(&argv, "otp");
 	}
-	if(log_unauth) 
+	if(log_unauth) {
+	    char *u;
+	    if(name[0]) u = name;
+	    else u=getenv("USER");
+	    u = u ? u : "unknown user";
 	    syslog(LOG_INFO, "unauthenticated access from %s (%s)", 
-		   host, user ? user : "unknown user");
+		   host, u);
+	}
     }
-    if (auth_level >= 0 && autologin == AUTH_VALID)
+    if (auth_level >= 0 && autologin == AUTH_VALID) {
 	addarg(&argv, "-f");
-#endif
-    if(user){
 	addarg(&argv, "--");
-	addarg(&argv, strdup(user));
-    }
+	addarg(&argv, name);
+    } /* else */ /* esc@magic.fi; removed stupid else */
+#endif
     if (getenv("USER")) {
+	addarg(&argv, "--");
+	addarg(&argv, strdup(getenv("USER")));
 	/*
 	 * Assume that login will set the USER variable
 	 * correctly.  For SysV systems, this means that
@@ -1394,7 +1394,6 @@ rmut(void)
     if (utxp) {
 	strcpy(utxp->ut_user, "");
 	utxp->ut_type = DEAD_PROCESS;
-#ifdef HAVE_UT_EXIT
 #ifdef _STRUCT___EXIT_STATUS
 	utxp->ut_exit.__e_termination = 0;
 	utxp->ut_exit.__e_exit = 0;
@@ -1404,7 +1403,6 @@ rmut(void)
 #else	
 	utxp->ut_exit.e_termination = 0;
 	utxp->ut_exit.e_exit = 0;
-#endif
 #endif
 	gettimeofday(&utxp->ut_tv, NULL);
 	pututxline(utxp);

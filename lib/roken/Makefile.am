@@ -5,7 +5,7 @@ include $(top_srcdir)/Makefile.am.common
 CLEANFILES = roken.h make-roken.c print_version.h
 
 lib_LTLIBRARIES = libroken.la
-libroken_la_LDFLAGS = -version-info 0:0:0
+libroken_la_LDFLAGS = -version-info 1:0:1
 
 noinst_PROGRAMS = make-roken make-print-version
 
@@ -77,6 +77,7 @@ EXTRA_libroken_la_SOURCES =	\
 	glob.h			\
 	hstrerror.c		\
 	inet_aton.c		\
+	inet_ntop.c		\
 	initgroups.c		\
 	innetgr.c		\
 	iruserok.c		\

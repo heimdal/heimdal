@@ -1,5 +1,39 @@
 1999-07-26  Assar Westerlund  <assar@sics.se>
 
+	* Release 0.1k
+
+1999-07-26  Johan Danielsson  <joda@pdc.kth.se>
+
+	* lib/krb5/Makefile.am: bump version number (changed function
+	signatures)
+
+	* lib/hdb/Makefile.am: bump version number (changes to some
+	function signatures)
+
+1999-07-26  Assar Westerlund  <assar@sics.se>
+	
+	* lib/krb5/Makefile.am: bump version to 3:0:2
+
+	* lib/hdb/Makefile.am: bump version to 2:1:0
+
+	* lib/asn1/Makefile.am: bump version to 1:1:0
+
+1999-07-26  Assar Westerlund  <assar@sics.se>
+
+	* lib/krb5/Makefile.am: bump version to 3:0:2
+
+	* lib/hdb/Makefile.am: bump version to 2:1:0
+
+	* lib/asn1/Makefile.am: bump version to 1:1:0
+
+1999-07-26  Assar Westerlund  <assar@sics.se>
+
+	* Release 0.1j
+
+1999-07-26  Assar Westerlund  <assar@sics.se>
+
+	* configure.in: rokenize inet_ntop
+
 	* lib/krb5/store_fd.c: lots of changes from size_t to ssize_t
 	
 	* lib/krb5/store_mem.c: lots of changes from size_t to ssize_t

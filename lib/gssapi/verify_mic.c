@@ -59,10 +59,8 @@ verify_mic_des
   ret = gssapi_krb5_verify_header (&p,
 				   token_buffer->length,
 				   type);
-  if (ret) {
-      *minor_status = 0;
+  if (ret)
       return ret;
-  }
 
   if (memcmp(p, "\x00\x00", 2) != 0)
       return GSS_S_BAD_SIG;
@@ -88,7 +86,6 @@ verify_mic_des
   if (memcmp (p - 8, hash, 8) != 0) {
     memset (deskey, 0, sizeof(deskey));
     memset (schedule, 0, sizeof(schedule));
-    *minor_status = 0;
     return GSS_S_BAD_MIC;
   }
 
@@ -114,7 +111,6 @@ verify_mic_des
   memset (schedule, 0, sizeof(schedule));
 
   if (memcmp (p, seq_data, 8) != 0) {
-    *minor_status = 0;
     return GSS_S_BAD_MIC;
   }
 
@@ -122,7 +118,6 @@ verify_mic_des
 				context_handle->auth_context,
 				++seq_number);
 
-  *minor_status = 0;
   return GSS_S_COMPLETE;
 }
 
@@ -143,7 +138,7 @@ verify_mic_des3
   OM_uint32 ret;
   krb5_crypto crypto;
   krb5_data seq_data;
-  int cmp;
+  int cmp, docompat;
   Checksum csum;
   char *tmp;
   char ivec[8];
@@ -152,10 +147,8 @@ verify_mic_des3
   ret = gssapi_krb5_verify_header (&p,
 				   token_buffer->length,
 				   type);
-  if (ret) {
-      *minor_status = 0;
+  if (ret)
       return ret;
-  }
 
   if (memcmp(p, "\x04\x00", 2) != 0) /* SGN_ALG = HMAC SHA1 DES3-KD */
       return GSS_S_BAD_SIG;
@@ -173,7 +166,9 @@ verify_mic_des3
   }
 
   /* verify sequence number */
-  if (context_handle->more_flags & COMPAT_OLD_DES3)
+  docompat = 0;
+retry:
+  if (docompat)
       memset(ivec, 0, 8);
   else
       memcpy(ivec, p + 8, 8);
@@ -183,16 +178,22 @@ verify_mic_des3
 			   KRB5_KU_USAGE_SEQ,
 			   p, 8, &seq_data, ivec);
   if (ret) {
-      gssapi_krb5_set_error_string ();
-      krb5_crypto_destroy (gssapi_krb5_context, crypto);
-      *minor_status = ret;
-      return GSS_S_FAILURE;
+      if (docompat++) {
+	  gssapi_krb5_set_error_string ();
+	  krb5_crypto_destroy (gssapi_krb5_context, crypto);
+	  *minor_status = ret;
+	  return GSS_S_FAILURE;
+      } else
+	  goto retry;
   }
 
   if (seq_data.length != 8) {
-      krb5_crypto_destroy (gssapi_krb5_context, crypto);
       krb5_data_free (&seq_data);
-      return GSS_S_BAD_MIC;
+      if (docompat++) {
+	  krb5_crypto_destroy (gssapi_krb5_context, crypto);
+	  return GSS_S_BAD_MIC;
+      } else
+	  goto retry;
   }
 
   krb5_auth_getremoteseqnumber (gssapi_krb5_context,
@@ -208,8 +209,11 @@ verify_mic_des3
   cmp = memcmp (seq, seq_data.data, seq_data.length);
   krb5_data_free (&seq_data);
   if (cmp != 0) {
-      krb5_crypto_destroy (gssapi_krb5_context, crypto);
-      return GSS_S_BAD_MIC;
+      if (docompat++) {
+	  krb5_crypto_destroy (gssapi_krb5_context, crypto);
+	  return GSS_S_BAD_MIC;
+      } else
+	  goto retry;
   }
 
   /* verify checksum */
@@ -245,7 +249,6 @@ verify_mic_des3
 				++seq_number);
 
   krb5_crypto_destroy (gssapi_krb5_context, crypto);
-  *minor_status = 0;
   return GSS_S_COMPLETE;
 }
 
@@ -269,6 +272,7 @@ gss_verify_mic_internal
 	*minor_status = ret;
 	return GSS_S_FAILURE;
     }
+    *minor_status = 0;
     krb5_enctype_to_keytype (gssapi_krb5_context, key->keytype, &keytype);
     switch (keytype) {
     case KEYTYPE_DES :
@@ -280,6 +284,11 @@ gss_verify_mic_internal
 	ret = verify_mic_des3 (minor_status, context_handle,
 			       message_buffer, token_buffer, qop_state, key,
 			       type);
+	break;
+    case KEYTYPE_ARCFOUR :
+	ret = _gssapi_verify_mic_arcfour (minor_status, context_handle,
+					  message_buffer, token_buffer,
+					  qop_state, key, type);
 	break;
     default :
 	*minor_status = KRB5_PROG_ETYPE_NOSUPP;

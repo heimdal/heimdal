@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997 - 2002 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997 - 2003 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -67,7 +67,8 @@ typedef struct gss_ctx_id_t_desc_struct {
   struct krb5_auth_context_data *auth_context;
   gss_name_t source, target;
   OM_uint32 flags;
-  enum { LOCAL = 1, OPEN = 2, COMPAT_OLD_DES3 = 4 } more_flags;
+  enum { LOCAL = 1, OPEN = 2, 
+	 COMPAT_OLD_DES3 = 4, COMPAT_OLD_DES3_SELECTED = 8 } more_flags;
   struct krb5_ticket *ticket;
   time_t lifetime;
 } gss_ctx_id_t_desc;
@@ -211,6 +212,10 @@ typedef OM_uint32 gss_qop_t;
  * credential or security context
  */
 #define GSS_C_INDEFINITE 0xfffffffful
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /*
  * The implementation must reserve static storage for a
@@ -770,5 +775,14 @@ OM_uint32 gss_krb5_copy_ccache
 	(OM_uint32 */*minor*/,
 	 gss_cred_id_t /*cred*/,
 	 struct krb5_ccache_data */*out*/);
+
+#define GSS_C_KRB5_COMPAT_DES3_MIC 1
+
+OM_uint32
+gss_krb5_compat_des3_mic(OM_uint32 *, gss_ctx_id_t, int);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* GSSAPI_H_ */

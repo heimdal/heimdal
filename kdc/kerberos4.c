@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997 - 2003 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997 - 2005 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -133,7 +133,7 @@ do_version4(unsigned char *buf,
     char *name = NULL, *inst = NULL, *realm = NULL;
     char *sname = NULL, *sinst = NULL;
     int32_t req_time;
-    time_t max_life;
+    time_t max_life, max_end, actual_end, issue_time;
     u_int8_t life;
     char client_name[256];
     char server_name[256];
@@ -383,9 +383,12 @@ do_version4(unsigned char *buf,
 	    goto out2;
 	}
 	
-#if 0
+	snprintf (client_name, sizeof(client_name),
+		  "%s.%s@%s",
+		  ad.pname, ad.pinst, ad.prealm);
 	ret = db_fetch4(ad.pname, ad.pinst, ad.prealm, &client);
-	if(ret){
+	if(ret != HDB_ERR_NOENTRY || 
+	   (ret == HDB_ERR_NOENTRY && strcmp(ad.prealm, v4_realm) == 0)) {
 	    char *s;
 	    s = kdc_log_msg(0, "Client not found in database: (krb4) "
 			    "%s.%s@%s: %s",
@@ -395,7 +398,6 @@ do_version4(unsigned char *buf,
 	    free(s);
 	    goto out2;
 	}
-#endif
 	
 	ret = db_fetch4(sname, sinst, v4_realm, &server);
 	if(ret){
@@ -407,7 +409,7 @@ do_version4(unsigned char *buf,
 	    goto out2;
 	}
 
-	ret = check_flags (NULL, NULL,
+	ret = check_flags (client, client_name,
 			   server, server_name,
 			   FALSE);
 	if (ret) {
@@ -425,17 +427,26 @@ do_version4(unsigned char *buf,
 	    goto out2;
 	}
 
-	max_life = krb_life_to_time(ad.time_sec, ad.life);
-	max_life = min(max_life, krb_life_to_time(kdc_time, life));
-	life = min(life, krb_time_to_life(kdc_time, max_life));
-	max_life = krb_life_to_time(0, life);
-#if 0
-	if(client->max_life)
-	    max_life = min(max_life, *client->max_life);
-#endif
+	max_end = krb_life_to_time(ad.time_sec, ad.life);
+	max_end = min(max_end, krb_life_to_time(kdc_time, life));
 	if(server->max_life)
-	    max_life = min(max_life, *server->max_life);
+	    max_end = min(max_end, kdc_time + *server->max_life);
+	if(client && client->max_life)
+	    max_end = min(max_end, kdc_time + *client->max_life);
+	life = min(life, krb_time_to_life(kdc_time, max_end));
 	
+	issue_time = kdc_time;
+	actual_end = krb_life_to_time(issue_time, life);
+	while (actual_end > max_end && life > 1) {
+	    /* move them into the next earlier lifetime bracket */
+	    life--;
+	    actual_end = krb_life_to_time(issue_time, life);
+	}
+	if (actual_end > max_end) {
+	    /* if life <= 1 and it's still too long, backdate the ticket */
+	    issue_time -= actual_end - max_end;
+	}
+
 	{
 	    KTEXT_ST cipher, ticket;
 	    KTEXT r;
@@ -443,13 +454,14 @@ do_version4(unsigned char *buf,
 	    des_new_random_key(&session);
 
 	    krb_create_ticket(&ticket, 0, ad.pname, ad.pinst, ad.prealm,
-			      addr->sin_addr.s_addr, &session, life, kdc_time,
+			      addr->sin_addr.s_addr, &session, life, 
+			      issue_time,
 			      sname, sinst, skey->key.keyvalue.data);
 	    
 	    create_ciph(&cipher, session, sname, sinst, v4_realm,
 			life, server->kvno % 256, &ticket,
-			kdc_time, &ad.session);
-
+			issue_time, &ad.session);
+	    
 	    memset(&session, 0, sizeof(session));
 	    memset(ad.session, 0, sizeof(ad.session));
 

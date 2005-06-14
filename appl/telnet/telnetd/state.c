@@ -45,7 +45,7 @@ int	not42 = 1;
  * Buffer for sub-options, and macros
  * for suboptions buffer manipulations
  */
-unsigned char subbuffer[2048], *subpointer= subbuffer, *subend= subbuffer;
+unsigned char subbuffer[1024*64], *subpointer= subbuffer, *subend= subbuffer;
 
 #define	SB_CLEAR()	subpointer = subbuffer
 #define	SB_TERM()	{ subend = subpointer; SB_CLEAR(); }
@@ -939,7 +939,7 @@ suboption(void)
     }  /* end of case TELOPT_TSPEED */
 
     case TELOPT_TTYPE: {		/* Yaaaay! */
-	static char terminalname[41];
+	char *p;
 
 	if (his_state_is_wont(TELOPT_TTYPE))	/* Ignore if option disabled */
 	    break;
@@ -949,9 +949,9 @@ suboption(void)
 	    return;		/* ??? XXX but, this is the most robust */
 	}
 
-	terminaltype = terminalname;
+	p = terminaltype;
 
-	while ((terminaltype < (terminalname + sizeof terminalname-1)) &&
+	while ((p < (terminaltype + sizeof terminaltype-1)) &&
 	       !SB_EOF()) {
 	    int c;
 
@@ -959,10 +959,9 @@ suboption(void)
 	    if (isupper(c)) {
 		c = tolower(c);
 	    }
-	    *terminaltype++ = c;    /* accumulate name */
+	    *p++ = c;    /* accumulate name */
 	}
-	*terminaltype = 0;
-	terminaltype = terminalname;
+	*p = 0;
 	break;
     }  /* end of case TELOPT_TTYPE */
 
@@ -1284,6 +1283,7 @@ doclientstat(void)
     clientstat(TELOPT_LINEMODE, WILL, 0);
 }
 
+#undef ADD
 #define	ADD(c)	 *ncp++ = c
 #define	ADD_DATA(c) { *ncp++ = c; if (c == SE || c == IAC) *ncp++ = c; }
 

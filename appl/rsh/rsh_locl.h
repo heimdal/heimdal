@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997 - 2003 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997 - 2004 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -137,7 +137,7 @@ extern krb5_crypto crypto;
 extern int key_usage;
 extern void *ivec_in[2];
 extern void *ivec_out[2];
-void init_ivecs(int);
+void init_ivecs(int, int);
 #endif
 #ifdef KRB4
 extern des_key_schedule schedule;

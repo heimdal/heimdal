@@ -1,3 +1,13 @@
+2005-06-15  Love Hörnquist Åstrand  <lha@it.su.se>
+
+	* Release 0.7
+
+	* lib/krb5/cache.c: 1.70: (_krb5_expand_default_cc_name): replace
+	strndup with inline copy
+
+	* kdc/kerberos5.c: 1.176: replace strndup with inline copy, free
+	data on failure
+
 2005-06-14  Love Hörnquist Åstrand  <lha@it.su.se>
 
 	* lib/krb5/Makefile.am: TESTS += test_mem libkrb5_la_SOURCES +=

@@ -5,6 +5,8 @@
 LANG=C
 export LANG
 
+exit 0 #disable test on release branch
+
 esym=
 symbols=
 

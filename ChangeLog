@@ -1,3 +1,52 @@
+2005-09-09  Love Hörnquist Åstrand  <lha@it.su.se>
+	
+	* Release 0.7.1
+
+	* lib/krb5/kuserok.c: 1.14: (check_directory): use passed
+	directory name
+
+2005-08-11  Love Hörnquist Åstrand  <lha@it.su.se>
+
+	* lib/krb5/crypto.c: 1.124: (wrapped_length): the underived
+	encrypted types checksum are all unkeyed (matches the code in
+	encrypt_internal() and encrypt_internal_special())
+
+2005-08-09  Love Hörnquist Åstrand  <lha@it.su.se>
+
+	* lib/hdb/db3.c: 1.16: (DB_open): catch errors from the d->open
+	calls instead of letting them slip though to d->cursor. Bug
+	repport from Andrew Bartlett <abartlet@samba.org> 1.15: (DB_open):
+	in case of error, close database
+
+2005-08-08  Love Hörnquist Åstrand  <lha@it.su.se>
+
+	* lib/hdb/mkey.c (hdb_seal_key_mkey): if mknvo isn't set, the
+	caller want the latest mkvno, go search for it.
+
+2005-07-26  Love Hörnquist Åstrand  <lha@it.su.se>
+
+	* kdc/524.c: 1.32: Always include <krb5-v4compat.h>.
+
+2005-07-13  Love Hörnquist Åstrand  <lha@it.su.se>
+
+	* lib/krb5/get_cred.c: 1.108: (krb5_get_credentials_with_flags):
+	only call krb5_cc_retrieve_cred once, and plug memory leak.
+
+	* lib/krb5/rd_cred.c (krb5_rd_cred): don't leak memory
+
+2005-06-15  Love Hörnquist Åstrand  <lha@it.su.se>
+
+	* Release 0.7
+
+	* kdc/kerberos5.c (make_etype_info2_entry): NUL terminate the
+	string
+
+	* lib/krb5/cache.c: 1.70: (_krb5_expand_default_cc_name): replace
+	strndup with inline copy
+
+	* kdc/kerberos5.c: 1.176: replace strndup with inline copy, free
+	data on failure
+
 2005-06-14  Love Hörnquist Åstrand  <lha@it.su.se>
 
 	* lib/krb5/Makefile.am: TESTS += test_mem libkrb5_la_SOURCES +=

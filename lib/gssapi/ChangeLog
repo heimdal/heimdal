@@ -1,3 +1,10 @@
+2005-12-01  Love Hörnquist Åstrand  <lha@it.su.se>
+
+	* acquire_cred.c: 1.27: (acquire_acceptor_cred): only check if
+	principal exists if we got called with principal as an argument.
+	1.26: (acquire_acceptor_cred): check that the acceptor exists in
+	the keytab before returning ok.
+	
 2005-05-30  Love Hörnquist Åstrand  <lha@it.su.se>
 
 	* init_sec_context.c (init_auth): honor ok-as-delegate if local

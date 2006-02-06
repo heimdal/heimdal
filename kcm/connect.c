@@ -123,7 +123,7 @@ update_client_creds(int s, kcm_client *peer)
 	}
     }
 #endif
-#ifdef LOCAL_PEERCRED
+#if defined(LOCAL_PEERCRED) && defined(XUCRED_VERSION)
     {
 	struct xucred peercred;
 	socklen_t peercredlen = sizeof(peercred);
@@ -349,8 +349,8 @@ do_request(void *buf, size_t len, struct descr *d)
 		(int)d->peercred.pid);
 
 	memset (&msghdr, 0, sizeof(msghdr));
-	msghdr.msg_name       = d->sa;
-	msghdr.msg_namelen    = d->sock_len;
+	msghdr.msg_name       = NULL;
+	msghdr.msg_namelen    = 0;
 	msghdr.msg_iov        = iov;
 	msghdr.msg_iovlen     = sizeof(iov)/sizeof(*iov);
 #if 0
@@ -370,7 +370,7 @@ do_request(void *buf, size_t len, struct descr *d)
 
 	if (sendmsg (d->s, &msghdr, 0) < 0) {
 	    kcm_log (0, "sendmsg(%d): %d %s", (int)d->peercred.pid,
-		     strerror(errno));
+		     errno, strerror(errno));
 	    krb5_data_free(&reply);
 	    return;
 	}
@@ -615,7 +615,7 @@ kcm_loop(void)
     ndescr = init_sockets(&d);
     if (ndescr <= 0) {
 	krb5_warnx(kcm_context, "No sockets!");
-#ifndef HAVE_DOORS
+#ifndef HAVE_DOOR_CREATE
 	exit(1);
 #endif
     }

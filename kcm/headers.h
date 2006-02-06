@@ -46,6 +46,9 @@
 #ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
 #endif
+#ifdef HAVE_SYS_PARAM_H
+#include <sys/param.h>
+#endif
 #ifdef HAVE_FCNTL_H
 #include <fcntl.h>
 #endif
@@ -57,6 +60,9 @@
 #endif
 #ifdef HAVE_SYS_UN_H
 #include <sys/un.h>
+#endif
+#ifdef HAVE_SYS_UCRED_H
+#include <sys/ucred.h>
 #endif
 #ifdef HAVE_UTIL_H
 #include <util.h>

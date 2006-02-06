@@ -1,3 +1,8 @@
+2005-07-13  Love Hörquist Åstrand  <lha@it.su.se>
+
+	* kxd.c: 1.78: (doit): only cleaup for active sockets, passive
+	does it own cleaning up
+
 2005-04-30  Love Hörquist Åstrand  <lha@it.su.se>
 
 	* kx.c (connect_host): make sure s is initialized

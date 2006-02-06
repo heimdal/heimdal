@@ -1,3 +1,11 @@
+2005-12-01  Love Hörnquist Åstrand  <lha@it.su.se>
+
+	* telnetd/telnetd.c: 1.77: Initialize the slc mapping table before
+	its used.  Based on bug report from Russell Sanford <rrs@clyde.dcccd.edu>
+2005-08-08  Love Hörnquist Åstrand  <lha@it.su.se>
+
+	* telnetd/telnetd.c: 1.76+delta:Fix printing of /etc/issue{,.net}.
+
 2005-05-20  Love Hörnquist Åstrand  <lha@it.su.se>
 
 	* telnetd/sys_term.c (start_login): put utmpx code into a new

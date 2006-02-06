@@ -2469,9 +2469,9 @@ _krb5_get_init_creds_opt_free_pkinit(krb5_get_init_creds_opt *opt)
 #ifdef PKINIT
     krb5_pk_init_ctx ctx;
 
-    if (opt->private == NULL || opt->private->pk_init_ctx == NULL)
+    if (opt->opt_private == NULL || opt->opt_private->pk_init_ctx == NULL)
 	return;
-    ctx = opt->private->pk_init_ctx;
+    ctx = opt->opt_private->pk_init_ctx;
     if (ctx->dh)
 	DH_free(ctx->dh);
 	ctx->dh = NULL;
@@ -2490,7 +2490,7 @@ _krb5_get_init_creds_opt_free_pkinit(krb5_get_init_creds_opt *opt)
 	free(ctx->id);
 	ctx->id = NULL;
     }
-    opt->private->pk_init_ctx = NULL;
+    opt->opt_private->pk_init_ctx = NULL;
 #endif
 }
     
@@ -2508,28 +2508,28 @@ krb5_get_init_creds_opt_set_pkinit(krb5_context context,
 #ifdef PKINIT
     krb5_error_code ret;
 
-    if (opt->private == NULL) {
+    if (opt->opt_private == NULL) {
 	krb5_set_error_string(context, "PKINIT: on non extendable opt");
 	return EINVAL;
     }
 
-    opt->private->pk_init_ctx = malloc(sizeof(*opt->private->pk_init_ctx));
-    if (opt->private->pk_init_ctx == NULL) {
+    opt->opt_private->pk_init_ctx = malloc(sizeof(*opt->opt_private->pk_init_ctx));
+    if (opt->opt_private->pk_init_ctx == NULL) {
 	krb5_set_error_string(context, "malloc: out of memory");
 	return ENOMEM;
     }
-    opt->private->pk_init_ctx->dh = NULL;
-    opt->private->pk_init_ctx->id = NULL;
+    opt->opt_private->pk_init_ctx->dh = NULL;
+    opt->opt_private->pk_init_ctx->id = NULL;
     ret = _krb5_pk_load_openssl_id(context,
-				   &opt->private->pk_init_ctx->id,
+				   &opt->opt_private->pk_init_ctx->id,
 				   user_id,
 				   x509_anchors,
 				   prompter,
 				   prompter_data,
 				   password);
     if (ret) {
-	free(opt->private->pk_init_ctx);
-	opt->private->pk_init_ctx = NULL;
+	free(opt->opt_private->pk_init_ctx);
+	opt->opt_private->pk_init_ctx = NULL;
     }
 
     /* XXX */
@@ -2556,7 +2556,7 @@ krb5_get_init_creds_opt_set_pkinit(krb5_context context,
 	    _krb5_get_init_creds_opt_free_pkinit(opt);
 	    return ENOMEM;
 	}
-	opt->private->pk_init_ctx->dh = dh;
+	opt->opt_private->pk_init_ctx->dh = dh;
 	if (!BN_hex2bn(&dh->p, P)) {
 	    _krb5_get_init_creds_opt_free_pkinit(opt);
 	    return ENOMEM;

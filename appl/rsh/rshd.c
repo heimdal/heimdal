@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997-2005 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997-2006 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -73,13 +73,6 @@ static int do_addr_verify = 0;
 static int do_keepalive = 1;
 static int do_version;
 static int do_help = 0;
-
-#if defined(KRB5) && defined(DCE)
-int dfsk5ok = 0;
-int dfspag = 0;
-int dfsfwd = 0;
-krb5_ticket *user_ticket;
-#endif
 
 static void
 syslog_and_die (const char *m, ...)
@@ -263,15 +256,25 @@ static void
 krb5_start_session (void)
 {
     krb5_error_code ret;
+    char *estr;
 
     ret = krb5_cc_resolve (context, tkfile, &ccache2);
     if (ret) {
+	estr = krb5_get_error_string(context);
+	syslog(LOG_WARNING, "resolve cred cache %s: %s", 
+	       tkfile, 
+	       estr ? estr : krb5_get_err_text(context, ret));
+	free(estr);
 	krb5_cc_destroy(context, ccache);
 	return;
     }
 
     ret = krb5_cc_copy_cache (context, ccache, ccache2);
     if (ret) {
+	estr = krb5_get_error_string(context);
+	syslog(LOG_WARNING, "storing credentials: %s", 
+	       estr ? estr : krb5_get_err_text(context, ret));
+	free(estr);
 	krb5_cc_destroy(context, ccache);
 	return ;
     }
@@ -376,6 +379,8 @@ recv_krb5_auth (int s, u_char *buf,
 				  ntohs(socket_get_port (thisaddr)),
 				  *cmd,
 				  *server_username);
+    if (cksum_data.length == -1)
+	syslog_and_die ("asprintf: out of memory");
 
     status = krb5_verify_authenticator_checksum(context, 
 						auth_context,
@@ -451,10 +456,6 @@ recv_krb5_auth (int s, u_char *buf,
 	    free (name);
 	}
     }	   
-
-#if defined(DCE)
-    user_ticket = ticket;
-#endif
 
     return 0;
 }
@@ -632,20 +633,20 @@ setup_environment (char ***env, const struct passwd *pwd)
     e = *env;
     e = realloc(e, (i + 7) * sizeof(char *));
 
-    asprintf (&e[i++], "USER=%s",  pwd->pw_name);
-    asprintf (&e[i++], "HOME=%s",  pwd->pw_dir);
-    asprintf (&e[i++], "SHELL=%s", pwd->pw_shell);
+    if (asprintf (&e[i++], "USER=%s",  pwd->pw_name) == -1)
+	syslog_and_die ("asprintf: out of memory");
+    if (asprintf (&e[i++], "HOME=%s",  pwd->pw_dir) == -1)
+	syslog_and_die ("asprintf: out of memory");
+    if (asprintf (&e[i++], "SHELL=%s", pwd->pw_shell) == -1)
+	syslog_and_die ("asprintf: out of memory");
     if (! path) {
-	asprintf (&e[i++], "PATH=%s",  _PATH_DEFPATH);
+	if (asprintf (&e[i++], "PATH=%s",  _PATH_DEFPATH) == -1)
+	    syslog_and_die ("asprintf: out of memory");
     }
     asprintf (&e[i++], "SSH_CLIENT=only_to_make_bash_happy");
-#if defined(DCE)
-    if (getenv("KRB5CCNAME"))
-	asprintf (&e[i++], "KRB5CCNAME=%s",  getenv("KRB5CCNAME"));
-#else
     if (do_unique_tkfile)
-	asprintf (&e[i++], "KRB5CCNAME=%s", tkfile);
-#endif
+	if (asprintf (&e[i++], "KRB5CCNAME=%s", tkfile) == -1)
+	    syslog_and_die ("asprintf: out of memory");
     e[i++] = NULL;
     *env = e;
 }
@@ -774,10 +775,6 @@ doit (void)
     if (client_user == NULL || server_user == NULL || cmd == NULL)
 	syslog_and_die("mising client/server/cmd");
 
-#if defined(DCE) && defined(_AIX)
-    esetenv("AUTHSTATE", "DCE", 1);
-#endif
-
     pwd = getpwnam (server_user);
     if (pwd == NULL)
 	fatal (s, NULL, "Login incorrect.");
@@ -817,34 +814,6 @@ doit (void)
 #endif
     
 
-#ifdef KRB5
-    {
-	int fd;
- 
-	if (!do_unique_tkfile)
-	    snprintf(tkfile,sizeof(tkfile),"FILE:/tmp/krb5cc_%lu",
-		     (unsigned long)pwd->pw_uid);
-	else if (*tkfile=='\0') {
-	    snprintf(tkfile,sizeof(tkfile),"FILE:/tmp/krb5cc_XXXXXX");
-	    fd = mkstemp(tkfile+5);
-	    close(fd);
-	    unlink(tkfile+5);
-	}
- 
-	if (kerberos_status)
-	    krb5_start_session();
-    }
-    chown(tkfile + 5, pwd->pw_uid, -1);
-
-#if defined(DCE)
-    if (kerberos_status) {
-	esetenv("KRB5CCNAME", tkfile, 1);
-	dfspag = krb5_dfs_pag(context, kerberos_status, user_ticket->client, server_user);
-    }
-#endif
-
-#endif
-
 #ifdef HAVE_SETLOGIN
     if (setlogin(pwd->pw_name) < 0)
 	syslog(LOG_ERR, "setlogin() failed: %m");
@@ -875,6 +844,25 @@ doit (void)
 	if (dup2 (STDOUT_FILENO, STDERR_FILENO) < 0)
 	    fatal (s, "dup2", "Cannot dup stderr.");
     }
+
+#ifdef KRB5
+    {
+	int fd;
+ 
+	if (!do_unique_tkfile)
+	    snprintf(tkfile,sizeof(tkfile),"FILE:/tmp/krb5cc_%lu",
+		     (unsigned long)pwd->pw_uid);
+	else if (*tkfile=='\0') {
+	    snprintf(tkfile,sizeof(tkfile),"FILE:/tmp/krb5cc_XXXXXX");
+	    fd = mkstemp(tkfile+5);
+	    close(fd);
+	    unlink(tkfile+5);
+	}
+ 
+	if (kerberos_status)
+	    krb5_start_session();
+    }
+#endif
 
     setup_environment (&env, pwd);
 

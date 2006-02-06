@@ -1,3 +1,8 @@
+2006-02-02  Love Hörnquist Åstrand  <lha@it.su.se>
+
+	* kadm5_err.et: 1.7: (PASS_REUSE): Spelling, from Václav H?la
+	<ax@natur.cuni.cz>
+	
 2005-05-30  Love Hörnquist Åstrand  <lha@it.su.se>
 
 	* ent_setup.c (attr_to_flags): check for KRB5_KDB_OK_AS_DELEGATE

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997 - 2002 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997 - 2005 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -402,6 +402,10 @@ do_authenticate (struct rx_header *hdr,
 
     unparse_auth_args (sp, &name, &instance, &start_time, &end_time,
 		       &request, &max_seq_len);
+    if (request.length < 8) {
+	make_error_reply (hdr, KABADREQUEST, reply);
+	goto out;
+    }
 
     snprintf (client_name, sizeof(client_name), "%s.%s@%s",
 	      name, instance, v4_realm);
@@ -581,6 +585,7 @@ do_getticket (struct rx_header *hdr,
     krb5_data times;
     int32_t max_seq_len;
     hdb_entry *server_entry = NULL;
+    hdb_entry *client_entry = NULL;
     hdb_entry *krbtgt_entry = NULL;
     Key *kkey = NULL;
     Key *skey = NULL;
@@ -594,12 +599,18 @@ do_getticket (struct rx_header *hdr,
     char pinst[INST_SZ];
     char prealm[REALM_SZ];
     char server_name[256];
+    char client_name[256];
 
     krb5_data_zero (&aticket);
     krb5_data_zero (&times);
 
     unparse_getticket_args (sp, &kvno, &auth_domain, &aticket,
 			    &name, &instance, &times, &max_seq_len);
+    if (times.length < 8) {
+	make_error_reply (hdr, KABADREQUEST, reply);
+	goto out;
+	
+    }
 
     snprintf (server_name, sizeof(server_name),
 	      "%s.%s@%s", name, instance, v4_realm);
@@ -609,14 +620,6 @@ do_getticket (struct rx_header *hdr,
 	kdc_log(0, "Server not found in database: %s: %s",
 		server_name, krb5_get_err_text(context, ret));
 	make_error_reply (hdr, KANOENT, reply);
-	goto out;
-    }
-
-    ret = check_flags (NULL, NULL,
-		       server_entry, server_name,
-		       FALSE);
-    if (ret) {
-	make_error_reply (hdr, KAPWEXPIRED, reply);
 	goto out;
     }
 
@@ -691,6 +694,31 @@ do_getticket (struct rx_header *hdr,
 	}
     }
 
+    snprintf (client_name, sizeof(client_name),
+	      "%s.%s@%s", pname, pinst, prealm);
+
+    ret = db_fetch4 (pname, pinst, prealm, &client_entry);
+    if(ret && ret != HDB_ERR_NOENTRY) {
+	kdc_log(0, "Client not found in database: %s: %s",
+		client_name, krb5_get_err_text(context, ret));
+	make_error_reply (hdr, KANOENT, reply);
+	goto out;
+    }
+    if (client_entry == NULL && strcmp(prealm, v4_realm) == 0) {
+	kdc_log(0, "Local client not found in database: (krb4) "
+		"%s", client_name);
+	make_error_reply (hdr, KANOENT, reply);
+	goto out;
+    }
+
+    ret = check_flags (client_entry, client_name,
+		       server_entry, server_name,
+		       FALSE);
+    if (ret) {
+	make_error_reply (hdr, KAPWEXPIRED, reply);
+	goto out;
+    }
+
     /* decrypt the times */
     des_set_key (&session, schedule);
     des_ecb_encrypt (times.data,
@@ -722,6 +750,10 @@ do_getticket (struct rx_header *hdr,
 	max_life = min(max_life, *krbtgt_entry->max_life);
     if (server_entry->max_life)
 	max_life = min(max_life, *server_entry->max_life);
+    /* if this is a cross realm request, the client_entry will likely
+       be NULL */
+    if (client_entry && client_entry->max_life)
+	max_life = min(max_life, *client_entry->max_life);
 
     life = krb_time_to_life(kdc_time, kdc_time + max_life);
 
@@ -800,6 +832,7 @@ do_kaserver(unsigned char *buf,
     krb5_ret_int32(sp, &op);
     switch (op) {
     case AUTHENTICATE :
+    case AUTHENTICATE_V2 :
 	do_authenticate (&hdr, sp, addr, reply);
 	break;
     case GETTICKET :
@@ -818,7 +851,6 @@ do_kaserver(unsigned char *buf,
     case DEBUG :
     case GETPASSWORD :
     case GETRANDOMKEY :
-    case AUTHENTICATE_V2 :
     default :
 	make_error_reply (&hdr, RXGEN_OPCODE, reply);
 	break;

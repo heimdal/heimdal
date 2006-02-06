@@ -50,6 +50,8 @@ RCSID("$Id$");
 #include <string.h>
 #include <fcntl.h>
 
+/* XXX undefine open so this works on Solaris with large file support */
+#undef open
 
 #define DBT2DATUM(DBT, DATUM) do { (DATUM)->dptr = (DBT)->data; (DATUM)->dsize = (DBT)->size; } while(0)
 #define DATUM2DBT(DATUM, DBT) do { (DBT)->data = (DATUM)->dptr; (DBT)->size = (DATUM)->dsize; } while(0)
@@ -165,7 +167,12 @@ dbm_open (const char *file, int flags, mode_t mode)
 	free(fn);
 	return NULL;
     }
+
+#if (DB_VERSION_MAJOR > 3) && (DB_VERSION_MINOR > 0)
+    if(db->open(db, NULL, fn, NULL, DB_BTREE, myflags, mode) != 0) {
+#else
     if(db->open(db, fn, NULL, DB_BTREE, myflags, mode) != 0) {
+#endif
 	free(fn);
 	db->close(db, 0);
 	return NULL;

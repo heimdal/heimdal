@@ -72,6 +72,26 @@ gssapi_krb5_make_header (u_char *p,
     return p;
 }
 
+u_char *
+_gssapi_make_mech_header(u_char *p,
+			 size_t len)
+{
+    int e;
+    size_t len_len, foo;
+
+    *p++ = 0x60;
+    len_len = length_len(len);
+    e = der_put_length (p + len_len - 1, len_len, len, &foo);
+    if(e || foo != len_len)
+	abort ();
+    p += len_len;
+    *p++ = 0x06;
+    *p++ = GSS_KRB5_MECHANISM->length;
+    memcpy (p, GSS_KRB5_MECHANISM->elements, GSS_KRB5_MECHANISM->length);
+    p += GSS_KRB5_MECHANISM->length;
+    return p;
+}
+
 /*
  * Give it a krb5_data and it will encapsulate with extra GSS-API wrappings.
  */

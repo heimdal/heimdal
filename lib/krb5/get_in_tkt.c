@@ -543,9 +543,9 @@ init_as_req (krb5_context context,
 			else
 			    krb5_data_zero(&salt.saltvalue);
 		    ret = add_padata(context, a->padata, creds->client, 
-			       key_proc, keyseed, 
-			       &preauth->val[i].info.val[j].etype, 1,
-			       sp);
+				     key_proc, keyseed, 
+				     &preauth->val[i].info.val[j].etype, 1,
+				     sp);
 		    if (ret == 0)
 			break;
 		}
@@ -658,6 +658,7 @@ krb5_get_in_cred(krb5_context context,
     krb5_preauthdata *my_preauth = NULL;
     unsigned nonce;
     int done;
+    int send_to_kdc_flags = 0;
 
     opts.i = options;
 
@@ -680,6 +681,7 @@ krb5_get_in_cred(krb5_context context,
 	if (my_preauth) {
 	    free_ETYPE_INFO(&my_preauth->val[0].info);
 	    free (my_preauth->val);
+	    my_preauth = NULL;
 	}
 	if (ret)
 	    return ret;
@@ -691,7 +693,8 @@ krb5_get_in_cred(krb5_context context,
 	if(len != req.length)
 	    krb5_abortx(context, "internal error in ASN.1 encoder");
 
-	ret = krb5_sendto_kdc (context, &req, &creds->client->realm, &resp);
+	ret = krb5_sendto_kdc_flags(context, &req, &creds->client->realm,
+				    &resp, send_to_kdc_flags);
 	krb5_data_free(&req);
 	if (ret)
 	    return ret;
@@ -720,6 +723,13 @@ krb5_get_in_cred(krb5_context context,
 		    done = 0;
 		    preauth = my_preauth;
 		    krb5_free_error_contents(context, &error);
+		    krb5_clear_error_string(context);
+		    continue;
+		}
+		if (ret == KRB5KRB_ERR_RESPONSE_TOO_BIG && !(send_to_kdc_flags & KRB5_KRBHST_FLAGS_LARGE_MSG)) {
+		    done = 0;
+            	    send_to_kdc_flags |= KRB5_KRBHST_FLAGS_LARGE_MSG; 
+            	    krb5_free_error_contents(context, &error); 
 		    krb5_clear_error_string(context);
 		    continue;
 		}
@@ -821,7 +831,7 @@ krb5_get_in_tkt(krb5_context context,
 			    ret_as_reply);
     if(ret) 
 	return ret;
-    ret = krb5_cc_store_cred (context, ccache, creds);
-    krb5_free_creds_contents (context, creds);
+    if (ccache)
+	ret = krb5_cc_store_cred (context, ccache, creds);
     return ret;
 }

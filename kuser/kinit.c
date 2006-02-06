@@ -52,9 +52,9 @@ char *start_str		= NULL;
 struct getarg_strings etype_str;
 int use_keytab		= 0;
 char *keytab_str	= NULL;
+int do_afslog		= -1;
 #ifdef KRB4
 int get_v4_tgt		= -1;
-int do_afslog		= -1;
 int convert_524;
 #endif
 int fcache_version;
@@ -66,10 +66,10 @@ static struct getargs args[] = {
     
     { "524convert", 	'9', arg_flag, &convert_524,
       "only convert ticket to version 4" },
-    
+#endif
     { "afslog", 	0  , arg_flag, &do_afslog,
       "obtain afs tokens"  },
-#endif
+
     { "cache", 		'c', arg_string, &cred_cache,
       "credentials cache", "cachename" },
 
@@ -290,10 +290,13 @@ do_524init(krb5_context context, krb5_ccache ccache,
 	krb5_cc_get_principal(context, ccache, &client);
 	memset(&in_creds, 0, sizeof(in_creds));
 	ret = get_server(context, client, server, &in_creds.server);
-	krb5_free_principal(context, client);
-	if(ret)
+	if(ret) {
+	    krb5_free_principal(context, client);
 	    return ret;
+	}
+	in_creds.client = client;
 	ret = krb5_get_credentials(context, 0, ccache, &in_creds, &real_creds);
+	krb5_free_principal(context, client);
 	krb5_free_principal(context, in_creds.server);
 	if(ret)
 	    return ret;
@@ -370,16 +373,15 @@ renew_validate(krb5_context context,
     }
     ret = krb5_cc_store_cred(context, cache, out);
 
-#ifdef KRB4
     if(ret == 0 && server == NULL) {
+#ifdef KRB4
 	/* only do this if it's a general renew-my-tgt request */
 	if(get_v4_tgt)
 	    do_524init(context, cache, out, NULL);
-
+#endif
 	if(do_afslog && k_hasafs())
 	    krb5_afslog(context, cache, NULL, NULL);
     }
-#endif
 
     krb5_free_creds (context, out);
     if(ret) {
@@ -426,15 +428,15 @@ get_new_tickets(krb5_context context,
 	krb5_get_init_creds_opt_set_address_list (&opt, &no_addrs);
     }
 
+    if (renew_life == NULL && renewable_flag)
+	renew_life = "1 month";
     if(renew_life) {
 	renew = parse_time (renew_life, "s");
 	if (renew < 0)
 	    errx (1, "unparsable time: %s", renew_life);
 
 	krb5_get_init_creds_opt_set_renew_life (&opt, renew);
-    } else if (renewable_flag == 1)
-	krb5_get_init_creds_opt_set_renew_life (&opt, 1 << 30);
-
+    }
 
     if(ticket_life != 0)
 	krb5_get_init_creds_opt_set_tkt_life (&opt, ticket_life);
@@ -625,8 +627,6 @@ main (int argc, char **argv)
 		if((fd = mkstemp(s)) >= 0) {
 		    close(fd);
 		    setenv("KRBTKFILE", s, 1);
-		    if (k_hasafs ())
-			k_setpag();
 		}
 	    }
 #endif
@@ -635,6 +635,9 @@ main (int argc, char **argv)
     }
     if (ret)
 	krb5_err (context, 1, ret, "resolving credentials cache");
+
+    if (argc > 1 && k_hasafs ())
+	k_setpag();
 
     if (lifetime) {
 	int tmp = parse_time (lifetime, "s");
@@ -648,11 +651,11 @@ main (int argc, char **argv)
 	krb5_appdefault_boolean(context, "kinit", 
 				krb5_principal_get_realm(context, principal), 
 				"krb4_get_tickets", TRUE, &get_v4_tgt);
+#endif
     if(do_afslog == -1)
 	krb5_appdefault_boolean(context, "kinit", 
 				krb5_principal_get_realm(context, principal), 
 				"afslog", TRUE, &do_afslog);
-#endif
 
     if(!addrs_flag && extra_addresses.num_strings > 0)
 	krb5_errx(context, 1, "specifying both extra addresses and "
@@ -687,20 +690,22 @@ main (int argc, char **argv)
 #ifdef KRB4
     if(get_v4_tgt)
 	do_524init(context, ccache, NULL, server);
+#endif
     if(do_afslog && k_hasafs())
 	krb5_afslog(context, ccache, NULL, NULL);
-#endif
     if(argc > 1) {
-	simple_execvp(argv[1], argv+1);
+	ret = simple_execvp(argv[1], argv+1);
 	krb5_cc_destroy(context, ccache);
 #ifdef KRB4
 	dest_tkt();
+#endif
 	if(k_hasafs())
 	    k_unlog();
-#endif
-    } else 
+    } else {
 	krb5_cc_close (context, ccache);
+	ret = 0;
+    }
     krb5_free_principal(context, principal);
     krb5_free_context (context);
-    return 0;
+    return ret;
 }

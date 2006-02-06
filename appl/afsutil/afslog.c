@@ -70,10 +70,10 @@ struct getargs args[] = {
     { "realm",	'k', arg_string, &realm, "realm for afs cell", "realm" },
     { "unlog",	'u', arg_flag, &unlog_flag, "remove tokens" },
 #ifdef KRB4
-    { "v4",	 0, arg_negative_flag, &use_krb4, "use Kerberos 4" },
+    { "v4",	 0, arg_negative_flag, &use_krb4, "don't use Kerberos 4" },
 #endif
 #ifdef KRB5
-    { "v5",	 0, arg_negative_flag, &use_krb5, "use Kerberos 5" },
+    { "v5",	 0, arg_negative_flag, &use_krb5, "don't use Kerberos 5" },
 #endif
 #if 0
     { "create-user", 0, arg_flag, &create_user, "create user if not found" },
@@ -246,6 +246,8 @@ do_afslog(const char *cell)
 	    return 0;
     }
 #endif
+    if (cell == NULL)
+	cell = "<default cell>";
 #ifdef KRB5
     if (k5ret)
 	warnx("krb5_afslog(%s): %s", cell, krb5_get_err_text(context, k5ret));
@@ -260,7 +262,7 @@ do_afslog(const char *cell)
 }
 
 static void
-log_func(void *ctx, const char *str, int ret)
+log_func(void *ctx, const char *str)
 {
     fprintf(stderr, "%s\n", str);
 }

@@ -1,3 +1,29 @@
+2005-12-28  Love Hörnquist Åstrand  <lha@it.su.se>
+
+	* rshd.c: part of 1.62: (doit): move creation of users ticket file
+	to later to avoid seteuid/setuid dance.
+	
+2005-04-25  Love Hörnquist Åstrand  <lha@it.su.se>
+
+	* rshd.c: 1.57: use snprintf to format tkfile
+
+2004-09-21  Johan Danielsson  <joda@pdc.kth.se>
+
+	* rshd.c: pull up 1.52->1.55: * move keepalive setting to after
+	setting up sockets * if we don't have an errsock, dup stdout to
+	stderr (this would normally be done by inetd, but not by
+	mini_inetd), * pass errsock status to init_ivecs
+	
+	* rsh.c: pull up 1.72->1.73: (loop): pass errsock status to
+	init_ivecs
+
+	* common.c: pull up 1.16->1.17: (init_ivecs): if we don't have an
+	errsock the ivecs should point to the same data
+	
+2003-08-19  Johan Danielsson  <joda@pdc.kth.se>
+
+	* rshd.c: -P also with KRB5
+	
 2003-04-16  Johan Danielsson  <joda@pdc.kth.se>
 
 	* rsh.c: use krb5_appdefault to get defaults for forward and
@@ -13,7 +39,7 @@
 
 	* rsh.c (loop): only check errsock if it's valid
 
-2003-03-18  Love  Love Hörnquist Åstrand <lha@it.su.se>
+2003-03-18  Love  Love Hörnquist Åstrand  <lha@it.su.se>
 
 	* rshd.c: do krb5_afslog when compling with afs support
 

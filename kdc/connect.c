@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997-2002 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997-2004 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -547,21 +547,23 @@ grow_descr (struct descr *d, size_t n)
 {
     if (d->size - d->len < n) {
 	unsigned char *tmp;
+	size_t grow; 
 
-	d->size += max(1024, d->len + n);
-	if (d->size >= max_request) {
+	grow = max(1024, d->len + n);
+	if (d->size + grow > max_request) {
 	    kdc_log(0, "Request exceeds max request size (%lu bytes).",
-		    (unsigned long)d->size);
+		    (unsigned long)d->size + grow);
 	    clear_descr(d);
 	    return -1;
 	}
-	tmp = realloc (d->buf, d->size);
+	tmp = realloc (d->buf, d->size + grow);
 	if (tmp == NULL) {
 	    kdc_log(0, "Failed to re-allocate %lu bytes.",
-		    (unsigned long)d->size);
+		    (unsigned long)d->size + grow);
 	    clear_descr(d);
 	    return -1;
 	}
+	d->size += grow;
 	d->buf = tmp;
     }
     return 0;
@@ -658,11 +660,19 @@ handle_http_tcp (struct descr *d)
 	    "<H1>404 Not found</H1>\r\n"
 	    "That page doesn't exist, maybe you are looking for "
 	    "<A HREF=\"http://www.pdc.kth.se/heimdal/\">Heimdal</A>?\r\n";
-	write(d->s, proto, strlen(proto));
-	write(d->s, msg, strlen(msg));
 	kdc_log(0, "HTTP request from %s is non KDC request", d->addr_string);
 	kdc_log(5, "Request: %s", t);
 	free(data);
+	if (write(d->s, proto, strlen(proto)) < 0) {
+	    kdc_log(0, "HTTP write failed: %s: %s", 
+		    d->addr_string, strerror(errno));
+	    return -1;
+	}
+	if (write(d->s, msg, strlen(msg)) < 0) {
+	    kdc_log(0, "HTTP write failed: %s: %s", 
+		    d->addr_string, strerror(errno));
+	    return -1;
+	}
 	return -1;
     }
     {
@@ -673,8 +683,16 @@ handle_http_tcp (struct descr *d)
 	    "Pragma: no-cache\r\n"
 	    "Content-type: application/octet-stream\r\n"
 	    "Content-transfer-encoding: binary\r\n\r\n";
-	write(d->s, proto, strlen(proto));
-	write(d->s, msg, strlen(msg));
+	if (write(d->s, proto, strlen(proto)) < 0) {
+	    kdc_log(0, "HTTP write failed: %s: %s", 
+		    d->addr_string, strerror(errno));
+	    return -1;
+	}
+	if (write(d->s, msg, strlen(msg)) < 0) {
+	    kdc_log(0, "HTTP write failed: %s: %s", 
+		    d->addr_string, strerror(errno));
+	    return -1;
+	}
     }
     memcpy(d->buf, data, len);
     d->len = len;
@@ -701,6 +719,12 @@ handle_tcp(struct descr *d, int index, int min_free)
     n = recvfrom(d[index].s, buf, sizeof(buf), 0, NULL, NULL);
     if(n < 0){
 	krb5_warn(context, errno, "recvfrom");
+	return;
+    } else if (n == 0) {
+	krb5_warnx(context, "connection closed before end of data after %lu "
+		   "bytes from %s",
+		   (unsigned long)d[index].len, d[index].addr_string);
+	clear_descr (d + index);
 	return;
     }
     if (grow_descr (&d[index], n))

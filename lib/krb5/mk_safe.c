@@ -69,7 +69,7 @@ krb5_mk_safe(krb5_context context,
 
   sec2                   = sec;
   s.safe_body.timestamp  = &sec2;
-  usec2                  = usec2;
+  usec2                  = usec;
   s.safe_body.usec       = &usec2;
   if (auth_context->flags & KRB5_AUTH_CONTEXT_DO_SEQUENCE) {
       tmp_seq = auth_context->local_seqnumber;

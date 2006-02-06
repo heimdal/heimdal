@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997-2002 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997-2003 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -273,10 +273,10 @@ print_tickets (krb5_context context,
 	rtbl_set_prefix(ct, "  ");
 	rtbl_set_column_prefix(ct, COL_ISSUED, "");
     }
-    while (krb5_cc_next_cred (context,
-			      ccache,
-			      &cursor,
-			      &creds) == 0) {
+    while ((ret = krb5_cc_next_cred (context,
+				     ccache,
+				     &cursor,
+				     &creds)) == 0) {
 	if(do_verbose){
 	    print_cred_verbose(context, &creds);
 	}else{
@@ -284,6 +284,8 @@ print_tickets (krb5_context context,
 	}
 	krb5_free_creds_contents (context, &creds);
     }
+    if(ret != KRB5_CC_END)
+	krb5_err(context, 1, ret, "krb5_cc_get_next");
     ret = krb5_cc_end_seq_get (context, ccache, &cursor);
     if (ret)
 	krb5_err (context, 1, ret, "krb5_cc_end_seq_get");
@@ -466,6 +468,7 @@ display_v4_tickets (int do_verbose)
      */
     return 0;
 }
+#endif /* KRB4 */
 
 /*
  * Print a list of all AFS tokens
@@ -500,7 +503,7 @@ display_tokens(int do_verbose)
 	    continue;
 	if(parms.out_size < sizeof(size_secret_tok))
 	    continue;
-	t[parms.out_size] = 0;
+	t[min(parms.out_size,sizeof(t)-1)] = 0;
 	memcpy(&size_secret_tok, r, sizeof(size_secret_tok));
 	/* dont bother about the secret token */
 	r += size_secret_tok + sizeof(size_secret_tok);
@@ -536,7 +539,6 @@ display_tokens(int do_verbose)
 	putchar('\n');
     }
 }
-#endif /* KRB4 */
 
 /*
  * display the ccache in `cred_cache'
@@ -596,8 +598,8 @@ static int do_verbose	= 0;
 static int do_test	= 0;
 #ifdef KRB4
 static int do_v4	= 1;
-static int do_tokens	= 0;
 #endif
+static int do_tokens	= 0;
 static int do_v5	= 1;
 static char *cred_cache;
 static int do_flags = 0;
@@ -612,9 +614,9 @@ static struct getargs args[] = {
 #ifdef KRB4
     { "v4",			'4',	arg_flag, &do_v4,
       "display v4 tickets", NULL },
+#endif
     { "tokens",			'T',   arg_flag, &do_tokens,
       "display AFS tokens", NULL },
-#endif
     { "v5",			'5',	arg_flag, &do_v5,
       "display v5 cred cache", NULL},
     { "verbose",		'v', arg_flag, &do_verbose,
@@ -666,20 +668,24 @@ main (int argc, char **argv)
 	exit_status = display_v5_ccache (cred_cache, do_test, 
 					 do_verbose, do_flags);
 
-#ifdef KRB4
     if (!do_test) {
+#ifdef KRB4
 	if (do_v4) {
 	    if (do_v5)
 		printf ("\n");
 	    display_v4_tickets (do_verbose);
 	}
+#endif
 	if (do_tokens && k_hasafs ()) {
-	    if (do_v4 || do_v5)
+	    if (do_v5)
 		printf ("\n");
+#ifdef KRB4
+	    else if (do_v4)
+		printf ("\n");
+#endif
 	    display_tokens (do_verbose);
 	}
     }
-#endif
 
     return exit_status;
 }

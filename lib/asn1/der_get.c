@@ -310,6 +310,8 @@ decode_enumerated (const unsigned char *p, size_t len,
     p += l;
     len -= l;
     ret += l;
+    if (reallen > len)
+	return ASN1_OVERRUN;
     e = der_get_int (p, reallen, num, &l);
     if (e) return e;
     p += l;

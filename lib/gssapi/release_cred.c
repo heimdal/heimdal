@@ -52,8 +52,14 @@ OM_uint32 gss_release_cred
         krb5_free_principal(gssapi_krb5_context, (*cred_handle)->principal);
     if ((*cred_handle)->keytab != NULL)
 	krb5_kt_close(gssapi_krb5_context, (*cred_handle)->keytab);
-    if ((*cred_handle)->ccache != NULL)
-	krb5_cc_close(gssapi_krb5_context, (*cred_handle)->ccache);
+    if ((*cred_handle)->ccache != NULL) {
+	const krb5_cc_ops *ops;
+	ops = krb5_cc_get_ops(gssapi_krb5_context, (*cred_handle)->ccache);
+	if (ops == &krb5_mcc_ops)
+	    krb5_cc_destroy(gssapi_krb5_context, (*cred_handle)->ccache);
+	else 
+	    krb5_cc_close(gssapi_krb5_context, (*cred_handle)->ccache);
+    }
     gss_release_oid_set(NULL, &(*cred_handle)->mechanisms);
     free(*cred_handle);
     *cred_handle = GSS_C_NO_CREDENTIAL;

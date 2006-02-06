@@ -281,6 +281,10 @@ OM_uint32 gss_get_mic
       ret = mic_des3 (minor_status, context_handle, qop_req,
 		      message_buffer, message_token, key);
       break;
+  case KEYTYPE_ARCFOUR:
+      ret = _gssapi_get_mic_arcfour (minor_status, context_handle, qop_req,
+				     message_buffer, message_token, key);
+      break;
   default :
       *minor_status = KRB5_PROG_ETYPE_NOSUPP;
       ret = GSS_S_FAILURE;

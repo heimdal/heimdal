@@ -1,3 +1,25 @@
+2004-09-08  Johan Danielsson  <joda@pdc.kth.se>
+
+	* xnlock.c: pull up 1.99->1.100: use krb5_appdefault_boolean
+	instead of krb5_config_get_bool
+
+2004-03-22  Johan Danielsson  <joda@pdc.kth.se>
+
+	* xnlock.c: protect the world from des_encrypt in crypt.h
+	
+2004-03-01  Love Hörnquist Åstrand  <lha@it.su.se>
+
+	* xnlock.c: include <crypt.h>, From: Fredrik Ljungberg
+	<flag@pobox.se>
+	
+2003-05-06  Johan Danielsson  <joda@pdc.kth.se>
+
+	* no checks here
+
+2003-04-29  Love Hörnquist Åstrand <lha@it.su.se>
+
+	* xnlock.c: include kafs.h in the krb5 case
+	
 2003-04-14  Love Hörnquist Åstrand <lha@it.su.se>
 
 	* xnlock.c (GetPasswd): cast argument to isprint to unsigned char,

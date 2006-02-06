@@ -106,21 +106,46 @@ implementations when using
 .Fn gss_get_mic
 /
 .Fn gss_verify_mic .
+Its possible to modify the behavior of the generator of the MIC with
+the
+.Pa krb5.conf
+configuration file so that old clients/servers will still
+work.
+.Pp
+New clients/servers will try both the old and new MIC in Heimdal 0.6.
+In 0.7 it will check only if configured and the compatibility code
+will be removed in 0.8.
+.Pp
+Heimdal 0.6 still generates by default the broken GSS-API DES3 mic,
+this will change in 0.7 to generate correct des3 mic.
 .Pp
 To turn on compatibility with older clients and servers, change the
 .Nm [gssapi]
-.Ar broken_3des_mic
+.Ar broken_des3_mic
 in
 .Pa krb5.conf
 that contains a list of globbing expressions that will be matched
 against the server name.
+To turn off generation of the old (incompatible) mic of the MIC use
+.Nm [gssapi]
+.Ar correct_des3_mic .
+.Pp
+If a match for a entry is in both
+.Nm [gssapi]
+.Ar correct_des3_mic
+and
+.Nm [gssapi]
+.Ar correct_des3_mic ,
+the later will override.
+.Pp
 This config option modifies behaviour for both clients and servers.
 .Pp
 Example:
 .Bd -literal -offset indent
 [gssapi]
-	broken_3des_mic = cvs/*@SU.SE
-	broken_3des_mic = host/*@SU.SE afs/*@SU.SE
+	broken_des3_mic = cvs/*@SU.SE
+	broken_des3_mic = host/*@E.KTH.SE
+	correct_des3_mic = host/*@SU.SE
 .Ed
 .Sh BUGS
 All of 0.5.x versions of

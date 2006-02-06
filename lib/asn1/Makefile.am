@@ -5,7 +5,7 @@ include $(top_srcdir)/Makefile.am.common
 YFLAGS = -d
 
 lib_LTLIBRARIES = libasn1.la
-libasn1_la_LDFLAGS = -version-info 6:0:0
+libasn1_la_LDFLAGS = -version-info 6:2:0
 
 libasn1_la_LIBADD = @LIB_com_err@
 
@@ -23,6 +23,7 @@ gen_files =					\
 	asn1_Authenticator.x			\
 	asn1_AuthorizationData.x		\
 	asn1_CKSUMTYPE.x			\
+	asn1_ChangePasswdDataMS.x		\
 	asn1_Checksum.x				\
 	asn1_ENCTYPE.x				\
 	asn1_ETYPE_INFO.x			\

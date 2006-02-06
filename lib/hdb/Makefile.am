@@ -20,7 +20,7 @@ LDADD = libhdb.la \
 	$(LIB_roken)
 
 lib_LTLIBRARIES = libhdb.la
-libhdb_la_LDFLAGS = -version-info 7:5:0
+libhdb_la_LDFLAGS = -version-info 7:7:0
 
 libhdb_la_SOURCES =				\
 	common.c				\

@@ -163,6 +163,8 @@ main(int argc, char **argv)
     netip = netibuf;
     nfrontp = nbackp = netobuf;
 
+    setprogname(argv[0]);
+
     progname = *argv;
 #ifdef ENCRYPTION
     nclearto = 0;
@@ -634,7 +636,7 @@ getterminaltype(char *name, size_t name_sz)
 		     */
 		    _gettermname();
 		    if (strncmp(first, terminaltype, sizeof(first)) != 0)
-			strcpy(terminaltype, first);
+			strlcpy(terminaltype, first, sizeof(terminaltype));
 		    break;
 		}
 	    }
@@ -745,12 +747,21 @@ Please contact your net administrator");
 #endif
 
     init_env();
+
+    /* begin server processing */
+
+    /*
+     * Initialize the slc mapping table.
+     */
+
+    get_slc_defaults();
+
     /*
      * get terminal type.
      */
     *user_name = 0;
     level = getterminaltype(user_name, sizeof(user_name));
-    esetenv("TERM", terminaltype ? terminaltype : "network", 1);
+    esetenv("TERM", terminaltype[0] ? terminaltype : "network", 1);
 
 #ifdef _SC_CRAY_SECURE_SYS
     if (secflag) {
@@ -761,7 +772,6 @@ Please contact your net administrator");
     }
 #endif	/* _SC_CRAY_SECURE_SYS */
 
-    /* begin server processing */
     my_telnet(net, ourpty, remote_host_name, remote_utmp_name,
 	      level, user_name);
     /*NOTREACHED*/
@@ -799,11 +809,6 @@ my_telnet(int f, int p, const char *host, const char *utmp_host,
     int nfd;
     int startslave_called = 0;
     time_t timeout;
-
-    /*
-     * Initialize the slc mapping table.
-     */
-    get_slc_defaults();
 
     /*
      * Do some tests where it is desireable to wait for a response.

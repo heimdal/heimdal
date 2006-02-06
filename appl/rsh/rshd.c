@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997-2003 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997-2004 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -405,8 +405,12 @@ recv_krb5_auth (int s, u_char *buf,
 	    temp_tkfile = tkfile + 5;
 	}
 	end = strchr(*client_username + 3,' ');
-	strncpy(temp_tkfile, *client_username + 3, end - *client_username - 3);
-	temp_tkfile[end - *client_username - 3] = '\0';
+	if (end == NULL)
+	    syslog_and_die("missing argument after -U");
+	snprintf(temp_tkfile, sizeof(tkfile) - (temp_tkfile - tkfile),
+		 "%.*s",
+		 (int)(end - *client_username - 3),
+		 *client_username + 3);
 	memmove (*client_username, end + 1, strlen(end+1)+1);
     }
 
@@ -459,7 +463,8 @@ recv_krb5_auth (int s, u_char *buf,
 static void
 loop (int from0, int to0,
       int to1,   int from1,
-      int to2,   int from2)
+      int to2,   int from2,
+      int have_errsock)
 {
     fd_set real_readset;
     int max_fd;
@@ -470,7 +475,7 @@ loop (int from0, int to0,
 
 #ifdef KRB5
     if(auth_method == AUTH_KRB5 && protocol_version == 2)
-	init_ivecs(0);
+	init_ivecs(0, have_errsock);
 #endif
 
     FD_ZERO(&real_readset);
@@ -551,7 +556,7 @@ pipe_a_like (int fd[2])
  * Start a child process and leave the parent copying data to and from it.  */
 
 static void
-setup_copier (void)
+setup_copier (int have_errsock)
 {
     int p0[2], p1[2], p2[2];
     pid_t pid;
@@ -582,7 +587,8 @@ setup_copier (void)
 
 	loop (STDIN_FILENO, p0[1],
 	      STDOUT_FILENO, p1[0],
-	      STDERR_FILENO, p2[0]);
+	      STDERR_FILENO, p2[0],
+	      have_errsock);
     }
 }
 
@@ -802,34 +808,6 @@ doit (void)
     }
 #endif
     
-
-#ifdef KRB5
-    {
-	int fd;
- 
-	if (!do_unique_tkfile)
-	    snprintf(tkfile,sizeof(tkfile),"FILE:/tmp/krb5cc_%u",pwd->pw_uid);
-	else if (*tkfile=='\0') {
-	    snprintf(tkfile,sizeof(tkfile),"FILE:/tmp/krb5cc_XXXXXX");
-	    fd = mkstemp(tkfile+5);
-	    close(fd);
-	    unlink(tkfile+5);
-	}
- 
-	if (kerberos_status)
-	    krb5_start_session();
-    }
-    chown(tkfile + 5, pwd->pw_uid, -1);
-
-#if defined(DCE)
-    if (kerberos_status) {
-	esetenv("KRB5CCNAME", tkfile, 1);
-	dfspag = krb5_dfs_pag(context, kerberos_status, user_ticket->client, server_user);
-    }
-#endif
-
-#endif
-
 #ifdef HAVE_SETLOGIN
     if (setlogin(pwd->pw_name) < 0)
 	syslog(LOG_ERR, "setlogin() failed: %m");
@@ -856,12 +834,33 @@ doit (void)
 	if (dup2 (errsock, STDERR_FILENO) < 0)
 	    fatal (s, "dup2", "Cannot dup stderr.");
 	close (errsock);
+    } else {
+	if (dup2 (STDOUT_FILENO, STDERR_FILENO) < 0)
+	    fatal (s, "dup2", "Cannot dup stderr.");
     }
+
+#ifdef KRB5
+    {
+	int fd;
+ 
+	if (!do_unique_tkfile)
+	    snprintf(tkfile,sizeof(tkfile),"FILE:/tmp/krb5cc_%u",pwd->pw_uid);
+	else if (*tkfile=='\0') {
+	    snprintf(tkfile,sizeof(tkfile),"FILE:/tmp/krb5cc_XXXXXX");
+	    fd = mkstemp(tkfile+5);
+	    close(fd);
+	    unlink(tkfile+5);
+	}
+ 
+	if (kerberos_status)
+	    krb5_start_session();
+    }
+#endif
 
     setup_environment (&env, pwd);
 
     if (do_encrypt) {
-	setup_copier ();
+	setup_copier (errsock >= 0);
     } else {
 	if (net_write (s, "", 1) != 1)
 	    fatal (s, "net_write", "write failed");
@@ -919,7 +918,7 @@ struct getargs args[] = {
       "port" },
     { "vacuous",	'v',	arg_flag, &do_vacuous,
       "Don't accept non-kerberised connections" },
-#ifdef KRB4
+#if defined(KRB4) || defined(KRB5)
     { NULL,		'P',	arg_negative_flag, &do_newpag,
       "Don't put process in new PAG" },
 #endif
@@ -971,13 +970,6 @@ main(int argc, char **argv)
     if(do_kerberos)
 	do_kerberos = DO_KRB4 | DO_KRB5;
 #endif
-
-    if (do_keepalive &&
-	setsockopt(0, SOL_SOCKET, SO_KEEPALIVE, (char *)&on,
-		   sizeof(on)) < 0)
-	syslog(LOG_WARNING, "setsockopt (SO_KEEPALIVE): %m");
-
-    /* set SO_LINGER? */
 
 #ifdef KRB5
     if((do_kerberos & DO_KRB5) && krb5_init_context (&context) != 0)
@@ -1034,6 +1026,13 @@ main(int argc, char **argv)
 	mini_inetd_addrinfo (ai);
 	freeaddrinfo(ai);
     }
+
+    if (do_keepalive &&
+	setsockopt(0, SOL_SOCKET, SO_KEEPALIVE, (char *)&on,
+		   sizeof(on)) < 0)
+	syslog(LOG_WARNING, "setsockopt (SO_KEEPALIVE): %m");
+
+    /* set SO_LINGER? */
 
     signal (SIGPIPE, SIG_IGN);
 

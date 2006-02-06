@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995, 1996, 1997, 1998, 1999 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995 - 2003 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -128,7 +128,7 @@ recv_conn (int sock, kx_context *kc,
 	 exit (1);
      }
      kc->thisaddr_len = addrlen;
-     addrlen = sizeof(kc->thataddr);
+     addrlen = sizeof(kc->__ss_that);
      kc->thataddr = (struct sockaddr*)&kc->__ss_that;
      if (getpeername (sock, kc->thataddr, &addrlen) < 0) {
 	 syslog (LOG_ERR, "getpeername: %m");
@@ -226,11 +226,11 @@ recv_conn (int sock, kx_context *kc,
 	 fatal (kc, sock, "cannot set uid");
      }
 
-     ret = getnameinfo((struct sockaddr *)&kc->thataddr, kc->thataddr_len,
+     ret = getnameinfo(kc->thataddr, kc->thataddr_len,
 		       remoteaddr, sizeof(remoteaddr), 
 		       NULL, 0, NI_NUMERICHOST);
      if (ret != 0)
-	 fatal (kc, sock, "getnameinfo failed");
+	 fatal (kc, sock, "getnameinfo failed: %s", gai_strerror(ret));
 
      syslog (LOG_INFO, "from %s(%s): %s -> %s",
 	     remotehost, remoteaddr,

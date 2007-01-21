@@ -1353,19 +1353,19 @@ _hx509_generate_private_key(hx509_context context,
 
 static const heim_octet_string null_entry_oid = { 2, rk_UNCONST("\x05\x00") };
 
-static const unsigned sha512_oid_tree[] = { 2, 16, 840, 1, 101, 3, 4, 3 };
+static const unsigned sha512_oid_tree[] = { 2, 16, 840, 1, 101, 3, 4, 2, 3 };
 const AlgorithmIdentifier _hx509_signature_sha512_data = { 
-    { 8, rk_UNCONST(sha512_oid_tree) }, rk_UNCONST(&null_entry_oid)
+    { 9, rk_UNCONST(sha512_oid_tree) }, rk_UNCONST(&null_entry_oid)
 };
 
-static const unsigned sha384_oid_tree[] = { 2, 16, 840, 1, 101, 3, 4, 2 };
+static const unsigned sha384_oid_tree[] = { 2, 16, 840, 1, 101, 3, 4, 2, 2 };
 const AlgorithmIdentifier _hx509_signature_sha384_data = { 
-    { 8, rk_UNCONST(sha384_oid_tree) }, rk_UNCONST(&null_entry_oid)
+    { 9, rk_UNCONST(sha384_oid_tree) }, rk_UNCONST(&null_entry_oid)
 };
 
 static const unsigned sha256_oid_tree[] = { 2, 16, 840, 1, 101, 3, 4, 2, 1 };
 const AlgorithmIdentifier _hx509_signature_sha256_data = { 
-    { 8, rk_UNCONST(sha256_oid_tree) }, rk_UNCONST(&null_entry_oid)
+    { 9, rk_UNCONST(sha256_oid_tree) }, rk_UNCONST(&null_entry_oid)
 };
 
 static const unsigned sha1_oid_tree[] = { 1, 3, 14, 3, 2, 26 };

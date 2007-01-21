@@ -1,5 +1,9 @@
-2007-01-16  Love Hörnquist Åstrand  <lha@it.su.se>
+2007-01-21  Love Hörnquist Åstrand  <lha@it.su.se>
 
+	* crypto.c: Fix sha2 oids.
+	
+2007-01-16  Love Hörnquist Åstrand  <lha@it.su.se>
+	
 	* hxtool.c: Set num of bits before we generate the key.
 	
 2007-01-15  Love Hörnquist Åstrand  <lha@it.su.se>

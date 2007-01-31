@@ -1,3 +1,11 @@
+2007-01-31  Love Hörnquist Åstrand  <lha@it.su.se>
+
+	* configure.in: 0.8-rc5
+
+	* fix-export: 1.52: Make hx509.info too
+
+	* fix-export: 1.51: build heimntlm-protos.h
+	
 2007-01-17  Love Hörnquist Åstrand  <lha@it.su.se>
 
 	* doc/hx509.texi: Spelling and more about proxy certificates.

@@ -1,3 +1,8 @@
+2007-01-31  Love Hörnquist Åstrand  <lha@it.su.se>
+
+	* cert.c: 1.86: indent 1.85: (is_proxy_cert): free info if we wont
+	return it.
+	
 2007-01-21  Love Hörnquist Åstrand  <lha@it.su.se>
 
 	* crypto.c: Fix sha2 oids.

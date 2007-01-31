@@ -847,7 +847,9 @@ find_parent(hx509_context context,
  */
 
 static int
-is_proxy_cert(hx509_context context, const Certificate *cert, ProxyCertInfo *rinfo)
+is_proxy_cert(hx509_context context, 
+	      const Certificate *cert, 
+	      ProxyCertInfo *rinfo)
 {
     ProxyCertInfo info;
     const Extension *e;
@@ -876,7 +878,9 @@ is_proxy_cert(hx509_context context, const Certificate *cert, ProxyCertInfo *rin
 	hx509_clear_error_string(context);
 	return HX509_EXTRA_DATA_AFTER_STRUCTURE; 
     }
-    if (rinfo)
+    if (rinfo == NULL)
+	free_ProxyCertInfo(&info);
+    else
 	*rinfo = info;
 
     return 0;

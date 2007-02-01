@@ -1,5 +1,11 @@
-2007-01-21  Love Hörnquist Åstrand  <lha@it.su.se>
+2007-01-31  Love Hörnquist Åstrand  <lha@it.su.se>
 
+	* rand-egd.c: 1.4: Make get_bytes static.
+
+	* rand.c: 1.14: (RAND_write_file): default to failure.
+	
+2007-01-21  Love Hörnquist Åstrand  <lha@it.su.se>
+	
 	* Makefile.am: clean more files
 
 	* rand-egd.c: access private functions though the RAND_METHOD

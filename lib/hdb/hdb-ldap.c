@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1999-2001, 2003, PADL Software Pty Ltd.
  * Copyright (c) 2004, Andrew Bartlett.
- * Copyright (c) 2003 - 2004, Kungliga Tekniska Högskolan.
+ * Copyright (c) 2003 - 2007, Kungliga Tekniska Högskolan.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -1701,14 +1701,14 @@ hdb_ldap_common(krb5_context context,
     }
     memset(*db, 0, sizeof(**db));
 
-    h = malloc(sizeof(*h));
+    h = calloc(1, sizeof(*h));
     if (h == NULL) {
 	krb5_set_error_string(context, "malloc: out of memory");
 	free(*db);
 	*db = NULL;
 	return ENOMEM;
     }
-    memset(h, 0, sizeof(*h));
+    (*db)->hdb_db = h;
 
     /* XXX */
     if (asprintf(&(*db)->hdb_name, "ldap:%s", search_base) == -1) {

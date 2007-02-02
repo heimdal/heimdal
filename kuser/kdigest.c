@@ -66,10 +66,6 @@ digest_server_init(struct digest_server_init_options *opt,
     krb5_error_code ret;
     krb5_digest digest;
 
-    if (strcasecmp(opt->type_string, "CHAP") != 0)
-	errx(1, "type not CHAP");
-
-    
     ret = krb5_digest_alloc(context, &digest);
     if (ret)
 	krb5_err(context, 1, ret, "digest_alloc");

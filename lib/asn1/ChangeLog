@@ -1,5 +1,9 @@
-2007-01-20  Love Hörnquist Åstrand  <lha@it.su.se>
+2007-02-02  Love Hörnquist Åstrand  <lha@it.su.se>
 
+	* digest.asn1: rename hash-a1 to session key
+	
+2007-01-20  Love Hörnquist Åstrand  <lha@it.su.se>
+	
 	* check-der.c: Test for NUL char in string in GENERAL STRING.
 
 	* der_get.c: Check for NUL characters in string and return

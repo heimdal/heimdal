@@ -1,5 +1,9 @@
-2007-01-31  Love Hörnquist Åstrand  <lha@it.su.se>
+2007-02-03  Love Hörnquist Åstrand  <lha@it.su.se>
 
+	* cert.c: 1.87: Fix printing and plug leak-on-error.
+	
+2007-01-31  Love Hörnquist Åstrand  <lha@it.su.se>
+	
 	* cert.c: 1.86: indent 1.85: (is_proxy_cert): free info if we wont
 	return it.
 	

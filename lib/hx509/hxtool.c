@@ -87,7 +87,7 @@ cms_verify_sd(struct cms_verify_sd_options *opt, int argc, char **argv)
 {
     hx509_verify_ctx ctx = NULL;
     heim_oid type;
-    heim_octet_string c, co;
+    heim_octet_string c, co, signeddata, *sd = NULL;
     hx509_certs store = NULL;
     hx509_certs signers = NULL;
     hx509_certs anchors = NULL;
@@ -106,6 +106,13 @@ cms_verify_sd(struct cms_verify_sd_options *opt, int argc, char **argv)
     ret = _hx509_map_file(argv[0], &p, &sz, NULL);
     if (ret)
 	err(1, "map_file: %s: %d", argv[0], ret);
+
+    if (opt->signed_content_string) {
+	ret = _hx509_map_file_os(opt->signed_content_string, &signeddata, NULL);
+	if (ret)
+	    err(1, "map_file: %s: %d", opt->signed_content_string, ret);
+	sd = &signeddata;
+    }
 
     ret = hx509_verify_init_ctx(context, &ctx);
 
@@ -135,7 +142,7 @@ cms_verify_sd(struct cms_verify_sd_options *opt, int argc, char **argv)
 
     hx509_verify_attach_anchors(ctx, anchors);
 
-    ret = hx509_cms_verify_signed(context, ctx, co.data, co.length,
+    ret = hx509_cms_verify_signed(context, ctx, co.data, co.length, sd,
 				  store, &type, &c, &signers);
     if (co.data != p)
 	der_free_octet_string(&co);
@@ -166,6 +173,8 @@ cms_verify_sd(struct cms_verify_sd_options *opt, int argc, char **argv)
 
     der_free_octet_string(&c);
     _hx509_unmap_file(p, sz);
+    if (sd)
+	_hx509_unmap_file_os(sd);
 
     return 0;
 }
@@ -181,7 +190,7 @@ cms_create_sd(struct cms_create_sd_options *opt, int argc, char **argv)
     hx509_cert cert;
     size_t sz;
     void *p;
-    int ret;
+    int ret, flags = 0;
 
     contentType = oid_id_pkcs7_data();
 
@@ -204,6 +213,9 @@ cms_create_sd(struct cms_create_sd_options *opt, int argc, char **argv)
     } else
 	anchors = NULL;
 
+    if (opt->detached_signature_flag)
+	flags |= HX509_CMS_SIGATURE_DETACHED;
+
     ret = hx509_query_alloc(context, &q);
     if (ret)
 	errx(1, "hx509_query_alloc: %d", ret);
@@ -224,6 +236,7 @@ cms_create_sd(struct cms_create_sd_options *opt, int argc, char **argv)
 	err(1, "map_file: %s: %d", argv[0], ret);
 
     ret = hx509_cms_create_signed_1(context,
+				    flags,
 				    contentType,
 				    p,
 				    sz, 
@@ -368,7 +381,7 @@ cms_create_enveloped(struct cms_envelope_options *opt, int argc, char **argv)
     if (ret)
 	errx(1, "hx509_certs_find: %d", ret);
 
-    ret = hx509_cms_envelope_1(context, cert, p, sz, enctype, 
+    ret = hx509_cms_envelope_1(context, 0, cert, p, sz, enctype, 
 			       oid_id_pkcs7_data(), &o);
     if (ret)
 	errx(1, "hx509_cms_envelope_1: %d", ret);

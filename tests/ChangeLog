@@ -1,5 +1,10 @@
-2007-01-15  Love Hörnquist Åstrand  <lha@it.su.se>
+2007-02-09  Love Hörnquist Åstrand  <lha@it.su.se>
 
+	* kdc/check-uu.in: 1.4: sleep more to see if this catches the race
+	1.3: save log, wait longer 1.2: drop rm that is no longer used
+	
+2007-01-15  Love Hörnquist Åstrand  <lha@it.su.se>
+	
 	* kdc/check-pkinit.in: tell me about certifiate that we have
 	generated
 	

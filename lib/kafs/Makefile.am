@@ -51,10 +51,10 @@ AFSL_EXP =
 AIX_SRC =
 endif # AIX
 
-libkafs_la_LIBADD = $(DEPLIB_krb5) ../roken/libroken.la $(DEPLIB_krb4)
+libkafs_la_LIBADD = $(DEPLIB_krb5) $(LIBADD_roken) $(DEPLIB_krb4)
 
 lib_LTLIBRARIES = libkafs.la
-libkafs_la_LDFLAGS = -version-info 4:1:4
+libkafs_la_LDFLAGS = -version-info 5:0:5
 foodir = $(libdir)
 foo_DATA = $(AFS_EXTRA_LIBS)
 # EXTRA_DATA = afslib.so

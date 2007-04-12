@@ -391,6 +391,20 @@ init_auth
 	goto failure;
 
 
+    /*
+     * This is hideous glue for (NFS) clients that wants to limit the
+     * available enctypes to what it can support (encryption in
+     * kernel). If there is no enctypes selected for this credential,
+     * reset it to the default set of enctypes.
+     */
+    {
+	krb5_enctype *enctypes = NULL;
+
+	if (initiator_cred_handle && initiator_cred_handle->enctypes)
+	    enctypes = initiator_cred_handle->enctypes;
+	krb5_set_default_in_tkt_etypes(context, enctypes);
+    }
+
     ret = gsskrb5_get_creds(minor_status,
 			    context,
 			    ccache,
@@ -476,11 +490,8 @@ init_auth
     if (req_flags & GSS_C_EXTENDED_ERROR_FLAG)
 	flags |= GSS_C_EXTENDED_ERROR_FLAG;
 
-    if (req_flags & GSS_C_CONF_FLAG)
-	flags |= GSS_C_CONF_FLAG;
-    if (req_flags & GSS_C_INTEG_FLAG)
-	flags |= GSS_C_INTEG_FLAG;
-
+    flags |= GSS_C_CONF_FLAG;
+    flags |= GSS_C_INTEG_FLAG;
     flags |= GSS_C_TRANS_FLAG;
     
     if (ret_flags)

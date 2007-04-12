@@ -3,11 +3,11 @@
 include $(top_srcdir)/Makefile.am.common
 
 lib_LTLIBRARIES = libhcrypto.la
-libhcrypto_la_LDFLAGS = -version-info 3:1:0
+libhcrypto_la_LDFLAGS = -version-info 4:0:0
 libhcrypto_la_LIBADD = \
 	$(top_builddir)/lib/asn1/libasn1.la \
 	$(LIB_dlopen) \
-	$(LIB_roken)
+	$(LIBADD_roken)
 
 hcryptoincludedir = $(includedir)/hcrypto
 buildhcryptoinclude = $(buildinclude)/hcrypto
@@ -101,6 +101,7 @@ libhcrypto_la_SOURCES =	\
 	rand.c		\
 	rand.h		\
 	rand-fortuna.c	\
+	rand-egd.c	\
 	rand-unix.c	\
 	rc2.c		\
 	rc2.h		\
@@ -137,7 +138,15 @@ test_crypto: test_crypto.in Makefile
 	chmod +x test_crypto.tmp
 	mv test_crypto.tmp test_crypto
 
-CLEANFILES = hcrypto hcrypto-link test_crypto.tmp test_crypto
+CLEANFILES = \
+	crypto-test \
+	crypto-test2 \
+	error \
+	hcrypto \
+	hcrypto-link \
+	test_crypto \
+	test_crypto.tmp \
+	test_crypto.tmp
 
 EXTRA_DIST = \
 	rsakey.der \

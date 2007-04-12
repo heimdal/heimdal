@@ -1,5 +1,33 @@
-2007-01-16  Love Hörnquist Åstrand  <lha@it.su.se>
+2007-02-04  Love Hörnquist Åstrand  <lha@it.su.se>
 
+	* hxtool-commands.in: 1.49: Add options to generate detached
+	signatures.
+	
+2007-02-03  Love Hörnquist Åstrand  <lha@it.su.se>
+
+	* file.c: 1.6: Allow mapping using heim_octet_string.
+
+	* hxtool.c: 1.101: Add options to generate detached signatures.
+
+	* cms.c: 1.53: Add flags to generate detached signatures.
+
+	* hx509.h: 1.19: Flag to generate detached signatures.
+
+	* test_cms.in: 1.26: test detached sigatures.
+
+	* cert.c: 1.87: Fix printing and plug leak-on-error.
+	
+2007-01-31  Love Hörnquist Åstrand  <lha@it.su.se>
+	
+	* cert.c: 1.86: indent 1.85: (is_proxy_cert): free info if we wont
+	return it.
+	
+2007-01-21  Love Hörnquist Åstrand  <lha@it.su.se>
+
+	* crypto.c: Fix sha2 oids.
+	
+2007-01-16  Love Hörnquist Åstrand  <lha@it.su.se>
+	
 	* hxtool.c: Set num of bits before we generate the key.
 	
 2007-01-15  Love Hörnquist Åstrand  <lha@it.su.se>

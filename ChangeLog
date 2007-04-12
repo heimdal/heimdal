@@ -1,3 +1,81 @@
+2007-04-13  Love Hörnquist Åstrand  <lha@it.su.se>
+
+	* Heimdal 0.8 release
+
+2007-02-22  Love Hörnquist Åstrand  <lha@it.su.se>
+
+	* kuser/kimpersonate.1: 1.3: Small fixes, from David Love.
+
+	* lib/krb5/krb5_digest.3: 1.3: Small fixes, from David Love.
+
+	* lib/krb5/krb5_aname_to_localname.3: 1.5: Small fixes, from David
+	Love.
+
+	* kcm/client.c: 1.4: (kcm_ccache_new_client): Cast snprintf'ed
+	value.
+
+	* kdc/krb5tgs.c: 1.29: Only check service key for cross realm PACs.
+	1.28: Don't check PACs on cross realm requests.
+	
+	* kdc/kerberos5.c: 1.236: Select a session enctype from the list
+	of the crypto systems supported enctype, is supported by the
+	client and is one of the enctype of the enctype of the krbtgt.
+	
+	The later is used as a hint what enctype all KDC are supporting to
+	make sure a newer version of KDC wont generate a session enctype
+	that and older version of a KDC in the same realm can't decrypt.
+	
+	But if the KDC admin is paranoid and doesn't want to have "no the
+	best" enctypes on the krbtgt, lets save the best pick from the
+	client list and hope that that will work for any other KDCs.
+	
+	Reported by metze.
+	
+	* kdc/hprop.c: 1.84: (propagate_database): on any failure, drop
+	the connection to the peer and try next one.
+	
+2007-02-09  Love Hörnquist Åstrand  <lha@it.su.se>
+
+	* lib/krb5/keytab.c: 1.65: (krb5_kt_get_entry): Use
+	krb5_kt_get_full_name to print out the keytab name.
+
+	* doc/setup.texi: 1.88: Spelling, from Guido Guenther
+	
+2007-02-08  Love Hörnquist Åstrand  <lha@it.su.se>
+
+	* lib/krb5/rd_cred.c: 1.30: Plug memory leak, from Michael B Allen.
+
+2007-02-03  Love Hörnquist Åstrand  <lha@it.su.se>
+	
+	* lib/krb5/pkinit.c: 1.121: pass extra flags for detached signatures.
+	
+	* kdc/pkinit.c: 1.87: pass extra flags for detached signatures.
+
+	* merge kdigest changes with head
+
+2007-02-02  Love Hörnquist Åstrand  <lha@it.su.se>
+
+	* lib/krb5/digest.c: rename hash-a1 to session key
+
+	* kdc/digest.c: 1.25: Use right size, from Klas Lindfors.  1.24:
+	First version from kllin.
+
+	* kuser/kdigest.c: 1.11: Set client nonce if available, from Klas.
+
+	* kuser/kdigest.c: Don't restrict the type.
+	
+2007-02-01  Love Hörnquist Åstrand  <lha@it.su.se>
+
+	* lib/hdb/hdb-ldap.c: 1.58: Set hdb->hdb_db for ldap.
+	
+2007-01-31  Love Hörnquist Åstrand  <lha@it.su.se>
+
+	* configure.in: 0.8-rc5
+
+	* fix-export: 1.52: Make hx509.info too
+
+	* fix-export: 1.51: build heimntlm-protos.h
+	
 2007-01-17  Love Hörnquist Åstrand  <lha@it.su.se>
 
 	* doc/hx509.texi: Spelling and more about proxy certificates.

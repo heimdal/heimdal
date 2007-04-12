@@ -1,4 +1,75 @@
+2007-04-12  Love Hörnquist Åstrand  <lha@it.su.se>
+
+	* krb5/release_cred.c: 1.15: Free list of limit enctypes if there
+	is one.
+
+	* krb5/init_sec_context.c: 1.78: Add hideous glue for (NFS)
+	clients that wants to limit the available enctypes to what it can
+	support (encryption in kernel). If there is no enctypes selected
+	for this credential, reset it to the default set of enctypes.
+
+	* krb5/set_cred_option.c: 1.6: Implement
+	GSS_KRB5_SET_ALLOWABLE_ENCTYPES_X.
+
+	* krb5/gsskrb5_locl.h: 1.10: (gsskrb5_cred): add list of supported
+	enctypes.
+
+	* mech/gss_krb5.c: 1.22: (gss_krb5_set_allowable_enctypes): use
+	the length of the array passed in, stop leaking memory, check for
+	error conditions.
+	
+2007-02-22  Love Hörnquist Åstrand  <lha@it.su.se>
+
+	* krb5/copy_ccache.c: 1.18: Try to leak less memory in the failure
+	case.
+
+	* gss_acquire_cred.3: 1.26-1.27: Add link for
+	gsskrb5_register_acceptor_identity.
+	
+2007-01-31  Love Hörnquist Åstrand  <lha@it.su.se>
+	
+	* mech/gss_display_status.c: 1.7: Use right printf formater.
+	
 2007-01-17  Love Hörnquist Åstrand  <lha@it.su.se>
+	
+	* test_context.c: Don't assume bufer from gss_display_status is
+	ok.
+
+	* mech/gss_wrap_size_limit.c: Reset out variables.
+
+	* mech/gss_wrap.c: Reset out variables.
+
+	* mech/gss_verify_mic.c: Reset out variables.
+
+	* mech/gss_utils.c: Reset out variables.
+
+	* mech/gss_release_oid_set.c: Reset out variables.
+
+	* mech/gss_release_cred.c: Reset out variables.
+
+	* mech/gss_release_buffer.c: Reset variables.
+
+	* mech/gss_oid_to_str.c: Reset out variables.
+
+	* mech/gss_inquire_sec_context_by_oid.c: Fix reset out variables.
+
+	* mech/gss_mech_switch.c: Reset out variables.
+
+	* mech/gss_inquire_sec_context_by_oid.c: Reset out variables.
+
+	* mech/gss_inquire_names_for_mech.c: Reset out variables.
+
+	* mech/gss_inquire_cred_by_oid.c: Reset out variables.
+
+	* mech/gss_inquire_cred_by_oid.c: Reset out variables.
+
+	* mech/gss_inquire_cred_by_mech.c: Reset out variables.
+
+	* mech/gss_inquire_cred.c: Reset out variables, fix memory leak.
+
+	* mech/gss_inquire_context.c: Reset out variables.
+
+	* mech/gss_init_sec_context.c: Zero out outbuffer on failure.
 
 	* mech/gss_import_name.c: Reset out variables.
 

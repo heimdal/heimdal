@@ -49,7 +49,7 @@ endif
 
 
 lib_LTLIBRARIES = libhdb.la $(ldap_so)
-libhdb_la_LDFLAGS = -version-info 8:0:1
+libhdb_la_LDFLAGS = -version-info 9:0:0
 
 dist_libhdb_la_SOURCES =			\
 	common.c				\
@@ -77,7 +77,7 @@ libhdb_la_LIBADD = \
 	$(LIB_com_err) \
 	../krb5/libkrb5.la \
 	../asn1/libasn1.la \
-	../roken/libroken.la \
+	$(LIBADD_roken) \
 	$(LIB_openldap) \
 	$(LIB_dlopen) \
 	$(DBLIB) \

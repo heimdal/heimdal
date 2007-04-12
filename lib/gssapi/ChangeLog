@@ -1,3 +1,23 @@
+2007-04-12  Love Hörnquist Åstrand  <lha@it.su.se>
+
+	* krb5/release_cred.c: 1.15: Free list of limit enctypes if there
+	is one.
+
+	* krb5/init_sec_context.c: 1.78: Add hideous glue for (NFS)
+	clients that wants to limit the available enctypes to what it can
+	support (encryption in kernel). If there is no enctypes selected
+	for this credential, reset it to the default set of enctypes.
+
+	* krb5/set_cred_option.c: 1.6: Implement
+	GSS_KRB5_SET_ALLOWABLE_ENCTYPES_X.
+
+	* krb5/gsskrb5_locl.h: 1.10: (gsskrb5_cred): add list of supported
+	enctypes.
+
+	* mech/gss_krb5.c: 1.22: (gss_krb5_set_allowable_enctypes): use
+	the length of the array passed in, stop leaking memory, check for
+	error conditions.
+	
 2007-02-22  Love Hörnquist Åstrand  <lha@it.su.se>
 
 	* krb5/copy_ccache.c: 1.18: Try to leak less memory in the failure

@@ -66,6 +66,7 @@ CLEANFILES= \
 	o2digest-reply \
 	ocache.krb5 \
 	s2digest-reply \
+	sdigest-init \
 	sdigest-reply \
 	server.keytab \
 	req-pkinit.der \

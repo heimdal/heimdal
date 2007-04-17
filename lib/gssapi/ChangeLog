@@ -1,3 +1,11 @@
+2007-04-17  Love Hörnquist Åstrand  <lha@it.su.se>
+
+	* spnego/cred_stubs.c: 20364: Need to import spnego name before we
+	can use it as a gss_name_t.
+
+	* mech/gss_acquire_cred.c: 20360: (gss_acquire_cred):
+	dont init cred->gc_mc every time in the loop.
+
 2007-04-12  Love Hörnquist Åstrand  <lha@it.su.se>
 
 	* krb5/release_cred.c: 1.15: Free list of limit enctypes if there

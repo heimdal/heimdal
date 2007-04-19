@@ -141,6 +141,7 @@ test_libntlm_v1(void)
     if (maj_stat != GSS_S_COMPLETE)
 	errx(1, "accept_sec_context 2");
 
+    gss_delete_sec_context(&min_stat, &ctx, NULL);
 
     return 0;
 }
@@ -248,6 +249,7 @@ test_libntlm_v2(void)
     if (maj_stat != GSS_S_COMPLETE)
 	errx(1, "accept_sec_context 2");
 
+    gss_delete_sec_context(&min_stat, &ctx, NULL);
 
     return 0;
 }

@@ -9,6 +9,8 @@ Changes in release 0.8.1
 
 * Fix memory leaks 
 
+* Bugs fixes
+
 Changes in release 0.8
 
  * PK-INIT support.

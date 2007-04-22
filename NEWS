@@ -1,15 +1,15 @@
 Changes in release 0.8.1
 
-* Make ASN.1 library less paranoid to with regard to NUL in string to
-  make it inter-operate with MIT Kerberos again.
+ * Make ASN.1 library less paranoid to with regard to NUL in string to
+   make it inter-operate with MIT Kerberos again.
 
-* Make GSS-API library work again when using gss_acquire_cred
+ * Make GSS-API library work again when using gss_acquire_cred
 
-* Add symbol versioning to libgssapi when using GNU ld.
+ * Add symbol versioning to libgssapi when using GNU ld.
 
-* Fix memory leaks 
+ * Fix memory leaks 
 
-* Bugs fixes
+ * Bugs fixes
 
 Changes in release 0.8
 

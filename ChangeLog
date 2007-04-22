@@ -1,9 +1,8 @@
-2007-04-19  Love Hörnquist Åstrand  <lha@it.su.se>
-
-	* fix memory leaks and add symbol versioning to libgssapi
+	
+	* See changelog in svn.
 
 2007-04-13  Love Hörnquist Åstrand  <lha@it.su.se>
-
+	
 	* Heimdal 0.8 release
 
 2007-02-22  Love Hörnquist Åstrand  <lha@it.su.se>

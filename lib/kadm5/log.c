@@ -124,6 +124,7 @@ kadm5_log_reinit (kadm5_server_context *context)
     kadm5_log_context *log_context = &context->log_context;
 
     if (log_context->log_fd != -1) {
+	flock (log_context->log_fd, LOCK_UN);
 	close (log_context->log_fd);
 	log_context->log_fd = -1;
     }
@@ -673,6 +674,8 @@ kadm5_log_replay_modify (kadm5_server_context *context,
 
 	ent.entry.keys.len = num;
 	ent.entry.keys.val = malloc(len * sizeof(*ent.entry.keys.val));
+	if (ent.entry.keys.val == NULL)
+	    return ENOMEM;
 	for (i = 0; i < ent.entry.keys.len; ++i) {
 	    ret = copy_Key(&log_ent.entry.keys.val[i],
 			   &ent.entry.keys.val[i]);
@@ -694,8 +697,10 @@ kadm5_log_replay_modify (kadm5_server_context *context,
 	    ent.entry.extensions = es;
 	    goto out;
 	}
-	free_HDB_extensions(es);
-	free(es);
+	if (es) {
+	    free_HDB_extensions(es);
+	    free(es);
+	}
     }
     ret = context->db->hdb_store(context->context, context->db, 
 				 HDB_F_REPLACE, &ent);
@@ -706,7 +711,7 @@ kadm5_log_replay_modify (kadm5_server_context *context,
 }
 
 /*
- * Add a `nop' operation to the log.
+ * Add a `nop' operation to the log. Does not close the log.
  */
 
 kadm5_ret_t
@@ -731,9 +736,7 @@ kadm5_log_nop (kadm5_server_context *context)
     }
     ret = kadm5_log_flush (log_context, sp);
     krb5_storage_free (sp);
-    if (ret)
-	return ret;
-    ret = kadm5_log_end (context);
+
     return ret;
 }
 
@@ -911,7 +914,7 @@ kadm5_log_truncate (kadm5_server_context *server_context)
     if (ret)
 	return ret;
 
-    ret = kadm5_log_set_version (server_context, vno + 1);
+    ret = kadm5_log_set_version (server_context, vno);
     if (ret)
 	return ret;
 
@@ -924,4 +927,15 @@ kadm5_log_truncate (kadm5_server_context *server_context)
 	return ret;
     return 0;
 
+}
+
+const char *
+kadm5_log_signal_socket(krb5_context context)
+{
+    return krb5_config_get_string_default(context,
+					  NULL,
+					  KADM5_LOG_SIGNAL,
+					  "kdc",
+					  "signal_socket",
+					  NULL);
 }

@@ -172,4 +172,4 @@ $(srcdir)/kadm5-private.h:
 		$(dist_libkadm5srv_la_SOURCES) \
 		|| rm -f kadm5-private.h
 
-EXTRA_DIST = kadm5_err.et iprop-commands.in $(man_MANS)
+EXTRA_DIST = kadm5_err.et iprop-commands.in $(man_MANS) sample_passwd_check.c

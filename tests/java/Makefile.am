@@ -37,6 +37,8 @@ CLEANFILES= \
 
 
 EXTRA_DIST = \
+	KerberosInit.java \
+	jaas.conf \
 	check-kinit.in \
 	have-java.sh \
 	krb5.conf.in

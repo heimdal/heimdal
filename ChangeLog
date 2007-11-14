@@ -1,5 +1,5 @@
 2007-07-17  Love Hörnquist Åstrand  <lha@it.su.se>
-
+	
 	* doc/hx509.texi: use version.texi
 	
 	* doc/heimdal.texi: use version.texi

@@ -326,7 +326,7 @@ add_file(char ***pfilenames, int *len, char *file)
 }
 
 /*
- *  `pq' isn't free, its up the the caller
+ *  `pq' isn't free, it's up the the caller
  */
 
 krb5_error_code KRB5_LIB_FUNCTION

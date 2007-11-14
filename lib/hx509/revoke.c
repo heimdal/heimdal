@@ -150,7 +150,7 @@ verify_ocsp(hx509_context context,
 
     /*
      * If signer certificate isn't the CA certificate, lets check the
-     * its the CA that signed the signer certificate and the OCSP EKU
+     * it is the CA that signed the signer certificate and the OCSP EKU
      * is set.
      */
     if (hx509_cert_cmp(signer, parent) != 0) {
@@ -960,8 +960,8 @@ hx509_revoke_ocsp_print(hx509_context context, const char *path, FILE *out)
 }
 
 /*
- * Verify that the `cert' is part of the OCSP reply and its not
- * expired. Doesn't verify signature the OCSP reply or its done by a
+ * Verify that the `cert' is part of the OCSP reply and it's not
+ * expired. Doesn't verify signature the OCSP reply or it's done by a
  * authorized sender, that is assumed to be already done.
  */
 

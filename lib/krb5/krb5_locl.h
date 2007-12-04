@@ -235,6 +235,7 @@ typedef struct krb5_context_data {
     int large_msg_size;
     int dns_canonicalize_hostname;
     struct send_to_kdc *send_to_kdc;
+    int default_cc_name_set;
 } krb5_context_data;
 
 #define KRB5_DEFAULT_CCNAME_FILE "FILE:/tmp/krb5cc_%{uid}"

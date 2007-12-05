@@ -37,15 +37,16 @@ sed -e $replace < ${base}/Info.plist.in > ./Info.plist
 
 echo "Build package"
 /Developer/usr/bin/packagemaker \
-    -build \
-    -ds \
-    -f ${destdir} \
-    -p ${imgdir}/Heimdal.pkg \
-    -r ${base}/Resources \
-    -i ./Info.plist || exit 1
+    --version "${version}" \
+    --root ${destdir} \
+    --info ./Info.plist \
+    --out ${imgdir}/Heimdal.pkg \
+    --resources ${base}/Resources \
+    --domain system || exit 1
 
 cd ..
 echo "Build disk image"
+rm "heimdal-${version}.dmg"
 /usr/bin/hdiutil create -volname "Heimdal-${version}" -srcfolder ${imgdir} "heimdal-${version}.dmg" || exit 1
 
 echo "Clean"

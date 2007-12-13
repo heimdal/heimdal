@@ -1,3 +1,9 @@
+heimdal (1.0.2.dfsg.1) gutsy; urgency=high
+
+  * New version
+
+ -- Love Hörnquist Åstrand <lha@h5l.se>  Mon, 13 Dec 2007 21:51:00 -0200
+
 heimdal (1.0.2RC6.dfsg.1) gutsy; urgency=low
 
   * New version

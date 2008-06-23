@@ -514,6 +514,7 @@ _kdc_pk_rd_padata(krb5_context context,
 				      signed_content.length,
 				      NULL,
 				      kdc_identity->certpool,
+				      _kdc_now.tv_sec,
 				      &eContentType,
 				      &eContent,
 				      &signer_certs);

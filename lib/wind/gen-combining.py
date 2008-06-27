@@ -59,8 +59,7 @@ combining_c = generate.Implementation('combining_table.c')
 
 combining_h.file.write(
 '''
-#include <stddef.h>
-#include <stdint.h>
+#include <krb5-types.h>
 
 struct translation {
   uint32_t key;

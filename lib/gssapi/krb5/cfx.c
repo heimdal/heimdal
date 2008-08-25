@@ -41,7 +41,8 @@
 #define CFXAcceptorSubkey	(1 << 2)
 
 krb5_error_code
-_gsskrb5cfx_wrap_length_cfx(krb5_context context,
+_gsskrb5cfx_wrap_length_cfx(const gsskrb5_ctx context_handle,
+			    krb5_context context,
 			    krb5_crypto crypto,
 			    int conf_req_flag,
 			    size_t input_length,
@@ -70,7 +71,11 @@ _gsskrb5cfx_wrap_length_cfx(krb5_context context,
 	/* Header is concatenated with data before encryption */
 	input_length += sizeof(gss_cfx_wrap_token_desc);
 
-	ret = krb5_crypto_getpadsize(context, crypto, &padsize);
+	if (IS_DCE_STYLE(context_handle)) {
+		ret = krb5_crypto_getblocksize(context, crypto, &padsize);
+	} else {
+		ret = krb5_crypto_getpadsize(context, crypto, &padsize);
+	}
 	if (ret) {
 	    return ret;
 	}
@@ -967,7 +972,7 @@ OM_uint32 _gssapi_wrap_cfx(OM_uint32 *minor_status,
     int32_t seq_number;
     u_char *p;
 
-    ret = _gsskrb5cfx_wrap_length_cfx(context,
+    ret = _gsskrb5cfx_wrap_length_cfx(ctx, context,
 				      ctx->crypto, conf_req_flag,
 				      input_message_buffer->length,
 				      &wrapped_len, &cksumsize, &padlength);
@@ -1086,7 +1091,15 @@ OM_uint32 _gssapi_wrap_cfx(OM_uint32 *minor_status,
 	token->RRC[0] = (rrc >> 8) & 0xFF;
 	token->RRC[1] = (rrc >> 0) & 0xFF;
 
-	ret = rrc_rotate(cipher.data, cipher.length, rrc, FALSE);
+	/*
+	 * this is really ugly, but needed against windows
+	 * for DCERPC, as windows rotates by EC+RRC.
+	 */
+	if (IS_DCE_STYLE(ctx)) {
+		ret = rrc_rotate(cipher.data, cipher.length, rrc+padlength, FALSE);
+	} else {
+		ret = rrc_rotate(cipher.data, cipher.length, rrc, FALSE);
+	}
 	if (ret != 0) {
 	    *minor_status = ret;
 	    _gsskrb5_release_buffer(minor_status, output_message_buffer);
@@ -1246,13 +1259,20 @@ OM_uint32 _gssapi_unwrap_cfx(OM_uint32 *minor_status,
     len = input_message_buffer->length;
     len -= (p - (u_char *)input_message_buffer->value);
 
-    /* Rotate by RRC; bogus to do this in-place XXX */
-    *minor_status = rrc_rotate(p, len, rrc, TRUE);
-    if (*minor_status != 0) {
-	return GSS_S_FAILURE;
-    }
-
     if (token_flags & CFXSealed) {
+	/*
+	 * this is really ugly, but needed against windows
+	 * for DCERPC, as windows rotates by EC+RRC.
+	 */
+	if (IS_DCE_STYLE(ctx)) {
+		*minor_status = rrc_rotate(p, len, rrc+ec, TRUE);
+	} else {
+		*minor_status = rrc_rotate(p, len, rrc, TRUE);
+	}
+	if (*minor_status != 0) {
+	    return GSS_S_FAILURE;
+	}
+
 	ret = krb5_decrypt(context, ctx->crypto, usage,
 	    p, len, &data);
 	if (ret != 0) {
@@ -1282,6 +1302,12 @@ OM_uint32 _gssapi_unwrap_cfx(OM_uint32 *minor_status,
 	output_message_buffer->length = data.length - ec - sizeof(*token);
     } else {
 	Checksum cksum;
+
+	/* Rotate by RRC; bogus to do this in-place XXX */
+	*minor_status = rrc_rotate(p, len, rrc, TRUE);
+	if (*minor_status != 0) {
+	    return GSS_S_FAILURE;
+	}
 
 	/* Determine checksum type */
 	ret = krb5_crypto_get_checksum_type(context,

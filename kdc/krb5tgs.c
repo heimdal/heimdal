@@ -1282,7 +1282,7 @@ build_server_referral(krb5_context context,
     memset(&ref, 0, sizeof(ref));
 
     if (referred_realm) {
-	ref.referred_realm = malloc(sizeof(ref.referred_realm));
+	ALLOC(ref.referred_realm);
 	if (ref.referred_realm == NULL)
 	    goto eout;
 	*ref.referred_realm = strdup(referred_realm);
@@ -1290,8 +1290,7 @@ build_server_referral(krb5_context context,
 	    goto eout;
     }
     if (true_principal_name) {
-	ref.true_principal_name =
-	    malloc(sizeof(ref.true_principal_name));
+	ALLOC(ref.true_principal_name);
 	if (ref.true_principal_name == NULL)
 	    goto eout;
 	ret = copy_PrincipalName(true_principal_name, ref.true_principal_name);
@@ -1299,8 +1298,7 @@ build_server_referral(krb5_context context,
 	    goto eout;
     }
     if (requested_principal) {
-	ref.requested_principal_name =
-	    malloc(sizeof(ref.requested_principal_name));
+	ALLOC(ref.requested_principal_name);
 	if (ref.requested_principal_name == NULL)
 	    goto eout;
 	ret = copy_PrincipalName(requested_principal,

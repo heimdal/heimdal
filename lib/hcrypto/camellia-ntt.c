@@ -30,12 +30,15 @@
  *  http://info.isl.ntt.co.jp/crypt/eng/camellia/specifications.html
  */
 
+#include "config.h"
 
 #include <string.h>
 #include <stdlib.h>
 
 #include <krb5-types.h>
 #include "camellia-ntt.h"
+
+#include <roken.h>
 
 /* key constants */
 

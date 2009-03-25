@@ -1187,6 +1187,7 @@ name_convert(krb5_context context, const char *name, const char *realm,
 	return KRB5_NT_UNKNOWN;
 
     /* didn't find it in config file, try built-in list */
+#ifdef KRB4
     {
 	struct v4_name_convert *q;
 	for(q = default_v4_name_convert; q->from; q++) {
@@ -1196,6 +1197,7 @@ name_convert(krb5_context context, const char *name, const char *realm,
 	    }
 	}
     }
+#endif
     return -1;
 }
 

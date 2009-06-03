@@ -83,7 +83,7 @@ typedef struct krb5_get_init_creds_ctx {
 #define KRB5_FAST_KDC_REPLY_KEY_REPLACED 4
 #define KRB5_FAST_REPLY_REPLY_VERIFED 8
 #define KRB5_FAST_STRONG 16
-	krb5_keyblock reply_key;
+	krb5_keyblock *reply_key;
     };
 
 } krb5_get_init_creds_ctx;
@@ -1704,7 +1704,8 @@ krb5_init_creds_step(krb5_context context,
 		eflags |= EXTRACT_TICKET_ALLOW_CNAME_MISMATCH;
 
 	    ret = process_pa_data_to_key(context, ctx, &ctx->cred,
-					 &ctx->as_req, &rep.kdc_rep, hostinfo, &key);
+					 &ctx->as_req, &rep.kdc_rep,
+					 hostinfo, &ctx->reply_key);
 	    if (ret) {
 		free_AS_REP(&rep.kdc_rep);
 		goto out;
@@ -1715,7 +1716,7 @@ krb5_init_creds_step(krb5_context context,
 	    ret = _krb5_extract_ticket(context,
 				       &rep,
 				       &ctx->cred,
-				       key,
+				       ctx->reply_key,
 				       NULL,
 				       KRB5_KU_AS_REP_ENC_PART,
 				       NULL,
@@ -1723,8 +1724,8 @@ krb5_init_creds_step(krb5_context context,
 				       eflags,
 				       NULL,
 				       NULL);
-	    krb5_free_keyblock(context, key);
-
+	    krb5_free_keyblock(context, ctx->reply_key);
+	    ctx->reply_key = NULL;
 	    *flags = 0;
 
 	    if (ret == 0)

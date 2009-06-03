@@ -83,6 +83,7 @@ typedef struct krb5_get_init_creds_ctx {
 #define KRB5_FAST_KDC_REPLY_KEY_REPLACED 4
 #define KRB5_FAST_REPLY_REPLY_VERIFED 8
 #define KRB5_FAST_STRONG 16
+	krb5_keyblock reply_key;
     };
 
 } krb5_get_init_creds_ctx;

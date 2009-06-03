@@ -84,8 +84,7 @@ typedef struct krb5_get_init_creds_ctx {
 #define KRB5_FAST_REPLY_REPLY_VERIFED 8
 #define KRB5_FAST_STRONG 16
 	krb5_keyblock *reply_key;
-    };
-
+    } fast_state;
 } krb5_get_init_creds_ctx;
 
 
@@ -1386,6 +1385,13 @@ krb5_init_creds_init(krb5_context context,
     ctx->prompter = prompter;
     ctx->prompter_data = prompter_data;
 
+    ret = init_as_req(context, ctx->flags, &ctx->cred,
+		      ctx->addrs, ctx->etypes, &ctx->as_req);
+    if (ret) {
+	free_init_creds_ctx(context, ctx);
+	return ret;
+    }
+
     *rctx = ctx;
 
     return ret;
@@ -1662,15 +1668,6 @@ krb5_init_creds_step(krb5_context context,
 
     krb5_data_zero(out);
 
-    if (ctx->as_req.req_body.cname == NULL) {
-	ret = init_as_req(context, ctx->flags, &ctx->cred,
-			  ctx->addrs, ctx->etypes, &ctx->as_req);
-	if (ret) {
-	    free_init_creds_ctx(context, ctx);
-	    return ret;
-	}
-    }
-
 #define MAX_PA_COUNTER 10
     if (ctx->pa_counter > MAX_PA_COUNTER) {
 	krb5_set_error_message(context, KRB5_GET_IN_TKT_LOOP,
@@ -1705,7 +1702,7 @@ krb5_init_creds_step(krb5_context context,
 
 	    ret = process_pa_data_to_key(context, ctx, &ctx->cred,
 					 &ctx->as_req, &rep.kdc_rep,
-					 hostinfo, &ctx->reply_key);
+					 hostinfo, &ctx->fast_state.reply_key);
 	    if (ret) {
 		free_AS_REP(&rep.kdc_rep);
 		goto out;
@@ -1716,7 +1713,7 @@ krb5_init_creds_step(krb5_context context,
 	    ret = _krb5_extract_ticket(context,
 				       &rep,
 				       &ctx->cred,
-				       ctx->reply_key,
+				       ctx->fast_state.reply_key,
 				       NULL,
 				       KRB5_KU_AS_REP_ENC_PART,
 				       NULL,
@@ -1724,8 +1721,8 @@ krb5_init_creds_step(krb5_context context,
 				       eflags,
 				       NULL,
 				       NULL);
-	    krb5_free_keyblock(context, ctx->reply_key);
-	    ctx->reply_key = NULL;
+	    krb5_free_keyblock(context, ctx->fast_state.reply_key);
+	    ctx->fast_state.reply_key = NULL;
 	    *flags = 0;
 
 	    if (ret == 0)

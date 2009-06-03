@@ -76,6 +76,14 @@ typedef struct krb5_get_init_creds_ctx {
     void *prompter_data;
 
     struct pa_info_data *ppaid;
+    struct fast_state {
+	int flags;
+#define KRB5_FAST_REPLY_KEY_USE_TO_ENCRYPT_THE_REPLY 1
+#define KRB5_FAST_REPLY_KEY_USE_IN_TRANSACTION 2
+#define KRB5_FAST_KDC_REPLY_KEY_REPLACED 4
+#define KRB5_FAST_REPLY_REPLY_VERIFED 8
+#define KRB5_FAST_STRONG 16
+    };
 
 } krb5_get_init_creds_ctx;
 

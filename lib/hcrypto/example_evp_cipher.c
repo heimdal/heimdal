@@ -40,6 +40,8 @@
 #include <err.h>
 #include <assert.h>
 
+#include "roken.h"
+
 /* key and initial vector */
 static char key[16] =
     "\xaa\xbb\x45\xd4\xaa\xbb\x45\xd4"

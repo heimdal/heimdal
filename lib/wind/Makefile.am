@@ -78,7 +78,7 @@ test_punycode_SOURCES =				\
 	punycode_examples.c			\
 	punycode_examples.h
 
-test-punycode.lo: $(built_tests)
+$(test_punycode_OBJECTS): $(built_tests)
 
 bin_PROGRAMS = idn-lookup
 

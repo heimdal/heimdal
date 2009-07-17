@@ -155,11 +155,11 @@ cmd
 		{
 		    if ($5) {
 			if (paranoid &&
-			    (data_dest->sa_family != AF_INET ||
-			     (ntohs(data_dest->sin_port) < IPPORT_RESERVED) ||
-			     memcmp(data_dest->sin_addr,
-				    &his_addr->sin_addr,
-				    sizeof(data_dest.sin_addr)) != 0)) {
+			    (data_dest->sa_family != his_addr->sa_family ||
+			     (socket_get_port(data_dest) < IPPORT_RESERVED) ||
+			     memcmp(socket_get_address(data_dest),
+				    socket_get_address(his_addr),
+				    socket_addr_size(his_addr)) != 0)) {
 			    usedefault = 1;
 			    reply(500, "Illegal PORT range rejected.");			    
 			} else {

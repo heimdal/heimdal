@@ -62,7 +62,7 @@ switch_environment(void)
 	errx(1, "no running as root, can't switch user/chroot");
 
     if (chroot_string && chroot(chroot_string) != 0)
-	    errx(1, "chroot(%s)", "chroot_string failed");
+	errx(1, "chroot(%s)", "chroot_string failed");
 
     if (runas_string) {
 	struct passwd *pw;

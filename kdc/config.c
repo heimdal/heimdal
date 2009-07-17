@@ -64,6 +64,10 @@ static struct getarg_strings addresses_str;	/* addresses to listen on */
 
 static char *v4_realm;
 
+char *runas_string;
+char *chroot_string;
+
+
 static struct getargs args[] = {
     {
 	"config-file",	'c',	arg_string,	&config_file,
@@ -118,6 +122,12 @@ static struct getargs args[] = {
 	"disable DES" },
     {	"builtin-hdb",	0,	arg_flag,   &builtin_hdb_flag,
 	"list builtin hdb backends"},
+    {   "runas-user",	0,	arg_string, &runas_string,
+	"run as this user when connected to network"
+    },
+    {   "chroot",	0,	arg_string, &chroot_string,
+	"chroot directory to run in"
+    },
     {	"help",		'h',	arg_flag,   &help_flag },
     {	"version",	'v',	arg_flag,   &version_flag }
 };

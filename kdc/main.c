@@ -48,6 +48,41 @@ sigterm(int sig)
     exit_flag = sig;
 }
 
+/*
+ * Allow dropping root bit, since heimdal reopens the database all the
+ * time the database needs to be owned by the user you are switched
+ * too. A better solution is to split the kdc in to more processes and
+ * run the network facing part with very low privilege.
+ */
+
+static void
+switch_environment(void)
+{
+    if ((runas_string || chroot_string) && geteuid() != 0)
+	errx(1, "no running as root, can't switch user/chroot");
+
+    if (chroot_string && chroot(chroot_string) != 0)
+	    errx(1, "chroot(%s)", "chroot_string failed");
+
+    if (runas_string) {
+	struct passwd *pw;
+
+	pw = getpwnam(runas_string);
+	if (pw == NULL)
+	    errx(1, "unknown user %s", runas_string);
+	
+	if (initgroups(pw->pw_name, pw->pw_gid) < 0)
+	    err(1, "initgroups failed");
+	
+	if (setgid(pw->pw_gid) < 0)
+	    err(1, "setgid(%s) failed", runas_string);
+	
+	if (setuid(pw->pw_uid) < 0)
+	    err(1, "setuid(%s)", runas_string);
+    }
+}
+
+
 int
 main(int argc, char **argv)
 {
@@ -95,6 +130,9 @@ main(int argc, char **argv)
 	daemon(0, 0);
 #endif
     pidfile(NULL);
+
+    switch_environment();
+
     loop(context, config);
     krb5_free_context(context);
     return 0;

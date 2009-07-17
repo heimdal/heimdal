@@ -652,13 +652,16 @@ krb5_get_kdc_cred(krb5_context context,
 			    &krbtgt);
     if(ret) {
 	free(*out_creds);
+	*out_creds = NULL;
 	return ret;
     }
     ret = get_cred_kdc(context, id, flags, addresses,
 		       in_creds, krbtgt, NULL, NULL, *out_creds);
     krb5_free_creds (context, krbtgt);
-    if(ret)
+    if(ret) {
 	free(*out_creds);
+	*out_creds = NULL;
+    }
     return ret;
 }
 

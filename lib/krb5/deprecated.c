@@ -496,4 +496,30 @@ krb5_clear_error_string(krb5_context context)
     return krb5_clear_error_message(context);
 }
 
+krb5_error_code KRB5_LIB_FUNCTION
+krb5_get_cred_from_kdc_opt(krb5_context context,
+			   krb5_ccache ccache,
+			   krb5_creds *in_creds,
+			   krb5_creds **out_creds,
+			   krb5_creds ***ret_tgts,
+			   krb5_flags flags) KRB5_DEPRECATED
+{
+    krb5_kdc_flags f;
+    f.i = flags;
+    return _krb5_get_cred_kdc_any(context, f, ccache,
+				  in_creds, NULL, NULL,
+				  out_creds, ret_tgts);
+}
+
+krb5_error_code KRB5_LIB_FUNCTION
+krb5_get_cred_from_kdc(krb5_context context,
+		       krb5_ccache ccache,
+		       krb5_creds *in_creds,
+		       krb5_creds **out_creds,
+		       krb5_creds ***ret_tgts) KRB5_DEPRECATED
+{
+    return krb5_get_cred_from_kdc_opt(context, ccache,
+				      in_creds, out_creds, ret_tgts, 0);
+}
+
 #endif /* HEIMDAL_SMALLER */

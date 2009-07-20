@@ -34,6 +34,8 @@
 #include "hdb_locl.h"
 #include "sqlite3.h"
 
+#define MAX_RETRIES 10
+
 typedef struct hdb_sqlite_db {
     double version;
     sqlite3 *db;
@@ -126,10 +128,11 @@ hdb_sqlite_prepare_stmt(krb5_context context,
                         sqlite3_stmt **statement,
                         const char *str)
 {
-    int ret;
+    int ret, tries = 0;
 
     ret = sqlite3_prepare_v2(db, str, -1, statement, NULL);
-    while(((ret == SQLITE_BUSY) ||
+    while((tries++ < MAX_RETRIES) &&
+	  ((ret == SQLITE_BUSY) ||
            (ret == SQLITE_IOERR_BLOCKED) ||
            (ret == SQLITE_LOCKED))) {
 	krb5_warnx(context, "hdb-sqlite: prepare busy");

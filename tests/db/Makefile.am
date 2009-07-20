@@ -2,7 +2,7 @@
 
 include $(top_srcdir)/Makefile.am.common
 
-noinst_DATA = krb5.conf
+noinst_DATA = krb5.conf krb5.conf-sqlite
 
 noinst_SCRIPTS = have-db
 
@@ -40,8 +40,12 @@ have-db: have-db.in Makefile
 	mv have-db.tmp have-db
 
 krb5.conf: krb5.conf.in Makefile
-	$(do_subst) < $(srcdir)/krb5.conf.in > krb5.conf.tmp
+	$(do_subst) -e 's,[@]type[@],,g' < $(srcdir)/krb5.conf.in > krb5.conf.tmp
 	mv krb5.conf.tmp krb5.conf
+
+krb5.conf-sqlite: krb5.conf.in Makefile
+	$(do_subst) -e 's,[@]type[@],sqlite:,g' < $(srcdir)/krb5.conf.in > krb5.conf-sqlite.tmp
+	mv krb5.conf-sqlite.tmp krb5.conf-sqlite
 
 
 CLEANFILES= \
@@ -54,6 +58,7 @@ CLEANFILES= \
 	out-current-* \
 	mkey.file* \
 	krb5.conf krb5.conf.tmp \
+	krb5.conf-sqlite krb5.conf-sqlite.tmp \
 	tempfile \
 	log.current-db* \
 	messages.log

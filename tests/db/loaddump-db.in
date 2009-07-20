@@ -47,11 +47,15 @@ kstash="../../kdc/kstash"
 hprop="../../kdc/hprop"
 hpropd="../../kdc/hpropd"
 
-propdb="${hprop} --database=./current-db -n"
-propddb="${hpropd} --database=./current-db -n"
+type="${1}"
+typesep="${type+:}"
+typeconf="${type+-}"
 
 
-KRB5_CONFIG="${objdir}/krb5.conf"
+propdb="${hprop} --database=${type}${typesep}./current-db -n"
+propddb="${hpropd} --database=${type}${typesep}./current-db -n"
+
+KRB5_CONFIG="${objdir}/krb5.conf${typeconf}${type}"
 export KRB5_CONFIG
 
 rm -f current-db*
@@ -78,6 +82,8 @@ rm -f current-db*
 ${kadmin} load ${srcdir}/text-dump-0.7  || exit 1
 ${propdb} > db-dump.tmp|| exit 1
 rm -f current-db*
+echo "${propddb} < db-dump.tmp"
+bash
 ${propddb} < db-dump.tmp || exit 1
 ${kadmin} dump | sort | sed 's/[0-9]* -$//' > out-text-dump-0.7  || exit 1
 sort < ${srcdir}/text-dump-0.7 | \

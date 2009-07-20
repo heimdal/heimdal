@@ -763,6 +763,9 @@ hdb_sqlite_rename(krb5_context context, HDB *db, const char *new_name)
 
     krb5_warnx(context, "%s", __FUNCTION__);
 
+    if (strncasecmp(new_name, "sqlite:", 7) == 0)
+	new_name += 7;
+
     hdb_sqlite_close_database(context, db);
 
     ret = rename(hsdb->db_file, new_name);

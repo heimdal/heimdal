@@ -48,8 +48,8 @@ hprop="../../kdc/hprop"
 hpropd="../../kdc/hpropd"
 
 type="${1}"
-typesep="${type+:}"
-typeconf="${type+-}"
+typesep="${type:+:}"
+typeconf="${type:+-}"
 
 
 propdb="${hprop} --database=${type}${typesep}./current-db -n"
@@ -82,8 +82,6 @@ rm -f current-db*
 ${kadmin} load ${srcdir}/text-dump-0.7  || exit 1
 ${propdb} > db-dump.tmp|| exit 1
 rm -f current-db*
-echo "${propddb} < db-dump.tmp"
-bash
 ${propddb} < db-dump.tmp || exit 1
 ${kadmin} dump | sort | sed 's/[0-9]* -$//' > out-text-dump-0.7  || exit 1
 sort < ${srcdir}/text-dump-0.7 | \

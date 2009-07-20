@@ -101,6 +101,7 @@ loadlib(krb5_context context, char *path)
     e = calloc(1, sizeof(*e));
     if (e == NULL) {
 	krb5_set_error_message(context, ENOMEM, "malloc: out of memory");
+	free(path);
 	return ENOMEM;
     }
 
@@ -116,7 +117,7 @@ loadlib(krb5_context context, char *path)
     e->u.dso.path = path;
 
     e->next = registered;
-    registered = e->next;
+    registered = e;
 
     return 0;
 }
@@ -234,10 +235,10 @@ load_plugins(krb5_context context)
 	    for (e = registered; e != NULL; e = e->next)
 		if (e->type == DSO && strcmp(e->u.dso.path, path) == 0)
 		    break;
-	    if (e == NULL) {
-		ret = loadlib(context, path);
-		if (ret)
-		    free(path);
+	    if (e) {
+		free(path);
+	    } else {
+		ret = loadlib(context, path); /* store or frees path */
 	    }
 	}
 	closedir(d);

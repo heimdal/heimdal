@@ -82,6 +82,8 @@ ${kadmin} -l add -p foo --use-defaults bar@${R} || exit 1
 ${kadmin} -l add -p foo --use-defaults baz@${R} || exit 1
 ${kadmin} -l add -p foo --use-defaults bez@${R} || exit 1
 ${kadmin} -l add -p foo --use-defaults fez@${R} || exit 1
+${kadmin} -l add -p foo --use-defaults pkinit@${R} || exit 1
+${kadmin} -l modify --pkinit-acl="CN=baz,DC=test,DC=h5l,DC=se" pkinit@${R} || exit 1
 
 echo foo > ${objdir}/foopassword
 
@@ -223,6 +225,18 @@ mv kadmin2.tmp kadmin.tmp
 
 cmp kadmin.tmp ${srcdir}/donotexists.txt || \
     { echo "wrong response"; exit 1;}
+
+#----------------------------------
+${kadmind} -d &
+kadmpid=$!
+sleep 1
+
+echo "kadmin get pkinit-acl"
+env KRB5CCNAME=${cache} \
+${kadmin} -p foo/admin@${R} get -o pkinit-acl pkinit@${R} \
+        > /dev/null || \
+	{ echo "kadmin failed $?"; cat messages.log ; exit 1; }
+
 
 echo "killing kdc (${kdcpid} ${kadmpid})"
 sh ${srcdir}/leaks-kill.sh kdc $kdcpid || exit 1

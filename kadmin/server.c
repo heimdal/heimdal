@@ -71,6 +71,7 @@ kadmind_dispatch(void *kadm_handle, krb5_boolean initial,
 	    krb5_free_principal(context->context, princ);
 	    goto fail;
 	}
+	mask |= KADM5_PRINCIPAL;
 	krb5_unparse_name_fixed(context->context, princ, name, sizeof(name));
 	krb5_warnx(context->context, "%s: %s %s", client, op, name);
 	ret = _kadm5_acl_check_permission(context, KADM5_PRIV_GET, princ);

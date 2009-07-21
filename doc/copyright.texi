@@ -407,4 +407,23 @@ Copyright (c) 1988,1989,1990,1991,1992 by Richard Outerbridge.
 
 
 @end verbatim
+@copynext
+
+@heading Jens-Uwe Mager, Helios Software GmbH
+
+AIX dlfcn in libkafs
+
+@verbatim
+
+Copyright (c) 1992,1993,1995,1996, Jens-Uwe Mager, Helios Software GmbH
+Not derived from licensed software.
+
+Permission is granted to freely use, copy, modify, and redistribute
+this software, provided that the author is not construed to be liable
+for any results of using the software, alterations are clearly marked
+as such, and this notice is not modified.
+
+@end verbatim
+
+
 @copyrightend

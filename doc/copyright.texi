@@ -217,7 +217,10 @@ SUCH DAMAGE.
 
 @heading PADL Software Pty Ltd
 
-CFX implementation for GSS-API krb5 mech.
+@table @asis
+@item CFX implementation for GSS-API krb5 mech.
+@item KCM credential cache.
+@end table
 
 @verbatim
 

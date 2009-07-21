@@ -1,4 +1,7 @@
 /*
+ * See README.dlfcn for license
+ */
+/*
  * @(#)dlfcn.c	1.11 revision of 96/04/10  20:12:51
  * This is an unpublished work copyright (c) 1992 HELIOS Software GmbH
  * 30159 Hannover, Germany

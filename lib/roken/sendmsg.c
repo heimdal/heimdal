@@ -35,8 +35,8 @@
 
 #include "roken.h"
 
-ssize_t ROKEN_LIB_FUNCTION
-sendmsg(int s, const struct msghdr *msg, int flags)
+ROKEN_LIB_FUNCTION ssize_t ROKEN_LIB_CALL
+sendmsg(SOCKET s, const struct msghdr *msg, int flags)
 {
     ssize_t ret;
     size_t tot = 0;

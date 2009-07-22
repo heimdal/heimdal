@@ -41,8 +41,8 @@
 #include <errno.h>
 #include <limits.h>
 
-#include <krb5.h>
 #include <roken.h>
+#include <krb5.h>
 
 #define HC_DEPRECATED_CRYPTO
 

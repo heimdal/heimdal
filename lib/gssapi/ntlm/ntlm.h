@@ -44,12 +44,13 @@
 #include <string.h>
 #include <errno.h>
 
+#include <roken.h>
+
 #include <gssapi.h>
 #include <gssapi_ntlm.h>
 #include <gssapi_mech.h>
 
 #include <krb5.h>
-#include <roken.h>
 #include <heim_threads.h>
 
 #include <heimntlm.h>

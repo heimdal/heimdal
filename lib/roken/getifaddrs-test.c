@@ -3,6 +3,8 @@
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  *
+ * Portions Copyright (c) 2009, Secure Endpoints Inc. All rights reserved.
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -38,18 +40,62 @@
 
 #include <ifaddrs.h>
 
+void
+print_addr(const char *s, struct sockaddr *sa)
+{
+    int i;
+    printf("  %s=%d/", s, sa->sa_family);
+#ifdef HAVE_STRUCT_SOCKADDR_SA_LEN
+    for(i = 0; i < sa->sa_len - ((long)sa->sa_data - (long)&sa->sa_family); i++)
+	printf("%02x", ((unsigned char*)sa->sa_data)[i]);
+#else
+    for(i = 0; i < sizeof(sa->sa_data); i++) 
+	printf("%02x", ((unsigned char*)sa->sa_data)[i]);
+#endif
+    printf("\n");
+}
+
+void 
+print_ifaddrs(struct ifaddrs *x)
+{
+    struct ifaddrs *p;
+    
+    for(p = x; p; p = p->ifa_next) {
+	printf("%s\n", p->ifa_name);
+	printf("  flags=%x\n", p->ifa_flags);
+	if(p->ifa_addr)
+	    print_addr("addr", p->ifa_addr);
+	if(p->ifa_dstaddr) 
+	    print_addr("dstaddr", p->ifa_dstaddr);
+	if(p->ifa_netmask) 
+	    print_addr("netmask", p->ifa_netmask);
+	printf("  %p\n", p->ifa_data);
+    }
+}
+
 int
 main(int argc, char **argv)
 {
     struct ifaddrs *addrs = NULL;
     int ret;
 
+    if (SOCK_INIT)
+	errx(1, "Couldn't initialize sockets. Err=%d\n", SOCK_ERRNO);
+
     ret = getifaddrs(&addrs);
     if (ret != 0)
 	err(1, "getifaddrs");
 
+    if (addrs == NULL)
+	errx(1, "address == NULL");
+
+    print_ifaddrs(addrs);
+
     /* Check that freeifaddrs doesn't crash */
     freeifaddrs(addrs);
+
+    if (SOCK_EXIT)
+	errx(1, "Couldn't uninitialize sockets. Err=%d\n", SOCK_ERRNO);
 
     return 0;
 }

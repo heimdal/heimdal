@@ -40,6 +40,10 @@
 #include "roken.h"
 #include <assert.h>
 
+#if defined(TEST_SNPRINTF)
+#include "snprintf-test.h"
+#endif /* TEST_SNPRINTF */
+
 enum format_flags {
     minus_flag     =  1,
     plus_flag      =  2,
@@ -119,10 +123,10 @@ typedef long longest;
 
 
 
-static int
+static size_t
 pad(struct snprintf_state *state, int width, char c)
 {
-    int len = 0;
+    size_t len = 0;
     while(width-- > 0){
 	(*state->append_char)(state,  c);
 	++len;
@@ -252,14 +256,14 @@ append_number(struct snprintf_state *state,
  * return length
  */
 
-static int
+static size_t
 append_string (struct snprintf_state *state,
 	       const unsigned char *arg,
 	       int width,
 	       int prec,
 	       int flags)
 {
-    int len = 0;
+    size_t len = 0;
 
     if(arg == NULL)
 	arg = (const unsigned char*)"(null)";
@@ -344,12 +348,12 @@ else \
  * zyxprintf - return length, as snprintf
  */
 
-static int
+static size_t
 xyzprintf (struct snprintf_state *state, const char *char_format, va_list ap)
 {
     const unsigned char *format = (const unsigned char *)char_format;
     unsigned char c;
-    int len = 0;
+    size_t len = 0;
 
     while((c = *format++)) {
 	if (c == '%') {
@@ -531,7 +535,7 @@ xyzprintf (struct snprintf_state *state, const char *char_format, va_list ap)
 }
 
 #if !defined(HAVE_SNPRINTF) || defined(TEST_SNPRINTF)
-int ROKEN_LIB_FUNCTION
+ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
 rk_snprintf (char *str, size_t sz, const char *format, ...)
 {
     va_list args;
@@ -564,7 +568,7 @@ rk_snprintf (char *str, size_t sz, const char *format, ...)
 #endif
 
 #if !defined(HAVE_ASPRINTF) || defined(TEST_SNPRINTF)
-int ROKEN_LIB_FUNCTION
+ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
 rk_asprintf (char **ret, const char *format, ...)
 {
     va_list args;
@@ -596,7 +600,7 @@ rk_asprintf (char **ret, const char *format, ...)
 #endif
 
 #if !defined(HAVE_ASNPRINTF) || defined(TEST_SNPRINTF)
-int ROKEN_LIB_FUNCTION
+ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
 rk_asnprintf (char **ret, size_t max_sz, const char *format, ...)
 {
     va_list args;
@@ -626,7 +630,7 @@ rk_asnprintf (char **ret, size_t max_sz, const char *format, ...)
 #endif
 
 #if !defined(HAVE_VASPRINTF) || defined(TEST_SNPRINTF)
-int ROKEN_LIB_FUNCTION
+ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
 rk_vasprintf (char **ret, const char *format, va_list args)
 {
     return vasnprintf (ret, 0, format, args);
@@ -635,10 +639,10 @@ rk_vasprintf (char **ret, const char *format, va_list args)
 
 
 #if !defined(HAVE_VASNPRINTF) || defined(TEST_SNPRINTF)
-int ROKEN_LIB_FUNCTION
+ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
 rk_vasnprintf (char **ret, size_t max_sz, const char *format, va_list args)
 {
-    int st;
+    size_t st;
     struct snprintf_state state;
 
     state.max_sz = max_sz;
@@ -674,7 +678,7 @@ rk_vasnprintf (char **ret, size_t max_sz, const char *format, va_list args)
 #endif
 
 #if !defined(HAVE_VSNPRINTF) || defined(TEST_SNPRINTF)
-int ROKEN_LIB_FUNCTION
+ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
 rk_vsnprintf (char *str, size_t sz, const char *format, va_list args)
 {
     struct snprintf_state state;

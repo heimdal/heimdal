@@ -44,7 +44,7 @@
  * anyway.
  */
 
-int ROKEN_LIB_FUNCTION
+ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
 setenv(const char *var, const char *val, int rewrite)
 {
     char *t;

@@ -33,7 +33,9 @@ typedef struct direct	DIRENTRY;
 #define S_ISDIR(m)		(((m) & S_IFMT) == S_IFDIR)
 #endif	/* !defined(S_ISDIR) */
 
+#ifndef HAVE_CHAR
 typedef unsigned char	CHAR;
+#endif
 
 #define MEM_INC		64
 #define SCREEN_INC	256

@@ -214,7 +214,7 @@ __ivaliduser(FILE *hostf, unsigned raddr, const char *luser,
  *
  * Returns 0 if ok, -1 if not ok.
  */
-int ROKEN_LIB_FUNCTION
+ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
 iruserok(unsigned raddr, int superuser, const char *ruser, const char *luser)
 {
 	char *cp;

@@ -36,7 +36,7 @@
 
 #ifndef HAVE_STRLCPY
 
-size_t ROKEN_LIB_FUNCTION
+ROKEN_LIB_FUNCTION size_t ROKEN_LIB_CALL
 strlcpy (char *dst, const char *src, size_t dst_sz)
 {
     size_t n;

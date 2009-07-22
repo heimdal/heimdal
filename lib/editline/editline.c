@@ -455,7 +455,7 @@ ceol(void)
 static void
 clear_line(void)
 {
-    Point = -strlen(Prompt);
+    Point = -(int)strlen(Prompt);
     TTYput('\r');
     ceol();
     Point = 0;

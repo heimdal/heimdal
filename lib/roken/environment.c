@@ -127,7 +127,7 @@ read_env_file(FILE *F, char ***env, int *assigned)
  * list of malloced strings in `env'
  */
 
-int ROKEN_LIB_FUNCTION
+ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
 read_environment(const char *file, char ***env)
 {
     int assigned;
@@ -141,7 +141,7 @@ read_environment(const char *file, char ***env)
     return assigned;
 }
 
-void ROKEN_LIB_FUNCTION
+ROKEN_LIB_FUNCTION void ROKEN_LIB_CALL
 free_environment(char **env)
 {
     int i;

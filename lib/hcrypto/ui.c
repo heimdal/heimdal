@@ -37,10 +37,15 @@
 #include <stdlib.h>
 #include <string.h>
 #include <signal.h>
+#ifdef HAVE_TERMIOS_H
 #include <termios.h>
+#endif
 #include <roken.h>
 
 #include <ui.h>
+#ifdef HAVE_CONIO_H
+#include <conio.h>
+#endif
 
 static sig_atomic_t intr_flag;
 
@@ -49,6 +54,8 @@ intr(int sig)
 {
     intr_flag++;
 }
+
+#ifndef HAVE_CONIO_H
 
 #ifndef NSIG
 #define NSIG 47
@@ -134,6 +141,51 @@ read_string(const char *preprompt, const char *prompt,
 	return -1;
     return 0;
 }
+
+#else  /* CONIO_H */
+
+static int
+read_string_conio(const char *preprompt, const char *prompt, 
+                  char *buf, size_t len, int echo)
+{
+    int of = 0;
+    int c;
+    char *p;
+    void (*oldsigintr)(int);
+
+    _cprintf("%s%s", preprompt, prompt);
+
+    oldsigintr = signal(SIGINT, intr);
+
+    p = buf;
+    while(intr_flag == 0){
+	c = ((echo)? _getche(): _getch());
+	if(c == '\n')
+	    break;
+	if(of == 0)
+	    *p++ = c;
+	of = (p == buf + len);
+    }
+    if(of)
+	p--;
+    *p = 0;
+    
+    if(echo == 0){
+	printf("\n");
+    }
+
+    signal(SIGINT, oldsigintr);
+    
+    if(intr_flag)
+	return -2;
+    if(of)
+	return -1;
+    return 0;
+}
+
+#define read_string read_string_conio
+
+#endif
 
 int
 UI_UTIL_read_pw_string(char *buf, int length, const char *prompt, int verify)

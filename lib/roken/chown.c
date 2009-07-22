@@ -35,7 +35,7 @@
 
 #include "roken.h"
 
-int ROKEN_LIB_FUNCTION
+ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
 chown(const char *path, uid_t owner, gid_t group)
 {
   return 0;

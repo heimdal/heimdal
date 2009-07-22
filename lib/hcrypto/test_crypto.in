@@ -36,9 +36,9 @@
 
 srcdir="@srcdir@"
 
-rsa="${TESTS_ENVIRONMENT} ./test_rsa"
-engine="${TESTS_ENVIRONMENT} ./test_engine_dso"
-rand="${TESTS_ENVIRONMENT} ./test_rand"
+rsa="${TESTS_ENVIRONMENT} ./test_rsa@exeext@"
+engine="${TESTS_ENVIRONMENT} ./test_engine_dso@exeext@"
+rand="${TESTS_ENVIRONMENT} ./test_rand@exeext@"
 
 ${engine} --test-random > /dev/null || { echo "missing random"; exit 77; }
 

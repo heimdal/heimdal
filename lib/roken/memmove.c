@@ -41,7 +41,7 @@
 #include <sys/types.h>
 #endif
 
-void* ROKEN_LIB_FUNCTION
+ROKEN_LIB_FUNCTION void* ROKEN_LIB_CALL
 memmove(void *s1, const void *s2, size_t n)
 {
   char *s=(char*)s2, *d=(char*)s1;

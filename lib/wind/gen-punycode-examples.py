@@ -104,6 +104,7 @@ extern const size_t punycode_examples_size;
 
 examples_c.file.write(
 '''
+#include <stdlib.h>
 #include "punycode_examples.h"
 
 const struct punycode_example punycode_examples[] = {

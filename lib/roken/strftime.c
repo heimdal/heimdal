@@ -166,7 +166,7 @@ week_number_mon4 (const struct tm *tm)
  *
  */
 
-size_t ROKEN_LIB_FUNCTION
+ROKEN_LIB_FUNCTION size_t ROKEN_LIB_CALL
 strftime (char *buf, size_t maxsize, const char *format,
 	  const struct tm *tm)
 {
@@ -382,7 +382,7 @@ strftime (char *buf, size_t maxsize, const char *format,
 				"%%%c", *format);
 		break;
 	    }
-	    if (ret < 0 || ret >= maxsize - n)
+	    if (ret < 0 || ret >= (int)(maxsize - n))
 		return 0;
 	    n   += ret;
 	    buf += ret;

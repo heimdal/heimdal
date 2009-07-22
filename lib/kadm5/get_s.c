@@ -61,7 +61,7 @@ add_tl_data(kadm5_principal_ent_t ent, int16_t type,
     return 0;
 }
 
-krb5_ssize_t KRB5_LIB_FUNCTION
+KRB5_LIB_FUNCTION krb5_ssize_t KRB5_LIB_CALL
 _krb5_put_int(void *buffer, unsigned long value, size_t size); /* XXX */
 
 kadm5_ret_t

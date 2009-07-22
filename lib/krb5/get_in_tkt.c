@@ -361,7 +361,7 @@ set_ptypes(krb5_context context,
     return(1);
 }
 
-krb5_error_code KRB5_LIB_FUNCTION
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_get_in_cred(krb5_context context,
 		 krb5_flags options,
 		 const krb5_addresses *addrs,
@@ -526,7 +526,7 @@ out:
     return ret;
 }
 
-krb5_error_code KRB5_LIB_FUNCTION
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_get_in_tkt(krb5_context context,
 		krb5_flags options,
 		const krb5_addresses *addrs,

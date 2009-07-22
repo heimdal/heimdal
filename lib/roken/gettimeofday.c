@@ -38,13 +38,13 @@
 /*
  * Simple gettimeofday that only returns seconds.
  */
-int ROKEN_LIB_FUNCTION
+ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
 gettimeofday (struct timeval *tp, void *ignore)
 {
      time_t t;
 
      t = time(NULL);
-     tp->tv_sec  = t;
+     tp->tv_sec  = (long) t;
      tp->tv_usec = 0;
      return 0;
 }

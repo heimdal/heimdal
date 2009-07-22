@@ -41,8 +41,13 @@ KRB5_LIB_VARIABLE const char *krb5_config_file =
 "/Library/Preferences/com.apple.Kerberos.plist:"
 "~/Library/Preferences/edu.mit.Kerberos:"
 "/Library/Preferences/edu.mit.Kerberos:"
+#endif	/* __APPLE__ */
+SYSCONFDIR "/krb5.conf"
+#ifndef _WIN32
+":/etc/krb5.conf"
 #endif
-SYSCONFDIR "/krb5.conf:/etc/krb5.conf";
+;
+
 KRB5_LIB_VARIABLE const char *krb5_defkeyname = KEYTAB_DEFAULT;
 
 KRB5_LIB_VARIABLE const char *krb5_cc_type_api = "API";

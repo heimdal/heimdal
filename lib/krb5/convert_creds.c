@@ -58,7 +58,7 @@ check_ticket_flags(TicketFlags f)
  * @ingroup krb5_v4compat
  */
 
-krb5_error_code KRB5_LIB_FUNCTION
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb524_convert_creds_kdc(krb5_context context,
 			 krb5_creds *in_cred,
 			 struct credentials *v4creds)
@@ -160,7 +160,7 @@ out2:
  * @ingroup krb5_v4compat
  */
 
-krb5_error_code KRB5_LIB_FUNCTION
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb524_convert_creds_kdc_ccache(krb5_context context,
 				krb5_ccache ccache,
 				krb5_creds *in_cred,

@@ -42,9 +42,11 @@
 #endif
 #include <errno.h>
 
+#include <roken.h>
+
 #ifndef HAVE_MKSTEMP
 
-int ROKEN_LIB_FUNCTION
+ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
 mkstemp(char *template)
 {
     int start, i;

@@ -1,0 +1,161 @@
+########################################################################
+#
+# Copyright (c) 2009, Secure Endpoints Inc.
+# All rights reserved.
+# 
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+# 
+# - Redistributions of source code must retain the above copyright
+#   notice, this list of conditions and the following disclaimer.
+# 
+# - Redistributions in binary form must reproduce the above copyright
+#   notice, this list of conditions and the following disclaimer in
+#   the documentation and/or other materials provided with the
+#   distribution.
+# 
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+# "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+# LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+# FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+# COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+# INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+# BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+# LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+# CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+# LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+# ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+# POSSIBILITY OF SUCH DAMAGE.
+# 
+
+RELDIR=lib\hdb
+
+!include ../../windows/NTMakefile.w32 
+
+gen_files_hdb = \
+	$(OBJ)\asn1_Salt.x \
+	$(OBJ)\asn1_Key.x \
+	$(OBJ)\asn1_Event.x \
+	$(OBJ)\asn1_HDBFlags.x \
+	$(OBJ)\asn1_GENERATION.x \
+	$(OBJ)\asn1_HDB_Ext_PKINIT_acl.x \
+	$(OBJ)\asn1_HDB_Ext_PKINIT_hash.x \
+	$(OBJ)\asn1_HDB_Ext_Constrained_delegation_acl.x \
+	$(OBJ)\asn1_HDB_Ext_Lan_Manager_OWF.x \
+	$(OBJ)\asn1_HDB_Ext_Password.x \
+	$(OBJ)\asn1_HDB_Ext_Aliases.x \
+	$(OBJ)\asn1_HDB_extension.x \
+	$(OBJ)\asn1_HDB_extensions.x \
+	$(OBJ)\asn1_hdb_entry.x \
+	$(OBJ)\asn1_hdb_entry_alias.x
+
+$(gen_files_hdb) $(OBJ)\hdb_asn1.h: $(BINDIR)\asn1_compile.exe hdb.asn1
+	cd $(OBJ)
+	$(BINDIR)\asn1_compile.exe $(SRCDIR)\hdb.asn1 hdb_asn1
+	cd $(SRCDIR)
+
+$(gen_files_hdb:.x=.c): $$(@R).x
+
+!ifdef OPENLDAP_MODULE
+
+ldap_dll = $(BINDIR)\hdb_ldap.dll
+ldap_lib = $(LIBDIR)\hdb_ldap.lib
+ldap_objs = $(OBJ)\hdb-ldap.obj
+
+$(ldap_dll): $(ldap_objs)
+	$(DLLGUILINK) -IMPLIB:$(ldap_lib)
+	$(_VC_MANIFEST_EMBED_DLL)
+	$(_VC_MANIFEST_CLEAN)
+	$(_CODESIGN)
+
+clean::
+	-$(RM) $(ldap_dll)
+	-$(RM) $(ldap_lib)
+
+!else
+
+ldap = $(OBJ)\hdb-ldap.obj
+ldap_c = hdb-ldap.c
+
+!endif
+
+dist_libhdb_la_SOURCES =			\
+	common.c				\
+	db.c					\
+	db3.c					\
+	ext.c					\
+	$(ldap_c)				\
+	hdb.c					\
+	hdb_locl.h				\
+	hdb-private.h				\
+	keys.c					\
+	keytab.c				\
+	dbinfo.c				\
+	mkey.c					\
+	ndbm.c					\
+	print.c
+
+libhdb_OBJs= \
+	$(OBJ)\common.obj	\
+	$(OBJ)\db.obj		\
+	$(OBJ)\db3.obj		\
+	$(OBJ)\ext.obj		\
+	$(ldap)			\
+	$(OBJ)\hdb.obj		\
+	$(OBJ)\keys.obj		\
+	$(OBJ)\keytab.obj	\
+	$(OBJ)\dbinfo.obj	\
+	$(OBJ)\mkey.obj		\
+	$(OBJ)\ndbm.obj		\
+	$(OBJ)\print.obj	\
+	$(gen_files_hdb:.x=.obj)	\
+	$(OBJ)\hdb_err.obj
+
+$(OBJ)\hdb_err.c $(OBJ)\hdb_err.h: hdb_err.et
+	cd $(OBJ)
+	$(BINDIR)\compile_et.exe $(SRCDIR)\hdb_err.et
+	cd $(SRCDIR)
+
+$(OBJ)\hdb-protos.h:
+	$(PERL) ../../cf/make-proto.pl -q -P remove -o $@ $(dist_libhdb_la_SOURCES) \
+		|| $(RM) $@
+
+$(OBJ)\hdb-private.h:
+	$(PERL) ../../cf/make-proto.pl -q -P remote -p $@ $(dist_libhdb_la_SOURCES) \
+		|| $(RM) $@
+
+INCFILES=\
+	$(INCDIR)\hdb.h \
+	$(INCDIR)\hdb-protos.h \
+	$(OBJ)\hdb-private.h	\
+	$(INCDIR)\hdb_err.h \
+	$(INCDIR)\hdb_asn1.h
+
+$(LIBHDB): $(libhdb_OBJs) $(ldap_lib)
+	$(LIBCON)
+
+all:: $(INCFILES) $(LIBHDB)
+
+clean::
+	-$(RM) $(INCFILES)
+	-$(RM) $(LIBHDB)
+
+test:: test-binaries test-run
+
+test-binaries: $(OBJ)\test_dbinfo.exe
+
+!ifdef OPENLDAP_INC
+openldap_inc_flag=-I$(OPENLDAP_INC)
+!else
+openldap_inc_flag=
+!endif
+
+hdb_cflags=-D_HDB_DB_DIR=$(DIR_hdbdir) $(openldap_inc_flag) -I$(OBJ)
+
+{}.c{$(OBJ)}.obj:
+	$(C2OBJ) $(hdb_cflags)
+
+{$(OBJ)}.c{$(OBJ)}.obj:
+	$(C2OBJ) $(hdb_cflags)
+

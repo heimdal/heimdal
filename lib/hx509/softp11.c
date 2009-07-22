@@ -31,6 +31,8 @@
  * SUCH DAMAGE.
  */
 
+#define CRYPTOKI_EXPORTS 1
+
 #include "hx_locl.h"
 #include "pkcs11.h"
 
@@ -38,6 +40,14 @@
 #define HANDLE_OBJECT_ID(h)	((h) & OBJECT_ID_MASK)
 #define OBJECT_ID(obj)		HANDLE_OBJECT_ID((obj)->object_handle)
 
+#ifndef HAVE_RANDOM
+#define random() rand()
+#define srandom(s) srand(s)
+#endif
+
+#ifdef _WIN32
+#include <shlobj.h>
+#endif
 
 struct st_attr {
     CK_ATTRIBUTE attribute;
@@ -687,6 +697,11 @@ read_conf_file(const char *fn, CK_USER_TYPE userType, const char *pin)
     CK_RV ret = CKR_OK;
     CK_RV failed = CKR_OK;
 
+    if (fn == NULL) {
+        st_logf("Can't open configuration file.  No file specified\n");
+        return CKR_GENERAL_ERROR;
+    }
+
     f = fopen(fn, "r");
     if (f == NULL) {
 	st_logf("can't open configuration file %s\n", fn);
@@ -792,7 +807,52 @@ func_not_supported(void)
     return CKR_FUNCTION_NOT_SUPPORTED;
 }
 
-CK_RV
+static char *
+get_config_file_for_user(void)
+{
+    char *fn = NULL, *home = NULL;
+
+#ifndef _WIN32
+    if (getuid() == geteuid()) {
+        fn = getenv("SOFTPKCS11RC");
+        if (fn)
+            fn = strdup(fn);
+        home = getenv("HOME");
+    }
+    if (fn == NULL && home == NULL) {
+        struct passwd *pw = getpwuid(getuid());	
+        if(pw != NULL)
+            home = pw->pw_dir;
+    }
+    if (fn == NULL) {
+        if (home)
+            asprintf(&fn, "%s/.soft-token.rc", home);
+        else
+            fn = strdup("/etc/soft-token.rc");
+    }
+#else  /* Windows */
+
+    char appdatafolder[MAX_PATH];
+
+    fn = getenv("SOFTPKCS11RC");
+
+    /* Retrieve the roaming AppData folder for the current user.  The
+       current user is the user account represented by the current
+       thread token. */
+
+    if (fn == NULL &&
+        SUCCEEDED(SHGetFolderPath(NULL, CSIDL_APPDATA, NULL, SHGFP_TYPE_CURRENT, appdatafolder))) {
+
+        asprintf(&fn, "%s\\.soft-token.rc", appdatafolder);
+    }
+
+#endif  /* _WIN32 */
+
+    return fn;
+}
+
+
+CK_RV CK_SPEC
 C_Initialize(CK_VOID_PTR a)
 {
     CK_C_INITIALIZE_ARGS_PTR args = a;
@@ -805,7 +865,7 @@ C_Initialize(CK_VOID_PTR a)
 
     OpenSSL_add_all_algorithms();
 
-    srandom(getpid() ^ time(NULL));
+    srandom(getpid() ^ (int) time(NULL));
 
     for (i = 0; i < MAX_NUM_SESSION; i++) {
 	soft_token.state[i].session_handle = CK_INVALID_HANDLE;
@@ -838,29 +898,7 @@ C_Initialize(CK_VOID_PTR a)
 	st_logf("\tFlags\t%04x\n", (unsigned int)args->flags);
     }
 
-    {
-	char *fn = NULL, *home = NULL;
-
-	if (getuid() == geteuid()) {
-	    fn = getenv("SOFTPKCS11RC");
-	    if (fn)
-		fn = strdup(fn);
-	    home = getenv("HOME");
-	}
-	if (fn == NULL && home == NULL) {
-	    struct passwd *pw = getpwuid(getuid());	
-	    if(pw != NULL)
-		home = pw->pw_dir;
-	}
-	if (fn == NULL) {
-	    if (home)
-		asprintf(&fn, "%s/.soft-token.rc", home);
-	    else
-		fn = strdup("/etc/soft-token.rc");
-	}
-
-	soft_token.config_file = fn;
-    }
+    soft_token.config_file = get_config_file_for_user();
 
     /*
      * This operations doesn't return CKR_OK if any of the
@@ -1456,7 +1494,7 @@ C_Sign(CK_SESSION_HANDLE hSession,
     struct session_state *state;
     struct st_object *o;
     CK_RV ret;
-    uint hret;
+    int hret;
     const AlgorithmIdentifier *alg;
     heim_octet_string sig, data;
 

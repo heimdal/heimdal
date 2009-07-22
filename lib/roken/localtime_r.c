@@ -39,7 +39,7 @@
 
 #ifndef HAVE_LOCALTIME_R
 
-struct tm * ROKEN_LIB_FUNCTION
+ROKEN_LIB_FUNCTION struct tm * ROKEN_LIB_CALL
 localtime_r(const time_t *timer, struct tm *result)
 {
     struct tm *tm;

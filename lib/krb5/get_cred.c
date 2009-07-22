@@ -33,7 +33,7 @@
  * SUCH DAMAGE.
  */
 
-#include <krb5_locl.h>
+#include "krb5_locl.h"
 #include <assert.h>
 
 /*
@@ -608,7 +608,7 @@ get_cred_kdc_address(krb5_context context,
     return ret;
 }
 
-krb5_error_code KRB5_LIB_FUNCTION
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_get_kdc_cred(krb5_context context,
 		  krb5_ccache id,
 		  krb5_kdc_flags flags,
@@ -1068,7 +1068,7 @@ _krb5_get_cred_kdc_any(krb5_context context,
 }
 
 
-krb5_error_code KRB5_LIB_FUNCTION
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_get_credentials_with_flags(krb5_context context,
 				krb5_flags options,
 				krb5_kdc_flags flags,
@@ -1154,7 +1154,7 @@ krb5_get_credentials_with_flags(krb5_context context,
     return ret;
 }
 
-krb5_error_code KRB5_LIB_FUNCTION
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_get_credentials(krb5_context context,
 		     krb5_flags options,
 		     krb5_ccache ccache,
@@ -1175,7 +1175,7 @@ struct krb5_get_creds_opt_data {
 };
 
 
-krb5_error_code KRB5_LIB_FUNCTION
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_get_creds_opt_alloc(krb5_context context, krb5_get_creds_opt *opt)
 {
     *opt = calloc(1, sizeof(**opt));
@@ -1187,7 +1187,7 @@ krb5_get_creds_opt_alloc(krb5_context context, krb5_get_creds_opt *opt)
     return 0;
 }
 
-void KRB5_LIB_FUNCTION
+KRB5_LIB_FUNCTION void KRB5_LIB_CALL
 krb5_get_creds_opt_free(krb5_context context, krb5_get_creds_opt opt)
 {
     if (opt->self)
@@ -1200,7 +1200,7 @@ krb5_get_creds_opt_free(krb5_context context, krb5_get_creds_opt opt)
     free(opt);
 }
 
-void KRB5_LIB_FUNCTION
+KRB5_LIB_FUNCTION void KRB5_LIB_CALL
 krb5_get_creds_opt_set_options(krb5_context context,
 			       krb5_get_creds_opt opt,
 			       krb5_flags options)
@@ -1208,7 +1208,7 @@ krb5_get_creds_opt_set_options(krb5_context context,
     opt->options = options;
 }
 
-void KRB5_LIB_FUNCTION
+KRB5_LIB_FUNCTION void KRB5_LIB_CALL
 krb5_get_creds_opt_add_options(krb5_context context,
 			       krb5_get_creds_opt opt,
 			       krb5_flags options)
@@ -1216,7 +1216,7 @@ krb5_get_creds_opt_add_options(krb5_context context,
     opt->options |= options;
 }
 
-void KRB5_LIB_FUNCTION
+KRB5_LIB_FUNCTION void KRB5_LIB_CALL
 krb5_get_creds_opt_set_enctype(krb5_context context,
 			       krb5_get_creds_opt opt,
 			       krb5_enctype enctype)
@@ -1224,7 +1224,7 @@ krb5_get_creds_opt_set_enctype(krb5_context context,
     opt->enctype = enctype;
 }
 
-krb5_error_code KRB5_LIB_FUNCTION
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_get_creds_opt_set_impersonate(krb5_context context,
 				   krb5_get_creds_opt opt,
 				   krb5_const_principal self)
@@ -1234,7 +1234,7 @@ krb5_get_creds_opt_set_impersonate(krb5_context context,
     return krb5_copy_principal(context, self, &opt->self);
 }
 
-krb5_error_code KRB5_LIB_FUNCTION
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_get_creds_opt_set_ticket(krb5_context context,
 			      krb5_get_creds_opt opt,
 			      const Ticket *ticket)
@@ -1267,7 +1267,7 @@ krb5_get_creds_opt_set_ticket(krb5_context context,
 
 
 
-krb5_error_code KRB5_LIB_FUNCTION
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_get_creds(krb5_context context,
 	       krb5_get_creds_opt opt,
 	       krb5_ccache ccache,
@@ -1395,7 +1395,7 @@ krb5_get_creds(krb5_context context,
  *
  */
 
-krb5_error_code KRB5_LIB_FUNCTION
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_get_renewed_creds(krb5_context context,
 		       krb5_creds *creds,
 		       krb5_const_principal client,

@@ -41,46 +41,48 @@
  */
 
 static void
-accept_it (int s)
+accept_it (SOCKET s)
 {
-    int s2;
+    SOCKET s2;
 
     s2 = accept(s, NULL, NULL);
-    if(s2 < 0)
+    if(IS_BAD_SOCKET(s2))
 	err (1, "accept");
-    close(s);
-    dup2(s2, STDIN_FILENO);
-    dup2(s2, STDOUT_FILENO);
-    /* dup2(s2, STDERR_FILENO); */
-    close(s2);
+    closesocket(s);
+    dup2(fd_from_socket(s2, _O_RDONLY), STDIN_FILENO);
+    dup2(fd_from_socket(s2, 0), STDOUT_FILENO);
+    /* dup2(fd_from_socket(s2, 0), STDERR_FILENO); */
+    closesocket(s2);
 }
 
 /*
  * Listen on a specified port, emulating inetd.
  */
 
-void ROKEN_LIB_FUNCTION
+ROKEN_LIB_FUNCTION void ROKEN_LIB_CALL
 mini_inetd_addrinfo (struct addrinfo *ai)
 {
     int ret;
     struct addrinfo *a;
     int n, nalloc, i;
-    int *fds;
+    SOCKET *fds;
     fd_set orig_read_set, read_set;
-    int max_fd = -1;
+    SOCKET max_fd = (SOCKET)-1;
 
     for (nalloc = 0, a = ai; a != NULL; a = a->ai_next)
 	++nalloc;
 
     fds = malloc (nalloc * sizeof(*fds));
-    if (fds == NULL)
+    if (fds == NULL) {
 	errx (1, "mini_inetd: out of memory");
+	UNREACHABLE(return);
+    }
 
     FD_ZERO(&orig_read_set);
 
     for (i = 0, a = ai; a != NULL; a = a->ai_next) {
 	fds[i] = socket (a->ai_family, a->ai_socktype, a->ai_protocol);
-	if (fds[i] < 0)
+	if (IS_BAD_SOCKET(fds[i]))
 	    continue;
 	socket_set_reuseaddr (fds[i], 1);
 	socket_set_ipv6only(fds[i], 1);
@@ -91,11 +93,13 @@ mini_inetd_addrinfo (struct addrinfo *ai)
 	}
 	if (listen (fds[i], SOMAXCONN) < 0) {
 	    warn ("listen af = %d", a->ai_family);
-	    close(fds[i]);
+	    closesocket(fds[i]);
 	    continue;
 	}
+#ifndef NO_LIMIT_FD_SETSIZE
 	if (fds[i] >= FD_SETSIZE)
 	    errx (1, "fd too large");
+#endif
 	FD_SET(fds[i], &orig_read_set);
 	max_fd = max(max_fd, fds[i]);
 	++i;
@@ -108,7 +112,7 @@ mini_inetd_addrinfo (struct addrinfo *ai)
 	read_set = orig_read_set;
 
 	ret = select (max_fd + 1, &read_set, NULL, NULL, NULL);
-	if (ret < 0 && errno != EINTR)
+	if (IS_SOCKET_ERROR(ret) && SOCK_ERRNO != EINTR)
 	    err (1, "select");
     } while (ret <= 0);
 
@@ -116,14 +120,14 @@ mini_inetd_addrinfo (struct addrinfo *ai)
 	if (FD_ISSET (fds[i], &read_set)) {
 	    accept_it (fds[i]);
 	    for (i = 0; i < n; ++i)
-	      close(fds[i]);
+	      closesocket(fds[i]);
 	    free(fds);
 	    return;
 	}
     abort ();
 }
 
-void ROKEN_LIB_FUNCTION
+ROKEN_LIB_FUNCTION void ROKEN_LIB_CALL
 mini_inetd (int port)
 {
     int error;

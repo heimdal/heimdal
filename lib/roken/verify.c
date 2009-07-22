@@ -42,7 +42,7 @@
 #endif
 #include "roken.h"
 
-int ROKEN_LIB_FUNCTION
+ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
 unix_verify_user(char *user, char *password)
 {
     struct passwd *pw;

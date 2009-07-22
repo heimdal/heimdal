@@ -60,7 +60,7 @@ static DBC *cursor;
 
 #define D(X) ((DB*)(X))
 
-void ROKEN_LIB_FUNCTION
+ROKEN_LIB_FUNCTION void ROKEN_LIB_CALL
 dbm_close (DBM *db)
 {
 #ifdef HAVE_DB3
@@ -71,7 +71,7 @@ dbm_close (DBM *db)
 #endif
 }
 
-int ROKEN_LIB_FUNCTION
+ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
 dbm_delete (DBM *db, datum dkey)
 {
     DBT key;
@@ -129,19 +129,19 @@ dbm_get (DB *db, int flags)
 #define DB_KEYEXIST	1
 #endif
 
-datum ROKEN_LIB_FUNCTION
+ROKEN_LIB_FUNCTION datum ROKEN_LIB_CALL
 dbm_firstkey (DBM *db)
 {
     return dbm_get(D(db), DB_FIRST);
 }
 
-datum ROKEN_LIB_FUNCTION
+ROKEN_LIB_FUNCTION datum ROKEN_LIB_CALL
 dbm_nextkey (DBM *db)
 {
     return dbm_get(D(db), DB_NEXT);
 }
 
-DBM* ROKEN_LIB_FUNCTION
+ROKEN_LIB_FUNCTION DBM* ROKEN_LIB_CALL
 dbm_open (const char *file, int flags, mode_t mode)
 {
     DB *db;
@@ -184,7 +184,7 @@ dbm_open (const char *file, int flags, mode_t mode)
     return (DBM*)db;
 }
 
-int ROKEN_LIB_FUNCTION
+ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
 dbm_store (DBM *db, datum dkey, datum dvalue, int flags)
 {
     int ret;
@@ -204,13 +204,13 @@ dbm_store (DBM *db, datum dkey, datum dvalue, int flags)
     RETURN(ret);
 }
 
-int ROKEN_LIB_FUNCTION
+ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
 dbm_error (DBM *db)
 {
     return 0;
 }
 
-int ROKEN_LIB_FUNCTION
+ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
 dbm_clearerr (DBM *db)
 {
     return 0;

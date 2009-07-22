@@ -1,0 +1,375 @@
+
+all::
+
+clean::
+
+test::
+
+prep::
+
+all:: prep
+
+!include <Win32.Mak>
+
+!ifdef NODEBUG
+BUILD=rel
+!else
+BUILD=dbg
+!endif
+
+!if exist($(MAKEDIR)\windows\NTMakefile.w32)
+SRC=$(MAKEDIR)
+!elseif exist($(MAKEDIR)\..\windows\NTMakefile.w32)
+SRC=$(MAKEDIR)\..
+!elseif exist($(MAKEDIR)\..\..\windows\NTMakefile.w32)
+SRC=$(MAKEDIR)\..\..
+!else
+!  error Cant determine source directory
+!endif
+
+!include "NTMakefile.config"
+
+#----------------------------------------------------------------
+# Directory macros
+
+DESTDIR=$(SRC)\windows\dest_$(OUTDIR)
+OBJDIR =$(SRC)\windows\obj_$(OUTDIR)
+
+INCDIR =$(DESTDIR)\inc
+LIBDIR =$(DESTDIR)\lib
+BINDIR =$(DESTDIR)\bin
+
+!ifdef RELDIR
+SRCDIR =$(SRC)\$(RELDIR)
+OBJ    =$(OBJDIR)\$(RELDIR)
+!else
+OBJ    =$(OBJDIR)
+!endif
+
+# For tests:
+PATH=$(PATH);$(BINDIR)
+
+#----------------------------------------------------------------
+# Command macros
+
+RMAKE=nmake /nologo /f NTMakefile RECURSE=1
+MKDIR=md
+CP=copy /Y
+LINK=link
+LM=lib
+RM=del /q
+ECHO=echo
+RC=rc
+
+!ifndef AWK
+AWK=gawk.exe
+!endif
+
+!ifndef YACC
+YACC=bison.exe -y
+!endif
+
+!ifndef LEX
+LEX=flex.exe
+!endif
+
+!ifndef PYTHON
+PYTHON=python.exe
+!endif
+
+!ifndef PERL
+PERL=perl.exe
+!endif
+
+!ifndef CMP
+CMP=cmp.exe
+!endif
+
+# Only used for tests
+!ifndef SH
+SH=sh.exe
+!endif
+
+!ifndef SED
+SED=sed.exe
+!endif
+
+#----------------------------------------------------------------
+# External dependencies
+
+!ifdef PTHREAD_INC
+pthreadinc= -I$(PTHREAD_INC)
+!endif
+
+#----------------------------------------------------------------
+# Build options
+
+cincdirs=$(cincdirs) -I$(INCDIR) $(pthreadinc)
+cdefines=$(cdefines) -DHAVE_CONFIG_H
+cwarn=$(cwarn) -D_CRT_SECURE_NO_WARNINGS -wd4996
+
+!if "$(CPU)"=="i386"
+libmach=/machine:X86
+!elseif "$(CPU)"=="AMD64"
+libmach=/machine:X64
+!else
+!  error Unknown CPU value
+!endif
+
+!ifndef STATICRUNTIME
+
+C2OBJ_C = $(CC) $(cdebug) $(cflags) $(cvarsdll) $(AUXCFLAGS) $(cdefines) $(cincdirs) $(cwarn)
+EXECONLINK_C = $(LINK) $(ldebug) $(conlflags) $(conlibsdll)
+EXEGUILINK_C = $(LINK) $(ldebug) $(guilflags) $(guilibsdll)
+DLLCONLINK_C = $(LINK) $(ldebug) $(dlllflags) $(conlibsdll)
+DLLGUILINK_C = $(LINK) $(ldebug) $(dlllflags) $(guilibsdll)
+
+!else # STATICRUNTIME
+
+C2OBJ_C = $(CC) $(cdebug) $(cflags) $(cvarsmt) $(AUXCFLAGS) $(cdefines) $(cincdirs) $(cwarn)
+EXECONLINK_C = $(LINK) $(ldebug) $(conlflags) $(conlibsmt)
+EXEGUILINK_C = $(LINK) $(ldebug) $(guilflags) $(guilibsmt)
+DLLCONLINK_C = $(LINK) $(ldebug) $(dlllflags) $(conlibsmt)
+DLLGUILINK_C = $(LINK) $(ldebug) $(dlllflags) $(guilibsmt)
+
+!endif
+
+LIBGUI_C = $(LM) /nologo $(libmach) /SUBSYSTEM:WINDOWS
+LIBCON_C = $(LM) /nologo $(libmach) /SUBSYSTEM:CONSOLE
+
+C2OBJ = $(C2OBJ_C) -Fo$@ -Fd$(@D)\ $**
+EXECONLINK = $(EXECONLINK_C) -OUT:$@ $**
+EXEGUILINK = $(EXEGUILINK_C) -OUT:$@ $**
+DLLCONLINK = $(DLLCONLINK_C) -OUT:$@ $**
+DLLGUILINK = $(DLLGUILINK_C) -OUT:$@ $**
+LIBGUI = $(LIBGUI_C) /OUT:$@ $**
+LIBCON = $(LIBCON_C) /OUT:$@ $**
+
+# Resources
+
+RC2RES_C = $(RC) $(cincdirs) $(AUXRCFLAGS)
+RC2RES = $(RC2RES_C) -fo $@ $**
+
+#----------------------------------------------------------------------
+# If this is the initial invocation, we check if all the build
+# utilities are there.  Also show the commands macros.
+
+!ifndef RECURSE
+
+check-utils:
+	@for %%g in ( "$(AWK)" "$(YACC)" "$(LEX)" "$(PYTHON)" "$(PERL)" "$(CMP)" ) do @( \
+	for /f %%f in ( "%%g" ) do @( \
+		if exist %%f @( \
+			echo Found %%f \
+		) else if "%%~$$PATH:f"=="" @( \
+			echo Could not find %%f in PATH && \
+			exit /b 1 \
+		) else @( \
+			echo Found %%~$$PATH:f \
+		) \
+	) \
+	)
+	@for %%g in ( "$(SH)" "$(SED)" ) do @( \
+	for /f %%f in ( "%%g" ) do @( \
+		if exist %%f @( \
+			echo Found %%f \
+		) else if "%%~$$PATH:f"=="" @( \
+			echo Could not find %%f in PATH && \
+			echo Test targets may fail. \
+		) else @( \
+			echo Found %%~$$PATH:f \
+		) \
+	) \
+	)
+
+
+prep:: check-utils
+
+show-cmds:
+	@$(ECHO) C2OBJ=$(C2OBJ_C:\=\\)
+	@$(ECHO).
+	@$(ECHO) EXECONLINK=$(EXECONLINK_C)
+	@$(ECHO).
+	@$(ECHO) EXEGUILINK=$(EXEGUILINK_C)
+	@$(ECHO).
+	@$(ECHO) DLLCONLINK=$(DLLCONLINK_C)
+	@$(ECHO).
+	@$(ECHO) DLLGUILINK=$(DLLGUILINK_C)
+	@$(ECHO).
+	@$(ECHO) LIBGUI=$(LIBGUI_C)
+	@$(ECHO).
+	@$(ECHO) LIBCON=$(LIBCON_C)
+
+prep:: show-cmds
+
+!endif
+
+{}.c{$(OBJ)}.obj:
+	$(C2OBJ)
+
+{$(OBJ)}.c{$(OBJ)}.obj:
+	$(C2OBJ)
+
+{}.cpp{$(OBJ)}.obj:
+	$(C2OBJ)
+
+{$(OBJ)}.cpp{$(OBJ)}.obj:
+	$(C2OBJ)
+
+{}.hin{}.h:
+	$(CP) $< $@
+
+{}.hin{$(INCDIR)}.h:
+	$(CP) $< $@
+
+{}.h{$(INCDIR)}.h:
+	$(CP) $< $@
+
+{$(OBJ)}.h{$(INCDIR)}.h:
+	$(CP) $< $@
+
+{$(OBJ)}.x{$(OBJ)}.c:
+	$(CP) $< $@
+
+{}.rc{$(OBJ)}.res:
+	$(RC2RES)
+
+#----------------------------------------------------------------------
+# Announce the build directory
+
+!ifdef RELDIR
+all:: announce
+
+test:: announce
+
+clean:: announce
+
+announce:
+	@echo.
+	@echo --------- Entering $(RELDIR:\= ):
+!endif
+
+#----------------------------------------------------------------------
+# Create any required directories if they don't already exist
+
+prep:: mkdirs
+
+mkdirs:
+!  if !exist($(OBJ))
+	$(MKDIR) $(OBJ)
+!  endif
+!  if !exist($(DESTDIR))
+	$(MKDIR) $(DESTDIR)
+!  endif
+!  if !exist($(LIBDIR))
+	$(MKDIR) $(LIBDIR)
+!  endif
+!  if !exist($(BINDIR))
+	$(MKDIR) $(BINDIR)
+!  endif
+!  if !exist($(INCDIR))
+	$(MKDIR) $(INCDIR)
+!  endif
+!  if !exist($(INCDIR)\gssapi)
+	$(MKDIR) $(INCDIR)\gssapi
+!  endif
+!  if !exist($(INCDIR)\hcrypto)
+	$(MKDIR) $(INCDIR)\hcrypto
+!  endif
+!  if !exist($(INCDIR)\kadm5)
+	$(MKDIR) $(INCDIR)\kadm5
+!  endif
+
+
+#----------------------------------------------------------------------
+# If SUBDIRS is defined, we should recurse into the subdirectories
+
+!ifdef SUBDIRS
+subdirs:
+	@for %%f in ( $(SUBDIRS) ) do @ (cd %%f && $(RMAKE) && cd ..) || exit /b 1
+
+clean-subdirs:
+	@for %%f in ( $(SUBDIRS) ) do @ (cd %%f && $(RMAKE) clean && cd ..) || exit /b 1
+
+test-subdirs:
+	@for %%f in ( $(SUBDIRS) ) do @ (cd %%f && $(RMAKE) test && cd ..) || exit /b 1
+
+all:: subdirs
+
+clean:: clean-subdirs
+
+test:: test-subdirs
+
+!endif
+
+#----------------------------------------------------------------------
+# Clean targets
+
+!ifdef CLEANFILES
+clean::
+	-$(RM) $(CLEANFILES)
+!endif
+!ifdef RELDIR
+clean::
+	-$(RM) $(OBJ)\*.*
+!endif
+
+.SUFFIXES: .c .cpp .hin .h .x
+
+#----------------------------------------------------------------------
+# Manifest handling
+#
+# Starting with Visual Studio 8, the C compiler and the linker
+# generate manifests so that the applications will link with the
+# correct side-by-side DLLs at run-time.  These are required for
+# correct operation under Windows XP.  We also have custom manifests
+# which need to be merged with the manifests that VS creates.
+#
+# The syntax for invoking the _VC_MANIFEST_EMBED_foo macro is:
+# $(_VC_MANIFEST_EMBED_???) <any additional manifests that need to be merged in>
+#
+
+MT=mt.exe -nologo
+
+_VC_MANIFEST_EMBED_EXE= \
+if exist $@.manifest $(MT) -outputresource:$@;1 -manifest $@.manifest
+
+_VC_MANIFEST_EMBED_DLL= \
+if exist $@.manifest $(MT) -outputresource:$@;2 -manifest $@.manifest
+
+# Note that if you are merging manifests, then the VS generated
+# manifest should be cleaned up after calling _VC_MANIFEST_EMBED_???.
+# This ensures that even if the DLL or EXE is executed in-place, the
+# embedded manifest will be used.  Otherwise the $@.manifest file will
+# be used.
+_VC_MANIFEST_CLEAN= \
+if exist $@.manifest $(RM) $@.manifest
+
+# End of manifest handling
+
+# Code signing
+!ifdef CODESIGN
+_CODESIGN=$(CODESIGN) $@
+!else
+_CODESIGN=
+!endif
+
+
+#----------------------------------------------------------------------
+# Various libraries
+#
+
+LIBROKEN    =$(LIBDIR)\libroken.lib
+LIBVERS	    =$(LIBDIR)\libvers.lib
+LIBEDITLINE =$(LIBDIR)\libeditline.lib
+LIBCOMERR   =$(LIBDIR)\libcom_err.lib
+LIBSL	    =$(LIBDIR)\libsl.lib
+LIBWIND	    =$(LIBDIR)\libwind.lib
+LIBASN1	    =$(LIBDIR)\libasn1.lib
+LIBSQLITE   =$(LIBDIR)\libsqlite.lib
+LIBHCRYPTO  =$(LIBDIR)\libhcrypto.lib
+LIBHX509    =$(LIBDIR)\libhx509.lib
+LIBKRB5	    =$(LIBDIR)\libkrb5.lib
+LIBHEIMNTLM =$(LIBDIR)\libheimntlm.lib
+LIBGSSAPI   =$(LIBDIR)\libgssapi.lib
+LIBHDB	    =$(LIBDIR)\libhdb.lib

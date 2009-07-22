@@ -35,7 +35,7 @@
 
 #include "roken.h"
 
-ssize_t ROKEN_LIB_FUNCTION
+ROKEN_LIB_FUNCTION ssize_t ROKEN_LIB_CALL
 readv(int d, const struct iovec *iov, int iovcnt)
 {
     ssize_t ret, nb;

@@ -36,7 +36,7 @@
 
 #ifndef HAVE_SWAB
 
-void ROKEN_LIB_FUNCTION
+ROKEN_LIB_FUNCTION void ROKEN_LIB_CALL
 swab (char *from, char *to, int nbytes)
 {
      while(nbytes >= 2) {

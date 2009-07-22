@@ -40,8 +40,8 @@
 
 static struct testcase {
     size_t size;
-    time_t val;
-    char *str;
+    int    val;
+    char  *str;
 } tests[] = {
     { 8, 1,		"1 second" },
     { 17, 61,		"1 minute 1 second" },
@@ -97,6 +97,7 @@ main(int argc, char **argv)
 		errx(1, "test %i not zero terminated", i);
 	    rk_test_mem_free("underrun");
 	}
+
 	buf = rk_test_mem_alloc(RK_TM_OVERRUN, "overrun",
 				tests[i].str, tests[i].size + 1);
 	j = parse_time(buf, "s");
@@ -110,6 +111,7 @@ main(int argc, char **argv)
 	if (j != tests[i].val)
 	    errx(1, "parse_time failed for test %d", i);
 	rk_test_mem_free("underrun");
+
     }
     return 0;
 }

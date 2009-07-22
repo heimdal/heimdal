@@ -42,7 +42,7 @@
 
 #include "roken.h"
 
-char* ROKEN_LIB_FUNCTION
+ROKEN_LIB_FUNCTION char* ROKEN_LIB_CALL
 getcwd(char *path, size_t size)
 {
     char xxx[MaxPathLen];

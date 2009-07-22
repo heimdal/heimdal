@@ -35,7 +35,7 @@
 
 #include "err.h"
 
-void ROKEN_LIB_FUNCTION
+ROKEN_LIB_FUNCTION void ROKEN_LIB_CALL
 errx(int eval, const char *fmt, ...)
 {
   va_list ap;

@@ -83,24 +83,24 @@ static int 	getent (char **, size_t *, char **, int, const char *, int, char *);
 static int	nfcmp (char *, char *);
 
 
-int ROKEN_LIB_FUNCTION cgetset(const char *ent);
-char *ROKEN_LIB_FUNCTION cgetcap(char *buf, const char *cap, int type);
-int ROKEN_LIB_FUNCTION cgetent(char **buf, char **db_array, const char *name);
-int ROKEN_LIB_FUNCTION cgetmatch(const char *buf, const char *name);
-int ROKEN_LIB_FUNCTION cgetclose(void);
+ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL cgetset(const char *ent);
+ROKEN_LIB_FUNCTION char * ROKEN_LIB_CALL cgetcap(char *buf, const char *cap, int type);
+ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL cgetent(char **buf, char **db_array, const char *name);
+ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL cgetmatch(const char *buf, const char *name);
+ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL cgetclose(void);
 #if 0
 int cgetfirst(char **buf, char **db_array);
 int cgetnext(char **bp, char **db_array);
 #endif
-int ROKEN_LIB_FUNCTION cgetstr(char *buf, const char *cap, char **str);
-int ROKEN_LIB_FUNCTION cgetustr(char *buf, const char *cap, char **str);
-int ROKEN_LIB_FUNCTION cgetnum(char *buf, const char *cap, long *num);
+ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL cgetstr(char *buf, const char *cap, char **str);
+ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL cgetustr(char *buf, const char *cap, char **str);
+ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL cgetnum(char *buf, const char *cap, long *num);
 /*
  * Cgetset() allows the addition of a user specified buffer to be added
  * to the database array, in effect "pushing" the buffer on top of the
  * virtual database. 0 is returned on success, -1 on failure.
  */
-int ROKEN_LIB_FUNCTION
+ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
 cgetset(const char *ent)
 {
     const char *source, *check;
@@ -153,7 +153,7 @@ cgetset(const char *ent)
  * If (cap, '@') or (cap, terminator, '@') is found before (cap, terminator)
  * return NULL.
  */
-char * ROKEN_LIB_FUNCTION
+ROKEN_LIB_FUNCTION char * ROKEN_LIB_CALL
 cgetcap(char *buf, const char *cap, int type)
 {
     char *bp;
@@ -204,7 +204,7 @@ cgetcap(char *buf, const char *cap, int type)
  * encountered (couldn't open/read a file, etc.), and -3 if a potential
  * reference loop is detected.
  */
-int ROKEN_LIB_FUNCTION
+ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
 cgetent(char **buf, char **db_array, const char *name)
 {
     size_t dummy;
@@ -700,7 +700,7 @@ static FILE *pfp;
 static int slash;
 static char **dbp;
 
-int ROKEN_LIB_FUNCTION
+ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
 cgetclose(void)
 {
     if (pfp != NULL) {
@@ -847,7 +847,7 @@ cgetnext(char **bp, char **db_array)
  * couldn't be found, -2 if a system error was encountered (storage
  * allocation failure).
  */
-int ROKEN_LIB_FUNCTION
+ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
 cgetstr(char *buf, const char *cap, char **str)
 {
     u_int m_room;
@@ -980,7 +980,7 @@ cgetstr(char *buf, const char *cap, char **str)
  * -1 if the requested string capability couldn't be found, -2 if a system
  * error was encountered (storage allocation failure).
  */
-int ROKEN_LIB_FUNCTION
+ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
 cgetustr(char *buf, const char *cap, char **str)
 {
     u_int m_room;
@@ -1049,7 +1049,7 @@ cgetustr(char *buf, const char *cap, char **str)
  * the long pointed to by num.  0 is returned on success, -1 if the requested
  * numeric capability couldn't be found.
  */
-int ROKEN_LIB_FUNCTION
+ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
 cgetnum(char *buf, const char *cap, long *num)
 {
     long n;

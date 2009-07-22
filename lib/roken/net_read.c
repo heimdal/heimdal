@@ -33,17 +33,13 @@
 
 #include <config.h>
 
-#include <sys/types.h>
-#include <unistd.h>
-#include <errno.h>
-
 #include "roken.h"
 
 /*
  * Like read but never return partial data.
  */
 
-ssize_t ROKEN_LIB_FUNCTION
+ROKEN_LIB_FUNCTION ssize_t ROKEN_LIB_CALL
 net_read (int fd, void *buf, size_t nbytes)
 {
     char *cbuf = (char *)buf;
@@ -51,11 +47,7 @@ net_read (int fd, void *buf, size_t nbytes)
     size_t rem = nbytes;
 
     while (rem > 0) {
-#ifdef WIN32
-	count = recv (fd, cbuf, rem, 0);
-#else
 	count = read (fd, cbuf, rem);
-#endif
 	if (count < 0) {
 	    if (errno == EINTR)
 		continue;
@@ -69,3 +61,30 @@ net_read (int fd, void *buf, size_t nbytes)
     }
     return nbytes;
 }
+
+#ifdef SOCKET_IS_NOT_AN_FD
+
+ROKEN_LIB_FUNCTION ssize_t ROKEN_LIB_CALL
+net_read_s (SOCKET sock, void *buf, size_t nbytes)
+{
+    char *cbuf = (char *)buf;
+    ssize_t count;
+    size_t rem = nbytes;
+
+    while (rem > 0) {
+	count = recv (sock, cbuf, rem, 0);
+	if (count < 0) {
+	    if (errno == EINTR)
+		continue;
+	    else
+		return count;
+	} else if (count == 0) {
+	    return count;
+	}
+	cbuf += count;
+	rem -= count;
+    }
+    return nbytes;
+}
+
+#endif

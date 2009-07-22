@@ -51,7 +51,7 @@ char	*optarg;		/* argument associated with option */
 #define	BADARG	(int)':'
 #define	EMSG	""
 
-int ROKEN_LIB_FUNCTION
+ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
 getopt(nargc, nargv, ostr)
 	int nargc;
 	char * const *nargv;

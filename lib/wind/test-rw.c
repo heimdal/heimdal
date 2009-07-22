@@ -67,7 +67,7 @@ struct testcase {
 	WIND_RW_BOM,
 	2, "\xfe\xff",
 	0,
-	0, {  },
+	0, { 0 },
 	WIND_RW_BE
     },
     /* no input */
@@ -75,7 +75,7 @@ struct testcase {
 	WIND_RW_BOM,
 	0, "",
 	0,
-	0, { },
+	0, { 0 },
 	WIND_RW_BOM
     },
     /* BOM only */
@@ -83,7 +83,7 @@ struct testcase {
 	WIND_RW_BOM,
 	2, "\xff\xfe",
 	0,
-	0, { },
+	0, { 0 },
 	WIND_RW_LE
     },
     /* water + z */
@@ -123,7 +123,7 @@ struct testcase {
 	WIND_RW_BOM,
 	1, "\xfe",
 	WIND_ERR_LENGTH_NOT_MOD2,
-	0, { },
+	0, { 0 },
 	WIND_RW_BOM
     },
     /* error, missing BOM */
@@ -131,7 +131,7 @@ struct testcase {
 	WIND_RW_BOM,
 	2, "\x00\x20",
 	WIND_ERR_NO_BOM,
-	0, { },
+	0, { 0 },
 	WIND_RW_BOM
     },
     /* error, overrun */

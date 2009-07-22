@@ -91,7 +91,7 @@ pk_copy_error(krb5_context context,
  *
  */
 
-void KRB5_LIB_FUNCTION
+KRB5_LIB_FUNCTION void KRB5_LIB_CALL
 _krb5_pk_cert_free(struct krb5_pk_cert *cert)
 {
     if (cert->cert) {
@@ -617,7 +617,7 @@ build_auth_pack(krb5_context context,
     return ret;
 }
 
-krb5_error_code KRB5_LIB_FUNCTION
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 _krb5_pk_mk_ContentInfo(krb5_context context,
 			const krb5_data *buf,
 			const heim_oid *oid,
@@ -807,7 +807,7 @@ pk_mk_padata(krb5_context context,
 }
 
 
-krb5_error_code KRB5_LIB_FUNCTION
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 _krb5_pk_mk_padata(krb5_context context,
 		   void *c,
 		   int ic_flags,
@@ -1534,7 +1534,7 @@ pk_rd_pa_reply_dh(krb5_context context,
     return ret;
 }
 
-krb5_error_code KRB5_LIB_FUNCTION
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 _krb5_pk_rd_pa_reply(krb5_context context,
 		     const char *realm,
 		     void *c,
@@ -1826,7 +1826,7 @@ _krb5_pk_set_user_id(krb5_context context,
     return ret;
 }
 
-krb5_error_code KRB5_LIB_FUNCTION
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 _krb5_pk_load_id(krb5_context context,
 		 struct krb5_pk_identity **ret_id,
 		 const char *user_id,
@@ -2291,7 +2291,7 @@ _krb5_dh_group_ok(krb5_context context, unsigned long bits,
 }
 #endif /* PKINIT */
 
-void KRB5_LIB_FUNCTION
+KRB5_LIB_FUNCTION void KRB5_LIB_CALL
 _krb5_get_init_creds_opt_free_pkinit(krb5_get_init_creds_opt *opt)
 {
 #ifdef PKINIT
@@ -2335,7 +2335,7 @@ _krb5_get_init_creds_opt_free_pkinit(krb5_get_init_creds_opt *opt)
 #endif
 }
 
-krb5_error_code KRB5_LIB_FUNCTION
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_get_init_creds_opt_set_pkinit(krb5_context context,
 				   krb5_get_init_creds_opt *opt,
 				   krb5_principal principal,

@@ -40,7 +40,7 @@
 
 #ifndef HAVE_STRCASECMP
 
-int ROKEN_LIB_FUNCTION
+ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
 strcasecmp(const char *s1, const char *s2)
 {
     while(toupper((unsigned char)*s1) == toupper((unsigned char)*s2)) {

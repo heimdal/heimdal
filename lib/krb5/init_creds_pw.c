@@ -586,7 +586,7 @@ out:
 }
 
 
-krb5_error_code KRB5_LIB_FUNCTION
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_keyblock_key_proc (krb5_context context,
 			krb5_keytype type,
 			krb5_data *salt,
@@ -1332,7 +1332,7 @@ process_pa_data_to_key(krb5_context context,
  * @ingroup krb5_credential
  */
 
-krb5_error_code KRB5_LIB_FUNCTION
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_init_creds_init(krb5_context context,
 		     krb5_principal client,
 		     krb5_prompter_fct prompter,
@@ -1386,7 +1386,7 @@ krb5_init_creds_init(krb5_context context,
  * @ingroup krb5_credential
  */
 
-krb5_error_code KRB5_LIB_FUNCTION
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_init_creds_set_service(krb5_context context,
 			    krb5_init_creds_context ctx,
 			    const char *service)
@@ -1426,7 +1426,7 @@ krb5_init_creds_set_service(krb5_context context,
  * @ingroup krb5_credential
  */
 
-krb5_error_code KRB5_LIB_FUNCTION
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_init_creds_set_password(krb5_context context,
 			     krb5_init_creds_context ctx,
 			     const char *password)
@@ -1492,7 +1492,7 @@ keytab_key_proc(krb5_context context, krb5_enctype enctype,
  * @ingroup krb5_credential
  */
 
-krb5_error_code KRB5_LIB_FUNCTION
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_init_creds_set_keytab(krb5_context context,
 			   krb5_init_creds_context ctx,
 			   krb5_keytab keytab)
@@ -1583,7 +1583,7 @@ keyblock_key_proc(krb5_context context, krb5_enctype enctype,
     return krb5_copy_keyblock (context, keyseed, key);
 }
 
-krb5_error_code KRB5_LIB_FUNCTION
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_init_creds_set_keyblock(krb5_context context,
 			     krb5_init_creds_context ctx,
 			     krb5_keyblock *keyblock)
@@ -1614,7 +1614,7 @@ krb5_init_creds_set_keyblock(krb5_context context,
  * @ingroup krb5_credential
  */
 
-krb5_error_code KRB5_LIB_FUNCTION
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_init_creds_step(krb5_context context,
 		     krb5_init_creds_context ctx,
 		     krb5_data *in,
@@ -1827,7 +1827,7 @@ krb5_init_creds_step(krb5_context context,
  * @return 0 for sucess or An Kerberos error code, see krb5_get_error_message().
  */
 
-krb5_error_code KRB5_LIB_FUNCTION
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_init_creds_get_creds(krb5_context context,
 			  krb5_init_creds_context ctx,
 			  krb5_creds *cred)
@@ -1843,7 +1843,7 @@ krb5_init_creds_get_creds(krb5_context context,
  * @ingroup krb5_credential
  */
 
-krb5_error_code KRB5_LIB_FUNCTION
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_init_creds_get_error(krb5_context context,
 			  krb5_init_creds_context ctx,
 			  KRB_ERROR *error)
@@ -1883,7 +1883,7 @@ krb5_init_creds_free(krb5_context context,
  * @ingroup krb5_credential
  */
 
-krb5_error_code KRB5_LIB_FUNCTION
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_init_creds_get(krb5_context context, krb5_init_creds_context ctx)
 {
     krb5_sendto_ctx stctx = NULL;
@@ -1931,7 +1931,7 @@ krb5_init_creds_get(krb5_context context, krb5_init_creds_context ctx)
  */
 
 
-krb5_error_code KRB5_LIB_FUNCTION
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_get_init_creds_password(krb5_context context,
 			     krb5_creds *creds,
 			     krb5_principal client,
@@ -2037,7 +2037,7 @@ krb5_get_init_creds_password(krb5_context context,
  * @ingroup krb5_credential
  */
 
-krb5_error_code KRB5_LIB_FUNCTION
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_get_init_creds_keyblock(krb5_context context,
 			     krb5_creds *creds,
 			     krb5_principal client,
@@ -2084,7 +2084,7 @@ krb5_get_init_creds_keyblock(krb5_context context,
  * @ingroup krb5_credential
  */
 
-krb5_error_code KRB5_LIB_FUNCTION
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_get_init_creds_keytab(krb5_context context,
 			   krb5_creds *creds,
 			   krb5_principal client,

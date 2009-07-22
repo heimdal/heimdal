@@ -60,7 +60,7 @@
  * }
  */
 
-krb5_error_code KRB5_LIB_FUNCTION
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_sendauth(krb5_context context,
 	      krb5_auth_context *auth_context,
 	      krb5_pointer p_fd,

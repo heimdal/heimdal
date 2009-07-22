@@ -33,7 +33,7 @@
 
 #define KRB5_DEPRECATED
 
-#include <krb5_locl.h>
+#include "krb5_locl.h"
 
 #undef __attribute__
 #define __attribute__(X)
@@ -684,7 +684,7 @@ find_chpw_proto(const char *name)
  * @ingroup @krb5_deprecated
  */
 
-krb5_error_code KRB5_LIB_FUNCTION
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_change_password (krb5_context	context,
 		      krb5_creds	*creds,
 		      const char	*newpw,
@@ -726,7 +726,7 @@ krb5_change_password (krb5_context	context,
  * @ingroup @krb5
  */
 
-krb5_error_code KRB5_LIB_FUNCTION
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_set_password(krb5_context context,
 		  krb5_creds *creds,
 		  const char *newpw,
@@ -769,7 +769,7 @@ krb5_set_password(krb5_context context,
  *
  */
 
-krb5_error_code KRB5_LIB_FUNCTION
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_set_password_using_ccache(krb5_context context,
 			       krb5_ccache ccache,
 			       const char *newpw,
@@ -834,7 +834,7 @@ krb5_set_password_using_ccache(krb5_context context,
  *
  */
 
-const char* KRB5_LIB_FUNCTION
+KRB5_LIB_FUNCTION const char* KRB5_LIB_CALL
 krb5_passwd_result_to_string (krb5_context context,
 			      int result)
 {

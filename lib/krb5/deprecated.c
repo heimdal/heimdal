@@ -51,7 +51,7 @@
  * @ingroup krb5_deprecated
  */
 
-void KRB5_LIB_FUNCTION
+KRB5_LIB_FUNCTION void KRB5_LIB_CALL
 krb5_free_data_contents(krb5_context context, krb5_data *data)
   KRB5_DEPRECATED
 {
@@ -64,7 +64,7 @@ krb5_free_data_contents(krb5_context context, krb5_data *data)
  * @ingroup krb5_deprecated
  */
 
-krb5_error_code KRB5_LIB_FUNCTION
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_keytype_to_enctypes_default (krb5_context context,
 				  krb5_keytype keytype,
 				  unsigned *len,
@@ -114,7 +114,7 @@ static int num_keys = sizeof(keys) / sizeof(keys[0]);
  * @ingroup krb5_deprecated
  */
 
-krb5_error_code KRB5_LIB_FUNCTION
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_keytype_to_string(krb5_context context,
 		       krb5_keytype keytype,
 		       char **string)
@@ -151,7 +151,7 @@ krb5_keytype_to_string(krb5_context context,
  * @ingroup krb5_deprecated
  */
 
-krb5_error_code KRB5_LIB_FUNCTION
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_string_to_keytype(krb5_context context,
 		       const char *string,
 		       krb5_keytype *keytype)
@@ -184,7 +184,7 @@ krb5_string_to_keytype(krb5_context context,
  * @ingroup krb5_deprecated
  */
 
-krb5_error_code KRB5_LIB_FUNCTION
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_password_key_proc (krb5_context context,
 			krb5_enctype type,
 			krb5_salt salt,
@@ -220,7 +220,7 @@ krb5_password_key_proc (krb5_context context,
  * @ingroup krb5_deprecated
  */
 
-krb5_error_code KRB5_LIB_FUNCTION
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_get_in_tkt_with_password (krb5_context context,
 			       krb5_flags options,
 			       krb5_addresses *addrs,
@@ -262,7 +262,7 @@ krb5_skey_key_proc (krb5_context context,
  * @ingroup krb5_deprecated
  */
 
-krb5_error_code KRB5_LIB_FUNCTION
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_get_in_tkt_with_skey (krb5_context context,
 			   krb5_flags options,
 			   krb5_addresses *addrs,
@@ -305,7 +305,7 @@ krb5_get_in_tkt_with_skey (krb5_context context,
  * @ingroup krb5_deprecated
  */
 
-krb5_error_code KRB5_LIB_FUNCTION
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_keytab_key_proc (krb5_context context,
 		      krb5_enctype enctype,
 		      krb5_salt salt,
@@ -345,7 +345,7 @@ krb5_keytab_key_proc (krb5_context context,
  * @ingroup krb5_deprecated
  */
 
-krb5_error_code KRB5_LIB_FUNCTION
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_get_in_tkt_with_keytab (krb5_context context,
 			     krb5_flags options,
 			     krb5_addresses *addrs,
@@ -389,7 +389,7 @@ convert_func(krb5_context conxtext, void *funcctx, krb5_principal principal)
  * @ingroup krb5_deprecated
  */
 
-krb5_error_code KRB5_LIB_FUNCTION
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_425_conv_principal_ext(krb5_context context,
 			    const char *name,
 			    const char *instance,
@@ -415,7 +415,7 @@ krb5_425_conv_principal_ext(krb5_context context,
  * @ingroup krb5_deprecated
  */
 
-krb5_error_code KRB5_LIB_FUNCTION
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_425_conv_principal(krb5_context context,
 			const char *name,
 			const char *instance,
@@ -444,7 +444,7 @@ krb5_425_conv_principal(krb5_context context,
  */
 
 
-krb5_error_code KRB5_LIB_FUNCTION
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_cc_gen_new(krb5_context context,
 		const krb5_cc_ops *ops,
 		krb5_ccache *id)
@@ -459,7 +459,7 @@ krb5_cc_gen_new(krb5_context context,
  * @ingroup krb5_deprecated
  */
 
-krb5_realm * KRB5_LIB_FUNCTION
+KRB5_LIB_FUNCTION krb5_realm * KRB5_LIB_CALL
 krb5_princ_realm(krb5_context context,
 		 krb5_principal principal)
     KRB5_DEPRECATED
@@ -474,7 +474,7 @@ krb5_princ_realm(krb5_context context,
  * @ingroup krb5_deprecated
  */
 
-void KRB5_LIB_FUNCTION
+KRB5_LIB_FUNCTION void KRB5_LIB_CALL
 krb5_princ_set_realm(krb5_context context,
 		     krb5_principal principal,
 		     krb5_realm *realm)
@@ -490,7 +490,7 @@ krb5_princ_set_realm(krb5_context context,
  */
 
 /* keep this for compatibility with older code */
-krb5_error_code KRB5_LIB_FUNCTION
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_free_creds_contents (krb5_context context, krb5_creds *c)
     KRB5_DEPRECATED
 {
@@ -508,7 +508,7 @@ krb5_free_creds_contents (krb5_context context, krb5_creds *c)
  * @ingroup krb5_deprecated
  */
 
-void KRB5_LIB_FUNCTION
+KRB5_LIB_FUNCTION void KRB5_LIB_CALL
 krb5_free_error_string(krb5_context context, char *str)
     KRB5_DEPRECATED
 {
@@ -528,7 +528,7 @@ krb5_free_error_string(krb5_context context, char *str)
  * @ingroup krb5_deprecated
  */
 
-krb5_error_code KRB5_LIB_FUNCTION
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_set_error_string(krb5_context context, const char *fmt, ...)
     __attribute__((format (printf, 2, 3))) KRB5_DEPRECATED
 {
@@ -554,7 +554,7 @@ krb5_set_error_string(krb5_context context, const char *fmt, ...)
  * @ingroup krb5_deprecated
  */
 
-krb5_error_code KRB5_LIB_FUNCTION
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_vset_error_string(krb5_context context, const char *fmt, va_list args)
     __attribute__ ((format (printf, 2, 0))) KRB5_DEPRECATED
 {
@@ -572,7 +572,7 @@ krb5_vset_error_string(krb5_context context, const char *fmt, va_list args)
  * @ingroup krb5_deprecated
  */
 
-void KRB5_LIB_FUNCTION
+KRB5_LIB_FUNCTION void KRB5_LIB_CALL
 krb5_clear_error_string(krb5_context context)
      KRB5_DEPRECATED
 {
@@ -585,7 +585,7 @@ krb5_clear_error_string(krb5_context context)
  * @ingroup krb5_deprecated
  */
 
-krb5_error_code KRB5_LIB_FUNCTION
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_get_cred_from_kdc_opt(krb5_context context,
 			   krb5_ccache ccache,
 			   krb5_creds *in_creds,
@@ -606,7 +606,7 @@ krb5_get_cred_from_kdc_opt(krb5_context context,
  * @ingroup krb5_deprecated
  */
 
-krb5_error_code KRB5_LIB_FUNCTION
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_get_cred_from_kdc(krb5_context context,
 		       krb5_ccache ccache,
 		       krb5_creds *in_creds,

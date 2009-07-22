@@ -144,7 +144,7 @@ main(int argc, char **argv)
 	}
 	case rk_ns_t_sshfp : {
 	    struct rk_sshfp_record *sshfp = rr->u.sshfp;
-	    int i;
+	    size_t i;
 
 	    printf ("alg %u type %u length %lu data ", sshfp->algorithm,
 		    sshfp->type,  (unsigned long)sshfp->sshfp_len);
@@ -156,7 +156,7 @@ main(int argc, char **argv)
 	}
 	case rk_ns_t_ds : {
 	    struct rk_ds_record *ds = rr->u.ds;
-	    int i;
+	    size_t i;
 
 	    printf ("key tag %u alg %u type %u length %u data ",
 		    ds->key_tag, ds->algorithm, ds->digest_type,

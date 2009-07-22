@@ -316,24 +316,30 @@ extern \"C\" {
 }
 if ($opt_E) {
     $public_h_header .= "#ifndef $opt_E
+#ifndef ${opt_E}_FUNCTION
 #if defined(_WIN32)
-#define ${opt_E}_FUNCTION __stdcall __declspec(dllimport)
+#define ${opt_E}_FUNCTION __declspec(dllimport)
+#define ${opt_E}_CALL __stdcall
 #define ${opt_E}_VARIABLE __declspec(dllimport)
 #else
 #define ${opt_E}_FUNCTION
 #define ${opt_E}_VARIABLE
 #endif
 #endif
-
+#endif
 ";
     
     $private_h_header .= "#ifndef $opt_E
+#ifndef ${opt_E}_FUNCTION
 #if defined(_WIN32)
-#define ${opt_E}_FUNCTION __stdcall __declspec(dllimport)
+#define ${opt_E}_FUNCTION __declspec(dllimport)
+#define ${opt_E}_CALL __stdcall
 #define ${opt_E}_VARIABLE __declspec(dllimport)
 #else
 #define ${opt_E}_FUNCTION
 #define ${opt_E}_VARIABLE
+#define ${opt_E}_CALL
+#endif
 #endif
 #endif
 

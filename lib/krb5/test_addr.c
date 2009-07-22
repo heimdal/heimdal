@@ -155,11 +155,40 @@ match_addr(krb5_context context, const char *range_addr,
     krb5_free_addresses(context, &one);
 }
 
+#ifdef _MSC_VER
+
+/* For the truncation tests, calling strcpy_s() or strcat_s() with a
+   size of 0 results in the invalid parameter handler being invoked.
+   For the debug version, the runtime also throws an assert. */
+
+static void
+inv_param_handler(const wchar_t* expression,
+		  const wchar_t* function,
+		  const wchar_t* file,
+		  unsigned int line,
+		  uintptr_t pReserved)
+{
+    printf("Invalid parameter handler invoked for: %S in %S(%d) [%S]\n",
+	   function, file, line, expression);
+}
+
+static _invalid_parameter_handler _inv_old = NULL;
+
+#define SET_INVALID_PARAM_HANDLER _inv_old = _set_invalid_parameter_handler(inv_param_handler)
+
+#else
+
+#define SET_INVALID_PARAM_HANDLER ((void) 0)
+
+#endif
+
 int
 main(int argc, char **argv)
 {
     krb5_context context;
     krb5_error_code ret;
+
+    SET_INVALID_PARAM_HANDLER;
 
     setprogname(argv[0]);
 

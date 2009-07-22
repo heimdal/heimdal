@@ -220,6 +220,10 @@ main(int argc, char **argv)
 	
 
     p = strrchr(filename, '/');
+#ifdef BACKSLASH_PATH_DELIM
+    if (!p)
+        p = strrchr(filename, '\\');
+#endif
     if(p)
 	p++;
     else

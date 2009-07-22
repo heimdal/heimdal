@@ -41,9 +41,11 @@
 
 #ifndef ROKEN_LIB_FUNCTION
 #ifdef _WIN32
-#define ROKEN_LIB_FUNCTION _stdcall
+#define ROKEN_LIB_FUNCTION
+#define ROKEN_LIB_CALL     __cdecl
 #else
 #define ROKEN_LIB_FUNCTION
+#define ROKEN_LIB_CALL
 #endif
 #endif
 
@@ -78,14 +80,14 @@ typedef struct {
 } DBM;
 #endif
 
-int ROKEN_LIB_FUNCTION dbm_clearerr (DBM*);
-void ROKEN_LIB_FUNCTION dbm_close (DBM*);
-int ROKEN_LIB_FUNCTION dbm_delete (DBM*, datum);
-int ROKEN_LIB_FUNCTION dbm_error (DBM*);
-datum ROKEN_LIB_FUNCTION dbm_fetch (DBM*, datum);
-datum ROKEN_LIB_FUNCTION dbm_firstkey (DBM*);
-datum ROKEN_LIB_FUNCTION dbm_nextkey (DBM*);
-DBM* ROKEN_LIB_FUNCTION dbm_open (const char*, int, mode_t);
-int ROKEN_LIB_FUNCTION dbm_store (DBM*, datum, datum, int);
+ROKEN_LIB_FUNCTION int   ROKEN_LIB_CALL dbm_clearerr (DBM*);
+ROKEN_LIB_FUNCTION void  ROKEN_LIB_CALL dbm_close (DBM*);
+ROKEN_LIB_FUNCTION int   ROKEN_LIB_CALL dbm_delete (DBM*, datum);
+ROKEN_LIB_FUNCTION int   ROKEN_LIB_CALL dbm_error (DBM*);
+ROKEN_LIB_FUNCTION datum ROKEN_LIB_CALL dbm_fetch (DBM*, datum);
+ROKEN_LIB_FUNCTION datum ROKEN_LIB_CALL dbm_firstkey (DBM*);
+ROKEN_LIB_FUNCTION datum ROKEN_LIB_CALL dbm_nextkey (DBM*);
+ROKEN_LIB_FUNCTION DBM*  ROKEN_LIB_CALL dbm_open (const char*, int, mode_t);
+ROKEN_LIB_FUNCTION int   ROKEN_LIB_CALL dbm_store (DBM*, datum, datum, int);
 
 #endif /* __ndbm_wrap_h__ */

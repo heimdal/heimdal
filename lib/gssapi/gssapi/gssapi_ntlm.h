@@ -38,14 +38,10 @@
 
 #include <gssapi.h>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+GSSAPI_CPP_START
 
 extern GSSAPI_LIB_VARIABLE gss_OID GSS_NTLM_MECHANISM;
 
-#ifdef __cplusplus
-}
-#endif
+GSSAPI_CPP_END
 
 #endif /* GSSAPI_NTLM_H_ */

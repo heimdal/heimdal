@@ -414,7 +414,7 @@ krb5_sendto (krb5_context context,
 
 	     for (a = ai; a != NULL; a = a->ai_next) {
 		 fd = socket (a->ai_family, a->ai_socktype | SOCK_CLOEXEC, a->ai_protocol);
-		 if (fd < 0)
+		 if (IS_BAD_SOCKET(fd))
 		     continue;
 		 rk_cloexec(fd);
 		 if (connect (fd, a->ai_addr, a->ai_addrlen) < 0) {

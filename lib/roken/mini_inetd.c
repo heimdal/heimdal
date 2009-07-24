@@ -88,12 +88,14 @@ mini_inetd_addrinfo (struct addrinfo *ai)
 	socket_set_ipv6only(fds[i], 1);
 	if (bind (fds[i], a->ai_addr, a->ai_addrlen) < 0) {
 	    warn ("bind af = %d", a->ai_family);
-	    close(fds[i]);
+	    closesocket(fds[i]);
+	    fds[i] = INVALID_SOCKET;
 	    continue;
 	}
 	if (listen (fds[i], SOMAXCONN) < 0) {
 	    warn ("listen af = %d", a->ai_family);
 	    closesocket(fds[i]);
+	    fds[i] = INVALID_SOCKET;
 	    continue;
 	}
 #ifndef NO_LIMIT_FD_SETSIZE

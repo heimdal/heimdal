@@ -24,11 +24,7 @@ AFS_EXTRA_LD = -e _nostart
 endif
 
 if AIX_DYNAMIC_AFS
-if HAVE_DLOPEN
 AIX_SRC = 
-else
-AIX_SRC = dlfcn.c
-endif
 AFS_EXTRA_LIBS = afslib.so
 AFS_EXTRA_DEFS =
 else
@@ -73,9 +69,9 @@ dist_libkafs_la_SOURCES =			\
 
 nodist_libkafs_la_SOURCES = $(ROKEN_SRCS)
 
-EXTRA_libkafs_la_SOURCES = afskrb5.c dlfcn.c afslib.c dlfcn.h
+EXTRA_libkafs_la_SOURCES = afskrb5.c afslib.c
 
-EXTRA_DIST = README.dlfcn afsl.exp afslib.exp $(man_MANS)
+EXTRA_DIST = afsl.exp afslib.exp $(man_MANS)
 
 man_MANS = kafs.3
 

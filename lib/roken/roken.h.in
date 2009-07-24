@@ -218,6 +218,67 @@ ROKEN_CPP_START
 #define setsid _setsid
 #endif
 
+#ifdef _MSC_VER
+/* Additional macros for Visual C/C++ runtime */
+
+#define close  _close
+
+#define getpid _getpid
+
+#define open   _open
+
+#define chdir   _chdir
+
+/* The MSVC implementation of snprintf is not C99 compliant.  */
+#define snprintf    rk_snprintf
+#define vsnprintf   rk_vsnprintf
+#define vasnprintf  rk_vasnprintf
+#define vasprintf   rk_vasprintf
+#define asnprintf   rk_asnprintf
+#define asprintf    rk_asprintf
+
+#define _PIPE_BUFFER_SZ 8192
+#define pipe(fds) _pipe((fds), _PIPE_BUFFER_SZ, O_BINARY);
+
+#define ftruncate(fd, sz) _chsize((fd), (sz))
+
+ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
+rk_snprintf (char *str, size_t sz, const char *format, ...);
+
+ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
+rk_asprintf (char **ret, const char *format, ...);
+
+ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
+rk_asnprintf (char **ret, size_t max_sz, const char *format, ...);
+
+ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
+rk_vasprintf (char **ret, const char *format, va_list args);
+
+ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
+rk_vasnprintf (char **ret, size_t max_sz, const char *format, va_list args);
+
+ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
+rk_vsnprintf (char *str, size_t sz, const char *format, va_list args);
+
+/* missing stat.h predicates */
+
+#define S_ISREG(m) (((m) & _S_IFREG) == _S_IFREG)
+
+#define S_ISDIR(m) (((m) & _S_IFDIR) == _S_IFDIR)
+
+#define S_ISCHR(m) (((m) & _S_IFCHR) == _S_IFCHR)
+
+#define S_ISFIFO(m) (((m) & _S_IFIFO) == _S_IFIFO)
+
+/* The following are not implemented:
+
+ S_ISLNK(m)
+ S_ISSOCK(m)
+ S_ISBLK(m)
+*/
+
+#endif
+
 #ifndef HAVE_PUTENV
 #define putenv rk_putenv
 ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL putenv(const char *);
@@ -727,6 +788,37 @@ ROKEN_LIB_FUNCTION const char * ROKEN_LIB_CALL
 gai_strerror(int);
 #endif
 
+/* While we are at it, define WinSock specific scatter gather socket
+   I/O. */
+
+#define iovec    _WSABUF
+#define iov_base buf
+#define iov_len  len
+
+struct msghdr {
+    void           *msg_name;
+    socklen_t       msg_namelen;
+    struct iovec   *msg_iov;
+    size_t          msg_iovlen;
+    void           *msg_control;
+    socklen_t       msg_controllen;
+    int             msg_flags;
+};
+
+ROKEN_LIB_FUNCTION ssize_t ROKEN_LIB_CALL
+sendmsg_w32(SOCKET s, const struct msghdr * msg, int flags);
+
+#define sendmsg(s,m,f) sendmsg_w32((s),(m),(f))
+
+#endif
+
+#ifdef NO_SLEEP
+
+ROKEN_LIB_FUNCTION unsigned int ROKEN_LIB_CALL
+sleep(unsigned int seconds);
+
+#endif
+
 ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
 getnameinfo_verified(const struct sockaddr *, socklen_t,
 		     char *, size_t,
@@ -748,6 +840,11 @@ strftime (char *, size_t, const char *, const struct tm *);
 #define strptime rk_strptime
 ROKEN_LIB_FUNCTION char * ROKEN_LIB_CALL
 strptime (const char *, const char *, struct tm *);
+#endif
+
+#ifndef HAVE_GETTIMEOFDAY
+ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
+gettimeofday (struct timeval *, void *);
 #endif
 
 #ifndef HAVE_EMALLOC

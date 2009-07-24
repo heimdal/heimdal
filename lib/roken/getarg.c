@@ -474,7 +474,7 @@ arg_match_long(struct getargs *args, size_t num_args,
 
     default:
 	abort ();
-	return 0;		/* Not-reached */
+	UNREACHABLE(return 0);
     }
 
     /* not reached */

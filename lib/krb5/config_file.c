@@ -413,9 +413,6 @@ krb5_config_parse_file_multi (krb5_context context,
     unsigned lineno = 0;
     krb5_error_code ret;
     struct fileptr f;
-#ifdef KRB5_USE_PATH_TOKENS
-     char * exp_fname = NULL;
-#endif
 
     /**
      * If the fname starts with "~/" parse configuration file in the
@@ -488,10 +485,20 @@ krb5_config_parse_file_multi (krb5_context context,
 	}
 =======
 #ifdef KRB5_USE_PATH_TOKENS
-    ret = _krb5_expand_path_tokens(context, fname, &exp_fname);
-    if (ret)
- 	return ret;
-    fname = exp_fname;
+    {
+	char * exp_fname = NULL;
+
+	ret = _krb5_expand_path_tokens(context, fname, &exp_fname);
+	if (ret) {
+	    if (newfname)
+		free(newfname);
+	    return ret;
+	}
+
+	if (newfname)
+	    free(newfname);
+	fname = newfname = exp_fname;
+    }
 #endif
 
     f.f = fopen(fname, "r");
@@ -502,10 +509,6 @@ krb5_config_parse_file_multi (krb5_context context,
 				fname, strerror(ret));
 	if (newfname)
 	    free(newfname);
-#ifdef KRB5_USE_PATH_TOKENS
- 	if (exp_fname)
- 	    free (exp_fname);
-#endif
 	return ret;
     }
 
@@ -515,19 +518,11 @@ krb5_config_parse_file_multi (krb5_context context,
 	krb5_set_error_message (context, ret, "%s:%u: %s", fname, lineno, str);
 	if (newfname)
 	    free(newfname);
-#ifdef KRB5_USE_PATH_TOKENS
- 	if (exp_fname)
- 	    free (exp_fname);
-#endif
 	return ret;
 >>>>>>> Initial Windows port
     }
     if (newfname)
 	free(newfname);
-#ifdef KRB5_USE_PATH_TOKENS
-    if (exp_fname)
-	free (exp_fname);
-#endif
     return 0;
 }
 

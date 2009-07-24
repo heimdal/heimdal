@@ -8,6 +8,7 @@ AC_DEFUN([rk_WIN32_EXPORT],[AH_TOP([#ifdef $1
 #define $2_VARIABLE __declspec(dllexport)
 #else
 #define $2_FUNCTION
+#define $2_CALL
 #define $2_VARIABLE
 #endif
 #endif

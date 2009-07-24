@@ -75,7 +75,7 @@ krb5_appdefault_boolean(krb5_context context, const char *appname,
     *ret_val = def_val;
 }
 
-void KRB5_LIB_FUNCTION
+KRB5_LIB_FUNCTION void KRB5_LIB_CALL
 krb5_appdefault_string(krb5_context context, const char *appname,
 		       krb5_const_realm realm, const char *option,
 		       const char *def_val, char **ret_val)

@@ -373,7 +373,7 @@ copy_etypes (krb5_context context,
  * @ingroup krb5
  */
 
-krb5_error_code KRB5_LIB_FUNCTION
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_copy_context(krb5_context context, krb5_context *out)
 {
     krb5_error_code ret;
@@ -1195,7 +1195,7 @@ krb5_get_kdc_sec_offset (krb5_context context, int32_t *sec, int32_t *usec)
  * @ingroup krb5
  */
 
-krb5_error_code KRB5_LIB_FUNCTION
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_set_kdc_sec_offset (krb5_context context, int32_t sec, int32_t usec)
 {
     context->kdc_sec_offset = sec;

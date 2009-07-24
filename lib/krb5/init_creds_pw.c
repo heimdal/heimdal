@@ -1866,7 +1866,7 @@ krb5_init_creds_get_error(krb5_context context,
  * @ingroup krb5_credential
  */
 
-void KRB5_LIB_FUNCTION
+KRB5_LIB_FUNCTION void KRB5_LIB_CALL
 krb5_init_creds_free(krb5_context context,
 		     krb5_init_creds_context ctx)
 {

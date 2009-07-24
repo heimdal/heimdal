@@ -55,7 +55,7 @@ rk_dumpdata (const char *filename, const void *buf, size_t size)
  * Read all data from a filename, care about errors.
  */
 
-int ROKEN_LIB_FUNCTION
+ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
 rk_undumpdata(const char *filename, void **buf, size_t *size)
 {
     struct stat sb;

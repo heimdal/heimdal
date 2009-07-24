@@ -2528,7 +2528,7 @@ find_ms_san(hx509_context context, hx509_cert cert, void *ctx)
  * Private since it need to be redesigned using krb5_get_init_creds()
  */
 
-krb5_error_code  KRB5_LIB_FUNCTION
+KRB5_LIB_FUNCTION krb5_error_code  KRB5_LIB_CALL
 _krb5_pk_enterprise_cert(krb5_context context,
 			 const char *user_id,
 			 krb5_const_realm realm,

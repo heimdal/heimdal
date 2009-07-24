@@ -323,6 +323,7 @@ if ($opt_E) {
 #define ${opt_E}_VARIABLE __declspec(dllimport)
 #else
 #define ${opt_E}_FUNCTION
+#define ${opt_E}_CALL
 #define ${opt_E}_VARIABLE
 #endif
 #endif
@@ -337,8 +338,8 @@ if ($opt_E) {
 #define ${opt_E}_VARIABLE __declspec(dllimport)
 #else
 #define ${opt_E}_FUNCTION
-#define ${opt_E}_VARIABLE
 #define ${opt_E}_CALL
+#define ${opt_E}_VARIABLE
 #endif
 #endif
 #endif

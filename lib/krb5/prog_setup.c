@@ -35,7 +35,7 @@
 #include <getarg.h>
 #include <err.h>
 
-KRB5_LIB_FUNCTION void
+KRB5_LIB_FUNCTION void KRB5_LIB_CALL
 krb5_std_usage(int code, struct getargs *args, int num_args)
 {
     arg_printusage(args, num_args, NULL, "");

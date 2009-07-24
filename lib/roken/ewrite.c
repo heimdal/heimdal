@@ -33,8 +33,6 @@
 
 #include <config.h>
 
-#include <err.h>
-
 #include "roken.h"
 
 /*

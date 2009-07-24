@@ -280,9 +280,11 @@
 ROKEN_CPP_START
 
 #ifndef IRIX4 /* fix for compiler bug */
+#ifndef _WIN32
 #ifdef RETSIGTYPE
 typedef RETSIGTYPE (*SigAction)(int);
 SigAction signal(int iSig, SigAction pAction); /* BSD compatible */
+#endif
 #endif
 #endif
 
@@ -377,23 +379,30 @@ socket_set_port (struct sockaddr *, int);
 
 #define socket_set_portrange rk_socket_set_portrange
 ROKEN_LIB_FUNCTION void ROKEN_LIB_CALL
-socket_set_portrange (int, int, int);
+socket_set_portrange (SOCKET, int, int);
 
 #define socket_set_debug rk_socket_set_debug
 ROKEN_LIB_FUNCTION void ROKEN_LIB_CALL
-socket_set_debug (int);
+socket_set_debug (SOCKET);
 
 #define socket_set_tos rk_socket_set_tos
 ROKEN_LIB_FUNCTION void ROKEN_LIB_CALL
-socket_set_tos (int, int);
+socket_set_tos (SOCKET, int);
 
 #define socket_set_reuseaddr rk_socket_set_reuseaddr
 ROKEN_LIB_FUNCTION void ROKEN_LIB_CALL
-socket_set_reuseaddr (int, int);
+socket_set_reuseaddr (SOCKET, int);
 
 #define socket_set_ipv6only rk_socket_set_ipv6only
 ROKEN_LIB_FUNCTION void ROKEN_LIB_CALL
-socket_set_ipv6only (int, int);
+socket_set_ipv6only (SOCKET, int);
+
+#ifdef SOCKET_IS_NOT_AN_FD
+ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
+fd_from_socket(SOCKET, int);
+#else
+#define fd_from_socket(s,f) (s)
+#endif
 
 #define vstrcollect rk_vstrcollect
 ROKEN_LIB_FUNCTION char ** ROKEN_LIB_CALL

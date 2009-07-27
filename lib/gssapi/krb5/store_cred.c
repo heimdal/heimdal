@@ -44,7 +44,10 @@ _gsskrb5_store_cred(OM_uint32         *minor_status,
 		    gss_cred_usage_t  *cred_usage_stored)
 {
     krb5_context context;
+    krb5_error_code ret;
     gsskrb5_cred cred;
+    krb5_ccache id;
+    int destroy = 0;
 
     *minor_status = 0;
 
@@ -69,8 +72,45 @@ _gsskrb5_store_cred(OM_uint32         *minor_status,
 	return(GSS_S_FAILURE);
     }
 
+    if (cred->principal == NULL) {
+	HEIMDAL_MUTEX_unlock(&cred->cred_id_mutex);
+	*minor_status = GSS_KRB5_S_KG_TGT_MISSING;
+	return(GSS_S_FAILURE);
+    }
+
     /* write out cred to credential cache */
 
+    ret = krb5_cc_cache_match(context, cred->principal, &id);
+    if (ret) {
+	ret = krb5_cc_new_unique(context, NULL, NULL, &id);
+	if (ret) {
+	    HEIMDAL_MUTEX_unlock(&cred->cred_id_mutex);
+	    *minor_status = ret;
+	    return(GSS_S_FAILURE);
+	}
+	destroy = 1;
+    }
+
+    ret = krb5_cc_initialize(context, id, cred->principal);
+    if (ret == 0)
+	ret = krb5_cc_copy_match_f(context, cred->ccache, id, NULL, NULL, NULL);
+    if (ret) {
+	if (destroy)
+	    krb5_cc_destroy(context, id);
+	else
+	    krb5_cc_close(context, id);
+	HEIMDAL_MUTEX_unlock(&cred->cred_id_mutex);
+	*minor_status = ret;
+	return(GSS_S_FAILURE);
+    }
+	
+    if (default_cred)
+	krb5_cc_switch(context, id);
+
+    krb5_cc_close(context, id);
+
+    HEIMDAL_MUTEX_unlock(&cred->cred_id_mutex);
+
     *minor_status = 0;
-    return GSS_S_FAILURE;
+    return GSS_S_COMPLETE;
 }

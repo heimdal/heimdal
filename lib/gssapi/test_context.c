@@ -54,6 +54,7 @@ static int getverifymic_flag = 0;
 static int deleg_flag = 0;
 static int policy_deleg_flag = 0;
 static int server_no_deleg_flag = 0;
+static int ei_flag = 0;
 static char *gsskrb5_acceptor_identity = NULL;
 static char *session_enctype_string = NULL;
 static int client_time_offset = 0;
@@ -443,6 +444,7 @@ static struct getargs args[] = {
     {"policy-delegate",0,	arg_flag,	&policy_deleg_flag, "policy delegate credential", NULL },
     {"server-no-delegate",0,	arg_flag,	&server_no_deleg_flag,
      "server should get a credential", NULL },
+    {"export-import-cred",0,	arg_flag,	&ei_flag, "test export/import cred", NULL },
     {"gsskrb5-acceptor-identity", 0, arg_string, &gsskrb5_acceptor_identity, "keytab", NULL },
     {"session-enctype",	0, arg_string,	&session_enctype_string, "enctype", NULL },
     {"client-time-offset",	0, arg_integer,	&client_time_offset, "time", NULL },
@@ -753,16 +755,43 @@ main(int argc, char **argv)
     gss_delete_sec_context(&min_stat, &sctx, NULL);
 
     if (deleg_cred != GSS_C_NO_CREDENTIAL) {
-	gss_cred_id_t deleg_cred2 = GSS_C_NO_CREDENTIAL;
+	gss_cred_id_t cred2 = GSS_C_NO_CREDENTIAL;
+	gss_buffer_desc cb;
 
-	loop(mechoid, nameoid, argv[0], deleg_cred, &cctx, &sctx, &actual_mech, &deleg_cred2);
-
-	gss_release_cred(&min_stat, &deleg_cred2);
+	loop(mechoid, nameoid, argv[0], deleg_cred, &cctx, &sctx, &actual_mech, &cred2);
 
 	gss_delete_sec_context(&min_stat, &cctx, NULL);
 	gss_delete_sec_context(&min_stat, &sctx, NULL);
 
+	gss_release_cred(&min_stat, &cred2);
+
+	/* check export/import */
+	if (ei_flag) {
+
+	    maj_stat = gss_export_cred(&min_stat, deleg_cred, &cb);
+	    if (maj_stat != GSS_S_COMPLETE)
+		errx(1, "export failed: %s",
+		     gssapi_err(maj_stat, min_stat, NULL));
+	    maj_stat = gss_import_cred(&min_stat, &cb, &cred2);
+	    if (maj_stat != GSS_S_COMPLETE)
+		errx(1, "import failed: %s",
+		     gssapi_err(maj_stat, min_stat, NULL));
+	    
+	    gss_release_buffer(&min_stat, &cb);
+	    gss_release_cred(&min_stat, &deleg_cred);
+	    
+	    loop(mechoid, nameoid, argv[0], cred2, &cctx, &sctx, &actual_mech, &deleg_cred);
+
+	    gss_release_cred(&min_stat, &cred2);
+	}
+
+	gss_delete_sec_context(&min_stat, &cctx, NULL);
+	gss_delete_sec_context(&min_stat, &sctx, NULL);
+
+	gss_release_cred(&min_stat, &deleg_cred);
+
     }
+
 
     empty_release();
 

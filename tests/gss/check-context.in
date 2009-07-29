@@ -316,6 +316,24 @@ ${context} \
     --name-type=hostbased-service host@lucid.test.h5l.se || \
 	{ exitcode=1 ; echo "test failed"; }
 
+echo "======export/import cred"
+
+echo "export-import cred (krb5)"
+${context} \
+    --mech-type=krb5 \
+    --delegate \
+    --export-import-cred \
+    --name-type=hostbased-service host@ok-delegate.test.h5l.se || \
+	{ exitcode=1 ; echo "test failed"; }
+
+echo "export-import cred (spnego)"
+${context} \
+    --mech-type=spnego \
+    --delegate \
+    --export-import-cred \
+    --name-type=hostbased-service host@ok-delegate.test.h5l.se || \
+	{ exitcode=1 ; echo "test failed"; }
+
 
 echo "======time diffs between client and server"
 

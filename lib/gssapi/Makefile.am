@@ -27,6 +27,7 @@ krb5src = \
 	krb5/aeap.c \
 	krb5/arcfour.c \
 	krb5/canonicalize_name.c \
+	krb5/creds.c \
 	krb5/ccache_name.c \
 	krb5/cfx.c \
 	krb5/cfx.h \
@@ -87,6 +88,7 @@ mechsrc = \
 	mech/gss_compare_name.c \
 	mech/gss_context_time.c \
 	mech/gss_create_empty_oid_set.c \
+	mech/gss_cred.c \
 	mech/gss_decapsulate_token.c \
 	mech/gss_delete_sec_context.c \
 	mech/gss_display_name.c \

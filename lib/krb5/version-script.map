@@ -710,6 +710,7 @@ HEIMDAL_KRB5_2.0 {
 		# Shared with GSSAPI krb5
 		_krb5_crc_init_table;		
 		_krb5_crc_update;		
+		_krb5_get_krbtgt;
 
 		# V4 compat glue
 		_krb5_krb_tf_setup;

@@ -238,7 +238,7 @@ load_plugins(krb5_context context)
 	    if (e) {
 		free(path);
 	    } else {
-		ret = loadlib(context, path); /* store or frees path */
+		loadlib(context, path); /* store or frees path */
 	    }
 	}
 	closedir(d);

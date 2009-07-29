@@ -395,7 +395,6 @@ doit(const char *filename, int mergep)
     line = 0;
     ret = 0;
     while(fgets(s, sizeof(s), f) != NULL) {
-	ret = 0;
 	line++;
 
 	p = s;
@@ -441,7 +440,7 @@ doit(const char *filename, int mergep)
 	p = skip_next(p);
 
 	e.generation = p;
-	p = skip_next(p);
+	skip_next(p);
 
 	e.extensions = p;
 	p = skip_next(p);

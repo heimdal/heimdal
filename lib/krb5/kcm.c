@@ -1098,7 +1098,6 @@ _krb5_kcm_get_initial_ticket(krb5_context context,
 			     krb5_keyblock *key)
 {
     krb5_error_code ret;
-    krb5_kcmcache *k = KCMCACHE(id);
     krb5_storage *request;
 
     ret = kcm_storage_request(context, KCM_OP_GET_INITIAL_TICKET, &request);

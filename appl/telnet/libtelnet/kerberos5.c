@@ -489,6 +489,7 @@ kerberos5_is(Authenticator *ap, unsigned char *data, int cnt)
 		log_message("Kerberos V5: "
 			    "krb5_mk_rep failed (%s)",
 			    krb5_get_err_text(context, ret));
+		krb5_free_keyblock_contents(context, key_block);
 		return;
 	    }
 	    Data(ap, KRB_RESPONSE, outbuf.data, outbuf.length);

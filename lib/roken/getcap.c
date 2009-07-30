@@ -854,7 +854,9 @@ cgetstr(char *buf, const char *cap, char **str)
     const char *bp;
     char *mp;
     int len;
-    char *mem;
+    char *mem, *nmem;
+
+    *str = NULL;
 
     /*
      * Find string capability cap
@@ -941,8 +943,11 @@ cgetstr(char *buf, const char *cap, char **str)
 	if (m_room == 0) {
 	    size_t size = mp - mem;
 
-	    if ((mem = realloc(mem, size + SFRAG)) == NULL)
+	    if ((nmem = realloc(mem, size + SFRAG)) == NULL) {
+		free(mem);
 		return (-2);
+	    }
+	    mem = nmem;
 	    m_room = SFRAG;
 	    mp = mem + size;
 	}
@@ -954,9 +959,13 @@ cgetstr(char *buf, const char *cap, char **str)
     /*
      * Give back any extra memory and return value and success.
      */
-    if (m_room != 0)
-	if ((mem = realloc(mem, (size_t)(mp - mem))) == NULL)
+    if (m_room != 0) {
+	if ((nmem = realloc(mem, (size_t)(mp - mem))) == NULL) {
+	    free(mem);
 	    return (-2);
+	}
+	mem = nmem;
+    }
     *str = mem;
     return (len);
 }

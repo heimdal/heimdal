@@ -87,8 +87,10 @@ stash(struct stash_options *opt, int argc, char **argv)
 	    n = read(opt->master_key_fd_integer, buf, sizeof(buf));
 	    if(n == 0)
 		krb5_warnx(context, "end of file reading passphrase");
-	    else if(n < 0)
+	    else if(n < 0) {
 		krb5_warn(context, errno, "reading passphrase");
+		n = 0;
+	    }
 	    buf[n] = '\0';
 	    buf[strcspn(buf, "\r\n")] = '\0';
 	} else {

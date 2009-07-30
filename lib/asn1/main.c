@@ -142,6 +142,10 @@ main(int argc, char **argv)
 	}
 
 	arg = calloc(2, sizeof(arg[0]));
+	if (arg == NULL) {
+	    perror("calloc");
+	    exit(1);
+	}
 	arg[0] = option_file;
 	arg[1] = NULL;
 	len = 1;

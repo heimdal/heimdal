@@ -12,7 +12,7 @@ login_SOURCES =					\
 		login.c				\
 		login_access.c			\
 		login_locl.h			\
-		login_protos.h			\
+		login-protos.h			\
 		loginpaths.h			\
 		limits_conf.c			\
 		osfc2.c				\
@@ -32,9 +32,9 @@ LDADD = $(LIB_otp) \
 	$(LIB_security) \
 	$(DBLIB)
 
-$(srcdir)/login_protos.h:
-	cd $(srcdir); perl ../../cf/make-proto.pl -o login_protos.h -q -P comment $(login_SOURCES) || rm -f login_protos.h
+$(srcdir)/login-protos.h:
+	cd $(srcdir); perl ../../cf/make-proto.pl -o login-protos.h -q -P comment $(login_SOURCES) || rm -f login-protos.h
 
-$(login_OBJECTS): $(srcdir)/login_protos.h
+$(login_OBJECTS): $(srcdir)/login-protos.h
 
 EXTRA_DIST = $(man_MANS)

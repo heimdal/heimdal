@@ -150,6 +150,6 @@ struct spwd;
 extern char **env;
 extern int num_env;
 
-#include "login_protos.h"
+#include "login-protos.h"
 
 #endif /* __LOGIN_LOCL_H__ */

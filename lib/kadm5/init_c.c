@@ -370,8 +370,8 @@ _kadm5_c_get_cred_cache(krb5_context context,
 	client = default_client;
 
 
-    if(id && (default_client == NULL ||
-	      krb5_principal_compare(context, client, default_client))) {
+    if(id && client && (default_client == NULL ||
+	      krb5_principal_compare(context, client, default_client) != 0)) {
 	ret = get_kadm_ticket(context, id, client, server_name);
 	if(ret == 0) {
 	    *ret_cache = id;

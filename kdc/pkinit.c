@@ -1450,8 +1450,10 @@ _kdc_pk_mk_pa_reply(krb5_context context,
 
 	ret = krb5_generate_random_keyblock(context, sessionetype, 
 					    sessionkey);
-	if (ret)
+	if (ret) {
+	    free(buf);
 	    goto out;
+	}
 
     } else
 	krb5_abortx(context, "PK-INIT internal error");

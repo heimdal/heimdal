@@ -171,11 +171,17 @@ recv_conn (int sock, kx_context *kc,
      if (*p != INIT)
 	 fatal(kc, sock, "Bad message");
      p++;
+     if ((p - msg) < sizeof(msg))
+	 fatal(kc, sock, "user");
+
      p += kx_get_int (p, &tmp32, 4, 0);
-     len = min(sizeof(user), tmp32);
-     memcpy (user, p, len);
+     if (tmp32 >= sizeof(user) - 1)
+	 fatal(kc, sock, "user name too long");
+     if ((p - msg) + tmp32 >= sizeof(msg))
+	 fatal(kc, sock, "user too long");
+     memcpy (user, p, tmp32);
      p += tmp32;
-     user[len] = '\0';
+     user[tmp32] = '\0';
 
      passwd = k_getpwnam (user);
      if (passwd == NULL)
@@ -184,6 +190,9 @@ recv_conn (int sock, kx_context *kc,
      if (context_userok (kc, user) != 0)
 	 fatal (kc, sock, "%s not allowed to login as %s",
 		kc->user, user);
+
+     if ((p - msg) >= sizeof(msg))
+	 fatal(kc, sock, "user too long");
 
      flags = *p++;
 
@@ -240,15 +249,17 @@ recv_conn (int sock, kx_context *kc,
      umask(077);
      if (!(flags & PASSIVE)) {
 	 p += kx_get_int (p, &tmp32, 4, 0);
-	 len = min(tmp32, display_size);
-	 memcpy (display, p, len);
-	 display[len] = '\0';
+	 if (tmp32 > display_size)
+	     fatal(kc, sock, "display too large");
+	 if ((p - msg) + tmp32 + 8 >= sizeof(msg))
+	     fatal(kc, sock, "user too long");
+	 memcpy (display, p, tmp32);
+	 display[tmp32] = '\0';
 	 p += tmp32;
 	 p += kx_get_int (p, &tmp32, 4, 0);
 	 len = min(tmp32, xauthfile_size);
 	 memcpy (xauthfile, p, len);
 	 xauthfile[len] = '\0';
-	 p += tmp32;
      }
 #if defined(SO_KEEPALIVE) && defined(HAVE_SETSOCKOPT)
      if (flags & KEEP_ALIVE) {

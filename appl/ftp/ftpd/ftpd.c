@@ -1111,10 +1111,14 @@ do_store(char *name, char *mode, int unique)
 
 	if(guest && filename_check(name))
 	    return;
-	if (unique && stat(name, &st) == 0 &&
-	    (name = gunique(name)) == NULL) {
-		LOGCMD(*mode == 'w' ? "put" : "append", name);
-		return;
+	if (unique) {
+	    char *uname;
+	    if (stat(name, &st) == 0) {
+		if ((uname = gunique(name)) == NULL)
+		    return;
+		name = uname;
+	    }
+	    LOGCMD(*mode == 'w' ? "put" : "append", name);
 	}
 
 	if (restart_point)

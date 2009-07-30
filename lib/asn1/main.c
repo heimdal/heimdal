@@ -150,7 +150,7 @@ main(int argc, char **argv)
 	    buf[strcspn(buf, "\n\r")] = '\0';
 
 	    arg = realloc(arg, (len + 2) * sizeof(arg[0]));
-	    if (argv == NULL) {
+	    if (arg == NULL) {
 		perror("malloc");
 		exit(1);
 	    }

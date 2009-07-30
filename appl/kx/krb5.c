@@ -416,6 +416,8 @@ recv_v5_auth (kx_context *kc, int sock, u_char *buf)
     ticket->client = NULL;
     krb5_free_ticket (CONTEXT(kc), ticket);
 
+    krb5_auth_con_free(CONTEXT(kc), auth_context);
+
     return 0;
 }
 

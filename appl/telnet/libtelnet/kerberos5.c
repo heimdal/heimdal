@@ -489,7 +489,7 @@ kerberos5_is(Authenticator *ap, unsigned char *data, int cnt)
 		log_message("Kerberos V5: "
 			    "krb5_mk_rep failed (%s)",
 			    krb5_get_err_text(context, ret));
-		krb5_free_keyblock_contents(context, key_block);
+		krb5_free_keyblock(context, key_block);
 		return;
 	    }
 	    Data(ap, KRB_RESPONSE, outbuf.data, outbuf.length);
@@ -531,11 +531,11 @@ kerberos5_is(Authenticator *ap, unsigned char *data, int cnt)
 	    if (ret != -1)
 		free(msg);
 	    auth_finished (ap, AUTH_REJECT);
-	    krb5_free_keyblock_contents(context, key_block);
+	    krb5_free_keyblock(context, key_block);
 	    break;
 	}
 	auth_finished(ap, AUTH_USER);
-	krb5_free_keyblock_contents(context, key_block);
+	krb5_free_keyblock(context, key_block);
 	
 	break;
     case KRB_FORWARD: {
@@ -658,7 +658,7 @@ kerberos5_reply(Authenticator *ap, unsigned char *data, int cnt)
 	skey.length = 8;
 	skey.data = keyblock->keyvalue.data;
 	encrypt_session_key(&skey, 0);
-	krb5_free_keyblock_contents (context, keyblock);
+	krb5_free_keyblock (context, keyblock);
 	auth_finished(ap, AUTH_USER);
 	if (forward_flags & OPTS_FORWARD_CREDS)
 	    kerberos5_forward(ap);

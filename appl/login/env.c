@@ -82,7 +82,7 @@ copy_env(void)
 	extend_env(*p);
 }
 
-int
+void
 login_read_env(const char *file)
 {
     char **newenv;
@@ -93,11 +93,13 @@ login_read_env(const char *file)
     i = read_environment(file, &newenv);
     for (j = 0; j < i; j++) {
 	p = strchr(newenv[j], '=');
+	if (p == NULL)
+	    errx(1, "%s: missing = in string %s",
+		 file, newenv[j]);
 	*p++ = 0;
 	add_env(newenv[j], p);
 	*--p = '=';
 	free(newenv[j]);
     }
     free(newenv);
-    return 0;
 }

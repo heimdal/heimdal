@@ -103,7 +103,7 @@ rk_strpoolcollect(struct rk_strpool *p)
     char *str;
     if (p == NULL)
 	return strdup("");
-    str =  = p->str;
+    str = p->str;
     p->str = NULL;
     free(p);
     return str;

@@ -99,6 +99,11 @@ main(int argc, char **argv)
 	ret = krb5_parse_name(context, argv[0], &principal);
 	if (ret)
 	    krb5_err(context, 1, ret, "krb5_parse_name: %s", argv[0]);
+    } else {
+	ret = krb5_get_default_principal(context, &principal);
+	if (ret)
+	    krb5_err(context, 1, ret, "krb5_get_default_principal");
+		     
     }
 
     ret = krb5_get_init_creds_password (context,

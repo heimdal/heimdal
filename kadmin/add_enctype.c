@@ -102,6 +102,7 @@ add_enctype(struct add_enctype_options*opt, int argc, char **argv)
 	    if (etypes[j] == key->key_data_type[0]) {
 		krb5_warnx(context, "enctype %d already exists",
 			   (int)etypes[j]);
+		free(new_key_data);
 		goto out;
 	    }
 	}

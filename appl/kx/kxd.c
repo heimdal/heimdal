@@ -99,6 +99,7 @@ cleanup(int nsockets, struct x_socket *sockets)
 	    free (sockets[i].pathname);
 	}
     }
+    free(sockets);
 }
 
 /*

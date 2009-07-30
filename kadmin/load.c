@@ -333,8 +333,10 @@ parse_extensions(char *str, HDB_extensions **e)
 	d = malloc(len);
 
 	len = hex_decode(p, d, len);
-	if (len < 0)
+	if (len < 0) {
+	    free(d);
 	    return -1;
+	}
 
 	ret = decode_HDB_extension(d, len, &ext, NULL);
 	free(d);

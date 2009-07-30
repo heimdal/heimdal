@@ -58,6 +58,8 @@ kadmind_dispatch(void *kadm_handle, krb5_boolean initial,
 			    client, sizeof(client));
 
     sp = krb5_storage_from_data(in);
+    if (sp == NULL)
+	krb5_errx(context, 1, "out of memory");
 
     krb5_ret_int32(sp, &cmd);
     switch(cmd){

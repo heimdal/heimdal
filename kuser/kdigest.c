@@ -121,6 +121,8 @@ digest_server_init(struct digest_server_init_options *opt,
     }
     printf("opaque=%s\n", krb5_digest_get_opaque(context, digest));
 
+    krb5_digest_free(digest);
+
     return 0;
 }
 
@@ -212,6 +214,8 @@ digest_server_request(struct digest_server_request_options *opt,
 	printf("session-key=%s\n", key);
 	free(key);
     }
+
+    krb5_digest_free(digest);
 
     return 0;
 }

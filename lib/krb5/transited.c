@@ -358,17 +358,15 @@ krb5_domain_x500_decode(krb5_context context,
 	return ret;
 
     /* remove empty components and count realms */
-    q = &r;
     *num_realms = 0;
-    for(p = r; p; ){
-	if(p->realm[0] == '\0'){
-	    free(p->realm);
-	    *q = p->next;
-	    free(p);
+    for(q = &r; *q; ){
+	if((*q)->realm[0] == '\0'){
 	    p = *q;
+	    *q = (*q)->next;
+	    free(p->realm);
+	    free(p);
 	}else{
-	    q = &p->next;
-	    p = p->next;
+	    q = &(*q)->next;
 	    (*num_realms)++;
 	}
     }

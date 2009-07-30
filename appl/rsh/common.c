@@ -97,8 +97,10 @@ do_read (int fd, void *buf, size_t sz, void *ivec)
 	    if (edata == NULL)
 		errx (1, "malloc: cannot allocate %u bytes", outer_len);
 	    ret = krb5_net_read (context, &fd, edata, outer_len);
-	    if (ret <= 0)
+	    if (ret <= 0) {
+		free(edata);
 		return ret;
+	    }
 
 	    status = krb5_decrypt_ivec(context, crypto, key_usage,
 				       edata, outer_len, &data, ivec);

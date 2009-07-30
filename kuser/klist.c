@@ -537,8 +537,8 @@ list_caches(void)
 	    free(name);
 	}
 	krb5_cc_close(context, id);
-	if (principal)
-	    krb5_free_principal(context, principal);
+
+	krb5_free_principal(context, principal);
     }
 
     krb5_cc_cache_end_seq_get(context, cursor);

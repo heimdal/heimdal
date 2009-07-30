@@ -252,6 +252,7 @@ add_slave (krb5_context context, krb5_keytab keytab, slave **root, int fd)
 	goto error;
     }
     ret = krb5_unparse_name (context, ticket->client, &s->name);
+    krb5_free_ticket (context, ticket);
     if (ret) {
 	krb5_warn (context, ret, "krb5_unparse_name");
 	goto error;
@@ -260,8 +261,6 @@ add_slave (krb5_context context, krb5_keytab keytab, slave **root, int fd)
 	krb5_warnx (context, "%s not in acl", s->name);
 	goto error;
     }
-    krb5_free_ticket (context, ticket);
-    ticket = NULL;
 
     {
 	slave *l = *root;

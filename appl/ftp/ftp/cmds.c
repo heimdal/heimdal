@@ -1759,6 +1759,11 @@ setnmap(int argc, char **argv)
 	mapflag = 1;
 	code = 1;
 	cp = strchr(altarg, ' ');
+	if (cp == NULL) {
+		printf("Usage: %s missing space\n",argv[0]);
+		code = -1;
+		return;
+	}
 	if (proxy) {
 		while(*++cp == ' ')
 			continue;

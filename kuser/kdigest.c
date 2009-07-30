@@ -403,7 +403,9 @@ digest_client_request(struct digest_client_request_options *opt,
 			opt->username_string,
 			opt->password_string);
     }
-	
+    if (client_nonce)
+	free(client_nonce);
+    free(server_nonce);
 
     return 0;
 }

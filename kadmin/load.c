@@ -442,10 +442,10 @@ doit(const char *filename, int mergep)
 	p = skip_next(p);
 
 	e.generation = p;
-	skip_next(p);
+	p = skip_next(p);
 
 	e.extensions = p;
-	p = skip_next(p);
+	skip_next(p);
 
 	memset(&ent, 0, sizeof(ent));
 	ret = krb5_parse_name(context, e.principal, &ent.entry.principal);

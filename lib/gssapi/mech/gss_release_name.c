@@ -33,9 +33,14 @@ OM_uint32 GSSAPI_LIB_FUNCTION
 gss_release_name(OM_uint32 *minor_status,
     gss_name_t *input_name)
 {
-	struct _gss_name *name = (struct _gss_name *) *input_name;
+	struct _gss_name *name;
 
 	*minor_status = 0;
+
+	if (input_name == NULL || *input_name == NULL)
+	    return GSS_S_COMPLETE;
+
+	name = (struct _gss_name *) *input_name;
 	if (name) {
 		if (name->gn_type.elements)
 			free(name->gn_type.elements);

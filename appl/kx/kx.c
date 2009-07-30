@@ -436,10 +436,9 @@ doit_active (kx_context *kc)
 	snprintf (display, display_size, ":%u", display_num);
     error = create_and_write_cookie (xauthfile, xauthfile_size,
 				     cookie, cookie_len);
-    if (error) {
-	warnx ("failed creating cookie file: %s", strerror(error));
-	return 1;
-    }
+    if (error)
+	errx(1, "failed creating cookie file: %s", strerror(error));
+
     status_output (kc->debug_flag);
     for (;;) {
 	fd_set fdset;

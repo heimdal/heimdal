@@ -163,7 +163,7 @@ extern int disallow_getting_krbtgt;
 extern const krb5_cc_ops krb5_kcmss_ops;
 #endif
 
-#include <kcm_protos.h>
+#include <kcm-protos.h>
 
 #endif /* __KCM_LOCL_H__ */
 

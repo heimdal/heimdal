@@ -17,16 +17,16 @@ kcm_SOURCES =		\
 	glue.c		\
 	headers.h	\
 	kcm_locl.h	\
-	kcm_protos.h	\
+	kcm-protos.h	\
 	log.c		\
 	main.c		\
 	protocol.c	\
 	renew.c
 
-$(srcdir)/kcm_protos.h:
-	cd $(srcdir); perl ../cf/make-proto.pl -o kcm_protos.h -q -P comment $(kcm_SOURCES) || rm -f kcm_protos.h
+$(srcdir)/kcm-protos.h:
+	cd $(srcdir); perl ../cf/make-proto.pl -o kcm-protos.h -q -P comment $(kcm_SOURCES) || rm -f kcm-protos.h
 
-$(kcm_OBJECTS): $(srcdir)/kcm_protos.h
+$(kcm_OBJECTS): $(srcdir)/kcm-protos.h
 
 man_MANS = kcm.8
 

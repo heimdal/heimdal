@@ -195,17 +195,25 @@ krb5_recvauth_match_version(krb5_context context,
     if (krb5_net_write (context, p_fd, &len, 4) != 4) {
 	ret = errno;
 	krb5_set_error_message(context, ret, "write: %s", strerror(ret));
+	krb5_free_ticket(*ticket);
+	*ticket = NULL;
 	return ret;
     }
 
     if (ap_options & AP_OPTS_MUTUAL_REQUIRED) {
 	ret = krb5_mk_rep (context, *auth_context, &data);
-	if (ret)
+	if (ret) {
+	    krb5_free_ticket(*ticket);
+	    *ticket = NULL;
 	    return ret;
+	}
 
 	ret = krb5_write_message (context, p_fd, &data);
-	if (ret)
+	if (ret) {
+	    krb5_free_ticket(*ticket);
+	    *ticket = NULL;
 	    return ret;
+	}
 	krb5_data_free (&data);
     }
     return 0;

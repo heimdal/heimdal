@@ -115,7 +115,7 @@ gss_import_cred(OM_uint32 * minor_status,
     gssapi_mech_interface m;
     krb5_error_code ret;
     struct _gss_cred *cred;
-    krb5_storage *sp;
+    krb5_storage *sp = NULL;
     OM_uint32 major, junk;
     krb5_data data;
 
@@ -204,6 +204,7 @@ gss_import_cred(OM_uint32 * minor_status,
 	SLIST_INSERT_HEAD(&cred->gc_mc, mc, gmc_link);
     }
     krb5_storage_free(sp);
+    sp = NULL;
 
     if (SLIST_EMPTY(&cred->gc_mc)) {
 	major = GSS_S_NO_CRED;
@@ -213,7 +214,8 @@ gss_import_cred(OM_uint32 * minor_status,
     return GSS_S_COMPLETE;
 
  out:
-    krb5_storage_free(sp);
+    if (sp)
+	krb5_storage_free(sp);
 
     gss_release_cred(&junk, cred_handle);
 

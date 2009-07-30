@@ -20,7 +20,7 @@ Makefile.in
 /ltmain.sh
 /missing
 /ylwrap
-/appl/login/login_protos.h
+/appl/login/login-protos.h
 /cf/libtool.m4
 /cf/ltoptions.m4
 /cf/ltsugar.m4
@@ -38,7 +38,7 @@ Makefile.in
 /doc/wind
 /include/config.h.in
 /include/stamp-h.in
-/kcm/kcm_protos.h
+/kcm/kcm-protos.h
 /kdc/kdc-protos.h
 /kdc/kdc-private.h
 /lib/asn1/der-protos.h

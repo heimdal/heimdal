@@ -40,7 +40,6 @@ CLEANFILES =			\
 	hdb_err.h		\
 	heim_asn1.h		\
 	heim_err.h		\
-	heim_threads.h		\
 	heimntlm-protos.h	\
 	heimntlm.h		\
 	hex.h			\

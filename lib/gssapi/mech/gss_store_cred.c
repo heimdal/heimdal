@@ -57,7 +57,7 @@ gss_store_cred(OM_uint32         *minor_status,
     if (cred == NULL)
 	return GSS_S_NO_CONTEXT;
 
-    if (cred_usage_stored) {
+    if (elements_stored) {
 	maj = gss_create_empty_oid_set(minor_status, elements_stored);
 	if (maj != GSS_S_COMPLETE)
 	    return maj;

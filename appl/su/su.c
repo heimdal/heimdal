@@ -453,6 +453,8 @@ main(int argc, char **argv)
 
 	    for (j = 0; j < i; j++) {
 		char *p = strchr(newenv[j], '=');
+		if (p == NULL)
+		    errx(1, "enviroment '%s' missing '='", newenv[j]);
 		*p++ = 0;
 		esetenv (newenv[j], p, 1);
 	    }

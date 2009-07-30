@@ -396,6 +396,8 @@ recv_krb5_auth (int s, u_char *buf,
 	}
     }	
 
+    krb5_auth_con_free(context, auth_context);
+
     return 0;
 }
 #endif /* KRB5 */

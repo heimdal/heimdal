@@ -678,7 +678,7 @@ sendrequest (char *cmd, char *local, char *remote, char *lmode, int printnames)
     char *rmode = "w";
 
     if (verbose && printnames) {
-	if (local && strcmp (local, "-") != 0)
+	if (strcmp (local, "-") != 0)
 	    printf ("local: %s ", local);
 	if (remote)
 	    printf ("remote: %s\n", remote);

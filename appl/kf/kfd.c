@@ -274,7 +274,10 @@ proto (int sock, const char *service)
 
     data.data = ret_string;
     data.length = strlen(ret_string) + 1;
-    return krb5_write_priv_message(context, auth_context, &sock, &data);
+    status = krb5_write_priv_message(context, auth_context, &sock, &data);
+    krb5_auth_con_free(context, auth_context);
+
+    return status;
 }
 
 static int

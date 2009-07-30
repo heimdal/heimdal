@@ -1457,8 +1457,11 @@ pk_rd_pa_reply_dh(krb5_context context,
 #endif
     }
 	
-    if (dh_gen_keylen >= 0) {
+    if (dh_gen_keylen <= 0) {
 	ret = EINVAL;
+	krb5_set_error_message(context, ret,
+			       N_("PKINIT: resulting DH key <= 0", ""));
+	dh_gen_keylen = 0;
 	goto out;
     }
 

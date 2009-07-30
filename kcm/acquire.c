@@ -87,7 +87,9 @@ kcm_ccache_acquire(krb5_context context,
 
     realm = krb5_principal_get_realm(context, ccache->client);
 
-    krb5_get_init_creds_opt_alloc(context, &opt);
+    ret = krb5_get_init_creds_opt_alloc(context, &opt);
+    if (ret)
+	goto out;
     krb5_get_init_creds_opt_set_default_flags(context, "kcm", realm, opt);
     if (ccache->tkt_life != 0)
 	krb5_get_init_creds_opt_set_tkt_life(opt, ccache->tkt_life);

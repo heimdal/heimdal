@@ -550,14 +550,20 @@ void mec(char *msg, enum protection_level level)
     }
     buf_size = strlen(msg) + 2;
     buf = malloc(buf_size);
+    if (buf == NULL) {
+	reply(501, "Failed to allocate %lu", (unsigned long)buf_size);
+	return;
+    }
     len = base64_decode(msg, buf);
     command_prot = level;
     if(len == (size_t)-1) {
+	free(buf);
 	reply(501, "Failed to base64-decode command");
 	return;
     }
     len = (*mech->decode)(app_data, buf, len, level);
     if(len == (size_t)-1) {
+	free(buf);
 	reply(535, "Failed to decode command");
 	return;
     }

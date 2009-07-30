@@ -46,8 +46,8 @@ OM_uint32 _gss_ntlm_inquire_cred
 {
     OM_uint32 ret, junk;
 
-    if (minor_status)
-	*minor_status = 0;
+    *minor_status = 0;
+
     if (name)
 	*name = GSS_C_NO_NAME;
     if (lifetime)

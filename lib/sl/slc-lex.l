@@ -100,14 +100,7 @@ handle_comment(void)
 	    }
 	    seen_slash = 1;
 	    continue;
-	}
-	if(seen_star && c == '/') {
-	    if(--level == 0)
-		return;
-	    seen_star = 0;
-	    continue;
-	}
-	if(c == '*') {
+	} else if(c == '*') {
 	    if(seen_slash) {
 		level++;
 		seen_star = seen_slash = 0;

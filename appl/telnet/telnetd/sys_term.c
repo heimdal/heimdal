@@ -1333,7 +1333,7 @@ start_login(const char *host, int autologin, char *name)
     addarg(&argv, "-h");
     addarg(&argv, host);
     addarg(&argv, "-p");
-    if(name[0])
+    if(name && name[0])
 	user = name;
     else
 	user = getenv("USER");

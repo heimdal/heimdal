@@ -936,7 +936,7 @@ recvrequest (char *cmd, char *local, char *remote,
 	return;
     }
     oldintr = signal (SIGINT, abortrecv);
-    if (!local_given || (strcmp (local, "-") && *local != '|')) {
+    if (!local_given || (local && (strcmp(local, "-") && *local != '|'))) {
 	if (access (local, 2) < 0) {
 	    char *dir = strrchr (local, '/');
 

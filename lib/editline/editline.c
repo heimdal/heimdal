@@ -1301,7 +1301,7 @@ argify(unsigned char *line, unsigned char ***avp)
 static el_STATUS
 last_argument(void)
 {
-    unsigned char	**av;
+    unsigned char	**av = NULL;
     unsigned char	*p;
     el_STATUS	s;
     int		ac;
@@ -1318,7 +1318,7 @@ last_argument(void)
     else
 	s = ac ? insert_string(av[ac - 1]) : CSstay;
 
-    if (ac)
+    if (av)
 	free(av);
     free(p);
     return s;

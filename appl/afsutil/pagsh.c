@@ -169,6 +169,8 @@ main(int argc, char **argv)
 	path = getenv("SHELL");
 	if(path == NULL){
 	    struct passwd *pw = k_getpwuid(geteuid());
+	    if (pw == NULL)
+		errx(1, "no such user: %d", (int)geteuid());
 	    path = strdup(pw->pw_shell);
 	}
     } else {

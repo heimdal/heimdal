@@ -428,7 +428,7 @@ doit_active (kx_context *kc)
 
     tmp2 = get_xsockets (&nsockets, &sockets, kc->tcp_flag);
     if (tmp2 < 0)
-	return 1;
+	errx(1, "Failed to open sockets");
     display_num = tmp2;
     if (kc->tcp_flag)
 	snprintf (display, display_size, "localhost:%u", display_num);

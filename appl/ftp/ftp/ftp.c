@@ -909,7 +909,7 @@ recvrequest (char *cmd, char *local, char *remote,
 
     is_retr = strcmp (cmd, "RETR") == 0;
     if (is_retr && verbose && printnames) {
-	if (local && strcmp (local, "-") != 0)
+	if (strcmp (local, "-") != 0)
 	    printf ("local: %s ", local);
 	if (remote)
 	    printf ("remote: %s\n", remote);
@@ -936,7 +936,7 @@ recvrequest (char *cmd, char *local, char *remote,
 	return;
     }
     oldintr = signal (SIGINT, abortrecv);
-    if (!local_given || (local && (strcmp(local, "-") && *local != '|'))) {
+    if (!local_given || (strcmp(local, "-") && *local != '|')) {
 	if (access (local, 2) < 0) {
 	    char *dir = strrchr (local, '/');
 

@@ -146,6 +146,7 @@ proto (int sock, const char *hostname, const char *service,
 					     auth_context,
 					     &sock);
     if (status) {
+	krb5_auth_con_free(context, auth_context);
 	krb5_warn (context, status, "krb5_auth_con_setaddr");
 	return 1;
     }
@@ -156,6 +157,7 @@ proto (int sock, const char *hostname, const char *service,
 				      KRB5_NT_SRV_HST,
 				      &server);
     if (status) {
+	krb5_auth_con_free(context, auth_context);
 	krb5_warn (context, status, "krb5_sname_to_principal");
 	return 1;
     }
@@ -174,6 +176,7 @@ proto (int sock, const char *hostname, const char *service,
 			    NULL,
 			    NULL);
     if (status) {
+	krb5_auth_con_free(context, auth_context);
 	krb5_warn(context, status, "krb5_sendauth");
 	return 1;
     }
@@ -185,6 +188,7 @@ proto (int sock, const char *hostname, const char *service,
     data_send.length = strlen(remote_name) + 1;
     status = krb5_write_priv_message(context, auth_context, &sock, &data_send);
     if (status) {
+	krb5_auth_con_free(context, auth_context);
 	krb5_warn (context, status, "krb5_write_message");
 	return 1;
     }
@@ -192,6 +196,7 @@ proto (int sock, const char *hostname, const char *service,
     data_send.length = strlen(ccache_name)+1;
     status = krb5_write_priv_message(context, auth_context, &sock, &data_send);
     if (status) {
+	krb5_auth_con_free(context, auth_context);
 	krb5_warn (context, status, "krb5_write_message");
 	return 1;
     }
@@ -200,12 +205,14 @@ proto (int sock, const char *hostname, const char *service,
 
     status = krb5_cc_default (context, &ccache);
     if (status) {
+	krb5_auth_con_free(context, auth_context);
 	krb5_warn (context, status, "krb5_cc_default");
 	return 1;
     }
 
     status = krb5_cc_get_principal (context, ccache, &principal);
     if (status) {
+	krb5_auth_con_free(context, auth_context);
 	krb5_warn (context, status, "krb5_cc_get_principal");
 	return 1;
     }
@@ -220,6 +227,7 @@ proto (int sock, const char *hostname, const char *service,
 				  NULL);
 
     if (status) {
+	krb5_auth_con_free(context, auth_context);
 	krb5_warn (context, status, "krb5_make_principal");
 	return 1;
     }
@@ -238,6 +246,7 @@ proto (int sock, const char *hostname, const char *service,
 				       &creds,
 				       &data);
     if (status) {
+	krb5_auth_con_free(context, auth_context);
 	krb5_warn (context, status, "krb5_get_forwarded_creds");
 	return 1;
     }
@@ -245,6 +254,7 @@ proto (int sock, const char *hostname, const char *service,
     status = krb5_write_priv_message(context, auth_context, &sock, &data);
 
     if (status) {
+	krb5_auth_con_free(context, auth_context);
 	krb5_warn (context, status, "krb5_mk_priv");
 	return 1;
     }
@@ -252,6 +262,7 @@ proto (int sock, const char *hostname, const char *service,
     krb5_data_free (&data);
 
     status = krb5_read_priv_message(context, auth_context, &sock, &data);
+    krb5_auth_con_free(context, auth_context);
     if (status) {
 	krb5_warn (context, status, "krb5_mk_priv");
 	return 1;

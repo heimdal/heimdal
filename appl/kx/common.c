@@ -270,7 +270,7 @@ get_xsockets (int *number, struct x_socket **sockets, int tcp_socket)
 	     tmp = try_socket (&s[n], dpy, *path);
 	     if (tmp == -1) {
 		 if (errno != ENOTDIR && errno != ENOENT)
-		     return -1;
+		     err(1, "failed to open '%s'", *path);
 	     } else if (tmp == 1) {
 		 while(--n >= 0) {
 		     close (s[n].fd);
@@ -288,7 +288,7 @@ get_xsockets (int *number, struct x_socket **sockets, int tcp_socket)
 	     tmp = try_pipe (&s[n], dpy, *path);
 	     if (tmp == -1) {
 		 if (errno != ENOTDIR && errno != ENOENT && errno != ENOSYS)
-		     return -1;
+		     err(1, "failed to open '%s'", *path);
 	     } else if (tmp == 1) {
 		 while (--n >= 0) {
 		     close (s[n].fd);
@@ -306,7 +306,7 @@ get_xsockets (int *number, struct x_socket **sockets, int tcp_socket)
 	 if (tcp_socket) {
 	     tmp = try_tcp (&s[n], dpy);
 	     if (tmp == -1)
-		 return -1;
+		 err(1, "failed to open tcp stocket");
 	     else if (tmp == 1) {
 		 while (--n >= 0) {
 		     close (s[n].fd);

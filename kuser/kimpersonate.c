@@ -128,6 +128,7 @@ encode_ticket (krb5_context context,
 	krb5_err (context, 1, ret, "encode_Ticket");
 
     krb5_data_copy(&cred->ticket, buf, len);
+    free(buf);
 }
 
 /*

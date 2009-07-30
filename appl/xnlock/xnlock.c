@@ -822,7 +822,7 @@ talk(int force_erase)
     }
 
     /* p2 now points to the first '\n' */
-    for (height = 0; p; height++) {
+    for (height = 0; p[0]; height++) {
 	int w;
 	*p2 = 0;
 	if ((w = XTextWidth(font, p, p2 - p)) > width)

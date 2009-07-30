@@ -506,11 +506,11 @@ scc_resolve(krb5_context context, krb5_ccache *id, const char *res)
 
 	if (sqlite3_column_type(s->scache_name, 0) != SQLITE_INTEGER) {
 	    sqlite3_reset(s->scache_name);
-	    scc_free(s);
 	    krb5_set_error_message(context, KRB5_CC_END,
 				   N_("Cache name of wrong type "
 				      "for scache %ld", ""),
 				  (unsigned long)s->name);
+	    scc_free(s);
 	    return KRB5_CC_END;
 	}
 
@@ -1334,9 +1334,8 @@ scc_move(krb5_context context, krb5_ccache from, krb5_ccache to)
     return 0;
 
 rollback:
-    scc_free(sfrom);
-
     exec_stmt(context, sfrom->db, "ROLLBACK", 0);
+    scc_free(sfrom);
 
     return KRB5_CC_IO;
 }

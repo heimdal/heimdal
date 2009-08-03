@@ -124,9 +124,10 @@ copy_cred(void)
 }
 #endif
 
-static void
+static gss_cred_id_t
 acquire_cred_service(const char *service,
 		     gss_OID nametype,
+		     gss_OID_set oidset,
 		     int flags)
 {
     OM_uint32 major_status, minor_status;
@@ -150,7 +151,7 @@ acquire_cred_service(const char *service,
     major_status = gss_acquire_cred(&minor_status,
 				    name,
 				    0,
-				    NULL,
+				    oidset,
 				    flags,
 				    &cred_handle,
 				    NULL,
@@ -168,18 +169,28 @@ acquire_cred_service(const char *service,
 
     if (GSS_ERROR(major_status))
 	exit(1);
+
+    return cred_handle;
 }
 
 static int version_flag = 0;
 static int help_flag	= 0;
+static int kerberos_flag = 0;
+static int enctype = 0;
 static char *acquire_name;
 static char *acquire_type;
+static char *target_name;
 static char *name_type;
 static char *ccache;
+static int num_loops = 1;
 
 static struct getargs args[] = {
     {"acquire-name", 0,	arg_string,	&acquire_name, "name", NULL },
     {"acquire-type", 0,	arg_string,	&acquire_type, "type", NULL },
+    {"enctype", 0,	arg_integer,	&enctype, "enctype-num", NULL },
+    {"loops", 0,	arg_integer,	&num_loops, "enctype-num", NULL },
+    {"kerberos", 0,	arg_flag,	&kerberos_flag, "enctype-num", NULL },
+    {"target-name", 0,	arg_string,	&target_name, "name", NULL },
     {"ccache", 0,	arg_string,	&ccache, "name", NULL },
     {"name-type", 0,	arg_string,	&name_type, "type", NULL },
     {"version",	0,	arg_flag,	&version_flag, "print version", NULL },
@@ -196,7 +207,12 @@ usage (int ret)
 int
 main(int argc, char **argv)
 {
-    int optidx = 0;
+    gss_OID_set oidset = GSS_C_NULL_OID_SET; 
+    gss_OID mechoid = GSS_C_NO_OID;
+    OM_uint32 maj_stat, min_stat;
+    gss_cred_id_t cred;
+    gss_name_t target = GSS_C_NO_NAME;
+    int i, optidx = 0;
     OM_uint32 flag;
     gss_OID type;
 
@@ -241,15 +257,75 @@ main(int argc, char **argv)
 	type = GSS_C_NT_HOSTBASED_SERVICE;
 
     if (ccache) {
-	OM_uint32 major_status, minor_status;
-	major_status = gss_krb5_ccache_name(&minor_status,
-					    ccache, NULL);
-	if (GSS_ERROR(major_status))
+	maj_stat = gss_krb5_ccache_name(&min_stat, ccache, NULL);
+	if (GSS_ERROR(maj_stat))
 	    errx(1, "gss_krb5_ccache_name %s",
-		 gssapi_err(major_status, minor_status, GSS_C_NO_OID));
+		 gssapi_err(maj_stat, min_stat, GSS_C_NO_OID));
     }
 
-    acquire_cred_service(acquire_name, type, flag);
+    if (kerberos_flag) {
+	mechoid = GSS_KRB5_MECHANISM;
+	
+	maj_stat = gss_create_empty_oid_set(&min_stat, &oidset); 
+	if (maj_stat != GSS_S_COMPLETE)
+	    errx(1, "gss_create_empty_oid_set: %s",
+		 gssapi_err(maj_stat, min_stat, GSS_C_NO_OID));
+	
+	maj_stat = gss_add_oid_set_member(&min_stat, GSS_KRB5_MECHANISM, &oidset); 
+	if (maj_stat != GSS_S_COMPLETE)
+	    errx(1, "gss_add_oid_set_member: %s",
+		 gssapi_err(maj_stat, min_stat, GSS_C_NO_OID));
+    }
+
+    if (target_name) {
+	gss_buffer_desc name;
+
+	name.value = target_name; 
+	name.length = strlen(target_name); 
+	maj_stat = gss_import_name(&min_stat, &name,
+				   GSS_C_NT_HOSTBASED_SERVICE, &target); 
+	if (maj_stat != GSS_S_COMPLETE)
+	    errx(1, "gss_import_name: %s",
+		 gssapi_err(maj_stat, min_stat, GSS_C_NO_OID));
+    }
+
+    for (i = 0; i < num_loops; i++) {
+
+	cred = acquire_cred_service(acquire_name, type, oidset, flag);
+
+	if (enctype) {
+	    int32_t enctypelist = enctype;
+	    
+	    maj_stat = gss_krb5_set_allowable_enctypes(&min_stat, cred, 
+						       1, &enctypelist); 
+	    if (maj_stat)
+		errx(1, "gss_krb5_set_allowable_enctypes: %s",
+		     gssapi_err(maj_stat, min_stat, GSS_C_NO_OID));
+	}
+	
+	if (target) {
+	    gss_ctx_id_t context = GSS_C_NO_CONTEXT;
+	    gss_buffer_desc out;
+
+	    out.length = 0;
+	    out.value = NULL;
+
+	    maj_stat = gss_init_sec_context(&min_stat, 
+					    cred, &context, 
+					    target, mechoid, 
+					    GSS_C_MUTUAL_FLAG, 0, NULL,
+					    GSS_C_NO_BUFFER, NULL, 
+					    &out, NULL, NULL); 
+	    if (maj_stat != GSS_S_COMPLETE && maj_stat != GSS_S_CONTINUE_NEEDED)
+		errx(1, "init_sec_context failed: %s",
+		     gssapi_err(maj_stat, min_stat, GSS_C_NO_OID));
+
+	    gss_release_buffer(&min_stat, &out);
+	    gss_delete_sec_context(&min_stat, &context, NULL);
+	}
+	gss_release_cred(&min_stat, &cred);
+    }
+
 
     return 0;
 }

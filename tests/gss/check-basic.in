@@ -126,7 +126,35 @@ ${acquire_cred} \
 echo "init using keytab"
 ${acquire_cred} \
     --acquire-type=initiate \
-    --acquire-name=host@host.test.h5l.se || exit 1
+    --acquire-name=host@host.test.h5l.se > /dev/null || exit 1
+
+echo "init using keytab (loop 10)"
+${acquire_cred} \
+    --acquire-type=initiate \
+    --loops=10 \
+    --acquire-name=host@host.test.h5l.se > /dev/null || exit 1
+
+echo "init using keytab (loop 10, target)"
+${acquire_cred} \
+    --acquire-type=initiate \
+    --loops=10 \
+    --target=host@host.test.h5l.se \
+    --acquire-name=host@host.test.h5l.se > /dev/null || exit 1
+
+echo "init using keytab (loop 10, kerberos)"
+${acquire_cred} \
+    --acquire-type=initiate \
+    --loops=10 \
+    --kerberos \
+    --acquire-name=host@host.test.h5l.se > /dev/null || exit 1
+
+echo "init using keytab (loop 10, target, kerberos)"
+${acquire_cred} \
+    --acquire-type=initiate \
+    --loops=10 \
+    --kerberos \
+    --target=host@host.test.h5l.se \
+    --acquire-name=host@host.test.h5l.se > /dev/null || exit 1
 
 echo "init using existing cc"
 ${acquire_cred} \

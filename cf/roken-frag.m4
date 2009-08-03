@@ -597,7 +597,7 @@ rk_CHECK_VAR([__progname],
 #include <err.h>
 #endif])
 
-AC_CHECK_DECLS([optarg, optind, opterr, optopt, environ],[],[][
+AC_CHECK_DECLS([optarg, optind, opterr, optopt, environ],[],[],[
 #include <stdlib.h>
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>

@@ -394,15 +394,19 @@ hdb_next_entry(krb5_context context,
 }
 
 
-static int hdb_end_seq_get(krb5_context context,
-			   krb5_keytab id,
-			   krb5_kt_cursor *cursor) {
+static int
+hdb_end_seq_get(krb5_context context,
+		krb5_keytab id,
+		krb5_kt_cursor *cursor)
+{
     struct hdb_cursor *c = cursor->data;
+
     (c->db->hdb_close)(context, c->db);
     (c->db->hdb_destroy)(context, c->db);
-    if (!c->next) {
+
+    if (!c->next)
 	hdb_free_entry(context, &c->hdb_entry);
-    }
+
     free(c);
     return 0;
 }

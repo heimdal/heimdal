@@ -321,65 +321,76 @@ hdb_next_entry(krb5_context context,
     struct hdb_cursor *c = cursor->data;
     krb5_error_code ret;
     
-	if (c->first) {
-	    c->first = FALSE;
-	    ret = (c->db->hdb_firstkey)(context, c->db, 
-					HDB_F_DECRYPT|
-					HDB_F_GET_CLIENT|HDB_F_GET_SERVER|HDB_F_GET_KRBTGT,
-					&c->hdb_entry);
-	    if (ret == HDB_ERR_NOENTRY)
-		return KRB5_KT_END;
-	    else if (ret)
-		return ret;
-	    
-	    if (c->hdb_entry.entry.keys.len == 0)
-		hdb_free_entry(context, &c->hdb_entry);
-	    else
-		c->next = FALSE;
-	} 
+    memset(entry, 0, sizeof(*entry));
+
+    if (c->first) {
+	c->first = FALSE;
+	ret = (c->db->hdb_firstkey)(context, c->db, 
+				    HDB_F_DECRYPT|
+				    HDB_F_GET_CLIENT|HDB_F_GET_SERVER|HDB_F_GET_KRBTGT,
+				    &c->hdb_entry);
+	if (ret == HDB_ERR_NOENTRY)
+	    return KRB5_KT_END;
+	else if (ret)
+	    return ret;
 	
-	while (c->next) {
-	    ret = (c->db->hdb_nextkey)(context, c->db, 
-				       HDB_F_DECRYPT|
-				       HDB_F_GET_CLIENT|HDB_F_GET_SERVER|HDB_F_GET_KRBTGT,
-				       &c->hdb_entry);
-	    if (ret == HDB_ERR_NOENTRY)
-		return KRB5_KT_END;
-	    else if (ret)
-		return ret;
-
-	    /* If no keys on this entry, try again */
-	    if (c->hdb_entry.entry.keys.len == 0)
-		hdb_free_entry(context, &c->hdb_entry);
-	    else
-		c->next = FALSE;
-	}
+	if (c->hdb_entry.entry.keys.len == 0)
+	    hdb_free_entry(context, &c->hdb_entry);
+	else
+	    c->next = FALSE;
+    } 
+    
+    while (c->next) {
+	ret = (c->db->hdb_nextkey)(context, c->db, 
+				   HDB_F_DECRYPT|
+				   HDB_F_GET_CLIENT|HDB_F_GET_SERVER|HDB_F_GET_KRBTGT,
+				   &c->hdb_entry);
+	if (ret == HDB_ERR_NOENTRY)
+	    return KRB5_KT_END;
+	else if (ret)
+	    return ret;
 	
-	/*
-	 * Return next enc type (keytabs are one slot per key, while
-	 * hdb is one record per principal.
-	 */
+	/* If no keys on this entry, try again */
+	if (c->hdb_entry.entry.keys.len == 0)
+	    hdb_free_entry(context, &c->hdb_entry);
+	else
+	    c->next = FALSE;
+    }
+    
+    /*
+     * Return next enc type (keytabs are one slot per key, while
+     * hdb is one record per principal.
+     */
+    
+    ret = krb5_copy_principal(context, 
+			      c->hdb_entry.entry.principal, 
+			      &entry->principal);
+    if (ret)
+	return ret;
 
-	krb5_copy_principal(context, 
-			    c->hdb_entry.entry.principal, 
-			    &entry->principal);
-	entry->vno = c->hdb_entry.entry.kvno;
-	krb5_copy_keyblock_contents(context,
-				    &c->hdb_entry.entry.keys.val[c->key_idx].key,
-				    &entry->keyblock);
-	c->key_idx++;
+    entry->vno = c->hdb_entry.entry.kvno;
+    ret = krb5_copy_keyblock_contents(context,
+				      &c->hdb_entry.entry.keys.val[c->key_idx].key,
+				      &entry->keyblock);
+    if (ret) {
+	krb5_free_principal(context, entry->principal);
+	memset(entry, 0, sizeof(*entry));
+	return ret;
+    }
+    c->key_idx++;
+    
+    /* 
+     * Once we get to the end of the list, signal that we want the
+     * next entry
+     */
+    
+    if (c->key_idx == c->hdb_entry.entry.keys.len) {
+	hdb_free_entry(context, &c->hdb_entry);
+	c->next = TRUE;
+	c->key_idx = 0;
+    }
 
-	/* 
-	 * Once we get to the end of the list, signal that we want the
-	 * next entry
-	 */
-
-	if (c->key_idx == c->hdb_entry.entry.keys.len) {
-		hdb_free_entry(context, &c->hdb_entry);
-		c->next = TRUE;
-		c->key_idx = 0;
-	}
-	return 0;
+    return 0;
 }
 
 

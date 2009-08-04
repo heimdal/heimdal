@@ -12,6 +12,8 @@ AM_CPPFLAGS += -DHOST=\"$(CANONICAL_HOST)\"
 nodist_include_HEADERS = krb5-types.h
 nodist_noinst_HEADERS = crypto-headers.h
 
+noinst_HEADERS = heim_threads.h
+
 krb5-types.h: bits$(EXEEXT)
 	./bits$(EXEEXT) krb5-types.h
 

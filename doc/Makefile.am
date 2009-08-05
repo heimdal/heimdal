@@ -64,6 +64,7 @@ $(PROJECTS): doxygen
 doxygen: hdb.dxy hx509.dxy hcrypto.dxy gssapi.dxy krb5.dxy ntlm.dxy wind.dxy
 	@for a in $(PROJECTS) ; do \
 		echo $$a ; \
+		find $(srcdir)/$$a -type d ! -perm -200 -exec chmod u+w {} ';' ; \
 		rm -rf $(srcdir)/$$a ; \
 		mkdir $(srcdir)/$$a ; \
 		doxygen $$a.dxy; \

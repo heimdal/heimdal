@@ -77,6 +77,7 @@ test_range(const struct range *r, int integ,
 	ret = _gsskrb5cfx_wrap_length_cfx(context,
 					  crypto,
 					  integ,
+					  0,
 					  max_wrap_size,
 					  &rsize, &cksumsize, &padsize);
 	if (ret)
@@ -118,6 +119,7 @@ test_special(krb5_context context, krb5_crypto crypto,
     ret = _gsskrb5cfx_wrap_length_cfx(context,
 				      crypto,
 				      integ,
+				      0,
 				      max_wrap_size,
 				      &rsize, &cksumsize, &padsize);
     if (ret)

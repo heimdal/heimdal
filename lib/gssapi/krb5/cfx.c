@@ -43,8 +43,8 @@
 krb5_error_code
 _gsskrb5cfx_wrap_length_cfx(krb5_context context,
 			    krb5_crypto crypto,
-			    int dce_style,
 			    int conf_req_flag,
+			    int dce_style,
 			    size_t input_length,
 			    size_t *output_length,
 			    size_t *cksumsize,

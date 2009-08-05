@@ -104,7 +104,6 @@ libroken_la_SOURCES =		\
 	unvis.c			\
 	verify.c		\
 	vis.c			\
-	vis.h			\
 	warnerr.c		\
 	write_pid.c		\
 	xfree.c			\

@@ -364,6 +364,8 @@ EXTRA_DIST = \
 	data/pkinit-pw.key \
 	data/pkinit.crt \
 	data/pkinit.key \
+	data/pkinit-ec.crt \
+	data/pkinit-ec.key \
 	data/proxy-level-test.crt \
 	data/proxy-level-test.key \
 	data/proxy-test.crt \
@@ -399,6 +401,9 @@ EXTRA_DIST = \
 	data/test-signed-data \
 	data/test-signed-data-noattr \
 	data/test-signed-data-noattr-nocerts \
+	data/test-signed-sha-1 \
+	data/test-signed-sha-256 \
+	data/test-signed-sha-512 \
 	data/test.combined.crt \
 	data/test.crt \
 	data/test.key \

@@ -31,13 +31,7 @@
  * SUCH DAMAGE.
  */
 
-#ifdef HAVE_CONFIG_H
 #include <config.h>
-#endif
-
-#ifdef RCSID
-RCSID("$Id$");
-#endif
 
 #include <stdio.h>
 

@@ -37,13 +37,7 @@
  * fail since openssl-0.9.8f
  */
 
-#ifdef HAVE_CONFIG_H
 #include <config.h>
-#endif
-
-#ifdef RCSID
-RCSID("$Id: test_rsa.c 20466 2007-04-20 08:29:05Z lha $");
-#endif
 
 #include <stdio.h>
 #include <ctype.h>

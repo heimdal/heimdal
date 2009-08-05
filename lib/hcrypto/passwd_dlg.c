@@ -36,10 +36,7 @@
  * Date:	June 1996
  */
 
-#ifdef HAVE_CONFIG_H
 #include <config.h>
-RCSID("$Id$");
-#endif
 
 #ifdef WIN32	/* Visual C++ 4.0 (Windows95/NT) */
 #include <Windows.h>

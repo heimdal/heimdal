@@ -205,7 +205,7 @@ generic_hash_cleanup(struct generic_hash *m)
 }
 
 const EVP_MD *
-EVP_md5(void)
+EVP_wincrypt_md5(void)
 {
     static const struct hc_evp_md md5 = {
 	16,

@@ -209,6 +209,7 @@ EXTRA_DIST = \
 	krb5.conf.in \
 	krb5.conf.keys.in \
 	ntlm-user-file.txt \
+	leaks-kill.sh \
 	pki-mapping \
 	uuserver.txt \
 	wait-kdc.sh

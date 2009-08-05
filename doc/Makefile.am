@@ -117,6 +117,7 @@ heimdal_TEXINFOS = \
 
 EXTRA_DIST = \
 	$(PROJECTS) \
+	gssapi.din \
 	hdb.din \
 	hcrypto.din \
 	heimdal.css \

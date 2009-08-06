@@ -113,7 +113,16 @@ gen_files_k5 =						\
 	asn1_krb5int32.x				\
 	asn1_krb5uint32.x				\
 	asn1_KRB5SignedPathData.x			\
-	asn1_KRB5SignedPath.x
+	asn1_KRB5SignedPath.x				\
+	asn1_FastOptions.x				\
+	asn1_KrbFastArmor.x				\
+	asn1_KrbFastArmoredRep.x			\
+	asn1_KrbFastArmoredReq.x			\
+	asn1_KrbFastFinished.x				\
+	asn1_KrbFastReq.x				\
+	asn1_KrbFastResponse.x				\
+	asn1_PA_FX_FAST_REPLY.x				\
+	asn1_PA_FX_FAST_REQUEST.x
 
 gen_files_cms =						\
 	asn1_CMSAttributes.x				\
@@ -464,6 +473,7 @@ gen_files_digest =					\
 
 gen_files_kx509 =					\
 	asn1_Kx509Response.x				\
+	asn1_KX509_ERROR_CODE.x				\
 	asn1_Kx509Request.x
 
 noinst_PROGRAMS = asn1_compile asn1_print asn1_gen
@@ -544,15 +554,15 @@ CLEANFILES = \
 	$(gen_files_kx509) \
 	$(gen_files_test) $(nodist_check_gen_SOURCES) \
 	rfc2459_asn1_files rfc2459_asn1.h \
-	cms_asn1_files cms_asn1.h \
-	krb5_asn1_files krb5_asn1.h \
-	pkinit_asn1_files pkinit_asn1.h \
-	pkcs8_asn1_files pkcs8_asn1.h \
-	pkcs9_asn1_files pkcs9_asn1.h \
-	pkcs12_asn1_files pkcs12_asn1.h \
-	digest_asn1_files digest_asn1.h \
-	kx509_asn1_files kx509_asn1.h \
-	test_asn1_files test_asn1.h
+	cms_asn1_files cms_asn1.h* \
+	krb5_asn1_files krb5_asn1.h* \
+	pkinit_asn1_files pkinit_asn1.h* \
+	pkcs8_asn1_files pkcs8_asn1.h* \
+	pkcs9_asn1_files pkcs9_asn1.h* \
+	pkcs12_asn1_files pkcs12_asn1.h* \
+	digest_asn1_files digest_asn1.h* \
+	kx509_asn1_files kx509_asn1.h* \
+	test_asn1_files test_asn1.h*
 
 dist_include_HEADERS = der.h heim_asn1.h der-protos.h
 

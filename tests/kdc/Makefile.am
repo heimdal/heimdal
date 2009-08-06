@@ -169,6 +169,8 @@ CLEANFILES= \
 	signal \
 	leaks-log \
 	malloc-log \
+	malloc-log-master \
+	malloc-log-slave \
 	messages.log \
 	o2cache.krb5 \
 	o2digest-reply \

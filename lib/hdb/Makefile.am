@@ -31,7 +31,7 @@ gen_files_hdb = \
 	asn1_hdb_entry_alias.x \
 	asn1_hdb_keyset.x
 
-CLEANFILES = $(BUILT_SOURCES) $(gen_files_hdb) hdb_asn1.h hdb_asn1_files
+CLEANFILES = $(BUILT_SOURCES) $(gen_files_hdb) hdb_asn1.h* hdb_asn1_files
 
 LDADD = libhdb.la \
 	$(LIB_openldap) \

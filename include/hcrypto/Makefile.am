@@ -8,6 +8,9 @@ CLEANFILES =		\
 	des.h		\
 	dh.h		\
 	dsa.h		\
+	ec.h		\
+	ecdsa.h		\
+	ecdh.h		\
 	engine.h	\
 	evp.h		\
 	hmac.h		\

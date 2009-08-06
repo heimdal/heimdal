@@ -158,9 +158,9 @@ hxtool_LDADD = \
 	$(top_builddir)/lib/sl/libsl.la
 
 CLEANFILES = $(BUILT_SOURCES) \
-	$(gen_files_ocsp) ocsp_asn1_files ocsp_asn1.h \
-	$(gen_files_pkcs10) pkcs10_asn1_files pkcs10_asn1.h \
-	$(gen_files_crmf) crmf_asn1_files crmf_asn1.h \
+	$(gen_files_ocsp) ocsp_asn1_files ocsp_asn1.h* \
+	$(gen_files_pkcs10) pkcs10_asn1_files pkcs10_asn1.h* \
+	$(gen_files_crmf) crmf_asn1_files crmf_asn1.h* \
 	$(TESTS) \
 	hxtool-commands.c hxtool-commands.h *.tmp \
 	request.out \

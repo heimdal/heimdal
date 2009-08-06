@@ -17,6 +17,7 @@ m4_define([test_headers], [
 		#include <openssl/des.h>
 		#include <openssl/rc4.h>
 		#include <openssl/aes.h>
+		#include <openssl/ec.h>
 		#include <openssl/engine.h>
 		#include <openssl/ui.h>
 		#include <openssl/rand.h>
@@ -48,6 +49,7 @@ m4_define([test_body], [
 		SHA256_Init(&sha256);
 		EVP_CIPHER_iv_length(((EVP_CIPHER*)0));
 		#ifdef HAVE_OPENSSL
+		EC_KEY_new();
 		RAND_status();
 		UI_UTIL_read_pw_string(0,0,0,0);
 		#endif

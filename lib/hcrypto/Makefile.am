@@ -20,6 +20,9 @@ hcryptoinclude_HEADERS =	\
 	des.h			\
 	dh.h			\
 	dsa.h			\
+	ec.h			\
+	ecdh.h			\
+	ecdsa.h			\
 	engine.h		\
 	evp.h			\
 	hmac.h			\

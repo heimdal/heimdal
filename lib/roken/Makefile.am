@@ -24,6 +24,7 @@ nodist_make_roken_SOURCES = make-roken.c
 check_PROGRAMS = 				\
 		base64-test			\
 		getaddrinfo-test		\
+		getifaddrs-test			\
 		hex-test			\
 		test-readenv			\
 		parse_bytes-test		\

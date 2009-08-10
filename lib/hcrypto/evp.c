@@ -546,19 +546,35 @@ EVP_CIPHER_CTX_cleanup(EVP_CIPHER_CTX *c)
     if (c->cipher && c->cipher->cleanup)
 	c->cipher->cleanup(c);
     if (c->cipher_data) {
+	memset(c->cipher_data, 0, c->cipher->ctx_size);
 	free(c->cipher_data);
 	c->cipher_data = NULL;
     }
     return 1;
 }
 
-#if 0
+/**
+ * If the cipher type supports it, change the key length
+ *
+ * @param c the cipher context to change the key length for
+ * @param length new key length
+ *
+ * @return 1 on success.
+ *
+ * @ingroup hcrypto_evp
+ */
+
 int
 EVP_CIPHER_CTX_set_key_length(EVP_CIPHER_CTX *c, int length)
 {
+    if ((c->cipher->flags & EVP_CIPH_VARIABLE_LENGTH) && length > 0) {
+	c->key_len = length;
+	return 1;
+    }
     return 0;
 }
 
+#if 0
 int
 EVP_CIPHER_CTX_set_padding(EVP_CIPHER_CTX *c, int pad)
 {
@@ -737,7 +753,7 @@ EVP_CipherInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *c, ENGINE *engine,
 	return 0;
     }
 
-    switch (EVP_CIPHER_CTX_flags(ctx)) {
+    switch (EVP_CIPHER_CTX_mode(ctx)) {
     case EVP_CIPH_CBC_MODE:
 
 	assert(EVP_CIPHER_CTX_iv_length(ctx) <= sizeof(ctx->iv));
@@ -746,6 +762,10 @@ EVP_CipherInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *c, ENGINE *engine,
 	    memcpy(ctx->oiv, iv, EVP_CIPHER_CTX_iv_length(ctx));
 	memcpy(ctx->iv, ctx->oiv, EVP_CIPHER_CTX_iv_length(ctx));
 	break;
+
+    case EVP_CIPH_STREAM_CIPHER:
+	break;
+
     default:
 	return 0;
     }

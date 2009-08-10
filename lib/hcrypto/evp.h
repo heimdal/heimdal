@@ -131,6 +131,7 @@ struct hc_CIPHER {
 #define EVP_CIPH_CBC_MODE		2
 #define EVP_CIPH_MODE			0x7
 
+#define EVP_CIPH_VARIABLE_LENGTH	0x008 /* variable key length */
 #define EVP_CIPH_ALWAYS_CALL_INIT	0x020
 #define EVP_CIPH_RAND_KEY		0x200
 

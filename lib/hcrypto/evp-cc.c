@@ -183,8 +183,6 @@ EVP_cc_des_cbc(void)
     return &des_ede3_cbc;
 }
 
-
-
 /*
  *
  */
@@ -391,21 +389,6 @@ EVP_cc_rc2_64_cbc(void)
     return &rc2_64_cbc;
 }
 
-
-/**
- * The RC4 cipher type (Apple CommonCrypto provider)
- *
- * @return the RC4 EVP_CIPHER pointer.
- *
- * @ingroup hcrypto_evp
- */
-
-const EVP_CIPHER *
-EVP_cc_rc4(void)
-{
-    abort();
-}
-
 /**
  * The CommonCrypto md2 provider
  *
@@ -551,6 +534,79 @@ const EVP_CIPHER *
 EVP_cc_camellia_256_cbc(void)
 {
     return NULL;
+}
+
+/*
+ *
+ */
+
+static int
+cc_rc4_init(EVP_CIPHER_CTX *ctx,
+	    const unsigned char * key,
+	    const unsigned char * iv,
+	    int encp)
+{
+    struct cc_key *cc = ctx->cipher_data;
+    return init_cc_key(encp, kCCAlgorithmRC4, key, ctx->key_len, iv, &cc->href);
+}
+
+/**
+ * The RC4 cipher type (Apple CommonCrypto provider)
+ *
+ * @return the RC4 EVP_CIPHER pointer.
+ *
+ * @ingroup hcrypto_evp
+ */
+
+const EVP_CIPHER *
+EVP_cc_rc4(void)
+{
+    static const EVP_CIPHER rc4 = {
+	0,
+	1,
+	16,
+	0,
+	EVP_CIPH_STREAM_CIPHER|EVP_CIPH_VARIABLE_LENGTH,
+	cc_rc4_init,
+	cc_do_cipher,
+	cc_cleanup,
+	sizeof(struct cc_key),
+	NULL,
+	NULL,
+	NULL,
+	NULL
+    };
+    return &rc4;
+}
+
+
+/**
+ * The RC4-40 cipher type (Apple CommonCrypto provider)
+ *
+ * @return the RC4 EVP_CIPHER pointer.
+ *
+ * @ingroup hcrypto_evp
+ */
+
+const EVP_CIPHER *
+EVP_cc_rc4_40(void)
+{
+    static const EVP_CIPHER rc4_40 = {
+	0,
+	1,
+	5,
+	0,
+	EVP_CIPH_STREAM_CIPHER|EVP_CIPH_VARIABLE_LENGTH,
+	cc_rc4_init,
+	cc_do_cipher,
+	cc_cleanup,
+	sizeof(struct cc_key),
+	NULL,
+	NULL,
+	NULL,
+	NULL
+    };
+    return &rc4_40;
 }
 
 #endif /* __APPLE__ */

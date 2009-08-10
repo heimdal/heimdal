@@ -555,15 +555,6 @@ DES3_random_to_key(krb5_context context,
  * ARCFOUR
  */
 
-static void
-ARCFOUR_schedule(krb5_context context,
-		 struct key_type *kt,
-		 struct key_data *kd)
-{
-    RC4_set_key (kd->schedule->data,
-		 kd->key->keyvalue.length, kd->key->keyvalue.data);
-}
-
 static krb5_error_code
 ARCFOUR_string_to_key(krb5_context context,
 		      krb5_enctype enctype,
@@ -884,10 +875,13 @@ static struct key_type keytype_arcfour = {
     "arcfour",
     128,
     16,
-    sizeof(RC4_KEY),
+    sizeof(struct evp_schedule),
     NULL,
-    ARCFOUR_schedule,
-    arcfour_salt
+    evp_schedule,
+    arcfour_salt,
+    NULL,
+    evp_cleanup,
+    EVP_rc4
 };
 
 krb5_error_code KRB5_LIB_FUNCTION
@@ -2149,12 +2143,12 @@ ARCFOUR_subencrypt(krb5_context context,
 		   unsigned usage,
 		   void *ivec)
 {
+    EVP_CIPHER_CTX ctx;
     struct checksum_type *c = _find_checksum (CKSUMTYPE_RSA_MD5);
     Checksum k1_c, k2_c, k3_c, cksum;
     struct key_data ke;
     krb5_keyblock kb;
     unsigned char t[4];
-    RC4_KEY rc4_key;
     unsigned char *cdata = data;
     unsigned char k1_c_data[16], k2_c_data[16], k3_c_data[16];
     krb5_error_code ret;
@@ -2196,8 +2190,12 @@ ARCFOUR_subencrypt(krb5_context context,
     if (ret)
 	krb5_abortx(context, "hmac failed");
 
-    RC4_set_key (&rc4_key, k3_c.checksum.length, k3_c.checksum.data);
-    RC4 (&rc4_key, len - 16, cdata + 16, cdata + 16);
+    EVP_CIPHER_CTX_init(&ctx);
+
+    EVP_CipherInit_ex(&ctx, EVP_rc4(), NULL, k3_c.checksum.data, NULL, 1);
+    EVP_Cipher(&ctx, cdata + 16, cdata + 16, len - 16);
+    EVP_CIPHER_CTX_cleanup(&ctx);
+
     memset (k1_c_data, 0, sizeof(k1_c_data));
     memset (k2_c_data, 0, sizeof(k2_c_data));
     memset (k3_c_data, 0, sizeof(k3_c_data));
@@ -2212,12 +2210,12 @@ ARCFOUR_subdecrypt(krb5_context context,
 		   unsigned usage,
 		   void *ivec)
 {
+    EVP_CIPHER_CTX ctx;
     struct checksum_type *c = _find_checksum (CKSUMTYPE_RSA_MD5);
     Checksum k1_c, k2_c, k3_c, cksum;
     struct key_data ke;
     krb5_keyblock kb;
     unsigned char t[4];
-    RC4_KEY rc4_key;
     unsigned char *cdata = data;
     unsigned char k1_c_data[16], k2_c_data[16], k3_c_data[16];
     unsigned char cksum_data[16];
@@ -2250,8 +2248,10 @@ ARCFOUR_subdecrypt(krb5_context context,
     if (ret)
 	krb5_abortx(context, "hmac failed");
 
-    RC4_set_key (&rc4_key, k3_c.checksum.length, k3_c.checksum.data);
-    RC4 (&rc4_key, len - 16, cdata + 16, cdata + 16);
+    EVP_CIPHER_CTX_init(&ctx);
+    EVP_CipherInit_ex(&ctx, EVP_rc4(), NULL, k3_c.checksum.data, NULL, 0);
+    EVP_Cipher(&ctx, cdata + 16, cdata + 16, len - 16);
+    EVP_CIPHER_CTX_cleanup(&ctx);
 
     ke.key = &kb;
     kb.keyvalue = k2_c.checksum;
@@ -4444,6 +4444,7 @@ _krb5_pk_octetstring2key(krb5_context context,
     void *keydata;
     unsigned char counter;
     unsigned char shaoutput[SHA_DIGEST_LENGTH];
+    EVP_MD_CTX *m;
 
     if(et == NULL) {
 	krb5_set_error_message(context, KRB5_PROG_ETYPE_NOSUPP,
@@ -4459,19 +4460,27 @@ _krb5_pk_octetstring2key(krb5_context context,
 	return ENOMEM;
     }
 
+    m = EVP_MD_CTX_create();
+    if (m == NULL) {
+	free(keydata);
+	krb5_set_error_message(context, ENOMEM, N_("malloc: out of memory", ""));
+	return ENOMEM;
+    }
+
     counter = 0;
     offset = 0;
     do {
-	SHA_CTX m;
 	
-	SHA1_Init(&m);
-	SHA1_Update(&m, &counter, 1);
-	SHA1_Update(&m, dhdata, dhsize);
+	EVP_DigestInit_ex(m, EVP_sha1(), NULL);
+	EVP_DigestUpdate(m, &counter, 1);
+	EVP_DigestUpdate(m, dhdata, dhsize);
+
 	if (c_n)
-	    SHA1_Update(&m, c_n->data, c_n->length);
+	    EVP_DigestUpdate(m, c_n->data, c_n->length);
 	if (k_n)
-	    SHA1_Update(&m, k_n->data, k_n->length);
-	SHA1_Final(shaoutput, &m);
+	    EVP_DigestUpdate(m, k_n->data, k_n->length);
+
+	EVP_DigestFinal_ex(m, shaoutput, NULL);
 
 	memcpy((unsigned char *)keydata + offset,
 	       shaoutput,
@@ -4481,6 +4490,8 @@ _krb5_pk_octetstring2key(krb5_context context,
 	counter++;
     } while(offset < keylen);
     memset(shaoutput, 0, sizeof(shaoutput));
+
+    EVP_MD_CTX_destroy(m);
 
     ret = krb5_random_to_key(context, type, keydata, keylen, key);
     memset(keydata, 0, sizeof(keylen));

@@ -44,6 +44,8 @@
 #include <roken.h>
 
 #include <evp.h>
+#include <evp-hcrypto.h>
+#include <evp-cc.h>
 #include <hex.h>
 #include <err.h>
 
@@ -359,6 +361,11 @@ test_cipher(int i, const EVP_CIPHER *c, struct tests *t)
     EVP_CIPHER_CTX dctx;
     void *d;
 
+    if (c == NULL) {
+	printf("%s not supported\n", t->name);
+	return 0;
+    }
+
     EVP_CIPHER_CTX_init(&ectx);
     EVP_CIPHER_CTX_init(&dctx);
 
@@ -445,6 +452,10 @@ main(int argc, char **argv)
 	ret += test_cipher(i, EVP_hcrypto_aes_256_cts(), &aes_256_cts_tests[i]);
     for (i = 0; i < sizeof(aes_tests)/sizeof(aes_tests[0]); i++)
 	ret += test_cipher(i, EVP_aes_256_cbc(), &aes_tests[i]);
+#ifdef __APPLE__
+    for (i = 0; i < sizeof(aes_tests)/sizeof(aes_tests[0]); i++)
+	ret += test_cipher(i, EVP_cc_aes_256_cbc(), &aes_tests[i]);
+#endif
     for (i = 0; i < sizeof(rc2_40_tests)/sizeof(rc2_40_tests[0]); i++)
 	ret += test_cipher(i, EVP_rc2_40_cbc(), &rc2_40_tests[i]);
     for (i = 0; i < sizeof(des_ede3_tests)/sizeof(des_ede3_tests[0]); i++)

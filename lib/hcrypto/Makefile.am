@@ -25,6 +25,8 @@ hcryptoinclude_HEADERS =	\
 	ecdsa.h			\
 	engine.h		\
 	evp.h			\
+	evp-hcrypto.h		\
+	evp-cc.h		\
 	hmac.h			\
 	md2.h			\
 	md4.h			\
@@ -109,6 +111,7 @@ libhcrypto_la_SOURCES =	\
 	evp.h		\
 	evp-hcrypto.c	\
 	evp-aes-cts.c	\
+	evp-cc.c	\
 	engine.c	\
 	engine.h	\
 	hash.h		\

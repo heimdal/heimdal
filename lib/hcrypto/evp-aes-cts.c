@@ -58,6 +58,7 @@ const EVP_CIPHER * _krb5_EVP_hcrypto_aes_256_cts(void);
 
 #else
 #include <evp.h>
+#include <evp-hcrypto.h>
 #include <aes.h>
 
 #define _hc_EVP_hcrypto_aes_128_cts hc_EVP_hcrypto_aes_128_cts

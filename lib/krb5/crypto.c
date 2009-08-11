@@ -4606,6 +4606,7 @@ _krb5_pk_kdf(krb5_context context,
     uint32_t counter;
     unsigned char *keydata;
     unsigned char shaoutput[SHA_DIGEST_LENGTH];
+    EVP_MD_CTX *m;
 
     if (der_heim_oid_cmp(&asn1_oid_id_pkinit_kdf_ah_sha1, &ai->algorithm) != 0) {
 	krb5_set_error_message(context, KRB5_PROG_ETYPE_NOSUPP,
@@ -4644,18 +4645,26 @@ _krb5_pk_kdf(krb5_context context,
 	return ret;
     }
 
+    m = EVP_MD_CTX_create();
+    if (m == NULL) {
+	free(keydata);
+	free(other.data);
+	krb5_set_error_message(context, ENOMEM, N_("malloc: out of memory", ""));
+	return ENOMEM;
+    }
+
     offset = 0;
     counter = 1;
     do {
 	unsigned char cdata[4];
-	SHA_CTX m;
 	
-	SHA1_Init(&m);
+	EVP_DigestInit_ex(m, EVP_sha1(), NULL);
 	_krb5_put_int(cdata, counter, 4);
-	SHA1_Update(&m, cdata, 4);
-	SHA1_Update(&m, dhdata, dhsize);
-	SHA1_Update(&m, other.data, other.length);
-	SHA1_Final(shaoutput, &m);
+	EVP_DigestUpdate(m, cdata, 4);
+	EVP_DigestUpdate(m, dhdata, dhsize);
+	EVP_DigestUpdate(m, other.data, other.length);
+
+	EVP_DigestFinal_ex(m, shaoutput, NULL);
 
 	memcpy((unsigned char *)keydata + offset,
 	       shaoutput,
@@ -4666,6 +4675,7 @@ _krb5_pk_kdf(krb5_context context,
     } while(offset < keylen);
     memset(shaoutput, 0, sizeof(shaoutput));
 
+    EVP_MD_CTX_destroy(m);
     free(other.data);
 
     ret = krb5_random_to_key(context, enctype, keydata, keylen, key);

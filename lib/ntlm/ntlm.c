@@ -910,7 +910,7 @@ int
 heim_ntlm_nt_key(const char *password, struct ntlm_buf *key)
 {
     struct ntlm_buf buf;
-    MD4_CTX ctx;
+    EVP_MD_CTX *m;
     int ret;
 
     key->data = malloc(MD5_DIGEST_LENGTH);
@@ -923,9 +923,19 @@ heim_ntlm_nt_key(const char *password, struct ntlm_buf *key)
 	heim_ntlm_free_buf(key);
 	return ret;
     }
-    MD4_Init(&ctx);
-    MD4_Update(&ctx, buf.data, buf.length);
-    MD4_Final(key->data, &ctx);
+
+    m = EVP_MD_CTX_create();
+    if (m == NULL) {
+	heim_ntlm_free_buf(key);
+	heim_ntlm_free_buf(&buf);
+	return ENOMEM;
+    }
+
+    EVP_DigestInit_ex(m, EVP_md4(), NULL);
+    EVP_DigestUpdate(m, buf.data, buf.length);
+    EVP_DigestFinal_ex(m, key->data, NULL);
+    EVP_MD_CTX_destroy(m);
+
     heim_ntlm_free_buf(&buf);
     return 0;
 }
@@ -988,7 +998,7 @@ heim_ntlm_build_ntlm1_master(void *key, size_t len,
 			     struct ntlm_buf *session,
 			     struct ntlm_buf *master)
 {
-    RC4_KEY rc4;
+    EVP_CIPHER_CTX c;
 
     memset(master, 0, sizeof(*master));
     memset(session, 0, sizeof(*session));
@@ -1010,25 +1020,42 @@ heim_ntlm_build_ntlm1_master(void *key, size_t len,
 	return EINVAL;
     }
 
+    EVP_CIPHER_CTX_init(&c);
+
     {
 	unsigned char sessionkey[MD4_DIGEST_LENGTH];
-	MD4_CTX ctx;
+	EVP_MD_CTX *m;
 
-	MD4_Init(&ctx);
-	MD4_Update(&ctx, key, len);
-	MD4_Final(sessionkey, &ctx);
+	m = EVP_MD_CTX_create();
+	if (m == NULL) {
+	    EVP_CIPHER_CTX_cleanup(&c);
+	    heim_ntlm_free_buf(master);
+	    heim_ntlm_free_buf(session);
+	    return ENOMEM;
+	}
+
+	EVP_DigestInit_ex(m, EVP_md4(), NULL);
+	EVP_DigestUpdate(m, key, len);
+	EVP_DigestFinal_ex(m, sessionkey, NULL);
+	EVP_MD_CTX_destroy(m);
 	
-	RC4_set_key(&rc4, sizeof(sessionkey), sessionkey);
+	if (EVP_CipherInit_ex(&c, EVP_rc4(), NULL, sessionkey, NULL, 1) != 1) {
+	    EVP_CIPHER_CTX_cleanup(&c);
+	    heim_ntlm_free_buf(master);
+	    heim_ntlm_free_buf(session);
+	    return EINVAL;
+	}
     }
 
     if (RAND_bytes(session->data, session->length) != 1) {
+	EVP_CIPHER_CTX_cleanup(&c);
 	heim_ntlm_free_buf(master);
 	heim_ntlm_free_buf(session);
 	return EINVAL;
     }
 
-    RC4(&rc4, master->length, session->data, master->data);
-    memset(&rc4, 0, sizeof(rc4));
+    EVP_Cipher(&c, master->data, session->data, master->length);
+    EVP_CIPHER_CTX_cleanup(&c);
 
     return 0;
 }
@@ -1349,15 +1376,22 @@ heim_ntlm_calculate_ntlm2_sess(const unsigned char clnt_nonce[8],
 {
     unsigned char ntlm2_sess_hash[MD5_DIGEST_LENGTH];
     unsigned char res[21], *resp;
-    MD5_CTX md5;
+    EVP_MD_CTX *m;
+
+    m = EVP_MD_CTX_create();
+    if (m == NULL)
+	return ENOMEM;
 
     lm->data = malloc(24);
-    if (lm->data == NULL)
+    if (lm->data == NULL) {
+	EVP_MD_CTX_destroy(m);
 	return ENOMEM;
+    }
     lm->length = 24;
 
     ntlm->data = malloc(24);
     if (ntlm->data == NULL) {
+	EVP_MD_CTX_destroy(m);
 	free(lm->data);
 	lm->data = NULL;
 	return ENOMEM;
@@ -1368,10 +1402,11 @@ heim_ntlm_calculate_ntlm2_sess(const unsigned char clnt_nonce[8],
     memset(lm->data, 0, 24);
     memcpy(lm->data, clnt_nonce, 8);
 
-    MD5_Init(&md5);
-    MD5_Update(&md5, svr_chal, 8); /* session nonce part 1 */
-    MD5_Update(&md5, clnt_nonce, 8); /* session nonce part 2 */
-    MD5_Final(ntlm2_sess_hash, &md5); /* will only use first 8 bytes */
+    EVP_DigestInit_ex(m, EVP_md5(), NULL);
+    EVP_DigestUpdate(m, svr_chal, 8); /* session nonce part 1 */
+    EVP_DigestUpdate(m, clnt_nonce, 8); /* session nonce part 2 */
+    EVP_DigestFinal_ex(m, ntlm2_sess_hash, NULL); /* will only use first 8 bytes */
+    EVP_MD_CTX_destroy(m);
 
     memset(res, 0, sizeof(res));
     memcpy(res, ntlm_hash, 16);

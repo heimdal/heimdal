@@ -213,8 +213,8 @@ _gk_find_buffer(gss_iov_buffer_desc *iov, int iov_count, OM_uint32 type)
     return NULL;
 }
 
-static OM_uint32
-allocate_buffer(OM_uint32 *minor_status, gss_iov_buffer_desc *buffer, size_t size)
+OM_uint32
+_gk_allocate_buffer(OM_uint32 *minor_status, gss_iov_buffer_desc *buffer, size_t size)
 {
     if (buffer->type & GSS_IOV_BUFFER_TYPE_FLAG_ALLOCATED) {
 	if (buffer->buffer.length == size)
@@ -343,7 +343,7 @@ _gssapi_wrap_cfx_iov(OM_uint32 *minor_status,
 	gsshsize += gsstsize;
 	gsstsize = 0;
     } else if (GSS_IOV_BUFFER_FLAGS(trailer->type) & GSS_IOV_BUFFER_TYPE_FLAG_ALLOCATE) {
-	major_status = allocate_buffer(minor_status, trailer, gsstsize);
+	major_status = _gk_allocate_buffer(minor_status, trailer, gsstsize);
 	if (major_status)
 	    goto failure;
     } else if (trailer->buffer.length < gsstsize) {
@@ -358,7 +358,7 @@ _gssapi_wrap_cfx_iov(OM_uint32 *minor_status,
      */
 
     if (GSS_IOV_BUFFER_FLAGS(header->type) & GSS_IOV_BUFFER_TYPE_FLAG_ALLOCATE) {
-	major_status = allocate_buffer(minor_status, header, gsshsize);
+	major_status = _gk_allocate_buffer(minor_status, header, gsshsize);
 	if (major_status != GSS_S_COMPLETE)
 	    goto failure;
     } else if (header->buffer.length < gsshsize) {

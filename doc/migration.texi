@@ -9,6 +9,10 @@ hpropd can read MIT Kerberos dump, the format is the same as used in
 mit-kerberos 1.0b7, and to dump that format use the following command:
 @samp{kdb5_util dump -b7}.
 
+To load the MIT Kerberos dump file, use the following command:
+
+@samp{/usr/heimdal/libexec/hprop --database=dump-file --master-key=/var/db/krb5kdc/mit_stash --source=mit-dump --decrypt --stdout | /usr/heimdal/libexec/hpropd --stdin}
+
 @section General issues
 
 When migrating from a Kerberos 4 KDC.

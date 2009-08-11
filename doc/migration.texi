@@ -3,6 +3,12 @@
 @node Migration, Acknowledgments, Programming with Kerberos, Top
 @chapter Migration
 
+@section Migration from MIT Kerberos to Heimdal
+
+hpropd can read MIT Kerberos dump, the format is the same as used in
+mit-kerberos 1.0b7, and to dump that format use the following command:
+@samp{kdb5_util dump -b7}.
+
 @section General issues
 
 When migrating from a Kerberos 4 KDC.

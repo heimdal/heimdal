@@ -428,7 +428,7 @@ krb5_free_creds_contents (krb5_context context, krb5_creds *c)
  * deprecated, use krb5_free_error_message().
  *
  * @param context Kerberos context
- * @param msg error message to free
+ * @param str error message to free
  *
  * @ingroup krb5_deprecated
  */
@@ -445,7 +445,7 @@ krb5_free_error_string(krb5_context context, char *str)
  * deprecated, use krb5_set_error_message().
  *
  * @param context Kerberos context
- * @param msg error message to free
+ * @param fmt error message to free
  *
  * @ingroup krb5_deprecated
  */

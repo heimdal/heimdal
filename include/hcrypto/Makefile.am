@@ -13,6 +13,8 @@ CLEANFILES =		\
 	ecdh.h		\
 	engine.h	\
 	evp.h		\
+	evp-hcrypto.h	\
+	evp-cc.h	\
 	hmac.h		\
 	md2.h		\
 	md4.h		\

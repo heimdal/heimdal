@@ -1364,6 +1364,10 @@ info(void *opt, int argc, char **argv)
     {
 	printf("ecdsa: ECDSA_METHOD-not-export\n");
     }
+#else
+    {
+	printf("ecdsa: hcrypto null\n");
+    }
 #endif
     {
 	int ret = RAND_status();

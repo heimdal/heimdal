@@ -606,7 +606,7 @@ unrotate_iov(OM_uint32 *minor_status, size_t rrc, gss_iov_buffer_desc *iov, int 
 	    GSS_IOV_BUFFER_TYPE(iov[i].type) == GSS_IOV_BUFFER_TYPE_PADDING ||
 	    GSS_IOV_BUFFER_TYPE(iov[i].type) == GSS_IOV_BUFFER_TYPE_TRAILER)
 	{
-	    memcpy(q, iov[i].buffer.value, MIN(iov[i].buffer.length, skip));
+	    memcpy(q, iov[i].buffer.value, min(iov[i].buffer.length, skip));
 	    if (iov[i].buffer.length > skip)
 		break;
 	    skip -= iov[i].buffer.length;

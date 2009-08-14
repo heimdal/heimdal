@@ -318,7 +318,7 @@ syserr:			run_err("%s: %s", name, strerror(errno));
 #undef MODEMASK
 #define	MODEMASK	(S_ISUID|S_ISGID|S_ISVTX|S_IRWXU|S_IRWXG|S_IRWXO)
 		snprintf(buf, sizeof(buf), "C%04o %lu %s\n",
-			 stb.st_mode & MODEMASK,
+			 (unsigned int)(stb.st_mode & MODEMASK),
 			 (unsigned long)stb.st_size,
 			 last);
 		write(remout, buf, strlen(buf));
@@ -384,7 +384,8 @@ rsource(char *name, struct stat *statp)
 		}
 	}
 	snprintf(path, sizeof(path),
-	    "D%04o %d %s\n", statp->st_mode & MODEMASK, 0, last);
+		 "D%04o %d %s\n", 
+		 (unsigned int)(statp->st_mode & MODEMASK), 0, last);
 	write(remout, path, strlen(path));
 	if (response() < 0) {
 		closedir(dirp);

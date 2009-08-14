@@ -4789,7 +4789,7 @@ krb5_crypto_prfplus(krb5_context context,
  * @param crypto1 first key to combine
  * @param crypto2 second key to combine
  * @param pepper1 factor to combine with first key to garante uniqueness
- * @param pepper1 factor to combine with second key to garante uniqueness
+ * @param pepper2 factor to combine with second key to garante uniqueness
  * @param enctype the encryption type of the resulting key
  * @param res allocated key, free with krb5_free_keyblock_contents()
  *

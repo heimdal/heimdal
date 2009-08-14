@@ -447,6 +447,8 @@ krb5_free_error_string(krb5_context context, char *str)
  * @param context Kerberos context
  * @param fmt error message to free
  *
+ * @return Return an error code or 0.
+ *
  * @ingroup krb5_deprecated
  */
 
@@ -468,6 +470,8 @@ krb5_set_error_string(krb5_context context, const char *fmt, ...)
  *
  * @param context Kerberos context
  * @param msg error message to free
+ *
+ * @return Return an error code or 0.
  *
  * @ingroup krb5_deprecated
  */

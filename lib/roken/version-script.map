@@ -56,6 +56,7 @@ HEIMDAL_ROKEN_1.0 {
 		rk_esetenv;
 		rk_estrdup;
 		rk_ewrite;
+		rk_flock;
 		rk_fnmatch;
 		rk_free_environment;
 		rk_freeaddrinfo;

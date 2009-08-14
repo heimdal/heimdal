@@ -41,7 +41,7 @@
 #define OP_MASK (LOCK_SH | LOCK_EX | LOCK_UN)
 
 int ROKEN_LIB_FUNCTION
-flock(int fd, int operation)
+rk_flock(int fd, int operation)
 {
 #if defined(HAVE_FCNTL) && defined(F_SETLK)
   struct flock arg;

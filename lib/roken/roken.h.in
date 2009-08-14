@@ -470,8 +470,8 @@ unsigned short ROKEN_LIB_FUNCTION bswap16(unsigned short);
 #define LOCK_UN   8		/* Unlock */
 #endif
 
-#define flock rk_flock
-int flock(int fd, int operation);
+#define flock(_x,_y) rk_flock(_x,_y)
+int rk_flock(int fd, int operation);
 #endif /* HAVE_FLOCK */
 
 time_t ROKEN_LIB_FUNCTION tm2time (struct tm, int);

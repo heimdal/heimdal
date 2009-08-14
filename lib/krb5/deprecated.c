@@ -497,7 +497,7 @@ void KRB5_LIB_FUNCTION
 krb5_clear_error_string(krb5_context context)
      KRB5_DEPRECATED
 {
-    return krb5_clear_error_message(context);
+    krb5_clear_error_message(context);
 }
 
 krb5_error_code KRB5_LIB_FUNCTION

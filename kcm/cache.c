@@ -47,7 +47,7 @@ char *kcm_ccache_nextid(pid_t pid, uid_t uid, gid_t gid)
     n = ++ccache_nextid;
     HEIMDAL_MUTEX_unlock(&ccache_mutex);
 
-    asprintf(&name, "%d:%u", uid, n);
+    asprintf(&name, "%ld:%u", (long)uid, n);
 
     return name;
 }

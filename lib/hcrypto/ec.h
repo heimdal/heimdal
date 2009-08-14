@@ -49,9 +49,6 @@
 #include <hcrypto/bn.h>
 #include <hcrypto/engine.h>
 
-struct EC_KEY;
-struct EC_GROUP;
-
 typedef struct EC_KEY EC_KEY;
 typedef struct EC_GROUP EC_GROUP;
 

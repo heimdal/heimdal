@@ -62,9 +62,6 @@ o2i_ECPublicKey(EC_KEY **key, unsigned char **, size_t);
 void
 EC_KEY_free(EC_KEY *);
 
-EC_KEY *
-EC_KEY_free(void);
-
 EC_GROUP *
 EC_GROUP_new_by_curve_name(int nid);
 

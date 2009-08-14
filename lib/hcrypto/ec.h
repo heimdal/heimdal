@@ -36,7 +36,15 @@
 
 #define EC_GROUP_get_degree hc_EC_GROUP_get_degree
 #define EC_KEY_get0_group hc_EC_KEY_get0_group
-
+#define EC_GROUP_get_order hc_EC_GROUP_get_order
+#define o2i_ECPublicKey hc_o2i_ECPublicKey
+#define EC_KEY_free hc_EC_KEY_free
+#define EC_GROUP_new_by_curve_name hc_EC_GROUP_new_by_curve_name
+#define EC_KEY_set_group hc_EC_KEY_set_group
+#define EC_GROUP_free hc_EC_GROUP_free
+#define EC_KEY_check_key hc_EC_KEY_check_key
+#define EC_KEY_get0_private_key hc_EC_KEY_get0_private_key
+#define EC_KEY_set_private_key hc_EC_KEY_set_private_key
 
 #include <hcrypto/bn.h>
 #include <hcrypto/engine.h>

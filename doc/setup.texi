@@ -92,6 +92,8 @@ with contents similar to the following.
         MY.REALM = @{
                 kdc = my.kdc my.slave.kdc
                 kdc = my.third.kdc
+                kdc = 130.237.237.17
+                kdc = [2001:6b0:1:ea::100]:88
         @}
 [domain_realm]
         .my.domain = MY.REALM

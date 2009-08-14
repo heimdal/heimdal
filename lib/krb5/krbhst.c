@@ -186,7 +186,7 @@ static struct krb5_krbhst_info*
 parse_hostspec(krb5_context context, struct krb5_krbhst_data *kd,
 	       const char *spec, int def_port, int port)
 {
-    const char *p = spec;
+    const char *p = spec, *q;
     struct krb5_krbhst_info *hi;
 
     hi = calloc(1, sizeof(*hi) + strlen(spec));
@@ -209,7 +209,17 @@ parse_hostspec(krb5_context context, struct krb5_krbhst_data *kd,
 	p += 4;
     }
 
-    if(strsep_copy(&p, ":", hi->hostname, strlen(spec) + 1) < 0) {
+    if (p[0] == '[' && (q = strchr(p, ']')) != NULL) {
+	/* if address looks like [foo:bar] or [foo:bar]: its a ipv6
+	   adress, strip of [] */
+	memcpy(hi->hostname, &p[1], q - p - 1);
+	hi->hostname[q - p - 1] = '\0';
+	p = q + 1;
+	/* get trailing : */
+	if (p[0] == ':')
+	    p++;
+    } else if(strsep_copy(&p, ":", hi->hostname, strlen(spec) + 1) < 0) {
+	/* copy everything before : */
 	free(hi);
 	return NULL;
     }
@@ -218,7 +228,7 @@ parse_hostspec(krb5_context context, struct krb5_krbhst_data *kd,
     strlwr(hi->hostname);
 
     hi->port = hi->def_port = def_port;
-    if(p != NULL) {
+    if(p != NULL && p[0]) {
 	char *end;
 	hi->port = strtol(p, &end, 0);
 	if(end == p) {

@@ -48,6 +48,8 @@ const EVP_CIPHER * _krb5_EVP_hcrypto_aes_128_cts(void);
 const EVP_CIPHER * _krb5_EVP_hcrypto_aes_256_cts(void);
 #define EVP_hcrypto_aes_128_cts _krb5_EVP_hcrypto_aes_128_cts
 #define EVP_hcrypto_aes_256_cts _krb5_EVP_hcrypto_aes_256_cts
+#else
+#include <hcrypto/evp-hcrypto.h>
 #endif
 
 struct key_data {
@@ -3584,6 +3586,7 @@ krb5_create_checksum_iov(krb5_context context,
  * @param usage Key usage for this buffer
  * @param data array of buffers to process
  * @param num_data length of array
+ * @param type return checksum type if not NULL
  *
  * @return Return an error code or 0.
  * @ingroup krb5_crypto
@@ -4386,8 +4389,8 @@ krb5_crypto_overhead (krb5_context context, krb5_crypto crypto)
  * @param context Kerberos 5 context
  * @param type the enctype resulting key will be of
  * @param data input random data to convert to a key
- * @param data size of input random data, at least krb5_enctype_keysize() long
- * @param data key, output key, free with krb5_free_keyblock_contents()
+ * @param size size of input random data, at least krb5_enctype_keysize() long
+ * @param key key, output key, free with krb5_free_keyblock_contents()
  *
  * @return Return an error code or 0.
  *

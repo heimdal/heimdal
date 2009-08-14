@@ -107,7 +107,7 @@ main(int argc, char **argv)
     fputs("#include <hcrypto/hmac.h>\n", f);
     fputs("#include <hcrypto/ec.h>\n", f);
     fputs("#include <hcrypto/ecdsa.h>\n", f);
-    fputs("#include <hcrytpo/ecdh.h>\n", f);
+    fputs("#include <hcrypto/ecdh.h>\n", f);
 #endif
     fprintf(f, "#endif /* __%s__ */\n", argv[1]);
     fclose(f);

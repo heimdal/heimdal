@@ -474,6 +474,10 @@ unsigned short ROKEN_LIB_FUNCTION bswap16(unsigned short);
 int rk_flock(int fd, int operation);
 #endif /* HAVE_FLOCK */
 
+#ifdef SunOS
+#define dirfd(x) ((x)->dd_fd)
+#endif
+
 time_t ROKEN_LIB_FUNCTION tm2time (struct tm, int);
 
 int ROKEN_LIB_FUNCTION unix_verify_user(char *, char *);

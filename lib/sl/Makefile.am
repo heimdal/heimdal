@@ -31,10 +31,9 @@ slc_SOURCES = slc-gram.y slc-lex.l slc.h
 
 CLEANFILES = snprintf.c strtok_r.c strdup.c strupr.c getprogname.c
 
-LDADD =						\
-	libsl.la				\
-	$(LEXLIB)				\
-	$(LIB_roken)
+LDADD =	libsl.la $(LIB_roken)
+
+slc_LDADD = $(LEXLIB) $(LDADD)
 
 strtok_r.c:
 	$(LN_S) $(srcdir)/../roken/strtok_r.c .

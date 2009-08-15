@@ -278,7 +278,7 @@ RSA_check_key(const RSA *key)
 	return 0;
     }
 
-    if (ret == sizeof(inbuf) && memcmp(buffer, inbuf, sizeof(inbuf)) == 0) {
+    if (ret == sizeof(inbuf) && ct_memcmp(buffer, inbuf, sizeof(inbuf)) == 0) {
 	free(buffer);
 	return 1;
     }

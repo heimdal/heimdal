@@ -213,7 +213,7 @@ main(int argc, char **argv)
 	    return 1;
 	}
 
-	if (memcmp(sighash, outdata, strlen(sighash)) != 0)
+	if (ct_memcmp(sighash, outdata, strlen(sighash)) != 0)
 	    return 1;
     }
 #endif

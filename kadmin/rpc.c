@@ -42,7 +42,7 @@
 		int __r;						\
 		if ((__r = (x))) {					\
 			krb5_errx(dcontext, 1, "Failed (%d) on %s:%d",	\
-			    __r, __FUNCTION__, __LINE__);		\
+			    __r, __FILE__, __LINE__);			\
 		}							\
 	} while(0)
 

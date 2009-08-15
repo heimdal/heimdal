@@ -65,6 +65,7 @@ libroken_la_SOURCES =		\
 	bswap.c			\
 	concat.c		\
 	cloexec.c		\
+	ct.c			\
 	dumpdata.c		\
 	environment.c		\
 	eread.c			\

@@ -1288,6 +1288,9 @@ _kdc_do_digest(krb5_context context,
 		EVP_DigestUpdate(&ctx, ireq.u.ntlmRequest.lm.data, 8);
 		EVP_DigestFinal_ex(&ctx, sessionhash, NULL);
 		memcpy(challange, sessionhash, sizeof(challange));
+
+		EVP_MD_CTX_cleanup(&ctx);
+
 	    } else {
 		if ((config->digests_allowed & NTLM_V1) == 0) {
 		    kdc_log(context, config, 0, "NTLM v1 not allowed");

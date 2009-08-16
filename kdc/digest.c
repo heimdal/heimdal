@@ -1265,7 +1265,7 @@ _kdc_do_digest(krb5_context context,
 
 	    if (flags & NTLM_NEG_NTLM2_SESSION) {
 		unsigned char sessionhash[MD5_DIGEST_LENGTH];
-		MD5_CTX md5ctx;
+		EVP_MD_CTX ctx;
 		
 		if ((config->digests_allowed & NTLM_V1_SESSION) == 0) {
 		    kdc_log(context, config, 0, "NTLM v1-session not allowed");
@@ -1280,10 +1280,13 @@ _kdc_do_digest(krb5_context context,
 		    goto failed;
 		}
 		
-		MD5_Init(&md5ctx);
-		MD5_Update(&md5ctx, challange, sizeof(challange));
-		MD5_Update(&md5ctx, ireq.u.ntlmRequest.lm.data, 8);
-		MD5_Final(sessionhash, &md5ctx);
+		EVP_MD_CTX_init(&ctx);
+
+		EVP_DigestInit_ex(&ctx, EVP_md5(), NULL);
+
+		EVP_DigestUpdate(&ctx, challange, sizeof(challange));
+		EVP_DigestUpdate(&ctx, ireq.u.ntlmRequest.lm.data, 8);
+		EVP_DigestFinal_ex(&ctx, sessionhash, NULL);
 		memcpy(challange, sessionhash, sizeof(challange));
 	    } else {
 		if ((config->digests_allowed & NTLM_V1) == 0) {
@@ -1311,12 +1314,17 @@ _kdc_do_digest(krb5_context context,
 	    free(answer.data);
 
 	    {
-		MD4_CTX ctx;
+		EVP_MD_CTX ctx;
 
-		MD4_Init(&ctx);
-		MD4_Update(&ctx,
-			   key->key.keyvalue.data, key->key.keyvalue.length);
-		MD4_Final(sessionkey, &ctx);
+		EVP_MD_CTX_init(&ctx);
+
+		EVP_DigestInit_ex(&ctx, EVP_md4(), NULL);
+		EVP_DigestUpdate(&ctx,
+				 key->key.keyvalue.data,
+				 key->key.keyvalue.length);
+		EVP_DigestFinal_ex(&ctx, sessionkey, NULL);
+
+		EVP_MD_CTX_cleanup(&ctx);
 	    }
 	}
 

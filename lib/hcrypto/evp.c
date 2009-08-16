@@ -176,6 +176,8 @@ EVP_MD_CTX_cleanup(EVP_MD_CTX *ctx) HC_DEPRECATED
 {
     if (ctx->md && ctx->md->cleanup)
 	(ctx->md->cleanup)(ctx);
+    else if (ctx->md)
+	memset(ctx->ptr, 0, ctx->md->ctx_size);
     ctx->md = NULL;
     ctx->engine = NULL;
     free(ctx->ptr);

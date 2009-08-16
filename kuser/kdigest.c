@@ -229,11 +229,13 @@ client_chap(const void *server_nonce, size_t snoncelen,
     unsigned char md[MD5_DIGEST_LENGTH];
     char *h;
 
-    MD5_Init(&ctx);
-    MD5_Update(&ctx, &server_identifier, 1);
-    MD5_Update(&ctx, password, strlen(password));
-    MD5_Update(&ctx, server_nonce, snoncelen);
-    MD5_Final(md, &ctx);
+    EVP_MD_CTX_init(&ctx);
+    EVP_DigestInit_ex(&ctx, EVP_md5(), NULL);
+
+    EVP_DigestUpdate(&ctx, &server_identifier, 1);
+    EVP_DigestUpdate(&ctx, password, strlen(password));
+    EVP_DigestUpdate(&ctx, server_nonce, snoncelen);
+    EVP_DigestFinal_ex(&ctx, md, NULL);
 
     hex_encode(md, 16, &h);
 

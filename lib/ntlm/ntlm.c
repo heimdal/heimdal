@@ -875,22 +875,23 @@ splitandenc(unsigned char *hash,
 	    unsigned char *challange,
 	    unsigned char *answer)
 {
-    DES_cblock key;
-    DES_key_schedule sched;
+    EVP_CIPHER_CTX ctx;
+    unsigned char key[8];
 
-    ((unsigned char*)key)[0] =  hash[0];
-    ((unsigned char*)key)[1] = (hash[0] << 7) | (hash[1] >> 1);
-    ((unsigned char*)key)[2] = (hash[1] << 6) | (hash[2] >> 2);
-    ((unsigned char*)key)[3] = (hash[2] << 5) | (hash[3] >> 3);
-    ((unsigned char*)key)[4] = (hash[3] << 4) | (hash[4] >> 4);
-    ((unsigned char*)key)[5] = (hash[4] << 3) | (hash[5] >> 5);
-    ((unsigned char*)key)[6] = (hash[5] << 2) | (hash[6] >> 6);
-    ((unsigned char*)key)[7] = (hash[6] << 1);
+    key[0] =  hash[0];
+    key[1] = (hash[0] << 7) | (hash[1] >> 1);
+    key[2] = (hash[1] << 6) | (hash[2] >> 2);
+    key[3] = (hash[2] << 5) | (hash[3] >> 3);
+    key[4] = (hash[3] << 4) | (hash[4] >> 4);
+    key[5] = (hash[4] << 3) | (hash[5] >> 5);
+    key[6] = (hash[5] << 2) | (hash[6] >> 6);
+    key[7] = (hash[6] << 1);
 
-    DES_set_odd_parity(&key);
-    DES_set_key_unchecked(&key, &sched);
-    DES_ecb_encrypt((DES_cblock *)challange, (DES_cblock *)answer, &sched, 1);
-    memset(&sched, 0, sizeof(sched));
+    EVP_CIPHER_CTX_init(&ctx);
+    
+    EVP_CipherInit_ex(&ctx, EVP_des_cbc(), NULL, key, NULL, 1);
+    EVP_Cipher(&ctx, answer, challange, 8);
+    EVP_CIPHER_CTX_cleanup(&ctx);
     memset(key, 0, sizeof(key));
 }
 

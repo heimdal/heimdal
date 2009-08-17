@@ -205,6 +205,7 @@ wrap_des
   EVP_MD_CTX md5;
   u_char hash[16];
   DES_key_schedule schedule;
+  EVP_CIPHER_CTX des_ctx;
   DES_cblock deskey;
   DES_cblock zero;
   int i;
@@ -291,9 +292,10 @@ wrap_des
 	  (ctx->more_flags & LOCAL) ? 0 : 0xFF,
 	  4);
 
-  DES_set_key_unchecked (&deskey, &schedule);
-  DES_cbc_encrypt ((void *)p, (void *)p, 8,
-		   &schedule, (DES_cblock *)(p + 8), DES_ENCRYPT);
+  EVP_CIPHER_CTX_init(&des_ctx);
+  EVP_CipherInit_ex(&des_ctx, EVP_des_cbc(), NULL, key->keyvalue.data, p + 8, 1);
+  EVP_Cipher(&des_ctx, p, p, 8);
+  EVP_CIPHER_CTX_cleanup(&des_ctx);
 
   krb5_auth_con_setlocalseqnumber (context,
 			       ctx->auth_context,
@@ -308,14 +310,11 @@ wrap_des
 
       for (i = 0; i < sizeof(deskey); ++i)
 	  deskey[i] ^= 0xf0;
-      DES_set_key_unchecked (&deskey, &schedule);
-      memset (&zero, 0, sizeof(zero));
-      DES_cbc_encrypt ((void *)p,
-		       (void *)p,
-		       datalen,
-		       &schedule,
-		       &zero,
-		       DES_ENCRYPT);
+
+      EVP_CIPHER_CTX_init(&des_ctx);
+      EVP_CipherInit_ex(&des_ctx, EVP_des_cbc(), NULL, deskey, zero, 1);
+      EVP_Cipher(&des_ctx, p, p, datalen);
+      EVP_CIPHER_CTX_cleanup(&des_ctx);
   }
   memset (deskey, 0, sizeof(deskey));
   memset (&schedule, 0, sizeof(schedule));

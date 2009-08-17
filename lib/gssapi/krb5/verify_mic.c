@@ -49,6 +49,7 @@ verify_mic_des
   EVP_MD_CTX md5;
   u_char hash[16], *seq;
   DES_key_schedule schedule;
+  EVP_CIPHER_CTX des_ctx;
   DES_cblock zero;
   DES_cblock deskey;
   uint32_t seq_number;
@@ -96,9 +97,11 @@ verify_mic_des
   HEIMDAL_MUTEX_lock(&context_handle->ctx_id_mutex);
 
   p -= 16;
-  DES_set_key_unchecked (&deskey, &schedule);
-  DES_cbc_encrypt ((void *)p, (void *)p, 8,
-		   &schedule, (DES_cblock *)hash, DES_DECRYPT);
+
+  EVP_CIPHER_CTX_init(&des_ctx);
+  EVP_CipherInit_ex(&des_ctx, EVP_des_cbc(), NULL, key->keyvalue.data, hash, 0);
+  EVP_Cipher(&des_ctx, p, p, 8);
+  EVP_CIPHER_CTX_cleanup(&des_ctx);
 
   memset (deskey, 0, sizeof(deskey));
   memset (&schedule, 0, sizeof(schedule));

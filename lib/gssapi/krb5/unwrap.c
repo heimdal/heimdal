@@ -48,6 +48,7 @@ unwrap_des
   size_t len;
   EVP_MD_CTX md5;
   u_char hash[16];
+  EVP_CIPHER_CTX des_ctx;
   DES_key_schedule schedule;
   DES_cblock deskey;
   DES_cblock zero;
@@ -98,16 +99,13 @@ unwrap_des
 
       for (i = 0; i < sizeof(deskey); ++i)
 	  deskey[i] ^= 0xf0;
-      DES_set_key_unchecked (&deskey, &schedule);
-      memset (&zero, 0, sizeof(zero));
-      DES_cbc_encrypt ((void *)p,
-		       (void *)p,
-		       input_message_buffer->length - len,
-		       &schedule,
-		       &zero,
-		       DES_DECRYPT);
 
-      memset (deskey, 0, sizeof(deskey));
+
+      EVP_CIPHER_CTX_init(&des_ctx);
+      EVP_CipherInit_ex(&des_ctx, EVP_des_cbc(), NULL, deskey, zero, 0);
+      EVP_Cipher(&des_ctx, p, p, input_message_buffer->length - len);
+      EVP_CIPHER_CTX_cleanup(&des_ctx);
+
       memset (&schedule, 0, sizeof(schedule));
   }
 
@@ -142,9 +140,11 @@ unwrap_des
   HEIMDAL_MUTEX_lock(&context_handle->ctx_id_mutex);
 
   p -= 16;
-  DES_set_key_unchecked (&deskey, &schedule);
-  DES_cbc_encrypt ((void *)p, (void *)p, 8,
-		   &schedule, (DES_cblock *)hash, DES_DECRYPT);
+
+  EVP_CIPHER_CTX_init(&des_ctx);
+  EVP_CipherInit_ex(&des_ctx, EVP_des_cbc(), NULL, key->keyvalue.data, hash, 0);
+  EVP_Cipher(&des_ctx, p, p, 8);
+  EVP_CIPHER_CTX_cleanup(&des_ctx);
 
   memset (deskey, 0, sizeof(deskey));
   memset (&schedule, 0, sizeof(schedule));

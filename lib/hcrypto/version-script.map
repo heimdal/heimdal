@@ -183,9 +183,9 @@ HEIMDAL_CRYPTO_1.0 {
 		hc_EVP_hcrypto_rc4;
 		hc_EVP_hcrypto_rc4_40;
 
-		hc_EVP_hcrypto_aes_cts_128_cbc;
-		hc_EVP_hcrypto_aes_cts_192_cbc;
-		hc_EVP_hcrypto_aes_cts_256_cbc;
+		hc_EVP_hcrypto_aes_128_cts;
+		hc_EVP_hcrypto_aes_192_cts;
+		hc_EVP_hcrypto_aes_256_cts;
 
 		hc_HMAC;
 		hc_HMAC_CTX_cleanup;

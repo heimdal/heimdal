@@ -285,44 +285,94 @@ _gssapi_wrap_cfx_iov(OM_uint32 *minor_status,
     gss_iov_buffer_desc *header, *trailer, *padding;
     size_t gsshsize, k5hsize;
     size_t gsstsize, k5tsize;
-    size_t i, padlength, rrc = 0, ec = 0;
+    size_t i, rrc = 0, ec = 0;
     gss_cfx_wrap_token token;
     krb5_error_code ret;
     int32_t seq_number;
     unsigned usage;
     krb5_crypto_iov *data = NULL;
-    int paddingoffset = 0;
-	
+
     header = _gk_find_buffer(iov, iov_count, GSS_IOV_BUFFER_TYPE_HEADER);
     if (header == NULL) {
 	*minor_status = EINVAL;
 	return GSS_S_FAILURE;
     }
 
-    krb5_crypto_length(context, ctx->crypto, KRB5_CRYPTO_TYPE_PADDING, &padlength);
-
     padding = _gk_find_buffer(iov, iov_count, GSS_IOV_BUFFER_TYPE_PADDING);
-    if (padlength != 0 && padding == NULL) {
-	*minor_status = EINVAL;
-	return GSS_S_FAILURE;
+    if (padding != NULL) {
+	padding->buffer.length = 0;
     }
 
     trailer = _gk_find_buffer(iov, iov_count, GSS_IOV_BUFFER_TYPE_TRAILER);
 
+    major_status = _gk_verify_buffers(minor_status, ctx, header, padding, trailer);
+    if (major_status != GSS_S_COMPLETE) {
+	    return major_status;
+    }
+
     if (conf_req_flag) {
-	ec = padlength;
+	size_t k5psize = 0;
+	size_t k5pbase = 0;
+	size_t k5bsize = 0;
+	size_t size = 0;
 
-	krb5_crypto_length(context, ctx->crypto, KRB5_CRYPTO_TYPE_TRAILER, &k5tsize);
-	krb5_crypto_length(context, ctx->crypto, KRB5_CRYPTO_TYPE_HEADER, &k5hsize);
+	for (i = 0; i < iov_count; i++) {
+	    switch (GSS_IOV_BUFFER_TYPE(iov[i].type)) {
+	    case GSS_IOV_BUFFER_TYPE_DATA:
+		size += iov[i].buffer.length;
+		break;
+	    default:
+		break;
+	    }
+	}
 
-	gsshsize = k5hsize + sizeof(*token);
-	gsstsize = k5tsize + sizeof(*token); /* encrypted token stored in trailer */
+	size += sizeof(gss_cfx_wrap_token_desc);
 
+	*minor_status = krb5_crypto_length(context, ctx->crypto,
+					   KRB5_CRYPTO_TYPE_HEADER,
+					   &k5hsize);
+	if (*minor_status)
+	    return GSS_S_FAILURE;
+
+	*minor_status = krb5_crypto_length(context, ctx->crypto,
+					   KRB5_CRYPTO_TYPE_TRAILER,
+					   &k5tsize);
+	if (*minor_status)
+	    return GSS_S_FAILURE;
+
+	*minor_status = krb5_crypto_length(context, ctx->crypto,
+					   KRB5_CRYPTO_TYPE_PADDING,
+					   &k5pbase);
+	if (*minor_status)
+	    return GSS_S_FAILURE;
+
+	if (k5pbase > 1) {
+	    k5psize = k5pbase - (size % k5pbase);
+	} else {
+	    k5psize = 0;
+	}
+
+	if (k5psize == 0 && IS_DCE_STYLE(ctx)) {
+	    *minor_status = krb5_crypto_getblocksize(context, ctx->crypto,
+						     &k5bsize);
+	    if (*minor_status)
+		return GSS_S_FAILURE;
+	    ec = k5bsize;
+	} else {
+	    ec = k5psize;
+	}
+
+	gsshsize = sizeof(gss_cfx_wrap_token_desc) + k5hsize;
+	gsstsize = sizeof(gss_cfx_wrap_token_desc) + ec + k5tsize;
     } else {
+	k5hsize = 0;
+	*minor_status = krb5_crypto_length(context, ctx->crypto,
+					   KRB5_CRYPTO_TYPE_CHECKSUM,
+					   &k5tsize);
+	if (*minor_status)
+	    return GSS_S_FAILURE;
 
-	krb5_crypto_length(context, ctx->crypto, KRB5_CRYPTO_TYPE_CHECKSUM, &k5tsize);
-
-	gsshsize = sizeof(*token);
+	gsshsize = sizeof(gss_cfx_wrap_token_desc);
 	gsstsize = k5tsize;
     }
 
@@ -389,8 +439,8 @@ _gssapi_wrap_cfx_iov(OM_uint32 *minor_status,
 	 * used to encode the size (in bytes) of the random filler.
 	 */
 	token->Flags |= CFXSealed;
-	token->EC[0] = (padlength >> 8) & 0xFF;
-	token->EC[1] = (padlength >> 0) & 0xFF;
+	token->EC[0] = (ec >> 8) & 0xFF;
+	token->EC[1] = (ec >> 0) & 0xFF;
 
     } else {
 	/*
@@ -441,15 +491,15 @@ _gssapi_wrap_cfx_iov(OM_uint32 *minor_status,
 	/*
 	  plain packet:
 
-	  {"header" | encrypt(plaintext-data | padding | E"header")}
+	  {"header" | encrypt(plaintext-data | ec-padding | E"header")}
 
 	  Expanded, this is with with RRC = 0:
 
-	  {"header" | krb5-header | plaintext-data | padding | E"header" | krb5-trailer }
+	  {"header" | krb5-header | plaintext-data | ec-padding | E"header" | krb5-trailer }
 
-	  In DCE-RPC mode == no trailer: RRC = gss "trailer" == length(padding | E"header" | krb5-trailer)
+	  In DCE-RPC mode == no trailer: RRC = gss "trailer" == length(ec-padding | E"header" | krb5-trailer)
 
-	  {"header" | padding | E"header" | krb5-trailer | krb5-header | plaintext-data  }
+	  {"header" | ec-padding | E"header" | krb5-trailer | krb5-header | plaintext-data  }
 	 */
 
 	i = 0;
@@ -461,10 +511,6 @@ _gssapi_wrap_cfx_iov(OM_uint32 *minor_status,
 	    switch (GSS_IOV_BUFFER_TYPE(iov[i - 1].type)) {
 	    case GSS_IOV_BUFFER_TYPE_DATA:
 		data[i].flags = KRB5_CRYPTO_TYPE_DATA;
-		break;
-	    case GSS_IOV_BUFFER_TYPE_PADDING:
-		data[i].flags = KRB5_CRYPTO_TYPE_PADDING;
-		paddingoffset = i;
 		break;
 	    case GSS_IOV_BUFFER_TYPE_SIGN_ONLY:
 		data[i].flags = KRB5_CRYPTO_TYPE_SIGN_ONLY;
@@ -483,8 +529,6 @@ _gssapi_wrap_cfx_iov(OM_uint32 *minor_status,
 	 * ciphertext.
 	 */
 
-	/* XXX KRB5_CRYPTO_TYPE_PADDING */
-
 	/* encrypted CFX header in trailer (or after the header if in
 	   DCE mode). Copy in header into E"header"
 	*/
@@ -492,15 +536,16 @@ _gssapi_wrap_cfx_iov(OM_uint32 *minor_status,
 	if (trailer)
 	    data[i].data.data = trailer->buffer.value;
 	else
-	    data[i].data.data = ((uint8_t *)header->buffer.value) + header->buffer.length - k5hsize - k5tsize - sizeof(*token);
+	    data[i].data.data = ((uint8_t *)header->buffer.value) + sizeof(*token);
 
-	data[i].data.length = sizeof(*token);
-	memcpy(data[i].data.data, token, sizeof(*token));
+	data[i].data.length = ec + sizeof(*token);
+	memset(data[i].data.data, 0xFF, ec);
+	memcpy(((uint8_t *)data[i].data.data) + ec, token, sizeof(*token));
 	i++;
 
 	/* Kerberos trailer comes after the gss trailer */
 	data[i].flags = KRB5_CRYPTO_TYPE_TRAILER;
-	data[i].data.data = ((uint8_t *)data[i-1].data.data) + sizeof(*token);
+	data[i].data.data = ((uint8_t *)data[i-1].data.data) + ec + sizeof(*token);
 	data[i].data.length = k5tsize;
 	i++;
 
@@ -516,9 +561,6 @@ _gssapi_wrap_cfx_iov(OM_uint32 *minor_status,
 	    token->RRC[1] = (rrc >> 0) & 0xFF;
 	}
 
-	if (paddingoffset)
-	    padding->buffer.length = data[paddingoffset].data.length;
-
     } else {
 	/*
 	  plain packet:
@@ -532,7 +574,6 @@ _gssapi_wrap_cfx_iov(OM_uint32 *minor_status,
 	for (i = 0; i < iov_count; i++) {
 	    switch (GSS_IOV_BUFFER_TYPE(iov[i].type)) {
 	    case GSS_IOV_BUFFER_TYPE_DATA:
-	    case GSS_IOV_BUFFER_TYPE_PADDING:
 		data[i].flags = KRB5_CRYPTO_TYPE_DATA;
 		break;
 	    case GSS_IOV_BUFFER_TYPE_SIGN_ONLY:
@@ -548,12 +589,17 @@ _gssapi_wrap_cfx_iov(OM_uint32 *minor_status,
 
 	data[i].flags = KRB5_CRYPTO_TYPE_DATA;
 	data[i].data.data = header->buffer.value;
-	data[i].data.length = header->buffer.length;
+	data[i].data.length = sizeof(gss_cfx_wrap_token_desc);
 	i++;
 
 	data[i].flags = KRB5_CRYPTO_TYPE_CHECKSUM;
-	data[i].data.data = trailer->buffer.value;
-	data[i].data.length = trailer->buffer.length;
+	if (trailer) {
+		data[i].data.data = trailer->buffer.value;
+	} else {
+		data[i].data.data = (uint8_t *)header->buffer.value +
+				     sizeof(gss_cfx_wrap_token_desc);
+	}
+	data[i].data.length = k5tsize;
 	i++;
 
 	ret = krb5_create_checksum_iov(context, ctx->crypto, usage, data, i, NULL);

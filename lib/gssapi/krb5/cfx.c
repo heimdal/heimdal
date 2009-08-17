@@ -710,7 +710,7 @@ _gssapi_unwrap_cfx_iov(OM_uint32 *minor_status,
 		       int iov_count)
 {
     OM_uint32 seq_number_lo, seq_number_hi, major_status, junk;
-    gss_iov_buffer_desc *header, *trailer;
+    gss_iov_buffer_desc *header, *trailer, *padding;
     gss_cfx_wrap_token token, ttoken;
     u_char token_flags;
     krb5_error_code ret;
@@ -730,7 +730,18 @@ _gssapi_unwrap_cfx_iov(OM_uint32 *minor_status,
     if (header->buffer.length < sizeof(*token)) /* we check exact below */
 	return GSS_S_DEFECTIVE_TOKEN;
 
+    padding = _gk_find_buffer(iov, iov_count, GSS_IOV_BUFFER_TYPE_PADDING);
+    if (padding != NULL && padding->buffer.length != 0) {
+	*minor_status = EINVAL;
+	return GSS_S_FAILURE;
+    }
+
     trailer = _gk_find_buffer(iov, iov_count, GSS_IOV_BUFFER_TYPE_TRAILER);
+
+    major_status = _gk_verify_buffers(minor_status, ctx, header, padding, trailer);
+    if (major_status != GSS_S_COMPLETE) {
+	    return major_status;
+    }
 
     token = (gss_cfx_wrap_token)header->buffer.value;
 
@@ -813,14 +824,16 @@ _gssapi_unwrap_cfx_iov(OM_uint32 *minor_status,
 	    size_t gsstsize = k5tsize + sizeof(*token);
 	    size_t gsshsize = k5hsize + sizeof(*token);
 
-	    if (IS_DCE_STYLE(ctx))
-		gsstsize += ec;
-	    gsshsize += gsstsize;
-
 	    if (rrc != gsstsize) {
 		major_status = GSS_S_DEFECTIVE_TOKEN;
 		goto failure;
 	    }
+
+	    if (IS_DCE_STYLE(ctx))
+		gsstsize += ec;
+
+	    gsshsize += gsstsize;
+
 	    if (header->buffer.length != gsshsize) {
 		major_status = GSS_S_DEFECTIVE_TOKEN;
 		goto failure;
@@ -847,7 +860,6 @@ _gssapi_unwrap_cfx_iov(OM_uint32 *minor_status,
 	for (j = 0; j < iov_count; i++, j++) {
 	    switch (GSS_IOV_BUFFER_TYPE(iov[j].type)) {
 	    case GSS_IOV_BUFFER_TYPE_DATA:
-	    case GSS_IOV_BUFFER_TYPE_PADDING:
 		data[i].flags = KRB5_CRYPTO_TYPE_DATA;
 		break;
 	    case GSS_IOV_BUFFER_TYPE_SIGN_ONLY:
@@ -865,17 +877,20 @@ _gssapi_unwrap_cfx_iov(OM_uint32 *minor_status,
 	   DCE mode). Copy in header into E"header"
 	*/
 	data[i].flags = KRB5_CRYPTO_TYPE_DATA;
-	if (trailer)
+	if (trailer) {
 	    data[i].data.data = trailer->buffer.value;
-	else
-	    data[i].data.data = ((uint8_t *)header->buffer.value) + header->buffer.length - k5hsize - k5tsize - sizeof(*token);
-	data[i].data.length = sizeof(*token);
-	ttoken = (gss_cfx_wrap_token)data[i].data.data;
+	} else {
+	    data[i].data.data = ((uint8_t *)header->buffer.value) +
+		header->buffer.length - k5hsize - k5tsize - ec- sizeof(*token);
+	}
+
+	data[i].data.length = ec + sizeof(*token);
+	ttoken = (gss_cfx_wrap_token)(((uint8_t *)data[i].data.data) + ec);
 	i++;
 
 	/* Kerberos trailer comes after the gss trailer */
 	data[i].flags = KRB5_CRYPTO_TYPE_TRAILER;
-	data[i].data.data = ((uint8_t *)data[i-1].data.data) + sizeof(*token);
+	data[i].data.data = ((uint8_t *)data[i-1].data.data) + ec + sizeof(*token);
 	data[i].data.length = k5tsize;
 	i++;
 
@@ -895,6 +910,9 @@ _gssapi_unwrap_cfx_iov(OM_uint32 *minor_status,
 	    goto failure;
 	}
     } else {
+	size_t gsstsize = ec;
+	size_t gsshsize = sizeof(*token);
+
 	/* Check RRC */
 	if (rrc != 0) {
 	    *minor_status = EINVAL;
@@ -903,21 +921,21 @@ _gssapi_unwrap_cfx_iov(OM_uint32 *minor_status,
 	}
 
 	if (trailer == NULL) {
-	    *minor_status = EINVAL;
-	    major_status = GSS_S_FAILURE;
+	    gsshsize += gsstsize;
+	    gsstsize = 0;
+	} else if (trailer->buffer.length != gsstsize) {
+	    major_status = GSS_S_DEFECTIVE_TOKEN;
 	    goto failure;
 	}
 
-	if (trailer->buffer.length != ec) {
-	    *minor_status = EINVAL;
-	    major_status = GSS_S_FAILURE;
+	if (header->buffer.length != gsshsize) {
+	    major_status = GSS_S_DEFECTIVE_TOKEN;
 	    goto failure;
 	}
 
 	for (i = 0; i < iov_count; i++) {
 	    switch (GSS_IOV_BUFFER_TYPE(iov[i].type)) {
 	    case GSS_IOV_BUFFER_TYPE_DATA:
-	    case GSS_IOV_BUFFER_TYPE_PADDING:
 		data[i].flags = KRB5_CRYPTO_TYPE_DATA;
 		break;
 	    case GSS_IOV_BUFFER_TYPE_SIGN_ONLY:
@@ -933,12 +951,17 @@ _gssapi_unwrap_cfx_iov(OM_uint32 *minor_status,
 
 	data[i].flags = KRB5_CRYPTO_TYPE_DATA;
 	data[i].data.data = header->buffer.value;
-	data[i].data.length = header->buffer.length;
+	data[i].data.length = sizeof(*token);
 	i++;
 
 	data[i].flags = KRB5_CRYPTO_TYPE_CHECKSUM;
-	data[i].data.data = trailer->buffer.value;
-	data[i].data.length = trailer->buffer.length;
+	if (trailer) {
+		data[i].data.data = trailer->buffer.value;
+	} else {
+		data[i].data.data = (uint8_t *)header->buffer.value +
+				     sizeof(*token);
+	}
+	data[i].data.length = ec;
 	i++;
 
 	token = (gss_cfx_wrap_token)header->buffer.value;

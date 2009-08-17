@@ -61,6 +61,8 @@ LT_INIT([shared static win32-dll])
 AM_CONDITIONAL(ENABLE_SHARED, test "$enable_shared" = "yes")
 rk_VERSIONSCRIPT
 
+AC_DEFINE(HEIM_WEAK_CRYPTO, 1, [Define if you want support for weak crypto])
+
 rk_TEST_PACKAGE(openldap,
 [#include <lber.h>
 #include <ldap.h>],

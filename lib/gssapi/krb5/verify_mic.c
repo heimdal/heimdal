@@ -33,6 +33,8 @@
 
 #include "gsskrb5_locl.h"
 
+#ifdef HEIM_WEAK_CRYPTO
+
 static OM_uint32
 verify_mic_des
            (OM_uint32 * minor_status,
@@ -129,6 +131,7 @@ verify_mic_des
 
   return GSS_S_COMPLETE;
 }
+#endif
 
 static OM_uint32
 verify_mic_des3
@@ -296,9 +299,13 @@ _gsskrb5_verify_mic_internal
     krb5_enctype_to_keytype (context, key->keytype, &keytype);
     switch (keytype) {
     case KEYTYPE_DES :
+#ifdef HEIM_WEAK_CRYPTO
 	ret = verify_mic_des (minor_status, ctx, context,
 			      message_buffer, token_buffer, qop_state, key,
 			      type);
+#else
+      ret = GSS_S_FAILURE;
+#endif
 	break;
     case KEYTYPE_DES3 :
 	ret = verify_mic_des3 (minor_status, ctx, context,

@@ -168,7 +168,11 @@ _gsskrb5_wrap_size_limit (
 
   switch (keytype) {
   case KEYTYPE_DES :
+#ifdef HEIM_WEAK_CRYPTO
       ret = sub_wrap_size(req_output_size, max_input_size, 8, 22);
+#else
+      ret = GSS_S_FAILURE;
+#endif
       break;
   case KEYTYPE_ARCFOUR:
   case KEYTYPE_ARCFOUR_56:
@@ -187,6 +191,8 @@ _gsskrb5_wrap_size_limit (
   *minor_status = 0;
   return ret;
 }
+
+#ifdef HEIM_WEAK_CRYPTO
 
 static OM_uint32
 wrap_des
@@ -324,6 +330,8 @@ wrap_des
   *minor_status = 0;
   return GSS_S_COMPLETE;
 }
+
+#endif
 
 static OM_uint32
 wrap_des3
@@ -553,9 +561,13 @@ OM_uint32 _gsskrb5_wrap
 
   switch (keytype) {
   case KEYTYPE_DES :
+#ifdef HEIM_WEAK_CRYPTO
       ret = wrap_des (minor_status, ctx, context, conf_req_flag,
 		      qop_req, input_message_buffer, conf_state,
 		      output_message_buffer, key);
+#else
+      ret = GSS_S_FAILURE;
+#endif
       break;
   case KEYTYPE_DES3 :
       ret = wrap_des3 (minor_status, ctx, context, conf_req_flag,

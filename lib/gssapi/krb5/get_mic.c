@@ -33,6 +33,8 @@
 
 #include "gsskrb5_locl.h"
 
+#ifdef HEIM_WEAK_CRYPTO
+
 static OM_uint32
 mic_des
            (OM_uint32 * minor_status,
@@ -125,6 +127,7 @@ mic_des
   *minor_status = 0;
   return GSS_S_COMPLETE;
 }
+#endif
 
 static OM_uint32
 mic_des3
@@ -301,8 +304,12 @@ OM_uint32 _gsskrb5_get_mic
 
   switch (keytype) {
   case KEYTYPE_DES :
+#ifdef HEIM_WEAK_CRYPTO
       ret = mic_des (minor_status, ctx, context, qop_req,
 		     message_buffer, message_token, key);
+#else
+      ret = GSS_S_FAILURE;
+#endif
       break;
   case KEYTYPE_DES3 :
       ret = mic_des3 (minor_status, ctx, context, qop_req,

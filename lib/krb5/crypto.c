@@ -36,8 +36,6 @@
 #include "krb5_locl.h"
 #include <pkinit_asn1.h>
 
-#define WEAK_ENCTYPES 1
-
 #ifndef HEIMDAL_SMALLER
 #define DES3_OLD_ENCTYPE 1
 #endif
@@ -182,7 +180,7 @@ struct evp_schedule {
 
 static HEIMDAL_MUTEX crypto_mutex = HEIMDAL_MUTEX_INITIALIZER;
 
-#ifdef WEAK_ENCTYPES
+#ifdef HEIM_WEAK_CRYPTO
 static void
 krb5_DES_random_key(krb5_context context,
 		    krb5_keyblock *key)
@@ -715,7 +713,7 @@ evp_cleanup(krb5_context context, struct key_data *kd)
  *
  */
 
-#ifdef WEAK_ENCTYPES
+#ifdef HEIM_WEAK_CRYPTO
 static struct salt_type des_salt[] = {
     {
 	KRB5_PW_SALT,
@@ -786,7 +784,7 @@ static struct key_type keytype_null = {
     NULL
 };
 
-#ifdef WEAK_ENCTYPES
+#ifdef HEIM_WEAK_CRYPTO
 static struct key_type keytype_des_old = {
     KEYTYPE_DES,
     "des-old",
@@ -812,7 +810,7 @@ static struct key_type keytype_des = {
     evp_cleanup,
     EVP_des_cbc
 };
-#endif /* WEAK_ENCTYPES */
+#endif /* HEIM_WEAK_CRYPTO */
 
 #ifdef DES3_OLD_ENCTYPE
 static struct key_type keytype_des3 = {
@@ -2056,7 +2054,7 @@ evp_encrypt(krb5_context context,
     return 0;
 }
 
-#ifdef WEAK_ENCTYPES
+#ifdef HEIM_WEAK_CRYPTO
 static krb5_error_code
 evp_des_encrypt_null_ivec(krb5_context context,
 			  struct key_data *key,
@@ -2505,7 +2503,7 @@ static struct encryption_type enctype_des3_cbc_none = {
     0,
     NULL
 };
-#ifdef WEAK_ENCTYPES
+#ifdef HEIM_WEAK_CRYPTO
 static struct encryption_type enctype_des_cbc_crc = {
     ETYPE_DES_CBC_CRC,
     "des-cbc-crc",
@@ -2590,7 +2588,7 @@ static struct encryption_type enctype_des_pcbc_none = {
     0,
     NULL
 };
-#endif /* WEAK_ENCTYPES */
+#endif /* HEIM_WEAK_CRYPTO */
 
 static struct encryption_type *etypes[] = {
     &enctype_aes256_cts_hmac_sha1,
@@ -2602,7 +2600,7 @@ static struct encryption_type *etypes[] = {
     &enctype_des3_cbc_md5,
     &enctype_old_des3_cbc_sha1,
 #endif
-#ifdef WEAK_ENCTYPES
+#ifdef HEIM_WEAK_CRYPTO
     &enctype_des_cbc_crc,
     &enctype_des_cbc_md4,
     &enctype_des_cbc_md5,

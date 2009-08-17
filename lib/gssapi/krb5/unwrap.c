@@ -33,6 +33,8 @@
 
 #include "gsskrb5_locl.h"
 
+#ifdef HEIM_WEAK_CRYPTO
+
 static OM_uint32
 unwrap_des
            (OM_uint32 * minor_status,
@@ -182,6 +184,7 @@ unwrap_des
 	  output_message_buffer->length);
   return GSS_S_COMPLETE;
 }
+#endif
 
 static OM_uint32
 unwrap_des3
@@ -416,9 +419,13 @@ OM_uint32 _gsskrb5_unwrap
 
   switch (keytype) {
   case KEYTYPE_DES :
+#ifdef HEIM_WEAK_CRYPTO
       ret = unwrap_des (minor_status, ctx,
 			input_message_buffer, output_message_buffer,
 			conf_state, qop_state, key);
+#else
+      ret = GSS_S_FAILURE;
+#endif
       break;
   case KEYTYPE_DES3 :
       ret = unwrap_des3 (minor_status, ctx, context,

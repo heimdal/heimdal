@@ -134,7 +134,7 @@ unwrap_des
   DES_set_key_unchecked (&deskey, &schedule);
   DES_cbc_cksum ((void *)hash, (void *)hash, sizeof(hash),
 		 &schedule, &zero);
-  if (memcmp (p - 8, hash, 8) != 0)
+  if (ct_memcmp (p - 8, hash, 8) != 0)
     return GSS_S_BAD_MIC;
 
   /* verify sequence number */
@@ -153,9 +153,9 @@ unwrap_des
   _gsskrb5_decode_om_uint32(seq, &seq_number);
 
   if (context_handle->more_flags & LOCAL)
-      cmp = memcmp(&seq[4], "\xff\xff\xff\xff", 4);
+      cmp = ct_memcmp(&seq[4], "\xff\xff\xff\xff", 4);
   else
-      cmp = memcmp(&seq[4], "\x00\x00\x00\x00", 4);
+      cmp = ct_memcmp(&seq[4], "\x00\x00\x00\x00", 4);
 
   if (cmp != 0) {
     HEIMDAL_MUTEX_unlock(&context_handle->ctx_id_mutex);
@@ -226,16 +226,16 @@ unwrap_des3
   if (memcmp (p, "\x04\x00", 2) != 0) /* HMAC SHA1 DES3_KD */
     return GSS_S_BAD_SIG;
   p += 2;
-  if (memcmp (p, "\x02\x00", 2) == 0) {
+  if (ct_memcmp (p, "\x02\x00", 2) == 0) {
     cstate = 1;
-  } else if (memcmp (p, "\xff\xff", 2) == 0) {
+  } else if (ct_memcmp (p, "\xff\xff", 2) == 0) {
     cstate = 0;
   } else
     return GSS_S_BAD_MIC;
   p += 2;
   if(conf_state != NULL)
     *conf_state = cstate;
-  if (memcmp (p, "\xff\xff", 2) != 0)
+  if (ct_memcmp (p, "\xff\xff", 2) != 0)
     return GSS_S_DEFECTIVE_TOKEN;
   p += 2;
   p += 28;
@@ -316,9 +316,9 @@ unwrap_des3
   _gsskrb5_decode_om_uint32(seq, &seq_number);
 
   if (context_handle->more_flags & LOCAL)
-      cmp = memcmp(&seq[4], "\xff\xff\xff\xff", 4);
+      cmp = ct_memcmp(&seq[4], "\xff\xff\xff\xff", 4);
   else
-      cmp = memcmp(&seq[4], "\x00\x00\x00\x00", 4);
+      cmp = ct_memcmp(&seq[4], "\x00\x00\x00\x00", 4);
 
   krb5_data_free (&seq_data);
   if (cmp != 0) {

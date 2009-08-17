@@ -208,7 +208,7 @@ _gsskrb5_verify_8003_checksum(
 	    *minor_status = 0;
 	    return GSS_S_BAD_BINDINGS;
 	}
-	if(memcmp(hash, p, sizeof(hash)) != 0) {
+	if(ct_memcmp(hash, p, sizeof(hash)) != 0) {
 	    *minor_status = 0;
 	    return GSS_S_BAD_BINDINGS;
 	}

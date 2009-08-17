@@ -807,7 +807,7 @@ _gssapi_unwrap_cfx_iov(OM_uint32 *minor_status,
 	ttoken->RRC[1] = token->RRC[1];
 
 	/* Check the integrity of the header */
-	if (memcmp(ttoken, token, sizeof(*token)) != 0) {
+	if (ct_memcmp(ttoken, token, sizeof(*token)) != 0) {
 	    major_status = GSS_S_BAD_MIC;
 	    goto failure;
 	}
@@ -1294,7 +1294,7 @@ OM_uint32 _gssapi_unwrap_cfx(OM_uint32 *minor_status,
 	((gss_cfx_wrap_token)p)->RRC[1] = token->RRC[1];
 
 	/* Check the integrity of the header */
-	if (memcmp(p, token, sizeof(*token)) != 0) {
+	if (ct_memcmp(p, token, sizeof(*token)) != 0) {
 	    krb5_data_free(&data);
 	    return GSS_S_BAD_MIC;
 	}
@@ -1496,7 +1496,7 @@ OM_uint32 _gssapi_verify_mic_cfx(OM_uint32 *minor_status,
 	    return GSS_S_DEFECTIVE_TOKEN;
     }
 
-    if (memcmp(token->Filler, "\xff\xff\xff\xff\xff", 5) != 0) {
+    if (ct_memcmp(token->Filler, "\xff\xff\xff\xff\xff", 5) != 0) {
 	return GSS_S_DEFECTIVE_TOKEN;
     }
 

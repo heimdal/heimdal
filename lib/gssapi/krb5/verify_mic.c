@@ -85,7 +85,7 @@ verify_mic_des
   DES_set_key_unchecked (&deskey, &schedule);
   DES_cbc_cksum ((void *)hash, (void *)hash, sizeof(hash),
 		 &schedule, &zero);
-  if (memcmp (p - 8, hash, 8) != 0) {
+  if (ct_memcmp (p - 8, hash, 8) != 0) {
     memset (deskey, 0, sizeof(deskey));
     memset (&schedule, 0, sizeof(schedule));
     return GSS_S_BAD_MIC;
@@ -107,9 +107,9 @@ verify_mic_des
   _gsskrb5_decode_om_uint32(seq, &seq_number);
 
   if (context_handle->more_flags & LOCAL)
-      cmp = memcmp(&seq[4], "\xff\xff\xff\xff", 4);
+      cmp = ct_memcmp(&seq[4], "\xff\xff\xff\xff", 4);
   else
-      cmp = memcmp(&seq[4], "\x00\x00\x00\x00", 4);
+      cmp = ct_memcmp(&seq[4], "\x00\x00\x00\x00", 4);
 
   if (cmp != 0) {
     HEIMDAL_MUTEX_unlock(&context_handle->ctx_id_mutex);
@@ -208,9 +208,9 @@ retry:
   _gsskrb5_decode_om_uint32(seq, &seq_number);
 
   if (context_handle->more_flags & LOCAL)
-      cmp = memcmp(&seq[4], "\xff\xff\xff\xff", 4);
+      cmp = ct_memcmp(&seq[4], "\xff\xff\xff\xff", 4);
   else
-      cmp = memcmp(&seq[4], "\x00\x00\x00\x00", 4);
+      cmp = ct_memcmp(&seq[4], "\x00\x00\x00\x00", 4);
 
   krb5_data_free (&seq_data);
   if (cmp != 0) {

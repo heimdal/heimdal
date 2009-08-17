@@ -234,6 +234,43 @@ allocate_buffer(OM_uint32 *minor_status, gss_iov_buffer_desc *buffer, size_t siz
 }
 
 
+OM_uint32
+_gk_verify_buffers(OM_uint32 *minor_status,
+		   const gsskrb5_ctx ctx,
+		   const gss_iov_buffer_desc *header,
+		   const gss_iov_buffer_desc *padding,
+		   const gss_iov_buffer_desc *trailer)
+{
+    if (header == NULL) {
+	*minor_status = EINVAL;
+	return GSS_S_FAILURE;
+    }
+
+    if (IS_DCE_STYLE(ctx)) {
+	/*
+	 * In DCE style mode we reject having a padding or trailer buffer
+	 */
+	if (padding) {
+	    *minor_status = EINVAL;
+	    return GSS_S_FAILURE;
+	}
+	if (trailer) {
+	    *minor_status = EINVAL;
+	    return GSS_S_FAILURE;
+	}
+    } else {
+	/*
+	 * In non-DCE style mode we require having a padding buffer
+	 */
+	if (padding == NULL) {
+	    *minor_status = EINVAL;
+	    return GSS_S_FAILURE;
+	}
+    }
+
+    *minor_status = 0;
+    return GSS_S_COMPLETE;
+}
 
 OM_uint32
 _gssapi_wrap_cfx_iov(OM_uint32 *minor_status,

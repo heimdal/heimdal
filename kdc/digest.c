@@ -1333,7 +1333,7 @@ _kdc_do_digest(krb5_context context,
 
 	if (ireq.u.ntlmRequest.sessionkey) {
 	    unsigned char masterkey[MD4_DIGEST_LENGTH];
-	    RC4_KEY rc4;
+	    EVP_CIPHER_CTX rc4;
 	    size_t len;
 	
 	    if ((flags & NTLM_NEG_KEYEX) == 0) {
@@ -1353,12 +1353,13 @@ _kdc_do_digest(krb5_context context,
 		goto failed;
 	    }
 	
-	    RC4_set_key(&rc4, sizeof(sessionkey), sessionkey);
-	
-	    RC4(&rc4, sizeof(masterkey),
-		ireq.u.ntlmRequest.sessionkey->data,
-		masterkey);
-	    memset(&rc4, 0, sizeof(rc4));
+
+	    EVP_CIPHER_CTX_init(&rc4);
+	    EVP_CipherInit_ex(&rc4, EVP_rc4(), NULL, sessionkey, NULL, 1);
+	    EVP_Cipher(&rc4,
+		       masterkey, ireq.u.ntlmRequest.sessionkey->data,
+		       sizeof(masterkey));
+	    EVP_CIPHER_CTX_cleanup(&rc4);
 	
 	    r.u.ntlmResponse.sessionkey =
 		malloc(sizeof(*r.u.ntlmResponse.sessionkey));

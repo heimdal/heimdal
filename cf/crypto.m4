@@ -38,20 +38,19 @@ m4_define([test_headers], [
 		])
 m4_define([test_body], [
 		void *schedule = 0;
-		MD4_CTX md4;
-		MD5_CTX md5;
 		SHA_CTX sha1;
 		SHA256_CTX sha256;
+		EVP_MD_CTX mdctx;
 
-		MD4_Init(&md4);
-		MD5_Init(&md5);
 		SHA1_Init(&sha1);
 		SHA256_Init(&sha256);
+		EVP_MD_CTX_init(&mdctx);
+		EVP_DigestInit_ex(&mdctx, EVP_sha1(), (ENGINE *)0);
 		EVP_CIPHER_iv_length(((EVP_CIPHER*)0));
+		UI_UTIL_read_pw_string(0,0,0,0);
+		RAND_status();
 		#ifdef HAVE_OPENSSL
 		EC_KEY_new();
-		RAND_status();
-		UI_UTIL_read_pw_string(0,0,0,0);
 		#endif
 
 		OpenSSL_add_all_algorithms();

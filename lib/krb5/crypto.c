@@ -1295,7 +1295,7 @@ des_verify(krb5_context context,
     EVP_DigestUpdate(m, data, len);
     EVP_DigestFinal_ex (m, res, NULL);
     EVP_MD_CTX_destroy(m);
-    if(memcmp(res, tmp + 8, sizeof(res)) != 0) {
+    if(ct_memcmp(res, tmp + 8, sizeof(res)) != 0) {
 	krb5_clear_error_message (context);
 	ret = KRB5KRB_AP_ERR_BAD_INTEGRITY;
     }
@@ -1885,7 +1885,7 @@ verify_checksum(krb5_context context,
     }
 
     if(c.checksum.length != cksum->checksum.length ||
-       memcmp(c.checksum.data, cksum->checksum.data, c.checksum.length)) {
+       ct_memcmp(c.checksum.data, cksum->checksum.data, c.checksum.length)) {
 	krb5_clear_error_message (context);
 	ret = KRB5KRB_AP_ERR_BAD_INTEGRITY;
     } else {
@@ -2269,7 +2269,7 @@ ARCFOUR_subdecrypt(krb5_context context,
     memset (k2_c_data, 0, sizeof(k2_c_data));
     memset (k3_c_data, 0, sizeof(k3_c_data));
 
-    if (memcmp (cksum.checksum.data, data, 16) != 0) {
+    if (ct_memcmp (cksum.checksum.data, data, 16) != 0) {
 	krb5_clear_error_message (context);
 	return KRB5KRB_AP_ERR_BAD_INTEGRITY;
     } else {

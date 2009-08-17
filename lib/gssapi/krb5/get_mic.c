@@ -45,7 +45,7 @@ mic_des
            )
 {
   u_char *p;
-  MD5_CTX md5;
+  EVP_MD_CTX md5;
   u_char hash[16];
   DES_key_schedule schedule;
   DES_cblock deskey;
@@ -79,10 +79,12 @@ mic_des
   p += 16;
 
   /* checksum */
-  MD5_Init (&md5);
-  MD5_Update (&md5, p - 24, 8);
-  MD5_Update (&md5, message_buffer->value, message_buffer->length);
-  MD5_Final (hash, &md5);
+  EVP_MD_CTX_init(&md5);
+  EVP_DigestInit_ex(&md5, EVP_md5(), NULL);
+  EVP_DigestUpdate(&md5, p - 24, 8);
+  EVP_DigestUpdate(&md5, message_buffer->value, message_buffer->length);
+  EVP_DigestFinal_ex(&md5, hash, NULL);
+  EVP_MD_CTX_cleanup(&md5);
 
   memset (&zero, 0, sizeof(zero));
   memcpy (&deskey, key->keyvalue.data, sizeof(deskey));

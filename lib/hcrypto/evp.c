@@ -50,8 +50,8 @@
 
 #include <krb5-types.h>
 
-#ifndef DEF_PROVIDER
-#define DEF_PROVIDER hcrypto
+#ifndef HCRYPTO_DEF_PROVIDER
+#define HCRYPTO_DEF_PROVIDER hcrypto
 #endif
 
 #define HC_CONCAT4(x,y,z,aa)	x ## y ## z ## aa
@@ -355,7 +355,7 @@ EVP_Digest(const void *data, size_t dsize, void *hash, unsigned int *hsize,
 const EVP_MD *
 EVP_sha256(void)
 {
-    return EVP_DEF_OP(DEF_PROVIDER, sha256);
+    return EVP_DEF_OP(HCRYPTO_DEF_PROVIDER, sha256);
 }
 
 /**
@@ -369,7 +369,7 @@ EVP_sha256(void)
 const EVP_MD *
 EVP_sha1(void)
 {
-    return EVP_DEF_OP(DEF_PROVIDER, sha1);
+    return EVP_DEF_OP(HCRYPTO_DEF_PROVIDER, sha1);
 }
 
 /**
@@ -398,7 +398,7 @@ EVP_sha(void) HC_DEPRECATED
 const EVP_MD *
 EVP_md5(void) HC_DEPRECATED_CRYPTO
 {
-    return EVP_DEF_OP(DEF_PROVIDER, md5);
+    return EVP_DEF_OP(HCRYPTO_DEF_PROVIDER, md5);
 }
 
 /**
@@ -412,7 +412,7 @@ EVP_md5(void) HC_DEPRECATED_CRYPTO
 const EVP_MD *
 EVP_md4(void) HC_DEPRECATED_CRYPTO
 {
-    return EVP_DEF_OP(DEF_PROVIDER, md4);
+    return EVP_DEF_OP(HCRYPTO_DEF_PROVIDER, md4);
 }
 
 /**
@@ -426,7 +426,7 @@ EVP_md4(void) HC_DEPRECATED_CRYPTO
 const EVP_MD *
 EVP_md2(void) HC_DEPRECATED_CRYPTO
 {
-    return EVP_DEF_OP(DEF_PROVIDER, md2);
+    return EVP_DEF_OP(HCRYPTO_DEF_PROVIDER, md2);
 }
 
 /*
@@ -995,7 +995,7 @@ EVP_enc_null(void)
 const EVP_CIPHER *
 EVP_rc2_cbc(void)
 {
-    return EVP_DEF_OP(DEF_PROVIDER, rc2_cbc);
+    return EVP_DEF_OP(HCRYPTO_DEF_PROVIDER, rc2_cbc);
 }
 
 /**
@@ -1009,7 +1009,7 @@ EVP_rc2_cbc(void)
 const EVP_CIPHER *
 EVP_rc2_40_cbc(void)
 {
-    return EVP_DEF_OP(DEF_PROVIDER, rc2_40_cbc);
+    return EVP_DEF_OP(HCRYPTO_DEF_PROVIDER, rc2_40_cbc);
 }
 
 /**
@@ -1023,7 +1023,7 @@ EVP_rc2_40_cbc(void)
 const EVP_CIPHER *
 EVP_rc2_64_cbc(void)
 {
-    return EVP_DEF_OP(DEF_PROVIDER, rc2_64_cbc);
+    return EVP_DEF_OP(HCRYPTO_DEF_PROVIDER, rc2_64_cbc);
 }
 
 /**
@@ -1037,7 +1037,7 @@ EVP_rc2_64_cbc(void)
 const EVP_CIPHER *
 EVP_rc4(void)
 {
-    return EVP_DEF_OP(DEF_PROVIDER, rc4);
+    return EVP_DEF_OP(HCRYPTO_DEF_PROVIDER, rc4);
 }
 
 /**
@@ -1051,7 +1051,7 @@ EVP_rc4(void)
 const EVP_CIPHER *
 EVP_rc4_40(void)
 {
-    return EVP_DEF_OP(DEF_PROVIDER, rc4_40);
+    return EVP_DEF_OP(HCRYPTO_DEF_PROVIDER, rc4_40);
 }
 
 /**
@@ -1065,7 +1065,7 @@ EVP_rc4_40(void)
 const EVP_CIPHER *
 EVP_des_cbc(void)
 {
-    return EVP_DEF_OP(DEF_PROVIDER, des_cbc);
+    return EVP_DEF_OP(HCRYPTO_DEF_PROVIDER, des_cbc);
 }
 
 /**
@@ -1079,7 +1079,7 @@ EVP_des_cbc(void)
 const EVP_CIPHER *
 EVP_des_ede3_cbc(void)
 {
-    return EVP_DEF_OP(DEF_PROVIDER, des_ede3_cbc);
+    return EVP_DEF_OP(HCRYPTO_DEF_PROVIDER, des_ede3_cbc);
 }
 
 /**
@@ -1093,7 +1093,7 @@ EVP_des_ede3_cbc(void)
 const EVP_CIPHER *
 EVP_aes_128_cbc(void)
 {
-    return EVP_DEF_OP(DEF_PROVIDER, aes_128_cbc);
+    return EVP_DEF_OP(HCRYPTO_DEF_PROVIDER, aes_128_cbc);
 }
 
 /**
@@ -1107,7 +1107,7 @@ EVP_aes_128_cbc(void)
 const EVP_CIPHER *
 EVP_aes_192_cbc(void)
 {
-    return EVP_DEF_OP(DEF_PROVIDER, aes_192_cbc);
+    return EVP_DEF_OP(HCRYPTO_DEF_PROVIDER, aes_192_cbc);
 }
 
 /**
@@ -1121,7 +1121,7 @@ EVP_aes_192_cbc(void)
 const EVP_CIPHER *
 EVP_aes_256_cbc(void)
 {
-    return EVP_DEF_OP(DEF_PROVIDER, aes_256_cbc);
+    return EVP_DEF_OP(HCRYPTO_DEF_PROVIDER, aes_256_cbc);
 }
 
 /**
@@ -1135,7 +1135,7 @@ EVP_aes_256_cbc(void)
 const EVP_CIPHER *
 EVP_camellia_128_cbc(void)
 {
-    return EVP_DEF_OP(DEF_PROVIDER, camellia_128_cbc);
+    return EVP_DEF_OP(HCRYPTO_DEF_PROVIDER, camellia_128_cbc);
 }
 
 /**
@@ -1149,7 +1149,7 @@ EVP_camellia_128_cbc(void)
 const EVP_CIPHER *
 EVP_camellia_192_cbc(void)
 {
-    return EVP_DEF_OP(DEF_PROVIDER, camellia_192_cbc);
+    return EVP_DEF_OP(HCRYPTO_DEF_PROVIDER, camellia_192_cbc);
 }
 
 /**
@@ -1163,7 +1163,7 @@ EVP_camellia_192_cbc(void)
 const EVP_CIPHER *
 EVP_camellia_256_cbc(void)
 {
-    return EVP_DEF_OP(DEF_PROVIDER, camellia_256_cbc);
+    return EVP_DEF_OP(HCRYPTO_DEF_PROVIDER, camellia_256_cbc);
 }
 
 /*

@@ -568,37 +568,30 @@ main(int argc, char **argv)
     for (i = 0; i < sizeof(aes_256_cts_tests)/sizeof(aes_256_cts_tests[0]); i++)
 	ret += test_cipher(i, EVP_hcrypto_aes_256_cts(), &aes_256_cts_tests[i]);
 
+    /* hcrypto */
     for (i = 0; i < sizeof(aes_tests)/sizeof(aes_tests[0]); i++)
 	ret += test_cipher(i, EVP_hcrypto_aes_256_cbc(), &aes_tests[i]);
+    for (i = 0; i < sizeof(rc2_40_tests)/sizeof(rc2_40_tests[0]); i++)
+	ret += test_cipher(i, EVP_hcrypto_rc2_40_cbc(), &rc2_40_tests[i]);
+    for (i = 0; i < sizeof(des_ede3_tests)/sizeof(des_ede3_tests[0]); i++)
+	ret += test_cipher(i, EVP_hcrypto_des_ede3_cbc(), &des_ede3_tests[i]);
+    for (i = 0; i < sizeof(camellia128_tests)/sizeof(camellia128_tests[0]); i++)
+	ret += test_cipher(i, EVP_hcrypto_camellia_128_cbc(),
+			   &camellia128_tests[i]);
+    for (i = 0; i < sizeof(rc4_tests)/sizeof(rc4_tests[0]); i++)
+	ret += test_cipher(i, EVP_hcrypto_rc4(), &rc4_tests[i]);
+
+    /* Common Crypto */
 #ifdef __APPLE__
     for (i = 0; i < sizeof(aes_tests)/sizeof(aes_tests[0]); i++)
 	ret += test_cipher(i, EVP_cc_aes_256_cbc(), &aes_tests[i]);
-#endif
-
-    for (i = 0; i < sizeof(rc2_40_tests)/sizeof(rc2_40_tests[0]); i++)
-	ret += test_cipher(i, EVP_hcrypto_rc2_40_cbc(), &rc2_40_tests[i]);
-#ifdef __APPLE__
     for (i = 0; i < sizeof(rc2_40_tests)/sizeof(rc2_40_tests[0]); i++)
 	ret += test_cipher(i, EVP_cc_rc2_40_cbc(), &rc2_40_tests[i]);
-#endif
-
-    for (i = 0; i < sizeof(des_ede3_tests)/sizeof(des_ede3_tests[0]); i++)
-	ret += test_cipher(i, EVP_hcrypto_des_ede3_cbc(), &des_ede3_tests[i]);
-#ifdef __APPLE__
     for (i = 0; i < sizeof(des_ede3_tests)/sizeof(des_ede3_tests[0]); i++)
 	ret += test_cipher(i, EVP_cc_des_ede3_cbc(), &des_ede3_tests[i]);
-#endif
-
     for (i = 0; i < sizeof(camellia128_tests)/sizeof(camellia128_tests[0]); i++)
-	ret += test_cipher(i, EVP_hcrypto_camellia_128_cbc(), &camellia128_tests[i]);
-#ifdef __APPLE__
-    for (i = 0; i < sizeof(camellia128_tests)/sizeof(camellia128_tests[0]); i++)
-	ret += test_cipher(i, EVP_cc_camellia_128_cbc(), &camellia128_tests[i]);
-#endif
-
-    for (i = 0; i < sizeof(rc4_tests)/sizeof(rc4_tests[0]); i++)
-	ret += test_cipher(i, EVP_hcrypto_rc4(), &rc4_tests[i]);
-#ifdef __APPLE__
+	ret += test_cipher(i, EVP_cc_camellia_128_cbc(),
+			   &camellia128_tests[i]);
     for (i = 0; i < sizeof(rc4_tests)/sizeof(rc4_tests[0]); i++)
 	ret += test_cipher(i, EVP_cc_rc4(), &rc4_tests[i]);
 #endif

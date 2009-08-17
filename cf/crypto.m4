@@ -38,12 +38,13 @@ m4_define([test_headers], [
 		])
 m4_define([test_body], [
 		void *schedule = 0;
-		SHA_CTX sha1;
-		SHA256_CTX sha256;
 		EVP_MD_CTX mdctx;
 
-		SHA1_Init(&sha1);
-		SHA256_Init(&sha256);
+		EVP_md4();
+		EVP_md5();
+		EVP_sha1();
+		EVP_sha256();
+
 		EVP_MD_CTX_init(&mdctx);
 		EVP_DigestInit_ex(&mdctx, EVP_sha1(), (ENGINE *)0);
 		EVP_CIPHER_iv_length(((EVP_CIPHER*)0));

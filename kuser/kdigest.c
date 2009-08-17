@@ -225,7 +225,7 @@ client_chap(const void *server_nonce, size_t snoncelen,
 	    unsigned char server_identifier,
 	    const char *password)
 {
-    MD5_CTX ctx;
+    EVP_MD_CTX ctx;
     unsigned char md[MD5_DIGEST_LENGTH];
     char *h;
 

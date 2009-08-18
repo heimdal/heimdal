@@ -252,7 +252,6 @@ man_MANS =					\
 	krb5_unparse_name.3			\
 	krb5_verify_init_creds.3		\
 	krb5_verify_user.3			\
-	krb5_warn.3				\
 	verify_krb5_conf.8
 
 dist_include_HEADERS = \

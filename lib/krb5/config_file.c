@@ -403,12 +403,27 @@ free_binding (krb5_context context, krb5_config_binding *b)
     }
 }
 
+/**
+ * Free configuration file section, the result of
+ * krb5_config_parse_file() and krb5_config_parse_file_multi().
+ *
+ * @param context A Kerberos 5 context
+ * @param s the configuration section to free
+ *
+ * @return returns 0 on successes, otherwise an error code, see
+ *          krb5_get_error_message()
+ *
+ * @ingroup krb5_support
+ */
+
 krb5_error_code KRB5_LIB_FUNCTION
 krb5_config_file_free (krb5_context context, krb5_config_section *s)
 {
     free_binding (context, s);
     return 0;
 }
+
+#ifndef HEIMDAL_SMALLER
 
 krb5_error_code
 _krb5_config_copy(krb5_context context,
@@ -444,7 +459,7 @@ _krb5_config_copy(krb5_context context,
     return 0;
 }
 
-
+#endif /* HEIMDAL_SMALLER */
 
 const void *
 krb5_config_get_next (krb5_context context,

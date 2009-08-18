@@ -40,11 +40,29 @@
 #define BYTEORDER_IS_HOST(SP) (BYTEORDER_IS((SP), KRB5_STORAGE_BYTEORDER_HOST) || \
 			       krb5_storage_is_flags((SP), KRB5_STORAGE_HOST_BYTEORDER))
 
+/**
+ * Add the flags on a storage buffer by or-ing in the flags to the buffer.
+ *
+ * @param sp the storage buffer to set the flags on
+ * @param flags the flags to set
+ *
+ * @ingroup krb5_storage
+ */
+
 void KRB5_LIB_FUNCTION
 krb5_storage_set_flags(krb5_storage *sp, krb5_flags flags)
 {
     sp->flags |= flags;
 }
+
+/**
+ * Clear the flags on a storage buffer
+ *
+ * @param sp the storage buffer to clear the flags on
+ * @param flags the flags to clear
+ *
+ * @ingroup krb5_storage
+ */
 
 void KRB5_LIB_FUNCTION
 krb5_storage_clear_flags(krb5_storage *sp, krb5_flags flags)

@@ -615,7 +615,8 @@ krb5_ret_uint8(krb5_storage *sp,
 }
 
 /**
- * Store a data to the storage.
+ * Store a data to the storage. The data is stored with an int32 as
+ * lenght plus the data (not padded).
  *
  * @param sp the storage buffer to write to
  * @param data the buffer to store.
@@ -674,6 +675,18 @@ krb5_ret_data(krb5_storage *sp,
     return 0;
 }
 
+/**
+ * Store a string to the buffer. The data is formated as an len:uint32
+ * plus the string itself (not padded).
+ *
+ * @param sp the storage buffer to write to
+ * @param data the buffer to store.
+ *
+ * @return 0 on success, a Kerberos 5 error code on failure.
+ *
+ * @ingroup krb5_storage
+ */
+
 krb5_error_code KRB5_LIB_FUNCTION
 krb5_store_string(krb5_storage *sp, const char *s)
 {
@@ -682,6 +695,18 @@ krb5_store_string(krb5_storage *sp, const char *s)
     data.data = rk_UNCONST(s);
     return krb5_store_data(sp, data);
 }
+
+/**
+ * Parse a string from the storage.
+ *
+ * @param sp the storage buffer to read from
+ * @param string the parsed string
+ *
+ * @return 0 on success, a Kerberos 5 error code on failure.
+ *
+ * @ingroup krb5_storage
+ */
+
 
 krb5_error_code KRB5_LIB_FUNCTION
 krb5_ret_string(krb5_storage *sp,
@@ -701,6 +726,18 @@ krb5_ret_string(krb5_storage *sp,
     return 0;
 }
 
+/**
+ * Store a zero terminated string to the buffer. The data is stored
+ * one character at a time until a NUL is stored.
+ *
+ * @param sp the storage buffer to write to
+ * @param s the string to store.
+ *
+ * @return 0 on success, a Kerberos 5 error code on failure.
+ *
+ * @ingroup krb5_storage
+ */
+
 krb5_error_code KRB5_LIB_FUNCTION
 krb5_store_stringz(krb5_storage *sp, const char *s)
 {
@@ -716,6 +753,17 @@ krb5_store_stringz(krb5_storage *sp, const char *s)
     }
     return 0;
 }
+
+/**
+ * Parse zero terminated string from the storage.
+ *
+ * @param sp the storage buffer to read from
+ * @param string the parsed string
+ *
+ * @return 0 on success, a Kerberos 5 error code on failure.
+ *
+ * @ingroup krb5_storage
+ */
 
 krb5_error_code KRB5_LIB_FUNCTION
 krb5_ret_stringz(krb5_storage *sp,
@@ -820,6 +868,16 @@ krb5_ret_stringnl(krb5_storage *sp,
     return 0;
 }
 
+/**
+ * Write a principal block to storage.
+ *
+ * @param sp the storage buffer to write to
+ * @param principal the principal block to write.
+ *
+ * @return 0 on success, a Kerberos 5 error code on failure.
+ *
+ * @ingroup krb5_storage
+ */
 
 krb5_error_code KRB5_LIB_FUNCTION
 krb5_store_principal(krb5_storage *sp,
@@ -846,6 +904,17 @@ krb5_store_principal(krb5_storage *sp,
     }
     return 0;
 }
+
+/**
+ * Parse principal from the storage.
+ *
+ * @param sp the storage buffer to read from
+ * @param princ the parsed principal
+ *
+ * @return 0 on success, a Kerberos 5 error code on failure.
+ *
+ * @ingroup krb5_storage
+ */
 
 krb5_error_code KRB5_LIB_FUNCTION
 krb5_ret_principal(krb5_storage *sp,
@@ -1018,6 +1087,17 @@ krb5_ret_times(krb5_storage *sp, krb5_times *times)
     return ret;
 }
 
+/**
+ * Write a address block to storage.
+ *
+ * @param sp the storage buffer to write to
+ * @param p the address block to write.
+ *
+ * @return 0 on success, a Kerberos 5 error code on failure.
+ *
+ * @ingroup krb5_storage
+ */
+
 krb5_error_code KRB5_LIB_FUNCTION
 krb5_store_address(krb5_storage *sp, krb5_address p)
 {
@@ -1027,6 +1107,17 @@ krb5_store_address(krb5_storage *sp, krb5_address p)
     ret = krb5_store_data(sp, p.address);
     return ret;
 }
+
+/**
+ * Read a address block from the storage.
+ *
+ * @param sp the storage buffer to write to
+ * @param adr the address block read from storage
+ *
+ * @return 0 on success, a Kerberos 5 error code on failure.
+ *
+ * @ingroup krb5_storage
+ */
 
 krb5_error_code KRB5_LIB_FUNCTION
 krb5_ret_address(krb5_storage *sp, krb5_address *adr)
@@ -1039,6 +1130,17 @@ krb5_ret_address(krb5_storage *sp, krb5_address *adr)
     ret = krb5_ret_data(sp, &adr->address);
     return ret;
 }
+
+/**
+ * Write a addresses block to storage.
+ *
+ * @param sp the storage buffer to write to
+ * @param p the addresses block to write.
+ *
+ * @return 0 on success, a Kerberos 5 error code on failure.
+ *
+ * @ingroup krb5_storage
+ */
 
 krb5_error_code KRB5_LIB_FUNCTION
 krb5_store_addrs(krb5_storage *sp, krb5_addresses p)
@@ -1053,6 +1155,17 @@ krb5_store_addrs(krb5_storage *sp, krb5_addresses p)
     }
     return ret;
 }
+
+/**
+ * Read a addresses block from the storage.
+ *
+ * @param sp the storage buffer to write to
+ * @param adr the addresses block read from storage
+ *
+ * @return 0 on success, a Kerberos 5 error code on failure.
+ *
+ * @ingroup krb5_storage
+ */
 
 krb5_error_code KRB5_LIB_FUNCTION
 krb5_ret_addrs(krb5_storage *sp, krb5_addresses *adr)
@@ -1074,6 +1187,17 @@ krb5_ret_addrs(krb5_storage *sp, krb5_addresses *adr)
     return ret;
 }
 
+/**
+ * Write a auth data block to storage.
+ *
+ * @param sp the storage buffer to write to
+ * @param auth the auth data block to write.
+ *
+ * @return 0 on success, a Kerberos 5 error code on failure.
+ *
+ * @ingroup krb5_storage
+ */
+
 krb5_error_code KRB5_LIB_FUNCTION
 krb5_store_authdata(krb5_storage *sp, krb5_authdata auth)
 {
@@ -1089,6 +1213,17 @@ krb5_store_authdata(krb5_storage *sp, krb5_authdata auth)
     }
     return 0;
 }
+
+/**
+ * Read a auth data from the storage.
+ *
+ * @param sp the storage buffer to write to
+ * @param auth the auth data block read from storage
+ *
+ * @return 0 on success, a Kerberos 5 error code on failure.
+ *
+ * @ingroup krb5_storage
+ */
 
 krb5_error_code KRB5_LIB_FUNCTION
 krb5_ret_authdata(krb5_storage *sp, krb5_authdata *auth)
@@ -1124,9 +1259,15 @@ bitswap32(int32_t b)
     return r;
 }
 
-
-/*
+/**
+ * Write a credentials block to storage.
  *
+ * @param sp the storage buffer to write to
+ * @param creds the creds block to write.
+ *
+ * @return 0 on success, a Kerberos 5 error code on failure.
+ *
+ * @ingroup krb5_storage
  */
 
 krb5_error_code KRB5_LIB_FUNCTION
@@ -1169,6 +1310,17 @@ krb5_store_creds(krb5_storage *sp, krb5_creds *creds)
     ret = krb5_store_data(sp, creds->second_ticket);
     return ret;
 }
+
+/**
+ * Read a credentials block from the storage.
+ *
+ * @param sp the storage buffer to write to
+ * @param creds the credentials block read from storage
+ *
+ * @return 0 on success, a Kerberos 5 error code on failure.
+ *
+ * @ingroup krb5_storage
+ */
 
 krb5_error_code KRB5_LIB_FUNCTION
 krb5_ret_creds(krb5_storage *sp, krb5_creds *creds)
@@ -1231,8 +1383,15 @@ cleanup:
 #define SC_AUTHDATA		    0x0020
 #define SC_ADDRESSES		    0x0040
 
-/*
+/**
+ * Write a tagged credentials block to storage.
  *
+ * @param sp the storage buffer to write to
+ * @param creds the creds block to write.
+ *
+ * @return 0 on success, a Kerberos 5 error code on failure.
+ *
+ * @ingroup krb5_storage
  */
 
 krb5_error_code KRB5_LIB_FUNCTION
@@ -1315,6 +1474,17 @@ krb5_store_creds_tag(krb5_storage *sp, krb5_creds *creds)
 
     return ret;
 }
+
+/**
+ * Read a tagged credentials block from the storage.
+ *
+ * @param sp the storage buffer to write to
+ * @param creds the credentials block read from storage
+ *
+ * @return 0 on success, a Kerberos 5 error code on failure.
+ *
+ * @ingroup krb5_storage
+ */
 
 krb5_error_code KRB5_LIB_FUNCTION
 krb5_ret_creds_tag(krb5_storage *sp,

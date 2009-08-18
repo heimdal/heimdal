@@ -187,7 +187,7 @@
  * @subsection intro_krb5_crypto Kerberos crypto
  *
  * Heimdal includes a implementation of the Kerberos crypto framework,
- * all crypto operations.
+ * all crypto operations. To create a crypto context call krb5_crypto_init().
  *
  * See also module @ref krb5_crypto .
  *

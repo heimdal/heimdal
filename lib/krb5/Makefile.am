@@ -213,7 +213,6 @@ man_MANS =					\
 	krb5_c_make_checksum.3			\
 	krb5_check_transited.3			\
 	krb5_compare_creds.3			\
-	krb5_context.3				\
 	krb5_create_checksum.3			\
 	krb5_creds.3				\
 	krb5_crypto_init.3			\

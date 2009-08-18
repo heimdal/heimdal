@@ -562,6 +562,18 @@ _krb5_config_vget (krb5_context context,
     return _krb5_config_vget_next (context, c, &foo, type, args);
 }
 
+/**
+ * Get a list of configuration binding list for more processing
+ *
+ * @param context A Kerberos 5 context.
+ * @param c a configuration section, or NULL to use the section from context
+ * @param ... a list of names, terminated with NULL.
+ *
+ * @return NULL if configuration list is not found, a list otherwise
+ *
+ * @ingroup krb5_support
+ */
+
 const krb5_config_binding *
 krb5_config_get_list (krb5_context context,
 		      const krb5_config_section *c,
@@ -575,6 +587,18 @@ krb5_config_get_list (krb5_context context,
     va_end(args);
     return ret;
 }
+
+/**
+ * Get a list of configuration binding list for more processing
+ *
+ * @param context A Kerberos 5 context.
+ * @param c a configuration section, or NULL to use the section from context
+ * @param args a va_list of arguments
+ *
+ * @return NULL if configuration list is not found, a list otherwise
+ *
+ * @ingroup krb5_support
+ */
 
 const krb5_config_binding *
 krb5_config_vget_list (krb5_context context,
@@ -694,6 +718,19 @@ krb5_config_get_string_default (krb5_context context,
     return ret;
 }
 
+/**
+ * Get a list of configuration strings, free the result with
+ * krb5_config_free_strings().
+ *
+ * @param context A Kerberos 5 context.
+ * @param c a configuration section, or NULL to use the section from context
+ * @param args a va_list of arguments
+ *
+ * @return TRUE or FALSE
+ *
+ * @ingroup krb5_support
+ */
+
 char ** KRB5_LIB_FUNCTION
 krb5_config_vget_strings(krb5_context context,
 			 const krb5_config_section *c,
@@ -741,6 +778,19 @@ cleanup:
 
 }
 
+/**
+ * Get a list of configuration strings, free the result with
+ * krb5_config_free_strings().
+ *
+ * @param context A Kerberos 5 context.
+ * @param c a configuration section, or NULL to use the section from context
+ * @param args a va_list of arguments
+ *
+ * @return TRUE or FALSE
+ *
+ * @ingroup krb5_support
+ */
+
 char**
 krb5_config_get_strings(krb5_context context,
 			const krb5_config_section *c,
@@ -754,6 +804,15 @@ krb5_config_get_strings(krb5_context context,
     return ret;
 }
 
+/**
+ * Free the resulting strings from krb5_config-get_strings() and
+ * krb5_config_vget_strings().
+ *
+ * @param strings strings to free
+ *
+ * @ingroup krb5_support
+ */
+
 void KRB5_LIB_FUNCTION
 krb5_config_free_strings(char **strings)
 {
@@ -764,6 +823,24 @@ krb5_config_free_strings(char **strings)
     }
     free(strings);
 }
+
+/**
+ * Like krb5_config_get_bool_default() but with a va_list list of
+ * configuration selection.
+ *
+ * Configuration value to a boolean value, where yes/true and any
+ * non-zero number means TRUE and other value is FALSE.
+ *
+ * @param context A Kerberos 5 context.
+ * @param c a configuration section, or NULL to use the section from context
+ * @param def_value the default value to return if no configuration
+ *        found in the database.
+ * @param args a va_list of arguments
+ *
+ * @return TRUE or FALSE
+ *
+ * @ingroup krb5_support
+ */
 
 krb5_boolean KRB5_LIB_FUNCTION
 krb5_config_vget_bool_default (krb5_context context,
@@ -781,6 +858,20 @@ krb5_config_vget_bool_default (krb5_context context,
     return FALSE;
 }
 
+/**
+ * krb5_config_get_bool() will convert the configuration
+ * option value to a boolean value, where yes/true and any non-zero
+ * number means TRUE and other value is FALSE.
+ *
+ * @param context A Kerberos 5 context.
+ * @param c a configuration section, or NULL to use the section from context
+ * @param args a va_list of arguments
+ *
+ * @return TRUE or FALSE
+ *
+ * @ingroup krb5_support
+ */
+
 krb5_boolean KRB5_LIB_FUNCTION
 krb5_config_vget_bool  (krb5_context context,
 			const krb5_config_section *c,
@@ -788,6 +879,22 @@ krb5_config_vget_bool  (krb5_context context,
 {
     return krb5_config_vget_bool_default (context, c, FALSE, args);
 }
+
+/**
+ * krb5_config_get_bool_default() will convert the configuration
+ * option value to a boolean value, where yes/true and any non-zero
+ * number means TRUE and other value is FALSE.
+ *
+ * @param context A Kerberos 5 context.
+ * @param c a configuration section, or NULL to use the section from context
+ * @param def_value the default value to return if no configuration
+ *        found in the database.
+ * @param args a va_list of arguments
+ *
+ * @return TRUE or FALSE
+ *
+ * @ingroup krb5_support
+ */
 
 krb5_boolean KRB5_LIB_FUNCTION
 krb5_config_get_bool_default (krb5_context context,
@@ -802,6 +909,22 @@ krb5_config_get_bool_default (krb5_context context,
     va_end(ap);
     return ret;
 }
+
+/**
+ * Like krb5_config_get_bool() but with a va_list list of
+ * configuration selection.
+ *
+ * Configuration value to a boolean value, where yes/true and any
+ * non-zero number means TRUE and other value is FALSE.
+ *
+ * @param context A Kerberos 5 context.
+ * @param c a configuration section, or NULL to use the section from context
+ * @param args a va_list of arguments
+ *
+ * @return TRUE or FALSE
+ *
+ * @ingroup krb5_support
+ */
 
 krb5_boolean KRB5_LIB_FUNCTION
 krb5_config_get_bool (krb5_context context,

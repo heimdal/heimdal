@@ -197,7 +197,35 @@ match_local_principals(krb5_context context,
 }
 
 /**
- * Return TRUE iff `principal' is allowed to login as `luser'.
+ * This function takes the name of a local user and checks if
+ * principal is allowed to log in as that user.
+ *
+ * The user may have a ~/.k5login file listing principals that are
+ * allowed to login as that user. If that file does not exist, all
+ * principals with a first component identical to the username, and a
+ * realm considered local, are allowed access.
+ *
+ * The .k5login file must contain one principal per line, be owned by
+ * user and not be writable by group or other (but must be readable by
+ * anyone).
+ *
+ * Note that if the file exists, no implicit access rights are given
+ * to user@LOCALREALM.
+ *
+ * Optionally, a set of files may be put in ~/.k5login.d (a
+ * directory), in which case they will all be checked in the same
+ * manner as .k5login.  The files may be called anything, but files
+ * starting with a hash (#) , or ending with a tilde (~) are
+ * ignored. Subdirectories are not traversed. Note that this directory
+ * may not be checked by other Kerberos implementations.
+ *
+ * @param context Kerberos 5 context.
+ * @param principal principal to check if allowed to login
+ * @param luser local user id
+ * 
+ * @return returns TRUE if access should be granted, FALSE otherwise.
+ *
+ * @ingroup krb5_support
  */
 
 krb5_boolean KRB5_LIB_FUNCTION

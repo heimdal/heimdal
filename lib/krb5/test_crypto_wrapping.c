@@ -123,9 +123,11 @@ main(int argc, char **argv)
     int i, optidx = 0;
 
     krb5_enctype enctypes[] = {
+#ifdef HEIM_WEAK_CRYPTO
 	ETYPE_DES_CBC_CRC,
 	ETYPE_DES_CBC_MD4,
 	ETYPE_DES_CBC_MD5,
+#endif
 	ETYPE_DES3_CBC_SHA1,
 	ETYPE_ARCFOUR_HMAC_MD5,
 	ETYPE_AES128_CTS_HMAC_SHA1_96,

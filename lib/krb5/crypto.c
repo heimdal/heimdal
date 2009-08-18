@@ -4059,6 +4059,23 @@ _get_derived_key(krb5_context context,
     return 0;
 }
 
+/**
+ * Create a crypto context used for all encryption and signature
+ * operation. The encryption type to use is taken from the key, but
+ * can be overridden with the enctype parameter.  This can be useful
+ * for encryptions types which is compatiable (DES for example).
+ *
+ * To free the crypto context, use krb5_crypto_destroy().
+ *
+ * @param context Kerberos context
+ * @param key the key block information with all key data
+ * @param etype the encryption type
+ * @param crypto the resulting crypto context
+ *
+ * @return Return an error code or 0.
+ *
+ * @ingroup krb5_crypto
+ */
 
 krb5_error_code KRB5_LIB_FUNCTION
 krb5_crypto_init(krb5_context context,
@@ -4131,6 +4148,17 @@ free_key_usage(krb5_context context, struct key_usage *ku,
     free_key_data(context, &ku->key, et);
 }
 
+/**
+ * Free a crypto context created by krb5_crypto_init().
+ *
+ * @param context Kerberos context
+ * @param crypto crypto context to free
+ *
+ * @return Return an error code or 0.
+ *
+ * @ingroup krb5_crypto
+ */
+
 krb5_error_code KRB5_LIB_FUNCTION
 krb5_crypto_destroy(krb5_context context,
 		    krb5_crypto crypto)
@@ -4145,6 +4173,18 @@ krb5_crypto_destroy(krb5_context context,
     return 0;
 }
 
+/**
+ * Return the blocksize used algorithm referenced by the crypto context
+ * 
+ * @param context Kerberos context
+ * @param crypto crypto context to query
+ * @param blocksize the resulting blocksize
+ *
+ * @return Return an error code or 0.
+ *
+ * @ingroup krb5_crypto
+ */
+
 krb5_error_code KRB5_LIB_FUNCTION
 krb5_crypto_getblocksize(krb5_context context,
 			 krb5_crypto crypto,
@@ -4153,6 +4193,18 @@ krb5_crypto_getblocksize(krb5_context context,
     *blocksize = crypto->et->blocksize;
     return 0;
 }
+
+/**
+ * Return the encryption type used by the crypto context
+ * 
+ * @param context Kerberos context
+ * @param crypto crypto context to query
+ * @param enctype the resulting encryption type
+ *
+ * @return Return an error code or 0.
+ *
+ * @ingroup krb5_crypto
+ */
 
 krb5_error_code KRB5_LIB_FUNCTION
 krb5_crypto_getenctype(krb5_context context,
@@ -4163,6 +4215,18 @@ krb5_crypto_getenctype(krb5_context context,
     return 0;
 }
 
+/**
+ * Return the padding size used by the crypto context
+ * 
+ * @param context Kerberos context
+ * @param crypto crypto context to query
+ * @param padsize the return padding size
+ *
+ * @return Return an error code or 0.
+ *
+ * @ingroup krb5_crypto
+ */
+
 krb5_error_code KRB5_LIB_FUNCTION
 krb5_crypto_getpadsize(krb5_context context,
                        krb5_crypto crypto,
@@ -4171,6 +4235,18 @@ krb5_crypto_getpadsize(krb5_context context,
     *padsize = crypto->et->padsize;
     return 0;
 }
+
+/**
+ * Return the confounder size used by the crypto context
+ * 
+ * @param context Kerberos context
+ * @param crypto crypto context to query
+ * @param confoundersize the returned confounder size
+ *
+ * @return Return an error code or 0.
+ *
+ * @ingroup krb5_crypto
+ */
 
 krb5_error_code KRB5_LIB_FUNCTION
 krb5_crypto_getconfoundersize(krb5_context context,

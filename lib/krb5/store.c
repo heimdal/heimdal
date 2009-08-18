@@ -377,6 +377,18 @@ krb5_ret_int(krb5_storage *sp,
     return 0;
 }
 
+/**
+ * Read a int32 from storage, byte order is controlled by the settings
+ * on the storage, see krb5_storage_set_byteorder().
+ *
+ * @param sp the storage to write too
+ * @param value the value read from the buffer
+ *
+ * @return 0 for success, or a Kerberos 5 error code on failure.
+ *
+ * @ingroup krb5_storage
+ */
+
 krb5_error_code KRB5_LIB_FUNCTION
 krb5_ret_int32(krb5_storage *sp,
 	       int32_t *value)
@@ -390,6 +402,18 @@ krb5_ret_int32(krb5_storage *sp,
 	*value = bswap32(*value);
     return 0;
 }
+
+/**
+ * Read a uint32 from storage, byte order is controlled by the settings
+ * on the storage, see krb5_storage_set_byteorder().
+ *
+ * @param sp the storage to write too
+ * @param value the value read from the buffer
+ *
+ * @return 0 for success, or a Kerberos 5 error code on failure.
+ *
+ * @ingroup krb5_storage
+ */
 
 krb5_error_code KRB5_LIB_FUNCTION
 krb5_ret_uint32(krb5_storage *sp,
@@ -447,6 +471,17 @@ krb5_store_uint16(krb5_storage *sp,
     return krb5_store_int16(sp, (int16_t)value);
 }
 
+/**
+ * Read a int16 from storage, byte order is controlled by the settings
+ * on the storage, see krb5_storage_set_byteorder().
+ *
+ * @param sp the storage to write too
+ * @param value the value read from the buffer
+ *
+ * @return 0 for success, or a Kerberos 5 error code on failure.
+ *
+ * @ingroup krb5_storage
+ */
 krb5_error_code KRB5_LIB_FUNCTION
 krb5_ret_int16(krb5_storage *sp,
 	       int16_t *value)
@@ -463,6 +498,18 @@ krb5_ret_int16(krb5_storage *sp,
 	*value = bswap16(*value);
     return 0;
 }
+
+/**
+ * Read a int16 from storage, byte order is controlled by the settings
+ * on the storage, see krb5_storage_set_byteorder().
+ *
+ * @param sp the storage to write too
+ * @param value the value read from the buffer
+ *
+ * @return 0 for success, or a Kerberos 5 error code on failure.
+ *
+ * @ingroup krb5_storage
+ */
 
 krb5_error_code KRB5_LIB_FUNCTION
 krb5_ret_uint16(krb5_storage *sp,
@@ -519,6 +566,17 @@ krb5_store_uint8(krb5_storage *sp,
     return krb5_store_int8(sp, (int8_t)value);
 }
 
+/**
+ * Read a int8 from storage
+ *
+ * @param sp the storage to write too
+ * @param value the value read from the buffer
+ *
+ * @return 0 for success, or a Kerberos 5 error code on failure.
+ *
+ * @ingroup krb5_storage
+ */
+
 krb5_error_code KRB5_LIB_FUNCTION
 krb5_ret_int8(krb5_storage *sp,
 	      int8_t *value)
@@ -530,6 +588,17 @@ krb5_ret_int8(krb5_storage *sp,
 	return (ret<0)?errno:sp->eof_code;
     return 0;
 }
+
+/**
+ * Read a uint8 from storage
+ *
+ * @param sp the storage to write too
+ * @param value the value read from the buffer
+ *
+ * @return 0 for success, or a Kerberos 5 error code on failure.
+ *
+ * @ingroup krb5_storage
+ */
 
 krb5_error_code KRB5_LIB_FUNCTION
 krb5_ret_uint8(krb5_storage *sp,

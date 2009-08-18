@@ -1198,37 +1198,7 @@ NONE_checksum(krb5_context context,
     return 0;
 }
 
-static krb5_error_code
-CRC32_checksum(krb5_context context,
-	       struct key_data *key,
-	       const void *data,
-	       size_t len,
-	       unsigned usage,
-	       Checksum *C)
-{
-    uint32_t crc;
-    unsigned char *r = C->checksum.data;
-    _krb5_crc_init_table ();
-    crc = _krb5_crc_update (data, len, 0);
-    r[0] = crc & 0xff;
-    r[1] = (crc >> 8)  & 0xff;
-    r[2] = (crc >> 16) & 0xff;
-    r[3] = (crc >> 24) & 0xff;
-    return 0;
-}
-
-static krb5_error_code
-RSA_MD4_checksum(krb5_context context,
-		 struct key_data *key,
-		 const void *data,
-		 size_t len,
-		 unsigned usage,
-		 Checksum *C)
-{
-    if (EVP_Digest(data, len, C->checksum.data, NULL, EVP_md4(), NULL) != 1)
-	krb5_abortx(context, "md4 checksum failed");
-    return 0;
-}
+#if defined(DES3_OLD_ENCTYPE) || defined(HEIM_WEAK_CRYPTO)
 
 static krb5_error_code
 des_checksum(krb5_context context,
@@ -1302,6 +1272,42 @@ des_verify(krb5_context context,
     return ret;
 }
 
+#endif
+
+#ifdef HEIM_WEAK_CRYPTO
+
+static krb5_error_code
+CRC32_checksum(krb5_context context,
+	       struct key_data *key,
+	       const void *data,
+	       size_t len,
+	       unsigned usage,
+	       Checksum *C)
+{
+    uint32_t crc;
+    unsigned char *r = C->checksum.data;
+    _krb5_crc_init_table ();
+    crc = _krb5_crc_update (data, len, 0);
+    r[0] = crc & 0xff;
+    r[1] = (crc >> 8)  & 0xff;
+    r[2] = (crc >> 16) & 0xff;
+    r[3] = (crc >> 24) & 0xff;
+    return 0;
+}
+
+static krb5_error_code
+RSA_MD4_checksum(krb5_context context,
+		 struct key_data *key,
+		 const void *data,
+		 size_t len,
+		 unsigned usage,
+		 Checksum *C)
+{
+    if (EVP_Digest(data, len, C->checksum.data, NULL, EVP_md4(), NULL) != 1)
+	krb5_abortx(context, "md4 checksum failed");
+    return 0;
+}
+
 static krb5_error_code
 RSA_MD4_DES_checksum(krb5_context context,
 		     struct key_data *key,
@@ -1325,19 +1331,6 @@ RSA_MD4_DES_verify(krb5_context context,
 }
 
 static krb5_error_code
-RSA_MD5_checksum(krb5_context context,
-		 struct key_data *key,
-		 const void *data,
-		 size_t len,
-		 unsigned usage,
-		 Checksum *C)
-{
-    if (EVP_Digest(data, len, C->checksum.data, NULL, EVP_md5(), NULL) != 1)
-	krb5_abortx(context, "md5 checksum failed");
-    return 0;
-}
-
-static krb5_error_code
 RSA_MD5_DES_checksum(krb5_context context,
 		     struct key_data *key,
 		     const void *data,
@@ -1358,6 +1351,8 @@ RSA_MD5_DES_verify(krb5_context context,
 {
     return des_verify(context, EVP_md5(), key, data, len, C);
 }
+
+#endif /* HEIM_WEAK_CRYPTO */
 
 #ifdef DES3_OLD_ENCTYPE
 static krb5_error_code
@@ -1570,6 +1565,7 @@ static struct checksum_type checksum_none = {
     NONE_checksum,
     NULL
 };
+#ifdef HEIM_WEAK_CRYPTO
 static struct checksum_type checksum_crc32 = {
     CKSUMTYPE_CRC32,
     "crc32",
@@ -1597,15 +1593,6 @@ static struct checksum_type checksum_rsa_md4_des = {
     RSA_MD4_DES_checksum,
     RSA_MD4_DES_verify
 };
-static struct checksum_type checksum_rsa_md5 = {
-    CKSUMTYPE_RSA_MD5,
-    "rsa-md5",
-    64,
-    16,
-    F_CPROOF,
-    RSA_MD5_checksum,
-    NULL
-};
 static struct checksum_type checksum_rsa_md5_des = {
     CKSUMTYPE_RSA_MD5_DES,
     "rsa-md5-des",
@@ -1615,6 +1602,34 @@ static struct checksum_type checksum_rsa_md5_des = {
     RSA_MD5_DES_checksum,
     RSA_MD5_DES_verify
 };
+#endif /* HEIM_WEAK_CRYPTO */
+
+#if defined(DES3_OLD_ENCTYPE) || defined(HEIM_WEAK_CRYPTO)
+
+static krb5_error_code
+RSA_MD5_checksum(krb5_context context,
+		 struct key_data *key,
+		 const void *data,
+		 size_t len,
+		 unsigned usage,
+		 Checksum *C)
+{
+    if (EVP_Digest(data, len, C->checksum.data, NULL, EVP_md5(), NULL) != 1)
+	krb5_abortx(context, "md5 checksum failed");
+    return 0;
+}
+
+static struct checksum_type checksum_rsa_md5 = {
+    CKSUMTYPE_RSA_MD5,
+    "rsa-md5",
+    64,
+    16,
+    F_CPROOF,
+    RSA_MD5_checksum,
+    NULL
+};
+#endif
+
 #ifdef DES3_OLD_ENCTYPE
 static struct checksum_type checksum_rsa_md5_des3 = {
     CKSUMTYPE_RSA_MD5_DES3,
@@ -1677,11 +1692,13 @@ static struct checksum_type checksum_hmac_md5 = {
 
 static struct checksum_type *checksum_types[] = {
     &checksum_none,
+#ifdef HEIM_WEAK_CRYPTO
     &checksum_crc32,
     &checksum_rsa_md4,
     &checksum_rsa_md4_des,
     &checksum_rsa_md5,
     &checksum_rsa_md5_des,
+#endif
 #ifdef DES3_OLD_ENCTYPE
     &checksum_rsa_md5_des3,
 #endif

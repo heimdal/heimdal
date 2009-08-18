@@ -134,13 +134,11 @@ HEIMDAL_KRB5_2.0 {
 		krb5_compare_creds;
 		krb5_config_file_free;
 		krb5_config_free_strings;
-		krb5_config_get;
 		krb5_config_get_bool;
 		krb5_config_get_bool_default;
 		krb5_config_get_int;
 		krb5_config_get_int_default;
 		krb5_config_get_list;
-		krb5_config_get_next;
 		krb5_config_get_string;
 		krb5_config_get_string_default;
 		krb5_config_get_strings;
@@ -149,13 +147,11 @@ HEIMDAL_KRB5_2.0 {
 		krb5_config_parse_file;
 		krb5_config_parse_file_multi;
 		krb5_config_parse_string_multi;
-		krb5_config_vget;
 		krb5_config_vget_bool;
 		krb5_config_vget_bool_default;
 		krb5_config_vget_int;
 		krb5_config_vget_int_default;
 		krb5_config_vget_list;
-		krb5_config_vget_next;
 		krb5_config_vget_string;
 		krb5_config_vget_string_default;
 		krb5_config_vget_strings;

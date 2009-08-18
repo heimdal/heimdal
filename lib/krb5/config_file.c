@@ -462,17 +462,17 @@ _krb5_config_copy(krb5_context context,
 #endif /* HEIMDAL_SMALLER */
 
 const void *
-krb5_config_get_next (krb5_context context,
-		      const krb5_config_section *c,
-		      const krb5_config_binding **pointer,
-		      int type,
-		      ...)
+_krb5_config_get_next (krb5_context context,
+		       const krb5_config_section *c,
+		       const krb5_config_binding **pointer,
+		       int type,
+		       ...)
 {
     const char *ret;
     va_list args;
 
     va_start(args, type);
-    ret = krb5_config_vget_next (context, c, pointer, type, args);
+    ret = _krb5_config_vget_next (context, c, pointer, type, args);
     va_end(args);
     return ret;
 }
@@ -501,11 +501,11 @@ vget_next(krb5_context context,
 }
 
 const void *
-krb5_config_vget_next (krb5_context context,
-		       const krb5_config_section *c,
-		       const krb5_config_binding **pointer,
-		       int type,
-		       va_list args)
+_krb5_config_vget_next (krb5_context context,
+			const krb5_config_section *c,
+			const krb5_config_binding **pointer,
+			int type,
+			va_list args)
 {
     const krb5_config_binding *b;
     const char *p;
@@ -537,29 +537,29 @@ krb5_config_vget_next (krb5_context context,
 }
 
 const void *
-krb5_config_get (krb5_context context,
-		 const krb5_config_section *c,
-		 int type,
-		 ...)
+_krb5_config_get (krb5_context context,
+		  const krb5_config_section *c,
+		  int type,
+		  ...)
 {
     const void *ret;
     va_list args;
 
     va_start(args, type);
-    ret = krb5_config_vget (context, c, type, args);
+    ret = _krb5_config_vget (context, c, type, args);
     va_end(args);
     return ret;
 }
 
 const void *
-krb5_config_vget (krb5_context context,
-		  const krb5_config_section *c,
-		  int type,
-		  va_list args)
+_krb5_config_vget (krb5_context context,
+		   const krb5_config_section *c,
+		   int type,
+		   va_list args)
 {
     const krb5_config_binding *foo = NULL;
 
-    return krb5_config_vget_next (context, c, &foo, type, args);
+    return _krb5_config_vget_next (context, c, &foo, type, args);
 }
 
 const krb5_config_binding *
@@ -581,7 +581,7 @@ krb5_config_vget_list (krb5_context context,
 		       const krb5_config_section *c,
 		       va_list args)
 {
-    return krb5_config_vget (context, c, krb5_config_list, args);
+    return _krb5_config_vget (context, c, krb5_config_list, args);
 }
 
 /**
@@ -632,7 +632,7 @@ krb5_config_vget_string (krb5_context context,
 			 const krb5_config_section *c,
 			 va_list args)
 {
-    return krb5_config_vget (context, c, krb5_config_string, args);
+    return _krb5_config_vget (context, c, krb5_config_string, args);
 }
 
 /**
@@ -704,8 +704,8 @@ krb5_config_vget_strings(krb5_context context,
     const krb5_config_binding *b = NULL;
     const char *p;
 
-    while((p = krb5_config_vget_next(context, c, &b,
-				     krb5_config_string, args))) {
+    while((p = _krb5_config_vget_next(context, c, &b,
+				      krb5_config_string, args))) {
 	char *tmp = strdup(p);
 	char *pos = NULL;
 	char *s;

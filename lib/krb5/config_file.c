@@ -584,6 +584,22 @@ krb5_config_vget_list (krb5_context context,
     return krb5_config_vget (context, c, krb5_config_list, args);
 }
 
+/**
+ * Returns a "const char *" to a string in the configuration database.
+ * The string may not be valid after a reload of the configuration
+ * database so a caller should make a local copy if it needs to keep
+ * the string.
+ *
+ * @param context A Kerberos 5 context.
+ * @param c a configuration section, or NULL to use the section from context
+ * @param ... a list of names, terminated with NULL.
+ *
+ * @return NULL if configuration string not found, a string otherwise
+ *
+ * @ingroup krb5_support
+ */
+ 
+
 const char* KRB5_LIB_FUNCTION
 krb5_config_get_string (krb5_context context,
 			const krb5_config_section *c,

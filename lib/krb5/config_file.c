@@ -599,7 +599,6 @@ krb5_config_vget_list (krb5_context context,
  * @ingroup krb5_support
  */
  
-
 const char* KRB5_LIB_FUNCTION
 krb5_config_get_string (krb5_context context,
 			const krb5_config_section *c,
@@ -614,6 +613,20 @@ krb5_config_get_string (krb5_context context,
     return ret;
 }
 
+/**
+ * Like krb5_config_get_string(), but uses a va_list instead of ...
+ *
+ * @param context A Kerberos 5 context.
+ * @param c a configuration section, or NULL to use the section from context
+ * @param def_value the default value to return if no configuration
+ *        found in the database.
+ * @param args a va_list of arguments
+ *
+ * @return NULL if configuration string not found, a string otherwise
+ *
+ * @ingroup krb5_support
+ */
+
 const char* KRB5_LIB_FUNCTION
 krb5_config_vget_string (krb5_context context,
 			 const krb5_config_section *c,
@@ -621,6 +634,21 @@ krb5_config_vget_string (krb5_context context,
 {
     return krb5_config_vget (context, c, krb5_config_string, args);
 }
+
+/**
+ * Like krb5_config_vget_string(), but instead of returning NULL,
+ * instead return a default value.
+ *
+ * @param context A Kerberos 5 context.
+ * @param c a configuration section, or NULL to use the section from context
+ * @param def_value the default value to return if no configuration
+ *        found in the database.
+ * @param args a va_list of arguments
+ *
+ * @return a configuration string
+ *
+ * @ingroup krb5_support
+ */
 
 const char* KRB5_LIB_FUNCTION
 krb5_config_vget_string_default (krb5_context context,
@@ -635,6 +663,21 @@ krb5_config_vget_string_default (krb5_context context,
 	ret = def_value;
     return ret;
 }
+
+/**
+ * Like krb5_config_get_string(), but instead of returning NULL,
+ * instead return a default value.
+ *
+ * @param context A Kerberos 5 context.
+ * @param c a configuration section, or NULL to use the section from context
+ * @param def_value the default value to return if no configuration
+ *        found in the database.
+ * @param ... a list of names, terminated with NULL.
+ *
+ * @return a configuration string
+ *
+ * @ingroup krb5_support
+ */
 
 const char* KRB5_LIB_FUNCTION
 krb5_config_get_string_default (krb5_context context,

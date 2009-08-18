@@ -203,7 +203,6 @@ $(srcdir)/krb5-private.h:
 
 man_MANS =					\
 	kerberos.8				\
-	krb5.3					\
 	krb5.conf.5				\
 	krb524_convert_creds_kdc.3		\
 	krb5_425_conv_principal.3		\

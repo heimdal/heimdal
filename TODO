@@ -1,39 +1,9 @@
 -*- indented-text -*-
 
-$Id$
-
-* configure
-
-* appl
-
-** appl/popper
-
-* doc
-
-* kdc
-
-* kadmin
-
-* kpasswdd
-
-* lib
-
-** lib/asn1
-
-** lib/auth
-
-** lib/auth/sia
-
-** lib/com_err
-
-** lib/des
-
 ** lib/gssapi
 
 cache delegation credentials to avoid hitting the kdc ?  require time
 stampless tickets, and was supported in the recv'ing end with 0.6.1.
-
-** lib/hdb
 
 ** lib/kadm5
 
@@ -45,5 +15,3 @@ fix to use rpc?
 
 verify_user: handle non-secure verification failing because of
 host->realm mapping
-
-** lib/roken

@@ -96,6 +96,9 @@
  * structure, including default encryption types, credential cache
  * (for example, a ticket file), and default realms.
  *
+ * The internals of the structure should never be accessed directly,
+ * functions exist for extracting information.
+ *
  * See the manual page for krb5_init_context() how to create a context
  * and module @ref krb5 for more information about the functions.
  *

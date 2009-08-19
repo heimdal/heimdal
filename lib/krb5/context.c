@@ -85,32 +85,6 @@ set_etypes (krb5_context context,
 }
 
 /*
- *
- */
-
-static krb5_error_code
-copy_etypes (krb5_context context,
-	     krb5_enctype *enctypes,
-	     krb5_enctype **ret_enctypes)
-{
-    unsigned int i;
-
-    for (i = 0; enctypes[i]; i++)
-	;
-    i++;
-
-    *ret_enctypes = malloc(sizeof(ret_enctypes[0]) * i);
-    if (*ret_enctypes == NULL) {
-	krb5_set_error_message(context, ENOMEM, 
-			       N_("malloc: out of memory", ""));
-	return ENOMEM;
-    }
-    memcpy(*ret_enctypes, enctypes, sizeof(ret_enctypes[0]) * i);
-    return 0;
-}
-
-
-/*
  * read variables from the configuration file and set in `context'
  */
 
@@ -329,6 +303,31 @@ out:
 }
 
 #ifndef HEIMDAL_SMALLER
+
+/*
+ *
+ */
+
+static krb5_error_code
+copy_etypes (krb5_context context,
+	     krb5_enctype *enctypes,
+	     krb5_enctype **ret_enctypes)
+{
+    unsigned int i;
+
+    for (i = 0; enctypes[i]; i++)
+	;
+    i++;
+
+    *ret_enctypes = malloc(sizeof(ret_enctypes[0]) * i);
+    if (*ret_enctypes == NULL) {
+	krb5_set_error_message(context, ENOMEM, 
+			       N_("malloc: out of memory", ""));
+	return ENOMEM;
+    }
+    memcpy(*ret_enctypes, enctypes, sizeof(ret_enctypes[0]) * i);
+    return 0;
+}
 
 /**
  * Make a copy for the Kerberos 5 context, the new krb5_context shoud

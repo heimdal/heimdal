@@ -210,7 +210,7 @@ match_local_principals(krb5_context context,
  * anyone).
  *
  * Note that if the file exists, no implicit access rights are given
- * to user@LOCALREALM.
+ * to user@@LOCALREALM.
  *
  * Optionally, a set of files may be put in ~/.k5login.d (a
  * directory), in which case they will all be checked in the same

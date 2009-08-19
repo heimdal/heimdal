@@ -680,7 +680,7 @@ krb5_ret_data(krb5_storage *sp,
  * plus the string itself (not padded).
  *
  * @param sp the storage buffer to write to
- * @param data the buffer to store.
+ * @param s the string to store.
  *
  * @return 0 on success, a Kerberos 5 error code on failure.
  *
@@ -872,7 +872,7 @@ krb5_ret_stringnl(krb5_storage *sp,
  * Write a principal block to storage.
  *
  * @param sp the storage buffer to write to
- * @param principal the principal block to write.
+ * @param p the principal block to write.
  *
  * @return 0 on success, a Kerberos 5 error code on failure.
  *

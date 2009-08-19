@@ -642,8 +642,6 @@ krb5_config_get_string (krb5_context context,
  *
  * @param context A Kerberos 5 context.
  * @param c a configuration section, or NULL to use the section from context
- * @param def_value the default value to return if no configuration
- *        found in the database.
  * @param args a va_list of arguments
  *
  * @return NULL if configuration string not found, a string otherwise
@@ -889,7 +887,7 @@ krb5_config_vget_bool  (krb5_context context,
  * @param c a configuration section, or NULL to use the section from context
  * @param def_value the default value to return if no configuration
  *        found in the database.
- * @param args a va_list of arguments
+ * @param ... a list of names, terminated with NULL.
  *
  * @return TRUE or FALSE
  *
@@ -919,7 +917,7 @@ krb5_config_get_bool_default (krb5_context context,
  *
  * @param context A Kerberos 5 context.
  * @param c a configuration section, or NULL to use the section from context
- * @param args a va_list of arguments
+ * @param ... a list of names, terminated with NULL.
  *
  * @return TRUE or FALSE
  *

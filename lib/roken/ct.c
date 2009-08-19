@@ -32,8 +32,7 @@
  */
 
 #include <config.h>
-
-#include <sys/types.h>
+#include "roken.h"
 
 /**
  * Constant time compare to memory regions. The reason for making it

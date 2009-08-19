@@ -328,8 +328,10 @@ out:
     return ret;
 }
 
+#ifndef HEIMDAL_SMALLER
+
 /**
- * Make a copy for the Kerberos 5 context, allocated krb5_contex shoud
+ * Make a copy for the Kerberos 5 context, the new krb5_context shoud
  * be freed with krb5_free_context().
  *
  * @param context the Kerberos context to copy
@@ -420,6 +422,8 @@ krb5_copy_context(krb5_context context, krb5_context *out)
     krb5_free_context(p);
     return ret;
 }
+
+#endif
 
 /**
  * Frees the krb5_context allocated by krb5_init_context().

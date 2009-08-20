@@ -331,11 +331,19 @@ cms_create_sd(struct cms_create_sd_options *opt, int argc, char **argv)
     size_t sz;
     void *p;
     int ret, flags = 0;
+    char *infile, *outfile = NULL;
 
     memset(&contentType, 0, sizeof(contentType));
 
-    if (argc < 2)
-	errx(1, "argc < 2");
+    infile = argv[0];
+
+    if (argc < 2) {
+	asprintf(&outfile, "%s.%s", infile,
+		 opt->pem_flag ? "pem" : "cms-signeddata");
+	if (outfile == NULL)
+	    errx(1, "out of memory");
+    } else
+	outfile = argv[1];
 
     hx509_lock_init(context, &lock);
     lock_strings(lock, &opt->pass_strings);
@@ -382,9 +390,9 @@ cms_create_sd(struct cms_create_sd_options *opt, int argc, char **argv)
 	    hx509_err(context, 1, ret, "hx509_certs_find");
     }
 
-    ret = rk_undumpdata(argv[0], &p, &sz);
+    ret = rk_undumpdata(infile, &p, &sz);
     if (ret)
-	err(1, "map_file: %s: %d", argv[0], ret);
+	err(1, "map_file: %s: %d", infile, ret);
 
     if (opt->peer_alg_strings.num_strings)
 	peer_strings(context, &peer, &opt->peer_alg_strings);
@@ -437,9 +445,9 @@ cms_create_sd(struct cms_create_sd_options *opt, int argc, char **argv)
 		hx509_err(context, 1, ret, "print signer");
 	}
 
-	f = fopen(argv[1], "w");
+	f = fopen(outfile, "w");
 	if (f == NULL)
-	    err(1, "open %s", argv[1]);
+	    err(1, "open %s", outfile);
 	
 	ret = hx509_pem_write(context, "CMS SIGNEDDATA", header, f,
 			      o.data, o.length);
@@ -449,7 +457,7 @@ cms_create_sd(struct cms_create_sd_options *opt, int argc, char **argv)
 	    errx(1, "hx509_pem_write: %d", ret);
 
     } else {
-	ret = _hx509_write_file(argv[1], o.data, o.length);
+	ret = _hx509_write_file(outfile, o.data, o.length);
 	if (ret)
 	    errx(1, "hx509_write_file: %d", ret);
     }

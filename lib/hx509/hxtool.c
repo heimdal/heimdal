@@ -327,7 +327,7 @@ cms_create_sd(struct cms_create_sd_options *opt, int argc, char **argv)
     heim_octet_string o;
     hx509_query *q;
     hx509_lock lock;
-    hx509_certs store, pool, anchors, signer;
+    hx509_certs store, pool, anchors, signer = NULL;
     size_t sz;
     void *p;
     int ret, flags = 0;
@@ -365,20 +365,22 @@ cms_create_sd(struct cms_create_sd_options *opt, int argc, char **argv)
 
     }
 
-    ret = hx509_query_alloc(context, &q);
-    if (ret)
-	errx(1, "hx509_query_alloc: %d", ret);
-
-    hx509_query_match_option(q, HX509_QUERY_OPTION_PRIVATE_KEY);
-    hx509_query_match_option(q, HX509_QUERY_OPTION_KU_DIGITALSIGNATURE);
-			
-    if (opt->signer_string)
-	hx509_query_match_friendly_name(q, opt->signer_string);
-
-    ret = hx509_certs_filter(context, store, q, &signer);
-    hx509_query_free(context, q);
-    if (ret)
-	hx509_err(context, 1, ret, "hx509_certs_find");
+    if (opt->signer_flag) {
+	ret = hx509_query_alloc(context, &q);
+	if (ret)
+	    errx(1, "hx509_query_alloc: %d", ret);
+	
+	hx509_query_match_option(q, HX509_QUERY_OPTION_PRIVATE_KEY);
+	hx509_query_match_option(q, HX509_QUERY_OPTION_KU_DIGITALSIGNATURE);
+	
+	if (opt->signer_string)
+	    hx509_query_match_friendly_name(q, opt->signer_string);
+	
+	ret = hx509_certs_filter(context, store, q, &signer);
+	hx509_query_free(context, q);
+	if (ret)
+	    hx509_err(context, 1, ret, "hx509_certs_find");
+    }
 
     ret = rk_undumpdata(argv[0], &p, &sz);
     if (ret)
@@ -429,9 +431,11 @@ cms_create_sd(struct cms_create_sd_options *opt, int argc, char **argv)
 	hx509_pem_add_header(&header, "Content-disposition",
 			     opt->detached_signature_flag ?
 			     "detached" : "inline");
-	ret = hx509_certs_iter(context, signer, print_signer, header);
-	if (ret)
-	    hx509_err(context, 1, ret, "print signer");
+	if (signer) {
+	    ret = hx509_certs_iter(context, signer, print_signer, header);
+	    if (ret)
+		hx509_err(context, 1, ret, "print signer");
+	}
 
 	f = fopen(argv[1], "w");
 	if (f == NULL)

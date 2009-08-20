@@ -21,10 +21,11 @@ CHECK_LOCAL =
 
 testit_LDADD = \
 	libeditline.la \
-	$(LIB_tgetent) \
 	$(LIB_roken)
 
 include_HEADERS = editline.h
+
+libeditline_la_LIBADD = $(LIB_tgetent)
 
 libeditline_la_SOURCES = \
 	edit_locl.h \

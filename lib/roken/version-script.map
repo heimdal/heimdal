@@ -10,6 +10,7 @@ HEIMDAL_ROKEN_1.0 {
 		cgetnum;
 		cgetset;
 		cgetustr;
+		ct_memcmp;
 		err;
 		errx;
 		free_getarg_strings;

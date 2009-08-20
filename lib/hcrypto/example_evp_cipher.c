@@ -65,11 +65,11 @@ int
 main(int argc, char **argv)
 {
     int encryptp = 1;
-    const char *ifn, *ofn;
+    const char *ifn = NULL, *ofn = NULL;
     FILE *in, *out;
     void *ibuf, *obuf;
     int ilen, olen;
-    size_t block_size;
+    size_t block_size = 0;
     const EVP_CIPHER *c = EVP_aes_128_cbc();
     EVP_CIPHER_CTX ctx;
     int ret;

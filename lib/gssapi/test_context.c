@@ -269,7 +269,7 @@ wrapunwrap_iov(gss_ctx_id_t cctx, gss_ctx_id_t sctx, int flags, gss_OID mechoid)
     OM_uint32 min_stat, maj_stat;
     gss_qop_t qop_state;
     int conf_state, conf_state2;
-    gss_iov_buffer_desc iov[5];
+    gss_iov_buffer_desc iov[6];
     unsigned char *p;
     int iov_len;
     char header_data[9] = "ABCheader";
@@ -298,9 +298,6 @@ wrapunwrap_iov(gss_ctx_id_t cctx, gss_ctx_id_t sctx, int flags, gss_OID mechoid)
 
     memset(iov, 0, sizeof(iov));
 
-    if (flags & USE_HEADER_ONLY)
-	iov_len -= 1; /* skip trailer */
-
     iov[0].type = GSS_IOV_BUFFER_TYPE_HEADER | GSS_IOV_BUFFER_TYPE_FLAG_ALLOCATE;
 
     if (header.length != 0) {
@@ -324,11 +321,24 @@ wrapunwrap_iov(gss_ctx_id_t cctx, gss_ctx_id_t sctx, int flags, gss_OID mechoid)
 	iov[3].buffer.length = 0;
 	iov[3].buffer.value = NULL;
     }
-    iov[4].type = GSS_IOV_BUFFER_TYPE_TRAILER | GSS_IOV_BUFFER_TYPE_FLAG_ALLOCATE;
+    if (dce_style_flag) {
+	iov[4].type = GSS_IOV_BUFFER_TYPE_EMPTY;
+    } else {
+	iov[4].type = GSS_IOV_BUFFER_TYPE_PADDING | GSS_IOV_BUFFER_TYPE_FLAG_ALLOCATE;
+    }
     iov[4].buffer.length = 0;
     iov[4].buffer.value = 0;
+    if (dce_style_flag) {
+	iov[5].type = GSS_IOV_BUFFER_TYPE_EMPTY;
+    } else if (flags & USE_HEADER_ONLY) {
+	iov[5].type = GSS_IOV_BUFFER_TYPE_EMPTY;
+    } else {
+	iov[5].type = GSS_IOV_BUFFER_TYPE_TRAILER | GSS_IOV_BUFFER_TYPE_FLAG_ALLOCATE;
+    }
+    iov[5].buffer.length = 0;
+    iov[5].buffer.value = 0;
 
-    maj_stat = gss_wrap_iov(&min_stat, cctx, flags & USE_CONF, 0, &conf_state,
+    maj_stat = gss_wrap_iov(&min_stat, cctx, dce_style_flag || flags & USE_CONF, 0, &conf_state,
 			    iov, iov_len);
     if (maj_stat != GSS_S_COMPLETE)
 	errx(1, "gss_wrap_iov failed");
@@ -338,7 +348,8 @@ wrapunwrap_iov(gss_ctx_id_t cctx, gss_ctx_id_t sctx, int flags, gss_OID mechoid)
 	iov[1].buffer.length +
 	iov[2].buffer.length +
 	iov[3].buffer.length + 
-	iov[4].buffer.length;
+	iov[4].buffer.length +
+	iov[5].buffer.length;
     token.data = emalloc(token.length);
 
     p = token.data;
@@ -352,6 +363,8 @@ wrapunwrap_iov(gss_ctx_id_t cctx, gss_ctx_id_t sctx, int flags, gss_OID mechoid)
     p += iov[3].buffer.length;
     memcpy(p, iov[4].buffer.value, iov[4].buffer.length);
     p += iov[4].buffer.length;
+    memcpy(p, iov[5].buffer.value, iov[5].buffer.length);
+    p += iov[5].buffer.length;
 
     assert(p - ((unsigned char *)token.data) == token.length);
 
@@ -733,13 +746,17 @@ main(int argc, char **argv)
 
     if (iov_flag) {
 	wrapunwrap_iov(cctx, sctx, 0, actual_mech);
+	wrapunwrap_iov(cctx, sctx, USE_HEADER_ONLY, actual_mech);
 	wrapunwrap_iov(cctx, sctx, USE_CONF, actual_mech);
 	wrapunwrap_iov(cctx, sctx, USE_CONF|USE_HEADER_ONLY, actual_mech);
 
 	wrapunwrap_iov(cctx, sctx, FORCE_IOV, actual_mech);
 	wrapunwrap_iov(cctx, sctx, USE_CONF|FORCE_IOV, actual_mech);
+	wrapunwrap_iov(cctx, sctx, USE_HEADER_ONLY|FORCE_IOV, actual_mech);
 	wrapunwrap_iov(cctx, sctx, USE_CONF|USE_HEADER_ONLY|FORCE_IOV, actual_mech);
 
+	wrapunwrap_iov(cctx, sctx, USE_SIGN_ONLY, actual_mech);
+	wrapunwrap_iov(cctx, sctx, USE_CONF|USE_SIGN_ONLY, actual_mech);
 	wrapunwrap_iov(cctx, sctx, USE_CONF|USE_HEADER_ONLY|USE_SIGN_ONLY, actual_mech);
     }
 

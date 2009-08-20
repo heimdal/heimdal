@@ -145,18 +145,28 @@ peer_strings(hx509_context context,
  *
  */
 
+struct pem_data {
+    heim_octet_string *os;
+    int detached_data;
+};
+
 static int
 pem_reader(hx509_context context, const char *type,
 	   const hx509_pem_header *headers,
 	   const void *data , size_t length, void *ctx)
 {
-    heim_octet_string *c = (heim_octet_string *)ctx;
+    struct pem_data *p = (struct pem_data *)ctx;
+    const char *h;
 
-    c->data = malloc(length);
-    if (c->data == NULL)
+    p->os->data = malloc(length);
+    if (p->os->data == NULL)
 	return ENOMEM;
-    memcpy(c->data, data, length);
-    c->length = length;
+    memcpy(p->os->data, data, length);
+    p->os->length = length;
+
+    h = hx509_pem_find_header(headers, "Content-disposition");
+    if (h && strcasecmp(h, "detached") == 0)
+	p->detached_data = 1;
 
     return 0;
 }
@@ -201,16 +211,36 @@ cms_verify_sd(struct cms_verify_sd_options *opt, int argc, char **argv)
     certs_strings(context, "store", store, lock, &opt->certificate_strings);
 
     if (opt->pem_flag) {
+	struct pem_data p;
 	FILE *f;
+
+	p.os = &co;
+	p.detached_data = 0;
 	
 	f = fopen(argv[0], "r");
 	if (f == NULL)
 	    err(1, "Failed to open file %s", argv[0]);
 
-	ret = hx509_pem_read(context, f, pem_reader, &co);
+	ret = hx509_pem_read(context, f, pem_reader, &p);
 	fclose(f);
 	if (ret)
 	    errx(1, "PEM reader failed: %d", ret);
+
+	if (p.detached_data && opt->signed_content_string == NULL) {
+	    char *r = strrchr(argv[0], '.');
+	    if (r && strcasecmp(r, ".pem") == 0) {
+		char *s = strdup(argv[0]);
+		if (s == NULL)
+		    errx(1, "malloc: out of memory");
+		s[r - argv[0]] = '\0';
+		ret = _hx509_map_file_os(s, &signeddata);
+		if (ret)
+		    errx(1, "map_file: %s: %d", s, ret);
+		free(s);
+		sd = &signeddata;
+	    }
+	}
+
     } else {
 	ret = rk_undumpdata(argv[0], &p, &sz);
 	if (ret)
@@ -284,9 +314,11 @@ cms_verify_sd(struct cms_verify_sd_options *opt, int argc, char **argv)
 
     hx509_lock_free(lock);
 
-    ret = _hx509_write_file(argv[1], c.data, c.length);
-    if (ret)
-	errx(1, "hx509_write_file: %d", ret);
+    if (argc > 1) {
+	ret = _hx509_write_file(argv[1], c.data, c.length);
+	if (ret)
+	    errx(1, "hx509_write_file: %d", ret);
+    }
 
     der_free_octet_string(&c);
 

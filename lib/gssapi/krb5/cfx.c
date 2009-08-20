@@ -365,6 +365,11 @@ _gssapi_wrap_cfx_iov(OM_uint32 *minor_status,
 	gsshsize = sizeof(gss_cfx_wrap_token_desc) + k5hsize;
 	gsstsize = sizeof(gss_cfx_wrap_token_desc) + ec + k5tsize;
     } else {
+	if (IS_DCE_STYLE(ctx)) {
+	    *minor_status = EINVAL;
+	    return GSS_S_FAILURE;
+	}
+
 	k5hsize = 0;
 	*minor_status = krb5_crypto_length(context, ctx->crypto,
 					   KRB5_CRYPTO_TYPE_CHECKSUM,
@@ -381,12 +386,6 @@ _gssapi_wrap_cfx_iov(OM_uint32 *minor_status,
      */
 
     if (trailer == NULL) {
-	/* conf_req_flag=0 doesn't support DCE_STYLE */
-	if (conf_req_flag == 0) {
-	    *minor_status = EINVAL;
-	    major_status = GSS_S_FAILURE;
-	    goto failure;
-	}	    
 	rrc = gsstsize;
 	if (IS_DCE_STYLE(ctx))
 	    rrc -= ec;

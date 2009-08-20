@@ -103,7 +103,7 @@ command = {
 		type = "flag"
 		help = "use subject name for CMS Identifier"
 	}
-	min_args="2"
+	min_args="1"
 	max_args="2"
 	argument="in-file out-file"
 	help = "Wrap a file within a SignedData object"

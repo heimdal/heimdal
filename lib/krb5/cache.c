@@ -1046,6 +1046,10 @@ krb5_cc_cache_get_first (krb5_context context,
  * Retrieve the next cache pointed to by (`cursor') in `id'
  * and advance `cursor'.
  *
+ * @param context A Kerberos 5 context
+ * @param cursor the iterator cursor, returned by krb5_cc_cache_get_first()
+ * @param id next ccache
+ *
  * @return Return 0 or an error code. Returns KRB5_CC_END when the end
  *         of caches is reached, see krb5_get_error_message().
  *

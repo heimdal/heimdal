@@ -69,7 +69,7 @@ main (int argc, char **argv)
 {
     krb5_context context;
     krb5_error_code ret;
-    krb5_ccache id;
+    krb5_ccache id = NULL;
     int optidx = 0;
 
     setprogname (argv[0]);

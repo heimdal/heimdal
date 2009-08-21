@@ -32,7 +32,7 @@
  */
 
 #include "kuser_locl.h"
-RCSID("$Id$");
+
 #include <kdigest-commands.h>
 #include <hex.h>
 #include <base64.h>

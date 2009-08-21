@@ -33,8 +33,6 @@
 
 #include "kuser_locl.h"
 
-RCSID("$Id$");
-
 static unsigned
 read_words (const char *filename, char ***ret_w)
 {

@@ -32,7 +32,6 @@
  */
 
 #include "kuser_locl.h"
-RCSID("$Id$");
 
 static const char *cache;
 static const char *credential;

@@ -33,8 +33,6 @@
 
 #include "kuser_locl.h"
 
-RCSID("$Id$");
-
 static char *cache_str;
 static char *out_cache_str;
 static char *delegation_cred_str;

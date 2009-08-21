@@ -33,8 +33,6 @@
 
 #include "kuser_locl.h"
 
-RCSID("$Id$");
-
 static int help_flag = 0;
 static int version_flag = 0;
 

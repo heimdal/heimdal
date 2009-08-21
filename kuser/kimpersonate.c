@@ -32,7 +32,6 @@
  */
 
 #include "kuser_locl.h"
-RCSID("$Id$");
 #include <parse_units.h>
 
 static char *client_principal_str = NULL;

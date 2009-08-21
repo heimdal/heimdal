@@ -33,8 +33,6 @@
 
 #include "kuser_locl.h"
 
-RCSID("$Id$");
-
 /*
  *
  */

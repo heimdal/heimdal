@@ -165,6 +165,7 @@ CLEANFILES = $(BUILT_SOURCES) \
 	hxtool-commands.c hxtool-commands.h *.tmp \
 	request.out \
 	out.pem out2.pem \
+	sd sd.pem \
 	sd.data sd.data.out \
 	ev.data ev.data.out \
 	cert-null.pem cert-sub-ca2.pem \

@@ -743,7 +743,7 @@ EVP_CipherInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *c, ENGINE *engine,
 	ctx->cipher = c;
 	ctx->key_len = c->key_len;
 
-	ctx->cipher_data = malloc(c->ctx_size);
+	ctx->cipher_data = calloc(1, c->ctx_size);
 	if (ctx->cipher_data == NULL && c->ctx_size != 0)
 	    return 0;
 

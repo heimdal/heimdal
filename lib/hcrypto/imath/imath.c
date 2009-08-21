@@ -637,7 +637,7 @@ mp_result mp_int_add_value(mp_int a, mp_small value, mp_int c)
 
 mp_result mp_int_sub(mp_int a, mp_int b, mp_int c)
 {
-  mp_size  ua, ub, uc, max;
+  mp_size  ua, ub, max;
 
   CHECK(a != NULL && b != NULL && c != NULL);
 

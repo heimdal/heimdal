@@ -31,6 +31,8 @@
  * SUCH DAMAGE.
  */
 
+#define HC_DEPRECATED_CRYPTO
+
 #include "kuser_locl.h"
 
 #include <kdigest-commands.h>
@@ -225,17 +227,19 @@ client_chap(const void *server_nonce, size_t snoncelen,
 	    unsigned char server_identifier,
 	    const char *password)
 {
-    EVP_MD_CTX ctx;
+    EVP_MD_CTX *ctx;
     unsigned char md[MD5_DIGEST_LENGTH];
     char *h;
 
-    EVP_MD_CTX_init(&ctx);
-    EVP_DigestInit_ex(&ctx, EVP_md5(), NULL);
+    ctx = EVP_MD_CTX_create();
+    EVP_DigestInit_ex(ctx, EVP_md5(), NULL);
 
-    EVP_DigestUpdate(&ctx, &server_identifier, 1);
-    EVP_DigestUpdate(&ctx, password, strlen(password));
-    EVP_DigestUpdate(&ctx, server_nonce, snoncelen);
-    EVP_DigestFinal_ex(&ctx, md, NULL);
+    EVP_DigestUpdate(ctx, &server_identifier, 1);
+    EVP_DigestUpdate(ctx, password, strlen(password));
+    EVP_DigestUpdate(ctx, server_nonce, snoncelen);
+    EVP_DigestFinal_ex(ctx, md, NULL);
+
+    EVP_MD_CTX_destroy(ctx);
 
     hex_encode(md, 16, &h);
 
@@ -268,30 +272,30 @@ client_mschapv2(const void *server_nonce, size_t snoncelen,
 		const char *username,
 		const char *password)
 {
-    EVP_MD_CTX hctx, ctx;
+    EVP_MD_CTX *hctx, *ctx;
     unsigned char md[SHA_DIGEST_LENGTH], challange[SHA_DIGEST_LENGTH];
     unsigned char hmd[MD4_DIGEST_LENGTH];
     struct ntlm_buf answer;
     int i, len, ret;
     char *h;
 
-    EVP_MD_CTX_init(&ctx);
-    EVP_DigestInit_ex(&ctx, EVP_sha1(), NULL);
+    ctx = EVP_MD_CTX_create();
+    EVP_DigestInit_ex(ctx, EVP_sha1(), NULL);
 
-    EVP_DigestUpdate(&ctx, client_nonce, cnoncelen);
-    EVP_DigestUpdate(&ctx, server_nonce, snoncelen);
-    EVP_DigestUpdate(&ctx, username, strlen(username));
-    EVP_DigestFinal_ex(&ctx, md, NULL);
+    EVP_DigestUpdate(ctx, client_nonce, cnoncelen);
+    EVP_DigestUpdate(ctx, server_nonce, snoncelen);
+    EVP_DigestUpdate(ctx, username, strlen(username));
+    EVP_DigestFinal_ex(ctx, md, NULL);
 
 
-    EVP_MD_CTX_init(&hctx);
-    EVP_DigestInit_ex(&hctx, EVP_md4(), NULL);
+    hctx = EVP_MD_CTX_create();
+    EVP_DigestInit_ex(hctx, EVP_md4(), NULL);
     len = strlen(password);
     for (i = 0; i < len; i++) {
-	EVP_DigestUpdate(&hctx, &password[i], 1);
-	EVP_DigestUpdate(&hctx, &password[len], 1);
+	EVP_DigestUpdate(hctx, &password[i], 1);
+	EVP_DigestUpdate(hctx, &password[len], 1);
     }	
-    EVP_DigestFinal_ex(&hctx, hmd, NULL);
+    EVP_DigestFinal_ex(hctx, hmd, NULL);
 
 
     /* ChallengeResponse */
@@ -304,41 +308,41 @@ client_mschapv2(const void *server_nonce, size_t snoncelen,
     free(h);
 
     /* PasswordHash */
-    EVP_DigestInit_ex(&hctx, EVP_md4(), NULL);
-    EVP_DigestUpdate(&hctx, hmd, sizeof(hmd));
-    EVP_DigestFinal_ex(&hctx, hmd, NULL);
+    EVP_DigestInit_ex(hctx, EVP_md4(), NULL);
+    EVP_DigestUpdate(hctx, hmd, sizeof(hmd));
+    EVP_DigestFinal_ex(hctx, hmd, NULL);
 
 
     /* GenerateAuthenticatorResponse */
-    EVP_DigestInit_ex(&ctx, EVP_sha1(), NULL);
-    EVP_DigestUpdate(&ctx, hmd, sizeof(hmd));
-    EVP_DigestUpdate(&ctx, answer.data, answer.length);
-    EVP_DigestUpdate(&ctx, ms_chap_v2_magic1, sizeof(ms_chap_v2_magic1));
-    EVP_DigestFinal_ex(&ctx, md, NULL);
+    EVP_DigestInit_ex(ctx, EVP_sha1(), NULL);
+    EVP_DigestUpdate(ctx, hmd, sizeof(hmd));
+    EVP_DigestUpdate(ctx, answer.data, answer.length);
+    EVP_DigestUpdate(ctx, ms_chap_v2_magic1, sizeof(ms_chap_v2_magic1));
+    EVP_DigestFinal_ex(ctx, md, NULL);
 
     /* ChallengeHash */
-    EVP_DigestInit_ex(&ctx, EVP_sha1(), NULL);
-    EVP_DigestUpdate(&ctx, client_nonce, cnoncelen);
-    EVP_DigestUpdate(&ctx, server_nonce, snoncelen);
-    EVP_DigestUpdate(&ctx, username, strlen(username));
-    EVP_DigestFinal_ex(&ctx, challange, NULL);
+    EVP_DigestInit_ex(ctx, EVP_sha1(), NULL);
+    EVP_DigestUpdate(ctx, client_nonce, cnoncelen);
+    EVP_DigestUpdate(ctx, server_nonce, snoncelen);
+    EVP_DigestUpdate(ctx, username, strlen(username));
+    EVP_DigestFinal_ex(ctx, challange, NULL);
 
-    EVP_DigestInit_ex(&ctx, EVP_sha1(), NULL);
-    EVP_DigestUpdate(&ctx, md, sizeof(md));
-    EVP_DigestUpdate(&ctx, challange, 8);
-    EVP_DigestUpdate(&ctx, ms_chap_v2_magic2, sizeof(ms_chap_v2_magic2));
-    EVP_DigestFinal_ex(&ctx, md, NULL);
+    EVP_DigestInit_ex(ctx, EVP_sha1(), NULL);
+    EVP_DigestUpdate(ctx, md, sizeof(md));
+    EVP_DigestUpdate(ctx, challange, 8);
+    EVP_DigestUpdate(ctx, ms_chap_v2_magic2, sizeof(ms_chap_v2_magic2));
+    EVP_DigestFinal_ex(ctx, md, NULL);
 
     hex_encode(md, sizeof(md), &h);
     printf("AuthenticatorResponse=%s\n", h);
     free(h);
 
     /* get_master, rfc 3079 3.4 */
-    EVP_DigestInit_ex(&ctx, EVP_sha1(), NULL);
-    EVP_DigestUpdate(&ctx, hmd, sizeof(hmd));
-    EVP_DigestUpdate(&ctx, answer.data, answer.length);
-    EVP_DigestUpdate(&ctx, ms_rfc3079_magic1, sizeof(ms_rfc3079_magic1));
-    EVP_DigestFinal_ex(&ctx, md, NULL);
+    EVP_DigestInit_ex(ctx, EVP_sha1(), NULL);
+    EVP_DigestUpdate(ctx, hmd, sizeof(hmd));
+    EVP_DigestUpdate(ctx, answer.data, answer.length);
+    EVP_DigestUpdate(ctx, ms_rfc3079_magic1, sizeof(ms_rfc3079_magic1));
+    EVP_DigestFinal_ex(ctx, md, NULL);
 
     free(answer.data);
 
@@ -346,8 +350,8 @@ client_mschapv2(const void *server_nonce, size_t snoncelen,
     printf("session-key=%s\n", h);
     free(h);
 
-    EVP_MD_CTX_cleanup(&hctx);
-    EVP_MD_CTX_cleanup(&ctx);
+    EVP_MD_CTX_destroy(hctx);
+    EVP_MD_CTX_destroy(ctx);
 }
 
 

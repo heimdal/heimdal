@@ -41,11 +41,13 @@ static int version_flag;
 static int unlog_flag = 1;
 #endif
 static int dest_tkt_flag = 1;
+static int all_flag = 0;
 
 struct getargs args[] = {
     { "credential",	0,   arg_string, &credential,
       "remove one credential", "principal" },
     { "cache",		'c', arg_string, &cache, "cache to destroy", "cache" },
+    { "all",		'A', arg_flag, &all_flag, "destroy all caches" },
 #ifndef NO_AFS
     { "unlog",		0,   arg_negative_flag, &unlog_flag,
       "do not destroy tokens", NULL },
@@ -97,49 +99,64 @@ main (int argc, char **argv)
     if (ret)
 	errx (1, "krb5_init_context failed: %d", ret);
 
-    if(cache == NULL) {
-	cache = krb5_cc_default_name(context);
-	if (cache == NULL) {
-	    warnx ("krb5_cc_default_name: %s", krb5_get_err_text(context, ret));
-	    exit(1);
+    if (all_flag) {
+	krb5_cccol_cursor cursor;
+
+	ret = krb5_cccol_cursor_new (context, &cursor);
+	if (ret)
+	    krb5_err(context, 1, ret, "krb5_cccol_cursor_new");
+
+	while (krb5_cccol_cursor_next (context, cursor, &ccache) == 0 && ccache != NULL) {
+	    
+	    ret = krb5_cc_destroy (context, ccache);
+	    if (ret) {
+		krb5_warn(context, ret, "krb5_cc_destroy");
+		exit_val = 1;
+	    }
 	}
-    }
+	krb5_cccol_cursor_free(context, &cursor);
 
-    ret =  krb5_cc_resolve(context,
-			   cache,
-			   &ccache);
-
-    if (ret == 0) {
-	if (credential) {
-	    krb5_creds mcred;
-	
-	    krb5_cc_clear_mcred(&mcred);
-
-	    ret = krb5_parse_name(context, credential, &mcred.server);
-	    if (ret)
-		krb5_err(context, 1, ret,
-			 "Can't parse principal %s", credential);
-
-	    ret = krb5_cc_remove_cred(context, ccache, 0, &mcred);
-	    if (ret)
-		krb5_err(context, 1, ret,
-			 "Failed to remove principal %s", credential);
-
-	    krb5_cc_close(context, ccache);
-	    krb5_free_principal(context, mcred.server);
-	    krb5_free_context(context);
-	    return 0;
-	}
-
-	ret = krb5_cc_destroy (context, ccache);
-	if (ret) {
-	    warnx ("krb5_cc_destroy: %s", krb5_get_err_text(context, ret));
-	    exit_val = 1;
-	}
     } else {
-	warnx ("krb5_cc_resolve(%s): %s", cache,
-	       krb5_get_err_text(context, ret));
-	exit_val = 1;
+	if(cache == NULL) {
+	    ret = krb5_cc_default(context, &ccache);
+	    if (ret)
+		krb5_err(context, 1, ret, "krb5_cc_default");
+	} else {
+	    ret =  krb5_cc_resolve(context,
+				   cache,
+				   &ccache);
+	    if (ret)
+		krb5_err(context, 1, ret, "krb5_cc_resolve");
+	}
+
+	if (ret == 0) {
+	    if (credential) {
+		krb5_creds mcred;
+		
+		krb5_cc_clear_mcred(&mcred);
+		
+		ret = krb5_parse_name(context, credential, &mcred.server);
+		if (ret)
+		    krb5_err(context, 1, ret,
+			     "Can't parse principal %s", credential);
+		
+		ret = krb5_cc_remove_cred(context, ccache, 0, &mcred);
+		if (ret)
+		    krb5_err(context, 1, ret,
+			     "Failed to remove principal %s", credential);
+		
+		krb5_cc_close(context, ccache);
+		krb5_free_principal(context, mcred.server);
+		krb5_free_context(context);
+		return 0;
+	    }
+	    
+	    ret = krb5_cc_destroy (context, ccache);
+	    if (ret) {
+		warnx ("krb5_cc_destroy: %s", krb5_get_err_text(context, ret));
+		exit_val = 1;
+	    }
+	}
     }
 
     krb5_free_context (context);

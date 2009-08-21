@@ -34,7 +34,7 @@
 
 command = {
 	name = "cms-create-sd"
-	name = "sign"
+	name = "cms-sign"
 	option = {
 		long = "certificate"
 		short = "c"
@@ -111,7 +111,6 @@ command = {
 }
 command = {
 	name = "cms-verify-sd"
-	name = "verify"
 	option = {
 		long = "anchors"
 		type = "strings"

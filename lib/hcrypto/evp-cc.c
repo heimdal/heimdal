@@ -95,6 +95,14 @@ init_cc_key(int encp, CCAlgorithm alg, const void *key,
     CCOperation op = encp ? kCCEncrypt : kCCDecrypt;
     CCCryptorStatus ret;
 
+    if (*ref) {
+	if (key == NULL && iv) {
+	    CCCryptorReset(*ref, iv);
+	    return 1;
+	}
+	CCCryptorRelease(*ref);
+    }
+
     ret = CCCryptorCreate(op, alg, 0, key, keylen, iv, ref);
     if (ret)
 	return 0;
@@ -127,7 +135,7 @@ EVP_cc_des_ede3_cbc(void)
 	8,
 	24,
 	8,
-	EVP_CIPH_CBC_MODE,
+	EVP_CIPH_CBC_MODE|EVP_CIPH_ALWAYS_CALL_INIT,
 	cc_des_ede3_cbc_init,
 	cc_do_cipher,
 	cc_cleanup,
@@ -170,7 +178,7 @@ EVP_cc_des_cbc(void)
 	kCCBlockSizeDES,
 	kCCBlockSizeDES,
 	kCCBlockSizeDES,
-	EVP_CIPH_CBC_MODE,
+	EVP_CIPH_CBC_MODE|EVP_CIPH_ALWAYS_CALL_INIT,
 	cc_des_cbc_init,
 	cc_do_cipher,
 	cc_cleanup,
@@ -213,7 +221,7 @@ EVP_cc_aes_128_cbc(void)
 	kCCBlockSizeAES128,
 	kCCKeySizeAES128,
 	kCCBlockSizeAES128,
-	EVP_CIPH_CBC_MODE,
+	EVP_CIPH_CBC_MODE|EVP_CIPH_ALWAYS_CALL_INIT,
 	cc_aes_cbc_init,
 	cc_do_cipher,
 	cc_cleanup,
@@ -242,7 +250,7 @@ EVP_cc_aes_192_cbc(void)
 	kCCBlockSizeAES128,
 	kCCKeySizeAES192,
 	kCCBlockSizeAES128,
-	EVP_CIPH_CBC_MODE,
+	EVP_CIPH_CBC_MODE|EVP_CIPH_ALWAYS_CALL_INIT,
 	cc_aes_cbc_init,
 	cc_do_cipher,
 	cc_cleanup,
@@ -271,7 +279,7 @@ EVP_cc_aes_256_cbc(void)
 	kCCBlockSizeAES128,
 	kCCKeySizeAES256,
 	kCCBlockSizeAES128,
-	EVP_CIPH_CBC_MODE,
+	EVP_CIPH_CBC_MODE|EVP_CIPH_ALWAYS_CALL_INIT,
 	cc_aes_cbc_init,
 	cc_do_cipher,
 	cc_cleanup,
@@ -315,7 +323,7 @@ EVP_cc_rc2_cbc(void)
 	kCCBlockSizeRC2,
 	16,
 	kCCBlockSizeRC2,
-	EVP_CIPH_CBC_MODE,
+	EVP_CIPH_CBC_MODE|EVP_CIPH_ALWAYS_CALL_INIT,
 	cc_rc2_cbc_init,
 	cc_do_cipher,
 	cc_cleanup,
@@ -345,7 +353,7 @@ EVP_cc_rc2_40_cbc(void)
 	kCCBlockSizeRC2,
 	5,
 	kCCBlockSizeRC2,
-	EVP_CIPH_CBC_MODE,
+	EVP_CIPH_CBC_MODE|EVP_CIPH_ALWAYS_CALL_INIT,
 	cc_rc2_cbc_init,
 	cc_do_cipher,
 	cc_cleanup,
@@ -376,7 +384,7 @@ EVP_cc_rc2_64_cbc(void)
 	kCCBlockSizeRC2,
 	8,
 	kCCBlockSizeRC2,
-	EVP_CIPH_CBC_MODE,
+	EVP_CIPH_CBC_MODE|EVP_CIPH_ALWAYS_CALL_INIT,
 	cc_rc2_cbc_init,
 	cc_do_cipher,
 	cc_cleanup,

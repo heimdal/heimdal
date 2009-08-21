@@ -613,7 +613,7 @@ _kdc_do_digest(krb5_context context,
 	}
 
 	if (strcasecmp(ireq.u.digestRequest.type, "CHAP") == 0) {
-	    EVP_MD_CTX ctx;
+	    EVP_MD_CTX *ctx;
 	    unsigned char md[MD5_DIGEST_LENGTH];
 	    char *mdx;
 	    char id;
@@ -642,15 +642,15 @@ _kdc_do_digest(krb5_context context,
 	    if (ret)
 		goto out;
 
-	    EVP_MD_CTX_init(&ctx);
+	    ctx = EVP_MD_CTX_create();
 
-	    EVP_DigestInit_ex(&ctx, EVP_md5(), NULL);
-	    EVP_DigestUpdate(&ctx, &id, 1);
-	    EVP_DigestUpdate(&ctx, password, strlen(password));
-	    EVP_DigestUpdate(&ctx, serverNonce.data, serverNonce.length);
-	    EVP_DigestFinal_ex(&ctx, md, NULL);
+	    EVP_DigestInit_ex(ctx, EVP_md5(), NULL);
+	    EVP_DigestUpdate(ctx, &id, 1);
+	    EVP_DigestUpdate(ctx, password, strlen(password));
+	    EVP_DigestUpdate(ctx, serverNonce.data, serverNonce.length);
+	    EVP_DigestFinal_ex(ctx, md, NULL);
 
-	    EVP_MD_CTX_cleanup(&ctx);
+	    EVP_MD_CTX_destroy(ctx);
 
 	    hex_encode(md, sizeof(md), &mdx);
 	    if (mdx == NULL) {
@@ -673,7 +673,7 @@ _kdc_do_digest(krb5_context context,
 	    }
 
 	} else if (strcasecmp(ireq.u.digestRequest.type, "SASL-DIGEST-MD5") == 0) {
-	    EVP_MD_CTX ctx;
+	    EVP_MD_CTX *ctx;
 	    unsigned char md[MD5_DIGEST_LENGTH];
 	    char *mdx;
 	    char *A1, *A2;
@@ -698,53 +698,53 @@ _kdc_do_digest(krb5_context context,
 	    if (ret)
 		goto failed;
 
-	    EVP_MD_CTX_init(&ctx);
+	    ctx = EVP_MD_CTX_create();
 
-	    EVP_DigestInit_ex(&ctx, EVP_md5(), NULL);
-	    EVP_DigestUpdate(&ctx, ireq.u.digestRequest.username,
+	    EVP_DigestInit_ex(ctx, EVP_md5(), NULL);
+	    EVP_DigestUpdate(ctx, ireq.u.digestRequest.username,
 		       strlen(ireq.u.digestRequest.username));
-	    EVP_DigestUpdate(&ctx, ":", 1);
-	    EVP_DigestUpdate(&ctx, *ireq.u.digestRequest.realm,
+	    EVP_DigestUpdate(ctx, ":", 1);
+	    EVP_DigestUpdate(ctx, *ireq.u.digestRequest.realm,
 		       strlen(*ireq.u.digestRequest.realm));
-	    EVP_DigestUpdate(&ctx, ":", 1);
-	    EVP_DigestUpdate(&ctx, password, strlen(password));
-	    EVP_DigestFinal_ex(&ctx, md, NULL);
+	    EVP_DigestUpdate(ctx, ":", 1);
+	    EVP_DigestUpdate(ctx, password, strlen(password));
+	    EVP_DigestFinal_ex(ctx, md, NULL);
 	
-	    EVP_DigestInit_ex(&ctx, EVP_md5(), NULL);
-	    EVP_DigestUpdate(&ctx, md, sizeof(md));
-	    EVP_DigestUpdate(&ctx, ":", 1);
-	    EVP_DigestUpdate(&ctx, ireq.u.digestRequest.serverNonce,
+	    EVP_DigestInit_ex(ctx, EVP_md5(), NULL);
+	    EVP_DigestUpdate(ctx, md, sizeof(md));
+	    EVP_DigestUpdate(ctx, ":", 1);
+	    EVP_DigestUpdate(ctx, ireq.u.digestRequest.serverNonce,
 		       strlen(ireq.u.digestRequest.serverNonce));
-	    EVP_DigestUpdate(&ctx, ":", 1);
-	    EVP_DigestUpdate(&ctx, *ireq.u.digestRequest.nonceCount,
+	    EVP_DigestUpdate(ctx, ":", 1);
+	    EVP_DigestUpdate(ctx, *ireq.u.digestRequest.nonceCount,
 		       strlen(*ireq.u.digestRequest.nonceCount));
 	    if (ireq.u.digestRequest.authid) {
-		EVP_DigestUpdate(&ctx, ":", 1);
-		EVP_DigestUpdate(&ctx, *ireq.u.digestRequest.authid,
+		EVP_DigestUpdate(ctx, ":", 1);
+		EVP_DigestUpdate(ctx, *ireq.u.digestRequest.authid,
 			   strlen(*ireq.u.digestRequest.authid));
 	    }
-	    EVP_DigestFinal_ex(&ctx, md, NULL);
+	    EVP_DigestFinal_ex(ctx, md, NULL);
 	    hex_encode(md, sizeof(md), &A1);
 	    if (A1 == NULL) {
 		ret = ENOMEM;
 		krb5_set_error_message(context, ret, "malloc: out of memory");
-		EVP_MD_CTX_cleanup(&ctx);
+		EVP_MD_CTX_destroy(ctx);
 		goto failed;
 	    }
 	
-	    EVP_DigestInit_ex(&ctx, EVP_md5(), NULL);
-	    EVP_DigestUpdate(&ctx,
+	    EVP_DigestInit_ex(ctx, EVP_md5(), NULL);
+	    EVP_DigestUpdate(ctx,
 			     "AUTHENTICATE:", sizeof("AUTHENTICATE:") - 1);
-	    EVP_DigestUpdate(&ctx, *ireq.u.digestRequest.uri,
+	    EVP_DigestUpdate(ctx, *ireq.u.digestRequest.uri,
 		       strlen(*ireq.u.digestRequest.uri));
 	
 	    /* conf|int */
 	    if (strcmp(ireq.u.digestRequest.digest, "clear") != 0) {
 		static char conf_zeros[] = ":00000000000000000000000000000000";
-		EVP_DigestUpdate(&ctx, conf_zeros, sizeof(conf_zeros) - 1);
+		EVP_DigestUpdate(ctx, conf_zeros, sizeof(conf_zeros) - 1);
 	    }
 	
-	    EVP_DigestFinal_ex(&ctx, md, NULL);
+	    EVP_DigestFinal_ex(ctx, md, NULL);
 
 	    hex_encode(md, sizeof(md), &A2);
 	    if (A2 == NULL) {
@@ -754,26 +754,26 @@ _kdc_do_digest(krb5_context context,
 		goto failed;
 	    }
 
-	    EVP_DigestInit_ex(&ctx, EVP_md5(), NULL);
-	    EVP_DigestUpdate(&ctx, A1, strlen(A2));
-	    EVP_DigestUpdate(&ctx, ":", 1);
-	    EVP_DigestUpdate(&ctx, ireq.u.digestRequest.serverNonce,
+	    EVP_DigestInit_ex(ctx, EVP_md5(), NULL);
+	    EVP_DigestUpdate(ctx, A1, strlen(A2));
+	    EVP_DigestUpdate(ctx, ":", 1);
+	    EVP_DigestUpdate(ctx, ireq.u.digestRequest.serverNonce,
 		       strlen(ireq.u.digestRequest.serverNonce));
-	    EVP_DigestUpdate(&ctx, ":", 1);
-	    EVP_DigestUpdate(&ctx, *ireq.u.digestRequest.nonceCount,
+	    EVP_DigestUpdate(ctx, ":", 1);
+	    EVP_DigestUpdate(ctx, *ireq.u.digestRequest.nonceCount,
 		       strlen(*ireq.u.digestRequest.nonceCount));
-	    EVP_DigestUpdate(&ctx, ":", 1);
-	    EVP_DigestUpdate(&ctx, *ireq.u.digestRequest.clientNonce,
+	    EVP_DigestUpdate(ctx, ":", 1);
+	    EVP_DigestUpdate(ctx, *ireq.u.digestRequest.clientNonce,
 		       strlen(*ireq.u.digestRequest.clientNonce));
-	    EVP_DigestUpdate(&ctx, ":", 1);
-	    EVP_DigestUpdate(&ctx, *ireq.u.digestRequest.qop,
+	    EVP_DigestUpdate(ctx, ":", 1);
+	    EVP_DigestUpdate(ctx, *ireq.u.digestRequest.qop,
 		       strlen(*ireq.u.digestRequest.qop));
-	    EVP_DigestUpdate(&ctx, ":", 1);
-	    EVP_DigestUpdate(&ctx, A2, strlen(A2));
+	    EVP_DigestUpdate(ctx, ":", 1);
+	    EVP_DigestUpdate(ctx, A2, strlen(A2));
 
-	    EVP_DigestFinal_ex(&ctx, md, NULL);
+	    EVP_DigestFinal_ex(ctx, md, NULL);
 
-	    EVP_MD_CTX_cleanup(&ctx);
+	    EVP_MD_CTX_destroy(ctx);
 
 	    free(A1);
 	    free(A2);
@@ -804,7 +804,7 @@ _kdc_do_digest(krb5_context context,
 	    const char *username;
 	    struct ntlm_buf answer;
 	    Key *key = NULL;
-	    EVP_MD_CTX ctx;
+	    EVP_MD_CTX *ctx;
 
 	    if ((config->digests_allowed & MS_CHAP_V2) == 0) {
 		kdc_log(context, config, 0, "MS-CHAP-V2 not allowed");
@@ -831,10 +831,10 @@ _kdc_do_digest(krb5_context context,
 	    else
 		username++;
 
-	    EVP_MD_CTX_init(&ctx);
+	    ctx = EVP_MD_CTX_create();
 
 	    /* ChallangeHash */
-	    EVP_DigestInit_ex(&ctx, EVP_sha1(), NULL);
+	    EVP_DigestInit_ex(ctx, EVP_sha1(), NULL);
 	    {
 		ssize_t ssize;
 		krb5_data clientNonce;
@@ -845,7 +845,7 @@ _kdc_do_digest(krb5_context context,
 		    ret = ENOMEM;
 		    krb5_set_error_message(context, ret,
 					   "malloc: out of memory");
-		    EVP_MD_CTX_cleanup(&ctx);
+		    EVP_MD_CTX_destroy(ctx);
 		    goto out;
 		}
 
@@ -855,18 +855,18 @@ _kdc_do_digest(krb5_context context,
 		    ret = ENOMEM;
 		    krb5_set_error_message(context, ret,
 					   "Failed to decode clientNonce");
-		    EVP_MD_CTX_cleanup(&ctx);
+		    EVP_MD_CTX_destroy(ctx);
 		    goto out;
 		}
-		EVP_DigestUpdate(&ctx, clientNonce.data, ssize);
+		EVP_DigestUpdate(ctx, clientNonce.data, ssize);
 		free(clientNonce.data);
 	    }
-	    EVP_DigestUpdate(&ctx, serverNonce.data, serverNonce.length);
-	    EVP_DigestUpdate(&ctx, username, strlen(username));
+	    EVP_DigestUpdate(ctx, serverNonce.data, serverNonce.length);
+	    EVP_DigestUpdate(ctx, username, strlen(username));
 
-	    EVP_DigestFinal_ex(&ctx, challange, NULL);
+	    EVP_DigestFinal_ex(ctx, challange, NULL);
 
-	    EVP_MD_CTX_cleanup(&ctx);
+	    EVP_MD_CTX_destroy(ctx);
 
 	    /* NtPasswordHash */
 	    ret = krb5_parse_name(context, username, &clientprincipal);
@@ -923,39 +923,39 @@ _kdc_do_digest(krb5_context context,
 
 	    if (r.u.response.success) {
 		unsigned char hashhash[MD4_DIGEST_LENGTH];
-		EVP_MD_CTX ctx;
+		EVP_MD_CTX *ctx;
 
-		EVP_MD_CTX_init(&ctx);
+		ctx = EVP_MD_CTX_create();
 
 		/* hashhash */
 		{
-		    EVP_DigestInit_ex(&ctx, EVP_md4(), NULL);
-		    EVP_DigestUpdate(&ctx,
+		    EVP_DigestInit_ex(ctx, EVP_md4(), NULL);
+		    EVP_DigestUpdate(ctx,
 				     key->key.keyvalue.data,
 				     key->key.keyvalue.length);
-		    EVP_DigestFinal_ex(&ctx, hashhash, NULL);
+		    EVP_DigestFinal_ex(ctx, hashhash, NULL);
 		}
 
 		/* GenerateAuthenticatorResponse */
-		EVP_DigestInit_ex(&ctx, EVP_sha1(), NULL);
-		EVP_DigestUpdate(&ctx, hashhash, sizeof(hashhash));
-		EVP_DigestUpdate(&ctx, answer.data, answer.length);
-		EVP_DigestUpdate(&ctx, ms_chap_v2_magic1,
+		EVP_DigestInit_ex(ctx, EVP_sha1(), NULL);
+		EVP_DigestUpdate(ctx, hashhash, sizeof(hashhash));
+		EVP_DigestUpdate(ctx, answer.data, answer.length);
+		EVP_DigestUpdate(ctx, ms_chap_v2_magic1,
 				 sizeof(ms_chap_v2_magic1));
-		EVP_DigestFinal_ex(&ctx, md, NULL);
+		EVP_DigestFinal_ex(ctx, md, NULL);
 
-		EVP_DigestInit_ex(&ctx, EVP_sha1(), NULL);
-		EVP_DigestUpdate(&ctx, md, sizeof(md));
-		EVP_DigestUpdate(&ctx, challange, 8);
-		EVP_DigestUpdate(&ctx, ms_chap_v2_magic2,
+		EVP_DigestInit_ex(ctx, EVP_sha1(), NULL);
+		EVP_DigestUpdate(ctx, md, sizeof(md));
+		EVP_DigestUpdate(ctx, challange, 8);
+		EVP_DigestUpdate(ctx, ms_chap_v2_magic2,
 				 sizeof(ms_chap_v2_magic2));
-		EVP_DigestFinal_ex(&ctx, md, NULL);
+		EVP_DigestFinal_ex(ctx, md, NULL);
 
 		r.u.response.rsp = calloc(1, sizeof(*r.u.response.rsp));
 		if (r.u.response.rsp == NULL) {
 		    free(answer.data);
 		    krb5_clear_error_message(context);
-		    EVP_MD_CTX_cleanup(&ctx);
+		    EVP_MD_CTX_destroy(ctx);
 		    ret = ENOMEM;
 		    goto out;
 		}
@@ -964,22 +964,22 @@ _kdc_do_digest(krb5_context context,
 		if (r.u.response.rsp == NULL) {
 		    free(answer.data);
 		    krb5_clear_error_message(context);
-		    EVP_MD_CTX_cleanup(&ctx);
+		    EVP_MD_CTX_destroy(ctx);
 		    ret = ENOMEM;
 		    goto out;
 		}
 
 		/* get_master, rfc 3079 3.4 */
-		EVP_DigestInit_ex(&ctx, EVP_sha1(), NULL);
-		EVP_DigestUpdate(&ctx, hashhash, 16);
-		EVP_DigestUpdate(&ctx, answer.data, answer.length);
-		EVP_DigestUpdate(&ctx, ms_rfc3079_magic1,
+		EVP_DigestInit_ex(ctx, EVP_sha1(), NULL);
+		EVP_DigestUpdate(ctx, hashhash, 16);
+		EVP_DigestUpdate(ctx, answer.data, answer.length);
+		EVP_DigestUpdate(ctx, ms_rfc3079_magic1,
 				 sizeof(ms_rfc3079_magic1));
-		EVP_DigestFinal_ex(&ctx, md, NULL);
+		EVP_DigestFinal_ex(ctx, md, NULL);
 
 		free(answer.data);
 
-		EVP_MD_CTX_cleanup(&ctx);
+		EVP_MD_CTX_destroy(ctx);
 
 		r.u.response.session_key =
 		    calloc(1, sizeof(*r.u.response.session_key));
@@ -1265,7 +1265,7 @@ _kdc_do_digest(krb5_context context,
 
 	    if (flags & NTLM_NEG_NTLM2_SESSION) {
 		unsigned char sessionhash[MD5_DIGEST_LENGTH];
-		EVP_MD_CTX ctx;
+		EVP_MD_CTX *ctx;
 		
 		if ((config->digests_allowed & NTLM_V1_SESSION) == 0) {
 		    kdc_log(context, config, 0, "NTLM v1-session not allowed");
@@ -1280,16 +1280,16 @@ _kdc_do_digest(krb5_context context,
 		    goto failed;
 		}
 		
-		EVP_MD_CTX_init(&ctx);
+		ctx = EVP_MD_CTX_create();
 
-		EVP_DigestInit_ex(&ctx, EVP_md5(), NULL);
+		EVP_DigestInit_ex(ctx, EVP_md5(), NULL);
 
-		EVP_DigestUpdate(&ctx, challange, sizeof(challange));
-		EVP_DigestUpdate(&ctx, ireq.u.ntlmRequest.lm.data, 8);
-		EVP_DigestFinal_ex(&ctx, sessionhash, NULL);
+		EVP_DigestUpdate(ctx, challange, sizeof(challange));
+		EVP_DigestUpdate(ctx, ireq.u.ntlmRequest.lm.data, 8);
+		EVP_DigestFinal_ex(ctx, sessionhash, NULL);
 		memcpy(challange, sessionhash, sizeof(challange));
 
-		EVP_MD_CTX_cleanup(&ctx);
+		EVP_MD_CTX_destroy(ctx);
 
 	    } else {
 		if ((config->digests_allowed & NTLM_V1) == 0) {
@@ -1317,17 +1317,17 @@ _kdc_do_digest(krb5_context context,
 	    free(answer.data);
 
 	    {
-		EVP_MD_CTX ctx;
+		EVP_MD_CTX *ctx;
 
-		EVP_MD_CTX_init(&ctx);
+		ctx = EVP_MD_CTX_create();
 
-		EVP_DigestInit_ex(&ctx, EVP_md4(), NULL);
-		EVP_DigestUpdate(&ctx,
+		EVP_DigestInit_ex(ctx, EVP_md4(), NULL);
+		EVP_DigestUpdate(ctx,
 				 key->key.keyvalue.data,
 				 key->key.keyvalue.length);
-		EVP_DigestFinal_ex(&ctx, sessionkey, NULL);
+		EVP_DigestFinal_ex(ctx, sessionkey, NULL);
 
-		EVP_MD_CTX_cleanup(&ctx);
+		EVP_MD_CTX_destroy(ctx);
 	    }
 	}
 

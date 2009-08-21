@@ -56,6 +56,9 @@ static struct getargs args[] = {
 };
 
 static void
+usage (int ret) __attribute__((noreturn));
+
+static void
 usage (int ret)
 {
     arg_printusage (args, sizeof(args)/sizeof(*args), NULL, "");

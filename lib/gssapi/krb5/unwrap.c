@@ -48,7 +48,7 @@ unwrap_des
 {
   u_char *p, *seq;
   size_t len;
-  EVP_MD_CTX md5;
+  EVP_MD_CTX *md5;
   u_char hash[16];
   EVP_CIPHER_CTX des_ctx;
   DES_key_schedule schedule;
@@ -122,12 +122,12 @@ unwrap_des
         return ret;
   }
 
-  EVP_MD_CTX_init(&md5);
-  EVP_DigestInit_ex(&md5, EVP_md5(), NULL);
-  EVP_DigestUpdate(&md5, p - 24, 8);
-  EVP_DigestUpdate(&md5, p, input_message_buffer->length - len);
-  EVP_DigestFinal_ex(&md5, hash, NULL);
-  EVP_MD_CTX_cleanup(&md5);
+  md5 = EVP_MD_CTX_create();
+  EVP_DigestInit_ex(md5, EVP_md5(), NULL);
+  EVP_DigestUpdate(md5, p - 24, 8);
+  EVP_DigestUpdate(md5, p, input_message_buffer->length - len);
+  EVP_DigestFinal_ex(md5, hash, NULL);
+  EVP_MD_CTX_destroy(md5);
 
   memset (&zero, 0, sizeof(zero));
   memcpy (&deskey, key->keyvalue.data, sizeof(deskey));

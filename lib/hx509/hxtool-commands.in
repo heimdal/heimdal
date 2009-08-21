@@ -156,9 +156,9 @@ command = {
 		type = "string"
 		help = "file containing content"
 	}
-	min_args="2"
+	min_args="1"
 	max_args="2"
-	argument="in-file out-file"
+	argument="in-file [out-file]"
 	help = "Verify a file within a SignedData object"
 }
 command = {

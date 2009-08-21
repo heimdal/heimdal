@@ -1141,7 +1141,7 @@ evp_md_create_signature(hx509_context context,
 			heim_octet_string *sig)
 {
     size_t sigsize = EVP_MD_size(sig_alg->evp_md());
-    EVP_MD_CTX ctx;
+    EVP_MD_CTX *ctx;
 
     memset(sig, 0, sizeof(*sig));
 
@@ -1161,11 +1161,11 @@ evp_md_create_signature(hx509_context context,
     }
     sig->length = sigsize;
 
-    EVP_MD_CTX_init(&ctx);
-    EVP_DigestInit_ex(&ctx, sig_alg->evp_md(), NULL);
-    EVP_DigestUpdate(&ctx, data->data, data->length);
-    EVP_DigestFinal_ex(&ctx, sig->data, NULL);
-    EVP_MD_CTX_cleanup(&ctx);
+    ctx = EVP_MD_CTX_create();
+    EVP_DigestInit_ex(ctx, sig_alg->evp_md(), NULL);
+    EVP_DigestUpdate(ctx, data->data, data->length);
+    EVP_DigestFinal_ex(ctx, sig->data, NULL);
+    EVP_MD_CTX_destroy(ctx);
 
 
     return 0;
@@ -1180,7 +1180,7 @@ evp_md_verify_signature(hx509_context context,
 			const heim_octet_string *sig)
 {
     unsigned char digest[EVP_MAX_MD_SIZE];
-    EVP_MD_CTX ctx;
+    EVP_MD_CTX *ctx;
     size_t sigsize = EVP_MD_size(sig_alg->evp_md());
 
     if (sig->length != sigsize || sigsize > sizeof(digest)) {
@@ -1189,11 +1189,11 @@ evp_md_verify_signature(hx509_context context,
 	return HX509_CRYPTO_SIG_INVALID_FORMAT;
     }
 
-    EVP_MD_CTX_init(&ctx);
-    EVP_DigestInit_ex(&ctx, sig_alg->evp_md(), NULL);
-    EVP_DigestUpdate(&ctx, data->data, data->length);
-    EVP_DigestFinal_ex(&ctx, digest, NULL);
-    EVP_MD_CTX_cleanup(&ctx);
+    ctx = EVP_MD_CTX_create();
+    EVP_DigestInit_ex(ctx, sig_alg->evp_md(), NULL);
+    EVP_DigestUpdate(ctx, data->data, data->length);
+    EVP_DigestFinal_ex(ctx, digest, NULL);
+    EVP_MD_CTX_destroy(ctx);
 
     if (ct_memcmp(digest, sig->data, sigsize) != 0) {
 	hx509_set_error_string(context, 0, HX509_CRYPTO_BAD_SIGNATURE,

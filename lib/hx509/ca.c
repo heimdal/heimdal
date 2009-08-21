@@ -1193,14 +1193,14 @@ ca_sign(hx509_context context,
 	unsigned char hash[SHA_DIGEST_LENGTH];
 
 	{
-	    EVP_MD_CTX ctx;
+	    EVP_MD_CTX *ctx;
 
-	    EVP_MD_CTX_init(&ctx);
-	    EVP_DigestInit_ex(&ctx, EVP_sha1(), NULL);
-	    EVP_DigestUpdate(&ctx, tbs->spki.subjectPublicKey.data,
+	    ctx = EVP_MD_CTX_create();
+	    EVP_DigestInit_ex(ctx, EVP_sha1(), NULL);
+	    EVP_DigestUpdate(ctx, tbs->spki.subjectPublicKey.data,
 			     tbs->spki.subjectPublicKey.length / 8);
-	    EVP_DigestFinal_ex(&ctx, hash, NULL);
-	    EVP_MD_CTX_cleanup(&ctx);
+	    EVP_DigestFinal_ex(ctx, hash, NULL);
+	    EVP_MD_CTX_destroy(ctx);
 	}
 
 	si.data = hash;

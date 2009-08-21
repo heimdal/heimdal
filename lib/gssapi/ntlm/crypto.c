@@ -80,7 +80,7 @@ _gss_ntlm_set_key(struct ntlmv2_key *key, int acceptor, int sealsign,
 		  unsigned char *data, size_t len)
 {
     unsigned char out[16];
-    EVP_MD_CTX ctx;
+    EVP_MD_CTX *ctx;
     const char *signmagic;
     const char *sealmagic;
 
@@ -94,19 +94,17 @@ _gss_ntlm_set_key(struct ntlmv2_key *key, int acceptor, int sealsign,
 
     key->seq = 0;
 
-    EVP_MD_CTX_init(&ctx);
-    EVP_DigestInit_ex(&ctx, EVP_md5(), NULL);
-    EVP_DigestUpdate(&ctx, data, len);
-    EVP_DigestUpdate(&ctx, signmagic, strlen(signmagic) + 1);
-    EVP_DigestFinal_ex(&ctx, key->signkey, NULL);
-    EVP_MD_CTX_cleanup(&ctx);
+    ctx = EVP_MD_CTX_create();
+    EVP_DigestInit_ex(ctx, EVP_md5(), NULL);
+    EVP_DigestUpdate(ctx, data, len);
+    EVP_DigestUpdate(ctx, signmagic, strlen(signmagic) + 1);
+    EVP_DigestFinal_ex(ctx, key->signkey, NULL);
 
-    EVP_MD_CTX_init(&ctx);
-    EVP_DigestInit_ex(&ctx, EVP_md5(), NULL);
-    EVP_DigestUpdate(&ctx, data, len);
-    EVP_DigestUpdate(&ctx, sealmagic, strlen(sealmagic) + 1);
-    EVP_DigestFinal_ex(&ctx, out, NULL);
-    EVP_MD_CTX_cleanup(&ctx);
+    EVP_DigestInit_ex(ctx, EVP_md5(), NULL);
+    EVP_DigestUpdate(ctx, data, len);
+    EVP_DigestUpdate(ctx, sealmagic, strlen(sealmagic) + 1);
+    EVP_DigestFinal_ex(ctx, out, NULL);
+    EVP_MD_CTX_destroy(ctx);
 
     RC4_set_key(&key->sealkey, 16, out);
     if (sealsign)

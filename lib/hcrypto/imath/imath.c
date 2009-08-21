@@ -553,16 +553,17 @@ mp_result mp_int_neg(mp_int a, mp_int c)
 
 mp_result mp_int_add(mp_int a, mp_int b, mp_int c)
 { 
-  mp_size  ua, ub, uc, max;
+  mp_size  ua, ub, max;
 
   CHECK(a != NULL && b != NULL && c != NULL);
 
-  ua = MP_USED(a); ub = MP_USED(b); uc = MP_USED(c);
+  ua = MP_USED(a); ub = MP_USED(b);
   max = MAX(ua, ub);
 
   if(MP_SIGN(a) == MP_SIGN(b)) {
     /* Same sign -- add magnitudes, preserve sign of addends */
     mp_digit carry;
+    mp_size uc;
 
     if(!s_pad(c, max))
       return MP_MEMORY;
@@ -640,12 +641,13 @@ mp_result mp_int_sub(mp_int a, mp_int b, mp_int c)
 
   CHECK(a != NULL && b != NULL && c != NULL);
 
-  ua = MP_USED(a); ub = MP_USED(b); uc = MP_USED(c);
+  ua = MP_USED(a); ub = MP_USED(b);
   max = MAX(ua, ub);
 
   if(MP_SIGN(a) != MP_SIGN(b)) {
     /* Different signs -- add magnitudes and keep sign of a */
     mp_digit carry;
+    mp_size uc;
 
     if(!s_pad(c, max))
       return MP_MEMORY;
@@ -2016,7 +2018,7 @@ mp_result mp_int_read_binary(mp_int z, unsigned char *buf, int len)
 mp_result mp_int_binary_len(mp_int z)
 {
   mp_result  res = mp_int_count_bits(z);
-  int        bytes = mp_int_unsigned_len(z);
+  int        bytes;
 
   if(res <= 0)
     return res;

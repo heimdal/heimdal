@@ -43,6 +43,7 @@
 .Op Fl c Ar cachefile
 .Op Fl -credential= Ns Ar principal
 .Op Fl -cache= Ns Ar cachefile
+.Op Fl A | Fl -all
 .Op Fl -no-unlog
 .Op Fl -no-delete-v4
 .Op Fl -version
@@ -61,6 +62,9 @@ from the credential cache if it exists.
 .It Fl c Ar cachefile
 .It Fl cache= Ns Ar cachefile
 The cache file to remove.
+.It Fl A
+.It Fl -all
+remove all credential caches.
 .It Fl -no-unlog
 Do not remove AFS tokens.
 .It Fl -no-delete-v4

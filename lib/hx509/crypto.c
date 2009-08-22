@@ -550,32 +550,17 @@ rsa_verify_signature(hx509_context context,
     int tosize, retsize;
     int ret;
     RSA *rsa;
-    RSAPublicKey pk;
     size_t size;
+    const unsigned char *p;
 
     memset(&di, 0, sizeof(di));
 
     spi = &signer->tbsCertificate.subjectPublicKeyInfo;
 
-    rsa = RSA_new();
+    p = spi->subjectPublicKey.data;
+    
+    rsa = d2i_RSAPublicKey(NULL, &p, size);
     if (rsa == NULL) {
-	hx509_set_error_string(context, 0, ENOMEM, "out of memory");
-	return ENOMEM;
-    }
-    ret = decode_RSAPublicKey(spi->subjectPublicKey.data,
-			      spi->subjectPublicKey.length / 8,
-			      &pk, &size);
-    if (ret) {
-	hx509_set_error_string(context, 0, ret, "Failed to decode RSAPublicKey");
-	goto out;
-    }
-
-    rsa->n = heim_int2BN(&pk.modulus);
-    rsa->e = heim_int2BN(&pk.publicExponent);
-
-    free_RSAPublicKey(&pk);
-
-    if (rsa->n == NULL || rsa->e == NULL) {
 	ret = ENOMEM;
 	hx509_set_error_string(context, 0, ret, "out of memory");
 	goto out;
@@ -650,6 +635,7 @@ rsa_verify_signature(hx509_context context,
 	}
 	free(to);
     }
+    ret = 0;
 
  out:
     free_DigestInfo(&di);
@@ -1501,7 +1487,10 @@ _hx509_verify_signature(hx509_context context,
 			const heim_octet_string *sig)
 {
     const struct signature_alg *md;
-    const Certificate *signer = _hx509_get_cert(cert);
+    const Certificate *signer = NULL;
+
+    if (cert)
+	signer = _hx509_get_cert(cert);
 
     md = find_sig_alg(&alg->algorithm);
     if (md == NULL) {

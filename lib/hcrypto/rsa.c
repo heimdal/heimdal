@@ -559,3 +559,38 @@ i2d_RSAPublicKey(RSA *rsa, unsigned char **pp)
 
     return size;
 }
+
+RSA *
+d2i_RSAPublicKey(RSA *rsa, const unsigned char **pp, size_t len)
+{
+    RSAPublicKey data;
+    RSA *k = rsa;
+    size_t size;
+    int ret;
+
+    ret = decode_RSAPublicKey(*pp, len, &data, &size);
+    if (ret)
+	return NULL;
+
+    *pp += size;
+
+    if (k == NULL) {
+	k = RSA_new();
+	if (k == NULL) {
+	    free_RSAPublicKey(&data);
+	    return NULL;
+	}
+    }
+
+    k->n = heim_int2BN(&data.modulus);
+    k->e = heim_int2BN(&data.publicExponent);
+
+    free_RSAPublicKey(&data);
+
+    if (k->n == NULL || k->e == NULL) {
+	RSA_free(k);
+	return NULL;
+    }
+	
+    return k;
+}

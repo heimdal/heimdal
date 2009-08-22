@@ -66,15 +66,13 @@ OM_uint32 _gss_ntlm_acquire_cred
 	
 	maj_stat = (*ctx->server->nsi_probe)(min_stat, ctx->ictx,
 					     name->domain);
-
-	if (maj_stat)
-	    return maj_stat;
-
 	{
 	    gss_ctx_id_t context = (gss_ctx_id_t)ctx;
-	    _gss_ntlm_delete_sec_context(min_stat, &context, NULL);
-	    *min_stat = 0;
+	    OM_uint32 junk;
+	    _gss_ntlm_delete_sec_context(&junk, &context, NULL);
 	}
+	if (maj_stat)
+	    return maj_stat;
     }	
     if (cred_usage == GSS_C_BOTH || cred_usage == GSS_C_INITIATE) {
 	ntlm_cred cred;

@@ -1495,12 +1495,13 @@ _hx509_signature_best_before(hx509_context context,
 
 int
 _hx509_verify_signature(hx509_context context,
-			const Certificate *signer,
+			const hx509_cert cert,
 			const AlgorithmIdentifier *alg,
 			const heim_octet_string *data,
 			const heim_octet_string *sig)
 {
     const struct signature_alg *md;
+    const Certificate *signer = _hx509_get_cert(cert);
 
     md = find_sig_alg(&alg->algorithm);
     if (md == NULL) {
@@ -1525,27 +1526,6 @@ _hx509_verify_signature(hx509_context context,
 	}
     }
     return (*md->verify_signature)(context, md, signer, alg, data, sig);
-}
-
-int
-_hx509_verify_signature_bitstring(hx509_context context,
-				  const Certificate *signer,
-				  const AlgorithmIdentifier *alg,
-				  const heim_octet_string *data,
-				  const heim_bit_string *sig)
-{
-    heim_octet_string os;
-
-    if (sig->length & 7) {
-	hx509_set_error_string(context, 0, HX509_CRYPTO_SIG_INVALID_FORMAT,
-			       "signature not multiple of 8 bits");
-	return HX509_CRYPTO_SIG_INVALID_FORMAT;
-    }
-
-    os.data = sig->data;
-    os.length = sig->length / 8;
-
-    return _hx509_verify_signature(context, signer, alg, data, &os);
 }
 
 int

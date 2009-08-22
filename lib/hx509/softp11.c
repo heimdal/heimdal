@@ -1617,7 +1617,7 @@ C_Verify(CK_SESSION_HANDLE hSession,
     data.length = ulSignatureLen;
 
     hret = _hx509_verify_signature(context,
-				   _hx509_get_cert(o->cert),
+				   o->cert,
 				   alg,
 				   &data,
 				   &sig);

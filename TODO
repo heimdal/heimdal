@@ -9,8 +9,6 @@ stampless tickets, and was supported in the recv'ing end with 0.6.1.
 
 add policies?
 
-fix to use rpc?
-
 ** lib/krb5
 
 verify_user: handle non-secure verification failing because of

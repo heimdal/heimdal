@@ -1086,7 +1086,7 @@ krb5_config_get_int (krb5_context context,
 krb5_error_code KRB5_LIB_FUNCTION
 krb5_config_parse_string_multi(krb5_context context,
 			       const char *string,
-			       krb5_config_section **res)
+			       krb5_config_section **res) KRB5_DEPRECATED
 {
     const char *str;
     unsigned lineno = 0;

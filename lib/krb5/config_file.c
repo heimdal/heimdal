@@ -278,27 +278,6 @@ krb5_config_parse_debug (struct fileptr *f,
     return 0;
 }
 
-krb5_error_code KRB5_LIB_FUNCTION
-krb5_config_parse_string_multi(krb5_context context,
-			       const char *string,
-			       krb5_config_section **res)
-{
-    const char *str;
-    unsigned lineno = 0;
-    krb5_error_code ret;
-    struct fileptr f;
-    f.f = NULL;
-    f.s = string;
-
-    ret = krb5_config_parse_debug (&f, res, &lineno, &str);
-    if (ret) {
-	krb5_set_error_message (context, ret, "%s:%u: %s",
-				"<constant>", lineno, str);
-	return ret;
-    }
-    return 0;
-}
-
 /**
  * Parse a configuration file and add the result into res. This
  * interface can be used to parse several configuration files into one
@@ -937,6 +916,23 @@ krb5_config_get_bool (krb5_context context,
     return ret;
 }
 
+/**
+ * Get the time from the configuration file using a relative time.
+ *
+ * Like krb5_config_get_time_default() but with a va_list list of
+ * configuration selection.
+ *
+ * @param context A Kerberos 5 context.
+ * @param c a configuration section, or NULL to use the section from context
+ * @param def_value the default value to return if no configuration
+ *        found in the database.
+ * @param args a va_list of arguments
+ *
+ * @return parsed the time (or def_value on parse error)
+ *
+ * @ingroup krb5_support
+ */
+
 int KRB5_LIB_FUNCTION
 krb5_config_vget_time_default (krb5_context context,
 			       const krb5_config_section *c,
@@ -954,13 +950,39 @@ krb5_config_vget_time_default (krb5_context context,
     return t;
 }
 
+/**
+ * Get the time from the configuration file using a relative time, for example: 1h30s
+ *
+ * @param context A Kerberos 5 context.
+ * @param c a configuration section, or NULL to use the section from context
+ * @param ... a list of names, terminated with NULL.
+ *
+ * @return parsed the time or -1 on error
+ *
+ * @ingroup krb5_support
+ */
+
 int KRB5_LIB_FUNCTION
-krb5_config_vget_time  (krb5_context context,
-			const krb5_config_section *c,
-			va_list args)
+krb5_config_vget_time(krb5_context context,
+		      const krb5_config_section *c,
+		      va_list args)
 {
     return krb5_config_vget_time_default (context, c, -1, args);
 }
+
+/**
+ * Get the time from the configuration file using a relative time, for example: 1h30s
+ *
+ * @param context A Kerberos 5 context.
+ * @param c a configuration section, or NULL to use the section from context
+ * @param def_value the default value to return if no configuration
+ *        found in the database.
+ * @param ... a list of names, terminated with NULL.
+ *
+ * @return parsed the time (or def_value on parse error)
+ *
+ * @ingroup krb5_support
+ */
 
 int KRB5_LIB_FUNCTION
 krb5_config_get_time_default (krb5_context context,
@@ -975,6 +997,18 @@ krb5_config_get_time_default (krb5_context context,
     va_end(ap);
     return ret;
 }
+
+/**
+ * Get the time from the configuration file using a relative time, for example: 1h30s
+ *
+ * @param context A Kerberos 5 context.
+ * @param c a configuration section, or NULL to use the section from context
+ * @param ... a list of names, terminated with NULL.
+ *
+ * @return parsed the time or -1 on error
+ *
+ * @ingroup krb5_support
+ */
 
 int KRB5_LIB_FUNCTION
 krb5_config_get_time (krb5_context context,
@@ -1045,3 +1079,29 @@ krb5_config_get_int (krb5_context context,
     va_end(ap);
     return ret;
 }
+
+
+#ifndef HEIMDAL_SMALLER
+
+krb5_error_code KRB5_LIB_FUNCTION
+krb5_config_parse_string_multi(krb5_context context,
+			       const char *string,
+			       krb5_config_section **res)
+{
+    const char *str;
+    unsigned lineno = 0;
+    krb5_error_code ret;
+    struct fileptr f;
+    f.f = NULL;
+    f.s = string;
+
+    ret = krb5_config_parse_debug (&f, res, &lineno, &str);
+    if (ret) {
+	krb5_set_error_message (context, ret, "%s:%u: %s",
+				"<constant>", lineno, str);
+	return ret;
+    }
+    return 0;
+}
+
+#endif

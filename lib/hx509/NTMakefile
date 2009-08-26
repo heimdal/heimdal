@@ -149,7 +149,7 @@ $(gen_files_pkcs10:.x=.c): $$(@R).x
 
 $(gen_files_crmf:.x=.c): $$(@R).x
 
-$(gen_files_ocsp) $(OBJ)\ocsp_asn1.h: $(asn1_compile) ocsp.asn1
+$(gen_files_ocsp) $(OBJ)\ocsp_asn1.hx: $(asn1_compile) ocsp.asn1
 	cd $(OBJ)
 	$(asn1_compile) \
 		--preserve-binary=OCSPTBSRequest \
@@ -158,7 +158,7 @@ $(gen_files_ocsp) $(OBJ)\ocsp_asn1.h: $(asn1_compile) ocsp.asn1
 	|| ( $(RM) -f $(gen_files_ocsp) $(OBJ)\ocsp_asn1.h ; exit /b 1 )
 	cd $(SRCDIR)
 
-$(gen_files_pkcs10) $(OBJ)\pkcs10_asn1.h: $(asn1_compile) pkcs10.asn1
+$(gen_files_pkcs10) $(OBJ)\pkcs10_asn1.hx: $(asn1_compile) pkcs10.asn1
 	cd $(OBJ)
 	$(asn1_compile) \
 		--preserve-binary=CertificationRequestInfo \
@@ -166,7 +166,7 @@ $(gen_files_pkcs10) $(OBJ)\pkcs10_asn1.h: $(asn1_compile) pkcs10.asn1
 	|| ( $(RM) -f $(gen_files_pkcs10) $(OBJ)\pkcs10_asn1.h ; exit /b 1 )
 	cd $(SRCDIR)
 
-$(gen_files_crmf) $(OBJ)\crmf_asn1.h: $(asn1_compile) crmf.asn1
+$(gen_files_crmf) $(OBJ)\crmf_asn1.hx: $(asn1_compile) crmf.asn1
 	cd $(OBJ)
 	$(asn1_compile) $(SRCDIR)\crmf.asn1 crmf_asn1 \
 	|| ( $(RM) -f $(gen_files_crmf) $(OBJ)\crmf_asn1.h ; exit /b 1 )

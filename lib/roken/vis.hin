@@ -104,6 +104,7 @@ ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
 	rk_strunvisx(char *, const char *, int);
 ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
 	rk_unvis(char *, int, int *, int);
+
 ROKEN_CPP_END
 
 #ifndef HAVE_VIS

@@ -2203,13 +2203,15 @@ _krb5_get_init_creds_opt_free_pkinit(krb5_get_init_creds_opt *opt)
     ctx = opt->opt_private->pk_init_ctx;
     switch (ctx->keyex) {
     case USE_DH:
-	DH_free(ctx->u.dh);
+	if (ctx->u.dh)
+	    DH_free(ctx->u.dh);
 	break;
     case USE_RSA:
 	break;
     case USE_ECDH: 
 #ifdef HAVE_OPENSSL
-	EC_KEY_free(ctx->u.eckey);
+	if (ctx->u.eckey)
+	    EC_KEY_free(ctx->u.eckey);
 #endif
 	break;
     }

@@ -319,9 +319,8 @@ krb5_init_context(krb5_context *context)
 	goto out;
 #endif	
 #ifdef NEED_SOCK_INIT
-    if (SOCK_INIT) {
+    if (SOCK_INIT)
 	p->flags |= KRB5_CTX_F_SOCKETS_INITIALIZED;
-    }
 #endif
 
 out:
@@ -1297,9 +1296,11 @@ _krb5_homedir_access(krb5_context context)
 {
     krb5_boolean allow;
 
+#ifdef HAVE_GETEUID
     /* is never allowed for root */
     if (geteuid() == 0)
 	return FALSE;
+#endif
 
     if (context && (context->flags & KRB5_CTX_F_HOMEDIR_ACCESS) == 0)
 	return FALSE;

@@ -1,5 +1,0 @@
-
-make iov work for arcfour
-make iov work for ntlm
-interop test
-make TYPE_STREAM work

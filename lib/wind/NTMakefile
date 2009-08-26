@@ -65,32 +65,32 @@ INCFILES=	\
 
 $(OBJ)\map_table.h $(OBJ)\map_table.c: rfc3454.txt gen-map.py stringprep.py
 	cd $(OBJ)
-	$(PYTHON) $(SRCDIR)\gen-map.py $(SRCDIR)\rfc3454.txt
+	$(PYTHON) $(SRCDIR)\gen-map.py $(SRCDIR)\rfc3454.txt $(OBJ)
 	cd $(SRCDIR)
 
 $(OBJ)\errorlist_table.h $(OBJ)\errorlist_table.c: rfc3454.txt gen-errorlist.py stringprep.py
 	cd $(OBJ)
-	$(PYTHON) $(SRCDIR)\gen-errorlist.py $(SRCDIR)\rfc3454.txt
+	$(PYTHON) $(SRCDIR)\gen-errorlist.py $(SRCDIR)\rfc3454.txt $(OBJ)
 	cd $(SRCDIR)
 
 $(OBJ)\normalize_table.h $(OBJ)\normalize_table.c: UnicodeData.txt CompositionExclusions-3.2.0.txt gen-normalize.py
 	cd $(OBJ)
-	$(PYTHON) $(SRCDIR)\gen-normalize.py $(SRCDIR)\UnicodeData.txt $(SRCDIR)\CompositionExclusions-3.2.0.txt
+	$(PYTHON) $(SRCDIR)\gen-normalize.py $(SRCDIR)\UnicodeData.txt $(SRCDIR)\CompositionExclusions-3.2.0.txt $(OBJ)
 	cd $(SRCDIR)
 
 $(OBJ)\combining_table.h $(OBJ)\combining_table.c: UnicodeData.txt gen-combining.py
 	cd $(OBJ)
-	$(PYTHON) $(SRCDIR)\gen-combining.py $(SRCDIR)\UnicodeData.txt
+	$(PYTHON) $(SRCDIR)\gen-combining.py $(SRCDIR)\UnicodeData.txt $(OBJ)
 	cd $(SRCDIR)
 
 $(OBJ)\bidi_table.h $(OBJ)\bidi_table.c: rfc3454.txt gen-bidi.py
 	cd $(OBJ)
-	$(PYTHON) $(SRCDIR)\gen-bidi.py $(SRCDIR)\rfc3454.txt
+	$(PYTHON) $(SRCDIR)\gen-bidi.py $(SRCDIR)\rfc3454.txt $(OBJ)
 	cd $(SRCDIR)
 
 $(OBJ)\punycode_examples.h $(OBJ)\punycode_examples.c: gen-punycode-examples.py rfc3492.txt
 	cd $(OBJ)
-	$(PYTHON) $(SRCDIR)\gen-punycode-examples.py $(SRCDIR)\rfc3492.txt
+	$(PYTHON) $(SRCDIR)\gen-punycode-examples.py $(SRCDIR)\rfc3492.txt $(OBJ)
 	cd $(SRCDIR)
 
 $(OBJ)\wind_err.c $(OBJ)\wind_err.h: wind_err.et

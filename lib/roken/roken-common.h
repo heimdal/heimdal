@@ -288,6 +288,18 @@ SigAction signal(int iSig, SigAction pAction); /* BSD compatible */
 #endif
 #endif
 
+#define SE_E_UNSPECIFIED (-1)
+#define SE_E_FORKFAILED  (-2)
+#define SE_E_WAITPIDFAILED (-3)
+#define SE_E_EXECTIMEOUT (-4)
+#define SE_E_NOEXEC   126
+#define SE_E_NOTFOUND 127
+
+#define SE_PROCSTATUS(st) (((st) >= 0 && (st) < 126)? st: -1)
+#define SE_PROCSIGNAL(st) (((st) >= 128)? (st) - 128: -1)
+#define SE_IS_ERROR(st) ((st) < 0 || (st) >= 126)
+
+
 #define simple_execve rk_simple_execve
 ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
 simple_execve(const char*, char*const[], char*const[]);
@@ -475,7 +487,7 @@ rk_cloexec(int);
 ROKEN_LIB_FUNCTION void ROKEN_LIB_CALL
 rk_cloexec_file(FILE *);
 
-int ROKEN_LIB_FUNCTION
+ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
 ct_memcmp(const void *, const void *, size_t);
 
 ROKEN_CPP_END

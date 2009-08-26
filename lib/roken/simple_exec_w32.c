@@ -51,7 +51,7 @@ RCSID("$Id$");
  *     the callback function is called.  THe possible return values
  *     from the callback function are:
  *
- * - ((time_t) -2) Exit loop without killing child and return -4.
+ * - ((time_t) -2) Exit loop without killing child and return SE_E_EXECTIMEOUT.
  * - ((time_t) -1) Kill child with SIGTERM and wait for child to exit.
  * - 0             Don't timeout again
  * - n             Seconds to next timeout
@@ -60,12 +60,12 @@ RCSID("$Id$");
  *
  * @param[in] timeout Seconds to first timeout.
  *
- * @retval -1 Unspecified system error
- * @retval -2 Fork failure (not applicable for _WIN32 targets)
- * @retval -3 waitpid errors
- * @retval -4 exec timeout
- * @retval 0- Return value from subprocess
- * @retval 126 The program coudln't be found
+ * @retval SE_E_UNSPECIFIED   Unspecified system error
+ * @retval SE_E_FORKFAILED    Fork failure (not applicable for _WIN32 targets)
+ * @retval SE_E_WAITPIDFAILED waitpid errors
+ * @retval SE_E_EXECTIMEOUT   exec timeout
+ * @retval 0 <= Return value  from subprocess
+ * @retval SE_E_NOTFOUND      The program coudln't be found
  * @retval 128- The signal that killed the subprocess +128.
  */
 ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
@@ -78,7 +78,7 @@ wait_for_process_timed(pid_t pid, time_t (*func)(void *),
     int rv = 0;
 
     if (hProcess == NULL)
-        return -4;
+        return SE_E_WAITPIDFAILED;
 
     dtimeout = (DWORD) ((timeout == 0)? INFINITE: timeout * 1000);
 
@@ -106,12 +106,12 @@ wait_for_process_timed(pid_t pid, time_t (*func)(void *),
 		    dtimeout = INFINITE;
 		    continue;
 		}
-		rv = -1;
+		rv = SE_E_UNSPECIFIED;
 		break;
 
 	    } else if (timeout == (time_t) -2) {
 
-		rv = -4;
+		rv = SE_E_EXECTIMEOUT;
 		break;
 
 	    } else {
@@ -123,7 +123,7 @@ wait_for_process_timed(pid_t pid, time_t (*func)(void *),
 
 	} else {
 
-	    rv = -1;
+	    rv = SE_E_UNSPECIFIED;
 	    break;
 
 	}
@@ -403,7 +403,7 @@ simple_execlp(const char *file, ...)
     argv = vstrcollect(&ap);
     va_end(ap);
     if(argv == NULL)
-	return -1;
+	return SE_E_UNSPECIFIED;
     ret = simple_execvp(file, argv);
     free(argv);
     return ret;
@@ -423,7 +423,7 @@ simple_execle(const char *file, ... /* ,char *const envp[] */)
     envp = va_arg(ap, char **);
     va_end(ap);
     if(argv == NULL)
-	return -1;
+	return SE_E_UNSPECIFIED;
     ret = simple_execve(file, argv, envp);
     free(argv);
     return ret;

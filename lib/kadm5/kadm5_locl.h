@@ -37,6 +37,7 @@
 #define __KADM5_LOCL_H__
 
 #include <config.h>
+#include <roken.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -76,7 +77,6 @@
 #include "kadm5_err.h"
 #include <hdb.h>
 #include <der.h>
-#include <roken.h>
 #include <parse_units.h>
 #include "private.h"
 

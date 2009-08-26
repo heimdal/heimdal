@@ -104,6 +104,7 @@ gen_files_k5 =						    \
 	$(OBJ)\asn1_PROV_SRV_LOCATION.x			    \
 	$(OBJ)\asn1_Principal.x				    \
 	$(OBJ)\asn1_PrincipalName.x			    \
+	$(OBJ)\asn1_Principals.x			    \
 	$(OBJ)\asn1_Realm.x				    \
 	$(OBJ)\asn1_SAMFlags.x				    \
 	$(OBJ)\asn1_TGS_REP.x				    \
@@ -116,7 +117,6 @@ gen_files_k5 =						    \
 	$(OBJ)\asn1_krb5int32.x				    \
 	$(OBJ)\asn1_krb5uint32.x			    \
 	$(OBJ)\asn1_KRB5SignedPathData.x		    \
-	$(OBJ)\asn1_KRB5SignedPathPrincipals.x		    \
 	$(OBJ)\asn1_KRB5SignedPath.x
 
 gen_files_cms =						    \
@@ -163,164 +163,175 @@ gen_files_cms =						    \
 	$(OBJ)\asn1_UnprotectedAttributes.x
 
 gen_files_rfc2459 =					    \
+	$(OBJ)\asn1_AccessDescription.x			    \
+	$(OBJ)\asn1_AlgorithmIdentifier.x		    \
+	$(OBJ)\asn1_Attribute.x				    \
+	$(OBJ)\asn1_AttributeType.x			    \
+	$(OBJ)\asn1_AttributeTypeAndValue.x		    \
+	$(OBJ)\asn1_AttributeValue.x			    \
+	$(OBJ)\asn1_AuthorityInfoAccessSyntax.x		    \
+	$(OBJ)\asn1_AuthorityKeyIdentifier.x		    \
+	$(OBJ)\asn1_BaseDistance.x			    \
+	$(OBJ)\asn1_BasicConstraints.x			    \
+	$(OBJ)\asn1_CRLCertificateList.x		    \
+	$(OBJ)\asn1_CRLDistributionPoints.x		    \
+	$(OBJ)\asn1_CRLReason.x				    \
+	$(OBJ)\asn1_Certificate.x			    \
+	$(OBJ)\asn1_CertificateSerialNumber.x		    \
+	$(OBJ)\asn1_Certificates.x			    \
+	$(OBJ)\asn1_DHPublicKey.x			    \
+	$(OBJ)\asn1_DSAParams.x				    \
+	$(OBJ)\asn1_DSAPublicKey.x			    \
+	$(OBJ)\asn1_DSASigValue.x			    \
+	$(OBJ)\asn1_DigestInfo.x			    \
+	$(OBJ)\asn1_DirectoryString.x			    \
+	$(OBJ)\asn1_DistributionPoint.x			    \
+	$(OBJ)\asn1_DistributionPointName.x		    \
+	$(OBJ)\asn1_DistributionPointReasonFlags.x	    \
+	$(OBJ)\asn1_DomainParameters.x			    \
+	$(OBJ)\asn1_ECParameters.x			    \
+	$(OBJ)\asn1_ECPoint.x				    \
+	$(OBJ)\asn1_ECDSA_Sig_Value.x			    \
+	$(OBJ)\asn1_ExtKeyUsage.x			    \
+	$(OBJ)\asn1_Extension.x				    \
+	$(OBJ)\asn1_Extensions.x			    \
+	$(OBJ)\asn1_GeneralName.x			    \
+	$(OBJ)\asn1_GeneralNames.x			    \
+	$(OBJ)\asn1_GeneralSubtree.x			    \
+	$(OBJ)\asn1_GeneralSubtrees.x			    \
+	$(OBJ)\asn1_KeyIdentifier.x			    \
+	$(OBJ)\asn1_KeyUsage.x				    \
+	$(OBJ)\asn1_Name.x				    \
+	$(OBJ)\asn1_NameConstraints.x			    \
+	$(OBJ)\asn1_OtherName.x				    \
+	$(OBJ)\asn1_PKIXXmppAddr.x			    \
+	$(OBJ)\asn1_ProxyCertInfo.x			    \
+	$(OBJ)\asn1_ProxyPolicy.x			    \
+	$(OBJ)\asn1_RDNSequence.x			    \
+	$(OBJ)\asn1_RSAPrivateKey.x			    \
+	$(OBJ)\asn1_RSAPublicKey.x			    \
+	$(OBJ)\asn1_RelativeDistinguishedName.x		    \
+	$(OBJ)\asn1_SubjectKeyIdentifier.x		    \
+	$(OBJ)\asn1_SubjectPublicKeyInfo.x		    \
+	$(OBJ)\asn1_TBSCRLCertList.x			    \
+	$(OBJ)\asn1_TBSCertificate.x			    \
+	$(OBJ)\asn1_TeletexStringx.x			    \
+	$(OBJ)\asn1_Time.x				    \
+	$(OBJ)\asn1_UniqueIdentifier.x			    \
+	$(OBJ)\asn1_ValidationParms.x			    \
+	$(OBJ)\asn1_Validity.x				    \
 	$(OBJ)\asn1_Version.x				    \
-	$(OBJ)\asn1_id_pkcs_1.x				    \
-	$(OBJ)\asn1_id_pkcs1_rsaEncryption.x		    \
+	$(OBJ)\asn1_id_Userid.x				    \
+	$(OBJ)\asn1_id_aes_128_cbc.x			    \
+	$(OBJ)\asn1_id_aes_192_cbc.x			    \
+	$(OBJ)\asn1_id_aes_256_cbc.x			    \
+	$(OBJ)\asn1_id_at_commonName.x			    \
+	$(OBJ)\asn1_id_at_countryName.x			    \
+	$(OBJ)\asn1_id_at_generationQualifier.x		    \
+	$(OBJ)\asn1_id_at_givenName.x			    \
+	$(OBJ)\asn1_id_at_initials.x			    \
+	$(OBJ)\asn1_id_at_localityName.x		    \
+	$(OBJ)\asn1_id_at_name.x			    \
+	$(OBJ)\asn1_id_at_organizationName.x		    \
+	$(OBJ)\asn1_id_at_organizationalUnitName.x	    \
+	$(OBJ)\asn1_id_at_pseudonym.x			    \
+	$(OBJ)\asn1_id_at_serialNumber.x		    \
+	$(OBJ)\asn1_id_at_stateOrProvinceName.x		    \
+	$(OBJ)\asn1_id_at_streetAddress.x		    \
+	$(OBJ)\asn1_id_at_surname.x			    \
+	$(OBJ)\asn1_id_dhpublicnumber.x			    \
+	$(OBJ)\asn1_id_domainComponent.x		    \
+	$(OBJ)\asn1_id_dsa.x				    \
+	$(OBJ)\asn1_id_dsa_with_sha1.x			    \
+	$(OBJ)\asn1_id_ecDH.x				    \
+	$(OBJ)\asn1_id_ecMQV.x				    \
+	$(OBJ)\asn1_id_ecPublicKey.x			    \
+	$(OBJ)\asn1_id_ec_group_secp160r1.x		    \
+	$(OBJ)\asn1_id_ec_group_secp160r2.x		    \
+	$(OBJ)\asn1_id_ec_group_secp256r1.x		    \
+	$(OBJ)\asn1_id_ecdsa_with_SHA1.x		    \
+	$(OBJ)\asn1_id_ecdsa_with_SHA256.x		    \
+	$(OBJ)\asn1_id_heim_rsa_pkcs1_x509.x		    \
+	$(OBJ)\asn1_id_ms_cert_enroll_domaincontroller.x    \
+	$(OBJ)\asn1_id_ms_client_authentication.x	    \
+	$(OBJ)\asn1_id_netscape.x			    \
+	$(OBJ)\asn1_id_netscape_cert_comment.x		    \
+	$(OBJ)\asn1_id_nistAlgorithm.x			    \
+	$(OBJ)\asn1_id_nist_aes_algs.x			    \
+	$(OBJ)\asn1_id_nist_sha_algs.x			    \
 	$(OBJ)\asn1_id_pkcs1_md2WithRSAEncryption.x	    \
 	$(OBJ)\asn1_id_pkcs1_md5WithRSAEncryption.x	    \
+	$(OBJ)\asn1_id_pkcs1_rsaEncryption.x		    \
 	$(OBJ)\asn1_id_pkcs1_sha1WithRSAEncryption.x	    \
 	$(OBJ)\asn1_id_pkcs1_sha256WithRSAEncryption.x	    \
 	$(OBJ)\asn1_id_pkcs1_sha384WithRSAEncryption.x	    \
 	$(OBJ)\asn1_id_pkcs1_sha512WithRSAEncryption.x	    \
-	$(OBJ)\asn1_id_heim_rsa_pkcs1_x509.x		    \
-	$(OBJ)\asn1_id_pkcs_2.x				    \
 	$(OBJ)\asn1_id_pkcs2_md2.x			    \
 	$(OBJ)\asn1_id_pkcs2_md4.x			    \
 	$(OBJ)\asn1_id_pkcs2_md5.x			    \
-	$(OBJ)\asn1_id_rsa_digestAlgorithm.x		    \
-	$(OBJ)\asn1_id_rsa_digest_md2.x			    \
-	$(OBJ)\asn1_id_rsa_digest_md4.x			    \
-	$(OBJ)\asn1_id_rsa_digest_md5.x			    \
-	$(OBJ)\asn1_id_pkcs_3.x				    \
+	$(OBJ)\asn1_id_pkcs3_des_ede3_cbc.x		    \
 	$(OBJ)\asn1_id_pkcs3_rc2_cbc.x			    \
 	$(OBJ)\asn1_id_pkcs3_rc4.x			    \
-	$(OBJ)\asn1_id_pkcs3_des_ede3_cbc.x		    \
-	$(OBJ)\asn1_id_rsadsi_encalg.x			    \
-	$(OBJ)\asn1_id_rsadsi_rc2_cbc.x			    \
-	$(OBJ)\asn1_id_rsadsi_des_ede3_cbc.x		    \
-	$(OBJ)\asn1_id_secsig_sha_1.x			    \
-	$(OBJ)\asn1_id_nistAlgorithm.x			    \
-	$(OBJ)\asn1_id_nist_aes_algs.x			    \
-	$(OBJ)\asn1_id_aes_128_cbc.x			    \
-	$(OBJ)\asn1_id_aes_192_cbc.x			    \
-	$(OBJ)\asn1_id_aes_256_cbc.x			    \
-	$(OBJ)\asn1_id_nist_sha_algs.x			    \
-	$(OBJ)\asn1_id_sha256.x				    \
-	$(OBJ)\asn1_id_sha224.x				    \
-	$(OBJ)\asn1_id_sha384.x				    \
-	$(OBJ)\asn1_id_sha512.x				    \
-	$(OBJ)\asn1_id_dhpublicnumber.x			    \
-	$(OBJ)\asn1_id_x9_57.x				    \
-	$(OBJ)\asn1_id_dsa.x				    \
-	$(OBJ)\asn1_id_dsa_with_sha1.x			    \
-	$(OBJ)\asn1_id_x520_at.x			    \
-	$(OBJ)\asn1_id_at_commonName.x			    \
-	$(OBJ)\asn1_id_at_surname.x			    \
-	$(OBJ)\asn1_id_at_serialNumber.x		    \
-	$(OBJ)\asn1_id_at_countryName.x			    \
-	$(OBJ)\asn1_id_at_localityName.x		    \
-	$(OBJ)\asn1_id_at_streetAddress.x		    \
-	$(OBJ)\asn1_id_at_stateOrProvinceName.x		    \
-	$(OBJ)\asn1_id_at_organizationName.x		    \
-	$(OBJ)\asn1_id_at_organizationalUnitName.x	    \
-	$(OBJ)\asn1_id_at_name.x			    \
-	$(OBJ)\asn1_id_at_givenName.x			    \
-	$(OBJ)\asn1_id_at_initials.x			    \
-	$(OBJ)\asn1_id_at_generationQualifier.x		    \
-	$(OBJ)\asn1_id_at_pseudonym.x			    \
-	$(OBJ)\asn1_id_Userid.x				    \
-	$(OBJ)\asn1_id_domainComponent.x		    \
-	$(OBJ)\asn1_id_x509_ce.x			    \
-	$(OBJ)\asn1_id_uspkicommon_card_id.x		    \
-	$(OBJ)\asn1_id_uspkicommon_piv_interim.x	    \
-	$(OBJ)\asn1_id_netscape.x			    \
-	$(OBJ)\asn1_id_netscape_cert_comment.x		    \
-	$(OBJ)\asn1_id_ms_cert_enroll_domaincontroller.x    \
-	$(OBJ)\asn1_id_ms_client_authentication.x	    \
-	$(OBJ)\asn1_AlgorithmIdentifier.x		    \
-	$(OBJ)\asn1_AttributeType.x			    \
-	$(OBJ)\asn1_AttributeValue.x			    \
-	$(OBJ)\asn1_TeletexStringx.x			    \
-	$(OBJ)\asn1_DirectoryString.x			    \
-	$(OBJ)\asn1_Attribute.x				    \
-	$(OBJ)\asn1_AttributeTypeAndValue.x		    \
-	$(OBJ)\asn1_AuthorityInfoAccessSyntax.x		    \
-	$(OBJ)\asn1_AccessDescription.x			    \
-	$(OBJ)\asn1_RelativeDistinguishedName.x		    \
-	$(OBJ)\asn1_RDNSequence.x			    \
-	$(OBJ)\asn1_Name.x				    \
-	$(OBJ)\asn1_CertificateSerialNumber.x		    \
-	$(OBJ)\asn1_Time.x				    \
-	$(OBJ)\asn1_Validity.x				    \
-	$(OBJ)\asn1_UniqueIdentifier.x			    \
-	$(OBJ)\asn1_SubjectPublicKeyInfo.x		    \
-	$(OBJ)\asn1_Extension.x				    \
-	$(OBJ)\asn1_Extensions.x			    \
-	$(OBJ)\asn1_TBSCertificate.x			    \
-	$(OBJ)\asn1_Certificate.x			    \
-	$(OBJ)\asn1_Certificates.x			    \
-	$(OBJ)\asn1_ValidationParms.x			    \
-	$(OBJ)\asn1_DomainParameters.x			    \
-	$(OBJ)\asn1_DHPublicKey.x			    \
-	$(OBJ)\asn1_OtherName.x				    \
-	$(OBJ)\asn1_GeneralName.x			    \
-	$(OBJ)\asn1_GeneralNames.x			    \
-	$(OBJ)\asn1_id_x509_ce_keyUsage.x		    \
-	$(OBJ)\asn1_KeyUsage.x				    \
-	$(OBJ)\asn1_id_x509_ce_authorityKeyIdentifier.x	    \
-	$(OBJ)\asn1_KeyIdentifier.x			    \
-	$(OBJ)\asn1_AuthorityKeyIdentifier.x		    \
-	$(OBJ)\asn1_id_x509_ce_subjectKeyIdentifier.x	    \
-	$(OBJ)\asn1_SubjectKeyIdentifier.x		    \
-	$(OBJ)\asn1_id_x509_ce_basicConstraints.x	    \
-	$(OBJ)\asn1_BasicConstraints.x			    \
-	$(OBJ)\asn1_id_x509_ce_nameConstraints.x	    \
-	$(OBJ)\asn1_BaseDistance.x			    \
-	$(OBJ)\asn1_GeneralSubtree.x			    \
-	$(OBJ)\asn1_GeneralSubtrees.x			    \
-	$(OBJ)\asn1_NameConstraints.x			    \
-	$(OBJ)\asn1_id_x509_ce_privateKeyUsagePeriod.x	    \
-	$(OBJ)\asn1_id_x509_ce_certificatePolicies.x	    \
-	$(OBJ)\asn1_id_x509_ce_policyMappings.x		    \
-	$(OBJ)\asn1_id_x509_ce_subjectAltName.x		    \
-	$(OBJ)\asn1_id_x509_ce_issuerAltName.x		    \
-	$(OBJ)\asn1_id_x509_ce_subjectDirectoryAttributes.x \
-	$(OBJ)\asn1_id_x509_ce_policyConstraints.x	    \
-	$(OBJ)\asn1_id_x509_ce_extKeyUsage.x		    \
-	$(OBJ)\asn1_ExtKeyUsage.x			    \
-	$(OBJ)\asn1_id_x509_ce_cRLDistributionPoints.x	    \
-	$(OBJ)\asn1_id_x509_ce_deltaCRLIndicator.x	    \
-	$(OBJ)\asn1_id_x509_ce_issuingDistributionPoint.x   \
-	$(OBJ)\asn1_id_x509_ce_holdInstructionCode.x	    \
-	$(OBJ)\asn1_id_x509_ce_invalidityDate.x		    \
-	$(OBJ)\asn1_id_x509_ce_certificateIssuer.x	    \
-	$(OBJ)\asn1_id_x509_ce_inhibitAnyPolicy.x	    \
-	$(OBJ)\asn1_DistributionPointReasonFlags.x	    \
-	$(OBJ)\asn1_DistributionPointName.x		    \
-	$(OBJ)\asn1_DistributionPoint.x			    \
-	$(OBJ)\asn1_CRLDistributionPoints.x		    \
-	$(OBJ)\asn1_DSASigValue.x			    \
-	$(OBJ)\asn1_DSAPublicKey.x			    \
-	$(OBJ)\asn1_DSAParams.x				    \
-	$(OBJ)\asn1_RSAPublicKey.x			    \
-	$(OBJ)\asn1_RSAPrivateKey.x			    \
-	$(OBJ)\asn1_DigestInfo.x			    \
-	$(OBJ)\asn1_TBSCRLCertList.x			    \
-	$(OBJ)\asn1_CRLCertificateList.x		    \
-	$(OBJ)\asn1_id_x509_ce_cRLNumber.x		    \
-	$(OBJ)\asn1_id_x509_ce_freshestCRL.x		    \
-	$(OBJ)\asn1_id_x509_ce_cRLReason.x		    \
-	$(OBJ)\asn1_CRLReason.x				    \
-	$(OBJ)\asn1_PKIXXmppAddr.x			    \
+	$(OBJ)\asn1_id_pkcs_1.x				    \
+	$(OBJ)\asn1_id_pkcs_2.x				    \
+	$(OBJ)\asn1_id_pkcs_3.x				    \
 	$(OBJ)\asn1_id_pkix.x				    \
+	$(OBJ)\asn1_id_pkix_kp.x			    \
+	$(OBJ)\asn1_id_pkix_kp_OCSPSigning.x		    \
+	$(OBJ)\asn1_id_pkix_kp_clientAuth.x		    \
+	$(OBJ)\asn1_id_pkix_kp_emailProtection.x	    \
+	$(OBJ)\asn1_id_pkix_kp_serverAuth.x		    \
+	$(OBJ)\asn1_id_pkix_kp_timeStamping.x		    \
 	$(OBJ)\asn1_id_pkix_on.x			    \
 	$(OBJ)\asn1_id_pkix_on_dnsSRV.x			    \
 	$(OBJ)\asn1_id_pkix_on_xmppAddr.x		    \
-	$(OBJ)\asn1_id_pkix_kp.x			    \
-	$(OBJ)\asn1_id_pkix_kp_serverAuth.x		    \
-	$(OBJ)\asn1_id_pkix_kp_clientAuth.x		    \
-	$(OBJ)\asn1_id_pkix_kp_emailProtection.x	    \
-	$(OBJ)\asn1_id_pkix_kp_timeStamping.x		    \
-	$(OBJ)\asn1_id_pkix_kp_OCSPSigning.x		    \
 	$(OBJ)\asn1_id_pkix_pe.x			    \
 	$(OBJ)\asn1_id_pkix_pe_authorityInfoAccess.x	    \
 	$(OBJ)\asn1_id_pkix_pe_proxyCertInfo.x		    \
 	$(OBJ)\asn1_id_pkix_ppl.x			    \
 	$(OBJ)\asn1_id_pkix_ppl_anyLanguage.x		    \
-	$(OBJ)\asn1_id_pkix_ppl_inheritAll.x		    \
 	$(OBJ)\asn1_id_pkix_ppl_independent.x		    \
-	$(OBJ)\asn1_ProxyPolicy.x			    \
-	$(OBJ)\asn1_ProxyCertInfo.x 
+	$(OBJ)\asn1_id_pkix_ppl_inheritAll.x		    \
+	$(OBJ)\asn1_id_rsa_digestAlgorithm.x		    \
+	$(OBJ)\asn1_id_rsa_digest_md2.x			    \
+	$(OBJ)\asn1_id_rsa_digest_md4.x			    \
+	$(OBJ)\asn1_id_rsa_digest_md5.x			    \
+	$(OBJ)\asn1_id_rsadsi_des_ede3_cbc.x		    \
+	$(OBJ)\asn1_id_rsadsi_encalg.x			    \
+	$(OBJ)\asn1_id_rsadsi_rc2_cbc.x			    \
+	$(OBJ)\asn1_id_secsig_sha_1.x			    \
+	$(OBJ)\asn1_id_sha224.x				    \
+	$(OBJ)\asn1_id_sha256.x				    \
+	$(OBJ)\asn1_id_sha384.x				    \
+	$(OBJ)\asn1_id_sha512.x				    \
+	$(OBJ)\asn1_id_uspkicommon_card_id.x		    \
+	$(OBJ)\asn1_id_uspkicommon_piv_interim.x	    \
+	$(OBJ)\asn1_id_x509_ce.x			    \
+	$(OBJ)\asn1_id_x509_ce_authorityKeyIdentifier.x	    \
+	$(OBJ)\asn1_id_x509_ce_basicConstraints.x	    \
+	$(OBJ)\asn1_id_x509_ce_cRLDistributionPoints.x	    \
+	$(OBJ)\asn1_id_x509_ce_cRLNumber.x		    \
+	$(OBJ)\asn1_id_x509_ce_cRLReason.x		    \
+	$(OBJ)\asn1_id_x509_ce_certificateIssuer.x	    \
+	$(OBJ)\asn1_id_x509_ce_certificatePolicies.x	    \
+	$(OBJ)\asn1_id_x509_ce_deltaCRLIndicator.x	    \
+	$(OBJ)\asn1_id_x509_ce_extKeyUsage.x		    \
+	$(OBJ)\asn1_id_x509_ce_freshestCRL.x		    \
+	$(OBJ)\asn1_id_x509_ce_holdInstructionCode.x	    \
+	$(OBJ)\asn1_id_x509_ce_inhibitAnyPolicy.x	    \
+	$(OBJ)\asn1_id_x509_ce_invalidityDate.x		    \
+	$(OBJ)\asn1_id_x509_ce_issuerAltName.x		    \
+	$(OBJ)\asn1_id_x509_ce_issuingDistributionPoint.x   \
+	$(OBJ)\asn1_id_x509_ce_keyUsage.x		    \
+	$(OBJ)\asn1_id_x509_ce_nameConstraints.x	    \
+	$(OBJ)\asn1_id_x509_ce_policyConstraints.x	    \
+	$(OBJ)\asn1_id_x509_ce_policyMappings.x		    \
+	$(OBJ)\asn1_id_x509_ce_privateKeyUsagePeriod.x	    \
+	$(OBJ)\asn1_id_x509_ce_subjectAltName.x		    \
+	$(OBJ)\asn1_id_x509_ce_subjectDirectoryAttributes.x \
+	$(OBJ)\asn1_id_x509_ce_subjectKeyIdentifier.x	    \
+	$(OBJ)\asn1_id_x520_at.x			    \
+	$(OBJ)\asn1_id_x9_57.x
 
 gen_files_pkinit =					    \
 	$(OBJ)\asn1_id_pkinit.x				    \
@@ -359,10 +370,11 @@ gen_files_pkinit =					    \
 	$(OBJ)\asn1_TrustedCA_Win2k.x			    \
 	$(OBJ)\asn1_PA_PK_AS_REQ_Win2k.x		    \
 	$(OBJ)\asn1_PA_PK_AS_REP_Win2k.x		    \
+	$(OBJ)\asn1_PA_PK_AS_REP_BTMM.x			    \
 	$(OBJ)\asn1_KDCDHKeyInfo_Win2k.x		    \
 	$(OBJ)\asn1_ReplyKeyPack_Win2k.x		    \
 	$(OBJ)\asn1_PkinitSP80056AOtherInfo.x		    \
-	$(OBJ)\asn1_PkinitSuppPubInfo.x 
+	$(OBJ)\asn1_PkinitSuppPubInfo.x
 
 gen_files_pkcs12 =					    \
 	$(OBJ)\asn1_id_pkcs_12.x			    \
@@ -475,18 +487,18 @@ $(BINDIR)\asn1_compile.exe:				    \
 	$(OBJ)\hash.obj					    \
 	$(OBJ)\lex.obj					    \
 	$(OBJ)\main.obj					    \
-	$(OBJ)\parse.obj				    \
+	$(OBJ)\asn1parse.obj				    \
 	$(OBJ)\symbol.obj
 	$(EXECONLINK) $(LIBROKEN) $(LIBVERS)
 	$(_VC_MANIFEST_EMBED_EXE)
 	$(_VC_MANIFEST_CLEAN)
 	$(_CODESIGN)
 
-$(OBJ)\lex.c: lex.l $(OBJ)\parse.h
+$(OBJ)\lex.c: lex.l $(OBJ)\asn1parse.h
 	$(LEX) -o$@ lex.l
 
-$(OBJ)\parse.c $(OBJ)\parse.h: parse.y
-	$(YACC) -o $(OBJ)\parse.c --defines=$(OBJ)\parse.h $**
+$(OBJ)\asn1parse.c $(OBJ)\asn1parse.h: asn1parse.y
+	$(YACC) -o $(OBJ)\asn1parse.c --defines=$(OBJ)\asn1parse.h $**
 
 $(OBJ)\asn1_err.c $(OBJ)\asn1_err.h: asn1_err.et
 	cd $(OBJ)
@@ -554,7 +566,7 @@ $(gen_files_cms:.x=.c)	    : $$(@R).x
 
 $(gen_files_test:.x=.c)	    : $$(@R).x
 
-$(gen_files_k5) $(OBJ)\krb5_asn1.h: $(BINDIR)\asn1_compile.exe k5.asn1
+$(gen_files_k5) $(OBJ)\krb5_asn1.hx: $(BINDIR)\asn1_compile.exe krb5.asn1
 	cd $(OBJ)
 	$(BINDIR)\asn1_compile.exe \
 		--encode-rfc1510-bit-string \
@@ -563,47 +575,47 @@ $(gen_files_k5) $(OBJ)\krb5_asn1.h: $(BINDIR)\asn1_compile.exe k5.asn1
 		--sequence=METHOD-DATA \
 		--sequence=ETYPE-INFO \
 		--sequence=ETYPE-INFO2 \
-		$(SRCDIR)\k5.asn1 krb5_asn1 \
+		$(SRCDIR)\krb5.asn1 krb5_asn1 \
 	|| ($(RM) $(OBJ)\krb5_asn1.h ; exit /b 1)
 	cd $(SRCDIR)
 
-$(gen_files_pkinit) $(OBJ)\pkinit_asn1.h: $(BINDIR)\asn1_compile.exe pkinit.asn1
+$(gen_files_pkinit) $(OBJ)\pkinit_asn1.hx: $(BINDIR)\asn1_compile.exe pkinit.asn1
 	cd $(OBJ)
 	$(BINDIR)\asn1_compile.exe $(SRCDIR)\pkinit.asn1 pkinit_asn1 \
 	|| ($(RM) $(OBJ)\pkinit_asn1.h ; exit /b 1)
 	cd $(SRCDIR)
 
-$(gen_files_pkcs8) $(OBJ)\pkcs8_asn1.h: $(BINDIR)\asn1_compile.exe pkcs8.asn1
+$(gen_files_pkcs8) $(OBJ)\pkcs8_asn1.hx: $(BINDIR)\asn1_compile.exe pkcs8.asn1
 	cd $(OBJ)
 	$(BINDIR)\asn1_compile.exe $(SRCDIR)\pkcs8.asn1 pkcs8_asn1 \
 	|| ($(RM) $(OBJ)\pkcs8_asn1.h ; exit /b 1)
 	cd $(SRCDIR)
 
-$(gen_files_pkcs9) $(OBJ)\pkcs9_asn1.h: $(BINDIR)\asn1_compile.exe pkcs9.asn1
+$(gen_files_pkcs9) $(OBJ)\pkcs9_asn1.hx: $(BINDIR)\asn1_compile.exe pkcs9.asn1
 	cd $(OBJ)
 	$(BINDIR)\asn1_compile.exe $(SRCDIR)\pkcs9.asn1 pkcs9_asn1 \
 	|| ($(RM) $(OBJ)\pkcs9_asn1.h ; exit /b 1)
 	cd $(SRCDIR)
 
-$(gen_files_pkcs12) $(OBJ)\pkcs12_asn1.h: $(BINDIR)\asn1_compile.exe pkcs12.asn1
+$(gen_files_pkcs12) $(OBJ)\pkcs12_asn1.hx: $(BINDIR)\asn1_compile.exe pkcs12.asn1
 	cd $(OBJ)
 	$(BINDIR)\asn1_compile.exe $(SRCDIR)\pkcs12.asn1 pkcs12_asn1 \
 	|| ($(RM) $(OBJ)\pkcs12_asn1.h ; exit /b 1)
 	cd $(SRCDIR)
 
-$(gen_files_digest) $(OBJ)\digest_asn1.h: $(BINDIR)\asn1_compile.exe digest.asn1
+$(gen_files_digest) $(OBJ)\digest_asn1.hx: $(BINDIR)\asn1_compile.exe digest.asn1
 	cd $(OBJ)
 	$(BINDIR)\asn1_compile.exe $(SRCDIR)\digest.asn1 digest_asn1 \
 	|| ($(RM) $(OBJ)\digest_asn1.h ; exit /b 1)
 	cd $(SRCDIR)
 
-$(gen_files_kx509) $(OBJ)\kx509_asn1.h: $(BINDIR)\asn1_compile.exe kx509.asn1
+$(gen_files_kx509) $(OBJ)\kx509_asn1.hx: $(BINDIR)\asn1_compile.exe kx509.asn1
 	cd $(OBJ)
 	$(BINDIR)\asn1_compile.exe $(SRCDIR)\kx509.asn1 kx509_asn1 \
 	|| ($(RM) $(OBJ)\kx509_asn1.h ; exit /b 1)
 	cd $(SRCDIR)
 
-$(gen_files_rfc2459) $(OBJ)\rfc2459_asn1.h: $(BINDIR)\asn1_compile.exe rfc2459.asn1
+$(gen_files_rfc2459) $(OBJ)\rfc2459_asn1.hx: $(BINDIR)\asn1_compile.exe rfc2459.asn1
 	cd $(OBJ)
 	$(BINDIR)\asn1_compile.exe \
 		--preserve-binary=TBSCertificate \
@@ -616,13 +628,13 @@ $(gen_files_rfc2459) $(OBJ)\rfc2459_asn1.h: $(BINDIR)\asn1_compile.exe rfc2459.a
 	|| ($(RM) $(OBJ)\krb5_asn1.h ; exit /b 1)
 	cd $(SRCDIR)
 
-$(gen_files_cms) $(OBJ)\cms_asn1.h: $(BINDIR)\asn1_compile.exe cms.asn1
+$(gen_files_cms) $(OBJ)\cms_asn1.hx: $(BINDIR)\asn1_compile.exe cms.asn1
 	cd $(OBJ)
 	$(BINDIR)\asn1_compile.exe $(SRCDIR)\CMS.asn1 cms_asn1 \
 	|| ($(RM) $(OBJ)\cms_asn1.h ; exit /b 1)
 	cd $(SRCDIR)
 
-$(gen_files_test) $(OBJ)\test_asn1.h: $(BINDIR)\asn1_compile.exe test.asn1
+$(gen_files_test) $(OBJ)\test_asn1.hx: $(BINDIR)\asn1_compile.exe test.asn1
 	cd $(OBJ)
 	$(BINDIR)\asn1_compile.exe \
 		--sequence=TESTSeqOf \

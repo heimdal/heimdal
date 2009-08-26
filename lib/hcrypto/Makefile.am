@@ -110,7 +110,6 @@ libhcrypto_la_SOURCES =	\
 	evp.c		\
 	evp.h		\
 	evp-hcrypto.c	\
-	evp-aes-cts.c	\
 	evp-cc.c	\
 	engine.c	\
 	engine.h	\

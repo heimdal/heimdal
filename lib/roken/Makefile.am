@@ -35,7 +35,7 @@ check_PROGRAMS = 				\
 
 TESTS = $(check_PROGRAMS)
 
-LDADD = libroken.la $(LIB_crypt)
+LDADD = libroken.la
 make_roken_LDADD = 
 
 noinst_LTLIBRARIES = libtest.la
@@ -119,7 +119,7 @@ EXTRA_libroken_la_SOURCES =	\
 	ifaddrs.hin		\
 	vis.hin	
 
-libroken_la_LIBADD = @LTLIBOBJS@
+libroken_la_LIBADD = @LTLIBOBJS@ $(LIB_crypt)
 
 $(LTLIBOBJS) $(libroken_la_OBJECTS): roken.h $(XHEADERS)
 

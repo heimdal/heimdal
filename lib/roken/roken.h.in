@@ -95,6 +95,24 @@ typedef int SOCKET;
 
 #include<io.h>
 
+#ifndef __BIT_TYPES_DEFINED__
+#define __BIT_TYPES_DEFINED__
+
+typedef __int8             int8_t;
+typedef __int16            int16_t;
+typedef __int32            int32_t;
+typedef __int64            int64_t;
+typedef unsigned __int8    uint8_t;
+typedef unsigned __int16   uint16_t;
+typedef unsigned __int32   uint32_t;
+typedef unsigned __int64   uint64_t;
+typedef uint8_t            u_int8_t;
+typedef uint16_t           u_int16_t;
+typedef uint32_t           u_int32_t;
+typedef uint64_t           u_int64_t;
+
+#endif  /* __BIT_TYPES_DEFINED__ */
+
 #define UNREACHABLE(x) x
 #define UNUSED_ARGUMENT(x) ((void) x)
 
@@ -221,13 +239,15 @@ ROKEN_CPP_START
 #ifdef _MSC_VER
 /* Additional macros for Visual C/C++ runtime */
 
-#define close  _close
+#define close	_close
 
-#define getpid _getpid
+#define getpid	_getpid
 
-#define open   _open
+#define open	_open
 
 #define chdir   _chdir
+
+#define fsync   _commit
 
 /* The MSVC implementation of snprintf is not C99 compliant.  */
 #define snprintf    rk_snprintf
@@ -580,8 +600,12 @@ readv(int, const struct iovec *, int);
 #endif
 
 #ifndef HAVE_PIDFILE
+#ifdef NO_PIDFILES
+#define pidfile(x) ((void) 0)
+#else
 #define pidfile rk_pidfile
 ROKEN_LIB_FUNCTION void ROKEN_LIB_CALL pidfile (const char*);
+#endif
 #endif
 
 #ifndef HAVE_BSWAP32
@@ -787,6 +811,8 @@ freeaddrinfo(struct addrinfo *);
 ROKEN_LIB_FUNCTION const char * ROKEN_LIB_CALL
 gai_strerror(int);
 #endif
+
+#ifdef HAVE_WINSOCK
 
 /* While we are at it, define WinSock specific scatter gather socket
    I/O. */

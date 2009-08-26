@@ -40,16 +40,6 @@
 #define DES3_OLD_ENCTYPE 1
 #endif
 
-
-#ifdef HAVE_OPENSSL /* XXX forward decl for hcrypto glue */
-const EVP_CIPHER * _krb5_EVP_hcrypto_aes_128_cts(void);
-const EVP_CIPHER * _krb5_EVP_hcrypto_aes_256_cts(void);
-#define EVP_hcrypto_aes_128_cts _krb5_EVP_hcrypto_aes_128_cts
-#define EVP_hcrypto_aes_256_cts _krb5_EVP_hcrypto_aes_256_cts
-#else
-#include <hcrypto/evp-hcrypto.h>
-#endif
-
 struct key_data {
     krb5_keyblock *key;
     krb5_data *schedule;

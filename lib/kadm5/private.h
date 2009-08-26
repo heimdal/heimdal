@@ -74,8 +74,12 @@ typedef struct kadm5_log_context {
     char *log_file;
     int log_fd;
     uint32_t version;
+#ifndef NO_UNIX_SOCKETS
     struct sockaddr_un socket_name;
-    int socket_fd;
+#else
+    struct addrinfo *socket_info;
+#endif
+    SOCKET socket_fd;
 } kadm5_log_context;
 
 typedef struct kadm5_server_context {

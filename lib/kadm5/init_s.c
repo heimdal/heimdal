@@ -55,7 +55,11 @@ kadm5_s_init_with_context(krb5_context context,
     assert(ctx->config.stash_file != NULL);
     assert(ctx->config.acl_file != NULL);
     assert(ctx->log_context.log_file != NULL);
+#ifndef NO_UNIX_SOCKETS
     assert(ctx->log_context.socket_name.sun_path[0] != '\0');
+#else
+    assert(ctx->log_context.socket_info != NULL);
+#endif
 
     ret = hdb_create(ctx->context, &ctx->db, ctx->config.dbname);
     if(ret)
@@ -67,7 +71,13 @@ kadm5_s_init_with_context(krb5_context context,
 
     ctx->log_context.log_fd   = -1;
 
+#ifndef NO_UNIX_SOCKETS
     ctx->log_context.socket_fd = socket (AF_UNIX, SOCK_DGRAM, 0);
+#else
+    ctx->log_context.socket_fd = socket (ctx->log_context.socket_info->ai_family,
+					 ctx->log_context.socket_info->ai_socktype,
+					 ctx->log_context.socket_info->ai_protocol);
+#endif
 
     ret = krb5_parse_name(ctx->context, client_name, &ctx->caller);
     if(ret)

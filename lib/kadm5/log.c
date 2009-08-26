@@ -206,15 +206,25 @@ kadm5_log_flush (kadm5_log_context *log_context,
 	krb5_data_free(&data);
 	return errno;
     }
+
     /*
      * Try to send a signal to any running `ipropd-master'
      */
+#ifndef NO_UNIX_SOCKETS
     sendto (log_context->socket_fd,
 	    (void *)&log_context->version,
 	    sizeof(log_context->version),
 	    0,
 	    (struct sockaddr *)&log_context->socket_name,
 	    sizeof(log_context->socket_name));
+#else
+    sendto (log_context->socket_fd,
+	    (void *)&log_context->version,
+	    sizeof(log_context->version),
+	    0,
+	    log_context->socket_info->ai_addr,
+	    log_context->socket_info->ai_addrlen);
+#endif
 
     krb5_data_free(&data);
     return 0;
@@ -970,6 +980,8 @@ kadm5_log_truncate (kadm5_server_context *server_context)
 
 }
 
+#ifndef NO_UNIX_SOCKETS
+
 static char *default_signal = NULL;
 static HEIMDAL_MUTEX signal_mutex = HEIMDAL_MUTEX_INITIALIZER;
 
@@ -988,3 +1000,55 @@ kadm5_log_signal_socket(krb5_context context)
 					  "signal_socket",
 					  NULL);
 }
+
+#else  /* NO_UNIX_SOCKETS */
+
+#define SIGNAL_SOCKET_HOST "127.0.0.1"
+#define SIGNAL_SOCKET_PORT "12701"
+
+kadm5_ret_t
+kadm5_log_signal_socket_info(krb5_context context,
+			     int server_end,
+			     struct addrinfo **ret_addrs)
+{
+    struct addrinfo hints;
+    struct addrinfo *addrs = NULL;
+    kadm5_ret_t ret = KADM5_FAILURE;
+    int wsret;
+
+    memset(&hints, 0, sizeof(hints));
+
+    hints.ai_flags = AI_NUMERICHOST;
+    if (server_end)
+	hints.ai_flags |= AI_PASSIVE;
+    hints.ai_family = AF_INET;
+    hints.ai_socktype = SOCK_STREAM;
+    hints.ai_protocol = IPPROTO_TCP;
+
+    wsret = getaddrinfo(SIGNAL_SOCKET_HOST,
+			SIGNAL_SOCKET_PORT,
+			&hints, &addrs);
+
+    if (wsret != 0) {
+	krb5_set_error_message(context, KADM5_FAILURE,
+			       "%s", gai_strerror(wsret));
+	goto done;
+    }
+
+    if (addrs == NULL) {
+	krb5_set_error_message(context, KADM5_FAILURE,
+			       "getaddrinfo() failed to return address list");
+	goto done;
+    }
+
+    *ret_addrs = addrs;
+    addrs = NULL;
+    ret = 0;
+
+ done:
+    if (addrs)
+	freeaddrinfo(addrs);
+    return ret;
+}
+
+#endif

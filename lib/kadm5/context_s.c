@@ -53,6 +53,8 @@ set_funcs(kadm5_server_context *c)
     SET(c, rename_principal);
 }
 
+#ifndef NO_UNIX_SOCKETS
+
 static void
 set_socket_name(krb5_context context, struct sockaddr_un *un)
 {
@@ -61,7 +63,17 @@ set_socket_name(krb5_context context, struct sockaddr_un *un)
     memset(un, 0, sizeof(*un));
     un->sun_family = AF_UNIX;
     strlcpy (un->sun_path, fn, sizeof(un->sun_path));
+
 }
+#else
+
+static void
+set_socket_info(krb5_context context, struct addrinfo **info)
+{
+    kadm5_log_signal_socket_info(context, 0, info);
+}
+
+#endif
 
 static kadm5_ret_t
 find_db_spec(kadm5_server_context *ctx)
@@ -115,7 +127,11 @@ find_db_spec(kadm5_server_context *ctx)
     if (ctx->log_context.log_file == NULL)
 	asprintf(&ctx->log_context.log_file, "%s/log", hdb_db_dir(context));
 
+#ifndef NO_UNIX_SOCKETS
     set_socket_name(context, &ctx->log_context.socket_name);
+#else
+    set_socket_info(context, &ctx->log_context.socket_info);
+#endif
 
     return 0;
 }

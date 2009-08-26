@@ -526,4 +526,10 @@ krb5_get_cred_from_kdc(krb5_context context,
 				      in_creds, out_creds, ret_tgts, 0);
 }
 
+void KRB5_LIB_FUNCTION
+krb5_free_unparsed_name(krb5_context context, char *str) KRB5_DEPRECATED
+{
+    krb5_xfree(str);
+}
+
 #endif /* HEIMDAL_SMALLER */

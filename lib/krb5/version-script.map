@@ -289,6 +289,7 @@ HEIMDAL_KRB5_2.0 {
 		krb5_free_principal;
 		krb5_free_salt;
 		krb5_free_ticket;
+		krb5_free_unparsed_name;
 		krb5_fwd_tgt_creds;
 		krb5_generate_random_block;
 		krb5_generate_random_keyblock;

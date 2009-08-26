@@ -41,9 +41,6 @@ $(LIBVERS): $(OBJ)\print_version.obj
 $(OBJ)\print_version.obj: print_version.c
 	$(C2OBJ) -I$(OBJ)
 
-$(OBJ)\make-print-version.obj: make-print-version.c
-	$(C2OBJ) -DKRB5
-
 $(OBJ)\make-print-version.exe: $(OBJ)\make-print-version.obj
 	$(EXECONLINK)
 	$(_VC_MANIFEST_EMBED_EXE)

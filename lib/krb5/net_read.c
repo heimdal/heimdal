@@ -39,7 +39,7 @@ krb5_net_read (krb5_context context,
 	       void *buf,
 	       size_t len)
 {
-  int fd = *((int *)p_fd);
+    SOCKET fd = *((SOCKET *)p_fd);
 
-  return net_read (fd, buf, len);
+    return net_read_s (fd, buf, len);
 }

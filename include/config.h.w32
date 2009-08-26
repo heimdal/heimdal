@@ -1371,8 +1371,20 @@ static const char *const rcsid[] = { (const char *)rcsid, "@(#)" msg }
 /* Define if fd_sets aren't limited to FD_SETSIZE sockets */
 #define NO_LIMIT_FD_SETSIZE 1
 
+/* Define if PID files should not be used. */
+#define NO_PIDFILES 1
+
+/* Define if SIGPIPE is not supported */
+#define NO_SIGPIPE 1
+
+/* Define if SIGXCPU is not supported */
+#define NO_SIGXCPU 1
+
 /* Define if sleep() is not available */
 #define NO_SLEEP 1
+
+/* Define to 1 if Unix sockets (AF_UNIX) are not available. */
+#define NO_UNIX_SOCKETS 1
 
 /* Define this to enable old environment option in telnet. */
 /* #define OLD_ENVIRON 1 */
@@ -1453,6 +1465,8 @@ static const char *const rcsid[] = { (const char *)rcsid, "@(#)" msg }
 #define SIGRETURN(x) return (RETSIGTYPE)(x)
 #endif
 
+#ifndef CPP_ONLY
+
 typedef int pid_t;
 
 typedef unsigned int gid_t;
@@ -1460,6 +1474,8 @@ typedef unsigned int gid_t;
 typedef unsigned int uid_t;
 
 typedef unsigned short mode_t;
+
+#endif
 
 #ifndef __cplusplus
 #define inline __inline

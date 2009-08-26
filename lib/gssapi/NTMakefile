@@ -39,6 +39,7 @@ krb5src = \
 	krb5/acquire_cred.c \
 	krb5/add_cred.c \
 	krb5/address_to_krb5addr.c \
+	krb5/aeap.c \
 	krb5/arcfour.c \
 	krb5/canonicalize_name.c \
 	krb5/ccache_name.c \
@@ -77,11 +78,11 @@ krb5src = \
 	krb5/release_cred.c \
 	krb5/release_name.c \
 	krb5/sequence.c \
+	krb5/store_cred.c \
 	krb5/set_cred_option.c \
 	krb5/set_sec_context_option.c \
 	krb5/ticket_flags.c \
 	krb5/unwrap.c \
-	krb5/v1.c \
 	krb5/verify_mic.c \
 	krb5/wrap.c
 
@@ -89,10 +90,12 @@ mechsrc = \
 	mech/context.h \
 	mech/context.c \
 	mech/cred.h \
+	mech/doxygen.c \
 	mech/gss_accept_sec_context.c \
 	mech/gss_acquire_cred.c \
 	mech/gss_add_cred.c \
 	mech/gss_add_oid_set_member.c \
+	mech/gss_aeap.c \
 	mech/gss_buffer_set.c \
 	mech/gss_canonicalize_name.c \
 	mech/gss_compare_name.c \
@@ -134,6 +137,7 @@ mechsrc = \
 	mech/gss_set_cred_option.c \
 	mech/gss_set_sec_context_option.c \
 	mech/gss_sign.c \
+	mech/gss_store_cred.c \
 	mech/gss_test_oid_set_member.c \
 	mech/gss_unseal.c \
 	mech/gss_unwrap.c \
@@ -186,7 +190,7 @@ ntlmsrc = \
 	ntlm/process_context_token.c \
 	ntlm/release_cred.c \
 	ntlm/release_name.c \
-	ntlm/digest.c
+	ntlm/kdc.c
 
 $(OBJ)\ntlm\ntlm-private.h: $(ntlmsrc)
 	$(PERL) ../../cf/make-proto.pl -q -P remove -p $@ $(ntlmsrc)
@@ -215,13 +219,19 @@ $(gssapi_files:.x=.c): $$(@R).x
 
 $(spnego_files:.x=.c): $$(@R).x
 
-$(gssapi_files) $(OBJ)\gssapi\gssapi_asn1.h: $(BINDIR)\asn1_compile.exe mech\gssapi.asn1
+$(OBJ)\gssapi\gssapi_asn1.h: $(OBJ)\gssapi\gssapi_asn1.hx
+	$(CP) $** $@
+
+$(OBJ)\spnego\spnego_asn1.h: $(OBJ)\spnego\spnego_asn1.hx
+	$(CP) $** $@
+
+$(gssapi_files) $(OBJ)\gssapi\gssapi_asn1.hx: $(BINDIR)\asn1_compile.exe mech\gssapi.asn1
 	cd $(OBJ)\gssapi
 	$(BINDIR)\asn1_compile.exe $(SRCDIR)\mech\gssapi.asn1 gssapi_asn1 \
 	|| ( $(RM) $(OBJ)\gssapi\gssapi_asn1.h ; exit /b 1 )
 	cd $(SRCDIR)
 
-$(spnego_files) $(OBJ)\spnego\spnego_asn1.h: $(BINDIR)\asn1_compile.exe spnego\spnego.asn1
+$(spnego_files) $(OBJ)\spnego\spnego_asn1.hx: $(BINDIR)\asn1_compile.exe spnego\spnego.asn1
 	cd $(OBJ)\spnego
 	$(BINDIR)\asn1_compile --sequence=MechTypeList $(SRCDIR)\spnego\spnego.asn1 spnego_asn1 \
 	|| ( $(RM) $(OBJ)\spnego\spnego_asn1.h ; exit /b 1 )
@@ -249,6 +259,7 @@ libgssapi_OBJs= \
 	$(OBJ)\krb5\acquire_cred.obj \
 	$(OBJ)\krb5\add_cred.obj \
 	$(OBJ)\krb5\address_to_krb5addr.obj \
+	$(OBJ)\krb5\aeap.obj \
 	$(OBJ)\krb5\arcfour.obj \
 	$(OBJ)\krb5\canonicalize_name.obj \
 	$(OBJ)\krb5\ccache_name.obj \
@@ -285,18 +296,20 @@ libgssapi_OBJs= \
 	$(OBJ)\krb5\release_cred.obj \
 	$(OBJ)\krb5\release_name.obj \
 	$(OBJ)\krb5\sequence.obj \
+	$(OBJ)\krb5\store_cred.obj \
 	$(OBJ)\krb5\set_cred_option.obj \
 	$(OBJ)\krb5\set_sec_context_option.obj \
 	$(OBJ)\krb5\ticket_flags.obj \
 	$(OBJ)\krb5\unwrap.obj \
-	$(OBJ)\krb5\v1.obj \
 	$(OBJ)\krb5\verify_mic.obj \
 	$(OBJ)\krb5\wrap.obj \
 	$(OBJ)\mech\context.obj \
+	$(OBJ)\mech\doxygen.obj \
 	$(OBJ)\mech\gss_accept_sec_context.obj \
 	$(OBJ)\mech\gss_acquire_cred.obj \
 	$(OBJ)\mech\gss_add_cred.obj \
 	$(OBJ)\mech\gss_add_oid_set_member.obj \
+	$(OBJ)\mech\gss_aeap.obj \
 	$(OBJ)\mech\gss_buffer_set.obj \
 	$(OBJ)\mech\gss_canonicalize_name.obj \
 	$(OBJ)\mech\gss_compare_name.obj \
@@ -338,6 +351,7 @@ libgssapi_OBJs= \
 	$(OBJ)\mech\gss_set_cred_option.obj \
 	$(OBJ)\mech\gss_set_sec_context_option.obj \
 	$(OBJ)\mech\gss_sign.obj \
+	$(OBJ)\mech\gss_store_cred.obj \
 	$(OBJ)\mech\gss_test_oid_set_member.obj \
 	$(OBJ)\mech\gss_unseal.obj \
 	$(OBJ)\mech\gss_unwrap.obj \
@@ -373,7 +387,7 @@ libgssapi_OBJs= \
 	$(OBJ)\ntlm\process_context_token.obj \
 	$(OBJ)\ntlm\release_cred.obj \
 	$(OBJ)\ntlm\release_name.obj \
-	$(OBJ)\ntlm\digest.obj \
+	$(OBJ)\ntlm\kdc.obj \
 	$(OBJ)\spnego\accept_sec_context.obj \
 	$(OBJ)\spnego\compat.obj \
 	$(OBJ)\spnego\context_stubs.obj \
@@ -384,7 +398,7 @@ libgssapi_OBJs= \
 	$(spnego_files:.x=.obj)	\
 	$(gssapi_files:.x=.obj)
 
-GCOPTS=-I$(SRCDIR) -I$(OBJ) -DBUILD_GSSAPI_LIB
+GCOPTS=-I$(SRCDIR) -I$(OBJ) -Igssapi -DBUILD_GSSAPI_LIB
 
 {$(OBJ)\krb5}.c{$(OBJ)\krb5}.obj:
 	$(C2OBJ) -I$(OBJ)\krb5 $(GCOPTS)
@@ -408,7 +422,7 @@ GCOPTS=-I$(SRCDIR) -I$(OBJ) -DBUILD_GSSAPI_LIB
 	$(C2OBJ) -I$(OBJ)\spnego $(GCOPTS)
 
 {spnego}.c{$(OBJ)\spnego}.obj:
-	$(C2OBJ) -I$(OBJ)\spnego $(GCOPTS)
+	$(C2OBJ) -I$(OBJ)\spnego -Imech $(GCOPTS)
 
 {$(OBJ)\gssapi}.c{$(OBJ)\gssapi}.obj:
 	$(C2OBJ) -I$(OBJ)\gssapi $(GCOPTS)

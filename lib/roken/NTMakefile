@@ -37,6 +37,7 @@ libroken_la_OBJS =			\
 	$(OBJ)\base64.obj		\
 	$(OBJ)\bswap.obj		\
 	$(OBJ)\concat.obj		\
+	$(OBJ)\cloexec.obj		\
 	$(OBJ)\dirent.obj		\
 	$(OBJ)\dlfcn_w32.obj		\
 	$(OBJ)\dumpdata.obj		\
@@ -102,7 +103,8 @@ libroken_la_OBJS =			\
 	$(OBJ)\vwarnx.obj		\
 	$(OBJ)\warn.obj			\
 	$(OBJ)\warnerr.obj		\
-	$(OBJ)\warnx.obj
+	$(OBJ)\warnx.obj		\
+	$(OBJ)\xfree.obj
 
 {}.c{$(OBJ)}.obj:
 	$(C2OBJ) -DBUILD_ROKEN_LIB

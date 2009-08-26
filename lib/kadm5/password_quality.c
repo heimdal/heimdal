@@ -199,7 +199,7 @@ external_passwd_quality (krb5_context context,
 
 	fclose(out);
 	fclose(error);
-	waitpid(child, &status, 0);
+	wait_for_process(child);
 	return 1;
     }
     reply[strcspn(reply, "\n")] = '\0';
@@ -207,12 +207,9 @@ external_passwd_quality (krb5_context context,
     fclose(out);
     fclose(error);
 
-    if (waitpid(child, &status, 0) < 0) {
-	snprintf(message, length, "external program failed: %s", reply);
-	free(p);
-	return 1;
-    }
-    if (!WIFEXITED(status) || WEXITSTATUS(status) != 0) {
+    status = wait_for_process(child);
+
+    if (SE_IS_ERROR(status) || SE_PROCSTATUS(status) != 0) {
 	snprintf(message, length, "external program failed: %s", reply);
 	free(p);
 	return 1;

@@ -40,6 +40,7 @@ gen_files_hdb = \
 	$(OBJ)\asn1_HDBFlags.x \
 	$(OBJ)\asn1_GENERATION.x \
 	$(OBJ)\asn1_HDB_Ext_PKINIT_acl.x \
+	$(OBJ)\asn1_HDB_Ext_PKINIT_cert.x \
 	$(OBJ)\asn1_HDB_Ext_PKINIT_hash.x \
 	$(OBJ)\asn1_HDB_Ext_Constrained_delegation_acl.x \
 	$(OBJ)\asn1_HDB_Ext_Lan_Manager_OWF.x \
@@ -48,9 +49,10 @@ gen_files_hdb = \
 	$(OBJ)\asn1_HDB_extension.x \
 	$(OBJ)\asn1_HDB_extensions.x \
 	$(OBJ)\asn1_hdb_entry.x \
-	$(OBJ)\asn1_hdb_entry_alias.x
+	$(OBJ)\asn1_hdb_entry_alias.x \
+	$(OBJ)\asn1_hdb_keyset.x
 
-$(gen_files_hdb) $(OBJ)\hdb_asn1.h: $(BINDIR)\asn1_compile.exe hdb.asn1
+$(gen_files_hdb) $(OBJ)\hdb_asn1.hx: $(BINDIR)\asn1_compile.exe hdb.asn1
 	cd $(OBJ)
 	$(BINDIR)\asn1_compile.exe $(SRCDIR)\hdb.asn1 hdb_asn1
 	cd $(SRCDIR)
@@ -87,8 +89,8 @@ dist_libhdb_la_SOURCES =			\
 	ext.c					\
 	$(ldap_c)				\
 	hdb.c					\
+	hdb-sqlite.c				\
 	hdb_locl.h				\
-	hdb-private.h				\
 	keys.c					\
 	keytab.c				\
 	dbinfo.c				\
@@ -103,6 +105,7 @@ libhdb_OBJs= \
 	$(OBJ)\ext.obj		\
 	$(ldap)			\
 	$(OBJ)\hdb.obj		\
+	$(OBJ)\hdb-sqlite.obj	\
 	$(OBJ)\keys.obj		\
 	$(OBJ)\keytab.obj	\
 	$(OBJ)\dbinfo.obj	\
@@ -117,11 +120,11 @@ $(OBJ)\hdb_err.c $(OBJ)\hdb_err.h: hdb_err.et
 	$(BINDIR)\compile_et.exe $(SRCDIR)\hdb_err.et
 	cd $(SRCDIR)
 
-$(OBJ)\hdb-protos.h:
+$(OBJ)\hdb-protos.h: $(dist_libhdb_la_SOURCES)
 	$(PERL) ../../cf/make-proto.pl -q -P remove -o $@ $(dist_libhdb_la_SOURCES) \
 		|| $(RM) $@
 
-$(OBJ)\hdb-private.h:
+$(OBJ)\hdb-private.h: $(dist_libhdb_la_SOURCES)
 	$(PERL) ../../cf/make-proto.pl -q -P remote -p $@ $(dist_libhdb_la_SOURCES) \
 		|| $(RM) $@
 
@@ -143,7 +146,21 @@ clean::
 
 test:: test-binaries test-run
 
-test-binaries: $(OBJ)\test_dbinfo.exe
+test-binaries: $(OBJ)\test_dbinfo.exe $(OBJ)\test_hdbkeys.exe
+
+$(OBJ)\test_dbinfo.exe: $(OBJ)\test_dbinfo.obj $(LIBHDB) $(LIBKRB5) $(LIBROKEN) $(LIBVERS)
+	$(EXECONLINK)
+	$(_VC_MANIFEST_EMBED_EXE)
+
+$(OBJ)\test_hdbkeys.exe: $(OBJ)\test_hdbkeys.obj $(LIBHDB) $(LIBKRB5) $(LIBROKEN) $(LIBASN1) $(LIBVERS)
+	$(EXECONLINK)
+	$(_VC_MANIFEST_EMBED_EXE)
+
+test-run:
+	cd $(OBJ)
+	test_dbinfo.exe
+	test_hdbkeys.exe
+	cd $(SRCDIR)
 
 !ifdef OPENLDAP_INC
 openldap_inc_flag=-I$(OPENLDAP_INC)
@@ -151,7 +168,7 @@ openldap_inc_flag=-I$(OPENLDAP_INC)
 openldap_inc_flag=
 !endif
 
-hdb_cflags=-D_HDB_DB_DIR=$(DIR_hdbdir) $(openldap_inc_flag) -I$(OBJ)
+hdb_cflags=$(openldap_inc_flag) -I$(OBJ)
 
 {}.c{$(OBJ)}.obj:
 	$(C2OBJ) $(hdb_cflags)

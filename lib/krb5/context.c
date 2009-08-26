@@ -838,20 +838,23 @@ krb5_init_ets(krb5_context context)
 {
     if(context->et_list == NULL){
 	krb5_add_et_list(context, initialize_krb5_error_table_r);
-	bindtextdomain(COM_ERR_BINDDOMAIN_krb5, HEIMDAL_LOCALEDIR);
-
 	krb5_add_et_list(context, initialize_asn1_error_table_r);
-	bindtextdomain(COM_ERR_BINDDOMAIN_asn1, HEIMDAL_LOCALEDIR);
-
 	krb5_add_et_list(context, initialize_heim_error_table_r);
-	bindtextdomain(COM_ERR_BINDDOMAIN_heim, HEIMDAL_LOCALEDIR);
 
 	krb5_add_et_list(context, initialize_k524_error_table_r);
+
+#ifdef COM_ERR_BINDDOMAIN_krb5
+	bindtextdomain(COM_ERR_BINDDOMAIN_krb5, HEIMDAL_LOCALEDIR);
+	bindtextdomain(COM_ERR_BINDDOMAIN_asn1, HEIMDAL_LOCALEDIR);
+	bindtextdomain(COM_ERR_BINDDOMAIN_heim, HEIMDAL_LOCALEDIR);
 	bindtextdomain(COM_ERR_BINDDOMAIN_k524, HEIMDAL_LOCALEDIR);
+#endif
 
 #ifdef PKINIT
 	krb5_add_et_list(context, initialize_hx_error_table_r);
+#ifdef COM_ERR_BINDDOMAIN_hx
 	bindtextdomain(COM_ERR_BINDDOMAIN_hx, HEIMDAL_LOCALEDIR);
+#endif
 #endif
     }
 }

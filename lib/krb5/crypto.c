@@ -5030,12 +5030,12 @@ krb5_crypto_fx_cf2(krb5_context context,
  * @ingroup krb5_deprecated
  */
 
+KRB5_DEPRECATED
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_keytype_to_enctypes (krb5_context context,
 			  krb5_keytype keytype,
 			  unsigned *len,
 			  krb5_enctype **val)
-    KRB5_DEPRECATED
 {
     int i;
     unsigned n = 0;
@@ -5077,11 +5077,11 @@ krb5_keytype_to_enctypes (krb5_context context,
  */
 
 /* if two enctypes have compatible keys */
+KRB5_DEPRECATED
 KRB5_LIB_FUNCTION krb5_boolean KRB5_LIB_CALL
 krb5_enctypes_compatible_keys(krb5_context context,
 			      krb5_enctype etype1,
 			      krb5_enctype etype2)
-    KRB5_DEPRECATED
 {
     struct encryption_type *e1 = _find_enctype(etype1);
     struct encryption_type *e2 = _find_enctype(etype2);

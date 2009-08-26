@@ -853,7 +853,7 @@ static struct key_type keytype_aes128 = {
     AES_salt,
     NULL,
     evp_cleanup,
-    EVP_hcrypto_aes_128_cts
+    EVP_aes_128_cbc
 };
 
 static struct key_type keytype_aes256 = {
@@ -867,7 +867,7 @@ static struct key_type keytype_aes256 = {
     AES_salt,
     NULL,
     evp_cleanup,
-    EVP_hcrypto_aes_256_cts
+    EVP_aes_256_cbc
 };
 
 static struct key_type keytype_arcfour = {
@@ -2068,6 +2068,102 @@ evp_encrypt(krb5_context context,
     return 0;
 }
 
+static const char zero_ivec[EVP_MAX_BLOCK_LENGTH] = { 0 };
+
+static krb5_error_code
+evp_encrypt_cts(krb5_context context,
+		struct key_data *key,
+		void *data,
+		size_t len,
+		krb5_boolean encryptp,
+		int usage,
+		void *ivec)
+{
+    size_t i, blocksize;
+    struct evp_schedule *ctx = key->schedule->data;
+    char tmp[EVP_MAX_BLOCK_LENGTH], ivec2[EVP_MAX_BLOCK_LENGTH];
+    EVP_CIPHER_CTX *c;
+    unsigned char *p;
+
+    c = encryptp ? &ctx->ectx : &ctx->dctx;
+
+    blocksize = EVP_CIPHER_CTX_block_size(c);
+
+    if (len < blocksize) {
+	krb5_set_error_message(context, EINVAL,
+			       "message block too short");
+	return EINVAL;
+    } else if (len == blocksize) {
+	EVP_CipherInit_ex(c, NULL, NULL, NULL, zero_ivec, -1);
+	EVP_Cipher(c, data, data, len);
+	return 0;
+    }
+
+    if (ivec)
+	EVP_CipherInit_ex(c, NULL, NULL, NULL, ivec, -1);
+    else
+	EVP_CipherInit_ex(c, NULL, NULL, NULL, zero_ivec, -1);
+
+    if (encryptp) {
+
+	p = data;
+	i = ((len - 1) / blocksize) * blocksize;
+	EVP_Cipher(c, p, p, i);
+	p += i - blocksize;
+	len -= i;
+	memcpy(ivec2, p, blocksize);
+
+	for (i = 0; i < len; i++)
+	    tmp[i] = p[i + blocksize] ^ ivec2[i];
+	for (; i < blocksize; i++)
+	    tmp[i] = 0 ^ ivec2[i];
+	
+	EVP_CipherInit_ex(c, NULL, NULL, NULL, zero_ivec, -1);
+	EVP_Cipher(c, p, tmp, blocksize);
+	
+	memcpy(p + blocksize, ivec2, len);
+	if (ivec)
+	    memcpy(ivec, p, blocksize);
+    } else { 
+	char tmp2[EVP_MAX_BLOCK_LENGTH], tmp3[EVP_MAX_BLOCK_LENGTH];
+
+	p = data;
+	if (len > blocksize * 2) {
+	    /* remove last two blocks and round up, decrypt this with cbc, then do cts dance */
+	    i = ((((len - blocksize * 2) + blocksize - 1) / blocksize) * blocksize);
+	    memcpy(ivec2, p + i - blocksize, blocksize);
+	    EVP_Cipher(c, p, p, i);
+	    p += i;
+	    len -= i + blocksize;
+	} else {
+	    if (ivec)
+		memcpy(ivec2, ivec, blocksize);
+	    else
+		memcpy(ivec2, zero_ivec, blocksize);
+	    len -= blocksize;
+	}
+
+	memcpy(tmp, p, blocksize);
+	EVP_CipherInit_ex(c, NULL, NULL, NULL, zero_ivec, -1);
+	EVP_Cipher(c, tmp2, p, blocksize);
+
+	memcpy(tmp3, p + blocksize, len);
+	memcpy(tmp3 + len, tmp2 + len, blocksize - len); /* xor 0 */
+
+	for (i = 0; i < len; i++)
+	    p[i + blocksize] = tmp2[i] ^ tmp3[i];
+
+	EVP_CipherInit_ex(c, NULL, NULL, NULL, zero_ivec, -1);
+	EVP_Cipher(c, p, tmp3, blocksize);
+
+	for (i = 0; i < blocksize; i++)
+	    p[i] ^= ivec2[i];
+	if (ivec)
+	    memcpy(ivec, tmp, blocksize);
+    }
+    return 0;
+}
+
 #ifdef HEIM_WEAK_CRYPTO
 static krb5_error_code
 evp_des_encrypt_null_ivec(krb5_context context,
@@ -2485,7 +2581,7 @@ static struct encryption_type enctype_aes128_cts_hmac_sha1 = {
     &checksum_sha1,
     &checksum_hmac_sha1_aes128,
     F_DERIVED,
-    evp_encrypt,
+    evp_encrypt_cts,
     16,
     AES_PRF
 };
@@ -2499,7 +2595,7 @@ static struct encryption_type enctype_aes256_cts_hmac_sha1 = {
     &checksum_sha1,
     &checksum_hmac_sha1_aes256,
     F_DERIVED,
-    evp_encrypt,
+    evp_encrypt_cts,
     16,
     AES_PRF
 };

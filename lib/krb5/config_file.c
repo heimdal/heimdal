@@ -420,6 +420,7 @@ krb5_config_parse_file_multi (krb5_context context,
      * enabled by calling krb5_set_home_dir_access().
      */
     if (fname[0] == '~' && fname[1] == '/') {
+#ifndef KRB5_USE_PATH_TOKENS
 	const char *home = NULL;
 
 	if (!_krb5_homedir_access(context)) {
@@ -445,6 +446,15 @@ krb5_config_parse_file_multi (krb5_context context,
 	    }
 	    fname = newfname;
 	}
+#else  /* KRB5_USE_PATH_TOKENS */
+	asprintf(&newfname, "%%{APPDATA}%s", &fname[1]);
+	if (newfname == NULL) {
+	    krb5_set_error_message(context, ENOMEM,
+				   N_("malloc: out of memory", ""));
+	    return ENOMEM;
+	}
+	fname = newfname;
+#endif
     }
 
     if (is_plist_file(fname)) {

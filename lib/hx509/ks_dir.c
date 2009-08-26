@@ -113,7 +113,9 @@ dir_iter_start(hx509_context context,
 	free(d);
 	return errno;
     }
+#ifdef HAVE_DIRFD
     rk_cloexec(dirfd(d->dir));
+#endif
     d->certs = NULL;
     d->iter = NULL;
 

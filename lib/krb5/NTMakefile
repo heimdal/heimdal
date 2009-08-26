@@ -48,7 +48,6 @@ libkrb5_OBJS =			\
 	$(OBJ)\changepw.obj		    \
 	$(OBJ)\codec.obj		    \
 	$(OBJ)\config_file.obj		    \
-	$(OBJ)\config_file_netinfo.obj	    \
 	$(OBJ)\convert_creds.obj	    \
 	$(OBJ)\constants.obj		    \
 	$(OBJ)\context.obj		    \
@@ -57,6 +56,7 @@ libkrb5_OBJS =			\
 	$(OBJ)\creds.obj		    \
 	$(OBJ)\crypto.obj		    \
 	$(OBJ)\data.obj			    \
+	$(OBJ)\deprecated.obj		    \
 	$(OBJ)\digest.obj		    \
 	$(OBJ)\eai_to_heim_errno.obj	    \
 	$(OBJ)\error_string.obj		    \
@@ -74,9 +74,6 @@ libkrb5_OBJS =			\
 	$(OBJ)\get_for_creds.obj	    \
 	$(OBJ)\get_host_realm.obj	    \
 	$(OBJ)\get_in_tkt.obj		    \
-	$(OBJ)\get_in_tkt_pw.obj	    \
-	$(OBJ)\get_in_tkt_with_keytab.obj   \
-	$(OBJ)\get_in_tkt_with_skey.obj	    \
 	$(OBJ)\get_port.obj		    \
 	$(OBJ)\init_creds.obj		    \
 	$(OBJ)\init_creds_pw.obj	    \
@@ -86,7 +83,6 @@ libkrb5_OBJS =			\
 	$(OBJ)\keytab_any.obj		    \
 	$(OBJ)\keytab_file.obj		    \
 	$(OBJ)\keytab_keyfile.obj	    \
-	$(OBJ)\keytab_krb4.obj		    \
 	$(OBJ)\keytab_memory.obj	    \
 	$(OBJ)\krbhst.obj		    \
 	$(OBJ)\kuserok.obj		    \
@@ -146,7 +142,6 @@ libkrb5_gen_OBJS=	    \
 
 INCFILES=			\
 	$(INCDIR)\heim_err.h	\
-	$(INCDIR)\heim_threads.h	\
 	$(INCDIR)\k524_err.h	\
 	$(INCDIR)\krb_err.h	\
 	$(INCDIR)\krb5.h	\
@@ -161,115 +156,110 @@ all:: $(INCFILES)
 clean::
 	-$(RM) $(INCFILES)
 
-dist_libkrb5_la_SOURCES =	    \
-	acache.c		    \
-	acl.c			    \
-	add_et_list.c		    \
-	addr_families.c		    \
-	aname_to_localname.c	    \
-	appdefault.c		    \
-	asn1_glue.c		    \
-	auth_context.c		    \
-	build_ap_req.c		    \
-	build_auth.c		    \
-	cache.c			    \
-	changepw.c		    \
-	codec.c			    \
-	config_file.c		    \
-	config_file_netinfo.c	    \
-	convert_creds.c		    \
-	constants.c		    \
-	context.c		    \
-	copy_host_realm.c	    \
-	crc.c			    \
-	creds.c			    \
-	crypto.c		    \
-	doxygen.c		    \
-	data.c			    \
-	digest.c		    \
-	eai_to_heim_errno.c	    \
-	error_string.c		    \
-	expand_hostname.c	    \
-	expand_path_w32.c	    \
-	fcache.c		    \
-	free.c			    \
-	free_host_realm.c	    \
-	generate_seq_number.c	    \
-	generate_subkey.c	    \
-	get_addrs.c		    \
-	get_cred.c		    \
-	get_default_principal.c	    \
-	get_default_realm.c	    \
-	get_for_creds.c		    \
-	get_host_realm.c	    \
-	get_in_tkt.c		    \
-	get_in_tkt_pw.c		    \
-	get_in_tkt_with_keytab.c    \
-	get_in_tkt_with_skey.c	    \
-	get_port.c		    \
-	heim_threads.h		    \
-	init_creds.c		    \
-	init_creds_pw.c		    \
-	kcm.c			    \
-	kcm.h			    \
-	keyblock.c		    \
-	keytab.c		    \
-	keytab_any.c		    \
-	keytab_file.c		    \
-	keytab_keyfile.c	    \
-	keytab_krb4.c		    \
-	keytab_memory.c		    \
-	krb5_locl.h		    \
-	krb5-v4compat.h		    \
-	krbhst.c		    \
-	kuserok.c		    \
-	log.c			    \
-	mcache.c		    \
-	misc.c			    \
-	mk_error.c		    \
-	mk_priv.c		    \
-	mk_rep.c		    \
-	mk_req.c		    \
-	mk_req_ext.c		    \
-	mk_safe.c		    \
-	mit_glue.c		    \
-	net_read.c		    \
-	net_write.c		    \
-	n-fold.c		    \
-	pac.c			    \
-	padata.c		    \
-	pkinit.c		    \
-	principal.c		    \
-	prog_setup.c		    \
-	prompter_posix.c	    \
-	rd_cred.c		    \
-	rd_error.c		    \
-	rd_priv.c		    \
-	rd_rep.c		    \
-	rd_req.c		    \
-	rd_safe.c		    \
-	read_message.c		    \
-	recvauth.c		    \
-	replay.c		    \
-	scache.c		    \
-	send_to_kdc.c		    \
-	sendauth.c		    \
-	set_default_realm.c	    \
-	sock_principal.c	    \
-	store.c			    \
-	store-int.h		    \
-	store_emem.c		    \
-	store_fd.c		    \
-	store_mem.c		    \
-	plugin.c		    \
-	ticket.c		    \
-	time.c			    \
-	transited.c		    \
-	v4_glue.c		    \
-	verify_init.c		    \
-	verify_user.c		    \
-	version.c		    \
-	warn.c			    \
+dist_libkrb5_la_SOURCES =			\
+	acache.c				\
+	acl.c					\
+	add_et_list.c				\
+	addr_families.c				\
+	aname_to_localname.c			\
+	appdefault.c				\
+	asn1_glue.c				\
+	auth_context.c				\
+	build_ap_req.c				\
+	build_auth.c				\
+	cache.c					\
+	changepw.c				\
+	codec.c					\
+	config_file.c				\
+	convert_creds.c				\
+	constants.c				\
+	context.c				\
+	copy_host_realm.c			\
+	crc.c					\
+	creds.c					\
+	crypto.c				\
+	doxygen.c				\
+	data.c					\
+	deprecated.c				\
+	digest.c				\
+	eai_to_heim_errno.c			\
+	error_string.c				\
+	expand_hostname.c			\
+	expand_path_w32.c			\
+	fcache.c				\
+	free.c					\
+	free_host_realm.c			\
+	generate_seq_number.c			\
+	generate_subkey.c			\
+	get_addrs.c				\
+	get_cred.c				\
+	get_default_principal.c			\
+	get_default_realm.c			\
+	get_for_creds.c				\
+	get_host_realm.c			\
+	get_in_tkt.c				\
+	get_port.c				\
+	init_creds.c				\
+	init_creds_pw.c				\
+	kcm.c					\
+	kcm.h					\
+	keyblock.c				\
+	keytab.c				\
+	keytab_any.c				\
+	keytab_file.c				\
+	keytab_keyfile.c			\
+	keytab_memory.c				\
+	krb5_locl.h				\
+	krb5-v4compat.h				\
+	krbhst.c				\
+	kuserok.c				\
+	log.c					\
+	mcache.c				\
+	misc.c					\
+	mk_error.c				\
+	mk_priv.c				\
+	mk_rep.c				\
+	mk_req.c				\
+	mk_req_ext.c				\
+	mk_safe.c				\
+	mit_glue.c				\
+	net_read.c				\
+	net_write.c				\
+	n-fold.c				\
+	pac.c					\
+	padata.c				\
+	pkinit.c				\
+	principal.c				\
+	prog_setup.c				\
+	prompter_posix.c			\
+	rd_cred.c				\
+	rd_error.c				\
+	rd_priv.c				\
+	rd_rep.c				\
+	rd_req.c				\
+	rd_safe.c				\
+	read_message.c				\
+	recvauth.c				\
+	replay.c				\
+	scache.c				\
+	send_to_kdc.c				\
+	sendauth.c				\
+	set_default_realm.c			\
+	sock_principal.c			\
+	store.c					\
+	store-int.h				\
+	store_emem.c				\
+	store_fd.c				\
+	store_mem.c				\
+	plugin.c				\
+	ticket.c				\
+	time.c					\
+	transited.c				\
+	v4_glue.c				\
+	verify_init.c				\
+	verify_user.c				\
+	version.c				\
+	warn.c					\
 	write_message.c
 
 $(OBJ)\krb5-protos.h: $(dist_libkrb5_la_SOURCES)
@@ -329,9 +319,12 @@ DLLSDKDEPS= \
 
 $(LIBKRB5): $(BINDIR)\libkrb5.dll
 
-$(BINDIR)\libkrb5.dll: $(libkrb5_OBJS) $(libkrb5_gen_OBJS) $(DLLDEPS)
+$(OBJ)\libkrb5-exports.def: libkrb5-exports.def.in $(INCDIR)\config.h
+	$(CPREPROCESSOUT) libkrb5-exports.def.in > $@ || $(RM) $@
+
+$(BINDIR)\libkrb5.dll: $(libkrb5_OBJS) $(libkrb5_gen_OBJS) $(DLLDEPS) $(OBJ)\libkrb5-exports.def
 	$(DLLGUILINK_C) -out:$(BINDIR)\libkrb5.dll -implib:$(LIBKRB5) \
-		$(DLLDEPS) $(DLLSDKDEPS) -def:libkrb5-exports.def @<<
+		$(DLLDEPS) $(DLLSDKDEPS) -def:$(OBJ)\libkrb5-exports.def @<<
 $(libkrb5_OBJS: =
 )
 $(libkrb5_gen_OBJS: =

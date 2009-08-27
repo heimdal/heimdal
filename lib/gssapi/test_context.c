@@ -483,7 +483,7 @@ main(int argc, char **argv)
     OM_uint32 min_stat, maj_stat;
     gss_ctx_id_t cctx, sctx;
     void *ctx;
-    gss_OID nameoid, mechoid, actual_mech;
+    gss_OID nameoid, mechoid, actual_mech, actual_mech2;
     gss_cred_id_t deleg_cred = GSS_C_NO_CREDENTIAL;
 
     setprogname(argv[0]);
@@ -775,7 +775,7 @@ main(int argc, char **argv)
 	gss_cred_id_t cred2 = GSS_C_NO_CREDENTIAL;
 	gss_buffer_desc cb;
 
-	loop(mechoid, nameoid, argv[0], deleg_cred, &cctx, &sctx, &actual_mech, &cred2);
+	loop(actual_mech, nameoid, argv[0], deleg_cred, &cctx, &sctx, &actual_mech2, &cred2);
 
 	gss_delete_sec_context(&min_stat, &cctx, NULL);
 	gss_delete_sec_context(&min_stat, &sctx, NULL);
@@ -797,7 +797,7 @@ main(int argc, char **argv)
 	    gss_release_buffer(&min_stat, &cb);
 	    gss_release_cred(&min_stat, &deleg_cred);
 	    
-	    loop(mechoid, nameoid, argv[0], cred2, &cctx, &sctx, &actual_mech, &deleg_cred);
+	    loop(actual_mech, nameoid, argv[0], cred2, &cctx, &sctx, &actual_mech2, &deleg_cred);
 
 	    gss_release_cred(&min_stat, &cred2);
 	}

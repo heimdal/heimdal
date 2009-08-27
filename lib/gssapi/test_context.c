@@ -249,6 +249,10 @@ wrapunwrap(gss_ctx_id_t cctx, gss_ctx_id_t sctx, int flags, gss_OID mechoid)
     if (maj_stat != GSS_S_COMPLETE)
 	errx(1, "gss_unwrap failed: %s",
 	     gssapi_err(maj_stat, min_stat, mechoid));
+
+    gss_release_buffer(&min_stat, &output_token);
+    gss_release_buffer(&min_stat, &output_token2);
+
 #if 0 /* doesn't work for NTLM yet */
     if (!!conf_state != !!flags)
 	errx(1, "conf_state mismatch");
@@ -417,6 +421,8 @@ getverifymic(gss_ctx_id_t cctx, gss_ctx_id_t sctx, gss_OID mechoid)
     if (maj_stat != GSS_S_COMPLETE)
 	errx(1, "gss_verify_mic failed: %s",
 	     gssapi_err(maj_stat, min_stat, mechoid));
+
+    gss_release_buffer(&min_stat, &output_token);
 }
 
 static void
@@ -776,7 +782,7 @@ main(int argc, char **argv)
 	if (verbose_flag)
 	    printf("checking actual mech (%s) on delegated cred\n", 
 		   oid_to_string(actual_mech));
-	loop(actual_mech, nameoid, argv[0], deleg_cred, &cctx, &sctx, &actual_mech2, &cred2);
+	loop(actual_mech, nameoid, argv[0], deleg_cred, &sctx, &cctx, &actual_mech2, &cred2);
 
 	gss_delete_sec_context(&min_stat, &cctx, NULL);
 	gss_delete_sec_context(&min_stat, &sctx, NULL);
@@ -786,7 +792,7 @@ main(int argc, char **argv)
 	/* try again using SPNEGO */
 	if (verbose_flag)
 	    printf("checking spnego on delegated cred\n");
-	loop(GSS_SPNEGO_MECHANISM, nameoid, argv[0], deleg_cred, &cctx, &sctx,
+	loop(GSS_SPNEGO_MECHANISM, nameoid, argv[0], deleg_cred, &sctx, &cctx,
 	     &actual_mech2, &cred2);
 
 	gss_delete_sec_context(&min_stat, &cctx, NULL);
@@ -813,7 +819,7 @@ main(int argc, char **argv)
 	    if (verbose_flag)
 		printf("checking actual mech (%s) on export/imported cred\n", 
 		       oid_to_string(actual_mech));
-	    loop(actual_mech, nameoid, argv[0], cred2, &cctx, &sctx,
+	    loop(actual_mech, nameoid, argv[0], cred2, &sctx, &cctx,
 		 &actual_mech2, &deleg_cred);
 
 	    gss_release_cred(&min_stat, &deleg_cred);
@@ -824,7 +830,7 @@ main(int argc, char **argv)
 	    /* try again using SPNEGO */
 	    if (verbose_flag)
 		printf("checking SPNEGO on export/imported cred\n");
-	    loop(GSS_SPNEGO_MECHANISM, nameoid, argv[0], cred2, &cctx, &sctx,
+	    loop(GSS_SPNEGO_MECHANISM, nameoid, argv[0], cred2, &sctx, &cctx,
 		 &actual_mech2, &deleg_cred);
 
 	    gss_release_cred(&min_stat, &deleg_cred);

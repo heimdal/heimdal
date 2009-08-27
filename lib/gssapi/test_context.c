@@ -378,7 +378,7 @@ wrapunwrap_iov(gss_ctx_id_t cctx, gss_ctx_id_t sctx, int flags, gss_OID mechoid)
 			      &output, &conf_state2, &qop_state);
 
 	if (maj_stat != GSS_S_COMPLETE)
-	    errx(1, "gss_unwrap from gss_wrap_iow failed: %s",
+	    errx(1, "gss_unwrap from gss_wrap_iov failed: %s",
 		 gssapi_err(maj_stat, min_stat, mechoid));
 
 	gss_release_buffer(&min_stat, &output);

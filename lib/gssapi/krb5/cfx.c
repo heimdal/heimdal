@@ -608,8 +608,13 @@ _gssapi_wrap_cfx_iov(OM_uint32 *minor_status,
 	    goto failure;
 	}
 
-	token->EC[0] =  (trailer->buffer.length >> 8) & 0xFF;
-	token->EC[1] =  (trailer->buffer.length >> 0) & 0xFF;
+	if (trailer) {
+	    token->EC[0] =  (trailer->buffer.length >> 8) & 0xFF;
+	    token->EC[1] =  (trailer->buffer.length >> 0) & 0xFF;
+	} else {
+	    token->EC[0] =  0;
+	    token->EC[1] =  0;
+	}
     }
 
     if (conf_state != NULL)

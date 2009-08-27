@@ -39,6 +39,7 @@ static gssapi_mech_interface_desc ntlm_mech = {
     GMI_VERSION,
     "ntlm",
     {10, rk_UNCONST("\x2b\x06\x01\x04\x01\x82\x37\x02\x02\x0a") },
+    0,
     _gss_ntlm_acquire_cred,
     _gss_ntlm_release_cred,
     _gss_ntlm_init_sec_context,

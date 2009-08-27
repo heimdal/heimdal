@@ -119,7 +119,10 @@ gss_init_sec_context(OM_uint32 * minor_status,
 	/*
 	 * If we have a cred, find the cred for this mechanism.
 	 */
-	cred_handle = _gss_mech_cred_find(initiator_cred_handle, mech_type);
+	if (m->gm_flags & GM_USE_MG_CRED)
+		cred_handle = initiator_cred_handle;
+	else
+		cred_handle = _gss_mech_cred_find(initiator_cred_handle, mech_type);
 
 	major_status = m->gm_init_sec_context(minor_status,
 	    cred_handle,

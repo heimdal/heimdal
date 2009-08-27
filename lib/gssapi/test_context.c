@@ -773,7 +773,21 @@ main(int argc, char **argv)
 	gss_cred_id_t cred2 = GSS_C_NO_CREDENTIAL;
 	gss_buffer_desc cb;
 
+	if (verbose_flag)
+	    printf("checking actual mech (%s) on delegated cred\n", 
+		   oid_to_string(actual_mech));
 	loop(actual_mech, nameoid, argv[0], deleg_cred, &cctx, &sctx, &actual_mech2, &cred2);
+
+	gss_delete_sec_context(&min_stat, &cctx, NULL);
+	gss_delete_sec_context(&min_stat, &sctx, NULL);
+
+	gss_release_cred(&min_stat, &cred2);
+
+	/* try again using SPNEGO */
+	if (verbose_flag)
+	    printf("checking spnego on delegated cred\n");
+	loop(GSS_SPNEGO_MECHANISM, nameoid, argv[0], deleg_cred, &cctx, &sctx,
+	     &actual_mech2, &cred2);
 
 	gss_delete_sec_context(&min_stat, &cctx, NULL);
 	gss_delete_sec_context(&min_stat, &sctx, NULL);
@@ -787,6 +801,7 @@ main(int argc, char **argv)
 	    if (maj_stat != GSS_S_COMPLETE)
 		errx(1, "export failed: %s",
 		     gssapi_err(maj_stat, min_stat, NULL));
+
 	    maj_stat = gss_import_cred(&min_stat, &cb, &cred2);
 	    if (maj_stat != GSS_S_COMPLETE)
 		errx(1, "import failed: %s",
@@ -795,15 +810,33 @@ main(int argc, char **argv)
 	    gss_release_buffer(&min_stat, &cb);
 	    gss_release_cred(&min_stat, &deleg_cred);
 	    
-	    loop(actual_mech, nameoid, argv[0], cred2, &cctx, &sctx, &actual_mech2, &deleg_cred);
+	    if (verbose_flag)
+		printf("checking actual mech (%s) on export/imported cred\n", 
+		       oid_to_string(actual_mech));
+	    loop(actual_mech, nameoid, argv[0], cred2, &cctx, &sctx,
+		 &actual_mech2, &deleg_cred);
+
+	    gss_release_cred(&min_stat, &deleg_cred);
+
+	    gss_delete_sec_context(&min_stat, &cctx, NULL);
+	    gss_delete_sec_context(&min_stat, &sctx, NULL);
+
+	    /* try again using SPNEGO */
+	    if (verbose_flag)
+		printf("checking SPNEGO on export/imported cred\n");
+	    loop(GSS_SPNEGO_MECHANISM, nameoid, argv[0], cred2, &cctx, &sctx,
+		 &actual_mech2, &deleg_cred);
+
+	    gss_release_cred(&min_stat, &deleg_cred);
+	    
+	    gss_delete_sec_context(&min_stat, &cctx, NULL);
+	    gss_delete_sec_context(&min_stat, &sctx, NULL);
 
 	    gss_release_cred(&min_stat, &cred2);
+
+	} else  {
+	    gss_release_cred(&min_stat, &deleg_cred);
 	}
-
-	gss_delete_sec_context(&min_stat, &cctx, NULL);
-	gss_delete_sec_context(&min_stat, &sctx, NULL);
-
-	gss_release_cred(&min_stat, &deleg_cred);
 
     }
 

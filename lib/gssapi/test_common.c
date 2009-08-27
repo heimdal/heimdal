@@ -35,8 +35,6 @@
 #include <err.h>
 #include "test_common.h"
 
-RCSID("$Id$");
-
 char *
 gssapi_err(OM_uint32 maj_stat, OM_uint32 min_stat, gss_OID mech)
 {

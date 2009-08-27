@@ -40,8 +40,6 @@
 #include <getarg.h>
 #include "test_common.h"
 
-RCSID("$Id$");
-
 #include <krb5.h>
 #include <heimntlm.h>
 

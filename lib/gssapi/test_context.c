@@ -40,8 +40,6 @@
 #include <gssapi_ntlm.h>
 #include "test_common.h"
 
-RCSID("$Id$");
-
 static char *type_string;
 static char *mech_string;
 static char *ret_mech_string;

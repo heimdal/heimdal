@@ -42,8 +42,6 @@
 #include <err.h>
 #include <roken.h>
 
-RCSID("$Id$");
-
 int
 main(int argc, char **argv)
 {

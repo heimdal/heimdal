@@ -48,8 +48,6 @@
 
 #include "test_common.h"
 
-RCSID("$Id$");
-
 static void
 print_time(OM_uint32 time_rec)
 {

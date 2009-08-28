@@ -750,6 +750,7 @@ main(int argc, char **argv)
 
     if (iov_flag) {
 	wrapunwrap_iov(cctx, sctx, 0, actual_mech);
+	wrapunwrap_iov(cctx, sctx, USE_HEADER_ONLY|FORCE_IOV, actual_mech);
 	wrapunwrap_iov(cctx, sctx, USE_HEADER_ONLY, actual_mech);
 	wrapunwrap_iov(cctx, sctx, USE_CONF, actual_mech);
 	wrapunwrap_iov(cctx, sctx, USE_CONF|USE_HEADER_ONLY, actual_mech);
@@ -759,9 +760,28 @@ main(int argc, char **argv)
 	wrapunwrap_iov(cctx, sctx, USE_HEADER_ONLY|FORCE_IOV, actual_mech);
 	wrapunwrap_iov(cctx, sctx, USE_CONF|USE_HEADER_ONLY|FORCE_IOV, actual_mech);
 
+	wrapunwrap_iov(cctx, sctx, USE_SIGN_ONLY|FORCE_IOV, actual_mech);
+	wrapunwrap_iov(cctx, sctx, USE_CONF|USE_SIGN_ONLY|FORCE_IOV, actual_mech);
+	wrapunwrap_iov(cctx, sctx, USE_CONF|USE_HEADER_ONLY|USE_SIGN_ONLY|FORCE_IOV, actual_mech);
+
+/* works */
+	wrapunwrap_iov(cctx, sctx, 0, actual_mech);
+	wrapunwrap_iov(cctx, sctx, FORCE_IOV, actual_mech);
+
+	wrapunwrap_iov(cctx, sctx, USE_CONF, actual_mech);
+	wrapunwrap_iov(cctx, sctx, USE_CONF|FORCE_IOV, actual_mech);
+
 	wrapunwrap_iov(cctx, sctx, USE_SIGN_ONLY, actual_mech);
+	wrapunwrap_iov(cctx, sctx, USE_SIGN_ONLY|FORCE_IOV, actual_mech);
+
 	wrapunwrap_iov(cctx, sctx, USE_CONF|USE_SIGN_ONLY, actual_mech);
-	wrapunwrap_iov(cctx, sctx, USE_CONF|USE_HEADER_ONLY|USE_SIGN_ONLY, actual_mech);
+	wrapunwrap_iov(cctx, sctx, USE_CONF|USE_SIGN_ONLY|FORCE_IOV, actual_mech);
+
+	wrapunwrap_iov(cctx, sctx, USE_HEADER_ONLY, actual_mech);
+	wrapunwrap_iov(cctx, sctx, USE_HEADER_ONLY|FORCE_IOV, actual_mech);
+
+	wrapunwrap_iov(cctx, sctx, USE_CONF|USE_HEADER_ONLY, actual_mech);
+	wrapunwrap_iov(cctx, sctx, USE_CONF|USE_HEADER_ONLY|FORCE_IOV, actual_mech);
     }
 
     if (getverifymic_flag) {

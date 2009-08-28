@@ -608,10 +608,13 @@ _gssapi_wrap_cfx_iov(OM_uint32 *minor_status,
 	    goto failure;
 	}
 
-	if (trailer) {
-	    token->EC[0] =  (trailer->buffer.length >> 8) & 0xFF;
-	    token->EC[1] =  (trailer->buffer.length >> 0) & 0xFF;
+	if (rrc) {
+	    token->RRC[0] = (rrc >> 8) & 0xFF;
+	    token->RRC[1] = (rrc >> 0) & 0xFF;
 	}
+
+	token->EC[0] =  (k5tsize >> 8) & 0xFF;
+	token->EC[1] =  (k5tsize >> 0) & 0xFF;
     }
 
     if (conf_state != NULL)
@@ -914,18 +917,23 @@ _gssapi_unwrap_cfx_iov(OM_uint32 *minor_status,
 	size_t gsstsize = ec;
 	size_t gsshsize = sizeof(*token);
 
-	/* Check RRC */
-	if (rrc != 0) {
-	    *minor_status = EINVAL;
-	    major_status = GSS_S_FAILURE;
-	    goto failure;
-	}
-
 	if (trailer == NULL) {
+	    /* Check RRC */
+	    if (rrc != gsstsize) {
+	       *minor_status = EINVAL;
+	       major_status = GSS_S_FAILURE;
+	       goto failure;
+	    }
+
 	    gsshsize += gsstsize;
 	    gsstsize = 0;
 	} else if (trailer->buffer.length != gsstsize) {
 	    major_status = GSS_S_DEFECTIVE_TOKEN;
+	    goto failure;
+	} else if (rrc != 0) {
+	    /* Check RRC */
+	    *minor_status = EINVAL;
+	    major_status = GSS_S_FAILURE;
 	    goto failure;
 	}
 

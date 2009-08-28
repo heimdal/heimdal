@@ -2,13 +2,13 @@ Release Notes - Heimdal - Version Heimdal 1.3
 
  New features
 
- - Partital support for MIT kadmind rpc protocol in kadmind
+ - Partial support for MIT kadmind rpc protocol in kadmind
  - Better support for finding keytab entries when using SPN aliases in the KDC
  - Support BER in ASN.1 library (needed for CMS)
  - Support decryption in Keychain private keys
  - Support for new sqlite based credential cache
- - Try both to KDC referals the the common DNS reverse lookup in GSS-API
- - Fix the KCM not not leak resources on failure
+ - Try both KDC referals and the common DNS reverse lookup in GSS-API
+ - Fix the KCM to not leak resources on failure
  - Add IPv6 support to iprop
  - Support localization of error strings in
    kinit/klist/kdestroy and Kerberos library

@@ -372,7 +372,7 @@ fi
 
 if ${hxtool} info | grep 'ecdsa: hcrypto null' > /dev/null ; then
     ecdsa=no
-else
+fi
 
 
 # If we support pkinit and have RSA, lets try that

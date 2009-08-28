@@ -142,7 +142,6 @@ OM_uint32 _gss_spnego_internal_delete_sec_context
     HEIMDAL_MUTEX_destroy(&ctx->ctx_id_mutex);
 
     free(ctx);
-    *context_handle = NULL;
 
     return ret;
 }

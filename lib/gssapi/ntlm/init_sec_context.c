@@ -155,6 +155,8 @@ get_user_ccache(const ntlm_name name, char **username, struct ntlm_buf *key)
     if (id)
 	krb5_cc_close(context, id);
 
+    krb5_free_context(context);
+
     return ret;
 }
 

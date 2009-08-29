@@ -81,9 +81,9 @@ static gssapi_mech_interface_desc spnego_mech = {
     _gss_spnego_set_sec_context_option,
     _gss_spnego_set_cred_option,
     _gss_spnego_pseudo_random,
-    NULL,
-    NULL,
-    NULL,
+    _gss_spnego_wrap_iov,
+    _gss_spnego_unwrap_iov,
+    _gss_spnego_wrap_iov_length,
     NULL,
     _gss_spnego_export_cred,
     _gss_spnego_import_cred

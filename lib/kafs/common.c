@@ -378,11 +378,14 @@ _kafs_try_get_cred(struct kafs_data *data, const char *user, const char *cell,
 
     ret = (*data->get_cred)(data, user, cell, realm, uid, kt);
     if (kafs_verbose) {
+	const char *estr = (*data->get_error)(data, ret);
 	char *str;
-	asprintf(&str, "%s tried afs%s%s@%s -> %d",
-		 data->name, cell[0] == '\0' ? "" : "/",
-		 cell, realm, ret);
+	asprintf(&str, "%s tried afs%s%s@%s -> %s (%d)",
+		 data->name, cell ? "/" : "",
+		 cell ? cell : "", realm, estr ? estr : "unknown", ret);
 	(*kafs_verbose)(kafs_verbose_ctx, str);
+	if (estr)
+	    (*data->free_error)(data, estr);
 	free(str);
     }
 
@@ -431,7 +434,7 @@ _kafs_get_cred(struct kafs_data *data,
 				 cell, realm_hint, uid, kt);
 	if (ret == 0) return 0;
 	ret = _kafs_try_get_cred(data, AUTH_SUPERUSER,
-				 "", realm_hint, uid, kt);
+				 NULL, realm_hint, uid, kt);
 	if (ret == 0) return 0;
     }
 
@@ -452,7 +455,7 @@ _kafs_get_cred(struct kafs_data *data,
      */
     if (strcmp(CELL, realm) == 0) {
         ret = _kafs_try_get_cred(data, AUTH_SUPERUSER,
-				 "", realm, uid, kt);
+				 NULL, realm, uid, kt);
 	if (ret == 0) return 0;
     }
 
@@ -463,7 +466,7 @@ _kafs_get_cred(struct kafs_data *data,
      * Try afs.cell@CELL.
      */
     ret = _kafs_try_get_cred(data, AUTH_SUPERUSER,
-			     "", CELL, uid, kt);
+			     NULL, CELL, uid, kt);
     if (ret == 0) return 0;
     ret = _kafs_try_get_cred(data, AUTH_SUPERUSER,
 			     cell, CELL, uid, kt);
@@ -482,7 +485,7 @@ _kafs_get_cred(struct kafs_data *data,
 				 cell, vl_realm, uid, kt);
 	if (ret)
 	    ret = _kafs_try_get_cred(data, AUTH_SUPERUSER,
-				     "", vl_realm, uid, kt);
+				     NULL, vl_realm, uid, kt);
 	free(vl_realm);
 	if (ret == 0) return 0;
     }

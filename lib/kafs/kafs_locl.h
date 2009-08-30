@@ -123,6 +123,8 @@ struct kafs_data {
     afslog_uid_func_t afslog_uid;
     get_cred_func_t get_cred;
     get_realm_func_t get_realm;
+    const char *(*get_error)(struct kafs_data *, int);
+    void (*free_error)(struct kafs_data *, const char *);
     void *data;
 };
 

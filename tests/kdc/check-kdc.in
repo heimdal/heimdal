@@ -113,6 +113,7 @@ ${kadmin} add -p bar --use-defaults bar@${R} || exit 1
 ${kadmin} add -p foo --use-defaults remove@${R} || exit 1
 ${kadmin} add -p kaka --use-defaults ${server}@${R} || exit 1
 ${kadmin} add -p kaka --use-defaults ${server}-des3@${R} || exit 1
+${kadmin} add -p kaka --use-defaults kt-des3@${R} || exit 1
 ${kadmin} add -p foo --use-defaults ${ps} || exit 1
 ${kadmin} modify --attributes=+trusted-for-delegation ${ps} || exit 1
 ${kadmin} modify --constrained-delegation=${server} ${ps} || exit 1
@@ -156,6 +157,12 @@ enctypes=`grep Keytypes: tempfile | sed 's/(pw-salt)//g' | sed 's/,//g' | sed 's
 
 enctype_sans_aes=`echo $enctypes | sed 's/aes[^ ]*//g'`
 enctype_sans_des3=`echo $enctypes | sed 's/des3-cbc-sha1//g'`
+
+echo "deleting all but des enctypes on kt-des3 in keytab"
+${kadmin} ext -k ${keytab} kt-des3@${R} || exit 1
+for a in ${enctype_sans_des3} ; do
+   ${ktutil} -k ${keytab} remove -p kt-des3@${R} -e $a
+done
 
 echo foo > ${objdir}/foopassword
 
@@ -271,6 +278,12 @@ echo "Getting server initial tickets"; > messages.log
 ${kinit} --keytab=${keytab} ${server}@$R || { ec=1 ; eval "${testfailed}"; }
 echo "Listing tickets"; > messages.log
 ${klist} | grep "Principal: ${server}" > /dev/null || \
+	{ ec=1 ; eval "${testfailed}"; }
+${kdestroy}
+
+echo "Getting key for key that are a subset in keytab compared to kdb"
+${kinit} --keytab=${keytab} kt-des3@${R}
+${klist} | grep "Principal: kt-des3" > /dev/null || \
 	{ ec=1 ; eval "${testfailed}"; }
 ${kdestroy}
 

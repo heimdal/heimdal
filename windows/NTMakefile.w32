@@ -144,7 +144,7 @@ pthreadinc= -I$(PTHREAD_INC)
 #----------------------------------------------------------------
 # Build options
 
-cincdirs=$(cincdirs) -I$(INCDIR) $(pthreadinc)
+cincdirs=$(cincdirs) -I$(INCDIR) -I$(INCDIR)\krb5 $(pthreadinc)
 cdefines=$(cdefines) -DHAVE_CONFIG_H
 cwarn=$(cwarn) -D_CRT_SECURE_NO_WARNINGS -wd4996
 
@@ -259,13 +259,13 @@ prep:: show-cmds
 {$(OBJ)}.cpp{$(OBJ)}.obj:
 	$(C2OBJ)
 
-{}.hin{}.h:
-	$(CP) $< $@
-
 {}.hin{$(INCDIR)}.h:
 	$(CP) $< $@
 
 {}.h{$(INCDIR)}.h:
+	$(CP) $< $@
+
+{}.h{$(INCDIR)\krb5}.h:
 	$(CP) $< $@
 
 {$(OBJ)}.h{$(INCDIR)}.h:
@@ -325,7 +325,9 @@ mkdirs:
 !  if !exist($(INCDIR)\kadm5)
 	$(MKDIR) $(INCDIR)\kadm5
 !  endif
-
+!  if !exist($(INCDIR)\krb5)
+	$(MKDIR) $(INCDIR)\krb5
+!  endif
 
 #----------------------------------------------------------------------
 # If SUBDIRS is defined, we should recurse into the subdirectories
@@ -368,11 +370,12 @@ clean::
 # Starting with Visual Studio 8, the C compiler and the linker
 # generate manifests so that the applications will link with the
 # correct side-by-side DLLs at run-time.  These are required for
-# correct operation under Windows XP.  We also have custom manifests
-# which need to be merged with the manifests that VS creates.
+# correct operation under Windows XP and later.  We also have custom
+# manifests which need to be merged with the manifests that VS
+# creates.
 #
-# The syntax for invoking the _VC_MANIFEST_EMBED_foo macro is:
-# $(_VC_MANIFEST_EMBED_???) <any additional manifests that need to be merged in>
+# The syntax for invoking the _VC_MANIFEST_EMBED_FOO macro is:
+# $(_VC_MANIFEST_EMBED_???) <additional manifests>
 #
 
 MT=mt.exe -nologo
@@ -388,6 +391,7 @@ if exist $@.manifest $(MT) -outputresource:$@;2 -manifest $@.manifest
 # This ensures that even if the DLL or EXE is executed in-place, the
 # embedded manifest will be used.  Otherwise the $@.manifest file will
 # be used.
+
 _VC_MANIFEST_CLEAN= \
 if exist $@.manifest $(RM) $@.manifest
 
@@ -400,9 +404,32 @@ _CODESIGN=$(CODESIGN) $@
 _CODESIGN=
 !endif
 
+#----------------------------------------------------------------------
+# Convenience macros for preparing EXEs and DLLs.  These are multiline
+# macros that deal with manifests and code signing.  Unless we need to
+# include custom manifests, these are what we should be using to
+# prepare binaries.
+
+EXEPREP=\
+$(_VC_MANIFEST_EMBED_EXE)^
+$(_VC_MANIFEST_CLEAN)^
+$(_CODESIGN)
+
+EXEPREP_NODIST=\
+$(_VC_MANIFEST_EMBED_EXE)^
+$(_VC_MANIFEST_CLEAN)
+
+DLLPREP=\
+$(_VC_MANIFEST_EMBED_DLL)^
+$(_VC_MANIFEST_CLEAN)^
+$(_CODESIGN)
+
+DLLPREP_NODIST=\
+$(_VC_MANIFEST_EMBED_DLL)^
+$(_VC_MANIFEST_CLEAN)
 
 #----------------------------------------------------------------------
-# Various libraries
+# Convenience macros for import libraries
 #
 
 LIBROKEN    =$(LIBDIR)\libroken.lib
@@ -421,3 +448,4 @@ LIBGSSAPI   =$(LIBDIR)\libgssapi.lib
 LIBHDB	    =$(LIBDIR)\libhdb.lib
 LIBKADM5SRV =$(LIBDIR)\libkadm5srv.lib
 LIBKADM5CLNT=$(LIBDIR)\libkadm5clnt.lib
+LIBKDC	    =$(LIBDIR)\libkdc.lib

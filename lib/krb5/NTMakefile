@@ -149,7 +149,8 @@ INCFILES=			\
 	$(INCDIR)\krb5_err.h	\
 	$(INCDIR)\krb5_locl.h	\
 	$(INCDIR)\krb5-protos.h	\
-	$(INCDIR)\krb5-private.h
+	$(INCDIR)\krb5-private.h	\
+	$(INCDIR)\krb5-v4compat.h
 
 all:: $(INCFILES)
 

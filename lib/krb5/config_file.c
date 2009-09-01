@@ -763,7 +763,7 @@ cleanup:
  *
  * @param context A Kerberos 5 context.
  * @param c a configuration section, or NULL to use the section from context
- * @param args a va_list of arguments
+ * @param ... a list of names, terminated with NULL.
  *
  * @return TRUE or FALSE
  *

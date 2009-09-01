@@ -90,7 +90,7 @@ dist_libkadm5srv_la_SOURCES =	\
 	kadm5-pwcheck.h		\
 	admin.h
 
-LIBKADM5CLNT_OBJs=		    \
+LIBKADM5CLNT_OBJS=		    \
 	$(OBJ)\ad.obj		    \
 	$(OBJ)\chpass_c.obj	    \
 	$(OBJ)\client_glue.obj	    \
@@ -159,7 +159,8 @@ $(OBJ)\kadm5-private.h: $(dist_libkadm5srv_la_SOURCES) $(dist_libkadm5clnt_la_SO
 
 $(OBJ)\iprop-commands.c $(OBJ)\iprop-commands.h: iprop-commands.in
 	cd $(OBJ)
-	$(BINDIR)\slc.exe $(SRCDIR)\iprop-commands.in
+	$(CP) $(SRCDIR)\iprop-commands.in $(OBJ)
+	$(BINDIR)\slc.exe iprop-commands.in
 	cd $(SRCDIR)
 
 $(OBJ)\kadm5_err.h $(OBJ)kadm5_err.c: kadm5_err.et

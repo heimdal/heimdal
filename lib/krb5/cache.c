@@ -119,8 +119,8 @@ krb5_cc_register(krb5_context context,
 {
     int i;
 
-    for(i = 0; i < context->num_cc_ops && context->cc_ops[i].prefix; i++) {
-	if(strcmp(context->cc_ops[i].prefix, ops->prefix) == 0) {
+    for(i = 0; i < context->num_cc_ops && context->cc_ops[i]->prefix; i++) {
+	if(strcmp(context->cc_ops[i]->prefix, ops->prefix) == 0) {
 	    if(!override) {
 		krb5_set_error_message(context,
 				       KRB5_CC_TYPE_EXISTS,
@@ -132,20 +132,19 @@ krb5_cc_register(krb5_context context,
 	}
     }
     if(i == context->num_cc_ops) {
-	krb5_cc_ops *o = realloc(context->cc_ops,
-				 (context->num_cc_ops + 1) *
-				 sizeof(*context->cc_ops));
+	const krb5_cc_ops **o = realloc(context->cc_ops,
+					(context->num_cc_ops + 1) *
+					sizeof(context->cc_ops[0]));
 	if(o == NULL) {
 	    krb5_set_error_message(context, KRB5_CC_NOMEM,
 				   N_("malloc: out of memory", ""));
 	    return KRB5_CC_NOMEM;
 	}
-	context->num_cc_ops++;
 	context->cc_ops = o;
-	memset(context->cc_ops + i, 0,
-	       (context->num_cc_ops - i) * sizeof(*context->cc_ops));
+	context->cc_ops[context->num_cc_ops] = NULL;
+	context->num_cc_ops++;
     }
-    memcpy(&context->cc_ops[i], ops, sizeof(context->cc_ops[i]));
+    context->cc_ops[i] = ops;
     return 0;
 }
 
@@ -219,12 +218,12 @@ krb5_cc_resolve(krb5_context context,
 
     *id = NULL;
 
-    for(i = 0; i < context->num_cc_ops && context->cc_ops[i].prefix; i++) {
-	size_t prefix_len = strlen(context->cc_ops[i].prefix);
+    for(i = 0; i < context->num_cc_ops && context->cc_ops[i]->prefix; i++) {
+	size_t prefix_len = strlen(context->cc_ops[i]->prefix);
 
-	if(strncmp(context->cc_ops[i].prefix, name, prefix_len) == 0
+	if(strncmp(context->cc_ops[i]->prefix, name, prefix_len) == 0
 	   && name[prefix_len] == ':') {
-	    return allocate_ccache (context, &context->cc_ops[i],
+	    return allocate_ccache (context, context->cc_ops[i],
 				    name + prefix_len + 1,
 				    id);
 	}
@@ -970,10 +969,10 @@ krb5_cc_get_prefix_ops(krb5_context context, const char *prefix)
     if (p1)
 	*p1 = '\0';
 
-    for(i = 0; i < context->num_cc_ops && context->cc_ops[i].prefix; i++) {
-	if(strcmp(context->cc_ops[i].prefix, p) == 0) {
+    for(i = 0; i < context->num_cc_ops && context->cc_ops[i]->prefix; i++) {
+	if(strcmp(context->cc_ops[i]->prefix, p) == 0) {
 	    free(p);
-	    return &context->cc_ops[i];
+	    return context->cc_ops[i];
 	}
     }
     free(p);
@@ -1402,7 +1401,7 @@ krb5_cccol_cursor_next(krb5_context context, krb5_cccol_cursor cursor,
 
 	if (cursor->cursor == NULL) {
 	    ret = krb5_cc_cache_get_first (context, 
-					   context->cc_ops[cursor->idx].prefix,
+					   context->cc_ops[cursor->idx]->prefix,
 					   &cursor->cursor);
 	    if (ret) {
 		cursor->idx++;

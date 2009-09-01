@@ -470,7 +470,7 @@ gen_files_kx509 =					    \
 	$(OBJ)\asn1_Kx509Response.x			    \
 	$(OBJ)\asn1_Kx509Request.x
 
-asn1_binaries =						    \
+ASN1_BINARIES =						    \
 	$(BINDIR)\asn1_compile.exe			    \
 	$(BINDIR)\asn1_print.exe			    \
 	$(BINDIR)\asn1_gen.exe
@@ -517,7 +517,7 @@ $(BINDIR)\asn1_gen.exe: $(OBJ)\asn1_gen.obj $(LIBASN1)
 	$(_VC_MANIFEST_CLEAN)
 	$(_CODESIGN)
 
-$(LIBASN1):				\
+LIBASN1_OBJS=	\
 	$(OBJ)\der.obj			\
 	$(OBJ)\der_get.obj		\
 	$(OBJ)\der_put.obj		\
@@ -538,13 +538,35 @@ $(LIBASN1):				\
 	$(gen_files_digest:.x=.obj)	\
 	$(gen_files_kx509:.x=.obj)	\
 	$(OBJ)\asn1_err.obj
-	$(LIBCON_C) /OUT:$@ @<<
+
+LIBASN1_LIBS=\
+	$(LIBROKEN)	\
+	$(LIBCOMERR)
+
+$(LIBASN1): $(BINDIR)\libasn1.dll
+
+$(BINDIR)\libasn1.dll: $(LIBASN1_OBJS)
+	$(DLLGUILINK_C) /OUT:$@ /DEF:libasn1-exports.def /IMPLIB:$(LIBASN1) $(LIBASN1_LIBS) @<<
 $(**: =
 )
 <<
+	$(DLLPREP)
 
 clean::
 	-$(RM) $(LIBASN1)
+	-$(RM) $(BINDIR)\libasn1.dll
+
+#
+# Generate list of exports
+#
+# This target is only used during development to generate a list of
+# symbols that are exported from all the object files in LIBASN1_OBJS.
+#
+exports-list.txt: $(LIBASN1_OBJS)
+	$(PERL) ..\..\cf\w32-list-externs-from-objs.pl -q -u @<< > $@
+$(**: =
+)
+<<
 
 $(gen_files_k5:.x=.c)	    : $$(@R).x
 
@@ -681,7 +703,7 @@ $(OBJ)\der-protos.h: $(libasn1_SOURCES:der-protos.h=)
 clean::
 	-$(RM) $(INCDIR)\der-protos.h
 
-all:: $(INCFILES) $(GENINCFILES) $(LIBASN1) $(asn1_binaries)
+all:: $(INCFILES) $(ASN1_BINARIES) $(GENINCFILES) $(LIBASN1)
 
 TEST_BINARIES=\
 	$(OBJ)\check-der.exe	\

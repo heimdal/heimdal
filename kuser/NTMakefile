@@ -33,3 +33,90 @@ RELDIR=kuser
 
 !include ../windows/NTMakefile.w32 
 
+BINPROGRAMS=\
+	$(BINDIR)\kinit.exe	\
+	$(BINDIR)\klist.exe	\
+	$(BINDIR)\kdestroy.exe	\
+	$(BINDIR)\kgetcred.exe	\
+	$(BINDIR)\kswitch.exe
+
+LIBEXECPROGRAMS=\
+	$(LIBEXECDIR)\kdigest.exe	\
+	$(LIBEXECDIR)\kimpersonate.exe
+
+NOINSTPROGRAMS=\
+	$(OBJ)\kverify.exe	\
+	$(OBJ)\kdecode_ticket.exe	\
+	$(OBJ)\generate-requests.exe	\
+	$(OBJ)\copy_cred_cache.exe
+
+BINLIBS=\
+	$(LIBKRB5)	\
+	$(LIBHEIMNTLM)	\
+	$(LIBHCRYPTO)	\
+	$(LIBASN1)	\
+	$(LIBROKEN)	\
+	$(LIBVERS)
+
+
+all:: $(BINPROGRAMS) $(LIBEXECPROGRAMS)
+
+clean::
+	-$(RM) $(BINPROGRAMS) $(LIBEXECPROGRAMS)
+
+$(BINDIR)\kinit.exe: $(OBJ)\kinit.obj $(BINLIBS)
+	$(EXECONLINK)
+	$(_VC_MANIFEST_EMBED_EXE)
+	$(_VC_MANIFEST_CLEAN)
+	$(_CODESIGN)
+
+$(BINDIR)\klist.exe: $(OBJ)\klist.obj $(BINLIBS)
+	$(EXECONLINK)
+	$(_VC_MANIFEST_EMBED_EXE)
+	$(_VC_MANIFEST_CLEAN)
+	$(_CODESIGN)
+
+
+$(BINDIR)\kdestroy.exe: $(OBJ)\kdestroy.obj $(BINLIBS)
+	$(EXECONLINK)
+	$(_VC_MANIFEST_EMBED_EXE)
+	$(_VC_MANIFEST_CLEAN)
+	$(_CODESIGN)
+
+
+$(BINDIR)\kgetcred.exe: $(OBJ)\kgetcred.obj $(BINLIBS)
+	$(EXECONLINK)
+	$(_VC_MANIFEST_EMBED_EXE)
+	$(_VC_MANIFEST_CLEAN)
+	$(_CODESIGN)
+
+
+$(BINDIR)\kswitch.exe: $(OBJ)\kswitch.obj $(BINLIBS)
+	$(EXECONLINK)
+	$(_VC_MANIFEST_EMBED_EXE)
+	$(_VC_MANIFEST_CLEAN)
+	$(_CODESIGN)
+
+
+$(LIBEXECDIR)\kdigest.exe: $(OBJ)\kdigest-commands.obj $(OBJ)\kdigest.obj $(BINLIBS) $(LIBSL)
+	$(EXECONLINK)
+	$(_VC_MANIFEST_EMBED_EXE)
+	$(_VC_MANIFEST_CLEAN)
+	$(_CODESIGN)
+
+$(OBJ)\kdigest.obj: kdigest.c
+	$(C2OBJ) -I$(OBJ)
+
+$(OBJ)\kdigest-commands.c $(OBJ)\kdigest-commands.h: kdigest-commands.in
+	cd $(OBJ)
+	$(CP) $(SRCDIR)\kdigest-commands.in $(OBJ)
+	$(BINDIR)\slc.exe kdigest-commands.in
+	cd $(SRCDIR)
+
+
+$(LIBEXECDIR)\kimpersonate.exe: $(OBJ)\kimpersonate.obj $(BINLIBS)
+	$(EXECONLINK)
+	$(_VC_MANIFEST_EMBED_EXE)
+	$(_VC_MANIFEST_CLEAN)
+	$(_CODESIGN)
+

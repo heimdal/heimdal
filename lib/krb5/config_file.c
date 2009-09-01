@@ -957,7 +957,7 @@ krb5_config_vget_time_default (krb5_context context,
  *
  * @param context A Kerberos 5 context.
  * @param c a configuration section, or NULL to use the section from context
- * @param ... a list of names, terminated with NULL.
+ * @param args a va_list of arguments
  *
  * @return parsed the time or -1 on error
  *

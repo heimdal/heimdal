@@ -74,11 +74,17 @@ main(int argc, char **argv)
 
     d = NULL;
     while ((d = hdb_dbinfo_get_next(info, d)) != NULL) {
-	printf("label: %s\n", hdb_dbinfo_get_label(context, d));
-	printf("\trealm: %s\n", hdb_dbinfo_get_realm(context, d));
-	printf("\tdbname: %s\n", hdb_dbinfo_get_dbname(context, d));
-	printf("\tmkey_file: %s\n", hdb_dbinfo_get_mkey_file(context, d));
-	printf("\tacl_file: %s\n", hdb_dbinfo_get_acl_file(context, d));
+	const char *s;
+	s = hdb_dbinfo_get_label(context, d);
+	printf("label: %s\n", s ? s : "no label");
+	s = hdb_dbinfo_get_realm(context, d);
+	printf("\trealm: %s\n", s ? s : "no realm");
+	s = hdb_dbinfo_get_dbname(context, d);
+	printf("\tdbname: %s\n", s ? s : "no dbname");
+	s = hdb_dbinfo_get_mkey_file(context, d);
+	printf("\tmkey_file: %s\n", s ? s : "no mkey file");
+	s = hdb_dbinfo_get_acl_file(context, d);
+	printf("\tacl_file: %s\n", s ? s : "no acl file");
     }
 
     hdb_free_dbinfo(context, &info);

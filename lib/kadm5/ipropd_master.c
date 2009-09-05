@@ -555,12 +555,11 @@ process_msg (krb5_context context, slave *s, int log_fd,
 	}
 	/* new started slave that have old log */
 	if (s->version == 0 && tmp != 0) {
-	    if (s->version < tmp) {
+	    if (current_version < tmp) {
 		krb5_warnx (context, "Slave %s have later version the master "
 			    "OUT OF SYNC", s->name);
-	    } else {
-		s->version = tmp;
 	    }
+	    s->version = tmp;
 	}
 	if (tmp < s->version) {
 	    krb5_warnx (context, "Slave claims to not have "

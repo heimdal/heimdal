@@ -896,8 +896,11 @@ main(int argc, char **argv)
 			   "Got a signal, updating slaves %lu to %lu",
 			   (unsigned long)old_version,
 			   (unsigned long)current_version);
-		for (p = slaves; p != NULL; p = p->next)
+		for (p = slaves; p != NULL; p = p->next) {
+		    if (p->flags & SLAVE_F_DEAD)
+			continue;
 		    send_diffs (context, p, log_fd, database, current_version);
+		}
 	    } else {
 		krb5_warnx(context,
 			   "Got a signal, but no update in log version %lu",

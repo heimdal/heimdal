@@ -59,8 +59,7 @@
 @top Heimdal
 @end ifnottex
 
-This manual is last updated @value{UPDATED} for version
-@value{VERSION} of Heimdal.
+This manual for version @value{VERSION} of Heimdal.
 
 @menu
 * Introduction::                

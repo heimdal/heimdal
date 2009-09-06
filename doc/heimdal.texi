@@ -16,7 +16,6 @@
 
 @include vars.texi
 
-@set UPDATED $Date$
 @set VERSION @value{PACKAGE_VERSION}
 @set EDITION 1.0
 
@@ -36,7 +35,6 @@
 @author Johan Danielsson
 @author Love Hörnquist Åstrand
 @author Assar Westerlund
-@author last updated @value{UPDATED}
 
 @end titlepage
 

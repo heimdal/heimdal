@@ -2,7 +2,7 @@
 
 PROJECT_NAME           = Heimdal GSS-API library
 PROJECT_NUMBER         = @PACKAGE_VERSION@
-OUTPUT_DIRECTORY       = @srcdir@/gssapi
+OUTPUT_DIRECTORY       = @srcdir@/doxyout/gssapi
 INPUT                  = @srcdir@/../lib/gssapi
 
 WARN_IF_UNDOCUMENTED   = NO

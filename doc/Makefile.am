@@ -62,13 +62,13 @@ PROJECTS = hcrypto hdb hx509 gssapi krb5 ntlm wind
 $(PROJECTS): doxygen
 
 doxygen: hdb.dxy hx509.dxy hcrypto.dxy gssapi.dxy krb5.dxy ntlm.dxy wind.dxy
+	find $(srcdir)/doxyout -type d ! -perm -200 -exec chmod u+w {} ';' ; \
+	rm -rf $(srcdir)/doxyout ; \
+	mkdir $(srcdir)/doxyout ; \
 	@for a in $(PROJECTS) ; do \
 		echo $$a ; \
-		find $(srcdir)/$$a -type d ! -perm -200 -exec chmod u+w {} ';' ; \
-		rm -rf $(srcdir)/$$a ; \
-		mkdir $(srcdir)/$$a ; \
 		doxygen $$a.dxy; \
-		(cd $(srcdir) && find $$a/man -type f > $$a/manpages ) ; \
+		(cd $(srcdir)/doxyout && find $$a/man -type f > $$a/manpages ) ; \
 	done
 
 install-data-hook: install-doxygen-manpage
@@ -77,19 +77,19 @@ dist-hook: doxygen
 
 install-doxygen-manpage:
 	for a in $(PROJECTS) ; do \
-		f="$(srcdir)/$$a/manpages" ; \
+		f="$(srcdir)/doyxgen/$$a/manpages" ; \
 		test -f $$f || continue ; \
 		echo "install $$a manual pages" ; \
 		while read x ; do \
 			section=`echo "$$x" | sed 's/.*\.\([0-9]\)/\1/'` ; \
 			$(mkinstalldirs) "$(DESTDIR)$(mandir)/man$$section" ; \
-			$(INSTALL_DATA) $(srcdir)/$$x "$(DESTDIR)$(mandir)/man$$section" ; \
+			$(INSTALL_DATA) $(srcdir)/doxyout/$$x "$(DESTDIR)$(mandir)/man$$section" ; \
 		done < $$f ; \
 	done ; exit 0
 
 uninstall-doxygen-manpage:
 	@for a in $(PROJECTS) ; do \
-		f="$(srcdir)/$$a/manpages" ; \
+		f="$(srcdir)/doxyout/$$a/manpages" ; \
 		test -f $$f || continue ; \
 		echo "removing $$a manual pages" ; \
 		while read x ; do \

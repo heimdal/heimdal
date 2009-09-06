@@ -2,7 +2,7 @@
 
 PROJECT_NAME           = Heimdal hdb library
 PROJECT_NUMBER         = @PACKAGE_VERSION@
-OUTPUT_DIRECTORY       = @srcdir@/hdb
+OUTPUT_DIRECTORY       = @srcdir@/doxyout/hdb
 INPUT                  = @srcdir@/../lib/hdb
 
 WARN_IF_UNDOCUMENTED   = YES

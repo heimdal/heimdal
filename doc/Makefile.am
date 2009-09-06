@@ -4,7 +4,7 @@ include $(top_srcdir)/Makefile.am.common
 
 AUTOMAKE_OPTIONS = no-texinfo.tex
 
-MAKEINFOFLAGS = --no-split --css-include=$(srcdir)/heimdal.css
+MAKEINFOFLAGS = --css-include=$(srcdir)/heimdal.css
 
 TEXI2DVI = true # ARGH, make distcheck can't be disabled to not build dvifiles
 

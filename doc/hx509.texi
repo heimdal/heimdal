@@ -16,7 +16,6 @@
 
 @include vars.texi
 
-@set UPDATED $Date$
 @set VERSION @value{PACKAGE_VERSION}
 @set EDITION 1.0
 
@@ -34,7 +33,6 @@
 @subtitle Edition @value{EDITION}, for version @value{VERSION}
 @subtitle 2008
 @author Love Hörnquist Åstrand
-@author last updated @value{UPDATED}
 
 @def@copynext{@vskip 20pt plus 1fil@penalty-1000}
 @def@copyrightstart{}

@@ -34,27 +34,27 @@
 # $Id$
 #
 
+top_builddir="@top_builddir@"
+env_setup="@env_setup@"
 srcdir="@srcdir@"
 objdir="@objdir@"
-EGREP="@EGREP@"
+
+. ${env_setup}
 
 testfailed="echo test failed; exit 1"
 
 # If there is no useful db support compile in, disable test
-../db/have-db || exit 77
+${have_db} || exit 77
 
 R=TEST.H5L.SE
 
 port=@port@
 pwport=@pwport@
 
-kinit="${TESTS_ENVIRONMENT} ../../kuser/kinit --password-file=${objdir}/foopassword --no-afslog"
-klist="${TESTS_ENVIRONMENT} ../../kuser/klist"
-kswitch="${TESTS_ENVIRONMENT} ../../kuser/kswitch"
-kdestroy="${TESTS_ENVIRONMENT} ../../kuser/kdestroy --no-unlog"
-kadmin="${TESTS_ENVIRONMENT} ../../kadmin/kadmin -l -r $R"
-kdc="${TESTS_ENVIRONMENT} ../../kdc/kdc --addresses=localhost -P $port"
-
+kinit="${kinit} --password-file=${objdir}/foopassword --no-afslog"
+kdestroy="${kdestroy} --no-unlog"
+kadmin="${kadmin} -l -r $R"
+kdc="${kdc} --addresses=localhost -P $port"
 
 server=host/datan.test.h5l.se
 cache="FILE:${objdir}/cache.krb5"
@@ -94,7 +94,7 @@ echo Starting kdc
 ${kdc} &
 kdcpid=$!
 
-sh ${srcdir}/wait-kdc.sh
+sh ${wait_kdc}
 if [ "$?" != 0 ] ; then
     kill -9 ${kdcpid}
     exit 1
@@ -151,7 +151,7 @@ ${klist} -l | grep bar@ >/dev/null && { ec=1 ; eval "${testfailed}"; }
 
 
 echo "killing kdc (${kdcpid})"
-sh ${srcdir}/leaks-kill.sh kdc $kdcpid || exit 1
+sh ${leaks_kill} kdc $kdcpid || exit 1
 
 trap "" EXIT
 

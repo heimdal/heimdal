@@ -10,6 +10,7 @@ EGREP="@EGREP@"
 # regular apps
 kinit="${TESTS_ENVIRONMENT} ${top_builddir}/kuser/kinit"
 klist="${TESTS_ENVIRONMENT} ${top_builddir}/kuser/klist"
+kswitch="${TESTS_ENVIRONMENT} ${top_builddir}/kuser/kswitch"
 kgetcred="${TESTS_ENVIRONMENT} ${top_builddir}/kuser/kgetcred"
 kdestroy="${TESTS_ENVIRONMENT} ${top_builddir}/kuser/kdestroy"
 kimpersonate="${TESTS_ENVIRONMENT} ${top_builddir}/kuser/kimpersonate"

@@ -34,14 +34,16 @@
 # $Id$
 #
 
-srcdir="@srcdir@"
+top_builddir="@top_builddir@"
+env_setup="@env_setup@"
 objdir="@objdir@"
-EGREP="@EGREP@"
 
 testfailed="echo test failed; cat messages.log; exit 1"
 
+. ${env_setup}
+
 # If there is no useful db support compile in, disable test
-../db/have-db || exit 77
+${have_db} || exit 77
 
 R=TEST.H5L.SE
 
@@ -52,8 +54,8 @@ kdc="${TESTS_ENVIRONMENT} ../../kdc/kdc --addresses=localhost -P $port"
 
 server=host/datan.test.h5l.se
 cache="FILE:${objdir}/cache.krb5"
-keyfile="${srcdir}/../../lib/hx509/data/key.der"
-keyfile2="${srcdir}/../../lib/hx509/data/key2.der"
+keyfile="${hx509_data}/key.der"
+keyfile2="${hx509_data}/key2.der"
 
 kinit="${TESTS_ENVIRONMENT} ../../kuser/kinit -c $cache --no-afslog"
 kgetcred="${TESTS_ENVIRONMENT} ../../kuser/kgetcred -c $cache"
@@ -165,7 +167,7 @@ echo Starting kdc
 ${kdc} &
 kdcpid=$!
 
-sh ${srcdir}/wait-kdc.sh
+sh ${wait_kdc}
 if [ "$?" != 0 ] ; then
     kill -9 ${kdcpid}
     exit 1
@@ -266,7 +268,7 @@ fi
 
 
 echo "killing kdc (${kdcpid})"
-sh ${srcdir}/leaks-kill.sh kdc $kdcpid || exit 1
+sh ${leaks_kill} kdc $kdcpid || exit 1
 
 trap "" EXIT
 

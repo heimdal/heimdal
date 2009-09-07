@@ -29,14 +29,12 @@ test_gic="${TESTS_ENVIRONMENT} ${top_builddir}/lib/krb5/test_gic"
 test_renew="${TESTS_ENVIRONMENT} ${top_builddir}/lib/krb5/test_renew"
 
 # misc apps
-wait_kdc="${top_srcdir}/tests/kdc/wait-kdc.sh"
-leaks_kill="${top_srcdir}/tests/kdc/leaks-kill.sh"
 have_db="${top_builddir}/tests/db/have-db"
+leaks_kill="${top_srcdir}/tests/kdc/leaks-kill.sh"
+wait_kdc="${top_srcdir}/tests/kdc/wait-kdc.sh"
 
 # data
 hx509_data="${top_srcdir}/lib/hx509/data"
-
-
 
 # malloc debug
 HEIM_MALLOC_DEBUG="MallocStackLoggingNoCompact=1 MallocErrorAbort=1 MallocLogFile=/tmp/heim-malloc-log"

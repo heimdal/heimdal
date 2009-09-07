@@ -38,4 +38,4 @@ hx509_data="${top_srcdir}/lib/hx509/data"
 
 
 # malloc debug
-HEIM_MALLOC_DEBUG="MallocStackLoggingNoCompact=1 MallocErrorAbort=1"
+HEIM_MALLOC_DEBUG="MallocStackLoggingNoCompact=1 MallocErrorAbort=1 MallocLogFile=/tmp/heim-malloc-log"

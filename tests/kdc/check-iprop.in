@@ -37,7 +37,6 @@
 top_builddir="@top_builddir@"
 env_setup="@env_setup@"
 objdir="@objdir@"
-srcdir="@srcdir@"
 
 . ${env_setup}
 

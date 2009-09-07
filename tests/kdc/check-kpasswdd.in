@@ -105,7 +105,7 @@ ${kadmin} check ${R2} || exit 1
 echo foo > ${objdir}/foopassword
 
 echo Starting kdc
-${kdc} &
+env ${HEIM_MALLOC_DEBUG} ${kdc} &
 kdcpid=$!
 
 sh ${wait_kdc}
@@ -115,8 +115,7 @@ if [ "$?" != 0 ] ; then
 fi
 
 echo Starting kpasswdd
-env MallocStackLogging=1 MallocStackLoggingNoCompact=1 MallocErrorAbort=1 MallocLogFile=${objdir}/malloc-log \
-${kpasswdd} &
+env ${HEIM_MALLOC_DEBUG} ${kpasswdd} &
 kpasswddpid=$!
 
 trap "kill -9 ${kdcpid} ${kpasswddpid}; echo signal killing kdc; exit \$ec;" EXIT
@@ -149,7 +148,7 @@ send ${pw}\n
 expect Success
 EOF
 
-${rkpty} cpw.tmp ../../kpasswd/kpasswd foo@${R} || \
+${rkpty} cpw.tmp env ${kpasswd} foo@${R} || \
 	{ ec=$? ; eval "${testfailed}"; }
 
 rm cpw.tmp

@@ -34,11 +34,17 @@
 # $Id$
 #
 
-srcdir="@srcdir@"
+top_builddir="@top_builddir@"
+env_setup="@env_setup@"
 objdir="@objdir@"
+srcdir="@srcdir@"
+
+testfailed="echo test failed; cat messages.log; exit 1"
+
+. ${env_setup}
 
 # If there is no useful db support compile in, disable test
-../db/have-db || exit 77
+${have_db} || exit 77
 
 R=TEST.H5L.SE
 
@@ -92,16 +98,12 @@ ${kadmin} check ${R} || exit 1
 
 echo $password > ${objdir}/foopassword
 
-echo Starting kdc
-env \
-MallocStackLogging=1 \
-MallocStackLoggingNoCompact=1 \
-MallocErrorAbort=1 \
-MallocLogFile=${objdir}/malloc-log \
-${kdc} &
+echo "Starting kdc"
+echo "${HEIM_MALLOC_DEBUG}"
+env ${HEIM_MALLOC_DEBUG} ${kdc} &
 kdcpid=$!
 
-sh ${srcdir}/wait-kdc.sh
+sh ${wait_kdc}
 if [ "$?" != 0 ] ; then
     kill -9 ${kdcpid}
     exit 1
@@ -294,7 +296,7 @@ fi
 trap "" EXIT
 
 echo "killing kdc (${kdcpid})"
-sh ${srcdir}/leaks-kill.sh kdc $kdcpid || exit 1
+sh ${leaks_kill} kdc $kdcpid || exit 1
 
 exit $exitcode
 

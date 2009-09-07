@@ -34,17 +34,20 @@
 # $Id$
 #
 
-srcdir="@srcdir@"
-objdir="@objdir@"
-EGREP="@EGREP@"
+top_builddir="@top_builddir@"
+objdir="."
+
+. ${top_builddir}/tests/bin/setup-env
+
+srcdir="${top_srcdir}/tests/kdc"
 
 # If there is no useful db support compile in, disable test
-../db/have-db || exit 77
+${have_db} || exit 77
 
 R=TEST.H5L.SE
 principal=host/datan.test.h5l.se@${R}
 
-kadmin="${TESTS_ENVIRONMENT} ../../kadmin/kadmin -r $R -l"
+kadmin="${kadmin} -l -r $R"
 
 CIN=${srcdir}/krb5.conf.keys.in
 COUT=${objdir}/krb5.conf.keys

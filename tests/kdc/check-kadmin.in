@@ -34,12 +34,12 @@
 # $Id$
 #
 
-srcdir="@srcdir@"
+top_builddir="@top_builddir@"
+env_setup="@env_setup@"
 objdir="@objdir@"
-EGREP="@EGREP@"
+srcdir="@srcdir@"
 
-# If there is no useful db support compile in, disable test
-../db/have-db || exit 77
+. ${env_setup}
 
 R=TEST.H5L.SE
 R2=TEST2.H5L.SE
@@ -49,15 +49,15 @@ admport=@admport@
 
 cache="FILE:${objdir}/cache.krb5"
 
-kadmin="${TESTS_ENVIRONMENT} ../../kadmin/kadmin -r $R"
-kdc="${TESTS_ENVIRONMENT} ../../kdc/kdc --addresses=localhost -P $port"
-kadmind="${TESTS_ENVIRONMENT} ../../kadmin/kadmind -p $admport"
+kadmin="${kadmin} -r $R"
+kdc="${kdc} --addresses=localhost -P $port"
+kadmind="${kadmind} -p $admport"
 
 server=host/datan.test.h5l.se
 
-kinit="${TESTS_ENVIRONMENT} ../../kuser/kinit -c $cache --no-afslog"
-kgetcred="${TESTS_ENVIRONMENT} ../../kuser/kgetcred -c $cache"
-kdestroy="${TESTS_ENVIRONMENT} ../../kuser/kdestroy -c $cache --no-unlog"
+kinit="${kinit} -c $cache --no-afslog"
+kgetcred="${kgetcred} -c $cache"
+kdestroy="${kdestroy} -c $cache --no-unlog"
 
 KRB5_CONFIG="${objdir}/krb5.conf"
 export KRB5_CONFIG
@@ -91,7 +91,7 @@ echo Starting kdc
 ${kdc} &
 kdcpid=$!
 
-sh ${srcdir}/wait-kdc.sh
+sh ${wait_kdc}
 if [ "$?" != 0 ] ; then
     kill -9 ${kdcpid}
     kill -9 ${kadmpid}
@@ -239,7 +239,7 @@ ${kadmin} -p foo/admin@${R} get -o pkinit-acl pkinit@${R} \
 
 
 echo "killing kdc (${kdcpid} ${kadmpid})"
-sh ${srcdir}/leaks-kill.sh kdc $kdcpid || exit 1
+sh ${leaks_kill} kdc $kdcpid || exit 1
 
 trap "" EXIT
 

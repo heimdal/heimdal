@@ -11,6 +11,7 @@ check_SCRIPTS = loaddump-db add-modify-delete check-dbinfo check-aliases
 TESTS = $(check_SCRIPTS) 
 
 do_subst = sed -e 's,[@]srcdir[@],$(srcdir),g' \
+	-e 's,[@]top_builddir[@],$(top_builddir),g' \
 	-e 's,[@]objdir[@],$(top_builddir)/tests/db,g' \
 	-e 's,[@]EGREP[@],$(EGREP),g' 
 

@@ -34,22 +34,24 @@
 # $Id$
 #
 
+top_builddir="@top_builddir@"
 srcdir="@srcdir@"
 objdir="@objdir@"
-EGREP="@EGREP@"
 
 testfailed="echo test failed; cat messages.log; exit 1"
 
+. ${top_builddir}/tests/bin/setup-env
+
 # If there is no useful db support compile in, disable test
-../db/have-db || exit 77
+${have_db} || exit 77
 
 R=TEST.H5L.SE
 R2=TEST2.H5L.SE
 
 port=@port@
 
-kadmin="${TESTS_ENVIRONMENT} ../../kadmin/kadmin -l -r $R"
-kdc="${TESTS_ENVIRONMENT} ../../kdc/kdc --addresses=localhost -P $port"
+kadmin="${kadmin} -l -r $R"
+kdc="${kdc} --addresses=localhost -P $port"
 
 server=host/datan.test.h5l.se
 server2=host/computer.example.com
@@ -68,17 +70,12 @@ keytab="FILE:${keytabfile}"
 ps="proxy-service@${R}"
 aesenctype="aes256-cts-hmac-sha1-96"
 
-kinit="${TESTS_ENVIRONMENT} ../../kuser/kinit -c $cache --no-afslog"
-klist="${TESTS_ENVIRONMENT} ../../kuser/klist -c $cache"
-kgetcred="${TESTS_ENVIRONMENT} ../../kuser/kgetcred -c $cache"
-kgetcred_imp="${TESTS_ENVIRONMENT} ../../kuser/kgetcred -c $cache --out-cache=${ocache}"
-kdestroy="${TESTS_ENVIRONMENT} ../../kuser/kdestroy -c $cache --no-unlog"
-ktutil="${TESTS_ENVIRONMENT} ../../admin/ktutil"
-hxtool="${TESTS_ENVIRONMENT} ../../lib/hx509/hxtool"
-kimpersonate="${TESTS_ENVIRONMENT} ../../kuser/kimpersonate -k ${keytab} --ccache=${ocache}"
-test_renew="${TESTS_ENVIRONMENT} ../../lib/krb5/test_renew"
-test_ap_req="${TESTS_ENVIRONMENT} ../../lib/krb5/test_ap-req"
-test_gic="${TESTS_ENVIRONMENT} ../../lib/krb5/test_gic"
+kinit="${kinit} -c $cache --no-afslog"
+klist="${klist} -c $cache"
+kgetcred="${kgetcred} -c $cache"
+kgetcred_imp="${kgetcred} -c $cache --out-cache=${ocache}"
+kdestroy="${kdestroy} -c $cache --no-unlog"
+kimpersonate="${kimpersonate} -k ${keytab} --ccache=${ocache}"
 
 KRB5_CONFIG="${objdir}/@KDCCONF@"
 export KRB5_CONFIG
@@ -171,7 +168,7 @@ env MallocStackLogging=1 MallocStackLoggingNoCompact=1 MallocErrorAbort=1 Malloc
 ${kdc} &
 kdcpid=$!
 
-sh ${srcdir}/wait-kdc.sh
+sh ${wait_kdc}
 if [ "$?" != 0 ] ; then
     kill -9 ${kdcpid}
     exit 1
@@ -391,7 +388,7 @@ fi
 # If we support pkinit and have RSA, lets try that
 if test "$pkinit" = yes -a "$rsa" = yes ; then
 
-    base="${srcdir}/../../lib/hx509/data"
+    base="${hx509_data}"
 
     echo "try anonymous pkinit"; > messages.log
     ${kinit} --anonymous ${R} || \
@@ -539,7 +536,7 @@ echo "   test_gic passes"
 ${kdestroy}
 
 echo "killing kdc (${kdcpid})"
-sh ${srcdir}/leaks-kill.sh kdc $kdcpid || exit 1
+sh ${leaks_kill} kdc $kdcpid || exit 1
 
 trap "" EXIT
 

@@ -44,6 +44,7 @@ do_subst = sed $(do_dlopen) \
 	-e 's,[@]admport[@],$(admport),g' \
 	-e 's,[@]pwport[@],$(pwport),g' \
 	-e 's,[@]objdir[@],$(top_builddir)/tests/kdc,g' \
+	-e 's,[@]top_builddir[@],$(top_builddir),g' \
 	-e 's,[@]EGREP[@],$(EGREP),g' 
 
 LDADD = ../../lib/krb5/libkrb5.la $(LIB_roken)

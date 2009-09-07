@@ -34,10 +34,9 @@
 # $Id$
 #
 
-srcdir="@srcdir@"
-base=`dirname "$0"`
+top_builddir="@top_builddir@"
 
-kdc="${base}/../../kdc/kdc"
+. ${top_builddir}/tests/bin/setup-env
 
 list=`${kdc} --builtin-hdb | sed 's/^builtin hdb backends: //'`
 oldIFS="$IFS"

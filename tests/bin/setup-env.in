@@ -1,0 +1,32 @@
+#!/bin/sh
+
+top_builddir="@top_builddir@"
+top_srcdir="@top_srcdir@"
+EGREP="@EGREP@"
+
+# Meant to be sourced (source or .) by the tester application, offers
+# most commands in heimdal as variables
+
+# regular apps
+kinit="${TESTS_ENVIRONMENT} ${top_builddir}/kuser/kinit"
+klist="${TESTS_ENVIRONMENT} ${top_builddir}/kuser/klist"
+kgetcred="${TESTS_ENVIRONMENT} ${top_builddir}/kuser/kgetcred"
+kdestroy="${TESTS_ENVIRONMENT} ${top_builddir}/kuser/kdestroy"
+kimpersonate="${TESTS_ENVIRONMENT} ${top_builddir}/kuser/kimpersonate"
+ktutil="${TESTS_ENVIRONMENT} ${top_builddir}/admin/ktutil"
+hxtool="${TESTS_ENVIRONMENT} ${top_builddir}/lib/hx509/hxtool"
+kadmin="${TESTS_ENVIRONMENT} ${top_builddir}/kadmin/kadmin"
+kdc="${TESTS_ENVIRONMENT} ${top_builddir}/kdc/kdc"
+
+# regression test tools
+test_renew="${TESTS_ENVIRONMENT} ${top_builddir}/lib/krb5/test_renew"
+test_ap_req="${TESTS_ENVIRONMENT} ${top_builddir}/lib/krb5/test_ap-req"
+test_gic="${TESTS_ENVIRONMENT} ${top_builddir}/lib/krb5/test_gic"
+
+# misc apps
+wait_kdc="${top_srcdir}/tests/kdc/wait-kdc.sh"
+leaks_kill="${top_srcdir}/tests/kdc/leaks-kill.sh"
+have_db="${top_builddir}/tests/db/have-db"
+
+# data
+hx509_data="${top_srcdir}/../../lib/hx509/data"

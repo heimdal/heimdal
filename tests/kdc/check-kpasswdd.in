@@ -46,7 +46,7 @@ ${have_db} || exit 77
 testfailed="echo test failed; cat messages.log; exit \$ec"
 
 # If there is no useful db support compile in, disable test
-../db/have-db || exit 77
+${have_db} || exit 77
 
 R=TEST.H5L.SE
 R2=TEST2.H5L.SE

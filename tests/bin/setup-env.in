@@ -18,6 +18,9 @@ ktutil="${TESTS_ENVIRONMENT} ${top_builddir}/admin/ktutil"
 hxtool="${TESTS_ENVIRONMENT} ${top_builddir}/lib/hx509/hxtool"
 kadmin="${TESTS_ENVIRONMENT} ${top_builddir}/kadmin/kadmin"
 kdc="${TESTS_ENVIRONMENT} ${top_builddir}/kdc/kdc"
+ipropd_slave="${TESTS_ENVIRONMENT} ${top_builddir}/lib/kadm5/ipropd-slave"
+ipropd_master="${TESTS_ENVIRONMENT} ${top_builddir}/lib/kadm5/ipropd-master"
+iprop_log="${TESTS_ENVIRONMENT} ${top_builddir}/lib/kadm5/iprop-log"
 
 # regression test tools
 test_renew="${TESTS_ENVIRONMENT} ${top_builddir}/lib/krb5/test_renew"

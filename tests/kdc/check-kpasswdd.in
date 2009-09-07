@@ -54,21 +54,19 @@ R2=TEST2.H5L.SE
 port=@port@
 pwport=@pwport@
 
-kadmin="${TESTS_ENVIRONMENT} ../../kadmin/kadmin -l -r $R"
-kdc="${TESTS_ENVIRONMENT} ../../kdc/kdc --addresses=localhost -P $port"
-kpasswdd="${TESTS_ENVIRONMENT} ../../kpasswd/kpasswdd --addresses=localhost -p $pwport"
+kadmin="${kadmin} -l -r $R"
+kdc="${kdc} --addresses=localhost -P $port"
+kpasswdd="${kpasswdd} --addresses=localhost -p $pwport"
 
 server=host/datan.test.h5l.se
 cache="FILE:${objdir}/cache.krb5"
 keytabfile=${objdir}/server.keytab
 keytab="FILE:${keytabfile}"
 
-kinit="${TESTS_ENVIRONMENT} ../../kuser/kinit -c $cache --no-afslog"
-klist="${TESTS_ENVIRONMENT} ../../kuser/klist -c $cache"
-kgetcred="${TESTS_ENVIRONMENT} ../../kuser/kgetcred -c $cache"
-kdestroy="${TESTS_ENVIRONMENT} ../../kuser/kdestroy -c $cache --no-unlog"
-test_apreq="${TESTS_ENVIRONMENT} ../../lib/krb5/test_ap-req"
-rkpty="${TESTS_ENVIRONMENT} ../../lib/roken/rkpty"
+kinit="${kinit} -c $cache --no-afslog"
+klist="${klist} -c $cache"
+kgetcred="${kgetcred} -c $cache"
+kdestroy="${kdestroy} -c $cache --no-unlog"
 
 KRB5_CONFIG="${objdir}/krb5.conf"
 export KRB5_CONFIG
@@ -132,7 +130,7 @@ echo "Getting tickets"; > messages.log
 ${kgetcred} ${server}@${R} || { ec=1 ; eval "${testfailed}"; }
 echo "Listing tickets"; > messages.log
 ${klist} > /dev/null || { ec=1 ; eval "${testfailed}"; }
-${test_apreq} ${server}@${R} ${keytab} ${cache} || \
+${test_ap_req} ${server}@${R} ${keytab} ${cache} || \
 	{ ec=1 ; eval "${testfailed}"; }
 ${kdestroy}
 
@@ -166,7 +164,7 @@ echo "Getting tickets"; > messages.log
 ${kgetcred} ${server}@${R} || { ec=1 ; eval "${testfailed}"; }
 echo "Listing tickets"; > messages.log
 ${klist} > /dev/null || { ec=1 ; eval "${testfailed}"; }
-${test_apreq} ${server}@${R} ${keytab} ${cache} || \
+${test_ap_req} ${server}@${R} ${keytab} ${cache} || \
 	{ ec=1 ; eval "${testfailed}"; }
 ${kdestroy}
 

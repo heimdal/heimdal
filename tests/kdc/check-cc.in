@@ -35,7 +35,6 @@
 #
 
 env_setup="@env_setup@"
-srcdir="@srcdir@"
 objdir="@objdir@"
 
 . ${env_setup}

@@ -24,9 +24,9 @@ kswitch="${TESTS_ENVIRONMENT} ${top_builddir}/kuser/kswitch"
 ktutil="${TESTS_ENVIRONMENT} ${top_builddir}/admin/ktutil"
 
 # regression test tools
-test_renew="${TESTS_ENVIRONMENT} ${top_builddir}/lib/krb5/test_renew"
 test_ap_req="${TESTS_ENVIRONMENT} ${top_builddir}/lib/krb5/test_ap-req"
 test_gic="${TESTS_ENVIRONMENT} ${top_builddir}/lib/krb5/test_gic"
+test_renew="${TESTS_ENVIRONMENT} ${top_builddir}/lib/krb5/test_renew"
 
 # misc apps
 wait_kdc="${top_srcdir}/tests/kdc/wait-kdc.sh"

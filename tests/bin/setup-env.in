@@ -31,3 +31,8 @@ have_db="${top_builddir}/tests/db/have-db"
 
 # data
 hx509_data="${top_srcdir}/lib/hx509/data"
+
+
+
+# malloc debug
+HEIM_MALLOC_DEBUG="MallocStackLoggingNoCompact=1 MallocErrorAbort=1"

@@ -257,6 +257,8 @@ fi
 echo "probing for slave pid"
 kill -0 ${ipds}  || { echo "slave no longer there"; exit 1; }
 
+> messages.log
+
 echo "Staring master again"
 env ${HEIM_MALLOC_DEBUG} \
 ${ipropd_master} --hostname=localhost -k ${keytab} \

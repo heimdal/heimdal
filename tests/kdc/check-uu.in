@@ -34,14 +34,16 @@
 # $Id$
 #
 
-srcdir="@srcdir@"
+env_setup="@env_setup@"
 objdir="@objdir@"
-EGREP="@EGREP@"
+srcdir="@srcdir@"
 
 testfailed="echo test failed; cat messages.log; exit 1"
 
+. ${env_setup}
+
 # If there is no useful db support compile in, disable test
-../db/have-db || exit 77
+${have_db} || exit 77
 
 R=TEST.H5L.SE
 
@@ -91,7 +93,7 @@ echo Starting kdc
 ${kdc} &
 kdcpid=$!
 
-sh ${srcdir}/wait-kdc.sh
+sh ${wait_kdc}
 if [ "$?" != 0 ] ; then
     kill -9 ${kdcpid}
     exit 1
@@ -131,7 +133,7 @@ ${kdestroy1}
 ${kdestroy2}
 
 echo "killing kdc uu_server (${kdcpid} ${uuspid})"
-sh ${srcdir}/leaks-kill.sh kdc $kdcpid || exit 1
+sh ${leaks_kill} kdc $kdcpid || exit 1
 
 
 trap "" EXIT

@@ -124,7 +124,7 @@ NTLM_ACCEPTOR_CCACHE="$cache"
 export NTLM_ACCEPTOR_CCACHE
 
 echo "Trying server-init"
-echo ${kdigest} ntlm-server-init \
+${kdigest} ntlm-server-init \
     --kerberos-realm=${R} \
     > sdigest-init || exitcode=1
 

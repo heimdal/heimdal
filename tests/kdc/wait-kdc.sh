@@ -39,7 +39,7 @@ log=${2:-messages.log}
 waitfor=${3:-${name} started}
 
 t=0
-waitsec=20
+waitsec=35
 
 echo "Waiting for ${name} to start, looking logfile ${log}"
 

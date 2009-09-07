@@ -34,7 +34,6 @@
 # $Id$
 #
 
-top_builddir="@top_builddir@"
 env_setup="@env_setup@"
 srcdir="@srcdir@"
 objdir="@objdir@"

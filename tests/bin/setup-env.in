@@ -29,4 +29,4 @@ leaks_kill="${top_srcdir}/tests/kdc/leaks-kill.sh"
 have_db="${top_builddir}/tests/db/have-db"
 
 # data
-hx509_data="${top_srcdir}/../../lib/hx509/data"
+hx509_data="${top_srcdir}/lib/hx509/data"

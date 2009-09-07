@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (c) 2007 Kungliga Tekniska Högskolan
+# Copyright (c) 2009 Kungliga Tekniska Högskolan
 # (Royal Institute of Technology, Stockholm, Sweden). 
 # All rights reserved. 
 #
@@ -35,71 +35,6 @@
 #
 
 top_builddir="@top_builddir@"
-env_setup="@env_setup@"
-objdir="."
+objdir="@objdir@"
 
-. ${env_setup}
-
-srcdir="${top_srcdir}/tests/kdc"
-
-# If there is no useful db support compile in, disable test
-${have_db} || exit 77
-
-R=TEST.H5L.SE
-principal=host/datan.test.h5l.se@${R}
-
-kadmin="${kadmin} -l -r $R"
-
-CIN=${srcdir}/krb5.conf.keys.in
-COUT=${objdir}/krb5.conf.keys
-
-sedvars="-e s,[@]srcdir[@],${srcdir},g -e s,[@]objdir[@],${objdir},g"
-
-KRB5_CONFIG="${COUT}"
-export KRB5_CONFIG
-
-rm -f ${COUT}
-rm -f current-db*
-rm -f out-*
-rm -f mkey.file*
-rm -f messages.log
-
-sed -e 's/@keys@/v5/' \
-	${sedvars} < ${CIN} > ${COUT}
-
-echo Creating database
-${kadmin} \
-    init \
-    --realm-max-ticket-life=1day \
-    --realm-max-renewable-life=1month \
-    ${R} || exit 1
-
-${kadmin} add -p foo --use-defaults ${principal} || exit 1
-
-${kadmin} cpw -p foo ${principal} || exit 1
-
-sed -e 's/@keys@/v4/' \
-	${sedvars} < ${CIN} > ${COUT}
-${kadmin} cpw -p foo ${principal} || exit 1
-
-sed -e 's/@keys@/v4 v5/' \
-	${sedvars} < ${CIN} > ${COUT}
-${kadmin} cpw -p foo ${principal} || exit 1
-
-sed -e 's/@keys@/v5 v4/' \
-	${sedvars} < ${CIN} > ${COUT}
-${kadmin} cpw -p foo ${principal} || exit 1
-
-sed -e 's/@keys@/des:pw-salt:/' \
-	${sedvars} < ${CIN} > ${COUT}
-${kadmin} cpw -p foo ${principal} || exit 1
-
-sed -e 's/@keys@/des-cbc-crc:afs3-salt:test.h5l.se/' \
-	${sedvars} < ${CIN} > ${COUT}
-${kadmin} cpw -p foo ${principal} || exit 1
-
-sed -e 's/@keys@/des:afs3-salt:test.h5l.se/' \
-	${sedvars} < ${CIN} > ${COUT}
-${kadmin} cpw -p foo ${principal} || exit 1
-
-exit 0
+exec ${top_builddir}/tests/kdc/check-kdc ${objdir}/krb5-weak.conf

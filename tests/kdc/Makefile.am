@@ -39,6 +39,7 @@ do_dlopen = -e 's,[@]DLOPEN[@],false,g'
 endif
 
 do_subst = sed $(do_dlopen) \
+	-e 's,[@]env_setup[@],$(top_builddir)/tests/bin/setup-env,g' \
 	-e 's,[@]srcdir[@],$(srcdir),g' \
 	-e 's,[@]port[@],$(port),g' \
 	-e 's,[@]admport[@],$(admport),g' \
@@ -65,16 +66,12 @@ check-des: check-des.in Makefile krb5.conf
 	mv check-des.tmp check-des
 
 check-kdc: check-kdc.in Makefile
-	$(do_subst) \
-	   -e 's,[@]KDCCONF[@],krb5.conf,g' \
-	   < $(srcdir)/check-kdc.in > check-kdc.tmp
+	$(do_subst) < $(srcdir)/check-kdc.in > check-kdc.tmp
 	chmod +x check-kdc.tmp
 	mv check-kdc.tmp check-kdc
 
-check-kdc-weak: check-kdc.in Makefile
-	$(do_subst) \
-	   -e 's,[@]KDCCONF[@],krb5-weak.conf,g' \
-	   < $(srcdir)/check-kdc.in > check-kdc-weak.tmp
+check-kdc-weak: check-kdc-weak.in Makefile
+	$(do_subst) < $(srcdir)/check-kdc-weak.in > check-kdc-weak.tmp
 	chmod +x check-kdc-weak.tmp
 	mv check-kdc-weak.tmp check-kdc-weak
 
@@ -200,6 +197,7 @@ EXTRA_DIST = \
 	check-iprop.in \
 	check-kadmin.in \
 	check-kdc.in \
+	check-kdc-weak.in \
 	check-keys.in \
 	check-kpasswdd.in \
 	check-pkinit.in \

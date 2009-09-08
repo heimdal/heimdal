@@ -40,8 +40,6 @@
 #include "windlocl.h"
 #include "punycode_examples.h"
 
-RCSID("$Id$");
-
 int
 main(void)
 {

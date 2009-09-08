@@ -37,8 +37,6 @@
 #include <string.h>
 #include "windlocl.h"
 
-RCSID("$Id$");
-
 static const unsigned base         = 36;
 static const unsigned t_min        = 1;
 static const unsigned t_max        = 26;

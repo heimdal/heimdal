@@ -37,8 +37,6 @@
 #include <stdio.h>
 #include "windlocl.h"
 
-RCSID("$Id$");
-
 #define MAX_LENGTH 10
 
 struct test {

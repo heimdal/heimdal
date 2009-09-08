@@ -44,8 +44,6 @@
 #include "windlocl.h"
 #include "normalize_table.h"
 
-RCSID("$Id$");
-
 static size_t
 parse_vector(char *buf, uint32_t *v)
 {

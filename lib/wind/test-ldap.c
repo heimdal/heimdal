@@ -40,8 +40,6 @@
 #include <assert.h>
 #include "windlocl.h"
 
-RCSID("$Id: test-utf8.c 22571 2008-02-05 20:22:06Z lha $");
-
 #define MAX_LENGTH 10
 
 struct testcase {

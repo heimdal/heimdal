@@ -32,7 +32,6 @@
  */
 
 #include <config.h>
-RCSID("$Id$");
 
 /*! @mainpage Heimdal wind library
  *

@@ -37,8 +37,6 @@
 #include <stdio.h>
 #include "windlocl.h"
 
-RCSID("$Id$");
-
 static uint32_t positives[] = {
     0x00A0, 0x3000,
     0x0080, 0x009F, 0x206A, 0x206F, 0xFEFF,

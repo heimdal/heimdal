@@ -39,8 +39,6 @@
 #include <err.h>
 #include "windlocl.h"
 
-RCSID("$Id$");
-
 static const char *failing_testcases[] = {
     "\x80",
     "\xFF",

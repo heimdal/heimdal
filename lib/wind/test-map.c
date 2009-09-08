@@ -41,8 +41,6 @@
 
 #include "windlocl.h"
 
-RCSID("$Id$");
-
 #define MAX_LENGTH 2
 
 struct example {

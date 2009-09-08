@@ -48,8 +48,6 @@
 
 #include "windlocl.h"
 
-RCSID("$Id$");
-
 static int version_flag = 0;
 static int help_flag	= 0;
 

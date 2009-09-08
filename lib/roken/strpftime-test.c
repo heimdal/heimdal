@@ -36,8 +36,6 @@
 #endif
 #include "roken.h"
 
-RCSID("$Id$");
-
 enum { MAXSIZE = 26 };
 
 static struct testcase {

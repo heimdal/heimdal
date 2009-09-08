@@ -34,8 +34,6 @@
 #include "roken.h"
 #include <limits.h>
 
-RCSID("$Id$");
-
 static int
 try (const char *format, ...)
 {

@@ -37,9 +37,6 @@
 #include <stdlib.h>
 #include "roken.h"
 
-RCSID("$Id");
-
-
 void * ROKEN_LIB_FUNCTION
 rk_realloc(void *ptr, size_t size)
 {

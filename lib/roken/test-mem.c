@@ -43,8 +43,6 @@
 
 #include "test-mem.h"
 
-RCSID("$Id$");
-
 /* #undef HAVE_MMAP */
 
 struct {

@@ -36,8 +36,6 @@
 #endif
 #include "roken.h"
 
-RCSID("$Id$");
-
 static const char *abb_weekdays[] = {
     "Sun",
     "Mon",

@@ -42,8 +42,6 @@
 #endif
 #include <errno.h>
 
-RCSID("$Id$");
-
 #ifndef HAVE_MKSTEMP
 
 int ROKEN_LIB_FUNCTION

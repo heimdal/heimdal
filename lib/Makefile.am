@@ -5,9 +5,6 @@ include $(top_srcdir)/Makefile.am.common
 if EDITLINE
 dir_editline = editline
 endif
-if KRB4
-dir_45 = 45
-endif
 if OTP
 dir_otp = otp
 endif
@@ -41,7 +38,6 @@ SUBDIRS = \
 	gssapi \
 	hdb \
 	kadm5 \
-	$(dir_45) \
 	$(dir_otp) \
 	$(dir_dce) \
 	auth

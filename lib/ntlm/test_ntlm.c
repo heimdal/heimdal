@@ -38,8 +38,6 @@
 #include <roken.h>
 #include <getarg.h>
 
-RCSID("$Id$");
-
 #include <krb5-types.h> /* or <inttypes.h> */
 #include <heimntlm.h>
 

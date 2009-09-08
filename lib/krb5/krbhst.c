@@ -179,6 +179,15 @@ krbhst_get_default_proto(struct krb5_krbhst_data *kd)
     return KRB5_KRBHST_UDP;
 }
 
+/*
+ *
+ */
+
+const char *
+_krb5_krbhst_get_realm(krb5_krbhst_handle handle)
+{
+    return handle->realm;
+}
 
 /*
  * parse `spec' into a krb5_krbhst_info, defaulting the port to `def_port'

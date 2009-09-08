@@ -672,6 +672,13 @@ krb5_cc_store_cred(krb5_context context,
  * from `id' in `creds'. 'creds' must be free by the caller using
  * krb5_free_cred_contents.
  *
+ * @param context A Kerberos 5 context
+ * @param id a Kerberos 5 credential cache
+ * @param whichfields what fields to use for matching credentials, same
+ *        flags as whichfields in krb5_compare_creds()
+ * @param mcreds template credential to use for comparing
+ * @param creds returned credential, free with krb5_free_cred_contents()
+ *
  * @return Return an error code or 0, see krb5_get_error_message().
  *
  * @ingroup krb5_ccache

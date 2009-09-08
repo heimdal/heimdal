@@ -93,6 +93,7 @@ init_context_from_config_file(krb5_context context)
 {
     krb5_error_code ret;
     const char * tmp;
+    char **s;
     krb5_enctype *tmptypes;
 
     INIT_FIELD(context, time, max_skew, 5 * 60, "clockskew");
@@ -202,6 +203,16 @@ init_context_from_config_file(krb5_context context)
 	krb5_enctype_enable(context, ETYPE_DES_CFB64_NONE);
 	krb5_enctype_enable(context, ETYPE_DES_PCBC_NONE);
     }
+
+    s = krb5_config_get_strings(context, NULL, "logging", "krb5", NULL);
+    if(s) {
+	char **p;
+	krb5_initlog(context, "libkrb5", &context->debug_dest);
+	for(p = s; *p; p++)
+	    krb5_addlog_dest(context, context->debug_dest, *p);
+	krb5_config_free_strings(s);
+    }
+
 
     return 0;
 }
@@ -400,6 +411,8 @@ krb5_copy_context(krb5_context context, krb5_context *out)
 #if 0 /* XXX */
     if(context->warn_dest != NULL)
 	;
+    if(context->debug_dest != NULL)
+	;
 #endif
 
     ret = krb5_set_extra_addresses(p, context->extra_addresses);
@@ -449,6 +462,8 @@ krb5_free_context(krb5_context context)
     krb5_clear_error_message(context);
     if(context->warn_dest != NULL)
 	krb5_closelog(context, context->warn_dest);
+    if(context->debug_dest != NULL)
+	krb5_closelog(context, context->debug_dest);
     krb5_set_extra_addresses(context, NULL);
     krb5_set_ignore_addresses(context, NULL);
     krb5_set_send_to_kdc_func(context, NULL, NULL);

@@ -32,8 +32,6 @@
 
 #include "sl_locl.h"
 
-RCSID("$Id$");
-
 struct {
     int ok;
     const char *line;

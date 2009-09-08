@@ -33,8 +33,6 @@
 
 #include "kafs_locl.h"
 
-RCSID("$Id$");
-
 #define AUTH_SUPERUSER "afs"
 
 /*

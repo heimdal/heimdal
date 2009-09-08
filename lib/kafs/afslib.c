@@ -37,8 +37,6 @@
 
 #include "kafs_locl.h"
 
-RCSID("$Id$");
-
 int
 aix_pioctl(char *a_path,
 	   int o_opcode,

@@ -33,8 +33,6 @@
 
 #include "kafs_locl.h"
 
-RCSID("$Id$");
-
 struct krb5_kafs_data {
     krb5_context context;
     krb5_ccache id;

@@ -33,8 +33,6 @@
 
 #include "kafs_locl.h"
 
-RCSID("$Id$");
-
 struct procdata {
     unsigned long param4;
     unsigned long param3;

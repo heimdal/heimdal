@@ -86,8 +86,11 @@ srv_find_realm(krb5_context context, krb5_krbhst_info ***res, int *count,
     snprintf(domain, sizeof(domain), "_%s._%s.%s.", service, proto, realm);
 
     r = rk_dns_lookup(domain, dns_type);
-    if(r == NULL)
+    if(r == NULL) {
+	_krb5_debug(context, 0,
+		    "DNS lookup failed domain: %s", domain);
 	return KRB5_KDC_UNREACH;
+    }
 
     for(num_srv = 0, rr = r->head; rr; rr = rr->next)
 	if(rr->type == rk_ns_t_srv)
@@ -384,11 +387,15 @@ static void
 srv_get_hosts(krb5_context context, struct krb5_krbhst_data *kd,
 	      const char *proto, const char *service)
 {
+    krb5_error_code ret;
     krb5_krbhst_info **res;
     int count, i;
 
-    if (srv_find_realm(context, &res, &count, kd->realm, "SRV", proto, service,
-		       kd->port))
+    ret = srv_find_realm(context, &res, &count, kd->realm, "SRV", proto, service,
+			 kd->port);
+    _krb5_debug(context, 2, "searching DNS for realm %s %s.%s -> %d",
+		kd->realm, proto, service, ret);
+    if (ret)
 	return;
     for(i = 0; i < count; i++)
 	append_host_hostinfo(kd, res[i]);
@@ -405,10 +412,12 @@ config_get_hosts(krb5_context context, struct krb5_krbhst_data *kd,
 		 const char *conf_string)
 {
     int i;
-	
     char **hostlist;
     hostlist = krb5_config_get_strings(context, NULL,
 				       "realms", kd->realm, conf_string, NULL);
+
+    _krb5_debug(context, 2, "configuration file for realm %s%s found",
+		kd->realm, hostlist ? "" : " not");
 
     if(hostlist == NULL)
 	return;
@@ -435,6 +444,9 @@ fallback_get_hosts(krb5_context context, struct krb5_krbhst_data *kd,
     struct addrinfo *ai;
     struct addrinfo hints;
     char portstr[NI_MAXSERV];
+
+    _krb5_debug(context, 2, "fallback lookup %d for realm %s (service %s)",
+		kd->fallback_count, kd->realm, serv_string);
 
     /*
      * Don't try forever in case the DNS server keep returning us
@@ -555,8 +567,10 @@ plugin_get_hosts(krb5_context context,
 				   N_("Locate plugin failed to lookup realm %s: %d", ""),
 				   kd->realm, ret);
 	    break;
-	} else if (ret == 0)
+	} else if (ret == 0) {
+	    _krb5_debug(context, 2, "plugin found result for realm %s", kd->realm);
 	    kd->flags |= KD_CONFIG_EXISTS;
+	}
 
     }
     _krb5_plugin_free(list);
@@ -587,8 +601,12 @@ kdc_get_next(krb5_context context,
 	    return 0;
     }
 
-    if (kd->flags & KD_CONFIG_EXISTS)
-	return KRB5_KDC_UNREACH; /* XXX */
+    if (kd->flags & KD_CONFIG_EXISTS) {
+	_krb5_debug(context, 1,
+		    "Configuration exists for realm %s, wont go to DNS",
+		    kd->realm);
+	return KRB5_KDC_UNREACH;
+    }
 
     if(context->srv_lookup) {
 	if((kd->flags & KD_SRV_UDP) == 0 && (kd->flags & KD_LARGE_MSG) == 0) {
@@ -622,6 +640,8 @@ kdc_get_next(krb5_context context,
 	    return 0;
     }
 
+    _krb5_debug(context, 0, "No KDC entries found for %s", kd->realm);
+
     return KRB5_KDC_UNREACH; /* XXX */
 }
 
@@ -646,8 +666,12 @@ admin_get_next(krb5_context context,
 	    return 0;
     }
 
-    if (kd->flags & KD_CONFIG_EXISTS)
-	return KRB5_KDC_UNREACH; /* XXX */
+    if (kd->flags & KD_CONFIG_EXISTS) {
+	_krb5_debug(context, 1,
+		    "Configuration exists for realm %s, wont go to DNS",
+		    kd->realm);
+	return KRB5_KDC_UNREACH;
+    }
 
     if(context->srv_lookup) {
 	if((kd->flags & KD_SRV_TCP) == 0) {
@@ -669,6 +693,8 @@ admin_get_next(krb5_context context,
 	if(get_next(kd, host))
 	    return 0;
     }
+
+    _krb5_debug(context, 0, "No admin entries found for realm %s", kd->realm);
 
     return KRB5_KDC_UNREACH;	/* XXX */
 }
@@ -694,8 +720,12 @@ kpasswd_get_next(krb5_context context,
 	    return 0;
     }
 
-    if (kd->flags & KD_CONFIG_EXISTS)
-	return KRB5_KDC_UNREACH; /* XXX */
+    if (kd->flags & KD_CONFIG_EXISTS) {
+	_krb5_debug(context, 1,
+		    "Configuration exists for realm %s, wont go to DNS",
+		    kd->realm);
+	return KRB5_KDC_UNREACH;
+    }
 
     if(context->srv_lookup) {
 	if((kd->flags & KD_SRV_UDP) == 0) {
@@ -724,7 +754,9 @@ kpasswd_get_next(krb5_context context,
 	return ret;
     }
 
-    return KRB5_KDC_UNREACH; /* XXX */
+    _krb5_debug(context, 0, "No kpasswd entries found for realm %s", kd->realm);
+
+    return KRB5_KDC_UNREACH;
 }
 
 static krb5_error_code
@@ -746,8 +778,12 @@ krb524_get_next(krb5_context context,
 	kd->flags |= KD_CONFIG;
     }
 
-    if (kd->flags & KD_CONFIG_EXISTS)
-	return KRB5_KDC_UNREACH; /* XXX */
+    if (kd->flags & KD_CONFIG_EXISTS) {
+	_krb5_debug(context, 1,
+		    "Configuration exists for realm %s, wont go to DNS",
+		    kd->realm);
+	return KRB5_KDC_UNREACH;
+    }
 
     if(context->srv_lookup) {
 	if((kd->flags & KD_SRV_UDP) == 0) {
@@ -774,11 +810,14 @@ krb524_get_next(krb5_context context,
 	return (*kd->get_next)(context, kd, host);
     }
 
-    return KRB5_KDC_UNREACH; /* XXX */
+    _krb5_debug(context, 0, "No kpasswd entries found for realm %s", kd->realm);
+
+    return KRB5_KDC_UNREACH;
 }
 
 static struct krb5_krbhst_data*
 common_init(krb5_context context,
+	    const char *service,
 	    const char *realm,
 	    int flags)
 {
@@ -791,6 +830,9 @@ common_init(krb5_context context,
 	free(kd);
 	return NULL;
     }
+
+    _krb5_debug(context, 2, "Trying to find service %s for realm %s flags %x",
+		service, realm, flags);
 
     /* For 'realms' without a . do not even think of going to DNS */
     if (!strchr(realm, '.'))
@@ -826,32 +868,37 @@ krb5_krbhst_init_flags(krb5_context context,
     krb5_error_code (*next)(krb5_context, struct krb5_krbhst_data *,
 			    krb5_krbhst_info **);
     int def_port;
+    const char *service;
 
     switch(type) {
     case KRB5_KRBHST_KDC:
 	next = kdc_get_next;
 	def_port = ntohs(krb5_getportbyname (context, "kerberos", "udp", 88));
+	service = "kdc";
 	break;
     case KRB5_KRBHST_ADMIN:
 	next = admin_get_next;
 	def_port = ntohs(krb5_getportbyname (context, "kerberos-adm",
 					     "tcp", 749));
+	service = "admin";
 	break;
     case KRB5_KRBHST_CHANGEPW:
 	next = kpasswd_get_next;
 	def_port = ntohs(krb5_getportbyname (context, "kpasswd", "udp",
 					     KPASSWD_PORT));
+	service = "change_password";
 	break;
     case KRB5_KRBHST_KRB524:
 	next = krb524_get_next;
 	def_port = ntohs(krb5_getportbyname (context, "krb524", "udp", 4444));
+	service = "524";
 	break;
     default:
 	krb5_set_error_message(context, ENOTTY,
 			       N_("unknown krbhst type (%u)", ""), type);
 	return ENOTTY;
     }
-    if((kd = common_init(context, realm, flags)) == NULL)
+    if((kd = common_init(context, service, realm, flags)) == NULL)
 	return ENOMEM;
     kd->get_next = next;
     kd->def_port = def_port;

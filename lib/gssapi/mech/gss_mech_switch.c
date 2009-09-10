@@ -28,7 +28,6 @@
 
 #include "mech_locl.h"
 #include <heim_threads.h>
-RCSID("$Id$");
 
 #ifndef _PATH_GSS_MECH
 #define _PATH_GSS_MECH	"/etc/gss/mech"

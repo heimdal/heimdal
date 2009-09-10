@@ -27,7 +27,6 @@
  */
 
 #include "mech_locl.h"
-RCSID("$Id$");
 
 static OM_uint32
 parse_header(const gss_buffer_t input_token, gss_OID mech_oid)

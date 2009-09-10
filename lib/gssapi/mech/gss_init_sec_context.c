@@ -27,7 +27,6 @@
  */
 
 #include "mech_locl.h"
-RCSID("$Id$");
 
 static gss_cred_id_t
 _gss_mech_cred_find(gss_cred_id_t cred_handle, gss_OID mech_type)

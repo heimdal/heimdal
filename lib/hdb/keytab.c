@@ -49,7 +49,7 @@ struct hdb_cursor {
 
 /*
  * the format for HDB keytabs is:
- * HDB:[database:file:mkey]
+ * HDB:[file:mkey]
  */
 
 static krb5_error_code

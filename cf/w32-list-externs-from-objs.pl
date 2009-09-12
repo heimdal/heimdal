@@ -17,7 +17,7 @@ sub dump_symbols_for_file($)
     while (<SP>) {
 	# 008 00000000 SECT3  notype ()    External     | _encode_AccessDescription
 
-	/^[[:xdigit:]]{3,}\s[[:xdigit:]]{8,}\s(\w+)\s+\w*\s+\(\)\s+(\w+)\s+\|\s+(\w+)$/ && do {
+	/^[[:xdigit:]]{3,}\s[[:xdigit:]]{8,}\s(\w+)\s+\w*\s+(?:\(\)|  )\s+(\w+)\s+\|\s+(\w+)$/ && do {
 	    my ($section, $visibility, $symbol) = ($1, $2, $3);
 
 	    if ($section ne "UNDEF" && $visibility eq "External") {

@@ -30,6 +30,46 @@
 # 
 
 RELDIR=admin 
-
+cincdirs=$(cincdirs) -I$(OBJ)
 !include ../windows/NTMakefile.w32 
 
+SBINPROGRAMS=$(SBINDIR)\ktutil.exe
+
+KTUTIL_OBJS= \
+	$(OBJ)\add.obj		\
+	$(OBJ)\change.obj	\
+	$(OBJ)\copy.obj		\
+	$(OBJ)\destroy.obj	\
+	$(OBJ)\get.obj		\
+	$(OBJ)\ktutil.obj	\
+	$(OBJ)\ktutil-commands.obj	\
+	$(OBJ)\list.obj		\
+	$(OBJ)\purge.obj	\
+	$(OBJ)\remove.obj	\
+	$(OBJ)\rename.obj
+
+KTUTIL_LIBS= \
+	$(LIBKRB5)	\
+	$(LIBKADM5SRV)	\
+	$(LIBSL)	\
+	$(LIBROKEN)	\
+	$(LIBHCRYPTO)	\
+	$(LIBVERS)
+
+$(SBINDIR)\ktutil.exe: $(KTUTIL_OBJS) $(KTUTIL_LIBS)
+	$(EXECONLINK)
+	$(EXEPREP)
+
+$(OBJ)\ktutil-commands.c $(OBJ)\ktutil-commands.h: ktutil-commands.in
+	cd $(OBJ)
+	$(CP) $(SRCDIR)\ktutil-commands.in $(OBJ)
+	$(BINDIR)\slc.exe ktutil-commands.in
+	cd $(SRCDIR)
+
+INCFILES=\
+	$(OBJ)\ktutil-commands.h
+
+all:: $(INCFILES) $(SBINPROGRAMS)
+
+clean::
+	-$(RM) $(SBINPROGRAMS)

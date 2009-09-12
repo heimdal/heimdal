@@ -95,17 +95,6 @@ static const char *const rcsid[] = { (const char *)rcsid, "@(#)" msg }
 #endif
 #endif
 
-#define _STR2(x) #x
-#define _STR(x) _STR2(x)
-
-#ifdef _HOST
-#define HOST _STR(_HOST)
-#endif
-
-#ifdef _HDB_DB_DIR
-#define HDB_DB_DIR _STR(_HDB_DB_DIR)
-#endif
-
 /* Feature macros */
 
 @FEATURE_DEFS@
@@ -856,12 +845,10 @@ static const char *const rcsid[] = { (const char *)rcsid, "@(#)" msg }
 #define HAVE_STRING_H 1
 
 /* Define if you have the function `strlcat'. */
-#define HAVE_STRLCAT 1
-#define strlcat(d,s,dsz) strcat_s((d),(dsz),(s))
+/* #define HAVE_STRLCAT 1 */
 
 /* Define if you have the function `strlcpy'. */
-#define HAVE_STRLCPY 1
-#define strlcpy(d,s,dsz) strcpy_s((d),(dsz),(s))
+/* #define HAVE_STRLCPY 1 */
 
 /* Define if you have the function `strlwr'. */
 #define HAVE_STRLWR 1
@@ -1366,6 +1353,10 @@ static const char *const rcsid[] = { (const char *)rcsid, "@(#)" msg }
 /* Define if you don't want to use mmap. */
 #define NO_MMAP 1
 
+/* Define to 1 if inetd will never be used to invoke any of the
+   daemons. */
+#define NO_INETD 1
+
 #define NO_RAND_EGD_METHOD 1
 
 /* Define if the Unix rand method is not defined */
@@ -1388,6 +1379,12 @@ static const char *const rcsid[] = { (const char *)rcsid, "@(#)" msg }
 
 /* Define to 1 if Unix sockets (AF_UNIX) are not available. */
 #define NO_UNIX_SOCKETS 1
+
+/* Define to 1 if POSIX link/unlink operations should be avoided.
+   This may be because the behavior of links are not not consistent
+   with POSIX or because the filesystem may not support POSIX
+   links. */
+#define NO_POSIX_LINKS 1
 
 /* Define this to enable old environment option in telnet. */
 /* #define OLD_ENVIRON 1 */
@@ -1492,17 +1489,21 @@ typedef unsigned short mode_t;
 
 /* Paths */
 
-#define SYSCONFDIR "%{COMMON_APPDATA}\\@PACKAGE@"
+#define SYSCONFDIR "%{COMMONCONFIG}"
 
-#define LIBDIR "%{COMMON_APPDATA}\\@PACKAGE@\\lib"
+#define LIBDIR "%{LIBDIR}"
 
-#define LIBEXECDIR "%{COMMON_APPDATA}\\@PACKAGE@\\libexec"
+#if 0
 
-#define LOCALSTATEDIR "%{COMMON_APPDATA}\\@PACKAGE@"
+#define LIBEXECDIR "%{LIBEXECDIR}"
 
-#define SBINDIR "%{COMMON_APPDATA}\\@PACKAGE@\\sbin"
+#define LOCALSTATEDIR "%{COMMONCONFIG}"
 
-#define BINDIR "%{COMMON_APPDATA}\\@PACKAGE@\\bin"
+#define SBINDIR "%{SBINDIR}"
+
+#define BINDIR "%{BINDIR}"
+
+#endif
 
 #endif	/* RC_INVOKED */
 

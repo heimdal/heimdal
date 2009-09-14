@@ -95,6 +95,7 @@ main(int argc, char **argv)
     int i;
     krb5_log_facility *logfacility;
     krb5_keytab keytab;
+    SOCKET sfd = INVALID_SOCKET;
 
     setprogname(argv[0]);
 
@@ -168,8 +169,9 @@ main(int argc, char **argv)
 					     "tcp", 749);
 	else
 	    debug_port = htons(atoi(port_str));
-	mini_inetd(debug_port);
+	mini_inetd(debug_port, &sfd);
     } else {
+#ifndef NO_INETD
 	struct sockaddr_storage __ss;
 	struct sockaddr *sa = (struct sockaddr *)&__ss;
 	socklen_t sa_size = sizeof(__ss);
@@ -178,19 +180,24 @@ main(int argc, char **argv)
 	 * Check if we are running inside inetd or not, if not, start
 	 * our own server.
 	 */
-	
+
 	if(roken_getsockname(STDIN_FILENO, sa, &sa_size) < 0 &&
-	       errno == ENOTSOCK) {
+	   SOCK_ERRNO == ENOTSOCK) {
+#endif
 	    parse_ports(context, port_str ? port_str : "+");
 	    pidfile(NULL);
-	    start_server(context);
+	    start_server(context, &sfd);
+#ifndef NO_INETD
+	} else {
+	    sfd = STDIN_FILENO;
 	}
+#endif
     }
-    
+
     if(realm)
 	krb5_set_default_realm(context, realm); /* XXX */
 
-    kadmind_loop(context, keytab, STDIN_FILENO);
+    kadmind_loop(context, keytab, sfd);
 
     return 0;
 }

@@ -124,15 +124,15 @@ spawn_child(krb5_context context, int *socks,
     struct sockaddr_storage __ss;
     struct sockaddr *sa = (struct sockaddr *)&__ss;
     socklen_t sa_size = sizeof(__ss);
-    int s;
+    SOCKET s;
     pid_t pid;
     krb5_address addr;
     char buf[128];
     size_t buf_len;
 
     s = accept(socks[this_sock], sa, &sa_size);
-    if(s < 0) {
-	krb5_warn(context, errno, "accept");
+    if(IS_BAD_SOCKET(s)) {
+	krb5_warn(context, SOCK_ERRNO, "accept");
 	return 1;
     }
     e = krb5_sockaddr2address(context, sa, &addr);
@@ -151,21 +151,21 @@ spawn_child(krb5_context context, int *socks,
     pid = fork();
     if(pid == 0) {
 	for(i = 0; i < num_socks; i++)
-	    close(socks[i]);
+	    closesocket(socks[i]);
 	dup2(s, STDIN_FILENO);
 	dup2(s, STDOUT_FILENO);
 	if(s != STDIN_FILENO && s != STDOUT_FILENO)
-	    close(s);
+	    closesocket(s);
 	return 0;
     } else {
-	close(s);
+	closesocket(s);
     }
     return 1;
 }
 
 static int
 wait_for_connection(krb5_context context,
-		    int *socks, unsigned int num_socks)
+		    SOCKET *socks, unsigned int num_socks)
 {
     unsigned int i;
     int e;
@@ -175,8 +175,10 @@ wait_for_connection(krb5_context context,
     FD_ZERO(&orig_read_set);
 
     for(i = 0; i < num_socks; i++) {
+#ifndef NO_LIMIT_FD_SETSIZE
 	if (socks[i] >= FD_SETSIZE)
 	    errx (1, "fd too large");
+#endif
 	FD_SET(socks[i], &orig_read_set);
 	max_fd = max(max_fd, socks[i]);
     }
@@ -193,9 +195,9 @@ wait_for_connection(krb5_context context,
     while (term_flag == 0) {
 	read_set = orig_read_set;
 	e = select(max_fd + 1, &read_set, NULL, NULL, NULL);
-	if(e < 0) {
-	    if(errno != EINTR)
-		krb5_warn(context, errno, "select");
+	if(IS_SOCKET_ERROR(e)) {
+	    if(SOCK_ERRNO != EINTR)
+		krb5_warn(context, SOCK_ERRNO, "select");
 	} else if(e == 0)
 	    krb5_warnx(context, "select returned 0");
 	else {
@@ -224,7 +226,7 @@ start_server(krb5_context context)
     int e;
     struct kadm_port *p;
 
-    int *socks = NULL, *tmp;
+    SOCKET *socks = NULL, *tmp;
     unsigned int num_socks = 0;
     int i;
 
@@ -257,23 +259,23 @@ start_server(krb5_context context)
 	}
 	socks = tmp;
 	for(ap = ai; ap; ap = ap->ai_next) {
-	    int s = socket(ap->ai_family, ap->ai_socktype, ap->ai_protocol);
-	    if(s < 0) {
-		krb5_warn(context, errno, "socket");
+	    SOCKET s = socket(ap->ai_family, ap->ai_socktype, ap->ai_protocol);
+	    if(IS_BAD_SOCKET(s)) {
+		krb5_warn(context, SOCK_ERRNO, "socket");
 		continue;
 	    }
 
 	    socket_set_reuseaddr(s, 1);
 	    socket_set_ipv6only(s, 1);
 
-	    if (bind (s, ap->ai_addr, ap->ai_addrlen) < 0) {
-		krb5_warn(context, errno, "bind");
-		close(s);
+	    if (IS_SOCKET_ERROR(bind (s, ap->ai_addr, ap->ai_addrlen))) {
+		krb5_warn(context, SOCK_ERRNO, "bind");
+		closesocket(s);
 		continue;
 	    }
-	    if (listen (s, SOMAXCONN) < 0) {
-		krb5_warn(context, errno, "listen");
-		close(s);
+	    if (IS_SOCKET_ERROR(listen (s, SOMAXCONN))) {
+		krb5_warn(context, SOCK_ERRNO, "listen");
+		closesocket(s);
 		continue;
 	    }
 	    socks[num_socks++] = s;
@@ -282,5 +284,6 @@ start_server(krb5_context context)
     }
     if(num_socks == 0)
 	krb5_errx(context, 1, "no sockets to listen to - exiting");
+
     return wait_for_connection(context, socks, num_socks);
 }

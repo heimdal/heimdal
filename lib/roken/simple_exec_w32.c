@@ -48,7 +48,7 @@ RCSID("$Id$");
  * @param[in] pid Process id for the monitored process
 
  * @param[in] func Timeout callback function.  When the wait times out,
- *     the callback function is called.  THe possible return values
+ *     the callback function is called.  The possible return values
  *     from the callback function are:
  *
  * - ((time_t) -2) Exit loop without killing child and return SE_E_EXECTIMEOUT.
@@ -72,13 +72,17 @@ ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
 wait_for_process_timed(pid_t pid, time_t (*func)(void *), 
 		       void *ptr, time_t timeout)
 {
-    HANDLE hProcess = OpenProcess(SYNCHRONIZE, FALSE, pid);
+    HANDLE hProcess;
     DWORD wrv = 0;
     DWORD dtimeout;
     int rv = 0;
 
-    if (hProcess == NULL)
+    hProcess = OpenProcess(SYNCHRONIZE, FALSE, pid);
+
+    if (hProcess == NULL) {
+	DWORD dw = GetLastError();
         return SE_E_WAITPIDFAILED;
+    }
 
     dtimeout = (DWORD) ((timeout == 0)? INFINITE: timeout * 1000);
 

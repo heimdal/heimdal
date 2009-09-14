@@ -63,6 +63,7 @@
 
 #define ETIMEDOUT               WSAETIMEDOUT
 #define EWOULDBLOCK             WSAEWOULDBLOCK
+#define ENOTSOCK		WSAENOTSOCK
 
 #define SOCK_INIT rk_WSAStartup()
 #define SOCK_EXIT rk_WSACleanup()
@@ -933,8 +934,11 @@ ROKEN_LIB_FUNCTION const char * ROKEN_LIB_CALL getprogname(void);
 extern const char *__progname;
 #endif
 
-ROKEN_LIB_FUNCTION void ROKEN_LIB_CALL mini_inetd_addrinfo (struct addrinfo*);
-ROKEN_LIB_FUNCTION void ROKEN_LIB_CALL mini_inetd (int);
+ROKEN_LIB_FUNCTION void ROKEN_LIB_CALL
+mini_inetd_addrinfo (struct addrinfo*, SOCKET *);
+
+ROKEN_LIB_FUNCTION void ROKEN_LIB_CALL
+mini_inetd (int, SOCKET *);
 
 #ifndef HAVE_LOCALTIME_R
 #define localtime_r rk_localtime_r

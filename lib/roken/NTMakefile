@@ -88,12 +88,15 @@ libroken_la_OBJS =			\
 	$(OBJ)\socket.obj		\
 	$(OBJ)\sockstartup_w32.obj	\
 	$(OBJ)\strcollect.obj		\
+	$(OBJ)\strlcat.obj		\
+	$(OBJ)\strlcpy.obj		\
 	$(OBJ)\strpool.obj		\
 	$(OBJ)\strptime.obj		\
 	$(OBJ)\strsep.obj		\
 	$(OBJ)\strsep_copy.obj		\
 	$(OBJ)\strtok_r.obj		\
 	$(OBJ)\syslogc.obj		\
+	$(OBJ)\timegm.obj		\
 	$(OBJ)\timeval.obj		\
 	$(OBJ)\tm2time.obj		\
 	$(OBJ)\unvis.obj		\
@@ -111,7 +114,10 @@ libroken_la_OBJS =			\
 	$(C2OBJ) -DBUILD_ROKEN_LIB
 
 $(LIBROKEN): $(libroken_la_OBJS)
-	$(LIBCON)
+	$(LIBCON_C) -out:$@ @<<
+$(**: =
+)
+<<
 
 $(OBJ)\make-roken.exe: $(OBJ)\make-roken.obj
 	$(EXECONLINK)
@@ -166,7 +172,8 @@ TEST_PROGS =			    \
 	$(OBJ)\parse_time-test.exe  \
 	$(OBJ)\snprintf-test.exe    \
 	$(OBJ)\strpftime-test.exe   \
-	$(OBJ)\dirent-test.exe
+	$(OBJ)\dirent-test.exe	    \
+	$(OBJ)\test-mini_inetd.exe
 
 $(OBJ)\strftime_test.obj: strftime.c
 	$(C2OBJ) -DTEST_SNPRINTF -DTEST_STRPFTIME -DBUILD_ROKEN_LIB
@@ -186,10 +193,10 @@ $(OBJ)\parse_reply-test.obj: parse_reply-test.c
 $(OBJ)\resolve_test.obj: resolve.c
 	$(C2OBJ) -DTEST_RESOLVE -DBUILD_ROKEN_LIB
 
-$(OBJ)\parse_reply-test.exe: $(OBJ)\parse_reply-test.obj $(OBJ)\resolve_test.obj
+$(OBJ)\parse_reply-test.exe: $(OBJ)\parse_reply-test.obj $(OBJ)\resolve_test.obj $(LIBROKEN)
 	$(EXECONLINK)
 
-$(OBJ)\test-readenv.exe: $(OBJ)\test-readenv.obj $(OBJ)\test-mem.obj
+$(OBJ)\test-readenv.exe: $(OBJ)\test-readenv.obj $(OBJ)\test-mem.obj $(LIBROKEN)
 	$(EXECONLINK)
 
 $(OBJ)\parse_time-test.exe: $(OBJ)\parse_time-test.obj $(OBJ)\test-mem.obj $(LIBROKEN)
@@ -205,29 +212,37 @@ $(OBJ)\snprintf-test.obj: snprintf-test.c
 	$(C2OBJ) -DTEST_SNPRINTF -DBUILD_ROKEN_LIB
 
 $(OBJ)\snprintf-test.exe: $(OBJ)\snprintf-test.obj $(OBJ)\libtest.lib $(LIBROKEN)
+	$(EXECONLINK)
 
 $(OBJ)\resolve-test.exe: $(OBJ)\resolve-test.obj $(LIBROKEN)
+	$(EXECONLINK)
 
 $(OBJ)\base64-test.exe: $(OBJ)\base64-test.obj $(OBJ)\base64.obj
+	$(EXECONLINK)
 
 $(OBJ)\getaddrinfo-test.exe: $(OBJ)\getaddrinfo-test.obj $(LIBROKEN)
+	$(EXECONLINK)
 
 $(OBJ)\hex-test.exe: $(OBJ)\hex-test.obj $(LIBROKEN)
-
-$(OBJ)\test-readenv.exe: $(OBJ)\test-readenv.obj $(LIBROKEN)
+	$(EXECONLINK)
 
 $(OBJ)\parse_bytes-test.exe: $(OBJ)\parse_bytes-test.obj $(LIBROKEN)
-
-$(OBJ)\parse_reply-test.exe: $(OBJ)\parse_reply-test.obj $(LIBROKEN)
+	$(EXECONLINK)
 
 $(OBJ)\dirent-test.exe: $(OBJ)\dirent-test.obj $(LIBROKEN)
+	$(EXECONLINK)
 
 $(OBJ)\getifaddrs-test.exe: $(OBJ)\getifaddrs-test.obj $(LIBROKEN)
+	$(EXECONLINK)
+
+$(OBJ)\test-mini_inetd.exe: $(OBJ)\test-mini_inetd.obj $(LIBROKEN)
+	$(EXECONLINK)
 
 test-binaries: $(TEST_PROGS) $(TMP_PROGS)
 
 test-run:
 	cd $(OBJ)
+	test-mini_inetd.exe
 	dirent-test.exe
 	base64-test.exe
 	getaddrinfo-test.exe

@@ -85,9 +85,6 @@ test_default_name(krb5_context context)
   	krb5_errx (context, 1, "krb5_cc_set_default_name 1 failed");
 #endif
 
-    if (strcmp(p3, test_cc_name) != 0)
-	krb5_errx (context, 1, "krb5_cc_set_default_name 1 failed");
-
     free(p1);
     free(p2);
     free(p3);
@@ -292,12 +289,17 @@ struct {
     char *res;
 } cc_names[] = {
     { "foo", 0, "foo" },
+    { "foo%}", 0, "foo%}" },
     { "%{uid}", 0 },
     { "foo%{null}", 0, "foo" },
     { "foo%{null}bar", 0, "foobar" },
     { "%{", 1 },
     { "%{foo %{", 1 },
     { "%{{", 1 },
+    { "%{{}", 1 },
+    { "%{nulll}", 1 },
+    { "%{does not exist}", 1 },
+    { "%{}", 1 },
 #ifdef KRB5_USE_PATH_TOKENS
     { "%{APPDATA}", 0 },
     { "%{COMMON_APPDATA}", 0},
@@ -307,6 +309,12 @@ struct {
     { "%{TEMP}", 0},
     { "%{USERID}", 0},
     { "%{uid}", 0},
+    { "%{USERCONFIG}", 0},
+    { "%{COMMONCONFIG}", 0},
+    { "%{LIBDIR}", 0},
+    { "%{BINDIR}", 0},
+    { "%{LIBEXEC}", 0},
+    { "%{SBINDIR}", 0},
 #endif
 };
 
@@ -717,7 +725,9 @@ main(int argc, char **argv)
 
     krb5_free_context(context);
 
+#if 0
     sleep(60);
+#endif
 
     return 0;
 }

@@ -41,26 +41,56 @@
  */
 
 static void
-accept_it (SOCKET s)
+accept_it (SOCKET s, SOCKET *ret_socket)
 {
-    SOCKET s2;
+    SOCKET as;
 
-    s2 = accept(s, NULL, NULL);
-    if(IS_BAD_SOCKET(s2))
+    as = accept(s, NULL, NULL);
+    if(IS_BAD_SOCKET(as))
 	err (1, "accept");
-    closesocket(s);
-    dup2(fd_from_socket(s2, _O_RDONLY), STDIN_FILENO);
-    dup2(fd_from_socket(s2, 0), STDOUT_FILENO);
-    /* dup2(fd_from_socket(s2, 0), STDERR_FILENO); */
-    closesocket(s2);
+
+    if (ret_socket) {
+
+	*ret_socket = as;
+
+    } else {
+	int fd = fd_from_socket(as, 0);
+
+	/* We would use _O_RDONLY for the fd_from_socket() call for
+	   STDIN, but there are instances where we assume that STDIN
+	   is a r/w socket. */
+
+	dup2(fd, STDIN_FILENO);
+	dup2(fd, STDOUT_FILENO);
+
+#ifdef SOCKET_IS_NOT_AN_FD
+	close(fd);
+#else
+	closesocket(as);
+#endif
+    }
 }
 
-/*
- * Listen on a specified port, emulating inetd.
+/**
+ * Listen on a specified addresses
+ *
+ * Listens on the specified addresses for incoming connections.  If
+ * the \a ret_socket parameter is \a NULL, on return STDIN and STDOUT
+ * will be connected to an accepted socket.  If the \a ret_socket
+ * parameter is non-NULL, the accepted socket will be returned in
+ * *ret_socket.  In the latter case, STDIN and STDOUT will be left
+ * unmodified.
+ *
+ * This function does not return if there is an error or if no
+ * connection is established.
+ *
+ * @param[in] ai Addresses to listen on
+ * @param[out] ret_socket If non-NULL receives the accepted socket.
+ *
+ * @see mini_inetd()
  */
-
 ROKEN_LIB_FUNCTION void ROKEN_LIB_CALL
-mini_inetd_addrinfo (struct addrinfo *ai)
+mini_inetd_addrinfo (struct addrinfo *ai, SOCKET *ret_socket)
 {
     int ret;
     struct addrinfo *a;
@@ -86,13 +116,13 @@ mini_inetd_addrinfo (struct addrinfo *ai)
 	    continue;
 	socket_set_reuseaddr (fds[i], 1);
 	socket_set_ipv6only(fds[i], 1);
-	if (bind (fds[i], a->ai_addr, a->ai_addrlen) < 0) {
+	if (IS_SOCKET_ERROR(bind (fds[i], a->ai_addr, a->ai_addrlen))) {
 	    warn ("bind af = %d", a->ai_family);
 	    closesocket(fds[i]);
 	    fds[i] = INVALID_SOCKET;
 	    continue;
 	}
-	if (listen (fds[i], SOMAXCONN) < 0) {
+	if (IS_SOCKET_ERROR(listen (fds[i], SOMAXCONN))) {
 	    warn ("listen af = %d", a->ai_family);
 	    closesocket(fds[i]);
 	    fds[i] = INVALID_SOCKET;
@@ -120,7 +150,7 @@ mini_inetd_addrinfo (struct addrinfo *ai)
 
     for (i = 0; i < n; ++i)
 	if (FD_ISSET (fds[i], &read_set)) {
-	    accept_it (fds[i]);
+	    accept_it (fds[i], ret_socket);
 	    for (i = 0; i < n; ++i)
 	      closesocket(fds[i]);
 	    free(fds);
@@ -129,8 +159,25 @@ mini_inetd_addrinfo (struct addrinfo *ai)
     abort ();
 }
 
+/**
+ * Listen on a specified port
+ *
+ * Listens on the specified port for incoming connections.  If the \a
+ * ret_socket parameter is \a NULL, on return STDIN and STDOUT will be
+ * connected to an accepted socket.  If the \a ret_socket parameter is
+ * non-NULL, the accepted socket will be returned in *ret_socket.  In
+ * the latter case, STDIN and STDOUT will be left unmodified.
+ *
+ * This function does not return if there is an error or if no
+ * connection is established.
+ *
+ * @param[in] port Port to listen on
+ * @param[out] ret_socket If non-NULL receives the accepted socket.
+ *
+ * @see mini_inetd_addrinfo()
+ */
 ROKEN_LIB_FUNCTION void ROKEN_LIB_CALL
-mini_inetd (int port)
+mini_inetd (int port, SOCKET * ret_socket)
 {
     int error;
     struct addrinfo *ai, hints;
@@ -147,7 +194,8 @@ mini_inetd (int port)
     if (error)
 	errx (1, "getaddrinfo: %s", gai_strerror (error));
 
-    mini_inetd_addrinfo(ai);
+    mini_inetd_addrinfo(ai, ret_socket);
 
     freeaddrinfo(ai);
 }
+

@@ -41,5 +41,19 @@ krb5_net_read (krb5_context context,
 {
     SOCKET fd = *((SOCKET *)p_fd);
 
+#ifdef SOCKET_IS_NOT_AN_FD
+#ifdef _MSC_VER
+    {
+	HANDLE h = _get_osfhandle(fd);
+
+	if (h != INVALID_HANDLE_VALUE) {
+	    return net_read (fd, buf, len);
+	}
+    }
+#else
+#error Don't know how to handle socket that may be an fd
+#endif
+#endif
+
     return net_read_s (fd, buf, len);
 }

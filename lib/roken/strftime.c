@@ -31,10 +31,10 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include <config.h>
+#include "roken.h"
 #ifdef TEST_STRPFTIME
 #include "strpftime-test.h"
 #endif
-#include "roken.h"
 
 static const char *abb_weekdays[] = {
     "Sun",

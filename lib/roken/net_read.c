@@ -74,10 +74,16 @@ net_read_s (SOCKET sock, void *buf, size_t nbytes)
     while (rem > 0) {
 	count = recv (sock, cbuf, rem, 0);
 	if (count < 0) {
-	    if (errno == EINTR)
+
+	    /* With WinSock, the error EINTR (WSAEINTR), is used to
+	       indicate that a blocking call was cancelled using
+	       WSACancelBlockingCall(). */
+
+#ifndef HAVE_WINSOCK
+	    if (SOCK_ERRNO == EINTR)
 		continue;
-	    else
-		return count;
+#endif
+	    return count;
 	} else if (count == 0) {
 	    return count;
 	}

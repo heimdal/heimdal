@@ -109,8 +109,20 @@ libhcrypt_OBJs = \
 	$(OBJ)\sha256.obj	\
 	$(OBJ)\ui.obj
 
+!ifndef STATICLIBS
+
+$(LIBHCRYPTO): $(BINDIR)\libhcrypto.dll
+
+$(BINDIR)\libhcrypto.dll: $(libhcrypt_OBJs) $(LIBROKEN) $(LIBASN1)
+	$(DLLGUILINK) -def:libhcrypto-exports.def -implib:$(LIBHCRYPTO)
+	$(DLLPREP)
+
+!else
+
 $(LIBHCRYPTO): $(libhcrypt_OBJs)
 	$(LIBCON)
+
+!endif
 
 {imath/}.c{$(OBJ)}.obj:
 	$(C2OBJ)

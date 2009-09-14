@@ -301,6 +301,14 @@ socket_set_ipv6only (SOCKET sock, int val)
 
 #ifdef SOCKET_IS_NOT_AN_FD
 
+/**
+ * Create a file descriptor from a socket
+ *
+ * While the socket handle in \a sock can be used with WinSock
+ * functions after calling fd_from_socket(), it should not be closed
+ * with closesocket().  The socket will be closed when the associated
+ * file descriptor is closed.
+ */
 ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
 fd_from_socket(SOCKET sock, int flags)
 {

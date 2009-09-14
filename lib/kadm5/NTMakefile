@@ -219,7 +219,7 @@ $(LIBKADM5CLNT): $(LIBKADM5CLNT_OBJS)
 $(LIBKADM5SRV): $(BINDIR)\libkadm5srv.dll
 
 $(BINDIR)\libkadm5srv.dll: $(LIBKADM5SRV_OBJS) $(LIBKRB5) $(LIBROKEN) $(LIBHDB) $(LIBCOMERR) $(LIBASN1) $(LIBSQLITE)
-	$(DLLGUILINK_C) -out:$@ -implib:$(LIBKADM5SRV) -def:libkadm5srv-exports.def $**
+	$(DLLGUILINK) -implib:$(LIBKADM5SRV) -def:libkadm5srv-exports.def
 	$(_VC_MANIFEST_EMBED_DLL)
 	$(_VC_MANIFEST_CLEAN)
 	$(_CODESIGN)
@@ -247,7 +247,7 @@ $(OBJ)\default_keys.exe: $(OBJ)\default_keys.obj
 	$(_VC_MANIFEST_CLEAN)
 
 $(OBJ)\sample_passwd_check.dll: $(OBJ)\sample_passwd_check.obj
-	$(DLLGUILINK)
+	$(DLLGUILINK)		#TODO: Define exports
 	$(_VC_MANIFEST_EMBED_DLL)
 	$(_VC_MANIFEST_CLEAN)
 

@@ -657,8 +657,10 @@ main(int argc, char **argv)
 	    fd_set readset;
 	    struct timeval to;
 
+#ifndef NO_LIMIT_FD_SETSIZE
 	    if (master_fd >= FD_SETSIZE)
 		krb5_errx (context, 1, "fd too large");
+#endif
 
 	    FD_ZERO(&readset);
 	    FD_SET(master_fd, &readset);

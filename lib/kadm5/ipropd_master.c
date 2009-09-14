@@ -852,8 +852,10 @@ main(int argc, char **argv)
 	struct timeval to = {30, 0};
 	uint32_t vers;
 
+#ifndef NO_LIMIT_FD_SETSIZE
 	if (signal_fd >= FD_SETSIZE || listen_fd >= FD_SETSIZE)
 	    krb5_errx (context, 1, "fd too large");
+#endif
 
 	FD_ZERO(&readset);
 	FD_SET(signal_fd, &readset);

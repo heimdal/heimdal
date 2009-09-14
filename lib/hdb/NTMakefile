@@ -66,7 +66,7 @@ ldap_lib = $(LIBDIR)\hdb_ldap.lib
 ldap_objs = $(OBJ)\hdb-ldap.obj
 
 $(ldap_dll): $(ldap_objs)
-	$(DLLGUILINK) -IMPLIB:$(ldap_lib)
+	$(DLLGUILINK) -implib:$(ldap_lib)
 	$(_VC_MANIFEST_EMBED_DLL)
 	$(_VC_MANIFEST_CLEAN)
 	$(_CODESIGN)
@@ -135,8 +135,20 @@ INCFILES=\
 	$(INCDIR)\hdb_err.h \
 	$(INCDIR)\hdb_asn1.h
 
+!ifndef STATICLIBS
+
+$(LIBHDB): $(BINDIR)\libhdb.dll
+
+$(BINDIR)\libhdb.dll: $(libhdb_OBJs) $(ldap_lib) $(LIBKRB5) $(LIBASN1) $(LIBSQLITE) $(LIBCOMERR) $(LIBROKEN)
+	$(DLLGUILINK) -def:libhdb-exports.def -implib:$(LIBHDB)
+	$(DLLPREP)
+
+!else
+
 $(LIBHDB): $(libhdb_OBJs) $(ldap_lib)
 	$(LIBCON)
+
+!endif
 
 all:: $(INCFILES) $(LIBHDB)
 

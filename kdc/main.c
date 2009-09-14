@@ -64,6 +64,7 @@ sigterm(int sig)
 static void
 switch_environment(void)
 {
+#ifdef HAVE_GETEUID
     if ((runas_string || chroot_string) && geteuid() != 0)
 	errx(1, "no running as root, can't switch user/chroot");
 
@@ -86,6 +87,7 @@ switch_environment(void)
 	if (setuid(pw->pw_uid) < 0)
 	    err(1, "setuid(%s)", runas_string);
     }
+#endif
 }
 
 
@@ -128,8 +130,12 @@ main(int argc, char **argv)
 #else
     signal(SIGINT, sigterm);
     signal(SIGTERM, sigterm);
+#ifndef NO_SIGXCPU
     signal(SIGXCPU, sigterm);
+#endif
+#ifndef NO_SIGPIPE
     signal(SIGPIPE, SIG_IGN);
+#endif
 #endif
 #ifdef SUPPORT_DETACH
     if (detach_from_console)

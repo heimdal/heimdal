@@ -49,4 +49,5 @@ strlcat (char *dst, const char *src, size_t dst_sz)
 
     return len + strlcpy (dst + len, src, dst_sz - len);
 }
+
 #endif

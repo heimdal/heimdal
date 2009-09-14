@@ -42,8 +42,20 @@ libheimntlm_la_SOURCES	= ntlm.c heimntlm.h
 $(OBJ)\heimntlm-protos.h: $(libheimntlm_la_SOURCES)
 	$(PERL) ../../cf/make-proto.pl -q -P remove -o $(OBJ)\heimntlm-protos.h $(libheimntlm_la_SOURCES)
 
+!ifndef STATICLIBS
+
+$(LIBHEIMNTLM): $(BINDIR)\libheimntlm.dll
+
+$(BINDIR)\libheimntlm.dll: $(OBJ)\ntlm.obj $(LIBKRB5) $(LIBHCRYPTO)
+	$(DLLGUILINK) -def:libheimntlm-exports.def -implib:$(LIBHEIMNTLM)
+	$(DLLPREP)
+
+!else
+
 $(LIBHEIMNTLM): $(OBJ)\ntlm.obj
 	$(LIBCON)
+
+!endif
 
 all:: $(INCFILES) $(LIBHEIMNTLM)
 

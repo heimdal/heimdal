@@ -33,7 +33,7 @@
 #include <shlobj.h>
 #include <sddl.h>
 
-#define PTYPE int
+typedef int PTYPE;
 
 /**
  * Expand a %{TEMP} token
@@ -47,7 +47,7 @@
  * the returned path may or may not exist.
  */
 static int
-_expand_temp_folder(krb5_context context, PTYPE param, char ** ret)
+_expand_temp_folder(krb5_context context, PTYPE param, const char * postfix, char ** ret)
 {
     TCHAR tpath[MAX_PATH];
     size_t len;
@@ -56,7 +56,7 @@ _expand_temp_folder(krb5_context context, PTYPE param, char ** ret)
 	if (context)
 	    krb5_set_error_string(context, "Failed to get temporary path (GLE=%d)",
 				  GetLastError());
-	return 1;
+	return EINVAL;
     }
 
     len = strlen(tpath);
@@ -69,8 +69,53 @@ _expand_temp_folder(krb5_context context, PTYPE param, char ** ret)
     if (*ret == NULL) {
 	if (context)
 	    krb5_set_error_string(context, "strdup - Out of memory");
-	return 1;
+	return ENOMEM;
     }
+
+    return 0;
+}
+
+extern HINSTANCE _krb5_hInstance;
+
+/**
+ * Expand a %{BINDIR} token
+ *
+ * This is also used to expand a few other tokens on Windows, since
+ * most of the executable binaries end up in the same directory.  The
+ * "bin" directory is considered to be the directory in which the
+ * krb5.dll is located.
+ */
+static int
+_expand_bin_dir(krb5_context context, PTYPE param, const char * postfix, char ** ret)
+{
+    TCHAR path[MAX_PATH];
+    TCHAR *lastSlash;
+    DWORD nc;
+
+    nc = GetModuleFileName(_krb5_hInstance, path, sizeof(path)/sizeof(path[0]));
+    if (nc == 0 ||
+	nc == sizeof(path)/sizeof(path[0])) {
+	return EINVAL;
+    }
+
+    lastSlash = strrchr(path, '\\');
+    if (lastSlash != NULL) {
+	TCHAR *fslash = strrchr(lastSlash, '/');
+
+	if (fslash != NULL)
+	    lastSlash = fslash;
+
+	*lastSlash = '\0';
+    }
+
+    if (postfix) {
+	if (strlcat(path, postfix, sizeof(path)/sizeof(path[0])) >= sizeof(path)/sizeof(path[0]))
+	    return EINVAL;
+    }
+
+    *ret = strdup(path);
+    if (*ret == NULL)
+	return ENOMEM;
 
     return 0;
 }
@@ -91,9 +136,9 @@ _expand_temp_folder(krb5_context context, PTYPE param, char ** ret)
  *
  */
 static int
-_expand_userid(krb5_context context, PTYPE param, char ** ret)
+_expand_userid(krb5_context context, PTYPE param, const char * postfix, char ** ret)
 {
-    int rv = 1;
+    int rv = EINVAL;
     HANDLE hThread = NULL;
     HANDLE hToken = NULL;
     PTOKEN_OWNER pOwner = NULL;
@@ -181,21 +226,34 @@ _expand_userid(krb5_context context, PTYPE param, char ** ret)
     return rv;
 }
 
+/**
+ * Expand a %{null} token
+ *
+ * The expansion of a %{null} token is always the empty string.
+ */
 static int
-_expand_null(krb5_context context, PTYPE param, char ** ret)
+_expand_null(krb5_context context, PTYPE param, const char * postfix, char ** ret)
 {
     *ret = strdup("");
     if (*ret == NULL) {
 	if (context)
 	    krb5_set_error_string(context, "Out of memory");
-	return 1;
+	return ENOMEM;
     }
     return 0;
 }
 
 
+/**
+ * Expand a folder identified by a CSIDL
+ *
+ * Parameters:
+ *
+ * @param[in] folder A CSIDL value identifying the folder to be
+ *     returned.
+ */
 static int
-_expand_csidl(krb5_context context, PTYPE folder, char ** ret)
+_expand_csidl(krb5_context context, PTYPE folder, const char * postfix, char ** ret)
 {
     TCHAR path[MAX_PATH];
     size_t len;
@@ -211,11 +269,16 @@ _expand_csidl(krb5_context context, PTYPE folder, char ** ret)
     if (len > 0 && path[len - 1] == '\\')
 	path[len - 1] = '\0';
 
+    if (postfix &&
+	strlcat(path, postfix, sizeof(path)/sizeof(path[0])) >= sizeof(path)/sizeof(path[0])) {
+	return ENOMEM;
+    }
+
     *ret = strdup(path);
     if (*ret == NULL) {
 	if (context)
 	    krb5_set_error_string(context, "Out of memory");
-	return 1;
+	return ENOMEM;
     }
     return 0;
 }
@@ -227,14 +290,18 @@ static const struct token {
 #define FTYPE_SPECIAL 1
 
     PTYPE param;
+    const char * postfix;
 
-    int (*exp_func)(krb5_context, PTYPE, char **);
+    int (*exp_func)(krb5_context, PTYPE, const char *, char **);
 
-#define CSIDL(C) FTYPE_CSIDL, C, _expand_csidl
+#define CSIDLP(C,P) FTYPE_CSIDL, C, P, _expand_csidl
+#define CSIDL(C) CSIDLP(C, NULL)
 
-#define SPECIAL(f) FTYPE_SPECIAL, 0, f
+#define SPECIALP(f, P) FTYPE_SPECIAL, 0, P, f
+#define SPECIAL(f) SPECIALP(f, NULL)
 
 } tokens[] = {
+    /* Windows only -- */
     {"APPDATA", CSIDL(CSIDL_APPDATA)},
 				/* Roaming application data (for current user) */
 
@@ -249,6 +316,34 @@ static const struct token {
 
     {"WINDOWS", CSIDL(CSIDL_WINDOWS)},
 				/* Windows folder */
+    /* -- end Windows only */
+
+    {"USERCONFIG", CSIDLP(CSIDL_APPDATA, "\\" PACKAGE)},
+				/* Per user Heimdal configuration file path */
+
+    {"COMMONCONFIG", CSIDLP(CSIDL_COMMON_APPDATA, "\\" PACKAGE)},
+				/* Common Heimdal configuration file path */
+
+    {"LIBDIR", SPECIAL(_expand_bin_dir)},
+				/* Expands to the "lib" directory.  On
+				   Windows this is treated the same as
+				   the "bin" directory. */
+
+    {"BINDIR", SPECIAL(_expand_bin_dir)},
+				/* Expands to the "bin" directory. On
+				   Windows this is treated the same as
+				   the "bin" directory. */
+
+    {"LIBEXEC", SPECIAL(_expand_bin_dir)},
+				/* Expands to the "libexec"
+				   directory. On Windows, this is
+				   treated the same as the "bin"
+				   directory. */
+
+    {"SBINDIR", SPECIAL(_expand_bin_dir)},
+				/* Expands to the "sbin" directory.
+				   On Windows, this is treated the
+				   same as the "bin" directory. */
 
     {"TEMP", SPECIAL(_expand_temp_folder)},
 				/* Temporary files folder */
@@ -273,20 +368,32 @@ _expand_token(krb5_context context, const char * token, const char * token_end,
 
     *ret = NULL;
 
-    if (token[0] != '%' || token[1] != '{' || token_end[0] != '}') {
+    if (token[0] != '%' || token[1] != '{' || token_end[0] != '}' ||
+	token_end - token <= 2) {
 	if (context)
 	    krb5_set_error_string(context, "Invalid token.");
-	return 1;
+	return EINVAL;
     }
 
     for (i=0; i < sizeof(tokens)/sizeof(tokens[0]); i++) {
 	if (!strncmp(token+2, tokens[i].tok, (token_end - token) - 2))
-	    return tokens[i].exp_func(context, tokens[i].param, ret);
+	    return tokens[i].exp_func(context, tokens[i].param, tokens[i].postfix, ret);
     }
 
     if (context)
 	krb5_set_error_string(context, "Invalid token.");
-    return 1;
+    return EINVAL;
+}
+
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
+_krb5_free_path(krb5_context context,
+		char * path)
+{
+    if (path == NULL)
+	return EINVAL;
+
+    free(path);
+    return 0;
 }
 
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
@@ -322,14 +429,14 @@ _krb5_expand_path_tokens(krb5_context context,
 		*ppath_out = NULL;
 		if (context)
 		    krb5_set_error_string(context, "variable missing }");
-		return KRB5_CONFIG_BADFORMAT;
+		return EINVAL;
 	    }
 
 	    if (_expand_token(context, tok_begin, tok_end, &append)) {
 		if (*ppath_out)
 		    free(*ppath_out);
 		*ppath_out = NULL;
-		return KRB5_CONFIG_BADFORMAT;
+		return EINVAL;
 	    }
 
 	    path_left = tok_end + 1;

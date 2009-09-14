@@ -49,9 +49,9 @@ $(LIBCOMERR): $(libcomerr_OBJs)
 $(LIBCOMERR): $(COMERRDLL)
 
 $(COMERRDLL): $(libcomerr_OBJs) $(OBJ)\libcom_err-version.res
-	$(DLLGUILINK_C) -OUT:$(COMERRDLL) -IMPLIB:$(LIBCOMERR) $** \
+	$(DLLGUILINK_C) -out:$(COMERRDLL) -implib:$(LIBCOMERR) $** \
 		$(LIBROKEN) \
-		-DEF:libcom_err-exports.def
+		-def:libcom_err-exports.def
 	$(_VC_MANIFEST_EMBED_DLL)
 	$(_VC_MANIFEST_CLEAN)
 	$(_CODESIGN)

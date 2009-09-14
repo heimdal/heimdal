@@ -157,7 +157,7 @@ krb5_auth_con_setaddrs(krb5_context context,
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_auth_con_genaddrs(krb5_context context,
 		       krb5_auth_context auth_context,
-		       int fd, int flags)
+		       SOCKET fd, int flags)
 {
     krb5_error_code ret;
     krb5_address local_k_address, remote_k_address;
@@ -170,9 +170,9 @@ krb5_auth_con_genaddrs(krb5_context context,
     if(flags & KRB5_AUTH_CONTEXT_GENERATE_LOCAL_ADDR) {
 	if (auth_context->local_address == NULL) {
 	    len = sizeof(ss_local);
-	    if(getsockname(fd, local, &len) < 0) {
+	    if(IS_SOCKET_ERROR(getsockname(fd, local, &len))) {
 		char buf[128];
-		ret = errno;
+		ret = SOCK_ERRNO;
 		strerror_r(ret, buf, sizeof(buf));
 		krb5_set_error_message(context, ret, "getsockname: %s", buf);
 		goto out;
@@ -188,9 +188,9 @@ krb5_auth_con_genaddrs(krb5_context context,
     }
     if(flags & KRB5_AUTH_CONTEXT_GENERATE_REMOTE_ADDR) {
 	len = sizeof(ss_remote);
-	if(getpeername(fd, remote, &len) < 0) {
+	if(IS_SOCKET_ERROR(getpeername(fd, remote, &len))) {
 	    char buf[128];
-	    ret = errno;
+	    ret = SOCK_ERRNO;
 	    strerror_r(ret, buf, sizeof(buf));
 	    krb5_set_error_message(context, ret, "getpeername: %s", buf);
 	    goto out;
@@ -221,7 +221,7 @@ krb5_auth_con_setaddrs_from_fd (krb5_context context,
 				krb5_auth_context auth_context,
 				void *p_fd)
 {
-    int fd = *(int*)p_fd;
+    SOCKET fd = *(SOCKET*)p_fd;
     int flags = 0;
     if(auth_context->local_address == NULL)
 	flags |= KRB5_AUTH_CONTEXT_GENERATE_LOCAL_FULL_ADDR;

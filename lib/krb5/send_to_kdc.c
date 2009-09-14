@@ -58,9 +58,11 @@ recv_loop (SOCKET fd,
      int ret;
      int nbytes;
 
+#ifndef NO_LIMIT_FD_SETSIZE
      if (fd >= FD_SETSIZE) {
 	 return -1;
      }
+#endif
 
      krb5_data_zero(rep);
      do {

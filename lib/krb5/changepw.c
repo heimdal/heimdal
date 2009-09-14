@@ -602,7 +602,8 @@ change_password_loop (krb5_context	context,
 			goto out;
 		    }
 		}
-	
+
+#ifndef NO_LIMIT_FD_SETSIZE	
 		if (sock >= FD_SETSIZE) {
 		    ret = ERANGE;
 		    krb5_set_error_message(context, ret,
@@ -610,6 +611,7 @@ change_password_loop (krb5_context	context,
 		    close (sock);
 		    goto out;
 		}
+#endif
 
 		FD_ZERO(&fdset);
 		FD_SET(sock, &fdset);

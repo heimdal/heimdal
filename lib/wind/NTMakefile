@@ -50,8 +50,20 @@ libwind_OBJs=	\
 	$(OBJ)\wind_err.obj			\
 	$(OBJ)\utf8.obj
 
+!ifndef STATICLIBS
+
+$(LIBWIND): $(BINDIR)\libwind.dll
+
+$(BINDIR)\libwind.dll: $(libwind_OBJs) $(LIBCOMERR)
+	$(DLLGUILINK) -def:libwind-exports.def -implib:$(LIBWIND)
+	$(DLLPREP)
+
+!else
+
 $(LIBWIND): $(libwind_OBJs)
 	$(LIBCON)
+
+!endif
 
 INCFILES=	\
 	$(INCDIR)\wind.h	\

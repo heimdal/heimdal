@@ -415,116 +415,227 @@ EXPORTS
 	free_Version
 	length_Version
 	copy_Version
+	asn1_oid_id_Userid
 	oid_id_Userid
+	asn1_oid_id_aes_128_cbc
 	oid_id_aes_128_cbc
+	asn1_oid_id_aes_192_cbc
 	oid_id_aes_192_cbc
+	asn1_oid_id_aes_256_cbc
 	oid_id_aes_256_cbc
+	asn1_oid_id_at_commonName
 	oid_id_at_commonName
+	asn1_oid_id_at_countryName
 	oid_id_at_countryName
+	asn1_oid_id_at_generationQualifier
 	oid_id_at_generationQualifier
+	asn1_oid_id_at_givenName
 	oid_id_at_givenName
+	asn1_oid_id_at_initials
 	oid_id_at_initials
+	asn1_oid_id_at_localityName
 	oid_id_at_localityName
+	asn1_oid_id_at_name
 	oid_id_at_name
+	asn1_oid_id_at_organizationName
 	oid_id_at_organizationName
+	asn1_oid_id_at_organizationalUnitName
 	oid_id_at_organizationalUnitName
+	asn1_oid_id_at_pseudonym
 	oid_id_at_pseudonym
+	asn1_oid_id_at_serialNumber
 	oid_id_at_serialNumber
+	asn1_oid_id_at_stateOrProvinceName
 	oid_id_at_stateOrProvinceName
+	asn1_oid_id_at_streetAddress
 	oid_id_at_streetAddress
+	asn1_oid_id_at_surname
 	oid_id_at_surname
+	asn1_oid_id_dhpublicnumber
 	oid_id_dhpublicnumber
+	asn1_oid_id_domainComponent
 	oid_id_domainComponent
+	asn1_oid_id_dsa
 	oid_id_dsa
+	asn1_oid_id_dsa_with_sha1
 	oid_id_dsa_with_sha1
+	asn1_oid_id_ecDH
 	oid_id_ecDH
+	asn1_oid_id_ecMQV
 	oid_id_ecMQV
+	asn1_oid_id_ecPublicKey
 	oid_id_ecPublicKey
+	asn1_oid_id_ec_group_secp160r1
 	oid_id_ec_group_secp160r1
+	asn1_oid_id_ec_group_secp160r2
 	oid_id_ec_group_secp160r2
+	asn1_oid_id_ec_group_secp256r1
 	oid_id_ec_group_secp256r1
+	asn1_oid_id_ecdsa_with_SHA1
 	oid_id_ecdsa_with_SHA1
+	asn1_oid_id_ecdsa_with_SHA256
 	oid_id_ecdsa_with_SHA256
+	asn1_oid_id_heim_rsa_pkcs1_x509
 	oid_id_heim_rsa_pkcs1_x509
+	asn1_oid_id_ms_cert_enroll_domaincontroller
 	oid_id_ms_cert_enroll_domaincontroller
+	asn1_oid_id_ms_client_authentication
 	oid_id_ms_client_authentication
+	asn1_oid_id_netscape
 	oid_id_netscape
+	asn1_oid_id_netscape_cert_comment
 	oid_id_netscape_cert_comment
+	asn1_oid_id_nistAlgorithm
 	oid_id_nistAlgorithm
+	asn1_oid_id_nist_aes_algs
 	oid_id_nist_aes_algs
+	asn1_oid_id_nist_sha_algs
 	oid_id_nist_sha_algs
+	asn1_oid_id_pkcs1_md2WithRSAEncryption
 	oid_id_pkcs1_md2WithRSAEncryption
+	asn1_oid_id_pkcs1_md5WithRSAEncryption
 	oid_id_pkcs1_md5WithRSAEncryption
+	asn1_oid_id_pkcs1_rsaEncryption
 	oid_id_pkcs1_rsaEncryption
+	asn1_oid_id_pkcs1_sha1WithRSAEncryption
 	oid_id_pkcs1_sha1WithRSAEncryption
+	asn1_oid_id_pkcs1_sha256WithRSAEncryption
 	oid_id_pkcs1_sha256WithRSAEncryption
+	asn1_oid_id_pkcs1_sha384WithRSAEncryption
 	oid_id_pkcs1_sha384WithRSAEncryption
+	asn1_oid_id_pkcs1_sha512WithRSAEncryption
 	oid_id_pkcs1_sha512WithRSAEncryption
+	asn1_oid_id_pkcs2_md2
 	oid_id_pkcs2_md2
+	asn1_oid_id_pkcs2_md4
 	oid_id_pkcs2_md4
+	asn1_oid_id_pkcs2_md5
 	oid_id_pkcs2_md5
+	asn1_oid_id_pkcs3_des_ede3_cbc
 	oid_id_pkcs3_des_ede3_cbc
+	asn1_oid_id_pkcs3_rc2_cbc
 	oid_id_pkcs3_rc2_cbc
+	asn1_oid_id_pkcs3_rc4
 	oid_id_pkcs3_rc4
+	asn1_oid_id_pkcs_1
 	oid_id_pkcs_1
+	asn1_oid_id_pkcs_2
 	oid_id_pkcs_2
+	asn1_oid_id_pkcs_3
 	oid_id_pkcs_3
+	asn1_oid_id_pkix
 	oid_id_pkix
+	asn1_oid_id_pkix_kp
 	oid_id_pkix_kp
+	asn1_oid_id_pkix_kp_OCSPSigning
 	oid_id_pkix_kp_OCSPSigning
+	asn1_oid_id_pkix_kp_clientAuth
 	oid_id_pkix_kp_clientAuth
+	asn1_oid_id_pkix_kp_emailProtection
 	oid_id_pkix_kp_emailProtection
+	asn1_oid_id_pkix_kp_serverAuth
 	oid_id_pkix_kp_serverAuth
+	asn1_oid_id_pkix_kp_timeStamping
 	oid_id_pkix_kp_timeStamping
+	asn1_oid_id_pkix_on
 	oid_id_pkix_on
+	asn1_oid_id_pkix_on_dnsSRV
 	oid_id_pkix_on_dnsSRV
+	asn1_oid_id_pkix_on_xmppAddr
 	oid_id_pkix_on_xmppAddr
+	asn1_oid_id_pkix_pe
 	oid_id_pkix_pe
+	asn1_oid_id_pkix_pe_authorityInfoAccess
 	oid_id_pkix_pe_authorityInfoAccess
+	asn1_oid_id_pkix_pe_proxyCertInfo
 	oid_id_pkix_pe_proxyCertInfo
+	asn1_oid_id_pkix_ppl
 	oid_id_pkix_ppl
+	asn1_oid_id_pkix_ppl_anyLanguage
 	oid_id_pkix_ppl_anyLanguage
+	asn1_oid_id_pkix_ppl_independent
 	oid_id_pkix_ppl_independent
+	asn1_oid_id_pkix_ppl_inheritAll
 	oid_id_pkix_ppl_inheritAll
+	asn1_oid_id_rsa_digestAlgorithm
 	oid_id_rsa_digestAlgorithm
+	asn1_oid_id_rsa_digest_md2
 	oid_id_rsa_digest_md2
+	asn1_oid_id_rsa_digest_md4
 	oid_id_rsa_digest_md4
+	asn1_oid_id_rsa_digest_md5
 	oid_id_rsa_digest_md5
+	asn1_oid_id_rsadsi_des_ede3_cbc
 	oid_id_rsadsi_des_ede3_cbc
+	asn1_oid_id_rsadsi_encalg
 	oid_id_rsadsi_encalg
+	asn1_oid_id_rsadsi_rc2_cbc
 	oid_id_rsadsi_rc2_cbc
+	asn1_oid_id_secsig_sha_1
 	oid_id_secsig_sha_1
+	asn1_oid_id_sha224
 	oid_id_sha224
+	asn1_oid_id_sha256
 	oid_id_sha256
+	asn1_oid_id_sha384
 	oid_id_sha384
+	asn1_oid_id_sha512
 	oid_id_sha512
+	asn1_oid_id_uspkicommon_card_id
 	oid_id_uspkicommon_card_id
+	asn1_oid_id_uspkicommon_piv_interim
 	oid_id_uspkicommon_piv_interim
+	asn1_oid_id_x509_ce
 	oid_id_x509_ce
+	asn1_oid_id_x509_ce_authorityKeyIdentifier
 	oid_id_x509_ce_authorityKeyIdentifier
+	asn1_oid_id_x509_ce_basicConstraints
 	oid_id_x509_ce_basicConstraints
+	asn1_oid_id_x509_ce_cRLDistributionPoints
 	oid_id_x509_ce_cRLDistributionPoints
+	asn1_oid_id_x509_ce_cRLNumber
 	oid_id_x509_ce_cRLNumber
+	asn1_oid_id_x509_ce_cRLReason
 	oid_id_x509_ce_cRLReason
+	asn1_oid_id_x509_ce_certificateIssuer
 	oid_id_x509_ce_certificateIssuer
+	asn1_oid_id_x509_ce_certificatePolicies
 	oid_id_x509_ce_certificatePolicies
+	asn1_oid_id_x509_ce_deltaCRLIndicator
 	oid_id_x509_ce_deltaCRLIndicator
+	asn1_oid_id_x509_ce_extKeyUsage
 	oid_id_x509_ce_extKeyUsage
+	asn1_oid_id_x509_ce_freshestCRL
 	oid_id_x509_ce_freshestCRL
+	asn1_oid_id_x509_ce_holdInstructionCode
 	oid_id_x509_ce_holdInstructionCode
+	asn1_oid_id_x509_ce_inhibitAnyPolicy
 	oid_id_x509_ce_inhibitAnyPolicy
+	asn1_oid_id_x509_ce_invalidityDate
 	oid_id_x509_ce_invalidityDate
+	asn1_oid_id_x509_ce_issuerAltName
 	oid_id_x509_ce_issuerAltName
+	asn1_oid_id_x509_ce_issuingDistributionPoint
 	oid_id_x509_ce_issuingDistributionPoint
+	asn1_oid_id_x509_ce_keyUsage
 	oid_id_x509_ce_keyUsage
+	asn1_oid_id_x509_ce_nameConstraints
 	oid_id_x509_ce_nameConstraints
+	asn1_oid_id_x509_ce_policyConstraints
 	oid_id_x509_ce_policyConstraints
+	asn1_oid_id_x509_ce_policyMappings
 	oid_id_x509_ce_policyMappings
+	asn1_oid_id_x509_ce_privateKeyUsagePeriod
 	oid_id_x509_ce_privateKeyUsagePeriod
+	asn1_oid_id_x509_ce_subjectAltName
 	oid_id_x509_ce_subjectAltName
+	asn1_oid_id_x509_ce_subjectDirectoryAttributes
 	oid_id_x509_ce_subjectDirectoryAttributes
+	asn1_oid_id_x509_ce_subjectKeyIdentifier
 	oid_id_x509_ce_subjectKeyIdentifier
+	asn1_oid_id_x520_at
 	oid_id_x520_at
+	asn1_oid_id_x9_57
 	oid_id_x9_57
 	encode_CMSAttributes
 	decode_CMSAttributes
@@ -691,12 +802,19 @@ EXPORTS
 	free_SignerInfos
 	length_SignerInfos
 	copy_SignerInfos
+	asn1_oid_id_pkcs7
 	oid_id_pkcs7
+	asn1_oid_id_pkcs7_data
 	oid_id_pkcs7_data
+	asn1_oid_id_pkcs7_digestedData
 	oid_id_pkcs7_digestedData
+	asn1_oid_id_pkcs7_encryptedData
 	oid_id_pkcs7_encryptedData
+	asn1_oid_id_pkcs7_envelopedData
 	oid_id_pkcs7_envelopedData
+	asn1_oid_id_pkcs7_signedAndEnvelopedData
 	oid_id_pkcs7_signedAndEnvelopedData
+	asn1_oid_id_pkcs7_signedData
 	oid_id_pkcs7_signedData
 	encode_UnprotectedAttributes
 	decode_UnprotectedAttributes
@@ -1072,6 +1190,8 @@ EXPORTS
 	free_Principals
 	length_Principals
 	copy_Principals
+	add_Principals
+	remove_Principals
 	encode_Realm
 	decode_Realm
 	free_Realm
@@ -1143,18 +1263,31 @@ EXPORTS
 	free_KRB5SignedPath
 	length_KRB5SignedPath
 	copy_KRB5SignedPath
+	asn1_oid_id_pkinit
 	oid_id_pkinit
+	asn1_oid_id_pkauthdata
 	oid_id_pkauthdata
+	asn1_oid_id_pkdhkeydata
 	oid_id_pkdhkeydata
+	asn1_oid_id_pkrkeydata
 	oid_id_pkrkeydata
+	asn1_oid_id_pkekuoid
 	oid_id_pkekuoid
+	asn1_oid_id_pkkdcekuoid
 	oid_id_pkkdcekuoid
+	asn1_oid_id_pkinit_san
 	oid_id_pkinit_san
+	asn1_oid_id_pkinit_ms_eku
 	oid_id_pkinit_ms_eku
+	asn1_oid_id_pkinit_ms_san
 	oid_id_pkinit_ms_san
+	asn1_oid_id_pkinit_kdf
 	oid_id_pkinit_kdf
+	asn1_oid_id_pkinit_kdf_ah_sha1
 	oid_id_pkinit_kdf_ah_sha1
+	asn1_oid_id_pkinit_kdf_ah_sha256
 	oid_id_pkinit_kdf_ah_sha256
+	asn1_oid_id_pkinit_kdf_ah_sha512
 	oid_id_pkinit_kdf_ah_sha512
 	encode_MS_UPN_SAN
 	decode_MS_UPN_SAN
@@ -1326,15 +1459,25 @@ EXPORTS
 	free_PKCS8EncryptedData
 	length_PKCS8EncryptedData
 	copy_PKCS8EncryptedData
+	asn1_oid_id_pkcs_9
 	oid_id_pkcs_9
+	asn1_oid_id_pkcs9_contentType
 	oid_id_pkcs9_contentType
+	asn1_oid_id_pkcs9_emailAddress
 	oid_id_pkcs9_emailAddress
+	asn1_oid_id_pkcs9_messageDigest
 	oid_id_pkcs9_messageDigest
+	asn1_oid_id_pkcs9_signingTime
 	oid_id_pkcs9_signingTime
+	asn1_oid_id_pkcs9_countersignature
 	oid_id_pkcs9_countersignature
+	asn1_oid_id_pkcs_9_at_friendlyName
 	oid_id_pkcs_9_at_friendlyName
+	asn1_oid_id_pkcs_9_at_localKeyId
 	oid_id_pkcs_9_at_localKeyId
+	asn1_oid_id_pkcs_9_at_certTypes
 	oid_id_pkcs_9_at_certTypes
+	asn1_oid_id_pkcs_9_at_certTypes_x509
 	oid_id_pkcs_9_at_certTypes_x509
 	encode_PKCS9_BMPString
 	decode_PKCS9_BMPString
@@ -1346,20 +1489,35 @@ EXPORTS
 	free_PKCS9_friendlyName
 	length_PKCS9_friendlyName
 	copy_PKCS9_friendlyName
+	asn1_oid_id_pkcs_12
 	oid_id_pkcs_12
+	asn1_oid_id_pkcs_12PbeIds
 	oid_id_pkcs_12PbeIds
+	asn1_oid_id_pbeWithSHAAnd128BitRC4
 	oid_id_pbeWithSHAAnd128BitRC4
+	asn1_oid_id_pbeWithSHAAnd40BitRC4
 	oid_id_pbeWithSHAAnd40BitRC4
+	asn1_oid_id_pbeWithSHAAnd3_KeyTripleDES_CBC
 	oid_id_pbeWithSHAAnd3_KeyTripleDES_CBC
+	asn1_oid_id_pbeWithSHAAnd2_KeyTripleDES_CBC
 	oid_id_pbeWithSHAAnd2_KeyTripleDES_CBC
+	asn1_oid_id_pbeWithSHAAnd128BitRC2_CBC
 	oid_id_pbeWithSHAAnd128BitRC2_CBC
+	asn1_oid_id_pbewithSHAAnd40BitRC2_CBC
 	oid_id_pbewithSHAAnd40BitRC2_CBC
+	asn1_oid_id_pkcs12_bagtypes
 	oid_id_pkcs12_bagtypes
+	asn1_oid_id_pkcs12_keyBag
 	oid_id_pkcs12_keyBag
+	asn1_oid_id_pkcs12_pkcs8ShroudedKeyBag
 	oid_id_pkcs12_pkcs8ShroudedKeyBag
+	asn1_oid_id_pkcs12_certBag
 	oid_id_pkcs12_certBag
+	asn1_oid_id_pkcs12_crlBag
 	oid_id_pkcs12_crlBag
+	asn1_oid_id_pkcs12_secretBag
 	oid_id_pkcs12_secretBag
+	asn1_oid_id_pkcs12_safeContentsBag
 	oid_id_pkcs12_safeContentsBag
 	encode_PKCS12_MacData
 	decode_PKCS12_MacData

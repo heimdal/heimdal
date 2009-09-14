@@ -543,18 +543,32 @@ LIBASN1_LIBS=\
 	$(LIBROKEN)	\
 	$(LIBCOMERR)
 
+!ifndef STATICLIBS
+
 $(LIBASN1): $(BINDIR)\libasn1.dll
 
-$(BINDIR)\libasn1.dll: $(LIBASN1_OBJS)
-	$(DLLGUILINK_C) /OUT:$@ /DEF:libasn1-exports.def /IMPLIB:$(LIBASN1) $(LIBASN1_LIBS) @<<
+$(BINDIR)\libasn1.dll: $(LIBASN1_OBJS) $(LIBASN1_LIBS)
+	$(DLLGUILINK_C) -out:$@ -def:libasn1-exports.def -implib:$(LIBASN1) @<<
 $(**: =
 )
 <<
 	$(DLLPREP)
 
 clean::
-	-$(RM) $(LIBASN1)
 	-$(RM) $(BINDIR)\libasn1.dll
+
+!else
+
+$(LIBASN1): $(LIBASN1_OBJS)
+	$(LIBCON_C) -out:$@ @<<
+$(**: =
+)
+<<
+
+!endif
+
+clean::
+	-$(RM) $(LIBASN1)
 
 #
 # Generate list of exports
@@ -588,15 +602,10 @@ $(gen_files_cms:.x=.c)	    : $$(@R).x
 
 $(gen_files_test:.x=.c)	    : $$(@R).x
 
-$(gen_files_k5) $(OBJ)\krb5_asn1.hx: $(BINDIR)\asn1_compile.exe krb5.asn1
+$(gen_files_k5) $(OBJ)\krb5_asn1.hx: $(BINDIR)\asn1_compile.exe krb5.asn1 krb5.opt
 	cd $(OBJ)
 	$(BINDIR)\asn1_compile.exe \
-		--encode-rfc1510-bit-string \
-		--sequence=KRB5SignedPathPrincipals \
-		--sequence=AuthorizationData \
-		--sequence=METHOD-DATA \
-		--sequence=ETYPE-INFO \
-		--sequence=ETYPE-INFO2 \
+		--option-file=$(SRCDIR)\krb5.opt \
 		$(SRCDIR)\krb5.asn1 krb5_asn1 \
 	|| ($(RM) $(OBJ)\krb5_asn1.h ; exit /b 1)
 	cd $(SRCDIR)
@@ -647,12 +656,14 @@ $(gen_files_rfc2459) $(OBJ)\rfc2459_asn1.hx: $(BINDIR)\asn1_compile.exe rfc2459.
 		--sequence=Extensions \
 		--sequence=CRLDistributionPoints \
 		$(SRCDIR)\rfc2459.asn1 rfc2459_asn1 \
-	|| ($(RM) $(OBJ)\krb5_asn1.h ; exit /b 1)
+	|| ($(RM) $(OBJ)\rfc2459_asn1.h ; exit /b 1)
 	cd $(SRCDIR)
 
-$(gen_files_cms) $(OBJ)\cms_asn1.hx: $(BINDIR)\asn1_compile.exe cms.asn1
+$(gen_files_cms) $(OBJ)\cms_asn1.hx: $(BINDIR)\asn1_compile.exe cms.asn1 cms.opt
 	cd $(OBJ)
-	$(BINDIR)\asn1_compile.exe $(SRCDIR)\CMS.asn1 cms_asn1 \
+	$(BINDIR)\asn1_compile.exe \
+		--option-file=$(SRCDIR)\cms.opt \
+		$(SRCDIR)\cms.asn1 cms_asn1 \
 	|| ($(RM) $(OBJ)\cms_asn1.h ; exit /b 1)
 	cd $(SRCDIR)
 
@@ -703,7 +714,7 @@ $(OBJ)\der-protos.h: $(libasn1_SOURCES:der-protos.h=)
 clean::
 	-$(RM) $(INCDIR)\der-protos.h
 
-all:: $(INCFILES) $(ASN1_BINARIES) $(GENINCFILES) $(LIBASN1)
+all:: $(INCFILES) $(GENINCFILES) $(ASN1_BINARIES) $(LIBASN1)
 
 TEST_BINARIES=\
 	$(OBJ)\check-der.exe	\

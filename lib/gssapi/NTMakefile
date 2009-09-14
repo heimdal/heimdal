@@ -244,6 +244,10 @@ $(OBJ)\gkrb5_err.c $(OBJ)\gkrb5_err.h: krb5\gkrb5_err.et
 
 INCFILES=	\
 	$(INCDIR)\gssapi.h	\
+	$(INCDIR)\gssapi\gssapi.h	\
+	$(INCDIR)\gssapi\gssapi_krb5.h	\
+	$(INCDIR)\gssapi\gssapi_ntlm.h	\
+	$(INCDIR)\gssapi\gssapi_spnego.h \
 	$(OBJ)\ntlm\ntlm-private.h	\
 	$(OBJ)\spnego\spnego-private.h	\
 	$(OBJ)\krb5\gsskrb5-private.h	\
@@ -439,6 +443,9 @@ GCOPTS=-I$(SRCDIR) -I$(OBJ) -Igssapi -DBUILD_GSSAPI_LIB
 {$(OBJ)\gssapi}.x{$(OBJ)\gssapi}.c:
 	$(CP) $** $@
 
+{gssapi}.h{$(INCDIR)\gssapi}.h:
+	$(CP) $** $@
+
 LIBGSSAPI_LIBS=\
 	$(LIBROKEN)	\
 	$(LIBASN1)	\
@@ -452,11 +459,10 @@ LIBGSSAPI_SDKLIBS=\
 
 !ifndef STATICLIBS
 
-$(LIBGSSAPI): $(BINDIR)\libgssapi.dll
-
 $(BINDIR)\libgssapi.dll: $(libgssapi_OBJs)
-	$(DLLGUILINK_C) -IMPLIB:$(LIBGSSAPI) \
-		-OUT:$(BINDIR)\libgssapi.dll \
+	$(DLLGUILINK_C) -implib:$(LIBGSSAPI)	\
+		-out:$(BINDIR)\libgssapi.dll	\
+		-def:libgssapi-exports.def	\
 		$(LIBGSSAPI_LIBS) $(LIBGSSAPI_SDKLIBS) @<<
 $(libgssapi_OBJs: =
 )
@@ -465,11 +471,10 @@ $(libgssapi_OBJs: =
 	$(_VC_MANIFEST_CLEAN)
 	$(_CODESIGN)
 
-all:: $(BINDIR)\libgssapi.dll
+$(LIBGSSAPI): $(BINDIR)\libgssapi.dll
 
 clean::
 	-$(RM) $(BINDIR)\libgssapi.dll
-	-$(RM) $(LIBGSSAPI)
 
 !else
 
@@ -479,12 +484,12 @@ $(libgssapi_OBJs: =
 )
 <<
 
+!endif
+
 all:: $(LIBGSSAPI)
 
 clean::
 	-$(RM) $(LIBGSSAPI)
-
-!endif
 
 prep:: mkdirs-gss
 

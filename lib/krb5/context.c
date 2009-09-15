@@ -243,6 +243,29 @@ cc_ops_register(krb5_context context)
 }
 
 static krb5_error_code
+cc_ops_copy(krb5_context context, const krb5_context src_context)
+{
+    context->cc_ops = NULL;
+    context->num_cc_ops = 0;
+
+    if (src_context->num_cc_ops == 0)
+	return 0;
+
+    context->cc_ops = malloc(sizeof(context->cc_ops[0]) * src_context->num_cc_ops);
+    if (context->cc_ops == NULL) {
+	krb5_set_error_message(context, KRB5_CC_NOMEM,
+			       N_("malloc: out of memory", ""));
+	return KRB5_CC_NOMEM;
+    }
+
+    context->num_cc_ops = src_context->num_cc_ops;
+    memcpy(context->cc_ops, src_context->cc_ops,
+	   sizeof(context->cc_ops[0]) * src_context->num_cc_ops);
+
+    return 0;
+}
+
+static krb5_error_code
 kt_ops_register(krb5_context context)
 {
     context->num_kt_types = 0;
@@ -259,6 +282,28 @@ kt_ops_register(krb5_context context)
     return 0;
 }
 
+static krb5_error_code
+kt_ops_copy(krb5_context context, const krb5_context src_context)
+{
+    context->num_kt_types = 0;
+    context->kt_types     = NULL;
+
+    if (src_context->num_kt_types == 0)
+	return 0;
+
+    context->kt_types = malloc(sizeof(context->kt_types[0]) * src_context->num_kt_types);
+    if (context->kt_types == NULL) {
+	krb5_set_error_message(context, ENOMEM,
+			       N_("malloc: out of memory", ""));
+	return ENOMEM;
+    }
+
+    context->num_kt_types = src_context->num_kt_types;
+    memcpy(context->kt_types, src_context->kt_types,
+	   sizeof(context->kt_types[0]) * src_context->num_kt_types);
+
+    return 0;
+}
 
 /**
  * Initializes the context structure and reads the configuration file
@@ -424,8 +469,9 @@ krb5_copy_context(krb5_context context, krb5_context *out)
 
     /* XXX should copy */
     krb5_init_ets(p);
-    cc_ops_register(p);
-    kt_ops_register(p);
+
+    cc_ops_copy(p, context);
+    kt_ops_copy(p, context);
 
 #if 0 /* XXX */
     if(context->warn_dest != NULL)

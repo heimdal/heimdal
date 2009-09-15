@@ -48,7 +48,7 @@ inet_pton(int af, const char *src, void *dst)
 	    INT s = sizeof(si4);
 
 	    si4.sin_family = AF_INET;
-	    r = WSAStringToAddress(src, AF_INET, NULL, &si4, &s);
+	    r = WSAStringToAddress(src, AF_INET, NULL, (LPSOCKADDR) &si4, &s);
 
 	    if (r == 0) {
 		memcpy(dst, &si4.sin_addr, sizeof(si4.sin_addr));
@@ -64,7 +64,7 @@ inet_pton(int af, const char *src, void *dst)
 	    INT s = sizeof(si6);
 
 	    si6.sin6_family = AF_INET6;
-	    r = WSAStringToAddress(src, AF_INET6, NULL, &si6, &s);
+	    r = WSAStringToAddress(src, AF_INET6, NULL, (LPSOCKADDR) &si6, &s);
 
 	    if (r == 0) {
 		memcpy(dst, &si6.sin6_addr, sizeof(si6.sin6_addr));

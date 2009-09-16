@@ -681,19 +681,12 @@ char * ROKEN_LIB_FUNCTION estrdup (const char *);
  * kludges and such
  */
 
-#if 1
 int ROKEN_LIB_FUNCTION
 roken_gethostby_setup(const char*, const char*);
 struct hostent* ROKEN_LIB_FUNCTION
 roken_gethostbyname(const char*);
 struct hostent* ROKEN_LIB_FUNCTION 
 roken_gethostbyaddr(const void*, size_t, int);
-#else
-#ifdef GETHOSTBYNAME_PROTO_COMPATIBLE
-#define roken_gethostbyname(x) gethostbyname(x)
-#else
-#define roken_gethostbyname(x) gethostbyname((char *)x)
-#endif
 
 #ifdef GETHOSTBYADDR_PROTO_COMPATIBLE
 #define roken_gethostbyaddr(a, l, t) gethostbyaddr(a, l, t)

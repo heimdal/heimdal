@@ -1,11 +1,14 @@
+#ifndef __crypto_header__
+#define __crypto_header__
+
 #ifndef PACKAGE_NAME
 #error "need config.h"
 #endif
 
-#ifdef HAVE__OPENSSL
-#ifndef OPENSSL_DES_LIBDES_COMPATIBILITY
+#ifdef HAVE_OPENSSL
+
 #define OPENSSL_DES_LIBDES_COMPATIBILITY
-#endif
+
 #include <openssl/evp.h>
 #include <openssl/des.h>
 #include <openssl/rc4.h>
@@ -52,3 +55,5 @@
 #include <hcrypto/ecdh.h>
 
 #endif /* HAVE_OPENSSL */
+
+#endif /* __crypto_header__ */

@@ -61,6 +61,8 @@ LIB_readline = @LIB_readline@
 
 LEXLIB = @LEXLIB@
 
+libexec_heimdaldir = $(libexecdir)/heimdal
+
 install-suid-programs:
 	@foo='$(bin_SUIDS)'; \
 	for file in $$foo; do \

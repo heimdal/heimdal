@@ -25,7 +25,7 @@ check_PROGRAMS = $(TESTS)
 
 # install these?
 
-noinst_PROGRAMS = slc
+libexec_heimdal_PROGRAMS = slc
 
 slc_SOURCES = slc-gram.y slc-lex.l slc.h
 

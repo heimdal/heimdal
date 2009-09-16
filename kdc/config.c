@@ -78,7 +78,7 @@ static struct getargs args[] = {
 	"don't require pa-data in as-reqs"
     },
     {
-	"max-request",	0,	arg_string, &max_request,
+	"max-request",	0,	arg_string, &max_request_str,
 	"max size for a kdc-request", "size"
     },
     { "enable-http", 'H', arg_flag, &enable_http, "turn on HTTP support" },

@@ -261,10 +261,10 @@ CLEANFILES = $(BUILT_SOURCES) \
 $(spnego_files) spnego_asn1.hx: spnego_asn1_files
 $(gssapi_files) gssapi_asn1.hx: gssapi_asn1_files
 
-spnego_asn1_files: ../asn1/asn1_compile$(EXEEXT) $(srcdir)/spnego/spnego.asn1 $(srcdir)/spnego/spnego.opt
+spnego_asn1_files: $(ASN1_COMPILE_DEP) $(srcdir)/spnego/spnego.asn1 $(srcdir)/spnego/spnego.opt
 	$(ASN1_COMPILE) --option-file=$(srcdir)/spnego/spnego.opt $(srcdir)/spnego/spnego.asn1 spnego_asn1
 
-gssapi_asn1_files: ../asn1/asn1_compile$(EXEEXT) $(srcdir)/mech/gssapi.asn1
+gssapi_asn1_files: $(ASN1_COMPILE_DEP) $(srcdir)/mech/gssapi.asn1
 	$(ASN1_COMPILE) $(srcdir)/mech/gssapi.asn1 gssapi_asn1
 
 $(srcdir)/krb5/gsskrb5-private.h:

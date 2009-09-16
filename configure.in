@@ -70,13 +70,21 @@ AM_CONDITIONAL(CROSS_COMPILE, test "${cross_compiling}" = yes)
 if test "${cross_compiling}" != yes ; then
    ASN1_COMPILE="\$(top_builddir)/lib/asn1/asn1_compile\$(EXEEXT)"
    SLC="\$(top_builddir)/lib/sl/slc"
+
+   ASN1_COMPILE_DEP="\$(ASN1_COMPILE_DEP)"
+   SLC_DEP="\$(SLC)"
 else
    ASN1_COMPILE="asn1_compile"
    SLC="slc"
+
+   ASN1_COMPILE_DEP=
+   SLC_DEP=
 fi
 
 AC_SUBST([ASN1_COMPILE])
+AC_SUBST([ASN1_COMPILE_DEP])
 AC_SUBST([SLC])
+AC_SUBST([SLC_DEP])
 
 
 dnl ---

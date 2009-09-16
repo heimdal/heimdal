@@ -114,13 +114,13 @@ $(gen_files_ocsp) ocsp_asn1.h: ocsp_asn1_files
 $(gen_files_pkcs10) pkcs10_asn1.h: pkcs10_asn1_files
 $(gen_files_crmf) crmf_asn1.h: crmf_asn1_files
 
-ocsp_asn1_files: ../asn1/asn1_compile$(EXEEXT) $(srcdir)/ocsp.asn1
+ocsp_asn1_files: $(ASN1_COMPILE_DEP) $(srcdir)/ocsp.asn1
 	$(ASN1_COMPILE) --preserve-binary=OCSPTBSRequest --preserve-binary=OCSPResponseData $(srcdir)/ocsp.asn1 ocsp_asn1 || (rm -f ocsp_asn1_files ; exit 1)
 
-pkcs10_asn1_files: ../asn1/asn1_compile$(EXEEXT) $(srcdir)/pkcs10.asn1
+pkcs10_asn1_files: $(ASN1_COMPILE_DEP) $(srcdir)/pkcs10.asn1
 	$(ASN1_COMPILE) --preserve-binary=CertificationRequestInfo $(srcdir)/pkcs10.asn1 pkcs10_asn1 || (rm -f pkcs10_asn1_files ; exit 1)
 
-crmf_asn1_files: ../asn1/asn1_compile$(EXEEXT) $(srcdir)/crmf.asn1
+crmf_asn1_files: $(ASN1_COMPILE_DEP) $(srcdir)/crmf.asn1
 	$(ASN1_COMPILE) $(srcdir)/crmf.asn1 crmf_asn1 || (rm -f crmf_asn1_files ; exit 1)
 
 $(libhx509_la_OBJECTS): $(srcdir)/hx509-protos.h $(srcdir)/hx509-private.h $(srcdir)/hx_locl.h

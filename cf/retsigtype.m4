@@ -9,7 +9,7 @@ AC_TYPE_SIGNAL
 if test "$ac_cv_type_signal" = "void" ; then
 	AC_DEFINE(VOID_RETSIGTYPE, 1, [Define if signal handlers return void.])
 fi
-AC_SUBST(VOID_RETSIGTYPE)
+
 AH_BOTTOM([#ifdef VOID_RETSIGTYPE
 #define SIGRETURN(x) return
 #else

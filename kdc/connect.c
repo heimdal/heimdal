@@ -46,7 +46,8 @@ const char *port_str;
 
 krb5_addresses explicit_addresses;
 
-size_t max_request;		/* maximal size of a request */
+size_t max_request_udp;
+size_t max_request_tcp;
 
 /*
  * a tuple describing on what to listen
@@ -480,20 +481,38 @@ handle_udp(krb5_context context,
     unsigned char *buf;
     int n;
 
-    buf = malloc(max_request);
+    buf = malloc(max_request_udp);
     if(buf == NULL){
-	kdc_log(context, config, 0, "Failed to allocate %lu bytes", (unsigned long)max_request);
+	kdc_log(context, config, 0, "Failed to allocate %lu bytes", (unsigned long)max_request_udp);
 	return;
     }
 
     d->sock_len = sizeof(d->__ss);
-    n = recvfrom(d->s, buf, max_request, 0, d->sa, &d->sock_len);
-    if(n < 0)
+    n = recvfrom(d->s, buf, max_request_udp, 0, d->sa, &d->sock_len);
+    if(n < 0) {
 	krb5_warn(context, errno, "recvfrom");
-    else {
+    } else {
 	addr_to_string (context, d->sa, d->sock_len,
 			d->addr_string, sizeof(d->addr_string));
-	do_request(context, config, buf, n, FALSE, d);
+	if (n == max_request_udp) {
+	    krb5_data data;
+	    krb5_warn(context, errno,
+		      "recvfrom: truncated packet from %s, asking for TCP",
+		      d->addr_string);
+	    krb5_mk_error(context,
+			  KRB5KRB_ERR_RESPONSE_TOO_BIG,
+			  NULL,
+			  NULL,
+			  NULL,
+			  NULL,
+			  NULL,
+			  NULL,
+			  &data);
+	    send_reply(context, config, FALSE, d, &data);
+	    krb5_data_free(&data);
+	} else {
+	    do_request(context, config, buf, n, FALSE, d);
+	}
     }
     free (buf);
 }
@@ -581,7 +600,7 @@ grow_descr (krb5_context context,
 	size_t grow;
 
 	grow = max(1024, d->len + n);
-	if (d->size + grow > max_request) {
+	if (d->size + grow > max_request_tcp) {
 	    kdc_log(context, config, 0, "Request exceeds max request size (%lu bytes).",
 		    (unsigned long)d->size + grow);
 	    clear_descr(d);

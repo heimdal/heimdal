@@ -222,16 +222,16 @@ configure(krb5_context context, int argc, char **argv)
 	krb5_err(context, 1, ret, "krb5_kdc_set_dbinfo");
 
     if(max_request_str)
-	max_request = parse_bytes(max_request_str, NULL);
+	max_request_tcp = max_request_udp = parse_bytes(max_request_str, NULL);
 
-    if(max_request == 0){
+    if(max_request_tcp == 0){
 	p = krb5_config_get_string (context,
 				    NULL,
 				    "kdc",
 				    "max-request",
 				    NULL);
 	if(p)
-	    max_request = parse_bytes(p, NULL);
+	    max_request_tcp = max_request_udp = parse_bytes(p, NULL);
     }
 
     if(require_preauth != -1)
@@ -297,8 +297,10 @@ configure(krb5_context context, int argc, char **argv)
 							   "detach", NULL);
 #endif /* SUPPORT_DETACH */
     
-    if(max_request == 0)
-	max_request = 64 * 1024;
+    if(max_request_tcp == 0)
+	max_request_tcp = 64 * 1024;
+    if(max_request_udp == 0)
+	max_request_udp = 64 * 1024;
 
     if (port_str == NULL)
 	port_str = "+";

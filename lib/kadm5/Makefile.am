@@ -2,8 +2,6 @@
 
 include $(top_srcdir)/Makefile.am.common
 
-SLC = $(top_builddir)/lib/sl/slc
-
 lib_LTLIBRARIES = libkadm5srv.la libkadm5clnt.la
 libkadm5srv_la_LDFLAGS = -version-info 8:1:0
 libkadm5clnt_la_LDFLAGS = -version-info 7:1:0

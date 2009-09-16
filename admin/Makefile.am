@@ -4,8 +4,6 @@ include $(top_srcdir)/Makefile.am.common
 
 AM_CPPFLAGS += $(INCLUDE_readline) $(INCLUDE_hcrypto)
 
-SLC = $(top_builddir)/lib/sl/slc
-
 man_MANS = ktutil.8
 
 sbin_PROGRAMS = ktutil

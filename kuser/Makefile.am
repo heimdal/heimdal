@@ -15,8 +15,6 @@ man_MANS = \
 	kgetcred.1 \
 	kimpersonate.1
 
-SLC = $(top_builddir)/lib/sl/slc
-
 bin_PROGRAMS = kinit klist kdestroy kgetcred kswitch
 libexec_PROGRAMS = kdigest kimpersonate
 

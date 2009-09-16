@@ -262,10 +262,10 @@ $(spnego_files) spnego_asn1.hx: spnego_asn1_files
 $(gssapi_files) gssapi_asn1.hx: gssapi_asn1_files
 
 spnego_asn1_files: ../asn1/asn1_compile$(EXEEXT) $(srcdir)/spnego/spnego.asn1 $(srcdir)/spnego/spnego.opt
-	../asn1/asn1_compile$(EXEEXT) --option-file=$(srcdir)/spnego/spnego.opt $(srcdir)/spnego/spnego.asn1 spnego_asn1
+	$(ASN1_COMPILE) --option-file=$(srcdir)/spnego/spnego.opt $(srcdir)/spnego/spnego.asn1 spnego_asn1
 
 gssapi_asn1_files: ../asn1/asn1_compile$(EXEEXT) $(srcdir)/mech/gssapi.asn1
-	../asn1/asn1_compile$(EXEEXT) $(srcdir)/mech/gssapi.asn1 gssapi_asn1
+	$(ASN1_COMPILE) $(srcdir)/mech/gssapi.asn1 gssapi_asn1
 
 $(srcdir)/krb5/gsskrb5-private.h:
 	cd $(srcdir) && perl ../../cf/make-proto.pl -q -P comment -p krb5/gsskrb5-private.h $(krb5src) || rm -f krb5/gsskrb5-private.h
@@ -306,8 +306,6 @@ gss_LDADD = libgssapi.la \
 	$(top_builddir)/lib/krb5/libkrb5.la \
 	$(LIB_readline) \
 	$(LIB_roken)
-
-SLC = $(top_builddir)/lib/sl/slc
 
 gss-commands.c gss-commands.h: gss-commands.in
 	$(SLC) $(srcdir)/gss-commands.in

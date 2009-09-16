@@ -596,34 +596,34 @@ $(gen_files_cms) cms_asn1.hx: cms_asn1_files
 $(gen_files_test) test_asn1.hx: test_asn1_files
 
 rfc2459_asn1_files: asn1_compile$(EXEEXT) $(srcdir)/rfc2459.asn1
-	./asn1_compile$(EXEEXT) --preserve-binary=TBSCertificate --preserve-binary=TBSCRLCertList --preserve-binary=Name --sequence=GeneralNames --sequence=Extensions --sequence=CRLDistributionPoints $(srcdir)/rfc2459.asn1 rfc2459_asn1 || (rm -f rfc2459_asn1_files ; exit 1)
+	$(ASN1_COMPILE) --preserve-binary=TBSCertificate --preserve-binary=TBSCRLCertList --preserve-binary=Name --sequence=GeneralNames --sequence=Extensions --sequence=CRLDistributionPoints $(srcdir)/rfc2459.asn1 rfc2459_asn1 || (rm -f rfc2459_asn1_files ; exit 1)
 
 cms_asn1_files: asn1_compile$(EXEEXT) $(srcdir)/cms.asn1 $(srcdir)/cms.opt
-	./asn1_compile$(EXEEXT) --option-file=$(srcdir)/cms.opt $(srcdir)/cms.asn1 cms_asn1 || (rm -f cms_asn1_files ; exit 1)
+	$(ASN1_COMPILE) --option-file=$(srcdir)/cms.opt $(srcdir)/cms.asn1 cms_asn1 || (rm -f cms_asn1_files ; exit 1)
 
 krb5_asn1_files: asn1_compile$(EXEEXT) $(srcdir)/krb5.asn1 $(srcdir)/krb5.opt
-	./asn1_compile$(EXEEXT) --option-file=$(srcdir)/krb5.opt $(srcdir)/krb5.asn1 krb5_asn1 || (rm -f krb5_asn1_files ; exit 1)
+	$(ASN1_COMPILE) --option-file=$(srcdir)/krb5.opt $(srcdir)/krb5.asn1 krb5_asn1 || (rm -f krb5_asn1_files ; exit 1)
 
 pkinit_asn1_files: asn1_compile$(EXEEXT) $(srcdir)/pkinit.asn1
-	./asn1_compile$(EXEEXT) $(srcdir)/pkinit.asn1 pkinit_asn1 || (rm -f pkinit_asn1_files ; exit 1)
+	$(ASN1_COMPILE) $(srcdir)/pkinit.asn1 pkinit_asn1 || (rm -f pkinit_asn1_files ; exit 1)
 
 pkcs8_asn1_files: asn1_compile$(EXEEXT) $(srcdir)/pkcs8.asn1
-	./asn1_compile$(EXEEXT) $(srcdir)/pkcs8.asn1 pkcs8_asn1 || (rm -f pkcs8_asn1_files ; exit 1)
+	$(ASN1_COMPILE) $(srcdir)/pkcs8.asn1 pkcs8_asn1 || (rm -f pkcs8_asn1_files ; exit 1)
 
 pkcs9_asn1_files: asn1_compile$(EXEEXT) $(srcdir)/pkcs9.asn1
-	./asn1_compile$(EXEEXT) $(srcdir)/pkcs9.asn1 pkcs9_asn1 || (rm -f pkcs9_asn1_files ; exit 1)
+	$(ASN1_COMPILE) $(srcdir)/pkcs9.asn1 pkcs9_asn1 || (rm -f pkcs9_asn1_files ; exit 1)
 
 pkcs12_asn1_files: asn1_compile$(EXEEXT) $(srcdir)/pkcs12.asn1
-	./asn1_compile$(EXEEXT) $(srcdir)/pkcs12.asn1 pkcs12_asn1 || (rm -f pkcs12_asn1_files ; exit 1)
+	$(ASN1_COMPILE) $(srcdir)/pkcs12.asn1 pkcs12_asn1 || (rm -f pkcs12_asn1_files ; exit 1)
 
 digest_asn1_files: asn1_compile$(EXEEXT) $(srcdir)/digest.asn1
-	./asn1_compile$(EXEEXT) $(srcdir)/digest.asn1 digest_asn1 || (rm -f digest_asn1_files ; exit 1)
+	$(ASN1_COMPILE) $(srcdir)/digest.asn1 digest_asn1 || (rm -f digest_asn1_files ; exit 1)
 
 kx509_asn1_files: asn1_compile$(EXEEXT) $(srcdir)/kx509.asn1
-	./asn1_compile$(EXEEXT) $(srcdir)/kx509.asn1 kx509_asn1 || (rm -f kx509_asn1_files ; exit 1)
+	$(ASN1_COMPILE) $(srcdir)/kx509.asn1 kx509_asn1 || (rm -f kx509_asn1_files ; exit 1)
 
 test_asn1_files: asn1_compile$(EXEEXT) $(srcdir)/test.asn1
-	./asn1_compile$(EXEEXT) --sequence=TESTSeqOf $(srcdir)/test.asn1 test_asn1 || (rm -f test_asn1_files ; exit 1)
+	$(ASN1_COMPILE) --sequence=TESTSeqOf $(srcdir)/test.asn1 test_asn1 || (rm -f test_asn1_files ; exit 1)
 
 EXTRA_DIST =		\
 	cms.asn1	\

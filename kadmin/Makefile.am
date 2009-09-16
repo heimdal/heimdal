@@ -8,8 +8,6 @@ sbin_PROGRAMS = kadmin
 
 libexec_PROGRAMS = kadmind
 
-SLC = $(top_builddir)/lib/sl/slc
-
 man_MANS = kadmin.8 kadmind.8
 
 noinst_PROGRAMS = add_random_users

@@ -61,6 +61,26 @@ LT_INIT([shared static win32-dll])
 AM_CONDITIONAL(ENABLE_SHARED, test "$enable_shared" = "yes")
 rk_VERSIONSCRIPT
 
+dnl
+dnl Helper bits for cross compiling
+dnl
+
+AM_CONDITIONAL(CROSS_COMPILE, test "${cross_compiling}" = yes)
+
+if test "${cross_compiling}" != yes ; then
+   ASN1_COMPILE="\$(top_builddir)/lib/asn1/asn1_compile\$(EXEEXT)"
+   SLC="\$(top_builddir)/lib/sl/slc"
+else
+   ASN1_COMPILE="asn1_compile"
+   SLC="slc"
+fi
+
+AC_SUBST([ASN1_COMPILE])
+AC_SUBST([SLC])
+
+
+dnl ---
+
 AC_DEFINE(HEIM_WEAK_CRYPTO, 1, [Define if you want support for weak crypto])
 
 rk_TEST_PACKAGE(openldap,

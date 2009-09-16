@@ -109,7 +109,7 @@ $(srcdir)/hdb-private.h:
 $(gen_files_hdb) hdb_asn1.h: hdb_asn1_files
 
 hdb_asn1_files: ../asn1/asn1_compile$(EXEEXT) $(srcdir)/hdb.asn1
-	../asn1/asn1_compile$(EXEEXT) $(srcdir)/hdb.asn1 hdb_asn1
+	$(ASN1_COMPILE) $(srcdir)/hdb.asn1 hdb_asn1
 
 $(libhdb_la_OBJECTS): hdb_asn1.h hdb_err.h
 

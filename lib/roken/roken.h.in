@@ -714,7 +714,7 @@ void ROKEN_LIB_FUNCTION setprogname(const char *);
 const char * ROKEN_LIB_FUNCTION getprogname(void);
 #endif
 
-#if !defined(HAVE_SETPROGNAME) && !defined(HAVE_GETPROGNAME) && !HAVE_DECL___PROGNAME
+#if !defined(HAVE_SETPROGNAME) && !defined(HAVE_GETPROGNAME) && !defined(HAVE_DECL___PROGNAME)
 extern const char *__progname;
 #endif
 

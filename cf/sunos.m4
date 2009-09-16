@@ -5,9 +5,6 @@ dnl
 AC_DEFUN([rk_SUNOS],[
 sunos=no
 case "$host" in 
-*-*-sunos4*)
-	sunos=40
-	;;
 *-*-solaris2.7)
 	sunos=57
 	;;

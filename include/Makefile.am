@@ -4,21 +4,26 @@ include $(top_srcdir)/Makefile.am.common
 
 SUBDIRS = kadm5 hcrypto gssapi
 
-noinst_PROGRAMS = bits make_crypto
+noinst_PROGRAMS = bits
 CHECK_LOCAL = no-check-local
 
 AM_CPPFLAGS += -DHOST=\"$(CANONICAL_HOST)\"
 
 nodist_include_HEADERS = krb5-types.h
-nodist_noinst_HEADERS = crypto-headers.h
 
-noinst_HEADERS = heim_threads.h
+noinst_HEADERS = heim_threads.h crypto-headers.h krb5-types.cross
+
+if !CROSS_COMPILE
 
 krb5-types.h: bits$(EXEEXT)
 	./bits$(EXEEXT) krb5-types.h
 
-crypto-headers.h: make_crypto$(EXEEXT)
-	./make_crypto$(EXEEXT) crypto-headers.h
+else
+
+krb5-types.h: krb5-types.cross
+	cp $(srcdir)/krb5-types.cross krb5-types.h
+
+endif
 
 CLEANFILES =			\
 	asn1.h			\

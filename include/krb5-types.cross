@@ -1,0 +1,16 @@
+/*
+ * generic krb5-types.h for cross compiling, assume system is posix/sus
+ */
+
+#ifndef __krb5_types_h__
+#define __krb5_types_h__
+
+#include <inttypes.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+
+typedef socklen_t krb5_socklen_t;
+#include <unistd.h>
+typedef ssize_t krb5_ssize_t;
+
+#endif /* __krb5_types_h__ */

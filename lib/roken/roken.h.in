@@ -112,7 +112,7 @@ struct sockaddr_dl;
 #ifdef HAVE_TERMIOS_H
 #include <termios.h>
 #endif
-#if defined(HAVE_SYS_IOCTL_H)
+#ifdef HAVE_SYS_IOCTL_H
 #include <sys/ioctl.h>
 #endif
 #ifdef TIME_WITH_SYS_TIME

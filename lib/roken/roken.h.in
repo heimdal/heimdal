@@ -688,13 +688,6 @@ roken_gethostbyname(const char*);
 struct hostent* ROKEN_LIB_FUNCTION 
 roken_gethostbyaddr(const void*, size_t, int);
 
-#ifdef GETHOSTBYADDR_PROTO_COMPATIBLE
-#define roken_gethostbyaddr(a, l, t) gethostbyaddr(a, l, t)
-#else
-#define roken_gethostbyaddr(a, l, t) gethostbyaddr((char *)a, l, t)
-#endif
-#endif
-
 #ifdef GETSERVBYNAME_PROTO_COMPATIBLE
 #define roken_getservbyname(x,y) getservbyname(x,y)
 #else

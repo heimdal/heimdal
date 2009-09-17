@@ -307,12 +307,12 @@ char * ROKEN_LIB_FUNCTION strerror(int);
 #define hstrerror rk_hstrerror
 #endif
 /* This causes a fatal error under Psoriasis */
-#if !(defined(SunOS) && (SunOS >= 50))
+#ifndef SunOS
 const char * ROKEN_LIB_FUNCTION hstrerror(int);
 #endif
 #endif
 
-#if !HAVE_DECL_H_ERRNO
+#ifndef HAVE_DECL_H_ERRNO
 extern int h_errno;
 #endif
 
@@ -509,13 +509,13 @@ int ROKEN_LIB_FUNCTION get_window_size(int fd, struct winsize *);
 void ROKEN_LIB_FUNCTION vsyslog(int, const char *, va_list);
 #endif
 
-#if !HAVE_DECL_OPTARG
+#ifndef HAVE_DECL_OPTARG
 extern char *optarg;
 #endif
-#if !HAVE_DECL_OPTIND
+#ifndef HAVE_DECL_OPTIND
 extern int optind;
 #endif
-#if !HAVE_DECL_OPTERR
+#ifndef HAVE_DECL_OPTERR
 extern int opterr;
 #endif
 

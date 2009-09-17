@@ -335,7 +335,7 @@ int ROKEN_LIB_FUNCTION
 inet_pton(int, const char *, void *);
 #endif
 
-#if !defined(HAVE_GETCWD)
+#ifndef HAVE_GETCWD
 #define getcwd rk_getcwd
 char* ROKEN_LIB_FUNCTION getcwd(char *, size_t);
 #endif

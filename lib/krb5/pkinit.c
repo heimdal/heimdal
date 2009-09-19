@@ -1882,11 +1882,12 @@ pk_copy_error(krb5_context context,
 {
     va_list va;
     char *s, *f;
+    int ret;
 
     va_start(va, fmt);
-    vasprintf(&f, fmt, va);
+    ret = vasprintf(&f, fmt, va);
     va_end(va);
-    if (f == NULL) {
+    if (ret == -1 || f == NULL) {
 	krb5_clear_error_message(context);
 	return;
     }

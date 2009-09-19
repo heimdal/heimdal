@@ -639,7 +639,8 @@ rsa_verify_signature(hx509_context context,
 
  out:
     free_DigestInfo(&di);
-    RSA_free(rsa);
+    if (rsa)
+	RSA_free(rsa);
     return ret;
 }
 

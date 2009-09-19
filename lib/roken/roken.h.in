@@ -312,7 +312,7 @@ const char * ROKEN_LIB_FUNCTION hstrerror(int);
 #endif
 #endif
 
-#ifndef HAVE_DECL_H_ERRNO
+#if HAVE_DECL_H_ERRNO
 extern int h_errno;
 #endif
 
@@ -509,13 +509,13 @@ int ROKEN_LIB_FUNCTION get_window_size(int fd, struct winsize *);
 void ROKEN_LIB_FUNCTION vsyslog(int, const char *, va_list);
 #endif
 
-#ifndef HAVE_DECL_OPTARG
+#if HAVE_DECL_OPTARG
 extern char *optarg;
 #endif
-#ifndef HAVE_DECL_OPTIND
+#if HAVE_DECL_OPTIND
 extern int optind;
 #endif
-#ifndef HAVE_DECL_OPTERR
+#if HAVE_DECL_OPTERR
 extern int opterr;
 #endif
 
@@ -714,7 +714,7 @@ void ROKEN_LIB_FUNCTION setprogname(const char *);
 const char * ROKEN_LIB_FUNCTION getprogname(void);
 #endif
 
-#if !defined(HAVE_SETPROGNAME) && !defined(HAVE_GETPROGNAME) && !defined(HAVE_DECL___PROGNAME)
+#if !defined(HAVE_SETPROGNAME) && !defined(HAVE_GETPROGNAME) && !HAVE_DECL___PROGNAME
 extern const char *__progname;
 #endif
 

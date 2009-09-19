@@ -123,6 +123,8 @@ main(int argc, char **argv)
     argc -= optidx;
     argv += optidx;
 
+    gsskrb5_set_default_realm("MIT.EDU");
+
     /*
      * test import/export
      */

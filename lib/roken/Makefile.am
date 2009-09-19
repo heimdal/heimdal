@@ -188,6 +188,9 @@ SUFFIXES += .hin
 .hin.h:
 	cp $< $@
 
+# Make make-roken deprecated in 1.4 when we know that roken-h-process.pl works
+if !CROSS_COMPILE
+
 roken.h: make-roken$(EXEEXT)
 	@./make-roken$(EXEEXT) > tmp.h ;\
 	if [ -f roken.h ] && cmp -s tmp.h roken.h ; then rm -f tmp.h ; \
@@ -195,6 +198,16 @@ roken.h: make-roken$(EXEEXT)
 
 make-roken.c: roken.h.in roken.awk
 	$(AWK) -f $(srcdir)/roken.awk $(srcdir)/roken.h.in > make-roken.c
+
+else
+
+roken.h: $(top_srcdir)/cf/roken-h-process.pl roken.h.in
+	perl $(top_srcdir)/cf/roken-h-process.pl \
+	-c $(top_builddir)/include/config.h  \
+	-p $(srcdir)/roken.h.in -o roken.h
+
+endif
+
 
 EXTRA_DIST = \
 	roken.awk roken.h.in \

@@ -66,9 +66,9 @@ segv_handler(int sig)
 
     fd = open("/dev/stdout", O_WRONLY, 0600);
     if (fd >= 0) {
-	write(fd, msg, sizeof(msg) - 1);
-	write(fd, testname, strlen(testname));
-	write(fd, "\n", 1);
+	(void)write(fd, msg, sizeof(msg) - 1);
+	(void)write(fd, testname, strlen(testname));
+	(void)write(fd, "\n", 1);
 	close(fd);
     }
     _exit(1);

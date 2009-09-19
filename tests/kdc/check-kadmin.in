@@ -41,6 +41,9 @@ srcdir="@srcdir@"
 
 . ${env_setup}
 
+# If there is no useful db support compile in, disable test
+${have_db} || exit 77
+
 R=TEST.H5L.SE
 R2=TEST2.H5L.SE
 

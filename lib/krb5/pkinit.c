@@ -1161,24 +1161,6 @@ pk_rd_pa_reply_enckey(krb5_context context,
     }
     der_free_oid(&contentType);
 
-#if 0 /* windows LH with interesting CMS packets, leaks memory */
-    {
-	size_t ph = 1 + der_length_len (length);
-	unsigned char *ptr = malloc(length + ph);
-	size_t l;
-
-	memcpy(ptr + ph, p, length);
-
-	ret = der_put_length_and_tag (ptr + ph - 1, ph, length,
-				      ASN1_C_UNIV, CONS, UT_Sequence, &l);
-	if (ret)
-	    return ret;
-	ptr += ph - l;
-	length += l;
-	p = ptr;
-    }
-#endif
-
     /* win2k uses ContentInfo */
     if (type == PKINIT_WIN2K) {
 	heim_oid type;

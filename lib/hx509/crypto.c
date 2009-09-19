@@ -558,6 +558,7 @@ rsa_verify_signature(hx509_context context,
     spi = &signer->tbsCertificate.subjectPublicKeyInfo;
 
     p = spi->subjectPublicKey.data;
+    size = spi->subjectPublicKey.length / 8;
     
     rsa = d2i_RSAPublicKey(NULL, &p, size);
     if (rsa == NULL) {
@@ -1577,35 +1578,19 @@ _hx509_public_encrypt(hx509_context context,
     int tosize;
     int ret;
     RSA *rsa;
-    RSAPublicKey pk;
     size_t size;
+    const unsigned char *p;
 
     ciphertext->data = NULL;
     ciphertext->length = 0;
 
     spi = &cert->tbsCertificate.subjectPublicKeyInfo;
 
-    rsa = RSA_new();
+    p = spi->subjectPublicKey.data;
+    size = spi->subjectPublicKey.length / 8;
+    
+    rsa = d2i_RSAPublicKey(NULL, &p, size);
     if (rsa == NULL) {
-	hx509_set_error_string(context, 0, ENOMEM, "out of memory");
-	return ENOMEM;
-    }
-
-    ret = decode_RSAPublicKey(spi->subjectPublicKey.data,
-			      spi->subjectPublicKey.length / 8,
-			      &pk, &size);
-    if (ret) {
-	RSA_free(rsa);
-	hx509_set_error_string(context, 0, ret, "RSAPublicKey decode failure");
-	return ret;
-    }
-    rsa->n = heim_int2BN(&pk.modulus);
-    rsa->e = heim_int2BN(&pk.publicExponent);
-
-    free_RSAPublicKey(&pk);
-
-    if (rsa->n == NULL || rsa->e == NULL) {
-	RSA_free(rsa);
 	hx509_set_error_string(context, 0, ENOMEM, "out of memory");
 	return ENOMEM;
     }

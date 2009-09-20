@@ -30,7 +30,6 @@ $1 == "#ifdef" || $1 == "#ifndef" || $1 == "#if" || $1 == "#else" || $1 == "#eli
 }
 
 END {
-	print "puts(\"#define ROKEN_VERSION  PACKAGE_VERSION \" );"
 	print "puts(\"\");"
 	print "puts(\"#endif /* __ROKEN_H__ */\");"
 	print "return 0;"

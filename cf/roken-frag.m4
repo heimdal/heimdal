@@ -633,16 +633,33 @@ rk_CHECK_VAR(altzone,[#include <time.h>])
 
 AC_HAVE_TYPE([sa_family_t],[
 #include <sys/types.h>
-#include <sys/socket.h>])
+#ifdef HAVE_SYS_SOCKET_H
+#include <sys/socket.h>
+#endif
+#ifdef HAVE_WS2TCPIP_H
+#include <ws2tcpip.h>
+#endif])
 AC_HAVE_TYPE([socklen_t],[
 #include <sys/types.h>
-#include <sys/socket.h>])
+#ifdef HAVE_SYS_SOCKET_H
+#include <sys/socket.h>
+#endif
+#ifdef HAVE_WS2TCPIP_H
+#include <ws2tcpip.h>
+#endif])
 AC_HAVE_TYPE([struct sockaddr], [
 #include <sys/types.h>
-#include <sys/socket.h>])
+#ifdef HAVE_SYS_SOCKET_H
+#include <sys/socket.h>
+#endif
+#ifdef HAVE_WS2TCPIP_H
+#include <ws2tcpip.h>
+#endif])
 AC_HAVE_TYPE([struct sockaddr_storage], [
 #include <sys/types.h>
+#ifdef HAVE_SYS_SOCKET_H
 #include <sys/socket.h>
+#endif
 #ifdef HAVE_WS2TCPIP_H
 #include <ws2tcpip.h>
 #endif])
@@ -659,7 +676,9 @@ AC_HAVE_TYPE([struct iovec],[
 ])
 AC_HAVE_TYPE([struct msghdr],[
 #include <sys/types.h>
+#ifdef HAVE_SYS_SOCKET_H
 #include <sys/socket.h>
+#endif
 #ifdef HAVE_WS2TCPIP_H
 #include <ws2tcpip.h>
 #endif])

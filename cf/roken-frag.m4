@@ -594,16 +594,26 @@ rk_CHECK_VAR(h_errno,
 #endif
 #ifdef HAVE_NETDB_H
 #include <netdb.h>
-#endif])
+#endif
+#ifdef HAVE_WS2TCPIP_H
+#include <ws2tcpip.h>
+#endif
+])
 
 rk_CHECK_VAR(h_errlist, 
 [#ifdef HAVE_NETDB_H
 #include <netdb.h>
+#endif
+#ifdef HAVE_WS2TCPIP_H
+#include <ws2tcpip.h>
 #endif])
 
 rk_CHECK_VAR(h_nerr, 
 [#ifdef HAVE_NETDB_H
 #include <netdb.h>
+#endif
+#ifdef HAVE_WS2TCPIP_H
+#include <ws2tcpip.h>
 #endif])
 
 rk_CHECK_VAR([__progname], 
@@ -665,7 +675,9 @@ AC_HAVE_TYPE([struct sockaddr_storage], [
 #endif])
 AC_HAVE_TYPE([struct addrinfo], [
 #include <sys/types.h>
+#ifdef HAVE_NETDB_H
 #include <netdb.h>
+#endif
 #ifdef HAVE_WS2TCPIP_H
 #include <ws2tcpip.h>
 #endif])

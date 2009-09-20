@@ -32,7 +32,6 @@ CLEANFILES =			\
 	cms_asn1.h 		\
 	com_err.h		\
 	com_right.h		\
-	crypto-headers.h	\
 	der-protos.h 		\
 	der.h			\
 	digest_asn1.h 		\

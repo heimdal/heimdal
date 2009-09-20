@@ -80,6 +80,8 @@ AC_CHECK_HEADERS([\
 	sys/wait.h				\
 	syslog.h				\
 	termios.h				\
+	winsock2.h				\
+	ws2tcpip.h				\
 	unistd.h				\
 	userconf.h				\
 	usersec.h				\
@@ -266,21 +268,33 @@ AC_FIND_FUNC_NO_LIBS(pidfile,util,
 AC_FIND_IF_NOT_BROKEN(getaddrinfo,,
 [#ifdef HAVE_NETDB_H
 #include <netdb.h>
+#endif
+#ifdef HAVE_WS2TCPIP_H
+#include <ws2tcpip.h>
 #endif],[0,0,0,0])
 
 AC_FIND_IF_NOT_BROKEN(getnameinfo,,
 [#ifdef HAVE_NETDB_H
 #include <netdb.h>
+#endif
+#ifdef HAVE_WS2TCPIP_H
+#include <ws2tcpip.h>
 #endif],[0,0,0,0,0,0,0])
 
 AC_FIND_IF_NOT_BROKEN(freeaddrinfo,,
 [#ifdef HAVE_NETDB_H
 #include <netdb.h>
+#endif
+#ifdef HAVE_WS2TCPIP_H
+#include <ws2tcpip.h>
 #endif],[0])
 
 AC_FIND_IF_NOT_BROKEN(gai_strerror,,
 [#ifdef HAVE_NETDB_H
 #include <netdb.h>
+#endif
+#ifdef HAVE_WS2TCPIP_H
+#include <ws2tcpip.h>
 #endif],[0])
 
 dnl Darwin is weird, and in some senses not unix, launchd doesn't want
@@ -628,10 +642,16 @@ AC_HAVE_TYPE([struct sockaddr], [
 #include <sys/socket.h>])
 AC_HAVE_TYPE([struct sockaddr_storage], [
 #include <sys/types.h>
-#include <sys/socket.h>])
+#include <sys/socket.h>
+#ifdef HAVE_WS2TCPIP_H
+#include <ws2tcpip.h>
+#endif])
 AC_HAVE_TYPE([struct addrinfo], [
 #include <sys/types.h>
-#include <netdb.h>])
+#include <netdb.h>
+#ifdef HAVE_WS2TCPIP_H
+#include <ws2tcpip.h>
+#endif])
 AC_HAVE_TYPE([struct ifaddrs], [#include <ifaddrs.h>])
 AC_HAVE_TYPE([struct iovec],[
 #include <sys/types.h>
@@ -640,7 +660,9 @@ AC_HAVE_TYPE([struct iovec],[
 AC_HAVE_TYPE([struct msghdr],[
 #include <sys/types.h>
 #include <sys/socket.h>
-])
+#ifdef HAVE_WS2TCPIP_H
+#include <ws2tcpip.h>
+#endif])
 
 dnl
 dnl Check for struct winsize

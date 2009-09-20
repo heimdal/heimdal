@@ -128,7 +128,6 @@ while (<IN>) {
     }
 }
 
-print OUT "#define ROKEN_VERSION " . $defines{"PACKAGE_VERSION"} . "\n";
 print OUT "\n";
 print OUT "#endif /* __ROKEN_H__ */\n";
 

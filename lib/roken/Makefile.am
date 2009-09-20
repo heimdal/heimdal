@@ -17,9 +17,7 @@ endif
 
 AM_CPPFLAGS += $(libroken_la_CPPFLAGS)
 
-noinst_PROGRAMS = make-roken snprintf-test resolve-test rkpty
-
-nodist_make_roken_SOURCES = make-roken.c
+noinst_PROGRAMS = snprintf-test resolve-test rkpty
 
 check_PROGRAMS = 				\
 		base64-test			\
@@ -123,7 +121,7 @@ libroken_la_LIBADD = @LTLIBOBJS@ $(LIB_crypt)
 
 $(LTLIBOBJS) $(libroken_la_OBJECTS): roken.h $(XHEADERS)
 
-BUILT_SOURCES = make-roken.c roken.h
+BUILT_SOURCES = roken.h
 
 if have_err_h
 err_h =
@@ -190,6 +188,11 @@ SUFFIXES += .hin
 
 # Make make-roken deprecated in 1.4 when we know that roken-h-process.pl works
 if !CROSS_COMPILE
+
+noinst_PROGRAMS += make-roken
+BUILT_SOURCES += make-roken.c
+
+nodist_make_roken_SOURCES = make-roken.c
 
 roken.h: make-roken$(EXEEXT)
 	@./make-roken$(EXEEXT) > tmp.h ;\

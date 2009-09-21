@@ -655,7 +655,6 @@ static void
 print_certificate(hx509_context hxcontext, hx509_cert cert, int verbose)
 {
     const char *fn;
-    char *str;
     int ret;
 
     fn = hx509_cert_get_friendly_name(cert);

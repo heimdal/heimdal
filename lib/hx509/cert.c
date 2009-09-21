@@ -3452,3 +3452,66 @@ out:
     hx509_env_free(&envcert);
     return ret;
 }
+
+/**
+ * Print a simple representation of a certificate
+ *
+ * @param context A hx509 context, can be NULL
+ * @param cert certificate to print
+ * @param out the stdio output stream, if NULL, stdout is used
+ *
+ * @return An hx509 error code
+ *
+ * @ingroup hx509_cert
+ */
+
+int
+hx509_print_cert(hx509_context context, hx509_cert cert, FILE *out)
+{
+    hx509_name name;
+    char *str;
+    int ret;
+
+    if (out == NULL)
+	out = stderr;
+
+    ret = hx509_cert_get_issuer(cert, &name);
+    if (ret)
+	return ret;
+    hx509_name_to_string(name, &str);
+    hx509_name_free(&name);
+    fprintf(out, "    issuer:  \"%s\"\n", str);
+    free(str);
+
+    ret = hx509_cert_get_subject(cert, &name);
+    if (ret)
+	return ret;
+    hx509_name_to_string(name, &str);
+    hx509_name_free(&name);
+    fprintf(out, "    subject: \"%s\"\n", str);
+    free(str);
+
+    {
+	heim_integer serialNumber;
+
+	ret = hx509_cert_get_serialnumber(cert, &serialNumber);
+	if (ret)
+	    return ret;
+	ret = der_print_hex_heim_integer(&serialNumber, &str);
+	if (ret)
+	    return ret;
+	der_free_heim_integer(&serialNumber);
+	fprintf(out, "    serial: %s\n", str);
+	free(str);
+    }
+
+    printf("    keyusage: ");
+    ret = hx509_cert_keyusage_print(context, cert, &str);
+    if (ret == 0) {
+	fprintf(out, "%s\n", str);
+	free(str);
+    } else
+	fprintf(out, "no");
+
+    return 0;
+}

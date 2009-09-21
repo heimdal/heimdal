@@ -83,6 +83,7 @@ mini_inetd_addrinfo (struct addrinfo *ai)
 	if (fds[i] < 0)
 	    continue;
 	socket_set_reuseaddr (fds[i], 1);
+	socket_set_ipv6only(fds[i], 1);
 	if (bind (fds[i], a->ai_addr, a->ai_addrlen) < 0) {
 	    warn ("bind af = %d", a->ai_family);
 	    close(fds[i]);

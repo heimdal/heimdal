@@ -1,2 +1,1 @@
-# $Id$
 TEST:foo:digestpassword

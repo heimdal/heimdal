@@ -402,7 +402,9 @@ krb_enc_iov2(krb5_context context,
 
     ret = krb5_decrypt_iov_ivec(context, crypto, usage,
 				iov, sizeof(iov)/sizeof(iov[0]), NULL);
+    free(iov[0].data.data);
     free(iov[3].data.data);
+
     if (ret)
 	krb5_err(context, 1, ret, "decrypt iov failed: %d", ret);
 
@@ -412,6 +414,8 @@ krb_enc_iov2(krb5_context context,
     p = clear->data;
     if (memcmp(iov[1].data.data, p, iov[1].data.length) != 0)
 	errx(1, "iov[1] incorrect");
+
+    free(iov[1].data.data);
 
     return 0;
 }
@@ -462,6 +466,11 @@ krb_enc_iov(krb5_context context,
     if (memcmp(iov[2].data.data, p, iov[2].data.length) != 0)
 	errx(1, "iov[2] incorrect");
 
+    free(iov[0].data.data);
+    free(iov[1].data.data);
+    free(iov[2].data.data);
+
+
     return 0;
 }
 
@@ -499,6 +508,9 @@ krb_checksum_iov(krb5_context context,
     ret = krb5_verify_checksum_iov(context, crypto, usage, iov, sizeof(iov)/sizeof(iov[0]), NULL);
     if (ret)
 	krb5_err(context, 1, ret, "krb5_verify_checksum_iov");
+
+    free(iov[0].data.data);
+    free(iov[2].data.data);
 
     return 0;
 }

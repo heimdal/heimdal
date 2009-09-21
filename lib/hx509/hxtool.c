@@ -654,7 +654,6 @@ cms_create_enveloped(struct cms_envelope_options *opt, int argc, char **argv)
 static void
 print_certificate(hx509_context hxcontext, hx509_cert cert, int verbose)
 {
-    hx509_name name;
     const char *fn;
     char *str;
     int ret;
@@ -665,41 +664,9 @@ print_certificate(hx509_context hxcontext, hx509_cert cert, int verbose)
     printf("    private key: %s\n",
 	   _hx509_cert_private_key(cert) ? "yes" : "no");
 
-    ret = hx509_cert_get_issuer(cert, &name);
+    ret = hx509_print_cert(hxcontext, cert, NULL);
     if (ret)
-	errx(1, "hx509_cert_get_issuer");
-    hx509_name_to_string(name, &str);
-    hx509_name_free(&name);
-    printf("    issuer:  \"%s\"\n", str);
-    free(str);
-
-    ret = hx509_cert_get_subject(cert, &name);
-    if (ret)
-	errx(1, "hx509_cert_get_subject");
-    hx509_name_to_string(name, &str);
-    hx509_name_free(&name);
-    printf("    subject: \"%s\"\n", str);
-    free(str);
-
-    {
-	heim_integer serialNumber;
-
-	ret = hx509_cert_get_serialnumber(cert, &serialNumber);
-	if (ret) errx(1, "hx509_cert_get_serialnumber");
-	ret = der_print_hex_heim_integer(&serialNumber, &str);
-	if (ret) errx(1, "der_print_hex_heim_integer");
-	der_free_heim_integer(&serialNumber);
-	printf("    serial: %s\n", str);
-	free(str);
-    }
-
-    printf("    keyusage: ");
-    ret = hx509_cert_keyusage_print(hxcontext, cert, &str);
-    if (ret == 0) {
-	printf("%s\n", str);
-	free(str);
-    } else
-	printf("no");
+	errx(1, "failed to print cert");
 
     if (verbose) {
 	hx509_validate_ctx vctx;

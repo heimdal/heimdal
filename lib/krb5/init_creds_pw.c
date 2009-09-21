@@ -1473,13 +1473,13 @@ krb5_init_creds_set_keytab(krb5_context context,
 	    goto next;
 
 	/* add enctype to supported list */
-	ptr = realloc(etypes, sizeof(etypes[0]) * (netypes + 1));
+	ptr = realloc(etypes, sizeof(etypes[0]) * (netypes + 2));
 	if (ptr == NULL)
 	    goto next;
 
 	etypes = ptr;
 	etypes[netypes] = entry.keyblock.keytype;
-	etypes[netypes + 1] = 0;
+	etypes[netypes + 1] = ETYPE_NULL;
 	netypes++;
     next:
 	krb5_kt_free_entry(context, &entry);

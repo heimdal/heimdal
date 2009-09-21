@@ -385,11 +385,12 @@ krb_enc_iov2(krb5_context context,
      */
 
     /* padding turn into data */
-    p = emalloc(iov[1].data.length + iov[2].data.length);
+    p = q = emalloc(iov[1].data.length + iov[2].data.length);
 
-    memcpy(p,                      iov[1].data.data, iov[1].data.length);
-    memcpy(p + iov[1].data.length, iov[2].data.data, iov[2].data.length);
-    
+    memcpy(q, iov[1].data.data, iov[1].data.length);
+    q += iov[1].data.length;
+    memcpy(q, iov[2].data.data, iov[2].data.length);
+
     free(iov[1].data.data);
     free(iov[2].data.data);
     
@@ -401,6 +402,7 @@ krb_enc_iov2(krb5_context context,
 
     ret = krb5_decrypt_iov_ivec(context, crypto, usage,
 				iov, sizeof(iov)/sizeof(iov[0]), NULL);
+    free(iov[3].data.data);
     if (ret)
 	krb5_err(context, 1, ret, "decrypt iov failed: %d", ret);
 
@@ -796,6 +798,8 @@ iov_test(krb5_context context)
     free(base);
 
     krb5_crypto_destroy(context, crypto);
+
+    krb5_free_keyblock_contents(context, &key);
 
     return 0;
 }

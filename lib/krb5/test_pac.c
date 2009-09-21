@@ -251,6 +251,7 @@ main(int argc, char **argv)
 	krb5_pac_free(context, pac2);
 
 	ret = krb5_pac_parse(context, data.data, data.length, &pac2);
+	krb5_data_free(&data);
 	if (ret)
 	    krb5_err(context, 1, ret, "krb5_pac_parse 4");
 	

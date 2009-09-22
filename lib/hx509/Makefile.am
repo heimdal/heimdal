@@ -1,5 +1,3 @@
-# $Id$
-
 include $(top_srcdir)/Makefile.am.common
 
 lib_LTLIBRARIES = libhx509.la

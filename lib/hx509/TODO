@@ -1,5 +1,3 @@
-$Id$
-
 Handle private_key_ops better, esp wrt ->key_oid
 
 Better support for keyex negotiation, DH and ECDH.

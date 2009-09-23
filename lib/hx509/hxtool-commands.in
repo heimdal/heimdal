@@ -113,6 +113,7 @@ command = {
 	name = "cms-verify-sd"
 	option = {
 		long = "anchors"
+		short = "D"
 		type = "strings"
 		argument = "certificate-store"
 		help = "trust anchors"
@@ -149,6 +150,11 @@ command = {
 		long = "signer-allowed"
 		type = "-flag"
 		help = "allow no signer"
+	}
+	option = {
+		long = "allow-wrong-oid"
+		type = "flag"
+		help = "allow wrong oid flag"
 	}
 	option = {
 		long = "signed-content"

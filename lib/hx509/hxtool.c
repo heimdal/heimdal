@@ -282,6 +282,8 @@ cms_verify_sd(struct cms_verify_sd_options *opt, int argc, char **argv)
 
     if (!opt->signer_allowed_flag)
 	flags |= HX509_CMS_VS_ALLOW_ZERO_SIGNER;
+    if (opt->allow_wrong_oid_flag)
+	flags |= HX509_CMS_VS_ALLOW_DATA_OID_MISMATCH;
 
     ret = hx509_cms_verify_signed(context, ctx, flags, co.data, co.length, sd,
 				  store, &type, &c, &signers);

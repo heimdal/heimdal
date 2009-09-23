@@ -13,6 +13,7 @@ HEIMDAL_COM_ERR_1.0 {
 		init_error_table;
 		reset_com_err_hook;
 		set_com_err_hook;
+		_et_list;
 	local:
 		*;
 };

@@ -138,7 +138,7 @@ main(int argc, char **argv)
 	if (name == NULL)
 	    krb5_errx(context, 1, "Generated credential cache have no name");
 
-	snprintf(tf, sizeof(tf), "%s:%s", typename_arg, name);
+	snprintf(tf, sizeof(tf), "%s:%s", krb5_cc_get_type(context, id), name);
 
 	ret = krb5_cc_close(context, id);
 	if (ret)

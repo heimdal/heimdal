@@ -280,6 +280,11 @@ _wind_stringprep_normalize(const uint32_t *in, size_t in_len,
     uint32_t *tmp;
     int ret;
 
+    if (in_len == 0) {
+	*out_len = 0;
+	return 0;
+    }
+
     tmp_len = in_len * 4;
     if (tmp_len < MAX_LENGTH_CANON)
 	tmp_len = MAX_LENGTH_CANON;

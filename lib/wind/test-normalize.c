@@ -101,7 +101,7 @@ test(char *buf)
 
     norm_len = MAX_LENGTH_CANON;
     tmp = malloc(norm_len * sizeof(size_t));
-    if (tmp == NULL)
+    if (tmp == NULL && norm_len != 0)
 	err(1, "malloc");
     ret = _wind_stringprep_normalize(in, in_len, tmp, &norm_len);
     if (ret) {

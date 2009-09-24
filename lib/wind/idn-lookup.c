@@ -73,7 +73,9 @@ lookup(const char *name)
     size_t norm_len = u_len * 2;
     uint32_t *norm = malloc(norm_len * sizeof(uint32_t));
 
-    if (u == NULL || norm == NULL)
+    if (u == NULL && u_len != 0)
+	errx(1, "malloc failed");
+    if (norm == NULL && norm_len != 0)
 	errx(1, "malloc failed");
 
     ret = wind_utf8ucs4(name, u, &u_len);

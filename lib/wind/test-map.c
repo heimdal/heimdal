@@ -64,7 +64,7 @@ try(const struct example *c)
     int ret;
     size_t out_len = c->out_len;
     uint32_t *tmp = malloc(out_len * sizeof(uint32_t));
-    if (tmp == NULL)
+    if (tmp == NULL && out_len != 0)
 	err(1, "malloc");
     ret = _wind_stringprep_map(c->in, c->in_len, tmp, &out_len, WIND_PROFILE_NAME);
     if (ret) {

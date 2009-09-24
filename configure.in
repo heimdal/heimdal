@@ -66,17 +66,30 @@ dnl
 dnl Helper bits for cross compiling
 dnl
 
+
+
 AM_CONDITIONAL(CROSS_COMPILE, test "${cross_compiling}" = yes)
 
+AC_ARG_WITH(cross-tools,
+	AS_HELP_STRING([--with-cross-tools=dir], [use cross tools in dir]),
+	[if test "$withval" = "yes"; then
+		AC_MSG_ERROR([Need path to cross tools])
+	fi
+	with_cross_tools="${with_cross_tools}/"
+	])
+
+echo "with_cross_tools: ${with_cross_tools}"
+
 if test "${cross_compiling}" != yes ; then
+
    ASN1_COMPILE="\$(top_builddir)/lib/asn1/asn1_compile\$(EXEEXT)"
    SLC="\$(top_builddir)/lib/sl/slc"
 
    ASN1_COMPILE_DEP="\$(ASN1_COMPILE)"
    SLC_DEP="\$(SLC)"
 else
-   ASN1_COMPILE="asn1_compile"
-   SLC="slc"
+   ASN1_COMPILE="${with_cross_tools}asn1_compile"
+   SLC="${with_cross_tools}slc"
 
    ASN1_COMPILE_DEP=
    SLC_DEP=

@@ -174,8 +174,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 @top Heimdal
 @end ifnottex
 
-This manual is last updated @value{UPDATED} for version
-@value{VERSION} of hx509.
+This manual is for version @value{VERSION} of hx509.
 
 @menu
 * Introduction::

@@ -190,7 +190,7 @@ int main(int argc, char **argv)
       AC_DEFINE(HAVE_NEW_DB, 1, [Define if NDBM really is DB (creates files *.db)])
     else
       AC_MSG_RESULT([no])
-    fi],[AC_MSG_RESULT([no])],[AC_MSG_RESULT([no-cross]))
+    fi],[AC_MSG_RESULT([no])],[AC_MSG_RESULT([no-cross])])
 fi
 
 AM_CONDITIONAL(HAVE_DB1, test "$db_type" = db1)dnl

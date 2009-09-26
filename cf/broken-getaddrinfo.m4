@@ -23,4 +23,4 @@ main(int argc, char **argv)
 		return 1;
 	return 0;
 }
-]])],[ac_cv_func_getaddrinfo_numserv=yes],[ac_cv_func_getaddrinfo_numserv=no]))])
+]])],[ac_cv_func_getaddrinfo_numserv=yes],[ac_cv_func_getaddrinfo_numserv=no],[ac_cv_func_getaddrinfo_numserv=yes]))])

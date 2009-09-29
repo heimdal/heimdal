@@ -484,7 +484,7 @@ get_new_tickets(krb5_context context,
 	if (ret)
 	    krb5_err(context, 1, ret, "krb5_get_init_creds_opt_set_pkinit");
 	if (ent_user_id)
-	    ret = _krb5_get_init_creds_opt_set_pkinit_user_certs(context, opt, ent_user_id);
+	    _krb5_get_init_creds_opt_set_pkinit_user_certs(context, opt, ent_user_id);
     }
 
     if (addrs_flag != -1)
@@ -547,7 +547,7 @@ get_new_tickets(krb5_context context,
 					  server_str,
 					  opt);
 	krb5_kt_close(context, kt);
-    } else if (pk_user_id || anonymous_flag) {
+    } else if (pk_user_id || ent_user_id || anonymous_flag) {
 	ret = krb5_get_init_creds_password (context,
 					    &cred,
 					    principal,

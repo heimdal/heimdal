@@ -1644,6 +1644,12 @@ match_ms_upn_san(krb5_context context,
 	kdc_log(context, config, 0, "Decode of MS-UPN-SAN failed");
 	goto out;
     }
+    if (size != list.val[0].length) {
+	free_MS_UPN_SAN(&upn);
+	kdc_log(context, config, 0, "Trailing data in ");
+	ret = KRB5_KDC_ERR_CLIENT_NAME_MISMATCH;
+	goto out;
+    }
 
     kdc_log(context, config, 0, "found MS UPN SAN: %s", upn);
 

@@ -265,6 +265,9 @@ typedef struct krb5_context_data {
 #define KRB5_CTX_F_CHECK_PAC			2
 #define KRB5_CTX_F_HOMEDIR_ACCESS		4
     struct send_to_kdc *send_to_kdc;
+#ifdef PKINIT
+    hx509_context hx509ctx;
+#endif
 } krb5_context_data;
 
 #define KRB5_DEFAULT_CCNAME_FILE "FILE:/tmp/krb5cc_%{uid}"

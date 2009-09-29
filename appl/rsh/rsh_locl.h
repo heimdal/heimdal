@@ -99,6 +99,7 @@
 #ifdef KRB5
 #include <krb5.h>
 /* XXX */
+struct hx509_certs_data;
 struct krb5_pk_identity;
 struct krb5_pk_cert;
 struct ContentInfo;

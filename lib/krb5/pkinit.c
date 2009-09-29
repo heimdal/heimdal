@@ -194,15 +194,15 @@ find_cert(krb5_context context, struct krb5_pk_identity *id,
     for (i = 0; i < sizeof(cf)/sizeof(cf[0]); i++) {
 	ret = hx509_query_match_eku(q, cf[i].oid);
 	if (ret) {
-	    pk_copy_error(context, id->hx509ctx, ret,
+	    pk_copy_error(context, context->hx509ctx, ret,
 			  "Failed setting %s OID", cf[i].type);
 	    return ret;
 	}
 
-	ret = hx509_certs_find(id->hx509ctx, id->certs, q, cert);
+	ret = hx509_certs_find(context->hx509ctx, id->certs, q, cert);
 	if (ret == 0)
 	    break;
-	pk_copy_error(context, id->hx509ctx, ret,
+	pk_copy_error(context, context->hx509ctx, ret,
 		      "Failed finding certificate with %s OID", cf[i].type);
     }
     return ret;
@@ -222,7 +222,7 @@ create_signature(krb5_context context,
     if (id->cert == NULL)
 	flags |= HX509_CMS_SIGNATURE_NO_SIGNER;
 
-    ret = hx509_cms_create_signed_1(id->hx509ctx,
+    ret = hx509_cms_create_signed_1(context->hx509ctx,
 				    flags,
 				    eContentType,
 				    eContent->data,
@@ -234,7 +234,7 @@ create_signature(krb5_context context,
 				    id->certs,
 				    sd_data);
     if (ret) {
-	pk_copy_error(context, id->hx509ctx, ret,
+	pk_copy_error(context, context->hx509ctx, ret,
 		      "Create CMS signedData");
 	return ret;
     }
@@ -597,7 +597,7 @@ build_auth_pack(krb5_context context,
 	if (a->supportedCMSTypes == NULL)
 	    return ENOMEM;
 
-	ret = hx509_crypto_available(ctx->id->hx509ctx, HX509_SELECT_ALL, NULL,
+	ret = hx509_crypto_available(context->hx509ctx, HX509_SELECT_ALL, NULL,
 				     &a->supportedCMSTypes->val,
 				     &a->supportedCMSTypes->len);
 	if (ret)
@@ -757,7 +757,7 @@ pk_mk_padata(krb5_context context,
 		free_PA_PK_AS_REQ(&req);
 		goto out;
 	    }
-	    ret = build_edi(context, ctx->id->hx509ctx,
+	    ret = build_edi(context, context->hx509ctx,
 			    ctx->id->anchors, req.trustedCertifiers);
 	    if (ret) {
 		krb5_set_error_message(context, ret,
@@ -880,7 +880,7 @@ pk_verify_sign(krb5_context context,
 
     *signer = NULL;
 
-    ret = hx509_cms_verify_signed(id->hx509ctx,
+    ret = hx509_cms_verify_signed(context->hx509ctx,
 				  id->verify_ctx,
 				  HX509_CMS_VS_ALLOW_DATA_OID_MISMATCH|HX509_CMS_VS_NO_KU_CHECK,
 				  data,
@@ -891,7 +891,7 @@ pk_verify_sign(krb5_context context,
 				  content,
 				  &signer_certs);
     if (ret) {
-	pk_copy_error(context, id->hx509ctx, ret,
+	pk_copy_error(context, context->hx509ctx, ret,
 		      "CMS verify signed failed");
 	return ret;
     }
@@ -903,9 +903,9 @@ pk_verify_sign(krb5_context context,
 	goto out;
     }
 	
-    ret = hx509_get_one_cert(id->hx509ctx, signer_certs, &(*signer)->cert);
+    ret = hx509_get_one_cert(context->hx509ctx, signer_certs, &(*signer)->cert);
     if (ret) {
-	pk_copy_error(context, id->hx509ctx, ret,
+	pk_copy_error(context, context->hx509ctx, ret,
 		      "Failed to get on of the signer certs");
 	goto out;
     }
@@ -1047,7 +1047,7 @@ pk_verify_host(krb5_context context,
     krb5_error_code ret = 0;
 
     if (ctx->require_eku) {
-	ret = hx509_cert_check_eku(ctx->id->hx509ctx, host->cert,
+	ret = hx509_cert_check_eku(context->hx509ctx, host->cert,
 				   &asn1_oid_id_pkkdcekuoid, 0);
 	if (ret) {
 	    krb5_set_error_message(context, ret,
@@ -1059,7 +1059,7 @@ pk_verify_host(krb5_context context,
 	hx509_octet_string_list list;
 	int i;
 
-	ret = hx509_cert_find_subjectAltName_otherName(ctx->id->hx509ctx,
+	ret = hx509_cert_find_subjectAltName_otherName(context->hx509ctx,
 						       host->cert,
 						       &asn1_oid_id_pkinit_san,
 						       &list);
@@ -1109,7 +1109,7 @@ pk_verify_host(krb5_context context,
 	return ret;
 
     if (hi) {
-	ret = hx509_verify_hostname(ctx->id->hx509ctx, host->cert,
+	ret = hx509_verify_hostname(context->hx509ctx, host->cert,
 				    ctx->require_hostname_match,
 				    HX509_HN_HOSTNAME,
 				    hi->hostname,
@@ -1152,7 +1152,7 @@ pk_rd_pa_reply_enckey(krb5_context context,
     if (ctx->type == PKINIT_WIN2K)
 	flags |= HX509_CMS_UE_ALLOW_WEAK;
 
-    ret = hx509_cms_unenvelope(ctx->id->hx509ctx,
+    ret = hx509_cms_unenvelope(context->hx509ctx,
 			       ctx->id->certs,
 			       flags,
 			       indata->data,
@@ -1162,7 +1162,7 @@ pk_rd_pa_reply_enckey(krb5_context context,
 			       &contentType,
 			       &content);
     if (ret) {
-	pk_copy_error(context, ctx->id->hx509ctx, ret,
+	pk_copy_error(context, context->hx509ctx, ret,
 		      "Failed to unenvelope CMS data in PK-INIT reply");
 	return ret;
     }
@@ -1750,10 +1750,6 @@ _krb5_pk_load_id(krb5_context context,
 	return ENOMEM;
     }	
 
-    ret = hx509_context_init(&id->hx509ctx);
-    if (ret)
-	goto out;
-
     if (user_id) {
 	hx509_lock lock;
 
@@ -1855,7 +1851,7 @@ _krb5_pk_load_id(krb5_context context,
 	hx509_certs_free(&id->anchors);
 	hx509_certs_free(&id->certpool);
 	hx509_revoke_free(&id->revokectx);
-	hx509_context_free(&id->hx509ctx);
+	hx509_context_free(&context->hx509ctx);
 	free(id);
     } else
 	*ret_id = id;
@@ -2216,7 +2212,6 @@ _krb5_get_init_creds_opt_free_pkinit(krb5_get_init_creds_opt *opt)
 	hx509_cert_free(ctx->id->cert);
 	hx509_certs_free(&ctx->id->anchors);
 	hx509_certs_free(&ctx->id->certpool);
-	hx509_context_free(&ctx->id->hx509ctx);
 
 	if (ctx->clientDHNonce) {
 	    krb5_free_data(NULL, ctx->clientDHNonce);
@@ -2308,7 +2303,7 @@ krb5_get_init_creds_opt_set_pkinit(krb5_context context,
     if (opt->opt_private->pk_init_ctx->id->certs) {
 	hx509_query *q = NULL;
 	hx509_cert cert = NULL;
-	hx509_context hx509ctx = opt->opt_private->pk_init_ctx->id->hx509ctx;
+	hx509_context hx509ctx = context->hx509ctx;
 
 	ret = hx509_query_alloc(hx509ctx, &q);
 	if (ret) {
@@ -2330,7 +2325,7 @@ krb5_get_init_creds_opt_set_pkinit(krb5_context context,
 	opt->opt_private->pk_init_ctx->id->cert = NULL;
 
     if ((flags & 2) == 0) {
-	hx509_context hx509ctx = opt->opt_private->pk_init_ctx->id->hx509ctx;
+	hx509_context hx509ctx = context->hx509ctx;
 	hx509_cert cert = opt->opt_private->pk_init_ctx->id->cert;
 
 	opt->opt_private->pk_init_ctx->keyex = USE_DH;

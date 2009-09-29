@@ -151,6 +151,7 @@ struct sockaddr_dl;
 struct send_to_kdc;
 
 /* XXX glue for pkinit */
+struct hx509_certs_data;
 struct krb5_pk_identity;
 struct krb5_pk_cert;
 struct ContentInfo;

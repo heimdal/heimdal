@@ -731,7 +731,6 @@ HEIMDAL_KRB5_2.0 {
 		_krb5_get_int;
 		_krb5_pac_sign;
 		_krb5_parse_moduli;
-		_krb5_pk_enterprise_cert;
 		_krb5_pk_kdf;
 		_krb5_pk_load_id;
 		_krb5_pk_mk_ContentInfo;
@@ -744,6 +743,10 @@ HEIMDAL_KRB5_2.0 {
 		_krb5_principalname2krb5_principal;
 		_krb5_put_int;
 		_krb5_s4u2self_to_checksumdata;
+
+		# kinit helper
+		_krb5_get_init_creds_opt_set_pkinit_user_certs
+		_krb5_pk_enterprise_cert;
 
 		# testing
 		_krb5_aes_cts_encrypt;

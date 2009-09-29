@@ -1707,15 +1707,39 @@ hx_pass_prompter(void *data, const hx509_prompt *prompter)
     return 0;
 }
 
-static void
+static krb5_error_code
 _krb5_pk_set_user_id(krb5_context context,
 		     krb5_pk_init_ctx ctx,
 		     struct hx509_certs_data *certs)
 {
+    hx509_certs c = hx509_certs_ref(certs);
+    hx509_query *q = NULL;
+    int ret;
+
     if (ctx->id->certs)
 	hx509_certs_free(&ctx->id->certs);
-    ctx->id->certs = hx509_certs_ref(certs);
+    if (ctx->id->cert) {
+	hx509_cert_free(ctx->id->cert);
+	ctx->id->cert = NULL;
+    }
+
+    ctx->id->certs = c;
     ctx->anonymous = 0;
+
+    ret = hx509_query_alloc(context->hx509ctx, &q);
+    if (ret) {
+	pk_copy_error(context, context->hx509ctx, ret,
+		      "Allocate query to find signing certificate");
+	return ret;
+    }
+	
+    hx509_query_match_option(q, HX509_QUERY_OPTION_PRIVATE_KEY);
+    hx509_query_match_option(q, HX509_QUERY_OPTION_KU_DIGITALSIGNATURE);
+	
+    ret = find_cert(context, ctx->id, q, &ctx->id->cert);
+    hx509_query_free(context->hx509ctx, q);
+
+    return ret;
 }
 
 krb5_error_code KRB5_LIB_FUNCTION
@@ -2301,26 +2325,9 @@ krb5_get_init_creds_opt_set_pkinit(krb5_context context,
     }
 
     if (opt->opt_private->pk_init_ctx->id->certs) {
-	hx509_query *q = NULL;
-	hx509_cert cert = NULL;
-	hx509_context hx509ctx = context->hx509ctx;
-
-	ret = hx509_query_alloc(hx509ctx, &q);
-	if (ret) {
-	    pk_copy_error(context, hx509ctx, ret,
-			  "Allocate query to find signing certificate");
-	    return ret;
-	}
-	
-	hx509_query_match_option(q, HX509_QUERY_OPTION_PRIVATE_KEY);
-	hx509_query_match_option(q, HX509_QUERY_OPTION_KU_DIGITALSIGNATURE);
-	
-	ret = find_cert(context, opt->opt_private->pk_init_ctx->id, q, &cert);
-	hx509_query_free(hx509ctx, q);
-	if (ret)
-	    return ret;
-
-	opt->opt_private->pk_init_ctx->id->cert = cert;
+	_krb5_pk_set_user_id(context,
+			     opt->opt_private->pk_init_ctx,
+			     opt->opt_private->pk_init_ctx->id->certs);
     } else
 	opt->opt_private->pk_init_ctx->id->cert = NULL;
 

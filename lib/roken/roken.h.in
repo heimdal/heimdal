@@ -476,7 +476,7 @@ unsigned short ROKEN_LIB_FUNCTION bswap16(unsigned short);
 int rk_flock(int fd, int operation);
 #endif /* HAVE_FLOCK */
 
-#ifdef SunOS
+#if defined(SunOS) || defined(_AIX)
 #define dirfd(x) ((x)->dd_fd)
 #endif
 

@@ -96,6 +96,7 @@ ${kadmin} \
 ${kadmin} add -p foo --use-defaults foo@${R} || exit 1
 ${kadmin} add -p bar --use-defaults bar@${R} || exit 1
 ${kadmin} add -p baz --use-defaults baz@${R} || exit 1
+${kadmin} modify --alias=baz2@test.h5l.se baz@${R} || exit 1
 ${kadmin} modify --pkinit-acl="CN=baz,DC=test,DC=h5l,DC=se" baz@${R} || exit 1
 
 ${kadmin} add -p kaka --use-defaults ${server}@${R} || exit 1
@@ -156,6 +157,14 @@ ${hxtool} issue-certificate \
 	  --req="PKCS10:req-pkinit2.der" \
 	  --certificate="FILE:pkinit3.crt" || exit 1
 
+echo "issue user 3 certificate (ms san, baz2)"
+${hxtool} issue-certificate \
+	  --ca-certificate=FILE:$objdir/ca.crt,${keyfile} \
+	  --type="pkinit-client" \
+          --ms-upn="baz2@test.h5l.se" \
+	  --req="PKCS10:req-pkinit2.der" \
+	  --certificate="FILE:pkinit4.crt" || exit 1
+
 
 echo foo > ${objdir}/foopassword
 
@@ -194,6 +203,21 @@ ${kdestroy}
 
 echo "Trying pk-init (ms upn)"; > messages.log
 ${kinit} -C FILE:${base}/pkinit3.crt,${keyfile2} bar@${R} || \
+	{ ec=1 ; eval "${testfailed}"; }
+${kgetcred} ${server}@${R} || { ec=1 ; eval "${testfailed}"; }
+${kdestroy}
+
+echo "Trying pk-init (ms upn, enterprise)"; > messages.log
+${kinit}  --canonicalize \
+	-C FILE:${base}/pkinit4.crt,${keyfile2} baz2@test.h5l.se@${R} || \
+	{ ec=1 ; eval "${testfailed}"; }
+${kgetcred} ${server}@${R} || { ec=1 ; eval "${testfailed}"; }
+${kdestroy}
+
+echo "Trying pk-init (ms upn, enterprise, pk-enterprise)"; > messages.log
+${kinit} --canonicalize \
+	--pk-enterprise \
+	-C FILE:${base}/pkinit4.crt,${keyfile2} ${R} || \
 	{ ec=1 ; eval "${testfailed}"; }
 ${kgetcred} ${server}@${R} || { ec=1 ; eval "${testfailed}"; }
 ${kdestroy}

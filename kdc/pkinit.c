@@ -1950,7 +1950,6 @@ _kdc_pk_initialize(krb5_context context,
 
     ret = _krb5_pk_load_id(context,
 			   &kdc_identity,
-			   0,
 			   user_id,
 			   anchors,
 			   pool,

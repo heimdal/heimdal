@@ -777,31 +777,40 @@ int
 certificate_copy(struct certificate_copy_options *opt, int argc, char **argv)
 {
     hx509_certs certs;
-    hx509_lock lock;
+    hx509_lock inlock, outlock = NULL;
     int ret;
 
-    hx509_lock_init(context, &lock);
-    lock_strings(lock, &opt->in_pass_strings);
+    hx509_lock_init(context, &inlock);
+    lock_strings(inlock, &opt->in_pass_strings);
+
+    if (opt->out_pass_string) {
+	hx509_lock_init(context, &outlock);
+	ret = hx509_lock_command_string(outlock, opt->out_pass_string);
+	if (ret)
+	    errx(1, "hx509_lock_command_string: %s: %d",
+		 opt->out_pass_string, ret);
+    }
 
     ret = hx509_certs_init(context, argv[argc - 1],
-			   HX509_CERTS_CREATE, lock, &certs);
+			   HX509_CERTS_CREATE, inlock, &certs);
     if (ret)
 	hx509_err(context, 1, ret, "hx509_certs_init");
 
     while(argc-- > 1) {
 	int ret;
-	ret = hx509_certs_append(context, certs, lock, argv[0]);
+	ret = hx509_certs_append(context, certs, inlock, argv[0]);
 	if (ret)
 	    hx509_err(context, 1, ret, "hx509_certs_append");
 	argv++;
     }
 
-    ret = hx509_certs_store(context, certs, 0, NULL);
+    ret = hx509_certs_store(context, certs, 0, outlock);
 	if (ret)
 	    hx509_err(context, 1, ret, "hx509_certs_store");
 
     hx509_certs_free(&certs);
-    hx509_lock_free(lock);
+    hx509_lock_free(inlock);
+    hx509_lock_free(outlock);
 
     return 0;
 }

@@ -304,6 +304,12 @@ krb5_init_context(krb5_context *context)
     cc_ops_register(p);
     kt_ops_register(p);
 
+#ifdef PKINIT
+    ret = hx509_context_init(&p->hx509ctx);
+    if (ret)
+	goto out;
+#endif	
+
 out:
     if(ret) {
 	krb5_free_context(p);

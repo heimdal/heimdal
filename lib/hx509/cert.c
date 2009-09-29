@@ -445,7 +445,7 @@ hx509_verify_attach_anchors(hx509_verify_ctx ctx, hx509_certs set)
 {
     if (ctx->trust_anchors)
 	hx509_certs_free(&ctx->trust_anchors);
-    ctx->trust_anchors = _hx509_certs_ref(set);
+    ctx->trust_anchors = hx509_certs_ref(set);
 }
 
 /**
@@ -1926,9 +1926,9 @@ hx509_verify_path(hx509_context context,
      *
      */
     if (ctx->trust_anchors)
-	anchors = _hx509_certs_ref(ctx->trust_anchors);
+	anchors = hx509_certs_ref(ctx->trust_anchors);
     else if (context->default_trust_anchors && ALLOW_DEF_TA(ctx))
-	anchors = _hx509_certs_ref(context->default_trust_anchors);
+	anchors = hx509_certs_ref(context->default_trust_anchors);
     else {
 	ret = hx509_certs_init(context, "MEMORY:no-TA", 0, NULL, &anchors);
 	if (ret)

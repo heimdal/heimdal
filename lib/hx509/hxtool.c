@@ -820,6 +820,7 @@ struct verify {
     hx509_certs chain;
     const char *hostname;
     int errors;
+    int count;
 };
 
 static int
@@ -834,8 +835,10 @@ verify_f(hx509_context hxcontext, void *ctx, hx509_cert c)
 	printf("verify_path: %s: %d\n", s, ret);
 	hx509_free_error_string(s);
 	v->errors++;
-    } else
+    } else {
+	v->count++;
 	printf("path ok\n");
+    }
 
     if (v->hostname) {
 	ret = hx509_verify_hostname(hxcontext, c, 0, HX509_HN_HOSTNAME,
@@ -964,6 +967,12 @@ pcert_verify(struct verify_options *opt, int argc, char **argv)
     hx509_certs_free(&anchors);
 
     hx509_revoke_free(&revoke_ctx);
+
+
+    if (v.count == 0) {
+	printf("no certs verify at all\n");
+	return 1;
+    }
 
     if (v.errors) {
 	printf("failed verifing %d checks\n", v.errors);

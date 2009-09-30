@@ -65,5 +65,15 @@ ${hxtool} certificate-copy DER-FILE:cert-der.tmp PEM-FILE:cert-pem2.tmp || exit 
 
 cmp cert-pem.tmp cert-pem2.tmp || exit 1
 
+echo "verify n0ll cert (fail)"
+${hxtool} verify --missing-revoke \
+	--hostname=foo.com \
+	cert:FILE:$srcdir/data/n0ll.pem \
+	anchor:FILE:$srcdir/data/n0ll.pem && exit 1
+
+echo "verify n0ll cert (fail)"
+${hxtool} verify --missing-revoke \
+	cert:FILE:$srcdir/data/n0ll.pem \
+	anchor:FILE:$srcdir/data/n0ll.pem && exit 1
 
 exit 0

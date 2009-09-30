@@ -243,11 +243,7 @@ _hx509_Name_to_string(const Name *n, char **str)
 		break;
 	    }
 	    case choice_DirectoryString_teletexString:
-		ss = malloc(ds->u.teletexString.length + 1);
-		if (ss == NULL)
-		    _hx509_abort("allocation failure"); /* XXX */
-		memcpy(ss, ds->u.teletexString.data, ds->u.teletexString.length);
-		ss[ds->u.teletexString.length] = '\0';
+		ss = ds->u.teletexString;
 		break;
 	    case choice_DirectoryString_universalString: {
 	        const uint32_t *uni = ds->u.universalString.data;
@@ -279,8 +275,7 @@ _hx509_Name_to_string(const Name *n, char **str)
 	    len = strlen(ss);
 	    append_string(str, &total_len, ss, len, 1);
 	    if (ds->element == choice_DirectoryString_universalString ||
-		ds->element == choice_DirectoryString_bmpString ||
-		ds->element == choice_DirectoryString_teletexString)
+		ds->element == choice_DirectoryString_bmpString)
 	    {
 		free(ss);
 	    }
@@ -341,7 +336,7 @@ dsstringprep(const DirectoryString *ds, uint32_t **rname, size_t *rlen)
 	COPYCHARARRAY(ds, printableString, len, name);
 	break;
     case choice_DirectoryString_teletexString:
-	COPYVOIDARRAY(ds, teletexString, len, name);
+	COPYCHARARRAY(ds, teletexString, len, name);
 	break;
     case choice_DirectoryString_bmpString:
 	COPYVALARRAY(ds, bmpString, len, name);

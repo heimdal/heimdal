@@ -823,10 +823,14 @@ tgs_make_reply(krb5_context context,
 	unsigned int i = 0;
 
 	/* XXX check authdata */
+
 	if (et.authorization_data == NULL) {
-	    ret = ENOMEM;
-	    krb5_set_error_message(context, ret, "malloc: out of memory");
-	    goto out;
+	    et.authorization_data = calloc(1, sizeof(*et.authorization_data));
+	    if (et.authorization_data == NULL) {
+		ret = ENOMEM;
+		krb5_set_error_message(context, ret, "malloc: out of memory");
+		goto out;
+	    }
 	}
 	for(i = 0; i < auth_data->len ; i++) {
 	    ret = add_AuthorizationData(et.authorization_data, &auth_data->val[i]);

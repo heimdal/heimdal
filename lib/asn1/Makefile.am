@@ -220,7 +220,6 @@ gen_files_rfc2459 =					\
 	asn1_SubjectPublicKeyInfo.x			\
 	asn1_TBSCRLCertList.x				\
 	asn1_TBSCertificate.x				\
-	asn1_TeletexStringx.x				\
 	asn1_Time.x					\
 	asn1_UniqueIdentifier.x				\
 	asn1_ValidationParms.x				\

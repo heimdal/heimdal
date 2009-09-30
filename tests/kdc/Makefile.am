@@ -181,6 +181,7 @@ CLEANFILES= \
 	pkinit.crt \
 	pkinit2.crt \
 	pkinit3.crt \
+	pkinit4.crt \
 	kdc.crt \
 	ca.crt \
 	uuserver.log \

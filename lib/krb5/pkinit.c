@@ -1174,8 +1174,26 @@ pk_rd_pa_reply_enckey(krb5_context context,
 	heim_octet_string out;
 
 	ret = hx509_cms_unwrap_ContentInfo(&content, &type, &out, NULL);
-	if (ret)
-	    goto out;
+	if (ret) {
+	    /* windows LH with interesting CMS packets */
+	    size_t ph = 1 + der_length_len(content.length);
+	    unsigned char *ptr = malloc(content.length + ph);
+	    size_t l;
+	    
+	    memcpy(ptr + ph, content.data, content.length);
+	    
+	    ret = der_put_length_and_tag (ptr + ph - 1, ph, content.length,
+					  ASN1_C_UNIV, CONS, UT_Sequence, &l);
+	    if (ret)
+		return ret;
+	    free(content.data);
+	    content.data = ptr;
+	    content.length += ph;
+
+	    ret = hx509_cms_unwrap_ContentInfo(&content, &type, &out, NULL);
+	    if (ret)
+		goto out;
+	}
 	if (der_heim_oid_cmp(&type, &asn1_oid_id_pkcs7_signedData)) {
 	    ret = EINVAL; /* XXX */
 	    krb5_set_error_message(context, ret,

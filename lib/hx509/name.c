@@ -925,12 +925,12 @@ hx509_general_name_unparse(GeneralName *name, char **str)
 
     switch (name->element) {
     case choice_GeneralName_otherName: {
-	char *str;
-	hx509_oid_sprint(&name->u.otherName.type_id, &str);
-	if (str == NULL)
+	char *oid;
+	hx509_oid_sprint(&name->u.otherName.type_id, &oid);
+	if (oid == NULL)
 	    return ENOMEM;
-	strpool = rk_strpoolprintf(strpool, "otherName: %s", str);
-	free(str);
+	strpool = rk_strpoolprintf(strpool, "otherName: %s", oid);
+	free(oid);
 	break;
     }
     case choice_GeneralName_rfc822Name:
@@ -985,12 +985,12 @@ hx509_general_name_unparse(GeneralName *name, char **str)
 	break;
     }
     case choice_GeneralName_registeredID: {
-	char *str;
-	hx509_oid_sprint(&name->u.registeredID, &str);
-	if (str == NULL)
+	char *oid;
+	hx509_oid_sprint(&name->u.registeredID, &oid);
+	if (oid == NULL)
 	    return ENOMEM;
-	strpool = rk_strpoolprintf(strpool, "registeredID: %s", str);
-	free(str);
+	strpool = rk_strpoolprintf(strpool, "registeredID: %s", oid);
+	free(oid);
 	break;
     }
     default:

@@ -53,6 +53,7 @@ enum hdb_lockop{ HDB_RLOCK, HDB_WLOCK };
 #define HDB_F_GET_KRBTGT	16	/* fetch krbtgt */
 #define HDB_F_GET_ANY		28	/* fetch any of client,server,krbtgt */
 #define HDB_F_CANON		32	/* want canonicalition */
+#define HDB_F_ADMIN_DATA	64	/* want data that kdc don't use  */
 
 /* hdb_capability_flags */
 #define HDB_CAP_F_HANDLE_ENTERPRISE_PRINCIPAL 1

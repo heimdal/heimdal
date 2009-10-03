@@ -46,7 +46,7 @@ static krb5_error_code LDAP_close(krb5_context context, HDB *);
 
 static krb5_error_code
 LDAP_message2entry(krb5_context context, HDB * db, LDAPMessage * msg,
-		   hdb_entry_ex * ent);
+		   int flags, hdb_entry_ex * ent);
 
 static const char *default_structural_object = "account";
 static char *structural_object;
@@ -402,7 +402,7 @@ LDAP_entry2mods(krb5_context context, HDB * db, hdb_entry_ex * ent,
 
     if (msg != NULL) {
 
-	ret = LDAP_message2entry(context, db, msg, &orig);
+	ret = LDAP_message2entry(context, db, msg, 0, &orig);
 	if (ret)
 	    goto out;
 
@@ -933,7 +933,7 @@ LDAP_principal2message(krb5_context context, HDB * db,
  */
 static krb5_error_code
 LDAP_message2entry(krb5_context context, HDB * db, LDAPMessage * msg,
-		   hdb_entry_ex * ent)
+		   int flags, hdb_entry_ex * ent)
 {
     char *unparsed_name = NULL, *dn = NULL, *ntPasswordIN = NULL;
     char *samba_acct_flags = NULL;
@@ -1115,31 +1115,32 @@ LDAP_message2entry(krb5_context context, HDB * db, LDAPMessage * msg,
 
     ent->entry.created_by.principal = NULL;
 
-    ret = LDAP_get_string_value(db, msg, "creatorsName", &dn);
-    if (ret == 0) {
-	if (LDAP_dn2principal(context, db, dn, &ent->entry.created_by.principal)
-	    != 0) {
-	    ent->entry.created_by.principal = NULL;
+    if (flags & HDB_F_ADMIN_DATA) {
+	ret = LDAP_get_string_value(db, msg, "creatorsName", &dn);
+	if (ret == 0) {
+	    LDAP_dn2principal(context, db, dn, &ent->entry.created_by.principal);
+	    free(dn);
 	}
-	free(dn);
-    }
 
-    ent->entry.modified_by = (Event *) malloc(sizeof(Event));
-    if (ent->entry.modified_by == NULL) {
-	ret = ENOMEM;
-	krb5_set_error_message(context, ret, "malloc: out of memory");
-	goto out;
-    }
-    ret = LDAP_get_generalized_time_value(db, msg, "modifyTimestamp",
-					  &ent->entry.modified_by->time);
-    if (ret == 0) {
-	ret = LDAP_get_string_value(db, msg, "modifiersName", &dn);
-	if (LDAP_dn2principal(context, db, dn, &ent->entry.modified_by->principal))
-	    ent->entry.modified_by->principal = NULL;
-	free(dn);
-    } else {
-	free(ent->entry.modified_by);
-	ent->entry.modified_by = NULL;
+	ent->entry.modified_by = calloc(1, sizeof(*ent->entry.modified_by));
+	if (ent->entry.modified_by == NULL) {
+	    ret = ENOMEM;
+	    krb5_set_error_message(context, ret, "malloc: out of memory");
+	    goto out;
+	}
+
+	ret = LDAP_get_generalized_time_value(db, msg, "modifyTimestamp",
+					      &ent->entry.modified_by->time);
+	if (ret == 0) {
+	    ret = LDAP_get_string_value(db, msg, "modifiersName", &dn);
+	    if (ret == 0) {
+		LDAP_dn2principal(context, db, dn, &ent->entry.modified_by->principal);
+		free(dn);
+	    } else {
+		free(ent->entry.modified_by);
+		ent->entry.modified_by = NULL;
+	    }
+	}
     }
 
     ent->entry.valid_start = malloc(sizeof(*ent->entry.valid_start));
@@ -1411,7 +1412,7 @@ LDAP_seq(krb5_context context, HDB * db, unsigned flags, hdb_entry_ex * entry)
 	    break;
 	case LDAP_RES_SEARCH_ENTRY:
 	    /* We have an entry. Parse it. */
-	    ret = LDAP_message2entry(context, db, e, entry);
+	    ret = LDAP_message2entry(context, db, e, flags, entry);
 	    ldap_msgfree(e);
 	    break;
 	case LDAP_RES_SEARCH_RESULT:
@@ -1582,7 +1583,7 @@ LDAP_fetch(krb5_context context, HDB * db, krb5_const_principal principal,
 	goto out;
     }
 
-    ret = LDAP_message2entry(context, db, e, entry);
+    ret = LDAP_message2entry(context, db, e, flags, entry);
     if (ret == 0) {
 	if (db->hdb_master_key_set && (flags & HDB_F_DECRYPT)) {
 	    ret = hdb_unseal_keys(context, db, &entry->entry);

@@ -52,7 +52,7 @@ kadm5_s_rename_principal(void *server_handle,
     if(ret)
 	return ret;
     ret = context->db->hdb_fetch(context->context, context->db,
-				 source, HDB_F_GET_ANY, &ent);
+				 source, HDB_F_GET_ANY|HDB_F_ADMIN_DATA, &ent);
     if(ret){
 	context->db->hdb_close(context->context, context->db);
 	goto out;

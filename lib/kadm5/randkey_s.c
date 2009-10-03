@@ -55,7 +55,7 @@ kadm5_s_randkey_principal(void *server_handle,
     if(ret)
 	return ret;
     ret = context->db->hdb_fetch(context->context, context->db, princ,
-				 HDB_F_GET_ANY, &ent);
+				 HDB_F_GET_ANY|HDB_F_ADMIN_DATA, &ent);
     if(ret)
 	goto out;
 

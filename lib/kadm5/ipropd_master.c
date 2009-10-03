@@ -361,7 +361,7 @@ send_complete (krb5_context context, slave *s,
 	return ret;
     }
 
-    ret = hdb_foreach (context, db, 0, prop_one, s);
+    ret = hdb_foreach (context, db, HDB_F_ADMIN_DATA, prop_one, s);
     if (ret) {
 	krb5_warn (context, ret, "hdb_foreach");
 	slave_dead(context, s);

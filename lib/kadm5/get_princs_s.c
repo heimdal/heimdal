@@ -99,7 +99,7 @@ kadm5_s_get_principals(void *server_handle,
     }
     d.princs = NULL;
     d.count = 0;
-    ret = hdb_foreach(context->context, context->db, 0, foreach, &d);
+    ret = hdb_foreach(context->context, context->db, HDB_F_ADMIN_DATA, foreach, &d);
     context->db->hdb_close(context->context, context->db);
     if(ret == 0)
 	ret = add_princ(&d, NULL);

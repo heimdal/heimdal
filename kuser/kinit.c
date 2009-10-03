@@ -417,7 +417,7 @@ get_new_tickets(krb5_context context,
     char passwd[256];
     krb5_deltat start_time = 0;
     krb5_deltat renew = 0;
-    char *renewstr = NULL;
+    const char *renewstr = NULL;
     krb5_enctype *enctype = NULL;
     krb5_ccache tempccache;
 #ifndef NO_NTLM

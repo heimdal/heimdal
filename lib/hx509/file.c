@@ -66,7 +66,7 @@ _hx509_write_file(const char *fn, const void *data, size_t length)
  */
 
 static void
-header(FILE *f, const char *type, const char *str)
+print_pem_stamp(FILE *f, const char *type, const char *str)
 {
     fprintf(f, "-----%s %s-----\n", type, str);
 }
@@ -82,7 +82,7 @@ hx509_pem_write(hx509_context context, const char *type,
 
 #define ENCODE_LINE_LENGTH	54
 
-    header(f, "BEGIN", type);
+    print_pem_stamp(f, "BEGIN", type);
 
     while (headers) {
 	fprintf(f, "%s: %s\n%s",
@@ -110,7 +110,7 @@ hx509_pem_write(hx509_context context, const char *type,
 	free(line);
     }
 
-    header(f, "END", type);
+    print_pem_stamp(f, "END", type);
 
     return 0;
 }

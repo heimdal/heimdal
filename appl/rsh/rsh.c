@@ -186,13 +186,12 @@ krb5_forward_cred (krb5_auth_context auth_context,
 
     creds.client = principal;
 
-    ret = krb5_build_principal (context,
-				&creds.server,
-				strlen(principal->realm),
-				principal->realm,
-				"krbtgt",
-				principal->realm,
-				NULL);
+    ret = krb5_make_principal(context,
+			      &creds.server,
+			      principal->realm,
+			      "krbtgt",
+			      principal->realm,
+			      NULL);
 
     if (ret) {
 	warnx ("could not forward creds: krb5_build_principal: %s",

@@ -194,7 +194,7 @@ krb5_forward_cred (krb5_auth_context auth_context,
 			      NULL);
 
     if (ret) {
-	warnx ("could not forward creds: krb5_build_principal: %s",
+	warnx ("could not forward creds: krb5_make_principal: %s",
 	       krb5_get_err_text (context, ret));
 	return 1;
     }

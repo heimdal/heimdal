@@ -813,7 +813,7 @@ main (int argc, char **argv)
 				  KRB5_WELLKNOWN_NAME, KRB5_ANON_NAME, 
 				  NULL);
 	if (ret)
-	    krb5_err(context, 1, ret, "krb5_build_principal");
+	    krb5_err(context, 1, ret, "krb5_make_principal");
 	krb5_principal_set_type(context, principal, KRB5_NT_WELLKNOWN);
 
     } else {

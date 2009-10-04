@@ -532,4 +532,12 @@ krb5_free_unparsed_name(krb5_context context, char *str) KRB5_DEPRECATED
     krb5_xfree(str);
 }
 
+krb5_error_code KRB5_LIB_FUNCTION
+krb5_generate_subkey(krb5_context context,
+		     const krb5_keyblock *key,
+		     krb5_keyblock **subkey) KRB5_DEPRECATED
+{
+    return krb5_generate_subkey_extended(context, key, ETYPE_NULL, subkey);
+}
+
 #endif /* HEIMDAL_SMALLER */

@@ -297,13 +297,12 @@ do_delegation (krb5_context context,
     if (kret)
 	goto out;
 
-    kret = krb5_build_principal(context,
-				&creds.server,
-				strlen(creds.client->realm),
-				creds.client->realm,
-				KRB5_TGS_NAME,
-				creds.client->realm,
-				NULL);
+    kret = krb5_make_principal(context,
+			       &creds.server,
+			       creds.client->realm,
+			       KRB5_TGS_NAME,
+			       creds.client->realm,
+			       NULL);
     if (kret)
 	goto out;
 

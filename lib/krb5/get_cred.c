@@ -252,7 +252,7 @@ init_tgs_req (krb5_context context,
 					 "tgs_require_subkey",
 					 NULL))
 	{
-	    ret = krb5_generate_subkey (context, &krbtgt->session, &key);
+	    ret = krb5_generate_subkey_extended(context, &krbtgt->session, ETYPE_NULL, &key);
 	    if (ret) {
 		krb5_auth_con_free (context, ac);
 		goto fail;

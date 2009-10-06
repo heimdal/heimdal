@@ -279,6 +279,18 @@ usually (depending on the operating system) receive a SIGSYS signal.
 .%T File Server/Cache Manager Interface
 .%D 1991
 .Re
+.Sh FILES
+libkafs will search for
+.Pa ThisCell and
+.Pa TheseCells
+in the following locations:
+.Pa /usr/vice/etc ,
+.Pa /etc/openafs ,
+.Pa /var/db/openafs/etc ,
+.Pa /usr/arla/etc ,
+.Pa /etc/arla ,
+and
+.Pa /etc/afs
 .Sh BUGS
 .Ev AFS_SYSCALL
 has no effect under AIX.

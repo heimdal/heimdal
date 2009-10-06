@@ -77,7 +77,7 @@ install-doxygen-manpage:
 	for a in $(PROJECTS) ; do \
 		f="$(srcdir)/doxyout/$$a/manpages" ; \
 		test -f $$f || continue ; \
-		echo "install $$a manual pages" ; \
+		echo "install $$a manual pages $$(wc -l < $$f)" ; \
 		while read x ; do \
 			section=`echo "$$x" | sed 's/.*\.\([0-9]\)/\1/'` ; \
 			$(mkinstalldirs) "$(DESTDIR)$(mandir)/man$$section" ; \

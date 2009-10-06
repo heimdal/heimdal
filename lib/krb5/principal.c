@@ -870,7 +870,7 @@ krb5_build_principal_ext(krb5_context context,
  *
  * @param context A Kerberos context.
  * @param inprinc principal to copy
- * @param inprinc copied principal, free with krb5_free_principal()
+ * @param outprinc copied principal, free with krb5_free_principal()
  *
  * @return An krb5 error code, see krb5_get_error_message().
  *

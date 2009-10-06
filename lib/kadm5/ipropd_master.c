@@ -474,6 +474,7 @@ send_diffs (krb5_context context, slave *s, int log_fd,
 	if (ver == s->version + 1)
 	    break;
 	if (left == 0) {
+	    krb5_storage_free(sp);
 	    krb5_warnx(context,
 		       "slave %s (version %lu) out of sync with master "
 		       "(first version in log %lu), sending complete database",
@@ -489,6 +490,7 @@ send_diffs (krb5_context context, slave *s, int log_fd,
 
     ret = krb5_data_alloc (&data, right - left + 4);
     if (ret) {
+	krb5_storage_free(sp);
 	krb5_warn (context, ret, "send_diffs: krb5_data_alloc");
 	slave_dead(context, s);
 	return 1;

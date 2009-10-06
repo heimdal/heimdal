@@ -1087,6 +1087,12 @@ krb5_get_credentials_with_flags(krb5_context context,
     krb5_creds *res_creds;
     int i;
 
+    if (in_creds->session.keytype) {
+	ret = krb5_enctype_valid(context, in_creds->session.keytype);
+	if (ret)
+	    return ret;
+    }
+
     *out_creds = NULL;
     res_creds = calloc(1, sizeof(*res_creds));
     if (res_creds == NULL) {
@@ -1282,6 +1288,12 @@ krb5_get_creds(krb5_context context,
     krb5_creds *res_creds;
     int i;
 
+    if (opt && opt->enctype) {
+	ret = krb5_enctype_valid(context, opt->enctype);
+	if (ret)
+	    return ret;
+    }
+
     memset(&in_creds, 0, sizeof(in_creds));
     in_creds.server = rk_UNCONST(inprinc);
 
@@ -1289,7 +1301,10 @@ krb5_get_creds(krb5_context context,
     if (ret)
 	return ret;
 
-    options = opt->options;
+    if (opt)
+	options = opt->options;
+    else
+	options = 0;
     flags.i = 0;
 
     *out_creds = NULL;
@@ -1301,7 +1316,7 @@ krb5_get_creds(krb5_context context,
 	return ENOMEM;
     }
 
-    if (opt->enctype) {
+    if (opt && opt->enctype) {
 	in_creds.session.keytype = opt->enctype;
 	options |= KRB5_TC_MATCH_KEYTYPE;
     }
@@ -1312,7 +1327,7 @@ krb5_get_creds(krb5_context context,
      */
     ret = krb5_cc_retrieve_cred(context,
                                 ccache,
-				opt->enctype ? KRB5_TC_MATCH_KEYTYPE : 0,
+				options & KRB5_TC_MATCH_KEYTYPE,
                                 &in_creds, res_creds);
     /*
      * If we got a credential, check if credential is expired before

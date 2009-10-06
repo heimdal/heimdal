@@ -745,7 +745,7 @@ HEIMDAL_KRB5_2.0 {
 		_krb5_s4u2self_to_checksumdata;
 
 		# kinit helper
-		_krb5_get_init_creds_opt_set_pkinit_user_certs
+		_krb5_get_init_creds_opt_set_pkinit_user_certs;
 		_krb5_pk_enterprise_cert;
 
 		# testing

@@ -59,8 +59,6 @@ vars.texi: vars.tin Makefile
 
 PROJECTS = hcrypto hdb hx509 gssapi krb5 ntlm wind 
 
-$(PROJECTS): doxygen
-
 doxygen: hdb.dxy hx509.dxy hcrypto.dxy gssapi.dxy krb5.dxy ntlm.dxy wind.dxy
 	@find $(srcdir)/doxyout -type d ! -perm -200 -exec chmod u+w {} ';' ; \
 	rm -rf $(srcdir)/doxyout ; \
@@ -117,7 +115,7 @@ heimdal_TEXINFOS = \
 	win2k.texi
 
 EXTRA_DIST = \
-	$(PROJECTS) \
+	doxyout \
 	footer.html \
 	gssapi.din \
 	hdb.din \

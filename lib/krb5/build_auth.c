@@ -146,16 +146,26 @@ krb5_build_authenticator (krb5_context context,
     } else
 	auth->seq_number = NULL;
     auth->authorization_data = NULL;
-    auth->cksum = cksum;
 
-    if (cksum != NULL && cksum->cksumtype == CKSUMTYPE_GSSAPI) {
-	/*
-	 * This is not GSS-API specific, we only enable it for
-	 * GSS for now
-	 */
-	ret = make_etypelist(context, &auth->authorization_data);
+    if (cksum) {
+	ALLOC(auth->cksum, 1);
+	if (auth->cksum == NULL) {
+	    ret = ENOMEM;
+	    goto fail;
+	}
+	ret = copy_Checksum(cksum, auth->cksum);
 	if (ret)
 	    goto fail;
+
+	if (auth->cksum->cksumtype == CKSUMTYPE_GSSAPI) {
+	    /*
+	     * This is not GSS-API specific, we only enable it for
+	     * GSS for now
+	     */
+	    ret = make_etypelist(context, &auth->authorization_data);
+	    if (ret)
+		goto fail;
+	}
     }
 
     /* XXX - Copy more to auth_context? */
@@ -189,7 +199,6 @@ krb5_build_authenticator (krb5_context context,
 	*auth_result = auth;
     else {
 	/* Don't free the `cksum', it's allocated by the caller */
-	auth->cksum = NULL;
 	free_Authenticator (auth);
 	free (auth);
     }

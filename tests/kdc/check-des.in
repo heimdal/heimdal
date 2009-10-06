@@ -50,8 +50,8 @@ port=@port@
 kadmin="${kadmin} -l -r $R"
 kdc="${kdc} --addresses=localhost -P $port"
 
-server=afs/test.h5l.se
-server2=host/server.test.h5l.se
+afsserver=afs/test.h5l.se
+hostserver=host/server.test.h5l.se
 cache="FILE:${objdir}/cache.krb5"
 
 kinit="${kinit} -c $cache --no-afslog"
@@ -85,10 +85,10 @@ ${kadmin} \
 ${kadmin} cpw -r krbtgt/${R}@${R} || exit 1
 
 ${kadmin} add -p foo --use-defaults foo@${R} || exit 1
-${kadmin} add -p kaka --use-defaults ${server}@${R} || exit 1
-${kadmin} add -p kaka --use-defaults ${server2}@${R} || exit 1
-${kadmin} add_enctype -r ${server}@${R} des-cbc-crc || exit 1
-${kadmin} add_enctype -r ${server2}@${R} des-cbc-crc || exit 1
+${kadmin} add -p kaka --use-defaults ${afsserver}@${R} || exit 1
+${kadmin} add -p kaka --use-defaults ${hostserver}@${R} || exit 1
+${kadmin} add_enctype -r ${afsserver}@${R} des-cbc-crc || exit 1
+${kadmin} add_enctype -r ${hostserver}@${R} des-cbc-crc || exit 1
 
 echo "Doing database check"
 ${kadmin} check ${R} || exit 1
@@ -113,25 +113,43 @@ echo "Getting client initial tickets"; > messages.log
 ${kinit} --password-file=${objdir}/foopassword foo@$R || \
 	{ ec=1 ; eval "${testfailed}"; }
 echo "Getting non des tickets (afs)"; > messages.log
-${kgetcred} ${server}@${R} || { ec=1 ; eval "${testfailed}"; }
+${kgetcred} ${afsserver}@${R} || { ec=1 ; eval "${testfailed}"; }
 ${klist} -v | grep des-cbc-crc > /dev/null && { ec=1 ; eval "${testfailed}"; }
 echo "Getting non des tickets (host/)"; > messages.log
-${kgetcred} ${server2}@${R} || { ec=1 ; eval "${testfailed}"; }
+${kgetcred} ${hostserver}@${R} || { ec=1 ; eval "${testfailed}"; }
 ${klist} -v | grep des-cbc-crc > /dev/null && { ec=1 ; eval "${testfailed}"; }
 ${kdestroy}
-
 
 
 echo "Getting client initial tickets"; > messages.log
 ${kinit} --password-file=${objdir}/foopassword foo@$R || \
 	{ ec=1 ; eval "${testfailed}"; }
-echo "Getting non des tickets (host/)"; > messages.log
-${kgetcred} -e des-cbc-crc ${server2}@${R} 2>/dev/null && \
+echo "Getting des tickets (fail test)"; > messages.log
+${kgetcred} -e des-cbc-crc ${hostserver}@${R} 2>/dev/null && \
+    { ec=1 ; eval "${testfailed}"; }
+echo "Getting non des tickets"; > messages.log
+${kgetcred} ${afsserver}@${R} || { ec=1 ; eval "${testfailed}"; }
+${klist} -v | grep des-cbc-crc > /dev/null && { ec=1 ; eval "${testfailed}"; }
+
+
+KRB5_CONFIG="${objdir}/krb5-weak.conf"
+
+echo "Getting client initial tickets"; > messages.log
+${kinit} --password-file=${objdir}/foopassword foo@$R || \
+	{ ec=1 ; eval "${testfailed}"; }
+
+echo "Getting non des tickets (host/), failure test"; > messages.log
+${kgetcred} -e des-cbc-crc ${hostserver}@${R} 2>/dev/null && \
     { ec=1 ; eval "${testfailed}"; }
 ${klist} -v | grep des-cbc-crc > /dev/null && { ec=1 ; eval "${testfailed}"; }
-echo "Getting des tickets"; > messages.log
-${kgetcred} -e des-cbc-crc ${server}@${R} || { ec=1 ; eval "${testfailed}"; }
+
+echo "Getting des tickets (afs)"; > messages.log
+${kgetcred} -e des-cbc-crc ${afsserver}@${R} || { ec=1 ; eval "${testfailed}"; }
 ${klist} -v | grep des-cbc-crc > /dev/null || { ec=1 ; eval "${testfailed}"; }
+
+${kdestroy}
+
+
 
 ${kdestroy}
 

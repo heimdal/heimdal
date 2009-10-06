@@ -898,6 +898,12 @@ get_cred_kdc_referral(krb5_context context,
     int loop = 0;
     int ok_as_delegate = 1;
 
+    if (in_creds->client->name.name_string.len < 2 && !flags.b.canonicalize) {
+	krb5_set_error_message(context, KRB5KDC_ERR_PATH_NOT_ACCEPTED,
+			       N_("Name too short to do referals, skipping", ""));
+	return KRB5KDC_ERR_PATH_NOT_ACCEPTED;
+    }
+
     memset(&tgt, 0, sizeof(tgt));
     memset(&ticket, 0, sizeof(ticket));
 

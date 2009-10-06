@@ -614,7 +614,6 @@ init_auth_restart
 				     enctype,
 				     ctx->kcred,
 				     &cksum,
-				     NULL,
 				     &authenticator,
 				     KRB5_KU_AP_REQ_AUTH);
 

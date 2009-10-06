@@ -56,7 +56,6 @@ HEIMDAL_KRB5_2.0 {
 		krb5_auth_con_setuserkey;
 		krb5_auth_getremoteseqnumber;
 		krb5_build_ap_req;
-		krb5_build_authenticator;
 		krb5_build_principal;
 		krb5_build_principal_ext;
 		krb5_build_principal_va;
@@ -709,6 +708,7 @@ HEIMDAL_KRB5_2.0 {
 		_krb5_crc_init_table;		
 		_krb5_crc_update;		
 		_krb5_get_krbtgt;
+		_krb5_build_authenticator;
 
 		# V4 compat glue
 		_krb5_krb_tf_setup;

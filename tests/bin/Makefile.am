@@ -15,5 +15,7 @@ setup-env: setup-env.in Makefile
 	chmod +x setup-env.tmp
 	mv setup-env.tmp setup-env
 
+EXTRA_DIST = setup-env.in
+
 CLEANFILES = setup-env setup-env.tmp
 

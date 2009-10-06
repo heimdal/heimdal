@@ -198,7 +198,7 @@ The file is in ASCII format and contains one character string, the cell
 name, per line. Cell names are case sensitive, but most cell names
 are lower case.
 
-See manpage for manpage{kafs,3} for search locations of ThisCell and TheseCells.
+See manpage for @manpage{kafs,3} for search locations of ThisCell and TheseCells.
 
 @subsection How to get a KeyFile
 

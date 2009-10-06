@@ -609,7 +609,7 @@ init_auth_restart
 	krb5_set_kdc_sec_offset (context, offset, -1);
     }
 
-    kret = krb5_build_authenticator (context,
+    kret = _krb5_build_authenticator(context,
 				     ctx->auth_context,
 				     enctype,
 				     ctx->kcred,

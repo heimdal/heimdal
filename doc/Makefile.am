@@ -75,7 +75,7 @@ dist-hook: doxygen
 
 install-doxygen-manpage:
 	for a in $(PROJECTS) ; do \
-		f="$(srcdir)/doyxgen/$$a/manpages" ; \
+		f="$(srcdir)/doxyout/$$a/manpages" ; \
 		test -f $$f || continue ; \
 		echo "install $$a manual pages" ; \
 		while read x ; do \

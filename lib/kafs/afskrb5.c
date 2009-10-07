@@ -163,6 +163,7 @@ get_cred(struct kafs_data *data, const char *name, const char *inst,
     krb5_error_code ret;
     krb5_creds in_creds, *out_creds;
     struct krb5_kafs_data *d = data->data;
+    int invalid;
 
     memset(&in_creds, 0, sizeof(in_creds));
 
@@ -175,8 +176,19 @@ get_cred(struct kafs_data *data, const char *name, const char *inst,
 	krb5_free_principal(d->context, in_creds.server);
 	return ret;
     }
+
     in_creds.session.keytype = ETYPE_DES_CBC_CRC;
+
+    /* check if des is disable, and in that case enable it for afs */
+    invalid = krb5_enctype_valid(d->context, in_creds.session.keytype);
+    if (invalid)
+	krb5_enctype_enable(d->context, in_creds.session.keytype);
+
     ret = krb5_get_credentials(d->context, 0, d->id, &in_creds, &out_creds);
+
+    if (invalid)
+	krb5_enctype_disable(d->context, in_creds.session.keytype);
+
     krb5_free_principal(d->context, in_creds.server);
     krb5_free_principal(d->context, in_creds.client);
     if(ret)

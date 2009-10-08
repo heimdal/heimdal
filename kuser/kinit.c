@@ -248,10 +248,15 @@ do_524init(krb5_context context, krb5_ccache ccache,
 	real_creds = creds;
     else {
 	krb5_principal client;
-	krb5_cc_get_principal(context, ccache, &client);
+	ret = krb5_cc_get_principal(context, ccache, &client);
+	if (ret) {
+	    krb5_warn(context, ret, "524init: can't get client principal");
+	    return ret;
+	}
 	memset(&in_creds, 0, sizeof(in_creds));
 	ret = get_server(context, client, server, &in_creds.server);
 	if(ret) {
+	    krb5_warn(context, ret, "524init: can't get server principal");
 	    krb5_free_principal(context, client);
 	    return ret;
 	}

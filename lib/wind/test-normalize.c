@@ -68,7 +68,7 @@ parse_vector(char *buf, uint32_t *v)
 }
 
 static int
-test(char *buf)
+test(char *buf, unsigned lineno)
 {
     char *last;
     char *c;
@@ -95,9 +95,7 @@ test(char *buf)
     out_len = parse_vector(c, out);
     if (strtok_r(NULL, ";", &last) == NULL)
 	return 0;
-    c = strtok_r(NULL, ";", &last);
-    if (c == NULL)
-	return 0;
+    c = last;
 
     norm_len = MAX_LENGTH_CANON;
     tmp = malloc(norm_len * sizeof(size_t));
@@ -110,12 +108,12 @@ test(char *buf)
 	return 1;
     }
     if (out_len != norm_len) {
-	printf("wrong out len (%s)\n", c);
+	printf("%u: wrong out len (%s)\n", lineno, c);
 	free(tmp);
 	return 1;
     }
     if (memcmp(out, tmp, out_len * sizeof(uint32_t)) != 0) {
-	printf("wrong out data (%s)\n", c);
+	printf("%u: wrong out data (%s)\n", lineno, c);
 	free(tmp);
 	return 1;
     }
@@ -130,6 +128,7 @@ main(int argc, char **argv)
     char buf[1024];
     char filename[256] = "NormalizationTest.txt";
     unsigned failures = 0;
+    unsigned lineno = 0;
 
     if (argc > 2)
 	errx(1, "usage: %s [file]", argv[0]);
@@ -148,12 +147,13 @@ main(int argc, char **argv)
 	    err(1, "open %s", filename);
     }
     while (fgets(buf, sizeof(buf), f) != NULL) {
+	lineno++;
 	if (buf[0] == '#')
 	    continue;
 	if (buf[0] == '@') {
 	    continue;
 	}
-	failures += test(buf);
+	failures += test(buf, lineno);
     }
     fclose(f);
     return failures != 0;

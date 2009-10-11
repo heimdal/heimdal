@@ -183,8 +183,7 @@ canonical_reorder(uint32_t *tmp, size_t tmp_len)
 		 j < tmp_len && _wind_combining_class(tmp[j]);
 		 ++j)
 		;
-	    qsort(&tmp[i], j - i, sizeof(unsigned),
-		  cc_cmp);
+	    qsort(&tmp[i], j - i, sizeof(tmp[0]), cc_cmp);
 	    i = j;
 	}
     }

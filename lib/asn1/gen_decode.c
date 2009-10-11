@@ -630,7 +630,7 @@ decode_type (const char *name, const Type *t, int optional,
 	    fprintf(codefile,
 		    "else {\n"
 		    "(%s)->u.%s.data = calloc(1, len);\n"
-		    "if ((%s)->u.%s.data == NULL) {\n"
+		    "if ((%s)->u.%s.data == NULL && len != 0) {\n"
 		    "e = ENOMEM; %s;\n"
 		    "}\n"
 		    "(%s)->u.%s.length = len;\n"

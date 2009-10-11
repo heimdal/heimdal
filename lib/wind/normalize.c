@@ -39,6 +39,7 @@
 #include <assert.h>
 #include <stdlib.h>
 #include <errno.h>
+#include <stdio.h>
 
 #include "normalize_table.h"
 
@@ -173,7 +174,7 @@ cc_cmp(const void *a, const void *b)
 static void
 canonical_reorder(uint32_t *tmp, size_t tmp_len)
 {
-    unsigned i;
+    size_t i;
 
     for (i = 0; i < tmp_len; ++i) {
 	int cc = _wind_combining_class(tmp[i]);

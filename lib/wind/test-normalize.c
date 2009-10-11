@@ -98,7 +98,7 @@ test(char *buf, unsigned lineno)
     c = last;
 
     norm_len = MAX_LENGTH_CANON;
-    tmp = malloc(norm_len * sizeof(size_t));
+    tmp = malloc(norm_len * sizeof(uint32_t));
     if (tmp == NULL && norm_len != 0)
 	err(1, "malloc");
     ret = _wind_stringprep_normalize(in, in_len, tmp, &norm_len);

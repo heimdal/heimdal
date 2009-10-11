@@ -9,7 +9,7 @@ case "$host" in
 *-*-aix3*)
 	aix=3
 	;;
-*-*-aix[4-9]*)
+*-*-aix[[4-9]]*)
 	aix=4
 	;;
 esac
@@ -17,12 +17,14 @@ esac
 AM_CONDITIONAL(AIX, test "$aix" != no)dnl
 AM_CONDITIONAL(AIX4, test "$aix" = 4)dnl
 
-
 AC_ARG_ENABLE(dynamic-afs,
 	AS_HELP_STRING([--disable-dynamic-afs],
 		[do not use loaded AFS library with AIX]))
 
 if test "$aix" != no; then
+
+	AC_DEFINE(NEED_QSORT, 1, [if your qsort is not a stable sort])
+
 	if test "$enable_dynamic_afs" != no; then
 		AC_REQUIRE([rk_DLOPEN])
 		if test "$ac_cv_func_dlopen" = no; then

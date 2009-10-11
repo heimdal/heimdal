@@ -799,6 +799,12 @@ time_t ROKEN_LIB_FUNCTION
 rk_timegm(struct tm *tm);
 #endif
 
+#ifdef NEED_QSORT
+#define qsort rk_qsort
+void
+rk_qsort(void *, size_t, size_t, int (*)(const void *, const void *));
+#endif
+
 #ifdef SOCKET_WRAPPER_REPLACE
 #include <socket_wrapper.h>
 #endif

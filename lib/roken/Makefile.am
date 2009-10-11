@@ -88,6 +88,7 @@ libroken_la_SOURCES =		\
 	parse_bytes.c		\
 	parse_time.c		\
 	parse_units.c		\
+	qsort.c			\
 	realloc.c		\
 	resolve.c		\
 	roken_gethostby.c	\

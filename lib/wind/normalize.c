@@ -41,6 +41,8 @@
 #include <errno.h>
 #include <stdio.h>
 
+#include "roken.h"
+
 #include "normalize_table.h"
 
 static int

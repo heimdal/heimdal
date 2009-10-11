@@ -32,6 +32,7 @@
  */
 
 #include <krb5_locl.h>
+#include <assert.h>
 
 /*
  * Take the `body' and encode it into `padata' using the credentials
@@ -79,7 +80,7 @@ static krb5_error_code
 set_auth_data (krb5_context context,
 	       KDC_REQ_BODY *req_body,
 	       krb5_authdata *authdata,
-	       krb5_keyblock *key)
+	       krb5_keyblock *subkey)
 {
     if(authdata->len) {
 	size_t len, buf_size;
@@ -101,7 +102,7 @@ set_auth_data (krb5_context context,
 				   N_("malloc: out of memory", ""));
 	    return ENOMEM;
 	}
-	ret = krb5_crypto_init(context, key, 0, &crypto);
+	ret = krb5_crypto_init(context, subkey, 0, &crypto);
 	if (ret) {
 	    free (buf);
 	    free (req_body->enc_authorization_data);
@@ -111,7 +112,6 @@ set_auth_data (krb5_context context,
 	krb5_encrypt_EncryptedData(context,
 				   crypto,
 				   KRB5_KU_TGS_REQ_AUTH_DAT_SUBKEY,
-				   /* KRB5_KU_TGS_REQ_AUTH_DAT_SESSION? */
 				   buf,
 				   len,
 				   0,
@@ -143,7 +143,9 @@ init_tgs_req (krb5_context context,
 	      krb5_keyblock **subkey,
 	      TGS_REQ *t)
 {
+    krb5_auth_context ac = NULL;
     krb5_error_code ret = 0;
+    krb5_keyblock *key = NULL;
 
     memset(t, 0, sizeof(*t));
     t->pvno = 5;
@@ -238,60 +240,39 @@ init_tgs_req (krb5_context context,
 	}
     }
 
-    {
-	krb5_auth_context ac;
-	krb5_keyblock *key = NULL;
+    ret = krb5_auth_con_init(context, &ac);
+    if(ret)
+	goto fail;
+    
+    ret = krb5_generate_subkey_extended(context, &krbtgt->session, 
+					ETYPE_NULL, &key);
+    if (ret)
+	goto fail;
+    
+    ret = krb5_auth_con_setlocalsubkey(context, ac, key);
+    if (ret)
+	goto fail;
+    
+    ret = set_auth_data (context, &t->req_body, &in_creds->authdata, key);
+    if (ret)
+	goto fail;
+    
+    ret = make_pa_tgs_req(context,
+			  ac,
+			  &t->req_body,
+			  &t->padata->val[0],
+			  krbtgt);
+    if(ret)
+	goto fail;
 
-	ret = krb5_auth_con_init(context, &ac);
-	if(ret)
-	    goto fail;
-
-	if (krb5_config_get_bool_default(context, NULL, FALSE,
-					 "realms",
-					 krbtgt->server->realm,
-					 "tgs_require_subkey",
-					 NULL))
-	{
-	    ret = krb5_generate_subkey_extended(context, &krbtgt->session, ETYPE_NULL, &key);
-	    if (ret) {
-		krb5_auth_con_free (context, ac);
-		goto fail;
-	    }
-
-	    ret = krb5_auth_con_setlocalsubkey(context, ac, key);
-	    if (ret) {
-		if (key)
-		    krb5_free_keyblock (context, key);
-		krb5_auth_con_free (context, ac);
-		goto fail;
-	    }
-	}
-
-	ret = set_auth_data (context, &t->req_body, &in_creds->authdata,
-			     key ? key : &krbtgt->session);
-	if (ret) {
-	    if (key)
-		krb5_free_keyblock (context, key);
-	    krb5_auth_con_free (context, ac);
-	    goto fail;
-	}
-
-	ret = make_pa_tgs_req(context,
-			      ac,
-			      &t->req_body,
-			      &t->padata->val[0],
-			      krbtgt);
-	if(ret) {
-	    if (key)
-		krb5_free_keyblock (context, key);
-	    krb5_auth_con_free(context, ac);
-	    goto fail;
-	}
-	*subkey = key;
-	
-	krb5_auth_con_free(context, ac);
-    }
+    *subkey = key;
+    key = NULL;
+    
 fail:
+    if (key)
+	krb5_free_keyblock (context, key);
+    if (ac)
+	krb5_auth_con_free(context, ac);
     if (ret) {
 	t->req_body.addresses = NULL;
 	free_TGS_REQ (t);
@@ -349,23 +330,29 @@ decrypt_tkt_with_subkey (krb5_context context,
     size_t size;
     krb5_crypto crypto;
 
-    ret = krb5_crypto_init(context, key, 0, &crypto);
-    if (ret)
-	return ret;
-    ret = krb5_decrypt_EncryptedData (context,
-				      crypto,
-				      usage,
-				      &dec_rep->kdc_rep.enc_part,
-				      &data);
-    krb5_crypto_destroy(context, crypto);
-    if(ret && subkey){
-	/* DCE compat -- try to decrypt with subkey */
+    assert(usage == 0);
+
+    /*
+     * start out with trying with subkey if we have one
+     */
+    if (subkey) {
 	ret = krb5_crypto_init(context, subkey, 0, &crypto);
 	if (ret)
 	    return ret;
 	ret = krb5_decrypt_EncryptedData (context,
 					  crypto,
 					  KRB5_KU_TGS_REP_ENC_PART_SUB_KEY,
+					  &dec_rep->kdc_rep.enc_part,
+					  &data);
+	krb5_crypto_destroy(context, crypto);
+    }
+    if (subkey == NULL || ret) {
+	ret = krb5_crypto_init(context, key, 0, &crypto);
+	if (ret)
+	    return ret;
+	ret = krb5_decrypt_EncryptedData (context,
+					  crypto,
+					  KRB5_KU_TGS_REP_ENC_PART_SESSION,
 					  &dec_rep->kdc_rep.enc_part,
 					  &data);
 	krb5_crypto_destroy(context, crypto);
@@ -549,7 +536,7 @@ get_cred_kdc(krb5_context context,
 				   out_creds,
 				   &krbtgt->session,
 				   NULL,
-				   KRB5_KU_TGS_REP_ENC_PART_SESSION,
+				   0,
 				   &krbtgt->addresses,
 				   nonce,
 				   eflags,

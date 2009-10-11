@@ -671,6 +671,8 @@ tgs_make_reply(krb5_context context,
 	       KDC_REQ_BODY *b,
 	       krb5_const_principal tgt_name,
 	       const EncTicketPart *tgt,
+	       const krb5_keyblock *replykey,
+	       int rk_is_subkey,
 	       const EncryptionKey *serverkey,
 	       const krb5_keyblock *sessionkey,
 	       krb5_kvno kvno,
@@ -931,7 +933,8 @@ tgs_make_reply(krb5_context context,
     ret = _kdc_encode_reply(context, config,
 			    &rep, &et, &ek, et.key.keytype,
 			    kvno,
-			    serverkey, 0, &tgt->key, e_text, reply);
+			    serverkey, 0, replykey, rk_is_subkey,
+			    e_text, reply);
     if (is_weak)
 	krb5_enctype_disable(context, et.key.keytype);
 
@@ -1081,7 +1084,9 @@ tgs_parse_request(krb5_context context,
 		  const struct sockaddr *from_addr,
 		  time_t **csec,
 		  int **cusec,
-		  AuthorizationData **auth_data)
+		  AuthorizationData **auth_data,
+		  krb5_keyblock **replykey,
+		  int *rk_is_subkey)
 {
     krb5_ap_req ap_req;
     krb5_error_code ret;
@@ -1091,10 +1096,13 @@ tgs_parse_request(krb5_context context,
     krb5_flags verify_ap_req_flags;
     krb5_crypto crypto;
     Key *tkey;
+    krb5_keyblock *subkey = NULL;
+    unsigned usage;
 
     *auth_data = NULL;
     *csec  = NULL;
     *cusec = NULL;
+    *replykey = NULL;
 
     memset(&ap_req, 0, sizeof(ap_req));
     ret = krb5_decode_ap_req(context, &tgs_req->padata_value, &ap_req);
@@ -1223,37 +1231,42 @@ tgs_parse_request(krb5_context context,
 	goto out;
     }
 
-    if (b->enc_authorization_data) {
-	unsigned usage = KRB5_KU_TGS_REQ_AUTH_DAT_SUBKEY;
-	krb5_keyblock *subkey;
-	krb5_data ad;
+    usage = KRB5_KU_TGS_REQ_AUTH_DAT_SUBKEY;
+    *rk_is_subkey = 1;
 
-	ret = krb5_auth_con_getremotesubkey(context, ac, &subkey);
-	if(ret){
+    ret = krb5_auth_con_getremotesubkey(context, ac, &subkey);
+    if(ret){
+	krb5_auth_con_free(context, ac);
+	kdc_log(context, config, 0, "Failed to get remote subkey: %s",
+		krb5_get_err_text(context, ret));
+	goto out;
+    }
+    if(subkey == NULL){
+	usage = KRB5_KU_TGS_REQ_AUTH_DAT_SESSION;
+	*rk_is_subkey = 0;
+
+	ret = krb5_auth_con_getkey(context, ac, &subkey);
+	if(ret) {
 	    krb5_auth_con_free(context, ac);
-	    kdc_log(context, config, 0, "Failed to get remote subkey: %s",
+	    kdc_log(context, config, 0, "Failed to get session key: %s",
 		    krb5_get_err_text(context, ret));
 	    goto out;
 	}
-	if(subkey == NULL){
-	    usage = KRB5_KU_TGS_REQ_AUTH_DAT_SESSION;
-	    ret = krb5_auth_con_getkey(context, ac, &subkey);
-	    if(ret) {
-		krb5_auth_con_free(context, ac);
-		kdc_log(context, config, 0, "Failed to get session key: %s",
-			krb5_get_err_text(context, ret));
-		goto out;
-	    }
-	}
-	if(subkey == NULL){
-	    krb5_auth_con_free(context, ac);
-	    kdc_log(context, config, 0,
-		    "Failed to get key for enc-authorization-data");
-	    ret = KRB5KRB_AP_ERR_BAD_INTEGRITY; /* ? */
-	    goto out;
-	}
+    }
+    if(subkey == NULL){
+	krb5_auth_con_free(context, ac);
+	kdc_log(context, config, 0,
+		"Failed to get key for enc-authorization-data");
+	ret = KRB5KRB_AP_ERR_BAD_INTEGRITY; /* ? */
+	goto out;
+    }
+
+    *replykey = subkey;
+
+    if (b->enc_authorization_data) {
+	krb5_data ad;
+
 	ret = krb5_crypto_init(context, subkey, 0, &crypto);
-	krb5_free_keyblock(context, subkey);
 	if (ret) {
 	    krb5_auth_con_free(context, ac);
 	    kdc_log(context, config, 0, "krb5_crypto_init failed: %s",
@@ -1381,6 +1394,8 @@ tgs_build_reply(krb5_context context,
 		KDC_REQ_BODY *b,
 		hdb_entry_ex *krbtgt,
 		krb5_enctype krbtgt_etype,
+		const krb5_keyblock *replykey,
+		int rk_is_subkey,
 		krb5_ticket *ticket,
 		krb5_data *reply,
 		const char *from,
@@ -1954,6 +1969,8 @@ server_lookup:
 			 b,
 			 client_principal,
 			 tgt,
+			 replykey,
+			 rk_is_subkey,
 			 ekey,
 			 &sessionkey,
 			 kvno,
@@ -2020,6 +2037,8 @@ _kdc_tgs_rep(krb5_context context,
     const char *e_text = NULL;
     krb5_enctype krbtgt_etype = ETYPE_NULL;
 
+    krb5_keyblock *replykey = NULL;
+    int rk_is_subkey = 0;
     time_t *csec = NULL;
     int *cusec = NULL;
 
@@ -2047,7 +2066,9 @@ _kdc_tgs_rep(krb5_context context,
 			    &e_text,
 			    from, from_addr,
 			    &csec, &cusec,
-			    &auth_data);
+			    &auth_data,
+			    &replykey,
+			    &rk_is_subkey);
     if (ret) {
 	kdc_log(context, config, 0,
 		"Failed parsing TGS-REQ from %s", from);
@@ -2060,6 +2081,8 @@ _kdc_tgs_rep(krb5_context context,
 			  &req->req_body,
 			  krbtgt,
 			  krbtgt_etype,
+			  replykey,
+			  rk_is_subkey,
 			  ticket,
 			  data,
 			  from,
@@ -2080,6 +2103,8 @@ _kdc_tgs_rep(krb5_context context,
     }
 
 out:
+    if (replykey)
+	krb5_free_keyblock(context, replykey);
     if(ret && data->data == NULL){
 	krb5_mk_error(context,
 		      ret,

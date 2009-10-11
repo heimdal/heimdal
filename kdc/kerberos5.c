@@ -261,6 +261,7 @@ _kdc_encode_reply(krb5_context context,
 		  krb5_enctype etype,
 		  int skvno, const EncryptionKey *skey,
 		  int ckvno, const EncryptionKey *reply_key,
+		  int rk_is_subkey,
 		  const char **e_text,
 		  krb5_data *reply)
 {
@@ -341,7 +342,7 @@ _kdc_encode_reply(krb5_context context,
     } else {
 	krb5_encrypt_EncryptedData(context,
 				   crypto,
-				   KRB5_KU_TGS_REP_ENC_PART_SESSION,
+				   rk_is_subkey ? KRB5_KU_TGS_REP_ENC_PART_SUB_KEY : KRB5_KU_TGS_REP_ENC_PART_SESSION,
 				   buf,
 				   len,
 				   ckvno,
@@ -1757,7 +1758,7 @@ _kdc_as_rep(krb5_context context,
     ret = _kdc_encode_reply(context, config,
 			    &rep, &et, &ek, setype, server->entry.kvno,
 			    &skey->key, client->entry.kvno,
-			    reply_key, &e_text, reply);
+			    reply_key, 0, &e_text, reply);
     free_EncTicketPart(&et);
     free_EncKDCRepPart(&ek);
     if (ret)

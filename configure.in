@@ -78,8 +78,6 @@ AC_ARG_WITH(cross-tools,
 	with_cross_tools="${with_cross_tools}/"
 	])
 
-echo "with_cross_tools: ${with_cross_tools}"
-
 if test "${cross_compiling}" != yes ; then
 
    ASN1_COMPILE="\$(top_builddir)/lib/asn1/asn1_compile\$(EXEEXT)"

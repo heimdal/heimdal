@@ -574,10 +574,8 @@ out:
     free_METHOD_DATA(&padata);
     krb5_data_free(&resp);
     krb5_data_free(&enc);
-    if(subkey){
-	krb5_free_keyblock_contents(context, subkey);
-	free(subkey);
-    }
+    if(subkey)
+	krb5_free_keyblock(context, subkey);
     return ret;
 
 }

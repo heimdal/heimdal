@@ -48,7 +48,7 @@ add_tl_data(kadm5_principal_ent_t ent, int16_t type,
     tl->tl_data_type = type;
     tl->tl_data_length = size;
     tl->tl_data_contents = malloc(size);
-    if (tl->tl_data_contents == NULL) {
+    if (tl->tl_data_contents == NULL && size != 0) {
 	free(tl);
 	return _kadm5_error_code(ENOMEM);
     }
@@ -176,7 +176,7 @@ kadm5_s_get_principal(void *server_handle,
 	krb5_data *sp;
 	krb5_get_pw_salt(context->context, ent.entry.principal, &salt);
 	out->key_data = malloc(ent.entry.keys.len * sizeof(*out->key_data));
-	if (out->key_data == NULL) {
+	if (out->key_data == NULL && ent.entry.keys.len != 0) {
 	    ret = ENOMEM;
 	    goto out;
 	}
@@ -193,7 +193,7 @@ kadm5_s_get_principal(void *server_handle,
 	    /* setup key */
 	    kd->key_data_length[0] = key->key.keyvalue.length;
 	    kd->key_data_contents[0] = malloc(kd->key_data_length[0]);
-	    if(kd->key_data_contents[0] == NULL){
+	    if(kd->key_data_contents[0] == NULL && kd->key_data_length[0] != 0){
 		ret = ENOMEM;
 		break;
 	    }

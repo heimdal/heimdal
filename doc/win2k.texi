@@ -122,34 +122,36 @@ netdom trust NT.REALM.EXAMPLE.COM /Domain:EXAMPLE.COM /add /realm /passwordt:Tru
 @end example
 
 You also need to add the inter-realm keys to the Heimdal KDC. But take
-cares to the encodings and salting used for those keys.  There should be
-no encoding stronger than the one configured on Windows side for this
+care to the encryption types and salting used for those keys. There should be
+no encryption type stronger than the one configured on Windows side for this
 relationship, itself limited to the ones supported by this specific version of
 Windows, nor any Kerberos 4 salted hashes, as Windows does not seem to
-understand them. Otherwise, the relationship will not works.
+understand them. Otherwise, the trust will not works.
 
 Here are the version-specific needed information:
-- Windows 2000: maximum encoding is DES
-- Windows 2003: maximum encoding is DES
-- Windows 2003RC2: maximum encoding is RC4, relationship defaults to DES
-- Windows 2008: maximum encoding is AES, relationship defaults to RC4
+@enumerate
+@item Windows 2000: maximum encryption type is DES
+@item Windows 2003: maximum encryption type is DES
+@item Windows 2003RC2: maximum encryption type is RC4, relationship defaults to DES
+@item Windows 2008: maximum encryption type is AES, relationship defaults to RC4
+@end enumerate
 
-For Windows 2003RC2, to change the relationship encoding, you have to use the
+For Windows 2003RC2, to change the trust encryption type, you have to use the
 @command{ktpass}, from the Windows 2003 Resource kit *service pack2*, available
 from Microsoft web site.
 
 @example
-C:> ktpass /MITRealmName DOMAINE.UNIX /TrustEncryp RC4 
+C:> ktpass /MITRealmName UNIX.EXAMPLE.COM /TrustEncryp RC4 
 @end example
 
 For Windows 2008, the same operation can be done with the @command{ksetup}, installed by default.
 
 @example
-C:> ksetup /SetEncTypeAttre DOMAINE.UNIX AES256-SHA1 
+C:> ksetup /SetEncTypeAttre EXAMPLE.COM AES256-SHA1 
 @end example
 
 Once the relationship is correctly configured, you can add the required
-inter-realm keys, using heimdal default encodings:
+inter-realm keys, using heimdal default encryption types:
 
 @example
 kadmin add krbtgt/NT.REALM.EXAMPLE.COM@@EXAMPLE.COM

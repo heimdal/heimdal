@@ -161,7 +161,7 @@ _gss_ntlm_accept_sec_context
 	}
 
 	output_token->value = malloc(out.length);
-	if (output_token->value == NULL) {
+	if (output_token->value == NULL && out.length != 0) {
 	    OM_uint32 junk;
 	    _gss_ntlm_delete_sec_context(&junk, context_handle, NULL);
 	    *minor_status = ENOMEM;

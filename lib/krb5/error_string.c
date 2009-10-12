@@ -104,6 +104,68 @@ krb5_vset_error_message (krb5_context context, krb5_error_code ret,
     HEIMDAL_MUTEX_unlock(context->mutex);
 }
 
+/**
+ * Prepend the context full error string for a specific error code.
+ * The error that is stored should be internationalized.
+ *
+ * @param context Kerberos 5 context
+ * @param ret The error code
+ * @param fmt Error string for the error code
+ * @param ... printf(3) style parameters.
+ *
+ * @ingroup krb5_error
+ */
+
+void KRB5_LIB_FUNCTION
+krb5_prepend_error_message(krb5_context context, krb5_error_code ret,
+			   const char *fmt, ...)
+    __attribute__ ((format (printf, 3, 4)))
+{
+    va_list ap;
+
+    va_start(ap, fmt);
+    krb5_vset_error_message (context, ret, fmt, ap);
+    va_end(ap);
+}
+
+/**
+ * Prepend the contexts's full error string for a specific error code.
+ *
+ * @param context Kerberos 5 context
+ * @param ret The error code
+ * @param fmt Error string for the error code
+ * @param args printf(3) style parameters.
+ *
+ * @ingroup krb5_error
+ */
+
+void KRB5_LIB_FUNCTION
+krb5_vprepend_error_message (krb5_context context, krb5_error_code ret,
+			     const char *fmt, va_list args)
+    __attribute__ ((format (printf, 3, 0)))
+{
+    char *str, *str2;
+    HEIMDAL_MUTEX_lock(context->mutex);
+    if (context->error_code != ret) {
+	HEIMDAL_MUTEX_unlock(context->mutex);
+	return;
+    }
+    vasprintf(&str, fmt, args);
+    if (context->error_string) {
+	int e;
+
+	e = asprintf(&str2, "%s: %s", str, context->error_string);
+	free(context->error_string);
+	if (e < 0)
+	    context->error_string = NULL;
+	else
+	    context->error_string = str2;
+	free(str);
+    } else
+	context->error_string = str;
+    HEIMDAL_MUTEX_unlock(context->mutex);
+}
+
 
 /**
  * Return the error message in context. On error or no error string,

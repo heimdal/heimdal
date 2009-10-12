@@ -69,7 +69,7 @@ This manual for version @value{VERSION} of Heimdal.
 * Applications::                
 * Things in search for a better place::  
 * Kerberos 4 issues::           
-* Windows 2000 compatability::  
+* Windows compatibility::  
 * Programming with Kerberos::   
 * Migration::                   
 * Acknowledgments::             
@@ -114,15 +114,15 @@ Kerberos 4 issues
 * Converting a version 4 database::  
 * kaserver::                    
 
-Windows 2000 compatability
+Windows compatibility
 
-* Configuring Windows 2000 to use a Heimdal KDC::  
-* Inter-Realm keys (trust) between Windows 2000 and a Heimdal KDC::  
+* Configuring Windows to use a Heimdal KDC::  
+* Inter-Realm keys (trust) between Windows and a Heimdal KDC::  
 * Create account mappings::     
 * Encryption types::            
 * Authorisation data::          
 * Quirks of Windows 2000 KDC::  
-* Useful links when reading about the Windows 2000::  
+* Useful links when reading about the Windows::  
 
 Programming with Kerberos
 

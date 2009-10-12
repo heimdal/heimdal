@@ -1,5 +1,6 @@
 @c $Id$
 
+
 @node Windows compatibility, Programming with Kerberos, Kerberos 4 issues, Top
 @comment  node-name,  next,  previous,  up
 @chapter Windows compatibility
@@ -22,10 +23,10 @@ somewhat useful.
 * Encryption types::            
 * Authorisation data::          
 * Quirks of Windows 2000 KDC::  
-* Useful links when reading about the Windows 2000::  
+* Useful links when reading about the Windows::  
 @end menu
 
-@node Configuring Windows to use a Heimdal KDC, Inter-Realm keys (trust) between Windows and a Heimdal KDC, Windows compatability, Windows compatability
+@node Configuring Windows to use a Heimdal KDC, Inter-Realm keys (trust) between Windows and a Heimdal KDC, Windows compatibility, Windows compatibility
 @comment node-name, next, precious, up
 @section Configuring Windows to use a Heimdal KDC
 
@@ -82,7 +83,7 @@ The Windows machine will now map any user to the corresponding principal,
 for example @samp{nisse} to the principal @samp{nisse@@MY.REALM}.
 (This is most likely what you want.)
 
-@node Inter-Realm keys (trust) between Windows and a Heimdal KDC, Create account mappings, Configuring Windows to use a Heimdal KDC, Windows compatability
+@node Inter-Realm keys (trust) between Windows and a Heimdal KDC, Create account mappings, Configuring Windows to use a Heimdal KDC, Windows compatibility
 @comment node-name, next, precious, up
 @section Inter-Realm keys (trust) between Windows and a Heimdal KDC
 
@@ -173,7 +174,7 @@ Do not forget to reboot before trying the new realm-trust (after
 running @command{ksetup}). It looks like it might work, but packets are
 never sent to the non-Windows KDC.
 
-@node Create account mappings, Encryption types, Inter-Realm keys (trust) between Windows and a Heimdal KDC, Windows compatability
+@node Create account mappings, Encryption types, Inter-Realm keys (trust) between Windows and a Heimdal KDC, Windows compatibility
 @comment node-name, next, precious, up
 @section Create account mappings
 
@@ -190,7 +191,7 @@ This adds @samp{authorizationNames} entry to the users LDAP entry to
 the Active Directory LDAP catalog. When you create users by script you
 can add this entry instead.
 
-@node Encryption types, Authorisation data, Create account mappings, Windows 2000 compatability
+@node Encryption types, Authorisation data, Create account mappings, Windows compatibility
 @comment  node-name,  next,  previous,  up
 @section Encryption types
 
@@ -202,7 +203,7 @@ MD4 and DES keys.  Users that are converted from a NT4 database, will
 only have MD4 passwords and will need a password change to get a DES
 key.
 
-@node Authorisation data, Quirks of Windows 2000 KDC, Encryption types, Windows 2000 compatability
+@node Authorisation data, Quirks of Windows 2000 KDC, Encryption types, Windows compatibility
 @comment  node-name,  next,  previous,  up
 @section Authorisation data
 
@@ -230,7 +231,7 @@ the file.
 analysing the data.
 @end enumerate
 
-@node Quirks of Windows 2000 KDC, Useful links when reading about the Windows 2000, Authorisation data, Windows 2000 compatability
+@node Quirks of Windows 2000 KDC, Useful links when reading about the Windows, Authorisation data, Windows compatibility
 @comment  node-name,  next,  previous,  up
 @section Quirks of Windows 2000 KDC
 
@@ -262,9 +263,9 @@ You should also add the following entries to the @file{krb5.conf} file:
 These configuration options will make sure that no checksums of the
 unsupported types are generated.
 
-@node Useful links when reading about the Windows 2000,  , Quirks of Windows 2000 KDC, Windows compatability
+@node Useful links when reading about the Windows,  , Quirks of Windows 2000 KDC, Windows compatibility
 @comment  node-name,  next,  previous,  up
-@section Useful links when reading about the Windows 2000
+@section Useful links when reading about the Windows
 
 See also our paper presented at the 2001 Usenix Annual Technical
 Conference, available in the proceedings or at
@@ -279,7 +280,7 @@ short list of the interesting documents that we have managed to find.
 @uref{http://www.microsoft.com/technet/prodtechnol/windows2000serv/howto/kerbstep.mspx}.
 Kerberos GSS-API (in Windows-eze SSPI), Windows as a client in a
 non-Windows KDC realm, adding unix clients to a Windows 2000 KDC, and
-adding cross-realm trust (@pxref{Inter-Realm keys (trust) between Windows 2000
+adding cross-realm trust (@pxref{Inter-Realm keys (trust) between Windows
 and a Heimdal KDC}).
 
 @item Windows 2000 Kerberos Authentication:

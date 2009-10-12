@@ -260,7 +260,7 @@ ret_principal_ent(krb5_storage *sp,
 	krb5_ret_int32(sp, &tmp);
 	princ->n_key_data = tmp;
 	princ->key_data = malloc(princ->n_key_data * sizeof(*princ->key_data));
-	if (princ->key_data == NULL)
+	if (princ->key_data == NULL && princ->n_key_data != 0)
 	    return ENOMEM;
 	for(i = 0; i < princ->n_key_data; i++)
 	    kadm5_ret_key_data(sp, &princ->key_data[i]);

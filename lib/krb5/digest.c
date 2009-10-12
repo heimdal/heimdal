@@ -1084,7 +1084,7 @@ krb5_ntlm_req_set_lm(krb5_context context,
 		     void *hash, size_t len)
 {
     ntlm->request.lm.data = malloc(len);
-    if (ntlm->request.lm.data == NULL) {
+    if (ntlm->request.lm.data == NULL && len != 0) {
 	krb5_set_error_message(context, ENOMEM, N_("malloc: out of memory", ""));
 	return ENOMEM;
     }
@@ -1099,7 +1099,7 @@ krb5_ntlm_req_set_ntlm(krb5_context context,
 		       void *hash, size_t len)
 {
     ntlm->request.ntlm.data = malloc(len);
-    if (ntlm->request.ntlm.data == NULL) {
+    if (ntlm->request.ntlm.data == NULL && len != 0) {
 	krb5_set_error_message(context, ENOMEM, N_("malloc: out of memory", ""));
 	return ENOMEM;
     }
@@ -1114,7 +1114,7 @@ krb5_ntlm_req_set_opaque(krb5_context context,
 			 krb5_data *opaque)
 {
     ntlm->request.opaque.data = malloc(opaque->length);
-    if (ntlm->request.opaque.data == NULL) {
+    if (ntlm->request.opaque.data == NULL && opaque->length != 0) {
 	krb5_set_error_message(context, ENOMEM, N_("malloc: out of memory", ""));
 	return ENOMEM;
     }
@@ -1134,7 +1134,7 @@ krb5_ntlm_req_set_session(krb5_context context,
 	return ENOMEM;
     }
     ntlm->request.sessionkey->data = malloc(length);
-    if (ntlm->request.sessionkey->data == NULL) {
+    if (ntlm->request.sessionkey->data == NULL && length != 0) {
 	krb5_set_error_message(context, ENOMEM, N_("malloc: out of memory", ""));
 	return ENOMEM;
     }

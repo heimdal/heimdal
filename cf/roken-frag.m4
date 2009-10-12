@@ -354,6 +354,7 @@ AC_BROKEN([					\
 	strcasecmp				\
 	strdup					\
 	strerror				\
+	strerror_r				\
 	strftime				\
 	strlcat					\
 	strlcpy					\

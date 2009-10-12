@@ -822,31 +822,6 @@ krb5_get_default_in_tkt_etypes(krb5_context context,
 }
 
 /**
- * Return the error string for the error code. The caller must not
- * free the string.
- *
- * @param context Kerberos 5 context.
- * @param code Kerberos error code.
- *
- * @return the error message matching code
- *
- * @ingroup krb5
- */
-
-const char* KRB5_LIB_FUNCTION
-krb5_get_err_text(krb5_context context, krb5_error_code code)
-{
-    const char *p = NULL;
-    if(context != NULL)
-	p = com_right(context->et_list, code);
-    if(p == NULL)
-	p = strerror(code);
-    if (p == NULL)
-	p = "Unknown error";
-    return p;
-}
-
-/**
  * Init the built-in ets in the Kerberos library.
  *
  * @param context kerberos context to add the ets too

@@ -744,7 +744,7 @@ generate_type_decode (const Symbol *s)
 	if (preserve)
 	    fprintf (codefile,
 		     "data->_save.data = calloc(1, ret);\n"
-		     "if (data->_save.data == NULL) { \n"
+		     "if (data->_save.data == NULL && ret != 0) { \n"
 		     "e = ENOMEM; goto fail; \n"
 		     "}\n"
 		     "data->_save.length = ret;\n"

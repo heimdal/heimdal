@@ -84,7 +84,7 @@ del_enctype(void *opt, int argc, char **argv)
     }
 
     new_key_data   = malloc(princ.n_key_data * sizeof(*new_key_data));
-    if (new_key_data == NULL) {
+    if (new_key_data == NULL && princ.n_key_data != 0) {
 	krb5_warnx (context, "out of memory");
 	goto out;
     }

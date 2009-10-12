@@ -285,7 +285,7 @@ kadmind_dispatch(void *kadm_handle, krb5_boolean initial,
 	}
 
 	key_data = malloc (n_key_data * sizeof(*key_data));
-	if (key_data == NULL) {
+	if (key_data == NULL && n_key_data != 0) {
 	    ret = ENOMEM;
 	    krb5_free_principal(context->context, princ);
 	    goto fail;

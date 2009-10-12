@@ -89,7 +89,7 @@ _kadm5_set_keys2(kadm5_server_context *context,
 
     len  = n_key_data;
     keys = malloc (len * sizeof(*keys));
-    if (keys == NULL)
+    if (keys == NULL && len != 0)
 	return ENOMEM;
 
     _kadm5_init_keys (keys, len);
@@ -148,7 +148,7 @@ _kadm5_set_keys3(kadm5_server_context *context,
 
     len  = n_keys;
     keys = malloc (len * sizeof(*keys));
-    if (keys == NULL)
+    if (keys == NULL && len != 0)
 	return ENOMEM;
 
     _kadm5_init_keys (keys, len);

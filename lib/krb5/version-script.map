@@ -324,6 +324,7 @@ HEIMDAL_KRB5_2.0 {
 		krb5_get_host_realm;
 		krb5_get_ignore_addresses;
 		krb5_get_in_cred;
+		krb5_cccol_last_change_time;
 		krb5_get_in_tkt;
 		krb5_get_in_tkt_with_keytab;
 		krb5_get_in_tkt_with_password;
@@ -376,8 +377,8 @@ HEIMDAL_KRB5_2.0 {
 		krb5_init_ets;
 		krb5_init_etype;
 		krb5_initlog;
-		krb5_is_thread_safe;
 		krb5_is_config_principal;
+		krb5_is_thread_safe;
 		krb5_kerberos_enctypes;
 		krb5_keyblock_get_enctype;
 		krb5_keyblock_init;
@@ -399,10 +400,10 @@ HEIMDAL_KRB5_2.0 {
 		krb5_kt_close;
 		krb5_kt_compare;
 		krb5_kt_copy_entry_contents;
-		krb5_kt_destroy;
 		krb5_kt_default;
 		krb5_kt_default_modify_name;
 		krb5_kt_default_name;
+		krb5_kt_destroy;
 		krb5_kt_end_seq_get;
 		krb5_kt_free_entry;
 		krb5_kt_get_entry;
@@ -467,6 +468,7 @@ HEIMDAL_KRB5_2.0 {
 		krb5_plugin_register;
 		krb5_prepend_config_files;
 		krb5_prepend_config_files_default;
+		krb5_prepend_error_message;
 		krb5_princ_realm;
 		krb5_princ_set_realm;
 		krb5_principal_compare;
@@ -550,15 +552,15 @@ HEIMDAL_KRB5_2.0 {
 		krb5_sendto_ctx_set_type;
 		krb5_sendto_kdc;
 		krb5_sendto_kdc_flags;
-		krb5_set_home_dir_access;
 		krb5_set_config_files;
 		krb5_set_default_in_tkt_etypes;
 		krb5_set_default_realm;
 		krb5_set_dns_canonicalize_hostname;
-		krb5_set_error_string;
 		krb5_set_error_message;
+		krb5_set_error_string;
 		krb5_set_extra_addresses;
 		krb5_set_fcache_version;
+		krb5_set_home_dir_access;
 		krb5_set_ignore_addresses;
 		krb5_set_kdc_sec_offset;
 		krb5_set_max_time_skew;
@@ -658,8 +660,9 @@ HEIMDAL_KRB5_2.0 {
 		krb5_verrx;
 		krb5_vlog;
 		krb5_vlog_msg;
-		krb5_vset_error_string;
+		krb5_vprepend_error_message;
 		krb5_vset_error_message;
+		krb5_vset_error_string;
 		krb5_vwarn;
 		krb5_vwarnx;
 		krb5_warn;
@@ -668,7 +671,6 @@ HEIMDAL_KRB5_2.0 {
 		krb5_write_priv_message;
 		krb5_write_safe_message;
 		krb5_xfree;
-		krb5_cccol_last_change_time;
 		krb5_cccol_cursor_new;
 		krb5_cccol_cursor_next;
 		krb5_cccol_cursor_free;

@@ -257,10 +257,10 @@ krb5_acl_match_file(krb5_context context,
     f = fopen(file, "r");
     if(f == NULL) {
 	int save_errno = errno;
-
+	strerror_r(save_errno, buf, sizeof(buf));
 	krb5_set_error_message(context, save_errno,
-			       N_("open(%s): %s", "file, errno"), file,
-			       strerror(save_errno));
+			       N_("open(%s): %s", "file, errno"),
+			       file, buf);
 	return save_errno;
     }
     rk_cloexec_file(f);

@@ -246,6 +246,8 @@ struct hdb_method {
     krb5_error_code (*create)(krb5_context, HDB **, const char *filename);
 };
 
+extern const int hdb_interface_version;
+
 #include <hdb-protos.h>
 
 #endif /* __HDB_H__ */

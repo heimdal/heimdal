@@ -8,7 +8,7 @@ case "$host" in
 *-*-solaris2.7)
 	sunos=57
 	;;
-*-*-solaris2.[[89]] | *-*-solaris2.1[0-9])
+*-*-solaris2.[[89]] | *-*-solaris2.1[[0-9]])
 	sunos=58
 	;;
 *-*-solaris2*)

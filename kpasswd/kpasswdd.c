@@ -747,13 +747,12 @@ int num_args = sizeof(args) / sizeof(args[0]);
 int
 main (int argc, char **argv)
 {
-    int optind;
     krb5_keytab keytab;
     krb5_error_code ret;
     char **files;
     int port, i;
 
-    optind = krb5_program_setup(&context, argc, argv, args, num_args, NULL);
+    krb5_program_setup(&context, argc, argv, args, num_args, NULL);
 
     if(help_flag)
 	krb5_std_usage(0, args, num_args);

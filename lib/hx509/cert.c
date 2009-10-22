@@ -283,6 +283,7 @@ hx509_cert_init_data(hx509_context context,
 	return ret;
     }
     if (size != len) {
+	free_Certificate(&t);
 	hx509_set_error_string(context, 0, HX509_EXTRA_DATA_AFTER_STRUCTURE,
 			       "Extra data after certificate");
 	return HX509_EXTRA_DATA_AFTER_STRUCTURE;

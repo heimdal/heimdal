@@ -11,9 +11,9 @@ man_MANS = \
 	klist.1 \
 	kdestroy.1 \
 	kswitch.1 \
-	kdigest.1 \
+	kdigest.8 \
 	kgetcred.1 \
-	kimpersonate.1
+	kimpersonate.8
 
 bin_PROGRAMS = kinit klist kdestroy kgetcred kswitch
 libexec_PROGRAMS = kdigest kimpersonate

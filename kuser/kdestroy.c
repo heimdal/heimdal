@@ -153,7 +153,7 @@ main (int argc, char **argv)
 	    
 	    ret = krb5_cc_destroy (context, ccache);
 	    if (ret) {
-		warnx ("krb5_cc_destroy: %s", krb5_get_err_text(context, ret));
+		krb5_warn(context, ret, "krb5_cc_destroy");
 		exit_val = 1;
 	    }
 	}

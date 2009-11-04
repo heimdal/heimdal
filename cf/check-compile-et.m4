@@ -67,6 +67,7 @@ elif test "${krb_cv_compile_et}" = "yes"; then
     const char *p;
     p = error_message(0);
     initialize_error_table_r(0,0,0,0);
+    com_right_r(0, 0, 0, 0);
   ]])],[krb_cv_com_err="yes"],[krb_cv_com_err="no"; CPPFLAGS="${save_CPPFLAGS}"])
   AC_MSG_RESULT(${krb_cv_com_err})
   LIBS="${krb_cv_save_LIBS}"

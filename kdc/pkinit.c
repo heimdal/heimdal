@@ -1580,9 +1580,10 @@ match_rfc_san(krb5_context context,
 				       list.val[i].length,
 				       &kn, &size);
 	if (ret) {
+	    const char *msg = krb5_get_error_message(context, ret);
 	    kdc_log(context, config, 0,
-		    "Decoding kerberos name in certificate failed: %s",
-		    krb5_get_err_text(context, ret));
+		    "Decoding kerberos name in certificate failed: %s", msg);
+	    krb5_free_error_message(context, msg);
 	    break;
 	}
 	if (size != list.val[i].length) {

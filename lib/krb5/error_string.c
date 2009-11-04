@@ -237,7 +237,7 @@ krb5_get_error_message(krb5_context context, krb5_error_code code)
 	char buf[128];
 	str = com_right_r(context->et_list, code, buf, sizeof(buf));
 	if (str)
-	    return stddup(str);
+	    return strdup(str);
     }
 
     if (asprintf(&str, "<unknown error: %d>", (int)code) == -1)

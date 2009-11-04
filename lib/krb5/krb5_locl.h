@@ -136,6 +136,8 @@ struct sockaddr_dl;
 #include <door.h>
 #endif
 
+#include <com_err.h>
+
 #include <roken.h>
 #include <parse_time.h>
 #include <base64.h>

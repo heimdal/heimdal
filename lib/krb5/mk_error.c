@@ -44,7 +44,7 @@ krb5_mk_error(krb5_context context,
 	      int *client_usec,
 	      krb5_data *reply)
 {
-    const char *e_text2;
+    const char *e_text2 = NULL;
     KRB_ERROR msg;
     krb5_timestamp sec;
     int32_t usec;

@@ -67,11 +67,7 @@ _warnerr(krb5_context context, int do_errtext,
 	if (err_str != NULL) {
 	    *arg = err_str;
 	} else {
-	    err_msg = krb5_get_err_text(context, code);
-	    if (err_msg)
-		*arg = err_msg;
-	    else
-		*arg= "<unknown error>";
+	    *arg= "<unknown error>";
 	}
     }
 	

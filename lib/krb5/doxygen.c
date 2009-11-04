@@ -201,7 +201,7 @@
  * this program are passed to krb5_err, that will print a
  * descriptive text of the error code and exit. Graphical programs can
  * convert error-code to a human readable error-string with the
- * krb5_get_err_text() function.
+ * krb5_get_error_message() function.
  *
  * Note that you should not use any Kerberos function before
  * krb5_init_context() have completed successfully. That is the
@@ -432,8 +432,7 @@
  * @subsection mit_krb5_error_code Error messages
  *
  * To get the error string, Heimdal uses
- * krb5_get_error_message() or, if NULL is returned,
- * krb5_get_err_text(). This is to return custom error messages
+ * krb5_get_error_message(). This is to return custom error messages
  * (like ``Can't find host/datan.example.com\@CODE.COM in
  * /etc/krb5.conf.'' instead of a ``Key table entry not found'' that
  * error_message returns.

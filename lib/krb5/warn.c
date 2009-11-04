@@ -59,8 +59,6 @@ _warnerr(krb5_context context, int do_errtext,
 	*arg++ = msg;
     }
     if(context && do_errtext){
-	const char *err_msg;
-
 	strlcat(xfmt, "%s", sizeof(xfmt));
 
 	err_str = krb5_get_error_message(context, code);

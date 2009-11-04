@@ -529,8 +529,7 @@ iterate (krb5_context context,
     case HPROP_KRB4_DUMP:
 	ret = v4_prop_dump(pd, database_name);
 	if(ret)
-	    krb5_warnx(context, "v4_prop_dump: %s",
-		       krb5_get_err_text(context, ret));
+	    krb5_warn(context, ret, "v4_prop_dump");
 	break;
     case HPROP_KASERVER:
 	ret = ka_dump(pd, database_name);
@@ -540,8 +539,7 @@ iterate (krb5_context context,
     case HPROP_MIT_DUMP:
 	ret = mit_prop_dump(pd, database_name);
 	if (ret)
-	    krb5_warnx(context, "mit_prop_dump: %s",
-		      krb5_get_err_text(context, ret));
+	    krb5_warn(context, ret, "mit_prop_dump");
 	break;
     case HPROP_HEIMDAL:
 	ret = hdb_foreach(context, db, HDB_F_DECRYPT, v5_prop, pd);

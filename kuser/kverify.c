@@ -114,7 +114,7 @@ main(int argc, char **argv)
 					NULL,
 					get_options);
     if (ret)
-	errx (1, "krb5_get_init_creds: %s", krb5_get_err_text(context, ret));
+	krb5_err(context, 1, ret,  "krb5_get_init_creds");
 
     ret = krb5_verify_init_creds (context,
 				  &cred,
@@ -123,8 +123,7 @@ main(int argc, char **argv)
 				  NULL,
 				  &verify_options);
     if (ret)
-	errx (1, "krb5_verify_init_creds: %s",
-	      krb5_get_err_text(context, ret));
+	krb5_err(context, 1, ret, "krb5_verify_init_creds");
     krb5_free_cred_contents (context, &cred);
     krb5_free_context (context);
     return 0;

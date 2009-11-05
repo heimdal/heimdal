@@ -995,8 +995,9 @@ tgs_check_authenticator(krb5_context context,
     /* XXX should not re-encode this */
     ASN1_MALLOC_ENCODE(KDC_REQ_BODY, buf, buf_size, b, &len, ret);
     if(ret){
-	kdc_log(context, config, 0, "Failed to encode KDC-REQ-BODY: %s",
-		krb5_get_err_text(context, ret));
+	const char *msg = krb5_get_error_message(context, ret);
+	kdc_log(context, config, 0, "Failed to encode KDC-REQ-BODY: %s", msg);
+	krb5_free_error_message(context, msg);
 	goto out;
     }
     if(buf_size != len) {
@@ -1008,9 +1009,10 @@ tgs_check_authenticator(krb5_context context,
     }
     ret = krb5_crypto_init(context, key, 0, &crypto);
     if (ret) {
+	const char *msg = krb5_get_error_message(context, ret);
 	free(buf);
-	kdc_log(context, config, 0, "krb5_crypto_init failed: %s",
-		krb5_get_err_text(context, ret));
+	kdc_log(context, config, 0, "krb5_crypto_init failed: %s", msg);
+	krb5_free_error_message(context, msg);
 	goto out;
     }
     ret = krb5_verify_checksum(context,
@@ -1022,9 +1024,10 @@ tgs_check_authenticator(krb5_context context,
     free(buf);
     krb5_crypto_destroy(context, crypto);
     if(ret){
+	const char *msg = krb5_get_error_message(context, ret);
 	kdc_log(context, config, 0,
-		"Failed to verify authenticator checksum: %s",
-		krb5_get_err_text(context, ret));
+		"Failed to verify authenticator checksum: %s", msg);
+	krb5_free_error_message(context, msg);
     }
 out:
     free_Authenticator(auth);
@@ -1107,8 +1110,9 @@ tgs_parse_request(krb5_context context,
     memset(&ap_req, 0, sizeof(ap_req));
     ret = krb5_decode_ap_req(context, &tgs_req->padata_value, &ap_req);
     if(ret){
-	kdc_log(context, config, 0, "Failed to decode AP-REQ: %s",
-		krb5_get_err_text(context, ret));
+	const char *msg = krb5_get_error_message(context, ret);
+	kdc_log(context, config, 0, "Failed to decode AP-REQ: %s", msg);
+	krb5_free_error_message(context, msg);
 	goto out;
     }
 
@@ -1127,14 +1131,15 @@ tgs_parse_request(krb5_context context,
     ret = _kdc_db_fetch(context, config, princ, HDB_F_GET_KRBTGT, NULL, krbtgt);
 
     if(ret) {
+	const char *msg = krb5_get_error_message(context, ret);
 	char *p;
 	ret = krb5_unparse_name(context, princ, &p);
 	if (ret != 0)
 	    p = "<unparse_name failed>";
 	krb5_free_principal(context, princ);
 	kdc_log(context, config, 0,
-		"Ticket-granting ticket not found in database: %s: %s",
-		p, krb5_get_err_text(context, ret));
+		"Ticket-granting ticket not found in database: %s: %s", msg);
+	krb5_free_error_message(context, msg);
 	if (ret == 0)
 	    free(p);
 	ret = KRB5KRB_AP_ERR_NOT_US;
@@ -1196,8 +1201,9 @@ tgs_parse_request(krb5_context context,
 			
     krb5_free_principal(context, princ);
     if(ret) {
-	kdc_log(context, config, 0, "Failed to verify AP-REQ: %s",
-		krb5_get_err_text(context, ret));
+	const char *msg = krb5_get_error_message(context, ret);
+	kdc_log(context, config, 0, "Failed to verify AP-REQ: %s", msg);
+	krb5_free_error_message(context, msg);
 	goto out;
     }
 
@@ -1236,9 +1242,10 @@ tgs_parse_request(krb5_context context,
 
     ret = krb5_auth_con_getremotesubkey(context, ac, &subkey);
     if(ret){
+	const char *msg = krb5_get_error_message(context, ret);
 	krb5_auth_con_free(context, ac);
-	kdc_log(context, config, 0, "Failed to get remote subkey: %s",
-		krb5_get_err_text(context, ret));
+	kdc_log(context, config, 0, "Failed to get remote subkey: %s", msg);
+	krb5_free_error_message(context, msg);
 	goto out;
     }
     if(subkey == NULL){
@@ -1247,9 +1254,10 @@ tgs_parse_request(krb5_context context,
 
 	ret = krb5_auth_con_getkey(context, ac, &subkey);
 	if(ret) {
+	    const char *msg = krb5_get_error_message(context, ret);
 	    krb5_auth_con_free(context, ac);
-	    kdc_log(context, config, 0, "Failed to get session key: %s",
-		    krb5_get_err_text(context, ret));
+	    kdc_log(context, config, 0, "Failed to get session key: %s", msg);
+	    krb5_free_error_message(context, msg);
 	    goto out;
 	}
     }
@@ -1268,9 +1276,10 @@ tgs_parse_request(krb5_context context,
 
 	ret = krb5_crypto_init(context, subkey, 0, &crypto);
 	if (ret) {
+	    const char *msg = krb5_get_error_message(context, ret);
 	    krb5_auth_con_free(context, ac);
-	    kdc_log(context, config, 0, "krb5_crypto_init failed: %s",
-		    krb5_get_err_text(context, ret));
+	    kdc_log(context, config, 0, "krb5_crypto_init failed: %s", msg);
+	    krb5_free_error_message(context, msg);
 	    goto out;
 	}
 	ret = krb5_decrypt_EncryptedData (context,
@@ -1514,7 +1523,7 @@ server_lookup:
 			NULL, &server);
 
     if(ret){
-	const char *new_rlm;
+	const char *new_rlm, *msg;
 	Realm req_rlm;
 	krb5_realm *realms;
 
@@ -1562,9 +1571,10 @@ server_lookup:
 	    }
 	    krb5_free_host_realm(context, realms);
 	}
+	msg = krb5_get_error_message(context, ret);
 	kdc_log(context, config, 0,
-		"Server not found in database: %s: %s", spn,
-		krb5_get_err_text(context, ret));
+		"Server not found in database: %s: %s", spn, msg);
+	krb5_free_error_message(context, msg);
 	if (ret == HDB_ERR_NOENTRY)
 	    ret = KRB5KDC_ERR_S_PRINCIPAL_UNKNOWN;
 	goto out;
@@ -1573,7 +1583,7 @@ server_lookup:
     ret = _kdc_db_fetch(context, config, cp, HDB_F_GET_CLIENT | HDB_F_CANON,
 			&clientdb, &client);
     if(ret) {
-	const char *krbtgt_realm;
+	const char *krbtgt_realm, *msg;
 
 	/*
 	 * If the client belongs to the same realm as our krbtgt, it
@@ -1593,8 +1603,9 @@ server_lookup:
 	    goto out;
 	}
 	
-	kdc_log(context, config, 1, "Client not found in database: %s: %s",
-		cpn, krb5_get_err_text(context, ret));
+	msg = krb5_get_error_message(context, ret);
+	kdc_log(context, config, 1, "Client not found in database: %s", msg);
+	krb5_free_error_message(context, msg);
     }
 
     /*
@@ -1675,9 +1686,11 @@ server_lookup:
 		    client, server, ekey, &tkey->key,
 		    tgt, &rspac, &signedpath);
     if (ret) {
+	const char *msg = krb5_get_error_message(context, ret);
 	kdc_log(context, config, 0,
 		"Verify PAC failed for %s (%s) from %s with %s",
-		spn, cpn, from, krb5_get_err_text(context, ret));
+		spn, cpn, from, msg);
+	krb5_free_error_message(context, msg);
 	goto out;
     }
 
@@ -1690,9 +1703,11 @@ server_lookup:
 			       &spp,
 			       &signedpath);
     if (ret) {
+	const char *msg = krb5_get_error_message(context, ret);
 	kdc_log(context, config, 0,
 		"KRB5SignedPath check failed for %s (%s) from %s with %s",
-		spn, cpn, from, krb5_get_err_text(context, ret));
+		spn, cpn, from, msg);
+	krb5_free_error_message(context, msg);
 	goto out;
     }
 
@@ -1728,10 +1743,11 @@ server_lookup:
 
 	    ret = krb5_crypto_init(context, &tgt->key, 0, &crypto);
 	    if (ret) {
+		const char *msg = krb5_get_error_message(context, ret);
 		free_PA_S4U2Self(&self);
 		krb5_data_free(&datack);
-		kdc_log(context, config, 0, "krb5_crypto_init failed: %s",
-			krb5_get_err_text(context, ret));
+		kdc_log(context, config, 0, "krb5_crypto_init failed: %s", msg);
+		krb5_free_error_message(context, msg);
 		goto out;
 	    }
 
@@ -1744,10 +1760,11 @@ server_lookup:
 	    krb5_data_free(&datack);
 	    krb5_crypto_destroy(context, crypto);
 	    if (ret) {
+		const char *msg = krb5_get_error_message(context, ret);
 		free_PA_S4U2Self(&self);
 		kdc_log(context, config, 0,
-			"krb5_verify_checksum failed for S4U2Self: %s",
-			krb5_get_err_text(context, ret));
+			"krb5_verify_checksum failed for S4U2Self: %s", msg);
+		krb5_free_error_message(context, msg);
 		goto out;
 	    }
 
@@ -1885,11 +1902,13 @@ server_lookup:
 	if (ret == 0 && !ad_signedpath)
 	    ret = KRB5KDC_ERR_BADOPTION;
 	if (ret) {
+	    const char *msg = krb5_get_error_message(context, ret);
 	    kdc_log(context, config, 0,
 		    "KRB5SignedPath check from service %s failed "
 		    "for delegation to %s for client %s "
 		    "from %s failed with %s",
-		    spn, str, cpn, from, krb5_get_err_text(context, ret));
+		    spn, str, cpn, from, msg);
+	    krb5_free_error_message(context, msg);
 	    free(str);
 	    goto out;
 	}

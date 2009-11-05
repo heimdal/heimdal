@@ -450,11 +450,10 @@ doit(const char *filename, int mergep)
 	memset(&ent, 0, sizeof(ent));
 	ret = krb5_parse_name(context, e.principal, &ent.entry.principal);
 	if(ret) {
+	    const char *msg = krb5_get_error_message(context, ret);
 	    fprintf(stderr, "%s:%d:%s (%s)\n",
-		    filename,
-		    line,
-		    krb5_get_err_text(context, ret),
-		    e.principal);
+		    filename, line, msg, e.principal);
+	    krb5_free_error_message(context, msg);
 	    continue;
 	}
 	

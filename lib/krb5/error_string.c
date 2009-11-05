@@ -263,3 +263,31 @@ krb5_free_error_message(krb5_context context, const char *msg)
 {
     free(rk_UNCONST(msg));
 }
+
+
+/**
+ * Return the error string for the error code. The caller must not
+ * free the string.
+ *
+ * This function is deprecated since its not threadsafe.
+ *
+ * @param context Kerberos 5 context.
+ * @param code Kerberos error code.
+ *
+ * @return the error message matching code
+ *
+ * @ingroup krb5
+ */
+
+const char* KRB5_LIB_FUNCTION
+krb5_get_err_text(krb5_context context, krb5_error_code code) KRB5_DEPRECATED
+{
+    const char *p = NULL;
+    if(context != NULL)
+	p = com_right(context->et_list, code);
+    if(p == NULL)
+	p = strerror(code);
+    if (p == NULL)
+	p = "Unknown error";
+    return p;
+}

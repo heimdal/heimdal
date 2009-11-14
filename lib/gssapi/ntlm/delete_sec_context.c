@@ -33,8 +33,6 @@
 
 #include "ntlm.h"
 
-RCSID("$Id$");
-
 OM_uint32 _gss_ntlm_delete_sec_context
            (OM_uint32 * minor_status,
             gss_ctx_id_t * context_handle,

@@ -33,8 +33,6 @@
 
 #include "ntlm.h"
 
-RCSID("$Id$");
-
 static gssapi_mech_interface_desc ntlm_mech = {
     GMI_VERSION,
     "ntlm",

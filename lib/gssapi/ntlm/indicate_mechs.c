@@ -33,8 +33,6 @@
 
 #include "ntlm.h"
 
-RCSID("$Id$");
-
 OM_uint32 _gss_ntlm_indicate_mechs
 (OM_uint32 * minor_status,
  gss_OID_set * mech_set

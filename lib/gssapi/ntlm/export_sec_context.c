@@ -33,8 +33,6 @@
 
 #include "ntlm.h"
 
-RCSID("$Id$");
-
 OM_uint32
 _gss_ntlm_export_sec_context (
     OM_uint32 * minor_status,

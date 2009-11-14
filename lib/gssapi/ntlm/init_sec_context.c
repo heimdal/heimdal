@@ -33,8 +33,6 @@
 
 #include "ntlm.h"
 
-RCSID("$Id$");
-
 static int
 from_file(const char *fn, const char *target_domain,
 	  char **username, struct ntlm_buf *key)

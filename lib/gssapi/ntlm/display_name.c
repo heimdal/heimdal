@@ -33,8 +33,6 @@
 
 #include "ntlm.h"
 
-RCSID("$Id$");
-
 OM_uint32 _gss_ntlm_display_name
            (OM_uint32 * minor_status,
             const gss_name_t input_name,

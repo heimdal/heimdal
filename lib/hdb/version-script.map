@@ -73,29 +73,29 @@ HEIMDAL_HDB_1.0 {
 		hdb_kt_ops;
 
 		# some random bits needed for libkadm
+		HDBFlags2int;
+		asn1_HDBFlags_units;
 		copy_Event;
 		copy_HDB_extensions;
 		copy_Key;
 		copy_Salt;
+		decode_HDB_Ext_Aliases;
+		decode_HDB_Ext_PKINIT_acl;
 		decode_HDB_extension;
 		encode_HDB_Ext_Aliases;
+		encode_HDB_Ext_PKINIT_acl;
+		encode_HDB_extension;
 		free_Event;
+		free_HDB_Ext_Aliases;
+		free_HDB_Ext_PKINIT_acl;
 		free_HDB_extension;
 		free_HDB_extensions;
 		free_Key;
 		free_hdb_entry;
-		asn1_HDBFlags_units;
-		HDBFlags2int;
 		int2HDBFlags;
 		length_HDB_Ext_Aliases;
-		decode_HDB_Ext_PKINIT_acl;
-		free_HDB_Ext_PKINIT_acl;
-		decode_HDB_Ext_Aliases;
-		free_HDB_Ext_Aliases;
-		length_HDB_extension;
-		encode_HDB_extension;
 		length_HDB_Ext_PKINIT_acl;
-		encode_HDB_Ext_PKINIT_acl;
+		length_HDB_extension;
 
 	local:
 		*;

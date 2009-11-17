@@ -82,6 +82,7 @@ HEIMDAL_HDB_1.0 {
 		decode_HDB_Ext_Aliases;
 		decode_HDB_Ext_PKINIT_acl;
 		decode_HDB_extension;
+		decode_Key;
 		encode_HDB_Ext_Aliases;
 		encode_HDB_Ext_PKINIT_acl;
 		encode_HDB_extension;

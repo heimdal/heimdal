@@ -253,8 +253,14 @@ $private_h_trailer = "";
 
 foreach(sort keys %funcs){
     if(/^(main)$/) { next }
+    if ($funcs{$_} =~ /\^/) {
+	$beginblock = "#ifdef __BLOCKS__\n";
+	$endblock = "#endif /* __BLOCKS__ */\n";
+    } else {
+	$beginblock = $endblock = "";
+    }
     if(!defined($exported{$_}) && /$private_func_re/) {
-	$private_h .= $funcs{$_} . "\n\n";
+	$private_h .= $beginblock . $funcs{$_} . "\n" . $endblock . "\n";
 	if($funcs{$_} =~ /__attribute__/) {
 	    $private_attribute_seen = 1;
 	}
@@ -267,7 +273,7 @@ foreach(sort keys %funcs){
 		$public_h .= "#ifndef HAVE_$fupper\n";
 	    }
 	}
-	$public_h .= $funcs{$_} . "\n";
+	$public_h .= $beginblock . $funcs{$_} . "\n" . $endblock;
 	if($funcs{$_} =~ /__attribute__/) {
 	    $public_attribute_seen = 1;
 	}

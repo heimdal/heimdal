@@ -552,6 +552,7 @@ AC_CONFIG_FILES(Makefile 		\
 	lib/gssapi/Makefile		\
 	lib/ntlm/Makefile		\
 	lib/hdb/Makefile		\
+	lib/ipc/Makefile		\
 	lib/kadm5/Makefile		\
 	lib/kafs/Makefile		\
 	lib/kdfs/Makefile		\

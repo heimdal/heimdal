@@ -3,6 +3,8 @@
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  *
+ * Portions Copyright (c) 2009 Apple Inc. All rights reserved.
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -82,10 +84,11 @@ test_integer (void)
 
     ret = generic_test (tests, ntests, sizeof(int),
 			(generic_encode)der_put_integer,
-			 (generic_length) der_length_integer,
-			 (generic_decode)der_get_integer,
-			 (generic_free)NULL,
-			 cmp_integer);
+			(generic_length) der_length_integer,
+			(generic_decode)der_get_integer,
+			(generic_free)NULL,
+			cmp_integer,
+			NULL);
 
     for (i = 0; i < ntests; ++i)
 	free (tests[i].name);
@@ -207,7 +210,8 @@ test_unsigned (void)
 			(generic_length)der_length_unsigned,
 			(generic_decode)der_get_unsigned,
 			(generic_free)NULL,
-			cmp_unsigned);
+			cmp_unsigned,
+			NULL);
     for (i = 0; i < ntests; ++i)
 	free (tests[i].name);
     return ret;
@@ -246,7 +250,8 @@ test_octet_string (void)
 			(generic_length)der_length_octet_string,
 			(generic_decode)der_get_octet_string,
 			(generic_free)der_free_octet_string,
-			cmp_octet_string);
+			cmp_octet_string,
+			NULL);
     free(tests[0].name);
     return ret;
 }
@@ -290,7 +295,8 @@ test_bmp_string (void)
 			(generic_length)der_length_bmp_string,
 			(generic_decode)der_get_bmp_string,
 			(generic_free)der_free_bmp_string,
-			cmp_bmp_string);
+			cmp_bmp_string,
+			NULL);
     free(tests[0].name);
     free(tests[1].name);
     return ret;
@@ -335,7 +341,8 @@ test_universal_string (void)
 			(generic_length)der_length_universal_string,
 			(generic_decode)der_get_universal_string,
 			(generic_free)der_free_universal_string,
-			cmp_universal_string);
+			cmp_universal_string,
+			NULL);
     free(tests[0].name);
     free(tests[1].name);
     return ret;
@@ -370,7 +377,8 @@ test_general_string (void)
 			(generic_length)der_length_general_string,
 			(generic_decode)der_get_general_string,
 			(generic_free)der_free_general_string,
-			cmp_general_string);
+			cmp_general_string,
+			NULL);
     free(tests[0].name);
     return ret;
 }
@@ -407,7 +415,8 @@ test_generalized_time (void)
 			(generic_length)der_length_generalized_time,
 			(generic_decode)der_get_generalized_time,
 			(generic_free)NULL,
-			cmp_generalized_time);
+			cmp_generalized_time,
+			NULL);
     for (i = 0; i < ntests; ++i)
 	free(tests[i].name);
     return ret;
@@ -454,7 +463,8 @@ test_oid (void)
 			(generic_length)der_length_oid,
 			(generic_decode)der_get_oid,
 			(generic_free)der_free_oid,
-			test_cmp_oid);
+			test_cmp_oid,
+			NULL);
     for (i = 0; i < ntests; ++i)
 	free(tests[i].name);
     return ret;
@@ -490,7 +500,8 @@ test_bit_string (void)
 			(generic_length)der_length_bit_string,
 			(generic_decode)der_get_bit_string,
 			(generic_free)der_free_bit_string,
-			test_cmp_bit_string);
+			test_cmp_bit_string,
+			NULL);
     for (i = 0; i < ntests; ++i)
 	free(tests[i].name);
     return ret;
@@ -541,7 +552,8 @@ test_heim_integer (void)
 			(generic_length)der_length_heim_integer,
 			(generic_decode)der_get_heim_integer,
 			(generic_free)der_free_heim_integer,
-			test_cmp_heim_integer);
+			test_cmp_heim_integer,
+			NULL);
     for (i = 0; i < ntests; ++i)
 	free (tests[i].name);
     if (ret)
@@ -590,7 +602,8 @@ test_boolean (void)
 			(generic_length)der_length_boolean,
 			(generic_decode)der_get_boolean,
 			(generic_free)NULL,
-			test_cmp_boolean);
+			test_cmp_boolean,
+			NULL);
     for (i = 0; i < ntests; ++i)
 	free (tests[i].name);
     if (ret)

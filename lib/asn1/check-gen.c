@@ -3,6 +3,8 @@
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  *
+ * Portions Copyright (c) 2009 Apple Inc. All rights reserved.
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -67,6 +69,8 @@ static char *nada_tgt_principal[] = { "krbtgt", "NADA.KTH.SE" };
 	do { if (strcmp((ac)->e, (bc)->e) != 0) return 1; } while(0)
 #define COMPARE_INTEGER(ac,bc,e) \
 	do { if ((ac)->e != (bc)->e) return 1; } while(0)
+#define COMPARE_OPT_INTEGER(ac,bc,e) \
+	do { if (*(ac)->e != *(bc)->e) return 1; } while(0)
 #define COMPARE_MEM(ac,bc,e,len) \
 	do { if (memcmp((ac)->e, (bc)->e,len) != 0) return 1; } while(0)
 
@@ -128,7 +132,8 @@ test_principal (void)
 			(generic_length)length_Principal,
 			(generic_decode)decode_Principal,
 			(generic_free)free_Principal,
-			cmp_principal);
+			cmp_principal,
+			NULL);
     for (i = 0; i < ntests; ++i)
 	free (tests[i].name);
 
@@ -194,7 +199,8 @@ test_authenticator (void)
 			(generic_length)length_Authenticator,
 			(generic_decode)decode_Authenticator,
 			(generic_free)free_Authenticator,
-			cmp_authenticator);
+			cmp_authenticator,
+			(generic_copy)copy_Authenticator);
     for (i = 0; i < ntests; ++i)
 	free(tests[i].name);
 
@@ -288,7 +294,8 @@ test_krb_error (void)
 			 (generic_length)length_KRB_ERROR,
 			 (generic_decode)decode_KRB_ERROR,
 			 (generic_free)free_KRB_ERROR,
-			 cmp_KRB_ERROR);
+			 cmp_KRB_ERROR,
+			 (generic_copy)copy_KRB_ERROR);
 }
 
 static int
@@ -372,7 +379,8 @@ test_Name (void)
 			 (generic_length)length_Name,
 			 (generic_decode)decode_Name,
 			 (generic_free)free_Name,
-			 cmp_Name);
+			 cmp_Name,
+			 (generic_copy)copy_Name);
 }
 
 static int
@@ -431,8 +439,225 @@ test_bit_string (void)
 			 (generic_length)length_KeyUsage,
 			 (generic_decode)decode_KeyUsage,
 			 (generic_free)free_KeyUsage,
-			 cmp_KeyUsage);
+			 cmp_KeyUsage,
+			 (generic_copy)copy_KeyUsage);
 }
+
+static int
+cmp_TicketFlags (void *a, void *b)
+{
+    TicketFlags *aa = a;
+    TicketFlags *ab = b;
+
+    return TicketFlags2int(*aa) != TicketFlags2int(*ab);
+}
+
+static int
+test_bit_string_rfc1510 (void)
+{
+    struct test_case tests[] = {
+	{ NULL, 7,
+	  "\x03\x05\x00\x80\x00\x00\x00",
+	  "TF bitstring 1"
+	},
+	{ NULL, 7,
+	  "\x03\x05\x00\x40\x20\x00\x00",
+	  "TF bitstring 2"
+	},
+	{ NULL, 7,
+	  "\x03\x05\x00\x00\x20\x00\x00",
+	  "TF bitstring 3"
+	},
+	{ NULL, 7,
+	  "\x03\x05\x00\x00\x00\x00\x00",
+	  "TF bitstring 4"
+	}
+    };
+
+    int ntests = sizeof(tests) / sizeof(*tests);
+    TicketFlags tf1, tf2, tf3, tf4;
+
+    memset(&tf1, 0, sizeof(tf1));
+    tf1.reserved = 1;
+    tests[0].val = &tf1;
+
+    memset(&tf2, 0, sizeof(tf2));
+    tf2.forwardable = 1;
+    tf2.pre_authent = 1;
+    tests[1].val = &tf2;
+
+    memset(&tf3, 0, sizeof(tf3));
+    tf3.pre_authent = 1;
+    tests[2].val = &tf3;
+
+    memset(&tf4, 0, sizeof(tf4));
+    tests[3].val = &tf4;
+
+
+    return generic_test (tests, ntests, sizeof(TicketFlags),
+			 (generic_encode)encode_TicketFlags,
+			 (generic_length)length_TicketFlags,
+			 (generic_decode)decode_TicketFlags,
+			 (generic_free)free_TicketFlags,
+			 cmp_TicketFlags,
+			 (generic_copy)copy_TicketFlags);
+}
+
+static int
+cmp_KerberosTime (void *a, void *b)
+{
+    KerberosTime *aa = a;
+    KerberosTime *ab = b;
+
+    return *aa != *ab;
+}
+
+static int
+test_time (void)
+{
+    struct test_case tests[] = {
+	{ NULL,  17,
+	  "\x18\x0f\x31\x39\x37\x30\x30\x31\x30\x31\x30\x31\x31\x38\x33\x31"
+	  "\x5a",
+	  "time 1" },
+	{ NULL,  17,
+	  "\x18\x0f\x32\x30\x30\x39\x30\x35\x32\x34\x30\x32\x30\x32\x34\x30"
+	  "\x5a"
+	  "time 2" }
+    };
+
+    int ntests = sizeof(tests) / sizeof(*tests);
+    KerberosTime times[] = {
+	4711,
+	1243130560
+    };
+
+    tests[0].val = &times[0];
+    tests[1].val = &times[1];
+
+    return generic_test (tests, ntests, sizeof(KerberosTime),
+			 (generic_encode)encode_KerberosTime,
+			 (generic_length)length_KerberosTime,
+			 (generic_decode)decode_KerberosTime,
+			 (generic_free)free_KerberosTime,
+			 cmp_KerberosTime,
+			 (generic_copy)copy_KerberosTime);
+}
+
+struct {
+    const char *cert;
+    size_t len;
+} certs[] = {
+    {
+	"\x30\x82\x02\x6c\x30\x82\x01\xd5\xa0\x03\x02\x01\x02\x02\x09\x00"
+	"\x99\x32\xde\x61\x0e\x40\x19\x8a\x30\x0d\x06\x09\x2a\x86\x48\x86"
+	"\xf7\x0d\x01\x01\x05\x05\x00\x30\x2a\x31\x1b\x30\x19\x06\x03\x55"
+	"\x04\x03\x0c\x12\x68\x78\x35\x30\x39\x20\x54\x65\x73\x74\x20\x52"
+	"\x6f\x6f\x74\x20\x43\x41\x31\x0b\x30\x09\x06\x03\x55\x04\x06\x13"
+	"\x02\x53\x45\x30\x1e\x17\x0d\x30\x39\x30\x34\x32\x36\x32\x30\x32"
+	"\x39\x34\x30\x5a\x17\x0d\x31\x39\x30\x34\x32\x34\x32\x30\x32\x39"
+	"\x34\x30\x5a\x30\x2a\x31\x1b\x30\x19\x06\x03\x55\x04\x03\x0c\x12"
+	"\x68\x78\x35\x30\x39\x20\x54\x65\x73\x74\x20\x52\x6f\x6f\x74\x20"
+	"\x43\x41\x31\x0b\x30\x09\x06\x03\x55\x04\x06\x13\x02\x53\x45\x30"
+	"\x81\x9f\x30\x0d\x06\x09\x2a\x86\x48\x86\xf7\x0d\x01\x01\x01\x05"
+	"\x00\x03\x81\x8d\x00\x30\x81\x89\x02\x81\x81\x00\xb9\xd3\x1b\x67"
+	"\x1c\xf7\x5e\x26\x81\x3b\x82\xff\x03\xa4\x43\xb5\xb2\x63\x0b\x89"
+	"\x58\x43\xfe\x3d\xe0\x38\x7d\x93\x74\xbb\xad\x21\xa4\x29\xd9\x34"
+	"\x79\xf3\x1c\x8c\x5a\xd6\xb0\xd7\x19\xea\xcc\xaf\xe0\xa8\x40\x02"
+	"\x1d\x91\xf1\xac\x36\xb0\xfb\x08\xbd\xcc\x9a\xe1\xb7\x6e\xee\x0a"
+	"\x69\xbf\x6d\x2b\xee\x20\x82\x61\x06\xf2\x18\xcc\x89\x11\x64\x7e"
+	"\xb2\xff\x47\xd1\x3b\x52\x73\xeb\x5a\xc0\x03\xa6\x4b\xc7\x40\x7e"
+	"\xbc\xe1\x0e\x65\x44\x3f\x40\x8b\x02\x82\x54\x04\xd9\xcc\x2c\x67"
+	"\x01\xb6\x16\x82\xd8\x33\x53\x17\xd7\xde\x8d\x5d\x02\x03\x01\x00"
+	"\x01\xa3\x81\x99\x30\x81\x96\x30\x1d\x06\x03\x55\x1d\x0e\x04\x16"
+	"\x04\x14\x6e\x48\x13\xdc\xbf\x8b\x95\x4c\x13\xf3\x1f\x97\x30\xdd"
+	"\x27\x96\x59\x9b\x0e\x68\x30\x5a\x06\x03\x55\x1d\x23\x04\x53\x30"
+	"\x51\x80\x14\x6e\x48\x13\xdc\xbf\x8b\x95\x4c\x13\xf3\x1f\x97\x30"
+	"\xdd\x27\x96\x59\x9b\x0e\x68\xa1\x2e\xa4\x2c\x30\x2a\x31\x1b\x30"
+	"\x19\x06\x03\x55\x04\x03\x0c\x12\x68\x78\x35\x30\x39\x20\x54\x65"
+	"\x73\x74\x20\x52\x6f\x6f\x74\x20\x43\x41\x31\x0b\x30\x09\x06\x03"
+	"\x55\x04\x06\x13\x02\x53\x45\x82\x09\x00\x99\x32\xde\x61\x0e\x40"
+	"\x19\x8a\x30\x0c\x06\x03\x55\x1d\x13\x04\x05\x30\x03\x01\x01\xff"
+	"\x30\x0b\x06\x03\x55\x1d\x0f\x04\x04\x03\x02\x01\xe6\x30\x0d\x06"
+	"\x09\x2a\x86\x48\x86\xf7\x0d\x01\x01\x05\x05\x00\x03\x81\x81\x00"
+	"\x52\x9b\xe4\x0e\xee\xc2\x5d\xb7\xf1\xba\x47\xe3\xfe\xaf\x3d\x51"
+	"\x10\xfd\xe8\x0d\x14\x58\x05\x36\xa7\xeb\xd8\x05\xe5\x27\x6f\x51"
+	"\xb8\xec\x90\xd9\x03\xe1\xbc\x9c\x93\x38\x21\x5c\xaf\x4e\x6c\x7b"
+	"\x6c\x65\xa9\x92\xcd\x94\xef\xa8\xae\x90\x12\x14\x78\x2d\xa3\x15"
+	"\xaa\x42\xf1\xd9\x44\x64\x2c\x3c\xc0\xbd\x3a\x48\xd8\x80\x45\x8b"
+	"\xd1\x79\x82\xe0\x0f\xdf\x08\x3c\x60\x21\x6f\x31\x47\x98\xae\x2f"
+	"\xcb\xb1\xa1\xb9\xc1\xa3\x71\x5e\x4a\xc2\x67\xdf\x66\x0a\x51\xb5"
+	"\xad\x60\x05\xdb\x02\xd4\x1a\xd2\xb9\x4e\x01\x08\x2b\xc3\x57\xaf",
+	624 },
+    {
+	"\x30\x82\x02\x54\x30\x82\x01\xbd\xa0\x03\x02\x01\x02\x02\x01\x08"
+	"\x30\x0d\x06\x09\x2a\x86\x48\x86\xf7\x0d\x01\x01\x05\x05\x00\x30"
+	"\x2a\x31\x1b\x30\x19\x06\x03\x55\x04\x03\x0c\x12\x68\x78\x35\x30"
+	"\x39\x20\x54\x65\x73\x74\x20\x52\x6f\x6f\x74\x20\x43\x41\x31\x0b"
+	"\x30\x09\x06\x03\x55\x04\x06\x13\x02\x53\x45\x30\x1e\x17\x0d\x30"
+	"\x39\x30\x34\x32\x36\x32\x30\x32\x39\x34\x30\x5a\x17\x0d\x31\x39"
+	"\x30\x34\x32\x34\x32\x30\x32\x39\x34\x30\x5a\x30\x1b\x31\x0b\x30"
+	"\x09\x06\x03\x55\x04\x06\x13\x02\x53\x45\x31\x0c\x30\x0a\x06\x03"
+	"\x55\x04\x03\x0c\x03\x6b\x64\x63\x30\x81\x9f\x30\x0d\x06\x09\x2a"
+	"\x86\x48\x86\xf7\x0d\x01\x01\x01\x05\x00\x03\x81\x8d\x00\x30\x81"
+	"\x89\x02\x81\x81\x00\xd2\x41\x7a\xf8\x4b\x55\xb2\xaf\x11\xf9\x43"
+	"\x9b\x43\x81\x09\x3b\x9a\x94\xcf\x00\xf4\x85\x75\x92\xd7\x2a\xa5"
+	"\x11\xf1\xa8\x50\x6e\xc6\x84\x74\x24\x17\xda\x84\xc8\x03\x37\xb2"
+	"\x20\xf3\xba\xb5\x59\x36\x21\x4d\xab\x70\xe2\xc3\x09\x93\x68\x14"
+	"\x12\x79\xc5\xbb\x9e\x1b\x4a\xf0\xc6\x24\x59\x25\xc3\x1c\xa8\x70"
+	"\x66\x5b\x3e\x41\x8e\xe3\x25\x71\x9a\x94\xa0\x5b\x46\x91\x6f\xdd"
+	"\x58\x14\xec\x89\xe5\x8c\x96\xc5\x38\x60\xe4\xab\xf2\x75\xee\x6e"
+	"\x62\xfc\xe1\xbd\x03\x47\xff\xc4\xbe\x0f\xca\x70\x73\xe3\x74\x58"
+	"\x3a\x2f\x04\x2d\x39\x02\x03\x01\x00\x01\xa3\x81\x98\x30\x81\x95"
+	"\x30\x09\x06\x03\x55\x1d\x13\x04\x02\x30\x00\x30\x0b\x06\x03\x55"
+	"\x1d\x0f\x04\x04\x03\x02\x05\xe0\x30\x12\x06\x03\x55\x1d\x25\x04"
+	"\x0b\x30\x09\x06\x07\x2b\x06\x01\x05\x02\x03\x05\x30\x1d\x06\x03"
+	"\x55\x1d\x0e\x04\x16\x04\x14\x3a\xd3\x73\xff\xab\xdb\x7d\x8d\xc6"
+	"\x3a\xa2\x26\x3e\xae\x78\x95\x80\xc9\xe6\x31\x30\x48\x06\x03\x55"
+	"\x1d\x11\x04\x41\x30\x3f\xa0\x3d\x06\x06\x2b\x06\x01\x05\x02\x02"
+	"\xa0\x33\x30\x31\xa0\x0d\x1b\x0b\x54\x45\x53\x54\x2e\x48\x35\x4c"
+	"\x2e\x53\x45\xa1\x20\x30\x1e\xa0\x03\x02\x01\x01\xa1\x17\x30\x15"
+	"\x1b\x06\x6b\x72\x62\x74\x67\x74\x1b\x0b\x54\x45\x53\x54\x2e\x48"
+	"\x35\x4c\x2e\x53\x45\x30\x0d\x06\x09\x2a\x86\x48\x86\xf7\x0d\x01"
+	"\x01\x05\x05\x00\x03\x81\x81\x00\x83\xf4\x14\xa7\x6e\x59\xff\x80"
+	"\x64\xe7\xfa\xcf\x13\x80\x86\xe1\xed\x02\x38\xad\x96\x72\x25\xe5"
+	"\x06\x7a\x9a\xbc\x24\x74\xa9\x75\x55\xb2\x49\x80\x69\x45\x95\x4a"
+	"\x4c\x76\xa9\xe3\x4e\x49\xd3\xc2\x69\x5a\x95\x03\xeb\xba\x72\x23"
+	"\x9c\xfd\x3d\x8b\xc6\x07\x82\x3b\xf4\xf3\xef\x6c\x2e\x9e\x0b\xac"
+	"\x9e\x6c\xbb\x37\x4a\xa1\x9e\x73\xd1\xdc\x97\x61\xba\xfc\xd3\x49"
+	"\xa6\xc2\x4c\x55\x2e\x06\x37\x76\xb5\xef\x57\xe7\x57\x58\x8a\x71"
+	"\x63\xf3\xeb\xe7\x55\x68\x0d\xf6\x46\x4c\xfb\xf9\x43\xbb\x0c\x92"
+	"\x4f\x4e\x22\x7b\x63\xe8\x4f\x9c",
+	600
+    }
+};
+
+static int
+test_cert(void)
+{
+    Certificate c, c2;
+    size_t size;
+    size_t i;
+    int ret;
+
+    for (i = 0; i < sizeof(certs)/sizeof(certs[0]); i++) {
+
+	ret = decode_Certificate((unsigned char *)certs[i].cert,
+				 certs[i].len, &c, &size);
+	if (ret)
+	    return ret;
+
+	ret = copy_Certificate(&c, &c2);
+	free_Certificate(&c);
+	if (ret)
+	    return ret;
+
+	free_Certificate(&c2);
+    }
+
+    return 0;
+}
+
 
 static int
 cmp_TESTLargeTag (void *a, void *b)
@@ -441,6 +666,7 @@ cmp_TESTLargeTag (void *a, void *b)
     TESTLargeTag *ab = b;
 
     COMPARE_INTEGER(aa,ab,foo);
+    COMPARE_INTEGER(aa,ab,bar);
     return 0;
 }
 
@@ -448,7 +674,7 @@ static int
 test_large_tag (void)
 {
     struct test_case tests[] = {
-	{ NULL,  8,  "\x30\x06\xbf\x7f\x03\x02\x01\x01", "large tag 1" }
+	{ NULL,  15,  "\x30\x0d\xbf\x7f\x03\x02\x01\x01\xbf\x81\x00\x03\x02\x01\x02", "large tag 1" }
     };
 
     int ntests = sizeof(tests) / sizeof(*tests);
@@ -456,6 +682,7 @@ test_large_tag (void)
 
     memset(&lt1, 0, sizeof(lt1));
     lt1.foo = 1;
+    lt1.bar = 2;
 
     tests[0].val = &lt1;
 
@@ -464,7 +691,8 @@ test_large_tag (void)
 			 (generic_length)length_TESTLargeTag,
 			 (generic_decode)decode_TESTLargeTag,
 			 (generic_free)free_TESTLargeTag,
-			 cmp_TESTLargeTag);
+			 cmp_TESTLargeTag,
+			 (generic_copy)copy_TESTLargeTag);
 }
 
 struct test_data {
@@ -490,9 +718,9 @@ check_tag_length(void)
 	{ 0, 5, 0, "\x02\xff\x7f\x02\x00"}
     };
     size_t sz;
-    krb5uint32 values[] = {0, 127, 128, 256, 512,
+    TESTuint32 values[] = {0, 127, 128, 256, 512,
 			 0, 127, 128, 256, 512 };
-    krb5uint32 u;
+    TESTuint32 u;
     int i, ret, failed = 0;
     void *buf;
 
@@ -501,7 +729,7 @@ check_tag_length(void)
 
 	buf = map_alloc(OVERRUN, td[i].data, td[i].len, &page);
 
-	ret = decode_krb5uint32(buf, td[i].len, &u, &sz);
+	ret = decode_TESTuint32(buf, td[i].len, &u, &sz);
 	if (ret) {
 	    if (td[i].ok) {
 		printf("failed with tag len test %d\n", i);
@@ -560,7 +788,8 @@ test_choice (void)
 			 (generic_length)length_TESTChoice1,
 			 (generic_decode)decode_TESTChoice1,
 			 (generic_free)free_TESTChoice1,
-			 cmp_TESTChoice);
+			 cmp_TESTChoice,
+			 (generic_copy)copy_TESTChoice1);
 
     memset(&c2_2, 0, sizeof(c2_2));
     c2_2.element = choice_TESTChoice2_asn1_ellipsis;
@@ -573,7 +802,8 @@ test_choice (void)
 			 (generic_length)length_TESTChoice2,
 			 (generic_decode)decode_TESTChoice2,
 			 (generic_free)free_TESTChoice2,
-			 cmp_TESTChoice);
+			 cmp_TESTChoice,
+			 (generic_copy)copy_TESTChoice2);
 
     return ret;
 }
@@ -623,7 +853,8 @@ test_implicit (void)
 			 (generic_length)length_TESTImplicit,
 			 (generic_decode)decode_TESTImplicit,
 			 (generic_free)free_TESTImplicit,
-			 cmp_TESTImplicit);
+			 cmp_TESTImplicit,
+			 (generic_copy)copy_TESTImplicit);
 
 #ifdef IMPLICIT_TAGGING_WORKS
     ret += generic_test (tests, ntests, sizeof(TESTImplicit2),
@@ -631,7 +862,8 @@ test_implicit (void)
 			 (generic_length)length_TESTImplicit2,
 			 (generic_decode)decode_TESTImplicit2,
 			 (generic_free)free_TESTImplicit2,
-			 cmp_TESTImplicit);
+			 cmp_TESTImplicit,
+			 NULL);
 
 #endif /* IMPLICIT_TAGGING_WORKS */
     return ret;
@@ -718,13 +950,95 @@ test_taglessalloc (void)
 			 (generic_length)length_TESTAlloc,
 			 (generic_decode)decode_TESTAlloc,
 			 (generic_free)free_TESTAlloc,
-			 cmp_TESTAlloc);
+			 cmp_TESTAlloc,
+			 (generic_copy)copy_TESTAlloc);
 
     free(c1.tagless);
 
     return ret;
 }
 
+static int
+cmp_TESTOptional (void *a, void *b)
+{
+    TESTOptional *aa = a;
+    TESTOptional *ab = b;
+
+    IF_OPT_COMPARE(aa,ab,zero) {
+	COMPARE_OPT_INTEGER(aa,ab,zero);
+    }
+    IF_OPT_COMPARE(aa,ab,one) {
+	COMPARE_OPT_INTEGER(aa,ab,one);
+    }
+    return 0;
+}
+
+/*
+UNIV CONS Sequence 5
+  CONTEXT CONS 0 3
+    UNIV PRIM Integer 1 00
+
+UNIV CONS Sequence 5
+  CONTEXT CONS 1 3
+    UNIV PRIM Integer 1 03
+
+UNIV CONS Sequence 10
+  CONTEXT CONS 0 3
+    UNIV PRIM Integer 1 00
+  CONTEXT CONS 1 3
+    UNIV PRIM Integer 1 01
+
+*/
+
+static int
+test_optional (void)
+{
+    struct test_case tests[] = {
+	{ NULL,  2,
+	  "\x30\x00",
+	  "optional 0" },
+	{ NULL,  7,
+	  "\x30\x05\xa0\x03\x02\x01\x00",
+	  "optional 1" },
+	{ NULL,  7,
+	  "\x30\x05\xa1\x03\x02\x01\x01",
+	  "optional 2" },
+	{ NULL,  12,
+	  "\x30\x0a\xa0\x03\x02\x01\x00\xa1\x03\x02\x01\x01",
+	  "optional 3" }
+    };
+
+    int ret = 0, ntests = sizeof(tests) / sizeof(*tests);
+    TESTOptional c0, c1, c2, c3;
+    int zero = 0;
+    int one = 1;
+
+    c0.zero = NULL;
+    c0.one = NULL;
+    tests[0].val = &c0;
+
+    c1.zero = &zero;
+    c1.one = NULL;
+    tests[1].val = &c1;
+
+    c2.zero = NULL;
+    c2.one = &one;
+    tests[2].val = &c2;
+
+    c3.zero = &zero;
+    c3.one = &one;
+    tests[3].val = &c3;
+
+    ret += generic_test (tests, ntests, sizeof(TESTOptional),
+			 (generic_encode)encode_TESTOptional,
+			 (generic_length)length_TESTOptional,
+			 (generic_decode)decode_TESTOptional,
+			 (generic_free)free_TESTOptional,
+			 cmp_TESTOptional,
+			 (generic_copy)copy_TESTOptional);
+
+    return ret;
+}
 
 static int
 check_fail_largetag(void)
@@ -793,10 +1107,10 @@ check_fail_choice(void)
     struct test_case tests[] = {
 	{NULL, 6,
 	 "\xa1\x02\x02\x01\x01",
-	 "one too short"},
+	 "choice one too short"},
 	{NULL, 6,
 	 "\xa1\x03\x02\x02\x01",
-	 "one too short inner"}
+	 "choice one too short inner"}
     };
     int ntests = sizeof(tests) / sizeof(*tests);
 
@@ -877,6 +1191,7 @@ out:
 static int
 check_seq_of_size(void)
 {
+#if 0 /* template */
     TESTInteger integers[4] = { 1, 2, 3, 4 };
     int ret;
 
@@ -920,11 +1235,9 @@ check_seq_of_size(void)
 	test_seq_of(TESTSeqSizeOf4, 1, &ssof4ok3);
 	test_seq_of(TESTSeqSizeOf4, 0, &ssof4f1);
    }
-
+#endif
     return 0;
 }
-
-
 
 int
 main(int argc, char **argv)
@@ -936,6 +1249,9 @@ main(int argc, char **argv)
     ret += test_krb_error();
     ret += test_Name();
     ret += test_bit_string();
+    ret += test_bit_string_rfc1510();
+    ret += test_time();
+    ret += test_cert();
 
     ret += check_tag_length();
     ret += test_large_tag();
@@ -943,6 +1259,7 @@ main(int argc, char **argv)
 
     ret += test_implicit();
     ret += test_taglessalloc();
+    ret += test_optional();
 
     ret += check_fail_largetag();
     ret += check_fail_sequence();

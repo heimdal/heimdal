@@ -3,6 +3,8 @@
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  *
+ * Portions Copyright (c) 2009 Apple Inc. All rights reserved.
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -42,6 +44,7 @@ typedef int (*generic_encode)(unsigned char *, size_t, void *, size_t *);
 typedef int (*generic_length)(void *);
 typedef int (*generic_decode)(unsigned char *, size_t, void *, size_t *);
 typedef int (*generic_free)(void *);
+typedef int (*generic_copy)(const void *, void *);
 
 int
 generic_test (const struct test_case *tests,
@@ -51,7 +54,8 @@ generic_test (const struct test_case *tests,
 	      int (*length)(void *),
 	      int (*decode)(unsigned char *, size_t, void *, size_t *),
 	      int (*free_data)(void *),
-	      int (*cmp)(void *a, void *b));
+	      int (*cmp)(void *a, void *b),
+	      int (*copy)(const void *a, void *b));
 
 int
 generic_decode_fail(const struct test_case *tests,

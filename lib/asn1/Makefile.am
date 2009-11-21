@@ -7,34 +7,44 @@ YFLAGS = -d -t
 lib_LTLIBRARIES = libasn1.la
 libasn1_la_LDFLAGS = -version-info 8:0:0
 
+noinst_LTLIBRARIES = libasn1base.la
+
 if versionscript
 libasn1_la_LDFLAGS += $(LDFLAGS_VERSION_SCRIPT)$(srcdir)/version-script.map
 endif
 
 
 libasn1_la_LIBADD = \
+	libasn1base.la \
 	@LIB_com_err@ \
 	$(LIBADD_roken)
 
 BUILT_SOURCES =				\
 	$(gen_files_rfc2459:.x=.c)	\
+	rfc2459_asn1-template.c		\
 	$(gen_files_cms:.x=.c)		\
-	$(gen_files_k5:.x=.c)		\
+	cms_asn1-template.c		\
+	$(gen_files_krb5:.x=.c)		\
+	krb5_asn1-template.c		\
 	$(gen_files_pkinit:.x=.c)	\
+	pkinit_asn1-template.c		\
 	$(gen_files_pkcs8:.x=.c)	\
+	pkcs8_asn1-template.c		\
 	$(gen_files_pkcs9:.x=.c)	\
+	pkcs9_asn1-template.c		\
 	$(gen_files_pkcs12:.x=.c)	\
+	pkcs12_asn1-template.c		\
 	$(gen_files_digest:.x=.c)	\
+	digest_asn1-template.c		\
 	$(gen_files_kx509:.x=.c)	\
-	asn1_err.h			\
-	asn1_err.c
+	kx509_asn1-template.c
 
-gen_files_k5 =						\
+gen_files_krb5 =					\
 	asn1_AD_AND_OR.x				\
 	asn1_AD_IF_RELEVANT.x				\
 	asn1_AD_KDCIssued.x				\
-	asn1_AD_MANDATORY_FOR_KDC.x			\
 	asn1_AD_LoginAlias.x				\
+	asn1_AD_MANDATORY_FOR_KDC.x			\
 	asn1_APOptions.x				\
 	asn1_AP_REP.x					\
 	asn1_AP_REQ.x					\
@@ -62,12 +72,15 @@ gen_files_k5 =						\
 	asn1_EncryptedData.x				\
 	asn1_EncryptionKey.x				\
 	asn1_EtypeList.x				\
+	asn1_FastOptions.x				\
 	asn1_HostAddress.x				\
 	asn1_HostAddresses.x				\
 	asn1_KDCOptions.x				\
 	asn1_KDC_REP.x					\
 	asn1_KDC_REQ.x					\
 	asn1_KDC_REQ_BODY.x				\
+	asn1_KRB5SignedPath.x				\
+	asn1_KRB5SignedPathData.x			\
 	asn1_KRB_CRED.x					\
 	asn1_KRB_ERROR.x				\
 	asn1_KRB_PRIV.x					\
@@ -76,12 +89,22 @@ gen_files_k5 =						\
 	asn1_KerberosString.x				\
 	asn1_KerberosTime.x				\
 	asn1_KrbCredInfo.x				\
+	asn1_KrbFastArmor.x				\
+	asn1_KrbFastArmoredRep.x			\
+	asn1_KrbFastArmoredReq.x			\
+	asn1_KrbFastFinished.x				\
+	asn1_KrbFastReq.x				\
+	asn1_KrbFastResponse.x				\
 	asn1_LR_TYPE.x					\
 	asn1_LastReq.x					\
 	asn1_MESSAGE_TYPE.x				\
 	asn1_METHOD_DATA.x				\
 	asn1_NAME_TYPE.x				\
+	asn1_PA_FX_FAST_REPLY.x				\
+	asn1_PA_FX_FAST_REQUEST.x			\
 	asn1_PADATA_TYPE.x				\
+	asn1_PA_ClientCanonicalized.x			\
+	asn1_PA_ClientCanonicalizedNames.x		\
 	asn1_PA_DATA.x					\
 	asn1_PA_ENC_SAM_RESPONSE_ENC.x         		\
 	asn1_PA_ENC_TS_ENC.x				\
@@ -92,11 +115,9 @@ gen_files_k5 =						\
 	asn1_PA_SAM_REDIRECT.x				\
 	asn1_PA_SAM_RESPONSE_2.x			\
 	asn1_PA_SAM_TYPE.x				\
-	asn1_PA_ClientCanonicalized.x			\
-	asn1_PA_ClientCanonicalizedNames.x		\
-	asn1_PA_SvrReferralData.x			\
-	asn1_PA_ServerReferralData.x			\
 	asn1_PA_SERVER_REFERRAL_DATA.x			\
+	asn1_PA_ServerReferralData.x			\
+	asn1_PA_SvrReferralData.x			\
 	asn1_PROV_SRV_LOCATION.x			\
 	asn1_Principal.x				\
 	asn1_PrincipalName.x				\
@@ -111,18 +132,7 @@ gen_files_k5 =						\
 	asn1_TransitedEncoding.x			\
 	asn1_TypedData.x				\
 	asn1_krb5int32.x				\
-	asn1_krb5uint32.x				\
-	asn1_KRB5SignedPathData.x			\
-	asn1_KRB5SignedPath.x				\
-	asn1_FastOptions.x				\
-	asn1_KrbFastArmor.x				\
-	asn1_KrbFastArmoredRep.x			\
-	asn1_KrbFastArmoredReq.x			\
-	asn1_KrbFastFinished.x				\
-	asn1_KrbFastReq.x				\
-	asn1_KrbFastResponse.x				\
-	asn1_PA_FX_FAST_REPLY.x				\
-	asn1_PA_FX_FAST_REQUEST.x
+	asn1_krb5uint32.x
 
 gen_files_cms =						\
 	asn1_CMSAttributes.x				\
@@ -430,8 +440,10 @@ gen_files_pkcs9 =					\
 	asn1_PKCS9_friendlyName.x
 
 gen_files_test =					\
+	asn1_TESTOptional.x				\
 	asn1_TESTAlloc.x				\
 	asn1_TESTAllocInner.x				\
+	asn1_TESTBitString.x				\
 	asn1_TESTCONTAINING.x				\
 	asn1_TESTCONTAININGENCODEDBY.x			\
 	asn1_TESTCONTAININGENCODEDBY2.x			\
@@ -445,14 +457,21 @@ gen_files_test =					\
 	asn1_TESTInteger2.x				\
 	asn1_TESTInteger3.x				\
 	asn1_TESTLargeTag.x				\
-	asn1_TESTSeq.x					\
-	asn1_TESTUSERCONSTRAINED.x			\
-	asn1_TESTSeqOf.x				\
 	asn1_TESTOSSize1.x				\
+	asn1_TESTPreserve.x				\
+	asn1_TESTSeq.x					\
+	asn1_TESTSeqOf.x				\
+	asn1_TESTSeqOf2.x				\
+	asn1_TESTSeqOf3.x				\
+	asn1_TESTSeqOfSeq.x				\
+	asn1_TESTSeqOfSeq2.x				\
+	asn1_TESTSeqOfSeq3.x				\
 	asn1_TESTSeqSizeOf1.x				\
 	asn1_TESTSeqSizeOf2.x				\
 	asn1_TESTSeqSizeOf3.x				\
-	asn1_TESTSeqSizeOf4.x
+	asn1_TESTSeqSizeOf4.x				\
+	asn1_TESTUSERCONSTRAINED.x			\
+	asn1_TESTuint32.x
 
 gen_files_digest =					\
 	asn1_DigestError.x				\
@@ -479,15 +498,20 @@ noinst_PROGRAMS = asn1_gen
 
 libexec_heimdal_PROGRAMS = asn1_compile asn1_print
 
-TESTS = check-der check-gen check-timegm check-ber
+TESTS = check-der check-gen check-timegm check-ber check-template
 check_PROGRAMS = $(TESTS)
 
 asn1_gen_SOURCES = asn1_gen.c
 asn1_print_SOURCES = asn1_print.c
 check_der_SOURCES = check-der.c check-common.c check-common.h
 
+check_template_SOURCES = check-template.c check-common.c check-common.h
+nodist_check_template_SOURCES = $(gen_files_test:.x=.c) test_asn1-template.c
+
 dist_check_gen_SOURCES = check-gen.c check-common.c check-common.h
-nodist_check_gen_SOURCES = $(gen_files_test:.x=.c)
+nodist_check_gen_SOURCES = $(gen_files_test:.x=.c) test_asn1-template.c
+
+build_HEADERZ = asn1-template.h
 
 asn1_compile_SOURCES = 				\
 	asn1-common.h				\
@@ -503,16 +527,17 @@ asn1_compile_SOURCES = 				\
 	gen_length.c				\
 	gen_locl.h				\
 	gen_seq.c				\
+	gen_template.c				\
 	hash.c					\
 	hash.h					\
 	lex.l					\
 	lex.h					\
 	main.c					\
+	asn1-template.h				\
 	symbol.c				\
 	symbol.h
 
-dist_libasn1_la_SOURCES =			\
-	der-protos.h 				\
+dist_libasn1base_la_SOURCES =			\
 	der_locl.h 				\
 	der.c					\
 	der.h					\
@@ -525,7 +550,12 @@ dist_libasn1_la_SOURCES =			\
 	der_format.c				\
 	heim_asn1.h				\
 	extra.c					\
+	template.c				\
 	timegm.c
+
+nodist_libasn1base_la_SOURCES = 	\
+	asn1_err.h			\
+	asn1_err.c
 
 nodist_libasn1_la_SOURCES = $(BUILT_SOURCES)
 
@@ -533,20 +563,25 @@ asn1_compile_LDADD = \
 	$(LIB_roken) $(LEXLIB)
 
 check_der_LDADD = \
+	libasn1base.la \
+	$(LIB_roken)
+
+check_template_LDADD = $(check_der_LDADD)
+asn1_print_LDADD = $(check_der_LDADD) $(LIB_com_err)
+asn1_gen_LDADD = $(check_der_LDADD)
+check_timegm_LDADD = $(check_der_LDADD)
+
+check_gen_LDADD = \
 	libasn1.la \
 	$(LIB_roken)
 
-check_gen_LDADD = $(check_der_LDADD)
-check_ber_LDADD = $(check_der_LDADD)
-asn1_print_LDADD = $(check_der_LDADD)
-asn1_gen_LDADD = $(check_der_LDADD)
-check_timegm_LDADD = $(check_der_LDADD)
+check_ber_LDADD = $(check_gen_LDADD)
 
 CLEANFILES = \
 	$(BUILT_SOURCES) \
 	$(gen_files_rfc2459) \
 	$(gen_files_cms) \
-	$(gen_files_k5) \
+	$(gen_files_krb5) \
 	$(gen_files_pkinit) \
 	$(gen_files_pkcs8) \
 	$(gen_files_pkcs9) \
@@ -554,6 +589,7 @@ CLEANFILES = \
 	$(gen_files_digest) \
 	$(gen_files_kx509) \
 	$(gen_files_test) $(nodist_check_gen_SOURCES) \
+	test_asn1-template.c \
 	rfc2459_asn1_files rfc2459_asn1.h* \
 	cms_asn1_files cms_asn1.h* \
 	krb5_asn1_files krb5_asn1.h* \
@@ -565,7 +601,7 @@ CLEANFILES = \
 	kx509_asn1_files kx509_asn1.h* \
 	test_asn1_files test_asn1.h*
 
-dist_include_HEADERS = der.h heim_asn1.h der-protos.h
+dist_include_HEADERS = der.h heim_asn1.h der-protos.h der-private.h
 
 nodist_include_HEADERS = asn1_err.h
 nodist_include_HEADERS += krb5_asn1.h
@@ -578,14 +614,28 @@ nodist_include_HEADERS += pkcs12_asn1.h
 nodist_include_HEADERS += digest_asn1.h
 nodist_include_HEADERS += kx509_asn1.h
 
-$(asn1_compile_OBJECTS): asn1parse.h asn1parse.c $(srcdir)/der-protos.h
-$(libasn1_la_OBJECTS): $(nodist_include_HEADERS) $(srcdir)/der-protos.h
+priv_headers  = krb5_asn1-priv.h
+priv_headers += pkinit_asn1-priv.h
+priv_headers += cms_asn1-priv.h
+priv_headers += rfc2459_asn1-priv.h
+priv_headers += pkcs8_asn1-priv.h
+priv_headers += pkcs9_asn1-priv.h
+priv_headers += pkcs12_asn1-priv.h
+priv_headers += digest_asn1-priv.h
+priv_headers += kx509_asn1-priv.h
+
+
+
+$(asn1_compile_OBJECTS): asn1parse.h asn1parse.c $(srcdir)/der-protos.h $(srcdir)/der-private.h
+$(libasn1_la_OBJECTS): $(nodist_include_HEADERS) $(priv_headers) asn1_err.h $(srcdir)/der-protos.h $(srcdir)/der-private.h
+$(libasn1base_la_OBJECTS): asn1_err.h $(srcdir)/der-protos.h $(srcdir)/der-private.h
 $(check_gen_OBJECTS): test_asn1.h
+$(check_template_OBJECTS): test_asn1_files
 $(asn1_print_OBJECTS): krb5_asn1.h
 
 asn1parse.h: asn1parse.c
 
-$(gen_files_k5) krb5_asn1.hx: krb5_asn1_files
+$(gen_files_krb5) krb5_asn1.hx: krb5_asn1_files
 $(gen_files_pkinit) pkinit_asn1.hx: pkinit_asn1_files
 $(gen_files_pkcs8) pkcs8_asn1.hx: pkcs8_asn1_files
 $(gen_files_pkcs9) pkcs9_asn1.hx: pkcs9_asn1_files
@@ -626,6 +676,7 @@ kx509_asn1_files: asn1_compile$(EXEEXT) $(srcdir)/kx509.asn1
 test_asn1_files: asn1_compile$(EXEEXT) $(srcdir)/test.asn1
 	$(ASN1_COMPILE) --sequence=TESTSeqOf $(srcdir)/test.asn1 test_asn1 || (rm -f test_asn1_files ; exit 1)
 
+
 EXTRA_DIST =		\
 	cms.asn1	\
 	cms.opt		\
@@ -646,4 +697,7 @@ EXTRA_DIST =		\
 	version-script.map
 
 $(srcdir)/der-protos.h:
-	cd $(srcdir) && perl ../../cf/make-proto.pl -q -P comment -o der-protos.h $(dist_libasn1_la_SOURCES) || rm -f der-protos.h
+	cd $(srcdir) && perl ../../cf/make-proto.pl -q -P comment -o der-protos.h $(dist_libasn1base_la_SOURCES) || rm -f der-protos.h
+
+$(srcdir)/der-private.h:
+	cd $(srcdir) && perl ../../cf/make-proto.pl -q -P comment -p der-private.h $(dist_libasn1base_la_SOURCES) || rm -f der-private.h

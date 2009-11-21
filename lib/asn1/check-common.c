@@ -3,6 +3,8 @@
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  *
+ * Portions Copyright (c) 2009 Apple Inc. All rights reserved.
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -197,7 +199,8 @@ generic_test (const struct test_case *tests,
 	      int (*length)(void *),
 	      int (*decode)(unsigned char *, size_t, void *, size_t *),
 	      int (*free_data)(void *),
-	      int (*cmp)(void *a, void *b))
+	      int (*cmp)(void *a, void *b),
+	      int (*copy)(const void *from, void *to))
 {
     unsigned char *buf, *buf2;
     int i;
@@ -210,6 +213,7 @@ generic_test (const struct test_case *tests,
     for (i = 0; i < ntests; ++i) {
 	int ret;
 	size_t sz, consumed_sz, length_sz, buf_sz;
+	void *to = NULL;
 
 	current_test = tests[i].name;
 
@@ -261,6 +265,11 @@ generic_test (const struct test_case *tests,
 	    printf ("\nactual:  ");
 	    print_bytes (buf, sz);
 	    printf ("\n");
+#if 0
+	    rk_dumpdata("correct", tests[i].bytes, tests[i].byte_len);
+	    rk_dumpdata("actual", buf, sz);
+	    exit (1);
+#endif
 	    ++failures;
 	    continue;
 	}
@@ -287,9 +296,33 @@ generic_test (const struct test_case *tests,
 	    ++failures;
 	    continue;
 	}
+
+	current_state = "copy";
+	if (copy) {
+	    to = emalloc(data_size);
+	    ret = (*copy)(data, to);
+	    if (ret != 0) {
+		printf ("copy of %s failed %d\n", tests[i].name, ret);
+		++failures;
+		continue;
+	    }
+
+	    current_state = "cmp-copy";
+	    if ((*cmp)(data, to) != 0) {
+		printf ("%s: copy comparison failed\n", tests[i].name);
+		++failures;
+		continue;
+	    }
+	}
+
 	current_state = "free";
-	if (free_data)
+	if (free_data) {
 	    (*free_data)(data);
+	    if (to) {
+		(*free_data)(to);
+		free(to);
+	    }
+	}
 
 	current_state = "free";
 	map_free(buf_map, tests[i].name, "encode");

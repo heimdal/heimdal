@@ -3,6 +3,8 @@
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  *
+ * Portions Copyright (c) 2009 Apple Inc. All rights reserved.
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -182,7 +184,9 @@ loop (unsigned char *buf, size_t len, int indent)
 	    case UT_GeneralizedTime :
 	    case UT_GeneralString :
 	    case UT_PrintableString :
-	    case UT_VisibleString : {
+	    case UT_VisibleString :
+	    case UT_IA5String :
+	    case UT_UTF8String : {
 		heim_general_string str;
 
 		ret = der_get_general_string (buf, length, &str, NULL);

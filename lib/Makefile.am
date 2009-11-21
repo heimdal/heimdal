@@ -31,6 +31,7 @@ SUBDIRS = \
 	asn1 \
 	$(dir_sqlite) \
 	$(dir_hcrypto) \
+	ipc \
 	hx509 \
 	krb5 \
 	ntlm \

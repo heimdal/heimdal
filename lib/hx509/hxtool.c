@@ -305,7 +305,7 @@ cms_verify_sd(struct cms_verify_sd_options *opt, int argc, char **argv)
 	printf("unsigned\n");
     } else {
 	printf("signers:\n");
-	hx509_certs_iter(context, signers, hx509_ci_print_names, stdout);
+	hx509_certs_iter_f(context, signers, hx509_ci_print_names, stdout);
     }
 
     hx509_verify_destroy_ctx(ctx);
@@ -474,7 +474,7 @@ cms_create_sd(struct cms_create_sd_options *opt, int argc, char **argv)
 			     opt->detached_signature_flag ?
 			     "detached" : "inline");
 	if (signer) {
-	    ret = hx509_certs_iter(context, signer, print_signer, header);
+	    ret = hx509_certs_iter_f(context, signer, print_signer, header);
 	    if (ret)
 		hx509_err(context, 1, ret, "print signer");
 	}
@@ -725,7 +725,7 @@ pcert_print(struct print_options *opt, int argc, char **argv)
 	}
 	if (opt->info_flag)
 	    hx509_certs_info(context, certs, NULL, NULL);
-	hx509_certs_iter(context, certs, print_f, &s);
+	hx509_certs_iter_f(context, certs, print_f, &s);
 	hx509_certs_free(&certs);
 	argv++;
     }
@@ -762,7 +762,7 @@ pcert_validate(struct validate_options *opt, int argc, char **argv)
 	ret = hx509_certs_init(context, argv[0], 0, lock, &certs);
 	if (ret)
 	    errx(1, "hx509_certs_init: %d", ret);
-	hx509_certs_iter(context, certs, validate_f, ctx);
+	hx509_certs_iter_f(context, certs, validate_f, ctx);
 	hx509_certs_free(&certs);
 	argv++;
     }
@@ -958,7 +958,7 @@ pcert_verify(struct verify_options *opt, int argc, char **argv)
     v.ctx = ctx;
     v.chain = chain;
 
-    hx509_certs_iter(context, certs, verify_f, &v);
+    hx509_certs_iter_f(context, certs, verify_f, &v);
 
     hx509_verify_destroy_ctx(ctx);
 
@@ -1181,7 +1181,7 @@ ocsp_verify(struct ocsp_verify_options *opt, int argc, char **argv)
 	    hx509_err(context, 1, ret, "hx509_certs_append: %s", argv[i]);
     }
 
-    ret = hx509_certs_iter(context, certs, verify_o, &os);
+    ret = hx509_certs_iter_f(context, certs, verify_o, &os);
 
     hx509_certs_free(&certs);
     _hx509_unmap_file_os(&os);
@@ -2075,7 +2075,7 @@ test_crypto(struct test_crypto_options *opt, int argc, char ** argv)
 
     hx509_verify_attach_anchors(vctx, certs);
 
-    ret = hx509_certs_iter(context, certs, test_one_cert, vctx);
+    ret = hx509_certs_iter_f(context, certs, test_one_cert, vctx);
     if (ret)
 	hx509_err(context, 1, ret, "hx509_cert_iter");
 

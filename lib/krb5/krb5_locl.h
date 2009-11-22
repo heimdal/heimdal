@@ -3,6 +3,8 @@
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  *
+ * Portions Copyright (c) 2009 Apple Inc. All rights reserved.
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -136,8 +138,6 @@ struct sockaddr_dl;
 #include <door.h>
 #endif
 
-#include <com_err.h>
-
 #include <roken.h>
 #include <parse_time.h>
 #include <base64.h>
@@ -219,6 +219,7 @@ struct _krb5_get_init_creds_opt_private {
     int flags;
 #define KRB5_INIT_CREDS_CANONICALIZE		1
 #define KRB5_INIT_CREDS_NO_C_CANON_CHECK	2
+#define KRB5_INIT_CREDS_NO_C_NO_EKU_CHECK	4
     struct {
         krb5_gic_process_last_req func;
         void *ctx;
@@ -275,12 +276,14 @@ typedef struct krb5_context_data {
 
 #define KRB5_DEFAULT_CCNAME_FILE "FILE:/tmp/krb5cc_%{uid}"
 #define KRB5_DEFAULT_CCNAME_API "API:"
-#define KRB5_DEFAULT_CCNAME_KCM "KCM:%{uid}"
+#define KRB5_DEFAULT_CCNAME_KCM_KCM "KCM:%{uid}"
+#define KRB5_DEFAULT_CCNAME_KCM_API "API:%{uid}"
 
 #define EXTRACT_TICKET_ALLOW_CNAME_MISMATCH		1
 #define EXTRACT_TICKET_ALLOW_SERVER_MISMATCH		2
 #define EXTRACT_TICKET_MATCH_REALM			4
 #define EXTRACT_TICKET_AS_REQ				8
+#define EXTRACT_TICKET_TIMESYNC				16
 
 /*
  * Configurable options
@@ -298,6 +301,10 @@ typedef struct krb5_context_data {
 #define KRB5_ADDRESSLESS_DEFAULT TRUE
 #endif
 
+#ifndef KRB5_FORWARDABLE_DEFAULT
+#define KRB5_FORWARDABLE_DEFAULT TRUE
+#endif
+
 #ifdef PKINIT
 
 struct krb5_pk_identity {
@@ -307,6 +314,8 @@ struct krb5_pk_identity {
     hx509_certs anchors;
     hx509_certs certpool;
     hx509_revoke_ctx revokectx;
+    int flags;
+#define PKINIT_BTMM 1
 };
 
 enum krb5_pk_type {

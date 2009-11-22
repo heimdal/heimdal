@@ -137,7 +137,7 @@ attr_to_flags(unsigned attr, HDBFlags *flags)
     /* DUP_SKEY */
     flags->invalid =	       !!(attr & KRB5_KDB_DISALLOW_ALL_TIX);
     flags->require_preauth =   !!(attr & KRB5_KDB_REQUIRES_PRE_AUTH);
-    /* HW_AUTH */
+    flags->require_hwauth =    !!(attr & KRB5_KDB_REQUIRES_HW_AUTH);
     flags->server =		!(attr & KRB5_KDB_DISALLOW_SVR);
     flags->change_pw = 	       !!(attr & KRB5_KDB_PWCHANGE_SERVICE);
     flags->client =	        1; /* XXX */
@@ -338,7 +338,7 @@ mit_prop_dump(void *arg, const char *file)
 	    ent.entry.kvno = getint(&p); /* XXX kvno */
 	
 	    ALLOC(ent.entry.keys.val[i].mkvno);
-	    *ent.entry.keys.val[i].mkvno = 0;
+	    *ent.entry.keys.val[i].mkvno = 1;
 	
 	    /* key version 0 -- actual key */
 	    ent.entry.keys.val[i].key.keytype = getint(&p); /* key type */

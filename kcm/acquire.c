@@ -32,8 +32,6 @@
 
 #include "kcm_locl.h"
 
-RCSID("$Id$");
-
 /*
  * Get a new ticket using a keytab/cached key and swap it into
  * an existing redentials cache

@@ -2,6 +2,8 @@
  * Copyright (c) 2005, PADL Software Pty Ltd.
  * All rights reserved.
  *
+ * Portions Copyright (c) 2009 Apple Inc. All rights reserved.
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -34,8 +36,6 @@
 #include <getarg.h>
 #include <parse_bytes.h>
 
-RCSID("$Id$");
-
 static const char *config_file;	/* location of kcm config file */
 
 size_t max_request = 0;		/* maximal size of a request */
@@ -60,7 +60,7 @@ static const char *system_group = NULL;
 static const char *renew_life = NULL;
 static const char *ticket_life = NULL;
 
-int disallow_getting_krbtgt = -1;
+int disallow_getting_krbtgt = 0;
 int name_constraints = -1;
 
 static int help_flag;
@@ -240,7 +240,7 @@ ccache_init_system(void)
 
     ret = krb5_parse_name(kcm_context, system_principal, &ccache->client);
     if (ret) {
-	kcm_release_ccache(kcm_context, &ccache);
+	kcm_release_ccache(kcm_context, ccache);
 	return ret;
     }
 
@@ -250,7 +250,7 @@ ccache_init_system(void)
     if (system_server != NULL) {
 	ret = krb5_parse_name(kcm_context, system_server, &ccache->server);
 	if (ret) {
-	    kcm_release_ccache(kcm_context, &ccache);
+	    kcm_release_ccache(kcm_context, ccache);
 	    return ret;
 	}
     }
@@ -264,7 +264,7 @@ ccache_init_system(void)
 	ret = krb5_kt_default(kcm_context, &ccache->key.keytab);
     }
     if (ret) {
-	kcm_release_ccache(kcm_context, &ccache);
+	kcm_release_ccache(kcm_context, ccache);
 	return ret;
     }
 
@@ -277,7 +277,7 @@ ccache_init_system(void)
     if (renew_life != NULL) {
 	ccache->renew_life = parse_time(renew_life, "s");
 	if (ccache->renew_life < 0) {
-	    kcm_release_ccache(kcm_context, &ccache);
+	    kcm_release_ccache(kcm_context, ccache);
 	    return EINVAL;
 	}
     }
@@ -288,7 +288,7 @@ ccache_init_system(void)
     if (ticket_life != NULL) {
 	ccache->tkt_life = parse_time(ticket_life, "s");
 	if (ccache->tkt_life < 0) {
-	    kcm_release_ccache(kcm_context, &ccache);
+	    kcm_release_ccache(kcm_context, ccache);
 	    return EINVAL;
 	}
     }
@@ -314,7 +314,7 @@ ccache_init_system(void)
     /* enqueue default actions for credentials cache */
     ret = kcm_ccache_enqueue_default(kcm_context, ccache, NULL);
 
-    kcm_release_ccache(kcm_context, &ccache); /* retained by event queue */
+    kcm_release_ccache(kcm_context, ccache); /* retained by event queue */
 
     return ret;
 }

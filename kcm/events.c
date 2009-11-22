@@ -161,7 +161,7 @@ kcm_remove_event_internal(krb5_context context,
     (*e)->fire_count = 0;
     (*e)->expire_time = 0;
     (*e)->backoff_time = 0;
-    kcm_release_ccache(context, &(*e)->ccache);
+    kcm_release_ccache(context, (*e)->ccache);
     (*e)->next = NULL;
     free(*e);
 

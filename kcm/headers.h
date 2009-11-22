@@ -33,9 +33,9 @@
 #ifndef __HEADERS_H__
 #define __HEADERS_H__
 
-#ifdef HAVE_CONFIG_H
+
 #include <config.h>
-#endif
+
 #include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -85,7 +85,9 @@
 
 
 #include <krb5.h>
-#include <krb5_locl.h>
+#include <heim_threads.h>
+
+#include "crypto-headers.h"
 
 #endif /* __HEADERS_H__ */
 

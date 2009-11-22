@@ -3,6 +3,8 @@
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  *
+ * Portions Copyright (c) 2009 Apple Inc. All rights reserved.
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -34,6 +36,10 @@
 #define KRB5_DEPRECATED
 
 #include "krb5_locl.h"
+
+#ifdef __APPLE__
+#include <CoreFoundation/CoreFoundation.h>
+#endif
 
 /* Gaah! I want a portable funopen */
 struct fileptr {
@@ -233,6 +239,99 @@ parse_binding(struct fileptr *f, unsigned *lineno, char *p,
     return ret;
 }
 
+#ifdef __APPLE__
+static char *
+cfstring2cstring(CFStringRef string)
+{
+    CFIndex len;
+    char *str;
+    
+    str = (char *) CFStringGetCStringPtr(string, kCFStringEncodingUTF8);
+    if (str)
+	return strdup(str);
+
+    len = CFStringGetLength(string);
+    len = 1 + CFStringGetMaximumSizeForEncoding(len, kCFStringEncodingUTF8);
+    str = malloc(len);
+    if (str == NULL)
+	return NULL;
+	
+    if (!CFStringGetCString (string, str, len, kCFStringEncodingUTF8)) {
+	free (str);
+	return NULL;
+    }
+    return str;
+}
+
+static void
+convert_content(const void *key, const void *value, void *context)
+{
+    krb5_config_section *tmp, **parent = context;
+    char *k, *v;
+
+    if (CFGetTypeID(key) != CFStringGetTypeID())
+	return;
+
+    k = cfstring2cstring(key);
+    if (k == NULL)
+	return;
+
+    if (CFGetTypeID(value) == CFStringGetTypeID()) {
+	tmp = get_entry(parent, k, krb5_config_string);
+	tmp->u.string = cfstring2cstring(value);
+    } else if (CFGetTypeID(value) == CFDictionaryGetTypeID()) {
+	tmp = get_entry(parent, k, krb5_config_list);
+	CFDictionaryApplyFunction(value, convert_content, &tmp->u.list);
+    } else {
+	/* log */
+    }
+    free(k);
+}
+
+static krb5_error_code
+parse_plist_config(krb5_context context, const char *path, krb5_config_section **parent)
+{
+    CFReadStreamRef s;
+    CFDictionaryRef d;
+    CFErrorRef e;
+    CFURLRef url;
+    CFDataRef p;
+    
+    url = CFURLCreateFromFileSystemRepresentation(kCFAllocatorDefault, (UInt8 *)path, strlen(path), FALSE);
+    if (url == NULL) {
+	krb5_clear_error_message(context);
+	return ENOMEM;
+    }
+
+    s = CFReadStreamCreateWithFile(kCFAllocatorDefault, url);
+    CFRelease(url);
+    if (s == NULL) {
+	krb5_clear_error_message(context);
+	return ENOMEM;
+    }
+
+    if (!CFReadStreamOpen(s)) {
+	CFRelease(s);
+	krb5_clear_error_message(context);
+	return ENOENT;
+    }
+
+    d = (CFDictionaryRef)CFPropertyListCreateWithStream (kCFAllocatorDefault, s, 0, kCFPropertyListImmutable, NULL, &e);
+    CFRelease(s);
+    if (d == NULL) {
+	krb5_clear_error_message(context);
+	return ENOENT;
+    }
+
+    CFDictionaryApplyFunction(d, convert_content, parent);
+    CFRelease(d);
+
+    return 0;
+}
+
+#endif
+
+
 /*
  * Parse the config file `fname', generating the structures into `res'
  * returning error messages in `error_message'
@@ -280,6 +379,18 @@ krb5_config_parse_debug (struct fileptr *f,
     return 0;
 }
 
+static int
+is_plist_file(const char *fname)
+{
+    size_t len = strlen(fname);
+    char suffix[] = ".plist";
+    if (len < sizeof(suffix))
+	return 0;
+    if (strcasecmp(&fname[len - (sizeof(suffix) - 1)], suffix) != 0)
+	return 0;
+    return 1;
+}
+
 /**
  * Parse a configuration file and add the result into res. This
  * interface can be used to parse several configuration files into one
@@ -309,8 +420,14 @@ krb5_config_parse_file_multi (krb5_context context,
      * current users home directory. The behavior can be disabled and
      * enabled by calling krb5_set_home_dir_access().
      */
-    if (_krb5_homedir_access(context) && fname[0] == '~' && fname[1] == '/') {
+    if (fname[0] == '~' && fname[1] == '/') {
 	const char *home = NULL;
+
+	if (!_krb5_homedir_access(context)) {
+	    krb5_set_error_message(context, EPERM,
+				   "Access to home directory not allowed");
+	    return EPERM;
+	}
 
 	if(!issuid())
 	    home = getenv("HOME");
@@ -331,24 +448,42 @@ krb5_config_parse_file_multi (krb5_context context,
 	}
     }
 
-    f.f = fopen(fname, "r");
-    f.s = NULL;
-    if(f.f == NULL) {
-	ret = errno;
-	krb5_set_error_message (context, ret, "open %s: %s",
-				fname, strerror(ret));
-	if (newfname)
-	    free(newfname);
-	return ret;
-    }
-
-    ret = krb5_config_parse_debug (&f, res, &lineno, &str);
-    fclose(f.f);
-    if (ret) {
-	krb5_set_error_message (context, ret, "%s:%u: %s", fname, lineno, str);
-	if (newfname)
-	    free(newfname);
-	return ret;
+    if (is_plist_file(fname)) {
+#ifdef __APPLE__
+	ret = parse_plist_config(context, fname, res);
+	if (ret) {
+	    krb5_set_error_message(context, ret,
+				   "Failed to parse plist %s", fname);
+	    if (newfname)
+		free(newfname);
+	    return ret;
+	}
+#else
+	krb5_set_error_message(context, ENOENT, 
+			       "no support for plist configuration files");
+	return ENOENT;
+#endif
+    } else {
+	f.f = fopen(fname, "r");
+	f.s = NULL;
+	if(f.f == NULL) {
+	    ret = errno;
+	    krb5_set_error_message (context, ret, "open %s: %s",
+				    fname, strerror(ret));
+	    if (newfname)
+		free(newfname);
+	    return ret;
+	}
+	
+	ret = krb5_config_parse_debug (&f, res, &lineno, &str);
+	fclose(f.f);
+	if (ret) {
+	    krb5_set_error_message (context, ret, "%s:%u: %s",
+				    fname, lineno, str);
+	    if (newfname)
+		free(newfname);
+	    return ret;
+	}
     }
     if (newfname)
 	free(newfname);

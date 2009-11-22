@@ -67,7 +67,24 @@ typedef struct krb5_get_init_creds_ctx {
     krb5_prompter_fct prompter;
     void *prompter_data;
 
+    struct pa_info_data *ppaid;
+
 } krb5_get_init_creds_ctx;
+
+
+struct pa_info_data {
+    krb5_enctype etype;
+    krb5_salt salt;
+    krb5_data *s2kparams;
+};
+
+static void
+free_paid(krb5_context context, struct pa_info_data *ppaid)
+{
+    krb5_free_salt(context, ppaid->salt);
+    if (ppaid->s2kparams)
+	krb5_free_data(context, ppaid->s2kparams);
+}
 
 static krb5_error_code
 default_s2k_func(krb5_context context, krb5_enctype type,
@@ -116,6 +133,10 @@ free_init_creds_ctx(krb5_context context, krb5_init_creds_context ctx)
     free_EncKDCRepPart(&ctx->enc_part);
     free_KRB_ERROR(&ctx->error);
     free_AS_REQ(&ctx->as_req);
+    if (ctx->ppaid) {
+	free_paid(context, ctx->ppaid);
+	free(ctx->ppaid);
+    }
     memset(ctx, 0, sizeof(*ctx));
 }
 
@@ -677,20 +698,6 @@ init_as_req (krb5_context context,
     return ret;
 }
 
-struct pa_info_data {
-    krb5_enctype etype;
-    krb5_salt salt;
-    krb5_data *s2kparams;
-};
-
-static void
-free_paid(krb5_context context, struct pa_info_data *ppaid)
-{
-    krb5_free_salt(context, ppaid->salt);
-    if (ppaid->s2kparams)
-	krb5_free_data(context, ppaid->s2kparams);
-}
-
 
 static krb5_error_code
 set_paid(struct pa_info_data *paid, krb5_context context,
@@ -1141,16 +1148,22 @@ process_pa_data_to_md(krb5_context context,
 	    return ret;
 
     } else if (in_md->len != 0) {
-	struct pa_info_data paid, *ppaid;
+	struct pa_info_data *paid, *ppaid;
 
-	memset(&paid, 0, sizeof(paid));
+	paid = calloc(1, sizeof(*paid));
 
-	paid.etype = ENCTYPE_NULL;
-	ppaid = process_pa_info(context, creds->client, a, &paid, in_md);
+	paid->etype = ENCTYPE_NULL;
+	ppaid = process_pa_info(context, creds->client, a, paid, in_md);
 
 	pa_data_to_md_ts_enc(context, a, creds->client, ctx, ppaid, *out_md);
-	if (ppaid)
-	    free_paid(context, ppaid);
+	if (ppaid) {
+	    if (ctx->ppaid) {
+		free_paid(context, ctx->ppaid);
+		free(ctx->ppaid);
+	    }
+	    ctx->ppaid = ppaid;
+	} else
+	    free(paid);
     }
 
     pa_data_add_pac_request(context, ctx, *out_md);
@@ -1186,12 +1199,15 @@ process_pa_data_to_key(krb5_context context,
 	ppaid = process_pa_info(context, creds->client, a, &paid,
 				rep->padata);
     }
+    if (ppaid == NULL)
+	ppaid = ctx->ppaid;
     if (ppaid == NULL) {
 	ret = krb5_get_pw_salt (context, creds->client, &paid.salt);
 	if (ret)
 	    return ret;
 	paid.etype = etype;
 	paid.s2kparams = NULL;
+	ppaid = &paid;
     }
 
     pa = NULL;
@@ -1226,7 +1242,7 @@ process_pa_data_to_key(krb5_context context,
 #endif
     } else if (ctx->keyseed)
 	ret = pa_data_to_key_plain(context, creds->client, ctx,
-				   paid.salt, paid.s2kparams, etype, key);
+				   ppaid->salt, ppaid->s2kparams, etype, key);
     else {
 	ret = EINVAL;
 	krb5_set_error_message(context, ret, N_("No usable pa data type", ""));

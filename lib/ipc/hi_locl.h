@@ -35,6 +35,8 @@
 
 #include "config.h"
 
+#define HAVE_LIBDISPATCH 1
+
 #include <sys/types.h>
 #include <sys/un.h>
 
@@ -47,6 +49,22 @@
 #include <asn1-common.h>
 
 #include <heim-ipc.h>
+
+#if defined(__APPLE__) && defined(HAVE_LIBDISPATCH)
+#include <mach/mach.h>
+#include <servers/bootstrap.h>
+#include <dispatch/dispatch.h>
+#include <bsm/libbsm.h>
+
+#ifndef __APPLE_PRIVATE__ /* awe, using private interface */
+typedef boolean_t (*dispatch_mig_callback_t)(mach_msg_header_t *message, mach_msg_header_t *reply);
+
+mach_msg_return_t
+dispatch_mig_server(dispatch_source_t ds, size_t maxmsgsz, dispatch_mig_callback_t callback);
+#endif
+
+#endif
+
 
 #include <roken.h>
 

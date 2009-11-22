@@ -44,11 +44,9 @@ struct heim_sipc {
 
 #if defined(__APPLE__) && defined(HAVE_LIBDISPATCH)
 
-#include <mach/mach.h>
-#include <dispatch/dispatch.h>
-#include <bsm/libbsm.h>
 #include "heim_ipcServer.h"
 #include "heim_ipc_reply.h"
+#include "heim_ipc_async.h"
 
 static dispatch_source_t timer;
 static dispatch_queue_t timerq;
@@ -201,10 +199,8 @@ mheim_do_call(mach_port_t server_port,
 	      mach_msg_type_number_t *replyoutCnt)
 {
     heim_sipc ctx = dispatch_get_context(dispatch_get_current_queue());
-    struct mach_service *st = ctx->mech;
     struct mach_call_ctx *s;
     kern_return_t kr;
-    heim_icred cred;
     uid_t uid;
     gid_t gid;
     pid_t pid;
@@ -258,10 +254,8 @@ mheim_do_call_request(mach_port_t server_port,
 		      mach_msg_type_number_t requestoutCnt)
 {
     heim_sipc ctx = dispatch_get_context(dispatch_get_current_queue());
-    struct mach_service *st = ctx->mech;
     struct mach_call_ctx *s;
     kern_return_t kr;
-    heim_icred cred;
     uid_t uid;
     gid_t gid;
     pid_t pid;
@@ -301,13 +295,10 @@ mheim_do_call_request(mach_port_t server_port,
     return KERN_SUCCESS;
 }
 
-
-
 static int
 mach_init(const char *service, mach_port_t sport, heim_sipc ctx)
 {
     struct mach_service *s;
-    kern_return_t kr;
     char *name;
 
     init_globals();
@@ -373,6 +364,7 @@ mach_checkin_or_register(const char *service)
     if (kr == KERN_SUCCESS)
 	return mp;
 
+    /* Pre SnowLeopard version */
     kr = mach_port_allocate(mach_task_self(), MACH_PORT_RIGHT_RECEIVE, &mp);
     if (kr != KERN_SUCCESS)
 	return MACH_PORT_NULL;
@@ -384,7 +376,7 @@ mach_checkin_or_register(const char *service)
 	return MACH_PORT_NULL;
     }
 
-    kr = bootstrap_register(bootstrap_port, service, mp);
+    kr = bootstrap_register(bootstrap_port, rk_UNCONST(service), mp);
     if (kr != KERN_SUCCESS) {
 	mach_port_destroy(mach_task_self(), mp);
 	return MACH_PORT_NULL;
@@ -404,7 +396,7 @@ heim_sipc_launchd_mach_init(const char *service,
 {
 #if defined(__APPLE__) && defined(HAVE_LIBDISPATCH)
     mach_port_t sport = MACH_PORT_NULL;
-    heim_sipc c;
+    heim_sipc c = NULL;
     int ret;
 
     *ctx = NULL;

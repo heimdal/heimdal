@@ -347,10 +347,6 @@ common_path_init(const char *service,
 		 void **ctx)
 {
     struct path_ctx *s;
-    const char *path;
-    char *apath = NULL;
-    int ret;
-    int *fd;
 
     s = malloc(sizeof(*s));
     if (s == NULL)

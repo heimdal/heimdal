@@ -232,6 +232,8 @@ LIB_roken="\$(top_builddir)/lib/vers/libvers.la $LIB_roken"
 
 rk_OTP
 
+rk_LIBDISPATCH
+
 AC_CHECK_OSFC2
 
 AC_ARG_ENABLE(mmap,

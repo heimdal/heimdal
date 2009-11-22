@@ -64,10 +64,12 @@ const int hdb_interface_version = HDB_INTERFACE_VERSION;
 static struct hdb_method methods[] = {
 #if HAVE_DB1 || HAVE_DB3
     { HDB_INTERFACE_VERSION, "db:",	hdb_db_create},
+    { HDB_INTERFACE_VERSION, "mit-db:",	hdb_mdb_create},
 #endif
 #if HAVE_NDBM
     { HDB_INTERFACE_VERSION, "ndbm:",	hdb_ndbm_create},
 #endif
+    { HDB_INTERFACE_VERSION, "keytab:",	hdb_keytab_create},
 #if defined(OPENLDAP) && !defined(OPENLDAP_MODULE)
     { HDB_INTERFACE_VERSION, "ldap:",	hdb_ldap_create},
     { HDB_INTERFACE_VERSION, "ldapi:",	hdb_ldapi_create},

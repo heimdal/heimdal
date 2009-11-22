@@ -39,10 +39,6 @@
  * Client library for Kerberos Credentials Manager (KCM) daemon
  */
 
-#ifdef HAVE_SYS_UN_H
-#include <sys/un.h>
-#endif
-
 #include "kcm.h"
 #include <heim-ipc.h>
 

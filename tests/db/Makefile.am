@@ -48,6 +48,10 @@ krb5.conf-sqlite: krb5.conf.in Makefile
 	$(do_subst) -e 's,[@]type[@],sqlite:,g' < $(srcdir)/krb5.conf.in > krb5.conf-sqlite.tmp
 	mv krb5.conf-sqlite.tmp krb5.conf-sqlite
 
+krb5-mit.conf: krb5-mit.conf.in Makefile
+	$(do_subst) < $(srcdir)/krb5-mit.conf.in > krb5-mit.conf.tmp
+	mv krb5-mit.conf.tmp krb5-mit.conf
+
 
 CLEANFILES= \
 	$(TESTS) \
@@ -60,6 +64,7 @@ CLEANFILES= \
 	mkey.file* \
 	krb5.conf krb5.conf.tmp \
 	krb5.conf-sqlite krb5.conf-sqlite.tmp \
+	krb5-mit.conf krb5-mit.conf.tmp \
 	tempfile \
 	log.current-db* \
 	messages.log
@@ -71,6 +76,7 @@ EXTRA_DIST = \
 	add-modify-delete.in \
 	have-db.in \
 	krb5.conf.in \
+	krb5-mit.conf.in \
 	text-dump-0.7 \
 	text-dump-known-ext \
 	text-dump-no-ext \

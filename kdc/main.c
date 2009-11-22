@@ -3,6 +3,8 @@
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  *
+ * Portions Copyright (c) 2009 Apple Inc. All rights reserved.
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -34,6 +36,10 @@
 #include "kdc_locl.h"
 #ifdef HAVE_UTIL_H
 #include <util.h>
+#endif
+
+#ifdef __APPLE__
+#include <sandbox.h>
 #endif
 
 sig_atomic_t exit_flag = 0;
@@ -92,6 +98,15 @@ main(int argc, char **argv)
 
     setprogname(argv[0]);
 
+#ifdef __APPLE__
+    {
+	char *errorstring;
+	ret = sandbox_init("kdc", SANDBOX_NAMED, &errorstring);
+	if (ret)
+	    errx(1, "sandbox_init failed: %d: %s", ret, errorstring);
+    }
+#endif
+
     ret = krb5_init_context(&context);
     if (ret == KRB5_CONFIG_BADFORMAT)
 	errx (1, "krb5_init_context failed to parse configuration file");
@@ -128,6 +143,9 @@ main(int argc, char **argv)
 #ifdef SUPPORT_DETACH
     if (detach_from_console)
 	daemon(0, 0);
+#endif
+#ifdef __APPLE__
+    bonjour_announce(context, config);
 #endif
     pidfile(NULL);
 

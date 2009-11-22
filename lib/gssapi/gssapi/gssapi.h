@@ -810,6 +810,7 @@ extern gss_OID GSSAPI_LIB_VARIABLE GSS_C_ATTR_STREAM_SIZES;
 
 OM_uint32 GSSAPI_LIB_FUNCTION
 gss_context_query_attributes(OM_uint32 * /* minor_status */,
+			     const gss_ctx_id_t /* context_handle */,
 			     gss_OID /* attribute */,
 			     void * /*data*/,
 			     size_t /* len */);

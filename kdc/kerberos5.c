@@ -890,7 +890,7 @@ _kdc_as_rep(krb5_context context,
     KDCOptions f = b->kdc_options;
     hdb_entry_ex *client = NULL, *server = NULL;
     HDB *clientdb;
-    krb5_enctype cetype, setype, sessionetype;
+    krb5_enctype setype, sessionetype;
     krb5_data e_data;
     EncTicketPart et;
     EncKDCRepPart ek;

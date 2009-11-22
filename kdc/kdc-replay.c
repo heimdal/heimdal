@@ -82,7 +82,7 @@ main(int argc, char **argv)
     if (ret)
 	krb5_err(context, 1, ret, "krb5_kdc_default_config");
 
-    kdc_openlog(context, config);
+    kdc_openlog(context, "kdc-replay", config);
 
     ret = krb5_kdc_set_dbinfo(context, config);
     if (ret)

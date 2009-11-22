@@ -35,19 +35,16 @@
 
 #define HC_DEPRECATED_CRYPTO
 
-#include <config.h>
-
-#include <krb5-types.h>
-#include <asn1-common.h>
+#include "headers.h"
 #include <digest_asn1.h>
-#include <crypto-headers.h>
-#include <krb5.h>
-#include <hdb.h>
-#include <kdc.h>
 #include <heimntlm.h>
-
 #include <heim-ipc.h>
-#include <roken.h>
+#include <getarg.h>
+
+typedef struct pk_client_params pk_client_params;
+struct DigestREQ;
+struct Kx509Request;
+#include <kdc-private.h>
 
 krb5_kdc_configuration *config;
 
@@ -217,14 +214,41 @@ ntlm_service(void *ctx, const heim_idata *req,
 	_kdc_free_ent (context, user);
 }
 
+static int help_flag;
+static int version_flag;
+
+static struct getargs args[] = {
+    {	"help",		'h',	arg_flag,   &help_flag },
+    {	"version",	'v',	arg_flag,   &version_flag }
+};
+
+static int num_args = sizeof(args) / sizeof(args[0]);
+
+static void
+usage(int ret)
+{
+    arg_printusage (args, num_args, NULL, "");
+    exit (ret);
+}
 
 int
 main(int argc, char **argv)
 {
     krb5_context context;
-    int ret;
+    int ret, optidx = 0;
 
     setprogname(argv[0]);
+
+    if (getarg(args, num_args, argc, argv, &optidx))
+	usage(1);
+	
+    if (help_flag)
+	usage(0);
+    
+    if (version_flag) {
+	print_version(NULL);
+	exit(0);
+    }
 
     ret = krb5_init_context(&context);
     if (ret)

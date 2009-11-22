@@ -36,6 +36,8 @@ LDADD = $(top_builddir)/lib/hdb/libhdb.la \
 	$(LIB_krb4) \
 	$(LIB_hcrypto) \
 	$(top_builddir)/lib/asn1/libasn1.la \
+	$(top_builddir)/lib/ntlm/libheimntlm.la \
+	$(top_builddir)/lib/ipc/libheim-ipcs.la \
 	$(LIB_roken) \
 	$(LIB_door_create) \
 	$(LIB_pidfile)

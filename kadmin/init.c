@@ -3,6 +3,8 @@
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  *
+ * Portions Copyright (c) 2009 Apple Inc. All rights reserved.
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -157,15 +159,9 @@ init(struct init_options *opt, int argc, char **argv)
 	krb5_principal princ;
 	const char *realm = argv[i];
 
-	/* Create `krbtgt/REALM' */
-	ret = krb5_make_principal(context, &princ, realm,
-				  KRB5_TGS_NAME, realm, NULL);
-	if(ret)
-	    return 0;
 	if (opt->realm_max_ticket_life_string == NULL) {
 	    max_life = 0;
 	    if(edit_deltat ("Realm max ticket life", &max_life, NULL, 0)) {
-		krb5_free_principal(context, princ);
 		return 0;
 	    }
 	}
@@ -173,12 +169,21 @@ init(struct init_options *opt, int argc, char **argv)
 	    max_rlife = 0;
 	    if(edit_deltat("Realm max renewable ticket life", &max_rlife,
 			   NULL, 0)) {
-		krb5_free_principal(context, princ);
 		return 0;
 	    }
 	}
+
+	/* Create `krbtgt/REALM' */
+	ret = krb5_make_principal(context, &princ, realm,
+				  KRB5_TGS_NAME, realm, NULL);
+	if(ret)
+	    return 0;
+
 	create_random_entry(princ, max_life, max_rlife, 0);
 	krb5_free_principal(context, princ);
+
+	if (opt->bare_flag)
+	    continue;
 
 	/* Create `kadmin/changepw' */
 	krb5_make_principal(context, &princ, realm,

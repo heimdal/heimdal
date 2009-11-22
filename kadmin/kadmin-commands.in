@@ -55,6 +55,11 @@ command = {
 		help = "just convert keyfile to new format"
 	}
 	option = {
+		long = "random-password"
+		type = "flag"
+		help = "use a random password (and print the password to stdout)"
+	}
+	option = {
 		long = "master-key-fd"
 		type = "integer"
 		argument = "fd"
@@ -88,6 +93,11 @@ command = {
 		long = "realm-max-renewable-life"
 		type = "string"
 		help = "realm max renewable lifetime"
+	}
+	option = {
+		long = "bare"
+		type = "flag"
+		help = "only create krbtgt for realm"
 	}
 	argument = "realm..."
 	min_args = "1"

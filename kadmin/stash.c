@@ -3,6 +3,8 @@
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  *
+ * Portions Copyright (c) 2009 Apple Inc. All rights reserved.
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -93,6 +95,9 @@ stash(struct stash_options *opt, int argc, char **argv)
 	    }
 	    buf[n] = '\0';
 	    buf[strcspn(buf, "\r\n")] = '\0';
+	} else if (opt->random_password_flag) {
+	    random_password (buf, sizeof(buf));
+	    printf("Using random master stash password: %s\n", buf);
 	} else {
 	    if(UI_UTIL_read_pw_string(buf, sizeof(buf), "Master key: ", 1)) {
 		hdb_free_master_key(context, mkey);

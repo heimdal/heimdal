@@ -619,7 +619,7 @@ add_certificate(const char *cert_file,
 	return CKR_GENERAL_ERROR;
     }
 
-    ret = hx509_certs_iter(context, certs, add_cert, &foo);
+    ret = hx509_certs_iter_f(context, certs, add_cert, &foo);
     hx509_certs_free(&certs);
     if (ret) {
 	st_logf("failed adding certs from file %s\n", cert_file);

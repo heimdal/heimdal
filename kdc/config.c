@@ -1,8 +1,9 @@
 /*
  * Copyright (c) 1997-2007 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
- *
  * All rights reserved.
+ *
+ * Portions Copyright (c) 2009 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -215,7 +216,7 @@ configure(krb5_context context, int argc, char **argv)
     if (ret)
 	krb5_err(context, 1, ret, "krb5_kdc_default_config");
 
-    kdc_openlog(context, config);
+    kdc_openlog(context, "kdc", config);
 
     ret = krb5_kdc_set_dbinfo(context, config);
     if (ret)
@@ -334,5 +335,33 @@ configure(krb5_context context, int argc, char **argv)
 
     krb5_kdc_windc_init(context);
 
+#ifdef __APPLE__
+    config->enable_pkinit = 1;
+
+    if (config->pkinit_kdc_friendly_name == NULL)
+	config->pkinit_kdc_friendly_name = 
+	    strdup("O=System Identity,CN=com.apple.kerberos.kdc");
+    if (config->pkinit_kdc_identity == NULL)
+	config->pkinit_kdc_identity = strdup("KEYCHAIN:");
+    if (config->pkinit_kdc_anchors == NULL)
+	config->pkinit_kdc_anchors = strdup("KEYCHAIN:");
+
+#endif
+
+    if (config->enable_pkinit) {
+	if (config->pkinit_kdc_identity == NULL)
+	    krb5_errx(context, 1, "pkinit enabled but no identity");
+ 
+	if (config->pkinit_kdc_anchors == NULL)
+	    krb5_errx(context, 1, "pkinit enabled but no X509 anchors");
+
+	_kdc_pk_initialize(context, config,
+			   config->pkinit_kdc_identity,
+			   config->pkinit_kdc_anchors,
+			   config->pkinit_kdc_cert_pool,
+			   config->pkinit_kdc_revoke);
+
+    }
+    
     return config;
 }

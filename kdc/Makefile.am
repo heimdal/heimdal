@@ -10,7 +10,7 @@ bin_PROGRAMS = string2key
 
 sbin_PROGRAMS = kstash
 
-libexec_PROGRAMS = hprop hpropd kdc
+libexec_PROGRAMS = hprop hpropd kdc digest-service
 
 noinst_PROGRAMS = kdc-replay
 
@@ -23,8 +23,12 @@ kstash_SOURCES = kstash.c headers.h
 
 string2key_SOURCES = string2key.c headers.h
 
+digest_service_SOURCES = \
+	digest-service.c
+
 kdc_SOURCES = connect.c	\
 	config.c	\
+	announce.c	\
 	main.c
 
 libkdc_la_SOURCES = 		\
@@ -110,9 +114,19 @@ LDADD = $(top_builddir)/lib/hdb/libhdb.la \
 	$(DBLIB)
 
 kdc_LDADD = libkdc.la $(LDADD) $(LIB_pidfile)
-kdc_replay_LDADD = $(kdc_LDADD)
+
+if FRAMEWORK_SECURITY
+kdc_LDFLAGS = -framework SystemConfiguration -framework CoreFoundation
+endif
+
+digest_service_LDADD = \
+	libkdc.la \
+	../lib/ipc/libheim-ipcs.la \
+	$(LDADD) $(LIB_pidfile)
+kdc_replay_LDADD = libkdc.la $(LDADD) $(LIB_pidfile)
 
 include_HEADERS = kdc.h kdc-protos.h
+
 
 krb5dir = $(includedir)/krb5
 krb5_HEADERS = windc_plugin.h

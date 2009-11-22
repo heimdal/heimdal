@@ -97,15 +97,18 @@ CFString2utf8(CFStringRef string)
 static void
 retry_timer(void)
 {
-    dispatch_source_timer_create(DISPATCH_TIMER_ONESHOT,
-				 5ull * NSEC_PER_SEC,
-				 0,
-				 NULL,
-				 g_queue,
-				 ^(dispatch_event_t event){
-				     create_dns_sd();
-				     dispatch_release(dispatch_event_get_source(event));
-				 });
+    dispatch_source_t s;
+    dispatch_time_t t;
+    
+    s = dispatch_source_create(DISPATCH_SOURCE_TYPE_TIMER,
+			       0, 0, g_queue);
+    t = dispatch_time(DISPATCH_TIME_NOW, 5ull * NSEC_PER_SEC);
+    dispatch_source_set_timer(s, t, 0, NSEC_PER_SEC);
+    dispatch_source_set_event_handler(s, ^{ 
+	    create_dns_sd();
+	    dispatch_release(s);
+	});
+    dispatch_resume(s);
 }
 
 /*
@@ -116,6 +119,7 @@ static void
 create_dns_sd(void)
 {
     DNSServiceErrorType error;
+    dispatch_source_t s;
 
     error = DNSServiceCreateConnection(&g_dnsRef);
     if (error) {
@@ -124,22 +128,26 @@ create_dns_sd(void)
     }
 
     dispatch_suspend(g_queue);
-    dispatch_source_read_create(DNSServiceRefSockFD(g_dnsRef),
-				NULL,
-				g_queue,
-				^(dispatch_source_t ds){
-				    if (dispatch_source_get_error(ds, NULL)) {
-					dispatch_release(ds);
-					return;
-				    }
-				    DNSServiceErrorType ret = DNSServiceProcessResult(g_dnsRef);
-				    /* on error tear down and set timer to recreate */
-				    if (ret != kDNSServiceErr_NoError && ret != kDNSServiceErr_Transient) {
-					destroy_dns_sd();
-					retry_timer();
-					dispatch_cancel(ds);
-				    }
-				});
+
+    s = dispatch_source_create(DISPATCH_SOURCE_TYPE_READ,
+			       DNSServiceRefSockFD(g_dnsRef),
+			       0, g_queue);
+    
+    dispatch_source_set_event_handler(s, ^{
+	    DNSServiceErrorType ret = DNSServiceProcessResult(g_dnsRef);
+	    /* on error tear down and set timer to recreate */
+	    if (ret != kDNSServiceErr_NoError && ret != kDNSServiceErr_Transient) {
+		dispatch_source_cancel(s);
+	    }
+	});
+
+    dispatch_source_set_cancel_handler(s, ^{
+	    destroy_dns_sd();
+	    retry_timer();
+	    dispatch_release(s);
+	});
+
+    dispatch_resume(s);
     
     /* Do the first update ourself */
     update_all(g_store, NULL, NULL);

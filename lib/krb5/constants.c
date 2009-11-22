@@ -3,6 +3,8 @@
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  *
+ * Portions Copyright (c) 2009 Apple Inc. All rights reserved.
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -35,6 +37,8 @@
 
 KRB5_LIB_VARIABLE const char *krb5_config_file =
 #ifdef __APPLE__
+"~/Library/Preferences/com.apple.Kerberos.plist:"
+"/Library/Preferences/com.apple.Kerberos.plist:"
 "~/Library/Preferences/edu.mit.Kerberos:"
 "/Library/Preferences/edu.mit.Kerberos:"
 #endif

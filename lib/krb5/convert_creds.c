@@ -132,10 +132,9 @@ krb524_convert_creds_kdc(krb5_context context,
 	    goto out;
 	memcpy(v4creds->session, v5_creds->session.keyvalue.data, 8);
     } else {
-	krb5_set_error_message (context, ret,
-				N_("converting credentials: %s",
-				  "already localized"),
-				krb5_get_err_text(context, ret));
+	krb5_prepend_error_message(context, ret,
+				   N_("converting credentials: %s",
+				      "already localized"));
     }
 out:
     krb5_storage_free(sp);

@@ -73,6 +73,7 @@ dist_libhdb_la_SOURCES =			\
 	$(ldap)					\
 	hdb.c					\
 	hdb-sqlite.c				\
+	hdb-keytab.c				\
 	hdb_locl.h				\
 	hdb-private.h				\
 	keys.c					\

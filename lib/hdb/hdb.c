@@ -3,6 +3,8 @@
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  *
+ * Portions Copyright (c) 2009 Apple Inc. All rights reserved.
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -411,6 +413,27 @@ hdb_list_builtin(krb5_context context, char **list)
     }
     *list = buf;
     return 0;
+}
+
+krb5_error_code
+_hdb_keytab2hdb_entry(krb5_context context,
+		      const krb5_keytab_entry *ktentry,
+		      hdb_entry_ex *entry)
+{
+    entry->entry.kvno = ktentry->vno;
+    entry->entry.created_by.time = ktentry->timestamp;
+
+    entry->entry.keys.val = calloc(1, sizeof(entry->entry.keys.val[0]));
+    if (entry->entry.keys.val == NULL)
+	return ENOMEM;
+    entry->entry.keys.len = 1;
+
+    entry->entry.keys.val[0].mkvno = NULL;
+    entry->entry.keys.val[0].salt = NULL;
+    
+    return krb5_copy_keyblock_contents(context,
+				       &ktentry->keyblock,
+				       &entry->entry.keys.val[0].key);
 }
 
 /**

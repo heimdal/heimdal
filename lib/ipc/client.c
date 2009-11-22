@@ -251,7 +251,6 @@ mach_async(void *ctx, const heim_idata *request, void *userctx,
 	});
 
     dispatch_source_set_cancel_handler(c->source, ^{
-	    struct async_client *s = dispatch_get_context(dispatch_get_current_queue());
 	    mach_port_mod_refs(mach_task_self(), c->mp, 
 			       MACH_PORT_RIGHT_RECEIVE, -1);
 	    dispatch_release(c->queue);

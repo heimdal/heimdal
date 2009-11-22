@@ -59,6 +59,17 @@ realloc_method_data(METHOD_DATA *md)
     return 0;
 }
 
+static void
+set_salt_padata(METHOD_DATA *md, Salt *salt)
+{
+    if (salt) {
+       realloc_method_data(md);
+       md->val[md->len - 1].padata_type = salt->type;
+       der_copy_octet_string(&salt->salt,
+                             &md->val[md->len - 1].padata_value);
+    }
+}
+
 const PA_DATA*
 _kdc_find_padata(const KDC_REQ *req, int *start, int type)
 {
@@ -910,6 +921,10 @@ _kdc_as_rep(krb5_context context,
     memset(&session_key, 0, sizeof(session_key));
     krb5_data_zero(&e_data);
 
+    ALLOC(rep.padata);
+    rep.padata->len = 0;
+    rep.padata->val = NULL;
+
     if (f.canonicalize)
 	flags |= HDB_F_CANON;
 
@@ -1259,6 +1274,8 @@ _kdc_as_rep(krb5_context context,
 	    }
 	    et.flags.pre_authent = 1;
 
+	    set_salt_padata(rep.padata, pa_key->salt);
+
 	    reply_key = &pa_key->key;
 
 	    ret = krb5_enctype_to_string(context, pa_key->key.keytype, &str);
@@ -1597,10 +1614,6 @@ _kdc_as_rep(krb5_context context,
 	ALLOC(ek.caddr);
 	copy_HostAddresses(et.caddr, ek.caddr);
     }
-
-    ALLOC(rep.padata);
-    rep.padata->len = 0;
-    rep.padata->val = NULL;
 
 #if PKINIT
     if (pkp) {

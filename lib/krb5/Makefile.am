@@ -53,9 +53,13 @@ if PKINIT
 LIB_pkinit = ../hx509/libhx509.la
 endif
 
+if have_scc
+use_sqlite = $(LIB_sqlite3)
+endif
+
 libkrb5_la_LIBADD = \
 	$(LIB_pkinit) \
-	$(LIB_sqlite3) \
+	$(use_sqlite) \
 	$(LIB_com_err) \
 	$(LIB_hcrypto) \
 	$(top_builddir)/lib/asn1/libasn1.la \

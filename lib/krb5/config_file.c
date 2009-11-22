@@ -267,7 +267,7 @@ static void
 convert_content(const void *key, const void *value, void *context)
 {
     krb5_config_section *tmp, **parent = context;
-    char *k, *v;
+    char *k;
 
     if (CFGetTypeID(key) != CFStringGetTypeID())
 	return;
@@ -295,7 +295,6 @@ parse_plist_config(krb5_context context, const char *path, krb5_config_section *
     CFDictionaryRef d;
     CFErrorRef e;
     CFURLRef url;
-    CFDataRef p;
     
     url = CFURLCreateFromFileSystemRepresentation(kCFAllocatorDefault, (UInt8 *)path, strlen(path), FALSE);
     if (url == NULL) {

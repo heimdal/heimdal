@@ -59,6 +59,7 @@ libkrb5_la_LIBADD = \
 	$(LIB_com_err) \
 	$(LIB_hcrypto) \
 	$(top_builddir)/lib/asn1/libasn1.la \
+	../ipc/libheim-ipcc.la \
 	../wind/libwind.la \
 	$(LIB_libintl) \
 	$(LIBADD_roken) \

@@ -3,6 +3,8 @@
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  *
+ * Portions Copyright (c) 2009 Apple Inc. All rights reserved.
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -57,9 +59,10 @@ printable_time_long(time_t t)
 #define COL_EXPIRES		NP_("  Expires", "")
 #define COL_FLAGS		NP_("Flags", "")
 #define COL_NAME		NP_("  Name", "")
-#define COL_PRINCIPAL		NP_("  Principal", "")
-#define COL_PRINCIPAL_KVNO	NP_("  Principal (kvno)", "")
-#define COL_CACHENAME		NP_("  Cache name", "")
+#define COL_PRINCIPAL		NP_("  Principal", "in klist output")
+#define COL_PRINCIPAL_KVNO	NP_("  Principal (kvno)", "in klist output")
+#define COL_CACHENAME		NP_("  Cache name", "name in klist output")
+#define COL_DEFCACHE		NP_("", "")
 
 static void
 print_cred(krb5_context context, krb5_creds *cred, rtbl_t ct, int do_flags)
@@ -223,7 +226,7 @@ print_tickets (krb5_context context,
     char *str, *name;
     krb5_cc_cursor cursor;
     krb5_creds creds;
-    int32_t sec, usec;
+    krb5_deltat sec;
 
     rtbl_t ct = NULL;
 
@@ -249,9 +252,9 @@ print_tickets (krb5_context context,
 	printf ("%17s: %d\n", N_("Cache version", ""),
 		krb5_cc_get_version(context, ccache));
 
-    krb5_get_kdc_sec_offset(context, &sec, &usec);
+    ret = krb5_cc_get_kdc_offset(context, ccache, &sec);
 
-    if (do_verbose && sec != 0) {
+    if (ret == 0 && do_verbose && sec != 0) {
 	char buf[BUFSIZ];
 	int val;
 	int sig;
@@ -431,28 +434,14 @@ display_tokens(int do_verbose)
  */
 
 static int
-display_v5_ccache (const char *cred_cache, int do_test, int do_verbose,
+display_v5_ccache (krb5_context context, krb5_ccache ccache,
+		   int do_test, int do_verbose,
 		   int do_flags, int do_hidden)
 {
     krb5_error_code ret;
-    krb5_context context;
-    krb5_ccache ccache;
     krb5_principal principal;
     int exit_status = 0;
 
-    ret = krb5_init_context (&context);
-    if (ret)
-	errx (1, "krb5_init_context failed: %d", ret);
-
-    if(cred_cache) {
-	ret = krb5_cc_resolve(context, cred_cache, &ccache);
-	if (ret)
-	    krb5_err (context, 1, ret, "%s", cred_cache);
-    } else {
-	ret = krb5_cc_default (context, &ccache);
-	if (ret)
-	    krb5_err (context, 1, ret, "krb5_cc_resolve");
-    }
 
     ret = krb5_cc_get_principal (context, ccache, &principal);
     if (ret) {
@@ -475,7 +464,7 @@ display_v5_ccache (const char *cred_cache, int do_test, int do_verbose,
 	krb5_err (context, 1, ret, "krb5_cc_close");
 
     krb5_free_principal (context, principal);
-    krb5_free_context (context);
+
     return exit_status;
 }
 
@@ -484,17 +473,19 @@ display_v5_ccache (const char *cred_cache, int do_test, int do_verbose,
  */
 
 static int
-list_caches(void)
+list_caches(krb5_context context)
 {
     krb5_cc_cache_cursor cursor;
-    krb5_context context;
+    const char *cdef_name;
+    char *def_name;
     krb5_error_code ret;
     krb5_ccache id;
     rtbl_t ct;
 
-    ret = krb5_init_context (&context);
-    if (ret)
-	errx (1, "krb5_init_context failed: %d", ret);
+    cdef_name = krb5_cc_default_name(context);
+    if (cdef_name == NULL)
+	krb5_errx(context, 1, "krb5_cc_default_name");
+    def_name = strdup(cdef_name);
 
     ret = krb5_cc_cache_get_first (context, NULL, &cursor);
     if (ret == KRB5_CC_NOSUPP)
@@ -506,6 +497,7 @@ list_caches(void)
     rtbl_add_column(ct, COL_NAME, 0);
     rtbl_add_column(ct, COL_CACHENAME, 0);
     rtbl_add_column(ct, COL_EXPIRES, 0);
+    rtbl_add_column(ct, COL_DEFCACHE, 0);
     rtbl_set_prefix(ct, "   ");
     rtbl_set_column_prefix(ct, COL_NAME, "");
 
@@ -524,6 +516,7 @@ list_caches(void)
 	ret = krb5_cc_get_friendly_name(context, id, &name);
 	if (ret == 0) {
 	    const char *str;
+	    char *fname;
 	    rtbl_add_column_entry(ct, COL_NAME, name);
 	    rtbl_add_column_entry(ct, COL_CACHENAME,
 				  krb5_cc_get_name(context, id));
@@ -533,6 +526,17 @@ list_caches(void)
 		str = printable_time(t);
 	    rtbl_add_column_entry(ct, COL_EXPIRES, str);
 	    free(name);
+
+	    ret = krb5_cc_get_full_name(context, id, &fname);
+	    if (ret)
+		krb5_err (context, 1, ret, "krb5_cc_get_full_name");
+
+	    if (strcmp(fname, def_name) == 0)
+		rtbl_add_column_entry(ct, COL_DEFCACHE, "*");
+	    else
+		rtbl_add_column_entry(ct, COL_DEFCACHE, "");
+
+	    krb5_xfree(fname);
 	}
 	krb5_cc_close(context, id);
 
@@ -541,6 +545,7 @@ list_caches(void)
 
     krb5_cc_cache_end_seq_get(context, cursor);
 
+    free(def_name);
     rtbl_format(ct, stdout);
     rtbl_destroy(ct);
 
@@ -555,6 +560,7 @@ static int version_flag		= 0;
 static int help_flag		= 0;
 static int do_verbose		= 0;
 static int do_list_caches	= 0;
+static int do_all_content	= 0;
 static int do_test		= 0;
 #ifndef NO_AFS
 static int do_tokens		= 0;
@@ -577,8 +583,10 @@ static struct getargs args[] = {
 #endif
     { "v5",			'5',	arg_flag, &do_v5,
       NP_("display v5 cred cache", ""), NULL},
+    { "all-content",		'A', arg_flag, &do_all_content,
+      NP_("all caches with their content", ""), NULL },
     { "list-caches",		'l', arg_flag, &do_list_caches,
-      NP_("verbose output", ""), NULL },
+      NP_("list all caches", ""), NULL },
     { "verbose",		'v', arg_flag, &do_verbose,
       NP_("verbose output", ""), NULL },
     { "hidden",			0,   arg_flag, &do_hidden,
@@ -606,6 +614,8 @@ usage (int ret)
 int
 main (int argc, char **argv)
 {
+    krb5_context context;
+    krb5_error_code ret;
     int optidx = 0;
     int exit_status = 0;
 
@@ -631,14 +641,50 @@ main (int argc, char **argv)
     if (argc != 0)
 	usage (1);
 
+    ret = krb5_init_context (&context);
+    if (ret)
+	errx (1, "krb5_init_context failed: %d", ret);
+
+
     if (do_list_caches) {
-	exit_status = list_caches();
+	exit_status = list_caches(context);
 	return exit_status;
     }
 
-    if (do_v5)
-	exit_status = display_v5_ccache (cred_cache, do_test,
-					 do_verbose, do_flags, do_hidden);
+    if (do_v5) {
+	krb5_ccache id;
+
+	if (do_all_content) {
+	    krb5_cc_cache_cursor cursor;
+
+	    ret = krb5_cc_cache_get_first (context, NULL, &cursor);
+	    if (ret)
+		krb5_err (context, 1, ret, "krb5_cc_cache_get_first");
+
+
+	    while (krb5_cc_cache_next (context, cursor, &id) == 0) {
+		exit_status |= display_v5_ccache(context, id, do_test,
+						 do_verbose, do_flags,
+						 do_hidden);
+		printf("\n\n");
+	    }
+	    krb5_cc_cache_end_seq_get(context, cursor);
+
+	} else {
+	    if(cred_cache) {
+		ret = krb5_cc_resolve(context, cred_cache, &id);
+		if (ret)
+		    krb5_err (context, 1, ret, "%s", cred_cache);
+	    } else {
+		ret = krb5_cc_default (context, &id);
+		if (ret)
+		    krb5_err (context, 1, ret, "krb5_cc_resolve");
+	    }
+	    exit_status = display_v5_ccache(context, id, do_test,
+					    do_verbose, do_flags,
+					    do_hidden);
+	}
+    }
 
     if (!do_test) {
 #ifndef NO_AFS
@@ -649,6 +695,8 @@ main (int argc, char **argv)
 	}
 #endif
     }
+
+    krb5_free_context(context);
 
     return exit_status;
 }

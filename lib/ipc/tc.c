@@ -34,11 +34,30 @@
  */
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <krb5-types.h>
 #include <asn1-common.h>
 #include <heim-ipc.h>
+#include <getarg.h>
 #include <err.h>
+#include <roken.h>
 
+static int help_flag;
+static int version_flag;
+
+static struct getargs args[] = {
+    {	"help",		'h',	arg_flag,   &help_flag },
+    {	"version",	'v',	arg_flag,   &version_flag }
+};
+
+static int num_args = sizeof(args) / sizeof(args[0]);
+
+static void
+usage(int ret)
+{
+    arg_printusage (args, num_args, NULL, "");
+    exit (ret);
+}
 
 static void
 reply(void *ctx, int errorcode, heim_idata *reply, heim_icred cred)
@@ -47,13 +66,27 @@ reply(void *ctx, int errorcode, heim_idata *reply, heim_icred cred)
     heim_ipc_semaphore_signal((heim_isemaphore)ctx); /* tell caller we are done */
 }
 
+
 int
 main(int argc, char **argv)
 {
+    int ret, optidx = 0;
     heim_isemaphore s;
     heim_idata req, rep;
     heim_ipc ipc;
-    int ret;
+
+    setprogname(argv[0]);
+
+    if (getarg(args, num_args, argc, argv, &optidx))
+	usage(1);
+	
+    if (help_flag)
+	usage(0);
+    
+    if (version_flag) {
+	print_version(NULL);
+	exit(0);
+    }
 
     ret = heim_ipc_init_context("ANY:org.h5l.test-ipc", &ipc);
     if (ret)

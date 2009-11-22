@@ -487,7 +487,9 @@ gen_files_digest =					\
 	asn1_NTLMInit.x					\
 	asn1_NTLMInitReply.x				\
 	asn1_NTLMRequest.x				\
-	asn1_NTLMResponse.x
+	asn1_NTLMRequest2.x				\
+	asn1_NTLMResponse.x				\
+	asn1_NTLMReply.x
 
 gen_files_kx509 =					\
 	asn1_Kx509Response.x				\

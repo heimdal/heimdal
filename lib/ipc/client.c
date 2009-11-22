@@ -352,10 +352,7 @@ common_path_init(const char *service,
 	return ENOMEM;
     s->fd = -1;
 
-    if (service[0] == '\0')
-	asprintf(&s->path, "/var/run/.heim_%s", file);
-    else
-	s->path = strdup(service);
+    asprintf(&s->path, "/var/run/.heim_%s-%s", service, file);
 	
     *ctx = s;
 
@@ -404,7 +401,7 @@ static int
 door_init(const char *service,
 	  void **ctx)
 {
-    ret = common_path_init(context, service, name, "door", ctx);
+    ret = common_path_init(context, service, "door", ctx);
     if (ret)
 	return ret;
     ret = connect_door(*ctx);

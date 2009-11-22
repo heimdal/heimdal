@@ -124,11 +124,11 @@ priv_headers += pkcs10_asn1-priv.h
 priv_headers += crmf_asn1-priv.h
 
 
-ocsp_asn1_files: $(ASN1_COMPILE_DEP) $(srcdir)/ocsp.asn1
-	$(ASN1_COMPILE) --preserve-binary=OCSPTBSRequest --preserve-binary=OCSPResponseData $(srcdir)/ocsp.asn1 ocsp_asn1 || (rm -f ocsp_asn1_files ; exit 1)
+ocsp_asn1_files: $(ASN1_COMPILE_DEP) $(srcdir)/ocsp.asn1 $(srcdir)/ocsp.opt
+	$(ASN1_COMPILE) --option-file=$(srcdir)/ocsp.opt $(srcdir)/ocsp.asn1 ocsp_asn1 || (rm -f ocsp_asn1_files ; exit 1)
 
-pkcs10_asn1_files: $(ASN1_COMPILE_DEP) $(srcdir)/pkcs10.asn1
-	$(ASN1_COMPILE) --preserve-binary=CertificationRequestInfo $(srcdir)/pkcs10.asn1 pkcs10_asn1 || (rm -f pkcs10_asn1_files ; exit 1)
+pkcs10_asn1_files: $(ASN1_COMPILE_DEP) $(srcdir)/pkcs10.asn1 $(srcdir)/pkcs10.opt
+	$(ASN1_COMPILE) --option-file=$(srcdir)/pkcs10.opt $(srcdir)/pkcs10.asn1 pkcs10_asn1 || (rm -f pkcs10_asn1_files ; exit 1)
 
 crmf_asn1_files: $(ASN1_COMPILE_DEP) $(srcdir)/crmf.asn1
 	$(ASN1_COMPILE) $(srcdir)/crmf.asn1 crmf_asn1 || (rm -f crmf_asn1_files ; exit 1)

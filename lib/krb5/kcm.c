@@ -43,10 +43,7 @@
 #include <heim-ipc.h>
 
 static krb5_error_code
-kcm_set_kdc_offset(krb5_context context, krb5_ccache id, krb5_deltat kdc_offset);
-static krb5_error_code
-kcm_get_kdc_offset(krb5_context context, krb5_ccache id, krb5_deltat *kdc_offset);
-
+kcm_set_kdc_offset(krb5_context, krb5_ccache, krb5_deltat);
 
 static const char *kcm_ipc_name = "ANY:org.h5l.kcm";
 

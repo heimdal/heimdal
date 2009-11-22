@@ -3,6 +3,8 @@
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  *
+ * Portions Copyright (c) 2009 Apple Inc. All rights reserved.
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -507,12 +509,16 @@ static krb5_error_code
 init_fcc (krb5_context context,
 	  krb5_ccache id,
 	  krb5_storage **ret_sp,
-	  int *ret_fd)
+	  int *ret_fd,
+	  krb5_deltat *kdc_offset)
 {
     int fd;
     int8_t pvno, tag;
     krb5_storage *sp;
     krb5_error_code ret;
+
+    if (kdc_offset)
+	*kdc_offset = 0;
 
     ret = fcc_open(context, id, &fd, O_RDONLY | O_BINARY | O_CLOEXEC, 0);
     if(ret)
@@ -589,8 +595,11 @@ init_fcc (krb5_context context,
 		goto out;
 	    }
 	    switch (dtag) {
-	    case FCC_TAG_DELTATIME :
-		ret = krb5_ret_int32 (sp, &context->kdc_sec_offset);
+	    case FCC_TAG_DELTATIME : {
+		int32_t offset;
+
+		ret = krb5_ret_int32 (sp, &offset);
+		ret |= krb5_ret_int32 (sp, &context->kdc_usec_offset);
 		if(ret) {
 		    ret = KRB5_CC_FORMAT;
 		    krb5_set_error_message(context, ret,
@@ -599,16 +608,11 @@ init_fcc (krb5_context context,
 					   FILENAME(id));
 		    goto out;
 		}
-		ret = krb5_ret_int32 (sp, &context->kdc_usec_offset);
-		if(ret) {
-		    ret = KRB5_CC_FORMAT;
-		    krb5_set_error_message(context, ret,
-					   N_("Error reading kdc_usec in "
-					      "cache file: %s", ""),
-					   FILENAME(id));
-		    goto out;
-		}
+		context->kdc_sec_offset = offset;
+		if (kdc_offset)
+		    *kdc_offset = offset;
 		break;
+	    }
 	    default :
 		for (i = 0; i < data_len; ++i) {
 		    ret = krb5_ret_int8 (sp, &dummy);
@@ -660,7 +664,7 @@ fcc_get_principal(krb5_context context,
     int fd;
     krb5_storage *sp;
 
-    ret = init_fcc (context, id, &sp, &fd);
+    ret = init_fcc (context, id, &sp, &fd, NULL);
     if (ret)
 	return ret;
     ret = krb5_ret_principal(sp, principal);
@@ -693,7 +697,7 @@ fcc_get_first (krb5_context context,
     memset(*cursor, 0, sizeof(struct fcc_cursor));
 
     ret = init_fcc (context, id, &FCC_CURSOR(*cursor)->sp,
-		    &FCC_CURSOR(*cursor)->fd);
+		    &FCC_CURSOR(*cursor)->fd, NULL);
     if (ret) {
 	free(*cursor);
 	*cursor = NULL;
@@ -863,7 +867,17 @@ fcc_get_cache_next(krb5_context context, krb5_cc_cursor cursor, krb5_ccache *id)
 	    return ret;
 	fn = expandedfn;
     }
+    /* check if file exists, don't return a non existant "next" */
+    if (strncasecmp(fn, "FILE:", 5) == 0) {
+	struct stat sb;
+	ret = stat(fn + 5, &sb);
+	if (ret) {
+	    ret = KRB5_CC_END;
+	    goto out;
+	}
+    }
     ret = krb5_cc_resolve(context, fn, id);
+ out:
     if (expandedfn)
 	free(expandedfn);
 
@@ -947,7 +961,7 @@ fcc_move(krb5_context context, krb5_ccache from, krb5_ccache to)
     {
 	krb5_storage *sp;
 	int fd;
-	ret = init_fcc (context, to, &sp, &fd);
+	ret = init_fcc (context, to, &sp, &fd, NULL);
 	if (sp)
 	    krb5_storage_free(sp);
 	fcc_unlock(context, fd);
@@ -988,6 +1002,28 @@ fcc_lastchange(krb5_context context, krb5_ccache id, krb5_timestamp *mtime)
     return 0;
 }
 
+static krb5_error_code
+fcc_set_kdc_offset(krb5_context context, krb5_ccache id, krb5_deltat kdc_offset)
+{
+    return 0;
+}
+
+static krb5_error_code
+fcc_get_kdc_offset(krb5_context context, krb5_ccache id, krb5_deltat *kdc_offset)
+{
+    krb5_error_code ret;
+    krb5_storage *sp;
+    int fd;
+    ret = init_fcc(context, id, &sp, &fd, kdc_offset);
+    if (sp)
+	krb5_storage_free(sp);
+    fcc_unlock(context, fd);
+    close(fd);
+
+    return ret;
+}
+
+
 /**
  * Variable containing the FILE based credential cache implemention.
  *
@@ -1018,5 +1054,7 @@ KRB5_LIB_VARIABLE const krb5_cc_ops krb5_fcc_ops = {
     fcc_move,
     fcc_get_default_name,
     NULL,
-    fcc_lastchange
+    fcc_lastchange,
+    fcc_set_kdc_offset,
+    fcc_get_kdc_offset
 };

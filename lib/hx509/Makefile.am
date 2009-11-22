@@ -103,14 +103,26 @@ endif
 if versionscript
 libhx509_la_LDFLAGS += $(LDFLAGS_VERSION_SCRIPT)$(srcdir)/version-script.map
 endif
-$(libhx509_la_OBJECTS): $(srcdir)/version-script.map
+$(libhx509_la_OBJECTS): $(srcdir)/version-script.map $(nodist_include_HEADERS) $(priv_headers)
 
 libhx509_la_CPPFLAGS = -I$(srcdir)/ref $(INCLUDE_hcrypto)
 nodist_libhx509_la_SOURCES = $(BUILT_SOURCES)
 
-$(gen_files_ocsp) ocsp_asn1.h: ocsp_asn1_files
-$(gen_files_pkcs10) pkcs10_asn1.h: pkcs10_asn1_files
-$(gen_files_crmf) crmf_asn1.h: crmf_asn1_files
+$(gen_files_ocsp) ocsp_asn1.hx ocsp_asn1-priv.hx: ocsp_asn1_files
+$(gen_files_pkcs10) pkcs10_asn1.hx pkcs10_asn1-priv.hx: pkcs10_asn1_files
+$(gen_files_crmf) crmf_asn1.hx crmf_asn1-priv.hx: crmf_asn1_files
+
+dist_include_HEADERS = hx509.h hx509-protos.h
+
+nodist_include_HEADERS = hx509_err.h
+nodist_include_HEADERS += ocsp_asn1.h
+nodist_include_HEADERS += pkcs10_asn1.h
+nodist_include_HEADERS += crmf_asn1.h
+
+priv_headers  = ocsp_asn1-priv.h
+priv_headers += pkcs10_asn1-priv.h
+priv_headers += crmf_asn1-priv.h
+
 
 ocsp_asn1_files: $(ASN1_COMPILE_DEP) $(srcdir)/ocsp.asn1
 	$(ASN1_COMPILE) --preserve-binary=OCSPTBSRequest --preserve-binary=OCSPResponseData $(srcdir)/ocsp.asn1 ocsp_asn1 || (rm -f ocsp_asn1_files ; exit 1)
@@ -130,9 +142,6 @@ $(srcdir)/hx509-protos.h:
 $(srcdir)/hx509-private.h:
 	cd $(srcdir) && perl ../../cf/make-proto.pl -q -P comment -p hx509-private.h $(dist_libhx509_la_SOURCES) || rm -f hx509-private.h
 
-dist_include_HEADERS = hx509.h hx509-protos.h
-nodist_include_HEADERS = hx509_err.h
-
 bin_PROGRAMS = hxtool
 
 hxtool-commands.c hxtool-commands.h: hxtool-commands.in $(SLC)
@@ -151,10 +160,13 @@ hxtool_LDADD = \
 	$(LIB_roken) \
 	$(top_builddir)/lib/sl/libsl.la
 
-CLEANFILES = $(BUILT_SOURCES) \
-	$(gen_files_ocsp) ocsp_asn1_files ocsp_asn1.h* \
-	$(gen_files_pkcs10) pkcs10_asn1_files pkcs10_asn1.h* \
-	$(gen_files_crmf) crmf_asn1_files crmf_asn1.h* \
+CLEANFILES = $(BUILT_SOURCES) sel-gram.c sel-lex.c \
+	$(gen_files_ocsp) ocsp_asn1_files ocsp_asn1{,-priv}.h* \
+	ocsp_asn1-template.[ch]* \
+	$(gen_files_pkcs10) pkcs10_asn1_files pkcs10_asn1{,-priv}.h* \
+	pkcs10_asn1-template.[ch]* \
+	$(gen_files_crmf) crmf_asn1_files crmf_asn1{,-priv}.h* \
+	crmf_asn1-template.[ch]* \
 	$(TESTS) \
 	hxtool-commands.c hxtool-commands.h *.tmp \
 	request.out \

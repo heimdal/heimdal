@@ -42,7 +42,7 @@ struct heim_sipc {
     void *mech;
 };
 
-#ifdef __APPLE__
+#if defined(__APPLE__) && defined(HAVE_LIBDISPATCH)
 
 #include <mach/mach.h>
 #include <dispatch/dispatch.h>
@@ -394,14 +394,15 @@ mach_checkin_or_register(const char *service)
 }
 
 
-#endif /* __APPLE__ */
+#endif /* __APPLE__ && HAVE_LIBDISPATCH */
+
 
 int
 heim_sipc_launchd_mach_init(const char *service,
 			    heim_ipc_callback callback,
 			    void *user, heim_sipc *ctx)
 {
-#ifdef __APPLE__
+#if defined(__APPLE__) && defined(HAVE_LIBDISPATCH)
     mach_port_t sport = MACH_PORT_NULL;
     heim_sipc c;
     int ret;
@@ -436,10 +437,10 @@ heim_sipc_launchd_mach_init(const char *service,
 	mach_port_mod_refs(mach_task_self(), sport, 
 			   MACH_PORT_RIGHT_RECEIVE, -1);
     return ret;
-#else
+#else /* !(__APPLE__ && HAVE_LIBDISPATCH) */
     *ctx = NULL;
     return EINVAL;
-#endif
+#endif /* __APPLE__ && HAVE_LIBDISPATCH */
 }
 
 /**
@@ -454,7 +455,7 @@ heim_sipc_launchd_mach_init(const char *service,
 void
 heim_sipc_timeout(time_t t)
 {
-#if __APPLE__
+#if defined(__APPLE__) && defined(HAVE_LIBDISPATCH)
     static dispatch_once_t timeoutonce;
     init_globals();
     dispatch_sync(timerq, ^{
@@ -476,7 +477,7 @@ heim_sipc_timeout(time_t t)
 void
 heim_sipc_set_timeout_handler(void (*func)(void))
 {
-#ifdef __APPLE__
+#if defined(__APPLE__) && defined(HAVE_LIBDISPATCH)
     init_globals();
     dispatch_sync(timerq, ^{ timer_ev = func; });
 #else

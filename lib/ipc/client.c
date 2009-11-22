@@ -375,13 +375,29 @@ unix_socket_init(const char *service,
     return ret;
 }
 
-
 static int
 unix_socket_ipc(void *ctx,
-		const heim_idata *request, heim_idata *response,
+		const heim_idata *req, heim_idata *rep,
 		heim_icred *cred)
 {
-    return EINVAL;
+    struct path_ctx *s = ctx;
+    uint32_t len = htonl(req->length);
+    if (net_write(s->fd, &len, sizeof(len)) != sizeof(len))
+	return -1;
+    if (net_write(s->fd, req->data, req->length) != req->length)
+	return -1;
+
+    if (net_read(s->fd, &len, sizeof(len)) != sizeof(len))
+	return -1;
+
+    rep->length = ntohl(len);
+    rep->data = malloc(rep->length);
+    if (rep->data == NULL)
+	return -1;
+    if (net_read(s->fd, rep->data, rep->length) != rep->length)
+	return -1;
+
+    return 0;
 }
 
 int
@@ -527,7 +543,15 @@ int
 heim_ipc_async(heim_ipc ctx, const heim_idata *send, void *userctx,
 	       void (*func)(void *, int, heim_idata *, heim_icred))
 {
-    if (ctx->ops->async == NULL)
-	return EAGAIN; /* XXX */
+    if (ctx->ops->async == NULL) {
+	heim_idata recv;
+	heim_icred cred;
+	int ret;
+
+	ret = (ctx->ops->ipc)(ctx->ctx, send, &recv, &cred);
+	(*func)(userctx, ret, &recv, cred);
+	heim_ipc_free_cred(cred);
+	free(recv.data);
+    }
     return (ctx->ops->async)(ctx->ctx, send, userctx, func);
 }

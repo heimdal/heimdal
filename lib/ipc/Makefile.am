@@ -26,8 +26,8 @@ TESTS =	$(check_PROGRAMS)
 
 noinst_PROGRAMS = tc ts
 
-ts_LDADD = libheim-ipcs.la
-tc_LDADD = libheim-ipcc.la
+ts_LDADD = libheim-ipcs.la $(LIB_roken)
+tc_LDADD = libheim-ipcc.la $(LIB_roken)
 
 if have_gcd
 

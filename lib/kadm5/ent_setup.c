@@ -3,6 +3,8 @@
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  *
+ * Portions Copyright (c) 2009 Apple Inc. All rights reserved.
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -110,6 +112,17 @@ perform_tl_data(krb5_context context,
     return ret;
 }
 
+static void
+default_flags(hdb_entry_ex *ent, int server)
+{
+    ent->entry.flags.client      = 1;
+    ent->entry.flags.server      = !!server;
+    ent->entry.flags.forwardable = 1;
+    ent->entry.flags.proxiable   = 1;
+    ent->entry.flags.renewable   = 1;
+    ent->entry.flags.postdate    = 1;
+}
+
 
 /*
  * Create the hdb entry `ent' based on data from `princ' with
@@ -147,14 +160,11 @@ _kadm5_setup_entry(kadm5_server_context *context,
 	    attr_to_flags(def->attributes, &ent->entry.flags);
 	    ent->entry.flags.invalid = 0;
 	} else {
-	    ent->entry.flags.client      = 1;
-	    ent->entry.flags.server      = 1;
-	    ent->entry.flags.forwardable = 1;
-	    ent->entry.flags.proxiable   = 1;
-	    ent->entry.flags.renewable   = 1;
-	    ent->entry.flags.postdate    = 1;
+	    default_flags(ent, 1);
 	}
-    }
+    } else
+	default_flags(ent, 0);
+
     if(mask & KADM5_MAX_LIFE) {
 	if(princ_mask & KADM5_MAX_LIFE) {
 	    if(princ->max_life)

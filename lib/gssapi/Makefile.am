@@ -258,8 +258,8 @@ CLEANFILES = $(BUILT_SOURCES) \
 	$(gssapi_files) gssapi_asn1.h* gssapi_asn1_files \
 	gss-commands.h gss-commands.c
 
-$(spnego_files) spnego_asn1.hx: spnego_asn1_files
-$(gssapi_files) gssapi_asn1.hx: gssapi_asn1_files
+$(spnego_files) spnego_asn1.hx spnego_asn1-priv.hx: spnego_asn1_files
+$(gssapi_files) gssapi_asn1.hx gssapi_asn1-priv.hx: gssapi_asn1_files
 
 spnego_asn1_files: $(ASN1_COMPILE_DEP) $(srcdir)/spnego/spnego.asn1 $(srcdir)/spnego/spnego.opt
 	$(ASN1_COMPILE) --option-file=$(srcdir)/spnego/spnego.opt $(srcdir)/spnego/spnego.asn1 spnego_asn1
@@ -321,9 +321,8 @@ EXTRA_DIST = \
 	version-script.map \
 	gss-commands.in
 
-# to help stupid solaris make
-
-$(libgssapi_la_OBJECTS): gkrb5_err.h gssapi_asn1.h spnego_asn1.h
+$(libgssapi_la_OBJECTS): gkrb5_err.h gssapi_asn1.h gssapi_asn1-priv.h
+$(libgssapi_la_OBJECTS): spnego_asn1.h spnego_asn1-priv.h
 
 gkrb5_err.h gkrb5_err.c: $(srcdir)/krb5/gkrb5_err.et
 	$(COMPILE_ET) $(srcdir)/krb5/gkrb5_err.et

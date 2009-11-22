@@ -3,6 +3,8 @@
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  *
+ * Portions Copyright (c) 2009 Apple Inc. All rights reserved.
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -124,20 +126,21 @@ get_config_time (krb5_context context,
 
 static krb5_boolean
 get_config_bool (krb5_context context,
+		 krb5_boolean def_value,
 		 const char *realm,
 		 const char *name)
 {
-    return krb5_config_get_bool (context,
-				 NULL,
-				 "realms",
-				 realm,
-				 name,
-				 NULL)
-	|| krb5_config_get_bool (context,
-				 NULL,
-				 "libdefaults",
-				 name,
-				 NULL);
+    krb5_boolean b;
+
+    b = krb5_config_get_bool_default(context, NULL, def_value,
+				     "realms", realm, name, NULL);
+    if (b != def_value)
+	return b;
+    b = krb5_config_get_bool_default (context, NULL, def_value,
+				      "libdefaults", name, NULL);
+    if (b != def_value)
+	return b;
+    return def_value;
 }
 
 /*
@@ -156,11 +159,12 @@ krb5_get_init_creds_opt_set_default_flags(krb5_context context,
     krb5_boolean b;
     time_t t;
 
-    b = get_config_bool (context, realm, "forwardable");
+    b = get_config_bool (context, KRB5_FORWARDABLE_DEFAULT,
+			 realm, "forwardable");
     krb5_appdefault_boolean(context, appname, realm, "forwardable", b, &b);
     krb5_get_init_creds_opt_set_forwardable(opt, b);
 
-    b = get_config_bool (context, realm, "proxiable");
+    b = get_config_bool (context, FALSE, realm, "proxiable");
     krb5_appdefault_boolean(context, appname, realm, "proxiable", b, &b);
     krb5_get_init_creds_opt_set_proxiable (opt, b);
 
@@ -357,10 +361,13 @@ krb5_get_init_creds_opt_set_win2k(krb5_context context,
     ret = require_ext_opt(context, opt, "init_creds_opt_set_win2k");
     if (ret)
 	return ret;
-    if (req)
+    if (req) {
 	opt->opt_private->flags |= KRB5_INIT_CREDS_NO_C_CANON_CHECK;
-    else
+	opt->opt_private->flags |= KRB5_INIT_CREDS_NO_C_NO_EKU_CHECK;
+    } else {
 	opt->opt_private->flags &= ~KRB5_INIT_CREDS_NO_C_CANON_CHECK;
+	opt->opt_private->flags &= ~KRB5_INIT_CREDS_NO_C_NO_EKU_CHECK;
+    }
     return 0;
 }
 

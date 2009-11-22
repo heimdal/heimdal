@@ -91,6 +91,7 @@ HEIMDAL_X509_1.2 {
 		hx509_certs_info;
 		hx509_certs_init;
 		hx509_certs_iter;
+		hx509_certs_iter_f;
 		hx509_certs_merge;
 		hx509_certs_next_cert;
 		hx509_certs_start_seq;

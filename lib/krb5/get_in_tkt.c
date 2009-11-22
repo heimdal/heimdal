@@ -498,7 +498,7 @@ krb5_get_in_cred(krb5_context context,
 	goto out;
 	
     {
-	unsigned flags = 0;
+	unsigned flags = EXTRACT_TICKET_TIMESYNC;
 	if (opts.request_anonymous)
 	    flags |= EXTRACT_TICKET_ALLOW_SERVER_MISMATCH;
 

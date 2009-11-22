@@ -35,7 +35,7 @@
 
 #include "hi_locl.h"
 
-#ifdef __APPLE__
+#if defined(__APPLE__) && defined(HAVE_LIBDISPATCH)
 
 #include "heim_ipc.h"
 #include "heim_ipc_asyncServer.h"
@@ -462,7 +462,7 @@ struct hipc_ops {
 };
 
 struct hipc_ops ipcs[] = {
-#ifdef __APPLE__
+#if defined(__APPLE__) && defined(HAVE_LIBDISPATCH)
     { "MACH", mach_init, mach_release, mach_ipc, mach_async },
 #endif
 #ifdef HAVE_DOOR

@@ -124,8 +124,8 @@ test_ap(krb5_context context,
 	    krb5_errx(context, 1, "server flag missing mutual req");
     }
 
-    krb5_auth_getremoteseqnumber(context, server_ac, &server_seq);
-    krb5_auth_getremoteseqnumber(context, client_ac, &client_seq);
+    krb5_auth_con_getremoteseqnumber(context, server_ac, &server_seq);
+    krb5_auth_con_getremoteseqnumber(context, client_ac, &client_seq);
     if (server_seq != client_seq)
 	krb5_errx(context, 1, "seq num differ");
 

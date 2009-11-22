@@ -34,8 +34,28 @@
  */
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <krb5-types.h>
 #include <heim-ipc.h>
+#include <getarg.h>
+#include <roken.h>
+
+static int help_flag;
+static int version_flag;
+
+static struct getargs args[] = {
+    {	"help",		'h',	arg_flag,   &help_flag },
+    {	"version",	'v',	arg_flag,   &version_flag }
+};
+
+static int num_args = sizeof(args) / sizeof(args[0]);
+
+static void
+usage(int ret)
+{
+    arg_printusage (args, num_args, NULL, "");
+    exit (ret);
+}
 
 static void
 test_service(void *ctx, const heim_idata *req,
@@ -54,6 +74,21 @@ test_service(void *ctx, const heim_idata *req,
 int
 main(int argc, char **argv)
 {
+    int optidx = 0;
+
+    setprogname(argv[0]);
+
+    if (getarg(args, num_args, argc, argv, &optidx))
+	usage(1);
+	
+    if (help_flag)
+	usage(0);
+    
+    if (version_flag) {
+	print_version(NULL);
+	exit(0);
+    }
+
 #if __APPLE__
     {
 	heim_sipc mach;

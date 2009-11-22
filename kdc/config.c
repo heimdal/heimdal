@@ -338,11 +338,12 @@ configure(krb5_context context, int argc, char **argv)
 #ifdef __APPLE__
     config->enable_pkinit = 1;
 
-    if (config->pkinit_kdc_friendly_name == NULL)
-	config->pkinit_kdc_friendly_name = 
-	    strdup("O=System Identity,CN=com.apple.kerberos.kdc");
-    if (config->pkinit_kdc_identity == NULL)
+    if (config->pkinit_kdc_identity == NULL) {
+	if (config->pkinit_kdc_friendly_name == NULL)
+	    config->pkinit_kdc_friendly_name = 
+		strdup("O=System Identity,CN=com.apple.kerberos.kdc");
 	config->pkinit_kdc_identity = strdup("KEYCHAIN:");
+    }
     if (config->pkinit_kdc_anchors == NULL)
 	config->pkinit_kdc_anchors = strdup("KEYCHAIN:");
 

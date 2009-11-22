@@ -3,6 +3,8 @@
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  *
+ * Portions Copyright (c) 2009 Apple Inc. All rights reserved.
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -503,4 +505,12 @@ _krb5_debug(krb5_context context,
     va_start(ap, fmt);
     krb5_vlog(context, context->debug_dest, level, fmt, ap);
     va_end(ap);
+}
+
+krb5_boolean KRB5_LIB_FUNCTION
+_krb5_have_debug(krb5_context context, int level)
+{
+    if (context == NULL || context->debug_dest == NULL)
+	return 0 ;
+    return 1;
 }

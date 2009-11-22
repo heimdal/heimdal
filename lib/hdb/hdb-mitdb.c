@@ -101,7 +101,7 @@ salt:
 #include <db.h>
 #endif
 
-#define CHECK(x) do { if (x) goto out; } while(0)
+#define CHECK(x) do { if ((x)) goto out; } while(0)
 
 static krb5_error_code
 mdb_principal2key(krb5_context context,
@@ -200,7 +200,6 @@ mdb_value2entry(krb5_context context, krb5_data *data, hdb_entry *entry)
     uint16_t u16, num_keys, num_tl;
     size_t i, j;
     char *p = NULL;
-    int highest_kvno = 0;
 
     sp = krb5_storage_from_data(data);
     if (sp == NULL) {
@@ -609,7 +608,6 @@ mdb_fetch(krb5_context context, HDB *db, krb5_const_principal principal,
 {
     krb5_data key, value;
     krb5_error_code code;
-    char *str;
 
     code = mdb_principal2key(context, principal, &key);
     if (code)
@@ -642,8 +640,8 @@ mdb_store(krb5_context context, HDB *db, unsigned flags, hdb_entry_ex *entry)
 static krb5_error_code
 mdb_remove(krb5_context context, HDB *db, krb5_const_principal principal)
 {
-    krb5_data key, value;
     krb5_error_code code;
+    krb5_data key;
 
     mdb_principal2key(context, principal, &key);
     code = db->hdb__del(context, db, key);

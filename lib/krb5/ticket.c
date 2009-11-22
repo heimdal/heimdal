@@ -3,6 +3,8 @@
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  *
+ * Portions Copyright (c) 2009 Apple Inc. All rights reserved.
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -752,6 +754,7 @@ _krb5_extract_ticket(krb5_context context,
 
     krb5_timeofday (context, &sec_now);
     if (rep->enc_part.flags.initial
+	&& (flags & EXTRACT_TICKET_TIMESYNC)
 	&& context->kdc_sec_offset == 0
 	&& krb5_config_get_bool (context, NULL,
 				 "libdefaults",

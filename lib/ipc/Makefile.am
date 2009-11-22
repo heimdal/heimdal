@@ -29,7 +29,7 @@ noinst_PROGRAMS = tc ts
 ts_LDADD = libheim-ipcs.la
 tc_LDADD = libheim-ipcc.la
 
-if LIBDISPATCH
+if have_gcd
 
 heim_ipc.h heim_ipcUser.c heim_ipcServer.c heim_ipcServer.h: heim_ipc.defs
 	mig -header heim_ipc.h -user heim_ipcUser.c -sheader heim_ipcServer.h -server heim_ipcServer.c -I$(srcdir) $(srcdir)/heim_ipc.defs
@@ -39,7 +39,6 @@ heim_ipc_async.h heim_ipc_asyncUser.c heim_ipc_asyncServer.c heim_ipc_asyncServe
 
 heim_ipc_reply.h heim_ipc_replyUser.c: heim_ipc_reply.defs
 	mig -header heim_ipc_reply.h -user heim_ipc_replyUser.c -sheader /dev/null -server /dev/null -I$(srcdir) $(srcdir)/heim_ipc_reply.defs
-
 
 built_ipcc = heim_ipc.h heim_ipcUser.c
 built_ipcc += heim_ipc_asyncServer.c heim_ipc_asyncServer.h
@@ -55,5 +54,9 @@ libheim_ipcs_la_SOURCES += $(built_ipcs)
 libheim_ipcs_la_LIBADD += -lbsm
 
 CLEANFILES = $(built_ipcc) $(built_ipcs)
+
+$(srcdir)/client.c: $(built_ipcc)
+$(srcdir)/server.c: $(built_ipcs)
+
 
 endif

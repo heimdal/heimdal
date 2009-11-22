@@ -35,8 +35,6 @@
 
 #include "config.h"
 
-#define HAVE_LIBDISPATCH 1
-
 #include <sys/types.h>
 #include <sys/un.h>
 
@@ -50,7 +48,7 @@
 
 #include <heim-ipc.h>
 
-#if defined(__APPLE__) && defined(HAVE_LIBDISPATCH)
+#if defined(__APPLE__) && defined(HAVE_GCD)
 #include <mach/mach.h>
 #include <servers/bootstrap.h>
 #include <dispatch/dispatch.h>

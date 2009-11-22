@@ -514,7 +514,6 @@ nodist_check_gen_SOURCES = $(gen_files_test:.x=.c) test_asn1-template.c
 build_HEADERZ = asn1-template.h
 
 asn1_compile_SOURCES = 				\
-	asn1-common.h				\
 	asn1_queue.h				\
 	asn1parse.y				\
 	der.h					\
@@ -602,6 +601,7 @@ CLEANFILES = \
 	test_asn1_files test_asn1.h*
 
 dist_include_HEADERS = der.h heim_asn1.h der-protos.h der-private.h
+dist_include_HEADERS += asn1-common.h
 
 nodist_include_HEADERS = asn1_err.h
 nodist_include_HEADERS += krb5_asn1.h

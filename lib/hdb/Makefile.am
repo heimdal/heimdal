@@ -31,7 +31,8 @@ gen_files_hdb = \
 	asn1_hdb_entry_alias.x \
 	asn1_hdb_keyset.x
 
-CLEANFILES = $(BUILT_SOURCES) $(gen_files_hdb) hdb_asn1.h* hdb_asn1_files
+CLEANFILES = $(BUILT_SOURCES) $(gen_files_hdb) \
+	hdb_asn1{,-priv}.h* hdb_asn1_files hdb_asn1-template.c*
 
 LDADD = libhdb.la \
 	$(LIB_openldap) \
@@ -98,7 +99,7 @@ libhdb_la_LIBADD = \
 	$(LIB_NDBM)
 
 $(libhdb_la_OBJECTS): $(srcdir)/hdb-protos.h $(srcdir)/hdb-private.h
-$(libhdb_la_OBJECTS): hdb_asn1.h
+$(libhdb_la_OBJECTS): hdb_asn1.h hdb_asn1-priv.h hdb_err.h
 
 $(srcdir)/hdb-protos.h:
 	cd $(srcdir); perl ../../cf/make-proto.pl -q -P comment -o hdb-protos.h $(dist_libhdb_la_SOURCES) || rm -f hdb-protos.h
@@ -106,12 +107,10 @@ $(srcdir)/hdb-protos.h:
 $(srcdir)/hdb-private.h:
 	cd $(srcdir); perl ../../cf/make-proto.pl -q -P comment -p hdb-private.h $(dist_libhdb_la_SOURCES) || rm -f hdb-private.h
 
-$(gen_files_hdb) hdb_asn1.h: hdb_asn1_files
+$(gen_files_hdb) hdb_asn1.hx hdb_asn1-priv.hx: hdb_asn1_files
 
 hdb_asn1_files: $(ASN1_COMPILE_DEP) $(srcdir)/hdb.asn1
 	$(ASN1_COMPILE) $(srcdir)/hdb.asn1 hdb_asn1
-
-$(libhdb_la_OBJECTS): hdb_asn1.h hdb_err.h
 
 test_dbinfo_LIBS = libhdb.la
 

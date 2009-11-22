@@ -124,7 +124,7 @@ krb5_prepend_error_message(krb5_context context, krb5_error_code ret,
     va_list ap;
 
     va_start(ap, fmt);
-    krb5_vset_error_message (context, ret, fmt, ap);
+    krb5_vprepend_error_message(context, ret, fmt, ap);
     va_end(ap);
 }
 
@@ -140,8 +140,8 @@ krb5_prepend_error_message(krb5_context context, krb5_error_code ret,
  */
 
 void KRB5_LIB_FUNCTION
-krb5_vprepend_error_message (krb5_context context, krb5_error_code ret,
-			     const char *fmt, va_list args)
+krb5_vprepend_error_message(krb5_context context, krb5_error_code ret,
+			    const char *fmt, va_list args)
     __attribute__ ((format (printf, 3, 0)))
 {
     char *str, *str2;

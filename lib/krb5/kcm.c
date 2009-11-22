@@ -145,9 +145,7 @@ krb5_kcm_storage_request(krb5_context context,
 static krb5_error_code
 kcm_alloc(krb5_context context, const char *name, krb5_ccache *id)
 {
-    krb5_error_code ret;
     krb5_kcmcache *k;
-    const char *path;
 
     k = malloc(sizeof(*k));
     if (k == NULL) {
@@ -1198,7 +1196,6 @@ _krb5_kcm_noop(krb5_context context,
 	       krb5_ccache id)
 {
     krb5_error_code ret;
-    krb5_kcmcache *k = KCMCACHE(id);
     krb5_storage *request;
 
     ret = krb5_kcm_storage_request(context, KCM_OP_NOOP, &request);

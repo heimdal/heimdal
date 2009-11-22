@@ -34,7 +34,6 @@
 #define KRB5_DEPRECATED
 
 #include "krb5_locl.h"
-#include <com_right.h>
 
 #undef __attribute__
 #define __attribute__(x)
@@ -539,6 +538,15 @@ krb5_generate_subkey(krb5_context context,
 		     krb5_keyblock **subkey) KRB5_DEPRECATED
 {
     return krb5_generate_subkey_extended(context, key, ETYPE_NULL, subkey);
+}
+
+krb5_error_code KRB5_LIB_FUNCTION
+krb5_auth_getremoteseqnumber(krb5_context context,
+			     krb5_auth_context auth_context,
+			     int32_t *seqnumber) KRB5_DEPRECATED
+{
+  *seqnumber = auth_context->remote_seqnumber;
+  return 0;
 }
 
 #endif /* HEIMDAL_SMALLER */

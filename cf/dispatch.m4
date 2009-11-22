@@ -1,0 +1,6 @@
+
+AC_DEFUN([rk_LIBDISPATCH],[
+
+AM_CONDITIONAL(LIBDISPATCH, test foo = bar)
+
+])

@@ -98,15 +98,6 @@ main(int argc, char **argv)
 
     setprogname(argv[0]);
 
-#ifdef __APPLE__
-    {
-	char *errorstring;
-	ret = sandbox_init("kdc", SANDBOX_NAMED, &errorstring);
-	if (ret)
-	    errx(1, "sandbox_init failed: %d: %s", ret, errorstring);
-    }
-#endif
-
     ret = krb5_init_context(&context);
     if (ret == KRB5_CONFIG_BADFORMAT)
 	errx (1, "krb5_init_context failed to parse configuration file");

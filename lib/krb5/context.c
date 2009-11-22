@@ -3,6 +3,8 @@
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  *
+ * Portions Copyright (c) 2009 Apple Inc. All rights reserved.
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -223,11 +225,18 @@ cc_ops_register(krb5_context context)
     context->cc_ops = NULL;
     context->num_cc_ops = 0;
 
+#ifndef KCM_IS_API_CACHE
     krb5_cc_register(context, &krb5_acc_ops, TRUE);
+#endif
     krb5_cc_register(context, &krb5_fcc_ops, TRUE);
     krb5_cc_register(context, &krb5_mcc_ops, TRUE);
+#ifdef HAVE_SCC
     krb5_cc_register(context, &krb5_scc_ops, TRUE);
+#endif
 #ifdef HAVE_KCM
+#ifdef KCM_IS_API_CACHE
+    krb5_cc_register(context, &krb5_akcm_ops, TRUE);
+#endif
     krb5_cc_register(context, &krb5_kcm_ops, TRUE);
 #endif
     return 0;
@@ -500,7 +509,7 @@ krb5_set_config_files(krb5_context context, char **filenames)
     krb5_config_binding *tmp = NULL;
     while(filenames != NULL && *filenames != NULL && **filenames != '\0') {
 	ret = krb5_config_parse_file_multi(context, *filenames, &tmp);
-	if(ret != 0 && ret != ENOENT && ret != EACCES) {
+	if(ret != 0 && ret != ENOENT && ret != EACCES && ret != EPERM) {
 	    krb5_config_file_free(context, tmp);
 	    return ret;
 	}

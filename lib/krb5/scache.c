@@ -33,6 +33,8 @@
 
 #include "krb5_locl.h"
 
+#ifdef HAVE_SCC
+
 #include <sqlite3.h>
 
 typedef struct krb5_scache {
@@ -1428,3 +1430,5 @@ KRB5_LIB_VARIABLE const krb5_cc_ops krb5_scc_ops = {
     scc_get_default_name,
     scc_set_default
 };
+
+#endif

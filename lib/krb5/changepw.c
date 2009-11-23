@@ -670,7 +670,7 @@ find_chpw_proto(const char *name)
 }
 
 /**
- * krb5_change_password() is deprecated, use krb5_set_password().
+ * Deprecated: krb5_change_password() is deprecated, use krb5_set_password().
  *
  * @param context a Keberos context
  * @param creds

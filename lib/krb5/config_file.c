@@ -1219,6 +1219,12 @@ krb5_config_get_int (krb5_context context,
 
 #ifndef HEIMDAL_SMALLER
 
+/**
+ * Deprecated: configuration files are not strings
+ *
+ * @ingroup krb5_deprecated
+ */
+
 krb5_error_code KRB5_LIB_FUNCTION
 krb5_config_parse_string_multi(krb5_context context,
 			       const char *string,

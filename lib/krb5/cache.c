@@ -1376,7 +1376,7 @@ out:
  *
  */
 
-struct krb5_cccol_cursor {
+struct krb5_cccol_cursor_data {
     int idx;
     krb5_cc_cache_cursor cursor;
 };

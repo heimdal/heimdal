@@ -688,6 +688,7 @@ heim_sipc_launchd_stream_fd_init(int fd,
     *ctx = ct;
     return 0;
 #else
+    close(fd);
     *ctx = NULL;
     return EINVAL;
 #endif

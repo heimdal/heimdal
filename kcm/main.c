@@ -39,6 +39,8 @@ sig_atomic_t exit_flag = 0;
 
 krb5_context kcm_context = NULL;
 
+const char *service_name = "org.h5l.kcm";
+
 static RETSIGTYPE
 sigterm(int sig)
 {
@@ -103,7 +105,17 @@ main(int argc, char **argv)
 	daemon(0, 0);
 #endif
     pidfile(NULL);
-    kcm_loop();
+
+    if (launchd_flag) {
+	heim_sipc mach;
+	heim_sipc_launchd_mach_init(service_name, kcm_service, NULL, &mach);
+    } else {
+	heim_sipc unix;
+	heim_sipc_service_unix(service_name, kcm_service, NULL, &unix);
+    }
+
+    heim_ipc_main();
+
     krb5_free_context(kcm_context);
     return 0;
 }

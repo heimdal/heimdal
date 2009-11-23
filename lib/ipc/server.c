@@ -676,9 +676,9 @@ socket_release(heim_sipc ctx)
 #endif
 
 int
-heim_sipc_launchd_fd_init(int fd,
-			  heim_ipc_callback callback,
-			  void *user, heim_sipc *ctx)
+heim_sipc_launchd_stream_fd_init(int fd,
+				 heim_ipc_callback callback,
+				 void *user, heim_sipc *ctx)
 {
 #ifndef HAVE_GCD
     heim_sipc ct = calloc(1, sizeof(*ct));
@@ -701,7 +701,7 @@ heim_sipc_service_unix(const char *service,
 {
     int fd = -1;
 
-    return heim_sipc_launchd_fd_init(fd, callback, user, ctx);
+    return heim_sipc_launchd_stream_fd_init(fd, callback, user, ctx);
 }
 
 

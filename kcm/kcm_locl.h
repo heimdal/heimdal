@@ -172,11 +172,15 @@ extern int name_constraints;
 #ifdef SUPPORT_DETACH
 extern int detach_from_console;
 #endif
+extern int launchd_flag;
 extern int disallow_getting_krbtgt;
 
 #if 0
 extern const krb5_cc_ops krb5_kcmss_ops;
 #endif
+
+void	kcm_service(void *, const heim_idata *, const heim_icred,
+		    heim_ipc_complete, heim_sipc_call);
 
 #include <kcm-protos.h>
 

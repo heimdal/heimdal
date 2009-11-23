@@ -701,8 +701,6 @@ heim_sipc_service_unix(const char *service,
 		       void *user, heim_sipc *ctx)
 {
     struct sockaddr_un un;
-    struct sockaddr *sa = (struct sockaddr *)&un;
-    krb5_socklen_t sa_size = sizeof(un);
     int fd;
 
     un.sun_family = AF_UNIX;
@@ -723,7 +721,7 @@ heim_sipc_service_unix(const char *service,
 
     unlink(un.sun_path);
 
-    if (bind(fd, sa, sa_size) < 0) {
+    if (bind(fd, (struct sockaddr *)&un, sizeof(un)) < 0) {
 	close(fd);
 	return errno;
     }

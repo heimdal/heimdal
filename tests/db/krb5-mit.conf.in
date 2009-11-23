@@ -1,0 +1,18 @@
+[libdefaults]
+	default_realm = MIT-DB.H5L.ORG
+
+[realms]
+	MIT-DB.H5L.ORG = {
+		kdc = localhost
+	}
+
+[kdc]
+	database = {
+		dbname = mit-db:@srcdir@/principal.MIT-DB.H5L.ORG
+		realm = MIT-DB.H5L.ORG
+		mkey_file = @srcdir@/mkey-MIT-DB.H5L.ORG
+#		log_file = @objdir@/log.mit-db.log
+	}
+
+[logging]
+	default = 0-/FILE:@objdir@/messages.log

@@ -382,6 +382,12 @@ unix_socket_ipc(void *ctx,
 {
     struct path_ctx *s = ctx;
     uint32_t len = htonl(req->length);
+    uint32_t rv;
+    int retval;
+
+    rep->data = NULL;
+    rep->length = 0;
+
     if (net_write(s->fd, &len, sizeof(len)) != sizeof(len))
 	return -1;
     if (net_write(s->fd, req->data, req->length) != req->length)
@@ -389,6 +395,9 @@ unix_socket_ipc(void *ctx,
 
     if (net_read(s->fd, &len, sizeof(len)) != sizeof(len))
 	return -1;
+    if (net_read(s->fd, &rv, sizeof(rv)) != sizeof(rv))
+	return -1;
+    retval = ntohl(rv);
 
     rep->length = ntohl(len);
     rep->data = malloc(rep->length);
@@ -397,7 +406,7 @@ unix_socket_ipc(void *ctx,
     if (net_read(s->fd, rep->data, rep->length) != rep->length)
 	return -1;
 
-    return 0;
+    return retval;
 }
 
 int

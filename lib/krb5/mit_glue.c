@@ -311,6 +311,12 @@ krb5_c_encrypt_length(krb5_context context,
     return 0;
 }
 
+/**
+ * Deprecated: keytypes doesn't exists, they are really enctypes.
+ *
+ * @ingroup krb5_deprecated
+ */
+
 krb5_error_code KRB5_LIB_FUNCTION
 krb5_c_enctype_compare(krb5_context context,
 		       krb5_enctype e1,

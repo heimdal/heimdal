@@ -70,22 +70,19 @@
 #ifdef HAVE_LIBUTIL_H
 #include <libutil.h>
 #endif
-#ifdef HAVE_GETPEERUCRED
-#include <ucred.h>
-#endif
-#ifdef HAVE_DOOR_CREATE
-#include <door.h>
-#include <alloca.h>
-#endif
+#include <ctype.h>
 #include <err.h>
 #include <roken.h>
 #include <getarg.h>
 #include <base64.h>
 #include <parse_units.h>
+#include <parse_time.h>
 
 
 #include <krb5.h>
 #include <heim_threads.h>
+
+#include <heim-ipc.h>
 
 #include "crypto-headers.h"
 

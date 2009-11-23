@@ -713,12 +713,7 @@ heim_sipc_service_unix(const char *service,
     if (fd < 0)
 	return errno;
 
-#if defined(HAVE_SETSOCKOPT) && defined(SOL_SOCKET) && defined(SO_REUSEADDR)
-    {
-	int one = 1;
-	setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, (void *)&one, sizeof(one));
-    }
-#endif
+    socket_set_reuseaddr(fd, 1);
 #ifdef LOCAL_CREDS
     {
 	int one = 1;

@@ -43,10 +43,12 @@
 /**
  * Same as krb5_data_free(). MIT compat.
  *
+ * Deprecated: use krb5_data_free().
+ *
  * @param context Kerberos 5 context.
  * @param data krb5_data to free.
  *
- * @ingroup krb5
+ * @ingroup krb5_deprecated
  */
 
 void KRB5_LIB_FUNCTION
@@ -56,9 +58,10 @@ krb5_free_data_contents(krb5_context context, krb5_data *data)
     krb5_data_free(data);
 }
 
-/*
- * First take the configured list of etypes for `keytype' if available,
- * else, do `krb5_keytype_to_enctypes'.
+/**
+ * Deprecated: keytypes doesn't exists, they are really enctypes.
+ *
+ * @ingroup krb5_deprecated
  */
 
 krb5_error_code KRB5_LIB_FUNCTION
@@ -104,6 +107,13 @@ static struct {
 
 static int num_keys = sizeof(keys) / sizeof(keys[0]);
 
+/**
+ * Deprecated: keytypes doesn't exists, they are really enctypes in
+ * most cases, use krb5_enctype_to_string().
+ *
+ * @ingroup krb5_deprecated
+ */
+
 krb5_error_code KRB5_LIB_FUNCTION
 krb5_keytype_to_string(krb5_context context,
 		       krb5_keytype keytype,
@@ -134,6 +144,13 @@ krb5_keytype_to_string(krb5_context context,
     return 0;
 }
 
+/**
+ * Deprecated: keytypes doesn't exists, they are really enctypes in
+ * most cases, use krb5_string_to_enctype().
+ *
+ * @ingroup krb5_deprecated
+ */
+
 krb5_error_code KRB5_LIB_FUNCTION
 krb5_string_to_keytype(krb5_context context,
 		       const char *string,
@@ -160,6 +177,12 @@ krb5_string_to_keytype(krb5_context context,
 			   "key type %s not supported", string);
     return KRB5_PROG_KEYTYPE_NOSUPP;
 }
+
+/**
+ * Deprecated: use krb5_get_init_creds() and friends.
+ *
+ * @ingroup krb5_deprecated
+ */
 
 krb5_error_code KRB5_LIB_FUNCTION
 krb5_password_key_proc (krb5_context context,
@@ -190,6 +213,12 @@ krb5_password_key_proc (krb5_context context,
     memset (buf, 0, sizeof(buf));
     return ret;
 }
+
+/**
+ * Deprecated: use krb5_get_init_creds() and friends.
+ *
+ * @ingroup krb5_deprecated
+ */
 
 krb5_error_code KRB5_LIB_FUNCTION
 krb5_get_in_tkt_with_password (krb5_context context,
@@ -226,6 +255,12 @@ krb5_skey_key_proc (krb5_context context,
 {
     return krb5_copy_keyblock (context, keyseed, key);
 }
+
+/**
+ * Deprecated: use krb5_get_init_creds() and friends.
+ *
+ * @ingroup krb5_deprecated
+ */
 
 krb5_error_code KRB5_LIB_FUNCTION
 krb5_get_in_tkt_with_skey (krb5_context context,
@@ -264,6 +299,12 @@ krb5_get_in_tkt_with_skey (krb5_context context,
 				ret_as_reply);
 }
 
+/**
+ * Deprecated: use krb5_get_init_creds() and friends.
+ *
+ * @ingroup krb5_deprecated
+ */
+
 krb5_error_code KRB5_LIB_FUNCTION
 krb5_keytab_key_proc (krb5_context context,
 		      krb5_enctype enctype,
@@ -297,6 +338,12 @@ krb5_keytab_key_proc (krb5_context context,
     krb5_kt_free_entry(context, &entry);
     return ret;
 }
+
+/**
+ * Deprecated: use krb5_get_init_creds() and friends.
+ *
+ * @ingroup krb5_deprecated
+ */
 
 krb5_error_code KRB5_LIB_FUNCTION
 krb5_get_in_tkt_with_keytab (krb5_context context,
@@ -336,6 +383,12 @@ convert_func(krb5_context conxtext, void *funcctx, krb5_principal principal)
     return (*func)(conxtext, principal);
 }
 
+/**
+ * Deprecated: kerberos 4 is dead, let it die.
+ *
+ * @ingroup krb5_deprecated
+ */
+
 krb5_error_code KRB5_LIB_FUNCTION
 krb5_425_conv_principal_ext(krb5_context context,
 			    const char *name,
@@ -356,6 +409,11 @@ krb5_425_conv_principal_ext(krb5_context context,
 					principal);
 }
 
+/**
+ * Deprecated: kerberos 4 is dead, let it die.
+ *
+ * @ingroup krb5_deprecated
+ */
 
 krb5_error_code KRB5_LIB_FUNCTION
 krb5_425_conv_principal(krb5_context context,
@@ -378,7 +436,7 @@ krb5_425_conv_principal(krb5_context context,
 /**
  * Generate a new ccache of type `ops' in `id'.
  *
- * Use krb5_cc_new_unique() instead.
+ * Deprecated: use krb5_cc_new_unique() instead.
  *
  * @return Return an error code or 0, see krb5_get_error_message().
  *
@@ -395,7 +453,11 @@ krb5_cc_gen_new(krb5_context context,
     return krb5_cc_new_unique(context, ops->prefix, NULL, id);
 }
 
-
+/**
+ * Deprecated: use krb5_principal_get_realm()
+ *
+ * @ingroup krb5_deprecated
+ */
 
 krb5_realm * KRB5_LIB_FUNCTION
 krb5_princ_realm(krb5_context context,
@@ -406,6 +468,12 @@ krb5_princ_realm(krb5_context context,
 }
 
 
+/**
+ * Deprecated: use krb5_principal_set_realm()
+ *
+ * @ingroup krb5_deprecated
+ */
+
 void KRB5_LIB_FUNCTION
 krb5_princ_set_realm(krb5_context context,
 		     krb5_principal principal,
@@ -414,6 +482,12 @@ krb5_princ_set_realm(krb5_context context,
 {
     principal->realm = *realm;
 }
+
+/**
+ * Deprecated: use krb5_free_cred_contents()
+ *
+ * @ingroup krb5_deprecated
+ */
 
 /* keep this for compatibility with older code */
 krb5_error_code KRB5_LIB_FUNCTION
@@ -424,8 +498,9 @@ krb5_free_creds_contents (krb5_context context, krb5_creds *c)
 }
 
 /**
- * Free the error message returned by krb5_get_error_string(),
- * deprecated, use krb5_free_error_message().
+ * Free the error message returned by krb5_get_error_string().
+ *
+ * Deprecated: use krb5_free_error_message()
  *
  * @param context Kerberos context
  * @param str error message to free
@@ -441,8 +516,9 @@ krb5_free_error_string(krb5_context context, char *str)
 }
 
 /**
- * Set the error message returned by krb5_get_error_string(),
- * deprecated, use krb5_set_error_message().
+ * Set the error message returned by krb5_get_error_string().
+ *
+ * Deprecated: use krb5_get_error_message()
  *
  * @param context Kerberos context
  * @param fmt error message to free
@@ -468,6 +544,8 @@ krb5_set_error_string(krb5_context context, const char *fmt, ...)
  * Set the error message returned by krb5_get_error_string(),
  * deprecated, use krb5_set_error_message().
  *
+ * Deprecated: use krb5_vset_error_message()
+ *
  * @param context Kerberos context
  * @param msg error message to free
  *
@@ -485,8 +563,9 @@ krb5_vset_error_string(krb5_context context, const char *fmt, va_list args)
 }
 
 /**
- * Clar the error message returned by krb5_get_error_string(),
- * deprecated, use krb5_clear_error_message().
+ * Clear the error message returned by krb5_get_error_string().
+ *
+ * Deprecated: use krb5_clear_error_message()
  *
  * @param context Kerberos context
  *
@@ -499,6 +578,12 @@ krb5_clear_error_string(krb5_context context)
 {
     krb5_clear_error_message(context);
 }
+
+/**
+ * Deprecated: use krb5_get_credentials_with_flags().
+ *
+ * @ingroup krb5_deprecated
+ */
 
 krb5_error_code KRB5_LIB_FUNCTION
 krb5_get_cred_from_kdc_opt(krb5_context context,
@@ -515,6 +600,12 @@ krb5_get_cred_from_kdc_opt(krb5_context context,
 				  out_creds, ret_tgts);
 }
 
+/**
+ * Deprecated: use krb5_get_credentials_with_flags().
+ *
+ * @ingroup krb5_deprecated
+ */
+
 krb5_error_code KRB5_LIB_FUNCTION
 krb5_get_cred_from_kdc(krb5_context context,
 		       krb5_ccache ccache,
@@ -526,11 +617,23 @@ krb5_get_cred_from_kdc(krb5_context context,
 				      in_creds, out_creds, ret_tgts, 0);
 }
 
+/**
+ * Deprecated: use krb5_xfree().
+ *
+ * @ingroup krb5_deprecated
+ */
+
 void KRB5_LIB_FUNCTION
 krb5_free_unparsed_name(krb5_context context, char *str) KRB5_DEPRECATED
 {
     krb5_xfree(str);
 }
+
+/**
+ * Deprecated: use krb5_generate_subkey_extended()
+ *
+ * @ingroup krb5_deprecated
+ */
 
 krb5_error_code KRB5_LIB_FUNCTION
 krb5_generate_subkey(krb5_context context,
@@ -539,6 +642,12 @@ krb5_generate_subkey(krb5_context context,
 {
     return krb5_generate_subkey_extended(context, key, ETYPE_NULL, subkey);
 }
+
+/**
+ * Deprecated: use krb5_auth_con_getremoteseqnumber()
+ *
+ * @ingroup krb5_deprecated
+ */
 
 krb5_error_code KRB5_LIB_FUNCTION
 krb5_auth_getremoteseqnumber(krb5_context context,

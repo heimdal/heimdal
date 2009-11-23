@@ -60,6 +60,7 @@ static const char *system_group = NULL;
 static const char *renew_life = NULL;
 static const char *ticket_life = NULL;
 
+int launchd_flag = 0;
 int disallow_getting_krbtgt = 0;
 int name_constraints = -1;
 
@@ -82,6 +83,10 @@ static struct getargs args[] = {
     {
 	"max-request",	0,	arg_string, &max_request,
 	"max size for a kcm-request", "size"
+    },
+    {
+	"launchd",	0,	arg_flag, &launchd_flag,
+	"when in use by launchd"
     },
 #ifdef SUPPORT_DETACH
 #if DETACH_IS_DEFAULT

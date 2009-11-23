@@ -392,6 +392,16 @@ krb5_get_init_creds_opt_set_process_last_req(krb5_context context,
 
 #ifndef HEIMDAL_SMALLER
 
+/**
+ * Deprecated: use krb5_get_init_creds_opt_alloc().
+ *
+ * The reason krb5_get_init_creds_opt_init() is deprecated is that
+ * krb5_get_init_creds_opt is a static structure and for ABI reason it
+ * can't grow, ie can't add new functionality.
+ *
+ * @ingroup krb5_deprecated
+ */
+
 void KRB5_LIB_FUNCTION
 krb5_get_init_creds_opt_init(krb5_get_init_creds_opt *opt)
     KRB5_DEPRECATED

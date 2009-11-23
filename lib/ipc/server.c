@@ -34,6 +34,7 @@
  */
 
 #include "hi_locl.h"
+#include <assert.h>
 
 struct heim_sipc {
     int (*release)(heim_sipc ctx);
@@ -434,6 +435,276 @@ heim_sipc_launchd_mach_init(const char *service,
     return EINVAL;
 #endif /* __APPLE__ && HAVE_GCD */
 }
+
+struct client {
+    int fd;
+    heim_ipc_callback callback;
+    void *userctx;
+    int flags;
+#define LISTEN_SOCKET	1
+#define WAITING_READ	2
+#define WAITING_WRITE	4
+#define WAITING_CLOSE	8
+    unsigned calls;
+    size_t ptr, len;
+    uint8_t *inmsg;
+    size_t olen;
+    uint8_t *outmsg;
+};
+
+#ifndef HAVE_GCD
+
+static unsigned num_clients = 0;
+static struct client **clients = NULL;
+
+static struct client *
+add_new_socket(int fd,
+	       int flags,
+	       heim_ipc_callback callback,
+	       void *userctx)
+{
+    struct client *c;
+    int s;
+
+    c = calloc(1, sizeof(*c));
+    if (c == NULL)
+	return NULL;
+	
+    c->s = accept(fd, NULL, NULL);
+    if(c->s < 0) {
+	free(c);
+	return NULL;
+    }
+
+    c->flags = flags;
+    c->callback = callback;
+    c->userctx = userctx;
+
+    clients = erealloc(clients, sizeof(clients[0]) * (num_clients + 1));
+    clients[num_clients] = c;
+    num_clients++;
+
+    return c;
+}
+
+struct socket_call {
+    heim_idata in;
+    struct client *c;
+};
+
+
+static void
+socket_complete(heim_sipc_call ctx, int returnvalue, heim_idata *reply)
+{
+    struct socket_call *sc = (struct socket_call *)ctx;
+    struct client *c = sc->c;
+
+    /* double complete ? */
+    if (c == NULL)
+	abort();
+
+    if ((c->flags & WAITING_CLOSE) == 0) {
+	size_t rlen = reply->length + sizeof(u32) + sizeof(u32);
+	uint8_t *ptr;
+	uint32_t u32;
+
+	c->obuf = erealloc(c->obuf, c->olen + rlen);
+	ptr = &c->omsg[c->olen];
+
+	/* length */
+	u32 = htonl(reply->length);
+	memcpy(ptr, &u32, sizeof(u32));
+	ptr += sizeof(u32);
+	/* return value */
+	u32 = htonl(returnvalue);
+	memcpy(ptr, &u32, sizeof(u32));
+	ptr += sizeof(u32);
+	/* data */
+	memcpy(ptr, reply->data, reply->length);
+	c->olen += rlen;
+	c->flags |= WAITING_WRITE;
+    }
+
+    c->calls--;
+
+    free(sc->in.data);
+    sc->c = NULL; /* so we can catch double complete */
+    free(sc);
+
+}
+
+void
+process_loop(void)
+{
+    struct pollfd *fds;
+    unsigned n, m;
+    unsigned num_fds;
+
+    while(num_clients > 0) {
+
+	fds = malloc(num_clients * sizeof(fds[0]));
+	if(fds == NULL)
+	    abort();
+
+	num_fds = num_clients;
+
+	for (n = 0 ; n < num_fds; n++) {
+	    fds[n].fd = clients[i]->fd;
+	    fds[n].events = 0;
+	    if (clients[i]->flags & WAITING_READ)
+		fds[n].events |= POLLIN;
+	    if (clients[i]->flags & WAITING_WRITE)
+		fds[n].events |= POLLOUT;
+	    
+	    fds[n].revents = 0;
+	}
+
+	poll(fds, num_fds, -1);
+
+	for (n = 0 ; n < num_fds; n++) {
+	    if (clients[n] == NULL)
+		continue;
+	    if (fds[n].revents & POLLERR) {
+		clients[n]->flags |= WAITING_CLOSE;
+		continue;
+	    }
+
+	    if (fds[n].revents & POLLIN) {
+		struct socket_call *sc;
+		ssize_t len;
+		uint32_t dlen;
+
+		if (clients[n]->flags & LISTEN_SOCKET) {
+		    add_new_socket(clients[n]->fd,
+				   WAITING_READ,
+				   clients[n]->callback,
+				   clients[n]->userctx);
+		    continue;
+		}
+
+		if (clients[n]->ptr - clients[n]->len < 1024) {
+		    clients[n]->inmsg = erealloc(clients[n]->inmsg,
+						 clients[n]->len + 1024);
+		    clients[n]->len += 1024;
+		}
+
+		len = read(clients[n]->fd,
+			   clients[n]->inmsg + clients[n]->ptr,
+			   clients[n]->len - clients[n]->ptr);
+		if (len <= 0) {
+		    clients[n]->flags |= WAITING_CLOSE;
+		    continue;
+		}
+		clients[n]->ptr += len;
+		if (clients[n]->ptr > clients[n]->len)
+		    abort();
+		
+		while (clients[n]->ptr >= sizeof(dlen)) {
+
+		    memcpy(&dlen, clients[n]->inmsg, sizeof(dlen));
+		    dlen = ntohl(dlen);
+
+		    if (dlen < clients[n]->ptr - sizeof(dlen))
+			break;
+		    
+		    cs = malloc(sizeof(*cs));
+		    cs->in.data = mallc(dlen);
+		    memcpy(cs->in.data, clients[i]->inmsg + sizeof(dlen), dlen);
+		    cs->in.length = dlen;
+		    
+		    clients[i]->ptr -= sizeof(dlen) + dlen;
+		    memmove(clients[i]->inmsg,
+			    clients[i]->inmsg + sizeof(dlen) + dlen,
+			    clients[i]->ptr);
+			    
+		    c->calls++;
+		    clients[n]->callback(ctx->userctx, &cs->in,
+					 NULL, socket_complete,
+					 (heim_sipc_call)cs);
+		}
+	    }
+	    if (fds[n].revents & POLLOUT) {
+		ssize_t len;
+
+		len = write(clients[n]->fd,
+			    clients[n]->outmsg,
+			    clients[n]->olen);
+		if (len <= 0) {
+		    clients[n]->flags |= WAITING_CLOSE;
+		    continue;
+		}
+		if (clients[n]->olen != len) {
+		    memmove(&clients[n]->outmsg[0]
+			    &clients[n]->outmsg[len],
+			    clients[n]->olen - len);
+		    clients[n]->olen -= len;
+		} else {
+		    clients[n]->olen = 0;
+		    free(clients[n]->outmsg);
+		    clients[n]->outmsg = NULL;
+
+		    clients[n]->flags &= WAITING_WRITE;
+		}
+	    }
+	}
+
+	n = 0;
+	for (n < num_clients) {
+	    struct client *c = clients[n];
+	    if ((c->flags & WAITING_CLOSE) == 0 || c->calls) {
+		n++;
+		continue;
+	    }
+	    close(c->fd);
+	    free(c);
+	    clients[n] = clients[num_clients - 1];
+	    num_clients--;
+	}
+
+
+	free(fds);
+    }
+}
+
+static int
+socket_release(heim_sipc ctx)
+{
+    struct client *c = ctx->mech;
+    c->flags |= WAITING_CLOSE;
+}
+
+#endif
+
+int
+heim_sipc_launchd_fd_init(int fd,
+			  heim_ipc_callback callback,
+			  void *user, heim_sipc *ctx)
+{
+#ifndef HAVE_GCD
+    heim_sipc ct = calloc(1, sizeof(*ct));
+    
+    ct->mech = add_new_socket(fd, LISTEN_SOCKET|WAITING_READ, callback, user);
+    ct->release = socket_release;
+    *ctx = ct;
+    return 0;
+#else
+    *ctx = NULL;
+    return EINVAL;
+#endif
+}
+
+
+int
+heim_sipc_service_unix(const char *service,
+		       heim_ipc_callback callback,
+		       void *user, heim_sipc *ctx)
+{
+    int fd = -1;
+
+    return heim_sipc_launchd_fd_init(fd, callback, user, ctx);
+}
+
+
 
 /**
  * Set the idle timeout value

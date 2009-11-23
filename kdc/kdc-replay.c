@@ -88,6 +88,21 @@ main(int argc, char **argv)
     if (ret)
 	krb5_err(context, 1, ret, "krb5_kdc_set_dbinfo");
 
+    if (config->enable_pkinit) {
+	if (config->pkinit_kdc_identity == NULL)
+	    krb5_errx(context, 1, "pkinit enabled but no identity");
+ 
+	if (config->pkinit_kdc_anchors == NULL)
+	    krb5_errx(context, 1, "pkinit enabled but no X509 anchors");
+
+	_kdc_pk_initialize(context, config,
+			   config->pkinit_kdc_identity,
+			   config->pkinit_kdc_anchors,
+			   config->pkinit_kdc_cert_pool,
+			   config->pkinit_kdc_revoke);
+
+    }
+
     if (argc != 2)
 	errx(1, "argc != 2");
 

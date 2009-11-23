@@ -43,6 +43,8 @@ struct heim_sipc {
     void *mech;
 };
 
+#undef HAVE_GCD
+
 #if defined(__APPLE__) && defined(HAVE_GCD)
 
 #include "heim_ipcServer.h"
@@ -464,14 +466,13 @@ add_new_socket(int fd,
 	       void *userctx)
 {
     struct client *c;
-    int s;
 
     c = calloc(1, sizeof(*c));
     if (c == NULL)
 	return NULL;
 	
-    c->s = accept(fd, NULL, NULL);
-    if(c->s < 0) {
+    c->fd = accept(fd, NULL, NULL);
+    if(c->fd < 0) {
 	free(c);
 	return NULL;
     }
@@ -504,12 +505,12 @@ socket_complete(heim_sipc_call ctx, int returnvalue, heim_idata *reply)
 	abort();
 
     if ((c->flags & WAITING_CLOSE) == 0) {
-	size_t rlen = reply->length + sizeof(u32) + sizeof(u32);
 	uint8_t *ptr;
 	uint32_t u32;
+	size_t rlen = reply->length + sizeof(u32) + sizeof(u32);
 
-	c->obuf = erealloc(c->obuf, c->olen + rlen);
-	ptr = &c->omsg[c->olen];
+	c->outmsg = erealloc(c->outmsg, c->olen + rlen);
+	ptr = &c->outmsg[c->olen];
 
 	/* length */
 	u32 = htonl(reply->length);
@@ -533,11 +534,11 @@ socket_complete(heim_sipc_call ctx, int returnvalue, heim_idata *reply)
 
 }
 
-void
+static void
 process_loop(void)
 {
     struct pollfd *fds;
-    unsigned n, m;
+    unsigned n;
     unsigned num_fds;
 
     while(num_clients > 0) {
@@ -549,11 +550,11 @@ process_loop(void)
 	num_fds = num_clients;
 
 	for (n = 0 ; n < num_fds; n++) {
-	    fds[n].fd = clients[i]->fd;
+	    fds[n].fd = clients[n]->fd;
 	    fds[n].events = 0;
-	    if (clients[i]->flags & WAITING_READ)
+	    if (clients[n]->flags & WAITING_READ)
 		fds[n].events |= POLLIN;
-	    if (clients[i]->flags & WAITING_WRITE)
+	    if (clients[n]->flags & WAITING_WRITE)
 		fds[n].events |= POLLOUT;
 	    
 	    fds[n].revents = 0;
@@ -570,7 +571,6 @@ process_loop(void)
 	    }
 
 	    if (fds[n].revents & POLLIN) {
-		struct socket_call *sc;
 		ssize_t len;
 		uint32_t dlen;
 
@@ -600,6 +600,7 @@ process_loop(void)
 		    abort();
 		
 		while (clients[n]->ptr >= sizeof(dlen)) {
+		    struct socket_call *cs;
 
 		    memcpy(&dlen, clients[n]->inmsg, sizeof(dlen));
 		    dlen = ntohl(dlen);
@@ -607,18 +608,19 @@ process_loop(void)
 		    if (dlen < clients[n]->ptr - sizeof(dlen))
 			break;
 		    
-		    cs = malloc(sizeof(*cs));
-		    cs->in.data = mallc(dlen);
-		    memcpy(cs->in.data, clients[i]->inmsg + sizeof(dlen), dlen);
+		    cs = emalloc(sizeof(*cs));
+		    cs->c = clients[n];
+		    cs->in.data = emalloc(dlen);
+		    memcpy(cs->in.data, clients[n]->inmsg + sizeof(dlen), dlen);
 		    cs->in.length = dlen;
 		    
-		    clients[i]->ptr -= sizeof(dlen) + dlen;
-		    memmove(clients[i]->inmsg,
-			    clients[i]->inmsg + sizeof(dlen) + dlen,
-			    clients[i]->ptr);
+		    clients[n]->ptr -= sizeof(dlen) + dlen;
+		    memmove(clients[n]->inmsg,
+			    clients[n]->inmsg + sizeof(dlen) + dlen,
+			    clients[n]->ptr);
 			    
-		    c->calls++;
-		    clients[n]->callback(ctx->userctx, &cs->in,
+		    clients[n]->calls++;
+		    clients[n]->callback(clients[n]->userctx, &cs->in,
 					 NULL, socket_complete,
 					 (heim_sipc_call)cs);
 		}
@@ -634,7 +636,7 @@ process_loop(void)
 		    continue;
 		}
 		if (clients[n]->olen != len) {
-		    memmove(&clients[n]->outmsg[0]
+		    memmove(&clients[n]->outmsg[0],
 			    &clients[n]->outmsg[len],
 			    clients[n]->olen - len);
 		    clients[n]->olen -= len;
@@ -649,7 +651,7 @@ process_loop(void)
 	}
 
 	n = 0;
-	for (n < num_clients) {
+	while (n < num_clients) {
 	    struct client *c = clients[n];
 	    if ((c->flags & WAITING_CLOSE) == 0 || c->calls) {
 		n++;
@@ -671,6 +673,7 @@ socket_release(heim_sipc ctx)
 {
     struct client *c = ctx->mech;
     c->flags |= WAITING_CLOSE;
+    return 0;
 }
 
 #endif
@@ -786,3 +789,14 @@ heim_sipc_free_context(heim_sipc ctx)
 {
     (ctx->release)(ctx);
 }
+
+void
+heim_ipc_main(void)
+{
+#if __APPLE__
+    dispatch_main();
+#else
+    process_loop();
+#endif
+}
+

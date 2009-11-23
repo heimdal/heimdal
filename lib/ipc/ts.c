@@ -74,6 +74,7 @@ test_service(void *ctx, const heim_idata *req,
 int
 main(int argc, char **argv)
 {
+    heim_sipc unix;
     int optidx = 0;
 
     setprogname(argv[0]);
@@ -96,6 +97,8 @@ main(int argc, char **argv)
 				    test_service, NULL, &mach);
     }
 #endif
+    heim_sipc_service_unix("org.h5l.test-ipc",
+			   test_service, NULL, &unix);
     heim_ipc_main();
 
     return 0;

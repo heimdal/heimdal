@@ -5019,6 +5019,12 @@ krb5_crypto_fx_cf2(krb5_context context,
 
 #ifndef HEIMDAL_SMALLER
 
+/**
+ * Deprecated: keytypes doesn't exists, they are really enctypes.
+ *
+ * @ingroup krb5_deprecated
+ */
+
 krb5_error_code KRB5_LIB_FUNCTION
 krb5_keytype_to_enctypes (krb5_context context,
 			  krb5_keytype keytype,
@@ -5058,6 +5064,12 @@ krb5_keytype_to_enctypes (krb5_context context,
     *val = ret;
     return 0;
 }
+
+/**
+ * Deprecated: keytypes doesn't exists, they are really enctypes.
+ *
+ * @ingroup krb5_deprecated
+ */
 
 /* if two enctypes have compatible keys */
 krb5_boolean KRB5_LIB_FUNCTION

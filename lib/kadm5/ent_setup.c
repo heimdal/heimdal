@@ -162,8 +162,7 @@ _kadm5_setup_entry(kadm5_server_context *context,
 	} else {
 	    default_flags(ent, 1);
 	}
-    } else
-	default_flags(ent, 0);
+    }
 
     if(mask & KADM5_MAX_LIFE) {
 	if(princ_mask & KADM5_MAX_LIFE) {

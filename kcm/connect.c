@@ -34,9 +34,8 @@
  */
 
 #include "kcm_locl.h"
-#include <heim-ipc.h>
 
-static void
+void
 kcm_service(void *ctx, const heim_idata *req,
 	    const heim_icred cred,
 	    heim_ipc_complete complete,
@@ -83,13 +82,3 @@ kcm_service(void *ctx, const heim_idata *req,
     (*complete)(cctx, ret, &rep);
     krb5_data_free(&rep);
 }
-
-void
-kcm_loop(void)
-{
-    heim_sipc mach;
-    heim_sipc_launchd_mach_init("org.h5l.kcm", kcm_service, NULL, &mach);
-
-    heim_ipc_main();
-}
-

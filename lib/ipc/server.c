@@ -699,7 +699,45 @@ heim_sipc_service_unix(const char *service,
 		       heim_ipc_callback callback,
 		       void *user, heim_sipc *ctx)
 {
-    int fd = -1;
+    struct sockaddr_un un;
+    struct sockaddr *sa = (struct sockaddr *)&un;
+    krb5_socklen_t sa_size = sizeof(un);
+    int fd;
+
+    un.sun_family = AF_UNIX;
+
+    snprintf(un.sun_path, sizeof(un.sun_path),
+	     "/var/run/.heim_%s-socket", service);
+    fd = socket(AF_UNIX, SOCK_STREAM, 0);
+    if (fd < 0)
+	return errno;
+
+#if defined(HAVE_SETSOCKOPT) && defined(SOL_SOCKET) && defined(SO_REUSEADDR)
+    {
+	int one = 1;
+	setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, (void *)&one, sizeof(one));
+    }
+#endif
+#ifdef LOCAL_CREDS
+    {
+	int one = 1;
+	setsockopt(fd, 0, LOCAL_CREDS, (void *)&one, sizeof(one));
+    }
+#endif
+
+    unlink(un.sun_path);
+
+    if (bind(fd, sa, sa_size) < 0) {
+	close(fd);
+	return errno;
+    }
+
+    if (listen(fd, SOMAXCONN) < 0) {
+	close(fd);
+	return errno;
+    }
+
+    chmod(un.sun_path, 0777);
 
     return heim_sipc_launchd_stream_fd_init(fd, callback, user, ctx);
 }

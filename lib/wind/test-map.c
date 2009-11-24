@@ -51,10 +51,10 @@ struct example {
 };
 
 static struct example cases[] = {
-    {{}, 0, {}, 0},
+    {{0}, 0, {0}, 0},
     {{0x0041}, 1, {0x0061}, 1},
     {{0x0061}, 1, {0x0061}, 1},
-    {{0x00AD}, 1, {}, 0},
+    {{0x00AD}, 1, {0}, 0},
     {{0x00DF}, 1, {0x0073, 0x0073}, 2}
 };
 
@@ -95,3 +95,4 @@ main(void)
 	failures += try(&cases[i]);
     return failures != 0;
 }
+

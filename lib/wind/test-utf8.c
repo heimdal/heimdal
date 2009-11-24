@@ -78,7 +78,7 @@ struct testcase {
 };
 
 static const struct testcase testcases[] = {
-    {"", 0, {}},
+    {"", 0, {0}},
     {"\x01", 1, {1}},
     {"\x7F", 1, {0x7F}},
     {"\x01\x7F", 2, {0x01, 0x7F}},

@@ -45,7 +45,7 @@ struct test {
 };
 
 static struct test passing_cases[] = {
-    {0, {}},
+    {0, {0}},
     {1, {0x0041}},
     {1, {0x05be}},
 };

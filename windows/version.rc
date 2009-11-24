@@ -1,0 +1,87 @@
+#include<windows.h>
+#include<config.h>
+
+LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
+#pragma code_page(1252)
+
+#ifdef VER_PRIVATE
+#define P_PRIVATE VS_FF_PRIVATEBUILD
+#else
+#define P_PRIVATE 0
+#endif
+
+#ifdef VER_SPECIAL
+#define P_SPECIAL VS_FF_SPECIALBUILD
+#else
+#define P_SPECIAL 0
+#endif
+
+#ifdef VER_PRERELEASE
+#define P_PRE VS_FF_PRERELEASE
+#else
+#define P_PRE 0
+#endif
+
+#ifdef VER_DEBUG
+#define P_DEBUG VS_FF_DEBUG
+#else
+#define P_DEBUG 0
+#endif
+
+/* If some per-file values aren't specified, we use the application
+values as a substitute */
+
+#ifndef RC_FILEVER_C
+#define RC_FILEVER_C RC_PRODVER_C
+#define RC_FILE_VER_0409 RC_PRODUCT_VER_0409
+#endif
+
+#ifndef RC_FILE_SUBTYPE
+#define RC_FILE_SUBTYPE VFT2_UNKNOWN
+#endif
+
+#ifndef RC_FILE_INTERNAL_0409
+#define RC_FILE_INTERNAL_0409 RC_FILE_ORIG_0409
+#endif
+
+1 VERSIONINFO
+    FILEVERSION RC_FILEVER_C
+    PRODUCTVERSION RC_PRODVER_C
+    FILEFLAGSMASK (VS_FF_DEBUG|VS_FF_PRERELEASE|VS_FF_PRIVATEBUILD|VS_FF_SPECIALBUILD)
+    FILEFLAGS (P_DEBUG|P_PRE|P_PRIVATE|P_SPECIAL)
+    FILEOS VOS_NT
+    FILETYPE RC_FILE_TYPE
+    FILESUBTYPE RC_FILE_SUBTYPE
+    BEGIN
+       BLOCK "StringFileInfo"
+       BEGIN
+           BLOCK "040904E4"
+	   BEGIN
+	       VALUE "ProductName", RC_PRODUCT_NAME_0409
+	       VALUE "ProductVersion", RC_PRODUCT_VER_0409
+	       VALUE "CompanyName", RC_COMPANY_0409
+	       VALUE "LegalCopyright", RC_COPYRIGHT_0409
+
+#ifdef RC_FILE_COMMENT_0409
+	       VALUE "Comments", RC_FILE_COMMENT_0409
+#endif
+#ifdef RC_FILE_DESC_0409
+	       VALUE "FileDescription", RC_FILE_DESC_0409
+#endif
+	       VALUE "FileVersion", RC_FILE_VER_0409
+	       VALUE "InternalName", RC_FILE_INTERNAL_0409
+	       VALUE "OriginalFilename", RC_FILE_ORIG_0409
+#ifdef VER_PRIVATE
+	       VALUE "PrivateBuild", VER_PRIVATE
+#endif
+#ifdef VER_SPECIAL
+	       VALUE "SpecialBuild", VER_SPECIAL
+#endif
+	   END
+       END
+
+       BLOCK "VarFileInfo"
+       BEGIN
+           VALUE "Translation", 0x0409	/* US English */, 1252 /* Multilingual */
+       END
+    END

@@ -38,6 +38,8 @@
 #include <sys/types.h>
 #include <sys/un.h>
 
+#include <sys/poll.h>
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

@@ -490,7 +490,6 @@ add_new_socket(int fd,
 	    return NULL;
 	}
     }
-    printf("new socket %d\n", c->fd);
 
     c->flags = flags;
     c->callback = callback;
@@ -509,7 +508,6 @@ add_new_socket(int fd,
     
     dispatch_source_set_event_handler(c->in, ^{ 
 	    int rw = (c->flags & WAITING_WRITE);
-	    printf("handle read %d\n", c->fd);
 	    handle_read(c);
 	    if (rw == 0 && (c->flags & WAITING_WRITE))
 		dispatch_resume(c->out);
@@ -518,10 +516,8 @@ add_new_socket(int fd,
 	    maybe_close(c);
 	});
     dispatch_source_set_event_handler(c->out, ^{
-	    printf("handle write %d\n", c->fd);
 	    handle_write(c);
 	    if ((c->flags & WAITING_WRITE) == 0) {
-		printf("completed write %d\n", c->fd);
 		dispatch_suspend(c->out);
 	    }
 	    maybe_close(c);
@@ -545,7 +541,6 @@ maybe_close(struct client *c)
     if (c->flags & (WAITING_READ|WAITING_WRITE))
 	return 0;
 
-    printf("client close: %d\n", c->fd);
 #ifdef HAVE_GCD
     dispatch_cancel(c->in);
     if ((c->flags & WAITING_READ) == 0)

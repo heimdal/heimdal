@@ -385,6 +385,9 @@ unix_socket_ipc(void *ctx,
     uint32_t rv;
     int retval;
 
+    if (cred)
+	*cred = NULL;
+
     rep->data = NULL;
     rep->length = 0;
 
@@ -400,11 +403,14 @@ unix_socket_ipc(void *ctx,
     retval = ntohl(rv);
 
     rep->length = ntohl(len);
-    rep->data = malloc(rep->length);
-    if (rep->data == NULL)
-	return -1;
-    if (net_read(s->fd, rep->data, rep->length) != rep->length)
-	return -1;
+    if (rep->length > 0) {
+	rep->data = malloc(rep->length);
+	if (rep->data == NULL)
+	    return -1;
+	if (net_read(s->fd, rep->data, rep->length) != rep->length)
+	    return -1;
+    } else
+	rep->data = NULL;
 
     return retval;
 }
@@ -554,13 +560,15 @@ heim_ipc_async(heim_ipc ctx, const heim_idata *send, void *userctx,
 {
     if (ctx->ops->async == NULL) {
 	heim_idata recv;
-	heim_icred cred;
+	heim_icred cred = NULL;
 	int ret;
 
 	ret = (ctx->ops->ipc)(ctx->ctx, send, &recv, &cred);
 	(*func)(userctx, ret, &recv, cred);
 	heim_ipc_free_cred(cred);
 	free(recv.data);
+	return ret;
+    } else {
+	return (ctx->ops->async)(ctx->ctx, send, userctx, func);
     }
-    return (ctx->ops->async)(ctx->ctx, send, userctx, func);
 }

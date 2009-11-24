@@ -66,29 +66,15 @@ reply(void *ctx, int errorcode, heim_idata *reply, heim_icred cred)
     heim_ipc_semaphore_signal((heim_isemaphore)ctx); /* tell caller we are done */
 }
 
-
-int
-main(int argc, char **argv)
+static void
+test_ipc(const char *service)
 {
-    int ret, optidx = 0;
     heim_isemaphore s;
     heim_idata req, rep;
     heim_ipc ipc;
+    int ret;
 
-    setprogname(argv[0]);
-
-    if (getarg(args, num_args, argc, argv, &optidx))
-	usage(1);
-	
-    if (help_flag)
-	usage(0);
-    
-    if (version_flag) {
-	print_version(NULL);
-	exit(0);
-    }
-
-    ret = heim_ipc_init_context("ANY:org.h5l.test-ipc", &ipc);
+    ret = heim_ipc_init_context(service, &ipc);
     if (ret)
 	errx(1, "heim_ipc_init_context: %d", ret);
 
@@ -110,6 +96,32 @@ main(int argc, char **argv)
     heim_ipc_semaphore_wait(s, HEIM_IPC_WAIT_FOREVER); /* wait for reply to complete the work */
 
     heim_ipc_free_context(ipc);
+}
+
+
+int
+main(int argc, char **argv)
+{
+    int optidx = 0;
+
+    setprogname(argv[0]);
+
+    if (getarg(args, num_args, argc, argv, &optidx))
+	usage(1);
+	
+    if (help_flag)
+	usage(0);
+    
+    if (version_flag) {
+	print_version(NULL);
+	exit(0);
+    }
+
+#ifdef __APPLE__
+    test_ipc("MACH:org.h5l.test-ipc");
+#endif
+    test_ipc("ANY:org.h5l.test-ipc");
+    test_ipc("UNIX:org.h5l.test-ipc");
 
     return 0;
 }

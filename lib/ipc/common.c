@@ -89,16 +89,6 @@ _heim_ipc_create_cred(uid_t uid, gid_t gid, pid_t pid, pid_t session, heim_icred
     return 0;
 }
 
-void
-heim_ipc_main(void)
-{
-#if __APPLE__
-    dispatch_main();
-#else
-    abort();
-#endif
-}
-
 heim_isemaphore
 heim_ipc_semaphore_create(long value)
 {

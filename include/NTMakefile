@@ -43,19 +43,8 @@ INCFILES=			\
 	$(INCDIR)\krb5-types.h	\
 	$(INCDIR)\version.h
 
-MAKECRYPTO=$(OBJ)\make_crypto.exe
-
-$(MAKECRYPTO): $(OBJ)\make_crypto.obj
-	$(EXECONLINK)
-	$(_VC_MANIFEST_EMBED_EXE)
-	$(_VC_MANIFEST_CLEAN)
-	$(_CODESIGN)
-
 $(INCDIR)\krb5-types.h: krb5-types.h.w32
 	$(CP) $** $@
-
-$(INCDIR)\crypto-headers.h: $(MAKECRYPTO)
-	$(MAKECRYPTO) $@
 
 $(INCDIR)\config.h: config.h.w32 ..\windows\NTMakefile.config NTMakefile
 	$(PERL) << < config.h.w32 > $@

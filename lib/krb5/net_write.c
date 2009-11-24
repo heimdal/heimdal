@@ -39,7 +39,7 @@ krb5_net_write (krb5_context context,
 		const void *buf,
 		size_t len)
 {
-    SOCKET fd = *((SOCKET *)p_fd);
+    krb5_socket_t fd = *((krb5_socket_t *)p_fd);
 
 #ifdef SOCKET_IS_NOT_AN_FD
 #ifdef _MSC_VER
@@ -51,7 +51,7 @@ krb5_net_write (krb5_context context,
 	}
     }
 #else
-#error Don't know how to handle SOCKET that may be an fd
+#error Dont know how to handle SOCKET that may be an fd
 #endif
 #endif
 
@@ -65,7 +65,7 @@ krb5_net_write_block(krb5_context context,
 		     size_t len,
 		     time_t timeout)
 {
-  SOCKET fd = *((SOCKET *)p_fd);
+  krb5_socket_t fd = *((krb5_socket_t *)p_fd);
   int ret;
   struct timeval tv, *tvp;
   const char *cbuf = (const char *)buf;

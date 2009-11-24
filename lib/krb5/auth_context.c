@@ -157,7 +157,7 @@ krb5_auth_con_setaddrs(krb5_context context,
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_auth_con_genaddrs(krb5_context context,
 		       krb5_auth_context auth_context,
-		       SOCKET fd, int flags)
+		       krb5_socket_t fd, int flags)
 {
     krb5_error_code ret;
     krb5_address local_k_address, remote_k_address;
@@ -221,7 +221,7 @@ krb5_auth_con_setaddrs_from_fd (krb5_context context,
 				krb5_auth_context auth_context,
 				void *p_fd)
 {
-    SOCKET fd = *(SOCKET*)p_fd;
+    krb5_socket_t fd = *(krb5_socket_t *)p_fd;
     int flags = 0;
     if(auth_context->local_address == NULL)
 	flags |= KRB5_AUTH_CONTEXT_GENERATE_LOCAL_FULL_ADDR;

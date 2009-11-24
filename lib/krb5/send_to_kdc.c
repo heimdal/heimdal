@@ -47,7 +47,7 @@ struct send_to_kdc {
  */
 
 static int
-recv_loop (SOCKET fd,
+recv_loop (krb5_socket_t fd,
 	   time_t tmout,
 	   int udp,
 	   size_t limit,
@@ -113,7 +113,7 @@ recv_loop (SOCKET fd,
  */
 
 static int
-send_and_recv_udp(SOCKET fd,
+send_and_recv_udp(krb5_socket_t fd,
 		  time_t tmout,
 		  const krb5_data *req,
 		  krb5_data *rep)
@@ -132,7 +132,7 @@ send_and_recv_udp(SOCKET fd,
  */
 
 static int
-send_and_recv_tcp(SOCKET fd,
+send_and_recv_tcp(krb5_socket_t fd,
 		  time_t tmout,
 		  const krb5_data *req,
 		  krb5_data *rep)
@@ -164,7 +164,7 @@ send_and_recv_tcp(SOCKET fd,
 }
 
 int
-_krb5_send_and_recv_tcp(SOCKET fd,
+_krb5_send_and_recv_tcp(krb5_socket_t fd,
 			time_t tmout,
 			const krb5_data *req,
 			krb5_data *rep)
@@ -177,7 +177,7 @@ _krb5_send_and_recv_tcp(SOCKET fd,
  */
 
 static int
-send_and_recv_http(SOCKET fd,
+send_and_recv_http(krb5_socket_t fd,
 		   time_t tmout,
 		   const char *prefix,
 		   const krb5_data *req,
@@ -266,7 +266,7 @@ send_via_proxy (krb5_context context,
     struct addrinfo hints;
     struct addrinfo *ai, *a;
     int ret;
-    SOCKET s = INVALID_SOCKET;
+    krb5_socket_t s = INVALID_SOCKET;
     char portstr[NI_MAXSERV];
 		
     if (proxy == NULL)
@@ -370,7 +370,7 @@ krb5_sendto (krb5_context context,
 	     krb5_data *receive)
 {
      krb5_error_code ret;
-     SOCKET fd;
+     krb5_socket_t fd;
      int i;
 
      krb5_data_zero(receive);

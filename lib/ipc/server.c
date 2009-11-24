@@ -735,7 +735,8 @@ process_loop(void)
 		if (n < num_clients - 1)
 		    clients[n] = clients[num_clients - 1];
 		num_clients--;
-	    }
+	    } else
+		n++;
 	}
 
 	free(fds);
@@ -864,7 +865,7 @@ heim_sipc_free_context(heim_sipc ctx)
 void
 heim_ipc_main(void)
 {
-#if __APPLE__
+#ifdef HAVE_GCD
     dispatch_main();
 #else
     process_loop();

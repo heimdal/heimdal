@@ -824,7 +824,7 @@ heim_sipc_service_unix(const char *service,
 void
 heim_sipc_timeout(time_t t)
 {
-#if defined(__APPLE__) && defined(HAVE_GCD)
+#ifdef HAVE_GCD
     static dispatch_once_t timeoutonce;
     init_globals();
     dispatch_sync(timerq, ^{
@@ -846,7 +846,7 @@ heim_sipc_timeout(time_t t)
 void
 heim_sipc_set_timeout_handler(void (*func)(void))
 {
-#if defined(__APPLE__) && defined(HAVE_GCD)
+#ifdef HAVE_GCD
     init_globals();
     dispatch_sync(timerq, ^{ timer_ev = func; });
 #else

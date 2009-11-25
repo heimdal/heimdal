@@ -45,15 +45,19 @@ INCFILES=	\
 	$(HCRYPTOINCLUDEDIR)\des.h	\
 	$(HCRYPTOINCLUDEDIR)\dh.h	\
 	$(HCRYPTOINCLUDEDIR)\dsa.h	\
+	$(HCRYPTOINCLUDEDIR)\ec.h	\
+	$(HCRYPTOINCLUDEDIR)\ecdh.h	\
+	$(HCRYPTOINCLUDEDIR)\ecdsa.h	\
 	$(HCRYPTOINCLUDEDIR)\engine.h	\
 	$(HCRYPTOINCLUDEDIR)\evp.h	\
+	$(HCRYPTOINCLUDEDIR)\evp-hcrypto.h	\
+	$(HCRYPTOINCLUDEDIR)\evp-cc.h	\
 	$(HCRYPTOINCLUDEDIR)\hmac.h	\
 	$(HCRYPTOINCLUDEDIR)\md2.h	\
 	$(HCRYPTOINCLUDEDIR)\md4.h	\
 	$(HCRYPTOINCLUDEDIR)\md5.h	\
 	$(HCRYPTOINCLUDEDIR)\pkcs12.h	\
 	$(HCRYPTOINCLUDEDIR)\rand.h	\
-	$(HCRYPTOINCLUDEDIR)\randi.h	\
 	$(HCRYPTOINCLUDEDIR)\rc2.h	\
 	$(HCRYPTOINCLUDEDIR)\rc4.h	\
 	$(HCRYPTOINCLUDEDIR)\rsa.h	\
@@ -74,8 +78,8 @@ all:: $(INCFILES)
 
 # libhcrypto
 
-libhcrypt_OBJs = \
-	$(OBJ)\imath.obj		\
+libhcrypto_OBJs = \
+	$(OBJ)\imath.obj	\
 	$(OBJ)\iprime.obj	\
 	$(OBJ)\aes.obj		\
 	$(OBJ)\bn.obj		\
@@ -87,13 +91,12 @@ libhcrypt_OBJs = \
 	$(OBJ)\dsa.obj		\
 	$(OBJ)\evp.obj		\
 	$(OBJ)\evp-hcrypto.obj	\
-	$(OBJ)\evp-aes-cts.obj	\
 	$(OBJ)\engine.obj	\
 	$(OBJ)\hmac.obj		\
 	$(OBJ)\md2.obj		\
 	$(OBJ)\md4.obj		\
 	$(OBJ)\md5.obj		\
-	$(OBJ)\pkcs5.obj		\
+	$(OBJ)\pkcs5.obj	\
 	$(OBJ)\pkcs12.obj	\
 	$(OBJ)\rand-fortuna.obj	\
 	$(OBJ)\rand-timer.obj	\
@@ -113,13 +116,13 @@ libhcrypt_OBJs = \
 
 $(LIBHCRYPTO): $(BINDIR)\libhcrypto.dll
 
-$(BINDIR)\libhcrypto.dll: $(libhcrypt_OBJs) $(LIBROKEN) $(LIBASN1)
+$(BINDIR)\libhcrypto.dll: $(libhcrypto_OBJs) $(LIBROKEN) $(LIBASN1)
 	$(DLLGUILINK) -def:libhcrypto-exports.def -implib:$(LIBHCRYPTO)
 	$(DLLPREP)
 
 !else
 
-$(LIBHCRYPTO): $(libhcrypt_OBJs)
+$(LIBHCRYPTO): $(libhcrypto_OBJs)
 	$(LIBCON)
 
 !endif
@@ -136,27 +139,28 @@ clean::
 
 TESTLIB=$(OBJ)\libhctest.lib
 
-$(TESTLIB): \
-	$(OBJ)\imath.obj	\
-	$(OBJ)\des.obj	\
+$(TESTLIB):		    \
+	$(OBJ)\imath.obj    \
+	$(OBJ)\des.obj	    \
 	$(OBJ)\ui.obj
 	$(LIBCON)
 
-test-binaries:	\
-	$(OBJ)\destest.exe \
-	$(OBJ)\mdtest.exe \
-	$(OBJ)\rc2test.exe  \
-	$(OBJ)\rctest.exe \
-	$(OBJ)\test_bn.exe \
-	$(OBJ)\test_cipher.exe \
-	$(OBJ)\test_engine_dso.exe \
-	$(OBJ)\test_hmac.exe \
-	$(OBJ)\test_imath.exe \
-	$(OBJ)\test_pkcs5.exe \
-	$(OBJ)\test_pkcs12.exe	\
-	$(OBJ)\test_rsa.exe	\
-	$(OBJ)\test_dh.exe	\
-	$(OBJ)\test_rand.exe	\
+test-binaries:				\
+	$(OBJ)\destest.exe		\
+	$(OBJ)\example_evp_cipher.exe	\
+	$(OBJ)\mdtest.exe		\
+	$(OBJ)\rc2test.exe		\
+	$(OBJ)\rctest.exe		\
+	$(OBJ)\test_bn.exe		\
+	$(OBJ)\test_cipher.exe		\
+	$(OBJ)\test_engine_dso.exe	\
+	$(OBJ)\test_hmac.exe		\
+	$(OBJ)\test_imath.exe		\
+	$(OBJ)\test_pkcs5.exe		\
+	$(OBJ)\test_pkcs12.exe		\
+	$(OBJ)\test_rsa.exe		\
+	$(OBJ)\test_dh.exe		\
+	$(OBJ)\test_rand.exe		\
 	$(OBJ)\test_crypto.sh
 
 $(OBJ)\destest.exe: $(OBJ)\destest.obj $(TESTLIB) $(LIBROKEN)

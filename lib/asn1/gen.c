@@ -739,7 +739,7 @@ define_type (int level, const char *name, const char *basename, Type *t, int typ
 	
 		/* pad unused */
 		while (pos < m->val) {
-		    asprintf (&n, "_unused%d:1;", pos);
+		    asprintf (&n, "_unused%d:1", pos);
 		    define_type (level + 1, n, newbasename, &i, FALSE, FALSE);
 		    free(n);
 		    pos++;
@@ -755,7 +755,7 @@ define_type (int level, const char *name, const char *basename, Type *t, int typ
 	    /* pad to 32 elements */
 	    while (pos < 32) {
 		char *n;
-		asprintf (&n, "_unused%d:1;", pos);
+		asprintf (&n, "_unused%d:1", pos);
 		define_type (level + 1, n, newbasename, &i, FALSE, FALSE);
 		free(n);
 		pos++;

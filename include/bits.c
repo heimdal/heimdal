@@ -234,6 +234,15 @@ int main(int argc, char **argv)
     fprintf(f, "typedef int krb5_ssize_t;\n");
 #endif
     fprintf(f, "\n");
+
+#if defined(_WIN32)
+    #include <ws2tcpip.h>
+    fprintf(f, "typedef SOCKET krb5_socket_t;\n");
+#else
+    fprintf(f, "typedef int krb5_socket_t;\n");
+#endif
+    fprintf(f, "\n");
+
 #endif /* KRB5 */
     fprintf(f, "#endif /* %s */\n", hb);
 

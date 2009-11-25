@@ -39,6 +39,9 @@ RCSID("$Id$");
 #include <string.h>
 #include <stdlib.h>
 #include <ctype.h>
+#ifdef WIN32
+#include <ws2tcpip.h>
+#endif
 
 #define BITSIZE(TYPE)						\
 {								\
@@ -157,7 +160,11 @@ int main(int argc, char **argv)
     fprintf(f, "#include <netinet/in6_machtypes.h>\n");
 #endif
 #ifdef HAVE_SOCKLEN_T
+#ifndef WIN32
     fprintf(f, "#include <sys/socket.h>\n");
+#else
+    fprintf(f, "#include <ws2tcpip.h>\n");
+#endif
 #endif
     fprintf(f, "\n");
 
@@ -236,7 +243,6 @@ int main(int argc, char **argv)
     fprintf(f, "\n");
 
 #if defined(_WIN32)
-    #include <ws2tcpip.h>
     fprintf(f, "typedef SOCKET krb5_socket_t;\n");
 #else
     fprintf(f, "typedef int krb5_socket_t;\n");

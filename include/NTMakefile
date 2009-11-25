@@ -43,8 +43,18 @@ INCFILES=			\
 	$(INCDIR)\krb5-types.h	\
 	$(INCDIR)\version.h
 
+!ifdef USE_STATIC_KRB5_TYPES
 $(INCDIR)\krb5-types.h: krb5-types.h.w32
 	$(CP) $** $@
+!else
+$(INCDIR)\krb5-types.h: $(OBJ)\bits.exe
+	$(OBJ)\bits.exe $(INCDIR)\krb5-types.h
+
+$(OBJ)\bits.exe: $(OBJ)\bits.obj
+	$(EXECONLINK)
+	$(EXEPREP_NODIST)
+
+!endif
 
 $(INCDIR)\config.h: config.h.w32 ..\windows\NTMakefile.config NTMakefile
 	$(PERL) << < config.h.w32 > $@
@@ -73,9 +83,10 @@ while(<>) {
   } elsif (m/\@VERSION_OPTDEFS\@/) {
 
     if ("$(VER_PRERELEASE)") { print "#define VER_PRERELEASE 1\n"; }
-    if ("$(VER_PRIVATE)") { print "#define VER_PRIVATE \"$(VER_PRIVATE)\""; }
-    if ("$(VER_SPECIAL)") { print "#define VER_SPECIAL \"$(VER_SPECIAL)\""; }
+    if ("$(VER_PRIVATE)") { print "#define VER_PRIVATE \"$(VER_PRIVATE)\"\n"; }
+    if ("$(VER_SPECIAL)") { print "#define VER_SPECIAL \"$(VER_SPECIAL)\"\n"; }
     if ("$(BUILD)" =~ "dbg") { print "#define VER_DEBUG 1\n"; }
+    print "#define HOST \"$(COMPUTERNAME)\"\n";
 
   } else {
 

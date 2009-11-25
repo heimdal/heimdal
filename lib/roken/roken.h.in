@@ -56,36 +56,36 @@
 
 #include<ws2tcpip.h>
 
-#define IS_BAD_SOCKET(s) ((s) == INVALID_SOCKET)
-#define IS_SOCKET_ERROR(rv) ((rv) == SOCKET_ERROR)
-#define SOCK_ERRNO WSAGetLastError()
-#define SOCK_IOCTL(s,c,a) ioctlsocket((s),(c),(a))
+typedef SOCKET rk_socket_t;
+
+#define rk_IS_BAD_SOCKET(s) ((s) == INVALID_SOCKET)
+#define rk_IS_SOCKET_ERROR(rv) ((rv) == SOCKET_ERROR)
+#define rk_SOCK_ERRNO WSAGetLastError()
+#define rk_SOCK_IOCTL(s,c,a) ioctlsocket((s),(c),(a))
 
 #define ETIMEDOUT               WSAETIMEDOUT
 #define EWOULDBLOCK             WSAEWOULDBLOCK
 #define ENOTSOCK		WSAENOTSOCK
 
-#define SOCK_INIT rk_WSAStartup()
-#define SOCK_EXIT rk_WSACleanup()
-#define NEED_SOCK_INIT 1
+#define rk_SOCK_INIT rk_WSAStartup()
+#define rk_SOCK_EXIT rk_WSACleanup()
 
 ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL rk_WSAStartup(void);
 ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL rk_WSACleanup(void);
 
 #else  /* not WinSock */
 
-typedef int SOCKET;
+typedef int rk_socket_t;
 
-#define closesocket(x) close(x)
-#define SOCK_IOCTL(s,c,a) ioctl((s),(c),(a))
-#define IS_BAD_SOCKET(s) ((s) < 0)
-#define IS_SOCKET_ERROR(rv) ((rv) < 0)
-#define SOCK_ERRNO errno
-#define INVALID_SOCKET (-1)
+#define rk_closesocket(x) close(x)
+#define rk_SOCK_IOCTL(s,c,a) ioctl((s),(c),(a))
+#define rk_IS_BAD_SOCKET(s) ((s) < 0)
+#define rk_IS_SOCKET_ERROR(rv) ((rv) < 0)
+#define rk_SOCK_ERRNO errno
+#define rk_INVALID_SOCKET (-1)
 
-#define SOCK_INIT (0)
-#define SOCK_EXIT (0)
-#undef NEED_SOCK_INIT
+#define rk_SOCK_INIT 0
+#define rk_SOCK_EXIT 0
 
 #endif
 
@@ -654,24 +654,14 @@ ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL roken_vconcat (char *, size_t, va_list);
 ROKEN_LIB_FUNCTION size_t ROKEN_LIB_CALL
     roken_vmconcat (char **, size_t, va_list);
 
-ROKEN_LIB_FUNCTION ssize_t ROKEN_LIB_CALL net_write (int, const void *, size_t);
+ROKEN_LIB_FUNCTION ssize_t ROKEN_LIB_CALL
+    net_write (rk_socket_t, const void *, size_t);
 
-ROKEN_LIB_FUNCTION ssize_t ROKEN_LIB_CALL net_read (int, void *, size_t);
+ROKEN_LIB_FUNCTION ssize_t ROKEN_LIB_CALL
+    net_read (rk_socket_t, void *, size_t);
 
-#ifdef SOCKET_IS_NOT_AN_FD
-
-ROKEN_LIB_FUNCTION ssize_t ROKEN_LIB_CALL net_write_s (SOCKET, const void *, size_t);
-
-ROKEN_LIB_FUNCTION ssize_t ROKEN_LIB_CALL net_read_s (SOCKET, void *, size_t);
-
-#else
-
-#define net_read_s net_read
-#define net_write_s net_write
-
-#endif
-
-ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL issuid(void);
+ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
+    issuid(void);
 
 #ifndef HAVE_STRUCT_WINSIZE
 struct winsize {
@@ -833,9 +823,7 @@ struct msghdr {
 };
 
 ROKEN_LIB_FUNCTION ssize_t ROKEN_LIB_CALL
-sendmsg_w32(SOCKET s, const struct msghdr * msg, int flags);
-
-#define sendmsg(s,m,f) sendmsg_w32((s),(m),(f))
+sendmsg(rk_socket_t s, const struct msghdr * msg, int flags);
 
 #endif
 
@@ -935,10 +923,10 @@ extern const char *__progname;
 #endif
 
 ROKEN_LIB_FUNCTION void ROKEN_LIB_CALL
-mini_inetd_addrinfo (struct addrinfo*, SOCKET *);
+mini_inetd_addrinfo (struct addrinfo*, rk_socket *);
 
 ROKEN_LIB_FUNCTION void ROKEN_LIB_CALL
-mini_inetd (int, SOCKET *);
+mini_inetd (int, rk_socket_t *);
 
 #ifndef HAVE_LOCALTIME_R
 #define localtime_r rk_localtime_r

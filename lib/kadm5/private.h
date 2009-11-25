@@ -79,7 +79,7 @@ typedef struct kadm5_log_context {
 #else
     struct addrinfo *socket_info;
 #endif
-    SOCKET socket_fd;
+    krb5_socket_t socket_fd;
 } kadm5_log_context;
 
 typedef struct kadm5_server_context {

@@ -41,12 +41,12 @@
  */
 
 static void
-accept_it (SOCKET s, SOCKET *ret_socket)
+accept_it (rk_socket_t s, rk_socket_t *ret_socket)
 {
-    SOCKET as;
+    rk_socket_t as;
 
     as = accept(s, NULL, NULL);
-    if(IS_BAD_SOCKET(as))
+    if(rk_IS_BAD_SOCKET(as))
 	err (1, "accept");
 
     if (ret_socket) {
@@ -54,20 +54,16 @@ accept_it (SOCKET s, SOCKET *ret_socket)
 	*ret_socket = as;
 
     } else {
-	int fd = fd_from_socket(as, 0);
+	int fd = socket_to_fd(as, 0);
 
-	/* We would use _O_RDONLY for the fd_from_socket() call for
+	/* We would use _O_RDONLY for the socket_to_fd() call for
 	   STDIN, but there are instances where we assume that STDIN
 	   is a r/w socket. */
 
 	dup2(fd, STDIN_FILENO);
 	dup2(fd, STDOUT_FILENO);
 
-#ifdef SOCKET_IS_NOT_AN_FD
-	close(fd);
-#else
-	closesocket(as);
-#endif
+	closesocket(fd);
     }
 }
 
@@ -90,14 +86,14 @@ accept_it (SOCKET s, SOCKET *ret_socket)
  * @see mini_inetd()
  */
 ROKEN_LIB_FUNCTION void ROKEN_LIB_CALL
-mini_inetd_addrinfo (struct addrinfo *ai, SOCKET *ret_socket)
+mini_inetd_addrinfo (struct addrinfo *ai, rk_socket_t *ret_socket)
 {
     int ret;
     struct addrinfo *a;
     int n, nalloc, i;
-    SOCKET *fds;
+    rk_socket_t *fds;
     fd_set orig_read_set, read_set;
-    SOCKET max_fd = (SOCKET)-1;
+    rk_socket_t max_fd = (rk_socket_t)-1;
 
     for (nalloc = 0, a = ai; a != NULL; a = a->ai_next)
 	++nalloc;
@@ -112,20 +108,20 @@ mini_inetd_addrinfo (struct addrinfo *ai, SOCKET *ret_socket)
 
     for (i = 0, a = ai; a != NULL; a = a->ai_next) {
 	fds[i] = socket (a->ai_family, a->ai_socktype, a->ai_protocol);
-	if (IS_BAD_SOCKET(fds[i]))
+	if (rk_IS_BAD_SOCKET(fds[i]))
 	    continue;
 	socket_set_reuseaddr (fds[i], 1);
 	socket_set_ipv6only(fds[i], 1);
-	if (IS_SOCKET_ERROR(bind (fds[i], a->ai_addr, a->ai_addrlen))) {
+	if (rk_IS_SOCKET_ERROR(bind (fds[i], a->ai_addr, a->ai_addrlen))) {
 	    warn ("bind af = %d", a->ai_family);
 	    closesocket(fds[i]);
-	    fds[i] = INVALID_SOCKET;
+	    fds[i] = rk_INVALID_SOCKET;
 	    continue;
 	}
-	if (IS_SOCKET_ERROR(listen (fds[i], SOMAXCONN))) {
+	if (rk_IS_SOCKET_ERROR(listen (fds[i], SOMAXCONN))) {
 	    warn ("listen af = %d", a->ai_family);
 	    closesocket(fds[i]);
-	    fds[i] = INVALID_SOCKET;
+	    fds[i] = rk_INVALID_SOCKET;
 	    continue;
 	}
 #ifndef NO_LIMIT_FD_SETSIZE
@@ -144,7 +140,7 @@ mini_inetd_addrinfo (struct addrinfo *ai, SOCKET *ret_socket)
 	read_set = orig_read_set;
 
 	ret = select (max_fd + 1, &read_set, NULL, NULL, NULL);
-	if (IS_SOCKET_ERROR(ret) && SOCK_ERRNO != EINTR)
+	if (rk_IS_SOCKET_ERROR(ret) && rk_SOCK_ERRNO != EINTR)
 	    err (1, "select");
     } while (ret <= 0);
 
@@ -177,7 +173,7 @@ mini_inetd_addrinfo (struct addrinfo *ai, SOCKET *ret_socket)
  * @see mini_inetd_addrinfo()
  */
 ROKEN_LIB_FUNCTION void ROKEN_LIB_CALL
-mini_inetd (int port, SOCKET * ret_socket)
+mini_inetd (int port, rk_socket_t * ret_socket)
 {
     int error;
     struct addrinfo *ai, hints;

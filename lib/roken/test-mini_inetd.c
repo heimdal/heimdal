@@ -55,31 +55,30 @@ get_address(int flags, struct addrinfo ** ret)
     ai.ai_protocol = PF_UNSPEC;
 
     rv = getaddrinfo("127.0.0.1", PORT_S, &ai, ret);
-    if (rv) {
-	fprintf(stderr, "[%s] getaddrinfo: %s", prog, gai_strerror(rv));
-    }
+    if (rv)
+	warnx("getaddrinfo: %s", gai_strerror(rv));
     return rv;
 }
 
 static int
-get_connected_socket(SOCKET * s_ret)
+get_connected_socket(rk_socket_t * s_ret)
 {
     struct addrinfo * ai = NULL;
     int rv = 0;
-    SOCKET s = INVALID_SOCKET;
+    rk_socket_t s = rk_INVALID_SOCKET;
 
     rv = get_address(0, &ai);
     if (rv)
 	return rv;
 
     s = socket(ai->ai_family, ai->ai_socktype, ai->ai_protocol);
-    if (IS_BAD_SOCKET(s)) {
+    if (rk_IS_BAD_SOCKET(s)) {
 	rv = 1;
 	goto done;
     }
 
     rv = connect(s, ai->ai_addr, ai->ai_addrlen);
-    if (IS_SOCKET_ERROR(rv))
+    if (rk_IS_SOCKET_ERROR(rv))
 	goto done;
 
     *s_ret = s;
@@ -87,13 +86,13 @@ get_connected_socket(SOCKET * s_ret)
     rv = 0;
 
  done:
-    if (!IS_BAD_SOCKET(s))
+    if (!rk_IS_BAD_SOCKET(s))
 	closesocket(s);
 
     if (ai)
 	freeaddrinfo(ai);
 
-    return (rv)?SOCK_ERRNO: 0;
+    return (rv) ? rk_SOCK_ERRNO : 0;
 }
 
 const char * test_strings[] = {
@@ -106,31 +105,34 @@ const char * test_strings[] = {
 static int
 test_simple_echo_client(void)
 {
-    SOCKET s = INVALID_SOCKET;
+    rk_socket_t s = INVALID_SOCKET;
     int rv;
     char buf[81];
     int i;
     
-    fprintf (stderr, "[%s] Getting connected socket...", prog);
+    fprintf(stderr, "[%s] Getting connected socket...", getprogname());
     rv = get_connected_socket(&s);
     if (rv) {
-	fprintf(stderr, "\n[%s] get_connected_socket() failed (%s)\n", prog, strerror(SOCK_ERRNO));
+	fprintf(stderr, "\n[%s] get_connected_socket() failed (%s)\n", 
+		getprogname(), strerror(rk_SOCK_ERRNO));
 	return 1;
     }
 
-    fprintf (stderr, "[%s] done\n", prog);
+    fprintf(stderr, "[%s] done\n", getprogname());
 
     for (i=0; i < sizeof(test_strings)/sizeof(test_strings[0]); i++) {
 	rv = send(s, test_strings[i], strlen(test_strings[i]), 0);
-	if (IS_SOCKET_ERROR(rv)) {
-	    fprintf (stderr, "[%s] send() failure (%s)\n", prog, strerror(SOCK_ERRNO));
+	if (rk_IS_SOCKET_ERROR(rv)) {
+	    fprintf(stderr, "[%s] send() failure (%s)\n", 
+		    getprogname(), strerror(rk_SOCK_ERRNO));
 	    closesocket(s);
 	    return 1;
 	}
 
 	rv = recv(s, buf, sizeof(buf), 0);
-	if (IS_SOCKET_ERROR(rv)) {
-	    fprintf (stderr, "[%s] recv() failure (%s)\n", prog, strerror(SOCK_ERRNO));
+	if (rk_IS_SOCKET_ERROR(rv)) {
+	    fprintf (stderr, "[%s] recv() failure (%s)\n",
+		     getprogname(), strerror(rk_SOCK_ERRNO));
 	    closesocket(s);
 	    return 1;
 	}
@@ -163,12 +165,13 @@ test_simple_echo_socket(void)
 	return test_simple_echo_client();
     } else {
 
-	SOCKET s = INVALID_SOCKET;
+	rk_socket_t s = INVALID_SOCKET;
 
 	fprintf (stderr, "[%s] Listening for connections...\n", prog);
 	mini_inetd(htons(PORT), &s);
-	if (IS_BAD_SOCKET(s)) {
-	    fprintf (stderr, "[%s] Connect failed (%s)\n", prog, strerror(SOCK_ERRNO));
+	if (rk_IS_BAD_SOCKET(s)) {
+	    fprintf (stderr, "[%s] Connect failed (%s)\n",
+		     getprogname(), strerror(rk_SOCK_ERRNO));
 	} else {
 	    fprintf (stderr, "[%s] Connected\n", prog);
 	}
@@ -177,17 +180,19 @@ test_simple_echo_socket(void)
 	    char buf[81];
 	    int rv, srv;
 
-	    while ((rv = recv(s, buf, sizeof(buf), 0)) != 0 && !IS_SOCKET_ERROR(rv)) {
+	    while ((rv = recv(s, buf, sizeof(buf), 0)) != 0 && !rk_IS_SOCKET_ERROR(rv)) {
 		buf[rv] = 0;
 		fprintf(stderr, "[%s] Received [%s]\n", prog, buf);
 
 		/* simple echo */
 		srv = send(s, buf, rv, 0);
 		if (srv != rv) {
-		    if (IS_SOCKET_ERROR(srv))
-			fprintf(stderr, "[%s] send() error [%s]\n", prog, strerror(SOCK_ERRNO));
+		    if (rk_IS_SOCKET_ERROR(srv))
+			fprintf(stderr, "[%s] send() error [%s]\n", 
+				getprogname(), strerror(rk_SOCK_ERRNO));
 		    else
-			fprintf(stderr, "[%s] send() size mismatch %d != %d", prog, srv, rv);
+			fprintf(stderr, "[%s] send() size mismatch %d != %d", 
+				getprogname(), srv, rv);
 		}
 
 		if (!strcmp(buf, "exit")) {
@@ -198,7 +203,9 @@ test_simple_echo_socket(void)
 		}
 	    }
 
-	    fprintf(stderr, "[%s] recv() failed (%s)\n", prog, strerror(SOCK_ERRNO));
+	    fprintf(stderr, "[%s] recv() failed (%s)\n",
+		    getprogname(),
+		    strerror(rk_SOCK_ERRNO));
 	}
 
 	closesocket(s);
@@ -346,6 +353,8 @@ do_test(char * path)
 
 int main(int argc, char ** argv)
 {
+    setprogname(argv[0]);
+
     if (argc == 2 && strcmp(argv[1], "--client") == 0)
 	return do_client();
     else if (argc == 2 && strcmp(argv[1], "--server") == 0)

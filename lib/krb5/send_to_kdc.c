@@ -266,7 +266,7 @@ send_via_proxy (krb5_context context,
     struct addrinfo hints;
     struct addrinfo *ai, *a;
     int ret;
-    krb5_socket_t s = INVALID_SOCKET;
+    krb5_socket_t s = rk_INVALID_SOCKET;
     char portstr[NI_MAXSERV];
 		
     if (proxy == NULL)
@@ -416,7 +416,7 @@ krb5_sendto (krb5_context context,
 
 	     for (a = ai; a != NULL; a = a->ai_next) {
 		 fd = socket (a->ai_family, a->ai_socktype | SOCK_CLOEXEC, a->ai_protocol);
-		 if (IS_BAD_SOCKET(fd))
+		 if (rk_IS_BAD_SOCKET(fd))
 		     continue;
 		 rk_cloexec(fd);
 		 if (connect (fd, a->ai_addr, a->ai_addrlen) < 0) {

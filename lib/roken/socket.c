@@ -222,7 +222,7 @@ socket_set_port (struct sockaddr *sa, int port)
  * Set the range of ports to use when binding with port = 0.
  */
 ROKEN_LIB_FUNCTION void ROKEN_LIB_CALL
-socket_set_portrange (SOCKET sock, int restr, int af)
+socket_set_portrange (rk_socket_t sock, int restr, int af)
 {
 #if defined(IP_PORTRANGE)
 	if (af == AF_INET) {
@@ -248,12 +248,12 @@ socket_set_portrange (SOCKET sock, int restr, int af)
  */
 
 ROKEN_LIB_FUNCTION void ROKEN_LIB_CALL
-socket_set_debug (SOCKET sock)
+socket_set_debug (rk_socket_t sock)
 {
 #if defined(SO_DEBUG) && defined(HAVE_SETSOCKOPT)
     int on = 1;
 
-    if (setsockopt (sock, SOL_SOCKET, SO_DEBUG, (void *) &on, sizeof (on)) < 0)
+    if (setsockopt (sock, SOL_rk_socket_t, SO_DEBUG, (void *) &on, sizeof (on)) < 0)
 	warn ("setsockopt SO_DEBUG (ignored)");
 #endif
 }
@@ -263,7 +263,7 @@ socket_set_debug (SOCKET sock)
  */
 
 ROKEN_LIB_FUNCTION void ROKEN_LIB_CALL
-socket_set_tos (SOCKET sock, int tos)
+socket_set_tos (rk_socket_t sock, int tos)
 {
 #if defined(IP_TOS) && defined(HAVE_SETSOCKOPT)
     if (setsockopt (sock, IPPROTO_IP, IP_TOS, (void *) &tos, sizeof (int)) < 0)
@@ -277,10 +277,10 @@ socket_set_tos (SOCKET sock, int tos)
  */
 
 ROKEN_LIB_FUNCTION void ROKEN_LIB_CALL
-socket_set_reuseaddr (SOCKET sock, int val)
+socket_set_reuseaddr (rk_socket_t sock, int val)
 {
 #if defined(SO_REUSEADDR) && defined(HAVE_SETSOCKOPT)
-    if(setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, (void *)&val,
+    if(setsockopt(sock, SOL_rk_socket_t, SO_REUSEADDR, (void *)&val,
 		  sizeof(val)) < 0)
 	err (1, "setsockopt SO_REUSEADDR");
 #endif
@@ -291,28 +291,27 @@ socket_set_reuseaddr (SOCKET sock, int val)
  */
 
 ROKEN_LIB_FUNCTION void ROKEN_LIB_CALL
-socket_set_ipv6only (SOCKET sock, int val)
+socket_set_ipv6only (rk_socket_t sock, int val)
 {
 #if defined(IPV6_V6ONLY) && defined(HAVE_SETSOCKOPT)
     setsockopt(sock, IPPROTO_IPV6, IPV6_V6ONLY, (void *)&val, sizeof(val));
 #endif
 }
 
-
-#ifdef SOCKET_IS_NOT_AN_FD
-
 /**
  * Create a file descriptor from a socket
  *
  * While the socket handle in \a sock can be used with WinSock
- * functions after calling fd_from_socket(), it should not be closed
+ * functions after calling socket_to_fd(), it should not be closed
  * with closesocket().  The socket will be closed when the associated
  * file descriptor is closed.
  */
 ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
-fd_from_socket(SOCKET sock, int flags)
+socket_to_fd(rk_socket_t sock, int flags)
 {
+#ifndef _WIN32
+    return sock;
+#else
     return _open_osfhandle((intptr_t) sock, flags);
-}
-
 #endif
+}

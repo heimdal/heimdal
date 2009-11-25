@@ -39,8 +39,10 @@
  * Like read but never return partial data.
  */
 
+#ifndef _WIN32
+
 ROKEN_LIB_FUNCTION ssize_t ROKEN_LIB_CALL
-net_read (int fd, void *buf, size_t nbytes)
+net_read (rk_socket_t fd, void *buf, size_t nbytes)
 {
     char *cbuf = (char *)buf;
     ssize_t count;
@@ -62,10 +64,10 @@ net_read (int fd, void *buf, size_t nbytes)
     return nbytes;
 }
 
-#ifdef SOCKET_IS_NOT_AN_FD
+#else
 
 ROKEN_LIB_FUNCTION ssize_t ROKEN_LIB_CALL
-net_read_s (SOCKET sock, void *buf, size_t nbytes)
+net_read(rk_socket_t sock, void *buf, size_t nbytes)
 {
     char *cbuf = (char *)buf;
     ssize_t count;
@@ -80,7 +82,7 @@ net_read_s (SOCKET sock, void *buf, size_t nbytes)
 	       WSACancelBlockingCall(). */
 
 #ifndef HAVE_WINSOCK
-	    if (SOCK_ERRNO == EINTR)
+	    if (rk_SOCK_ERRNO == EINTR)
 		continue;
 #endif
 	    return count;

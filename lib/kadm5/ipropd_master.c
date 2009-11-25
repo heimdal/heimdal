@@ -45,13 +45,13 @@ static int time_before_gone;
 
 const char *master_hostname;
 
-static SOCKET
+static krb5_socket_t
 make_signal_socket (krb5_context context)
 {
 #ifndef NO_UNIX_SOCKETS
     struct sockaddr_un addr;
     const char *fn;
-    SOCKET fd;
+    krb5_socket_t fd;
 
     fn = kadm5_log_signal_socket(context);
 
@@ -67,30 +67,30 @@ make_signal_socket (krb5_context context)
     return fd;
 #else
     struct addrinfo *ai = NULL;
-    SOCKET fd;
+    krb5_socket_t fd;
 
     kadm5_log_signal_socket_info(context, 1, &ai);
 
     fd = socket(ai->ai_family, ai->ai_socktype, ai->ai_protocol);
-    if (IS_BAD_SOCKET(fd))
-	krb5_err (context, 1, SOCK_ERRNO, "socket AF=%d", ai->ai_family);
+    if (rk_IS_BAD_SOCKET(fd))
+	krb5_err (context, 1, rk_SOCK_ERRNO, "socket AF=%d", ai->ai_family);
 
-    if (IS_SOCKET_ERROR( bind (fd, ai->ai_addr, ai->ai_addrlen) ))
-	krb5_err (context, 1, SOCK_ERRNO, "bind");
+    if (rk_IS_SOCKET_ERROR( bind (fd, ai->ai_addr, ai->ai_addrlen) ))
+	krb5_err (context, 1, rk_SOCK_ERRNO, "bind");
     return fd;
 #endif
 }
 
-static SOCKET
+static krb5_socket_t
 make_listen_socket (krb5_context context, const char *port_str)
 {
-    SOCKET fd;
+    krb5_socket_t fd;
     int one = 1;
     struct sockaddr_in addr;
 
     fd = socket (AF_INET, SOCK_STREAM, 0);
-    if (IS_BAD_SOCKET(fd))
-	krb5_err (context, 1, SOCK_ERRNO, "socket AF_INET");
+    if (rk_IS_BAD_SOCKET(fd))
+	krb5_err (context, 1, rk_SOCK_ERRNO, "socket AF_INET");
     setsockopt (fd, SOL_SOCKET, SO_REUSEADDR, (void *)&one, sizeof(one));
     memset (&addr, 0, sizeof(addr));
     addr.sin_family = AF_INET;
@@ -120,7 +120,7 @@ make_listen_socket (krb5_context context, const char *port_str)
 }
 
 struct slave {
-    SOCKET fd;
+    krb5_socket_t fd;
     struct sockaddr_in addr;
     char *name;
     krb5_auth_context ac;
@@ -195,9 +195,9 @@ slave_dead(krb5_context context, slave *s)
 {
     krb5_warnx(context, "slave %s dead", s->name);
 
-    if (!IS_BAD_SOCKET(s->fd)) {
+    if (!rk_IS_BAD_SOCKET(s->fd)) {
 	closesocket (s->fd);
-	s->fd = INVALID_SOCKET;
+	s->fd = rk_INVALID_SOCKET;
     }
     s->flags |= SLAVE_F_DEAD;
     slave_seen(s);
@@ -208,7 +208,7 @@ remove_slave (krb5_context context, slave *s, slave **root)
 {
     slave **p;
 
-    if (!IS_BAD_SOCKET(s->fd))
+    if (!rk_IS_BAD_SOCKET(s->fd))
 	closesocket (s->fd);
     if (s->name)
 	free (s->name);
@@ -224,7 +224,8 @@ remove_slave (krb5_context context, slave *s, slave **root)
 }
 
 static void
-add_slave (krb5_context context, krb5_keytab keytab, slave **root, SOCKET fd)
+add_slave (krb5_context context, krb5_keytab keytab, slave **root,
+	   krb5_socket_t fd)
 {
     krb5_principal server;
     krb5_error_code ret;
@@ -243,8 +244,8 @@ add_slave (krb5_context context, krb5_keytab keytab, slave **root, SOCKET fd)
 
     addr_len = sizeof(s->addr);
     s->fd = accept (fd, (struct sockaddr *)&s->addr, &addr_len);
-    if (IS_BAD_SOCKET(s->fd)) {
-	krb5_warn (context, errno, "accept");
+    if (rk_IS_BAD_SOCKET(s->fd)) {
+	krb5_warn (context, rk_SOCK_ERRNO, "accept");
 	goto error;
     }
     if (master_hostname)
@@ -309,7 +310,7 @@ error:
 
 struct prop_context {
     krb5_auth_context auth_context;
-    SOCKET fd;
+    krb5_socket_t fd;
 };
 
 static int
@@ -759,7 +760,7 @@ main(int argc, char **argv)
     void *kadm_handle;
     kadm5_server_context *server_context;
     kadm5_config_params conf;
-    SOCKET signal_fd, listen_fd;
+    krb5_socket_t signal_fd, listen_fd;
     int log_fd;
     slave *slaves = NULL;
     uint32_t current_version = 0, old_version = 0;

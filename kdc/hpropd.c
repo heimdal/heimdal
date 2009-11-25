@@ -78,7 +78,7 @@ main(int argc, char **argv)
     krb5_principal c1, c2;
     krb5_authenticator authent;
     krb5_keytab keytab;
-    SOCKET sock = INVALID_SOCKET;
+    krb5_socket_t sock = rk_INVALID_SOCKET;
     int close_socket = 0;
     HDB *db = NULL;
     int optidx = 0;

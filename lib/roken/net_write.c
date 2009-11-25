@@ -39,8 +39,10 @@
  * Like write but never return partial data.
  */
 
+#ifndef _WIN32
+
 ROKEN_LIB_FUNCTION ssize_t ROKEN_LIB_CALL
-net_write (int fd, const void *buf, size_t nbytes)
+net_write (rk_socket_t fd, const void *buf, size_t nbytes)
 {
     const char *cbuf = (const char *)buf;
     ssize_t count;
@@ -60,10 +62,10 @@ net_write (int fd, const void *buf, size_t nbytes)
     return nbytes;
 }
 
-#ifdef SOCKET_IS_NOT_AN_FD
+#else
 
 ROKEN_LIB_FUNCTION ssize_t ROKEN_LIB_CALL
-net_write_s (SOCKET sock, const void *buf, size_t nbytes)
+net_write(rk_socket_t sock, const void *buf, size_t nbytes)
 {
     const char *cbuf = (const char *)buf;
     ssize_t count;

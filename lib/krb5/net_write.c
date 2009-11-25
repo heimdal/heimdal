@@ -40,24 +40,10 @@ krb5_net_write (krb5_context context,
 		size_t len)
 {
     krb5_socket_t fd = *((krb5_socket_t *)p_fd);
-
-#ifdef SOCKET_IS_NOT_AN_FD
-#ifdef _MSC_VER
-    {
-	HANDLE h = _get_osfhandle(fd);
-
-	if (h != INVALID_HANDLE_VALUE) {
-	    return net_write (fd, buf, len);
-	}
-    }
-#else
-#error Dont know how to handle SOCKET that may be an fd
-#endif
-#endif
-
-    return net_write_s (fd, buf, len);
+    return net_write(fd, buf, len);
 }
 
+KRB5_DEPRECATED
 KRB5_LIB_FUNCTION krb5_ssize_t KRB5_LIB_CALL
 krb5_net_write_block(krb5_context context,
 		     void *p_fd,
@@ -85,8 +71,8 @@ krb5_net_write_block(krb5_context context,
 	  tvp = NULL;
 
       ret = select(fd + 1, NULL, &wfds, NULL, tvp);
-      if (IS_SOCKET_ERROR(ret)) {
-	  if (SOCK_ERRNO == EINTR)
+      if (rk_IS_SOCKET_ERROR(ret)) {
+	  if (rk_SOCK_ERRNO == EINTR)
 	      continue;
 	  return -1;
       } 
@@ -99,7 +85,7 @@ krb5_net_write_block(krb5_context context,
 
       count = send (fd, cbuf, rem, 0);
 
-      if (IS_SOCKET_ERROR(count)) {
+      if (rk_IS_SOCKET_ERROR(count)) {
 	  return -1;
       }
 

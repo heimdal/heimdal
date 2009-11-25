@@ -392,30 +392,27 @@ socket_set_port (struct sockaddr *, int);
 
 #define socket_set_portrange rk_socket_set_portrange
 ROKEN_LIB_FUNCTION void ROKEN_LIB_CALL
-socket_set_portrange (SOCKET, int, int);
+socket_set_portrange (rk_socket_t, int, int);
 
 #define socket_set_debug rk_socket_set_debug
 ROKEN_LIB_FUNCTION void ROKEN_LIB_CALL
-socket_set_debug (SOCKET);
+socket_set_debug (rk_socket_t);
 
 #define socket_set_tos rk_socket_set_tos
 ROKEN_LIB_FUNCTION void ROKEN_LIB_CALL
-socket_set_tos (SOCKET, int);
+socket_set_tos (rk_socket_t, int);
 
 #define socket_set_reuseaddr rk_socket_set_reuseaddr
 ROKEN_LIB_FUNCTION void ROKEN_LIB_CALL
-socket_set_reuseaddr (SOCKET, int);
+socket_set_reuseaddr (rk_socket_t, int);
 
 #define socket_set_ipv6only rk_socket_set_ipv6only
 ROKEN_LIB_FUNCTION void ROKEN_LIB_CALL
-socket_set_ipv6only (SOCKET, int);
+socket_set_ipv6only (rk_socket_t, int);
 
-#ifdef SOCKET_IS_NOT_AN_FD
+#define socket_to_fd rk_socket_to_fd
 ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
-fd_from_socket(SOCKET, int);
-#else
-#define fd_from_socket(s,f) (s)
-#endif
+socket_to_fd(rk_socket_t, int);
 
 #define vstrcollect rk_vstrcollect
 ROKEN_LIB_FUNCTION char ** ROKEN_LIB_CALL

@@ -80,7 +80,7 @@ main(int argc, char **argv)
     int ret;
 
     if (SOCK_INIT)
-	errx(1, "Couldn't initialize sockets. Err=%d\n", SOCK_ERRNO);
+	errx(1, "Couldn't initialize sockets. Err=%d\n", rk_SOCK_ERRNO);
 
     ret = getifaddrs(&addrs);
     if (ret != 0)
@@ -95,7 +95,7 @@ main(int argc, char **argv)
     freeifaddrs(addrs);
 
     if (SOCK_EXIT)
-	errx(1, "Couldn't uninitialize sockets. Err=%d\n", SOCK_ERRNO);
+	errx(1, "Couldn't uninitialize sockets. Err=%d\n", rk_SOCK_ERRNO);
 
     return 0;
 }

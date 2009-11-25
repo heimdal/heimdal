@@ -389,6 +389,8 @@ hdb_sqlite_fetch(krb5_context context, HDB *db, krb5_const_principal principal,
     krb5_error_code ret;
     char *principal_string;
     hdb_sqlite_db *hsdb = (hdb_sqlite_db*)(db->hdb_db);
+    sqlite3_stmt *fetch = hsdb->fetch;
+    krb5_data value;
 
     ret = krb5_unparse_name(context, principal, &principal_string);
     if (ret) {
@@ -396,7 +398,6 @@ hdb_sqlite_fetch(krb5_context context, HDB *db, krb5_const_principal principal,
         return ret;
     }
 
-    sqlite3_stmt *fetch = hsdb->fetch;
     sqlite3_bind_text(fetch, 1, principal_string, -1, SQLITE_STATIC);
 
     sqlite_error = hdb_sqlite_step(context, hsdb->db, fetch);
@@ -421,7 +422,6 @@ hdb_sqlite_fetch(krb5_context context, HDB *db, krb5_const_principal principal,
         }
     }
 
-    krb5_data value;
     value.length = sqlite3_column_bytes(fetch, 0);
     value.data = (void *) sqlite3_column_blob(fetch, 0);
 
@@ -487,6 +487,8 @@ hdb_sqlite_store(krb5_context context, HDB *db, unsigned flags,
     const HDB_Ext_Aliases *aliases;
 
     hdb_sqlite_db *hsdb = (hdb_sqlite_db *)(db->hdb_db);
+    krb5_data value;
+    sqlite3_stmt *get_ids = hsdb->get_ids;
 
     ret = hdb_sqlite_exec_stmt(context, hsdb->db,
                                "BEGIN IMMEDIATE TRANSACTION", EINVAL);
@@ -507,13 +509,10 @@ hdb_sqlite_store(krb5_context context, HDB *db, unsigned flags,
         goto rollback;
     }
 
-    krb5_data value;
     ret = hdb_entry2value(context, &entry->entry, &value);
     if(ret) {
         goto rollback;
     }
-
-    sqlite3_stmt *get_ids = hsdb->get_ids;
 
     sqlite3_bind_text(get_ids, 1, principal_string, -1, SQLITE_STATIC);
     ret = hdb_sqlite_step(context, hsdb->db, get_ids);
@@ -664,12 +663,13 @@ static krb5_error_code
 hdb_sqlite_destroy(krb5_context context, HDB *db)
 {
     int ret;
+    hdb_sqlite_db *hsdb;
 
     ret = hdb_clear_master_key(context, db);
 
     hdb_sqlite_close_database(context, db);
 
-    hdb_sqlite_db *hsdb = (hdb_sqlite_db*)(db->hdb_db);
+    hsdb = (hdb_sqlite_db*)(db->hdb_db);
 
     free(hsdb->db_file);
     free(db->hdb_db);
@@ -786,14 +786,13 @@ hdb_sqlite_remove(krb5_context context, HDB *db,
     krb5_error_code ret;
     char *principal_string;
     hdb_sqlite_db *hsdb = (hdb_sqlite_db*)(db->hdb_db);
+    sqlite3_stmt *remove = hsdb->remove;
     
     ret = krb5_unparse_name(context, principal, &principal_string);
     if (ret) {
         free(principal_string);
         return ret;
     }
-
-    sqlite3_stmt *remove = hsdb->remove;
 
     sqlite3_bind_text(remove, 1, principal_string, -1, SQLITE_STATIC);
 

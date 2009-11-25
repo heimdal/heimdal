@@ -253,7 +253,7 @@ socket_set_debug (rk_socket_t sock)
 #if defined(SO_DEBUG) && defined(HAVE_SETSOCKOPT)
     int on = 1;
 
-    if (setsockopt (sock, SOL_rk_socket_t, SO_DEBUG, (void *) &on, sizeof (on)) < 0)
+    if (setsockopt (sock, SOL_SOCKET, SO_DEBUG, (void *) &on, sizeof (on)) < 0)
 	warn ("setsockopt SO_DEBUG (ignored)");
 #endif
 }
@@ -280,7 +280,7 @@ ROKEN_LIB_FUNCTION void ROKEN_LIB_CALL
 socket_set_reuseaddr (rk_socket_t sock, int val)
 {
 #if defined(SO_REUSEADDR) && defined(HAVE_SETSOCKOPT)
-    if(setsockopt(sock, SOL_rk_socket_t, SO_REUSEADDR, (void *)&val,
+    if(setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, (void *)&val,
 		  sizeof(val)) < 0)
 	err (1, "setsockopt SO_REUSEADDR");
 #endif

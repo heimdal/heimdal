@@ -253,11 +253,6 @@
 #endif
 
 /*
- * error codes for inet_ntop/inet_pton 
- */
-#define EAFNOSUPPORT WSAEAFNOSUPPORT
-
-/*
  * for shutdown(2)
  */
 

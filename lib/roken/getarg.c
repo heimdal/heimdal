@@ -286,7 +286,6 @@ arg_printusage_i18n (struct getargs *args,
 	}
 	if (args[i].short_name && !ISFLAG(args[i])) {
 	    snprintf(buf, sizeof(buf), "[-%c", args[i].short_name);
-	    buf[sizeof(buf)/sizeof(buf[0]) - 1] = '\0';
 	    len += 2;
 	    len += print_arg(buf + strlen(buf), sizeof(buf) - strlen(buf),
 			     0, 0, &args[i], i18n);
@@ -353,7 +352,7 @@ static int
 arg_match_long(struct getargs *args, size_t num_args,
 	       char *argv, int argc, char **rargv, int *goptind)
 {
-    size_t i;
+    int i;
     char *goptarg = NULL;
     int negate = 0;
     int partial_match = 0;
@@ -485,7 +484,7 @@ static int
 arg_match_short (struct getargs *args, size_t num_args,
 		 char *argv, int argc, char **rargv, int *goptind)
 {
-    size_t j, k;
+    int j, k;
 
     for(j = 1; j > 0 && j < strlen(rargv[*goptind]); j++) {
 	for(k = 0; k < num_args; k++) {

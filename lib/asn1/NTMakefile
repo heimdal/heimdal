@@ -696,12 +696,13 @@ $(gen_files_test) $(OBJ)\test_asn1.hx: $(BINDIR)\asn1_compile.exe test.asn1
 	|| ($(RM) $(OBJ)\test_asn1.h ; exit /b 1)
 	cd $(SRCDIR)
 
-INCFILES=			\
-	$(INCDIR)\der.h		\
-	$(INCDIR)\heim_asn1.h	\
-	$(INCDIR)\der-protos.h	\
-	$(INCDIR)\der-private.h	\
-	$(INCDIR)\asn1-common.h	\
+INCFILES=			    \
+	$(INCDIR)\der.h		    \
+	$(INCDIR)\heim_asn1.h	    \
+	$(INCDIR)\der-protos.h	    \
+	$(INCDIR)\der-private.h	    \
+	$(INCDIR)\asn1-common.h	    \
+	$(INCDIR)\asn1-template.h   \
 	$(OBJ)\asn1_err.h
 
 $(INCDIR)\der-protos.h: $(OBJ)\der-protos.h

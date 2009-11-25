@@ -277,6 +277,9 @@ prep:: show-cmds
 {$(OBJ)}.hx{$(INCDIR)}.h:
 	$(CP) $< $@
 
+{$(OBJ)}.hx{$(OBJ)}.h:
+	$(CP) $< $@
+
 {}.rc{$(OBJ)}.res:
 	$(RC2RES)
 

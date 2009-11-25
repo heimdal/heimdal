@@ -813,14 +813,14 @@ get_config_file_for_user(void)
     char *fn = NULL, *home = NULL;
 
 #ifndef _WIN32
-    if (getuid() == geteuid()) {
+    if (!issuid()) {
         fn = getenv("SOFTPKCS11RC");
         if (fn)
             fn = strdup(fn);
         home = getenv("HOME");
     }
     if (fn == NULL && home == NULL) {
-        struct passwd *pw = getpwuid(getuid());	
+        struct passwd *pw = getpwuid(getuid());
         if(pw != NULL)
             home = pw->pw_dir;
     }

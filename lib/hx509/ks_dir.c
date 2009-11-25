@@ -113,7 +113,7 @@ dir_iter_start(hx509_context context,
 	free(d);
 	return errno;
     }
-#ifdef HAVE_DIRFD
+#ifndef _WIN32
     rk_cloexec(dirfd(d->dir));
 #endif
     d->certs = NULL;

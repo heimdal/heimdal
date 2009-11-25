@@ -21,6 +21,8 @@ AC_REQUIRE([AC_PROG_LIBTOOL])
 
 AC_REQUIRE([AC_MIPS_ABI])
 
+AC_DEFINE(rk_PATH_DELIM, '/', [Path name delimiter])
+
 dnl C characteristics
 
 AC_REQUIRE([AC_C___ATTRIBUTE__])

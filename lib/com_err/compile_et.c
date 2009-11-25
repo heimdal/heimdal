@@ -32,6 +32,9 @@
  */
 
 #undef ROKEN_RENAME
+
+#include "config.h"
+
 #include "compile_et.h"
 #include <getarg.h>
 
@@ -219,19 +222,7 @@ main(int argc, char **argv)
 	err(1, "%s", filename);
 	
 
-    p = strrchr(filename, '/');
-#ifdef BACKSLASH_PATH_DELIM
-    {
-       char * bs = strrchr(filename, '\\');
-
-       if (p) {
-           if (p < bs)
-               p = bs;
-       } else {
-           p = bs;
-       }
-    }
-#endif
+    p = strrchr(filename, rk_PATH_DELIM);
     if(p)
 	p++;
     else

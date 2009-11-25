@@ -13,4 +13,6 @@ typedef socklen_t krb5_socklen_t;
 #include <unistd.h>
 typedef ssize_t krb5_ssize_t;
 
+typedef int krb5_socket_t;
+
 #endif /* __krb5_types_h__ */

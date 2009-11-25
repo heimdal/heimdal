@@ -145,8 +145,8 @@ read_string(const char *preprompt, const char *prompt,
 #else  /* CONIO_H */
 
 static int
-read_string_conio(const char *preprompt, const char *prompt, 
-                  char *buf, size_t len, int echo)
+read_string(const char *preprompt, const char *prompt, 
+	    char *buf, size_t len, int echo)
 {
     int of = 0;
     int c;
@@ -182,8 +182,6 @@ read_string_conio(const char *preprompt, const char *prompt,
 	return -1;
     return 0;
 }
-
-#define read_string read_string_conio
 
 #endif
 

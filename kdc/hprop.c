@@ -131,6 +131,7 @@ v5_prop(krb5_context context, HDB *db, hdb_entry_ex *entry, void *appdata)
     return ret;
 }
 
+#ifdef KRB4
 int
 v4_prop(void *arg, struct v4_principal *p)
 {
@@ -255,6 +256,7 @@ v4_prop(void *arg, struct v4_principal *p)
     hdb_free_entry(pd->context, &ent);
     return ret;
 }
+#endif
 
 #include "kadb.h"
 
@@ -276,6 +278,8 @@ read_block(krb5_context context, int fd, int32_t pos, void *buf, size_t len)
     if(ret != len)
 	krb5_errx(context, 1, "read(%lu) = %u", (unsigned long)len, ret);
 }
+
+#ifdef KRB4
 
 static int
 ka_convert(struct prop_data *pd, int fd, struct ka_entry *ent)
@@ -405,7 +409,7 @@ ka_dump(struct prop_data *pd, const char *file)
     }
     return 0;
 }
-
+#endif	/* KRB4 */
 
 
 struct getargs args[] = {
@@ -414,13 +418,19 @@ struct getargs args[] = {
     { "source",   0,	arg_string, &source_type, "type of database to read",
       "heimdal"
       "|mit-dump"
+#ifdef KRB4
       "|krb4-dump"
       "|kaserver"
+#endif
     },
 
+#ifdef KRB4
     { "v4-realm", 'r',  arg_string, &v4_realm, "v4 realm to use" },
+#endif
     { "cell",	  'c',  arg_string, &afs_cell, "name of AFS cell" },
+#ifdef KRB4
     { "kaspecials", 'S', arg_flag,   &kaspecials_flag, "dump KASPECIAL keys"},
+#endif
     { "keytab",   'k',	arg_string, &ktname, "keytab to use for authentication", "keytab" },
     { "v5-realm", 'R',  arg_string, &local_realm, "v5 realm to use" },
     { "decrypt",  'D',  arg_flag,   &decrypt_flag,   "decrypt keys" },
@@ -526,6 +536,7 @@ iterate (krb5_context context,
     int ret;
 
     switch(type) {
+#ifdef KRB4
     case HPROP_KRB4_DUMP:
 	ret = v4_prop_dump(pd, database_name);
 	if(ret)
@@ -536,6 +547,7 @@ iterate (krb5_context context,
 	if(ret)
 	    krb5_warn(context, ret, "ka_dump");
 	break;
+#endif
     case HPROP_MIT_DUMP:
 	ret = mit_prop_dump(pd, database_name);
 	if (ret)

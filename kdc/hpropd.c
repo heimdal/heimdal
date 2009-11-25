@@ -48,8 +48,10 @@ struct getargs args[] = {
     { "database", 'd', arg_string, &database, "database", "file" },
     { "stdin",    'n', arg_flag, &from_stdin, "read from stdin" },
     { "print",	    0, arg_flag, &print_dump, "print dump to stdout" },
+#ifdef SUPPORT_INETD
     { "inetd",	   'i',	arg_negative_flag,	&inetd_flag,
       "Not started from inetd" },
+#endif
     { "keytab",   'k',	arg_string, &ktname,	"keytab to use for authentication", "keytab" },
     { "realm",   'r',	arg_string, &local_realm, "realm to use" },
     { "version",    0, arg_flag, &version_flag, NULL, NULL },
@@ -74,7 +76,7 @@ main(int argc, char **argv)
     krb5_principal c1, c2;
     krb5_authenticator authent;
     krb5_keytab keytab;
-    int fd;
+    krb5_socket_t sock = rk_INVALID_SOCKET;
     HDB *db = NULL;
     int optidx = 0;
     char *tmp_db;
@@ -114,9 +116,9 @@ main(int argc, char **argv)
     if (database == NULL)
 	database = hdb_default_db(context);
 
-    if(from_stdin)
-	fd = STDIN_FILENO;
-    else {
+    if(from_stdin) {
+	sock = STDIN_FILENO;
+    } else {
 	struct sockaddr_storage ss;
 	struct sockaddr *sa = (struct sockaddr *)&ss;
 	socklen_t sin_len = sizeof(ss);
@@ -124,19 +126,24 @@ main(int argc, char **argv)
 	krb5_ticket *ticket;
 	char *server;
 
-	fd = STDIN_FILENO;
+	sock = STDIN_FILENO;
+#ifdef SUPPORT_INETD
 	if (inetd_flag == -1) {
-	    if (getpeername (fd, sa, &sin_len) < 0)
+	    if (getpeername (sock, sa, &sin_len) < 0) {
 		inetd_flag = 0;
-	    else
+	    } else {
 		inetd_flag = 1;
+	    }
 	}
+#else
+	inetd_flag = 0;
+#endif
 	if (!inetd_flag) {
 	    mini_inetd (krb5_getportbyname (context, "hprop", "tcp",
-					    HPROP_PORT), NULL);
+					    HPROP_PORT), &sock);
 	}
 	sin_len = sizeof(ss);
-	if(getpeername(fd, sa, &sin_len) < 0)
+	if(getpeername(sock, sa, &sin_len) < 0)
 	    krb5_err(context, 1, errno, "getpeername");
 
 	if (inet_ntop(sa->sa_family,
@@ -162,7 +169,7 @@ main(int argc, char **argv)
 		krb5_err (context, 1, ret, "krb5_kt_default");
 	}
 
-	ret = krb5_recvauth(context, &ac, &fd, HPROP_VERSION, NULL,
+	ret = krb5_recvauth(context, &ac, &sock, HPROP_VERSION, NULL,
 			    0, keytab, &ticket);
 	if(ret)
 	    krb5_err(context, 1, ret, "krb5_recvauth");
@@ -179,7 +186,7 @@ main(int argc, char **argv)
 	ret = krb5_auth_con_getauthenticator(context, ac, &authent);
 	if(ret)
 	    krb5_err(context, 1, ret, "krb5_auth_con_getauthenticator");
-	
+
 	ret = krb5_make_principal(context, &c1, NULL, "kadmin", "hprop", NULL);
 	if(ret)
 	    krb5_err(context, 1, ret, "krb5_make_principal");
@@ -217,11 +224,11 @@ main(int argc, char **argv)
 	hdb_entry_ex entry;
 
 	if(from_stdin) {
-	    ret = krb5_read_message(context, &fd, &data);
+	    ret = krb5_read_message(context, &sock, &data);
 	    if(ret != 0 && ret != HEIM_ERR_EOF)
 		krb5_err(context, 1, ret, "krb5_read_message");
 	} else {
-	    ret = krb5_read_priv_message(context, ac, &fd, &data);
+	    ret = krb5_read_priv_message(context, ac, &sock, &data);
 	    if(ret)
 		krb5_err(context, 1, ret, "krb5_read_priv_message");
 	}
@@ -230,7 +237,7 @@ main(int argc, char **argv)
 	    if(!from_stdin) {
 		data.data = NULL;
 		data.length = 0;
-		krb5_write_priv_message(context, ac, &fd, &data);
+		krb5_write_priv_message(context, ac, &sock, &data);
 	    }
 	    if(!print_dump) {
 		ret = db->hdb_rename(context, db, database);
@@ -267,5 +274,9 @@ main(int argc, char **argv)
     }
     if (!print_dump)
 	krb5_log(context, fac, 0, "Received %d principals", nprincs);
+
+    if (inetd_flag == 0)
+	rk_closesocket(sock);
+
     exit(0);
 }

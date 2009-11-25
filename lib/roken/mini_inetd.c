@@ -124,7 +124,7 @@ mini_inetd_addrinfo (struct addrinfo *ai, rk_socket_t *ret_socket)
 	    fds[i] = rk_INVALID_SOCKET;
 	    continue;
 	}
-#ifndef NO_LIMIT_FD_SETSIZE
+#ifdef FD_SETSIZE
 	if (fds[i] >= FD_SETSIZE)
 	    errx (1, "fd too large");
 #endif

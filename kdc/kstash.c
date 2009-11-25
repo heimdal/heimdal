@@ -144,13 +144,19 @@ main(int argc, char **argv)
 	if(ret)
 	    unlink(new);
 	else {
+#ifndef NO_POSIX_LINKS
 	    unlink(old);
 	    if(link(keyfile, old) < 0 && errno != ENOENT) {
 		ret = errno;
 		unlink(new);
-	    } else if(rename(new, keyfile) < 0) {
-		ret = errno;
+	    } else {
+#endif
+		if(rename(new, keyfile) < 0) {
+		    ret = errno;
+		}
+#ifndef NO_POSIX_LINKS
 	    }
+#endif
 	}
     out:
 	free(old);

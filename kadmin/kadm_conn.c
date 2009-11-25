@@ -175,8 +175,10 @@ wait_for_connection(krb5_context context,
     FD_ZERO(&orig_read_set);
 
     for(i = 0; i < num_socks; i++) {
+#ifdef FD_SETSIZE
 	if (socks[i] >= FD_SETSIZE)
 	    errx (1, "fd too large");
+#endif
 	FD_SET(socks[i], &orig_read_set);
 	max_fd = max(max_fd, socks[i]);
     }

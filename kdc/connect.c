@@ -217,7 +217,7 @@ parse_ports(krb5_context context,
  */
 
 struct descr {
-    int s;
+    krb5_socket_t s;
     int type;
     int port;
     unsigned char *buf;
@@ -235,7 +235,7 @@ init_descr(struct descr *d)
 {
     memset(d, 0, sizeof(*d));
     d->sa = (struct sockaddr *)&d->__ss;
-    d->s = -1;
+    d->s = rk_INVALID_SOCKET;
 }
 
 /*
@@ -270,8 +270,8 @@ init_socket(krb5_context context,
     ret = krb5_addr2sockaddr (context, a, sa, &sa_size, port);
     if (ret) {
 	krb5_warn(context, ret, "krb5_addr2sockaddr");
-	close(d->s);
-	d->s = -1;
+	rk_closesocket(d->s);
+	d->s = rk_INVALID_SOCKET;
 	return;
     }
 
@@ -279,9 +279,9 @@ init_socket(krb5_context context,
 	return;
 
     d->s = socket(family, type, 0);
-    if(d->s < 0){
+    if(rk_IS_BAD_SOCKET(d->s)){
 	krb5_warn(context, errno, "socket(%d, %d, 0)", family, type);
-	d->s = -1;
+	d->s = rk_INVALID_SOCKET;
 	return;
     }
 #if defined(HAVE_SETSOCKOPT) && defined(SOL_SOCKET) && defined(SO_REUSEADDR)
@@ -293,24 +293,24 @@ init_socket(krb5_context context,
     d->type = type;
     d->port = port;
 
-    if(bind(d->s, sa, sa_size) < 0){
+    if(rk_IS_SOCKET_ERROR(bind(d->s, sa, sa_size))){
 	char a_str[256];
 	size_t len;
 
 	krb5_print_address (a, a_str, sizeof(a_str), &len);
 	krb5_warn(context, errno, "bind %s/%d", a_str, ntohs(port));
-	close(d->s);
-	d->s = -1;
+	rk_closesocket(d->s);
+	d->s = rk_INVALID_SOCKET;
 	return;
     }
-    if(type == SOCK_STREAM && listen(d->s, SOMAXCONN) < 0){
+    if(type == SOCK_STREAM && rk_IS_SOCKET_ERROR(listen(d->s, SOMAXCONN))){
 	char a_str[256];
 	size_t len;
 
 	krb5_print_address (a, a_str, sizeof(a_str), &len);
 	krb5_warn(context, errno, "listen %s/%d", a_str, ntohs(port));
-	close(d->s);
-	d->s = -1;
+	rk_closesocket(d->s);
+	d->s = rk_INVALID_SOCKET;
 	return;
     }
 }
@@ -348,7 +348,7 @@ init_sockets(krb5_context context,
 	for (j = 0; j < addresses.len; ++j) {
 	    init_socket(context, config, &d[num], &addresses.val[j],
 			ports[i].family, ports[i].type, ports[i].port);
-	    if(d[num].s != -1){
+	    if(d[num].s != rk_INVALID_SOCKET){
 		char a_str[80];
 		size_t len;
 
@@ -423,15 +423,16 @@ send_reply(krb5_context context,
 	l[1] = (reply->length >> 16) & 0xff;
 	l[2] = (reply->length >> 8) & 0xff;
 	l[3] = reply->length & 0xff;
-	if(sendto(d->s, l, sizeof(l), 0, d->sa, d->sock_len) < 0) {
+	if(rk_IS_SOCKET_ERROR(sendto(d->s, l, sizeof(l), 0, d->sa, d->sock_len))) {
 	    kdc_log (context, config,
-		     0, "sendto(%s): %s", d->addr_string, strerror(errno));
+		     0, "sendto(%s): %s", d->addr_string,
+		     strerror(rk_SOCK_ERRNO));
 	    return;
 	}
     }
-    if(sendto(d->s, reply->data, reply->length, 0, d->sa, d->sock_len) < 0) {
-	kdc_log (context, config,
-		 0, "sendto(%s): %s", d->addr_string, strerror(errno));
+    if(rk_IS_SOCKET_ERROR(sendto(d->s, reply->data, reply->length, 0, d->sa, d->sock_len))) {
+	kdc_log (context, config, 0, "sendto(%s): %s", d->addr_string,
+		 strerror(rk_SOCK_ERRNO));
 	return;
     }
 }
@@ -489,9 +490,9 @@ handle_udp(krb5_context context,
 
     d->sock_len = sizeof(d->__ss);
     n = recvfrom(d->s, buf, max_request_udp, 0, d->sa, &d->sock_len);
-    if(n < 0) {
-	krb5_warn(context, errno, "recvfrom");
-    } else {
+    if(rk_IS_SOCKET_ERROR(n))
+	krb5_warn(context, rk_SOCK_ERRNO, "recvfrom");
+    else {
 	addr_to_string (context, d->sa, d->sock_len,
 			d->addr_string, sizeof(d->addr_string));
 	if (n == max_request_udp) {
@@ -523,9 +524,9 @@ clear_descr(struct descr *d)
     if(d->buf)
 	memset(d->buf, 0, d->size);
     d->len = 0;
-    if(d->s != -1)
-	close(d->s);
-    d->s = -1;
+    if(d->s != rk_INVALID_SOCKET)
+	rk_closesocket(d->s);
+    d->s = rk_INVALID_SOCKET;
 }
 
 
@@ -559,23 +560,25 @@ add_new_tcp (krb5_context context,
 	     krb5_kdc_configuration *config,
 	     struct descr *d, int parent, int child)
 {
-    int s;
+    krb5_socket_t s;
 
     if (child == -1)
 	return;
 
     d[child].sock_len = sizeof(d[child].__ss);
     s = accept(d[parent].s, d[child].sa, &d[child].sock_len);
-    if(s < 0) {
-	krb5_warn(context, errno, "accept");
+    if(rk_IS_BAD_SOCKET(s)) {
+	krb5_warn(context, rk_SOCK_ERRNO, "accept");
 	return;
     }
-	
+
+#ifdef FD_SETSIZE
     if (s >= FD_SETSIZE) {
 	krb5_warnx(context, "socket FD too large");
-	close (s);
+	rk_closesocket (s);
 	return;
     }
+#endif
 
     d[child].s = s;
     d[child].timeout = time(NULL) + TCP_TIMEOUT;
@@ -718,14 +721,14 @@ handle_http_tcp (krb5_context context,
 	kdc_log(context, config, 0, "HTTP request from %s is non KDC request", d->addr_string);
 	kdc_log(context, config, 5, "HTTP request: %s", t);
 	free(data);
-	if (write(d->s, proto, strlen(proto)) < 0) {
+	if (rk_IS_SOCKET_ERROR(send(d->s, proto, strlen(proto), 0))) {
 	    kdc_log(context, config, 0, "HTTP write failed: %s: %s",
-		    d->addr_string, strerror(errno));
+		    d->addr_string, strerror(rk_SOCK_ERRNO));
 	    return -1;
 	}
-	if (write(d->s, msg, strlen(msg)) < 0) {
+	if (rk_IS_SOCKET_ERROR(send(d->s, msg, strlen(msg), 0))) {
 	    kdc_log(context, config, 0, "HTTP write failed: %s: %s",
-		    d->addr_string, strerror(errno));
+		    d->addr_string, strerror(rk_SOCK_ERRNO));
 	    return -1;
 	}
 	return -1;
@@ -738,16 +741,16 @@ handle_http_tcp (krb5_context context,
 	    "Pragma: no-cache\r\n"
 	    "Content-type: application/octet-stream\r\n"
 	    "Content-transfer-encoding: binary\r\n\r\n";
-	if (write(d->s, proto, strlen(proto)) < 0) {
+	if (rk_IS_SOCKET_ERROR(send(d->s, proto, strlen(proto), 0))) {
 	    free(data);
 	    kdc_log(context, config, 0, "HTTP write failed: %s: %s",
-		    d->addr_string, strerror(errno));
+		    d->addr_string, strerror(rk_SOCK_ERRNO));
 	    return -1;
 	}
-	if (write(d->s, msg, strlen(msg)) < 0) {
+	if (rk_IS_SOCKET_ERROR(send(d->s, msg, strlen(msg), 0))) {
 	    free(data);
 	    kdc_log(context, config, 0, "HTTP write failed: %s: %s",
-		    d->addr_string, strerror(errno));
+		    d->addr_string, strerror(rk_SOCK_ERRNO));
 	    return -1;
 	}
     }
@@ -778,8 +781,8 @@ handle_tcp(krb5_context context,
     }
 
     n = recvfrom(d[idx].s, buf, sizeof(buf), 0, NULL, NULL);
-    if(n < 0){
-	krb5_warn(context, errno, "recvfrom failed from %s to %s/%d",
+    if(rk_IS_SOCKET_ERROR(n)){
+	krb5_warn(context, rk_SOCK_ERRNO, "recvfrom failed from %s to %s/%d",
 		  d[idx].addr_string, descr_type(d + idx),
 		  ntohs(d[idx].port));
 	return;
@@ -865,7 +868,7 @@ loop(krb5_context context,
 
 	FD_ZERO(&fds);
 	for(i = 0; i < ndescr; i++) {
-	    if(d[i].s >= 0){
+	    if(!rk_IS_BAD_SOCKET(d[i].s)){
 		if(d[i].type == SOCK_STREAM &&
 		   d[i].timeout && d[i].timeout < time(NULL)) {
 		    kdc_log(context, config, 1,
@@ -876,8 +879,10 @@ loop(krb5_context context,
 		}
 		if(max_fd < d[i].s)
 		    max_fd = d[i].s;
+#ifdef FD_SETSIZE
 		if (max_fd >= FD_SETSIZE)
 		    krb5_errx(context, 1, "fd too large");
+#endif
 		FD_SET(d[i].s, &fds);
 	    } else if(min_free < 0 || i < min_free)
 		min_free = i;
@@ -905,11 +910,11 @@ loop(krb5_context context,
 	    break;
 	case -1:
 	    if (errno != EINTR)
-		krb5_warn(context, errno, "select");
+		krb5_warn(context, rk_SOCK_ERRNO, "select");
 	    break;
 	default:
 	    for(i = 0; i < ndescr; i++)
-		if(d[i].s >= 0 && FD_ISSET(d[i].s, &fds)) {
+		if(!rk_IS_BAD_SOCKET(d[i].s) && FD_ISSET(d[i].s, &fds)) {
 		    if(d[i].type == SOCK_DGRAM)
 			handle_udp(context, config, &d[i]);
 		    else if(d[i].type == SOCK_STREAM)
@@ -917,8 +922,11 @@ loop(krb5_context context,
 		}
 	}
     }
-    if(exit_flag == SIGXCPU)
+    if (0);
+#ifdef SIGXCPU
+    else if(exit_flag == SIGXCPU)
 	kdc_log(context, config, 0, "CPU time limit exceeded");
+#endif
     else if(exit_flag == SIGINT || exit_flag == SIGTERM)
 	kdc_log(context, config, 0, "Terminated");
     else

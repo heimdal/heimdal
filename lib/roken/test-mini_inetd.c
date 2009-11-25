@@ -87,7 +87,11 @@ get_connected_socket(rk_socket_t * s_ret)
 
  done:
     if (!rk_IS_BAD_SOCKET(s))
+<<<<<<< HEAD
 	closesocket(s);
+=======
+	rk_closesocket(s);
+>>>>>>> master
 
     if (ai)
 	freeaddrinfo(ai);
@@ -125,7 +129,11 @@ test_simple_echo_client(void)
 	if (rk_IS_SOCKET_ERROR(rv)) {
 	    fprintf(stderr, "[%s] send() failure (%s)\n", 
 		    getprogname(), strerror(rk_SOCK_ERRNO));
+<<<<<<< HEAD
 	    closesocket(s);
+=======
+	    rk_closesocket(s);
+>>>>>>> master
 	    return 1;
 	}
 
@@ -133,25 +141,41 @@ test_simple_echo_client(void)
 	if (rk_IS_SOCKET_ERROR(rv)) {
 	    fprintf (stderr, "[%s] recv() failure (%s)\n",
 		     getprogname(), strerror(rk_SOCK_ERRNO));
+<<<<<<< HEAD
 	    closesocket(s);
+=======
+	    rk_closesocket(s);
+>>>>>>> master
 	    return 1;
 	}
 
 	if (rv == 0) {
 	    fprintf (stderr, "[%s] No data received\n", prog);
+<<<<<<< HEAD
 	    closesocket(s);
+=======
+	    rk_closesocket(s);
+>>>>>>> master
 	    return 1;
 	}
 
 	if (rv != strlen(test_strings[i])) {
 	    fprintf (stderr, "[%s] Data length mismatch %d != %d\n", prog, rv, strlen(test_strings[i]));
+<<<<<<< HEAD
 	    closesocket(s);
+=======
+	    rk_closesocket(s);
+>>>>>>> master
 	    return 1;
 	}
     }
 
     fprintf (stderr, "[%s] Done\n", prog);
+<<<<<<< HEAD
     closesocket(s);
+=======
+    rk_closesocket(s);
+>>>>>>> master
     return 0;
 }
 
@@ -198,7 +222,11 @@ test_simple_echo_socket(void)
 		if (!strcmp(buf, "exit")) {
 		    fprintf(stderr, "[%s] Exiting...\n", prog);
 		    shutdown(s, SD_SEND);
+<<<<<<< HEAD
 		    closesocket(s);
+=======
+		    rk_closesocket(s);
+>>>>>>> master
 		    return 0;
 		}
 	    }
@@ -208,7 +236,11 @@ test_simple_echo_socket(void)
 		    strerror(rk_SOCK_ERRNO));
 	}
 
+<<<<<<< HEAD
 	closesocket(s);
+=======
+	rk_closesocket(s);
+>>>>>>> master
     }
 
     return 1;

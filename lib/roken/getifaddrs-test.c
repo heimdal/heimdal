@@ -40,7 +40,11 @@
 
 #include <ifaddrs.h>
 
+<<<<<<< HEAD
 void
+=======
+static void
+>>>>>>> master
 print_addr(const char *s, struct sockaddr *sa)
 {
     int i;
@@ -55,7 +59,11 @@ print_addr(const char *s, struct sockaddr *sa)
     printf("\n");
 }
 
+<<<<<<< HEAD
 void 
+=======
+static void
+>>>>>>> master
 print_ifaddrs(struct ifaddrs *x)
 {
     struct ifaddrs *p;
@@ -79,7 +87,11 @@ main(int argc, char **argv)
     struct ifaddrs *addrs = NULL;
     int ret;
 
+<<<<<<< HEAD
     if (SOCK_INIT)
+=======
+    if (rk_SOCK_INIT())
+>>>>>>> master
 	errx(1, "Couldn't initialize sockets. Err=%d\n", rk_SOCK_ERRNO);
 
     ret = getifaddrs(&addrs);
@@ -94,7 +106,7 @@ main(int argc, char **argv)
     /* Check that freeifaddrs doesn't crash */
     freeifaddrs(addrs);
 
-    if (SOCK_EXIT)
+    if (rk_SOCK_EXIT())
 	errx(1, "Couldn't uninitialize sockets. Err=%d\n", rk_SOCK_ERRNO);
 
     return 0;

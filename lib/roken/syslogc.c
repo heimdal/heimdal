@@ -218,7 +218,7 @@ openlog( char* ident, int option, int facility )
         sa_local.sin_family = AF_INET;
         if( bind( syslog_socket, (SOCKADDR*) &sa_local, sizeof(SOCKADDR_IN) ) == 0 )
             break;
-        closesocket( syslog_socket );
+        rk_closesocket( syslog_socket );
         syslog_socket = INVALID_SOCKET;
         if( n == 100 )
             goto done;
@@ -243,7 +243,7 @@ openlog( char* ident, int option, int facility )
  done:
     if( failed ) {
         if( syslog_socket != INVALID_SOCKET )
-            closesocket( syslog_socket );
+            rk_closesocket( syslog_socket );
     }
     syslog_opened = !failed;
 

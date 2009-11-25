@@ -772,7 +772,7 @@ main (int argc, char **argv)
     }
 
     if (!inetd_flag)
-	mini_inetd (port);
+	mini_inetd (port, NULL);
 
      signal (SIGCHLD, childhandler);
      return doit(STDIN_FILENO, tcp_flag);

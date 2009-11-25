@@ -301,7 +301,7 @@ pop_init(POP *p,int argcount,char **argmessage)
 	    portnum = p->kerberosp ?
 		pop_getportbyname(p, "kpop", "tcp", 1109) :
 	    pop_getportbyname(p, "pop", "tcp", 110);
-	mini_inetd (portnum);
+	mini_inetd (portnum, NULL);
     }
 
     /*  Get the address and socket of the client to whom I am speaking */

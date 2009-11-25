@@ -284,7 +284,7 @@ static int
 doit (int port, const char *service)
 {
     if (do_inetd)
-	mini_inetd(port);
+	mini_inetd(port, NULL);
     return proto (STDIN_FILENO, service);
 }
 

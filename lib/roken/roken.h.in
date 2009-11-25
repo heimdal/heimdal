@@ -72,8 +72,8 @@ typedef SOCKET rk_socket_t;
 #define EWOULDBLOCK             WSAEWOULDBLOCK
 #define ENOTSOCK		WSAENOTSOCK
 
-#define rk_SOCK_INIT rk_WSAStartup()
-#define rk_SOCK_EXIT rk_WSACleanup()
+#define rk_SOCK_INIT() rk_WSAStartup()
+#define rk_SOCK_EXIT() rk_WSACleanup()
 
 ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL rk_WSAStartup(void);
 ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL rk_WSACleanup(void);
@@ -89,13 +89,8 @@ typedef int rk_socket_t;
 #define rk_SOCK_ERRNO errno
 #define rk_INVALID_SOCKET (-1)
 
-<<<<<<< HEAD
-#define rk_SOCK_INIT 0
-#define rk_SOCK_EXIT 0
-=======
 #define rk_SOCK_INIT() 0
 #define rk_SOCK_EXIT() 0
->>>>>>> master
 
 #endif
 
@@ -933,11 +928,7 @@ extern const char *__progname;
 #endif
 
 ROKEN_LIB_FUNCTION void ROKEN_LIB_CALL
-<<<<<<< HEAD
-mini_inetd_addrinfo (struct addrinfo*, rk_socket *);
-=======
 mini_inetd_addrinfo (struct addrinfo*, rk_socket_t *);
->>>>>>> master
 
 ROKEN_LIB_FUNCTION void ROKEN_LIB_CALL
 mini_inetd (int, rk_socket_t *);

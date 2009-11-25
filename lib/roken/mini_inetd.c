@@ -114,25 +114,17 @@ mini_inetd_addrinfo (struct addrinfo *ai, rk_socket_t *ret_socket)
 	socket_set_ipv6only(fds[i], 1);
 	if (rk_IS_SOCKET_ERROR(bind (fds[i], a->ai_addr, a->ai_addrlen))) {
 	    warn ("bind af = %d", a->ai_family);
-<<<<<<< HEAD
-	    closesocket(fds[i]);
-=======
 	    rk_closesocket(fds[i]);
->>>>>>> master
 	    fds[i] = rk_INVALID_SOCKET;
 	    continue;
 	}
 	if (rk_IS_SOCKET_ERROR(listen (fds[i], SOMAXCONN))) {
 	    warn ("listen af = %d", a->ai_family);
-<<<<<<< HEAD
-	    closesocket(fds[i]);
-=======
 	    rk_closesocket(fds[i]);
->>>>>>> master
 	    fds[i] = rk_INVALID_SOCKET;
 	    continue;
 	}
-#ifndef NO_LIMIT_FD_SETSIZE
+#ifdef FD_SETSIZE
 	if (fds[i] >= FD_SETSIZE)
 	    errx (1, "fd too large");
 #endif
@@ -156,11 +148,7 @@ mini_inetd_addrinfo (struct addrinfo *ai, rk_socket_t *ret_socket)
 	if (FD_ISSET (fds[i], &read_set)) {
 	    accept_it (fds[i], ret_socket);
 	    for (i = 0; i < n; ++i)
-<<<<<<< HEAD
-	      closesocket(fds[i]);
-=======
 	      rk_closesocket(fds[i]);
->>>>>>> master
 	    free(fds);
 	    return;
 	}
@@ -185,11 +173,7 @@ mini_inetd_addrinfo (struct addrinfo *ai, rk_socket_t *ret_socket)
  * @see mini_inetd_addrinfo()
  */
 ROKEN_LIB_FUNCTION void ROKEN_LIB_CALL
-<<<<<<< HEAD
-mini_inetd (int port, rk_socket_t * ret_socket)
-=======
 mini_inetd(int port, rk_socket_t * ret_socket)
->>>>>>> master
 {
     int error;
     struct addrinfo *ai, hints;

@@ -1362,9 +1362,6 @@ static const char *const rcsid[] = { (const char *)rcsid, "@(#)" msg }
 /* Define if the Unix rand method is not defined */
 #define NO_RAND_UNIX_METHOD 1
 
-/* Define if fd_sets aren't limited to FD_SETSIZE sockets */
-#define NO_LIMIT_FD_SETSIZE 1
-
 /* Define if PID files should not be used. */
 #define NO_PIDFILES 1
 

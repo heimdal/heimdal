@@ -66,6 +66,8 @@ const int hdb_interface_version = HDB_INTERFACE_VERSION;
 static struct hdb_method methods[] = {
 #if HAVE_DB1 || HAVE_DB3
     { HDB_INTERFACE_VERSION, "db:",	hdb_db_create},
+#endif
+#if HAVE_DB1
     { HDB_INTERFACE_VERSION, "mit-db:",	hdb_mdb_create},
 #endif
 #if HAVE_NDBM

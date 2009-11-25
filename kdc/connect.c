@@ -270,7 +270,7 @@ init_socket(krb5_context context,
     ret = krb5_addr2sockaddr (context, a, sa, &sa_size, port);
     if (ret) {
 	krb5_warn(context, ret, "krb5_addr2sockaddr");
-	closesocket(d->s);
+	rk_closesocket(d->s);
 	d->s = rk_INVALID_SOCKET;
 	return;
     }
@@ -299,7 +299,7 @@ init_socket(krb5_context context,
 
 	krb5_print_address (a, a_str, sizeof(a_str), &len);
 	krb5_warn(context, errno, "bind %s/%d", a_str, ntohs(port));
-	closesocket(d->s);
+	rk_closesocket(d->s);
 	d->s = rk_INVALID_SOCKET;
 	return;
     }
@@ -309,7 +309,7 @@ init_socket(krb5_context context,
 
 	krb5_print_address (a, a_str, sizeof(a_str), &len);
 	krb5_warn(context, errno, "listen %s/%d", a_str, ntohs(port));
-	closesocket(d->s);
+	rk_closesocket(d->s);
 	d->s = rk_INVALID_SOCKET;
 	return;
     }
@@ -489,7 +489,7 @@ handle_udp(krb5_context context,
     }
 
     d->sock_len = sizeof(d->__ss);
-    n = recvfrom(d->s, buf, max_request, 0, d->sa, &d->sock_len);
+    n = recvfrom(d->s, buf, max_request_udp, 0, d->sa, &d->sock_len);
     if(rk_IS_SOCKET_ERROR(n))
 	krb5_warn(context, rk_SOCK_ERRNO, "recvfrom");
     else {
@@ -525,7 +525,7 @@ clear_descr(struct descr *d)
 	memset(d->buf, 0, d->size);
     d->len = 0;
     if(d->s != rk_INVALID_SOCKET)
-	closesocket(d->s);
+	rk_closesocket(d->s);
     d->s = rk_INVALID_SOCKET;
 }
 
@@ -572,10 +572,10 @@ add_new_tcp (krb5_context context,
 	return;
     }
 
-#ifndef NO_LIMIT_FD_SETSIZE
+#ifdef FD_SETSIZE
     if (s >= FD_SETSIZE) {
 	krb5_warnx(context, "socket FD too large");
-	closesocket (s);
+	rk_closesocket (s);
 	return;
     }
 #endif
@@ -880,6 +880,7 @@ loop(krb5_context context,
 #ifndef NO_LIMIT_FD_SETSIZE
 		if(max_fd < d[i].s)
 		    max_fd = d[i].s;
+#ifdef FD_SETSIZE
 		if (max_fd >= FD_SETSIZE)
 		    krb5_errx(context, 1, "fd too large");
 #endif
@@ -923,7 +924,7 @@ loop(krb5_context context,
 	}
     }
     if (0);
-#ifndef NO_SIGXCPU
+#ifdef SIGXCPU
     else if(exit_flag == SIGXCPU)
 	kdc_log(context, config, 0, "CPU time limit exceeded");
 #endif

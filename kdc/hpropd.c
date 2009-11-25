@@ -50,7 +50,7 @@ struct getargs args[] = {
     { "database", 'd', arg_string, &database, "database", "file" },
     { "stdin",    'n', arg_flag, &from_stdin, "read from stdin" },
     { "print",	    0, arg_flag, &print_dump, "print dump to stdout" },
-#ifndef NO_INETD
+#ifdef SUPPORT_INETD
     { "inetd",	   'i',	arg_negative_flag,	&inetd_flag,
       "Not started from inetd" },
 #endif
@@ -79,7 +79,6 @@ main(int argc, char **argv)
     krb5_authenticator authent;
     krb5_keytab keytab;
     krb5_socket_t sock = rk_INVALID_SOCKET;
-    int close_socket = 0;
     HDB *db = NULL;
     int optidx = 0;
     char *tmp_db;
@@ -130,24 +129,21 @@ main(int argc, char **argv)
 	char *server;
 
 	sock = STDIN_FILENO;
-#ifndef NO_INETD
+#ifdef SUPPORT_INETD
 	if (inetd_flag == -1) {
 	    if (getpeername (sock, sa, &sin_len) < 0) {
 		inetd_flag = 0;
-		close_socket = 0;
 	    } else {
 		inetd_flag = 1;
-		close_socket = 0;
 	    }
 	}
-	if (!inetd_flag) {
+#else
+	inetd_flag = 0;
 #endif
+	if (!inetd_flag) {
 	    mini_inetd (krb5_getportbyname (context, "hprop", "tcp",
 					    HPROP_PORT), &sock);
-	    close_socket = 1;
-#ifndef NO_INETD
 	}
-#endif
 	sin_len = sizeof(ss);
 	if(getpeername(sock, sa, &sin_len) < 0)
 	    krb5_err(context, 1, errno, "getpeername");
@@ -281,8 +277,8 @@ main(int argc, char **argv)
     if (!print_dump)
 	krb5_log(context, fac, 0, "Received %d principals", nprincs);
 
-    if (close_socket)
-	closesocket(sock);
+    if (inetd_flag == 0)
+	rk_closesocket(sock);
 
     exit(0);
 }

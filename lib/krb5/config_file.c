@@ -473,6 +473,21 @@ krb5_config_parse_file_multi (krb5_context context,
 	return ENOENT;
 #endif
     } else {
+#ifdef KRB5_USE_PATH_TOKENS
+	char * exp_fname = NULL;
+
+	ret = _krb5_expand_path_tokens(context, fname, &exp_fname);
+	if (ret) {
+	    if (newfname)
+		free(newfname);
+	    return ret;
+	}
+	
+	if (newfname)
+	    free(newfname);
+	fname = newfname = exp_fname;
+#endif
+
 	f.f = fopen(fname, "r");
 	f.s = NULL;
 	if(f.f == NULL) {
@@ -493,46 +508,7 @@ krb5_config_parse_file_multi (krb5_context context,
 		free(newfname);
 	    return ret;
 	}
-=======
-#ifdef KRB5_USE_PATH_TOKENS
-    {
-	char * exp_fname = NULL;
-
-	ret = _krb5_expand_path_tokens(context, fname, &exp_fname);
-	if (ret) {
-	    if (newfname)
-		free(newfname);
-	    return ret;
-	}
-
-	if (newfname)
-	    free(newfname);
-	fname = newfname = exp_fname;
     }
-#endif
-
-    f.f = fopen(fname, "r");
-    f.s = NULL;
-    if(f.f == NULL) {
-	ret = errno;
-	krb5_set_error_message (context, ret, "open %s: %s",
-				fname, strerror(ret));
-	if (newfname)
-	    free(newfname);
-	return ret;
-    }
-
-    ret = krb5_config_parse_debug (&f, res, &lineno, &str);
-    fclose(f.f);
-    if (ret) {
-	krb5_set_error_message (context, ret, "%s:%u: %s", fname, lineno, str);
-	if (newfname)
-	    free(newfname);
-	return ret;
->>>>>>> Initial Windows port
-    }
-    if (newfname)
-	free(newfname);
     return 0;
 }
 

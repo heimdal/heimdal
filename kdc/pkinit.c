@@ -1945,12 +1945,12 @@ load_mappings(krb5_context context, const char *fn)
  */
 
 krb5_error_code
-_kdc_pk_initialize(krb5_context context,
-		   krb5_kdc_configuration *config,
-		   const char *user_id,
-		   const char *anchors,
-		   char **pool,
-		   char **revoke_list)
+krb5_kdc_pk_initialize(krb5_context context,
+		       krb5_kdc_configuration *config,
+		       const char *user_id,
+		       const char *anchors,
+		       char **pool,
+		       char **revoke_list)
 {
     const char *file;
     char *fn = NULL;

@@ -122,18 +122,22 @@ main(int argc, char **argv)
 
 	sigaction(SIGINT, &sa, NULL);
 	sigaction(SIGTERM, &sa, NULL);
+#ifdef SIGXCPU
 	sigaction(SIGXCPU, &sa, NULL);
+#endif
 
 	sa.sa_handler = SIG_IGN;
+#ifdef SIGPIPE
 	sigaction(SIGPIPE, &sa, NULL);
+#endif
     }
 #else
     signal(SIGINT, sigterm);
     signal(SIGTERM, sigterm);
-#ifndef NO_SIGXCPU
+#ifdef SIGXCPU
     signal(SIGXCPU, sigterm);
 #endif
-#ifndef NO_SIGPIPE
+#ifdef SIGPIPE
     signal(SIGPIPE, SIG_IGN);
 #endif
 #endif

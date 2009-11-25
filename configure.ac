@@ -195,6 +195,9 @@ AM_CONDITIONAL(KRB4, false)
 AM_CONDITIONAL(KRB5, true)
 AM_CONDITIONAL(do_roken_rename, true)
 
+AC_DEFINE(SUPPORT_INETD, 1, [Enable use of inetd style startup.])dnl
+
+
 AC_DEFINE(KRB5, 1, [Enable Kerberos 5 support in applications.])dnl
 AC_SUBST(LIB_kdb)dnl
 

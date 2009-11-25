@@ -110,8 +110,8 @@ main(int argc, char **argv)
 	heim_sipc mach;
 	heim_sipc_launchd_mach_init(service_name, kcm_service, NULL, &mach);
     } else {
-	heim_sipc unix;
-	heim_sipc_service_unix(service_name, kcm_service, NULL, &unix);
+	heim_sipc un;
+	heim_sipc_service_unix(service_name, kcm_service, NULL, &un);
     }
 
     heim_ipc_main();

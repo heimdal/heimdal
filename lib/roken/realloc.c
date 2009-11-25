@@ -37,7 +37,7 @@
 #include <stdlib.h>
 #include "roken.h"
 
-void * ROKEN_LIB_FUNCTION
+ROKEN_LIB_FUNCTION void * ROKEN_LIB_CALL
 rk_realloc(void *ptr, size_t size)
 {
     if (ptr == NULL)

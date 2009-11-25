@@ -498,7 +498,7 @@ nl_open(void)
 }
 
 /* ====================================================================== */
-int ROKEN_LIB_FUNCTION
+ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
 rk_getifaddrs(struct ifaddrs **ifap)
 {
   int sd;
@@ -1165,7 +1165,7 @@ getlifaddrs2(struct ifaddrs **ifap,
 }
 #endif /* defined(HAVE_IPV6) && defined(SIOCGLIFCONF) && defined(SIOCGLIFFLAGS) */
 
-int ROKEN_LIB_FUNCTION
+ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
 rk_getifaddrs(struct ifaddrs **ifap)
 {
     int ret = -1;
@@ -1193,7 +1193,9 @@ rk_getifaddrs(struct ifaddrs **ifap)
     return ret;
 }
 
-void ROKEN_LIB_FUNCTION
+#endif /* !AF_NETLINK */
+
+ROKEN_LIB_FUNCTION void ROKEN_LIB_CALL
 rk_freeifaddrs(struct ifaddrs *ifp)
 {
     struct ifaddrs *p, *q;
@@ -1213,8 +1215,6 @@ rk_freeifaddrs(struct ifaddrs *ifp)
 	free(q);
     }
 }
-
-#endif /* !AF_NETLINK */
 
 #ifdef TEST
 

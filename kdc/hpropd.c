@@ -133,7 +133,7 @@ main(int argc, char **argv)
 	}
 	if (!inetd_flag) {
 	    mini_inetd (krb5_getportbyname (context, "hprop", "tcp",
-					    HPROP_PORT));
+					    HPROP_PORT), NULL);
 	}
 	sin_len = sizeof(ss);
 	if(getpeername(fd, sa, &sin_len) < 0)

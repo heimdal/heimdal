@@ -132,7 +132,6 @@ check_directory(krb5_context context,
     if((d = opendir(dirname)) == NULL)
 	return errno;
 
-#ifdef HAVE_DIRFD
     {
 	int fd;
 	struct stat st2;
@@ -147,7 +146,6 @@ check_directory(krb5_context context,
 	    return EACCES;
 	}
     }
-#endif
 
     while((dent = readdir(d)) != NULL) {
 	if(strcmp(dent->d_name, ".") == 0 ||

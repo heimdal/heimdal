@@ -38,7 +38,7 @@
 #include <shadow.h>
 #endif
 
-struct passwd * ROKEN_LIB_FUNCTION
+ROKEN_LIB_FUNCTION struct passwd * ROKEN_LIB_CALL
 k_getpwuid (uid_t uid)
 {
      struct passwd *p;

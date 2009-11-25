@@ -35,7 +35,7 @@
 
 #include "roken.h"
 
-ssize_t ROKEN_LIB_FUNCTION
+ROKEN_LIB_FUNCTION ssize_t ROKEN_LIB_CALL
 recvmsg(int s, struct msghdr *msg, int flags)
 {
     ssize_t ret, nb;

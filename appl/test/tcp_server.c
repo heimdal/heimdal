@@ -155,7 +155,7 @@ proto (int sock, const char *service)
 static int
 doit (int port, const char *service)
 {
-    mini_inetd (port);
+    mini_inetd (port, NULL);
 
     return proto (STDIN_FILENO, service);
 }

@@ -1252,7 +1252,7 @@ main(int argc, char **argv)
 	    err(1, "error opening %s", lf);
     }
 
-    mini_inetd(htons(port));
+    mini_inetd(htons(port), NULL);
     fprintf(logfile, "connected\n");
 
     {

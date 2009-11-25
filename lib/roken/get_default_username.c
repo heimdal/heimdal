@@ -40,7 +40,7 @@
  * NULL if we can't guess at all.
  */
 
-const char * ROKEN_LIB_FUNCTION
+ROKEN_LIB_FUNCTION const char * ROKEN_LIB_CALL
 get_default_username (void)
 {
     const char *user;
@@ -73,5 +73,11 @@ get_default_username (void)
 	    return pwd->pw_name;
     }
 #endif
+#ifdef _WIN32
+    /* TODO: We can call GetUserNameEx() and figure out a
+       username. However, callers do not free the return value of this
+       function. */
+#endif
+
     return user;
 }

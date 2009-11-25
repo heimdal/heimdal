@@ -45,6 +45,12 @@ static char rcsid[] = "$NetBSD: fnmatch.c,v 1.11 1995/02/27 03:43:06 cgd Exp $";
  * Compares a filename or pathname to a pattern.
  */
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
+#include <roken.h>
+
 #include <fnmatch.h>
 #include <string.h>
 
@@ -52,7 +58,7 @@ static char rcsid[] = "$NetBSD: fnmatch.c,v 1.11 1995/02/27 03:43:06 cgd Exp $";
 
 static const char *rangematch (const char *, int, int);
 
-int ROKEN_LIB_FUNCTION
+ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
 rk_fnmatch(const char *pattern, const char *string, int flags)
 {
 	const char *stringstart;

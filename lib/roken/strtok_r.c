@@ -39,7 +39,7 @@
 
 #ifndef HAVE_STRTOK_R
 
-char * ROKEN_LIB_FUNCTION
+ROKEN_LIB_FUNCTION char * ROKEN_LIB_CALL
 strtok_r(char *s1, const char *s2, char **lasts)
 {
   char *ret;

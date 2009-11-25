@@ -45,7 +45,7 @@ extern char **environ;
 /*
  * unsetenv --
  */
-void ROKEN_LIB_FUNCTION
+ROKEN_LIB_FUNCTION void ROKEN_LIB_CALL
 unsetenv(const char *name)
 {
   int len;

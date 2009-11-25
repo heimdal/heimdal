@@ -79,7 +79,7 @@ libroken_la_OBJS =			\
 	$(OBJ)\resolve.obj		\
 	$(OBJ)\roken_gethostby.obj	\
 	$(OBJ)\rtbl.obj			\
-	$(OBJ)\sendmsg_w32.obj		\
+	$(OBJ)\sendmsg.obj		\
 	$(OBJ)\setenv.obj		\
 	$(OBJ)\setprogname.obj		\
 	$(OBJ)\simple_exec_w32.obj	\

@@ -39,7 +39,7 @@
 
 #include "roken.h"
 
-int ROKEN_LIB_FUNCTION
+ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
 seteuid(uid_t euid)
 {
 #ifdef HAVE_SETREUID

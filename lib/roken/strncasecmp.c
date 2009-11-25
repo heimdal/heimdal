@@ -39,7 +39,7 @@
 
 #ifndef HAVE_STRNCASECMP
 
-int ROKEN_LIB_FUNCTION
+ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
 strncasecmp(const char *s1, const char *s2, size_t n)
 {
     while(n > 0

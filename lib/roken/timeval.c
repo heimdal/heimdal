@@ -43,7 +43,7 @@
  * Make `t1' consistent.
  */
 
-void ROKEN_LIB_FUNCTION
+ROKEN_LIB_FUNCTION void ROKEN_LIB_CALL
 timevalfix(struct timeval *t1)
 {
     if (t1->tv_usec < 0) {
@@ -60,7 +60,7 @@ timevalfix(struct timeval *t1)
  * t1 += t2
  */
 
-void ROKEN_LIB_FUNCTION
+ROKEN_LIB_FUNCTION void ROKEN_LIB_CALL
 timevaladd(struct timeval *t1, const struct timeval *t2)
 {
     t1->tv_sec  += t2->tv_sec;
@@ -72,7 +72,7 @@ timevaladd(struct timeval *t1, const struct timeval *t2)
  * t1 -= t2
  */
 
-void ROKEN_LIB_FUNCTION
+ROKEN_LIB_FUNCTION void ROKEN_LIB_CALL
 timevalsub(struct timeval *t1, const struct timeval *t2)
 {
     t1->tv_sec  -= t2->tv_sec;

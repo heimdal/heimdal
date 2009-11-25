@@ -961,7 +961,7 @@ main(int argc, char **argv)
 			errx (1, "getaddrinfo: %s", gai_strerror (error));
 		}
 	}
-	mini_inetd_addrinfo (ai);
+	mini_inetd_addrinfo (ai, NULL);
 	freeaddrinfo(ai);
     }
 

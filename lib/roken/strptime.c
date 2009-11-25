@@ -31,11 +31,11 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include <config.h>
+#include "roken.h"
 #ifdef TEST_STRPFTIME
 #include "strpftime-test.h"
 #endif
 #include <ctype.h>
-#include "roken.h"
 
 static const char *abb_weekdays[] = {
     "Sun",
@@ -177,7 +177,7 @@ first_day (int year)
     int ret = 4;
 
     for (; year > 1970; --year)
-	ret = (ret + 365 + is_leap_year (year) ? 1 : 0) % 7;
+	ret = (ret + (is_leap_year (year) ? 366 : 365)) % 7;
     return ret;
 }
 
@@ -237,7 +237,7 @@ set_week_number_mon4 (struct tm *timeptr, int wnum)
  *
  */
 
-char * ROKEN_LIB_FUNCTION
+ROKEN_LIB_FUNCTION char * ROKEN_LIB_CALL
 strptime (const char *buf, const char *format, struct tm *timeptr)
 {
     char c;

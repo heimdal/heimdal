@@ -56,19 +56,19 @@ static struct units bytes_short_units[] = {
     { NULL, 0 }
 };
 
-int ROKEN_LIB_FUNCTION
+ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
 parse_bytes (const char *s, const char *def_unit)
 {
     return parse_units (s, bytes_units, def_unit);
 }
 
-int ROKEN_LIB_FUNCTION
+ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
 unparse_bytes (int t, char *s, size_t len)
 {
     return unparse_units (t, bytes_units, s, len);
 }
 
-int ROKEN_LIB_FUNCTION
+ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
 unparse_bytes_short (int t, char *s, size_t len)
 {
     return unparse_units_approx (t, bytes_short_units, s, len);

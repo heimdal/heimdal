@@ -38,7 +38,7 @@
 #include "roken.h"
 
 #ifndef HAVE_STRNDUP
-char * ROKEN_LIB_FUNCTION
+ROKEN_LIB_FUNCTION char * ROKEN_LIB_CALL
 strndup(const char *old, size_t sz)
 {
     size_t len = strnlen (old, sz);

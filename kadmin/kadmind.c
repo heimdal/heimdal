@@ -168,7 +168,7 @@ main(int argc, char **argv)
 					     "tcp", 749);
 	else
 	    debug_port = htons(atoi(port_str));
-	mini_inetd(debug_port);
+	mini_inetd(debug_port, NULL);
     } else {
 	struct sockaddr_storage __ss;
 	struct sockaddr *sa = (struct sockaddr *)&__ss;

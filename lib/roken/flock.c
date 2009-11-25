@@ -37,11 +37,11 @@
 
 #include "roken.h"
 
-
 #define OP_MASK (LOCK_SH | LOCK_EX | LOCK_UN)
 
-int ROKEN_LIB_FUNCTION
-rk_flock(int fd, int operation)
+
+ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
+fk_flock(int fd, int operation)
 {
 #if defined(HAVE_FCNTL) && defined(F_SETLK)
   struct flock arg;
@@ -75,6 +75,76 @@ rk_flock(int fd, int operation)
     break;
   }
   return code;
+
+#elif defined(_WIN32)
+  /* Windows */
+
+#define FLOCK_OFFSET_LOW  0
+#define FLOCK_OFFSET_HIGH 0
+#define FLOCK_LENGTH_LOW  0x00000000
+#define FLOCK_LENGTH_HIGH 0x80000000
+
+  HANDLE hFile;
+  OVERLAPPED ov;
+  BOOL rv = FALSE;
+  DWORD f = 0;
+
+  hFile = (HANDLE) _get_osfhandle(fd);
+  if (hFile == NULL || hFile == INVALID_HANDLE_VALUE) {
+      _set_errno(EBADF);
+      return -1;
+  }
+
+  ZeroMemory(&ov, sizeof(ov));
+  ov.hEvent = NULL;
+  ov.Offset = FLOCK_OFFSET_LOW;
+  ov.OffsetHigh = FLOCK_OFFSET_HIGH;
+
+  if (operation & LOCK_NB)
+      f = LOCKFILE_FAIL_IMMEDIATELY;
+
+  switch (operation & OP_MASK) {
+  case LOCK_UN:			/* Unlock */
+      rv = UnlockFileEx(hFile, 0,
+			FLOCK_LENGTH_LOW, FLOCK_LENGTH_HIGH, &ov);
+      break;
+
+  case LOCK_SH:			/* Shared lock */
+      rv = LockFileEx(hFile, f, 0,
+		      FLOCK_LENGTH_LOW, FLOCK_LENGTH_HIGH, &ov);
+      break;
+
+  case LOCK_EX:			/* Exclusive lock */
+      rv = LockFileEx(hFile, f|LOCKFILE_EXCLUSIVE_LOCK, 0,
+		      FLOCK_LENGTH_LOW, FLOCK_LENGTH_HIGH,
+		      &ov);
+      break;
+
+  default:
+      _set_errno(EINVAL);
+      return -1;
+  }
+
+  if (!rv) {
+      switch (GetLastError()) {
+      case ERROR_SHARING_VIOLATION:
+      case ERROR_LOCK_VIOLATION:
+      case ERROR_IO_PENDING:
+	  _set_errno(EWOULDBLOCK);
+	  break;
+
+      case ERROR_ACCESS_DENIED:
+	  _set_errno(EACCES);
+	  break;
+
+      default:
+	  _set_errno(ENOLCK);
+      }
+      return -1;
+  }
+
+  return 0;
+
 #else
   return -1;
 #endif

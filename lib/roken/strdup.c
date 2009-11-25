@@ -36,7 +36,7 @@
 #include <string.h>
 
 #ifndef HAVE_STRDUP
-char * ROKEN_LIB_FUNCTION
+ROKEN_LIB_FUNCTION char * ROKEN_LIB_CALL
 strdup(const char *old)
 {
 	char *t = malloc(strlen(old)+1);

@@ -329,7 +329,7 @@ main(int argc, char **argv)
 #endif
 
     if(interactive_flag)
-	mini_inetd (port);
+	mini_inetd(port, NULL);
 
     /*
      * LOG_NDELAY sets up the logging connection immediately,

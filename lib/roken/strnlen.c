@@ -35,7 +35,7 @@
 
 #include "roken.h"
 
-size_t ROKEN_LIB_FUNCTION
+ROKEN_LIB_FUNCTION size_t ROKEN_LIB_CALL
 strnlen(const char *s, size_t len)
 {
     size_t i;

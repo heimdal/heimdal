@@ -43,7 +43,7 @@
 #endif
 #include "roken.h"
 
-time_t ROKEN_LIB_FUNCTION
+ROKEN_LIB_FUNCTION time_t ROKEN_LIB_CALL
 tm2time (struct tm tm, int local)
 {
     time_t t;

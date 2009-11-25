@@ -33,14 +33,9 @@
 
 #include <config.h>
 
-#include <stdio.h>
-#include <sys/types.h>
-#include <unistd.h>
 #include "roken.h"
 
-#include "roken.h"
-
-char * ROKEN_LIB_FUNCTION
+ROKEN_LIB_FUNCTION char * ROKEN_LIB_CALL
 pid_file_write (const char *progname)
 {
     FILE *fp;
@@ -59,7 +54,7 @@ pid_file_write (const char *progname)
     return ret;
 }
 
-void ROKEN_LIB_FUNCTION
+ROKEN_LIB_FUNCTION void ROKEN_LIB_CALL
 pid_file_delete (char **filename)
 {
     if (*filename != NULL) {
@@ -79,7 +74,7 @@ pidfile_cleanup(void)
 	pid_file_delete(&pidfile_path);
 }
 
-void
+ROKEN_LIB_FUNCTION void ROKEN_LIB_CALL
 pidfile(const char *basename)
 {
     if(pidfile_path != NULL)

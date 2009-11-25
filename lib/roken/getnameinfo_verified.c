@@ -43,7 +43,7 @@
  * NI_NAMEREQD flag is set or return the numeric address as a string.
  */
 
-int ROKEN_LIB_FUNCTION
+ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
 getnameinfo_verified(const struct sockaddr *sa, socklen_t salen,
 		     char *host, size_t hostlen,
 		     char *serv, size_t servlen,

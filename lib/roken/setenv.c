@@ -44,9 +44,10 @@
  * anyway.
  */
 
-int ROKEN_LIB_FUNCTION
+ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
 setenv(const char *var, const char *val, int rewrite)
 {
+#ifndef _WIN32
     char *t;
 
     if (!rewrite && getenv(var) != 0)
@@ -60,4 +61,15 @@ setenv(const char *var, const char *val, int rewrite)
 	return 0;
     else
 	return -1;
+#else  /* Win32 */
+    char dummy[8];
+
+    if (!rewrite && GetEnvironmentVariable(var, dummy, sizeof(dummy)/sizeof(char)) != 0)
+	return 0;
+
+    if (SetEnvironmentVariable(var, val) == 0)
+	return -1;
+    else
+	return 0;
+#endif
 }

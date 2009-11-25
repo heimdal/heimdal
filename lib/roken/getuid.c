@@ -36,7 +36,7 @@
 
 #ifndef HAVE_GETUID
 
-int ROKEN_LIB_FUNCTION
+ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
 getuid(void)
 {
     return 17;

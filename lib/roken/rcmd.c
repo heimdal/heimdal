@@ -36,7 +36,7 @@
 #include "roken.h"
 #include <stdio.h>
 
-int ROKEN_LIB_FUNCTION
+ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
 rcmd(char **ahost,
      unsigned short inport,
      const char *locuser,

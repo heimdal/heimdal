@@ -370,7 +370,7 @@ main(int argc, char **argv)
 	    port = k_getportbyname("telnet", "tcp", htons(23));
 #endif
 	}
-	mini_inetd (port);
+	mini_inetd (port, NULL);
     } else if (argc > 0) {
 	usage(1);
 	/* NOT REACHED */

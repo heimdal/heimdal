@@ -37,7 +37,7 @@
 
 #include <err.h>
 
-void ROKEN_LIB_FUNCTION
+ROKEN_LIB_FUNCTION void ROKEN_LIB_CALL
 esetenv(const char *var, const char *val, int rewrite)
 {
     if (setenv (rk_UNCONST(var), rk_UNCONST(val), rewrite))

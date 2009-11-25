@@ -47,7 +47,7 @@ static char sccsid[] = "@(#)daemon.c	8.1 (Berkeley) 6/4/93";
 
 #include "roken.h"
 
-int ROKEN_LIB_FUNCTION
+ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
 daemon(int nochdir, int noclose)
 {
     int fd;

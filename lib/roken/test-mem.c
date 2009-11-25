@@ -54,7 +54,15 @@ struct {
     int fd;
 } map;
 
+#ifdef HAVE_SIGACTION
+
 struct sigaction sa, osa;
+
+#else
+
+void (* osigh)(int);
+
+#endif
 
 char *testname;
 
@@ -82,7 +90,7 @@ segv_handler(int sig)
 	errx(1, "malloc");
 
 
-void * ROKEN_LIB_FUNCTION
+ROKEN_LIB_FUNCTION void * ROKEN_LIB_CALL
 rk_test_mem_alloc(enum rk_test_mem_type type, const char *name,
 		  void *buf, size_t size)
 {
@@ -98,7 +106,7 @@ rk_test_mem_alloc(enum rk_test_mem_type type, const char *name,
     map.start = p;
     map.size = size + 2;
     p[0] = 0xff;
-    p[map.size] = 0xff;
+    p[map.size-1] = 0xff;
     map.data_start = p + 1;
 #else
     unsigned char *p;
@@ -149,6 +157,7 @@ rk_test_mem_alloc(enum rk_test_mem_type type, const char *name,
 	abort();
     }
 #endif
+#ifdef HAVE_SIGACTION
     sigemptyset (&sa.sa_mask);
     sa.sa_flags = 0;
 #ifdef SA_RESETHAND
@@ -156,6 +165,9 @@ rk_test_mem_alloc(enum rk_test_mem_type type, const char *name,
 #endif
     sa.sa_handler = segv_handler;
     sigaction (SIGSEGV, &sa, &osa);
+#else
+    osigh = signal(SIGSEGV, segv_handler);
+#endif
 
     map.data_size = size;
     if (buf)
@@ -163,7 +175,7 @@ rk_test_mem_alloc(enum rk_test_mem_type type, const char *name,
     return map.data_start;
 }
 
-void ROKEN_LIB_FUNCTION
+ROKEN_LIB_FUNCTION void ROKEN_LIB_CALL
 rk_test_mem_free(const char *map_name)
 {
 #ifndef HAVE_MMAP
@@ -174,7 +186,7 @@ rk_test_mem_free(const char *map_name)
 
     if (p[0] != 0xff)
 	errx(1, "%s: %s underrun %x\n", testname, map_name, p[0]);
-    if (p[map.size] != 0xff)
+    if (p[map.size-1] != 0xff)
 	errx(1, "%s: %s overrun %x\n", testname, map_name, p[map.size - 1]);
     free(map.start);
 #else
@@ -192,5 +204,9 @@ rk_test_mem_free(const char *map_name)
     free(testname);
     testname = NULL;
 
+#ifdef HAVE_SIGACTION
     sigaction (SIGSEGV, &osa, NULL);
+#else
+    signal (SIGSEGV, osigh);
+#endif
 }

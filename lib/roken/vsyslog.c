@@ -58,7 +58,7 @@ simple_vsyslog(int pri, const char *fmt, va_list ap)
  * do like syslog but with a `va_list'
  */
 
-void ROKEN_LIB_FUNCTION
+ROKEN_LIB_FUNCTION void ROKEN_LIB_CALL
 vsyslog(int pri, const char *fmt, va_list ap)
 {
     char *fmt2;

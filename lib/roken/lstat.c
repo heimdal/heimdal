@@ -35,7 +35,7 @@
 
 #include "roken.h"
 
-int ROKEN_LIB_FUNCTION
+ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
 lstat(const char *path, struct stat *buf)
 {
   return stat(path, buf);

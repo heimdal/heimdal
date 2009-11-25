@@ -37,7 +37,7 @@
 
 /* getaddrinfo via string specifying host and port */
 
-int ROKEN_LIB_FUNCTION
+ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
 roken_getaddrinfo_hostspec2(const char *hostspec,
 			    int socktype,
 			    int port,
@@ -92,7 +92,7 @@ roken_getaddrinfo_hostspec2(const char *hostspec,
     return getaddrinfo (host, portstr, &hints, ai);
 }
 
-int ROKEN_LIB_FUNCTION
+ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
 roken_getaddrinfo_hostspec(const char *hostspec,
 			   int port,
 			   struct addrinfo **ai)

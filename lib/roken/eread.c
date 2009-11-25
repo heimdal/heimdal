@@ -33,16 +33,13 @@
 
 #include <config.h>
 
-#include <unistd.h>
-#include <err.h>
-
 #include "roken.h"
 
 /*
  * Like read but never fails (and never returns partial data).
  */
 
-ssize_t ROKEN_LIB_FUNCTION
+ROKEN_LIB_FUNCTION ssize_t ROKEN_LIB_CALL
 eread (int fd, void *buf, size_t nbytes)
 {
     ssize_t ret;

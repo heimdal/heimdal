@@ -36,7 +36,7 @@
 
 #ifndef ROKEN_LIB_FUNCTION
 #ifdef _WIN32
-#define ROKEN_LIB_FUNCTION __declspec(dllimport)
+#define ROKEN_LIB_FUNCTION
 #define ROKEN_LIB_CALL __stdcall
 #else
 #define ROKEN_LIB_FUNCTION

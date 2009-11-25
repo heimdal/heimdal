@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007 Kungliga Tekniska Högskolan
+ * Copyright (c) 2006 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  *
@@ -31,19 +31,93 @@
  * SUCH DAMAGE.
  */
 
+#include <config.h>
+
+#include <windows.h>
+#include <wincrypt.h>
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <rand.h>
+#include <heim_threads.h>
+
+#include <roken.h>
+
+#include "randi.h"
+
+static HCRYPTPROV cryptprovider = 0; 
+
+static HCRYPTPROV
+_hc_CryptProvider(void)
+{
+    BOOL res;
+
+    if (cryptprovider != 0)
+	return cryptprovider;
+	
+    res = CryptAcquireContext(&cryptprovider, NULL,
+			      MS_ENHANCED_PROV, PROV_RSA_FULL,
+			      0);
+    if(!res)
+        CryptAcquireContext(&cryptprovider, NULL,
+			    MS_ENHANCED_PROV, PROV_RSA_FULL,
+			    CRYPT_NEWKEYSET);
+    return cryptprovider;
+}
+
 /*
- * $Id$
+ *
  */
 
-#ifndef _HEIM_RANDI_H
-#define _HEIM_RANDI_H 1
 
-extern const RAND_METHOD hc_rand_fortuna_method;
-extern const RAND_METHOD hc_rand_unix_method;
-extern const RAND_METHOD hc_rand_egd_method;
-extern const RAND_METHOD hc_rand_timer_method;
-extern const RAND_METHOD hc_rand_w32crypto_method;
+static void
+w32crypto_seed(const void *indata, int size)
+{
+}
 
-const RAND_METHOD * RAND_timer_method(void);
 
-#endif /* _HEIM_RANDI_H */
+static int
+w32crypto_bytes(unsigned char *outdata, int size)
+{
+    if (CryptGenRandom(_hc_CryptProvider(), size, outdata) == 0)
+	return 0;
+    return 1;
+}
+
+static void
+w32crypto_cleanup(void)
+{
+}
+
+static void
+w32crypto_add(const void *indata, int size, double entropi)
+{
+}
+
+static int
+w32crypto_pseudorand(unsigned char *outdata, int size)
+{
+}
+
+static int
+w32crypto_status(void)
+{
+    if (_hc_CryptProvider() == NULL)
+	return 0;
+    return 1;
+}
+
+const RAND_METHOD hc_rand_w32crypto_method = {
+    w32crypto_seed,
+    w32crypto_bytes,
+    w32crypto_cleanup,
+    w32crypto_add,
+    w32crypto_pseudorand,
+    w32crypto_status
+};
+
+const RAND_METHOD *
+RAND_w32crypto_method(void)
+{
+    return &hc_rand_w32crypto_method;
+}

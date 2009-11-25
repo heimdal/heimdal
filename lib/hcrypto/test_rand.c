@@ -113,10 +113,14 @@ main(int argc, char **argv)
     if (rand_method) {
 	if (strcasecmp(rand_method, "fortuna") == 0)
 	    RAND_set_rand_method(RAND_fortuna_method());
+#ifndef NO_RAND_UNIX_METHOD
 	else if (strcasecmp(rand_method, "unix") == 0)
 	    RAND_set_rand_method(RAND_unix_method());
+#endif
+#ifndef NO_RAND_EGD_METHOD
 	else if (strcasecmp(rand_method, "egd") == 0)
 	    RAND_set_rand_method(RAND_egd_method());
+#endif
 	else
 	    errx(1, "unknown method %s", rand_method);
     }

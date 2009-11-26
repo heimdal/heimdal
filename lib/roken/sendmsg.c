@@ -100,7 +100,7 @@ sendmsg(rk_socket_t s, const struct msghdr *msg, int flags)
  * 
  **********************************************************************/
 
-/*
+/**
  * Implementation of sendmsg() for WIN32
  *
  * We are using a contrived definition of msghdr which actually uses

@@ -363,7 +363,7 @@ krb5_init_context(krb5_context *context)
     if (ret)
 	goto out;
 #endif	
-    if (SOCK_INIT())
+    if (rk_SOCK_INIT())
 	p->flags |= KRB5_CTX_F_SOCKETS_INITIALIZED;
 
 out:
@@ -534,7 +534,7 @@ krb5_free_context(krb5_context context)
     HEIMDAL_MUTEX_destroy(context->mutex);
     free(context->mutex);
     if (context->flags & KRB5_CTX_F_SOCKETS_INITIALIZED) {
- 	SOCK_EXIT();
+ 	rk_SOCK_EXIT();
     }
 
     memset(context, 0, sizeof(*context));

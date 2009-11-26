@@ -41,7 +41,7 @@
 
 
 ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
-fk_flock(int fd, int operation)
+rk_flock(int fd, int operation)
 {
 #if defined(HAVE_FCNTL) && defined(F_SETLK)
   struct flock arg;

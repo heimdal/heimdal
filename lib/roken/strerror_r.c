@@ -37,6 +37,22 @@
 #include <string.h>
 #include <errno.h>
 
+#ifdef _MSC_VER
+
+char * ROKEN_LIB_FUNCTION
+strerror_r(int eno, char * strerrbuf, size_t buflen)
+{
+    errno_t err;
+
+    err = strerror_s(strerrbuf, buflen, eno);
+    if (err != 0)
+        sprintf_s(strerrbuf, buflen, "Error % occurred.", eno);
+
+    return strerrbuf;
+}
+
+#else
+
 extern int sys_nerr;
 extern char *sys_errlist[];
 
@@ -53,3 +69,5 @@ strerror_r(int eno, char *strerrbuf, size_t buflen)
 	return ERANGE;
     return 0;
 }
+
+#endif

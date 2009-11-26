@@ -32,8 +32,8 @@
  */
 
 #include <config.h>
+#include <roken.h>
 
-#include <windows.h>
 #include <wincrypt.h>
 
 #include <stdio.h>
@@ -41,27 +41,37 @@
 #include <rand.h>
 #include <heim_threads.h>
 
-#include <roken.h>
-
 #include "randi.h"
 
-static HCRYPTPROV cryptprovider = 0; 
+volatile static HCRYPTPROV g_cryptprovider = 0;
 
 static HCRYPTPROV
 _hc_CryptProvider(void)
 {
     BOOL res;
+    HCRYPTPROV cryptprovider = 0;
 
-    if (cryptprovider != 0)
-	return cryptprovider;
-	
+    if (g_cryptprovider != 0)
+	return g_cryptprovider;
+
     res = CryptAcquireContext(&cryptprovider, NULL,
 			      MS_ENHANCED_PROV, PROV_RSA_FULL,
 			      0);
-    if(!res)
-        CryptAcquireContext(&cryptprovider, NULL,
-			    MS_ENHANCED_PROV, PROV_RSA_FULL,
-			    CRYPT_NEWKEYSET);
+
+    if (GetLastError() == NTE_BAD_KEYSET) {
+        if(!res)
+            res = CryptAcquireContext(&cryptprovider, NULL,
+                                      MS_ENHANCED_PROV, PROV_RSA_FULL,
+                                      CRYPT_NEWKEYSET);
+    }
+
+    if (res &&
+        InterlockedCompareExchange(&g_cryptprovider, cryptprovider, 0) != 0) {
+
+        CryptReleaseContext(cryptprovider, 0);
+        cryptprovider = g_cryptprovider;
+    }
+
     return cryptprovider;
 }
 
@@ -79,7 +89,7 @@ w32crypto_seed(const void *indata, int size)
 static int
 w32crypto_bytes(unsigned char *outdata, int size)
 {
-    if (CryptGenRandom(_hc_CryptProvider(), size, outdata) == 0)
+    if (CryptGenRandom(_hc_CryptProvider(), size, outdata))
 	return 0;
     return 1;
 }
@@ -97,12 +107,13 @@ w32crypto_add(const void *indata, int size, double entropi)
 static int
 w32crypto_pseudorand(unsigned char *outdata, int size)
 {
+    return 1;
 }
 
 static int
 w32crypto_status(void)
 {
-    if (_hc_CryptProvider() == NULL)
+    if (_hc_CryptProvider() == 0)
 	return 0;
     return 1;
 }

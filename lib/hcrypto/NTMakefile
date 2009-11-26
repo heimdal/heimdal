@@ -31,7 +31,7 @@
 
 RELDIR=lib\hcrypto
 
-AUXCFLAGS=$(AUXCFLAGS) -DKRB5 -I$(INCDIR)\hcrypto
+AUXCFLAGS=$(AUXCFLAGS) -DKRB5 -I$(HCRYPTOINCLUDEDIR)
 
 !include ../../windows/NTMakefile.w32
 
@@ -58,6 +58,7 @@ INCFILES=	\
 	$(HCRYPTOINCLUDEDIR)\md5.h	\
 	$(HCRYPTOINCLUDEDIR)\pkcs12.h	\
 	$(HCRYPTOINCLUDEDIR)\rand.h	\
+	$(HCRYPTOINCLUDEDIR)\randi.h	\
 	$(HCRYPTOINCLUDEDIR)\rc2.h	\
 	$(HCRYPTOINCLUDEDIR)\rc4.h	\
 	$(HCRYPTOINCLUDEDIR)\rsa.h	\
@@ -98,8 +99,7 @@ libhcrypto_OBJs = \
 	$(OBJ)\md5.obj		\
 	$(OBJ)\pkcs5.obj	\
 	$(OBJ)\pkcs12.obj	\
-	$(OBJ)\rand-fortuna.obj	\
-	$(OBJ)\rand-timer.obj	\
+	$(OBJ)\rand-w32.obj	\
 	$(OBJ)\rand.obj		\
 	$(OBJ)\rc2.obj		\
 	$(OBJ)\rc4.obj		\

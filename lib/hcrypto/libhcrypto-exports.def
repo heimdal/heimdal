@@ -212,7 +212,7 @@ EXPORTS
 ;	hc_RAND_egd_bytes
 ;	hc_RAND_egd_method
 	hc_RAND_file_name
-	hc_RAND_fortuna_method
+;	hc_RAND_fortuna_method
 	hc_RAND_get_rand_method
 	hc_RAND_load_file
 	hc_RAND_pseudo_bytes
@@ -222,6 +222,7 @@ EXPORTS
 	hc_RAND_status
 ;	hc_RAND_unix_method
 ;	hc_RAND_timer_method
+        hc_RAND_w32crypto_method
 	hc_RAND_write_file
 	hc_RC2_cbc_encrypt
 	hc_RC2_decryptc

@@ -188,6 +188,7 @@ AC_CHECK_FUNCS([				\
 	setprogname				\
 	setstate				\
 	strsvis					\
+	strsvisx				\
 	strunvis				\
 	strvis					\
 	strvisx					\
@@ -386,7 +387,7 @@ AM_CONDITIONAL(have_fnmatch_h,
 AC_FOREACH([rk_func], [strndup strsep strtok_r],
 	[AC_NEED_PROTO([#include <string.h>], rk_func)])
 
-AC_FOREACH([rk_func], [strsvis strunvis strvis strvisx svis unvis vis],
+AC_FOREACH([rk_func], [strsvis strsvisx strunvis strvis strvisx svis unvis vis],
 [AC_NEED_PROTO([#ifdef HAVE_VIS_H
 #include <vis.h>
 #endif], rk_func)])

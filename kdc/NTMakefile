@@ -37,7 +37,11 @@ BINPROGRAMS=$(BINDIR)\string2key.exe
 
 SBINPROGRAMS=$(SBINDIR)\kstash.exe
 
-LIBEXECPROGRAMS=$(LIBEXECDIR)\hprop.exe $(LIBEXECDIR)\hpropd.exe $(LIBEXECDIR)\kdc.exe
+LIBEXECPROGRAMS= \
+	$(LIBEXECDIR)\hprop.exe \
+	$(LIBEXECDIR)\hpropd.exe \
+	$(LIBEXECDIR)\kdc.exe \
+#	$(LIBEXECDIR)\digest-service.exe
 
 NOINST_PROGRAMS=$(OBJ)\kdc-replay.exe
 
@@ -90,7 +94,14 @@ $(BINDIR)\string2key.exe: $(OBJ)\string2key.obj $(BIN_LIBS)
 	$(_VC_MANIFEST_CLEAN)
 	$(_CODESIGN)
 
-$(LIBEXECDIR)\kdc.exe: $(OBJ)\connect.obj $(OBJ)\config.obj $(OBJ)\main.obj $(LIBKDC) $(BIN_LIBS)
+$(BINDIR)\digest-service.exe: $(OBJ)\digest-service.obj $(BIN_LIBS)
+	$(EXECONLINK)
+	$(_VC_MANIFEST_EMBED_EXE)
+	$(_VC_MANIFEST_CLEAN)
+	$(_CODESIGN)
+
+$(LIBEXECDIR)\kdc.exe: \
+$(OBJ)\connect.obj $(OBJ)\config.obj $(OBJ)\announce.obj $(OBJ)\main.obj $(LIBKDC) $(BIN_LIBS)
 	$(EXECONLINK)
 	$(_VC_MANIFEST_EMBED_EXE)
 	$(_VC_MANIFEST_CLEAN)

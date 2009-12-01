@@ -955,6 +955,14 @@ ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
 strsvis(char *, const char *, int, const char *);
 #endif
 
+#if !defined(HAVE_STRSVISX) || defined(NEED_STRSVISX_PROTO)
+#ifndef HAVE_STRSVISX
+#define strsvisx rk_strsvisx
+#endif
+ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
+strsvisx(char *, const char *, size_t, int, const char *);
+#endif
+
 #if !defined(HAVE_STRUNVIS) || defined(NEED_STRUNVIS_PROTO)
 #ifndef HAVE_STRUNVIS
 #define strunvis rk_strunvis

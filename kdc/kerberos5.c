@@ -286,8 +286,9 @@ _kdc_encode_reply(krb5_context context,
 
     ret = krb5_crypto_init(context, skey, etype, &crypto);
     if (ret) {
+        const char *msg;
 	free(buf);
-	const char *msg = krb5_get_error_message(context, ret);
+	msg = krb5_get_error_message(context, ret);
 	kdc_log(context, config, 0, "krb5_crypto_init failed: %s", msg);
 	krb5_free_error_message(context, msg);
 	return ret;

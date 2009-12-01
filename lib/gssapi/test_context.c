@@ -43,6 +43,7 @@
 static char *type_string;
 static char *mech_string;
 static char *ret_mech_string;
+static char *client_name;
 static int dns_canon_flag = -1;
 static int mutual_auth_flag = 0;
 static int dce_style_flag = 0;
@@ -58,9 +59,13 @@ static char *session_enctype_string = NULL;
 static int client_time_offset = 0;
 static int server_time_offset = 0;
 static int max_loops = 0;
+static char *limit_enctype_string = NULL;
 static int version_flag = 0;
 static int verbose_flag = 0;
 static int help_flag	= 0;
+
+static krb5_context context;
+static krb5_enctype limit_enctype = 0;
 
 static struct {
     const char *name;
@@ -452,6 +457,8 @@ static struct getargs args[] = {
     {"dns-canonicalize",0,arg_negative_flag, &dns_canon_flag,
      "use dns to canonicalize", NULL },
     {"mutual-auth",0,	arg_flag,	&mutual_auth_flag,"mutual auth", NULL },
+    {"client-name", 0,  arg_string,     &client_name, "client name", NULL },
+    {"limit-enctype",0,	arg_string,	&limit_enctype_string, "enctype", NULL },
     {"dce-style",0,	arg_flag,	&dce_style_flag, "dce-style", NULL },
     {"wrapunwrap",0,	arg_flag,	&wrapunwrap_flag, "wrap/unwrap", NULL },
     {"iov", 0, 		arg_flag,	&iov_flag, "wrap/unwrap iov", NULL },
@@ -488,9 +495,12 @@ main(int argc, char **argv)
     gss_ctx_id_t cctx, sctx;
     void *ctx;
     gss_OID nameoid, mechoid, actual_mech, actual_mech2;
-    gss_cred_id_t deleg_cred = GSS_C_NO_CREDENTIAL;
+    gss_cred_id_t client_cred = GSS_C_NO_CREDENTIAL, deleg_cred = GSS_C_NO_CREDENTIAL;
 
     setprogname(argv[0]);
+
+    if (krb5_init_context(&context))
+	errx(1, "krb5_init_context");
 
     cctx = sctx = GSS_C_NO_CONTEXT;
 
@@ -531,7 +541,47 @@ main(int argc, char **argv)
     if (gsskrb5_acceptor_identity)
 	gsskrb5_register_acceptor_identity(gsskrb5_acceptor_identity);
 
-    loop(mechoid, nameoid, argv[0], GSS_C_NO_CREDENTIAL,
+    if (client_name) {
+	gss_buffer_desc cn;
+	gss_name_t cname;
+	cn.value = client_name;
+	cn.length = strlen(client_name);
+	maj_stat = gss_import_name(&min_stat, &cn, GSS_C_NT_USER_NAME, &cname);
+	if (maj_stat)
+	    errx(1, "gss_import_name: %s",
+		 gssapi_err(maj_stat, min_stat, GSS_C_NO_OID));
+
+	maj_stat = gss_acquire_cred(&min_stat, cname, 0, NULL, 
+				    GSS_C_INITIATE, &client_cred, NULL, NULL);
+	if (GSS_ERROR(maj_stat))
+	    errx(1, "gss_import_name: %s",
+		 gssapi_err(maj_stat, min_stat, GSS_C_NO_OID));
+	gss_release_name(&min_stat, &cname);
+    }
+
+    if (limit_enctype_string) {
+	krb5_error_code ret;
+
+	ret = krb5_string_to_enctype(context,
+				     limit_enctype_string,
+				     &limit_enctype);
+	if (ret)
+	    krb5_err(context, 1, ret, "krb5_string_to_enctype");
+    }
+
+
+    if (limit_enctype) {
+	if (client_cred == NULL)
+	    errx(1, "client_cred missing");
+
+	maj_stat = gss_krb5_set_allowable_enctypes(&min_stat, client_cred,
+						   1, &limit_enctype); 
+	if (maj_stat)
+	    errx(1, "gss_krb5_set_allowable_enctypes: %s",
+		 gssapi_err(maj_stat, min_stat, GSS_C_NO_OID));
+    }
+
+    loop(mechoid, nameoid, argv[0], client_cred,
 	 &sctx, &cctx, &actual_mech, &deleg_cred);
 
     if (verbose_flag)
@@ -549,17 +599,12 @@ main(int argc, char **argv)
 
     /* XXX should be actual_mech */
     if (gss_oid_equal(mechoid, GSS_KRB5_MECHANISM)) {
-	krb5_context context;
 	time_t time;
 	gss_buffer_desc authz_data;
 	gss_buffer_desc in, out1, out2;
 	krb5_keyblock *keyblock, *keyblock2;
 	krb5_timestamp now;
 	krb5_error_code ret;
-
-	ret = krb5_init_context(&context);
-	if (ret)
-	    errx(1, "krb5_init_context");
 
 	ret = krb5_timeofday(context, &now);
 	if (ret)
@@ -624,6 +669,8 @@ main(int argc, char **argv)
 
 	if (maj_stat != GSS_S_COMPLETE)
 	    keyblock = NULL;
+	else if (limit_enctype && keyblock->keytype != limit_enctype)
+	    errx(1, "gsskrb5_get_subkey wrong enctype");
 	
  	maj_stat = gsskrb5_get_subkey(&min_stat,
 				      cctx,
@@ -635,6 +682,8 @@ main(int argc, char **argv)
 
 	if (maj_stat != GSS_S_COMPLETE)
 	    keyblock2 = NULL;
+	else if (limit_enctype && keyblock->keytype != limit_enctype)
+	    errx(1, "gsskrb5_get_subkey wrong enctype");
 
 	if (keyblock || keyblock2) {
 	    if (keyblock == NULL)
@@ -679,8 +728,12 @@ main(int argc, char **argv)
 	    errx(1, "gsskrb5_get_initiator_subkey failed: %s",
 		     gssapi_err(maj_stat, min_stat, actual_mech));
 
-	if (maj_stat == GSS_S_COMPLETE)
+	if (maj_stat == GSS_S_COMPLETE) {
+
+	    if (limit_enctype && keyblock->keytype != limit_enctype)
+		errx(1, "gsskrb5_get_initiator_subkey wrong enctype");
 	    krb5_free_keyblock(context, keyblock);
+	}
 
  	maj_stat = gsskrb5_extract_authz_data_from_sec_context(&min_stat,
 							       sctx,
@@ -688,8 +741,6 @@ main(int argc, char **argv)
 							       &authz_data);
 	if (maj_stat == GSS_S_COMPLETE)
 	    gss_release_buffer(&min_stat, &authz_data);
-
-	krb5_free_context(context);
 
 
 	memset(&out1, 0, sizeof(out1));
@@ -866,8 +917,9 @@ main(int argc, char **argv)
 
     }
 
-
     empty_release();
+    
+    krb5_free_context(context);
 
     return 0;
 }

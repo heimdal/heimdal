@@ -264,6 +264,7 @@ echo "====== gss-api session key check"
 
 # this will break when oneone invents a cooler enctype then aes256-cts-hmac-sha1-96
 coolenctype="aes256-cts-hmac-sha1-96"
+limit_enctype="des3-cbc-sha1"
 
 echo "Getting client initial tickets"
 ${kinit} --password-file=${objdir}/foopassword user1@${R} || \
@@ -276,6 +277,16 @@ ${context} \
     --session-enctype=${coolenctype} \
     --name-type=hostbased-service host@no-aes.test.h5l.se || \
 	{ exitcode=1 ; echo "test failed"; }
+
+echo "Building context on cred, check if its limited still"
+${context} \
+    --mech-type=krb5 \
+    --client-name=user1@${R} \
+    --limit-enctype="${limit_enctype}" \
+    --mutual-auth \
+    --name-type=hostbased-service host@no-aes.test.h5l.se || \
+	{ exitcode=1 ; echo "test failed"; }
+
 
 echo "====== ok-as-delegate"
 

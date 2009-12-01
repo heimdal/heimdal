@@ -52,7 +52,7 @@ gen_files_hdb = \
 	$(OBJ)\asn1_hdb_entry_alias.x \
 	$(OBJ)\asn1_hdb_keyset.x
 
-$(gen_files_hdb) $(OBJ)\hdb_asn1.hx: $(BINDIR)\asn1_compile.exe hdb.asn1
+$(gen_files_hdb) $(OBJ)\hdb_asn1.hx $(OBJ)\hdb_asn1-priv.hx: $(BINDIR)\asn1_compile.exe hdb.asn1
 	cd $(OBJ)
 	$(BINDIR)\asn1_compile.exe $(SRCDIR)\hdb.asn1 hdb_asn1
 	cd $(SRCDIR)
@@ -90,6 +90,8 @@ dist_libhdb_la_SOURCES =			\
 	$(ldap_c)				\
 	hdb.c					\
 	hdb-sqlite.c				\
+	hdb-keytab.c				\
+	hdb-mitdb.c				\
 	hdb_locl.h				\
 	keys.c					\
 	keytab.c				\
@@ -98,7 +100,7 @@ dist_libhdb_la_SOURCES =			\
 	ndbm.c					\
 	print.c
 
-libhdb_OBJs= \
+libhdb_OBJs = \
 	$(OBJ)\common.obj	\
 	$(OBJ)\db.obj		\
 	$(OBJ)\db3.obj		\
@@ -106,6 +108,8 @@ libhdb_OBJs= \
 	$(ldap)			\
 	$(OBJ)\hdb.obj		\
 	$(OBJ)\hdb-sqlite.obj	\
+	$(OBJ)\hdb-keytab.obj	\
+	$(OBJ)\hdb-mitdb.obj	\
 	$(OBJ)\keys.obj		\
 	$(OBJ)\keytab.obj	\
 	$(OBJ)\dbinfo.obj	\
@@ -128,12 +132,13 @@ $(OBJ)\hdb-private.h: $(dist_libhdb_la_SOURCES)
 	$(PERL) ../../cf/make-proto.pl -q -P remote -p $@ $(dist_libhdb_la_SOURCES) \
 		|| $(RM) $@
 
-INCFILES=\
-	$(INCDIR)\hdb.h \
-	$(INCDIR)\hdb-protos.h \
+INCFILES=			\
+	$(INCDIR)\hdb.h		\
+	$(INCDIR)\hdb-protos.h	\
 	$(OBJ)\hdb-private.h	\
-	$(INCDIR)\hdb_err.h \
-	$(INCDIR)\hdb_asn1.h
+	$(INCDIR)\hdb_err.h	\
+	$(INCDIR)\hdb_asn1.h	\
+	$(INCDIR)\hdb_asn1-priv.h
 
 !ifndef STATICLIBS
 

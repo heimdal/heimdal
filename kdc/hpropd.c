@@ -35,9 +35,7 @@
 
 RCSID("$Id$");
 
-#ifndef NO_INETD
 static int inetd_flag = -1;
-#endif
 static int help_flag;
 static int version_flag;
 static int print_dump;

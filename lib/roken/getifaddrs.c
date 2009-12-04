@@ -1010,12 +1010,11 @@ getifaddrs2(struct ifaddrs **ifap,
 #if defined(HAVE_IPV6) && defined(SIOCGLIFCONF) && defined(SIOCGLIFFLAGS)
 static int
 getlifaddrs2(struct ifaddrs **ifap,
-	     int siocgifconf, int siocgifflags,
+	     int af, int siocgifconf, int siocgifflags,
 	     size_t ifreq_sz)
 {
     int ret;
-    int fd_inet6;
-    int fd_inet;
+    int fd;
     size_t buf_size;
     char *buf;
     struct lifconf ifconf;
@@ -1028,15 +1027,9 @@ getlifaddrs2(struct ifaddrs **ifap,
     buf = NULL;
 
     memset (&sa_zero, 0, sizeof(sa_zero));
-    fd_inet6 = socket(AF_INET6, SOCK_DGRAM, 0);
-    if (fd_inet6 < 0)
+    fd = socket(af, SOCK_DGRAM, 0);
+    if (fd < 0)
 	return -1;
-
-    fd_inet = socket(AF_INET, SOCK_DGRAM, 0);
-    if (fd_inet < 0) {
-	close(fd_inet6);
-	return -1;
-    }
 
     buf_size = 8192;
     for (;;) {
@@ -1055,7 +1048,7 @@ getlifaddrs2(struct ifaddrs **ifap,
 	/*
 	 * Solaris returns EINVAL when the buffer is too small.
 	 */
-	if (ioctl (fd_inet, siocgifconf, &ifconf) < 0 && errno != EINVAL) {
+	if (ioctl (fd, siocgifconf, &ifconf) < 0 && errno != EINVAL) {
 	    ret = errno;
 	    goto error_out;
 	}
@@ -1093,11 +1086,9 @@ getlifaddrs2(struct ifaddrs **ifap,
 	memset (&ifreq, 0, sizeof(ifreq));
 	memcpy (ifreq.lifr_name, ifr->lifr_name, sizeof(ifr->lifr_name));
 
-	if (ioctl(fd_inet6, siocgifflags, &ifreq) < 0) {
-            if (ioctl(fd_inet, siocgifflags, &ifreq) < 0) {
-                ret = errno;
-                goto error_out;
-            }
+	if (ioctl(fd, siocgifflags, &ifreq) < 0) {
+	    ret = errno;
+	    goto error_out;
 	}
 
 	*end = malloc(sizeof(**end));
@@ -1151,14 +1142,12 @@ getlifaddrs2(struct ifaddrs **ifap,
 	
     }
     *ifap = start;
-    close(fd_inet6);
-    close(fd_inet);
+    close(fd);
     free(buf);
     return 0;
   error_out:
     rk_freeifaddrs(start);
-    close(fd_inet6);
-    close(fd_inet);
+    close(fd);
     free(buf);
     errno = ret;
     return -1;
@@ -1177,7 +1166,7 @@ rk_getifaddrs(struct ifaddrs **ifap)
 #endif
 #if defined(HAVE_IPV6) && defined(SIOCGLIFCONF) && defined(SIOCGLIFFLAGS)
     if (ret)
-	ret = getlifaddrs2 (ifap, SIOCGLIFCONF, SIOCGLIFFLAGS,
+	ret = getlifaddrs2 (ifap, AF_INET6, SIOCGLIFCONF, SIOCGLIFFLAGS,
 			    sizeof(struct lifreq));
 #endif
 #if defined(HAVE_IPV6) && defined(SIOCGIFCONF)

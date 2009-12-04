@@ -1193,8 +1193,6 @@ rk_getifaddrs(struct ifaddrs **ifap)
     return ret;
 }
 
-#endif /* !AF_NETLINK */
-
 ROKEN_LIB_FUNCTION void ROKEN_LIB_CALL
 rk_freeifaddrs(struct ifaddrs *ifp)
 {
@@ -1215,6 +1213,8 @@ rk_freeifaddrs(struct ifaddrs *ifp)
 	free(q);
     }
 }
+
+#endif /* !AF_NETLINK */
 
 #ifdef TEST
 

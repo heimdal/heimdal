@@ -1165,9 +1165,43 @@ rk_getifaddrs(struct ifaddrs **ifap)
 			   sizeof(struct in6_ifreq));
 #endif
 #if defined(HAVE_IPV6) && defined(SIOCGLIFCONF) && defined(SIOCGLIFFLAGS)
-    if (ret)
-	ret = getlifaddrs2 (ifap, AF_INET6, SIOCGLIFCONF, SIOCGLIFFLAGS,
+    /* Do IPv6 and IPv4 queries separately then join the result.
+     *
+     * HP-UX only returns IPv6 addresses using SIOCGLIFCONF,
+     * SIOCGIFCONF has to be used for IPv4 addresses. The result is then
+     * merged.
+     *
+     * Solaris needs particular care, because a SIOCGLIFCONF lookup using
+     * AF_UNSPEC can fail in a Zone requiring an AF_INET lookup, so we just
+     * do them separately the same as for HP-UX. See
+     * http://repo.or.cz/w/heimdal.git/commitdiff/76afc31e9ba2f37e64c70adc006ade9e37e9ef73
+     */
+    if (ret) {
+	int v6err, v4err;
+	struct ifaddrs *v6addrs, *v4addrs;
+
+	v6err = getlifaddrs2 (&v6addrs, AF_INET6, SIOCGLIFCONF, SIOCGLIFFLAGS,
 			    sizeof(struct lifreq));
+	v4err = getifaddrs2 (&v4addrs, AF_INET, SIOCGIFCONF, SIOCGIFFLAGS,
+			    sizeof(struct ifreq));
+	if (v6err)
+	    v6addrs = NULL;
+	if (v4err)
+	    v4addrs = NULL;
+
+	if (v6addrs) {
+	    if (v4addrs)
+		*ifap = append_ifaddrs(v6addrs, v4addrs);
+	    else
+		*ifap = v6addrs;
+	} else if (v4addrs) {
+	    *ifap = v4addrs;
+	} else {
+	    *ifap = NULL;
+	}
+
+	ret = (v6err || v4err) ? -1 : 0;
+    }
 #endif
 #if defined(HAVE_IPV6) && defined(SIOCGIFCONF)
     if (ret)

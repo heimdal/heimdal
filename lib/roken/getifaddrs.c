@@ -1039,7 +1039,7 @@ getlifaddrs2(struct ifaddrs **ifap,
 	    goto error_out;
 	}
 #ifndef __hpux
-	ifconf.lifc_family = AF_UNSPEC;
+	ifconf.lifc_family = af;
 	ifconf.lifc_flags  = 0;
 #endif
 	ifconf.lifc_len    = buf_size;
@@ -1153,6 +1153,27 @@ getlifaddrs2(struct ifaddrs **ifap,
     return -1;
 }
 #endif /* defined(HAVE_IPV6) && defined(SIOCGLIFCONF) && defined(SIOCGLIFFLAGS) */
+
+/**
+ * Join two struct ifaddrs lists by appending supp to base.
+ * Either may be NULL. The new list head (usually base) will be
+ * returned.
+ */
+static struct ifaddrs *
+append_ifaddrs(struct ifaddrs *base, struct ifaddrs *supp) {
+    if (!base)
+	return supp;
+
+    if (!supp)
+	return base;
+
+    while (base->ifa_next)
+	base = base->ifa_next;
+
+    base->ifa_next = supp;
+
+    return base;
+}
 
 ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
 rk_getifaddrs(struct ifaddrs **ifap)

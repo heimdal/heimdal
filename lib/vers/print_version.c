@@ -34,6 +34,8 @@
 
 #include <config.h>
 
+#define VERSION_HIDDEN static
+
 #include "roken.h"
 
 #include "version.h"

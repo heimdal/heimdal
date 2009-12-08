@@ -125,7 +125,6 @@ man_MANS = kadm5_pwcheck.3 iprop.8 iprop-log.8
 LDADD = \
 	libkadm5srv.la \
 	$(top_builddir)/lib/hdb/libhdb.la \
-	$(LIB_openldap) \
 	$(top_builddir)/lib/krb5/libkrb5.la \
 	$(top_builddir)/lib/asn1/libasn1.la \
 	$(LIB_hcrypto) \
@@ -137,7 +136,6 @@ LDADD = \
 iprop_log_LDADD = \
 	libkadm5srv.la \
 	$(top_builddir)/lib/hdb/libhdb.la \
-	$(LIB_openldap) \
 	$(top_builddir)/lib/krb5/libkrb5.la \
 	$(top_builddir)/lib/asn1/libasn1.la \
 	$(LIB_hcrypto) \

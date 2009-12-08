@@ -541,6 +541,8 @@ kcm_ccache_remove_cred_internal(krb5_context context,
 	    krb5_free_cred_contents(context, &cred->cred);
 	    free(cred);
 	    ret = 0;
+	    if (*c == NULL)
+		break;
 	}
     }
 

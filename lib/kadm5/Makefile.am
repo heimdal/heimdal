@@ -32,7 +32,9 @@ default_keys_SOURCES = default_keys.c
 kadm5includedir = $(includedir)/kadm5
 buildkadm5include = $(buildinclude)/kadm5
 
-dist_kadm5include_HEADERS = admin.h private.h kadm5-protos.h kadm5-private.h
+dist_kadm5include_HEADERS = admin.h private.h kadm5-pwcheck.h
+dist_kadm5include_HEADERS += kadm5-protos.h kadm5-private.h
+
 nodist_kadm5include_HEADERS = kadm5_err.h
 
 install-build-headers:: $(dist_kadm5include_HEADERS) $(nodist_kadm5include_HEADERS)
@@ -69,7 +71,6 @@ dist_libkadm5clnt_la_SOURCES =			\
 	randkey_c.c				\
 	rename_c.c				\
 	send_recv.c				\
-	kadm5-pwcheck.h				\
 	admin.h
 
 nodist_libkadm5clnt_la_SOURCES =		\
@@ -106,7 +107,6 @@ dist_libkadm5srv_la_SOURCES =			\
 	server_glue.c				\
 	set_keys.c				\
 	set_modifier.c				\
-	kadm5-pwcheck.h				\
 	admin.h
 
 nodist_libkadm5srv_la_SOURCES = 		\

@@ -173,7 +173,7 @@ krb5_auth_con_genaddrs(krb5_context context,
 	    if(getsockname(fd, local, &len) < 0) {
 		char buf[128];
 		ret = errno;
-		rk_rk_strerror_r(ret, buf, sizeof(buf));
+		rk_strerror_r(ret, buf, sizeof(buf));
 		krb5_set_error_message(context, ret, "getsockname: %s", buf);
 		goto out;
 	    }
@@ -191,7 +191,7 @@ krb5_auth_con_genaddrs(krb5_context context,
 	if(getpeername(fd, remote, &len) < 0) {
 	    char buf[128];
 	    ret = errno;
-	    rk_rk_strerror_r(ret, buf, sizeof(buf));
+	    rk_strerror_r(ret, buf, sizeof(buf));
 	    krb5_set_error_message(context, ret, "getpeername: %s", buf);
 	    goto out;
 	}

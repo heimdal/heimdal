@@ -9,18 +9,22 @@ libheim_ipcs_la_SOURCES = server.c common.c
 
 include_HEADERS = heim-ipc.h
 
+##
+## Enable when this is not a noinst_ library
+##
 #libheim_ipcc_la_LDFLAGS = -version-info 0:0:0
 #libheim_ipcs_la_LDFLAGS = -version-info 0:0:0
+#
+#if versionscript
+#libheim_ipcc_la_LDFLAGS += $(LDFLAGS_VERSION_SCRIPT)$(srcdir)/version-scriptc.map
+#libheim_ipcs_la_LDFLAGS += $(LDFLAGS_VERSION_SCRIPT)$(srcdir)/version-scripts.map
+#endif
+
 
 libheim_ipcc_la_LIBADD = \
 	$(LIB_roken)
 
 libheim_ipcs_la_LIBADD = $(libheim_ipcc_la_LIBADD)
-
-if versionscript
-libheim_ipcc_la_LDFLAGS += $(LDFLAGS_VERSION_SCRIPT)$(srcdir)/version-scriptc.map
-libheim_ipcs_la_LDFLAGS += $(LDFLAGS_VERSION_SCRIPT)$(srcdir)/version-scripts.map
-endif
 
 TESTS =	$(check_PROGRAMS)
 

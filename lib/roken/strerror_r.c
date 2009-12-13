@@ -37,12 +37,23 @@
 #include <string.h>
 #include <errno.h>
 
+#ifndef HAVE_STRERROR_R
 extern int sys_nerr;
 extern char *sys_errlist[];
+#endif
 
 int ROKEN_LIB_FUNCTION
 rk_strerror_r(int eno, char *strerrbuf, size_t buflen)
 {
+    /* Assume is the linux broken strerror_r (returns the a buffer (char *) if the input buffer wasn't use */
+#ifdef HAVE_STRERROR_R
+    const char *str;
+    str = strerror_r(eno, strerrbuf, buflen);
+    if (str != strerrbuf)
+	if (strlcpy(strerrbuf, str, buflen) >= buflen)
+	    return ERANGE;
+    return 0;
+#else
     int ret;
     if(eno < 0 || eno >= sys_nerr) {
 	snprintf(strerrbuf, buflen, "Error %d occurred.", eno);
@@ -52,4 +63,5 @@ rk_strerror_r(int eno, char *strerrbuf, size_t buflen)
     if (ret > buflen)
 	return ERANGE;
     return 0;
+#endif
 }

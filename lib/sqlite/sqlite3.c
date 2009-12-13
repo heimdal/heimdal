@@ -367,11 +367,7 @@ SQLITE_PRIVATE   void sqlite3Coverage(int);
 ** We support that for legacy
 */
 #if !defined(SQLITE_THREADSAFE)
-#if defined(THREADSAFE)
-# define SQLITE_THREADSAFE THREADSAFE
-#else
 # define SQLITE_THREADSAFE 1
-#endif
 #endif
 
 /*

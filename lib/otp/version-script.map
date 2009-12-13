@@ -6,6 +6,7 @@ HEIMDAL_OTP_1.0 {
 		otp_db_open;
 		otp_delete;
 		otp_error;
+		otp_find_alg;		
 		otp_get;
 		otp_parse;
 		otp_parse_altdict;

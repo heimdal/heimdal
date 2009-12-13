@@ -9,8 +9,8 @@ libheim_ipcs_la_SOURCES = server.c common.c
 
 include_HEADERS = heim-ipc.h
 
-libheim_ipcc_la_LDFLAGS = -version-info 0:0:0
-libheim_ipcs_la_LDFLAGS = -version-info 0:0:0
+#libheim_ipcc_la_LDFLAGS = -version-info 0:0:0
+#libheim_ipcs_la_LDFLAGS = -version-info 0:0:0
 
 libheim_ipcc_la_LIBADD = \
 	$(LIB_roken)

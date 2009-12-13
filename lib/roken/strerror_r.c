@@ -33,6 +33,8 @@
 
 #include <config.h>
 
+#if !defined(HAVE_STRERROR_R) && !defined(STRERROR_R_PROTO_COMPATIBLE)
+
 #include <stdio.h>
 #include <string.h>
 #include <errno.h>
@@ -65,3 +67,5 @@ rk_strerror_r(int eno, char *strerrbuf, size_t buflen)
     return 0;
 #endif
 }
+
+#endif

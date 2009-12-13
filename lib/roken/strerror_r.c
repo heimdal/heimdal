@@ -40,8 +40,8 @@
 extern int sys_nerr;
 extern char *sys_errlist[];
 
-char* ROKEN_LIB_FUNCTION
-strerror_r(int eno, char *strerrbuf, size_t buflen)
+int ROKEN_LIB_FUNCTION
+rk_strerror_r(int eno, char *strerrbuf, size_t buflen)
 {
     int ret;
     if(eno < 0 || eno >= sys_nerr) {

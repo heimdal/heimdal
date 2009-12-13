@@ -311,7 +311,6 @@ case "$host_os" in
 		AC_BROKEN([daemon]) ;;
 esac
 
-
 AC_BROKEN([					\
 	chown					\
 	copyhostent				\
@@ -357,7 +356,6 @@ AC_BROKEN([					\
 	strcasecmp				\
 	strdup					\
 	strerror				\
-	strerror_r				\
 	strftime				\
 	strlcat					\
 	strlcpy					\
@@ -501,6 +499,19 @@ AC_FIND_FUNC_NO_LIBS(crypt, crypt)dnl
 AC_REQUIRE([rk_BROKEN_REALLOC])dnl
 
 dnl AC_KRB_FUNC_GETCWD_BROKEN
+
+dnl strerror_r is great fun, on linux it exists before sus catched up,
+dnl so the return type is diffrent, lets check for both
+
+AC_PROTO_COMPAT([
+#include <stdio.h>
+#include <string.h>
+],
+strerror_r, int strerror_r(int, char *, size_t))
+
+AC_CHECK_FUNC([strerror_r],
+    [AC_DEFINE_UNQUOTED(HAVE_STRERROR_R, 1,
+        [Define if you have the function strerror_r.])])
 
 dnl
 dnl Checks for prototypes and declarations

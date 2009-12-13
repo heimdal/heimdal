@@ -7,7 +7,7 @@ AC_CONFIG_SRCDIR([kuser/kinit.c])
 AC_CONFIG_HEADERS(include/config.h)
 AC_CONFIG_MACRO_DIR([cf])
 
-AM_INIT_AUTOMAKE([foreign 1.10])
+AM_INIT_AUTOMAKE([foreign 1.10.3])
 AM_MAINTAINER_MODE
 
 dnl Checks for programs.

@@ -100,6 +100,7 @@ libroken_la_SOURCES =		\
 	snprintf.c		\
 	socket.c		\
 	strcollect.c		\
+	strerror_r.c		\
 	strpool.c		\
 	timeval.c		\
 	tm2time.c		\

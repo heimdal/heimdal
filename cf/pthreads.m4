@@ -19,17 +19,17 @@ case "$host" in
 		PTHREADS_LIBS=-mt
 	fi
 	;;
-*-*-netbsd[12]*)
+*-*-netbsd[[12]]*)
 	native_pthread_support="if running netbsd 1.6T or newer"
 	dnl heim_threads.h knows this
 	PTHREADS_LIBS="-lpthread"
 	;;
-*-*-netbsd[3456789]*)
+*-*-netbsd[[3456789]]*)
 	native_pthread_support="netbsd 3 uses explict pthread"
 	dnl heim_threads.h knows this
 	PTHREADS_LIBS="-lpthread"
 	;;
-*-*-freebsd5*)
+*-*-freebsd[[56789]]*)
 	native_pthread_support=yes
 	;;
 *-*-openbsd*)

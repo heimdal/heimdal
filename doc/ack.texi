@@ -55,6 +55,7 @@ Bugfixes, documentation, encouragement, and code has been contributed by:
 @item Frank van der Linden
 @item Guido Günther
 @item Jason McIntyre
+@item Jan Rekorajski
 @item Johan Gadsjö
 @item Johan Ihrén
 @item John Center

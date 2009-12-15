@@ -175,11 +175,11 @@ ${context}  --no-dns-canon --name-type=krb5-principal-name host/lucid || \
 
 echo "======test context building"
 for mech in krb5 krb5iov spnego spnegoiov; do
-	if [ "$mech" == "krb5iov" ] ; then
+	if [ "$mech" = "krb5iov" ] ; then
 	    mech="krb5"
 	    iov="--iov"
 	fi
-	if [ "$mech" == "spnegoiov" ] ; then
+	if [ "$mech" = "spnegoiov" ] ; then
 	    mech="spnego"
 	    iov="--iov"
 	fi
@@ -215,11 +215,11 @@ done
 echo "======dce-style"
 for mech in krb5 krb5iov spnego; do
 	iov=""
-	if [ "$mech" == "krb5iov" ] ; then
+	if [ "$mech" = "krb5iov" ] ; then
 	    mech="krb5"
 	    iov="--iov"
 	fi
-	if [ "$mech" == "spnegoiov" ] ; then
+	if [ "$mech" = "spnegoiov" ] ; then
 	    mech="spnego"
 	    iov="--iov"
 	fi

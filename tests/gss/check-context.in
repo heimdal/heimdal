@@ -126,7 +126,8 @@ trap "kill ${kdcpid}; echo signal killing kdc; exit 1;" EXIT
 exitcode=0
 
 echo "Getting client initial tickets"
-${kinit} --password-file=${objdir}/foopassword --forwardable user1@${R} || exitcode=1
+${kinit} --password-file=${objdir}/foopassword --forwardable user1@${R} || \
+	{ exitcode=1 ; echo "test failed"; }
 
 echo "======test unreadable/non existant keytab and its error message"
 ${context} --mech-type=krb5 host@lucid.test.h5l.se || \
@@ -292,7 +293,8 @@ echo "====== ok-as-delegate"
 
 echo "Getting client initial tickets"
 ${kinit} --forwardable \
-    --password-file=${objdir}/foopassword user1@${R} || exitcode=1
+    --password-file=${objdir}/foopassword user1@${R} || \
+	{ exitcode=1 ; echo "test failed"; }
 
 echo "ok-as-delegate not used"
 ${context} \
@@ -318,7 +320,8 @@ ${context} \
 
 echo "Getting client initial tickets with --ok-as-delgate"
 ${kinit} --ok-as-delegate  --forwardable \
-    --password-file=${objdir}/foopassword user1@${R} || exitcode=1
+    --password-file=${objdir}/foopassword user1@${R} || \
+	{ exitcode=1 ; echo "test failed"; }
 
 echo "policy delegate to non delegate host"
 ${context} \
@@ -357,7 +360,8 @@ ${context} \
 echo "======time diffs between client and server"
 
 echo "Getting client initial ticket"
-${kinit} --password-file=${objdir}/foopassword user1@${R} || exitcode=1
+${kinit} --password-file=${objdir}/foopassword user1@${R} || \
+	{ exitcode=1 ; echo "test failed"; }
 
 echo "No time offset"
 ${context} \
@@ -389,7 +393,8 @@ ${context} \
 echo "Getting client initial ticket"
 ${kinit} --password-file=${objdir}/foopassword user1@${R} || exitcode=1
 # Pre-poplute the cache since tgs-req will fail since our time is wrong
-${kgetcred} host/lucid.test.h5l.se@${R} || exitcode=1
+${kgetcred} host/lucid.test.h5l.se@${R} || \
+	{ exitcode=1 ; echo "test failed"; }
 
 echo "Client time offset"
 ${context} \

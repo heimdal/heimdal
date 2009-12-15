@@ -176,9 +176,9 @@ add_builtin(gssapi_mech_interface mech)
     if (mech == NULL)
 	return 0;
 
-    m = malloc(sizeof(*m));
+    m = calloc(1, sizeof(*m));
     if (m == NULL)
-	return 1;
+	return ENOMEM;
     m->gm_so = NULL;
     m->gm_mech = *mech;
     m->gm_mech_oid = mech->gm_mech_oid; /* XXX */
@@ -187,13 +187,12 @@ add_builtin(gssapi_mech_interface mech)
 
     /* pick up the oid sets of names */
 
-    if (m->gm_mech.gm_inquire_names_for_mech) {
+    if (m->gm_mech.gm_inquire_names_for_mech)
 	(*m->gm_mech.gm_inquire_names_for_mech)(&minor_status,
 	    &m->gm_mech.gm_mech_oid, &m->gm_name_types);
-    }
-    if (m->gm_name_types == NULL) {
+
+    if (m->gm_name_types == NULL)
 	gss_create_empty_oid_set(&minor_status, &m->gm_name_types);
-    }
 
     SLIST_INSERT_HEAD(&_gss_mechs, m, gm_link);
     return 0;

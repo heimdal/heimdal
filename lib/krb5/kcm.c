@@ -78,7 +78,7 @@ kcm_send_request(krb5_context context,
 	ret = heim_ipc_init_context(kcm_ipc_name, &kcm_ipc);
     HEIMDAL_MUTEX_unlock(&kcm_mutex);
     if (ret)
-	return ret;
+	return KRB5_CC_NOSUPP;
 
     ret = krb5_storage_to_data(request, &request_data);
     if (ret) {

@@ -391,7 +391,8 @@ ${context} \
 	{ exitcode=1 ; echo "test failed"; }
 
 echo "Getting client initial ticket"
-${kinit} --password-file=${objdir}/foopassword user1@${R} || exitcode=1
+${kinit} --password-file=${objdir}/foopassword user1@${R} || \
+	{ exitcode=1 ; echo "test failed"; }
 # Pre-poplute the cache since tgs-req will fail since our time is wrong
 ${kgetcred} host/lucid.test.h5l.se@${R} || \
 	{ exitcode=1 ; echo "test failed"; }
@@ -407,7 +408,8 @@ ${context} \
 echo "Getting client initial tickets (use-referrals)"
 ${kinit} \
     --password-file=${objdir}/foopassword \
-    --use-referrals user1@${R} || exitcode=1
+    --use-referrals user1@${R} || \
+	{ exitcode=1 ; echo "test failed"; }
 
 # XXX these tests really need to use somethat that resolve to something
 ${context} \

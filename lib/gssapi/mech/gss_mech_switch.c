@@ -190,7 +190,8 @@ add_builtin(gssapi_mech_interface mech)
     if (m->gm_mech.gm_inquire_names_for_mech) {
 	(*m->gm_mech.gm_inquire_names_for_mech)(&minor_status,
 	    &m->gm_mech.gm_mech_oid, &m->gm_name_types);
-    } else {
+    }
+    if (m->gm_name_types == NULL) {
 	gss_create_empty_oid_set(&minor_status, &m->gm_name_types);
     }
 
@@ -211,6 +212,8 @@ _gss_load_mech(void)
 	char		*name, *oid, *lib, *kobj;
 	struct _gss_mech_switch *m;
 	void		*so;
+	gss_OID_desc	mech_oid;
+	int		found;
 
 
 	HEIMDAL_MUTEX_lock(&_gss_mech_mutex);
@@ -253,6 +256,23 @@ _gss_load_mech(void)
 		if (!name || !oid || !lib || !kobj)
 			continue;
 
+		if (_gss_string_to_oid(oid, &mech_oid))
+			continue;
+
+		/*
+		 * Check for duplicates, already loaded mechs.
+		 */
+		found = 0;
+		SLIST_FOREACH(m, &_gss_mechs, gm_link) {
+			if (gss_oid_equal(&m->gm_mech.gm_mech_oid, &mech_oid)) {
+				found = 1;
+				free(mech_oid.elements);
+				break;
+			}
+		}
+		if (found)
+			continue;
+
 #ifndef RTLD_LOCAL
 #define RTLD_LOCAL 0
 #endif
@@ -260,17 +280,17 @@ _gss_load_mech(void)
 		so = dlopen(lib, RTLD_LAZY | RTLD_LOCAL);
 		if (!so) {
 /*			fprintf(stderr, "dlopen: %s\n", dlerror()); */
+			free(mech_oid.elements);
 			continue;
 		}
 
 		m = malloc(sizeof(*m));
-		if (!m)
+		if (!m) {
+			free(mech_oid.elements);
 			break;
-		m->gm_so = so;
-		if (_gss_string_to_oid(oid, &m->gm_mech.gm_mech_oid)) {
-			free(m);
-			continue;
 		}
+		m->gm_so = so;
+		m->gm_mech.gm_mech_oid = mech_oid;
 		m->gm_mech.gm_flags = 0;
 		
 		major_status = gss_add_oid_set_member(&minor_status,

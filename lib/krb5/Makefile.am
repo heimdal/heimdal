@@ -62,6 +62,7 @@ libkrb5_la_LIBADD = \
 	../wind/libwind.la \
 	$(LIB_libintl) \
 	$(LIBADD_roken) \
+	$(PTHREAD_LIBADD) \
 	$(LIB_door_create) \
 	$(LIB_dlopen)
 

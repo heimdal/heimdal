@@ -1,5 +1,8 @@
 #!/bin/sh
 
+unset KRB5_CONFIG
+unset KRB5CCNAME
+
 top_builddir="@top_builddir@"
 top_srcdir="@top_srcdir@"
 EGREP="@EGREP@"

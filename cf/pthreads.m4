@@ -31,6 +31,7 @@ case "$host" in
 	;;
 *-*-freebsd[[56789]]*)
 	native_pthread_support=yes
+	PTHREADS_LIBADD="-lpthread"
 	;;
 *-*-openbsd*)
 	native_pthread_support=yes
@@ -81,9 +82,11 @@ if test "$enable_pthread_support" != no; then
 else
   PTHREADS_CFLAGS=""
   PTHREADS_LIBS=""
+  PTHREADS_LIBADD=""
 fi
 
 AC_SUBST(PTHREADS_CFLAGS)
+AC_SUBST(PTHREADS_LIBADD)
 AC_SUBST(PTHREADS_LIBS)
 
 AC_MSG_RESULT($enable_pthread_support)

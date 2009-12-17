@@ -176,7 +176,7 @@ add_builtin(gssapi_mech_interface mech)
     if (mech == NULL)
 	return 0;
 
-    m = malloc(sizeof(*m));
+    m = calloc(1, sizeof(*m));
     if (m == NULL)
 	return 1;
     m->gm_so = NULL;

@@ -29,8 +29,12 @@ case "$host" in
 	dnl heim_threads.h knows this
 	PTHREADS_LIBS="-lpthread"
 	;;
-*-*-freebsd[[56789]]*)
+*-*-freebsd[[56]]*)
 	native_pthread_support=yes
+	;;
+*-*-freebsd[[789]]*)
+	native_pthread_support=yes
+	PTHREADS_LIBADD="-lthr"
 	;;
 *-*-openbsd*)
 	native_pthread_support=yes
@@ -81,10 +85,12 @@ if test "$enable_pthread_support" != no; then
 else
   PTHREADS_CFLAGS=""
   PTHREADS_LIBS=""
+  PTHREADS_LIBADD=""
 fi
 
 AC_SUBST(PTHREADS_CFLAGS)
 AC_SUBST(PTHREADS_LIBS)
+AC_SUBST(PTHREADS_LIBADD)
 
 AC_MSG_RESULT($enable_pthread_support)
 ])

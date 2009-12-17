@@ -34,7 +34,7 @@ case "$host" in
 	;;
 *-*-freebsd[[789]]*)
 	native_pthread_support=yes
-	PTHREADS_LIBADD="-lthr"
+	PTHREADS_LIBADD="-lpthread
 	;;
 *-*-openbsd*)
 	native_pthread_support=yes

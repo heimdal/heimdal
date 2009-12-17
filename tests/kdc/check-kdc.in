@@ -35,12 +35,12 @@ top_builddir="@top_builddir@"
 env_setup="@env_setup@"
 objdir="@objdir@"
 
+. ${env_setup}
+
 KRB5_CONFIG="${1-${objdir}/krb5.conf}"
 export KRB5_CONFIG
 
 testfailed="echo test failed; cat messages.log; exit 1"
-
-. ${env_setup}
 
 # If there is no useful db support compile in, disable test
 ${have_db} || exit 77

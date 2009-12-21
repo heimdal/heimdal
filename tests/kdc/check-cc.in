@@ -36,6 +36,11 @@ objdir="@objdir@"
 
 . ${env_setup}
 
+KRB5_CONFIG="${objdir}/krb5-cc.conf"
+export KRB5_CONFIG
+
+unset KRB5CCNAME
+
 testfailed="echo test failed; exit 1"
 
 # If there is no useful db support compile in, disable test
@@ -55,9 +60,6 @@ server=host/datan.test.h5l.se
 cache="FILE:${objdir}/cache.krb5"
 keytabfile=${objdir}/server.keytab
 keytab="FILE:${keytabfile}"
-
-KRB5_CONFIG="${objdir}/krb5-cc.conf"
-export KRB5_CONFIG
 
 rm -f ${keytabfile}
 rm -f current-db*

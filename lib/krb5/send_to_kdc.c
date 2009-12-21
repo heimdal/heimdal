@@ -80,7 +80,7 @@ recv_loop (krb5_socket_t fd,
 	 } else {
 	     void *tmp;
 
-	     if (SOCK_IOCTL (fd, FIONREAD, &nbytes) < 0) {
+	     if (rk_SOCK_IOCTL (fd, FIONREAD, &nbytes) < 0) {
 		 krb5_data_free (rep);
 		 return -1;
 	     }
@@ -142,9 +142,9 @@ send_and_recv_tcp(krb5_socket_t fd,
     krb5_data len_data;
 
     _krb5_put_int(len, req->length, 4);
-    if(net_write_s(fd, len, sizeof(len)) < 0)
+    if(net_write (fd, len, sizeof(len)) < 0)
 	return -1;
-    if(net_write_s(fd, req->data, req->length) < 0)
+    if(net_write (fd, req->data, req->length) < 0)
 	return -1;
     if (recv_loop (fd, tmout, 0, 4, &len_data) < 0)
 	return -1;
@@ -194,7 +194,7 @@ send_and_recv_http(krb5_socket_t fd,
     free(str);
     if (request == NULL)
 	return -1;
-    ret = net_write_s (fd, request, strlen(request));
+    ret = net_write (fd, request, strlen(request));
     free (request);
     if (ret < 0)
 	return ret;
@@ -266,7 +266,7 @@ send_via_proxy (krb5_context context,
     struct addrinfo hints;
     struct addrinfo *ai, *a;
     int ret;
-    krb5_socket_t s = INVALID_SOCKET;
+    krb5_socket_t s = rk_INVALID_SOCKET;
     char portstr[NI_MAXSERV];
 		
     if (proxy == NULL)
@@ -416,7 +416,7 @@ krb5_sendto (krb5_context context,
 
 	     for (a = ai; a != NULL; a = a->ai_next) {
 		 fd = socket (a->ai_family, a->ai_socktype | SOCK_CLOEXEC, a->ai_protocol);
-		 if (IS_BAD_SOCKET(fd))
+		 if (rk_IS_BAD_SOCKET(fd))
 		     continue;
 		 rk_cloexec(fd);
 		 if (connect (fd, a->ai_addr, a->ai_addrlen) < 0) {

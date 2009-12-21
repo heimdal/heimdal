@@ -70,8 +70,8 @@ krb5_net_write_block(krb5_context context,
 	  tvp = NULL;
 
       ret = select(fd + 1, NULL, &wfds, NULL, tvp);
-      if (IS_SOCKET_ERROR(ret)) {
-	  if (SOCK_ERRNO == EINTR)
+      if (rk_IS_SOCKET_ERROR(ret)) {
+	  if (rk_SOCK_ERRNO == EINTR)
 	      continue;
 	  return -1;
       } 
@@ -84,7 +84,7 @@ krb5_net_write_block(krb5_context context,
 
       count = send (fd, cbuf, rem, 0);
 
-      if (IS_SOCKET_ERROR(count)) {
+      if (rk_IS_SOCKET_ERROR(count)) {
 	  return -1;
       }
 

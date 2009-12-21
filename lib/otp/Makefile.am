@@ -40,6 +40,10 @@ if do_roken_rename
 ROKEN_SRCS = snprintf.c strcasecmp.c strncasecmp.c strlwr.c strlcpy.c strlcat.c
 endif
 
+if versionscript
+libotp_la_LDFLAGS += $(LDFLAGS_VERSION_SCRIPT)$(srcdir)/version-script.map
+endif
+
 $(libotp_la_OBJECTS): $(ndbm_wrap)
 
 ndbm_wrap.c:

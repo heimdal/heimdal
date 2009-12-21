@@ -57,6 +57,7 @@ EXPORTS
 	krb5_auth_con_setuserkey
 	krb5_auth_getremoteseqnumber
 	krb5_build_ap_req
+	krb5_build_authenticator
 	krb5_build_principal
 	krb5_build_principal_ext
 	krb5_build_principal_va
@@ -137,11 +138,13 @@ EXPORTS
 	krb5_compare_creds
 	krb5_config_file_free
 	krb5_config_free_strings
+	krb5_config_get
 	krb5_config_get_bool
 	krb5_config_get_bool_default
 	krb5_config_get_int
 	krb5_config_get_int_default
 	krb5_config_get_list
+	krb5_config_get_next
 	krb5_config_get_string
 	krb5_config_get_string_default
 	krb5_config_get_strings
@@ -150,11 +153,13 @@ EXPORTS
 	krb5_config_parse_file
 	krb5_config_parse_file_multi
 	krb5_config_parse_string_multi
+	krb5_config_vget
 	krb5_config_vget_bool
 	krb5_config_vget_bool_default
 	krb5_config_vget_int
 	krb5_config_vget_int_default
 	krb5_config_vget_list
+	krb5_config_vget_next
 	krb5_config_vget_string
 	krb5_config_vget_string_default
 	krb5_config_vget_strings
@@ -675,11 +680,12 @@ EXPORTS
 	krb5_write_priv_message
 	krb5_write_safe_message
 	krb5_xfree
+	krb5_cccol_last_change_time
 	krb5_cccol_cursor_new
 	krb5_cccol_cursor_next
 	krb5_cccol_cursor_free
 
-; com_err error tables
+	; com_err error tables
 	initialize_krb5_error_table_r
 	initialize_krb5_error_table
 	initialize_krb_error_table_r
@@ -689,7 +695,7 @@ EXPORTS
 	initialize_k524_error_table_r
 	initialize_k524_error_table
 
-; variables
+        ; variables
 	krb5_mcc_ops            DATA
 	krb5_acc_ops            DATA
 	krb5_fcc_ops            DATA
@@ -699,7 +705,9 @@ EXPORTS
 #ifdef HAVE_KCM
 	krb5_kcm_ops            DATA
 #endif
-;	krb4_fkt_ops            DATA
+#ifdef HAVE_KRB4
+	krb4_fkt_ops            DATA
+#endif
 	krb5_wrfkt_ops          DATA
 	krb5_mkt_ops            DATA
 	krb5_akf_ops            DATA
@@ -714,13 +722,13 @@ EXPORTS
 	krb5_cc_type_kcm        DATA
 	krb5_cc_type_scc        DATA
 
-; Shared with GSSAPI krb5
+        ; Shared with GSSAPI krb5
 	_krb5_crc_init_table		
 	_krb5_crc_update		
 	_krb5_get_krbtgt
 	_krb5_build_authenticator
 
-; V4 compat glue
+        ; V4 compat glue
 	_krb5_krb_tf_setup
 	_krb5_krb_dest_tkt
 	_krb5_krb_life_to_time
@@ -734,7 +742,7 @@ EXPORTS
 	_krb5_krb_time_to_life
 	_krb5_krb_cr_err_reply
 
-; Shared with libkdc
+	; Shared with libkdc
 	_krb5_AES_string_to_default_iterator
 	_krb5_dh_group_ok
 	_krb5_get_host_realm_int
@@ -753,12 +761,13 @@ EXPORTS
 	_krb5_principalname2krb5_principal
 	_krb5_put_int
 	_krb5_s4u2self_to_checksumdata
+	_krb5_expand_path_tokens
 
-; kinit helper
+        ; kinit helper
 	_krb5_get_init_creds_opt_set_pkinit_user_certs
 	_krb5_pk_enterprise_cert
 
-; testing
+	; testing
 ;	_krb5_aes_cts_encrypt
 	_krb5_n_fold
 	_krb5_expand_default_cc_name

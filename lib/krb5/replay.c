@@ -135,7 +135,7 @@ krb5_rc_initialize(krb5_context context,
     if(f == NULL) {
 	char buf[128];
 	ret = errno;
-	strerror_r(ret, buf, sizeof(buf));
+	rk_strerror_r(ret, buf, sizeof(buf));
 	krb5_set_error_message(context, ret, "open(%s): %s", id->name, buf);
 	return ret;
     }
@@ -161,7 +161,7 @@ krb5_rc_destroy(krb5_context context,
     if(remove(id->name) < 0) {
 	char buf[128];
 	ret = errno;
-	strerror_r(ret, buf, sizeof(buf));
+	rk_strerror_r(ret, buf, sizeof(buf));
 	krb5_set_error_message(context, ret, "remove(%s): %s", id->name, buf);
 	return ret;
     }
@@ -212,7 +212,7 @@ krb5_rc_store(krb5_context context,
     if(f == NULL) {
 	char buf[128];
 	ret = errno;
-	strerror_r(ret, buf, sizeof(buf));
+	rk_strerror_r(ret, buf, sizeof(buf));
 	krb5_set_error_message(context, ret, "open(%s): %s", id->name, buf);
 	return ret;
     }
@@ -232,7 +232,7 @@ krb5_rc_store(krb5_context context,
 	char buf[128];
 	ret = errno;
 	fclose(f);
-	strerror_r(ret, buf, sizeof(buf));
+	rk_strerror_r(ret, buf, sizeof(buf));
 	krb5_set_error_message(context, ret, "%s: %s",
 			       id->name, buf);
 	return ret;
@@ -241,7 +241,7 @@ krb5_rc_store(krb5_context context,
     f = fopen(id->name, "a");
     if(f == NULL) {
 	char buf[128];
-	strerror_r(errno, buf, sizeof(buf));
+	rk_strerror_r(errno, buf, sizeof(buf));
 	krb5_set_error_message(context, KRB5_RC_IO_UNKNOWN,
 			       "open(%s): %s", id->name, buf);
 	return KRB5_RC_IO_UNKNOWN;

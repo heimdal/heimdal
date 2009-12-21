@@ -603,7 +603,7 @@ change_password_loop (krb5_context	context,
 		    }
 		}
 
-#ifndef NO_LIMIT_FD_SETSIZE	
+#ifndef NO_LIMIT_FD_SETSIZE
 		if (sock >= FD_SETSIZE) {
 		    ret = ERANGE;
 		    krb5_set_error_message(context, ret,

@@ -99,7 +99,7 @@ _krb5_xlock(krb5_context context, int fd, krb5_boolean exclusive,
 	break;
     default: {
 	char buf[128];
-	strerror_r(ret, buf, sizeof(buf));
+	rk_strerror_r(ret, buf, sizeof(buf));
 	krb5_set_error_message(context, ret,
 			       N_("error locking cache file %s: %s",
 				  "file, error"), filename, buf);
@@ -133,7 +133,7 @@ _krb5_xunlock(krb5_context context, int fd)
 	break;
     default: {
 	char buf[128];
-	strerror_r(ret, buf, sizeof(buf));
+	rk_strerror_r(ret, buf, sizeof(buf));
 	krb5_set_error_message(context, ret,
 			       N_("Failed to unlock file: %s", ""), buf);
 	break;
@@ -397,7 +397,7 @@ fcc_open(krb5_context context,
     if(fd < 0) {
 	char buf[128];
 	ret = errno;
-	strerror_r(ret, buf, sizeof(buf));
+	rk_strerror_r(ret, buf, sizeof(buf));
 	krb5_set_error_message(context, ret, N_("open(%s): %s", "file, error"),
 			       filename, buf);
 	return ret;
@@ -461,7 +461,7 @@ fcc_initialize(krb5_context context,
 	if (ret == 0) {
 	    char buf[128];
 	    ret = errno;
-	    strerror_r(ret, buf, sizeof(buf));
+	    rk_strerror_r(ret, buf, sizeof(buf));
 	    krb5_set_error_message (context, ret, N_("close %s: %s", ""),
 				    FILENAME(id), buf);
 	}
@@ -516,7 +516,7 @@ fcc_store_cred(krb5_context context,
     if (close(fd) < 0) {
 	if (ret == 0) {
 	    char buf[128];
-	    strerror_r(ret, buf, sizeof(buf));
+	    rk_strerror_r(ret, buf, sizeof(buf));
 	    ret = errno;
 	    krb5_set_error_message (context, ret, N_("close %s: %s", ""),
 				    FILENAME(id), buf);
@@ -930,7 +930,7 @@ fcc_move(krb5_context context, krb5_ccache from, krb5_ccache to)
     if (ret && errno != EXDEV) {
 	char buf[128];
 	ret = errno;
-	strerror_r(ret, buf, sizeof(buf));
+	rk_strerror_r(ret, buf, sizeof(buf));
 	krb5_set_error_message(context, ret,
 			       N_("Rename of file from %s "
 				  "to %s failed: %s", ""),
@@ -997,7 +997,7 @@ fcc_move(krb5_context context, krb5_ccache from, krb5_ccache to)
 	close(fd);
     }
 
-    fcc_destroy(context, from);
+    fcc_close(context, from);
 
     return ret;
 }

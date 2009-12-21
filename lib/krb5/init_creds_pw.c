@@ -1541,6 +1541,7 @@ krb5_init_creds_set_keytab(krb5_context context,
 	    /* remove old list of etype */
 	    if (etypes)
 		free(etypes);
+	    etypes = NULL;
 	    netypes = 0;
 	    kvno = entry.vno;
 	} else if (entry.vno != kvno)

@@ -7,7 +7,7 @@ AC_CONFIG_SRCDIR([kuser/kinit.c])
 AC_CONFIG_HEADERS(include/config.h)
 AC_CONFIG_MACRO_DIR([cf])
 
-AM_INIT_AUTOMAKE([foreign 1.10])
+AM_INIT_AUTOMAKE([foreign 1.10.3])
 AM_MAINTAINER_MODE
 
 dnl Checks for programs.
@@ -628,8 +628,11 @@ dnl This is the release version name-number[beta]
 dnl
 
 cat > include/newversion.h.in <<EOF
-const char *heimdal_long_version = "@([#])\$Version: $PACKAGE_STRING by @USER@ on @HOST@ ($host) @DATE@ \$";
-const char *heimdal_version = "AC_PACKAGE_STRING";
+#ifndef VERSION_HIDDEN
+#define VERSION_HIDDEN
+#endif
+VERSION_HIDDEN const char *heimdal_long_version = "@([#])\$Version: $PACKAGE_STRING by @USER@ on @HOST@ ($host) @DATE@ \$";
+VERSION_HIDDEN const char *heimdal_version = "AC_PACKAGE_STRING";
 EOF
 
 if test -f include/version.h && cmp -s include/newversion.h.in include/version.h.in; then

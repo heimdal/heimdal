@@ -1010,12 +1010,11 @@ getifaddrs2(struct ifaddrs **ifap,
 #if defined(HAVE_IPV6) && defined(SIOCGLIFCONF) && defined(SIOCGLIFFLAGS)
 static int
 getlifaddrs2(struct ifaddrs **ifap,
-	     int siocgifconf, int siocgifflags,
+	     int af, int siocgifconf, int siocgifflags,
 	     size_t ifreq_sz)
 {
     int ret;
-    int fd_inet6;
-    int fd_inet;
+    int fd;
     size_t buf_size;
     char *buf;
     struct lifconf ifconf;
@@ -1028,15 +1027,9 @@ getlifaddrs2(struct ifaddrs **ifap,
     buf = NULL;
 
     memset (&sa_zero, 0, sizeof(sa_zero));
-    fd_inet6 = socket(AF_INET6, SOCK_DGRAM, 0);
-    if (fd_inet6 < 0)
+    fd = socket(af, SOCK_DGRAM, 0);
+    if (fd < 0)
 	return -1;
-
-    fd_inet = socket(AF_INET, SOCK_DGRAM, 0);
-    if (fd_inet < 0) {
-	close(fd_inet6);
-	return -1;
-    }
 
     buf_size = 8192;
     for (;;) {
@@ -1046,7 +1039,7 @@ getlifaddrs2(struct ifaddrs **ifap,
 	    goto error_out;
 	}
 #ifndef __hpux
-	ifconf.lifc_family = AF_UNSPEC;
+	ifconf.lifc_family = af;
 	ifconf.lifc_flags  = 0;
 #endif
 	ifconf.lifc_len    = buf_size;
@@ -1055,7 +1048,7 @@ getlifaddrs2(struct ifaddrs **ifap,
 	/*
 	 * Solaris returns EINVAL when the buffer is too small.
 	 */
-	if (ioctl (fd_inet, siocgifconf, &ifconf) < 0 && errno != EINVAL) {
+	if (ioctl (fd, siocgifconf, &ifconf) < 0 && errno != EINVAL) {
 	    ret = errno;
 	    goto error_out;
 	}
@@ -1093,11 +1086,9 @@ getlifaddrs2(struct ifaddrs **ifap,
 	memset (&ifreq, 0, sizeof(ifreq));
 	memcpy (ifreq.lifr_name, ifr->lifr_name, sizeof(ifr->lifr_name));
 
-	if (ioctl(fd_inet6, siocgifflags, &ifreq) < 0) {
-            if (ioctl(fd_inet, siocgifflags, &ifreq) < 0) {
-                ret = errno;
-                goto error_out;
-            }
+	if (ioctl(fd, siocgifflags, &ifreq) < 0) {
+	    ret = errno;
+	    goto error_out;
 	}
 
 	*end = malloc(sizeof(**end));
@@ -1151,19 +1142,38 @@ getlifaddrs2(struct ifaddrs **ifap,
 	
     }
     *ifap = start;
-    close(fd_inet6);
-    close(fd_inet);
+    close(fd);
     free(buf);
     return 0;
   error_out:
     rk_freeifaddrs(start);
-    close(fd_inet6);
-    close(fd_inet);
+    close(fd);
     free(buf);
     errno = ret;
     return -1;
 }
 #endif /* defined(HAVE_IPV6) && defined(SIOCGLIFCONF) && defined(SIOCGLIFFLAGS) */
+
+/**
+ * Join two struct ifaddrs lists by appending supp to base.
+ * Either may be NULL. The new list head (usually base) will be
+ * returned.
+ */
+static struct ifaddrs *
+append_ifaddrs(struct ifaddrs *base, struct ifaddrs *supp) {
+    if (!base)
+	return supp;
+
+    if (!supp)
+	return base;
+
+    while (base->ifa_next)
+	base = base->ifa_next;
+
+    base->ifa_next = supp;
+
+    return base;
+}
 
 ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
 rk_getifaddrs(struct ifaddrs **ifap)
@@ -1176,9 +1186,43 @@ rk_getifaddrs(struct ifaddrs **ifap)
 			   sizeof(struct in6_ifreq));
 #endif
 #if defined(HAVE_IPV6) && defined(SIOCGLIFCONF) && defined(SIOCGLIFFLAGS)
-    if (ret)
-	ret = getlifaddrs2 (ifap, SIOCGLIFCONF, SIOCGLIFFLAGS,
+    /* Do IPv6 and IPv4 queries separately then join the result.
+     *
+     * HP-UX only returns IPv6 addresses using SIOCGLIFCONF,
+     * SIOCGIFCONF has to be used for IPv4 addresses. The result is then
+     * merged.
+     *
+     * Solaris needs particular care, because a SIOCGLIFCONF lookup using
+     * AF_UNSPEC can fail in a Zone requiring an AF_INET lookup, so we just
+     * do them separately the same as for HP-UX. See
+     * http://repo.or.cz/w/heimdal.git/commitdiff/76afc31e9ba2f37e64c70adc006ade9e37e9ef73
+     */
+    if (ret) {
+	int v6err, v4err;
+	struct ifaddrs *v6addrs, *v4addrs;
+
+	v6err = getlifaddrs2 (&v6addrs, AF_INET6, SIOCGLIFCONF, SIOCGLIFFLAGS,
 			    sizeof(struct lifreq));
+	v4err = getifaddrs2 (&v4addrs, AF_INET, SIOCGIFCONF, SIOCGIFFLAGS,
+			    sizeof(struct ifreq));
+	if (v6err)
+	    v6addrs = NULL;
+	if (v4err)
+	    v4addrs = NULL;
+
+	if (v6addrs) {
+	    if (v4addrs)
+		*ifap = append_ifaddrs(v6addrs, v4addrs);
+	    else
+		*ifap = v6addrs;
+	} else if (v4addrs) {
+	    *ifap = v4addrs;
+	} else {
+	    *ifap = NULL;
+	}
+
+	ret = (v6err || v4err) ? -1 : 0;
+    }
 #endif
 #if defined(HAVE_IPV6) && defined(SIOCGIFCONF)
     if (ret)
@@ -1192,8 +1236,6 @@ rk_getifaddrs(struct ifaddrs **ifap)
 #endif
     return ret;
 }
-
-#endif /* !AF_NETLINK */
 
 ROKEN_LIB_FUNCTION void ROKEN_LIB_CALL
 rk_freeifaddrs(struct ifaddrs *ifp)
@@ -1215,6 +1257,8 @@ rk_freeifaddrs(struct ifaddrs *ifp)
 	free(q);
     }
 }
+
+#endif /* !AF_NETLINK */
 
 #ifdef TEST
 

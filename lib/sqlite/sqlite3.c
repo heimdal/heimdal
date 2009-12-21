@@ -366,12 +366,14 @@ SQLITE_PRIVATE   void sqlite3Coverage(int);
 ** Older versions of SQLite used an optional THREADSAFE macro.
 ** We support that for legacy
 */
-#if !defined(SQLITE_THREADSAFE)
-#if defined(THREADSAFE)
-# define SQLITE_THREADSAFE THREADSAFE
+#ifdef ENABLE_PTHREAD_SUPPORT
+#define SQLITE_THREADSAFE 1
 #else
-# define SQLITE_THREADSAFE 1
+#define SQLITE_THREADSAFE 0
 #endif
+
+#if !defined(SQLITE_THREADSAFE)
+# define SQLITE_THREADSAFE 1
 #endif
 
 /*

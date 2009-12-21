@@ -91,7 +91,7 @@ krb5_storage_from_fd(krb5_socket_t fd_in)
     krb5_storage *sp;
     int fd;
 
-#ifdef _WIN32
+#ifdef SOCKET_IS_NOT_AN_FD
 #ifdef _MSC_VER
     if (_get_osfhandle(fd_in) != -1) {
 	fd = dup(fd_in);
@@ -101,7 +101,7 @@ krb5_storage_from_fd(krb5_socket_t fd_in)
 #else
 #error Dont know how to deal with fd that may or may not be a socket.
 #endif
-#else
+#else  /* SOCKET_IS_NOT_AN_FD */
     fd = dup(fd_in);
 #endif
 

@@ -67,6 +67,7 @@ libkrb5_la_LIBADD = \
 	../wind/libwind.la \
 	$(LIB_libintl) \
 	$(LIBADD_roken) \
+	$(PTHREAD_LIBADD) \
 	$(LIB_door_create) \
 	$(LIB_dlopen)
 
@@ -187,7 +188,7 @@ dist_libkrb5_la_SOURCES =			\
 nodist_libkrb5_la_SOURCES =			\
 	$(ERR_FILES)
 
-libkrb5_la_LDFLAGS = -version-info 25:0:0
+libkrb5_la_LDFLAGS = -version-info 26:0:0
 
 if versionscript
 libkrb5_la_LDFLAGS += $(LDFLAGS_VERSION_SCRIPT)$(srcdir)/version-script.map

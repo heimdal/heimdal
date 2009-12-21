@@ -47,11 +47,13 @@ if OPENLDAP_MODULE
 
 ldap_so = hdb_ldap.la
 hdb_ldap_la_SOURCES = hdb-ldap.c
-hdb_ldap_la_LDFLAGS = -module
+hdb_ldap_la_LDFLAGS = -module -avoid-version
+hdb_ldap_la_LIBADD = $(LIB_openldap) libhdb.la
 
 else
 
 ldap = hdb-ldap.c
+ldap_lib = $(LIB_openldap)
 
 endif
 
@@ -95,7 +97,7 @@ libhdb_la_LIBADD = \
 	../asn1/libasn1.la \
 	$(LIB_sqlite3) \
 	$(LIBADD_roken) \
-	$(LIB_openldap) \
+	$(ldap_lib) \
 	$(LIB_dlopen) \
 	$(DBLIB) \
 	$(LIB_NDBM)

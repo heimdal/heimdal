@@ -221,6 +221,9 @@ match_local_principals(krb5_context context,
  * ignored. Subdirectories are not traversed. Note that this directory
  * may not be checked by other Kerberos implementations.
  *
+ * If no configuration file exists, match user against local domains,
+ * ie luser@LOCAL-REALMS-IN-CONFIGURATION-FILES.
+ *
  * @param context Kerberos 5 context.
  * @param principal principal to check if allowed to login
  * @param luser local user id
@@ -293,10 +296,9 @@ krb5_kuserok (krb5_context context,
 
     return FALSE;
 #else
-    /* On Windows, for now we always return TRUE.  The .k5login file
-       may be on a remote profile and we don't have access to the
-       profile until we have a token handle for the user's
-       credentials. */
-    return TRUE;
+    /* The .k5login file may be on a remote profile and we don't have
+       access to the profile until we have a token handle for the
+       user's credentials. */
+    return match_local_principals(context, principal, luser);
 #endif
 }

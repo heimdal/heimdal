@@ -531,11 +531,23 @@ krb5_free_context(krb5_context context)
     krb5_set_ignore_addresses(context, NULL);
     krb5_set_send_to_kdc_func(context, NULL, NULL);
 
+#ifdef PKINIT
+    hx509_context_free(&context->hx509ctx);
+#endif
+
     HEIMDAL_MUTEX_destroy(context->mutex);
     free(context->mutex);
+<<<<<<< HEAD
     if (context->flags & KRB5_CTX_F_SOCKETS_INITIALIZED) {
  	rk_SOCK_EXIT();
     }
+=======
+#ifdef NEED_SOCK_INIT
+    if (context->flags & KRB5_CTX_F_SOCKETS_INITIALIZED) {
+ 	SOCK_EXIT;
+    }
+#endif
+>>>>>>> h-github/master
 
     memset(context, 0, sizeof(*context));
     free(context);

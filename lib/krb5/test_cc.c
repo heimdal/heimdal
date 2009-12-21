@@ -77,12 +77,12 @@ test_default_name(krb5_context context)
 	krb5_errx (context, 1, "krb5_cc_default_name 2 failed");
     p3 = estrdup(p);
 
-#ifndef KRB5_USE_PATH_TOKENS    
+#ifndef KRB5_USE_PATH_TOKENS
     /* If we are using path tokens, we don't expect the p3 and
        test_cc_name to match since p3 is going to have expanded
        tokens. */
     if (strcmp(p3, test_cc_name) != 0)
-  	krb5_errx (context, 1, "krb5_cc_set_default_name 1 failed");
+	krb5_errx (context, 1, "krb5_cc_set_default_name 1 failed");
 #endif
 
     free(p1);

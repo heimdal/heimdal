@@ -142,9 +142,9 @@ send_and_recv_tcp(krb5_socket_t fd,
     krb5_data len_data;
 
     _krb5_put_int(len, req->length, 4);
-    if(net_write(fd, len, sizeof(len)) < 0)
+    if(net_write (fd, len, sizeof(len)) < 0)
 	return -1;
-    if(net_write(fd, req->data, req->length) < 0)
+    if(net_write (fd, req->data, req->length) < 0)
 	return -1;
     if (recv_loop (fd, tmout, 0, 4, &len_data) < 0)
 	return -1;

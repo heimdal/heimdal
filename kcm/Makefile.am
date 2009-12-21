@@ -31,7 +31,6 @@ $(kcm_OBJECTS): $(srcdir)/kcm-protos.h
 man_MANS = kcm.8
 
 LDADD = $(top_builddir)/lib/hdb/libhdb.la \
-	$(LIB_openldap) \
 	$(top_builddir)/lib/krb5/libkrb5.la \
 	$(LIB_krb4) \
 	$(LIB_hcrypto) \

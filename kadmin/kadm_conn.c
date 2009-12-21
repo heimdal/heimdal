@@ -131,8 +131,8 @@ spawn_child(krb5_context context, int *socks,
     size_t buf_len;
 
     s = accept(socks[this_sock], sa, &sa_size);
-    if(IS_BAD_SOCKET(s)) {
-	krb5_warn(context, SOCK_ERRNO, "accept");
+    if(rk_IS_BAD_SOCKET(s)) {
+	krb5_warn(context, rk_SOCK_ERRNO, "accept");
 	return 1;
     }
     e = krb5_sockaddr2address(context, sa, &addr);
@@ -195,9 +195,9 @@ wait_for_connection(krb5_context context,
     while (term_flag == 0) {
 	read_set = orig_read_set;
 	e = select(max_fd + 1, &read_set, NULL, NULL, NULL);
-	if(IS_SOCKET_ERROR(e)) {
-	    if(SOCK_ERRNO != EINTR)
-		krb5_warn(context, SOCK_ERRNO, "select");
+	if(rk_IS_SOCKET_ERROR(e)) {
+	    if(rk_SOCK_ERRNO != EINTR)
+		krb5_warn(context, rk_SOCK_ERRNO, "select");
 	} else if(e == 0)
 	    krb5_warnx(context, "select returned 0");
 	else {
@@ -260,21 +260,21 @@ start_server(krb5_context context)
 	socks = tmp;
 	for(ap = ai; ap; ap = ap->ai_next) {
 	    SOCKET s = socket(ap->ai_family, ap->ai_socktype, ap->ai_protocol);
-	    if(IS_BAD_SOCKET(s)) {
-		krb5_warn(context, SOCK_ERRNO, "socket");
+	    if(rk_IS_BAD_SOCKET(s)) {
+		krb5_warn(context, rk_SOCK_ERRNO, "socket");
 		continue;
 	    }
 
 	    socket_set_reuseaddr(s, 1);
 	    socket_set_ipv6only(s, 1);
 
-	    if (IS_SOCKET_ERROR(bind (s, ap->ai_addr, ap->ai_addrlen))) {
-		krb5_warn(context, SOCK_ERRNO, "bind");
+	    if (rk_IS_SOCKET_ERROR(bind (s, ap->ai_addr, ap->ai_addrlen))) {
+		krb5_warn(context, rk_SOCK_ERRNO, "bind");
 		closesocket(s);
 		continue;
 	    }
-	    if (IS_SOCKET_ERROR(listen (s, SOMAXCONN))) {
-		krb5_warn(context, SOCK_ERRNO, "listen");
+	    if (rk_IS_SOCKET_ERROR(listen (s, SOMAXCONN))) {
+		krb5_warn(context, rk_SOCK_ERRNO, "listen");
 		closesocket(s);
 		continue;
 	    }

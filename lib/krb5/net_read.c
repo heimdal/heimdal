@@ -33,13 +33,12 @@
 
 #include "krb5_locl.h"
 
-krb5_ssize_t KRB5_LIB_FUNCTION
+KRB5_LIB_FUNCTION krb5_ssize_t KRB5_LIB_CALL
 krb5_net_read (krb5_context context,
 	       void *p_fd,
 	       void *buf,
 	       size_t len)
 {
-  int fd = *((int *)p_fd);
-
-  return net_read (fd, buf, len);
+    krb5_socket_t fd = *((krb5_socket_t *)p_fd);
+    return net_read(fd, buf, len);
 }

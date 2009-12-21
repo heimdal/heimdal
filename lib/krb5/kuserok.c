@@ -65,6 +65,7 @@ check_one_file(krb5_context context,
 	fclose (f);
 	return EISDIR;
     }
+#ifndef _WIN32
     if (st.st_uid != pwd->pw_uid && st.st_uid != 0) {
 	fclose (f);
 	return EACCES;
@@ -73,6 +74,7 @@ check_one_file(krb5_context context,
 	fclose (f);
 	return EACCES;
     }
+#endif
 
     while (fgets (buf, sizeof(buf), f) != NULL) {
 	krb5_principal tmp;
@@ -124,10 +126,12 @@ check_directory(krb5_context context,
     if (!S_ISDIR(st.st_mode))
 	return ENOTDIR;
 
+#ifndef _WIN32
     if (st.st_uid != pwd->pw_uid && st.st_uid != 0)
 	return EACCES;
     if ((st.st_mode & (S_IWGRP | S_IWOTH)) != 0)
 	return EACCES;
+#endif
 
     if((d = opendir(dirname)) == NULL)
 	return errno;
@@ -217,6 +221,9 @@ match_local_principals(krb5_context context,
  * ignored. Subdirectories are not traversed. Note that this directory
  * may not be checked by other Kerberos implementations.
  *
+ * If no configuration file exists, match user against local domains,
+ * ie luser@LOCAL-REALMS-IN-CONFIGURATION-FILES.
+ *
  * @param context Kerberos 5 context.
  * @param principal principal to check if allowed to login
  * @param luser local user id
@@ -226,14 +233,15 @@ match_local_principals(krb5_context context,
  * @ingroup krb5_support
  */
 
-krb5_boolean KRB5_LIB_FUNCTION
+KRB5_LIB_FUNCTION krb5_boolean KRB5_LIB_CALL
 krb5_kuserok (krb5_context context,
 	      krb5_principal principal,
 	      const char *luser)
 {
+#ifndef _WIN32
     char *buf;
     size_t buflen;
-    struct passwd *pwd;
+    struct passwd *pwd = NULL;
     krb5_error_code ret;
     krb5_boolean result = FALSE;
 
@@ -284,4 +292,10 @@ krb5_kuserok (krb5_context context,
 	return match_local_principals(context, principal, luser);
 
     return FALSE;
+#else
+    /* The .k5login file may be on a remote profile and we don't have
+       access to the profile until we have a token handle for the
+       user's credentials. */
+    return match_local_principals(context, principal, luser);
+#endif
 }

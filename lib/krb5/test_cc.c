@@ -38,11 +38,17 @@ static int debug_flag	= 0;
 static int version_flag = 0;
 static int help_flag	= 0;
 
+#ifdef KRB5_USE_PATH_TOKENS
+#define TEST_CC_NAME "%{TEMP}/krb5-cc-test-foo"
+#else
+#define TEST_CC_NAME "/tmp/krb5-cc-test-foo"
+#endif
+
 static void
 test_default_name(krb5_context context)
 {
     krb5_error_code ret;
-    const char *p, *test_cc_name = "/tmp/krb5-cc-test-foo";
+    const char *p, *test_cc_name = TEST_CC_NAME;
     char *p1, *p2, *p3;
 
     p = krb5_cc_default_name(context);
@@ -71,8 +77,13 @@ test_default_name(krb5_context context)
 	krb5_errx (context, 1, "krb5_cc_default_name 2 failed");
     p3 = estrdup(p);
 
+#ifndef KRB5_USE_PATH_TOKENS
+    /* If we are using path tokens, we don't expect the p3 and
+       test_cc_name to match since p3 is going to have expanded
+       tokens. */
     if (strcmp(p3, test_cc_name) != 0)
 	krb5_errx (context, 1, "krb5_cc_set_default_name 1 failed");
+#endif
 
     free(p1);
     free(p2);
@@ -278,12 +289,33 @@ struct {
     char *res;
 } cc_names[] = {
     { "foo", 0, "foo" },
+    { "foo%}", 0, "foo%}" },
     { "%{uid}", 0 },
     { "foo%{null}", 0, "foo" },
     { "foo%{null}bar", 0, "foobar" },
     { "%{", 1 },
     { "%{foo %{", 1 },
     { "%{{", 1 },
+    { "%{{}", 1 },
+    { "%{nulll}", 1 },
+    { "%{does not exist}", 1 },
+    { "%{}", 1 },
+#ifdef KRB5_USE_PATH_TOKENS
+    { "%{APPDATA}", 0 },
+    { "%{COMMON_APPDATA}", 0},
+    { "%{LOCAL_APPDATA}", 0},
+    { "%{SYSTEM}", 0},
+    { "%{WINDOWS}", 0},
+    { "%{TEMP}", 0},
+    { "%{USERID}", 0},
+    { "%{uid}", 0},
+    { "%{USERCONFIG}", 0},
+    { "%{COMMONCONFIG}", 0},
+    { "%{LIBDIR}", 0},
+    { "%{BINDIR}", 0},
+    { "%{LIBEXEC}", 0},
+    { "%{SBINDIR}", 0},
+#endif
 };
 
 static void
@@ -671,7 +703,9 @@ main(int argc, char **argv)
 
     test_move(context, krb5_cc_type_file);
     test_move(context, krb5_cc_type_memory);
+#ifdef HAVE_KCM
     test_move(context, krb5_cc_type_kcm);
+#endif
     test_move(context, krb5_cc_type_scc);
 
     test_prefix_ops(context, "FILE:/tmp/foo", &krb5_fcc_ops);
@@ -691,7 +725,9 @@ main(int argc, char **argv)
 
     krb5_free_context(context);
 
+#if 0
     sleep(60);
+#endif
 
     return 0;
 }

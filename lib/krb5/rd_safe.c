@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  */
 
-#include <krb5_locl.h>
+#include "krb5_locl.h"
 
 static krb5_error_code
 verify_checksum(krb5_context context,
@@ -80,7 +80,7 @@ out:
     return ret;
 }
 
-krb5_error_code KRB5_LIB_FUNCTION
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_rd_safe(krb5_context context,
 	     krb5_auth_context auth_context,
 	     const krb5_data *inbuf,

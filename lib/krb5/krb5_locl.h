@@ -47,6 +47,8 @@
 #include <stdlib.h>
 #include <limits.h>
 
+#include <krb5-types.h>
+
 #ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
 #endif
@@ -185,6 +187,7 @@ struct _krb5_krb_auth_data;
 #define KEYTAB_DEFAULT "FILE:" SYSCONFDIR "/krb5.keytab"
 #define KEYTAB_DEFAULT_MODIFY "FILE:" SYSCONFDIR "/krb5.keytab"
 
+
 #define MODULI_FILE SYSCONFDIR "/krb5.moduli"
 
 #ifndef O_BINARY
@@ -270,13 +273,18 @@ typedef struct krb5_context_data {
 #define KRB5_CTX_F_DNS_CANONICALIZE_HOSTNAME	1
 #define KRB5_CTX_F_CHECK_PAC			2
 #define KRB5_CTX_F_HOMEDIR_ACCESS		4
+#define KRB5_CTX_F_SOCKETS_INITIALIZED          8
     struct send_to_kdc *send_to_kdc;
 #ifdef PKINIT
     hx509_context hx509ctx;
 #endif
 } krb5_context_data;
 
+#ifndef KRB5_USE_PATH_TOKENS
 #define KRB5_DEFAULT_CCNAME_FILE "FILE:/tmp/krb5cc_%{uid}"
+#else
+#define KRB5_DEFAULT_CCNAME_FILE "FILE:%{TEMP}/krb5cc_%{uid}"
+#endif
 #define KRB5_DEFAULT_CCNAME_API "API:"
 #define KRB5_DEFAULT_CCNAME_KCM_KCM "KCM:%{uid}"
 #define KRB5_DEFAULT_CCNAME_KCM_API "API:%{uid}"

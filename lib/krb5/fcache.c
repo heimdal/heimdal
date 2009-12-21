@@ -226,7 +226,11 @@ scrub_file (int fd)
 	    return errno;
 	pos -= tmp;
     }
+#ifdef _MSC_VER
+    _commit (fd);
+#else
     fsync (fd);
+#endif
     return 0;
 }
 
@@ -320,6 +324,22 @@ fcc_gen_new(krb5_context context, krb5_ccache *id)
 			       N_("malloc: out of memory", ""));
 	return KRB5_CC_NOMEM;
     }
+#ifdef KRB5_USE_PATH_TOKENS
+    {
+	char * exp_file = NULL;
+	krb5_error_code ec;
+
+	ec = _krb5_expand_path_tokens(context, file, &exp_file);
+
+	if (ec == 0) {
+	    free(file);
+	    file = exp_file;
+	} else {
+	    free(file);
+	    return ec;
+	}
+    }
+#endif
     fd = mkstemp(file);
     if(fd < 0) {
 	int ret = errno;
@@ -898,6 +918,15 @@ fcc_move(krb5_context context, krb5_ccache from, krb5_ccache to)
     krb5_error_code ret = 0;
 
     ret = rename(FILENAME(from), FILENAME(to));
+#ifdef RENAME_DOES_NOT_UNLINK
+    if (ret && (errno == EEXIST || errno == EACCES)) {
+	ret = unlink(FILENAME(to));
+	if (ret == 0) {
+	    ret = rename(FILENAME(from), FILENAME(to));
+	}
+    }
+#endif
+
     if (ret && errno != EXDEV) {
 	char buf[128];
 	ret = errno;

@@ -33,25 +33,24 @@
 
 #include "krb5_locl.h"
 
-krb5_ssize_t KRB5_LIB_FUNCTION
+KRB5_LIB_FUNCTION krb5_ssize_t KRB5_LIB_CALL
 krb5_net_write (krb5_context context,
 		void *p_fd,
 		const void *buf,
 		size_t len)
 {
-  int fd = *((int *)p_fd);
-
-  return net_write (fd, buf, len);
+    krb5_socket_t fd = *((krb5_socket_t *)p_fd);
+    return net_write(fd, buf, len);
 }
 
-krb5_ssize_t KRB5_LIB_FUNCTION
+KRB5_LIB_FUNCTION krb5_ssize_t KRB5_LIB_CALL
 krb5_net_write_block(krb5_context context,
 		     void *p_fd,
 		     const void *buf,
 		     size_t len,
 		     time_t timeout)
 {
-  int fd = *((int *)p_fd);
+  krb5_socket_t fd = *((krb5_socket_t *)p_fd);
   int ret;
   struct timeval tv, *tvp;
   const char *cbuf = (const char *)buf;
@@ -71,29 +70,45 @@ krb5_net_write_block(krb5_context context,
 	  tvp = NULL;
 
       ret = select(fd + 1, NULL, &wfds, NULL, tvp);
-      if (ret < 0) {
-	  if (errno == EINTR)
+      if (IS_SOCKET_ERROR(ret)) {
+	  if (SOCK_ERRNO == EINTR)
 	      continue;
 	  return -1;
-      } else if (ret == 0)
+      } 
+
+#ifdef HAVE_WINSOCK
+      if (ret == 0) {
+	  WSASetLastError( WSAETIMEDOUT );
 	  return 0;
+      }
+
+      count = send (fd, cbuf, rem, 0);
+
+      if (IS_SOCKET_ERROR(count)) {
+	  return -1;
+      }
+
+#else
+      if (ret == 0) {
+	  return 0;
+      }
 
       if (!FD_ISSET(fd, &wfds)) {
 	  errno = ETIMEDOUT;
 	  return -1;
       }
 
-#ifdef WIN32
-      count = send (fd, cbuf, rem, 0);
-#else
       count = write (fd, cbuf, rem);
-#endif
+
       if (count < 0) {
 	  if (errno == EINTR)
 	      continue;
 	  else
 	      return count;
       }
+
+#endif
+
       cbuf += count;
       rem -= count;
 

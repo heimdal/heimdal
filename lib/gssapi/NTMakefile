@@ -527,7 +527,7 @@ clean::
 
 !ifdef ELISP
 # This macro invocation is used to update the libgssapi_OBJs
-# definition below (generate-obj-macro is defined in NTMakefile.w32):
+# definition below (generate-obj-macro is defined in maint.el):
 
 (generate-obj-macro "libgssapi_OBJs"
 	            (concat "\t$(OBJ)\\gkrb5_err.obj \\\n"

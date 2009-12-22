@@ -293,7 +293,7 @@ send_via_proxy (krb5_context context,
 	    continue;
 	rk_cloexec(s);
 	if (connect (s, a->ai_addr, a->ai_addrlen) < 0) {
-	    closesocket (s);
+	    rk_closesocket (s);
 	    continue;
 	}
 	break;
@@ -311,7 +311,7 @@ send_via_proxy (krb5_context context,
     }
     ret = send_and_recv_http(s, context->kdc_timeout,
 			     prefix, send_data, receive);
-    closesocket (s);
+    rk_closesocket (s);
     free(prefix);
     if(ret == 0 && receive->length != 0)
 	return 0;
@@ -420,7 +420,7 @@ krb5_sendto (krb5_context context,
 		     continue;
 		 rk_cloexec(fd);
 		 if (connect (fd, a->ai_addr, a->ai_addrlen) < 0) {
-		     closesocket (fd);
+		     rk_closesocket (fd);
 		     continue;
 		 }
 		 switch (hi->proto) {
@@ -437,7 +437,7 @@ krb5_sendto (krb5_context context,
 					      send_data, receive);
 		     break;
 		 }
-		 closesocket (fd);
+		 rk_closesocket (fd);
 		 if(ret == 0 && receive->length != 0)
 		     goto out;
 	     }

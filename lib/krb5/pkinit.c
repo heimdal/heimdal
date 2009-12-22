@@ -1959,7 +1959,6 @@ _krb5_pk_load_id(krb5_context context,
 	hx509_certs_free(&id->anchors);
 	hx509_certs_free(&id->certpool);
 	hx509_revoke_free(&id->revokectx);
-	hx509_context_free(&context->hx509ctx);
 	free(id);
     } else
 	*ret_id = id;

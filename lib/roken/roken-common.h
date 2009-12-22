@@ -480,6 +480,9 @@ rk_cloexec(int);
 ROKEN_LIB_FUNCTION void ROKEN_LIB_CALL
 rk_cloexec_file(FILE *);
 
+ROKEN_LIB_FUNCTION void ROKEN_LIB_CALL
+rk_cloexec_dir(DIR *);
+
 ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
 ct_memcmp(const void *, const void *, size_t);
 

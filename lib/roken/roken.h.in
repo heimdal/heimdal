@@ -222,6 +222,10 @@ struct sockaddr_dl;
 #include <paths.h>
 #endif
 
+#ifdef HAVE_DIRENT_H
+#include <dirent.h>
+#endif
+
 #ifdef BACKSLASH_PATH_DELIM
 #define rk_PATH_DELIM '\\'
 #endif

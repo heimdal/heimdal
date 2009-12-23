@@ -30,6 +30,7 @@ doing so.  It will make life easier for you and everyone else.
 * Using LDAP to store the database::
 * Providing Kerberos credentials to servers and programs::
 * Setting up PK-INIT::
+* Debugging Kerberos problems::
 @end menu
 
 @node  Configuration file, Creating the database, Setting up a realm, Setting up a realm
@@ -1096,7 +1097,7 @@ service@@host$ kinit --cache=/var/run/service_krb5_cache \
 @end example
 
 
-@node Setting up PK-INIT, , Providing Kerberos credentials to servers and programs, Setting up a realm
+@node Setting up PK-INIT, Debugging Kerberos problems, Providing Kerberos credentials to servers and programs, Setting up a realm
 @section Setting up PK-INIT
 
 PK-INIT is levering the existing PKI infrastructure to use
@@ -1485,3 +1486,19 @@ To enable Microsoft Smartcardlogin> for certificates in your Windows
 2000 CA, you want to look at Microsoft Knowledge Base Article -
 313274 ``HOW TO: Configure a Certification Authority to Issue
 Smart Card Certificates in Windows''.
+
+@node Debugging Kerberos problems, , Setting up PK-INIT, Setting up a realm
+@section Debugging Kerberos problems
+
+To debug Kerberos client and server problems you can enable debug
+traceing by adding the following to @file{/etc/krb5,conf}. Note that the
+trace logging is sparse at the moment, but will continue to improve.
+
+@example
+[logging]
+        libkrb5 = 0-/SYSLOG:
+@end example
+
+
+
+

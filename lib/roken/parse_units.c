@@ -80,7 +80,7 @@ parse_something (const char *s, const struct units *units,
 	while(isspace((unsigned char)*p) || *p == ',')
 	    ++p;
 
-	val = (int) strtod (p, &next); /* strtol(p, &next, 0); */
+	val = strtol(p, &next, 0);
 	if (p == next) {
 	    val = 0;
 	    if(!accept_no_val_p)

@@ -124,7 +124,7 @@ spawn_child(krb5_context context, int *socks,
     struct sockaddr_storage __ss;
     struct sockaddr *sa = (struct sockaddr *)&__ss;
     socklen_t sa_size = sizeof(__ss);
-    SOCKET s;
+    krb5_socket_t s;
     pid_t pid;
     krb5_address addr;
     char buf[128];
@@ -165,7 +165,7 @@ spawn_child(krb5_context context, int *socks,
 
 static int
 wait_for_connection(krb5_context context,
-		    SOCKET *socks, unsigned int num_socks)
+		    krb5_socket_t *socks, unsigned int num_socks)
 {
     unsigned int i;
     int e;
@@ -226,7 +226,7 @@ start_server(krb5_context context)
     int e;
     struct kadm_port *p;
 
-    SOCKET *socks = NULL, *tmp;
+    krb5_socket_t *socks = NULL, *tmp;
     unsigned int num_socks = 0;
     int i;
 
@@ -259,7 +259,7 @@ start_server(krb5_context context)
 	}
 	socks = tmp;
 	for(ap = ai; ap; ap = ap->ai_next) {
-	    SOCKET s = socket(ap->ai_family, ap->ai_socktype, ap->ai_protocol);
+	    krb5_socket_t s = socket(ap->ai_family, ap->ai_socktype, ap->ai_protocol);
 	    if(rk_IS_BAD_SOCKET(s)) {
 		krb5_warn(context, rk_SOCK_ERRNO, "socket");
 		continue;

@@ -95,7 +95,7 @@ main(int argc, char **argv)
     int i;
     krb5_log_facility *logfacility;
     krb5_keytab keytab;
-    SOCKET sfd = INVALID_SOCKET;
+    krb5_socket_t sfd = rk_INVALID_SOCKET;
 
     setprogname(argv[0]);
 

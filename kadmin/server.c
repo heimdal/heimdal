@@ -440,7 +440,7 @@ v5_loop (krb5_context context,
 	 krb5_auth_context ac,
 	 krb5_boolean initial,
 	 void *kadm_handle,
-	 SOCKET fd)
+	 krb5_socket_t fd)
 {
     krb5_error_code ret;
     krb5_data in, out;
@@ -476,7 +476,7 @@ match_appl_version(const void *data, const char *appl_version)
 static void
 handle_v5(krb5_context context,
 	  krb5_keytab keytab,
-	  SOCKET fd)
+	  krb5_socket_t fd)
 {
     krb5_error_code ret;
     krb5_ticket *ticket;
@@ -539,7 +539,7 @@ handle_v5(krb5_context context,
 krb5_error_code
 kadmind_loop(krb5_context context,
 	     krb5_keytab keytab,
-	     SOCKET sock)
+	     krb5_socket_t sock)
 {
     u_char buf[sizeof(KRB5_SENDAUTH_VERSION) + 4];
     ssize_t n;

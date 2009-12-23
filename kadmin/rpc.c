@@ -1091,7 +1091,7 @@ process_stream(krb5_context context,
 
 
 int
-handle_mit(krb5_context context, void *buf, size_t len, SOCKET sock)
+handle_mit(krb5_context context, void *buf, size_t len, krb5_socket_t sock)
 {
     krb5_storage *sp;
 

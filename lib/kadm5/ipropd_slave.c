@@ -657,8 +657,10 @@ main(int argc, char **argv)
 	    fd_set readset;
 	    struct timeval to;
 
+#ifndef NO_LIMIT_FD_SETSIZE
 	    if (master_fd >= FD_SETSIZE)
 		krb5_errx (context, 1, "fd too large");
+#endif
 
 	    FD_ZERO(&readset);
 	    FD_SET(master_fd, &readset);
@@ -730,8 +732,11 @@ main(int argc, char **argv)
 	    reconnect = reconnect_max;
     }
 
-    if(exit_flag == SIGXCPU)
+    if (0);
+#ifndef NO_SIGXCPU
+    else if(exit_flag == SIGXCPU)
 	krb5_warnx(context, "%s CPU time limit exceeded", getprogname());
+#endif
     else if(exit_flag == SIGINT || exit_flag == SIGTERM)
 	krb5_warnx(context, "%s terminated", getprogname());
     else

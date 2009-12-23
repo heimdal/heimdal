@@ -63,6 +63,8 @@
 
 typedef SOCKET rk_socket_t;
 
+#define rk_closesocket(x) closesocket(x)
+#define rk_INVALID_SOCKET INVALID_SOCKET
 #define rk_IS_BAD_SOCKET(s) ((s) == INVALID_SOCKET)
 #define rk_IS_SOCKET_ERROR(rv) ((rv) == SOCKET_ERROR)
 #define rk_SOCK_ERRNO WSAGetLastError()
@@ -72,8 +74,8 @@ typedef SOCKET rk_socket_t;
 #define EWOULDBLOCK             WSAEWOULDBLOCK
 #define ENOTSOCK		WSAENOTSOCK
 
-#define rk_SOCK_INIT rk_WSAStartup()
-#define rk_SOCK_EXIT rk_WSACleanup()
+#define rk_SOCK_INIT() rk_WSAStartup()
+#define rk_SOCK_EXIT() rk_WSACleanup()
 
 ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL rk_WSAStartup(void);
 ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL rk_WSACleanup(void);
@@ -220,6 +222,14 @@ struct sockaddr_dl;
 #include <paths.h>
 #endif
 
+#ifdef HAVE_DIRENT_H
+#include <dirent.h>
+#endif
+
+#ifdef BACKSLASH_PATH_DELIM
+#define rk_PATH_DELIM '\\'
+#endif
+
 #ifndef HAVE_SSIZE_T
 #ifdef _WIN64
 typedef __int64 ssize_t;
@@ -303,7 +313,7 @@ rk_vsnprintf (char *str, size_t sz, const char *format, va_list args);
  S_ISBLK(m)
 */
 
-#endif
+#endif  /* _MSC_VER */
 
 #ifndef HAVE_PUTENV
 #define putenv rk_putenv
@@ -827,8 +837,10 @@ struct msghdr {
     int             msg_flags;
 };
 
+#define sendmsg sendmsg_w32
+
 ROKEN_LIB_FUNCTION ssize_t ROKEN_LIB_CALL
-sendmsg(rk_socket_t s, const struct msghdr * msg, int flags);
+sendmsg_w32(rk_socket_t s, const struct msghdr * msg, int flags);
 
 #endif
 

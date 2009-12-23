@@ -1,19 +1,19 @@
 /***********************************************************************
  * Copyright (c) 2009, Secure Endpoints Inc.
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
- * 
+ *
  * - Redistributions of source code must retain the above copyright
  *   notice, this list of conditions and the following disclaimer.
- * 
+ *
  * - Redistributions in binary form must reproduce the above copyright
  *   notice, this list of conditions and the following disclaimer in
  *   the documentation and/or other materials provided with the
  *   distribution.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
  * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
  * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
@@ -26,36 +26,41 @@
  * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
  * OF THE POSSIBILITY OF SUCH DAMAGE.
- * 
+ *
  **********************************************************************/
 
-#ifndef __krb5_types_h__
-#define __krb5_types_h__
+#ifndef __DIRENT_H__
+#define __DIRENT_H__
 
-#ifndef __BIT_TYPES_DEFINED__
-#define __BIT_TYPES_DEFINED__
-
-typedef __int8             int8_t;
-typedef __int16            int16_t;
-typedef __int32            int32_t;
-typedef __int64            int64_t;
-typedef unsigned __int8    uint8_t;
-typedef unsigned __int16   uint16_t;
-typedef unsigned __int32   uint32_t;
-typedef unsigned __int64   uint64_t;
-typedef uint8_t            u_int8_t;
-typedef uint16_t           u_int16_t;
-typedef uint32_t           u_int32_t;
-typedef uint64_t           u_int64_t;
-
-#endif  /* __BIT_TYPES_DEFINED__ */
-
-typedef int                krb5_socklen_t;
-
-#ifdef _WIN64
-typedef __int64            krb5_ssize_t;
+#ifndef ROKEN_LIB_FUNCTION
+#ifdef _WIN32
+#define ROKEN_LIB_FUNCTION
+#define ROKEN_LIB_CALL     __cdecl
 #else
-typedef int                krb5_ssize_t;
+#define ROKEN_LIB_FUNCTION
+#define ROKEN_LIB_CALL
+#endif
 #endif
 
-#endif  /* __krb5_types_h__ */
+#include<sys/types.h>
+
+struct dirent {
+    ino_t   d_ino;
+    char    d_name[1];
+};
+
+typedef struct _dirent_dirinfo DIR;
+
+ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL closedir(DIR *);
+
+ROKEN_LIB_FUNCTION DIR * ROKEN_LIB_CALL opendir(const char *);
+
+ROKEN_LIB_FUNCTION struct dirent * ROKEN_LIB_CALL readdir(DIR *);
+
+ROKEN_LIB_FUNCTION void ROKEN_LIB_CALL rewinddir(DIR *);
+
+ROKEN_LIB_FUNCTION void ROKEN_LIB_CALL seekdir(DIR *, long);
+
+ROKEN_LIB_FUNCTION long ROKEN_LIB_CALL telldir(DIR *);
+
+#endif

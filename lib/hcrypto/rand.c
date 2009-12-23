@@ -60,7 +60,9 @@ init_method(void)
 {
     if (selected_meth != NULL)
 	return;
-#ifdef __APPLE__
+#if defined(_WIN32)
+    selected_meth = &hc_rand_w32crypto_method;
+#elif defined(__APPLE__)
     selected_meth = &hc_rand_unix_method;
 #else
     selected_meth = &hc_rand_fortuna_method;

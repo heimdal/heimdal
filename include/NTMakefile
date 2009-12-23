@@ -43,19 +43,12 @@ INCFILES=			\
 	$(INCDIR)\krb5-types.h	\
 	$(INCDIR)\version.h
 
-MAKECRYPTO=$(OBJ)\make_crypto.exe
+$(INCDIR)\krb5-types.h: $(OBJ)\bits.exe
+	$(OBJ)\bits.exe $(INCDIR)\krb5-types.h
 
-$(MAKECRYPTO): $(OBJ)\make_crypto.obj
+$(OBJ)\bits.exe: $(OBJ)\bits.obj
 	$(EXECONLINK)
-	$(_VC_MANIFEST_EMBED_EXE)
-	$(_VC_MANIFEST_CLEAN)
-	$(_CODESIGN)
-
-$(INCDIR)\krb5-types.h: krb5-types.h.w32
-	$(CP) $** $@
-
-$(INCDIR)\crypto-headers.h: $(MAKECRYPTO)
-	$(MAKECRYPTO) $@
+	$(EXEPREP_NODIST)
 
 $(INCDIR)\config.h: config.h.w32 ..\windows\NTMakefile.config NTMakefile
 	$(PERL) << < config.h.w32 > $@
@@ -79,14 +72,16 @@ while(<>) {
     if ("$(HAVE_PTHREAD_H)") { print "#define HAVE_PTHREAD_H 1\n"; }
     if ("$(ENV_HACK)") { print "#define ENV_HACK 1\n"; }
     if ("$(HAVE_KCM)") { print "#define HAVE_KCM 1\n"; }
-    if ("$(DIR_hdbdir)") { print "#define HDB_DB_DIR \"$(DIR_hdbdir)\"\n"; }
+    if ("$(HAVE_SCC)") { print "#define HAVE_SCC 1\n"; }
+    if ("$(DIR_hdbdir)") { print "#define HDB_DB_DIR \"".'$(DIR_hdbdir)'."\"\n"; }
 
   } elsif (m/\@VERSION_OPTDEFS\@/) {
 
     if ("$(VER_PRERELEASE)") { print "#define VER_PRERELEASE 1\n"; }
-    if ("$(VER_PRIVATE)") { print "#define VER_PRIVATE \"$(VER_PRIVATE)\""; }
-    if ("$(VER_SPECIAL)") { print "#define VER_SPECIAL \"$(VER_SPECIAL)\""; }
+    if ("$(VER_PRIVATE)") { print "#define VER_PRIVATE \"$(VER_PRIVATE)\"\n"; }
+    if ("$(VER_SPECIAL)") { print "#define VER_SPECIAL \"$(VER_SPECIAL)\"\n"; }
     if ("$(BUILD)" =~ "dbg") { print "#define VER_DEBUG 1\n"; }
+    print "#define HOST \"$(COMPUTERNAME)\"\n";
 
   } else {
 

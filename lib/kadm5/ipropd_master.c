@@ -45,12 +45,13 @@ static int time_before_gone;
 
 const char *master_hostname;
 
-static int
+static krb5_socket_t
 make_signal_socket (krb5_context context)
 {
+#ifndef NO_UNIX_SOCKETS
     struct sockaddr_un addr;
     const char *fn;
-    int fd;
+    krb5_socket_t fd;
 
     fn = kadm5_log_signal_socket(context);
 
@@ -64,18 +65,32 @@ make_signal_socket (krb5_context context)
     if (bind (fd, (struct sockaddr *)&addr, sizeof(addr)) < 0)
 	krb5_err (context, 1, errno, "bind %s", addr.sun_path);
     return fd;
+#else
+    struct addrinfo *ai = NULL;
+    krb5_socket_t fd;
+
+    kadm5_log_signal_socket_info(context, 1, &ai);
+
+    fd = socket(ai->ai_family, ai->ai_socktype, ai->ai_protocol);
+    if (rk_IS_BAD_SOCKET(fd))
+	krb5_err (context, 1, rk_SOCK_ERRNO, "socket AF=%d", ai->ai_family);
+
+    if (rk_IS_SOCKET_ERROR( bind (fd, ai->ai_addr, ai->ai_addrlen) ))
+	krb5_err (context, 1, rk_SOCK_ERRNO, "bind");
+    return fd;
+#endif
 }
 
-static int
+static krb5_socket_t
 make_listen_socket (krb5_context context, const char *port_str)
 {
-    int fd;
+    krb5_socket_t fd;
     int one = 1;
     struct sockaddr_in addr;
 
     fd = socket (AF_INET, SOCK_STREAM, 0);
-    if (fd < 0)
-	krb5_err (context, 1, errno, "socket AF_INET");
+    if (rk_IS_BAD_SOCKET(fd))
+	krb5_err (context, 1, rk_SOCK_ERRNO, "socket AF_INET");
     setsockopt (fd, SOL_SOCKET, SO_REUSEADDR, (void *)&one, sizeof(one));
     memset (&addr, 0, sizeof(addr));
     addr.sin_family = AF_INET;
@@ -105,7 +120,7 @@ make_listen_socket (krb5_context context, const char *port_str)
 }
 
 struct slave {
-    int fd;
+    krb5_socket_t fd;
     struct sockaddr_in addr;
     char *name;
     krb5_auth_context ac;
@@ -180,9 +195,9 @@ slave_dead(krb5_context context, slave *s)
 {
     krb5_warnx(context, "slave %s dead", s->name);
 
-    if (s->fd >= 0) {
-	close (s->fd);
-	s->fd = -1;
+    if (!rk_IS_BAD_SOCKET(s->fd)) {
+	rk_closesocket (s->fd);
+	s->fd = rk_INVALID_SOCKET;
     }
     s->flags |= SLAVE_F_DEAD;
     slave_seen(s);
@@ -193,8 +208,8 @@ remove_slave (krb5_context context, slave *s, slave **root)
 {
     slave **p;
 
-    if (s->fd >= 0)
-	close (s->fd);
+    if (!rk_IS_BAD_SOCKET(s->fd))
+	rk_closesocket (s->fd);
     if (s->name)
 	free (s->name);
     if (s->ac)
@@ -209,7 +224,8 @@ remove_slave (krb5_context context, slave *s, slave **root)
 }
 
 static void
-add_slave (krb5_context context, krb5_keytab keytab, slave **root, int fd)
+add_slave (krb5_context context, krb5_keytab keytab, slave **root,
+	   krb5_socket_t fd)
 {
     krb5_principal server;
     krb5_error_code ret;
@@ -228,8 +244,8 @@ add_slave (krb5_context context, krb5_keytab keytab, slave **root, int fd)
 
     addr_len = sizeof(s->addr);
     s->fd = accept (fd, (struct sockaddr *)&s->addr, &addr_len);
-    if (s->fd < 0) {
-	krb5_warn (context, errno, "accept");
+    if (rk_IS_BAD_SOCKET(s->fd)) {
+	krb5_warn (context, rk_SOCK_ERRNO, "accept");
 	goto error;
     }
     if (master_hostname)
@@ -294,7 +310,7 @@ error:
 
 struct prop_context {
     krb5_auth_context auth_context;
-    int fd;
+    krb5_socket_t fd;
 };
 
 static int
@@ -744,7 +760,7 @@ main(int argc, char **argv)
     void *kadm_handle;
     kadm5_server_context *server_context;
     kadm5_config_params conf;
-    int signal_fd, listen_fd;
+    krb5_socket_t signal_fd, listen_fd;
     int log_fd;
     slave *slaves = NULL;
     uint32_t current_version = 0, old_version = 0;
@@ -837,8 +853,10 @@ main(int argc, char **argv)
 	struct timeval to = {30, 0};
 	uint32_t vers;
 
+#ifndef NO_LIMIT_FD_SETSIZE
 	if (signal_fd >= FD_SETSIZE || listen_fd >= FD_SETSIZE)
 	    krb5_errx (context, 1, "fd too large");
+#endif
 
 	FD_ZERO(&readset);
 	FD_SET(signal_fd, &readset);
@@ -880,7 +898,11 @@ main(int argc, char **argv)
 	}
 
 	if (ret && FD_ISSET(signal_fd, &readset)) {
+#ifndef NO_UNIX_SOCKETS
 	    struct sockaddr_un peer_addr;
+#else
+	    struct sockaddr_storage peer_addr;
+#endif
 	    socklen_t peer_len = sizeof(peer_addr);
 
 	    if(recvfrom(signal_fd, (void *)&vers, sizeof(vers), 0,
@@ -931,8 +953,11 @@ main(int argc, char **argv)
 	write_stats(context, slaves, current_version);
     }
 
-    if(exit_flag == SIGXCPU)
+    if (0) ;
+#ifndef NO_SIGXCPU
+    else if(exit_flag == SIGXCPU)
 	krb5_warnx(context, "%s CPU time limit exceeded", getprogname());
+#endif
     else if(exit_flag == SIGINT || exit_flag == SIGTERM)
 	krb5_warnx(context, "%s terminated", getprogname());
     else

@@ -63,7 +63,11 @@ setup_signal(void)
 #else
     signal(SIGINT, sigterm);
     signal(SIGTERM, sigterm);
+#ifndef NO_SIGXCPU
     signal(SIGXCPU, sigterm);
+#endif
+#ifndef NO_SIGPIPE
     signal(SIGPIPE, SIG_IGN);
+#endif
 #endif
 }

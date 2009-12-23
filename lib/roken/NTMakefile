@@ -38,6 +38,7 @@ libroken_la_OBJS =			\
 	$(OBJ)\bswap.obj		\
 	$(OBJ)\concat.obj		\
 	$(OBJ)\cloexec.obj		\
+	$(OBJ)\ct.obj			\
 	$(OBJ)\dirent.obj		\
 	$(OBJ)\dlfcn_w32.obj		\
 	$(OBJ)\dumpdata.obj		\
@@ -88,6 +89,7 @@ libroken_la_OBJS =			\
 	$(OBJ)\socket.obj		\
 	$(OBJ)\sockstartup_w32.obj	\
 	$(OBJ)\strcollect.obj		\
+	$(OBJ)\strerror_r.obj		\
 	$(OBJ)\strlcat.obj		\
 	$(OBJ)\strlcpy.obj		\
 	$(OBJ)\strpool.obj		\

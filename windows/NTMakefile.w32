@@ -277,6 +277,9 @@ prep:: show-cmds
 {$(OBJ)}.hx{$(INCDIR)}.h:
 	$(CP) $< $@
 
+{$(OBJ)}.hx{$(OBJ)}.h:
+	$(CP) $< $@
+
 {}.rc{$(OBJ)}.res:
 	$(RC2RES)
 
@@ -444,6 +447,8 @@ LIBHCRYPTO  =$(LIBDIR)\libhcrypto.lib
 LIBHX509    =$(LIBDIR)\libhx509.lib
 LIBKRB5	    =$(LIBDIR)\libkrb5.lib
 LIBHEIMNTLM =$(LIBDIR)\libheimntlm.lib
+LIBHEIMIPCC =$(LIBDIR)\libheim-ipcc.lib
+LIBHEIMIPCS =$(LIBDIR)\libheim-ipcs.lib
 LIBGSSAPI   =$(LIBDIR)\libgssapi.lib
 LIBHDB	    =$(LIBDIR)\libhdb.lib
 LIBKADM5SRV =$(LIBDIR)\libkadm5srv.lib

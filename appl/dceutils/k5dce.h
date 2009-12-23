@@ -55,7 +55,7 @@ typedef unsigned char   krb5_octet;
 typedef krb5_octet      krb5_boolean;
 typedef krb5short       krb5_keytype; /* in k5.2 it's a short */
 typedef krb5_int32      krb5_flags;
-typedef krb5_int32  krb5_timestamp;
+typedef krb5_int32  krb5_timestamp; /* is a time_t in krb5.h */
 
 typedef char * krb5_pointer;  /* pointer to unexposed data */
 

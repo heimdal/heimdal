@@ -128,12 +128,18 @@ stash(struct stash_options *opt, int argc, char **argv)
 	    unlink(new);
 	else {
 	    unlink(old);
+#ifndef NO_POSIX_LINKS
 	    if(link(opt->key_file_string, old) < 0 && errno != ENOENT) {
 		ret = errno;
 		unlink(new);
-	    } else if(rename(new, opt->key_file_string) < 0) {
-		ret = errno;
+	    } else {
+#endif
+		if(rename(new, opt->key_file_string) < 0) {
+		    ret = errno;
+		}
+#ifndef NO_POSIX_LINKS
 	    }
+#endif
 	}
     out:
 	free(old);

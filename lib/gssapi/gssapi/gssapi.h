@@ -45,10 +45,12 @@
 
 #ifndef BUILD_GSSAPI_LIB
 #if defined(_WIN32)
-#define GSSAPI_LIB_FUNCTION _stdcall __declspec(dllimport)
+#define GSSAPI_LIB_FUNCTION __declspec(dllimport)
+#define GSSAPI_LIB_CALL     __stdcall
 #define GSSAPI_LIB_VARIABLE __declspec(dllimport)
 #else
 #define GSSAPI_LIB_FUNCTION
+#define GSSAPI_LIB_CALL
 #define GSSAPI_LIB_VARIABLE
 #endif
 #endif

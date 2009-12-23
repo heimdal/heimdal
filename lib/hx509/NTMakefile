@@ -191,7 +191,10 @@ INCFILES=			    \
 	$(INCDIR)\hx509_err.h	    \
 	$(INCDIR)\ocsp_asn1.h	    \
 	$(INCDIR)\pkcs10_asn1.h	    \
-	$(INCDIR)\crmf_asn1.h
+	$(INCDIR)\crmf_asn1.h	    \
+	$(OBJ)\ocsp_asn1-priv.h	    \
+	$(OBJ)\pkcs10_asn1-priv.h   \
+	$(OBJ)\crmf_asn1-priv.h
 
 hxtool.c: $(OBJ)\hxtool-commands.h
 
@@ -203,7 +206,7 @@ $(OBJ)\hxtool-commands.c $(OBJ)\hxtool-commands.h: hxtool-commands.in $(SLC)
 	$(SLC) hxtool-commands.in
 	cd $(SRCDIR)
 
-$(BINDIR)\hxtool.exe: $(OBJ)\hxtool.obj $(OBJ)\hxtool-commands.obj $(LIBHX509) 
+$(BINDIR)\hxtool.exe: $(OBJ)\hxtool.obj $(OBJ)\hxtool-commands.obj $(LIBHX509)
 	$(EXECONLINK) $(LIBASN1) $(LIBHCRYPTO) $(LIBROKEN) $(LIBSL) $(LIBVERS) $(LIBWIND) $(LIBCOMERR)
 	$(_VC_MANIFEST_EMBED_EXE)
 	$(_VC_MANIFEST_CLEAN)
@@ -240,4 +243,3 @@ all:: $(INCFILES) $(LIBHX509) $(BINDIR)\hxtool.exe
 
 clean::
 	-$(RM) $(BINDIR)\hxtool.exe
-

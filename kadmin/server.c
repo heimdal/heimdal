@@ -440,7 +440,7 @@ v5_loop (krb5_context context,
 	 krb5_auth_context ac,
 	 krb5_boolean initial,
 	 void *kadm_handle,
-	 int fd)
+	 krb5_socket_t fd)
 {
     krb5_error_code ret;
     krb5_data in, out;
@@ -476,7 +476,7 @@ match_appl_version(const void *data, const char *appl_version)
 static void
 handle_v5(krb5_context context,
 	  krb5_keytab keytab,
-	  int fd)
+	  krb5_socket_t fd)
 {
     krb5_error_code ret;
     krb5_ticket *ticket;
@@ -539,13 +539,13 @@ handle_v5(krb5_context context,
 krb5_error_code
 kadmind_loop(krb5_context context,
 	     krb5_keytab keytab,
-	     int fd)
+	     krb5_socket_t sock)
 {
     u_char buf[sizeof(KRB5_SENDAUTH_VERSION) + 4];
     ssize_t n;
     unsigned long len;
 
-    n = krb5_net_read(context, &fd, buf, 4);
+    n = krb5_net_read(context, &sock, buf, 4);
     if(n == 0)
 	exit(0);
     if(n < 0)
@@ -554,21 +554,21 @@ kadmind_loop(krb5_context context,
 
     if (len == sizeof(KRB5_SENDAUTH_VERSION)) {
 
-	n = krb5_net_read(context, &fd, buf + 4, len);
+	n = krb5_net_read(context, &sock, buf + 4, len);
 	if (n < 0)
 	    krb5_err (context, 1, errno, "reading sendauth version");
 	if (n == 0)
 	    krb5_errx (context, 1, "EOF reading sendauth version");
 
 	if(memcmp(buf + 4, KRB5_SENDAUTH_VERSION, len) == 0) {
-	    handle_v5(context, keytab, fd);
+	    handle_v5(context, keytab, sock);
 	    return 0;
 	}
 	len += 4;
     } else
 	len = 4;
 
-    handle_mit(context, buf, len, fd);
+    handle_mit(context, buf, len, sock);
 
     return 0;
 }

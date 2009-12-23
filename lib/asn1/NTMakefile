@@ -37,8 +37,8 @@ gen_files_k5 =						    \
 	$(OBJ)\asn1_AD_AND_OR.x				    \
 	$(OBJ)\asn1_AD_IF_RELEVANT.x			    \
 	$(OBJ)\asn1_AD_KDCIssued.x			    \
-	$(OBJ)\asn1_AD_MANDATORY_FOR_KDC.x		    \
 	$(OBJ)\asn1_AD_LoginAlias.x			    \
+	$(OBJ)\asn1_AD_MANDATORY_FOR_KDC.x		    \
 	$(OBJ)\asn1_APOptions.x				    \
 	$(OBJ)\asn1_AP_REP.x				    \
 	$(OBJ)\asn1_AP_REQ.x				    \
@@ -66,12 +66,15 @@ gen_files_k5 =						    \
 	$(OBJ)\asn1_EncryptedData.x			    \
 	$(OBJ)\asn1_EncryptionKey.x			    \
 	$(OBJ)\asn1_EtypeList.x				    \
+	$(OBJ)\asn1_FastOptions.x			    \
 	$(OBJ)\asn1_HostAddress.x			    \
 	$(OBJ)\asn1_HostAddresses.x			    \
 	$(OBJ)\asn1_KDCOptions.x			    \
 	$(OBJ)\asn1_KDC_REP.x				    \
 	$(OBJ)\asn1_KDC_REQ.x				    \
 	$(OBJ)\asn1_KDC_REQ_BODY.x			    \
+	$(OBJ)\asn1_KRB5SignedPath.x			    \
+	$(OBJ)\asn1_KRB5SignedPathData.x		    \
 	$(OBJ)\asn1_KRB_CRED.x				    \
 	$(OBJ)\asn1_KRB_ERROR.x				    \
 	$(OBJ)\asn1_KRB_PRIV.x				    \
@@ -80,27 +83,35 @@ gen_files_k5 =						    \
 	$(OBJ)\asn1_KerberosString.x			    \
 	$(OBJ)\asn1_KerberosTime.x			    \
 	$(OBJ)\asn1_KrbCredInfo.x			    \
+	$(OBJ)\asn1_KrbFastArmor.x			    \
+	$(OBJ)\asn1_KrbFastArmoredRep.x			    \
+	$(OBJ)\asn1_KrbFastArmoredReq.x			    \
+	$(OBJ)\asn1_KrbFastFinished.x			    \
+	$(OBJ)\asn1_KrbFastReq.x			    \
+	$(OBJ)\asn1_KrbFastResponse.x			    \
 	$(OBJ)\asn1_LR_TYPE.x				    \
 	$(OBJ)\asn1_LastReq.x				    \
 	$(OBJ)\asn1_MESSAGE_TYPE.x			    \
 	$(OBJ)\asn1_METHOD_DATA.x			    \
 	$(OBJ)\asn1_NAME_TYPE.x				    \
+	$(OBJ)\asn1_PA_FX_FAST_REPLY.x			    \
+	$(OBJ)\asn1_PA_FX_FAST_REQUEST.x		    \
 	$(OBJ)\asn1_PADATA_TYPE.x			    \
+	$(OBJ)\asn1_PA_ClientCanonicalized.x		    \
+	$(OBJ)\asn1_PA_ClientCanonicalizedNames.x	    \
 	$(OBJ)\asn1_PA_DATA.x				    \
-	$(OBJ)\asn1_PA_ENC_SAM_RESPONSE_ENC.x         	    \
+	$(OBJ)\asn1_PA_ENC_SAM_RESPONSE_ENC.x		    \
 	$(OBJ)\asn1_PA_ENC_TS_ENC.x			    \
 	$(OBJ)\asn1_PA_PAC_REQUEST.x			    \
 	$(OBJ)\asn1_PA_S4U2Self.x			    \
 	$(OBJ)\asn1_PA_SAM_CHALLENGE_2.x		    \
-	$(OBJ)\asn1_PA_SAM_CHALLENGE_2_BODY.x 		    \
+	$(OBJ)\asn1_PA_SAM_CHALLENGE_2_BODY.x		    \
 	$(OBJ)\asn1_PA_SAM_REDIRECT.x			    \
 	$(OBJ)\asn1_PA_SAM_RESPONSE_2.x			    \
 	$(OBJ)\asn1_PA_SAM_TYPE.x			    \
-	$(OBJ)\asn1_PA_ClientCanonicalized.x		    \
-	$(OBJ)\asn1_PA_ClientCanonicalizedNames.x	    \
-	$(OBJ)\asn1_PA_SvrReferralData.x		    \
-	$(OBJ)\asn1_PA_ServerReferralData.x		    \
 	$(OBJ)\asn1_PA_SERVER_REFERRAL_DATA.x		    \
+	$(OBJ)\asn1_PA_ServerReferralData.x		    \
+	$(OBJ)\asn1_PA_SvrReferralData.x		    \
 	$(OBJ)\asn1_PROV_SRV_LOCATION.x			    \
 	$(OBJ)\asn1_Principal.x				    \
 	$(OBJ)\asn1_PrincipalName.x			    \
@@ -115,9 +126,7 @@ gen_files_k5 =						    \
 	$(OBJ)\asn1_TransitedEncoding.x			    \
 	$(OBJ)\asn1_TypedData.x				    \
 	$(OBJ)\asn1_krb5int32.x				    \
-	$(OBJ)\asn1_krb5uint32.x			    \
-	$(OBJ)\asn1_KRB5SignedPathData.x		    \
-	$(OBJ)\asn1_KRB5SignedPath.x
+	$(OBJ)\asn1_krb5uint32.x
 
 gen_files_cms =						    \
 	$(OBJ)\asn1_CMSAttributes.x			    \
@@ -215,7 +224,6 @@ gen_files_rfc2459 =					    \
 	$(OBJ)\asn1_SubjectPublicKeyInfo.x		    \
 	$(OBJ)\asn1_TBSCRLCertList.x			    \
 	$(OBJ)\asn1_TBSCertificate.x			    \
-	$(OBJ)\asn1_TeletexStringx.x			    \
 	$(OBJ)\asn1_Time.x				    \
 	$(OBJ)\asn1_UniqueIdentifier.x			    \
 	$(OBJ)\asn1_ValidationParms.x			    \
@@ -426,8 +434,10 @@ gen_files_pkcs9 =					    \
 	$(OBJ)\asn1_PKCS9_friendlyName.x
 
 gen_files_test =					    \
+	$(OBJ)\asn1_TESTOptional.x			    \
 	$(OBJ)\asn1_TESTAlloc.x				    \
 	$(OBJ)\asn1_TESTAllocInner.x			    \
+	$(OBJ)\asn1_TESTBitString.x			    \
 	$(OBJ)\asn1_TESTCONTAINING.x			    \
 	$(OBJ)\asn1_TESTCONTAININGENCODEDBY.x		    \
 	$(OBJ)\asn1_TESTCONTAININGENCODEDBY2.x		    \
@@ -441,14 +451,21 @@ gen_files_test =					    \
 	$(OBJ)\asn1_TESTInteger2.x			    \
 	$(OBJ)\asn1_TESTInteger3.x			    \
 	$(OBJ)\asn1_TESTLargeTag.x			    \
-	$(OBJ)\asn1_TESTSeq.x				    \
-	$(OBJ)\asn1_TESTUSERCONSTRAINED.x		    \
-	$(OBJ)\asn1_TESTSeqOf.x				    \
 	$(OBJ)\asn1_TESTOSSize1.x			    \
+	$(OBJ)\asn1_TESTPreserve.x			    \
+	$(OBJ)\asn1_TESTSeq.x				    \
+	$(OBJ)\asn1_TESTSeqOf.x				    \
+	$(OBJ)\asn1_TESTSeqOf2.x			    \
+	$(OBJ)\asn1_TESTSeqOf3.x			    \
+	$(OBJ)\asn1_TESTSeqOfSeq.x			    \
+	$(OBJ)\asn1_TESTSeqOfSeq2.x			    \
+	$(OBJ)\asn1_TESTSeqOfSeq3.x			    \
 	$(OBJ)\asn1_TESTSeqSizeOf1.x			    \
 	$(OBJ)\asn1_TESTSeqSizeOf2.x			    \
 	$(OBJ)\asn1_TESTSeqSizeOf3.x			    \
-	$(OBJ)\asn1_TESTSeqSizeOf4.x
+	$(OBJ)\asn1_TESTSeqSizeOf4.x			    \
+	$(OBJ)\asn1_TESTUSERCONSTRAINED.x		    \
+	$(OBJ)\asn1_TESTuint32.x
 
 gen_files_digest =					    \
 	$(OBJ)\asn1_DigestError.x			    \
@@ -464,18 +481,22 @@ gen_files_digest =					    \
 	$(OBJ)\asn1_NTLMInit.x				    \
 	$(OBJ)\asn1_NTLMInitReply.x			    \
 	$(OBJ)\asn1_NTLMRequest.x			    \
-	$(OBJ)\asn1_NTLMResponse.x
+	$(OBJ)\asn1_NTLMRequest2.x			    \
+	$(OBJ)\asn1_NTLMResponse.x			    \
+	$(OBJ)\asn1_NTLMReply.x
 
 gen_files_kx509 =					    \
 	$(OBJ)\asn1_Kx509Response.x			    \
+	$(OBJ)\asn1_KX509_ERROR_CODE.x			    \
 	$(OBJ)\asn1_Kx509Request.x
 
 ASN1_BINARIES =						    \
-	$(BINDIR)\asn1_compile.exe			    \
-	$(BINDIR)\asn1_print.exe			    \
+	$(LIBEXECDIR)\asn1_compile.exe			    \
+	$(LIBEXECDIR)\asn1_print.exe			    \
 	$(BINDIR)\asn1_gen.exe
 
 $(BINDIR)\asn1_compile.exe:				    \
+	$(OBJ)\asn1parse.obj				    \
 	$(OBJ)\gen.obj					    \
 	$(OBJ)\gen_copy.obj				    \
 	$(OBJ)\gen_decode.obj				    \
@@ -484,10 +505,10 @@ $(BINDIR)\asn1_compile.exe:				    \
 	$(OBJ)\gen_glue.obj				    \
 	$(OBJ)\gen_length.obj				    \
 	$(OBJ)\gen_seq.obj				    \
+	$(OBJ)\gen_template.obj				    \
 	$(OBJ)\hash.obj					    \
 	$(OBJ)\lex.obj					    \
 	$(OBJ)\main.obj					    \
-	$(OBJ)\asn1parse.obj				    \
 	$(OBJ)\symbol.obj
 	$(EXECONLINK) $(LIBROKEN) $(LIBVERS)
 	$(_VC_MANIFEST_EMBED_EXE)
@@ -675,25 +696,41 @@ $(gen_files_test) $(OBJ)\test_asn1.hx: $(BINDIR)\asn1_compile.exe test.asn1
 	|| ($(RM) $(OBJ)\test_asn1.h ; exit /b 1)
 	cd $(SRCDIR)
 
-INCFILES=$(INCDIR)\der.h $(INCDIR)\heim_asn1.h $(INCDIR)\der-protos.h \
+INCFILES=			    \
+	$(INCDIR)\der.h		    \
+	$(INCDIR)\heim_asn1.h	    \
+	$(INCDIR)\der-protos.h	    \
+	$(INCDIR)\der-private.h	    \
+	$(INCDIR)\asn1-common.h	    \
+	$(INCDIR)\asn1-template.h   \
 	$(OBJ)\asn1_err.h
 
 $(INCDIR)\der-protos.h: $(OBJ)\der-protos.h
 
-GENINCFILES=	\
-	$(INCDIR)\asn1_err.h	\
-	$(INCDIR)\cms_asn1.h	\
-	$(INCDIR)\digest_asn1.h	\
-	$(INCDIR)\krb5_asn1.h	\
-	$(INCDIR)\kx509_asn1.h	\
-	$(INCDIR)\pkcs12_asn1.h	\
-	$(INCDIR)\pkcs8_asn1.h	\
-	$(INCDIR)\pkcs9_asn1.h	\
-	$(INCDIR)\pkinit_asn1.h	\
-	$(INCDIR)\rfc2459_asn1.h
+GENINCFILES=			    \
+	$(INCDIR)\asn1_err.h	    \
+	$(INCDIR)\cms_asn1.h	    \
+	$(INCDIR)\digest_asn1.h	    \
+	$(INCDIR)\krb5_asn1.h	    \
+	$(INCDIR)\kx509_asn1.h	    \
+	$(INCDIR)\pkcs12_asn1.h	    \
+	$(INCDIR)\pkcs8_asn1.h	    \
+	$(INCDIR)\pkcs9_asn1.h	    \
+	$(INCDIR)\pkinit_asn1.h	    \
+	$(INCDIR)\rfc2459_asn1.h    \
+	$(OBJ)\krb5_asn1-priv.h	    \
+	$(OBJ)\pkinit_asn1-priv.h   \
+	$(OBJ)\cms_asn1-priv.h	    \
+	$(OBJ)\rfc2459_asn1-priv.h  \
+	$(OBJ)\pkcs8_asn1-priv.h    \
+	$(OBJ)\pkcs9_asn1-priv.h    \
+	$(OBJ)\pkcs12_asn1-priv.h   \
+	$(OBJ)\digest_asn1-priv.h   \
+	$(OBJ)\kx509_asn1-priv.h    \
+	$(OBJ)\test_asn1.h	    \
+	$(OBJ)\test_asn1-priv.h
 
 libasn1_SOURCES=	\
-	der-protos.h 	\
 	der_locl.h 	\
 	der.c		\
 	der.h		\
@@ -708,8 +745,11 @@ libasn1_SOURCES=	\
 	extra.c		\
 	timegm.c
 
-$(OBJ)\der-protos.h: $(libasn1_SOURCES:der-protos.h=)
+$(OBJ)\der-protos.h: $(libasn1_SOURCES)
 	$(PERL) ..\..\cf\make-proto.pl -q -P remove -o $(OBJ)\der-protos.h $(libasn1_SOURCES) || $(RM) $(OBJ)\der-protos.h
+
+$(OBJ)\der-private.h: $(libasn1_SOURCES)
+	$(PERL) ..\..\cf\make-proto.pl -q -P remove -p $(OBJ)\der-private.h $(libasn1_SOURCES) || $(RM) $(OBJ)\der-private.h
 
 clean::
 	-$(RM) $(INCDIR)\der-protos.h

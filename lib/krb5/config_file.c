@@ -473,6 +473,21 @@ krb5_config_parse_file_multi (krb5_context context,
 	return ENOENT;
 #endif
     } else {
+#ifdef KRB5_USE_PATH_TOKENS
+	char * exp_fname = NULL;
+
+	ret = _krb5_expand_path_tokens(context, fname, &exp_fname);
+	if (ret) {
+	    if (newfname)
+		free(newfname);
+	    return ret;
+	}
+	
+	if (newfname)
+	    free(newfname);
+	fname = newfname = exp_fname;
+#endif
+
 	f.f = fopen(fname, "r");
 	f.s = NULL;
 	if(f.f == NULL) {
@@ -494,8 +509,6 @@ krb5_config_parse_file_multi (krb5_context context,
 	    return ret;
 	}
     }
-    if (newfname)
-	free(newfname);
     return 0;
 }
 
@@ -1236,10 +1249,11 @@ krb5_config_get_int (krb5_context context,
  * @ingroup krb5_deprecated
  */
 
+KRB5_DEPRECATED
 krb5_error_code KRB5_LIB_FUNCTION
 krb5_config_parse_string_multi(krb5_context context,
 			       const char *string,
-			       krb5_config_section **res) KRB5_DEPRECATED
+			       krb5_config_section **res)
 {
     const char *str;
     unsigned lineno = 0;

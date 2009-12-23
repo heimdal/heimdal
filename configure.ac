@@ -167,7 +167,7 @@ AM_CONDITIONAL(SQLITE3,  test "X$with_sqlite3" = Xyes)
 AC_ARG_ENABLE(sqlite-cache, 
 	AS_HELP_STRING([--disable-sqlite-cache],[if you want support for cache in sqlite]))
 if test "$enable_sqlite_cache" != no; then
-    AC_DEFINE(HAVE_SCC, 1, [Define if you want support for DCE/DFS PAG's.])
+    AC_DEFINE(HAVE_SCC, 1, [Define if you want support for cache in sqlite.])
 fi
 AM_CONDITIONAL(have_scc, test "$enable_sqlite_cache" != no)
 

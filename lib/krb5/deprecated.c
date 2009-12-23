@@ -631,8 +631,9 @@ krb5_get_cred_from_kdc(krb5_context context,
  * @ingroup krb5_deprecated
  */
 
+KRB5_DEPRECATED
 void KRB5_LIB_FUNCTION
-krb5_free_unparsed_name(krb5_context context, char *str) KRB5_DEPRECATED
+krb5_free_unparsed_name(krb5_context context, char *str)
 {
     krb5_xfree(str);
 }
@@ -643,10 +644,11 @@ krb5_free_unparsed_name(krb5_context context, char *str) KRB5_DEPRECATED
  * @ingroup krb5_deprecated
  */
 
+KRB5_DEPRECATED
 krb5_error_code KRB5_LIB_FUNCTION
 krb5_generate_subkey(krb5_context context,
 		     const krb5_keyblock *key,
-		     krb5_keyblock **subkey) KRB5_DEPRECATED
+		     krb5_keyblock **subkey)
 {
     return krb5_generate_subkey_extended(context, key, ETYPE_NULL, subkey);
 }
@@ -657,10 +659,11 @@ krb5_generate_subkey(krb5_context context,
  * @ingroup krb5_deprecated
  */
 
+KRB5_DEPRECATED
 krb5_error_code KRB5_LIB_FUNCTION
 krb5_auth_getremoteseqnumber(krb5_context context,
 			     krb5_auth_context auth_context,
-			     int32_t *seqnumber) KRB5_DEPRECATED
+			     int32_t *seqnumber)
 {
   *seqnumber = auth_context->remote_seqnumber;
   return 0;

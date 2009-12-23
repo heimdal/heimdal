@@ -245,22 +245,25 @@ cc_ops_register(krb5_context context)
 static krb5_error_code
 cc_ops_copy(krb5_context context, const krb5_context src_context)
 {
+    krb5_cc_ops **cc_ops;
+
     context->cc_ops = NULL;
     context->num_cc_ops = 0;
 
     if (src_context->num_cc_ops == 0)
 	return 0;
 
-    context->cc_ops = malloc(sizeof(context->cc_ops[0]) * src_context->num_cc_ops);
-    if (context->cc_ops == NULL) {
+    cc_ops = malloc(sizeof(cc_ops[0]) * src_context->num_cc_ops);
+    if (cc_ops == NULL) {
 	krb5_set_error_message(context, KRB5_CC_NOMEM,
 			       N_("malloc: out of memory", ""));
 	return KRB5_CC_NOMEM;
     }
 
+    memcpy(cc_ops, src_context->cc_ops,
+	   sizeof(cc_ops[0]) * src_context->num_cc_ops);
+    context->cc_ops = cc_ops;
     context->num_cc_ops = src_context->num_cc_ops;
-    memcpy(context->cc_ops, src_context->cc_ops,
-	   sizeof(context->cc_ops[0]) * src_context->num_cc_ops);
 
     return 0;
 }
@@ -363,10 +366,8 @@ krb5_init_context(krb5_context *context)
     if (ret)
 	goto out;
 #endif	
-#ifdef NEED_SOCK_INIT
-    if (SOCK_INIT)
+    if (rk_SOCK_INIT())
 	p->flags |= KRB5_CTX_F_SOCKETS_INITIALIZED;
-#endif
 
 out:
     if(ret) {
@@ -539,11 +540,9 @@ krb5_free_context(krb5_context context)
 
     HEIMDAL_MUTEX_destroy(context->mutex);
     free(context->mutex);
-#ifdef NEED_SOCK_INIT
     if (context->flags & KRB5_CTX_F_SOCKETS_INITIALIZED) {
- 	SOCK_EXIT;
+ 	rk_SOCK_EXIT();
     }
-#endif
 
     memset(context, 0, sizeof(*context));
     free(context);

@@ -425,7 +425,7 @@ krb5_auth_con_setlocalseqnumber (krb5_context context,
   return 0;
 }
 
-KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_FUNCTION
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_auth_con_getremoteseqnumber(krb5_context context,
 				 krb5_auth_context auth_context,
 				 int32_t *seqnumber)

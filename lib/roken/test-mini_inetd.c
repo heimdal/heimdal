@@ -82,7 +82,7 @@ get_connected_socket(rk_socket_t * s_ret)
 	goto done;
 
     *s_ret = s;
-    s = INVALID_SOCKET;
+    s = rk_INVALID_SOCKET;
     rv = 0;
 
  done:
@@ -105,7 +105,7 @@ const char * test_strings[] = {
 static int
 test_simple_echo_client(void)
 {
-    rk_socket_t s = INVALID_SOCKET;
+    rk_socket_t s = rk_INVALID_SOCKET;
     int rv;
     char buf[81];
     int i;
@@ -165,7 +165,7 @@ test_simple_echo_socket(void)
 	return test_simple_echo_client();
     } else {
 
-	rk_socket_t s = INVALID_SOCKET;
+	rk_socket_t s = rk_INVALID_SOCKET;
 
 	fprintf (stderr, "[%s] Listening for connections...\n", prog);
 	mini_inetd(htons(PORT), &s);

@@ -56,3 +56,11 @@ rk_cloexec_file(FILE *f)
     rk_cloexec(fileno(f));
 #endif
 }
+
+void ROKEN_LIB_FUNCTION
+rk_cloexec_dir(DIR * d)
+{
+#ifdef HAVE_DIRFD
+    rk_cloexec(dirfd(d));
+#endif
+}

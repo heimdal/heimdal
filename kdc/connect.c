@@ -877,11 +877,13 @@ loop(krb5_context context,
 		    clear_descr(&d[i]);
 		    continue;
 		}
+#ifndef NO_LIMIT_FD_SETSIZE
 		if(max_fd < d[i].s)
 		    max_fd = d[i].s;
 #ifdef FD_SETSIZE
 		if (max_fd >= FD_SETSIZE)
 		    krb5_errx(context, 1, "fd too large");
+#endif
 #endif
 		FD_SET(d[i].s, &fds);
 	    } else if(min_free < 0 || i < min_free)

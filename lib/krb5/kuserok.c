@@ -242,6 +242,8 @@ krb5_kuserok (krb5_context context,
     char *buf;
     size_t buflen;
     struct passwd *pwd = NULL;
+    char *profile_dir = NULL;
+    krb5_boolean free_profile_dir = FALSE;
     krb5_error_code ret;
     krb5_boolean result = FALSE;
 
@@ -258,14 +260,15 @@ krb5_kuserok (krb5_context context,
 #endif
     if (pwd == NULL)
 	return FALSE;
+    profile_dir = pwd->pw_dir;
 
 #define KLOGIN "/.k5login"
-    buflen = strlen(pwd->pw_dir) + sizeof(KLOGIN) + 2; /* 2 for .d */
+    buflen = strlen(profile_dir) + sizeof(KLOGIN) + 2; /* 2 for .d */
     buf = malloc(buflen);
     if(buf == NULL)
 	return FALSE;
     /* check user's ~/.k5login */
-    strlcpy(buf, pwd->pw_dir, buflen);
+    strlcpy(buf, profile_dir, buflen);
     strlcat(buf, KLOGIN, buflen);
     ret = check_one_file(context, buf, pwd, principal, &result);
 

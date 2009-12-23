@@ -56,7 +56,7 @@ static void
 destroy_kadm5_log_context (kadm5_log_context *c)
 {
     free (c->log_file);
-    closesocket (c->socket_fd);
+    rk_closesocket (c->socket_fd);
 #ifndef NO_UNIX_SOCKETS
     if (c->socket_info) {
 	freeaddrinfo(c->socket_info);

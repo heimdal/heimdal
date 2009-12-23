@@ -151,14 +151,14 @@ spawn_child(krb5_context context, int *socks,
     pid = fork();
     if(pid == 0) {
 	for(i = 0; i < num_socks; i++)
-	    closesocket(socks[i]);
+	    rk_closesocket(socks[i]);
 	dup2(s, STDIN_FILENO);
 	dup2(s, STDOUT_FILENO);
 	if(s != STDIN_FILENO && s != STDOUT_FILENO)
-	    closesocket(s);
+	    rk_closesocket(s);
 	return 0;
     } else {
-	closesocket(s);
+	rk_closesocket(s);
     }
     return 1;
 }
@@ -270,12 +270,12 @@ start_server(krb5_context context)
 
 	    if (rk_IS_SOCKET_ERROR(bind (s, ap->ai_addr, ap->ai_addrlen))) {
 		krb5_warn(context, rk_SOCK_ERRNO, "bind");
-		closesocket(s);
+		rk_closesocket(s);
 		continue;
 	    }
 	    if (rk_IS_SOCKET_ERROR(listen (s, SOMAXCONN))) {
 		krb5_warn(context, rk_SOCK_ERRNO, "listen");
-		closesocket(s);
+		rk_closesocket(s);
 		continue;
 	    }
 	    socks[num_socks++] = s;

@@ -196,7 +196,7 @@ slave_dead(krb5_context context, slave *s)
     krb5_warnx(context, "slave %s dead", s->name);
 
     if (!rk_IS_BAD_SOCKET(s->fd)) {
-	closesocket (s->fd);
+	rk_closesocket (s->fd);
 	s->fd = rk_INVALID_SOCKET;
     }
     s->flags |= SLAVE_F_DEAD;
@@ -209,7 +209,7 @@ remove_slave (krb5_context context, slave *s, slave **root)
     slave **p;
 
     if (!rk_IS_BAD_SOCKET(s->fd))
-	closesocket (s->fd);
+	rk_closesocket (s->fd);
     if (s->name)
 	free (s->name);
     if (s->ac)

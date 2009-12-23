@@ -182,11 +182,12 @@ main(int argc, char **argv)
 	 */
 
 	if(roken_getsockname(STDIN_FILENO, sa, &sa_size) < 0 &&
-	   SOCK_ERRNO == ENOTSOCK) {
+	   rk_SOCK_ERRNO == ENOTSOCK) {
 #endif
 	    parse_ports(context, port_str ? port_str : "+");
 	    pidfile(NULL);
-	    start_server(context, &sfd);
+	    start_server(context);
+	    sfd = STDIN_FILENO;
 #ifndef NO_INETD
 	} else {
 	    sfd = STDIN_FILENO;

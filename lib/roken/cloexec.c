@@ -60,7 +60,7 @@ rk_cloexec_file(FILE *f)
 void ROKEN_LIB_FUNCTION
 rk_cloexec_dir(DIR * d)
 {
-#ifdef HAVE_DIRFD
+#ifndef _WIN32
     rk_cloexec(dirfd(d));
 #endif
 }

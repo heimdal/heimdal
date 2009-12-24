@@ -105,12 +105,6 @@ w32crypto_add(const void *indata, int size, double entropi)
 }
 
 static int
-w32crypto_pseudorand(unsigned char *outdata, int size)
-{
-    return 1;
-}
-
-static int
 w32crypto_status(void)
 {
     if (_hc_CryptProvider() == 0)
@@ -123,7 +117,7 @@ const RAND_METHOD hc_rand_w32crypto_method = {
     w32crypto_bytes,
     w32crypto_cleanup,
     w32crypto_add,
-    w32crypto_pseudorand,
+    w32crypto_bytes,
     w32crypto_status
 };
 

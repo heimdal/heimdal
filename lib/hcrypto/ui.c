@@ -55,7 +55,52 @@ intr(int sig)
     intr_flag++;
 }
 
-#ifndef HAVE_CONIO_H
+#ifdef HAVE_CONIO_H
+
+/*
+ * Windows does console slightly different then then unix case.
+ */
+
+static int
+read_string(const char *preprompt, const char *prompt, 
+	    char *buf, size_t len, int echo)
+{
+    int of = 0;
+    int c;
+    char *p;
+    void (*oldsigintr)(int);
+
+    _cprintf("%s%s", preprompt, prompt);
+
+    oldsigintr = signal(SIGINT, intr);
+
+    p = buf;
+    while(intr_flag == 0){
+	c = ((echo)? _getche(): _getch());
+	if(c == '\n')
+	    break;
+	if(of == 0)
+	    *p++ = c;
+	of = (p == buf + len);
+    }
+    if(of)
+	p--;
+    *p = 0;
+    
+    if(echo == 0){
+	printf("\n");
+    }
+
+    signal(SIGINT, oldsigintr);
+    
+    if(intr_flag)
+	return -2;
+    if(of)
+	return -1;
+    return 0;
+}
+
+#else /* !HAVE_CONIO_H */
 
 #ifndef NSIG
 #define NSIG 47
@@ -142,48 +187,7 @@ read_string(const char *preprompt, const char *prompt,
     return 0;
 }
 
-#else  /* CONIO_H */
-
-static int
-read_string(const char *preprompt, const char *prompt, 
-	    char *buf, size_t len, int echo)
-{
-    int of = 0;
-    int c;
-    char *p;
-    void (*oldsigintr)(int);
-
-    _cprintf("%s%s", preprompt, prompt);
-
-    oldsigintr = signal(SIGINT, intr);
-
-    p = buf;
-    while(intr_flag == 0){
-	c = ((echo)? _getche(): _getch());
-	if(c == '\n')
-	    break;
-	if(of == 0)
-	    *p++ = c;
-	of = (p == buf + len);
-    }
-    if(of)
-	p--;
-    *p = 0;
-    
-    if(echo == 0){
-	printf("\n");
-    }
-
-    signal(SIGINT, oldsigintr);
-    
-    if(intr_flag)
-	return -2;
-    if(of)
-	return -1;
-    return 0;
-}
-
-#endif
+#endif /* HAVE_CONIO_H */
 
 int
 UI_UTIL_read_pw_string(char *buf, int length, const char *prompt, int verify)

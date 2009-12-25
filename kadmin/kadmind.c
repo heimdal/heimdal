@@ -171,7 +171,10 @@ main(int argc, char **argv)
 	    debug_port = htons(atoi(port_str));
 	mini_inetd(debug_port, &sfd);
     } else {
-#ifndef NO_INETD
+#ifdef _WIN32
+	pidfile(NULL);
+	start_server(context, port_str);
+#else
 	struct sockaddr_storage __ss;
 	struct sockaddr *sa = (struct sockaddr *)&__ss;
 	socklen_t sa_size = sizeof(__ss);
@@ -183,16 +186,11 @@ main(int argc, char **argv)
 
 	if(roken_getsockname(STDIN_FILENO, sa, &sa_size) < 0 &&
 	   rk_SOCK_ERRNO == ENOTSOCK) {
-#endif
-	    parse_ports(context, port_str ? port_str : "+");
 	    pidfile(NULL);
-	    start_server(context);
-	    sfd = STDIN_FILENO;
-#ifndef NO_INETD
-	} else {
-	    sfd = STDIN_FILENO;
+	    start_server(context, port_str);
 	}
-#endif
+#endif /* _WIN32 */
+	sfd = STDIN_FILENO;
     }
 
     if(realm)

@@ -221,7 +221,7 @@ wait_for_connection(krb5_context context,
 
 
 int
-start_server(krb5_context context)
+start_server(krb5_context context, const char *port_str)
 {
     int e;
     struct kadm_port *p;
@@ -229,6 +229,11 @@ start_server(krb5_context context)
     krb5_socket_t *socks = NULL, *tmp;
     unsigned int num_socks = 0;
     int i;
+
+    if (port_str == NULL)
+	port_str = "+";
+
+    parse_ports(context, port_str);
 
     for(p = kadm_ports; p; p = p->next) {
 	struct addrinfo hints, *ai, *ap;

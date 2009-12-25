@@ -1353,10 +1353,6 @@ static const char *const rcsid[] = { (const char *)rcsid, "@(#)" msg }
 /* Define if you don't want to use mmap. */
 #define NO_MMAP 1
 
-/* Define to 1 if inetd will never be used to invoke any of the
-   daemons. */
-#define NO_INETD 1
-
 #define NO_RAND_EGD_METHOD 1
 
 /* Define if the Unix rand method is not defined */

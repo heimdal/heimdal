@@ -24,7 +24,6 @@ host->realm mapping
 
 * windows stuff
 
--- remove NO_INETD
 -- drop all double negation #ifndef NO_
 -- got though windows specific ifdefs to minimized them
 -- switch to use heim-ipc for services, like the kadmin change notification socket

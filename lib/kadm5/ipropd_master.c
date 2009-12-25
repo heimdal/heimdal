@@ -953,13 +953,12 @@ main(int argc, char **argv)
 	write_stats(context, slaves, current_version);
     }
 
-    if (0) ;
+    if(exit_flag == SIGINT || exit_flag == SIGTERM)
+	krb5_warnx(context, "%s terminated", getprogname());
 #ifdef SIGXCPU
     else if(exit_flag == SIGXCPU)
 	krb5_warnx(context, "%s CPU time limit exceeded", getprogname());
 #endif
-    else if(exit_flag == SIGINT || exit_flag == SIGTERM)
-	krb5_warnx(context, "%s terminated", getprogname());
     else
 	krb5_warnx(context, "%s unexpected exit reason: %ld",
 		   getprogname(), (long)exit_flag);

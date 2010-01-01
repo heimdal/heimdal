@@ -80,7 +80,7 @@ krb5_c_verify_checksum(krb5_context context, const krb5_keyblock *key,
 
     if (data_cksum.cksumtype == cksum->cksumtype
 	&& data_cksum.checksum.length == cksum->checksum.length
-	&& memcmp(data_cksum.checksum.data, cksum->checksum.data, cksum->checksum.length) == 0)
+	&& ct_memcmp(data_cksum.checksum.data, cksum->checksum.data, cksum->checksum.length) == 0)
 	*valid = 1;
 
     krb5_free_checksum_contents(context, &data_cksum);

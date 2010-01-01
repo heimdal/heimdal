@@ -168,7 +168,7 @@ hcrypto-link:
 	$(LN_S) $(srcdir)/../hcrypto hcrypto
 	touch hcrypto-link
 
-do_subst = sed -e 's,[@]srcdir[@],$(srcdir),g'
+do_subst = sed -e 's,[@]srcdir[@],$(srcdir),g' -e 's,[@]exeext[@],$(exeext),g'
 
 test_crypto: test_crypto.in Makefile
 	$(do_subst) < $(srcdir)/test_crypto.in > test_crypto.tmp

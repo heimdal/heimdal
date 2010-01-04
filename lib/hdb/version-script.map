@@ -87,6 +87,7 @@ HEIMDAL_HDB_1.0 {
 		encode_HDB_Ext_Aliases;
 		encode_HDB_Ext_PKINIT_acl;
 		encode_HDB_extension;
+		encode_Key;
 		free_Event;
 		free_HDB_Ext_Aliases;
 		free_HDB_Ext_PKINIT_acl;
@@ -99,6 +100,7 @@ HEIMDAL_HDB_1.0 {
 		length_HDB_Ext_Aliases;
 		length_HDB_Ext_PKINIT_acl;
 		length_HDB_extension;
+		length_Key;
 
 	local:
 		*;

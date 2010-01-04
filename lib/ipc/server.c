@@ -36,6 +36,8 @@
 #include "hi_locl.h"
 #include <assert.h>
 
+#define MAX_PACKET_SIZE (128 * 1024)
+
 struct heim_sipc {
     int (*release)(heim_sipc ctx);
     heim_ipc_callback callback;
@@ -448,6 +450,12 @@ struct client {
 #define WAITING_READ	2
 #define WAITING_WRITE	4
 #define WAITING_CLOSE	8
+
+#define HTTP_REPLY	16
+
+#define INHERIT_MASK	0xffff0000
+#define INCLUDE_ERROR_CODE (1 << 16)
+#define ALLOW_HTTP	(1<<17)
     unsigned calls;
     size_t ptr, len;
     uint8_t *inmsg;
@@ -576,7 +584,10 @@ socket_complete(heim_sipc_call ctx, int returnvalue, heim_idata *reply)
     if ((c->flags & WAITING_CLOSE) == 0) {
 	uint8_t *ptr;
 	uint32_t u32;
-	size_t rlen = reply->length + sizeof(u32) + sizeof(u32);
+	size_t rlen = reply->length + sizeof(u32);
+
+	if (c->flags & INCLUDE_ERROR_CODE)
+	    rlen += sizeof(u32);
 
 	c->outmsg = erealloc(c->outmsg, c->olen + rlen);
 
@@ -587,9 +598,11 @@ socket_complete(heim_sipc_call ctx, int returnvalue, heim_idata *reply)
 	ptr += sizeof(u32);
 
 	/* return value */
-	u32 = htonl(returnvalue);
-	memcpy(ptr, &u32, sizeof(u32));
-	ptr += sizeof(u32);
+	if (c->flags & INCLUDE_ERROR_CODE) {
+	    u32 = htonl(returnvalue);
+	    memcpy(ptr, &u32, sizeof(u32));
+	    ptr += sizeof(u32);
+	}
 
 	/* data */
 	memcpy(ptr, reply->data, reply->length);
@@ -606,6 +619,119 @@ socket_complete(heim_sipc_call ctx, int returnvalue, heim_idata *reply)
     maybe_close(c);
 }
 
+/* remove HTTP %-quoting from buf */
+static int
+de_http(char *buf)
+{
+    unsigned char *p, *q;
+    for(p = q = (unsigned char *)buf; *p; p++, q++) {
+	if(*p == '%' && isxdigit(p[1]) && isxdigit(p[2])) {
+	    unsigned int x;
+	    if(sscanf((char *)p + 1, "%2x", &x) != 1)
+		return -1;
+	    *q = x;
+	    p += 2;
+	} else
+	    *q = *p;
+    }
+    *q = '\0';
+    return 0;
+}
+
+struct socket_call *
+handle_http_tcp(struct client *c)
+{
+    struct socket_call *cs;
+    char *s, *p, *t;
+    void *data;
+    char *proto;
+    int len;
+
+    s = (char *)d->inmsg;
+
+    p = strstr(s, "\r\n");
+    if (p == NULL)
+	return NULL;
+
+    *p = 0;
+
+    p = NULL;
+    t = strtok_r(s, " \t", &p);
+    if (t == NULL)
+	return NULL;
+
+    t = strtok_r(NULL, " \t", &p);
+    if (t == NULL)
+	return NULL;
+
+    data = malloc(strlen(t));
+    if (data == NULL) {
+	return NULL;
+
+    if(*t == '/')
+	t++;
+    if(de_http(t) != 0) {
+	free(data);
+	return NULL;
+    }
+    proto = strtok_r(NULL, " \t", &p);
+    if (proto == NULL) {
+	free(data);
+	return NULL;
+    }
+    len = base64_decode(t, data);
+    if(len <= 0){
+	const char *msg =
+	    " 404 Not found\r\n"
+	    "Server: Heimdal/" VERSION "\r\n"
+	    "Cache-Control: no-cache\r\n"
+	    "Pragma: no-cache\r\n"
+	    "Content-type: text/html\r\n"
+	    "Content-transfer-encoding: 8bit\r\n\r\n"
+	    "<TITLE>404 Not found</TITLE>\r\n"
+	    "<H1>404 Not found</H1>\r\n"
+	    "That page doesn't exist, maybe you are looking for "
+	    "<A HREF=\"http://www.h5l.org/\">Heimdal</A>?\r\n";
+	free(data);
+	if (rk_IS_SOCKET_ERROR(send(d->s, proto, strlen(proto), 0))) {
+	    return NULL;
+	}
+	if (rk_IS_SOCKET_ERROR(send(d->s, msg, strlen(msg), 0))) {
+	    return NULL;
+	}
+	return NULL;
+    }
+
+    cs = emalloc(sizeof(*cs));
+    cs->c = c;
+    cs->in.data = data;
+    cs->in.length = len;
+    c->ptr = 0;
+
+    {
+	const char *msg =
+	    " 200 OK\r\n"
+	    "Server: Heimdal/" VERSION "\r\n"
+	    "Cache-Control: no-cache\r\n"
+	    "Pragma: no-cache\r\n"
+	    "Content-type: application/octet-stream\r\n"
+	    "Content-transfer-encoding: binary\r\n\r\n";
+	if (rk_IS_SOCKET_ERROR(send(d->s, proto, strlen(proto), 0))) {
+	    free(data);
+	    free(cs);
+	    return NULL;
+	}
+	if (rk_IS_SOCKET_ERROR(send(d->s, msg, strlen(msg), 0))) {
+	    free(data);
+	    free(cs);
+	    return NULL;
+	}
+    }
+
+    return cs;
+}
+
+
 static void
 handle_read(struct client *c)
 {
@@ -614,7 +740,7 @@ handle_read(struct client *c)
 
     if (c->flags & LISTEN_SOCKET) {
 	add_new_socket(c->fd,
-		       WAITING_READ,
+		       WAITING_READ | (c->flags & INHERIT_MASK),
 		       c->callback,
 		       c->userctx);
 	return;
@@ -639,22 +765,45 @@ handle_read(struct client *c)
     while (c->ptr >= sizeof(dlen)) {
 	struct socket_call *cs;
 	
-	memcpy(&dlen, c->inmsg, sizeof(dlen));
-	dlen = ntohl(dlen);
+	if((c->flags & ALLOW_HTTP) && c->ptr >= 4 &&
+	   strncmp((char *)c->inmsg, "GET ", 4) == 0 &&
+	   strncmp((char *)c->inmsg + c->ptr - 4, "\r\n\r\n", 4) == 0) {
+
+	    /* remove the trailing \r\n\r\n so the string is NUL terminated */
+	    c->inmsg[c->ptr - 4] = '\0';
+
+	    c->flags |= HTTP_REPLY;
+
+	    cs = handle_http_tcp(c);
+	    if (cs == NULL) {
+		c->flags |= WAITING_CLOSE;
+		c->flags &= ~WAITING_READ;
+		break;
+	    }
+	} else {
+	    memcpy(&dlen, c->inmsg, sizeof(dlen));
+	    dlen = ntohl(dlen);
+
+	    if (dlen > MAX_PACKET_SIZE) {
+		c->flags |= WAITING_CLOSE;
+		c->flags &= ~WAITING_READ;
+		return;
+	    }
+	    if (dlen < c->ptr - sizeof(dlen)) {
+		break;
+	    }
 	
-	if (dlen < c->ptr - sizeof(dlen))
-	    break;
+	    cs = emalloc(sizeof(*cs));
+	    cs->c = c;
+	    cs->in.data = emalloc(dlen);
+	    memcpy(cs->in.data, c->inmsg + sizeof(dlen), dlen);
+	    cs->in.length = dlen;
 	
-	cs = emalloc(sizeof(*cs));
-	cs->c = c;
-	cs->in.data = emalloc(dlen);
-	memcpy(cs->in.data, c->inmsg + sizeof(dlen), dlen);
-	cs->in.length = dlen;
-	
-	c->ptr -= sizeof(dlen) + dlen;
-	memmove(c->inmsg,
-		c->inmsg + sizeof(dlen) + dlen,
-		c->ptr);
+	    c->ptr -= sizeof(dlen) + dlen;
+	    memmove(c->inmsg,
+		    c->inmsg + sizeof(dlen) + dlen,
+		    c->ptr);
+	}
 	
 	c->calls++;
 	c->callback(c->userctx, &cs->in,
@@ -753,22 +902,42 @@ socket_release(heim_sipc ctx)
     return 0;
 }
 
+#define HEIM_SIPC_TYPE_IPC		1
+#define HEIM_SIPC_TYPE_UINT32		2
+#define HEIM_SIPC_TYPE_HTTP		4
+
 int
-heim_sipc_launchd_stream_fd_init(int fd,
-				 heim_ipc_callback callback,
-				 void *user, heim_sipc *ctx)
+heim_sipc_stream_listener(int fd,
+			  int type,
+			  heim_ipc_callback callback,
+			  void *user, heim_sipc *ctx)
 {
     heim_sipc ct = calloc(1, sizeof(*ct));
     struct client *c;
 
-    c = add_new_socket(fd, LISTEN_SOCKET|WAITING_READ, callback, user);
+    if ((type & HEIM_SIPC_TYPE_IPC) && (type & (HEIM_SIPC_TYPE_UINT32|HEIM_SIPC_TYPE_HTTP)))
+	return EINVAL;
+
+    switch (type) {
+    case HEIM_SIPC_TYPE_IPC:
+	c = add_new_socket(fd, LISTEN_SOCKET|WAITING_READ|INCLUDE_ERROR_CODE, callback, user);
+	break;
+    case HEIM_SIPC_TYPE_UINT32:
+	c = add_new_socket(fd, LISTEN_SOCKET|WAITING_READ, callback, user);
+	break;
+    case HEIM_SIPC_TYPE_UINT32|HEIM_SIPC_TYPE_HTTP:
+	c = add_new_socket(fd, LISTEN_SOCKET|WAITING_READ|ALLOW_HTTP, callback, user);
+	break;
+    default:
+	free(ct);
+	return EINVAL;
+    }
 
     ct->mech = c;
     ct->release = socket_release;
     *ctx = ct;
     return 0;
 }
-
 
 int
 heim_sipc_service_unix(const char *service,
@@ -808,10 +977,8 @@ heim_sipc_service_unix(const char *service,
 
     chmod(un.sun_path, 0666);
 
-    return heim_sipc_launchd_stream_fd_init(fd, callback, user, ctx);
+    return heim_sipc_stream_listener(fd, HEIM_SIPC_TYPE_IPC, callback, user, ctx);
 }
-
-
 
 /**
  * Set the idle timeout value

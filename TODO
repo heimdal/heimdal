@@ -27,3 +27,4 @@ host->realm mapping
 -- drop all double negation #ifndef NO_
 -- got though windows specific ifdefs to minimized them
 -- switch to use heim-ipc for services, like the kadmin change notification socket
+-- Unify lib/krb5/expand_path_w32.c

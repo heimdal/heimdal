@@ -49,6 +49,8 @@
 #include <krb5-types.h>
 #include <asn1-common.h>
 
+#include <base64.h>
+
 #include <heim-ipc.h>
 
 #if defined(__APPLE__) && defined(HAVE_GCD)

@@ -579,6 +579,7 @@ output_data(struct client *c, const void *data, size_t len)
     c->outmsg = erealloc(c->outmsg, c->olen + len);
     memcpy(&c->outmsg[c->olen], data, len);
     c->olen += len;
+    c->flags |= WAITING_WRITE;
 }
 
 static void
@@ -606,7 +607,12 @@ socket_complete(heim_sipc_call ctx, int returnvalue, heim_idata *reply)
 
 	/* data */
 	output_data(c, reply->data, reply->length);
-	c->flags |= WAITING_WRITE;
+
+	/* if HTTP, close connection */
+	if (c->flags & HTTP_REPLY) {
+	    c->flags |= WAITING_CLOSE;
+	    c->flags &= ~WAITING_READ;
+	}
     }
 
     c->calls--;
@@ -889,13 +895,8 @@ socket_release(heim_sipc ctx)
     return 0;
 }
 
-#define HEIM_SIPC_TYPE_IPC		1
-#define HEIM_SIPC_TYPE_UINT32		2
-#define HEIM_SIPC_TYPE_HTTP		4
-
 int
-heim_sipc_stream_listener(int fd,
-			  int type,
+heim_sipc_stream_listener(int fd, int type,
 			  heim_ipc_callback callback,
 			  void *user, heim_sipc *ctx)
 {
@@ -912,6 +913,7 @@ heim_sipc_stream_listener(int fd,
     case HEIM_SIPC_TYPE_UINT32:
 	c = add_new_socket(fd, LISTEN_SOCKET|WAITING_READ, callback, user);
 	break;
+    case HEIM_SIPC_TYPE_HTTP:
     case HEIM_SIPC_TYPE_UINT32|HEIM_SIPC_TYPE_HTTP:
 	c = add_new_socket(fd, LISTEN_SOCKET|WAITING_READ|ALLOW_HTTP, callback, user);
 	break;
@@ -964,7 +966,8 @@ heim_sipc_service_unix(const char *service,
 
     chmod(un.sun_path, 0666);
 
-    return heim_sipc_stream_listener(fd, HEIM_SIPC_TYPE_IPC, callback, user, ctx);
+    return heim_sipc_stream_listener(fd, HEIM_SIPC_TYPE_IPC,
+				     callback, user, ctx);
 }
 
 /**

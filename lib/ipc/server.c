@@ -572,6 +572,16 @@ struct socket_call {
 };
 
 static void
+output_data(struct client *c, const void *data, size_t len)
+{
+    if (c->olen + len < c->olen)
+	abort();
+    c->outmsg = erealloc(c->outmsg, c->olen + len);
+    memcpy(&c->outmsg[c->olen], data, len);
+    c->olen += len;
+}
+
+static void
 socket_complete(heim_sipc_call ctx, int returnvalue, heim_idata *reply)
 {
     struct socket_call *sc = (struct socket_call *)ctx;
@@ -582,31 +592,20 @@ socket_complete(heim_sipc_call ctx, int returnvalue, heim_idata *reply)
 	abort();
 
     if ((c->flags & WAITING_CLOSE) == 0) {
-	uint8_t *ptr;
 	uint32_t u32;
-	size_t rlen = reply->length + sizeof(u32);
-
-	if (c->flags & INCLUDE_ERROR_CODE)
-	    rlen += sizeof(u32);
-
-	c->outmsg = erealloc(c->outmsg, c->olen + rlen);
 
 	/* length */
-	ptr = &c->outmsg[c->olen];
 	u32 = htonl(reply->length);
-	memcpy(ptr, &u32, sizeof(u32));
-	ptr += sizeof(u32);
+	output_data(c, &u32, sizeof(u32));
 
 	/* return value */
 	if (c->flags & INCLUDE_ERROR_CODE) {
 	    u32 = htonl(returnvalue);
-	    memcpy(ptr, &u32, sizeof(u32));
-	    ptr += sizeof(u32);
+	    output_data(c, &u32, sizeof(u32));
 	}
 
 	/* data */
-	memcpy(ptr, reply->data, reply->length);
-	c->olen += rlen;
+	output_data(c, reply->data, reply->length);
 	c->flags |= WAITING_WRITE;
     }
 
@@ -638,7 +637,7 @@ de_http(char *buf)
     return 0;
 }
 
-struct socket_call *
+static struct socket_call *
 handle_http_tcp(struct client *c)
 {
     struct socket_call *cs;
@@ -647,7 +646,7 @@ handle_http_tcp(struct client *c)
     char *proto;
     int len;
 
-    s = (char *)d->inmsg;
+    s = (char *)c->inmsg;
 
     p = strstr(s, "\r\n");
     if (p == NULL)
@@ -665,7 +664,7 @@ handle_http_tcp(struct client *c)
 	return NULL;
 
     data = malloc(strlen(t));
-    if (data == NULL) {
+    if (data == NULL)
 	return NULL;
 
     if(*t == '/')
@@ -693,12 +692,8 @@ handle_http_tcp(struct client *c)
 	    "That page doesn't exist, maybe you are looking for "
 	    "<A HREF=\"http://www.h5l.org/\">Heimdal</A>?\r\n";
 	free(data);
-	if (rk_IS_SOCKET_ERROR(send(d->s, proto, strlen(proto), 0))) {
-	    return NULL;
-	}
-	if (rk_IS_SOCKET_ERROR(send(d->s, msg, strlen(msg), 0))) {
-	    return NULL;
-	}
+	output_data(c, proto, strlen(proto));
+	output_data(c, msg, strlen(msg));
 	return NULL;
     }
 
@@ -716,16 +711,8 @@ handle_http_tcp(struct client *c)
 	    "Pragma: no-cache\r\n"
 	    "Content-type: application/octet-stream\r\n"
 	    "Content-transfer-encoding: binary\r\n\r\n";
-	if (rk_IS_SOCKET_ERROR(send(d->s, proto, strlen(proto), 0))) {
-	    free(data);
-	    free(cs);
-	    return NULL;
-	}
-	if (rk_IS_SOCKET_ERROR(send(d->s, msg, strlen(msg), 0))) {
-	    free(data);
-	    free(cs);
-	    return NULL;
-	}
+	output_data(c, proto, strlen(proto));
+	output_data(c, msg, strlen(msg));
     }
 
     return cs;

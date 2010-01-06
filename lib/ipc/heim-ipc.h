@@ -108,8 +108,8 @@ heim_sipc_launchd_mach_init(const char *, heim_ipc_callback,
 			    void *, heim_sipc *);
 
 int
-heim_sipc_launchd_stream_fd_init(int, heim_ipc_callback,
-				 void *, heim_sipc *);
+heim_sipc_stream_listener(int, int, heim_ipc_callback,
+			  void *, heim_sipc *);
 
 int
 heim_sipc_service_unix(const char *, heim_ipc_callback,

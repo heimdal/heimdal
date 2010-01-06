@@ -25,9 +25,10 @@ libheim_ipcs_la_LIBADD = $(libheim_ipcc_la_LIBADD)
 
 TESTS =	$(check_PROGRAMS)
 
-noinst_PROGRAMS = tc ts
+noinst_PROGRAMS = tc ts ts-http
 
 ts_LDADD = libheim-ipcs.la $(LIB_roken)
+ts_http_LDADD = $(ts_LDADD)
 tc_LDADD = libheim-ipcc.la $(LIB_roken)
 
 if have_gcd

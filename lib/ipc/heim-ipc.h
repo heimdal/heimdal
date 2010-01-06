@@ -95,6 +95,10 @@ heim_ipc_async(heim_ipc, const heim_idata *, void *, void (*func)(void *, int, h
 
 /* server */
 
+#define HEIM_SIPC_TYPE_IPC		1
+#define HEIM_SIPC_TYPE_UINT32		2
+#define HEIM_SIPC_TYPE_HTTP		4
+
 typedef void
 (*heim_ipc_complete)(heim_sipc_call, int, heim_idata *);
 

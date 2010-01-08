@@ -43,7 +43,9 @@
 #include <string.h>
 #include <assert.h>
 
+#ifdef HAVE_COMMONCRYPTO_COMMONDIGEST_H
 #include <CommonCrypto/CommonDigest.h>
+#endif
 #include <CommonCrypto/CommonCryptor.h>
 
 #include <evp.h>
@@ -420,6 +422,7 @@ EVP_cc_rc2_64_cbc(void)
 const EVP_MD *
 EVP_cc_md2(void)
 {
+#ifdef HAVE_COMMONCRYPTO_COMMONDIGEST_H
     static const struct hc_evp_md md2 = {
 	CC_MD2_DIGEST_LENGTH,
 	CC_MD2_BLOCK_BYTES,
@@ -430,6 +433,9 @@ EVP_cc_md2(void)
 	(hc_evp_md_cleanup)NULL
     };
     return &md2;
+#else
+    return NULL;
+#endif
 }
 
 /**
@@ -441,6 +447,7 @@ EVP_cc_md2(void)
 const EVP_MD *
 EVP_cc_md4(void)
 {
+#ifdef HAVE_COMMONCRYPTO_COMMONDIGEST_H
     static const struct hc_evp_md md4 = {
 	CC_MD4_DIGEST_LENGTH,
 	CC_MD4_BLOCK_BYTES,
@@ -451,6 +458,9 @@ EVP_cc_md4(void)
 	(hc_evp_md_cleanup)NULL
     };
     return &md4;
+#else
+    return NULL;
+#endif
 }
 
 /**
@@ -462,6 +472,7 @@ EVP_cc_md4(void)
 const EVP_MD *
 EVP_cc_md5(void)
 {
+#ifdef HAVE_COMMONCRYPTO_COMMONDIGEST_H
     static const struct hc_evp_md md5 = {
 	CC_MD5_DIGEST_LENGTH,
 	CC_MD5_BLOCK_BYTES,
@@ -472,6 +483,9 @@ EVP_cc_md5(void)
 	(hc_evp_md_cleanup)NULL
     };
     return &md5;
+#else
+    return NULL;
+#endif
 }
 
 /**
@@ -483,6 +497,7 @@ EVP_cc_md5(void)
 const EVP_MD *
 EVP_cc_sha1(void)
 {
+#ifdef HAVE_COMMONCRYPTO_COMMONDIGEST_H
     static const struct hc_evp_md sha1 = {
 	CC_SHA1_DIGEST_LENGTH,
 	CC_SHA1_BLOCK_BYTES,
@@ -493,6 +508,9 @@ EVP_cc_sha1(void)
 	(hc_evp_md_cleanup)NULL
     };
     return &sha1;
+#else
+    return NULL;
+#endif
 }
 
 /**
@@ -504,6 +522,7 @@ EVP_cc_sha1(void)
 const EVP_MD *
 EVP_cc_sha256(void)
 {
+#ifdef HAVE_COMMONCRYPTO_COMMONDIGEST_H
     static const struct hc_evp_md sha256 = {
 	CC_SHA256_DIGEST_LENGTH,
 	CC_SHA256_BLOCK_BYTES,
@@ -514,6 +533,9 @@ EVP_cc_sha256(void)
 	(hc_evp_md_cleanup)NULL
     };
     return &sha256;
+#else
+    return NULL;
+#endif
 }
 
 /**

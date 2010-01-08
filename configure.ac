@@ -295,6 +295,7 @@ dnl Checks for header files.
 AC_HEADER_STDC
 
 AC_CHECK_HEADERS([\
+	CommonCrypto/CommonDigest.h		\
 	arpa/ftp.h				\
 	arpa/telnet.h				\
 	bind/bitypes.h				\

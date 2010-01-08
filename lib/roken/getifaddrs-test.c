@@ -94,8 +94,7 @@ main(int argc, char **argv)
     /* Check that freeifaddrs doesn't crash */
     freeifaddrs(addrs);
 
-    if (rk_SOCK_EXIT())
-	errx(1, "Couldn't uninitialize sockets. Err=%d\n", rk_SOCK_ERRNO);
+    rk_SOCK_EXIT();
 
     return 0;
 }

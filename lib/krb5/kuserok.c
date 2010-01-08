@@ -243,7 +243,6 @@ krb5_kuserok (krb5_context context,
     size_t buflen;
     struct passwd *pwd = NULL;
     char *profile_dir = NULL;
-    krb5_boolean free_profile_dir = FALSE;
     krb5_error_code ret;
     krb5_boolean result = FALSE;
 

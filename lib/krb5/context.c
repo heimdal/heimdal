@@ -245,7 +245,7 @@ cc_ops_register(krb5_context context)
 static krb5_error_code
 cc_ops_copy(krb5_context context, const krb5_context src_context)
 {
-    krb5_cc_ops **cc_ops;
+    const krb5_cc_ops **cc_ops;
 
     context->cc_ops = NULL;
     context->num_cc_ops = 0;

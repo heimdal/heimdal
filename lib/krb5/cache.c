@@ -186,9 +186,9 @@ allocate_ccache (krb5_context context,
 		 krb5_ccache *id)
 {
     krb5_error_code ret;
+#ifdef KRB5_USE_PATH_TOKENS
     char * exp_residual = NULL;
 
-#ifdef KRB5_USE_PATH_TOKENS
     ret = _krb5_expand_path_tokens(context, residual, &exp_residual);
     if (ret)
 	return ret;

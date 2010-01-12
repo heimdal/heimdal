@@ -284,11 +284,15 @@ close_generate (void)
 {
     fprintf (headerfile, "#endif /* __%s_h__ */\n", headerbase);
 
-    fclose (headerfile);
-    fclose (privheaderfile);
-    fclose (templatefile);
-    fprintf (logfile, "\n");
-    fclose (logfile);
+    if (headerfile)
+        fclose (headerfile);
+    if (privheaderfile)
+        fclose (privheaderfile);
+    if (templatefile)
+        fclose (templatefile);
+    if (logfile)
+        fprintf (logfile, "\n");
+        fclose (logfile);
 }
 
 void

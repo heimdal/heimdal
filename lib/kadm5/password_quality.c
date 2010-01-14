@@ -170,7 +170,7 @@ external_passwd_quality (krb5_context context,
 	return 1;
     }
 
-    child = pipe_execv(&in, &out, &error, program, p, NULL);
+    child = pipe_execv(&in, &out, &error, program, program, p, NULL);
     if (child < 0) {
 	snprintf(message, length, "external password quality "
 		 "program failed to execute for principal %s", p);

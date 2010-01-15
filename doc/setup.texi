@@ -421,16 +421,18 @@ controls, add lines similar to the following to your
 
 @example
 [password_quality]
-	policies = external-check builtin:minimum-length module:policyname
+	policies = external-check builtin:minimum-length modulename:policyname
 	external_program = /bin/false
 	policy_libraries = @var{library1.so} @var{library2.so}
 @end example
 
 In @samp{[password_quality]policies} the module name is optional if
 the policy name is unique in all modules (members of
-@samp{policy_libraries}).
+@samp{policy_libraries}).  All built-in policies can be qualified with
+a module name of @samp{builtin} to unambiguously specify the built-in
+policy and not a policy by the same name from a loaded module.
 
-The built-in polices are
+The built-in policies are
 
 @itemize @bullet
 

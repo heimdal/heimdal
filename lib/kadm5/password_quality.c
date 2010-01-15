@@ -398,8 +398,10 @@ kadm5_add_passwd_quality_verifier(krb5_context context,
 		return ret;
 	    tmp++;
 	}
+	return 0;
+    } else {
+	return add_verifier(context, check_library);
     }
-    return add_verifier(context, check_library);
 #else
     return 0;
 #endif /* HAVE_DLOPEN */

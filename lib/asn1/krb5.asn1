@@ -766,7 +766,7 @@ PA-ServerReferralData ::= SEQUENCE {
 FastOptions ::= BIT STRING {
 	    reserved(0),
 	    hide-client-names(1),
-	    kdc-follow--referrals(16)
+	    kdc-follow-referrals(16)
 }
 
 KrbFastReq ::= SEQUENCE {

@@ -274,6 +274,10 @@ typedef enum krb5_key_usage {
     /* Encryption type of the kdc session contribution in pk-init */
     KRB5_KU_AS_REQ = 56,
     /* Checksum of over the AS-REQ send by the KDC in PA-REQ-ENC-PA-REP */
+    KRB5_KU_FAST_REQ_CHKSUM = 50,
+    /* FAST armor checksum */
+    KRB5_KU_FAST_ENC = 51,
+    /* FAST armor encryption */
     KRB5_KU_DIGEST_ENCRYPT = -18,
     /* Encryption key usage used in the digest encryption field */
     KRB5_KU_DIGEST_OPAQUE = -19,

@@ -1388,6 +1388,17 @@ _kdc_as_rep(krb5_context context,
 	pa->padata_value.length	= 0;
 	pa->padata_value.data	= NULL;
 #endif
+	/*
+	 * Announce FX-FAST
+	 */
+	ret = realloc_method_data(&method_data);
+	if (ret) {
+	    free_METHOD_DATA(&method_data);
+	    goto out;
+	}
+	pa = &method_data.val[method_data.len-1];
+	pa->padata_type		= KRB5_PADATA_FX_FAST;
+	pa->padata_value.length	= 0;
 
 	/*
 	 * If there is a client key, send ETYPE_INFO{,2}

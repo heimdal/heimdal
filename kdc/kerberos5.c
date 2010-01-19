@@ -2145,6 +2145,10 @@ out:
 	    if (ret)
 		goto out2;
 
+	    /* 
+	     * Set cookie to let client know we want conversation to
+	     * continue.
+	     */
 	    ret = krb5_padata_add(context, &error_method,
 				  KRB5_PADATA_FX_COOKIE,
 				  NULL, 0);

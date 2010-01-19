@@ -278,6 +278,10 @@ typedef enum krb5_key_usage {
     /* FAST armor checksum */
     KRB5_KU_FAST_ENC = 51,
     /* FAST armor encryption */
+    KRB5_KU_FAST_REP = 52,
+    /* FAST armor reply */
+    KRB5_KU_FAST_FINISHED = 53,
+    /* FAST finished checksum */
     KRB5_KU_DIGEST_ENCRYPT = -18,
     /* Encryption key usage used in the digest encryption field */
     KRB5_KU_DIGEST_OPAQUE = -19,

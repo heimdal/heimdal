@@ -51,10 +51,13 @@ _kdc_fast_mk_response(krb5_context context,
     size_t size;
 
     memset(&fxfastrep, 0, sizeof(fxfastrep));
+    memset(&fastrep, 0, sizeof(fastrep));
     krb5_data_zero(data);
 
-    fastrep.padata.val = pa_data->val;
-    fastrep.padata.len = pa_data->len;
+    if (pa_data) {
+	fastrep.padata.val = pa_data->val;
+	fastrep.padata.len = pa_data->len;
+    }
     fastrep.strengthen_key = strengthen_key;
     fastrep.finished = finished;
     fastrep.nonce = nonce;

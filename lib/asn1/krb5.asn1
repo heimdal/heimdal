@@ -809,9 +809,10 @@ KrbFastFinished ::= SEQUENCE {
 }
 
 KrbFastResponse ::= SEQUENCE {
-	padata      [0] SEQUENCE OF PA-DATA,
-	rep-key     [1] EncryptionKey OPTIONAL,
-	finished    [2] KrbFastFinished OPTIONAL,
+	padata      	[0] METHOD-DATA,
+        strengthen-key	[1] EncryptionKey OPTIONAL,
+	finished	[2] KrbFastFinished OPTIONAL,
+        nonce		[3] krb5uint32,
 	...
 }
 

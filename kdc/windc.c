@@ -111,7 +111,7 @@ _kdc_check_access(krb5_context context,
 		  hdb_entry_ex *client_ex, const char *client_name,
 		  hdb_entry_ex *server_ex, const char *server_name,
 		  KDC_REQ *req,
-		  krb5_data *e_data)
+		  METHOD_DATA *method_data)
 {
     if (windcft == NULL)
 	    return kdc_check_flags(context, config,
@@ -119,9 +119,9 @@ _kdc_check_access(krb5_context context,
 				   server_ex, server_name,
 				   req->msg_type == krb_as_req);
 
-    return (windcft->client_access)(windcctx,
-				    context, config,
-				    client_ex, client_name,
-				    server_ex, server_name,
-				    req, e_data);
+    return (windcft->client_access)(windcctx, 
+				    context, config, 
+				    client_ex, client_name, 
+				    server_ex, server_name, 
+				    req, method_data);
 }

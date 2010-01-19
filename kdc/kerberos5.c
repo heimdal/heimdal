@@ -998,10 +998,13 @@ _kdc_as_rep(krb5_context context,
     {
 	const PA_DATA *pa;
 	size_t len;
+	int i = 0;
 
-	pa = _kdc_find_padata(req, &i, KRB5_PADATA_FX_FAST));
+	pa = _kdc_find_padata(req, &i, KRB5_PADATA_FX_FAST);
 	if (pa != NULL) {
 	    PA_FX_FAST_REQUEST fxreq;
+	    krb5_keyblock armorkey;
+
 	    ret = decode_PA_FX_FAST_REQUEST(pa->padata_value.data,
 					    pa->padata_value.length,
 					    &fxreq,
@@ -1009,14 +1012,14 @@ _kdc_as_rep(krb5_context context,
 	    if (ret)
 		goto out;
 	    if (len != pa->padata_value.length) {
-		ret = KDC_ERR_PREAUTH_FAILED;
+		ret = KRB5KDC_ERR_PREAUTH_FAILED;
 		goto out;
 	    }
 
-	    if (fxreq.choice != armored_data) {
+	    if (fxreq.element != choice_PA_FX_FAST_REQUEST_armored_data) {
 		kdc_log(context, config, 0,
 			"AS-REQ FAST contain unknown type");
-		ret = KDC_ERR_PREAUTH_FAILED;
+		ret = KRB5KDC_ERR_PREAUTH_FAILED;
 		goto out;
 	    }
 
@@ -1024,20 +1027,22 @@ _kdc_as_rep(krb5_context context,
 	    if (fxreq.u.armored_data.armor == NULL) {
 		kdc_log(context, config, 0,
 			"AS-REQ armor missing");
-		ret = KDC_ERR_PREAUTH_FAILED;
+		ret = KRB5KDC_ERR_PREAUTH_FAILED;
 		goto out;
 	    }
 
 	    if (fxreq.u.armored_data.armor->armor_type != 1) {
 		kdc_log(context, config, 0,
 			"AS-REQ armor type not ap-req");
-		ret = KDC_ERR_PREAUTH_FAILED;
+		ret = KRB5KDC_ERR_PREAUTH_FAILED;
 		goto out;
 	    }
 	    
 	    krb5_ap_req ap_req;
 
-	    ret = krb5_decode_ap_req(context, fxreq.u.armored_data.armor->armor_value, &ap_req);
+	    ret = krb5_decode_ap_req(context,
+				     &fxreq.u.armored_data.armor->armor_value,
+				     &ap_req);
 	    if(ret) {
 		kdc_log(context, config, 0, "AP-REQ decode failed");
 		goto out;
@@ -1078,28 +1083,47 @@ _kdc_as_rep(krb5_context context,
 	    if (ac->remote_subkey == NULL) {
 		kdc_log(context, config, 0,
 			"FAST AP-REQ remote subkey missing");
-		ret = KDC_ERR_PREAUTH_FAILED;
+		ret = KRB5KDC_ERR_PREAUTH_FAILED;
 		goto out;
 	    }		
 
-	    krb5_keyblock armorkey;
+	    krb5_crypto crypto_subkey, crypto_session, armor_crypto = NULL;
 
-	    ret = krb5_crypto_fx_cf2(context, subkey, sessionkey,
+	    krb5_crypto_init(context, ac->remote_subkey, 0, &crypto_subkey);
+	    krb5_crypto_init(context, ac->keyblock, 0, &crypto_session);
+
+	    krb5_data pepper1, pepper2;
+	    pepper1.data = "subkeyarmor";
+	    pepper1.length = strlen(pepper1.data);
+	    pepper2.data = "ticketarmor";
+	    pepper2.length = strlen(pepper2.data);
+
+	    ret = krb5_crypto_fx_cf2(context, crypto_subkey, crypto_session,
+				     &pepper1, &pepper2,
 				     ac->remote_subkey->keytype, &armorkey);
+	    krb5_crypto_destroy(context, crypto_subkey);
+	    krb5_crypto_destroy(context, crypto_session);
+
 	    if (ret)
 		goto out;
 
+	    krb5_crypto_init(context, &armorkey, 0, &armor_crypto);
+	    krb5_free_keyblock_contents(context, &armorkey);
+
 	    /* verify req-checksum of the outer body */
+
+	    unsigned char *buf;
+	    size_t len, size;
 
 	    ASN1_MALLOC_ENCODE(KDC_REQ_BODY, buf, len, &req->req_body, &size, ret);
 	    if (ret)
 		goto out;
 	    if (size != len) {
-		ret = KDC_ERR_PREAUTH_FAILED;
+		ret = KRB5KDC_ERR_PREAUTH_FAILED;
 		goto out;
 	    }
 
-	    ret = krb5_verify_checksum(context, fastcrypto,
+	    ret = krb5_verify_checksum(context, armor_crypto,
 				       KRB5_KU_FAST_REQ_CHKSUM,
 				       buf, len, 
 				       &fxreq.u.armored_data.req_checksum);
@@ -1107,7 +1131,9 @@ _kdc_as_rep(krb5_context context,
 	    if (ret)
 		goto out;
 
-	    ret = krb5_decrypt_EncryptedData(crypto, fastcrypto,
+	    krb5_data data;
+
+	    ret = krb5_decrypt_EncryptedData(context, armor_crypto,
 					     KRB5_KU_FAST_ENC,
 					     &fxreq.u.armored_data.enc_fast_req,
 					     &data);
@@ -1115,12 +1141,16 @@ _kdc_as_rep(krb5_context context,
 		goto out;
 
 	    ret = decode_KrbFastReq(data.data, data.length, &fastreq, &size);
-	    if (ret)
+	    if (ret) {
+		krb5_data_free(&data);
 		goto out;
+	    }
 	    if (data.length != size) {
-		ret = KDC_ERR_PREAUTH_FAILED;
+		krb5_data_free(&data);
+		ret = KRB5KDC_ERR_PREAUTH_FAILED;
 		goto out;
 	    }		
+	    krb5_data_free(&data);
 
 	    free_KDC_REQ_BODY(&req->req_body);
 	    ret = copy_KDC_REQ_BODY(&fastreq.req_body, &req->req_body);
@@ -1131,7 +1161,7 @@ _kdc_as_rep(krb5_context context,
 	    if (FastOptions2int(fastreq.fast_options) & 0xfffc) {
 		kdc_log(context, config, 0,
 			"FAST unsupported mandatory option set");
-		ret = KDC_ERR_PREAUTH_FAILED;
+		ret = KRB5KDC_ERR_PREAUTH_FAILED;
 		goto out;
 	    }
 
@@ -2051,7 +2081,7 @@ out:
 	    if (e_data.length != len)
 		krb5_abortx(context, "internal asn.1 error");
 
-	    fxfastrep.choice = armored_data_choice_PA_FX_FAST_REPLY;
+	    fxfastrep.element = choice_PA_FX_FAST_REPLY_armored_data;
 
 	    ret = krb5_encrypt_EncryptedData(context,
 					     crypto,

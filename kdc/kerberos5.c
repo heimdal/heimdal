@@ -2085,7 +2085,7 @@ out:
 	    }
 	    krb5_data_zero(&e_data);
 
-	    ret = _kdc_fast_mk_responce(context, armor_crypto,
+	    ret = _kdc_fast_mk_response(context, armor_crypto,
 					&error_method, NULL, NULL, 
 					req->req_body.nonce, &e_data);
 	    free_METHOD_DATA(&error_method);

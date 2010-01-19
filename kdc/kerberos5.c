@@ -985,6 +985,8 @@ _kdc_as_rep(krb5_context context,
     krb5_crypto armor_crypto = NULL;
 
     memset(&rep, 0, sizeof(rep));
+    memset(&et, 0, sizeof(et));
+    memset(&ek, 0, sizeof(ek));
     memset(&session_key, 0, sizeof(session_key));
     error_method.len = 0;
     error_method.val = NULL;
@@ -2023,19 +2025,48 @@ _kdc_as_rep(krb5_context context,
 
 	memset(&finished, 0, sizeof(finished));
 
+	finished.timestamp = kdc_time;
+	finished.usec = 0;
+	finished.crealm = client_princ->realm;
+	finished.cname = client_princ->name;
+
+	krb5_data_zero(&data);
+
+	ret = krb5_create_checksum(context, armor_crypto,
+				   KRB5_KU_FAST_FINISHED, 0,
+				   data.data, data.length,
+				   &finished.ticket_checksum);
+	if (ret)
+	    goto out;
+
 	ret = _kdc_fast_mk_response(context, armor_crypto,
 				    rep.padata, strengthen_key, &finished, 
 				    req->req_body.nonce, &data);
+	free_Checksum(&finished.ticket_checksum);
 	if (ret)
-	    goto out2;
+	    goto out;
+
+	if (rep.padata) {
+	    free_METHOD_DATA(rep.padata);
+	} else {
+	    rep.padata = calloc(1, sizeof(*rep.padata));
+	    if (rep.padata == NULL) {
+		ret = ENOMEM;
+		goto out;
+	    }
+	}
+
+	ret = krb5_padata_add(context, rep.padata,
+			      KRB5_PADATA_FX_FAST,
+			      data.data, data.length);
+	if (ret)
+	    goto out;
     }
 
     ret = _kdc_encode_reply(context, config,
 			    &rep, &et, &ek, setype, server->entry.kvno,
 			    &skey->key, client->entry.kvno,
 			    reply_key, 0, &e_text, reply);
-    free_EncTicketPart(&et);
-    free_EncKDCRepPart(&ek);
     if (ret)
 	goto out;
 
@@ -2134,6 +2165,9 @@ out2:
     if (pkp)
 	_kdc_pk_free_client_param(context, pkp);
 #endif
+    free_EncTicketPart(&et);
+    free_EncKDCRepPart(&ek);
+
     if (error_method.len)
 	free_METHOD_DATA(&error_method);
     if (client_princ)

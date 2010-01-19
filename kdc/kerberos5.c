@@ -2017,7 +2017,17 @@ _kdc_as_rep(krb5_context context,
 
     /* XXX handle fast reply */
     if (armor_crypto) {
+	krb5_data data;
+	krb5_keyblock *strengthen_key = NULL;
+	KrbFastFinished finished;
 
+	memset(&finished, 0, sizeof(finished));
+
+	ret = _kdc_fast_mk_response(context, armor_crypto,
+				    rep.padata, strengthen_key, &finished, 
+				    req->req_body.nonce, &data);
+	if (ret)
+	    goto out2;
     }
 
     ret = _kdc_encode_reply(context, config,
@@ -2050,7 +2060,6 @@ out:
 	if (armor_crypto) {
 	    PA_FX_FAST_REPLY fxfastrep;
 	    KrbFastResponse fastrep;
-	    PA_DATA *pa;
 
 	    memset(&fxfastrep, 0, sizeof(fxfastrep));
 	    memset(&fastrep, 0, sizeof(fastrep));
@@ -2080,7 +2089,7 @@ out:
 				  KRB5_PADATA_FX_FAST,
 				  e_data.data, e_data.length);
 	    if (ret) {
-		krb5_free_data(&e_data);
+		krb5_data_free(&e_data);
 		goto out2;
 	    }
 	    krb5_data_zero(&e_data);

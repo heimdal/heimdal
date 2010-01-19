@@ -987,7 +987,7 @@ tgs_make_reply(krb5_context context,
        CAST session key. Should the DES3 etype be added to the
        etype list, even if we don't want a session key with
        DES3? */
-    ret = _kdc_encode_reply(context, config,
+    ret = _kdc_encode_reply(context, config, NULL, 0,
 			    &rep, &et, &ek, et.key.keytype,
 			    kvno,
 			    serverkey, 0, replykey, rk_is_subkey,
@@ -2347,7 +2347,10 @@ _kdc_tgs_rep(krb5_context context,
 out:
     if (replykey)
 	krb5_free_keyblock(context, replykey);
+
     if(ret && ret != HDB_ERR_NOT_FOUND_HERE && data->data == NULL){
+	/* XXX add fast wrapping on the error */
+
 	krb5_mk_error(context,
 		      ret,
 		      NULL,

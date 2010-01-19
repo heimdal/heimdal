@@ -76,7 +76,8 @@ EXPORTS
 	TransitedEncoding,
 	TypedData,
 	KrbFastResponse,
-	KrbFastFinished
+	KrbFastFinished,
+	KrbFastReq
 	;
 
 NAME-TYPE ::= INTEGER {

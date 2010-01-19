@@ -1690,7 +1690,6 @@ krb5_init_creds_step(krb5_context context,
 
 	ret = decode_AS_REP(in->data, in->length, &rep.kdc_rep, &size);
 	if (ret == 0) {
-	    krb5_keyblock *key = NULL;
 	    unsigned eflags = EXTRACT_TICKET_AS_REQ | EXTRACT_TICKET_TIMESYNC;
 
 	    if (ctx->flags.canonicalize) {

@@ -321,6 +321,7 @@ log_patypes(krb5_context context,
 krb5_error_code
 _kdc_encode_reply(krb5_context context,
 		  krb5_kdc_configuration *config,
+		  krb5_crypto armor_crypto, uint32_t nonce,
 		  KDC_REP *rep, const EncTicketPart *et, EncKDCRepPart *ek,
 		  krb5_enctype etype,
 		  int skvno, const EncryptionKey *skey,
@@ -373,6 +374,58 @@ _kdc_encode_reply(krb5_context context,
 	kdc_log(context, config, 0, "Failed to encrypt data: %s", msg);
 	krb5_free_error_message(context, msg);
 	return ret;
+    }
+
+    if (armor_crypto) {
+	krb5_data data;
+	krb5_keyblock *strengthen_key = NULL;
+	KrbFastFinished finished;
+
+	memset(&finished, 0, sizeof(finished));
+	krb5_data_zero(&data);
+
+	finished.timestamp = kdc_time;
+	finished.usec = 0;
+	finished.crealm = et->crealm;
+	finished.cname = et->cname;
+
+	ASN1_MALLOC_ENCODE(Ticket, data.data, data.length,
+			   &rep->ticket, &len, ret);
+	if (ret)
+	    return ret;
+	if (data.length != len)
+	    krb5_abortx(context, "internal asn.1 error");
+
+	ret = krb5_create_checksum(context, armor_crypto,
+				   KRB5_KU_FAST_FINISHED, 0,
+				   data.data, data.length,
+				   &finished.ticket_checksum);
+	krb5_data_free(&data);
+	if (ret)
+	    return ret;
+
+	ret = _kdc_fast_mk_response(context, armor_crypto,
+				    rep->padata, strengthen_key, &finished,
+				    nonce, &data);
+	free_Checksum(&finished.ticket_checksum);
+	if (ret)
+	    return ret;
+
+	if (rep->padata) {
+	    free_METHOD_DATA(rep->padata);
+	} else {
+	    rep->padata = calloc(1, sizeof(*(rep->padata)));
+	    if (rep->padata == NULL) {
+		krb5_data_free(&data);
+		return ENOMEM;
+	    }
+	}
+
+	ret = krb5_padata_add(context, rep->padata,
+			      KRB5_PADATA_FX_FAST,
+			      data.data, data.length);
+	if (ret)
+	    return ret;
     }
 
     if(rep->msg_type == krb_as_rep && !config->encode_as_rep_as_tgs_rep)
@@ -2017,53 +2070,7 @@ _kdc_as_rep(krb5_context context,
 
     log_as_req(context, config, reply_key->keytype, setype, b);
 
-    /* XXX handle fast reply */
-    if (armor_crypto) {
-	krb5_data data;
-	krb5_keyblock *strengthen_key = NULL;
-	KrbFastFinished finished;
-
-	memset(&finished, 0, sizeof(finished));
-
-	finished.timestamp = kdc_time;
-	finished.usec = 0;
-	finished.crealm = client_princ->realm;
-	finished.cname = client_princ->name;
-
-	krb5_data_zero(&data);
-
-	ret = krb5_create_checksum(context, armor_crypto,
-				   KRB5_KU_FAST_FINISHED, 0,
-				   data.data, data.length,
-				   &finished.ticket_checksum);
-	if (ret)
-	    goto out;
-
-	ret = _kdc_fast_mk_response(context, armor_crypto,
-				    rep.padata, strengthen_key, &finished, 
-				    req->req_body.nonce, &data);
-	free_Checksum(&finished.ticket_checksum);
-	if (ret)
-	    goto out;
-
-	if (rep.padata) {
-	    free_METHOD_DATA(rep.padata);
-	} else {
-	    rep.padata = calloc(1, sizeof(*rep.padata));
-	    if (rep.padata == NULL) {
-		ret = ENOMEM;
-		goto out;
-	    }
-	}
-
-	ret = krb5_padata_add(context, rep.padata,
-			      KRB5_PADATA_FX_FAST,
-			      data.data, data.length);
-	if (ret)
-	    goto out;
-    }
-
-    ret = _kdc_encode_reply(context, config,
+    ret = _kdc_encode_reply(context, config, armor_crypto, req->req_body.nonce,
 			    &rep, &et, &ek, setype, server->entry.kvno,
 			    &skey->key, client->entry.kvno,
 			    reply_key, 0, &e_text, reply);

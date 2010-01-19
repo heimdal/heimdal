@@ -965,7 +965,7 @@ _kdc_as_rep(krb5_context context,
     KDC_REQ_BODY *b = NULL;
     AS_REP rep;
     KDCOptions f;
-    hdb_entry_ex *client = NULL, *server = NULL;
+    hdb_entry_ex *client = NULL, *server = NULL, *armor_user = NULL;
     HDB *clientdb;
     krb5_enctype setype, sessionetype;
     EncTicketPart et;
@@ -1049,11 +1049,11 @@ _kdc_as_rep(krb5_context context,
 		goto out;
 	    }
 
-	    krb5_principal server;
+	    krb5_principal armor_server;
 
 	    /* Save that principal that was in the request */
 	    ret = _krb5_principalname2krb5_principal(context,
-						     &server,
+						     &armor_server,
 						     ap_req.ticket.sname,
 						     ap_req.ticket.realm);
 	    if (ret) {
@@ -1061,18 +1061,30 @@ _kdc_as_rep(krb5_context context,
 		goto out;
 	    }
 
-	    krb5_keyblock *keyblock = NULL;
+	    Key *armor_key = NULL;
 	    krb5_ticket *ticket = NULL;
 	    krb5_flags ap_req_options;
 	    
-	    /* XXX get keyblock */
+	    ret = _kdc_db_fetch(context, config, armor_server,
+				HDB_F_GET_SERVER, NULL, &armor_user);
+	    if(ret){
+		ret = KRB5KDC_ERR_S_PRINCIPAL_UNKNOWN;
+		goto out;
+	    }
+
+	    ret = hdb_enctype2key(context, &armor_user->entry,
+				  ap_req.ticket.enc_part.etype,
+				  &armor_key);
+	    if (ret) {
+		goto out;
+	    }
 
 	    krb5_auth_context ac = NULL;
 
 	    ret = krb5_verify_ap_req2(context, &ac, 
 				      &ap_req,
-				      server,
-				      keyblock,
+				      armor_server,
+				      &armor_key->key,
 				      0,
 				      &ap_req_options,
 				      &ticket, 
@@ -2132,8 +2144,6 @@ out:
 	krb5_data_free(&e_data);
     }
 out2:
-    if (armor_crypto)
-	krb5_crypto_destroy(context, armor_crypto);
 #ifdef PKINIT
     if (pkp)
 	_kdc_pk_free_client_param(context, pkp);
@@ -2150,6 +2160,10 @@ out2:
 	_kdc_free_ent(context, client);
     if(server)
 	_kdc_free_ent(context, server);
+    if(armor_user)
+	_kdc_free_ent(context, armor_user);
+    if (armor_crypto)
+	krb5_crypto_destroy(context, armor_crypto);
     return ret;
 }
 

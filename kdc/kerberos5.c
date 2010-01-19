@@ -2116,26 +2116,25 @@ out:
 	    if (ret)
 		goto out2;
 
-	    if (/* hide_principal */ 0) {
-		error_client = NULL;
-		error_server = NULL;
-		e_text = NULL;
-		ret = KRB5KDC_ERR_PREAUTH_REQUIRED;
-	    }
-
 	    ret = krb5_padata_add(context, &error_method,
-				  KRB5_PADATA_FX_FAST,
+				  KRB5_PADATA_FX_ERROR,
 				  e_data.data, e_data.length);
 	    if (ret) {
 		krb5_data_free(&e_data);
 		goto out2;
 	    }
-	    krb5_data_zero(&e_data);
+
+	    if (/* hide_principal */ 0) {
+		error_client = NULL;
+		error_server = NULL;
+		e_text = NULL;
+	    }
 
 	    ret = _kdc_fast_mk_response(context, armor_crypto,
 					&error_method, NULL, NULL, 
 					req->req_body.nonce, &e_data);
 	    free_METHOD_DATA(&error_method);
+	    krb5_data_free(&e_data);
 	    if (ret)
 		goto out2;
 
@@ -2143,6 +2142,12 @@ out:
 				  KRB5_PADATA_FX_FAST,
 				  e_data.data, e_data.length);
 	    krb5_data_zero(&e_data);
+	    if (ret)
+		goto out2;
+
+	    ret = krb5_padata_add(context, &error_method,
+				  KRB5_PADATA_FX_COOKIE,
+				  NULL, 0);
 	    if (ret)
 		goto out2;
 	}

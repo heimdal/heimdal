@@ -37,6 +37,7 @@ libkdc_la_SOURCES = 		\
 	default_config.c 	\
 	set_dbinfo.c	 	\
 	digest.c		\
+	fast.c			\
 	kdc_locl.h		\
 	kerberos5.c		\
 	krb5tgs.c		\

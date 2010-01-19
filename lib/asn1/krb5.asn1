@@ -63,6 +63,8 @@ EXPORTS
 	PA-ServerReferralData,
 	PA-SvrReferralData,
 	PADATA-TYPE,
+	PA-FX-FAST-REQUEST,
+	PA-FX-FAST-REPLY,
 	Principal,
 	PrincipalName,
 	Principals,
@@ -72,7 +74,9 @@ EXPORTS
 	Ticket,
 	TicketFlags,
 	TransitedEncoding,
-	TypedData
+	TypedData,
+	KrbFastResponse,
+	KrbFastFinished
 	;
 
 NAME-TYPE ::= INTEGER {

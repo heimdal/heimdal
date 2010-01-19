@@ -1082,6 +1082,7 @@ _kdc_as_rep(krb5_context context,
 		goto out;
 
 	    if (ac->remote_subkey == NULL) {
+		krb5_auth_con_free(context, ac);
 		kdc_log(context, config, 0,
 			"FAST AP-REQ remote subkey missing");
 		ret = KRB5KDC_ERR_PREAUTH_FAILED;
@@ -1102,6 +1103,7 @@ _kdc_as_rep(krb5_context context,
 	    ret = krb5_crypto_fx_cf2(context, crypto_subkey, crypto_session,
 				     &pepper1, &pepper2,
 				     ac->remote_subkey->keytype, &armorkey);
+	    krb5_auth_con_free(context, ac);
 	    krb5_crypto_destroy(context, crypto_subkey);
 	    krb5_crypto_destroy(context, crypto_session);
 
@@ -1995,6 +1997,8 @@ _kdc_as_rep(krb5_context context,
 	goto out;
 
     log_as_req(context, config, reply_key->keytype, setype, b);
+
+    /* XXX handle fast reply */
 
     ret = _kdc_encode_reply(context, config,
 			    &rep, &et, &ek, setype, server->entry.kvno,

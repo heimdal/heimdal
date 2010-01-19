@@ -998,13 +998,25 @@ _kdc_as_rep(krb5_context context,
      */
     {
 	const PA_DATA *pa;
-	size_t len;
 	int i = 0;
 
 	pa = _kdc_find_padata(req, &i, KRB5_PADATA_FX_FAST);
 	if (pa != NULL) {
+	    krb5_crypto crypto_subkey = NULL, crypto_session = NULL;
+	    krb5_data pepper1, pepper2;
 	    PA_FX_FAST_REQUEST fxreq;
+	    krb5_principal armor_server;
+	    krb5_auth_context ac = NULL;
+	    krb5_ticket *ticket = NULL;
+	    krb5_flags ap_req_options;
+	    Key *armor_key = NULL;
 	    krb5_keyblock armorkey;
+	    krb5_ap_req ap_req;
+	    unsigned char *buf;
+	    KrbFastReq fastreq;
+	    size_t len, size;
+	    krb5_data data;
+
 
 	    ret = decode_PA_FX_FAST_REQUEST(pa->padata_value.data,
 					    pa->padata_value.length,
@@ -1039,8 +1051,6 @@ _kdc_as_rep(krb5_context context,
 		goto out;
 	    }
 	    
-	    krb5_ap_req ap_req;
-
 	    ret = krb5_decode_ap_req(context,
 				     &fxreq.u.armored_data.armor->armor_value,
 				     &ap_req);
@@ -1048,8 +1058,6 @@ _kdc_as_rep(krb5_context context,
 		kdc_log(context, config, 0, "AP-REQ decode failed");
 		goto out;
 	    }
-
-	    krb5_principal armor_server;
 
 	    /* Save that principal that was in the request */
 	    ret = _krb5_principalname2krb5_principal(context,
@@ -1061,13 +1069,10 @@ _kdc_as_rep(krb5_context context,
 		goto out;
 	    }
 
-	    Key *armor_key = NULL;
-	    krb5_ticket *ticket = NULL;
-	    krb5_flags ap_req_options;
-	    
 	    ret = _kdc_db_fetch(context, config, armor_server,
 				HDB_F_GET_SERVER, NULL, &armor_user);
 	    if(ret){
+		free_AP_REQ(&ap_req);
 		ret = KRB5KDC_ERR_S_PRINCIPAL_UNKNOWN;
 		goto out;
 	    }
@@ -1076,10 +1081,9 @@ _kdc_as_rep(krb5_context context,
 				  ap_req.ticket.enc_part.etype,
 				  &armor_key);
 	    if (ret) {
+		free_AP_REQ(&ap_req);
 		goto out;
 	    }
-
-	    krb5_auth_context ac = NULL;
 
 	    ret = krb5_verify_ap_req2(context, &ac, 
 				      &ap_req,
@@ -1101,14 +1105,21 @@ _kdc_as_rep(krb5_context context,
 		goto out;
 	    }		
 
-	    krb5_crypto crypto_subkey, crypto_session;
-
-	    krb5_crypto_init(context, ac->remote_subkey, 0, &crypto_subkey);
-	    krb5_crypto_init(context, &ticket->ticket.key, 0, &crypto_session);
-
+	    ret = krb5_crypto_init(context, ac->remote_subkey,
+				   0, &crypto_subkey);
+	    krb5_auth_con_free(context, ac);
+	    if (ret) {
+		krb5_free_ticket(context, ticket);
+		goto out;
+	    }
+	    ret = krb5_crypto_init(context, &ticket->ticket.key,
+				   0, &crypto_session);
 	    krb5_free_ticket(context, ticket);
+	    if (ret) {
+		krb5_crypto_destroy(context, crypto_subkey);
+		goto out;
+	    }
 
-	    krb5_data pepper1, pepper2;
 	    pepper1.data = "subkeyarmor";
 	    pepper1.length = strlen(pepper1.data);
 	    pepper2.data = "ticketarmor";
@@ -1116,8 +1127,8 @@ _kdc_as_rep(krb5_context context,
 
 	    ret = krb5_crypto_fx_cf2(context, crypto_subkey, crypto_session,
 				     &pepper1, &pepper2,
-				     ac->remote_subkey->keytype, &armorkey);
-	    krb5_auth_con_free(context, ac);
+				     ac->remote_subkey->keytype,
+				     &armorkey);
 	    krb5_crypto_destroy(context, crypto_subkey);
 	    krb5_crypto_destroy(context, crypto_session);
 
@@ -1128,9 +1139,6 @@ _kdc_as_rep(krb5_context context,
 	    krb5_free_keyblock_contents(context, &armorkey);
 
 	    /* verify req-checksum of the outer body */
-
-	    unsigned char *buf;
-	    size_t len, size;
 
 	    ASN1_MALLOC_ENCODE(KDC_REQ_BODY, buf, len, &req->req_body, &size, ret);
 	    if (ret)
@@ -1148,16 +1156,12 @@ _kdc_as_rep(krb5_context context,
 	    if (ret)
 		goto out;
 
-	    krb5_data data;
-
 	    ret = krb5_decrypt_EncryptedData(context, armor_crypto,
 					     KRB5_KU_FAST_ENC,
 					     &fxreq.u.armored_data.enc_fast_req,
 					     &data);
 	    if (ret)
 		goto out;
-
-	    KrbFastReq fastreq;
 
 	    ret = decode_KrbFastReq(data.data, data.length, &fastreq, &size);
 	    if (ret) {
@@ -1185,7 +1189,6 @@ _kdc_as_rep(krb5_context context,
 	    }
 
 	    /* KDC MUST ignore outer pa data preauth-14 - 6.5.5 */
-
 	    free_METHOD_DATA(req->padata);
 	    ret = copy_METHOD_DATA(&fastreq.padata, req->padata);
 	    if (ret)

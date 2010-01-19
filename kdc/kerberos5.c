@@ -2016,6 +2016,9 @@ _kdc_as_rep(krb5_context context,
     log_as_req(context, config, reply_key->keytype, setype, b);
 
     /* XXX handle fast reply */
+    if (armor_crypto) {
+
+    }
 
     ret = _kdc_encode_reply(context, config,
 			    &rep, &et, &ek, setype, server->entry.kvno,
@@ -2063,6 +2066,8 @@ out:
 				NULL,
 				NULL,
 				&e_data);
+	    if (ret)
+		goto out2;
 
 	    if (/* hide_principal */ 0) {
 		error_client = NULL;
@@ -2071,59 +2076,28 @@ out:
 		ret = KRB5KDC_ERR_PREAUTH_REQUIRED;
 	    }
 
-	    ret = realloc_method_data(&error_method);
-	    if (ret)
+	    ret = krb5_padata_add(context, &error_method,
+				  KRB5_PADATA_FX_FAST,
+				  e_data.data, e_data.length);
+	    if (ret) {
+		krb5_free_data(&e_data);
 		goto out2;
-
-	    pa = &error_method.val[error_method.len-1];
-	    pa->padata_type  = KRB5_PADATA_FX_ERROR;
-	    pa->padata_value = e_data;
-
+	    }
 	    krb5_data_zero(&e_data);
 
-	    fastrep.padata = error_method;
-	    error_method.val = 0;
-	    error_method.len = 0;
-	    fastrep.strengthen_key = NULL;
-	    fastrep.finished = NULL;
-	    fastrep.nonce = req->req_body.nonce;
-
-	    ASN1_MALLOC_ENCODE(KrbFastResponse, e_data.data, e_data.length,
-			       &fastrep, &size, ret);
-	    free_KrbFastResponse(&fastrep);
-	    if (ret)
-		goto out2;
-	    if (e_data.length != size)
-		krb5_abortx(context, "internal asn.1 error");
-
-	    fxfastrep.element = choice_PA_FX_FAST_REPLY_armored_data;
-
-	    ret = krb5_encrypt_EncryptedData(context,
-					     armor_crypto,
-					     KRB5_KU_FAST_REP,
-					     e_data.data,
-					     e_data.length,
-					     0,
-					     &fxfastrep.u.armored_data.enc_fast_rep);
-	    krb5_data_free(&e_data);
+	    ret = _kdc_fast_mk_responce(context, armor_crypto,
+					&error_method, NULL, NULL, 
+					req->req_body.nonce, &e_data);
+	    free_METHOD_DATA(&error_method);
 	    if (ret)
 		goto out2;
 
-	    ASN1_MALLOC_ENCODE(PA_FX_FAST_REPLY, e_data.data, e_data.length,
-			       &fxfastrep, &size, ret);
-	    if (ret)
-		goto out2;
-	    if (e_data.length != size)
-		krb5_abortx(context, "internal asn.1 error");
-
-	    
-	    ret = realloc_method_data(&error_method);
-	    if (ret)
-		goto out;
-	    pa = &error_method.val[error_method.len-1];
-	    pa->padata_type		= KRB5_PADATA_FX_FAST;
-	    pa->padata_value = e_data;
+	    ret = krb5_padata_add(context, &error_method,
+				  KRB5_PADATA_FX_FAST,
+				  e_data.data, e_data.length);
 	    krb5_data_zero(&e_data);
+	    if (ret)
+		goto out2;
 	}
 
 	if (error_method.len) {

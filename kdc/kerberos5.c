@@ -1092,7 +1092,9 @@ _kdc_as_rep(krb5_context context,
 	    krb5_crypto crypto_subkey, crypto_session;
 
 	    krb5_crypto_init(context, ac->remote_subkey, 0, &crypto_subkey);
-	    krb5_crypto_init(context, ac->keyblock, 0, &crypto_session);
+	    krb5_crypto_init(context, &ticket->ticket.key, 0, &crypto_session);
+
+	    krb5_free_ticket(context, ticket);
 
 	    krb5_data pepper1, pepper2;
 	    pepper1.data = "subkeyarmor";

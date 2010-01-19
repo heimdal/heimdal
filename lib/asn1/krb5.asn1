@@ -776,7 +776,7 @@ FastOptions ::= BIT STRING {
 
 KrbFastReq ::= SEQUENCE {
 	fast-options [0] FastOptions,
-	padata       [1] SEQUENCE OF PA-DATA,
+	padata       [1] METHOD-DATA,
 	req-body     [2] KDC-REQ-BODY,
 	...
 }

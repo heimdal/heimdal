@@ -962,7 +962,7 @@ _kdc_as_rep(krb5_context context,
 	    struct sockaddr *from_addr,
 	    int datagram_reply)
 {
-    KDC_REQ_BODY *b;
+    KDC_REQ_BODY *b = NULL;
     AS_REP rep;
     KDCOptions f;
     hdb_entry_ex *client = NULL, *server = NULL;
@@ -982,6 +982,7 @@ _kdc_as_rep(krb5_context context,
     pk_client_params *pkp = NULL;
 #endif
     METHOD_DATA error_method;
+    krb5_crypto armor_crypto = NULL;
 
     memset(&rep, 0, sizeof(rep));
     memset(&session_key, 0, sizeof(session_key));
@@ -1087,7 +1088,7 @@ _kdc_as_rep(krb5_context context,
 		goto out;
 	    }		
 
-	    krb5_crypto crypto_subkey, crypto_session, armor_crypto = NULL;
+	    krb5_crypto crypto_subkey, crypto_session;
 
 	    krb5_crypto_init(context, ac->remote_subkey, 0, &crypto_subkey);
 	    krb5_crypto_init(context, ac->keyblock, 0, &crypto_session);
@@ -1140,6 +1141,8 @@ _kdc_as_rep(krb5_context context,
 	    if (ret)
 		goto out;
 
+	    KrbFastReq fastreq;
+
 	    ret = decode_KrbFastReq(data.data, data.length, &fastreq, &size);
 	    if (ret) {
 		krb5_data_free(&data);
@@ -1168,7 +1171,7 @@ _kdc_as_rep(krb5_context context,
 	    /* KDC MUST ignore outer pa data preauth-14 - 6.5.5 */
 
 	    free_METHOD_DATA(req->padata);
-	    ret = copy_METHOD_DATA(&fastreq.padata, pa->padata);
+	    ret = copy_METHOD_DATA(&fastreq.padata, req->padata);
 	    if (ret)
 		goto out;
 
@@ -1319,8 +1322,12 @@ _kdc_as_rep(krb5_context context,
 
 	i = 0;
 	pa = _kdc_find_padata(req, &i, KRB5_PADATA_ENCRYPTED_CHALLENGE);
-	if (pa && armor_key) {
+	if (pa && armor_crypto) {
 	    /* XXX handle encrypted challange */
+
+	    if (1)
+		goto pkinit;
+
 	}
 
     pkinit:
@@ -1545,16 +1552,12 @@ _kdc_as_rep(krb5_context context,
 	      || client->entry.flags.require_preauth
 	      || server->entry.flags.require_preauth) {
 	PA_DATA *pa;
-	unsigned char *buf;
-	size_t len;
 
     use_pa:
 
 	ret = realloc_method_data(&error_method);
-	if (ret) {
-	    free_METHOD_DATA(&error_method);
+	if (ret)
 	    goto out;
-	}
 	pa = &error_method.val[error_method.len-1];
 	pa->padata_type		= KRB5_PADATA_ENC_TIMESTAMP;
 	pa->padata_value.length	= 0;
@@ -1562,20 +1565,16 @@ _kdc_as_rep(krb5_context context,
 
 #ifdef PKINIT
 	ret = realloc_method_data(&error_method);
-	if (ret) {
-	    free_METHOD_DATA(&error_method);
+	if (ret)
 	    goto out;
-	}
 	pa = &error_method.val[error_method.len-1];
 	pa->padata_type		= KRB5_PADATA_PK_AS_REQ;
 	pa->padata_value.length	= 0;
 	pa->padata_value.data	= NULL;
 
 	ret = realloc_method_data(&error_method);
-	if (ret) {
-	    free_METHOD_DATA(&error_method);
+	if (ret)
 	    goto out;
-	}
 	pa = &error_method.val[error_method.len-1];
 	pa->padata_type		= KRB5_PADATA_PK_AS_REQ_WIN;
 	pa->padata_value.length	= 0;
@@ -1585,10 +1584,8 @@ _kdc_as_rep(krb5_context context,
 	 * Announce FX-FAST
 	 */
 	ret = realloc_method_data(&error_method);
-	if (ret) {
-	    free_METHOD_DATA(&error_method);
+	if (ret)
 	    goto out;
-	}
 	pa = &error_method.val[error_method.len-1];
 	pa->padata_type		= KRB5_PADATA_FX_FAST;
 	pa->padata_value.length	= 0;
@@ -1616,17 +1613,13 @@ _kdc_as_rep(krb5_context context,
 	    if (older_enctype(ckey->key.keytype)) {
 		ret = get_pa_etype_info(context, config,
 					&error_method, ckey);
-		if (ret) {
-		    free_METHOD_DATA(&error_method);
+		if (ret)
 		    goto out;
-		}
 	    }
 	    ret = get_pa_etype_info2(context, config,
 				     &error_method, ckey);
-	    if (ret) {
-		free_METHOD_DATA(&error_method);
+	    if (ret)
 		goto out;
-	    }
 	}
 
 	ret = KRB5KDC_ERR_PREAUTH_REQUIRED;
@@ -2024,16 +2017,18 @@ out:
 
     if(ret != 0 && ret != HDB_ERR_NOT_FOUND_HERE){
 	krb5_data e_data;
-	krb5_const_principal error_client = client_princ;
-	krb5_const_principal error_server = server_princ;
+	krb5_principal error_client = client_princ;
+	krb5_principal error_server = server_princ;
+	size_t size;
 	
 	krb5_data_zero(&e_data);
 
-	if (armor_key) {
+	if (armor_crypto) {
 	    PA_FX_FAST_REPLY fxfastrep;
-	    KRBFastResponse fastrep;
+	    KrbFastResponse fastrep;
+	    PA_DATA *pa;
 
-	    memeset(&fxfastrep, 0, sizeof(fxfastrep));
+	    memset(&fxfastrep, 0, sizeof(fxfastrep));
 	    memset(&fastrep, 0, sizeof(fastrep));
 	    
 	    /* first add the KRB-ERROR to the fast errors */
@@ -2043,7 +2038,7 @@ out:
 				e_text,
 				NULL,
 				error_client,
-				error_client,
+				error_server,
 				NULL,
 				NULL,
 				&e_data);
@@ -2060,9 +2055,8 @@ out:
 		goto out2;
 
 	    pa = &error_method.val[error_method.len-1];
-	    pa->padata_type  = KRB5_PADATA_FX_FAST_ERROR;
-	    pa->padata_value.length = e_data.length;
-	    pa->padata_value.length = e_data.data;
+	    pa->padata_type  = KRB5_PADATA_FX_ERROR;
+	    pa->padata_value = e_data;
 
 	    krb5_data_zero(&e_data);
 
@@ -2071,42 +2065,40 @@ out:
 	    error_method.len = 0;
 	    fastrep.strengthen_key = NULL;
 	    fastrep.finished = NULL;
-	    fastrep.nonce = b->nonce;
+	    fastrep.nonce = req->req_body.nonce;
 
-	    ASN1_MALLOC_ENCODE(KRBFastResponse, e_data.data, e_data.length,
-			       &fastrep, &len, ret);
-	    free_KRBFastResponse(&fastrep);
+	    ASN1_MALLOC_ENCODE(KrbFastResponse, e_data.data, e_data.length,
+			       &fastrep, &size, ret);
+	    free_KrbFastResponse(&fastrep);
 	    if (ret)
 		goto out2;
-	    if (e_data.length != len)
+	    if (e_data.length != size)
 		krb5_abortx(context, "internal asn.1 error");
 
 	    fxfastrep.element = choice_PA_FX_FAST_REPLY_armored_data;
 
 	    ret = krb5_encrypt_EncryptedData(context,
-					     crypto,
-					     KRB5_KU_USAGE_REP,
+					     armor_crypto,
+					     KRB5_KU_FAST_REP,
 					     e_data.data,
 					     e_data.length,
-					     NULL,
+					     0,
 					     &fxfastrep.u.armored_data.enc_fast_rep);
 	    krb5_data_free(&e_data);
 	    if (ret)
 		goto out2;
 
 	    ASN1_MALLOC_ENCODE(PA_FX_FAST_REPLY, e_data.data, e_data.length,
-			       &fxfastrep, &len, ret);
+			       &fxfastrep, &size, ret);
 	    if (ret)
 		goto out2;
-	    if (e_data.length != len)
+	    if (e_data.length != size)
 		krb5_abortx(context, "internal asn.1 error");
 
 	    
 	    ret = realloc_method_data(&error_method);
-	    if (ret) {
-		free_METHOD_DATA(&error_method);
+	    if (ret)
 		goto out;
-	    }
 	    pa = &error_method.val[error_method.len-1];
 	    pa->padata_type		= KRB5_PADATA_FX_FAST;
 	    pa->padata_value = e_data;
@@ -2115,11 +2107,10 @@ out:
 
 	if (error_method.len) {
 	    ASN1_MALLOC_ENCODE(METHOD_DATA, e_data.data, e_data.length, 
-			       &error_method, &len, ret);
-	    free_METHOD_DATA(&error_method);
+			       &error_method, &size, ret);
 	    if (ret)
 		goto out2;
-	    if (e_data.length != len)
+	    if (e_data.length != size)
 		krb5_abortx(context, "internal asn.1 error");
 	}
 
@@ -2135,12 +2126,14 @@ out:
 	krb5_data_free(&e_data);
     }
 out2:
+    if (armor_crypto)
+	krb5_crypto_destroy(context, armor_crypto);
 #ifdef PKINIT
     if (pkp)
 	_kdc_pk_free_client_param(context, pkp);
 #endif
-    if (e_data.data)
-        free(e_data.data);
+    if (error_method.len)
+	free_METHOD_DATA(&error_method);
     if (client_princ)
 	krb5_free_principal(context, client_princ);
     free(client_name);

@@ -803,8 +803,7 @@ KrbFastFinished ::= SEQUENCE {
 	usec        [1] krb5int32,
 	crealm      [2] Realm,
 	cname       [3] PrincipalName,
-	checksum    [4] Checksum,
-	ticket-checksum [5] Checksum,
+	ticket-checksum [4] Checksum,
 	...
 }
 

@@ -1504,7 +1504,6 @@ _kdc_as_rep(krb5_context context,
 						 KRB5_KU_ENC_CHALLENGE_CLIENT,
 						 &enc_data,
 						 &ts_data);
-		krb5_crypto_destroy(context, challangecrypto);
 		if (ret)
 		    continue;
 
@@ -1514,6 +1513,7 @@ _kdc_as_rep(krb5_context context,
 					   &size);
 		krb5_data_free(&ts_data);
 		if(ret){
+		    krb5_crypto_destroy(context, challangecrypto);
 		    e_text = "Failed to decode PA-ENC-TS-ENC";
 		    ret = KRB5KDC_ERR_PREAUTH_FAILED;
 		    kdc_log(context, config,
@@ -1524,6 +1524,8 @@ _kdc_as_rep(krb5_context context,
 
 		if (abs(kdc_time - p.patimestamp) > context->max_skew) {
 		    char client_time[100];
+
+		    krb5_crypto_destroy(context, challangecrypto);
 
 		    krb5_format_time(context, p.patimestamp,
 				     client_time, sizeof(client_time), TRUE);
@@ -1546,6 +1548,7 @@ _kdc_as_rep(krb5_context context,
 
 		ret = make_pa_enc_challange(context, rep.padata,
 					    challangecrypto);
+		krb5_crypto_destroy(context, challangecrypto);
 		if (ret)
 		    goto out;
 					    

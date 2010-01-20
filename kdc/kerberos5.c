@@ -1388,23 +1388,130 @@ _kdc_as_rep(krb5_context context,
 
 	log_patypes(context, config, req->padata);
 
+	kdc_log(context, config, 5,
+		"Looking for ENCRYPTED-CHALLANGE pa-data -- %s", client_name);
+
+	e_text = "No FAST ENCRYPTED CHALLANGE found";
+
+	i = 0;
+	pa = _kdc_find_padata(req, &i, KRB5_PADATA_ENCRYPTED_CHALLENGE);
+	if (pa && armor_crypto) {
+	    krb5_data ts_data;
+	    struct Key *k;
+	    size_t size;
+
+	    if (b->kdc_options.request_anonymous) {
+		ret = KRB5KRB_AP_ERR_BAD_INTEGRITY;
+		kdc_log(context, config, 0, "ENC-CHALL doesn't support anon");
+		goto out;
+	    }
+
+	    EncryptedData enc_data;
+
+	    ret = decode_EncryptedData(pa->padata_value.data,
+				       pa->padata_value.length,
+				       &enc_data,
+				       &size);
+	    if (ret) {
+		ret = KRB5KRB_AP_ERR_BAD_INTEGRITY;
+		kdc_log(context, config, 5, "Failed to decode PA-DATA -- %s",
+			client_name);
+		goto out;
+	    }
+
+	    krb5_data pepper1, pepper2;
+
+	    pepper1.data = "clientchallengearmor";
+	    pepper1.length = strlen(pepper1.data);
+	    pepper2.data = "challengelongterm";
+	    pepper2.length = strlen(pepper2.data);
+
+	    krb5_enctype aenctype;
+	    krb5_crypto_getenctype(context, armor_crypto, &aenctype);
+
+	    for (i = 0; i < client->entry.keys.len; i++) {
+		krb5_crypto challangecrypto, longtermcrypto;
+		krb5_keyblock challangekey;
+		PA_ENC_TS_ENC p;
+
+		k = &client->entry.keys.val[i];
+
+		ret = krb5_crypto_init(context, &k->key, 0, &longtermcrypto);
+		if (ret)
+		    continue;			
+
+		ret = krb5_crypto_fx_cf2(context, armor_crypto, longtermcrypto,
+					 &pepper1, &pepper2, aenctype,
+					 &challangekey);
+		krb5_crypto_destroy(context, longtermcrypto);
+		if (ret)
+		    continue;
+
+		ret = krb5_crypto_init(context, &challangekey, 0,
+				       &challangecrypto);
+		if (ret)
+		    continue;
+
+		ret = krb5_decrypt_EncryptedData(context, challangecrypto,
+						 KRB5_KU_ENC_CHALLENGE_CLIENT,
+						 &enc_data,
+						 &ts_data);
+		krb5_crypto_destroy(context, challangecrypto);
+		if (ret)
+		    continue;
+
+		ret = decode_PA_ENC_TS_ENC(ts_data.data,
+					   ts_data.length,
+					   &p,
+					   &size);
+		krb5_data_free(&ts_data);
+		if(ret){
+		    e_text = "Failed to decode PA-ENC-TS-ENC";
+		    ret = KRB5KDC_ERR_PREAUTH_FAILED;
+		    kdc_log(context, config,
+			    5, "Failed to decode PA-ENC-TS_ENC -- %s",
+			    client_name);
+		    continue;
+		}
+
+		if (abs(kdc_time - p.patimestamp) > context->max_skew) {
+		    char client_time[100];
+
+		    krb5_format_time(context, p.patimestamp,
+				     client_time, sizeof(client_time), TRUE);
+
+		    ret = KRB5KRB_AP_ERR_SKEW;
+		    kdc_log(context, config, 0,
+			    "Too large time skew, "
+			    "client time %s is out by %u > %u seconds -- %s",
+			    client_time,
+			    (unsigned)abs(kdc_time - p.patimestamp),
+			    context->max_skew,
+			    client_name);
+
+		    free_PA_ENC_TS_ENC(&p);
+		    goto out;
+		}
+
+		free_PA_ENC_TS_ENC(&p);
+		et.flags.pre_authent = 1;
+
+		/* XXX add kdc reply */
+
+		set_salt_padata(rep.padata, k->salt);
+		reply_key = &k->key;
+
+		goto preauth_done;
+	    }
+	    free_EncryptedData(&enc_data);
+	}
+
 #ifdef PKINIT
 	kdc_log(context, config, 5,
 		"Looking for PKINIT pa-data -- %s", client_name);
 
 	e_text = "No PKINIT PA found";
 
-	i = 0;
-	pa = _kdc_find_padata(req, &i, KRB5_PADATA_ENCRYPTED_CHALLENGE);
-	if (pa && armor_crypto) {
-	    /* XXX handle encrypted challange */
-
-	    if (1)
-		goto pkinit;
-
-	}
-
-    pkinit:
 	i = 0;
 	pa = _kdc_find_padata(req, &i, KRB5_PADATA_PK_AS_REQ);
 	if (pa == NULL) {
@@ -1569,7 +1676,6 @@ _kdc_as_rep(krb5_context context,
 			client_name);
 		continue;
 	    }
-	    free_PA_ENC_TS_ENC(&p);
 	    if (abs(kdc_time - p.patimestamp) > context->max_skew) {
 		char client_time[100];
 
@@ -1591,8 +1697,10 @@ _kdc_as_rep(krb5_context context,
 		 * there is a e_text, they become unhappy.
 		 */
 		e_text = NULL;
+		free_PA_ENC_TS_ENC(&p);
 		goto out;
 	    }
+	    free_PA_ENC_TS_ENC(&p);
 	    et.flags.pre_authent = 1;
 
 	    set_salt_padata(rep.padata, pa_key->salt);

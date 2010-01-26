@@ -474,6 +474,7 @@ HEIMDAL_KRB5_2.0 {
 		krb5_principal_compare;
 		krb5_principal_compare_any_realm;
 		krb5_principal_get_comp_string;
+		krb5_principal_get_num_comp;
 		krb5_principal_get_realm;
 		krb5_principal_get_type;
 		krb5_principal_match;

@@ -1033,6 +1033,11 @@ void
 rk_qsort(void *, size_t, size_t, int (*)(const void *, const void *));
 #endif
 
+#if defined(__LINUX__) && SOCK_CLOEXEC && !defined(SOCKET_WRAPPER_REPLACE) 
+#undef socket
+#define socket(_fam,_type,_prot) rk_socket(_fam,_type,_prot)
+#endif
+
 #ifdef SOCKET_WRAPPER_REPLACE
 #include <socket_wrapper.h>
 #endif

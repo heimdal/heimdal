@@ -298,7 +298,7 @@ socket_set_ipv6only (int sock, int val)
 #endif
 }
 
-#ifndef HEIMAL_SMALLER
+#ifndef HEIMDAL_SMALLER
 
 int rk_socket(int, int, int);
 
@@ -316,4 +316,4 @@ rk_socket(int domain, int type, int protocol)
     return s;
 }
 
-#endif
+#endif /* HEIMDAL_SMALLER */

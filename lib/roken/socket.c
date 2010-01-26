@@ -316,7 +316,7 @@ socket_to_fd(rk_socket_t sock, int flags)
 #endif
 }
 
-#ifndef HEIMAL_SMALLER
+#ifndef HEIMDAL_SMALLER
 
 int rk_socket(int, int, int);
 
@@ -334,4 +334,4 @@ rk_socket(int domain, int type, int protocol)
     return s;
 }
 
-#endif
+#endif /* HEIMDAL_SMALLER */

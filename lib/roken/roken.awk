@@ -3,6 +3,12 @@
 BEGIN {
 	print "#include <config.h>"
 	print "#include <stdio.h>"
+	print "#ifdef HAVE_SYS_TYPES_H"
+	print "#include <sys/types.h>"
+	print "#endif"
+	print "#ifdef HAVE_SYS_SOCKET_H"
+	print "#include <sys/socket.h>"
+	print "#endif"
 	print ""
 	print "int main(int argc, char **argv)"
 	print "{"

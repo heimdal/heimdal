@@ -297,3 +297,23 @@ socket_set_ipv6only (int sock, int val)
     setsockopt(sock, IPPROTO_IPV6, IPV6_V6ONLY, (void *)&val, sizeof(val));
 #endif
 }
+
+#ifndef HEIMAL_SMALLER
+
+int rk_socket(int, int, int);
+
+int
+rk_socket(int domain, int type, int protocol)
+{
+    int s;
+    s = socket (domain, type, protocol);
+#ifdef SOCK_CLOEXEC
+    if ((SOCK_CLOEXEC & protocol) && s < 0 && errno == EINVAL) {
+	protocol &= ~SOCK_CLOEXEC;
+	s = socket (domain, type, protocol);
+    }
+#endif
+    return s;
+}
+
+#endif

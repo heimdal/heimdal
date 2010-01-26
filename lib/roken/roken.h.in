@@ -1036,6 +1036,7 @@ rk_qsort(void *, size_t, size_t, int (*)(const void *, const void *));
 #if defined(__LINUX__) && SOCK_CLOEXEC && !defined(SOCKET_WRAPPER_REPLACE) 
 #undef socket
 #define socket(_fam,_type,_prot) rk_socket(_fam,_type,_prot)
+int ROKEN_LIB_FUNCTION rk_socket(int, int, int);
 #endif
 
 #ifdef SOCKET_WRAPPER_REPLACE

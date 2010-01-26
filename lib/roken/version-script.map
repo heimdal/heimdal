@@ -94,6 +94,7 @@ HEIMDAL_ROKEN_1.0 {
 		rk_simple_execve_timed;
 		rk_simple_execvp;
 		rk_simple_execvp_timed;
+		rk_socket;
 		rk_socket_addr_size;
 		rk_socket_get_address;
 		rk_socket_get_port;

@@ -20,6 +20,7 @@ HEIMDAL_KRB5_2.0 {
 		krb5_address_order;
 		krb5_address_prefixlen_boundary;
 		krb5_address_search;
+		krb5_allow_weak_crypto;
 		krb5_aname_to_localname;
 		krb5_anyaddr;
 		krb5_appdefault_boolean;

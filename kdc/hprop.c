@@ -714,6 +714,11 @@ main(int argc, char **argv)
     if(ret)
 	exit(1);
 
+    /* We may be reading an old database encrypted with a DES master key. */
+    ret = krb5_allow_weak_crypto(context, 1);
+    if(ret)
+        krb5_err(context, 1, ret, "krb5_allow_weak_crypto");
+
     if(local_realm)
 	krb5_set_default_realm(context, local_realm);
 

@@ -236,6 +236,7 @@ mit_prop_dump(void *arg, const char *file)
 
 	int num_tl_data;
 	int num_key_data;
+	int high_kvno;
 	int attributes;
 
 	int tmp;
@@ -349,11 +350,37 @@ mit_prop_dump(void *arg, const char *file)
 	    }
 	}
 	ALLOC_SEQ(&ent.entry.keys, num_key_data);
+	high_kvno = -1;
 	for(i = 0; i < num_key_data; i++) {
 	    int key_versions;
+	    int kvno;
 	    key_versions = getint(&p); /* key data version */
-	    ent.entry.kvno = getint(&p); /* XXX kvno */
-	
+	    kvno = getint(&p);
+
+	    /*
+	     * An MIT dump file may contain multiple sets of keys with
+	     * different kvnos.  Since the Heimdal database can only represent
+	     * one kvno per principal, we only want the highest set.  Assume
+	     * that set will be given first, and discard all keys with lower
+	     * kvnos.
+	     */
+	    if (kvno > high_kvno && high_kvno != -1)
+		errx(1, "line %d: high kvno keys given after low kvno keys",
+		     lineno);
+	    else if (kvno < high_kvno) {
+		nexttoken(&p); /* key type */
+		nexttoken(&p); /* key length */
+		nexttoken(&p); /* key */
+		if (key_versions > 1) {
+		    nexttoken(&p); /* salt type */
+		    nexttoken(&p); /* salt length */
+		    nexttoken(&p); /* salt */
+		}
+		ent.entry.keys.len--;
+		continue;
+	    }
+	    ent.entry.kvno = kvno;
+	    high_kvno = kvno;
 	    ALLOC(ent.entry.keys.val[i].mkvno);
 	    *ent.entry.keys.val[i].mkvno = 0;
 	

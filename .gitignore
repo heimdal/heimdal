@@ -174,7 +174,6 @@ asn1_*.[cx]
 /lib/hdb/hdb-private.h
 /lib/hdb/test_dbinfo
 /lib/hdb/test_hdbkeys
-/lib/hx509/data/*.pem
 /lib/hx509/data/*.srl
 /lib/hx509/data/*.req
 /lib/hx509/data/sub-ca-combined.crt

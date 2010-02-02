@@ -311,6 +311,20 @@ mit_prop_dump(void *arg, const char *file)
 #define mit_KRB5_TL_LAST_PWD_CHANGE	1
 #define mit_KRB5_TL_MOD_PRINC		2
 	    switch(tl_type) {
+	    case mit_KRB5_TL_LAST_PWD_CHANGE:
+		buf = malloc(tl_length);
+		if (buf == NULL)
+		    errx(ENOMEM, "malloc");
+		getdata(&p, buf, tl_length); /* data itself */
+		val = buf[0] | (buf[1] << 8) | (buf[2] << 16) | (buf[3] << 24);
+		free(buf);
+		ALLOC(ent.entry.extensions);
+		ALLOC_SEQ(ent.entry.extensions, 1);
+		ent.entry.extensions->val[0].mandatory = 0;
+		ent.entry.extensions->val[0].data.element
+		    = choice_HDB_extension_data_last_pw_change;
+		ent.entry.extensions->val[0].data.u.last_pw_change = val;
+		break;
 	    case mit_KRB5_TL_MOD_PRINC:
 		buf = malloc(tl_length);
 		if (buf == NULL)

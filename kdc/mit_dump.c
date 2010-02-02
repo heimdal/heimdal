@@ -256,8 +256,11 @@ mit_prop_dump(void *arg, const char *file)
 	    q = nexttoken(&p); /* x.0 */
 	    if(sscanf(q, "%d", &major) != 1)
 		errx(1, "line %d: unknown version", lineno);
-	    if(major != 4)
-		errx(1, "unknown dump file format, got %d, expected 4", major);
+	    if(major != 4 && major != 5 && major != 6)
+		errx(1, "unknown dump file format, got %d, expected 4-6",
+		     major);
+	    continue;
+	} else if(strcmp(q, "policy") == 0) {
 	    continue;
 	} else if(strcmp(q, "princ") != 0) {
 	    warnx("line %d: not a principal", lineno);

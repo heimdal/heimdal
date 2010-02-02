@@ -209,7 +209,8 @@ format_field(kadm5_principal_ent_t princ, unsigned int field,
 	snprintf(buf, buf_len, "%d", princ->kvno);
 	break;
     case KADM5_MKVNO:
-	snprintf(buf, buf_len, "%d", princ->mkvno);
+	/* XXX libkadm5srv decrypts the keys, so mkvno is always 0. */
+	strlcpy(buf, "unknown", buf_len);
 	break;
     case KADM5_LAST_SUCCESS:
 	time_t2str(princ->last_success, buf, buf_len, !condensed);

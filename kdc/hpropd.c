@@ -240,12 +240,12 @@ main(int argc, char **argv)
 		krb5_write_priv_message(context, ac, &sock, &data);
 	    }
 	    if(!print_dump) {
-		ret = db->hdb_rename(context, db, database);
-		if(ret)
-		    krb5_err(context, 1, ret, "db_rename");
 		ret = db->hdb_close(context, db);
 		if(ret)
 		    krb5_err(context, 1, ret, "db_close");
+		ret = db->hdb_rename(context, db, database);
+		if(ret)
+		    krb5_err(context, 1, ret, "db_rename");
 	    }
 	    break;
 	}

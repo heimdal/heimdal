@@ -36,7 +36,9 @@ cincdirs=-I$(OBJ) -I$(INCDIR)\gssapi
 
 SBIN_PROGRAMS=$(SBINDIR)\kadmin.exe
 
-LIBEXEC_PROGRAMS=$(LIBEXECDIR)\kadmind.exe
+# Disable kadmind.exe since currently it doesn't build
+#LIBEXEC_PROGRAMS=$(LIBEXECDIR)\kadmind.exe
+#
 
 COMMON_LIBS=		\
 	$(LIBHDB)	\

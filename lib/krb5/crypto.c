@@ -4409,7 +4409,7 @@ krb5_enctype_enable(krb5_context context,
  * @ingroup krb5_crypto
  */
 
-KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
+krb5_error_code KRB5_LIB_FUNCTION
 krb5_allow_weak_crypto(krb5_context context,
 		       krb5_boolean enable)
 {

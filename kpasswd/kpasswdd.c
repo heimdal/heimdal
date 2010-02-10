@@ -447,13 +447,27 @@ verify (krb5_auth_context *auth_context,
     krb5_data krb_priv_data;
     krb5_realm *r;
 
+    /*
+     * Only send an error reply if the request passes basic length
+     * verification.  Otherwise, kpasswdd would reply to every UDP packet,
+     * allowing an attacker to set up a ping-pong DoS attack via a spoofed UDP
+     * packet with a source address of another UDP service that also replies
+     * to every packet.
+     *
+     * Also suppress the error reply if ap_req_len is 0, which indicates
+     * either an invalid request or an error packet.  An error packet may be
+     * the result of a ping-pong attacker pointing us at another kpasswdd.
+     */
     pkt_len = (msg[0] << 8) | (msg[1]);
     pkt_ver = (msg[2] << 8) | (msg[3]);
     ap_req_len = (msg[4] << 8) | (msg[5]);
     if (pkt_len != len) {
 	krb5_warnx (context, "Strange len: %ld != %ld",
 		    (long)pkt_len, (long)len);
-	reply_error (NULL, s, sa, sa_size, 0, 1, "Bad request");
+	return 1;
+    }
+    if (ap_req_len == 0) {
+	krb5_warnx (context, "Request is error packet (ap_req_len == 0)");
 	return 1;
     }
     if (pkt_ver != KRB5_KPASSWD_VERS_CHANGEPW &&

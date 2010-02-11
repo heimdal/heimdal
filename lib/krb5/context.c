@@ -1376,6 +1376,7 @@ _krb5_homedir_access(krb5_context context)
  * @param allow allow if TRUE home directory
  * @return the old value
  *
+ * @ingroup krb5
  */
 
 krb5_boolean

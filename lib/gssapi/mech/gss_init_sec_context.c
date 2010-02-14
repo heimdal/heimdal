@@ -68,14 +68,20 @@ _gss_mech_cred_find(gss_cred_id_t cred_handle, gss_OID mech_type)
  *        available mechanism are listed in the @ref gssapi_mechs_intro
  *        section.
  *
- * @param req_flags
- * @param time_req
- * @param input_chan_bindings
+ * @param req_flags flags using when building the context, see @ref
+ *        gssapi_context_ flags
+ *
+ * @param time_req time requested this context should be valid in
+ *        seconds, common used value is GSS_C_INDEFINITE
+ *
+ * @param input_chan_bindings Channel bindings used, if not exepected
+ *        otherwise, used GSS_C_NO_CHANNEL_BINDINGS
  *
  * @param input_token input token sent from the acceptor, for the
  * 	  initial packet the buffer of { NULL, 0 } should be used.
  *
- * @param actual_mech_type the actual mech used
+ * @param actual_mech_type the actual mech used, MUST NOT be freed
+ *        since it pointing to static memory.
  *
  * @param output_token if there is an output token, regardless of
  * 	  complete, continue_needed, or error it should be sent to the

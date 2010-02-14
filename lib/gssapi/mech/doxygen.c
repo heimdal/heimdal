@@ -74,7 +74,7 @@
  */
 
 /**
- * @page gssapi_mechs GSS-API mechanisms
+ * @page gssapi_mechs_intro GSS-API mechanisms
  * @section gssapi_mechs GSS-API mechanisms
  *
  * - Kerberos 5 - GSS_KRB5_MECHANISM

@@ -35,9 +35,9 @@
  *
  * Heimdal implements the following mechanisms:
  *
- * - Kerberos 5
- * - SPNEGO
- * - NTLM
+ * - Kerberos 5 - GSS_KRB5_MECHANISM
+ * - SPNEGO - GSS_SPNEGO_MECHANISM
+ * - NTLM - GSS_NTLM_MECHANISM
  *
  * The project web page: http://www.h5l.org/
  *

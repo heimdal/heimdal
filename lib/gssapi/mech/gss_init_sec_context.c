@@ -58,8 +58,16 @@ _gss_mech_cred_find(gss_cred_id_t cred_handle, gss_OID mech_type)
  * @param context_handle a pointer to a context handle, will be
  * 	  returned as long as there is not an error.
  *
- * @param target_name
- * @param input_mech_type
+ * @param target_name the target name of acceptor, created using
+ * 	  gss_import_name(). The name is can be of any name types the
+ * 	  mechanism supports, check supported name types with
+ * 	  gss_inquire_names_for_mech().
+ *
+ * @param input_mech_type mechanism type to use, if GSS_C_NO_OID is
+ *        used, Kerberos (GSS_KRB5_MECHANISM) will be tried. Other
+ *        available mechanism are listed in the @ref gssapi_mechs_intro
+ *        section.
+ *
  * @param req_flags
  * @param time_req
  * @param input_chan_bindings

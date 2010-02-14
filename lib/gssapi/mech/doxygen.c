@@ -35,13 +35,16 @@
  *
  * Heimdal implements the following mechanisms:
  *
- * - Kerberos 5 - GSS_KRB5_MECHANISM
- * - SPNEGO - GSS_SPNEGO_MECHANISM
- * - NTLM - GSS_NTLM_MECHANISM
+ * - Kerberos 5
+ * - SPNEGO
+ * - NTLM
+ *
+ * See @ref gssapi_mechs for more describtion about these mechanisms.
  *
  * The project web page: http://www.h5l.org/
  *
  * - @ref gssapi_services_intro
+ * - @ref gssapi_mechs
  * - @ref gssapi_api_INvsMN
  */
 
@@ -69,6 +72,17 @@
  *  - out of sequence
  *
  */
+
+/**
+ * @page gssapi_mechs GSS-API mechanisms
+ * @section gssapi_mechs GSS-API mechanisms
+ *
+ * - Kerberos 5 - GSS_KRB5_MECHANISM
+ * - SPNEGO - GSS_SPNEGO_MECHANISM
+ * - NTLM - GSS_NTLM_MECHANISM
+
+ */
+
 
 /**
  * @page internalVSmechname Internal names and mechanism names

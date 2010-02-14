@@ -78,7 +78,7 @@
  * - GSS_C_IDENTIFY_FLAG
  * - GSS_C_EXTENDED_ERROR_FLAG
  * - GSS_C_DELEG_POLICY_FLAG
-
+ *
  *
  * @subsection gssapi_services_permessage Per-message services
  *

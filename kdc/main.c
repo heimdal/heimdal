@@ -42,6 +42,10 @@
 #include <sandbox.h>
 #endif
 
+#ifdef HAVE_CAPNG
+#include <cap-ng.h>
+#endif
+
 sig_atomic_t exit_flag = 0;
 
 #ifdef SUPPORT_DETACH
@@ -77,15 +81,26 @@ switch_environment(void)
 	pw = getpwnam(runas_string);
 	if (pw == NULL)
 	    errx(1, "unknown user %s", runas_string);
-	
+
 	if (initgroups(pw->pw_name, pw->pw_gid) < 0)
 	    err(1, "initgroups failed");
 	
+#ifndef HAVE_CAPNG
 	if (setgid(pw->pw_gid) < 0)
 	    err(1, "setgid(%s) failed", runas_string);
 	
 	if (setuid(pw->pw_uid) < 0)
 	    err(1, "setuid(%s)", runas_string);
+#else
+	capng_clear (CAPNG_EFFECTIVE | CAPNG_PERMITTED);
+	if (capng_updatev (CAPNG_ADD, CAPNG_EFFECTIVE | CAPNG_PERMITTED,
+	                   CAP_NET_BIND_SERVICE, CAP_SETPCAP, -1) < 0)
+	    err(1, "capng_updateev");
+
+	if (capng_change_id(pw->pw_uid, pw->pw_gid,
+	                    CAPNG_CLEAR_BOUNDING) < 0)
+	    err(1, "capng_change_id(%s)", runas_string);
+#endif
     }
 #endif
 }

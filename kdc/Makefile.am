@@ -109,11 +109,12 @@ LDADD = $(top_builddir)/lib/hdb/libhdb.la \
 	$(LIB_roken) \
 	$(DBLIB)
 
-kdc_LDADD = libkdc.la $(LDADD) $(LIB_pidfile)
+kdc_LDADD = libkdc.la $(LDADD) $(LIB_pidfile) $(CAPNG_LIBS)
 
 if FRAMEWORK_SECURITY
 kdc_LDFLAGS = -framework SystemConfiguration -framework CoreFoundation
 endif
+kdc_CFLAGS = $(CAPNG_CFLAGS)
 
 digest_service_LDADD = \
 	libkdc.la \

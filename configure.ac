@@ -146,6 +146,24 @@ if test "$enable_krb4" != no ;then
 	AC_DEFINE([KRB4], 1, [Define to enable Kerberos 4.])
 fi
 
+dnl Need to test if pkg-config exists
+PKG_PROG_PKG_CONFIG
+
+dnl libcap-ng
+AC_ARG_WITH([capng],
+  AC_HELP_STRING([--with-capng], [use libcap-ng to drop KDC privileges @<:@default=check@:>@]),
+  [],
+  [with_capng=check])
+if test "$with_capng" != "no"; then
+  PKG_CHECK_MODULES([CAPNG], [libcap-ng >= 0.4.0],
+		    [with_capng=yes],[with_capng=no])
+fi
+if test "$with_capng" = "yes"; then
+  AC_DEFINE_UNQUOTED([HAVE_CAPNG], 1, [whether capng is available for privilege reduction])
+fi
+AM_CONDITIONAL([HAVE_CAPNG], [test "$with_capng" != "no"])
+AC_SUBST([CAPNG_CFLAGS])
+AC_SUBST([CAPNG_LIBS])
 
 dnl Check for sqlite
 rk_TEST_PACKAGE(sqlite3,

@@ -40,10 +40,12 @@ static int flags;
 static int family;
 static int socktype;
 
+static int verbose_counter;
 static int version_flag;
 static int help_flag;
 
 static struct getargs args[] = {
+    {"verbose",	0,	arg_counter,	&verbose_counter,"verbose",	NULL},
     {"flags",	0,	arg_integer,	&flags,		"flags",	NULL},
     {"family",	0,	arg_integer,	&family,	"family",	NULL},
     {"socktype",0,	arg_integer,	&socktype,	"socktype",	NULL},
@@ -68,7 +70,8 @@ doit (const char *nodename, const char *servname)
     struct addrinfo *res, *r;
     int ret;
 
-    printf ("(%s,%s)... ", nodename ? nodename : "null", servname);
+    if (verbose_counter)
+	printf ("(%s,%s)... ", nodename ? nodename : "null", servname);
 
     memset (&hints, 0, sizeof(hints));
     hints.ai_flags    = flags;
@@ -76,11 +79,11 @@ doit (const char *nodename, const char *servname)
     hints.ai_socktype = socktype;
 
     ret = getaddrinfo (nodename, servname, &hints, &res);
-    if (ret) {
-	printf ("error: %s\n", gai_strerror(ret));
-	return;
-    }
-    printf ("\n");
+    if (ret)
+	errx(1, "error: %s\n", gai_strerror(ret));
+
+    if (verbose_counter)
+	printf ("\n");
 
     for (r = res; r != NULL; r = r->ai_next) {
 	char addrstr[256];
@@ -88,17 +91,20 @@ doit (const char *nodename, const char *servname)
 	if (inet_ntop (r->ai_family,
 		       socket_get_address (r->ai_addr),
 		       addrstr, sizeof(addrstr)) == NULL) {
-	    printf ("\tbad address?\n");
+	    if (verbose_counter)
+		printf ("\tbad address?\n");
 	    continue;
 	}
-	printf ("\tfamily = %d, socktype = %d, protocol = %d, "
-		"address = \"%s\", port = %d",
-		r->ai_family, r->ai_socktype, r->ai_protocol,
-		addrstr,
-		ntohs(socket_get_port (r->ai_addr)));
-	if (r->ai_canonname)
-	    printf (", canonname = \"%s\"", r->ai_canonname);
-	printf ("\n");
+	if (verbose_counter) {
+	    printf ("\tfamily = %d, socktype = %d, protocol = %d, "
+		    "address = \"%s\", port = %d",
+		    r->ai_family, r->ai_socktype, r->ai_protocol,
+		    addrstr,
+		    ntohs(socket_get_port (r->ai_addr)));
+	    if (r->ai_canonname)
+		printf (", canonname = \"%s\"", r->ai_canonname);
+	    printf ("\n");
+	}
     }
     freeaddrinfo (res);
 }

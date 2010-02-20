@@ -2,8 +2,8 @@ include $(top_srcdir)/Makefile.am.common
 
 noinst_LTLIBRARIES = libheim-ipcc.la libheim-ipcs.la
 
-libheim_ipcc_la_SOURCES = client.c common.c
-libheim_ipcs_la_SOURCES = server.c common.c
+dist_libheim_ipcc_la_SOURCES = client.c common.c
+dist_libheim_ipcs_la_SOURCES = server.c common.c
 
 include_HEADERS = heim-ipc.h
 
@@ -45,13 +45,13 @@ heim_ipc_reply.h heim_ipc_replyUser.c: heim_ipc_reply.defs
 built_ipcc = heim_ipc.h heim_ipcUser.c
 built_ipcc += heim_ipc_asyncServer.c heim_ipc_asyncServer.h
 
-libheim_ipcc_la_SOURCES += $(built_ipcc)
+nodist_libheim_ipcc_la_SOURCES = $(built_ipcc)
 
 built_ipcs = heim_ipcServer.c heim_ipcServer.h
 built_ipcs += heim_ipc_asyncUser.c heim_ipc_async.h
 built_ipcs += heim_ipc_reply.h heim_ipc_replyUser.c
 
-libheim_ipcs_la_SOURCES += $(built_ipcs)
+nodist_libheim_ipcs_la_SOURCES = $(built_ipcs)
 
 libheim_ipcs_la_LIBADD += -lbsm
 

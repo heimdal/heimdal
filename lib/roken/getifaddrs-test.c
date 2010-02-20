@@ -35,10 +35,31 @@
 
 #include <config.h>
 #include <err.h>
+#include "getarg.h"
 
 #include "roken.h"
 
 #include <ifaddrs.h>
+
+static int verbose_counter;
+static int version_flag;
+static int help_flag;
+
+static struct getargs args[] = {
+    {"verbose",	0,	arg_counter,	&verbose_counter,"verbose",	NULL},
+    {"version",	0,	arg_flag,	&version_flag,	"print version",NULL},
+    {"help",	0,	arg_flag,	&help_flag,	NULL,		NULL}
+};
+
+static void
+usage(int ret)
+{
+    arg_printusage (args,
+		    sizeof(args) / sizeof(args[0]),
+		    NULL, "");
+    exit (ret);
+}
+
 
 static void
 print_addr(const char *s, struct sockaddr *sa)
@@ -61,15 +82,17 @@ print_ifaddrs(struct ifaddrs *x)
     struct ifaddrs *p;
     
     for(p = x; p; p = p->ifa_next) {
-	printf("%s\n", p->ifa_name);
-	printf("  flags=%x\n", p->ifa_flags);
-	if(p->ifa_addr)
-	    print_addr("addr", p->ifa_addr);
-	if(p->ifa_dstaddr) 
-	    print_addr("dstaddr", p->ifa_dstaddr);
-	if(p->ifa_netmask) 
-	    print_addr("netmask", p->ifa_netmask);
-	printf("  %p\n", p->ifa_data);
+	if (verbose_counter) {
+	    printf("%s\n", p->ifa_name);
+	    printf("  flags=%x\n", p->ifa_flags);
+	    if(p->ifa_addr)
+		print_addr("addr", p->ifa_addr);
+	    if(p->ifa_dstaddr) 
+		print_addr("dstaddr", p->ifa_dstaddr);
+	    if(p->ifa_netmask) 
+		print_addr("netmask", p->ifa_netmask);
+	    printf("  %p\n", p->ifa_data);
+	}
     }
 }
 
@@ -77,7 +100,21 @@ int
 main(int argc, char **argv)
 {
     struct ifaddrs *addrs = NULL;
-    int ret;
+    int ret, optidx = 0;
+
+    setprogname (argv[0]);
+
+    if (getarg (args, sizeof(args) / sizeof(args[0]), argc, argv,
+		&optidx))
+	usage (1);
+
+    if (help_flag)
+	usage (0);
+
+    if (version_flag) {
+	fprintf (stderr, "%s from %s-%s\n", getprogname(), PACKAGE, VERSION);
+	return 0;
+    }
 
     if (rk_SOCK_INIT())
 	errx(1, "Couldn't initialize sockets. Err=%d\n", rk_SOCK_ERRNO);

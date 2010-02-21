@@ -67,6 +67,7 @@ CLEANFILES= \
 	krb5-mit.conf krb5-mit.conf.tmp \
 	tempfile \
 	log.current-db* \
+	heimdal-db* \
 	messages.log
 
 EXTRA_DIST = \

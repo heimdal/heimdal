@@ -652,8 +652,12 @@ ROKEN_LIB_FUNCTION unsigned short ROKEN_LIB_CALL bswap16(unsigned short);
 int rk_flock(int fd, int operation);
 #endif /* HAVE_FLOCK */
 
-#if defined(SunOS) || defined(_AIX)
+#ifndef HAVE_DIRFD
+#ifdef HAVE_STRUCT_DIRENT_DD_FD
 #define dirfd(x) ((x)->dd_fd)
+#else
+#error Missing dirfd() and ->dd_fd
+#endif
 #endif
 
 ROKEN_LIB_FUNCTION time_t ROKEN_LIB_CALL tm2time (struct tm, int);

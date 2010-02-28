@@ -486,7 +486,9 @@ int rk_flock(int fd, int operation);
 #ifdef HAVE_STRUCT_DIRENT_DD_FD
 #define dirfd(x) ((x)->dd_fd)
 #else
+#ifndef _WIN32 /* Windows code never calls dirfd */
 #error Missing dirfd() and ->dd_fd
+#endif
 #endif
 #endif
 

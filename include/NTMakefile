@@ -111,5 +111,5 @@ const char *heimdal_version = "$(VER_PACKAGE_NAME) $(VER_PACKAGE_VERSION)";
 all:: $(INCFILES)
 
 clean::
-	$(RM) $(INCFILES)
+	-$(RM) $(INCFILES)
 

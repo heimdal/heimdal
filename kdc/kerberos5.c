@@ -1425,6 +1425,7 @@ _kdc_as_rep(krb5_context context,
     if(f.renew || f.validate || f.proxy || f.forwarded || f.enc_tkt_in_skey
        || (f.request_anonymous && !config->allow_anonymous)) {
 	ret = KRB5KDC_ERR_BADOPTION;
+	e_text = "Bad KDC options";
 	kdc_log(context, config, 0, "Bad KDC options -- %s", client_name);
 	goto out;
     }
@@ -1454,6 +1455,7 @@ _kdc_as_rep(krb5_context context,
     if(client->entry.flags.forwardable && server->entry.flags.forwardable)
 	et.flags.forwardable = f.forwardable;
     else if (f.forwardable) {
+	e_text = "Ticket may not be forwardable";
 	ret = KRB5KDC_ERR_POLICY;
 	kdc_log(context, config, 0,
 		"Ticket may not be forwardable -- %s", client_name);
@@ -1462,6 +1464,7 @@ _kdc_as_rep(krb5_context context,
     if(client->entry.flags.proxiable && server->entry.flags.proxiable)
 	et.flags.proxiable = f.proxiable;
     else if (f.proxiable) {
+	e_text = "Ticket may not be proxiable";
 	ret = KRB5KDC_ERR_POLICY;
 	kdc_log(context, config, 0,
 		"Ticket may not be proxiable -- %s", client_name);
@@ -1470,6 +1473,7 @@ _kdc_as_rep(krb5_context context,
     if(client->entry.flags.postdate && server->entry.flags.postdate)
 	et.flags.may_postdate = f.allow_postdate;
     else if (f.allow_postdate){
+	e_text = "Ticket may not be postdate";
 	ret = KRB5KDC_ERR_POLICY;
 	kdc_log(context, config, 0,
 		"Ticket may not be postdatable -- %s", client_name);
@@ -1478,6 +1482,7 @@ _kdc_as_rep(krb5_context context,
 
     /* check for valid set of addresses */
     if(!_kdc_check_addresses(context, config, b->addresses, from_addr)) {
+	e_text = "Bad address list in requested";
 	ret = KRB5KRB_AP_ERR_BADADDR;
 	kdc_log(context, config, 0,
 		"Bad address list requested -- %s", client_name);
@@ -1630,6 +1635,7 @@ _kdc_as_rep(krb5_context context,
 					   &et);
 	if (ret)
 	    goto out;
+
     } else
 #endif
     {

@@ -33,7 +33,7 @@
 
 #include <config.h>
 
-#if !defined(HAVE_STRERROR_R) && !defined(STRERROR_R_PROTO_COMPATIBLE)
+#if (!defined(HAVE_STRERROR_R) && !defined(strerror_r)) || (!defined(STRERROR_R_PROTO_COMPATIBLE) && defined(HAVE_STRERROR_R))
 
 #include <stdio.h>
 #include <string.h>
@@ -58,11 +58,6 @@ rk_strerror_r(int eno, char * strerrbuf, size_t buflen)
 
 #else  /* _MSC_VER */
 
-#ifndef HAVE_STRERROR_R
-extern int sys_nerr;
-extern char *sys_errlist[];
-#endif
-
 int ROKEN_LIB_FUNCTION
 rk_strerror_r(int eno, char *strerrbuf, size_t buflen)
 {
@@ -76,11 +71,7 @@ rk_strerror_r(int eno, char *strerrbuf, size_t buflen)
     return 0;
 #else
     int ret;
-    if(eno < 0 || eno >= sys_nerr) {
-	snprintf(strerrbuf, buflen, "Error %d occurred.", eno);
-	return EINVAL;
-    }
-    ret = snprintf(strerrbuf, buflen, "%s", sys_errlist[eno]);
+    ret = strlcpy(strerrbuf, buflen, strerror(eno));
     if (ret > buflen)
 	return ERANGE;
     return 0;

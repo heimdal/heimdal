@@ -86,6 +86,8 @@ HEIMDAL_ROKEN_1.0 {
 		rk_read_environment;
 		rk_readv;
 		rk_realloc;
+		rk_strerror;
+		rk_strerror_r;
 		rk_setprogname;
 		rk_simple_execle;
 		rk_simple_execlp;

@@ -33,16 +33,37 @@
 
 #include <config.h>
 
-#if !defined(HAVE_STRERROR_R) && !defined(STRERROR_R_PROTO_COMPATIBLE)
+#if (!defined(HAVE_STRERROR_R) && !defined(strerror_r)) || (!defined(STRERROR_R_PROTO_COMPATIBLE) && defined(HAVE_STRERROR_R))
 
 #include <stdio.h>
 #include <string.h>
 #include <errno.h>
 
+<<<<<<< HEAD
 #ifndef HAVE_STRERROR_R
 extern int sys_nerr;
 extern char *sys_errlist[];
 #endif
+=======
+#ifdef _MSC_VER
+
+int ROKEN_LIB_FUNCTION
+rk_strerror_r(int eno, char * strerrbuf, size_t buflen)
+{
+    errno_t err;
+
+    err = strerror_s(strerrbuf, buflen, eno);
+    if (err != 0) {
+        int code;
+        code = sprintf_s(strerrbuf, buflen, "Error % occurred.", eno);
+        err = ((code != 0)? errno : 0);
+    }
+
+    return err;
+}
+
+#else  /* _MSC_VER */
+>>>>>>> 6da28e7... move same ifdef magic from roken-common.h.in to here, use strerror()
 
 int ROKEN_LIB_FUNCTION
 rk_strerror_r(int eno, char *strerrbuf, size_t buflen)
@@ -57,11 +78,7 @@ rk_strerror_r(int eno, char *strerrbuf, size_t buflen)
     return 0;
 #else
     int ret;
-    if(eno < 0 || eno >= sys_nerr) {
-	snprintf(strerrbuf, buflen, "Error %d occurred.", eno);
-	return EINVAL;
-    }
-    ret = snprintf(strerrbuf, buflen, "%s", sys_errlist[eno]);
+    ret = strlcpy(strerrbuf, buflen, strerror(eno));
     if (ret > buflen)
 	return ERANGE;
     return 0;

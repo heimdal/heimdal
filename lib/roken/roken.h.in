@@ -471,7 +471,7 @@ ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL getdtablesize(void);
 ROKEN_LIB_FUNCTION char * ROKEN_LIB_CALL strerror(int);
 #endif
 
-#if !defined(HAVE_STRERROR_R) && !defined(strerror_r) && !defined(STRERROR_R_PROTO_COMPATIBLE)
+#if (!defined(HAVE_STRERROR_R) && !defined(strerror_r)) || (!defined(STRERROR_R_PROTO_COMPATIBLE) && defined(HAVE_STRERROR_R))
 int ROKEN_LIB_FUNCTION rk_strerror_r(int, char *, size_t);
 #else
 #define rk_strerror_r strerror_r

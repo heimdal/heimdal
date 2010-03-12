@@ -38,6 +38,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <errno.h>
+#include "roken.h"
 
 <<<<<<< HEAD
 #ifndef HAVE_STRERROR_R

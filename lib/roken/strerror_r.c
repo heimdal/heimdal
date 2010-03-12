@@ -38,6 +38,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <errno.h>
+#include "roken.h"
 
 #ifdef _MSC_VER
 

@@ -1,6 +1,6 @@
 
 @macro copynext{} 
-@vskip 20pt plus 1fil@penalty-1000
+@vskip 20pt plus 1fil
 @end macro
 
 @macro copyrightstart{}

@@ -34,7 +34,7 @@
 @subtitle 2008
 @author Love Hörnquist Åstrand
 
-@def@copynext{@vskip 20pt plus 1fil@penalty-1000}
+@def@copynext{@vskip 20pt plus 1fil}
 @def@copyrightstart{}
 @def@copyrightend{}
 @page

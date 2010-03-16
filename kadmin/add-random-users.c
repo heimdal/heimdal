@@ -33,8 +33,6 @@
 
 #include "kadmin_locl.h"
 
-RCSID("$Id$");
-
 #define WORDS_FILENAME "/usr/share/dict/words"
 
 #define NUSERS 1000

@@ -34,8 +34,6 @@
 #include "kadmin_locl.h"
 #include "kadmin-commands.h"
 
-RCSID("$Id$");
-
 struct ext_keytab_data {
     krb5_keytab keytab;
 };

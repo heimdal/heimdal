@@ -34,8 +34,6 @@
 #include "kadmin_locl.h"
 #include "kadmin-commands.h"
 
-RCSID("$Id$");
-
 struct cpw_entry_data {
     int random_key;
     int random_password;

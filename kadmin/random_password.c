@@ -33,8 +33,6 @@
 
 #include "kadmin_locl.h"
 
-RCSID("$Id$");
-
 /* This file defines some a function that generates a random password,
    that can be used when creating a large amount of principals (such
    as for a batch of students). Since this is a political matter, you

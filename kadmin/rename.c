@@ -34,8 +34,6 @@
 #include "kadmin_locl.h"
 #include "kadmin-commands.h"
 
-RCSID("$Id$");
-
 int
 rename_entry(void *opt, int argc, char **argv)
 {

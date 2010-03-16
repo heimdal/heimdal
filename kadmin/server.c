@@ -34,8 +34,6 @@
 #include "kadmin_locl.h"
 #include <krb5-private.h>
 
-RCSID("$Id$");
-
 static kadm5_ret_t
 kadmind_dispatch(void *kadm_handle, krb5_boolean initial,
 		 krb5_data *in, krb5_data *out)

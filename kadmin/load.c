@@ -35,8 +35,6 @@
 #include "kadmin-commands.h"
 #include <kadm5/private.h>
 
-RCSID("$Id$");
-
 struct entry {
     char *principal;
     char *key;

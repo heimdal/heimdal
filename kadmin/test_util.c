@@ -32,8 +32,6 @@
 
 #include "kadmin_locl.h"
 
-RCSID("$Id$");
-
 krb5_context context;
 void *kadm_handle;
 

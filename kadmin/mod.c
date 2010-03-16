@@ -34,8 +34,6 @@
 #include "kadmin_locl.h"
 #include "kadmin-commands.h"
 
-RCSID("$Id$");
-
 static void
 add_tl(kadm5_principal_ent_rec *princ, int type, krb5_data *data)
 {

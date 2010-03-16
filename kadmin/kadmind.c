@@ -33,8 +33,6 @@
 
 #include "kadmin_locl.h"
 
-RCSID("$Id$");
-
 static char *check_library  = NULL;
 static char *check_function = NULL;
 static getarg_strings policy_libraries = { 0, NULL };

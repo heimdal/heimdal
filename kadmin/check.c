@@ -38,8 +38,6 @@
 #include "kadmin_locl.h"
 #include "kadmin-commands.h"
 
-RCSID("$Id$");
-
 static int
 get_check_entry(const char *name, kadm5_principal_ent_rec *ent)
 {

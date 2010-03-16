@@ -36,8 +36,6 @@
 #include <sys/wait.h>
 #endif
 
-RCSID("$Id$");
-
 struct kadm_port {
     char *port;
     unsigned short def_port;

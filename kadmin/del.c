@@ -34,8 +34,6 @@
 #include "kadmin_locl.h"
 #include "kadmin-commands.h"
 
-RCSID("$Id$");
-
 static int
 do_del_entry(krb5_principal principal, void *data)
 {

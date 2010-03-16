@@ -37,8 +37,6 @@
 #include "kadmin-commands.h"
 #include <kadm5/private.h>
 
-RCSID("$Id$");
-
 static kadm5_ret_t
 create_random_entry(krb5_principal princ,
 		    unsigned max_life,

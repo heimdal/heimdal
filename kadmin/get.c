@@ -36,8 +36,6 @@
 #include <parse_units.h>
 #include <rtbl.h>
 
-RCSID("$Id$");
-
 static struct field_name {
     const char *fieldname;
     unsigned int fieldvalue;

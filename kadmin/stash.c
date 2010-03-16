@@ -36,8 +36,6 @@
 #include "kadmin_locl.h"
 #include "kadmin-commands.h"
 
-RCSID("$Id$");
-
 extern int local_flag;
 
 int

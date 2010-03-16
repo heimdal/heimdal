@@ -35,8 +35,6 @@
 #include "kadmin-commands.h"
 #include <sl.h>
 
-RCSID("$Id$");
-
 static char *config_file;
 static char *keyfile;
 int local_flag;

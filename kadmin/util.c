@@ -34,8 +34,6 @@
 #include "kadmin_locl.h"
 #include <parse_units.h>
 
-RCSID("$Id$");
-
 /*
  * util.c - functions for parsing, unparsing, and editing different
  * types of data used in kadmin.

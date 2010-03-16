@@ -38,6 +38,7 @@ KRB5_LIB_VARIABLE const char *krb5_config_file =
 "~/Library/Preferences/edu.mit.Kerberos:"
 "/Library/Preferences/edu.mit.Kerberos:"
 #endif
+"~/.krb5/config:"
 SYSCONFDIR "/krb5.conf:/etc/krb5.conf";
 KRB5_LIB_VARIABLE const char *krb5_defkeyname = KEYTAB_DEFAULT;
 

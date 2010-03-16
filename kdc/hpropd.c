@@ -33,8 +33,6 @@
 
 #include "hprop.h"
 
-RCSID("$Id$");
-
 static int inetd_flag = -1;
 static int help_flag;
 static int version_flag;

@@ -33,8 +33,6 @@
 
 #include "headers.h"
 
-RCSID("$Id$");
-
 krb5_context context;
 
 static char *keyfile;

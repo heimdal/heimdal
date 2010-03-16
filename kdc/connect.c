@@ -33,8 +33,6 @@
 
 #include "kdc_locl.h"
 
-RCSID("$Id$");
-
 /* Should we enable the HTTP hack? */
 int enable_http = -1;
 

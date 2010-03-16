@@ -33,8 +33,6 @@
 
 #include "kdc_locl.h"
 
-RCSID("$Id$");
-
 #define MAX_TIME ((time_t)((1U << 31) - 1))
 
 void

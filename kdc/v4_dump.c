@@ -33,8 +33,6 @@
 
 #include "hprop.h"
 
-RCSID("$Id$");
-
 static time_t
 time_parse(const char *cp)
 {

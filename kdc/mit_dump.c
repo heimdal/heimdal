@@ -33,8 +33,6 @@
 
 #include "hprop.h"
 
-RCSID("$Id$");
-
 /*
 can have any number of princ stanzas.
 format is as follows (only \n indicates newlines)

@@ -35,8 +35,6 @@
 
 #include "hprop.h"
 
-RCSID("$Id$");
-
 static int version_flag;
 static int help_flag;
 static const char *ktname = HPROP_KEYTAB;

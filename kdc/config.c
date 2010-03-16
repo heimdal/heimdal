@@ -37,8 +37,6 @@
 #include <getarg.h>
 #include <parse_bytes.h>
 
-RCSID("$Id$");
-
 struct dbinfo {
     char *realm;
     char *dbname;

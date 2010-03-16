@@ -34,8 +34,6 @@
 #include "headers.h"
 #include <getarg.h>
 
-RCSID("$Id$");
-
 int version5;
 int version4;
 int afs;

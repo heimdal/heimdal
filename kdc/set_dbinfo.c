@@ -35,8 +35,6 @@
 
 #include "kdc_locl.h"
 
-RCSID("$Id: default_config.c 21296 2007-06-25 14:49:11Z lha $");
-
 static krb5_error_code
 add_db(krb5_context context, struct krb5_kdc_configuration *c,
        const char *conf, const char *master_key)

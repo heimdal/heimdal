@@ -2002,7 +2002,7 @@ krb5_get_init_creds_password(krb5_context context,
 
 
     if (ret == KRB5KDC_ERR_KEY_EXPIRED && chpw == 0) {
-	char buf[1024];
+	char buf2[1024];
 
 	/* try to avoid recursion */
 	if (in_tkt_service != NULL && strcmp(in_tkt_service, "kadmin/changepw") == 0)
@@ -2015,7 +2015,7 @@ krb5_get_init_creds_password(krb5_context context,
 	ret = change_password (context,
 			       client,
 			       ctx->password,
-			       buf,
+			       buf2,
 			       sizeof(buf),
 			       prompter,
 			       data,

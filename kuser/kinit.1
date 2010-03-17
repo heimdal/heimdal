@@ -39,8 +39,6 @@
 .Nd acquire initial tickets
 .Sh SYNOPSIS
 .Nm kinit
-.Op Fl 4 | Fl -524init
-.Op Fl 9 | Fl -524convert
 .Op Fl -afslog
 .Oo Fl c Ar cachename \*(Ba Xo
 .Fl -cache= Ns Ar cachename
@@ -94,13 +92,6 @@ is used to authenticate to the Kerberos server as
 or if none is given, a system generated default (typically your login
 name at the default realm), and acquire a ticket granting ticket that
 can later be used to obtain tickets for other services.
-.Pp
-If you have compiled
-.Nm kinit
-with Kerberos 4 support and you have a
-Kerberos 4 server,
-.Nm
-will detect this and get you Kerberos 4 tickets.
 .Pp
 Supported options:
 .Bl -tag -width Ds
@@ -222,24 +213,6 @@ Request a ticket with no addresses.
 Request an anonymous ticket (which means that the ticket will be
 issued to an anonymous principal, typically
 .Dq anonymous@REALM ) .
-.El
-.Pp
-The following options are only available if
-.Nm
-has been compiled with support for Kerberos 4.
-.Bl -tag -width Ds
-.It Xo
-.Fl 4 ,
-.Fl -524init
-.Xc
-Try to convert the obtained Kerberos 5 krbtgt to a version 4
-compatible ticket.
-It will store this ticket in the default Kerberos 4 ticket file.
-.It Xo
-.Fl 9 ,
-.Fl -524convert
-.Xc
-only convert ticket to version 4
 .It Fl -afslog
 Gets AFS tickets, converts them to version 4 format, and stores them
 in the kernel.

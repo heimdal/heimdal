@@ -88,7 +88,8 @@ find_KRB5SignedPath(krb5_context context,
 	return KRB5KDC_ERR_PADATA_TYPE_NOSUPP;
     }
 
-    if (child.val[0].ad_type != KRB5_AUTHDATA_SIGNTICKET) {
+    if (child.val[0].ad_type != KRB5_AUTHDATA_SIGNTICKET && 
+	child.val[0].ad_type != KRB5_AUTHDATA_SIGNTICKET_OLD) {
 	free_AuthorizationData(&child);
 	return KRB5KDC_ERR_PADATA_TYPE_NOSUPP;
     }

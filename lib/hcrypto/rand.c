@@ -343,6 +343,8 @@ RAND_file_name(char *filename, size_t size)
 	e = getenv("RANDFILE");
 	if (e == NULL)
 	    e = getenv("HOME");
+	if (e)
+	    pathp = 1;
     }
     /*
      * Here we really want to call getpwuid(getuid()) but this will

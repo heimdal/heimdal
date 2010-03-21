@@ -83,16 +83,24 @@ done
 # RAND_file_name() when the enviroment is lacking those.
 #
 
-HOME=
-RANDFILE=
+if [ -e /dev/random -o -e /dev/urandom -o -e /dev/srandom -o -e /dev/arandom ] ; then
 
-${rand} --method=unix --file=unix 2>error
-res=$?
-if test "X$res" != X0 ; then
-    grep "random not ready yet" error || \
-	{ echo "random unix ready failing" ; cat error; exit 1; }
-    echo "random method unix out for lunch"
-    continue
+    # try hard to unset HOME and RANDFILE
+    HOME=
+    RANDFILE=
+
+    unset HOME
+    unset RANDFILE
+
+    ${rand} --method=unix --file=unix 2>error
+    res=$?
+    if test "X$res" != X0 ; then
+        grep "random not ready yet" error || \
+    	{ echo "random unix ready failing" ; cat error; exit 1; }
+        echo "random method unix out for lunch"
+        continue
+    fi
+
 fi
 
 exit 0

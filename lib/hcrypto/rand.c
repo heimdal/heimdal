@@ -359,7 +359,7 @@ RAND_file_name(char *filename, size_t size)
      *
      * So at least return the unix /dev/random if we have one
      */
-
+#ifndef _WIN32
     if (e == NULL) {
 	int fd;
 
@@ -367,6 +367,7 @@ RAND_file_name(char *filename, size_t size)
 	if (fd >= 0)
 	    close(fd);
     }
+#endif
     if (e == NULL)
 	return NULL;
 

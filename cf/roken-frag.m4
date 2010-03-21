@@ -403,7 +403,7 @@ if test "$ac_rk_have_dirfd" = "yes" ; then
 fi
 AC_MSG_RESULT($ac_rk_have_dirfd)
 
-AC_HAVE_STRUCT_FIELD(struct dirent, dd_fd, [#include <sys/types.h>
+AC_HAVE_STRUCT_FIELD(DIR, dd_fd, [#include <sys/types.h>
 #ifdef HAVE_DIRENT_H
 #include <dirent.h>
 #endif])

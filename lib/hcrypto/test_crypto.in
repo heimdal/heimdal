@@ -78,4 +78,21 @@ for a in 7 15 16 17 31 32 33 ; do
     cmp test-out-1 test-out-$a || { echo "cmp $a failed" ; exit 1; }
 done
 
+#
+# Last time we run is w/o HOME and RANDFILE to make sure we can do
+# RAND_file_name() when the enviroment is lacking those.
+#
+
+HOME=
+RANDFILE=
+
+${rand} --method=unix --file=unix 2>error
+res=$?
+if test "X$res" != X0 ; then
+    grep "random not ready yet" error || \
+	{ echo "random unix ready failing" ; cat error; exit 1; }
+    echo "random method unix out for lunch"
+    continue
+fi
+
 exit 0

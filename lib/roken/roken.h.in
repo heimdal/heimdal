@@ -653,7 +653,7 @@ int rk_flock(int fd, int operation);
 #endif /* HAVE_FLOCK */
 
 #ifndef HAVE_DIRFD
-#ifdef HAVE_STRUCT_DIRENT_DD_FD
+#ifdef HAVE_DIR_DD_FD
 #define dirfd(x) ((x)->dd_fd)
 #else
 #ifndef _WIN32 /* Windows code never calls dirfd */

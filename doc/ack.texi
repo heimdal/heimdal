@@ -40,7 +40,9 @@ Bugfixes, documentation, encouragement, and code has been contributed by:
 @item Allan McRae
 @item Andrew Bartlett
 @item Andrew Cobaugh
+@item Andrew Tridge
 @item Anton Lundin
+@item Asanka Herath
 @item Björn Sandell
 @item Björn Schlögl
 @item Brandon S. Allbery KF8NH
@@ -54,6 +56,7 @@ Bugfixes, documentation, encouragement, and code has been contributed by:
 @item Douglas E Engert
 @item Frank van der Linden
 @item Guido Günther
+@item Harald Barth
 @item Jason McIntyre
 @item Jan Rekorajski
 @item Johan Gadsjö
@@ -67,6 +70,7 @@ Bugfixes, documentation, encouragement, and code has been contributed by:
 @item Mario Strasser
 @item Mark Eichin
 @item Martin von Gagern
+@item Matthias Dieter Wallnöfer
 @item Mattias Amnefelt
 @item Michael B Allen
 @item Michael Fromberger
@@ -75,6 +79,7 @@ Bugfixes, documentation, encouragement, and code has been contributed by:
 @item Miroslav Ruda
 @item Mustafa A. Hashmi
 @item Petr Holub
+@item Russ Allbery
 @item Phil Fisher
 @item Rafal Malinowski
 @item Rainer Toebbicke

@@ -1613,7 +1613,8 @@ krb5_init_creds_set_keyblock(krb5_context context,
  * @param in input data from KDC, first round it should be reset by krb5_data_zer().
  * @param out reply to KDC.
  * @param hostinfo KDC address info, first round it can be NULL.
- * @param flags status of the round, if KRB5_INIT_CREDS_STEP_CONTINUE is set, continue one more round.
+ * @param flags status of the round, if
+ *        KRB5_INIT_CREDS_STEP_FLAG_CONTINUE is set, continue one more round.
  *
  * @return 0 for success, or an Kerberos 5 error code, see
  *     krb5_get_error_message().
@@ -1816,7 +1817,7 @@ krb5_init_creds_step(krb5_context context,
     out->data = ctx->req_buffer.data;
     out->length = ctx->req_buffer.length;
 
-    *flags = KRB5_INIT_CREDS_STEP_CONTINUE;
+    *flags = KRB5_INIT_CREDS_STEP_FLAG_CONTINUE;
 
     return 0;
  out:

@@ -41,7 +41,7 @@
  * @param a first oid to compare
  * @param b second oid to compare
  *
- * @return zero when both oid are the same OID, non-zero when they are
+ * @return non-zero when both oid are the same OID, zero when they are
  *         not the same.
  *         
  * @ingroup gssapi

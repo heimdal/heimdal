@@ -13,7 +13,6 @@
 #include <openssl/des.h>
 #include <openssl/rc4.h>
 #include <openssl/rc2.h>
-#include <openssl/md2.h>
 #include <openssl/md4.h>
 #include <openssl/md5.h>
 #include <openssl/sha.h>
@@ -39,7 +38,6 @@
 
 #include <hcrypto/evp.h>
 #include <hcrypto/des.h>
-#include <hcrypto/md2.h>
 #include <hcrypto/md4.h>
 #include <hcrypto/md5.h>
 #include <hcrypto/sha.h>

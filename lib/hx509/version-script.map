@@ -201,10 +201,8 @@ HEIMDAL_X509_1.2 {
 		hx509_revoke_verify;
 		hx509_set_error_string;
 		hx509_set_error_stringv;
-		hx509_signature_md2;
 		hx509_signature_md5;
 		hx509_signature_rsa;
-		hx509_signature_rsa_with_md2;
 		hx509_signature_rsa_with_md5;
 		hx509_signature_rsa_with_sha1;
 		hx509_signature_rsa_with_sha256;

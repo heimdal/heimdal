@@ -149,11 +149,6 @@ const AlgorithmIdentifier _hx509_signature_md5_data = {
     { 6, rk_UNCONST(md5_oid_tree) }, rk_UNCONST(&null_entry_oid)
 };
 
-static const unsigned md2_oid_tree[] = { 1, 2, 840, 113549, 2, 2 };
-const AlgorithmIdentifier _hx509_signature_md2_data = {
-    { 6, rk_UNCONST(md2_oid_tree) }, rk_UNCONST(&null_entry_oid)
-};
-
 static const unsigned ecPublicKey[] ={ 1, 2, 840, 10045, 2, 1 };
 const AlgorithmIdentifier _hx509_signature_ecPublicKey = {
     { 6, rk_UNCONST(ecPublicKey) }, NULL
@@ -192,11 +187,6 @@ const AlgorithmIdentifier _hx509_signature_rsa_with_sha1_data = {
 static const unsigned rsa_with_md5_oid[] ={ 1, 2, 840, 113549, 1, 1, 4 };
 const AlgorithmIdentifier _hx509_signature_rsa_with_md5_data = {
     { 7, rk_UNCONST(rsa_with_md5_oid) }, NULL
-};
-
-static const unsigned rsa_with_md2_oid[] ={ 1, 2, 840, 113549, 1, 1, 2 };
-const AlgorithmIdentifier _hx509_signature_rsa_with_md2_data = {
-    { 7, rk_UNCONST(rsa_with_md2_oid) }, NULL
 };
 
 static const unsigned rsa_oid[] ={ 1, 2, 840, 113549, 1, 1, 1 };
@@ -1290,19 +1280,6 @@ static const struct signature_alg rsa_with_md5_alg = {
     rsa_create_signature
 };
 
-static const struct signature_alg rsa_with_md2_alg = {
-    "rsa-with-md2",
-    &asn1_oid_id_pkcs1_md2WithRSAEncryption,
-    &_hx509_signature_rsa_with_md2_data,
-    &asn1_oid_id_pkcs1_rsaEncryption,
-    &_hx509_signature_md2_data,
-    PROVIDE_CONF|REQUIRE_SIGNER|RA_RSA_USES_DIGEST_INFO|SIG_PUBLIC_SIG,
-    1230739889,
-    NULL,
-    rsa_verify_signature,
-    rsa_create_signature
-};
-
 static const struct signature_alg dsa_sha1_alg = {
     "dsa-with-sha1",
     &asn1_oid_id_dsa_with_sha1,
@@ -1355,19 +1332,6 @@ static const struct signature_alg md5_alg = {
     NULL
 };
 
-static const struct signature_alg md2_alg = {
-    "rsa-md2",
-    &asn1_oid_id_rsa_digest_md2,
-    &_hx509_signature_md2_data,
-    NULL,
-    NULL,
-    SIG_DIGEST,
-    0,
-    EVP_md2,
-    evp_md_verify_signature,
-    NULL
-};
-
 /*
  * Order matter in this structure, "best" first for each "key
  * compatible" type (type is ECDSA, RSA, DSA, none, etc)
@@ -1382,13 +1346,11 @@ static const struct signature_alg *sig_algs[] = {
     &rsa_with_sha1_alg,
     &pkcs1_rsa_sha1_alg,
     &rsa_with_md5_alg,
-    &rsa_with_md2_alg,
     &heim_rsa_pkcs1_x509,
     &dsa_sha1_alg,
     &sha256_alg,
     &sha1_alg,
     &md5_alg,
-    &md2_alg,
     NULL
 };
 
@@ -1845,10 +1807,6 @@ hx509_signature_md5(void)
 { return &_hx509_signature_md5_data; }
 
 const AlgorithmIdentifier *
-hx509_signature_md2(void)
-{ return &_hx509_signature_md2_data; }
-
-const AlgorithmIdentifier *
 hx509_signature_ecPublicKey(void)
 { return &_hx509_signature_ecPublicKey; }
 
@@ -1879,10 +1837,6 @@ hx509_signature_rsa_with_sha1(void)
 const AlgorithmIdentifier *
 hx509_signature_rsa_with_md5(void)
 { return &_hx509_signature_rsa_with_md5_data; }
-
-const AlgorithmIdentifier *
-hx509_signature_rsa_with_md2(void)
-{ return &_hx509_signature_rsa_with_md2_data; }
 
 const AlgorithmIdentifier *
 hx509_signature_rsa(void)

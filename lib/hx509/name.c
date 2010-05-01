@@ -319,7 +319,7 @@ _hx509_Name_to_string(const Name *n, char **str)
 static int
 dsstringprep(const DirectoryString *ds, uint32_t **rname, size_t *rlen)
 {
-    wind_profile_flags flags = 0;
+    wind_profile_flags flags;
     size_t i, len;
     int ret;
     uint32_t *name;
@@ -329,22 +329,28 @@ dsstringprep(const DirectoryString *ds, uint32_t **rname, size_t *rlen)
 
     switch(ds->element) {
     case choice_DirectoryString_ia5String:
+	flags = WIND_PROFILE_LDAP;
 	COPYCHARARRAY(ds, ia5String, len, name);
 	break;
     case choice_DirectoryString_printableString:
-	flags = WIND_PROFILE_LDAP_CASE_EXACT_ATTRIBUTE;
+	flags = WIND_PROFILE_LDAP;
+	flags |= WIND_PROFILE_LDAP_CASE_EXACT_ATTRIBUTE;
 	COPYCHARARRAY(ds, printableString, len, name);
 	break;
     case choice_DirectoryString_teletexString:
+	flags = WIND_PROFILE_LDAP_CASE;
 	COPYCHARARRAY(ds, teletexString, len, name);
 	break;
     case choice_DirectoryString_bmpString:
+	flags = WIND_PROFILE_LDAP;
 	COPYVALARRAY(ds, bmpString, len, name);
 	break;
     case choice_DirectoryString_universalString:
+	flags = WIND_PROFILE_LDAP;
 	COPYVALARRAY(ds, universalString, len, name);
 	break;
     case choice_DirectoryString_utf8String:
+	flags = WIND_PROFILE_LDAP;
 	ret = wind_utf8ucs4_length(ds->u.utf8String, &len);
 	if (ret)
 	    return ret;
@@ -367,8 +373,7 @@ dsstringprep(const DirectoryString *ds, uint32_t **rname, size_t *rlen)
 	*rlen = *rlen * 2;
 	*rname = malloc(*rlen * sizeof((*rname)[0]));
 
-	ret = wind_stringprep(name, len, *rname, rlen,
-			      WIND_PROFILE_LDAP|flags);
+	ret = wind_stringprep(name, len, *rname, rlen, flags);
 	if (ret == WIND_ERR_OVERRUN) {
 	    free(*rname);
 	    *rname = NULL;

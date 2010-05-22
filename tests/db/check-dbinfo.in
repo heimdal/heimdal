@@ -42,4 +42,8 @@ export KRB5_CONFIG
 
 ../../lib/hdb/test_dbinfo > dbinfo.out || exit 1
 
+../../lib/hdb/test_mkey --mkey-file="${srcdir}/../../lib/hdb/data-mkey.mit.des3.le" || exit 1
+../../lib/hdb/test_mkey --mkey-file="${srcdir}/../../lib/hdb/data-mkey.mit.des3.be" || exit 1
+
+
 exit 0

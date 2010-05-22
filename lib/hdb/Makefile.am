@@ -62,7 +62,7 @@ if versionscript
 libhdb_la_LDFLAGS += $(LDFLAGS_VERSION_SCRIPT)$(srcdir)/version-script.map
 endif
 
-noinst_PROGRAMS = test_dbinfo test_hdbkeys
+noinst_PROGRAMS = test_dbinfo test_hdbkeys test_mkey
 
 dist_libhdb_la_SOURCES =			\
 	common.c				\
@@ -116,6 +116,7 @@ $(libhdb_la_OBJECTS): hdb_asn1.h hdb_err.h
 test_dbinfo_LIBS = libhdb.la
 
 test_hdbkeys_LIBS = ../krb5/libkrb5.la libhdb.la
+test_mkey_LIBS = $(test_hdbkeys_LIBS)
 
 # to help stupid solaris make
 

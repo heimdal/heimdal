@@ -172,7 +172,7 @@ tfm_rsa_public_encrypt(int flen, const unsigned char* from,
 
 static int
 tfm_rsa_public_decrypt(int flen, const unsigned char* from,
-			 unsigned char* to, RSA* rsa, int padding)
+		       unsigned char* to, RSA* rsa, int padding)
 {
     unsigned char *p;
     int res;
@@ -244,7 +244,7 @@ tfm_rsa_public_decrypt(int flen, const unsigned char* from,
 
 static int
 tfm_rsa_private_encrypt(int flen, const unsigned char* from,
-			  unsigned char* to, RSA* rsa, int padding)
+			unsigned char* to, RSA* rsa, int padding)
 {
     unsigned char *p, *p0;
     int res;
@@ -335,7 +335,7 @@ tfm_rsa_private_encrypt(int flen, const unsigned char* from,
 
 static int
 tfm_rsa_private_decrypt(int flen, const unsigned char* from,
-			  unsigned char* to, RSA* rsa, int padding)
+			unsigned char* to, RSA* rsa, int padding)
 {
     unsigned char *ptr;
     int res;
@@ -434,7 +434,6 @@ tfm_rsa_private_decrypt(int flen, const unsigned char* from,
     return size;
 }
 
-#if 0
 static BIGNUM *
 mpz2BN(fp_int *s)
 {
@@ -458,7 +457,6 @@ static int
 random_num(fp_int *num, size_t len)
 {
     unsigned char *p;
-    int res;
 
     len = (len + 7) / 8;
     p = malloc(len);
@@ -472,33 +470,23 @@ random_num(fp_int *num, size_t len)
     free(p);
     return 0;
 }
-#endif
 
 #define CHECK(f, v) if ((f) != (v)) { goto out; }
 
 static int
 tfm_rsa_generate_key(RSA *rsa, int bits, BIGNUM *e, BN_GENCB *cb)
 {
-#if 0
     fp_int el, p, q, n, d, dmp1, dmq1, iqmp, t1, t2, t3;
-    int counter, ret;
+    int counter, ret, bitsp;
 
     if (bits < 789)
 	return -1;
 
+    bitsp = (bits + 1) / 2;
+
     ret = -1;
 
-    fp_init(&el);
-    fp_init(&p);
-    fp_init(&q);
-    fp_init(&n);
-    fp_init(&d);
-    fp_init(&dmp1);
-    fp_init(&dmq1);
-    fp_init(&iqmp);
-    fp_init(&t1);
-    fp_init(&t2);
-    fp_init(&t3);
+    fp_init_multi(&el, &p, &q, &n, &n, &d, &dmp1, &dmq1, &iqmp, &t1, &t2, &t3, NULL);
 
     BN2mpz(&el, e);
 
@@ -506,11 +494,11 @@ tfm_rsa_generate_key(RSA *rsa, int bits, BIGNUM *e, BN_GENCB *cb)
     counter = 0;
     do {
 	BN_GENCB_call(cb, 2, counter++);
-	CHECK(random_num(&p, bits / 2 + 1), 0);
-	CHECK(mp_int_find_prime(&p), MP_TRUE);
+	CHECK(random_num(&p, bitsp), 0);
+	CHECK(fp_find_prime(&p), FP_YES);
 
-	CHECK(fp_sub_d(&p, 1, &t1), MP_OK);
-	CHECK(mp_int_gcd(&t1, &el, &t2), MP_OK);
+	fp_sub_d(&p, 1, &t1);
+	fp_gcd(&t1, &el, &t2);
     } while(fp_cmp_d(&t2, 1) != 0);
 
     BN_GENCB_call(cb, 3, 0);
@@ -518,15 +506,15 @@ tfm_rsa_generate_key(RSA *rsa, int bits, BIGNUM *e, BN_GENCB *cb)
     counter = 0;
     do {
 	BN_GENCB_call(cb, 2, counter++);
-	CHECK(random_num(&q, bits / 2 + 1), 0);
-	CHECK(mp_int_find_prime(&q), MP_TRUE);
+	CHECK(random_num(&q, bits - bitsp), 0);
+	CHECK(fp_find_prime(&q), FP_YES);
 
 	if (fp_cmp(&p, &q) == 0) /* don't let p and q be the same */
 	    continue;
 
-	CHECK(fp_sub_d(&q, 1, &t1), MP_OK);
-	CHECK(mp_int_gcd(&t1, &el, &t2), MP_OK);
-    } while(mp_int_compare_value(&t2, 1) != 0);
+	fp_sub_d(&q, 1, &t1);
+	fp_gcd(&t1, &el, &t2);
+    } while(fp_cmp_d(&t2, 1) != 0);
 
     /* make p > q */
     if (fp_cmp(&p, &q) < 0) {
@@ -539,20 +527,20 @@ tfm_rsa_generate_key(RSA *rsa, int bits, BIGNUM *e, BN_GENCB *cb)
     BN_GENCB_call(cb, 3, 1);
 
     /* calculate n,  		n = p * q */
-    CHECK(fp_mul(&p, &q, &n), MP_OK);
+    fp_mul(&p, &q, &n);
 
     /* calculate d, 		d = 1/e mod (p - 1)(q - 1) */
-    CHECK(fp_sub_d(&p, 1, &t1), MP_OK);
-    CHECK(fp_sub_d(&q, 1, &t2), MP_OK);
-    CHECK(fp_mul(&t1, &t2, &t3), MP_OK);
-    CHECK(fp_invmod(&el, &t3, &d), MP_OK);
+    fp_sub_d(&p, 1, &t1);
+    fp_sub_d(&q, 1, &t2);
+    fp_mul(&t1, &t2, &t3);
+    fp_invmod(&el, &t3, &d);
 
     /* calculate dmp1		dmp1 = d mod (p-1) */
-    CHECK(fp_mod(&d, &t1, &dmp1), MP_OK);
+    fp_mod(&d, &t1, &dmp1);
     /* calculate dmq1		dmq1 = d mod (q-1) */
-    CHECK(fp_mod(&d, &t2, &dmq1), MP_OK);
+    fp_mod(&d, &t2, &dmq1);
     /* calculate iqmp 		iqmp = 1/q mod p */
-    CHECK(fp_invmod(&q, &p, &iqmp), MP_OK);
+    fp_invmod(&q, &p, &iqmp);
 
     /* fill in RSA key */
 
@@ -566,6 +554,7 @@ tfm_rsa_generate_key(RSA *rsa, int bits, BIGNUM *e, BN_GENCB *cb)
     rsa->iqmp = mpz2BN(&iqmp);
 
     ret = 1;
+
 out:
     fp_zero(&el);
     fp_zero(&p);
@@ -580,9 +569,6 @@ out:
     fp_zero(&t3);
 
     return ret;
-#else
-    return -1;
-#endif
 }
 
 static int

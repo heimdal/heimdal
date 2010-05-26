@@ -49,6 +49,7 @@ asn1_*.[cx]
 /libtool
 /ltmain.sh
 /missing
+/setupbuild.cmd
 /ylwrap
 
 # Files in subdirectories.
@@ -255,6 +256,7 @@ asn1_*.[cx]
 /lib/wind/normalize_table.h
 /lib/wind/punycode_examples.c
 /lib/wind/punycode_examples.h
+/out
 /po/gen-po.sh
 /scripts
 /tests/bin/setup-env

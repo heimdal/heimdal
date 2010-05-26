@@ -78,7 +78,7 @@ tfm_rsa_private_calculate(fp_int * in, fp_int * p,  fp_int * q,
     /* C2 = 1/q mod p  (iqmp) */
     /* u = (vp - vq)C2 mod p. */
     fp_sub(&vp, &vq, &u);
-    if (u.sign == FP_NEG)
+    if (fp_isneg(&u))
 	fp_add(&u, p, &u);
     fp_mul(&u, iqmp, &u);
     fp_mod(&u, p, &u);
@@ -265,7 +265,7 @@ tfm_rsa_private_encrypt(int flen, const unsigned char* from,
     fp_read_unsigned_bin(&in, p0, size);
     free(p0);
 
-    if(in.sign == FP_NEG ||
+    if(fp_isneg(&in) ||
        fp_cmp(&in, &n) >= 0) {
 	size = -3;
 	goto out;
@@ -337,8 +337,7 @@ tfm_rsa_private_decrypt(int flen, const unsigned char* from,
 
     fp_read_unsigned_bin(&in, rk_UNCONST(from), flen);
 
-    if(in.sign == FP_NEG ||
-       fp_cmp(&in, &n) >= 0) {
+    if(fp_isneg(&in) || fp_cmp(&in, &n) >= 0) {
 	size = -2;
 	goto out;
     }
@@ -364,8 +363,7 @@ tfm_rsa_private_decrypt(int flen, const unsigned char* from,
     } else {
 	fp_int d;
 
-	if(in.sign == FP_NEG ||
-	   fp_cmp(&in, &n) >= 0)
+	if(fp_isneg(&in) || fp_cmp(&in, &n) >= 0)
 	    return -4;
 
 	BN2mpz(&d, rsa->d);

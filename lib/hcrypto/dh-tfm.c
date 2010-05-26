@@ -168,7 +168,7 @@ tfm_dh_compute_key(unsigned char *shared, const BIGNUM * pub, DH *dh)
     BN2mpz(&peer_pub, pub);
 
     /* check if peers pubkey is reasonable */
-    if (peer_pub.sign == FP_NEG
+    if (fp_isneg(&peer_pub)
 	|| fp_cmp(&peer_pub, &p) >= 0
 	|| fp_cmp_d(&peer_pub, 1) <= 0)
     {

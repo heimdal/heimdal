@@ -310,6 +310,9 @@ void fp_init_multi(fp_int *a, ...);
 #define fp_iseven(a) (((a)->used >= 0 && (((a)->dp[0] & 1) == 0)) ? FP_YES : FP_NO)
 #define fp_isodd(a)  (((a)->used > 0  && (((a)->dp[0] & 1) == 1)) ? FP_YES : FP_NO)
 
+/* is negative ? */
+#define fp_isneg(a) (((a)->sign) == FP_NEG)
+
 /* set to a small digit */
 void fp_set(fp_int *a, fp_digit b);
 

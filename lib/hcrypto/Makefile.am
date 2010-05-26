@@ -107,6 +107,7 @@ libhcrypto_la_SOURCES =	\
 	dh.c		\
 	dh.h		\
 	dh-imath.c	\
+	dh-tfm.c	\
 	dsa.c		\
 	dsa.h		\
 	doxygen.c	\
@@ -171,6 +172,7 @@ tfmsource = \
 	tomsfastmath/src/addsub/fp_submod.c \
 	tomsfastmath/src/addsub/s_fp_add.c \
 	tomsfastmath/src/addsub/s_fp_sub.c \
+	tomsfastmath/src/bin/fp_init_multi.c \
 	tomsfastmath/src/bin/fp_radix_size.c \
 	tomsfastmath/src/bin/fp_read_radix.c \
 	tomsfastmath/src/bin/fp_read_signed_bin.c \
@@ -221,6 +223,7 @@ tfmsource = \
 	tomsfastmath/src/mul/fp_mul_comba_small_set.c \
 	tomsfastmath/src/mul/fp_mul_d.c \
 	tomsfastmath/src/mul/fp_mulmod.c \
+	tomsfastmath/src/numtheory/fp_find_prime.c \
 	tomsfastmath/src/numtheory/fp_gcd.c \
 	tomsfastmath/src/numtheory/fp_invmod.c \
 	tomsfastmath/src/numtheory/fp_isprime.c \

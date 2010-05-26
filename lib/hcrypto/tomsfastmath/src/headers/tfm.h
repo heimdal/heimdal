@@ -301,7 +301,9 @@ const char *fp_ident(void);
 
 /* initialize [or zero] an fp int */
 #define fp_init(a)  (void)memset((a), 0, sizeof(fp_int))
+void fp_init_multi(fp_int *a, ...);
 #define fp_zero(a)  fp_init(a)
+#define fp_zero_multi  fp_init_multi
 
 /* zero/even/odd ? */
 #define fp_iszero(a) (((a)->used == 0) ? FP_YES : FP_NO)
@@ -424,6 +426,9 @@ void fp_prime_miller_rabin (fp_int * a, fp_int * b, int *result);
 
 /* 256 trial divisions + 8 Miller-Rabins, returns FP_YES if probable prime  */
 int fp_isprime(fp_int *a);
+
+/* given a, find a prime a that same and larger, that is a fp_isprime think is a prime */
+int fp_find_prime(fp_int *a);
 
 /* Primality generation flags */
 #define TFM_PRIME_BBS      0x0001 /* BBS style prime */

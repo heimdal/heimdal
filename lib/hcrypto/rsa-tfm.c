@@ -87,9 +87,7 @@ tfm_rsa_private_calculate(fp_int * in, fp_int * p,  fp_int * q,
     fp_mul(&u, q, &u);
     fp_add(&u, &vq, out);
 
-    fp_zero(&vp);
-    fp_zero(&vq);
-    fp_zero(&u);
+    fp_zero_multi(&vp, &vq, &u, NULL);
 
     return 0;
 }
@@ -120,8 +118,7 @@ tfm_rsa_public_encrypt(int flen, const unsigned char* from,
 
     p = p0 = malloc(size - 1);
     if (p0 == NULL) {
-	fp_zero(&e);
-	fp_zero(&n);
+	fp_zero_multi(&e, &n, NULL);
 	return -3;
     }
 
@@ -129,8 +126,7 @@ tfm_rsa_public_encrypt(int flen, const unsigned char* from,
 
     *p++ = 2;
     if (RAND_bytes(p, padlen) != 1) {
-	fp_zero(&e);
-	fp_zero(&n);
+	fp_zero_multi(&e, &n, NULL);
 	free(p0);
 	return -4;
     }
@@ -151,9 +147,7 @@ tfm_rsa_public_encrypt(int flen, const unsigned char* from,
 
     res = fp_exptmod(&dec, &e, &n, &enc);
 
-    fp_zero(&dec);
-    fp_zero(&e);
-    fp_zero(&n);
+    fp_zero_multi(&dec, &e, &n, NULL);
 
     if (res != 0)
 	return -4;
@@ -191,8 +185,7 @@ tfm_rsa_public_decrypt(int flen, const unsigned char* from,
 #if 0
     /* Check that the exponent is larger then 3 */
     if (mp_int_compare_value(&e, 3) <= 0) {
-	fp_zero(&n);
-	fp_zero(&e);
+	fp_zero_multi(&e, &n, NULL);
 	return -3;
     }
 #endif
@@ -201,16 +194,13 @@ tfm_rsa_public_decrypt(int flen, const unsigned char* from,
     fp_read_unsigned_bin(&s, rk_UNCONST(from), flen);
 
     if (fp_cmp(&s, &n) >= 0) {
-	fp_zero(&n);
-	fp_zero(&e);
+	fp_zero_multi(&e, &n, NULL);
 	return -4;
     }
 
     res = fp_exptmod(&s, &e, &n, &us);
 
-    fp_zero(&s);
-    fp_zero(&n);
-    fp_zero(&e);
+    fp_zero_multi(&s, &e, &n, NULL);
 
     if (res != 0)
 	return -5;
@@ -292,11 +282,7 @@ tfm_rsa_private_encrypt(int flen, const unsigned char* from,
 
 	res = tfm_rsa_private_calculate(&in, &p, &q, &dmp1, &dmq1, &iqmp, &out);
 
-	fp_zero(&p);
-	fp_zero(&q);
-	fp_zero(&dmp1);
-	fp_zero(&dmq1);
-	fp_zero(&iqmp);
+	fp_zero_multi(&p, &q, &dmp1, &dmq1, &iqmp, NULL);
 
 	if (res != 0) {
 	    size = -4;
@@ -323,10 +309,7 @@ tfm_rsa_private_encrypt(int flen, const unsigned char* from,
     }
 
  out:
-    fp_zero(&e);
-    fp_zero(&n);
-    fp_zero(&in);
-    fp_zero(&out);
+    fp_zero_multi(&e, &n, &in, &out, NULL);
 
     return size;
 }
@@ -371,11 +354,7 @@ tfm_rsa_private_decrypt(int flen, const unsigned char* from,
 
 	res = tfm_rsa_private_calculate(&in, &p, &q, &dmp1, &dmq1, &iqmp, &out);
 
-	fp_zero(&p);
-	fp_zero(&q);
-	fp_zero(&dmp1);
-	fp_zero(&dmq1);
-	fp_zero(&iqmp);
+	fp_zero_multi(&p, &q, &dmp1, &dmq1, &iqmp, NULL);
 
 	if (res != 0) {
 	    size = -3;
@@ -423,10 +402,7 @@ tfm_rsa_private_decrypt(int flen, const unsigned char* from,
     memmove(to, ptr, size);
 
  out:
-    fp_zero(&e);
-    fp_zero(&n);
-    fp_zero(&in);
-    fp_zero(&out);
+    fp_zero_multi(&e, &n, &in, &out, NULL);
 
     return size;
 }
@@ -553,17 +529,8 @@ tfm_rsa_generate_key(RSA *rsa, int bits, BIGNUM *e, BN_GENCB *cb)
     ret = 1;
 
 out:
-    fp_zero(&el);
-    fp_zero(&p);
-    fp_zero(&q);
-    fp_zero(&n);
-    fp_zero(&d);
-    fp_zero(&dmp1);
-    fp_zero(&dmq1);
-    fp_zero(&iqmp);
-    fp_zero(&t1);
-    fp_zero(&t2);
-    fp_zero(&t3);
+    fp_zero_multi(&el, &p, &q, &n, &d, &dmp1,
+		  &dmq1, &iqmp, &t1, &t2, &t3, NULL);
 
     return ret;
 }

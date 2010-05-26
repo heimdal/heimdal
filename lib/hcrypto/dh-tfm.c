@@ -82,7 +82,7 @@ mpz2BN(fp_int *s)
 #define DH_NUM_TRIES 10
 
 static int
-dh_generate_key(DH *dh)
+tfm_dh_generate_key(DH *dh)
 {
     fp_int pub, priv_key, g, p;
     int have_private_key = (dh->priv_key != NULL);
@@ -122,7 +122,7 @@ dh_generate_key(DH *dh)
 	fp_zero(&priv_key);
 	fp_zero(&g);
 	fp_zero(&p);
-	if (res != FP_YES)
+	if (res != 0)
 	    continue;
 
 	dh->pub_key = mpz2BN(&pub);
@@ -152,10 +152,11 @@ dh_generate_key(DH *dh)
 }
 
 static int
-dh_compute_key(unsigned char *shared, const BIGNUM * pub, DH *dh)
+tfm_dh_compute_key(unsigned char *shared, const BIGNUM * pub, DH *dh)
 {
     fp_int s, priv_key, p, peer_pub;
     size_t size = 0;
+    int ret;
 
     if (dh->pub_key == NULL || dh->g == NULL || dh->priv_key == NULL)
 	return -1;
@@ -181,11 +182,14 @@ dh_compute_key(unsigned char *shared, const BIGNUM * pub, DH *dh)
 
     fp_init(&s);
 
-    fp_exptmod(&peer_pub, &priv_key, &p, &s);
+    ret = fp_exptmod(&peer_pub, &priv_key, &p, &s);
 
     fp_zero(&p);
     fp_zero(&peer_pub);
     fp_zero(&priv_key);
+
+    if (ret != 0)
+	return -1;
 
     size = fp_unsigned_bin_size(&s);
     fp_to_unsigned_bin(&s, shared);
@@ -195,20 +199,20 @@ dh_compute_key(unsigned char *shared, const BIGNUM * pub, DH *dh)
 }
 
 static int
-dh_generate_params(DH *dh, int a, int b, BN_GENCB *callback)
+tfm_dh_generate_params(DH *dh, int a, int b, BN_GENCB *callback)
 {
     /* groups should already be known, we don't care about this */
     return 0;
 }
 
 static int
-dh_init(DH *dh)
+tfm_dh_init(DH *dh)
 {
     return 1;
 }
 
 static int
-dh_finish(DH *dh)
+tfm_dh_finish(DH *dh)
 {
     return 1;
 }
@@ -218,16 +222,16 @@ dh_finish(DH *dh)
  *
  */
 
-const DH_METHOD _hc_dh_imath_method = {
-    "hcrypto imath DH",
-    dh_generate_key,
-    dh_compute_key,
+const DH_METHOD _hc_dh_tfm_method = {
+    "hcrypto tfm DH",
+    tfm_dh_generate_key,
+    tfm_dh_compute_key,
     NULL,
-    dh_init,
-    dh_finish,
+    tfm_dh_init,
+    tfm_dh_finish,
     0,
     NULL,
-    dh_generate_params
+    tfm_dh_generate_params
 };
 
 /**
@@ -241,5 +245,5 @@ const DH_METHOD _hc_dh_imath_method = {
 const DH_METHOD *
 DH_tfm_method(void)
 {
-    return &_hc_dh_imath_method;
+    return &_hc_dh_tfm_method;
 }

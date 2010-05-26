@@ -450,7 +450,7 @@ check_tgs_flags(krb5_context context,
     }
 
     if(f.renewable){
-	if(!tgt->flags.renewable){
+	if(!tgt->flags.renewable || tgt->renew_till == NULL){
 	    kdc_log(context, config, 0,
 		    "Bad request for renewable ticket");
 	    return KRB5KDC_ERR_BADOPTION;
@@ -773,7 +773,9 @@ tgs_make_reply(krb5_context context,
 	et.endtime = *et.starttime + life;
     }
     if(f.renewable_ok && tgt->flags.renewable &&
-       et.renew_till == NULL && et.endtime < *b->till){
+       et.renew_till == NULL && et.endtime < *b->till &&
+       tgt->renew_till != NULL)
+    {
 	et.flags.renewable = 1;
 	ALLOC(et.renew_till);
 	*et.renew_till = *b->till;

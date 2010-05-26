@@ -8,6 +8,12 @@ Release Notes - Heimdal - Version Heimdal 1.4
  - Table driven ASN.1 compiler, smaller!, not enabled by default
  - Native Windows client support
 
+Release Notes - Heimdal - Version Heimdal 1.3.3
+
+ Bug fixes
+ - Check the GSS-API checksum exists before trying to use it [CVE-2010-1321]
+ - Check NULL pointers before dereference them [kdc]
+
 Release Notes - Heimdal - Version Heimdal 1.3.2
 
  Bug fixes

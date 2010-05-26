@@ -125,4 +125,10 @@ test_mkey_LIBS = $(test_hdbkeys_LIBS)
 
 hdb_err.h: hdb_err.et
 
-EXTRA_DIST = hdb.asn1 hdb_err.et hdb.schema version-script.map
+EXTRA_DIST = \
+	hdb.asn1 \
+	hdb_err.et \
+	hdb.schema \
+	version-script.map \
+	data-mkey.mit.des3.le \
+	data-mkey.mit.des3.be

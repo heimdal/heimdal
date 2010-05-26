@@ -462,6 +462,7 @@ gsskrb5_acceptor_start(OM_uint32 * minor_status,
     /*
      * We need to get the flags out of the 8003 checksum.
      */
+
     {
 	krb5_authenticator authenticator;
 
@@ -472,6 +473,12 @@ gsskrb5_acceptor_start(OM_uint32 * minor_status,
 	    ret = GSS_S_FAILURE;
 	    *minor_status = kret;
 	    return ret;
+	}
+
+	if (authenticator->cksum == NULL) {
+	    krb5_free_authenticator(context, &authenticator);
+	    *minor_status = 0;
+	    return GSS_S_BAD_BINDINGS;
 	}
 
         if (authenticator->cksum->cksumtype == CKSUMTYPE_GSSAPI) {

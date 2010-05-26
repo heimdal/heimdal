@@ -317,7 +317,8 @@ DLLDEPS= \
 DLLSDKDEPS= \
 	$(PTHREAD_LIB)	\
 	secur32.lib	\
-	shell32.lib
+	shell32.lib	\
+	dnsapi.lib
 
 $(LIBKRB5): $(BINDIR)\libkrb5.dll
 

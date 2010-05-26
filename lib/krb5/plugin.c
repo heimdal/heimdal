@@ -201,8 +201,19 @@ load_plugins(krb5_context context)
 	dirs = rk_UNCONST(sysplugin_dirs);
 
     for (di = dirs; *di != NULL; di++) {
+#ifdef KRB5_USE_PATH_TOKENS
+	{
+	    char * dir = NULL;
 
-	d = opendir(*di);
+	    if (_krb5_expand_path_tokens(context, *di, &dir))
+		continue;
+	    d = opendir(dir);
+
+	    free(dir);
+	}
+#else
+	d = opendir(*id);
+#endif
 	if (d == NULL)
 	    continue;
 	rk_cloexec_dir(d);

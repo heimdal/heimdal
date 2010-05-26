@@ -990,11 +990,12 @@ fcc_move(krb5_context context, krb5_ccache from, krb5_ccache to)
     {
 	krb5_storage *sp;
 	int fd;
-	ret = init_fcc (context, to, &sp, &fd, NULL);
-	if (sp)
-	    krb5_storage_free(sp);
-	fcc_unlock(context, fd);
-	close(fd);
+	if ((ret = init_fcc (context, to, &sp, &fd, NULL)) == 0) {
+	    if (sp)
+		krb5_storage_free(sp);
+	    fcc_unlock(context, fd);
+	    close(fd);
+	}
     }
 
     fcc_close(context, from);
@@ -1041,7 +1042,7 @@ static krb5_error_code
 fcc_get_kdc_offset(krb5_context context, krb5_ccache id, krb5_deltat *kdc_offset)
 {
     krb5_error_code ret;
-    krb5_storage *sp;
+    krb5_storage *sp = NULL;
     int fd;
     ret = init_fcc(context, id, &sp, &fd, kdc_offset);
     if (sp)

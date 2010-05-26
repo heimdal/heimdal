@@ -479,6 +479,14 @@ _krb5_expand_path_tokens(krb5_context context,
 	}
     }
 
+    /* Also deal with slashes */
+    if (*ppath_out) {
+	char * c;
+	for (c = *ppath_out; *c; c++)
+	    if (*c == '/')
+		*c = '\\';
+    }
+
     return 0;
 }
 

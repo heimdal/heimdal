@@ -60,12 +60,13 @@ BN2mpz(fp_int *s, const BIGNUM *bn)
 }
 
 static int
-rsa_private_calculate(fp_int * in, fp_int * p,  fp_int * q,
-		      fp_int * dmp1, fp_int * dmq1, fp_int * iqmp,
-		      fp_int * out)
+tfm_rsa_private_calculate(fp_int * in, fp_int * p,  fp_int * q,
+			  fp_int * dmp1, fp_int * dmq1, fp_int * iqmp,
+			  fp_int * out)
 {
     fp_int vp, vq, u;
-    fp_init(&vp); fp_init(&vq); fp_init(&u);
+
+    fp_init_multi(&vp, &vq, &u, NULL);
 
     /* vq = c ^ (d mod (q - 1)) mod q */
     /* vp = c ^ (d mod (p - 1)) mod p */
@@ -143,9 +144,8 @@ tfm_rsa_public_encrypt(int flen, const unsigned char* from,
     memcpy(p, from, flen);
     p += flen;
     assert((p - p0) == size - 1);
-
-    fp_init(&enc);
-    fp_init(&dec);
+    
+    fp_init_multi(&enc, &dec, NULL);
     fp_read_unsigned_bin(&dec, p0, size - 1);
     free(p0);
 
@@ -197,8 +197,7 @@ tfm_rsa_public_decrypt(int flen, const unsigned char* from,
     }
 #endif
 
-    fp_init(&s);
-    fp_init(&us);
+    fp_init_multi(&s, &us, NULL);
     fp_read_unsigned_bin(&s, rk_UNCONST(from), flen);
 
     if (fp_cmp(&s, &n) >= 0) {
@@ -272,8 +271,7 @@ tfm_rsa_private_encrypt(int flen, const unsigned char* from,
     BN2mpz(&n, rsa->n);
     BN2mpz(&e, rsa->e);
 
-    fp_init(&in);
-    fp_init(&out);
+    fp_init_multi(&in, &out, NULL);
     fp_read_unsigned_bin(&in, p0, size);
     free(p0);
 
@@ -292,7 +290,7 @@ tfm_rsa_private_encrypt(int flen, const unsigned char* from,
 	BN2mpz(&dmq1, rsa->dmq1);
 	BN2mpz(&iqmp, rsa->iqmp);
 
-	res = rsa_private_calculate(&in, &p, &q, &dmp1, &dmq1, &iqmp, &out);
+	res = tfm_rsa_private_calculate(&in, &p, &q, &dmp1, &dmq1, &iqmp, &out);
 
 	fp_zero(&p);
 	fp_zero(&q);
@@ -349,8 +347,7 @@ tfm_rsa_private_decrypt(int flen, const unsigned char* from,
     if (flen > size)
 	return -2;
 
-    fp_init(&in);
-    fp_init(&out);
+    fp_init_multi(&in, &out, NULL);
 
     BN2mpz(&n, rsa->n);
     BN2mpz(&e, rsa->e);
@@ -372,7 +369,7 @@ tfm_rsa_private_decrypt(int flen, const unsigned char* from,
 	BN2mpz(&dmq1, rsa->dmq1);
 	BN2mpz(&iqmp, rsa->iqmp);
 
-	res = rsa_private_calculate(&in, &p, &q, &dmp1, &dmq1, &iqmp, &out);
+	res = tfm_rsa_private_calculate(&in, &p, &q, &dmp1, &dmq1, &iqmp, &out);
 
 	fp_zero(&p);
 	fp_zero(&q);

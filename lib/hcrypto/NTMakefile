@@ -29,11 +29,21 @@
 # POSSIBILITY OF SUCH DAMAGE.
 # 
 
+SUBDIRS=tomsfastmath
+
 RELDIR=lib\hcrypto
 
 AUXCFLAGS=$(AUXCFLAGS) -DKRB5 -I$(HCRYPTOINCLUDEDIR)
 
 !include ../../windows/NTMakefile.w32
+
+# Do dependencies first
+
+all:: subdirs
+
+clean:: clean-subdirs
+
+test:: test-subdirs
 
 # Include files
 
@@ -108,6 +118,7 @@ libhcrypto_OBJs = \
 	$(OBJ)\rsa.obj		\
 	$(OBJ)\rsa-gmp.obj	\
 	$(OBJ)\rsa-imath.obj	\
+	$(OBJ)\rsa-tfm.obj	\
 	$(OBJ)\sha.obj		\
 	$(OBJ)\sha256.obj	\
 	$(OBJ)\ui.obj
@@ -116,7 +127,7 @@ libhcrypto_OBJs = \
 
 $(LIBHCRYPTO): $(BINDIR)\libhcrypto.dll
 
-$(BINDIR)\libhcrypto.dll: $(libhcrypto_OBJs) $(LIBROKEN) $(LIBASN1)
+$(BINDIR)\libhcrypto.dll: $(libhcrypto_OBJs) $(LIBROKEN) $(LIBASN1) $(LIBTFM)
 	$(DLLGUILINK) -def:libhcrypto-exports.def -implib:$(LIBHCRYPTO)
 	$(DLLPREP)
 
@@ -258,3 +269,4 @@ test-run:
 	cd $(SRCDIR)
 
 test:: $(TESTLIB) test-binaries test-run
+

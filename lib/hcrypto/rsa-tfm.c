@@ -265,8 +265,7 @@ tfm_rsa_private_encrypt(int flen, const unsigned char* from,
     fp_read_unsigned_bin(&in, p0, size);
     free(p0);
 
-    if(fp_isneg(&in) ||
-       fp_cmp(&in, &n) >= 0) {
+    if(fp_isneg(&in) || fp_cmp(&in, &n) >= 0) {
 	size = -3;
 	goto out;
     }

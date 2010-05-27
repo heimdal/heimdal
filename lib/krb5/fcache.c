@@ -307,9 +307,10 @@ _krb5_erase_file(krb5_context context, const char *filename)
 static krb5_error_code
 fcc_gen_new(krb5_context context, krb5_ccache *id)
 {
+    char *file, *exp_file = NULL;
+    krb5_error_code ret;
     krb5_fcache *f;
     int fd;
-    char *file;
 
     f = malloc(sizeof(*f));
     if(f == NULL) {
@@ -324,32 +325,23 @@ fcc_gen_new(krb5_context context, krb5_ccache *id)
 			       N_("malloc: out of memory", ""));
 	return KRB5_CC_NOMEM;
     }
-#ifdef KRB5_USE_PATH_TOKENS
-    {
-	char * exp_file = NULL;
-	krb5_error_code ec;
+    ret = _krb5_expand_path_tokens(context, file, &exp_file);
+    free(file);
+    if (ret)
+	return ret;
 
-	ec = _krb5_expand_path_tokens(context, file, &exp_file);
+    file = exp_file;
 
-	if (ec == 0) {
-	    free(file);
-	    file = exp_file;
-	} else {
-	    free(file);
-	    return ec;
-	}
-    }
-#endif
-    fd = mkstemp(file);
+    fd = mkstemp(exp_file);
     if(fd < 0) {
 	int ret = errno;
-	krb5_set_error_message(context, ret, N_("mkstemp %s failed", ""), file);
+	krb5_set_error_message(context, ret, N_("mkstemp %s failed", ""), exp_file);
 	free(f);
-	free(file);
+	free(exp_file);
 	return ret;
     }
     close(fd);
-    f->filename = file;
+    f->filename = exp_file;
     f->version = 0;
     (*id)->data.data = f;
     (*id)->data.length = sizeof(*f);

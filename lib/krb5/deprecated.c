@@ -359,8 +359,6 @@ krb5_425_conv_principal_ext(krb5_context context,
 					principal);
 }
 
-#endif
-
 krb5_error_code KRB5_LIB_FUNCTION
 krb5_425_conv_principal(krb5_context context,
 			const char *name,
@@ -378,6 +376,8 @@ krb5_425_conv_principal(krb5_context context,
     return krb5_425_conv_principal_ext(context, name, instance, realm,
 				       NULL, resolve, princ);
 }
+
+#endif
 
 /**
  * Generate a new ccache of type `ops' in `id'.

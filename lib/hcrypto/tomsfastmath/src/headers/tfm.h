@@ -449,6 +449,8 @@ int fp_prime_random_ex(fp_int *a, int t, int size, int flags, tfm_prime_callback
 /* radix conersions */
 int fp_count_bits(fp_int *a);
 
+int fp_radix_size(fp_int *a, int radix, int *size);
+
 int fp_unsigned_bin_size(fp_int *a);
 void fp_read_unsigned_bin(fp_int *a, unsigned char *b, int c);
 void fp_to_unsigned_bin(fp_int *a, unsigned char *b);

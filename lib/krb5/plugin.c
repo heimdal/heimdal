@@ -212,7 +212,7 @@ load_plugins(krb5_context context)
 	    free(dir);
 	}
 #else
-	d = opendir(*id);
+	d = opendir(*di);
 #endif
 	if (d == NULL)
 	    continue;

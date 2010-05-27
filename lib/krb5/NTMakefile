@@ -62,7 +62,7 @@ libkrb5_OBJS =			\
 	$(OBJ)\eai_to_heim_errno.obj	    \
 	$(OBJ)\error_string.obj		    \
 	$(OBJ)\expand_hostname.obj	    \
-	$(OBJ)\expand_path_w32.obj	    \
+	$(OBJ)\expand_path.obj	    	    \
 	$(OBJ)\fcache.obj		    \
 	$(OBJ)\free.obj			    \
 	$(OBJ)\free_host_realm.obj	    \

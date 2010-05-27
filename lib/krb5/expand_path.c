@@ -38,7 +38,7 @@ typedef int PTYPE;
 #include <shlobj.h>
 #include <sddl.h>
 
-/**
+/*
  * Expand a %{TEMP} token
  *
  * The %{TEMP} token expands to the temporary path for the current
@@ -81,7 +81,7 @@ _expand_temp_folder(krb5_context context, PTYPE param, const char *postfix, char
 
 extern HINSTANCE _krb5_hInstance;
 
-/**
+/*
  * Expand a %{BINDIR} token
  *
  * This is also used to expand a few other tokens on Windows, since
@@ -124,7 +124,7 @@ _expand_bin_dir(krb5_context context, PTYPE param, const char *postfix, char **r
     return 0;
 }
 
-/**
+/*
  *  Expand a %{USERID} token
  *
  *  The %{USERID} token expands to the string representation of the
@@ -233,14 +233,10 @@ _expand_userid(krb5_context context, PTYPE param, const char *postfix, char **re
     return rv;
 }
 
-/**
+/*
  * Expand a folder identified by a CSIDL
- *
- * Parameters:
- *
- * @param[in] folder A CSIDL value identifying the folder to be
- *     returned.
  */
+
 static int
 _expand_csidl(krb5_context context, PTYPE folder, const char *postfix, char **ret)
 {
@@ -351,34 +347,18 @@ static const struct token {
 #define CSIDLP(C,P) FTYPE_CSIDL, C, P, _expand_csidl
 #define CSIDL(C) CSIDLP(C, NULL)
 
-    {"APPDATA", CSIDL(CSIDL_APPDATA)},
-				/* Roaming application data (for current user) */
-
-    {"COMMON_APPDATA", CSIDL(CSIDL_COMMON_APPDATA)},
-				/* Application data (all users) */
-
-    {"LOCAL_APPDATA", CSIDL(CSIDL_LOCAL_APPDATA)},
-				/* Local application data (for current user) */
-
-    {"SYSTEM", CSIDL(CSIDL_SYSTEM)},
-				/* Windows System folder (e.g. %WINDIR%\System32) */
-
-    {"WINDOWS", CSIDL(CSIDL_WINDOWS)},
-				/* Windows folder */
-    {"USERCONFIG", CSIDLP(CSIDL_APPDATA, "\\" PACKAGE)},
-				/* Per user Heimdal configuration file path */
-
-    {"COMMONCONFIG", CSIDLP(CSIDL_COMMON_APPDATA, "\\" PACKAGE)},
-				/* Common Heimdal configuration file path */
+    {"APPDATA", CSIDL(CSIDL_APPDATA)}, /* Roaming application data (for current user) */
+    {"COMMON_APPDATA", CSIDL(CSIDL_COMMON_APPDATA)}, /* Application data (all users) */
+    {"LOCAL_APPDATA", CSIDL(CSIDL_LOCAL_APPDATA)}, /* Local application data (for current user) */
+    {"SYSTEM", CSIDL(CSIDL_SYSTEM)}, /* Windows System folder (e.g. %WINDIR%\System32) */
+    {"WINDOWS", CSIDL(CSIDL_WINDOWS)}, /* Windows folder */
+    {"USERCONFIG", CSIDLP(CSIDL_APPDATA, "\\" PACKAGE)}, /* Per user Heimdal configuration file path */
+    {"COMMONCONFIG", CSIDLP(CSIDL_COMMON_APPDATA, "\\" PACKAGE)}, /* Common Heimdal configuration file path */
     {"LIBDIR", SPECIAL(_expand_bin_dir)},
     {"BINDIR", SPECIAL(_expand_bin_dir)},
     {"LIBEXEC", SPECIAL(_expand_bin_dir)},
     {"SBINDIR", SPECIAL(_expand_bin_dir)},
 #else
-#if 0
-    {"USERCONFIG", SPECIAL(_expand_homedir)},
-    {"COMMONCONFIG", SPECIAL(_expand_commondir)},
-#endif
     {"LIBDIR", FTYPE_SPECIAL, 0, LIBDIR, _expand_path},
     {"BINDIR", FTYPE_SPECIAL, 0, BINDIR, _expand_path},
     {"LIBEXEC", FTYPE_SPECIAL, 0, LIBEXECDIR, _expand_path},
@@ -391,10 +371,12 @@ static const struct token {
 };
 
 static int
-_expand_token(krb5_context context, const char * token, const char * token_end,
-	      char ** ret)
+_expand_token(krb5_context context,
+	      const char *token,
+	      const char *token_end,
+	      char **ret)
 {
-    int i;
+    size_t i;
 
     *ret = NULL;
 
@@ -405,7 +387,7 @@ _expand_token(krb5_context context, const char * token, const char * token_end,
 	return EINVAL;
     }
 
-    for (i=0; i < sizeof(tokens)/sizeof(tokens[0]); i++) {
+    for (i = 0; i < sizeof(tokens)/sizeof(tokens[0]); i++) {
 	if (!strncmp(token+2, tokens[i].tok, (token_end - token) - 2))
 	    return tokens[i].exp_func(context, tokens[i].param,
 				      tokens[i].postfix, ret);
@@ -421,9 +403,9 @@ _krb5_expand_path_tokens(krb5_context context,
 			 const char *path_in,
 			 char **ppath_out)
 {
-    size_t len = 0;
     char *tok_begin, *tok_end, *append;
     const char *path_left;
+    size_t len = 0;
 
     *ppath_out = NULL;
 

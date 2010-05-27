@@ -53,6 +53,8 @@ SRC=$(MAKEDIR)
 SRC=$(MAKEDIR)\..
 !elseif exist($(MAKEDIR)\..\..\windows\NTMakefile.w32)
 SRC=$(MAKEDIR)\..\..
+!elseif exist($(MAKEDIR)\..\..\..\windows\NTMakefile.w32)
+SRC=$(MAKEDIR)\..\..\..
 !else
 !  error Cant determine source directory
 !endif
@@ -62,8 +64,8 @@ SRC=$(MAKEDIR)\..\..
 #----------------------------------------------------------------
 # Directory macros
 
-DESTDIR=$(SRC)\out32\dest_$(OUTDIR)
-OBJDIR =$(SRC)\out32\obj_$(OUTDIR)
+DESTDIR=$(SRC)\out\dest_$(OUTDIR)
+OBJDIR =$(SRC)\out\obj_$(OUTDIR)
 
 INCDIR =$(DESTDIR)\inc
 LIBDIR =$(DESTDIR)\lib
@@ -146,7 +148,7 @@ pthreadinc= -I$(PTHREAD_INC)
 
 cincdirs=$(cincdirs) -I$(INCDIR) -I$(INCDIR)\krb5 $(pthreadinc)
 cdefines=$(cdefines) -DHAVE_CONFIG_H
-cwarn=$(cwarn) -D_CRT_SECURE_NO_WARNINGS -wd4996
+cwarn=$(cwarn) -D_CRT_SECURE_NO_WARNINGS -wd4996 -wd4127 -wd4244 -wd4100
 
 !if "$(CPU)"=="i386"
 libmach=/machine:X86
@@ -454,3 +456,4 @@ LIBHDB	    =$(LIBDIR)\libhdb.lib
 LIBKADM5SRV =$(LIBDIR)\libkadm5srv.lib
 LIBKADM5CLNT=$(LIBDIR)\libkadm5clnt.lib
 LIBKDC	    =$(LIBDIR)\libkdc.lib
+LIBTFM	    =$(LIBDIR)\libtfm.lib

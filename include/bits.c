@@ -49,7 +49,7 @@ RCSID("$Id$");
     char tmp[128], tmp2[128];					\
     while(x){ x <<= 1; b++; if(x < zero) pre=""; }		\
     if(b >= len){						\
-        int tabs;						\
+        size_t tabs;						\
 	sprintf(tmp, "%sint%d_t" , pre, len);			\
 	sprintf(tmp2, "typedef %s %s;", #TYPE, tmp);		\
 	tabs = 5 - strlen(tmp2) / 8;				\

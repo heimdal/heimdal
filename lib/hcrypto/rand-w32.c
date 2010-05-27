@@ -48,25 +48,25 @@ volatile static HCRYPTPROV g_cryptprovider = 0;
 static HCRYPTPROV
 _hc_CryptProvider(void)
 {
-    BOOL res;
+    BOOL rv;
     HCRYPTPROV cryptprovider = 0;
 
     if (g_cryptprovider != 0)
 	return g_cryptprovider;
 
-    res = CryptAcquireContext(&cryptprovider, NULL,
+    rv = CryptAcquireContext(&cryptprovider, NULL,
 			      MS_ENHANCED_PROV, PROV_RSA_FULL,
 			      0);
 
     if (GetLastError() == NTE_BAD_KEYSET) {
-        if(!res)
-            res = CryptAcquireContext(&cryptprovider, NULL,
+        if(!rv)
+            rv = CryptAcquireContext(&cryptprovider, NULL,
                                       MS_ENHANCED_PROV, PROV_RSA_FULL,
                                       CRYPT_NEWKEYSET);
     }
 
-    if (res &&
-        InterlockedCompareExchange(&g_cryptprovider, cryptprovider, 0) != 0) {
+    if (rv &&
+        InterlockedCompareExchangePointer(&g_cryptprovider, cryptprovider, 0) != 0) {
 
         CryptReleaseContext(cryptprovider, 0);
         cryptprovider = g_cryptprovider;
@@ -90,8 +90,8 @@ static int
 w32crypto_bytes(unsigned char *outdata, int size)
 {
     if (CryptGenRandom(_hc_CryptProvider(), size, outdata))
-	return 0;
-    return 1;
+	return 1;
+    return 0;
 }
 
 static void

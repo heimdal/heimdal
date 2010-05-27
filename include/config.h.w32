@@ -1224,6 +1224,9 @@ static const char *const rcsid[] = { (const char *)rcsid, "@(#)" msg }
 /* Defined if we have WinSock */
 #define HAVE_WINSOCK 1
 
+/* Defined if we have WinDNS */
+#define HAVE_WINDNS 1
+
 /* define if struct winsize has ws_xpixel */
 /* #define HAVE_WS_XPIXEL 1 */
 
@@ -1403,6 +1406,9 @@ static const char *const rcsid[] = { (const char *)rcsid, "@(#)" msg }
 
 /* Define if a socket is not a file descriptor */
 #define SOCKET_IS_NOT_AN_FD 1
+
+/* Define if FD_SETSIZE check does not apply to this platform */
+#define NO_LIMIT_FD_SETSIZE 1
 
 /* Define to 1 if you have the ANSI C header files. */
 #define STDC_HEADERS 1

@@ -34,6 +34,8 @@
 #include "krb5_locl.h"
 #include <dirent.h>
 
+#ifndef _WIN32
+
 /* see if principal is mentioned in the filename access file, return
    TRUE (in result) if so, FALSE otherwise */
 
@@ -65,7 +67,6 @@ check_one_file(krb5_context context,
 	fclose (f);
 	return EISDIR;
     }
-#ifndef _WIN32
     if (st.st_uid != pwd->pw_uid && st.st_uid != 0) {
 	fclose (f);
 	return EACCES;
@@ -74,7 +75,6 @@ check_one_file(krb5_context context,
 	fclose (f);
 	return EACCES;
     }
-#endif
 
     while (fgets (buf, sizeof(buf), f) != NULL) {
 	krb5_principal tmp;
@@ -126,12 +126,10 @@ check_directory(krb5_context context,
     if (!S_ISDIR(st.st_mode))
 	return ENOTDIR;
 
-#ifndef _WIN32
     if (st.st_uid != pwd->pw_uid && st.st_uid != 0)
 	return EACCES;
     if ((st.st_mode & (S_IWGRP | S_IWOTH)) != 0)
 	return EACCES;
-#endif
 
     if((d = opendir(dirname)) == NULL)
 	return errno;
@@ -166,6 +164,8 @@ check_directory(krb5_context context,
     closedir(d);
     return ret;
 }
+
+#endif  /* !_WIN32 */
 
 static krb5_boolean
 match_local_principals(krb5_context context,

@@ -477,7 +477,7 @@ KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_cc_set_default_name(krb5_context context, const char *name)
 {
     krb5_error_code ret = 0;
-    char *p;
+    char *p, *exp_p = NULL;
 
     if (name == NULL) {
 	const char *e = NULL;
@@ -529,24 +529,15 @@ krb5_cc_set_default_name(krb5_context context, const char *name)
 	return ENOMEM;
     }
 
-#ifdef KRB5_USE_PATH_TOKENS
-    {
-	char * exp_p = NULL;
-
-	if (_krb5_expand_path_tokens(context, p, &exp_p) == 0) {
-	    free (p);
-	    p = exp_p;
-	} else {
-	    free (p);
-	    return EINVAL;
-	}
-    }
-#endif
+    ret = _krb5_expand_path_tokens(context, p, &exp_p);
+    free(p);
+    if (ret)
+	return ret;
 
     if (context->default_cc_name)
 	free(context->default_cc_name);
 
-    context->default_cc_name = p;
+    context->default_cc_name = exp_p;
 
     return ret;
 }

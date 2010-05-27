@@ -277,6 +277,8 @@ read_block(krb5_context context, int fd, int32_t pos, void *buf, size_t len)
 	krb5_errx(context, 1, "read(%lu) = %u", (unsigned long)len, ret);
 }
 
+#ifdef KRB4
+
 static int
 ka_convert(struct prop_data *pd, int fd, struct ka_entry *ent)
 {
@@ -405,7 +407,7 @@ ka_dump(struct prop_data *pd, const char *file)
     }
     return 0;
 }
-
+#endif
 
 
 struct getargs args[] = {
@@ -500,8 +502,10 @@ struct {
     const char *name;
 } types[] = {
     { HPROP_HEIMDAL,	"heimdal" },
+#ifdef KRB4
     { HPROP_KRB4_DUMP,	"krb4-dump" },
     { HPROP_KASERVER, 	"kaserver" },
+#endif
     { HPROP_MIT_DUMP,	"mit-dump" }
 };
 
@@ -526,6 +530,7 @@ iterate (krb5_context context,
     int ret;
 
     switch(type) {
+#ifdef KRB4
     case HPROP_KRB4_DUMP:
 	ret = v4_prop_dump(pd, database_name);
 	if(ret)
@@ -536,6 +541,7 @@ iterate (krb5_context context,
 	if(ret)
 	    krb5_warn(context, ret, "ka_dump");
 	break;
+#endif
     case HPROP_MIT_DUMP:
 	ret = mit_prop_dump(pd, database_name);
 	if (ret)

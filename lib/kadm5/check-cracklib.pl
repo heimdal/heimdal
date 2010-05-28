@@ -40,6 +40,9 @@ my $database = '/usr/lib/cracklib_dict';
 my $historydb = '/var/heimdal/historydb';
 # NEED TO CHANGE THESE TO MATCH YOUR SYSTEM
 
+# seconds password reuse allowed (to catch retries from clients)
+my $reusetime = 60; 
+
 my %params;
 
 sub check_basic
@@ -60,6 +63,7 @@ sub check_repeat
     my $result  = 'Do not reuse passwords';
     my %DB;
     my $md5context = new Digest::MD5;
+    my $timenow = scalar(time());
 
     $md5context->reset();
     $md5context->add($principal, ":", $passwd);
@@ -67,8 +71,11 @@ sub check_repeat
     my $key=$md5context->hexdigest();
 
     dbmopen(%DB,$historydb,0600) or die "Internal: Could not open $historydb";
-    $result = "ok" if (!$DB{$key});
-    $DB{$key}=scalar(time());
+    if (!$DB{$key} || ($timenow - $DB{$key} < $reusetime)) { 
+	$result = "ok";
+	print $timenow - $DB{$key} . "\n";
+	$DB{$key}=$timenow;
+    }
     dbmclose(%DB) or die "Internal: Could not close $historydb";
     return $result;
 }

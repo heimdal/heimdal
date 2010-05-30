@@ -1028,11 +1028,11 @@ acc_get_default_name(krb5_context context, char **str)
 	return translate_cc_error(context, error);
     }
 	
-    asprintf(str, "API:%s", name->data);
+    error = asprintf(str, "API:%s", name->data);
     (*name->func->release)(name);
     (*cc->func->release)(cc);
 
-    if (*str == NULL) {
+    if (error < 0 || *str == NULL) {
 	krb5_set_error_message(context, ENOMEM, N_("malloc: out of memory", ""));
 	return ENOMEM;
     }

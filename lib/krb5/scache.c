@@ -296,6 +296,7 @@ out:
 static krb5_scache *
 scc_alloc(krb5_context context, const char *name)
 {
+    krb5_error_code ret;
     krb5_scache *s;
 
     ALLOC(s, 1);
@@ -319,14 +320,15 @@ scc_alloc(krb5_context context, const char *name)
 	if (file) {
 	    *file++ = '\0';
 	    s->file = strdup(file);
+	    ret = 0;
 	} else {
-	    _krb5_expand_default_cc_name(context, KRB5_SCACHE_DB, &s->file);
+	    ret = _krb5_expand_default_cc_name(context, KRB5_SCACHE_DB, &s->file);
 	}
     } else {
 	_krb5_expand_default_cc_name(context, KRB5_SCACHE_DB, &s->file);
-	asprintf(&s->name, "unique-%p", s);
+	ret = asprintf(&s->name, "unique-%p", s);
     }
-    if (s->file == NULL || s->name == NULL) {
+    if (ret < 0 || s->file == NULL || s->name == NULL) {
 	scc_free(s);
 	return NULL;
     }

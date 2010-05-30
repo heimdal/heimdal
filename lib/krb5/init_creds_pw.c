@@ -234,11 +234,12 @@ report_expiration (krb5_context context,
 		   const char *str,
 		   time_t now)
 {
-    char *p;
+    char *p = NULL;
 
-    asprintf (&p, "%s%s", str, ctime(&now));
-    (*prompter) (context, data, NULL, p, 0, NULL);
-    free (p);
+    if (asprintf(&p, "%s%s", str, ctime(&now)) < 0 || p == NULL)
+	return;
+    (*prompter)(context, data, NULL, p, 0, NULL);
+    free(p);
 }
 
 /*
@@ -562,10 +563,14 @@ change_password (krb5_context context,
 			     &result_string);
     if (ret)
 	goto out;
-    asprintf (&p, "%s: %.*s\n",
-	      result_code ? "Error" : "Success",
-	      (int)result_string.length,
-	      result_string.length > 0 ? (char*)result_string.data : "");
+    if (asprintf(&p, "%s: %.*s\n",
+		 result_code ? "Error" : "Success",
+		 (int)result_string.length,
+		 result_string.length > 0 ? (char*)result_string.data : "") < 0)
+    {
+	ret = ENOMEM;
+	goto out;
+    }
 
     /* return the result */
     (*prompter) (context, data, NULL, p, 0, NULL);

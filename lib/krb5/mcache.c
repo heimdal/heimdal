@@ -67,15 +67,16 @@ static krb5_mcache *
 mcc_alloc(const char *name)
 {
     krb5_mcache *m, *m_c;
+    int ret = 0;
 
     ALLOC(m, 1);
     if(m == NULL)
 	return NULL;
     if(name == NULL)
-	asprintf(&m->name, "%p", m);
+	ret = asprintf(&m->name, "%p", m);
     else
 	m->name = strdup(name);
-    if(m->name == NULL) {
+    if(ret < 0 || m->name == NULL) {
 	free(m);
 	return NULL;
     }

@@ -447,8 +447,9 @@ krb5_config_parse_file_multi (krb5_context context,
 	    fname = newfname;
 	}
 #else  /* KRB5_USE_PATH_TOKENS */
-	asprintf(&newfname, "%%{USERCONFIG}%s", &fname[1]);
-	if (newfname == NULL) {
+	if (asprintf(&newfname, "%%{USERCONFIG}%s", &fname[1]) < 0 || 
+	    newfname == NULL)
+	{
 	    krb5_set_error_message(context, ENOMEM,
 				   N_("malloc: out of memory", ""));
 	    return ENOMEM;

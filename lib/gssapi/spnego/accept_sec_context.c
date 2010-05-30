@@ -372,7 +372,11 @@ select_mech(OM_uint32 *minor_status, MechType *mechType, int verify_p,
 		*minor_status = errno;
 		return GSS_S_FAILURE;
 	    }
-	    asprintf(&str, "host@%s", hostname);
+	    i = asprintf(&str, "host@%s", hostname);
+	    if (i < 0 || str == NULL) {
+		*minor_status = ENOMEM;
+		return GSS_S_FAILURE;
+	    }
 	    host = str;
 	}
 

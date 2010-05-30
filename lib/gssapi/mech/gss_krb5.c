@@ -42,7 +42,7 @@ gss_krb5_copy_ccache(OM_uint32 *minor_status,
     krb5_error_code kret;
     krb5_ccache id;
     OM_uint32 ret;
-    char *str;
+    char *str = NULL;
 
     ret = gss_inquire_cred_by_oid(minor_status,
 				  cred,
@@ -67,7 +67,7 @@ gss_krb5_copy_ccache(OM_uint32 *minor_status,
     kret = asprintf(&str, "%.*s", (int)data_set->elements[0].length,
 		    (char *)data_set->elements[0].value);
     gss_release_buffer_set(minor_status, &data_set);
-    if (kret == -1) {
+    if (kret < 0 || str == NULL) {
 	*minor_status = ENOMEM;
 	return GSS_S_FAILURE;
     }

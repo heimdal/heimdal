@@ -47,7 +47,7 @@ OM_uint32 _gss_ntlm_display_name
 
     if (output_name_buffer) {
 	ntlm_name n = (ntlm_name)input_name;
-	char *str;
+	char *str = NULL;
 	int len;
 	
 	output_name_buffer->length = 0;
@@ -59,7 +59,7 @@ OM_uint32 _gss_ntlm_display_name
 	}
 
 	len = asprintf(&str, "%s@%s", n->user, n->domain);
-	if (str == NULL) {
+	if (len < 0 || str == NULL) {
 	    *minor_status = ENOMEM;
 	    return GSS_S_FAILURE;
 	}

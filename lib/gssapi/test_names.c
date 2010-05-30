@@ -129,8 +129,9 @@ main(int argc, char **argv)
      * test import/export
      */
 
+    str = NULL;
     len = asprintf(&str, "ftp@freeze-arrow.mit.edu");
-    if (len == -1)
+    if (len < 0 || str == NULL)
 	errx(1, "asprintf");
 
     name_buffer.value = str;
@@ -183,8 +184,9 @@ main(int argc, char **argv)
      * Dovecot SASL lib does this.
      */
 
+    str = NULL;
     len = asprintf(&str, "lha");
-    if (len == -1)
+    if (len < 0 || str == NULL)
 	errx(1, "asprintf");
 
     name_buffer.value = str;

@@ -55,10 +55,10 @@ _gsskrb5_register_acceptor_identity (const char *identity)
     if (identity == NULL) {
 	ret = krb5_kt_default(context, &_gsskrb5_keytab);
     } else {
-	char *p;
+	char *p = NULL;
 
-	asprintf(&p, "FILE:%s", identity);
-	if(p == NULL) {
+	ret = asprintf(&p, "FILE:%s", identity);
+	if(ret < 0 || p == NULL) {
 	    HEIMDAL_MUTEX_unlock(&gssapi_keytab_mutex);
 	    return GSS_S_FAILURE;
 	}

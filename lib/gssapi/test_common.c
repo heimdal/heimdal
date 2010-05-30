@@ -56,13 +56,14 @@ gssapi_err(OM_uint32 maj_stat, OM_uint32 min_stat, gss_OID mech)
 	disp_maj_stat = gss_display_status(&disp_min_stat, min_stat,
 					   GSS_C_MECH_CODE,
 					   mech, &msg_ctx, &min_error_message);
-	asprintf(&ret, "gss-code: %lu %.*s -- mech-code: %lu %.*s",
-		 (unsigned long)maj_stat,
-		 (int)maj_error_message.length,
-		 (char *)maj_error_message.value,
-		 (unsigned long)min_stat,
-		 (int)min_error_message.length,
-		 (char *)min_error_message.value);
+	if (asprintf(&ret, "gss-code: %lu %.*s -- mech-code: %lu %.*s",
+		     (unsigned long)maj_stat,
+		     (int)maj_error_message.length,
+		     (char *)maj_error_message.value,
+		     (unsigned long)min_stat,
+		     (int)min_error_message.length,
+		     (char *)min_error_message.value) < 0 || ret == NULL)
+	    errx(1, "malloc");
 
 	gss_release_buffer(&disp_min_stat, &maj_error_message);
 	gss_release_buffer(&disp_min_stat, &min_error_message);

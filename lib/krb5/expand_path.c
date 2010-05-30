@@ -298,10 +298,10 @@ _expand_temp_folder(krb5_context context, PTYPE param, const char *postfix, char
 }
 
 static int
-_expand_userid(krb5_context context, PTYPE param, const char *postfix, char **ret)
+_expand_userid(krb5_context context, PTYPE param, const char *postfix, char **str)
 {
-    asprintf(ret, "%ld", (unsigned long)getuid());
-    if (*ret == NULL)
+    int ret = asprintf(str, "%ld", (unsigned long)getuid());
+    if (ret < 0 || *str == NULL)
 	return ENOMEM;
     return 0;
 }

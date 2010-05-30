@@ -428,8 +428,8 @@ krb5_vlog_msg(krb5_context context,
 		krb5_format_time(context, t, buf, sizeof(buf), TRUE);
 	    }
 	    if(actual == NULL) {
-		vasprintf(&msg, fmt, ap);
-		if(msg == NULL)
+		int ret = vasprintf(&msg, fmt, ap);
+		if(ret < 0 || msg == NULL)
 		    actual = fmt;
 		else
 		    actual = msg;

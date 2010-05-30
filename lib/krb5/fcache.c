@@ -307,7 +307,7 @@ _krb5_erase_file(krb5_context context, const char *filename)
 static krb5_error_code
 fcc_gen_new(krb5_context context, krb5_ccache *id)
 {
-    char *file, *exp_file = NULL;
+    char *file = NULL, *exp_file = NULL;
     krb5_error_code ret;
     krb5_fcache *f;
     int fd;
@@ -318,8 +318,8 @@ fcc_gen_new(krb5_context context, krb5_ccache *id)
 			       N_("malloc: out of memory", ""));
 	return KRB5_CC_NOMEM;
     }
-    asprintf (&file, "%sXXXXXX", KRB5_DEFAULT_CCFILE_ROOT);
-    if(file == NULL) {
+    ret = asprintf (&file, "%sXXXXXX", KRB5_DEFAULT_CCFILE_ROOT);
+    if(ret < 0 || file == NULL) {
 	free(f);
 	krb5_set_error_message(context, KRB5_CC_NOMEM,
 			       N_("malloc: out of memory", ""));
@@ -764,7 +764,7 @@ fcc_remove_cred(krb5_context context,
 {
     krb5_error_code ret;
     krb5_ccache copy, newfile;
-    char *newname;
+    char *newname = NULL;
     int fd;
 
     ret = krb5_cc_new_unique(context, krb5_cc_type_memory, NULL, &copy);
@@ -783,10 +783,10 @@ fcc_remove_cred(krb5_context context,
 	return ret;
     }
 
-    asprintf(&newname, "FILE:%s.XXXXXX", FILENAME(id));
-    if (newname == NULL) {
+    ret = asprintf(&newname, "FILE:%s.XXXXXX", FILENAME(id));
+    if (ret < 0 || newname == NULL) {
 	krb5_cc_destroy(context, copy);
-	return ret;
+	return ENOMEM;
     }
 
     fd = mkstemp(&newname[5]);

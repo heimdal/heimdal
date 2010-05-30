@@ -126,23 +126,20 @@ init_generate (const char *filename, const char *base)
     }
 
     /* public header file */
-    asprintf(&header, "%s.h", headerbase);
-    if (header == NULL)
+    if (asprintf(&header, "%s.h", headerbase) < 0 || header == NULL)
 	errx(1, "malloc");
-    asprintf(&fn, "%s.hx", headerbase);
-    if (fn == NULL)
+    if (asprintf(&fn, "%s.hx", headerbase) < 0 || fn == NULL)
 	errx(1, "malloc");
     headerfile = fopen (fn, "w");
     if (headerfile == NULL)
 	err (1, "open %s", fn);
     free(fn);
+    fn = NULL;
 
     /* private header file */
-    asprintf(&privheader, "%s-priv.h", headerbase);
-    if (privheader == NULL)
+    if (asprintf(&privheader, "%s-priv.h", headerbase) < 0 || privheader == NULL)
 	errx(1, "malloc");
-    asprintf(&fn, "%s-priv.hx", headerbase);
-    if (fn == NULL)
+    if (asprintf(&fn, "%s-priv.hx", headerbase) < 0 || fn == NULL)
 	errx(1, "malloc");
     privheaderfile = fopen (fn, "w");
     if (privheaderfile == NULL)
@@ -150,10 +147,8 @@ init_generate (const char *filename, const char *base)
     free(fn);
 
     /* template file */
-    asprintf(&template, "%s-template.c", headerbase);
-    if (template == NULL)
+    if (asprintf(&template, "%s-template.c", headerbase) < 0 || template == NULL)
 	errx(1, "malloc");
-
     fprintf (headerfile,
 	     "/* Generated from %s */\n"
 	     "/* Do not edit */\n\n",

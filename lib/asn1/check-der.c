@@ -77,7 +77,8 @@ test_integer (void)
 
     for (i = 0; i < ntests; ++i) {
 	tests[i].val = &values[i];
-	asprintf (&tests[i].name, "integer %d", values[i]);
+	if (asprintf (&tests[i].name, "integer %d", values[i]) < 0)
+	    errx(1, "malloc");
 	if (tests[i].name == NULL)
 	    errx(1, "malloc");
     }
@@ -200,7 +201,8 @@ test_unsigned (void)
 
     for (i = 0; i < ntests; ++i) {
 	tests[i].val = &values[i];
-	asprintf (&tests[i].name, "unsigned %u", values[i]);
+	if (asprintf (&tests[i].name, "unsigned %u", values[i]) < 0)
+	    errx(1, "malloc");
 	if (tests[i].name == NULL)
 	    errx(1, "malloc");
     }
@@ -241,7 +243,8 @@ test_octet_string (void)
     int ret;
 
     tests[0].val = &s1;
-    asprintf (&tests[0].name, "a octet string");
+    if (asprintf (&tests[0].name, "a octet string") < 0)
+	errx(1, "malloc");
     if (tests[0].name == NULL)
 	errx(1, "malloc");
 
@@ -282,11 +285,13 @@ test_bmp_string (void)
     int ret;
 
     tests[0].val = &s1;
-    asprintf (&tests[0].name, "a bmp string");
+    if (asprintf (&tests[0].name, "a bmp string") < 0)
+	errx(1, "malloc");
     if (tests[0].name == NULL)
 	errx(1, "malloc");
     tests[1].val = &s2;
-    asprintf (&tests[1].name, "second bmp string");
+    if (asprintf (&tests[1].name, "second bmp string") < 0)
+	errx(1, "malloc");
     if (tests[1].name == NULL)
 	errx(1, "malloc");
 
@@ -328,11 +333,13 @@ test_universal_string (void)
     int ret;
 
     tests[0].val = &s1;
-    asprintf (&tests[0].name, "a universal string");
+    if (asprintf (&tests[0].name, "a universal string") < 0)
+	errx(1, "malloc");
     if (tests[0].name == NULL)
 	errx(1, "malloc");
     tests[1].val = &s2;
-    asprintf (&tests[1].name, "second universal string");
+    if (asprintf (&tests[1].name, "second universal string") < 0)
+	errx(1, "malloc");
     if (tests[1].name == NULL)
 	errx(1, "malloc");
 
@@ -368,7 +375,8 @@ test_general_string (void)
     int ret, ntests = sizeof(tests) / sizeof(*tests);
 
     tests[0].val = &s1;
-    asprintf (&tests[0].name, "the string \"%s\"", s1);
+    if (asprintf (&tests[0].name, "the string \"%s\"", s1) < 0)
+	errx(1, "malloc");
     if (tests[0].name == NULL)
 	errx(1, "malloc");
 
@@ -405,7 +413,8 @@ test_generalized_time (void)
 
     for (i = 0; i < ntests; ++i) {
 	tests[i].val = &values[i];
-	asprintf (&tests[i].name, "time %d", (int)values[i]);
+	if (asprintf (&tests[i].name, "time %d", (int)values[i]) < 0)
+	    errx(1, "malloc");
 	if (tests[i].name == NULL)
 	    errx(1, "malloc");
     }
@@ -453,7 +462,8 @@ test_oid (void)
 
     for (i = 0; i < ntests; ++i) {
 	tests[i].val = &values[i];
-	asprintf (&tests[i].name, "oid %d", i);
+	if (asprintf (&tests[i].name, "oid %d", i) < 0)
+	    errx(1, "malloc");
 	if (tests[i].name == NULL)
 	    errx(1, "malloc");
     }
@@ -490,7 +500,8 @@ test_bit_string (void)
 
     for (i = 0; i < ntests; ++i) {
 	tests[i].val = &values[i];
-	asprintf (&tests[i].name, "bit_string %d", i);
+	if (asprintf (&tests[i].name, "bit_string %d", i) < 0)
+	    errx(1, "malloc");
 	if (tests[i].name == NULL)
 	    errx(1, "malloc");
     }
@@ -542,7 +553,8 @@ test_heim_integer (void)
 
     for (i = 0; i < ntests; ++i) {
 	tests[i].val = &values[i];
-	asprintf (&tests[i].name, "heim_integer %d", i);
+	if (asprintf (&tests[i].name, "heim_integer %d", i) < 0)
+	    errx(1, "malloc");
 	if (tests[i].name == NULL)
 	    errx(1, "malloc");
     }
@@ -592,7 +604,8 @@ test_boolean (void)
 
     for (i = 0; i < ntests; ++i) {
 	tests[i].val = &values[i];
-	asprintf (&tests[i].name, "heim_boolean %d", i);
+	if (asprintf (&tests[i].name, "heim_boolean %d", i) < 0)
+	    errx(1, "malloc");
 	if (tests[i].name == NULL)
 	    errx(1, "malloc");
     }

@@ -877,7 +877,7 @@ scc_get_first (krb5_context context,
     krb5_scache *s = SCACHE(id);
     krb5_error_code ret;
     struct cred_ctx *ctx;
-    char *str, *name;
+    char *str = NULL, *name = NULL;
 
     *cursor = NULL;
 
@@ -902,17 +902,17 @@ scc_get_first (krb5_context context,
 	return KRB5_CC_END;
     }
 
-    asprintf(&name, "credIteration%luPid%d",
+    ret = asprintf(&name, "credIteration%luPid%d",
 	     (unsigned long)ctx, (int)getpid());
-    if (name == NULL) {
+    if (ret < 0 || name == NULL) {
 	krb5_set_error_message(context, ENOMEM,
 			       N_("malloc: out of memory", ""));
 	free(ctx);
 	return ENOMEM;
     }
 
-    asprintf(&ctx->drop, "DROP TABLE %s", name);
-    if (ctx->drop == NULL) {
+    ret = asprintf(&ctx->drop, "DROP TABLE %s", name);
+    if (ret < 0 || ctx->drop == NULL) {
 	krb5_set_error_message(context, ENOMEM,
 			       N_("malloc: out of memory", ""));
 	free(name);
@@ -920,12 +920,19 @@ scc_get_first (krb5_context context,
 	return ENOMEM;
     }
 
-    asprintf(&str, "CREATE TEMPORARY TABLE %s "
+    ret = asprintf(&str, "CREATE TEMPORARY TABLE %s "
 	     "AS SELECT oid,created_at FROM credentials WHERE cid = %lu",
 	     name, (unsigned long)s->cid);
+    if (ret < 0 || str == NULL) {
+	free(ctx->drop);
+	free(name);
+	free(ctx);
+	return ENOMEM;
+    }
 
     ret = exec_stmt(context, s->db, str, KRB5_CC_IO);
     free(str);
+    str = NULL;
     if (ret) {
 	free(ctx->drop);
 	free(name);
@@ -933,8 +940,8 @@ scc_get_first (krb5_context context,
 	return ret;
     }
 
-    asprintf(&str, "SELECT oid FROM %s ORDER BY created_at", name);
-    if (str == NULL) {
+    ret = asprintf(&str, "SELECT oid FROM %s ORDER BY created_at", name);
+    if (ret < 0 || str == NULL) {
 	exec_stmt(context, s->db, ctx->drop, 0);
 	free(ctx->drop);
 	free(name);
@@ -944,6 +951,7 @@ scc_get_first (krb5_context context,
 
     ret = prepare_stmt(context, s->db, &ctx->stmt, str);
     free(str);
+    str = NULL;
     free(name);
     if (ret) {
 	exec_stmt(context, s->db, ctx->drop, 0);
@@ -1148,7 +1156,7 @@ scc_get_cache_first(krb5_context context, krb5_cc_cursor *cursor)
 {
     struct cache_iter *ctx;
     krb5_error_code ret;
-    char *name, *str;
+    char *name = NULL, *str = NULL;
 
     *cursor = NULL;
 
@@ -1165,9 +1173,9 @@ scc_get_cache_first(krb5_context context, krb5_cc_cursor *cursor)
 	return ret;
     }
 
-    asprintf(&name, "cacheIteration%luPid%d",
+    ret = asprintf(&name, "cacheIteration%luPid%d",
 	     (unsigned long)ctx, (int)getpid());
-    if (name == NULL) {
+    if (ret < 0 || name == NULL) {
 	krb5_set_error_message(context, ENOMEM,
 			       N_("malloc: out of memory", ""));
 	sqlite3_close(ctx->db);
@@ -1175,8 +1183,8 @@ scc_get_cache_first(krb5_context context, krb5_cc_cursor *cursor)
 	return ENOMEM;
     }
 
-    asprintf(&ctx->drop, "DROP TABLE %s", name);
-    if (ctx->drop == NULL) {
+    ret = asprintf(&ctx->drop, "DROP TABLE %s", name);
+    if (ret < 0 || ctx->drop == NULL) {
 	krb5_set_error_message(context, ENOMEM,
 			       N_("malloc: out of memory", ""));
 	sqlite3_close(ctx->db);
@@ -1185,9 +1193,9 @@ scc_get_cache_first(krb5_context context, krb5_cc_cursor *cursor)
 	return ENOMEM;
     }
 
-    asprintf(&str, "CREATE TEMPORARY TABLE %s AS SELECT name FROM caches",
+    ret = asprintf(&str, "CREATE TEMPORARY TABLE %s AS SELECT name FROM caches",
 	     name);
-    if (str == NULL) {
+    if (ret < 0 || str == NULL) {
 	krb5_set_error_message(context, ENOMEM,
 			       N_("malloc: out of memory", ""));
 	sqlite3_close(ctx->db);
@@ -1199,6 +1207,7 @@ scc_get_cache_first(krb5_context context, krb5_cc_cursor *cursor)
 
     ret = exec_stmt(context, ctx->db, str, KRB5_CC_IO);
     free(str);
+    str = NULL;
     if (ret) {
 	sqlite3_close(ctx->db);
 	free(name);
@@ -1207,9 +1216,9 @@ scc_get_cache_first(krb5_context context, krb5_cc_cursor *cursor)
 	return ret;
     }
 
-    asprintf(&str, "SELECT name FROM %s", name);
+    ret = asprintf(&str, "SELECT name FROM %s", name);
     free(name);
-    if (str == NULL) {
+    if (ret < 0 || str == NULL) {
 	exec_stmt(context, ctx->db, ctx->drop, 0);
 	sqlite3_close(ctx->db);
 	free(name);
@@ -1356,13 +1365,15 @@ scc_get_default_name(krb5_context context, char **str)
     krb5_error_code ret;
     char *name;
 
+    *str = NULL;
+
     ret = get_def_name(context, &name);
     if (ret)
 	return _krb5_expand_default_cc_name(context, KRB5_SCACHE_NAME, str);
 
-    asprintf(str, "SCC:%s", name);
+    ret = asprintf(str, "SCC:%s", name);
     free(name);
-    if (*str == NULL) {
+    if (ret < 0 || *str == NULL) {
 	krb5_set_error_message(context, ENOMEM,
 			       N_("malloc: out of memory", ""));
 	return ENOMEM;

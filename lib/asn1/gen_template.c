@@ -583,15 +583,18 @@ template_members(struct templatehead *temp, const char *basetype, const char *na
 	Member *m;
 
 	ASN1_TAILQ_FOREACH(m, t->members, members) {
-	    char *newbasename;
+	    char *newbasename = NULL;
 
 	    if (m->ellipsis)
 		continue;
 
-	    if (name)
-		asprintf(&newbasename, "%s_%s", basetype, name);
-	    else
+	    if (name) {
+		if (asprintf(&newbasename, "%s_%s", basetype, name) < 0)
+		    errx(1, "malloc");
+	    } else
 		newbasename = strdup(basetype);
+	    if (newbasename == NULL)
+		errx(1, "malloc");
 
 	    template_members(temp, newbasename, m->gen_name, m->type, m->optional, isstruct, 1);
 
@@ -601,7 +604,7 @@ template_members(struct templatehead *temp, const char *basetype, const char *na
 	break;
     }
     case TTag: {
-	char *tname, *elname;
+	char *tname = NULL, *elname = NULL;
 	const char *sename, *dupname;
 	int subtype_is_struct = is_struct(t->subtype, isstruct);
 
@@ -610,10 +613,12 @@ template_members(struct templatehead *temp, const char *basetype, const char *na
 	else
 	    sename = symbol_name(basetype, t->subtype);
 
-	asprintf(&tname, "tag_%s_%lu", name ? name : "", (unsigned long)t);
+	if (asprintf(&tname, "tag_%s_%lu", name ? name : "", (unsigned long)t) < 0 || tname == NULL)
+	    errx(1, "malloc");
 	output_name(tname);
 
-	asprintf(&elname, "%s_%s", basetype, tname);
+	if (asprintf(&elname, "%s_%s", basetype, tname) < 0 || elname == NULL)
+	    errx(1, "malloc");
 
 	generate_template_type(elname, &dupname, NULL, sename, name,
 			       t->subtype, 0, subtype_is_struct, 0);
@@ -633,16 +638,17 @@ template_members(struct templatehead *temp, const char *basetype, const char *na
     case TSetOf:
     case TSequenceOf: {
 	const char *type, *tname, *dupname;
-	char *sename, *elname;
+	char *sename = NULL, *elname = NULL;
 	int subtype_is_struct = is_struct(t->subtype, 0);
 
 	if (name && subtype_is_struct) {
 	    tname = "seofTstruct";
-	    asprintf(&sename, "%s_%s_val",
-		     basetype, name);
+	    if (asprintf(&sename, "%s_%s_val", basetype, name) < 0)
+		errx(1, "malloc");
 	} else if (subtype_is_struct) {
 	    tname = "seofTstruct";
-	    asprintf(&sename, "%s_val", symbol_name(basetype, t->subtype));
+	    if (asprintf(&sename, "%s_val", symbol_name(basetype, t->subtype)) < 0)
+		errx(1, "malloc");
 	} else {
 	    if (name)
 		tname = name;
@@ -650,12 +656,15 @@ template_members(struct templatehead *temp, const char *basetype, const char *na
 		tname = "seofTstruct";
 	    sename = strdup(symbol_name(basetype, t->subtype));
 	}
+	if (sename == NULL)
+	    errx(1, "malloc");
 
 	if (t->type == TSetOf) type = "A1_OP_SETOF";
 	else if (t->type == TSequenceOf) type = "A1_OP_SEQOF";
 	else abort();
 
-	asprintf(&elname, "%s_%s_%lu", basetype, tname, (unsigned long)t);
+	if (asprintf(&elname, "%s_%s_%lu", basetype, tname, (unsigned long)t) < 0 || elname == NULL)
+	    errx(1, "malloc");
 
 	generate_template_type(elname, &dupname, NULL, sename, NULL, t->subtype,
 			       0, subtype_is_struct, need_offset);
@@ -668,21 +677,22 @@ template_members(struct templatehead *temp, const char *basetype, const char *na
 	struct templatehead template = ASN1_TAILQ_HEAD_INITIALIZER(template);
 	struct template *q;
 	size_t count = 0, i;
-	char *tname;
+	char *tname = NULL;
 	FILE *f = get_code_file();
 	Member *m;
 	int ellipsis = 0;
 	char *e;
 
-	asprintf(&tname, "asn1_choice_%s_%s%x",
-		 basetype, name ? name : "", (unsigned int)(uintptr_t)t);
+	if (asprintf(&tname, "asn1_choice_%s_%s%x",
+		     basetype, name ? name : "", (unsigned int)(uintptr_t)t) < 0 || tname == NULL)
+	    errx(1, "malloc");
 
 	ASN1_TAILQ_FOREACH(m, t->members, members) {
 	    const char *dupname;
-	    char *elname;
-	    char *newbasename;
+	    char *elname = NULL;
+	    char *newbasename = NULL;
 	    int subtype_is_struct;
-
+	    
 	    if (m->ellipsis) {
 		ellipsis = 1;
 		continue;
@@ -690,12 +700,18 @@ template_members(struct templatehead *temp, const char *basetype, const char *na
 
 	    subtype_is_struct = is_struct(m->type, 0);
 
-	    asprintf(&elname, "%s_choice_%s", basetype, m->gen_name);
+	    if (asprintf(&elname, "%s_choice_%s", basetype, m->gen_name) < 0 || elname == NULL)
+		errx(1, "malloc");
 
-	    if (subtype_is_struct)
-		asprintf(&newbasename, "%s_%s", basetype, m->gen_name);
-	    else
+	    if (subtype_is_struct) {
+		if (asprintf(&newbasename, "%s_%s", basetype, m->gen_name) < 0)
+		    errx(1, "malloc");
+	    } else
 		newbasename = strdup(basetype);
+
+	    if (newbasename == NULL)
+		errx(1, "malloc");
+
 
 	    generate_template_type(elname, &dupname, NULL,
 				   symbol_name(newbasename, m->type),
@@ -710,10 +726,11 @@ template_members(struct templatehead *temp, const char *basetype, const char *na
 	    free(newbasename);
 	}
 
+	e = NULL;
 	if (ellipsis) {
-	    asprintf(&e, "offsetof(%s%s, u.asn1_ellipsis)", isstruct ? "struct " : "", basetype);
-	} else
-	    e = NULL;
+	    if (asprintf(&e, "offsetof(%s%s, u.asn1_ellipsis)", isstruct ? "struct " : "", basetype) < 0 || e == NULL)
+		errx(1, "malloc");
+	}
 
 	ASN1_TAILQ_FOREACH(q, &template, members) {
 	    count++;

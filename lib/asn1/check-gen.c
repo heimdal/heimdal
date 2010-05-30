@@ -124,7 +124,10 @@ test_principal (void)
 
     for (i = 0; i < ntests; ++i) {
 	tests[i].val = &values[i];
-	asprintf (&tests[i].name, "Principal %d", i);
+	if (asprintf (&tests[i].name, "Principal %d", i) < 0)
+	    errx(1, "malloc");
+	if (tests[i].name == NULL)
+	    errx(1, "malloc");
     }
 
     ret = generic_test (tests, ntests, sizeof(Principal),
@@ -191,7 +194,10 @@ test_authenticator (void)
 
     for (i = 0; i < ntests; ++i) {
 	tests[i].val = &values[i];
-	asprintf (&tests[i].name, "Authenticator %d", i);
+	if (asprintf (&tests[i].name, "Authenticator %d", i) < 0)
+	    errx(1, "malloc");
+	if (tests[i].name == NULL)
+	    errx(1, "malloc");
     }
 
     ret = generic_test (tests, ntests, sizeof(Authenticator),

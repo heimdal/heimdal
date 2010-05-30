@@ -116,7 +116,7 @@ get_filename (void)
 void
 init_generate (const char *filename, const char *base)
 {
-    char *fn;
+    char *fn = NULL;
 
     orig_filename = filename;
     if (base != NULL) {
@@ -145,6 +145,7 @@ init_generate (const char *filename, const char *base)
     if (privheaderfile == NULL)
 	err (1, "open %s", fn);
     free(fn);
+    fn = NULL;
 
     /* template file */
     if (asprintf(&template, "%s-template.c", headerbase) < 0 || template == NULL)
@@ -229,8 +230,7 @@ init_generate (const char *filename, const char *base)
 	  headerfile);
     fprintf (headerfile, "struct units;\n\n");
     fprintf (headerfile, "#endif\n\n");
-    asprintf(&fn, "%s_files", base);
-    if (fn == NULL)
+    if (asprintf(&fn, "%s_files", base) < 0 || fn == NULL)
 	errx(1, "malloc");
     logfile = fopen(fn, "w");
     if (logfile == NULL)
@@ -324,19 +324,19 @@ gen_compare_defval(const char *var, struct value *val)
 void
 generate_header_of_codefile(const char *name)
 {
-    char *filename;
+    char *filename = NULL;
 
     if (codefile != NULL)
 	abort();
 
-    asprintf (&filename, "%s_%s.x", STEM, name);
-    if (filename == NULL)
+    if (asprintf (&filename, "%s_%s.x", STEM, name) < 0 || filename == NULL)
 	errx(1, "malloc");
     codefile = fopen (filename, "w");
     if (codefile == NULL)
 	err (1, "fopen %s", filename);
     fprintf(logfile, "%s ", filename);
     free(filename);
+    filename = NULL;
     fprintf (codefile,
 	     "/* Generated from %s */\n"
 	     "/* Do not edit */\n\n"
@@ -664,7 +664,8 @@ getnewbasename(char **newbasename, int typedefp, const char *basename, const cha
     else {
 	if (name[0] == '*')
 	    name++;
-	asprintf(newbasename, "%s_%s", basename, name);
+	if (asprintf(newbasename, "%s_%s", basename, name) < 0)
+	    errx(1, "malloc");
     }
     if (*newbasename == NULL)
 	err(1, "malloc");
@@ -730,27 +731,30 @@ define_type (int level, const char *name, const char *basename, Type *t, int typ
 
 	    fprintf (headerfile, "struct %s {\n", newbasename);
 	    ASN1_TAILQ_FOREACH(m, t->members, members) {
-		char *n;
+		char *n = NULL;
 	
 		/* pad unused */
 		while (pos < m->val) {
-		    asprintf (&n, "_unused%d:1", pos);
+		    if (asprintf (&n, "_unused%d:1", pos) < 0 || n == NULL)
+			errx(1, "malloc");
 		    define_type (level + 1, n, newbasename, &i, FALSE, FALSE);
 		    free(n);
 		    pos++;
 		}
 
-		asprintf (&n, "%s:1", m->gen_name);
-		if (n == NULL)
+		n = NULL;
+		if (asprintf (&n, "%s:1", m->gen_name) < 0 || n == NULL)
 		    errx(1, "malloc");
 		define_type (level + 1, n, newbasename, &i, FALSE, FALSE);
 		free (n);
+		n = NULL;
 		pos++;
 	    }
 	    /* pad to 32 elements */
 	    while (pos < 32) {
-		char *n;
-		asprintf (&n, "_unused%d:1", pos);
+		char *n = NULL;
+		if (asprintf (&n, "_unused%d:1", pos) < 0 || n == NULL)
+		    errx(1, "malloc");
 		define_type (level + 1, n, newbasename, &i, FALSE, FALSE);
 		free(n);
 		pos++;
@@ -794,10 +798,9 @@ define_type (int level, const char *name, const char *basename, Type *t, int typ
 	    if (m->ellipsis) {
 		;
 	    } else if (m->optional) {
-		char *n;
+		char *n = NULL;
 
-		asprintf (&n, "*%s", m->gen_name);
-		if (n == NULL)
+		if (asprintf (&n, "*%s", m->gen_name) < 0 || n == NULL)
 		    errx(1, "malloc");
 		define_type (level + 1, n, newbasename, m->type, FALSE, FALSE);
 		free (n);
@@ -882,10 +885,9 @@ define_type (int level, const char *name, const char *basename, Type *t, int typ
 		space(level + 2);
 		fprintf(headerfile, "heim_octet_string asn1_ellipsis;\n");
 	    } else if (m->optional) {
-		char *n;
+		char *n = NULL;
 
-		asprintf (&n, "*%s", m->gen_name);
-		if (n == NULL)
+		if (asprintf (&n, "*%s", m->gen_name) < 0 || n == NULL)
 		    errx(1, "malloc");
 		define_type (level + 2, n, newbasename, m->type, FALSE, FALSE);
 		free (n);

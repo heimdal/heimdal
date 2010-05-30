@@ -224,7 +224,8 @@ partial_offset(const char *basetype, const char *name, int need_offset)
     char *str;
     if (name == NULL || need_offset == 0)
 	return strdup("0");
-    asprintf(&str, "offsetof(struct %s, %s)", basetype, name);
+    if (asprintf(&str, "offsetof(struct %s, %s)", basetype, name) < 0 || str == NULL)
+	errx(1, "malloc");
     return str;
 }
 
@@ -273,7 +274,8 @@ tlist_header(struct tlist *t, const char *fmt, ...)
 {
     va_list ap;
     va_start(ap, fmt);
-    vasprintf(&t->header, fmt, ap);
+    if (vasprintf(&t->header, fmt, ap) < 0 || t->header == NULL)
+	errx(1, "malloc");
     va_end(ap);
 }
 
@@ -389,7 +391,8 @@ add_line(struct templatehead *t, const char *fmt, ...)
     struct template *q = calloc(1, sizeof(*q));
     va_list ap;
     va_start(ap, fmt);
-    vasprintf(&q->line, fmt, ap);
+    if (vasprintf(&q->line, fmt, ap) < 0 || q->line == NULL)
+	errx(1, "malloc");
     va_end(ap);
     ASN1_TAILQ_INSERT_TAIL(t, q, members);
     return q;
@@ -404,10 +407,11 @@ add_line_pointer(struct templatehead *t,
 {
     struct template *q;
     va_list ap;
-    char *tt;
+    char *tt = NULL;
 
     va_start(ap, ttfmt);
-    vasprintf(&tt, ttfmt, ap);
+    if (vasprintf(&tt, ttfmt, ap) < 0 || tt == NULL)
+	errx(1, "malloc");
     va_end(ap);
 
     q = add_line(t, "{ %s, %s, asn1_%s }", tt, offset, ptr);
@@ -543,7 +547,7 @@ template_members(struct templatehead *temp, const char *basetype, const char *na
 	struct template *q;
 	Member *m;
 	size_t count = 0, i;
-	char *bname;
+	char *bname = NULL;
 	FILE *f = get_code_file();
 
 	if (ASN1_TAILQ_EMPTY(t->members)) {
@@ -551,7 +555,8 @@ template_members(struct templatehead *temp, const char *basetype, const char *na
 	    break;
 	}
 
-	asprintf(&bname, "bmember_%s_%lu", name ? name : "", (unsigned long)t);
+	if (asprintf(&bname, "bmember_%s_%lu", name ? name : "", (unsigned long)t) < 0 || bname == NULL)
+	    errx(1, "malloc");
 	output_name(bname);
 
 	ASN1_TAILQ_FOREACH(m, t->members, members) {
@@ -584,7 +589,7 @@ template_members(struct templatehead *temp, const char *basetype, const char *na
 
 	ASN1_TAILQ_FOREACH(m, t->members, members) {
 	    char *newbasename = NULL;
-
+	    
 	    if (m->ellipsis)
 		continue;
 

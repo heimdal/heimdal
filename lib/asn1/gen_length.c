@@ -149,10 +149,9 @@ length_type (const char *name, const Type *t,
 	    if(t->type == TChoice)
 		fprintf(codefile, "case %s:\n", m->label);
 
-	    asprintf (&s, "%s(%s)->%s%s",
-		      m->optional ? "" : "&", name,
-		      t->type == TChoice ? "u." : "", m->gen_name);
-	    if (s == NULL)
+	    if (asprintf (&s, "%s(%s)->%s%s",
+			  m->optional ? "" : "&", name,
+			  t->type == TChoice ? "u." : "", m->gen_name) < 0 || s == NULL)
 		errx(1, "malloc");
 	    if (m->optional)
 		fprintf (codefile, "if(%s)", s);
@@ -183,8 +182,8 @@ length_type (const char *name, const Type *t,
     }
     case TSetOf:
     case TSequenceOf: {
-	char *n;
-	char *sname;
+	char *n = NULL;
+	char *sname = NULL;
 
 	fprintf (codefile,
 		 "{\n"
@@ -196,11 +195,9 @@ length_type (const char *name, const Type *t,
 	fprintf (codefile, "for(i = (%s)->len - 1; i >= 0; --i){\n", name);
 	fprintf (codefile, "int %s_for_oldret = %s;\n"
 		 "%s = 0;\n", tmpstr, variable, variable);
-	asprintf (&n, "&(%s)->val[i]", name);
-	if (n == NULL)
+	if (asprintf (&n, "&(%s)->val[i]", name) < 0  || n == NULL)
 	    errx(1, "malloc");
-	asprintf (&sname, "%s_S_Of", tmpstr);
-	if (sname == NULL)
+	if (asprintf (&sname, "%s_S_Of", tmpstr) < 0 || sname == NULL)
 	    errx(1, "malloc");
 	length_type(n, t->subtype, variable, sname);
 	fprintf (codefile, "%s += %s_for_oldret;\n",
@@ -248,9 +245,8 @@ length_type (const char *name, const Type *t,
 	fprintf (codefile, "/* NULL */\n");
 	break;
     case TTag:{
-    	char *tname;
-	asprintf(&tname, "%s_tag", tmpstr);
-	if (tname == NULL)
+    	char *tname = NULL;
+	if (asprintf(&tname, "%s_tag", tmpstr) < 0 || tname == NULL)
 	    errx(1, "malloc");
 	length_type (name, t->subtype, variable, tname);
 	fprintf (codefile, "ret += %lu + der_length_len (ret);\n",

@@ -48,13 +48,12 @@ ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
 setenv(const char *var, const char *val, int rewrite)
 {
 #ifndef _WIN32
-    char *t;
+    char *t = NULL;
 
     if (!rewrite && getenv(var) != 0)
 	return 0;
 
-    asprintf (&t, "%s=%s", var, val);
-    if (t == NULL)
+    if (asprintf (&t, "%s=%s", var, val) < 0 || t == NULL)
 	return -1;
 
     if (putenv(t) == 0)

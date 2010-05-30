@@ -64,6 +64,7 @@ vsyslog(int pri, const char *fmt, va_list ap)
     char *fmt2;
     const char *p;
     char *p2;
+    int ret;
     int saved_errno = errno;
     int fmt_len  = strlen (fmt);
     int fmt2_len = fmt_len;
@@ -100,9 +101,9 @@ vsyslog(int pri, const char *fmt, va_list ap)
     }
     *p2 = '\0';
 
-    vasprintf (&buf, fmt2, ap);
+    ret = vasprintf (&buf, fmt2, ap);
     free (fmt2);
-    if (buf == NULL) {
+    if (ret < 0 || buf == NULL) {
 	simple_vsyslog (pri, fmt, ap);
 	return;
     }

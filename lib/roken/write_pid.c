@@ -38,11 +38,10 @@
 ROKEN_LIB_FUNCTION char * ROKEN_LIB_CALL
 pid_file_write (const char *progname)
 {
+    char *ret = NULL;
     FILE *fp;
-    char *ret;
 
-    asprintf (&ret, "%s%s.pid", _PATH_VARRUN, progname);
-    if (ret == NULL)
+    if (asprintf (&ret, "%s%s.pid", _PATH_VARRUN, progname) < 0 || ret == NULL)
 	return NULL;
     fp = fopen (ret, "w");
     if (fp == NULL) {

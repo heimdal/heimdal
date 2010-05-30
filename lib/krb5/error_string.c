@@ -98,11 +98,14 @@ krb5_vset_error_message (krb5_context context, krb5_error_code ret,
 {
     int r;
 
-    krb5_clear_error_message(context);
     HEIMDAL_MUTEX_lock(context->mutex);
+    if (context->error_string) {
+	free(context->error_string);
+	context->error_string = NULL;
+    }
     context->error_code = ret;
     r = vasprintf(&context->error_string, fmt, args);
-    if (r)
+    if (r < 0)
 	context->error_string = NULL;
     HEIMDAL_MUTEX_unlock(context->mutex);
 }

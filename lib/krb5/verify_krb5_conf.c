@@ -588,7 +588,9 @@ check_section(krb5_context context, const char *path, krb5_config_section *cf,
     char *local;
 
     for(p = cf; p != NULL; p = p->next) {
-	asprintf(&local, "%s/%s", path, p->name);
+	local = NULL;
+	if (asprintf(&local, "%s/%s", path, p->name) < 0 || local == NULL)
+	    errx(1, "out of memory");
 	for(e = entries; e->name != NULL; e++) {
 	    if(*e->name == '\0' || strcmp(e->name, p->name) == 0) {
 		if(e->type != p->type) {

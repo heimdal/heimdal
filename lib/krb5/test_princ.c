@@ -77,7 +77,8 @@ test_princ(krb5_context context)
 
     realm = krb5_principal_get_realm(context, p);
 
-    asprintf(&princ_reformed, "%s@%s", princ_short, realm);
+    if (asprintf(&princ_reformed, "%s@%s", princ_short, realm) < 0 || princ_reformed == NULL)
+	errx(1, "malloc");
 
     ret = krb5_parse_name(context, princ_reformed, &p2);
     free(princ_reformed);

@@ -124,7 +124,8 @@ test_mcache(krb5_context context)
     if (tc == NULL)
 	krb5_errx(context, 1, "krb5_cc_get_name");
 
-    asprintf(&c, "%s:%s", tc, nc);
+    if (asprintf(&c, "%s:%s", tc, nc) < 0 || c == NULL)
+	errx(1, "malloc");
 
     krb5_cc_close(context, id);
 
@@ -165,7 +166,7 @@ test_init_vs_destroy(krb5_context context, const char *type)
     krb5_error_code ret;
     krb5_ccache id, id2;
     krb5_principal p, p2;
-    char *n;
+    char *n = NULL;
 
     ret = krb5_parse_name(context, "lha@SU.SE", &p);
     if (ret)
@@ -175,9 +176,11 @@ test_init_vs_destroy(krb5_context context, const char *type)
     if (ret)
 	krb5_err(context, 1, ret, "krb5_cc_new_unique");
 
-    asprintf(&n, "%s:%s",
-	     krb5_cc_get_type(context, id),
-	     krb5_cc_get_name(context, id));
+    if (asprintf(&n, "%s:%s",
+		 krb5_cc_get_type(context, id),
+		 krb5_cc_get_name(context, id)) < 0 || n == NULL)
+	errx(1, "malloc");
+	
 
     ret = krb5_cc_resolve(context, n, &id2);
     free(n);

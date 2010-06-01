@@ -3,6 +3,7 @@
 top_builddir="@top_builddir@"
 top_srcdir="@top_srcdir@"
 EGREP="@EGREP@"
+NO_AFS="@NO_AFS@"
 
 # Meant to be sourced (source or .) by the tester application, offers
 # most commands in heimdal as variables

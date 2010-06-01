@@ -52,7 +52,7 @@ port=@port@
 pwport=@pwport@
 
 kinit="${kinit} --password-file=${objdir}/foopassword --no-afslog"
-kdestroy="${kdestroy} --no-unlog"
+test ! "${NO_AFS}" && kdestroy="${kdestroy} --no-unlog"
 kadmin="${kadmin} -l -r $R"
 kdc="${kdc} --addresses=localhost -P $port"
 

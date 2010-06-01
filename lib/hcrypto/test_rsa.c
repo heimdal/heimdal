@@ -211,13 +211,14 @@ main(int argc, char **argv)
     argv += idx;
 
     OpenSSL_add_all_algorithms();
+    ENGINE_load_builtin_engines();
 
     if (argc == 0) {
-	OpenSSL_add_all_algorithms();
-	ENGINE_load_builtin_engines();
 	engine = ENGINE_by_id("builtin");
     } else {
-	engine = ENGINE_by_dso(argv[0], id_flag);
+	engine = ENGINE_by_id(argv[0]);
+	if (engine == NULL)
+	    engine = ENGINE_by_dso(argv[0], id_flag);
     }
     if (engine == NULL)
 	errx(1, "ENGINE_by_dso failed");
@@ -232,7 +233,6 @@ main(int argc, char **argv)
 
     if (time_keygen) {
 	struct timeval tv1, tv2;
-	const int num = 10;
 	BIGNUM *e;
 
 	rsa = RSA_new_method(engine);
@@ -242,9 +242,11 @@ main(int argc, char **argv)
 	e = BN_new();
 	BN_set_word(e, 0x10001);
 
+	printf("running keygen with %d loops\n", loops);
+
 	gettimeofday(&tv1, NULL);
 
-	for (i = 0; i < num; i++) {
+	for (i = 0; i < loops; i++) {
 	    rsa = RSA_new_method(engine);
 	    if (RSA_generate_key_ex(rsa, 1024, e, NULL) != 1)
 		errx(1, "RSA_generate_key_ex");
@@ -266,18 +268,31 @@ main(int argc, char **argv)
 
     if (time_key) {
 	const int size = 20;
-	const int num = 128;
 	struct timeval tv1, tv2;
 	unsigned char *p;
 
-	rsa = read_key(engine, time_key);
+	if (strcmp(time_key, "generate") == 0) {
+	    BIGNUM *e;
 
-	p = emalloc(num * size);
+	    rsa = RSA_new_method(engine);
+	    if (!key_blinding)
+		rsa->flags |= RSA_FLAG_NO_BLINDING;
 
-	RAND_bytes(p, num * size);
+	    e = BN_new();
+	    BN_set_word(e, 0x10001);
+
+	    if (RSA_generate_key_ex(rsa, 1024, e, NULL) != 1)
+		errx(1, "RSA_generate_key_ex");
+	} else {
+	    rsa = read_key(engine, time_key);
+	}
+
+	p = emalloc(loops * size);
+
+	RAND_bytes(p, loops * size);
 
 	gettimeofday(&tv1, NULL);
-	for (i = 0; i < num; i++)
+	for (i = 0; i < loops; i++)
 	    check_rsa(p + (i * size), size, rsa, RSA_PKCS1_PADDING);
 	gettimeofday(&tv2, NULL);
 

@@ -2,7 +2,7 @@
 
 include $(top_srcdir)/Makefile.am.common
 
-AM_CPPFLAGS += -I$(srcdir)/../login
+AM_CPPFLAGS += -I$(srcdir)/../login $(INCLUDE_hcrypto)
 
 bin_PROGRAMS = rsh
 

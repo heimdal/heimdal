@@ -54,7 +54,7 @@ keytab="FILE:${keytabfile}"
 
 kdc="${kdc} --addresses=localhost -P $port"
 kadmin="${kadmin} -r $R"
-kinit="${kinit} -c $cache --no-afslog"
+kinit="${kinit} -c $cache ${afs_no_afslog}"
 
 KRB5_CONFIG="${objdir}/krb5.conf"
 export KRB5_CONFIG

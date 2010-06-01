@@ -55,10 +55,10 @@ cache="FILE:${objdir}/cache.krb5"
 keytabfile=${objdir}/server.keytab
 keytab="FILE:${keytabfile}"
 
-kinit="${TESTS_ENVIRONMENT} ../../kuser/kinit -c $cache --no-afslog"
+kinit="${TESTS_ENVIRONMENT} ../../kuser/kinit -c $cache ${afs_no_afslog}"
 klist="${TESTS_ENVIRONMENT} ../../kuser/klist -c $cache"
 kgetcred="${TESTS_ENVIRONMENT} ../../kuser/kgetcred -c $cache"
-kdestroy="${TESTS_ENVIRONMENT} ../../kuser/kdestroy -c $cache --no-unlog"
+kdestroy="${TESTS_ENVIRONMENT} ../../kuser/kdestroy -c $cache ${afs_no_unlog}"
 test_apreq="${TESTS_ENVIRONMENT} ../../lib/krb5/test_ap-req"
 
 KRB5_CONFIG="${objdir}/krb5.conf"

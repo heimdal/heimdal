@@ -60,10 +60,10 @@ cache="FILE:${objdir}/cache.krb5"
 keytabfile=${objdir}/server.keytab
 keytab="FILE:${keytabfile}"
 
-kinit="${kinit} -c $cache --no-afslog"
+kinit="${kinit} -c $cache ${afs_no_afslog}"
 klist="${klist} -c $cache"
 kgetcred="${kgetcred} -c $cache"
-kdestroy="${kdestroy} -c $cache --no-unlog"
+kdestroy="${kdestroy} -c $cache ${afs_no_unlog}"
 
 KRB5_CONFIG="${objdir}/krb5.conf"
 export KRB5_CONFIG

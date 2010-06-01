@@ -70,11 +70,11 @@ keytab="FILE:${keytabfile}"
 ps="proxy-service@${R}"
 aesenctype="aes256-cts-hmac-sha1-96"
 
-kinit="${kinit} -c $cache --no-afslog"
+kinit="${kinit} -c $cache ${afs_no_afslog}"
 klist="${klist} -c $cache"
 kgetcred="${kgetcred} -c $cache"
 kgetcred_imp="${kgetcred} -c $cache --out-cache=${ocache}"
-kdestroy="${kdestroy} -c $cache --no-unlog"
+kdestroy="${kdestroy} -c $cache ${afs_no_unlog}"
 kimpersonate="${kimpersonate} -k ${keytab} --ccache=${ocache}"
 
 rm -f ${keytabfile}

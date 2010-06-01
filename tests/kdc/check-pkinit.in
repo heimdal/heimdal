@@ -54,9 +54,9 @@ cache="FILE:${objdir}/cache.krb5"
 keyfile="${hx509_data}/key.der"
 keyfile2="${hx509_data}/key2.der"
 
-kinit="${kinit} -c $cache --no-afslog"
+kinit="${kinit} -c $cache ${afs_no_afslog}"
 kgetcred="${kgetcred} -c $cache"
-kdestroy="${kdestroy} -c $cache --no-unlog"
+kdestroy="${kdestroy} -c $cache ${afs_no_unlog}"
 
 KRB5_CONFIG="${objdir}/krb5-pkinit.conf"
 export KRB5_CONFIG

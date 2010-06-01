@@ -43,6 +43,14 @@ have_db="${top_builddir}/tests/db/have-db"
 leaks_kill="${top_srcdir}/tests/kdc/leaks-kill.sh"
 wait_kdc="${top_srcdir}/tests/kdc/wait-kdc.sh"
 
+if [ ! "${NO_AFS}" ] ; then
+    afs_no_unlog="--no-unlog"
+    afs_no_afslog="--no-afslog"
+else
+    afs_no_unlog=""
+    afs_no_afslog=""
+fi
+
 # data
 hx509_data="${top_srcdir}/lib/hx509/data"
 

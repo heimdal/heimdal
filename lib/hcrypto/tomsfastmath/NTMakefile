@@ -71,7 +71,9 @@ libtfm_OBJs=	\
 	$(OBJ)\fp_mod_d.obj	\
 	$(OBJ)\fp_2expt.obj	\
 	$(OBJ)\fp_exptmod.obj	\
+	$(OBJ)\fp_find_prime.obj	\
 	$(OBJ)\fp_ident.obj	\
+	$(OBJ)\fp_init_multi.obj	\
 	$(OBJ)\fp_set.obj	\
 	$(OBJ)\fp_montgomery_calc_normalization.obj	\
 	$(OBJ)\fp_montgomery_reduce.obj	\

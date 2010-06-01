@@ -8,7 +8,8 @@ do_subst = \
 	sed $(do_dlopen) \
 	-e "s,[@]EGREP[@],$(EGREP),g" \
 	-e "s,[@]top_srcdir[@],$${top_srcdir},g" \
-	-e "s,[@]top_builddir[@],$${top_builddir},g"
+	-e "s,[@]top_builddir[@],$${top_builddir},g" \
+	-e "s,[@]NO_AFS[@],$${NO_AFS},g"
 
 setup-env: setup-env.in Makefile
 	$(do_subst) < $(srcdir)/setup-env.in > setup-env.tmp

@@ -246,6 +246,7 @@ AC_ARG_ENABLE([afs-support],
 if test "$enable_afs_support" = no; then
 	AC_DEFINE(NO_AFS, 1, [Define if you don't wan't support for AFS.])
 fi
+AC_SUBST(NO_AFS)dnl
 
 rk_DB
 

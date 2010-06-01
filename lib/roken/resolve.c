@@ -851,6 +851,7 @@ parse_dns_record(PDNS_RECORD pRec)
 	break;
     }
 
+#ifdef DNS_TYPE_DS
     case rk_ns_t_ds: {
 	rr->u.ds = malloc (sizeof(*rr->u.ds) + pRec->Data.DS.wDigestLength - 1);
 	if (rr->u.ds == NULL) {
@@ -866,6 +867,7 @@ parse_dns_record(PDNS_RECORD pRec)
 		  pRec->Data.DS.Digest, pRec->Data.DS.wDigestLength);
 	break;
     }
+#endif
 
     default:
 	dns_free_rr(rr);

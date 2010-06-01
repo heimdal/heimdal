@@ -54,6 +54,8 @@
 #define ENGINE_set_id hc_ENGINE_set_id
 #define ENGINE_set_name hc_ENGINE_set_name
 #define ENGINE_set_destroy_function hc_ENGINE_set_destroy_function
+#define ENGINE_new hc_ENGINE_new
+#define ENGINE_free hc_ENGINE_free
 #define ENGINE_up_ref hc_ENGINE_up_ref
 #define ENGINE_get_default_DH hc_ENGINE_get_default_DH
 #define ENGINE_get_default_RSA hc_ENGINE_get_default_RSA
@@ -76,6 +78,9 @@ typedef struct hc_engine ENGINE;
 typedef int (*openssl_bind_engine)(ENGINE *, const char *, const void *);
 typedef unsigned long (*openssl_v_check)(unsigned long);
 
+ENGINE	*
+	ENGINE_new(void);
+int ENGINE_free(ENGINE *);
 void	ENGINE_add_conf_module(void);
 void	ENGINE_load_builtin_engines(void);
 ENGINE *ENGINE_by_id(const char *);

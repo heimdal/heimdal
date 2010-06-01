@@ -86,6 +86,8 @@ HEIMDAL_CRYPTO_1.0 {
 		hc_DSA_set_default_method;
 		hc_DSA_up_ref;
 		hc_DSA_verify;
+		hc_ENGINE_new;
+		hc_ENGINE_free;
 		hc_ENGINE_add_conf_module;
 		hc_ENGINE_by_dso;
 		hc_ENGINE_by_id;

@@ -45,6 +45,12 @@ ${engine} --test-random > /dev/null || { echo "missing random"; exit 77; }
 ${rsa} --key=${srcdir}/rsakey.der || \
 	{ echo "rsa test failed" ; exit 1; }
 
+${rsa} --time-key=${srcdir}/rsakey.der || \
+	{ echo "rsa test failed" ; exit 1; }
+
+${rsa} --time-key=generate || \
+	{ echo "rsa test failed" ; exit 1; }
+
 ${engine} --rsa=${srcdir}/rsakey.der || \
 	{ echo "engine test failed" ; exit 1; }
 

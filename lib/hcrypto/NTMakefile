@@ -99,6 +99,7 @@ libhcrypto_OBJs = \
 	$(OBJ)\des.obj		\
 	$(OBJ)\dh.obj		\
 	$(OBJ)\dh-imath.obj	\
+	$(OBJ)\dh-tfm.obj	\
 	$(OBJ)\dsa.obj		\
 	$(OBJ)\evp.obj		\
 	$(OBJ)\evp-hcrypto.obj	\

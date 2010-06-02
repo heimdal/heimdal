@@ -70,8 +70,8 @@ ENGINE_new(void)
 int
 ENGINE_free(ENGINE *engine)
 {
+    return ENGINE_finish(engine);
 }
-
 
 int
 ENGINE_finish(ENGINE *engine)
@@ -280,6 +280,24 @@ ENGINE_load_builtin_engines(void)
     if (ret != 1)
 	ENGINE_finish(engine);
 
+#ifdef HAVE_GMP
+    /*
+     * gmp
+     */
+
+    engine = ENGINE_new();
+    if (engine == NULL)
+	return;
+
+    ENGINE_set_id(engine, "gmp");
+    ENGINE_set_name(engine,
+		    "Heimdal crypto gmp engine version " PACKAGE_VERSION);
+    ENGINE_set_RSA(engine, RSA_gmp_method());
+
+    ret = add_engine(engine);
+    if (ret != 1)
+	ENGINE_finish(engine);
+#endif
 }
 
 ENGINE *

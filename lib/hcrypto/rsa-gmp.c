@@ -55,6 +55,7 @@ BN2mpz(mpz_t s, const BIGNUM *bn)
     len = BN_num_bytes(bn);
     p = malloc(len);
     BN_bn2bin(bn, p);
+    mpz_init(s);
     mpz_import(s, len, 1, 1, 1, 0, p);
     free(p);
 }
@@ -88,9 +89,9 @@ rsa_private_calculate(mpz_t in, mpz_t p,  mpz_t q,
 
     /* vq = c ^ (d mod (q - 1)) mod q */
     /* vp = c ^ (d mod (p - 1)) mod p */
-    mpz_fdiv_r(vp, m, p);
+    mpz_fdiv_r(vp, in, p);
     mpz_powm(vp, vp, dmp1, p);
-    mpz_fdiv_r(vq, m, q);
+    mpz_fdiv_r(vq, in, q);
     mpz_powm(vq, vq, dmq1, q);
 
     /* C2 = 1/q mod p  (iqmp) */
@@ -105,7 +106,7 @@ rsa_private_calculate(mpz_t in, mpz_t p,  mpz_t q,
 
     /* c ^ d mod n = vq + u q */
     mpz_mul(u, q, u);
-    mpz_add(out, x, xq);
+    mpz_add(out, u, vq);
 
     mpz_clear(vp);
     mpz_clear(vq);
@@ -123,7 +124,6 @@ gmp_rsa_public_encrypt(int flen, const unsigned char* from,
 			unsigned char* to, RSA* rsa, int padding)
 {
     unsigned char *p, *p0;
-    mp_result res;
     size_t size, padlen;
     mpz_t enc, dec, n, e;
 
@@ -260,7 +260,7 @@ gmp_rsa_private_encrypt(int flen, const unsigned char* from,
 {
     unsigned char *p, *p0;
     size_t size;
-    mpz_t in, out, n, e, b, bi;
+    mpz_t in, out, n, e;
 
     if (padding != RSA_PKCS1_PADDING)
 	return -1;
@@ -280,11 +280,11 @@ gmp_rsa_private_encrypt(int flen, const unsigned char* from,
     p += flen;
     assert((p - p0) == size);
 
-    BN2mpz(&n, rsa->n);
-    BN2mpz(&e, rsa->e);
+    BN2mpz(n, rsa->n);
+    BN2mpz(e, rsa->e);
 
-    mp_int_init(&in);
-    mp_int_init(&out);
+    mpz_init(in);
+    mpz_init(out);
     mpz_import(in, size, 1, 1, 1, 0, p0);
     free(p0);
 
@@ -307,21 +307,17 @@ gmp_rsa_private_encrypt(int flen, const unsigned char* from,
 
 	rsa_private_calculate(in, p, q, dmp1, dmq1, iqmp, out);
 
-	mp_int_clear(&p);
-	mp_int_clear(&q);
-	mp_int_clear(&dmp1);
-	mp_int_clear(&dmq1);
-	mp_int_clear(&iqmp);
+	mpz_clear(p);
+	mpz_clear(q);
+	mpz_clear(dmp1);
+	mpz_clear(dmq1);
+	mpz_clear(iqmp);
     } else {
 	mpz_t d;
 
 	BN2mpz(d, rsa->d);
 	mpz_powm(out, in, d, n);
-	mp_int_clear(d);
-	if (res != MP_OK) {
-	    size = 0;
-	    goto out;
-	}
+	mpz_clear(d);
     }
 
     {
@@ -331,7 +327,6 @@ gmp_rsa_private_encrypt(int flen, const unsigned char* from,
 	size = ssize;
     }
 
-out:
     mpz_clear(e);
     mpz_clear(n);
     mpz_clear(in);
@@ -346,7 +341,7 @@ gmp_rsa_private_decrypt(int flen, const unsigned char* from,
 {
     unsigned char *ptr;
     size_t size;
-    mpz_t in, out, n, e, b, bi;
+    mpz_t in, out, n, e;
 
     if (padding != RSA_PKCS1_PADDING)
 	return -1;
@@ -361,14 +356,10 @@ gmp_rsa_private_decrypt(int flen, const unsigned char* from,
     BN2mpz(n, rsa->n);
     BN2mpz(e, rsa->e);
 
-    res = mp_int_read_unsigned(&in, rk_UNCONST(from), flen);
-    if (res != MP_OK) {
-	size = -1;
-	goto out;
-    }
+    mpz_import(in, flen, 1, 1, 1, 0, from);
 
-    if(mp_int_compare_zero(&in) < 0 ||
-       mp_int_compare(&in, &n) >= 0) {
+    if(mpz_cmp_ui(in, 0) < 0 ||
+       mpz_cmp(in, n) >= 0) {
 	size = 0;
 	goto out;
     }
@@ -382,7 +373,7 @@ gmp_rsa_private_decrypt(int flen, const unsigned char* from,
 	BN2mpz(dmq1, rsa->dmq1);
 	BN2mpz(iqmp, rsa->iqmp);
 
-	res = rsa_private_calculate(in, p, q, dmp1, dmq1, iqmp, out);
+	rsa_private_calculate(in, p, q, dmp1, dmq1, iqmp, out);
 
 	mpz_clear(p);
 	mpz_clear(q);
@@ -400,11 +391,7 @@ gmp_rsa_private_decrypt(int flen, const unsigned char* from,
 
 	BN2mpz(d, rsa->d);
 	mpz_powm(out, in, d, n);
-	mp_int_clear(d);
-	if (res != MP_OK) {
-	    size = 0;
-	    goto out;
-	}
+	mpz_clear(d);
     }
 
     ptr = to;
@@ -438,6 +425,26 @@ out:
 }
 
 static int
+random_num(mpz_t num, size_t len)
+{
+    unsigned char *p;
+
+    len = (len + 7) / 8;
+    p = malloc(len);
+    if (p == NULL)
+	return 1;
+    if (RAND_bytes(p, len) != 1) {
+	free(p);
+	return 1;
+    }
+    mpz_init(num);
+    mpz_import(num, len, 1, 1, 1, 0, p);
+    free(p);
+    return 0;
+}
+
+
+static int
 gmp_rsa_generate_key(RSA *rsa, int bits, BIGNUM *e, BN_GENCB *cb)
 {
     mpz_t el, p, q, n, d, dmp1, dmq1, iqmp, t1, t2, t3;
@@ -463,68 +470,64 @@ gmp_rsa_generate_key(RSA *rsa, int bits, BIGNUM *e, BN_GENCB *cb)
     BN2mpz(el, e);
 
     /* generate p and q so that p != q and bits(pq) ~ bits */
+
     counter = 0;
-#if 0
     do {
 	BN_GENCB_call(cb, 2, counter++);
-	CHECK(random_num(&p, bits / 2 + 1), 0);
-	CHECK(mp_int_find_prime(&p), MP_TRUE);
+	random_num(p, bits / 2 + 1);
+	mpz_nextprime(p, p);
 
-	CHECK(mp_int_sub_value(&p, 1, &t1), MP_OK);
-	CHECK(mp_int_gcd(&t1, &el, &t2), MP_OK);
-    } while(mp_int_compare_value(&t2, 1) != 0);
+	mpz_sub_ui(t1, p, 1);
+	mpz_gcd(t2, t1, el);
+    } while(mpz_cmp_ui(t2, 1) != 0);
 
     BN_GENCB_call(cb, 3, 0);
 
     counter = 0;
     do {
 	BN_GENCB_call(cb, 2, counter++);
-	CHECK(random_num(&q, bits / 2 + 1), 0);
-	CHECK(mp_int_find_prime(&q), MP_TRUE);
+	random_num(q, bits / 2 + 1);
+	mpz_nextprime(q, q);
 
-	if (mp_int_compare(&p, &q) == 0) /* don't let p and q be the same */
-	    continue;
-
-	CHECK(mp_int_sub_value(&q, 1, &t1), MP_OK);
-	CHECK(mp_int_gcd(&t1, &el, &t2), MP_OK);
-    } while(mp_int_compare_value(&t2, 1) != 0);
+	mpz_sub_ui(t1, q, 1);
+	mpz_gcd(t2, t1, el);
+    } while(mpz_cmp_ui(t2, 1) != 0);
 
     /* make p > q */
-    if (mp_int_compare(&p, &q) < 0)
-	mp_int_swap(&p, &q);
+    if (mpz_cmp(p, q) < 0)
+	mpz_swap(p, q);
 
     BN_GENCB_call(cb, 3, 1);
 
     /* calculate n,  		n = p * q */
-    CHECK(mp_int_mul(&p, &q, &n), MP_OK);
+    mpz_mul(n, p, q);
 
     /* calculate d, 		d = 1/e mod (p - 1)(q - 1) */
-    CHECK(mp_int_sub_value(&p, 1, &t1), MP_OK);
-    CHECK(mp_int_sub_value(&q, 1, &t2), MP_OK);
-    CHECK(mp_int_mul(&t1, &t2, &t3), MP_OK);
-    CHECK(mp_int_invmod(&el, &t3, &d), MP_OK);
+    mpz_sub_ui(t1, p, 1);
+    mpz_sub_ui(t2, q, 1);
+    mpz_mul(t3, t1, t2);
+    mpz_invert(d, el, t3);
 
     /* calculate dmp1		dmp1 = d mod (p-1) */
-    CHECK(mp_int_mod(&d, &t1, &dmp1), MP_OK);
+    mpz_mod(dmp1, d, t1);
     /* calculate dmq1		dmq1 = d mod (q-1) */
-    CHECK(mp_int_mod(&d, &t2, &dmq1), MP_OK);
+    mpz_mod(dmq1, d, t2);
     /* calculate iqmp 		iqmp = 1/q mod p */
-    CHECK(mp_int_invmod(&q, &p, &iqmp), MP_OK);
+    mpz_invert(iqmp, q, p);
 
     /* fill in RSA key */
 
-    rsa->e = mpz2BN(&el);
-    rsa->p = mpz2BN(&p);
-    rsa->q = mpz2BN(&q);
-    rsa->n = mpz2BN(&n);
-    rsa->d = mpz2BN(&d);
-    rsa->dmp1 = mpz2BN(&dmp1);
-    rsa->dmq1 = mpz2BN(&dmq1);
-    rsa->iqmp = mpz2BN(&iqmp);
+    rsa->e = mpz2BN(el);
+    rsa->p = mpz2BN(p);
+    rsa->q = mpz2BN(q);
+    rsa->n = mpz2BN(n);
+    rsa->d = mpz2BN(d);
+    rsa->dmp1 = mpz2BN(dmp1);
+    rsa->dmq1 = mpz2BN(dmq1);
+    rsa->iqmp = mpz2BN(iqmp);
 
     ret = 1;
-#endif
-out:
+
     mpz_clear(el);
     mpz_clear(p);
     mpz_clear(q);

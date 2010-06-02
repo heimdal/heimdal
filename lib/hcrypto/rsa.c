@@ -392,12 +392,9 @@ RSA_null_method(void)
     return &rsa_null_method;
 }
 
-extern const RSA_METHOD hc_rsa_imath_method;
-#ifdef HAVE_GMP
-static const RSA_METHOD *default_rsa_method = &hc_rsa_gmp_method;
-#else
-static const RSA_METHOD *default_rsa_method = &hc_rsa_imath_method;
-#endif
+extern const RSA_METHOD hc_rsa_tfm_method;
+
+static const RSA_METHOD *default_rsa_method = &hc_rsa_tfm_method;
 
 const RSA_METHOD *
 RSA_get_default_method(void)

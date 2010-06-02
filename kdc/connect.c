@@ -664,24 +664,21 @@ handle_http_tcp (krb5_context context,
 
     s = (char *)d->buf;
 
-    p = strstr(s, "\r\n");
-    if (p == NULL) {
-	kdc_log(context, config, 0, "Malformed HTTP request from %s", d->addr_string);
-	return -1;
-    }
-    *p = 0;
-
     p = NULL;
     t = strtok_r(s, " \t", &p);
     if (t == NULL) {
-	kdc_log(context, config, 0, "Malformed HTTP request from %s", d->addr_string);
+	kdc_log(context, config, 0,
+		"Missing HTTP operand (GET) request from %s", d->addr_string);
 	return -1;
     }
+
     t = strtok_r(NULL, " \t", &p);
     if(t == NULL) {
-	kdc_log(context, config, 0, "Malformed HTTP request from %s", d->addr_string);
+	kdc_log(context, config, 0,
+		"Missing HTTP GET data in request from %s", d->addr_string);
 	return -1;
     }
+
     data = malloc(strlen(t));
     if (data == NULL) {
 	kdc_log(context, config, 0, "Failed to allocate %lu bytes",

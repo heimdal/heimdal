@@ -57,6 +57,7 @@ BN2mpz(mpz_t s, const BIGNUM *bn)
     BN_bn2bin(bn, p);
     mpz_init(s);
     mpz_import(s, len, 1, 1, 1, 0, p);
+
     free(p);
 }
 
@@ -73,7 +74,6 @@ mpz2BN(mpz_t s)
     if (p == NULL && size != 0)
 	return NULL;
     mpz_export(p, &size, 1, 1, 1, 0, s);
-
     bn = BN_bin2bn(p, size, NULL);
     free(p);
     return bn;
@@ -437,7 +437,6 @@ random_num(mpz_t num, size_t len)
 	free(p);
 	return 1;
     }
-    mpz_init(num);
     mpz_import(num, len, 1, 1, 1, 0, p);
     free(p);
     return 0;

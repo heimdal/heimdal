@@ -47,6 +47,7 @@ ${have_db} || exit 77
 
 R=TEST.H5L.SE
 R2=TEST2.H5L.SE
+R3=TEST-HTTP.H5L.SE
 
 port=@port@
 
@@ -97,6 +98,12 @@ ${kadmin} \
     --realm-max-renewable-life=1month \
     ${R2} || exit 1
 
+${kadmin} \
+    init \
+    --realm-max-ticket-life=1day \
+    --realm-max-renewable-life=1month \
+    ${R3} || exit 1
+
 ${kadmin} cpw -r krbtgt/${R}@${R} || exit 1
 ${kadmin} cpw -r krbtgt/${R}@${R} || exit 1
 ${kadmin} cpw -r krbtgt/${R}@${R} || exit 1
@@ -132,6 +139,8 @@ ${kadmin} add -p cross2 --use-defaults krbtgt/${R}@${R2} || exit 1
 
 ${kadmin} add -p foo --use-defaults pw-expire@${R} || exit 1
 ${kadmin} modify --pw-expiration-time=+1day  pw-expire@${R} || exit 1
+
+${kadmin} add -p foo --use-defaults foo@${R3} || exit 1
 
 echo "Check parser"
 ${kadmin} add -p foo --use-defaults -- -p || exit 1
@@ -183,6 +192,11 @@ ${kgetcred} ${server}@${R} || { ec=1 ; eval "${testfailed}"; }
 echo "Listing tickets"; > messages.log
 ${klist} > /dev/null || { ec=1 ; eval "${testfailed}"; }
 ${test_ap_req} ${server}@${R} ${keytab} ${cache} || \
+	{ ec=1 ; eval "${testfailed}"; }
+${kdestroy}
+
+echo "Getting client initial tickets (http transport)"; > messages.log
+${kinit} --password-file=${objdir}/foopassword foo@${R3} || \
 	{ ec=1 ; eval "${testfailed}"; }
 ${kdestroy}
 

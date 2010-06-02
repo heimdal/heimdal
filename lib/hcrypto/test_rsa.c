@@ -211,6 +211,9 @@ main(int argc, char **argv)
     argv += idx;
 
     OpenSSL_add_all_algorithms();
+#ifdef OPENSSL
+    ENGINE_load_openssl();
+#endif
     ENGINE_load_builtin_engines();
 
     if (argc == 0) {

@@ -48,6 +48,18 @@
  * RSA is named by its inventors (Ron Rivest, Adi Shamir, and Leonard
  * Adleman) (published in 1977), patented expired in 21 September 2000.
  *
+ *
+ * Speed for RSA in seconds
+ *   no key blinding
+ *   1000 iteration, 
+ *   same rsa key
+ *   operation performed each eteration sign, verify, encrypt, decrypt on a random bit pattern
+ *
+ * gmp: 	 0.733615
+ * tfm: 	 2.450173 (default in hcrypto)
+ * openssl:	 4.046564
+ * imath: 	22.975163
+ *
  * See the library functions here: @ref hcrypto_rsa
  */
 

@@ -356,11 +356,11 @@ $(BINDIR)\verify_krb5_conf.exe: $(OBJ)\verify_krb5_conf.obj $(LIBKRB5) $(LIBROKE
 	$(_VC_MANIFEST_CLEAN)
 	$(_CODESIGN)
 
-{}.c{$(OBJ)}.obj:
-	$(C2OBJ) -DBUILD_KRB5_LIB
+{}.c{$(OBJ)}.obj::
+	$(C2OBJ_P) -DBUILD_KRB5_LIB
 
-{$(OBJ)}.c{$(OBJ)}.obj:
-	$(C2OBJ) -DBUILD_KRB5_LIB
+{$(OBJ)}.c{$(OBJ)}.obj::
+	$(C2OBJ_P) -DBUILD_KRB5_LIB
 
 #----------------------------------------------------------------------
 # Tests

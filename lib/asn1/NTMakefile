@@ -31,6 +31,8 @@
 
 RELDIR=lib\asn1
 
+intcflags=-I$(SRCDIR) -I$(OBJ)
+
 !include ../../windows/NTMakefile.w32
 
 gen_files_k5 =						    \
@@ -767,10 +769,4 @@ test-binaries: $(TEST_BINARIES)
 test-run:
 
 test:: test-binaries test-run
-
-{$(OBJ)}.c{$(OBJ)}.obj:
-	$(C2OBJ) -I$(SRCDIR) -I$(OBJ)
-
-{}.c{$(OBJ)}.obj:
-	$(C2OBJ) -I$(SRCDIR) -I$(OBJ)
 

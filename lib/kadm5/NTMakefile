@@ -259,5 +259,5 @@ test-run:
 {}.h{$(KADM5INCDIR)}.h:
 	$(CP) $< $@
 
-{}.c{$(OBJ)}.obj:
-	$(C2OBJ) -I$(OBJ) -I$(KADM5INCDIR)
+{}.c{$(OBJ)}.obj::
+	$(C2OBJ_P) -I$(OBJ) -I$(KADM5INCDIR)

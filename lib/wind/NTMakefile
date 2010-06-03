@@ -120,8 +120,8 @@ TEST_BINARIES=\
 	$(OBJ)\test-ldap.exe	\
 	$(OBJ)\test-utf8.exe
 
-{$(OBJ)}.c{$(OBJ)}.obj:
-	$(C2OBJ) -I$(SRCDIR)
+{$(OBJ)}.c{$(OBJ)}.obj::
+	$(C2OBJ_P) -I$(SRCDIR)
 
 {$(OBJ)}.obj{$(OBJ)}.exe:
 	$(EXECONLINK) $(LIBWIND) $(LIBROKEN)

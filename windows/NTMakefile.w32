@@ -160,7 +160,7 @@ libmach=/machine:X64
 
 !ifndef STATICRUNTIME
 
-C2OBJ_C = $(CC) $(cdebug) $(cflags) $(cvarsdll) $(AUXCFLAGS) $(cdefines) $(cincdirs) $(cwarn)
+C2OBJ_C = $(CC) $(cdebug) $(cflags) $(cvarsdll) $(AUXCFLAGS) $(intcflags) $(cdefines) $(cincdirs) $(cwarn)
 EXECONLINK_C = $(LINK) $(ldebug) $(conlflags) $(conlibsdll)
 EXEGUILINK_C = $(LINK) $(ldebug) $(guilflags) $(guilibsdll)
 DLLCONLINK_C = $(LINK) $(ldebug) $(dlllflags) $(conlibsdll)
@@ -168,7 +168,7 @@ DLLGUILINK_C = $(LINK) $(ldebug) $(dlllflags) $(guilibsdll)
 
 !else # STATICRUNTIME
 
-C2OBJ_C = $(CC) $(cdebug) $(cflags) $(cvarsmt) $(AUXCFLAGS) $(cdefines) $(cincdirs) $(cwarn)
+C2OBJ_C = $(CC) $(cdebug) $(cflags) $(cvarsmt) $(AUXCFLAGS) $(intcflags) $(cdefines) $(cincdirs) $(cwarn)
 EXECONLINK_C = $(LINK) $(ldebug) $(conlflags) $(conlibsmt)
 EXEGUILINK_C = $(LINK) $(ldebug) $(guilflags) $(guilibsmt)
 DLLCONLINK_C = $(LINK) $(ldebug) $(dlllflags) $(conlibsmt)
@@ -180,6 +180,8 @@ LIBGUI_C = $(LM) /nologo $(libmach) /SUBSYSTEM:WINDOWS
 LIBCON_C = $(LM) /nologo $(libmach) /SUBSYSTEM:CONSOLE
 
 C2OBJ = $(C2OBJ_C) -Fo$@ -Fd$(@D)\ $**
+C2OBJ_NP = $(C2OBJ_C) -MP $<
+C2OBJ_P = $(C2OBJ_NP) -Fo$(OBJ)\ -Fd$(OBJ)\ #
 EXECONLINK = $(EXECONLINK_C) -OUT:$@ $**
 EXEGUILINK = $(EXEGUILINK_C) -OUT:$@ $**
 DLLCONLINK = $(DLLCONLINK_C) -OUT:$@ $**
@@ -249,17 +251,25 @@ prep:: show-cmds
 
 !endif
 
-{}.c{$(OBJ)}.obj:
-	$(C2OBJ)
+{}.c{$(OBJ)}.obj::
+	$(C2OBJ_C) /Fd$(OBJ)\ /Fo$(OBJ)\ /MP @<<
+$<
+<<
 
-{$(OBJ)}.c{$(OBJ)}.obj:
-	$(C2OBJ)
+{$(OBJ)}.c{$(OBJ)}.obj::
+	$(C2OBJ_C) /Fd$(OBJ)\ /Fo$(OBJ)\ /MP @<<
+$<
+<<
 
-{}.cpp{$(OBJ)}.obj:
-	$(C2OBJ)
+{}.cpp{$(OBJ)}.obj::
+	$(C2OBJ_C) /Fd$(OBJ)\ /Fo$(OBJ)\ /MP @<<
+$<
+<<
 
-{$(OBJ)}.cpp{$(OBJ)}.obj:
-	$(C2OBJ)
+{$(OBJ)}.cpp{$(OBJ)}.obj::
+	$(C2OBJ_C) /Fd$(OBJ)\ /Fo$(OBJ)\ /MP @<<
+$<
+<<
 
 {}.hin{$(INCDIR)}.h:
 	$(CP) $< $@

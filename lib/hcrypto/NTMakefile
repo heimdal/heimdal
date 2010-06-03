@@ -139,8 +139,8 @@ $(LIBHCRYPTO): $(libhcrypto_OBJs)
 
 !endif
 
-{imath/}.c{$(OBJ)}.obj:
-	$(C2OBJ)
+{imath/}.c{$(OBJ)}.obj::
+	$(C2OBJ_P)
 
 all:: $(LIBHCRYPTO)
 

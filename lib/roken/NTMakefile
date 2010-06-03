@@ -112,8 +112,8 @@ libroken_la_OBJS =			\
 	$(OBJ)\warnx.obj		\
 	$(OBJ)\xfree.obj
 
-{}.c{$(OBJ)}.obj:
-	$(C2OBJ) -DBUILD_ROKEN_LIB
+{}.c{$(OBJ)}.obj::
+	$(C2OBJ_P) -DBUILD_ROKEN_LIB
 
 $(LIBROKEN): $(libroken_la_OBJS)
 	$(LIBCON_C) -out:$@ @<<

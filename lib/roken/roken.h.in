@@ -316,6 +316,32 @@ rk_vsnprintf (char *str, size_t sz, const char *format, va_list args);
 
 #endif  /* _MSC_VER */
 
+#ifdef HAVE_WINSOCK
+
+/* While we are at it, define WinSock specific scatter gather socket
+   I/O. */
+
+#define iovec    _WSABUF
+#define iov_base buf
+#define iov_len  len
+
+struct msghdr {
+    void           *msg_name;
+    socklen_t       msg_namelen;
+    struct iovec   *msg_iov;
+    size_t          msg_iovlen;
+    void           *msg_control;
+    socklen_t       msg_controllen;
+    int             msg_flags;
+};
+
+#define sendmsg sendmsg_w32
+
+ROKEN_LIB_FUNCTION ssize_t ROKEN_LIB_CALL
+sendmsg_w32(rk_socket_t s, const struct msghdr * msg, int flags);
+
+#endif	/* HAVE_WINSOCK */
+
 #ifndef HAVE_PUTENV
 #define putenv rk_putenv
 ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL putenv(const char *);
@@ -823,32 +849,6 @@ freeaddrinfo(struct addrinfo *);
 #define gai_strerror rk_gai_strerror
 ROKEN_LIB_FUNCTION const char * ROKEN_LIB_CALL
 gai_strerror(int);
-#endif
-
-#ifdef HAVE_WINSOCK
-
-/* While we are at it, define WinSock specific scatter gather socket
-   I/O. */
-
-#define iovec    _WSABUF
-#define iov_base buf
-#define iov_len  len
-
-struct msghdr {
-    void           *msg_name;
-    socklen_t       msg_namelen;
-    struct iovec   *msg_iov;
-    size_t          msg_iovlen;
-    void           *msg_control;
-    socklen_t       msg_controllen;
-    int             msg_flags;
-};
-
-#define sendmsg sendmsg_w32
-
-ROKEN_LIB_FUNCTION ssize_t ROKEN_LIB_CALL
-sendmsg_w32(rk_socket_t s, const struct msghdr * msg, int flags);
-
 #endif
 
 #ifdef NO_SLEEP

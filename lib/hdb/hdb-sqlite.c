@@ -482,7 +482,7 @@ hdb_sqlite_store(krb5_context context, HDB *db, unsigned flags,
     int ret;
     int i;
     sqlite_int64 entry_id;
-    char *principal_string;
+    char *principal_string = NULL;
     char *alias_string;
     const HDB_Ext_Aliases *aliases;
 

@@ -100,7 +100,7 @@ roken_vmconcat (char **s, size_t max_len, va_list args)
 ROKEN_LIB_FUNCTION size_t ROKEN_LIB_CALL
 roken_mconcat (char **s, size_t max_len, ...)
 {
-    int ret;
+    size_t ret;
     va_list args;
 
     va_start(args, max_len);

@@ -80,7 +80,6 @@ wait_for_process_timed(pid_t pid, time_t (*func)(void *),
     hProcess = OpenProcess(SYNCHRONIZE, FALSE, pid);
 
     if (hProcess == NULL) {
-	DWORD dw = GetLastError();
         return SE_E_WAITPIDFAILED;
     }
 

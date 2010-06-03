@@ -810,9 +810,11 @@ func_not_supported(void)
 static char *
 get_config_file_for_user(void)
 {
-    char *fn = NULL, *home = NULL;
+    char *fn = NULL;
 
 #ifndef _WIN32
+    char *home = NULL;
+
     if (!issuid()) {
         fn = getenv("SOFTPKCS11RC");
         if (fn)

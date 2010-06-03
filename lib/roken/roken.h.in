@@ -68,7 +68,8 @@ typedef SOCKET rk_socket_t;
 #define rk_IS_BAD_SOCKET(s) ((s) == INVALID_SOCKET)
 #define rk_IS_SOCKET_ERROR(rv) ((rv) == SOCKET_ERROR)
 #define rk_SOCK_ERRNO WSAGetLastError()
-#define rk_SOCK_IOCTL(s,c,a) ioctlsocket((s),(c),(a))
+
+ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL rk_SOCK_IOCTL(SOCKET s, long cmd, int * argp);
 
 #define ETIMEDOUT               WSAETIMEDOUT
 #define EWOULDBLOCK             WSAEWOULDBLOCK

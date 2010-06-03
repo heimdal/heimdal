@@ -96,11 +96,11 @@ struct checksum_type {
     size_t blocksize;
     size_t checksumsize;
     unsigned flags;
-    krb5_enctype (*checksum)(krb5_context context,
-			     struct key_data *key,
-			     const void *buf, size_t len,
-			     unsigned usage,
-			     Checksum *csum);
+    krb5_error_code (*checksum)(krb5_context context,
+				struct key_data *key,
+				const void *buf, size_t len,
+				unsigned usage,
+				Checksum *csum);
     krb5_error_code (*verify)(krb5_context context,
 			      struct key_data *key,
 			      const void *buf, size_t len,

@@ -288,8 +288,8 @@ encode_type (const char *name, const Type *t, const char *tmpstr)
 	fprintf(codefile,
 		"{\n"
 		"struct heim_octet_string *val;\n"
-		"size_t elen, totallen = 0;\n"
-		"int eret;\n");
+		"size_t elen = 0, totallen = 0;\n"
+		"int eret = 0;\n");
 
 	fprintf(codefile,
 		"if ((%s)->len > UINT_MAX/sizeof(val[0]))\n"
@@ -535,8 +535,8 @@ generate_type_encode (const Symbol *s)
     case TChoice:
 	fprintf (codefile,
 		 "size_t ret = 0;\n"
-		 "size_t l;\n"
-		 "int i, e;\n\n");
+		 "size_t l, i;\n"
+		 "int e;\n\n");
 	fprintf(codefile, "i = 0;\n"); /* hack to avoid `unused variable' */
 
 	encode_type("data", s->type, "Top");

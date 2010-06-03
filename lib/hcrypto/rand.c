@@ -342,7 +342,7 @@ RAND_write_file(const char *filename)
 const char *
 RAND_file_name(char *filename, size_t size)
 {
-    char *e = NULL;
+    const char *e = NULL;
     int pathp = 0, ret;
 
     if (!issuid()) {

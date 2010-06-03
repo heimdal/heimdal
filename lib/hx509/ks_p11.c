@@ -835,7 +835,7 @@ p11_init(hx509_context context,
 	goto out;
     }
 
-    getFuncs = dlsym(p->dl_handle, "C_GetFunctionList");
+    getFuncs = (CK_C_GetFunctionList) dlsym(p->dl_handle, "C_GetFunctionList");
     if (getFuncs == NULL) {
 	ret = HX509_PKCS11_LOAD;
 	hx509_set_error_string(context, 0, ret,

@@ -223,7 +223,7 @@ arg_printusage_i18n (struct getargs *args,
 		     const char *usage,
 		     const char *progname,
 		     const char *extra_string,
-		     char *(i18n)(const char *))
+		     char *(*i18n)(const char *))
 {
     size_t i, max_len = 0;
     char buf[128];

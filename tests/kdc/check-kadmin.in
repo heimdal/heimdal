@@ -241,6 +241,66 @@ ${kadmin} -p foo/admin@${R} get -o pkinit-acl pkinit@${R} \
         > /dev/null || \
 	{ echo "kadmin failed $?"; cat messages.log ; exit 1; }
 
+#----------------------------------
+${kadmind} -d &
+kadmpid=$!
+sleep 1
+
+echo "kadmin get -o principal"
+env KRB5CCNAME=${cache} \
+${kadmin} -p foo/admin@${R} get -o principal bar@${R} \
+        > kadmin.tmp 2>&1 || \
+	{ echo "kadmin failed $?"; cat messages.log ; exit 1; }
+if test "$(cat kadmin.tmp)" != "Principal: bar@TEST.H5L.SE" ; then
+   cat kadmin.tmp ; cat messages.log ; exit 1 ;
+fi
+
+
+#----------------------------------
+${kadmind} -d &
+kadmpid=$!
+sleep 1
+
+echo "kadmin get -o kvno"
+env KRB5CCNAME=${cache} \
+${kadmin} -p foo/admin@${R} get -o kvno bar@${R} \
+        > kadmin.tmp 2>&1 || \
+	{ echo "kadmin failed $?"; cat messages.log ; exit 1; }
+if test "$(cat kadmin.tmp)" != "Kvno: 1" ; then
+   cat kadmin.tmp ; cat messages.log ; exit 1 ;
+fi
+
+
+#----------------------------------
+${kadmind} -d &
+kadmpid=$!
+sleep 1
+
+echo "kadmin get -o princ_expire_time"
+env KRB5CCNAME=${cache} \
+${kadmin} -p foo/admin@${R} get -o princ_expire_time bar@${R} \
+        > kadmin.tmp 2>&1 || \
+	{ echo "kadmin failed $?"; cat messages.log ; exit 1; }
+if test "$(cat kadmin.tmp)" != "Principal expires: never" ; then
+   cat kadmin.tmp ; cat messages.log ; exit 1 ;
+fi
+
+#----------------------------------
+${kadmind} -d &
+kadmpid=$!
+sleep 1
+
+echo "kadmin get -s -o attributes"
+env KRB5CCNAME=${cache} \
+${kadmin} -p foo/admin@${R} get -s -o attributes bar@${R} \
+        > kadmin.tmp 2>&1 || \
+	{ echo "kadmin failed $?"; cat messages.log ; exit 1; }
+if test "$(cat kadmin.tmp)" != "Attributes" ; then
+   cat kadmin.tmp ; cat messages.log ; exit 1 ;
+fi
+
+#----------------------------------
+
 
 echo "killing kdc (${kdcpid} ${kadmpid})"
 sh ${leaks_kill} kdc $kdcpid || exit 1

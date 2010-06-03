@@ -1492,18 +1492,6 @@ typedef unsigned short mode_t;
 
 #define LIBDIR "%{LIBDIR}"
 
-#if 0
-
-#define LIBEXECDIR "%{LIBEXECDIR}"
-
-#define LOCALSTATEDIR "%{COMMONCONFIG}"
-
-#define SBINDIR "%{SBINDIR}"
-
-#define BINDIR "%{BINDIR}"
-
-#endif
-
 #endif	/* RC_INVOKED */
 
 

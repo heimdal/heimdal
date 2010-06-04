@@ -144,6 +144,9 @@ HEIMDAL_CRYPTO_1.0 {
 		hc_EVP_aes_128_cbc;
 		hc_EVP_aes_192_cbc;
 		hc_EVP_aes_256_cbc;
+		hc_EVP_aes_128_cfb8;
+		hc_EVP_aes_192_cfb8;
+		hc_EVP_aes_256_cfb8;
 		hc_EVP_des_cbc;
 		hc_EVP_des_ede3_cbc;
 		hc_EVP_camellia_128_cbc;
@@ -173,6 +176,9 @@ HEIMDAL_CRYPTO_1.0 {
 		hc_EVP_cc_aes_128_cbc;
 		hc_EVP_cc_aes_192_cbc;
 		hc_EVP_cc_aes_256_cbc;
+		hc_EVP_cc_aes_128_cfb8;
+		hc_EVP_cc_aes_192_cfb8;
+		hc_EVP_cc_aes_256_cfb8;
 
 		hc_EVP_hcrypto_md2;
 		hc_EVP_hcrypto_md4;
@@ -183,13 +189,15 @@ HEIMDAL_CRYPTO_1.0 {
 		hc_EVP_hcrypto_aes_128_cbc;
 		hc_EVP_hcrypto_aes_192_cbc;
 		hc_EVP_hcrypto_aes_256_cbc;
+		hc_EVP_hcrypto_aes_128_cfb8;
+		hc_EVP_hcrypto_aes_192_cfb8;
+		hc_EVP_hcrypto_aes_256_cfb8;
 		hc_EVP_hcrypto_rc4;
 		hc_EVP_hcrypto_rc4_40;
 
 		hc_EVP_hcrypto_aes_128_cts;
 		hc_EVP_hcrypto_aes_192_cts;
 		hc_EVP_hcrypto_aes_256_cts;
-
 		hc_HMAC;
 		hc_HMAC_CTX_cleanup;
 		hc_HMAC_CTX_init;

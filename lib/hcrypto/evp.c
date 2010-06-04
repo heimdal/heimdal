@@ -768,6 +768,10 @@ EVP_CipherInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *c, ENGINE *engine,
 
     case EVP_CIPH_STREAM_CIPHER:
 	break;
+    case EVP_CIPH_CFB8_MODE:
+	if (iv)
+	    memcpy(ctx->iv, iv, EVP_CIPHER_CTX_iv_length(ctx));
+	break;
 
     default:
 	return 0;
@@ -1126,6 +1130,48 @@ EVP_aes_256_cbc(void)
 }
 
 /**
+ * The AES-128 cipher type
+ *
+ * @return the AES-128 EVP_CIPHER pointer.
+ *
+ * @ingroup hcrypto_evp
+ */
+
+const EVP_CIPHER *
+EVP_aes_128_cfb8(void)
+{
+    return EVP_DEF_OP(HCRYPTO_DEF_PROVIDER, aes_128_cfb8);
+}
+
+/**
+ * The AES-192 cipher type
+ *
+ * @return the AES-192 EVP_CIPHER pointer.
+ *
+ * @ingroup hcrypto_evp
+ */
+
+const EVP_CIPHER *
+EVP_aes_192_cfb8(void)
+{
+    return EVP_DEF_OP(HCRYPTO_DEF_PROVIDER, aes_192_cfb8);
+}
+
+/**
+ * The AES-256 cipher type
+ *
+ * @return the AES-256 EVP_CIPHER pointer.
+ *
+ * @ingroup hcrypto_evp
+ */
+
+const EVP_CIPHER *
+EVP_aes_256_cfb8(void)
+{
+    return EVP_DEF_OP(HCRYPTO_DEF_PROVIDER, aes_256_cfb8);
+}
+
+/**
  * The Camellia-128 cipher type
  *
  * @return the Camellia-128 EVP_CIPHER pointer.
@@ -1179,6 +1225,9 @@ static const struct cipher_name {
     { "aes-128-cbc", EVP_aes_128_cbc },
     { "aes-192-cbc", EVP_aes_192_cbc },
     { "aes-256-cbc", EVP_aes_256_cbc },
+    { "aes-128-cfb8", EVP_aes_128_cfb8 },
+    { "aes-192-cfb8", EVP_aes_192_cfb8 },
+    { "aes-256-cfb8", EVP_aes_256_cfb8 },
     { "camellia-128-cbc", EVP_camellia_128_cbc },
     { "camellia-192-cbc", EVP_camellia_192_cbc },
     { "camellia-256-cbc", EVP_camellia_256_cbc }

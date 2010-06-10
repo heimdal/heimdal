@@ -463,11 +463,13 @@ LIBGSSAPI_SDKLIBS=\
 
 !ifndef STATICLIBS
 
-$(BINDIR)\libgssapi.dll: $(libgssapi_OBJs)
+RES=$(OBJ)\libgssapi-version.res
+
+$(BINDIR)\libgssapi.dll: $(libgssapi_OBJs) $(RES)
 	$(DLLGUILINK_C) -implib:$(LIBGSSAPI)	\
 		-out:$(BINDIR)\libgssapi.dll	\
 		-def:libgssapi-exports.def	\
-		$(LIBGSSAPI_LIBS) $(LIBGSSAPI_SDKLIBS) @<<
+		$(LIBGSSAPI_LIBS) $(RES) $(LIBGSSAPI_SDKLIBS) @<<
 $(libgssapi_OBJs: =
 )
 <<

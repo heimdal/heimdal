@@ -64,7 +64,8 @@ KADMIN_OBJS=			    \
 	$(OBJ)\util.obj		    \
 	$(OBJ)\pw_quality.obj	    \
 	$(OBJ)\random_password.obj  \
-	$(OBJ)\kadmin-commands.obj
+	$(OBJ)\kadmin-commands.obj  \
+	$(OBJ)\kadmin-version.res
 
 KADMIN_LIBS=	\
 	$(LIBKADM5CLNT)	\
@@ -90,7 +91,8 @@ KADMIND_OBJS=		    \
 	$(OBJ)\rpc.obj	    \
 	$(OBJ)\server.obj   \
 	$(OBJ)\kadmind.obj  \
-	$(OBJ)\kadm_conn.obj
+	$(OBJ)\kadm_conn.obj \
+	$(OBJ)\kadmind-version.res
 
 KADMIND_LIBS=\
 	$(LIBKADM5SRV)	\

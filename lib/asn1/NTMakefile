@@ -510,7 +510,8 @@ $(BINDIR)\asn1_compile.exe:				    \
 	$(OBJ)\hash.obj					    \
 	$(OBJ)\lex.obj					    \
 	$(OBJ)\main.obj					    \
-	$(OBJ)\symbol.obj
+	$(OBJ)\symbol.obj				    \
+	$(OBJ)\asn1_compile-version.res
 	$(EXECONLINK) $(LIBROKEN) $(LIBVERS)
 	$(EXEPREP)
 

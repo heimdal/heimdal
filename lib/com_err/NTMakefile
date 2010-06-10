@@ -56,7 +56,7 @@ $(COMERRDLL): $(libcomerr_OBJs) $(OBJ)\libcom_err-version.res
 
 !endif
 
-$(BINDIR)\compile_et.exe:  $(OBJ)\parse.obj $(OBJ)\lex.obj $(OBJ)\compile_et.obj
+$(BINDIR)\compile_et.exe:  $(OBJ)\parse.obj $(OBJ)\lex.obj $(OBJ)\compile_et.obj $(OBJ)\compile_et-version.res
 	$(EXECONLINK) $(LIBROKEN) $(LIBVERS)
 	$(EXEPREP)
 

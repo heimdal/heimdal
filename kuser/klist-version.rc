@@ -1,5 +1,5 @@
 /***********************************************************************
- * Copyright (c) 2009, Secure Endpoints Inc.
+ * Copyright (c) 2010, Secure Endpoints Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -29,8 +29,8 @@
  *
  **********************************************************************/
 
-#define RC_FILE_TYPE VFT_DLL
-#define RC_FILE_DESC_0409 "Common Error Library"
-#define RC_FILE_ORIG_0409 "com_err.dll"
+#define RC_FILE_TYPE VFT_APP
+#define RC_FILE_DESC_0409 "List Kerberos Tickets"
+#define RC_FILE_ORIG_0409 "klist.exe"
 
-#include "../../windows/version.rc"
+#include "../windows/version.rc"

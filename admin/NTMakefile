@@ -55,7 +55,7 @@ KTUTIL_LIBS= \
 	$(LIBROKEN)	\
 	$(LIBVERS)
 
-$(SBINDIR)\ktutil.exe: $(KTUTIL_OBJS) $(KTUTIL_LIBS)
+$(SBINDIR)\ktutil.exe: $(KTUTIL_OBJS) $(KTUTIL_LIBS) $(OBJ)\ktutil-version.res
 	$(EXECONLINK)
 	$(EXEPREP)
 

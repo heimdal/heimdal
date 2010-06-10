@@ -54,6 +54,8 @@ DLLSDKDEPS= \
 
 DEF=$(OBJ)\heimdal.def
 
+RES=$(OBJ)\heimdal-version.res
+
 DEFSRC= ..\asn1\libasn1-exports.def \
 	..\wind\libwind-exports.def \
 	..\hcrypto\libhcrypto-exports.def \
@@ -67,8 +69,8 @@ DLL=$(BINDIR)\heimdal.dll
 
 $(LIBHEIMDAL): $(BINDIR)\heimdal.dll
 
-$(DLL): $(DLLDEPS) $(DEF)
-	$(DLLGUILINK_C) $(DLLDEPS) $(DLLSDKDEPS) \
+$(DLL): $(DLLDEPS) $(DEF) $(RES)
+	$(DLLGUILINK_C) $(DLLDEPS) $(DLLSDKDEPS) $(RES) \
 		-def:$(DEF) -out:$(DLL) \
 		-implib:$(LIBHEIMDAL)
 	$(DLLPREP)

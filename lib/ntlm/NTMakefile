@@ -44,9 +44,11 @@ $(OBJ)\heimntlm-protos.h: $(libheimntlm_la_SOURCES)
 
 !ifndef STATICLIBS
 
+RES=$(OBJ)\libheimntlm-version.res
+
 $(LIBHEIMNTLM): $(BINDIR)\libheimntlm.dll
 
-$(BINDIR)\libheimntlm.dll: $(OBJ)\ntlm.obj $(LIBHEIMDAL)
+$(BINDIR)\libheimntlm.dll: $(OBJ)\ntlm.obj $(LIBHEIMDAL) $(RES)
 	$(DLLGUILINK) -def:libheimntlm-exports.def -implib:$(LIBHEIMNTLM)
 	$(DLLPREP)
 

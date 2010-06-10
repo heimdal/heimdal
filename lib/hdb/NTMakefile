@@ -140,9 +140,11 @@ INCFILES=			\
 
 !ifndef STATICLIBS
 
+RES=$(OBJ)\libhdb-version.res
+
 $(LIBHDB): $(BINDIR)\libhdb.dll
 
-$(BINDIR)\libhdb.dll: $(libhdb_OBJs) $(ldap_lib) $(LIBHEIMDAL) $(LIBSQLITE) $(LIBCOMERR) $(LIBROKEN)
+$(BINDIR)\libhdb.dll: $(libhdb_OBJs) $(ldap_lib) $(LIBHEIMDAL) $(LIBSQLITE) $(LIBCOMERR) $(LIBROKEN) $(RES)
 	$(DLLGUILINK) -def:libhdb-exports.def -implib:$(LIBHDB)
 	$(DLLPREP)
 

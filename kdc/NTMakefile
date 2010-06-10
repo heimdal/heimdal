@@ -63,7 +63,7 @@ BIN_LIBS=\
 	$(LIBROKEN)	\
 	$(LIBVERS)
 
-$(LIBEXECDIR)\hprop.exe: $(OBJ)\hprop.obj $(OBJ)\mit_dump.obj $(BIN_LIBS)
+$(LIBEXECDIR)\hprop.exe: $(OBJ)\hprop.obj $(OBJ)\mit_dump.obj $(BIN_LIBS) $(OBJ)\hprop-version.res
 	$(EXECONLINK)
 	$(EXEPREP)
 
@@ -72,15 +72,15 @@ $(LIBEXECDIR)\hprop.exe: $(OBJ)\v4_dump.obj
 !endif
 
 
-$(LIBEXECDIR)\hpropd.exe: $(OBJ)\hpropd.obj $(BIN_LIBS)
+$(LIBEXECDIR)\hpropd.exe: $(OBJ)\hpropd.obj $(BIN_LIBS) $(OBJ)\hpropd-version.res
 	$(EXECONLINK)
 	$(EXEPREP)
 
-$(SBINDIR)\kstash.exe: $(OBJ)\kstash.obj $(BIN_LIBS)
+$(SBINDIR)\kstash.exe: $(OBJ)\kstash.obj $(BIN_LIBS) $(OBJ)\kstash-version.res
 	$(EXECONLINK)
 	$(EXEPREP)
 
-$(BINDIR)\string2key.exe: $(OBJ)\string2key.obj $(BIN_LIBS)
+$(BINDIR)\string2key.exe: $(OBJ)\string2key.obj $(BIN_LIBS) $(OBJ)\string2key-version.res
 	$(EXECONLINK)
 	$(EXEPREP)
 
@@ -89,7 +89,9 @@ $(BINDIR)\digest-service.exe: $(OBJ)\digest-service.obj $(BIN_LIBS)
 	$(EXEPREP)
 
 $(LIBEXECDIR)\kdc.exe: \
-$(OBJ)\connect.obj $(OBJ)\config.obj $(OBJ)\announce.obj $(OBJ)\main.obj $(LIBKDC) $(BIN_LIBS)
+		$(OBJ)\connect.obj $(OBJ)\config.obj $(OBJ)\announce.obj \
+		$(OBJ)\main.obj $(OBJ)\kdc-version.res \
+		$(LIBKDC) $(BIN_LIBS)
 	$(EXECONLINK)
 	$(EXEPREP)
 
@@ -119,7 +121,9 @@ LIBKDC_LIBS=\
 	$(LIBHEIMNTLM)	\
 	$(LIBROKEN)
 
-$(LIBEXECDIR)\libkdc.dll: $(LIBKDC_OBJS) $(LIBKDC_LIBS)
+LIBKDCRES=$(OBJ)\libkdc-version.res
+
+$(LIBEXECDIR)\libkdc.dll: $(LIBKDC_OBJS) $(LIBKDC_LIBS) $(LIBKDCRES)
 	$(DLLGUILINK) -implib:$(LIBKDC) -def:libkdc-exports.def
 	$(DLLPREP)
 

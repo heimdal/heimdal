@@ -194,7 +194,7 @@ $(OBJ)\hxtool-commands.c $(OBJ)\hxtool-commands.h: hxtool-commands.in $(SLC)
 	$(SLC) hxtool-commands.in
 	cd $(SRCDIR)
 
-$(BINDIR)\hxtool.exe: $(OBJ)\hxtool.obj $(OBJ)\hxtool-commands.obj $(LIBHEIMDAL)
+$(BINDIR)\hxtool.exe: $(OBJ)\hxtool.obj $(OBJ)\hxtool-commands.obj $(LIBHEIMDAL) $(OBJ)\hxtool-version.res
 	$(EXECONLINK) $(LIBHEIMDAL) $(LIBROKEN) $(LIBSL) $(LIBVERS) $(LIBCOMERR)
 	$(EXEPREP)
 

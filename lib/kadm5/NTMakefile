@@ -194,24 +194,29 @@ EXELIBDEPS= \
 	$(LIBCOMERR) \
 	$(LIBVERS)
 
-$(SBINDIR)\iprop-log.exe: $(OBJ)\iprop-log.obj $(OBJ)\iprop-commands.obj $(EXELIBDEPS)
+$(SBINDIR)\iprop-log.exe: $(OBJ)\iprop-log.obj $(OBJ)\iprop-commands.obj $(EXELIBDEPS) \
+		$(OBJ)\iprop-log-version.res
 	$(EXECONLINK)
 	$(EXEPREP)
 
-$(LIBEXECDIR)\ipropd-master.exe: $(OBJ)\ipropd_master.obj $(OBJ)\ipropd_common.obj $(EXELIBDEPS)
+$(LIBEXECDIR)\ipropd-master.exe: $(OBJ)\ipropd_master.obj $(OBJ)\ipropd_common.obj \
+		$(EXELIBDEPS) $(OBJ)\ipropd-master-version.res
 	$(EXECONLINK)
 	$(EXEPREP)
 
-$(LIBEXECDIR)\ipropd-slave.exe: $(OBJ)\ipropd_slave.obj $(OBJ)\ipropd_common.obj $(EXELIBDEPS)
+$(LIBEXECDIR)\ipropd-slave.exe: $(OBJ)\ipropd_slave.obj $(OBJ)\ipropd_common.obj \
+		$(EXELIBDEPS) $(OBJ)\ipropd-slave-version.res
 	$(EXECONLINK)
 	$(EXEPREP)
 
 $(LIBKADM5CLNT): $(LIBKADM5CLNT_OBJS)
 	$(LIBCON)
 
+LIBKADM5SRVRES=$(OBJ)\libkadm5srv-version.res
+
 $(LIBKADM5SRV): $(BINDIR)\libkadm5srv.dll
 
-$(BINDIR)\libkadm5srv.dll: $(LIBKADM5SRV_OBJS) $(LIBHEIMDAL) $(LIBROKEN) $(LIBHDB) $(LIBCOMERR) $(LIBSQLITE)
+$(BINDIR)\libkadm5srv.dll: $(LIBKADM5SRV_OBJS) $(LIBHEIMDAL) $(LIBROKEN) $(LIBHDB) $(LIBCOMERR) $(LIBSQLITE) $(LIBKADM5SRVRES)
 	$(DLLGUILINK) -implib:$(LIBKADM5SRV) -def:libkadm5srv-exports.def
 	$(DLLPREP)
 

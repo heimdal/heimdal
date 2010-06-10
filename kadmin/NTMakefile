@@ -42,9 +42,7 @@ SBIN_PROGRAMS=$(SBINDIR)\kadmin.exe
 
 COMMON_LIBS=		\
 	$(LIBHDB)	\
-	$(LIBKRB5)	\
-	$(LIBHCRYPTO)	\
-	$(LIBASN1)	\
+	$(LIBHEIMDAL)	\
 	$(LIBROKEN)
 
 KADMIN_OBJS=			    \

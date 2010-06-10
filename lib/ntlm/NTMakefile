@@ -46,7 +46,7 @@ $(OBJ)\heimntlm-protos.h: $(libheimntlm_la_SOURCES)
 
 $(LIBHEIMNTLM): $(BINDIR)\libheimntlm.dll
 
-$(BINDIR)\libheimntlm.dll: $(OBJ)\ntlm.obj $(LIBKRB5) $(LIBHCRYPTO)
+$(BINDIR)\libheimntlm.dll: $(OBJ)\ntlm.obj $(LIBHEIMDAL)
 	$(DLLGUILINK) -def:libheimntlm-exports.def -implib:$(LIBHEIMNTLM)
 	$(DLLPREP)
 
@@ -67,7 +67,7 @@ test-run:
 	test_ntlm.exe
 	cd $(SRCDIR)
 
-$(OBJ)\test_ntlm.exe: $(OBJ)\test_ntlm.obj $(LIBHEIMNTLM) $(LIBKRB5) $(LIBVERS) $(LIBROKEN) $(LIBHCRYPTO) $(LIBASN1)
+$(OBJ)\test_ntlm.exe: $(OBJ)\test_ntlm.obj $(LIBHEIMNTLM) $(LIBHEIMDAL) $(LIBVERS) $(LIBROKEN)
 	$(EXECONLINK)
 	$(EXEPREP_NODIST)
 

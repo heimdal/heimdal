@@ -463,23 +463,24 @@ $(_VC_MANIFEST_CLEAN)
 # Convenience macros for import libraries
 #
 
-LIBROKEN    =$(LIBDIR)\libroken.lib
-LIBVERS	    =$(LIBDIR)\libvers.lib
-LIBEDITLINE =$(LIBDIR)\libeditline.lib
-LIBCOMERR   =$(LIBDIR)\libcom_err.lib
-LIBSL	    =$(LIBDIR)\libsl.lib
-LIBWIND	    =$(LIBDIR)\libwind.lib
 LIBASN1	    =$(LIBDIR)\libasn1.lib
-LIBSQLITE   =$(LIBDIR)\libsqlite.lib
+LIBCOMERR   =$(LIBDIR)\libcom_err.lib
+LIBEDITLINE =$(LIBDIR)\libeditline.lib
+LIBGSSAPI   =$(LIBDIR)\libgssapi.lib
 LIBHCRYPTO  =$(LIBDIR)\libhcrypto.lib
-LIBHX509    =$(LIBDIR)\libhx509.lib
-LIBKRB5	    =$(LIBDIR)\libkrb5.lib
-LIBHEIMNTLM =$(LIBDIR)\libheimntlm.lib
+LIBHDB	    =$(LIBDIR)\libhdb.lib
+LIBHEIMDAL  =$(LIBDIR)\heimdal.lib
 LIBHEIMIPCC =$(LIBDIR)\libheim-ipcc.lib
 LIBHEIMIPCS =$(LIBDIR)\libheim-ipcs.lib
-LIBGSSAPI   =$(LIBDIR)\libgssapi.lib
-LIBHDB	    =$(LIBDIR)\libhdb.lib
-LIBKADM5SRV =$(LIBDIR)\libkadm5srv.lib
+LIBHEIMNTLM =$(LIBDIR)\libheimntlm.lib
+LIBHX509    =$(LIBDIR)\libhx509.lib
 LIBKADM5CLNT=$(LIBDIR)\libkadm5clnt.lib
+LIBKADM5SRV =$(LIBDIR)\libkadm5srv.lib
 LIBKDC	    =$(LIBDIR)\libkdc.lib
 LIBLTM	    =$(LIBDIR)\libltm.lib
+LIBKRB5	    =$(LIBDIR)\libkrb5.lib
+LIBROKEN    =$(LIBDIR)\libroken.lib
+LIBSL	    =$(LIBDIR)\libsl.lib
+LIBSQLITE   =$(LIBDIR)\libsqlite.lib
+LIBVERS	    =$(LIBDIR)\libvers.lib
+LIBWIND	    =$(LIBDIR)\libwind.lib

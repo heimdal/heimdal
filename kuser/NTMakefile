@@ -51,10 +51,8 @@ NOINSTPROGRAMS=\
 	$(OBJ)\copy_cred_cache.exe
 
 BINLIBS=\
-	$(LIBKRB5)	\
+	$(LIBHEIMDAL)	\
 	$(LIBHEIMNTLM)	\
-	$(LIBHCRYPTO)	\
-	$(LIBASN1)	\
 	$(LIBROKEN)	\
 	$(LIBVERS)
 

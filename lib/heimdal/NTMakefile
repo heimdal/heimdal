@@ -1,6 +1,6 @@
 ########################################################################
 #
-# Copyright (c) 2009, Secure Endpoints Inc.
+# Copyright (c) 2009, 2010 Secure Endpoints Inc.
 # All rights reserved.
 # 
 # Redistribution and use in source and binary forms, with or without
@@ -29,46 +29,61 @@
 # POSSIBILITY OF SUCH DAMAGE.
 # 
 
-RELDIR=admin 
-cincdirs=$(cincdirs) -I$(OBJ)
-!include ../windows/NTMakefile.w32 
+RELDIR = lib\heimdal
 
-SBINPROGRAMS=$(SBINDIR)\ktutil.exe
+!include ../../windows/NTMakefile.w32
 
-KTUTIL_OBJS= \
-	$(OBJ)\add.obj		\
-	$(OBJ)\change.obj	\
-	$(OBJ)\copy.obj		\
-	$(OBJ)\destroy.obj	\
-	$(OBJ)\get.obj		\
-	$(OBJ)\ktutil.obj	\
-	$(OBJ)\ktutil-commands.obj	\
-	$(OBJ)\list.obj		\
-	$(OBJ)\purge.obj	\
-	$(OBJ)\remove.obj	\
-	$(OBJ)\rename.obj
+!ifndef STATICLIBS
 
-KTUTIL_LIBS= \
-	$(LIBHEIMDAL)	\
-	$(LIBKADM5SRV)	\
-	$(LIBSL)	\
+DLLDEPS= \
+	$(LIBASN1)	\
+	$(LIBCOMERR)	\
+	$(LIBHCRYPTO)	\
+	$(LIBHX509)	\
+	$(LIBKRB5)	\
 	$(LIBROKEN)	\
-	$(LIBVERS)
+	$(LIBSQLITE)	\
+	$(LIBWIND)	\
+	$(LIBTFM)
 
-$(SBINDIR)\ktutil.exe: $(KTUTIL_OBJS) $(KTUTIL_LIBS)
-	$(EXECONLINK)
-	$(EXEPREP)
+DLLSDKDEPS= \
+	$(PTHREAD_LIB)	\
+	secur32.lib	\
+	shell32.lib	\
+	dnsapi.lib
 
-$(OBJ)\ktutil-commands.c $(OBJ)\ktutil-commands.h: ktutil-commands.in
-	cd $(OBJ)
-	$(CP) $(SRCDIR)\ktutil-commands.in $(OBJ)
-	$(BINDIR)\slc.exe ktutil-commands.in
-	cd $(SRCDIR)
+DEF=$(OBJ)\heimdal.def
 
-INCFILES=\
-	$(OBJ)\ktutil-commands.h
+DEFSRC= ..\asn1\libasn1-exports.def \
+	..\wind\libwind-exports.def \
+	..\hcrypto\libhcrypto-exports.def \
+	..\hx509\libhx509-exports.def \
+	$(OBJDIR)\lib\krb5\libkrb5-exports.def
 
-all:: $(INCFILES) $(SBINPROGRAMS)
+$(DEF): $(DEFSRC)
+	copy $(DEFSRC:  = + ) $(DEF)
+
+DLL=$(BINDIR)\heimdal.dll
+
+$(LIBHEIMDAL): $(BINDIR)\heimdal.dll
+
+$(DLL): $(DLLDEPS) $(DEF)
+	$(DLLGUILINK_C) $(DLLDEPS) $(DLLSDKDEPS) \
+		-def:$(DEF) -out:$(DLL) \
+		-implib:$(LIBHEIMDAL)
+	$(DLLPREP)
 
 clean::
-	-$(RM) $(SBINPROGRAMS)
+	-$(RM) $(BINDIR)\heimdal.dll
+
+!else
+
+$(LIBHEIMDAL): $(LIBASN1) $(LIBWIND) $(LIBHCRYPTO) $(LIBHX509) $(LIBKRB5)
+	$(LIBCON)
+
+!endif
+
+all:: $(LIBHEIMDAL)
+
+clean::
+	-$(RM) $(LIBHEIMDAL)

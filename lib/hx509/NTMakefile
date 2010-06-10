@@ -103,20 +103,8 @@ libhx509_la_OBJS = \
 	$(gen_files_ocsp:.x=.obj)	\
 	$(gen_files_pkcs10:.x=.obj)
 
-!ifndef STATICLIBS
-
-$(LIBHX509): $(BINDIR)\libhx509.dll
-
-$(BINDIR)\libhx509.dll: $(libhx509_la_OBJS) $(LIBHCRYPTO) $(LIBASN1) $(LIBWIND) $(LIBROKEN) $(LIBCOMERR)
-	$(DLLGUILINK) -def:libhx509-exports.def -implib:$(LIBHX509) shell32.lib
-	$(DLLPREP)
-
-!else
-
 $(LIBHX509): $(libhx509_la_OBJS)
 	$(LIBCON)
-
-!endif
 
 dist_libhx509_la_SOURCES = \
 	$(SRCDIR)\ca.c \
@@ -237,7 +225,9 @@ $(OBJ)\sel-gram.c: sel-gram.y
 $(OBJ)\sel-lex.c: sel-lex.l
 	$(LEX) -o$@ sel-lex.l
 
-all:: $(INCFILES) $(LIBHX509) $(BINDIR)\hxtool.exe
+all:: $(INCFILES) $(LIBHX509)
+
+all-tools:: $(BINDIR)\hxtool.exe
 
 clean::
 	-$(RM) $(BINDIR)\hxtool.exe

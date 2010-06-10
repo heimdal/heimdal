@@ -44,11 +44,30 @@ dir_hcrypto = hcrypto
 !endif
 
 SUBDIRS = roken vers editline com_err sl wind asn1 sqlite \
-	$(dir_hcrypto) hx509 krb5 ntlm kafs gssapi hdb kadm5 \
-	auth $(dir_45) $(dir_otp) $(dir_dce)
+	$(dir_hcrypto) hx509 krb5 heimdal ntlm kafs gssapi hdb \
+	kadm5 auth $(dir_45) $(dir_otp) $(dir_dce)
 
 !include ../windows/NTMakefile.w32
 
-all:: subdirs
+# We can't build some of the lib tools until after we have LIBHEIMDAL.
+# So we build tools in a separate build step:
 
-clean:: clean-subdirs
+all:: all-tools
+
+all-tools:: asn1-tools hx509-tools krb5-tools
+
+asn1-tools:
+	cd asn1
+	$(RMAKE) all-tools
+	cd ..
+
+hx509-tools:
+	cd hx509
+	$(RMAKE) all-tools
+	cd ..
+
+krb5-tools:
+	cd krb5
+	$(RMAKE) all-tools
+	cd ..
+

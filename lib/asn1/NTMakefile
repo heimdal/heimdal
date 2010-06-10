@@ -494,9 +494,7 @@ gen_files_kx509 =					    \
 	$(OBJ)\asn1_Kx509Request.x
 
 ASN1_BINARIES =						    \
-	$(LIBEXECDIR)\asn1_compile.exe			    \
-	$(LIBEXECDIR)\asn1_print.exe			    \
-	$(BINDIR)\asn1_gen.exe
+	$(LIBEXECDIR)\asn1_compile.exe
 
 $(BINDIR)\asn1_compile.exe:				    \
 	$(OBJ)\asn1parse.obj				    \
@@ -527,11 +525,11 @@ $(OBJ)\asn1_err.c $(OBJ)\asn1_err.h: asn1_err.et
 	$(BINDIR)\compile_et.exe $(SRCDIR)\asn1_err.et
 	cd $(SRCDIR)
 
-$(BINDIR)\asn1_print.exe: $(OBJ)\asn1_print.obj $(LIBASN1)
+$(BINDIR)\asn1_print.exe: $(OBJ)\asn1_print.obj $(LIBHEIMDAL)
 	$(EXECONLINK) $(LIBVERS) $(LIBROKEN) $(LIBCOMERR)
 	$(EXEPREP)
 
-$(BINDIR)\asn1_gen.exe: $(OBJ)\asn1_gen.obj $(LIBASN1)
+$(BINDIR)\asn1_gen.exe: $(OBJ)\asn1_gen.obj $(LIBHEIMDAL)
 	$(EXECONLINK) $(LIBVERS) $(LIBROKEN)
 	$(EXEPREP)
 
@@ -557,33 +555,11 @@ LIBASN1_OBJS=	\
 	$(gen_files_kx509:.x=.obj)	\
 	$(OBJ)\asn1_err.obj
 
-LIBASN1_LIBS=\
-	$(LIBROKEN)	\
-	$(LIBCOMERR)
-
-!ifndef STATICLIBS
-
-$(LIBASN1): $(BINDIR)\libasn1.dll
-
-$(BINDIR)\libasn1.dll: $(LIBASN1_OBJS) $(LIBASN1_LIBS)
-	$(DLLGUILINK_C) -out:$@ -def:libasn1-exports.def -implib:$(LIBASN1) @<<
-$(**: =
-)
-<<
-	$(DLLPREP)
-
-clean::
-	-$(RM) $(BINDIR)\libasn1.dll
-
-!else
-
 $(LIBASN1): $(LIBASN1_OBJS)
 	$(LIBCON_C) -out:$@ @<<
 $(**: =
 )
 <<
-
-!endif
 
 clean::
 	-$(RM) $(LIBASN1)
@@ -752,6 +728,8 @@ clean::
 	-$(RM) $(INCDIR)\der-protos.h
 
 all:: $(INCFILES) $(GENINCFILES) $(ASN1_BINARIES) $(LIBASN1)
+
+all-tools:: $(LIBEXECDIR)\asn1_print.exe $(BINDIR)\asn1_gen.exe
 
 TEST_BINARIES=\
 	$(OBJ)\check-der.exe	\

@@ -59,9 +59,7 @@ clean::
 
 BIN_LIBS=\
 	$(LIBHDB)	\
-	$(LIBKRB5)	\
-	$(LIBHCRYPTO)	\
-	$(LIBASN1)	\
+	$(LIBHEIMDAL)	\
 	$(LIBROKEN)	\
 	$(LIBVERS)
 
@@ -117,15 +115,9 @@ LIBKDC_OBJS=$(LIBKDC_OBJS) \
 
 LIBKDC_LIBS=\
 	$(LIBHDB)	\
-	$(LIBKRB5)	\
+	$(LIBHEIMDAL)	\
 	$(LIBHEIMNTLM)	\
-	$(LIBHCRYPTO)	\
-	$(LIBASN1)	\
 	$(LIBROKEN)
-
-!ifdef PKINIT
-LIBKDC_LIBS=$(LIBKDC_LIBS) $(LIBHX509)
-!endif
 
 $(LIBEXECDIR)\libkdc.dll: $(LIBKDC_OBJS) $(LIBKDC_LIBS)
 	$(DLLGUILINK) -implib:$(LIBKDC) -def:libkdc-exports.def

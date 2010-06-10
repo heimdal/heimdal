@@ -88,6 +88,9 @@ ${kadmin} get foo@${R} | grep alias1@${R} >/dev/null || exit 1
 
 ${kadmin} add -p foo --use-defaults  ${service}@${R2} || exit 1
 
+${kadmin} add -p foo --use-defaults bar@${R} || exit 1
+${kadmin} add -p foo --use-defaults 'baz\@realm.foo@'${R} || exit 1
+
 ${kadmin} add -p cross1 --use-defaults krbtgt/${R2}@${R} || exit 1
 ${kadmin} add -p cross2 --use-defaults krbtgt/${R}@${R2} || exit 1
 
@@ -110,6 +113,26 @@ fi
 trap "kill -9 ${kdcpid}; echo signal killing kdc; exit 1;" EXIT
 
 ec=0
+
+
+echo "Getting client bar"; > messages.log
+${kinit} --password-file=${objdir}/foopassword bar@${R} || \
+	{ ec=1 ; eval "${testfailed}"; }
+echo "checking that we got back right principal"
+${klist} | grep "Principal: bar@${R}" > /dev/null || \
+	{ ec=1 ; eval "${testfailed}"; }
+${kdestroy}
+
+echo "Getting client baz"; > messages.log
+${kinit} --password-file=${objdir}/foopassword 'baz\@realm.foo@'${R} || \
+	{ ec=1 ; eval "${testfailed}"; }
+echo "checking that we got back right principal"
+${klist}
+${klist} | grep 'Principal: baz' > /dev/null || \
+	{ ec=1 ; eval "${testfailed}"; }
+${kdestroy}
+
+
 
 echo "Test AS-REQ"
 

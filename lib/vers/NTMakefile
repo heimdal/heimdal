@@ -43,8 +43,7 @@ $(OBJ)\print_version.obj: print_version.c
 
 $(OBJ)\make-print-version.exe: $(OBJ)\make-print-version.obj
 	$(EXECONLINK)
-	$(_VC_MANIFEST_EMBED_EXE)
-	$(_VC_MANIFEST_CLEAN)
+	$(EXEPREP_NODIST)
 
 $(OBJ)\print_version.h: $(OBJ)\make-print-version.exe
 	$(OBJ)\make-print-version.exe $@

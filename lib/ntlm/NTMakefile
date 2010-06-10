@@ -69,7 +69,6 @@ test-run:
 
 $(OBJ)\test_ntlm.exe: $(OBJ)\test_ntlm.obj $(LIBHEIMNTLM) $(LIBKRB5) $(LIBVERS) $(LIBROKEN) $(LIBHCRYPTO) $(LIBASN1)
 	$(EXECONLINK)
-	$(_VC_MANIFEST_EMBED_EXE)
-	$(_VC_MANIFEST_CLEAN)
+	$(EXEPREP_NODIST)
 
 test:: test-binaries test-run

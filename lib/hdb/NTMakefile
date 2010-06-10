@@ -67,9 +67,7 @@ ldap_objs = $(OBJ)\hdb-ldap.obj
 
 $(ldap_dll): $(ldap_objs)
 	$(DLLGUILINK) -implib:$(ldap_lib)
-	$(_VC_MANIFEST_EMBED_DLL)
-	$(_VC_MANIFEST_CLEAN)
-	$(_CODESIGN)
+	$(DLLPREP)
 
 clean::
 	-$(RM) $(ldap_dll)
@@ -167,11 +165,11 @@ test-binaries: $(OBJ)\test_dbinfo.exe $(OBJ)\test_hdbkeys.exe
 
 $(OBJ)\test_dbinfo.exe: $(OBJ)\test_dbinfo.obj $(LIBHDB) $(LIBKRB5) $(LIBROKEN) $(LIBVERS)
 	$(EXECONLINK)
-	$(_VC_MANIFEST_EMBED_EXE)
+	$(EXEPREP_NODIST)
 
 $(OBJ)\test_hdbkeys.exe: $(OBJ)\test_hdbkeys.obj $(LIBHDB) $(LIBKRB5) $(LIBROKEN) $(LIBASN1) $(LIBVERS)
 	$(EXECONLINK)
-	$(_VC_MANIFEST_EMBED_EXE)
+	$(EXEPREP_NODIST)
 
 test-run:
 	cd $(OBJ)

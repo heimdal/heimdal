@@ -473,9 +473,7 @@ $(BINDIR)\libgssapi.dll: $(libgssapi_OBJs)
 $(libgssapi_OBJs: =
 )
 <<
-	$(_VC_MANIFEST_EMBED_DLL)
-	$(_VC_MANIFEST_CLEAN)
-	$(_CODESIGN)
+	$(DLLPREP)
 
 $(LIBGSSAPI): $(BINDIR)\libgssapi.dll
 

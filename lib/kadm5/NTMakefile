@@ -197,21 +197,15 @@ EXELIBDEPS= \
 
 $(SBINDIR)\iprop-log.exe: $(OBJ)\iprop-log.obj $(OBJ)\iprop-commands.obj $(EXELIBDEPS)
 	$(EXECONLINK)
-	$(_VC_MANIFEST_EMBED_EXE)
-	$(_VC_MANIFEST_CLEAN)
-	$(_CODESIGN)
+	$(EXEPREP)
 
 $(LIBEXECDIR)\ipropd-master.exe: $(OBJ)\ipropd_master.obj $(OBJ)\ipropd_common.obj $(EXELIBDEPS)
 	$(EXECONLINK)
-	$(_VC_MANIFEST_EMBED_EXE)
-	$(_VC_MANIFEST_CLEAN)
-	$(_CODESIGN)
+	$(EXEPREP)
 
 $(LIBEXECDIR)\ipropd-slave.exe: $(OBJ)\ipropd_slave.obj $(OBJ)\ipropd_common.obj $(EXELIBDEPS)
 	$(EXECONLINK)
-	$(_VC_MANIFEST_EMBED_EXE)
-	$(_VC_MANIFEST_CLEAN)
-	$(_CODESIGN)
+	$(EXEPREP)
 
 $(LIBKADM5CLNT): $(LIBKADM5CLNT_OBJS)
 	$(LIBCON)
@@ -220,9 +214,7 @@ $(LIBKADM5SRV): $(BINDIR)\libkadm5srv.dll
 
 $(BINDIR)\libkadm5srv.dll: $(LIBKADM5SRV_OBJS) $(LIBKRB5) $(LIBROKEN) $(LIBHDB) $(LIBCOMERR) $(LIBASN1) $(LIBSQLITE)
 	$(DLLGUILINK) -implib:$(LIBKADM5SRV) -def:libkadm5srv-exports.def
-	$(_VC_MANIFEST_EMBED_DLL)
-	$(_VC_MANIFEST_CLEAN)
-	$(_CODESIGN)
+	$(DLLPREP)
 
 all:: $(INCFILES) $(LIBKADM5SRV) $(LIBKADM5CLNT) $(SBINPROGRAMS) $(LIBEXECPROGRAMS)
 
@@ -243,13 +235,11 @@ test-binaries:	\
 
 $(OBJ)\default_keys.exe: $(OBJ)\default_keys.obj
 	$(EXECONLINK)
-	$(_VC_MANIFEST_EMBED_EXE)
-	$(_VC_MANIFEST_CLEAN)
+	$(EXEPREP_NODIST)
 
 $(OBJ)\sample_passwd_check.dll: $(OBJ)\sample_passwd_check.obj
 	$(DLLGUILINK)		#TODO: Define exports
-	$(_VC_MANIFEST_EMBED_DLL)
-	$(_VC_MANIFEST_CLEAN)
+	$(DLLPREP_NODIST)
 
 test-run:
 

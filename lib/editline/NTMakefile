@@ -43,9 +43,7 @@ $(LIBDIR)\libeditline.lib: $(libeditline_la_OBJS)
 
 $(OBJ)\testit.exe: $(OBJ)\testit.obj $(LIBEDITLINE) $(LIBROKEN) $(LIBVERS)
 	$(EXECONLINK)
-	$(_VC_MANIFEST_EMBED_EXE)
-	$(_VC_MANIFEST_CLEAN)
-	$(_CODESIGN)
+	$(EXEPREP_NODIST)
 
 all:: $(LIBEDITLINE)
 

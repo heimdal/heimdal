@@ -514,9 +514,7 @@ $(BINDIR)\asn1_compile.exe:				    \
 	$(OBJ)\main.obj					    \
 	$(OBJ)\symbol.obj
 	$(EXECONLINK) $(LIBROKEN) $(LIBVERS)
-	$(_VC_MANIFEST_EMBED_EXE)
-	$(_VC_MANIFEST_CLEAN)
-	$(_CODESIGN)
+	$(EXEPREP)
 
 $(OBJ)\lex.c: lex.l $(OBJ)\asn1parse.h
 	$(LEX) -o$@ lex.l
@@ -531,15 +529,11 @@ $(OBJ)\asn1_err.c $(OBJ)\asn1_err.h: asn1_err.et
 
 $(BINDIR)\asn1_print.exe: $(OBJ)\asn1_print.obj $(LIBASN1)
 	$(EXECONLINK) $(LIBVERS) $(LIBROKEN) $(LIBCOMERR)
-	$(_VC_MANIFEST_EMBED_EXE)
-	$(_VC_MANIFEST_CLEAN)
-	$(_CODESIGN)
+	$(EXEPREP)
 
 $(BINDIR)\asn1_gen.exe: $(OBJ)\asn1_gen.obj $(LIBASN1)
 	$(EXECONLINK) $(LIBVERS) $(LIBROKEN)
-	$(_VC_MANIFEST_EMBED_EXE)
-	$(_VC_MANIFEST_CLEAN)
-	$(_CODESIGN)
+	$(EXEPREP)
 
 LIBASN1_OBJS=	\
 	$(OBJ)\der.obj			\

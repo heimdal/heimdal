@@ -177,74 +177,59 @@ test-binaries:				\
 
 $(OBJ)\destest.exe: $(OBJ)\destest.obj $(TESTLIB) $(LIBROKEN)
 	$(EXECONLINK)
-	$(_VC_MANIFEST_EMBED_EXE)
-	$(_VC_MANIFEST_CLEAN)
-
+	$(EXEPREP_NODIST)
 
 $(OBJ)\mdtest.exe: $(OBJ)\mdtest.obj $(LIBHCRYPTO) $(LIBROKEN)
 	$(EXECONLINK)
-	$(_VC_MANIFEST_EMBED_EXE)
-	$(_VC_MANIFEST_CLEAN)
+	$(EXEPREP_NODIST)
 
 $(OBJ)\rc2test.exe: $(OBJ)\rc2test.obj $(LIBHCRYPTO) $(LIBROKEN)
 	$(EXECONLINK)
-	$(_VC_MANIFEST_EMBED_EXE)
-	$(_VC_MANIFEST_CLEAN)
+	$(EXEPREP_NODIST)
 
 $(OBJ)\rctest.exe: $(OBJ)\rctest.obj $(LIBHCRYPTO) $(LIBROKEN)
 	$(EXECONLINK)
-	$(_VC_MANIFEST_EMBED_EXE)
-	$(_VC_MANIFEST_CLEAN)
+	$(EXEPREP_NODIST)
 
 $(OBJ)\test_bn.exe: $(OBJ)\test_bn.obj $(LIBHCRYPTO) $(LIBROKEN) $(LIBASN1)
 	$(EXECONLINK)
-	$(_VC_MANIFEST_EMBED_EXE)
-	$(_VC_MANIFEST_CLEAN)
+	$(EXEPREP_NODIST)
 
 $(OBJ)\test_cipher.exe: $(OBJ)\test_cipher.obj $(LIBHCRYPTO) $(LIBROKEN) $(LIBVERS)
 	$(EXECONLINK)
-	$(_VC_MANIFEST_EMBED_EXE)
-	$(_VC_MANIFEST_CLEAN)
+	$(EXEPREP_NODIST)
 
 $(OBJ)\test_engine_dso.exe: $(OBJ)\test_engine_dso.obj $(LIBHCRYPTO) $(LIBROKEN) $(LIBASN1) $(LIBVERS)
 	$(EXECONLINK)
-	$(_VC_MANIFEST_EMBED_EXE)
-	$(_VC_MANIFEST_CLEAN)
+	$(EXEPREP_NODIST)
 
 $(OBJ)\test_hmac.exe: $(OBJ)\test_hmac.obj $(LIBHCRYPTO)
 	$(EXECONLINK)
-	$(_VC_MANIFEST_EMBED_EXE)
-	$(_VC_MANIFEST_CLEAN)
+	$(EXEPREP_NODIST)
 
 $(OBJ)\test_imath.exe: $(OBJ)\test_imath.obj $(TESTLIB) $(LIBROKEN)
 	$(EXECONLINK)
-	$(_VC_MANIFEST_EMBED_EXE)
-	$(_VC_MANIFEST_CLEAN)
+	$(EXEPREP_NODIST)
 
 $(OBJ)\test_pkcs5.exe: $(OBJ)\test_pkcs5.obj $(LIBHCRYPTO) $(LIBROKEN)
 	$(EXECONLINK)
-	$(_VC_MANIFEST_EMBED_EXE)
-	$(_VC_MANIFEST_CLEAN)
+	$(EXEPREP_NODIST)
 
 $(OBJ)\test_pkcs12.exe: $(OBJ)\test_pkcs12.obj $(LIBHCRYPTO) $(LIBASN1) $(LIBROKEN)
 	$(EXECONLINK)
-	$(_VC_MANIFEST_EMBED_EXE)
-	$(_VC_MANIFEST_CLEAN)
+	$(EXEPREP_NODIST)
 
 $(OBJ)\test_rsa.exe: $(OBJ)\test_rsa.obj $(LIBHCRYPTO) $(LIBROKEN) $(LIBASN1) $(LIBVERS)
 	$(EXECONLINK)
-	$(_VC_MANIFEST_EMBED_EXE)
-	$(_VC_MANIFEST_CLEAN)
+	$(EXEPREP_NODIST)
 
 $(OBJ)\test_dh.exe: $(OBJ)\test_dh.obj $(LIBHCRYPTO) $(LIBROKEN) $(LIBASN1) $(LIBVERS)
 	$(EXECONLINK)
-	$(_VC_MANIFEST_EMBED_EXE)
-	$(_VC_MANIFEST_CLEAN)
+	$(EXEPREP_NODIST)
 
 $(OBJ)\test_rand.exe: $(OBJ)\test_rand.obj $(LIBHCRYPTO) $(LIBROKEN) $(LIBASN1) $(LIBVERS)
 	$(EXECONLINK)
-	$(_VC_MANIFEST_EMBED_EXE)
-	$(_VC_MANIFEST_CLEAN)
+	$(EXEPREP_NODIST)
 
 $(OBJ)\test_crypto.sh: test_crypto.in NTMakefile
 	$(SED) -e "s,[@]srcdir[@],$(SRCDIR),g" -e "s,[@]exeext[@],.exe,g" < test_crypto.in > $@

@@ -352,9 +352,7 @@ clean::
 
 $(BINDIR)\verify_krb5_conf.exe: $(OBJ)\verify_krb5_conf.obj $(LIBKRB5) $(LIBROKEN) $(LIBVERS)
 	$(EXECONLINK)
-	$(_VC_MANIFEST_EMBED_EXE)
-	$(_VC_MANIFEST_CLEAN)
-	$(_CODESIGN)
+	$(EXEPREP)
 
 {}.c{$(OBJ)}.obj::
 	$(C2OBJ_P) -DBUILD_KRB5_LIB
@@ -433,8 +431,8 @@ test-run:
 
 $(test_binaries): $$(@R).obj
 	$(EXECONLINK) $(LIBKRB5) $(LIBVERS) $(LIBROKEN) $(LIBHCRYPTO) $(LIBASN1)
-	$(_VC_MANIFEST_EMBED_EXE)
-	$(_VC_MANIFEST_CLEAN)
+	$(EXECONLINK) $(LIBHEIMDAL) $(LIBVERS) $(LIBROKEN)
+	$(EXEPREP_NODIST)
 
 $(test_binaries:.exe=.obj): $$(@B).c
 	$(C2OBJ_C) -Fo$@ -Fd$(@D)\ $** -DBlah

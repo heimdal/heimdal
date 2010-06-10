@@ -67,9 +67,7 @@ BIN_LIBS=\
 
 $(LIBEXECDIR)\hprop.exe: $(OBJ)\hprop.obj $(OBJ)\mit_dump.obj $(BIN_LIBS)
 	$(EXECONLINK)
-	$(_VC_MANIFEST_EMBED_EXE)
-	$(_VC_MANIFEST_CLEAN)
-	$(_CODESIGN)
+	$(EXEPREP)
 
 !ifdef KRB4
 $(LIBEXECDIR)\hprop.exe: $(OBJ)\v4_dump.obj
@@ -78,34 +76,24 @@ $(LIBEXECDIR)\hprop.exe: $(OBJ)\v4_dump.obj
 
 $(LIBEXECDIR)\hpropd.exe: $(OBJ)\hpropd.obj $(BIN_LIBS)
 	$(EXECONLINK)
-	$(_VC_MANIFEST_EMBED_EXE)
-	$(_VC_MANIFEST_CLEAN)
-	$(_CODESIGN)
+	$(EXEPREP)
 
 $(SBINDIR)\kstash.exe: $(OBJ)\kstash.obj $(BIN_LIBS)
 	$(EXECONLINK)
-	$(_VC_MANIFEST_EMBED_EXE)
-	$(_VC_MANIFEST_CLEAN)
-	$(_CODESIGN)
+	$(EXEPREP)
 
 $(BINDIR)\string2key.exe: $(OBJ)\string2key.obj $(BIN_LIBS)
 	$(EXECONLINK)
-	$(_VC_MANIFEST_EMBED_EXE)
-	$(_VC_MANIFEST_CLEAN)
-	$(_CODESIGN)
+	$(EXEPREP)
 
 $(BINDIR)\digest-service.exe: $(OBJ)\digest-service.obj $(BIN_LIBS)
 	$(EXECONLINK)
-	$(_VC_MANIFEST_EMBED_EXE)
-	$(_VC_MANIFEST_CLEAN)
-	$(_CODESIGN)
+	$(EXEPREP)
 
 $(LIBEXECDIR)\kdc.exe: \
 $(OBJ)\connect.obj $(OBJ)\config.obj $(OBJ)\announce.obj $(OBJ)\main.obj $(LIBKDC) $(BIN_LIBS)
 	$(EXECONLINK)
-	$(_VC_MANIFEST_EMBED_EXE)
-	$(_VC_MANIFEST_CLEAN)
-	$(_CODESIGN)
+	$(EXEPREP)
 
 LIBKDC_OBJS=\
 	$(OBJ)\default_config.obj	\
@@ -141,9 +129,7 @@ LIBKDC_LIBS=$(LIBKDC_LIBS) $(LIBHX509)
 
 $(LIBEXECDIR)\libkdc.dll: $(LIBKDC_OBJS) $(LIBKDC_LIBS)
 	$(DLLGUILINK) -implib:$(LIBKDC) -def:libkdc-exports.def
-	$(_VC_MANIFEST_EMBED_DLL)
-	$(_VC_MANIFEST_CLEAN)
-	$(_CODESIGN)
+	$(DLLPREP)
 
 $(LIBKDC): $(LIBEXECDIR)\libkdc.dll
 

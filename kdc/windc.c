@@ -86,14 +86,19 @@ _kdc_pac_verify(krb5_context context,
 		const krb5_principal client_principal,
 		hdb_entry_ex *client,
 		hdb_entry_ex *server,
-		krb5_pac *pac)
+		krb5_pac *pac,
+		int *verified)
 {
-    if (windcft == NULL) {
-	krb5_set_error_message(context, EINVAL, "Can't verify PAC, no function");
-	return EINVAL;
-    }
-    return (windcft->pac_verify)(windcctx, context,
-				 client_principal, client, server, pac);
+    krb5_error_code ret;
+
+    if (windcft == NULL)
+	return 0;
+
+    ret = windcft->pac_verify(windcctx, context,
+			      client_principal, client, server, pac);
+    if (ret == 0)
+	*verified = 1;
+    return ret;
 }
 
 krb5_error_code

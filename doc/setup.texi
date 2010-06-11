@@ -758,17 +758,36 @@ May  3 14:10:54  May  3 23:55:54  host/hummel.it.su.se@@SU.SE
 @section Transit policy
 @cindex Transit policy
 
-If you want to use cross realm authentication through an intermediate
-realm, it must be explicitly allowed by either the KDCs or the server
-receiving the request. This is done in @file{krb5.conf} in the
+Under some circumstances, you may not wish to set up direct
+cross-realm trust with every realm to which you wish to authenticate
+or from which you wish to accept authentications. Kerberos supports
+multi-hop cross-realm trust where a client principal in realm A
+authenticates to a service in realm C through a realm B with which
+both A and C have cross-realm trust relationships. In this situation,
+A and C need not set up cross-realm principals between each other.
+
+If you want to use cross-realm authentication through an intermediate
+realm, it must be explicitly allowed by either the KDCs for the realm
+to which the client is authenticating (in this case, realm C), or the
+server receiving the request. This is done in @file{krb5.conf} in the
 @code{[capaths]} section.
+
+In addition, the client in realm A need to be configured to know how
+to reach realm C via realm B. This can be done either on the client or
+via KDC configuration in the KDC for realm A.
+
+@subsection Allowing cross-realm transits
 
 When the ticket transits through a realm to another realm, the
 destination realm adds its peer to the "transited-realms" field in the
-ticket. The field is unordered, since there is no way to know if
-know if one of the transited-realms changed the order of the list.
+ticket. The field is unordered, since there is no way to know if know
+if one of the transited-realms changed the order of the list. For the
+authentication to be accepted by the final destination realm, all of
+the transited realms must be listed as trusted in the @code{[capaths]}
+configuration, either in the KDC for the destination realm or on the
+server receiving the authentication.
 
-The syntax for @code{[capaths]} section:
+The syntax for @code{[capaths]} section is:
 
 @example
 [capaths]
@@ -777,11 +796,15 @@ The syntax for @code{[capaths]} section:
         @}
 @end example
 
-The realm @code{STACKEN.KTH.SE} allows clients from @code{SU.SE} and
-@code{DSV.SU.SE} to cross it. Since @code{STACKEN.KTH.SE} only has
-direct cross realm setup with @code{KTH.SE}, and @code{DSV.SU.SE} only
-has direct cross realm setup with @code{SU.SE} they need to use both
-@code{SU.SE} and @code{KTH.SE} as transit realms.
+In the following example, the realm @code{STACKEN.KTH.SE} only has
+direct cross-realm set up with @code{KTH.SE}.  @code{KTH.SE} has
+direct cross-realm set up with @code{STACKEN.KTH.SE} and @code{SU.SE}.
+@code{DSV.SU.SE} only has direct cross-realm set up with @code{SU.SE}.
+The goal is to allow principals in the @code{DSV.SU.SE} or
+@code{SU.SE} realms to authenticate to services in
+@code{STACKEN.KTH.SE}.  This is done with the following
+@code{[capaths]} entry on either the server accepting authentication
+or on the KDC for @code{STACKEN.KTH.SE}.
 
 @example
 [capaths]
@@ -791,17 +814,100 @@ has direct cross realm setup with @code{SU.SE} they need to use both
 	DSV.SU.SE = @{
                     STACKEN.KTH.SE = SU.SE KTH.SE
 	@}
-
 @end example
+
+The first entry allows cross-realm authentication from clients in
+@code{SU.SE} transiting through @code{KTH.SE} to
+@code{STACKEN.KTH.SE}.  The second entry allows cross-realm
+authentication from clients in @code{DSV.SU.SE} transiting through
+both @code{SU.SE} and @code{KTH.SE} to @code{STACKEN.KTH.SE}.
+
+Be careful of which realm goes where; it's easy to put realms in the
+wrong place.  The block is tagged with the client realm (the realm of
+the principal authenticating), and the realm before the equal sign is
+the final destination realm: the realm to which the client is
+authenticating.  After the equal sign go all the realms that the
+client transits through.
 
 The order of the @code{PERMITTED-CROSS-REALMS} is not important when
 doing transit cross realm verification.
 
-However, the order is important when the @code{[capaths]} section is used
-to figure out the intermediate realm to go to when doing multi-realm
-transit. When figuring out the next realm, the first realm of the list
-of @code{PERMITTED-CROSS-REALMS} is chosen. This is done in both the
-client kerberos library and the KDC.
+@subsection Configuring client cross-realm transits
+
+The @code{[capaths]} section is also used for another purpose: to tell
+clients which realm to transit through to reach a realm with which
+their local realm does not have cross-realm trust.  This can be done
+by either putting a @code{[capaths]} entry in the configuration of the
+client or by putting the entry in the configuration of the KDC for the
+client's local realm.  In the latter case, the KDC will then hand back
+a referral to the client when the client requests a cross-realm ticket
+to the destination realm, telling the client to try to go through an
+intermediate realm.
+
+For client configuration, the order of @code{PERMITTED-CROSS-REALMS}
+is significant, since only the first realm in this section (after the
+equal sign) is used by the client.
+
+For example, again consider the @code{[capaths]} entry above for the
+case of a client in the @code{SU.SE} realm, and assume that the client
+or the @code{SU.SE} KDC has that @code{[capaths]} entry.  If the
+client attempts to authenticate to a service in the
+@code{STACKEN.KTH.SE} realm, that entry says to first authenticate
+cross-realm to the @code{KTH.SE} realm (the first realm listed in the
+@code{PERMITTED-CROSS-REALMS} section), and then from there to
+@code{STACKEN.KTH.SE}.
+
+Each entry in @code{[capaths]} can only give the next hop, since only
+the first realm in @code{PERMITTED-CROSS-REALMS} is used.  If, for
+instance, a client in @code{DSV.SU.SE} had a @code{[capaths]}
+configuration as above but without the first block for @code{SU.SE},
+they would not be able to reach @code{STACKEN.KTH.SE}.  They would get
+as far as @code{SU.SE} based on the @code{DSV.SU.SE} entry in
+@code{[capaths]} and then attempt to go directly from there to
+@code{STACKEN.KTH.SE} and get stuck (unless, of course, the
+@code{SU.SE} KDC had the additional entry required to tell the client
+to go through @code{KTH.SE}).
+
+@subsection Active Directory forest example
+
+One common place where a @code{[capaths]} configuration is desirable
+is with Windows Active Directory forests.  One common Active Directory
+configuration is to have one top-level Active Directory realm but then
+divide systems, services, and users into child realms (perhaps based
+on organizational unit).  One generally establishes cross-realm trust
+only with the top-level realm, and then uses transit policy to permit
+authentications to and from the child realms.
+
+For example, suppose an organization has a Heimdal realm
+@code{EXAMPLE.COM}, a Windows Active Directory realm
+@code{WIN.EXAMPLE.COM}, and then child Active Directory realms
+@code{ENGR.WIN.EXAMPLE.COM} and @code{SALES.WIN.EXAMPLE.COM}.  The
+goal is to allow users in any of these realms to authenticate to
+services in any of these realms.  The @code{EXAMPLE.COM} KDC (and
+possibly client) configuration should therefore contain a
+@code{[capaths]} section as follows:
+
+@example
+[capaths]
+	ENGR.WIN.EXAMPLE.COM = @{
+		EXAMPLE.COM = WIN.EXAMPLE.COM
+	@}
+	SALES.WIN.EXAMPLE.COM = @{
+		EXAMPLE.COM = WIN.EXAMPLE.COM
+	@}
+	EXAMPLE.COM = @{
+		ENGR.WIN.EXAMPLE.COM = WIN.EXAMPLE.COM
+		SALES.WIN.EXAMPLE.COM = WIN.EXAMPLE.COM
+	@}
+@end example
+
+The first two blocks allow clients in the @code{ENGR.WIN.EXAMPLE.COM}
+and @code{SALES.WIN.EXAMPLE.COM} realms to authenticate to services in
+the @code{EXAMPLE.COM} realm.  The third block tells the client (or
+tells the KDC to tell the client via referrals) to transit through
+@code{WIN.EXAMPLE.COM} to reach these realms.  Both sides of the
+configuration are needed for bi-directional transited cross-realm
+authentication.
 
 @c To test the cross realm configuration, use:
 @c    kmumble transit-check client server transit-realms ...

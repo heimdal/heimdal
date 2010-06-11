@@ -332,19 +332,25 @@ check_PAC(krb5_context context,
 		}
 
 		ret = _kdc_pac_verify(context, client_principal,
-				      client, server, &pac);
+				      client, server, &pac, signedpath);
 		if (ret) {
 		    krb5_pac_free(context, pac);
 		    return ret;
 		}
-		*signedpath = 1;
 
-		ret = _krb5_pac_sign(context, pac, tkt->authtime,
-				     client_principal,
-				     server_key, krbtgt_key, rspac);
+		/*
+		 * Only re-sign PAC if we could verify it with the PAC
+		 * function. The no-verify case happens when we get in
+		 * a PAC from cross realm from a Windows domain and
+		 * that there is no PAC verification function.
+		 */
+		if (*signedpath)
+		    ret = _krb5_pac_sign(context, pac, tkt->authtime,
+					 client_principal,
+					 server_key, krbtgt_key, rspac);
 
 		krb5_pac_free(context, pac);
-
+		
 		return ret;
 	    }
 	}

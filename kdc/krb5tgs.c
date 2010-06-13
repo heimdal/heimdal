@@ -312,6 +312,7 @@ check_PAC(krb5_context context,
 	for (j = 0; j < child.len; j++) {
 
 	    if (child.val[j].ad_type == KRB5_AUTHDATA_WIN2K_PAC) {
+		int signed_pac = 0;
 		krb5_pac pac;
 
 		/* Found PAC */
@@ -332,7 +333,7 @@ check_PAC(krb5_context context,
 		}
 
 		ret = _kdc_pac_verify(context, client_principal,
-				      client, server, &pac, signedpath);
+				      client, server, &pac, &signed_pac);
 		if (ret) {
 		    krb5_pac_free(context, pac);
 		    return ret;
@@ -344,11 +345,12 @@ check_PAC(krb5_context context,
 		 * a PAC from cross realm from a Windows domain and
 		 * that there is no PAC verification function.
 		 */
-		if (*signedpath)
+		if (signed_pac) {
+		    *signedpath = 1;
 		    ret = _krb5_pac_sign(context, pac, tkt->authtime,
 					 client_principal,
 					 server_key, krbtgt_key, rspac);
-
+		}
 		krb5_pac_free(context, pac);
 		
 		return ret;

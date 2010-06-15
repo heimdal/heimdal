@@ -55,6 +55,10 @@ _gss_mech_cred_find(gss_cred_id_t cred_handle, gss_OID mech_type)
  *
  * @param minor_status minor status code.
  *
+ * @param initiator_cred_handle the credential to use when building
+ *        the context, if GSS_C_NO_CREDENTIAL is passed, the default
+ *        credential for the mechanism will be used.
+ *
  * @param context_handle a pointer to a context handle, will be
  * 	  returned as long as there is not an error.
  *
@@ -69,7 +73,7 @@ _gss_mech_cred_find(gss_cred_id_t cred_handle, gss_OID mech_type)
  *        section.
  *
  * @param req_flags flags using when building the context, see @ref
- *        gssapi_context_ flags
+ *        gssapi_context_flags
  *
  * @param time_req time requested this context should be valid in
  *        seconds, common used value is GSS_C_INDEFINITE

@@ -222,7 +222,7 @@ match_local_principals(krb5_context context,
  * may not be checked by other Kerberos implementations.
  *
  * If no configuration file exists, match user against local domains,
- * ie luser@LOCAL-REALMS-IN-CONFIGURATION-FILES.
+ * ie luser@@LOCAL-REALMS-IN-CONFIGURATION-FILES.
  *
  * @param context Kerberos 5 context.
  * @param principal principal to check if allowed to login

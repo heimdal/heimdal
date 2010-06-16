@@ -241,6 +241,13 @@ DomainParameters ::= SEQUENCE {
 	validationParms	ValidationParms OPTIONAL -- ValidationParms
 }
 
+-- As defined by PKCS3
+DHParameter ::= SEQUENCE {
+	prime		INTEGER, -- odd prime, p=jq +1
+	base		INTEGER, -- generator, g
+	privateValueLength INTEGER OPTIONAL
+}
+
 DHPublicKey ::= INTEGER
 
 OtherName ::= SEQUENCE {

@@ -57,6 +57,7 @@
 #define DH_check_pubkey hc_DH_check_pubkey
 #define DH_generate_key hc_DH_generate_key
 #define DH_compute_key hc_DH_compute_key
+#define	i2d_DHparams hc_i2d_DHparams
 
 /*
  *
@@ -138,6 +139,8 @@ int	DH_generate_parameters_ex(DH *, int, int, BN_GENCB *);
 int	DH_check_pubkey(const DH *, const BIGNUM *, int *);
 int	DH_generate_key(DH *);
 int	DH_compute_key(unsigned char *,const BIGNUM *,DH *);
+
+int	i2d_DHparams(DH *, const char **);
 
 #endif /* _HEIM_DH_H */
 

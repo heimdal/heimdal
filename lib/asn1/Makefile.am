@@ -203,6 +203,7 @@ gen_files_rfc2459 =					\
 	asn1_DistributionPoint.x			\
 	asn1_DistributionPointName.x			\
 	asn1_DistributionPointReasonFlags.x		\
+	asn1_DHParameter.x				\
 	asn1_DomainParameters.x				\
 	asn1_ECParameters.x				\
 	asn1_ECPoint.x					\

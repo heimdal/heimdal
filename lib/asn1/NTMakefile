@@ -197,6 +197,7 @@ gen_files_rfc2459 =					    \
 	$(OBJ)\asn1_DistributionPoint.x			    \
 	$(OBJ)\asn1_DistributionPointName.x		    \
 	$(OBJ)\asn1_DistributionPointReasonFlags.x	    \
+	$(OBJ)\asn1_DHParameter.x			    \
 	$(OBJ)\asn1_DomainParameters.x			    \
 	$(OBJ)\asn1_ECParameters.x			    \
 	$(OBJ)\asn1_ECPoint.x				    \

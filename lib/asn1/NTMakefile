@@ -735,11 +735,44 @@ all-tools:: $(LIBEXECDIR)\asn1_print.exe $(BINDIR)\asn1_gen.exe
 TEST_BINARIES=\
 	$(OBJ)\check-der.exe	\
 	$(OBJ)\check-gen.exe	\
-	$(OBJ)\check-timegm.exe
+	$(OBJ)\check-timegm.exe \
+	$(OBJ)\check-ber.exe	\
+	$(OBJ)\check-template.exe \
 
 test-binaries: $(TEST_BINARIES)
 
 test-run:
+	cd $(OBJ)
+	check-der.exe
+	check-gen.exe
+	check-timegm.exe
+	check-ber.exe
+	check-template.exe
+	cd $(SRC)
 
 test:: test-binaries test-run
 
+$(OBJ)\check-ber.exe: $(OBJ)\check-ber.obj \
+		$(LIBHEIMDAL) $(LIBROKEN)
+	$(EXECONLINK)
+	$(EXEPREP_NODIST)
+
+$(OBJ)\check-der.exe: $(OBJ)\check-der.obj $(OBJ)\check-common.obj \
+		$(LIBHEIMDAL) $(LIBROKEN)
+	$(EXECONLINK)
+	$(EXEPREP_NODIST)
+
+$(OBJ)\check-gen.exe: $(OBJ)\check-gen.obj $(OBJ)\check-common.obj \
+		$(LIBHEIMDAL) $(LIBROKEN) $(gen_files_test:.x=.obj)
+	$(EXECONLINK)
+	$(EXEPREP_NODIST)
+
+$(OBJ)\check-timegm.exe: $(OBJ)\check-timegm.obj \
+		$(LIBHEIMDAL) $(LIBROKEN)
+	$(EXECONLINK)
+	$(EXEPREP_NODIST)
+
+$(OBJ)\check-template.exe: $(OBJ)\check-template.obj $(OBJ)\check-common.obj \
+		$(LIBHEIMDAL) $(LIBROKEN) $(gen_files_test:.x=.obj)
+	$(EXECONLINK)
+	$(EXEPREP_NODIST)

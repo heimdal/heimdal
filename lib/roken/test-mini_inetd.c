@@ -253,7 +253,7 @@ do_client(void)
 {
     int rv = 0;
 
-    SOCK_INIT;
+    rk_SOCK_INIT();
 
     prog = "Client";
     is_client = 1;
@@ -262,7 +262,7 @@ do_client(void)
 
     rv = test_simple_echo_socket();
 
-    SOCK_EXIT;
+    rk_SOCK_EXIT();
 
     return rv;
 }
@@ -272,7 +272,7 @@ do_server(void)
 {
     int rv = 0;
 
-    SOCK_INIT;
+    rk_SOCK_INIT();
 
     prog = "Server";
 
@@ -280,7 +280,7 @@ do_server(void)
 
     rv = test_simple_echo_socket();
 
-    SOCK_EXIT;
+    rk_SOCK_EXIT();
 
     return rv;
 }

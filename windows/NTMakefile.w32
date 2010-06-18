@@ -317,6 +317,8 @@ $<
 !ifdef RELDIR
 all:: announce
 
+all-tools:: announce-tools
+
 test:: announce
 
 clean:: announce
@@ -324,6 +326,10 @@ clean:: announce
 announce:
 	@echo.
 	@echo --------- Entering $(RELDIR:\= ):
+
+announce-tools:
+	@echo.
+	@echo --------- Entering $(RELDIR:\= ) tools:
 !endif
 
 #----------------------------------------------------------------------

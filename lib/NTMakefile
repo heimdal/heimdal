@@ -57,17 +57,11 @@ all:: all-tools
 all-tools:: asn1-tools hx509-tools krb5-tools
 
 asn1-tools:
-	cd asn1
-	$(RMAKE) all-tools
-	cd ..
+	@( cd asn1 && $(RMAKE) all-tools && cd .. ) || exit /b 1
 
 hx509-tools:
-	cd hx509
-	$(RMAKE) all-tools
-	cd ..
+	@( cd hx509 && $(RMAKE) all-tools && cd .. ) || exit /b 1
 
 krb5-tools:
-	cd krb5
-	$(RMAKE) all-tools
-	cd ..
+	@( cd krb5 && $(RMAKE) all-tools && cd .. ) || exit /b 1
 

@@ -535,8 +535,8 @@ generate_type_encode (const Symbol *s)
     case TChoice:
 	fprintf (codefile,
 		 "size_t ret = 0;\n"
-		 "size_t l, i;\n"
-		 "int e;\n\n");
+		 "size_t l;\n"
+		 "int i, e;\n\n");
 	fprintf(codefile, "i = 0;\n"); /* hack to avoid `unused variable' */
 
 	encode_type("data", s->type, "Top");

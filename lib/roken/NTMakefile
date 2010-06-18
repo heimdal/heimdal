@@ -196,7 +196,7 @@ $(OBJ)\resolve_test.obj: resolve.c
 	$(C2OBJ) -DTEST_RESOLVE -DBUILD_ROKEN_LIB
 
 $(OBJ)\parse_reply-test.exe: $(OBJ)\parse_reply-test.obj $(OBJ)\resolve_test.obj $(LIBROKEN)
-	$(EXECONLINK)
+	$(EXECONLINK) DnsAPI.lib
 
 $(OBJ)\test-readenv.exe: $(OBJ)\test-readenv.obj $(OBJ)\test-mem.obj $(LIBROKEN)
 	$(EXECONLINK)
@@ -217,7 +217,7 @@ $(OBJ)\snprintf-test.exe: $(OBJ)\snprintf-test.obj $(OBJ)\libtest.lib $(LIBROKEN
 	$(EXECONLINK)
 
 $(OBJ)\resolve-test.exe: $(OBJ)\resolve-test.obj $(LIBROKEN)
-	$(EXECONLINK)
+	$(EXECONLINK) DnsAPI.lib
 
 $(OBJ)\base64-test.exe: $(OBJ)\base64-test.obj $(OBJ)\base64.obj
 	$(EXECONLINK)

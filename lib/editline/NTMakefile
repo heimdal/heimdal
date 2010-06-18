@@ -53,8 +53,6 @@ clean::
 test-binaries:  $(OBJ)\testit.exe
 
 run-test:
-	cd $(OBJ)
-	testit.exe
-	cd $(SRC)\lib\editline
+	echo Please run $(OBJ)\testit.exe interactively to test.
 
 test:: test-binaries run-test

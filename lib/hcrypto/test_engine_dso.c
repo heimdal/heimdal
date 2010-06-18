@@ -199,7 +199,7 @@ main(int argc, char **argv)
 	RSA *rsa;
 	FILE *f;
 	
-	f = fopen(rsa_flag, "r");
+	f = fopen(rsa_flag, "rb");
 	if (f == NULL)
 	    err(1, "could not open file %s", rsa_flag);
 	

@@ -127,8 +127,12 @@ main(int argc, char **argv)
 	else if (strcasecmp(rand_method, "egd") == 0)
 	    RAND_set_rand_method(RAND_egd_method());
 #endif
+#ifdef WIN32
+	else if (strcasecmp(rand_method, "w32crypto") == 0)
+	    RAND_set_rand_method(RAND_w32crypto_method());
+#endif
 	else
-	    errx(1, "unknown method %s", rand_method);
+	    errx(0, "unknown method %s", rand_method);
     }
 	
     if (RAND_file_name(path, sizeof(path)) == NULL)

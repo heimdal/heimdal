@@ -399,3 +399,8 @@ $(test_binaries): $$(@R).obj
 
 $(test_binaries:.exe=.obj): $$(@B).c
 	$(C2OBJ_C) -Fo$@ -Fd$(@D)\ $** -DBlah
+
+test-exports:
+	$(PERL) ..\..\cf\w32-check-exported-symbols.pl --vs version-script.map --def libkrb5-exports.def.in
+
+test:: test-exports

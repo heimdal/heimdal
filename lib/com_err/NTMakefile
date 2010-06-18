@@ -82,3 +82,7 @@ clean::
 	-$(RM) $(INCFILES)
 	-$(RM) $(COMERRDLL)
 
+test-exports:
+	$(PERL) ..\..\cf\w32-check-exported-symbols.pl --vs version-script.map --def libcom_err-exports.def
+
+test:: test-exports

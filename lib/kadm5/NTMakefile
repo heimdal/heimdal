@@ -255,3 +255,8 @@ test-run:
 
 {}.c{$(OBJ)}.obj::
 	$(C2OBJ_P) -I$(OBJ) -I$(KADM5INCDIR)
+
+test-exports:
+	$(PERL) ..\..\cf\w32-check-exported-symbols.pl --vs version-script.map --def libkadm5srv-exports.def
+
+test:: test-exports

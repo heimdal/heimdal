@@ -152,3 +152,8 @@ clean::
 	-$(RM) $(INCFILES)
 
 test:: test-binaries test-run
+
+test-exports:
+	$(PERL) ..\..\cf\w32-check-exported-symbols.pl --vs version-script.map --def libwind-exports.def
+
+test:: test-exports

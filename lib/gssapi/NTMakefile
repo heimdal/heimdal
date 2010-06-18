@@ -531,3 +531,8 @@ clean::
                             "\t$(gssapi_files:.x=.obj)")
                     "krb5src" "mechsrc" "spnegosrc" "ntlmsrc")
 !endif
+
+test-exports:
+	$(PERL) ..\..\cf\w32-check-exported-symbols.pl --vs version-script.map --def libgssapi-exports.def
+
+test:: test-exports

@@ -193,3 +193,7 @@ hdb_cflags=$(openldap_inc_flag) -I$(OBJ)
 {$(OBJ)}.c{$(OBJ)}.obj::
 	$(C2OBJ_P) $(hdb_cflags)
 
+test-exports:
+	$(PERL) ..\..\cf\w32-check-exported-symbols.pl --vs version-script.map --def libhdb-exports.def
+
+test:: test-exports

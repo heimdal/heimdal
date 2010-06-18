@@ -167,6 +167,10 @@ $(OBJ)\destest.exe: $(OBJ)\destest.obj $(TESTLIB) $(LIBROKEN)
 	$(EXECONLINK)
 	$(EXEPREP_NODIST)
 
+$(OBJ)\example_evp_cipher.exe: $(OBJ)\example_evp_cipher.obj $(TESTLIB) $(LIBHEIMDAL) $(LIBROKEN)
+	$(EXECONLINK)
+	$(EXEPREP_NODIST)
+
 $(OBJ)\mdtest.exe: $(OBJ)\mdtest.obj $(LIBHEIMDAL) $(LIBROKEN)
 	$(EXECONLINK)
 	$(EXEPREP_NODIST)
@@ -183,7 +187,7 @@ $(OBJ)\test_bn.exe: $(OBJ)\test_bn.obj $(LIBHEIMDAL) $(LIBROKEN)
 	$(EXECONLINK)
 	$(EXEPREP_NODIST)
 
-$(OBJ)\test_cipher.exe: $(OBJ)\test_cipher.obj $(LIBHEIMDAL) $(LIBROKEN) $(LIBVERS)
+$(OBJ)\test_cipher.exe: $(OBJ)\test_cipher.obj $(TESTLIB) $(LIBHEIMDAL) $(LIBROKEN) $(LIBVERS)
 	$(EXECONLINK)
 	$(EXEPREP_NODIST)
 
@@ -219,11 +223,17 @@ $(OBJ)\test_rand.exe: $(OBJ)\test_rand.obj $(LIBHEIMDAL) $(LIBROKEN) $(LIBVERS)
 	$(EXECONLINK)
 	$(EXEPREP_NODIST)
 
+SRCDIR1=$(SRCDIR:\=/)
+SRCDIR2=$(SRCDIR1::=)
+
 $(OBJ)\test_crypto.sh: test_crypto.in NTMakefile
-	$(SED) -e "s,[@]srcdir[@],$(SRCDIR),g" -e "s,[@]exeext[@],.exe,g" < test_crypto.in > $@
+	$(SED) -e "s,[@]srcdir[@],/$(SRCDIR2),g" -e "s,[@]exeext[@],.exe,g" < test_crypto.in > $@ || $(RM) $@
 
 test-run:
 	cd $(OBJ)
+!ifdef SH
+	$(SH) test_crypto.sh
+!endif
 	destest.exe
 	mdtest.exe
 	rc2test.exe
@@ -235,11 +245,8 @@ test-run:
 	test_imath.exe
 	test_pkcs5.exe
 	test_pkcs12.exe
-#	test_rsa.exe
-#	test_dh.exe
-!ifdef SH
-	$(SH) test_crypto.sh
-!endif
+	test_rsa.exe
+	test_dh.exe
 	cd $(SRCDIR)
 
 test:: $(TESTLIB) test-binaries test-run

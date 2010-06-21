@@ -1,6 +1,6 @@
 ########################################################################
 #
-# Copyright (c) 2010, Secure Endpoints Inc.
+# Copyright (c) 2009, Secure Endpoints Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -29,8 +29,8 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
-RELDIR=packages
-SUBDIRS=windows
+RELDIR=packages\windows
+SUBDIRS=assembly
 
-!include ../windows/NTMakefile.w32
+!include ../../windows/NTMakefile.w32
 

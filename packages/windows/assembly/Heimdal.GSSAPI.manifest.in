@@ -1,0 +1,16 @@
+<?xml version="1" encoding="UTF-8" standalone="yes" ?>
+<assembly xmlns="urn:schemas-microsoft-com:asm.v1">
+  <assemblyIdentity type="win32" name="@name@"
+		    processorArchitecture="@cpu@"
+		    version="@version@"
+		    publicKeyToken="@pkt@" />
+  <file name="libgssapi.dll" />
+  <dependency>
+    <dependentAssembly>
+      <assemblyIdentity type="win32" name="@krbname@"
+			processorArchitecture="@cpu@"
+			version="@krbversion@"
+			publickeytoken="@pkt@" />
+    </dependentAssembly>
+  </dependency>
+</assembly>

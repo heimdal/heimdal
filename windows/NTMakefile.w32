@@ -72,6 +72,7 @@ LIBDIR =$(DESTDIR)\lib
 BINDIR =$(DESTDIR)\bin
 SBINDIR=$(BINDIR)
 LIBEXECDIR=$(BINDIR)
+ASMDIR=$(BINDIR)\asm
 
 !ifdef RELDIR
 SRCDIR =$(SRC)\$(RELDIR)
@@ -95,38 +96,18 @@ RM=del /q
 ECHO=echo
 RC=rc
 
-!ifndef AWK
 AWK=gawk.exe
-!endif
-
-!ifndef YACC
 YACC=bison.exe -y
-!endif
-
-!ifndef LEX
 LEX=flex.exe
-!endif
-
-!ifndef PYTHON
 PYTHON=python.exe
-!endif
-
-!ifndef PERL
 PERL=perl.exe
-!endif
-
-!ifndef CMP
 CMP=cmp.exe
-!endif
+SIGNTOOL=signtool.exe
+MAKECAT=makecat.exe
 
 # Only used for tests
-!ifndef SH
 SH=sh.exe
-!endif
-
-!ifndef SED
 SED=sed.exe
-!endif
 
 #----------------------------------------------------------------
 # External dependencies
@@ -220,7 +201,7 @@ RC2RES = $(RC2RES_C) -fo $@ $**
 !ifndef RECURSE
 
 check-utils:
-	@for %%g in ( "$(AWK)" "$(YACC)" "$(LEX)" "$(PYTHON)" "$(PERL)" "$(CMP)" ) do @( \
+	@for %%g in ( "$(AWK)" "$(YACC)" "$(LEX)" "$(PYTHON)" "$(PERL)" "$(CMP)" "$(SED)" "$(SIGNTOOL)" "$(MAKECAT)" ) do @( \
 	for /f %%f in ( "%%g" ) do @( \
 		if exist %%f @( \
 			echo Found %%f \
@@ -232,7 +213,7 @@ check-utils:
 		) \
 	) \
 	)
-	@for %%g in ( "$(SH)" "$(SED)" ) do @( \
+	@for %%g in ( "$(SH)" ) do @( \
 	for /f %%f in ( "%%g" ) do @( \
 		if exist %%f @( \
 			echo Found %%f \
@@ -265,7 +246,7 @@ show-cmds:
 
 prep:: show-cmds
 
-!endif
+!endif				# RECURSE
 
 {}.c{$(OBJ)}.obj::
 	$(C2OBJ_C) /Fd$(OBJ)\ /Fo$(OBJ)\ /MP @<<
@@ -350,6 +331,9 @@ mkdirs:
 !  if !exist($(BINDIR))
 	$(MKDIR) $(BINDIR)
 !  endif
+!  if !exist($(ASMDIR))
+	$(MKDIR) $(ASMDIR)
+!  endif
 !  if !exist($(INCDIR))
 	$(MKDIR) $(INCDIR)
 !  endif
@@ -418,10 +402,10 @@ clean::
 MT=mt.exe -nologo
 
 _VC_MANIFEST_EMBED_EXE= \
-if exist $@.manifest $(MT) -outputresource:$@;1 -manifest $@.manifest
+( if exist $@.manifest $(MT) -outputresource:$@;1 -manifest $@.manifest )
 
 _VC_MANIFEST_EMBED_DLL= \
-if exist $@.manifest $(MT) -outputresource:$@;2 -manifest $@.manifest
+( if exist $@.manifest $(MT) -outputresource:$@;2 -manifest $@.manifest )
 
 # Note that if you are merging manifests, then the VS generated
 # manifest should be cleaned up after calling _VC_MANIFEST_EMBED_???.
@@ -430,15 +414,35 @@ if exist $@.manifest $(MT) -outputresource:$@;2 -manifest $@.manifest
 # be used.
 
 _VC_MANIFEST_CLEAN= \
-if exist $@.manifest $(RM) $@.manifest
+( if exist $@.manifest $(RM) $@.manifest )
 
 # End of manifest handling
 
-# Code signing
+#----------------------------------------------------------------------
+# Code and assembly signing
+#
+# SIGNTOOL_C is any set of options required for certificate/private
+# key selection for code signging.
+#
+# SIGNTOOL_O is any set of additional options to signtool.exe
+#
+# SIGNTOOL_T is the timestamp option
+
 !ifdef CODESIGN
-_CODESIGN=$(CODESIGN) $@
+_CODESIGN=( $(CODESIGN) $@ )
 !else
-_CODESIGN=
+
+!ifdef SIGNTOOL_C
+
+!ifndef SIGNTOOL_T
+SIGNTOOL_T=/t http://timestamp.verisign.com/scripts/timstamp.dll
+!endif
+
+_CODESIGN=( $(SIGNTOOL) sign $(SIGNTOOL_O) $(SIGNTOOL_T) $(SIGNTOOL_C) /v $@ )
+!else
+_CODESIGN=( echo Skipping code sign )
+!endif
+
 !endif
 
 #----------------------------------------------------------------------
@@ -448,25 +452,19 @@ _CODESIGN=
 # prepare binaries.
 
 EXEPREP=\
-$(_VC_MANIFEST_EMBED_EXE)^
-$(_VC_MANIFEST_CLEAN)^
-$(_CODESIGN)
+( $(_VC_MANIFEST_EMBED_EXE) && $(_VC_MANIFEST_CLEAN) && $(_CODESIGN) ) || $(RM) $@
 
 EXEPREP_NODIST=\
-$(_VC_MANIFEST_EMBED_EXE)^
-$(_VC_MANIFEST_CLEAN)
+( $(_VC_MANIFEST_EMBED_EXE) && $(_VC_MANIFEST_CLEAN) ) || $(RM) $@
 
 DLLPREP=\
-$(_VC_MANIFEST_EMBED_DLL)^
-$(_VC_MANIFEST_CLEAN)^
-$(_CODESIGN)
+( $(_VC_MANIFEST_EMBED_DLL) && $(_VC_MANIFEST_CLEAN) && $(_CODESIGN) ) || $(RM) $@
 
 DLLPREP_NODIST=\
-$(_VC_MANIFEST_EMBED_DLL)^
-$(_VC_MANIFEST_CLEAN)
+( $(_VC_MANIFEST_EMBED_DLL) && $(_VC_MANIFEST_CLEAN) ) || $(RM) $@
 
 #----------------------------------------------------------------------
-# Convenience macros for import libraries
+# Convenience macros for import libraries and assemblies
 #
 
 LIBASN1	    =$(LIBDIR)\libasn1.lib
@@ -490,3 +488,6 @@ LIBSL	    =$(LIBDIR)\libsl.lib
 LIBSQLITE   =$(LIBDIR)\libsqlite.lib
 LIBVERS	    =$(LIBDIR)\libvers.lib
 LIBWIND	    =$(LIBDIR)\libwind.lib
+
+ASMKRBNAME  =Heimdal.Kerberos
+ASMGSSNAME  =Heimdal.GSSAPI

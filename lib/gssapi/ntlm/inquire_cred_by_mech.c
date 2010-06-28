@@ -33,7 +33,8 @@
 
 #include "ntlm.h"
 
-OM_uint32 _gss_ntlm_inquire_cred_by_mech (
+OM_uint32 GSSAPI_CALLCONV
+_gss_ntlm_inquire_cred_by_mech (
             OM_uint32 * minor_status,
             const gss_cred_id_t cred_handle,
             const gss_OID mech_type,

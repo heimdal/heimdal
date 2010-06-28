@@ -65,8 +65,6 @@ libroken_la_OBJS =			\
 	$(OBJ)\hex.obj			\
 	$(OBJ)\hostent_find_fqdn.obj	\
 	$(OBJ)\inet_aton.obj		\
-	$(OBJ)\inet_ntop.obj		\
-	$(OBJ)\inet_pton.obj		\
 	$(OBJ)\issuid.obj		\
 	$(OBJ)\lstat.obj		\
 	$(OBJ)\mini_inetd.obj		\
@@ -111,6 +109,12 @@ libroken_la_OBJS =			\
 	$(OBJ)\warnerr.obj		\
 	$(OBJ)\warnx.obj		\
 	$(OBJ)\xfree.obj
+
+!if $(NMAKE_WINVER) < 0x0600
+libroken_la_OBJS=$(libroken_la_OBJS) \
+	$(OBJ)\inet_ntop.obj		\
+	$(OBJ)\inet_pton.obj
+!endif
 
 {}.c{$(OBJ)}.obj::
 	$(C2OBJ_P) -DBUILD_ROKEN_LIB

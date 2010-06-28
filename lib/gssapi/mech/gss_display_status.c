@@ -135,7 +135,7 @@ supplementary_error(OM_uint32 v)
 }
 
 
-OM_uint32 GSSAPI_LIB_FUNCTION
+GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL
 gss_display_status(OM_uint32 *minor_status,
     OM_uint32 status_value,
     int status_type,

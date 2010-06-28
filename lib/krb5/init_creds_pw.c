@@ -94,7 +94,7 @@ free_paid(krb5_context context, struct pa_info_data *ppaid)
 	krb5_free_data(context, ppaid->s2kparams);
 }
 
-static krb5_error_code
+static krb5_error_code KRB5_CALLCONV
 default_s2k_func(krb5_context context, krb5_enctype type,
 		 krb5_const_pointer keyseed,
 		 krb5_salt salt, krb5_data *s2kparms,
@@ -1459,7 +1459,7 @@ krb5_init_creds_set_password(krb5_context context,
     return 0;
 }
 
-static krb5_error_code
+static krb5_error_code KRB5_CALLCONV
 keytab_key_proc(krb5_context context, krb5_enctype enctype,
 		krb5_const_pointer keyseed,
 		krb5_salt salt, krb5_data *s2kparms,
@@ -1586,7 +1586,7 @@ krb5_init_creds_set_keytab(krb5_context context,
     return 0;
 }
 
-static krb5_error_code
+static krb5_error_code KRB5_CALLCONV
 keyblock_key_proc(krb5_context context, krb5_enctype enctype,
 		  krb5_const_pointer keyseed,
 		  krb5_salt salt, krb5_data *s2kparms,

@@ -293,7 +293,7 @@ out:
 
 
 
-static krb5_scache *
+static krb5_scache * KRB5_CALLCONV
 scc_alloc(krb5_context context, const char *name)
 {
     krb5_error_code ret;
@@ -478,14 +478,14 @@ bind_principal(krb5_context context,
  *
  */
 
-static const char*
+static const char* KRB5_CALLCONV
 scc_get_name(krb5_context context,
 	     krb5_ccache id)
 {
     return SCACHE(id)->name;
 }
 
-static krb5_error_code
+static krb5_error_code KRB5_CALLCONV
 scc_resolve(krb5_context context, krb5_ccache *id, const char *res)
 {
     krb5_scache *s;
@@ -536,7 +536,7 @@ scc_resolve(krb5_context context, krb5_ccache *id, const char *res)
     return 0;
 }
 
-static krb5_error_code
+static krb5_error_code KRB5_CALLCONV
 scc_gen_new(krb5_context context, krb5_ccache *id)
 {
     krb5_scache *s;
@@ -555,7 +555,7 @@ scc_gen_new(krb5_context context, krb5_ccache *id)
     return 0;
 }
 
-static krb5_error_code
+static krb5_error_code KRB5_CALLCONV
 scc_initialize(krb5_context context,
 	       krb5_ccache id,
 	       krb5_principal primary_principal)
@@ -619,7 +619,7 @@ rollback:
 
 }
 
-static krb5_error_code
+static krb5_error_code KRB5_CALLCONV
 scc_close(krb5_context context,
 	  krb5_ccache id)
 {
@@ -627,7 +627,7 @@ scc_close(krb5_context context,
     return 0;
 }
 
-static krb5_error_code
+static krb5_error_code KRB5_CALLCONV
 scc_destroy(krb5_context context,
 	    krb5_ccache id)
 {
@@ -705,7 +705,7 @@ decode_creds(krb5_context context, const void *data, size_t length,
 }
 
 
-static krb5_error_code
+static krb5_error_code KRB5_CALLCONV
 scc_store_cred(krb5_context context,
 	       krb5_ccache id,
 	       krb5_creds *creds)
@@ -813,7 +813,7 @@ rollback:
     return ret;
 }
 
-static krb5_error_code
+static krb5_error_code KRB5_CALLCONV
 scc_get_principal(krb5_context context,
 		  krb5_ccache id,
 		  krb5_principal *principal)
@@ -869,7 +869,7 @@ struct cred_ctx {
     sqlite3_stmt *credstmt;
 };
 
-static krb5_error_code
+static krb5_error_code KRB5_CALLCONV
 scc_get_first (krb5_context context,
 	       krb5_ccache id,
 	       krb5_cc_cursor *cursor)
@@ -975,7 +975,7 @@ scc_get_first (krb5_context context,
     return 0;
 }
 
-static krb5_error_code
+static krb5_error_code KRB5_CALLCONV
 scc_get_next (krb5_context context,
 	      krb5_ccache id,
 	      krb5_cc_cursor *cursor,
@@ -1028,7 +1028,7 @@ next:
     return ret;
 }
 
-static krb5_error_code
+static krb5_error_code KRB5_CALLCONV
 scc_end_get (krb5_context context,
 	     krb5_ccache id,
 	     krb5_cc_cursor *cursor)
@@ -1047,7 +1047,7 @@ scc_end_get (krb5_context context,
     return 0;
 }
 
-static krb5_error_code
+static krb5_error_code KRB5_CALLCONV
 scc_remove_cred(krb5_context context,
 		 krb5_ccache id,
 		 krb5_flags which,
@@ -1137,7 +1137,7 @@ scc_remove_cred(krb5_context context,
     return ret;
 }
 
-static krb5_error_code
+static krb5_error_code KRB5_CALLCONV
 scc_set_flags(krb5_context context,
 	      krb5_ccache id,
 	      krb5_flags flags)
@@ -1151,7 +1151,7 @@ struct cache_iter {
     sqlite3_stmt *stmt;
 };
 
-static krb5_error_code
+static krb5_error_code KRB5_CALLCONV
 scc_get_cache_first(krb5_context context, krb5_cc_cursor *cursor)
 {
     struct cache_iter *ctx;
@@ -1242,7 +1242,7 @@ scc_get_cache_first(krb5_context context, krb5_cc_cursor *cursor)
     return 0;
 }
 
-static krb5_error_code
+static krb5_error_code KRB5_CALLCONV
 scc_get_cache_next(krb5_context context,
 		   krb5_cc_cursor cursor,
 		   krb5_ccache *id)
@@ -1277,7 +1277,7 @@ again:
     return scc_resolve(context, id, name);
 }
 
-static krb5_error_code
+static krb5_error_code KRB5_CALLCONV
 scc_end_cache_get(krb5_context context, krb5_cc_cursor cursor)
 {
     struct cache_iter *ctx = cursor;
@@ -1290,7 +1290,7 @@ scc_end_cache_get(krb5_context context, krb5_cc_cursor cursor)
     return 0;
 }
 
-static krb5_error_code
+static krb5_error_code KRB5_CALLCONV
 scc_move(krb5_context context, krb5_ccache from, krb5_ccache to)
 {
     krb5_scache *sfrom = SCACHE(from);
@@ -1359,7 +1359,7 @@ rollback:
     return KRB5_CC_IO;
 }
 
-static krb5_error_code
+static krb5_error_code KRB5_CALLCONV
 scc_get_default_name(krb5_context context, char **str)
 {
     krb5_error_code ret;
@@ -1381,7 +1381,7 @@ scc_get_default_name(krb5_context context, char **str)
     return 0;
 }
 
-static krb5_error_code
+static krb5_error_code KRB5_CALLCONV
 scc_set_default(krb5_context context, krb5_ccache id)
 {
     krb5_scache *s = SCACHE(id);

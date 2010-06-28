@@ -105,7 +105,7 @@ _gss_mech_cred_find(gss_cred_id_t cred_handle, gss_OID mech_type)
 
 
 
-OM_uint32 GSSAPI_LIB_FUNCTION
+GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL
 gss_init_sec_context(OM_uint32 * minor_status,
     const gss_cred_id_t initiator_cred_handle,
     gss_ctx_id_t * context_handle,

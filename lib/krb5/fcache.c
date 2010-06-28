@@ -58,7 +58,7 @@ struct fcc_cursor {
 
 #define FCC_CURSOR(C) ((struct fcc_cursor*)(C))
 
-static const char*
+static const char* KRB5_CALLCONV
 fcc_get_name(krb5_context context,
 	     krb5_ccache id)
 {
@@ -167,20 +167,20 @@ write_storage(krb5_context context, krb5_storage *sp, int fd)
 }
 
 
-static krb5_error_code
+static krb5_error_code KRB5_CALLCONV
 fcc_lock(krb5_context context, krb5_ccache id,
 	 int fd, krb5_boolean exclusive)
 {
     return _krb5_xlock(context, fd, exclusive, fcc_get_name(context, id));
 }
 
-static krb5_error_code
+static krb5_error_code KRB5_CALLCONV
 fcc_unlock(krb5_context context, int fd)
 {
     return _krb5_xunlock(context, fd);
 }
 
-static krb5_error_code
+static krb5_error_code KRB5_CALLCONV
 fcc_resolve(krb5_context context, krb5_ccache *id, const char *res)
 {
     krb5_fcache *f;
@@ -304,7 +304,7 @@ _krb5_erase_file(krb5_context context, const char *filename)
     return ret;
 }
 
-static krb5_error_code
+static krb5_error_code KRB5_CALLCONV
 fcc_gen_new(krb5_context context, krb5_ccache *id)
 {
     char *file = NULL, *exp_file = NULL;
@@ -373,7 +373,7 @@ storage_set_flags(krb5_context context, krb5_storage *sp, int vno)
     krb5_storage_set_flags(sp, flags);
 }
 
-static krb5_error_code
+static krb5_error_code KRB5_CALLCONV
 fcc_open(krb5_context context,
 	 krb5_ccache id,
 	 int *fd_ret,
@@ -404,7 +404,7 @@ fcc_open(krb5_context context,
     return 0;
 }
 
-static krb5_error_code
+static krb5_error_code KRB5_CALLCONV
 fcc_initialize(krb5_context context,
 	       krb5_ccache id,
 	       krb5_principal primary_principal)
@@ -460,7 +460,7 @@ fcc_initialize(krb5_context context,
     return ret;
 }
 
-static krb5_error_code
+static krb5_error_code KRB5_CALLCONV
 fcc_close(krb5_context context,
 	  krb5_ccache id)
 {
@@ -469,7 +469,7 @@ fcc_close(krb5_context context,
     return 0;
 }
 
-static krb5_error_code
+static krb5_error_code KRB5_CALLCONV
 fcc_destroy(krb5_context context,
 	    krb5_ccache id)
 {
@@ -477,7 +477,7 @@ fcc_destroy(krb5_context context,
     return 0;
 }
 
-static krb5_error_code
+static krb5_error_code KRB5_CALLCONV
 fcc_store_cred(krb5_context context,
 	       krb5_ccache id,
 	       krb5_creds *creds)
@@ -667,7 +667,7 @@ init_fcc (krb5_context context,
     return ret;
 }
 
-static krb5_error_code
+static krb5_error_code KRB5_CALLCONV
 fcc_get_principal(krb5_context context,
 		  krb5_ccache id,
 		  krb5_principal *principal)
@@ -688,12 +688,12 @@ fcc_get_principal(krb5_context context,
     return ret;
 }
 
-static krb5_error_code
+static krb5_error_code KRB5_CALLCONV
 fcc_end_get (krb5_context context,
 	     krb5_ccache id,
 	     krb5_cc_cursor *cursor);
 
-static krb5_error_code
+static krb5_error_code KRB5_CALLCONV
 fcc_get_first (krb5_context context,
 	       krb5_ccache id,
 	       krb5_cc_cursor *cursor)
@@ -726,7 +726,7 @@ fcc_get_first (krb5_context context,
     return 0;
 }
 
-static krb5_error_code
+static krb5_error_code KRB5_CALLCONV
 fcc_get_next (krb5_context context,
 	      krb5_ccache id,
 	      krb5_cc_cursor *cursor,
@@ -744,7 +744,7 @@ fcc_get_next (krb5_context context,
     return ret;
 }
 
-static krb5_error_code
+static krb5_error_code KRB5_CALLCONV
 fcc_end_get (krb5_context context,
 	     krb5_ccache id,
 	     krb5_cc_cursor *cursor)
@@ -756,7 +756,7 @@ fcc_end_get (krb5_context context,
     return 0;
 }
 
-static krb5_error_code
+static krb5_error_code KRB5_CALLCONV
 fcc_remove_cred(krb5_context context,
 		 krb5_ccache id,
 		 krb5_flags which,
@@ -822,7 +822,7 @@ fcc_remove_cred(krb5_context context,
     return ret;
 }
 
-static krb5_error_code
+static krb5_error_code KRB5_CALLCONV
 fcc_set_flags(krb5_context context,
 	      krb5_ccache id,
 	      krb5_flags flags)
@@ -830,7 +830,7 @@ fcc_set_flags(krb5_context context,
     return 0; /* XXX */
 }
 
-static int
+static int KRB5_CALLCONV
 fcc_get_version(krb5_context context,
 		krb5_ccache id)
 {
@@ -841,7 +841,7 @@ struct fcache_iter {
     int first;
 };
 
-static krb5_error_code
+static krb5_error_code KRB5_CALLCONV
 fcc_get_cache_first(krb5_context context, krb5_cc_cursor *cursor)
 {
     struct fcache_iter *iter;
@@ -856,7 +856,7 @@ fcc_get_cache_first(krb5_context context, krb5_cc_cursor *cursor)
     return 0;
 }
 
-static krb5_error_code
+static krb5_error_code KRB5_CALLCONV
 fcc_get_cache_next(krb5_context context, krb5_cc_cursor cursor, krb5_ccache *id)
 {
     struct fcache_iter *iter = cursor;
@@ -896,7 +896,7 @@ fcc_get_cache_next(krb5_context context, krb5_cc_cursor cursor, krb5_ccache *id)
     return ret;
 }
 
-static krb5_error_code
+static krb5_error_code KRB5_CALLCONV
 fcc_end_cache_get(krb5_context context, krb5_cc_cursor cursor)
 {
     struct fcache_iter *iter = cursor;
@@ -904,7 +904,7 @@ fcc_end_cache_get(krb5_context context, krb5_cc_cursor cursor)
     return 0;
 }
 
-static krb5_error_code
+static krb5_error_code KRB5_CALLCONV
 fcc_move(krb5_context context, krb5_ccache from, krb5_ccache to)
 {
     krb5_error_code ret = 0;
@@ -995,7 +995,7 @@ fcc_move(krb5_context context, krb5_ccache from, krb5_ccache to)
     return ret;
 }
 
-static krb5_error_code
+static krb5_error_code KRB5_CALLCONV
 fcc_get_default_name(krb5_context context, char **str)
 {
     return _krb5_expand_default_cc_name(context,
@@ -1003,7 +1003,7 @@ fcc_get_default_name(krb5_context context, char **str)
 					str);
 }
 
-static krb5_error_code
+static krb5_error_code KRB5_CALLCONV
 fcc_lastchange(krb5_context context, krb5_ccache id, krb5_timestamp *mtime)
 {
     krb5_error_code ret;
@@ -1024,13 +1024,13 @@ fcc_lastchange(krb5_context context, krb5_ccache id, krb5_timestamp *mtime)
     return 0;
 }
 
-static krb5_error_code
+static krb5_error_code KRB5_CALLCONV
 fcc_set_kdc_offset(krb5_context context, krb5_ccache id, krb5_deltat kdc_offset)
 {
     return 0;
 }
 
-static krb5_error_code
+static krb5_error_code KRB5_CALLCONV
 fcc_get_kdc_offset(krb5_context context, krb5_ccache id, krb5_deltat *kdc_offset)
 {
     krb5_error_code ret;

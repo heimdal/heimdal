@@ -33,7 +33,7 @@
 
 #include "ntlm.h"
 
-OM_uint32 _gss_ntlm_acquire_cred
+OM_uint32 GSSAPI_CALLCONV _gss_ntlm_acquire_cred
            (OM_uint32 * min_stat,
             const gss_name_t desired_name,
             OM_uint32 time_req,

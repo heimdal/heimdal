@@ -213,7 +213,7 @@ _gss_copy_cred(ntlm_cred from, ntlm_cred *to)
     return 0;
 }
 
-OM_uint32
+OM_uint32 GSSAPI_CALLCONV
 _gss_ntlm_init_sec_context
            (OM_uint32 * minor_status,
             const gss_cred_id_t initiator_cred_handle,

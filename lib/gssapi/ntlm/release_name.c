@@ -33,7 +33,8 @@
 
 #include "ntlm.h"
 
-OM_uint32 _gss_ntlm_release_name
+OM_uint32 GSSAPI_CALLCONV
+_gss_ntlm_release_name
            (OM_uint32 * minor_status,
             gss_name_t * input_name
            )

@@ -472,7 +472,7 @@ acceptor_complete(OM_uint32 * minor_status,
 }
 
 
-static OM_uint32
+static OM_uint32 GSSAPI_CALLCONV
 acceptor_start
 	   (OM_uint32 * minor_status,
 	    gss_ctx_id_t * context_handle,
@@ -689,7 +689,7 @@ out:
 }
 
 
-static OM_uint32
+static OM_uint32 GSSAPI_CALLCONV
 acceptor_continue
 	   (OM_uint32 * minor_status,
 	    gss_ctx_id_t * context_handle,
@@ -876,7 +876,7 @@ acceptor_continue
     return ret;
 }
 
-OM_uint32
+OM_uint32 GSSAPI_CALLCONV
 _gss_spnego_accept_sec_context
 	   (OM_uint32 * minor_status,
 	    gss_ctx_id_t * context_handle,

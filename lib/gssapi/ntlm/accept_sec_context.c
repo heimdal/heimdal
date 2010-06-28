@@ -64,7 +64,7 @@ _gss_ntlm_allocate_ctx(OM_uint32 *minor_status, ntlm_ctx *ctx)
  *
  */
 
-OM_uint32
+OM_uint32 GSSAPI_CALLCONV
 _gss_ntlm_accept_sec_context
 (OM_uint32 * minor_status,
  gss_ctx_id_t * context_handle,

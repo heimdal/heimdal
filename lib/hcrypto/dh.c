@@ -513,7 +513,7 @@ bn2heim_int(BIGNUM *bn, heim_integer *integer)
  */
 
 int
-i2d_DHparams(DH *dh, const char **pp)
+i2d_DHparams(DH *dh, unsigned char **pp)
 {
     DHParameter data;
     size_t size;

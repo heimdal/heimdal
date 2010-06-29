@@ -665,6 +665,11 @@ handle_http_tcp (krb5_context context,
 
     s = (char *)d->buf;
 
+    p = strstr(s, "\r\n");
+    if (p)
+	*p = 0;
+
+
     p = NULL;
     t = strtok_r(s, " \t", &p);
     if (t == NULL) {

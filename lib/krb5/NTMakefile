@@ -90,13 +90,13 @@ libkrb5_OBJS =			\
 	$(OBJ)\log.obj			    \
 	$(OBJ)\mcache.obj		    \
 	$(OBJ)\misc.obj			    \
+	$(OBJ)\mit_glue.obj		    \
 	$(OBJ)\mk_error.obj		    \
 	$(OBJ)\mk_priv.obj		    \
 	$(OBJ)\mk_rep.obj		    \
 	$(OBJ)\mk_req.obj		    \
 	$(OBJ)\mk_req_ext.obj		    \
 	$(OBJ)\mk_safe.obj		    \
-	$(OBJ)\mit_glue.obj		    \
 	$(OBJ)\net_read.obj		    \
 	$(OBJ)\net_write.obj		    \
 	$(OBJ)\n-fold.obj		    \
@@ -319,10 +319,10 @@ $(BINDIR)\verify_krb5_conf.exe: $(OBJ)\verify_krb5_conf.obj $(LIBHEIMDAL) $(LIBR
 	$(EXEPREP)
 
 {}.c{$(OBJ)}.obj::
-	$(C2OBJ_P) -DBUILD_KRB5_LIB
+	$(C2OBJ_P) -DBUILD_KRB5_LIB -DASN1_LIB
 
 {$(OBJ)}.c{$(OBJ)}.obj::
-	$(C2OBJ_P) -DBUILD_KRB5_LIB
+	$(C2OBJ_P) -DBUILD_KRB5_LIB -DASN1_LIB
 
 #----------------------------------------------------------------------
 # Tests

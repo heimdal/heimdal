@@ -33,7 +33,7 @@ SUBDIRS=libtommath
 
 RELDIR=lib\hcrypto
 
-AUXCFLAGS=$(AUXCFLAGS) -DKRB5 -I$(HCRYPTOINCLUDEDIR)
+intcflags=-DKRB5 -DASN1_LIB -I$(HCRYPTOINCLUDEDIR)
 
 !include ../../windows/NTMakefile.w32
 

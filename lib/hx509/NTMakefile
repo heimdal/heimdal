@@ -30,6 +30,7 @@
 # 
 
 RELDIR=lib\hx509
+intcflags=-DASN1_LIB
 
 !include ../../windows/NTMakefile.w32
 

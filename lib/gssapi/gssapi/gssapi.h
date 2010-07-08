@@ -843,7 +843,7 @@ gss_context_query_attributes(OM_uint32 * /* minor_status */,
  * obsolete versions of these routines and their current forms.
  */
 
-GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL GSSAPI_DEPRECATED gss_sign
+GSSAPI_DEPRECATED GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL gss_sign
            (OM_uint32 * /*minor_status*/,
             gss_ctx_id_t /*context_handle*/,
             int /*qop_req*/,
@@ -851,7 +851,7 @@ GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL GSSAPI_DEPRECATED gss_sign
             gss_buffer_t /*message_token*/
            );
 
-GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL GSSAPI_DEPRECATED gss_verify
+GSSAPI_DEPRECATED GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL gss_verify
            (OM_uint32 * /*minor_status*/,
             gss_ctx_id_t /*context_handle*/,
             gss_buffer_t /*message_buffer*/,
@@ -859,7 +859,7 @@ GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL GSSAPI_DEPRECATED gss_verify
             int * /*qop_state*/
            );
 
-GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL GSSAPI_DEPRECATED gss_seal
+GSSAPI_DEPRECATED GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL gss_seal
            (OM_uint32 * /*minor_status*/,
             gss_ctx_id_t /*context_handle*/,
             int /*conf_req_flag*/,
@@ -869,7 +869,7 @@ GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL GSSAPI_DEPRECATED gss_seal
             gss_buffer_t /*output_message_buffer*/
            );
 
-GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL GSSAPI_DEPRECATED gss_unseal
+GSSAPI_DEPRECATED GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL gss_unseal
            (OM_uint32 * /*minor_status*/,
             gss_ctx_id_t /*context_handle*/,
             gss_buffer_t /*input_message_buffer*/,

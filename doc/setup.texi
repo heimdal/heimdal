@@ -270,14 +270,14 @@ check are for existence and flags on important principals. The
 database check by run by the following command :
 
 @example
-kadmin check REALM.EXAMPLE.ORG
+kadmin -l check REALM.EXAMPLE.ORG
 @end example
 
 @node keytabs, Serving Kerberos 4/524/kaserver, Checking the setup, Setting up a realm
 @section keytabs
 
 To extract a service ticket from the database and put it in a keytab, you
-need to first create the principal in the database with @samp{ank}
+need to first create the principal in the database with @samp{add}
 (using the @kbd{--random-key} flag to get a random key) and then
 extract it with @samp{ext_keytab}.
 
@@ -493,7 +493,7 @@ If no password quality checking function is configured, the only check
 performed is that the password is at least six characters long.
 
 To check the password policy settings, use the command
-@command{password-quality} in @command{kadmin} program. The password
+@command{verify-password-quality} in @command{kadmin} program. The password
 verification is only performed locally, on the client.  It may be
 convenient to set the environment variable @samp{KRB5_CONFIG} to point
 to a test version of @file{krb5.conf} while you're testing the
@@ -1094,7 +1094,7 @@ kdc# kadmin -l
 kadmin> init EXAMPLE.COM
 Realm max ticket life [unlimited]:
 Realm max renewable ticket life [unlimited]:
-kadmin> ank lukeh
+kadmin> add lukeh
 Max ticket life [1 day]:
 Max renewable life [1 week]:
 Principal expiration time [never]:

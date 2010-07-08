@@ -64,4 +64,16 @@ typedef struct heim_octet_string heim_any_set;
     }                                                          \
   } while (0)
 
+#ifdef _WIN32
+#ifndef ASN1_LIB
+#define ASN1EXP  __declspec(dllimport)
+#else
+#define ASN1EXP
+#endif
+#define ASN1CALL __stdcall
+#else
+#define ASN1EXP
+#define ASN1CALL
+#endif
+	  
 #endif

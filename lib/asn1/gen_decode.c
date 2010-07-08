@@ -661,7 +661,7 @@ generate_type_decode (const Symbol *s)
 {
     int preserve = preserve_type(s->name) ? TRUE : FALSE;
 
-    fprintf (codefile, "int\n"
+    fprintf (codefile, "int ASN1CALL\n"
 	     "decode_%s(const unsigned char *p,"
 	     " size_t len, %s *data, size_t *size)\n"
 	     "{\n",

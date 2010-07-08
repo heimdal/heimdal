@@ -502,7 +502,7 @@ encode_type (const char *name, const Type *t, const char *tmpstr)
 void
 generate_type_encode (const Symbol *s)
 {
-    fprintf (codefile, "int\n"
+    fprintf (codefile, "int ASN1CALL\n"
 	     "encode_%s(unsigned char *p, size_t len,"
 	     " const %s *data, size_t *size)\n"
 	     "{\n",

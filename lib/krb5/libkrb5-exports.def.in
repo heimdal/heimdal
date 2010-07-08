@@ -88,6 +88,7 @@ EXPORTS
 	krb5_cc_clear_mcred
 	krb5_cc_close
 	krb5_cc_copy_cache
+	krb5_cc_copy_creds
 	krb5_cc_copy_match_f
 	krb5_cc_default
 	krb5_cc_default_name

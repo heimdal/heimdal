@@ -33,6 +33,14 @@ RELDIR=packages\windows\assembly
 
 !include ../../../windows/NTMakefile.w32
 
+!  if "$(CPU)"=="i386" || "$(CPU)"=="x86"
+MCPU=x86
+!  elseif "$(CPU)"=="AMD64"
+MCPU=amd64
+!  else
+!    error Unknown CPU
+!  endif
+
 # CODESIGN_PKT should be set to the public key token of the code
 # signing certificate in use.  You can use :
 #
@@ -63,7 +71,7 @@ $(ASMKRBDIR)\$(ASMKRBMAN).nohash: Heimdal.Kerberos.manifest.in
 
 $(ASMKRBDIR)\$(ASMKRBMAN) $(ASMKRBDIR)\$(ASMKRBMAN).cdf: \
 		$(ASMKRBDIR)\$(ASMKRBMAN).nohash $(ASMKRBBINS)
-	$(MT) -manifest $(ASMKRBDIR)\$(ASMKRBMAN).nohash -out:$@ -hashupdate -makecdfs
+	$(MT) -manifest $(ASMKRBDIR)\$(ASMKRBMAN).nohash -out:$(ASMKRBDIR)\$(ASMKRBMAN) -hashupdate -makecdfs
 
 $(ASMKRBDIR)\$(ASMKRBNAME).cat: $(ASMKRBDIR)\$(ASMKRBMAN).cdf
 	cd $(ASMKRBDIR)
@@ -85,6 +93,9 @@ clean::
 
 {$(BINDIR)}.dll{$(ASMKRBDIR)}.dll:
 	$(CP) $< $@
+
+test::
+	$(MT) -manifest $(ASMKRBDIR)\$(ASMKRBMAN) -validate_manifest
 
 # ----------------------------------------------------------------------
 # Heimdal.GSSAPI Assembly
@@ -128,6 +139,30 @@ clean::
 {$(BINDIR)}.dll{$(ASMGSSDIR)}.dll:
 	$(CP) $< $@
 
+test::
+	$(MT) -manifest $(ASMGSSDIR)\$(ASMGSSMAN) -validate_manifest
+
+# ----------------------------------------------------------------------
+# Application manifests
+
+APPMANIFEST=$(INCDIR)\Heimdal.Application.$(MCPU).manifest
+
+all:: $(APPMANIFEST)
+
+clean::
+	$(RM) $(APPMANIFEST)
+
+$(APPMANIFEST): Heimdal.Application.manifest.in
+	$(SED)  -e "s,[@]gssname[@],$(ASMGSSNAME),g" \
+		-e "s,[@]gssversion[@],$(ASMGSSVER),g" \
+		-e "s,[@]krbname[@],$(ASMKRBNAME),g" \
+		-e "s,[@]krbversion[@],$(ASMKRBVER),g" \
+		-e "s,[@]cpu[@],$(MCPU),g" \
+		-e "s,[@]pkt[@],$(CODESIGN_PKT),g" < $** > $@
+
+test::
+	$(MT) -manifest $(APPMANIFEST) -validate_manifest
+
 # ----------------------------------------------------------------------
 
 .SUFFIXES: .dll
@@ -138,13 +173,5 @@ mk-asm-dirs:
 !  endif
 !  if !exist($(ASMGSSDIR))
 	$(MKDIR) $(ASMGSSDIR)
-!  endif
-
-!  if "$(CPU)"=="i386" || "$(CPU)"=="x86"
-MCPU=x86
-!  elseif "$(CPU)"=="AMD64"
-MCPU=amd64
-!  else
-!    error Unknown CPU
 !  endif
 

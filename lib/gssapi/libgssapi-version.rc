@@ -31,6 +31,6 @@
 
 #define RC_FILE_TYPE VFT_DLL
 #define RC_FILE_DESC_0409 "Generic Security Service Application Program Interface library"
-#define RC_FILE_ORIG_0409 "libgssapi.dll"
+#define RC_FILE_ORIG_0409 "gssapi.dll"
 
 #include "../../windows/version.rc"

@@ -59,6 +59,14 @@ SRC=$(MAKEDIR)\..\..\..
 !  error Cant determine source directory
 !endif
 
+!  if "$(CPU)"=="i386" || "$(CPU)"=="x86"
+MCPU=x86
+!  elseif "$(CPU)"=="AMD64"
+MCPU=amd64
+!  else
+!    error Unknown CPU
+!  endif
+
 !include "NTMakefile.config"
 
 #----------------------------------------------------------------
@@ -491,3 +499,5 @@ LIBWIND	    =$(LIBDIR)\libwind.lib
 
 ASMKRBNAME  =Heimdal.Kerberos
 ASMGSSNAME  =Heimdal.GSSAPI
+APPMANIFEST =$(INCDIR)\Heimdal.Application.$(MCPU).manifest
+

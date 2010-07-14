@@ -45,7 +45,7 @@ dir_hcrypto = hcrypto
 
 SUBDIRS = roken vers editline com_err sl wind asn1 sqlite \
 	$(dir_hcrypto) hx509 krb5 heimdal ntlm kafs gssapi hdb \
-	kadm5 auth $(dir_45) $(dir_otp) $(dir_dce)
+	kadm5 auth $(dir_45) $(dir_otp) $(dir_dce) ..\packages\windows\assembly
 
 !include ../windows/NTMakefile.w32
 

@@ -31,6 +31,8 @@
 
 RELDIR = lib\com_err
 
+intcflags=-DBUILD_KRB5_LIB
+
 !include ../../windows/NTMakefile.w32
 
 INCFILES=$(INCDIR)\com_err.h $(INCDIR)\com_right.h

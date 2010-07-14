@@ -632,7 +632,7 @@ krb5_get_cred_from_kdc(krb5_context context,
  */
 
 KRB5_DEPRECATED
-void KRB5_LIB_FUNCTION
+KRB5_LIB_FUNCTION void KRB5_LIB_CALL
 krb5_free_unparsed_name(krb5_context context, char *str)
 {
     krb5_xfree(str);

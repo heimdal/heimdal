@@ -370,13 +370,13 @@ mkdirs:
 
 !ifdef SUBDIRS
 subdirs:
-	@for %%f in ( $(SUBDIRS) ) do @ (cd %%f && $(RMAKE) && cd ..) || exit /b 1
+	@for %%f in ( $(SUBDIRS) ) do @ (pushd %%f && $(RMAKE) && popd) || exit /b 1
 
 clean-subdirs:
-	@for %%f in ( $(SUBDIRS) ) do @ (cd %%f && $(RMAKE) clean && cd ..) || exit /b 1
+	@for %%f in ( $(SUBDIRS) ) do @ (pushd %%f && $(RMAKE) clean && popd) || exit /b 1
 
 test-subdirs:
-	@for %%f in ( $(SUBDIRS) ) do @ (cd %%f && $(RMAKE) test && cd ..) || exit /b 1
+	@for %%f in ( $(SUBDIRS) ) do @ (pushd %%f && $(RMAKE) test && popd) || exit /b 1
 
 all:: subdirs
 

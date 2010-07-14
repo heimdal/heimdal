@@ -138,6 +138,13 @@ pthreadinc= -I$(PTHREAD_INC)
 cincdirs=$(cincdirs) -I$(INCDIR) -I$(INCDIR)\krb5 $(pthreadinc)
 cdefines=$(cdefines) -DHAVE_CONFIG_H
 
+# ---------------------------------------------------------------
+# time_t issues
+
+!if "$(MCPU)"=="x86"
+cdefines=$(cdefines) -D_USE_32BIT_TIME_T
+!endif
+
 # Disable warnings:
 #
 # C4996: 'function' was declared deprecated

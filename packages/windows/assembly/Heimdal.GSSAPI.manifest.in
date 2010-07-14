@@ -4,14 +4,14 @@
 		    processorArchitecture="@cpu@"
 		    version="@version@"
 		    publicKeyToken="@pkt@" />
-  <file name="libgssapi.dll" />
+  <file name="gssapi.dll" />
   <dependency>
     <dependentAssembly>
       <assemblyIdentity type="win32" name="@krbname@"
 			language="*"
 			processorArchitecture="@cpu@"
 			version="@krbversion@"
-			publickeytoken="@pkt@" />
+			publicKeyToken="@pkt@" />
     </dependentAssembly>
   </dependency>
 </assembly>

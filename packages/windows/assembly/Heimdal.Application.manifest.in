@@ -1,6 +1,6 @@
 <?xml version="1" encoding="UTF-8" standalone="yes" ?>
 <assembly xmlns="urn:schemas-microsoft-com:asm.v1" manifestVersion="1.0">
-  <assemblyIdentity type="win32" name=""
+  <assemblyIdentity type="win32" name="Heimdal.Application"
 		    processorArchitecture="@cpu@"
 		    version="1.0.0.0" />
   <dependency>
@@ -9,7 +9,7 @@
 			language="*"
 			processorArchitecture="@cpu@"
 			version="@krbversion@"
-			publickeytoken="@pkt@" />
+			publicKeyToken="@pkt@" />
     </dependentAssembly>
   </dependency>
   <dependency>
@@ -18,7 +18,7 @@
 			language="*"
 			processorArchitecture="@cpu@"
 			version="@gssversion@"
-			publickeytoken="@pkt@" />
+			publicKeyToken="@pkt@" />
     </dependentAssembly>
   </dependency>
 </assembly>

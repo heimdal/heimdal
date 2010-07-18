@@ -109,6 +109,7 @@ libhcrypto_la_SOURCES =	\
 	dh.h		\
 	dh-imath.c	\
 	dh-tfm.c	\
+	dh-ltm.c	\
 	dsa.c		\
 	dsa.h		\
 	doxygen.c	\

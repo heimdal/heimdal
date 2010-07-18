@@ -46,16 +46,20 @@
 #include <getarg.h>
 
 #include <dh.h>
+#include <evp.h>
 
 /*
  *
  */
 
+static char *id_string;
+static int verbose;
 static int version_flag;
 static int help_flag;
-static int verbose;
 
 static struct getargs args[] = {
+    { "id",	0,		arg_string,	&id_string,
+      "type of ENGINE", NULL },
     { "verbose",	0,	arg_flag,	&verbose,
       "verbose output from tests", NULL },
     { "version",	0,	arg_flag,	&version_flag,
@@ -320,7 +324,7 @@ static void print_secret(unsigned char *sec, size_t len)
     printf("\n");
 }
 
-static int check_prime(struct prime *pr)
+static int check_prime(ENGINE *engine, struct prime *pr)
 {
     DH *dh1, *dh2;
     BIGNUM *p, *g;
@@ -333,8 +337,8 @@ static int check_prime(struct prime *pr)
 
     p = BN_new();
     g = BN_new();
-    dh1 = DH_new();
-    dh2 = DH_new();
+    dh1 = DH_new_method(engine);
+    dh2 = DH_new_method(engine);
 
     /* 1. set shared parameter */
     set_prime(p, pr->value);
@@ -419,6 +423,7 @@ usage (int ret)
 int
 main(int argc, char **argv)
 {
+    ENGINE *engine = NULL;
     int idx = 0;
 
     setprogname(argv[0]);
@@ -437,11 +442,29 @@ main(int argc, char **argv)
     argc -= idx;
     argv += idx;
 
+    OpenSSL_add_all_algorithms();
+#ifdef OPENSSL
+    ENGINE_load_openssl();
+#endif
+    ENGINE_load_builtin_engines();
+
+    if (id_string) {
+	engine = ENGINE_by_id(id_string);
+	if (engine == NULL)
+	    engine = ENGINE_by_dso(id_string, id_string);
+    } else {
+	engine = ENGINE_by_id("builtin");
+    }
+    if (engine == NULL)
+	errx(1, "ENGINE_by_dso failed");
+
+    printf("dh %s\n", ENGINE_get_DH(engine)->name);
+
     {
 	struct prime *p = primes;
 	
 	for (; p->name; ++p)
-	    if (check_prime(p))
+	    if (check_prime(engine, p))
 		printf("%s: shared secret OK\n", p->name);
 	    else
 		printf("%s: shared secret FAILURE\n", p->name);

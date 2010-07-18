@@ -153,11 +153,13 @@ to the following restrictions:
 @end verbatim
 @copynext
 
-@heading TomsFastMath
+@heading TomsFastMath / LibTomMath
 
-Tom's fast math (bignum support)
+Tom's fast math (bignum support) and LibTomMath
 
 @verbatim
+
+LibTomMath is hereby released into the Public Domain.  
 
 TomsFastMath is public domain.
 

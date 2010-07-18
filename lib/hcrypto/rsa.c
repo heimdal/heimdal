@@ -56,7 +56,8 @@
  *   operation performed each eteration sign, verify, encrypt, decrypt on a random bit pattern
  *
  * gmp: 	 0.733615
- * tfm: 	 2.450173 (default in hcrypto)
+ * tfm: 	 2.450173
+ * ltm:		 2.452774 (default in hcrypto)
  * openssl:	 4.046564
  * imath: 	22.975163
  *

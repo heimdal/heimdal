@@ -236,9 +236,9 @@ ENGINE_load_builtin_engines(void)
 
     ENGINE_set_id(engine, "builtin");
     ENGINE_set_name(engine,
-		    "Heimdal crypto builtin engine version " PACKAGE_VERSION);
-    ENGINE_set_RSA(engine, RSA_tfm_method());
-    ENGINE_set_DH(engine, DH_tfm_method());
+		    "Heimdal crypto builtin (ltm) engine version " PACKAGE_VERSION);
+    ENGINE_set_RSA(engine, RSA_ltm_method());
+    ENGINE_set_DH(engine, DH_ltm_method());
 
     ret = add_engine(engine);
     if (ret != 1)

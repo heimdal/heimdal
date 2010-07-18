@@ -79,7 +79,7 @@ extern "C" {
    #define DIGIT_BIT          60
 #else
    /* this is the default case, 28-bit digits */
-   
+
    /* this is to make porting into LibTomCrypt easier :-) */
 #ifndef CRYPT
    #if defined(_MSC_VER) || defined(__BORLANDC__) 
@@ -221,9 +221,13 @@ int mp_init_size(mp_int *a, int size);
 #define mp_iszero(a) (((a)->used == 0) ? MP_YES : MP_NO)
 #define mp_iseven(a) (((a)->used > 0 && (((a)->dp[0] & 1) == 0)) ? MP_YES : MP_NO)
 #define mp_isodd(a)  (((a)->used > 0 && (((a)->dp[0] & 1) == 1)) ? MP_YES : MP_NO)
+#define mp_isneg(a)  (((a)->sign) ? MP_YES : MP_NO)
 
 /* set to zero */
 void mp_zero(mp_int *a);
+
+/* set to zero, multi */
+void mp_zero_multi(mp_int *a, ...);
 
 /* set to a digit */
 void mp_set(mp_int *a, mp_digit b);
@@ -515,6 +519,10 @@ int mp_prime_next_prime(mp_int *a, int t, int bbs_style);
  *
  */
 int mp_prime_random_ex(mp_int *a, int t, int size, int flags, ltm_prime_callback cb, void *dat);
+
+int mp_find_prime(mp_int *a);
+
+int mp_isprime(mp_int *a);
 
 /* ---> radix conversion <--- */
 int mp_count_bits(mp_int *a);

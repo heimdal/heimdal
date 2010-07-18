@@ -263,6 +263,26 @@ ENGINE_load_builtin_engines(void)
 	ENGINE_finish(engine);
 
     /*
+     * ltm
+     */
+
+    engine = ENGINE_new();
+    if (engine == NULL)
+	return;
+
+    ENGINE_set_id(engine, "ltm");
+    ENGINE_set_name(engine,
+		    "Heimdal crypto ltm engine version " PACKAGE_VERSION);
+    ENGINE_set_RSA(engine, RSA_ltm_method());
+#if 0
+    ENGINE_set_DH(engine, DH_ltm_method());
+#endif
+
+    ret = add_engine(engine);
+    if (ret != 1)
+	ENGINE_finish(engine);
+
+    /*
      * imath
      */
 

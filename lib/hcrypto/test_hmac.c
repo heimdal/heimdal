@@ -41,6 +41,7 @@
 
 #include <hmac.h>
 #include <evp.h>
+#include <roken.h>
 
 int
 main(int argc, char **argv)
@@ -66,7 +67,7 @@ main(int argc, char **argv)
 	return 1;
     }
 
-    if (memcmp(hmac, answer, hmaclen) != 0) {
+    if (ct_memcmp(hmac, answer, hmaclen) != 0) {
 	printf("wrong answer\n");
 	return 1;
     }

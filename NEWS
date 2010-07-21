@@ -8,6 +8,12 @@ Release Notes - Heimdal - Version Heimdal 1.4
  - Table driven ASN.1 compiler, smaller!, not enabled by default
  - Native Windows client support
 
+Notes
+
+ - Disabled write support NDBM hdb backend (read still in there) since
+   it can't handle large records, please migrate to a diffrent backend
+   (like BDB4)
+
 Release Notes - Heimdal - Version Heimdal 1.3.3
 
  Bug fixes

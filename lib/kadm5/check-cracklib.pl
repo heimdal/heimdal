@@ -80,7 +80,7 @@ sub badpassword
     exit 0
 }
 
-while (<>) {
+while (<STDIN>) {
     last if /^end$/;
     if (!/^([^:]+): (.+)$/) {
 	die "key value pair not correct: $_";

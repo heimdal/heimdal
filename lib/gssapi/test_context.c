@@ -69,12 +69,12 @@ static krb5_enctype limit_enctype = 0;
 
 static struct {
     const char *name;
-    gss_OID *oid;
+    gss_OID oid;
 } o2n[] = {
-    { "krb5", &GSS_KRB5_MECHANISM },
-    { "spnego", &GSS_SPNEGO_MECHANISM },
-    { "ntlm", &GSS_NTLM_MECHANISM },
-    { "sasl-digest-md5", &GSS_SASL_DIGEST_MD5_MECHANISM }
+    { "krb5", GSS_KRB5_MECHANISM },
+    { "spnego", GSS_SPNEGO_MECHANISM },
+    { "ntlm", GSS_NTLM_MECHANISM },
+    { "sasl-digest-md5", GSS_SASL_DIGEST_MD5_MECHANISM }
 };
 
 static gss_OID
@@ -83,7 +83,7 @@ string_to_oid(const char *name)
     int i;
     for (i = 0; i < sizeof(o2n)/sizeof(o2n[0]); i++)
 	if (strcasecmp(name, o2n[i].name) == 0)
-	    return *o2n[i].oid;
+	    return o2n[i].oid;
     errx(1, "name '%s' not unknown", name);
 }
 
@@ -92,7 +92,7 @@ oid_to_string(const gss_OID oid)
 {
     int i;
     for (i = 0; i < sizeof(o2n)/sizeof(o2n[0]); i++)
-	if (gss_oid_equal(oid, *o2n[i].oid))
+	if (gss_oid_equal(oid, o2n[i].oid))
 	    return o2n[i].name;
     return "unknown oid";
 }

@@ -194,11 +194,8 @@ gss_release_iov_buffer(OM_uint32 *minor_status,
  * @ingroup gssapi
  */
 
-static gss_OID_desc gss_c_attr_stream_sizes_desc =
+gss_OID_desc GSSAPI_LIB_FUNCTION __gss_c_attr_stream_sizes_oid_desc =
     {10, rk_UNCONST("\x2a\x86\x48\x86\xf7\x12\x01\x02\x01\x03")};
-
-gss_OID GSSAPI_LIB_VARIABLE GSS_C_ATTR_STREAM_SIZES =
-    &gss_c_attr_stream_sizes_desc;
 
 OM_uint32 GSSAPI_LIB_FUNCTION
 gss_context_query_attributes(OM_uint32 *minor_status,

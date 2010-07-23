@@ -266,7 +266,8 @@ GSSAPI_CPP_START
  * GSS_C_NT_USER_NAME should be initialized to point
  * to that gss_OID_desc.
  */
-extern GSSAPI_LIB_VARIABLE gss_OID GSS_C_NT_USER_NAME;
+extern GSSAPI_LIB_VARIABLE gss_OID_desc __gss_c_nt_user_name_oid_desc;
+#define GSS_C_NT_USER_NAME (&__gss_c_nt_user_name_oid_desc)
 
 /*
  * The implementation must reserve static storage for a
@@ -279,7 +280,8 @@ extern GSSAPI_LIB_VARIABLE gss_OID GSS_C_NT_USER_NAME;
  * The constant GSS_C_NT_MACHINE_UID_NAME should be
  * initialized to point to that gss_OID_desc.
  */
-extern GSSAPI_LIB_VARIABLE gss_OID GSS_C_NT_MACHINE_UID_NAME;
+extern GSSAPI_LIB_VARIABLE gss_OID_desc __gss_c_nt_machine_uid_name_oid_desc;
+#define GSS_C_NT_MACHINE_UID_NAME (&__gss_c_nt_machine_uid_name_oid_desc)
 
 /*
  * The implementation must reserve static storage for a
@@ -292,7 +294,8 @@ extern GSSAPI_LIB_VARIABLE gss_OID GSS_C_NT_MACHINE_UID_NAME;
  * The constant GSS_C_NT_STRING_UID_NAME should be
  * initialized to point to that gss_OID_desc.
  */
-extern GSSAPI_LIB_VARIABLE gss_OID GSS_C_NT_STRING_UID_NAME;
+extern GSSAPI_LIB_VARIABLE gss_OID_desc __gss_c_nt_string_uid_name_oid_desc;
+#define GSS_C_NT_STRING_UID_NAME (&__gss_c_nt_string_uid_name_oid_desc)
 
 /*
  * The implementation must reserve static storage for a
@@ -311,7 +314,8 @@ extern GSSAPI_LIB_VARIABLE gss_OID GSS_C_NT_STRING_UID_NAME;
  * parameter, but should not be emitted by GSS-API
  * implementations
  */
-extern GSSAPI_LIB_VARIABLE gss_OID GSS_C_NT_HOSTBASED_SERVICE_X;
+extern GSSAPI_LIB_VARIABLE gss_OID_desc __gss_c_nt_hostbased_service_x_oid_desc;
+#define GSS_C_NT_HOSTBASED_SERVICE_X (&__gss_c_nt_hostbased_service_x_oid_desc)
 
 /*
  * The implementation must reserve static storage for a
@@ -324,7 +328,8 @@ extern GSSAPI_LIB_VARIABLE gss_OID GSS_C_NT_HOSTBASED_SERVICE_X;
  * GSS_C_NT_HOSTBASED_SERVICE should be initialized
  * to point to that gss_OID_desc.
  */
-extern GSSAPI_LIB_VARIABLE gss_OID GSS_C_NT_HOSTBASED_SERVICE;
+extern GSSAPI_LIB_VARIABLE gss_OID_desc __gss_c_nt_hostbased_service_oid_desc;
+#define GSS_C_NT_HOSTBASED_SERVICE (&__gss_c_nt_hostbased_service_oid_desc)
 
 /*
  * The implementation must reserve static storage for a
@@ -336,7 +341,8 @@ extern GSSAPI_LIB_VARIABLE gss_OID GSS_C_NT_HOSTBASED_SERVICE;
  * and GSS_C_NT_ANONYMOUS should be initialized to point
  * to that gss_OID_desc.
  */
-extern GSSAPI_LIB_VARIABLE gss_OID GSS_C_NT_ANONYMOUS;
+extern GSSAPI_LIB_VARIABLE gss_OID_desc __gss_c_nt_anonymous_oid_desc;
+#define GSS_C_NT_ANONYMOUS (&__gss_c_nt_anonymous_oid_desc)
 
 /*
  * The implementation must reserve static storage for a
@@ -348,13 +354,16 @@ extern GSSAPI_LIB_VARIABLE gss_OID GSS_C_NT_ANONYMOUS;
  * GSS_C_NT_EXPORT_NAME should be initialized to point
  * to that gss_OID_desc.
  */
-extern GSSAPI_LIB_VARIABLE gss_OID GSS_C_NT_EXPORT_NAME;
+extern GSSAPI_LIB_VARIABLE gss_OID_desc __gss_c_nt_export_name_oid_desc;
+#define GSS_C_NT_EXPORT_NAME (&__gss_c_nt_export_name_oid_desc) 
 
 /*
  * Digest mechanism
  */
 
-extern GSSAPI_LIB_VARIABLE gss_OID GSS_SASL_DIGEST_MD5_MECHANISM;
+extern gss_OID_desc GSSAPI_LIB_VARIABLE __gss_sasl_digest_md5_mechanism_oid_desc;
+#define GSS_SASL_DIGEST_MD5_MECHANISM (&__gss_sasl_digest_md5_mechanism_oid_desc)
+
 
 /* Major status codes */
 
@@ -807,7 +816,8 @@ typedef struct {
 			 (GSS_IOV_BUFFER_TYPE_PADDING) */
 } gss_context_stream_sizes; 
 
-extern gss_OID GSSAPI_LIB_VARIABLE GSS_C_ATTR_STREAM_SIZES;
+extern gss_OID_desc GSSAPI_LIB_VARIABLE __gss_c_attr_stream_sizes_oid_desc;
+#define GSS_C_ATTR_STREAM_SIZES (&__gss_c_attr_stream_sizes_oid_desc)
 
 
 OM_uint32 GSSAPI_LIB_FUNCTION

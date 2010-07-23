@@ -53,12 +53,15 @@ GSSAPI_CPP_START
  * This is for kerberos5 names.
  */
 
-extern GSSAPI_LIB_VARIABLE gss_OID GSS_KRB5_NT_PRINCIPAL_NAME;
-extern GSSAPI_LIB_VARIABLE gss_OID GSS_KRB5_NT_USER_NAME;
-extern GSSAPI_LIB_VARIABLE gss_OID GSS_KRB5_NT_MACHINE_UID_NAME;
-extern GSSAPI_LIB_VARIABLE gss_OID GSS_KRB5_NT_STRING_UID_NAME;
+extern gss_OID_desc GSSAPI_LIB_VARIABLE __gss_krb5_nt_principal_name_oid_desc;
+#define GSS_KRB5_NT_PRINCIPAL_NAME (&__gss_krb5_nt_principal_name_oid_desc)
 
-extern GSSAPI_LIB_VARIABLE gss_OID GSS_KRB5_MECHANISM;
+#define GSS_KRB5_NT_USER_NAME (&__gss_c_nt_user_name_oid_desc)
+#define GSS_KRB5_NT_MACHINE_UID_NAME (&__gss_c_nt_machine_uid_name_oid_desc)
+#define GSS_KRB5_NT_STRING_UID_NAME (&__gss_c_nt_string_uid_name_oid_desc)
+
+extern gss_OID_desc GSSAPI_LIB_VARIABLE __gss_krb5_mechanism_oid_desc;
+#define GSS_KRB5_MECHANISM (&__gss_krb5_mechanism_oid_desc)
 
 /* for compatibility with MIT api */
 
@@ -66,31 +69,77 @@ extern GSSAPI_LIB_VARIABLE gss_OID GSS_KRB5_MECHANISM;
 #define gss_krb5_nt_general_name GSS_KRB5_NT_PRINCIPAL_NAME
 
 /* Extensions set contexts options */
-extern GSSAPI_LIB_VARIABLE gss_OID GSS_KRB5_COPY_CCACHE_X;
-extern GSSAPI_LIB_VARIABLE gss_OID GSS_KRB5_COMPAT_DES3_MIC_X;
-extern GSSAPI_LIB_VARIABLE gss_OID GSS_KRB5_REGISTER_ACCEPTOR_IDENTITY_X;
-extern GSSAPI_LIB_VARIABLE gss_OID GSS_KRB5_SET_DNS_CANONICALIZE_X;
-extern GSSAPI_LIB_VARIABLE gss_OID GSS_KRB5_SEND_TO_KDC_X;
-extern GSSAPI_LIB_VARIABLE gss_OID GSS_KRB5_SET_DEFAULT_REALM_X;
-extern GSSAPI_LIB_VARIABLE gss_OID GSS_KRB5_CCACHE_NAME_X;
-extern GSSAPI_LIB_VARIABLE gss_OID GSS_KRB5_SET_TIME_OFFSET_X;
-extern GSSAPI_LIB_VARIABLE gss_OID GSS_KRB5_GET_TIME_OFFSET_X;
-extern GSSAPI_LIB_VARIABLE gss_OID GSS_KRB5_PLUGIN_REGISTER_X;
+extern GSSAPI_LIB_VARIABLE gss_OID_desc __gss_krb5_copy_ccache_x_oid_desc;
+#define GSS_KRB5_COPY_CCACHE_X (&__gss_krb5_copy_ccache_x_oid_desc)
+
+extern GSSAPI_LIB_VARIABLE gss_OID_desc __gss_krb5_compat_des3_mic_x_oid_desc;
+#define GSS_KRB5_COMPAT_DES3_MIC_X (&__gss_krb5_compat_des3_mic_x_oid_desc)
+
+extern GSSAPI_LIB_VARIABLE gss_OID_desc __gss_krb5_register_acceptor_identity_x_oid_desc;
+#define GSS_KRB5_REGISTER_ACCEPTOR_IDENTITY_X (&__gss_krb5_register_acceptor_identity_x_oid_desc)
+
+extern GSSAPI_LIB_VARIABLE gss_OID_desc __gss_krb5_set_dns_canonicalize_x_oid_desc;
+#define GSS_KRB5_SET_DNS_CANONICALIZE_X (&__gss_krb5_set_dns_canonicalize_x_oid_desc)
+
+extern GSSAPI_LIB_VARIABLE gss_OID_desc __gss_krb5_send_to_kdc_x_oid_desc;
+#define GSS_KRB5_SEND_TO_KDC_X (&__gss_krb5_send_to_kdc_x_oid_desc)
+
+extern GSSAPI_LIB_VARIABLE gss_OID_desc __gss_krb5_set_default_realm_x_oid_desc;
+#define GSS_KRB5_SET_DEFAULT_REALM_X (&__gss_krb5_set_default_realm_x_oid_desc)
+
+extern GSSAPI_LIB_VARIABLE gss_OID_desc __gss_krb5_ccache_name_x_oid_desc;
+#define GSS_KRB5_CCACHE_NAME_X (&__gss_krb5_ccache_name_x_oid_desc)
+
+extern GSSAPI_LIB_VARIABLE gss_OID_desc __gss_krb5_set_time_offset_x_oid_desc;
+#define GSS_KRB5_SET_TIME_OFFSET_X (&__gss_krb5_set_time_offset_x_oid_desc)
+
+extern GSSAPI_LIB_VARIABLE gss_OID_desc __gss_krb5_get_time_offset_x_oid_desc;
+#define GSS_KRB5_GET_TIME_OFFSET_X (&__gss_krb5_get_time_offset_x_oid_desc)
+
+extern GSSAPI_LIB_VARIABLE gss_OID_desc __gss_krb5_plugin_register_x_oid_desc;
+#define GSS_KRB5_PLUGIN_REGISTER_X (&__gss_krb5_plugin_register_x_oid_desc)
+
 /* Extensions inquire context */
-extern GSSAPI_LIB_VARIABLE gss_OID GSS_KRB5_GET_TKT_FLAGS_X;
-extern GSSAPI_LIB_VARIABLE gss_OID GSS_KRB5_EXTRACT_AUTHZ_DATA_FROM_SEC_CONTEXT_X;
-extern GSSAPI_LIB_VARIABLE gss_OID GSS_C_PEER_HAS_UPDATED_SPNEGO;
-extern GSSAPI_LIB_VARIABLE gss_OID GSS_KRB5_EXPORT_LUCID_CONTEXT_X;
-extern GSSAPI_LIB_VARIABLE gss_OID GSS_KRB5_EXPORT_LUCID_CONTEXT_V1_X;
-extern GSSAPI_LIB_VARIABLE gss_OID GSS_KRB5_GET_SUBKEY_X;
-extern GSSAPI_LIB_VARIABLE gss_OID GSS_KRB5_GET_INITIATOR_SUBKEY_X;
-extern GSSAPI_LIB_VARIABLE gss_OID GSS_KRB5_GET_ACCEPTOR_SUBKEY_X;
-extern GSSAPI_LIB_VARIABLE gss_OID GSS_KRB5_GET_AUTHTIME_X;
-extern GSSAPI_LIB_VARIABLE gss_OID GSS_KRB5_GET_SERVICE_KEYBLOCK_X;
+extern GSSAPI_LIB_VARIABLE gss_OID_desc __gss_krb5_get_tkt_flags_x_oid_desc;
+#define GSS_KRB5_GET_TKT_FLAGS_X (&__gss_krb5_get_tkt_flags_x_oid_desc)
+
+extern GSSAPI_LIB_VARIABLE gss_OID_desc __gss_krb5_extract_authz_data_from_sec_context_x_oid_desc;
+#define GSS_KRB5_EXTRACT_AUTHZ_DATA_FROM_SEC_CONTEXT_X (&__gss_krb5_extract_authz_data_from_sec_context_x_oid_desc)
+
+extern GSSAPI_LIB_VARIABLE gss_OID_desc __gss_c_peer_has_updated_spnego_oid_desc;
+#define GSS_C_PEER_HAS_UPDATED_SPNEGO (&__gss_c_peer_has_updated_spnego_oid_desc)
+
+extern GSSAPI_LIB_VARIABLE gss_OID_desc __gss_krb5_export_lucid_context_x_oid_desc;
+#define GSS_KRB5_EXPORT_LUCID_CONTEXT_X (&__gss_krb5_export_lucid_context_x_oid_desc)
+
+extern GSSAPI_LIB_VARIABLE gss_OID_desc __gss_krb5_export_lucid_context_v1_x_oid_desc;
+#define GSS_KRB5_EXPORT_LUCID_CONTEXT_V1_X (&__gss_krb5_export_lucid_context_v1_x_oid_desc)
+
+extern GSSAPI_LIB_VARIABLE gss_OID_desc __gss_krb5_get_subkey_x_oid_desc;
+#define GSS_KRB5_GET_SUBKEY_X (&__gss_krb5_get_subkey_x_oid_desc)
+
+extern GSSAPI_LIB_VARIABLE gss_OID_desc __gss_krb5_get_initiator_subkey_x_oid_desc;
+#define GSS_KRB5_GET_INITIATOR_SUBKEY_X (&__gss_krb5_get_initiator_subkey_x_oid_desc)
+
+extern GSSAPI_LIB_VARIABLE gss_OID_desc __gss_krb5_get_acceptor_subkey_x_oid_desc;
+#define GSS_KRB5_GET_ACCEPTOR_SUBKEY_X (&__gss_krb5_get_acceptor_subkey_x_oid_desc)
+
+extern GSSAPI_LIB_VARIABLE gss_OID_desc __gss_krb5_get_authtime_x_oid_desc;
+#define GSS_KRB5_GET_AUTHTIME_X (&__gss_krb5_get_authtime_x_oid_desc)
+
+extern GSSAPI_LIB_VARIABLE gss_OID_desc __gss_krb5_get_service_keyblock_x_oid_desc;
+#define GSS_KRB5_GET_SERVICE_KEYBLOCK_X (&__gss_krb5_get_service_keyblock_x_oid_desc)
+
 /* Extensions creds */
-extern GSSAPI_LIB_VARIABLE gss_OID GSS_KRB5_IMPORT_CRED_X;
-extern GSSAPI_LIB_VARIABLE gss_OID GSS_KRB5_SET_ALLOWABLE_ENCTYPES_X;
-extern GSSAPI_LIB_VARIABLE gss_OID GSS_KRB5_CRED_NO_CI_FLAGS_X;
+
+extern GSSAPI_LIB_VARIABLE gss_OID_desc __gss_krb5_import_cred_x_oid_desc;
+#define GSS_KRB5_IMPORT_CRED_X (&__gss_krb5_import_cred_x_oid_desc)
+
+extern GSSAPI_LIB_VARIABLE gss_OID_desc __gss_krb5_set_allowable_enctypes_x_oid_desc;
+#define GSS_KRB5_SET_ALLOWABLE_ENCTYPES_X (&__gss_krb5_set_allowable_enctypes_x_oid_desc)
+
+extern GSSAPI_LIB_VARIABLE gss_OID_desc __gss_krb5_cred_no_ci_flags_x_oid_desc;
+#define GSS_KRB5_CRED_NO_CI_FLAGS_X (&__gss_krb5_cred_no_ci_flags_x_oid_desc)
 
 /*
  * kerberos mechanism specific functions

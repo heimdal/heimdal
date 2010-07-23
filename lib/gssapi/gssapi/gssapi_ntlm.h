@@ -40,7 +40,8 @@
 
 GSSAPI_CPP_START
 
-extern GSSAPI_LIB_VARIABLE gss_OID GSS_NTLM_MECHANISM;
+extern GSSAPI_LIB_VARIABLE gss_OID_desc __gss_ntlm_mechanism_oid_desc;
+#define GSS_NTLM_MECHANISM (&__gss_ntlm_mechanism_oid_desc)
 
 GSSAPI_CPP_END
 

@@ -235,7 +235,7 @@ OM_uint32 _gsskrb5_import_name
 				      context,
 				      input_name_buffer,
 				      output_name);
-    else if (gss_oid_equal(input_name_type, GSS_C_NO_OID)
+    else if (input_name_type == GSS_C_NO_OID
 	     || gss_oid_equal(input_name_type, GSS_C_NT_USER_NAME)
 	     || gss_oid_equal(input_name_type, GSS_KRB5_NT_PRINCIPAL_NAME))
  	/* default printable syntax */

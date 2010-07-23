@@ -73,7 +73,6 @@ sub check_repeat
     dbmopen(%DB,$historydb,0600) or die "Internal: Could not open $historydb";
     if (!$DB{$key} || ($timenow - $DB{$key} < $reusetime)) { 
 	$result = "ok";
-	print $timenow - $DB{$key} . "\n";
 	$DB{$key}=$timenow;
     }
     dbmclose(%DB) or die "Internal: Could not close $historydb";

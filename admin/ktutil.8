@@ -161,36 +161,6 @@ Removes all old versions of a key for which there is a newer version
 that is at least
 .Ar age
 (default one week) old.
-.It srvconvert
-.It srv2keytab Xo
-.Op Fl s Ar srvtab
-.Op Fl -srvtab= Ns Ar srvtab
-.Xc
-Converts the version 4 srvtab in
-.Ar srvtab
-to a version 5 keytab and stores it in
-.Ar keytab .
-Identical to:
-.Bd -ragged -offset indent
-.Li ktutil copy
-.Li krb4: Ns Ar srvtab
-.Ar keytab
-.Ed
-.It srvcreate
-.It key2srvtab Xo
-.Op Fl s Ar srvtab
-.Op Fl -srvtab= Ns Ar srvtab
-.Xc
-Converts the version 5 keytab in
-.Ar keytab
-to a version 4 srvtab and stores it in
-.Ar srvtab .
-Identical to:
-.Bd -ragged -offset indent
-.Li ktutil copy
-.Ar keytab
-.Li krb4: Ns Ar srvtab
-.Ed
 .El
 .Sh SEE ALSO
 .Xr kadmin 8

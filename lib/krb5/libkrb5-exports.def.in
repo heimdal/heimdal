@@ -705,9 +705,6 @@ EXPORTS
 #ifdef HAVE_KCM
 	krb5_kcm_ops            DATA
 #endif
-#ifdef HAVE_KRB4
-	krb4_fkt_ops            DATA
-#endif
 	krb5_wrfkt_ops          DATA
 	krb5_mkt_ops            DATA
 	krb5_akf_ops            DATA

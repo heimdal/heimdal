@@ -857,8 +857,6 @@ extern KRB5_LIB_VARIABLE const krb5_kt_ops krb5_wrfkt_ops;
 extern KRB5_LIB_VARIABLE const krb5_kt_ops krb5_javakt_ops;
 extern KRB5_LIB_VARIABLE const krb5_kt_ops krb5_mkt_ops;
 extern KRB5_LIB_VARIABLE const krb5_kt_ops krb5_akf_ops;
-extern KRB5_LIB_VARIABLE const krb5_kt_ops krb4_fkt_ops;
-extern KRB5_LIB_VARIABLE const krb5_kt_ops krb5_srvtab_fkt_ops;
 extern KRB5_LIB_VARIABLE const krb5_kt_ops krb5_any_ops;
 
 extern KRB5_LIB_VARIABLE const char *krb5_cc_type_api;

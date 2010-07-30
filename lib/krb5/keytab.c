@@ -73,11 +73,6 @@
  *   store the keytab in a AFS keyfile (usually /usr/afs/etc/KeyFile ),
  *   the type's name is AFSKEYFILE. The residual part is a filename.
  *
- * - krb4
- *   the keytab is a Kerberos 4 srvtab that is on-the-fly converted to
- *   a keytab. The type's name is krb4 The residual part is a
- *   filename.
- *
  * - memory
  *   The keytab is stored in a memory segment. This allows sensitive
  *   and/or temporary data not to be stored on disk. The type's name

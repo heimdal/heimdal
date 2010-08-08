@@ -56,14 +56,14 @@ int
 der_printable_string_cmp(const heim_printable_string *p, 
 			 const heim_printable_string *q)
 {
-    return der_heim_octet_string_cmp(q, q);
+    return der_heim_octet_string_cmp(p, q);
 }
 
 int
 der_ia5_string_cmp(const heim_ia5_string *p, 
 		   const heim_ia5_string *q)
 {
-    return der_heim_octet_string_cmp(q, q);
+    return der_heim_octet_string_cmp(p, q);
 }
 
 int

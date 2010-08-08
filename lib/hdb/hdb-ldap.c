@@ -886,7 +886,7 @@ LDAP__lookup_princ(krb5_context context,
 	ldap_msgfree(*msg);
 	*msg = NULL;
 	
-	ret = escape_value(context, princname, &quote);
+	ret = escape_value(context, userid, &quote);
 	if (ret)
 	    goto out;
 

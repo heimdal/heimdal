@@ -1267,6 +1267,19 @@ static const struct signature_alg rsa_with_sha1_alg = {
     rsa_create_signature
 };
 
+static const struct signature_alg rsa_with_sha1_alg_secsig = {
+    "rsa-with-sha1",
+    &asn1_oid_id_secsig_sha_1WithRSAEncryption,
+    &_hx509_signature_rsa_with_sha1_data,
+    &asn1_oid_id_pkcs1_rsaEncryption,
+    &_hx509_signature_sha1_data,
+    PROVIDE_CONF|REQUIRE_SIGNER|RA_RSA_USES_DIGEST_INFO|SIG_PUBLIC_SIG|SELF_SIGNED_OK,
+    0,
+    NULL,
+    rsa_verify_signature,
+    rsa_create_signature
+};
+
 static const struct signature_alg rsa_with_md5_alg = {
     "rsa-with-md5",
     &asn1_oid_id_pkcs1_md5WithRSAEncryption,
@@ -1344,6 +1357,7 @@ static const struct signature_alg *sig_algs[] = {
 #endif
     &rsa_with_sha256_alg,
     &rsa_with_sha1_alg,
+    &rsa_with_sha1_alg_secsig,
     &pkcs1_rsa_sha1_alg,
     &rsa_with_md5_alg,
     &heim_rsa_pkcs1_x509,

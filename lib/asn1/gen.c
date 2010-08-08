@@ -390,6 +390,7 @@ generate_constant (const Symbol *s)
     case objectidentifiervalue: {
 	struct objid *o, **list;
 	unsigned int i, len;
+	char *gen_upper;
 
 	if (!one_code_file)
 	    generate_header_of_codefile(s->gen_name);
@@ -415,12 +416,6 @@ generate_constant (const Symbol *s)
 		    o->label ? o->label : "label-less", o->value);
 	}
 
-	fprintf (headerfile, "} */\n");
-	fprintf (headerfile,
-		 "extern const heim_oid asn1_oid_%s;\n\n",
-		 s->gen_name);
-
-
 	fprintf (codefile, "static unsigned oid_%s_variable_num[%d] =  {",
 		 s->gen_name, len);
 	for (i = len ; i > 0; i--) {
@@ -433,6 +428,23 @@ generate_constant (const Symbol *s)
 		 s->gen_name, len, s->gen_name);
 
 	free(list);
+
+	/* header file */
+
+	gen_upper = strdup(s->gen_name);
+	len = strlen(gen_upper);
+	for (i = 0; i < len; i++)
+	    gen_upper[i] = toupper((int)s->gen_name[i]);
+
+	fprintf (headerfile, "} */\n");
+	fprintf (headerfile,
+		 "extern const heim_oid asn1_oid_%s;\n"
+		 "#define ASN1_OID_%s (&asn1_oid_%s)\n\n",
+		 s->gen_name,
+		 gen_upper,
+		 s->gen_name);
+
+	free(gen_upper);
 
 	if (!one_code_file)
 	    close_codefile();

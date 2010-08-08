@@ -158,9 +158,9 @@ main(int argc, char **argv)
 	    struct rk_ds_record *ds = rr->u.ds;
 	    size_t i;
 
-	    printf ("key tag %u alg %u type %u length %u data ",
+	    printf ("key tag %u alg %u type %u length %lu data ",
 		    ds->key_tag, ds->algorithm, ds->digest_type,
-		    ds->digest_len);
+		    (unsigned long)ds->digest_len);
 	    for (i = 0; i < ds->digest_len; i++)
 		printf("%02X", ds->digest_data[i]);
 	    printf("\n");

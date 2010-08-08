@@ -181,10 +181,10 @@ init_generate (const char *filename, const char *base)
 	     "typedef char *heim_utf8_string;\n\n"
 	     );
     fprintf (headerfile,
-	     "typedef char *heim_printable_string;\n\n"
+	     "typedef struct heim_octet_string heim_printable_string;\n\n"
 	     );
     fprintf (headerfile,
-	     "typedef char *heim_ia5_string;\n\n"
+	     "typedef struct heim_octet_string heim_ia5_string;\n\n"
 	     );
     fprintf (headerfile,
 	     "typedef struct heim_bmp_string {\n"

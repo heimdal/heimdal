@@ -181,11 +181,33 @@ loop (unsigned char *buf, size_t len, int indent)
 		free (str.data);
 		break;
 	    }
+	    case UT_IA5String :
+	    case UT_PrintableString : {
+		heim_printable_string str;
+		unsigned char *s;
+		size_t n;
+
+		memset(&str, 0, sizeof(str));
+
+		ret = der_get_printable_string (buf, length, &str, NULL);
+		if (ret)
+		    errx (1, "der_get_general_string: %s",
+			  error_message (ret));
+		s = str.data;
+		printf("\"");
+		for (n = 0; n < str.length; n++) {
+		    if (isprint((int)s[n]))
+			printf ("%c", s[n]);
+		    else
+			printf ("#%02x", s[n]);
+		}
+		printf("\"\n");
+		der_free_printable_string(&str);
+		break;
+	    }
 	    case UT_GeneralizedTime :
 	    case UT_GeneralString :
-	    case UT_PrintableString :
 	    case UT_VisibleString :
-	    case UT_IA5String :
 	    case UT_UTF8String : {
 		heim_general_string str;
 

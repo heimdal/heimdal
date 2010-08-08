@@ -76,4 +76,9 @@ ${hxtool} verify --missing-revoke \
 	cert:FILE:$srcdir/data/n0ll.pem \
 	anchor:FILE:$srcdir/data/n0ll.pem && exit 1
 
+echo "check that windows cert with utf16 in printable string works"
+${hxtool} verify --missing-revoke \
+	cert:FILE:$srcdir/data/win-u16-in-printablestring.der \
+	anchor:FILE:$srcdir/data/win-u16-in-printablestring.der || exit 1
+
 exit 0

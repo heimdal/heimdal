@@ -352,12 +352,14 @@ test_Name (void)
     atv1[0].type.length = sizeof(cmp_CN)/sizeof(cmp_CN[0]);
     atv1[0].type.components = cmp_CN;
     atv1[0].value.element = choice_DirectoryString_printableString;
-    atv1[0].value.u.printableString = "Love";
+    atv1[0].value.u.printableString.data = "Love";
+    atv1[0].value.u.printableString.length = 4;
 
     atv1[1].type.length = sizeof(cmp_L)/sizeof(cmp_L[0]);
     atv1[1].type.components = cmp_L;
     atv1[1].value.element = choice_DirectoryString_printableString;
-    atv1[1].value.u.printableString = "STOCKHOLM";
+    atv1[1].value.u.printableString.data = "STOCKHOLM";
+    atv1[1].value.u.printableString.length = 9;
 
     /* n2 */
     n2.element = choice_Name_rdnSequence;
@@ -369,12 +371,14 @@ test_Name (void)
     atv2[0].type.length = sizeof(cmp_L)/sizeof(cmp_L[0]);
     atv2[0].type.components = cmp_L;
     atv2[0].value.element = choice_DirectoryString_printableString;
-    atv2[0].value.u.printableString = "STOCKHOLM";
+    atv2[0].value.u.printableString.data = "STOCKHOLM";
+    atv2[0].value.u.printableString.length = 9;
 
     atv2[1].type.length = sizeof(cmp_CN)/sizeof(cmp_CN[0]);
     atv2[1].type.components = cmp_CN;
     atv2[1].value.element = choice_DirectoryString_printableString;
-    atv2[1].value.u.printableString = "Love";
+    atv2[1].value.u.printableString.data = "Love";
+    atv2[1].value.u.printableString.length = 4;
 
     /* */
     tests[0].val = &n1;

@@ -485,7 +485,8 @@ hx509_ca_tbs_add_crl_dp_uri(hx509_context context,
 	name.u.fullName.val = &gn;
 
 	gn.element = choice_GeneralName_uniformResourceIdentifier;
-	gn.u.uniformResourceIdentifier = rk_UNCONST(uri);
+	gn.u.uniformResourceIdentifier.data = rk_UNCONST(uri);
+	gn.u.uniformResourceIdentifier.length = strlen(uri);
 
 	ASN1_MALLOC_ENCODE(DistributionPointName,
 			   dp.distributionPoint->data,
@@ -785,7 +786,8 @@ hx509_ca_tbs_add_san_hostname(hx509_context context,
 
     memset(&gn, 0, sizeof(gn));
     gn.element = choice_GeneralName_dNSName;
-    gn.u.dNSName = rk_UNCONST(dnsname);
+    gn.u.dNSName.data = rk_UNCONST(dnsname);
+    gn.u.dNSName.length = strlen(dnsname);
 
     return add_GeneralNames(&tbs->san, &gn);
 }
@@ -812,7 +814,8 @@ hx509_ca_tbs_add_san_rfc822name(hx509_context context,
 
     memset(&gn, 0, sizeof(gn));
     gn.element = choice_GeneralName_rfc822Name;
-    gn.u.rfc822Name = rk_UNCONST(rfc822Name);
+    gn.u.rfc822Name.data = rk_UNCONST(rfc822Name);
+    gn.u.rfc822Name.length = strlen(rfc822Name);
 
     return add_GeneralNames(&tbs->san, &gn);
 }

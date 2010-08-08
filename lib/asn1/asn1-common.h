@@ -20,8 +20,8 @@ typedef struct heim_octet_string {
 
 typedef char *heim_general_string;
 typedef char *heim_utf8_string;
-typedef char *heim_printable_string;
-typedef char *heim_ia5_string;
+typedef struct heim_octet_string heim_printable_string;
+typedef struct heim_octet_string heim_ia5_string;
 
 typedef struct heim_bmp_string {
     size_t length;

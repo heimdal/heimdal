@@ -1726,9 +1726,9 @@ match_general_name(const GeneralName *c, const GeneralName *n, int *match)
 	if (lenc > lenn)
 	    return HX509_NAME_CONSTRAINT_ERROR;
 	ptr = n->u.dNSName.data;
-	if (memcmp(&ptr[lenn - lenc], c->u.dNSName.data, c->u.dNSName.length) != 0)
+	if (memcmp(&ptr[lenn - lenc], c->u.dNSName.data, lenc) != 0)
 	    return HX509_NAME_CONSTRAINT_ERROR;
-	if (lenc != lenn && ptr[lenn - lenc - 1] != '.')
+	if (lenn != lenc && ptr[lenn - lenc - 1] != '.')
 	    return HX509_NAME_CONSTRAINT_ERROR;
 	*match = 1;
 	return 0;

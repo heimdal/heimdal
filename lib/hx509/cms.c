@@ -1170,6 +1170,7 @@ struct sigctx {
     heim_octet_string content;
     hx509_peer_info peer;
     int cmsidflag;
+    int leafonly;
     hx509_certs certs;
     hx509_certs anchors;
     hx509_certs pool;
@@ -1360,7 +1361,7 @@ sig_process(hx509_context context, void *ctx, hx509_cert cert)
     if (sigctx->certs) {
 	unsigned int i;
 
-	if (sigctx->pool) {
+	if (sigctx->pool && sigctx->leafonly == 0) {
 	    _hx509_calculate_path(context,
 				  HX509_CALCULATE_PATH_NO_ANCHOR,
 				  time(NULL),
@@ -1454,9 +1455,22 @@ hx509_cms_create_signed(hx509_context context,
     else
 	sigctx.cmsidflag = CMS_ID_SKI;
 
-    ret = hx509_certs_init(context, "MEMORY:certs", 0, NULL, &sigctx.certs);
-    if (ret)
-	return ret;
+    /**
+     * Use HX509_CMS_SIGNATURE_LEAF_ONLY to only request leaf
+     * certificates to be added to the SignedData.
+     */
+    sigctx.leafonly = (flags & HX509_CMS_SIGNATURE_LEAF_ONLY) ? 1 : 0;
+
+    /**
+     * Use HX509_CMS_NO_CERTS to make the SignedData contain no
+     * certificates, overrides HX509_CMS_SIGNATURE_LEAF_ONLY.
+     */
+
+    if ((flags & HX509_CMS_SIGNATURE_NO_CERTS) == 0) {
+	ret = hx509_certs_init(context, "MEMORY:certs", 0, NULL, &sigctx.certs);
+	if (ret)
+	    return ret;
+    }
 
     sigctx.anchors = anchors;
     sigctx.pool = pool;

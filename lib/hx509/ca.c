@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2006 - 2007 Kungliga Tekniska Högskolan
+ * Copyright (c) 2006 - 2010 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  *
@@ -53,11 +53,15 @@ struct hx509_ca_tbs {
 	unsigned int key:1;
 	unsigned int serial:1;
 	unsigned int domaincontroller:1;
+	unsigned int xUniqueID:1;
     } flags;
     time_t notBefore;
     time_t notAfter;
     int pathLenConstraint; /* both for CA and Proxy */
     CRLDistributionPoints crldp;
+    heim_bit_string subjectUniqueID;
+    heim_bit_string issuerUniqueID;
+
 };
 
 /**
@@ -79,15 +83,6 @@ hx509_ca_tbs_init(hx509_context context, hx509_ca_tbs *tbs)
     *tbs = calloc(1, sizeof(**tbs));
     if (*tbs == NULL)
 	return ENOMEM;
-
-    (*tbs)->subject = NULL;
-    (*tbs)->san.len = 0;
-    (*tbs)->san.val = NULL;
-    (*tbs)->eku.len = 0;
-    (*tbs)->eku.val = NULL;
-    (*tbs)->pathLenConstraint = 0;
-    (*tbs)->crldp.len = 0;
-    (*tbs)->crldp.val = NULL;
 
     return 0;
 }
@@ -111,7 +106,8 @@ hx509_ca_tbs_free(hx509_ca_tbs *tbs)
     free_ExtKeyUsage(&(*tbs)->eku);
     der_free_heim_integer(&(*tbs)->serial);
     free_CRLDistributionPoints(&(*tbs)->crldp);
-
+    der_free_bit_string(&(*tbs)->subjectUniqueID);
+    der_free_bit_string(&(*tbs)->issuerUniqueID);
     hx509_name_free(&(*tbs)->subject);
 
     memset(*tbs, 0, sizeof(**tbs));
@@ -843,6 +839,48 @@ hx509_ca_tbs_set_subject(hx509_context context,
 }
 
 /**
+ * Set the issuerUniqueID and subjectUniqueID
+ *
+ * These are only supposed to be used considered with version 2
+ * certificates, replaced by the two extensions SubjectKeyIdentifier
+ * and IssuerKeyIdentifier. This function is to allow application
+ * using legacy protocol to issue them.
+ *
+ * @param context A hx509 context.
+ * @param tbs object to be signed.
+ * @param issuerUniqueID to be set
+ * @param subjectUniqueID to be set
+ *
+ * @return An hx509 error code, see hx509_get_error_string().
+ *
+ * @ingroup hx509_ca
+ */
+
+int
+hx509_ca_tbs_set_unique(hx509_context context,
+			hx509_ca_tbs tbs,
+			const heim_bit_string *subjectUniqueID,
+			const heim_bit_string *issuerUniqueID)
+{
+    int ret;
+
+    der_free_bit_string(&tbs->subjectUniqueID);
+    der_free_bit_string(&tbs->issuerUniqueID);
+    
+    tbs->flags.xUniqueID = 0;
+    ret = der_copy_bit_string(subjectUniqueID, &tbs->subjectUniqueID);
+    if (ret)
+	return ret;
+
+    ret = der_copy_bit_string(issuerUniqueID, &tbs->issuerUniqueID);
+    if (ret)
+	return ret;
+    tbs->flags.xUniqueID = 1;
+
+    return 0;
+}
+
+/**
  * Expand the the subject name in the to-be-signed certificate object
  * using hx509_name_expand().
  *
@@ -863,6 +901,10 @@ hx509_ca_tbs_subject_expand(hx509_context context,
 {
     return hx509_name_expand(context, tbs->subject, env);
 }
+
+/*
+ *
+ */
 
 static int
 add_extension(hx509_context context,
@@ -1094,6 +1136,26 @@ ca_sign(hx509_context context,
     }
     /* issuerUniqueID  [1]  IMPLICIT BIT STRING OPTIONAL */
     /* subjectUniqueID [2]  IMPLICIT BIT STRING OPTIONAL */
+    if (tbs->flags.xUniqueID) {
+	tbsc->subjectUniqueID = calloc(1, sizeof(*tbsc->subjectUniqueID));
+	tbsc->issuerUniqueID = calloc(1, sizeof(*tbsc->issuerUniqueID));
+	if (tbsc->subjectUniqueID == NULL || tbsc->issuerUniqueID == NULL) {
+	    ret = ENOMEM;
+	    hx509_set_error_string(context, 0, ret, "Out of memory");
+	    goto out;
+	}
+	ret = der_copy_bit_string(&tbs->subjectUniqueID, tbsc->subjectUniqueID);
+	if (ret) {
+	    hx509_set_error_string(context, 0, ret, "Out of memory");
+	    goto out;
+	}
+	ret = der_copy_bit_string(&tbs->issuerUniqueID, tbsc->issuerUniqueID);
+	if (ret) {
+	    hx509_set_error_string(context, 0, ret, "Out of memory");
+	    goto out;
+	}
+    }
+
     /* extensions      [3]  EXPLICIT Extensions OPTIONAL */
     tbsc->extensions = calloc(1, sizeof(*tbsc->extensions));
     if (tbsc->extensions == NULL) {

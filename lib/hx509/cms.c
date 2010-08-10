@@ -1416,6 +1416,12 @@ cert_process(hx509_context context, void *ctx, hx509_cert cert)
     return ret;
 }
 
+static int
+cmp_AlgorithmIdentifier(const AlgorithmIdentifier *p, const AlgorithmIdentifier *q)
+{
+    return der_heim_oid_cmp(&p->algorithm, &q->algorithm);
+}
+
 int
 hx509_cms_create_signed(hx509_context context,
 			int flags,
@@ -1428,7 +1434,7 @@ hx509_cms_create_signed(hx509_context context,
 			hx509_certs pool,
 			heim_octet_string *signed_data)
 {
-    unsigned int i;
+    unsigned int i, j;
     hx509_name name;
     int ret;
     size_t size;
@@ -1511,22 +1517,19 @@ hx509_cms_create_signed(hx509_context context,
     }
 
     if (sigctx.sd.signerInfos.len) {
-	ALLOC_SEQ(&sigctx.sd.digestAlgorithms, sigctx.sd.signerInfos.len);
-	if (sigctx.sd.digestAlgorithms.val == NULL) {
-	    ret = ENOMEM;
-	    hx509_clear_error_string(context);
-	    goto out;
-	}
-	
-	/* XXX remove dups */
 	for (i = 0; i < sigctx.sd.signerInfos.len; i++) {
 	    AlgorithmIdentifier *di =
 		&sigctx.sd.signerInfos.val[i].digestAlgorithm;
-	    ret = copy_AlgorithmIdentifier(di,
-					   &sigctx.sd.digestAlgorithms.val[i]);
-	    if (ret) {
-		hx509_clear_error_string(context);
-		goto out;
+
+	    for (j = 0; j < sigctx.sd.digestAlgorithms.len; j++)
+		if (cmp_AlgorithmIdentifier(di, &sigctx.sd.digestAlgorithms.val[j]) == 0)
+		    break;
+	    if (j < sigctx.sd.digestAlgorithms.len) {
+		ret = add_DigestAlgorithmIdentifiers(&sigctx.sd.digestAlgorithms, di);
+		if (ret) {
+		    hx509_clear_error_string(context);
+		    goto out;
+		}
 	    }
 	}
     }

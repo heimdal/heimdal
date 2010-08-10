@@ -47,8 +47,8 @@ generate_type_seq (const Symbol *s)
     while(type->type == TTag)
 	type = type->subtype;
 
-    if (type->type != TSequenceOf) {
-	printf("%s not seq of %d\n", s->name, (int)type->type);
+    if (type->type != TSequenceOf && type->type != TSetOf) {
+	fprintf(stderr, "%s not seq of %d\n", s->name, (int)type->type);
 	return;
     }
 

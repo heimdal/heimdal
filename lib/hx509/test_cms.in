@@ -414,6 +414,45 @@ ${hxtool} cms-verify-sd \
 	--pem \
 	sd.pem > /dev/null
 
+echo "create signed data (no certs, detached sig)"
+cp "$srcdir/test_chain.in" sd
+${hxtool} cms-sign \
+	--certificate=FILE:$srcdir/data/test.crt,$srcdir/data/test.key \
+	--detached-signature \
+	--no-embedded-certs \
+	"$srcdir/data/static-file" \
+	sd > /dev/null || exit 1
+
+echo "create signed data (leif only, detached sig)"
+cp "$srcdir/test_chain.in" sd
+${hxtool} cms-sign \
+	--certificate=FILE:$srcdir/data/test.crt,$srcdir/data/test.key \
+	--detached-signature \
+	--embed-leaf-only \
+	"$srcdir/data/static-file" \
+	sd > /dev/null || exit 1
+
+echo "create signed data (no certs, detached sig, 2 signers)"
+cp "$srcdir/test_chain.in" sd
+${hxtool} cms-sign \
+	--certificate=FILE:$srcdir/data/test.crt,$srcdir/data/test.key \
+	--certificate=FILE:$srcdir/data/sub-cert.crt,$srcdir/data/sub-cert.key \
+	--detached-signature \
+	--no-embedded-certs \
+	"$srcdir/data/static-file" \
+	sd > /dev/null || exit 1
+
+echo "create signed data (no certs, detached sig, 3 signers)"
+cp "$srcdir/test_chain.in" sd
+${hxtool} cms-sign \
+	--certificate=FILE:$srcdir/data/test.crt,$srcdir/data/test.key \
+	--certificate=FILE:$srcdir/data/sub-cert.crt,$srcdir/data/sub-cert.key \
+	--certificate=FILE:$srcdir/data/test-ds-only.crt,$srcdir/data/test-ds-only.key \
+	--detached-signature \
+	--no-embedded-certs \
+	"$srcdir/data/static-file" \
+	sd > /dev/null || exit 1
+
 echo "envelope data (content-type)"
 ${hxtool} cms-envelope \
 	--certificate=FILE:$srcdir/data/test.crt \

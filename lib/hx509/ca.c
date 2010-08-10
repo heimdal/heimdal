@@ -867,15 +867,17 @@ hx509_ca_tbs_set_unique(hx509_context context,
     der_free_bit_string(&tbs->subjectUniqueID);
     der_free_bit_string(&tbs->issuerUniqueID);
     
-    tbs->flags.xUniqueID = 0;
-    ret = der_copy_bit_string(subjectUniqueID, &tbs->subjectUniqueID);
-    if (ret)
-	return ret;
+    if (subjectUniqueID) {
+	ret = der_copy_bit_string(subjectUniqueID, &tbs->subjectUniqueID);
+	if (ret)
+	    return ret;
+    }
 
-    ret = der_copy_bit_string(issuerUniqueID, &tbs->issuerUniqueID);
-    if (ret)
-	return ret;
-    tbs->flags.xUniqueID = 1;
+    if (issuerUniqueID) {
+	ret = der_copy_bit_string(issuerUniqueID, &tbs->issuerUniqueID);
+	if (ret)
+	    return ret;
+    }
 
     return 0;
 }
@@ -1135,21 +1137,29 @@ ca_sign(hx509_context context,
 	goto out;
     }
     /* issuerUniqueID  [1]  IMPLICIT BIT STRING OPTIONAL */
-    /* subjectUniqueID [2]  IMPLICIT BIT STRING OPTIONAL */
-    if (tbs->flags.xUniqueID) {
-	tbsc->subjectUniqueID = calloc(1, sizeof(*tbsc->subjectUniqueID));
+    if (tbs->issuerUniqueID.length) {
 	tbsc->issuerUniqueID = calloc(1, sizeof(*tbsc->issuerUniqueID));
-	if (tbsc->subjectUniqueID == NULL || tbsc->issuerUniqueID == NULL) {
+	if (tbsc->issuerUniqueID == NULL) {
 	    ret = ENOMEM;
 	    hx509_set_error_string(context, 0, ret, "Out of memory");
 	    goto out;
 	}
-	ret = der_copy_bit_string(&tbs->subjectUniqueID, tbsc->subjectUniqueID);
+	ret = der_copy_bit_string(&tbs->issuerUniqueID, tbsc->issuerUniqueID);
 	if (ret) {
 	    hx509_set_error_string(context, 0, ret, "Out of memory");
 	    goto out;
 	}
-	ret = der_copy_bit_string(&tbs->issuerUniqueID, tbsc->issuerUniqueID);
+    }
+    /* subjectUniqueID [2]  IMPLICIT BIT STRING OPTIONAL */
+    if (tbs->subjectUniqueID.length) {
+	tbsc->subjectUniqueID = calloc(1, sizeof(*tbsc->subjectUniqueID));
+	if (tbsc->subjectUniqueID == NULL) {
+	    ret = ENOMEM;
+	    hx509_set_error_string(context, 0, ret, "Out of memory");
+	    goto out;
+	}
+
+	ret = der_copy_bit_string(&tbs->subjectUniqueID, tbsc->subjectUniqueID);
 	if (ret) {
 	    hx509_set_error_string(context, 0, ret, "Out of memory");
 	    goto out;

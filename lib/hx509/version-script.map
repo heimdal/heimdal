@@ -57,6 +57,7 @@ HEIMDAL_X509_1.2 {
 		hx509_ca_tbs_set_spki;
 		hx509_ca_tbs_set_subject;
 		hx509_ca_tbs_set_template;
+		hx509_ca_tbs_set_unique;
 		hx509_ca_tbs_subject_expand;
 		hx509_ca_tbs_template_units;
 		hx509_cert;
@@ -76,6 +77,8 @@ HEIMDAL_X509_1.2 {
 		hx509_cert_get_notBefore;
 		hx509_cert_get_serialnumber;
 		hx509_cert_get_subject;
+		hx509_cert_get_issuer_unique_id;
+		hx509_cert_get_subject_unique_id;
 		hx509_cert_init;
 		hx509_cert_init_data;
 		hx509_cert_keyusage_print;

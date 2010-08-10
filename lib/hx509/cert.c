@@ -1510,6 +1510,65 @@ hx509_cert_get_SPKI_AlgorithmIdentifier(hx509_context context,
     return ret;
 }
 
+static int
+get_x_unique_id(hx509_context context, const char *name, 
+		const heim_bit_string *cert, heim_bit_string *subject)
+{
+    int ret;
+
+    if (cert == NULL) {
+	ret = HX509_EXTENSION_NOT_FOUND;
+	hx509_set_error_string(context, 0, ret, "%s unique id doesn't exists", name);
+	return ret;
+    }
+    ret = der_copy_bit_string(cert, subject);
+    if (ret) {
+	hx509_set_error_string(context, 0, ret, "malloc out of memory", name);
+	return ret;
+    }
+    return 0;
+}
+
+/**
+ * Get a copy of the Issuer Unique ID
+ *
+ * @param context a hx509_context
+ * @param p a hx509 certificate
+ * @param issuer the issuer id returned, free with der_free_bit_string()
+ *
+ * @return An hx509 error code, see hx509_get_error_string(). The
+ * error code HX509_EXTENSION_NOT_FOUND is returned if the certificate
+ * doesn't have a issuerUniqueID
+ *
+ * @ingroup hx509_cert
+ */
+
+int
+hx509_cert_get_issuer_unique_id(hx509_context context, hx509_cert p, heim_bit_string *issuer)
+{
+    return get_x_unique_id(context, "issuer", p->data->tbsCertificate.issuerUniqueID, issuer);
+}
+
+/**
+ * Get a copy of the Subect Unique ID
+ *
+ * @param context a hx509_context
+ * @param p a hx509 certificate
+ * @param subject the subject id returned, free with der_free_bit_string()
+ *
+ * @return An hx509 error code, see hx509_get_error_string(). The
+ * error code HX509_EXTENSION_NOT_FOUND is returned if the certificate
+ * doesn't have a subjectUniqueID
+ *
+ * @ingroup hx509_cert
+ */
+
+int
+hx509_cert_get_subject_unique_id(hx509_context context, hx509_cert p, heim_bit_string *subject)
+{
+    return get_x_unique_id(context, "subject", p->data->tbsCertificate.subjectUniqueID, subject);
+}
+
 
 hx509_private_key
 _hx509_cert_private_key(hx509_cert p)

@@ -423,6 +423,10 @@ cms_create_sd(struct cms_create_sd_options *opt, int argc, char **argv)
 	if (ret)
 	    hx509_err(context, 1, ret, "hx509_certs_find");
     }
+    if (!opt->embedded_certs_flag)
+	flags |= HX509_CMS_SIGNATURE_NO_CERTS;
+    if (opt->embed_leaf_only_flag)
+	flags |= HX509_CMS_SIGNATURE_LEAF_ONLY;
 
     ret = rk_undumpdata(infile, &p, &sz);
     if (ret)

@@ -157,6 +157,8 @@ typedef enum {
 #define HX509_CMS_SIGNATURE_DETACHED			0x01
 #define HX509_CMS_SIGNATURE_ID_NAME			0x02
 #define HX509_CMS_SIGNATURE_NO_SIGNER			0x04
+#define HX509_CMS_SIGNATURE_LEAF_ONLY			0x08
+#define HX509_CMS_SIGNATURE_NO_CERTS			0x10
 
 /* hx509_verify_hostname nametype */
 typedef enum  {

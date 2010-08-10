@@ -104,6 +104,16 @@ command = {
 		type = "flag"
 		help = "use subject name for CMS Identifier"
 	}
+	option = {
+		long = "embedded-certs"
+		type = "-flag"
+		help = "dont embedded certficiates"
+	}
+	option = {
+		long = "embed-leaf-only"
+		type = "flag"
+		help = "only embed leaf certificate"
+	}
 	min_args="1"
 	max_args="2"
 	argument="in-file out-file"

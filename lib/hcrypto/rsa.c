@@ -61,9 +61,10 @@
  *
  * gmp: 	 0.733615
  * tfm: 	 2.450173
- * ltm:		 2.452774 (default in hcrypto)
- * openssl:	 4.046564
- * imath: 	22.975163
+ * ltm:		 3.79 (default in hcrypto)
+ * openssl:	 4.04
+ * cdsa:	15.89
+ * imath: 	40.62
  *
  * See the library functions here: @ref hcrypto_rsa
  */

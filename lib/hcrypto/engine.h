@@ -68,6 +68,16 @@
 
 typedef struct hc_engine ENGINE;
 
+#define NID_md2			0
+#define NID_md4			1
+#define NID_md5			2
+#define NID_sha1		4
+#define NID_sha256		5
+
+/*
+ *
+ */
+
 #include <hcrypto/rsa.h>
 #include <hcrypto/dsa.h>
 #include <hcrypto/dh.h>

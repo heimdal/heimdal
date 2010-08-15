@@ -42,6 +42,8 @@
 
 #include <roken.h>
 
+#ifdef USE_HCRYPTO_IMATH
+
 #include "imath/imath.h"
 #include "imath/iprime.h"
 
@@ -673,9 +675,14 @@ const RSA_METHOD hc_rsa_imath_method = {
     NULL,
     imath_rsa_generate_key
 };
+#endif
 
 const RSA_METHOD *
 RSA_imath_method(void)
 {
+#ifdef USE_HCRYPTO_IMATH
     return &hc_rsa_imath_method;
+#else
+    return NULL;
+#endif
 }

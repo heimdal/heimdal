@@ -1,7 +1,9 @@
 /*
- * Copyright (c) 2003-2004 Kungliga Tekniska Högskolan
+ * Copyright (c) 2010 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
+ *
+ * Portions Copyright (c) 2010 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -31,53 +33,37 @@
  * SUCH DAMAGE.
  */
 
-/* $Id$ */
+#include <config.h>
 
-#ifndef HEIM_AES_H
-#define HEIM_AES_H 1
+#include <sys/errno.h>
 
-/* symbol renaming */
-#define AES_set_encrypt_key hc_AES_set_encrypt_key
-#define AES_set_decrypt_key hc_AES_decrypt_key
-#define AES_encrypt hc_AES_encrypt
-#define AES_decrypt hc_AES_decrypt
-#define AES_cbc_encrypt hc_AES_cbc_encrypt
-#define AES_cfb8_encrypt hc_AES_cfb8_encrypt
+#include <stdio.h>
+#include <stdlib.h>
 
-/*
- *
- */
+#include <krb5-types.h>
+#include <rfc2459_asn1.h>
+#include <hcrypto/bn.h>
 
-#define AES_BLOCK_SIZE 16
-#define AES_MAXNR 14
 
-#define AES_ENCRYPT 1
-#define AES_DECRYPT 0
+#include "common.h"
 
-typedef struct aes_key {
-    uint32_t key[(AES_MAXNR+1)*4];
-    int rounds;
-} AES_KEY;
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-int AES_set_encrypt_key(const unsigned char *, const int, AES_KEY *);
-int AES_set_decrypt_key(const unsigned char *, const int, AES_KEY *);
-
-void AES_encrypt(const unsigned char *, unsigned char *, const AES_KEY *);
-void AES_decrypt(const unsigned char *, unsigned char *, const AES_KEY *);
-
-void AES_cbc_encrypt(const unsigned char *, unsigned char *,
-		     unsigned long, const AES_KEY *,
-		     unsigned char *, int);
-void AES_cfb8_encrypt(const unsigned char *, unsigned char *,
-		      unsigned long, const AES_KEY *,
-		      unsigned char *, int);
-
-#ifdef  __cplusplus
+int
+_hc_BN_to_integer(BIGNUM *bn, heim_integer *integer)
+{
+    integer->length = BN_num_bytes(bn);
+    integer->data = malloc(integer->length);
+    if (integer->data == NULL)
+	return ENOMEM;
+    BN_bn2bin(bn, integer->data);
+    integer->negative = BN_is_negative(bn);
+    return 0;
 }
-#endif
 
-#endif /* HEIM_AES_H */
+BIGNUM *
+_hc_integer_to_BN(const heim_integer *i, BIGNUM *bn)
+{
+    bn = BN_bin2bn(i->data, i->length, bn);
+    if (bn)
+	BN_set_negative(bn, i->negative);
+    return bn;
+}

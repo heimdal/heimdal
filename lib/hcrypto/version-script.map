@@ -3,6 +3,7 @@
 HEIMDAL_CRYPTO_1.0 {
 	global:
 		hc_AES_cbc_encrypt;
+		hc_AES_cfb8_encrypt;
 		hc_AES_decrypt;
 		hc_AES_decrypt_key;
 		hc_BN_CTX_end;
@@ -69,7 +70,6 @@ HEIMDAL_CRYPTO_1.0 {
 		hc_DH_get_default_method;
 		hc_DH_get_ex_data;
 		hc_DH_imath_method;
-		hc_DH_tfm_method;
 		hc_DH_ltm_method;
 		hc_DH_gmp_method;
 		hc_DH_new;
@@ -251,7 +251,6 @@ HEIMDAL_CRYPTO_1.0 {
 		hc_RSA_get_default_method;
 		hc_RSA_get_method;
 		hc_RSA_imath_method;
-		hc_RSA_tfm_method;
 		hc_RSA_new;
 		hc_RSA_new_method;
 		hc_RSA_null_method;

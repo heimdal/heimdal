@@ -244,6 +244,7 @@ ENGINE_load_builtin_engines(void)
     if (ret != 1)
 	ENGINE_finish(engine);
 
+#ifdef USE_HCRYPTO_TFM
     /*
      * TFM
      */
@@ -261,7 +262,9 @@ ENGINE_load_builtin_engines(void)
     ret = add_engine(engine);
     if (ret != 1)
 	ENGINE_finish(engine);
+#endif /* USE_HCRYPTO_TFM */
 
+#ifdef USE_HCRYPTO_LTM
     /*
      * ltm
      */
@@ -279,7 +282,9 @@ ENGINE_load_builtin_engines(void)
     ret = add_engine(engine);
     if (ret != 1)
 	ENGINE_finish(engine);
+#endif
 
+#ifdef USE_HCRYPTO_IMATH
     /*
      * imath
      */
@@ -297,6 +302,7 @@ ENGINE_load_builtin_engines(void)
     ret = add_engine(engine);
     if (ret != 1)
 	ENGINE_finish(engine);
+#endif
 
 #ifdef HAVE_GMP
     /*

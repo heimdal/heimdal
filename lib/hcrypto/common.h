@@ -1,7 +1,9 @@
 /*
- * Copyright (c) 2003-2004 Kungliga Tekniska Högskolan
+ * Copyright (c) 2010 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
+ *
+ * Portions Copyright (c) 2010 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -31,53 +33,13 @@
  * SUCH DAMAGE.
  */
 
-/* $Id$ */
+#ifndef HCRYPTO_COMMON_H
+#define HCRYPTO_COMMON_H 1
 
-#ifndef HEIM_AES_H
-#define HEIM_AES_H 1
+int
+_hc_BN_to_integer(BIGNUM *, heim_integer *);
 
-/* symbol renaming */
-#define AES_set_encrypt_key hc_AES_set_encrypt_key
-#define AES_set_decrypt_key hc_AES_decrypt_key
-#define AES_encrypt hc_AES_encrypt
-#define AES_decrypt hc_AES_decrypt
-#define AES_cbc_encrypt hc_AES_cbc_encrypt
-#define AES_cfb8_encrypt hc_AES_cfb8_encrypt
+BIGNUM *
+_hc_integer_to_BN(const heim_integer *i, BIGNUM *bn);
 
-/*
- *
- */
-
-#define AES_BLOCK_SIZE 16
-#define AES_MAXNR 14
-
-#define AES_ENCRYPT 1
-#define AES_DECRYPT 0
-
-typedef struct aes_key {
-    uint32_t key[(AES_MAXNR+1)*4];
-    int rounds;
-} AES_KEY;
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-int AES_set_encrypt_key(const unsigned char *, const int, AES_KEY *);
-int AES_set_decrypt_key(const unsigned char *, const int, AES_KEY *);
-
-void AES_encrypt(const unsigned char *, unsigned char *, const AES_KEY *);
-void AES_decrypt(const unsigned char *, unsigned char *, const AES_KEY *);
-
-void AES_cbc_encrypt(const unsigned char *, unsigned char *,
-		     unsigned long, const AES_KEY *,
-		     unsigned char *, int);
-void AES_cfb8_encrypt(const unsigned char *, unsigned char *,
-		      unsigned long, const AES_KEY *,
-		      unsigned char *, int);
-
-#ifdef  __cplusplus
-}
-#endif
-
-#endif /* HEIM_AES_H */
+#endif /* HCRYPTO_COMMON_H */

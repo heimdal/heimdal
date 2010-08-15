@@ -81,6 +81,7 @@ static void
 check_rsa(const unsigned char *in, size_t len, RSA *rsa, int padding)
 {
     unsigned char *res, *res2;
+    unsigned int len2;
     int keylen;
 
     res = malloc(RSA_size(rsa));
@@ -128,6 +129,14 @@ check_rsa(const unsigned char *in, size_t len, RSA *rsa, int padding)
 
     if (memcmp(res2, in, len) != 0)
 	errx(1, "string not the same after decryption");
+
+    len2 = keylen;
+
+    if (RSA_sign(NID_sha1, in, len, res, &len2, rsa) != 1)
+	errx(1, "RSA_sign failed");
+
+    if (RSA_verify(NID_sha1, in, len, res, len2, rsa) != 1)
+	errx(1, "RSA_verify failed");
 
     free(res);
     free(res2);

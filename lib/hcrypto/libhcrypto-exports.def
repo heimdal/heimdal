@@ -66,7 +66,7 @@ EXPORTS
 	hc_DH_get_default_method
 	hc_DH_get_ex_data
 	hc_DH_imath_method
-	hc_DH_tfm_method
+	hc_DH_ltm_method
 ;	hc_DH_gmp_method
 	hc_DH_new
 	hc_DH_new_method
@@ -238,7 +238,7 @@ EXPORTS
 	hc_RSA_get_default_method
 	hc_RSA_get_method
 	hc_RSA_imath_method
-	hc_RSA_tfm_method
+	hc_RSA_ltm_method
 	hc_RSA_new
 	hc_RSA_new_method
 	hc_RSA_null_method

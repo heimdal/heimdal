@@ -47,9 +47,9 @@
 #define EVP_cc_aes_128_cbc hc_EVP_cc_aes_128_cbc
 #define EVP_cc_aes_192_cbc hc_EVP_cc_aes_192_cbc
 #define EVP_cc_aes_256_cbc hc_EVP_cc_aes_256_cbc
-#define EVP_cc_aes_cfb_128_cbc hc_EVP_cc_aes_128_cfb8
-#define EVP_cc_aes_cfb_192_cbc hc_EVP_cc_aes_192_cfb8
-#define EVP_cc_aes_cfb_256_cbc hc_EVP_cc_aes_256_cfb8
+#define EVP_cc_aes_128_cfb8 hc_EVP_cc_aes_128_cfb8
+#define EVP_cc_aes_192_cfb8 hc_EVP_cc_aes_192_cfb8
+#define EVP_cc_aes_256_cfb8 hc_EVP_cc_aes_256_cfb8
 #define EVP_cc_rc4 hc_EVP_cc_rc4
 #define EVP_cc_rc4_40 hc_EVP_cc_rc4_40
 #define EVP_cc_rc2_40_cbc hc_EVP_cc_rc2_40_cbc

@@ -31,15 +31,15 @@
  * SUCH DAMAGE.
  */
 
-#ifdef HAVE_CONFIG_H
 #include <config.h>
-#endif
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <dh.h>
 
 #include <roken.h>
+
+#ifdef USE_HCRYPTO_TFM
 
 #include "tfm.h"
 
@@ -247,3 +247,5 @@ DH_tfm_method(void)
 {
     return &_hc_dh_tfm_method;
 }
+
+#endif

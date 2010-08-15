@@ -117,9 +117,8 @@ cc_do_cfb8_cipher(EVP_CIPHER_CTX *ctx,
         memcpy(ctx->iv, &oiv[1], ctx->cipher->iv_len);
     }
 
-     return 1;
- }
-
+    return 1;
+}
 
 static int
 cc_cleanup(EVP_CIPHER_CTX *ctx)
@@ -334,6 +333,10 @@ EVP_cc_aes_256_cbc(void)
     return &c;
 }
 
+/*
+ *
+ */
+
 static int
 cc_aes_cfb8_init(EVP_CIPHER_CTX *ctx,
 		const unsigned char * key,
@@ -341,6 +344,7 @@ cc_aes_cfb8_init(EVP_CIPHER_CTX *ctx,
 		int encp)
 {
     struct cc_key *cc = ctx->cipher_data;
+    memcpy(ctx->iv, iv, ctx->cipher->iv_len);
     return init_cc_key(1, kCCAlgorithmAES128, kCCOptionECBMode,
 		       key, ctx->cipher->key_len, NULL, &cc->href);
 }
@@ -361,7 +365,7 @@ EVP_cc_aes_128_cfb8(void)
 	1,
 	kCCKeySizeAES128,
 	kCCBlockSizeAES128,
-	EVP_CIPH_CFB8_MODE,
+	EVP_CIPH_CFB8_MODE|EVP_CIPH_ALWAYS_CALL_INIT,
 	cc_aes_cfb8_init,
 	cc_do_cfb8_cipher,
 	cc_cleanup,
@@ -390,8 +394,8 @@ EVP_cc_aes_192_cfb8(void)
 	1,
 	kCCKeySizeAES192,
 	kCCBlockSizeAES128,
-	EVP_CIPH_CFB8_MODE,
-	cc_aes_cfb8_init,	
+	EVP_CIPH_CFB8_MODE|EVP_CIPH_ALWAYS_CALL_INIT,
+	cc_aes_cfb8_init,
 	cc_do_cfb8_cipher,
 	cc_cleanup,
 	sizeof(struct cc_key),
@@ -416,10 +420,10 @@ EVP_cc_aes_256_cfb8(void)
 {
     static const EVP_CIPHER c = {
 	0,
-	1,
+	kCCBlockSizeAES128,
 	kCCKeySizeAES256,
 	kCCBlockSizeAES128,
-	EVP_CIPH_CFB8_MODE,
+	EVP_CIPH_CFB8_MODE|EVP_CIPH_ALWAYS_CALL_INIT,
 	cc_aes_cfb8_init,
 	cc_do_cfb8_cipher,
 	cc_cleanup,

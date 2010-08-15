@@ -42,6 +42,8 @@
 
 #include <roken.h>
 
+#ifdef USE_HCRYPTO_TFM
+
 #include "tfm.h"
 
 static void
@@ -561,8 +563,15 @@ const RSA_METHOD hc_rsa_tfm_method = {
     tfm_rsa_generate_key
 };
 
+#endif
+
 const RSA_METHOD *
 RSA_tfm_method(void)
 {
+#ifdef USE_HCRYPTO_TFM
     return &hc_rsa_tfm_method;
+#else
+    return NULL;
+#endif
 }
+

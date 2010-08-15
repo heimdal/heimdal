@@ -3,6 +3,8 @@
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  *
+ * Portions Copyright (c) 2009 Apple Inc. All rights reserved.
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -111,8 +113,12 @@ main(int argc, char **argv)
     buffer = emalloc(len);
 
     if (rand_method) {
-	if (strcasecmp(rand_method, "fortuna") == 0)
+	if (0) {
+	}
+#ifndef NO_RAND_FORTUNA_METHOD
+	else if (strcasecmp(rand_method, "fortuna") == 0)
 	    RAND_set_rand_method(RAND_fortuna_method());
+#endif
 #ifndef NO_RAND_UNIX_METHOD
 	else if (strcasecmp(rand_method, "unix") == 0)
 	    RAND_set_rand_method(RAND_unix_method());

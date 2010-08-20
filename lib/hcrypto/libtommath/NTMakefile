@@ -163,3 +163,9 @@ $(LIBLTM): $(libltm_OBJs)
 	$(LIBCON)
 
 all:: $(INCFILES) $(LIBLTM)
+
+{}.c{$(OBJ)}.obj:
+	$(C2OBJ)
+
+{$(OBJ)}.c{$(OBJ)}.obj:
+	$(C2OBJ)

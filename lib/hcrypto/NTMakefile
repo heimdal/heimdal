@@ -142,9 +142,6 @@ $(LIBHCRYPTO): $(libhcrypto_OBJs)
 {imath/}.c{$(OBJ)}.obj:
 	$(C2OBJ)
 
-{libtommath/}.c{$(OBJ)}.obj:
-	$(C2OBJ)
-
 all:: $(LIBHCRYPTO)
 
 clean::

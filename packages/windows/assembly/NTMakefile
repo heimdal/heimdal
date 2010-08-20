@@ -81,7 +81,7 @@ asm-krb: \
 all:: asm-krb
 
 clean::
-	$(RM) $(ASMKRBDIR)\*.*
+	-$(RM) $(ASMKRBDIR)\*.*
 
 {$(BINDIR)}.dll{$(ASMKRBDIR)}.dll:
 	$(CP) $< $@
@@ -126,7 +126,7 @@ asm-gss: \
 all:: asm-gss
 
 clean::
-	$(RM) $(ASMGSSDIR)\*.*
+	-$(RM) $(ASMGSSDIR)\*.*
 
 {$(BINDIR)}.dll{$(ASMGSSDIR)}.dll:
 	$(CP) $< $@
@@ -140,7 +140,7 @@ test::
 all:: $(APPMANIFEST)
 
 clean::
-	$(RM) $(APPMANIFEST)
+	-$(RM) $(APPMANIFEST)
 
 $(APPMANIFEST): Heimdal.Application.manifest.in
 	$(SED)  -e "s,[@]gssname[@],$(ASMGSSNAME),g" \

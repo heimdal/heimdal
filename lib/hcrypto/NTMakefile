@@ -96,6 +96,7 @@ libhcrypto_OBJs = 			\
 	$(OBJ)\bn.obj			\
 	$(OBJ)\camellia.obj		\
 	$(OBJ)\camellia-ntt.obj		\
+	$(OBJ)\common.obj		\
 	$(OBJ)\des.obj			\
 	$(OBJ)\dh.obj			\
 	$(OBJ)\dh-imath.obj		\

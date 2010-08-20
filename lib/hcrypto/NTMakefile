@@ -29,7 +29,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 # 
 
-SUBDIRS=tomsfastmath
+SUBDIRS=libtommath
 
 RELDIR=lib\hcrypto
 
@@ -89,39 +89,39 @@ all:: $(INCFILES)
 
 # libhcrypto
 
-libhcrypto_OBJs = \
-	$(OBJ)\imath.obj	\
-	$(OBJ)\iprime.obj	\
-	$(OBJ)\aes.obj		\
-	$(OBJ)\bn.obj		\
-	$(OBJ)\camellia.obj	\
-	$(OBJ)\camellia-ntt.obj	\
-	$(OBJ)\des.obj		\
-	$(OBJ)\dh.obj		\
-	$(OBJ)\dh-imath.obj	\
-	$(OBJ)\dh-tfm.obj	\
-	$(OBJ)\dsa.obj		\
-	$(OBJ)\evp.obj		\
-	$(OBJ)\evp-hcrypto.obj	\
-	$(OBJ)\engine.obj	\
-	$(OBJ)\hmac.obj		\
-	$(OBJ)\md2.obj		\
-	$(OBJ)\md4.obj		\
-	$(OBJ)\md5.obj		\
-	$(OBJ)\pkcs5.obj	\
-	$(OBJ)\pkcs12.obj	\
-	$(OBJ)\rand-w32.obj	\
-	$(OBJ)\rand.obj		\
-	$(OBJ)\rc2.obj		\
-	$(OBJ)\rc4.obj		\
-	$(OBJ)\rijndael-alg-fst.obj \
-	$(OBJ)\rnd_keys.obj	\
-	$(OBJ)\rsa.obj		\
-	$(OBJ)\rsa-gmp.obj	\
-	$(OBJ)\rsa-imath.obj	\
-	$(OBJ)\rsa-tfm.obj	\
-	$(OBJ)\sha.obj		\
-	$(OBJ)\sha256.obj	\
+libhcrypto_OBJs = 			\
+	$(OBJ)\imath.obj		\
+	$(OBJ)\iprime.obj		\
+	$(OBJ)\aes.obj			\
+	$(OBJ)\bn.obj			\
+	$(OBJ)\camellia.obj		\
+	$(OBJ)\camellia-ntt.obj		\
+	$(OBJ)\des.obj			\
+	$(OBJ)\dh.obj			\
+	$(OBJ)\dh-imath.obj		\
+	$(OBJ)\dh-ltm.obj		\
+	$(OBJ)\dsa.obj			\
+	$(OBJ)\evp.obj			\
+	$(OBJ)\evp-hcrypto.obj		\
+	$(OBJ)\engine.obj		\
+	$(OBJ)\hmac.obj			\
+	$(OBJ)\md2.obj			\
+	$(OBJ)\md4.obj			\
+	$(OBJ)\md5.obj			\
+	$(OBJ)\pkcs5.obj		\
+	$(OBJ)\pkcs12.obj		\
+	$(OBJ)\rand-w32.obj		\
+	$(OBJ)\rand.obj			\
+	$(OBJ)\rc2.obj			\
+	$(OBJ)\rc4.obj			\
+	$(OBJ)\rijndael-alg-fst.obj	\
+	$(OBJ)\rnd_keys.obj		\
+	$(OBJ)\rsa.obj			\
+	$(OBJ)\rsa-gmp.obj		\
+	$(OBJ)\rsa-imath.obj		\
+	$(OBJ)\rsa-ltm.obj		\
+	$(OBJ)\sha.obj			\
+	$(OBJ)\sha256.obj		\
 	$(OBJ)\ui.obj
 
 !ifndef STATICLIBS
@@ -140,6 +140,9 @@ $(LIBHCRYPTO): $(libhcrypto_OBJs)
 !endif
 
 {imath/}.c{$(OBJ)}.obj:
+	$(C2OBJ)
+
+{libtommath/}.c{$(OBJ)}.obj:
 	$(C2OBJ)
 
 all:: $(LIBHCRYPTO)

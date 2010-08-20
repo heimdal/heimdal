@@ -456,4 +456,4 @@ LIBHDB	    =$(LIBDIR)\libhdb.lib
 LIBKADM5SRV =$(LIBDIR)\libkadm5srv.lib
 LIBKADM5CLNT=$(LIBDIR)\libkadm5clnt.lib
 LIBKDC	    =$(LIBDIR)\libkdc.lib
-LIBTFM	    =$(LIBDIR)\libtfm.lib
+LIBLTM	    =$(LIBDIR)\libltm.lib

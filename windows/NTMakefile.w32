@@ -173,18 +173,18 @@ libmach=/machine:X64
 !ifndef STATICRUNTIME
 
 C2OBJ_C = $(CC) $(cdebug) $(cflags) $(cvarsdll) $(AUXCFLAGS) $(intcflags) $(cdefines) $(cincdirs) $(cwarn)
-EXECONLINK_C = $(LINK) $(ldebug) $(conlflags) $(conlibsdll)
-EXEGUILINK_C = $(LINK) $(ldebug) $(guilflags) $(guilibsdll)
-DLLCONLINK_C = $(LINK) $(ldebug) $(dlllflags) $(conlibsdll)
-DLLGUILINK_C = $(LINK) $(ldebug) $(dlllflags) $(guilibsdll)
+EXECONLINK_C = $(LINK) $(ldebug) $(conlflags) $(conlibsdll) $(libmach)
+EXEGUILINK_C = $(LINK) $(ldebug) $(guilflags) $(guilibsdll) $(libmach)
+DLLCONLINK_C = $(LINK) $(ldebug) $(dlllflags) $(conlibsdll) $(libmach)
+DLLGUILINK_C = $(LINK) $(ldebug) $(dlllflags) $(guilibsdll) $(libmach)
 
 !else # STATICRUNTIME
 
 C2OBJ_C = $(CC) $(cdebug) $(cflags) $(cvarsmt) $(AUXCFLAGS) $(intcflags) $(cdefines) $(cincdirs) $(cwarn)
-EXECONLINK_C = $(LINK) $(ldebug) $(conlflags) $(conlibsmt)
-EXEGUILINK_C = $(LINK) $(ldebug) $(guilflags) $(guilibsmt)
-DLLCONLINK_C = $(LINK) $(ldebug) $(dlllflags) $(conlibsmt)
-DLLGUILINK_C = $(LINK) $(ldebug) $(dlllflags) $(guilibsmt)
+EXECONLINK_C = $(LINK) $(ldebug) $(conlflags) $(conlibsmt) $(libmach)
+EXEGUILINK_C = $(LINK) $(ldebug) $(guilflags) $(guilibsmt) $(libmach)
+DLLCONLINK_C = $(LINK) $(ldebug) $(dlllflags) $(conlibsmt) $(libmach)
+DLLGUILINK_C = $(LINK) $(ldebug) $(dlllflags) $(guilibsmt) $(libmach)
 
 !endif
 

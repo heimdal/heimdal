@@ -311,6 +311,7 @@ gen_files_rfc2459 =					    \
 	$(OBJ)\asn1_id_rsadsi_encalg.x			    \
 	$(OBJ)\asn1_id_rsadsi_rc2_cbc.x			    \
 	$(OBJ)\asn1_id_secsig_sha_1.x			    \
+	$(OBJ)\asn1_id_secsig_sha_1WithRSAEncryption.x	    \
 	$(OBJ)\asn1_id_sha224.x				    \
 	$(OBJ)\asn1_id_sha256.x				    \
 	$(OBJ)\asn1_id_sha384.x				    \

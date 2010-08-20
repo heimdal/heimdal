@@ -1,3 +1,4 @@
+; This is a generated file.  Do not modify directly.
 EXPORTS
 	krb5_address_compare = heimdal._krb5_address_compare@12	@13
 	krb5_address_order = heimdal._krb5_address_order@12	@14

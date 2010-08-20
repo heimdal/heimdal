@@ -1,3 +1,4 @@
+; This is a generated file.  Do not modify directly.
 EXPORTS
 	GSS_C_NT_ANONYMOUS = gssapi.GSS_C_NT_ANONYMOUS	@1
 	GSS_C_NT_EXPORT_NAME = gssapi.GSS_C_NT_EXPORT_NAME	@2

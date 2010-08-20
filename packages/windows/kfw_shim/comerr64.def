@@ -1,3 +1,4 @@
+; This is a generated file.  Do not modify directly.
 EXPORTS
 	add_error_table = add_error_table	@1
 	com_err = com_err.com_err	@2

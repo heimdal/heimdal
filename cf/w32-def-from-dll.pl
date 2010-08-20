@@ -141,6 +141,7 @@ sub use_response_file($)
     close RF;
 }
 
+print "; This is a generated file.  Do not modify directly.\n";
 print "EXPORTS\n";
 
 for (@ARGV) {

@@ -36,7 +36,7 @@ RELDIR=lib\hcrypto\libtommath
 INCFILES=$(INCDIR)\tommath.h
 
 libltm_OBJs=	\
-	$(OBJ)\bncore.obj			\
+	$(OBJ)\bncore.obj		\
 	$(OBJ)\bn_mp_init.obj		\
 	$(OBJ)\bn_mp_clear.obj		\
 	$(OBJ)\bn_mp_exch.obj		\
@@ -46,13 +46,13 @@ libltm_OBJs=	\
 	$(OBJ)\bn_mp_zero.obj		\
 	$(OBJ)\bn_mp_zero_multi.obj	\
 	$(OBJ)\bn_mp_set.obj		\
-	$(OBJ)\bn_mp_set_int.obj		\
+	$(OBJ)\bn_mp_set_int.obj	\
 	$(OBJ)\bn_mp_init_size.obj	\
 	$(OBJ)\bn_mp_copy.obj		\
 	$(OBJ)\bn_mp_init_copy.obj	\
 	$(OBJ)\bn_mp_abs.obj		\
 	$(OBJ)\bn_mp_neg.obj		\
-	$(OBJ)\bn_mp_cmp_mag.obj		\
+	$(OBJ)\bn_mp_cmp_mag.obj	\
 	$(OBJ)\bn_mp_cmp.obj		\
 	$(OBJ)\bn_mp_cmp_d.obj		\
 	$(OBJ)\bn_mp_rshd.obj		\
@@ -97,7 +97,7 @@ libltm_OBJs=	\
 	$(OBJ)\bn_fast_mp_montgomery_reduce.obj \
 	$(OBJ)\bn_mp_montgomery_reduce.obj \
 	$(OBJ)\bn_mp_exptmod_fast.obj	\
-	$(OBJ)\bn_mp_exptmod.obj		\
+	$(OBJ)\bn_mp_exptmod.obj	\
 	$(OBJ)\bn_mp_2expt.obj		\
 	$(OBJ)\bn_mp_n_root.obj		\
 	$(OBJ)\bn_mp_jacobi.obj		\
@@ -121,13 +121,13 @@ libltm_OBJs=	\
 	$(OBJ)\bn_mp_prime_is_prime.obj	\
 	$(OBJ)\bn_mp_prime_next_prime.obj	\
 	$(OBJ)\bn_mp_find_prime.obj	\
-	$(OBJ)\bn_mp_isprime.obj		\
+	$(OBJ)\bn_mp_isprime.obj	\
 	$(OBJ)\bn_mp_dr_reduce.obj	\
 	$(OBJ)\bn_mp_dr_is_modulus.obj	\
-	$(OBJ)\bn_mp_dr_setup.obj		\
+	$(OBJ)\bn_mp_dr_setup.obj	\
 	$(OBJ)\bn_mp_reduce_setup.obj	\
-	$(OBJ)\bn_mp_toom_mul.obj		\
-	$(OBJ)\bn_mp_toom_sqr.obj		\
+	$(OBJ)\bn_mp_toom_mul.obj	\
+	$(OBJ)\bn_mp_toom_sqr.obj	\
 	$(OBJ)\bn_mp_div_3.obj		\
 	$(OBJ)\bn_s_mp_exptmod.obj	\
 	$(OBJ)\bn_mp_reduce_2k.obj	\
@@ -138,21 +138,21 @@ libltm_OBJs=	\
 	$(OBJ)\bn_mp_reduce_2k_setup_l.obj \
 	$(OBJ)\bn_mp_radix_smap.obj	\
 	$(OBJ)\bn_mp_read_radix.obj	\
-	$(OBJ)\bn_mp_toradix.obj		\
+	$(OBJ)\bn_mp_toradix.obj	\
 	$(OBJ)\bn_mp_radix_size.obj	\
 	$(OBJ)\bn_mp_fread.obj		\
 	$(OBJ)\bn_mp_fwrite.obj		\
-	$(OBJ)\bn_mp_cnt_lsb.obj		\
+	$(OBJ)\bn_mp_cnt_lsb.obj	\
 	$(OBJ)\bn_error.obj		\
 	$(OBJ)\bn_mp_init_multi.obj	\
 	$(OBJ)\bn_mp_clear_multi.obj	\
 	$(OBJ)\bn_mp_exteuclid.obj	\
 	$(OBJ)\bn_mp_toradix_n.obj	\
 	$(OBJ)\bn_mp_prime_random_ex.obj	\
-	$(OBJ)\bn_mp_get_int.obj		\
+	$(OBJ)\bn_mp_get_int.obj	\
 	$(OBJ)\bn_mp_sqrt.obj		\
 	$(OBJ)\bn_mp_is_square.obj	\
-	$(OBJ)\bn_mp_init_set.obj		\
+	$(OBJ)\bn_mp_init_set.obj	\
 	$(OBJ)\bn_mp_init_set_int.obj	\
 	$(OBJ)\bn_mp_invmod_slow.obj	\
 	$(OBJ)\bn_mp_prime_rabin_miller_trials.obj \

@@ -5,5 +5,5 @@ EXPORTS
 	com_err_va = com_err.com_err_va	@3
 	error_message = com_err.error_message	@4
 	remove_error_table = remove_error_table	@5
-	reset_com_err_hook = com_err.reset_com_err_hook	@7
-	set_com_err_hook = com_err.set_com_err_hook	@6
+	reset_com_err_hook = SHIM_reset_com_err_hook	@7
+	set_com_err_hook = SHIM_set_com_err_hook	@6

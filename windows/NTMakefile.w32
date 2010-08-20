@@ -80,7 +80,7 @@ LIBDIR =$(DESTDIR)\lib
 BINDIR =$(DESTDIR)\bin
 SBINDIR=$(BINDIR)
 LIBEXECDIR=$(BINDIR)
-ASMDIR=$(BINDIR)\asm
+ASMDIR=$(BINDIR)
 
 !ifdef RELDIR
 SRCDIR =$(SRC)\$(RELDIR)
@@ -345,9 +345,6 @@ mkdirs:
 !  endif
 !  if !exist($(BINDIR))
 	$(MKDIR) $(BINDIR)
-!  endif
-!  if !exist($(ASMDIR))
-	$(MKDIR) $(ASMDIR)
 !  endif
 !  if !exist($(INCDIR))
 	$(MKDIR) $(INCDIR)

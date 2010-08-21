@@ -50,20 +50,8 @@ libwind_OBJs=	\
 	$(OBJ)\wind_err.obj			\
 	$(OBJ)\utf8.obj
 
-!ifndef STATICLIBS
-
-$(LIBWIND): $(BINDIR)\libwind.dll
-
-$(BINDIR)\libwind.dll: $(libwind_OBJs) $(LIBCOMERR)
-	$(DLLGUILINK) -def:libwind-exports.def -implib:$(LIBWIND)
-	$(DLLPREP)
-
-!else
-
 $(LIBWIND): $(libwind_OBJs)
 	$(LIBCON)
-
-!endif
 
 INCFILES=	\
 	$(INCDIR)\wind.h	\
@@ -120,13 +108,12 @@ TEST_BINARIES=\
 	$(OBJ)\test-ldap.exe	\
 	$(OBJ)\test-utf8.exe
 
-{$(OBJ)}.c{$(OBJ)}.obj:
-	$(C2OBJ) -I$(SRCDIR)
+{$(OBJ)}.c{$(OBJ)}.obj::
+	$(C2OBJ_P) -I$(SRCDIR)
 
 {$(OBJ)}.obj{$(OBJ)}.exe:
-	$(EXECONLINK) $(LIBWIND) $(LIBROKEN)
-	$(_VC_MANIFEST_EMBED_EXE)
-	$(_VC_MANIFEST_CLEAN)
+	$(EXECONLINK) $(LIBHEIMDAL) $(LIBROKEN)
+	$(EXEPREP_NODIST)
 
 $(OBJ)\test-bidi.exe: $(OBJ)\test-bidi.obj
 
@@ -165,3 +152,8 @@ clean::
 	-$(RM) $(INCFILES)
 
 test:: test-binaries test-run
+
+test-exports:
+	$(PERL) ..\..\cf\w32-check-exported-symbols.pl --vs version-script.map --def libwind-exports.def
+
+test:: test-exports

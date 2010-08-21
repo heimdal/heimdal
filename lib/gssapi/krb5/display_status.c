@@ -139,7 +139,7 @@ _gsskrb5_set_status (int ret, const char *fmt, ...)
     }
 }
 
-OM_uint32 _gsskrb5_display_status
+OM_uint32 GSSAPI_CALLCONV _gsskrb5_display_status
 (OM_uint32		*minor_status,
  OM_uint32		 status_value,
  int			 status_type,

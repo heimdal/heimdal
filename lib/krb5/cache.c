@@ -477,7 +477,7 @@ KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_cc_set_default_name(krb5_context context, const char *name)
 {
     krb5_error_code ret = 0;
-    char *p, *exp_p = NULL;
+    char *p = NULL, *exp_p = NULL;
 
     if (name == NULL) {
 	const char *e = NULL;

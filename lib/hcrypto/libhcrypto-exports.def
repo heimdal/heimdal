@@ -44,7 +44,7 @@ EXPORTS
 	hc_DES_init_random_number_generator
 	hc_DES_is_weak_key
 	hc_DES_key_sched
-;	hc_DES_mem_rand8
+;!	hc_DES_mem_rand8
 	hc_DES_new_random_key
 	hc_DES_pcbc_encrypt
 	hc_DES_rand_data
@@ -87,6 +87,7 @@ EXPORTS
 	hc_ENGINE_by_dso
 	hc_ENGINE_by_id
 	hc_ENGINE_finish
+	hc_ENGINE_free
 	hc_ENGINE_get_DH
 	hc_ENGINE_get_RAND
 	hc_ENGINE_get_RSA
@@ -95,6 +96,7 @@ EXPORTS
 	hc_ENGINE_get_id
 	hc_ENGINE_get_name
 	hc_ENGINE_load_builtin_engines
+	hc_ENGINE_new
 	hc_ENGINE_set_DH
 	hc_ENGINE_set_RSA
 	hc_ENGINE_set_default_DH
@@ -125,20 +127,19 @@ EXPORTS
 	hc_EVP_DigestUpdate
 	hc_EVP_MD_CTX_block_size
 	hc_EVP_MD_CTX_cleanup
-	hc_EVP_MD_CTX_cleanup
-	hc_EVP_MD_CTX_create
 	hc_EVP_MD_CTX_create
 	hc_EVP_MD_CTX_destroy
-	hc_EVP_MD_CTX_destroy
-	hc_EVP_MD_CTX_init
 	hc_EVP_MD_CTX_init
 	hc_EVP_MD_CTX_md
 	hc_EVP_MD_CTX_size
 	hc_EVP_MD_block_size
 	hc_EVP_MD_size
 	hc_EVP_aes_128_cbc
+	hc_EVP_aes_128_cfb8
 	hc_EVP_aes_192_cbc
+	hc_EVP_aes_192_cfb8
 	hc_EVP_aes_256_cbc
+	hc_EVP_aes_256_cfb8
 	hc_EVP_des_cbc
 	hc_EVP_des_ede3_cbc
 	hc_EVP_camellia_128_cbc
@@ -159,15 +160,18 @@ EXPORTS
 	hc_EVP_sha1
 	hc_EVP_sha256
 
-;	hc_EVP_cc_md2
-;	hc_EVP_cc_md4
-;	hc_EVP_cc_md5
-;	hc_EVP_cc_sha1
-;	hc_EVP_cc_sha256
-;	hc_EVP_cc_des_ede3_cbc
-;	hc_EVP_cc_aes_128_cbc
-;	hc_EVP_cc_aes_192_cbc
-;	hc_EVP_cc_aes_256_cbc
+;!	hc_EVP_cc_md2
+;!	hc_EVP_cc_md4
+;!	hc_EVP_cc_md5
+;!	hc_EVP_cc_sha1
+;!	hc_EVP_cc_sha256
+;!	hc_EVP_cc_des_ede3_cbc
+;!	hc_EVP_cc_aes_128_cbc
+;!	hc_EVP_cc_aes_192_cbc
+;!	hc_EVP_cc_aes_256_cbc
+;!	hc_EVP_cc_aes_128_cfb8
+;!	hc_EVP_cc_aes_192_cfb8
+;!	hc_EVP_cc_aes_256_cfb8
 
 	hc_EVP_hcrypto_md2
 	hc_EVP_hcrypto_md4
@@ -181,9 +185,13 @@ EXPORTS
 	hc_EVP_hcrypto_rc4
 	hc_EVP_hcrypto_rc4_40
 
-;	hc_EVP_hcrypto_aes_128_cts
-;	hc_EVP_hcrypto_aes_192_cts
-;	hc_EVP_hcrypto_aes_256_cts
+	hc_EVP_hcrypto_aes_128_cfb8
+	hc_EVP_hcrypto_aes_192_cfb8
+	hc_EVP_hcrypto_aes_256_cfb8
+
+;!	hc_EVP_hcrypto_aes_128_cts
+;!	hc_EVP_hcrypto_aes_192_cts
+;!	hc_EVP_hcrypto_aes_256_cts
 
 	hc_HMAC
 	hc_HMAC_CTX_cleanup
@@ -209,11 +217,11 @@ EXPORTS
 	hc_RAND_add
 	hc_RAND_bytes
 	hc_RAND_cleanup
-;	hc_RAND_egd
-;	hc_RAND_egd_bytes
-;	hc_RAND_egd_method
+;!	hc_RAND_egd
+;!	hc_RAND_egd_bytes
+;!	hc_RAND_egd_method
 	hc_RAND_file_name
-;	hc_RAND_fortuna_method
+;!	hc_RAND_fortuna_method
 	hc_RAND_get_rand_method
 	hc_RAND_load_file
 	hc_RAND_pseudo_bytes
@@ -221,9 +229,9 @@ EXPORTS
 	hc_RAND_set_rand_engine
 	hc_RAND_set_rand_method
 	hc_RAND_status
-;	hc_RAND_unix_method
-;	hc_RAND_timer_method
-        hc_RAND_w32crypto_method
+;!	hc_RAND_unix_method
+;!	hc_RAND_timer_method
+        hc_RAND_w32crypto_method	;!
 	hc_RAND_write_file
 	hc_RC2_cbc_encrypt
 	hc_RC2_decryptc
@@ -259,7 +267,6 @@ EXPORTS
 	hc_SHA256_Final
 	hc_SHA256_Init
 	hc_SHA256_Update
-	hc_UI_UTIL_read_pw_string
 	hc_UI_UTIL_read_pw_string
 	hc_d2i_RSAPrivateKey
 	hc_i2d_RSAPrivateKey

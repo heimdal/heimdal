@@ -33,7 +33,10 @@ RELDIR=lib\hcrypto\libtommath
 
 !include ../../../windows/NTMakefile.w32
 
-INCFILES=$(INCDIR)\tommath.h
+INCFILES=	\
+	$(INCDIR)\tommath.h		\
+	$(INCDIR)\tommath_class.h	\
+	$(INCDIR)\tommath_superclass.h
 
 libltm_OBJs=	\
 	$(OBJ)\bncore.obj		\
@@ -163,9 +166,3 @@ $(LIBLTM): $(libltm_OBJs)
 	$(LIBCON)
 
 all:: $(INCFILES) $(LIBLTM)
-
-{}.obj{$(OBJ)}.obj:
-	$(C2OBJ)
-
-{$(OBJ)}.obj{$(OBJ)}.obj:
-	$(C2OBJ)

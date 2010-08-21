@@ -180,7 +180,7 @@ generate_type_free (const Symbol *s)
 {
     int preserve = preserve_type(s->name) ? TRUE : FALSE;
    
-    fprintf (codefile, "void\n"
+    fprintf (codefile, "void ASN1CALL\n"
 	     "free_%s(%s *data)\n"
 	     "{\n",
 	     s->gen_name, s->gen_name);

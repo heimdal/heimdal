@@ -1356,10 +1356,14 @@ static const char *const rcsid[] = { (const char *)rcsid, "@(#)" msg }
 /* Define if you don't want to use mmap. */
 #define NO_MMAP 1
 
+/* Define if EGD rand method is not defined */
 #define NO_RAND_EGD_METHOD 1
 
 /* Define if the Unix rand method is not defined */
 #define NO_RAND_UNIX_METHOD 1
+
+/* Define if the Fortuna rand method is not defined */
+#define NO_RAND_FORTUNA_METHOD 1
 
 /* Define if PID files should not be used. */
 #define NO_PIDFILES 1
@@ -1452,32 +1456,6 @@ static const char *const rcsid[] = { (const char *)rcsid, "@(#)" msg }
 
 #ifdef ROKEN_RENAME
 #include "roken_rename.h"
-#endif
-
-#define RETSIGTYPE void
-
-#define VOID_RETSIGTYPE 1
-
-#ifdef VOID_RETSIGTYPE
-#define SIGRETURN(x) return
-#else
-#define SIGRETURN(x) return (RETSIGTYPE)(x)
-#endif
-
-#ifndef CPP_ONLY
-
-typedef int pid_t;
-
-typedef unsigned int gid_t;
-
-typedef unsigned int uid_t;
-
-typedef unsigned short mode_t;
-
-#endif
-
-#ifndef __cplusplus
-#define inline __inline
 #endif
 
 #if defined(ENCRYPTION) && !defined(AUTHENTICATION)

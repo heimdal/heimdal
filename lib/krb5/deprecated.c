@@ -185,7 +185,7 @@ krb5_string_to_keytype(krb5_context context,
  */
 
 KRB5_DEPRECATED
-KRB5_LIB_FUNCTION krb5_error_code
+KRB5_LIB_FUNCTION krb5_error_code KRB5_CALLCONV
 krb5_password_key_proc (krb5_context context,
 			krb5_enctype type,
 			krb5_salt salt,
@@ -246,7 +246,7 @@ krb5_get_in_tkt_with_password (krb5_context context,
 			     ret_as_reply);
 }
 
-static krb5_error_code
+static krb5_error_code KRB5_CALLCONV
 krb5_skey_key_proc (krb5_context context,
 		    krb5_enctype type,
 		    krb5_salt salt,
@@ -306,7 +306,7 @@ krb5_get_in_tkt_with_skey (krb5_context context,
  */
 
 KRB5_DEPRECATED
-KRB5_LIB_FUNCTION krb5_error_code
+KRB5_LIB_FUNCTION krb5_error_code KRB5_CALLCONV
 krb5_keytab_key_proc (krb5_context context,
 		      krb5_enctype enctype,
 		      krb5_salt salt,
@@ -632,7 +632,7 @@ krb5_get_cred_from_kdc(krb5_context context,
  */
 
 KRB5_DEPRECATED
-void KRB5_LIB_FUNCTION
+KRB5_LIB_FUNCTION void KRB5_LIB_CALL
 krb5_free_unparsed_name(krb5_context context, char *str)
 {
     krb5_xfree(str);

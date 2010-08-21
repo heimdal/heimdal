@@ -66,7 +66,8 @@ _hc_CryptProvider(void)
     }
 
     if (rv &&
-        InterlockedCompareExchangePointer(&g_cryptprovider, cryptprovider, 0) != 0) {
+        InterlockedCompareExchangePointer((PVOID *) &g_cryptprovider,
+					  (PVOID) cryptprovider, 0) != 0) {
 
         CryptReleaseContext(cryptprovider, 0);
         cryptprovider = g_cryptprovider;

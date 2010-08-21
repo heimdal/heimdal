@@ -1,19 +1,18 @@
 EXPORTS
-	GSS_KRB5_MECHANISM
-	GSS_NTLM_MECHANISM
-	GSS_SPNEGO_MECHANISM
-	GSS_SASL_DIGEST_MD5_MECHANISM
-	GSS_C_NT_ANONYMOUS
-	GSS_C_NT_EXPORT_NAME
-	GSS_C_NT_HOSTBASED_SERVICE
-	GSS_C_NT_HOSTBASED_SERVICE_X
-	GSS_C_NT_MACHINE_UID_NAME
-	GSS_C_NT_STRING_UID_NAME
-	GSS_C_NT_USER_NAME
-	GSS_KRB5_NT_PRINCIPAL_NAME
-	GSS_KRB5_NT_USER_NAME
-	GSS_KRB5_NT_MACHINE_UID_NAME
-	GSS_KRB5_NT_STRING_UID_NAME
+	__gss_krb5_mechanism_oid_desc
+	__gss_ntlm_mechanism_oid_desc
+	__gss_spnego_mechanism_oid_desc
+	__gss_sasl_digest_md5_mechanism_oid_desc
+	__gss_c_nt_anonymous_oid_desc
+	__gss_c_nt_export_name_oid_desc
+	__gss_c_nt_hostbased_service_oid_desc
+	__gss_c_nt_hostbased_service_x_oid_desc
+	__gss_c_nt_machine_uid_name_oid_desc
+	__gss_c_nt_string_uid_name_oid_desc
+	__gss_c_nt_user_name_oid_desc
+	__gss_krb5_cred_no_ci_flags_x_oid_desc
+	__gss_krb5_nt_principal_name_oid_desc
+	__gss_c_attr_stream_sizes_oid_desc
 	gss_accept_sec_context
 	gss_acquire_cred
 	gss_add_buffer_set_member

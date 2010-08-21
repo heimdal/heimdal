@@ -56,7 +56,7 @@ ${engine} --rsa=${srcdir}/rsakey.der || \
 
 ${rsa} --loops=4 || { echo "rsa test for 4 loops failed" ; exit 1; }
 
-for a in unix fortuna egd ;do
+for a in unix fortuna egd w32crypto ;do
 	${rand} --method=${a} --file=crypto-test 2>error
 	res=$?
 	if test "X$res" != X0 ; then

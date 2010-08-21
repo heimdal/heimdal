@@ -33,7 +33,8 @@
 
 #include "ntlm.h"
 
-OM_uint32 _gss_ntlm_inquire_mechs_for_name (
+OM_uint32 GSSAPI_CALLCONV
+_gss_ntlm_inquire_mechs_for_name (
             OM_uint32 * minor_status,
             const gss_name_t input_name,
             gss_OID_set * mech_types

@@ -208,7 +208,9 @@ generic_test (const struct test_case *tests,
     void *data;
     struct map_page *data_map, *buf_map, *buf2_map;
 
+#ifdef HAVE_SIGACTION
     struct sigaction sa, osa;
+#endif
 
     for (i = 0; i < ntests; ++i) {
 	int ret;
@@ -219,6 +221,7 @@ generic_test (const struct test_case *tests,
 
 	current_state = "init";
 
+#ifdef HAVE_SIGACTION
 	sigemptyset (&sa.sa_mask);
 	sa.sa_flags = 0;
 #ifdef SA_RESETHAND
@@ -226,6 +229,7 @@ generic_test (const struct test_case *tests,
 #endif
 	sa.sa_handler = segv_handler;
 	sigaction (SIGSEGV, &sa, &osa);
+#endif
 
 	data = map_alloc(OVERRUN, NULL, data_size, &data_map);
 
@@ -241,7 +245,7 @@ generic_test (const struct test_case *tests,
 	    continue;
 	}
 	if (sz != tests[i].byte_len) {
-	    printf ("encoding of %s has wrong len (%lu != %lu)\n",
+ 	    printf ("encoding of %s has wrong len (%lu != %lu)\n",
 		    tests[i].name,
 		    (unsigned long)sz, (unsigned long)tests[i].byte_len);
 	    ++failures;
@@ -329,7 +333,9 @@ generic_test (const struct test_case *tests,
 	map_free(buf2_map, tests[i].name, "decode");
 	map_free(data_map, tests[i].name, "data");
 
+#ifdef HAVE_SIGACTION
 	sigaction (SIGSEGV, &osa, NULL);
+#endif
     }
     current_state = "done";
     return failures;
@@ -355,7 +361,9 @@ generic_decode_fail (const struct test_case *tests,
     void *data;
     struct map_page *data_map, *buf_map;
 
+#ifdef HAVE_SIGACTION
     struct sigaction sa, osa;
+#endif
 
     for (i = 0; i < ntests; ++i) {
 	int ret;
@@ -366,6 +374,7 @@ generic_decode_fail (const struct test_case *tests,
 
 	current_state = "init";
 
+#ifdef HAVE_SIGACTION
 	sigemptyset (&sa.sa_mask);
 	sa.sa_flags = 0;
 #ifdef SA_RESETHAND
@@ -373,6 +382,7 @@ generic_decode_fail (const struct test_case *tests,
 #endif
 	sa.sa_handler = segv_handler;
 	sigaction (SIGSEGV, &sa, &osa);
+#endif
 
 	data = map_alloc(OVERRUN, NULL, data_size, &data_map);
 
@@ -402,7 +412,9 @@ generic_decode_fail (const struct test_case *tests,
 	    map_free(buf_map, tests[i].name, "encode");
 	map_free(data_map, tests[i].name, "data");
 
+#ifdef HAVE_SIGACTION
 	sigaction (SIGSEGV, &osa, NULL);
+#endif
     }
     current_state = "done";
     return failures;

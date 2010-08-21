@@ -47,7 +47,7 @@
  * @ingroup gssapi
  */
 
-int GSSAPI_LIB_FUNCTION
+GSSAPI_LIB_FUNCTION int GSSAPI_LIB_CALL
 gss_oid_equal(const gss_OID a, const gss_OID b)
 {
     if (a == b && a != GSS_C_NO_OID)

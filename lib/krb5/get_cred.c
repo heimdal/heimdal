@@ -314,7 +314,7 @@ _krb5_get_krbtgt(krb5_context context,
 }
 
 /* DCE compatible decrypt proc */
-static krb5_error_code
+static krb5_error_code KRB5_CALLCONV
 decrypt_tkt_with_subkey (krb5_context context,
 			 krb5_keyblock *key,
 			 krb5_key_usage usage,

@@ -59,6 +59,14 @@ SRC=$(MAKEDIR)\..\..\..
 !  error Cant determine source directory
 !endif
 
+!  if "$(CPU)"=="i386" || "$(CPU)"=="x86"
+MCPU=x86
+!  elseif "$(CPU)"=="AMD64"
+MCPU=amd64
+!  else
+!    error Unknown CPU
+!  endif
+
 !include "NTMakefile.config"
 
 #----------------------------------------------------------------
@@ -72,6 +80,7 @@ LIBDIR =$(DESTDIR)\lib
 BINDIR =$(DESTDIR)\bin
 SBINDIR=$(BINDIR)
 LIBEXECDIR=$(BINDIR)
+ASMDIR=$(BINDIR)
 
 !ifdef RELDIR
 SRCDIR =$(SRC)\$(RELDIR)
@@ -95,38 +104,18 @@ RM=del /q
 ECHO=echo
 RC=rc
 
-!ifndef AWK
 AWK=gawk.exe
-!endif
-
-!ifndef YACC
 YACC=bison.exe -y
-!endif
-
-!ifndef LEX
 LEX=flex.exe
-!endif
-
-!ifndef PYTHON
 PYTHON=python.exe
-!endif
-
-!ifndef PERL
 PERL=perl.exe
-!endif
-
-!ifndef CMP
 CMP=cmp.exe
-!endif
+SIGNTOOL=signtool.exe
+MAKECAT=makecat.exe
 
 # Only used for tests
-!ifndef SH
 SH=sh.exe
-!endif
-
-!ifndef SED
 SED=sed.exe
-!endif
 
 #----------------------------------------------------------------
 # External dependencies
@@ -148,7 +137,30 @@ pthreadinc= -I$(PTHREAD_INC)
 
 cincdirs=$(cincdirs) -I$(INCDIR) -I$(INCDIR)\krb5 $(pthreadinc)
 cdefines=$(cdefines) -DHAVE_CONFIG_H
-cwarn=$(cwarn) -D_CRT_SECURE_NO_WARNINGS -wd4996 -wd4127 -wd4244 -wd4100
+
+# ---------------------------------------------------------------
+# time_t issues
+
+!if "$(MCPU)"=="x86"
+cdefines=$(cdefines) -D_USE_32BIT_TIME_T
+!endif
+
+# Disable warnings:
+#
+# C4996: 'function' was declared deprecated
+# C4127: Conditional expression is constant
+# C4244: Conversion from 'type1' to 'type2', possible loss of data
+# C4100: 'identifier': unreferenced formal parameter
+# C4706: Assignment within conditional expression
+# C4214: Nonstandard extension used
+# C4267: '': Conversion from 'type1' to 'type2', possible loss of data
+# C4018: '': Signed/unsigned mismatch
+# C4204: Nonstandard extension used: non-constant aggregate initializer
+# C4221: Nonstandard extension used: 'v1': cannot be initialized using address of automatic variable 'v2'
+# C4295: '': Array is too small to include a terminating null character
+#
+cwarn=$(cwarn) -D_CRT_SECURE_NO_WARNINGS -wd4996 -wd4127 -wd4244 -wd4100 -wd4706
+cwarn=$(cwarn) -wd4214 -wd4267 -wd4018 -wd4389 -wd4204 -wd4221 -wd4295
 
 !if "$(CPU)"=="i386"
 libmach=/machine:X86
@@ -160,19 +172,19 @@ libmach=/machine:X64
 
 !ifndef STATICRUNTIME
 
-C2OBJ_C = $(CC) $(cdebug) $(cflags) $(cvarsdll) $(AUXCFLAGS) $(cdefines) $(cincdirs) $(cwarn)
-EXECONLINK_C = $(LINK) $(ldebug) $(conlflags) $(conlibsdll)
-EXEGUILINK_C = $(LINK) $(ldebug) $(guilflags) $(guilibsdll)
-DLLCONLINK_C = $(LINK) $(ldebug) $(dlllflags) $(conlibsdll)
-DLLGUILINK_C = $(LINK) $(ldebug) $(dlllflags) $(guilibsdll)
+C2OBJ_C = $(CC) $(cdebug) $(cflags) $(cvarsdll) $(AUXCFLAGS) $(intcflags) $(cdefines) $(cincdirs) $(cwarn)
+EXECONLINK_C = $(LINK) $(ldebug) $(conlflags) $(conlibsdll) $(libmach)
+EXEGUILINK_C = $(LINK) $(ldebug) $(guilflags) $(guilibsdll) $(libmach)
+DLLCONLINK_C = $(LINK) $(ldebug) $(dlllflags) $(conlibsdll) $(libmach)
+DLLGUILINK_C = $(LINK) $(ldebug) $(dlllflags) $(guilibsdll) $(libmach)
 
 !else # STATICRUNTIME
 
-C2OBJ_C = $(CC) $(cdebug) $(cflags) $(cvarsmt) $(AUXCFLAGS) $(cdefines) $(cincdirs) $(cwarn)
-EXECONLINK_C = $(LINK) $(ldebug) $(conlflags) $(conlibsmt)
-EXEGUILINK_C = $(LINK) $(ldebug) $(guilflags) $(guilibsmt)
-DLLCONLINK_C = $(LINK) $(ldebug) $(dlllflags) $(conlibsmt)
-DLLGUILINK_C = $(LINK) $(ldebug) $(dlllflags) $(guilibsmt)
+C2OBJ_C = $(CC) $(cdebug) $(cflags) $(cvarsmt) $(AUXCFLAGS) $(intcflags) $(cdefines) $(cincdirs) $(cwarn)
+EXECONLINK_C = $(LINK) $(ldebug) $(conlflags) $(conlibsmt) $(libmach)
+EXEGUILINK_C = $(LINK) $(ldebug) $(guilflags) $(guilibsmt) $(libmach)
+DLLCONLINK_C = $(LINK) $(ldebug) $(dlllflags) $(conlibsmt) $(libmach)
+DLLGUILINK_C = $(LINK) $(ldebug) $(dlllflags) $(guilibsmt) $(libmach)
 
 !endif
 
@@ -180,6 +192,8 @@ LIBGUI_C = $(LM) /nologo $(libmach) /SUBSYSTEM:WINDOWS
 LIBCON_C = $(LM) /nologo $(libmach) /SUBSYSTEM:CONSOLE
 
 C2OBJ = $(C2OBJ_C) -Fo$@ -Fd$(@D)\ $**
+C2OBJ_NP = $(C2OBJ_C) -MP $<
+C2OBJ_P = $(C2OBJ_NP) -Fo$(OBJ)\ -Fd$(OBJ)\ #
 EXECONLINK = $(EXECONLINK_C) -OUT:$@ $**
 EXEGUILINK = $(EXEGUILINK_C) -OUT:$@ $**
 DLLCONLINK = $(DLLCONLINK_C) -OUT:$@ $**
@@ -202,7 +216,7 @@ RC2RES = $(RC2RES_C) -fo $@ $**
 !ifndef RECURSE
 
 check-utils:
-	@for %%g in ( "$(AWK)" "$(YACC)" "$(LEX)" "$(PYTHON)" "$(PERL)" "$(CMP)" ) do @( \
+	@for %%g in ( "$(AWK)" "$(YACC)" "$(LEX)" "$(PYTHON)" "$(PERL)" "$(CMP)" "$(SED)" "$(SIGNTOOL)" "$(MAKECAT)" ) do @( \
 	for /f %%f in ( "%%g" ) do @( \
 		if exist %%f @( \
 			echo Found %%f \
@@ -214,7 +228,7 @@ check-utils:
 		) \
 	) \
 	)
-	@for %%g in ( "$(SH)" "$(SED)" ) do @( \
+	@for %%g in ( "$(SH)" ) do @( \
 	for /f %%f in ( "%%g" ) do @( \
 		if exist %%f @( \
 			echo Found %%f \
@@ -247,19 +261,27 @@ show-cmds:
 
 prep:: show-cmds
 
-!endif
+!endif				# RECURSE
 
-{}.c{$(OBJ)}.obj:
-	$(C2OBJ)
+{}.c{$(OBJ)}.obj::
+	$(C2OBJ_C) /Fd$(OBJ)\ /Fo$(OBJ)\ /MP @<<
+$<
+<<
 
-{$(OBJ)}.c{$(OBJ)}.obj:
-	$(C2OBJ)
+{$(OBJ)}.c{$(OBJ)}.obj::
+	$(C2OBJ_C) /Fd$(OBJ)\ /Fo$(OBJ)\ /MP @<<
+$<
+<<
 
-{}.cpp{$(OBJ)}.obj:
-	$(C2OBJ)
+{}.cpp{$(OBJ)}.obj::
+	$(C2OBJ_C) /Fd$(OBJ)\ /Fo$(OBJ)\ /MP @<<
+$<
+<<
 
-{$(OBJ)}.cpp{$(OBJ)}.obj:
-	$(C2OBJ)
+{$(OBJ)}.cpp{$(OBJ)}.obj::
+	$(C2OBJ_C) /Fd$(OBJ)\ /Fo$(OBJ)\ /MP @<<
+$<
+<<
 
 {}.hin{$(INCDIR)}.h:
 	$(CP) $< $@
@@ -291,6 +313,8 @@ prep:: show-cmds
 !ifdef RELDIR
 all:: announce
 
+all-tools:: announce-tools
+
 test:: announce
 
 clean:: announce
@@ -298,6 +322,10 @@ clean:: announce
 announce:
 	@echo.
 	@echo --------- Entering $(RELDIR:\= ):
+
+announce-tools:
+	@echo.
+	@echo --------- Entering $(RELDIR:\= ) tools:
 !endif
 
 #----------------------------------------------------------------------
@@ -339,13 +367,13 @@ mkdirs:
 
 !ifdef SUBDIRS
 subdirs:
-	@for %%f in ( $(SUBDIRS) ) do @ (cd %%f && $(RMAKE) && cd ..) || exit /b 1
+	@for %%f in ( $(SUBDIRS) ) do @ (pushd %%f && $(RMAKE) && popd) || exit /b 1
 
 clean-subdirs:
-	@for %%f in ( $(SUBDIRS) ) do @ (cd %%f && $(RMAKE) clean && cd ..) || exit /b 1
+	@for %%f in ( $(SUBDIRS) ) do @ (pushd %%f && $(RMAKE) clean && popd) || exit /b 1
 
 test-subdirs:
-	@for %%f in ( $(SUBDIRS) ) do @ (cd %%f && $(RMAKE) test && cd ..) || exit /b 1
+	@for %%f in ( $(SUBDIRS) ) do @ (pushd %%f && $(RMAKE) test && popd) || exit /b 1
 
 all:: subdirs
 
@@ -386,10 +414,10 @@ clean::
 MT=mt.exe -nologo
 
 _VC_MANIFEST_EMBED_EXE= \
-if exist $@.manifest $(MT) -outputresource:$@;1 -manifest $@.manifest
+( if exist $@.manifest $(MT) -outputresource:$@;1 -manifest $@.manifest )
 
 _VC_MANIFEST_EMBED_DLL= \
-if exist $@.manifest $(MT) -outputresource:$@;2 -manifest $@.manifest
+( if exist $@.manifest $(MT) -outputresource:$@;2 -manifest $@.manifest )
 
 # Note that if you are merging manifests, then the VS generated
 # manifest should be cleaned up after calling _VC_MANIFEST_EMBED_???.
@@ -398,15 +426,35 @@ if exist $@.manifest $(MT) -outputresource:$@;2 -manifest $@.manifest
 # be used.
 
 _VC_MANIFEST_CLEAN= \
-if exist $@.manifest $(RM) $@.manifest
+( if exist $@.manifest $(RM) $@.manifest )
 
 # End of manifest handling
 
-# Code signing
+#----------------------------------------------------------------------
+# Code and assembly signing
+#
+# SIGNTOOL_C is any set of options required for certificate/private
+# key selection for code signging.
+#
+# SIGNTOOL_O is any set of additional options to signtool.exe
+#
+# SIGNTOOL_T is the timestamp option
+
 !ifdef CODESIGN
-_CODESIGN=$(CODESIGN) $@
+_CODESIGN=( $(CODESIGN) $@ )
 !else
-_CODESIGN=
+
+!ifdef SIGNTOOL_C
+
+!ifndef SIGNTOOL_T
+SIGNTOOL_T=/t http://timestamp.verisign.com/scripts/timstamp.dll
+!endif
+
+_CODESIGN=( $(SIGNTOOL) sign $(SIGNTOOL_O) $(SIGNTOOL_T) $(SIGNTOOL_C) /v $@ )
+!else
+_CODESIGN=( echo Skipping code sign )
+!endif
+
 !endif
 
 #----------------------------------------------------------------------
@@ -416,44 +464,44 @@ _CODESIGN=
 # prepare binaries.
 
 EXEPREP=\
-$(_VC_MANIFEST_EMBED_EXE)^
-$(_VC_MANIFEST_CLEAN)^
-$(_CODESIGN)
+( $(_VC_MANIFEST_EMBED_EXE) && $(_VC_MANIFEST_CLEAN) && $(_CODESIGN) ) || $(RM) $@
 
 EXEPREP_NODIST=\
-$(_VC_MANIFEST_EMBED_EXE)^
-$(_VC_MANIFEST_CLEAN)
+( $(_VC_MANIFEST_EMBED_EXE) && $(_VC_MANIFEST_CLEAN) ) || $(RM) $@
 
 DLLPREP=\
-$(_VC_MANIFEST_EMBED_DLL)^
-$(_VC_MANIFEST_CLEAN)^
-$(_CODESIGN)
+( $(_VC_MANIFEST_EMBED_DLL) && $(_VC_MANIFEST_CLEAN) && $(_CODESIGN) ) || $(RM) $@
 
 DLLPREP_NODIST=\
-$(_VC_MANIFEST_EMBED_DLL)^
-$(_VC_MANIFEST_CLEAN)
+( $(_VC_MANIFEST_EMBED_DLL) && $(_VC_MANIFEST_CLEAN) ) || $(RM) $@
 
 #----------------------------------------------------------------------
-# Convenience macros for import libraries
+# Convenience macros for import libraries and assemblies
 #
 
-LIBROKEN    =$(LIBDIR)\libroken.lib
-LIBVERS	    =$(LIBDIR)\libvers.lib
-LIBEDITLINE =$(LIBDIR)\libeditline.lib
-LIBCOMERR   =$(LIBDIR)\libcom_err.lib
-LIBSL	    =$(LIBDIR)\libsl.lib
-LIBWIND	    =$(LIBDIR)\libwind.lib
 LIBASN1	    =$(LIBDIR)\libasn1.lib
-LIBSQLITE   =$(LIBDIR)\libsqlite.lib
+LIBCOMERR   =$(LIBDIR)\libcom_err.lib
+LIBEDITLINE =$(LIBDIR)\libeditline.lib
+LIBGSSAPI   =$(LIBDIR)\libgssapi.lib
 LIBHCRYPTO  =$(LIBDIR)\libhcrypto.lib
-LIBHX509    =$(LIBDIR)\libhx509.lib
-LIBKRB5	    =$(LIBDIR)\libkrb5.lib
-LIBHEIMNTLM =$(LIBDIR)\libheimntlm.lib
+LIBHDB	    =$(LIBDIR)\libhdb.lib
+LIBHEIMDAL  =$(LIBDIR)\heimdal.lib
 LIBHEIMIPCC =$(LIBDIR)\libheim-ipcc.lib
 LIBHEIMIPCS =$(LIBDIR)\libheim-ipcs.lib
-LIBGSSAPI   =$(LIBDIR)\libgssapi.lib
-LIBHDB	    =$(LIBDIR)\libhdb.lib
-LIBKADM5SRV =$(LIBDIR)\libkadm5srv.lib
+LIBHEIMNTLM =$(LIBDIR)\libheimntlm.lib
+LIBHX509    =$(LIBDIR)\libhx509.lib
 LIBKADM5CLNT=$(LIBDIR)\libkadm5clnt.lib
+LIBKADM5SRV =$(LIBDIR)\libkadm5srv.lib
 LIBKDC	    =$(LIBDIR)\libkdc.lib
 LIBLTM	    =$(LIBDIR)\libltm.lib
+LIBKRB5	    =$(LIBDIR)\libkrb5.lib
+LIBROKEN    =$(LIBDIR)\libroken.lib
+LIBSL	    =$(LIBDIR)\libsl.lib
+LIBSQLITE   =$(LIBDIR)\libsqlite.lib
+LIBVERS	    =$(LIBDIR)\libvers.lib
+LIBWIND	    =$(LIBDIR)\libwind.lib
+
+ASMKRBNAME  =Heimdal.Kerberos
+ASMGSSNAME  =Heimdal.GSSAPI
+APPMANIFEST =$(INCDIR)\Heimdal.Application.$(MCPU).manifest
+

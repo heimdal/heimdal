@@ -321,7 +321,7 @@ tfm_rsa_private_decrypt(int flen, const unsigned char* from,
 {
     unsigned char *ptr;
     int res;
-    size_t size;
+    int size;
     fp_int in, out, n, e;
 
     if (padding != RSA_PKCS1_PADDING)

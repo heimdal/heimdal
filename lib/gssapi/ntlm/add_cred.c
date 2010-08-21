@@ -33,7 +33,7 @@
 
 #include "ntlm.h"
 
-OM_uint32 _gss_ntlm_add_cred (
+OM_uint32 GSSAPI_CALLCONV _gss_ntlm_add_cred (
      OM_uint32           *minor_status,
      const gss_cred_id_t input_cred_handle,
      const gss_name_t    desired_name,

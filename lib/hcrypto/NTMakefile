@@ -33,7 +33,7 @@ SUBDIRS=libtommath
 
 RELDIR=lib\hcrypto
 
-AUXCFLAGS=$(AUXCFLAGS) -DKRB5 -I$(HCRYPTOINCLUDEDIR)
+intcflags=-DKRB5 -DASN1_LIB -I$(HCRYPTOINCLUDEDIR) -DUSE_HCRYPTO_IMATH=1
 
 !include ../../windows/NTMakefile.w32
 
@@ -96,6 +96,7 @@ libhcrypto_OBJs = 			\
 	$(OBJ)\bn.obj			\
 	$(OBJ)\camellia.obj		\
 	$(OBJ)\camellia-ntt.obj		\
+	$(OBJ)\common.obj		\
 	$(OBJ)\des.obj			\
 	$(OBJ)\dh.obj			\
 	$(OBJ)\dh-imath.obj		\
@@ -124,23 +125,11 @@ libhcrypto_OBJs = 			\
 	$(OBJ)\sha256.obj		\
 	$(OBJ)\ui.obj
 
-!ifndef STATICLIBS
-
-$(LIBHCRYPTO): $(BINDIR)\libhcrypto.dll
-
-$(BINDIR)\libhcrypto.dll: $(libhcrypto_OBJs) $(LIBROKEN) $(LIBASN1) $(LIBTFM)
-	$(DLLGUILINK) -def:libhcrypto-exports.def -implib:$(LIBHCRYPTO)
-	$(DLLPREP)
-
-!else
-
 $(LIBHCRYPTO): $(libhcrypto_OBJs)
 	$(LIBCON)
 
-!endif
-
-{imath/}.c{$(OBJ)}.obj:
-	$(C2OBJ)
+{imath/}.c{$(OBJ)}.obj::
+	$(C2OBJ_P)
 
 all:: $(LIBHCRYPTO)
 
@@ -177,80 +166,75 @@ test-binaries:				\
 
 $(OBJ)\destest.exe: $(OBJ)\destest.obj $(TESTLIB) $(LIBROKEN)
 	$(EXECONLINK)
-	$(_VC_MANIFEST_EMBED_EXE)
-	$(_VC_MANIFEST_CLEAN)
+	$(EXEPREP_NODIST)
 
-
-$(OBJ)\mdtest.exe: $(OBJ)\mdtest.obj $(LIBHCRYPTO) $(LIBROKEN)
+$(OBJ)\example_evp_cipher.exe: $(OBJ)\example_evp_cipher.obj $(TESTLIB) $(LIBHEIMDAL) $(LIBROKEN)
 	$(EXECONLINK)
-	$(_VC_MANIFEST_EMBED_EXE)
-	$(_VC_MANIFEST_CLEAN)
+	$(EXEPREP_NODIST)
 
-$(OBJ)\rc2test.exe: $(OBJ)\rc2test.obj $(LIBHCRYPTO) $(LIBROKEN)
+$(OBJ)\mdtest.exe: $(OBJ)\mdtest.obj $(LIBHEIMDAL) $(LIBROKEN)
 	$(EXECONLINK)
-	$(_VC_MANIFEST_EMBED_EXE)
-	$(_VC_MANIFEST_CLEAN)
+	$(EXEPREP_NODIST)
 
-$(OBJ)\rctest.exe: $(OBJ)\rctest.obj $(LIBHCRYPTO) $(LIBROKEN)
+$(OBJ)\rc2test.exe: $(OBJ)\rc2test.obj $(LIBHEIMDAL) $(LIBROKEN)
 	$(EXECONLINK)
-	$(_VC_MANIFEST_EMBED_EXE)
-	$(_VC_MANIFEST_CLEAN)
+	$(EXEPREP_NODIST)
 
-$(OBJ)\test_bn.exe: $(OBJ)\test_bn.obj $(LIBHCRYPTO) $(LIBROKEN) $(LIBASN1)
+$(OBJ)\rctest.exe: $(OBJ)\rctest.obj $(LIBHEIMDAL) $(LIBROKEN)
 	$(EXECONLINK)
-	$(_VC_MANIFEST_EMBED_EXE)
-	$(_VC_MANIFEST_CLEAN)
+	$(EXEPREP_NODIST)
 
-$(OBJ)\test_cipher.exe: $(OBJ)\test_cipher.obj $(LIBHCRYPTO) $(LIBROKEN) $(LIBVERS)
+$(OBJ)\test_bn.exe: $(OBJ)\test_bn.obj $(LIBHEIMDAL) $(LIBROKEN)
 	$(EXECONLINK)
-	$(_VC_MANIFEST_EMBED_EXE)
-	$(_VC_MANIFEST_CLEAN)
+	$(EXEPREP_NODIST)
 
-$(OBJ)\test_engine_dso.exe: $(OBJ)\test_engine_dso.obj $(LIBHCRYPTO) $(LIBROKEN) $(LIBASN1) $(LIBVERS)
+$(OBJ)\test_cipher.exe: $(OBJ)\test_cipher.obj $(TESTLIB) $(LIBHEIMDAL) $(LIBROKEN) $(LIBVERS)
 	$(EXECONLINK)
-	$(_VC_MANIFEST_EMBED_EXE)
-	$(_VC_MANIFEST_CLEAN)
+	$(EXEPREP_NODIST)
 
-$(OBJ)\test_hmac.exe: $(OBJ)\test_hmac.obj $(LIBHCRYPTO)
+$(OBJ)\test_engine_dso.exe: $(OBJ)\test_engine_dso.obj $(LIBHEIMDAL) $(LIBROKEN) $(LIBVERS)
 	$(EXECONLINK)
-	$(_VC_MANIFEST_EMBED_EXE)
-	$(_VC_MANIFEST_CLEAN)
+	$(EXEPREP_NODIST)
+
+$(OBJ)\test_hmac.exe: $(OBJ)\test_hmac.obj $(LIBHEIMDAL)
+	$(EXECONLINK)
+	$(EXEPREP_NODIST)
 
 $(OBJ)\test_imath.exe: $(OBJ)\test_imath.obj $(TESTLIB) $(LIBROKEN)
 	$(EXECONLINK)
-	$(_VC_MANIFEST_EMBED_EXE)
-	$(_VC_MANIFEST_CLEAN)
+	$(EXEPREP_NODIST)
 
-$(OBJ)\test_pkcs5.exe: $(OBJ)\test_pkcs5.obj $(LIBHCRYPTO) $(LIBROKEN)
+$(OBJ)\test_pkcs5.exe: $(OBJ)\test_pkcs5.obj $(LIBHEIMDAL) $(LIBROKEN)
 	$(EXECONLINK)
-	$(_VC_MANIFEST_EMBED_EXE)
-	$(_VC_MANIFEST_CLEAN)
+	$(EXEPREP_NODIST)
 
-$(OBJ)\test_pkcs12.exe: $(OBJ)\test_pkcs12.obj $(LIBHCRYPTO) $(LIBASN1) $(LIBROKEN)
+$(OBJ)\test_pkcs12.exe: $(OBJ)\test_pkcs12.obj $(LIBHEIMDAL) $(LIBROKEN)
 	$(EXECONLINK)
-	$(_VC_MANIFEST_EMBED_EXE)
-	$(_VC_MANIFEST_CLEAN)
+	$(EXEPREP_NODIST)
 
-$(OBJ)\test_rsa.exe: $(OBJ)\test_rsa.obj $(LIBHCRYPTO) $(LIBROKEN) $(LIBASN1) $(LIBVERS)
+$(OBJ)\test_rsa.exe: $(OBJ)\test_rsa.obj $(LIBHEIMDAL) $(LIBROKEN) $(LIBVERS)
 	$(EXECONLINK)
-	$(_VC_MANIFEST_EMBED_EXE)
-	$(_VC_MANIFEST_CLEAN)
+	$(EXEPREP_NODIST)
 
-$(OBJ)\test_dh.exe: $(OBJ)\test_dh.obj $(LIBHCRYPTO) $(LIBROKEN) $(LIBASN1) $(LIBVERS)
+$(OBJ)\test_dh.exe: $(OBJ)\test_dh.obj $(LIBHEIMDAL) $(LIBROKEN) $(LIBVERS)
 	$(EXECONLINK)
-	$(_VC_MANIFEST_EMBED_EXE)
-	$(_VC_MANIFEST_CLEAN)
+	$(EXEPREP_NODIST)
 
-$(OBJ)\test_rand.exe: $(OBJ)\test_rand.obj $(LIBHCRYPTO) $(LIBROKEN) $(LIBASN1) $(LIBVERS)
+$(OBJ)\test_rand.exe: $(OBJ)\test_rand.obj $(LIBHEIMDAL) $(LIBROKEN) $(LIBVERS)
 	$(EXECONLINK)
-	$(_VC_MANIFEST_EMBED_EXE)
-	$(_VC_MANIFEST_CLEAN)
+	$(EXEPREP_NODIST)
+
+SRCDIR1=$(SRCDIR:\=/)
+SRCDIR2=$(SRCDIR1::=)
 
 $(OBJ)\test_crypto.sh: test_crypto.in NTMakefile
-	$(SED) -e "s,[@]srcdir[@],$(SRCDIR),g" -e "s,[@]exeext[@],.exe,g" < test_crypto.in > $@
+	$(SED) -e "s,[@]srcdir[@],/$(SRCDIR2),g" -e "s,[@]exeext[@],.exe,g" < test_crypto.in > $@ || $(RM) $@
 
 test-run:
 	cd $(OBJ)
+!ifdef SH
+	$(SH) test_crypto.sh
+!endif
 	destest.exe
 	mdtest.exe
 	rc2test.exe
@@ -262,12 +246,13 @@ test-run:
 	test_imath.exe
 	test_pkcs5.exe
 	test_pkcs12.exe
-#	test_rsa.exe
-#	test_dh.exe
-!ifdef SH
-	$(SH) test_crypto.sh
-!endif
+	test_rsa.exe
+	test_dh.exe
 	cd $(SRCDIR)
 
 test:: $(TESTLIB) test-binaries test-run
 
+test-exports:
+	$(PERL) ..\..\cf\w32-check-exported-symbols.pl --vs version-script.map --def libhcrypto-exports.def
+
+test:: test-exports

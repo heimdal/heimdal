@@ -42,7 +42,11 @@
 #endif
 #endif
 
+#ifdef _WIN32
+typedef int (__stdcall *DLSYM_RET_TYPE)();
+#else
 #define DLSYM_RET_TYPE void *
+#endif
 
 #ifdef __cplusplus
 extern "C" 

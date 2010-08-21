@@ -33,7 +33,7 @@
 
 #include "ntlm.h"
 
-OM_uint32 _gss_ntlm_compare_name
+OM_uint32 GSSAPI_CALLCONV _gss_ntlm_compare_name
            (OM_uint32 * minor_status,
             const gss_name_t name1,
             const gss_name_t name2,

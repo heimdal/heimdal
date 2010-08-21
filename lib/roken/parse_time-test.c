@@ -85,15 +85,15 @@ main(int argc, char **argv)
 
 	    buf = rk_test_mem_alloc(RK_TM_UNDERRUN, "underrun",
 				    NULL, tests[i].size);
-	    sz = unparse_time(tests[i].val, buf, buf_sz);
+	    sz = unparse_time(tests[i].val, buf, min(buf_sz, tests[i].size));
 	    if (sz != tests[i].size)
 		errx(1, "sz (%lu) != tests[%d].size (%lu) with insize %lu",
 		     (unsigned long)sz, i,
 		     (unsigned long)tests[i].size,
 		     (unsigned long)buf_sz);
-	    if (buf_sz > 0 && strncmp(buf, tests[i].str, buf_sz - 1) != 0)
+	    if (buf_sz > 0 && strncmp(buf, tests[i].str, min(buf_sz, tests[i].size) - 1) != 0)
 		errx(1, "test %i wrong result %s vs %s", i, buf, tests[i].str);
-	    if (buf_sz > 0 && buf[buf_sz - 1] != '\0')
+	    if (buf_sz > 0 && buf[min(buf_sz, tests[i].size) - 1] != '\0')
 		errx(1, "test %i not zero terminated", i);
 	    rk_test_mem_free("underrun");
 	}

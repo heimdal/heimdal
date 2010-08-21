@@ -87,7 +87,7 @@ opendir(const char * filespec)
     }
 
     do {
-        long len = strlen(fd.name);
+        size_t len = strlen(fd.name);
         struct dirent * e;
 
         if (dp->n_entries == dp->nc_entries) {

@@ -498,7 +498,7 @@ xyzprintf (struct snprintf_state *state, const char *char_format, va_list ap)
 		break;
 	    }
 	    case 'p' : {
-		unsigned long arg = (unsigned long)va_arg(ap, void*);
+		u_longest arg = (u_longest)va_arg(ap, void*);
 
 		len += append_number (state, arg, 0x10, "0123456789ABCDEF",
 				      width, prec, flags, 0);

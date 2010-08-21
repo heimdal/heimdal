@@ -91,7 +91,6 @@ mechsrc = \
 	mech/context.h \
 	mech/context.c \
 	mech/cred.h \
-	mech/doxygen.c \
 	mech/gss_accept_sec_context.c \
 	mech/gss_acquire_cred.c \
 	mech/gss_add_cred.c \
@@ -309,7 +308,6 @@ libgssapi_OBJs = \
 	$(OBJ)\krb5/verify_mic.obj \
 	$(OBJ)\krb5/wrap.obj \
 	$(OBJ)\mech/context.obj \
-	$(OBJ)\mech/doxygen.obj \
 	$(OBJ)\mech/gss_accept_sec_context.obj \
 	$(OBJ)\mech/gss_acquire_cred.obj \
 	$(OBJ)\mech/gss_add_cred.obj \
@@ -406,38 +404,38 @@ libgssapi_OBJs = \
 
 GCOPTS=-I$(SRCDIR) -I$(OBJ) -Igssapi -DBUILD_GSSAPI_LIB
 
-{$(OBJ)\krb5}.c{$(OBJ)\krb5}.obj:
-	$(C2OBJ) -I$(OBJ)\krb5 $(GCOPTS)
+{$(OBJ)\krb5}.c{$(OBJ)\krb5}.obj::
+	$(C2OBJ_NP) -Fo$(OBJ)\krb5\ -Fd$(OBJ)\krb5\ -I$(OBJ)\krb5 $(GCOPTS)
 
-{krb5}.c{$(OBJ)\krb5}.obj:
-	$(C2OBJ) -I$(OBJ)\krb5 $(GCOPTS)
+{krb5}.c{$(OBJ)\krb5}.obj::
+	$(C2OBJ_NP) -Fo$(OBJ)\krb5\ -Fd$(OBJ)\krb5\ -I$(OBJ)\krb5 $(GCOPTS)
 
-{$(OBJ)\mech}.c{$(OBJ)\mech}.obj:
-	$(C2OBJ) -I$(OBJ)\mech $(GCOPTS)
+{$(OBJ)\mech}.c{$(OBJ)\mech}.obj::
+	$(C2OBJ_NP) -Fo$(OBJ)\mech\ -Fd$(OBJ)\mech\ -I$(OBJ)\mech $(GCOPTS)
 
-{mech}.c{$(OBJ)\mech}.obj:
-	$(C2OBJ) -I$(OBJ)\mech -I$(OBJ)\gssapi $(GCOPTS)
+{mech}.c{$(OBJ)\mech}.obj::
+	$(C2OBJ_NP) -Fo$(OBJ)\mech\ -Fd$(OBJ)\mech\ -I$(OBJ)\mech -I$(OBJ)\gssapi $(GCOPTS)
 
-{$(OBJ)\ntlm}.c{$(OBJ)\ntlm}.obj:
-	$(C2OBJ) -I$(OBJ)\ntlm $(GCOPTS)
+{$(OBJ)\ntlm}.c{$(OBJ)\ntlm}.obj::
+	$(C2OBJ_NP) -Fo$(OBJ)\ntlm\ -Fd$(OBJ)\ntlm\ -I$(OBJ)\ntlm $(GCOPTS)
 
-{ntlm}.c{$(OBJ)\ntlm}.obj:
-	$(C2OBJ) -I$(OBJ)\ntlm $(GCOPTS)
+{ntlm}.c{$(OBJ)\ntlm}.obj::
+	$(C2OBJ_NP) -Fo$(OBJ)\ntlm\ -Fd$(OBJ)\ntlm\ -I$(OBJ)\ntlm $(GCOPTS)
 
-{$(OBJ)\spnego}.c{$(OBJ)\spnego}.obj:
-	$(C2OBJ) -I$(OBJ)\spnego $(GCOPTS)
+{$(OBJ)\spnego}.c{$(OBJ)\spnego}.obj::
+	$(C2OBJ_NP) -Fo$(OBJ)\spnego\ -Fd$(OBJ)\spnego\ -I$(OBJ)\spnego $(GCOPTS)
 
-{spnego}.c{$(OBJ)\spnego}.obj:
-	$(C2OBJ) -I$(OBJ)\spnego -Imech $(GCOPTS)
+{spnego}.c{$(OBJ)\spnego}.obj::
+	$(C2OBJ_NP) -Fo$(OBJ)\spnego\ -Fd$(OBJ)\spnego\ -I$(OBJ)\spnego -Imech $(GCOPTS)
 
-{$(OBJ)\gssapi}.c{$(OBJ)\gssapi}.obj:
-	$(C2OBJ) -I$(OBJ)\gssapi $(GCOPTS)
+{$(OBJ)\gssapi}.c{$(OBJ)\gssapi}.obj::
+	$(C2OBJ_NP) -Fo$(OBJ)\gssapi\ -Fd$(OBJ)\gssapi\ -I$(OBJ)\gssapi $(GCOPTS)
 
-{}.c{$(OBJ)}.obj:
-	$(C2OBJ) $(GCOPTS)
+{}.c{$(OBJ)}.obj::
+	$(C2OBJ_P) $(GCOPTS)
 
-{$(OBJ)}.c{$(OBJ)}.obj:
-	$(C2OBJ) $(GCOPTS)
+{$(OBJ)}.c{$(OBJ)}.obj::
+	$(C2OBJ_P) $(GCOPTS)
 
 {$(OBJ)\spnego}.x{$(OBJ)\spnego}.c:
 	$(CP) $** $@
@@ -456,9 +454,7 @@ GCOPTS=-I$(SRCDIR) -I$(OBJ) -Igssapi -DBUILD_GSSAPI_LIB
 
 LIBGSSAPI_LIBS=\
 	$(LIBROKEN)	\
-	$(LIBASN1)	\
-	$(LIBKRB5)	\
-	$(LIBHCRYPTO)	\
+	$(LIBHEIMDAL)	\
 	$(LIBHEIMNTLM)	\
 	$(LIBCOMERR)
 
@@ -467,22 +463,22 @@ LIBGSSAPI_SDKLIBS=\
 
 !ifndef STATICLIBS
 
-$(BINDIR)\libgssapi.dll: $(libgssapi_OBJs)
+RES=$(OBJ)\libgssapi-version.res
+
+$(BINDIR)\gssapi.dll: $(libgssapi_OBJs) $(RES)
 	$(DLLGUILINK_C) -implib:$(LIBGSSAPI)	\
-		-out:$(BINDIR)\libgssapi.dll	\
+		-out:$(BINDIR)\gssapi.dll	\
 		-def:libgssapi-exports.def	\
-		$(LIBGSSAPI_LIBS) $(LIBGSSAPI_SDKLIBS) @<<
+		$(LIBGSSAPI_LIBS) $(RES) $(LIBGSSAPI_SDKLIBS) @<<
 $(libgssapi_OBJs: =
 )
 <<
-	$(_VC_MANIFEST_EMBED_DLL)
-	$(_VC_MANIFEST_CLEAN)
-	$(_CODESIGN)
+	$(DLLPREP)
 
-$(LIBGSSAPI): $(BINDIR)\libgssapi.dll
+$(LIBGSSAPI): $(BINDIR)\gssapi.dll
 
 clean::
-	-$(RM) $(BINDIR)\libgssapi.dll
+	-$(RM) $(BINDIR)\gssapi.dll
 
 !else
 
@@ -535,3 +531,8 @@ clean::
                             "\t$(gssapi_files:.x=.obj)")
                     "krb5src" "mechsrc" "spnegosrc" "ntlmsrc")
 !endif
+
+test-exports:
+	$(PERL) ..\..\cf\w32-check-exported-symbols.pl --vs version-script.map --def libgssapi-exports.def
+
+test:: test-exports

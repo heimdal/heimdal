@@ -408,7 +408,7 @@ imath_rsa_private_decrypt(int flen, const unsigned char* from,
 {
     unsigned char *ptr;
     mp_result res;
-    size_t size;
+    int size;
     mpz_t in, out, n, e, b, bi;
     int blinding = (rsa->flags & RSA_FLAG_NO_BLINDING) == 0;
     int do_unblind = 0;

@@ -149,42 +149,42 @@ struct krb5_keytab_data;
 struct krb5_ccache_data;
 struct Principal;
 
-OM_uint32 GSSAPI_LIB_FUNCTION
+GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL
 gss_krb5_ccache_name(OM_uint32 * /*minor_status*/,
 		     const char * /*name */,
 		     const char ** /*out_name */);
 
-OM_uint32 GSSAPI_LIB_FUNCTION gsskrb5_register_acceptor_identity
+GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL gsskrb5_register_acceptor_identity
         (const char * /*identity*/);
 
-OM_uint32 GSSAPI_LIB_FUNCTION krb5_gss_register_acceptor_identity
+GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL krb5_gss_register_acceptor_identity
 	(const char * /*identity*/);
 
-OM_uint32 GSSAPI_LIB_FUNCTION gss_krb5_copy_ccache
+GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL gss_krb5_copy_ccache
 	(OM_uint32 * /*minor*/,
 	 gss_cred_id_t /*cred*/,
 	 struct krb5_ccache_data * /*out*/);
 
-OM_uint32 GSSAPI_LIB_FUNCTION
+GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL
 gss_krb5_import_cred(OM_uint32 * /*minor*/,
 		     struct krb5_ccache_data * /*in*/,
 		     struct Principal * /*keytab_principal*/,
 		     struct krb5_keytab_data * /*keytab*/,
 		     gss_cred_id_t * /*out*/);
 
-OM_uint32 GSSAPI_LIB_FUNCTION gss_krb5_get_tkt_flags
+GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL gss_krb5_get_tkt_flags
 	(OM_uint32 * /*minor*/,
 	 gss_ctx_id_t /*context_handle*/,
 	 OM_uint32 * /*tkt_flags*/);
 
-OM_uint32 GSSAPI_LIB_FUNCTION
+GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL
 gsskrb5_extract_authz_data_from_sec_context
 	(OM_uint32 * /*minor_status*/,
 	 gss_ctx_id_t /*context_handle*/,
 	 int /*ad_type*/,
 	 gss_buffer_t /*ad_data*/);
 
-OM_uint32 GSSAPI_LIB_FUNCTION
+GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL
 gsskrb5_set_dns_canonicalize(int);
 
 struct gsskrb5_send_to_kdc {
@@ -192,35 +192,35 @@ struct gsskrb5_send_to_kdc {
     void *ptr;
 };
 
-OM_uint32 GSSAPI_LIB_FUNCTION
+GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL
 gsskrb5_set_send_to_kdc(struct gsskrb5_send_to_kdc *)
     GSSKRB5_FUNCTION_DEPRECATED;
 
-OM_uint32 GSSAPI_LIB_FUNCTION
+GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL
 gsskrb5_set_default_realm(const char *);
 
-OM_uint32 GSSAPI_LIB_FUNCTION
+GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL
 gsskrb5_extract_authtime_from_sec_context(OM_uint32 *, gss_ctx_id_t, time_t *);
 
 struct EncryptionKey;
 
-OM_uint32 GSSAPI_LIB_FUNCTION
+GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL
 gsskrb5_extract_service_keyblock(OM_uint32 *minor_status,
 				 gss_ctx_id_t context_handle,
 				 struct EncryptionKey **out);
-OM_uint32 GSSAPI_LIB_FUNCTION
+GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL
 gsskrb5_get_initiator_subkey(OM_uint32 *minor_status,
 				 gss_ctx_id_t context_handle,
 				 struct EncryptionKey **out);
-OM_uint32 GSSAPI_LIB_FUNCTION
+GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL
 gsskrb5_get_subkey(OM_uint32 *minor_status,
 		   gss_ctx_id_t context_handle,
 		   struct EncryptionKey **out);
 
-OM_uint32 GSSAPI_LIB_FUNCTION
+GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL
 gsskrb5_set_time_offset(int);
 
-OM_uint32 GSSAPI_LIB_FUNCTION
+GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL
 gsskrb5_get_time_offset(int *);
 
 struct gsskrb5_krb5_plugin {
@@ -229,7 +229,7 @@ struct gsskrb5_krb5_plugin {
     void *symbol;
 };
 
-OM_uint32 GSSAPI_LIB_FUNCTION
+GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL
 gsskrb5_plugin_register(struct gsskrb5_krb5_plugin *);
 
 
@@ -275,19 +275,19 @@ typedef struct gss_krb5_lucid_context_version {
  * Function declarations
  */
 
-OM_uint32 GSSAPI_LIB_FUNCTION
+GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL
 gss_krb5_export_lucid_sec_context(OM_uint32 *minor_status,
 				  gss_ctx_id_t *context_handle,
 				  OM_uint32 version,
 				  void **kctx);
 
 
-OM_uint32 GSSAPI_LIB_FUNCTION
+GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL
 gss_krb5_free_lucid_sec_context(OM_uint32 *minor_status,
 				void *kctx);
 
 
-OM_uint32 GSSAPI_LIB_FUNCTION
+GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL
 gss_krb5_set_allowable_enctypes(OM_uint32 *minor_status,
 				gss_cred_id_t cred,
 				OM_uint32 num_enctypes,

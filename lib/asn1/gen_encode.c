@@ -288,8 +288,8 @@ encode_type (const char *name, const Type *t, const char *tmpstr)
 	fprintf(codefile,
 		"{\n"
 		"struct heim_octet_string *val;\n"
-		"size_t elen, totallen = 0;\n"
-		"int eret;\n");
+		"size_t elen = 0, totallen = 0;\n"
+		"int eret = 0;\n");
 
 	fprintf(codefile,
 		"if ((%s)->len > UINT_MAX/sizeof(val[0]))\n"
@@ -502,7 +502,7 @@ encode_type (const char *name, const Type *t, const char *tmpstr)
 void
 generate_type_encode (const Symbol *s)
 {
-    fprintf (codefile, "int\n"
+    fprintf (codefile, "int ASN1CALL\n"
 	     "encode_%s(unsigned char *p, size_t len,"
 	     " const %s *data, size_t *size)\n"
 	     "{\n",

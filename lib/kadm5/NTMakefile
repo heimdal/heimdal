@@ -187,42 +187,38 @@ LIBEXECPROGRAMS=$(LIBEXECDIR)\ipropd-master.exe $(LIBEXECDIR)\ipropd-slave.exe
 EXELIBDEPS= \
 	$(LIBKADM5SRV) \
 	$(LIBROKEN) \
-	$(LIBKRB5) \
+	$(LIBHEIMDAL) \
 	$(LIBHDB) \
-	$(LIBASN1) \
 	$(LIBSQLITE) \
 	$(LIBSL) \
 	$(LIBCOMERR) \
 	$(LIBVERS)
 
-$(SBINDIR)\iprop-log.exe: $(OBJ)\iprop-log.obj $(OBJ)\iprop-commands.obj $(EXELIBDEPS)
+$(SBINDIR)\iprop-log.exe: $(OBJ)\iprop-log.obj $(OBJ)\iprop-commands.obj $(EXELIBDEPS) \
+		$(OBJ)\iprop-log-version.res
 	$(EXECONLINK)
-	$(_VC_MANIFEST_EMBED_EXE)
-	$(_VC_MANIFEST_CLEAN)
-	$(_CODESIGN)
+	$(EXEPREP)
 
-$(LIBEXECDIR)\ipropd-master.exe: $(OBJ)\ipropd_master.obj $(OBJ)\ipropd_common.obj $(EXELIBDEPS)
+$(LIBEXECDIR)\ipropd-master.exe: $(OBJ)\ipropd_master.obj $(OBJ)\ipropd_common.obj \
+		$(EXELIBDEPS) $(OBJ)\ipropd-master-version.res
 	$(EXECONLINK)
-	$(_VC_MANIFEST_EMBED_EXE)
-	$(_VC_MANIFEST_CLEAN)
-	$(_CODESIGN)
+	$(EXEPREP)
 
-$(LIBEXECDIR)\ipropd-slave.exe: $(OBJ)\ipropd_slave.obj $(OBJ)\ipropd_common.obj $(EXELIBDEPS)
+$(LIBEXECDIR)\ipropd-slave.exe: $(OBJ)\ipropd_slave.obj $(OBJ)\ipropd_common.obj \
+		$(EXELIBDEPS) $(OBJ)\ipropd-slave-version.res
 	$(EXECONLINK)
-	$(_VC_MANIFEST_EMBED_EXE)
-	$(_VC_MANIFEST_CLEAN)
-	$(_CODESIGN)
+	$(EXEPREP)
 
 $(LIBKADM5CLNT): $(LIBKADM5CLNT_OBJS)
 	$(LIBCON)
 
+LIBKADM5SRVRES=$(OBJ)\libkadm5srv-version.res
+
 $(LIBKADM5SRV): $(BINDIR)\libkadm5srv.dll
 
-$(BINDIR)\libkadm5srv.dll: $(LIBKADM5SRV_OBJS) $(LIBKRB5) $(LIBROKEN) $(LIBHDB) $(LIBCOMERR) $(LIBASN1) $(LIBSQLITE)
+$(BINDIR)\libkadm5srv.dll: $(LIBKADM5SRV_OBJS) $(LIBHEIMDAL) $(LIBROKEN) $(LIBHDB) $(LIBCOMERR) $(LIBSQLITE) $(LIBKADM5SRVRES)
 	$(DLLGUILINK) -implib:$(LIBKADM5SRV) -def:libkadm5srv-exports.def
-	$(_VC_MANIFEST_EMBED_DLL)
-	$(_VC_MANIFEST_CLEAN)
-	$(_CODESIGN)
+	$(DLLPREP)
 
 all:: $(INCFILES) $(LIBKADM5SRV) $(LIBKADM5CLNT) $(SBINPROGRAMS) $(LIBEXECPROGRAMS)
 
@@ -243,13 +239,11 @@ test-binaries:	\
 
 $(OBJ)\default_keys.exe: $(OBJ)\default_keys.obj
 	$(EXECONLINK)
-	$(_VC_MANIFEST_EMBED_EXE)
-	$(_VC_MANIFEST_CLEAN)
+	$(EXEPREP_NODIST)
 
 $(OBJ)\sample_passwd_check.dll: $(OBJ)\sample_passwd_check.obj
 	$(DLLGUILINK)		#TODO: Define exports
-	$(_VC_MANIFEST_EMBED_DLL)
-	$(_VC_MANIFEST_CLEAN)
+	$(DLLPREP_NODIST)
 
 test-run:
 
@@ -259,5 +253,10 @@ test-run:
 {}.h{$(KADM5INCDIR)}.h:
 	$(CP) $< $@
 
-{}.c{$(OBJ)}.obj:
-	$(C2OBJ) -I$(OBJ) -I$(KADM5INCDIR)
+{}.c{$(OBJ)}.obj::
+	$(C2OBJ_P) -I$(OBJ) -I$(KADM5INCDIR)
+
+test-exports:
+	$(PERL) ..\..\cf\w32-check-exported-symbols.pl --vs version-script.map --def libkadm5srv-exports.def
+
+test:: test-exports

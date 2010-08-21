@@ -41,6 +41,7 @@ EXPORTS
 	krb5_auth_con_getlocalseqnumber
 	krb5_auth_con_getlocalsubkey
 	krb5_auth_con_getrcache
+	krb5_auth_con_getremoteseqnumber
 	krb5_auth_con_getremotesubkey
 	krb5_auth_con_init
 	krb5_auth_con_removeflags
@@ -87,6 +88,7 @@ EXPORTS
 	krb5_cc_clear_mcred
 	krb5_cc_close
 	krb5_cc_copy_cache
+	krb5_cc_copy_creds
 	krb5_cc_copy_match_f
 	krb5_cc_default
 	krb5_cc_default_name
@@ -108,7 +110,7 @@ EXPORTS
 	krb5_cc_move
 	krb5_cc_new_unique
 	krb5_cc_next_cred
-;	krb5_cc_next_cred_match
+;!	krb5_cc_next_cred_match
 	krb5_cc_register
 	krb5_cc_remove_cred
 	krb5_cc_resolve
@@ -138,13 +140,13 @@ EXPORTS
 	krb5_compare_creds
 	krb5_config_file_free
 	krb5_config_free_strings
-        _krb5_config_get
+;      _krb5_config_get
 	krb5_config_get_bool
 	krb5_config_get_bool_default
 	krb5_config_get_int
 	krb5_config_get_int_default
 	krb5_config_get_list
-	_krb5_config_get_next
+;	_krb5_config_get_next
 	krb5_config_get_string
 	krb5_config_get_string_default
 	krb5_config_get_strings
@@ -153,13 +155,13 @@ EXPORTS
 	krb5_config_parse_file
 	krb5_config_parse_file_multi
 	krb5_config_parse_string_multi
-	_krb5_config_vget
+;	_krb5_config_vget
 	krb5_config_vget_bool
 	krb5_config_vget_bool_default
 	krb5_config_vget_int
 	krb5_config_vget_int_default
 	krb5_config_vget_list
-	_krb5_config_vget_next
+;	_krb5_config_vget_next
 	krb5_config_vget_string
 	krb5_config_vget_string_default
 	krb5_config_vget_strings
@@ -333,12 +335,12 @@ EXPORTS
 	krb5_get_host_realm
 	krb5_get_ignore_addresses
 	krb5_get_in_cred
-	krb5_cccol_last_change_time
+;	krb5_cccol_last_change_time
 	krb5_get_in_tkt
 	krb5_get_in_tkt_with_keytab
 	krb5_get_in_tkt_with_password
 	krb5_get_in_tkt_with_skey
-;	krb5_get_init_creds
+;!	krb5_get_init_creds
 	krb5_get_init_creds_keyblock
 	krb5_get_init_creds_keytab
 	krb5_get_init_creds_opt_alloc
@@ -483,8 +485,10 @@ EXPORTS
 	krb5_principal_compare
 	krb5_principal_compare_any_realm
 	krb5_principal_get_comp_string
+	krb5_principal_get_num_comp
 	krb5_principal_get_realm
 	krb5_principal_get_type
+	krb5_principal_is_krbtgt
 	krb5_principal_match
 	krb5_principal_set_realm
 	krb5_principal_set_type
@@ -730,7 +734,6 @@ EXPORTS
 	_krb5_krb_dest_tkt
 	_krb5_krb_life_to_time
 	_krb5_krb_decomp_ticket
-	_krb5_krb_decomp_ticket
 	_krb5_krb_create_ticket
 	_krb5_krb_create_ciph
 	_krb5_krb_create_auth_reply
@@ -758,13 +761,13 @@ EXPORTS
 	_krb5_principalname2krb5_principal
 	_krb5_put_int
 	_krb5_s4u2self_to_checksumdata
-	_krb5_expand_path_tokens
+	_krb5_expand_path_tokens	;!
 
         ; kinit helper
 	_krb5_get_init_creds_opt_set_pkinit_user_certs
 	_krb5_pk_enterprise_cert
 
 	; testing
-;	_krb5_aes_cts_encrypt
+;!	_krb5_aes_cts_encrypt
 	_krb5_n_fold
 	_krb5_expand_default_cc_name

@@ -33,7 +33,7 @@
 
 #include "ntlm.h"
 
-OM_uint32 _gss_ntlm_release_cred
+OM_uint32 GSSAPI_CALLCONV _gss_ntlm_release_cred
            (OM_uint32 * minor_status,
             gss_cred_id_t * cred_handle
            )

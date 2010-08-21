@@ -648,7 +648,7 @@ krb5_sendto_context(krb5_context context,
     return ret;
 }
 
-krb5_error_code
+krb5_error_code KRB5_CALLCONV
 _krb5_kdc_retry(krb5_context context, krb5_sendto_ctx ctx, void *data,
 		const krb5_data *reply, int *action)
 {

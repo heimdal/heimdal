@@ -51,10 +51,8 @@ NOINSTPROGRAMS=\
 	$(OBJ)\copy_cred_cache.exe
 
 BINLIBS=\
-	$(LIBKRB5)	\
+	$(LIBHEIMDAL)	\
 	$(LIBHEIMNTLM)	\
-	$(LIBHCRYPTO)	\
-	$(LIBASN1)	\
 	$(LIBROKEN)	\
 	$(LIBVERS)
 
@@ -64,45 +62,33 @@ all:: $(BINPROGRAMS) $(LIBEXECPROGRAMS)
 clean::
 	-$(RM) $(BINPROGRAMS) $(LIBEXECPROGRAMS)
 
-$(BINDIR)\kinit.exe: $(OBJ)\kinit.obj $(BINLIBS)
+$(BINDIR)\kinit.exe: $(OBJ)\kinit.obj $(BINLIBS) $(OBJ)\kinit-version.res
 	$(EXECONLINK)
-	$(_VC_MANIFEST_EMBED_EXE)
-	$(_VC_MANIFEST_CLEAN)
-	$(_CODESIGN)
+	$(EXEPREP)
 
-$(BINDIR)\klist.exe: $(OBJ)\klist.obj $(BINLIBS)
+$(BINDIR)\klist.exe: $(OBJ)\klist.obj $(BINLIBS) $(OBJ)\klist-version.res
 	$(EXECONLINK)
-	$(_VC_MANIFEST_EMBED_EXE)
-	$(_VC_MANIFEST_CLEAN)
-	$(_CODESIGN)
+	$(EXEPREP)
 
 
-$(BINDIR)\kdestroy.exe: $(OBJ)\kdestroy.obj $(BINLIBS)
+$(BINDIR)\kdestroy.exe: $(OBJ)\kdestroy.obj $(BINLIBS) $(OBJ)\kdestroy-version.res
 	$(EXECONLINK)
-	$(_VC_MANIFEST_EMBED_EXE)
-	$(_VC_MANIFEST_CLEAN)
-	$(_CODESIGN)
+	$(EXEPREP)
 
 
-$(BINDIR)\kgetcred.exe: $(OBJ)\kgetcred.obj $(BINLIBS)
+$(BINDIR)\kgetcred.exe: $(OBJ)\kgetcred.obj $(BINLIBS) $(OBJ)\kgetcred-version.res
 	$(EXECONLINK)
-	$(_VC_MANIFEST_EMBED_EXE)
-	$(_VC_MANIFEST_CLEAN)
-	$(_CODESIGN)
+	$(EXEPREP)
 
 
-$(BINDIR)\kswitch.exe: $(OBJ)\kswitch.obj $(BINLIBS)
+$(BINDIR)\kswitch.exe: $(OBJ)\kswitch.obj $(BINLIBS) $(OBJ)\kswitch-version.res
 	$(EXECONLINK)
-	$(_VC_MANIFEST_EMBED_EXE)
-	$(_VC_MANIFEST_CLEAN)
-	$(_CODESIGN)
+	$(EXEPREP)
 
 
-$(LIBEXECDIR)\kdigest.exe: $(OBJ)\kdigest-commands.obj $(OBJ)\kdigest.obj $(BINLIBS) $(LIBSL)
+$(LIBEXECDIR)\kdigest.exe: $(OBJ)\kdigest-commands.obj $(OBJ)\kdigest.obj $(BINLIBS) $(LIBSL) $(OBJ)\kdigest-version.res
 	$(EXECONLINK)
-	$(_VC_MANIFEST_EMBED_EXE)
-	$(_VC_MANIFEST_CLEAN)
-	$(_CODESIGN)
+	$(EXEPREP)
 
 $(OBJ)\kdigest.obj: kdigest.c
 	$(C2OBJ) -I$(OBJ)
@@ -114,9 +100,7 @@ $(OBJ)\kdigest-commands.c $(OBJ)\kdigest-commands.h: kdigest-commands.in
 	cd $(SRCDIR)
 
 
-$(LIBEXECDIR)\kimpersonate.exe: $(OBJ)\kimpersonate.obj $(BINLIBS)
+$(LIBEXECDIR)\kimpersonate.exe: $(OBJ)\kimpersonate.obj $(BINLIBS) $(OBJ)\kimpersonate-version.res
 	$(EXECONLINK)
-	$(_VC_MANIFEST_EMBED_EXE)
-	$(_VC_MANIFEST_CLEAN)
-	$(_CODESIGN)
+	$(EXEPREP)
 

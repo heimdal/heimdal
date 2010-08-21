@@ -77,7 +77,7 @@ rk_getifaddrs(struct ifaddrs **ifpp)
 	ZeroMemory(il, il_len);
 
 	if (WSAIoctl(s, SIO_GET_INTERFACE_LIST, NULL, 0,
-		     (LPVOID) il, il_len, &cbret,
+		     (LPVOID) il, (DWORD) il_len, &cbret,
 		     NULL, NULL) == 0) {
 	    il_len = cbret;
 	    break;

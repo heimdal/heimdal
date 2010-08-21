@@ -31,6 +31,8 @@
 
 RELDIR=lib\asn1
 
+intcflags=-I$(SRCDIR) -I$(OBJ)
+
 !include ../../windows/NTMakefile.w32
 
 gen_files_k5 =						    \
@@ -309,6 +311,7 @@ gen_files_rfc2459 =					    \
 	$(OBJ)\asn1_id_rsadsi_encalg.x			    \
 	$(OBJ)\asn1_id_rsadsi_rc2_cbc.x			    \
 	$(OBJ)\asn1_id_secsig_sha_1.x			    \
+	$(OBJ)\asn1_id_secsig_sha_1WithRSAEncryption.x	    \
 	$(OBJ)\asn1_id_sha224.x				    \
 	$(OBJ)\asn1_id_sha256.x				    \
 	$(OBJ)\asn1_id_sha384.x				    \
@@ -492,9 +495,7 @@ gen_files_kx509 =					    \
 	$(OBJ)\asn1_Kx509Request.x
 
 ASN1_BINARIES =						    \
-	$(LIBEXECDIR)\asn1_compile.exe			    \
-	$(LIBEXECDIR)\asn1_print.exe			    \
-	$(BINDIR)\asn1_gen.exe
+	$(LIBEXECDIR)\asn1_compile.exe
 
 $(BINDIR)\asn1_compile.exe:				    \
 	$(OBJ)\asn1parse.obj				    \
@@ -510,11 +511,10 @@ $(BINDIR)\asn1_compile.exe:				    \
 	$(OBJ)\hash.obj					    \
 	$(OBJ)\lex.obj					    \
 	$(OBJ)\main.obj					    \
-	$(OBJ)\symbol.obj
+	$(OBJ)\symbol.obj				    \
+	$(OBJ)\asn1_compile-version.res
 	$(EXECONLINK) $(LIBROKEN) $(LIBVERS)
-	$(_VC_MANIFEST_EMBED_EXE)
-	$(_VC_MANIFEST_CLEAN)
-	$(_CODESIGN)
+	$(EXEPREP)
 
 $(OBJ)\lex.c: lex.l $(OBJ)\asn1parse.h
 	$(LEX) -o$@ lex.l
@@ -527,17 +527,13 @@ $(OBJ)\asn1_err.c $(OBJ)\asn1_err.h: asn1_err.et
 	$(BINDIR)\compile_et.exe $(SRCDIR)\asn1_err.et
 	cd $(SRCDIR)
 
-$(BINDIR)\asn1_print.exe: $(OBJ)\asn1_print.obj $(LIBASN1)
+$(BINDIR)\asn1_print.exe: $(OBJ)\asn1_print.obj $(LIBHEIMDAL)
 	$(EXECONLINK) $(LIBVERS) $(LIBROKEN) $(LIBCOMERR)
-	$(_VC_MANIFEST_EMBED_EXE)
-	$(_VC_MANIFEST_CLEAN)
-	$(_CODESIGN)
+	$(EXEPREP)
 
-$(BINDIR)\asn1_gen.exe: $(OBJ)\asn1_gen.obj $(LIBASN1)
+$(BINDIR)\asn1_gen.exe: $(OBJ)\asn1_gen.obj $(LIBHEIMDAL)
 	$(EXECONLINK) $(LIBVERS) $(LIBROKEN)
-	$(_VC_MANIFEST_EMBED_EXE)
-	$(_VC_MANIFEST_CLEAN)
-	$(_CODESIGN)
+	$(EXEPREP)
 
 LIBASN1_OBJS=	\
 	$(OBJ)\der.obj			\
@@ -561,33 +557,11 @@ LIBASN1_OBJS=	\
 	$(gen_files_kx509:.x=.obj)	\
 	$(OBJ)\asn1_err.obj
 
-LIBASN1_LIBS=\
-	$(LIBROKEN)	\
-	$(LIBCOMERR)
-
-!ifndef STATICLIBS
-
-$(LIBASN1): $(BINDIR)\libasn1.dll
-
-$(BINDIR)\libasn1.dll: $(LIBASN1_OBJS) $(LIBASN1_LIBS)
-	$(DLLGUILINK_C) -out:$@ -def:libasn1-exports.def -implib:$(LIBASN1) @<<
-$(**: =
-)
-<<
-	$(DLLPREP)
-
-clean::
-	-$(RM) $(BINDIR)\libasn1.dll
-
-!else
-
 $(LIBASN1): $(LIBASN1_OBJS)
 	$(LIBCON_C) -out:$@ @<<
 $(**: =
 )
 <<
-
-!endif
 
 clean::
 	-$(RM) $(LIBASN1)
@@ -757,20 +731,49 @@ clean::
 
 all:: $(INCFILES) $(GENINCFILES) $(ASN1_BINARIES) $(LIBASN1)
 
+all-tools:: $(LIBEXECDIR)\asn1_print.exe $(BINDIR)\asn1_gen.exe
+
 TEST_BINARIES=\
 	$(OBJ)\check-der.exe	\
 	$(OBJ)\check-gen.exe	\
-	$(OBJ)\check-timegm.exe
+	$(OBJ)\check-timegm.exe \
+	$(OBJ)\check-ber.exe	\
+	$(OBJ)\check-template.exe \
 
 test-binaries: $(TEST_BINARIES)
 
 test-run:
+	cd $(OBJ)
+	check-der.exe
+	check-gen.exe
+	check-timegm.exe
+	check-ber.exe
+	check-template.exe
+	cd $(SRC)
 
 test:: test-binaries test-run
 
-{$(OBJ)}.c{$(OBJ)}.obj:
-	$(C2OBJ) -I$(SRCDIR) -I$(OBJ)
+$(OBJ)\check-ber.exe: $(OBJ)\check-ber.obj \
+		$(LIBHEIMDAL) $(LIBROKEN)
+	$(EXECONLINK)
+	$(EXEPREP_NODIST)
 
-{}.c{$(OBJ)}.obj:
-	$(C2OBJ) -I$(SRCDIR) -I$(OBJ)
+$(OBJ)\check-der.exe: $(OBJ)\check-der.obj $(OBJ)\check-common.obj \
+		$(LIBHEIMDAL) $(LIBROKEN)
+	$(EXECONLINK)
+	$(EXEPREP_NODIST)
 
+$(OBJ)\check-gen.exe: $(OBJ)\check-gen.obj $(OBJ)\check-common.obj \
+		$(LIBHEIMDAL) $(LIBROKEN) $(gen_files_test:.x=.obj)
+	$(EXECONLINK)
+	$(EXEPREP_NODIST)
+
+$(OBJ)\check-timegm.exe: $(OBJ)\check-timegm.obj \
+		$(LIBHEIMDAL) $(LIBROKEN)
+	$(EXECONLINK)
+	$(EXEPREP_NODIST)
+
+$(OBJ)\check-template.exe: $(OBJ)\check-template.obj $(OBJ)\check-common.obj \
+		$(LIBHEIMDAL) $(LIBROKEN) $(gen_files_test:.x=.obj)
+	$(EXECONLINK)
+	$(EXEPREP_NODIST)

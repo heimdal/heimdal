@@ -228,6 +228,18 @@ init_generate (const char *filename, const char *base)
 	  "    }                                                          \\\n"
 	  "  } while (0)\n\n",
 	  headerfile);
+    fputs("#ifdef _WIN32\n"
+	  "#ifndef ASN1_LIB\n"
+	  "#define ASN1EXP  __declspec(dllimport)\n"
+	  "#else\n"
+	  "#define ASN1EXP\n"
+	  "#endif\n"
+	  "#define ASN1CALL __stdcall\n"
+	  "#else\n"
+	  "#define ASN1EXP\n"
+	  "#define ASN1CALL\n"
+	  "#endif\n",
+	  headerfile);
     fprintf (headerfile, "struct units;\n\n");
     fprintf (headerfile, "#endif\n\n");
     if (asprintf(&fn, "%s_files", base) < 0 || fn == NULL)
@@ -340,6 +352,7 @@ generate_header_of_codefile(const char *name)
     fprintf (codefile,
 	     "/* Generated from %s */\n"
 	     "/* Do not edit */\n\n"
+	     "#define  ASN1_LIB\n\n"
 	     "#include <stdio.h>\n"
 	     "#include <stdlib.h>\n"
 	     "#include <time.h>\n"
@@ -975,6 +988,7 @@ void
 generate_type (const Symbol *s)
 {
     FILE *h;
+    const char * exp;
 
     if (!one_code_file)
 	generate_header_of_codefile(s->gen_name);
@@ -996,30 +1010,37 @@ generate_type (const Symbol *s)
 
     /* generate prototypes */
 
-    if (is_export(s->name))
+    if (is_export(s->name)) {
 	h = headerfile;
-    else
+	exp = "ASN1EXP ";
+    } else {
 	h = privheaderfile;
+	exp = "";
+    }
    
     fprintf (h,
-	     "int    "
+	     "%sint    ASN1CALL "
 	     "decode_%s(const unsigned char *, size_t, %s *, size_t *);\n",
+	     exp,
 	     s->gen_name, s->gen_name);
     fprintf (h,
-	     "int    "
+	     "%sint    ASN1CALL "
 	     "encode_%s(unsigned char *, size_t, const %s *, size_t *);\n",
+	     exp,
 	     s->gen_name, s->gen_name);
     fprintf (h,
-	     "size_t length_%s(const %s *);\n",
+	     "%ssize_t ASN1CALL length_%s(const %s *);\n",
+	     exp,
 	     s->gen_name, s->gen_name);
     fprintf (h,
-	     "int    copy_%s  (const %s *, %s *);\n",
+	     "%sint    ASN1CALL copy_%s  (const %s *, %s *);\n",
+	     exp,
 	     s->gen_name, s->gen_name, s->gen_name);
     fprintf (h,
-	     "void   free_%s  (%s *);\n",
+	     "%svoid   ASN1CALL free_%s  (%s *);\n",
+	     exp,
 	     s->gen_name, s->gen_name);
    
-
     fprintf(h, "\n\n");
 
     if (!one_code_file) {

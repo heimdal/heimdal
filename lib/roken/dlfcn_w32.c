@@ -91,6 +91,6 @@ dlsym(void * vhm, const char * func_name)
 {
     HMODULE hm = (HMODULE) vhm;
 
-    return GetProcAddress(hm, func_name);
+    return (DLSYM_RET_TYPE)(ULONG_PTR)GetProcAddress(hm, func_name);
 }
 

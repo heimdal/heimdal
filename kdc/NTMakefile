@@ -59,53 +59,41 @@ clean::
 
 BIN_LIBS=\
 	$(LIBHDB)	\
-	$(LIBKRB5)	\
-	$(LIBHCRYPTO)	\
-	$(LIBASN1)	\
+	$(LIBHEIMDAL)	\
 	$(LIBROKEN)	\
 	$(LIBVERS)
 
-$(LIBEXECDIR)\hprop.exe: $(OBJ)\hprop.obj $(OBJ)\mit_dump.obj $(BIN_LIBS)
+$(LIBEXECDIR)\hprop.exe: $(OBJ)\hprop.obj $(OBJ)\mit_dump.obj $(BIN_LIBS) $(OBJ)\hprop-version.res
 	$(EXECONLINK)
-	$(_VC_MANIFEST_EMBED_EXE)
-	$(_VC_MANIFEST_CLEAN)
-	$(_CODESIGN)
+	$(EXEPREP)
 
 !ifdef KRB4
 $(LIBEXECDIR)\hprop.exe: $(OBJ)\v4_dump.obj
 !endif
 
 
-$(LIBEXECDIR)\hpropd.exe: $(OBJ)\hpropd.obj $(BIN_LIBS)
+$(LIBEXECDIR)\hpropd.exe: $(OBJ)\hpropd.obj $(BIN_LIBS) $(OBJ)\hpropd-version.res
 	$(EXECONLINK)
-	$(_VC_MANIFEST_EMBED_EXE)
-	$(_VC_MANIFEST_CLEAN)
-	$(_CODESIGN)
+	$(EXEPREP)
 
-$(SBINDIR)\kstash.exe: $(OBJ)\kstash.obj $(BIN_LIBS)
+$(SBINDIR)\kstash.exe: $(OBJ)\kstash.obj $(BIN_LIBS) $(OBJ)\kstash-version.res
 	$(EXECONLINK)
-	$(_VC_MANIFEST_EMBED_EXE)
-	$(_VC_MANIFEST_CLEAN)
-	$(_CODESIGN)
+	$(EXEPREP)
 
-$(BINDIR)\string2key.exe: $(OBJ)\string2key.obj $(BIN_LIBS)
+$(BINDIR)\string2key.exe: $(OBJ)\string2key.obj $(BIN_LIBS) $(OBJ)\string2key-version.res
 	$(EXECONLINK)
-	$(_VC_MANIFEST_EMBED_EXE)
-	$(_VC_MANIFEST_CLEAN)
-	$(_CODESIGN)
+	$(EXEPREP)
 
 $(BINDIR)\digest-service.exe: $(OBJ)\digest-service.obj $(BIN_LIBS)
 	$(EXECONLINK)
-	$(_VC_MANIFEST_EMBED_EXE)
-	$(_VC_MANIFEST_CLEAN)
-	$(_CODESIGN)
+	$(EXEPREP)
 
 $(LIBEXECDIR)\kdc.exe: \
-$(OBJ)\connect.obj $(OBJ)\config.obj $(OBJ)\announce.obj $(OBJ)\main.obj $(LIBKDC) $(BIN_LIBS)
+		$(OBJ)\connect.obj $(OBJ)\config.obj $(OBJ)\announce.obj \
+		$(OBJ)\main.obj $(OBJ)\kdc-version.res \
+		$(LIBKDC) $(BIN_LIBS)
 	$(EXECONLINK)
-	$(_VC_MANIFEST_EMBED_EXE)
-	$(_VC_MANIFEST_CLEAN)
-	$(_CODESIGN)
+	$(EXEPREP)
 
 LIBKDC_OBJS=\
 	$(OBJ)\default_config.obj	\
@@ -129,21 +117,15 @@ LIBKDC_OBJS=$(LIBKDC_OBJS) \
 
 LIBKDC_LIBS=\
 	$(LIBHDB)	\
-	$(LIBKRB5)	\
+	$(LIBHEIMDAL)	\
 	$(LIBHEIMNTLM)	\
-	$(LIBHCRYPTO)	\
-	$(LIBASN1)	\
 	$(LIBROKEN)
 
-!ifdef PKINIT
-LIBKDC_LIBS=$(LIBKDC_LIBS) $(LIBHX509)
-!endif
+LIBKDCRES=$(OBJ)\libkdc-version.res
 
-$(LIBEXECDIR)\libkdc.dll: $(LIBKDC_OBJS) $(LIBKDC_LIBS)
+$(LIBEXECDIR)\libkdc.dll: $(LIBKDC_OBJS) $(LIBKDC_LIBS) $(LIBKDCRES)
 	$(DLLGUILINK) -implib:$(LIBKDC) -def:libkdc-exports.def
-	$(_VC_MANIFEST_EMBED_DLL)
-	$(_VC_MANIFEST_CLEAN)
-	$(_CODESIGN)
+	$(DLLPREP)
 
 $(LIBKDC): $(LIBEXECDIR)\libkdc.dll
 

@@ -225,7 +225,7 @@ no_ci_flags(OM_uint32 *minor_status,
 }
 
 
-OM_uint32
+OM_uint32 GSSAPI_CALLCONV
 _gsskrb5_set_cred_option
            (OM_uint32 *minor_status,
             gss_cred_id_t *cred_handle,

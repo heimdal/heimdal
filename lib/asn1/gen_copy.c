@@ -231,7 +231,7 @@ generate_type_copy (const Symbol *s)
 
   used_fail = 0;
 
-  fprintf (codefile, "int\n"
+  fprintf (codefile, "int ASN1CALL\n"
 	   "copy_%s(const %s *from, %s *to)\n"
 	   "{\n"
 	   "memset(to, 0, sizeof(*to));\n",

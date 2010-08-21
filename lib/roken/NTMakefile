@@ -65,8 +65,6 @@ libroken_la_OBJS =			\
 	$(OBJ)\hex.obj			\
 	$(OBJ)\hostent_find_fqdn.obj	\
 	$(OBJ)\inet_aton.obj		\
-	$(OBJ)\inet_ntop.obj		\
-	$(OBJ)\inet_pton.obj		\
 	$(OBJ)\issuid.obj		\
 	$(OBJ)\lstat.obj		\
 	$(OBJ)\mini_inetd.obj		\
@@ -112,8 +110,14 @@ libroken_la_OBJS =			\
 	$(OBJ)\warnx.obj		\
 	$(OBJ)\xfree.obj
 
-{}.c{$(OBJ)}.obj:
-	$(C2OBJ) -DBUILD_ROKEN_LIB
+!if $(NMAKE_WINVER) < 0x0600
+libroken_la_OBJS=$(libroken_la_OBJS) \
+	$(OBJ)\inet_ntop.obj		\
+	$(OBJ)\inet_pton.obj
+!endif
+
+{}.c{$(OBJ)}.obj::
+	$(C2OBJ_P) -DBUILD_ROKEN_LIB
 
 $(LIBROKEN): $(libroken_la_OBJS)
 	$(LIBCON_C) -out:$@ @<<
@@ -196,7 +200,7 @@ $(OBJ)\resolve_test.obj: resolve.c
 	$(C2OBJ) -DTEST_RESOLVE -DBUILD_ROKEN_LIB
 
 $(OBJ)\parse_reply-test.exe: $(OBJ)\parse_reply-test.obj $(OBJ)\resolve_test.obj $(LIBROKEN)
-	$(EXECONLINK)
+	$(EXECONLINK) DnsAPI.lib
 
 $(OBJ)\test-readenv.exe: $(OBJ)\test-readenv.obj $(OBJ)\test-mem.obj $(LIBROKEN)
 	$(EXECONLINK)
@@ -217,7 +221,7 @@ $(OBJ)\snprintf-test.exe: $(OBJ)\snprintf-test.obj $(OBJ)\libtest.lib $(LIBROKEN
 	$(EXECONLINK)
 
 $(OBJ)\resolve-test.exe: $(OBJ)\resolve-test.obj $(LIBROKEN)
-	$(EXECONLINK)
+	$(EXECONLINK) DnsAPI.lib
 
 $(OBJ)\base64-test.exe: $(OBJ)\base64-test.obj $(OBJ)\base64.obj
 	$(EXECONLINK)

@@ -104,5 +104,6 @@ int	RAND_egd_bytes(const char *, int);
 const RAND_METHOD *	RAND_fortuna_method(void);
 const RAND_METHOD *	RAND_unix_method(void);
 const RAND_METHOD *	RAND_egd_method(void);
+const RAND_METHOD *	RAND_w32crypto_method(void);
 
 #endif /* _HEIM_RAND_H */

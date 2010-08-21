@@ -49,14 +49,13 @@ KTUTIL_OBJS= \
 	$(OBJ)\rename.obj
 
 KTUTIL_LIBS= \
-	$(LIBKRB5)	\
+	$(LIBHEIMDAL)	\
 	$(LIBKADM5SRV)	\
 	$(LIBSL)	\
 	$(LIBROKEN)	\
-	$(LIBHCRYPTO)	\
 	$(LIBVERS)
 
-$(SBINDIR)\ktutil.exe: $(KTUTIL_OBJS) $(KTUTIL_LIBS)
+$(SBINDIR)\ktutil.exe: $(KTUTIL_OBJS) $(KTUTIL_LIBS) $(OBJ)\ktutil-version.res
 	$(EXECONLINK)
 	$(EXEPREP)
 

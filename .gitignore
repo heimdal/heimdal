@@ -114,6 +114,7 @@ asn1_*.[cx]
 /doc/ntlm
 /doc/wind
 /doc/vars.texi
+/doc/doxyout
 /include/*.h
 !/include/crypto-headers.h
 !/include/heim_threads.h

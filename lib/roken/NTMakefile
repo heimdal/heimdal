@@ -75,6 +75,7 @@ libroken_la_OBJS =			\
 	$(OBJ)\parse_time.obj		\
 	$(OBJ)\parse_units.obj		\
 	$(OBJ)\realloc.obj		\
+	$(OBJ)\rename.obj		\
 	$(OBJ)\resolve.obj		\
 	$(OBJ)\roken_gethostby.obj	\
 	$(OBJ)\rtbl.obj			\

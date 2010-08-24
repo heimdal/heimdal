@@ -451,7 +451,7 @@ generate_constant (const Symbol *s)
 
 	fprintf (headerfile, "} */\n");
 	fprintf (headerfile,
-		 "extern const heim_oid asn1_oid_%s;\n"
+		 "extern ASN1EXP const heim_oid asn1_oid_%s;\n"
 		 "#define ASN1_OID_%s (&asn1_oid_%s)\n\n",
 		 s->gen_name,
 		 gen_upper,

@@ -43,7 +43,8 @@ strlcpy (char *dst, const char *src, size_t dst_cch)
 {
     errno_t e;
 
-    e = strcpy_s(dst, dst_cch, src);
+    if (dst_cch > 0)
+        e = strncpy_s(dst, dst_cch, src, _TRUNCATE);
 
     return strlen (src);
 }

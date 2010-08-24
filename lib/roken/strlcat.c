@@ -39,9 +39,16 @@
 ROKEN_LIB_FUNCTION size_t ROKEN_LIB_CALL
 strlcat (char *dst, const char *src, size_t dst_sz)
 {
-    size_t len = strlen(dst);
+    size_t len;
+#if defined(_MSC_VER) && _MSC_VER >= 1400
+    len = strnlen_s(dst, dst_sz);
+#elif defined(HAVE_STRNLEN)
+    len = strnlen(dst, dst_sz);
+#else
+    len = strlen(dst);
+#endif
 
-    if (dst_sz < len)
+    if (dst_sz <= len)
 	/* the total size of dst is less than the string it contains;
            this could be considered bad input, but we might as well
            handle it */

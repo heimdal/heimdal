@@ -814,6 +814,14 @@ fcc_remove_cred(krb5_context context,
     }
 
     ret = rename(&newname[5], FILENAME(id));
+#ifdef RENAME_DOES_NOT_UNLINK
+    if (ret && (errno == EEXIST || errno == EACCES)) {
+	ret = unlink(FILENAME(id));
+	if (ret == 0) {
+	    ret = rename(&newname[5], FILENAME(id));
+	}
+    }
+#endif
     if (ret)
 	ret = errno;
     free(newname);

@@ -1,5 +1,6 @@
 EXPORTS
 	hc_AES_cbc_encrypt
+        hc_AES_cfb8_encrypt
 	hc_AES_decrypt
 	hc_AES_decrypt_key
 	hc_BN_CTX_end
@@ -67,7 +68,7 @@ EXPORTS
 	hc_DH_get_ex_data
 	hc_DH_imath_method
 	hc_DH_ltm_method
-;	hc_DH_gmp_method
+;!	hc_DH_gmp_method
 	hc_DH_new
 	hc_DH_new_method
 	hc_DH_null_method
@@ -246,7 +247,7 @@ EXPORTS
 	hc_RSA_get_default_method
 	hc_RSA_get_method
 	hc_RSA_imath_method
-	hc_RSA_ltm_method
+	hc_RSA_ltm_method               ;!
 	hc_RSA_new
 	hc_RSA_new_method
 	hc_RSA_null_method
@@ -268,6 +269,7 @@ EXPORTS
 	hc_SHA256_Init
 	hc_SHA256_Update
 	hc_UI_UTIL_read_pw_string
+        hc_i2d_DHparams
 	hc_d2i_RSAPrivateKey
 	hc_i2d_RSAPrivateKey
 	hc_i2d_RSAPublicKey

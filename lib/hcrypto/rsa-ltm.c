@@ -156,15 +156,17 @@ ltm_rsa_public_encrypt(int flen, const unsigned char* from,
 
     size = RSA_size(rsa);
 
-    if (size < RSA_PKCS1_PADDING_SIZE || size - RSA_PKCS1_PADDING_SIZE < flen)
+    if (size < RSA_PKCS1_PADDING_SIZE || size - RSA_PKCS1_PADDING_SIZE < flen) {
+	mp_clear_multi(&n, &e, &enc, &dec);
 	return -2;
+    }
 
     BN2mpz(&n, rsa->n);
     BN2mpz(&e, rsa->e);
 
     p = p0 = malloc(size - 1);
     if (p0 == NULL) {
-	mp_clear_multi(&e, &n, NULL);
+	mp_clear_multi(&e, &n, &enc, &dec, NULL);
 	return -3;
     }
 
@@ -172,7 +174,7 @@ ltm_rsa_public_encrypt(int flen, const unsigned char* from,
 
     *p++ = 2;
     if (RAND_bytes(p, padlen) != 1) {
-	mp_clear_multi(&e, &n, NULL);
+	mp_clear_multi(&e, &n, &enc, &dec, NULL);
 	free(p0);
 	return -4;
     }
@@ -187,7 +189,6 @@ ltm_rsa_public_encrypt(int flen, const unsigned char* from,
     p += flen;
     assert((p - p0) == size - 1);
     
-    mp_init_multi(&enc, &dec, NULL);
     mp_read_unsigned_bin(&dec, p0, size - 1);
     free(p0);
 
@@ -195,8 +196,10 @@ ltm_rsa_public_encrypt(int flen, const unsigned char* from,
 
     mp_clear_multi(&dec, &e, &n, NULL);
 
-    if (res != 0)
+    if (res != 0) {
+	mp_clear(&enc);
 	return -4;
+    }
 
     {
 	size_t ssize;
@@ -233,7 +236,7 @@ ltm_rsa_public_decrypt(int flen, const unsigned char* from,
 #if 0
     /* Check that the exponent is larger then 3 */
     if (mp_int_compare_value(&e, 3) <= 0) {
-	mp_clear_multi(&e, &n, NULL);
+	mp_clear_multi(&e, &n, &s, &us, NULL);
 	return -3;
     }
 #endif
@@ -241,16 +244,18 @@ ltm_rsa_public_decrypt(int flen, const unsigned char* from,
     mp_read_unsigned_bin(&s, rk_UNCONST(from), flen);
 
     if (mp_cmp(&s, &n) >= 0) {
-	mp_clear_multi(&e, &n, NULL);
+	mp_clear_multi(&e, &n, &s, &us, NULL);
 	return -4;
     }
 
     res = mp_exptmod(&s, &e, &n, &us);
 
-    mp_clear_multi(&s, &e, &n, NULL);
+    mp_clear_multi(&e, &n, &s, NULL);
 
-    if (res != 0)
+    if (res != 0) {
+	mp_clear(&us);
 	return -5;
+    }
     p = to;
 
 

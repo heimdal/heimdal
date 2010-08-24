@@ -393,8 +393,8 @@ test-run:
 	test_time.exe
 	cd $(SRCDIR)
 
-$(test_binaries): $$(@R).obj
-	$(EXECONLINK) $(LIBHEIMDAL) $(LIBVERS) $(LIBROKEN)
+$(test_binaries): $$(@R).obj $(LIBHEIMDAL) $(LIBVERS) $(LIBROKEN)
+	$(EXECONLINK)
 	$(EXEPREP_NODIST)
 
 $(test_binaries:.exe=.obj): $$(@B).c

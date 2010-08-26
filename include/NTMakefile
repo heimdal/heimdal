@@ -74,6 +74,7 @@ while(<>) {
     if ("$(HAVE_KCM)") { print "#define HAVE_KCM 1\n"; }
     if ("$(HAVE_SCC)") { print "#define HAVE_SCC 1\n"; }
     if ("$(DIR_hdbdir)") { print "#define HDB_DB_DIR \"".'$(DIR_hdbdir)'."\"\n"; }
+    if ("$(HAVE_MSLSA_CACHE)") { print "#define HAVE_MSLSA_CACHE 1\n"; }
 
   } elsif (m/\@VERSION_OPTDEFS\@/) {
 

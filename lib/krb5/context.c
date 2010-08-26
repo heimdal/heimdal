@@ -247,6 +247,9 @@ cc_ops_register(krb5_context context)
 #endif
     krb5_cc_register(context, &krb5_kcm_ops, TRUE);
 #endif
+#ifdef HAVE_MSLSA_CACHE
+    _krb5_mslsa_register_cc_ops(context, TRUE);
+#endif
     return 0;
 }
 

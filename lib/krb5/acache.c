@@ -172,14 +172,16 @@ void
 _heim_krb5_ipc_client_set_target_uid(uid_t uid)
 {
     init_ccapi(NULL);
-    (*set_target_uid)(uid);
+    if (set_target_uid != NULL)
+        (*set_target_uid)(uid);
 }
 
 void
 _heim_krb5_ipc_client_clear_target(void)
 {
     init_ccapi(NULL);
-    (*clear_target)();
+    if (clear_target != NULL)
+        (*clear_target)();
 }
 
 static krb5_error_code

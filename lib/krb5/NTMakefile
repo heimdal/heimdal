@@ -317,6 +317,9 @@ all:: $(OBJ)\libkrb5-exports.def
 clean::
 	-$(RM) $(OBJ)\libkrb5-exports.def
 
+#----------------------------------------------------------------------
+# Tools
+
 all-tools:: $(BINDIR)\verify_krb5_conf.exe
 
 clean::
@@ -385,7 +388,7 @@ test-run:
 	store-test.exe
 	string-to-key-test.exe
 	test_acl.exe
-	-test_addr.exe
+	test_addr.exe
 	test_cc.exe
 	test_config.exe
 	test_prf.exe

@@ -82,6 +82,7 @@
 .Op Fl -fcache-version= Ns Ar version-number
 .Op Fl A | Fl -no-addresses
 .Op Fl -anonymous
+.Op Fl -enterprise
 .Op Fl -version
 .Op Fl -help
 .Op Ar principal Op Ar command
@@ -213,6 +214,10 @@ Request a ticket with no addresses.
 Request an anonymous ticket (which means that the ticket will be
 issued to an anonymous principal, typically
 .Dq anonymous@REALM ) .
+.It Xo
+.Fl -enterprise
+.Xc
+Parse principal as a KRB5-NT-ENTERPRISE name.
 .It Fl -afslog
 Gets AFS tickets, converts them to version 4 format, and stores them
 in the kernel.

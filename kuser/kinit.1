@@ -217,7 +217,15 @@ issued to an anonymous principal, typically
 .It Xo
 .Fl -enterprise
 .Xc
-Parse principal as a KRB5-NT-ENTERPRISE name.
+Parse principal as a enterprise (KRB5-NT-ENTERPRISE) name. Enterprise
+names are email like principals that are stored in the name part of
+the principal, and since there are two @ characters the parser needs
+to know that the first is not a realm.
+An example of an enterprise name is
+.Dq lha@e.kth.se@KTH.SE ,
+and this option is usually used with canonicalize so that the
+principal returned from the KDC will typically be the real principal
+name.
 .It Fl -afslog
 Gets AFS tickets, converts them to version 4 format, and stores them
 in the kernel.

@@ -421,9 +421,35 @@ setup_columns(struct get_entry_data *data, const char *column_info)
     return 0;
 }
 
+static int
+do_list_entry(krb5_principal principal, void *data)
+{
+    char buf[1024];
+    krb5_error_code ret;
+
+    ret = krb5_unparse_name_fixed_short(context, principal, buf, sizeof(buf));
+    if (ret != 0)
+        return ret;
+    printf("%s\n", buf);
+    return 0;
+}
+
+static int
+listit(const char *funcname, int argc, char **argv)
+{
+    int i;
+    krb5_error_code ret, saved_ret = 0;
+
+    for (i = 0; i < argc; i++) {
+	ret = foreach_principal(argv[i], do_list_entry, funcname, NULL);
+        if (saved_ret == 0 && ret != 0)
+            saved_ret = ret;
+    }
+    return saved_ret != 0;
+}
+
 #define DEFAULT_COLUMNS_SHORT "principal,princ_expire_time,pw_expiration,last_pwd_change,max_life,max_rlife"
 #define DEFAULT_COLUMNS_LONG "principal,princ_expire_time,pw_expiration,last_pwd_change,max_life,max_rlife,kvno,mkvno,last_success,last_failed,fail_auth_count,mod_time,mod_name,attributes,keytypes,pkinit-acl,aliases"
-#define DEFAULT_COLUMNS_TERSE "principal="
 
 static int
 getit(struct get_options *opt, const char *name, int argc, char **argv)
@@ -441,13 +467,16 @@ getit(struct get_options *opt, const char *name, int argc, char **argv)
     if(opt->long_flag == 0 && opt->short_flag == 0 && opt->terse_flag == 0)
 	opt->short_flag = 1;
 
+    if (opt->terse_flag)
+        return listit(name, argc, argv);
+
     data.table = NULL;
     data.chead = NULL;
     data.ctail = &data.chead;
     data.mask = 0;
     data.extra_mask = 0;
 
-    if(opt->short_flag || opt->terse_flag) {
+    if(opt->short_flag) {
 	data.table = rtbl_create();
 	rtbl_set_separator(data.table, "  ");
 	data.format = print_entry_short;
@@ -456,12 +485,8 @@ getit(struct get_options *opt, const char *name, int argc, char **argv)
     if(opt->column_info_string == NULL) {
 	if(opt->long_flag)
 	    ret = setup_columns(&data, DEFAULT_COLUMNS_LONG);
-	else if(opt->short_flag)
+	else
 	    ret = setup_columns(&data, DEFAULT_COLUMNS_SHORT);
-	else {
-	    ret = setup_columns(&data, DEFAULT_COLUMNS_TERSE);
-	    rtbl_set_flags(data.table, RTBL_HEADER_STYLE_NONE);
-	}
     } else
 	ret = setup_columns(&data, opt->column_info_string);
 	

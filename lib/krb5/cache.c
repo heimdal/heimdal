@@ -206,8 +206,10 @@ allocate_ccache (krb5_context context,
     }
 
     ret = (*id)->ops->resolve(context, id, residual);
-    if(ret)
+    if(ret) {
 	free(*id);
+        *id = NULL;
+    }
 
 #ifdef KRB5_USE_PATH_TOKENS
     if (exp_residual)

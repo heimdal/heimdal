@@ -420,4 +420,10 @@ krb5_auth_con_setrecvsubkey(krb5_context context, krb5_auth_context auth_context
     return krb5_auth_con_setremotesubkey(context, auth_context, keyblock);
 }
 
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
+krb5_free_default_realm(krb5_context context, krb5_realm realm)
+{
+    return krb5_xfree(realm);
+}
+
 #endif /* HEIMDAL_SMALLER */

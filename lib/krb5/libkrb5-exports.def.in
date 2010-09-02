@@ -287,6 +287,7 @@ EXPORTS
 	krb5_free_creds_contents
 	krb5_free_data
 	krb5_free_data_contents
+        krb5_free_default_realm
 	krb5_free_error
 	krb5_free_error_contents
 	krb5_free_error_string

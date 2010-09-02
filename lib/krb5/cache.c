@@ -217,6 +217,25 @@ allocate_ccache (krb5_context context,
     return ret;
 }
 
+static int
+is_possible_path_name(const char * name)
+{
+    const char * colon;
+
+    if ((colon = strchr(name, ':')) == NULL)
+        return TRUE;
+
+#ifdef _WIN32
+    /* <drive letter>:\path\to\cache ? */
+
+    if (colon == name + 1 &&
+        strchr(colon + 1, ':') == NULL)
+        return TRUE;
+#endif
+
+    return FALSE;
+}
+
 /**
  * Find and allocate a ccache in `id' from the specification in `residual'.
  * If the ccache name doesn't contain any colon, interpret it as a file name.
@@ -251,7 +270,7 @@ krb5_cc_resolve(krb5_context context,
 				    id);
 	}
     }
-    if (strchr (name, ':') == NULL)
+    if (is_possible_path_name(name))
 	return allocate_ccache (context, &krb5_fcc_ops, name, id);
     else {
 	krb5_set_error_message(context, KRB5_CC_UNKNOWN_TYPE,
@@ -1413,7 +1432,7 @@ krb5_cccol_cursor_next(krb5_context context, krb5_cccol_cursor cursor,
 	cursor->cursor = NULL;
 	if (ret != KRB5_CC_END)
 	    break;
-	
+
 	cursor->idx++;
     }
     if (cursor->idx >= context->num_cc_ops) {

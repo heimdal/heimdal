@@ -495,7 +495,7 @@ getit(struct get_options *opt, const char *name, int argc, char **argv)
     }
 
     for(i = 0; i < argc; i++)
-	ret = foreach_principal(argv[i], do_get_entry, "get", &data);
+	ret = foreach_principal(argv[i], do_get_entry, name, &data);
 
     if(data.table != NULL) {
 	rtbl_format(data.table, stdout);

@@ -59,6 +59,7 @@ while(<>) {
 
     if ("$(KRB5)") { print "#define KRB5 1\n"; }
     if ("$(KRB4)") { print "#define KRB4 1\n"; }
+    if ("$(WEAK_CRYPTO)") { print "#define HEIM_WEAK_CRYPTO 1\n"; }
     if ("$(PKINIT)") { print "#define PKINIT 1\n"; }
     if ("$(NO_AFS)") { print "#define NO_AFS 1\n"; }
     if ("$(OPENLDAP)") { print "#define OPENLDAP 1\n"; }

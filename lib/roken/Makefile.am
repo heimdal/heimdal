@@ -16,6 +16,9 @@ libroken_la_LDFLAGS += $(LDFLAGS_VERSION_SCRIPT)$(srcdir)/version-script.map
 endif
 
 AM_CPPFLAGS += $(libroken_la_CPPFLAGS)
+if HAVE_DBHEADER
+AM_CPPFLAGS += -I$(DBHEADER)
+endif
 
 noinst_PROGRAMS = snprintf-test resolve-test rkpty
 

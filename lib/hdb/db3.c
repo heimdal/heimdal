@@ -35,9 +35,13 @@
 
 #if HAVE_DB3
 
-#ifdef HAVE_DB4_DB_H
+#ifdef HAVE_DBHEADER
+#include <db.h>
+#elif HAVE_DB5_DB_H
+#include <db5/db.h>
+#elif HAVE_DB4_DB_H
 #include <db4/db.h>
-#elif defined(HAVE_DB3_DB_H)
+#elif HAVE_DB3_DB_H
 #include <db3/db.h>
 #else
 #include <db.h>

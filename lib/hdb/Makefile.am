@@ -6,6 +6,9 @@ AM_CPPFLAGS += -I../asn1 -I$(srcdir)/../asn1 $(INCLUDE_hcrypto)
 AM_CPPFLAGS += $(INCLUDE_openldap) -DHDB_DB_DIR=\"$(DIR_hdbdir)\"
 AM_CPPFLAGS += -I$(srcdir)/../krb5
 AM_CPPFLAGS += $(INCLUDE_sqlite3)
+if HAVE_DBHEADER
+AM_CPPFLAGS += -I$(DBHEADER)
+endif
 
 BUILT_SOURCES = \
 	$(gen_files_hdb:.x=.c)	\

@@ -356,6 +356,7 @@ EVP_Digest(const void *data, size_t dsize, void *hash, unsigned int *hsize,
 const EVP_MD *
 EVP_sha256(void)
 {
+    hcrypto_validate();
     return EVP_DEF_OP(HCRYPTO_DEF_PROVIDER, sha256);
 }
 
@@ -370,6 +371,7 @@ EVP_sha256(void)
 const EVP_MD *
 EVP_sha1(void)
 {
+    hcrypto_validate();
     return EVP_DEF_OP(HCRYPTO_DEF_PROVIDER, sha1);
 }
 
@@ -385,6 +387,7 @@ const EVP_MD *
 EVP_sha(void) HC_DEPRECATED
     
 {
+    hcrypto_validate();
     return EVP_sha1();
 }
 
@@ -399,6 +402,7 @@ EVP_sha(void) HC_DEPRECATED
 const EVP_MD *
 EVP_md5(void) HC_DEPRECATED_CRYPTO
 {
+    hcrypto_validate();
     return EVP_DEF_OP(HCRYPTO_DEF_PROVIDER, md5);
 }
 
@@ -413,6 +417,7 @@ EVP_md5(void) HC_DEPRECATED_CRYPTO
 const EVP_MD *
 EVP_md4(void) HC_DEPRECATED_CRYPTO
 {
+    hcrypto_validate();
     return EVP_DEF_OP(HCRYPTO_DEF_PROVIDER, md4);
 }
 
@@ -427,6 +432,7 @@ EVP_md4(void) HC_DEPRECATED_CRYPTO
 const EVP_MD *
 EVP_md2(void) HC_DEPRECATED_CRYPTO
 {
+    hcrypto_validate();
     return EVP_DEF_OP(HCRYPTO_DEF_PROVIDER, md2);
 }
 
@@ -1000,6 +1006,7 @@ EVP_enc_null(void)
 const EVP_CIPHER *
 EVP_rc2_cbc(void)
 {
+    hcrypto_validate();
     return EVP_DEF_OP(HCRYPTO_DEF_PROVIDER, rc2_cbc);
 }
 
@@ -1014,6 +1021,7 @@ EVP_rc2_cbc(void)
 const EVP_CIPHER *
 EVP_rc2_40_cbc(void)
 {
+    hcrypto_validate();
     return EVP_DEF_OP(HCRYPTO_DEF_PROVIDER, rc2_40_cbc);
 }
 
@@ -1028,6 +1036,7 @@ EVP_rc2_40_cbc(void)
 const EVP_CIPHER *
 EVP_rc2_64_cbc(void)
 {
+    hcrypto_validate();
     return EVP_DEF_OP(HCRYPTO_DEF_PROVIDER, rc2_64_cbc);
 }
 
@@ -1042,6 +1051,7 @@ EVP_rc2_64_cbc(void)
 const EVP_CIPHER *
 EVP_rc4(void)
 {
+    hcrypto_validate();
     return EVP_DEF_OP(HCRYPTO_DEF_PROVIDER, rc4);
 }
 
@@ -1056,6 +1066,7 @@ EVP_rc4(void)
 const EVP_CIPHER *
 EVP_rc4_40(void)
 {
+    hcrypto_validate();
     return EVP_DEF_OP(HCRYPTO_DEF_PROVIDER, rc4_40);
 }
 
@@ -1070,6 +1081,7 @@ EVP_rc4_40(void)
 const EVP_CIPHER *
 EVP_des_cbc(void)
 {
+    hcrypto_validate();
     return EVP_DEF_OP(HCRYPTO_DEF_PROVIDER, des_cbc);
 }
 
@@ -1084,6 +1096,7 @@ EVP_des_cbc(void)
 const EVP_CIPHER *
 EVP_des_ede3_cbc(void)
 {
+    hcrypto_validate();
     return EVP_DEF_OP(HCRYPTO_DEF_PROVIDER, des_ede3_cbc);
 }
 
@@ -1098,6 +1111,7 @@ EVP_des_ede3_cbc(void)
 const EVP_CIPHER *
 EVP_aes_128_cbc(void)
 {
+    hcrypto_validate();
     return EVP_DEF_OP(HCRYPTO_DEF_PROVIDER, aes_128_cbc);
 }
 
@@ -1112,6 +1126,7 @@ EVP_aes_128_cbc(void)
 const EVP_CIPHER *
 EVP_aes_192_cbc(void)
 {
+    hcrypto_validate();
     return EVP_DEF_OP(HCRYPTO_DEF_PROVIDER, aes_192_cbc);
 }
 
@@ -1126,6 +1141,7 @@ EVP_aes_192_cbc(void)
 const EVP_CIPHER *
 EVP_aes_256_cbc(void)
 {
+    hcrypto_validate();
     return EVP_DEF_OP(HCRYPTO_DEF_PROVIDER, aes_256_cbc);
 }
 
@@ -1140,6 +1156,7 @@ EVP_aes_256_cbc(void)
 const EVP_CIPHER *
 EVP_aes_128_cfb8(void)
 {
+    hcrypto_validate();
     return EVP_DEF_OP(HCRYPTO_DEF_PROVIDER, aes_128_cfb8);
 }
 
@@ -1154,6 +1171,7 @@ EVP_aes_128_cfb8(void)
 const EVP_CIPHER *
 EVP_aes_192_cfb8(void)
 {
+    hcrypto_validate();
     return EVP_DEF_OP(HCRYPTO_DEF_PROVIDER, aes_192_cfb8);
 }
 
@@ -1168,6 +1186,7 @@ EVP_aes_192_cfb8(void)
 const EVP_CIPHER *
 EVP_aes_256_cfb8(void)
 {
+    hcrypto_validate();
     return EVP_DEF_OP(HCRYPTO_DEF_PROVIDER, aes_256_cfb8);
 }
 
@@ -1182,6 +1201,7 @@ EVP_aes_256_cfb8(void)
 const EVP_CIPHER *
 EVP_camellia_128_cbc(void)
 {
+    hcrypto_validate();
     return EVP_DEF_OP(HCRYPTO_DEF_PROVIDER, camellia_128_cbc);
 }
 
@@ -1196,6 +1216,7 @@ EVP_camellia_128_cbc(void)
 const EVP_CIPHER *
 EVP_camellia_192_cbc(void)
 {
+    hcrypto_validate();
     return EVP_DEF_OP(HCRYPTO_DEF_PROVIDER, camellia_192_cbc);
 }
 
@@ -1210,6 +1231,7 @@ EVP_camellia_192_cbc(void)
 const EVP_CIPHER *
 EVP_camellia_256_cbc(void)
 {
+    hcrypto_validate();
     return EVP_DEF_OP(HCRYPTO_DEF_PROVIDER, camellia_256_cbc);
 }
 

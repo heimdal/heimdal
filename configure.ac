@@ -560,6 +560,10 @@ rk_DESTDIRS
 rk_WFLAGS([-Wall -Wmissing-prototypes -Wpointer-arith -Wbad-function-cast -Wmissing-declarations -Wnested-externs])
 
 
+AH_BOTTOM([#ifdef __APPLE__
+#include <AvailabilityMacros.h>
+#endif])
+
 AH_BOTTOM([#ifdef ROKEN_RENAME
 #include "roken_rename.h"
 #endif])

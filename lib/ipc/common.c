@@ -36,6 +36,8 @@
 #include "hi_locl.h"
 #ifdef HAVE_GCD
 #include <dispatch/dispatch.h>
+#else
+#include "heim_threads.h"
 #endif
 
 struct heim_icred {
@@ -89,13 +91,27 @@ _heim_ipc_create_cred(uid_t uid, gid_t gid, pid_t pid, pid_t session, heim_icred
     return 0;
 }
 
+#ifndef HAVE_GCD
+struct heim_isemaphore {
+    HEIMDAL_MUTEX mutex;
+    pthread_cond_t cond;
+    long counter;
+};
+#endif
+
 heim_isemaphore
 heim_ipc_semaphore_create(long value)
 {
 #ifdef HAVE_GCD
     return (heim_isemaphore)dispatch_semaphore_create(value);
 #else
-    abort();
+    heim_isemaphore s = malloc(sizeof(*s));
+    if (s == NULL)
+	return NULL;
+    HEIMDAL_MUTEX_init(&s->mutex);
+    pthread_cond_init(&s->cond, NULL);
+    s->counter = value;
+    return s;
 #endif
 }
 
@@ -111,7 +127,27 @@ heim_ipc_semaphore_wait(heim_isemaphore s, time_t t)
 
     return dispatch_semaphore_wait((dispatch_semaphore_t)s, timeout);
 #else
-    abort();
+    HEIMDAL_MUTEX_lock(&s->mutex);
+    /* if counter hits below zero, we get to wait */
+    if (--s->counter < 0) {
+	int ret;
+
+	if (t == HEIM_IPC_WAIT_FOREVER)
+	    ret = pthread_cond_wait(&s->cond, &s->mutex);
+	else {
+	    struct timespec ts;
+	    ts.tv_sec = t;
+	    ts.tv_nsec = 0;
+	    ret = pthread_cond_timedwait(&s->cond, &s->mutex, &ts);
+	}
+	if (ret) {
+	    HEIMDAL_MUTEX_unlock(&s->mutex);
+	    return errno;
+	}
+    }
+    HEIMDAL_MUTEX_unlock(&s->mutex);
+
+    return 0;
 #endif
 }
 
@@ -121,7 +157,13 @@ heim_ipc_semaphore_signal(heim_isemaphore s)
 #ifdef HAVE_GCD
     return dispatch_semaphore_signal((dispatch_semaphore_t)s);
 #else
-    abort();
+    int wakeup;
+    HEIMDAL_MUTEX_lock(&s->mutex);
+    wakeup = (++s->counter == 0) ;
+    HEIMDAL_MUTEX_unlock(&s->mutex);
+    if (wakeup)
+	pthread_cond_signal(&s->cond);
+    return 0;
 #endif
 }
 
@@ -131,7 +173,13 @@ heim_ipc_semaphore_release(heim_isemaphore s)
 #ifdef HAVE_GCD
     return dispatch_release((dispatch_semaphore_t)s);
 #else
-    abort();
+    HEIMDAL_MUTEX_lock(&s->mutex);
+    if (s->counter != 0)
+	abort();
+    HEIMDAL_MUTEX_unlock(&s->mutex);
+    HEIMDAL_MUTEX_destroy(&s->mutex);
+    pthread_cond_destroy(&s->cond);
+    free(s);
 #endif
 }
 

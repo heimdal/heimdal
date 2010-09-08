@@ -34,7 +34,7 @@
  */
 
 #include "hi_locl.h"
-#ifdef __APPLE__
+#ifdef HAVE_GCD
 #include <dispatch/dispatch.h>
 #endif
 
@@ -92,7 +92,7 @@ _heim_ipc_create_cred(uid_t uid, gid_t gid, pid_t pid, pid_t session, heim_icred
 heim_isemaphore
 heim_ipc_semaphore_create(long value)
 {
-#ifdef __APPLE__
+#ifdef HAVE_GCD
     return (heim_isemaphore)dispatch_semaphore_create(value);
 #else
     abort();
@@ -102,7 +102,7 @@ heim_ipc_semaphore_create(long value)
 long
 heim_ipc_semaphore_wait(heim_isemaphore s, time_t t)
 {
-#ifdef __APPLE__
+#ifdef HAVE_GCD
     uint64_t timeout;
     if (t == HEIM_IPC_WAIT_FOREVER)
 	timeout = DISPATCH_TIME_FOREVER;
@@ -118,7 +118,7 @@ heim_ipc_semaphore_wait(heim_isemaphore s, time_t t)
 long
 heim_ipc_semaphore_signal(heim_isemaphore s)
 {
-#ifdef __APPLE__
+#ifdef HAVE_GCD
     return dispatch_semaphore_signal((dispatch_semaphore_t)s);
 #else
     abort();
@@ -128,7 +128,7 @@ heim_ipc_semaphore_signal(heim_isemaphore s)
 void
 heim_ipc_semaphore_release(heim_isemaphore s)
 {
-#ifdef __APPLE__
+#ifdef HAVE_GCD
     return dispatch_release((dispatch_semaphore_t)s);
 #else
     abort();

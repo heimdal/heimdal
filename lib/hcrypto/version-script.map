@@ -285,6 +285,7 @@ HEIMDAL_CRYPTO_1.0 {
 		hc_EVP_hcrypto_camellia_128_cbc;
 		hc_EVP_CipherUpdate;
 		hc_EVP_CipherFinal_ex;
+		hc_hcrypto_validate;
 	local:
 		*;
 };

@@ -23,7 +23,7 @@
  *
  */
 
-#include "config.h"
+#include "kdc_locl.h"
 
 #if defined(__APPLE__) && defined(HAVE_GCD)
 
@@ -39,8 +39,6 @@
 
 #include <dns_sd.h>
 #include <err.h>
-
-#include "kdc_locl.h"
 
 static krb5_kdc_configuration *announce_config;
 static krb5_context announce_context;

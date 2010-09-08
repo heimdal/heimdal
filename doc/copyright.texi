@@ -126,6 +126,9 @@ SUCH DAMAGE.
 
 libeditline
 
+This is a modified version of libeditline and the bugs we introduced
+are our own.
+
 @verbatim
 
 Copyright 1992 Simmule Turner and Rich Salz.  All rights reserved. 

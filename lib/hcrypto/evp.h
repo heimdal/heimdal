@@ -104,6 +104,7 @@
 #define	OpenSSL_add_all_algorithms_noconf hc_OpenSSL_add_all_algorithms_noconf
 #define EVP_CIPHER_CTX_ctrl hc_EVP_CIPHER_CTX_ctrl
 #define EVP_CIPHER_CTX_rand_key hc_EVP_CIPHER_CTX_rand_key
+#define hcrypto_validate hc_hcrypto_validate
 
 /*
  *
@@ -315,6 +316,9 @@ int	EVP_BytesToKey(const EVP_CIPHER *, const EVP_MD *,
 void	OpenSSL_add_all_algorithms(void);
 void	OpenSSL_add_all_algorithms_conf(void);
 void	OpenSSL_add_all_algorithms_noconf(void);
+
+void
+hcrypto_validate(void);
 
 HC_CPP_END
 

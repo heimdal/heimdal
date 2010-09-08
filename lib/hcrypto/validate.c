@@ -42,6 +42,7 @@
 #include <roken.h>
 
 #include <evp.h>
+#include <hmac.h>
 #include <err.h>
 
 struct tests {
@@ -263,6 +264,32 @@ test_cipher(struct tests *t)
     return 0;
 }
 
+static void
+check_hmac(void)
+{
+    unsigned char buf[4] = { 0, 0, 0, 0 };
+    char hmackey[] = "hello-world";
+    size_t hmackey_size = sizeof(hmackey);
+    unsigned int hmaclen;
+    unsigned char hmac[EVP_MAX_MD_SIZE];
+    HMAC_CTX c;
+
+    char answer[20] = "\x2c\xfa\x32\xb7\x2b\x8a\xf6\xdf\xcf\xda"
+	              "\x6f\xd1\x52\x4d\x54\x58\x73\x0f\xf3\x24";
+
+    HMAC_CTX_init(&c);
+    HMAC_Init_ex(&c, hmackey, hmackey_size, EVP_sha1(), NULL);
+    HMAC_Update(&c, buf, sizeof(buf));
+    HMAC_Final(&c, hmac, &hmaclen);
+    HMAC_CTX_cleanup(&c);
+
+    if (hmaclen != 20)
+	errx(1, "hmaclen = %d\n", (int)hmaclen);
+
+    if (ct_memcmp(hmac, answer, hmaclen) != 0)
+	errx(1, "wrong answer\n");
+}
+
 void
 hcrypto_validate(void)
 {
@@ -276,4 +303,6 @@ hcrypto_validate(void)
 
     for (i = 0; i < sizeof(tests) / sizeof(tests[0]); i++)
 	test_cipher(&tests[i]);
+
+    check_hmac();
 }

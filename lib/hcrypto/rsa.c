@@ -398,7 +398,6 @@ RSA_verify(int type, const unsigned char *from, unsigned int flen,
 	return rsa->meth->rsa_verify(type, from, flen, sigbuf, siglen, rsa);
 
     if (rsa->meth->rsa_pub_dec) {
-	heim_octet_string indata;
 	const AlgorithmIdentifier *digest_alg;
 	void *data;
 	DigestInfo di;

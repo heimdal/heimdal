@@ -410,7 +410,7 @@ EVP_cc_aes_128_cfb8(void)
     };
     return &c;
 #else
-    return NULL
+    return NULL;
 #endif
 }
 

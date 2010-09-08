@@ -23,7 +23,9 @@
  *
  */
 
-#ifdef __APPLE__
+#include "config.h"
+
+#if defined(__APPLE__) && defined(HAVE_GCD)
 
 #include <CoreFoundation/CoreFoundation.h>
 #include <SystemConfiguration/SCDynamicStore.h>
@@ -525,10 +527,12 @@ register_notification(void)
 
     return store;
 }
+#endif
 
 void
 bonjour_announce(krb5_context context, krb5_kdc_configuration *config)
 {
+#if defined(__APPLE__) && defined(HAVE_GCD)
     g_queue = dispatch_queue_create("com.apple.kdc_announce", NULL);
     if (!g_queue)
 	errx(1, "dispatch_queue_create");
@@ -538,6 +542,5 @@ bonjour_announce(krb5_context context, krb5_kdc_configuration *config)
     announce_context = context;
 	
     create_dns_sd();
+#endif
 }
-
-#endif /* __APPLE__ */

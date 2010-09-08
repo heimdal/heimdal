@@ -550,12 +550,12 @@ maybe_close(struct client *c)
 	return 0;
 
 #ifdef HAVE_GCD
-    dispatch_cancel(c->in);
+    dispatch_source_cancel(c->in);
     if ((c->flags & WAITING_READ) == 0)
 	dispatch_resume(c->in);
     dispatch_release(c->in);
 
-    dispatch_cancel(c->out);
+    dispatch_source_cancel(c->out);
     if ((c->flags & WAITING_WRITE) == 0)
 	dispatch_resume(c->out);
     dispatch_release(c->out);

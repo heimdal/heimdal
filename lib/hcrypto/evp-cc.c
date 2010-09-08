@@ -48,7 +48,9 @@
 #ifdef HAVE_COMMONCRYPTO_COMMONDIGEST_H
 #include <CommonCrypto/CommonDigest.h>
 #endif
+#ifdef HAVE_COMMONCRYPTO_COMMONCRYPTOR_H
 #include <CommonCrypto/CommonCryptor.h>
+#endif
 
 #include <evp.h>
 #include <evp-cc.h>
@@ -56,6 +58,8 @@
 /*
  *
  */
+
+#ifdef HAVE_COMMONCRYPTO_COMMONCRYPTOR_H
 
 struct cc_key {
     CCCryptorRef href;
@@ -160,6 +164,8 @@ cc_des_ede3_cbc_init(EVP_CIPHER_CTX *ctx,
     return init_cc_key(encp, kCCAlgorithm3DES, 0, key, kCCKeySize3DES, iv, &cc->href);
 }
 
+#endif /* HAVE_COMMONCRYPTO_COMMONCRYPTOR_H */
+
 /**
  * The tripple DES cipher type (Apple CommonCrypto provider)
  *
@@ -171,6 +177,7 @@ cc_des_ede3_cbc_init(EVP_CIPHER_CTX *ctx,
 const EVP_CIPHER *
 EVP_cc_des_ede3_cbc(void)
 {
+#ifdef HAVE_COMMONCRYPTO_COMMONCRYPTOR_H
     static const EVP_CIPHER des_ede3_cbc = {
 	0,
 	8,
@@ -187,8 +194,12 @@ EVP_cc_des_ede3_cbc(void)
 	NULL
     };
     return &des_ede3_cbc;
+#else
+    return NULL;
+#endif
 }
 
+#ifdef HAVE_COMMONCRYPTO_COMMONCRYPTOR_H
 /*
  *
  */
@@ -202,6 +213,7 @@ cc_des_cbc_init(EVP_CIPHER_CTX *ctx,
     struct cc_key *cc = ctx->cipher_data;
     return init_cc_key(encp, kCCAlgorithmDES, 0, key, kCCBlockSizeDES, iv, &cc->href);
 }
+#endif
 
 /**
  * The DES cipher type (Apple CommonCrypto provider)
@@ -214,6 +226,7 @@ cc_des_cbc_init(EVP_CIPHER_CTX *ctx,
 const EVP_CIPHER *
 EVP_cc_des_cbc(void)
 {
+#ifdef HAVE_COMMONCRYPTO_COMMONCRYPTOR_H
     static const EVP_CIPHER des_ede3_cbc = {
 	0,
 	kCCBlockSizeDES,
@@ -230,8 +243,12 @@ EVP_cc_des_cbc(void)
 	NULL
     };
     return &des_ede3_cbc;
+#else
+    return NULL;
+#endif
 }
 
+#ifdef HAVE_COMMONCRYPTO_COMMONCRYPTOR_H
 /*
  *
  */
@@ -245,6 +262,7 @@ cc_aes_cbc_init(EVP_CIPHER_CTX *ctx,
     struct cc_key *cc = ctx->cipher_data;
     return init_cc_key(encp, kCCAlgorithmAES128, 0, key, ctx->cipher->key_len, iv, &cc->href);
 }
+#endif
 
 /**
  * The AES-128 cipher type (Apple CommonCrypto provider)
@@ -257,6 +275,7 @@ cc_aes_cbc_init(EVP_CIPHER_CTX *ctx,
 const EVP_CIPHER *
 EVP_cc_aes_128_cbc(void)
 {
+#ifdef HAVE_COMMONCRYPTO_COMMONCRYPTOR_H
     static const EVP_CIPHER c = {
 	0,
 	kCCBlockSizeAES128,
@@ -273,6 +292,9 @@ EVP_cc_aes_128_cbc(void)
 	NULL
     };
     return &c;
+#else
+    return NULL;
+#endif
 }
 
 /**
@@ -286,6 +308,7 @@ EVP_cc_aes_128_cbc(void)
 const EVP_CIPHER *
 EVP_cc_aes_192_cbc(void)
 {
+#ifdef HAVE_COMMONCRYPTO_COMMONCRYPTOR_H
     static const EVP_CIPHER c = {
 	0,
 	kCCBlockSizeAES128,
@@ -302,6 +325,9 @@ EVP_cc_aes_192_cbc(void)
 	NULL
     };
     return &c;
+#else
+    return NULL;
+#endif
 }
 
 /**
@@ -315,6 +341,7 @@ EVP_cc_aes_192_cbc(void)
 const EVP_CIPHER *
 EVP_cc_aes_256_cbc(void)
 {
+#ifdef HAVE_COMMONCRYPTO_COMMONCRYPTOR_H
     static const EVP_CIPHER c = {
 	0,
 	kCCBlockSizeAES128,
@@ -331,8 +358,12 @@ EVP_cc_aes_256_cbc(void)
 	NULL
     };
     return &c;
+#else
+    return NULL;
+#endif
 }
 
+#ifdef HAVE_COMMONCRYPTO_COMMONCRYPTOR_H
 /*
  *
  */
@@ -348,6 +379,7 @@ cc_aes_cfb8_init(EVP_CIPHER_CTX *ctx,
     return init_cc_key(1, kCCAlgorithmAES128, kCCOptionECBMode,
 		       key, ctx->cipher->key_len, NULL, &cc->href);
 }
+#endif
 
 /**
  * The AES-128 CFB8 cipher type (Apple CommonCrypto provider)
@@ -360,6 +392,7 @@ cc_aes_cfb8_init(EVP_CIPHER_CTX *ctx,
 const EVP_CIPHER *
 EVP_cc_aes_128_cfb8(void)
 {
+#ifdef HAVE_COMMONCRYPTO_COMMONCRYPTOR_H
     static const EVP_CIPHER c = {
 	0,
 	1,
@@ -376,6 +409,9 @@ EVP_cc_aes_128_cfb8(void)
 	NULL
     };
     return &c;
+#else
+    return NULL
+#endif
 }
 
 /**
@@ -389,6 +425,7 @@ EVP_cc_aes_128_cfb8(void)
 const EVP_CIPHER *
 EVP_cc_aes_192_cfb8(void)
 {
+#ifdef HAVE_COMMONCRYPTO_COMMONCRYPTOR_H
     static const EVP_CIPHER c = {
 	0,
 	1,
@@ -405,6 +442,9 @@ EVP_cc_aes_192_cfb8(void)
 	NULL
     };
     return &c;
+#else
+    return NULL;
+#endif
 }
 
 /**
@@ -418,6 +458,7 @@ EVP_cc_aes_192_cfb8(void)
 const EVP_CIPHER *
 EVP_cc_aes_256_cfb8(void)
 {
+#ifdef HAVE_COMMONCRYPTO_COMMONCRYPTOR_H
     static const EVP_CIPHER c = {
 	0,
 	kCCBlockSizeAES128,
@@ -434,6 +475,9 @@ EVP_cc_aes_256_cfb8(void)
 	NULL
     };
     return &c;
+#else
+    return NULL;
+#endif
 }
 
 /*
@@ -722,6 +766,8 @@ EVP_cc_camellia_256_cbc(void)
     return NULL;
 }
 
+#ifdef HAVE_COMMONCRYPTO_COMMONCRYPTOR_H
+
 /*
  *
  */
@@ -736,7 +782,10 @@ cc_rc4_init(EVP_CIPHER_CTX *ctx,
     return init_cc_key(encp, kCCAlgorithmRC4, 0, key, ctx->key_len, iv, &cc->href);
 }
 
+#endif
+
 /**
+
  * The RC4 cipher type (Apple CommonCrypto provider)
  *
  * @return the RC4 EVP_CIPHER pointer.
@@ -747,6 +796,7 @@ cc_rc4_init(EVP_CIPHER_CTX *ctx,
 const EVP_CIPHER *
 EVP_cc_rc4(void)
 {
+#ifdef HAVE_COMMONCRYPTO_COMMONCRYPTOR_H
     static const EVP_CIPHER rc4 = {
 	0,
 	1,
@@ -763,6 +813,9 @@ EVP_cc_rc4(void)
 	NULL
     };
     return &rc4;
+#else
+    return NULL;
+#endif
 }
 
 
@@ -777,6 +830,7 @@ EVP_cc_rc4(void)
 const EVP_CIPHER *
 EVP_cc_rc4_40(void)
 {
+#ifdef HAVE_COMMONCRYPTO_COMMONCRYPTOR_H
     static const EVP_CIPHER rc4_40 = {
 	0,
 	1,
@@ -793,6 +847,9 @@ EVP_cc_rc4_40(void)
 	NULL
     };
     return &rc4_40;
+#else
+    return NULL;
+#endif
 }
 
 #endif /* __APPLE__ */

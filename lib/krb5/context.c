@@ -388,6 +388,13 @@ out:
 
 #ifndef HEIMDAL_SMALLER
 
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
+krb5_get_permitted_enctypes(krb5_context context,
+			    krb5_enctype **etypes)
+{
+    return krb5_get_default_in_tkt_etypes(context, etypes);
+}
+
 /*
  *
  */

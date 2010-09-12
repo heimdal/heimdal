@@ -1314,7 +1314,8 @@ EVP_BytesToKey(const EVP_CIPHER *type,
 	       void *keydata,
 	       void *ivdata)
 {
-    int ivlen, keylen, first = 0;
+    unsigned int ivlen, keylen;
+    int first = 0;
     unsigned int mds = 0, i;
     unsigned char *key = keydata;
     unsigned char *iv = ivdata;

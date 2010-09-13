@@ -420,6 +420,7 @@ EXTRA_DIST = \
 	data/test.crt \
 	data/test.key \
 	data/test.p12 \
+	data/win-u16-in-printablestring.der \
 	data/yutaka-pad-broken-ca.pem \
 	data/yutaka-pad-broken-cert.pem \
 	data/yutaka-pad-ok-ca.pem \

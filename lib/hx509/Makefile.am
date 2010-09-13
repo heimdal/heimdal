@@ -300,7 +300,9 @@ EXTRA_DIST = \
 	hx509_err.et \
 	hxtool-commands.in \
 	ocsp.asn1 \
+	ocsp.opt \
 	pkcs10.asn1 \
+	pkcs10.opt \
 	test_ca.in \
 	test_chain.in \
 	test_cert.in \

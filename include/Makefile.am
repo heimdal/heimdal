@@ -29,12 +29,16 @@ endif
 
 CLEANFILES =			\
 	asn1.h			\
+	asn1-common.h		\
+	asn1-template.h		\
 	asn1_err.h		\
 	base64.h		\
 	cms_asn1.h 		\
+	crmf_asn1.h		\
 	com_err.h		\
 	com_right.h		\
 	der-protos.h 		\
+	der-private.h 		\
 	der.h			\
 	digest_asn1.h 		\
 	editline.h		\
@@ -46,6 +50,7 @@ CLEANFILES =			\
 	hdb.h			\
 	hdb_asn1.h		\
 	hdb_err.h		\
+	heim-ipc.h		\
 	heim_asn1.h		\
 	heim_err.h		\
 	heimntlm-protos.h	\
@@ -70,12 +75,14 @@ CLEANFILES =			\
 	kx509_err.h		\
 	locate_plugin.h		\
 	otp.h			\
+	ocsp_asn1.h		\
 	parse_bytes.h		\
 	parse_time.h		\
 	parse_units.h		\
 	pkcs12_asn1.h		\
 	pkcs8_asn1.h		\
 	pkcs9_asn1.h		\
+	pkcs10_asn1.h		\
 	pkinit_asn1.h		\
 	resolve.h		\
 	rfc2459_asn1.h		\

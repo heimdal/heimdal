@@ -54,6 +54,7 @@ AM_YFLAGS = -d
 dist_libhx509_la_SOURCES = \
 	ca.c \
 	cert.c \
+	char_map.h \
 	cms.c \
 	collector.c \
 	crypto.c \
@@ -299,6 +300,7 @@ EXTRA_DIST = \
 	crmf.asn1 \
 	hx509_err.et \
 	hxtool-commands.in \
+	quote.py \
 	ocsp.asn1 \
 	ocsp.opt \
 	pkcs10.asn1 \

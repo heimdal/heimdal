@@ -2,8 +2,8 @@ include $(top_srcdir)/Makefile.am.common
 
 noinst_LTLIBRARIES = libheim-ipcc.la libheim-ipcs.la
 
-dist_libheim_ipcc_la_SOURCES = hi_locl.h client.c common.c
-dist_libheim_ipcs_la_SOURCES = hi_locl.h server.c common.c
+dist_libheim_ipcc_la_SOURCES = hi_locl.h heim_ipc_types.h client.c common.c
+dist_libheim_ipcs_la_SOURCES = hi_locl.h heim_ipc_types.h server.c common.cb
 
 include_HEADERS = heim-ipc.h
 

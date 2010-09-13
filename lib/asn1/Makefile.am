@@ -592,17 +592,18 @@ CLEANFILES = \
 	$(gen_files_digest) \
 	$(gen_files_kx509) \
 	$(gen_files_test) $(nodist_check_gen_SOURCES) \
+	asn1_err.c asn1_err.h \
 	test_asn1-template.c \
-	rfc2459_asn1_files rfc2459_asn1.h* \
-	cms_asn1_files cms_asn1.h* \
-	krb5_asn1_files krb5_asn1.h* \
-	pkinit_asn1_files pkinit_asn1.h* \
-	pkcs8_asn1_files pkcs8_asn1.h* \
-	pkcs9_asn1_files pkcs9_asn1.h* \
-	pkcs12_asn1_files pkcs12_asn1.h* \
-	digest_asn1_files digest_asn1.h* \
-	kx509_asn1_files kx509_asn1.h* \
-	test_asn1_files test_asn1.h*
+	rfc2459_asn1_files rfc2459_asn1*.h* \
+	cms_asn1_files cms_asn1*.h* \
+	krb5_asn1_files krb5_asn1*.h* \
+	pkinit_asn1_files pkinit_asn1*.h* \
+	pkcs8_asn1_files pkcs8_asn1*.h* \
+	pkcs9_asn1_files pkcs9_asn1*.h* \
+	pkcs12_asn1_files pkcs12_asn1*.h* \
+	digest_asn1_files digest_asn1*.h* \
+	kx509_asn1_files kx509_asn1*.h* \
+	test_asn1_files test_asn1*.h*
 
 dist_include_HEADERS = der.h heim_asn1.h der-protos.h der-private.h
 dist_include_HEADERS += asn1-common.h

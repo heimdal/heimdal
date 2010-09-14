@@ -619,7 +619,7 @@ ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL fchown(int, uid_t, gid_t);
 #ifdef RENAME_DOES_NOT_UNLINK
 ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL rk_rename(const char *, const char *);
 #else
-#define rk_rename(__rk_rn_from,_rk_rn_to) rename(__rk_rn_from,__rk_rn_to)
+#define rk_rename(__rk_rn_from,__rk_rn_to) rename(__rk_rn_from,__rk_rn_to)
 #endif
 
 #if !defined(HAVE_DAEMON) || defined(NEED_DAEMON_PROTO)

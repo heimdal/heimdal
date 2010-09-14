@@ -210,7 +210,10 @@ main(int argc, char **argv)
     check_truncation(context, "IPv4:127.0.0.0");
     check_truncation(context, "RANGE:IPv4:127.0.0.0-IPv4:127.0.0.255");
 #ifdef HAVE_IPV6
+    check_truncation(context, "IPv6:::");
     check_truncation(context, "IPv6:::1");
+    check_truncation(context, "IPv6:fe80:9:c3e:0:209:6bff:fea0:e522");
+    check_truncation(context, "IPv6:fe80::209:0:0:0");
     check_truncation(context, "IPv6:fe80::ffff:ffff:ffff:ffff");
 #endif
 

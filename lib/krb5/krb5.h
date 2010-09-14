@@ -410,6 +410,10 @@ typedef union {
 #define KRB5_TC_MATCH_2ND_TKT		(1 << 23)
 #define KRB5_TC_MATCH_IS_SKEY		(1 << 22)
 
+/* constants for get_flags and set_flags */
+#define KRB5_TC_OPENCLOSE 0x00000001
+#define KRB5_TC_NOTICKET  0x00000002
+
 typedef AuthorizationData krb5_authdata;
 
 typedef KRB_ERROR krb5_error;

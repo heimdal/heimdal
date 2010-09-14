@@ -52,7 +52,11 @@ struct testcase {
 } tests[] = {
     /* 0 */
     {
-	&asn1_oid_id_pkinit_kdf_ah_sha1, /* AlgorithmIdentifier */
+        NULL,                            /* AlgorithmIdentifier */
+	/* == &asn1_oid_id_pkinit_kdf_ah_sha1.  Addresses of exported
+         * symbols are not considered constant on all platforms
+         * (Windows).  So we set it in main() below. */
+
 	{ /* Z */
 	    256,
 	    "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
@@ -259,6 +263,8 @@ main(int argc, char **argv)
     ret = krb5_init_context(&context);
     if (ret)
 	errx (1, "krb5_init_context failed: %d", ret);
+
+    tests[0].oid = &asn1_oid_id_pkinit_kdf_ah_sha1;
 
     for (i = 0; i < sizeof(tests)/sizeof(tests[0]); i++)
 	test_dh2key(context, i, &tests[i]);

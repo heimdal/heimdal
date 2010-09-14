@@ -86,7 +86,8 @@ net_read(rk_socket_t sock, void *buf, size_t nbytes)
 
 	if (use_read == 0 &&
 	    rk_IS_SOCKET_ERROR(count) &&
-	    rk_SOCK_ERRNO == WSAENOTSOCK) {
+            (rk_SOCK_ERRNO == WSANOTINITIALISED ||
+             rk_SOCK_ERRNO == WSAENOTSOCK)) {
 	    use_read = 1;
 
 	    count = _read (sock, cbuf, rem);

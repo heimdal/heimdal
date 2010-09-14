@@ -407,6 +407,11 @@ _krb5_expand_path_tokens(krb5_context context,
     const char *path_left;
     size_t len = 0;
 
+    if (path_in == NULL || *path_in == '\0') {
+        *ppath_out = strdup("");
+        return 0;
+    }
+
     *ppath_out = NULL;
 
     for (path_left = path_in; path_left && *path_left; ) {

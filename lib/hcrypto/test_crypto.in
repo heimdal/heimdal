@@ -60,6 +60,8 @@ for a in unix fortuna egd w32crypto ;do
 	${rand} --method=${a} --file=crypto-test 2>error
 	res=$?
 	if test "X$res" != X0 ; then
+            grep "unknown method" error && \
+                { echo "random $a is not available" ; continue; }
 	    grep "random not ready yet" error || \
 		{ echo "random $a ready failing" ; cat error; exit 1; }
 	    echo "random method $a out for lunch"
@@ -101,6 +103,8 @@ if [ -e /dev/random -o -e /dev/urandom -o -e /dev/srandom -o -e /dev/arandom ] ;
     ${rand} --method=unix --file=unix 2>error
     res=$?
     if test "X$res" != X0 ; then
+        grep "unknown method" error && \
+        { echo "random unix is not available"; exit 0; }
         grep "random not ready yet" error || \
     	{ echo "random unix ready failing" ; cat error; exit 1; }
         echo "random method unix out for lunch"

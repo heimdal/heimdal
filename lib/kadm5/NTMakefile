@@ -237,12 +237,21 @@ test-binaries:	\
 	$(OBJ)\test_pw_quality.exe \
 	$(OBJ)\sample_passwd_check.dll
 
-$(OBJ)\default_keys.exe: $(OBJ)\default_keys.obj
+$(OBJ)\default_keys.exe: $(OBJ)\default_keys.obj $(LIBHEIMDAL) $(LIBROKEN) $(LIBHDB)
 	$(EXECONLINK)
 	$(EXEPREP_NODIST)
 
-$(OBJ)\sample_passwd_check.dll: $(OBJ)\sample_passwd_check.obj
-	$(DLLGUILINK)		#TODO: Define exports
+$(OBJ)\test_pw_quality.exe: $(OBJ)\test_pw_quality.obj	\
+	$(LIBROKEN) $(LIBKADM5SRV) $(LIBVERS) $(LIBHEIMDAL)
+	$(EXECONLINK)
+	$(EXEPREP_NODIST)
+
+$(OBJ)\sample_passwd_check.dll: $(OBJ)\sample_passwd_check.obj $(LIBHEIMDAL)
+	$(DLLGUILINK) /DEF:<<
+EXPORTS
+	version DATA
+	check_length
+<<
 	$(DLLPREP_NODIST)
 
 test-run:

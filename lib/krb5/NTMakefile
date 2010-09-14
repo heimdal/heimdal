@@ -264,6 +264,14 @@ dist_libkrb5_la_SOURCES =			\
 	warn.c					\
 	write_message.c
 
+!ifdef HAVE_MSLSA_CACHE
+libkrb5_OBJS=$(libkrb5_OBJS)			\
+	$(OBJ)\lsacache.obj
+
+dist_libkrb5_la_SOURCES=$(dist_libkrb5_la_SOURCES)	\
+	lsacache.c
+!endif
+
 $(OBJ)\krb5-protos.h: $(dist_libkrb5_la_SOURCES)
 	$(PERL) ..\..\cf\make-proto.pl -E KRB5_LIB -q -P remove -o $(OBJ)\krb5-protos.h $(dist_libkrb5_la_SOURCES) || $(RM) -f krb5-protos.h
 
@@ -308,6 +316,9 @@ all:: $(OBJ)\libkrb5-exports.def
 
 clean::
 	-$(RM) $(OBJ)\libkrb5-exports.def
+
+#----------------------------------------------------------------------
+# Tools
 
 all-tools:: $(BINDIR)\verify_krb5_conf.exe
 
@@ -377,7 +388,7 @@ test-run:
 	store-test.exe
 	string-to-key-test.exe
 	test_acl.exe
-	-test_addr.exe
+	test_addr.exe
 	test_cc.exe
 	test_config.exe
 	test_prf.exe
@@ -393,8 +404,8 @@ test-run:
 	test_time.exe
 	cd $(SRCDIR)
 
-$(test_binaries): $$(@R).obj
-	$(EXECONLINK) $(LIBHEIMDAL) $(LIBVERS) $(LIBROKEN)
+$(test_binaries): $$(@R).obj $(LIBHEIMDAL) $(LIBVERS) $(LIBROKEN)
+	$(EXECONLINK)
 	$(EXEPREP_NODIST)
 
 $(test_binaries:.exe=.obj): $$(@B).c

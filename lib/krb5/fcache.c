@@ -813,7 +813,7 @@ fcc_remove_cred(krb5_context context,
 	return ret;
     }
 
-    ret = rename(&newname[5], FILENAME(id));
+    ret = rk_rename(&newname[5], FILENAME(id));
     if (ret)
 	ret = errno;
     free(newname);
@@ -909,15 +909,7 @@ fcc_move(krb5_context context, krb5_ccache from, krb5_ccache to)
 {
     krb5_error_code ret = 0;
 
-    ret = rename(FILENAME(from), FILENAME(to));
-#ifdef RENAME_DOES_NOT_UNLINK
-    if (ret && (errno == EEXIST || errno == EACCES)) {
-	ret = unlink(FILENAME(to));
-	if (ret == 0) {
-	    ret = rename(FILENAME(from), FILENAME(to));
-	}
-    }
-#endif
+    ret = rk_rename(FILENAME(from), FILENAME(to));
 
     if (ret && errno != EXDEV) {
 	char buf[128];

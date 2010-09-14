@@ -83,7 +83,8 @@ net_write(rk_socket_t sock, const void *buf, size_t nbytes)
 
 	if (use_write == 0 &&
 	    rk_IS_SOCKET_ERROR(count) &&
-	    rk_SOCK_ERRNO == WSAENOTSOCK) {
+	    (rk_SOCK_ERRNO == WSANOTINITIALISED ||
+             rk_SOCK_ERRNO == WSAENOTSOCK)) {
 	    use_write = 1;
 
 	    count = _write (sock, cbuf, rem);

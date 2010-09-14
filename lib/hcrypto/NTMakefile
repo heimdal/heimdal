@@ -196,7 +196,7 @@ $(OBJ)\test_engine_dso.exe: $(OBJ)\test_engine_dso.obj $(LIBHEIMDAL) $(LIBROKEN)
 	$(EXECONLINK)
 	$(EXEPREP_NODIST)
 
-$(OBJ)\test_hmac.exe: $(OBJ)\test_hmac.obj $(LIBHEIMDAL)
+$(OBJ)\test_hmac.exe: $(OBJ)\test_hmac.obj $(LIBHEIMDAL) $(LIBROKEN)
 	$(EXECONLINK)
 	$(EXEPREP_NODIST)
 

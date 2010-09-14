@@ -248,9 +248,12 @@ print_tickets (krb5_context context,
     }
     free (str);
 
-    if(do_verbose)
+    if(do_verbose) {
 	printf ("%17s: %d\n", N_("Cache version", ""),
 		krb5_cc_get_version(context, ccache));
+    } else {
+        krb5_cc_set_flags(context, ccache, KRB5_TC_NOTICKET);
+    }
 
     ret = krb5_cc_get_kdc_offset(context, ccache, &sec);
 

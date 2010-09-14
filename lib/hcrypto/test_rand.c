@@ -132,7 +132,7 @@ main(int argc, char **argv)
 	    RAND_set_rand_method(RAND_w32crypto_method());
 #endif
 	else
-	    errx(0, "unknown method %s", rand_method);
+	    errx(1, "unknown method %s", rand_method);
     }
 	
     if (RAND_file_name(path, sizeof(path)) == NULL)

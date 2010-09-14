@@ -17,8 +17,8 @@ sub dump_symbols_for_file($)
     while (<SP>) {
 	# 008 00000000 SECT3  notype ()    External     | _encode_AccessDescription
 
-	/^[[:xdigit:]]{3,}\s[[:xdigit:]]{8,}\s(\w+)\s+\w*\s+(?:\(\)|  )\s+(\w+)\s+\|\s+(\w+)$/ && do {
-	    my ($section, $visibility, $symbol) = ($1, $2, $3);
+	/^[[:xdigit:]]{3,}\s[[:xdigit:]]{8,}\s(\w+)\s+\w*\s+(\(\)|  )\s+(\w+)\s+\|\s+([0-9a-zA-Z\@\_]+)$/ && do {
+	    my ($section, $type, $visibility, $symbol) = ($1, $2, $3, $4);
 
 	    if ($section ne "UNDEF" && $visibility eq "External") {
 		print $fn if $show_module_name;
@@ -27,7 +27,13 @@ sub dump_symbols_for_file($)
 		if ($strip_leading_underscore && $symbol =~ /_(.*)/) {
 		    $symbol = $1;
 		}
+		if ($strip_leading_underscore && $symbol =~ /(.*)\@.*$/) {
+		    $symbol = $1;
+		}
 		print $symbol;
+                if ($type ne "()") {
+                    print "\tDATA";
+                }
 		print "\n";
 	    }
 	};

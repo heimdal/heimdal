@@ -44,6 +44,7 @@
 #include <err.h>
 #include <roken.h>
 
+#include "asn1-common.h"
 #include "check-common.h"
 
 RCSID("$Id$");
@@ -195,12 +196,12 @@ int
 generic_test (const struct test_case *tests,
 	      unsigned ntests,
 	      size_t data_size,
-	      int (*encode)(unsigned char *, size_t, void *, size_t *),
-	      int (*length)(void *),
-	      int (*decode)(unsigned char *, size_t, void *, size_t *),
-	      int (*free_data)(void *),
+	      int (ASN1CALL *encode)(unsigned char *, size_t, void *, size_t *),
+	      int (ASN1CALL *length)(void *),
+	      int (ASN1CALL *decode)(unsigned char *, size_t, void *, size_t *),
+	      int (ASN1CALL *free_data)(void *),
 	      int (*cmp)(void *a, void *b),
-	      int (*copy)(const void *from, void *to))
+	      int (ASN1CALL *copy)(const void *from, void *to))
 {
     unsigned char *buf, *buf2;
     int i;
@@ -353,7 +354,7 @@ int
 generic_decode_fail (const struct test_case *tests,
 		     unsigned ntests,
 		     size_t data_size,
-		     int (*decode)(unsigned char *, size_t, void *, size_t *))
+		     int (ASN1CALL *decode)(unsigned char *, size_t, void *, size_t *))
 {
     unsigned char *buf;
     int i;

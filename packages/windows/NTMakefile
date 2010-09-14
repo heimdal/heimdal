@@ -30,7 +30,7 @@
 #
 
 RELDIR=packages\windows
-SUBDIRS=kfw_shim
+SUBDIRS=kfw_shim sdk
 
 !include ../../windows/NTMakefile.w32
 

@@ -195,7 +195,7 @@ $(OBJ)\hxtool-commands.c $(OBJ)\hxtool-commands.h: hxtool-commands.in $(SLC)
 	$(SLC) hxtool-commands.in
 	cd $(SRCDIR)
 
-$(BINDIR)\hxtool.exe: $(OBJ)\hxtool.obj $(OBJ)\hxtool-commands.obj $(LIBHEIMDAL) $(OBJ)\hxtool-version.res
+$(BINDIR)\hxtool.exe: $(OBJ)\tool\hxtool.obj $(OBJ)\tool\hxtool-commands.obj $(LIBHEIMDAL) $(OBJ)\hxtool-version.res
 	$(EXECONLINK) $(LIBHEIMDAL) $(LIBROKEN) $(LIBSL) $(LIBVERS) $(LIBCOMERR)
 	$(EXEPREP)
 
@@ -228,7 +228,21 @@ $(OBJ)\sel-lex.c: sel-lex.l
 
 all:: $(INCFILES) $(LIBHX509)
 
+prep:: mktooldir
+
+mktooldir:
+!  if !exist($(OBJ)\tool)
+	$(MKDIR) $(OBJ)\tool
+!  endif
+
 all-tools:: $(BINDIR)\hxtool.exe
 
 clean::
 	-$(RM) $(BINDIR)\hxtool.exe
+	-$(RM) $(OBJ)\tool\*.*
+
+{}.c{$(OBJ)\tool}.obj::
+	$(C2OBJ_C) /Fd$(OBJ)\tool\ /Fo$(OBJ)\tool\ /MP /UASN1_LIB $<
+
+{$(OBJ)}.c{$(OBJ)\tool}.obj::
+	$(C2OBJ_C) /Fd$(OBJ)\tool\ /Fo$(OBJ)\tool\ /MP /UASN1_LIB $<

@@ -3,7 +3,8 @@ EXPORTS
 	__gss_ntlm_mechanism_oid_desc
 	__gss_spnego_mechanism_oid_desc
 	__gss_sasl_digest_md5_mechanism_oid_desc
-	__gss_c_nt_anonymous_oid_desc
+	__gss_c_nt_anonymous_oid_desc   ;!
+;!	__gss_c_nt_anonymous
 	__gss_c_nt_export_name_oid_desc
 	__gss_c_nt_hostbased_service_oid_desc
 	__gss_c_nt_hostbased_service_x_oid_desc
@@ -31,9 +32,11 @@ EXPORTS
 	gss_duplicate_name
 	gss_duplicate_oid
 	gss_encapsulate_token
+        gss_export_cred
 	gss_export_name
 	gss_export_sec_context
 	gss_get_mic
+        gss_import_cred
 	gss_import_name
 	gss_import_sec_context
 	gss_indicate_mechs
@@ -44,8 +47,7 @@ EXPORTS
 	gss_inquire_cred_by_oid
 	gss_inquire_mechs_for_name
 	gss_inquire_names_for_mech
-	gss_inquire_sec_context_by_oid
-	gss_inquire_sec_context_by_oid
+	gss_inquire_sec_context_by_oid  ;!
 	gss_krb5_ccache_name
 	gss_krb5_copy_ccache
 	gss_krb5_export_lucid_sec_context

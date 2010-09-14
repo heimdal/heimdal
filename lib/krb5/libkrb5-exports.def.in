@@ -77,6 +77,7 @@ EXPORTS
 	krb5_c_make_random_key
 	krb5_c_prf
 	krb5_c_prf_length
+        krb5_c_random_make_octets
 	krb5_c_set_checksum
 	krb5_c_valid_cksumtype
 	krb5_c_valid_enctype
@@ -88,7 +89,7 @@ EXPORTS
 	krb5_cc_clear_mcred
 	krb5_cc_close
 	krb5_cc_copy_cache
-	krb5_cc_copy_creds
+	krb5_cc_copy_creds      ;!
 	krb5_cc_copy_match_f
 	krb5_cc_default
 	krb5_cc_default_name
@@ -287,6 +288,7 @@ EXPORTS
 	krb5_free_creds_contents
 	krb5_free_data
 	krb5_free_data_contents
+        krb5_free_default_realm
 	krb5_free_error
 	krb5_free_error_contents
 	krb5_free_error_string

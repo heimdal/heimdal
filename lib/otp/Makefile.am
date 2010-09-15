@@ -74,3 +74,5 @@ CLEANFILES = \
 	strlcpy.c \
 	strlwr.c \
 	strncasecmp.c
+
+EXTRA_DIST = version-script.map

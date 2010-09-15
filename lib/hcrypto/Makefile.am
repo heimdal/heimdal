@@ -165,6 +165,9 @@ imathsource =			\
 	imath/iprime.h
 
 ltmsources = \
+	libtommath/tommath.h \
+	libtommath/tommath_class.h \
+	libtommath/tommath_superclass.h \
 	libtommath/bncore.c \
 	libtommath/bn_mp_init.c \
 	libtommath/bn_mp_clear.c \

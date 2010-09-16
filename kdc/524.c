@@ -33,6 +33,8 @@
 
 #include "kdc_locl.h"
 
+#ifdef KRB4
+
 #include <krb5-v4compat.h>
 
 /*
@@ -394,3 +396,4 @@ _kdc_do_524(krb5_context context,
 	_kdc_free_ent (context, server);
     return ret;
 }
+#endif /* KRB4 */

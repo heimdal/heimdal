@@ -72,7 +72,7 @@ dump_vector(const char * msg, uint32_t * v, size_t len)
 {
     size_t i;
 
-    printf("%s: (%d) ", msg, len);
+    printf("%s: (%d) ", msg, (int)len);
     for (i=0; i < len; i++) {
 	printf("%s%x", (i > 0? " ":""), v[i]);
     }

@@ -33,6 +33,8 @@
 
 #include "hprop.h"
 
+#ifdef KRB4
+
 static time_t
 time_parse(const char *cp)
 {
@@ -139,3 +141,4 @@ v4_prop_dump(void *arg, const char *file)
     fclose(f);
     return 0;
 }
+#endif /* KRB4 */

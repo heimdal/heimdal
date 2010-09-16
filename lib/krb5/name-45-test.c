@@ -35,6 +35,8 @@
 #include "krb5_locl.h"
 #include <err.h>
 
+#ifdef KRB4
+
 enum { MAX_COMPONENTS = 3 };
 
 static struct testcase {
@@ -292,3 +294,9 @@ main(int argc, char **argv)
     }
     return val;
 }
+
+#else /* stub for !KRB4 */
+int main(int argc, char *argv[]) {
+	return 77;
+}
+#endif

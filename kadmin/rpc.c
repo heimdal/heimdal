@@ -686,7 +686,7 @@ proc_init(kadm5_server_context *context,
     CHECK(krb5_store_uint32(out, 0)); /* code */
 }
 
-struct proc {
+struct krb5_proc {
     char *name;
     void (*func)(kadm5_server_context *, krb5_storage *, krb5_storage *);
 } procs[] = {

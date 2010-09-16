@@ -90,7 +90,7 @@ truncated_addr(krb5_context context, const char *addr,
     krb5_print_address(&addresses.val[0], buf, truncate_len, &len);
 
 #if 0
-    printf("addr %s (%d/%d)\n", buf, (int)len, (int)strlen(buf));
+    printf("addr %s (%d/%d) should be %d\n", buf, (int)len, (int)strlen(buf), (int)outlen);
 #endif
 
     if (truncate_len > strlen(buf) + 1)
@@ -117,6 +117,8 @@ static void
 check_truncation(krb5_context context, const char *addr)
 {
     int i, len = strlen(addr);
+
+    truncated_addr(context, addr, len, len);
 
     for (i = 0; i < len; i++)
 	truncated_addr(context, addr, i, len);
@@ -212,7 +214,7 @@ main(int argc, char **argv)
 #ifdef HAVE_IPV6
     check_truncation(context, "IPv6:::");
     check_truncation(context, "IPv6:::1");
-    check_truncation(context, "IPv6:fe80:9:c3e:0:209:6bff:fea0:e522");
+    check_truncation(context, "IPv6:fe80:9:c3e::209:6bff:fea0:e522");
     check_truncation(context, "IPv6:fe80::209:0:0:0");
     check_truncation(context, "IPv6:fe80::ffff:ffff:ffff:ffff");
 #endif

@@ -83,7 +83,7 @@ main (int argc, char **argv)
     while((ret = krb5_cc_next_cred(context, id, &cursor, &creds)) == 0){
         char *principal;
 
-	krb5_unparse_name_short(context, creds.server, &principal);
+	krb5_unparse_name(context, creds.server, &principal);
 	printf("principal: %s\\n", principal);
 	free(principal);
 	krb5_free_cred_contents (context, &creds);

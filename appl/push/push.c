@@ -34,6 +34,13 @@
 #include "push_locl.h"
 RCSID("$Id$");
 
+#if defined(_AIX) && defined(STAT)
+/*
+ * AIX defines STAT to 1 in sys/dir.h
+ */
+#  undef STAT
+#endif
+
 #ifdef KRB5
 static int use_v5 = -1;
 static krb5_context context;

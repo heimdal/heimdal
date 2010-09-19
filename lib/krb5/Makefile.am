@@ -152,6 +152,7 @@ dist_libkrb5_la_SOURCES =			\
 	n-fold.c				\
 	pac.c					\
 	padata.c				\
+	pcache.c				\
 	pkinit.c				\
 	principal.c				\
 	prog_setup.c				\
@@ -258,7 +259,7 @@ nodist_include_HEADERS = krb5_err.h heim_err.h k524_err.h
 
 # XXX use nobase_include_HEADERS = krb5/locate_plugin.h
 krb5dir = $(includedir)/krb5
-krb5_HEADERS = locate_plugin.h send_to_kdc_plugin.h
+krb5_HEADERS = locate_plugin.h send_to_kdc_plugin.h ccache_plugin.h
 
 build_HEADERZ = \
 	$(krb5_HEADERS) \

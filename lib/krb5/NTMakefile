@@ -124,6 +124,7 @@ libkrb5_OBJS =			\
 	$(OBJ)\store_emem.obj		    \
 	$(OBJ)\store_fd.obj		    \
 	$(OBJ)\store_mem.obj		    \
+	$(OBJ)\pcache.obj		    \
 	$(OBJ)\plugin.obj		    \
 	$(OBJ)\ticket.obj		    \
 	$(OBJ)\time.obj			    \
@@ -253,6 +254,7 @@ dist_libkrb5_la_SOURCES =			\
 	store_emem.c				\
 	store_fd.c				\
 	store_mem.c				\
+	pcache.c				\
 	plugin.c				\
 	ticket.c				\
 	time.c					\
@@ -263,14 +265,6 @@ dist_libkrb5_la_SOURCES =			\
 	version.c				\
 	warn.c					\
 	write_message.c
-
-!ifdef HAVE_MSLSA_CACHE
-libkrb5_OBJS=$(libkrb5_OBJS)			\
-	$(OBJ)\lsacache.obj
-
-dist_libkrb5_la_SOURCES=$(dist_libkrb5_la_SOURCES)	\
-	lsacache.c
-!endif
 
 $(OBJ)\krb5-protos.h: $(dist_libkrb5_la_SOURCES)
 	$(PERL) ..\..\cf\make-proto.pl -E KRB5_LIB -q -P remove -o $(OBJ)\krb5-protos.h $(dist_libkrb5_la_SOURCES) || $(RM) -f krb5-protos.h

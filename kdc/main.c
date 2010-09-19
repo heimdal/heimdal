@@ -38,10 +38,6 @@
 #include <util.h>
 #endif
 
-#ifdef __APPLE__
-#include <sandbox.h>
-#endif
-
 #ifdef HAVE_CAPNG
 #include <cap-ng.h>
 #endif

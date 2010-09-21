@@ -179,6 +179,28 @@ krb5_plugin_register(krb5_context context,
     return 0;
 }
 
+static int
+is_valid_plugin_filename(const char * n)
+{
+    if (n[0] == '.' && (n[1] == '\0' || (n[1] == '.' && n[2] == '\0')))
+        return 0;
+
+#ifdef _WIN32
+    /* On Windows, we only attempt to load .dll files as plug-ins. */
+    {
+        const char * ext;
+
+        ext = strrchr(n, '.');
+        if (ext == NULL)
+            return 0;
+
+        return !stricmp(ext, ".dll");
+    }
+#endif
+
+    return 1;
+}
+
 static krb5_error_code
 load_plugins(krb5_context context)
 {
@@ -219,7 +241,7 @@ load_plugins(krb5_context context)
 	    char *n = entry->d_name;
 
 	    /* skip . and .. */
-	    if (n[0] == '.' && (n[1] == '\0' || (n[1] == '.' && n[2] == '\0')))
+            if (!is_valid_plugin_filename(n))
 		continue;
 
 	    path = NULL;

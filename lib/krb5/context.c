@@ -616,6 +616,11 @@ krb5_set_config_files(krb5_context context, char **filenames)
     if(tmp == NULL)
 	return ENXIO;
 #endif
+
+#ifdef _WIN32
+    krb5_load_config_from_registry(context, &tmp);
+#endif
+
     krb5_config_file_free(context, context->cf);
     context->cf = tmp;
     ret = init_context_from_config_file(context);

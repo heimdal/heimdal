@@ -48,6 +48,7 @@ libkrb5_OBJS =			\
 	$(OBJ)\changepw.obj		    \
 	$(OBJ)\codec.obj		    \
 	$(OBJ)\config_file.obj		    \
+	$(OBJ)\config_reg.obj		    \
 	$(OBJ)\convert_creds.obj	    \
 	$(OBJ)\constants.obj		    \
 	$(OBJ)\context.obj		    \
@@ -190,6 +191,7 @@ dist_libkrb5_la_SOURCES =			\
 	changepw.c				\
 	codec.c					\
 	config_file.c				\
+	config_reg.c				\
 	convert_creds.c				\
 	constants.c				\
 	context.c				\

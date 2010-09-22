@@ -84,7 +84,7 @@ static krb5_error_code parse_list(struct fileptr *f, unsigned *lineno,
 				  krb5_config_binding **parent,
 				  const char **err_message);
 
-static krb5_config_section *
+krb5_config_section *
 get_entry(krb5_config_section **parent, const char *name, int type)
 {
     krb5_config_section **q;

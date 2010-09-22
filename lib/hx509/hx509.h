@@ -71,6 +71,11 @@ enum {
     HX509_VALIDATE_F_VERBOSE = 2
 };
 
+enum {
+    HX509_CRYPTO_PADDING_PKCS7 = 0,
+    HX509_CRYPTO_PADDING_NONE = 1
+};
+
 struct hx509_cert_attribute_data {
     heim_oid oid;
     heim_octet_string data;

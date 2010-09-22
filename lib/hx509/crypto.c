@@ -2016,7 +2016,11 @@ struct hx509cipher {
 struct hx509_crypto_data {
     char *name;
     int flags;
-#define ALLOW_WEAK 1
+#define ALLOW_WEAK 	1
+
+#define PADDING_NONE	2
+#define PADDING_PKCS7	4
+#define PADDING_FLAGS	(2|4)
     const struct hx509cipher *cipher;
     const EVP_CIPHER *c;
     heim_octet_string key;
@@ -2302,6 +2306,7 @@ hx509_crypto_init(hx509_context context,
 	return ENOMEM;
     }
 
+    (*crypto)->flags = PADDING_PKCS7;
     (*crypto)->cipher = cipher;
     (*crypto)->c = (*cipher->evp_func)();
 
@@ -2342,9 +2347,20 @@ hx509_crypto_set_key_name(hx509_crypto crypto, const char *name)
 }
 
 void
-hx509_crypto_allow_weak(hx509_crypto crypto)
+hx509_crypto_set_padding(hx509_crypto crypto, int padding_type)
 {
-    crypto->flags |= ALLOW_WEAK;
+    switch (padding_type) {
+    case HX509_CRYPTO_PADDING_PKCS7:
+	crypto->flags &= ~PADDING_FLAGS;
+	crypto->flags |= PADDING_PKCS7;
+	break;
+    case HX509_CRYPTO_PADDING_NONE:
+	crypto->flags &= ~PADDING_FLAGS;
+	crypto->flags |= PADDING_NONE;
+	break;
+    default:
+	_hx509_abort("Invalid padding");
+    }
 }
 
 int
@@ -2560,7 +2576,7 @@ hx509_crypto_decrypt(hx509_crypto crypto,
     }
     EVP_CIPHER_CTX_cleanup(&evp);
 
-    if (EVP_CIPHER_block_size(crypto->c) > 1) {
+    if ((crypto->flags & PADDING_PKCS7) && EVP_CIPHER_block_size(crypto->c) > 1) {
 	int padsize;
 	unsigned char *p;
 	int j, bsize = EVP_CIPHER_block_size(crypto->c);

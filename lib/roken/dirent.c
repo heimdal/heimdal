@@ -53,14 +53,65 @@ struct _dirent_dirinfo {
 
 #define INITIAL_ENTRIES 16
 
+/**
+ * Create a filespec for use with _findfirst() using a path spec
+ *
+ * If the last component of the path spec contains wildcards, we let
+ * it be.  If the last component doesn't end with a slash, we add one.
+ */
+static const char *
+filespec_from_dir_path(const char * path, char * buffer, size_t cch_buffer)
+{
+    char *comp, *t;
+    size_t pos;
+
+    if (strcpy_s(buffer, cch_buffer, path) != 0)
+        return NULL;
+
+    comp = strrchr(buffer, '\\');
+    if (comp == NULL)
+        comp = buffer;
+
+    t = strrchr(comp, '/');
+    if (t != NULL)
+        comp = t;
+
+    comp++;
+
+    pos = strcspn(comp, "*?");
+    if (comp[pos] != '\0')
+        return buffer;
+
+    /* We don't append a slash if pos == 0 because that changes the
+     * meaning:
+     *
+     * "*.*" is all files in the current directory.
+     * "\*.*" is all files in the root directory of the current drive.
+     */
+    if (pos > 0 && comp[pos - 1] != '\\' &&
+        comp[pos - 1] != '/') {
+        strcat_s(comp, cch_buffer - (comp - buffer), "\\");
+    }
+
+    strcat_s(comp, cch_buffer - (comp - buffer), "*.*");
+
+    return buffer;
+}
+
 ROKEN_LIB_FUNCTION DIR * ROKEN_LIB_CALL
-opendir(const char * filespec)
+opendir(const char * path)
 {
     DIR *              dp;
     struct _finddata_t fd;
     intptr_t           fd_handle;
+    const char         *filespec;
+    char               path_buffer[1024];
 
     memset(&fd, 0, sizeof(fd));
+
+    filespec = filespec_from_dir_path(path, path_buffer, sizeof(path_buffer)/sizeof(char));
+    if (filespec == NULL)
+        return NULL;
 
     fd_handle = _findfirst(filespec, &fd);
 

@@ -2347,6 +2347,12 @@ hx509_crypto_set_key_name(hx509_crypto crypto, const char *name)
 }
 
 void
+hx509_crypto_allow_weak(hx509_crypto crypto)
+{
+    crypto->flags |= ALLOW_WEAK;
+}
+
+void
 hx509_crypto_set_padding(hx509_crypto crypto, int padding_type)
 {
     switch (padding_type) {

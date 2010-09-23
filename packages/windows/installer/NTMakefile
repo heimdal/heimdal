@@ -53,7 +53,10 @@ $(OBJ)\heimdal-assemblies.wixobj: heimdal-assemblies.wxs
 		-dBinDir=$(BINDIR)	\
 		-dPlatform=$(PLATFORM)
 
-all:: $(MERGEMOD)
+$(SDKREDISTDIR)\Heimdal.msm: $(MERGEMOD)
+	$(CP) $** $@
+
+all:: $(MERGEMOD) $(SDKREDISTDIR)\Heimdal.msm
 
 clean::
 	-$(RM) $(MERGEMOD)

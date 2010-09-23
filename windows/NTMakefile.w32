@@ -86,6 +86,7 @@ SDKDIR		=$(SRC)\out
 SDKINCDIR	=$(SRC)\out\inc
 SDKLIBDIR	=$(SRC)\out\lib\$(CPU)
 SDKSRCDIR	=$(SRC)\out\src
+SDKREDISTDIR	=$(SRC)\out\redist\$(CPU)
 
 !ifdef RELDIR
 SRCDIR =$(SRC)\$(RELDIR)

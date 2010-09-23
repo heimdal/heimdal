@@ -54,6 +54,9 @@ mksdkdirs:
 ! if !exist($(SDKLIBDIR))
 	$(MKDIR) $(SDKLIBDIR)
 ! endif
+! if !exist($(SDKREDISTDIR))
+	$(MKDIR) $(SDKREDISTDIR)
+! endif
 
 INCFILES=\
 	$(SDKINCDIR)\com_err.h	\

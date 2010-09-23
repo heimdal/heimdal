@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="windows-1252"?>
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+
+  <?if $(var.Platform)=x64 ?>
+
+  <?define Win64=yes ?>
+  <?define GuidKerberos=78905402-0F4B-48E1-924C-B0E18657C5C5 ?>
+  <?define GuidGSSAPI=6EDFA308-6825-4395-9C9E-362C890F1343 ?>
+
+  <?else?>
+
+  <?define Win64=no ?>
+  <?define GuidKerberos=C5919968-FEC4-4D17-89A4-8697B95F115E ?>
+  <?define GuidGSSAPI=F1EEAB94-ACF3-425E-85BE-4761A0634F46 ?>
+
+  <?endif?>
+
+  <Module Id="Heimdal" Language="0" Version="$(var.Version)">
+
+    <Package Id="A064012D-F3C3-4059-9AC0-00D8A5283D6D"
+             InstallerVersion="200"
+             Languages="1033" Manufacturer="Secure Endpoints Inc."
+             SummaryCodepage="1252" AdminImage="no"
+             Platform="$(var.Platform)" />
+
+    <Directory Id='TARGETDIR' Name='SourceDir'>
+      <Directory Id="dir.Heimdal.Kerberos" Name="Heimdal.Kerberos"
+                 FileSource="$(var.BinDir)\Heimdal.Kerberos">
+        <Component Id="comp.Heimdal.Kerberos"
+                   Guid="$(var.GuidKerberos)"
+                   Win64="$(var.Win64)">
+          <File Name="heimdal.dll" KeyPath="yes" Assembly="win32"
+                AssemblyManifest="id.Heimdal.Kerberos.manifest" />
+          <File Name="com_err.dll" />
+          <File Name="heimdal.pdb" />
+          <File Name="com_err.pdb" />
+          <File Name="Heimdal.Kerberos.cat" />
+          <File Name="Heimdal.Kerberos.manifest" Id="id.Heimdal.Kerberos.manifest" />
+        </Component>
+      </Directory>
+
+      <Directory Id="dir.Heimdal.GSSAPI" Name="Heimdal.GSSAPI"
+                 FileSource="$(var.BinDir)\Heimdal.GSSAPI">
+        <Component Id="comp.Heimdal.GSSAPI"
+                   Guid="$(var.GuidGSSAPI)"
+                   Win64="$(var.Win64)">
+          <File Name="gssapi.dll" KeyPath="yes" Assembly="win32"
+                AssemblyManifest="id.Heimdal.GSSAPI.manifest" />
+          <File Name="gssapi.pdb" />
+          <File Name="Heimdal.GSSAPI.cat" />
+          <File Name="Heimdal.GSSAPI.manifest" Id="id.Heimdal.GSSAPI.manifest" />
+        </Component>
+
+      </Directory>
+    </Directory>
+
+  </Module>
+</Wix>

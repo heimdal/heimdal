@@ -1,0 +1,157 @@
+<?xml version='1.0' encoding='windows-1252'?>
+<Wix xmlns='http://schemas.microsoft.com/wix/2006/wi'>
+
+  <?if $(var.Platform)=x64 ?>
+
+  <?define Win64=yes ?>
+  <?define PIProgramFilesFolder=ProgramFiles64Folder ?>
+  <?define GuidKinit=BAA5BD92-163E-4AA5-8C99-EA2100F3D9DE ?>
+  <?define GuidKlist=60E82A9D-2CD4-4DE5-8DCA-F3A010BE8A19 ?>
+  <?define GuidKswitch=7320C75F-80C5-4AA3-B133-2AB7F496B291 ?>
+  <?define GuidKdestroy=289C2C0D-F41D-4E46-9819-6B9B63F83418 ?>
+  <?define GuidKtutil=28B09087-4731-41F4-B734-C71E84EC31FC ?>
+  <?define GuidKdigest=D13DA4C0-B1BB-4C02-8ED2-5DFC7D16B19D ?>
+
+  <?else?>
+
+  <?define Win64=no ?>
+  <?define PIProgramFilesFolder=ProgramFilesFolder ?>
+  <?define GuidKinit=038F19D7-F7C9-4B6A-8359-321CD1FAD347 ?>
+  <?define GuidKlist=36BF8C4E-B0C4-42AF-9F3F-3D6F8CFEBB49 ?>
+  <?define GuidKswitch=3A4438E7-BBC0-47B4-9146-E0CDCBBE6C86 ?>
+  <?define GuidKdestroy=07D96FBC-2251-4EBC-AA68-12C6C52F44E6 ?>
+  <?define GuidKtutil=CE082458-E2C5-4744-A423-88C23AD3C81C ?>
+  <?define GuidKdigest=3FFBFAB0-FB37-411C-AF4E-53BCC468D7D1 ?>
+
+  <?endif?>
+
+  <Product Name='Heimdal'
+           Id='*' UpgradeCode='81E64C32-1D09-4E3D-9EA2-EECD9C4D16CE'
+           Language='1033' Codepage='1252' Version='$(var.Version)'
+           Manufacturer='Secure Endpoints Inc.'>
+
+    <Package Id='*' Description="Heimdal"
+      Comments='Heimdal Kerberos tools and libraries'
+      Manufacturer='Secure Endpoints Inc.'
+      InstallerVersion='300' Languages='1033' Compressed='yes' SummaryCodepage='1252' />
+
+    <Directory Id='TARGETDIR' Name='SourceDir' DiskId='1'>
+      <Directory Id='$(var.PIProgramFilesFolder)' Name='PFiles'>
+        <Directory Id='INSTALLDIR' Name='Heimdal'>
+          <Directory Id='dirBin' Name='bin' FileSource='$(var.BinDir)'>
+
+            <Component Id='comp.kinit'
+                       Guid='$(var.GuidKinit)'
+                       Win64='$(var.Win64)'>
+              <File Name='kinit.exe' KeyPath='yes' />
+            </Component>
+
+            <Component Id='comp.klist'
+                       Guid='$(var.GuidKlist)'
+                       Win64='$(var.Win64)'>
+              <File Name='klist.exe' KeyPath='yes' />
+            </Component>
+
+            <Component Id='comp.kswitch'
+                       Guid='$(var.GuidKswitch)'
+                       Win64='$(var.Win64)'>
+              <File Name='kswitch.exe' KeyPath='yes' />
+            </Component>
+
+            <Component Id='comp.ktutil'
+                       Guid='$(var.GuidKtutil)'
+                       Win64='$(var.Win64)'>
+              <File Name='ktutil.exe' KeyPath='yes' />
+            </Component>
+
+            <Component Id='comp.kdestroy'
+                       Guid='$(var.GuidKdestroy)'
+                       Win64='$(var.Win64)'>
+              <File Name='kdestroy.exe' KeyPath='yes' />
+            </Component>
+
+            <Component Id='comp.kdigest'
+                       Guid='$(var.GuidKdigest)'
+                       Win64='$(var.Win64)'>
+              <File Name='kdigest.exe' KeyPath='yes' />
+            </Component>
+
+            <Merge Id='Heimdal.Assemblies' Language='0'
+                   SourceFile='$(var.InstDir)\Heimdal.msm' />
+
+            <Merge Id='Runtime' Language='0'
+                   SourceFile='$(var.RuntimeModule)' />
+
+            <?ifdef KrbCompat?>
+            <Merge Id='Heimdal.Compatibility' Language='0'
+                   SourceFile='$(var.InstDir)\Heimdal-krbcompat.msm' />
+            <?endif?>
+
+            <Directory Id='dirPlugin' Name='plugin'>
+              <Directory Id='PLUGINDIR' Name='krb5'>
+
+                <Component Id='comp.Plugin.Reg'
+                           Guid='4BC44234-70A4-4CC1-A5AF-4CA76E9F9487'>
+                  <RegistryKey Action='createAndRemoveOnUninstall' Root='HKLM'
+                               Key='Software\Heimdal'>
+                    <RegistryValue Name='plugin_dir' Type='multiString' Action='append'
+                                   Value='"[PLUGINDIR]"' KeyPath='yes' />
+                  </RegistryKey>
+                </Component>
+
+              </Directory>
+            </Directory>
+
+          </Directory>
+        </Directory>
+      </Directory>
+      <Directory Id='CommonAppDataFolder' Name='ProgramData'>
+        <Directory Id='dirCommonHeimdal' Name='Heimdal' FileSource='$(var.SrcDir)'>
+
+            <Component Id='comp.krb5.conf'
+                       Guid='ED28951F-7B17-4DF5-91D7-4DC11C810E66' >
+              <File Name='krb5.conf' KeyPath='yes' />
+            </Component>
+
+        </Directory>
+      </Directory>
+    </Directory>
+
+    <Media Id='1' Cabinet='Disk1' CompressionLevel='high' EmbedCab='yes' />
+
+    <Feature Id='feature.Main' ConfigurableDirectory='INSTALLDIR'
+             Title='Heimdal'
+             Description='Command line tools and libraries for Heimdal Kerberos'
+             Level='1' TypicalDefault='install' InstallDefault='local'>
+
+      <ComponentRef Id='comp.kinit' />
+      <ComponentRef Id='comp.klist' />
+      <ComponentRef Id='comp.kdestroy' />
+      <ComponentRef Id='comp.kswitch' />
+      <ComponentRef Id='comp.kdigest' />
+      <ComponentRef Id='comp.ktutil' />
+      <ComponentRef Id='comp.krb5.conf' />
+      <?ifdef LsaCache ?>
+      <ComponentRef Id='comp.LSACache' />
+      <?endif?>
+      <?ifdef ApiCache ?>
+      <ComponentRef Id='comp.APICache' />
+      <?endif?>
+      <ComponentRef Id='comp.Plugin.Reg' />
+
+      <MergeRef Id='Heimdal.Assemblies' />
+      <MergeRef Id='Runtime' />
+      <?ifdef KrbCompat?>
+      <MergeRef Id='Heimdal.Compatibility' />
+      <?endif?>
+
+      <?ifdef Thirdparty ?>
+      <ComponentGroupRef Id='comp.Heimdal.Thirdparty' />
+      <?endif?>
+
+    </Feature>
+
+    <Property Id='ALLUSERS' Value='1' Secure='yes' />
+
+  </Product>
+</Wix>

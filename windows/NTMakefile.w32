@@ -72,19 +72,20 @@ MCPU=amd64
 #----------------------------------------------------------------
 # Directory macros
 
-DESTDIR=$(SRC)\out\dest_$(OUTDIR)
-OBJDIR =$(SRC)\out\obj_$(OUTDIR)
+DESTDIR		=$(SRC)\out\dest_$(OUTDIR)
+OBJDIR		=$(SRC)\out\obj_$(OUTDIR)
 
-INCDIR =$(DESTDIR)\inc
-LIBDIR =$(DESTDIR)\lib
-BINDIR =$(DESTDIR)\bin
-SBINDIR=$(BINDIR)
-LIBEXECDIR=$(BINDIR)
-ASMDIR=$(BINDIR)
-SDKDIR=$(SRC)\out
-SDKINCDIR=$(SRC)\out\inc
-SDKLIBDIR=$(SRC)\out\lib\$(CPU)
-SDKSRCDIR=$(SRC)\out\src
+INCDIR		=$(DESTDIR)\inc
+LIBDIR		=$(DESTDIR)\lib
+BINDIR		=$(DESTDIR)\bin
+SBINDIR		=$(BINDIR)
+LIBEXECDIR	=$(BINDIR)
+ASMDIR		=$(BINDIR)
+INSTDIR		=$(DESTDIR)\install
+SDKDIR		=$(SRC)\out
+SDKINCDIR	=$(SRC)\out\inc
+SDKLIBDIR	=$(SRC)\out\lib\$(CPU)
+SDKSRCDIR	=$(SRC)\out\src
 
 !ifdef RELDIR
 SRCDIR =$(SRC)\$(RELDIR)
@@ -117,6 +118,9 @@ CMP=cmp.exe
 SIGNTOOL=signtool.exe
 MAKECAT=makecat.exe
 
+CANDLE=candle.exe
+LIGHT=light.exe
+
 # Only used for tests
 SH=sh.exe
 SED=sed.exe
@@ -141,6 +145,8 @@ pthreadinc= -I$(PTHREAD_INC)
 
 cincdirs=$(cincdirs) -I$(INCDIR) -I$(INCDIR)\krb5 $(pthreadinc)
 cdefines=$(cdefines) -DHAVE_CONFIG_H
+cdebug=$(cdebug) /Zi
+ldebug=$(ldebug) /DEBUG
 
 # ---------------------------------------------------------------
 # time_t issues
@@ -220,7 +226,7 @@ RC2RES = $(RC2RES_C) -fo $@ $**
 !ifndef RECURSE
 
 check-utils:
-	@for %%g in ( "$(AWK)" "$(YACC)" "$(LEX)" "$(PYTHON)" "$(PERL)" "$(CMP)" "$(SED)" "$(SIGNTOOL)" "$(MAKECAT)" ) do @( \
+	@for %%g in ( "$(AWK)" "$(YACC)" "$(LEX)" "$(PYTHON)" "$(PERL)" "$(CMP)" "$(SED)" "$(SIGNTOOL)" "$(MAKECAT)" "$(CANDLE)" "$(LIGHT)") do @( \
 	for /f %%f in ( "%%g" ) do @( \
 		if exist %%f @( \
 			echo Found %%f \

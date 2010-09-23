@@ -864,6 +864,49 @@ krb5_config_get_string_default (krb5_context context,
     return ret;
 }
 
+static char *
+next_component_string(char * begin, char * delims, char **state)
+{
+    char * end;
+
+    if (begin == NULL)
+        begin = *state;
+
+    if (*begin == '\0')
+        return NULL;
+
+    end = begin;
+    while (*end == '"') {
+        char * t = strchr(end + 1, '"');
+        if (t)
+            end = ++t;
+        else
+            end += strlen(end);
+    }
+
+    if (*end != '\0') {
+        size_t pos;
+
+        pos = strcspn(end, delims);
+        end = end + pos;
+    }
+
+    if (*end != '\0') {
+        *end = '\0';
+        *state = end + 1;
+        if (*begin == '"' && *(end - 1) == '"') {
+            begin++; *(end - 1) = '\0';
+        }
+        return begin;
+    }
+
+    *state = end;
+    if (*begin == '"' && *(end - 1) == '"') {
+        begin++; *(end - 1) = '\0';
+    }
+    return begin;
+}
+
 /**
  * Get a list of configuration strings, free the result with
  * krb5_config_free_strings().
@@ -894,7 +937,7 @@ krb5_config_vget_strings(krb5_context context,
 	char *s;
 	if(tmp == NULL)
 	    goto cleanup;
-	s = strtok_r(tmp, " \t", &pos);
+	s = next_component_string(tmp, " \t", &pos);
 	while(s){
 	    char **tmp2 = realloc(strings, (nstr + 1) * sizeof(*strings));
 	    if(tmp2 == NULL)
@@ -904,7 +947,7 @@ krb5_config_vget_strings(krb5_context context,
 	    nstr++;
 	    if(strings[nstr-1] == NULL)
 		goto cleanup;
-	    s = strtok_r(NULL, " \t", &pos);
+	    s = next_component_string(NULL, " \t", &pos);
 	}
 	free(tmp);
     }

@@ -2487,12 +2487,17 @@ hx509_crypto_encrypt(hx509_crypto crypto,
 	goto out;
     }
 
-    if (EVP_CIPHER_block_size(crypto->c) == 1) {
+    assert(crypto->flags & PADDING_FLAGS);
+    if (crypto->flags & PADDING_NONE) {
 	padsize = 0;
-    } else {
-	int bsize = EVP_CIPHER_block_size(crypto->c);
-	padsize = bsize - (length % bsize);
+    } else if (crypto->flags & PADDING_PKCS7) {
+	if (EVP_CIPHER_block_size(crypto->c) == 1) {
+	} else {
+	    int bsize = EVP_CIPHER_block_size(crypto->c);
+	    padsize = bsize - (length % bsize);
+	}
     }
+
     (*ciphertext)->length = length + padsize;
     (*ciphertext)->data = malloc(length + padsize);
     if ((*ciphertext)->data == NULL) {

@@ -85,7 +85,7 @@ static krb5_error_code parse_list(struct fileptr *f, unsigned *lineno,
 				  const char **err_message);
 
 krb5_config_section *
-get_entry(krb5_config_section **parent, const char *name, int type)
+_krb5_config_get_entry(krb5_config_section **parent, const char *name, int type)
 {
     krb5_config_section **q;
 
@@ -135,7 +135,7 @@ parse_section(char *p, krb5_config_section **s, krb5_config_section **parent,
 	return KRB5_CONFIG_BADFORMAT;
     }
     *p1 = '\0';
-    tmp = get_entry(parent, p + 1, krb5_config_list);
+    tmp = _krb5_config_get_entry(parent, p + 1, krb5_config_list);
     if(tmp == NULL) {
 	*err_message = "out of memory";
 	return KRB5_CONFIG_BADFORMAT;
@@ -216,14 +216,14 @@ parse_binding(struct fileptr *f, unsigned *lineno, char *p,
 	++p;
     *p2 = '\0';
     if (*p == '{') {
-	tmp = get_entry(parent, p1, krb5_config_list);
+	tmp = _krb5_config_get_entry(parent, p1, krb5_config_list);
 	if (tmp == NULL) {
 	    *err_message = "out of memory";
 	    return KRB5_CONFIG_BADFORMAT;
 	}
 	ret = parse_list (f, lineno, &tmp->u.list, err_message);
     } else {
-	tmp = get_entry(parent, p1, krb5_config_string);
+	tmp = _krb5_config_get_entry(parent, p1, krb5_config_string);
 	if (tmp == NULL) {
 	    *err_message = "out of memory";
 	    return KRB5_CONFIG_BADFORMAT;
@@ -282,10 +282,10 @@ convert_content(const void *key, const void *value, void *context)
 	return;
 
     if (CFGetTypeID(value) == CFStringGetTypeID()) {
-	tmp = get_entry(parent, k, krb5_config_string);
+	tmp = _krb5_config_get_entry(parent, k, krb5_config_string);
 	tmp->u.string = cfstring2cstring(value);
     } else if (CFGetTypeID(value) == CFDictionaryGetTypeID()) {
-	tmp = get_entry(parent, k, krb5_config_list);
+	tmp = _krb5_config_get_entry(parent, k, krb5_config_list);
 	CFDictionaryApplyFunction(value, convert_content, &tmp->u.list);
     } else {
 	/* log */

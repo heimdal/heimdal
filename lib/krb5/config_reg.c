@@ -124,7 +124,7 @@ parse_reg_value(krb5_context context,
         goto done;
     }
 
-    value = get_entry(parent, valuename, krb5_config_string);
+    value = _krb5_config_get_entry(parent, valuename, krb5_config_string);
     if (value == NULL) {
         code = ENOMEM;
         goto done;
@@ -257,7 +257,7 @@ parse_reg_subkeys(krb5_context context,
         if (rcode != ERROR_SUCCESS)
             continue;
 
-        section = get_entry(parent, name, krb5_config_list);
+        section = _krb5_config_get_entry(parent, name, krb5_config_list);
         if (section == NULL) {
             RegCloseKey(subkey);
             return ENOMEM;
@@ -289,7 +289,7 @@ parse_reg_root(krb5_context context,
     krb5_config_section *libdefaults = NULL;
     krb5_error_code     code = 0;
 
-    libdefaults = get_entry(parent, "libdefaults", krb5_config_list);
+    libdefaults = _krb5_config_get_entry(parent, "libdefaults", krb5_config_list);
     if (libdefaults == NULL) {
         krb5_set_error_message(context, ENOMEM, "Out of memory while parsing configuration");
         return ENOMEM;

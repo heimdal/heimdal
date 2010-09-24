@@ -1454,8 +1454,8 @@ tgs_build_reply(krb5_context context,
     krb5_principal cp = NULL, sp = NULL;
     krb5_principal client_principal = NULL;
     char *spn = NULL, *cpn = NULL;
-    hdb_entry_ex *server = NULL, *client = NULL;
-    HDB *clientdb;
+    hdb_entry_ex *server = NULL, *client = NULL, *s4u2self_impersonated_client = NULL;
+    HDB *clientdb, *s4u2self_impersonated_clientdb;
     krb5_realm ref_realm = NULL;
     EncTicketPart *tgt = &ticket->ticket;
     krb5_principals spp = NULL;
@@ -1819,6 +1819,48 @@ server_lookup:
 	    if (ret)
 		goto out;
 
+	    /* If we were about to put a PAC into the ticket, we better fix it to be the right PAC */
+	    if(rspac.data) {
+		krb5_pac p = NULL;
+		krb5_data_free(&rspac);
+		ret = _kdc_db_fetch(context, config, client_principal, HDB_F_GET_CLIENT | HDB_F_CANON,
+				    &s4u2self_impersonated_clientdb, &s4u2self_impersonated_client);
+		if (ret) {
+		    const char *msg;
+
+		    /*
+		     * If the client belongs to the same realm as our krbtgt, it
+		     * should exist in the local database.
+		     *
+		     */
+
+		    if (ret == HDB_ERR_NOENTRY)
+			ret = KRB5KDC_ERR_C_PRINCIPAL_UNKNOWN;
+		    msg = krb5_get_error_message(context, ret);
+		    kdc_log(context, config, 1, "S2U4Self principal to impersonate %s not found in database: %s", cpn, msg);
+		    krb5_free_error_message(context, msg);
+		    goto out;
+		}
+		ret = _kdc_pac_generate(context, s4u2self_impersonated_client, &p);
+		if (ret) {
+		    kdc_log(context, config, 0, "PAC generation failed for -- %s",
+			    selfcpn);
+		    goto out;
+		}
+		if (p != NULL) {
+		    ret = _krb5_pac_sign(context, p, ticket->ticket.authtime,
+					 s4u2self_impersonated_client->entry.principal,
+					 ekey, &tkey->key,
+					 &rspac);
+		    krb5_pac_free(context, p);
+		    if (ret) {
+			kdc_log(context, config, 0, "PAC signing failed for -- %s",
+				selfcpn);
+			goto out;
+		    }
+		}
+	    }
+
 	    /*
 	     * Check that service doing the impersonating is
 	     * requesting a ticket to it-self.
@@ -2056,6 +2098,8 @@ out:
 	_kdc_free_ent(context, server);
     if(client)
 	_kdc_free_ent(context, client);
+    if(s4u2self_impersonated_client)
+	_kdc_free_ent(context, s4u2self_impersonated_client);
 
     if (client_principal && client_principal != cp)
 	krb5_free_principal(context, client_principal);

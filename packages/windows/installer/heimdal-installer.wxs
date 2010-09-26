@@ -11,6 +11,8 @@
   <?define GuidKdestroy=289C2C0D-F41D-4E46-9819-6B9B63F83418 ?>
   <?define GuidKtutil=28B09087-4731-41F4-B734-C71E84EC31FC ?>
   <?define GuidKdigest=D13DA4C0-B1BB-4C02-8ED2-5DFC7D16B19D ?>
+  <?define GuidPolGSSAPI=2EB8472F-64DD-470B-AF65-FC8AAC185788 ?>
+  <?define GuidPolKerberos=9ED6B62C-13D0-43BB-BCD7-4737D3E6EC43 ?>
 
   <?else?>
 
@@ -22,18 +24,20 @@
   <?define GuidKdestroy=07D96FBC-2251-4EBC-AA68-12C6C52F44E6 ?>
   <?define GuidKtutil=CE082458-E2C5-4744-A423-88C23AD3C81C ?>
   <?define GuidKdigest=3FFBFAB0-FB37-411C-AF4E-53BCC468D7D1 ?>
+  <?define GuidPolGSSAPI=7B7D6813-8D9C-4647-8966-89A1CA24A08B ?>
+  <?define GuidPolKerberos=EF04F1AF-725B-4AF6-AE7B-18E2036C03B9 ?>
 
   <?endif?>
 
-  <Product Name='Heimdal'
+  <Product Name='!(loc.ProductName) $(var.Version)'
            Id='*' UpgradeCode='81E64C32-1D09-4E3D-9EA2-EECD9C4D16CE'
-           Language='1033' Codepage='1252' Version='$(var.Version)'
-           Manufacturer='Secure Endpoints Inc.'>
+           Language='!(loc.LanguageCode)' Codepage='1252' Version='$(var.Version)'
+           Manufacturer='!(loc.Manufacturer)'>
 
-    <Package Id='*' Description="Heimdal"
-      Comments='Heimdal Kerberos tools and libraries'
-      Manufacturer='Secure Endpoints Inc.'
-      InstallerVersion='300' Languages='1033' Compressed='yes' SummaryCodepage='1252' />
+    <Package Id='*' Description='!(loc.Description)'
+      Manufacturer='!(loc.Manufacturer)'
+      InstallerVersion='300' Languages='!(loc.LanguageCode)'
+      Compressed='yes' SummaryCodepage='1252' />
 
     <Directory Id='TARGETDIR' Name='SourceDir' DiskId='1'>
       <Directory Id='$(var.PIProgramFilesFolder)' Name='PFiles'>
@@ -44,36 +48,42 @@
                        Guid='$(var.GuidKinit)'
                        Win64='$(var.Win64)'>
               <File Name='kinit.exe' KeyPath='yes' />
+              <File Name='kinit.pdb' />
             </Component>
 
             <Component Id='comp.klist'
                        Guid='$(var.GuidKlist)'
                        Win64='$(var.Win64)'>
               <File Name='klist.exe' KeyPath='yes' />
+              <File Name='klist.pdb' />
             </Component>
 
             <Component Id='comp.kswitch'
                        Guid='$(var.GuidKswitch)'
                        Win64='$(var.Win64)'>
               <File Name='kswitch.exe' KeyPath='yes' />
+              <File Name='kswitch.pdb' />
             </Component>
 
             <Component Id='comp.ktutil'
                        Guid='$(var.GuidKtutil)'
                        Win64='$(var.Win64)'>
               <File Name='ktutil.exe' KeyPath='yes' />
+              <File Name='ktutil.pdb' />
             </Component>
 
             <Component Id='comp.kdestroy'
                        Guid='$(var.GuidKdestroy)'
                        Win64='$(var.Win64)'>
               <File Name='kdestroy.exe' KeyPath='yes' />
+              <File Name='kdestroy.pdb' />
             </Component>
 
             <Component Id='comp.kdigest'
                        Guid='$(var.GuidKdigest)'
                        Win64='$(var.Win64)'>
               <File Name='kdigest.exe' KeyPath='yes' />
+              <File Name='kdigest.pdb' />
             </Component>
 
             <Merge Id='Heimdal.Assemblies' Language='0'
@@ -86,6 +96,40 @@
             <Merge Id='Heimdal.Compatibility' Language='0'
                    SourceFile='$(var.InstDir)\Heimdal-krbcompat.msm' />
             <?endif?>
+
+            <!--
+                Publisher Configuration
+
+                The publisher configuration files are included in the
+                Heimdal installers, but not included in the Heimdal
+                assemblies.
+            -->
+
+            <Directory Id='dir.policy.Heimdal.GSSAPI'
+                       Name='$(var.PolPrefix).Heimdal.GSSAPI'
+                       FileSource='$(var.BinDir)\$(var.PolPrefix).Heimdal.GSSAPI'>
+              <Component Id='comp.policy.Heimdal.GSSAPI'
+                         Guid='$(var.GuidPolGSSAPI)'
+                         Win64='$(var.Win64)'>
+                <File Name='$(var.Version).pol' KeyPath='yes' Assembly='win32'
+                      Id='policy.Kerberos' AssemblyManifest='policy.Kerberos' />
+                <File Name='$(var.Version).cat' Id='policy.Kerberos.cat' />
+              </Component>
+
+            </Directory>
+
+            <Directory Id='dir.policy.Heimdal.Kerberos'
+                       Name='$(var.PolPrefix).Heimdal.Kerberos'
+                       FileSource='$(var.BinDir)\$(var.PolPrefix).Heimdal.Kerberos'>
+              <Component Id='comp.policy.Heimdal.Kerberos'
+                         Guid='$(var.GuidPolKerberos)'
+                         Win64='$(var.Win64)'>
+                <File Name='$(var.Version).pol' KeyPath='yes' Assembly='win32'
+                      Id='policy.GSSAPI' AssemblyManifest='policy.GSSAPI' />
+                <File Name='$(var.Version).cat' Id='policy.GSSAPI.cat' />
+              </Component>
+
+            </Directory>
 
             <Directory Id='dirPlugin' Name='plugin'>
               <Directory Id='PLUGINDIR' Name='krb5'>
@@ -119,9 +163,19 @@
 
     <Media Id='1' Cabinet='Disk1' CompressionLevel='high' EmbedCab='yes' />
 
+    <Upgrade Id='81E64C32-1D09-4E3D-9EA2-EECD9C4D16CE'>
+      <UpgradeVersion IncludeMaximum='no' MigrateFeatures='yes' Maximum='$(var.Version)'
+                      Property='PREVIOUSINSTALLATION' />
+    </Upgrade>
+
+    <InstallExecuteSequence>
+      <RemoveExistingProducts After='InstallFinalize' />
+    </InstallExecuteSequence>
+
+    <Condition Message='!(loc.AdminRequired)'>Installed OR Privileged</Condition>
     <Feature Id='feature.Main' ConfigurableDirectory='INSTALLDIR'
-             Title='Heimdal'
-             Description='Command line tools and libraries for Heimdal Kerberos'
+             Title='!(loc.FeaMainTitle)'
+             Description='!(loc.FeaMainDesc)'
              Level='1' TypicalDefault='install' InstallDefault='local'>
 
       <ComponentRef Id='comp.kinit' />
@@ -139,11 +193,11 @@
       <?endif?>
       <ComponentRef Id='comp.Plugin.Reg' />
 
+      <ComponentRef Id='comp.policy.Heimdal.Kerberos' />
+      <ComponentRef Id='comp.policy.Heimdal.GSSAPI' />
+
       <MergeRef Id='Heimdal.Assemblies' />
       <MergeRef Id='Runtime' />
-      <?ifdef KrbCompat?>
-      <MergeRef Id='Heimdal.Compatibility' />
-      <?endif?>
 
       <?ifdef Thirdparty ?>
       <ComponentGroupRef Id='comp.Heimdal.Thirdparty' />
@@ -151,7 +205,21 @@
 
     </Feature>
 
+    <!-- Properties for Add/Remove Programs -->
+
+    <Property Id='ARPHELPLINK' Value='http://www.h5l.org' />
+
+    <Property Id='ARPCONTACT' Value='heimdal@h5l.org' />
+
+    <Property Id='ARPURLINFOABOUT' Value='http://www.h5l.org' />
+
+    <!-- Other properties -->
+
     <Property Id='ALLUSERS' Value='1' Secure='yes' />
+
+    <Property Id='WIXUI_INSTALLDIR' Value='INSTALLDIR' />
+
+    <UIRef Id='WixUI_InstallDir' />
 
   </Product>
 </Wix>

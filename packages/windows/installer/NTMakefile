@@ -35,6 +35,7 @@ RELDIR=packages\windows\installer
 
 VERSIOND=$(VER_PRODUCT_MAJOR)-$(VER_PRODUCT_MINOR)-$(VER_PRODUCT_AUX)-$(VER_PRODUCT_PATCH)
 VERSION=$(VER_PRODUCT_MAJOR).$(VER_PRODUCT_MINOR).$(VER_PRODUCT_AUX).$(VER_PRODUCT_PATCH)
+POLPREFIX=policy.$(VER_PRODUCT_MAJOR).$(VER_PRODUCT_MINOR)
 
 !if "$(CPU)"=="AMD64"
 PLATFORM=x64
@@ -63,16 +64,19 @@ clean::
 
 !if exist($(SRC)\thirdparty)
 THIRDPARTYOBJS=$(INSTDIR)\apicache.wixobj $(INSTDIR)\lsacache.wixobj
-THIRDPARTYDEPS=$(INSTDIR)\Heimdal-krbcompat.msm
-THIRDPARTYOPT=-dApiCache=1 -dLsaCache=1 -dKrbCompat=1
+THIRDPARTYOPT=-dApiCache=1 -dLsaCache=1
 !endif
 
 INSTALLER=$(INSTDIR)\Heimdal.msi
 
 RUNTIMEMODULE="$(MSSDK)\Redist\VC\microsoft.vcxx.crt.$(PLATFORM)_msm.msm"
 
-$(INSTALLER): $(OBJ)\heimdal-installer.wixobj $(MERGEMOD) $(THIRDPARTYOBJS) $(THIRDPARTYDEPS)
-	$(LIGHT) -out $@ $(OBJ)\heimdal-installer.wixobj $(THIRDPARTYOBJS) -sval
+$(INSTALLER): $(OBJ)\heimdal-installer.wixobj $(MERGEMOD) $(THIRDPARTYOBJS)	\
+		$(THIRDPARTYDEPS) lang\en-us.wxl
+	$(LIGHT) -out $@ $(OBJ)\heimdal-installer.wixobj $(THIRDPARTYOBJS)	\
+		-sval -cultures:en-us -loc lang\en-us.wxl	\
+		-dWixUILicenseRtf=lang\license-en-us.rtf	\
+		-ext WixUIExtension
 	$(_CODESIGN)
 
 $(OBJ)\heimdal-installer.wixobj: heimdal-installer.wxs
@@ -83,6 +87,7 @@ $(OBJ)\heimdal-installer.wixobj: heimdal-installer.wxs
 		-dSrcDir=$(SRC)		\
 		-dPlatform=$(PLATFORM)	\
 		-dRuntimeModule=$(RUNTIMEMODULE) \
+		-dPolPrefix=$(POLPREFIX)	\
 		$(THIRDPARTYOPT)
 
 all:: $(INSTALLER)

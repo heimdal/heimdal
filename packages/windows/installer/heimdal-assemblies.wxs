@@ -19,7 +19,7 @@
 
     <Package Id="A064012D-F3C3-4059-9AC0-00D8A5283D6D"
              InstallerVersion="200"
-             Languages="1033" Manufacturer="Secure Endpoints Inc."
+             Languages="1033" Manufacturer="Heimdal"
              SummaryCodepage="1252" AdminImage="no"
              Platform="$(var.Platform)" />
 

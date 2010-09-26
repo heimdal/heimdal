@@ -62,7 +62,7 @@ all:: $(INCFILES) $(LIBSL) $(BINDIR)\slc.exe
 
 clean::
 	-$(RM) $(LIBSL)
-	-$(RM) $(BINDIR)\slc.exe
+	-$(RM) $(BINDIR)\slc.*
 
 test-binaries: $(OBJ)\test_sl.exe
 

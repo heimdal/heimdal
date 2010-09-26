@@ -238,7 +238,7 @@ mktooldir:
 all-tools:: $(BINDIR)\hxtool.exe
 
 clean::
-	-$(RM) $(BINDIR)\hxtool.exe
+	-$(RM) $(BINDIR)\hxtool.*
 	-$(RM) $(OBJ)\tool\*.*
 
 {}.c{$(OBJ)\tool}.obj::

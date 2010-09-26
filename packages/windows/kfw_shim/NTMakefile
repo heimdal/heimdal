@@ -108,7 +108,7 @@ $(BINDIR)\krb5_64.dll: $(KRB5_SHIM_OBJS)
 all:: $(FILES)
 
 clean::
-	-$(RM) $(FILES)
+	-$(RM) $(FILES:.dll=.*)
 
 !ifdef DEV
 

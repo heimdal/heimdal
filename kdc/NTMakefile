@@ -55,7 +55,7 @@ all:: $(INCFILES) $(LIBKDC) $(BINPROGRAMS) $(SBINPROGRAMS) $(LIBEXECPROGRAMS)
 
 clean::
 	-$(RM) $(LIBKDC)
-	-$(RM) $(BINPROGRAMS) $(SBINPROGRAMS) $(LIBEXECPROGRAMS)
+	-$(RM) $(BINPROGRAMS:.exe=.*) $(SBINPROGRAMS:.exe=.*) $(LIBEXECPROGRAMS:.exe=.*)
 
 BIN_LIBS=\
 	$(LIBHDB)	\
@@ -128,6 +128,9 @@ $(LIBEXECDIR)\libkdc.dll: $(LIBKDC_OBJS) $(LIBKDC_LIBS) $(LIBKDCRES)
 	$(DLLPREP)
 
 $(LIBKDC): $(LIBEXECDIR)\libkdc.dll
+
+clean::
+	-$(RM) $(LIBEXECDIR)\libkdc.*
 
 libkdc_la_SOURCES = 		\
 	default_config.c 	\

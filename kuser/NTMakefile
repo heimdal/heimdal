@@ -60,7 +60,7 @@ BINLIBS=\
 all:: $(BINPROGRAMS) $(LIBEXECPROGRAMS)
 
 clean::
-	-$(RM) $(BINPROGRAMS) $(LIBEXECPROGRAMS)
+	-$(RM) $(BINPROGRAMS:.exe=.*) $(LIBEXECPROGRAMS:.exe=.*)
 
 $(BINDIR)\kinit.exe: $(OBJ)\kinit.obj $(BINLIBS) $(OBJ)\kinit-version.res
 	$(EXECONLINK)

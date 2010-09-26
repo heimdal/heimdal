@@ -106,8 +106,8 @@ $(LIBEXECDIR)\kadmind.exe: $(KADMIND_OBJS) $(KADMIND_LIBS)
 all:: $(INCFILES) $(SBIN_PROGRAMS) $(LIBEXEC_PROGRAMS)
 
 clean::
-	-$(RM) $(SBIN_PROGRAMS)
-	-$(RM) $(LIBEXEC_PROGRAMS)
+	-$(RM) $(SBIN_PROGRAMS:.exe=.*)
+	-$(RM) $(LIBEXEC_PROGRAMS:.exe=.*)
 
 
 

@@ -82,7 +82,8 @@ all:: $(INCFILES) $(LIBCOMERR) $(BINDIR)\compile_et.exe
 clean::
 	-$(RM) $(LIBCOMERR)
 	-$(RM) $(INCFILES)
-	-$(RM) $(COMERRDLL)
+	-$(RM) $(COMERRDLL:.dll=.*)
+	-$(RM) $(BINDIR)\compile_et.*
 
 test-exports:
 	$(PERL) ..\..\cf\w32-check-exported-symbols.pl --vs version-script.map --def libcom_err-exports.def

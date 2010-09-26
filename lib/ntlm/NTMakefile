@@ -52,6 +52,9 @@ $(BINDIR)\libheimntlm.dll: $(OBJ)\ntlm.obj $(LIBHEIMDAL) $(RES)
 	$(DLLGUILINK) -def:libheimntlm-exports.def -implib:$(LIBHEIMNTLM)
 	$(DLLPREP)
 
+clean::
+	-$(RM) $(BINDIR)\libheimntlm.*
+
 !else
 
 $(LIBHEIMNTLM): $(OBJ)\ntlm.obj

@@ -478,7 +478,7 @@ $(libgssapi_OBJs: =
 $(LIBGSSAPI): $(BINDIR)\gssapi.dll
 
 clean::
-	-$(RM) $(BINDIR)\gssapi.dll
+	-$(RM) $(BINDIR)\gssapi.*
 
 !else
 

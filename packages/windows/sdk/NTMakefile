@@ -98,4 +98,6 @@ all:: $(INCFILES) $(LIBFILES)
 clean::
 	-$(RM) $(SDKINCDIR)\*.*
 	-$(RM) $(SDKINCDIR)\krb5\*.*
+	-$(RM) $(SDKINCDIR)\kadm5\*.*
 	-$(RM) $(SDKLIBDIR)\*.*
+	-$(RM) $(SDKREDISTDIR)\*.*

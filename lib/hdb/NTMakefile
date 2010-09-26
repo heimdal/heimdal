@@ -148,6 +148,9 @@ $(BINDIR)\libhdb.dll: $(libhdb_OBJs) $(ldap_lib) $(LIBHEIMDAL) $(LIBSQLITE) $(LI
 	$(DLLGUILINK) -def:libhdb-exports.def -implib:$(LIBHDB)
 	$(DLLPREP)
 
+clean::
+	-$(RM) $(BINDIR)\libhdb.*
+
 !else
 
 $(LIBHDB): $(libhdb_OBJs) $(ldap_lib)

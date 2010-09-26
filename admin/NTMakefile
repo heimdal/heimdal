@@ -71,4 +71,4 @@ INCFILES=\
 all:: $(INCFILES) $(SBINPROGRAMS)
 
 clean::
-	-$(RM) $(SBINPROGRAMS)
+	-$(RM) $(SBINPROGRAMS:.exe=.*)

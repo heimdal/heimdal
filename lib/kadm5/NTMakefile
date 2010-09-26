@@ -226,9 +226,9 @@ clean::
 	-$(RM) $(INCFILES)
 	-$(RM) $(LIBKADM5CLNT)
 	-$(RM) $(LIBKADM5SRV)
-	-$(RM) $(BINDIR)\libkadm5srv.dll
-	-$(RM) $(SBINPROGRAMS)
-	-$(RM) $(LIBEXECPROGRAMS)
+	-$(RM) $(BINDIR)\libkadm5srv.*
+	-$(RM) $(SBINPROGRAMS:.exe=.*)
+	-$(RM) $(LIBEXECPROGRAMS:.exe=.*)
 
 test:: test-binaries test-run
 

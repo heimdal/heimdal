@@ -733,6 +733,14 @@ all:: $(INCFILES) $(GENINCFILES) $(ASN1_BINARIES) $(LIBASN1)
 
 all-tools:: $(LIBEXECDIR)\asn1_print.exe $(BINDIR)\asn1_gen.exe
 
+clean::
+	-$(RM) $(INCFILES)
+	-$(RM) $(GENINCFILES)
+	-$(RM) $(ASN1_BINARIES:.exe=.*)
+	-$(RM) $(LIBASN1)
+	-$(RM) $(LIBEXECDIR)\asn1_print.*
+	-$(RM) $(LIBEXECDIR)\asn1_gen.*
+
 TEST_BINARIES=\
 	$(OBJ)\check-der.exe	\
 	$(OBJ)\check-gen.exe	\
@@ -752,6 +760,9 @@ test-run:
 	cd $(SRC)
 
 test:: test-binaries test-run
+
+clean::
+	-$(RM) $(TEST_BINARIES:.exe=*)
 
 $(OBJ)\check-ber.exe: $(OBJ)\check-ber.obj \
 		$(LIBHEIMDAL) $(LIBROKEN)

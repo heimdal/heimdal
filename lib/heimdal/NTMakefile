@@ -76,7 +76,7 @@ $(DLL): $(DLLDEPS) $(DEF) $(RES)
 	$(DLLPREP)
 
 clean::
-	-$(RM) $(BINDIR)\heimdal.dll
+	-$(RM) $(BINDIR)\heimdal.*
 
 !else
 

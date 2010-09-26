@@ -88,6 +88,22 @@ values as a substitute */
 #define RC_FILE_INTERNAL_0409 RC_FILE_ORIG_0409
 #endif
 
+#ifndef RC_FILE_PRODUCT_NAME_0409
+#define RC_FILE_PRODUCT_NAME_0409 RC_PRODUCT_NAME_0409
+#endif
+
+#ifndef RC_FILE_PRODUCT_VER_0409
+#define RC_FILE_PRODUCT_VER_0409 RC_PRODUCT_VER_0409
+#endif
+
+#ifndef RC_FILE_COMPANY_0409
+#define RC_FILE_COMPANY_0409 RC_COMPANY_0409
+#endif
+
+#ifndef RC_FILE_COPYRIGHT_0409
+#define RC_FILE_COPYRIGHT_0409 RC_COPYRIGHT_0409
+#endif
+
 1 VERSIONINFO
     FILEVERSION RC_FILEVER_C
     PRODUCTVERSION RC_PRODVER_C
@@ -103,10 +119,10 @@ values as a substitute */
        BEGIN
            BLOCK "040904E4"
 	   BEGIN
-	       VALUE "ProductName", RC_PRODUCT_NAME_0409
-	       VALUE "ProductVersion", RC_PRODUCT_VER_0409
-	       VALUE "CompanyName", RC_COMPANY_0409
-	       VALUE "LegalCopyright", RC_COPYRIGHT_0409
+	       VALUE "ProductName", RC_FILE_PRODUCT_NAME_0409
+	       VALUE "ProductVersion", RC_FILE_PRODUCT_VER_0409
+	       VALUE "CompanyName", RC_FILE_COMPANY_0409
+	       VALUE "LegalCopyright", RC_FILE_COPYRIGHT_0409
 
 #ifdef RC_FILE_COMMENT_0409
 	       VALUE "Comments", RC_FILE_COMMENT_0409

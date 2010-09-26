@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<assembly xmlns="urn:schemas-microsoft-com:asm.v1" manifestVersion="1.0">
+  <assemblyIdentity type="win32-policy"
+                    publicKeyToken="@pkt@"
+                    name="@gsspolname@"
+                    version="@gssversion@"
+                    processorArchitecture="@cpu@"/>
+  <dependency>
+    <dependentAssembly>
+      <assemblyIdentity type="win32"
+                        publicKeyToken="@pkt@"
+                        name="@gssname@"
+                        language="*"
+                        processorArchitecture="@cpu@"/>
+      <bindingRedirect oldVersion="@gssverfrom@.0.0-@gssversion@"
+                       newVersion="@gssversion@"/>
+    </dependentAssembly>
+  </dependency>
+</assembly>

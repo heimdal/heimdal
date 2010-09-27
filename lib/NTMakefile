@@ -54,7 +54,7 @@ SUBDIRS = roken vers editline com_err sl wind asn1 sqlite \
 
 all:: all-tools
 
-all-tools:: asn1-tools hx509-tools krb5-tools
+all-tools:: asn1-tools hx509-tools krb5-tools kadm5-tools
 
 asn1-tools:
 	@( cd asn1 && $(RMAKE) all-tools && cd .. ) || exit /b 1
@@ -65,3 +65,5 @@ hx509-tools:
 krb5-tools:
 	@( cd krb5 && $(RMAKE) all-tools && cd .. ) || exit /b 1
 
+kadm5-tools:
+	@( cd kadm5 && $(RMAKE) all-tools && cd .. ) || exit /b 1

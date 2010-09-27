@@ -32,6 +32,7 @@
           <File Name="heimdal.dll" KeyPath="yes" Assembly="win32"
                 AssemblyManifest="id.Heimdal.Kerberos.manifest" />
           <File Name="com_err.dll" />
+          <File Name="heimntlm.dll" />
           <File Name="heimdal.pdb" />
           <File Name="com_err.pdb" />
           <File Name="Heimdal.Kerberos.cat" />

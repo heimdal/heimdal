@@ -53,7 +53,10 @@ ASMKRBDIR=$(ASMDIR)\Heimdal.Kerberos
 ASMKRBVER=$(VER_PRODUCT_MAJOR).$(VER_PRODUCT_MINOR).$(VER_PRODUCT_AUX).$(VER_PRODUCT_PATCH)
 ASMKRBMAN=$(ASMKRBNAME).manifest
 
-ASMKRBBINS=$(ASMKRBDIR)\heimdal.dll $(ASMKRBDIR)\com_err.dll $(ASMKRBDIR)\heimdal.pdb $(ASMKRBDIR)\com_err.pdb
+ASMKRBBINS=\
+	$(ASMKRBDIR)\heimdal.dll	\
+	$(ASMKRBDIR)\com_err.dll	\
+	$(ASMKRBDIR)\heimntlm.dll	\
 
 $(ASMKRBDIR)\$(ASMKRBMAN).nohash: Heimdal.Kerberos.manifest.in
 	$(SED)  -e "s,[@]name[@],$(ASMKRBNAME),g" \

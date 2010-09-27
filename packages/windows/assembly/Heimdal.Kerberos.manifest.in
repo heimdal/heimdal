@@ -6,4 +6,5 @@
 		    publicKeyToken="@pkt@" />
   <file name="heimdal.dll" />
   <file name="com_err.dll" />
+  <file name="heimntlm.dll" />
 </assembly>

@@ -69,6 +69,8 @@ $(ASMKRBDIR)\$(ASMKRBMAN).nohash: Heimdal.Kerberos.manifest.in
 
 $(ASMKRBDIR)\$(ASMKRBMAN) $(ASMKRBDIR)\$(ASMKRBMAN).cdf: \
 		$(ASMKRBDIR)\$(ASMKRBMAN).nohash $(ASMKRBBINS)
+	-$(RM) $(ASMKRBDIR)\$(ASMKRBMAN)
+	-$(RM) $(ASMKRBDIR)\$(ASMKRBMAN).cdf
 	$(MT) -manifest $(ASMKRBDIR)\$(ASMKRBMAN).nohash -out:$(ASMKRBDIR)\$(ASMKRBMAN) -hashupdate -makecdfs
 
 $(ASMKRBDIR)\$(ASMKRBNAME).cat: $(ASMKRBDIR)\$(ASMKRBMAN).cdf
@@ -113,6 +115,8 @@ $(ASMGSSDIR)\$(ASMGSSMAN).nohash: Heimdal.GSSAPI.manifest.in
 
 $(ASMGSSDIR)\$(ASMGSSMAN) $(ASMGSSDIR)\$(ASMGSSMAN).cdf: \
 		$(ASMGSSDIR)\$(ASMGSSMAN).nohash $(ASMGSSBINS)
+	-$(RM) $(ASMGSSDIR)\$(ASMGSSMAN)
+	-$(RM) $(ASMGSSDIR)\$(ASMGSSMAN).cdf
 	$(MT) -manifest $(ASMGSSDIR)\$(ASMGSSMAN).nohash -out:$@ -hashupdate -makecdfs
 
 $(ASMGSSDIR)\$(ASMGSSNAME).cat: $(ASMGSSDIR)\$(ASMGSSMAN).cdf

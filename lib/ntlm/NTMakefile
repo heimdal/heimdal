@@ -46,14 +46,14 @@ $(OBJ)\heimntlm-protos.h: $(libheimntlm_la_SOURCES)
 
 RES=$(OBJ)\libheimntlm-version.res
 
-$(LIBHEIMNTLM): $(BINDIR)\libheimntlm.dll
+$(LIBHEIMNTLM): $(BINDIR)\heimntlm.dll
 
-$(BINDIR)\libheimntlm.dll: $(OBJ)\ntlm.obj $(LIBHEIMDAL) $(RES)
+$(BINDIR)\heimntlm.dll: $(OBJ)\ntlm.obj $(LIBHEIMDAL) $(RES)
 	$(DLLGUILINK) -def:libheimntlm-exports.def -implib:$(LIBHEIMNTLM)
 	$(DLLPREP)
 
 clean::
-	-$(RM) $(BINDIR)\libheimntlm.*
+	-$(RM) $(BINDIR)\heimntlm.*
 
 !else
 

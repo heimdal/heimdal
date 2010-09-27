@@ -514,7 +514,7 @@ $(BINDIR)\asn1_compile.exe:				    \
 	$(OBJ)\symbol.obj				    \
 	$(OBJ)\asn1_compile-version.res
 	$(EXECONLINK) $(LIBROKEN) $(LIBVERS)
-	$(EXEPREP)
+	$(EXEPREP_NOHEIM)
 
 $(OBJ)\lex.c: lex.l $(OBJ)\asn1parse.h
 	$(LEX) -o$@ lex.l

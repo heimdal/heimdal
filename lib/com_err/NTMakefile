@@ -60,7 +60,7 @@ $(COMERRDLL): $(libcomerr_OBJs) $(OBJ)\libcom_err-version.res
 
 $(BINDIR)\compile_et.exe:  $(OBJ)\parse.obj $(OBJ)\lex.obj $(OBJ)\compile_et.obj $(OBJ)\compile_et-version.res
 	$(EXECONLINK) $(LIBROKEN) $(LIBVERS)
-	$(EXEPREP)
+	$(EXEPREP_NOHEIM)
 
 $(OBJ)\parse.obj: $(OBJ)\parse.c
 	$(C2OBJ) -I$(SRC)\$(RELDIR)

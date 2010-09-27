@@ -40,7 +40,7 @@ $(LIBSL): $(OBJ)\sl.obj
 
 $(BINDIR)\slc.exe: $(OBJ)\slc-gram.obj $(OBJ)\slc-lex.obj
 	$(EXECONLINK) $(LIBROKEN) $(LIBVERS)
-	$(EXEPREP)
+	$(EXEPREP_NOHEIM)
 
 $(OBJ)\slc-gram.c: slc-gram.y
 	$(YACC) -o $@ --defines=$(@R).h slc-gram.y

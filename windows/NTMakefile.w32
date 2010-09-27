@@ -425,6 +425,9 @@ clean::
 MT=mt.exe -nologo
 
 _VC_MANIFEST_EMBED_EXE= \
+( if exist $@.manifest $(MT) -outputresource:$@;1 -manifest $@.manifest $(APPMANIFEST) )
+
+_VC_MANIFEST_EMBED_EXE_NOHEIM= \
 ( if exist $@.manifest $(MT) -outputresource:$@;1 -manifest $@.manifest )
 
 _VC_MANIFEST_EMBED_DLL= \
@@ -475,16 +478,19 @@ _CODESIGN=( echo Skipping code sign )
 # prepare binaries.
 
 EXEPREP=\
-( $(_VC_MANIFEST_EMBED_EXE) && $(_VC_MANIFEST_CLEAN) && $(_CODESIGN) ) || $(RM) $@
+( $(_VC_MANIFEST_EMBED_EXE) && $(_VC_MANIFEST_CLEAN) && $(_CODESIGN) ) || ( $(RM) $@ && exit /b 1 )
+
+EXEPREP_NOHEIM=\
+( $(_VC_MANIFEST_EMBED_EXE_NOHEIM) && $(_VC_MANIFEST_CLEAN) && $(_CODESIGN) ) || ( $(RM) $@ && exit /b 1 )
 
 EXEPREP_NODIST=\
-( $(_VC_MANIFEST_EMBED_EXE) && $(_VC_MANIFEST_CLEAN) ) || $(RM) $@
+( $(_VC_MANIFEST_EMBED_EXE_NOHEIM) && $(_VC_MANIFEST_CLEAN) ) || ( $(RM) $@ && exit /b 1 )
 
 DLLPREP=\
-( $(_VC_MANIFEST_EMBED_DLL) && $(_VC_MANIFEST_CLEAN) && $(_CODESIGN) ) || $(RM) $@
+( $(_VC_MANIFEST_EMBED_DLL) && $(_VC_MANIFEST_CLEAN) && $(_CODESIGN) ) || ( $(RM) $@ && exit /b 1 )
 
 DLLPREP_NODIST=\
-( $(_VC_MANIFEST_EMBED_DLL) && $(_VC_MANIFEST_CLEAN) ) || $(RM) $@
+( $(_VC_MANIFEST_EMBED_DLL) && $(_VC_MANIFEST_CLEAN) ) || ( $(RM) $@ && exit /b 1 )
 
 #----------------------------------------------------------------------
 # Convenience macros for import libraries and assemblies

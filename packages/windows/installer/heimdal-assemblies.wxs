@@ -35,6 +35,7 @@
           <File Name="heimntlm.dll" />
           <File Name="heimdal.pdb" />
           <File Name="com_err.pdb" />
+          <File Name="heimntlm.pdb" />
           <File Name="Heimdal.Kerberos.cat" />
           <File Name="Heimdal.Kerberos.manifest" Id="id.Heimdal.Kerberos.manifest" />
         </Component>

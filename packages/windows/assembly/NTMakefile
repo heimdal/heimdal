@@ -57,6 +57,9 @@ ASMKRBBINS=\
 	$(ASMKRBDIR)\heimdal.dll	\
 	$(ASMKRBDIR)\com_err.dll	\
 	$(ASMKRBDIR)\heimntlm.dll	\
+	$(ASMKRBDIR)\heimdal.pdb	\
+	$(ASMKRBDIR)\com_err.pdb	\
+	$(ASMKRBDIR)\heimntlm.pdb
 
 $(ASMKRBDIR)\$(ASMKRBMAN).nohash: Heimdal.Kerberos.manifest.in
 	$(SED)  -e "s,[@]name[@],$(ASMKRBNAME),g" \
@@ -86,12 +89,6 @@ all:: asm-krb
 clean::
 	-$(RM) $(ASMKRBDIR)\*.*
 
-{$(BINDIR)}.dll{$(ASMKRBDIR)}.dll:
-	$(CP) $< $@
-
-{$(BINDIR)}.pdb{$(ASMKRBDIR)}.pdb:
-	$(CP) $< $@
-
 test::
 	$(MT) -manifest $(ASMKRBDIR)\$(ASMKRBMAN) -validate_manifest
 
@@ -102,7 +99,9 @@ ASMGSSDIR=$(ASMDIR)\Heimdal.GSSAPI
 ASMGSSVER=$(VER_PRODUCT_MAJOR).$(VER_PRODUCT_MINOR).$(VER_PRODUCT_AUX).$(VER_PRODUCT_PATCH)
 ASMGSSMAN=$(ASMGSSNAME).manifest
 
-ASMGSSBINS=$(ASMGSSDIR)\gssapi.dll $(ASMGSSDIR)\gssapi.pdb
+ASMGSSBINS=\
+	$(ASMGSSDIR)\gssapi.dll		\
+	$(ASMGSSDIR)\gssapi.pdb
 
 $(ASMGSSDIR)\$(ASMGSSMAN).nohash: Heimdal.GSSAPI.manifest.in
 	$(SED)  -e "s,[@]name[@],$(ASMGSSNAME),g" \
@@ -216,6 +215,12 @@ clean::
 	-$(RM) $(POLGSSFILE)\*.*
 
 # ----------------------------------------------------------------------
+
+{$(BINDIR)}.dll{$(ASMKRBDIR)}.dll:
+	$(CP) $< $@
+
+{$(BINDIR)}.pdb{$(ASMKRBDIR)}.pdb:
+	$(CP) $< $@
 
 .SUFFIXES: .dll .pdb
 

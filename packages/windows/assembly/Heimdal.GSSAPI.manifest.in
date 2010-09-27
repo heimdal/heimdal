@@ -5,6 +5,7 @@
 		    version="@version@"
 		    publicKeyToken="@pkt@" />
   <file name="gssapi.dll" />
+  <file name="gssapi.pdb" />
   <dependency>
     <dependentAssembly>
       <assemblyIdentity type="win32" name="@krbname@"

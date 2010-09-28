@@ -201,6 +201,21 @@ is_valid_plugin_filename(const char * n)
     return 1;
 }
 
+static void
+trim_trailing_slash(char * path)
+{
+    size_t l;
+
+    l = strlen(path);
+    while (l > 0 && (path[l - 1] == '/'
+#ifdef BACKSLASH_PATH_DELIM
+                     || path[l - 1] == '\\'
+#endif
+               )) {
+        path[--l] = '\0';
+    }
+}
+
 static krb5_error_code
 load_plugins(krb5_context context)
 {
@@ -229,6 +244,8 @@ load_plugins(krb5_context context)
         if (_krb5_expand_path_tokens(context, *di, &dir))
             goto next_dir;
 #endif
+
+        trim_trailing_slash(dir);
 
         d = opendir(dir);
 

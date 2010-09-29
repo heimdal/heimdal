@@ -356,9 +356,14 @@ make_hints(struct addrinfo *hints, int proto)
     }
 }
 
-/*
- * return an `struct addrinfo *' in `ai' corresponding to the information
- * in `host'.  free:ing is handled by krb5_krbhst_free.
+/**
+ * Return an `struct addrinfo *' for a KDC host.
+ *
+ * Returns an the struct addrinfo in in that corresponds to the
+ * information in `host'.  free:ing is handled by krb5_krbhst_free, so
+ * the returned ai must not be released.
+ *
+ * @ingroup krb5
  */
 
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
@@ -370,9 +375,25 @@ krb5_krbhst_get_addrinfo(krb5_context context, krb5_krbhst_info *host,
     int ret;
 
     if (host->ai == NULL) {
+	char *hostname = host->hostname;
+
+	/**
+	 * If the hostname contains a dot, assumes it's a FQAN and
+	 * don't use search domains since that might be painfully slow
+	 * when machine is disconnected from that network.
+	 */
+
+	if (strchr(hostname, '.') && hostname[strlen(hostname) - 1] == '.') {
+	    ret = asprintf(&hostname, "%s.", host->hostname);
+	    if (ret < 0 || hostname == NULL)
+		return ENOMEM;
+	}
+
 	make_hints(&hints, host->proto);
 	snprintf (portstr, sizeof(portstr), "%d", host->port);
-	ret = getaddrinfo(host->hostname, portstr, &hints, &host->ai);
+	ret = getaddrinfo(hostname, portstr, &hints, &host->ai);
+	if (hostname != host->hostname)
+	    free(hostname);
 	if (ret)
 	    return krb5_eai_to_heim_errno(ret, errno);
     }

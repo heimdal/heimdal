@@ -58,6 +58,15 @@ test_timegm(void)
     if (t != -1)
 	ret += 1;
 
+    _der_gmtime(1159696980, &tm);
+    if (tm.tm_year != 106 ||
+	tm.tm_mon != 9 ||
+	tm.tm_mday != 1 ||
+	tm.tm_hour != 10 ||
+	tm.tm_min != 3 ||
+	tm.tm_sec != 0)
+      errx(1, "tmtime failes");
+
     return ret;
 }
 

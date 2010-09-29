@@ -8,6 +8,7 @@ EXPORTS
 	SAMFlags2int
 	TicketFlags2int
 	_der_timegm
+	_der_gmtime
 	_heim_der_set_sort
 	_heim_fix_dce
 	_heim_len_int

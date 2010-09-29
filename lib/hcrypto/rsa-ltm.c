@@ -398,7 +398,7 @@ ltm_rsa_private_decrypt(int flen, const unsigned char* from,
     if (flen > size)
 	return -2;
 
-    mp_init_multi(&in, &n, &e, &out, &bi, &b, NULL);
+    mp_init_multi(&in, &n, &e, &out, &b, &bi, NULL);
 
     BN2mpz(&n, rsa->n);
     BN2mpz(&e, rsa->e);
@@ -479,7 +479,7 @@ ltm_rsa_private_decrypt(int flen, const unsigned char* from,
     memmove(to, ptr, size);
 
  out:
-    mp_clear_multi(&e, &n, &in, &out, NULL);
+    mp_clear_multi(&e, &n, &in, &out, &b, &bi, NULL);
 
     return size;
 }

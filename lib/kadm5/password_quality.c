@@ -148,7 +148,7 @@ external_passwd_quality (krb5_context context,
     char reply[1024];
     FILE *in = NULL, *out = NULL, *error = NULL;
 
-    if (memchr(pwd->data, pwd->length, '\n') != NULL) {
+    if (memchr(pwd->data, '\n', pwd->length) != NULL) {
 	snprintf(message, length, "password contains newline, "
 		 "not valid for external test");
 	return 1;

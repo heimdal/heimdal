@@ -659,7 +659,9 @@ rsa_create_signature(hx509_context context,
     else
 	sig_oid = signer->signature_alg;
 
-    if (der_heim_oid_cmp(sig_oid, ASN1_OID_ID_PKCS1_SHA256WITHRSAENCRYPTION) == 0) {
+    if (der_heim_oid_cmp(sig_oid, ASN1_OID_ID_PKCS1_SHA512WITHRSAENCRYPTION) == 0) {
+	digest_alg = hx509_signature_sha512();
+    } else if (der_heim_oid_cmp(sig_oid, ASN1_OID_ID_PKCS1_SHA256WITHRSAENCRYPTION) == 0) {
 	digest_alg = hx509_signature_sha256();
     } else if (der_heim_oid_cmp(sig_oid, ASN1_OID_ID_PKCS1_SHA1WITHRSAENCRYPTION) == 0) {
 	digest_alg = hx509_signature_sha1();

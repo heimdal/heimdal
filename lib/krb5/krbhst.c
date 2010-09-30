@@ -370,35 +370,52 @@ KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_krbhst_get_addrinfo(krb5_context context, krb5_krbhst_info *host,
 			 struct addrinfo **ai)
 {
-    struct addrinfo hints;
-    char portstr[NI_MAXSERV];
-    int ret;
+    int ret = 0;
 
     if (host->ai == NULL) {
+	struct addrinfo hints;
+	char portstr[NI_MAXSERV];
 	char *hostname = host->hostname;
 
+	snprintf (portstr, sizeof(portstr), "%d", host->port);
+	make_hints(&hints, host->proto);
+
 	/**
-	 * If the hostname contains a dot, assumes it's a FQAN and
+	 * First try this as an IP address, this allows us to add a
+	 * dot at the end to stop using the search domains.
+	 */
+
+	hints.ai_flags |= AI_NUMERICHOST | AI_NUMERICSERV;
+
+	ret = getaddrinfo(host->hostname, portstr, &hints, &host->ai);
+	if (ret == 0)
+	    goto out;
+
+	/**
+	 * If the hostname contains a dot, assumes it's a FQDN and
 	 * don't use search domains since that might be painfully slow
 	 * when machine is disconnected from that network.
 	 */
 
-	if (strchr(hostname, '.') && hostname[strlen(hostname) - 1] == '.') {
+	hints.ai_flags &= ~(AI_NUMERICHOST);
+
+	if (strchr(hostname, '.') && hostname[strlen(hostname) - 1] != '.') {
 	    ret = asprintf(&hostname, "%s.", host->hostname);
 	    if (ret < 0 || hostname == NULL)
 		return ENOMEM;
 	}
 
-	make_hints(&hints, host->proto);
-	snprintf (portstr, sizeof(portstr), "%d", host->port);
 	ret = getaddrinfo(hostname, portstr, &hints, &host->ai);
 	if (hostname != host->hostname)
 	    free(hostname);
-	if (ret)
-	    return krb5_eai_to_heim_errno(ret, errno);
+	if (ret) {
+	    ret = krb5_eai_to_heim_errno(ret, errno);
+	    goto out;
+	}
     }
+ out:
     *ai = host->ai;
-    return 0;
+    return ret;
 }
 
 static krb5_boolean

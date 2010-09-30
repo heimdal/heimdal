@@ -2488,7 +2488,7 @@ hx509_crypto_encrypt(hx509_crypto crypto,
 		     heim_octet_string **ciphertext)
 {
     EVP_CIPHER_CTX evp;
-    size_t padsize;
+    size_t padsize, bsize;
     int ret;
 
     *ciphertext = NULL;
@@ -2516,14 +2516,16 @@ hx509_crypto_encrypt(hx509_crypto crypto,
     }
 
     assert(crypto->flags & PADDING_FLAGS);
+
+    bsize = EVP_CIPHER_block_size(crypto->c);
+    padsize = 0;
+
     if (crypto->flags & PADDING_NONE) {
-	padsize = 0;
+	if (bsize != 1 && (length % bsize) != 0)
+	    return HX509_CMS_PADDING_ERROR;
     } else if (crypto->flags & PADDING_PKCS7) {
-	if (EVP_CIPHER_block_size(crypto->c) == 1) {
-	} else {
-	    int bsize = EVP_CIPHER_block_size(crypto->c);
+	if (bsize != 1)
 	    padsize = bsize - (length % bsize);
-	}
     }
 
     (*ciphertext)->length = length + padsize;

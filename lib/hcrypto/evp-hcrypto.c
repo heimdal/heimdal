@@ -290,6 +290,29 @@ EVP_hcrypto_sha256(void)
 }
 
 /**
+ * The message digest SHA256 - hcrypto
+ *
+ * @return the message digest type.
+ *
+ * @ingroup hcrypto_evp
+ */
+
+const EVP_MD *
+EVP_hcrypto_sha512(void)
+{
+    static const struct hc_evp_md sha512 = {
+	64,
+	128,
+	sizeof(SHA512_CTX),
+	(hc_evp_md_init)SHA512_Init,
+	(hc_evp_md_update)SHA512_Update,
+	(hc_evp_md_final)SHA512_Final,
+	NULL
+    };
+    return &sha512;
+}
+
+/**
  * The message digest SHA1 - hcrypto
  *
  * @return the message digest type.

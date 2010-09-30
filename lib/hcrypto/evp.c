@@ -360,6 +360,13 @@ EVP_sha256(void)
     return EVP_DEF_OP(HCRYPTO_DEF_PROVIDER, sha256);
 }
 
+const EVP_MD *
+EVP_sha512(void)
+{
+    hcrypto_validate();
+    return EVP_DEF_OP(HCRYPTO_DEF_PROVIDER, sha512);
+}
+
 /**
  * The message digest SHA1
  *

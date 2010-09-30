@@ -154,6 +154,7 @@ libhcrypto_la_SOURCES =	\
 	sha.c		\
 	sha.h		\
 	sha256.c	\
+	sha512.c	\
 	validate.c	\
 	ui.c		\
 	ui.h

@@ -167,6 +167,7 @@ HEIMDAL_CRYPTO_1.0 {
 		hc_EVP_sha;
 		hc_EVP_sha1;
 		hc_EVP_sha256;
+		hc_EVP_sha512;
 
 		hc_EVP_cc_md2;
 		hc_EVP_cc_md4;
@@ -186,6 +187,7 @@ HEIMDAL_CRYPTO_1.0 {
 		hc_EVP_hcrypto_md5;
 		hc_EVP_hcrypto_sha1;
 		hc_EVP_hcrypto_sha256;
+		hc_EVP_hcrypto_sha512;
 		hc_EVP_hcrypto_des_ede3_cbc;
 		hc_EVP_hcrypto_aes_128_cbc;
 		hc_EVP_hcrypto_aes_192_cbc;

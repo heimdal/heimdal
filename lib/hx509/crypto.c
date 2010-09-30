@@ -1241,6 +1241,19 @@ static const struct signature_alg pkcs1_rsa_sha1_alg = {
     rsa_create_signature
 };
 
+static const struct signature_alg rsa_with_sha512_alg = {
+    "rsa-with-sha512",
+    ASN1_OID_ID_PKCS1_SHA512WITHRSAENCRYPTION,
+    &_hx509_signature_rsa_with_sha512_data,
+    ASN1_OID_ID_PKCS1_RSAENCRYPTION,
+    &_hx509_signature_sha512_data,
+    PROVIDE_CONF|REQUIRE_SIGNER|RA_RSA_USES_DIGEST_INFO|SIG_PUBLIC_SIG|SELF_SIGNED_OK,
+    0,
+    NULL,
+    rsa_verify_signature,
+    rsa_create_signature
+};
+
 static const struct signature_alg rsa_with_sha256_alg = {
     "rsa-with-sha256",
     ASN1_OID_ID_PKCS1_SHA256WITHRSAENCRYPTION,
@@ -1306,6 +1319,19 @@ static const struct signature_alg dsa_sha1_alg = {
     /* create_signature */ NULL,
 };
 
+static const struct signature_alg sha512_alg = {
+    "sha-512",
+    ASN1_OID_ID_SHA512,
+    &_hx509_signature_sha512_data,
+    NULL,
+    NULL,
+    SIG_DIGEST,
+    0,
+    EVP_sha512,
+    evp_md_verify_signature,
+    evp_md_create_signature
+};
+
 static const struct signature_alg sha256_alg = {
     "sha-256",
     ASN1_OID_ID_SHA256,
@@ -1355,6 +1381,7 @@ static const struct signature_alg *sig_algs[] = {
     &ecdsa_with_sha256_alg,
     &ecdsa_with_sha1_alg,
 #endif
+    &rsa_with_sha512_alg,
     &rsa_with_sha256_alg,
     &rsa_with_sha1_alg,
     &rsa_with_sha1_alg_secsig,
@@ -1362,6 +1389,7 @@ static const struct signature_alg *sig_algs[] = {
     &rsa_with_md5_alg,
     &heim_rsa_pkcs1_x509,
     &dsa_sha1_alg,
+    &sha512_alg,
     &sha256_alg,
     &sha1_alg,
     &md5_alg,

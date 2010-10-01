@@ -242,3 +242,33 @@ SHA512_Final (void *res, SHA512_CTX *m)
 	}
     }
 }
+
+void
+SHA384_Init(SHA384_CTX *m)
+{
+    m->sz[0] = 0;
+    m->sz[1] = 0;
+    A = 0xcbbb9d5dc1059ed8;
+    B = 0x629a292a367cd507;
+    C = 0x9159015a3070dd17;
+    D = 0x152fecd8f70e5939;
+    E = 0x67332667ffc00b31;
+    F = 0x8eb44a8768581511;
+    G = 0xdb0c2e0d64f98fa7;
+    H = 0x47b5481dbefa4fa4;
+}
+
+void
+SHA384_Update (SHA384_CTX *m, const void *v, size_t len)
+{
+    SHA512_Update(m, v, len);
+}
+
+void
+SHA384_Final (void *res, SHA384_CTX *m)
+{
+    unsigned char data[SHA512_DIGEST_LENGTH];
+    SHA512_Final(data, m);
+    memcpy(res, data, SHA384_DIGEST_LENGTH);
+}
+

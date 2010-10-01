@@ -101,16 +101,15 @@ struct hash_foo sha256 = {
     (void (*)(void*, void*))SHA256_Final,
     EVP_sha256
 };
-#ifdef HAVE_SHA384
 struct hash_foo sha384 = {
     "SHA-384",
     sizeof(SHA384_CTX),
     48,
     (void (*)(void*))SHA384_Init,
     (void (*)(void*,const void*, size_t))SHA384_Update,
-    (void (*)(void*, void*))SHA384_Final
+    (void (*)(void*, void*))SHA384_Final,
+    EVP_sha384
 };
-#endif
 struct hash_foo sha512 = {
     "SHA-512",
     sizeof(SHA512_CTX),
@@ -207,7 +206,6 @@ struct test sha256_tests[] = {
     { NULL }
 };
 
-#ifdef HAVE_SHA384
 struct test sha384_tests[] = {
     { "abc",
       { 0xcb,0x00,0x75,0x3f,0x45,0xa3,0x5e,0x8b,
@@ -233,7 +231,6 @@ struct test sha384_tests[] = {
 	0xae,0x97,0xdd,0xd8,0x7f,0x3d,0x89,0x85}},
     {NULL}
 };
-#endif
 
 struct test sha512_tests[] = {
     { "abc",
@@ -344,10 +341,8 @@ main (void)
 	hash_test(&md2, md2_tests) +
 	hash_test(&md4, md4_tests) +
 	hash_test(&md5, md5_tests) +
-	hash_test(&sha1, sha1_tests)
-	+ hash_test(&sha256, sha256_tests)
-#ifdef HAVE_SHA384
-	+ hash_test(&sha384, sha384_tests)
-#endif
-	+ hash_test(&sha512, sha512_tests);
+	hash_test(&sha1, sha1_tests) +
+	hash_test(&sha256, sha256_tests) +
+	hash_test(&sha384, sha384_tests) +
+	hash_test(&sha512, sha512_tests);
 }

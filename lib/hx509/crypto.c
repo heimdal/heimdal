@@ -661,6 +661,8 @@ rsa_create_signature(hx509_context context,
 
     if (der_heim_oid_cmp(sig_oid, ASN1_OID_ID_PKCS1_SHA512WITHRSAENCRYPTION) == 0) {
 	digest_alg = hx509_signature_sha512();
+    } else if (der_heim_oid_cmp(sig_oid, ASN1_OID_ID_PKCS1_SHA384WITHRSAENCRYPTION) == 0) {
+	digest_alg = hx509_signature_sha384();
     } else if (der_heim_oid_cmp(sig_oid, ASN1_OID_ID_PKCS1_SHA256WITHRSAENCRYPTION) == 0) {
 	digest_alg = hx509_signature_sha256();
     } else if (der_heim_oid_cmp(sig_oid, ASN1_OID_ID_PKCS1_SHA1WITHRSAENCRYPTION) == 0) {
@@ -1256,6 +1258,19 @@ static const struct signature_alg rsa_with_sha512_alg = {
     rsa_create_signature
 };
 
+static const struct signature_alg rsa_with_sha384_alg = {
+    "rsa-with-sha384",
+    ASN1_OID_ID_PKCS1_SHA384WITHRSAENCRYPTION,
+    &_hx509_signature_rsa_with_sha384_data,
+    ASN1_OID_ID_PKCS1_RSAENCRYPTION,
+    &_hx509_signature_sha384_data,
+    PROVIDE_CONF|REQUIRE_SIGNER|RA_RSA_USES_DIGEST_INFO|SIG_PUBLIC_SIG|SELF_SIGNED_OK,
+    0,
+    NULL,
+    rsa_verify_signature,
+    rsa_create_signature
+};
+
 static const struct signature_alg rsa_with_sha256_alg = {
     "rsa-with-sha256",
     ASN1_OID_ID_PKCS1_SHA256WITHRSAENCRYPTION,
@@ -1334,6 +1349,19 @@ static const struct signature_alg sha512_alg = {
     evp_md_create_signature
 };
 
+static const struct signature_alg sha384_alg = {
+    "sha-384",
+    ASN1_OID_ID_SHA512,
+    &_hx509_signature_sha384_data,
+    NULL,
+    NULL,
+    SIG_DIGEST,
+    0,
+    EVP_sha384,
+    evp_md_verify_signature,
+    evp_md_create_signature
+};
+
 static const struct signature_alg sha256_alg = {
     "sha-256",
     ASN1_OID_ID_SHA256,
@@ -1384,6 +1412,7 @@ static const struct signature_alg *sig_algs[] = {
     &ecdsa_with_sha1_alg,
 #endif
     &rsa_with_sha512_alg,
+    &rsa_with_sha384_alg,
     &rsa_with_sha256_alg,
     &rsa_with_sha1_alg,
     &rsa_with_sha1_alg_secsig,
@@ -1392,6 +1421,7 @@ static const struct signature_alg *sig_algs[] = {
     &heim_rsa_pkcs1_x509,
     &dsa_sha1_alg,
     &sha512_alg,
+    &sha384_alg,
     &sha256_alg,
     &sha1_alg,
     &md5_alg,

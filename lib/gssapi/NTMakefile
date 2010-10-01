@@ -473,7 +473,7 @@ $(BINDIR)\gssapi.dll: $(libgssapi_OBJs) $(RES)
 $(libgssapi_OBJs: =
 )
 <<
-	$(DLLPREP)
+	$(DLLPREP_NODIST)
 
 $(LIBGSSAPI): $(BINDIR)\gssapi.dll
 

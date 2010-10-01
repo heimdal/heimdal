@@ -82,9 +82,10 @@ $(ASMKRBDIR)\$(ASMKRBNAME).cat: $(ASMKRBDIR)\$(ASMKRBMAN).cdf
 	cd $(SRCDIR)
 
 asm-krb: \
-	$(ASMKRBBINS) \
-	$(ASMKRBDIR)\$(ASMKRBMAN) \
-	$(ASMKRBDIR)\$(ASMKRBNAME).cat
+	$(APPMANIFEST)	\
+	$(ASMKRBBINS)	\
+	$(ASMKRBDIR)\$(ASMKRBMAN)	\
+	$(ASMKRBDIR)\$(ASMKRBNAME).cat	\
 
 all:: asm-krb
 
@@ -93,6 +94,14 @@ clean::
 
 test::
 	$(MT) -manifest $(ASMKRBDIR)\$(ASMKRBMAN) -validate_manifest
+
+{$(BINDIR)}.dll{$(ASMKRBDIR)}.dll:
+	$(CP) $< $@
+	$(DLLPREP_MERGE)
+
+{$(BINDIR)}.pdb{$(ASMKRBDIR)}.pdb:
+	$(CP) $< $@
+
 
 # ----------------------------------------------------------------------
 # Heimdal.GSSAPI Assembly
@@ -128,9 +137,10 @@ $(ASMGSSDIR)\$(ASMGSSNAME).cat: $(ASMGSSDIR)\$(ASMGSSMAN).cdf
 	cd $(SRCDIR)
 
 asm-gss: \
-	$(ASMGSSBINS) \
-	$(ASMGSSDIR)\$(ASMGSSMAN) \
-	$(ASMGSSDIR)\$(ASMGSSNAME).cat
+	$(APPMANIFEST)	\
+	$(ASMGSSBINS)	\
+	$(ASMGSSDIR)\$(ASMGSSMAN)	\
+	$(ASMGSSDIR)\$(ASMGSSNAME).cat	\
 
 all:: asm-gss
 
@@ -139,6 +149,7 @@ clean::
 
 {$(BINDIR)}.dll{$(ASMGSSDIR)}.dll:
 	$(CP) $< $@
+	$(DLLPREP_MERGE)
 
 {$(BINDIR)}.pdb{$(ASMGSSDIR)}.pdb:
 	$(CP) $< $@
@@ -219,12 +230,6 @@ clean::
 	-$(RM) $(POLGSSFILE)\*.*
 
 # ----------------------------------------------------------------------
-
-{$(BINDIR)}.dll{$(ASMKRBDIR)}.dll:
-	$(CP) $< $@
-
-{$(BINDIR)}.pdb{$(ASMKRBDIR)}.pdb:
-	$(CP) $< $@
 
 .SUFFIXES: .dll .pdb
 

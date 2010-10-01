@@ -180,6 +180,8 @@ EXPORTS
 	hc_EVP_hcrypto_md5
 	hc_EVP_hcrypto_sha1
 	hc_EVP_hcrypto_sha256
+	hc_EVP_hcrypto_sha384
+	hc_EVP_hcrypto_sha512
 	hc_EVP_hcrypto_des_ede3_cbc
 	hc_EVP_hcrypto_aes_128_cbc
 	hc_EVP_hcrypto_aes_192_cbc

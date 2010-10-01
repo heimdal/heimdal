@@ -101,9 +101,11 @@ libhcrypto_OBJs = 			\
 	$(OBJ)\dh.obj			\
 	$(OBJ)\dh-imath.obj		\
 	$(OBJ)\dh-ltm.obj		\
+	$(OBJ)\dh-tfm.obj		\
 	$(OBJ)\dsa.obj			\
 	$(OBJ)\evp.obj			\
 	$(OBJ)\evp-hcrypto.obj		\
+	$(OBJ)\evp-cc.obj		\
 	$(OBJ)\engine.obj		\
 	$(OBJ)\hmac.obj			\
 	$(OBJ)\md2.obj			\
@@ -121,8 +123,10 @@ libhcrypto_OBJs = 			\
 	$(OBJ)\rsa-gmp.obj		\
 	$(OBJ)\rsa-imath.obj		\
 	$(OBJ)\rsa-ltm.obj		\
+	$(OBJ)\rsa-tfm.obj		\
 	$(OBJ)\sha.obj			\
 	$(OBJ)\sha256.obj		\
+	$(OBJ)\sha512.obj		\
 	$(OBJ)\ui.obj			\
 	$(OBJ)\validate.obj
 

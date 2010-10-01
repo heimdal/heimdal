@@ -98,4 +98,12 @@ void SHA512_Init (SHA512_CTX *);
 void SHA512_Update (SHA512_CTX *, const void *, size_t);
 void SHA512_Final (void *, SHA512_CTX *);
 
+#define SHA384_DIGEST_LENGTH 48
+
+typedef struct hc_sha512state SHA384_CTX;
+
+void SHA384_Init (SHA384_CTX *);
+void SHA384_Update (SHA384_CTX *, const void *, size_t);
+void SHA384_Final (void *, SHA384_CTX *);
+
 #endif /* HEIM_SHA_H */

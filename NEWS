@@ -1,3 +1,10 @@
+Release Notes - Heimdal - Version Heimdal 1.5
+
+New features
+
+ - SHA512 support
+ - No Kerberos 4 support
+
 Release Notes - Heimdal - Version Heimdal 1.4
 
  New features

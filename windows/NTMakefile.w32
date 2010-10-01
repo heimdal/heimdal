@@ -433,6 +433,12 @@ _VC_MANIFEST_EMBED_EXE_NOHEIM= \
 _VC_MANIFEST_EMBED_DLL= \
 ( if exist $@.manifest $(MT) -outputresource:$@;2 -manifest $@.manifest )
 
+_MERGE_MANIFEST_DLL= \
+( $(MT) -inputresource:$@;2 -manifest $(APPMANIFEST) -outputresource:$@;2 )
+
+_INSERT_APPMANIFEST_DLL= \
+( $(MT) -manifest $(APPMANIFEST) -outputresource:$@;2 )
+
 # Note that if you are merging manifests, then the VS generated
 # manifest should be cleaned up after calling _VC_MANIFEST_EMBED_???.
 # This ensures that even if the DLL or EXE is executed in-place, the
@@ -491,6 +497,9 @@ DLLPREP=\
 
 DLLPREP_NODIST=\
 ( $(_VC_MANIFEST_EMBED_DLL) && $(_VC_MANIFEST_CLEAN) ) || ( $(RM) $@ && exit /b 1 )
+
+DLLPREP_MERGE=\
+( ( $(_MERGE_MANIFEST_DLL) || $(_INSERT_APPMANIFEST_DLL) ) && $(_CODESIGN) ) || ( $(RM) $@ && exit /b 1 )
 
 #----------------------------------------------------------------------
 # Convenience macros for import libraries and assemblies

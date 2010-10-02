@@ -86,6 +86,7 @@ _kdc_pac_verify(krb5_context context,
 		const krb5_principal client_principal,
 		hdb_entry_ex *client,
 		hdb_entry_ex *server,
+		hdb_entry_ex *krbtgt,
 		krb5_pac *pac,
 		int *verified)
 {
@@ -95,7 +96,7 @@ _kdc_pac_verify(krb5_context context,
 	return 0;
 
     ret = windcft->pac_verify(windcctx, context,
-			      client_principal, client, server, pac);
+			      client_principal, client, server, krbtgt, pac);
     if (ret == 0)
 	*verified = 1;
     return ret;

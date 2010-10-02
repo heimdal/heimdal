@@ -111,7 +111,7 @@ ntlm_service(void *ctx, const heim_idata *req,
 	krb5_principal_set_type(context, client, KRB5_NT_NTLM);
 
 	ret = _kdc_db_fetch(context, config, client,
-			    HDB_F_GET_CLIENT, NULL, &user);
+			    HDB_F_GET_CLIENT, NULL, NULL, &user);
 	krb5_free_principal(context, client);
 	if (ret)
 	    goto failed;

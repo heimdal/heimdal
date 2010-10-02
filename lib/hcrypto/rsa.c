@@ -516,7 +516,6 @@ RSA_null_method(void)
 }
 
 extern const RSA_METHOD hc_rsa_gmp_method;
-extern const RSA_METHOD hc_rsa_imath_method;
 extern const RSA_METHOD hc_rsa_tfm_method;
 extern const RSA_METHOD hc_rsa_ltm_method;
 static const RSA_METHOD *default_rsa_method = &hc_rsa_ltm_method;

@@ -2,7 +2,7 @@
 
 include $(top_srcdir)/Makefile.am.common
 
-AM_CPPFLAGS += -I$(srcdir)/libtommath -DUSE_HCRYPTO_IMATH=1 -DUSE_HCRYPTO_LTM=1
+AM_CPPFLAGS += -I$(srcdir)/libtommath -DUSE_HCRYPTO_LTM=1
 
 lib_LTLIBRARIES = libhcrypto.la
 check_LTLIBRARIES = libhctest.la
@@ -63,19 +63,16 @@ PROGRAM_TESTS = \
 	test_cipher \
 	test_engine_dso \
 	test_hmac \
-	test_imath \
 	test_pkcs12 \
 	test_pkcs5
 
 libhctest_la_SOURCES = \
-	imath/imath.c	\
 	des-tables.h	\
 	des.c		\
 	des.h		\
 	ui.c		\
 	ui.h
 
-test_imath_LDADD = libhctest.la $(LIB_roken)
 destest_LDADD = libhctest.la $(LIB_roken)
 
 SCRIPT_TESTS = \
@@ -91,7 +88,6 @@ TESTS = $(PROGRAM_TESTS) $(SCRIPT_TESTS)
 LDADD = $(lib_LTLIBRARIES) $(LIB_roken)
 
 libhcrypto_la_SOURCES =	\
-	$(imathsource)	\
 	$(ltmsources)	\
 	aes.c		\
 	aes.h		\
@@ -108,7 +104,6 @@ libhcrypto_la_SOURCES =	\
 	des.h		\
 	dh.c		\
 	dh.h		\
-	dh-imath.c	\
 	dh-tfm.c	\
 	dh-ltm.c	\
 	dsa.c		\
@@ -147,7 +142,6 @@ libhcrypto_la_SOURCES =	\
 	rnd_keys.c	\
 	rsa.c		\
 	rsa-gmp.c	\
-	rsa-imath.c	\
 	rsa-tfm.c	\
 	rsa-ltm.c	\
 	rsa.h		\
@@ -158,12 +152,6 @@ libhcrypto_la_SOURCES =	\
 	validate.c	\
 	ui.c		\
 	ui.h
-
-imathsource =			\
-	imath/imath.c		\
-	imath/imath.h		\
-	imath/iprime.c		\
-	imath/iprime.h
 
 ltmsources = \
 	libtommath/tommath.h \
@@ -295,7 +283,7 @@ ltmsources = \
 
 $(libhcrypto_la_OBJECTS): hcrypto-link
 
-libhcrypto_la_CPPFLAGS = -DIMATH_LARGE_PRIME_TABLE -DTFM_CHECK -DTFM_TIMING_RESISTANT -DBUILD_HCRYPTO_LIB $(AM_CPPFLAGS)
+libhcrypto_la_CPPFLAGS = -DBUILD_HCRYPTO_LIB $(AM_CPPFLAGS)
 
 if versionscript
 libhcrypto_la_LDFLAGS += $(LDFLAGS_VERSION_SCRIPT)$(srcdir)/version-script.map
@@ -333,8 +321,6 @@ EXTRA_DIST = \
 	ecdh.h \
 	ecdsa.h \
 	gen-des.pl \
-	imath/LICENSE \
-	imath/import.sh \
 	md5crypt_test.c \
 	passwd_dialog.aps \
 	passwd_dialog.clw \

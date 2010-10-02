@@ -235,9 +235,9 @@ const DH_METHOD _hc_dh_ltm_method = {
 };
 
 /**
- * DH implementation using libimath.
+ * DH implementation using libtommath.
  *
- * @return the DH_METHOD for the DH implementation using libimath.
+ * @return the DH_METHOD for the DH implementation using libtommath.
  *
  * @ingroup hcrypto_dh
  */

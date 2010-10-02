@@ -69,7 +69,6 @@ HEIMDAL_CRYPTO_1.0 {
 		hc_DH_generate_parameters_ex;
 		hc_DH_get_default_method;
 		hc_DH_get_ex_data;
-		hc_DH_imath_method;
 		hc_DH_ltm_method;
 		hc_DH_gmp_method;
 		hc_DH_new;
@@ -254,7 +253,6 @@ HEIMDAL_CRYPTO_1.0 {
 		hc_RSA_get_app_data;
 		hc_RSA_get_default_method;
 		hc_RSA_get_method;
-		hc_RSA_imath_method;
 		hc_RSA_new;
 		hc_RSA_new_method;
 		hc_RSA_null_method;

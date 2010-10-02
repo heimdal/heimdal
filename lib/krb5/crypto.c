@@ -1880,12 +1880,19 @@ verify_checksum(krb5_context context,
 	    return ret;
     } else
 	dkey = NULL;
+
+    /*
+     * If checksum have a verify function, lets use that instead of
+     * calling ->checksum and then compare result.
+     */
+
     if(ct->verify) {
 	ret = (*ct->verify)(context, dkey, data, len, usage, cksum);
-	krb5_set_error_message(context, ret, 
-			       N_("Decrypt integrity check failed for checksum "
-				  "type %s, key type %s", ""),
-			       ct->name, crypto->et->name);
+	if (ret)
+	    krb5_set_error_message(context, ret, 
+				   N_("Decrypt integrity check failed for checksum "
+				      "type %s, key type %s", ""),
+				   ct->name, crypto->et->name);
 	return ret;
     }
 

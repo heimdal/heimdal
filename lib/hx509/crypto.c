@@ -828,8 +828,6 @@ rsa_generate_private_key(hx509_context context,
 
     if (ctx->num_bits)
 	bits = ctx->num_bits;
-    else if (ctx->isCA)
-	bits *= 2;
 
     ret = RSA_generate_key_ex(private_key->private_key.rsa, bits, e, NULL);
     BN_free(e);

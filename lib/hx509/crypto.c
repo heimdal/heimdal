@@ -812,7 +812,7 @@ rsa_generate_private_key(hx509_context context,
     unsigned long bits;
 
     static const int default_rsa_e = 65537;
-    static const int default_rsa_bits = 1024;
+    static const int default_rsa_bits = 2048;
 
     private_key->private_key.rsa = RSA_new();
     if (private_key->private_key.rsa == NULL) {

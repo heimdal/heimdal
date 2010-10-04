@@ -48,6 +48,9 @@ ${rsa} --key=${srcdir}/rsakey.der || \
 ${rsa} --time-key=${srcdir}/rsakey.der || \
 	{ echo "rsa test failed" ; exit 1; }
 
+${rsa} --time-key=${srcdir}/rsakey2048.der || \
+	{ echo "rsa test failed" ; exit 1; }
+
 ${rsa} --time-key=generate || \
 	{ echo "rsa test failed" ; exit 1; }
 

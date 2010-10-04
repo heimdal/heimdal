@@ -43,6 +43,15 @@ PLATFORM=x64
 PLATFORM=x86
 !endif
 
+!if "$(BUILD)"=="rel"
+DEBUGOPT=
+!else
+DEBUGOPT=-$(BUILD)
+!endif
+
+######################################################################
+# Heimdal Merge Modules
+
 MERGEMOD=$(INSTDIR)\Heimdal.msm
 
 $(MERGEMOD): $(OBJ)\heimdal-assemblies.wixobj
@@ -62,14 +71,48 @@ all:: $(MERGEMOD) $(SDKREDISTDIR)\Heimdal.msm
 clean::
 	-$(RM) $(MERGEMOD)
 
+######################################################################
+# Runtime modules
+
+VCVER=VC90
+
+!if "$(CPU)"=="AMD64"
+CPUSUFFIX=_x64
+!else
+CPUSUFFIX=
+!endif
+
+!if "$(BUILD)"=="rel"
+CRTNAME=CRT
+!else
+CRTNAME=DebugCRT
+!endif
+
+MMDIR=$(ProgramFiles)\Common Files\Merge Modules
+!if !exist($(MMDIR))
+MMDIR=$(SystemDrive)\Program Files (x86)\Common Files\Merge Modules
+!endif
+
+!if exist("$(MMDIR)")
+
+RUNTIMEMODULE="$(MMDIR)\Microsoft_$(VCVER)_$(CRTNAME)_x86$(CPUSUFFIX).msm"
+
+!else
+
+RUNTIMEMODULE="$(MSSDK)\Redist\VC\microsoft.vcxx.crt.$(PLATFORM)_msm.msm"
+
+!endif
+
+
+######################################################################
+# Heimdal installer
+
 !if exist($(SRC)\thirdparty)
 THIRDPARTYOBJS=$(INSTDIR)\apicache.wixobj $(INSTDIR)\lsacache.wixobj
 THIRDPARTYOPT=-dApiCache=1 -dLsaCache=1
 !endif
 
-INSTALLER=$(INSTDIR)\Heimdal.msi
-
-RUNTIMEMODULE="$(MSSDK)\Redist\VC\microsoft.vcxx.crt.$(PLATFORM)_msm.msm"
+INSTALLER=$(INSTDIR)\Heimdal-$(CPU)$(DEBUGOPT)-$(VERSIOND).msi
 
 $(INSTALLER): $(OBJ)\heimdal-installer.wixobj $(MERGEMOD) $(THIRDPARTYOBJS)	\
 		$(THIRDPARTYDEPS) lang\en-us.wxl

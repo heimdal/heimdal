@@ -330,5 +330,7 @@ EXTRA_DIST = \
 	passwd_dlg.h \
 	resource.h \
 	rsakey.der \
+	rsakey2048.der \
+	rsakey4096.der \
 	test_crypto.in \
 	version-script.map

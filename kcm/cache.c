@@ -428,6 +428,8 @@ kcm_release_ccache(krb5_context context, kcm_ccache c)
 
     HEIMDAL_MUTEX_lock(&c->mutex);
     if (c->refcnt == 1) {
+	kcm_free_ccache_data_internal(context, c);
+	free(c);
     } else {
 	c->refcnt--;
 	HEIMDAL_MUTEX_unlock(&c->mutex);

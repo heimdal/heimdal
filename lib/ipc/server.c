@@ -456,6 +456,7 @@ struct client {
 #define INHERIT_MASK	0xffff0000
 #define INCLUDE_ERROR_CODE (1 << 16)
 #define ALLOW_HTTP	(1<<17)
+#define UNIX_SOCKET	(1<<18)
     unsigned calls;
     size_t ptr, len;
     uint8_t *inmsg;
@@ -465,6 +466,11 @@ struct client {
     dispatch_source_t in;
     dispatch_source_t out;
 #endif
+    struct {
+	uid_t uid;
+	gid_t gid;
+	pid_t pid;
+    } unixrights;
 };
 
 #ifndef HAVE_GCD
@@ -475,6 +481,132 @@ static struct client **clients = NULL;
 static void handle_read(struct client *);
 static void handle_write(struct client *);
 static int maybe_close(struct client *);
+
+/*
+ * Update peer credentials from socket.
+ *
+ * SCM_CREDS can only be updated the first time there is read data to
+ * read from the filedescriptor, so if we read do it before this
+ * point, the cred data might not be is not there yet.
+ */
+
+static int
+update_client_creds(struct client *c)
+{
+#ifdef HAVE_GETPEERUCRED
+    /* Solaris 10 */
+    {
+	ucred_t *peercred;
+	
+	if (getpeerucred(c->fd, &peercred) != 0) {
+	    c->unixrights.uid = ucred_geteuid(peercred);
+	    c->unixrights.gid = ucred_getegid(peercred);
+	    c->unixrights.pid = 0;
+	    ucred_free(peercred);
+	    return 1;
+	}
+    }
+#endif
+#ifdef HAVE_GETPEEREID
+    /* FreeBSD, OpenBSD */
+    {
+	uid_t uid;
+	gid_t gid;
+
+	if (getpeereid(c->fd, &uid, &gid) == 0) {
+	    c->unixrights.uid = uid;
+	    c->unixrights.gid = gid;
+	    c->unixrights.pid = 0;
+	    return 1;
+	}
+    }
+#endif
+#ifdef SO_PEERCRED
+    /* Linux */
+    {
+	struct ucred pc;
+	socklen_t pclen = sizeof(pc);
+
+	if (getsockopt(c->fd, SOL_SOCKET, SO_PEERCRED, (void *)&pc, &pclen) == 0) {
+	    c->unixrights.uid = pc.uid;
+	    c->unixrights.gid = pc.gid;
+	    c->unixrights.pid = pc.pid;
+	    return 1;
+	}
+    }
+#endif
+#if defined(LOCAL_PEERCRED) && defined(XUCRED_VERSION)
+    {
+	struct xucred peercred;
+	socklen_t peercredlen = sizeof(peercred);
+
+	if (getsockopt(c->fd, LOCAL_PEERCRED, 1,
+		       (void *)&peercred, &peercredlen) == 0
+	    && peercred.cr_version == XUCRED_VERSION)
+	{
+	    c->unixrights.uid = peercred.cr_uid;
+	    c->unixrights.gid = peercred.cr_gid;
+	    c->unixrights.pid = 0;
+	    return 1;
+	}
+    }
+#endif
+#if defined(SOCKCREDSIZE) && defined(SCM_CREDS)
+    /* NetBSD */
+    if (c->unixrights.uid == -1) {
+	struct msghdr msg;
+	socklen_t crmsgsize;
+	void *crmsg;
+	struct cmsghdr *cmp;
+	struct sockcred *sc;
+	
+	memset(&msg, 0, sizeof(msg));
+	crmsgsize = CMSG_SPACE(SOCKCREDSIZE(NGROUPS));
+	if (crmsgsize == 0)
+	    return 1 ;
+
+	crmsg = malloc(crmsgsize);
+	if (crmsg == NULL)
+	    goto failed_scm_creds;
+
+	memset(crmsg, 0, crmsgsize);
+	
+	msg.msg_control = crmsg;
+	msg.msg_controllen = crmsgsize;
+	
+	if (recvmsg(c->fd, &msg, 0) < 0) {
+	    free(crmsg);
+	    goto failed_scm_creds;
+	}	
+	
+	if (msg.msg_controllen == 0 || (msg.msg_flags & MSG_CTRUNC) != 0) {
+	    free(crmsg);
+	    goto failed_scm_creds;
+	}	
+	
+	cmp = CMSG_FIRSTHDR(&msg);
+	if (cmp->cmsg_level != SOL_SOCKET || cmp->cmsg_type != SCM_CREDS) {
+	    free(crmsg);
+	    goto failed_scm_creds;
+	}	
+	
+	sc = (struct sockcred *)(void *)CMSG_DATA(cmp);
+	
+	c->unixrights.uid = sc->sc_euid;
+	c->unixrights.gid = sc->sc_egid;
+	c->unixrights.pid = 0;
+	
+	free(crmsg);
+	return 1;
+    } else {
+	/* we already got the cred, just return it */
+	return 1;
+    }
+ failed_scm_creds:
+#endif
+    return 0;
+}
+
 
 static struct client *
 add_new_socket(int fd,
@@ -569,6 +701,7 @@ maybe_close(struct client *c)
 struct socket_call {
     heim_idata in;
     struct client *c;
+    heim_icred cred;
 };
 
 static void
@@ -616,7 +749,8 @@ socket_complete(heim_sipc_call ctx, int returnvalue, heim_idata *reply)
     }
 
     c->calls--;
-
+    if (sc->cred)
+	heim_ipc_free_cred(sc->cred);
     free(sc->in.data);
     sc->c = NULL; /* so we can catch double complete */
     free(sc);
@@ -799,8 +933,15 @@ handle_read(struct client *c)
 	}
 	
 	c->calls++;
+
+	if ((c->flags & UNIX_SOCKET) != 0) {
+	    if (update_client_creds(c))
+		_heim_ipc_create_cred(c->unixrights.uid, c->unixrights.gid, 
+				      c->unixrights.pid, -1, &cs->cred);
+	}
+
 	c->callback(c->userctx, &cs->in,
-		    NULL, socket_complete,
+		    cs->cred, socket_complete,
 		    (heim_sipc_call)cs);
     }
 }
@@ -924,6 +1065,11 @@ heim_sipc_stream_listener(int fd, int type,
 
     ct->mech = c;
     ct->release = socket_release;
+
+    c->unixrights.uid = (uid_t) -1;
+    c->unixrights.gid = (gid_t) -1;
+    c->unixrights.pid = (pid_t) 0;
+
     *ctx = ct;
     return 0;
 }
@@ -934,7 +1080,7 @@ heim_sipc_service_unix(const char *service,
 		       void *user, heim_sipc *ctx)
 {
     struct sockaddr_un un;
-    int fd;
+    int fd, ret;
 
     un.sun_family = AF_UNIX;
 
@@ -966,8 +1112,14 @@ heim_sipc_service_unix(const char *service,
 
     chmod(un.sun_path, 0666);
 
-    return heim_sipc_stream_listener(fd, HEIM_SIPC_TYPE_IPC,
-				     callback, user, ctx);
+    ret = heim_sipc_stream_listener(fd, HEIM_SIPC_TYPE_IPC,
+				    callback, user, ctx);
+    if (ret == 0) {
+	struct client *c = (*ctx)->mech;
+	c->flags |= UNIX_SOCKET;
+    }
+
+    return ret;
 }
 
 /**

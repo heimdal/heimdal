@@ -49,6 +49,10 @@
 #include <krb5-types.h>
 #include <asn1-common.h>
 
+#ifdef HAVE_SYS_UN_H
+#include <sys/un.h>
+#endif
+
 #include <base64.h>
 
 #include <heim-ipc.h>

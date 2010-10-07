@@ -269,7 +269,11 @@ DB_open(krb5_context context, HDB *db, int flags, mode_t mode)
 	krb5_set_error_message(context, ENOMEM, "malloc: out of memory");
 	return ENOMEM;
     }
-    db_create(&d, NULL, 0);
+    if (db_create(&d, NULL, 0) != 0) {
+	free(fn);
+	krb5_set_error_message(context, ENOMEM, "malloc: out of memory");
+	return ENOMEM;
+    }
     db->hdb_db = d;
 
 #if (DB_VERSION_MAJOR >= 4) && (DB_VERSION_MINOR >= 1)

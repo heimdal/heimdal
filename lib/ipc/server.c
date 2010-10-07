@@ -916,7 +916,7 @@ handle_read(struct client *c)
 		c->flags &= ~WAITING_READ;
 		return;
 	    }
-	    if (dlen < c->ptr - sizeof(dlen)) {
+	    if (dlen > c->ptr - sizeof(dlen)) {
 		break;
 	    }
 	

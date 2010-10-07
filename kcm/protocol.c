@@ -948,6 +948,13 @@ kcm_op_move_cache(krb5_context context,
 	return ret;
     }
 
+    /* move to ourself is simple, done! */
+    if (strcmp(oldname, newname) == 0) {
+	free(oldname);
+	free(newname);
+	return 0;
+    }
+
     ret = kcm_ccache_resolve_client(context, client, opcode, oldname, &oldid);
     if (ret) {
 	free(oldname);

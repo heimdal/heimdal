@@ -35,6 +35,31 @@
 #include "roken.h"
 #ifndef HAVE_GETTIMEOFDAY
 
+#ifdef _WIN32
+
+ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
+gettimeofday (struct timeval *tp, void *ignore)
+{
+    FILETIME ft;
+    ULARGE_INTEGER li;
+    ULONGLONG ull;
+
+    GetSystemTimeAsFileTime(&ft);
+    li.LowPart = ft.dwLowDateTime;
+    li.HighPart = ft.dwHighDateTime;
+    ull = li.QuadPart;
+
+    ull -= 116444736000000000i64;
+    ull /= 10i64;               /* ull is now in microseconds */
+
+    tp->tv_usec = (ull % 1000000i64);
+    tp->tv_sec  = (ull / 1000000i64);
+
+    return 0;
+}
+
+#else
+
 /*
  * Simple gettimeofday that only returns seconds.
  */
@@ -48,4 +73,6 @@ gettimeofday (struct timeval *tp, void *ignore)
      tp->tv_usec = 0;
      return 0;
 }
+
+#endif  /* !_WIN32 */
 #endif

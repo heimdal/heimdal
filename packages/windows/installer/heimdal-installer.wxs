@@ -186,10 +186,10 @@
       <ComponentRef Id='comp.ktutil' />
       <ComponentRef Id='comp.krb5.conf' />
       <?ifdef LsaCache ?>
-      <ComponentRef Id='comp.LSACache' />
+      <ComponentGroupRef Id='comps.LSACache' />
       <?endif?>
       <?ifdef ApiCache ?>
-      <ComponentRef Id='comp.APICache' />
+      <ComponentGroupRef Id='comps.APICache' />
       <?endif?>
       <ComponentRef Id='comp.Plugin.Reg' />
 

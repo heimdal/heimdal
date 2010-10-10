@@ -24,6 +24,7 @@ doing so.  It will make life easier for you and everyone else.
 * Slave Servers::
 * Incremental propagation::
 * Encryption types and salting::
+* Credential cache server - KCM::
 * Cross realm::
 * Transit policy::
 * Setting up DNS::
@@ -630,7 +631,7 @@ slave#  /usr/heimdal/libexec/ipropd-slave master &
 To manage the iprop log file you should use the @command{iprop-log}
 command. With it you can dump, truncate and replay the logfile.
 
-@node Encryption types and salting, Cross realm, Incremental propagation, Setting up a realm
+@node Encryption types and salting, Credential cache server - KCM, Incremental propagation, Setting up a realm
 @section Encryption types and salting
 @cindex Salting
 @cindex Encryption types
@@ -691,7 +692,29 @@ the cell name appended to the password.
 
 @end itemize
 
-@node Cross realm, Transit policy, Encryption types and salting, Setting up a realm
+@node Credential cache server - KCM, Cross realm, Encryption types and salting, Setting up a realm
+@section Credential cache server - KCM
+@cindex KCM
+@cindex Credential cache server
+
+When KCM running is easy for users to switch between different
+kerberos principals using @file{kswitch} or built in support in
+application, like OpenSSH's GSSAPIClientIdentity.
+
+Other advantages are that there is the long term credentials are not
+written to disk and on reboot the credential is removed when kcm
+process stopps running.
+
+Configure the system startup script to start the kcm process,
+@file{/usr/heimdal/libexec/kcm} and then configure the system to use kcm in @file{krb5.conf}.
+
+@example
+[libdefaults]
+	default_cc_type = KCM
+@end example
+
+
+@node Cross realm, Transit policy, Credential cache server - KCM, Setting up a realm
 @section Cross realm
 @cindex Cross realm
 

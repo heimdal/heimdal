@@ -51,6 +51,7 @@
 
 typedef struct EC_KEY EC_KEY;
 typedef struct EC_GROUP EC_GROUP;
+typedef struct EC_GROUP_ID_s *EC_GROUP_ID;
 
 unsigned long
 EC_GROUP_get_degree(EC_GROUP *);
@@ -63,6 +64,12 @@ EC_GROUP_get_order(EC_GROUP *, BIGNUM *, BN_CTX *);
 
 EC_KEY *
 o2i_ECPublicKey(EC_KEY **key, unsigned char **, size_t);
+
+EC_KEY *
+EC_KEY_new_by_curve_name(EC_GROUP_ID);
+
+int
+EC_KEY_generate_key(EC_KEY *);
 
 void
 EC_KEY_free(EC_KEY *);

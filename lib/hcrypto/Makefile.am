@@ -104,7 +104,6 @@ libhcrypto_la_SOURCES =	\
 	des.h		\
 	dh.c		\
 	dh.h		\
-	dh-tfm.c	\
 	dh-ltm.c	\
 	dsa.c		\
 	dsa.h		\
@@ -142,7 +141,6 @@ libhcrypto_la_SOURCES =	\
 	rnd_keys.c	\
 	rsa.c		\
 	rsa-gmp.c	\
-	rsa-tfm.c	\
 	rsa-ltm.c	\
 	rsa.h		\
 	sha.c		\

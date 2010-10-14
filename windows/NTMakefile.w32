@@ -110,21 +110,33 @@ RM=del /q
 ECHO=echo
 RC=rc
 
-AWK=gawk.exe
-YACC=bison.exe -y
-LEX=flex.exe
+#----------------------------------------------------------------
+# Program macros
+
+AWK_CMD=gawk.exe
+YACC_CMD=bison.exe
+LEX_CMD=flex.exe
 PYTHON=python.exe
 PERL=perl.exe
 CMP=cmp.exe
 SIGNTOOL=signtool.exe
 MAKECAT=makecat.exe
+HHC=hhc.exe
+MAKEINFO=makeinfo.exe
 
-CANDLE=candle.exe
-LIGHT=light.exe
+CANDLE_CMD=candle.exe
+LIGHT_CMD=light.exe
 
 # Only used for tests
 SH=sh.exe
 SED=sed.exe
+
+# Commands
+AWK=$(AWK_CMD)
+YACC=$(YACC_CMD) -y
+LEX=$(LEX_CMD)
+CANDLE=$(CANDLE_CMD) -nologo
+LIGHT=$(LIGHT_CMD) -nologo
 
 #----------------------------------------------------------------
 # External dependencies
@@ -227,7 +239,7 @@ RC2RES = $(RC2RES_C) -fo $@ $**
 !ifndef RECURSE
 
 check-utils:
-	@for %%g in ( "$(AWK)" "$(YACC)" "$(LEX)" "$(PYTHON)" "$(PERL)" "$(CMP)" "$(SED)" "$(SIGNTOOL)" "$(MAKECAT)" "$(CANDLE)" "$(LIGHT)") do @( \
+	@for %%g in ( "$(AWK_CMD)" "$(YACC_CMD)" "$(LEX_CMD)" "$(PYTHON)" "$(PERL)" "$(CMP)" "$(SED)" "$(SIGNTOOL)" "$(MAKECAT)" "$(CANDLE_CMD)" "$(LIGHT_CMD)" "$(MAKEINFO)" "$(HHC)") do @( \
 	for /f %%f in ( "%%g" ) do @( \
 		if exist %%f @( \
 			echo Found %%f \

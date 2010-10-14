@@ -218,7 +218,7 @@ $(OBJ)\sel-gram.obj: $(OBJ)\sel-gram.c
 	$(C2OBJ) -I$(SRCDIR)
 
 $(OBJ)\sel-lex.obj: $(OBJ)\sel-lex.c
-	$(C2OBJ) -I$(SRCDIR) -I$(OBJ)
+	$(C2OBJ) -I$(SRCDIR) -I$(OBJ) -DYY_NO_UNISTD_H
 
 $(OBJ)\sel-gram.c: sel-gram.y
 	$(YACC) -o $@ --defines=$(OBJ)\sel-gram.h sel-gram.y

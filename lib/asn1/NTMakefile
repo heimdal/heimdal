@@ -519,6 +519,9 @@ $(BINDIR)\asn1_compile.exe:				    \
 $(OBJ)\lex.c: lex.l $(OBJ)\asn1parse.h
 	$(LEX) -o$@ lex.l
 
+$(OBJ)\lex.obj: $(OBJ)\lex.c
+	$(C2OBJ) -DYY_NO_UNISTD_H
+
 $(OBJ)\asn1parse.c $(OBJ)\asn1parse.h: asn1parse.y
 	$(YACC) -o $(OBJ)\asn1parse.c --defines=$(OBJ)\asn1parse.h $**
 

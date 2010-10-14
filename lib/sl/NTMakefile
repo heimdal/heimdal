@@ -52,7 +52,7 @@ $(OBJ)\slc-lex.c: slc-lex.l
 	$(LEX) -o$@ slc-lex.l
 
 $(OBJ)\slc-lex.obj: $(OBJ)\slc-lex.c
-	$(C2OBJ) -I$(SRC)\$(RELDIR)
+	$(C2OBJ) -I$(SRC)\$(RELDIR) -DYY_NO_UNISTD_H
 
 $(OBJ)\test_sl.exe: $(OBJ)\test_sl.obj
 	$(EXECONLINK) $(LIBSL) $(LIBVERS) $(LIBROKEN)

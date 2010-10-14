@@ -78,6 +78,7 @@ OBJDIR		=$(SRC)\out\obj_$(OUTDIR)
 INCDIR		=$(DESTDIR)\inc
 LIBDIR		=$(DESTDIR)\lib
 BINDIR		=$(DESTDIR)\bin
+DOCDIR		=$(DESTDIR)\doc
 SBINDIR		=$(BINDIR)
 LIBEXECDIR	=$(BINDIR)
 ASMDIR		=$(BINDIR)
@@ -371,6 +372,9 @@ mkdirs:
 !  endif
 !  if !exist($(INCDIR))
 	$(MKDIR) $(INCDIR)
+!  endif
+!  if !exist($(DOCDIR))
+	$(MKDIR) $(DOCDIR)
 !  endif
 !  if !exist($(INCDIR)\gssapi)
 	$(MKDIR) $(INCDIR)\gssapi

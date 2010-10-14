@@ -33,3 +33,85 @@ RELDIR=doc
 
 !include ../windows/NTMakefile.w32 
 
+heimdal_TEXINFOS = \
+	$(OBJ)\ack.texi \
+	$(OBJ)\apps.texi \
+	$(OBJ)\copyright.texi \
+	$(OBJ)\heimdal.texi \
+	$(OBJ)\install.texi \
+	$(OBJ)\intro.texi \
+	$(OBJ)\kerberos4.texi \
+	$(OBJ)\migration.texi \
+	$(OBJ)\misc.texi \
+	$(OBJ)\programming.texi \
+	$(OBJ)\setup.texi \
+	$(OBJ)\vars.texi \
+	$(OBJ)\whatis.texi \
+	$(OBJ)\win2k.texi
+
+hx509_TEXINFOS = \
+	$(OBJ)\hx509.texi
+
+{}.texi{$(OBJ)}.texi:
+	$(CP) $** $@
+
+{}.tin{$(OBJ)}.texi:
+	$(SED) -e "s,[@]dbdir[@],x,g"	\
+	-e "s,[@]PACKAGE_VERSION[@],$(VER_PACKAGE_VERSION),g" < $** > $@
+
+MAKEINFOFLAGS = --css-include=$(SRCDIR)/heimdal.css
+
+######################################################################
+# Build heimdal.chm
+
+# Copyrights-and-Licenses.html is where the table of contents ends up
+# when generating HTML output using makeinfo.  Same goes for
+# How-to-use-the-PKCS11-module.html below.
+
+$(OBJ)\heimdal\index.html $(OBJ)\heimdal\Copyrights-and-Licenses.html: $(heimdal_TEXINFOS)
+	cd $(OBJ)
+	$(MAKEINFO) $(MAKEINFOFLAGS) --html heimdal.texi
+	cd $(SRCDIR)
+
+$(OBJ)\heimdal\toc.hhc: $(OBJ)\heimdal\Copyrights-and-Licenses.html
+	$(PERL) $(SRC)\cf\w32-hh-toc-from-info.pl -o$@ $**
+
+$(OBJ)\heimdal\heimdal.hhp: heimdal.hhp
+	$(CP) $** $@
+
+$(DOCDIR)\heimdal.chm: $(OBJ)\heimdal\heimdal.hhp $(OBJ)\heimdal\toc.hhc
+	cd $(OBJ)\heimdal
+	-$(HHC) heimdal.hhp
+	$(CP) heimdal.chm $@
+	cd $(SRCDIR)
+
+######################################################################
+# Build hx509.chm
+
+$(OBJ)\hx509\index.html $(OBJ)\hx509\How-to-use-the-PKCS11-module.html: $(hx509_TEXINFOS)
+	cd $(OBJ)
+	$(MAKEINFO) $(MAKEINFOFLAGS) --html hx509.texi
+	cd $(SRCDIR)
+
+$(OBJ)\hx509\toc.hhc: $(OBJ)\hx509\How-to-use-the-PKCS11-module.html
+	$(PERL) $(SRC)\cf\w32-hh-toc-from-info.pl -o$@ $**
+
+$(OBJ)\hx509\hx509.hhp: hx509.hhp
+	$(CP) $** $@
+
+$(DOCDIR)\hx509.chm: $(OBJ)\hx509\hx509.hhp $(OBJ)\hx509\toc.hhc
+	cd $(OBJ)\hx509
+	-$(HHC) hx509.hhp
+	$(CP) hx509.chm $@
+	cd $(SRCDIR)
+
+all:: $(OBJ)\heimdal\index.html $(OBJ)\hx509\index.html \
+	$(DOCDIR)\heimdal.chm $(DOCDIR)\hx509.chm
+
+clean::
+	-$(RM) $(OBJ)\heimdal\*.*
+	-$(RM) $(OBJ)\hx509\*.*
+	-$(RM) $(DOCDIR)\heimdal.chm
+	-$(RM) $(DOCDIR)\hx509.chm
+
+.SUFFIXES: .texi .tin

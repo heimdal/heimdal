@@ -181,6 +181,9 @@
     <Upgrade Id='81E64C32-1D09-4E3D-9EA2-EECD9C4D16CE'>
       <UpgradeVersion IncludeMaximum='no' MigrateFeatures='yes' Maximum='$(var.Version)'
                       Property='PREVIOUSINSTALLATION' />
+      <UpgradeVersion Minimum='$(var.Version)' IncludeMinimum='yes'
+                      Maximum='127.127.32767.32767'
+                      OnlyDetect='yes' Property='EXISTINGINSTALLATION' />
     </Upgrade>
 
     <InstallExecuteSequence>
@@ -188,6 +191,8 @@
     </InstallExecuteSequence>
 
     <Condition Message='!(loc.AdminRequired)'>Installed OR Privileged</Condition>
+    <Condition Message='!(loc.AlreadyInstalled)'>Installed OR NOT EXISTINGINSTALLATION</Condition>
+
     <Feature Id='feature.Main' ConfigurableDirectory='INSTALLDIR'
              Title='!(loc.FeaMainTitle)'
              Description='!(loc.FeaMainDesc)'

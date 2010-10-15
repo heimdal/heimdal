@@ -126,6 +126,7 @@ $(OBJ)\heimdal-installer.wixobj: heimdal-installer.wxs
 	$(CANDLE) -arch $(PLATFORM) -o $@ $** \
 		-dVersion=$(VERSION)	\
 		-dBinDir=$(BINDIR)	\
+		-dDocDir=$(DOCDIR)	\
 		-dInstDir=$(INSTDIR)	\
 		-dSrcDir=$(SRC)		\
 		-dPlatform=$(PLATFORM)	\

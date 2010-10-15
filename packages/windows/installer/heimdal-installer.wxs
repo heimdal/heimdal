@@ -147,6 +147,21 @@
             </Directory>
 
           </Directory>
+
+          <Directory Id='dirDoc' Name='doc' FileSource='$(var.DocDir)'>
+
+            <Component Id='comp.Heimdal.chm'
+                       Guid='785F6668-EBDB-4F18-8BEF-F72ECECB43D6'>
+              <File Name='heimdal.chm' />
+            </Component>
+
+            <Component Id='comp.HX509.chm'
+                       Guid='CBB379D6-629D-4EB9-AC0D-0167651F14EF'>
+              <File Name='hx509.chm' />
+            </Component>
+
+          </Directory>
+
         </Directory>
       </Directory>
       <Directory Id='CommonAppDataFolder' Name='ProgramData'>
@@ -185,6 +200,8 @@
       <ComponentRef Id='comp.kdigest' />
       <ComponentRef Id='comp.ktutil' />
       <ComponentRef Id='comp.krb5.conf' />
+      <ComponentRef Id='comp.Heimdal.chm' />
+      <ComponentRef Id='comp.HX509.chm' />
       <?ifdef LsaCache ?>
       <ComponentGroupRef Id='comps.LSACache' />
       <?endif?>

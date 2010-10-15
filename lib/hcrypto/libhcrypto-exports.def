@@ -249,7 +249,6 @@ EXPORTS
 	hc_RSA_get_app_data
 	hc_RSA_get_default_method
 	hc_RSA_get_method
-	hc_RSA_imath_method
 	hc_RSA_new
 	hc_RSA_new_method
 	hc_RSA_null_method

@@ -33,7 +33,7 @@ SUBDIRS=libtommath
 
 RELDIR=lib\hcrypto
 
-intcflags=-DKRB5 -DASN1_LIB -I$(HCRYPTOINCLUDEDIR) -DUSE_HCRYPTO_IMATH=1
+intcflags=-DKRB5 -DASN1_LIB -I$(HCRYPTOINCLUDEDIR) -DUSE_HCRYPTO_LTM=1
 
 !include ../../windows/NTMakefile.w32
 
@@ -90,8 +90,6 @@ all:: $(INCFILES)
 # libhcrypto
 
 libhcrypto_OBJs = 			\
-	$(OBJ)\imath.obj		\
-	$(OBJ)\iprime.obj		\
 	$(OBJ)\aes.obj			\
 	$(OBJ)\bn.obj			\
 	$(OBJ)\camellia.obj		\
@@ -99,7 +97,6 @@ libhcrypto_OBJs = 			\
 	$(OBJ)\common.obj		\
 	$(OBJ)\des.obj			\
 	$(OBJ)\dh.obj			\
-	$(OBJ)\dh-imath.obj		\
 	$(OBJ)\dh-ltm.obj		\
 	$(OBJ)\dh-tfm.obj		\
 	$(OBJ)\dsa.obj			\
@@ -121,7 +118,6 @@ libhcrypto_OBJs = 			\
 	$(OBJ)\rnd_keys.obj		\
 	$(OBJ)\rsa.obj			\
 	$(OBJ)\rsa-gmp.obj		\
-	$(OBJ)\rsa-imath.obj		\
 	$(OBJ)\rsa-ltm.obj		\
 	$(OBJ)\rsa-tfm.obj		\
 	$(OBJ)\sha.obj			\
@@ -133,9 +129,6 @@ libhcrypto_OBJs = 			\
 $(LIBHCRYPTO): $(libhcrypto_OBJs)
 	$(LIBCON)
 
-{imath/}.c{$(OBJ)}.obj::
-	$(C2OBJ_P)
-
 all:: $(LIBHCRYPTO)
 
 clean::
@@ -146,7 +139,6 @@ clean::
 TESTLIB=$(OBJ)\libhctest.lib
 
 $(TESTLIB):		    \
-	$(OBJ)\imath.obj    \
 	$(OBJ)\des.obj	    \
 	$(OBJ)\ui.obj
 	$(LIBCON)
@@ -161,7 +153,6 @@ test-binaries:				\
 	$(OBJ)\test_cipher.exe		\
 	$(OBJ)\test_engine_dso.exe	\
 	$(OBJ)\test_hmac.exe		\
-	$(OBJ)\test_imath.exe		\
 	$(OBJ)\test_pkcs5.exe		\
 	$(OBJ)\test_pkcs12.exe		\
 	$(OBJ)\test_rsa.exe		\
@@ -177,7 +168,7 @@ $(OBJ)\example_evp_cipher.exe: $(OBJ)\example_evp_cipher.obj $(TESTLIB) $(LIBHEI
 	$(EXECONLINK)
 	$(EXEPREP_NODIST)
 
-$(OBJ)\mdtest.exe: $(OBJ)\mdtest.obj $(LIBHEIMDAL) $(LIBROKEN)
+$(OBJ)\mdtest.exe: $(OBJ)\mdtest.obj $(LIBHEIMDAL) $(LIBROKEN) $(OBJ)\sha512.obj
 	$(EXECONLINK)
 	$(EXEPREP_NODIST)
 
@@ -202,10 +193,6 @@ $(OBJ)\test_engine_dso.exe: $(OBJ)\test_engine_dso.obj $(LIBHEIMDAL) $(LIBROKEN)
 	$(EXEPREP_NODIST)
 
 $(OBJ)\test_hmac.exe: $(OBJ)\test_hmac.obj $(LIBHEIMDAL) $(LIBROKEN)
-	$(EXECONLINK)
-	$(EXEPREP_NODIST)
-
-$(OBJ)\test_imath.exe: $(OBJ)\test_imath.obj $(TESTLIB) $(LIBROKEN)
 	$(EXECONLINK)
 	$(EXEPREP_NODIST)
 
@@ -248,7 +235,6 @@ test-run:
 	test_cipher.exe
 	test_engine_dso.exe
 	test_hmac.exe
-	test_imath.exe
 	test_pkcs5.exe
 	test_pkcs12.exe
 	test_rsa.exe

@@ -576,6 +576,7 @@ AC_CONFIG_FILES(Makefile 		\
 	include/hcrypto/Makefile	\
 	include/kadm5/Makefile		\
 	lib/Makefile			\
+	base/Makefile			\
 	lib/auth/Makefile		\
 	lib/auth/afskauthlib/Makefile	\
 	lib/auth/pam/Makefile		\

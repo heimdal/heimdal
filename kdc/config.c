@@ -333,6 +333,7 @@ configure(krb5_context context, int argc, char **argv)
 
     krb5_kdc_windc_init(context);
 
+#ifdef PKINIT
 #ifdef __APPLE__
     config->enable_pkinit = 1;
 
@@ -345,7 +346,7 @@ configure(krb5_context context, int argc, char **argv)
     if (config->pkinit_kdc_anchors == NULL)
 	config->pkinit_kdc_anchors = strdup("KEYCHAIN:");
 
-#endif
+#endif /* __APPLE__ */
 
     if (config->enable_pkinit) {
 	if (config->pkinit_kdc_identity == NULL)
@@ -361,6 +362,8 @@ configure(krb5_context context, int argc, char **argv)
 			       config->pkinit_kdc_revoke);
 
     }
+
+#endif /* PKINIT */
     
     return config;
 }

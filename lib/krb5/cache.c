@@ -512,6 +512,12 @@ krb5_cc_set_default_name(krb5_context context, const char *name)
 		context->default_cc_name_env = strdup(e);
 	    }
 	}
+
+#ifdef _WIN32
+        if (e == NULL) {
+            p = e = _krb5_get_default_mit_cc_name();
+        }
+#endif
 	if (e == NULL) {
 	    e = krb5_config_get_string(context, NULL, "libdefaults",
 				       "default_cc_name", NULL);

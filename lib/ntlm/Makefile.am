@@ -8,7 +8,9 @@ lib_LTLIBRARIES = libheimntlm.la
 
 include_HEADERS = heimntlm.h heimntlm-protos.h
 
-libheimntlm_la_SOURCES	= ntlm.c heimntlm.h
+dist_libheimntlm_la_SOURCES = ntlm.c heimntlm.h
+
+nodist_libheimntlm_la_SOURCES = ntlm_err.c
 
 libheimntlm_la_LDFLAGS = -version-info 1:0:1
 
@@ -25,8 +27,7 @@ libheimntlm_la_LIBADD = \
 $(srcdir)/heimntlm-protos.h:
 	cd $(srcdir) && perl ../../cf/make-proto.pl -q -P comment -o heimntlm-protos.h $(libheimntlm_la_SOURCES) || rm -f heimntlm-protos.h
 
-$(libheimntlm_la_OBJECTS): $(srcdir)/heimntlm-protos.h
-
+$(libheimntlm_la_OBJECTS): $(srcdir)/heimntlm-protos.h ntlm_err.h
 
 TESTS = test_ntlm
 
@@ -34,4 +35,9 @@ check_PROGRAMS = test_ntlm
 
 LDADD = libheimntlm.la $(LIB_roken)
 
-EXTRA_DIST = version-script.map
+EXTRA_DIST = version-script.map ntlm_err.et
+
+CLEANFILES = \
+	ntlm_err.c ntlm_err.h
+
+ntlm_err.h: ntlm_err.et

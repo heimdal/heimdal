@@ -112,7 +112,6 @@ heim_dict_t
 heim_dict_create(size_t size)
 {
     heim_dict_t dict;
-    int i;
 
     dict = _heim_alloc_object(&dict_object, sizeof(*dict));
 
@@ -197,6 +196,7 @@ heim_dict_add_value(heim_dict_t dict, heim_object_t key, heim_object_t value)
     h = _search(dict, key);
     if (h) {
 	heim_release(h->value);
+	h->value = heim_retain(value);
     } else {
 	unsigned long v;
 
@@ -216,7 +216,6 @@ heim_dict_add_value(heim_dict_t dict, heim_object_t key, heim_object_t value)
 	if (h->next)
 	    h->next->prev = &h->next;
     }
-    h->value = heim_retain(value);
 
     return 0;
 }

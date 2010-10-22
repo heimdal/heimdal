@@ -177,12 +177,12 @@ swap_uint64_t (uint64_t t)
     return ((temp & 0xffff0000ffff0000ULL) >> 16) |
            ((temp & 0x0000ffff0000ffffULL) << 16);
 }
-#endif
 
 struct x64{
-    uint64_t a:64;
-    uint64_t b:64;
+    uint64_t a;
+    uint64_t b;
 };
+#endif
 
 void
 SHA512_Update (SHA512_CTX *m, const void *v, size_t len)

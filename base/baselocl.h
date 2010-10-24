@@ -40,6 +40,7 @@
 #include <unistd.h>
 
 #include "config.h"
+#include "heim_threads.h" 
 
 #include "heimbase.h"
 #include "heimbasepriv.h"

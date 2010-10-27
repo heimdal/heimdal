@@ -40,16 +40,15 @@
 #include <unistd.h>
 
 #include "config.h"
-#include "heim_threads.h" 
 
+#include "heimqueue.h"
+#include "heim_threads.h"
 #include "heimbase.h"
 #include "heimbasepriv.h"
 
 #ifdef HAVE_DISPATCH_DISPATCH_H
 #include <dispatch/dispatch.h>
 #endif
-
-#define HEIM_BASE_ABORT(x) abort()
 
 #ifdef __GNUC__
 #define heim_base_atomic_inc(x) __sync_add_and_fetch((x), 1)
@@ -80,3 +79,12 @@
     ((heim_object_t)((((uintptr_t)(x)) << 5) | ((tid) << 2) | 0x1))
 #define heim_base_tagged_object_tid(x) ((((uintptr_t)(x)) & 0x1f) >> 2)
 #define heim_base_tagged_object_value(x) (((uintptr_t)(x)) >> 5)
+
+/*
+ *
+ */
+
+#undef HEIMDAL_NORETURN_ATTRIBUTE
+#define HEIMDAL_NORETURN_ATTRIBUTE
+#undef HEIMDAL_PRINTF_ATTRIBUTE
+#define HEIMDAL_PRINTF_ATTRIBUTE(x)

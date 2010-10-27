@@ -100,7 +100,13 @@ heim_string_create(const char *string)
 }
 
 /**
- * Create a string object from a strings allocated in the text segment
+ * Create a string object from a strings allocated in the text segment.
+ *
+ * Note that static string object wont be auto released with
+ * heim_auto_release(), the allocation policy of the string must
+ * be manged separately from the returned object. This make this
+ * function not very useful for strings in allocated from heap or
+ * stack. In that case you should use heim_string_create().
  *
  * @param string the string to create, must be an utf8 string
  *
@@ -126,7 +132,7 @@ heim_string_get_type_id(void)
 }
 
 /**
- * Get the string value of the content
+ * Get the string value of the content.
  *
  * @param string the string object to get the value from
  *

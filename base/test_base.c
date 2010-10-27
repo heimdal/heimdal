@@ -91,13 +91,43 @@ test_dict(void)
     return 0;
 }
 
+static int
+test_auto_release(void)
+{
+    heim_auto_release_t ar1, ar2;
+    heim_number_t n1;
+    heim_string_t s1;
+
+    ar1 = heim_auto_release_create();
+
+    s1 = heim_string_create("hejsan");
+    heim_auto_release(s1);
+
+    s1 = heim_string_create_with_static("hejsan");
+    heim_auto_release(s1);
+
+    n1 = heim_number_create(1);
+    heim_auto_release(n1);
+
+    ar2 = heim_auto_release_create();
+
+    n1 = heim_number_create(1);
+    heim_auto_release(n1);
+
+    heim_release(ar2);
+    heim_release(ar1);
+
+    return 0;
+}
+
 int
 main(int argc, char **argv)
 {
     int res = 0;
 
-    res += test_memory();
-    res += test_dict();
+    res |= test_memory();
+    res |= test_dict();
+    res |= test_auto_release();
 
-    return 0;
+    return res;
 }

@@ -37,6 +37,9 @@
 #define HEIM_BASE_H 1
 
 #include <sys/types.h>
+#include <krb5-types.h>
+#include <stdarg.h>
+#include <stdbool.h>
 
 typedef void * heim_object_t;
 typedef unsigned int heim_tid_t;
@@ -60,6 +63,19 @@ heim_get_hash(heim_object_t ptr);
 
 void
 heim_base_once_f(heim_base_once_t *, void *, void (*)(void *));
+
+void
+heim_abort(const char *fmt, ...)
+    HEIMDAL_NORETURN_ATTRIBUTE
+    HEIMDAL_PRINTF_ATTRIBUTE((printf, 1, 2));
+
+void
+heim_abortv(const char *fmt, va_list ap)
+    HEIMDAL_NORETURN_ATTRIBUTE
+    HEIMDAL_PRINTF_ATTRIBUTE((printf, 1, 0));
+
+#define heim_assert(e,t) \
+    (__builtin_expect(!(e), 0) ? heim_abort(t ":" #e) : (void)0)
 
 /*
  *
@@ -93,6 +109,10 @@ void	heim_array_iterate(heim_array_t, void (^)(heim_object_t));
 size_t	heim_array_get_length(heim_array_t);
 heim_object_t
 	heim_array_copy_value(heim_array_t, size_t);
+void	heim_array_delete_value(heim_array_t, size_t);
+#ifdef __BLOCKS__
+void	heim_array_filter(heim_array_t, bool (^)(heim_object_t));
+#endif
 
 /*
  * Dict
@@ -135,5 +155,15 @@ typedef struct heim_number_data *heim_number_t;
 heim_number_t heim_number_create(int);
 heim_tid_t heim_number_get_type_id(void);
 int heim_number_get_int(heim_number_t);
+
+/*
+ *
+ */
+
+typedef struct heim_auto_release * heim_auto_release_t;
+
+heim_auto_release_t heim_auto_release_create(void);
+void heim_auto_release_drain(heim_auto_release_t);
+void heim_auto_release(heim_object_t);
 
 #endif /* HEIM_BASE_H */

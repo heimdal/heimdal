@@ -181,6 +181,51 @@ heim_object_t
 heim_array_copy_value(heim_array_t array, size_t idx)
 {
     if (idx >= array->len)
-	HEIM_BASE_ABORT("index too large");
+	heim_abort("index too large");
     return heim_retain(array->val[idx]);
+}
+
+/**
+ * Delete value at idx
+ *
+ * @param array the array to modify
+ * @param idx the key to delete
+ */
+
+void
+heim_array_delete_value(heim_array_t array, size_t idx)
+{
+    heim_object_t obj;
+    if (idx >= array->len)
+	heim_abort("index too large");
+    obj = array->val[idx];
+
+    array->len--;
+
+    if (idx < array->len)
+	memmove(&array->val[idx], &array->val[idx + 1],
+		(array->len - idx) * sizeof(array->val[0]));
+
+    heim_release(obj);
+}
+
+/**
+ * Get value at idx
+ *
+ * @param array the array to modify
+ * @param idx the key to delete
+ */
+
+void
+heim_array_filter(heim_array_t array, bool (^block)(heim_object_t))
+{
+    size_t n = 0;
+
+    while (n < array->len) {
+	if (block(array->val[n])) {
+	    heim_array_delete_value(array, n);
+	} else {
+	    n++;
+	}
+    }
 }

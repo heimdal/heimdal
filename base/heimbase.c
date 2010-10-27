@@ -34,26 +34,42 @@
  */
 
 #include "baselocl.h"
+#include <syslog.h>
 
 static heim_base_atomic_type tidglobal = HEIM_TID_USER;
 
 struct heim_base {
     heim_type_t isa;
     heim_base_atomic_type ref_cnt;
-    uintptr_t isaextra[3]; 
+    HEIM_TAILQ_ENTRY(heim_base) autorel;
+    heim_auto_release_t autorelpool;
+    uintptr_t isaextra[3];
 };
 
 /* specialized version of base */
 struct heim_base_mem {
     heim_type_t isa;
     heim_base_atomic_type ref_cnt;
+    HEIM_TAILQ_ENTRY(heim_base) autorel;
+    heim_auto_release_t autorelpool;
     const char *name;
     void (*dealloc)(void *);
-    uintptr_t isaextra[1]; 
+    uintptr_t isaextra[1];
 };
 
 #define PTR2BASE(ptr) (((struct heim_base *)ptr) - 1)
 #define BASE2PTR(ptr) ((void *)(((struct heim_base *)ptr) + 1))
+
+/*
+ * Auto release structure
+ */
+
+struct heim_auto_release {
+    HEIM_TAILQ_HEAD(, heim_base) pool;
+    HEIMDAL_MUTEX pool_mutex;
+    struct heim_auto_release *parent;
+};
+
 
 /**
  * Retain object
@@ -75,7 +91,7 @@ heim_retain(void *ptr)
 	return ptr;
 
     if ((heim_base_atomic_inc(&p->ref_cnt) - 1) == 0)
-	HEIM_BASE_ABORT("resurection");
+	heim_abort("resurection");
     return ptr;
 }
 
@@ -103,11 +119,19 @@ heim_release(void *ptr)
 	return;
 
     if (old == 1) {
+	heim_auto_release_t ar = p->autorelpool;
+	/* remove from autorel pool list */
+	if (ar) {
+	    p->autorelpool = NULL;
+	    HEIMDAL_MUTEX_lock(&ar->pool_mutex);
+	    HEIM_TAILQ_REMOVE(&ar->pool, p, autorel);
+	    HEIMDAL_MUTEX_unlock(&ar->pool_mutex);
+	}
 	if (p->isa->dealloc)
 	    p->isa->dealloc(ptr);
 	free(p);
     } else
-	HEIM_BASE_ABORT("over release");
+	heim_abort("over release");
 }
 
 static heim_type_t tagged_isa[9] = {
@@ -133,7 +157,7 @@ _heim_get_isa(heim_object_t ptr)
 	    return tagged_isa[heim_base_tagged_object_tid(ptr)];
 	if (heim_base_is_tagged_string(ptr))
 	    return &_heim_string_object;
-	abort();
+	heim_abort("not a supported tagged type");
     }
     p = PTR2BASE(ptr);
     return p->isa;
@@ -186,7 +210,7 @@ heim_cmp(heim_object_t a, heim_object_t b)
 {
     heim_tid_t ta, tb;
     heim_type_t isa;
- 
+
     ta = heim_get_tid(a);
     tb = heim_get_tid(b);
 
@@ -248,8 +272,6 @@ _heim_create_type(const char *name,
 {
     heim_type_t type;
 
-    /* XXX posix_memalign */
-
     type = calloc(1, sizeof(*type));
     if (type == NULL)
 	return NULL;
@@ -268,6 +290,7 @@ _heim_create_type(const char *name,
 heim_object_t
 _heim_alloc_object(heim_type_t type, size_t size)
 {
+    /* XXX should use posix_memalign */
     struct heim_base *p = calloc(1, size + sizeof(*p));
     if (p == NULL)
 	return NULL;
@@ -312,7 +335,6 @@ heim_base_once_f(heim_base_once_t *once, void *ctx, void (*func)(void *))
 	HEIMDAL_MUTEX_unlock(&mutex);
 	while (1) {
 	    struct timeval tv = { 0, 1000 };
-	    select(0, NULL, NULL, NULL, &tv);
 	    HEIMDAL_MUTEX_lock(&mutex);
 	    if (*once == 2)
 		break;
@@ -321,4 +343,217 @@ heim_base_once_f(heim_base_once_t *once, void *ctx, void (*func)(void *))
 	HEIMDAL_MUTEX_unlock(&mutex);
     }
 #endif
+}
+
+/**
+ * Abort and log the failure (using syslog)
+ */
+
+void
+heim_abort(const char *fmt, ...)
+{
+    va_list ap;
+    va_start(ap, fmt);
+    heim_abortv(fmt, ap);
+    va_end(ap);
+}
+
+/**
+ * Abort and log the failure (using syslog)
+ */
+
+void
+heim_abortv(const char *fmt, va_list ap)
+{
+    char *str = NULL;
+    int ret;
+    
+    ret = vasprintf(&str, fmt, ap);
+    if (ret > 0 && str) {
+	syslog(LOG_ERR, "heim_abort: %s", str);
+    }
+    abort();
+}
+
+/*
+ *
+ */
+
+static int ar_created = 0;
+static HEIMDAL_thread_key ar_key;
+
+struct ar_tls {
+    struct heim_auto_release *head;
+    struct heim_auto_release *current;
+    HEIMDAL_MUTEX tls_mutex;
+};
+
+static void
+ar_tls_delete(void *ptr)
+{
+    struct ar_tls *tls = ptr;
+    if (tls->head)
+	heim_release(tls->head);
+    free(tls);
+}
+
+static void
+init_ar_tls(void *ptr)
+{
+    int ret;
+    HEIMDAL_key_create(&ar_key, ar_tls_delete, ret);
+    if (ret == 0)
+	ar_created = 1;
+}
+
+static struct ar_tls *
+autorel_tls(void)
+{
+    static heim_base_once_t once = HEIM_BASE_ONCE_INIT;
+    struct ar_tls *arp;
+    int ret;
+
+    heim_base_once_f(&once, NULL, init_ar_tls);
+    if (!ar_created)
+	return NULL;
+
+    arp = HEIMDAL_getspecific(ar_key);
+    if (arp == NULL) {
+
+	arp = calloc(1, sizeof(*arp));
+	if (arp == NULL)
+	    return NULL;
+	HEIMDAL_setspecific(ar_key, arp, ret);
+	if (ret) {
+	    free(arp);
+	    return NULL;
+	}
+    }
+    return arp;
+
+}
+
+static void
+autorel_dealloc(void *ptr)
+{
+    heim_auto_release_t ar = ptr;
+    struct ar_tls *tls;
+
+    tls = autorel_tls();
+    if (tls == NULL)
+	heim_abort("autorelease pool released on thread w/o autorelease inited");
+
+    heim_auto_release_drain(ar);
+
+    if (!HEIM_TAILQ_EMPTY(&ar->pool))
+	heim_abort("pool not empty after draining");
+
+    HEIMDAL_MUTEX_lock(&tls->tls_mutex);
+    if (tls->current != ptr)
+	heim_abort("autorelease not releaseing top pool");
+
+    if (tls->current != tls->head)
+	tls->current = ar->parent;
+    HEIMDAL_MUTEX_unlock(&tls->tls_mutex);
+}
+
+static int
+autorel_cmp(void *a, void *b)
+{
+    return (a == b);
+}
+
+static unsigned long
+autorel_hash(void *ptr)
+{
+    return (unsigned long)ptr;
+}
+
+
+static struct heim_type_data _heim_autorel_object = {
+    HEIM_TID_AUTORELEASE,
+    "autorelease-pool",
+    NULL,
+    autorel_dealloc,
+    NULL,
+    autorel_cmp,
+    autorel_hash
+};
+
+/**
+ *
+ */
+
+heim_auto_release_t
+heim_auto_release_create(void)
+{
+    struct ar_tls *tls = autorel_tls();
+    heim_auto_release_t ar;
+
+    if (tls == NULL)
+	heim_abort("Failed to create/get autorelease head");
+
+    ar = _heim_alloc_object(&_heim_autorel_object, sizeof(struct heim_auto_release));
+    if (ar) {
+	HEIMDAL_MUTEX_lock(&tls->tls_mutex);
+	if (tls->head == NULL)
+	    tls->head = ar;
+	ar->parent = tls->current;
+	tls->current = ar;
+	HEIMDAL_MUTEX_unlock(&tls->tls_mutex);
+    }
+
+    return ar;
+}
+
+/**
+ * Mark the current object as a
+ */
+
+void
+heim_auto_release(heim_object_t ptr)
+{
+    struct heim_base *p = PTR2BASE(ptr);
+    struct ar_tls *tls = autorel_tls();
+    heim_auto_release_t ar;
+
+    if (ptr == NULL || heim_base_is_tagged(ptr))
+	return;
+
+    /* drop from old pool */
+    if ((ar = p->autorelpool) != NULL) {
+	HEIMDAL_MUTEX_lock(&ar->pool_mutex);
+	HEIM_TAILQ_REMOVE(&ar->pool, p, autorel);
+	p->autorelpool = NULL;
+	HEIMDAL_MUTEX_unlock(&ar->pool_mutex);
+    }
+
+    if (tls == NULL || (ar = tls->current) == NULL)
+	heim_abort("no auto relase pool in place, would leak");
+
+    HEIMDAL_MUTEX_lock(&ar->pool_mutex);
+    HEIM_TAILQ_INSERT_HEAD(&ar->pool, p, autorel);
+    p->autorelpool = ar;
+    HEIMDAL_MUTEX_unlock(&ar->pool_mutex);
+}
+
+/**
+ *
+ */
+
+void
+heim_auto_release_drain(heim_auto_release_t autorel)
+{
+    heim_object_t obj;
+
+    /* release all elements on the tail queue */
+
+    HEIMDAL_MUTEX_lock(&autorel->pool_mutex);
+    while(!HEIM_TAILQ_EMPTY(&autorel->pool)) {
+	obj = HEIM_TAILQ_FIRST(&autorel->pool);
+	HEIMDAL_MUTEX_unlock(&autorel->pool_mutex);
+	heim_release(BASE2PTR(obj));
+	HEIMDAL_MUTEX_lock(&autorel->pool_mutex);
+    }
+    HEIMDAL_MUTEX_unlock(&autorel->pool_mutex);
 }

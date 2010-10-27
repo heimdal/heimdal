@@ -165,14 +165,47 @@
         </Directory>
       </Directory>
       <Directory Id='CommonAppDataFolder' Name='ProgramData'>
-        <Directory Id='dirCommonHeimdal' Name='Heimdal' FileSource='$(var.SrcDir)'>
+        <Directory Id='dirCommonKerberos' Name='Kerberos' FileSource='$(var.SrcDir)'>
 
-            <Component Id='comp.krb5.conf'
-                       Guid='ED28951F-7B17-4DF5-91D7-4DC11C810E66' >
-              <File Name='krb5.conf' KeyPath='yes' />
-            </Component>
+          <Component Id='comp.krb5.conf'
+                     Guid='ED28951F-7B17-4DF5-91D7-4DC11C810E66'
+                     Permanent='yes' NeverOverwrite='yes'>
+            <File Name='krb5.conf' KeyPath='yes' Id='krb5_conf' />
+            <Environment Id='KRB5_CONFIG_by_krb5.conf' Name='KRB5_CONFIG' Action='set' System='yes' Value='[#krb5_conf]' />
+            <Condition>Not LEGACYKRB5INI And Not LEGACYKRB5CONF</Condition>
+          </Component>
+
+          <Component Id='comp.krb5.ini.move'
+                     Guid='316CB754-4332-4C02-95C1-4AC82590712D'>
+            <CopyFile Id='copy_krb5.ini' Delete='yes'
+                      DestinationDirectory='dirCommonKerberos'
+                      DestinationName='krb5.conf' DestinationShortName='krb5.cnf'
+                      SourceProperty='LEGACYKRB5INI' />
+            <Environment Id='KRB5_CONFIG_by_legacy_krb5.ini' Name='KRB5_CONFIG' Action='set' System='yes' Value='[dirCommonKerberos]krb5.conf' />
+            <RegistryKey Action='createAndRemoveOnUninstall' Root='HKLM'
+                         Key='Software\Heimdal\CurrentVersion'>
+              <RegistryValue Name='LegacyKrb5IniLocation' Type='string' Value='[LEGACYKRB5INI]' KeyPath='yes' />
+            </RegistryKey>
+            <Condition>LEGACYKRB5INI</Condition>
+          </Component>
+
+          <Component Id='comp.krb5.conf.move'
+                     Guid='ADCE6801-0FD3-46E7-955A-FC9214CFE0AB'>
+            <CopyFile Id='copy_krb5.conf' Delete='yes'
+                      DestinationDirectory='dirCommonKerberos'
+                      DestinationName='krb5.conf' DestinationShortName='krb5.cnf'
+                      SourceProperty='LEGACYKRB5CONF' />
+            <Environment Id='KRB5_CONFIG_by_legacy_krb5.conf' Name='KRB5_CONFIG' Action='set' System='yes' Value='[dirCommonKerberos]krb5.conf' />
+            <RegistryKey Action='createAndRemoveOnUninstall' Root='HKLM'
+                         Key='Software\Heimdal\CurrentVersion'>
+              <RegistryValue Name='LegacyKrb5ConfLocation' Type='string' Value='[LEGACYKRB5CONF]' KeyPath='yes' />
+            </RegistryKey>
+            <Condition>LEGACYKRB5CONF</Condition>
+          </Component>
 
         </Directory>
+      </Directory>
+      <Directory Id='WindowsFolder'>
       </Directory>
     </Directory>
 
@@ -185,6 +218,19 @@
                       Maximum='127.127.32767.32767'
                       OnlyDetect='yes' Property='EXISTINGINSTALLATION' />
     </Upgrade>
+
+    <!-- Search for existing configuration files -->
+    <Property Id='LEGACYKRB5INI' Secure='yes'>
+      <DirectorySearch Id='dirSearchKrb5Ini' Depth='1' Path='[WindowsFolder]'>
+        <FileSearch Name='krb5.ini' />
+      </DirectorySearch>
+    </Property>
+
+    <Property Id='LEGACYKRB5CONF' Secure='yes'>
+      <DirectorySearch Id='dirSearchKrb5Conf' Depth='1' Path='[WindowsFolder]'>
+        <FileSearch Name='krb5.conf' />
+      </DirectorySearch>
+    </Property>
 
     <InstallExecuteSequence>
       <RemoveExistingProducts After='InstallFinalize' />
@@ -207,6 +253,8 @@
       <ComponentRef Id='comp.krb5.conf' />
       <ComponentRef Id='comp.Heimdal.chm' />
       <ComponentRef Id='comp.HX509.chm' />
+      <ComponentRef Id='comp.krb5.ini.move' />
+      <ComponentRef Id='comp.krb5.conf.move' />
       <?ifdef LsaCache ?>
       <ComponentGroupRef Id='comps.LSACache' />
       <?endif?>

@@ -46,6 +46,7 @@ KRB5_LIB_VARIABLE const char *krb5_config_file =
 SYSCONFDIR "/krb5.conf"
 #ifdef _WIN32
 ":%{COMMON_APPDATA}/Kerberos/krb5.conf"
+":%{WINDOWS}/krb5.ini"
 #else
 ":/etc/krb5.conf"
 #endif

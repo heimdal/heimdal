@@ -44,7 +44,9 @@ KRB5_LIB_VARIABLE const char *krb5_config_file =
 #endif	/* __APPLE__ */
 "~/.krb5/config:"
 SYSCONFDIR "/krb5.conf"
-#ifndef _WIN32
+#ifdef _WIN32
+":%{COMMON_APPDATA}/Kerberos/krb5.conf"
+#else
 ":/etc/krb5.conf"
 #endif
 ;

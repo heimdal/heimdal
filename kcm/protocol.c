@@ -1506,14 +1506,14 @@ kcm_op_do_ntlm(krb5_context context,
 	    }
 	    
 	    ret = heim_ntlm_calculate_ntlm2_sess(nonce,
-						 type2.challange,
+						 type2.challenge,
 						 c->nthash.data,
 						 &type3.lm,
 						 &type3.ntlm);
 	} else {
 	    ret = heim_ntlm_calculate_ntlm1(c->nthash.data,
 					    c->nthash.length,
-					    type2.challange,
+					    type2.challenge,
 					    &type3.ntlm);
 	    
 	}
@@ -1568,7 +1568,7 @@ kcm_op_do_ntlm(krb5_context context,
 					ctx->client->key.length,
 					type3.username,
 					name->domain,
-					type2.challange,
+					type2.challenge,
 					&type2.targetinfo,
 					ntlmv2,
 					&type3.ntlm);

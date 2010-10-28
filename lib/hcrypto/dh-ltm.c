@@ -155,16 +155,13 @@ static int
 ltm_dh_compute_key(unsigned char *shared, const BIGNUM * pub, DH *dh)
 {
     mp_int s, priv_key, p, peer_pub;
-    size_t size = 0;
     int ret;
 
     if (dh->pub_key == NULL || dh->g == NULL || dh->priv_key == NULL)
 	return -1;
 
-    mp_init(&p);
+    mp_init_multi(&s, &priv_key, &p, &peer_pub, NULL);
     BN2mpz(&p, dh->p);
-
-    mp_init(&peer_pub);
     BN2mpz(&peer_pub, pub);
 
     /* check if peers pubkey is reasonable */
@@ -172,30 +169,28 @@ ltm_dh_compute_key(unsigned char *shared, const BIGNUM * pub, DH *dh)
 	|| mp_cmp(&peer_pub, &p) >= 0
 	|| mp_cmp_d(&peer_pub, 1) <= 0)
     {
-	mp_zero(&p);
-	mp_zero(&peer_pub);
-	return -1;
+	ret = -1;
+	goto out;
     }
 
-    mp_init(&priv_key);
     BN2mpz(&priv_key, dh->priv_key);
 
     mp_init(&s);
 
     ret = mp_exptmod(&peer_pub, &priv_key, &p, &s);
 
-    mp_zero(&p);
-    mp_zero(&peer_pub);
-    mp_zero(&priv_key);
+    if (ret != 0) {
+	ret = -1;
+	goto out;
+    }
 
-    if (ret != 0)
-	return -1;
-
-    size = mp_unsigned_bin_size(&s);
+    ret = mp_unsigned_bin_size(&s);
     mp_to_unsigned_bin(&s, shared);
-    mp_zero(&s);
 
-    return size;
+ out:
+    mp_zero_multi(&s, &priv_key, &p, &peer_pub, NULL);
+
+    return ret;
 }
 
 static int

@@ -48,9 +48,13 @@ typedef heim_object_t heim_null_t;
 #define HEIM_BASE_ONCE_INIT 0
 typedef long heim_base_once_t; /* XXX arch dependant */
 
-
 void *	heim_retain(heim_object_t);
 void	heim_release(heim_object_t);
+
+typedef void (*heim_type_dealloc)(void *);
+
+void *
+heim_alloc(size_t size, const char *name, heim_type_dealloc dealloc);
 
 heim_tid_t
 heim_get_tid(heim_object_t object);
@@ -123,7 +127,7 @@ typedef struct heim_dict_data *heim_dict_t;
 heim_dict_t heim_dict_create(size_t size);
 heim_tid_t heim_dict_get_type_id(void);
 
-typedef void (*heim_dict_iterator_f_t)(heim_object_t, heim_object_t, heim_object_t, void *);
+typedef void (*heim_dict_iterator_f_t)(heim_object_t, heim_object_t, void *);
 
 int	heim_dict_add_value(heim_dict_t, heim_object_t, heim_object_t);
 void	heim_dict_iterate_f(heim_dict_t, heim_dict_iterator_f_t, void *);

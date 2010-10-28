@@ -259,7 +259,7 @@ heim_dict_iterate_f(heim_dict_t dict, heim_dict_iterator_f_t func, void *arg)
 
     for (h = dict->tab; h < &dict->tab[dict->size]; ++h)
 	for (g = *h; g; g = g->next)
-	    func(dict, g->key, g->value, arg);
+	    func(g->key, g->value, arg);
 }
 
 #ifdef __BLOCKS__

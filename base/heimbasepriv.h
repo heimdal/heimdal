@@ -34,7 +34,6 @@
  */
 
 typedef void (*heim_type_init)(void *);
-typedef void (*heim_type_dealloc)(void *);
 typedef heim_object_t (*heim_type_copy)(void *);
 typedef int (*heim_type_cmp)(void *, void *);
 typedef unsigned long (*heim_type_hash)(void *);
@@ -70,10 +69,6 @@ struct heim_type_data {
 };
 
 heim_type_t _heim_get_isa(heim_object_t);
-
-/* alloc allocates a plain memory object */
-void *
-heim_alloc(size_t size, const char *name, heim_type_dealloc dealloc);
 
 heim_type_t
 _heim_create_type(const char *name,

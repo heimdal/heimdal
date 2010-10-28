@@ -53,6 +53,7 @@ CLEANFILES =			\
 	heim-ipc.h		\
 	heim_asn1.h		\
 	heim_err.h		\
+	heimbase.h		\
 	heimntlm-protos.h	\
 	heimntlm.h		\
 	hex.h			\

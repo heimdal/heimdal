@@ -80,6 +80,7 @@ Bugfixes, documentation, encouragement, and code has been contributed by:
 @item Mustafa A. Hashmi
 @item Petr Holub
 @item Russ Allbery
+@item Patrik Lundin
 @item Phil Fisher
 @item Rafal Malinowski
 @item Rainer Toebbicke

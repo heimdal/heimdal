@@ -92,7 +92,12 @@ static RETSIGTYPE
 sigchld(int sig)
 {
     int status;
-    waitpid(-1, &status, 0);
+    /*
+     * waitpid() is async safe. will return -1 or 0 on no more zombie
+     * children
+     */
+    while ((waitpid(-1, &status, WNOHANG)) > 0)
+	;
     SIGRETURN(0);
 }
 

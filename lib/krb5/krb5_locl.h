@@ -120,6 +120,8 @@ struct sockaddr_dl;
 
 #include <com_err.h>
 
+#include <heimbase.h>
+
 #define HEIMDAL_TEXTDOMAIN "heimdal_krb5"
 
 #ifdef LIBINTL

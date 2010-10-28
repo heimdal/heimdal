@@ -119,14 +119,14 @@ ltm_dh_generate_key(DH *dh)
 	
 	res = mp_exptmod(&g, &priv_key, &p, &pub);
 
-	mp_zero(&priv_key);
-	mp_zero(&g);
-	mp_zero(&p);
+	mp_clear(&priv_key);
+	mp_clear(&g);
+	mp_clear(&p);
 	if (res != 0)
 	    continue;
 
 	dh->pub_key = mpz2BN(&pub);
-	mp_zero(&pub);
+	mp_clear(&pub);
 	if (dh->pub_key == NULL)
 	    return 0;
 	

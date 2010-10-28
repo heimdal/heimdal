@@ -346,14 +346,14 @@ _gss_ntlm_init_sec_context
 		}
 
 		ret = heim_ntlm_calculate_ntlm2_sess(nonce,
-						     type2.challange,
+						     type2.challenge,
 						     ctx->client->key.data,
 						     &type3.lm,
 						     &type3.ntlm);
 	    } else {
 		ret = heim_ntlm_calculate_ntlm1(ctx->client->key.data,
 						ctx->client->key.length,
-						type2.challange,
+						type2.challenge,
 						&type3.ntlm);
 
 	    }
@@ -417,7 +417,7 @@ _gss_ntlm_init_sec_context
 					    ctx->client->key.length,
 					    ctx->client->username,
 					    name->domain,
-					    type2.challange,
+					    type2.challenge,
 					    &type2.targetinfo,
 					    ntlmv2,
 					    &type3.ntlm);

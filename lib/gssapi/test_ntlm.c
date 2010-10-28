@@ -118,7 +118,7 @@ test_libntlm_v1(int flags)
 	heim_ntlm_nt_key(password, &key);
 
 	heim_ntlm_calculate_ntlm1(key.data, key.length,
-				  type2.challange,
+				  type2.challenge,
 				  &type3.ntlm);
 
 	if (flags & NTLM_NEG_KEYEX) {
@@ -245,7 +245,7 @@ test_libntlm_v2(int flags)
 	heim_ntlm_calculate_ntlm2(key.data, key.length,
 				  user,
 				  type2.targetname,
-				  type2.challange,
+				  type2.challenge,
 				  &type2.targetinfo,
 				  ntlmv2,
 				  &type3.ntlm);

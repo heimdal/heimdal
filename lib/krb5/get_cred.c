@@ -710,34 +710,20 @@ add_cred(krb5_context context, krb5_creds const *tkt, krb5_creds ***tgts)
     return ret;
 }
 
-/*
-get_cred(server)
-	creds = cc_get_cred(server)
-	if(creds) return creds
-	tgt = cc_get_cred(krbtgt/server_realm@any_realm)
-	if(tgt)
-		return get_cred_tgt(server, tgt)
-	if(client_realm == server_realm)
-		return NULL
-	tgt = get_cred(krbtgt/server_realm@client_realm)
-	while(tgt_inst != server_realm)
-		tgt = get_cred(krbtgt/server_realm@tgt_inst)
-	return get_cred_tgt(server, tgt)
-	*/
-
 static krb5_error_code
-get_cred_kdc_capath(krb5_context context,
-		    krb5_kdc_flags flags,
-		    krb5_ccache ccache,
-		    krb5_creds *in_creds,
-		    krb5_principal impersonate_principal,
-		    Ticket *second_ticket,			
-		    krb5_creds **out_creds,
-		    krb5_creds ***ret_tgts)
+get_cred_kdc_capath_worker(krb5_context context,
+                           krb5_kdc_flags flags,
+                           krb5_ccache ccache,
+                           krb5_creds *in_creds,
+                           krb5_const_realm try_realm,
+                           krb5_principal impersonate_principal,
+                           Ticket *second_ticket,			
+                           krb5_creds **out_creds,
+                           krb5_creds ***ret_tgts)
 {
     krb5_error_code ret;
     krb5_creds *tgt, tmp_creds;
-    krb5_const_realm client_realm, server_realm, try_realm;
+    krb5_const_realm client_realm, server_realm;
     int ok_as_delegate = 1;
 
     *out_creds = NULL;
@@ -748,11 +734,6 @@ get_cred_kdc_capath(krb5_context context,
     ret = krb5_copy_principal(context, in_creds->client, &tmp_creds.client);
     if(ret)
 	return ret;
-
-    try_realm = krb5_config_get_string(context, NULL, "capaths",
-				       client_realm, server_realm, NULL);
-    if (try_realm == NULL)
-	try_realm = client_realm;
 
     ret = krb5_make_principal(context,
 			      &tmp_creds.server,
@@ -860,6 +841,56 @@ get_cred_kdc_capath(krb5_context context,
 	}
     }
     krb5_free_creds(context, tgt);
+    return ret;
+}                           
+
+/*
+get_cred(server)
+	creds = cc_get_cred(server)
+	if(creds) return creds
+	tgt = cc_get_cred(krbtgt/server_realm@any_realm)
+	if(tgt)
+		return get_cred_tgt(server, tgt)
+	if(client_realm == server_realm)
+		return NULL
+	tgt = get_cred(krbtgt/server_realm@client_realm)
+	while(tgt_inst != server_realm)
+		tgt = get_cred(krbtgt/server_realm@tgt_inst)
+	return get_cred_tgt(server, tgt)
+	*/
+
+static krb5_error_code
+get_cred_kdc_capath(krb5_context context,
+		    krb5_kdc_flags flags,
+		    krb5_ccache ccache,
+		    krb5_creds *in_creds,
+		    krb5_principal impersonate_principal,
+		    Ticket *second_ticket,			
+		    krb5_creds **out_creds,
+		    krb5_creds ***ret_tgts)
+{
+    krb5_error_code ret;
+    krb5_const_realm client_realm, server_realm, try_realm;
+
+    client_realm = krb5_principal_get_realm(context, in_creds->client);
+    server_realm = krb5_principal_get_realm(context, in_creds->server);
+
+    try_realm = client_realm;
+    ret = get_cred_kdc_capath_worker(context, flags, ccache, in_creds, try_realm,
+                                     impersonate_principal, second_ticket, out_creds,
+                                     ret_tgts);
+
+    if (ret == KRB5KDC_ERR_S_PRINCIPAL_UNKNOWN) {
+        try_realm = krb5_config_get_string(context, NULL, "capaths",
+                                           client_realm, server_realm, NULL);
+
+        if (try_realm != NULL && strcmp(try_realm, client_realm)) {
+            ret = get_cred_kdc_capath_worker(context, flags, ccache, in_creds,
+                                             try_realm, impersonate_principal,
+                                             second_ticket, out_creds, ret_tgts);
+        }
+    }
+
     return ret;
 }
 

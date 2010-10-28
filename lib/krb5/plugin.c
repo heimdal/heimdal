@@ -558,12 +558,8 @@ _krb5_plugin_run_f(krb5_context context,
 		   krb5_error_code (*func)(krb5_context, const void *, void *, void *))
 {
     heim_string_t m = heim_string_create(module);
-    heim_string_t n = heim_string_create(name);
-    heim_array_t result;
     heim_dict_t dict;
     struct iter_ctx s;
-
-    result = heim_array_create();
 
     HEIMDAL_MUTEX_lock(&plugin_mutex);
 
@@ -571,15 +567,14 @@ _krb5_plugin_run_f(krb5_context context,
     heim_release(m);
     if (dict == NULL) {
 	HEIMDAL_MUTEX_unlock(&plugin_mutex);
-	heim_release(n);
 	return KRB5_PLUGIN_NO_HANDLE;
     }
 
     s.context = context;
     s.name = name;
-    s.n = n;
+    s.n = heim_string_create(name);
     s.min_version = min_version;
-    s.result = result;
+    s.result = heim_array_create();
     s.func = func;
     s.userctx = userctx;
 
@@ -591,10 +586,10 @@ _krb5_plugin_run_f(krb5_context context,
     
     s.ret = KRB5_PLUGIN_NO_HANDLE;
 
-    heim_array_iterate_f(result, eval_results, &s);
+    heim_array_iterate_f(s.result, eval_results, &s);
 
-    heim_release(result);
-    heim_release(n);
+    heim_release(s.result);
+    heim_release(s.n);
 
     return s.ret;
 }

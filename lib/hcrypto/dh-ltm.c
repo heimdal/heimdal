@@ -188,7 +188,7 @@ ltm_dh_compute_key(unsigned char *shared, const BIGNUM * pub, DH *dh)
     mp_to_unsigned_bin(&s, shared);
 
  out:
-    mp_zero_multi(&s, &priv_key, &p, &peer_pub, NULL);
+    mp_clear_multi(&s, &priv_key, &p, &peer_pub, NULL);
 
     return ret;
 }

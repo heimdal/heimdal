@@ -119,9 +119,7 @@ ltm_dh_generate_key(DH *dh)
 	
 	res = mp_exptmod(&g, &priv_key, &p, &pub);
 
-	mp_clear(&priv_key);
-	mp_clear(&g);
-	mp_clear(&p);
+	mp_clear_multi(&priv_key, &g, &p, NULL);
 	if (res != 0)
 	    continue;
 
@@ -174,8 +172,6 @@ ltm_dh_compute_key(unsigned char *shared, const BIGNUM * pub, DH *dh)
     }
 
     BN2mpz(&priv_key, dh->priv_key);
-
-    mp_init(&s);
 
     ret = mp_exptmod(&peer_pub, &priv_key, &p, &s);
 

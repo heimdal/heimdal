@@ -166,14 +166,14 @@ spawn_child(krb5_context context, int *socks,
     return 1;
 }
 
-static int
+static void
 wait_for_connection(krb5_context context,
 		    krb5_socket_t *socks, unsigned int num_socks)
 {
     unsigned int i;
     int e;
     fd_set orig_read_set, read_set;
-    int max_fd = -1;
+    int status, max_fd = -1;
 
     FD_ZERO(&orig_read_set);
 
@@ -207,23 +207,20 @@ wait_for_connection(krb5_context context,
 	    for(i = 0; i < num_socks; i++) {
 		if(FD_ISSET(socks[i], &read_set))
 		    if(spawn_child(context, socks, num_socks, i) == 0)
-			return 0;
+			return;
 	    }
 	}
     }
     signal(SIGCHLD, SIG_IGN);
-    while(1) {
-	int status;
-	pid_t pid;
-	pid = waitpid(-1, &status, 0);
-	if(pid == -1 && errno == ECHILD)
-	    break;
-    }
+
+    while ((waitpid(-1, &status, WNOHANG)) > 0)
+	;
+
     exit(0);
 }
 
 
-int
+void
 start_server(krb5_context context, const char *port_str)
 {
     int e;
@@ -293,5 +290,5 @@ start_server(krb5_context context, const char *port_str)
     if(num_socks == 0)
 	krb5_errx(context, 1, "no sockets to listen to - exiting");
 
-    return wait_for_connection(context, socks, num_socks);
+    wait_for_connection(context, socks, num_socks);
 }

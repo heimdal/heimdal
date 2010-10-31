@@ -36,6 +36,11 @@
 #include "krb5_locl.h"
 #include <assert.h>
 
+static krb5_error_code
+get_cred_kdc_capath(krb5_context, krb5_kdc_flags,
+		    krb5_ccache, krb5_creds *, krb5_principal,
+		    Ticket *, krb5_creds **, krb5_creds ***);
+
 /*
  * Take the `body' and encode it into `padata' using the credentials
  * in `creds'.

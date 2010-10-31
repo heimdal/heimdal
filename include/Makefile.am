@@ -75,23 +75,24 @@ CLEANFILES =			\
 	kx509_asn1.h		\
 	kx509_err.h		\
 	locate_plugin.h		\
-	otp.h			\
+	ntlm_err.h		\
 	ocsp_asn1.h		\
+	otp.h			\
 	parse_bytes.h		\
 	parse_time.h		\
 	parse_units.h		\
+	pkcs10_asn1.h		\
 	pkcs12_asn1.h		\
 	pkcs8_asn1.h		\
 	pkcs9_asn1.h		\
-	pkcs10_asn1.h		\
 	pkinit_asn1.h		\
 	resolve.h		\
 	rfc2459_asn1.h		\
 	roken-common.h		\
 	roken.h			\
 	rtbl.h			\
-	sl.h			\
 	send_to_kdc_plugin.h	\
+	sl.h			\
 	test-mem.h		\
 	vers.h			\
 	vis.h			\

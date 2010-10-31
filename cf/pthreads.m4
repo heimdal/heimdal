@@ -12,10 +12,10 @@ case "$host" in
 *-*-solaris2*)
 	native_pthread_support=yes
 	if test "$GCC" = yes; then
-		PTHREADS_CFLAGS=-pthreads
+		PTHREAD_CFLAGS=-pthreads
 		PTHREAD_LIBADD=-pthreads
 	else
-		PTHREADS_CFLAGS=-mt
+		PTHREAD_CFLAGS=-mt
 		PTHREAD_LDADD=-mt
 		PTHREAD_LIBADD=-mt
 	fi
@@ -30,30 +30,27 @@ case "$host" in
 	dnl heim_threads.h knows this
 	PTHREAD_LIBADD="-lpthread"
 	;;
-*-*-freebsd[[56]]*)
+*-*-freebsd[[56789]]*)
 	native_pthread_support=yes
-	;;
-*-*-freebsd[[789]]*)
-	native_pthread_support=yes
-	PTHREADS_LIBADD="-lpthread"
+	PTHREAD_LIBADD="-pthread"
 	;;
 *-*-openbsd*)
 	native_pthread_support=yes
-	PTHREADS_CFLAGS=-pthread
+	PTHREAD_CFLAGS=-pthread
 	PTHREAD_LIBADD=-pthread
 	;;
 *-*-linux* | *-*-linux-gnu)
 	case `uname -r` in
 	2.*)
 		native_pthread_support=yes
-		PTHREADS_CFLAGS=-pthread
+		PTHREAD_CFLAGS=-pthread
 		PTHREAD_LIBADD=-pthread
 		;;
 	esac
 	;;
 *-*-kfreebsd*-gnu*)
 	native_pthread_support=yes
-	PTHREADS_CFLAGS=-pthread
+	PTHREAD_CFLAGS=-pthread
 	PTHREAD_LIBADD=-pthread
 	;;
 *-*-aix*)
@@ -84,14 +81,13 @@ if test "$enable_pthread_support" != no; then
     dnl for libraries.
     LIBS="$PTHREAD_LIBADD $LIBS"
 else
-  PTHREADS_CFLAGS=""
+  PTHREAD_CFLAGS=""
   PTHREAD_LIBADD=""
-  PTHREADS_LIBADD=""
 fi
 
-AC_SUBST(PTHREADS_CFLAGS)
+AC_SUBST(PTHREAD_CFLAGS)
 AC_SUBST(PTHREAD_LDADD)
-AC_SUBST(PTHREADS_LIBADD)
+AC_SUBST(PTHREAD_LIBADD)
 
 AC_MSG_RESULT($enable_pthread_support)
 ])

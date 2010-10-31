@@ -6,7 +6,9 @@ AM_CPPFLAGS += $(INCLUDE_hcrypto)
 
 lib_LTLIBRARIES = libheimntlm.la
 
-include_HEADERS = heimntlm.h heimntlm-protos.h
+dist_include_HEADERS = heimntlm.h heimntlm-protos.h
+
+nodist_include_HEADERS = ntlm_err.h
 
 dist_libheimntlm_la_SOURCES = ntlm.c heimntlm.h
 

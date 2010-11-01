@@ -11,10 +11,14 @@ noinst_PROGRAMS =				\
 	test_gic				\
 	test_alname				\
 	test_crypto				\
+	test_rfc3961				\
 	test_get_addrs				\
 	test_kuserok				\
 	test_renew				\
 	test_forward
+
+noinst_LTLIBRARIES =				\
+	librfc3961.la
 
 TESTS =						\
 	aes-test				\
@@ -72,6 +76,20 @@ libkrb5_la_LIBADD = \
 	$(LIB_door_create) \
 	$(LIB_dlopen)
 
+librfc3961_la_LIBADD = \
+	$(LIB_pkinit) \
+	$(use_sqlite) \
+	$(LIB_com_err) \
+	$(LIB_hcrypto) \
+	$(top_builddir)/lib/asn1/libasn1.la \
+	../ipc/libheim-ipcc.la \
+	../wind/libwind.la \
+	$(LIB_libintl) \
+	$(LIBADD_roken) \
+	$(PTHREAD_LIBADD) \
+	$(LIB_door_create) \
+	$(LIB_dlopen)
+
 lib_LTLIBRARIES = libkrb5.la
 
 ERR_FILES = krb5_err.c krb_err.c heim_err.c k524_err.c
@@ -80,6 +98,10 @@ libkrb5_la_CPPFLAGS = \
 	-DBUILD_KRB5_LIB \
 	$(AM_CPPFLAGS) \
 	-DHEIMDAL_LOCALEDIR='"$(localedir)"'
+
+librfc3961_la_CPPFLAGS = \
+	-DBUILD_KRB5_LIB \
+	$(AM_CPPFLAGS)
 
 dist_libkrb5_la_SOURCES =			\
 	acache.c				\
@@ -103,6 +125,17 @@ dist_libkrb5_la_SOURCES =			\
 	crc.c					\
 	creds.c					\
 	crypto.c				\
+	crypto.h				\
+	crypto-aes.c				\
+	crypto-algs.c				\
+	crypto-arcfour.c			\
+	crypto-des.c				\
+	crypto-des-common.c			\
+	crypto-des3.c				\
+	crypto-evp.c				\
+	crypto-null.c				\
+	crypto-pk.c				\
+	crypto-rand.c				\
 	doxygen.c				\
 	data.c					\
 	deprecated.c				\
@@ -167,12 +200,18 @@ dist_libkrb5_la_SOURCES =			\
 	read_message.c				\
 	recvauth.c				\
 	replay.c				\
+	salt.c					\
+	salt-aes.c				\
+	salt-arcfour.c				\
+	salt-des.c				\
+	salt-des3.c				\
 	scache.c				\
 	send_to_kdc.c				\
 	sendauth.c				\
 	set_default_realm.c			\
 	sock_principal.c			\
 	store.c					\
+	store-int.c				\
 	store-int.h				\
 	store_emem.c				\
 	store_fd.c				\
@@ -198,6 +237,40 @@ libkrb5_la_LDFLAGS += $(LDFLAGS_VERSION_SCRIPT)$(srcdir)/version-script.map
 endif
 
 $(libkrb5_la_OBJECTS) $(verify_krb5_conf_OBJECTS): $(srcdir)/krb5-protos.h $(srcdir)/krb5-private.h
+
+nodist_librfc3961_la_SOURCES =			\
+	crc.c					\
+	crypto.c				\
+	crypto.h				\
+	crypto-aes.c				\
+	crypto-algs.c				\
+	crypto-arcfour.c			\
+	crypto-des.c				\
+	crypto-des-common.c			\
+	crypto-des3.c				\
+	crypto-evp.c				\
+	crypto-null.c				\
+	crypto-pk.c				\
+	crypto-rand.c				\
+	crypto-stubs.c				\
+	data.c					\
+	error_string.c				\
+	keyblock.c				\
+	n-fold.c				\
+	salt.c					\
+	salt-aes.c				\
+	salt-arcfour.c				\
+	salt-des.c				\
+	salt-des3.c				\
+	store-int.c				\
+	warn.c
+
+test_rfc3961_LDADD = 				\
+	librfc3961.la 				\
+	$(top_builddir)/lib/asn1/libasn1.la	\
+	$(top_builddir)/lib/wind/libwind.la 	\
+	$(LIB_hcrypto)				\
+	$(LIB_roken)
 
 $(srcdir)/krb5-protos.h:
 	cd $(srcdir) && perl ../../cf/make-proto.pl -E KRB5_LIB -q -P comment -o krb5-protos.h $(dist_libkrb5_la_SOURCES) || rm -f krb5-protos.h
@@ -273,7 +346,7 @@ CLEANFILES = \
 	heim_err.c heim_err.h \
 	k524_err.c k524_err.h
 
-$(libkrb5_la_OBJECTS): krb5_err.h krb_err.h heim_err.h k524_err.h
+$(libkrb5_la_OBJECTS): krb5_err.h krb_err.h heim_err.h k524_err.h crypto.h
 
 EXTRA_DIST = \
 	krb5_err.et \

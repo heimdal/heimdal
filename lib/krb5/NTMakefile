@@ -55,6 +55,16 @@ libkrb5_OBJS =			\
 	$(OBJ)\crc.obj			    \
 	$(OBJ)\creds.obj		    \
 	$(OBJ)\crypto.obj		    \
+	$(OBJ)\crypto-aes.obj		    \
+	$(OBJ)\crypto-algs.obj		    \
+	$(OBJ)\crypto-arcfour.obj	    \
+	$(OBJ)\crypto-des-common.obj	    \
+	$(OBJ)\crypto-des.obj		    \
+	$(OBJ)\crypto-des3.obj		    \
+	$(OBJ)\crypto-evp.obj		    \
+	$(OBJ)\crypto-null.obj		    \
+	$(OBJ)\crypto-pk.obj		    \
+	$(OBJ)\crypto-rand.obj		    \
 	$(OBJ)\data.obj			    \
 	$(OBJ)\deprecated.obj		    \
 	$(OBJ)\digest.obj		    \
@@ -115,12 +125,18 @@ libkrb5_OBJS =			\
 	$(OBJ)\read_message.obj		    \
 	$(OBJ)\recvauth.obj		    \
 	$(OBJ)\replay.obj		    \
+	$(OBJ)\salt-aes.obj		    \
+	$(OBJ)\salt-arcfour.obj		    \
+	$(OBJ)\salt-des.obj		    \
+	$(OBJ)\salt-des3.obj		    \
+	$(OBJ)\salt.obj			    \
 	$(OBJ)\scache.obj		    \
 	$(OBJ)\send_to_kdc.obj		    \
 	$(OBJ)\sendauth.obj		    \
 	$(OBJ)\set_default_realm.obj	    \
 	$(OBJ)\sock_principal.obj	    \
 	$(OBJ)\store.obj		    \
+	$(OBJ)\store-int.obj		    \
 	$(OBJ)\store_emem.obj		    \
 	$(OBJ)\store_fd.obj		    \
 	$(OBJ)\store_mem.obj		    \

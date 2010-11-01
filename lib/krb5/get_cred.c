@@ -756,7 +756,7 @@ get_cred_kdc_capath_worker(krb5_context context,
 	ret = find_cred(context, ccache, tmp_creds.server,
 			*ret_tgts, &tgts);
 	if(ret == 0){
-	    if (try_realm != client_realm)
+	    if (strcmp(try_realm, client_realm) != 0)
 		ok_as_delegate = tgts.flags.b.ok_as_delegate;
 
 	    *out_creds = calloc(1, sizeof(**out_creds));

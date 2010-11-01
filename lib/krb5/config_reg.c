@@ -38,7 +38,7 @@
 #define REGPATH "SOFTWARE\\Heimdal"
 
 /**
- * Parse a registry value as a configuration value
+ * Parse a registry value as a string
  *
  * The following registry value types are handled:
  *
@@ -54,102 +54,153 @@
  *   a separator.  No quoting is performed.
  *
  * Any other value type is rejected.
+ *
+ * @param [in]valuename Name of the registry value to be queried
+ * @param [in]type      Type of the value. REG_NONE if unknown
+ * @param [in]cbdata    Size of value. 0 if unknown.
+ *
+ * @a type and @a cbdata are only considered valid if both are
+ * specified.
+ *
+ * @retval The registry value string, or NULL if there was an error.
+ * If NULL is returned, an error message has been set using
+ * krb5_set_error_message().
  */
-static krb5_error_code
-parse_reg_value(krb5_context context,
-                HKEY key, const char * valuename,
-                DWORD type, DWORD cbdata, krb5_config_section ** parent)
+char *
+_krb5_parse_reg_value_as_string(krb5_context context,
+                                HKEY key, const char * valuename,
+                                DWORD type, DWORD cb_data)
 {
-    LONG                rcode;
-    DWORD               cb;
+    LONG                rcode = ERROR_MORE_DATA;
+    DWORD               cb_alloc;
     krb5_config_section *value;
     krb5_error_code     code = 0;
 
     BYTE                static_buffer[16384];
     BYTE                *pbuffer;
+    char                *ret_string = NULL;
 
-    /* Size adjustments */
+    /* If we know a type and cb_data from a previous call to
+     * RegEnumValue(), we use it.  Otherwise we use the
+     * static_buffer[] and query directly.  We do this to minimize the
+     * number of queries. */
+
+    if (type == REG_NONE || cb_data == 0) {
+
+        pbuffer = &static_buffer[0];
+        cb_alloc = cb_data = sizeof(static_buffer);
+        rcode = RegQueryValueExA(key, valuename, NULL, &type, pbuffer, &cb_data);
+
+        if (rcode == ERROR_SUCCESS &&
+
+            ((type != REG_SZ &&
+              type != REG_EXPAND_SZ) || cb_data + 1 <= sizeof(static_buffer)) &&
+
+            (type != REG_MULTI_SZ || cb_data + 2 <= sizeof(static_buffer)))
+            goto have_data;
+
+        if (rcode != ERROR_MORE_DATA && rcode != ERROR_SUCCESS)
+            return NULL;
+    }
+
+    /* Either we don't have the data or we aren't sure of the size
+     * (due to potentially missing terminating NULs). */
 
     switch (type) {
     case REG_DWORD:
-        if (cbdata != sizeof(DWORD)) {
-            krb5_set_error_message(context, KRB5_CONFIG_BADFORMAT,
-                                   "Unexpected size while reading registry value %s",
-                                   valuename);
-            return KRB5_CONFIG_BADFORMAT;
+        if (cb_data != sizeof(DWORD)) {
+            if (context)
+                krb5_set_error_message(context, 0,
+                                       "Unexpected size while reading registry value %s",
+                                       valuename);
+            return NULL;
         }
         break;
 
     case REG_SZ:
     case REG_EXPAND_SZ:
-        cbdata += sizeof(char); /* Accout for potential missing NUL
-                                 * terminator. */
+
+        if (rcode == ERROR_SUCCESS && cb_data > 0 && pbuffer[cb_data - 1] == '\0')
+            goto have_data;
+
+        cb_data += sizeof(char); /* Accout for potential missing NUL
+                                  * terminator. */
         break;
 
     case REG_MULTI_SZ:
-        cbdata += sizeof(char) * 2;
+
+        if (rcode == ERROR_SUCCESS && cb_data > 0 && pbuffer[cb_data - 1] == '\0' &&
+            (cb_data == 1 || pbuffer[cb_data - 2] == '\0'))
+            goto have_data;
+
+        cb_data += sizeof(char) * 2; /* Potential missing double NUL
+                                      * terminator. */
         break;
 
     default:
-        krb5_set_error_message(context, KRB5_CONFIG_BADFORMAT,
-                               "Unexpected type while reading registry value %s",
-                               valuename);
-        return KRB5_CONFIG_BADFORMAT;
+        if (context)
+            krb5_set_error_message(context, 0,
+                                   "Unexpected type while reading registry value %s",
+                                   valuename);
+        return NULL;
     }
 
-    if (cbdata <= sizeof(static_buffer))
+    if (cb_data <= sizeof(static_buffer))
         pbuffer = &static_buffer[0];
     else {
-        pbuffer = malloc(cbdata);
+        pbuffer = malloc(cb_data);
         if (pbuffer == NULL)
-            return ENOMEM;
+            return NULL;
     }
 
-    cb = cbdata;
+    cb_alloc = cb_data;
+    rcode = RegQueryValueExA(key, valuename, NULL, NULL, pbuffer, &cb_data);
 
-    rcode = RegQueryValueExA(key, valuename, NULL, NULL, pbuffer, &cb);
     if (rcode != ERROR_SUCCESS) {
-        krb5_set_error_message(context, KRB5_CONFIG_BADFORMAT,
-                               "Unexpected error while reading registry value %s",
-                               valuename);
-        code = KRB5_CONFIG_BADFORMAT;
+
+        /* This can potentially be from a race condition. I.e. some
+         * other process or thread went and modified the registry
+         * value between the time we queried its size and queried for
+         * its value.  Ideally we would retry the query in a loop. */
+
+        if (context)
+            krb5_set_error_message(context, 0,
+                                   "Unexpected error while reading registry value %s",
+                                   valuename);
         goto done;
     }
 
-    if (cb > cbdata) {
-        krb5_set_error_message(context, KRB5_CONFIG_BADFORMAT,
-                               "Unexpected error while reading registry value %s",
-                               valuename);
-        code = KRB5_CONFIG_BADFORMAT;
+    if (cb_data > cb_alloc || cb_data == 0) {
+        if (context)
+            krb5_set_error_message(context, 0,
+                                   "Unexpected size while reading registry value %s",
+                                   valuename);
         goto done;
     }
 
-    value = _krb5_config_get_entry(parent, valuename, krb5_config_string);
-    if (value == NULL) {
-        code = ENOMEM;
-        goto done;
-    }
-
-    if (value->u.string != NULL) {
-        free(value->u.string);
-        value->u.string = NULL;
-    }
-
+have_data:
     switch (type) {
     case REG_DWORD:
-    {
-        asprintf(&value->u.string, "%d", *((DWORD *) pbuffer));
-    }
-    break;
+        asprintf(&ret_string, "%d", *((DWORD *) pbuffer));
+        break;
 
     case REG_SZ:
     {
         char * str = (char *) pbuffer;
 
-        if (str[cb - 1] != '\0')
-            str[cb] = '\0';
+        if (str[cb_data - 1] != '\0') {
+            if (cb_data < cb_alloc)
+                str[cb_data] = '\0';
+            else
+                break;
+        }
 
-        value->u.string = strdup(str);
+        if (pbuffer != static_buffer) {
+            ret_string = (char *) pbuffer;
+            pbuffer = NULL;
+        } else {
+            ret_string = strdup(pbuffer);
+        }
     }
     break;
 
@@ -160,15 +211,20 @@ parse_reg_value(krb5_context context,
                                  * ExpandEnvironmentStrings() is
                                  * limited to 32K. */
 
-        if (str[cb - 1] != '\0')
-            str[cb] = '\0';
+        if (str[cb_data - 1] != '\0') {
+            if (cb_data < cb_alloc)
+                str[cb_data] = '\0';
+            else
+                break;
+        }
 
-        if (ExpandEnvironmentStrings(str, expsz, sizeof(expsz)/sizeof(expsz[0])) != 0) {
-            value->u.string = strdup(expsz);
+        if (ExpandEnvironmentStrings(str, expsz, sizeof(expsz)/sizeof(char)) != 0) {
+            ret_string = strdup(expsz);
         } else {
-            code = KRB5_CONFIG_BADFORMAT;
-            krb5_set_error_message(context, KRB5_CONFIG_BADFORMAT,
-                                   "Overflow while expanding environment strings for registry value %s", valuename);
+            if (context)
+                krb5_set_error_message(context, 0,
+                                       "Overflow while expanding environment strings "
+                                       "for registry value %s", valuename);
         }
     }
     break;
@@ -178,8 +234,8 @@ parse_reg_value(krb5_context context,
         char * str = (char *) pbuffer;
         char * iter;
 
-        str[cbdata - 1] = '\0';
-        str[cbdata - 2] = '\0';
+        str[cb_alloc - 1] = '\0';
+        str[cb_alloc - 2] = '\0';
 
         for (iter = str; *iter;) {
             size_t len = strlen(iter);
@@ -191,14 +247,63 @@ parse_reg_value(krb5_context context,
                 break;
         }
 
-        value->u.string = strdup(str);
+        if (pbuffer != static_buffer) {
+            ret_string = str;
+            pbuffer = NULL;
+        } else {
+            ret_string = strdup(str);
+        }
     }
     break;
+
+    default:
+        if (context)
+            krb5_set_error_message(context, 0,
+                                   "Unexpected type while reading registry value %s",
+                                   valuename);
     }
 
 done:
     if (pbuffer != static_buffer && pbuffer != NULL)
         free(pbuffer);
+
+    return ret_string;
+}
+
+/**
+ * Parse a registry value as a configuration value
+ *
+ * @see parse_reg_value_as_string()
+ */
+static krb5_error_code
+parse_reg_value(krb5_context context,
+                HKEY key, const char * valuename,
+                DWORD type, DWORD cbdata, krb5_config_section ** parent)
+{
+    char                *reg_string = NULL;
+    krb5_config_section *value;
+    krb5_error_code     code = 0;
+
+    reg_string = _krb5_parse_reg_value_as_string(context, key, valuename, type, cbdata);
+
+    if (reg_string == NULL)
+        return KRB5_CONFIG_BADFORMAT;
+
+    value = _krb5_config_get_entry(parent, valuename, krb5_config_string);
+    if (value == NULL) {
+        code = ENOMEM;
+        goto done;
+    }
+
+    if (value->u.string != NULL)
+        free(value->u.string);
+
+    value->u.string = reg_string;
+    reg_string = NULL;
+
+done:
+    if (reg_string != NULL)
+        free(reg_string);
 
     return code;
 }
@@ -315,8 +420,8 @@ parse_reg_root(krb5_context context,
  * @see parse_reg_value() for details about how each type of value is handled.
  */
 krb5_error_code
-krb5_load_config_from_registry(krb5_context context,
-                               krb5_config_section ** res)
+_krb5_load_config_from_registry(krb5_context context,
+                                krb5_config_section ** res)
 {
     HKEY        key = NULL;
     LONG        rcode;

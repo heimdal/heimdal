@@ -515,7 +515,7 @@ krb5_cc_set_default_name(krb5_context context, const char *name)
 
 #ifdef _WIN32
         if (e == NULL) {
-            p = e = _krb5_get_default_mit_cc_name();
+            e = p = _krb5_get_default_cc_name_from_registry();
         }
 #endif
 	if (e == NULL) {
@@ -1698,3 +1698,30 @@ krb5_cc_get_kdc_offset(krb5_context context, krb5_ccache id, krb5_deltat *offset
     }
     return (*id->ops->get_kdc_offset)(context, id, offset);
 }
+
+
+#ifdef _WIN32
+
+char *
+_krb5_get_default_cc_name_from_registry()
+{
+    HKEY hk_k5 = 0;
+    LONG code;
+    char * ccname = NULL;
+
+    code = RegOpenKeyEx(HKEY_CURRENT_USER,
+                        "Software\\MIT\\Kerberos5",
+                        0, KEY_READ, &hk_k5);
+
+    if (code != ERROR_SUCCESS)
+        return NULL;
+
+    ccname = _krb5_parse_reg_value_as_string(NULL, hk_k5, "ccname",
+                                             REG_NONE, 0);
+
+    RegCloseKey(hk_k5);
+
+    return ccname;
+}
+
+#endif

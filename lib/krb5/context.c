@@ -618,7 +618,7 @@ krb5_set_config_files(krb5_context context, char **filenames)
 #endif
 
 #ifdef _WIN32
-    krb5_load_config_from_registry(context, &tmp);
+    _krb5_load_config_from_registry(context, &tmp);
 #endif
 
     krb5_config_file_free(context, context->cf);

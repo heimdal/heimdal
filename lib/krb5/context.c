@@ -741,6 +741,45 @@ krb5_prepend_config_files_default(const char *filelist, char ***pfilenames)
     return 0;
 }
 
+#ifdef _WIN32
+
+/**
+ * Checks the registry for configuration file location
+ *
+ * Kerberos for Windows and other legacy Kerberos applications expect
+ * to find the configuration file location in the
+ * SOFTWARE\MIT\Kerberos registry key under the value "config".
+ */
+char *
+_krb5_get_default_config_config_files_from_registry()
+{
+    static const char * KeyName = "Software\\MIT\\Kerberos";
+    char *config_file = NULL;
+    LONG rcode;
+    HKEY key;
+
+    rcode = RegOpenKeyEx(HKEY_CURRENT_USER, KeyName, 0, KEY_READ, &key);
+    if (rcode == ERROR_SUCCESS) {
+        config_file = _krb5_parse_reg_value_as_string(NULL, key, "config",
+                                                      REG_NONE, 0);
+        RegCloseKey(key);
+    }
+
+    if (config_file)
+        return config_file;
+
+    rcode = RegOpenKeyEx(HKEY_LOCAL_MACHINE, KeyName, 0, KEY_READ, &key);
+    if (rcode == ERROR_SUCCESS) {
+        config_file = _krb5_parse_reg_value_as_string(NULL, key, "config",
+                                                      REG_NONE, 0);
+        RegCloseKey(key);
+    }
+
+    return config_file;
+}
+
+#endif
+
 /**
  * Get the global configuration list.
  *
@@ -761,6 +800,22 @@ krb5_get_default_config_files(char ***pfilenames)
         return EINVAL;
     if(!issuid())
 	files = getenv("KRB5_CONFIG");
+
+#ifdef _WIN32
+    if (files == NULL) {
+        char * reg_files;
+        reg_files = _krb5_get_default_config_config_files_from_registry();
+        if (reg_files != NULL) {
+            krb5_error_code code;
+
+            code = krb5_prepend_config_files(reg_files, NULL, pfilenames);
+            free(reg_files);
+
+            return code;
+        }
+    }
+#endif
+
     if (files == NULL)
 	files = krb5_config_file;
 

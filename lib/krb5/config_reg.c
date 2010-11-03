@@ -35,7 +35,7 @@
 #error  config_reg.c is only for Windows
 #endif
 
-#define REGPATH "SOFTWARE\\Heimdal"
+#define REGPATH "SOFTWARE\\Kerberos"
 
 /**
  * Parse a registry value as a string

@@ -44,7 +44,7 @@
 .Fl -cache= Ns Ar cachename
 .Xc
 .Oc
-.Op Fl f | Fl -forwardable
+.Op Fl f | Fl -no-forwardable
 .Oo Fl t Ar keytabname \*(Ba Xo
 .Fl -keytab= Ns Ar keytabname
 .Xc
@@ -103,10 +103,11 @@ Supported options:
 The credentials cache to put the acquired ticket in, if other than
 default.
 .It Xo
-.Fl f ,
-.Fl -forwardable
+.Fl f
+.Fl -no-forwardable
 .Xc
-Get ticket that can be forwarded to another host.
+Get ticket that can be forwarded to another host, or if the negative
+flags use, don't get a forwardable flag.
 .It Xo
 .Fl t Ar keytabname ,
 .Fl -keytab= Ns Ar keytabname

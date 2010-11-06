@@ -490,9 +490,7 @@ verify_checksum(krb5_context context,
 	return ret;
     }
 
-    if(c.checksum.length != cksum->checksum.length ||
-       ct_memcmp(c.checksum.data, cksum->checksum.data, c.checksum.length)) {
-	krb5_clear_error_message (context);
+    if(krb5_data_ct_cmp(&c.checksum, &cksum->checksum) != 0) {
 	ret = KRB5KRB_AP_ERR_BAD_INTEGRITY;
 	krb5_set_error_message(context, ret,
 			       N_("Decrypt integrity check failed for checksum "

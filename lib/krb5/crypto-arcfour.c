@@ -55,13 +55,13 @@ static struct key_type keytype_arcfour = {
  * checksum according to section 5. of draft-brezak-win2k-krb-rc4-hmac-03.txt
  */
 
-static krb5_error_code
-HMAC_MD5_checksum(krb5_context context,
-		  struct key_data *key,
-		  const void *data,
-		  size_t len,
-		  unsigned usage,
-		  Checksum *result)
+krb5_error_code
+_krb5_HMAC_MD5_checksum(krb5_context context,
+			struct key_data *key,
+			const void *data,
+			size_t len,
+			unsigned usage,
+			Checksum *result)
 {
     EVP_MD_CTX *m;
     struct checksum_type *c = _krb5_find_checksum (CKSUMTYPE_RSA_MD5);
@@ -111,7 +111,7 @@ struct checksum_type _krb5_checksum_hmac_md5 = {
     64,
     16,
     F_KEYED | F_CPROOF,
-    HMAC_MD5_checksum,
+    _krb5_HMAC_MD5_checksum,
     NULL
 };
 

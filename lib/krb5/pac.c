@@ -485,21 +485,20 @@ verify_checksum(krb5_context context,
      * for the same issue in MIT, and
      * http://blogs.msdn.com/b/openspecification/archive/2010/01/01/verifying-the-server-signature-in-kerberos-privilege-account-certificate.aspx
      * for Microsoft's explaination */
+
     if (cksum.cksumtype == CKSUMTYPE_HMAC_MD5) {
 	Checksum local_checksum;
+
+	memset(&local_checksum, 0, sizeof(local_checksum));
 
 	ret = HMAC_MD5_any_checksum(context, key, ptr, len,
 				    KRB5_KU_OTHER_CKSUM, &local_checksum);
 
-	if(local_checksum.checksum.length != cksum.checksum.length ||
-	   ct_memcmp(local_checksum.checksum.data, cksum.checksum.data,
-		     local_checksum.checksum.length)) {
+	if (ret != 0 || krb5_data_ct_cmp(&local_checksum.checksum, &cksum.checksum) != 0) {
 	    ret = KRB5KRB_AP_ERR_BAD_INTEGRITY;
 	    krb5_set_error_message(context, ret,
 				   N_("PAC integrity check failed for "
 				      "hmac-md5 checksum", ""));
-	} else {
-	    ret = 0;
 	}
 	krb5_data_free(&local_checksum.checksum);
 

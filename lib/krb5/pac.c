@@ -90,15 +90,17 @@ HMAC_MD5_any_checksum(krb5_context context,
     struct key_data local_key;
     krb5_error_code ret;
 
+    memset(&local_key, 0, sizeof(local_key));
+
     ret = krb5_copy_keyblock(context, key, &local_key.key);
     if (ret)
 	return ret;
 
-    local_key.schedule = NULL;
-
     ret = krb5_data_alloc (&result->checksum, 16);
-    if (ret)
+    if (ret) {
+	krb5_free_keyblock(context, local_key.key);
 	return ret;
+    }
 
     result->cksumtype = CKSUMTYPE_HMAC_MD5;
     ret = HMAC_MD5_checksum(context, &local_key, data, len, usage, result);

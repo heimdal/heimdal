@@ -145,7 +145,7 @@ RSA_MD4_DES_verify(krb5_context context,
 		   unsigned usage,
 		   Checksum *C)
 {
-    return _krb5_des_verify(context, EVP_md5(), key, data, len, C);
+    return _krb5_des_verify(context, EVP_md4(), key, data, len, C);
 }
 
 static krb5_error_code

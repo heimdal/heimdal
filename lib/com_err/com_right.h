@@ -71,9 +71,16 @@ struct et_list {
 };
 extern struct et_list *_et_list;
 
-const char *com_right (struct et_list *list, long code);
-const char *com_right_r (struct et_list *list, long code, char *, size_t);
-void initialize_error_table_r (struct et_list **, const char **, int, long);
-void free_error_table (struct et_list *);
+KRB5_LIB_FUNCTION const char * KRB5_LIB_CALL
+com_right (struct et_list *list, long code);
+
+KRB5_LIB_FUNCTION const char * KRB5_LIB_CALL
+com_right_r (struct et_list *list, long code, char *, size_t);
+
+KRB5_LIB_FUNCTION void KRB5_LIB_CALL
+initialize_error_table_r (struct et_list **, const char **, int, long);
+
+KRB5_LIB_FUNCTION void KRB5_LIB_CALL
+free_error_table (struct et_list *);
 
 #endif /* __COM_RIGHT_H__ */

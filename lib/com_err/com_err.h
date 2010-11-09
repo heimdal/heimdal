@@ -45,26 +45,6 @@
 #define __attribute__(X)
 #endif
 
-#ifndef KRB5_LIB
-#ifndef KRB5_LIB_FUNCTION
-#if defined(_WIN32)
-#define KRB5_LIB_FUNCTION __declspec(dllimport)
-#define KRB5_LIB_CALL __stdcall
-#define KRB5_LIB_VARIABLE __declspec(dllimport)
-#else
-#define KRB5_LIB_FUNCTION
-#define KRB5_LIB_CALL
-#define KRB5_LIB_VARIABLE
-#endif
-#endif
-#endif
-
-#ifdef _WIN32
-#define KRB5_CALLCONV __stdcall
-#else
-#define KRB5_CALLCONV
-#endif
-
 typedef void (KRB5_CALLCONV *errf) (const char *, long, const char *, va_list);
 
 KRB5_LIB_FUNCTION const char * KRB5_LIB_CALL

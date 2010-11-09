@@ -42,6 +42,11 @@
 ROKEN_LIB_FUNCTION struct tm * ROKEN_LIB_CALL
 localtime_r(const time_t *timer, struct tm *result)
 {
+#ifdef _MSC_VER
+
+    return (localtime_s(result, timer) == 0)? result : NULL;
+
+#else
     struct tm *tm;
 
     tm = localtime((time_t *)timer);
@@ -49,6 +54,7 @@ localtime_r(const time_t *timer, struct tm *result)
 	return NULL;
     *result = *tm;
     return result;
+#endif
 }
 
 #endif

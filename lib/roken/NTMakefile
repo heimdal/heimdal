@@ -67,6 +67,7 @@ libroken_la_OBJS =			\
 	$(OBJ)\hostent_find_fqdn.obj	\
 	$(OBJ)\inet_aton.obj		\
 	$(OBJ)\issuid.obj		\
+	$(OBJ)\localtime_r.obj		\
 	$(OBJ)\lstat.obj		\
 	$(OBJ)\mini_inetd.obj		\
 	$(OBJ)\mkstemp.obj		\

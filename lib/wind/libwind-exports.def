@@ -12,6 +12,8 @@ EXPORTS
 	wind_ucs2utf8_length
 	wind_ucs2read
 
+        initialize_wind_error_table_r
+
 ; testing
 	_wind_combining_class
 	_wind_stringprep_testbidi

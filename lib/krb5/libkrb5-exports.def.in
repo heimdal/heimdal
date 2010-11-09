@@ -372,6 +372,7 @@ EXPORTS
 	krb5_get_renewed_creds
 	krb5_get_server_rcache
 	krb5_get_use_admin_kdc
+        krb5_get_validated_creds
 	krb5_get_warn_dest
 	krb5_get_wrapped_length
 	krb5_getportbyname

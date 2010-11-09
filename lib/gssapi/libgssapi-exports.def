@@ -99,3 +99,4 @@ EXPORTS
 	_gsskrb5cfx_wrap_length_cfx
 	_gssapi_wrap_size_cfx
 
+        initialize_gk5_error_table_r

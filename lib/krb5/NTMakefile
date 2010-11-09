@@ -285,10 +285,10 @@ dist_libkrb5_la_SOURCES =			\
 	write_message.c
 
 $(OBJ)\krb5-protos.h: $(dist_libkrb5_la_SOURCES)
-	$(PERL) ..\..\cf\make-proto.pl -E KRB5_LIB -q -P remove -o $(OBJ)\krb5-protos.h $(dist_libkrb5_la_SOURCES) || $(RM) -f krb5-protos.h
+	$(PERL) ..\..\cf\make-proto.pl -E KRB5_LIB -q -P remove -o $(OBJ)\krb5-protos.h $(dist_libkrb5_la_SOURCES) || $(RM) -f $(OBJ)\krb5-protos.h
 
 $(OBJ)\krb5-private.h: $(dist_libkrb5_la_SOURCES)
-	$(PERL) ..\..\cf\make-proto.pl -q -P remove -p $(OBJ)\krb5-private.h $(dist_libkrb5_la_SOURCES) || $(RM) -f krb5-private.h
+	$(PERL) ..\..\cf\make-proto.pl -q -P remove -p $(OBJ)\krb5-private.h $(dist_libkrb5_la_SOURCES) || $(RM) -f $(OBJ)\krb5-private.h
 
 $(OBJ)\krb5_err.c $(OBJ)\krb5_err.h: krb5_err.et
 	cd $(OBJ)

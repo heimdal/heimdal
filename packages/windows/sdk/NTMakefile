@@ -48,6 +48,9 @@ mksdkdirs:
 ! if !exist($(SDKINCDIR)\krb5)
 	$(MKDIR) $(SDKINCDIR)\krb5
 ! endif
+! if !exist($(SDKINCDIR)\heimdal)
+	$(MKDIR) $(SDKINCDIR)\heimdal
+! endif
 ! if !exist($(SDKINCDIR)\kadm5)
 	$(MKDIR) $(SDKINCDIR)\kadm5
 ! endif
@@ -77,6 +80,26 @@ INCFILES=\
 	$(SDKINCDIR)\krb5\krb5_locl.h	\
 	$(SDKINCDIR)\kadm5\kadm5_err.h	\
 	$(SDKINCDIR)\kadm5\kadm5-protos.h	\
+	$(SDKINCDIR)\heimdal\asn1_err.h	\
+	$(SDKINCDIR)\heimdal\heim_err.h	\
+	$(SDKINCDIR)\heimdal\k524_err.h	\
+	$(SDKINCDIR)\heimdal\krb5-protos.h	\
+	$(SDKINCDIR)\heimdal\krb5-types.h	\
+	$(SDKINCDIR)\heimdal\krb5-v4compat.h	\
+	$(SDKINCDIR)\heimdal\krb5.h	\
+	$(SDKINCDIR)\heimdal\krb5_asn1.h	\
+	$(SDKINCDIR)\heimdal\krb5_ccapi.h	\
+	$(SDKINCDIR)\heimdal\krb5_err.h	\
+	$(SDKINCDIR)\heimdal\krb5_locl.h	\
+	$(SDKINCDIR)\heimdal\gkrb5_err.h	\
+	$(SDKINCDIR)\heimdal\wind_err.h		\
+	$(SDKINCDIR)\heimdal\krb_err.h		\
+	$(SDKINCDIR)\heimdal\hx509_err.h	\
+	$(SDKINCDIR)\heimdal\roken.h		\
+	$(SDKINCDIR)\heimdal\roken-common.h	\
+	$(SDKINCDIR)\heimdal\syslog.h		\
+	$(SDKINCDIR)\heimdal\err.h		\
+	$(SDKINCDIR)\heimdal\dirent.h		\
 	$(SDKINCDIR)\gssapi\gkrb5_err.h		\
 	$(SDKINCDIR)\gssapi\gssapi.h		\
 	$(SDKINCDIR)\gssapi\gssapi_krb5.h	\
@@ -86,6 +109,7 @@ INCFILES=\
 LIBFILES=\
 	$(SDKLIBDIR)\heimdal.lib	\
 	$(SDKLIBDIR)\libcom_err.lib	\
+	$(SDKLIBDIR)\libroken.lib	\
 	$(SDKLIBDIR)\libgssapi.lib
 
 all:: $(INCFILES) $(LIBFILES)
@@ -101,14 +125,19 @@ all:: $(INCFILES) $(LIBFILES)
 {$(INCDIR)}.h{$(SDKINCDIR)\krb5}.h:
 	$(CP) $** $@
 
+{$(INCDIR)}.h{$(SDKINCDIR)\heimdal}.h:
+	$(CP) $** $@
+
 {$(INCDIR)\kadm5}.h{$(SDKINCDIR)\kadm5}.h:
 	$(CP) $** $@
 
 {$(INCDIR)\gssapi}.h{$(SDKINCDIR)\gssapi}.h:
 	$(CP) $** $@
+
 clean::
 	-$(RM) $(SDKINCDIR)\*.*
 	-$(RM) $(SDKINCDIR)\krb5\*.*
+	-$(RM) $(SDKINCDIR)\heimdal\*.*
 	-$(RM) $(SDKINCDIR)\kadm5\*.*
 	-$(RM) $(SDKLIBDIR)\*.*
 	-$(RM) $(SDKREDISTDIR)\*.*

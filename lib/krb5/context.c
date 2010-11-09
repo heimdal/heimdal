@@ -1485,7 +1485,7 @@ _krb5_homedir_access(krb5_context context)
  * @ingroup krb5
  */
 
-krb5_boolean
+KRB5_LIB_FUNCTION krb5_boolean KRB5_LIB_CALL
 krb5_set_home_dir_access(krb5_context context, krb5_boolean allow)
 {
     krb5_boolean old;

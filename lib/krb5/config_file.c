@@ -1302,7 +1302,7 @@ krb5_config_get_int (krb5_context context,
  */
 
 KRB5_DEPRECATED
-krb5_error_code KRB5_LIB_FUNCTION
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_config_parse_string_multi(krb5_context context,
 			       const char *string,
 			       krb5_config_section **res)

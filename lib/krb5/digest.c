@@ -46,7 +46,7 @@ struct krb5_digest_data {
     DigestResponse response;
 };
 
-krb5_error_code
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_digest_alloc(krb5_context context, krb5_digest *digest)
 {
     krb5_digest d;
@@ -62,7 +62,7 @@ krb5_digest_alloc(krb5_context context, krb5_digest *digest)
     return 0;
 }
 
-void
+KRB5_LIB_FUNCTION void KRB5_LIB_CALL
 krb5_digest_free(krb5_digest digest)
 {
     if (digest == NULL)
@@ -76,7 +76,7 @@ krb5_digest_free(krb5_digest digest)
     return;
 }
 
-krb5_error_code
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_digest_set_server_cb(krb5_context context,
 			  krb5_digest digest,
 			  const char *type,
@@ -110,7 +110,7 @@ krb5_digest_set_server_cb(krb5_context context,
     return ENOMEM;
 }
 
-krb5_error_code
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_digest_set_type(krb5_context context,
 		     krb5_digest digest,
 		     const char *type)
@@ -127,7 +127,7 @@ krb5_digest_set_type(krb5_context context,
     return 0;
 }
 
-krb5_error_code
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_digest_set_hostname(krb5_context context,
 			 krb5_digest digest,
 			 const char *hostname)
@@ -151,14 +151,14 @@ krb5_digest_set_hostname(krb5_context context,
     return 0;
 }
 
-const char *
+KRB5_LIB_FUNCTION const char * KRB5_LIB_CALL
 krb5_digest_get_server_nonce(krb5_context context,
 			     krb5_digest digest)
 {
     return digest->initReply.nonce;
 }
 
-krb5_error_code
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_digest_set_server_nonce(krb5_context context,
 			     krb5_digest digest,
 			     const char *nonce)
@@ -175,14 +175,14 @@ krb5_digest_set_server_nonce(krb5_context context,
     return 0;
 }
 
-const char *
+KRB5_LIB_FUNCTION const char * KRB5_LIB_CALL
 krb5_digest_get_opaque(krb5_context context,
 		       krb5_digest digest)
 {
     return digest->initReply.opaque;
 }
 
-krb5_error_code
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_digest_set_opaque(krb5_context context,
 		       krb5_digest digest,
 		       const char *opaque)
@@ -199,7 +199,7 @@ krb5_digest_set_opaque(krb5_context context,
     return 0;
 }
 
-const char *
+KRB5_LIB_FUNCTION const char * KRB5_LIB_CALL
 krb5_digest_get_identifier(krb5_context context,
 			   krb5_digest digest)
 {
@@ -208,7 +208,7 @@ krb5_digest_get_identifier(krb5_context context,
     return *digest->initReply.identifier;
 }
 
-krb5_error_code
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_digest_set_identifier(krb5_context context,
 			   krb5_digest digest,
 			   const char *id)
@@ -406,7 +406,7 @@ digest_request(krb5_context context,
     return ret;
 }
 
-krb5_error_code
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_digest_init_request(krb5_context context,
 			 krb5_digest digest,
 			 krb5_realm realm,
@@ -461,7 +461,7 @@ krb5_digest_init_request(krb5_context context,
 }
 
 
-krb5_error_code
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_digest_set_client_nonce(krb5_context context,
 			     krb5_digest digest,
 			     const char *nonce)
@@ -487,7 +487,7 @@ krb5_digest_set_client_nonce(krb5_context context,
     return 0;
 }
 
-krb5_error_code
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_digest_set_digest(krb5_context context,
 		       krb5_digest digest,
 		       const char *dgst)
@@ -505,7 +505,7 @@ krb5_digest_set_digest(krb5_context context,
     return 0;
 }
 
-krb5_error_code
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_digest_set_username(krb5_context context,
 			 krb5_digest digest,
 			 const char *username)
@@ -522,7 +522,7 @@ krb5_digest_set_username(krb5_context context,
     return 0;
 }
 
-krb5_error_code
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_digest_set_authid(krb5_context context,
 		       krb5_digest digest,
 		       const char *authid)
@@ -546,7 +546,7 @@ krb5_digest_set_authid(krb5_context context,
     return 0;
 }
 
-krb5_error_code
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_digest_set_authentication_user(krb5_context context,
 				    krb5_digest digest,
 				    krb5_principal authentication_user)
@@ -566,7 +566,7 @@ krb5_digest_set_authentication_user(krb5_context context,
     return 0;
 }
 
-krb5_error_code
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_digest_set_realm(krb5_context context,
 		      krb5_digest digest,
 		      const char *realm)
@@ -590,7 +590,7 @@ krb5_digest_set_realm(krb5_context context,
     return 0;
 }
 
-krb5_error_code
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_digest_set_method(krb5_context context,
 		       krb5_digest digest,
 		       const char *method)
@@ -615,7 +615,7 @@ krb5_digest_set_method(krb5_context context,
     return 0;
 }
 
-krb5_error_code
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_digest_set_uri(krb5_context context,
 		    krb5_digest digest,
 		    const char *uri)
@@ -639,7 +639,7 @@ krb5_digest_set_uri(krb5_context context,
     return 0;
 }
 
-krb5_error_code
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_digest_set_nonceCount(krb5_context context,
 			   krb5_digest digest,
 			   const char *nonce_count)
@@ -665,7 +665,7 @@ krb5_digest_set_nonceCount(krb5_context context,
     return 0;
 }
 
-krb5_error_code
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_digest_set_qop(krb5_context context,
 		    krb5_digest digest,
 		    const char *qop)
@@ -689,7 +689,7 @@ krb5_digest_set_qop(krb5_context context,
     return 0;
 }
 
-int
+KRB5_LIB_FUNCTION int KRB5_LIB_CALL
 krb5_digest_set_responseData(krb5_context context,
 			     krb5_digest digest,
 			     const char *response)
@@ -702,7 +702,7 @@ krb5_digest_set_responseData(krb5_context context,
     return 0;
 }
 
-krb5_error_code
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_digest_request(krb5_context context,
 		    krb5_digest digest,
 		    krb5_realm realm,
@@ -763,14 +763,14 @@ krb5_digest_request(krb5_context context,
     return ret;
 }
 
-krb5_boolean
+KRB5_LIB_FUNCTION krb5_boolean KRB5_LIB_CALL
 krb5_digest_rep_get_status(krb5_context context,
 			   krb5_digest digest)
 {
     return digest->response.success ? TRUE : FALSE;
 }
 
-const char *
+KRB5_LIB_FUNCTION const char * KRB5_LIB_CALL
 krb5_digest_get_rsp(krb5_context context,
 		    krb5_digest digest)
 {
@@ -779,7 +779,7 @@ krb5_digest_get_rsp(krb5_context context,
     return *digest->response.rsp;
 }
 
-krb5_error_code
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_digest_get_tickets(krb5_context context,
 			krb5_digest digest,
 			Ticket **tickets)
@@ -789,7 +789,7 @@ krb5_digest_get_tickets(krb5_context context,
 }
 
 
-krb5_error_code
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_digest_get_client_binding(krb5_context context,
 			       krb5_digest digest,
 			       char **type,
@@ -811,7 +811,7 @@ krb5_digest_get_client_binding(krb5_context context,
     return 0;
 }
 
-krb5_error_code
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_digest_get_session_key(krb5_context context,
 			    krb5_digest digest,
 			    krb5_data *data)
@@ -835,7 +835,7 @@ struct krb5_ntlm_data {
     NTLMResponse response;
 };
 
-krb5_error_code
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_ntlm_alloc(krb5_context context,
 		krb5_ntlm *ntlm)
 {
@@ -847,7 +847,7 @@ krb5_ntlm_alloc(krb5_context context,
     return 0;
 }
 
-krb5_error_code
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_ntlm_free(krb5_context context, krb5_ntlm ntlm)
 {
     free_NTLMInit(&ntlm->init);
@@ -860,7 +860,7 @@ krb5_ntlm_free(krb5_context context, krb5_ntlm ntlm)
 }
 
 
-krb5_error_code
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_ntlm_init_request(krb5_context context,
 		       krb5_ntlm ntlm,
 		       krb5_realm realm,
@@ -921,7 +921,7 @@ krb5_ntlm_init_request(krb5_context context,
     return ret;
 }
 
-krb5_error_code
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_ntlm_init_get_flags(krb5_context context,
 			 krb5_ntlm ntlm,
 			 uint32_t *flags)
@@ -930,7 +930,7 @@ krb5_ntlm_init_get_flags(krb5_context context,
     return 0;
 }
 
-krb5_error_code
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_ntlm_init_get_challange(krb5_context context,
 			     krb5_ntlm ntlm,
 			     krb5_data *challange)
@@ -944,7 +944,7 @@ krb5_ntlm_init_get_challange(krb5_context context,
     return ret;
 }
 
-krb5_error_code
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_ntlm_init_get_opaque(krb5_context context,
 			  krb5_ntlm ntlm,
 			  krb5_data *opaque)
@@ -958,7 +958,7 @@ krb5_ntlm_init_get_opaque(krb5_context context,
     return ret;
 }
 
-krb5_error_code
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_ntlm_init_get_targetname(krb5_context context,
 			      krb5_ntlm ntlm,
 			      char **name)
@@ -971,7 +971,7 @@ krb5_ntlm_init_get_targetname(krb5_context context,
     return 0;
 }
 
-krb5_error_code
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_ntlm_init_get_targetinfo(krb5_context context,
 			      krb5_ntlm ntlm,
 			      krb5_data *data)
@@ -994,7 +994,7 @@ krb5_ntlm_init_get_targetinfo(krb5_context context,
 }
 
 
-krb5_error_code
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_ntlm_request(krb5_context context,
 		  krb5_ntlm ntlm,
 		  krb5_realm realm,
@@ -1043,7 +1043,7 @@ krb5_ntlm_request(krb5_context context,
     return ret;
 }
 
-krb5_error_code
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_ntlm_req_set_flags(krb5_context context,
 			krb5_ntlm ntlm,
 			uint32_t flags)
@@ -1052,7 +1052,7 @@ krb5_ntlm_req_set_flags(krb5_context context,
     return 0;
 }
 
-krb5_error_code
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_ntlm_req_set_username(krb5_context context,
 			   krb5_ntlm ntlm,
 			   const char *username)
@@ -1065,7 +1065,7 @@ krb5_ntlm_req_set_username(krb5_context context,
     return 0;
 }
 
-krb5_error_code
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_ntlm_req_set_targetname(krb5_context context,
 			     krb5_ntlm ntlm,
 			     const char *targetname)
@@ -1078,7 +1078,7 @@ krb5_ntlm_req_set_targetname(krb5_context context,
     return 0;
 }
 
-krb5_error_code
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_ntlm_req_set_lm(krb5_context context,
 		     krb5_ntlm ntlm,
 		     void *hash, size_t len)
@@ -1093,7 +1093,7 @@ krb5_ntlm_req_set_lm(krb5_context context,
     return 0;
 }
 
-krb5_error_code
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_ntlm_req_set_ntlm(krb5_context context,
 		       krb5_ntlm ntlm,
 		       void *hash, size_t len)
@@ -1108,7 +1108,7 @@ krb5_ntlm_req_set_ntlm(krb5_context context,
     return 0;
 }
 
-krb5_error_code
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_ntlm_req_set_opaque(krb5_context context,
 			 krb5_ntlm ntlm,
 			 krb5_data *opaque)
@@ -1123,7 +1123,7 @@ krb5_ntlm_req_set_opaque(krb5_context context,
     return 0;
 }
 
-krb5_error_code
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_ntlm_req_set_session(krb5_context context,
 			  krb5_ntlm ntlm,
 			  void *sessionkey, size_t length)
@@ -1143,14 +1143,14 @@ krb5_ntlm_req_set_session(krb5_context context,
     return 0;
 }
 
-krb5_boolean
+KRB5_LIB_FUNCTION krb5_boolean KRB5_LIB_CALL
 krb5_ntlm_rep_get_status(krb5_context context,
 			 krb5_ntlm ntlm)
 {
     return ntlm->response.success ? TRUE : FALSE;
 }
 
-krb5_error_code
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_ntlm_rep_get_sessionkey(krb5_context context,
 			     krb5_ntlm ntlm,
 			     krb5_data *data)
@@ -1179,7 +1179,7 @@ krb5_ntlm_rep_get_sessionkey(krb5_context context,
  * @ingroup krb5_digest
  */
 
-krb5_error_code
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_digest_probe(krb5_context context,
 		  krb5_realm realm,
 		  krb5_ccache ccache,

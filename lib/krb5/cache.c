@@ -397,7 +397,7 @@ krb5_cc_get_full_name(krb5_context context,
  */
 
 
-const krb5_cc_ops *
+KRB5_LIB_FUNCTION const krb5_cc_ops * KRB5_LIB_CALL
 krb5_cc_get_ops(krb5_context context, krb5_ccache id)
 {
     return id->ops;
@@ -461,7 +461,7 @@ environment_changed(krb5_context context)
  * @ingroup krb5_ccache
  */
 
-krb5_error_code KRB5_LIB_FUNCTION
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_cc_switch(krb5_context context, krb5_ccache id)
 {
 
@@ -477,7 +477,7 @@ krb5_cc_switch(krb5_context context, krb5_ccache id)
  * @ingroup krb5_ccache
  */
 
-krb5_boolean KRB5_LIB_FUNCTION
+KRB5_LIB_FUNCTION krb5_boolean KRB5_LIB_CALL
 krb5_cc_support_switch(krb5_context context, const char *type)
 {
     const krb5_cc_ops *ops;
@@ -973,7 +973,7 @@ krb5_cc_clear_mcred(krb5_creds *mcred)
  */
 
 
-const krb5_cc_ops *
+KRB5_LIB_FUNCTION const krb5_cc_ops * KRB5_LIB_CALL
 krb5_cc_get_prefix_ops(krb5_context context, const char *prefix)
 {
     char *p, *p1;
@@ -1189,7 +1189,7 @@ krb5_cc_cache_match (krb5_context context,
  * @ingroup krb5_ccache
  */
 
-krb5_error_code
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_cc_move(krb5_context context, krb5_ccache from, krb5_ccache to)
 {
     krb5_error_code ret;
@@ -1664,7 +1664,7 @@ krb5_cc_get_lifetime(krb5_context context, krb5_ccache id, time_t *t)
  * @ingroup krb5_ccache
  */
 
-krb5_error_code
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_cc_set_kdc_offset(krb5_context context, krb5_ccache id, krb5_deltat offset)
 {
     if (id->ops->set_kdc_offset == NULL) {
@@ -1689,7 +1689,7 @@ krb5_cc_set_kdc_offset(krb5_context context, krb5_ccache id, krb5_deltat offset)
  * @ingroup krb5_ccache
  */
 
-krb5_error_code
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_cc_get_kdc_offset(krb5_context context, krb5_ccache id, krb5_deltat *offset)
 {
     if (id->ops->get_kdc_offset == NULL) {

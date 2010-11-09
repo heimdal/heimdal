@@ -584,7 +584,7 @@ krb5_free_unparsed_name(krb5_context context, char *str)
  */
 
 KRB5_DEPRECATED
-krb5_error_code KRB5_LIB_FUNCTION
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_generate_subkey(krb5_context context,
 		     const krb5_keyblock *key,
 		     krb5_keyblock **subkey)
@@ -599,7 +599,7 @@ krb5_generate_subkey(krb5_context context,
  */
 
 KRB5_DEPRECATED
-krb5_error_code KRB5_LIB_FUNCTION
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_auth_getremoteseqnumber(krb5_context context,
 			     krb5_auth_context auth_context,
 			     int32_t *seqnumber)

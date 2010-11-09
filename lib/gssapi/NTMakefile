@@ -245,6 +245,7 @@ INCFILES=				\
     $(INCDIR)\gssapi\gssapi_krb5.h	\
     $(INCDIR)\gssapi\gssapi_ntlm.h	\
     $(INCDIR)\gssapi\gssapi_spnego.h	\
+    $(INCDIR)\gssapi\gkrb5_err.h	\
     $(OBJ)\ntlm\ntlm-private.h		\
     $(OBJ)\spnego\spnego-private.h	\
     $(OBJ)\krb5\gsskrb5-private.h	\
@@ -444,6 +445,9 @@ GCOPTS=-I$(SRCDIR) -I$(OBJ) -Igssapi -DBUILD_GSSAPI_LIB
 	$(CP) $** $@
 
 {gssapi}.h{$(INCDIR)\gssapi}.h:
+	$(CP) $** $@
+
+{$(OBJ)}.h{$(INCDIR)\gssapi}.h:
 	$(CP) $** $@
 
 {$(OBJ)\gssapi}.hx{$(OBJ)\gssapi}.h:

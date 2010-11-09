@@ -51,6 +51,9 @@ mksdkdirs:
 ! if !exist($(SDKINCDIR)\kadm5)
 	$(MKDIR) $(SDKINCDIR)\kadm5
 ! endif
+! if !exist($(SDKINCDIR)\gssapi)
+	$(MKDIR) $(SDKINCDIR)\gssapi
+! endif
 ! if !exist($(SDKLIBDIR))
 	$(MKDIR) $(SDKLIBDIR)
 ! endif
@@ -74,10 +77,16 @@ INCFILES=\
 	$(SDKINCDIR)\krb5\krb5_locl.h	\
 	$(SDKINCDIR)\kadm5\kadm5_err.h	\
 	$(SDKINCDIR)\kadm5\kadm5-protos.h	\
+	$(SDKINCDIR)\gssapi\gkrb5_err.h		\
+	$(SDKINCDIR)\gssapi\gssapi.h		\
+	$(SDKINCDIR)\gssapi\gssapi_krb5.h	\
+	$(SDKINCDIR)\gssapi\gssapi_ntlm.h	\
+	$(SDKINCDIR)\gssapi\gssapi_spnego.h	\
 
 LIBFILES=\
 	$(SDKLIBDIR)\heimdal.lib	\
 	$(SDKLIBDIR)\libcom_err.lib	\
+	$(SDKLIBDIR)\libgssapi.lib
 
 all:: $(INCFILES) $(LIBFILES)
 
@@ -95,6 +104,8 @@ all:: $(INCFILES) $(LIBFILES)
 {$(INCDIR)\kadm5}.h{$(SDKINCDIR)\kadm5}.h:
 	$(CP) $** $@
 
+{$(INCDIR)\gssapi}.h{$(SDKINCDIR)\gssapi}.h:
+	$(CP) $** $@
 clean::
 	-$(RM) $(SDKINCDIR)\*.*
 	-$(RM) $(SDKINCDIR)\krb5\*.*

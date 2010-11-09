@@ -124,13 +124,13 @@ SIGNTOOL=signtool.exe
 MAKECAT=makecat.exe
 HHC=hhc.exe
 MAKEINFO=makeinfo.exe
+SED=sed.exe
 
 CANDLE_CMD=candle.exe
 LIGHT_CMD=light.exe
 
 # Only used for tests
 SH=sh.exe
-SED=sed.exe
 
 # Commands
 AWK=$(AWK_CMD)

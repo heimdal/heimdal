@@ -209,6 +209,7 @@ heim_array_delete_value(heim_array_t array, size_t idx)
     heim_release(obj);
 }
 
+#ifdef __BLOCKS__
 /**
  * Get value at idx
  *
@@ -229,3 +230,5 @@ heim_array_filter(heim_array_t array, bool (^block)(heim_object_t))
 	}
     }
 }
+
+#endif /* __BLOCKS__ */

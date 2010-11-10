@@ -5,6 +5,7 @@ EXPORTS
 	kdc_openlog
 	krb5_kdc_windc_init
 	krb5_kdc_get_config
+	krb5_kdc_pkinit_config
 	krb5_kdc_set_dbinfo
 	krb5_kdc_process_krb5_request
 	krb5_kdc_process_request

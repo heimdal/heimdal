@@ -137,7 +137,7 @@
                 <Component Id='comp.Plugin.Reg'
                            Guid='4BC44234-70A4-4CC1-A5AF-4CA76E9F9487'>
                   <RegistryKey Action='createAndRemoveOnUninstall' Root='HKLM'
-                               Key='Software\Heimdal'>
+                               Key='Software\Kerberos'>
                     <RegistryValue Name='plugin_dir' Type='multiString' Action='append'
                                    Value='"[PLUGINDIR]"' KeyPath='yes' />
                   </RegistryKey>

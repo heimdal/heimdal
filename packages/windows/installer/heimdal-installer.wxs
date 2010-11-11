@@ -311,6 +311,10 @@
       <ComponentGroupRef Id='comp.Heimdal.Thirdparty' />
       <?endif?>
 
+      <?ifdef MKShim ?>
+      <ComponentGroupRef Id='comp.Heimdal.MKShim' />
+      <?endif?>
+
     </Feature>
 
     <!-- Properties for Add/Remove Programs -->

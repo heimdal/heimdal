@@ -112,6 +112,11 @@ THIRDPARTYOBJS=$(INSTDIR)\apicache.wixobj $(INSTDIR)\lsacache.wixobj
 THIRDPARTYOPT=-dApiCache=1 -dLsaCache=1
 !endif
 
+!ifdef MKSHIMDIR
+THIRDPARTYOBJS=$(THIRDPARTYOBJS) $(MKSHIMDIR)\out\dest_$(OUTDIR)\install\MKShim.wixlib
+THIRDPARTYOPT=$(THIRDPARTYOPTS) -dMKShim=1
+!endif
+
 INSTALLER=$(INSTDIR)\Heimdal-$(CPU)$(DEBUGOPT)-$(VERSIOND).msi
 
 $(INSTALLER): $(OBJ)\heimdal-installer.wixobj $(MERGEMOD) $(THIRDPARTYOBJS)	\

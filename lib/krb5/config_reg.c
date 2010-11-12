@@ -40,6 +40,20 @@
 /**
  * Parse a registry value as a string
  *
+ * @see _krb5_parse_reg_value_as_multi_string()
+ */
+char *
+_krb5_parse_reg_value_as_string(krb5_context context,
+                                HKEY key, const char * valuename,
+                                DWORD type, DWORD cb_data)
+{
+    return _krb5_parse_reg_value_as_multi_string(context, key, valuename,
+                                                 type, cb_data, " ");
+}
+
+/**
+ * Parse a registry value as a multi string
+ *
  * The following registry value types are handled:
  *
  * - REG_DWORD: The decimal string representation is used as the
@@ -50,14 +64,15 @@
  * - REG_EXPAND_SZ: Environment variables in the string are expanded
  *   and the result is used as the value.
  *
- * - REG_MULTI_SZ: The list of strings is concatenated using a ' ' as
- *   a separator.  No quoting is performed.
+ * - REG_MULTI_SZ: The list of strings is concatenated using the
+ *   separator.  No quoting is performed.
  *
  * Any other value type is rejected.
  *
  * @param [in]valuename Name of the registry value to be queried
  * @param [in]type      Type of the value. REG_NONE if unknown
  * @param [in]cbdata    Size of value. 0 if unknown.
+ * @param [in]separator Separator character for concatenating strings.
  *
  * @a type and @a cbdata are only considered valid if both are
  * specified.
@@ -67,9 +82,9 @@
  * krb5_set_error_message().
  */
 char *
-_krb5_parse_reg_value_as_string(krb5_context context,
-                                HKEY key, const char * valuename,
-                                DWORD type, DWORD cb_data)
+_krb5_parse_reg_value_as_multi_string(krb5_context context,
+                                      HKEY key, const char * valuename,
+                                      DWORD type, DWORD cb_data, char *separator)
 {
     LONG                rcode = ERROR_MORE_DATA;
     DWORD               cb_alloc;
@@ -242,7 +257,7 @@ have_data:
 
             iter += len;
             if (iter[1] != '\0')
-                *iter++ = ' ';
+                *iter++ = *separator;
             else
                 break;
         }

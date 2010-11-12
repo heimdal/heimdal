@@ -135,7 +135,7 @@ all:: $(INCFILES) $(LIBFILES)
 {$(INCDIR)\gssapi}.h{$(SDKINCDIR)\gssapi}.h:
 	$(CP) $** $@
 
-{$(INCDIR)\gssapi}.h{$(SDKINCDIR)}.h:
+{$(INCDIR)\gssapi}.h{$(SDKINCDIR)\heimdal}.h:
 	$(CP) $** $@
 
 $(SDKINCDIR)\Heimdal.Application.$(MCPU).manifest: $(APPMANIFEST)

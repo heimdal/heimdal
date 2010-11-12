@@ -44,6 +44,17 @@
         <Directory Id='INSTALLDIR' Name='Heimdal'>
           <Directory Id='dirBin' Name='bin' FileSource='$(var.BinDir)'>
 
+            <Component Id='comp.SearchPath'
+                       Guid='BA6C1A53-E479-4E87-9B61-7BA793DBAE56' Win64='$(var.Win64)'>
+              <RegistryKey Action='createAndRemoveOnUninstall' Root='HKLM'
+                           Key='Software\Heimdal\CurrentVersion'>
+                <RegistryValue Name='InstallPath' Type='string'
+                               Value='[dirBin]' KeyPath='yes' />
+              </RegistryKey>
+              <Environment Id='env.Path' Name='PATH' Action='set' Part='last'
+                           Separator=';' Value='[dirBin]' />
+            </Component>
+
             <Component Id='comp.kinit'
                        Guid='$(var.GuidKinit)'
                        Win64='$(var.Win64)'>
@@ -282,17 +293,18 @@
              Description='!(loc.FeaMainDesc)'
              Level='1' TypicalDefault='install' InstallDefault='local'>
 
+      <ComponentRef Id='comp.HX509.chm' />
+      <ComponentRef Id='comp.Heimdal.chm' />
+      <ComponentRef Id='comp.SearchPath' />
+      <ComponentRef Id='comp.kdestroy' />
+      <ComponentRef Id='comp.kdigest' />
       <ComponentRef Id='comp.kinit' />
       <ComponentRef Id='comp.klist' />
-      <ComponentRef Id='comp.kdestroy' />
-      <ComponentRef Id='comp.kswitch' />
-      <ComponentRef Id='comp.kdigest' />
-      <ComponentRef Id='comp.ktutil' />
       <ComponentRef Id='comp.krb5.conf' />
-      <ComponentRef Id='comp.Heimdal.chm' />
-      <ComponentRef Id='comp.HX509.chm' />
-      <ComponentRef Id='comp.krb5.ini.move' />
       <ComponentRef Id='comp.krb5.conf.move' />
+      <ComponentRef Id='comp.krb5.ini.move' />
+      <ComponentRef Id='comp.kswitch' />
+      <ComponentRef Id='comp.ktutil' />
       <?ifdef LsaCache ?>
       <ComponentGroupRef Id='comps.LSACache' />
       <?endif?>

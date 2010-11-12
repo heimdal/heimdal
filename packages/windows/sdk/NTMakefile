@@ -100,7 +100,7 @@ INCFILES=\
 	$(SDKINCDIR)\heimdal\syslog.h		\
 	$(SDKINCDIR)\heimdal\err.h		\
 	$(SDKINCDIR)\heimdal\dirent.h		\
-	$(SDKINCDIR)\gssapi\gkrb5_err.h		\
+	$(SDKINCDIR)\heimdal\gkrb5_err.h		\
 	$(SDKINCDIR)\gssapi\gssapi.h		\
 	$(SDKINCDIR)\gssapi\gssapi_krb5.h	\
 	$(SDKINCDIR)\gssapi\gssapi_ntlm.h	\
@@ -133,6 +133,9 @@ all:: $(INCFILES) $(LIBFILES)
 	$(CP) $** $@
 
 {$(INCDIR)\gssapi}.h{$(SDKINCDIR)\gssapi}.h:
+	$(CP) $** $@
+
+{$(INCDIR)\gssapi}.h{$(SDKINCDIR)}.h:
 	$(CP) $** $@
 
 $(SDKINCDIR)\Heimdal.Application.$(MCPU).manifest: $(APPMANIFEST)

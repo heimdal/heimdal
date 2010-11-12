@@ -37,18 +37,18 @@
 
 KRB5_LIB_VARIABLE const char *krb5_config_file =
 #ifdef __APPLE__
-"~/Library/Preferences/com.apple.Kerberos.plist:"
-"/Library/Preferences/com.apple.Kerberos.plist:"
-"~/Library/Preferences/edu.mit.Kerberos:"
-"/Library/Preferences/edu.mit.Kerberos:"
+"~/Library/Preferences/com.apple.Kerberos.plist" PATH_SEP
+"/Library/Preferences/com.apple.Kerberos.plist" PATH_SEP
+"~/Library/Preferences/edu.mit.Kerberos" PATH_SEP
+"/Library/Preferences/edu.mit.Kerberos" PATH_SEP
 #endif	/* __APPLE__ */
-"~/.krb5/config:"
+"~/.krb5/config" PATH_SEP
 SYSCONFDIR "/krb5.conf"
 #ifdef _WIN32
-":%{COMMON_APPDATA}/Kerberos/krb5.conf"
-":%{WINDOWS}/krb5.ini"
+PATH_SEP "%{COMMON_APPDATA}/Kerberos/krb5.conf"
+PATH_SEP "%{WINDOWS}/krb5.ini"
 #else
-":/etc/krb5.conf"
+PATH_SEP "/etc/krb5.conf"
 #endif
 ;
 

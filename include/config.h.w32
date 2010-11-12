@@ -99,8 +99,11 @@ static const char *const rcsid[] = { (const char *)rcsid, "@(#)" msg }
 
 @FEATURE_DEFS@
 
-/* Define is backslashes act as path delimiters */
+/* Define is backslashes act as path name delimiters */
 #define BACKSLASH_PATH_DELIM 1
+
+/* Path separator character */
+#define PATH_SEP ";"
 
 /* Define if you want to use DES encryption in telnet. */
 #define DES_ENCRYPTION 1

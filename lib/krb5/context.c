@@ -673,7 +673,7 @@ krb5_prepend_config_files(const char *filelist, char **pq, char ***ret_pp)
     while(1) {
 	ssize_t l;
 	q = p;
-	l = strsep_copy(&q, ":", NULL, 0);
+	l = strsep_copy(&q, PATH_SEP, NULL, 0);
 	if(l == -1)
 	    break;
 	fn = malloc(l + 1);
@@ -681,7 +681,7 @@ krb5_prepend_config_files(const char *filelist, char **pq, char ***ret_pp)
 	    krb5_free_config_files(pp);
 	    return ENOMEM;
 	}
-	(void)strsep_copy(&p, ":", fn, l + 1);
+	(void)strsep_copy(&p, PATH_SEP, fn, l + 1);
 	ret = add_file(&pp, &len, fn);
 	if (ret) {
 	    krb5_free_config_files(pp);

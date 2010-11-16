@@ -52,7 +52,7 @@
                                Value='[dirBin]' KeyPath='yes' />
               </RegistryKey>
               <Environment Id='env.Path' Name='PATH' Action='set' Part='last'
-                           Separator=';' Value='[dirBin]' />
+                           Separator=';' Value='[dirBin]' System='yes' />
             </Component>
 
             <Component Id='comp.kinit'

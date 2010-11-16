@@ -32,11 +32,13 @@
 my $show_module_name = 1;
 my $use_indent = 1;
 my $strip_leading_underscore = 0;
+my $always_export = 0;
 my $module_name = "";
-my %target_exports = ();
+my $local_prefix = "SHIM_";
+my %forward_exports = ();
 my %local_exports = ();
 
-sub build_target_exports_list($)
+sub build_forwarder_target_list($)
 {
     $fn = shift;
 
@@ -52,7 +54,7 @@ sub build_target_exports_list($)
 	    my ($ordinal, $symbol, $in) = ($1, $2, $3);
 
 	    if ($in eq "") { $in = $symbol };
-	    $target_exports{$symbol} = $in;
+	    $forward_exports{$symbol} = $in;
 	};
     }
 
@@ -62,7 +64,7 @@ sub build_target_exports_list($)
 # Dump all symbols for the given dll file that are defined and have
 # external scope.
 
-sub build_glue_exports_list($)
+sub build_def_file($)
 {
     $fn = shift;
 
@@ -88,21 +90,24 @@ sub build_glue_exports_list($)
 		    print STDERR "  ".$in." != ".$local_exports{$symbol}."\n";
 		}
 		print "\t@".$ordinal."\n";
-	    } elsif (exists $local_exports{"SHIM_".$symbol}) {
+	    } elsif (exists $local_exports{$local_prefix.$symbol}) {
 		print "\t".$symbol;
-		print " = ".$local_exports{"SHIM_".$symbol};
+		print " = ".$local_exports{$local_prefix.$symbol};
 		print "\t@".$ordinal."\n";
-	    } elsif (exists $target_exports{$symbol}) {
+	    } elsif (exists $forward_exports{$symbol}) {
 		print "\t".$symbol;
 		print " = ".$module_name;
-		if ($in ne $target_exports{$symbol} and $in ne "") {
+		if ($in ne $forward_exports{$symbol} and $in ne "") {
 		    print STDERR "Incorrect calling convention for $symbol\n";
-		    print STDERR "  ".$in." != ".$target_exports{$symbol}."\n";
+		    print STDERR "  ".$in." != ".$forward_exports{$symbol}."\n";
 		}
-		my $texp = $target_exports{$symbol};
+		my $texp = $forward_exports{$symbol};
 		if ($texp =~ /^_([^@]+)$/) { $texp = $1; }
 		print $texp."\t@".$ordinal."\n";
-	    } else {
+	    } elsif ($always_export) {
+                print "\t".$symbol." = ".$local_prefix.$symbol;
+                print "\t@".$ordinal."\n";
+            } else {
 		print STDERR "Symbol not found: $symbol\n";
 	    }
 	};
@@ -150,7 +155,7 @@ sub process_file($)
     $fn = shift;
 
     if ($fn =~ m/\.dll$/i) {
-	build_glue_exports_list($fn);
+	build_def_file($fn);
     } elsif ($fn =~ m/\.obj$/i) {
 	build_local_exports_list($fn);
     } else {
@@ -182,8 +187,18 @@ for (@ARGV) {
 	    last ARG;
 	};
 
+        /-l(.*)/ && do {
+            $local_prefix = $1."_";
+            last ARG;
+        };
+
+        /-a/ && do {
+            $always_export = 1;
+            last ARG;
+        };
+
 	/-e(.*)/ && do {
-	    build_target_exports_list($1);
+	    build_forwarder_target_list($1);
 	    last ARG;
 	};
 

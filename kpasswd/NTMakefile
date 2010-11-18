@@ -31,5 +31,21 @@
 
 RELDIR=kpasswd 
 
-!include ../windows/NTMakefile.w32 
+!include ../windows/NTMakefile.w32
 
+BINPROGRAMS=\
+	$(BINDIR)\kpasswd.exe
+
+KPASSWDLIBS=\
+	$(LIBROKEN)	\
+	$(LIBHEIMDAL)	\
+	$(LIBVERS)
+
+$(BINDIR)\kpasswd.exe: $(OBJ)\kpasswd.obj $(KPASSWDLIBS)
+	$(EXECONLINK)
+	$(EXEPREP)
+
+all:: $(BINPROGRAMS)
+
+clean::
+	-$(RM) $(BINPROGRAMS)

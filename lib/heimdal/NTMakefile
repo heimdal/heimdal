@@ -73,7 +73,7 @@ $(DLL): $(DLLDEPS) $(DEF) $(RES)
 	$(DLLGUILINK_C) $(DLLDEPS) $(DLLSDKDEPS) $(RES) \
 		-def:$(DEF) -out:$(DLL) \
 		-implib:$(LIBHEIMDAL)
-	$(DLLPREP_NODIST)
+	$(DLLPREP)
 
 clean::
 	-$(RM) $(BINDIR)\heimdal.*

@@ -57,9 +57,11 @@ ASMKRBBINS=\
 	$(ASMKRBDIR)\heimdal.dll	\
 	$(ASMKRBDIR)\com_err.dll	\
 	$(ASMKRBDIR)\heimntlm.dll	\
+	$(ASMKRBDIR)\gssapi.dll		\
 	$(ASMKRBDIR)\heimdal.pdb	\
 	$(ASMKRBDIR)\com_err.pdb	\
-	$(ASMKRBDIR)\heimntlm.pdb
+	$(ASMKRBDIR)\heimntlm.pdb	\
+	$(ASMKRBDIR)\gssapi.pdb
 
 $(ASMKRBDIR)\$(ASMKRBMAN).nohash: Heimdal.Kerberos.manifest.in
 	$(SED)  -e "s,[@]name[@],$(ASMKRBNAME),g" \
@@ -97,65 +99,9 @@ test::
 
 {$(BINDIR)}.dll{$(ASMKRBDIR)}.dll:
 	$(CP) $< $@
-	$(DLLPREP_MERGE)
 
 {$(BINDIR)}.pdb{$(ASMKRBDIR)}.pdb:
 	$(CP) $< $@
-
-
-# ----------------------------------------------------------------------
-# Heimdal.GSSAPI Assembly
-
-ASMGSSDIR=$(ASMDIR)\Heimdal.GSSAPI
-ASMGSSVER=$(VER_PRODUCT_MAJOR).$(VER_PRODUCT_MINOR).$(VER_PRODUCT_AUX).$(VER_PRODUCT_PATCH)
-ASMGSSMAN=$(ASMGSSNAME).manifest
-
-ASMGSSBINS=\
-	$(ASMGSSDIR)\gssapi.dll		\
-	$(ASMGSSDIR)\gssapi.pdb
-
-$(ASMGSSDIR)\$(ASMGSSMAN).nohash: Heimdal.GSSAPI.manifest.in
-	$(SED)  -e "s,[@]name[@],$(ASMGSSNAME),g" \
-		-e "s,[@]version[@],$(ASMGSSVER),g" \
-		-e "s,[@]krbname[@],$(ASMKRBNAME),g" \
-		-e "s,[@]krbversion[@],$(ASMKRBVER),g" \
-		-e "s,[@]cpu[@],$(MCPU),g" \
-		-e "s,[@]pkt[@],$(CODESIGN_PKT),g" < $** > $@
-
-$(ASMGSSDIR)\$(ASMGSSMAN) $(ASMGSSDIR)\$(ASMGSSMAN).cdf: \
-		$(ASMGSSDIR)\$(ASMGSSMAN).nohash $(ASMGSSBINS)
-	-$(RM) $(ASMGSSDIR)\$(ASMGSSMAN)
-	-$(RM) $(ASMGSSDIR)\$(ASMGSSMAN).cdf
-	$(MT) -manifest $(ASMGSSDIR)\$(ASMGSSMAN).nohash -out:$@ -hashupdate -makecdfs
-
-$(ASMGSSDIR)\$(ASMGSSNAME).cat: $(ASMGSSDIR)\$(ASMGSSMAN).cdf
-	cd $(ASMGSSDIR)
-	$(MAKECAT) $**
-	$(_CODESIGN)
-#	$(RM) $(ASMGSSMAN).cdf
-#	$(RM) $(ASMGSSMAN).nohash
-	cd $(SRCDIR)
-
-asm-gss: \
-	$(APPMANIFEST)	\
-	$(ASMGSSBINS)	\
-	$(ASMGSSDIR)\$(ASMGSSMAN)	\
-	$(ASMGSSDIR)\$(ASMGSSNAME).cat	\
-
-all:: asm-gss
-
-clean::
-	-$(RM) $(ASMGSSDIR)\*.*
-
-{$(BINDIR)}.dll{$(ASMGSSDIR)}.dll:
-	$(CP) $< $@
-	$(DLLPREP_MERGE)
-
-{$(BINDIR)}.pdb{$(ASMGSSDIR)}.pdb:
-	$(CP) $< $@
-
-test::
-	$(MT) -manifest $(ASMGSSDIR)\$(ASMGSSMAN) -validate_manifest
 
 # ----------------------------------------------------------------------
 # Application manifests
@@ -166,9 +112,7 @@ clean::
 	-$(RM) $(APPMANIFEST)
 
 $(APPMANIFEST): Heimdal.Application.manifest.in
-	$(SED)  -e "s,[@]gssname[@],$(ASMGSSNAME),g" \
-		-e "s,[@]gssversion[@],$(ASMGSSVER),g" \
-		-e "s,[@]krbname[@],$(ASMKRBNAME),g" \
+	$(SED)	-e "s,[@]krbname[@],$(ASMKRBNAME),g" \
 		-e "s,[@]krbversion[@],$(ASMKRBVER),g" \
 		-e "s,[@]cpu[@],$(MCPU),g" \
 		-e "s,[@]pkt[@],$(CODESIGN_PKT),g" < $** > $@
@@ -201,33 +145,10 @@ $(POLKRBCAT): $(POLKRBFILE).cdf
 	$(_CODESIGN)
 	cd $(SRCDIR)
 
-POLGSS=policy.$(VER_PRODUCT_MAJOR).$(VER_PRODUCT_MINOR).Heimdal.GSSAPI
-POLGSSDIR=$(ASMDIR)\$(POLGSS)
-POLGSSFILE=$(POLGSSDIR)\$(ASMGSSVER).pol
-POLGSSCAT=$(POLGSSDIR)\$(ASMGSSVER).cat
-
-$(POLGSSFILE): policy.Heimdal.GSSAPI.in
-	$(SED)  -e "s,[@]gssname[@],$(ASMGSSNAME),g"	\
-		-e "s,[@]gssversion[@],$(ASMGSSVER),g"	\
-		-e "s,[@]gssverfrom[@],$(VER_PRODUCT_MAJOR).$(VER_PRODUCT_MINOR),g"	\
-		-e "s,[@]gsspolname[@],$(POLGSS),g"	\
-		-e "s,[@]cpu[@],$(MCPU),g"	\
-		-e "s,[@]pkt[@],$(CODESIGN_PKT),g" < $** > $@
-
-$(POLGSSFILE).cdf: $(POLGSSFILE)
-	$(MT) -manifest $(POLGSSFILE) -makecdfs
-
-$(POLGSSCAT): $(POLGSSFILE).cdf
-	cd $(POLGSSDIR)
-	$(MAKECAT) $**
-	$(_CODESIGN)
-	cd $(SRCDIR)
-
-all:: $(POLKRBFILE) $(POLGSSFILE) $(POLKRBCAT) $(POLGSSCAT)
+all:: $(POLKRBFILE) $(POLKRBCAT)
 
 clean::
 	-$(RM) $(POLKRBDIR)\*.*
-	-$(RM) $(POLGSSDIR)\*.*
 
 # ----------------------------------------------------------------------
 
@@ -237,12 +158,6 @@ mk-asm-dirs:
 !  if !exist($(ASMKRBDIR))
 	$(MKDIR) $(ASMKRBDIR)
 !  endif
-!  if !exist($(ASMGSSDIR))
-	$(MKDIR) $(ASMGSSDIR)
-!  endif
 !  if !exist($(POLKRBDIR))
 	$(MKDIR) $(POLKRBDIR)
-!  endif
-!  if !exist($(POLGSSDIR))
-	$(MKDIR) $(POLGSSDIR)
 !  endif

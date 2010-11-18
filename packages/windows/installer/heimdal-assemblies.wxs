@@ -33,26 +33,14 @@
                 AssemblyManifest="id.Heimdal.Kerberos.manifest" />
           <File Name="com_err.dll" />
           <File Name="heimntlm.dll" />
+          <File Name="gssapi.dll" />
           <File Name="heimdal.pdb" />
           <File Name="com_err.pdb" />
           <File Name="heimntlm.pdb" />
+          <File Name="gssapi.pdb" />
           <File Name="Heimdal.Kerberos.cat" />
           <File Name="Heimdal.Kerberos.manifest" Id="id.Heimdal.Kerberos.manifest" />
         </Component>
-      </Directory>
-
-      <Directory Id="dir.Heimdal.GSSAPI" Name="Heimdal.GSSAPI"
-                 FileSource="$(var.BinDir)\Heimdal.GSSAPI">
-        <Component Id="comp.Heimdal.GSSAPI"
-                   Guid="$(var.GuidGSSAPI)"
-                   Win64="$(var.Win64)">
-          <File Name="gssapi.dll" KeyPath="yes" Assembly="win32"
-                AssemblyManifest="id.Heimdal.GSSAPI.manifest" />
-          <File Name="gssapi.pdb" />
-          <File Name="Heimdal.GSSAPI.cat" />
-          <File Name="Heimdal.GSSAPI.manifest" Id="id.Heimdal.GSSAPI.manifest" />
-        </Component>
-
       </Directory>
     </Directory>
 

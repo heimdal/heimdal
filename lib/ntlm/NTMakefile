@@ -50,7 +50,7 @@ $(LIBHEIMNTLM): $(BINDIR)\heimntlm.dll
 
 $(BINDIR)\heimntlm.dll: $(OBJ)\ntlm.obj $(LIBHEIMDAL) $(RES)
 	$(DLLGUILINK) -def:libheimntlm-exports.def -implib:$(LIBHEIMNTLM)
-	$(DLLPREP_NODIST)
+	$(DLLPREP)
 
 clean::
 	-$(RM) $(BINDIR)\heimntlm.*

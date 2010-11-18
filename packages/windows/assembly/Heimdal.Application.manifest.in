@@ -9,13 +9,4 @@
 			publicKeyToken="@pkt@" />
     </dependentAssembly>
   </dependency>
-  <dependency>
-    <dependentAssembly>
-      <assemblyIdentity type="win32" name="@gssname@"
-			language="*"
-			processorArchitecture="@cpu@"
-			version="@gssversion@"
-			publicKeyToken="@pkt@" />
-    </dependentAssembly>
-  </dependency>
 </assembly>

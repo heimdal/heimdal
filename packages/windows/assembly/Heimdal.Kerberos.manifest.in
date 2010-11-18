@@ -7,7 +7,9 @@
   <file name="heimdal.dll" />
   <file name="com_err.dll" />
   <file name="heimntlm.dll" />
+  <file name="gssapi.dll" />
   <file name="heimdal.pdb" />
   <file name="com_err.pdb" />
   <file name="heimntlm.pdb" />
+  <file name="gssapi.pdb" />
 </assembly>

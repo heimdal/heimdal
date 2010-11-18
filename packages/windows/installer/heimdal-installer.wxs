@@ -14,6 +14,7 @@
   <?define GuidPolGSSAPI=2EB8472F-64DD-470B-AF65-FC8AAC185788 ?>
   <?define GuidPolKerberos=9ED6B62C-13D0-43BB-BCD7-4737D3E6EC43 ?>
   <?define GuidKpasswd=20A984EC-5BCB-4B93-A3A9-7AACBDC625E9 ?>
+  <?define GuidKvno=2B932C2B-9167-4051-BDF7-A104E9983CE6 ?>
 
   <?else?>
 
@@ -28,6 +29,7 @@
   <?define GuidPolGSSAPI=7B7D6813-8D9C-4647-8966-89A1CA24A08B ?>
   <?define GuidPolKerberos=EF04F1AF-725B-4AF6-AE7B-18E2036C03B9 ?>
   <?define GuidKpasswd=B66C04B5-EE1D-48C3-A25B-4DCAAA8F459B ?>
+  <?define GuidKvno=4C6015BE-1347-4D12-8841-FF90E0B9D6A8 ?>
 
   <?endif?>
 
@@ -104,6 +106,13 @@
                        Win64='$(var.Win64)'>
               <File Name='kpasswd.exe' KeyPath='yes' />
               <File Name='kpasswd.pdb' />
+            </Component>
+
+            <Component Id='comp.kvno'
+                       Guid='$(var.GuidKvno)'
+                       Win64='$(var.Win64)'>
+              <File Name='kvno.exe' KeyPath='yes' />
+              <File Name='kvno.pdb' />
             </Component>
 
             <Merge Id='Heimdal.Assemblies' Language='0'
@@ -302,6 +311,7 @@
       <ComponentRef Id='comp.krb5.ini.move' />
       <ComponentRef Id='comp.kswitch' />
       <ComponentRef Id='comp.ktutil' />
+      <ComponentRef Id='comp.kvno' />
       <?ifdef LsaCache ?>
       <ComponentGroupRef Id='comps.LSACache' />
       <?endif?>

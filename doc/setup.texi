@@ -407,7 +407,17 @@ To allow users to change their passwords, you should run @command{kpasswdd}.
 It is not run from @command{inetd}.
 
 You might need to add @samp{kpasswd} to your @file{/etc/services} as
-@samp{464/udp}.
+@samp{464/udp}.  If your realm is not setup to use DNS, you might also
+need to add a @samp{kpasswd_server} entry to the realm configuration
+in @file{/etc/krb5.conf} on client machines:
+
+@example
+[realms]
+        MY.REALM = @{
+                kdc = my.kdc my.slave.kdc
+                kpasswd_server = my.kdc
+        @}
+@end example
 
 @subsection Password quality assurance
 

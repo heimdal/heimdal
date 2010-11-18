@@ -39,7 +39,8 @@ BINPROGRAMS=\
 	$(BINDIR)\kdestroy.exe	\
 	$(BINDIR)\kgetcred.exe	\
 	$(BINDIR)\kswitch.exe	\
-	$(BINDIR)\kvno.exe
+	$(BINDIR)\kvno.exe	\
+	$(BINDIR)\kcpytkt.exe
 
 LIBEXECPROGRAMS=\
 	$(LIBEXECDIR)\kdigest.exe	\
@@ -106,5 +107,9 @@ $(LIBEXECDIR)\kimpersonate.exe: $(OBJ)\kimpersonate.obj $(BINLIBS) $(OBJ)\kimper
 	$(EXEPREP)
 
 $(BINDIR)\kvno.exe: $(OBJ)\kvno.obj $(BINLIBS)
+	$(EXECONLINK)
+	$(EXEPREP)
+
+$(BINDIR)\kcpytkt.exe: $(OBJ)\kcpytkt.obj $(BINLIBS)
 	$(EXECONLINK)
 	$(EXEPREP)

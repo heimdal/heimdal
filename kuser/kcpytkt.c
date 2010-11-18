@@ -84,7 +84,7 @@ static void do_kcpytkt (int count, char *names[],
         ret = krb5_string_to_enctype(context, etypestr, &etype);
 	if (ret)
 	    krb5_err(context, 1, ret, "Can't convert enctype %s", etypestr);
-        retflags = KRB5_TC_MATCH_SRV_NAMEONLY;
+        retflags = KRB5_TC_MATCH_SRV_NAMEONLY | KRB5_TC_MATCH_KEYTYPE;
     } else {
 	etype = 0;
         retflags = KRB5_TC_MATCH_SRV_NAMEONLY;

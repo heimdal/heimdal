@@ -16,6 +16,7 @@
   <?define GuidKpasswd=20A984EC-5BCB-4B93-A3A9-7AACBDC625E9 ?>
   <?define GuidKvno=2B932C2B-9167-4051-BDF7-A104E9983CE6 ?>
   <?define GuidKcpytkt=17734691-7CB3-4E9A-AADC-6D4205795F43 ?>
+  <?define GuidKdeltkt=3E853905-8CDA-4E14-8EBA-C0C4EEDB811A ?>
 
   <?else?>
 
@@ -32,6 +33,7 @@
   <?define GuidKpasswd=B66C04B5-EE1D-48C3-A25B-4DCAAA8F459B ?>
   <?define GuidKvno=4C6015BE-1347-4D12-8841-FF90E0B9D6A8 ?>
   <?define GuidKcpytkt=CBCDFC80-601B-4F26-A020-7D1278735B95 ?>
+  <?define GuidKdeltkt=6450EE72-E472-4709-B457-B579BFB2472B ?>
 
   <?endif?>
 
@@ -122,6 +124,13 @@
                        Win64='$(var.Win64)'>
               <File Name='kcpytkt.exe' KeyPath='yes' />
               <File Name='kcpytkt.pdb' />
+            </Component>
+
+            <Component Id='comp.kdeltkt'
+                       Guid='$(var.GuidKdeltkt)'
+                       Win64='$(var.Win64)'>
+              <File Name='kdeltkt.exe' KeyPath='yes' />
+              <File Name='kdeltkt.pdb' />
             </Component>
 
             <Merge Id='Heimdal.Assemblies' Language='0'
@@ -311,6 +320,7 @@
       <ComponentRef Id='comp.Heimdal.chm' />
       <ComponentRef Id='comp.SearchPath' />
       <ComponentRef Id='comp.kcpytkt' />
+      <ComponentRef Id='comp.kdeltkt' />
       <ComponentRef Id='comp.kdestroy' />
       <ComponentRef Id='comp.kdigest' />
       <ComponentRef Id='comp.kinit' />

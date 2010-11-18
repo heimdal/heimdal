@@ -40,7 +40,8 @@ BINPROGRAMS=\
 	$(BINDIR)\kgetcred.exe	\
 	$(BINDIR)\kswitch.exe	\
 	$(BINDIR)\kvno.exe	\
-	$(BINDIR)\kcpytkt.exe
+	$(BINDIR)\kcpytkt.exe	\
+	$(BINDIR)\kdeltkt.exe
 
 LIBEXECPROGRAMS=\
 	$(LIBEXECDIR)\kdigest.exe	\
@@ -111,5 +112,9 @@ $(BINDIR)\kvno.exe: $(OBJ)\kvno.obj $(BINLIBS)
 	$(EXEPREP)
 
 $(BINDIR)\kcpytkt.exe: $(OBJ)\kcpytkt.obj $(BINLIBS)
+	$(EXECONLINK)
+	$(EXEPREP)
+
+$(BINDIR)\kdeltkt.exe: $(OBJ)\kdeltkt.obj $(BINLIBS)
 	$(EXECONLINK)
 	$(EXEPREP)

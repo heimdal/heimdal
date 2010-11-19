@@ -70,6 +70,13 @@ enum hdb_lockop{ HDB_RLOCK, HDB_WLOCK };
 
 typedef struct hdb_master_key_data *hdb_master_key;
 
+/**
+ * hdb_entry_ex is a wrapper structure around the hdb_entry structure
+ * that allows backends to keep a pointer to the backing store, ie in
+ * ->hdb_fetch(), so that we the kadmin/kpasswd backend gets around to
+ * ->hdb_store(), the backend doesn't need to lookup the entry again.
+ */
+
 typedef struct hdb_entry_ex {
     void *ctx;
     hdb_entry entry;

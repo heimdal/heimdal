@@ -46,6 +46,9 @@ extern char *yytext;
 #define alloca(x) malloc(x)
 #endif
 
+#define YYMALLOC malloc
+#define YYFREE free
+
 %}
 
 %union {

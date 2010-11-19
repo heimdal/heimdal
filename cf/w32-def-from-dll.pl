@@ -170,7 +170,7 @@ sub use_response_file($)
     open (RF, '<', $fn) or die "Can't open response file $fn";
 
     while (<RF>) {
-	/(\S+)/ && do {
+	/^(\S+)$/ && do {
 	    process_file($1);
 	}
     }
@@ -182,27 +182,27 @@ print "EXPORTS\n";
 
 for (@ARGV) {
     ARG: {
-	/-m(.*)/ && do {
+	/^-m(.*)$/ && do {
 	    $module_name = $1.".";
 	    last ARG;
 	};
 
-        /-l(.*)/ && do {
+        /^-l(.*)$/ && do {
             $local_prefix = $1."_";
             last ARG;
         };
 
-        /-a/ && do {
+        /^-a$/ && do {
             $always_export = 1;
             last ARG;
         };
 
-	/-e(.*)/ && do {
+	/^-e(.*)$/ && do {
 	    build_forwarder_target_list($1);
 	    last ARG;
 	};
 
-	/@(.*)/ && do {
+	/^@(.*)$/ && do {
 	    use_response_file($1);
 	    last ARG;
 	};

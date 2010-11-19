@@ -89,22 +89,22 @@ sub use_response_file($)
 
 for (@ARGV) {
     ARG: {
-	/-q/ && do {
+	/^-q$/ && do {
 	    $show_module_name = 0;
 	    last ARG;
 	};
 
-	/-1/ && do {
+	/^-1$/ && do {
 	    $use_indent = 0;
 	    last ARG;
 	};
 
-	/-u/ && do {
+	/^-u$/ && do {
 	    $strip_leading_underscore = 1;
 	    last ARG;
 	};
 
-	/@(.*)/ && do {
+	/^@(.*)$/ && do {
 	    use_response_file($1);
 	    last ARG;
 	};

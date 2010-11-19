@@ -30,7 +30,8 @@
 # 
 
 RELDIR=lib\hx509
-intcflags=-DASN1_LIB
+intcflags=-I$(SRCDIR)\ref -I$(OBJ)
+localcflags=-DASN1_LIB
 
 !include ../../windows/NTMakefile.w32
 

@@ -190,7 +190,7 @@ openldap_inc_flag=
 hdb_cflags=$(openldap_inc_flag) -I$(OBJ)
 
 {}.c{$(OBJ)}.obj::
-	$(C2OBJ_P) $(hdb_cflags)
+	$(C2OBJ_P) $(hdb_cflags) -DASN1_LIB
 
 {$(OBJ)}.c{$(OBJ)}.obj::
 	$(C2OBJ_P) $(hdb_cflags)

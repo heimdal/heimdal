@@ -409,31 +409,31 @@ GCOPTS=-I$(SRCDIR) -I$(OBJ) -Igssapi -DBUILD_GSSAPI_LIB
 	$(C2OBJ_NP) -Fo$(OBJ)\krb5\ -Fd$(OBJ)\krb5\ -I$(OBJ)\krb5 $(GCOPTS)
 
 {krb5}.c{$(OBJ)\krb5}.obj::
-	$(C2OBJ_NP) -Fo$(OBJ)\krb5\ -Fd$(OBJ)\krb5\ -I$(OBJ)\krb5 $(GCOPTS)
+	$(C2OBJ_NP) -Fo$(OBJ)\krb5\ -Fd$(OBJ)\krb5\ -I$(OBJ)\krb5 $(GCOPTS) -DASN1_LIB
 
 {$(OBJ)\mech}.c{$(OBJ)\mech}.obj::
 	$(C2OBJ_NP) -Fo$(OBJ)\mech\ -Fd$(OBJ)\mech\ -I$(OBJ)\mech $(GCOPTS)
 
 {mech}.c{$(OBJ)\mech}.obj::
-	$(C2OBJ_NP) -Fo$(OBJ)\mech\ -Fd$(OBJ)\mech\ -I$(OBJ)\mech -I$(OBJ)\gssapi $(GCOPTS)
+	$(C2OBJ_NP) -Fo$(OBJ)\mech\ -Fd$(OBJ)\mech\ -I$(OBJ)\mech -I$(OBJ)\gssapi $(GCOPTS) -DASN1_LIB
 
 {$(OBJ)\ntlm}.c{$(OBJ)\ntlm}.obj::
 	$(C2OBJ_NP) -Fo$(OBJ)\ntlm\ -Fd$(OBJ)\ntlm\ -I$(OBJ)\ntlm $(GCOPTS)
 
 {ntlm}.c{$(OBJ)\ntlm}.obj::
-	$(C2OBJ_NP) -Fo$(OBJ)\ntlm\ -Fd$(OBJ)\ntlm\ -I$(OBJ)\ntlm $(GCOPTS)
+	$(C2OBJ_NP) -Fo$(OBJ)\ntlm\ -Fd$(OBJ)\ntlm\ -I$(OBJ)\ntlm $(GCOPTS) -DASN1_LIB
 
 {$(OBJ)\spnego}.c{$(OBJ)\spnego}.obj::
 	$(C2OBJ_NP) -Fo$(OBJ)\spnego\ -Fd$(OBJ)\spnego\ -I$(OBJ)\spnego $(GCOPTS)
 
 {spnego}.c{$(OBJ)\spnego}.obj::
-	$(C2OBJ_NP) -Fo$(OBJ)\spnego\ -Fd$(OBJ)\spnego\ -I$(OBJ)\spnego -Imech $(GCOPTS)
+	$(C2OBJ_NP) -Fo$(OBJ)\spnego\ -Fd$(OBJ)\spnego\ -I$(OBJ)\spnego -Imech $(GCOPTS) -DASN1_LIB
 
 {$(OBJ)\gssapi}.c{$(OBJ)\gssapi}.obj::
 	$(C2OBJ_NP) -Fo$(OBJ)\gssapi\ -Fd$(OBJ)\gssapi\ -I$(OBJ)\gssapi $(GCOPTS)
 
 {}.c{$(OBJ)}.obj::
-	$(C2OBJ_P) $(GCOPTS)
+	$(C2OBJ_P) $(GCOPTS) -DASN1_LIB
 
 {$(OBJ)}.c{$(OBJ)}.obj::
 	$(C2OBJ_P) $(GCOPTS)

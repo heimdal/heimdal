@@ -243,7 +243,8 @@ clean::
 	-$(RM) $(OBJ)\tool\*.*
 
 {}.c{$(OBJ)\tool}.obj::
-	$(C2OBJ_C) /Fd$(OBJ)\tool\ /Fo$(OBJ)\tool\ /MP /UASN1_LIB $<
+	$(C2OBJ_C) /Fd$(OBJ)\tool\ /Fo$(OBJ)\tool\ $(MPOPT) /UASN1_LIB $<
 
 {$(OBJ)}.c{$(OBJ)\tool}.obj::
-	$(C2OBJ_C) /Fd$(OBJ)\tool\ /Fo$(OBJ)\tool\ /MP /UASN1_LIB $<
+	$(C2OBJ_C) /Fd$(OBJ)\tool\ /Fo$(OBJ)\tool\ $(MPOPT) /UASN1_LIB $<
+

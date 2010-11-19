@@ -194,6 +194,12 @@ libmach=/machine:X64
 !  error Unknown CPU value
 !endif
 
+!ifdef NO_MP
+MPOPT=
+!else
+MPOPT=/MP
+!endif
+
 !ifndef STATICRUNTIME
 
 C2OBJ_C = $(CC) $(cdebug) $(cflags) $(cvarsdll) $(AUXCFLAGS) $(intcflags) $(cdefines) $(cincdirs) $(cwarn)
@@ -216,7 +222,7 @@ LIBGUI_C = $(LM) /nologo $(libmach) /SUBSYSTEM:WINDOWS
 LIBCON_C = $(LM) /nologo $(libmach) /SUBSYSTEM:CONSOLE
 
 C2OBJ = $(C2OBJ_C) -Fo$@ -Fd$(@D)\ $**
-C2OBJ_NP = $(C2OBJ_C) -MP $<
+C2OBJ_NP = $(C2OBJ_C) $(MPOPT) $<
 C2OBJ_P = $(C2OBJ_NP) -Fo$(OBJ)\ -Fd$(OBJ)\ #
 EXECONLINK = $(EXECONLINK_C) -OUT:$@ $**
 EXEGUILINK = $(EXEGUILINK_C) -OUT:$@ $**
@@ -298,22 +304,22 @@ prep:: show-cmds
 !endif				# RECURSE
 
 {}.c{$(OBJ)}.obj::
-	$(C2OBJ_C) /Fd$(OBJ)\ /Fo$(OBJ)\ /MP @<<
+	$(C2OBJ_C) /Fd$(OBJ)\ /Fo$(OBJ)\ $(localcflags) $(MPOPT) @<<
 $<
 <<
 
 {$(OBJ)}.c{$(OBJ)}.obj::
-	$(C2OBJ_C) /Fd$(OBJ)\ /Fo$(OBJ)\ /MP @<<
+	$(C2OBJ_C) /Fd$(OBJ)\ /Fo$(OBJ)\ $(extcflags) $(MPOPT) @<<
 $<
 <<
 
 {}.cpp{$(OBJ)}.obj::
-	$(C2OBJ_C) /Fd$(OBJ)\ /Fo$(OBJ)\ /MP @<<
+	$(C2OBJ_C) /Fd$(OBJ)\ /Fo$(OBJ)\ $(localcflags) $(MPOPT) @<<
 $<
 <<
 
 {$(OBJ)}.cpp{$(OBJ)}.obj::
-	$(C2OBJ_C) /Fd$(OBJ)\ /Fo$(OBJ)\ /MP @<<
+	$(C2OBJ_C) /Fd$(OBJ)\ /Fo$(OBJ)\ $(extcflags) $(MPOPT) @<<
 $<
 <<
 

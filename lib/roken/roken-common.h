@@ -150,6 +150,11 @@
 
 #endif	/* !_WIN32 */
 
+/* Minimize conflict with WinNT.h */
+#ifdef SLIST_ENTRY
+#undef SLIST_ENTRY
+#endif
+
 #ifndef PATH_MAX
 #define PATH_MAX MAX_PATH
 #endif
@@ -219,6 +224,10 @@
 
 #ifndef AI_NUMERICHOST
 #define AI_NUMERICHOST	0x04
+#endif
+
+#ifndef AI_NUMERICSERV
+#define AI_NUMERICSERV  0x08
 #endif
 
 /* flags for getnameinfo() */

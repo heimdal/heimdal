@@ -239,8 +239,18 @@ RC2RES = $(RC2RES_C) -fo $@ $**
 
 !ifndef RECURSE
 
+REQUIRED_TOOLS= \
+	"$(AWK_CMD)" "$(YACC_CMD)" "$(LEX_CMD)" "$(PYTHON)" "$(PERL)" \
+	"$(CMP)" "$(SED)" "$(SIGNTOOL)" "$(MAKECAT)" "$(MAKEINFO)" "$(HHC)"
+
+!ifdef BUILD_INSTALLERS
+REQUIRED_TOOLS=$(REQUIRED_TOOLS) "$(CANDLE_CMD)" "$(LIGHT_CMD)"
+!endif
+
+OPTIONAL_TOOLS="$(SH)" 
+
 check-utils:
-	@for %%g in ( "$(AWK_CMD)" "$(YACC_CMD)" "$(LEX_CMD)" "$(PYTHON)" "$(PERL)" "$(CMP)" "$(SED)" "$(SIGNTOOL)" "$(MAKECAT)" "$(CANDLE_CMD)" "$(LIGHT_CMD)" "$(MAKEINFO)" "$(HHC)") do @( \
+	@for %%g in ( $(REQUIRED_TOOLS) ) do @( \
 	for /f %%f in ( "%%g" ) do @( \
 		if exist %%f @( \
 			echo Found %%f \
@@ -252,13 +262,13 @@ check-utils:
 		) \
 	) \
 	)
-	@for %%g in ( "$(SH)" ) do @( \
+	@for %%g in ( $(OPTIONAL_TOOLS) ) do @( \
 	for /f %%f in ( "%%g" ) do @( \
 		if exist %%f @( \
 			echo Found %%f \
 		) else if "%%~$$PATH:f"=="" @( \
 			echo Could not find %%f in PATH && \
-			echo Test targets may fail. \
+			echo Optional targets may fail. \
 		) else @( \
 			echo Found %%~$$PATH:f \
 		) \

@@ -291,7 +291,7 @@ kadm5_setup_passwd_quality_check(krb5_context context,
 	krb5_warnx(context, "failed to open `%s'", check_library);
 	return;
     }
-    version = dlsym(handle, "version");
+    version = (int *) dlsym(handle, "version");
     if(version == NULL) {
 	krb5_warnx(context,
 		   "didn't find `version' symbol in `%s'", check_library);
@@ -331,7 +331,7 @@ add_verifier(krb5_context context, const char *check_library)
 	krb5_warnx(context, "failed to open `%s'", check_library);
 	return ENOENT;
     }
-    v = dlsym(handle, "kadm5_password_verifier");
+    v = (struct kadm5_pw_policy_verifier *) dlsym(handle, "kadm5_password_verifier");
     if(v == NULL) {
 	krb5_warnx(context,
 		   "didn't find `kadm5_password_verifier' symbol "

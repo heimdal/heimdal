@@ -88,7 +88,6 @@ _krb5_parse_reg_value_as_multi_string(krb5_context context,
 {
     LONG                rcode = ERROR_MORE_DATA;
     DWORD               cb_alloc;
-    krb5_config_section *value;
     krb5_error_code     code = 0;
 
     BYTE                static_buffer[16384];

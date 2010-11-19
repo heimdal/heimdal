@@ -42,6 +42,7 @@ RCSID("$Id$");
 #include <stdlib.h>
 #include <ctype.h>
 #ifdef WIN32
+#include <winsock2.h>
 #include <ws2tcpip.h>
 #endif
 
@@ -165,6 +166,7 @@ int main(int argc, char **argv)
 #ifndef WIN32
     fprintf(f, "#include <sys/socket.h>\n");
 #else
+    fprintf(f, "#include <winsock2.h>\n");
     fprintf(f, "#include <ws2tcpip.h>\n");
 #endif
 #endif

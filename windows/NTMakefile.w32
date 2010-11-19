@@ -182,9 +182,10 @@ cdefines=$(cdefines) -D_USE_32BIT_TIME_T
 # C4204: Nonstandard extension used: non-constant aggregate initializer
 # C4221: Nonstandard extension used: 'v1': cannot be initialized using address of automatic variable 'v2'
 # C4295: '': Array is too small to include a terminating null character
+# C4146: Unary minus operator applied to unsigned type, result still unsigned.
 #
 cwarn=$(cwarn) -D_CRT_SECURE_NO_WARNINGS -wd4996 -wd4127 -wd4244 -wd4100 -wd4706
-cwarn=$(cwarn) -wd4214 -wd4267 -wd4018 -wd4389 -wd4204 -wd4221 -wd4295
+cwarn=$(cwarn) -wd4214 -wd4267 -wd4018 -wd4389 -wd4204 -wd4221 -wd4295 -wd4146
 
 !if "$(CPU)"=="i386"
 libmach=/machine:X86

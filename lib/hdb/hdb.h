@@ -211,7 +211,7 @@ typedef struct HDB{
      * all other operations, increasing the kvno, and update
      * modification timestamp.
      * 
-     * The backen need to call _kadm5_set_keys() and perform password
+     * The backend needs to call _kadm5_set_keys() and perform password
      * quality checks.
      */
     krb5_error_code (*hdb_password)(krb5_context, struct HDB*, hdb_entry_ex*, const char *, int);
@@ -227,7 +227,7 @@ typedef struct HDB{
      */
     krb5_error_code (*hdb_auth_status)(krb5_context, struct HDB *, hdb_entry_ex *, int);
     /**
-     * Check is delegation is allowed.
+     * Check if delegation is allowed.
      */
     krb5_error_code (*hdb_check_constrained_delegation)(krb5_context, struct HDB *, hdb_entry_ex *, krb5_const_principal);
 

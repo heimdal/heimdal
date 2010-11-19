@@ -46,7 +46,7 @@ static int random_key_flag;
 static const char *enctype_str = "des3-cbc-sha1";
 
 static struct getargs args[] = {
-    { "enctype", 'e', arg_string, &enctype_str, "encryption type" },
+    { "enctype", 'e', arg_string, rk_UNCONST(&enctype_str), "encryption type" },
     { "key-file", 'k', arg_string, &keyfile, "master key file", "file" },
     { "convert-file", 0, arg_flag, &convert_flag,
       "just convert keyfile to new format" },

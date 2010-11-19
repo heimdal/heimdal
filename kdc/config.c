@@ -99,7 +99,7 @@ static struct getargs args[] = {
 	&enable_v4_cross_realm,
 	"respond to kerberos 4 requests from foreign realms"
     },
-    {	"ports",	'P', 	arg_string, &port_str,
+    {	"ports",	'P', 	arg_string, rk_UNCONST(&port_str),
 	"ports to listen to", "portspec"
     },
 #ifdef SUPPORT_DETACH

@@ -125,13 +125,14 @@ v5_prop(krb5_context context, HDB *db, hdb_entry_ex *entry, void *appdata)
 
 struct getargs args[] = {
     { "master-key", 'm', arg_string, &mkeyfile, "v5 master key file", "file" },
-    { "database", 'd',	arg_string, &database, "database", "file" },
+    { "database", 'd',	arg_string, rk_UNCONST(&database), "database", "file" },
     { "source",   0,	arg_string, &source_type, "type of database to read",
       "heimdal"
       "|mit-dump"
     },
 
-    { "keytab",   'k',	arg_string, &ktname, "keytab to use for authentication", "keytab" },
+    { "keytab",   'k',	arg_string, rk_UNCONST(&ktname),
+      "keytab to use for authentication", "keytab" },
     { "v5-realm", 'R',  arg_string, &local_realm, "v5 realm to use" },
     { "decrypt",  'D',  arg_flag,   &decrypt_flag,   "decrypt keys" },
     { "encrypt",  'E',  arg_flag,   &encrypt_flag,   "encrypt keys" },

@@ -733,11 +733,11 @@ static struct getargs args[] = {
     { "keytab", 'k', arg_string, &keytab_str,
       "keytab to get authentication from", "kspec" },
     { "database", 'd', arg_string, &database, "database", "file"},
-    { "slave-stats-file", 0, arg_string, &slave_stats_file,
+    { "slave-stats-file", 0, arg_string, rk_UNCONST(&slave_stats_file),
       "file for slave status information", "file"},
-    { "time-missing", 0, arg_string, &slave_time_missing,
+    { "time-missing", 0, arg_string, rk_UNCONST(&slave_time_missing),
       "time before slave is polled for presence", "time"},
-    { "time-gone", 0, arg_string, &slave_time_gone,
+    { "time-gone", 0, arg_string, rk_UNCONST(&slave_time_gone),
       "time of inactivity after which a slave is considered gone", "time"},
     { "port", 0, arg_string, &port_str,
       "port ipropd will listen to", "port"},
@@ -745,7 +745,7 @@ static struct getargs args[] = {
     { "detach", 0, arg_flag, &detach_from_console,
       "detach from console" },
 #endif
-    { "hostname", 0, arg_string, &master_hostname,
+    { "hostname", 0, arg_string, rk_UNCONST(&master_hostname),
       "hostname of master (if not same as hostname)", "hostname" },
     { "version", 0, arg_flag, &version_flag },
     { "help", 0, arg_flag, &help_flag }

@@ -269,7 +269,7 @@ cc_ops_copy(krb5_context context, const krb5_context src_context)
 	return KRB5_CC_NOMEM;
     }
 
-    memcpy(cc_ops, src_context->cc_ops,
+    memcpy(rk_UNCONST(cc_ops), src_context->cc_ops,
 	   sizeof(cc_ops[0]) * src_context->num_cc_ops);
     context->cc_ops = cc_ops;
     context->num_cc_ops = src_context->num_cc_ops;
@@ -559,7 +559,7 @@ krb5_free_context(krb5_context context)
     krb5_free_host_realm (context, context->default_realms);
     krb5_config_file_free (context, context->cf);
     free_error_table (context->et_list);
-    free(context->cc_ops);
+    free(rk_UNCONST(context->cc_ops));
     free(context->kt_types);
     krb5_clear_error_message(context);
     if(context->warn_dest != NULL)

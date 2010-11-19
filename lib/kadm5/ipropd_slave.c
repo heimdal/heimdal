@@ -472,7 +472,7 @@ static struct getargs args[] = {
     { "detach", 0, arg_flag, &detach_from_console,
       "detach from console" },
 #endif
-    { "hostname", 0, arg_string, &slave_str,
+    { "hostname", 0, arg_string, rk_UNCONST(&slave_str),
       "hostname of slave (if not same as hostname)", "hostname" },
     { "version", 0, arg_flag, &version_flag },
     { "help", 0, arg_flag, &help_flag }

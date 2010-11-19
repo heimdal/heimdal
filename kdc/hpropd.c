@@ -43,7 +43,7 @@ static char *local_realm;
 static char *ktname = NULL;
 
 struct getargs args[] = {
-    { "database", 'd', arg_string, &database, "database", "file" },
+    { "database", 'd', arg_string, rk_UNCONST(&database), "database", "file" },
     { "stdin",    'n', arg_flag, &from_stdin, "read from stdin" },
     { "print",	    0, arg_flag, &print_dump, "print dump to stdout" },
 #ifdef SUPPORT_INETD

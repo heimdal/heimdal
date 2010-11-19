@@ -134,7 +134,7 @@ krb5_cc_register(krb5_context context,
 	}
     }
     if(i == context->num_cc_ops) {
-	const krb5_cc_ops **o = realloc(context->cc_ops,
+	const krb5_cc_ops **o = realloc(rk_UNCONST(context->cc_ops),
 					(context->num_cc_ops + 1) *
 					sizeof(context->cc_ops[0]));
 	if(o == NULL) {

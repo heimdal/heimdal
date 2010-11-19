@@ -44,9 +44,9 @@ static int dest_tkt_flag = 1;
 static int all_flag = 0;
 
 struct getargs args[] = {
-    { "credential",	0,   arg_string, &credential,
+    { "credential",	0,   arg_string, rk_UNCONST(&credential),
       "remove one credential", "principal" },
-    { "cache",		'c', arg_string, &cache, "cache to destroy", "cache" },
+    { "cache",		'c', arg_string, rk_UNCONST(&cache), "cache to destroy", "cache" },
     { "all",		'A', arg_flag, &all_flag, "destroy all caches" },
 #ifndef NO_AFS
     { "unlog",		0,   arg_negative_flag, &unlog_flag,

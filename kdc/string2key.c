@@ -51,7 +51,7 @@ struct getargs args[] = {
     { "cell",     'c', arg_string, &cell, "AFS cell to use", "cell" },
     { "password", 'w', arg_string, &password, "Password to use", "password" },
     { "principal",'p', arg_string, &principal, "Kerberos v5 principal to use", "principal" },
-    { "keytype",  'k', arg_string, &keytype_str, "Keytype" },
+    { "keytype",  'k', arg_string, rk_UNCONST(&keytype_str), "Keytype" },
     { "version",    0, arg_flag,   &version, "print version" },
     { "help",       0, arg_flag,   &help, NULL }
 };

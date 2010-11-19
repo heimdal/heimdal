@@ -716,6 +716,16 @@ add_cred(krb5_context context, krb5_creds const *tkt, krb5_creds ***tgts)
 }
 
 static krb5_error_code
+get_cred_kdc_capath(krb5_context context,
+		    krb5_kdc_flags flags,
+		    krb5_ccache ccache,
+		    krb5_creds *in_creds,
+		    krb5_principal impersonate_principal,
+		    Ticket *second_ticket,			
+		    krb5_creds **out_creds,
+		    krb5_creds ***ret_tgts);
+
+static krb5_error_code
 get_cred_kdc_capath_worker(krb5_context context,
                            krb5_kdc_flags flags,
                            krb5_ccache ccache,

@@ -48,7 +48,7 @@
 .Fl -database= Ns Pa file
 .Xc
 .Oc
-.Op Fl -source= Ns Ar heimdal|mit-dump|krb4-dump|kaserver
+.Op Fl -source= Ns Ar heimdal|mit-dump
 .Oo Fl r Ar string \*(Ba Xo
 .Fl -v4-realm= Ns Ar string
 .Xc
@@ -57,7 +57,6 @@
 .Fl -cell= Ns Ar cell
 .Xc
 .Oc
-.Op Fl S | Fl -kaspecials
 .Oo Fl k Ar keytab \*(Ba Xo
 .Fl -keytab= Ns Ar keytab
 .Xc
@@ -101,19 +100,15 @@ Where to find the master key to encrypt or decrypt keys with.
 .Xc
 The database to be propagated.
 .It Xo
-.Fl -source= Ns Ar heimdal|mit-dump|krb4-dump|kaserver
+.Fl -source= Ns Ar heimdal|mit-dump
 .Xc
 Specifies the type of the source database. Alternatives include:
 .Pp
-.Bl -tag -width krb4-dump -compact -offset indent
+.Bl -tag -width mit-dump -compact -offset indent
 .It heimdal
 a Heimdal database
 .It mit-dump
 a MIT Kerberos 5 dump file
-.It krb4-dump
-a Kerberos 4 dump file
-.It kaserver
-an AFS kaserver database
 .El
 .It Xo
 .Fl k Ar keytab ,
@@ -147,45 +142,12 @@ This option transmits the database with encrypted keys.
 .Xc
 Dump the database on stdout, in a format that can be fed to hpropd.
 .El
-.Pp
-The following options are only valid if
-.Nm hprop
-is compiled with support for Kerberos 4 (kaserver).
-.Bl -tag -width Ds
-.It Xo
-.Fl r Ar string ,
-.Fl -v4-realm= Ns Ar string
-.Xc
-v4 realm to use.
-.It Xo
-.Fl c Ar cell ,
-.Fl -cell= Ns Ar cell
-.Xc
-The AFS cell name, used if reading a kaserver database.
-.It Xo
-.Fl S ,
-.Fl -kaspecials
-.Xc
-Also dump the principals marked as special in the kaserver database.
-.It Xo
-.Fl K ,
-.Fl -ka-db
-.Xc
-Deprecated, identical to
-.Sq --source=kaserver .
-.El
 .Sh EXAMPLES
 The following will propagate a database to another machine (which
 should run
 .Xr hpropd 8 ):
 .Bd -literal -offset indent
 $ hprop slave-1 slave-2
-.Ed
-.Pp
-Convert a Kerberos 4 dump-file for use with a Heimdal KDC:
-.Bd -literal -offset indent
-$ hprop -n --source=krb4-dump -d /var/kerberos/principal.dump \\
-  --master-key=/.k | hpropd -n
 .Ed
 .Sh SEE ALSO
 .Xr hpropd 8

@@ -16,7 +16,7 @@ noinst_PROGRAMS = kdc-replay
 
 man_MANS = kdc.8 kstash.8 hprop.8 hpropd.8 string2key.8
 
-hprop_SOURCES = hprop.c mit_dump.c v4_dump.c hprop.h kadb.h 
+hprop_SOURCES = hprop.c mit_dump.c hprop.h kadb.h 
 hpropd_SOURCES = hpropd.c hprop.h
 
 kstash_SOURCES = kstash.c headers.h
@@ -43,9 +43,6 @@ libkdc_la_SOURCES = 		\
 	pkinit.c		\
 	log.c			\
 	misc.c			\
-	524.c			\
-	kerberos4.c		\
-	kaserver.c		\
 	kx509.c			\
 	process.c		\
 	windc.c			\

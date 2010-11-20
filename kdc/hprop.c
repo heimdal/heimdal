@@ -48,12 +48,6 @@ static hdb_master_key mkey5;
 
 static char *source_type;
 
-static char *afs_cell;
-static char *v4_realm;
-
-static int kaspecials_flag;
-static int ka_use_null_salt;
-
 static char *local_realm=NULL;
 
 static int
@@ -129,27 +123,6 @@ v5_prop(krb5_context context, HDB *db, hdb_entry_ex *entry, void *appdata)
     return ret;
 }
 
-#include "kadb.h"
-
-/* read a `ka_entry' from `fd' at offset `pos' */
-static void
-read_block(krb5_context context, int fd, int32_t pos, void *buf, size_t len)
-{
-    krb5_error_code ret;
-#ifdef HAVE_PREAD
-    if((ret = pread(fd, buf, len, 64 + pos)) < 0)
-	krb5_err(context, 1, errno, "pread(%u)", 64 + pos);
-#else
-    if(lseek(fd, 64 + pos, SEEK_SET) == (off_t)-1)
-	krb5_err(context, 1, errno, "lseek(%u)", 64 + pos);
-    ret = read(fd, buf, len);
-    if(ret < 0)
-	krb5_err(context, 1, errno, "read(%lu)", (unsigned long)len);
-#endif
-    if(ret != len)
-	krb5_errx(context, 1, "read(%lu) = %u", (unsigned long)len, ret);
-}
-
 struct getargs args[] = {
     { "master-key", 'm', arg_string, &mkeyfile, "v5 master key file", "file" },
     { "database", 'd',	arg_string, &database, "database", "file" },
@@ -158,7 +131,6 @@ struct getargs args[] = {
       "|mit-dump"
     },
 
-    { "cell",	  'c',  arg_string, &afs_cell, "name of AFS cell" },
     { "keytab",   'k',	arg_string, &ktname, "keytab to use for authentication", "keytab" },
     { "v5-realm", 'R',  arg_string, &local_realm, "v5 realm to use" },
     { "decrypt",  'D',  arg_flag,   &decrypt_flag,   "decrypt keys" },
@@ -444,20 +416,6 @@ main(int argc, char **argv)
     if(local_realm)
 	krb5_set_default_realm(context, local_realm);
 
-    if(v4_realm == NULL) {
-	ret = krb5_get_default_realm(context, &v4_realm);
-	if(ret)
-	    krb5_err(context, 1, ret, "krb5_get_default_realm");
-    }
-
-    if(afs_cell == NULL) {
-	afs_cell = strdup(v4_realm);
-	if(afs_cell == NULL)
-	    krb5_errx(context, 1, "out of memory");
-	strlwr(afs_cell);
-    }
-
-
     if(encrypt_flag && decrypt_flag)
 	krb5_errx(context, 1,
 		  "only one of `--encrypt' and `--decrypt' is meaningful");
@@ -479,10 +437,6 @@ main(int argc, char **argv)
 	if(ret)
 	    krb5_errx(context, 1, "No master key file found");
     }
-
-    if (IS_TYPE_V4(type) && v4_realm == NULL)
-	krb5_errx(context, 1, "Its a Kerberos 4 database "
-		  "but no realm configured");
 
     switch(type) {
     case HPROP_MIT_DUMP:

@@ -40,5 +40,4 @@ SUBDIRS = \
 	hdb \
 	kadm5 \
 	$(dir_otp) \
-	$(dir_dce) \
-	auth
+	$(dir_dce)

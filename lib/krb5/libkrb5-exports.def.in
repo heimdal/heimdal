@@ -1,12 +1,6 @@
 EXPORTS
 	krb524_convert_creds_kdc
 	krb524_convert_creds_kdc_ccache
-#ifdef KRB4
-	krb5_425_conv_principal
-	krb5_425_conv_principal_ext2
-	krb5_425_conv_principal_ext
-	krb5_524_conv_principal
-#endif
 	krb5_abort
 	krb5_abortx
 	krb5_acl_match_file

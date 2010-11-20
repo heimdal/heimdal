@@ -361,9 +361,6 @@ test_binaries =				\
 	$(OBJ)\aes-test.exe		\
 	$(OBJ)\derived-key-test.exe	\
 	$(OBJ)\n-fold-test.exe		\
-!ifdef KRB4
-	$(OBJ)\name-45-test.exe		\
-!endif
 	$(OBJ)\parse-name-test.exe	\
 	$(OBJ)\store-test.exe		\
 	$(OBJ)\string-to-key-test.exe	\
@@ -391,9 +388,6 @@ test-run:
 	aes-test.exe
 	derived-key-test.exe
 	n-fold-test.exe
-!ifdef KRB4
-	name-45-test.exe
-!endif
 	parse-name-test.exe
 	store-test.exe
 	string-to-key-test.exe

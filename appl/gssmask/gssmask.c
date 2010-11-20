@@ -851,11 +851,9 @@ HandleOP(CallExtension)
 static int
 HandleOP(AcquirePKInitCreds)
 {
-    krb5_error_code ret;
     int32_t flags;
     krb5_data pfxdata;
     char fn[] = "FILE:/tmp/pkcs12-creds-XXXXXXX";
-    const char *default_realm = "H5L.ORG";
     krb5_principal principal = NULL;
     int fd;
 

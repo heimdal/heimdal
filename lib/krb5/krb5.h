@@ -847,6 +847,8 @@ typedef krb5_error_code
  *
  */
 
+struct hx509_certs_data;
+
 #include <krb5-protos.h>
 
 /* variables */

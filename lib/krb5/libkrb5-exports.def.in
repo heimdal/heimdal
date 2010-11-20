@@ -766,8 +766,8 @@ EXPORTS
 	_krb5_expand_path_tokens	;!
 
         ; kinit helper
-	_krb5_get_init_creds_opt_set_pkinit_user_certs
-	_krb5_pk_enterprise_cert
+	krb5_get_init_creds_opt_set_pkinit_user_certs
+	krb5_pk_enterprise_cert
 
 	; testing
 ;!	_krb5_aes_cts_encrypt

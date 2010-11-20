@@ -376,67 +376,6 @@ krb5_get_in_tkt_with_keytab (krb5_context context,
 			    ret_as_reply);
 }
 
-#ifdef KRB4
-
-static krb5_boolean
-convert_func(krb5_context conxtext, void *funcctx, krb5_principal principal)
-{
-    krb5_boolean (*func)(krb5_context, krb5_principal) = funcctx;
-    return (*func)(conxtext, principal);
-}
-
-/**
- * Deprecated: kerberos 4 is dead, let it die.
- *
- * @ingroup krb5_deprecated
- */
-
-KRB5_DEPRECATED
-KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
-krb5_425_conv_principal_ext(krb5_context context,
-			    const char *name,
-			    const char *instance,
-			    const char *realm,
-			    krb5_boolean (*func)(krb5_context, krb5_principal),
-			    krb5_boolean resolve,
-			    krb5_principal *principal)
-{
-    return krb5_425_conv_principal_ext2(context,
-					name,
-					instance,
-					realm,
-					func ? convert_func : NULL,
-					func,
-					resolve,
-					principal);
-}
-
-/**
- * Deprecated: kerberos 4 is dead, let it die.
- *
- * @ingroup krb5_deprecated
- */
-
-KRB5_DEPRECATED
-KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
-krb5_425_conv_principal(krb5_context context,
-			const char *name,
-			const char *instance,
-			const char *realm,
-			krb5_principal *princ)
-{
-    krb5_boolean resolve = krb5_config_get_bool(context,
-						NULL,
-						"libdefaults",
-						"v4_instance_resolve",
-						NULL);
-
-    return krb5_425_conv_principal_ext(context, name, instance, realm,
-				       NULL, resolve, princ);
-}
-
-#endif
-
 /**
  * Generate a new ccache of type `ops' in `id'.
  *

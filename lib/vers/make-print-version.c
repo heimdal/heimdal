@@ -41,9 +41,6 @@
 #ifdef KRB5
 extern const char *heimdal_version;
 #endif
-#ifdef KRB4
-extern const char *krb4_version;
-#endif
 #include <version.h>
 
 int
@@ -62,12 +59,6 @@ main(int argc, char **argv)
     fprintf(f, "#define VERSIONLIST \"");
 #ifdef KRB5
     fprintf(f, "%s", heimdal_version);
-#endif
-#ifdef KRB4
-#ifdef KRB5
-    fprintf(f, ", ");
-#endif
-    fprintf(f, "%s", krb4_version);
 #endif
     fprintf(f, "\"\n");
     fclose(f);

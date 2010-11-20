@@ -24,7 +24,6 @@ TESTS =						\
 	aes-test				\
 	derived-key-test			\
 	n-fold-test				\
-	name-45-test				\
 	parse-name-test				\
 	store-test				\
 	string-to-key-test			\
@@ -220,7 +219,6 @@ dist_libkrb5_la_SOURCES =			\
 	ticket.c				\
 	time.c					\
 	transited.c				\
-	v4_glue.c				\
 	verify_init.c				\
 	verify_user.c				\
 	version.c				\

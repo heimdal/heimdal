@@ -848,14 +848,6 @@ HandleOP(CallExtension)
     errx(1, "CallExtension");
 }
 
-krb5_error_code KRB5_LIB_FUNCTION
-_krb5_pk_enterprise_cert (
-	krb5_context /*context*/,
-	const char */*user_id*/,
-	krb5_const_realm /*realm*/,
-	krb5_principal */*principal*/);
-
-
 static int
 HandleOP(AcquirePKInitCreds)
 {
@@ -877,13 +869,6 @@ HandleOP(AcquirePKInitCreds)
     net_write(fd, pfxdata.data, pfxdata.length);
     krb5_data_free(&pfxdata);
     close(fd);
-
-    /* get credentials */
-
-    ret = _krb5_pk_enterprise_cert(context, fn, default_realm, &principal);
-    if (ret)
-	krb5_err(context, 1, ret, "krb5_pk_enterprise_certs");
-
 
     if (principal)
 	krb5_free_principal(context, principal);

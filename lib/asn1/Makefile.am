@@ -53,10 +53,10 @@ asn1_print_SOURCES = asn1_print.c
 check_der_SOURCES = check-der.c check-common.c check-common.h
 
 check_template_SOURCES = check-template.c check-common.c check-common.h
-nodist_check_template_SOURCES = $(gen_files_test:.x=.c) test_asn1-template.c
+nodist_check_template_SOURCES = $(gen_files_test:.x=.c)
 
 dist_check_gen_SOURCES = check-gen.c check-common.c check-common.h
-nodist_check_gen_SOURCES = $(gen_files_test:.x=.c) test_asn1-template.c
+nodist_check_gen_SOURCES = $(gen_files_test:.x=.c)
 
 build_HEADERZ = asn1-template.h
 
@@ -136,7 +136,6 @@ CLEANFILES = \
 	$(gen_files_kx509) \
 	$(gen_files_test) $(nodist_check_gen_SOURCES) \
 	asn1_err.c asn1_err.h \
-	test_asn1-template.c \
 	rfc2459_asn1_files rfc2459_asn1*.h* \
 	cms_asn1_files cms_asn1*.h* \
 	krb5_asn1_files krb5_asn1*.h* \

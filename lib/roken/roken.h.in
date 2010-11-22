@@ -54,7 +54,8 @@
 #ifdef HAVE_WINSOCK
 /* Declarations for Microsoft Windows */
 
-#include<ws2tcpip.h>
+#include <winsock2.h>
+#include <ws2tcpip.h>
 
 /*
  * error codes for inet_ntop/inet_pton 

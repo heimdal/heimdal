@@ -78,6 +78,7 @@ OBJDIR		=$(SRC)\out\obj_$(OUTDIR)
 INCDIR		=$(DESTDIR)\inc
 LIBDIR		=$(DESTDIR)\lib
 BINDIR		=$(DESTDIR)\bin
+PLUGINDIR	=$(BINDIR)\plugin\krb5
 DOCDIR		=$(DESTDIR)\doc
 SBINDIR		=$(BINDIR)
 LIBEXECDIR	=$(BINDIR)
@@ -386,6 +387,9 @@ mkdirs:
 !  endif
 !  if !exist($(BINDIR))
 	$(MKDIR) $(BINDIR)
+!  endif
+!  if !exist($(PLUGINDIR))
+	$(MKDIR) $(PLUGINDIR)
 !  endif
 !  if !exist($(INCDIR))
 	$(MKDIR) $(INCDIR)

@@ -1413,7 +1413,6 @@ nt2unixtime(uint64_t t)
  * @param username name of the user, as sent in the message, assumed to be in UTF8.
  * @param target the name of the target, assumed to be in UTF8.
  * @param serverchallenge challenge as sent by the server in the type2 message.
- * @param infotarget infotarget as sent by the server in the type2 message.
  * @param ntlmv2 calculated session key
  * @param answer ntlm response answer, should be freed with heim_ntlm_free_buf().
  *

@@ -35,6 +35,8 @@ klist_LDADD	= $(kinit_LDADD)
 
 kimpersonate_LDADD = $(kinit_LDADD)
 
+kswitch_LDADD = $(kinit_LDADD) $(LIB_readline)
+
 dist_kdigest_SOURCES = kdigest.c
 nodist_kdigest_SOURCES = kdigest-commands.c
 

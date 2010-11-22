@@ -713,6 +713,53 @@ Configure the system startup script to start the kcm process,
 	default_cc_type = KCM
 @end example
 
+Now when you run @command{kinit} it doesn't overwrite your existing
+credentials but rather just add them to the set of
+credentials. @command{klist -l} lists the credentials and the star
+marks the default credential.
+
+@example
+$ kinit lha@@KTH.SE
+lha@@KTH.SE's Password: 
+$ klist -l
+  Name         Cache name               Expires         
+lha@@KTH.SE   0                        Nov 22 23:09:40   *
+lha@@SU.SE    Initial default ccache   Nov 22 14:14:24   
+@end example
+
+When switching between credentials you can use @command{kswitch}.
+
+@example
+$ kswitch -i
+     Principal
+1    lha@@KTH.SE
+2    lha@@SU.SE
+Select number: 2
+@end example
+
+After switching, a new set of credentials are used as default.
+
+@example
+$ klist -l
+  Name         Cache name               Expires         
+lha@@SU.SE    Initial default ccache   Nov 22 14:14:24   *
+lha@@KTH.SE   0                        Nov 22 23:09:40   
+@end example
+
+Som applications, like openssh with Simon Wilkinsons patch applied,
+support specifiying that credential to use.  The example below will
+login to the host computer.kth.se using lha@@KTH.SE (not the current
+default credential).
+
+@example
+$ ssh \
+   -o GSSAPIAuthentication=yes \
+   -o GSSAPIKeyExchange=yes \
+   -o GSSAPIClientIdentity=lha@@KTH.SE \
+   computer.kth.se
+@end example
+
+
 
 @node Cross realm, Transit policy, Credential cache server - KCM, Setting up a realm
 @section Cross realm

@@ -33,6 +33,10 @@
 
 #include "kuser_locl.h"
 
+#ifdef HAVE_READLINE
+char *readline(char *prompt);
+#endif
+
 /*
  *
  */
@@ -42,6 +46,7 @@ static int help_flag		= 0;
 static char *cache;
 static char *principal;
 static char *type;
+static int interactive_flag;
 
 static struct getargs args[] = {
     { "type",			't', arg_string, &type,
@@ -50,6 +55,8 @@ static struct getargs args[] = {
       NP_("name of credential cache", ""), "cache" },
     { "principal",		'p', arg_string, &principal,
       NP_("name of principal", ""), "principal" },
+    { "interactive", 		'i', arg_flag, &interactive_flag,
+      NP_("interactive selection", ""), NULL },
     { "version", 		0,   arg_flag, &version_flag,
       NP_("print version", ""), NULL },
     { "help",			0,   arg_flag, &help_flag, NULL, NULL}
@@ -106,7 +113,65 @@ main (int argc, char **argv)
 	krb5_errx(context, 1,
 		  N_("Both --cache and --principal given, choose one", ""));
 
-    if (principal) {
+    if (interactive_flag) {
+	krb5_cc_cache_cursor cursor;
+	krb5_ccache *ids;
+	size_t i, len = 0;
+	char *name;
+	rtbl_t ct;
+
+	ct = rtbl_create();
+
+	rtbl_add_column (ct, "", 0);
+	rtbl_add_column (ct, "Principal", 0);
+	rtbl_set_column_prefix(ct, "Principal", "    ");
+
+	ret = krb5_cc_cache_get_first (context, NULL, &cursor);
+	if (ret)
+	    krb5_err (context, 1, ret, "krb5_cc_cache_get_first");
+
+	while (krb5_cc_cache_next (context, cursor, &id) == 0) {
+	    krb5_principal p;
+	    char num[10];
+	
+	    ret = krb5_cc_get_principal(context, id, &p);
+	    if (ret)
+		continue;
+
+	    ret = krb5_unparse_name(context, p, &name);
+	    krb5_free_principal(context, p);
+
+	    snprintf(num, sizeof(num), "%d", (int)(len + 1));
+	    rtbl_add_column_entry(ct, "", num);
+	    rtbl_add_column_entry(ct, "Principal", name);
+	    free(name);
+	    
+	    ids = erealloc(ids, (len + 1) * sizeof(ids[0]));
+	    ids[len] = id;
+	    len++;
+	}
+	krb5_cc_cache_end_seq_get(context, cursor);
+
+	rtbl_format(ct, stdout);
+	rtbl_destroy(ct);
+
+	name = readline("Select number: ");
+	if (name) {
+	    i = atoi(name);
+	    if (i == 0)
+		krb5_errx(context, 1, "Cache number '%s' is invalid", name);
+	    if (i > len)
+		krb5_errx(context, 1, "Cache number '%s' is too large", name);
+	    
+	    id = ids[i - 1];
+	    ids[i - 1] = NULL;
+	} else
+	    krb5_errx(context, 1, "No cache selected");
+	for (i = 0; i < len; i++)
+	    if (ids[i])
+		krb5_cc_close(context, ids[i]);
+
+    } else if (principal) {
 	krb5_principal p;
 
 	ret = krb5_parse_name(context, principal, &p);

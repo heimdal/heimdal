@@ -84,6 +84,8 @@
 #endif
 #include "crypto-headers.h" /* for UI_UTIL_read_pw_string */
 
+#include <rtbl.h>
+
 #ifdef HAVE_LOCALE_H
 #include <locale.h>
 #endif

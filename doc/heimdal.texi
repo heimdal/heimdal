@@ -91,6 +91,7 @@ Setting up a realm
 * Slave Servers::               
 * Incremental propagation::     
 * Encryption types and salting::                     
+* Credential cache server - KCM::
 * Cross realm::                 
 * Transit policy::              
 * Setting up DNS::              

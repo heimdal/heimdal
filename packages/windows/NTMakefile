@@ -30,9 +30,11 @@
 #
 
 RELDIR=packages\windows
-SUBDIRS=kfw_shim sdk
+SUBDIRS=sdk
 
 !include ../../windows/NTMakefile.w32
 
 # Note: the assembly directory is built as a child of the \lib
 # directory since the application manifest is required at that point.
+
+# The installer directory is built separately at the end of the build.

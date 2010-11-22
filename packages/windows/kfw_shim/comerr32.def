@@ -1,9 +1,0 @@
-; This is a generated file.  Do not modify directly.
-EXPORTS
-	add_error_table = _add_error_table@4	@1
-	com_err = com_err.com_err	@2
-	com_err_va = com_err._com_err_va@16	@3
-	error_message = com_err._error_message@4	@4
-	remove_error_table = _remove_error_table@4	@5
-	reset_com_err_hook = SHIM_reset_com_err_hook	@6
-	set_com_err_hook = SHIM_set_com_err_hook	@7

@@ -154,7 +154,7 @@ static krb5_error_code
 parse_list(struct fileptr *f, unsigned *lineno, krb5_config_binding **parent,
 	   const char **err_message)
 {
-    char buf[BUFSIZ];
+    char buf[KRB5_BUFSIZ];
     krb5_error_code ret;
     krb5_config_binding *b = NULL;
     unsigned beg_lineno = *lineno;
@@ -352,7 +352,7 @@ krb5_config_parse_debug (struct fileptr *f,
 {
     krb5_config_section *s = NULL;
     krb5_config_binding *b = NULL;
-    char buf[BUFSIZ];
+    char buf[KRB5_BUFSIZ];
     krb5_error_code ret;
 
     while (config_fgets(buf, sizeof(buf), f) != NULL) {

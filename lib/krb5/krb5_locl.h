@@ -212,7 +212,7 @@ struct _krb5_krb_auth_data;
 #endif
 
 
-#define KRB5_BUFSIZ 1024
+#define KRB5_BUFSIZ 2048
 
 typedef enum {
     KRB5_INIT_CREDS_TRISTATE_UNSET = 0,

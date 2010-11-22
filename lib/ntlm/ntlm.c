@@ -1290,8 +1290,7 @@ heim_ntlm_build_ntlm2_master(void *key, size_t len,
 /**
  * Given a key and encrypted session, unwrap the session key
  *
- * @param key the sessionBaseKey
- * @param len length of key
+ * @param baseKey the sessionBaseKey
  * @param encryptedSession encrypted session, type3.session field.
  * @param session generated session nonce, should be freed with heim_ntlm_free_buf().
  *

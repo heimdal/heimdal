@@ -99,6 +99,7 @@ test::
 
 {$(BINDIR)}.dll{$(ASMKRBDIR)}.dll:
 	$(CP) $< $@
+	$(DLLPREP_MERGE)
 
 {$(BINDIR)}.pdb{$(ASMKRBDIR)}.pdb:
 	$(CP) $< $@

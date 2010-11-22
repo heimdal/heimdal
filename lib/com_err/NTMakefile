@@ -54,7 +54,7 @@ $(COMERRDLL): $(libcomerr_OBJs) $(OBJ)\libcom_err-version.res
 	$(DLLGUILINK_C) -out:$(COMERRDLL) -implib:$(LIBCOMERR) $** \
 		$(LIBROKEN) \
 		-def:libcom_err-exports.def
-	$(DLLPREP)
+	$(DLLPREP_NODIST)
 
 !endif
 

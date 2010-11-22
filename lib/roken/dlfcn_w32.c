@@ -134,6 +134,7 @@ ROKEN_LIB_FUNCTION void  * ROKEN_LIB_CALL
 dlopen(const char *fn, int flags)
 {
     HMODULE hm;
+    UINT    old_error_mode;
 
     /* We don't support dlopen(0, ...) on Windows.*/
     if ( fn == NULL ) {
@@ -141,11 +142,15 @@ dlopen(const char *fn, int flags)
 	return NULL;
     }
 
+    old_error_mode = SetErrorMode(SEM_FAILCRITICALERRORS);
+
     hm = LoadLibrary(fn);
 
     if (hm == NULL) {
 	set_error_from_last();
     }
+
+    SetErrorMode(old_error_mode);
 
     return (void *) hm;
 }

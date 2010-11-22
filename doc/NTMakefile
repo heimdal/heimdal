@@ -105,8 +105,10 @@ $(DOCDIR)\hx509.chm: $(OBJ)\hx509\hx509.hhp $(OBJ)\hx509\toc.hhc
 	$(CP) hx509.chm $@
 	cd $(SRCDIR)
 
+!ifndef NO_DOC
 all:: $(OBJ)\heimdal\index.html $(OBJ)\hx509\index.html \
 	$(DOCDIR)\heimdal.chm $(DOCDIR)\hx509.chm
+!endif
 
 clean::
 	-$(RM) $(OBJ)\heimdal\*.*

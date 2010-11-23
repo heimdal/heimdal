@@ -766,13 +766,13 @@ ROKEN_LIB_FUNCTION void ROKEN_LIB_CALL vsyslog(int, const char *, va_list);
 #endif
 
 #if !HAVE_DECL_OPTARG
-extern char *optarg;
+ROKEN_LIB_VARIABLE extern char *optarg;
 #endif
 #if !HAVE_DECL_OPTIND
-extern int optind;
+ROKEN_LIB_VARIABLE extern int optind;
 #endif
 #if !HAVE_DECL_OPTERR
-extern int opterr;
+ROKEN_LIB_VARIABLE extern int opterr;
 #endif
 
 #ifndef HAVE_GETIPNODEBYNAME

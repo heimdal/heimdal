@@ -29,6 +29,7 @@
  * 
  **********************************************************************/
 
+#include <config.h>
 #include <windows.h>
 #include <dlfcn.h>
 #include <strsafe.h>

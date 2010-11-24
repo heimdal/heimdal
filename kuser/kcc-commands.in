@@ -43,6 +43,62 @@ command = {
 	}
 }
 command = {
+	name = "kgetcred"
+	help = "Acquire a Kerberos ticket"
+	option = {
+	       long = "enctype"
+	       short = "e"
+	       type = "string"
+	       argument = "enctype"
+	       help = "Encryption type to use"
+	}
+	option = {
+	       long = "cache"
+	       short = "c"
+	       type = "string"
+	       argument = "cachename"
+	       help = "Credentials cache"
+	}
+}
+command = {
+	name = "kvno"
+	help = "Acquire a Kerberos ticket"
+	option = {
+	       long = "enctype"
+	       short = "e"
+	       type = "string"
+	       argument = "enctype"
+	       help = "Encryption type to use"
+	}
+	option = {
+	       long = "cache"
+	       short = "c"
+	       type = "string"
+	       argument = "cachename"
+	       help = "Credentials cache"
+	}
+	option = {
+	       long = "keytab"
+	       short = "k"
+	       type = "string"
+	       argument = "keytabname"
+	       help = "Keytab to use"
+	}
+	option = {
+	       long = "server"
+	       short = "S"
+	       type = "string"
+	       argument = "principal"
+	       help = "Server to get ticket for"
+	}
+	option = {
+	       long = "quiet"
+	       short = "q"
+	       type = "flag"
+	       help = "Quiet"
+	}
+}
+command = {
 	name = "help"
 	name = "?"
 	argument = "[command]"

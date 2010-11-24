@@ -69,6 +69,28 @@ klist(struct klist_options *opt, int argc, char **argv)
     return 0;
 }
 
+int
+kgetcred(struct kgetcred_options *opt, int argc, char **argv)
+{
+    return 0;
+}
+
+/*
+ * Wrapper for command line compatiblity
+ */
+
+int
+kvno(struct kvno_options *opt, int argc, char **argv)
+{
+    struct kgetcred_options k;
+    memset(&k, 0, sizeof(k));
+
+    k.cache_string = opt->cache_string;
+    k.enctype_string = opt->enctype_string;
+
+    return kgetcred(&k, argc, argv);
+}
+
 static int
 command_alias(const char *name)
 {

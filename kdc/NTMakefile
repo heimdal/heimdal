@@ -104,7 +104,6 @@ LIBKDC_OBJS=\
 	$(OBJ)\pkinit.obj	\
 	$(OBJ)\log.obj		\
 	$(OBJ)\misc.obj		\
-	$(OBJ)\kaserver.obj	\
 	$(OBJ)\kx509.obj	\
 	$(OBJ)\process.obj	\
 	$(OBJ)\windc.obj
@@ -142,7 +141,6 @@ libkdc_la_SOURCES = 		\
 	pkinit.c		\
 	log.c			\
 	misc.c			\
-	kaserver.c		\
 	kx509.c			\
 	process.c		\
 	windc.c			\

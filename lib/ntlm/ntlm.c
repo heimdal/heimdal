@@ -455,7 +455,7 @@ heim_ntlm_decode_targetinfo(const struct ntlm_buf *data,
 {
     uint16_t type, len;
     krb5_storage *in;
-    int ret, done = 0;
+    int ret = 0, done = 0;
 
     memset(ti, 0, sizeof(*ti));
 

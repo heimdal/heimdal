@@ -55,10 +55,7 @@ ROKEN_LIB_VARIABLE char	*optarg; /* argument associated with option */
 #define	EMSG	""
 
 ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
-getopt(nargc, nargv, ostr)
-	int nargc;
-	char * const *nargv;
-	const char *ostr;
+getopt(int nargc, char * const *nargv, const char *ostr)
 {
 	static char *place = EMSG;		/* option letter processing */
 	char *oli;			/* option letter list index */

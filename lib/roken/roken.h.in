@@ -765,6 +765,15 @@ ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL get_window_size(int fd, struct winsize *);
 ROKEN_LIB_FUNCTION void ROKEN_LIB_CALL vsyslog(int, const char *, va_list);
 #endif
 
+#ifndef HAVE_GETOPT
+#define getopt rk_getopt
+#define optarg rk_optarg
+#define optind rk_optind
+#define opterr rk_opterr
+ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
+getopt(int nargc, char * const *nargv, const char *ostr);
+#endif
+
 #if !HAVE_DECL_OPTARG
 ROKEN_LIB_VARIABLE extern char *optarg;
 #endif

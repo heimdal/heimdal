@@ -18,7 +18,7 @@ man_MANS = \
 bin_PROGRAMS = kinit klist kdestroy kgetcred kswitch
 libexec_PROGRAMS = kdigest kimpersonate
 
-noinst_PROGRAMS = kverify kdecode_ticket generate-requests copy_cred_cache
+noinst_PROGRAMS = kcc kverify kdecode_ticket generate-requests copy_cred_cache
 
 kinit_LDADD = \
 	$(LIB_kafs) \
@@ -37,6 +37,15 @@ kimpersonate_LDADD = $(kinit_LDADD)
 
 kswitch_LDADD = $(kinit_LDADD) $(LIB_readline)
 
+kcc_LDADD = \
+	$(top_builddir)/lib/sl/libsl.la \
+	$(kinit_LDADD)
+
+dist_kcc_SOURCES = kcc.c
+nodist_kcc_SOURCES = kcc-commands.c
+
+$(kcc_OBJECTS): kcc-commands.h
+
 dist_kdigest_SOURCES = kdigest.c
 nodist_kdigest_SOURCES = kdigest-commands.c
 
@@ -50,10 +59,15 @@ kdigest_LDADD = \
 
 $(kdigest_OBJECTS): kdigest-commands.h
 
-CLEANFILES = kdigest-commands.h kdigest-commands.c
+CLEANFILES = \
+	kdigest-commands.h kdigest-commands.c \
+	kcc-commands.h kcc-commands.c
 
 kdigest-commands.c kdigest-commands.h: kdigest-commands.in
 	$(SLC) $(srcdir)/kdigest-commands.in
+
+kcc-commands.c kcc-commands.h: kcc-commands.in
+	$(SLC) $(srcdir)/kcc-commands.in
 
 LDADD = \
 	$(top_builddir)/lib/krb5/libkrb5.la \
@@ -61,5 +75,6 @@ LDADD = \
 	$(top_builddir)/lib/asn1/libasn1.la \
 	$(LIB_roken)
 
-EXTRA_DIST = $(man_MANS) kuser_locl.h kdigest-commands.in copy_cred_cache.1
+EXTRA_DIST = $(man_MANS) \
+	kuser_locl.h kcc-commands.in kdigest-commands.in copy_cred_cache.1
 

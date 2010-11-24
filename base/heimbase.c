@@ -36,6 +36,10 @@
 #include "baselocl.h"
 #include <syslog.h>
 
+#ifndef HAVE_VASPRINTF
+#include <roken.h>
+#endif
+
 static heim_base_atomic_type tidglobal = HEIM_TID_USER;
 
 struct heim_base {

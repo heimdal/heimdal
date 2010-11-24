@@ -35,44 +35,11 @@ localcflags=-DASN1_LIB
 
 !include ../../windows/NTMakefile.w32
 
-gen_files_ocsp = 				\
-	$(OBJ)\asn1_OCSPBasicOCSPResponse.x	\
-	$(OBJ)\asn1_OCSPCertID.x		\
-	$(OBJ)\asn1_OCSPCertStatus.x		\
-	$(OBJ)\asn1_OCSPInnerRequest.x		\
-	$(OBJ)\asn1_OCSPKeyHash.x		\
-	$(OBJ)\asn1_OCSPRequest.x		\
-	$(OBJ)\asn1_OCSPResponderID.x		\
-	$(OBJ)\asn1_OCSPResponse.x		\
-	$(OBJ)\asn1_OCSPResponseBytes.x		\
-	$(OBJ)\asn1_OCSPResponseData.x		\
-	$(OBJ)\asn1_OCSPResponseStatus.x	\
-	$(OBJ)\asn1_OCSPSignature.x		\
-	$(OBJ)\asn1_OCSPSingleResponse.x	\
-	$(OBJ)\asn1_OCSPTBSRequest.x		\
-	$(OBJ)\asn1_OCSPVersion.x		\
-	$(OBJ)\asn1_id_pkix_ocsp.x		\
-	$(OBJ)\asn1_id_pkix_ocsp_basic.x	\
-	$(OBJ)\asn1_id_pkix_ocsp_nonce.x
+gen_files_ocsp = $(OBJ)\asn1_ocsp_asn1.x
 
-gen_files_pkcs10 = 				\
-	$(OBJ)\asn1_CertificationRequestInfo.x	\
-	$(OBJ)\asn1_CertificationRequest.x
+gen_files_pkcs10 = $(OBJ)\asn1_pkcs10_asn1.x
 
-gen_files_crmf = 				\
-	$(OBJ)\asn1_CRMFRDNSequence.x		\
-	$(OBJ)\asn1_CertReqMessages.x		\
-	$(OBJ)\asn1_CertReqMsg.x		\
-	$(OBJ)\asn1_CertRequest.x		\
-	$(OBJ)\asn1_CertTemplate.x		\
-	$(OBJ)\asn1_Controls.x			\
-	$(OBJ)\asn1_PBMParameter.x		\
-	$(OBJ)\asn1_PKMACValue.x		\
-	$(OBJ)\asn1_POPOPrivKey.x		\
-	$(OBJ)\asn1_POPOSigningKey.x		\
-	$(OBJ)\asn1_POPOSigningKeyInput.x	\
-	$(OBJ)\asn1_ProofOfPossession.x		\
-	$(OBJ)\asn1_SubsequentMessage.x	
+gen_files_crmf = $(OBJ)\asn1_crmf_asn1.x
 
 libhx509_la_OBJS =			\
 	$(OBJ)\ca.obj			\
@@ -151,7 +118,7 @@ $(gen_files_crmf:.x=.c): $$(@R).x
 
 $(gen_files_ocsp) $(OBJ)\ocsp_asn1.hx: $(asn1_compile) ocsp.asn1
 	cd $(OBJ)
-	$(asn1_compile) \
+	$(asn1_compile) --one-code-file \
 		--preserve-binary=OCSPTBSRequest \
 		--preserve-binary=OCSPResponseData \
 		$(SRCDIR)\ocsp.asn1 ocsp_asn1 \
@@ -160,7 +127,7 @@ $(gen_files_ocsp) $(OBJ)\ocsp_asn1.hx: $(asn1_compile) ocsp.asn1
 
 $(gen_files_pkcs10) $(OBJ)\pkcs10_asn1.hx: $(asn1_compile) pkcs10.asn1
 	cd $(OBJ)
-	$(asn1_compile) \
+	$(asn1_compile) --one-code-file \
 		--preserve-binary=CertificationRequestInfo \
 		$(SRCDIR)\pkcs10.asn1 pkcs10_asn1 \
 	|| ( $(RM) -f $(gen_files_pkcs10) $(OBJ)\pkcs10_asn1.h ; exit /b 1 )
@@ -168,7 +135,7 @@ $(gen_files_pkcs10) $(OBJ)\pkcs10_asn1.hx: $(asn1_compile) pkcs10.asn1
 
 $(gen_files_crmf) $(OBJ)\crmf_asn1.hx: $(asn1_compile) crmf.asn1
 	cd $(OBJ)
-	$(asn1_compile) $(SRCDIR)\crmf.asn1 crmf_asn1 \
+	$(asn1_compile) --one-code-file $(SRCDIR)\crmf.asn1 crmf_asn1 \
 	|| ( $(RM) -f $(gen_files_crmf) $(OBJ)\crmf_asn1.h ; exit /b 1 )
 	cd $(SRCDIR)
 

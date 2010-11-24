@@ -202,19 +202,9 @@ $(OBJ)\krb5\gsskrb5-private.h: $(krb5src)
 $(OBJ)\spnego\spnego-private.h: $(spnegosrc)
 	$(PERL) ../../cf/make-proto.pl -q -P remove -p $@ $(spnegosrc)
 
-gssapi_files = 					\
-	$(OBJ)\gssapi\asn1_GSSAPIContextToken.x
+gssapi_files = $(OBJ)\gssapi\asn1_gssapi_asn1.x
 
-spnego_files =					\
-	$(OBJ)\spnego\asn1_ContextFlags.x	\
-	$(OBJ)\spnego\asn1_MechType.x		\
-	$(OBJ)\spnego\asn1_MechTypeList.x	\
-	$(OBJ)\spnego\asn1_NegotiationToken.x	\
-	$(OBJ)\spnego\asn1_NegotiationTokenWin.x \
-	$(OBJ)\spnego\asn1_NegHints.x		\
-	$(OBJ)\spnego\asn1_NegTokenInit.x	\
-	$(OBJ)\spnego\asn1_NegTokenInitWin.x	\
-	$(OBJ)\spnego\asn1_NegTokenResp.x
+spnego_files = $(OBJ)\spnego\asn1_spnego_asn1.x
 
 $(gssapi_files:.x=.c): $$(@R).x
 
@@ -223,14 +213,15 @@ $(spnego_files:.x=.c): $$(@R).x
 $(gssapi_files) $(OBJ)\gssapi\gssapi_asn1.hx $(OBJ)\gssapi\gssapi_asn1-priv.hx: \
 $(BINDIR)\asn1_compile.exe mech\gssapi.asn1
 	cd $(OBJ)\gssapi
-	$(BINDIR)\asn1_compile.exe $(SRCDIR)\mech\gssapi.asn1 gssapi_asn1 \
+	$(BINDIR)\asn1_compile.exe --one-code-file $(SRCDIR)\mech\gssapi.asn1 gssapi_asn1 \
 	|| ( $(RM) $(OBJ)\gssapi\gssapi_asn1.h ; exit /b 1 )
 	cd $(SRCDIR)
 
 $(spnego_files) $(OBJ)\spnego\spnego_asn1.hx $(OBJ)\spnego\spnego_asn1-priv.hx: \
 $(BINDIR)\asn1_compile.exe spnego\spnego.asn1
 	cd $(OBJ)\spnego
-	$(BINDIR)\asn1_compile --sequence=MechTypeList $(SRCDIR)\spnego\spnego.asn1 spnego_asn1 \
+	$(BINDIR)\asn1_compile --one-code-file --sequence=MechTypeList \
+		$(SRCDIR)\spnego\spnego.asn1 spnego_asn1 \
 	|| ( $(RM) $(OBJ)\spnego\spnego_asn1.h ; exit /b 1 )
 	cd $(SRCDIR)
 

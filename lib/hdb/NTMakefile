@@ -33,28 +33,11 @@ RELDIR=lib\hdb
 
 !include ../../windows/NTMakefile.w32 
 
-gen_files_hdb = \
-	$(OBJ)\asn1_Salt.x \
-	$(OBJ)\asn1_Key.x \
-	$(OBJ)\asn1_Event.x \
-	$(OBJ)\asn1_HDBFlags.x \
-	$(OBJ)\asn1_GENERATION.x \
-	$(OBJ)\asn1_HDB_Ext_PKINIT_acl.x \
-	$(OBJ)\asn1_HDB_Ext_PKINIT_cert.x \
-	$(OBJ)\asn1_HDB_Ext_PKINIT_hash.x \
-	$(OBJ)\asn1_HDB_Ext_Constrained_delegation_acl.x \
-	$(OBJ)\asn1_HDB_Ext_Lan_Manager_OWF.x \
-	$(OBJ)\asn1_HDB_Ext_Password.x \
-	$(OBJ)\asn1_HDB_Ext_Aliases.x \
-	$(OBJ)\asn1_HDB_extension.x \
-	$(OBJ)\asn1_HDB_extensions.x \
-	$(OBJ)\asn1_hdb_entry.x \
-	$(OBJ)\asn1_hdb_entry_alias.x \
-	$(OBJ)\asn1_hdb_keyset.x
+gen_files_hdb = $(OBJ)\asn1_hdb_asn1.x
 
 $(gen_files_hdb) $(OBJ)\hdb_asn1.hx $(OBJ)\hdb_asn1-priv.hx: $(BINDIR)\asn1_compile.exe hdb.asn1
 	cd $(OBJ)
-	$(BINDIR)\asn1_compile.exe $(SRCDIR)\hdb.asn1 hdb_asn1
+	$(BINDIR)\asn1_compile.exe --one-code-file $(SRCDIR)\hdb.asn1 hdb_asn1
 	cd $(SRCDIR)
 
 $(gen_files_hdb:.x=.c): $$(@R).x

@@ -38,9 +38,12 @@
 #include <string.h>
 #include <errno.h>
 #include <limits.h>
-#include <unistd.h>
 
 #include "config.h"
+
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>
+#endif
 
 #include "heimqueue.h"
 #include "heim_threads.h"

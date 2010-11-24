@@ -54,9 +54,9 @@ static const char *const rcsid[] = { (const char *)rcsid, "@(#)" msg }
 #ifdef BUILD_KRB5_LIB
 #ifndef KRB5_LIB
 #ifdef _WIN32
-#define KRB5_LIB_FUNCTION __declspec(dllexport)
+#define KRB5_LIB_FUNCTION
 #define KRB5_LIB_CALL     __stdcall
-#define KRB5_LIB_VARIABLE __declspec(dllexport)
+#define KRB5_LIB_VARIABLE
 #else
 #define KRB5_LIB_FUNCTION
 #define KRB5_LIB_CALL
@@ -84,9 +84,9 @@ static const char *const rcsid[] = { (const char *)rcsid, "@(#)" msg }
 #ifdef BUILD_GSSAPI_LIB
 #ifndef GSSAPI_LIB
 #ifdef _WIN32
-#define GSSAPI_LIB_FUNCTION __declspec(dllexport)
+#define GSSAPI_LIB_FUNCTION
 #define GSSAPI_LIB_CALL     __stdcall
-#define GSSAPI_LIB_VARIABLE __declspec(dllexport)
+#define GSSAPI_LIB_VARIABLE
 #else
 #define GSSAPI_LIB_FUNCTION
 #define GSSAPI_LIB_CALL

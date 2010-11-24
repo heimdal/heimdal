@@ -46,6 +46,12 @@
 #include "slc.h"
 extern FILE *yyin;
 extern struct assignment *assignment;
+
+/* Declarations for Bison:
+ */
+#define YYMALLOC        malloc
+#define YYFREE          free
+
 %}
 
 %union {

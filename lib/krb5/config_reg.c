@@ -87,11 +87,10 @@ _krb5_parse_reg_value_as_multi_string(krb5_context context,
                                       DWORD type, DWORD cb_data, char *separator)
 {
     LONG                rcode = ERROR_MORE_DATA;
-    DWORD               cb_alloc;
-    krb5_error_code     code = 0;
 
     BYTE                static_buffer[16384];
-    BYTE                *pbuffer;
+    BYTE                *pbuffer = &static_buffer[0];
+    DWORD               cb_alloc = sizeof(static_buffer);
     char                *ret_string = NULL;
 
     /* If we know a type and cb_data from a previous call to
@@ -213,7 +212,7 @@ have_data:
             ret_string = (char *) pbuffer;
             pbuffer = NULL;
         } else {
-            ret_string = strdup(pbuffer);
+            ret_string = strdup((char *) pbuffer);
         }
     }
     break;

@@ -855,23 +855,23 @@ heim_ntlm_decode_type3(const struct ntlm_buf *buf,
     CHECK(type, 3);
     CHECK(ret_sec_buffer(in, &lm), 0);
     if (lm.allocated)
-	min_offset = MIN(min_offset, lm.offset);
+	min_offset = min(min_offset, lm.offset);
     CHECK(ret_sec_buffer(in, &ntlm), 0);
     if (ntlm.allocated)
-	min_offset = MIN(min_offset, ntlm.offset);
+	min_offset = min(min_offset, ntlm.offset);
     CHECK(ret_sec_buffer(in, &target), 0);
     if (target.allocated)
-	min_offset = MIN(min_offset, target.offset);
+	min_offset = min(min_offset, target.offset);
     CHECK(ret_sec_buffer(in, &username), 0);
     if (username.allocated)
-	min_offset = MIN(min_offset, username.offset);
+	min_offset = min(min_offset, username.offset);
     CHECK(ret_sec_buffer(in, &ws), 0);
     if (ws.allocated)
-	min_offset = MIN(min_offset, ws.offset);
+	min_offset = min(min_offset, ws.offset);
 
     if (min_offset > 52) {
 	CHECK(ret_sec_buffer(in, &sessionkey), 0);
-	min_offset = MAX(min_offset, sessionkey.offset);
+	min_offset = max(min_offset, sessionkey.offset);
 	CHECK(krb5_ret_uint32(in, &type3->flags), 0);
     }
     if (min_offset > 52 + 8 + 4 + 8) {

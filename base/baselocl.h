@@ -62,7 +62,12 @@
 
 #define heim_base_exchange_pointer(t,v) __sync_lock_test_and_set((t), (v))
 
-#elif 0 /* windows */
+#elif defined(_WIN32)
+
+#define heim_base_atomic_inc(x) InterlockedIncrement(x)
+#define heim_base_atomic_dec(x) InterlockedDecrement(x)
+#define heim_base_atomic_type	LONG
+#define heim_base_atomic_max    MAXLONG
 
 #define heim_base_exchange_pointer(t,v) InterlockedExchangePointer((t),(v))
 

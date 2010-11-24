@@ -49,7 +49,6 @@ libkrb5_OBJS =			\
 	$(OBJ)\codec.obj		    \
 	$(OBJ)\config_file.obj		    \
 	$(OBJ)\config_reg.obj		    \
-	$(OBJ)\convert_creds.obj	    \
 	$(OBJ)\constants.obj		    \
 	$(OBJ)\context.obj		    \
 	$(OBJ)\copy_host_realm.obj	    \
@@ -146,7 +145,6 @@ libkrb5_OBJS =			\
 	$(OBJ)\ticket.obj		    \
 	$(OBJ)\time.obj			    \
 	$(OBJ)\transited.obj		    \
-	$(OBJ)\v4_glue.obj		    \
 	$(OBJ)\verify_init.obj		    \
 	$(OBJ)\verify_user.obj		    \
 	$(OBJ)\version.obj		    \
@@ -169,7 +167,8 @@ INCFILES=			\
 	$(INCDIR)\krb5_locl.h	\
 	$(INCDIR)\krb5-protos.h	\
 	$(INCDIR)\krb5-private.h	\
-	$(INCDIR)\krb5-v4compat.h
+	$(INCDIR)\krb5-v4compat.h	\
+	$(INCDIR)\crypto.h
 
 all:: $(INCFILES)
 
@@ -192,13 +191,22 @@ dist_libkrb5_la_SOURCES =			\
 	codec.c					\
 	config_file.c				\
 	config_reg.c				\
-	convert_creds.c				\
 	constants.c				\
 	context.c				\
 	copy_host_realm.c			\
 	crc.c					\
 	creds.c					\
 	crypto.c				\
+	crypto.h				\
+	crypto-aes.c				\
+	crypto-algs.c				\
+	crypto-arcfour.c			\
+	crypto-des.c				\
+	crypto-des-common.c			\
+	crypto-des3.c				\
+	crypto-evp.c				\
+	crypto-pk.c				\
+	crypto-rand.c				\
 	doxygen.c				\
 	data.c					\
 	deprecated.c				\
@@ -262,12 +270,18 @@ dist_libkrb5_la_SOURCES =			\
 	read_message.c				\
 	recvauth.c				\
 	replay.c				\
+	salt.c					\
+	salt-aes.c				\
+	salt-arcfour.c				\
+	salt-des.c				\
+	salt-des3.c				\
 	scache.c				\
 	send_to_kdc.c				\
 	sendauth.c				\
 	set_default_realm.c			\
 	sock_principal.c			\
 	store.c					\
+	store-int.c				\
 	store-int.h				\
 	store_emem.c				\
 	store_fd.c				\
@@ -277,7 +291,6 @@ dist_libkrb5_la_SOURCES =			\
 	ticket.c				\
 	time.c					\
 	transited.c				\
-	v4_glue.c				\
 	verify_init.c				\
 	verify_user.c				\
 	version.c				\
@@ -330,6 +343,43 @@ clean::
 	-$(RM) $(OBJ)\libkrb5-exports.def
 
 #----------------------------------------------------------------------
+# librfc3961
+
+librfc3961_OBJS=\
+	$(OBJ)\crc.obj			\
+	$(OBJ)\crypto.obj		\
+	$(OBJ)\crypto-aes.obj		\
+	$(OBJ)\crypto-algs.obj		\
+	$(OBJ)\crypto-arcfour.obj	\
+	$(OBJ)\crypto-des.obj		\
+	$(OBJ)\crypto-des-common.obj	\
+	$(OBJ)\crypto-des3.obj		\
+	$(OBJ)\crypto-evp.obj		\
+	$(OBJ)\crypto-null.obj		\
+	$(OBJ)\crypto-pk.obj		\
+	$(OBJ)\crypto-rand.obj		\
+	$(OBJ)\crypto-stubs.obj		\
+	$(OBJ)\data.obj			\
+	$(OBJ)\error_string.obj		\
+	$(OBJ)\keyblock.obj		\
+	$(OBJ)\n-fold.obj		\
+	$(OBJ)\salt.obj			\
+	$(OBJ)\salt-aes.obj		\
+	$(OBJ)\salt-arcfour.obj		\
+	$(OBJ)\salt-des.obj		\
+	$(OBJ)\salt-des3.obj		\
+	$(OBJ)\store-int.obj		\
+	$(OBJ)\warn.obj
+
+$(LIBRFC3961): $(librfc3961_OBJS)
+	$(LIBCON)
+
+all:: $(LIBRFC3961)
+
+clean::
+	-$(RM) $(LIBRFC3961)
+
+#----------------------------------------------------------------------
 # Tools
 
 all-tools:: $(BINDIR)\verify_krb5_conf.exe
@@ -353,35 +403,36 @@ $(BINDIR)\verify_krb5_conf.exe: $(OBJ)\verify_krb5_conf.obj $(LIBHEIMDAL) $(LIBR
 test:: test-binaries test-run
 
 test_binaries =				\
-	$(OBJ)\krbhst-test.exe		\
-	$(OBJ)\test_alname.exe		\
-	$(OBJ)\test_crypto.exe		\
-	$(OBJ)\test_get_addrs.exe	\
-	$(OBJ)\test_kuserok.exe		\
-	$(OBJ)\test_renew.exe		\
-	$(OBJ)\test_forward.exe		\
 	$(OBJ)\aes-test.exe		\
 	$(OBJ)\derived-key-test.exe	\
+	$(OBJ)\krbhst-test.exe		\
 	$(OBJ)\n-fold-test.exe		\
 	$(OBJ)\parse-name-test.exe	\
 	$(OBJ)\store-test.exe		\
 	$(OBJ)\string-to-key-test.exe	\
 	$(OBJ)\test_acl.exe		\
 	$(OBJ)\test_addr.exe		\
+	$(OBJ)\test_alname.exe		\
 	$(OBJ)\test_cc.exe		\
 	$(OBJ)\test_config.exe		\
-	$(OBJ)\test_hostname.exe	\
-	$(OBJ)\test_prf.exe		\
-	$(OBJ)\test_store.exe		\
+	$(OBJ)\test_crypto.exe		\
 	$(OBJ)\test_crypto_wrapping.exe	\
+	$(OBJ)\test_forward.exe		\
+	$(OBJ)\test_get_addrs.exe	\
+	$(OBJ)\test_hostname.exe	\
 	$(OBJ)\test_keytab.exe		\
+	$(OBJ)\test_kuserok.exe		\
 	$(OBJ)\test_mem.exe		\
 	$(OBJ)\test_pac.exe		\
-	$(OBJ)\test_plugin.exe		\
-	$(OBJ)\test_princ.exe		\
 	$(OBJ)\test_pkinit_dh2key.exe	\
 	$(OBJ)\test_pknistkdf.exe	\
-	$(OBJ)\test_time.exe
+	$(OBJ)\test_plugin.exe		\
+	$(OBJ)\test_prf.exe		\
+	$(OBJ)\test_princ.exe		\
+	$(OBJ)\test_renew.exe		\
+	$(OBJ)\test_rfc3961		\
+	$(OBJ)\test_store.exe		\
+	$(OBJ)\test_time.exe		\
 
 test-binaries: $(test_binaries)
 
@@ -399,6 +450,7 @@ test-run:
 	test_config.exe
 	test_prf.exe
 	test_store.exe
+	test_crypto.exe
 	test_crypto_wrapping.exe
 	test_keytab.exe
 	test_mem.exe
@@ -411,6 +463,10 @@ test-run:
 	cd $(SRCDIR)
 
 $(test_binaries): $$(@R).obj $(LIBHEIMDAL) $(LIBVERS) $(LIBROKEN)
+	$(EXECONLINK)
+	$(EXEPREP_NODIST)
+
+$(OBJ)\test_rfc3961.exe: $(OBJ)\test_rfc3961.obj $(LIBRFC3961) $(LIBHEIMDAL) $(LIBVERS) $(LIBROKEN)
 	$(EXECONLINK)
 	$(EXEPREP_NODIST)
 

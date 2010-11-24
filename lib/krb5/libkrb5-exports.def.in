@@ -1,6 +1,8 @@
 EXPORTS
+#ifdef KRB4
 	krb524_convert_creds_kdc
 	krb524_convert_creds_kdc_ccache
+#endif
 	krb5_abort
 	krb5_abortx
 	krb5_acl_match_file
@@ -102,6 +104,7 @@ EXPORTS
 	krb5_cc_get_type
 	krb5_cc_get_version
 	krb5_cc_initialize
+        krb5_cc_last_change_time
 	krb5_cc_move
 	krb5_cc_new_unique
 	krb5_cc_next_cred
@@ -193,6 +196,7 @@ EXPORTS
 	krb5_data_alloc
 	krb5_data_cmp
 	krb5_data_copy
+        krb5_data_ct_cmp
 	krb5_data_free
 	krb5_data_realloc
 	krb5_data_zero
@@ -727,6 +731,7 @@ EXPORTS
 	_krb5_get_krbtgt
 	_krb5_build_authenticator
 
+#ifdef KRB4
         ; V4 compat glue
 	_krb5_krb_tf_setup
 	_krb5_krb_dest_tkt
@@ -739,6 +744,7 @@ EXPORTS
 	_krb5_krb_free_auth_data
 	_krb5_krb_time_to_life
 	_krb5_krb_cr_err_reply
+#endif
 
 	; Shared with libkdc
 	_krb5_AES_string_to_default_iterator

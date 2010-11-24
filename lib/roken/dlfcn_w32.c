@@ -36,7 +36,7 @@
 
 #define ERR_STR_LEN 256
 
-static volatile DWORD dlfcn_tls = TLS_OUT_OF_INDEXES;
+static volatile LONG dlfcn_tls = TLS_OUT_OF_INDEXES;
 
 static DWORD get_tl_error_slot(void)
 {

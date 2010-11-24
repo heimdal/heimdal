@@ -61,9 +61,5 @@ LDADD = \
 	$(top_builddir)/lib/asn1/libasn1.la \
 	$(LIB_roken)
 
-# make sure install-exec-hook doesn't have any commands in Makefile.am.common
-install-exec-hook:
-	(cd $(DESTDIR)$(bindir) && rm -f kauth && $(LN_S) kinit kauth)
-
 EXTRA_DIST = $(man_MANS) kuser_locl.h kdigest-commands.in copy_cred_cache.1
 

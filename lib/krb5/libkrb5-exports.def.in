@@ -246,6 +246,7 @@ EXPORTS
 	krb5_digest_set_username
 	krb5_domain_x500_decode
 	krb5_domain_x500_encode
+	krb5_enmem
 	krb5_eai_to_heim_errno
 	krb5_encode_Authenticator
 	krb5_encode_ETYPE_INFO2

@@ -84,7 +84,7 @@ $(BINDIR)\kgetcred.exe: $(OBJ)\kgetcred.obj $(BINLIBS) $(OBJ)\kgetcred-version.r
 	$(EXEPREP)
 
 
-$(BINDIR)\kswitch.exe: $(OBJ)\kswitch.obj $(BINLIBS) $(OBJ)\kswitch-version.res
+$(BINDIR)\kswitch.exe: $(OBJ)\kswitch.obj $(BINLIBS) $(LIBEDITLINE) $(OBJ)\kswitch-version.res
 	$(EXECONLINK)
 	$(EXEPREP)
 

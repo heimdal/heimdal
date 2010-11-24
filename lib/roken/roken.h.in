@@ -544,7 +544,6 @@ int ROKEN_LIB_FUNCTION rk_strerror_r(int, char *, size_t);
 #endif
 /* This causes a fatal error under Psoriasis */
 #ifndef SunOS
-const char * ROKEN_LIB_FUNCTION hstrerror(int);
 ROKEN_LIB_FUNCTION const char * ROKEN_LIB_CALL hstrerror(int);
 #endif
 #endif

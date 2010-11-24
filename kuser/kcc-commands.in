@@ -38,9 +38,8 @@ command = {
 	option = {
 		long = "cache"
 		short = "c"
-		type = "flag"
+		type = "string"
 		help = "credential cache to list"
-		default = "1"
 	}
 }
 command = {

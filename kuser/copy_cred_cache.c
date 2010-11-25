@@ -31,50 +31,11 @@
  * SUCH DAMAGE.
  */
 
+#include "kuser_locl.h"
 #include <config.h>
-
-#include <stdlib.h>
-#include <krb5.h>
-#include <roken.h>
-#include <getarg.h>
 #include <parse_units.h>
 #include <parse_time.h>
-
-static int krbtgt_only_flag;
-static char *service_string;
-static char *enctype_string;
-static char *flags_string;
-static char *valid_string;
-static int fcache_version;
-static int help_flag;
-static int version_flag;
-
-static struct getargs args[] = {
-    { "krbtgt-only", 0, arg_flag, &krbtgt_only_flag,
-      "only copy local krbtgt" },
-    { "service", 0, arg_string, &service_string,
-      "limit to this service", "principal" },
-    { "enctype", 0, arg_string, &enctype_string,
-      "limit to this enctype", "enctype" },
-    { "flags", 0, arg_string, &flags_string,
-      "limit to these flags", "ticketflags" },
-    { "valid-for", 0, arg_string, &valid_string,
-      "limit to creds valid for at least this long", "time" },
-    { "fcache-version", 0, arg_integer, &fcache_version,
-      "file cache version to create" },
-    { "version", 0, arg_flag, &version_flag },
-    { "help", 'h', arg_flag, &help_flag }
-};
-
-static void
-usage(int ret)
-{
-    arg_printusage(args,
-		   sizeof(args) / sizeof(*args),
-		   NULL,
-		   "[from-cache] to-cache");
-    exit(ret);
-}
+#include "kcc-commands.h"
 
 static int32_t
 bitswap32(int32_t b)
@@ -120,106 +81,83 @@ matchfunc(krb5_context context, void *ptr, const krb5_creds *creds)
 }
 
 int
-main(int argc, char **argv)
+copy_cred_cache(struct copy_cred_cache_options *opt, int argc, char **argv)
 {
     krb5_error_code ret;
-    krb5_context context;
-    int optidx = 0;
     const char *from_name, *to_name;
     krb5_ccache from_ccache, to_ccache;
     unsigned int matched;
     struct ctx ctx;
 
-    setprogname(argv[0]);
-
     memset(&ctx, 0, sizeof(ctx));
 
-    if (getarg(args, sizeof(args) / sizeof(args[0]), argc, argv, &optidx))
-	usage(1);
-
-    if (help_flag)
-	usage(0);
-
-    if (version_flag) {
-	print_version(NULL);
-	exit(0);
-    }
-    argc -= optidx;
-    argv += optidx;
-
-    if (argc < 1 || argc > 2)
-	usage(1);
-
-    if (krb5_init_context(&context))
-	errx(1, "krb5_init_context failed");
-
-    if (service_string) {
-	ret = krb5_parse_name(context, service_string, &ctx.mcreds.server);
+    if (opt->service_string) {
+	ret = krb5_parse_name(kcc_context, opt->service_string, &ctx.mcreds.server);
 	if (ret)
-	    krb5_err(context, 1, ret, "%s", service_string);
+	    krb5_err(kcc_context, 1, ret, "%s", opt->service_string);
     }
-    if (enctype_string) {
+    if (opt->enctype_string) {
 	krb5_enctype enctype;
-	ret = krb5_string_to_enctype(context, enctype_string, &enctype);
+	ret = krb5_string_to_enctype(kcc_context, opt->enctype_string, &enctype);
 	if (ret)
-	    krb5_err(context, 1, ret, "%s", enctype_string);
+	    krb5_err(kcc_context, 1, ret, "%s", opt->enctype_string);
 	ctx.whichfields |= KRB5_TC_MATCH_KEYTYPE;
 	ctx.mcreds.session.keytype = enctype;
     }
-    if (flags_string) {
-	parse_ticket_flags(context, flags_string, &ctx.mcreds.flags);
+    if (opt->flags_string) {
+	parse_ticket_flags(kcc_context, opt->flags_string, &ctx.mcreds.flags);
 	ctx.whichfields |= KRB5_TC_MATCH_FLAGS;
     }
-    if (valid_string) {
-	time_t t = parse_time(valid_string, "s");
+    if (opt->valid_for_string) {
+	time_t t = parse_time(opt->valid_for_string, "s");
 	if(t < 0)
-	    errx(1, "unknown time \"%s\"", valid_string);
+	    errx(1, "unknown time \"%s\"", opt->valid_for_string);
 	ctx.mcreds.times.endtime = time(NULL) + t;
 	ctx.whichfields |= KRB5_TC_MATCH_TIMES;
     }
-    if (fcache_version)
-	krb5_set_fcache_version(context, fcache_version);
+    if (opt->fcache_version_integer)
+	krb5_set_fcache_version(kcc_context, opt->fcache_version_integer);
 
     if (argc == 1) {
-	from_name = krb5_cc_default_name(context);
+	from_name = krb5_cc_default_name(kcc_context);
 	to_name = argv[0];
     } else {
 	from_name = argv[0];
 	to_name = argv[1];
     }
 
-    ret = krb5_cc_resolve(context, from_name, &from_ccache);
+    ret = krb5_cc_resolve(kcc_context, from_name, &from_ccache);
     if (ret)
-	krb5_err(context, 1, ret, "%s", from_name);
+	krb5_err(kcc_context, 1, ret, "%s", from_name);
 
-    if (krbtgt_only_flag) {
+    if (opt->krbtgt_only_flag) {
 	krb5_principal client;
-	ret = krb5_cc_get_principal(context, from_ccache, &client);
+	ret = krb5_cc_get_principal(kcc_context, from_ccache, &client);
 	if (ret)
-	    krb5_err(context, 1, ret, "getting default principal");
-	ret = krb5_make_principal(context, &ctx.mcreds.server,
-				  krb5_principal_get_realm(context, client),
+	    krb5_err(kcc_context, 1, ret, "getting default principal");
+	ret = krb5_make_principal(kcc_context, &ctx.mcreds.server,
+				  krb5_principal_get_realm(kcc_context, client),
 				  KRB5_TGS_NAME,
-				  krb5_principal_get_realm(context, client),
+				  krb5_principal_get_realm(kcc_context, client),
 				  NULL);
 	if (ret)
-	    krb5_err(context, 1, ret, "constructing krbtgt principal");
-	krb5_free_principal(context, client);
+	    krb5_err(kcc_context, 1, ret, "constructing krbtgt principal");
+	krb5_free_principal(kcc_context, client);
     }
-    ret = krb5_cc_resolve(context, to_name, &to_ccache);
+    ret = krb5_cc_resolve(kcc_context, to_name, &to_ccache);
     if (ret)
-	krb5_err(context, 1, ret, "%s", to_name);
+	krb5_err(kcc_context, 1, ret, "%s", to_name);
 
-    ret = krb5_cc_copy_match_f(context, from_ccache, to_ccache,
+    ret = krb5_cc_copy_match_f(kcc_context, from_ccache, to_ccache,
 			       matchfunc, &ctx, &matched);
     if (ret)
-	krb5_err(context, 1, ret, "copying cred cache");
+	krb5_err(kcc_context, 1, ret, "copying cred cache");
 
-    krb5_cc_close(context, from_ccache);
+    krb5_cc_close(kcc_context, from_ccache);
     if(matched == 0)
-	krb5_cc_destroy(context, to_ccache);
+	krb5_cc_destroy(kcc_context, to_ccache);
     else
-	krb5_cc_close(context, to_ccache);
-    krb5_free_context(context);
+	krb5_cc_close(kcc_context, to_ccache);
+
     return matched == 0;
 }

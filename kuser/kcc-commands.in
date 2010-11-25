@@ -191,6 +191,45 @@ command = {
 	}
 }
 command = {
+	name = "copy_cred_cache"
+	option = {
+	       long = "krbtgt-only"
+	       type = "flag"
+	       help = "only copy local krbtgt"
+	}
+	option = {
+	       long = "service"
+	       type = "string"
+	       help = "limit to this service"
+	       argument = "service"
+	}
+	option = {
+	       long = "enctype"
+	       type = "string"
+	       help = "limit to this enctype"
+	       argument = "enctype"
+	}
+	option = {
+	       long = "flags"
+	       type = "string"
+	       help = "limit to these flags"
+	}
+	option = {
+	       long = "valid-for"
+	       type = "string"
+	       help = "limit to creds valid for at least this long"
+	       argument =  "time"
+	}
+	option = {
+	       long = "fcache-version"
+	       type = "integer"
+	       help = "file cache version to create"
+	}
+	min_args = "1"
+	max_args = "2"
+	help = "Copies credential caches"
+}
+command = {
 	name = "help"
 	name = "?"
 	argument = "[command]"

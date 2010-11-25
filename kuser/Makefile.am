@@ -18,7 +18,7 @@ man_MANS = \
 bin_PROGRAMS = kinit kdestroy kgetcred kcc
 libexec_PROGRAMS = kdigest kimpersonate
 
-noinst_PROGRAMS = kverify kdecode_ticket generate-requests copy_cred_cache
+noinst_PROGRAMS = kverify kdecode_ticket generate-requests
 
 kinit_LDADD = \
 	$(LIB_kafs) \
@@ -37,7 +37,7 @@ kcc_LDADD = \
 	$(top_builddir)/lib/sl/libsl.la \
 	$(kinit_LDADD)
 
-dist_kcc_SOURCES = kcc.c klist.c kswitch.c
+dist_kcc_SOURCES = kcc.c klist.c kswitch.c copy_cred_cache.c
 nodist_kcc_SOURCES = kcc-commands.c
 
 $(kcc_OBJECTS): kcc-commands.h

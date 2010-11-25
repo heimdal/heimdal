@@ -103,5 +103,6 @@
 #define textdomain(package)
 #endif
 
+extern krb5_context kcc_context;
 
 #endif /* __KUSER_LOCL_H__ */

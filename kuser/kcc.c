@@ -64,12 +64,6 @@ help(void *opt, int argc, char **argv)
 }
 
 int
-klist(struct klist_options *opt, int argc, char **argv)
-{
-    return 0;
-}
-
-int
 kgetcred(struct kgetcred_options *opt, int argc, char **argv)
 {
     return 0;
@@ -115,8 +109,8 @@ main(int argc, char **argv)
     setprogname (argv[0]);
 
     setlocale (LC_ALL, "");
-    bindtextdomain ("heimdal_kcc", HEIMDAL_LOCALEDIR);
-    textdomain("heimdal_kcc");
+    bindtextdomain ("heimdal_kuser", HEIMDAL_LOCALEDIR);
+    textdomain("heimdal_kuser");
 
     ret = krb5_init_context(&kcc_context);
     if (ret == KRB5_CONFIG_BADFORMAT)
@@ -147,7 +141,7 @@ main(int argc, char **argv)
 	}
 
     } else {
-	argv[0] = getprogname();
+	argv[0] = rk_UNCONST(getprogname());
     }
 
     argc -= optidx;

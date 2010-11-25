@@ -35,10 +35,9 @@ RELDIR=kuser
 
 BINPROGRAMS=\
 	$(BINDIR)\kinit.exe	\
-	$(BINDIR)\klist.exe	\
+	$(BINDIR)\kcc.exe	\
 	$(BINDIR)\kdestroy.exe	\
 	$(BINDIR)\kgetcred.exe	\
-	$(BINDIR)\kswitch.exe	\
 	$(BINDIR)\kvno.exe	\
 	$(BINDIR)\kcpytkt.exe	\
 	$(BINDIR)\kdeltkt.exe
@@ -69,7 +68,7 @@ $(BINDIR)\kinit.exe: $(OBJ)\kinit.obj $(BINLIBS) $(OBJ)\kinit-version.res
 	$(EXECONLINK)
 	$(EXEPREP)
 
-$(BINDIR)\klist.exe: $(OBJ)\klist.obj $(BINLIBS) $(OBJ)\klist-version.res
+$(BINDIR)\kcc.exe: $(OBJ)\kcc-commands.obj $(OBJ)\kcc.obj $(obj)\kswitch.obj $(obj)\klist.obj $(BINLIBS) $(OBJ)\kcc-version.res
 	$(EXECONLINK)
 	$(EXEPREP)
 
@@ -80,11 +79,6 @@ $(BINDIR)\kdestroy.exe: $(OBJ)\kdestroy.obj $(BINLIBS) $(OBJ)\kdestroy-version.r
 
 
 $(BINDIR)\kgetcred.exe: $(OBJ)\kgetcred.obj $(BINLIBS) $(OBJ)\kgetcred-version.res
-	$(EXECONLINK)
-	$(EXEPREP)
-
-
-$(BINDIR)\kswitch.exe: $(OBJ)\kswitch.obj $(BINLIBS) $(LIBEDITLINE) $(OBJ)\kswitch-version.res
 	$(EXECONLINK)
 	$(EXEPREP)
 
@@ -102,6 +96,20 @@ $(OBJ)\kdigest-commands.c $(OBJ)\kdigest-commands.h: kdigest-commands.in
 	$(BINDIR)\slc.exe kdigest-commands.in
 	cd $(SRCDIR)
 
+$(OBJ)\kcc.obj: kcc.c
+	$(C2OBJ) -I$(OBJ)
+
+$(OBJ)\kswitch.obj: kswitch.c
+	$(C2OBJ) -I$(OBJ)
+
+$(OBJ)\klist.obj: klist.c
+	$(C2OBJ) -I$(OBJ)
+
+$(OBJ)\kcc-commands.c $(OBJ)\kcc-commands.h: kcc-commands.in
+	cd $(OBJ)
+	$(CP) $(SRCDIR)\kcc-commands.in $(OBJ)
+	$(BINDIR)\slc.exe kcc-commands.in
+	cd $(SRCDIR)
 
 $(LIBEXECDIR)\kimpersonate.exe: $(OBJ)\kimpersonate.obj $(BINLIBS) $(OBJ)\kimpersonate-version.res
 	$(EXECONLINK)

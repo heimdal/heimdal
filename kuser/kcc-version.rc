@@ -30,7 +30,7 @@
  **********************************************************************/
 
 #define RC_FILE_TYPE VFT_APP
-#define RC_FILE_DESC_0409 "Switch Between Default Credential Caches"
-#define RC_FILE_ORIG_0409 "kswitch.exe"
+#define RC_FILE_DESC_0409 "Ticket tool"
+#define RC_FILE_ORIG_0409 "kcc.exe"
 
 #include "../windows/version.rc"

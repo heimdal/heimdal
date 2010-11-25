@@ -180,9 +180,9 @@ afslog_file(const char *path)
 static int
 do_afslog(const char *cell)
 {
-    int k5ret, k4ret;
+    int k5ret;
 
-    k5ret = k4ret = 0;
+    k5ret = 0;
 
 #ifdef KRB5
     if(context != NULL && id != NULL && use_krb5) {
@@ -195,9 +195,9 @@ do_afslog(const char *cell)
 	cell = "<default cell>";
 #ifdef KRB5
     if (k5ret)
-	warnx("krb5_afslog(%s): %s", cell, krb5_get_err_text(context, k5ret));
+	krb5_warn(context, k5ret, "krb5_afslog(%s)", cell);
 #endif
-    if (k5ret || k4ret)
+    if (k5ret)
 	return 1;
     return 0;
 }

@@ -15,7 +15,7 @@ man_MANS = \
 	kgetcred.1 \
 	kimpersonate.8
 
-bin_PROGRAMS = kinit kdestroy kgetcred kswitch kcc
+bin_PROGRAMS = kinit kdestroy kgetcred kcc
 libexec_PROGRAMS = kdigest kimpersonate
 
 noinst_PROGRAMS = kverify kdecode_ticket generate-requests copy_cred_cache
@@ -33,13 +33,11 @@ kdestroy_LDADD	= $(kinit_LDADD)
 
 kimpersonate_LDADD = $(kinit_LDADD)
 
-kswitch_LDADD = $(kinit_LDADD) $(LIB_readline)
-
 kcc_LDADD = \
 	$(top_builddir)/lib/sl/libsl.la \
 	$(kinit_LDADD)
 
-dist_kcc_SOURCES = kcc.c klist.c
+dist_kcc_SOURCES = kcc.c klist.c kswitch.c
 nodist_kcc_SOURCES = kcc-commands.c
 
 $(kcc_OBJECTS): kcc-commands.h
@@ -79,4 +77,5 @@ EXTRA_DIST = $(man_MANS) \
 # make sure install-exec-hook doesn't have any commands in Makefile.am.common
 install-exec-hook:
 	(cd $(DESTDIR)$(bindir) && rm -f klist && $(LN_S) kcc klist)
+	(cd $(DESTDIR)$(bindir) && rm -f kswitch && $(LN_S) kcc kswitch)
 

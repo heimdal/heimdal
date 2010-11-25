@@ -124,6 +124,35 @@ command = {
 	}
 }
 command = {
+	name = "kswitch"
+	name = "switch"
+	help = "Switch default kerberos cache"
+	option = {
+		long = "type"
+		short = "t"
+		type = "string"
+		help = "type of credential cache"
+	}
+	option = {
+		long = "cache"
+		short = "c"
+		type = "string"
+		help = "name of credential cache"
+	}
+	option = {
+		long = "principal"
+		short = "p"
+		type = "string"
+		help = "name of principal"
+	}
+	option = {
+		long = "interactive"
+		short = "i"
+		type = "flag"
+		help = "interactive selection"
+	}
+};
+command = {
 	name = "kvno"
 	help = "Acquire a Kerberos ticket"
 	option = {

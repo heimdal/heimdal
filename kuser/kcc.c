@@ -89,7 +89,7 @@ static int
 command_alias(const char *name)
 {
     const char *aliases[] = {
-	"kinit", "klist", "kgetcred", "kdeltkt",
+	"kinit", "klist", "kswitch", "kgetcred", "kvno", "kdeltkt",
 	"kdestroy", "kcpytkt", NULL
     }, **p = aliases;
 

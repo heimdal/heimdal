@@ -27,7 +27,7 @@ kinit="${TESTS_ENVIRONMENT} ${top_builddir}/kuser/kinit"
 klist="${TESTS_ENVIRONMENT} ${top_builddir}/kuser/kcc klist"
 kpasswd="${TESTS_ENVIRONMENT} ${top_builddir}/kpasswd/kpasswd"
 kpasswdd="${TESTS_ENVIRONMENT} ${top_builddir}/kpasswd/kpasswdd"
-kswitch="${TESTS_ENVIRONMENT} ${top_builddir}/kuser/kswitch"
+kswitch="${TESTS_ENVIRONMENT} ${top_builddir}/kuser/kcc kswitch"
 ktutil="${TESTS_ENVIRONMENT} ${top_builddir}/admin/ktutil"
 
 # regression test tools

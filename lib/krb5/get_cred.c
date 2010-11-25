@@ -716,16 +716,6 @@ add_cred(krb5_context context, krb5_creds const *tkt, krb5_creds ***tgts)
 }
 
 static krb5_error_code
-get_cred_kdc_capath(krb5_context context,
-		    krb5_kdc_flags flags,
-		    krb5_ccache ccache,
-		    krb5_creds *in_creds,
-		    krb5_principal impersonate_principal,
-		    Ticket *second_ticket,			
-		    krb5_creds **out_creds,
-		    krb5_creds ***ret_tgts);
-
-static krb5_error_code
 get_cred_kdc_capath_worker(krb5_context context,
                            krb5_kdc_flags flags,
                            krb5_ccache ccache,
@@ -766,7 +756,8 @@ get_cred_kdc_capath_worker(krb5_context context,
 	ret = find_cred(context, ccache, tmp_creds.server,
 			*ret_tgts, &tgts);
 	if(ret == 0){
-	    if (strcmp(try_realm, client_realm) != 0)
+	    /* only allow implicit ok_as_delegate if the realm is the clients realm */
+	    if (strcmp(try_realm, client_realm) != 0 || strcmp(try_realm, server_realm) != 0)
 		ok_as_delegate = tgts.flags.b.ok_as_delegate;
 
 	    *out_creds = calloc(1, sizeof(**out_creds));

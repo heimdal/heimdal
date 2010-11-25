@@ -215,7 +215,7 @@ hdb_sqlite_open_database(krb5_context context, HDB *db, int flags)
             sqlite3_close(hsdb->db);
             hsdb->db = NULL;
         } else
-	    ret = _krb5_enomem(context);
+	    ret = krb5_enomem(context);
         return ret;
     }
 

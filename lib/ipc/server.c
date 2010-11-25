@@ -370,6 +370,7 @@ mach_checkin_or_register(const char *service)
     if (kr == KERN_SUCCESS)
 	return mp;
 
+#if __MAC_OS_X_VERSION_MIN_REQUIRED <= 1050
     /* Pre SnowLeopard version */
     kr = mach_port_allocate(mach_task_self(), MACH_PORT_RIGHT_RECEIVE, &mp);
     if (kr != KERN_SUCCESS)
@@ -389,6 +390,9 @@ mach_checkin_or_register(const char *service)
     }
 
     return mp;
+#else
+    return MACH_PORT_NULL;
+#endif
 }
 
 

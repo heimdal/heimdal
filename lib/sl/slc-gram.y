@@ -126,6 +126,7 @@ check_option(struct assignment *as)
 {
     struct assignment *a;
     int seen_long = 0;
+    int seen_name = 0;
     int seen_short = 0;
     int seen_type = 0;
     int seen_argument = 0;
@@ -138,6 +139,8 @@ check_option(struct assignment *as)
 	    seen_long++;
 	else if(strcmp(a->name, "short") == 0)
 	    seen_short++;
+	else if(strcmp(a->name, "name") == 0)
+	    seen_name++;
 	else if(strcmp(a->name, "type") == 0)
 	    seen_type++;
 	else if(strcmp(a->name, "argument") == 0)
@@ -147,12 +150,16 @@ check_option(struct assignment *as)
 	else if(strcmp(a->name, "default") == 0)
 	    seen_default++;
 	else {
-	    ex(a, "unknown name");
+	    ex(a, "unknown name %s", a->name);
 	    ret++;
 	}
     }
     if(seen_long == 0 && seen_short == 0) {
 	ex(as, "neither long nor short option");
+	ret++;
+    }
+    if (seen_long == 0 && seen_name == 0) {
+	ex(as, "either of long or name option must be used");
 	ret++;
     }
     if(seen_long > 1) {
@@ -209,7 +216,7 @@ check_command(struct assignment *as)
 		} else if(strcmp(a->name, "max_args") == 0) {
 			seen_maxargs++;
 		} else {
-			ex(a, "unknown name");
+			ex(a, "unknown name: %s", a->name);
 			ret++;
 		}
 	}

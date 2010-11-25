@@ -36,8 +36,6 @@ objdir="@objdir@"
 
 . ${env_setup}
 
-testfailed="echo test failed; exit 1"
-
 # If there is no useful db support compile in, disable test
 ${have_db} || exit 77
 
@@ -61,6 +59,8 @@ kdestroy="${kdestroy} -c $cache ${afs_no_unlog}"
 
 KRB5_CONFIG="${objdir}/krb5.conf"
 export KRB5_CONFIG
+
+testfailed="echo test failed; ${klist} -v ; exit 1"
 
 rm -f ${keytabfile}
 rm -f current-db*
@@ -126,10 +126,14 @@ ${kgetcred} krbtgt/${R4}@${R3} || { ec=1 ; eval "${testfailed}"; }
 ${kgetcred} host/server.test3.h5l.se@${R3} || { ec=1 ; eval "${testfailed}"; }
 ${kgetcred} host/server.test4.h5l.se@${R4} || { ec=1 ; eval "${testfailed}"; }
 
+
 echo "check result"
-${klist} -v | awk '/Server:.*host.server.test3/{c=8}{if(c-->0){print}}' | grep 'Ticket flags:.*ok-as-delegate' > /dev/null || { ec=1 ; eval "${testfailed}"; }
-${klist} -v | awk '/Server:.*host.noserver.test3/{c=8}{if(c-->0){print}}' | grep 'Ticket flags:.*ok-as-delegate' 2> /dev/null && { ec=1 ; eval "${testfailed}"; }
-${klist} -v | awk '/Server:.*host.server.test4/{c=8}{if(c-->0){print}}' | grep 'Ticket flags:.*ok-as-delegate' 2> /dev/null && { ec=1 ; eval "${testfailed}"; }
+${klist} -v | awk '/Server:.*host.server.test3/{c=8}{if(c-->0){print}}' | grep 'Ticket flags:.*ok-as-delegate' > /dev/null || \
+    { ec=1 ; echo "server.test3 failed";  eval "${testfailed}"; }
+${klist} -v | awk '/Server:.*host.noserver.test3/{c=8}{if(c-->0){print}}' | grep 'Ticket flags:.*ok-as-delegate' 2> /dev/null && \
+    { ec=1 ; echo "noserver.test3 failed"; eval "${testfailed}"; }
+${klist} -v | awk '/Server:.*host.server.test4/{c=8}{if(c-->0){print}}' | grep 'Ticket flags:.*ok-as-delegate' 2> /dev/null && \
+    { ec=1 ; echo "server.test4 failed" ; eval "${testfailed}"; }
 
 ${kdestroy}
 

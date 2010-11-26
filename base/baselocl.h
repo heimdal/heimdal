@@ -78,8 +78,8 @@
 
 #define heim_base_atomic_inc(x) ((x)++)
 #define heim_base_atomic_dec(x) ((x)--)
-#define heim_base_atomic_type	long
-#define heim_base_atomic_max    MAXLONG
+#define heim_base_atomic_type	unsigned int
+#define heim_base_atomic_max    UINT_MAX
 
 #endif
 

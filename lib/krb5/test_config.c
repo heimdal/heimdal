@@ -96,7 +96,7 @@ struct {
     { "", NULL }
 };
 
-void
+static void
 check_config_files(void)
 {
     krb5_context context;
@@ -186,7 +186,7 @@ const struct {
     { "longer_strings", config_string_result10 }
 };
 
-void
+static void
 check_escaped_strings(void)
 {
     krb5_context context;
@@ -198,7 +198,7 @@ check_escaped_strings(void)
     if (ret)
         errx(1, "krb5_init_context %d", ret);
 
-    ret = krb5_config_parse_file(context, "test_config_strings.cfg", &c);
+    ret = krb5_config_parse_file(context, "test_config_strings.out", &c);
     if (ret)
         krb5_errx(context, 1, "krb5_config_parse_file()");
 
@@ -214,7 +214,7 @@ check_escaped_strings(void)
 
         e = config_strings_tests[i].expected;
 
-        for (s = ps; *s && *e; s++, e++) {
+        for (s = (const char **)ps; *s && *e; s++, e++) {
             if (strcmp(*s, *e))
                 errx(1,
                      "Unexpected configuration string at value [%s].\n"

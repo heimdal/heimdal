@@ -44,6 +44,8 @@ TESTS =						\
 	test_pknistkdf				\
 	test_time
 
+check_DATA = test_config_strings.out
+
 check_PROGRAMS = $(TESTS) test_hostname test_ap-req
 
 LDADD = libkrb5.la \
@@ -338,6 +340,7 @@ build_HEADERZ = \
 	krb_err.h
 
 CLEANFILES = \
+	test_config_strings.out \
 	test-store-data \
 	krb5_err.c krb5_err.h \
 	krb_err.c krb_err.h \
@@ -346,6 +349,9 @@ CLEANFILES = \
 
 $(libkrb5_la_OBJECTS): krb5_err.h krb_err.h heim_err.h k524_err.h crypto.h
 
+test_config_strings.out: test_config_strings.cfg
+	$(CP) $(srcdir)/test_config_strings.cfg test_config_strings.out
+
 EXTRA_DIST = \
 	krb5_err.et \
 	krb_err.et \
@@ -353,6 +359,7 @@ EXTRA_DIST = \
 	k524_err.et \
 	$(man_MANS) \
 	version-script.map \
+	test_config_strings.cfg \
 	krb5.moduli
 
 #sysconf_DATA = krb5.moduli

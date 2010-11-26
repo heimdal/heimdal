@@ -400,7 +400,7 @@ $(BINDIR)\verify_krb5_conf.exe: $(OBJ)\verify_krb5_conf.obj $(LIBHEIMDAL) $(LIBR
 #----------------------------------------------------------------------
 # Tests
 
-test:: test-binaries test-run
+test:: test-binaries test-files test-run
 
 test_binaries =				\
 	$(OBJ)\aes-test.exe		\
@@ -435,6 +435,11 @@ test_binaries =				\
 	$(OBJ)\test_time.exe		\
 
 test-binaries: $(test_binaries)
+
+test-files: $(OBJ)\test_config_strings.cfg
+
+$(OBJ)\test_config_strings.cfg: test_config_strings.cfg
+	$(CP) $** $@
 
 test-run:
 	cd $(OBJ)

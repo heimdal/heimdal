@@ -139,35 +139,6 @@ _kafs_fixup_viceid(struct ClearToken *ct, uid_t uid)
     }
 }
 
-
-int
-_kafs_v4_to_kt(CREDENTIALS *c, uid_t uid, struct kafs_token *kt)
-{
-    kt->ticket = NULL;
-
-    if (c->ticket_st.length > MAX_KTXT_LEN)
-	return EINVAL;
-
-    kt->ticket = malloc(c->ticket_st.length);
-    if (kt->ticket == NULL)
-	return ENOMEM;
-    kt->ticket_len = c->ticket_st.length;
-    memcpy(kt->ticket, c->ticket_st.dat, kt->ticket_len);
-
-    /*
-     * Build a struct ClearToken
-     */
-    kt->ct.AuthHandle = c->kvno;
-    memcpy (kt->ct.HandShakeKey, c->session, sizeof(c->session));
-    kt->ct.ViceId = uid;
-    kt->ct.BeginTimestamp = c->issue_date;
-    kt->ct.EndTimestamp = krb_life_to_time(c->issue_date, c->lifetime);
-
-    _kafs_fixup_viceid(&kt->ct, uid);
-
-    return 0;
-}
-
 /* Try to get a db-server for an AFS cell from a AFSDB record */
 
 static int

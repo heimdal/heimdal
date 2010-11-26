@@ -339,6 +339,7 @@ heim_base_once_f(heim_base_once_t *once, void *ctx, void (*func)(void *))
 	HEIMDAL_MUTEX_unlock(&mutex);
 	while (1) {
 	    struct timeval tv = { 0, 1000 };
+	    select(0, NULL, NULL, NULL, &tv);
 	    HEIMDAL_MUTEX_lock(&mutex);
 	    if (*once == 2)
 		break;

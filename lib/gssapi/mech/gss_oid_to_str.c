@@ -84,9 +84,9 @@ gss_name_to_oid(const char *name)
     size_t i, partial = (size_t)-1;
 
     for (i = 0; _gss_ont_mech[i].oid; i++) {
-	if (strcasecmp(name, _gss_ont_mech[i].name) == 0)
+	if (strcasecmp(name, _gss_ont_mech[i].short_desc) == 0)
 	    return _gss_ont_mech[i].oid;
-	if (strncasecmp(name, _gss_ont_mech[i].name, strlen(name)) == 0) {
+	if (strncasecmp(name, _gss_ont_mech[i].short_desc, strlen(name)) == 0) {
 	    if (partial != (size_t)-1)
 		return NULL;
 	    partial = i;

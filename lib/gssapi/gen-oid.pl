@@ -20,7 +20,11 @@ if ($header) {
     printf "#define GSSAPI_GSSAPI_OID 1\n\n";
 } else {
     printf "#include \"gssapi.h\"\n\n";
+    printf "#include \"gssapi_mech.h\"\n\n";
 }
+
+my %tables;
+my %types;
 
 while(<>) {
 
@@ -65,8 +69,28 @@ while(<>) {
 	    printf "/* $name - $oid */\n";
 	    printf "gss_OID_desc $store = { $length, \"$data\" };\n\n";
 	}
+    } elsif (/^desc\s+([\w]+)\s+(\w+)\s+(\"[^\"]*\")\s+(\"[^\"]*\")/) {
+        my ($type, $oid, $short, $long) = ($1, $2, $3, $4);
+	my $object = { type=> $type, oid => $oid, short => $short, long => $long };
+	
+	$tables{$oid} = \$object;
+	$types{$type} = 1;
     }
 
+}
+
+foreach my $k (keys %types) {
+    if (!$header) {
+	print "struct _gss_oid_name_table _gss_ont_" . $k . "[] = {\n";
+	foreach my $m (values %tables) {
+	    if ($$m->{type} eq $k) {
+		printf "  { %s, \"%s\", %s, %s },\n", $$m->{oid}, $$m->{oid}, $$m->{short}, $$m->{long};
+	    }
+	}
+	printf "  { NULL }\n";
+	printf "};\n\n";
+	
+    }
 }
 
 if ($header) {

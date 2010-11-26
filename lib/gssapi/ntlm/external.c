@@ -74,6 +74,3 @@ __gss_ntlm_initialize(void)
 {
 	return &ntlm_mech;
 }
-
-gss_OID_desc __gss_ntlm_mechanism_oid_desc =
-    {10, rk_UNCONST("\x2b\x06\x01\x04\x01\x82\x37\x02\x02\x0a") };

@@ -987,6 +987,16 @@ gss_display_mech_attr(OM_uint32 * minor_status,
 		      gss_buffer_t long_desc);
 
 
+/*
+ *
+ */
+
+GSSAPI_LIB_FUNCTION const char * GSSAPI_LIB_CALL
+gss_oid_to_name(gss_const_OID oid);
+
+GSSAPI_LIB_FUNCTION gss_OID GSSAPI_LIB_CALL
+gss_name_to_oid(const char *name);
+
 GSSAPI_CPP_END
 
 #endif /* GSSAPI_GSSAPI_H_ */

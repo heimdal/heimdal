@@ -1,5 +1,7 @@
 #include "gssapi.h"
 
+#include "gssapi_mech.h"
+
 /* GSS_KRB5_COPY_CCACHE_X - 1.2.752.43.13.1 */
 gss_OID_desc __gss_krb5_copy_ccache_x_oid_desc = { 6, "\x2a\xf0\x05\x2b\x0d\x01" };
 
@@ -114,6 +116,24 @@ gss_OID_desc __gss_ma_attr_long_desc_oid_desc = { 6, "\x2a\xf0\x05\x2b\x0d\x68" 
 /* GSS_SASL_DIGEST_MD5_MECHANISM - 1.2.752.43.14.1 */
 gss_OID_desc __gss_sasl_digest_md5_mechanism_oid_desc = { 6, "\x2a\xf0\x05\x2b\x0e\x01" };
 
+/* GSS_KRB5_MECHANISM - 1.2.840.113554.1.2.2 */
+gss_OID_desc __gss_krb5_mechanism_oid_desc = { 9, "\x2a\xc8\x06\x92\xf7\x06\x01\x02\x02" };
+
+/* GSS_NTLM_MECHANISM - 1.3.6.1.4.1.311.2.2.10 */
+gss_OID_desc __gss_ntlm_mechanism_oid_desc = { 10, "\x2b\x06\x01\x04\x01\xb7\x02\x02\x02\x0a" };
+
 /* GSS_C_PEER_HAS_UPDATED_SPNEGO - 1.3.6.1.4.1.9513.19.5 */
 gss_OID_desc __gss_c_peer_has_updated_spnego_oid_desc = { 9, "\x2b\x06\x01\x04\x01\xa9\x4a\x13\x05" };
+
+struct _gss_oid_name_table _gss_ont_ma[] = {
+  { GSS_MA_SASL_MECH_NAME, "GSS_MA_SASL_MECH_NAME", "SASL mechanism name", "The name of the SASL mechanism" },
+  { GSS_MA_MECH_NAME, "GSS_MA_MECH_NAME", "GSS mech name", "The name of the GSS-API mechanism" },
+  { GSS_MA_MECH_DESCRIPTION, "GSS_MA_MECH_DESCRIPTION", "Mech description", "The long description of the mechanism" },
+  { NULL }
+};
+
+struct _gss_oid_name_table _gss_ont_mech[] = {
+  { GSS_KRB5_MECHANISM, "GSS_KRB5_MECHANISM", "Kerberos 5", "Heimdal Kerberos 5 mechanism" },
+  { NULL }
+};
 

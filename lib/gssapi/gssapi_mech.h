@@ -478,4 +478,14 @@ void		gss_mg_collect_error(gss_OID, OM_uint32, OM_uint32);
 int _gss_mo_get_option_1(gss_const_OID, gss_mo_desc *, gss_buffer_t);
 int _gss_mo_get_option_0(gss_const_OID, gss_mo_desc *, gss_buffer_t);
 
+struct _gss_oid_name_table {
+    gss_OID oid;
+    const char *name;
+    const char *short_desc;
+    const char *long_desc;
+};
+
+extern struct _gss_oid_name_table _gss_ont_mech[];
+extern struct _gss_oid_name_table _gss_ont_ma[];
+
 #endif /* GSSAPI_MECH_H */

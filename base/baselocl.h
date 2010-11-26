@@ -54,7 +54,8 @@
 #include <dispatch/dispatch.h>
 #endif
 
-#ifdef __GNUC__
+#if defined(__GNUC__) && defined(HAVE___SYNC_ADD_AND_FETCH)
+
 #define heim_base_atomic_inc(x) __sync_add_and_fetch((x), 1)
 #define heim_base_atomic_dec(x) __sync_sub_and_fetch((x), 1)
 #define heim_base_atomic_type	unsigned int
@@ -72,7 +73,14 @@
 #define heim_base_exchange_pointer(t,v) InterlockedExchangePointer((t),(v))
 
 #else
-#error "provide atomic integer operations for your compiler"
+
+#warning "provide atomic integer operations for your compiler"
+
+#define heim_base_atomic_inc(x) ((x)++)
+#define heim_base_atomic_dec(x) ((x)--)
+#define heim_base_atomic_type	long
+#define heim_base_atomic_max    MAXLONG
+
 #endif
 
 /* tagged strings/object/XXX */

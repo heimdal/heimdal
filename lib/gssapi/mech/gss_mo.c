@@ -55,7 +55,7 @@ _gss_mo_get_option_0(gss_const_OID mech, gss_mo_desc *mo, gss_buffer_t value)
 }
 
 int
-_gss_mo_get_ctx_as_value(gss_const_OID mech, gss_mo_desc *mo, gss_buffer_t value)
+_gss_mo_get_ctx_as_string(gss_const_OID mech, gss_mo_desc *mo, gss_buffer_t value)
 {
     if (value) {
 	value->value = strdup((char *)mo->ctx);
@@ -101,13 +101,14 @@ gss_mo_get(gss_const_OID mech, gss_const_OID option, gss_buffer_t value)
 }
 
 static void
-add_all_mo(gssapi_mech_interface m, gss_OID_set *options)
+add_all_mo(gssapi_mech_interface m, gss_OID_set *options, OM_uint32 mask)
 {
     OM_uint32 minor;
     size_t n;
 
     for (n = 0; n < m->gm_mo_num; n++)
-	gss_add_oid_set_member(&minor, m->gm_mo[n].option, options);
+	if ((m->gm_mo[n].flags & mask) == mask)
+	    gss_add_oid_set_member(&minor, m->gm_mo[n].option, options);
 }
 
 GSSAPI_LIB_FUNCTION void GSSAPI_LIB_CALL
@@ -128,7 +129,7 @@ gss_mo_list(gss_const_OID mech, gss_OID_set *options)
     if (major != GSS_S_COMPLETE)
 	return;
 
-    add_all_mo(m, options);
+    add_all_mo(m, options, 0);
 }
 
 GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL
@@ -240,6 +241,7 @@ gss_inquire_mech_for_saslname(OM_uint32 *minor_status,
     *mech_type = NULL;
 
     SLIST_FOREACH(m, &_gss_mechs, gm_link) {
+
 	major = mo_name(&m->gm_mech_oid, GSS_MA_SASL_MECH_NAME, &name);
 	if (major)
 	    continue;
@@ -272,9 +274,58 @@ gss_indicate_mechs_by_attrs(OM_uint32 * minor_status,
 			    gss_const_OID_set desired_mech_attrs,
 			    gss_const_OID_set except_mech_attrs,
 			    gss_const_OID_set critical_mech_attrs,
-			    gss_OID_set mechs)
+			    gss_OID_set *mechs)
 {
-    _mg_oid_set_zero(mechs);
+    struct _gss_mech_switch *ms;
+    OM_uint32 major;
+    size_t n, m;
+
+    major = gss_create_empty_oid_set(minor_status, mechs);
+    if (major)
+	return major;
+
+    _gss_load_mech();
+
+    SLIST_FOREACH(ms, &_gss_mechs, gm_link) {
+	gssapi_mech_interface mi = &ms->gm_mech;
+
+	if (desired_mech_attrs) {
+	    for (n = 0; n < desired_mech_attrs->count; n++) {
+		for (m = 0; m < mi->gm_mo_num; m++)
+		    if (gss_oid_equal(mi->gm_mo[m].option, &desired_mech_attrs->elements[n]))
+			break;
+		if (m == mi->gm_mo_num)
+		    goto next;
+	    }
+	}
+
+	if (except_mech_attrs) {
+	    for (n = 0; n < desired_mech_attrs->count; n++) {
+		for (m = 0; m < mi->gm_mo_num; m++) {
+		    if (gss_oid_equal(mi->gm_mo[m].option, &desired_mech_attrs->elements[n]))
+			goto next;
+		}
+	    }
+	}
+
+	if (critical_mech_attrs) {
+	    for (n = 0; n < desired_mech_attrs->count; n++) {
+		for (m = 0; m < mi->gm_mo_num; m++) {
+		    if (mi->gm_mo[m].flags & GSS_MO_MA_CRITICAL)
+			continue;
+		    if (gss_oid_equal(mi->gm_mo[m].option, &desired_mech_attrs->elements[n]))
+			break;
+		}
+		if (m == mi->gm_mo_num)
+		    goto next;
+	    }
+	}
+
+
+    next:
+	do { } while(0);
+    }
+
 
     return GSS_S_FAILURE;
 }
@@ -301,11 +352,19 @@ gss_inquire_attrs_for_mech(OM_uint32 * minor_status,
 {
     OM_uint32 major, junk;
 
-    if (mech_attr) {
-	if (mech)
-	    gss_mo_list(mech, mech_attr);
-	else
-	    *mech_attr = NULL;
+    if (mech_attr && mech) {
+	gssapi_mech_interface m;
+
+	if ((m = __gss_get_mechanism(mech)) == NULL) {
+	    *minor_status = 0;
+	    return GSS_S_BAD_MECH;
+	}
+
+	major = gss_create_empty_oid_set(minor_status, mech_attr);
+	if (major != GSS_S_COMPLETE)
+	    return major;
+
+	add_all_mo(m, mech_attr, GSS_MO_MA);
     }    
 
     if (known_mech_attrs) {
@@ -313,14 +372,15 @@ gss_inquire_attrs_for_mech(OM_uint32 * minor_status,
 
 	major = gss_create_empty_oid_set(minor_status, known_mech_attrs);
 	if (major) {
-	    gss_release_oid_set(&junk, mech_attr);
+	    if (mech_attr)
+		gss_release_oid_set(&junk, mech_attr);
 	    return major;
 	}
 
 	_gss_load_mech();
 
 	SLIST_FOREACH(m, &_gss_mechs, gm_link)
-	    add_all_mo(&m->gm_mech, known_mech_attrs);
+	    add_all_mo(&m->gm_mech, known_mech_attrs, GSS_MO_MA);
     }
 
 
@@ -356,8 +416,6 @@ gss_display_mech_attr(OM_uint32 * minor_status,
 
     if (minor_status)
 	*minor_status = 0;
-
-    /* XXX check if the mech implements this, if it does, lets ask it for its idea first */
 
     for (n = 0; ma == NULL && _gss_ont_ma[n].oid; n++)
 	if (gss_oid_equal(mech_attr, _gss_ont_ma[n].oid))

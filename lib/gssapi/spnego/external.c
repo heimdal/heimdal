@@ -92,6 +92,3 @@ __gss_spnego_initialize(void)
 {
 	return &spnego_mech;
 }
-
-gss_OID_desc GSSAPI_LIB_VARIABLE __gss_spnego_mechanism_oid_desc =
-    {6, (void *)"\x2b\x06\x01\x05\x05\x02"};

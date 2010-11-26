@@ -401,6 +401,9 @@ struct gss_mo_desc_struct {
     void *ctx;
     int (*get)(gss_const_OID, gss_mo_desc *, gss_buffer_t);
     int (*set)(gss_const_OID, gss_mo_desc *, int, gss_buffer_t);
+    OM_uint32 flags;
+#define GSS_MO_MA		1
+#define GSS_MO_MA_CRITICAL	2
 };
 
 
@@ -477,6 +480,7 @@ void		gss_mg_collect_error(gss_OID, OM_uint32, OM_uint32);
 
 int _gss_mo_get_option_1(gss_const_OID, gss_mo_desc *, gss_buffer_t);
 int _gss_mo_get_option_0(gss_const_OID, gss_mo_desc *, gss_buffer_t);
+int _gss_mo_get_ctx_as_string(gss_const_OID, gss_mo_desc *, gss_buffer_t);
 
 struct _gss_oid_name_table {
     gss_OID oid;

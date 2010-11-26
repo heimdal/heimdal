@@ -175,6 +175,33 @@ gss_OID_desc GSSAPI_LIB_VARIABLE __gss_iakerb_min_msg_mechanism_oid_desc =
  * Context for krb5 calls.
  */
 
+static gss_mo_desc _gsskrb5_mech_options[] = {
+    {
+	GSS_MA_SASL_MECH_NAME,
+	"SASL mech name",
+	"GS2-KRB5",
+	_gss_mo_get_ctx_as_string,
+	NULL,
+	GSS_MO_MA
+    },
+    {
+	GSS_MA_MECH_NAME,
+	"Mechanism name",
+	"KRB5",
+	_gss_mo_get_ctx_as_string,
+	NULL,
+	GSS_MO_MA,
+    },
+    {
+	GSS_MA_MECH_DESCRIPTION,
+	"Mechanism description",
+	"Heimdal Kerberos 5 mech",
+	_gss_mo_get_ctx_as_string,
+	NULL,
+	GSS_MO_MA
+    }
+};
+
 /*
  *
  */
@@ -223,7 +250,16 @@ static gssapi_mech_interface_desc krb5_mech = {
     _gk_wrap_iov_length,
     _gsskrb5_store_cred,
     _gsskrb5_export_cred,
-    _gsskrb5_import_cred
+    _gsskrb5_import_cred,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    _gsskrb5_mech_options,
+    sizeof(_gsskrb5_mech_options) / sizeof(_gsskrb5_mech_options[0])
 };
 
 gssapi_mech_interface

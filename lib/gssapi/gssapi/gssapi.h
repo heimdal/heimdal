@@ -937,11 +937,11 @@ gss_import_cred(OM_uint32 * /* minor_status */,
  * mech option
  */
 
-GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL
+GSSAPI_LIB_FUNCTION int GSSAPI_LIB_CALL
 gss_mo_set(gss_const_OID mech, gss_const_OID option,
 	   int enable, gss_buffer_t value);
 
-GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL
+GSSAPI_LIB_FUNCTION int GSSAPI_LIB_CALL
 gss_mo_get(gss_const_OID mech, gss_const_OID option, gss_buffer_t value);
 
 GSSAPI_LIB_FUNCTION void GSSAPI_LIB_CALL
@@ -971,7 +971,7 @@ gss_indicate_mechs_by_attrs(OM_uint32 * minor_status,
 			    gss_const_OID_set desired_mech_attrs,
 			    gss_const_OID_set except_mech_attrs,
 			    gss_const_OID_set critical_mech_attrs,
-			    gss_OID_set mechs);
+			    gss_OID_set *mechs);
 
 GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL
 gss_inquire_attrs_for_mech(OM_uint32 * minor_status,

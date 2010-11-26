@@ -122,6 +122,9 @@ gss_OID_desc __gss_krb5_mechanism_oid_desc = { 9, "\x2a\xc8\x06\x92\xf7\x06\x01\
 /* GSS_NTLM_MECHANISM - 1.3.6.1.4.1.311.2.2.10 */
 gss_OID_desc __gss_ntlm_mechanism_oid_desc = { 10, "\x2b\x06\x01\x04\x01\xb7\x02\x02\x02\x0a" };
 
+/* GSS_SPNEGO_MECHANISM - 1.3.6.1.5.5.2 */
+gss_OID_desc __gss_spnego_mechanism_oid_desc = { 6, "\x2b\x06\x01\x05\x05\x02" };
+
 /* GSS_C_PEER_HAS_UPDATED_SPNEGO - 1.3.6.1.4.1.9513.19.5 */
 gss_OID_desc __gss_c_peer_has_updated_spnego_oid_desc = { 9, "\x2b\x06\x01\x04\x01\xa9\x4a\x13\x05" };
 
@@ -133,6 +136,8 @@ struct _gss_oid_name_table _gss_ont_ma[] = {
 };
 
 struct _gss_oid_name_table _gss_ont_mech[] = {
+  { GSS_SPNEGO_MECHANISM, "GSS_SPNEGO_MECHANISM", "SPNEGO", "Heimdal SPNEGO mechanism" },
+  { GSS_NTLM_MECHANISM, "GSS_NTLM_MECHANISM", "NTLM", "Heimdal NTLM mechanism" },
   { GSS_KRB5_MECHANISM, "GSS_KRB5_MECHANISM", "Kerberos 5", "Heimdal Kerberos 5 mechanism" },
   { NULL }
 };

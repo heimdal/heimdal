@@ -125,20 +125,7 @@ extern gss_OID_desc __gss_sasl_digest_md5_mechanism_oid_desc;
 #define GSS_SASL_DIGEST_MD5_MECHANISM (&__gss_sasl_digest_md5_mechanism_oid_desc)
 
 /*
- *   To support ongoing experimentation, testing, and evolution of the
- *   specification, the Kerberos V5 GSS-API mechanism as defined in this
- *   and any successor memos will be identified with the following Object
- *   Identifier, as defined in RFC-1510, until the specification is
- *   advanced to the level of Proposed Standard RFC:
- *
- *   {iso(1), org(3), dod(5), internet(1), security(5), kerberosv5(2)}
- *
- *   Upon advancement to the level of Proposed Standard RFC, the Kerberos
- *   V5 GSS-API mechanism will be identified by an Object Identifier
- *   having the value:
- *
- *   {iso(1) member-body(2) United States(840) mit(113554) infosys(1)
- *   gssapi(2) krb5(2)}
+ * "Standard" mechs
  */
 extern gss_OID_desc __gss_krb5_mechanism_oid_desc;
 #define GSS_KRB5_MECHANISM (&__gss_krb5_mechanism_oid_desc)
@@ -146,11 +133,14 @@ extern gss_OID_desc __gss_krb5_mechanism_oid_desc;
 extern gss_OID_desc __gss_ntlm_mechanism_oid_desc;
 #define GSS_NTLM_MECHANISM (&__gss_ntlm_mechanism_oid_desc)
 
+extern gss_OID_desc __gss_spnego_mechanism_oid_desc;
+#define GSS_SPNEGO_MECHANISM (&__gss_spnego_mechanism_oid_desc)
+
  /* From Luke Howard */
 extern gss_OID_desc __gss_c_peer_has_updated_spnego_oid_desc;
 #define GSS_C_PEER_HAS_UPDATED_SPNEGO (&__gss_c_peer_has_updated_spnego_oid_desc)
 
- /*
-  * OID mappings with name and short description and and slightly longer description
-  */
+/*
+ * OID mappings with name and short description and and slightly longer description
+ */
 #endif /* GSSAPI_GSSAPI_OID */

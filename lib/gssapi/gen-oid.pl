@@ -48,20 +48,32 @@ while(<>) {
 	my $length = 0;
 	my $data = "";
 
-	my $num = $array[0] * 40 + $array[1];
-	$data .= sprintf("\\x%x", $num);
-	$length += 1;
+	my $num;
 
-	foreach $num (@array[2 .. $#array]) {
-	    my $num2 = $num;
-	    while ($num2) {
-		my $p = int($num2 % 128);
-		$num2 = int($num2 / 128);
-		$p |= 0x80 if ($num2);
-		$data .= sprintf("\\x%02x", $p);
+	$n = $#array;
+	while ($n > 1) {
+	    $num = $array[$n];
+
+	    my $p = int($num % 128);
+	    $data = sprintf("\\x%02x", $p) . $data;
+
+	    $num = int($num / 128);
+
+	    $length += 1;
+
+	    while ($num > 0) {
+		$p = int($num % 128) + 128;
+		$num = int($num / 128);
+		$data = sprintf("\\x%02x", $p) . $data;
 		$length += 1;
 	    }
+	    $n--;
 	}
+	$num = int($array[0] * 40 + $array[1]);
+
+	$data = sprintf("\\x%x", $num) . $data;
+	$length += 1;
+
 	if ($header) {
 	    printf "extern gss_OID_desc $store;\n";
 	    printf "#define $name (&$store)\n\n";

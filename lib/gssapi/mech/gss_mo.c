@@ -69,7 +69,7 @@ gss_mo_set(gss_OID mech, gss_OID option, int enable, gss_buffer_t value)
     return 0;
 }
 
-int
+OM_uint32
 gss_mo_get(gss_OID mech, gss_OID option, gss_buffer_t value)
 {
     gssapi_mech_interface m;
@@ -142,6 +142,19 @@ gss_mo_name(gss_OID mech, gss_OID option, gss_buffer_t name)
     return GSS_S_BAD_NAME;
 }
 
+/**
+ * Returns differnt protocol names and description of the mechanism.
+ *
+ * @param desired_mech mech list query
+ * @param sasl_mech_name SASL GS2 protocol name
+ * @param mech_name gssapi protocol name
+ * @param mech_description description of gssapi mech
+ *
+ * @return returns GSS_S_COMPLETE or a error code.
+ *
+ * @ingroup gssapi
+ */
+
 GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL
 gss_inquire_saslname_for_mech(OM_uint32 *minor_status,
 			      const gss_OID desired_mech,
@@ -149,9 +162,33 @@ gss_inquire_saslname_for_mech(OM_uint32 *minor_status,
 			      gss_buffer_t mech_name,
 			      gss_buffer_t mech_description)
 {
+    OM_uint32 major;
+
     _mg_buffer_zero(sasl_mech_name);
     _mg_buffer_zero(mech_name);
     _mg_buffer_zero(mech_description);
+
+    if (minor_status)
+	*minor_status = 0;
+
+    if (desired_mech)
+	return GSS_S_BAD_MECH;
+
+    if (sasl_mech_name) {
+	major = gss_mo_get(desired_mech, GSS_MA_SASL_MECH_NAME, sasl_mech_name);
+	if (major)
+	    return major;
+    }
+    if (mech_name) {
+	major = gss_mo_get(desired_mech, GSS_MA_MECH_NAME, mech_name);
+	if (major)
+	    return major;
+    }
+    if (mech_description) {
+	major = gss_mo_get(desired_mech, GSS_MA_MECH_DESCRIPTION, mech_description);
+	if (major)
+	    return major;
+    }
 
     return GSS_S_COMPLETE;
 }

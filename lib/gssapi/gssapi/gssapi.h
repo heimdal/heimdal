@@ -270,6 +270,8 @@ typedef OM_uint32 gss_qop_t;
 
 GSSAPI_CPP_START
 
+#include <gssapi/gssapi_oid.h>
+
 /*
  * The implementation must reserve static storage for a
  * gss_OID_desc object containing the value
@@ -371,14 +373,6 @@ extern GSSAPI_LIB_VARIABLE gss_OID_desc __gss_c_nt_anonymous_oid_desc;
  */
 extern GSSAPI_LIB_VARIABLE gss_OID_desc __gss_c_nt_export_name_oid_desc;
 #define GSS_C_NT_EXPORT_NAME (&__gss_c_nt_export_name_oid_desc) 
-
-/*
- * Digest mechanism
- */
-
-extern gss_OID_desc GSSAPI_LIB_VARIABLE __gss_sasl_digest_md5_mechanism_oid_desc;
-#define GSS_SASL_DIGEST_MD5_MECHANISM (&__gss_sasl_digest_md5_mechanism_oid_desc)
-
 
 /* Major status codes */
 

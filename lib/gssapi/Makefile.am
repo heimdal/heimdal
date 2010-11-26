@@ -113,6 +113,7 @@ mechsrc = \
 	mech/gss_mech_switch.c \
 	mech/gss_mo.o \
 	mech/gss_names.c \
+	mech/gss_oid.c \
 	mech/gss_oid_equal.c \
 	mech/gss_oid_to_str.c \
 	mech/gss_process_context_token.c \
@@ -219,10 +220,12 @@ noinst_HEADERS = \
 	ntlm/ntlm-private.h \
 	spnego/spnego-private.h \
 	krb5/gsskrb5-private.h
+
 nobase_include_HEADERS = \
 	gssapi/gssapi.h \
 	gssapi/gssapi_krb5.h \
 	gssapi/gssapi_ntlm.h \
+	gssapi/gssapi_oid.h \
 	gssapi/gssapi_spnego.h
 
 gssapidir = $(includedir)/gssapi
@@ -324,6 +327,11 @@ EXTRA_DIST = \
 
 $(libgssapi_la_OBJECTS): gkrb5_err.h gssapi_asn1.h gssapi_asn1-priv.h
 $(libgssapi_la_OBJECTS): spnego_asn1.h spnego_asn1-priv.h
+$(libgssapi_la_OBJECTS): $(srcdir)/gssapi/gssapi_oid.h
 
 gkrb5_err.h gkrb5_err.c: $(srcdir)/krb5/gkrb5_err.et
 	$(COMPILE_ET) $(srcdir)/krb5/gkrb5_err.et
+
+$(srcdir)/gssapi/gssapi_oid.h $(srcdir)/mech/gss_oid.c:
+	perl $(srcdir)/gen-oid.pl -b base -h $(srcdir)/oid.txt > $(srcdir)/gssapi/gssapi_oid.h
+	perl $(srcdir)/gen-oid.pl -b base $(srcdir)/oid.txt > $(srcdir)/mech/gss_oid.c

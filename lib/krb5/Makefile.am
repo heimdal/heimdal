@@ -236,7 +236,7 @@ endif
 
 $(libkrb5_la_OBJECTS) $(verify_krb5_conf_OBJECTS): $(srcdir)/krb5-protos.h $(srcdir)/krb5-private.h
 
-nodist_librfc3961_la_SOURCES =			\
+librfc3961_la_SOURCES =				\
 	crc.c					\
 	crypto.c				\
 	crypto.h				\

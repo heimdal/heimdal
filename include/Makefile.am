@@ -37,6 +37,7 @@ CLEANFILES =			\
 	crmf_asn1.h		\
 	com_err.h		\
 	com_right.h		\
+	cache_plugin.h		\
 	der-protos.h 		\
 	der-private.h 		\
 	der.h			\

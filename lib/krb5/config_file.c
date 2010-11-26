@@ -877,7 +877,13 @@ next_component_string(char * begin, char * delims, char **state)
 
     end = begin;
     while (*end == '"') {
-        char * t = strchr(end + 1, '"');
+        char * t;
+        while ((t = strchr(end + 1, '"')) != NULL && *(t - 1) == '\\') {
+            --t;
+            memmove(t, t + 1, strlen(t));
+            end = t;
+        }
+
         if (t)
             end = ++t;
         else
@@ -894,14 +900,14 @@ next_component_string(char * begin, char * delims, char **state)
     if (*end != '\0') {
         *end = '\0';
         *state = end + 1;
-        if (*begin == '"' && *(end - 1) == '"') {
+        if (*begin == '"' && *(end - 1) == '"' && begin + 1 < end) {
             begin++; *(end - 1) = '\0';
         }
         return begin;
     }
 
     *state = end;
-    if (*begin == '"' && *(end - 1) == '"') {
+    if (*begin == '"' && *(end - 1) == '"' && begin + 1 < end) {
         begin++; *(end - 1) = '\0';
     }
     return begin;

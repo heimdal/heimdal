@@ -88,12 +88,20 @@ gss_mo_get(gss_OID mech, gss_OID option, gss_buffer_t value)
     return 0;
 }
 
+static void
+add_oid_set(gssapi_mech_interface m, gss_OID_set options)
+{
+    size_t n;
+
+    for (n = 0; n < m->gm_mo_num; n++)
+	gss_add_oid_set_member(&minor, m->gm_mo[n].option, options);
+}
+
 void
 gss_mo_list(gss_OID mech, gss_OID_set *options)
 {
     gssapi_mech_interface m;
     OM_uint32 major, minor;
-    size_t n;
 
     if (options == NULL)
 	return;
@@ -107,8 +115,7 @@ gss_mo_list(gss_OID mech, gss_OID_set *options)
     if (major != GSS_S_COMPLETE)
 	return;
 
-    for (n = 0; n < m->gm_mo_num; n++)
-	gss_add_oid_set_member(&minor, m->gm_mo[n].option, options);
+    add_oid_set(m, options);
 }
 
 OM_uint32
@@ -170,14 +177,48 @@ gss_indicate_mechs_by_attrs(OM_uint32 * minor_status,
     return GSS_S_FAILURE;
 }
 
+/**
+ * List support attributes for a mech and/or all mechanisms.
+ *
+ * @param mech given together with mech_attr will return the list of
+ *        attributes for mechanism, can optionally be GSS_C_NO_OID.
+ * @param mech_attr see mech parameter, can optionally be NULL,
+ *        release with gss_release_oid_set().
+ * @param known_mech_attrs all attributes for mechanisms supported,
+ *        release with gss_release_oid_set().
+ *
+ * @ingroup gssapi
+ */
+
 GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL
 gss_inquire_attrs_for_mech(OM_uint32 * minor_status,
 			   gss_const_OID mech,
-			   gss_OID_set * mech_attr,
+			   gss_OID_set *mech_attr,
 			   gss_OID_set *known_mech_attrs)
 {
-    _mg_oid_set_zero(mech_attr);
-    _mg_oid_set_zero(known_mech_attrs);
+    OM_uint32 major, junk;
+    gssapi_mech_interface m;
+
+    if (mech_attr) {
+	if (mech)
+	    gss_mo_list(mech, mech_attr);
+	else
+	    *mech_attr = NULL;
+    }    
+
+    if (known_mech_attrs) {
+	major = gss_create_empty_oid_set(minor_status, known_mech_attrs);
+	if (major) {
+	    gss_release_oid_set(&junk, mech_attr);
+	    return major;
+	}
+
+	_gss_load_mech();
+
+	SLIST_FOREACH(m, &_gss_mechs, gm_link)
+	    add_oid_set(m, known_mech_attrs);
+    }
+
 
     return GSS_S_COMPLETE;
 }

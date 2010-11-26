@@ -52,6 +52,9 @@ static char * handle_string(void);
 #undef ECHO
 
 %}
+
+%option nounput
+
 %%
 [A-Za-z][-A-Za-z0-9_]*	{
 			  yylval.string = strdup ((const char *)yytext);

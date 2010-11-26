@@ -285,7 +285,7 @@ test_cfx_SOURCES = krb5/test_cfx.c
 
 check_PROGRAMS = test_acquire_cred $(TESTS)
 
-bin_PROGRAMS = gss
+bin_PROGRAMS = gsstool
 noinst_PROGRAMS = test_cred test_kcred test_context test_ntlm
 
 test_context_SOURCES = test_context.c test_common.c test_common.h
@@ -302,10 +302,10 @@ LDADD = libgssapi.la \
 
 # gss
 
-dist_gss_SOURCES = gss.c
-nodist_gss_SOURCES = gss-commands.c gss-commands.h
+dist_gsstool_SOURCES = gsstool.c
+nodist_gsstool_SOURCES = gss-commands.c gss-commands.h
 
-gss_LDADD = libgssapi.la \
+gsstool_LDADD = libgssapi.la \
 	$(top_builddir)/lib/sl/libsl.la \
 	$(top_builddir)/lib/krb5/libkrb5.la \
 	$(LIB_readline) \
@@ -314,7 +314,7 @@ gss_LDADD = libgssapi.la \
 gss-commands.c gss-commands.h: gss-commands.in
 	$(SLC) $(srcdir)/gss-commands.in
 
-$(gss_OBJECTS): gss-commands.h
+$(gsstool_OBJECTS): gss-commands.h
 
 EXTRA_DIST = \
 	$(man_MANS) \

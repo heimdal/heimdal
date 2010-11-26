@@ -105,6 +105,8 @@ HEIMDAL_GSS_2.0 {
 		gss_mo_set;
 		gss_mo_list;
 		gss_mo_name;
+		gss_name_to_oid;
+		gss_oid_to_name;
 
 		# _gsskrb5cfx_ are really internal symbols, but export
 		# then now to make testing easier.

@@ -65,6 +65,8 @@ usage (int ret)
 
 #define COL_OID		"OID"
 #define COL_NAME	"Name"
+#define COL_DESC	"Description"
+#define COL_VALUE	"Value"
 #define COL_MECH	"Mech"
 #define COL_EXPIRE	"Expire"
 
@@ -114,6 +116,57 @@ supported_mechanisms(void *argptr, int argc, char **argv)
     return 0;
 }
 
+void static 
+print_mech_attr(const char *mechname, gss_const_OID mech, gss_OID_set set)
+{
+    gss_buffer_desc name, desc;
+    OM_uint32 major, minor;
+    rtbl_t ct;
+    size_t n;
+
+    ct = rtbl_create();
+    if (ct == NULL)
+	errx(1, "rtbl_create");
+
+    rtbl_set_separator(ct, "  ");
+    rtbl_add_column(ct, COL_OID, 0);
+    rtbl_add_column(ct, COL_DESC, 0);
+    if (mech)
+	rtbl_add_column(ct, COL_VALUE, 0);
+
+    for (n = 0; n < set->count; n++) {
+	major = gss_display_mech_attr(&minor, &set->elements[n], &name, &desc, NULL);
+	if (major)
+	    continue;
+	
+	rtbl_add_column_entryv(ct, COL_OID, "%.*s",
+			       (int)name.length, (char *)name.value);
+	rtbl_add_column_entryv(ct, COL_DESC, "%.*s",
+			       (int)desc.length, (char *)desc.value);
+	if (mech) {
+	    gss_buffer_desc value;
+	    
+	    if (gss_mo_get(mech, &set->elements[n], &value) != 0)
+		value.length = 0;
+
+	    if (value.length)
+		rtbl_add_column_entryv(ct, COL_VALUE, "%.*s",
+				       (int)value.length, (char *)value.value);
+	    else
+		rtbl_add_column_entryv(ct, COL_VALUE, "<>");
+	    gss_release_buffer(&minor, &value);
+	}
+
+	gss_release_buffer(&minor, &name);
+	gss_release_buffer(&minor, &desc);
+    }
+
+    printf("attributes for: %s\n", mechname);
+    rtbl_format(ct, stdout);
+    rtbl_destroy(ct);
+}
+
+
 int
 attrs_for_mech(struct attrs_for_mech_options *opt, int argc, char **argv)
 {
@@ -132,10 +185,15 @@ attrs_for_mech(struct attrs_for_mech_options *opt, int argc, char **argv)
 	errx(1, "gss_inquire_attrs_for_mech");
 
     if (mech) {
+	print_mech_attr(opt->mech_string, mech, mech_attr);
     }
 
     if (opt->all_flag) {
+	print_mech_attr("all mechs", NULL, known_mech_attrs);
     }
+
+    gss_release_oid_set(&minor, &mech_attr);
+    gss_release_oid_set(&minor, &known_mech_attrs);
 
     return 0;
 }

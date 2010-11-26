@@ -54,7 +54,19 @@ _gss_mo_get_option_0(gss_const_OID mech, gss_mo_desc *mo, gss_buffer_t value)
     return get_option_def(0, mech, mo, value);
 }
 
-GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL
+int
+_gss_mo_get_ctx_as_value(gss_const_OID mech, gss_mo_desc *mo, gss_buffer_t value)
+{
+    if (value) {
+	value->value = strdup((char *)mo->ctx);
+	if (value->value == NULL)
+	    return 1;
+	value->length = strlen((char *)mo->ctx);
+    }
+    return 0;
+}
+
+GSSAPI_LIB_FUNCTION int GSSAPI_LIB_CALL
 gss_mo_set(gss_const_OID mech, gss_const_OID option,
 	   int enable, gss_buffer_t value)
 {
@@ -70,7 +82,7 @@ gss_mo_set(gss_const_OID mech, gss_const_OID option,
     return 0;
 }
 
-GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL
+GSSAPI_LIB_FUNCTION int GSSAPI_LIB_CALL
 gss_mo_get(gss_const_OID mech, gss_const_OID option, gss_buffer_t value)
 {
     gssapi_mech_interface m;
@@ -153,7 +165,10 @@ mo_name(const gss_const_OID mech, gss_const_OID option, gss_buffer_t name)
     if (name == NULL)
 	return GSS_S_COMPLETE;
 
-    return gss_mo_name(mech, option, name);
+    if (gss_mo_get(mech, option, name) != 0 && value->length == 0)
+	return GSS_S_FAILURE;
+
+    return GSS_S_COMPLETE;
 }
 
 /**
@@ -225,7 +240,7 @@ gss_inquire_mech_for_saslname(OM_uint32 *minor_status,
     *mech_type = NULL;
 
     SLIST_FOREACH(m, &_gss_mechs, gm_link) {
-	major = gss_mo_name(&m->gm_mech_oid, GSS_MA_SASL_MECH_NAME, &name);
+	major = mo_name(&m->gm_mech_oid, GSS_MA_SASL_MECH_NAME, &name);
 	if (major)
 	    continue;
 	if (name.length == sasl_mech_name->length &&
@@ -341,6 +356,8 @@ gss_display_mech_attr(OM_uint32 * minor_status,
 
     if (minor_status)
 	*minor_status = 0;
+
+    /* XXX check if the mech implements this, if it does, lets ask it for its idea first */
 
     for (n = 0; ma == NULL && _gss_ont_ma[n].oid; n++)
 	if (gss_oid_equal(mech_attr, _gss_ont_ma[n].oid))

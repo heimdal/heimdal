@@ -111,7 +111,9 @@ mechsrc = \
 	mech/gss_inquire_names_for_mech.c \
 	mech/gss_krb5.c \
 	mech/gss_mech_switch.c \
+	mech/gss_mo.c \
 	mech/gss_names.c \
+	mech/gss_oid.c \
 	mech/gss_oid_equal.c \
 	mech/gss_oid_to_str.c \
 	mech/gss_process_context_token.c \
@@ -218,10 +220,12 @@ noinst_HEADERS = \
 	ntlm/ntlm-private.h \
 	spnego/spnego-private.h \
 	krb5/gsskrb5-private.h
+
 nobase_include_HEADERS = \
 	gssapi/gssapi.h \
 	gssapi/gssapi_krb5.h \
 	gssapi/gssapi_ntlm.h \
+	gssapi/gssapi_oid.h \
 	gssapi/gssapi_spnego.h
 
 gssapidir = $(includedir)/gssapi
@@ -281,7 +285,7 @@ test_cfx_SOURCES = krb5/test_cfx.c
 
 check_PROGRAMS = test_acquire_cred $(TESTS)
 
-bin_PROGRAMS = gss
+bin_PROGRAMS = gsstool
 noinst_PROGRAMS = test_cred test_kcred test_context test_ntlm
 
 test_context_SOURCES = test_context.c test_common.c test_common.h
@@ -298,10 +302,10 @@ LDADD = libgssapi.la \
 
 # gss
 
-dist_gss_SOURCES = gss.c
-nodist_gss_SOURCES = gss-commands.c gss-commands.h
+dist_gsstool_SOURCES = gsstool.c
+nodist_gsstool_SOURCES = gss-commands.c gss-commands.h
 
-gss_LDADD = libgssapi.la \
+gsstool_LDADD = libgssapi.la \
 	$(top_builddir)/lib/sl/libsl.la \
 	$(top_builddir)/lib/krb5/libkrb5.la \
 	$(LIB_readline) \
@@ -310,7 +314,7 @@ gss_LDADD = libgssapi.la \
 gss-commands.c gss-commands.h: gss-commands.in
 	$(SLC) $(srcdir)/gss-commands.in
 
-$(gss_OBJECTS): gss-commands.h
+$(gsstool_OBJECTS): gss-commands.h
 
 EXTRA_DIST = \
 	$(man_MANS) \
@@ -323,6 +327,11 @@ EXTRA_DIST = \
 
 $(libgssapi_la_OBJECTS): gkrb5_err.h gssapi_asn1.h gssapi_asn1-priv.h
 $(libgssapi_la_OBJECTS): spnego_asn1.h spnego_asn1-priv.h
+$(libgssapi_la_OBJECTS): $(srcdir)/gssapi/gssapi_oid.h
 
 gkrb5_err.h gkrb5_err.c: $(srcdir)/krb5/gkrb5_err.et
 	$(COMPILE_ET) $(srcdir)/krb5/gkrb5_err.et
+
+$(srcdir)/gssapi/gssapi_oid.h $(srcdir)/mech/gss_oid.c:
+	perl $(srcdir)/gen-oid.pl -b base -h $(srcdir)/oid.txt > $(srcdir)/gssapi/gssapi_oid.h
+	perl $(srcdir)/gen-oid.pl -b base $(srcdir)/oid.txt > $(srcdir)/mech/gss_oid.c

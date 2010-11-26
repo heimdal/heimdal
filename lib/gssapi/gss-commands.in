@@ -37,6 +37,19 @@ command = {
 	help = "Print the supported mechanisms"
 }
 command = {
+	name = "attrs-for-mech"
+	help = "Print the attributes for mechs"
+	option = {
+		long = "all"
+		type = "flag"
+	}
+	option = {
+		long = "mech"
+		type = "string"
+		argument = "mechanism"
+	}
+}
+command = {
 	name = "help"
 	name = "?"
 	argument = "[command]"

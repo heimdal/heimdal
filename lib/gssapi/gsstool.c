@@ -3,6 +3,8 @@
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  *
+ * Portions Copyright (c) 2009 - 2010 Apple Inc. All rights reserved.
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -31,9 +33,7 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifdef HAVE_CONFIG_H
 #include <config.h>
-#endif
 
 #include <stdio.h>
 #include <gssapi.h>
@@ -45,7 +45,7 @@
 #include <getarg.h>
 #include <rtbl.h>
 #include <gss-commands.h>
-#include <krb5.h>
+
 
 static int version_flag = 0;
 static int help_flag	= 0;
@@ -65,6 +65,11 @@ usage (int ret)
 
 #define COL_OID		"OID"
 #define COL_NAME	"Name"
+#define COL_DESC	"Description"
+#define COL_VALUE	"Value"
+#define COL_MECH	"Mech"
+#define COL_EXPIRE	"Expire"
+#define COL_SASL	"SASL"
 
 int
 supported_mechanisms(void *argptr, int argc, char **argv)
@@ -87,24 +92,37 @@ supported_mechanisms(void *argptr, int argc, char **argv)
     rtbl_set_separator(ct, "  ");
     rtbl_add_column(ct, COL_OID, 0);
     rtbl_add_column(ct, COL_NAME, 0);
+    rtbl_add_column(ct, COL_DESC, 0);
+    rtbl_add_column(ct, COL_SASL, 0);
 
     for (i = 0; i < mechs->count; i++) {
-	gss_buffer_desc name;
+	gss_buffer_desc str, sasl_name, mech_name, mech_desc;
 
-	maj_stat = gss_oid_to_str(&min_stat, &mechs->elements[i], &name);
+	maj_stat = gss_oid_to_str(&min_stat, &mechs->elements[i], &str);
 	if (maj_stat != GSS_S_COMPLETE)
 	    errx(1, "gss_oid_to_str failed");
 
 	rtbl_add_column_entryv(ct, COL_OID, "%.*s",
-			       (int)name.length, (char *)name.value);
-	gss_release_buffer(&min_stat, &name);
+			       (int)str.length, (char *)str.value);
+	gss_release_buffer(&min_stat, &str);
 
-	if (gss_oid_equal(&mechs->elements[i], GSS_KRB5_MECHANISM))
-	    rtbl_add_column_entry(ct, COL_NAME, "Kerberos 5");
-	else if (gss_oid_equal(&mechs->elements[i], GSS_SPNEGO_MECHANISM))
-	    rtbl_add_column_entry(ct, COL_NAME, "SPNEGO");
-	else if (gss_oid_equal(&mechs->elements[i], GSS_NTLM_MECHANISM))
-	    rtbl_add_column_entry(ct, COL_NAME, "NTLM");
+	(void)gss_inquire_saslname_for_mech(&min_stat,
+					    &mechs->elements[i],
+					    &sasl_name,
+					    &mech_name,
+					    &mech_desc);
+
+	rtbl_add_column_entryv(ct, COL_NAME, "%.*s",
+			       (int)mech_name.length, (char *)mech_name.value);
+	rtbl_add_column_entryv(ct, COL_DESC, "%.*s",
+			       (int)mech_desc.length, (char *)mech_desc.value);
+	rtbl_add_column_entryv(ct, COL_SASL, "%.*s",
+			       (int)sasl_name.length, (char *)sasl_name.value);
+
+	gss_release_buffer(&min_stat, &mech_name);
+	gss_release_buffer(&min_stat, &mech_desc);
+	gss_release_buffer(&min_stat, &sasl_name);
+
     }
     gss_release_oid_set(&min_stat, &mechs);
 
@@ -114,57 +132,88 @@ supported_mechanisms(void *argptr, int argc, char **argv)
     return 0;
 }
 
-#if 0
-/*
- *
- */
+void static 
+print_mech_attr(const char *mechname, gss_const_OID mech, gss_OID_set set)
+{
+    gss_buffer_desc name, desc;
+    OM_uint32 major, minor;
+    rtbl_t ct;
+    size_t n;
 
-#define DOVEDOT_MAJOR_VERSION 1
-#define DOVEDOT_MINOR_VERSION 0
+    ct = rtbl_create();
+    if (ct == NULL)
+	errx(1, "rtbl_create");
 
-/*
-	S: MECH mech mech-parameters
-	S: MECH mech mech-parameters
-	S: VERSION major minor
-	S: CPID pid
-	S: CUID pid
-	S: ...
-	S: DONE
-	C: VERSION major minor
-	C: CPID pid
+    rtbl_set_separator(ct, "  ");
+    rtbl_add_column(ct, COL_OID, 0);
+    rtbl_add_column(ct, COL_DESC, 0);
+    if (mech)
+	rtbl_add_column(ct, COL_VALUE, 0);
 
-	C: AUTH id method service= resp=
-	C: CONT id message
+    for (n = 0; n < set->count; n++) {
+	major = gss_display_mech_attr(&minor, &set->elements[n], &name, &desc, NULL);
+	if (major)
+	    continue;
+	
+	rtbl_add_column_entryv(ct, COL_OID, "%.*s",
+			       (int)name.length, (char *)name.value);
+	rtbl_add_column_entryv(ct, COL_DESC, "%.*s",
+			       (int)desc.length, (char *)desc.value);
+	if (mech) {
+	    gss_buffer_desc value;
+	    
+	    if (gss_mo_get(mech, &set->elements[n], &value) != 0)
+		value.length = 0;
 
-	S: OK id user=
-	S: FAIL id reason=
-	S: CONTINUE id message
-*/
+	    if (value.length)
+		rtbl_add_column_entryv(ct, COL_VALUE, "%.*s",
+				       (int)value.length, (char *)value.value);
+	    else
+		rtbl_add_column_entryv(ct, COL_VALUE, "<>");
+	    gss_release_buffer(&minor, &value);
+	}
+
+	gss_release_buffer(&minor, &name);
+	gss_release_buffer(&minor, &desc);
+    }
+
+    printf("attributes for: %s\n", mechname);
+    rtbl_format(ct, stdout);
+    rtbl_destroy(ct);
+}
+
 
 int
-dovecot_server(void *argptr, int argc, char **argv)
+attrs_for_mech(struct attrs_for_mech_options *opt, int argc, char **argv)
 {
-    krb5_storage *sp;
-    int fd = 0;
+    gss_OID_set mech_attr = NULL, known_mech_attrs = NULL;
+    gss_OID mech = GSS_C_NO_OID;
+    OM_uint32 major, minor;
 
-    sp = krb5_storage_from_fd(fd);
-    if (sp == NULL)
-	errx(1, "krb5_storage_from_fd");
-
-    krb5_store_stringnl(sp, "MECH\tGSSAPI");
-    krb5_store_stringnl(sp, "VERSION\t1\t0");
-    krb5_store_stringnl(sp, "DONE");
-
-    while (1) {
-	char *cmd;
-	if (krb5_ret_stringnl(sp, &cmd) != 0)
-	    break;
-	printf("cmd: %s\n", cmd);
-	free(cmd);
+    if (opt->mech_string) {
+	mech = gss_name_to_oid(opt->mech_string);
+	if (mech == NULL)
+	    errx(1, "mech %s is unknown", opt->mech_string);
     }
+
+    major = gss_inquire_attrs_for_mech(&minor, mech, &mech_attr, &known_mech_attrs);
+    if (major)
+	errx(1, "gss_inquire_attrs_for_mech");
+
+    if (mech) {
+	print_mech_attr(opt->mech_string, mech, mech_attr);
+    }
+
+    if (opt->all_flag) {
+	print_mech_attr("all mechs", NULL, known_mech_attrs);
+    }
+
+    gss_release_oid_set(&minor, &mech_attr);
+    gss_release_oid_set(&minor, &known_mech_attrs);
+
     return 0;
 }
-#endif
+
 
 /*
  *

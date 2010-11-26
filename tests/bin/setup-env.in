@@ -29,6 +29,7 @@ kpasswd="${TESTS_ENVIRONMENT} ${top_builddir}/kpasswd/kpasswd"
 kpasswdd="${TESTS_ENVIRONMENT} ${top_builddir}/kpasswd/kpasswdd"
 kswitch="${TESTS_ENVIRONMENT} ${top_builddir}/kuser/kcc kswitch"
 ktutil="${TESTS_ENVIRONMENT} ${top_builddir}/admin/ktutil"
+gsstool="${TESTS_ENVIRONMENT} ${top_builddir}/lib/gssapi/gsstool"
 
 # regression test tools
 test_ap_req="${TESTS_ENVIRONMENT} ${top_builddir}/lib/krb5/test_ap-req"

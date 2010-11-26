@@ -33,6 +33,33 @@
 
 #include "ntlm.h"
 
+static gss_mo_desc ntlm_mo[] = {
+    {
+	GSS_C_MA_SASL_MECH_NAME,
+	GSS_MO_MA,
+	"SASL mech name",
+	"NTLM",
+	_gss_mo_get_ctx_as_string,
+	NULL
+    },
+    {
+	GSS_C_MA_MECH_NAME,
+	GSS_MO_MA,
+	"Mechanism name",
+	"NTLMSPP",
+	_gss_mo_get_ctx_as_string,
+	NULL
+    },
+    {
+	GSS_C_MA_MECH_DESCRIPTION,
+	GSS_MO_MA,
+	"Mechanism description",
+	"Heimdal NTLMSSP Mechanism",
+	_gss_mo_get_ctx_as_string,
+	NULL
+    }
+};
+
 static gssapi_mech_interface_desc ntlm_mech = {
     GMI_VERSION,
     "ntlm",
@@ -66,7 +93,27 @@ static gssapi_mech_interface_desc ntlm_mech = {
     _gss_ntlm_inquire_names_for_mech,
     _gss_ntlm_inquire_mechs_for_name,
     _gss_ntlm_canonicalize_name,
-    _gss_ntlm_duplicate_name
+    _gss_ntlm_duplicate_name,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    ntlm_mo,
+    sizeof(ntlm_mo) / sizeof(ntlm_mo[0])
 };
 
 gssapi_mech_interface
@@ -74,6 +121,3 @@ __gss_ntlm_initialize(void)
 {
 	return &ntlm_mech;
 }
-
-gss_OID_desc __gss_ntlm_mechanism_oid_desc =
-    {10, rk_UNCONST("\x2b\x06\x01\x04\x01\x82\x37\x02\x02\x0a") };

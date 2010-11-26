@@ -397,13 +397,13 @@ typedef struct gss_mo_desc_struct gss_mo_desc;
 
 struct gss_mo_desc_struct {
     gss_OID option;
+    OM_uint32 flags;
+#define GSS_MO_MA		1
+#define GSS_MO_MA_CRITICAL	2
     const char *name;
     void *ctx;
     int (*get)(gss_const_OID, gss_mo_desc *, gss_buffer_t);
     int (*set)(gss_const_OID, gss_mo_desc *, int, gss_buffer_t);
-    OM_uint32 flags;
-#define GSS_MO_MA		1
-#define GSS_MO_MA_CRITICAL	2
 };
 
 

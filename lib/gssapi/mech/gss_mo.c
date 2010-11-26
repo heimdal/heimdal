@@ -146,11 +146,20 @@ gss_mo_name(gss_const_OID mech, gss_const_OID option, gss_buffer_t name)
 
     for (n = 0; n < m->gm_mo_num; n++) {
 	if (gss_oid_equal(option, m->gm_mo[n].option)) {
-	    name->value = strdup(m->gm_mo[n].name);
-	    if (name->value == NULL)
-		return GSS_S_BAD_NAME;
-	    name->length = strlen(m->gm_mo[n].name);
-	    return GSS_S_COMPLETE;
+	    /*
+	     * If ther is no name, its because its a GSS_C_MA and there is already a table for that.
+	     */
+	    if (m->gm_mo[n].name) {
+		name->value = strdup(m->gm_mo[n].name);
+		if (name->value == NULL)
+		    return GSS_S_BAD_NAME;
+		name->length = strlen(m->gm_mo[n].name);
+		return GSS_S_COMPLETE;
+	    } else {
+		OM_uint32 junk;
+		return gss_display_mech_attr(&junk, option,
+					     NULL, name, NULL);
+	    }
 	}
     }
     return GSS_S_BAD_NAME;
@@ -161,7 +170,7 @@ gss_mo_name(gss_const_OID mech, gss_const_OID option, gss_buffer_t name)
  */
 
 static OM_uint32
-mo_name(const gss_const_OID mech, gss_const_OID option, gss_buffer_t name)
+mo_value(const gss_const_OID mech, gss_const_OID option, gss_buffer_t name)
 {
     if (name == NULL)
 	return GSS_S_COMPLETE;
@@ -202,16 +211,16 @@ gss_inquire_saslname_for_mech(OM_uint32 *minor_status,
     if (minor_status)
 	*minor_status = 0;
 
-    if (desired_mech)
+    if (desired_mech == NULL)
 	return GSS_S_BAD_MECH;
 
-    major = mo_name(desired_mech, GSS_MA_SASL_MECH_NAME, sasl_mech_name);
+    major = mo_value(desired_mech, GSS_C_MA_SASL_MECH_NAME, sasl_mech_name);
     if (major) return major;
 
-    major = mo_name(desired_mech, GSS_MA_MECH_NAME, mech_name);
+    major = mo_value(desired_mech, GSS_C_MA_MECH_NAME, mech_name);
     if (major) return major;
 
-    major = mo_name(desired_mech, GSS_MA_MECH_DESCRIPTION, mech_description);
+    major = mo_value(desired_mech, GSS_C_MA_MECH_DESCRIPTION, mech_description);
     if (major) return major;
 
     return GSS_S_COMPLETE;
@@ -242,7 +251,7 @@ gss_inquire_mech_for_saslname(OM_uint32 *minor_status,
 
     SLIST_FOREACH(m, &_gss_mechs, gm_link) {
 
-	major = mo_name(&m->gm_mech_oid, GSS_MA_SASL_MECH_NAME, &name);
+	major = mo_value(&m->gm_mech_oid, GSS_C_MA_SASL_MECH_NAME, &name);
 	if (major)
 	    continue;
 	if (name.length == sasl_mech_name->length &&

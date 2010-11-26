@@ -69,6 +69,7 @@ usage (int ret)
 #define COL_VALUE	"Value"
 #define COL_MECH	"Mech"
 #define COL_EXPIRE	"Expire"
+#define COL_SASL	"SASL"
 
 int
 supported_mechanisms(void *argptr, int argc, char **argv)
@@ -91,10 +92,11 @@ supported_mechanisms(void *argptr, int argc, char **argv)
     rtbl_set_separator(ct, "  ");
     rtbl_add_column(ct, COL_OID, 0);
     rtbl_add_column(ct, COL_NAME, 0);
+    rtbl_add_column(ct, COL_DESC, 0);
+    rtbl_add_column(ct, COL_SASL, 0);
 
     for (i = 0; i < mechs->count; i++) {
-	gss_buffer_desc str;
-	const char *name = NULL;
+	gss_buffer_desc str, sasl_name, mech_name, mech_desc;
 
 	maj_stat = gss_oid_to_str(&min_stat, &mechs->elements[i], &str);
 	if (maj_stat != GSS_S_COMPLETE)
@@ -104,9 +106,23 @@ supported_mechanisms(void *argptr, int argc, char **argv)
 			       (int)str.length, (char *)str.value);
 	gss_release_buffer(&min_stat, &str);
 
-	name = gss_oid_to_name(&mechs->elements[i]);
-	if (name)
-	    rtbl_add_column_entry(ct, COL_NAME, name);
+	(void)gss_inquire_saslname_for_mech(&min_stat,
+					    &mechs->elements[i],
+					    &sasl_name,
+					    &mech_name,
+					    &mech_desc);
+
+	rtbl_add_column_entryv(ct, COL_NAME, "%.*s",
+			       (int)mech_name.length, (char *)mech_name.value);
+	rtbl_add_column_entryv(ct, COL_DESC, "%.*s",
+			       (int)mech_desc.length, (char *)mech_desc.value);
+	rtbl_add_column_entryv(ct, COL_SASL, "%.*s",
+			       (int)sasl_name.length, (char *)sasl_name.value);
+
+	gss_release_buffer(&min_stat, &mech_name);
+	gss_release_buffer(&min_stat, &mech_desc);
+	gss_release_buffer(&min_stat, &sasl_name);
+
     }
     gss_release_oid_set(&min_stat, &mechs);
 

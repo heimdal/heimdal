@@ -95,23 +95,14 @@ gss_OID_desc __gss_krb5_cred_no_ci_flags_x_oid_desc = { 6, "\x2a\x85\x70\x2b\x0d
 /* GSS_KRB5_IMPORT_CRED_X - 1.2.752.43.13.30 */
 gss_OID_desc __gss_krb5_import_cred_x_oid_desc = { 6, "\x2a\x85\x70\x2b\x0d\x1e" };
 
-/* GSS_MA_SASL_MECH_NAME - 1.2.752.43.13.100 */
-gss_OID_desc __gss_ma_sasl_mech_name_oid_desc = { 6, "\x2a\x85\x70\x2b\x0d\x64" };
+/* GSS_C_MA_SASL_MECH_NAME - 1.2.752.43.13.100 */
+gss_OID_desc __gss_c_ma_sasl_mech_name_oid_desc = { 6, "\x2a\x85\x70\x2b\x0d\x64" };
 
-/* GSS_MA_MECH_NAME - 1.2.752.43.13.101 */
-gss_OID_desc __gss_ma_mech_name_oid_desc = { 6, "\x2a\x85\x70\x2b\x0d\x65" };
+/* GSS_C_MA_MECH_NAME - 1.2.752.43.13.101 */
+gss_OID_desc __gss_c_ma_mech_name_oid_desc = { 6, "\x2a\x85\x70\x2b\x0d\x65" };
 
-/* GSS_MA_MECH_DESCRIPTION - 1.2.752.43.13.102 */
-gss_OID_desc __gss_ma_mech_description_oid_desc = { 6, "\x2a\x85\x70\x2b\x0d\x66" };
-
-/* GSS_MA_ATTR_NAME - 1.2.752.43.13.103 */
-gss_OID_desc __gss_ma_attr_name_oid_desc = { 6, "\x2a\x85\x70\x2b\x0d\x67" };
-
-/* GSS_MA_ATTR_SHORT_DESC - 1.2.752.43.13.104 */
-gss_OID_desc __gss_ma_attr_short_desc_oid_desc = { 6, "\x2a\x85\x70\x2b\x0d\x68" };
-
-/* GSS_MA_ATTR_LONG_DESC - 1.2.752.43.13.104 */
-gss_OID_desc __gss_ma_attr_long_desc_oid_desc = { 6, "\x2a\x85\x70\x2b\x0d\x68" };
+/* GSS_C_MA_MECH_DESCRIPTION - 1.2.752.43.13.102 */
+gss_OID_desc __gss_c_ma_mech_description_oid_desc = { 6, "\x2a\x85\x70\x2b\x0d\x66" };
 
 /* GSS_SASL_DIGEST_MD5_MECHANISM - 1.2.752.43.14.1 */
 gss_OID_desc __gss_sasl_digest_md5_mechanism_oid_desc = { 6, "\x2a\x85\x70\x2b\x0e\x01" };
@@ -128,17 +119,125 @@ gss_OID_desc __gss_spnego_mechanism_oid_desc = { 6, "\x2b\x06\x01\x05\x05\x02" }
 /* GSS_C_PEER_HAS_UPDATED_SPNEGO - 1.3.6.1.4.1.9513.19.5 */
 gss_OID_desc __gss_c_peer_has_updated_spnego_oid_desc = { 9, "\x2b\x06\x01\x04\x01\xca\x29\x13\x05" };
 
+/* GSS_C_MA_MECH_CONCRETE - 1.3.6.1.5.5.13.1 */
+gss_OID_desc __gss_c_ma_mech_concrete_oid_desc = { 7, "\x2b\x06\x01\x05\x05\x0d\x01" };
+
+/* GSS_C_MA_MECH_PSEUDO - 1.3.6.1.5.5.13.2 */
+gss_OID_desc __gss_c_ma_mech_pseudo_oid_desc = { 7, "\x2b\x06\x01\x05\x05\x0d\x02" };
+
+/* GSS_C_MA_MECH_COMPOSITE - 1.3.6.1.5.5.13.3 */
+gss_OID_desc __gss_c_ma_mech_composite_oid_desc = { 7, "\x2b\x06\x01\x05\x05\x0d\x03" };
+
+/* GSS_C_MA_MECH_NEGO - 1.3.6.1.5.5.13.4 */
+gss_OID_desc __gss_c_ma_mech_nego_oid_desc = { 7, "\x2b\x06\x01\x05\x05\x0d\x04" };
+
+/* GSS_C_MA_MECH_GLUE - 1.3.6.1.5.5.13.5 */
+gss_OID_desc __gss_c_ma_mech_glue_oid_desc = { 7, "\x2b\x06\x01\x05\x05\x0d\x05" };
+
+/* GSS_C_MA_NOT_MECH - 1.3.6.1.5.5.13.6 */
+gss_OID_desc __gss_c_ma_not_mech_oid_desc = { 7, "\x2b\x06\x01\x05\x05\x0d\x06" };
+
+/* GSS_C_MA_DEPRECATED - 1.3.6.1.5.5.13.7 */
+gss_OID_desc __gss_c_ma_deprecated_oid_desc = { 7, "\x2b\x06\x01\x05\x05\x0d\x07" };
+
+/* GSS_C_MA_NOT_DFLT_MECH - 1.3.6.1.5.5.13.8 */
+gss_OID_desc __gss_c_ma_not_dflt_mech_oid_desc = { 7, "\x2b\x06\x01\x05\x05\x0d\x08" };
+
+/* GSS_C_MA_ITOK_FRAMED - 1.3.6.1.5.5.13.9 */
+gss_OID_desc __gss_c_ma_itok_framed_oid_desc = { 7, "\x2b\x06\x01\x05\x05\x0d\x09" };
+
+/* GSS_C_MA_AUTH_INIT - 1.3.6.1.5.5.13.10 */
+gss_OID_desc __gss_c_ma_auth_init_oid_desc = { 7, "\x2b\x06\x01\x05\x05\x0d\x0a" };
+
+/* GSS_C_MA_AUTH_TARG - 1.3.6.1.5.5.13.11 */
+gss_OID_desc __gss_c_ma_auth_targ_oid_desc = { 7, "\x2b\x06\x01\x05\x05\x0d\x0b" };
+
+/* GSS_C_MA_AUTH_INIT_INIT - 1.3.6.1.5.5.13.12 */
+gss_OID_desc __gss_c_ma_auth_init_init_oid_desc = { 7, "\x2b\x06\x01\x05\x05\x0d\x0c" };
+
+/* GSS_C_MA_AUTH_TARG_INIT - 1.3.6.1.5.5.13.13 */
+gss_OID_desc __gss_c_ma_auth_targ_init_oid_desc = { 7, "\x2b\x06\x01\x05\x05\x0d\x0d" };
+
+/* GSS_C_MA_AUTH_INIT_ANON - 1.3.6.1.5.5.13.14 */
+gss_OID_desc __gss_c_ma_auth_init_anon_oid_desc = { 7, "\x2b\x06\x01\x05\x05\x0d\x0e" };
+
+/* GSS_C_MA_AUTH_TARG_ANON - 1.3.6.1.5.5.13.15 */
+gss_OID_desc __gss_c_ma_auth_targ_anon_oid_desc = { 7, "\x2b\x06\x01\x05\x05\x0d\x0f" };
+
+/* GSS_C_MA_DELEG_CRED - 1.3.6.1.5.5.13.16 */
+gss_OID_desc __gss_c_ma_deleg_cred_oid_desc = { 7, "\x2b\x06\x01\x05\x05\x0d\x10" };
+
+/* GSS_C_MA_INTEG_PROT - 1.3.6.1.5.5.13.17 */
+gss_OID_desc __gss_c_ma_integ_prot_oid_desc = { 7, "\x2b\x06\x01\x05\x05\x0d\x11" };
+
+/* GSS_C_MA_CONF_PROT - 1.3.6.1.5.5.13.18 */
+gss_OID_desc __gss_c_ma_conf_prot_oid_desc = { 7, "\x2b\x06\x01\x05\x05\x0d\x12" };
+
+/* GSS_C_MA_MIC - 1.3.6.1.5.5.13.19 */
+gss_OID_desc __gss_c_ma_mic_oid_desc = { 7, "\x2b\x06\x01\x05\x05\x0d\x13" };
+
+/* GSS_C_MA_WRAP - 1.3.6.1.5.5.13.20 */
+gss_OID_desc __gss_c_ma_wrap_oid_desc = { 7, "\x2b\x06\x01\x05\x05\x0d\x14" };
+
+/* GSS_C_MA_PROT_READY - 1.3.6.1.5.5.13.21 */
+gss_OID_desc __gss_c_ma_prot_ready_oid_desc = { 7, "\x2b\x06\x01\x05\x05\x0d\x15" };
+
+/* GSS_C_MA_REPLAY_DET - 1.3.6.1.5.5.13.22 */
+gss_OID_desc __gss_c_ma_replay_det_oid_desc = { 7, "\x2b\x06\x01\x05\x05\x0d\x16" };
+
+/* GSS_C_MA_OOS_DET - 1.3.6.1.5.5.13.23 */
+gss_OID_desc __gss_c_ma_oos_det_oid_desc = { 7, "\x2b\x06\x01\x05\x05\x0d\x17" };
+
+/* GSS_C_MA_CBINDINGS - 1.3.6.1.5.5.13.24 */
+gss_OID_desc __gss_c_ma_cbindings_oid_desc = { 7, "\x2b\x06\x01\x05\x05\x0d\x18" };
+
+/* GSS_C_MA_PFS - 1.3.6.1.5.5.13.25 */
+gss_OID_desc __gss_c_ma_pfs_oid_desc = { 7, "\x2b\x06\x01\x05\x05\x0d\x19" };
+
+/* GSS_C_MA_COMPRESS - 1.3.6.1.5.5.13.26 */
+gss_OID_desc __gss_c_ma_compress_oid_desc = { 7, "\x2b\x06\x01\x05\x05\x0d\x1a" };
+
+/* GSS_C_MA_CTX_TRANS - 1.3.6.1.5.5.13.27 */
+gss_OID_desc __gss_c_ma_ctx_trans_oid_desc = { 7, "\x2b\x06\x01\x05\x05\x0d\x1b" };
+
 struct _gss_oid_name_table _gss_ont_ma[] = {
-  { GSS_MA_SASL_MECH_NAME, "GSS_MA_SASL_MECH_NAME", "SASL mechanism name", "The name of the SASL mechanism" },
-  { GSS_MA_MECH_NAME, "GSS_MA_MECH_NAME", "GSS mech name", "The name of the GSS-API mechanism" },
-  { GSS_MA_MECH_DESCRIPTION, "GSS_MA_MECH_DESCRIPTION", "Mech description", "The long description of the mechanism" },
+  { GSS_C_MA_COMPRESS, "GSS_C_MA_COMPRESS", "compress", "" },
+  { GSS_C_MA_AUTH_TARG_INIT, "GSS_C_MA_AUTH_TARG_INIT", "auth-targ-princ-initial", "" },
+  { GSS_C_MA_CBINDINGS, "GSS_C_MA_CBINDINGS", "channel-bindings", "" },
+  { GSS_C_MA_WRAP, "GSS_C_MA_WRAP", "wrap", "" },
+  { GSS_C_MA_ITOK_FRAMED, "GSS_C_MA_ITOK_FRAMED", "initial-is-framed", "" },
+  { GSS_C_MA_MECH_NEGO, "GSS_C_MA_MECH_NEGO", "mech-negotiation-mech", "" },
+  { GSS_C_MA_MECH_COMPOSITE, "GSS_C_MA_MECH_COMPOSITE", "composite-mech", "" },
+  { GSS_C_MA_REPLAY_DET, "GSS_C_MA_REPLAY_DET", "replay-detection", "" },
+  { GSS_C_MA_AUTH_INIT_ANON, "GSS_C_MA_AUTH_INIT_ANON", "auth-init-princ-anon", "" },
+  { GSS_C_MA_PROT_READY, "GSS_C_MA_PROT_READY", "prot-ready", "" },
+  { GSS_C_MA_AUTH_INIT, "GSS_C_MA_AUTH_INIT", "auth-init-princ", "" },
+  { GSS_C_MA_PFS, "GSS_C_MA_PFS", "pfs", "" },
+  { GSS_C_MA_CONF_PROT, "GSS_C_MA_CONF_PROT", "conf-prot", "" },
+  { GSS_C_MA_MECH_PSEUDO, "GSS_C_MA_MECH_PSEUDO", "pseudo-mech", "" },
+  { GSS_C_MA_AUTH_TARG, "GSS_C_MA_AUTH_TARG", "auth-targ-princ", "" },
+  { GSS_C_MA_MECH_NAME, "GSS_C_MA_MECH_NAME", "GSS mech name", "The name of the GSS-API mechanism" },
+  { GSS_C_MA_NOT_MECH, "GSS_C_MA_NOT_MECH", "not-mech", "" },
+  { GSS_C_MA_MIC, "GSS_C_MA_MIC", "mic", "" },
+  { GSS_C_MA_DEPRECATED, "GSS_C_MA_DEPRECATED", "mech-deprecated", "" },
+  { GSS_C_MA_MECH_GLUE, "GSS_C_MA_MECH_GLUE", "mech-glue", "" },
+  { GSS_C_MA_DELEG_CRED, "GSS_C_MA_DELEG_CRED", "deleg-cred", "" },
+  { GSS_C_MA_NOT_DFLT_MECH, "GSS_C_MA_NOT_DFLT_MECH", "mech-not-default", "" },
+  { GSS_C_MA_AUTH_TARG_ANON, "GSS_C_MA_AUTH_TARG_ANON", "auth-targ-princ-anon", "" },
+  { GSS_C_MA_INTEG_PROT, "GSS_C_MA_INTEG_PROT", "integ-prot", "" },
+  { GSS_C_MA_CTX_TRANS, "GSS_C_MA_CTX_TRANS", "context-transfer", "" },
+  { GSS_C_MA_MECH_DESCRIPTION, "GSS_C_MA_MECH_DESCRIPTION", "Mech description", "The long description of the mechanism" },
+  { GSS_C_MA_OOS_DET, "GSS_C_MA_OOS_DET", "oos-detection", "" },
+  { GSS_C_MA_AUTH_INIT_INIT, "GSS_C_MA_AUTH_INIT_INIT", "auth-init-princ-initial", "" },
+  { GSS_C_MA_MECH_CONCRETE, "GSS_C_MA_MECH_CONCRETE", "concrete-mech", "Indicates that a mech is neither a pseudo-mechanism nor a composite mechanism" },
+  { GSS_C_MA_SASL_MECH_NAME, "GSS_C_MA_SASL_MECH_NAME", "SASL mechanism name", "The name of the SASL mechanism" },
   { NULL }
 };
 
 struct _gss_oid_name_table _gss_ont_mech[] = {
+  { GSS_KRB5_MECHANISM, "GSS_KRB5_MECHANISM", "Kerberos 5", "Heimdal Kerberos 5 mechanism" },
   { GSS_SPNEGO_MECHANISM, "GSS_SPNEGO_MECHANISM", "SPNEGO", "Heimdal SPNEGO mechanism" },
   { GSS_NTLM_MECHANISM, "GSS_NTLM_MECHANISM", "NTLM", "Heimdal NTLM mechanism" },
-  { GSS_KRB5_MECHANISM, "GSS_KRB5_MECHANISM", "Kerberos 5", "Heimdal Kerberos 5 mechanism" },
   { NULL }
 };
 

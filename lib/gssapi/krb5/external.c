@@ -175,29 +175,93 @@ gss_OID_desc GSSAPI_LIB_VARIABLE __gss_iakerb_min_msg_mechanism_oid_desc =
  * Context for krb5 calls.
  */
 
-static gss_mo_desc _gsskrb5_mech_options[] = {
+static gss_mo_desc krb5_mo[] = {
     {
-	GSS_MA_SASL_MECH_NAME,
+	GSS_C_MA_SASL_MECH_NAME,
+	GSS_MO_MA,
 	"SASL mech name",
 	"GS2-KRB5",
 	_gss_mo_get_ctx_as_string,
-	NULL,
-	GSS_MO_MA
+	NULL
     },
     {
-	GSS_MA_MECH_NAME,
+	GSS_C_MA_MECH_NAME,
+	GSS_MO_MA,
 	"Mechanism name",
 	"KRB5",
 	_gss_mo_get_ctx_as_string,
-	NULL,
-	GSS_MO_MA,
+	NULL
     },
     {
-	GSS_MA_MECH_DESCRIPTION,
+	GSS_C_MA_MECH_DESCRIPTION,
+	GSS_MO_MA,
 	"Mechanism description",
 	"Heimdal Kerberos 5 mech",
 	_gss_mo_get_ctx_as_string,
-	NULL,
+	NULL
+    },
+    {
+	GSS_C_MA_MECH_CONCRETE,
+	GSS_MO_MA
+    },
+    {
+	GSS_C_MA_ITOK_FRAMED,
+	GSS_MO_MA
+    },
+    {
+	GSS_C_MA_AUTH_INIT,
+	GSS_MO_MA
+    },
+    {
+	GSS_C_MA_AUTH_TARG,
+	GSS_MO_MA
+    },
+    {
+	GSS_C_MA_AUTH_INIT_ANON,
+	GSS_MO_MA
+    },
+    {
+	GSS_C_MA_DELEG_CRED,
+	GSS_MO_MA
+    },
+    {
+	GSS_C_MA_INTEG_PROT,
+	GSS_MO_MA
+    },
+    {
+	GSS_C_MA_CONF_PROT,
+	GSS_MO_MA
+    },
+    {
+	GSS_C_MA_MIC,
+	GSS_MO_MA
+    },
+    {
+	GSS_C_MA_WRAP,
+	GSS_MO_MA
+    },
+    {
+	GSS_C_MA_PROT_READY,
+	GSS_MO_MA
+    },
+    {
+	GSS_C_MA_REPLAY_DET,
+	GSS_MO_MA
+    },
+    {
+	GSS_C_MA_OOS_DET,
+	GSS_MO_MA
+    },
+    {
+	GSS_C_MA_CBINDINGS,
+	GSS_MO_MA
+    },
+    {
+	GSS_C_MA_PFS,
+	GSS_MO_MA
+    },
+    {
+	GSS_C_MA_CTX_TRANS,
 	GSS_MO_MA
     }
 };
@@ -258,8 +322,8 @@ static gssapi_mech_interface_desc krb5_mech = {
     NULL,
     NULL,
     NULL,
-    _gsskrb5_mech_options,
-    sizeof(_gsskrb5_mech_options) / sizeof(_gsskrb5_mech_options[0])
+    krb5_mo,
+    sizeof(krb5_mo) / sizeof(krb5_mo[0])
 };
 
 gssapi_mech_interface

@@ -99,24 +99,14 @@ extern gss_OID_desc __gss_krb5_import_cred_x_oid_desc;
 #define GSS_KRB5_IMPORT_CRED_X (&__gss_krb5_import_cred_x_oid_desc)
 
  /* glue for gss_inquire_saslname_for_mech */
-extern gss_OID_desc __gss_ma_sasl_mech_name_oid_desc;
-#define GSS_MA_SASL_MECH_NAME (&__gss_ma_sasl_mech_name_oid_desc)
+extern gss_OID_desc __gss_c_ma_sasl_mech_name_oid_desc;
+#define GSS_C_MA_SASL_MECH_NAME (&__gss_c_ma_sasl_mech_name_oid_desc)
 
-extern gss_OID_desc __gss_ma_mech_name_oid_desc;
-#define GSS_MA_MECH_NAME (&__gss_ma_mech_name_oid_desc)
+extern gss_OID_desc __gss_c_ma_mech_name_oid_desc;
+#define GSS_C_MA_MECH_NAME (&__gss_c_ma_mech_name_oid_desc)
 
-extern gss_OID_desc __gss_ma_mech_description_oid_desc;
-#define GSS_MA_MECH_DESCRIPTION (&__gss_ma_mech_description_oid_desc)
-
- /* glue for gss_display_mech_attr */
-extern gss_OID_desc __gss_ma_attr_name_oid_desc;
-#define GSS_MA_ATTR_NAME (&__gss_ma_attr_name_oid_desc)
-
-extern gss_OID_desc __gss_ma_attr_short_desc_oid_desc;
-#define GSS_MA_ATTR_SHORT_DESC (&__gss_ma_attr_short_desc_oid_desc)
-
-extern gss_OID_desc __gss_ma_attr_long_desc_oid_desc;
-#define GSS_MA_ATTR_LONG_DESC (&__gss_ma_attr_long_desc_oid_desc)
+extern gss_OID_desc __gss_c_ma_mech_description_oid_desc;
+#define GSS_C_MA_MECH_DESCRIPTION (&__gss_c_ma_mech_description_oid_desc)
 
 /*
  * Digest mechanisms - 1.2.752.43.14
@@ -143,4 +133,88 @@ extern gss_OID_desc __gss_c_peer_has_updated_spnego_oid_desc;
 /*
  * OID mappings with name and short description and and slightly longer description
  */
+/*
+ * RFC5587
+ */
+extern gss_OID_desc __gss_c_ma_mech_concrete_oid_desc;
+#define GSS_C_MA_MECH_CONCRETE (&__gss_c_ma_mech_concrete_oid_desc)
+
+extern gss_OID_desc __gss_c_ma_mech_pseudo_oid_desc;
+#define GSS_C_MA_MECH_PSEUDO (&__gss_c_ma_mech_pseudo_oid_desc)
+
+extern gss_OID_desc __gss_c_ma_mech_composite_oid_desc;
+#define GSS_C_MA_MECH_COMPOSITE (&__gss_c_ma_mech_composite_oid_desc)
+
+extern gss_OID_desc __gss_c_ma_mech_nego_oid_desc;
+#define GSS_C_MA_MECH_NEGO (&__gss_c_ma_mech_nego_oid_desc)
+
+extern gss_OID_desc __gss_c_ma_mech_glue_oid_desc;
+#define GSS_C_MA_MECH_GLUE (&__gss_c_ma_mech_glue_oid_desc)
+
+extern gss_OID_desc __gss_c_ma_not_mech_oid_desc;
+#define GSS_C_MA_NOT_MECH (&__gss_c_ma_not_mech_oid_desc)
+
+extern gss_OID_desc __gss_c_ma_deprecated_oid_desc;
+#define GSS_C_MA_DEPRECATED (&__gss_c_ma_deprecated_oid_desc)
+
+extern gss_OID_desc __gss_c_ma_not_dflt_mech_oid_desc;
+#define GSS_C_MA_NOT_DFLT_MECH (&__gss_c_ma_not_dflt_mech_oid_desc)
+
+extern gss_OID_desc __gss_c_ma_itok_framed_oid_desc;
+#define GSS_C_MA_ITOK_FRAMED (&__gss_c_ma_itok_framed_oid_desc)
+
+extern gss_OID_desc __gss_c_ma_auth_init_oid_desc;
+#define GSS_C_MA_AUTH_INIT (&__gss_c_ma_auth_init_oid_desc)
+
+extern gss_OID_desc __gss_c_ma_auth_targ_oid_desc;
+#define GSS_C_MA_AUTH_TARG (&__gss_c_ma_auth_targ_oid_desc)
+
+extern gss_OID_desc __gss_c_ma_auth_init_init_oid_desc;
+#define GSS_C_MA_AUTH_INIT_INIT (&__gss_c_ma_auth_init_init_oid_desc)
+
+extern gss_OID_desc __gss_c_ma_auth_targ_init_oid_desc;
+#define GSS_C_MA_AUTH_TARG_INIT (&__gss_c_ma_auth_targ_init_oid_desc)
+
+extern gss_OID_desc __gss_c_ma_auth_init_anon_oid_desc;
+#define GSS_C_MA_AUTH_INIT_ANON (&__gss_c_ma_auth_init_anon_oid_desc)
+
+extern gss_OID_desc __gss_c_ma_auth_targ_anon_oid_desc;
+#define GSS_C_MA_AUTH_TARG_ANON (&__gss_c_ma_auth_targ_anon_oid_desc)
+
+extern gss_OID_desc __gss_c_ma_deleg_cred_oid_desc;
+#define GSS_C_MA_DELEG_CRED (&__gss_c_ma_deleg_cred_oid_desc)
+
+extern gss_OID_desc __gss_c_ma_integ_prot_oid_desc;
+#define GSS_C_MA_INTEG_PROT (&__gss_c_ma_integ_prot_oid_desc)
+
+extern gss_OID_desc __gss_c_ma_conf_prot_oid_desc;
+#define GSS_C_MA_CONF_PROT (&__gss_c_ma_conf_prot_oid_desc)
+
+extern gss_OID_desc __gss_c_ma_mic_oid_desc;
+#define GSS_C_MA_MIC (&__gss_c_ma_mic_oid_desc)
+
+extern gss_OID_desc __gss_c_ma_wrap_oid_desc;
+#define GSS_C_MA_WRAP (&__gss_c_ma_wrap_oid_desc)
+
+extern gss_OID_desc __gss_c_ma_prot_ready_oid_desc;
+#define GSS_C_MA_PROT_READY (&__gss_c_ma_prot_ready_oid_desc)
+
+extern gss_OID_desc __gss_c_ma_replay_det_oid_desc;
+#define GSS_C_MA_REPLAY_DET (&__gss_c_ma_replay_det_oid_desc)
+
+extern gss_OID_desc __gss_c_ma_oos_det_oid_desc;
+#define GSS_C_MA_OOS_DET (&__gss_c_ma_oos_det_oid_desc)
+
+extern gss_OID_desc __gss_c_ma_cbindings_oid_desc;
+#define GSS_C_MA_CBINDINGS (&__gss_c_ma_cbindings_oid_desc)
+
+extern gss_OID_desc __gss_c_ma_pfs_oid_desc;
+#define GSS_C_MA_PFS (&__gss_c_ma_pfs_oid_desc)
+
+extern gss_OID_desc __gss_c_ma_compress_oid_desc;
+#define GSS_C_MA_COMPRESS (&__gss_c_ma_compress_oid_desc)
+
+extern gss_OID_desc __gss_c_ma_ctx_trans_oid_desc;
+#define GSS_C_MA_CTX_TRANS (&__gss_c_ma_ctx_trans_oid_desc)
+
 #endif /* GSSAPI_GSSAPI_OID */

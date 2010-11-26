@@ -75,6 +75,6 @@
 	do {						\
 		if (oid_set) {				\
 			(oid_set)->elements = NULL;	\
-			 (oid_set)->length = 0;		\
+			(oid_set)->count = 0;		\
 		 }					\
 	} while(0)

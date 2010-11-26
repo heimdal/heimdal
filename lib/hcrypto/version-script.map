@@ -273,6 +273,12 @@ HEIMDAL_CRYPTO_1.0 {
 		hc_SHA256_Final;
 		hc_SHA256_Init;
 		hc_SHA256_Update;
+		hc_SHA384_Final;
+		hc_SHA384_Init;
+		hc_SHA384_Update;
+		hc_SHA512_Final;
+		hc_SHA512_Init;
+		hc_SHA512_Update;
 		hc_UI_UTIL_read_pw_string;
 		hc_UI_UTIL_read_pw_string;
 		hc_i2d_DHparams;

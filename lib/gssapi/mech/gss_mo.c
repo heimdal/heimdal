@@ -451,5 +451,5 @@ gss_display_mech_attr(OM_uint32 * minor_status,
 	    return major;
     }
 
-    return GSS_S_FAILURE;
+    return GSS_S_COMPLETE;
 }

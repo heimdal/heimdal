@@ -165,7 +165,7 @@ mo_name(const gss_const_OID mech, gss_const_OID option, gss_buffer_t name)
     if (name == NULL)
 	return GSS_S_COMPLETE;
 
-    if (gss_mo_get(mech, option, name) != 0 && value->length == 0)
+    if (gss_mo_get(mech, option, name) != 0 && name->length == 0)
 	return GSS_S_FAILURE;
 
     return GSS_S_COMPLETE;

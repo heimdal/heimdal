@@ -23,7 +23,7 @@ extern gss_OID_desc __gss_krb5_export_lucid_context_x_oid_desc;
 #define GSS_KRB5_EXPORT_LUCID_CONTEXT_X (&__gss_krb5_export_lucid_context_x_oid_desc)
 
 extern gss_OID_desc __gss_krb5_export_lucid_context_v1_x_oid_desc;
-#define GSS_KRB5_EXPORT_LUCID_CONTEXT_v1_X (&__gss_krb5_export_lucid_context_v1_x_oid_desc)
+#define GSS_KRB5_EXPORT_LUCID_CONTEXT_V1_X (&__gss_krb5_export_lucid_context_v1_x_oid_desc)
 
 extern gss_OID_desc __gss_krb5_set_dns_canonicalize_x_oid_desc;
 #define GSS_KRB5_SET_DNS_CANONICALIZE_X (&__gss_krb5_set_dns_canonicalize_x_oid_desc)
@@ -90,6 +90,12 @@ extern gss_OID_desc __gss_c_ntlm_session_key_oid_desc;
 
 extern gss_OID_desc __gss_c_ntlm_force_v1_oid_desc;
 #define GSS_C_NTLM_FORCE_V1 (&__gss_c_ntlm_force_v1_oid_desc)
+
+extern gss_OID_desc __gss_krb5_cred_no_ci_flags_x_oid_desc;
+#define GSS_KRB5_CRED_NO_CI_FLAGS_X (&__gss_krb5_cred_no_ci_flags_x_oid_desc)
+
+extern gss_OID_desc __gss_krb5_import_cred_x_oid_desc;
+#define GSS_KRB5_IMPORT_CRED_X (&__gss_krb5_import_cred_x_oid_desc)
 
  /* glue for gss_inquire_saslname_for_mech */
 extern gss_OID_desc __gss_ma_sasl_mech_name_oid_desc;

@@ -18,7 +18,7 @@ gss_OID_desc __gss_krb5_register_acceptor_identity_x_oid_desc = { 6, "\x2a\xf0\x
 /* GSS_KRB5_EXPORT_LUCID_CONTEXT_X - 1.2.752.43.13.6 */
 gss_OID_desc __gss_krb5_export_lucid_context_x_oid_desc = { 6, "\x2a\xf0\x05\x2b\x0d\x06" };
 
-/* GSS_KRB5_EXPORT_LUCID_CONTEXT_v1_X - 1.2.752.43.13.6.1 */
+/* GSS_KRB5_EXPORT_LUCID_CONTEXT_V1_X - 1.2.752.43.13.6.1 */
 gss_OID_desc __gss_krb5_export_lucid_context_v1_x_oid_desc = { 7, "\x2a\xf0\x05\x2b\x0d\x06\x01" };
 
 /* GSS_KRB5_SET_DNS_CANONICALIZE_X - 1.2.752.43.13.7 */
@@ -86,6 +86,12 @@ gss_OID_desc __gss_c_ntlm_session_key_oid_desc = { 6, "\x2a\xf0\x05\x2b\x0d\x1b"
 
 /* GSS_C_NTLM_FORCE_V1 - 1.2.752.43.13.28 */
 gss_OID_desc __gss_c_ntlm_force_v1_oid_desc = { 6, "\x2a\xf0\x05\x2b\x0d\x1c" };
+
+/* GSS_KRB5_CRED_NO_CI_FLAGS_X - 1.2.752.43.13.29 */
+gss_OID_desc __gss_krb5_cred_no_ci_flags_x_oid_desc = { 6, "\x2a\xf0\x05\x2b\x0d\x1d" };
+
+/* GSS_KRB5_IMPORT_CRED_X - 1.2.752.43.13.30 */
+gss_OID_desc __gss_krb5_import_cred_x_oid_desc = { 6, "\x2a\xf0\x05\x2b\x0d\x1e" };
 
 /* GSS_MA_SASL_MECH_NAME - 1.2.752.43.13.28 */
 gss_OID_desc __gss_ma_sasl_mech_name_oid_desc = { 6, "\x2a\xf0\x05\x2b\x0d\x1c" };

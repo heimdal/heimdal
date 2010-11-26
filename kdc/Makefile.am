@@ -16,7 +16,7 @@ noinst_PROGRAMS = kdc-replay
 
 man_MANS = kdc.8 kstash.8 hprop.8 hpropd.8 string2key.8
 
-hprop_SOURCES = hprop.c mit_dump.c hprop.h kadb.h 
+hprop_SOURCES = hprop.c mit_dump.c hprop.h
 hpropd_SOURCES = hpropd.c hprop.h
 
 kstash_SOURCES = kstash.c headers.h

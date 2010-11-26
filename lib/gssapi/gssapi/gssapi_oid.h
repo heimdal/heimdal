@@ -1,6 +1,7 @@
 #ifndef GSSAPI_GSSAPI_OID
 #define GSSAPI_GSSAPI_OID 1
 
+ /* contact Love Hörnquist Åstrand <lha@h5l.org> for new oid arcs */
  /*
   * 1.2.752.43.13 Heimdal GSS-API Extentions
   */
@@ -102,11 +103,12 @@ extern gss_OID_desc __gss_ma_sasl_mech_name_oid_desc;
 #define GSS_MA_SASL_MECH_NAME (&__gss_ma_sasl_mech_name_oid_desc)
 
 /*
- * Digest mechanisms
+ * Digest mechanisms - 1.2.752.43.14
  */
 extern gss_OID_desc __gss_sasl_digest_md5_mechanism_oid_desc;
 #define GSS_SASL_DIGEST_MD5_MECHANISM (&__gss_sasl_digest_md5_mechanism_oid_desc)
 
+ /* From Luke Howard */
 extern gss_OID_desc __gss_c_peer_has_updated_spnego_oid_desc;
 #define GSS_C_PEER_HAS_UPDATED_SPNEGO (&__gss_c_peer_has_updated_spnego_oid_desc)
 

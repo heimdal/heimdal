@@ -331,7 +331,9 @@ gss_display_mech_attr(OM_uint32 * minor_status,
 		      gss_buffer_t short_desc,
 		      gss_buffer_t long_desc)
 {
+    struct _gss_oid_name_table *ma = NULL;
     OM_uint32 major;
+    size_t n;
 
     _mg_buffer_zero(name);
     _mg_buffer_zero(short_desc);
@@ -340,16 +342,39 @@ gss_display_mech_attr(OM_uint32 * minor_status,
     if (minor_status)
 	*minor_status = 0;
 
-#if 0
-    major = mo_name(mech_attr, GSS_MA_ATTR_NAME, name);
-    if (major) return major;
+    for (n = 0; ma == NULL && _gss_ont_ma[n].oid; n++)
+	if (gss_oid_equal(mech_attr, _gss_ont_ma[n].oid))
+	    ma = &_gss_ont_ma[n];
 
-    major = mo_name(mech_attr, GSS_MA_ATTR_SHORT_DESC, short_desc);
-    if (major) return major;
+    if (ma == NULL)
+	return GSS_S_BAD_MECH_ATTR;
 
-    major = mo_name(mech_attr, GSS_MA_ATTR_LONG_DESC, long_desc);
-    if (major) return major;
-#endif
+    if (name) {
+	gss_buffer_desc n;
+	n.value = rk_UNCONST(ma->name);
+	n.length = strlen(ma->name);
+	major = _gss_copy_buffer(minor_status, &n, name);
+	if (major != GSS_S_COMPLETE)
+	    return major;
+    }
+
+    if (short_desc) {
+	gss_buffer_desc n;
+	n.value = rk_UNCONST(ma->short_desc);
+	n.length = strlen(ma->short_desc);
+	major = _gss_copy_buffer(minor_status, &n, short_desc);
+	if (major != GSS_S_COMPLETE)
+	    return major;
+    }
+
+    if (long_desc) {
+	gss_buffer_desc n;
+	n.value = rk_UNCONST(ma->long_desc);
+	n.length = strlen(ma->long_desc);
+	major = _gss_copy_buffer(minor_status, &n, long_desc);
+	if (major != GSS_S_COMPLETE)
+	    return major;
+    }
 
     return GSS_S_FAILURE;
 }

@@ -430,7 +430,7 @@ test_binaries =				\
 	$(OBJ)\test_prf.exe		\
 	$(OBJ)\test_princ.exe		\
 	$(OBJ)\test_renew.exe		\
-	$(OBJ)\test_rfc3961		\
+	$(OBJ)\test_rfc3961.exe		\
 	$(OBJ)\test_store.exe		\
 	$(OBJ)\test_time.exe		\
 

@@ -53,6 +53,7 @@ static int getstring(void);
 
 %}
 
+%option nounput
 
 %%
 et			{ return ET; }

@@ -111,7 +111,7 @@ mechsrc = \
 	mech/gss_inquire_names_for_mech.c \
 	mech/gss_krb5.c \
 	mech/gss_mech_switch.c \
-	mech/gss_mo.o \
+	mech/gss_mo.c \
 	mech/gss_names.c \
 	mech/gss_oid.c \
 	mech/gss_oid_equal.c \

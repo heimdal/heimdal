@@ -102,6 +102,22 @@ extern gss_OID_desc __gss_krb5_import_cred_x_oid_desc;
 extern gss_OID_desc __gss_ma_sasl_mech_name_oid_desc;
 #define GSS_MA_SASL_MECH_NAME (&__gss_ma_sasl_mech_name_oid_desc)
 
+extern gss_OID_desc __gss_ma_mech_name_oid_desc;
+#define GSS_MA_MECH_NAME (&__gss_ma_mech_name_oid_desc)
+
+extern gss_OID_desc __gss_ma_mech_description_oid_desc;
+#define GSS_MA_MECH_DESCRIPTION (&__gss_ma_mech_description_oid_desc)
+
+ /* glue for gss_display_mech_attr */
+extern gss_OID_desc __gss_ma_attr_name_oid_desc;
+#define GSS_MA_ATTR_NAME (&__gss_ma_attr_name_oid_desc)
+
+extern gss_OID_desc __gss_ma_attr_short_desc_oid_desc;
+#define GSS_MA_ATTR_SHORT_DESC (&__gss_ma_attr_short_desc_oid_desc)
+
+extern gss_OID_desc __gss_ma_attr_long_desc_oid_desc;
+#define GSS_MA_ATTR_LONG_DESC (&__gss_ma_attr_long_desc_oid_desc)
+
 /*
  * Digest mechanisms - 1.2.752.43.14
  */

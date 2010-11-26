@@ -760,7 +760,7 @@ gss_set_cred_option (OM_uint32 *minor_status,
 		     const gss_buffer_t value);
 
 GSSAPI_LIB_FUNCTION int GSSAPI_LIB_CALL
-gss_oid_equal(const gss_OID a, const gss_OID b);
+gss_oid_equal(gss_const_OID a, gss_const_OID b);
 
 GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL
 gss_create_empty_buffer_set
@@ -938,16 +938,17 @@ gss_import_cred(OM_uint32 * /* minor_status */,
  */
 
 GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL
-gss_mo_set(gss_OID mech, gss_OID option, int enable, gss_buffer_t value);
+gss_mo_set(gss_const_OID mech, gss_const_OID option,
+	   int enable, gss_buffer_t value);
 
 GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL
-gss_mo_get(gss_OID mech, gss_OID option, gss_buffer_t value);
+gss_mo_get(gss_const_OID mech, gss_const_OID option, gss_buffer_t value);
 
 GSSAPI_LIB_FUNCTION void GSSAPI_LIB_CALL
-gss_mo_list(gss_OID mech, gss_OID_set *options);
+gss_mo_list(gss_const_OID mech, gss_OID_set *options);
 
 GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL
-gss_mo_name(gss_OID mech, gss_OID options, gss_buffer_t name);
+gss_mo_name(gss_const_OID mech, gss_const_OID options, gss_buffer_t name);
 
 /*
  * SASL glue functions and mech inquire

@@ -93,8 +93,23 @@ gss_OID_desc __gss_krb5_cred_no_ci_flags_x_oid_desc = { 6, "\x2a\xf0\x05\x2b\x0d
 /* GSS_KRB5_IMPORT_CRED_X - 1.2.752.43.13.30 */
 gss_OID_desc __gss_krb5_import_cred_x_oid_desc = { 6, "\x2a\xf0\x05\x2b\x0d\x1e" };
 
-/* GSS_MA_SASL_MECH_NAME - 1.2.752.43.13.28 */
-gss_OID_desc __gss_ma_sasl_mech_name_oid_desc = { 6, "\x2a\xf0\x05\x2b\x0d\x1c" };
+/* GSS_MA_SASL_MECH_NAME - 1.2.752.43.13.100 */
+gss_OID_desc __gss_ma_sasl_mech_name_oid_desc = { 6, "\x2a\xf0\x05\x2b\x0d\x64" };
+
+/* GSS_MA_MECH_NAME - 1.2.752.43.13.101 */
+gss_OID_desc __gss_ma_mech_name_oid_desc = { 6, "\x2a\xf0\x05\x2b\x0d\x65" };
+
+/* GSS_MA_MECH_DESCRIPTION - 1.2.752.43.13.102 */
+gss_OID_desc __gss_ma_mech_description_oid_desc = { 6, "\x2a\xf0\x05\x2b\x0d\x66" };
+
+/* GSS_MA_ATTR_NAME - 1.2.752.43.13.103 */
+gss_OID_desc __gss_ma_attr_name_oid_desc = { 6, "\x2a\xf0\x05\x2b\x0d\x67" };
+
+/* GSS_MA_ATTR_SHORT_DESC - 1.2.752.43.13.104 */
+gss_OID_desc __gss_ma_attr_short_desc_oid_desc = { 6, "\x2a\xf0\x05\x2b\x0d\x68" };
+
+/* GSS_MA_ATTR_LONG_DESC - 1.2.752.43.13.104 */
+gss_OID_desc __gss_ma_attr_long_desc_oid_desc = { 6, "\x2a\xf0\x05\x2b\x0d\x68" };
 
 /* GSS_SASL_DIGEST_MD5_MECHANISM - 1.2.752.43.14.1 */
 gss_OID_desc __gss_sasl_digest_md5_mechanism_oid_desc = { 6, "\x2a\xf0\x05\x2b\x0e\x01" };

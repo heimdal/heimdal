@@ -399,12 +399,8 @@ struct gss_mo_desc_struct {
     gss_OID option;
     const char *name;
     void *ctx;
-    int (*get)(gss_OID, gss_mo_desc *, gss_buffer_t);
-    int (*set)(gss_OID, gss_mo_desc *, int, gss_buffer_t);
-    OM_uint32 flags;
-#define GSS_MO_IS_MA		1
-#define GSS_MO_MA_CRITIAL	2
-    const char *description;
+    int (*get)(gss_const_OID, gss_mo_desc *, gss_buffer_t);
+    int (*set)(gss_const_OID, gss_mo_desc *, int, gss_buffer_t);
 };
 
 
@@ -471,12 +467,15 @@ typedef struct gssapi_mech_interface_desc {
 } gssapi_mech_interface_desc, *gssapi_mech_interface;
 
 gssapi_mech_interface
-__gss_get_mechanism(gss_OID /* oid */);
+__gss_get_mechanism(gss_const_OID /* oid */);
 
 gssapi_mech_interface __gss_spnego_initialize(void);
 gssapi_mech_interface __gss_krb5_initialize(void);
 gssapi_mech_interface __gss_ntlm_initialize(void);
 
 void		gss_mg_collect_error(gss_OID, OM_uint32, OM_uint32);
+
+int _gss_mo_get_option_1(gss_const_OID, gss_mo_desc *, gss_buffer_t);
+int _gss_mo_get_option_0(gss_const_OID, gss_mo_desc *, gss_buffer_t);
 
 #endif /* GSSAPI_MECH_H */

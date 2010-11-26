@@ -74,11 +74,31 @@
 
 #else
 
-#warning "provide atomic integer operations for your compiler"
+#define HEIM_BASE_NEED_ATOMIC_MUTEX 1
+extern HEIMDAL_MUTEX _heim_base_mutex;
 
-#define heim_base_atomic_inc(x) ((x)++)
-#define heim_base_atomic_dec(x) ((x)--)
 #define heim_base_atomic_type	unsigned int
+
+static inline heim_base_atomic_type
+heim_base_atomic_inc(heim_base_atomic_type *x)
+{
+    heim_base_atomic_type t;
+    HEIMDAL_MUTEX_lock(&_heim_base_mutex);
+    t = ++(*x);
+    HEIMDAL_MUTEX_unlock(&_heim_base_mutex);
+    return t;
+}
+
+static inline heim_base_atomic_type
+heim_base_atomic_dec(heim_base_atomic_type *x)
+{
+    heim_base_atomic_type t;
+    HEIMDAL_MUTEX_lock(&_heim_base_mutex);
+    t = --(*x);
+    HEIMDAL_MUTEX_unlock(&_heim_base_mutex);
+    return t;
+}
+
 #define heim_base_atomic_max    UINT_MAX
 
 #endif

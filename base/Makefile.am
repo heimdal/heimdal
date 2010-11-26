@@ -19,6 +19,7 @@ libheimbase_la_SOURCES =	\
 	dict.c			\
 	heimbase.c		\
 	heimbasepriv.h		\
+	heimqueue.h		\
 	null.c			\
 	number.c		\
 	string.c		

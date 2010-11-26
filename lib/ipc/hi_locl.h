@@ -49,6 +49,10 @@
 #include <string.h>
 #include <errno.h>
 
+#ifdef HAVE_GETPEERUCRED
+#include <ucred.h>
+#endif
+
 #include <krb5-types.h>
 #include <asn1-common.h>
 

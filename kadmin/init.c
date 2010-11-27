@@ -123,9 +123,9 @@ init(struct init_options *opt, int argc, char **argv)
     kadm5_ret_t ret;
     int i;
     HDB *db;
-    krb5_deltat max_life, max_rlife;
+    krb5_deltat max_life = 0, max_rlife = 0;
 
-    if(!local_flag) {
+    if (!local_flag) {
 	krb5_warnx(context, "init is only available in local (-l) mode");
 	return 0;
     }

@@ -102,6 +102,13 @@ krb5_error_code
 _hdb_fetch(krb5_context context, HDB *db, krb5_const_principal principal,
 	   unsigned flags, hdb_entry_ex *entry)
 {
+    return _hdb_fetch_kvno(context, db, principal, flags & (~HDB_F_KVNO_SPECIFIED), 0, entry);
+}
+
+krb5_error_code
+_hdb_fetch_kvno(krb5_context context, HDB *db, krb5_const_principal principal,
+		unsigned flags, krb5_kvno kvno, hdb_entry_ex *entry)
+{
     krb5_principal enterprise_principal = NULL;
     krb5_data key, value;
     krb5_error_code ret;

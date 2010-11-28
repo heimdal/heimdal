@@ -354,7 +354,7 @@ _gss_import_cred_t(OM_uint32 * minor_status,
 		   gss_cred_id_t * cred_handle);
 
 
-typedef OM_uint32
+typedef OM_uint32 GSSAPI_CALLCONV
 _gss_acquire_cred_ex_t(void * /* status */,
 		       const gss_name_t /* desired_name */,
 		       OM_uint32 /* flags */,
@@ -364,30 +364,30 @@ _gss_acquire_cred_ex_t(void * /* status */,
 		       void * /* ctx */,
 		       void (* /*complete */)(void *, OM_uint32, void *, gss_cred_id_t, OM_uint32));
 
-typedef void
+typedef void GSSAPI_CALLCONV
 _gss_iter_creds_t(OM_uint32 /* flags */,
 		  void * /* userctx */,
 		  void (* /*cred_iter */ )(void *, gss_OID, gss_cred_id_t));
 
-typedef OM_uint32
+typedef OM_uint32 GSSAPI_CALLCONV
 _gss_destroy_cred_t(OM_uint32 * /* minor_status */,
-		    gss_cred_id_t */* cred */);
+		    gss_cred_id_t * /* cred */);
 
-typedef OM_uint32
+typedef OM_uint32 GSSAPI_CALLCONV
 _gss_cred_hold_t(OM_uint32 * /* minor_status */,
 		 gss_cred_id_t /* cred */);
 
-typedef OM_uint32
+typedef OM_uint32 GSSAPI_CALLCONV
 _gss_cred_unhold_t(OM_uint32 * /* minor_status */,
 		   gss_cred_id_t /* cred */);
 
-typedef OM_uint32
+typedef OM_uint32 GSSAPI_CALLCONV
 _gss_cred_label_set_t(OM_uint32 * /* minor_status */,
 		      gss_cred_id_t /* cred */,
 		      const char * /* label */,
 		      gss_buffer_t /* value */);
 
-typedef OM_uint32
+typedef OM_uint32 GSSAPI_CALLCONV
 _gss_cred_label_get_t(OM_uint32 * /* minor_status */,
 		      gss_cred_id_t /* cred */,
 		      const char * /* label */,

@@ -2,6 +2,10 @@ EXPORTS
 #ifdef KRB4
 	krb524_convert_creds_kdc
 	krb524_convert_creds_kdc_ccache
+        krb5_425_conv_principal
+        krb5_425_conv_principal_ext
+        krb5_425_conv_principal_ext2
+        krb5_524_conv_principal
 #endif
 	krb5_abort
 	krb5_abortx
@@ -377,7 +381,7 @@ EXPORTS
 	krb5_get_renewed_creds
 	krb5_get_server_rcache
 	krb5_get_use_admin_kdc
-        krb5_get_validated_creds
+        krb5_get_validated_creds        ;!
 	krb5_get_warn_dest
 	krb5_get_wrapped_length
 	krb5_getportbyname

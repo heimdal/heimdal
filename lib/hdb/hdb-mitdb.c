@@ -743,7 +743,6 @@ hdb_mdb_create(krb5_context context, HDB **db,
     (*db)->hdb_capability_flags = 0;
     (*db)->hdb_open = mdb_open;
     (*db)->hdb_close = mdb_close;
-    (*db)->hdb_fetch = mdb_fetch;
     (*db)->hdb_fetch_kvno = mdb_fetch_kvno;
     (*db)->hdb_store = mdb_store;
     (*db)->hdb_remove = mdb_remove;

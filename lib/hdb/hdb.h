@@ -74,7 +74,7 @@ typedef struct hdb_master_key_data *hdb_master_key;
 /**
  * hdb_entry_ex is a wrapper structure around the hdb_entry structure
  * that allows backends to keep a pointer to the backing store, ie in
- * ->hdb_fetch(), so that we the kadmin/kpasswd backend gets around to
+ * ->hdb_fetch_kvno(), so that we the kadmin/kpasswd backend gets around to
  * ->hdb_store(), the backend doesn't need to lookup the entry again.
  */
 
@@ -123,15 +123,6 @@ typedef struct HDB{
      * Free an entry after use.
      */
     void	    (*hdb_free)(krb5_context, struct HDB*, hdb_entry_ex*);
-    /**
-     * Fetch an entry from the backend
-     *
-     * Fetch an entry from the backend, flags are what type of entry
-     * should be fetch: client, server, krbtgt.
-     */
-    krb5_error_code (*hdb_fetch)(krb5_context, struct HDB*,
-				 krb5_const_principal, unsigned, 
-				 hdb_entry_ex*);
     /**
      * Fetch an entry from the backend
      *

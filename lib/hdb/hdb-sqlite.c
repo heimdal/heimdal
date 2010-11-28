@@ -875,7 +875,6 @@ hdb_sqlite_create(krb5_context context, HDB **db, const char *argument)
     (*db)->hdb_unlock = hdb_sqlite_unlock;
     (*db)->hdb_firstkey = hdb_sqlite_firstkey;
     (*db)->hdb_nextkey = hdb_sqlite_nextkey;
-    (*db)->hdb_fetch = hdb_sqlite_fetch;
     (*db)->hdb_fetch_kvno = hdb_sqlite_fetch_kvno;
     (*db)->hdb_store = hdb_sqlite_store;
     (*db)->hdb_remove = hdb_sqlite_remove;

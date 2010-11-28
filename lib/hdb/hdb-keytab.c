@@ -221,7 +221,6 @@ hdb_keytab_create(krb5_context context, HDB ** db, const char *arg)
     (*db)->hdb_openp = 0;
     (*db)->hdb_open = hkt_open;
     (*db)->hdb_close = hkt_close;
-    (*db)->hdb_fetch = hkt_fetch;
     (*db)->hdb_fetch_kvno = hkt_fetch_kvno;
     (*db)->hdb_store = hkt_store;
     (*db)->hdb_remove = NULL;

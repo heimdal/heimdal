@@ -1878,7 +1878,6 @@ hdb_ldap_common(krb5_context context,
     (*db)->hdb_capability_flags = 0;
     (*db)->hdb_open = LDAP_open;
     (*db)->hdb_close = LDAP_close;
-    (*db)->hdb_fetch = LDAP_fetch;
     (*db)->hdb_fetch_kvno = LDAP_fetch_kvno;
     (*db)->hdb_store = LDAP_store;
     (*db)->hdb_remove = LDAP_remove;

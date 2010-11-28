@@ -136,6 +136,7 @@ $(OBJ)\make-roken.c: roken.h.in roken.awk $(INCDIR)\config.h
 
 $(INCDIR)\roken.h: $(OBJ)\make-roken.exe
 	$(OBJ)\make-roken.exe > $@ || $(RM) $@
+	$(AWK) 'BEGIN{n=1} {print n++, $$0;}' $@
 
 INCFILES = 				\
 	$(INCDIR)\base64.h	\

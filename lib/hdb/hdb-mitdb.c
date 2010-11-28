@@ -642,15 +642,6 @@ mdb_fetch_kvno(krb5_context context, HDB *db, krb5_const_principal principal,
 }
 
 static krb5_error_code
-mdb_fetch(krb5_context context, HDB *db, krb5_const_principal principal,
-	  unsigned flags, hdb_entry_ex *entry)
-{
-    return mdb_fetch_kvno(context, db, principal,
-			  flags & (~HDB_F_KVNO_SPECIFIED), 0, entry);
-}
-
-
-static krb5_error_code
 mdb_store(krb5_context context, HDB *db, unsigned flags, hdb_entry_ex *entry)
 {
     krb5_set_error_message(context, EINVAL, "can't set principal in mdb");

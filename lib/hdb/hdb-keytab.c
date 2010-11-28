@@ -171,13 +171,6 @@ hkt_fetch_kvno(krb5_context context, HDB * db, krb5_const_principal principal,
 }
 
 static krb5_error_code
-hkt_fetch(krb5_context context, HDB * db, krb5_const_principal principal,
-	  unsigned flags, hdb_entry_ex * entry)
-{
-	return hkt_fetch_kvno(context, db, principal, flags & ~HDB_F_KVNO_SPECIFIED, 0, entry);
-}
-
-static krb5_error_code
 hkt_store(krb5_context context, HDB * db, unsigned flags,
 	  hdb_entry_ex * entry)
 {

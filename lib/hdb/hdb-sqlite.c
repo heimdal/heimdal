@@ -443,15 +443,6 @@ out:
     return ret;
 }
 
-static krb5_error_code
-hdb_sqlite_fetch(krb5_context context, HDB *db, krb5_const_principal principal,
-                 unsigned flags, hdb_entry_ex *entry)
-{
-    return hdb_sqlite_fetch_kvno(context, db, principal,
-				 flags & (~HDB_F_KVNO_SPECIFIED), 0, entry);
-}
-
-
 /**
  * Convenience function to step a prepared statement with no
  * value once.

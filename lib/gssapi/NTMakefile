@@ -125,6 +125,7 @@ mechsrc = \
 	mech/gss_krb5.c \
 	mech/gss_mech_switch.c \
 	mech/gss_names.c \
+	mech/gss_oid.c \
 	mech/gss_oid_equal.c \
 	mech/gss_oid_to_str.c \
 	mech/gss_process_context_token.c \
@@ -234,6 +235,7 @@ INCFILES=				\
     $(INCDIR)\gssapi.h			\
     $(INCDIR)\gssapi\gssapi.h		\
     $(INCDIR)\gssapi\gssapi_krb5.h	\
+    $(INCDIR)\gssapi\gssapi_oid.h	\
     $(INCDIR)\gssapi\gssapi_ntlm.h	\
     $(INCDIR)\gssapi\gssapi_spnego.h	\
     $(INCDIR)\gssapi\gkrb5_err.h	\
@@ -334,6 +336,7 @@ libgssapi_OBJs = \
 	$(OBJ)\mech/gss_krb5.obj \
 	$(OBJ)\mech/gss_mech_switch.obj \
 	$(OBJ)\mech/gss_names.obj \
+	$(OBJ)\mech/gss_oid.obj \
 	$(OBJ)\mech/gss_oid_equal.obj \
 	$(OBJ)\mech/gss_oid_to_str.obj \
 	$(OBJ)\mech/gss_process_context_token.obj \

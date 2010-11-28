@@ -118,7 +118,7 @@ hkt_open(krb5_context context, HDB * db, int flags, mode_t mode)
 
 static krb5_error_code
 hkt_fetch_kvno(krb5_context context, HDB * db, krb5_const_principal principal,
-	       unsigned flags, unsigned kvno, hdb_entry_ex * entry)
+	       unsigned flags, krb5_kvno kvno, hdb_entry_ex * entry)
 {
     hdb_keytab k = (hdb_keytab)db->hdb_db;
     krb5_error_code ret;

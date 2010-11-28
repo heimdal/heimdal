@@ -29,7 +29,9 @@
 # POSSIBILITY OF SUCH DAMAGE.
 # 
 
-RELDIR=kuser 
+RELDIR=kuser
+
+intcflags=-I$(OBJ)
 
 !include ../windows/NTMakefile.w32 
 
@@ -58,24 +60,28 @@ BINLIBS=\
 	$(LIBROKEN)	\
 	$(LIBVERS)
 
-
 all:: $(BINPROGRAMS) $(LIBEXECPROGRAMS)
 
 clean::
 	-$(RM) $(BINPROGRAMS:.exe=.*) $(LIBEXECPROGRAMS:.exe=.*)
+
 
 $(BINDIR)\kinit.exe: $(OBJ)\kinit.obj $(BINLIBS) $(OBJ)\kinit-version.res
 	$(EXECONLINK)
 	$(EXEPREP)
 
 KCC_OBJS =				\
-	$(OBJ)\kcc-commands.obj 	\
-	$(OBJ)\kcc.obj 			\
-	$(OBJ)\kswitch.obj 		\
-	$(OBJ)\klist.obj 		\
+	$(OBJ)\kcc-commands.obj		\
+	$(OBJ)\kcc.obj			\
+	$(OBJ)\kswitch.obj		\
+	$(OBJ)\klist.obj		\
 	$(OBJ)\copy_cred_cache.obj
 
-$(BINDIR)\kcc.exe: $(KCC_OBJS) $(BINLIBS) $(LIBSL) $(OBJ)\kcc-version.res
+KCCLIBS=\
+	$(BINLIBS)	\
+	$(LIBSL)
+
+$(BINDIR)\kcc.exe: $(KCC_OBJS) $(KCCLIBS) $(OBJ)\kcc-version.res
 	$(EXECONLINK)
 	$(EXEPREP)
 
@@ -102,18 +108,6 @@ $(OBJ)\kdigest-commands.c $(OBJ)\kdigest-commands.h: kdigest-commands.in
 	$(CP) $(SRCDIR)\kdigest-commands.in $(OBJ)
 	$(BINDIR)\slc.exe kdigest-commands.in
 	cd $(SRCDIR)
-
-$(OBJ)\kcc.obj: kcc.c
-	$(C2OBJ) -I$(OBJ)
-
-$(OBJ)\kswitch.obj: kswitch.c
-	$(C2OBJ) -I$(OBJ)
-
-$(OBJ)\klist.obj: klist.c
-	$(C2OBJ) -I$(OBJ)
-
-$(OBJ)\copy_cred_cache.obj: copy_cred_cache.c
-	$(C2OBJ) -I$(OBJ)
 
 $(OBJ)\kcc-commands.c $(OBJ)\kcc-commands.h: kcc-commands.in
 	cd $(OBJ)

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008 Kungliga Tekniska Högskolan
+ * Copyright (c) 2008 - 2010 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  *
@@ -36,6 +36,20 @@
 
 #ifdef HAVE_READLINE
 char *readline(char *prompt);
+#else
+
+static char *
+readline(char *prompt)
+{
+    char buf[BUFSIZ];
+    printf ("%s", prompt);
+    fflush (stdout);
+    if(fgets(buf, sizeof(buf), stdin) == NULL)
+	return NULL;
+    buf[strcspn(buf, "\r\n")] = '\0';
+    return strdup(buf);
+}
+
 #endif
 
 /*

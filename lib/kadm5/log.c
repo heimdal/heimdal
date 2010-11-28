@@ -583,9 +583,9 @@ kadm5_log_replay_modify (kadm5_server_context *context,
 	return ret;
 
     memset(&ent, 0, sizeof(ent));
-    ret = context->db->hdb_fetch(context->context, context->db,
-				 log_ent.entry.principal,
-				 HDB_F_DECRYPT|HDB_F_GET_ANY|HDB_F_ADMIN_DATA, &ent);
+    ret = context->db->hdb_fetch_kvno(context->context, context->db,
+				      log_ent.entry.principal,
+				      HDB_F_DECRYPT|HDB_F_GET_ANY|HDB_F_ADMIN_DATA, 0, &ent);
     if (ret)
 	goto out;
     if (mask & KADM5_PRINC_EXPIRE_TIME) {

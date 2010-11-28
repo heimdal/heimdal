@@ -53,8 +53,8 @@ change(void *server_handle,
     if(ret)
 	return ret;
 
-    ret = context->db->hdb_fetch(context->context, context->db, princ,
-				 HDB_F_DECRYPT|HDB_F_GET_ANY|HDB_F_ADMIN_DATA, &ent);
+    ret = context->db->hdb_fetch_kvno(context->context, context->db, princ,
+				      HDB_F_DECRYPT|HDB_F_GET_ANY|HDB_F_ADMIN_DATA, 0, &ent);
     if(ret)
 	goto out;
 
@@ -166,8 +166,8 @@ kadm5_s_chpass_principal_with_key(void *server_handle,
     ret = context->db->hdb_open(context->context, context->db, O_RDWR, 0);
     if(ret)
 	return ret;
-    ret = context->db->hdb_fetch(context->context, context->db, princ,
-				 HDB_F_GET_ANY|HDB_F_ADMIN_DATA, &ent);
+    ret = context->db->hdb_fetch_kvno(context->context, context->db, princ, 0,
+				      HDB_F_GET_ANY|HDB_F_ADMIN_DATA, &ent);
     if(ret == HDB_ERR_NOENTRY)
 	goto out;
     ret = _kadm5_set_keys2(context, &ent.entry, n_key_data, key_data);

@@ -48,8 +48,8 @@ kadm5_s_delete_principal(void *server_handle, krb5_principal princ)
 	krb5_warn(context->context, ret, "opening database");
 	return ret;
     }
-    ret = context->db->hdb_fetch(context->context, context->db, princ,
-				 HDB_F_DECRYPT|HDB_F_GET_ANY|HDB_F_ADMIN_DATA, &ent);
+    ret = context->db->hdb_fetch_kvno(context->context, context->db, princ,
+				      HDB_F_DECRYPT|HDB_F_GET_ANY|HDB_F_ADMIN_DATA, 0, &ent);
     if(ret == HDB_ERR_NOENTRY)
 	goto out;
     if(ent.entry.flags.immutable) {

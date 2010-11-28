@@ -123,6 +123,7 @@ libhcrypto_OBJs = 			\
 	$(OBJ)\rsa-ltm.obj		\
 	$(OBJ)\sha.obj			\
 	$(OBJ)\sha256.obj		\
+	$(OBJ)\sha512.obj		\
 	$(OBJ)\ui.obj			\
 	$(OBJ)\validate.obj
 

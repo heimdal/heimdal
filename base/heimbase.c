@@ -370,13 +370,10 @@ heim_abort(const char *fmt, ...)
 void
 heim_abortv(const char *fmt, va_list ap)
 {
-    char *str = NULL;
-    int ret;
+    static char str[1024];
     
-    ret = vasprintf(&str, fmt, ap);
-    if (ret > 0 && str) {
-	syslog(LOG_ERR, "heim_abort: %s", str);
-    }
+    vsnprintf(str, sizeof(str), fmt, ap);
+    syslog(LOG_ERR, "heim_abort: %s", str);
     abort();
 }
 

@@ -41,8 +41,6 @@
 #include <errno.h>
 #include <limits.h>
 
-#include <roken.h>
-
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif

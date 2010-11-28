@@ -379,12 +379,13 @@ hdb_sqlite_make_database(krb5_context context, HDB *db, const char *filename)
  * @param db        Heimdal database handle
  * @param principal The principal whose entry to search for
  * @param flags     Currently only for HDB_F_DECRYPT
+ * @param kvno	    kvno to fetch is HDB_F_KVNO_SPECIFIED use used
  *
  * @return          0 if everything worked, an error code if not
  */
 static krb5_error_code
-hdb_sqlite_fetch(krb5_context context, HDB *db, krb5_const_principal principal,
-                 unsigned flags, hdb_entry_ex *entry)
+hdb_sqlite_fetch_kvno(krb5_context context, HDB *db, krb5_const_principal principal,
+		      unsigned flags, krb5_kvno kvno, hdb_entry_ex *entry)
 {
     int sqlite_error;
     krb5_error_code ret;
@@ -441,6 +442,15 @@ out:
 
     return ret;
 }
+
+static krb5_error_code
+hdb_sqlite_fetch(krb5_context context, HDB *db, krb5_const_principal principal,
+                 unsigned flags, hdb_entry_ex *entry)
+{
+    return hdb_sqlite_fetch_kvno(context, db, principal,
+				 flags & (~HDB_F_KVNO_SPECIFIED), 0, entry);
+}
+
 
 /**
  * Convenience function to step a prepared statement with no
@@ -866,6 +876,7 @@ hdb_sqlite_create(krb5_context context, HDB **db, const char *argument)
     (*db)->hdb_firstkey = hdb_sqlite_firstkey;
     (*db)->hdb_nextkey = hdb_sqlite_nextkey;
     (*db)->hdb_fetch = hdb_sqlite_fetch;
+    (*db)->hdb_fetch_kvno = hdb_sqlite_fetch_kvno;
     (*db)->hdb_store = hdb_sqlite_store;
     (*db)->hdb_remove = hdb_sqlite_remove;
     (*db)->hdb_destroy = hdb_sqlite_destroy;

@@ -140,7 +140,7 @@ typedef struct HDB{
      * knvo (if specified and flags HDB_F_KVNO_SPECIFIED set) is the kvno to get
      */
     krb5_error_code (*hdb_fetch_kvno)(krb5_context, struct HDB*,
-				      krb5_const_principal, unsigned, unsigned,
+				      krb5_const_principal, unsigned, krb5_kvno,
 				      hdb_entry_ex*);
     /**
      * Store an entry to database

@@ -112,6 +112,9 @@ $(OBJ)\kswitch.obj: kswitch.c
 $(OBJ)\klist.obj: klist.c
 	$(C2OBJ) -I$(OBJ)
 
+$(OBJ)\copy_cred_cache.obj: copy_cred_cache.c
+	$(C2OBJ) -I$(OBJ)
+
 $(OBJ)\kcc-commands.c $(OBJ)\kcc-commands.h: kcc-commands.in
 	cd $(OBJ)
 	$(CP) $(SRCDIR)\kcc-commands.in $(OBJ)

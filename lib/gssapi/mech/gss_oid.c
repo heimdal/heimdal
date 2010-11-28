@@ -1,6 +1,4 @@
-#include "gssapi.h"
-
-#include "gssapi_mech.h"
+#include "mech_locl.h"
 
 /* GSS_KRB5_COPY_CCACHE_X - 1.2.752.43.13.1 */
 gss_OID_desc GSSAPI_LIB_VARIABLE __gss_krb5_copy_ccache_x_oid_desc = { 6, "\x2a\x85\x70\x2b\x0d\x01" };

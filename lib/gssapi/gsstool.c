@@ -34,6 +34,7 @@
  */
 
 #include <config.h>
+#include <roken.h>
 
 #include <stdio.h>
 #include <gssapi.h>
@@ -41,7 +42,6 @@
 #include <gssapi_spnego.h>
 #include <gssapi_ntlm.h>
 #include <err.h>
-#include <roken.h>
 #include <getarg.h>
 #include <rtbl.h>
 #include <gss-commands.h>

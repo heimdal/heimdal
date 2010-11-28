@@ -33,13 +33,15 @@
  * SUCH DAMAGE.
  */
 
+#include "config.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
 #include <limits.h>
 
-#include "config.h"
+#include <roken.h>
 
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>

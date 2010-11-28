@@ -5,6 +5,7 @@ lib_LTLIBRARIES = libheimbase.la
 check_PROGRAMS = test_base
 
 libheimbase_la_LDFLAGS = -version-info 1:0:0
+libheimbase_la_CPPFLAGS = $(ROKEN_RENAME)
 
 if versionscript
 libheimbase_la_LDFLAGS += $(LDFLAGS_VERSION_SCRIPT)$(srcdir)/version-script.map
@@ -12,7 +13,7 @@ endif
 
 include_HEADERS	= heimbase.h
 
-libheimbase_la_SOURCES =	\
+dist_libheimbase_la_SOURCES =	\
 	array.c			\
 	baselocl.h		\
 	bool.c			\
@@ -22,6 +23,14 @@ libheimbase_la_SOURCES =	\
 	heimqueue.h		\
 	null.c			\
 	number.c		\
-	string.c		
+	string.c		\
+	roken_rename.h
+
+if do_roken_rename
+nodist_libheimbase_la_SOURCES = snprintf.c
+endif
+
+snprintf.c:
+	$(LN_S) $(top_srcdir)/lib/roken/snprintf.c .
 
 test_base_LDADD = $(LIB_heimbase)

@@ -1604,8 +1604,8 @@ LDAP_open(krb5_context context, HDB * db, int flags, mode_t mode)
 }
 
 static krb5_error_code
-LDAP_fetch(krb5_context context, HDB * db, krb5_const_principal principal,
-	   unsigned flags, hdb_entry_ex * entry)
+LDAP_fetch_kvno(krb5_context context, HDB * db, krb5_const_principal principal,
+		unsigned flags, krb5_kvno kvno, hdb_entry_ex * entry)
 {
     LDAPMessage *msg, *e;
     krb5_error_code ret;
@@ -1633,6 +1633,14 @@ LDAP_fetch(krb5_context context, HDB * db, krb5_const_principal principal,
     ldap_msgfree(msg);
 
     return ret;
+}
+
+static krb5_error_code
+LDAP_fetch(krb5_context context, HDB * db, krb5_const_principal principal,
+	   unsigned flags, hdb_entry_ex * entry)
+{
+    return LDAP_fetch_kvno(context, db, principal,
+			   flags & (~HDB_F_KVNO_SPECIFIED), 0, entry);
 }
 
 static krb5_error_code
@@ -1871,6 +1879,7 @@ hdb_ldap_common(krb5_context context,
     (*db)->hdb_open = LDAP_open;
     (*db)->hdb_close = LDAP_close;
     (*db)->hdb_fetch = LDAP_fetch;
+    (*db)->hdb_fetch_kvno = LDAP_fetch_kvno;
     (*db)->hdb_store = LDAP_store;
     (*db)->hdb_remove = LDAP_remove;
     (*db)->hdb_firstkey = LDAP_firstkey;

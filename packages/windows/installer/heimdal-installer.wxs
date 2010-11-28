@@ -6,8 +6,6 @@
   <?define Win64=yes ?>
   <?define PIProgramFilesFolder=ProgramFiles64Folder ?>
   <?define GuidKinit=BAA5BD92-163E-4AA5-8C99-EA2100F3D9DE ?>
-  <?define GuidKlist=60E82A9D-2CD4-4DE5-8DCA-F3A010BE8A19 ?>
-  <?define GuidKswitch=7320C75F-80C5-4AA3-B133-2AB7F496B291 ?>
   <?define GuidKdestroy=289C2C0D-F41D-4E46-9819-6B9B63F83418 ?>
   <?define GuidKtutil=28B09087-4731-41F4-B734-C71E84EC31FC ?>
   <?define GuidKdigest=D13DA4C0-B1BB-4C02-8ED2-5DFC7D16B19D ?>
@@ -17,14 +15,13 @@
   <?define GuidKvno=2B932C2B-9167-4051-BDF7-A104E9983CE6 ?>
   <?define GuidKcpytkt=17734691-7CB3-4E9A-AADC-6D4205795F43 ?>
   <?define GuidKdeltkt=3E853905-8CDA-4E14-8EBA-C0C4EEDB811A ?>
+  <?define GuidKcc=F411A9F1-A186-40CB-B55B-CADBE0166268 ?>
 
   <?else?>
 
   <?define Win64=no ?>
   <?define PIProgramFilesFolder=ProgramFilesFolder ?>
   <?define GuidKinit=038F19D7-F7C9-4B6A-8359-321CD1FAD347 ?>
-  <?define GuidKlist=36BF8C4E-B0C4-42AF-9F3F-3D6F8CFEBB49 ?>
-  <?define GuidKswitch=3A4438E7-BBC0-47B4-9146-E0CDCBBE6C86 ?>
   <?define GuidKdestroy=07D96FBC-2251-4EBC-AA68-12C6C52F44E6 ?>
   <?define GuidKtutil=CE082458-E2C5-4744-A423-88C23AD3C81C ?>
   <?define GuidKdigest=3FFBFAB0-FB37-411C-AF4E-53BCC468D7D1 ?>
@@ -34,6 +31,7 @@
   <?define GuidKvno=4C6015BE-1347-4D12-8841-FF90E0B9D6A8 ?>
   <?define GuidKcpytkt=CBCDFC80-601B-4F26-A020-7D1278735B95 ?>
   <?define GuidKdeltkt=6450EE72-E472-4709-B457-B579BFB2472B ?>
+  <?define GuidKcc=11800964-4A5F-466E-B2FE-DD2EFC54DDB9 ?>
 
   <?endif?>
 
@@ -68,20 +66,6 @@
                        Win64='$(var.Win64)'>
               <File Name='kinit.exe' KeyPath='yes' />
               <File Name='kinit.pdb' />
-            </Component>
-
-            <Component Id='comp.klist'
-                       Guid='$(var.GuidKlist)'
-                       Win64='$(var.Win64)'>
-              <File Name='klist.exe' KeyPath='yes' />
-              <File Name='klist.pdb' />
-            </Component>
-
-            <Component Id='comp.kswitch'
-                       Guid='$(var.GuidKswitch)'
-                       Win64='$(var.Win64)'>
-              <File Name='kswitch.exe' KeyPath='yes' />
-              <File Name='kswitch.pdb' />
             </Component>
 
             <Component Id='comp.ktutil'
@@ -131,6 +115,19 @@
                        Win64='$(var.Win64)'>
               <File Name='kdeltkt.exe' KeyPath='yes' />
               <File Name='kdeltkt.pdb' />
+            </Component>
+
+            <Component Id='comp.kcc'
+                       Guid='$(var.GuidKcc)'
+                       Win64='$(var.Win64)'>
+              <File Name='kcc.exe' KeyPath='yes'>
+                <CopyFile Id='klist.exe' DestinationName='klist.exe' />
+                <CopyFile Id='kswitch.exe' DestinationName='kswitch.exe' />
+              </File>
+              <File Name='kcc.pdb'>
+                <CopyFile Id='klist.pdb' DestinationName='klist.pdb' />
+                <CopyFile Id='kswitch.pdb' DestinationName='kswitch.pdb' />
+              </File>
             </Component>
 
             <Merge Id='Heimdal.Assemblies' Language='0'
@@ -324,14 +321,14 @@
       <ComponentRef Id='comp.kdestroy' />
       <ComponentRef Id='comp.kdigest' />
       <ComponentRef Id='comp.kinit' />
-      <ComponentRef Id='comp.klist' />
       <ComponentRef Id='comp.kpasswd' />
       <ComponentRef Id='comp.krb5.conf' />
       <ComponentRef Id='comp.krb5.conf.move' />
       <ComponentRef Id='comp.krb5.ini.move' />
-      <ComponentRef Id='comp.kswitch' />
       <ComponentRef Id='comp.ktutil' />
       <ComponentRef Id='comp.kvno' />
+      <ComponentRef Id='comp.kcc' />
+
       <?ifdef LsaCache ?>
       <ComponentGroupRef Id='comps.LSACache' />
       <?endif?>

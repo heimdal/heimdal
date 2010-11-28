@@ -49,8 +49,8 @@ LIBEXECPROGRAMS=\
 NOINSTPROGRAMS=\
 	$(OBJ)\kverify.exe	\
 	$(OBJ)\kdecode_ticket.exe	\
-	$(OBJ)\generate-requests.exe	\
-	$(OBJ)\copy_cred_cache.exe
+	$(OBJ)\generate-requests.exe
+
 
 BINLIBS=\
 	$(LIBHEIMDAL)	\
@@ -68,7 +68,14 @@ $(BINDIR)\kinit.exe: $(OBJ)\kinit.obj $(BINLIBS) $(OBJ)\kinit-version.res
 	$(EXECONLINK)
 	$(EXEPREP)
 
-$(BINDIR)\kcc.exe: $(OBJ)\kcc-commands.obj $(OBJ)\kcc.obj $(OBJ)\kswitch.obj $(OBJ)\klist.obj $(BINLIBS) $(OBJ)\kcc-version.res
+KCC_OBJS =				\
+	$(OBJ)\kcc-commands.obj 	\
+	$(OBJ)\kcc.obj 			\
+	$(OBJ)\kswitch.obj 		\
+	$(OBJ)\klist.obj 		\
+	$(OBJ)\copy_cred_cache.obj
+
+$(BINDIR)\kcc.exe: $(KCC_OBJS) $(BINLIBS) $(LIBSL) $(OBJ)\kcc-version.res
 	$(EXECONLINK)
 	$(EXEPREP)
 

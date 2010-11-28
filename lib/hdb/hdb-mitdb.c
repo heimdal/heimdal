@@ -198,7 +198,7 @@ fix_salt(krb5_context context, hdb_entry *ent, int key_num)
 
 
 static krb5_error_code
-mdb_value2entry(krb5_context context, krb5_data *data, hdb_entry *entry)
+mdb_value2entry(krb5_context context, krb5_data *data, krb5_kvno kvno, hdb_entry *entry)
 {
     krb5_error_code ret;
     krb5_storage *sp;
@@ -304,7 +304,7 @@ mdb_value2entry(krb5_context context, krb5_data *data, hdb_entry *entry)
 	version = u16;
 	CHECK(ret = krb5_ret_uint16(sp, &u16));
 
-	if (entry->kvno < u16) {
+	if (((entry->kvno < u16) && kvno == 0) || kvno == u16) {
 	    keep = 1;
 	    entry->kvno = u16;
 	    for (j = 0; j < entry->keys.len; j++) {
@@ -382,6 +382,11 @@ mdb_value2entry(krb5_context context, krb5_data *data, hdb_entry *entry)
 		krb5_storage_seek(sp, u16, u16);
 	    }
 	}
+    }
+
+    if (entry->kvno == 0 && kvno != 0) {
+	ret = HDB_ERR_NOT_FOUND_HERE;
+	goto out;
     }
 
     return 0;
@@ -480,7 +485,7 @@ mdb_seq(krb5_context context, HDB *db,
     data.length = value.size;
     memset(entry, 0, sizeof(*entry));
 
-    if (mdb_value2entry(context, &data, &entry->entry))
+    if (mdb_value2entry(context, &data, 0, &entry->entry))
 	return mdb_seq(context, db, flags, entry, R_NEXT);
 
     if (db->hdb_master_key_set && (flags & HDB_F_DECRYPT)) {
@@ -609,8 +614,8 @@ mdb__del(krb5_context context, HDB *db, krb5_data key)
 }
 
 static krb5_error_code
-mdb_fetch(krb5_context context, HDB *db, krb5_const_principal principal,
-	  unsigned flags, hdb_entry_ex *entry)
+mdb_fetch_kvno(krb5_context context, HDB *db, krb5_const_principal principal,
+	       unsigned flags, krb5_kvno kvno, hdb_entry_ex *entry)
 {
     krb5_data key, value;
     krb5_error_code code;
@@ -622,7 +627,7 @@ mdb_fetch(krb5_context context, HDB *db, krb5_const_principal principal,
     krb5_data_free(&key);
     if(code)
 	return code;
-    code = mdb_value2entry(context, &value, &entry->entry);
+    code = mdb_value2entry(context, &value, kvno, &entry->entry);
     krb5_data_free(&value);
     if (code)
 	return code;
@@ -635,6 +640,15 @@ mdb_fetch(krb5_context context, HDB *db, krb5_const_principal principal,
 
     return 0;
 }
+
+static krb5_error_code
+mdb_fetch(krb5_context context, HDB *db, krb5_const_principal principal,
+	  unsigned flags, hdb_entry_ex *entry)
+{
+    return mdb_fetch_kvno(context, db, principal,
+			  flags & (~HDB_F_KVNO_SPECIFIED), 0, entry);
+}
+
 
 static krb5_error_code
 mdb_store(krb5_context context, HDB *db, unsigned flags, hdb_entry_ex *entry)
@@ -730,6 +744,7 @@ hdb_mdb_create(krb5_context context, HDB **db,
     (*db)->hdb_open = mdb_open;
     (*db)->hdb_close = mdb_close;
     (*db)->hdb_fetch = mdb_fetch;
+    (*db)->hdb_fetch_kvno = mdb_fetch_kvno;
     (*db)->hdb_store = mdb_store;
     (*db)->hdb_remove = mdb_remove;
     (*db)->hdb_firstkey = mdb_firstkey;

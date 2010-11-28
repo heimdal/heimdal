@@ -1,3 +1,4 @@
+/* Generated file */
 #ifndef GSSAPI_GSSAPI_OID
 #define GSSAPI_GSSAPI_OID 1
 

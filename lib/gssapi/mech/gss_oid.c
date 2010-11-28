@@ -1,3 +1,4 @@
+/* Generated file */
 #include "mech_locl.h"
 
 /* GSS_KRB5_COPY_CCACHE_X - 1.2.752.43.13.1 */

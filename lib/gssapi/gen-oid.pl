@@ -75,11 +75,11 @@ while(<>) {
 	$length += 1;
 
 	if ($header) {
-	    printf "extern gss_OID_desc $store;\n";
+	    printf "extern GSSAPI_LIB_VARIABLE gss_OID_desc $store;\n";
 	    printf "#define $name (&$store)\n\n";
 	} else {
 	    printf "/* $name - $oid */\n";
-	    printf "gss_OID_desc $store = { $length, \"$data\" };\n\n";
+	    printf "gss_OID_desc GSSAPI_LIB_VARIABLE $store = { $length, \"$data\" };\n\n";
 	}
     } elsif (/^desc\s+([\w]+)\s+(\w+)\s+(\"[^\"]*\")\s+(\"[^\"]*\")/) {
         my ($type, $oid, $short, $long) = ($1, $2, $3, $4);

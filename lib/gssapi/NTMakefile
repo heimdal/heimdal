@@ -521,6 +521,17 @@ clean::
 	-$(RM) $(OBJ)\mech\*.*
 	-$(RM) $(OBJ)\gssapi\*.*
 
+all-tools:: $(OBJ)\gsstool.exe
+
+$(OBJ)\gsstool.exe: $(OBJ)\gsstool.obj $(OBJ)\gss-commands.obj $(LIBGSSAPI) $(LIBROKEN) $(LIBSL) $(LIBVERS)
+	$(EXECONLINK)
+
+$(OBJ)\gss-commands.c $(OBJ)\gss-commands.h: gss-commands.in
+	cd $(OBJ)
+	$(CP) $(SRCDIR)\gss-commands.in gss-commands.in
+	$(BINDIR)\slc.exe gss-commands.in
+	cd $(SRCDIR)
+
 !ifdef ELISP
 # This macro invocation is used to update the libgssapi_OBJs
 # definition below (generate-obj-macro is defined in maint.el):

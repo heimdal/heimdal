@@ -36,13 +36,13 @@ RELDIR=base
 INCFILES=$(INCDIR)\heimbase.h
 
 {}.c{$(OBJ)}.obj::
-	$(C2OBJ_P) -DROKEN_RENAME
+	$(C2OBJ) -I$(SRC)\$(RELDIR) -DROKEN_RENAME
 
 {$(OBJ)}.c{$(OBJ)}.obj::
-	$(C2OBJ_P) -DROKEN_RENAME
+	$(C2OBJ) -I$(SRC)\$(RELDIR) -DROKEN_RENAME
 
-$(OBJ)\snprintf.obj: $(SRCDIR)\..\lib/roken/snprintf.c
-	$(C2OBJ) -DROKEN_RENAME
+$(OBJ)\snprintf.obj: $(SRCDIR)\..\lib\roken\snprintf.c
+	$(C2OBJ) -I$(SRC)\$(RELDIR) -DROKEN_RENAME
 
 libheimbase_OBJS =		\
 	$(OBJ)\array.obj	\

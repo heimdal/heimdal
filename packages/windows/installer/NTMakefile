@@ -76,7 +76,13 @@ clean::
 ######################################################################
 # Runtime modules
 
+!if [ $(PERL) $(SRC)\cf\w32-detect-vc-version.pl $(CC) ]==15
 VCVER=VC90
+!elseif [ $(PERL) $(SRC)\cf\w32-detect-vc-version.pl $(CC) ]==14
+VCVER=VC80
+!else
+!  error Cant determine Visual C compiler version
+!endif
 
 !if "$(CPU)"=="AMD64"
 CPUSUFFIX=_x64

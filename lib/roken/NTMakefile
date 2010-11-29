@@ -79,6 +79,7 @@ libroken_la_OBJS =			\
 	$(OBJ)\realloc.obj		\
 	$(OBJ)\rename.obj		\
 	$(OBJ)\resolve.obj		\
+	$(OBJ)\rand.obj			\
 	$(OBJ)\roken_gethostby.obj	\
 	$(OBJ)\rtbl.obj			\
 	$(OBJ)\sendmsg.obj		\

@@ -1084,6 +1084,15 @@ void
 rk_qsort(void *, size_t, size_t, int (*)(const void *, const void *));
 #endif
 
+#if defined(HAVE_ARC4RANDOM)
+#define rk_random() arc4random()
+#elif defined(HAVE_RANDOM)
+#define rk_random() random()
+#else
+#define rk_random() rand()
+#endif
+
+
 #if defined(__linux__) && defined(SOCK_CLOEXEC) && !defined(SOCKET_WRAPPER_REPLACE) && !defined(__SOCKET_WRAPPER_H__)
 #undef socket
 #define socket(_fam,_type,_prot) rk_socket(_fam,_type,_prot)

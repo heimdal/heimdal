@@ -109,11 +109,21 @@ extern GSSAPI_LIB_VARIABLE gss_OID_desc __gss_c_ma_mech_name_oid_desc;
 extern GSSAPI_LIB_VARIABLE gss_OID_desc __gss_c_ma_mech_description_oid_desc;
 #define GSS_C_MA_MECH_DESCRIPTION (&__gss_c_ma_mech_description_oid_desc)
 
-/*
- * Digest mechanisms - 1.2.752.43.14
- */
+/* Heimdal mechanisms - 1.2.752.43.14 */
 extern GSSAPI_LIB_VARIABLE gss_OID_desc __gss_sasl_digest_md5_mechanism_oid_desc;
 #define GSS_SASL_DIGEST_MD5_MECHANISM (&__gss_sasl_digest_md5_mechanism_oid_desc)
+
+extern GSSAPI_LIB_VARIABLE gss_OID_desc __gss_netlogon_mechanism_oid_desc;
+#define GSS_NETLOGON_MECHANISM (&__gss_netlogon_mechanism_oid_desc)
+
+extern GSSAPI_LIB_VARIABLE gss_OID_desc __gss_netlogon_set_session_key_x_oid_desc;
+#define GSS_NETLOGON_SET_SESSION_KEY_X (&__gss_netlogon_set_session_key_x_oid_desc)
+
+extern GSSAPI_LIB_VARIABLE gss_OID_desc __gss_netlogon_set_sign_algorithm_x_oid_desc;
+#define GSS_NETLOGON_SET_SIGN_ALGORITHM_X (&__gss_netlogon_set_sign_algorithm_x_oid_desc)
+
+extern GSSAPI_LIB_VARIABLE gss_OID_desc __gss_netlogon_nt_netbios_dns_name_oid_desc;
+#define GSS_NETLOGON_NT_NETBIOS_DNS_NAME (&__gss_netlogon_nt_netbios_dns_name_oid_desc)
 
 /*
  * "Standard" mechs

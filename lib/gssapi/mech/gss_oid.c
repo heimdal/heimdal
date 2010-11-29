@@ -106,6 +106,18 @@ gss_OID_desc GSSAPI_LIB_VARIABLE __gss_c_ma_mech_description_oid_desc = { 6, "\x
 /* GSS_SASL_DIGEST_MD5_MECHANISM - 1.2.752.43.14.1 */
 gss_OID_desc GSSAPI_LIB_VARIABLE __gss_sasl_digest_md5_mechanism_oid_desc = { 6, "\x2a\x85\x70\x2b\x0e\x01" };
 
+/* GSS_NETLOGON_MECHANISM - 1.2.752.43.14.2 */
+gss_OID_desc GSSAPI_LIB_VARIABLE __gss_netlogon_mechanism_oid_desc = { 6, "\x2a\x85\x70\x2b\x0e\x02" };
+
+/* GSS_NETLOGON_SET_SESSION_KEY_X - 1.2.752.43.14.3 */
+gss_OID_desc GSSAPI_LIB_VARIABLE __gss_netlogon_set_session_key_x_oid_desc = { 6, "\x2a\x85\x70\x2b\x0e\x03" };
+
+/* GSS_NETLOGON_SET_SIGN_ALGORITHM_X - 1.2.752.43.14.4 */
+gss_OID_desc GSSAPI_LIB_VARIABLE __gss_netlogon_set_sign_algorithm_x_oid_desc = { 6, "\x2a\x85\x70\x2b\x0e\x04" };
+
+/* GSS_NETLOGON_NT_NETBIOS_DNS_NAME - 1.2.752.43.14.5 */
+gss_OID_desc GSSAPI_LIB_VARIABLE __gss_netlogon_nt_netbios_dns_name_oid_desc = { 6, "\x2a\x85\x70\x2b\x0e\x05" };
+
 /* GSS_KRB5_MECHANISM - 1.2.840.113554.1.2.2 */
 gss_OID_desc GSSAPI_LIB_VARIABLE __gss_krb5_mechanism_oid_desc = { 9, "\x2a\x86\x48\x86\xf7\x12\x01\x02\x02" };
 

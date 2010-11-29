@@ -132,6 +132,13 @@
             <Merge Id='Heimdal.Policy' Language='0'
                    SourceFile='$(var.InstDir)\Heimdal.Policy.msm' />
 
+            <?ifdef AssemblyDir32 ?>
+            <Merge Id='Heimdal.Assemblies.32' Language='0'
+                   SourceFile='$(var.AssemblyDir32)\Heimdal.msm' />
+
+            <Merge Id='Heimdal.Policy.32' Language='0'
+                   SourceFile='$(var.AssemblyDir32)\Heimdal.Policy.msm' />
+            <?endif?>
 
             <Merge Id='Runtime' Language='0'
                    SourceFile='$(var.RuntimeModule)' />
@@ -319,6 +326,10 @@
       <MergeRef Id='Heimdal.Assemblies' />
       <MergeRef Id='Heimdal.Policy' />
       <MergeRef Id='Runtime' />
+      <?ifdef AssemblyDir32 ?>
+      <MergeRef Id='Heimdal.Assemblies.32' />
+      <MergeRef Id='Heimdal.Policy.32' />
+      <?endif?>
 
       <?ifdef Thirdparty ?>
       <ComponentGroupRef Id='comp.Heimdal.Thirdparty' />

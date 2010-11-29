@@ -93,6 +93,18 @@ clean::
 	-$(RM) $(SDKREDISTDIR)\Heimdal.msm
 	-$(RM) $(SDKREDISTDIR)\Heimdal.Policy.msm
 
+# Locate 32-bit assembly merge modules
+
+!if "$(CPU)"=="AMD64"
+ASSEMBLYDIR32=$(SDKREDISTDIR:AMD64=i386)
+
+!if !exist( $(ASSEMBLYDIR32)\Heimdal.msm )
+
+!message 32-bit assembly not found.  Skipping 32-bit components
+!undef ASSEMBLYDIR32
+!endif
+
+!endif
 
 ######################################################################
 # Runtime modules
@@ -148,20 +160,27 @@ THIRDPARTYOPT=$(THIRDPARTYOPT) -dMKShim=1
 
 INSTALLER=$(INSTDIR)\Heimdal-$(CPU)$(DEBUGOPT)-$(VERSIOND).msi
 
-$(INSTALLER): $(OBJ)\heimdal-installer.wixobj $(ASSEMBLYMODULE) $(THIRDPARTYOBJS)	\
-		$(THIRDPARTYDEPS) lang\en-us.wxl
+$(INSTALLER): $(OBJ)\heimdal-installer.wixobj $(ASSEMBLYMODULE) $(POLICYMODULE) \
+		$(THIRDPARTYOBJS) $(THIRDPARTYDEPS) lang\en-us.wxl
 	$(LIGHT) -out $@ $(OBJ)\heimdal-installer.wixobj $(THIRDPARTYOBJS)	\
 		-sval -cultures:en-us -loc lang\en-us.wxl	\
 		-dWixUILicenseRtf=lang\license-en-us.rtf	\
 		-ext WixUIExtension
 	$(_CODESIGN)
 
+!ifdef ASSEMBLYDIR32
+$(INSTALLER): $(ASSEMBLYDIR32)\Heimdal.msm $(ASSEMBLYDIR32)\Heimdal.Policy.msm
+!endif
+
 $(OBJ)\heimdal-installer.wixobj: heimdal-installer.wxs
-	$(CANDLE) -arch $(PLATFORM) -o $@ $**		\
+	$(CANDLE) -arch $(PLATFORM) -o $@ heimdal-installer.wxs		\
 		-dVersion=$(VERSION)			\
 		-dBinDir=$(BINDIR)			\
 		-dDocDir=$(DOCDIR)			\
 		-dInstDir=$(INSTDIR)			\
+!ifdef ASSEMBLYDIR32
+		-dAssemblyDir32=$(ASSEMBLYDIR32)	\
+!endif
 		-dSrcDir=$(SRC)				\
 		-dPlatform=$(PLATFORM)			\
 		-dRuntimeModule=$(RUNTIMEMODULE)	\

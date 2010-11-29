@@ -4,18 +4,20 @@
   <?if $(var.Platform)=x64 ?>
 
   <?define Win64=yes ?>
+  <?define GuidPackage=DCFB2432-6072-4F2C-B934-CD7E60576396 ?>
   <?define GuidPolKerberos=9ED6B62C-13D0-43BB-BCD7-4737D3E6EC43 ?>
 
   <?else?>
 
   <?define Win64=no ?>
+  <?define GuidPackage=FC60A0C6-1B5C-4B38-8BDD-C647B4119C19 ?>
   <?define GuidPolKerberos=EF04F1AF-725B-4AF6-AE7B-18E2036C03B9 ?>
 
   <?endif?>
 
   <Module Id="Heimdal" Language="0" Version="$(var.Version)">
 
-    <Package Id="A064012D-F3C3-4059-9AC0-00D8A5283D6D"
+    <Package Id="$(var.GuidPackage)"
              InstallerVersion="200"
              Languages="1033" Manufacturer="Heimdal"
              SummaryCodepage="1252" AdminImage="no"

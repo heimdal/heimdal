@@ -216,11 +216,10 @@ $(OBJ)\test_rand.exe: $(OBJ)\test_rand.obj $(LIBHEIMDAL) $(LIBROKEN) $(LIBVERS)
 	$(EXECONLINK)
 	$(EXEPREP_NODIST)
 
-SRCDIR1=$(SRCDIR:\=/)
-SRCDIR2=$(SRCDIR1::=)
+SRCDIR2=$(SRCDIR:\=\\\\)
 
 $(OBJ)\test_crypto.sh: test_crypto.in NTMakefile
-	$(SED) -e "s,[@]srcdir[@],/$(SRCDIR2),g" -e "s,[@]exeext[@],.exe,g" < test_crypto.in > $@ || $(RM) $@
+	$(SED) -e "s,[@]srcdir[@],$(SRCDIR2),g" -e "s,[@]exeext[@],.exe,g" -e "s,\r,," < test_crypto.in > $@ || $(RM) $@
 
 test-run:
 	cd $(OBJ)

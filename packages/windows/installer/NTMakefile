@@ -54,24 +54,45 @@ DEBUGOPT=-$(BUILD)
 ######################################################################
 # Heimdal Merge Modules
 
-MERGEMOD=$(INSTDIR)\Heimdal.msm
+ASSEMBLYMODULE=$(INSTDIR)\Heimdal.msm
 
-$(MERGEMOD): $(OBJ)\heimdal-assemblies.wixobj
+$(ASSEMBLYMODULE): $(OBJ)\heimdal-assemblies.wixobj
 	$(LIGHT) -out $@ $**
 
 $(OBJ)\heimdal-assemblies.wixobj: heimdal-assemblies.wxs
-	$(CANDLE) -arch $(PLATFORM) -o $@ $** \
-		-dVersion=$(VERSION)	\
-		-dBinDir=$(BINDIR)	\
+	$(CANDLE) -arch $(PLATFORM) -o $@ $**	\
+		-dVersion=$(VERSION)		\
+		-dBinDir=$(BINDIR)		\
 		-dPlatform=$(PLATFORM)
 
-$(SDKREDISTDIR)\Heimdal.msm: $(MERGEMOD)
+$(SDKREDISTDIR)\Heimdal.msm: $(ASSEMBLYMODULE)
 	$(CP) $** $@
 
-all:: $(MERGEMOD) $(SDKREDISTDIR)\Heimdal.msm
+POLICYMODULE=$(INSTDIR)\Heimdal.Policy.msm
+
+$(POLICYMODULE): $(OBJ)\heimdal-policy.wixobj
+	$(LIGHT) -out $@ $**
+
+$(OBJ)\heimdal-policy.wixobj: heimdal-policy.wxs
+	$(CANDLE) -arch $(PLATFORM) -o $@ $**	\
+		-dVersion=$(VERSION)		\
+		-dBinDir=$(BINDIR)		\
+		-dPlatform=$(PLATFORM)		\
+		-dPolPrefix=$(POLPREFIX)
+
+$(SDKREDISTDIR)\Heimdal.Policy.msm: $(POLICYMODULE)
+	$(CP) $** $@
+
+all:: $(ASSEMBLYMODULE) $(SDKREDISTDIR)\Heimdal.msm
+
+all:: $(POLICYMODULE) $(SDKREDISTDIR)\Heimdal.Policy.msm
 
 clean::
-	-$(RM) $(MERGEMOD)
+	-$(RM) $(ASSEMBLYMODULE)
+	-$(RM) $(POLICYMODULE)
+	-$(RM) $(SDKREDISTDIR)\Heimdal.msm
+	-$(RM) $(SDKREDISTDIR)\Heimdal.Policy.msm
+
 
 ######################################################################
 # Runtime modules
@@ -127,7 +148,7 @@ THIRDPARTYOPT=$(THIRDPARTYOPT) -dMKShim=1
 
 INSTALLER=$(INSTDIR)\Heimdal-$(CPU)$(DEBUGOPT)-$(VERSIOND).msi
 
-$(INSTALLER): $(OBJ)\heimdal-installer.wixobj $(MERGEMOD) $(THIRDPARTYOBJS)	\
+$(INSTALLER): $(OBJ)\heimdal-installer.wixobj $(ASSEMBLYMODULE) $(THIRDPARTYOBJS)	\
 		$(THIRDPARTYDEPS) lang\en-us.wxl
 	$(LIGHT) -out $@ $(OBJ)\heimdal-installer.wixobj $(THIRDPARTYOBJS)	\
 		-sval -cultures:en-us -loc lang\en-us.wxl	\
@@ -136,15 +157,15 @@ $(INSTALLER): $(OBJ)\heimdal-installer.wixobj $(MERGEMOD) $(THIRDPARTYOBJS)	\
 	$(_CODESIGN)
 
 $(OBJ)\heimdal-installer.wixobj: heimdal-installer.wxs
-	$(CANDLE) -arch $(PLATFORM) -o $@ $** \
-		-dVersion=$(VERSION)	\
-		-dBinDir=$(BINDIR)	\
-		-dDocDir=$(DOCDIR)	\
-		-dInstDir=$(INSTDIR)	\
-		-dSrcDir=$(SRC)		\
-		-dPlatform=$(PLATFORM)	\
-		-dRuntimeModule=$(RUNTIMEMODULE) \
-		-dPolPrefix=$(POLPREFIX)	\
+	$(CANDLE) -arch $(PLATFORM) -o $@ $**		\
+		-dVersion=$(VERSION)			\
+		-dBinDir=$(BINDIR)			\
+		-dDocDir=$(DOCDIR)			\
+		-dInstDir=$(INSTDIR)			\
+		-dSrcDir=$(SRC)				\
+		-dPlatform=$(PLATFORM)			\
+		-dRuntimeModule=$(RUNTIMEMODULE)	\
+		-dPolPrefix=$(POLPREFIX)		\
 		$(THIRDPARTYOPT)
 
 all:: $(INSTALLER)

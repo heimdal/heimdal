@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="windows-1252"?>
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+
+  <?if $(var.Platform)=x64 ?>
+
+  <?define Win64=yes ?>
+  <?define GuidPolKerberos=9ED6B62C-13D0-43BB-BCD7-4737D3E6EC43 ?>
+
+  <?else?>
+
+  <?define Win64=no ?>
+  <?define GuidPolKerberos=EF04F1AF-725B-4AF6-AE7B-18E2036C03B9 ?>
+
+  <?endif?>
+
+  <Module Id="Heimdal" Language="0" Version="$(var.Version)">
+
+    <Package Id="A064012D-F3C3-4059-9AC0-00D8A5283D6D"
+             InstallerVersion="200"
+             Languages="1033" Manufacturer="Heimdal"
+             SummaryCodepage="1252" AdminImage="no"
+             Platform="$(var.Platform)" />
+
+    <!--
+        Publisher Configuration
+
+        The publisher configuration files are included in the Heimdal
+        installers, but not included in the Heimdal assemblies.
+    -->
+
+    <Directory Id='TARGETDIR' Name='SourceDir'>
+      <Directory Id='dir.policy.Heimdal.Kerberos'
+                 Name='$(var.PolPrefix).Heimdal.Kerberos'
+                 FileSource='$(var.BinDir)\$(var.PolPrefix).Heimdal.Kerberos'>
+
+        <Component Id='comp.policy.Heimdal.Kerberos'
+                   Guid='$(var.GuidPolKerberos)'
+                   Win64='$(var.Win64)'>
+          <File Name='$(var.Version).pol' KeyPath='yes' Assembly='win32'
+                Id='policy.Kerberos' AssemblyManifest='policy.Kerberos' />
+          <File Name='$(var.Version).cat' Id='policy.Kerberos.cat' />
+        </Component>
+
+      </Directory>
+    </Directory>
+
+  </Module>
+</Wix>

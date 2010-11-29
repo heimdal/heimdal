@@ -9,8 +9,6 @@
   <?define GuidKdestroy=289C2C0D-F41D-4E46-9819-6B9B63F83418 ?>
   <?define GuidKtutil=28B09087-4731-41F4-B734-C71E84EC31FC ?>
   <?define GuidKdigest=D13DA4C0-B1BB-4C02-8ED2-5DFC7D16B19D ?>
-  <?define GuidPolGSSAPI=2EB8472F-64DD-470B-AF65-FC8AAC185788 ?>
-  <?define GuidPolKerberos=9ED6B62C-13D0-43BB-BCD7-4737D3E6EC43 ?>
   <?define GuidKpasswd=20A984EC-5BCB-4B93-A3A9-7AACBDC625E9 ?>
   <?define GuidKvno=2B932C2B-9167-4051-BDF7-A104E9983CE6 ?>
   <?define GuidKcpytkt=17734691-7CB3-4E9A-AADC-6D4205795F43 ?>
@@ -25,8 +23,6 @@
   <?define GuidKdestroy=07D96FBC-2251-4EBC-AA68-12C6C52F44E6 ?>
   <?define GuidKtutil=CE082458-E2C5-4744-A423-88C23AD3C81C ?>
   <?define GuidKdigest=3FFBFAB0-FB37-411C-AF4E-53BCC468D7D1 ?>
-  <?define GuidPolGSSAPI=7B7D6813-8D9C-4647-8966-89A1CA24A08B ?>
-  <?define GuidPolKerberos=EF04F1AF-725B-4AF6-AE7B-18E2036C03B9 ?>
   <?define GuidKpasswd=B66C04B5-EE1D-48C3-A25B-4DCAAA8F459B ?>
   <?define GuidKvno=4C6015BE-1347-4D12-8841-FF90E0B9D6A8 ?>
   <?define GuidKcpytkt=CBCDFC80-601B-4F26-A020-7D1278735B95 ?>
@@ -133,6 +129,10 @@
             <Merge Id='Heimdal.Assemblies' Language='0'
                    SourceFile='$(var.InstDir)\Heimdal.msm' />
 
+            <Merge Id='Heimdal.Policy' Language='0'
+                   SourceFile='$(var.InstDir)\Heimdal.Policy.msm' />
+
+
             <Merge Id='Runtime' Language='0'
                    SourceFile='$(var.RuntimeModule)' />
 
@@ -140,27 +140,6 @@
             <Merge Id='Heimdal.Compatibility' Language='0'
                    SourceFile='$(var.InstDir)\Heimdal-krbcompat.msm' />
             <?endif?>
-
-            <!--
-                Publisher Configuration
-
-                The publisher configuration files are included in the
-                Heimdal installers, but not included in the Heimdal
-                assemblies.
-            -->
-
-            <Directory Id='dir.policy.Heimdal.Kerberos'
-                       Name='$(var.PolPrefix).Heimdal.Kerberos'
-                       FileSource='$(var.BinDir)\$(var.PolPrefix).Heimdal.Kerberos'>
-              <Component Id='comp.policy.Heimdal.Kerberos'
-                         Guid='$(var.GuidPolKerberos)'
-                         Win64='$(var.Win64)'>
-                <File Name='$(var.Version).pol' KeyPath='yes' Assembly='win32'
-                      Id='policy.GSSAPI' AssemblyManifest='policy.GSSAPI' />
-                <File Name='$(var.Version).cat' Id='policy.GSSAPI.cat' />
-              </Component>
-
-            </Directory>
 
             <Directory Id='dirPlugin' Name='plugin'>
               <Directory Id='PLUGINDIR' Name='krb5'>
@@ -337,9 +316,8 @@
       <?endif?>
       <ComponentRef Id='comp.Plugin.Reg' />
 
-      <ComponentRef Id='comp.policy.Heimdal.Kerberos' />
-
       <MergeRef Id='Heimdal.Assemblies' />
+      <MergeRef Id='Heimdal.Policy' />
       <MergeRef Id='Runtime' />
 
       <?ifdef Thirdparty ?>

@@ -428,9 +428,6 @@ GCOPTS=-I$(SRCDIR) -I$(OBJ) -Igssapi -DBUILD_GSSAPI_LIB
 {$(OBJ)\gssapi}.c{$(OBJ)\gssapi}.obj::
 	$(C2OBJ_NP) -Fo$(OBJ)\gssapi\ -Fd$(OBJ)\gssapi\ -I$(OBJ)\gssapi $(GCOPTS)
 
-{}.c{$(OBJ)}.obj::
-	$(C2OBJ_P) $(GCOPTS) -DASN1_LIB
-
 {$(OBJ)}.c{$(OBJ)}.obj::
 	$(C2OBJ_P) $(GCOPTS)
 
@@ -521,9 +518,9 @@ clean::
 	-$(RM) $(OBJ)\mech\*.*
 	-$(RM) $(OBJ)\gssapi\*.*
 
-all-tools:: $(OBJ)\gsstool.exe
+all-tools:: $(BINDIR)\gsstool.exe
 
-$(OBJ)\gsstool.exe: $(OBJ)\gsstool.obj $(OBJ)\gss-commands.obj $(LIBGSSAPI) $(LIBROKEN) $(LIBSL) $(LIBVERS)
+$(BINDIR)\gsstool.exe: $(OBJ)\gsstool.obj $(OBJ)\gss-commands.obj $(LIBGSSAPI) $(LIBROKEN) $(LIBSL) $(LIBVERS)
 	$(EXECONLINK)
 
 $(OBJ)\gss-commands.c $(OBJ)\gss-commands.h: gss-commands.in
@@ -547,3 +544,65 @@ test-exports:
 	$(PERL) ..\..\cf\w32-check-exported-symbols.pl --vs version-script.map --def libgssapi-exports.def
 
 test:: test-exports
+
+
+TEST_BINARIES=\
+	$(OBJ)\test_oid.exe	\
+	$(OBJ)\test_names.exe	\
+	$(OBJ)\test_cfx.exe	\
+	$(OBJ)\test_acquire_cred.exe	\
+	$(OBJ)\test_cred.exe	\
+	$(OBJ)\test_kcred.exe	\
+	$(OBJ)\test_context.exe	\
+	$(OBJ)\test_ntlm.exe
+
+$(OBJ)\test_oid.exe: $(OBJ)\test_oid.obj $(LIBGSSAPI) $(LIBROKEN)
+	$(EXECONLINK)
+	$(EXEPREP_NODIST)
+
+$(OBJ)\test_names.exe: $(OBJ)\test_names.obj $(LIBGSSAPI) $(LIBROKEN) $(LIBVERS)
+	$(EXECONLINK)
+	$(EXEPREP_NODIST)
+
+$(OBJ)\test_cfx.exe: $(OBJ)\krb5\test_cfx.obj $(LIBHEIMDAL) $(LIBGSSAPI) $(LIBROKEN)
+	$(EXECONLINK)
+	$(EXEPREP_NODIST)
+
+$(OBJ)\test_acquire_cred.exe: $(OBJ)\test_acquire_cred.obj $(OBJ)\test_common.obj \
+		$(LIBGSSAPI) $(LIBROKEN) $(LIBVERS)
+	$(EXECONLINK)
+	$(EXEPREP_NODIST)
+
+$(OBJ)\test_cred.exe: $(OBJ)\test_cred.obj $(LIBGSSAPI) $(LIBROKEN) $(LIBVERS)
+	$(EXECONLINK)
+	$(EXEPREP_NODIST)
+
+$(OBJ)\test_kcred.exe: $(OBJ)\test_kcred.obj $(LIBGSSAPI) $(LIBHEIMDAL)	\
+		$(LIBROKEN) $(LIBVERS)
+	$(EXECONLINK)
+	$(EXEPREP_NODIST)
+
+$(OBJ)\test_context.exe: $(OBJ)\test_context.obj $(OBJ)\test_common.obj	\
+		$(LIBGSSAPI) $(LIBHEIMDAL) $(LIBROKEN) $(LIBVERS)
+	$(EXECONLINK)
+	$(EXEPREP_NODIST)
+
+$(OBJ)\test_ntlm.exe: $(OBJ)\test_ntlm.obj $(OBJ)\test_common.obj	\
+		$(LIBGSSAPI) $(LIBHEIMNTLM) $(LIBROKEN) $(LIBVERS)
+	$(EXECONLINK)
+	$(EXEPREP_NODIST)
+
+{}.c{$(OBJ)}.obj::
+	$(C2OBJ_P) -I$(OBJ)\krb5 -I$(OBJ) -I$(SRCDIR) -I$(SRCDIR)\gssapi
+
+test-binaries: $(LIBGSSAPI) $(TEST_BINARIES)
+
+run-test:
+	cd $(OBJ)
+	test_oid
+	test_names
+	test_cfx
+	test_kcred
+	cd $(SRCDIR)
+
+test:: test-binaries run-test

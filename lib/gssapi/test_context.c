@@ -71,11 +71,20 @@ static struct {
     const char *name;
     gss_OID oid;
 } o2n[] = {
-    { "krb5", GSS_KRB5_MECHANISM },
-    { "spnego", GSS_SPNEGO_MECHANISM },
-    { "ntlm", GSS_NTLM_MECHANISM },
-    { "sasl-digest-md5", GSS_SASL_DIGEST_MD5_MECHANISM }
+    { "krb5", NULL /* GSS_KRB5_MECHANISM */ },
+    { "spnego", NULL /* GSS_SPNEGO_MECHANISM */ },
+    { "ntlm", NULL /* GSS_NTLM_MECHANISM */ },
+    { "sasl-digest-md5", NULL /* GSS_SASL_DIGEST_MD5_MECHANISM */ }
 };
+
+static void
+init_o2n(void)
+{
+    o2n[0].oid = GSS_KRB5_MECHANISM;
+    o2n[1].oid = GSS_SPNEGO_MECHANISM;
+    o2n[2].oid = GSS_NTLM_MECHANISM;
+    o2n[3].oid = GSS_SASL_DIGEST_MD5_MECHANISM;
+}
 
 static gss_OID
 string_to_oid(const char *name)
@@ -498,6 +507,8 @@ main(int argc, char **argv)
     gss_cred_id_t client_cred = GSS_C_NO_CREDENTIAL, deleg_cred = GSS_C_NO_CREDENTIAL;
 
     setprogname(argv[0]);
+
+    init_o2n();
 
     if (krb5_init_context(&context))
 	errx(1, "krb5_init_context");

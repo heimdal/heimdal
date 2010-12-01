@@ -33,10 +33,10 @@
 
 #include "config.h"
 
+#include <roken.h>
 #include <stdio.h>
 #include <gssapi.h>
 #include <err.h>
-#include <roken.h>
 #include <getarg.h>
 #include "test_common.h"
 

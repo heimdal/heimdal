@@ -35,12 +35,12 @@
 #include <config.h>
 #endif
 
+#include <roken.h>
 #include <stdio.h>
 #include <gssapi.h>
 #include <gssapi_krb5.h>
 #include <gssapi_spnego.h>
 #include <err.h>
-#include <roken.h>
 
 int
 main(int argc, char **argv)

@@ -35,6 +35,7 @@
 #include <config.h>
 #endif
 
+#include <roken.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -44,7 +45,6 @@
 #include <gssapi_spnego.h>
 #include <krb5.h>
 #include <err.h>
-#include <roken.h>
 #include <getarg.h>
 
 static int version_flag = 0;

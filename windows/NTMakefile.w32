@@ -72,8 +72,8 @@ MCPU=amd64
 #----------------------------------------------------------------
 # Directory macros
 
-DESTDIR		=$(SRC)\out\dest_$(OUTDIR)
-OBJDIR		=$(SRC)\out\obj_$(OUTDIR)
+DESTDIR		=$(SRC)\out\dest_$(CPU)
+OBJDIR		=$(SRC)\out\obj_$(CPU)
 
 INCDIR		=$(DESTDIR)\inc
 LIBDIR		=$(DESTDIR)\lib

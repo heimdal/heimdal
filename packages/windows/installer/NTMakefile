@@ -93,19 +93,6 @@ clean::
 	-$(RM) $(SDKREDISTDIR)\Heimdal.msm
 	-$(RM) $(SDKREDISTDIR)\Heimdal.Policy.msm
 
-# Locate 32-bit assembly merge modules
-
-!if "$(CPU)"=="AMD64"
-ASSEMBLYDIR32=$(SDKREDISTDIR:AMD64=i386)
-
-!if !exist( $(ASSEMBLYDIR32)\Heimdal.msm )
-
-!message 32-bit assembly not found.  Skipping 32-bit components
-!undef ASSEMBLYDIR32
-!endif
-
-!endif
-
 ######################################################################
 # Runtime modules
 
@@ -115,12 +102,6 @@ VCVER=VC90
 VCVER=VC80
 !else
 !  error Cant determine Visual C compiler version
-!endif
-
-!if "$(CPU)"=="AMD64"
-CPUSUFFIX=_x64
-!else
-CPUSUFFIX=
 !endif
 
 !if "$(BUILD)"=="rel"
@@ -136,11 +117,13 @@ MMDIR=$(SystemDrive)\Program Files (x86)\Common Files\Merge Modules
 
 !if exist("$(MMDIR)")
 
-RUNTIMEMODULE="$(MMDIR)\Microsoft_$(VCVER)_$(CRTNAME)_x86$(CPUSUFFIX).msm"
+RUNTIMEMODULE32="$(MMDIR)\Microsoft_$(VCVER)_$(CRTNAME)_x86.msm"
+RUNTIMEMODULE64="$(MMDIR)\Microsoft_$(VCVER)_$(CRTNAME)_x86_x64.msm"
 
 !else
 
-RUNTIMEMODULE="$(MSSDK)\Redist\VC\microsoft.vcxx.crt.$(PLATFORM)_msm.msm"
+RUNTIMEMODULE32="$(MSSDK)\Redist\VC\microsoft.vcxx.crt.x86_msm.msm"
+RUNTIMEMODULE64="$(MSSDK)\Redist\VC\microsoft.vcxx.crt.x64_msm.msm"
 
 !endif
 
@@ -148,44 +131,72 @@ RUNTIMEMODULE="$(MSSDK)\Redist\VC\microsoft.vcxx.crt.$(PLATFORM)_msm.msm"
 ######################################################################
 # Heimdal installer
 
+CANDLEOPTS=	\
+	-dVersion=$(VERSION)			\
+	-dBinDir=$(BINDIR)			\
+	-dDocDir=$(DOCDIR)			\
+	-dSrcDir=$(SRC)				\
+	-dPlatform=$(PLATFORM)			\
+	-dPolPrefix=$(POLPREFIX)		\
+
+!if "$(CPU)"=="AMD64"
+
+INSTDIR32=$(INSTDIR:AMD64=i386)
+
+CANDLEOPTS=$(CANDLEOPTS) -dTarget64	\
+	-dInstDir32=$(INSTDIR32)	\
+	-dInstDir64=$(INSTDIR)			\
+	-dRuntimeModule32=$(RUNTIMEMODULE32)	\
+	-dRuntimeModule64=$(RUNTIMEMODULE64)	\
+
+!ifdef MULTIPLATFORM_INSTALLER
+CANDLEOPTS=$(CANDLEOPTS) -dTarget32
+!else
+!  message Excluding 32-bit components from installer
+!endif
+
+INSTDEPS=$(INSTDIR32)\Heimdal.msm \
+	$(INSTDIR32)\Heimdal.Policy.msm	\
+	$(ASSEMBLYMODULE) $(POLICYMODULE)
+
+!else
+
+CANDLEOPTS=$(CANDLEOPTS) -dTarget32		\
+	-dInstDir32=$(INSTDIR)			\
+	-dRuntimeModule32=$(RUNTIMEMODULE32)	\
+
+!endif
+
 !if exist($(SRC)\thirdparty)
 THIRDPARTYOBJS=$(INSTDIR)\apicache.wixobj $(INSTDIR)\lsacache.wixobj
-THIRDPARTYOPT=-dApiCache=1 -dLsaCache=1
+THIRDPARTYOPTS=-dApiCache=1 -dLsaCache=1
+
+!if "$(CPU)"=="AMD64"
+THIRDPARTYOBJS=$(THIRDPARTYOBJS) $(INSTDIR32)\apicache.wixobj $(INSTDIR32)\lsacache.wixobj
+!endif
 !endif
 
 !if exist($(SRC)\thirdparty\MKShim)
 THIRDPARTYOBJS=$(THIRDPARTYOBJS) $(INSTDIR)\MKShim.wixlib
-THIRDPARTYOPT=$(THIRDPARTYOPT) -dMKShim=1
+THIRDPARTYOPTS=$(THIRDPARTYOPTS) -dMKShim=1
+
+!if "$(CPU)"=="AMD64"
+THIRDPARTYOBJS=$(THIRDPARTYOBJS) $(INSTDIR32)\MKShim.wixlib
+!endif
 !endif
 
 INSTALLER=$(INSTDIR)\Heimdal-$(CPU)$(DEBUGOPT)-$(VERSIOND).msi
 
-$(INSTALLER): $(OBJ)\heimdal-installer.wixobj $(ASSEMBLYMODULE) $(POLICYMODULE) \
-		$(THIRDPARTYOBJS) $(THIRDPARTYDEPS) lang\en-us.wxl
+$(INSTALLER): $(OBJ)\heimdal-installer.wixobj $(THIRDPARTYOBJS) $(INSTDEPS) lang\en-us.wxl
 	$(LIGHT) -out $@ $(OBJ)\heimdal-installer.wixobj $(THIRDPARTYOBJS)	\
 		-sval -cultures:en-us -loc lang\en-us.wxl	\
 		-dWixUILicenseRtf=lang\license-en-us.rtf	\
 		-ext WixUIExtension
 	$(_CODESIGN)
 
-!ifdef ASSEMBLYDIR32
-$(INSTALLER): $(ASSEMBLYDIR32)\Heimdal.msm $(ASSEMBLYDIR32)\Heimdal.Policy.msm
-!endif
-
 $(OBJ)\heimdal-installer.wixobj: heimdal-installer.wxs
-	$(CANDLE) -arch $(PLATFORM) -o $@ heimdal-installer.wxs		\
-		-dVersion=$(VERSION)			\
-		-dBinDir=$(BINDIR)			\
-		-dDocDir=$(DOCDIR)			\
-		-dInstDir=$(INSTDIR)			\
-!ifdef ASSEMBLYDIR32
-		-dAssemblyDir32=$(ASSEMBLYDIR32)	\
-!endif
-		-dSrcDir=$(SRC)				\
-		-dPlatform=$(PLATFORM)			\
-		-dRuntimeModule=$(RUNTIMEMODULE)	\
-		-dPolPrefix=$(POLPREFIX)		\
-		$(THIRDPARTYOPT)
+	$(CANDLE) -arch $(PLATFORM) -o $@ heimdal-installer.wxs \
+		$(CANDLEOPTS) $(THIRDPARTYOPTS)
 
 all:: $(INSTALLER)
 

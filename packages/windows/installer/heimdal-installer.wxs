@@ -5,6 +5,8 @@
 
   <?define Win64=yes ?>
   <?define PIProgramFilesFolder=ProgramFiles64Folder ?>
+
+  <?define ToolsBinDir=dirBin64 ?>
   <?define GuidKinit=BAA5BD92-163E-4AA5-8C99-EA2100F3D9DE ?>
   <?define GuidKdestroy=289C2C0D-F41D-4E46-9819-6B9B63F83418 ?>
   <?define GuidKtutil=28B09087-4731-41F4-B734-C71E84EC31FC ?>
@@ -15,10 +17,14 @@
   <?define GuidKdeltkt=3E853905-8CDA-4E14-8EBA-C0C4EEDB811A ?>
   <?define GuidKcc=F411A9F1-A186-40CB-B55B-CADBE0166268 ?>
 
+  <?define ConfigDir=INSTALLDIR64 ?>
+
   <?else?>
 
   <?define Win64=no ?>
   <?define PIProgramFilesFolder=ProgramFilesFolder ?>
+
+  <?define ToolsBinDir=dirBin32 ?>
   <?define GuidKinit=038F19D7-F7C9-4B6A-8359-321CD1FAD347 ?>
   <?define GuidKdestroy=07D96FBC-2251-4EBC-AA68-12C6C52F44E6 ?>
   <?define GuidKtutil=CE082458-E2C5-4744-A423-88C23AD3C81C ?>
@@ -28,6 +34,8 @@
   <?define GuidKcpytkt=CBCDFC80-601B-4F26-A020-7D1278735B95 ?>
   <?define GuidKdeltkt=6450EE72-E472-4709-B457-B579BFB2472B ?>
   <?define GuidKcc=11800964-4A5F-466E-B2FE-DD2EFC54DDB9 ?>
+
+  <?define ConfigDir=INSTALLDIR32 ?>
 
   <?endif?>
 
@@ -42,145 +50,195 @@
       Compressed='yes' SummaryCodepage='1252' />
 
     <Directory Id='TARGETDIR' Name='SourceDir' DiskId='1'>
-      <Directory Id='$(var.PIProgramFilesFolder)' Name='PFiles'>
-        <Directory Id='INSTALLDIR' Name='Heimdal'>
-          <Directory Id='dirBin' Name='bin' FileSource='$(var.BinDir)'>
 
-            <Component Id='comp.SearchPath'
-                       Guid='BA6C1A53-E479-4E87-9B61-7BA793DBAE56' Win64='$(var.Win64)'>
-              <RegistryKey Action='createAndRemoveOnUninstall' Root='HKLM'
-                           Key='Software\Heimdal\CurrentVersion'>
-                <RegistryValue Name='InstallPath' Type='string'
-                               Value='[dirBin]' KeyPath='yes' />
-              </RegistryKey>
-              <Environment Id='env.Path' Name='PATH' Action='set' Part='last'
-                           Separator=';' Value='[dirBin]' System='yes' />
-            </Component>
-
-            <Component Id='comp.kinit'
-                       Guid='$(var.GuidKinit)'
-                       Win64='$(var.Win64)'>
-              <File Name='kinit.exe' KeyPath='yes' />
-              <File Name='kinit.pdb' />
-            </Component>
-
-            <Component Id='comp.ktutil'
-                       Guid='$(var.GuidKtutil)'
-                       Win64='$(var.Win64)'>
-              <File Name='ktutil.exe' KeyPath='yes' />
-              <File Name='ktutil.pdb' />
-            </Component>
-
-            <Component Id='comp.kdestroy'
-                       Guid='$(var.GuidKdestroy)'
-                       Win64='$(var.Win64)'>
-              <File Name='kdestroy.exe' KeyPath='yes' />
-              <File Name='kdestroy.pdb' />
-            </Component>
-
-            <Component Id='comp.kdigest'
-                       Guid='$(var.GuidKdigest)'
-                       Win64='$(var.Win64)'>
-              <File Name='kdigest.exe' KeyPath='yes' />
-              <File Name='kdigest.pdb' />
-            </Component>
-
-            <Component Id='comp.kpasswd'
-                       Guid='$(var.GuidKpasswd)'
-                       Win64='$(var.Win64)'>
-              <File Name='kpasswd.exe' KeyPath='yes' />
-              <File Name='kpasswd.pdb' />
-            </Component>
-
-            <Component Id='comp.kvno'
-                       Guid='$(var.GuidKvno)'
-                       Win64='$(var.Win64)'>
-              <File Name='kvno.exe' KeyPath='yes' />
-              <File Name='kvno.pdb' />
-            </Component>
-
-            <Component Id='comp.kcpytkt'
-                       Guid='$(var.GuidKcpytkt)'
-                       Win64='$(var.Win64)'>
-              <File Name='kcpytkt.exe' KeyPath='yes' />
-              <File Name='kcpytkt.pdb' />
-            </Component>
-
-            <Component Id='comp.kdeltkt'
-                       Guid='$(var.GuidKdeltkt)'
-                       Win64='$(var.Win64)'>
-              <File Name='kdeltkt.exe' KeyPath='yes' />
-              <File Name='kdeltkt.pdb' />
-            </Component>
-
-            <Component Id='comp.kcc'
-                       Guid='$(var.GuidKcc)'
-                       Win64='$(var.Win64)'>
-              <File Name='kcc.exe' KeyPath='yes'>
-                <CopyFile Id='klist.exe' DestinationName='klist.exe' />
-                <CopyFile Id='kswitch.exe' DestinationName='kswitch.exe' />
-              </File>
-              <File Name='kcc.pdb'>
-                <CopyFile Id='klist.pdb' DestinationName='klist.pdb' />
-                <CopyFile Id='kswitch.pdb' DestinationName='kswitch.pdb' />
-              </File>
-            </Component>
-
-            <Merge Id='Heimdal.Assemblies' Language='0'
-                   SourceFile='$(var.InstDir)\Heimdal.msm' />
-
-            <Merge Id='Heimdal.Policy' Language='0'
-                   SourceFile='$(var.InstDir)\Heimdal.Policy.msm' />
-
-            <?ifdef AssemblyDir32 ?>
-            <Merge Id='Heimdal.Assemblies.32' Language='0'
-                   SourceFile='$(var.AssemblyDir32)\Heimdal.msm' />
-
-            <Merge Id='Heimdal.Policy.32' Language='0'
-                   SourceFile='$(var.AssemblyDir32)\Heimdal.Policy.msm' />
-            <?endif?>
-
-            <Merge Id='Runtime' Language='0'
-                   SourceFile='$(var.RuntimeModule)' />
-
-            <?ifdef KrbCompat?>
-            <Merge Id='Heimdal.Compatibility' Language='0'
-                   SourceFile='$(var.InstDir)\Heimdal-krbcompat.msm' />
-            <?endif?>
-
-            <Directory Id='dirPlugin' Name='plugin'>
-              <Directory Id='PLUGINDIR' Name='krb5'>
-
-                <Component Id='comp.Plugin.Reg'
-                           Guid='4BC44234-70A4-4CC1-A5AF-4CA76E9F9487'>
-                  <RegistryKey Action='createAndRemoveOnUninstall' Root='HKLM'
-                               Key='Software\Kerberos'>
-                    <RegistryValue Name='plugin_dir' Type='multiString' Action='append'
-                                   Value='"[PLUGINDIR]"' KeyPath='yes' />
-                  </RegistryKey>
-                </Component>
-
+      <?ifdef Target32 ?>
+      <Directory Id='ProgramFilesFolder'>
+        <Directory Id='INSTALLDIR32' Name='Heimdal'>
+          <Directory Id='dirBin32' Name='bin'>
+            <Directory Id='dirPlugin32' Name='plugin'>
+              <Directory Id='PLUGINDIR32' Name='krb5'>
               </Directory>
             </Directory>
-
           </Directory>
-
-          <Directory Id='dirDoc' Name='doc' FileSource='$(var.DocDir)'>
-
-            <Component Id='comp.Heimdal.chm'
-                       Guid='785F6668-EBDB-4F18-8BEF-F72ECECB43D6'>
-              <File Name='heimdal.chm' />
-            </Component>
-
-            <Component Id='comp.HX509.chm'
-                       Guid='CBB379D6-629D-4EB9-AC0D-0167651F14EF'>
-              <File Name='hx509.chm' />
-            </Component>
-
-          </Directory>
-
         </Directory>
       </Directory>
+      <?endif?>
+
+      <?ifdef Target64?>
+      <Directory Id='ProgramFiles64Folder'>
+        <Directory Id='INSTALLDIR64' Name='Heimdal'>
+          <Directory Id='dirBin64' Name='bin'>
+            <Directory Id='dirPlugin64' Name='plugin'>
+              <Directory Id='PLUGINDIR64' Name='krb5'>
+              </Directory>
+            </Directory>
+          </Directory>
+        </Directory>
+      </Directory>
+      <?endif?>
+
+    </Directory>
+
+    <?ifdef Target32?>
+    <DirectoryRef Id='dirBin32' DiskId='1'>
+      <Component Id='comp.SearchPath.32' Feature='feature.Main'
+                 Guid='BA6C1A53-E479-4E87-9B61-7BA793DBAE56' Win64='no'>
+        <RegistryKey Action='createAndRemoveOnUninstall' Root='HKLM'
+                     Key='Software\Heimdal\CurrentVersion'>
+          <RegistryValue Name='InstallPath' Type='string'
+                         Value='[dirBin32]' KeyPath='yes' />
+        </RegistryKey>
+        <Environment Id='env.Path.32' Name='PATH' Action='set' Part='last'
+                     Separator=';' Value='[dirBin32]' System='yes' />
+      </Component>
+
+      <Merge Id='Heimdal.Assemblies.32' Language='0'
+             SourceFile='$(var.InstDir32)\Heimdal.msm' />
+
+      <Merge Id='Heimdal.Policy.32' Language='0'
+             SourceFile='$(var.InstDir32)\Heimdal.Policy.msm' />
+
+      <Merge Id='Runtime.32' Language='0'
+             SourceFile='$(var.RuntimeModule32)' />
+
+    </DirectoryRef>
+    <?endif?>
+
+    <?ifdef Target64?>
+    <DirectoryRef Id='dirBin64' DiskId='1'>
+      <Component Id='comp.SearchPath.64' Feature='feature.Main'
+                 Guid='2F189729-2253-47A1-AA68-06FE3A9697A7' Win64='yes'>
+        <RegistryKey Action='createAndRemoveOnUninstall' Root='HKLM'
+                     Key='Software\Heimdal\CurrentVersion'>
+          <RegistryValue Name='InstallPath' Type='string'
+                         Value='[dirBin64]' KeyPath='yes' />
+        </RegistryKey>
+        <Environment Id='env.Path' Name='PATH' Action='set' Part='last'
+                     Separator=';' Value='[dirBin64]' System='yes' />
+      </Component>
+
+      <Merge Id='Heimdal.Assemblies.64' Language='0'
+             SourceFile='$(var.InstDir64)\Heimdal.msm' />
+
+      <Merge Id='Heimdal.Policy.64' Language='0'
+             SourceFile='$(var.InstDir64)\Heimdal.Policy.msm' />
+
+      <Merge Id='Runtime.64' Language='0'
+             SourceFile='$(var.RuntimeModule64)' />
+
+    </DirectoryRef>
+    <?endif?>
+
+    <DirectoryRef Id='$(var.ToolsBinDir)' FileSource='$(var.BinDir)'>
+
+      <Component Id='comp.kinit'
+                 Guid='$(var.GuidKinit)'
+                 Win64='$(var.Win64)'>
+        <File Name='kinit.exe' KeyPath='yes' />
+        <File Name='kinit.pdb' />
+      </Component>
+
+      <Component Id='comp.ktutil'
+                 Guid='$(var.GuidKtutil)'
+                 Win64='$(var.Win64)'>
+        <File Name='ktutil.exe' KeyPath='yes' />
+        <File Name='ktutil.pdb' />
+      </Component>
+
+      <Component Id='comp.kdestroy'
+                 Guid='$(var.GuidKdestroy)'
+                 Win64='$(var.Win64)'>
+        <File Name='kdestroy.exe' KeyPath='yes' />
+        <File Name='kdestroy.pdb' />
+      </Component>
+
+      <Component Id='comp.kdigest'
+                 Guid='$(var.GuidKdigest)'
+                 Win64='$(var.Win64)'>
+        <File Name='kdigest.exe' KeyPath='yes' />
+        <File Name='kdigest.pdb' />
+      </Component>
+
+      <Component Id='comp.kpasswd'
+                 Guid='$(var.GuidKpasswd)'
+                 Win64='$(var.Win64)'>
+        <File Name='kpasswd.exe' KeyPath='yes' />
+        <File Name='kpasswd.pdb' />
+      </Component>
+
+      <Component Id='comp.kvno'
+                 Guid='$(var.GuidKvno)'
+                 Win64='$(var.Win64)'>
+        <File Name='kvno.exe' KeyPath='yes' />
+        <File Name='kvno.pdb' />
+      </Component>
+
+      <Component Id='comp.kcpytkt'
+                 Guid='$(var.GuidKcpytkt)'
+                 Win64='$(var.Win64)'>
+        <File Name='kcpytkt.exe' KeyPath='yes' />
+        <File Name='kcpytkt.pdb' />
+      </Component>
+
+      <Component Id='comp.kdeltkt'
+                 Guid='$(var.GuidKdeltkt)'
+                 Win64='$(var.Win64)'>
+        <File Name='kdeltkt.exe' KeyPath='yes' />
+        <File Name='kdeltkt.pdb' />
+      </Component>
+
+      <Component Id='comp.kcc'
+                 Guid='$(var.GuidKcc)'
+                 Win64='$(var.Win64)'>
+        <File Name='kcc.exe' KeyPath='yes'>
+          <CopyFile Id='klist.exe' DestinationName='klist.exe' />
+          <CopyFile Id='kswitch.exe' DestinationName='kswitch.exe' />
+        </File>
+        <File Name='kcc.pdb'>
+          <CopyFile Id='klist.pdb' DestinationName='klist.pdb' />
+          <CopyFile Id='kswitch.pdb' DestinationName='kswitch.pdb' />
+        </File>
+      </Component>
+
+      <Component Id='comp.Heimdal.chm'
+                 Guid='785F6668-EBDB-4F18-8BEF-F72ECECB43D6'>
+        <File Source='$(var.DocDir)\heimdal.chm' />
+      </Component>
+
+      <Component Id='comp.HX509.chm'
+                 Guid='CBB379D6-629D-4EB9-AC0D-0167651F14EF'>
+        <File Source='$(var.DocDir)\hx509.chm' />
+      </Component>
+
+    </DirectoryRef>
+
+    <?ifdef Target32?>
+    <DirectoryRef Id='PLUGINDIR32'>
+      <Component Id='comp.Plugin.Reg.32' Feature='feature.Main'
+                 Guid='4BC44234-70A4-4CC1-A5AF-4CA76E9F9487' Win64='no'>
+        <RegistryKey Action='createAndRemoveOnUninstall' Root='HKLM'
+                     Key='Software\Kerberos'>
+          <RegistryValue Name='plugin_dir' Type='multiString' Action='append'
+                         Value='"[PLUGINDIR32]"' KeyPath='yes' />
+        </RegistryKey>
+      </Component>
+    </DirectoryRef>
+    <?endif?>
+
+    <?ifdef Target64?>
+    <DirectoryRef Id='PLUGINDIR64'>
+      <Component Id='comp.Plugin.Reg.64' Feature='feature.Main'
+                 Guid='5A99A52E-A4CD-40F8-AFFD-AD61939FC547' Win64='yes'>
+        <RegistryKey Action='createAndRemoveOnUninstall' Root='HKLM'
+                     Key='Software\Kerberos'>
+          <RegistryValue Name='plugin_dir' Type='multiString' Action='append'
+                         Value='"[PLUGINDIR64]"' KeyPath='yes' />
+        </RegistryKey>
+      </Component>
+    </DirectoryRef>
+    <?endif?>
+
+    <DirectoryRef Id='TARGETDIR'>
       <Directory Id='CommonAppDataFolder' Name='ProgramData'>
         <Directory Id='dirCommonKerberos' Name='Kerberos' FileSource='$(var.SrcDir)'>
 
@@ -245,7 +303,7 @@
       </Directory>
       <Directory Id='WindowsFolder'>
       </Directory>
-    </Directory>
+    </DirectoryRef>
 
     <Media Id='1' Cabinet='Disk1' CompressionLevel='high' EmbedCab='yes' />
 
@@ -294,14 +352,13 @@
     <Condition Message='!(loc.AdminRequired)'>Installed OR Privileged</Condition>
     <Condition Message='!(loc.AlreadyInstalled)'>Installed OR NOT EXISTINGINSTALLATION</Condition>
 
-    <Feature Id='feature.Main' ConfigurableDirectory='INSTALLDIR'
+    <Feature Id='feature.Main' ConfigurableDirectory='$(var.ConfigDir)'
              Title='!(loc.FeaMainTitle)'
              Description='!(loc.FeaMainDesc)'
              Level='1' TypicalDefault='install' InstallDefault='local'>
 
       <ComponentRef Id='comp.HX509.chm' />
       <ComponentRef Id='comp.Heimdal.chm' />
-      <ComponentRef Id='comp.SearchPath' />
       <ComponentRef Id='comp.kcpytkt' />
       <ComponentRef Id='comp.kdeltkt' />
       <ComponentRef Id='comp.kdestroy' />
@@ -316,27 +373,42 @@
       <ComponentRef Id='comp.kcc' />
 
       <?ifdef LsaCache ?>
-      <ComponentGroupRef Id='comps.LSACache' />
+      <?ifdef Target32?>
+      <ComponentGroupRef Id='comps.LSACache.32' />
       <?endif?>
+      <?ifdef Target64?>
+      <ComponentGroupRef Id='comps.LSACache.64' />
+      <?endif?>
+      <?endif?>
+
       <?ifdef ApiCache ?>
-      <ComponentGroupRef Id='comps.APICache' />
+      <?ifdef Target32?>
+      <ComponentGroupRef Id='comps.APICache.32' />
       <?endif?>
-      <ComponentRef Id='comp.Plugin.Reg' />
-
-      <MergeRef Id='Heimdal.Assemblies' />
-      <MergeRef Id='Heimdal.Policy' />
-      <MergeRef Id='Runtime' />
-      <?ifdef AssemblyDir32 ?>
-      <MergeRef Id='Heimdal.Assemblies.32' />
-      <MergeRef Id='Heimdal.Policy.32' />
+      <?ifdef Target64?>
+      <ComponentGroupRef Id='comps.APICache.64' />
       <?endif?>
-
-      <?ifdef Thirdparty ?>
-      <ComponentGroupRef Id='comp.Heimdal.Thirdparty' />
       <?endif?>
 
       <?ifdef MKShim ?>
-      <ComponentGroupRef Id='comp.Heimdal.MKShim' />
+      <?ifdef Target32?>
+      <ComponentGroupRef Id='comp.Heimdal.MKShim.32' />
+      <?endif?>
+      <?ifdef Target64?>
+      <ComponentGroupRef Id='comp.Heimdal.MKShim.64' />
+      <?endif?>
+      <?endif?>
+
+      <?ifdef Target32?>
+      <MergeRef Id='Heimdal.Assemblies.32' />
+      <MergeRef Id='Heimdal.Policy.32' />
+      <MergeRef Id='Runtime.32' />
+      <?endif?>
+
+      <?ifdef Target64?>
+      <MergeRef Id='Heimdal.Assemblies.64' />
+      <MergeRef Id='Heimdal.Policy.64' />
+      <MergeRef Id='Runtime.64' />
       <?endif?>
 
     </Feature>
@@ -353,7 +425,7 @@
 
     <Property Id='ALLUSERS' Value='1' Secure='yes' />
 
-    <Property Id='WIXUI_INSTALLDIR' Value='INSTALLDIR' />
+    <Property Id='WIXUI_INSTALLDIR' Value='$(var.ConfigDir)' />
 
     <UIRef Id='WixUI_InstallDir' />
 

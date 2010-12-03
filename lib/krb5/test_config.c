@@ -136,7 +136,7 @@ const char *config_string_result3[] = {
 };
 
 const char *config_string_result4[] = {
-    "\"\"", "\"", "\"", NULL
+    "\"\"", "", "\"\"", NULL
 };
 
 const char *config_string_result5[] = {
@@ -148,11 +148,11 @@ const char *config_string_result6[] = {
 };
 
 const char *config_string_result7[] = {
-    "Snape\"Kills Dumbledore\"", NULL
+    "SnapeKills\\", "Dumbledore", NULL
 };
 
 const char *config_string_result8[] = {
-    "\"TownOf\"Sandwich: Massachusetts\"Oldest", "Town", "In", "Cape Cod", NULL
+    "\"TownOf Sandwich: Massachusetts\"Oldest", "Town", "In", "Cape Cod", NULL
 };
 
 const char *config_string_result9[] = {

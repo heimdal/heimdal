@@ -34,8 +34,6 @@
 #ifndef	_MECHQUEUE_H_
 #define	_MECHQUEUE_H_
 
-#ifndef HEIM_SLIST_HEAD
-
 /*
  * Singly-linked List definitions.
  */
@@ -95,7 +93,5 @@ struct {								\
 #define	HEIM_SLIST_EMPTY(head)	((head)->slh_first == NULL)
 #define	HEIM_SLIST_FIRST(head)	((head)->slh_first)
 #define	HEIM_SLIST_NEXT(elm, field)	((elm)->field.sle_next)
-
-#endif /* HEIM_SLIST_HEAD */
 
 #endif	/* !_MECHQUEUE_H_ */

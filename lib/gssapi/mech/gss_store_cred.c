@@ -63,7 +63,7 @@ gss_store_cred(OM_uint32         *minor_status,
 	    return maj;
     }
 
-    SLIST_FOREACH(mc, &cred->gc_mc, gmc_link) {
+    HEIM_SLIST_FOREACH(mc, &cred->gc_mc, gmc_link) {
 	gssapi_mech_interface m = mc->gmc_mech;
 
 	if (m == NULL || m->gm_store_cred == NULL)

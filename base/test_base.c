@@ -34,6 +34,7 @@
  */
 
 #include <stdio.h>
+#include <err.h>
 
 #include "heimbase.h"
 #include "heimbasepriv.h"
@@ -103,9 +104,6 @@ test_auto_release(void)
     s1 = heim_string_create("hejsan");
     heim_auto_release(s1);
 
-    s1 = heim_string_create_with_static("hejsan");
-    heim_auto_release(s1);
-
     n1 = heim_number_create(1);
     heim_auto_release(n1);
 
@@ -120,6 +118,25 @@ test_auto_release(void)
     return 0;
 }
 
+static int
+test_string(void)
+{
+    heim_string_t s1, s2;
+    const char *string = "hejsan";
+
+    s1 = heim_string_create(string);
+    s2 = heim_string_create(string);
+
+    if (heim_cmp(s1, s2) != 0)
+	errx(1, "the same string is not the same");
+
+
+    heim_release(s1);
+    heim_release(s2);
+
+    return 0;
+}
+
 int
 main(int argc, char **argv)
 {
@@ -128,6 +145,7 @@ main(int argc, char **argv)
     res |= test_memory();
     res |= test_dict();
     res |= test_auto_release();
+    res |= test_string();
 
     return res;
 }

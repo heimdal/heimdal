@@ -150,11 +150,6 @@
 
 #endif	/* !_WIN32 */
 
-/* Minimize conflict with WinNT.h */
-#ifdef SLIST_ENTRY
-#undef SLIST_ENTRY
-#endif
-
 #ifndef PATH_MAX
 #define PATH_MAX MAX_PATH
 #endif

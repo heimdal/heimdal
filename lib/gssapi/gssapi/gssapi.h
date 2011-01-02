@@ -986,6 +986,36 @@ gss_display_mech_attr(OM_uint32 * minor_status,
 		      gss_buffer_t short_desc,
 		      gss_buffer_t long_desc);
 
+/*
+ * Solaris compat
+ */
+
+GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL gss_acquire_cred_with_password
+           (OM_uint32 * /*minor_status*/,
+            const gss_name_t /*desired_name*/,
+            const gss_buffer_t /*password*/,
+            OM_uint32 /*time_req*/,
+            const gss_OID_set /*desired_mechs*/,
+            gss_cred_usage_t /*cred_usage*/,
+            gss_cred_id_t * /*output_cred_handle*/,
+            gss_OID_set * /*actual_mechs*/,
+            OM_uint32 * /*time_rec*/
+           );
+
+GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL gss_add_cred_with_password (
+            OM_uint32 * /*minor_status*/,
+            const gss_cred_id_t /*input_cred_handle*/,
+            const gss_name_t /*desired_name*/,
+            const gss_OID /*desired_mech*/,
+            const gss_buffer_t /*password*/,
+            gss_cred_usage_t /*cred_usage*/,
+            OM_uint32 /*initiator_time_req*/,
+            OM_uint32 /*acceptor_time_req*/,
+            gss_cred_id_t * /*output_cred_handle*/,
+            gss_OID_set * /*actual_mechs*/,
+            OM_uint32 * /*initiator_time_rec*/,
+            OM_uint32 * /*acceptor_time_rec*/
+           );
 
 /*
  *

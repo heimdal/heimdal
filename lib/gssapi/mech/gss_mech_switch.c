@@ -160,7 +160,12 @@ do {									\
 
 #define OPTSYM(name)							\
 do {									\
-	m->gm_mech.gm_ ## name = dlsym(so, "gss_" #name);			\
+	m->gm_mech.gm_ ## name = dlsym(so, "gss_" #name);		\
+} while (0)
+
+#define OPTSPISYM(name)							\
+do {									\
+	m->gm_mech.gm_ ## name = dlsym(so, "gssspi_" #name);		\
 } while (0)
 
 /*
@@ -332,11 +337,22 @@ _gss_load_mech(void)
 		OPTSYM(inquire_cred_by_oid);
 		OPTSYM(inquire_sec_context_by_oid);
 		OPTSYM(set_sec_context_option);
-		OPTSYM(set_cred_option);
+		OPTSPISYM(set_cred_option);
 		OPTSYM(pseudo_random);
 		OPTSYM(wrap_iov);
 		OPTSYM(unwrap_iov);
 		OPTSYM(wrap_iov_length);
+		OPTSPISYM(acquire_cred_with_password);
+		OPTSYM(add_cred_with_password);
+
+		/* pick up the oid sets of names */
+
+		if (m->gm_mech.gm_inquire_names_for_mech)
+			(*m->gm_mech.gm_inquire_names_for_mech)(&minor_status,
+	    		&m->gm_mech.gm_mech_oid, &m->gm_name_types);
+
+		if (m->gm_name_types == NULL)
+			gss_create_empty_oid_set(&minor_status, &m->gm_name_types);
 
 		HEIM_SLIST_INSERT_HEAD(&_gss_mechs, m, gm_link);
 		continue;

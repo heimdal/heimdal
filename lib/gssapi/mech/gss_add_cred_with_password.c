@@ -28,53 +28,12 @@
 
 #include "mech_locl.h"
 
-struct _gss_mechanism_cred *
-_gss_copy_cred(struct _gss_mechanism_cred *mc)
-{
-	struct _gss_mechanism_cred *new_mc;
-	gssapi_mech_interface m = mc->gmc_mech;
-	OM_uint32 major_status, minor_status;
-	gss_name_t name;
-	gss_cred_id_t cred;
-	OM_uint32 initiator_lifetime, acceptor_lifetime;
-	gss_cred_usage_t cred_usage;
-
-	major_status = m->gm_inquire_cred_by_mech(&minor_status,
-	    mc->gmc_cred, mc->gmc_mech_oid,
-	    &name, &initiator_lifetime, &acceptor_lifetime, &cred_usage);
-	if (major_status) {
-		_gss_mg_error(m, major_status, minor_status);
-		return (0);
-	}
-
-	major_status = m->gm_add_cred(&minor_status,
-	    GSS_C_NO_CREDENTIAL, name, mc->gmc_mech_oid,
-	    cred_usage, initiator_lifetime, acceptor_lifetime,
-	    &cred, 0, 0, 0);
-	m->gm_release_name(&minor_status, &name);
-
-	if (major_status) {
-		_gss_mg_error(m, major_status, minor_status);
-		return (0);
-	}
-
-	new_mc = malloc(sizeof(struct _gss_mechanism_cred));
-	if (!new_mc) {
-		m->gm_release_cred(&minor_status, &cred);
-		return (0);
-	}
-	new_mc->gmc_mech = m;
-	new_mc->gmc_mech_oid = &m->gm_mech_oid;
-	new_mc->gmc_cred = cred;
-
-	return (new_mc);
-}
-
 GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL
-gss_add_cred(OM_uint32 *minor_status,
+gss_add_cred_with_password(OM_uint32 *minor_status,
     const gss_cred_id_t input_cred_handle,
     const gss_name_t desired_name,
     const gss_OID desired_mech,
+    const gss_buffer_t password,
     gss_cred_usage_t cred_usage,
     OM_uint32 initiator_time_req,
     OM_uint32 acceptor_time_req,
@@ -148,6 +107,11 @@ gss_add_cred(OM_uint32 *minor_status,
 	}
 
 	m = __gss_get_mechanism(desired_mech);
+	if (m->gm_add_cred_with_password == NULL) {
+		release_cred = (gss_cred_id_t)new_cred;
+		gss_release_cred(&junk, &release_cred);
+		return (GSS_S_UNAVAILABLE);
+	}
 
 	mc = malloc(sizeof(struct _gss_mechanism_cred));
 	if (!mc) {
@@ -159,9 +123,10 @@ gss_add_cred(OM_uint32 *minor_status,
 	mc->gmc_mech = m;
 	mc->gmc_mech_oid = &m->gm_mech_oid;
 
-	major_status = m->gm_add_cred(minor_status,
+	major_status = m->gm_add_cred_with_password(minor_status,
 	    target_mc ? target_mc->gmc_cred : GSS_C_NO_CREDENTIAL,
 	    desired_name ? mn->gmn_name : GSS_C_NO_NAME,
+	    password,
 	    desired_mech,
 	    cred_usage,
 	    initiator_time_req,

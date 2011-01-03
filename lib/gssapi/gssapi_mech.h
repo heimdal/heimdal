@@ -393,6 +393,68 @@ _gss_cred_label_get_t(OM_uint32 * /* minor_status */,
 		      const char * /* label */,
 		      gss_buffer_t /* value */);
 
+typedef OM_uint32 GSSAPI_CALLCONV _gss_display_name_ext_t (
+	       OM_uint32 *,            /* minor_status */
+	       gss_name_t,             /* name */
+	       gss_OID,                /* display_as_name_type */
+	       gss_buffer_t            /* display_name */
+	      );
+
+typedef OM_uint32 GSSAPI_CALLCONV _gss_inquire_name_t (
+	       OM_uint32 *,            /* minor_status */
+	       gss_name_t,             /* name */
+	       int *,                  /* name_is_MN */
+	       gss_OID *,              /* MN_mech */
+	       gss_buffer_set_t *      /* attrs */
+	      );
+
+typedef OM_uint32 GSSAPI_CALLCONV _gss_get_name_attribute_t (
+	       OM_uint32 *,	      /* minor_status */
+	       gss_name_t,            /* name */
+	       gss_buffer_t,          /* attr */
+	       int *,                 /* authenticated */
+	       int *,                 /* complete */
+	       gss_buffer_t,          /* value */
+	       gss_buffer_t,          /* display_value */
+	       int *                  /* more */
+	    );
+
+typedef OM_uint32 GSSAPI_CALLCONV _gss_set_name_attribute_t (
+	       OM_uint32 *,           /* minor_status */
+	       gss_name_t,            /* name */
+	       int,                   /* complete */
+	       gss_buffer_t,          /* attr */
+	       gss_buffer_t           /* value */
+	    );
+
+typedef OM_uint32 GSSAPI_CALLCONV _gss_delete_name_attribute_t (
+	       OM_uint32 *,           /* minor_status */
+	       gss_name_t,            /* name */
+	       gss_buffer_t           /* attr */
+	    );
+
+typedef OM_uint32 GSSAPI_CALLCONV _gss_export_name_composite_t (
+	       OM_uint32 *,           /* minor_status */
+	       gss_name_t,            /* name */
+	       gss_buffer_t           /* exp_composite_name */
+	    );
+
+typedef OM_uint32 GSSAPI_CALLCONV _gss_map_name_to_any_t (
+	       OM_uint32 *,           /* minor_status */
+	       gss_name_t,            /* name */
+	       int,                   /* authenticated */
+	       gss_buffer_t,          /* type_id */
+	       gss_any_t *            /* output */
+	    );
+
+typedef OM_uint32 GSSAPI_CALLCONV _gss_release_any_name_mapping_t (
+	       OM_uint32 *,           /* minor_status */
+	       gss_name_t,            /* name */
+	       gss_buffer_t,          /* type_id */
+	       gss_any_t *            /* input */
+	    );
+
+
 typedef struct gss_mo_desc_struct gss_mo_desc;
 
 struct gss_mo_desc_struct {
@@ -467,6 +529,14 @@ typedef struct gssapi_mech_interface_desc {
 	_gss_cred_label_set_t		*gm_cred_label_set;
         gss_mo_desc			*gm_mo;
         size_t				 gm_mo_num;
+        _gss_display_name_ext_t         *gm_display_name_ext;
+        _gss_inquire_name_t             *gm_inquire_name;
+        _gss_get_name_attribute_t       *gm_get_name_attribute;
+        _gss_set_name_attribute_t       *gm_set_name_attribute;
+        _gss_delete_name_attribute_t    *gm_delete_name_attribute;
+        _gss_export_name_composite_t    *gm_export_name_composite;
+        _gss_map_name_to_any_t          *gm_map_name_to_any;
+        _gss_release_any_name_mapping_t *gm_release_any_name_mapping;
 } gssapi_mech_interface_desc, *gssapi_mech_interface;
 
 gssapi_mech_interface

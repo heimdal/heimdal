@@ -479,7 +479,7 @@ _netlogon_wrap_iov(OM_uint32 * minor_status,
 
     size = _netlogon_signature_length(ctx->SignatureAlgorithm, conf_req_flag);
 
-    if (GSS_IOV_BUFFER_FLAGS(header->type) & GSS_IOV_BUFFER_TYPE_FLAG_ALLOCATE) {
+    if (GSS_IOV_BUFFER_FLAGS(header->type) & GSS_IOV_BUFFER_FLAG_ALLOCATE) {
         ret = _gss_mg_allocate_buffer(minor_status, header, size);
         if (GSS_ERROR(ret))
             return ret;
@@ -669,7 +669,7 @@ OM_uint32 _netlogon_get_mic
 
     iov[0].type = GSS_IOV_BUFFER_TYPE_DATA;
     iov[0].buffer = *message_buffer;
-    iov[1].type = GSS_IOV_BUFFER_TYPE_HEADER | GSS_IOV_BUFFER_TYPE_FLAG_ALLOCATE;
+    iov[1].type = GSS_IOV_BUFFER_TYPE_HEADER | GSS_IOV_BUFFER_FLAG_ALLOCATE;
     iov[1].buffer.length = 0;
     iov[1].buffer.value = NULL;
 

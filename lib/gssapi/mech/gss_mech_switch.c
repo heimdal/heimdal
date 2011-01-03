@@ -276,7 +276,11 @@ _gss_load_mech(void)
 #define RTLD_LOCAL 0
 #endif
 
-		so = dlopen(lib, RTLD_LAZY | RTLD_LOCAL);
+#ifndef RTLD_GROUP
+#define RTLD_GROUP 0
+#endif
+
+		so = dlopen(lib, RTLD_LAZY | RTLD_LOCAL | RTLD_GROUP);
 		if (!so) {
 /*			fprintf(stderr, "dlopen: %s\n", dlerror()); */
 			free(mech_oid.elements);

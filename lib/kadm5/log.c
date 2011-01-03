@@ -884,7 +884,10 @@ kadm5_log_previous (krb5_context context,
 	krb5_storage_seek(sp, oldoff, SEEK_SET);
 	krb5_set_error_message(context, KADM5_BAD_DB,
 			       "kadm5_log_previous: log entry "
-			       "have consistency failure, version number wrong");
+			       "have consistency failure, version number wrong "
+			       "(tmp %lu ver %lu)",
+			       (unsigned long)tmp,
+			       (unsigned long)*ver);
 	return KADM5_BAD_DB;
     }
     ret = krb5_ret_int32 (sp, &tmp);

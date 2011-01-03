@@ -90,15 +90,19 @@ mechsrc = \
 	mech/gss_create_empty_oid_set.c \
 	mech/gss_cred.c \
 	mech/gss_decapsulate_token.c \
+	mech/gss_delete_name_attribute.c \
 	mech/gss_delete_sec_context.c \
 	mech/gss_display_name.c \
+	mech/gss_display_name_ext.c \
 	mech/gss_display_status.c \
 	mech/gss_duplicate_name.c \
 	mech/gss_duplicate_oid.c \
 	mech/gss_encapsulate_token.c \
 	mech/gss_export_name.c \
+	mech/gss_export_name_composite.c \
 	mech/gss_export_sec_context.c \
 	mech/gss_get_mic.c \
+	mech/gss_get_name_attribute.c \
 	mech/gss_import_name.c \
 	mech/gss_import_sec_context.c \
 	mech/gss_indicate_mechs.c \
@@ -108,8 +112,10 @@ mechsrc = \
 	mech/gss_inquire_cred_by_mech.c \
 	mech/gss_inquire_cred_by_oid.c \
 	mech/gss_inquire_mechs_for_name.c \
+	mech/gss_inquire_name.c \
 	mech/gss_inquire_names_for_mech.c \
 	mech/gss_krb5.c \
+	mech/gss_map_name_to_any.c \
 	mech/gss_mech_switch.c \
 	mech/gss_mo.c \
 	mech/gss_names.c \
@@ -118,6 +124,7 @@ mechsrc = \
 	mech/gss_oid_to_str.c \
 	mech/gss_process_context_token.c \
 	mech/gss_pseudo_random.c \
+	mech/gss_release_any_name_mapping.c \
 	mech/gss_release_buffer.c \
 	mech/gss_release_cred.c \
 	mech/gss_release_name.c \
@@ -125,6 +132,7 @@ mechsrc = \
 	mech/gss_release_oid_set.c \
 	mech/gss_seal.c \
 	mech/gss_set_cred_option.c \
+	mech/gss_set_name_attribute.c \
 	mech/gss_set_sec_context_option.c \
 	mech/gss_sign.c \
 	mech/gss_store_cred.c \

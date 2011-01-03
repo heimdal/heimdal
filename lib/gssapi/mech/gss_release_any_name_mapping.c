@@ -33,20 +33,16 @@
 #include "mech_locl.h"
 
 OM_uint32
-gss_inquire_name(OM_uint32 *minor_status,
-		 gss_name_t input_name,
-		 int *name_is_MN,
-		 gss_OID *MN_mech,
-		 gss_buffer_set_t *attrs)
+gss_release_any_name_mapping(OM_uint32 *minor_status,
+		             gss_name_t input_name,
+		             gss_buffer_t type_id,
+		             gss_any_t *input)
 {
     OM_uint32 major_status = GSS_S_UNAVAILABLE;
     struct _gss_name *name = (struct _gss_name *) input_name;
     struct _gss_mechanism_name *mn;
         
     *minor_status = 0;
-    *name_is_MN = 0;
-    *MN_mech = GSS_C_NO_OID;
-    *attrs = GSS_C_NO_BUFFER_SET;
 
     if (input_name == GSS_C_NO_NAME)
         return GSS_S_BAD_NAME;
@@ -54,23 +50,19 @@ gss_inquire_name(OM_uint32 *minor_status,
     HEIM_SLIST_FOREACH(mn, &name->gn_mn, gmn_link) {
         gssapi_mech_interface m = mn->gmn_mech;
 
-        if (!m->gm_inquire_name)
+        if (!m->gm_release_any_name_mapping)
             continue;
 
-        major_status = m->gm_inquire_name(minor_status,
-                                          mn->gmn_name,
-                                          NULL,
-                                          MN_mech,
-                                          attrs);
-        if (major_status == GSS_S_COMPLETE) {
-            *name_is_MN = 1;
-#if 0
-            if (*MN_mech == GSS_C_NO_OID)
-                *MN_mech = &m->gm_mech_oid;
-#endif
+        major_status = m->gm_release_any_name_mapping(minor_status,
+                                                      mn->gmn_name,
+                                                      type_id,
+                                                      input);
+        if (GSS_ERROR(major_status))
+            _gss_mg_error(m, major_status, *minor_status);
+        else {
+            *input = (gss_any_t)0;
             break;
         }
-        _gss_mg_error(m, major_status, *minor_status);
     }
 
     return major_status;

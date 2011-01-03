@@ -356,6 +356,9 @@ _gss_load_mech(void)
 		OPTSYM(export_name_composite);
 		OPTSYM(map_name_to_any);
 		OPTSYM(release_any_name_mapping);
+		OPTSYM(inquire_saslname_for_mech);
+		OPTSYM(inquire_mech_for_saslname);
+		OPTSYM(inquire_attrs_for_mech);
 
 		/* pick up the oid sets of names */
 

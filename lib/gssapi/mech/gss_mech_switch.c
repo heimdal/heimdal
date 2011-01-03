@@ -348,6 +348,14 @@ _gss_load_mech(void)
 		OPTSYM(wrap_iov_length);
 		OPTSPISYM(acquire_cred_with_password);
 		OPTSYM(add_cred_with_password);
+		OPTSYM(display_name_ext);
+		OPTSYM(inquire_name);
+		OPTSYM(get_name_attribute);
+		OPTSYM(set_name_attribute);
+		OPTSYM(delete_name_attribute);
+		OPTSYM(export_name_composite);
+		OPTSYM(map_name_to_any);
+		OPTSYM(release_any_name_mapping);
 
 		/* pick up the oid sets of names */
 

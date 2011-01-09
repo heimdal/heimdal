@@ -40,4 +40,15 @@ HEIM_SLIST_HEAD(_gss_mech_switch_list, _gss_mech_switch);
 extern struct _gss_mech_switch_list _gss_mechs;
 extern gss_OID_set _gss_mech_oids;
 
+/*
+ * Initialization function for MO SPI, so they may dynamically return a
+ * set of mechanism objects at load time.
+ */
+typedef OM_uint32 GSSAPI_CALLCONV _gss_mo_init (
+        OM_uint32 *minor,
+        gss_OID oid,
+        gss_mo_desc **mo,
+        size_t *mo_num
+        );
+
 void	_gss_load_mech(void);

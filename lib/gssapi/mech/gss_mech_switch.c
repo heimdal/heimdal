@@ -252,6 +252,8 @@ _gss_load_mech(void)
 	rk_cloexec_file(fp);
 
 	while (fgets(buf, sizeof(buf), fp)) {
+		_gss_mo_init *mi;
+
 		if (*buf == '#')
 			continue;
 		p = buf;
@@ -360,10 +362,18 @@ _gss_load_mech(void)
 		OPTSPISYM(acquire_cred_with_password);
 		OPTSYM(add_cred_with_password);
 
-		/* API-as-SPI compatibility */
-		COMPATSYM(inquire_saslname_for_mech);
-		COMPATSYM(inquire_mech_for_saslname);
-		COMPATSYM(inquire_attrs_for_mech);
+		mi = dlsym(so, "gss_mo_init");
+		if (mi != NULL) {
+			major_status = mi(&minor_status, &mech_oid,
+					  &m->gm_mech.gm_mo, &m->gm_mech.gm_mo_num);
+			if (GSS_ERROR(major_status))
+				goto bad;
+		} else {
+			/* API-as-SPI compatibility */
+			COMPATSYM(inquire_saslname_for_mech);
+			COMPATSYM(inquire_mech_for_saslname);
+			COMPATSYM(inquire_attrs_for_mech);
+		}
 
 		/* pick up the oid sets of names */
 

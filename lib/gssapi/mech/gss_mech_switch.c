@@ -168,6 +168,11 @@ do {									\
 	m->gm_mech.gm_ ## name = dlsym(so, "gssspi_" #name);		\
 } while (0)
 
+#define COMPATSYM(name)							\
+do {									\
+	m->gm_mech.gm_compat->gmc_ ## name = dlsym(so, "gss_" #name);	\
+} while (0)
+
 /*
  *
  */
@@ -286,28 +291,26 @@ _gss_load_mech(void)
 #endif
 
 		so = dlopen(lib, RTLD_LAZY | RTLD_LOCAL | RTLD_GROUP);
-		if (!so) {
+		if (so == NULL) {
 /*			fprintf(stderr, "dlopen: %s\n", dlerror()); */
-			free(mech_oid.elements);
-			continue;
+			goto bad;
 		}
 
-		m = malloc(sizeof(*m));
-		if (!m) {
-			free(mech_oid.elements);
-			break;
-		}
+		m = calloc(1, sizeof(*m));
+		if (m == NULL)
+			goto bad;
+
 		m->gm_so = so;
 		m->gm_mech.gm_mech_oid = mech_oid;
 		m->gm_mech.gm_flags = 0;
-		
+		m->gm_mech.gm_compat = calloc(1, sizeof(struct gss_mech_compat_desc_struct));
+		if (m->gm_mech.gm_compat == NULL)
+			goto bad;
+
 		major_status = gss_add_oid_set_member(&minor_status,
 		    &m->gm_mech.gm_mech_oid, &_gss_mech_oids);
-		if (major_status) {
-			free(m->gm_mech.gm_mech_oid.elements);
-			free(m);
-			continue;
-		}
+		if (GSS_ERROR(major_status))
+			goto bad;
 
 		SYM(acquire_cred);
 		SYM(release_cred);
@@ -346,8 +349,6 @@ _gss_load_mech(void)
 		OPTSYM(wrap_iov);
 		OPTSYM(unwrap_iov);
 		OPTSYM(wrap_iov_length);
-		OPTSPISYM(acquire_cred_with_password);
-		OPTSYM(add_cred_with_password);
 		OPTSYM(display_name_ext);
 		OPTSYM(inquire_name);
 		OPTSYM(get_name_attribute);
@@ -356,9 +357,13 @@ _gss_load_mech(void)
 		OPTSYM(export_name_composite);
 		OPTSYM(map_name_to_any);
 		OPTSYM(release_any_name_mapping);
-		OPTSYM(inquire_saslname_for_mech);
-		OPTSYM(inquire_mech_for_saslname);
-		OPTSYM(inquire_attrs_for_mech);
+		OPTSPISYM(acquire_cred_with_password);
+		OPTSYM(add_cred_with_password);
+
+		/* API-as-SPI compatibility */
+		COMPATSYM(inquire_saslname_for_mech);
+		COMPATSYM(inquire_mech_for_saslname);
+		COMPATSYM(inquire_attrs_for_mech);
 
 		/* pick up the oid sets of names */
 
@@ -373,6 +378,7 @@ _gss_load_mech(void)
 		continue;
 
 	bad:
+		free(m->gm_mech.gm_compat);
 		free(m->gm_mech.gm_mech_oid.elements);
 		free(m);
 		dlclose(so);

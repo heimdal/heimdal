@@ -44,7 +44,6 @@ get_option_def(int def, gss_const_OID mech, gss_mo_desc *mo, gss_buffer_t value)
     return def;
 }
 
-
 int
 _gss_mo_get_option_1(gss_const_OID mech, gss_mo_desc *mo, gss_buffer_t value)
 {
@@ -63,10 +62,10 @@ _gss_mo_get_ctx_as_string(gss_const_OID mech, gss_mo_desc *mo, gss_buffer_t valu
     if (value) {
 	value->value = strdup((char *)mo->ctx);
 	if (value->value == NULL)
-	    return 1;
+	    return GSS_S_FAILURE;
 	value->length = strlen((char *)mo->ctx);
     }
-    return 0;
+    return GSS_S_COMPLETE;
 }
 
 GSSAPI_LIB_FUNCTION int GSSAPI_LIB_CALL
@@ -82,7 +81,8 @@ gss_mo_set(gss_const_OID mech, gss_const_OID option,
     for (n = 0; n < m->gm_mo_num; n++)
 	if (gss_oid_equal(option, m->gm_mo[n].option) && m->gm_mo[n].set)
 	    return m->gm_mo[n].set(mech, &m->gm_mo[n], enable, value);
-    return 0;
+
+    return GSS_S_UNAVAILABLE;
 }
 
 GSSAPI_LIB_FUNCTION int GSSAPI_LIB_CALL
@@ -94,13 +94,13 @@ gss_mo_get(gss_const_OID mech, gss_const_OID option, gss_buffer_t value)
     _mg_buffer_zero(value);
 
     if ((m = __gss_get_mechanism(mech)) == NULL)
-	return 0;
+	return GSS_S_BAD_MECH;
 
     for (n = 0; n < m->gm_mo_num; n++)
 	if (gss_oid_equal(option, m->gm_mo[n].option) && m->gm_mo[n].get)
 	    return m->gm_mo[n].get(mech, &m->gm_mo[n], value);
 
-    return 0;
+    return GSS_S_UNAVAILABLE;
 }
 
 static void
@@ -179,10 +179,7 @@ mo_value(const gss_const_OID mech, gss_const_OID option, gss_buffer_t name)
     if (name == NULL)
 	return GSS_S_COMPLETE;
 
-    if (gss_mo_get(mech, option, name) != 0 && name->length == 0)
-	return GSS_S_FAILURE;
-
-    return GSS_S_COMPLETE;
+    return gss_mo_get(mech, option, name);
 }
 
 /* code derived from draft-ietf-cat-sasl-gssapi-01 */
@@ -210,7 +207,7 @@ make_sasl_name(OM_uint32 *minor, const gss_OID mech, char sasl_name[16])
     memcpy(p, "GS2-", 4);
     p += 4;
 
-    *p++ = basis_32[h[0] >> 3];
+    *p++ = basis_32[(h[0] >> 3)];
     *p++ = basis_32[((h[0] & 7) << 2) | (h[1] >> 6)];
     *p++ = basis_32[(h[1] & 0x3f) >> 1];
     *p++ = basis_32[((h[1] & 1) << 4) | (h[2] >> 4)];
@@ -218,7 +215,7 @@ make_sasl_name(OM_uint32 *minor, const gss_OID mech, char sasl_name[16])
     *p++ = basis_32[(h[3] & 0x7f) >> 2];
     *p++ = basis_32[((h[3] & 3) << 3) | (h[4] >> 5)];
     *p++ = basis_32[(h[4] & 0x1f)];
-    *p++ = basis_32[h[5] >> 3];
+    *p++ = basis_32[(h[5] >> 3)];
     *p++ = basis_32[((h[5] & 7) << 2) | (h[6] >> 6)];
     *p++ = basis_32[(h[6] & 0x3f) >> 1];
 
@@ -237,6 +234,7 @@ inquire_saslname_for_mech_compat(OM_uint32 *minor,
                                  gss_buffer_t mech_name,
                                  gss_buffer_t mech_description)
 {
+    struct gss_mech_compat_desc_struct *gmc;
     gssapi_mech_interface m;
     OM_uint32 major;
 
@@ -244,14 +242,17 @@ inquire_saslname_for_mech_compat(OM_uint32 *minor,
     if (m == NULL)
         return GSS_S_BAD_MECH;
 
-    if (m->gm_inquire_saslname_for_mech == NULL)
-        return GSS_S_UNAVAILABLE;
+    gmc = m->gm_compat;
 
-    major = m->gm_inquire_saslname_for_mech(minor,
-                                            desired_mech,
-                                            sasl_mech_name,
-                                            mech_name,
-                                            mech_description);
+    if (gmc != NULL && gmc->gmc_inquire_saslname_for_mech != NULL) {
+        major = gmc->gmc_inquire_saslname_for_mech(minor,
+                                                   desired_mech,
+                                                   sasl_mech_name,
+                                                   mech_name,
+                                                   mech_description);
+    } else {
+        major = GSS_S_UNAVAILABLE;
+    }
 
     return major;
 }
@@ -289,16 +290,9 @@ gss_inquire_saslname_for_mech(OM_uint32 *minor_status,
     if (desired_mech == NULL)
 	return GSS_S_BAD_MECH;
 
-    major = inquire_saslname_for_mech_compat(minor_status,
-                                             desired_mech,
-                                             sasl_mech_name,
-                                             mech_name,
-                                             mech_description);
-    if (major == GSS_S_COMPLETE)
-        return major;
-
     major = mo_value(desired_mech, GSS_C_MA_SASL_MECH_NAME, sasl_mech_name);
     if (major == GSS_S_COMPLETE) {
+        /* Native SPI */
         major = mo_value(desired_mech, GSS_C_MA_MECH_NAME, mech_name);
         if (GSS_ERROR(major))
             return major;
@@ -306,9 +300,19 @@ gss_inquire_saslname_for_mech(OM_uint32 *minor_status,
         major = mo_value(desired_mech, GSS_C_MA_MECH_DESCRIPTION, mech_description);
         if (GSS_ERROR(major))
             return major;
+    }
 
-        return major;
-    } else {
+    if (GSS_ERROR(major)) {
+        /* API-as-SPI compatibility */
+        major = inquire_saslname_for_mech_compat(minor_status,
+                                                 desired_mech,
+                                                 sasl_mech_name,
+                                                 mech_name,
+                                                 mech_description);
+    }
+
+    if (GSS_ERROR(major)) {
+        /* Algorithmically dervied SASL mechanism name */
         char buf[16];
         gss_buffer_desc tmp = { sizeof(buf) - 1, buf };
 
@@ -341,7 +345,7 @@ gss_inquire_mech_for_saslname(OM_uint32 *minor_status,
 {
     struct _gss_mech_switch *m;
     gss_buffer_desc name;
-    OM_uint32 major;
+    OM_uint32 major, junk;
     char buf[16];
 
     _gss_load_mech();
@@ -349,29 +353,39 @@ gss_inquire_mech_for_saslname(OM_uint32 *minor_status,
     *mech_type = NULL;
 
     HEIM_SLIST_FOREACH(m, &_gss_mechs, gm_link) {
-        if (m->gm_mech.gm_inquire_mech_for_saslname) {
-            major = m->gm_mech.gm_inquire_mech_for_saslname(minor_status,
-                                                            sasl_mech_name,
-                                                            mech_type);
-            if (major == GSS_S_COMPLETE)
-                return major;
-        }
+        struct gss_mech_compat_desc_struct *gmc;
 
+        /* Native SPI */
         major = mo_value(&m->gm_mech_oid, GSS_C_MA_SASL_MECH_NAME, &name);
         if (major == GSS_S_COMPLETE &&
             name.length == sasl_mech_name->length &&
             memcmp(name.value, sasl_mech_name->value, name.length) == 0) {
-                gss_release_buffer(&major, &name);
+                gss_release_buffer(&junk, &name);
                 *mech_type = &m->gm_mech_oid;
                 return GSS_S_COMPLETE;
 	}
-	gss_release_buffer(&major, &name);
+	gss_release_buffer(&junk, &name);
 
-        if (sasl_mech_name->length == 16 &&
-            make_sasl_name(minor_status, &m->gm_mech_oid, buf) == GSS_S_COMPLETE &&
-            memcmp(buf, sasl_mech_name->value, 16) == 0) {
-                *mech_type = &m->gm_mech_oid;
-                return GSS_S_COMPLETE;
+        if (GSS_ERROR(major)) {
+            /* API-as-SPI compatibility */
+            gmc = m->gm_mech.gm_compat;
+            if (gmc && gmc->gmc_inquire_mech_for_saslname) {
+                major = gmc->gmc_inquire_mech_for_saslname(minor_status,
+                                                           sasl_mech_name,
+                                                           mech_type);
+                if (major == GSS_S_COMPLETE)
+                    return GSS_S_COMPLETE;
+            }
+        }
+
+        if (GSS_ERROR(major)) {
+            /* Algorithmically dervied SASL mechanism name */
+            if (sasl_mech_name->length == 16 &&
+                make_sasl_name(minor_status, &m->gm_mech_oid, buf) == GSS_S_COMPLETE &&
+                memcmp(buf, sasl_mech_name->value, 16) == 0) {
+                    *mech_type = &m->gm_mech_oid;
+                    return GSS_S_COMPLETE;
+            }
         }
     }
 
@@ -448,13 +462,14 @@ gss_indicate_mechs_by_attrs(OM_uint32 * minor_status,
 
     HEIM_SLIST_FOREACH(ms, &_gss_mechs, gm_link) {
 	gssapi_mech_interface mi = &ms->gm_mech;
+        struct gss_mech_compat_desc_struct *gmc = mi->gm_compat;
         OM_uint32 tmp;
 
-        if (mi->gm_inquire_attrs_for_mech != NULL) {
-            major = mi->gm_inquire_attrs_for_mech(minor_status,
-                                                  &mi->gm_mech_oid,
-                                                  &mech_attrs,
-                                                  &known_mech_attrs);
+        if (gmc && gmc->gmc_inquire_attrs_for_mech) {
+            major = gmc->gmc_inquire_attrs_for_mech(minor_status,
+                                                    &mi->gm_mech_oid,
+                                                    &mech_attrs,
+                                                    &known_mech_attrs);
             if (GSS_ERROR(major))
                 continue;
         }
@@ -507,17 +522,20 @@ gss_inquire_attrs_for_mech(OM_uint32 * minor_status,
 
     if (mech_attr && mech) {
 	gssapi_mech_interface m;
+        struct gss_mech_compat_desc_struct *gmc;
 
 	if ((m = __gss_get_mechanism(mech)) == NULL) {
 	    *minor_status = 0;
 	    return GSS_S_BAD_MECH;
 	}
 
-        if (m->gm_inquire_attrs_for_mech != NULL) {
-            major = m->gm_inquire_attrs_for_mech(minor_status,
-                                                 mech,
-                                                 mech_attr,
-                                                 known_mech_attrs);
+        gmc = m->gm_compat;
+
+        if (gmc && gmc->gmc_inquire_attrs_for_mech) {
+            major = gmc->gmc_inquire_attrs_for_mech(minor_status,
+                                                    mech,
+                                                    mech_attr,
+                                                    known_mech_attrs);
         } else {
 	    major = gss_create_empty_oid_set(minor_status, mech_attr);
             if (major == GSS_S_COMPLETE)

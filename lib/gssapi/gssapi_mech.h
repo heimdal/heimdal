@@ -495,32 +495,13 @@ typedef OM_uint32 GSSAPI_CALLCONV _gss_release_any_name_mapping_t (
 	       gss_any_t *            /* input */
 	    );
 
-typedef OM_uint32 GSSAPI_CALLCONV _gss_inquire_saslname_for_mech_t (
-	       OM_uint32 *,           /* minor_status */
-	       const gss_OID,         /* desired_mech */
-	       gss_buffer_t,          /* sasl_mech_name */
-	       gss_buffer_t,          /* mech_name */
-	       gss_buffer_t           /* mech_description */
-	    );
-
-typedef OM_uint32 GSSAPI_CALLCONV _gss_inquire_mech_for_saslname_t (
-	       OM_uint32 *,           /* minor_status */
-	       const gss_buffer_t,    /* sasl_mech_name */
-	       gss_OID *              /* mech_type */
-	    );
-
-typedef OM_uint32 GSSAPI_CALLCONV _gss_inquire_attrs_for_mech_t (
-	       OM_uint32 *,           /* minor_status */
-	       gss_const_OID,         /* mech */
-	       gss_OID_set *,         /* mech_attrs */
-	       gss_OID_set *          /* known_mech_attrs */
-	    );
+/* mechglue internal */
+struct gss_mech_compat_desc_struct;
 
 #define GMI_VERSION 5
 
 /* gm_flags */
 #define GM_USE_MG_CRED      	1	/* uses mech glue credentials */
-
 
 typedef struct gssapi_mech_interface_desc {
 	unsigned			     gm_version;
@@ -576,8 +557,7 @@ typedef struct gssapi_mech_interface_desc {
 	_gss_cred_label_set_t		    *gm_cred_label_set;
         gss_mo_desc			    *gm_mo;
         size_t				     gm_mo_num;
-        _gss_acquire_cred_with_password_t   *gm_acquire_cred_with_password;
-        _gss_add_cred_with_password_t       *gm_add_cred_with_password;
+        struct gss_mech_compat_desc_struct  *gm_compat;
         _gss_display_name_ext_t             *gm_display_name_ext;
         _gss_inquire_name_t                 *gm_inquire_name;
         _gss_get_name_attribute_t           *gm_get_name_attribute;
@@ -586,9 +566,8 @@ typedef struct gssapi_mech_interface_desc {
         _gss_export_name_composite_t        *gm_export_name_composite;
         _gss_map_name_to_any_t              *gm_map_name_to_any;
         _gss_release_any_name_mapping_t     *gm_release_any_name_mapping;
-        _gss_inquire_saslname_for_mech_t    *gm_inquire_saslname_for_mech;
-        _gss_inquire_mech_for_saslname_t    *gm_inquire_mech_for_saslname;
-        _gss_inquire_attrs_for_mech_t       *gm_inquire_attrs_for_mech;
+        _gss_acquire_cred_with_password_t   *gm_acquire_cred_with_password;
+        _gss_add_cred_with_password_t       *gm_add_cred_with_password;
 } gssapi_mech_interface_desc, *gssapi_mech_interface;
 
 gssapi_mech_interface

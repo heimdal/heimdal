@@ -146,6 +146,7 @@ HEIMDAL_X509_1.2 {
 		hx509_err;
 		hx509_free_error_string;
 		hx509_free_octet_string_list;
+		hx509_find_private_alg;
 		hx509_general_name_unparse;
 		hx509_get_error_string;
 		hx509_get_one_cert;

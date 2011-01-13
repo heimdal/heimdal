@@ -4,6 +4,7 @@ HEIMDAL_X509_1.2 {
 	global:
 		_hx509_cert_assign_key;
 		_hx509_cert_private_key;
+		_hx509_cert_public_encrypt;
 		_hx509_certs_keys_free;
 		_hx509_certs_keys_get;
 		_hx509_expr_eval;

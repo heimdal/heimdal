@@ -35,7 +35,8 @@ kimpersonate_LDADD = $(kinit_LDADD)
 
 kcc_LDADD = \
 	$(top_builddir)/lib/sl/libsl.la \
-	$(kinit_LDADD)
+	$(kinit_LDADD) \
+	$(LIB_readline)
 
 dist_kcc_SOURCES = kcc.c klist.c kswitch.c copy_cred_cache.c
 nodist_kcc_SOURCES = kcc-commands.c

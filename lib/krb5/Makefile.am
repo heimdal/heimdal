@@ -63,28 +63,28 @@ use_sqlite = $(LIB_sqlite3)
 endif
 
 libkrb5_la_LIBADD = \
+	$(top_builddir)/lib/asn1/libasn1.la \
+	$(top_builddir)/lib/ipc/libheim-ipcc.la \
+	$(top_builddir)/lib/wind/libwind.la \
+	$(top_builddir)/base/libheimbase.la \
 	$(LIB_pkinit) \
 	$(use_sqlite) \
 	$(LIB_com_err) \
 	$(LIB_hcrypto) \
-	$(top_builddir)/lib/asn1/libasn1.la \
-	../ipc/libheim-ipcc.la \
-	../wind/libwind.la \
 	$(LIB_libintl) \
 	$(LIBADD_roken) \
-	../../base/libheimbase.la \
 	$(PTHREAD_LIBADD) \
 	$(LIB_door_create) \
 	$(LIB_dlopen)
 
 librfc3961_la_LIBADD = \
+	$(top_builddir)/lib/asn1/libasn1.la \
+	$(top_builddir)/lib/ipc/libheim-ipcc.la \
+	$(top_builddir)/lib/wind/libwind.la \
 	$(LIB_pkinit) \
 	$(use_sqlite) \
 	$(LIB_com_err) \
 	$(LIB_hcrypto) \
-	$(top_builddir)/lib/asn1/libasn1.la \
-	../ipc/libheim-ipcc.la \
-	../wind/libwind.la \
 	$(LIB_libintl) \
 	$(LIBADD_roken) \
 	$(PTHREAD_LIBADD) \

@@ -143,6 +143,7 @@ asn1_*.[cx]
 /kpasswd/kpasswdd
 /kuser/copy_cred_cache
 /kuser/generate-requests
+/kuser/kcc
 /kuser/kdecode_ticket
 /kuser/kdestroy
 /kuser/kdigest
@@ -172,6 +173,7 @@ asn1_*.[cx]
 /lib/editline/strlcat.c
 /lib/editline/testit
 /lib/gssapi/gss
+/lib/gssapi/gsstool
 /lib/gssapi/krb5/gsskrb5-private.h
 /lib/gssapi/ntlm/ntlm-private.h
 /lib/gssapi/spnego/spnego-private.h
@@ -183,6 +185,7 @@ asn1_*.[cx]
 /lib/hdb/hdb-private.h
 /lib/hdb/test_dbinfo
 /lib/hdb/test_hdbkeys
+/lib/hdb/test_mkey
 /lib/hx509/data/*.srl
 /lib/hx509/data/*.req
 /lib/hx509/data/sub-ca-combined.crt
@@ -215,6 +218,7 @@ asn1_*.[cx]
 /lib/krb5/test_gic
 /lib/krb5/test_kuserok
 /lib/krb5/test_renew
+/lib/krb5/test_rfc3961
 /lib/krb5/verify_krb5_conf
 /lib/ntlm/heimntlm-protos.h
 /lib/otp/ndbm_wrap.c

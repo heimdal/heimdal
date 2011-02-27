@@ -1294,7 +1294,7 @@ request_create(struct request_create_options *opt, int argc, char **argv)
 	    opt->key_bits_integer,
 	    &signer);
 
-    _hx509_request_init(context, &req);
+    hx509_request_init(context, &req);
 
     if (opt->subject_string) {
 	hx509_name name = NULL;
@@ -1302,7 +1302,7 @@ request_create(struct request_create_options *opt, int argc, char **argv)
 	ret = hx509_parse_name(context, opt->subject_string, &name);
 	if (ret)
 	    errx(1, "hx509_parse_name: %d\n", ret);
-	_hx509_request_set_name(context, req, name);
+	hx509_request_set_name(context, req, name);
 
 	if (opt->verbose_flag) {
 	    char *s;
@@ -1327,16 +1327,16 @@ request_create(struct request_create_options *opt, int argc, char **argv)
     }
 
 
-    ret = _hx509_private_key2SPKI(context, signer, &key);
+    ret = hx509_private_key2SPKI(context, signer, &key);
     if (ret)
-	errx(1, "_hx509_private_key2SPKI: %d\n", ret);
+	errx(1, "hx509_private_key2SPKI: %d\n", ret);
 
-    ret = _hx509_request_set_SubjectPublicKeyInfo(context,
+    ret = hx509_request_set_SubjectPublicKeyInfo(context,
 						  req,
 						  &key);
     free_SubjectPublicKeyInfo(&key);
     if (ret)
-	hx509_err(context, 1, ret, "_hx509_request_set_SubjectPublicKeyInfo");
+	hx509_err(context, 1, ret, "hx509_request_set_SubjectPublicKeyInfo");
 
     ret = _hx509_request_to_pkcs10(context,
 				   req,
@@ -1345,8 +1345,8 @@ request_create(struct request_create_options *opt, int argc, char **argv)
     if (ret)
 	hx509_err(context, 1, ret, "_hx509_request_to_pkcs10");
 
-    _hx509_private_key_free(&signer);
-    _hx509_request_free(&req);
+    hx509_private_key_free(&signer);
+    hx509_request_free(&req);
 
     if (ret == 0)
 	rk_dumpdata(outfile, request.data, request.length);
@@ -1370,7 +1370,7 @@ request_print(struct request_print_options *opt, int argc, char **argv)
 	    hx509_err(context, 1, ret, "parse_request: %s", argv[i]);
 
 	ret = _hx509_request_print(context, req, stdout);
-	_hx509_request_free(&req);
+	hx509_request_free(&req);
 	if (ret)
 	    hx509_err(context, 1, ret, "Failed to print file %s", argv[i]);
     }
@@ -1814,9 +1814,9 @@ hxtool_ca(struct certificate_sign_options *opt, int argc, char **argv)
 	if (ret)
 	    err(1, "read_private_key");
 
-	ret = _hx509_private_key2SPKI(context, private_key, &spki);
+	ret = hx509_private_key2SPKI(context, private_key, &spki);
 	if (ret)
-	    errx(1, "_hx509_private_key2SPKI: %d\n", ret);
+	    errx(1, "hx509_private_key2SPKI: %d\n", ret);
 
 	if (opt->self_signed_flag)
 	    cert_key = private_key;
@@ -1828,13 +1828,13 @@ hxtool_ca(struct certificate_sign_options *opt, int argc, char **argv)
 	ret = _hx509_request_parse(context, opt->req_string, &req);
 	if (ret)
 	    hx509_err(context, 1, ret, "parse_request: %s", opt->req_string);
-	ret = _hx509_request_get_name(context, req, &subject);
+	ret = hx509_request_get_name(context, req, &subject);
 	if (ret)
 	    hx509_err(context, 1, ret, "get name");
-	ret = _hx509_request_get_SubjectPublicKeyInfo(context, req, &spki);
+	ret = hx509_request_get_SubjectPublicKeyInfo(context, req, &spki);
 	if (ret)
 	    hx509_err(context, 1, ret, "get spki");
-	_hx509_request_free(&req);
+	hx509_request_free(&req);
     }
 
     if (opt->generate_key_string) {
@@ -1859,9 +1859,9 @@ hxtool_ca(struct certificate_sign_options *opt, int argc, char **argv)
 	if (ret)
 	    hx509_err(context, 1, ret, "generate private key");
 	
-	ret = _hx509_private_key2SPKI(context, cert_key, &spki);
+	ret = hx509_private_key2SPKI(context, cert_key, &spki);
 	if (ret)
-	    errx(1, "_hx509_private_key2SPKI: %d\n", ret);
+	    errx(1, "hx509_private_key2SPKI: %d\n", ret);
 
 	if (opt->self_signed_flag)
 	    private_key = cert_key;
@@ -2015,8 +2015,8 @@ hxtool_ca(struct certificate_sign_options *opt, int argc, char **argv)
     free_SubjectPublicKeyInfo(&spki);
 
     if (private_key != cert_key)
-	_hx509_private_key_free(&private_key);
-    _hx509_private_key_free(&cert_key);
+	hx509_private_key_free(&private_key);
+    hx509_private_key_free(&cert_key);
 
     hx509_ca_tbs_free(&tbs);
 

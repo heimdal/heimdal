@@ -665,7 +665,7 @@ hx509_cms_envelope_1(hx509_context context,
 	goto out;
     }
 
-    ret = _hx509_cert_public_encrypt(context,
+    ret = hx509_cert_public_encrypt(context,
 				     &key, cert,
 				     &ri->keyEncryptionAlgorithm.algorithm,
 				     &ri->encryptedKey);

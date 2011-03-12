@@ -35,16 +35,22 @@
 
 #include "krb5_locl.h"
 
+struct _krb5_key_usage {
+    unsigned usage;
+    struct _krb5_key_data key;
+};
+
+
 #ifndef HEIMDAL_SMALLER
 #define DES3_OLD_ENCTYPE 1
 #endif
 
 static krb5_error_code _get_derived_key(krb5_context, krb5_crypto,
-					unsigned, struct key_data**);
-static struct key_data *_new_derived_key(krb5_crypto crypto, unsigned usage);
+					unsigned, struct _krb5_key_data**);
+static struct _krb5_key_data *_new_derived_key(krb5_crypto crypto, unsigned usage);
 
 static void free_key_schedule(krb5_context,
-			      struct key_data *,
+			      struct _krb5_key_data *,
 			      struct encryption_type *);
 
 /************************************************************
@@ -110,7 +116,7 @@ krb5_generate_random_keyblock(krb5_context context,
 
 static krb5_error_code
 _key_schedule(krb5_context context,
-	      struct key_data *key)
+	      struct _krb5_key_data *key)
 {
     krb5_error_code ret;
     struct encryption_type *et = _krb5_find_enctype(key->key->keytype);
@@ -150,7 +156,7 @@ _key_schedule(krb5_context context,
 
 static krb5_error_code
 SHA1_checksum(krb5_context context,
-	      struct key_data *key,
+	      struct _krb5_key_data *key,
 	      const void *data,
 	      size_t len,
 	      unsigned usage,
@@ -168,7 +174,7 @@ _krb5_internal_hmac(krb5_context context,
 		    const void *data,
 		    size_t len,
 		    unsigned usage,
-		    struct key_data *keyblock,
+		    struct _krb5_key_data *keyblock,
 		    Checksum *result)
 {
     unsigned char *ipad, *opad;
@@ -229,7 +235,7 @@ krb5_hmac(krb5_context context,
 	  Checksum *result)
 {
     struct checksum_type *c = _krb5_find_checksum(cktype);
-    struct key_data kd;
+    struct _krb5_key_data kd;
     krb5_error_code ret;
 
     if (c == NULL) {
@@ -252,7 +258,7 @@ krb5_hmac(krb5_context context,
 
 krb5_error_code
 _krb5_SP_HMAC_SHA1_checksum(krb5_context context,
-			    struct key_data *key,
+			    struct _krb5_key_data *key,
 			    const void *data,
 			    size_t len,
 			    unsigned usage,
@@ -298,7 +304,7 @@ get_checksum_key(krb5_context context,
 		 krb5_crypto crypto,
 		 unsigned usage,  /* not krb5_key_usage */
 		 struct checksum_type *ct,
-		 struct key_data **key)
+		 struct _krb5_key_data **key)
 {
     krb5_error_code ret = 0;
 
@@ -335,7 +341,7 @@ create_checksum (krb5_context context,
 		 Checksum *result)
 {
     krb5_error_code ret;
-    struct key_data *dkey;
+    struct _krb5_key_data *dkey;
     int keyed_checksum;
 
     if (ct->flags & F_DISABLED) {
@@ -417,7 +423,7 @@ verify_checksum(krb5_context context,
 		Checksum *cksum)
 {
     krb5_error_code ret;
-    struct key_data *dkey;
+    struct _krb5_key_data *dkey;
     int keyed_checksum;
     Checksum c;
     struct checksum_type *ct;
@@ -798,7 +804,7 @@ encrypt_internal_derived(krb5_context context,
     Checksum cksum;
     unsigned char *p, *q;
     krb5_error_code ret;
-    struct key_data *dkey;
+    struct _krb5_key_data *dkey;
     const struct encryption_type *et = crypto->et;
 
     checksum_sz = CHECKSUMSIZE(et->keyed_checksum);
@@ -967,7 +973,7 @@ decrypt_internal_derived(krb5_context context,
     Checksum cksum;
     unsigned char *p;
     krb5_error_code ret;
-    struct key_data *dkey;
+    struct _krb5_key_data *dkey;
     struct encryption_type *et = crypto->et;
     unsigned long l;
 
@@ -1201,7 +1207,7 @@ krb5_encrypt_iov_ivec(krb5_context context,
     Checksum cksum;
     unsigned char *p, *q;
     krb5_error_code ret;
-    struct key_data *dkey;
+    struct _krb5_key_data *dkey;
     const struct encryption_type *et = crypto->et;
     krb5_crypto_iov *tiv, *piv, *hiv;
 
@@ -1393,7 +1399,7 @@ krb5_decrypt_iov_ivec(krb5_context context,
     Checksum cksum;
     unsigned char *p, *q;
     krb5_error_code ret;
-    struct key_data *dkey;
+    struct _krb5_key_data *dkey;
     struct encryption_type *et = crypto->et;
     krb5_crypto_iov *tiv, *hiv;
 
@@ -1834,7 +1840,7 @@ krb5_decrypt_EncryptedData(krb5_context context,
 krb5_error_code
 _krb5_derive_key(krb5_context context,
 		 struct encryption_type *et,
-		 struct key_data *key,
+		 struct _krb5_key_data *key,
 		 const void *constant,
 		 size_t len)
 {
@@ -1923,10 +1929,10 @@ _krb5_derive_key(krb5_context context,
     return ret;
 }
 
-static struct key_data *
+static struct _krb5_key_data *
 _new_derived_key(krb5_crypto crypto, unsigned usage)
 {
-    struct key_usage *d = crypto->key_usage;
+    struct _krb5_key_usage *d = crypto->key_usage;
     d = realloc(d, (crypto->num_key_usage + 1) * sizeof(*d));
     if(d == NULL)
 	return NULL;
@@ -1947,7 +1953,7 @@ krb5_derive_key(krb5_context context,
 {
     krb5_error_code ret;
     struct encryption_type *et;
-    struct key_data d;
+    struct _krb5_key_data d;
 
     *derived_key = NULL;
 
@@ -1975,10 +1981,10 @@ static krb5_error_code
 _get_derived_key(krb5_context context,
 		 krb5_crypto crypto,
 		 unsigned usage,
-		 struct key_data **key)
+		 struct _krb5_key_data **key)
 {
     int i;
-    struct key_data *d;
+    struct _krb5_key_data *d;
     unsigned char constant[5];
 
     for(i = 0; i < crypto->num_key_usage; i++)
@@ -2060,7 +2066,7 @@ krb5_crypto_init(krb5_context context,
 
 static void
 free_key_schedule(krb5_context context,
-		  struct key_data *key,
+		  struct _krb5_key_data *key,
 		  struct encryption_type *et)
 {
     if (et->keytype->cleanup)
@@ -2070,7 +2076,7 @@ free_key_schedule(krb5_context context,
 }
 
 void
-_krb5_free_key_data(krb5_context context, struct key_data *key,
+_krb5_free_key_data(krb5_context context, struct _krb5_key_data *key,
 	      struct encryption_type *et)
 {
     krb5_free_keyblock(context, key->key);
@@ -2081,7 +2087,7 @@ _krb5_free_key_data(krb5_context context, struct key_data *key,
 }
 
 static void
-free_key_usage(krb5_context context, struct key_usage *ku,
+free_key_usage(krb5_context context, struct _krb5_key_usage *ku,
 	       struct encryption_type *et)
 {
     _krb5_free_key_data(context, &ku->key, et);

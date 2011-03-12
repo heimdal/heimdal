@@ -35,21 +35,18 @@
 #define DES3_OLD_ENCTYPE 1
 #endif
 
-struct key_data {
+struct _krb5_key_data {
     krb5_keyblock *key;
     krb5_data *schedule;
 };
 
-struct key_usage {
-    unsigned usage;
-    struct key_data key;
-};
+struct _krb5_key_usage;
 
 struct krb5_crypto_data {
     struct encryption_type *et;
-    struct key_data key;
+    struct _krb5_key_data key;
     int num_key_usage;
-    struct key_usage *key_usage;
+    struct _krb5_key_usage *key_usage;
 };
 
 #define CRYPTO_ETYPE(C) ((C)->et->type)
@@ -78,10 +75,10 @@ struct key_type {
     size_t size;
     size_t schedule_size;
     void (*random_key)(krb5_context, krb5_keyblock*);
-    void (*schedule)(krb5_context, struct key_type *, struct key_data *);
+    void (*schedule)(krb5_context, struct key_type *, struct _krb5_key_data *);
     struct salt_type *string_to_key;
     void (*random_to_key)(krb5_context, krb5_keyblock*, const void*, size_t);
-    void (*cleanup)(krb5_context, struct key_data *);
+    void (*cleanup)(krb5_context, struct _krb5_key_data *);
     const EVP_CIPHER *(*evp)(void);
 };
 
@@ -92,12 +89,12 @@ struct checksum_type {
     size_t checksumsize;
     unsigned flags;
     krb5_error_code (*checksum)(krb5_context context,
-				struct key_data *key,
+				struct _krb5_key_data *key,
 				const void *buf, size_t len,
 				unsigned usage,
 				Checksum *csum);
     krb5_error_code (*verify)(krb5_context context,
-			      struct key_data *key,
+			      struct _krb5_key_data *key,
 			      const void *buf, size_t len,
 			      unsigned usage,
 			      Checksum *csum);
@@ -114,7 +111,7 @@ struct encryption_type {
     struct checksum_type *keyed_checksum;
     unsigned flags;
     krb5_error_code (*encrypt)(krb5_context context,
-			       struct key_data *key,
+			       struct _krb5_key_data *key,
 			       void *data, size_t len,
 			       krb5_boolean encryptp,
 			       int usage,

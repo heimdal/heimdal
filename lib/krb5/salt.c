@@ -249,7 +249,7 @@ krb5_string_to_key_derived(krb5_context context,
 {
     struct encryption_type *et = _krb5_find_enctype(etype);
     krb5_error_code ret;
-    struct key_data kd;
+    struct _krb5_key_data kd;
     size_t keylen;
     u_char *tmp;
 

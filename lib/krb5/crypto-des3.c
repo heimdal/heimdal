@@ -86,7 +86,7 @@ static struct key_type keytype_des3_derived = {
 #ifdef DES3_OLD_ENCTYPE
 static krb5_error_code
 RSA_MD5_DES3_checksum(krb5_context context,
-		      struct key_data *key,
+		      struct _krb5_key_data *key,
 		      const void *data,
 		      size_t len,
 		      unsigned usage,
@@ -97,7 +97,7 @@ RSA_MD5_DES3_checksum(krb5_context context,
 
 static krb5_error_code
 RSA_MD5_DES3_verify(krb5_context context,
-		    struct key_data *key,
+		    struct _krb5_key_data *key,
 		    const void *data,
 		    size_t len,
 		    unsigned usage,

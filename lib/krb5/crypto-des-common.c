@@ -57,7 +57,7 @@ _krb5_xor (DES_cblock *key, const unsigned char *b)
 krb5_error_code
 _krb5_des_checksum(krb5_context context,
 		   const EVP_MD *evp_md,
-		   struct key_data *key,
+		   struct _krb5_key_data *key,
 		   const void *data,
 		   size_t len,
 		   Checksum *cksum)
@@ -90,7 +90,7 @@ _krb5_des_checksum(krb5_context context,
 krb5_error_code
 _krb5_des_verify(krb5_context context,
 		 const EVP_MD *evp_md,
-		 struct key_data *key,
+		 struct _krb5_key_data *key,
 		 const void *data,
 		 size_t len,
 		 Checksum *C)
@@ -130,7 +130,7 @@ _krb5_des_verify(krb5_context context,
 
 static krb5_error_code
 RSA_MD5_checksum(krb5_context context,
-		 struct key_data *key,
+		 struct _krb5_key_data *key,
 		 const void *data,
 		 size_t len,
 		 unsigned usage,

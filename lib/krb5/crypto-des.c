@@ -50,7 +50,7 @@ krb5_DES_random_key(krb5_context context,
 static void
 krb5_DES_schedule_old(krb5_context context,
 		      struct key_type *kt,
-		      struct key_data *key)
+		      struct _krb5_key_data *key)
 {
     DES_set_key_unchecked(key->key->keyvalue.data, key->schedule->data);
 }
@@ -96,7 +96,7 @@ static struct key_type keytype_des = {
 
 static krb5_error_code
 CRC32_checksum(krb5_context context,
-	       struct key_data *key,
+	       struct _krb5_key_data *key,
 	       const void *data,
 	       size_t len,
 	       unsigned usage,
@@ -115,7 +115,7 @@ CRC32_checksum(krb5_context context,
 
 static krb5_error_code
 RSA_MD4_checksum(krb5_context context,
-		 struct key_data *key,
+		 struct _krb5_key_data *key,
 		 const void *data,
 		 size_t len,
 		 unsigned usage,
@@ -128,7 +128,7 @@ RSA_MD4_checksum(krb5_context context,
 
 static krb5_error_code
 RSA_MD4_DES_checksum(krb5_context context,
-		     struct key_data *key,
+		     struct _krb5_key_data *key,
 		     const void *data,
 		     size_t len,
 		     unsigned usage,
@@ -139,7 +139,7 @@ RSA_MD4_DES_checksum(krb5_context context,
 
 static krb5_error_code
 RSA_MD4_DES_verify(krb5_context context,
-		   struct key_data *key,
+		   struct _krb5_key_data *key,
 		   const void *data,
 		   size_t len,
 		   unsigned usage,
@@ -150,7 +150,7 @@ RSA_MD4_DES_verify(krb5_context context,
 
 static krb5_error_code
 RSA_MD5_DES_checksum(krb5_context context,
-		     struct key_data *key,
+		     struct _krb5_key_data *key,
 		     const void *data,
 		     size_t len,
 		     unsigned usage,
@@ -161,7 +161,7 @@ RSA_MD5_DES_checksum(krb5_context context,
 
 static krb5_error_code
 RSA_MD5_DES_verify(krb5_context context,
-		   struct key_data *key,
+		   struct _krb5_key_data *key,
 		   const void *data,
 		   size_t len,
 		   unsigned usage,
@@ -212,7 +212,7 @@ struct checksum_type _krb5_checksum_rsa_md5_des = {
 
 static krb5_error_code
 evp_des_encrypt_null_ivec(krb5_context context,
-			  struct key_data *key,
+			  struct _krb5_key_data *key,
 			  void *data,
 			  size_t len,
 			  krb5_boolean encryptp,
@@ -231,7 +231,7 @@ evp_des_encrypt_null_ivec(krb5_context context,
 
 static krb5_error_code
 evp_des_encrypt_key_ivec(krb5_context context,
-			 struct key_data *key,
+			 struct _krb5_key_data *key,
 			 void *data,
 			 size_t len,
 			 krb5_boolean encryptp,
@@ -250,7 +250,7 @@ evp_des_encrypt_key_ivec(krb5_context context,
 
 static krb5_error_code
 DES_CFB64_encrypt_null_ivec(krb5_context context,
-			    struct key_data *key,
+			    struct _krb5_key_data *key,
 			    void *data,
 			    size_t len,
 			    krb5_boolean encryptp,
@@ -268,7 +268,7 @@ DES_CFB64_encrypt_null_ivec(krb5_context context,
 
 static krb5_error_code
 DES_PCBC_encrypt_key_ivec(krb5_context context,
-			  struct key_data *key,
+			  struct _krb5_key_data *key,
 			  void *data,
 			  size_t len,
 			  krb5_boolean encryptp,

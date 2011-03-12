@@ -36,7 +36,7 @@
 void
 _krb5_evp_schedule(krb5_context context,
 		   struct key_type *kt,
-		   struct key_data *kd)
+		   struct _krb5_key_data *kd)
 {
     struct evp_schedule *key = kd->schedule->data;
     const EVP_CIPHER *c = (*kt->evp)();
@@ -49,7 +49,7 @@ _krb5_evp_schedule(krb5_context context,
 }
 
 void
-_krb5_evp_cleanup(krb5_context context, struct key_data *kd)
+_krb5_evp_cleanup(krb5_context context, struct _krb5_key_data *kd)
 {
     struct evp_schedule *key = kd->schedule->data;
     EVP_CIPHER_CTX_cleanup(&key->ectx);
@@ -58,7 +58,7 @@ _krb5_evp_cleanup(krb5_context context, struct key_data *kd)
 
 krb5_error_code
 _krb5_evp_encrypt(krb5_context context,
-		struct key_data *key,
+		struct _krb5_key_data *key,
 		void *data,
 		size_t len,
 		krb5_boolean encryptp,
@@ -89,7 +89,7 @@ static const unsigned char zero_ivec[EVP_MAX_BLOCK_LENGTH] = { 0 };
 
 krb5_error_code
 _krb5_evp_encrypt_cts(krb5_context context,
-		      struct key_data *key,
+		      struct _krb5_key_data *key,
 		      void *data,
 		      size_t len,
 		      krb5_boolean encryptp,

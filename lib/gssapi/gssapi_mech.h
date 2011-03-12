@@ -454,8 +454,15 @@ typedef OM_uint32 GSSAPI_CALLCONV _gss_release_any_name_mapping_t (
 	       gss_any_t *            /* input */
 	    );
 
+/*
+ *
+ */
 
 typedef struct gss_mo_desc_struct gss_mo_desc;
+
+typedef OM_uint32 GSSAPI_CALLCONV
+_gss_mo_init (OM_uint32 *, gss_OID, gss_mo_desc **, size_t *);
+
 
 struct gss_mo_desc_struct {
     gss_OID option;
@@ -469,7 +476,7 @@ struct gss_mo_desc_struct {
 };
 
 
-#define GMI_VERSION 4
+#define GMI_VERSION 5
 
 /* gm_flags */
 #define GM_USE_MG_CRED      	1	/* uses mech glue credentials */

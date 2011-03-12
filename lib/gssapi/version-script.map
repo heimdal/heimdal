@@ -58,13 +58,11 @@ HEIMDAL_GSS_2.0 {
 		gss_krb5_get_tkt_flags;
 		gss_krb5_import_cred;
 		gss_krb5_set_allowable_enctypes;
-		gss_map_name_to_any;
 		gss_mg_collect_error;
 		gss_oid_equal;
 		gss_oid_to_str;
 		gss_process_context_token;
 		gss_pseudo_random;
-		gss_release_any_name_mapping;
 		gss_release_buffer;
 		gss_release_buffer_set;
 		gss_release_cred;

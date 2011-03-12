@@ -1039,24 +1039,6 @@ GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL gss_export_name_composite (
     gss_buffer_t	/* exp_composite_name */
     );
 
-typedef struct gss_any *gss_any_t;
-
-GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL gss_map_name_to_any (
-    OM_uint32 *,	/* minor_status */
-    gss_name_t,		/* name */
-    int,		/* authenticated */
-    gss_buffer_t,	/* type_id */
-    gss_any_t *		/* output */
-    );
-
-GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL gss_release_any_name_mapping (
-    OM_uint32 *,	/* minor_status */
-    gss_name_t,		/* name */
-    gss_buffer_t,	/* type_id */
-    gss_any_t *		/* input */
-    );
-
-
 /*
  *
  */

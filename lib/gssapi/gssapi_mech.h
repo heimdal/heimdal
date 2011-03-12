@@ -439,21 +439,6 @@ typedef OM_uint32 GSSAPI_CALLCONV _gss_export_name_composite_t (
 	       gss_buffer_t           /* exp_composite_name */
 	    );
 
-typedef OM_uint32 GSSAPI_CALLCONV _gss_map_name_to_any_t (
-	       OM_uint32 *,           /* minor_status */
-	       gss_name_t,            /* name */
-	       int,                   /* authenticated */
-	       gss_buffer_t,          /* type_id */
-	       gss_any_t *            /* output */
-	    );
-
-typedef OM_uint32 GSSAPI_CALLCONV _gss_release_any_name_mapping_t (
-	       OM_uint32 *,           /* minor_status */
-	       gss_name_t,            /* name */
-	       gss_buffer_t,          /* type_id */
-	       gss_any_t *            /* input */
-	    );
-
 /*
  *
  */
@@ -542,8 +527,6 @@ typedef struct gssapi_mech_interface_desc {
         _gss_set_name_attribute_t       *gm_set_name_attribute;
         _gss_delete_name_attribute_t    *gm_delete_name_attribute;
         _gss_export_name_composite_t    *gm_export_name_composite;
-        _gss_map_name_to_any_t          *gm_map_name_to_any;
-        _gss_release_any_name_mapping_t *gm_release_any_name_mapping;
 } gssapi_mech_interface_desc, *gssapi_mech_interface;
 
 gssapi_mech_interface

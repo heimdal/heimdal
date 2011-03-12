@@ -349,8 +349,6 @@ _gss_load_mech(void)
 		OPTSYM(set_name_attribute);
 		OPTSYM(delete_name_attribute);
 		OPTSYM(export_name_composite);
-		OPTSYM(map_name_to_any);
-		OPTSYM(release_any_name_mapping);
 
 		mi = dlsym(so, "gss_mo_init");
 		if (mi != NULL) {

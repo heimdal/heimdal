@@ -52,6 +52,33 @@ typedef struct krb5_kx_context krb5_kx_context;
 #define CONTEXT(kc) (K5DATA(kc)->context)
 
 /*
+ *
+ */
+
+static void
+ksyslog(krb5_context context, krb5_error_code ret, const char *fmt, ...)
+	__attribute__((__format__(__printf__, 3, 0)));
+
+static void
+ksyslog(krb5_context context, krb5_error_code ret, const char *fmt, ...)
+{
+    const char *msg;
+    char *str = NULL;
+    va_list va;
+
+    msg = krb5_get_error_message(context, ret);
+
+    va_start(va, fmt);
+    vasprintf(&str, fmt, va);
+    va_end(va);
+
+    syslog(LOG_ERR, "%s: %s", str, msg);
+
+    krb5_free_error_message(context, msg);
+    free(str);
+}
+
+/*
  * Destroy the krb5 context in `c'.
  */
 
@@ -378,8 +405,7 @@ recv_v5_auth (kx_context *kc, int sock, u_char *buf)
     ret = krb5_sock_to_principal (CONTEXT(kc), sock, "host",
 				  KRB5_NT_SRV_HST, &server);
     if (ret) {
-	syslog (LOG_ERR, "krb5_sock_to_principal: %s",
-		krb5_get_err_text (CONTEXT(kc), ret));
+	ksyslog (CONTEXT(kc), ret, "krb5_sock_to_principal");
 	exit (1);
     }
 
@@ -393,22 +419,19 @@ recv_v5_auth (kx_context *kc, int sock, u_char *buf)
 			 &ticket);
     krb5_free_principal (CONTEXT(kc), server);
     if (ret) {
-	syslog (LOG_ERR, "krb5_sock_to_principal: %s",
-		krb5_get_err_text (CONTEXT(kc), ret));
+	ksyslog (CONTEXT(kc), ret, "krb5_recvauth");
 	exit (1);
     }
 
     ret = krb5_auth_con_getkey (CONTEXT(kc), auth_context, &K5DATA(kc)->keyblock);
     if (ret) {
-	syslog (LOG_ERR, "krb5_auth_con_getkey: %s",
-		krb5_get_err_text (CONTEXT(kc), ret));
+	ksyslog (CONTEXT(kc), ret, "krb5_auth_con_getkey");
 	exit (1);
     }
 
     ret = krb5_crypto_init (CONTEXT(kc), K5DATA(kc)->keyblock, 0, &K5DATA(kc)->crypto);
     if (ret) {
-	syslog (LOG_ERR, "krb5_crypto_init: %s",
-		krb5_get_err_text (CONTEXT(kc), ret));
+	ksyslog (CONTEXT(kc), ret, "krb5_crypto_init");
 	exit (1);
     }
 

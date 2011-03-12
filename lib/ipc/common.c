@@ -105,7 +105,8 @@ heim_ipc_semaphore_create(long value)
 #ifdef HAVE_GCD
     return (heim_isemaphore)dispatch_semaphore_create(value);
 #elif !defined(ENABLE_PTHREAD_SUPPORT)
-    heim_assert(0, "no semaphore support w/o pthreads");
+    /* heim_assert(0, "no semaphore support w/o pthreads"); */
+    abort();
     return NULL;
 #else
     heim_isemaphore s = malloc(sizeof(*s));
@@ -130,7 +131,8 @@ heim_ipc_semaphore_wait(heim_isemaphore s, time_t t)
 
     return dispatch_semaphore_wait((dispatch_semaphore_t)s, timeout);
 #elif !defined(ENABLE_PTHREAD_SUPPORT)
-    heim_assert(0, "no semaphore support w/o pthreads");
+    /* heim_assert(0, "no semaphore support w/o pthreads"); */
+    abort();
     return 0;
 #else
     HEIMDAL_MUTEX_lock(&s->mutex);
@@ -163,7 +165,8 @@ heim_ipc_semaphore_signal(heim_isemaphore s)
 #ifdef HAVE_GCD
     return dispatch_semaphore_signal((dispatch_semaphore_t)s);
 #elif !defined(ENABLE_PTHREAD_SUPPORT)
-    heim_assert(0, "no semaphore support w/o pthreads");
+    /* heim_assert(0, "no semaphore support w/o pthreads"); */
+    abort();
     return EINVAL;
 #else
     int wakeup;
@@ -182,7 +185,8 @@ heim_ipc_semaphore_release(heim_isemaphore s)
 #ifdef HAVE_GCD
     dispatch_release((dispatch_semaphore_t)s);
 #elif !defined(ENABLE_PTHREAD_SUPPORT)
-    heim_assert(0, "no semaphore support w/o pthreads");
+    /* heim_assert(0, "no semaphore support w/o pthreads"); */
+    abort();
 #else
     HEIMDAL_MUTEX_lock(&s->mutex);
     if (s->counter != 0)

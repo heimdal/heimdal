@@ -62,7 +62,7 @@ _krb5_des_checksum(krb5_context context,
 		   size_t len,
 		   Checksum *cksum)
 {
-    struct evp_schedule *ctx = key->schedule->data;
+    struct _krb5_evp_schedule *ctx = key->schedule->data;
     EVP_MD_CTX *m;
     DES_cblock ivec;
     unsigned char *p = cksum->checksum.data;
@@ -95,7 +95,7 @@ _krb5_des_verify(krb5_context context,
 		 size_t len,
 		 Checksum *C)
 {
-    struct evp_schedule *ctx = key->schedule->data;
+    struct _krb5_evp_schedule *ctx = key->schedule->data;
     EVP_MD_CTX *m;
     unsigned char tmp[24];
     unsigned char res[16];
@@ -141,7 +141,7 @@ RSA_MD5_checksum(krb5_context context,
     return 0;
 }
 
-struct checksum_type _krb5_checksum_rsa_md5 = {
+struct _krb5_checksum_type _krb5_checksum_rsa_md5 = {
     CKSUMTYPE_RSA_MD5,
     "rsa-md5",
     64,

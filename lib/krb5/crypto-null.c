@@ -37,7 +37,7 @@
 #define DES3_OLD_ENCTYPE 1
 #endif
 
-static struct key_type keytype_null = {
+static struct _krb5_key_type keytype_null = {
     KEYTYPE_NULL,
     "null",
     0,
@@ -59,7 +59,7 @@ NONE_checksum(krb5_context context,
     return 0;
 }
 
-struct checksum_type _krb5_checksum_none = {
+struct _krb5_checksum_type _krb5_checksum_none = {
     CKSUMTYPE_NONE,
     "none",
     1,
@@ -81,7 +81,7 @@ NULL_encrypt(krb5_context context,
     return 0;
 }
 
-struct encryption_type _krb5_enctype_null = {
+struct _krb5_encryption_type _krb5_enctype_null = {
     ETYPE_NULL,
     "null",
     1,

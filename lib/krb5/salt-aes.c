@@ -45,7 +45,7 @@ AES_string_to_key(krb5_context context,
 {
     krb5_error_code ret;
     uint32_t iter;
-    struct encryption_type *et;
+    struct _krb5_encryption_type *et;
     struct _krb5_key_data kd;
 
     if (opaque.length == 0)

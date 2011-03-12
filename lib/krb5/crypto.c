@@ -51,7 +51,7 @@ static struct _krb5_key_data *_new_derived_key(krb5_crypto crypto, unsigned usag
 
 static void free_key_schedule(krb5_context,
 			      struct _krb5_key_data *,
-			      struct encryption_type *);
+			      struct _krb5_encryption_type *);
 
 /************************************************************
  *                                                          *
@@ -62,7 +62,7 @@ krb5_enctype_keysize(krb5_context context,
 		     krb5_enctype type,
 		     size_t *keysize)
 {
-    struct encryption_type *et = _krb5_find_enctype(type);
+    struct _krb5_encryption_type *et = _krb5_find_enctype(type);
     if(et == NULL) {
 	krb5_set_error_message(context, KRB5_PROG_ETYPE_NOSUPP,
 			       N_("encryption type %d not supported", ""),
@@ -78,7 +78,7 @@ krb5_enctype_keybits(krb5_context context,
 		     krb5_enctype type,
 		     size_t *keybits)
 {
-    struct encryption_type *et = _krb5_find_enctype(type);
+    struct _krb5_encryption_type *et = _krb5_find_enctype(type);
     if(et == NULL) {
 	krb5_set_error_message(context, KRB5_PROG_ETYPE_NOSUPP,
 			       "encryption type %d not supported",
@@ -95,7 +95,7 @@ krb5_generate_random_keyblock(krb5_context context,
 			      krb5_keyblock *key)
 {
     krb5_error_code ret;
-    struct encryption_type *et = _krb5_find_enctype(type);
+    struct _krb5_encryption_type *et = _krb5_find_enctype(type);
     if(et == NULL) {
 	krb5_set_error_message(context, KRB5_PROG_ETYPE_NOSUPP,
 			       N_("encryption type %d not supported", ""),
@@ -119,8 +119,8 @@ _key_schedule(krb5_context context,
 	      struct _krb5_key_data *key)
 {
     krb5_error_code ret;
-    struct encryption_type *et = _krb5_find_enctype(key->key->keytype);
-    struct key_type *kt;
+    struct _krb5_encryption_type *et = _krb5_find_enctype(key->key->keytype);
+    struct _krb5_key_type *kt;
 
     if (et == NULL) {
 	krb5_set_error_message (context, KRB5_PROG_ETYPE_NOSUPP,
@@ -170,7 +170,7 @@ SHA1_checksum(krb5_context context,
 /* HMAC according to RFC2104 */
 krb5_error_code
 _krb5_internal_hmac(krb5_context context,
-		    struct checksum_type *cm,
+		    struct _krb5_checksum_type *cm,
 		    const void *data,
 		    size_t len,
 		    unsigned usage,
@@ -234,7 +234,7 @@ krb5_hmac(krb5_context context,
 	  krb5_keyblock *key,
 	  Checksum *result)
 {
-    struct checksum_type *c = _krb5_find_checksum(cktype);
+    struct _krb5_checksum_type *c = _krb5_find_checksum(cktype);
     struct _krb5_key_data kd;
     krb5_error_code ret;
 
@@ -264,7 +264,7 @@ _krb5_SP_HMAC_SHA1_checksum(krb5_context context,
 			    unsigned usage,
 			    Checksum *result)
 {
-    struct checksum_type *c = _krb5_find_checksum(CKSUMTYPE_SHA1);
+    struct _krb5_checksum_type *c = _krb5_find_checksum(CKSUMTYPE_SHA1);
     Checksum res;
     char sha1_data[20];
     krb5_error_code ret;
@@ -279,7 +279,7 @@ _krb5_SP_HMAC_SHA1_checksum(krb5_context context,
     return 0;
 }
 
-struct checksum_type _krb5_checksum_sha1 = {
+struct _krb5_checksum_type _krb5_checksum_sha1 = {
     CKSUMTYPE_SHA1,
     "sha1",
     64,
@@ -289,7 +289,7 @@ struct checksum_type _krb5_checksum_sha1 = {
     NULL
 };
 
-struct checksum_type *
+struct _krb5_checksum_type *
 _krb5_find_checksum(krb5_cksumtype type)
 {
     int i;
@@ -303,7 +303,7 @@ static krb5_error_code
 get_checksum_key(krb5_context context,
 		 krb5_crypto crypto,
 		 unsigned usage,  /* not krb5_key_usage */
-		 struct checksum_type *ct,
+		 struct _krb5_checksum_type *ct,
 		 struct _krb5_key_data **key)
 {
     krb5_error_code ret = 0;
@@ -333,7 +333,7 @@ get_checksum_key(krb5_context context,
 
 static krb5_error_code
 create_checksum (krb5_context context,
-		 struct checksum_type *ct,
+		 struct _krb5_checksum_type *ct,
 		 krb5_crypto crypto,
 		 unsigned usage,
 		 void *data,
@@ -370,7 +370,7 @@ create_checksum (krb5_context context,
 }
 
 static int
-arcfour_checksum_p(struct checksum_type *ct, krb5_crypto crypto)
+arcfour_checksum_p(struct _krb5_checksum_type *ct, krb5_crypto crypto)
 {
     return (ct->type == CKSUMTYPE_HMAC_MD5) &&
 	(crypto->key.key->keytype == KEYTYPE_ARCFOUR);
@@ -385,7 +385,7 @@ krb5_create_checksum(krb5_context context,
 		     size_t len,
 		     Checksum *result)
 {
-    struct checksum_type *ct = NULL;
+    struct _krb5_checksum_type *ct = NULL;
     unsigned keyusage;
 
     /* type 0 -> pick from crypto */
@@ -426,7 +426,7 @@ verify_checksum(krb5_context context,
     struct _krb5_key_data *dkey;
     int keyed_checksum;
     Checksum c;
-    struct checksum_type *ct;
+    struct _krb5_checksum_type *ct;
 
     ct = _krb5_find_checksum(cksum->cksumtype);
     if (ct == NULL || (ct->flags & F_DISABLED)) {
@@ -447,7 +447,7 @@ verify_checksum(krb5_context context,
     }
     keyed_checksum = (ct->flags & F_KEYED) != 0;
     if(keyed_checksum) {
-	struct checksum_type *kct;
+	struct _krb5_checksum_type *kct;
 	if (crypto == NULL) {
 	    krb5_set_error_message(context, KRB5_PROG_SUMTYPE_NOSUPP,
 				   N_("Checksum type %s is keyed but no "
@@ -517,7 +517,7 @@ krb5_verify_checksum(krb5_context context,
 		     size_t len,
 		     Checksum *cksum)
 {
-    struct checksum_type *ct;
+    struct _krb5_checksum_type *ct;
     unsigned keyusage;
 
     ct = _krb5_find_checksum(cksum->cksumtype);
@@ -543,7 +543,7 @@ krb5_crypto_get_checksum_type(krb5_context context,
                               krb5_crypto crypto,
 			      krb5_cksumtype *type)
 {
-    struct checksum_type *ct = NULL;
+    struct _krb5_checksum_type *ct = NULL;
 
     if (crypto != NULL) {
         ct = crypto->et->keyed_checksum;
@@ -568,7 +568,7 @@ krb5_checksumsize(krb5_context context,
 		  krb5_cksumtype type,
 		  size_t *size)
 {
-    struct checksum_type *ct = _krb5_find_checksum(type);
+    struct _krb5_checksum_type *ct = _krb5_find_checksum(type);
     if(ct == NULL) {
 	krb5_set_error_message (context, KRB5_PROG_SUMTYPE_NOSUPP,
 				N_("checksum type %d not supported", ""),
@@ -583,7 +583,7 @@ KRB5_LIB_FUNCTION krb5_boolean KRB5_LIB_CALL
 krb5_checksum_is_keyed(krb5_context context,
 		       krb5_cksumtype type)
 {
-    struct checksum_type *ct = _krb5_find_checksum(type);
+    struct _krb5_checksum_type *ct = _krb5_find_checksum(type);
     if(ct == NULL) {
 	if (context)
 	    krb5_set_error_message (context, KRB5_PROG_SUMTYPE_NOSUPP,
@@ -598,7 +598,7 @@ KRB5_LIB_FUNCTION krb5_boolean KRB5_LIB_CALL
 krb5_checksum_is_collision_proof(krb5_context context,
 				 krb5_cksumtype type)
 {
-    struct checksum_type *ct = _krb5_find_checksum(type);
+    struct _krb5_checksum_type *ct = _krb5_find_checksum(type);
     if(ct == NULL) {
 	if (context)
 	    krb5_set_error_message (context, KRB5_PROG_SUMTYPE_NOSUPP,
@@ -613,7 +613,7 @@ KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_checksum_disable(krb5_context context,
 		      krb5_cksumtype type)
 {
-    struct checksum_type *ct = _krb5_find_checksum(type);
+    struct _krb5_checksum_type *ct = _krb5_find_checksum(type);
     if(ct == NULL) {
 	if (context)
 	    krb5_set_error_message (context, KRB5_PROG_SUMTYPE_NOSUPP,
@@ -629,7 +629,7 @@ krb5_checksum_disable(krb5_context context,
  *                                                          *
  ************************************************************/
 
-struct encryption_type *
+struct _krb5_encryption_type *
 _krb5_find_enctype(krb5_enctype type)
 {
     int i;
@@ -645,7 +645,7 @@ krb5_enctype_to_string(krb5_context context,
 		       krb5_enctype etype,
 		       char **string)
 {
-    struct encryption_type *e;
+    struct _krb5_encryption_type *e;
     e = _krb5_find_enctype(etype);
     if(e == NULL) {
 	krb5_set_error_message (context, KRB5_PROG_ETYPE_NOSUPP,
@@ -684,7 +684,7 @@ krb5_enctype_to_keytype(krb5_context context,
 			krb5_enctype etype,
 			krb5_keytype *keytype)
 {
-    struct encryption_type *e = _krb5_find_enctype(etype);
+    struct _krb5_encryption_type *e = _krb5_find_enctype(etype);
     if(e == NULL) {
 	krb5_set_error_message (context, KRB5_PROG_ETYPE_NOSUPP,
 				N_("encryption type %d not supported", ""),
@@ -699,7 +699,7 @@ KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_enctype_valid(krb5_context context,
 		   krb5_enctype etype)
 {
-    struct encryption_type *e = _krb5_find_enctype(etype);
+    struct _krb5_encryption_type *e = _krb5_find_enctype(etype);
     if(e == NULL) {
 	krb5_set_error_message (context, KRB5_PROG_ETYPE_NOSUPP,
 				N_("encryption type %d not supported", ""),
@@ -757,7 +757,7 @@ KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_cksumtype_valid(krb5_context context,
 		     krb5_cksumtype ctype)
 {
-    struct checksum_type *c = _krb5_find_checksum(ctype);
+    struct _krb5_checksum_type *c = _krb5_find_checksum(ctype);
     if (c == NULL) {
 	krb5_set_error_message (context, KRB5_PROG_SUMTYPE_NOSUPP,
 				N_("checksum type %d not supported", ""),
@@ -805,7 +805,7 @@ encrypt_internal_derived(krb5_context context,
     unsigned char *p, *q;
     krb5_error_code ret;
     struct _krb5_key_data *dkey;
-    const struct encryption_type *et = crypto->et;
+    const struct _krb5_encryption_type *et = crypto->et;
 
     checksum_sz = CHECKSUMSIZE(et->keyed_checksum);
 
@@ -870,7 +870,7 @@ encrypt_internal(krb5_context context,
     Checksum cksum;
     unsigned char *p, *q;
     krb5_error_code ret;
-    const struct encryption_type *et = crypto->et;
+    const struct _krb5_encryption_type *et = crypto->et;
 
     checksum_sz = CHECKSUMSIZE(et->checksum);
 
@@ -932,7 +932,7 @@ encrypt_internal_special(krb5_context context,
 			 krb5_data *result,
 			 void *ivec)
 {
-    struct encryption_type *et = crypto->et;
+    struct _krb5_encryption_type *et = crypto->et;
     size_t cksum_sz = CHECKSUMSIZE(et->checksum);
     size_t sz = len + cksum_sz + et->confoundersize;
     char *tmp, *p;
@@ -974,7 +974,7 @@ decrypt_internal_derived(krb5_context context,
     unsigned char *p;
     krb5_error_code ret;
     struct _krb5_key_data *dkey;
-    struct encryption_type *et = crypto->et;
+    struct _krb5_encryption_type *et = crypto->et;
     unsigned long l;
 
     checksum_sz = CHECKSUMSIZE(et->keyed_checksum);
@@ -1053,7 +1053,7 @@ decrypt_internal(krb5_context context,
     unsigned char *p;
     Checksum cksum;
     size_t checksum_sz, l;
-    struct encryption_type *et = crypto->et;
+    struct _krb5_encryption_type *et = crypto->et;
 
     if ((len % et->padsize) != 0) {
 	krb5_clear_error_message(context);
@@ -1118,7 +1118,7 @@ decrypt_internal_special(krb5_context context,
 			 krb5_data *result,
 			 void *ivec)
 {
-    struct encryption_type *et = crypto->et;
+    struct _krb5_encryption_type *et = crypto->et;
     size_t cksum_sz = CHECKSUMSIZE(et->checksum);
     size_t sz = len - cksum_sz - et->confoundersize;
     unsigned char *p;
@@ -1208,7 +1208,7 @@ krb5_encrypt_iov_ivec(krb5_context context,
     unsigned char *p, *q;
     krb5_error_code ret;
     struct _krb5_key_data *dkey;
-    const struct encryption_type *et = crypto->et;
+    const struct _krb5_encryption_type *et = crypto->et;
     krb5_crypto_iov *tiv, *piv, *hiv;
 
     if (num_data < 0) {
@@ -1400,7 +1400,7 @@ krb5_decrypt_iov_ivec(krb5_context context,
     unsigned char *p, *q;
     krb5_error_code ret;
     struct _krb5_key_data *dkey;
-    struct encryption_type *et = crypto->et;
+    struct _krb5_encryption_type *et = crypto->et;
     krb5_crypto_iov *tiv, *hiv;
 
     if (num_data < 0) {
@@ -1625,7 +1625,7 @@ krb5_verify_checksum_iov(krb5_context context,
 			 unsigned int num_data,
 			 krb5_cksumtype *type)
 {
-    struct encryption_type *et = crypto->et;
+    struct _krb5_encryption_type *et = crypto->et;
     Checksum cksum;
     krb5_crypto_iov *civ;
     krb5_error_code ret;
@@ -1839,7 +1839,7 @@ krb5_decrypt_EncryptedData(krb5_context context,
 
 krb5_error_code
 _krb5_derive_key(krb5_context context,
-		 struct encryption_type *et,
+		 struct _krb5_encryption_type *et,
 		 struct _krb5_key_data *key,
 		 const void *constant,
 		 size_t len)
@@ -1847,7 +1847,7 @@ _krb5_derive_key(krb5_context context,
     unsigned char *k = NULL;
     unsigned int nblocks = 0, i;
     krb5_error_code ret = 0;
-    struct key_type *kt = et->keytype;
+    struct _krb5_key_type *kt = et->keytype;
 
     ret = _key_schedule(context, key);
     if(ret)
@@ -1952,7 +1952,7 @@ krb5_derive_key(krb5_context context,
 		krb5_keyblock **derived_key)
 {
     krb5_error_code ret;
-    struct encryption_type *et;
+    struct _krb5_encryption_type *et;
     struct _krb5_key_data d;
 
     *derived_key = NULL;
@@ -2067,7 +2067,7 @@ krb5_crypto_init(krb5_context context,
 static void
 free_key_schedule(krb5_context context,
 		  struct _krb5_key_data *key,
-		  struct encryption_type *et)
+		  struct _krb5_encryption_type *et)
 {
     if (et->keytype->cleanup)
 	(*et->keytype->cleanup)(context, key);
@@ -2077,7 +2077,7 @@ free_key_schedule(krb5_context context,
 
 void
 _krb5_free_key_data(krb5_context context, struct _krb5_key_data *key,
-	      struct encryption_type *et)
+	      struct _krb5_encryption_type *et)
 {
     krb5_free_keyblock(context, key->key);
     if(key->schedule) {
@@ -2088,7 +2088,7 @@ _krb5_free_key_data(krb5_context context, struct _krb5_key_data *key,
 
 static void
 free_key_usage(krb5_context context, struct _krb5_key_usage *ku,
-	       struct encryption_type *et)
+	       struct _krb5_encryption_type *et)
 {
     _krb5_free_key_data(context, &ku->key, et);
 }
@@ -2218,7 +2218,7 @@ KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_enctype_disable(krb5_context context,
 		     krb5_enctype enctype)
 {
-    struct encryption_type *et = _krb5_find_enctype(enctype);
+    struct _krb5_encryption_type *et = _krb5_find_enctype(enctype);
     if(et == NULL) {
 	if (context)
 	    krb5_set_error_message (context, KRB5_PROG_ETYPE_NOSUPP,
@@ -2245,7 +2245,7 @@ KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_enctype_enable(krb5_context context,
 		    krb5_enctype enctype)
 {
-    struct encryption_type *et = _krb5_find_enctype(enctype);
+    struct _krb5_encryption_type *et = _krb5_find_enctype(enctype);
     if(et == NULL) {
 	if (context)
 	    krb5_set_error_message (context, KRB5_PROG_ETYPE_NOSUPP,
@@ -2289,7 +2289,7 @@ wrapped_length (krb5_context context,
 		krb5_crypto  crypto,
 		size_t       data_len)
 {
-    struct encryption_type *et = crypto->et;
+    struct _krb5_encryption_type *et = crypto->et;
     size_t padsize = et->padsize;
     size_t checksumsize = CHECKSUMSIZE(et->checksum);
     size_t res;
@@ -2304,7 +2304,7 @@ wrapped_length_dervied (krb5_context context,
 			krb5_crypto  crypto,
 			size_t       data_len)
 {
-    struct encryption_type *et = crypto->et;
+    struct _krb5_encryption_type *et = crypto->et;
     size_t padsize = et->padsize;
     size_t res;
 
@@ -2340,7 +2340,7 @@ static size_t
 crypto_overhead (krb5_context context,
 		 krb5_crypto  crypto)
 {
-    struct encryption_type *et = crypto->et;
+    struct _krb5_encryption_type *et = crypto->et;
     size_t res;
 
     res = CHECKSUMSIZE(et->checksum);
@@ -2354,7 +2354,7 @@ static size_t
 crypto_overhead_dervied (krb5_context context,
 			 krb5_crypto  crypto)
 {
-    struct encryption_type *et = crypto->et;
+    struct _krb5_encryption_type *et = crypto->et;
     size_t res;
 
     if (et->keyed_checksum)
@@ -2401,7 +2401,7 @@ krb5_random_to_key(krb5_context context,
 		   krb5_keyblock *key)
 {
     krb5_error_code ret;
-    struct encryption_type *et = _krb5_find_enctype(type);
+    struct _krb5_encryption_type *et = _krb5_find_enctype(type);
     if(et == NULL) {
 	krb5_set_error_message(context, KRB5_PROG_ETYPE_NOSUPP,
 			       N_("encryption type %d not supported", ""),
@@ -2435,7 +2435,7 @@ krb5_crypto_prf_length(krb5_context context,
 		       krb5_enctype type,
 		       size_t *length)
 {
-    struct encryption_type *et = _krb5_find_enctype(type);
+    struct _krb5_encryption_type *et = _krb5_find_enctype(type);
 
     if(et == NULL || et->prf_length == 0) {
 	krb5_set_error_message(context, KRB5_PROG_ETYPE_NOSUPP,
@@ -2454,7 +2454,7 @@ krb5_crypto_prf(krb5_context context,
 		const krb5_data *input,
 		krb5_data *output)
 {
-    struct encryption_type *et = crypto->et;
+    struct _krb5_encryption_type *et = crypto->et;
 
     krb5_data_zero(output);
 
@@ -2646,8 +2646,8 @@ krb5_enctypes_compatible_keys(krb5_context context,
 			      krb5_enctype etype1,
 			      krb5_enctype etype2)
 {
-    struct encryption_type *e1 = _krb5_find_enctype(etype1);
-    struct encryption_type *e2 = _krb5_find_enctype(etype2);
+    struct _krb5_encryption_type *e1 = _krb5_find_enctype(etype1);
+    struct _krb5_encryption_type *e2 = _krb5_find_enctype(etype2);
     return e1 != NULL && e2 != NULL && e1->keytype == e2->keytype;
 }
 

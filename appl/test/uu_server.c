@@ -62,8 +62,7 @@ proto (int sock, const char *service)
 
     status = krb5_auth_con_init (context, &auth_context);
     if (status)
-	errx (1, "krb5_auth_con_init: %s",
-	      krb5_get_err_text(context, status));
+	krb5_err(context, 1, status, "krb5_auth_con_init");
 
     local_addr.addr_type = AF_INET;
     local_addr.address.length = sizeof(local.sin_addr);
@@ -78,8 +77,7 @@ proto (int sock, const char *service)
 				     &local_addr,
 				     &remote_addr);
     if (status)
-	errx (1, "krb5_auth_con_setaddr: %s",
-	      krb5_get_err_text(context, status));
+	krb5_err(context, 1, status, "krb5_auth_con_setaddr");
 
     status = krb5_read_message(context, &sock, &client_name);
     if(status)
@@ -150,8 +148,7 @@ proto (int sock, const char *service)
 			   &data,
 			   NULL);
     if (status)
-	errx (1, "krb5_rd_safe: %s",
-	      krb5_get_err_text(context, status));
+	krb5_err(context, 1, status, "krb5_rd_safe");
 
     printf ("safe packet: %.*s\n", (int)data.length,
 	    (char *)data.data);
@@ -166,8 +163,7 @@ proto (int sock, const char *service)
 			   &data,
 			   NULL);
     if (status)
-	errx (1, "krb5_rd_priv: %s",
-	      krb5_get_err_text(context, status));
+	krb5_err(context, 1, status, "krb5_rd_priv");
 
     printf ("priv packet: %.*s\n", (int)data.length,
 	    (char *)data.data);

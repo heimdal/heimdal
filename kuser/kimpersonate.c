@@ -103,14 +103,19 @@ encode_ticket (krb5_context context,
     if (ret)
 	krb5_err(context, 1, ret, "EncTicketPart");
 
-    krb5_crypto_init(context, skey, etype, &crypto);
-    krb5_encrypt_EncryptedData (context,
-				crypto,
-				KRB5_KU_TICKET,
-				buf,
-				len,
-				skvno,
-				&ticket.enc_part);
+    ret = krb5_crypto_init(context, skey, etype, &crypto);
+    if (ret)
+	krb5_err(context, 1, ret, "krb5_crypto_init");
+    ret = krb5_encrypt_EncryptedData (context,
+				      crypto,
+				      KRB5_KU_TICKET,
+				      buf,
+				      len,
+				      skvno,
+				      &ticket.enc_part);
+    if (ret)
+	krb5_err(context, 1, ret, "krb5_encrypt_EncryptedData");
+
     free(buf);
     krb5_crypto_destroy(context, crypto);
 

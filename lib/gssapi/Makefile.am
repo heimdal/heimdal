@@ -166,6 +166,7 @@ ntlmsrc = \
 	ntlm/canonicalize_name.c \
 	ntlm/compare_name.c \
 	ntlm/context_time.c \
+	ntlm/creds.c \
 	ntlm/crypto.c \
 	ntlm/delete_sec_context.c \
 	ntlm/display_name.c \
@@ -181,10 +182,11 @@ ntlmsrc = \
 	ntlm/indicate_mechs.c \
 	ntlm/init_sec_context.c \
 	ntlm/inquire_context.c \
-	ntlm/inquire_cred.c \
 	ntlm/inquire_cred_by_mech.c \
 	ntlm/inquire_mechs_for_name.c \
 	ntlm/inquire_names_for_mech.c \
+	ntlm/inquire_sec_context_by_oid.c \
+	ntlm/iter_cred.c \
 	ntlm/process_context_token.c \
 	ntlm/release_cred.c \
 	ntlm/release_name.c \

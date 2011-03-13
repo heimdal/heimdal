@@ -81,5 +81,10 @@ typedef enum kcm_operation {
 #define _PATH_KCM_SOCKET      "/var/run/.kcm_socket"
 #define _PATH_KCM_DOOR      "/var/run/.kcm_door"
 
+#define KCM_NTLM_FLAG_SESSIONKEY 1
+#define KCM_NTLM_FLAG_NTLM2_SESSION 2
+#define KCM_NTLM_FLAG_KEYEX 4
+#define KCM_NTLM_FLAG_AV_GUEST 8
+
 #endif /* __KCM_H__ */
 

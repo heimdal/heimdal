@@ -49,8 +49,10 @@
 #include <gssapi.h>
 #include <gssapi_ntlm.h>
 #include <gssapi_mech.h>
+#include <gssapi_oid.h>
 
 #include <krb5.h>
+#include <kcm.h>
 #include <heim_threads.h>
 
 #include <heimntlm.h>
@@ -109,6 +111,7 @@ typedef struct {
     void *ictx;
     ntlm_cred client;
     OM_uint32 gssflags;
+    uint32_t kcmflags;
     uint32_t flags;
     uint32_t status;
 #define STATUS_OPEN 1

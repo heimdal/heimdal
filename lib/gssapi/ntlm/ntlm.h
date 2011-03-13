@@ -119,6 +119,8 @@ typedef struct {
 #define STATUS_SESSIONKEY 4
     krb5_data sessionkey;
 
+    gss_buffer_desc pac;
+
     union {
 	struct {
 	    struct {

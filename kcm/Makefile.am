@@ -21,6 +21,7 @@ kcm_SOURCES =		\
 	log.c		\
 	main.c		\
 	protocol.c	\
+	sessions.c	\
 	renew.c
 
 $(srcdir)/kcm-protos.h:

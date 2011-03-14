@@ -395,9 +395,10 @@ kadmind_dispatch(void *kadm_handlep, krb5_boolean initial,
 		}
 	    }
 	}
-	ret = kadm5_randkey_principal_3(kadm_handle, princ, keepold, n_ks_tuple,
-					ks_tuple, &new_keys, &n_keys);
-	krb5_free_principal(context->context, princ);
+	ret = kadm5_randkey_principal_3(kadm_handlep, princ, keepold,
+					n_ks_tuple, ks_tuple, &new_keys,
+					&n_keys);
+	krb5_free_principal(contextp->context, princ);
 
 	krb5_storage_free(sp);
 	sp = krb5_storage_emem();

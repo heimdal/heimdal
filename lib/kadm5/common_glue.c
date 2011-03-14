@@ -46,6 +46,17 @@ kadm5_chpass_principal(void *server_handle,
 }
 
 kadm5_ret_t
+kadm5_chpass_principal_3(void *server_handle,
+		         krb5_principal princ,
+		         krb5_boolean keepold,
+		         int n_ks_tuple,
+		         krb5_key_salt_tuple *ks_tuple,
+		         const char *password)
+{
+    return __CALL(chpass_principal, (server_handle, princ, password));
+}
+
+kadm5_ret_t
 kadm5_chpass_principal_with_key(void *server_handle,
 				krb5_principal princ,
 				int n_key_data,
@@ -92,6 +103,19 @@ kadm5_get_principal(void *server_handle,
     return __CALL(get_principal, (server_handle, princ, out, mask));
 }
 
+#if 0
+/**
+ * Extract decrypted keys from kadm5_principal_ent_t object.
+ *
+ * @server_handle is the kadm5 handle
+ * @entry is the HDB entry for the principal in question
+ * @ktype is the enctype to get a key for, or -1 to get the first one
+ * @stype is the salttype to get a key for, or -1 to get the first match
+ * @kvno is the kvno to search for, or -1 to get the first match (highest kvno)
+ * @keyblock is where the key will be placed
+ * @keysalt, if not NULL, is where the salt will be placed
+ * @kvnop, if not NULL, is where the selected kvno will be placed
+ */
 kadm5_ret_t
 kadm5_decrypt_key(void *server_handle,
                   kadm5_principal_ent_t entry,
@@ -99,8 +123,12 @@ kadm5_decrypt_key(void *server_handle,
 		  int32_t kvno, krb5_keyblock *keyblock,
                   krb5_keysalt *keysalt, int *kvnop)
 {
-	
+	int i;
+
+	for (i = 0; i < entry->n_key_data; i++) {
+	}
 }
+#endif
 
 kadm5_ret_t
 kadm5_modify_principal(void *server_handle,

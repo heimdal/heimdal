@@ -87,9 +87,6 @@ AH_BOTTOM([
 ])
 
 AC_CONFIG_FILES([Makefile
-dnl                 libedit.pc
                  src/Makefile
-dnl                 doc/Makefile
-dnl                 examples/Makefile])
 ])
 AC_OUTPUT

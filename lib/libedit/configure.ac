@@ -87,8 +87,9 @@ AH_BOTTOM([
 ])
 
 AC_CONFIG_FILES([Makefile
-                 libedit.pc
+dnl                 libedit.pc
                  src/Makefile
-                 doc/Makefile
-                 examples/Makefile])
+dnl                 doc/Makefile
+dnl                 examples/Makefile])
+])
 AC_OUTPUT

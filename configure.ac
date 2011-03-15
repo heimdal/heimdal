@@ -139,13 +139,6 @@ if test "$enable_kx509" != no ;then
 	AC_DEFINE([KX509], 1, [Define to enable kx509.])
 fi
 
-AC_ARG_ENABLE(krb4, 
-	AS_HELP_STRING([--disable-krb4],
-		[if you want disable to krb4 support]))
-if test "$enable_krb4" != no ;then
-	AC_DEFINE([KRB4], 1, [Define to enable Kerberos 4.])
-fi
-
 dnl Need to test if pkg-config exists
 PKG_PROG_PKG_CONFIG
 

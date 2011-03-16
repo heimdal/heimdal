@@ -33,6 +33,7 @@ CLEANFILES =			\
 	asn1-template.h		\
 	asn1_err.h		\
 	base64.h		\
+	ccache_plugin.h		\
 	cms_asn1.h 		\
 	crmf_asn1.h		\
 	com_err.h		\

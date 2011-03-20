@@ -70,6 +70,7 @@ krb5src = \
 	krb5/set_sec_context_option.c \
 	krb5/ticket_flags.c \
 	krb5/unwrap.c \
+	krb5/userok.c \
 	krb5/verify_mic.c \
 	krb5/wrap.c
 

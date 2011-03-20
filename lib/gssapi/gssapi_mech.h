@@ -564,6 +564,8 @@ typedef struct gssapi_mech_interface_desc {
 	_gss_cred_label_set_t		*gm_cred_label_set;
         gss_mo_desc			*gm_mo;
         size_t				 gm_mo_num;
+        _gss_pname_to_uid_t             *gm_pname_to_uid;
+        _gss_userok_t                   *gm_userok;
         _gss_display_name_ext_t         *gm_display_name_ext;
         _gss_inquire_name_t             *gm_inquire_name;
         _gss_get_name_attribute_t       *gm_get_name_attribute;
@@ -572,8 +574,6 @@ typedef struct gssapi_mech_interface_desc {
         _gss_export_name_composite_t    *gm_export_name_composite;
         _gss_acquire_cred_with_password_t   *gm_acquire_cred_with_password;
         _gss_add_cred_with_password_t   *gm_add_cred_with_password;
-        _gss_pname_to_uid_t             *gm_pname_to_uid;
-        _gss_userok_t                   *gm_userok;
         struct gss_mech_compat_desc_struct  *gm_compat;
 } gssapi_mech_interface_desc, *gssapi_mech_interface;
 

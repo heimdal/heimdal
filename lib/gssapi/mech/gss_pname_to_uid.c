@@ -34,15 +34,15 @@
 
 OM_uint32
 gss_pname_to_uid(OM_uint32 *minor_status,
-                 const gss_name_t input_name,
+                 const gss_name_t pname,
                  const gss_OID mech_type,
-                 uid_t *uidOut)
+                 uid_t *uidp)
 {
-    OM_uint32 major_status;
-    struct _gss_name *name = (struct _gss_name *) input_name;
-    struct _gss_mechanism_name *mn;
+    OM_uint32 major_status = GSS_S_UNAVAILABLE;
+    struct _gss_name *name = (struct _gss_name *) pname;
+    struct _gss_mechanism_name *mn = NULL;
 
-    *uidOut = -1;
+    *minor_status = 0;
 
     if (mech_type != GSS_C_NO_OID) {
         major_status = _gss_find_mn(minor_status, name, mech_type, &mn);
@@ -52,24 +52,28 @@ gss_pname_to_uid(OM_uint32 *minor_status,
         if (mn->gmn_mech->gm_pname_to_uid == NULL)
             return GSS_S_UNAVAILABLE;
 
-        return mn->gmn_mech->gm_pname_to_uid(minor_status, mn->gmn_name,
-                                             mech_type, uidOut);
-    }
-
-    major_status = GSS_S_UNAVAILABLE;
-
-    HEIM_SLIST_FOREACH(mn, &name->gn_mn, gmn_link) {
-        if (mn->gmn_mech->gm_pname_to_uid == NULL)
-
-            continue;
-
         major_status = mn->gmn_mech->gm_pname_to_uid(minor_status,
                                                      mn->gmn_name,
-                                                     mn->gmn_mech_oid,
-                                                     uidOut);
-        if (major_status != GSS_S_UNAVAILABLE)
-            break;
+                                                     mech_type,
+                                                     uidp);
+    } else {
+        HEIM_SLIST_FOREACH(mn, &name->gn_mn, gmn_link) {
+            if (mn->gmn_mech->gm_pname_to_uid == NULL)
+                continue;
+
+            major_status = mn->gmn_mech->gm_pname_to_uid(minor_status,
+                                                         mn->gmn_name,
+                                                         mn->gmn_mech_oid,
+                                                         uidp);
+            if (major_status != GSS_S_UNAVAILABLE)
+                break;
+        }
     }
+
+    if (major_status != GSS_S_COMPLETE &&
+        major_status != GSS_S_UNAVAILABLE &&
+        mn != NULL)
+        _gss_mg_error(mn->gmn_mech, major_status, *minor_status);
 
     return major_status;
 }

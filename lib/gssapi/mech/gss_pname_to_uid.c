@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, PADL Software Pty Ltd.
+ * Copyright (c) 2011, PADL Software Pty Ltd.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -33,36 +33,42 @@
 #include "mech_locl.h"
 
 OM_uint32
-gss_release_any_name_mapping(OM_uint32 *minor_status,
-		             gss_name_t input_name,
-		             gss_buffer_t type_id,
-		             gss_any_t *input)
+gss_pname_to_uid(OM_uint32 *minor_status,
+                 const gss_name_t input_name,
+                 const gss_OID mech_type,
+                 uid_t *uidOut)
 {
-    OM_uint32 major_status = GSS_S_UNAVAILABLE;
+    OM_uint32 major_status;
     struct _gss_name *name = (struct _gss_name *) input_name;
     struct _gss_mechanism_name *mn;
-        
-    *minor_status = 0;
 
-    if (input_name == GSS_C_NO_NAME)
-        return GSS_S_BAD_NAME;
+    *uidOut = -1;
+
+    if (mech_type != GSS_C_NO_OID) {
+        major_status = _gss_find_mn(minor_status, name, mech_type, &mn);
+        if (GSS_ERROR(major_status))
+            return major_status;
+
+        if (mn->gmn_mech->gm_pname_to_uid == NULL)
+            return GSS_S_UNAVAILABLE;
+
+        return mn->gmn_mech->gm_pname_to_uid(minor_status, mn->gmn_name,
+                                             mech_type, uidOut);
+    }
+
+    major_status = GSS_S_UNAVAILABLE;
 
     HEIM_SLIST_FOREACH(mn, &name->gn_mn, gmn_link) {
-        gssapi_mech_interface m = mn->gmn_mech;
+        if (mn->gmn_mech->gm_pname_to_uid == NULL)
 
-        if (!m->gm_release_any_name_mapping)
             continue;
 
-        major_status = m->gm_release_any_name_mapping(minor_status,
-                                                      mn->gmn_name,
-                                                      type_id,
-                                                      input);
-        if (GSS_ERROR(major_status))
-            _gss_mg_error(m, major_status, *minor_status);
-        else {
-            *input = (gss_any_t)0;
+        major_status = mn->gmn_mech->gm_pname_to_uid(minor_status,
+                                                     mn->gmn_name,
+                                                     mn->gmn_mech_oid,
+                                                     uidOut);
+        if (major_status != GSS_S_UNAVAILABLE)
             break;
-        }
     }
 
     return major_status;

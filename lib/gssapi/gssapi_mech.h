@@ -488,6 +488,20 @@ typedef OM_uint32 GSSAPI_CALLCONV _gss_add_cred_with_password_t (
 	       OM_uint32 *             /* acceptor_time_rec */
 	      );
 
+typedef OM_uint32 GSSAPI_CALLCONV _gss_pname_to_uid_t (
+	       OM_uint32 *,		/* minor_status */
+	       const gss_name_t,	/* name */
+	       const gss_OID,		/* mech_type */
+	       uid_t *			/* uidOut */
+	      );
+
+typedef OM_uint32 GSSAPI_CALLCONV _gss_userok_t (
+	       OM_uint32 *,		/* minor_status */
+	       const gss_name_t,	/* name */
+	       const char *,		/* user */
+	       int *			/*user_ok */
+	      );
+
 /* mechglue internal */
 struct gss_mech_compat_desc_struct;
 
@@ -558,7 +572,9 @@ typedef struct gssapi_mech_interface_desc {
         _gss_export_name_composite_t    *gm_export_name_composite;
         _gss_acquire_cred_with_password_t   *gm_acquire_cred_with_password;
         _gss_add_cred_with_password_t   *gm_add_cred_with_password;
-        gss_mech_compat_desc_struct     *gm_compat;
+        _gss_pname_to_uid_t             *gm_pname_to_uid;
+        _gss_userok_t                   *gm_userok;
+        struct gss_mech_compat_desc_struct  *gm_compat;
 } gssapi_mech_interface_desc, *gssapi_mech_interface;
 
 gssapi_mech_interface

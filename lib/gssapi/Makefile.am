@@ -117,16 +117,15 @@ mechsrc = \
 	mech/gss_inquire_name.c \
 	mech/gss_inquire_names_for_mech.c \
 	mech/gss_krb5.c \
-	mech/gss_map_name_to_any.c \
 	mech/gss_mech_switch.c \
 	mech/gss_mo.c \
 	mech/gss_names.c \
 	mech/gss_oid.c \
 	mech/gss_oid_equal.c \
 	mech/gss_oid_to_str.c \
+	mech/gss_pname_to_uid.c \
 	mech/gss_process_context_token.c \
 	mech/gss_pseudo_random.c \
-	mech/gss_release_any_name_mapping.c \
 	mech/gss_release_buffer.c \
 	mech/gss_release_cred.c \
 	mech/gss_release_name.c \
@@ -141,6 +140,7 @@ mechsrc = \
 	mech/gss_test_oid_set_member.c \
 	mech/gss_unseal.c \
 	mech/gss_unwrap.c \
+	mech/gss_userok.c \
 	mech/gss_utils.c \
 	mech/gss_verify.c \
 	mech/gss_verify_mic.c \

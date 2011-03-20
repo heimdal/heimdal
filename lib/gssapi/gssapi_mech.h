@@ -393,47 +393,6 @@ _gss_cred_label_get_t(OM_uint32 * /* minor_status */,
 		      const char * /* label */,
 		      gss_buffer_t /* value */);
 
-typedef struct gss_mo_desc_struct gss_mo_desc;
-
-struct gss_mo_desc_struct {
-    gss_OID option;
-    OM_uint32 flags;
-#define GSS_MO_MA		1
-#define GSS_MO_MA_CRITICAL	2
-    const char *name;
-    void *ctx;
-    int (*get)(gss_const_OID, gss_mo_desc *, gss_buffer_t);
-    int (*set)(gss_const_OID, gss_mo_desc *, int, gss_buffer_t);
-};
-
-typedef OM_uint32 GSSAPI_CALLCONV _gss_acquire_cred_with_password_t
-	      (OM_uint32 *,            /* minor_status */
-	       const gss_name_t,       /* desired_name */
-	       const gss_buffer_t,     /* password */
-	       OM_uint32,              /* time_req */
-	       const gss_OID_set,      /* desired_mechs */
-	       gss_cred_usage_t,       /* cred_usage */
-	       gss_cred_id_t *,        /* output_cred_handle */
-	       gss_OID_set *,          /* actual_mechs */
-	       OM_uint32 *             /* time_rec */
-	      );
-
-
-typedef OM_uint32 GSSAPI_CALLCONV _gss_add_cred_with_password_t (
-	       OM_uint32 *,            /* minor_status */
-	       const gss_cred_id_t,    /* input_cred_handle */
-	       const gss_name_t,       /* desired_name */
-	       const gss_OID,          /* desired_mech */
-	       const gss_buffer_t,     /* password */
-	       gss_cred_usage_t,       /* cred_usage */
-	       OM_uint32,              /* initiator_time_req */
-	       OM_uint32,              /* acceptor_time_req */
-	       gss_cred_id_t *,        /* output_cred_handle */
-	       gss_OID_set *,          /* actual_mechs */
-	       OM_uint32 *,            /* initiator_time_rec */
-	       OM_uint32 *             /* acceptor_time_rec */
-	      );
-
 typedef OM_uint32 GSSAPI_CALLCONV _gss_display_name_ext_t (
 	       OM_uint32 *,            /* minor_status */
 	       gss_name_t,             /* name */
@@ -480,20 +439,54 @@ typedef OM_uint32 GSSAPI_CALLCONV _gss_export_name_composite_t (
 	       gss_buffer_t           /* exp_composite_name */
 	    );
 
-typedef OM_uint32 GSSAPI_CALLCONV _gss_map_name_to_any_t (
-	       OM_uint32 *,           /* minor_status */
-	       gss_name_t,            /* name */
-	       int,                   /* authenticated */
-	       gss_buffer_t,          /* type_id */
-	       gss_any_t *            /* output */
-	    );
+/*
+ *
+ */
 
-typedef OM_uint32 GSSAPI_CALLCONV _gss_release_any_name_mapping_t (
-	       OM_uint32 *,           /* minor_status */
-	       gss_name_t,            /* name */
-	       gss_buffer_t,          /* type_id */
-	       gss_any_t *            /* input */
-	    );
+typedef struct gss_mo_desc_struct gss_mo_desc;
+
+typedef OM_uint32 GSSAPI_CALLCONV
+_gss_mo_init (OM_uint32 *, gss_OID, gss_mo_desc **, size_t *);
+
+
+struct gss_mo_desc_struct {
+    gss_OID option;
+    OM_uint32 flags;
+#define GSS_MO_MA		1
+#define GSS_MO_MA_CRITICAL	2
+    const char *name;
+    void *ctx;
+    int (*get)(gss_const_OID, gss_mo_desc *, gss_buffer_t);
+    int (*set)(gss_const_OID, gss_mo_desc *, int, gss_buffer_t);
+};
+
+typedef OM_uint32 GSSAPI_CALLCONV _gss_acquire_cred_with_password_t
+	      (OM_uint32 *,            /* minor_status */
+	       const gss_name_t,       /* desired_name */
+	       const gss_buffer_t,     /* password */
+	       OM_uint32,              /* time_req */
+	       const gss_OID_set,      /* desired_mechs */
+	       gss_cred_usage_t,       /* cred_usage */
+	       gss_cred_id_t *,        /* output_cred_handle */
+	       gss_OID_set *,          /* actual_mechs */
+	       OM_uint32 *             /* time_rec */
+	      );
+
+
+typedef OM_uint32 GSSAPI_CALLCONV _gss_add_cred_with_password_t (
+	       OM_uint32 *,            /* minor_status */
+	       const gss_cred_id_t,    /* input_cred_handle */
+	       const gss_name_t,       /* desired_name */
+	       const gss_OID,          /* desired_mech */
+	       const gss_buffer_t,     /* password */
+	       gss_cred_usage_t,       /* cred_usage */
+	       OM_uint32,              /* initiator_time_req */
+	       OM_uint32,              /* acceptor_time_req */
+	       gss_cred_id_t *,        /* output_cred_handle */
+	       gss_OID_set *,          /* actual_mechs */
+	       OM_uint32 *,            /* initiator_time_rec */
+	       OM_uint32 *             /* acceptor_time_rec */
+	      );
 
 /* mechglue internal */
 struct gss_mech_compat_desc_struct;
@@ -504,70 +497,68 @@ struct gss_mech_compat_desc_struct;
 #define GM_USE_MG_CRED      	1	/* uses mech glue credentials */
 
 typedef struct gssapi_mech_interface_desc {
-	unsigned			     gm_version;
-	const char			    *gm_name;
-	gss_OID_desc			     gm_mech_oid;
-        unsigned			     gm_flags;
-	_gss_acquire_cred_t		    *gm_acquire_cred;
-	_gss_release_cred_t		    *gm_release_cred;
-	_gss_init_sec_context_t		    *gm_init_sec_context;
-	_gss_accept_sec_context_t	    *gm_accept_sec_context;
-	_gss_process_context_token_t	    *gm_process_context_token;
-	_gss_delete_sec_context_t	    *gm_delete_sec_context;
-	_gss_context_time_t		    *gm_context_time;
-	_gss_get_mic_t			    *gm_get_mic;
-	_gss_verify_mic_t		    *gm_verify_mic;
-	_gss_wrap_t			    *gm_wrap;
-	_gss_unwrap_t			    *gm_unwrap;
-	_gss_display_status_t		    *gm_display_status;
-	_gss_indicate_mechs_t		    *gm_indicate_mechs;
-	_gss_compare_name_t		    *gm_compare_name;
-	_gss_display_name_t		    *gm_display_name;
-	_gss_import_name_t		    *gm_import_name;
-	_gss_export_name_t		    *gm_export_name;
-	_gss_release_name_t		    *gm_release_name;
-	_gss_inquire_cred_t		    *gm_inquire_cred;
-	_gss_inquire_context_t		    *gm_inquire_context;
-	_gss_wrap_size_limit_t		    *gm_wrap_size_limit;
-	_gss_add_cred_t			    *gm_add_cred;
-	_gss_inquire_cred_by_mech_t	    *gm_inquire_cred_by_mech;
-	_gss_export_sec_context_t	    *gm_export_sec_context;
-	_gss_import_sec_context_t	    *gm_import_sec_context;
-	_gss_inquire_names_for_mech_t	    *gm_inquire_names_for_mech;
-	_gss_inquire_mechs_for_name_t	    *gm_inquire_mechs_for_name;
-	_gss_canonicalize_name_t	    *gm_canonicalize_name;
-	_gss_duplicate_name_t		    *gm_duplicate_name;
-	_gss_inquire_sec_context_by_oid	    *gm_inquire_sec_context_by_oid;
-	_gss_inquire_cred_by_oid	    *gm_inquire_cred_by_oid;
-	_gss_set_sec_context_option	    *gm_set_sec_context_option;
-	_gss_set_cred_option		    *gm_set_cred_option;
-	_gss_pseudo_random		    *gm_pseudo_random;
-	_gss_wrap_iov_t			    *gm_wrap_iov;
-	_gss_unwrap_iov_t		    *gm_unwrap_iov;
-	_gss_wrap_iov_length_t		    *gm_wrap_iov_length;
-	_gss_store_cred_t		    *gm_store_cred;
-	_gss_export_cred_t		    *gm_export_cred;
-	_gss_import_cred_t		    *gm_import_cred;
-	_gss_acquire_cred_ex_t		    *gm_acquire_cred_ex;
-	_gss_iter_creds_t		    *gm_iter_creds;
-	_gss_destroy_cred_t		    *gm_destroy_cred;
-	_gss_cred_hold_t		    *gm_cred_hold;
-	_gss_cred_unhold_t		    *gm_cred_unhold;
-	_gss_cred_label_get_t		    *gm_cred_label_get;
-	_gss_cred_label_set_t		    *gm_cred_label_set;
-        gss_mo_desc			    *gm_mo;
-        size_t				     gm_mo_num;
-        struct gss_mech_compat_desc_struct  *gm_compat;
-        _gss_display_name_ext_t             *gm_display_name_ext;
-        _gss_inquire_name_t                 *gm_inquire_name;
-        _gss_get_name_attribute_t           *gm_get_name_attribute;
-        _gss_set_name_attribute_t           *gm_set_name_attribute;
-        _gss_delete_name_attribute_t        *gm_delete_name_attribute;
-        _gss_export_name_composite_t        *gm_export_name_composite;
-        _gss_map_name_to_any_t              *gm_map_name_to_any;
-        _gss_release_any_name_mapping_t     *gm_release_any_name_mapping;
+	unsigned			gm_version;
+	const char			*gm_name;
+	gss_OID_desc			gm_mech_oid;
+        unsigned			gm_flags;
+	_gss_acquire_cred_t		*gm_acquire_cred;
+	_gss_release_cred_t		*gm_release_cred;
+	_gss_init_sec_context_t		*gm_init_sec_context;
+	_gss_accept_sec_context_t	*gm_accept_sec_context;
+	_gss_process_context_token_t	*gm_process_context_token;
+	_gss_delete_sec_context_t	*gm_delete_sec_context;
+	_gss_context_time_t		*gm_context_time;
+	_gss_get_mic_t			*gm_get_mic;
+	_gss_verify_mic_t		*gm_verify_mic;
+	_gss_wrap_t			*gm_wrap;
+	_gss_unwrap_t			*gm_unwrap;
+	_gss_display_status_t		*gm_display_status;
+	_gss_indicate_mechs_t		*gm_indicate_mechs;
+	_gss_compare_name_t		*gm_compare_name;
+	_gss_display_name_t		*gm_display_name;
+	_gss_import_name_t		*gm_import_name;
+	_gss_export_name_t		*gm_export_name;
+	_gss_release_name_t		*gm_release_name;
+	_gss_inquire_cred_t		*gm_inquire_cred;
+	_gss_inquire_context_t		*gm_inquire_context;
+	_gss_wrap_size_limit_t		*gm_wrap_size_limit;
+	_gss_add_cred_t			*gm_add_cred;
+	_gss_inquire_cred_by_mech_t	*gm_inquire_cred_by_mech;
+	_gss_export_sec_context_t	*gm_export_sec_context;
+	_gss_import_sec_context_t	*gm_import_sec_context;
+	_gss_inquire_names_for_mech_t	*gm_inquire_names_for_mech;
+	_gss_inquire_mechs_for_name_t	*gm_inquire_mechs_for_name;
+	_gss_canonicalize_name_t	*gm_canonicalize_name;
+	_gss_duplicate_name_t		*gm_duplicate_name;
+	_gss_inquire_sec_context_by_oid	*gm_inquire_sec_context_by_oid;
+	_gss_inquire_cred_by_oid	*gm_inquire_cred_by_oid;
+	_gss_set_sec_context_option	*gm_set_sec_context_option;
+	_gss_set_cred_option		*gm_set_cred_option;
+	_gss_pseudo_random		*gm_pseudo_random;
+	_gss_wrap_iov_t			*gm_wrap_iov;
+	_gss_unwrap_iov_t		*gm_unwrap_iov;
+	_gss_wrap_iov_length_t		*gm_wrap_iov_length;
+	_gss_store_cred_t		*gm_store_cred;
+	_gss_export_cred_t		*gm_export_cred;
+	_gss_import_cred_t		*gm_import_cred;
+	_gss_acquire_cred_ex_t		*gm_acquire_cred_ex;
+	_gss_iter_creds_t		*gm_iter_creds;
+	_gss_destroy_cred_t		*gm_destroy_cred;
+	_gss_cred_hold_t		*gm_cred_hold;
+	_gss_cred_unhold_t		*gm_cred_unhold;
+	_gss_cred_label_get_t		*gm_cred_label_get;
+	_gss_cred_label_set_t		*gm_cred_label_set;
+        gss_mo_desc			*gm_mo;
+        size_t				 gm_mo_num;
+        _gss_display_name_ext_t         *gm_display_name_ext;
+        _gss_inquire_name_t             *gm_inquire_name;
+        _gss_get_name_attribute_t       *gm_get_name_attribute;
+        _gss_set_name_attribute_t       *gm_set_name_attribute;
+        _gss_delete_name_attribute_t    *gm_delete_name_attribute;
+        _gss_export_name_composite_t    *gm_export_name_composite;
         _gss_acquire_cred_with_password_t   *gm_acquire_cred_with_password;
-        _gss_add_cred_with_password_t       *gm_add_cred_with_password;
+        _gss_add_cred_with_password_t   *gm_add_cred_with_password;
+        gss_mech_compat_desc_struct     *gm_compat;
 } gssapi_mech_interface_desc, *gssapi_mech_interface;
 
 gssapi_mech_interface

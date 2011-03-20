@@ -2,8 +2,8 @@
 
 include $(top_srcdir)/Makefile.am.common
 
-if EDITLINE
-dir_editline = editline
+if LIBEDIT
+dir_editline = libedit
 endif
 if OTP
 dir_otp = otp

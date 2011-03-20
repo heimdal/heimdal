@@ -357,10 +357,10 @@ _gss_load_mech(void)
 		OPTSYM(set_name_attribute);
 		OPTSYM(delete_name_attribute);
 		OPTSYM(export_name_composite);
-		OPTSYM(map_name_to_any);
-		OPTSYM(release_any_name_mapping);
 		OPTSPISYM(acquire_cred_with_password);
 		OPTSYM(add_cred_with_password);
+		OPTSYM(pname_to_uid);
+		OPTSYM(user_ok);
 
 		mi = dlsym(so, "gss_mo_init");
 		if (mi != NULL) {

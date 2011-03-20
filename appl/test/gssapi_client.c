@@ -94,6 +94,8 @@ do_trans (int sock, gss_ctx_id_t context_hdl)
     return 0;
 }
 
+extern char *password;
+
 static int
 proto (int sock, const char *hostname, const char *service)
 {
@@ -102,6 +104,7 @@ proto (int sock, const char *hostname, const char *service)
 
     int context_established = 0;
     gss_ctx_id_t context_hdl = GSS_C_NO_CONTEXT;
+    gss_cred_id_t cred = GSS_C_NO_CREDENTIAL;
     gss_buffer_desc real_input_token, real_output_token;
     gss_buffer_t input_token = &real_input_token,
 	output_token = &real_output_token;
@@ -129,6 +132,26 @@ proto (int sock, const char *hostname, const char *service)
     if (GSS_ERROR(maj_stat))
 	gss_err (1, min_stat,
 		 "Error importing name `%s@%s':\n", service, hostname);
+
+    if (password) {
+        gss_buffer_desc pw;
+
+        pw.value = password;
+        pw.length = strlen(password);
+
+        maj_stat = gss_acquire_cred_with_password(&min_stat,
+                                                  GSS_C_NO_NAME,
+                                                  &pw,
+                                                  GSS_C_INDEFINITE,
+                                                  GSS_C_NO_OID_SET,
+                                                  GSS_C_INITIATE,
+                                                  &cred,
+                                                  NULL,
+                                                  NULL);
+        if (GSS_ERROR(maj_stat))
+            gss_err (1, min_stat,
+                     "Error acquiring initiator credentials");
+    }
 
     addrlen = sizeof(local);
     if (getsockname (sock, (struct sockaddr *)&local, &addrlen) < 0
@@ -172,7 +195,7 @@ proto (int sock, const char *hostname, const char *service)
     while(!context_established) {
 	maj_stat =
 	    gss_init_sec_context(&min_stat,
-				 GSS_C_NO_CREDENTIAL,
+				 cred,
 				 &context_hdl,
 				 server,
 				 mech_oid,

@@ -30,6 +30,30 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+/*
+ * Portions Copyright (C) 2010 by the Massachusetts Institute of Technology.
+ * All rights reserved.
+ *
+ * Export of this software from the United States of America may
+ *   require a specific license from the United States Government.
+ *   It is the responsibility of any person or organization contemplating
+ *   export to obtain such a license before exporting.
+ *
+ * WITHIN THAT CONSTRAINT, permission to use, copy, modify, and
+ * distribute this software and its documentation for any purpose and
+ * without fee is hereby granted, provided that the above copyright
+ * notice appear in all copies and that both that copyright notice and
+ * this permission notice appear in supporting documentation, and that
+ * the name of M.I.T. not be used in advertising or publicity pertaining
+ * to distribution of the software without specific, written prior
+ * permission.  Furthermore if you modify this software you must label
+ * your software as modified software and not distribute it in such a
+ * fashion that it might be confused with the original M.I.T. software.
+ * M.I.T. makes no representations about the suitability of
+ * this software for any purpose.  It is provided "as is" without express
+ * or implied warranty.
+ */
+
 
 #include "test_locl.h"
 #include <gssapi/gssapi.h>
@@ -119,6 +143,11 @@ gss_err(int exitval, int status, const char *fmt, ...)
     va_end(args);
 }
 
+static gss_OID_desc eapMechs[] = {
+    { 10, "\x2B\x06\x01\x04\x01\xA9\x4A\x16\x01\x11" },
+    { 10, "\x2B\x06\x01\x04\x01\xA9\x4A\x16\x01\x12" },
+};
+
 gss_OID
 select_mech(const char *mech)
 {
@@ -126,10 +155,86 @@ select_mech(const char *mech)
 	return GSS_KRB5_MECHANISM;
     else if (strcasecmp(mech, "spnego") == 0)
 	return GSS_SPNEGO_MECHANISM;
+    else if (strcasecmp(mech, "eap-aes128") == 0)
+	return &eapMechs[0];
+    else if (strcasecmp(mech, "eap-aes256") == 0)
+	return &eapMechs[1];
     else if (strcasecmp(mech, "no-oid") == 0)
 	return GSS_C_NO_OID;
     else
-	errx (1, "Unknown mechanism '%s' (spnego, krb5, no-oid)", mech);
+	errx (1, "Unknown mechanism '%s' (spnego, krb5, eap-aes128, eap-aes256, no-oid)", mech);
+}
+
+static void
+dumpAttribute(OM_uint32 *minor,
+              gss_name_t name,
+              gss_buffer_t attribute,
+              int noisy)
+{
+    OM_uint32 major, tmp;
+    gss_buffer_desc value;
+    gss_buffer_desc display_value;
+    int authenticated = 0;
+    int complete = 0;
+    int more = -1;
+    unsigned int i;
+
+    while (more != 0) {
+        value.value = NULL;
+        display_value.value = NULL;
+
+        major = gss_get_name_attribute(minor, name, attribute, &authenticated,
+                                       &complete, &value, &display_value,
+                                       &more);
+        if (GSS_ERROR(major))
+            break;
+
+        fprintf(stderr, "Attribute %.*s %s %s\n\n%.*s\n",
+                (int)attribute->length, (char *)attribute->value,
+                authenticated ? "Authenticated" : "",
+                complete ? "Complete" : "",
+                (int)display_value.length, (char *)display_value.value);
+
+        if (noisy) {
+            for (i = 0; i < value.length; i++) {
+                if ((i % 32) == 0)
+                    fprintf(stderr, "\n");
+                fprintf(stderr, "%02x", ((char *)value.value)[i] & 0xFF);
+            }
+            fprintf(stderr, "\n\n");
+        }
+
+        gss_release_buffer(&tmp, &value);
+        gss_release_buffer(&tmp, &display_value);
+    }
+}
+
+static OM_uint32
+enumerateAttributes(OM_uint32 *minor,
+                    gss_name_t name,
+                    int noisy)
+{
+    OM_uint32 major, tmp;
+    int name_is_MN;
+    gss_OID mech = GSS_C_NO_OID;
+    gss_buffer_set_t attrs = GSS_C_NO_BUFFER_SET;
+    unsigned int i;
+
+    major = gss_inquire_name(minor, name, &name_is_MN, &mech, &attrs);
+    if (GSS_ERROR(major))
+        return major;
+
+    if (attrs != GSS_C_NO_BUFFER_SET) {
+        for (i = 0; i < attrs->count; i++)
+            dumpAttribute(minor, name, &attrs->elements[i], noisy);
+    }
+
+#if 0
+    gss_release_oid(&tmp, &mech);
+#endif
+    gss_release_buffer_set(&tmp, &attrs);
+
+    return major;
 }
 
 void
@@ -149,6 +254,7 @@ print_gss_name(const char *prefix, gss_name_t name)
 	     (int)name_token.length,
 	     (char *)name_token.value);
 
-    gss_release_buffer (&min_stat, &name_token);
+    enumerateAttributes(&min_stat, name, 1);
 
+    gss_release_buffer (&min_stat, &name_token);
 }

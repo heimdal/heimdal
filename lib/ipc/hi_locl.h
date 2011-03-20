@@ -57,6 +57,7 @@
 #include <sys/un.h>
 #endif
 
+#include <heimbase.h>
 #include <base64.h>
 
 #include <heim-ipc.h>

@@ -104,7 +104,7 @@
 #define KADM5_HIST_PRINCIPAL	"kadmin/history"
 #define KADM5_CHANGEPW_SERVICE	"kadmin/changepw"
 
-typedef struct _krb5_key_data {
+typedef struct {
     int16_t key_data_ver;	/* Version */
     int16_t key_data_kvno;	/* Key Version */
     int16_t key_data_type[2];	/* Array of types */

@@ -2,7 +2,7 @@ dnl Process this file with autoconf to produce a configure script.
 AC_REVISION($Revision$)
 AC_PREREQ(2.62)
 test -z "$CFLAGS" && CFLAGS="-g"
-AC_INIT([Heimdal],[1.4.99],[heimdal-bugs@h5l.org])
+AC_INIT([Heimdal],[1.5pre1],[heimdal-bugs@h5l.org])
 AC_CONFIG_SRCDIR([kuser/kinit.c])
 AC_CONFIG_HEADERS(include/config.h)
 AC_CONFIG_MACRO_DIR([cf])
@@ -137,13 +137,6 @@ AC_ARG_ENABLE(kx509,
 		[if you want disable to kx509 support]))
 if test "$enable_kx509" != no ;then
 	AC_DEFINE([KX509], 1, [Define to enable kx509.])
-fi
-
-AC_ARG_ENABLE(krb4, 
-	AS_HELP_STRING([--disable-krb4],
-		[if you want disable to krb4 support]))
-if test "$enable_krb4" != no ;then
-	AC_DEFINE([KRB4], 1, [Define to enable Kerberos 4.])
 fi
 
 dnl Need to test if pkg-config exists
@@ -284,7 +277,23 @@ rk_CHECK_MAN
 
 rk_TEST_PACKAGE(readline,
 [#include <stdio.h>
- #include <readline.h>],-lreadline,,, READLINE)
+#if defined(HAVE_READLINE_READLINE_H)
+#include <readline/readline.h>
+#elif defined(HAVE_READLINE_H)
+#include <readline.h>
+#endif
+],-lreadline,,, READLINE,, [readline.h readline/readline.h])
+
+rk_TEST_PACKAGE(libedit,
+[#include <stdio.h>
+#if defined(HAVE_READLINE_READLINE_H)
+#include <readline/readline.h>
+#elif defined(HAVE_READLINE_H)
+#include <readline.h>
+#endif
+],-ledit,,, READLINE,, [readline.h readline/readline.h])
+
+AC_CONFIG_SUBDIRS([lib/libedit])
 
 rk_TEST_PACKAGE(hesiod,[#include <hesiod.h>],-lhesiod,,, HESIOD)
 
@@ -596,7 +605,6 @@ AC_CONFIG_FILES(Makefile 		\
 	lib/asn1/Makefile		\
 	lib/com_err/Makefile		\
 	lib/hcrypto/Makefile		\
-	lib/editline/Makefile		\
 	lib/hx509/Makefile		\
 	lib/gssapi/Makefile		\
 	lib/ntlm/Makefile		\

@@ -46,7 +46,7 @@
 #define DPO(data,offset) ((void *)(((unsigned char *)data)  + offset))
 
 
-struct asn1_type_func prim[] = {
+static struct asn1_type_func prim[] = {
 #define el(name, type) {				\
 	(asn1_type_encode)der_put_##name,		\
 	(asn1_type_decode)der_get_##name,		\

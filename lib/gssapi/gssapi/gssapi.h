@@ -1025,9 +1025,23 @@ GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL gss_add_cred_with_password (
             OM_uint32 * /*acceptor_time_rec*/
            );
 
+GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL
+gss_pname_to_uid(
+        OM_uint32 *minor,
+        const gss_name_t name,
+        const gss_OID mech_type,
+        uid_t *uidOut);
+
+GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL
+gss_userok(OM_uint32 *minor,
+           const gss_name_t name,
+           const char *user,
+           int *user_ok);
+
 /*
  * Naming extensions
  */
+
 GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL gss_display_name_ext (
     OM_uint32 *,	/* minor_status */
     gss_name_t,		/* name */
@@ -1072,23 +1086,6 @@ GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL gss_export_name_composite (
     OM_uint32 *,	/* minor_status */
     gss_name_t,		/* name */
     gss_buffer_t	/* exp_composite_name */
-    );
-
-typedef struct gss_any *gss_any_t;
-
-GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL gss_map_name_to_any (
-    OM_uint32 *,	/* minor_status */
-    gss_name_t,		/* name */
-    int,		/* authenticated */
-    gss_buffer_t,	/* type_id */
-    gss_any_t *		/* output */
-    );
-
-GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL gss_release_any_name_mapping (
-    OM_uint32 *,	/* minor_status */
-    gss_name_t,		/* name */
-    gss_buffer_t,	/* type_id */
-    gss_any_t *		/* input */
     );
 
 /*

@@ -2,7 +2,8 @@
 
 HEIMDAL_GSS_2.0 {
 	global:
-		__gss_c_nt_anonymous;
+#		__gss_c_nt_anonymous;
+		__gss_c_nt_anonymous_oid_desc;
 		__gss_c_nt_export_name_oid_desc;
 		__gss_c_nt_hostbased_service_oid_desc;
 		__gss_c_nt_hostbased_service_x_oid_desc;
@@ -60,13 +61,12 @@ HEIMDAL_GSS_2.0 {
 		gss_krb5_get_tkt_flags;
 		gss_krb5_import_cred;
 		gss_krb5_set_allowable_enctypes;
-		gss_map_name_to_any;
 		gss_mg_collect_error;
 		gss_oid_equal;
 		gss_oid_to_str;
+		gss_pname_to_uid;
 		gss_process_context_token;
 		gss_pseudo_random;
-		gss_release_any_name_mapping;
 		gss_release_buffer;
 		gss_release_buffer_set;
 		gss_release_cred;
@@ -79,10 +79,12 @@ HEIMDAL_GSS_2.0 {
 		gss_set_name_attribute;
 		gss_set_sec_context_option;
 		gss_sign;
+		gss_store_cred;
 		gss_test_oid_set_member;
 		gss_unseal;
 		gss_unwrap;
 		gss_unwrap_iov;
+		gss_userok;
 		gss_verify;
 		gss_verify_mic;
 		gss_wrap;

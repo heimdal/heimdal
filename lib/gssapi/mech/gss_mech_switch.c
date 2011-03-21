@@ -388,9 +388,11 @@ _gss_load_mech(void)
 		continue;
 
 	bad:
-		free(m->gm_mech.gm_compat);
-		free(m->gm_mech.gm_mech_oid.elements);
-		free(m);
+		if (m != NULL) {
+			free(m->gm_mech.gm_compat);
+			free(m->gm_mech.gm_mech_oid.elements);
+			free(m);
+		}
 		dlclose(so);
 		continue;
 	}

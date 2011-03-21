@@ -32,6 +32,104 @@
 
 #include "mech_locl.h"
 
+static OM_uint32
+mech_pname_to_uid(OM_uint32 *minor_status,
+                  struct _gss_mechanism_name *mn,
+                  uid_t *uidp)
+{
+    OM_uint32 major_status = GSS_S_UNAVAILABLE;
+
+    *minor_status = 0;
+
+    if (mn->gmn_mech->gm_pname_to_uid == NULL)
+        return GSS_S_UNAVAILABLE;
+
+    major_status = mn->gmn_mech->gm_pname_to_uid(minor_status,
+                                                 mn->gmn_name,
+                                                 mn->gmn_mech_oid,
+                                                 uidp);
+    if (GSS_ERROR(major_status))
+        _gss_mg_error(mn->gmn_mech, major_status, *minor_status);
+
+    return major_status;
+}
+
+static OM_uint32
+attr_pname_to_uid(OM_uint32 *minor_status,
+                  struct _gss_mechanism_name *mn,
+                  uid_t *uidp)
+{
+    OM_uint32 major_status = GSS_S_UNAVAILABLE;
+    OM_uint32 tmpMinor;
+    int more = -1;
+    gss_buffer_desc attribute;
+
+    *minor_status = 0;
+
+    if (mn->gmn_mech->gm_get_name_attribute == NULL)
+        return GSS_S_UNAVAILABLE;
+
+    attribute.length = sizeof("local-login-user") - 1;
+    attribute.value = "local-login-user";
+
+    while (more != 0) {
+        gss_buffer_desc value;
+        gss_buffer_desc display_value;
+        int authenticated = 0, complete = 0, code;
+#ifdef POSIX_GETPWNAM_R
+        char pwbuf[2048];
+        struct passwd pw, *pwd;
+#else
+        struct passwd *pwd;
+#endif
+        char *localname;
+
+        major_status = mn->gmn_mech->gm_get_name_attribute(minor_status,
+                                                           mn->gmn_name,
+                                                           &attribute,
+                                                           &authenticated,
+                                                           &complete,
+                                                           &value,
+                                                           &display_value,
+                                                           &more);
+        if (GSS_ERROR(major_status)) {
+            _gss_mg_error(mn->gmn_mech, major_status, *minor_status);
+            break;
+        }
+
+        localname = malloc(value.length + 1);
+        if (localname == NULL) {
+            major_status = GSS_S_FAILURE;
+            *minor_status = ENOMEM;
+            break;
+        }
+
+        memcpy(localname, value.value, value.length);
+        localname[value.length] = '\0';
+
+#ifdef POSIX_GETPWNAM_R
+        if (getpwnam_r(localname, &pw, pwbuf, sizeof(pwbuf), &pwd) != 0)
+            pwd = NULL;
+#else
+        pwd = getpwnam(localname);
+#endif
+
+        free(localname);
+        gss_release_buffer(&tmpMinor, &value);
+        gss_release_buffer(&tmpMinor, &display_value);
+
+        if (code == 0 && pwd != NULL) {
+            *uidp = pwd->pw_uid;
+            major_status = GSS_S_COMPLETE;
+            *minor_status = 0;
+            break;
+        } else
+            major_status = GSS_S_UNAVAILABLE;
+    }
+
+    return major_status;
+}
+
 OM_uint32
 gss_pname_to_uid(OM_uint32 *minor_status,
                  const gss_name_t pname,
@@ -49,30 +147,23 @@ gss_pname_to_uid(OM_uint32 *minor_status,
         if (GSS_ERROR(major_status))
             return major_status;
 
-        if (mn->gmn_mech->gm_pname_to_uid == NULL)
-            return GSS_S_UNAVAILABLE;
-
-        major_status = mn->gmn_mech->gm_pname_to_uid(minor_status,
-                                                     mn->gmn_name,
-                                                     mech_type,
-                                                     uidp);
+        major_status = mech_pname_to_uid(minor_status, mn, uidp);
+        if (major_status != GSS_S_COMPLETE)
+            major_status = attr_pname_to_uid(minor_status, mn, uidp);
     } else {
         HEIM_SLIST_FOREACH(mn, &name->gn_mn, gmn_link) {
             if (mn->gmn_mech->gm_pname_to_uid == NULL)
                 continue;
 
-            major_status = mn->gmn_mech->gm_pname_to_uid(minor_status,
-                                                         mn->gmn_name,
-                                                         mn->gmn_mech_oid,
-                                                         uidp);
+            major_status = mech_pname_to_uid(minor_status, mn, uidp);
+            if (major_status != GSS_S_COMPLETE)
+                major_status = attr_pname_to_uid(minor_status, mn, uidp);
             if (major_status != GSS_S_UNAVAILABLE)
                 break;
         }
     }
 
-    if (major_status != GSS_S_COMPLETE &&
-        major_status != GSS_S_UNAVAILABLE &&
-        mn != NULL)
+    if (major_status != GSS_S_COMPLETE && mn != NULL)
         _gss_mg_error(mn->gmn_mech, major_status, *minor_status);
 
     return major_status;

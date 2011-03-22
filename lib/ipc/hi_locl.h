@@ -36,7 +36,10 @@
 #include "config.h"
 
 #include <sys/types.h>
+#include <sys/socket.h>
+#ifdef HAVE_SYS_UN_H
 #include <sys/un.h>
+#endif
 
 #include <sys/poll.h>
 
@@ -52,10 +55,6 @@
 
 #include <krb5-types.h>
 #include <asn1-common.h>
-
-#ifdef HAVE_SYS_UN_H
-#include <sys/un.h>
-#endif
 
 #include <heimbase.h>
 #include <base64.h>

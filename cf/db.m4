@@ -42,12 +42,11 @@ AS_IF([test "x$with_berkeley_db" != xno],
 	           db4/db.h				\
 	           db3/db.h				\
 	           db.h					\
-	           db_185.h				\
     ])])
 
 dnl db_create is used by db3 and db4 and db5
 
-  AC_FIND_FUNC_NO_LIBS(db_create, [$dbheader] db5 db4 db3 db, [
+  AC_FIND_FUNC_NO_LIBS(db_create_HACK, [$dbheader] db5 db4 db3 db, [
   #include <stdio.h>
   #ifdef HAVE_DBHEADER
   #include <$dbheader/db.h>
@@ -78,8 +77,6 @@ dnl dbopen is used by db1/db2
     #include <stdio.h>
     #if defined(HAVE_DB2_DB_H)
     #include <db2/db.h>
-    #elif defined(HAVE_DB_185_H)
-    #include <db_185.h>
     #elif defined(HAVE_DB_H)
     #include <db.h>
     #else

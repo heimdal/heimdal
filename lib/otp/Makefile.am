@@ -16,10 +16,14 @@ lib_LTLIBRARIES = libotp.la
 libotp_la_LDFLAGS = -version-info 1:5:1
 libotp_la_LIBADD  = $(LIB_hcrypto) $(LIB_roken) $(LIB_NDBM)
 
+if HAVE_DB1
+ndbm_wrap = ndbm_wrap.c ndbm_wrap.h
+else
 if HAVE_DB3
 ndbm_wrap = ndbm_wrap.c ndbm_wrap.h
 else
 ndbm_wrap =
+endif
 endif
 
 dist_libotp_la_SOURCES = \

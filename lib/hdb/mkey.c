@@ -32,6 +32,7 @@
  */
 
 #include "hdb_locl.h"
+#include <assert.h>
 #ifndef O_BINARY
 #define O_BINARY 0
 #endif
@@ -477,6 +478,85 @@ hdb_unseal_keys(krb5_context context, HDB *db, hdb_entry *ent)
     if (db->hdb_master_key_set == 0)
 	return 0;
     return hdb_unseal_keys_mkey(context, ent, db->hdb_master_key);
+}
+
+krb5_error_code
+hdb_unseal_keys_kvno(krb5_context context, HDB *db, krb5_kvno kvno,
+		     hdb_entry *ent)
+{
+    krb5_error_code ret = KRB5KRB_AP_ERR_NOKEY;	/* XXX need a better code? */
+    HDB_extension *tmp;
+    HDB_Ext_KeySet *hist_keys;
+    hdb_keyset *tmp_keys;
+    Key *tmp_val;
+    unsigned int tmp_len;
+    krb5_kvno tmp_kvno;
+    int i, k;
+
+    assert(kvno == 0 || kvno < ent->kvno);
+
+    tmp = hdb_find_extension(ent, choice_HDB_extension_data_hist_keys);
+    if (tmp == NULL)
+	return ret;
+
+    tmp_len = ent->keys.len;
+    tmp_val = ent->keys.val;
+    tmp_kvno = ent->kvno;
+
+    hist_keys = &tmp->data.u.hist_keys;
+
+    for (i = hist_keys->len - 1; i >= 0; i++) {
+	if (kvno != 0 && hist_keys->val[i].kvno != kvno)
+	    continue;
+	for (k = 0; k < hist_keys->val[i].keys.len; k++) {
+	    ret = hdb_unseal_key_mkey(context,
+				      &hist_keys->val[i].keys.val[k],
+				      db->hdb_master_key);
+	    if (ret)
+		return (ret);
+	}
+
+	if (kvno == 0)
+	    continue;
+
+	/*
+	 * NOTE: What follows is a bit of an ugly hack.
+	 *
+	 * This is the keyset we're being asked for, so we add the
+	 * current keyset to the history, leave the one we were asked
+	 * for in the history, and pretend the one we were asked for is
+	 * also the current keyset.
+	 *
+	 * This is a bit of a defensive hack in case an entry fetched
+	 * this way ever gets modified then stored: if the keyset is not
+	 * changed we can detect this and put things back, else we won't
+	 * drop any keysets from history by accident.
+	 *
+	 * Note too that we only ever get called with a non-zero kvno
+	 * either in the KDC or in cases where we aren't changing the
+	 * HDB entry anyways, which is why this is just a defensive
+	 * hack.  We also don't fetch specific kvnos in the dump case,
+	 * so there's no danger that we'll dump this entry and load it
+	 * again, repeatedly causing the history to grow boundelessly.
+	 */
+	tmp_keys = realloc(hist_keys->val,
+		      sizeof (*hist_keys->val) * (hist_keys->len + 1));
+	if (tmp_keys == NULL)
+	    return ENOMEM;
+
+	memmove(&tmp_keys[1], tmp_keys,
+		sizeof (*hist_keys->val) * hist_keys->len++);
+	tmp_keys[0].keys.len = ent->keys.len;
+	tmp_keys[0].keys.val = ent->keys.val;
+	tmp_keys[0].kvno = ent->kvno;
+	tmp_keys[0].replace_time = time(NULL);
+	i++;
+	ent->keys.len = hist_keys->val[i].keys.len;
+	ent->keys.val = hist_keys->val[i].keys.val;
+	ent->kvno = kvno;
+    }
+
+    return (ret);
 }
 
 krb5_error_code

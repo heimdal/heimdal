@@ -343,6 +343,16 @@ _gss_load_mech(void)
 		OPTSYM(wrap_iov);
 		OPTSYM(unwrap_iov);
 		OPTSYM(wrap_iov_length);
+		OPTSYM(store_cred);
+		OPTSYM(export_cred);
+		OPTSYM(import_cred);
+		OPTSYM(acquire_cred_ex);
+		OPTSYM(iter_creds);
+		OPTSYM(destroy_cred);
+		OPTSYM(cred_hold);
+		OPTSYM(cred_unhold);
+		OPTSYM(cred_label_get);
+		OPTSYM(cred_label_set);
 		OPTSYM(display_name_ext);
 		OPTSYM(inquire_name);
 		OPTSYM(get_name_attribute);

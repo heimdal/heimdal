@@ -459,9 +459,41 @@ extern GSSAPI_LIB_VARIABLE gss_OID_desc __gss_c_nt_export_name_oid_desc;
  * Finally, function prototypes for the GSS-API routines.
  */
 
+#define GSS_C_OPTION_MASK 0xffff
+#define GSS_C_CRED_NO_UI  0x10000
+
 GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL gss_acquire_cred
            (OM_uint32 * /*minor_status*/,
             const gss_name_t /*desired_name*/,
+            OM_uint32 /*time_req*/,
+            const gss_OID_set /*desired_mechs*/,
+            gss_cred_usage_t /*cred_usage*/,
+            gss_cred_id_t * /*output_cred_handle*/,
+            gss_OID_set * /*actual_mechs*/,
+            OM_uint32 * /*time_rec*/
+           );
+
+extern gss_OID_desc GSSAPI_LIB_VARIABLE __gss_c_cred_password_oid_desc;
+#define GSS_C_CRED_PASSWORD (&__gss_c_cred_password_oid_desc)
+
+extern gss_OID_desc GSSAPI_LIB_VARIABLE __gss_c_cred_certificate_oid_desc;
+#define GSS_C_CRED_CERTIFICATE (&__gss_c_cred_certificate_oid_desc)
+
+GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL gss_acquire_cred_ex
+           (OM_uint32 * /*minor_status*/,
+            const gss_name_t /*desired_name*/,
+            const gss_OID /*credential_type*/,
+            const void * /*credential_data*/,
+            OM_uint32 /*time_req*/,
+            const gss_OID /*desired_mech*/,
+            gss_cred_usage_t /*cred_usage*/,
+            gss_cred_id_t * /*output_cred_handle*/
+           );
+
+GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL gss_acquire_cred_with_password
+           (OM_uint32 * /*minor_status*/,
+            const gss_name_t /*desired_name*/,
+            const gss_buffer_t /*password*/,
             OM_uint32 /*time_req*/,
             const gss_OID_set /*desired_mechs*/,
             gss_cred_usage_t /*cred_usage*/,

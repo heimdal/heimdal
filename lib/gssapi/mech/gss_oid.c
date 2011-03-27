@@ -103,6 +103,12 @@ gss_OID_desc GSSAPI_LIB_VARIABLE __gss_c_ma_mech_name_oid_desc = { 6, "\x2a\x85\
 /* GSS_C_MA_MECH_DESCRIPTION - 1.2.752.43.13.102 */
 gss_OID_desc GSSAPI_LIB_VARIABLE __gss_c_ma_mech_description_oid_desc = { 6, "\x2a\x85\x70\x2b\x0d\x66" };
 
+/* GSS_C_CRED_PASSWORD - 1.2.752.43.13.200 */
+gss_OID_desc GSSAPI_LIB_VARIABLE __gss_c_cred_password_oid_desc = { 7, "\x2a\x85\x70\x2b\x0d\x81\x48" };
+
+/* GSS_C_CRED_CERTIFICATE - 1.2.752.43.13.201 */
+gss_OID_desc GSSAPI_LIB_VARIABLE __gss_c_cred_certificate_oid_desc = { 7, "\x2a\x85\x70\x2b\x0d\x81\x49" };
+
 /* GSS_SASL_DIGEST_MD5_MECHANISM - 1.2.752.43.14.1 */
 gss_OID_desc GSSAPI_LIB_VARIABLE __gss_sasl_digest_md5_mechanism_oid_desc = { 6, "\x2a\x85\x70\x2b\x0e\x01" };
 

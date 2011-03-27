@@ -355,14 +355,14 @@ _gss_import_cred_t(OM_uint32 * minor_status,
 
 
 typedef OM_uint32 GSSAPI_CALLCONV
-_gss_acquire_cred_ex_t(void * /* status */,
+_gss_acquire_cred_ex_t(OM_uint32 * /*minor_status */,
 		       const gss_name_t /* desired_name */,
-		       OM_uint32 /* flags */,
+		       const gss_OID /* credential_type */,
+		       const void * /* credential_data */,
 		       OM_uint32 /* time_req */,
+		       const gss_OID /* desired_mech */,
 		       gss_cred_usage_t /* cred_usage */,
-		       void * /* identity */,
-		       void * /* ctx */,
-		       void (* /*complete */)(void *, OM_uint32, void *, gss_cred_id_t, OM_uint32));
+		       gss_cred_id_t * /* output_cred_handle */);
 
 typedef void GSSAPI_CALLCONV
 _gss_iter_creds_t(OM_uint32 /* flags */,

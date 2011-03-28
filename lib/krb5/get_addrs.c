@@ -82,8 +82,8 @@ gethostname_fallback (krb5_context context, krb5_addresses *res)
 }
 
 enum {
-    LOOP            = 1,	/* do include loopback interfaces XXX remove */
-    LOOP_IF_NONE    = 2,	/* include loopback if no other if's */
+    LOOP            = 1,	/* do include loopback addrs */
+    LOOP_IF_NONE    = 2,	/* include loopback addrs if no others */
     EXTRA_ADDRESSES = 4,	/* include extra addresses */
     SCAN_INTERFACES = 8		/* scan interfaces for addresses */
 };
@@ -146,9 +146,7 @@ find_all_addresses (krb5_context context, krb5_addresses *res, int flags)
 	    continue;
 	if (krb5_sockaddr_uninteresting(ifa->ifa_addr))
 	    continue;
-	if (krb5_sockaddr_is_loopback(ifa->ifa_addr))
-	    continue;
-	if ((ifa->ifa_flags & IFF_LOOPBACK) != 0 && (flags & LOOP) == 0)
+	if (krb5_sockaddr_is_loopback(ifa->ifa_addr) && (flags & LOOP) == 0)
 	    /* We'll deal with the LOOP_IF_NONE case later. */
 	    continue;
 
@@ -189,25 +187,22 @@ find_all_addresses (krb5_context context, krb5_addresses *res, int flags)
 		continue;
 	    if (krb5_sockaddr_uninteresting(ifa->ifa_addr))
 		continue;
-	    /* XXX Do we really want to allow loopback addresses here? */
-
-	    if ((ifa->ifa_flags & IFF_LOOPBACK) != 0) {
-		ret = krb5_sockaddr2address(context,
-					    ifa->ifa_addr, &res->val[idx]);
-		if (ret) {
-		    /*
-		     * See comment above.
-		     */
-		    continue;
-		}
-		if((flags & EXTRA_ADDRESSES) &&
-		   krb5_address_search(context, &res->val[idx],
-				       &ignore_addresses)) {
-		    krb5_free_address(context, &res->val[idx]);
-		    continue;
-		}
-		idx++;
+	    if (!krb5_sockaddr_is_loopback(ifa->ifa_addr))
+		continue;
+	    if ((ifa->ifa_flags & IFF_LOOPBACK) == 0)
+		/* Presumably loopback addrs are only used on loopback ifs! */
+		continue;
+	    ret = krb5_sockaddr2address(context,
+					ifa->ifa_addr, &res->val[idx]);
+	    if (ret)
+		continue; /* We don't consider this failure fatal */
+	    if((flags & EXTRA_ADDRESSES) &&
+	       krb5_address_search(context, &res->val[idx],
+				   &ignore_addresses)) {
+		krb5_free_address(context, &res->val[idx]);
+		continue;
 	    }
+	    idx++;
 	}
     }
 
@@ -270,7 +265,7 @@ get_addrs_int (krb5_context context, krb5_addresses *res, int flags)
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_get_all_client_addrs (krb5_context context, krb5_addresses *res)
 {
-    int flags = LOOP | LOOP_IF_NONE | EXTRA_ADDRESSES;
+    int flags = LOOP_IF_NONE | EXTRA_ADDRESSES;
 
     if (context->scan_interfaces)
 	flags |= SCAN_INTERFACES;

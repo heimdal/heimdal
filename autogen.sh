@@ -4,3 +4,5 @@
 # tool-chain installed
 PATH=/usr/local/bin:$PATH
 /usr/local/bin/autoreconf -f -i || { echo "autoreconf failed: $?"; exit 1; }
+find . -name '*-private.h' -delete
+find . -name '*-protos.h' -delete

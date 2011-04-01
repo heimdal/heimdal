@@ -205,7 +205,7 @@ mdb_value2entry(krb5_context context, krb5_data *data, krb5_kvno kvno, hdb_entry
     uint32_t u32;
     uint16_t u16, num_keys, num_tl;
     size_t i, j;
-    char *p = NULL;
+    char *p;
 
     sp = krb5_storage_from_data(data);
     if (sp == NULL) {
@@ -292,10 +292,14 @@ mdb_value2entry(krb5_context context, krb5_data *data, krb5_kvno kvno, hdb_entry
 	 * but we don't want to take chances, so we add an extra NUL.
 	 */
 	p = malloc(u16 + 1);
+	if (p == NULL) {
+	    ret = ENOMEM;
+	    goto out;
+	}
 	krb5_storage_read(sp, p, u16);
 	p[u16] = '\0';
 	CHECK(ret = krb5_parse_name(context, p, &entry->principal));
-	free(p); p = NULL;
+	free(p);
     }
     /* for num tl data times
            16: tl data type
@@ -330,7 +334,11 @@ mdb_value2entry(krb5_context context, krb5_data *data, krb5_kvno kvno, hdb_entry
 	version = u16;
 	CHECK(ret = krb5_ret_uint16(sp, &u16));
 
-	if (((entry->kvno < u16) && kvno == 0) || kvno == u16) {
+	/*
+	 * First time through, and until we find one matching key,
+	 * entry->kvno == 0.
+	 */
+	if ((entry->kvno < u16) && (kvno == 0 || kvno == u16)) {
 	    keep = 1;
 	    entry->kvno = u16;
 	    /*
@@ -347,6 +355,7 @@ mdb_value2entry(krb5_context context, krb5_data *data, krb5_kvno kvno, hdb_entry
 	    entry->keys.len = 0;
 	    entry->keys.val = NULL;
 	} else if (entry->kvno == u16)
+	    /* Accumulate keys */
 	    keep = 1;
 
 	if (keep) {
@@ -365,12 +374,12 @@ mdb_value2entry(krb5_context context, krb5_data *data, krb5_kvno kvno, hdb_entry
 	    memset(k, 0, sizeof(*k));
 	    entry->keys.len += 1;
 
-	    entry->keys.val[i].mkvno = malloc(sizeof(*entry->keys.val[i].mkvno));
-	    if (entry->keys.val[i].mkvno == NULL) {
+	    k->mkvno = malloc(sizeof(*k->mkvno));
+	    if (k->mkvno == NULL) {
 		ret = ENOMEM;
 		goto out;
 	    }
-	    *entry->keys.val[i].mkvno = 1;
+	    *k->mkvno = 1;
 
 	    for (j = 0; j < version; j++) {
 		uint16_t type;
@@ -451,9 +460,6 @@ mdb_value2entry(krb5_context context, krb5_data *data, krb5_kvno kvno, hdb_entry
     if (ret == HEIM_ERR_EOF)
 	/* Better error code than "end of file" */
 	ret = HEIM_ERR_BAD_HDBENT_ENCODING;
-    if (p)
-	free(p);
-    free_hdb_entry(entry);
     return ret;
 }
 

@@ -52,6 +52,23 @@ asn1_*.[cx]
 /setupbuild.cmd
 /ylwrap
 
+/lib/libedit/aclocal.m4
+/lib/libedit/autom4te.cache
+/lib/libedit/compile
+/lib/libedit/config.guess
+/lib/libedit/config.log
+/lib/libedit/config.status
+/lib/libedit/config.sub
+/lib/libedit/configure
+/lib/libedit/depcomp
+/lib/libedit/install-sh
+/lib/libedit/libtool
+/lib/libedit/ltmain.sh
+/lib/libedit/missing
+/lib/libedit/setupbuild.cmd
+/lib/libedit/ylwrap
+
+
 # Files in subdirectories.
 
 /admin/ktutil

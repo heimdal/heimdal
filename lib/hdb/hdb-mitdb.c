@@ -220,17 +220,17 @@ mdb_value2entry(krb5_context context, krb5_data *data, krb5_kvno kvno, hdb_entry
     if (u16 != KDB_V1_BASE_LENGTH) { ret = EINVAL; goto out; }
     /* 32: attributes */
     CHECK(ret = krb5_ret_uint32(sp, &u32));
-    entry->flags.postdate =	 !(u16 & KRB5_KDB_DISALLOW_POSTDATED);
-    entry->flags.forwardable =	 !(u16 & KRB5_KDB_DISALLOW_FORWARDABLE);
-    entry->flags.initial =	!!(u16 & KRB5_KDB_DISALLOW_TGT_BASED);
-    entry->flags.renewable =	 !(u16 & KRB5_KDB_DISALLOW_RENEWABLE);
-    entry->flags.proxiable =	 !(u16 & KRB5_KDB_DISALLOW_PROXIABLE);
+    entry->flags.postdate =	 !(u32 & KRB5_KDB_DISALLOW_POSTDATED);
+    entry->flags.forwardable =	 !(u32 & KRB5_KDB_DISALLOW_FORWARDABLE);
+    entry->flags.initial =	!!(u32 & KRB5_KDB_DISALLOW_TGT_BASED);
+    entry->flags.renewable =	 !(u32 & KRB5_KDB_DISALLOW_RENEWABLE);
+    entry->flags.proxiable =	 !(u32 & KRB5_KDB_DISALLOW_PROXIABLE);
     /* DUP_SKEY */
-    entry->flags.invalid =	!!(u16 & KRB5_KDB_DISALLOW_ALL_TIX);
-    entry->flags.require_preauth =!!(u16 & KRB5_KDB_REQUIRES_PRE_AUTH);
-    entry->flags.require_hwauth =!!(u16 & KRB5_KDB_REQUIRES_HW_AUTH);
-    entry->flags.server =	 !(u16 & KRB5_KDB_DISALLOW_SVR);
-    entry->flags.change_pw = 	!!(u16 & KRB5_KDB_PWCHANGE_SERVICE);
+    entry->flags.invalid =	!!(u32 & KRB5_KDB_DISALLOW_ALL_TIX);
+    entry->flags.require_preauth =!!(u32 & KRB5_KDB_REQUIRES_PRE_AUTH);
+    entry->flags.require_hwauth =!!(u32 & KRB5_KDB_REQUIRES_HW_AUTH);
+    entry->flags.server =	 !(u32 & KRB5_KDB_DISALLOW_SVR);
+    entry->flags.change_pw = 	!!(u32 & KRB5_KDB_PWCHANGE_SERVICE);
     entry->flags.client =	   1; /* XXX */
 
     /* 32: max time */

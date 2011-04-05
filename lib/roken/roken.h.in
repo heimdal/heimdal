@@ -932,6 +932,7 @@ strptime (const char *, const char *, struct tm *);
 #endif
 
 #ifndef HAVE_GETTIMEOFDAY
+#define gettimeofday rk_gettimeofday
 ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
 gettimeofday (struct timeval *, void *);
 #endif

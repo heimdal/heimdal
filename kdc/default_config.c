@@ -133,6 +133,11 @@ krb5_kdc_get_config(krb5_context context, krb5_kdc_configuration **config)
 				     c->tgs_use_strongest_session_key,
 				     "kdc",
 				     "tgs-use-strongest-session-key", NULL);
+    c->use_strongest_server_key =
+	krb5_config_get_bool_default(context, NULL,
+				     c->use_strongest_server_key,
+				     "kdc",
+				     "use-strongest-server-key", NULL);
 
     c->check_ticket_addresses =
 	krb5_config_get_bool_default(context, NULL,

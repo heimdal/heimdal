@@ -134,24 +134,35 @@ _kdc_get_preferred_key(krb5_context context,
 		       krb5_enctype *enctype,
 		       Key **key)
 {
-    const krb5_enctype *p;
     krb5_error_code ret;
     int i;
 
-    p = krb5_kerberos_enctypes(context);
+    if (config->use_strongest_server_key) {
+	const krb5_enctype *p = krb5_kerberos_enctypes(context);
 
-    for (i = 0; p[i] != ETYPE_NULL; i++) {
-	if (krb5_enctype_valid(context, p[i]) != 0)
-	    continue;
-	ret = hdb_enctype2key(context, &h->entry, p[i], key);
-	if (ret == 0) {
-	    *enctype = p[i];
-	    return 0;
+	for (i = 0; p[i] != ETYPE_NULL; i++) {
+	    if (krb5_enctype_valid(context, p[i]) != 0)
+		continue;
+	    ret = hdb_enctype2key(context, &h->entry, p[i], key);
+	    if (ret == 0) {
+		*enctype = p[i];
+		return 0;
+	    }
+	}
+    } else {
+	*key = NULL;
+
+	for (i = 0; i < h->entry.keys.len; i++) {
+	    if (krb5_enctype_valid(context, h->entry.keys.val[i].key.keytype)
+		!= 0) {
+		*key = &h->entry.keys.val[i];
+		return 0;
+	    }
 	}
     }
 
     krb5_set_error_message(context, EINVAL,
 			   "No valid kerberos key found for %s", name);
-    return EINVAL;
+    return EINVAL; /* XXX */
 }
 

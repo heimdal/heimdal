@@ -418,6 +418,11 @@ pre-authentication). Defaults to TRUE.
 .It Li tgs-use-strongest-session-key = Va BOOL
 Like as-use-strongest-session-key, but applies to the session key
 enctype of tickets issued by the TGS. Defaults to TRUE.
+.It Li use-strongest-server-key = Va BOOL
+If TRUE then the KDC picks, for the ticket encrypted part's key, the
+first supported enctype from the target service principal's hdb entry's
+current keyset. Else the KDC picks the first supported enctype from the
+target service principal's hdb entry's current keyset. Defaults to TRUE.
 .It Li check-ticket-addresses = Va BOOL
 Verify the addresses in the tickets used in tgs requests.
 .\" XXX

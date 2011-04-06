@@ -123,6 +123,11 @@ krb5_kdc_get_config(krb5_context context, krb5_kdc_configuration **config)
 				     c->as_use_strongest_session_key,
 				     "kdc",
 				     "as-use-strongest-session-key", NULL);
+    c->preauth_use_strongest_session_key =
+	krb5_config_get_bool_default(context, NULL,
+				     c->preauth_use_strongest_session_key,
+				     "kdc",
+				     "preauth-use-strongest-session-key", NULL);
     c->tgs_use_strongest_session_key =
 	krb5_config_get_bool_default(context, NULL,
 				     c->tgs_use_strongest_session_key,

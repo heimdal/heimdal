@@ -134,6 +134,7 @@ _kdc_find_etype(krb5_context context, krb5_boolean use_strongest_session_key,
     krb5_enctype enctype = ETYPE_NULL;
     Key *key = NULL;
 
+    /* We'll want to avoid keys with v4 salted keys in the pre-auth case... */
     ret = krb5_get_pw_salt(context, princ->entry.principal, &def_salt);
     if (ret)
 	return ret;
@@ -1387,9 +1388,9 @@ _kdc_as_rep(krb5_context context,
 	/*
 	 * If there is a client key, send ETYPE_INFO{,2}
 	 */
-	ret = _kdc_find_etype(context, config->as_use_strongest_session_key,
-			      TRUE, client, b->etype.val, b->etype.len, NULL,
-			      &ckey);
+	ret = _kdc_find_etype(context,
+			      config->preauth_use_strongest_session_key, TRUE,
+			      client, b->etype.val, b->etype.len, NULL, &ckey);
 	if (ret == 0) {
 
 	    /*

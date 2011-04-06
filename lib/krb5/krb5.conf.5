@@ -411,6 +411,10 @@ client's AS-REQ enctype list, that is also supported by the KDC and the
 target principal, for the ticket session key. Else it will prefer the
 first key from the client's AS-REQ enctype list that is also supported
 by the KDC and the target principal. Defaults to TRUE.
+.It Li preauth-use-strongest-session-key = Va BOOL
+Like as-use-strongest-session-key, but applies to the session key
+enctype selection for PA-ETYPE-INFO2 (i.e., for password-based
+pre-authentication). Defaults to TRUE.
 .It Li tgs-use-strongest-session-key = Va BOOL
 Like as-use-strongest-session-key, but applies to the session key
 enctype of tickets issued by the TGS. Defaults to TRUE.

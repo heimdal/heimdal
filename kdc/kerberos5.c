@@ -123,36 +123,98 @@ is_default_salt_p(const krb5_salt *default_salt, const Key *key)
  */
 
 krb5_error_code
-_kdc_find_etype(krb5_context context, const hdb_entry_ex *princ,
+_kdc_find_etype(krb5_context context, krb5_boolean use_strongest_session_key,
+		krb5_boolean is_preauth, hdb_entry_ex *princ,
 		krb5_enctype *etypes, unsigned len,
-		Key **ret_key)
+		krb5_enctype *ret_enctype, Key **ret_key)
 {
-    size_t i;
-    krb5_error_code ret = KRB5KDC_ERR_ETYPE_NOSUPP;
+    int i;
+    krb5_error_code ret;
     krb5_salt def_salt;
+    krb5_enctype enctype = ETYPE_NULL;
+    Key *key = NULL;
 
-    krb5_get_pw_salt (context, princ->entry.principal, &def_salt);
+    ret = krb5_get_pw_salt(context, princ->entry.principal, &def_salt);
+    if (ret)
+	return ret;
 
-    for(i = 0; ret != 0 && i < len ; i++) {
-	Key *key = NULL;
+    if (use_strongest_session_key) {
+	const krb5_enctype *p;
+	krb5_enctype clientbest = ETYPE_NULL;
+	int j;
 
-	if (krb5_enctype_valid(context, etypes[i]) != 0 &&
-	    !_kdc_is_weak_exception(princ->entry.principal, etypes[i]))
-	    continue;
+	/*
+	 * Pick the strongest key that the KDC, target service, and
+	 * client all support, using the local cryptosystem enctype
+	 * list in strongest-to-weakest order to drive the search.
+	 *
+	 * This is not what RFC4120 says to do, but it encourages
+	 * adoption of stronger enctypes.  This doesn't play well with
+	 * clients that have multiple Kerberos client implementations
+	 * available with different supported enctype lists.
+	 */
 
-	while (hdb_next_enctype2key(context, &princ->entry, etypes[i], &key) == 0) {
-	    if (key->key.keyvalue.length == 0) {
-		ret = KRB5KDC_ERR_NULL_KEY;
+	/* drive the search with local supported enctypes list */
+	p = krb5_kerberos_enctypes(context);
+	for (i = 0; p[i] != ETYPE_NULL && enctype == ETYPE_NULL; i++) {
+	    if (krb5_enctype_valid(context, p[i]) != 0)
 		continue;
+
+	    /* check that the client supports it too */
+	    for (j = 0; j < len && enctype == ETYPE_NULL; j++) {
+		if (p[i] != etypes[j])
+		    continue;
+		/* save best of union of { client, crypto system } */
+		if (clientbest == ETYPE_NULL)
+		    clientbest = p[i];
+		/* check target princ support */
+		ret = hdb_enctype2key(context, &princ->entry, p[i], &key);
+		if (ret)
+		    continue;
+		if (is_preauth && !is_default_salt_p(&def_salt, key))
+		    continue;
+		enctype = p[i];
 	    }
-	    *ret_key   = key;
-	    ret = 0;
-	    if (is_default_salt_p(&def_salt, key)) {
-		krb5_free_salt (context, def_salt);
-		return ret;
+	}
+	if (clientbest != ETYPE_NULL && enctype == ETYPE_NULL)
+	    enctype = clientbest;
+	else if (enctype == ETYPE_NULL)
+	    ret = KRB5KDC_ERR_ETYPE_NOSUPP;
+	if (ret == 0 && ret_enctype != NULL)
+	    *ret_enctype = enctype;
+	if (ret == 0 && ret_key != NULL)
+	    *ret_key = key;
+    } else {
+	/*
+	 * Pick the first key from the client's enctype list that is
+	 * supported by the cryptosystem and by the given principal.
+	 *
+	 * RFC4120 says we SHOULD pick the first _strong_ key from the
+	 * client's list... not the first key...  If the admin disallows
+	 * weak enctypes in krb5.conf and selects this key selection
+	 * algorithm, then we get exactly what RFC4120 says.
+	 */
+	for(i = 0; ret != 0 && i < len ; i++) {
+
+	    if (krb5_enctype_valid(context, etypes[i]) != 0 &&
+		!_kdc_is_weak_exception(princ->entry.principal, etypes[i]))
+		continue;
+
+	    while (hdb_next_enctype2key(context, &princ->entry, etypes[i], &key) == 0) {
+		if (key->key.keyvalue.length == 0) {
+		    ret = KRB5KDC_ERR_NULL_KEY;
+		    continue;
+		}
+		if (ret_key != NULL)
+		    *ret_key   = key;
+		ret = 0;
+		if (is_preauth && is_default_salt_p(&def_salt, key))
+		    goto out;
 	    }
 	}
     }
+
+out:
     krb5_free_salt (context, def_salt);
     return ret;
 }
@@ -1018,59 +1080,31 @@ _kdc_as_rep(krb5_context context,
     memset(&ek, 0, sizeof(ek));
 
     /*
-     * Select a session enctype from the list of the crypto systems
-     * supported enctype, is supported by the client and is one of the
-     * enctype of the enctype of the krbtgt.
+     * Select a session enctype from the list of the crypto system
+     * supported enctypes that is supported by the client and is one of
+     * the enctype of the enctype of the service (likely krbtgt).
      *
-     * The later is used as a hint what enctype all KDC are supporting
-     * to make sure a newer version of KDC wont generate a session
-     * enctype that and older version of a KDC in the same realm can't
+     * The latter is used as a hint of what enctypes all KDC support,
+     * to make sure a newer version of KDC won't generate a session
+     * enctype that an older version of a KDC in the same realm can't
      * decrypt.
-     *
-     * But if the KDC admin is paranoid and doesn't want to have "no
+     */
+    ret = _kdc_find_etype(context, config->as_use_strongest_session_key, FALSE,
+			  client, b->etype.val, b->etype.len, &sessionetype,
+			  NULL);
+    if (ret) {
+	kdc_log(context, config, 0,
+		"Client (%s) from %s has no common enctypes with KDC"
+		"to use for the session key",
+		client_name, from);
+	goto out;
+    }
+    /*
+     * But if the KDC admin is paranoid and doesn't want to have "not
      * the best" enctypes on the krbtgt, lets save the best pick from
      * the client list and hope that that will work for any other
      * KDCs.
      */
-    {
-	const krb5_enctype *p;
-	krb5_enctype clientbest = ETYPE_NULL;
-	size_t i, j;
-
-	p = krb5_kerberos_enctypes(context);
-
-	sessionetype = ETYPE_NULL;
-
-	for (i = 0; p[i] != ETYPE_NULL && sessionetype == ETYPE_NULL; i++) {
-	    if (krb5_enctype_valid(context, p[i]) != 0)
-		continue;
-
-	    for (j = 0; j < b->etype.len && sessionetype == ETYPE_NULL; j++) {
-		Key *dummy;
-		/* check with client */
-		if (p[i] != b->etype.val[j])
-		    continue;
-		/* save best of union of { client, crypto system } */
-		if (clientbest == ETYPE_NULL)
-		    clientbest = p[i];
-		/* check with krbtgt */
-		ret = hdb_enctype2key(context, &server->entry, p[i], &dummy);
-		if (ret)
-		    continue;
-		sessionetype = p[i];
-	    }
-	}
-	/* if krbtgt had no shared keys with client, pick clients best */
-	if (clientbest != ETYPE_NULL && sessionetype == ETYPE_NULL) {
-	    sessionetype = clientbest;
-	} else if (sessionetype == ETYPE_NULL) {
-	    kdc_log(context, config, 0,
-		    "Client (%s) from %s has no common enctypes with KDC"
-		    "to use for the session key",
-		    client_name, from);
-	    goto out;
-	}
-    }
 
     /*
      * Pre-auth processing
@@ -1353,7 +1387,8 @@ _kdc_as_rep(krb5_context context,
 	/*
 	 * If there is a client key, send ETYPE_INFO{,2}
 	 */
-	ret = _kdc_find_etype(context, client, b->etype.val, b->etype.len,
+	ret = _kdc_find_etype(context, config->as_use_strongest_session_key,
+			      TRUE, client, b->etype.val, b->etype.len, NULL,
 			      &ckey);
 	if (ret == 0) {
 

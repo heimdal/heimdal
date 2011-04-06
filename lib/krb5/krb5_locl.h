@@ -246,9 +246,14 @@ struct _krb5_get_init_creds_opt_private {
     } lr;
 };
 
+typedef uint32_t krb5_enctype_set;
+
 typedef struct krb5_context_data {
     krb5_enctype *etypes;
-    krb5_enctype *etypes_des;
+    krb5_enctype *etypes_des;/* deprecated */
+    krb5_enctype *as_etypes;
+    krb5_enctype *tgs_etypes;
+    krb5_enctype *permitted_enctypes;
     char **default_realms;
     time_t max_skew;
     time_t kdc_timeout;

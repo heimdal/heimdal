@@ -128,6 +128,24 @@ init_context_from_config_file(krb5_context context)
     free(context->etypes_des);
     context->etypes_des = tmptypes;
 
+    ret = set_etypes (context, "default_as_etypes", &tmptypes);
+    if(ret)
+	return ret;
+    free(context->as_etypes);
+    context->as_etypes = tmptypes;
+
+    ret = set_etypes (context, "default_tgs_etypes", &tmptypes);
+    if(ret)
+	return ret;
+    free(context->tgs_etypes);
+    context->tgs_etypes = tmptypes;
+
+    ret = set_etypes (context, "permitted_enctypes", &tmptypes);
+    if(ret)
+	return ret;
+    free(context->permitted_enctypes);
+    context->permitted_enctypes = tmptypes;
+
     /* default keytab name */
     tmp = NULL;
     if(!issuid())

@@ -405,6 +405,15 @@ Default is the same as
 Should the kdc answer kdc-requests over http.
 .It Li enable-kaserver = Va BOOL
 If this kdc should emulate the AFS kaserver.
+.It Li as-use-strongest-session-key = Va BOOL
+If this is TRUE then the KDC will prefer the strongest key from the
+client's AS-REQ enctype list, that is also supported by the KDC and the
+target principal, for the ticket session key. Else it will prefer the
+first key from the client's AS-REQ enctype list that is also supported
+by the KDC and the target principal. Defaults to TRUE.
+.It Li tgs-use-strongest-session-key = Va BOOL
+Like as-use-strongest-session-key, but applies to the session key
+enctype of tickets issued by the TGS. Defaults to TRUE.
 .It Li check-ticket-addresses = Va BOOL
 Verify the addresses in the tickets used in tgs requests.
 .\" XXX

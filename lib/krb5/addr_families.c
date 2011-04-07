@@ -748,12 +748,12 @@ static struct addr_operations at[] = {
 #ifndef HEIMDAL_SMALLER
     /* fake address type */
     {KRB5_ADDRESS_ARANGE, KRB5_ADDRESS_ARANGE, sizeof(struct arange),
-     NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+     NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
      arange_print_addr, arange_parse_addr,
      arange_order_addr, arange_free, arange_copy },
 #endif
     {KRB5_ADDRESS_ADDRPORT, KRB5_ADDRESS_ADDRPORT, 0,
-     NULL, NULL, NULL, NULL, NULL,
+     NULL, NULL, NULL, NULL, NULL, NULL,
      NULL, NULL, addrport_print_addr, NULL, NULL, NULL, NULL }
 };
 

@@ -205,7 +205,7 @@ mdb_value2entry(krb5_context context, krb5_data *data, krb5_kvno kvno, hdb_entry
     uint32_t u32;
     uint16_t u16, num_keys, num_tl;
     size_t i, j;
-    char *p = NULL;
+    char *p;
 
     sp = krb5_storage_from_data(data);
     if (sp == NULL) {
@@ -215,7 +215,21 @@ mdb_value2entry(krb5_context context, krb5_data *data, krb5_kvno kvno, hdb_entry
     
     krb5_storage_set_byteorder(sp, KRB5_STORAGE_BYTEORDER_LE);
 
-    /* 16: baselength */
+    /*
+     * 16: baselength
+     *
+     * The story here is that these 16 bits have to be a constant:
+     * KDB_V1_BASE_LENGTH.  Once upon a time a different value here
+     * would have been used to indicate the presence of "extra data"
+     * between the "base" contents and the {principal name, TL data,
+     * keys} that follow it.  Nothing supports such "extra data"
+     * nowadays, so neither do we here.
+     *
+     * XXX But... surely we ought to log about this extra data, or skip
+     * it, or something, in case anyone has MIT KDBs with ancient
+     * entries in them...  Logging would allow the admin to know which
+     * entries to dump with MIT krb5's kdb5_util.
+     */
     CHECK(ret = krb5_ret_uint16(sp, &u16));
     if (u16 != KDB_V1_BASE_LENGTH) { ret = EINVAL; goto out; }
     /* 32: attributes */
@@ -273,28 +287,44 @@ mdb_value2entry(krb5_context context, krb5_data *data, krb5_kvno kvno, hdb_entry
     CHECK(ret = krb5_ret_uint16(sp, &u16));
     /* length: principal */
     {
+	/*
+	 * Note that the principal name includes the NUL in the entry,
+	 * but we don't want to take chances, so we add an extra NUL.
+	 */
 	p = malloc(u16 + 1);
+	if (p == NULL) {
+	    ret = ENOMEM;
+	    goto out;
+	}
 	krb5_storage_read(sp, p, u16);
 	p[u16] = '\0';
 	CHECK(ret = krb5_parse_name(context, p, &entry->principal));
-	free(p); p = NULL;
+	free(p);
     }
     /* for num tl data times
            16: tl data type
            16: tl data length
            length: length */
     for (i = 0; i < num_tl; i++) {
+	/* 16: TL data type */
 	CHECK(ret = krb5_ret_uint16(sp, &u16));
+	/* 16: TL data length */
 	CHECK(ret = krb5_ret_uint16(sp, &u16));
 	krb5_storage_seek(sp, u16, SEEK_CUR);
     }
-    /* for num key data times
-       16: version (num keyblocks)
-       16: kvno
-       for version times:
-           16: type
-           16: length
-           length: keydata */
+    /*
+     * for num key data times
+     * 16: "version"
+     * 16: kvno
+     * for version times:
+     *     16: type
+     *     16: length
+     *     length: keydata
+     *
+     * "version" here is really 1 or 2, the first meaning there's only
+     * keys for this kvno, the second meaning there's keys and salt[s?].
+     * That's right... hold that gag reflex, you can do it.
+     */
     for (i = 0; i < num_keys; i++) {
 	int keep = 0;
 	uint16_t version;
@@ -304,16 +334,28 @@ mdb_value2entry(krb5_context context, krb5_data *data, krb5_kvno kvno, hdb_entry
 	version = u16;
 	CHECK(ret = krb5_ret_uint16(sp, &u16));
 
-	if (((entry->kvno < u16) && kvno == 0) || kvno == u16) {
+	/*
+	 * First time through, and until we find one matching key,
+	 * entry->kvno == 0.
+	 */
+	if ((entry->kvno < u16) && (kvno == 0 || kvno == u16)) {
 	    keep = 1;
 	    entry->kvno = u16;
-	    for (j = 0; j < entry->keys.len; j++) {
+	    /*
+	     * Found a higher kvno than earlier, so free the old highest
+	     * kvno keys.
+	     *
+	     * XXX Of course, we actually want to extract the old kvnos
+	     * as well, for some of the kadm5 APIs.  We shouldn't free
+	     * these keys, but keep them elsewhere.
+	     */
+	    for (j = 0; j < entry->keys.len; j++)
 		free_Key(&entry->keys.val[j]);
-		free(entry->keys.val);
-		entry->keys.len = 0;
-		entry->keys.val = NULL;
-	    }
+	    free(entry->keys.val);
+	    entry->keys.len = 0;
+	    entry->keys.val = NULL;
 	} else if (entry->kvno == u16)
+	    /* Accumulate keys */
 	    keep = 1;
 
 	if (keep) {
@@ -332,28 +374,40 @@ mdb_value2entry(krb5_context context, krb5_data *data, krb5_kvno kvno, hdb_entry
 	    memset(k, 0, sizeof(*k));
 	    entry->keys.len += 1;
 
-	    entry->keys.val[i].mkvno = malloc(sizeof(*entry->keys.val[i].mkvno));
-	    if (entry->keys.val[i].mkvno == NULL) {
+	    k->mkvno = malloc(sizeof(*k->mkvno));
+	    if (k->mkvno == NULL) {
 		ret = ENOMEM;
 		goto out;
 	    }
-	    *entry->keys.val[i].mkvno = 1;
+	    *k->mkvno = 1;
 
 	    for (j = 0; j < version; j++) {
 		uint16_t type;
 		CHECK(ret = krb5_ret_uint16(sp, &type));
 		CHECK(ret = krb5_ret_uint16(sp, &u16));
-		if (j == 0) { /* key */
+		if (j == 0) {
+		    /* This "version" means we have a key */
 		    k->key.keytype = type;
 		    if (u16 < 2) {
 			ret = EINVAL;
 			goto out;
 		    }
+		    /*
+		     * MIT stores keys encrypted keys as {16-bit length
+		     * of plaintext key, {encrypted key}}.  The reason
+		     * for this is that the Kerberos cryptosystem is not
+		     * length-preserving.  Heimdal's approach is to
+		     * truncate the plaintext to the expected length of
+		     * the key given its enctype, so we ignore this
+		     * 16-bit length-of-plaintext-key field.
+		     */
 		    krb5_storage_seek(sp, 2, SEEK_CUR); /* skip real length */
-		    k->key.keyvalue.length = u16 - 2;
+		    k->key.keyvalue.length = u16 - 2;   /* adjust cipher len */
 		    k->key.keyvalue.data = malloc(k->key.keyvalue.length);
-		    krb5_storage_read(sp, k->key.keyvalue.data, k->key.keyvalue.length);
-		} else if (j == 1) { /* salt */
+		    krb5_storage_read(sp, k->key.keyvalue.data,
+				      k->key.keyvalue.length);
+		} else if (j == 1) {
+		    /* This "version" means we have a salt */
 		    k->salt = calloc(1, sizeof(*k->salt));
 		    if (k->salt == NULL) {
 			ret = ENOMEM;
@@ -371,15 +425,27 @@ mdb_value2entry(krb5_context context, krb5_data *data, krb5_kvno kvno, hdb_entry
 		    }			
 		    fix_salt(context, entry, entry->keys.len - 1);
 		} else {
+		    /*
+		     * Whatever this "version" might be, we skip it
+		     *
+		     * XXX A krb5.conf parameter requesting that we log
+		     * about strangeness like this, or return an error
+		     * from here, might be nice.
+		     */
 		    krb5_storage_seek(sp, u16, SEEK_CUR);
 		}
 	    }
 	} else {
-	    /* skip */
+	    /*
+	     * XXX For now we skip older kvnos, but we should extract
+	     * them...
+	     */
 	    for (j = 0; j < version; j++) {
+		/* enctype */
 		CHECK(ret = krb5_ret_uint16(sp, &u16));
+		/* encrypted key (or plaintext salt) */
 		CHECK(ret = krb5_ret_uint16(sp, &u16));
-		krb5_storage_seek(sp, u16, u16);
+		krb5_storage_seek(sp, u16, SEEK_CUR);
 	    }
 	}
     }
@@ -391,9 +457,9 @@ mdb_value2entry(krb5_context context, krb5_data *data, krb5_kvno kvno, hdb_entry
 
     return 0;
  out:
-    if (p)
-	free(p);
-    free_hdb_entry(entry);
+    if (ret == HEIM_ERR_EOF)
+	/* Better error code than "end of file" */
+	ret = HEIM_ERR_BAD_HDBENT_ENCODING;
     return ret;
 }
 

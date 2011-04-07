@@ -44,6 +44,7 @@ struct addr_operations {
     void (*h_addr2sockaddr)(const char *, struct sockaddr *, krb5_socklen_t *, int);
     krb5_error_code (*h_addr2addr)(const char *, krb5_address *);
     krb5_boolean (*uninteresting)(const struct sockaddr *);
+    krb5_boolean (*is_loopback)(const struct sockaddr *);
     void (*anyaddr)(struct sockaddr *, krb5_socklen_t *, int);
     int (*print_addr)(const krb5_address *, char *, size_t);
     int (*parse_addr)(krb5_context, const char*, krb5_address *);
@@ -131,6 +132,17 @@ ipv4_uninteresting (const struct sockaddr *sa)
     const struct sockaddr_in *sin4 = (const struct sockaddr_in *)sa;
 
     if (sin4->sin_addr.s_addr == INADDR_ANY)
+	return TRUE;
+
+    return FALSE;
+}
+
+static krb5_boolean
+ipv4_is_loopback (const struct sockaddr *sa)
+{
+    const struct sockaddr_in *sin4 = (const struct sockaddr_in *)sa;
+
+    if ((ntohl(sin4->sin_addr.s_addr) >> 24) == IN_LOOPBACKNET)
 	return TRUE;
 
     return FALSE;
@@ -310,9 +322,17 @@ ipv6_uninteresting (const struct sockaddr *sa)
     const struct sockaddr_in6 *sin6 = (const struct sockaddr_in6 *)sa;
     const struct in6_addr *in6 = (const struct in6_addr *)&sin6->sin6_addr;
 
-    return
-	IN6_IS_ADDR_LINKLOCAL(in6)
+    return IN6_IS_ADDR_LINKLOCAL(in6)
 	|| IN6_IS_ADDR_V4COMPAT(in6);
+}
+
+static krb5_boolean
+ipv6_is_loopback (const struct sockaddr *sa)
+{
+    const struct sockaddr_in6 *sin6 = (const struct sockaddr_in6 *)sa;
+    const struct in6_addr *in6 = (const struct in6_addr *)&sin6->sin6_addr;
+
+    return (IN6_IS_ADDR_LOOPBACK(in6));
 }
 
 static void
@@ -713,8 +733,8 @@ static struct addr_operations at[] = {
      ipv4_addr2sockaddr,
      ipv4_h_addr2sockaddr,
      ipv4_h_addr2addr,
-     ipv4_uninteresting, ipv4_anyaddr, ipv4_print_addr, ipv4_parse_addr,
-     NULL, NULL, NULL, ipv4_mask_boundary },
+     ipv4_uninteresting, ipv4_is_loopback, ipv4_anyaddr, ipv4_print_addr,
+     ipv4_parse_addr, NULL, NULL, NULL, ipv4_mask_boundary },
 #ifdef HAVE_IPV6
     {AF_INET6,	KRB5_ADDRESS_INET6, sizeof(struct sockaddr_in6),
      ipv6_sockaddr2addr,
@@ -722,18 +742,18 @@ static struct addr_operations at[] = {
      ipv6_addr2sockaddr,
      ipv6_h_addr2sockaddr,
      ipv6_h_addr2addr,
-     ipv6_uninteresting, ipv6_anyaddr, ipv6_print_addr, ipv6_parse_addr,
-     NULL, NULL, NULL, ipv6_mask_boundary } ,
+     ipv6_uninteresting, ipv6_is_loopback, ipv6_anyaddr, ipv6_print_addr,
+     ipv6_parse_addr, NULL, NULL, NULL, ipv6_mask_boundary } ,
 #endif
 #ifndef HEIMDAL_SMALLER
     /* fake address type */
     {KRB5_ADDRESS_ARANGE, KRB5_ADDRESS_ARANGE, sizeof(struct arange),
-     NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+     NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
      arange_print_addr, arange_parse_addr,
      arange_order_addr, arange_free, arange_copy },
 #endif
     {KRB5_ADDRESS_ADDRPORT, KRB5_ADDRESS_ADDRPORT, 0,
-     NULL, NULL, NULL, NULL, NULL,
+     NULL, NULL, NULL, NULL, NULL, NULL,
      NULL, NULL, addrport_print_addr, NULL, NULL, NULL, NULL }
 };
 
@@ -910,6 +930,15 @@ krb5_sockaddr_uninteresting(const struct sockaddr *sa)
     if (a == NULL || a->uninteresting == NULL)
 	return TRUE;
     return (*a->uninteresting)(sa);
+}
+
+KRB5_LIB_FUNCTION krb5_boolean KRB5_LIB_CALL
+krb5_sockaddr_is_loopback(const struct sockaddr *sa)
+{
+    struct addr_operations *a = find_af(sa->sa_family);
+    if (a == NULL || a->is_loopback == NULL)
+	return TRUE;
+    return (*a->is_loopback)(sa);
 }
 
 /**

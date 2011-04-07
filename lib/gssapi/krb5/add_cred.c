@@ -123,23 +123,11 @@ OM_uint32 GSSAPI_CALLCONV _gsskrb5_add_cred (
 	}
 
 	if (cred->keytab) {
-	    char name[KRB5_KT_PREFIX_MAX_LEN + MAXPATHLEN];
-	    int len;
+	    char *name = NULL;
 	
 	    ret = GSS_S_FAILURE;
 
-	    kret = krb5_kt_get_type(context, cred->keytab,
-				    name, KRB5_KT_PREFIX_MAX_LEN);
-	    if (kret) {
-		*minor_status = kret;
-		goto failure;
-	    }
-	    len = strlen(name);
-	    name[len++] = ':';
-
-	    kret = krb5_kt_get_name(context, cred->keytab,
-				    name + len,
-				    sizeof(name) - len);
+	    kret = krb5_kt_get_full_name(context, cred->keytab, &name);
 	    if (kret) {
 		*minor_status = kret;
 		goto failure;
@@ -147,6 +135,7 @@ OM_uint32 GSSAPI_CALLCONV _gsskrb5_add_cred (
 
 	    kret = krb5_kt_resolve(context, name,
 				   &handle->keytab);
+	    krb5_xfree(name);
 	    if (kret){
 		*minor_status = kret;
 		goto failure;

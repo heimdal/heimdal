@@ -42,7 +42,6 @@ AS_IF([test "x$with_berkeley_db" != xno],
 	           db4/db.h				\
 	           db3/db.h				\
 	           db.h					\
-	           db_185.h				\
     ])])
 
 dnl db_create is used by db3 and db4 and db5
@@ -70,32 +69,29 @@ dnl db_create is used by db3 and db4 and db5
       DBLIB=""
     fi
     AC_DEFINE(HAVE_DB3, 1, [define if you have a berkeley db3/4/5 library])
-  else
+  fi
 
 dnl dbopen is used by db1/db2
 
-    AC_FIND_FUNC_NO_LIBS(dbopen, db2 db, [
-    #include <stdio.h>
-    #if defined(HAVE_DB2_DB_H)
-    #include <db2/db.h>
-    #elif defined(HAVE_DB_185_H)
-    #include <db_185.h>
-    #elif defined(HAVE_DB_H)
-    #include <db.h>
-    #else
-    #error no db.h
-    #endif
-    ],[NULL, 0, 0, 0, NULL])
+  AC_FIND_FUNC_NO_LIBS(dbopen, db2 db, [
+  #include <stdio.h>
+  #if defined(HAVE_DB2_DB_H)
+  #include <db2/db.h>
+  #elif defined(HAVE_DB_H)
+  #include <db.h>
+  #else
+  #error no db.h
+  #endif
+  ],[NULL, 0, 0, 0, NULL])
 
-    if test "$ac_cv_func_dbopen" = "yes"; then
-      db_type=db1
-      if test "$ac_cv_funclib_dbopen" != "yes"; then
-        DBLIB="$ac_cv_funclib_dbopen"
-      else
-        DBLIB=""
-      fi
-      AC_DEFINE(HAVE_DB1, 1, [define if you have a berkeley db1/2 library])
+  if test "$ac_cv_func_dbopen" = "yes"; then
+    db_type=db1
+    if test "$ac_cv_funclib_dbopen" != "yes"; then
+      DBLIB="$ac_cv_funclib_dbopen"
+    else
+      DBLIB=""
     fi
+    AC_DEFINE(HAVE_DB1, 1, [define if you have a berkeley db1/2 library])
   fi
 
 dnl test for ndbm compatability

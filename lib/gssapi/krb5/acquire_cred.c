@@ -81,17 +81,18 @@ __gsskrb5_ccache_lifetime(OM_uint32 *minor_status,
 static krb5_error_code
 get_keytab(krb5_context context, krb5_keytab *keytab)
 {
-    char kt_name[256];
     krb5_error_code kret;
 
     HEIMDAL_MUTEX_lock(&gssapi_keytab_mutex);
 
     if (_gsskrb5_keytab != NULL) {
-	kret = krb5_kt_get_name(context,
-				_gsskrb5_keytab,
-				kt_name, sizeof(kt_name));
-	if (kret == 0)
-	    kret = krb5_kt_resolve(context, kt_name, keytab);
+	char *name = NULL;
+
+	kret = krb5_kt_get_full_name(context, _gsskrb5_keytab, &name);
+	if (kret == 0) {
+	    kret = krb5_kt_resolve(context, name, keytab);
+	    krb5_xfree(name);
+	}
     } else
 	kret = krb5_kt_default(context, keytab);
 

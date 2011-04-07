@@ -421,6 +421,7 @@ HEIMDAL_KRB5_2.0 {
 		krb5_kt_get_full_name;
 		krb5_kt_get_name;
 		krb5_kt_get_type;
+		krb5_kt_have_content;
 		krb5_kt_next_entry;
 		krb5_kt_read_service_key;
 		krb5_kt_register;

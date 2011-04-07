@@ -36,6 +36,24 @@
 HEIMDAL_MUTEX gssapi_keytab_mutex = HEIMDAL_MUTEX_INITIALIZER;
 krb5_keytab _gsskrb5_keytab;
 
+static krb5_error_code
+validate_keytab(krb5_context context, const char *name, krb5_keytab *id)
+{
+    krb5_error_code ret;
+
+    ret = krb5_kt_resolve(context, name, id);
+    if (ret)
+	return ret;
+
+    ret = krb5_kt_have_content(context, *id);
+    if (ret) {
+	krb5_kt_close(context, *id);
+	*id = NULL;
+    }
+
+    return ret;
+}
+
 OM_uint32
 _gsskrb5_register_acceptor_identity (const char *identity)
 {
@@ -55,15 +73,23 @@ _gsskrb5_register_acceptor_identity (const char *identity)
     if (identity == NULL) {
 	ret = krb5_kt_default(context, &_gsskrb5_keytab);
     } else {
-	char *p = NULL;
-
-	ret = asprintf(&p, "FILE:%s", identity);
-	if(ret < 0 || p == NULL) {
-	    HEIMDAL_MUTEX_unlock(&gssapi_keytab_mutex);
-	    return GSS_S_FAILURE;
+	/*
+	 * First check if we can the keytab as is and if it has content...
+	 */
+	ret = validate_keytab(context, identity, &_gsskrb5_keytab);
+	/*
+	 * if it doesn't, lets prepend FILE: and try again
+	 */
+	if (ret) {
+	    char *p = NULL;
+	    ret = asprintf(&p, "FILE:%s", identity);
+	    if(ret < 0 || p == NULL) {
+		HEIMDAL_MUTEX_unlock(&gssapi_keytab_mutex);
+		return GSS_S_FAILURE;
+	    }
+	    ret = validate_keytab(context, p, &_gsskrb5_keytab);
+	    free(p);
 	}
-	ret = krb5_kt_resolve(context, p, &_gsskrb5_keytab);
-	free(p);
     }
     HEIMDAL_MUTEX_unlock(&gssapi_keytab_mutex);
     if(ret)

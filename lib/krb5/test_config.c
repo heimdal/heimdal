@@ -224,7 +224,8 @@ check_escaped_strings(void)
         }
 
         if (*s || *e)
-            errx(1, "Configuation string list for value [%s] has incorrect length.\n"); 
+            errx(1, "Configuation string list for value [%s] has incorrect length.",
+		 config_strings_tests[i].name); 
 
         krb5_config_free_strings(ps);
     }

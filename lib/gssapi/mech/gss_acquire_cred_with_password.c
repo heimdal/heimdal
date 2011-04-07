@@ -46,14 +46,14 @@ gss_acquire_cred_with_password(OM_uint32 *minor_status,
     OM_uint32 major_status, tmp_minor;
 
     if (desired_mechs == GSS_C_NO_OID_SET) {
-	major_status = gss_acquire_cred_ex(minor_status,
-					   desired_name,
-					   GSS_C_CRED_PASSWORD,
-					   password,
-					   time_req,
-					   GSS_C_NO_OID,
-					   cred_usage,
-					   output_cred_handle);
+	major_status = gss_acquire_cred_ext(minor_status,
+					    desired_name,
+					    GSS_C_CRED_PASSWORD,
+					    password,
+					    time_req,
+					    GSS_C_NO_OID,
+					    cred_usage,
+					    output_cred_handle);
 	if (GSS_ERROR(major_status))
 	    return major_status;
     } else {
@@ -71,14 +71,14 @@ gss_acquire_cred_with_password(OM_uint32 *minor_status,
 	    struct _gss_cred *tmp_cred = NULL;
 	    struct _gss_mechanism_cred *mc;
 
-	    major_status = gss_acquire_cred_ex(minor_status,
-					       desired_name,
-					       GSS_C_CRED_PASSWORD,
-					       password,
-					       time_req,
-					       &desired_mechs->elements[i],
-					       cred_usage,
-					       (gss_cred_id_t *)&tmp_cred);
+	    major_status = gss_acquire_cred_ext(minor_status,
+						desired_name,
+						GSS_C_CRED_PASSWORD,
+						password,
+						time_req,
+						&desired_mechs->elements[i],
+						cred_usage,
+						(gss_cred_id_t *)&tmp_cred);
 	    if (GSS_ERROR(major_status))
 		continue;
 

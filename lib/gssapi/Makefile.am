@@ -80,7 +80,7 @@ mechsrc = \
 	mech/doxygen.c \
 	mech/gss_accept_sec_context.c \
 	mech/gss_acquire_cred.c \
-	mech/gss_acquire_cred_ex.c \
+	mech/gss_acquire_cred_ext.c \
 	mech/gss_acquire_cred_with_password.c \
 	mech/gss_add_cred.c \
 	mech/gss_add_oid_set_member.c \

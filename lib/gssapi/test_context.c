@@ -573,9 +573,9 @@ main(int argc, char **argv)
 	    errx(1, "gss_import_name: %s",
 		 gssapi_err(maj_stat, min_stat, GSS_C_NO_OID));
 
-	maj_stat = gss_acquire_cred_ex(&min_stat, cname,
-				       credential_type, &credential_data,
-				       0, GSS_C_NO_OID, GSS_C_INITIATE, &client_cred);
+	maj_stat = gss_acquire_cred_ext(&min_stat, cname,
+					credential_type, &credential_data,
+					0, GSS_C_NO_OID, GSS_C_INITIATE, &client_cred);
 	if (GSS_ERROR(maj_stat))
 	    errx(1, "gss_acquire_cred_ex: %s",
 		 gssapi_err(maj_stat, min_stat, GSS_C_NO_OID));

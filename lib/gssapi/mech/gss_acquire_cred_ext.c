@@ -31,7 +31,7 @@
 #include "mech_locl.h"
 
 GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL
-gss_acquire_cred_ex(OM_uint32 *minor_status,
+gss_acquire_cred_ext(OM_uint32 *minor_status,
     const gss_name_t desired_name,
     const gss_OID credential_type,
     const void *credential_data,
@@ -50,7 +50,7 @@ gss_acquire_cred_ex(OM_uint32 *minor_status,
 
     *minor_status = 0;
     if (output_cred_handle == NULL)
-        return GSS_S_CALL_INACCESSIBLE_READ;
+	return GSS_S_CALL_INACCESSIBLE_READ;
 
     _gss_load_mech();
 
@@ -100,15 +100,15 @@ gss_acquire_cred_ex(OM_uint32 *minor_status,
 	mc->gmc_mech = m;
 	mc->gmc_mech_oid = &m->gm_mech_oid;
 
-	if (m->gm_acquire_cred_ex) {
-	    major_status = m->gm_acquire_cred_ex(minor_status,
-						 desired_mech_name,
-						 credential_type,
-						 credential_data,
-						 time_req,
-						 mc->gmc_mech_oid,
-						 cred_usage,
-						 &mc->gmc_cred);
+	if (m->gm_acquire_cred_ext) {
+	    major_status = m->gm_acquire_cred_ext(minor_status,
+						  desired_mech_name,
+						  credential_type,
+						  credential_data,
+						  time_req,
+						  mc->gmc_mech_oid,
+						  cred_usage,
+						  &mc->gmc_cred);
 	} else if (credential_type != GSS_C_NO_OID) {
 	    gss_OID_set_desc set2;
 

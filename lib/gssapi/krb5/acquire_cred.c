@@ -342,14 +342,14 @@ OM_uint32 GSSAPI_CALLCONV _gsskrb5_acquire_cred
 	}
     }
 
-    ret = _gsskrb5_acquire_cred_ex(minor_status,
-				   desired_name,
-				   GSS_C_NO_OID,
-				   NULL,
-				   time_req,
-				   GSS_KRB5_MECHANISM,
-				   cred_usage,
-				   output_cred_handle);
+    ret = _gsskrb5_acquire_cred_ext(minor_status,
+				    desired_name,
+				    GSS_C_NO_OID,
+				    NULL,
+				    time_req,
+				    GSS_KRB5_MECHANISM,
+				    cred_usage,
+				    output_cred_handle);
     if (ret)
 	return ret;
 
@@ -364,7 +364,7 @@ OM_uint32 GSSAPI_CALLCONV _gsskrb5_acquire_cred
     return ret;
 }
 
-OM_uint32 GSSAPI_CALLCONV _gsskrb5_acquire_cred_ex
+OM_uint32 GSSAPI_CALLCONV _gsskrb5_acquire_cred_ext
 (OM_uint32 * minor_status,
  const gss_name_t desired_name,
  const gss_OID credential_type,

@@ -245,6 +245,11 @@ for mech in krb5 spnego; do
 		--mech-type=$mech host@lucid.test.h5l.se || \
 		{ eval "$testfailed"; }
 
+	echo "${mech}: acceptor_identity positive (prefix)" ; > messages.log
+	${context} --gsskrb5-acceptor-identity=FILE:${keytabfile}.new \
+		--mech-type=$mech host@lucid.test.h5l.se || \
+		{ eval "$testfailed"; }
+
 	echo "${mech}: acceptor_identity negative" ; > messages.log
 	${context} --gsskrb5-acceptor-identity=${keytabfile}.foo \
 		--mech-type=$mech host@lucid.test.h5l.se 2>/dev/null && \

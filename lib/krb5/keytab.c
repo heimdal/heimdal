@@ -166,29 +166,27 @@ krb5_kt_register(krb5_context context,
 }
 
 static const char *
-keytab_name(const char * name, const char ** ptype, size_t * ptype_len)
+keytab_name(const char *name, const char **type, size_t *type_len)
 {
-    const char * residual;
+    const char *residual;
 
     residual = strchr(name, ':');
 
-    if (residual == NULL
-
+    if (residual == NULL ||
+	name[0] == '/'
 #ifdef _WIN32
-
         /* Avoid treating <drive>:<path> as a keytab type
          * specification */
-
         || name + 1 == residual
 #endif
         ) {
 
-        *ptype = "FILE";
-        *ptype_len = strlen(*ptype);
+        *type = "FILE";
+        *type_len = strlen(*type);
         residual = name;
     } else {
-        *ptype = name;
-        *ptype_len = residual - name;
+        *type = name;
+        *type_len = residual - name;
         residual++;
     }
 
@@ -849,4 +847,47 @@ krb5_kt_remove_entry(krb5_context context,
 	return KRB5_KT_NOWRITE;
     }
     return (*id->remove)(context, id, entry);
+}
+
+/**
+ * Return true if the keytab exists and have entries
+ *
+ * @param context a Keberos context.
+ * @param id a keytab.
+ *
+ * @return Return an error code or 0, see krb5_get_error_message().
+ *
+ * @ingroup krb5_keytab
+ */
+
+KRB5_LIB_FUNCTION krb5_boolean KRB5_LIB_CALL
+krb5_kt_have_content(krb5_context context,
+		     krb5_keytab id)
+{
+    krb5_keytab_entry entry;
+    krb5_kt_cursor cursor;
+    krb5_error_code ret;
+    char *name;
+
+    ret = krb5_kt_start_seq_get(context, id, &cursor);
+    if (ret)
+	goto notfound;
+
+    ret = krb5_kt_next_entry(context, id, &entry, &cursor);
+    krb5_kt_end_seq_get(context, id, &cursor);
+    if (ret)
+	goto notfound;
+
+    krb5_kt_free_entry(context, &entry);
+
+    return 0;
+
+ notfound:
+    ret = krb5_kt_get_full_name(context, id, &name);
+    if (ret == 0) {
+	krb5_set_error_message(context, KRB5_KT_NOTFOUND,
+			       N_("No entry in keytab: %s", ""), name);
+	free(name);
+    }
+    return KRB5_KT_NOTFOUND;
 }

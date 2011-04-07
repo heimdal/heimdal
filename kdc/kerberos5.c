@@ -128,16 +128,18 @@ _kdc_find_etype(krb5_context context, krb5_boolean use_strongest_session_key,
 		krb5_enctype *etypes, unsigned len,
 		krb5_enctype *ret_enctype, Key **ret_key)
 {
-    int i;
     krb5_error_code ret;
     krb5_salt def_salt;
     krb5_enctype enctype = ETYPE_NULL;
-    Key *key = NULL;
+    Key *key;
+    int i;
 
     /* We'll want to avoid keys with v4 salted keys in the pre-auth case... */
     ret = krb5_get_pw_salt(context, princ->entry.principal, &def_salt);
     if (ret)
 	return ret;
+
+    ret = KRB5KDC_ERR_ETYPE_NOSUPP;
 
     if (use_strongest_session_key) {
 	const krb5_enctype *p;
@@ -195,7 +197,7 @@ _kdc_find_etype(krb5_context context, krb5_boolean use_strongest_session_key,
 	 * weak enctypes in krb5.conf and selects this key selection
 	 * algorithm, then we get exactly what RFC4120 says.
 	 */
-	for(i = 0; ret != 0 && i < len ; i++) {
+	for(key = NULL, i = 0; ret != 0 && i < len; i++, key = NULL) {
 
 	    if (krb5_enctype_valid(context, etypes[i]) != 0 &&
 		!_kdc_is_weak_exception(princ->entry.principal, etypes[i]))
@@ -207,7 +209,9 @@ _kdc_find_etype(krb5_context context, krb5_boolean use_strongest_session_key,
 		    continue;
 		}
 		if (ret_key != NULL)
-		    *ret_key   = key;
+		    *ret_key = key;
+		if (ret_enctype != NULL)
+		    *ret_enctype = etypes[i];
 		ret = 0;
 		if (is_preauth && is_default_salt_p(&def_salt, key))
 		    goto out;

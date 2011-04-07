@@ -144,20 +144,26 @@ _kdc_get_preferred_key(krb5_context context,
 	    if (krb5_enctype_valid(context, p[i]) != 0)
 		continue;
 	    ret = hdb_enctype2key(context, &h->entry, p[i], key);
-	    if (ret == 0) {
+	    if (ret != 0)
+		continue;
+	    if (enctype != NULL)
 		*enctype = p[i];
-		return 0;
-	    }
+	    return 0;
 	}
     } else {
 	*key = NULL;
 
 	for (i = 0; i < h->entry.keys.len; i++) {
 	    if (krb5_enctype_valid(context, h->entry.keys.val[i].key.keytype)
-		!= 0) {
-		*key = &h->entry.keys.val[i];
-		return 0;
-	    }
+		!= 0)
+		continue;
+	    ret = hdb_enctype2key(context, &h->entry,
+		h->entry.keys.val[i].key.keytype, key);
+	    if (ret != 0)
+		continue;
+	    if (enctype != NULL)
+		*enctype = (*key)->key.keytype;
+	    return 0;
 	}
     }
 

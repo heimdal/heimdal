@@ -177,7 +177,14 @@ Only support variable now is
 .Li %{uid}
 that expands to the current user id.
 .It Li default_etypes = Va etypes ...
-A list of default encryption types to use.
+A list of default encryption types to use. (Default: all enctypes if
+allow_weak_crypto = TRUE, else all enctypes except single DES enctypes.)
+.It Li default_as_etypes = Va etypes ...
+A list of default encryption types to use in AS requests.  (Default: the
+value of default_etypes.)
+.It Li default_tgs_etypes = Va etypes ...
+A list of default encryption types to use in TGS requests.  (Default:
+the value of default_etypes.)
 .It Li default_etypes_des = Va etypes ...
 A list of default encryption types to use when requesting a DES credential.
 .It Li default_keytab_name = Va keytab

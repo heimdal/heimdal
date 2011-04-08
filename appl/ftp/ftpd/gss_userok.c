@@ -49,14 +49,9 @@ int
 gssapi_userok(void *app_data, char *username)
 {
     struct gssapi_data *data = app_data;
-    OM_uint32 major, minor;
-    int userok;
 
-    major = gss_userok(&minor, data->client_name, username, &userok);
-    if (GSS_ERROR(major) || !userok)
-        return 1;
-
-    return 0;
+    /* Yes, this logic really is inverted. */
+    return !gss_userok(data->client_name, username);
 }
 
 int

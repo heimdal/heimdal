@@ -167,6 +167,7 @@ init_tgs_req (krb5_context context,
 	t->req_body.etype.val[0] = in_creds->session.keytype;
     } else {
 	ret = krb5_init_etype(context,
+			      KRB5_PDU_TGS_REQUEST,
 			      &t->req_body.etype.len,
 			      &t->req_body.etype.val,
 			      NULL);

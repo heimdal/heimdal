@@ -165,6 +165,22 @@ enum {
 
 };
 
+/* PDU types */
+typedef enum krb5_pdu {
+    KRB5_PDU_ERROR = 0,
+    KRB5_PDU_TICKET = 1,
+    KRB5_PDU_AS_REQUEST = 2,
+    KRB5_PDU_AS_REPLY = 3,
+    KRB5_PDU_TGS_REQUEST = 4,
+    KRB5_PDU_TGS_REPLY = 5,
+    KRB5_PDU_AP_REQUEST = 6,
+    KRB5_PDU_AP_REPLY = 7,
+    KRB5_PDU_KRB_SAFE = 8,
+    KRB5_PDU_KRB_PRIV = 9,
+    KRB5_PDU_KRB_CRED = 10,
+    KRB5_PDU_NONE = 11 /* See krb5_get_permitted_enctypes() */
+} krb5_pdu;
+
 typedef PADATA_TYPE krb5_preauthtype;
 
 typedef enum krb5_key_usage {

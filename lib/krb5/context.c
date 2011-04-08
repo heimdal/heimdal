@@ -34,6 +34,7 @@
  */
 
 #include "krb5_locl.h"
+#include <assert.h>
 #include <com_err.h>
 
 #define INIT_FIELD(C, T, E, D, F)					\
@@ -431,7 +432,7 @@ KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_get_permitted_enctypes(krb5_context context,
 			    krb5_enctype **etypes)
 {
-    return krb5_get_default_in_tkt_etypes(context, etypes);
+    return krb5_get_default_in_tkt_etypes(context, KRB5_PDU_NONE, etypes);
 }
 
 /*
@@ -989,21 +990,33 @@ krb5_set_default_in_tkt_etypes(krb5_context context,
 
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_get_default_in_tkt_etypes(krb5_context context,
+			       krb5_pdu pdu_type,
 			       krb5_enctype **etypes)
 {
+    krb5_enctype *enctypes;
     krb5_enctype *p;
     int i;
     krb5_error_code ret;
 
-    if(context->etypes) {
-	for(i = 0; context->etypes[i]; i++);
+    assert(pdu_type == KRB5_PDU_AS_REQUEST || pdu_type == KRB5_PDU_TGS_REQUEST
+	   || pdu_type == KRB5_PDU_NONE);
+
+    if (pdu_type == KRB5_PDU_AS_REQUEST && context->as_etypes != NULL)
+	enctypes = context->as_etypes;
+    else if (pdu_type == KRB5_PDU_TGS_REQUEST && context->tgs_etypes != NULL)
+	enctypes = context->tgs_etypes;
+    else if (context->etypes != NULL)
+	enctypes = context->etypes;
+
+    if (enctypes != NULL) {
+	for (i = 0; enctypes[i]; i++);
 	++i;
-	ALLOC(p, i);
-	if(!p) {
+	ALLOC (p, i);
+	if (!p) {
 	    krb5_set_error_message (context, ENOMEM, N_("malloc: out of memory", ""));
 	    return ENOMEM;
 	}
-	memmove(p, context->etypes, i * sizeof(krb5_enctype));
+	memmove(p, enctypes, i * sizeof(krb5_enctype));
     } else {
 	ret = default_etypes(context, &p);
 	if (ret)
@@ -1424,6 +1437,7 @@ krb5_set_max_time_skew (krb5_context context, time_t t)
 
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_init_etype (krb5_context context,
+		 krb5_pdu pdu_type,
 		 unsigned *len,
 		 krb5_enctype **val,
 		 const krb5_enctype *etypes)
@@ -1434,7 +1448,7 @@ krb5_init_etype (krb5_context context,
 
     ret = 0;
     if (etypes == NULL) {
-	ret = krb5_get_default_in_tkt_etypes(context, &tmp);
+	ret = krb5_get_default_in_tkt_etypes(context, pdu_type, &tmp);
 	if (ret)
 	    return ret;
 	etypes = tmp;

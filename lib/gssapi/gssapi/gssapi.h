@@ -1033,10 +1033,17 @@ gss_pname_to_uid(
         uid_t *uidOut);
 
 GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL
-gss_userok(OM_uint32 *minor,
-           const gss_name_t name,
-           const char *user,
-           int *user_ok);
+gss_authorize_localname(
+        OM_uint32 *minor,
+        const gss_name_t name,
+        const gss_name_t user,
+        int *authorized);
+
+GSSAPI_LIB_FUNCTION int GSSAPI_LIB_CALL
+gss_userok(const gss_name_t name,
+           const char *user);
+
+extern GSSAPI_LIB_VARIABLE gss_buffer_t GSS_C_ATTR_LOCAL_LOGIN_USER;
 
 /*
  * Naming extensions

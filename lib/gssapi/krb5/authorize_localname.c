@@ -33,18 +33,30 @@
 #include "gsskrb5_locl.h"
 
 OM_uint32
-_gsskrb5_userok(OM_uint32 *minor_status,
-                const gss_name_t input_name,
-                const char *user,
-                int *user_ok)
+_gsskrb5_authorize_localname(OM_uint32 *minor_status,
+                             const gss_name_t input_name,
+                             gss_const_buffer_t user_name,
+                             int *user_ok)
 {
     krb5_context context;
-    krb5_const_principal princ = (krb5_const_principal)input_name;
+    krb5_principal princ = (krb5_principal)input_name;
+    char *user;
 
     GSSAPI_KRB5_INIT(&context);
 
+    user = malloc(user_name->length + 1);
+    if (user == NULL) {
+        *minor_status = ENOMEM;
+        return GSS_S_FAILURE;
+    }
+
+    memcpy(user, user_name->value, user_name->length);
+    user[user_name->length] = '\0';
+
     *minor_status = 0;
     *user_ok = krb5_kuserok(context, princ, user);
+
+    free(user);
 
     return GSS_S_COMPLETE;
 }

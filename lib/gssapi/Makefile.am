@@ -71,7 +71,7 @@ krb5src = \
 	krb5/set_sec_context_option.c \
 	krb5/ticket_flags.c \
 	krb5/unwrap.c \
-	krb5/userok.c \
+	krb5/authorize_localname.c \
 	krb5/verify_mic.c \
 	krb5/wrap.c
 
@@ -142,7 +142,7 @@ mechsrc = \
 	mech/gss_test_oid_set_member.c \
 	mech/gss_unseal.c \
 	mech/gss_unwrap.c \
-	mech/gss_userok.c \
+	mech/gss_authorize_localname.c \
 	mech/gss_utils.c \
 	mech/gss_verify.c \
 	mech/gss_verify_mic.c \

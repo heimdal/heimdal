@@ -62,15 +62,11 @@ attr_pname_to_uid(OM_uint32 *minor_status,
     OM_uint32 major_status = GSS_S_UNAVAILABLE;
     OM_uint32 tmpMinor;
     int more = -1;
-    gss_buffer_desc attribute;
 
     *minor_status = 0;
 
     if (mn->gmn_mech->gm_get_name_attribute == NULL)
         return GSS_S_UNAVAILABLE;
-
-    attribute.length = sizeof("local-login-user") - 1;
-    attribute.value = "local-login-user";
 
     while (more != 0) {
         gss_buffer_desc value;
@@ -86,7 +82,7 @@ attr_pname_to_uid(OM_uint32 *minor_status,
 
         major_status = mn->gmn_mech->gm_get_name_attribute(minor_status,
                                                            mn->gmn_name,
-                                                           &attribute,
+                                                           GSS_C_ATTR_LOCAL_LOGIN_USER,
                                                            &authenticated,
                                                            &complete,
                                                            &value,

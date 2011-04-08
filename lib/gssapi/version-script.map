@@ -12,6 +12,7 @@ HEIMDAL_GSS_2.0 {
 		__gss_c_nt_user_name_oid_desc;
 		__gss_krb5_nt_principal_name_oid_desc;
 		__gss_c_attr_stream_sizes_oid_desc;
+		GSS_C_ATTR_LOCAL_LOGIN_USER;
 		gss_accept_sec_context;
 		gss_acquire_cred;
 		gss_acquire_cred_with_password;
@@ -19,6 +20,7 @@ HEIMDAL_GSS_2.0 {
 		gss_add_cred;
 		gss_add_cred_with_password;
 		gss_add_oid_set_member;
+		gss_authorize_localname;
 		gss_canonicalize_name;
 		gss_compare_name;
 		gss_context_query_attributes;
@@ -84,7 +86,6 @@ HEIMDAL_GSS_2.0 {
 		gss_unseal;
 		gss_unwrap;
 		gss_unwrap_iov;
-		gss_userok;
 		gss_verify;
 		gss_verify_mic;
 		gss_wrap;

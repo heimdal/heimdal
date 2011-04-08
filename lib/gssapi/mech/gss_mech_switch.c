@@ -360,7 +360,7 @@ _gss_load_mech(void)
 		OPTSPISYM(acquire_cred_with_password);
 		OPTSYM(add_cred_with_password);
 		OPTSYM(pname_to_uid);
-		OPTSYM(userok);
+		OPTSPISYM(authorize_localname);
 
 		mi = dlsym(so, "gss_mo_init");
 		if (mi != NULL) {

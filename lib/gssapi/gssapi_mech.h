@@ -495,11 +495,11 @@ typedef OM_uint32 GSSAPI_CALLCONV _gss_pname_to_uid_t (
 	       uid_t *			/* uidOut */
 	      );
 
-typedef OM_uint32 GSSAPI_CALLCONV _gss_userok_t (
+typedef OM_uint32 GSSAPI_CALLCONV _gss_authorize_localname_t (
 	       OM_uint32 *,		/* minor_status */
 	       const gss_name_t,	/* name */
-	       const char *,		/* user */
-	       int *			/*user_ok */
+	       gss_const_buffer_t,	/* user */
+	       int *			/* user_ok */
 	      );
 
 /* mechglue internal */
@@ -565,7 +565,7 @@ typedef struct gssapi_mech_interface_desc {
         gss_mo_desc			*gm_mo;
         size_t				 gm_mo_num;
         _gss_pname_to_uid_t             *gm_pname_to_uid;
-        _gss_userok_t                   *gm_userok;
+        _gss_authorize_localname_t      *gm_authorize_localname;
         _gss_display_name_ext_t         *gm_display_name_ext;
         _gss_inquire_name_t             *gm_inquire_name;
         _gss_get_name_attribute_t       *gm_get_name_attribute;

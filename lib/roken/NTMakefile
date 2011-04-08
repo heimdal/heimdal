@@ -103,6 +103,7 @@ libroken_la_OBJS =			\
 	$(OBJ)\timegm.obj		\
 	$(OBJ)\timeval.obj		\
 	$(OBJ)\tm2time.obj		\
+	$(OBJ)\tsearch.obj		\
 	$(OBJ)\unvis.obj		\
 	$(OBJ)\verr.obj			\
 	$(OBJ)\verrx.obj		\
@@ -155,6 +156,7 @@ INCFILES = 			\
 	$(INCDIR)\roken.h	\
 	$(INCDIR)\roken-common.h	\
 	$(INCDIR)\rtbl.h	\
+	$(INCDIR)\search.h	\
 	$(INCDIR)\stdbool.h	\
 	$(INCDIR)\syslog.h	\
 	$(INCDIR)\vis.h		\

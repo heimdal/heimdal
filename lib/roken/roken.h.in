@@ -1099,6 +1099,18 @@ rk_qsort(void *, size_t, size_t, int (*)(const void *, const void *));
 #define rk_random() rand()
 #endif
 
+#ifndef HAVE_TDELETE
+#define tdelete(a,b,c) rk_tdelete(a,b,c)
+#endif
+#ifndef HAVE_TFIND
+#define tfind(a,b,c) rk_tfind(a,b,c)
+#endif
+#ifndef HAVE_TSEARCH
+#define tsearch(a,b,c) rk_tsearch(a,b,c)
+#endif
+#ifndef HAVE_TWALK
+#define twalk(a,b) rk_twalk(a,b)
+#endif
 
 #if defined(__linux__) && defined(SOCK_CLOEXEC) && !defined(SOCKET_WRAPPER_REPLACE) && !defined(__SOCKET_WRAPPER_H__)
 #undef socket

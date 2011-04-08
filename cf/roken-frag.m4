@@ -65,6 +65,7 @@ AC_CHECK_HEADERS([\
 	poll.h					\
 	pwd.h					\
 	rpcsvc/ypclnt.h				\
+	search.h				\
 	shadow.h				\
 	stdint.h				\
 	sys/bswap.h				\
@@ -149,6 +150,7 @@ AC_REQUIRE([CHECK_NETINET_IP_AND_TCP])
 
 AM_CONDITIONAL(have_err_h, test "$ac_cv_header_err_h" = yes)
 AM_CONDITIONAL(have_ifaddrs_h, test "$ac_cv_header_ifaddrs_h" = yes)
+AM_CONDITIONAL(have_search_h, test "$ac_cv_header_search_h" = yes)
 AM_CONDITIONAL(have_vis_h, test "$ac_cv_header_vis_h" = yes)
 
 dnl Check for functions and libraries
@@ -197,6 +199,10 @@ AC_CHECK_FUNCS([				\
 	svis					\
 	sysconf					\
 	sysctl					\
+	tdelete					\
+	tfind					\
+	tsearch					\
+	twalk					\
 	uname					\
 	unvis					\
 	vasnprintf				\

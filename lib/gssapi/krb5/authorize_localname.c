@@ -36,12 +36,12 @@ OM_uint32
 _gsskrb5_authorize_localname(OM_uint32 *minor_status,
                              const gss_name_t input_name,
                              gss_const_buffer_t user_name,
-                             gss_const_OID user_name_type,
-                             int *user_ok)
+                             gss_const_OID user_name_type)
 {
     krb5_context context;
     krb5_principal princ = (krb5_principal)input_name;
     char *user;
+    int user_ok;
 
     if (!gss_oid_equal(user_name_type, GSS_C_NT_USER_NAME))
         return GSS_S_BAD_NAMETYPE;
@@ -58,9 +58,9 @@ _gsskrb5_authorize_localname(OM_uint32 *minor_status,
     user[user_name->length] = '\0';
 
     *minor_status = 0;
-    *user_ok = krb5_kuserok(context, princ, user);
+    user_ok = krb5_kuserok(context, princ, user);
 
     free(user);
 
-    return GSS_S_COMPLETE;
+    return user_ok ? GSS_S_COMPLETE : GSS_S_UNAUTHORIZED;
 }

@@ -1036,8 +1036,7 @@ GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL
 gss_authorize_localname(
         OM_uint32 *minor,
         const gss_name_t name,
-        const gss_name_t user,
-        int *authorized);
+        const gss_name_t user);
 
 GSSAPI_LIB_FUNCTION int GSSAPI_LIB_CALL
 gss_userok(const gss_name_t name,

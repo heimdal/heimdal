@@ -32,7 +32,8 @@ check_PROGRAMS = 				\
 		parse_reply-test		\
 		parse_time-test			\
 		snprintf-test			\
-		strpftime-test
+		strpftime-test			\
+		tsearch-test
 
 TESTS = $(check_PROGRAMS)
 
@@ -58,6 +59,9 @@ strpftime_test_CFLAGS = -DTEST_STRPFTIME
 snprintf_test_SOURCES	= snprintf-test.c
 snprintf_test_LDADD = libtest.la $(LDADD)
 snprintf_test_CFLAGS	= -DTEST_SNPRINTF
+tsearch_test_SOURCES	= tsearch-test.c
+tsearch_test_LDADD = libtest.la $(LDADD)
+tsearch_test_CFLAGS	= -DTEST_TSEARCH
 
 resolve_test_SOURCES = resolve-test.c
 
@@ -107,6 +111,7 @@ libroken_la_SOURCES =		\
 	strerror_r.c		\
 	strpool.c		\
 	timeval.c		\
+	tsearch.c		\
 	tm2time.c		\
 	unvis.c			\
 	verify.c		\
@@ -121,6 +126,7 @@ EXTRA_libroken_la_SOURCES =	\
 	glob.hin		\
 	fnmatch.hin		\
 	ifaddrs.hin		\
+	search.hin		\
 	vis.hin	
 
 libroken_la_LIBADD = @LTLIBOBJS@ $(LIB_crypt)
@@ -153,6 +159,12 @@ else
 ifaddrs_h = ifaddrs.h
 endif
 
+if have_search_h
+search_h = 
+else
+search_h = search.h
+endif
+
 if have_vis_h
 vis_h = 
 else
@@ -160,8 +172,8 @@ vis_h = vis.h
 endif
 
 ## these are controlled by configure
-XHEADERS = $(err_h) $(fnmatch_h) $(glob_h) $(ifaddrs_h) $(vis_h)
-CLEANFILES += err.h fnmatch.h glob.h ifaddrs.h vis.h
+XHEADERS = $(err_h) $(fnmatch_h) $(glob_h) $(ifaddrs_h) $(search_h) $(vis_h)
+CLEANFILES += err.h fnmatch.h glob.h ifaddrs.h search.h vis.h
 
 dist_include_HEADERS = 				\
 	base64.h				\
@@ -186,7 +198,7 @@ nodist_include_HEADERS = roken.h
 rokenincludedir = $(includedir)/roken
 nodist_rokeninclude_HEADERS = $(XHEADERS)
 
-man_MANS = getarg.3 parse_time.3 rtbl.3 ecalloc.3
+man_MANS = getarg.3 parse_time.3 rtbl.3 ecalloc.3 tsearch.3
 
 SUFFIXES += .hin
 .hin.h:

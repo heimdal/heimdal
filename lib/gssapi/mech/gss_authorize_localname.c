@@ -41,11 +41,10 @@ gss_buffer_t GSSAPI_LIB_VARIABLE GSS_C_ATTR_LOCAL_LOGIN_USER = &localLoginUserAt
 
 static OM_uint32
 mech_authorize_localname(OM_uint32 *minor_status,
-	                 const gss_name_t input_name,
+	                 const struct _gss_name *name,
 	                 const struct _gss_name *user,
 	                 int *user_ok)
 {
-    const struct _gss_name *name = (const struct _gss_name *)input_name;
     OM_uint32 major_status = GSS_S_UNAVAILABLE;
     struct _gss_mechanism_name *mn;
 
@@ -60,6 +59,7 @@ mech_authorize_localname(OM_uint32 *minor_status,
         major_status = m->gm_authorize_localname(minor_status,
                                                  mn->gmn_name,
                                                  &user->gn_value,
+                                                 &user->gn_type,
                                                  user_ok);
         if (GSS_ERROR(major_status) || *user_ok)
             break;
@@ -73,7 +73,7 @@ mech_authorize_localname(OM_uint32 *minor_status,
  */
 static OM_uint32
 attr_authorize_localname(OM_uint32 *minor_status,
-	                 const gss_name_t name,
+	                 const struct _gss_name *name,
 	                 const struct _gss_name *user,
 	                 int *user_ok)
 {
@@ -83,13 +83,16 @@ attr_authorize_localname(OM_uint32 *minor_status,
 
     *user_ok = 0;
 
+    if (!gss_oid_equal(&user->gn_type, GSS_C_NT_USER_NAME))
+        return GSS_S_BAD_NAMETYPE;
+
     while (more != 0 && *user_ok == 0) {
 	gss_buffer_desc value;
 	gss_buffer_desc display_value;
 	int authenticated = 0, complete = 0;
 
 	major_status = gss_get_name_attribute(minor_status,
-					      name,
+					      (gss_name_t)name,
 					      GSS_C_ATTR_LOCAL_LOGIN_USER,
 					      &authenticated,
 					      &complete,
@@ -113,18 +116,19 @@ attr_authorize_localname(OM_uint32 *minor_status,
 
 OM_uint32
 gss_authorize_localname(OM_uint32 *minor_status,
-	                const gss_name_t name,
-	                const gss_name_t user_name,
+	                const gss_name_t gss_name,
+	                const gss_name_t gss_user,
 	                int *user_ok)
 
 {
     OM_uint32 major_status;
-    const struct _gss_name *user = (const struct _gss_name *) user_name;
+    const struct _gss_name *name = (const struct _gss_name *) gss_name;
+    const struct _gss_name *user = (const struct _gss_name *) gss_user;
 
     *minor_status = 0;
     *user_ok = 0;
 
-    if (name == GSS_C_NO_NAME || user_name == GSS_C_NO_NAME)
+    if (gss_name == GSS_C_NO_NAME || gss_user == GSS_C_NO_NAME)
         return GSS_S_CALL_INACCESSIBLE_READ;
 
     /* name must not be a MN */
@@ -144,7 +148,8 @@ gss_authorize_localname(OM_uint32 *minor_status,
 
     /* If mech returns unavail, we compare the local name */
     if (major_status == GSS_S_UNAVAILABLE)
-        major_status = gss_compare_name(minor_status, name, user_name, user_ok);
+        major_status = gss_compare_name(minor_status, gss_name,
+                                        gss_user, user_ok);
 
     return major_status;
 }
@@ -161,7 +166,8 @@ gss_userok(const gss_name_t name,
     userBuf.value = (void *)user;
     userBuf.length = strlen(user);
 
-    major_status = gss_import_name(&minor_status, &userBuf, GSS_C_NO_OID, &userName);
+    major_status = gss_import_name(&minor_status, &userBuf,
+                                   GSS_C_NT_USER_NAME, &userName);
     if (GSS_ERROR(major_status))
         return 0;
 

@@ -499,6 +499,7 @@ typedef OM_uint32 GSSAPI_CALLCONV _gss_authorize_localname_t (
 	       OM_uint32 *,		/* minor_status */
 	       const gss_name_t,	/* name */
 	       gss_const_buffer_t,	/* user */
+	       gss_const_OID,		/* user_name_type */
 	       int *			/* user_ok */
 	      );
 

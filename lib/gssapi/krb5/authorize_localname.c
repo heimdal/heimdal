@@ -36,11 +36,15 @@ OM_uint32
 _gsskrb5_authorize_localname(OM_uint32 *minor_status,
                              const gss_name_t input_name,
                              gss_const_buffer_t user_name,
+                             gss_const_OID user_name_type,
                              int *user_ok)
 {
     krb5_context context;
     krb5_principal princ = (krb5_principal)input_name;
     char *user;
+
+    if (!gss_oid_equal(user_name_type, GSS_C_NT_USER_NAME))
+        return GSS_S_BAD_NAMETYPE;
 
     GSSAPI_KRB5_INIT(&context);
 

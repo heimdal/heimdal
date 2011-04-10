@@ -198,7 +198,7 @@ nodist_include_HEADERS = roken.h
 rokenincludedir = $(includedir)/roken
 nodist_rokeninclude_HEADERS = $(XHEADERS)
 
-man_MANS = getarg.3 parse_time.3 rtbl.3 ecalloc.3 tsearch.3
+man_MANS = getarg.3 parse_time.3 rtbl.3 ecalloc.3
 
 SUFFIXES += .hin
 .hin.h:

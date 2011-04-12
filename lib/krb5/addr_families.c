@@ -727,34 +727,78 @@ addrport_print_addr (const krb5_address *addr, char *str, size_t len)
 }
 
 static struct addr_operations at[] = {
-    {AF_INET,	KRB5_ADDRESS_INET, sizeof(struct sockaddr_in),
-     ipv4_sockaddr2addr,
-     ipv4_sockaddr2port,
-     ipv4_addr2sockaddr,
-     ipv4_h_addr2sockaddr,
-     ipv4_h_addr2addr,
-     ipv4_uninteresting, ipv4_is_loopback, ipv4_anyaddr, ipv4_print_addr,
-     ipv4_parse_addr, NULL, NULL, NULL, ipv4_mask_boundary },
+    {
+	AF_INET,	KRB5_ADDRESS_INET, sizeof(struct sockaddr_in),
+	ipv4_sockaddr2addr,
+	ipv4_sockaddr2port,
+	ipv4_addr2sockaddr,
+	ipv4_h_addr2sockaddr,
+	ipv4_h_addr2addr,
+	ipv4_uninteresting,
+	ipv4_is_loopback,
+	ipv4_anyaddr,
+	ipv4_print_addr,
+	ipv4_parse_addr,
+	NULL,
+	NULL,
+	NULL,
+     ipv4_mask_boundary
+    },
 #ifdef HAVE_IPV6
-    {AF_INET6,	KRB5_ADDRESS_INET6, sizeof(struct sockaddr_in6),
-     ipv6_sockaddr2addr,
-     ipv6_sockaddr2port,
-     ipv6_addr2sockaddr,
-     ipv6_h_addr2sockaddr,
-     ipv6_h_addr2addr,
-     ipv6_uninteresting, ipv6_is_loopback, ipv6_anyaddr, ipv6_print_addr,
-     ipv6_parse_addr, NULL, NULL, NULL, ipv6_mask_boundary } ,
+    {
+	AF_INET6,	KRB5_ADDRESS_INET6, sizeof(struct sockaddr_in6),
+	ipv6_sockaddr2addr,
+	ipv6_sockaddr2port,
+	ipv6_addr2sockaddr,
+	ipv6_h_addr2sockaddr,
+	ipv6_h_addr2addr,
+	ipv6_uninteresting,
+	ipv6_is_loopback,
+	ipv6_anyaddr,
+	ipv6_print_addr,
+	ipv6_parse_addr,
+	NULL,
+	NULL,
+	NULL,
+	ipv6_mask_boundary
+    } ,
 #endif
 #ifndef HEIMDAL_SMALLER
     /* fake address type */
-    {KRB5_ADDRESS_ARANGE, KRB5_ADDRESS_ARANGE, sizeof(struct arange),
-     NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-     arange_print_addr, arange_parse_addr,
-     arange_order_addr, arange_free, arange_copy },
+    {
+	KRB5_ADDRESS_ARANGE, KRB5_ADDRESS_ARANGE, sizeof(struct arange),
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	arange_print_addr,
+	arange_parse_addr,
+	arange_order_addr,
+	arange_free,
+	arange_copy,
+	NULL
+    },
 #endif
-    {KRB5_ADDRESS_ADDRPORT, KRB5_ADDRESS_ADDRPORT, 0,
-     NULL, NULL, NULL, NULL, NULL, NULL,
-     NULL, NULL, addrport_print_addr, NULL, NULL, NULL, NULL }
+    {
+	KRB5_ADDRESS_ADDRPORT, KRB5_ADDRESS_ADDRPORT, 0,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	addrport_print_addr,
+	NULL,
+	NULL,
+	NULL,
+	NULL
+    }
 };
 
 static int num_addrs = sizeof(at) / sizeof(at[0]);

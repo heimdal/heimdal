@@ -422,11 +422,6 @@ init_auth
 	goto failure;
     }
 
-    ret = _gss_DES3_get_mic_compat(minor_status, ctx, context);
-    if (ret)
-	goto failure;
-
-
     /*
      * This is hideous glue for (NFS) clients that wants to limit the
      * available enctypes to what it can support (encryption in
@@ -468,6 +463,10 @@ init_auth
 	goto failure;
 
     ctx->lifetime = ctx->kcred->times.endtime;
+
+    ret = _gss_DES3_get_mic_compat(minor_status, ctx, context);
+    if (ret)
+	goto failure;
 
     ret = _gsskrb5_lifetime_left(minor_status,
 				 context,

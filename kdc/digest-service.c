@@ -272,6 +272,10 @@ main(int argc, char **argv)
 	heim_sipc_timeout(60);
     }
 #endif
+    {
+	heim_sipc un;
+	heim_sipc_service_unix("org.h5l.ntlm-service", kcm_service, NULL, &un);
+    }
 
     heim_ipc_main();
     return 0;

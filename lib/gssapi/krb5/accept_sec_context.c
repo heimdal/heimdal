@@ -55,10 +55,12 @@ validate_keytab(krb5_context context, const char *name, krb5_keytab *id)
 }
 
 OM_uint32
-_gsskrb5_register_acceptor_identity (const char *identity)
+_gsskrb5_register_acceptor_identity(OM_uint32 *min_stat, const char *identity)
 {
     krb5_context context;
     krb5_error_code ret;
+
+    *min_stat = 0;
 
     ret = _gsskrb5_init(&context);
     if(ret)
@@ -92,8 +94,10 @@ _gsskrb5_register_acceptor_identity (const char *identity)
 	}
     }
     HEIMDAL_MUTEX_unlock(&gssapi_keytab_mutex);
-    if(ret)
+    if(ret) {
+	*min_stat = ret;
 	return GSS_S_FAILURE;
+    }
     return GSS_S_COMPLETE;
 }
 

@@ -78,7 +78,9 @@ static struct hdb_method methods[] = {
     { HDB_INTERFACE_VERSION, "ldap:",	hdb_ldap_create},
     { HDB_INTERFACE_VERSION, "ldapi:",	hdb_ldapi_create},
 #endif
+#ifdef HAVE_SQLITE3
     { HDB_INTERFACE_VERSION, "sqlite:", hdb_sqlite_create},
+#endif
     {0, NULL,	NULL}
 };
 

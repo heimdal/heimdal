@@ -141,9 +141,11 @@ check_acl (krb5_context context, const char *name)
     FILE *fp;
     char buf[256];
     int ret = 1;
-    char *slavefile;
+    char *slavefile = NULL;
 
-    asprintf(&slavefile, "%s/slaves", hdb_db_dir(context));
+    if (asprintf(&slavefile, "%s/slaves", hdb_db_dir(context))
+	|| slavefile == NULL)
+	errx(1, "out of memory");
 
     fn = krb5_config_get_string_default(context,
 					NULL,

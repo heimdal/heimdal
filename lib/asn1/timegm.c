@@ -98,6 +98,14 @@ _der_gmtime(time_t t, struct tm *tm)
     tm->tm_min = (secday % 3600) / 60;
     tm->tm_hour = secday / 3600;
 
+    /* 
+     * Refuse to calculate time ~ 2000 years into the future, this is
+     * not possible for systems where time_t is a int32_t, however,
+     * when time_t is a int64_t, that can happen.
+     */
+    if (days > 356000)
+	return NULL;
+
     tm->tm_year = 70;
     while(1) {
 	unsigned dayinyear = (is_leap(tm->tm_year) ? 366 : 365);

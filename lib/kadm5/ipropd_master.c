@@ -143,7 +143,7 @@ check_acl (krb5_context context, const char *name)
     int ret = 1;
     char *slavefile = NULL;
 
-    if (asprintf(&slavefile, "%s/slaves", hdb_db_dir(context))
+    if (asprintf(&slavefile, "%s/slaves", hdb_db_dir(context)) == -1
 	|| slavefile == NULL)
 	errx(1, "out of memory");
 

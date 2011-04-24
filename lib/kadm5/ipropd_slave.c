@@ -528,8 +528,8 @@ main(int argc, char **argv)
     setup_signal();
 
     if (config_file == NULL) {
-	asprintf(&config_file, "%s/kdc.conf", hdb_db_dir(context));
-	if (config_file == NULL)
+	if (asprintf(&config_file, "%s/kdc.conf", hdb_db_dir(context)) == -1
+	    || config_file == NULL)
 	    errx(1, "out of memory");
     }
 

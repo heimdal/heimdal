@@ -386,10 +386,10 @@ kadm5_add_passwd_quality_verifier(krb5_context context,
 				      "password_quality",
 				      "policy_libraries",
 				      NULL);
-	if(tmp == NULL)
+	if(tmp == NULL || *tmp == NULL)
 	    return 0;
 
-	while(tmp) {
+	while (*tmp) {
 	    ret = add_verifier(context, *tmp);
 	    if (ret)
 		return ret;
@@ -432,7 +432,7 @@ find_func(krb5_context context, const char *name)
 	if (module && strcmp(module, verifiers[i]->name) != 0)
 	    continue;
 	for (f = verifiers[i]->funcs; f->name ; f++)
-	    if (strcmp(name, f->name) == 0) {
+	    if (strcmp(func, f->name) == 0) {
 		if (module)
 		    free(module);
 		return f;

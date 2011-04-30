@@ -354,7 +354,7 @@ ipv6_print_addr (const krb5_address *addr, char *str, size_t len)
     if(inet_ntop(AF_INET6, addr->address.data, buf, sizeof(buf)) == NULL)
 	{
 	    /* XXX this is pretty ugly, but better than abort() */
-	    int i;
+	    size_t i;
 	    unsigned char *p = addr->address.data;
 	    buf[0] = '\0';
 	    for(i = 0; i < addr->address.length; i++) {
@@ -821,7 +821,7 @@ find_af(int af)
 }
 
 static struct addr_operations *
-find_atype(int atype)
+find_atype(krb5_address_type atype)
 {
     struct addr_operations *a;
 
@@ -1111,17 +1111,17 @@ krb5_print_address (const krb5_address *addr,
     if (a == NULL || a->print_addr == NULL) {
 	char *s;
 	int l;
-	int i;
+	size_t i;
 
 	s = str;
 	l = snprintf(s, len, "TYPE_%d:", addr->addr_type);
-	if (l < 0 || l >= len)
+	if (l < 0 || (size_t)l >= len)
 	    return EINVAL;
 	s += l;
 	len -= l;
 	for(i = 0; i < addr->address.length; i++) {
 	    l = snprintf(s, len, "%02x", ((char*)addr->address.data)[i]);
-	    if (l < 0 || l >= len)
+	    if (l < 0 || (size_t)l >= len)
 		return EINVAL;
 	    len -= l;
 	    s += l;
@@ -1307,7 +1307,7 @@ krb5_address_search(krb5_context context,
 		    const krb5_address *addr,
 		    const krb5_addresses *addrlist)
 {
-    int i;
+    size_t i;
 
     for (i = 0; i < addrlist->len; ++i)
 	if (krb5_address_compare (context, addr, &addrlist->val[i]))
@@ -1355,7 +1355,7 @@ KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_free_addresses(krb5_context context,
 		    krb5_addresses *addresses)
 {
-    int i;
+    size_t i;
     for(i = 0; i < addresses->len; i++)
 	krb5_free_address(context, &addresses->val[i]);
     free(addresses->val);
@@ -1406,7 +1406,7 @@ krb5_copy_addresses(krb5_context context,
 		    const krb5_addresses *inaddr,
 		    krb5_addresses *outaddr)
 {
-    int i;
+    size_t i;
     ALLOC_SEQ(outaddr, inaddr->len);
     if(inaddr->len > 0 && outaddr->val == NULL)
 	return ENOMEM;
@@ -1435,7 +1435,7 @@ krb5_append_addresses(krb5_context context,
 {
     krb5_address *tmp;
     krb5_error_code ret;
-    int i;
+    size_t i;
     if(source->len > 0) {
 	tmp = realloc(dest->val, (dest->len + source->len) * sizeof(*tmp));
 	if(tmp == NULL) {

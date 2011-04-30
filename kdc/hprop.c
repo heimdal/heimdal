@@ -133,13 +133,13 @@ struct getargs args[] = {
 
     { "keytab",   'k',	arg_string, rk_UNCONST(&ktname),
       "keytab to use for authentication", "keytab" },
-    { "v5-realm", 'R',  arg_string, &local_realm, "v5 realm to use" },
-    { "decrypt",  'D',  arg_flag,   &decrypt_flag,   "decrypt keys" },
-    { "encrypt",  'E',  arg_flag,   &encrypt_flag,   "encrypt keys" },
-    { "stdout",	  'n',  arg_flag,   &to_stdout, "dump to stdout" },
-    { "verbose",  'v',	arg_flag, &verbose_flag },
-    { "version",   0,	arg_flag, &version_flag },
-    { "help",     'h',	arg_flag, &help_flag }
+    { "v5-realm", 'R',  arg_string, &local_realm, "v5 realm to use", NULL },
+    { "decrypt",  'D',  arg_flag,   &decrypt_flag,   "decrypt keys", NULL },
+    { "encrypt",  'E',  arg_flag,   &encrypt_flag,   "encrypt keys", NULL },
+    { "stdout",	  'n',  arg_flag,   &to_stdout, "dump to stdout", NULL },
+    { "verbose",  'v',	arg_flag, &verbose_flag, NULL, NULL },
+    { "version",   0,	arg_flag, &version_flag, NULL, NULL },
+    { "help",     'h',	arg_flag, &help_flag, NULL, NULL }
 };
 
 static int num_args = sizeof(args) / sizeof(args[0]);
@@ -213,7 +213,7 @@ struct {
 static int
 parse_source_type(const char *s)
 {
-    int i;
+    size_t i;
     for(i = 0; i < sizeof(types) / sizeof(types[0]); i++) {
 	if(strstr(types[i].name, s) == types[i].name)
 	    return types[i].type;

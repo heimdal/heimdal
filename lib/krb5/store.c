@@ -262,10 +262,11 @@ krb5_storage_to_data(krb5_storage *sp, krb5_data *data)
     pos = sp->seek(sp, 0, SEEK_CUR);
     if (pos < 0)
 	return HEIM_ERR_NOT_SEEKABLE;
-    size = (size_t)sp->seek(sp, 0, SEEK_END);
-    if (size > (size_t)-1)
+    size = sp->seek(sp, 0, SEEK_END);
+    /* don't allocate unresonable amount of memory */
+    if (size > UINT_MAX/8)
 	return HEIM_ERR_TOO_BIG;
-    ret = krb5_data_alloc (data, size);
+    ret = krb5_data_alloc(data, size);
     if (ret) {
 	sp->seek(sp, pos, SEEK_SET);
 	return ret;
@@ -290,8 +291,10 @@ krb5_store_int(krb5_storage *sp,
 	return EINVAL;
     _krb5_put_int(v, value, len);
     ret = sp->store(sp, v, len);
-    if (ret != len)
-	return (ret<0)?errno:sp->eof_code;
+    if (ret < 0)
+	return errno;
+    if ((size_t)ret != len)
+	return sp->eof_code;
     return 0;
 }
 
@@ -346,8 +349,10 @@ krb5_ret_int(krb5_storage *sp,
     unsigned char v[4];
     unsigned long w;
     ret = sp->fetch(sp, v, len);
-    if(ret != len)
-	return (ret<0)?errno:sp->eof_code;
+    if (ret < 0)
+	return errno;
+    if ((size_t)ret != len)
+	return sp->eof_code;
     _krb5_get_int(v, &w, len);
     *value = w;
     return 0;
@@ -612,11 +617,10 @@ krb5_store_data(krb5_storage *sp,
     if(ret < 0)
 	return ret;
     ret = sp->store(sp, data.data, data.length);
-    if(ret != data.length){
-	if(ret < 0)
-	    return errno;
+    if(ret < 0)
+	return errno;
+    if((size_t)ret != data.length)
 	return sp->eof_code;
-    }
     return 0;
 }
 
@@ -722,12 +726,10 @@ krb5_store_stringz(krb5_storage *sp, const char *s)
     ssize_t ret;
 
     ret = sp->store(sp, s, len);
-    if(ret != len) {
-	if(ret < 0)
-	    return ret;
-	else
-	    return sp->eof_code;
-    }
+    if(ret < 0)
+	return ret;
+    if((size_t)ret != len)
+	return sp->eof_code;
     return 0;
 }
 
@@ -782,12 +784,10 @@ krb5_store_stringnl(krb5_storage *sp, const char *s)
     ssize_t ret;
 
     ret = sp->store(sp, s, len);
-    if(ret != len) {
-	if(ret < 0)
-	    return ret;
-	else
-	    return sp->eof_code;
-    }
+    if(ret < 0)
+	return ret;
+    if((size_t)ret != len)
+	return sp->eof_code;
     ret = sp->store(sp, "\n", 1);
     if(ret != 1) {
 	if(ret < 0)
@@ -860,7 +860,7 @@ KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_store_principal(krb5_storage *sp,
 		     krb5_const_principal p)
 {
-    int i;
+    size_t i;
     int ret;
 
     if(!krb5_storage_is_flags(sp, KRB5_STORAGE_PRINCIPAL_NO_NAME_TYPE)) {
@@ -1122,7 +1122,7 @@ krb5_ret_address(krb5_storage *sp, krb5_address *adr)
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_store_addrs(krb5_storage *sp, krb5_addresses p)
 {
-    int i;
+    size_t i;
     int ret;
     ret = krb5_store_int32(sp, p.len);
     if(ret) return ret;
@@ -1147,7 +1147,7 @@ krb5_store_addrs(krb5_storage *sp, krb5_addresses p)
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_ret_addrs(krb5_storage *sp, krb5_addresses *adr)
 {
-    int i;
+    size_t i;
     int ret;
     int32_t tmp;
 
@@ -1179,7 +1179,7 @@ KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_store_authdata(krb5_storage *sp, krb5_authdata auth)
 {
     krb5_error_code ret;
-    int i;
+    size_t i;
     ret = krb5_store_int32(sp, auth.len);
     if(ret) return ret;
     for(i = 0; i < auth.len; i++){

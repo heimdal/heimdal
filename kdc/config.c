@@ -74,30 +74,31 @@ static struct getargs args[] = {
     },
     {
 	"require-preauth",	'p',	arg_negative_flag, &require_preauth,
-	"don't require pa-data in as-reqs"
+	"don't require pa-data in as-reqs", NULL
     },
     {
 	"max-request",	0,	arg_string, &max_request_str,
 	"max size for a kdc-request", "size"
     },
-    { "enable-http", 'H', arg_flag, &enable_http, "turn on HTTP support" },
+    { "enable-http", 'H', arg_flag, &enable_http, "turn on HTTP support",
+   	 NULL },
     {	"524",		0, 	arg_negative_flag, &enable_524,
-	"don't respond to 524 requests"
+	"don't respond to 524 requests", NULL
     },
     {
 	"kaserver", 'K', arg_flag,   &enable_kaserver,
-	"enable kaserver support"
+	"enable kaserver support", NULL
     },
     {	"kerberos4",	0, 	arg_flag, &enable_v4,
-	"respond to kerberos 4 requests"
+	"respond to kerberos 4 requests", NULL
     },
     {
 	"v4-realm",	'r',	arg_string, &v4_realm,
-	"realm to serve v4-requests for"
+	"realm to serve v4-requests for", NULL
     },
     {	"kerberos4-cross-realm",	0, 	arg_flag,
 	&enable_v4_cross_realm,
-	"respond to kerberos 4 requests from foreign realms"
+	"respond to kerberos 4 requests from foreign realms", NULL
     },
     {	"ports",	'P', 	arg_string, rk_UNCONST(&port_str),
 	"ports to listen to", "portspec"
@@ -106,29 +107,29 @@ static struct getargs args[] = {
 #if DETACH_IS_DEFAULT
     {
 	"detach",       'D',      arg_negative_flag, &detach_from_console,
-	"don't detach from console"
+	"don't detach from console", NULL
     },
 #else
     {
 	"detach",       0 ,      arg_flag, &detach_from_console,
-	"detach from console"
+	"detach from console", NULL
     },
 #endif
 #endif
     {	"addresses",	0,	arg_strings, &addresses_str,
 	"addresses to listen on", "list of addresses" },
     {	"disable-des",	0,	arg_flag, &disable_des,
-	"disable DES" },
+	"disable DES", NULL },
     {	"builtin-hdb",	0,	arg_flag,   &builtin_hdb_flag,
-	"list builtin hdb backends"},
+	"list builtin hdb backends", NULL},
     {   "runas-user",	0,	arg_string, &runas_string,
-	"run as this user when connected to network"
+	"run as this user when connected to network", NULL
     },
     {   "chroot",	0,	arg_string, &chroot_string,
-	"chroot directory to run in"
+	"chroot directory to run in", NULL
     },
-    {	"help",		'h',	arg_flag,   &help_flag },
-    {	"version",	'v',	arg_flag,   &version_flag }
+    {	"help",		'h',	arg_flag,   &help_flag, NULL, NULL },
+    {	"version",	'v',	arg_flag,   &version_flag, NULL, NULL }
 };
 
 static int num_args = sizeof(args) / sizeof(args[0]);

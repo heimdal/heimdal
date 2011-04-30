@@ -70,7 +70,7 @@ _kadm5_init_keys (Key *keys, int len)
 int
 _kadm5_exists_keys(Key *keys1, int len1, Key *keys2, int len2)
 {
-    unsigned int i, j;
+    int i, j;
 
     for (i = 0; i < len1; ++i) {
 	for (j = 0; j < len2; j++) {

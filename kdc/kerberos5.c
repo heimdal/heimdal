@@ -74,9 +74,9 @@ _kdc_find_padata(const KDC_REQ *req, int *start, int type)
     if (req->padata == NULL)
 	return NULL;
 
-    while(*start < req->padata->len){
+    while((size_t)*start < req->padata->len){
 	(*start)++;
-	if(req->padata->val[*start - 1].padata_type == type)
+	if(req->padata->val[*start - 1].padata_type == (unsigned)type)
 	    return &req->padata->val[*start - 1];
     }
     return NULL;
@@ -127,7 +127,7 @@ _kdc_find_etype(krb5_context context, const hdb_entry_ex *princ,
 		krb5_enctype *etypes, unsigned len,
 		Key **ret_key)
 {
-    int i;
+    size_t i;
     krb5_error_code ret = KRB5KDC_ERR_ETYPE_NOSUPP;
     krb5_salt def_salt;
 
@@ -211,7 +211,7 @@ log_patypes(krb5_context context,
 {
     struct rk_strpool *p = NULL;
     char *str;
-    int i;
+    size_t i;
 	
     for (i = 0; i < padata->len; i++) {
 	switch(padata->val[i].padata_type) {
@@ -614,7 +614,7 @@ log_as_req(krb5_context context,
     krb5_error_code ret;
     struct rk_strpool *p;
     char *str;
-    int i;
+    size_t i;
 
     p = rk_strpoolprintf(NULL, "%s", "Client supported enctypes: ");
 
@@ -809,7 +809,7 @@ _kdc_check_addresses(krb5_context context,
     krb5_address addr;
     krb5_boolean result;
     krb5_boolean only_netbios = TRUE;
-    int i;
+    size_t i;
 
     if(config->check_ticket_addresses == 0)
 	return TRUE;
@@ -1035,7 +1035,7 @@ _kdc_as_rep(krb5_context context,
     {
 	const krb5_enctype *p;
 	krb5_enctype clientbest = ETYPE_NULL;
-	int i, j;
+	size_t i, j;
 
 	p = krb5_kerberos_enctypes(context);
 
@@ -1663,7 +1663,7 @@ _kdc_as_rep(krb5_context context,
 	PA_ClientCanonicalized canon;
 	krb5_data data;
 	PA_DATA pa;
-	krb5_crypto crypto;
+	krb5_crypto cryptox;
 	size_t len;
 
 	memset(&canon, 0, sizeof(canon));
@@ -1679,18 +1679,18 @@ _kdc_as_rep(krb5_context context,
 	    krb5_abortx(context, "internal asn.1 error");
 
 	/* sign using "returned session key" */
-	ret = krb5_crypto_init(context, &et.key, 0, &crypto);
+	ret = krb5_crypto_init(context, &et.key, 0, &cryptox);
 	if (ret) {
 	    free(data.data);
 	    goto out;
 	}
 
-	ret = krb5_create_checksum(context, crypto,
+	ret = krb5_create_checksum(context, cryptox,
 				   KRB5_KU_CANONICALIZED_NAMES, 0,
 				   data.data, data.length,
 				   &canon.canon_checksum);
 	free(data.data);
-	krb5_crypto_destroy(context, crypto);
+	krb5_crypto_destroy(context, cryptox);
 	if (ret)
 	    goto out;
 	

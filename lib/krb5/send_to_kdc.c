@@ -88,7 +88,7 @@ recv_loop (krb5_socket_t fd,
 		 return 0;
 
 	     if (limit)
-		 nbytes = min(nbytes, limit - rep->length);
+		 nbytes = min((size_t)nbytes, limit - rep->length);
 
 	     tmp = realloc (rep->data, rep->length + nbytes);
 	     if (tmp == NULL) {
@@ -371,7 +371,7 @@ krb5_sendto (krb5_context context,
 {
      krb5_error_code ret;
      krb5_socket_t fd;
-     int i;
+     size_t i;
 
      krb5_data_zero(receive);
 
@@ -602,7 +602,7 @@ krb5_sendto_context(krb5_context context,
 	    type = KRB5_KRBHST_KDC;
     }
 
-    if (send_data->length > context->large_msg_size)
+    if ((int)send_data->length > context->large_msg_size)
 	ctx->flags |= KRB5_KRBHST_FLAGS_LARGE_MSG;
 
     /* loop until we get back a appropriate response */

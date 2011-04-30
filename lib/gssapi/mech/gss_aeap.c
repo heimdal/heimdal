@@ -168,7 +168,7 @@ gss_release_iov_buffer(OM_uint32 *minor_status,
 		       int iov_count)
 {
     OM_uint32 junk;
-    size_t i;
+    int i;
 
     if (minor_status)
 	*minor_status = 0;

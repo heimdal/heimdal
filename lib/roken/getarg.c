@@ -352,7 +352,7 @@ static int
 arg_match_long(struct getargs *args, size_t num_args,
 	       char *argv, int argc, char **rargv, int *goptind)
 {
-    int i;
+    size_t i;
     char *goptarg = NULL;
     int negate = 0;
     int partial_match = 0;
@@ -477,7 +477,7 @@ static int
 arg_match_short (struct getargs *args, size_t num_args,
 		 char *argv, int argc, char **rargv, int *goptind)
 {
-    int j, k;
+    size_t j, k;
 
     for(j = 1; j > 0 && j < strlen(rargv[*goptind]); j++) {
 	for(k = 0; k < num_args; k++) {
@@ -500,9 +500,11 @@ arg_match_short (struct getargs *args, size_t num_args,
 		}
 		if(args[k].type == arg_collect) {
 		    struct getarg_collect_info *c = args[k].value;
+		    int a = (int)j;
 
-		    if((*c->func)(TRUE, argc, rargv, goptind, &j, c->data))
+		    if((*c->func)(TRUE, argc, rargv, goptind, &a, c->data))
 			return ARG_ERR_BAD_ARG;
+		    j = a;
 		    break;
 		}
 

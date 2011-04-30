@@ -98,7 +98,7 @@ krb5_get_pw_salt(krb5_context context,
 		 krb5_salt *salt)
 {
     size_t len;
-    int i;
+    size_t i;
     krb5_error_code ret;
     char *p;
 

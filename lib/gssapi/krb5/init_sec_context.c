@@ -675,7 +675,8 @@ init_auth_restart
 	output_token->length = outbuf.length;
     } else {
         ret = _gsskrb5_encapsulate (minor_status, &outbuf, output_token,
-				    (u_char *)"\x01\x00", GSS_KRB5_MECHANISM);
+				    (u_char *)(intptr_t)"\x01\x00",
+				    GSS_KRB5_MECHANISM);
 	krb5_data_free (&outbuf);
 	if (ret)
 	    goto failure;
@@ -910,20 +911,20 @@ OM_uint32 GSSAPI_CALLCONV _gsskrb5_init_sec_context
 	return GSS_S_BAD_MECH;
 
     if (input_token == GSS_C_NO_BUFFER || input_token->length == 0) {
-	OM_uint32 ret;
+	OM_uint32 ret1;
 
 	if (*context_handle != GSS_C_NO_CONTEXT) {
 	    *minor_status = 0;
 	    return GSS_S_FAILURE | GSS_S_CALL_BAD_STRUCTURE;
 	}
 
-	ret = _gsskrb5_create_ctx(minor_status,
+	ret1 = _gsskrb5_create_ctx(minor_status,
 				  context_handle,
 				  context,
 				  input_chan_bindings,
 				  INITIATOR_START);
-	if (ret)
-	    return ret;
+	if (ret1)
+	    return ret1;
     }
 
     if (*context_handle == GSS_C_NO_CONTEXT) {

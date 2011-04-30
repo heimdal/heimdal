@@ -38,7 +38,8 @@ RCSID("$Id$");
 static const char *config_name = "ipropd-slave";
 
 static krb5_log_facility *log_facility;
-static char *server_time_lost = "5 min";
+static char five_min[] = "5 min";
+static char *server_time_lost = five_min;
 static int time_before_lost;
 const char *slave_str = NULL;
 
@@ -198,9 +199,9 @@ receive_loop (krb5_context context,
 	krb5_ret_int32 (sp, &tmp);
 	op = tmp;
 	krb5_ret_int32 (sp, &len);
-	if (vers <= server_context->log_context.version)
+	if ((uint32_t)vers <= server_context->log_context.version)
 	    krb5_storage_seek(sp, len + 8, SEEK_CUR);
-    } while(vers <= server_context->log_context.version);
+    } while((uint32_t)vers <= server_context->log_context.version);
 
     /*
      * Read up rest of the entires into the memory...
@@ -460,8 +461,8 @@ static int detach_from_console = 0;
 #endif
 
 static struct getargs args[] = {
-    { "config-file", 'c', arg_string, &config_file },
-    { "realm", 'r', arg_string, &realm },
+    { "config-file", 'c', arg_string, &config_file, NULL, NULL },
+    { "realm", 'r', arg_string, &realm, NULL, NULL },
     { "keytab", 'k', arg_string, &keytab_str,
       "keytab to get authentication from", "kspec" },
     { "time-lost", 0, arg_string, &server_time_lost,
@@ -470,12 +471,12 @@ static struct getargs args[] = {
       "port ipropd-slave will connect to", "port"},
 #ifdef SUPPORT_DETACH
     { "detach", 0, arg_flag, &detach_from_console,
-      "detach from console" },
+      "detach from console", NULL },
 #endif
     { "hostname", 0, arg_string, rk_UNCONST(&slave_str),
       "hostname of slave (if not same as hostname)", "hostname" },
-    { "version", 0, arg_flag, &version_flag },
-    { "help", 0, arg_flag, &help_flag }
+    { "version", 0, arg_flag, &version_flag, NULL, NULL },
+    { "help", 0, arg_flag, &help_flag, NULL, NULL }
 };
 
 static int num_args = sizeof(args) / sizeof(args[0]);

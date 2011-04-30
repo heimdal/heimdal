@@ -302,7 +302,7 @@ encode_type (const char *name, const Type *t, const char *tmpstr)
 		name, name);
 
 	fprintf(codefile,
-		"for(i = 0; i < (%s)->len; i++) {\n",
+		"for(i = 0; i < (int)(%s)->len; i++) {\n",
 		name);
 
 	fprintf(codefile,
@@ -326,7 +326,7 @@ encode_type (const char *name, const Type *t, const char *tmpstr)
 
 	fprintf(codefile,
 		"if (totallen > len) {\n"
-		"for (i = 0; i < (%s)->len; i++) {\n"
+		"for (i = 0; i < (int)(%s)->len; i++) {\n"
 		"free(val[i].data);\n"
 		"}\n"
 		"free(val);\n"
@@ -339,7 +339,7 @@ encode_type (const char *name, const Type *t, const char *tmpstr)
 		name);
 
 	fprintf (codefile,
-		 "for(i = (%s)->len - 1; i >= 0; --i) {\n"
+		 "for(i = (int)(%s)->len - 1; i >= 0; --i) {\n"
 		 "p -= val[i].length;\n"
 		 "ret += val[i].length;\n"
 		 "memcpy(p + 1, val[i].data, val[i].length);\n"
@@ -355,7 +355,7 @@ encode_type (const char *name, const Type *t, const char *tmpstr)
 	char *n = NULL;
 
 	fprintf (codefile,
-		 "for(i = (%s)->len - 1; i >= 0; --i) {\n"
+		 "for(i = (int)(%s)->len - 1; i >= 0; --i) {\n"
 		 "size_t %s_for_oldret = ret;\n"
 		 "ret = 0;\n",
 		 name, tmpstr);

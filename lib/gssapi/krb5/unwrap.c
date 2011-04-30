@@ -54,7 +54,7 @@ unwrap_des
   DES_key_schedule schedule;
   DES_cblock deskey;
   DES_cblock zero;
-  int i;
+  size_t i;
   uint32_t seq_number;
   size_t padlength;
   OM_uint32 ret;

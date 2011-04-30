@@ -124,7 +124,7 @@ print_cred(krb5_context context, krb5_creds *cred, rtbl_t ct, int do_flags)
 static void
 print_cred_verbose(krb5_context context, krb5_creds *cred)
 {
-    int j;
+    size_t j;
     char *str;
     krb5_error_code ret;
     krb5_timestamp sec;

@@ -575,7 +575,7 @@ process_msg (krb5_context context, slave *s, int log_fd,
 	}
 	/* new started slave that have old log */
 	if (s->version == 0 && tmp != 0) {
-	    if (current_version < tmp) {
+	    if (current_version < (uint32_t)tmp) {
 		krb5_warnx (context, "Slave %s (version %lu) have later version "
 			    "the master (version %lu) OUT OF SYNC", 
 			    s->name, (unsigned long)tmp,
@@ -583,7 +583,7 @@ process_msg (krb5_context context, slave *s, int log_fd,
 	    }
 	    s->version = tmp;
 	}
-	if (tmp < s->version) {
+	if ((uint32_t)tmp < s->version) {
 	    krb5_warnx (context, "Slave claims to not have "
 			"version we already sent to it");
 	} else {
@@ -720,10 +720,11 @@ write_stats(krb5_context context, slave *slaves, uint32_t current_version)
 }
 
 
+static char sHDB[] = "HDB:";
 static char *realm;
 static int version_flag;
 static int help_flag;
-static char *keytab_str = "HDB:";
+static char *keytab_str = sHDB;
 static char *database;
 static char *config_file;
 static char *port_str;
@@ -732,8 +733,8 @@ static int detach_from_console = 0;
 #endif
 
 static struct getargs args[] = {
-    { "config-file", 'c', arg_string, &config_file },
-    { "realm", 'r', arg_string, &realm },
+    { "config-file", 'c', arg_string, &config_file, NULL, NULL },
+    { "realm", 'r', arg_string, &realm, NULL, NULL },
     { "keytab", 'k', arg_string, &keytab_str,
       "keytab to get authentication from", "kspec" },
     { "database", 'd', arg_string, &database, "database", "file"},
@@ -747,12 +748,12 @@ static struct getargs args[] = {
       "port ipropd will listen to", "port"},
 #ifdef SUPPORT_DETACH
     { "detach", 0, arg_flag, &detach_from_console,
-      "detach from console" },
+      "detach from console", NULL },
 #endif
     { "hostname", 0, arg_string, rk_UNCONST(&master_hostname),
       "hostname of master (if not same as hostname)", "hostname" },
-    { "version", 0, arg_flag, &version_flag },
-    { "help", 0, arg_flag, &help_flag }
+    { "version", 0, arg_flag, &version_flag, NULL, NULL },
+    { "help", 0, arg_flag, &help_flag, NULL, NULL }
 };
 static int num_args = sizeof(args) / sizeof(args[0]);
 

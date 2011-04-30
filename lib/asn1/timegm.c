@@ -56,13 +56,13 @@ time_t
 _der_timegm (struct tm *tm)
 {
   time_t res = 0;
-  unsigned i;
+  int i;
 
   if (tm->tm_year < 0)
       return -1;
   if (tm->tm_mon < 0 || tm->tm_mon > 11)
       return -1;
-  if (tm->tm_mday < 1 || tm->tm_mday > ndays[is_leap(tm->tm_year)][tm->tm_mon])
+  if (tm->tm_mday < 1 || tm->tm_mday > (int)ndays[is_leap(tm->tm_year)][tm->tm_mon])
       return -1;
   if (tm->tm_hour < 0 || tm->tm_hour > 23)
       return -1;

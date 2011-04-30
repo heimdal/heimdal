@@ -434,28 +434,28 @@ gss_display_mech_attr(OM_uint32 * minor_status,
 	return GSS_S_BAD_MECH_ATTR;
 
     if (name) {
-	gss_buffer_desc n;
-	n.value = rk_UNCONST(ma->name);
-	n.length = strlen(ma->name);
-	major = _gss_copy_buffer(minor_status, &n, name);
+	gss_buffer_desc bd;
+	bd.value = rk_UNCONST(ma->name);
+	bd.length = strlen(ma->name);
+	major = _gss_copy_buffer(minor_status, &bd, name);
 	if (major != GSS_S_COMPLETE)
 	    return major;
     }
 
     if (short_desc) {
-	gss_buffer_desc n;
-	n.value = rk_UNCONST(ma->short_desc);
-	n.length = strlen(ma->short_desc);
-	major = _gss_copy_buffer(minor_status, &n, short_desc);
+	gss_buffer_desc bd;
+	bd.value = rk_UNCONST(ma->short_desc);
+	bd.length = strlen(ma->short_desc);
+	major = _gss_copy_buffer(minor_status, &bd, short_desc);
 	if (major != GSS_S_COMPLETE)
 	    return major;
     }
 
     if (long_desc) {
-	gss_buffer_desc n;
-	n.value = rk_UNCONST(ma->long_desc);
-	n.length = strlen(ma->long_desc);
-	major = _gss_copy_buffer(minor_status, &n, long_desc);
+	gss_buffer_desc bd;
+	bd.value = rk_UNCONST(ma->long_desc);
+	bd.length = strlen(ma->long_desc);
+	major = _gss_copy_buffer(minor_status, &bd, long_desc);
 	if (major != GSS_S_COMPLETE)
 	    return major;
     }

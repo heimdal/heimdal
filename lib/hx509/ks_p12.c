@@ -56,7 +56,7 @@ parse_pkcs12_type(hx509_context, struct hx509_collector *, const heim_oid *,
 static const PKCS12_Attribute *
 find_attribute(const PKCS12_Attributes *attrs, const heim_oid *oid)
 {
-    int i;
+    size_t i;
     if (attrs == NULL)
 	return NULL;
     for (i = 0; i < attrs->len; i++)
@@ -168,7 +168,7 @@ certBag_parser(hx509_context context,
 	const heim_oid *oids[] = {
 	    &asn1_oid_id_pkcs_9_at_localKeyId, &asn1_oid_id_pkcs_9_at_friendlyName
 	};
-	int i;
+	size_t i;
 
 	for  (i = 0; i < sizeof(oids)/sizeof(oids[0]); i++) {
 	    const heim_oid *oid = oids[i];
@@ -190,7 +190,8 @@ parse_safe_content(hx509_context context,
 		   const unsigned char *p, size_t len)
 {
     PKCS12_SafeContents sc;
-    int ret, i;
+    int ret;
+    size_t i;
 
     memset(&sc, 0, sizeof(sc));
 
@@ -310,7 +311,7 @@ parse_pkcs12_type(hx509_context context,
 		  const void *data, size_t length,
 		  const PKCS12_Attributes *attrs)
 {
-    int i;
+    size_t i;
 
     for (i = 0; i < sizeof(bagtypes)/sizeof(bagtypes[0]); i++)
 	if (der_heim_oid_cmp(bagtypes[i].oid, oid) == 0)
@@ -327,7 +328,8 @@ p12_init(hx509_context context,
     void *buf;
     PKCS12_PFX pfx;
     PKCS12_AuthenticatedSafe as;
-    int ret, i;
+    int ret;
+    size_t i;
     struct hx509_collector *c;
 
     *data = NULL;

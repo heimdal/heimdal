@@ -184,7 +184,7 @@ hdb_get_entry(krb5_context context,
     const char *mkey   = d->mkey;
     char *fdbname = NULL, *fmkey = NULL;
     HDB *db;
-    int i;
+    size_t i;
 
     memset(&ent, 0, sizeof(ent));
 
@@ -222,7 +222,7 @@ hdb_get_entry(krb5_context context,
     }else if(ret)
 	goto out;
 
-    if(kvno && ent.entry.kvno != kvno) {
+    if(kvno && (krb5_kvno)ent.entry.kvno != kvno) {
 	hdb_free_entry(context, &ent);
  	ret = KRB5_KT_NOTFOUND;
 	goto out;
@@ -382,7 +382,7 @@ hdb_next_entry(krb5_context context,
      * next entry
      */
     
-    if (c->key_idx == c->hdb_entry.entry.keys.len) {
+    if ((size_t)c->key_idx == c->hdb_entry.entry.keys.len) {
 	hdb_free_entry(context, &c->hdb_entry);
 	c->next = TRUE;
 	c->key_idx = 0;

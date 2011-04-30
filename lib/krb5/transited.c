@@ -370,7 +370,7 @@ krb5_domain_x500_decode(krb5_context context,
 	    (*num_realms)++;
 	}
     }
-    if (*num_realms < 0 || *num_realms + 1 > UINT_MAX/sizeof(**realms))
+    if (*num_realms + 1 > UINT_MAX/sizeof(**realms))
 	return ERANGE;
 
     {
@@ -431,7 +431,7 @@ krb5_check_transited(krb5_context context,
 {
     char **tr_realms;
     char **p;
-    int i;
+    size_t i;
 
     if(num_realms == 0)
 	return 0;
@@ -467,7 +467,7 @@ krb5_check_transited_realms(krb5_context context,
 			    unsigned int num_realms,
 			    int *bad_realm)
 {
-    int i;
+    size_t i;
     int ret = 0;
     char **bad_realms = krb5_config_get_strings(context, NULL,
 						"libdefaults",

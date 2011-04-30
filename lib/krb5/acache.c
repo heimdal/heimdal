@@ -78,7 +78,7 @@ static const struct {
 static krb5_error_code
 translate_cc_error(krb5_context context, cc_int32 error)
 {
-    int i;
+    size_t i;
     krb5_clear_error_message(context);
     for(i = 0; i < sizeof(cc_errors)/sizeof(cc_errors[0]); i++)
 	if (cc_errors[i].error == error)
@@ -337,7 +337,7 @@ make_ccred_from_cred(krb5_context context,
 		     cc_credentials_v5_t *cred)
 {
     krb5_error_code ret;
-    int i;
+    size_t i;
 
     memset(cred, 0, sizeof(*cred));
 
@@ -1114,7 +1114,9 @@ KRB5_LIB_VARIABLE const krb5_cc_ops krb5_acc_ops = {
     acc_move,
     acc_get_default_name,
     acc_set_default,
-    acc_lastchange
+    acc_lastchange,
+    NULL,
+    NULL,
 };
 
 #endif

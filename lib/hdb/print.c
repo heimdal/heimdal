@@ -78,7 +78,8 @@ append_string(krb5_context context, krb5_storage *sp, const char *fmt, ...)
 static krb5_error_code
 append_hex(krb5_context context, krb5_storage *sp, krb5_data *data)
 {
-    int i, printable = 1;
+    int printable = 1;
+    size_t i;
     char *p;
 
     p = data->data;
@@ -126,7 +127,7 @@ static krb5_error_code
 entry2string_int (krb5_context context, krb5_storage *sp, hdb_entry *ent)
 {
     char *p;
-    int i;
+    size_t i;
     krb5_error_code ret;
 
     /* --- principal */

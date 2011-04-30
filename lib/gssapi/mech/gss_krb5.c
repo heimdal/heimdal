@@ -439,7 +439,7 @@ gss_krb5_set_allowable_enctypes(OM_uint32 *minor_status,
     gss_buffer_desc buffer;
     krb5_storage *sp;
     krb5_data data;
-    int i;
+    size_t i;
 
     sp = krb5_storage_emem();
     if (sp == NULL) {

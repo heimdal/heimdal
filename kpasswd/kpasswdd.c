@@ -680,11 +680,11 @@ doit (krb5_keytab keytab, int port)
 	krb5_errx (context, 1, "No sockets!");
 
     while(exit_flag == 0) {
-	int ret;
+	krb5_ssize_t retx;
 	fd_set fdset = real_fdset;
 
-	ret = select (maxfd + 1, &fdset, NULL, NULL, NULL);
-	if (ret < 0) {
+	retx = select (maxfd + 1, &fdset, NULL, NULL, NULL);
+	if (retx < 0) {
 	    if (errno == EINTR)
 		continue;
 	    else
@@ -695,9 +695,9 @@ doit (krb5_keytab keytab, int port)
 		u_char buf[BUFSIZ];
 		socklen_t addrlen = sizeof(__ss);
 
-		ret = recvfrom (sockets[i], buf, sizeof(buf), 0,
+		retx = recvfrom(sockets[i], buf, sizeof(buf), 0,
 				sa, &addrlen);
-		if (ret < 0) {
+		if (retx < 0) {
 		    if(errno == EINTR)
 			break;
 		    else
@@ -707,7 +707,7 @@ doit (krb5_keytab keytab, int port)
 		process (realms, keytab, sockets[i],
 			 &addrs.val[i],
 			 sa, addrlen,
-			 buf, ret);
+			 buf, retx);
 	    }
     }
 
@@ -730,7 +730,8 @@ sigterm(int sig)
 static const char *check_library  = NULL;
 static const char *check_function = NULL;
 static getarg_strings policy_libraries = { 0, NULL };
-static char *keytab_str = "HDB:";
+static char sHDB[] = "HDB:";
+static char *keytab_str = sHDB;
 static char *realm_str;
 static int version_flag;
 static int help_flag;
@@ -750,11 +751,11 @@ struct getargs args[] = {
       "addresses to listen on", "list of addresses" },
     { "keytab", 'k', arg_string, &keytab_str,
       "keytab to get authentication key from", "kspec" },
-    { "config-file", 'c', arg_string, &config_file },
+    { "config-file", 'c', arg_string, &config_file, NULL, NULL },
     { "realm", 'r', arg_string, &realm_str, "default realm", "realm" },
-    { "port",  'p', arg_string, &port_str, "port" },
-    { "version", 0, arg_flag, &version_flag },
-    { "help", 0, arg_flag, &help_flag }
+    { "port",  'p', arg_string, &port_str, "port", NULL },
+    { "version", 0, arg_flag, &version_flag, NULL, NULL },
+    { "help", 0, arg_flag, &help_flag, NULL, NULL }
 };
 int num_args = sizeof(args) / sizeof(args[0]);
 
@@ -836,10 +837,10 @@ main (int argc, char **argv)
     explicit_addresses.len = 0;
 
     if (addresses_str.num_strings) {
-	int i;
+	int j;
 
-	for (i = 0; i < addresses_str.num_strings; ++i)
-	    add_one_address (addresses_str.strings[i], i == 0);
+	for (j = 0; j < addresses_str.num_strings; ++j)
+	    add_one_address (addresses_str.strings[j], j == 0);
 	free_getarg_strings (&addresses_str);
     } else {
 	char **foo = krb5_config_get_strings (context, NULL,

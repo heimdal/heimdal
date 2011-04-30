@@ -90,7 +90,8 @@ kt_get(struct get_options *opt, int argc, char **argv)
     void *kadm_handle = NULL;
     krb5_enctype *etypes = NULL;
     size_t netypes = 0;
-    int i, j;
+    size_t i;
+    int a, j;
     unsigned int failed = 0;
 
     if((keytab = ktutil_open_keytab()) == NULL)
@@ -120,7 +121,7 @@ kt_get(struct get_options *opt, int argc, char **argv)
     }
 
 
-    for(i = 0; i < argc; i++){
+    for(a = 0; a < argc; a++){
 	krb5_principal princ_ent;
 	kadm5_principal_ent_rec princ;
 	int mask = 0;
@@ -129,9 +130,9 @@ kt_get(struct get_options *opt, int argc, char **argv)
 	int created = 0;
 	krb5_keytab_entry entry;
 
-	ret = krb5_parse_name(context, argv[i], &princ_ent);
+	ret = krb5_parse_name(context, argv[a], &princ_ent);
 	if (ret) {
-	    krb5_warn(context, ret, "can't parse principal %s", argv[i]);
+	    krb5_warn(context, ret, "can't parse principal %s", argv[a]);
 	    failed++;
 	    continue;
 	}
@@ -161,14 +162,14 @@ kt_get(struct get_options *opt, int argc, char **argv)
 	if(ret == 0)
 	    created = 1;
 	else if(ret != KADM5_DUP) {
-	    krb5_warn(context, ret, "kadm5_create_principal(%s)", argv[i]);
+	    krb5_warn(context, ret, "kadm5_create_principal(%s)", argv[a]);
 	    krb5_free_principal(context, princ_ent);
 	    failed++;
 	    continue;
 	}
 	ret = kadm5_randkey_principal(kadm_handle, princ_ent, &keys, &n_keys);
 	if (ret) {
-	    krb5_warn(context, ret, "kadm5_randkey_principal(%s)", argv[i]);
+	    krb5_warn(context, ret, "kadm5_randkey_principal(%s)", argv[a]);
 	    krb5_free_principal(context, princ_ent);
 	    failed++;
 	    continue;
@@ -177,7 +178,7 @@ kt_get(struct get_options *opt, int argc, char **argv)
 	ret = kadm5_get_principal(kadm_handle, princ_ent, &princ,
 			      KADM5_PRINCIPAL | KADM5_KVNO | KADM5_ATTRIBUTES);
 	if (ret) {
-	    krb5_warn(context, ret, "kadm5_get_principal(%s)", argv[i]);
+	    krb5_warn(context, ret, "kadm5_get_principal(%s)", argv[a]);
 	    for (j = 0; j < n_keys; j++)
 		krb5_free_keyblock_contents(context, &keys[j]);
 	    krb5_free_principal(context, princ_ent);
@@ -185,7 +186,7 @@ kt_get(struct get_options *opt, int argc, char **argv)
 	    continue;
 	}
 	if(!created && (princ.attributes & KRB5_KDB_DISALLOW_ALL_TIX))
-	    krb5_warnx(context, "%s: disallow-all-tix flag set - clearing", argv[i]);
+	    krb5_warnx(context, "%s: disallow-all-tix flag set - clearing", argv[a]);
 	princ.attributes &= (~KRB5_KDB_DISALLOW_ALL_TIX);
 	mask = KADM5_ATTRIBUTES;
 	if(created) {
@@ -194,7 +195,7 @@ kt_get(struct get_options *opt, int argc, char **argv)
 	}
 	ret = kadm5_modify_principal(kadm_handle, &princ, mask);
 	if (ret) {
-	    krb5_warn(context, ret, "kadm5_modify_principal(%s)", argv[i]);
+	    krb5_warn(context, ret, "kadm5_modify_principal(%s)", argv[a]);
 	    for (j = 0; j < n_keys; j++)
 		krb5_free_keyblock_contents(context, &keys[j]);
 	    krb5_free_principal(context, princ_ent);
@@ -205,7 +206,7 @@ kt_get(struct get_options *opt, int argc, char **argv)
 	    int do_add = TRUE;
 
 	    if (netypes) {
-		int k;
+		size_t k;
 
 		do_add = FALSE;
 		for (k = 0; k < netypes; ++k)

@@ -153,7 +153,7 @@ parse_keys(hdb_entry *ent, char *str)
     krb5_error_code ret;
     int tmp;
     char *p;
-    int i;
+    size_t i;
 
     p = strsep(&str, ":");
     if (sscanf(p, "%d", &tmp) != 1)

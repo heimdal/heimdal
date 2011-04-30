@@ -63,7 +63,7 @@ config_fgets(char *str, size_t len, struct fileptr *ptr)
 	p = ptr->s + strcspn(ptr->s, "\n");
 	if(*p == '\n')
 	    p++;
-	l = min(len, p - ptr->s);
+	l = min(len, (size_t)(p - ptr->s));
 	if(len > 0) {
 	    memcpy(str, ptr->s, l);
 	    str[l] = '\0';
@@ -91,7 +91,7 @@ _krb5_config_get_entry(krb5_config_section **parent, const char *name, int type)
 
     for(q = parent; *q != NULL; q = &(*q)->next)
 	if(type == krb5_config_list &&
-	   type == (*q)->type &&
+	   (unsigned)type == (*q)->type &&
 	   strcmp(name, (*q)->name) == 0)
 	    return *q;
     *q = calloc(1, sizeof(**q));
@@ -635,7 +635,7 @@ vget_next(krb5_context context,
     const char *p = va_arg(args, const char *);
     while(b != NULL) {
 	if(strcmp(b->name, name) == 0) {
-	    if(b->type == type && p == NULL) {
+	    if(b->type == (unsigned)type && p == NULL) {
 		*pointer = b;
 		return b->u.generic;
 	    } else if(b->type == krb5_config_list && p != NULL) {
@@ -675,7 +675,7 @@ _krb5_config_vget_next (krb5_context context,
     /* we were called again, so just look for more entries with the
        same name and type */
     for (b = (*pointer)->next; b != NULL; b = b->next) {
-	if(strcmp(b->name, (*pointer)->name) == 0 && b->type == type) {
+	if(strcmp(b->name, (*pointer)->name) == 0 && b->type == (unsigned)type) {
 	    *pointer = b;
 	    return b->u.generic;
 	}
@@ -865,7 +865,7 @@ krb5_config_get_string_default (krb5_context context,
 }
 
 static char *
-next_component_string(char * begin, char * delims, char **state)
+next_component_string(char * begin, const char * delims, char **state)
 {
     char * end;
 

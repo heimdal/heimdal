@@ -466,7 +466,7 @@ krb5_verify_ap_req2(krb5_context context,
     ac->keytype = ETYPE_NULL;
 
     if (etypes.val) {
-	int i;
+	size_t i;
 
 	for (i = 0; i < etypes.len; i++) {
 	    if (krb5_enctype_valid(context, etypes.val[i]) == 0) {

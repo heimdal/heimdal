@@ -349,7 +349,7 @@ load_ocsp(hx509_context context, struct revoke_ocsp *ocsp)
     }
 
     if (basic.certs) {
-	int i;
+	size_t i;
 
 	ret = hx509_certs_init(context, "MEMORY:ocsp-certs", 0,
 			       NULL, &certs);
@@ -760,8 +760,7 @@ hx509_revoke_verify(hx509_context context,
 	    if (ocsp->ocsp.tbsResponseData.responses.val[j].nextUpdate) {
 		if (*ocsp->ocsp.tbsResponseData.responses.val[j].nextUpdate < now)
 		    continue;
-	    } else
-		/* Should force a refetch, but can we ? */;
+	    } /* else should force a refetch, but can we ? */
 
 	    return 0;
 	}
@@ -1076,7 +1075,8 @@ int
 hx509_revoke_ocsp_print(hx509_context context, const char *path, FILE *out)
 {
     struct revoke_ocsp ocsp;
-    int ret, i;
+    int ret;
+    size_t i;
 
     if (out == NULL)
 	out = stdout;
@@ -1141,7 +1141,7 @@ hx509_revoke_ocsp_print(hx509_context context, const char *path, FILE *out)
 	    status = "element unknown";
 	}
 
-	fprintf(out, "\t%d. status: %s\n", i, status);
+	fprintf(out, "\t%zu. status: %s\n", i, status);
 
 	fprintf(out, "\tthisUpdate: %s\n",
 		printable_time(ocsp.ocsp.tbsResponseData.responses.val[i].thisUpdate));
@@ -1188,7 +1188,8 @@ hx509_ocsp_verify(hx509_context context,
 {
     const Certificate *c = _hx509_get_cert(cert);
     OCSPBasicOCSPResponse basic;
-    int ret, i;
+    int ret;
+    size_t i;
 
     if (now == 0)
 	now = time(NULL);

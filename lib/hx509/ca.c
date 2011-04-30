@@ -266,7 +266,7 @@ hx509_ca_tbs_set_template(hx509_context context,
     }
     if (flags & HX509_CA_TEMPLATE_EKU) {
 	ExtKeyUsage eku;
-	int i;
+	size_t i;
 	ret = _hx509_cert_get_eku(context, cert, &eku);
 	if (ret)
 	    return ret;
@@ -689,7 +689,7 @@ add_utf8_san(hx509_context context,
 	     const heim_oid *oid,
 	     const char *string)
 {
-    const PKIXXmppAddr ustring = (const PKIXXmppAddr)string;
+    const PKIXXmppAddr ustring = (const PKIXXmppAddr)(intptr_t)string;
     heim_octet_string os;
     size_t size;
     int ret;

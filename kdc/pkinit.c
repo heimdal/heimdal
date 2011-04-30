@@ -237,7 +237,7 @@ generate_dh_keyblock(krb5_context context,
 	}
 
 	dh_gen_keylen = DH_compute_key(dh_gen_key,client_params->u.dh.public_key, client_params->u.dh.key);
-	if (dh_gen_keylen == -1) {
+	if (dh_gen_keylen == (size_t)-1) {
 	    ret = KRB5KRB_ERR_GENERIC;
 	    krb5_set_error_message(context, ret,
 				   "Can't compute Diffie-Hellman key");
@@ -1247,7 +1247,7 @@ _kdc_pk_mk_pa_reply(krb5_context context,
     krb5_enctype enctype;
     int pa_type;
     hx509_cert kdc_cert = NULL;
-    int i;
+    size_t i;
 
     if (!config->enable_pkinit) {
 	krb5_clear_error_message(context);
@@ -1575,7 +1575,8 @@ match_rfc_san(krb5_context context,
 	      krb5_const_principal match)
 {
     hx509_octet_string_list list;
-    int ret, i, found = 0;
+    int ret, found = 0;
+    size_t i;
 
     memset(&list, 0 , sizeof(list));
 
@@ -1709,7 +1710,7 @@ _kdc_pk_check_client(krb5_context context,
     const HDB_Ext_PKINIT_cert *pc;
     krb5_error_code ret;
     hx509_name name;
-    int i;
+    size_t i;
 
     if (cp->cert == NULL) {
 
@@ -1737,12 +1738,12 @@ _kdc_pk_check_client(krb5_context context,
     ret = hdb_entry_get_pkinit_cert(&client->entry, &pc);
     if (ret == 0 && pc) {
 	hx509_cert cert;
-	unsigned int i;
+	size_t j;
 	
-	for (i = 0; i < pc->len; i++) {
+	for (j = 0; j < pc->len; j++) {
 	    ret = hx509_cert_init_data(context->hx509ctx,
-				       pc->val[i].cert.data,
-				       pc->val[i].cert.length,
+				       pc->val[j].cert.data,
+				       pc->val[j].cert.length,
 				       &cert);
 	    if (ret)
 		continue;

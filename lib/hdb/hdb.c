@@ -168,7 +168,7 @@ hdb_unlock(int fd)
 void
 hdb_free_entry(krb5_context context, hdb_entry_ex *ent)
 {
-    int i;
+    size_t i;
 
     if (ent->free_entry)
 	(*ent->free_entry)(context, ent);
@@ -217,7 +217,7 @@ hdb_check_db_format(krb5_context context, HDB *db)
     if (ret)
 	return ret;
 
-    tag.data = HDB_DB_FORMAT_ENTRY;
+    tag.data = (void *)(intptr_t)HDB_DB_FORMAT_ENTRY;
     tag.length = strlen(tag.data);
     ret = (*db->hdb__get)(context, db, tag, &version);
     ret2 = db->hdb_unlock(context, db);
@@ -250,7 +250,7 @@ hdb_init_db(krb5_context context, HDB *db)
     if (ret)
 	return ret;
 
-    tag.data = HDB_DB_FORMAT_ENTRY;
+    tag.data = (void *)(intptr_t)HDB_DB_FORMAT_ENTRY;
     tag.length = strlen(tag.data);
     snprintf(ver, sizeof(ver), "%u", HDB_DB_FORMAT);
     version.data = ver;

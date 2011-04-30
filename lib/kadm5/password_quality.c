@@ -95,8 +95,8 @@ char_class_passwd_quality (krb5_context context,
 	"1234567890",
 	"!@#$%^&*()/?<>,.{[]}\\|'~`\" "
     };
-    int i, counter = 0, req_classes;
-    size_t len;
+    int counter = 0, req_classes;
+    size_t i, len;
     char *pw;
 
     req_classes = krb5_config_get_int_default(context, NULL, 3,
@@ -234,7 +234,7 @@ struct kadm5_pw_policy_check_func builtin_funcs[] = {
     { "minimum-length", min_length_passwd_quality },
     { "character-class", char_class_passwd_quality },
     { "external-check", external_passwd_quality },
-    { NULL }
+    { NULL, NULL }
 };
 struct kadm5_pw_policy_verifier builtin_verifier = {
     "builtin",

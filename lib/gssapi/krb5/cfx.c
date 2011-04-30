@@ -425,6 +425,9 @@ _gssapi_wrap_cfx_iov(OM_uint32 *minor_status,
     token->Flags     = 0;
     token->Filler    = 0xFF;
 
+    if ((ctx->more_flags & LOCAL) == 0)
+	token->Flags |= CFXSentByAcceptor;
+
     if (ctx->more_flags & ACCEPTOR_SUBKEY)
 	token->Flags |= CFXAcceptorSubkey;
 

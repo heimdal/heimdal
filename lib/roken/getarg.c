@@ -228,7 +228,6 @@ arg_printusage_i18n (struct getargs *args,
     size_t i, max_len = 0;
     char buf[128];
     int col = 0, columns;
-    struct winsize ws;
 
     if (progname == NULL)
 	progname = getprogname();
@@ -240,9 +239,7 @@ arg_printusage_i18n (struct getargs *args,
 	mandoc_template(args, num_args, progname, extra_string, i18n);
 	return;
     }
-    if(get_window_size(2, &ws) == 0)
-	columns = ws.ws_col;
-    else
+    if(get_window_size(2, NULL, &columns) == -1)
 	columns = 80;
     col = 0;
     col += fprintf (stderr, "%s: %s", usage, progname);

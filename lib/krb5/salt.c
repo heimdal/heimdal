@@ -33,6 +33,7 @@
 
 #include "krb5_locl.h"
 
+/* coverity[+alloc : arg-*3] */
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_salttype_to_string (krb5_context context,
 			 krb5_enctype etype,

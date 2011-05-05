@@ -39,21 +39,29 @@
 #include "kcc-commands.h"
 
 static char*
-printable_time(time_t t)
+printable_time_internal(time_t t, int x)
 {
     static char s[128];
-    strlcpy(s, ctime(&t)+ 4, sizeof(s));
-    s[15] = 0;
+    char *p;
+
+    if ((p = ctime(&t)) == NULL)
+	strlcpy(s, "?", sizeof(s));
+    else
+	strlcpy(s, p + 4, sizeof(s));
+    s[x] = 0;
     return s;
+}
+
+static char*
+printable_time(time_t t)
+{
+    return printable_time_internal(t, 20);
 }
 
 static char*
 printable_time_long(time_t t)
 {
-    static char s[128];
-    strlcpy(s, ctime(&t)+ 4, sizeof(s));
-    s[20] = 0;
-    return s;
+    return printable_time_internal(t, 20);
 }
 
 #define COL_ISSUED		NP_("  Issued","")

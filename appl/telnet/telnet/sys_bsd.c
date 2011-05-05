@@ -608,11 +608,11 @@ TerminalSpeeds(long *input_speed, long *output_speed)
 int
 TerminalWindowSize(long *rows, long *cols)
 {
-    struct winsize ws;
+    int irows, icols;
 
-    if (get_window_size (STDIN_FILENO, &ws) == 0) {
-	*rows = ws.ws_row;
-	*cols = ws.ws_col;
+    if (get_window_size(STDIN_FILENO, &irows, &icols) == 0) {
+	*rows = irows;
+	*cols = icols;
 	return 1;
     } else
 	return 0;

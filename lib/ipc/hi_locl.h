@@ -52,7 +52,6 @@
 #include <krb5-types.h>
 #include <asn1-common.h>
 
-#include <heimbase.h>
 #include <base64.h>
 
 #include <heim-ipc.h>

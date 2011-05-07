@@ -1173,8 +1173,13 @@ _kdc_as_rep(krb5_context context,
 	    }
 
 	    ret = _kdc_db_fetch(context, config, armor_server,
-				HDB_F_GET_SERVER, NULL, &armor_user);
-	    if(ret){
+				HDB_F_GET_SERVER, NULL, NULL, &armor_user);
+	    if(ret == HDB_ERR_NOT_FOUND_HERE) {
+		kdc_log(context, config, 5,
+			"armor key does not have secrets at this KDC, "
+			"need to proxy");
+		goto out;
+	    } if(ret){
 		free_AP_REQ(&ap_req);
 		ret = KRB5KDC_ERR_S_PRINCIPAL_UNKNOWN;
 		goto out;

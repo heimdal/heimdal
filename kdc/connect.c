@@ -148,16 +148,6 @@ add_standard_ports (krb5_context context,
     add_port_service(context, family, "kerberos-sec", 88, "tcp");
     if(enable_http)
 	add_port_service(context, family, "http", 80, "tcp");
-    if(config->enable_524) {
-	add_port_service(context, family, "krb524", 4444, "udp");
-	add_port_service(context, family, "krb524", 4444, "tcp");
-    }
-    if(config->enable_v4) {
-	add_port_service(context, family, "kerberos-iv", 750, "udp");
-	add_port_service(context, family, "kerberos-iv", 750, "tcp");
-    }
-    if (config->enable_kaserver)
-	add_port_service(context, family, "afs3-kaserver", 7004, "udp");
     if(config->enable_kx509) {
 	add_port_service(context, family, "kca_service", 9878, "udp");
 	add_port_service(context, family, "kca_service", 9878, "tcp");

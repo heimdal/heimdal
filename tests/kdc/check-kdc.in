@@ -292,7 +292,7 @@ ${klist} | grep "Principal: ${server}" > /dev/null || \
 ${kdestroy}
 
 echo "Getting key for key that are a subset in keytab compared to kdb"
-${kinit} --keytab=${keytab} kt-des3@${R}
+${kinit} --keytab=${keytab} kt-des3@${R} || { ec=1; eval "${testfailed}"; }
 ${klist} | grep "Principal: kt-des3" > /dev/null || \
 	{ ec=1 ; eval "${testfailed}"; }
 ${kdestroy}

@@ -39,7 +39,8 @@ TESTS =						\
 	test_princ				\
 	test_pkinit_dh2key			\
 	test_pknistkdf				\
-	test_time
+	test_time				\
+	test_x500
 
 check_PROGRAMS = $(TESTS) test_hostname test_ap-req
 

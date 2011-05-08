@@ -410,7 +410,7 @@ krb5_domain_x500_encode(char **realms, unsigned int num_realms,
 	return ENOMEM;
     *s = '\0';
     for(i = 0; i < num_realms; i++){
-	if(i && i < num_realms - 1)
+	if(i)
 	    strlcat(s, ",", len + 1);
 	if(realms[i][0] == '/')
 	    strlcat(s, " ", len + 1);

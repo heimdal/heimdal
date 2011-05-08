@@ -42,7 +42,8 @@ TESTS =						\
 	test_princ				\
 	test_pkinit_dh2key			\
 	test_pknistkdf				\
-	test_time
+	test_time				\
+	test_x500
 
 check_DATA = test_config_strings.out
 

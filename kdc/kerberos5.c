@@ -1178,6 +1178,7 @@ _kdc_as_rep(krb5_context context,
 		kdc_log(context, config, 5,
 			"armor key does not have secrets at this KDC, "
 			"need to proxy");
+		ret = KRB5KDC_ERR_S_PRINCIPAL_UNKNOWN;
 		goto out;
 	    } if(ret){
 		free_AP_REQ(&ap_req);
@@ -1824,12 +1825,10 @@ _kdc_as_rep(krb5_context context,
 	/*
 	 * Announce FX-FAST
 	 */
-	ret = realloc_method_data(&error_method);
+	ret = krb5_padata_add(context, &error_method,
+			      KRB5_PADATA_FX_FAST, NULL, 0);
 	if (ret)
 	    goto out;
-	pa = &error_method.val[error_method.len-1];
-	pa->padata_type		= KRB5_PADATA_FX_FAST;
-	pa->padata_value.length	= 0;
 
 	/*
 	 * If there is a client key, send ETYPE_INFO{,2}
@@ -2255,6 +2254,7 @@ out:
     free_AS_REP(&rep);
 
     if(ret != 0 && ret != HDB_ERR_NOT_FOUND_HERE){
+	krb5_error_code outer_error = ret;
 	krb5_data e_data;
 	krb5_principal error_client = client_princ;
 	krb5_principal error_server = server_princ;
@@ -2272,7 +2272,7 @@ out:
 	    /* first add the KRB-ERROR to the fast errors */
 
 	    ret = krb5_mk_error(context,
-				ret,
+				outer_error,
 				e_text,
 				NULL,
 				error_client,
@@ -2281,7 +2281,7 @@ out:
 				NULL,
 				&e_data);
 	    if (ret)
-		goto out2;
+		goto out;
 
 	    ret = krb5_padata_add(context, &error_method,
 				  KRB5_PADATA_FX_ERROR,
@@ -2333,7 +2333,7 @@ out:
 	}
 
 	ret = krb5_mk_error(context,
-			    ret,
+			    outer_error,
 			    e_text,
 			    (e_data.length ? &e_data : NULL),
 			    error_client,

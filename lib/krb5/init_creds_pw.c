@@ -1385,13 +1385,6 @@ krb5_init_creds_init(krb5_context context,
     ctx->prompter = prompter;
     ctx->prompter_data = prompter_data;
 
-    ret = init_as_req(context, ctx->flags, &ctx->cred,
-		      ctx->addrs, ctx->etypes, &ctx->as_req);
-    if (ret) {
-	free_init_creds_ctx(context, ctx);
-	return ret;
-    }
-
     *rctx = ctx;
 
     return ret;
@@ -1667,6 +1660,15 @@ krb5_init_creds_step(krb5_context context,
     size_t size;
 
     krb5_data_zero(out);
+
+    if (ctx->as_req.req_body.cname == NULL) {
+	ret = init_as_req(context, ctx->flags, &ctx->cred,
+			  ctx->addrs, ctx->etypes, &ctx->as_req);
+	if (ret) {
+	    free_init_creds_ctx(context, ctx);
+	    return ret;
+	}
+    }
 
 #define MAX_PA_COUNTER 10
     if (ctx->pa_counter > MAX_PA_COUNTER) {

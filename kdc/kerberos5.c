@@ -2253,95 +2253,21 @@ _kdc_as_rep(krb5_context context,
 out:
     free_AS_REP(&rep);
 
+    /*
+     * In case of a non proxy error, build an error message.
+     */
     if(ret != 0 && ret != HDB_ERR_NOT_FOUND_HERE){
-	krb5_error_code outer_error = ret;
-	krb5_data e_data;
-	krb5_principal error_client = client_princ;
-	krb5_principal error_server = server_princ;
-	size_t size;
-	
-	krb5_data_zero(&e_data);
-
-	if (armor_crypto) {
-	    PA_FX_FAST_REPLY fxfastrep;
-	    KrbFastResponse fastrep;
-
-	    memset(&fxfastrep, 0, sizeof(fxfastrep));
-	    memset(&fastrep, 0, sizeof(fastrep));
-	    
-	    /* first add the KRB-ERROR to the fast errors */
-
-	    ret = krb5_mk_error(context,
-				outer_error,
-				e_text,
-				NULL,
-				error_client,
-				error_server,
-				NULL,
-				NULL,
-				&e_data);
-	    if (ret)
-		goto out;
-
-	    ret = krb5_padata_add(context, &error_method,
-				  KRB5_PADATA_FX_ERROR,
-				  e_data.data, e_data.length);
-	    if (ret) {
-		krb5_data_free(&e_data);
-		goto out2;
-	    }
-
-	    if (/* hide_principal */ 0) {
-		error_client = NULL;
-		error_server = NULL;
-		e_text = NULL;
-	    }
-
-	    ret = _kdc_fast_mk_response(context, armor_crypto,
-					&error_method, NULL, NULL, 
-					req->req_body.nonce, &e_data);
-	    free_METHOD_DATA(&error_method);
-	    krb5_data_free(&e_data);
-	    if (ret)
-		goto out2;
-
-	    ret = krb5_padata_add(context, &error_method,
-				  KRB5_PADATA_FX_FAST,
-				  e_data.data, e_data.length);
-	    krb5_data_zero(&e_data);
-	    if (ret)
-		goto out2;
-
-	    /* 
-	     * Set cookie to let client know we want conversation to
-	     * continue.
-	     */
-	    ret = krb5_padata_add(context, &error_method,
-				  KRB5_PADATA_FX_COOKIE,
-				  NULL, 0);
-	    if (ret)
-		goto out2;
-	}
-
-	if (error_method.len) {
-	    ASN1_MALLOC_ENCODE(METHOD_DATA, e_data.data, e_data.length, 
-			       &error_method, &size, ret);
-	    if (ret)
-		goto out2;
-	    if (e_data.length != size)
-		krb5_abortx(context, "internal asn.1 error");
-	}
-
-	ret = krb5_mk_error(context,
-			    outer_error,
-			    e_text,
-			    (e_data.length ? &e_data : NULL),
-			    error_client,
-			    error_server,
-			    NULL,
-			    NULL,
-			    reply);
-	krb5_data_free(&e_data);
+	kdc_log(context, config, 10, "as-req: sending error: %d to client", ret);
+	ret = _kdc_fast_mk_error(context,
+				 &error_method,
+				 armor_crypto,
+				 &req->req_body,
+				 ret, e_text,
+				 client_princ, server_princ,
+				 NULL, NULL,
+				 reply);
+	if (ret)
+	    goto out2;
     }
 out2:
 #ifdef PKINIT

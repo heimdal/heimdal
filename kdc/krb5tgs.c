@@ -2350,17 +2350,19 @@ out:
 
     if(ret && ret != HDB_ERR_NOT_FOUND_HERE && data->data == NULL){
 	/* XXX add fast wrapping on the error */
+	METHOD_DATA error_method = { 0, NULL };
+	
 
-	krb5_mk_error(context,
-		      ret,
-		      NULL,
-		      NULL,
-		      NULL,
-		      NULL,
-		      csec,
-		      cusec,
-		      data);
-	ret = 0;
+	kdc_log(context, config, 10, "tgs-req: sending error: %d to client", ret);
+	ret = _kdc_fast_mk_error(context,
+				 &error_method,
+				 NULL,
+				 NULL,
+				 ret, NULL,
+				 NULL, NULL,
+				 csec, cusec,
+				 data);
+	free_METHOD_DATA(&error_method);
     }
     free(csec);
     free(cusec);

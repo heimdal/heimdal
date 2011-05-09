@@ -1216,8 +1216,8 @@ _kdc_as_rep(krb5_context context,
 
 	    ret = krb5_crypto_init(context, ac->remote_subkey,
 				   0, &crypto_subkey);
-	    krb5_auth_con_free(context, ac);
 	    if (ret) {
+		krb5_auth_con_free(context, ac);
 		krb5_free_ticket(context, ticket);
 		goto out;
 	    }
@@ -1225,6 +1225,7 @@ _kdc_as_rep(krb5_context context,
 				   0, &crypto_session);
 	    krb5_free_ticket(context, ticket);
 	    if (ret) {
+		krb5_auth_con_free(context, ac);
 		krb5_crypto_destroy(context, crypto_subkey);
 		goto out;
 	    }
@@ -1240,11 +1241,13 @@ _kdc_as_rep(krb5_context context,
 				     &armorkey);
 	    krb5_crypto_destroy(context, crypto_subkey);
 	    krb5_crypto_destroy(context, crypto_session);
-
+	    krb5_auth_con_free(context, ac);
 	    if (ret)
 		goto out;
 
-	    krb5_crypto_init(context, &armorkey, 0, &armor_crypto);
+	    ret = krb5_crypto_init(context, &armorkey, 0, &armor_crypto);
+	    if (ret)
+		goto out;
 	    krb5_free_keyblock_contents(context, &armorkey);
 
 	    /* verify req-checksum of the outer body */

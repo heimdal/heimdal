@@ -147,6 +147,12 @@ _kdc_fast_mk_error(krb5_context context,
 	    e_text = NULL;
 	}
 
+	ret = krb5_padata_add(context, error_method,
+			      KRB5_PADATA_FX_COOKIE,
+			      NULL, 0);
+	if (ret)
+	    return ret;
+	
 	ret = _kdc_fast_mk_response(context, armor_crypto,
 				    error_method, NULL, NULL, 
 				    req_body->nonce, &e_data);
@@ -157,17 +163,9 @@ _kdc_fast_mk_error(krb5_context context,
 	ret = krb5_padata_add(context, error_method,
 			      KRB5_PADATA_FX_FAST,
 			      e_data.data, e_data.length);
-	krb5_data_zero(&e_data);
 	if (ret)
 	    return ret;
 
-	/* 
-	 * Set cookie to let client know we want conversation to
-	 * continue.
-	 */
-	ret = krb5_padata_add(context, error_method,
-			      KRB5_PADATA_FX_COOKIE,
-			      NULL, 0);
 	if (ret)
 	    return ret;
     }

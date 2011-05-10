@@ -14,6 +14,7 @@ SCRIPT_TESTS = \
 	check-delegation \
 	check-des \
 	check-digest \
+	check-fast \
 	check-kadmin \
 	check-kdc \
 	check-kdc-weak \
@@ -62,6 +63,11 @@ check-des: check-des.in Makefile krb5.conf
 	$(do_subst) < $(srcdir)/check-des.in > check-des.tmp
 	chmod +x check-des.tmp
 	mv check-des.tmp check-des
+
+check-fast: check-fast.in Makefile
+	$(do_subst) < $(srcdir)/check-fast.in > check-fast.tmp
+	chmod +x check-fast.tmp
+	mv check-fast.tmp check-fast
 
 check-kdc: check-kdc.in Makefile
 	$(do_subst) < $(srcdir)/check-kdc.in > check-kdc.tmp

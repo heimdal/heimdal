@@ -2317,6 +2317,14 @@ _kdc_tgs_rep(krb5_context context,
 	goto out;
     }
 
+    {
+	int i = 0;
+	const PA_DATA *pa = _kdc_find_padata(req, &i, KRB5_PADATA_FX_FAST);
+	if (pa)
+	    kdc_log(context, config, 10, "Got TGS FAST request"); 
+    }
+
+
     ret = tgs_build_reply(context,
 			  config,
 			  req,

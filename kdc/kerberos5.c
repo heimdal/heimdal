@@ -241,6 +241,13 @@ _kdc_make_anonymous_principalname (PrincipalName *pn)
     return 0;
 }
 
+static void
+_kdc_set_e_text(kdc_request_t r, const char *e_text)
+{
+    r->e_text = e_text;
+    kdc_log(r->context, r->config, 0, "%s", e_text);
+}
+
 void
 _kdc_log_timestamp(krb5_context context,
 		   krb5_kdc_configuration *config,
@@ -457,8 +464,7 @@ pa_enc_ts_validate(kdc_request_t r, const PA_DATA *pa)
 	
     if (r->req.req_body.kdc_options.request_anonymous) {
 	ret = KRB5KRB_AP_ERR_BAD_INTEGRITY;
-	r->e_text = "ENC-TS doesn't suport anon";
-	kdc_log(r->context, r->config, 0, "ENC-TS doesn't support anon");
+	_kdc_set_e_text(r, "ENC-TS doesn't suport anon");
 	goto out;
     }
 
@@ -477,7 +483,7 @@ pa_enc_ts_validate(kdc_request_t r, const PA_DATA *pa)
 			  enc_data.etype, &pa_key);
     if(ret){
 	char *estr;
-	r->e_text = "No key matching entype";
+	_kdc_set_e_text(r, "No key matching entype");
 	ret = KRB5KDC_ERR_ETYPE_NOSUPP;
 	if(krb5_enctype_to_string(r->context, enc_data.etype, &estr))
 	    estr = NULL;
@@ -1688,7 +1694,7 @@ _kdc_as_rep(kdc_request_t r,
 
     if(b->sname == NULL){
 	ret = KRB5KRB_ERR_GENERIC;
-	r->e_text = "No server in request";
+	_kdc_set_e_text(r, "No server in request");
     } else{
 	ret = _krb5_principalname2krb5_principal (context,
 						  &r->server_princ,
@@ -1704,7 +1710,7 @@ _kdc_as_rep(kdc_request_t r,
     }
     if(b->cname == NULL){
 	ret = KRB5KRB_ERR_GENERIC;
-	r->e_text = "No client in request";
+	_kdc_set_e_text(r, "No client in request");
     } else {
 	ret = _krb5_principalname2krb5_principal (context,
 						  &r->client_princ,
@@ -1842,7 +1848,7 @@ _kdc_as_rep(kdc_request_t r,
 	kdc_log(context, config, 5,
 		"Looking for PKINIT pa-data -- %s", r->client_name);
 
-	r->e_text = "No PKINIT PA found";
+	_kdc_set_e_text(r, "No PKINIT PA found");
 
 	i = 0;
 	pa = _kdc_find_padata(req, &i, KRB5_PADATA_PK_AS_REQ);
@@ -1871,11 +1877,9 @@ _kdc_as_rep(kdc_request_t r,
 				       pkp,
 				       &client_cert);
 	    if (ret) {
-		r->e_text = "PKINIT certificate not allowed to "
-		    "impersonate principal";
+		_kdc_set_e_text(r, "PKINIT certificate not allowed to "
+				"impersonate principal");
 		_kdc_pk_free_client_param(context, pkp);
-		
-		kdc_log(context, config, 0, "%s", r->e_text);
 		pkp = NULL;
 		goto out;
 	    }
@@ -1946,11 +1950,7 @@ _kdc_as_rep(kdc_request_t r,
 	}
 
 	ret = KRB5KDC_ERR_PREAUTH_REQUIRED;
-	r->e_text ="Need to use PA-ENC-TIMESTAMP/PA-PK-AS-REQ",
-
-	kdc_log(context, config, 0,
-		"No preauth found, returning PREAUTH-REQUIRED -- %s",
-		r->client_name);
+	_kdc_set_e_text(r, "Need to use PA-ENC-TIMESTAMP/PA-PK-AS-REQ");
 	goto out;
     }
 
@@ -1983,8 +1983,7 @@ _kdc_as_rep(kdc_request_t r,
     if(f.renew || f.validate || f.proxy || f.forwarded || f.enc_tkt_in_skey
        || (f.request_anonymous && !config->allow_anonymous)) {
 	ret = KRB5KDC_ERR_BADOPTION;
-	r->e_text = "Bad KDC options";
-	kdc_log(context, config, 0, "Bad KDC options -- %s", r->client_name);
+	_kdc_set_e_text(r, "Bad KDC options");
 	goto out;
     }
 
@@ -2013,37 +2012,29 @@ _kdc_as_rep(kdc_request_t r,
     if(r->client->entry.flags.forwardable && r->server->entry.flags.forwardable)
 	et.flags.forwardable = f.forwardable;
     else if (f.forwardable) {
-	r->e_text = "Ticket may not be forwardable";
+	_kdc_set_e_text(r, "Ticket may not be forwardable");
 	ret = KRB5KDC_ERR_POLICY;
-	kdc_log(context, config, 0,
-		"Ticket may not be forwardable -- %s", r->client_name);
 	goto out;
     }
     if(r->client->entry.flags.proxiable && r->server->entry.flags.proxiable)
 	et.flags.proxiable = f.proxiable;
     else if (f.proxiable) {
-	r->e_text = "Ticket may not be proxiable";
+	_kdc_set_e_text(r, "Ticket may not be proxiable");
 	ret = KRB5KDC_ERR_POLICY;
-	kdc_log(context, config, 0,
-		"Ticket may not be proxiable -- %s", r->client_name);
 	goto out;
     }
     if(r->client->entry.flags.postdate && r->server->entry.flags.postdate)
 	et.flags.may_postdate = f.allow_postdate;
     else if (f.allow_postdate){
-	r->e_text = "Ticket may not be postdate";
+	_kdc_set_e_text(r, "Ticket may not be postdate");
 	ret = KRB5KDC_ERR_POLICY;
-	kdc_log(context, config, 0,
-		"Ticket may not be postdatable -- %s", r->client_name);
 	goto out;
     }
 
     /* check for valid set of addresses */
     if(!_kdc_check_addresses(context, config, b->addresses, from_addr)) {
-	r->e_text = "Bad address list in requested";
+	_kdc_set_e_text(r, "Bad address list in requested");
 	ret = KRB5KRB_AP_ERR_BADADDR;
-	kdc_log(context, config, 0,
-		"Bad address list requested -- %s", r->client_name);
 	goto out;
     }
 
@@ -2181,12 +2172,13 @@ _kdc_as_rep(kdc_request_t r,
 
 #if PKINIT
     if (pkp) {
-        r->e_text = "Failed to build PK-INIT reply";
 	ret = _kdc_pk_mk_pa_reply(context, config, pkp, r->client,
 				  sessionetype, req, req_buffer,
 				  &r->reply_key, &et.key, rep.padata);
-	if (ret)
+	if (ret) {
+	    _kdc_set_e_text(r, "Failed to build PK-INIT reply");
 	    goto out;
+	}
 	ret = _kdc_add_inital_verified_cas(context,
 					   config,
 					   pkp,
@@ -2203,7 +2195,7 @@ _kdc_as_rep(kdc_request_t r,
     }
 
     if (r->reply_key.keytype == ETYPE_NULL) {
-	r->e_text = "Client have no reply key";
+	_kdc_set_e_text(r, "Client have no reply key");
 	ret = KRB5KDC_ERR_CLIENT_NOTYET;
 	goto out;
     }
@@ -2340,7 +2332,7 @@ _kdc_as_rep(kdc_request_t r,
     if (datagram_reply && reply->length > config->max_datagram_reply_length) {
 	krb5_data_free(reply);
 	ret = KRB5KRB_ERR_RESPONSE_TOO_BIG;
-	r->e_text = "Reply packet too large";
+	_kdc_set_e_text(r, "Reply packet too large");
     }
 
 out:

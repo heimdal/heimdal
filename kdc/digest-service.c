@@ -44,6 +44,8 @@
 typedef struct pk_client_params pk_client_params;
 struct DigestREQ;
 struct Kx509Request;
+typedef struct kdc_request_desc *kdc_request_t;
+
 #include <kdc-private.h>
 
 krb5_kdc_configuration *config;

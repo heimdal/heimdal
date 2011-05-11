@@ -43,7 +43,7 @@ export KRB5_CONFIG
 testfailed="echo test failed; cat messages.log; exit 1"
 
 # If there is no useful db support compile in, disable test
-${have_db} || exit 77
+#${have_db} || exit 77
 
 R=TEST.H5L.SE
 
@@ -138,6 +138,9 @@ if [ -f ${mit}/kinit ] ; then
 
    echo "Checking for FAST avail"
    ${klist} --hidden | grep fast_avail > /dev/null || { exit 1; }
+
+   echo "Getting service ticket"
+   ${mit}/kvno -c ${cache} ${server}@${R} || { exit 1; }
 
 fi
 

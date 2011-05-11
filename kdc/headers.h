@@ -106,6 +106,8 @@
 #include <kdc.h>
 #include <windc_plugin.h>
 
+#include <heimbase.h>
+
 #undef ALLOC
 #define ALLOC(X) ((X) = calloc(1, sizeof(*(X))))
 #undef ALLOC_SEQ

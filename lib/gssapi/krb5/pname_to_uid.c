@@ -38,6 +38,7 @@ _gsskrb5_pname_to_uid(OM_uint32 *minor_status,
                       const gss_OID mech_type,
                       uid_t *uidp) 
 {
+#if 0
     krb5_error_code ret;
     krb5_context context;
     krb5_const_principal princ = (krb5_const_principal)pname;
@@ -77,4 +78,8 @@ _gsskrb5_pname_to_uid(OM_uint32 *minor_status,
     *uidp = pwd->pw_uid;
 
     return GSS_S_COMPLETE;
+#else
+    *minor_status = KRB5_NO_LOCALNAME;
+    return GSS_S_UNAVAILABLE;
+#endif
 }

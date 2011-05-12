@@ -47,8 +47,10 @@ gss_get_name_attribute(OM_uint32 *minor_status,
     struct _gss_mechanism_name *mn;
         
     *minor_status = 0;
-    *authenticated = 0;
-    *complete = 0;
+    if (authenticated != NULL)
+        *authenticated = 0;
+    if (complete != NULL)
+        *complete = 0;
     _mg_buffer_zero(value);
     _mg_buffer_zero(display_value);
 

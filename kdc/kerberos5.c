@@ -278,6 +278,69 @@ _kdc_log_timestamp(krb5_context context,
 	    type, authtime_str, starttime_str, endtime_str, renewtime_str);
 }
 
+/*
+ *
+ */
+
+#ifdef PKINIT
+
+static krb5_error_code
+pa_pkinit_validate(kdc_request_t r, const PA_DATA *pa)
+{
+    char *client_cert = NULL;
+    krb5_error_code ret;
+    pk_client_params *pkp = NULL;
+
+    ret = _kdc_pk_rd_padata(r->context, r->config, &r->req, pa, r->client, &pkp);
+    if (ret || pkp == NULL) {
+	ret = KRB5KRB_AP_ERR_BAD_INTEGRITY;
+	kdc_log(r->context, r->config, 5,
+		"Failed to decode PKINIT PA-DATA -- %s",
+		r->client_name);
+	goto out;
+    }
+    
+    ret = _kdc_pk_check_client(r->context,
+			       r->config,
+			       r->clientdb, 
+			       r->client,
+			       pkp,
+			       &client_cert);
+    if (ret) {
+	_kdc_set_e_text(r, "PKINIT certificate not allowed to "
+			"impersonate principal");
+	goto out;
+    }
+
+    kdc_log(r->context, r->config, 0,
+	    "PKINIT pre-authentication succeeded -- %s using %s",
+	    r->client_name, client_cert);
+    free(client_cert);
+
+    ret = _kdc_pk_mk_pa_reply(r->context, r->config, pkp, r->client,
+			      r->sessionetype, &r->req, &r->request,
+			      &r->reply_key, &r->session_key, &r->outpadata);
+    if (ret) {
+	_kdc_set_e_text(r, "Failed to build PK-INIT reply");
+	goto out;
+    }
+#if 0
+    ret = _kdc_add_inital_verified_cas(r->context, r->config,
+				       pkp, &r->et);
+#endif
+ out:
+    if (pkp)
+	_kdc_pk_free_client_param(r->context, pkp);
+
+    return ret;
+}
+
+#endif /* PKINIT */
+
+/*
+ *
+ */
+
 static krb5_error_code
 make_pa_enc_challange(krb5_context context, METHOD_DATA *md,
 		      krb5_crypto crypto)
@@ -620,13 +683,19 @@ struct kdc_patypes {
 
 static const struct kdc_patypes pat[] = {
 #ifdef PKINIT
-    { KRB5_PADATA_PK_AS_REQ, "PK-INIT(ietf)", PA_ANNOUNCE },
-    { KRB5_PADATA_PK_AS_REQ_WIN, "PK-INIT(win2k)", PA_ANNOUNCE },
+    {
+	KRB5_PADATA_PK_AS_REQ, "PK-INIT(ietf)", PA_ANNOUNCE,
+	pa_pkinit_validate
+    },
+    {
+	KRB5_PADATA_PK_AS_REQ_WIN, "PK-INIT(win2k)", PA_ANNOUNCE,
+	pa_pkinit_validate
+    },
 #else
-    { KRB5_PADATA_PK_AS_REQ, "PK-INIT(ietf)", 0 },
-    { KRB5_PADATA_PK_AS_REQ_WIN, "PK-INIT(win2k)", 0 },
+    { KRB5_PADATA_PK_AS_REQ, "PK-INIT(ietf)", 0, NULL },
+    { KRB5_PADATA_PK_AS_REQ_WIN, "PK-INIT(win2k)", 0, NULL },
 #endif
-    { KRB5_PADATA_PA_PK_OCSP_RESPONSE , "OCSP", 0 },
+    { KRB5_PADATA_PA_PK_OCSP_RESPONSE , "OCSP", 0, NULL },
     { 
 	KRB5_PADATA_ENC_TIMESTAMP , "ENC-TS",
 	PA_ANNOUNCE,
@@ -637,10 +706,10 @@ static const struct kdc_patypes pat[] = {
 	PA_ANNOUNCE | PA_REQ_FAST,
 	pa_enc_chal_validate
     },
-    { KRB5_PADATA_REQ_ENC_PA_REP , "REQ-ENC-PA-REP", 0 },
-    { KRB5_PADATA_FX_FAST, "FX-FAST", PA_ANNOUNCE },
-    { KRB5_PADATA_FX_ERROR, "FX-ERROR", 0 },
-    { KRB5_PADATA_FX_COOKIE, "FX-COOKIE", 0 }
+    { KRB5_PADATA_REQ_ENC_PA_REP , "REQ-ENC-PA-REP", 0, NULL },
+    { KRB5_PADATA_FX_FAST, "FX-FAST", PA_ANNOUNCE, NULL },
+    { KRB5_PADATA_FX_ERROR, "FX-ERROR", 0, NULL },
+    { KRB5_PADATA_FX_COOKIE, "FX-COOKIE", 0, NULL }
 };
 
 static void
@@ -1658,15 +1727,12 @@ _kdc_as_rep(kdc_request_t r,
     KDC_REQ_BODY *b = NULL;
     AS_REP rep;
     KDCOptions f;
-    krb5_enctype setype, sessionetype;
+    krb5_enctype setype;
     EncTicketPart et;
     EncKDCRepPart ek;
     krb5_error_code ret = 0;
     Key *ckey, *skey;
     int flags = 0;
-#ifdef PKINIT
-    pk_client_params *pkp = NULL;
-#endif
     METHOD_DATA error_method;
 
     memset(&rep, 0, sizeof(rep));
@@ -1674,10 +1740,6 @@ _kdc_as_rep(kdc_request_t r,
     memset(&ek, 0, sizeof(ek));
     error_method.len = 0;
     error_method.val = NULL;
-
-    ALLOC(rep.padata);
-    rep.padata->len = 0;
-    rep.padata->val = NULL;
 
     /*
      * Look for FAST armor and unwrap
@@ -1794,6 +1856,7 @@ _kdc_as_rep(kdc_request_t r,
      * enctype that an older version of a KDC in the same realm can't
      * decrypt.
      */
+
     ret = _kdc_find_etype(context, config->as_use_strongest_session_key, FALSE,
 			  client, b->etype.val, b->etype.len, &sessionetype,
 			  NULL);
@@ -1841,58 +1904,8 @@ _kdc_as_rep(kdc_request_t r,
 
 	if (found_pa) {
 	    et.flags.pre_authent = 1;
-	    goto preauth_done;
 	}
 
-#ifdef PKINIT
-	kdc_log(context, config, 5,
-		"Looking for PKINIT pa-data -- %s", r->client_name);
-
-	_kdc_set_e_text(r, "No PKINIT PA found");
-
-	i = 0;
-	pa = _kdc_find_padata(req, &i, KRB5_PADATA_PK_AS_REQ);
-	if (pa == NULL) {
-	    i = 0;
-	    pa = _kdc_find_padata(req, &i, KRB5_PADATA_PK_AS_REQ_WIN);
-	}
-	if (pa) {
-	    char *client_cert = NULL;
-
-	    ret = _kdc_pk_rd_padata(context, config, req, pa, r->client, &pkp);
-	    if (ret) {
-		ret = KRB5KRB_AP_ERR_BAD_INTEGRITY;
-		kdc_log(context, config, 5,
-			"Failed to decode PKINIT PA-DATA -- %s",
-			r->client_name);
-		goto out;
-	    }
-	    if (ret == 0 && pkp == NULL)
-		goto out;
-
-	    ret = _kdc_pk_check_client(context,
-				       config,
-				       r->clientdb, 
-				       r->client,
-				       pkp,
-				       &client_cert);
-	    if (ret) {
-		_kdc_set_e_text(r, "PKINIT certificate not allowed to "
-				"impersonate principal");
-		_kdc_pk_free_client_param(context, pkp);
-		pkp = NULL;
-		goto out;
-	    }
-
-	    found_pa = 1;
-	    et.flags.pre_authent = 1;
-	    kdc_log(context, config, 0,
-		    "PKINIT pre-authentication succeeded -- %s using %s",
-		    r->client_name, client_cert);
-	    free(client_cert);
-	}
-    preauth_done:
-#endif
 	if(found_pa == 0 && config->require_preauth)
 	    goto use_pa;
 	/* We come here if we found a pa-enc-timestamp, but if there
@@ -2170,26 +2183,12 @@ _kdc_as_rep(kdc_request_t r,
 	copy_HostAddresses(et.caddr, ek.caddr);
     }
 
-#if PKINIT
-    if (pkp) {
-	ret = _kdc_pk_mk_pa_reply(context, config, pkp, r->client,
-				  sessionetype, req, req_buffer,
-				  &r->reply_key, &et.key, rep.padata);
-	if (ret) {
-	    _kdc_set_e_text(r, "Failed to build PK-INIT reply");
-	    goto out;
-	}
-	ret = _kdc_add_inital_verified_cas(context,
-					   config,
-					   pkp,
-					   &et);
-	if (ret)
-	    goto out;
+    /*
+     * Check and session and reply keys
+     */
 
-    } else
-#endif
-    {
-	ret = krb5_generate_random_keyblock(context, sessionetype, &et.key);
+    if (r->session_key.keytype == ETYPE_NULL) {
+	ret = krb5_generate_random_keyblock(context, r->sessionetype, &r->session_key);
 	if (ret)
 	    goto out;
     }
@@ -2200,11 +2199,18 @@ _kdc_as_rep(kdc_request_t r,
 	goto out;
     }
 
-    ret = copy_EncryptionKey(&et.key, &ek.key);
+    ret = copy_EncryptionKey(&r->session_key, &et.key);
     if (ret)
 	goto out;
 
-    /* Add signing of alias referral */
+    ret = copy_EncryptionKey(&r->session_key, &ek.key);
+    if (ret)
+	goto out;
+
+    /*
+     * Add signing of alias referral
+     */
+
     if (f.canonicalize) {
 	PA_ClientCanonicalized canon;
 	krb5_data data;
@@ -2250,15 +2256,22 @@ _kdc_as_rep(kdc_request_t r,
 
 	pa.padata_type = KRB5_PADATA_CLIENT_CANONICALIZED;
 	pa.padata_value = data;
-	ret = add_METHOD_DATA(rep.padata, &pa);
+	ret = add_METHOD_DATA(&r->outpadata, &pa);
 	free(data.data);
 	if (ret)
 	    goto out;
     }
 
-    if (rep.padata->len == 0) {
-	free(rep.padata);
-	rep.padata = NULL;
+    if (r->outpadata.len) {
+
+	ALLOC(rep.padata);
+	if (rep.padata == NULL) {
+	    ret = ENOMEM;
+	    goto out;
+	}
+	ret = copy_METHOD_DATA(&r->outpadata, rep.padata);
+	if (ret)
+	    goto out;
     }
 
     /* Add the PAC */
@@ -2355,10 +2368,6 @@ out:
 	    goto out2;
     }
 out2:
-#ifdef PKINIT
-    if (pkp)
-	_kdc_pk_free_client_param(context, pkp);
-#endif
     free_EncTicketPart(&et);
     free_EncKDCRepPart(&ek);
 

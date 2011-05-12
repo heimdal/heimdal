@@ -66,7 +66,7 @@ struct kdc_request_desc {
     EncKDCRepPart ek;
 
     /* PA methods can affect both the reply key and the session key (pkinit) */
-    krb5_keyblock sessionetype;
+    krb5_enctype sessionetype;
     krb5_keyblock reply_key;
     krb5_keyblock session_key;
 

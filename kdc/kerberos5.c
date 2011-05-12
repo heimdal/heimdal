@@ -242,6 +242,17 @@ _kdc_make_anonymous_principalname (PrincipalName *pn)
 }
 
 static void
+_kdc_r_log(kdc_request_t r, int level, const char *fmt, ...)
+{
+    va_list ap;
+    char *s;
+    va_start(ap, fmt);
+    s = kdc_log_msg_va(r->context, r->config, level, fmt, ap);
+    if(s) free(s);
+    va_end(ap);
+}
+
+static void
 _kdc_set_e_text(kdc_request_t r, const char *e_text)
 {
     r->e_text = e_text;
@@ -287,16 +298,15 @@ _kdc_log_timestamp(krb5_context context,
 static krb5_error_code
 pa_pkinit_validate(kdc_request_t r, const PA_DATA *pa)
 {
+    pk_client_params *pkp = NULL;
     char *client_cert = NULL;
     krb5_error_code ret;
-    pk_client_params *pkp = NULL;
 
     ret = _kdc_pk_rd_padata(r->context, r->config, &r->req, pa, r->client, &pkp);
     if (ret || pkp == NULL) {
 	ret = KRB5KRB_AP_ERR_BAD_INTEGRITY;
-	kdc_log(r->context, r->config, 5,
-		"Failed to decode PKINIT PA-DATA -- %s",
-		r->client_name);
+	_kdc_r_log(r, 5, "Failed to decode PKINIT PA-DATA -- %s",
+		   r->client_name);
 	goto out;
     }
     
@@ -312,9 +322,8 @@ pa_pkinit_validate(kdc_request_t r, const PA_DATA *pa)
 	goto out;
     }
 
-    kdc_log(r->context, r->config, 0,
-	    "PKINIT pre-authentication succeeded -- %s using %s",
-	    r->client_name, client_cert);
+    _kdc_r_log(r, 0, "PKINIT pre-authentication succeeded -- %s using %s",
+	       r->client_name, client_cert);
     free(client_cert);
 
     ret = _kdc_pk_mk_pa_reply(r->context, r->config, pkp, r->client,
@@ -414,8 +423,8 @@ pa_enc_chal_validate(kdc_request_t r, const PA_DATA *pa)
 			       &size);
     if (ret) {
 	ret = KRB5KRB_AP_ERR_BAD_INTEGRITY;
-	kdc_log(r->context, r->config, 5, "Failed to decode PA-DATA -- %s",
-		r->client_name);
+	_kdc_r_log(r, 5, "Failed to decode PA-DATA -- %s",
+		   r->client_name);
 	return ret;
     }
 
@@ -464,9 +473,8 @@ pa_enc_chal_validate(kdc_request_t r, const PA_DATA *pa)
 	if(ret){
 	    krb5_crypto_destroy(r->context, challangecrypto);
 	    ret = KRB5KDC_ERR_PREAUTH_FAILED;
-	    kdc_log(r->context, r->config,
-		    5, "Failed to decode PA-ENC-TS_ENC -- %s",
-		    r->client_name);
+	    _kdc_r_log(r, 5, "Failed to decode PA-ENC-TS_ENC -- %s",
+		       r->client_name);
 	    continue;
 	}
 
@@ -479,13 +487,12 @@ pa_enc_chal_validate(kdc_request_t r, const PA_DATA *pa)
 			     client_time, sizeof(client_time), TRUE);
 
 	    ret = KRB5KRB_AP_ERR_SKEW;
-	    kdc_log(r->context, r->config, 0,
-		    "Too large time skew, "
-		    "client time %s is out by %u > %u seconds -- %s",
-		    client_time,
-		    (unsigned)abs(kdc_time - p.patimestamp),
-		    r->context->max_skew,
-		    r->client_name);
+	    _kdc_r_log(r, 0, "Too large time skew, "
+		       "client time %s is out by %u > %u seconds -- %s",
+		       client_time,
+		       (unsigned)abs(kdc_time - p.patimestamp),
+		       r->context->max_skew,
+		       r->client_name);
 
 	    free_PA_ENC_TS_ENC(&p);
 	    goto out;
@@ -537,8 +544,8 @@ pa_enc_ts_validate(kdc_request_t r, const PA_DATA *pa)
 			       &len);
     if (ret) {
 	ret = KRB5KRB_AP_ERR_BAD_INTEGRITY;
-	kdc_log(r->context, r->config, 5, "Failed to decode PA-DATA -- %s",
-		r->client_name);
+	_kdc_r_log(r, 5, "Failed to decode PA-DATA -- %s",
+		   r->client_name);
 	goto out;
     }
 	
@@ -551,13 +558,13 @@ pa_enc_ts_validate(kdc_request_t r, const PA_DATA *pa)
 	if(krb5_enctype_to_string(r->context, enc_data.etype, &estr))
 	    estr = NULL;
 	if(estr == NULL)
-	    kdc_log(r->context, r->config, 5,
-		    "No client key matching pa-data (%d) -- %s",
-		    enc_data.etype, r->client_name);
+	    _kdc_r_log(r, 5,
+		       "No client key matching pa-data (%d) -- %s",
+		       enc_data.etype, r->client_name);
 	else
-	    kdc_log(r->context, r->config, 5,
-		    "No client key matching pa-data (%s) -- %s",
-		    estr, r->client_name);
+	    _kdc_r_log(r, 5,
+		       "No client key matching pa-data (%s) -- %s",
+		       estr, r->client_name);
 	free(estr);
 	free_EncryptedData(&enc_data);
 	goto out;
@@ -567,7 +574,7 @@ pa_enc_ts_validate(kdc_request_t r, const PA_DATA *pa)
     ret = krb5_crypto_init(r->context, &pa_key->key, 0, &crypto);
     if (ret) {
 	const char *msg = krb5_get_error_message(r->context, ret);
-	kdc_log(r->context, r->config, 0, "krb5_crypto_init failed: %s", msg);
+	_kdc_r_log(r, 0, "krb5_crypto_init failed: %s", msg);
 	krb5_free_error_message(r->context, msg);
 	free_EncryptedData(&enc_data);
 	goto out;
@@ -592,10 +599,9 @@ pa_enc_ts_validate(kdc_request_t r, const PA_DATA *pa)
 				      pa_key->key.keytype, &str);
 	if (ret2)
 	    str = NULL;
-	kdc_log(r->context, r->config, 5,
-		"Failed to decrypt PA-DATA -- %s "
-		"(enctype %s) error %s",
-		r->client_name, str ? str : "unknown enctype", msg);
+	_kdc_r_log(r, 5, "Failed to decrypt PA-DATA -- %s "
+		   "(enctype %s) error %s",
+		   r->client_name, str ? str : "unknown enctype", msg);
 	krb5_free_error_message(r->context, msg);
 	free(str);
 
@@ -620,9 +626,8 @@ pa_enc_ts_validate(kdc_request_t r, const PA_DATA *pa)
     krb5_data_free(&ts_data);
     if(ret){
 	ret = KRB5KDC_ERR_PREAUTH_FAILED;
-	kdc_log(r->context, r->config,
-		5, "Failed to decode PA-ENC-TS_ENC -- %s",
-		r->client_name);
+	_kdc_r_log(r, 5, "Failed to decode PA-ENC-TS_ENC -- %s",
+		   r->client_name);
 	goto out;
     }
     if (abs(kdc_time - p.patimestamp) > r->context->max_skew) {
@@ -632,13 +637,12 @@ pa_enc_ts_validate(kdc_request_t r, const PA_DATA *pa)
 			 client_time, sizeof(client_time), TRUE);
 
 	ret = KRB5KRB_AP_ERR_SKEW;
-	kdc_log(r->context, r->config, 0,
-		"Too large time skew, "
-		"client time %s is out by %u > %u seconds -- %s",
-		client_time,
-		(unsigned)abs(kdc_time - p.patimestamp),
-		r->context->max_skew,
-		r->client_name);
+	_kdc_r_log(r, 0, "Too large time skew, "
+		   "client time %s is out by %u > %u seconds -- %s",
+		   client_time,
+		   (unsigned)abs(kdc_time - p.patimestamp),
+		   r->context->max_skew,
+		   r->client_name);
 
 	/*
 	 * The following is needed to make windows clients to
@@ -660,9 +664,8 @@ pa_enc_ts_validate(kdc_request_t r, const PA_DATA *pa)
     ret = krb5_enctype_to_string(r->context, pa_key->key.keytype, &str);
     if (ret)
 	str = NULL;
-    kdc_log(r->context, r->config, 2,
-	    "ENC-TS Pre-authentication succeeded -- %s using %s",
-	    r->client_name, str ? str : "unknown enctype");
+    _kdc_r_log(r, 2, "ENC-TS Pre-authentication succeeded -- %s using %s",
+	       r->client_name, str ? str : "unknown enctype");
     free(str);
 
     ret = 0;

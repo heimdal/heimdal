@@ -325,7 +325,7 @@ static gssapi_mech_interface_desc krb5_mech = {
     krb5_mo,
     sizeof(krb5_mo) / sizeof(krb5_mo[0]),
     _gsskrb5_authorize_localname,
-    _gsskrb5_pname_to_uid
+    _gsskrb5_pname_to_uid,
     NULL,
     NULL,
     NULL,

@@ -44,9 +44,12 @@ gss_inquire_name(OM_uint32 *minor_status,
     struct _gss_mechanism_name *mn;
         
     *minor_status = 0;
-    *name_is_MN = 0;
-    *MN_mech = GSS_C_NO_OID;
-    *attrs = GSS_C_NO_BUFFER_SET;
+    if (name_is_MN != NULL)
+        *name_is_MN = 0;
+    if (MN_mech != NULL)
+        *MN_mech = GSS_C_NO_OID;
+    if (attrs != NULL)
+        *attrs = GSS_C_NO_BUFFER_SET;
 
     if (input_name == GSS_C_NO_NAME)
         return GSS_S_BAD_NAME;
@@ -63,7 +66,8 @@ gss_inquire_name(OM_uint32 *minor_status,
                                           MN_mech,
                                           attrs);
         if (major_status == GSS_S_COMPLETE) {
-            *name_is_MN = 1;
+            if (name_is_MN != NULL)
+                *name_is_MN = 1;
 #if 0
             if (*MN_mech == GSS_C_NO_OID)
                 *MN_mech = &m->gm_mech_oid;

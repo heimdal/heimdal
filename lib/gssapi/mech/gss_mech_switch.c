@@ -160,7 +160,17 @@ do {									\
 
 #define OPTSYM(name)							\
 do {									\
-	m->gm_mech.gm_ ## name = dlsym(so, "gss_" #name);			\
+	m->gm_mech.gm_ ## name = dlsym(so, "gss_" #name);		\
+} while (0)
+
+#define OPTSPISYM(name)							\
+do {									\
+	m->gm_mech.gm_ ## name = dlsym(so, "gssspi_" #name);		\
+} while (0)
+
+#define COMPATSYM(name)							\
+do {									\
+	m->gm_mech.gm_compat->gmc_ ## name = dlsym(so, "gss_" #name);	\
 } while (0)
 
 /*
@@ -283,28 +293,23 @@ _gss_load_mech(void)
 #endif
 
 		so = dlopen(lib, RTLD_LAZY | RTLD_LOCAL | RTLD_GROUP);
-		if (!so) {
+		if (so == NULL) {
 /*			fprintf(stderr, "dlopen: %s\n", dlerror()); */
-			free(mech_oid.elements);
-			continue;
+			goto bad;
 		}
 
-		m = malloc(sizeof(*m));
-		if (!m) {
-			free(mech_oid.elements);
-			break;
-		}
+		m = calloc(1, sizeof(*m));
+		if (m == NULL)
+			goto bad;
+
 		m->gm_so = so;
 		m->gm_mech.gm_mech_oid = mech_oid;
 		m->gm_mech.gm_flags = 0;
-		
+
 		major_status = gss_add_oid_set_member(&minor_status,
 		    &m->gm_mech.gm_mech_oid, &_gss_mech_oids);
-		if (major_status) {
-			free(m->gm_mech.gm_mech_oid.elements);
-			free(m);
-			continue;
-		}
+		if (GSS_ERROR(major_status))
+			goto bad;
 
 		SYM(acquire_cred);
 		SYM(release_cred);
@@ -338,7 +343,7 @@ _gss_load_mech(void)
 		OPTSYM(inquire_cred_by_oid);
 		OPTSYM(inquire_sec_context_by_oid);
 		OPTSYM(set_sec_context_option);
-		OPTSYM(set_cred_option);
+		OPTSPISYM(set_cred_option);
 		OPTSYM(pseudo_random);
 		OPTSYM(wrap_iov);
 		OPTSYM(unwrap_iov);
@@ -352,20 +357,29 @@ _gss_load_mech(void)
 
 		mi = dlsym(so, "gss_mo_init");
 		if (mi != NULL) {
-			major_status = mi(&minor_status,
-					  &mech_oid,
-					  &m->gm_mech.gm_mo,
-					  &m->gm_mech.gm_mo_num);
+			major_status = mi(&minor_status, &mech_oid,
+					  &m->gm_mech.gm_mo, &m->gm_mech.gm_mo_num);
 			if (GSS_ERROR(major_status))
 				goto bad;
 		}
+
+		/* pick up the oid sets of names */
+
+		if (m->gm_mech.gm_inquire_names_for_mech)
+			(*m->gm_mech.gm_inquire_names_for_mech)(&minor_status,
+			&m->gm_mech.gm_mech_oid, &m->gm_name_types);
+
+		if (m->gm_name_types == NULL)
+			gss_create_empty_oid_set(&minor_status, &m->gm_name_types);
 
 		HEIM_SLIST_INSERT_HEAD(&_gss_mechs, m, gm_link);
 		continue;
 
 	bad:
-		free(m->gm_mech.gm_mech_oid.elements);
-		free(m);
+		if (m != NULL) {
+			free(m->gm_mech.gm_mech_oid.elements);
+			free(m);
+		}
 		dlclose(so);
 		continue;
 	}

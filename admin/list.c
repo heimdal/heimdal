@@ -113,7 +113,7 @@ do_list(struct list_options *opt, const char *keytab_str)
 	    rtbl_add_column_entry_by_id(table, 3, buf);
 	}
 	if(opt->keys_flag) {
-	    int i;
+	    size_t i;
 	    s = malloc(2 * entry.keyblock.keyvalue.length + 1);
 	    if (s == NULL) {
 		krb5_warnx(context, "malloc failed");

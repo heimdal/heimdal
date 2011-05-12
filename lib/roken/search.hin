@@ -18,7 +18,9 @@
 #endif
 #endif
 
+#ifndef _WIN32
 #include <sys/cdefs.h>
+#endif
 #include <sys/types.h>
 
 typedef	enum {

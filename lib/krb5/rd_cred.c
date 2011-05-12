@@ -65,7 +65,7 @@ krb5_rd_cred(krb5_context context,
     EncKrbCredPart enc_krb_cred_part;
     krb5_data enc_krb_cred_part_data;
     krb5_crypto crypto;
-    int i;
+    size_t i;
 
     memset(&enc_krb_cred_part, 0, sizeof(enc_krb_cred_part));
 

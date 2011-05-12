@@ -103,7 +103,7 @@ add_padata(krb5_context context,
     PA_DATA *pa2;
     krb5_salt salt2;
     krb5_enctype *ep;
-    int i;
+    size_t i;
 
     if(salt == NULL) {
 	/* default to standard salt */
@@ -247,7 +247,7 @@ init_as_req (krb5_context context,
     a->req_body.additional_tickets = NULL;
 
     if(preauth != NULL) {
-	int i;
+	size_t i;
 	ALLOC(a->padata, 1);
 	if(a->padata == NULL) {
 	    ret = ENOMEM;
@@ -258,7 +258,7 @@ init_as_req (krb5_context context,
 	a->padata->len = 0;
 	for(i = 0; i < preauth->len; i++) {
 	    if(preauth->val[i].type == KRB5_PADATA_ENC_TIMESTAMP){
-		int j;
+		size_t j;
 
 		for(j = 0; j < preauth->val[i].info.len; j++) {
 		    krb5_salt *sp = &salt;
@@ -331,7 +331,7 @@ set_ptypes(krb5_context context,
 
     if(error->e_data) {
 	METHOD_DATA md;
-	int i;
+	size_t i;
 	decode_METHOD_DATA(error->e_data->data,
 			   error->e_data->length,
 			   &md,

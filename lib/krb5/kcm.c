@@ -1155,7 +1155,9 @@ KRB5_LIB_VARIABLE const krb5_cc_ops krb5_akcm_ops = {
     kcm_move,
     kcm_get_default_name_api,
     kcm_set_default,
-    kcm_lastchange
+    kcm_lastchange,
+    NULL,
+    NULL
 };
 
 

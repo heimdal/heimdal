@@ -228,7 +228,6 @@ arg_printusage_i18n (struct getargs *args,
     size_t i, max_len = 0;
     char buf[128];
     int col = 0, columns;
-    struct winsize ws;
 
     if (progname == NULL)
 	progname = getprogname();
@@ -240,9 +239,7 @@ arg_printusage_i18n (struct getargs *args,
 	mandoc_template(args, num_args, progname, extra_string, i18n);
 	return;
     }
-    if(get_window_size(2, &ws) == 0)
-	columns = ws.ws_col;
-    else
+    if(get_window_size(2, NULL, &columns) == -1)
 	columns = 80;
     col = 0;
     col += fprintf (stderr, "%s: %s", usage, progname);
@@ -352,7 +349,7 @@ static int
 arg_match_long(struct getargs *args, size_t num_args,
 	       char *argv, int argc, char **rargv, int *goptind)
 {
-    int i;
+    size_t i;
     char *goptarg = NULL;
     int negate = 0;
     int partial_match = 0;
@@ -477,7 +474,7 @@ static int
 arg_match_short (struct getargs *args, size_t num_args,
 		 char *argv, int argc, char **rargv, int *goptind)
 {
-    int j, k;
+    size_t j, k;
 
     for(j = 1; j > 0 && j < strlen(rargv[*goptind]); j++) {
 	for(k = 0; k < num_args; k++) {
@@ -500,9 +497,11 @@ arg_match_short (struct getargs *args, size_t num_args,
 		}
 		if(args[k].type == arg_collect) {
 		    struct getarg_collect_info *c = args[k].value;
+		    int a = (int)j;
 
-		    if((*c->func)(TRUE, argc, rargv, goptind, &j, c->data))
+		    if((*c->func)(TRUE, argc, rargv, goptind, &a, c->data))
 			return ARG_ERR_BAD_ARG;
+		    j = a;
 		    break;
 		}
 

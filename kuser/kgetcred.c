@@ -53,17 +53,17 @@ struct getargs args[] = {
     { "delegation-credential-cache",0,arg_string, &delegation_cred_str,
       NP_("where to find the ticket use for delegation", ""), "cache"},
     { "canonicalize",	0, arg_flag, &canonicalize_flag,
-      NP_("canonicalize the principal", "") },
+      NP_("canonicalize the principal", ""), NULL },
     { "forwardable",	0, arg_flag, &forwardable_flag,
-      NP_("forwardable ticket requested", "")},
-    { "transit-check",	0,   arg_negative_flag, &transit_flag },
+      NP_("forwardable ticket requested", ""), NULL},
+    { "transit-check",	0,   arg_negative_flag, &transit_flag, NULL, NULL },
     { "enctype",	'e', arg_string, &etype_str,
       NP_("encryption type to use", ""), "enctype"},
     { "impersonate",	0,   arg_string, &impersonate_str,
       NP_("client to impersonate", ""), "principal"},
-    { "name-type",		0,   arg_string, &nametype_str },
-    { "version", 	0,   arg_flag, &version_flag },
-    { "help",		0,   arg_flag, &help_flag }
+    { "name-type",		0,   arg_string, &nametype_str, NULL, NULL },
+    { "version", 	0,   arg_flag, &version_flag, NULL, NULL },
+    { "help",		0,   arg_flag, &help_flag, NULL, NULL }
 };
 
 static void

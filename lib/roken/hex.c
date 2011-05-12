@@ -37,7 +37,7 @@
 #include <ctype.h>
 #include "hex.h"
 
-const static char hexchar[] = "0123456789ABCDEF";
+static const char hexchar[16] = "0123456789ABCDEF";
 
 static int
 pos(char c)

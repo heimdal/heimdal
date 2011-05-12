@@ -508,7 +508,7 @@ check_constrained_delegation(krb5_context context,
 {
     const HDB_Ext_Constrained_delegation_acl *acl;
     krb5_error_code ret;
-    int i;
+    size_t i;
 
     /* if client delegates to itself, that ok */
     if (krb5_principal_compare(context, client->entry.principal, server) == TRUE)
@@ -606,7 +606,7 @@ fix_transited_encoding(krb5_context context,
     krb5_error_code ret = 0;
     char **realms, **tmp;
     unsigned int num_realms;
-    int i;
+    size_t i;
 
     switch (tr->tr_type) {
     case DOMAIN_X500_COMPRESS:
@@ -1131,6 +1131,7 @@ tgs_parse_request(krb5_context context,
 		  krb5_keyblock **replykey,
 		  int *rk_is_subkey)
 {
+    static char failed[] = "<unparse_name failed>";
     krb5_ap_req ap_req;
     krb5_error_code ret;
     krb5_principal princ;
@@ -1174,7 +1175,7 @@ tgs_parse_request(krb5_context context,
 	char *p;
 	ret = krb5_unparse_name(context, princ, &p);
 	if (ret != 0)
-	    p = "<unparse_name failed>";
+	    p = failed;
 	krb5_free_principal(context, princ);
 	kdc_log(context, config, 5, "Ticket-granting ticket account %s does not have secrets at this KDC, need to proxy", p);
 	if (ret == 0)
@@ -1186,7 +1187,7 @@ tgs_parse_request(krb5_context context,
 	char *p;
 	ret = krb5_unparse_name(context, princ, &p);
 	if (ret != 0)
-	    p = "<unparse_name failed>";
+	    p = failed;
 	krb5_free_principal(context, princ);
 	kdc_log(context, config, 0,
 		"Ticket-granting ticket not found in database: %s", msg);
@@ -1198,13 +1199,13 @@ tgs_parse_request(krb5_context context,
     }
 
     if(ap_req.ticket.enc_part.kvno &&
-       *ap_req.ticket.enc_part.kvno != (*krbtgt)->entry.kvno){
+       (size_t)*ap_req.ticket.enc_part.kvno != (*krbtgt)->entry.kvno){
 	char *p;
 
 	ret = krb5_unparse_name (context, princ, &p);
 	krb5_free_principal(context, princ);
 	if (ret != 0)
-	    p = "<unparse_name failed>";
+	    p = failed;
 	kdc_log(context, config, 0,
 		"Ticket kvno = %d, DB kvno = %d (%s)",
 		*ap_req.ticket.enc_part.kvno,
@@ -1646,7 +1647,7 @@ server_lookup:
 	krb5_enctype etype;
 
 	if(b->kdc_options.enc_tkt_in_skey) {
-	    int i;
+	    size_t i;
 	    ekey = &adtkt.key;
 	    for(i = 0; i < b->etype.len; i++)
 		if (b->etype.val[i] == adtkt.key.keytype)

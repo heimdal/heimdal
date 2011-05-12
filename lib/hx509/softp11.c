@@ -140,9 +140,9 @@ snprintf_fill(char *str, size_t size, char fillchar, const char *fmt, ...)
     va_start(ap, fmt);
     len = vsnprintf(str, size, fmt, ap);
     va_end(ap);
-    if (len < 0 || len > size)
+    if (len < 0 || (size_t)len > size)
 	return;
-    while(len < size)
+    while ((size_t)len < size)
 	str[len++] = fillchar;
 }
 
@@ -152,9 +152,9 @@ snprintf_fill(char *str, size_t size, char fillchar, const char *fmt, ...)
 
 #define VERIFY_SESSION_HANDLE(s, state)			\
 {							\
-    CK_RV ret;						\
-    ret = verify_session_handle(s, state);		\
-    if (ret != CKR_OK) {				\
+    CK_RV xret;						\
+    xret = verify_session_handle(s, state);		\
+    if (xret != CKR_OK) {				\
 	/* return CKR_OK */;				\
     }							\
 }
@@ -163,7 +163,7 @@ static CK_RV
 verify_session_handle(CK_SESSION_HANDLE hSession,
 		      struct session_state **state)
 {
-    int i;
+    size_t i;
 
     for (i = 0; i < MAX_NUM_SESSION; i++){
 	if (soft_token.state[i].session_handle == hSession)
@@ -421,6 +421,7 @@ struct foo {
 static int
 add_cert(hx509_context hxctx, void *ctx, hx509_cert cert)
 {
+    static char empty[] = "";
     struct foo *foo = (struct foo *)ctx;
     struct st_object *o = NULL;
     CK_OBJECT_CLASS type;
@@ -520,8 +521,8 @@ add_cert(hx509_context hxctx, void *ctx, hx509_cert cert)
 
     add_object_attribute(o, 0, CKA_KEY_TYPE, &key_type, sizeof(key_type));
     add_object_attribute(o, 0, CKA_ID, foo->id, strlen(foo->id));
-    add_object_attribute(o, 0, CKA_START_DATE, "", 1); /* XXX */
-    add_object_attribute(o, 0, CKA_END_DATE, "", 1); /* XXX */
+    add_object_attribute(o, 0, CKA_START_DATE, empty, 1); /* XXX */
+    add_object_attribute(o, 0, CKA_END_DATE, empty, 1); /* XXX */
     add_object_attribute(o, 0, CKA_DERIVE, &bool_false, sizeof(bool_false));
     add_object_attribute(o, 0, CKA_LOCAL, &bool_false, sizeof(bool_false));
     mech_type = CKM_RSA_X_509;
@@ -557,8 +558,8 @@ add_cert(hx509_context hxctx, void *ctx, hx509_cert cert)
 
 	add_object_attribute(o, 0, CKA_KEY_TYPE, &key_type, sizeof(key_type));
 	add_object_attribute(o, 0, CKA_ID, foo->id, strlen(foo->id));
-	add_object_attribute(o, 0, CKA_START_DATE, "", 1); /* XXX */
-	add_object_attribute(o, 0, CKA_END_DATE, "", 1); /* XXX */
+	add_object_attribute(o, 0, CKA_START_DATE, empty, 1); /* XXX */
+	add_object_attribute(o, 0, CKA_END_DATE, empty, 1); /* XXX */
 	add_object_attribute(o, 0, CKA_DERIVE, &bool_false, sizeof(bool_false));
 	add_object_attribute(o, 0, CKA_LOCAL, &bool_false, sizeof(bool_false));
 	mech_type = CKM_RSA_X_509;
@@ -859,7 +860,7 @@ C_Initialize(CK_VOID_PTR a)
 {
     CK_C_INITIALIZE_ARGS_PTR args = a;
     CK_RV ret;
-    int i;
+    size_t i;
 
     st_logf("Initialize\n");
 
@@ -916,7 +917,7 @@ C_Initialize(CK_VOID_PTR a)
 CK_RV
 C_Finalize(CK_VOID_PTR args)
 {
-    int i;
+    size_t i;
 
     INIT_CONTEXT();
 
@@ -1112,7 +1113,7 @@ C_OpenSession(CK_SLOT_ID slotID,
 	      CK_NOTIFY Notify,
 	      CK_SESSION_HANDLE_PTR phSession)
 {
-    int i;
+    size_t i;
     INIT_CONTEXT();
     st_logf("OpenSession: slot: %d\n", (int)slotID);
 
@@ -1155,7 +1156,7 @@ C_CloseSession(CK_SESSION_HANDLE hSession)
 CK_RV
 C_CloseAllSessions(CK_SLOT_ID slotID)
 {
-    int i;
+    size_t i;
     INIT_CONTEXT();
 
     st_logf("CloseAllSessions\n");
@@ -1429,7 +1430,7 @@ commonInit(CK_ATTRIBUTE *attr_match, int attr_match_len,
 
 
 static CK_RV
-dup_mechanism(CK_MECHANISM_PTR *dup, const CK_MECHANISM_PTR pMechanism)
+dup_mechanism(CK_MECHANISM_PTR *dp, const CK_MECHANISM_PTR pMechanism)
 {
     CK_MECHANISM_PTR p;
 
@@ -1437,9 +1438,9 @@ dup_mechanism(CK_MECHANISM_PTR *dup, const CK_MECHANISM_PTR pMechanism)
     if (p == NULL)
 	return CKR_DEVICE_MEMORY;
 
-    if (*dup)
-	free(*dup);
-    *dup = p;
+    if (*dp)
+	free(*dp);
+    *dp = p;
     memcpy(p, pMechanism, sizeof(*p));
 
     return CKR_OK;

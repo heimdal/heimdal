@@ -91,6 +91,7 @@ Bugfixes, documentation, encouragement, and code has been contributed by:
 @item Sho Hosoda, 細田 将
 @item Stefan Metzmacher
 @item Ted Percival
+@item Tom Payerle
 @item Victor Guerra
 @item Zeqing Xia
 @item Åke Sandgren 

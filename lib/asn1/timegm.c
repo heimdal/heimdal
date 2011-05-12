@@ -56,13 +56,13 @@ time_t
 _der_timegm (struct tm *tm)
 {
   time_t res = 0;
-  unsigned i;
+  int i;
 
   if (tm->tm_year < 0)
       return -1;
   if (tm->tm_mon < 0 || tm->tm_mon > 11)
       return -1;
-  if (tm->tm_mday < 1 || tm->tm_mday > ndays[is_leap(tm->tm_year)][tm->tm_mon])
+  if (tm->tm_mday < 1 || tm->tm_mday > (int)ndays[is_leap(tm->tm_year)][tm->tm_mon])
       return -1;
   if (tm->tm_hour < 0 || tm->tm_hour > 23)
       return -1;
@@ -97,6 +97,14 @@ _der_gmtime(time_t t, struct tm *tm)
     tm->tm_sec = secday % 60;
     tm->tm_min = (secday % 3600) / 60;
     tm->tm_hour = secday / 3600;
+
+    /* 
+     * Refuse to calculate time ~ 2000 years into the future, this is
+     * not possible for systems where time_t is a int32_t, however,
+     * when time_t is a int64_t, that can happen.
+     */
+    if (days > 356000)
+	return NULL;
 
     tm->tm_year = 70;
     while(1) {

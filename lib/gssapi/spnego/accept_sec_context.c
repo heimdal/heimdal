@@ -316,7 +316,7 @@ select_mech(OM_uint32 *minor_status, MechType *mechType, int verify_p,
     gss_OID_desc oid;
     gss_OID oidp;
     gss_OID_set mechs;
-    int i;
+    size_t i;
     OM_uint32 ret, junk;
 
     ret = der_put_oid ((unsigned char *)mechbuf + sizeof(mechbuf) - 1,
@@ -368,12 +368,13 @@ select_mech(OM_uint32 *minor_status, MechType *mechType, int verify_p,
 
 	host = getenv("GSSAPI_SPNEGO_NAME");
 	if (host == NULL || issuid()) {
+	    int rv;
 	    if (gethostname(hostname, sizeof(hostname)) != 0) {
 		*minor_status = errno;
 		return GSS_S_FAILURE;
 	    }
-	    i = asprintf(&str, "host@%s", hostname);
-	    if (i < 0 || str == NULL) {
+	    rv = asprintf(&str, "host@%s", hostname);
+	    if (rv < 0 || str == NULL) {
 		*minor_status = ENOMEM;
 		return GSS_S_FAILURE;
 	    }
@@ -491,7 +492,6 @@ acceptor_start
     NegotiationToken nt;
     size_t nt_len;
     NegTokenInit *ni;
-    int i;
     gss_buffer_desc data;
     gss_buffer_t mech_input_token = GSS_C_NO_BUFFER;
     gss_buffer_desc mech_output_token;
@@ -613,13 +613,14 @@ acceptor_start
      */
 
     if (!first_ok && ni->mechToken != NULL) {
+	size_t j;
 
 	preferred_mech_type = GSS_C_NO_OID;
 
 	/* Call glue layer to find first mech we support */
-	for (i = 1; i < ni->mechTypes.len; ++i) {
+	for (j = 1; j < ni->mechTypes.len; ++j) {
 	    ret = select_mech(minor_status,
-			      &ni->mechTypes.val[i],
+			      &ni->mechTypes.val[j],
 			      1,
 			      &preferred_mech_type);
 	    if (ret == 0)

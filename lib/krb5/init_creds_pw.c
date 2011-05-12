@@ -759,7 +759,7 @@ pa_etype_info2(krb5_context context,
     krb5_error_code ret;
     ETYPE_INFO2 e;
     size_t sz;
-    int i, j;
+    size_t i, j;
 
     memset(&e, 0, sizeof(e));
     ret = decode_ETYPE_INFO2(data->data, data->length, &e, &sz);
@@ -808,7 +808,7 @@ pa_etype_info(krb5_context context,
     krb5_error_code ret;
     ETYPE_INFO e;
     size_t sz;
-    int i, j;
+    size_t i, j;
 
     memset(&e, 0, sizeof(e));
     ret = decode_ETYPE_INFO(data->data, data->length, &e, &sz);
@@ -889,9 +889,9 @@ static struct pa_info pa_prefs[] = {
 };
 
 static PA_DATA *
-find_pa_data(const METHOD_DATA *md, int type)
+find_pa_data(const METHOD_DATA *md, unsigned type)
 {
-    int i;
+    size_t i;
     if (md == NULL)
 	return NULL;
     for (i = 0; i < md->len; i++)
@@ -908,7 +908,7 @@ process_pa_info(krb5_context context,
 		METHOD_DATA *md)
 {
     struct pa_info_data *p = NULL;
-    int i;
+    size_t i;
 
     for (i = 0; p == NULL && i < sizeof(pa_prefs)/sizeof(pa_prefs[0]); i++) {
 	PA_DATA *pa = find_pa_data(md, pa_prefs[i].type);
@@ -989,7 +989,7 @@ add_enc_ts_padata(krb5_context context,
     krb5_error_code ret;
     krb5_salt salt2;
     krb5_enctype *ep;
-    int i;
+    size_t i;
 
     if(salt == NULL) {
 	/* default to standard salt */

@@ -55,10 +55,6 @@ krb5_kdc_get_config(krb5_context context, krb5_kdc_configuration **config)
     c->allow_null_ticket_addresses = TRUE;
     c->allow_anonymous = FALSE;
     c->trpolicy = TRPOLICY_ALWAYS_CHECK;
-    c->enable_v4 = FALSE;
-    c->enable_kaserver = FALSE;
-    c->enable_524 = FALSE;
-    c->enable_v4_cross_realm = FALSE;
     c->enable_pkinit = FALSE;
     c->pkinit_princ_in_cert = TRUE;
     c->pkinit_require_binding = TRUE;
@@ -70,19 +66,6 @@ krb5_kdc_get_config(krb5_context context, krb5_kdc_configuration **config)
 	krb5_config_get_bool_default(context, NULL,
 				     c->require_preauth,
 				     "kdc", "require-preauth", NULL);
-    c->enable_v4 =
-	krb5_config_get_bool_default(context, NULL,
-				     c->enable_v4,
-				     "kdc", "enable-kerberos4", NULL);
-    c->enable_v4_cross_realm =
-	krb5_config_get_bool_default(context, NULL,
-				     c->enable_v4_cross_realm,
-				     "kdc",
-				     "enable-kerberos4-cross-realm", NULL);
-    c->enable_524 =
-	krb5_config_get_bool_default(context, NULL,
-				     c->enable_v4,
-				     "kdc", "enable-524", NULL);
 #ifdef DIGEST
     c->enable_digest =
 	krb5_config_get_bool_default(context, NULL,
@@ -179,28 +162,6 @@ krb5_kdc_get_config(krb5_context context, krb5_kdc_configuration **config)
 		    trpolicy_str);
 	}
     }
-
-    {
-	const char *p;
-	p = krb5_config_get_string (context, NULL,
-				    "kdc",
-				    "v4-realm",
-				    NULL);
-	if(p != NULL) {
-	    c->v4_realm = strdup(p);
-	    if (c->v4_realm == NULL)
-		krb5_errx(context, 1, "out of memory");
-	} else {
-	    c->v4_realm = NULL;
-	}
-    }
-
-    c->enable_kaserver =
-	krb5_config_get_bool_default(context,
-				     NULL,
-				     c->enable_kaserver,
-				     "kdc", "enable-kaserver", NULL);
-
 
     c->encode_as_rep_as_tgs_rep =
 	krb5_config_get_bool_default(context, NULL,

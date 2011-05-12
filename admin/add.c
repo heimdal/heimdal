@@ -113,7 +113,7 @@ kt_add(struct add_options *opt, int argc, char **argv)
 		goto out;
 	    }
 
-	    if (hex_decode(opt->password_string, data, len) != len) {
+	    if ((size_t)hex_decode(opt->password_string, data, len) != len) {
 		free(data);
 		krb5_warn(context, ENOMEM, "hex decode failed");
 		goto out;

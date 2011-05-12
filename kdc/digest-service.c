@@ -63,7 +63,7 @@ ntlm_service(void *ctx, const heim_idata *req,
     NTLMReply ntp;
     size_t size;
     int ret;
-    char *domain;
+    const char *domain;
 
     kdc_log(context, config, 1, "digest-request: uid=%d",
 	    (int)heim_ipc_cred_get_uid(cred));
@@ -184,13 +184,13 @@ ntlm_service(void *ctx, const heim_idata *req,
 	free(answer.data);
 	
 	{
-	    EVP_MD_CTX *ctx;
+	    EVP_MD_CTX *ctxp;
 	    
-	    ctx = EVP_MD_CTX_create();
-	    EVP_DigestInit_ex(ctx, EVP_md4(), NULL);
-	    EVP_DigestUpdate(ctx, key->key.keyvalue.data, key->key.keyvalue.length);
-	    EVP_DigestFinal_ex(ctx, sessionkey, NULL);
-	    EVP_MD_CTX_destroy(ctx);
+	    ctxp = EVP_MD_CTX_create();
+	    EVP_DigestInit_ex(ctxp, EVP_md4(), NULL);
+	    EVP_DigestUpdate(ctxp, key->key.keyvalue.data, key->key.keyvalue.length);
+	    EVP_DigestFinal_ex(ctxp, sessionkey, NULL);
+	    EVP_MD_CTX_destroy(ctxp);
 	}
     }
 
@@ -218,8 +218,8 @@ static int help_flag;
 static int version_flag;
 
 static struct getargs args[] = {
-    {	"help",		'h',	arg_flag,   &help_flag },
-    {	"version",	'v',	arg_flag,   &version_flag }
+    {	"help",		'h',	arg_flag,   &help_flag, NULL, NULL },
+    {	"version",	'v',	arg_flag,   &version_flag, NULL, NULL }
 };
 
 static int num_args = sizeof(args) / sizeof(args[0]);
@@ -272,6 +272,10 @@ main(int argc, char **argv)
 	heim_sipc_timeout(60);
     }
 #endif
+    {
+	heim_sipc un;
+	heim_sipc_service_unix("org.h5l.ntlm-service", ntlm_service, NULL, &un);
+    }
 
     heim_ipc_main();
     return 0;

@@ -1249,6 +1249,34 @@ check_seq_of_size(void)
     return 0;
 }
 
+static int
+check_TESTMechTypeList(void)
+{
+    TESTMechTypeList tl;
+    unsigned oid1[] =  { 1, 2, 840, 48018, 1, 2, 2};
+    TESTMechType t1 = { 7, oid1 };
+    unsigned oid2[] =  { 1, 2, 840, 113554, 1, 2, 2};
+    TESTMechType t2 = { 7, oid2 };
+    unsigned oid3[] =   { 1, 3, 6, 1, 4, 1, 311, 2, 2, 30};
+    TESTMechType t3 = { 10, oid3 };
+    unsigned oid4[] =   { 1, 3, 6, 1, 4, 1, 311, 2, 2, 10};
+    TESTMechType t4 = { 10, oid4 };
+    TESTMechType array[4] = { t1, t2, t3, t4 };
+    size_t size, len;
+    void *ptr;
+    int ret;
+
+    tl.len = 4;
+    tl.val = array;
+
+    ASN1_MALLOC_ENCODE(TESTMechTypeList, ptr, len, &tl, &size, ret);
+    if (ret)
+	errx(1, "TESTMechTypeList: %d", ret);
+    if (len != size)
+	abort();
+    return 0;
+}
+
 int
 main(int argc, char **argv)
 {
@@ -1277,6 +1305,8 @@ main(int argc, char **argv)
 
     ret += check_seq();
     ret += check_seq_of_size();
+
+    ret += check_TESTMechTypeList();
 
     return ret;
 }

@@ -77,7 +77,7 @@ struct heim_type_data dict_object = {
 static size_t
 isprime(size_t p)
 {
-    int q, i;
+    size_t q, i;
 
     for(i = 2 ; i < p; i++) {
 	q = p / i;

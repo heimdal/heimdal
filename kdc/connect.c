@@ -60,7 +60,7 @@ struct port_desc{
 /* the current ones */
 
 static struct port_desc *ports;
-static int num_ports;
+static size_t num_ports;
 
 /*
  * add `family, port, protocol' to the list with duplicate suppresion.
@@ -71,7 +71,7 @@ add_port(krb5_context context,
 	 int family, int port, const char *protocol)
 {
     int type;
-    int i;
+    size_t i;
 
     if(strcmp(protocol, "udp") == 0)
 	type = SOCK_DGRAM;
@@ -148,16 +148,6 @@ add_standard_ports (krb5_context context,
     add_port_service(context, family, "kerberos-sec", 88, "tcp");
     if(enable_http)
 	add_port_service(context, family, "http", 80, "tcp");
-    if(config->enable_524) {
-	add_port_service(context, family, "krb524", 4444, "udp");
-	add_port_service(context, family, "krb524", 4444, "tcp");
-    }
-    if(config->enable_v4) {
-	add_port_service(context, family, "kerberos-iv", 750, "udp");
-	add_port_service(context, family, "kerberos-iv", 750, "tcp");
-    }
-    if (config->enable_kaserver)
-	add_port_service(context, family, "afs3-kaserver", 7004, "udp");
     if(config->enable_kx509) {
 	add_port_service(context, family, "kca_service", 9878, "udp");
 	add_port_service(context, family, "kca_service", 9878, "tcp");
@@ -324,7 +314,7 @@ init_sockets(krb5_context context,
 	     struct descr **desc)
 {
     krb5_error_code ret;
-    int i, j;
+    size_t i, j;
     struct descr *d;
     int num = 0;
     krb5_addresses addresses;
@@ -478,7 +468,7 @@ handle_udp(krb5_context context,
 	   struct descr *d)
 {
     unsigned char *buf;
-    int n;
+    ssize_t n;
 
     buf = malloc(max_request_udp);
     if(buf == NULL){
@@ -493,7 +483,7 @@ handle_udp(krb5_context context,
     else {
 	addr_to_string (context, d->sa, d->sock_len,
 			d->addr_string, sizeof(d->addr_string));
-	if (n == max_request_udp) {
+	if ((size_t)n == max_request_udp) {
 	    krb5_data data;
 	    krb5_warn(context, errno,
 		      "recvfrom: truncated packet from %s, asking for TCP",
@@ -754,7 +744,7 @@ handle_http_tcp (krb5_context context,
 	    return -1;
 	}
     }
-    if (len > d->len)
+    if ((size_t)len > d->len)
         len = d->len;
     memcpy(d->buf, data, len);
     d->len = len;
@@ -864,7 +854,7 @@ loop(krb5_context context,
 	fd_set fds;
 	int min_free = -1;
 	int max_fd = 0;
-	int i;
+	size_t i;
 
 	FD_ZERO(&fds);
 	for(i = 0; i < ndescr; i++) {
@@ -886,7 +876,7 @@ loop(krb5_context context,
 #endif
 #endif
 		FD_SET(d[i].s, &fds);
-	    } else if(min_free < 0 || i < min_free)
+	    } else if(min_free < 0 || i < (size_t)min_free)
 		min_free = i;
 	}
 	if(min_free == -1){

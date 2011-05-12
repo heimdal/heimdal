@@ -549,8 +549,12 @@ main(int argc, char **argv)
     else
 	mechoid = string_to_oid(mech_string);
 
-    if (gsskrb5_acceptor_identity)
-	gsskrb5_register_acceptor_identity(gsskrb5_acceptor_identity);
+    if (gsskrb5_acceptor_identity) {
+	maj_stat = gsskrb5_register_acceptor_identity(gsskrb5_acceptor_identity);
+	if (maj_stat)
+	    errx(1, "gsskrb5_acceptor_identity: %s",
+		 gssapi_err(maj_stat, 0, GSS_C_NO_OID));
+    }
 
     if (client_name) {
 	gss_buffer_desc cn;

@@ -918,7 +918,8 @@ vi_comment_out(EditLine *el, Int c)
  * NB: posix implies that we should enter insert mode, however
  * this is against historical precedent...
  */
-#if defined(__weak_reference) && !defined(__FreeBSD__)
+#undef __weak_reference /* __weak_reference is different on freebsd */
+#ifdef __weak_reference
 __weakref_visible char *my_get_alias_text(const char *)
     __weak_reference(get_alias_text);
 #endif
@@ -926,7 +927,7 @@ protected el_action_t
 /*ARGSUSED*/
 vi_alias(EditLine *el, Int c)
 {
-#if defined(_weak_reference) && !defined(__FreeBSD__)
+#ifdef __weak_reference
 	char alias_name[3];
 	char *alias_text;
 

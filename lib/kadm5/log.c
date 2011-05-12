@@ -193,12 +193,12 @@ kadm5_log_flush (kadm5_log_context *log_context,
 {
     krb5_data data;
     size_t len;
-    int ret;
+    ssize_t ret;
 
     krb5_storage_to_data(sp, &data);
     len = data.length;
     ret = write (log_context->log_fd, data.data, len);
-    if (ret != len) {
+    if (ret < 0 || (size_t)ret != len) {
 	krb5_data_free(&data);
 	return errno;
     }
@@ -696,7 +696,7 @@ kadm5_log_replay_modify (kadm5_server_context *context,
     }
     if (mask & KADM5_KEY_DATA) {
 	size_t num;
-	int i;
+	size_t i;
 
 	for (i = 0; i < ent.entry.keys.len; ++i)
 	    free_Key(&ent.entry.keys.val[i]);
@@ -880,7 +880,7 @@ kadm5_log_previous (krb5_context context,
     ret = krb5_ret_int32 (sp, &tmp);
     if (ret)
 	goto end_of_storage;
-    if (tmp != *ver) {
+    if ((uint32_t)tmp != *ver) {
 	krb5_storage_seek(sp, oldoff, SEEK_SET);
 	krb5_set_error_message(context, KADM5_BAD_DB,
 			       "kadm5_log_previous: log entry "
@@ -901,7 +901,7 @@ kadm5_log_previous (krb5_context context,
     ret = krb5_ret_int32 (sp, &tmp);
     if (ret)
 	goto end_of_storage;
-    if (tmp != *len) {
+    if ((uint32_t)tmp != *len) {
 	krb5_storage_seek(sp, oldoff, SEEK_SET);
 	krb5_set_error_message(context, KADM5_BAD_DB,
 			       "kadm5_log_previous: log entry "

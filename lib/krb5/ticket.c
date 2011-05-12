@@ -195,7 +195,7 @@ find_type_in_ad(krb5_context context,
 		int level)
 {
     krb5_error_code ret = 0;
-    int i;
+    size_t i;
 
     if (level > 9) {
 	ret = ENOENT; /* XXX */
@@ -748,7 +748,7 @@ _krb5_extract_ticket(krb5_context context,
 
     /* compare nonces */
 
-    if (nonce != rep->enc_part.nonce) {
+    if (nonce != (unsigned)rep->enc_part.nonce) {
 	ret = KRB5KRB_AP_ERR_MODIFIED;
 	krb5_set_error_message(context, ret, N_("malloc: out of memory", ""));
 	goto out;

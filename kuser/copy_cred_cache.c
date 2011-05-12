@@ -60,7 +60,7 @@ parse_ticket_flags(krb5_context context,
 
     memset(&ff, 0, sizeof(ff));
     ff.proxy = 1;
-    if (parse_flags("proxy", asn1_TicketFlags_units(), 0) == TicketFlags2int(ff))
+    if ((size_t)parse_flags("proxy", asn1_TicketFlags_units(), 0) == TicketFlags2int(ff))
 	ret_flags->i = flags;
     else
 	ret_flags->i = bitswap32(flags);

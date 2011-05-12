@@ -371,8 +371,11 @@ sl_slc_help (SL_cmd *cmds, int argc, char **argv)
 		     argv[0]);
 	} else {
 	    if(c->func) {
-		char *fake[] = { NULL, "--help", NULL };
+		static char help[] = "--help";
+		char *fake[3];
 		fake[0] = argv[0];
+		fake[1] = help;
+		fake[2] = NULL;
 		(*c->func)(2, fake);
 		fprintf(stderr, "\n");
 	    }

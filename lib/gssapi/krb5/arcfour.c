@@ -255,7 +255,7 @@ _gssapi_verify_mic_arcfour(OM_uint32 * minor_status,
 			   const gss_buffer_t token_buffer,
 			   gss_qop_t * qop_state,
 			   krb5_keyblock *key,
-			   char *type)
+			   const char *type)
 {
     krb5_error_code ret;
     uint32_t seq_number;
@@ -270,7 +270,7 @@ _gssapi_verify_mic_arcfour(OM_uint32 * minor_status,
     p = token_buffer->value;
     omret = _gsskrb5_verify_header (&p,
 				       token_buffer->length,
-				       (u_char *)type,
+				       type,
 				       GSS_KRB5_MECHANISM);
     if (omret)
 	return omret;

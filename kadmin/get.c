@@ -110,9 +110,9 @@ add_column(struct get_entry_data *data, struct field_name *ff, const char *heade
 static int
 cmp_salt (const krb5_salt *salt, const krb5_key_data *k)
 {
-    if (salt->salttype != k->key_data_type[1])
+    if (salt->salttype != (size_t)k->key_data_type[1])
 	return 1;
-    if (salt->saltvalue.length != k->key_data_length[1])
+    if (salt->saltvalue.length != (size_t)k->key_data_length[1])
 	return 1;
     return memcmp (salt->saltvalue.data, k->key_data_contents[1],
 		   salt->saltvalue.length);
@@ -245,7 +245,7 @@ format_field(kadm5_principal_ent_t princ, unsigned int field,
 	krb5_tl_data *tl;
 
 	for (tl = princ->tl_data; tl != NULL; tl = tl->tl_data_next)
-	    if (tl->tl_data_type == subfield)
+	    if ((unsigned)tl->tl_data_type == subfield)
 		break;
 	if (tl == NULL) {
 	    strlcpy(buf, "", buf_len);
@@ -261,7 +261,8 @@ format_field(kadm5_principal_ent_t princ, unsigned int field,
 	case KRB5_TL_PKINIT_ACL: {
 	    HDB_Ext_PKINIT_acl acl;
 	    size_t size;
-	    int i, ret;
+	    int ret;
+	    size_t i;
 
 	    ret = decode_HDB_Ext_PKINIT_acl(tl->tl_data_contents,
 					    tl->tl_data_length,
@@ -293,7 +294,8 @@ format_field(kadm5_principal_ent_t princ, unsigned int field,
 	case KRB5_TL_ALIASES: {
 	    HDB_Ext_Aliases alias;
 	    size_t size;
-	    int i, ret;
+	    int ret;
+	    size_t i;
 
 	    ret = decode_HDB_Ext_Aliases(tl->tl_data_contents,
 					 tl->tl_data_length,
@@ -309,7 +311,7 @@ format_field(kadm5_principal_ent_t princ, unsigned int field,
 		ret = krb5_unparse_name(context, &alias.aliases.val[i], &p);
 		if (ret)
 		    break;
-		if (i < 0)
+		if (i > 0)
 		    strlcat(buf, " ", buf_len);
 		strlcat(buf, p, buf_len);
 		free(p);

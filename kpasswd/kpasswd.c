@@ -40,10 +40,11 @@ static char *admin_principal_str;
 static char *cred_cache_str;
 
 static struct getargs args[] = {
-    { "admin-principal",	0,   arg_string, &admin_principal_str },
-    { "cache",			'c', arg_string, &cred_cache_str },
-    { "version", 		0,   arg_flag, &version_flag },
-    { "help",			0,   arg_flag, &help_flag }
+    { "admin-principal",	0,   arg_string, &admin_principal_str, NULL,
+   	 NULL },
+    { "cache",			'c', arg_string, &cred_cache_str, NULL, NULL },
+    { "version", 		0,   arg_flag, &version_flag, NULL, NULL },
+    { "help",			0,   arg_flag, &help_flag, NULL, NULL }
 };
 
 static void

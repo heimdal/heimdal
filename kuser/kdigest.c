@@ -436,6 +436,7 @@ ntlm_server_init(struct ntlm_server_init_options *opt,
     krb5_data challenge, opaque;
     struct ntlm_buf data;
     char *s;
+    static char zero2[] = "\x00\x00";
 
     memset(&type2, 0, sizeof(type2));
 
@@ -471,7 +472,7 @@ ntlm_server_init(struct ntlm_server_init_options *opt,
 	krb5_err(context, 1, ret, "krb5_ntlm_init_get_flags");
 
     krb5_ntlm_init_get_targetname(context, ntlm, &type2.targetname);
-    type2.targetinfo.data = "\x00\x00";
+    type2.targetinfo.data = zero2;
     type2.targetinfo.length = 2;
 	
     ret = heim_ntlm_encode_type2(&type2, &data);

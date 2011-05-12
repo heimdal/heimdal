@@ -180,7 +180,7 @@ _krb5_internal_hmac(krb5_context context,
     unsigned char *ipad, *opad;
     unsigned char *key;
     size_t key_len;
-    int i;
+    size_t i;
 
     ipad = malloc(cm->blocksize + len);
     if (ipad == NULL)
@@ -311,7 +311,7 @@ get_checksum_key(krb5_context context,
     if(ct->flags & F_DERIVED)
 	ret = _get_derived_key(context, crypto, usage, key);
     else if(ct->flags & F_VARIANT) {
-	int i;
+	size_t i;
 
 	*key = _new_derived_key(crypto, 0xff/* KRB5_KU_RFC1510_VARIANT */);
 	if(*key == NULL) {
@@ -1160,9 +1160,9 @@ decrypt_internal_special(krb5_context context,
 }
 
 static krb5_crypto_iov *
-find_iv(krb5_crypto_iov *data, int num_data, int type)
+find_iv(krb5_crypto_iov *data, size_t num_data, unsigned type)
 {
-    int i;
+    size_t i;
     for (i = 0; i < num_data; i++)
 	if (data[i].flags == type)
 	    return &data[i];
@@ -1403,11 +1403,6 @@ krb5_decrypt_iov_ivec(krb5_context context,
     struct _krb5_encryption_type *et = crypto->et;
     krb5_crypto_iov *tiv, *hiv;
 
-    if (num_data < 0) {
-        krb5_clear_error_message(context);
-	return KRB5_CRYPTO_INTERNAL;
-    }
-
     if(!derived_crypto(context, crypto)) {
 	krb5_clear_error_message(context);
 	return KRB5_CRYPTO_INTERNAL;
@@ -1545,14 +1540,9 @@ krb5_create_checksum_iov(krb5_context context,
     Checksum cksum;
     krb5_crypto_iov *civ;
     krb5_error_code ret;
-    int i;
+    size_t i;
     size_t len;
     char *p, *q;
-
-    if (num_data < 0) {
-        krb5_clear_error_message(context);
-	return KRB5_CRYPTO_INTERNAL;
-    }
 
     if(!derived_crypto(context, crypto)) {
 	krb5_clear_error_message(context);
@@ -1629,14 +1619,9 @@ krb5_verify_checksum_iov(krb5_context context,
     Checksum cksum;
     krb5_crypto_iov *civ;
     krb5_error_code ret;
-    int i;
+    size_t i;
     size_t len;
     char *p, *q;
-
-    if (num_data < 0) {
-        krb5_clear_error_message(context);
-	return KRB5_CRYPTO_INTERNAL;
-    }
 
     if(!derived_crypto(context, crypto)) {
 	krb5_clear_error_message(context);
@@ -1730,7 +1715,7 @@ krb5_crypto_length_iov(krb5_context context,
 		       unsigned int num_data)
 {
     krb5_error_code ret;
-    int i;
+    size_t i;
 
     for (i = 0; i < num_data; i++) {
 	ret = krb5_crypto_length(context, crypto,

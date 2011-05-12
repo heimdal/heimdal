@@ -188,7 +188,8 @@ find_cert(krb5_context context, struct krb5_pk_identity *id,
 	{ "MS EKU" },
 	{ "any (or no)" }
     };
-    int i, ret, start = 1;
+    int ret;
+    size_t i, start;
     unsigned oids[] = { 1, 2, 840, 113635, 100, 3, 2, 1 };
     const heim_oid mobileMe = { sizeof(oids)/sizeof(oids[0]), oids };
 
@@ -536,7 +537,7 @@ build_auth_pack(krb5_context context,
 #ifdef HAVE_OPENSSL
 	    ECParameters ecp;
 	    unsigned char *p;
-	    int len;
+	    int xlen;
 
 	    /* copy in public key, XXX find the best curve that the server support or use the clients curve if possible */
 
@@ -551,11 +552,11 @@ build_auth_pack(krb5_context context,
 		free_ECParameters(&ecp);
 		return ENOMEM;
 	    }
-	    ASN1_MALLOC_ENCODE(ECParameters, p, len, &ecp, &size, ret);
+	    ASN1_MALLOC_ENCODE(ECParameters, p, xlen, &ecp, &size, ret);
 	    free_ECParameters(&ecp);
 	    if (ret)
 		return ret;
-	    if (size != len)
+	    if ((int)size != xlen)
 		krb5_abortx(context, "asn1 internal error");
 	    
 	    a->clientPublicValue->algorithm.parameters->data = p;
@@ -578,18 +579,18 @@ build_auth_pack(krb5_context context,
 
 	    /* encode onto dhkey */
 
-	    len = i2o_ECPublicKey(ctx->u.eckey, NULL);
-	    if (len <= 0)
+	    xlen = i2o_ECPublicKey(ctx->u.eckey, NULL);
+	    if (xlen <= 0)
 		abort();
 
-	    dhbuf.data = malloc(len);
+	    dhbuf.data = malloc(xlen);
 	    if (dhbuf.data == NULL)
 		abort();
-	    dhbuf.length = len;
+	    dhbuf.length = xlen;
 	    p = dhbuf.data;
 
-	    len = i2o_ECPublicKey(ctx->u.eckey, &p);
-	    if (len <= 0)
+	    xlen = i2o_ECPublicKey(ctx->u.eckey, &p);
+	    if (xlen <= 0)
 		abort();
 
 	    /* XXX verify that this is right with RFC3279 */
@@ -607,7 +608,8 @@ build_auth_pack(krb5_context context,
 	if (a->supportedCMSTypes == NULL)
 	    return ENOMEM;
 
-	ret = hx509_crypto_available(context->hx509ctx, HX509_SELECT_ALL, NULL,
+	ret = hx509_crypto_available(context->hx509ctx, HX509_SELECT_ALL,
+				     ctx->id->cert,
 				     &a->supportedCMSTypes->val,
 				     &a->supportedCMSTypes->len);
 	if (ret)
@@ -968,7 +970,7 @@ get_reply_key_win(krb5_context context,
 	return ret;
     }
 
-    if (key_pack.nonce != nonce) {
+    if ((unsigned)key_pack.nonce != nonce) {
 	krb5_set_error_message(context, ret,
 			       N_("PKINIT enckey nonce is wrong", ""));
 	free_ReplyKeyPack_Win2k(&key_pack);
@@ -1081,7 +1083,7 @@ pk_verify_host(krb5_context context,
     }
     if (ctx->require_krbtgt_otherName) {
 	hx509_octet_string_list list;
-	int i;
+	size_t i;
 
 	ret = hx509_cert_find_subjectAltName_otherName(context->hx509ctx,
 						       host->cert,
@@ -1433,7 +1435,7 @@ pk_rd_pa_reply_dh(krb5_context context,
 				   N_("PKINIT: Can't compute Diffie-Hellman key", ""));
 	    goto out;
 	}
-	if (dh_gen_keylen < size) {
+	if (dh_gen_keylen < (int)size) {
 	    size -= dh_gen_keylen;
 	    memmove(dh_gen_key + size, dh_gen_key, dh_gen_keylen);
 	    memset(dh_gen_key, 0, size);

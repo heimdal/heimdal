@@ -52,9 +52,9 @@ static getarg_strings policy_libraries = { 0, NULL };
 
 static struct getargs args[] = {
     {	"principal", 	'p',	arg_string,	&client_name,
-	"principal to authenticate as" },
+	"principal to authenticate as", NULL },
     {   "keytab",	'K',	arg_string,	&keytab,
-   	"keytab for authentication principal" },
+   	"keytab for authentication principal", NULL },
     {
 	"config-file",	'c',	arg_string,	&config_file,
 	"location of config file",	"file"
@@ -75,7 +75,8 @@ static struct getargs args[] = {
 	"server-port",	's',	arg_integer,   &server_port,
 	"port to use", "port number"
     },
-    {	"ad", 		0, arg_flag, &ad_flag, "active directory admin mode" },
+    {	"ad", 		0, arg_flag, &ad_flag, "active directory admin mode",
+	NULL },
 #ifdef HAVE_DLOPEN
     { "check-library", 0, arg_string, &check_library,
       "library to load password check function from", "library" },
@@ -84,9 +85,9 @@ static struct getargs args[] = {
     { "policy-libraries", 0, arg_strings, &policy_libraries,
       "password check function to load", "function" },
 #endif
-    {	"local", 'l', arg_flag, &local_flag, "local admin mode" },
-    {	"help",		'h',	arg_flag,   &help_flag },
-    {	"version",	'v',	arg_flag,   &version_flag }
+    {	"local", 'l', arg_flag, &local_flag, "local admin mode", NULL },
+    {	"help",		'h',	arg_flag,   &help_flag, NULL, NULL },
+    {	"version",	'v',	arg_flag,   &version_flag, NULL, NULL }
 };
 
 static int num_args = sizeof(args) / sizeof(args[0]);

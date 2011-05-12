@@ -154,11 +154,10 @@ _gsskrb5_set_sec_context_option
 	if (maj_stat != GSS_S_COMPLETE)
 	    return maj_stat;
 
-	_gsskrb5_register_acceptor_identity(str);
+	maj_stat = _gsskrb5_register_acceptor_identity(minor_status, str);
 	free(str);
 
-	*minor_status = 0;
-	return GSS_S_COMPLETE;
+	return maj_stat;
 
     } else if (gss_oid_equal(desired_object, GSS_KRB5_SET_DEFAULT_REALM_X)) {
 	char *str;

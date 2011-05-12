@@ -41,6 +41,7 @@ _gss_import_export_name(OM_uint32 *minor_status,
 	gssapi_mech_interface m;
 	struct _gss_name *name;
 	gss_name_t new_canonical_name;
+	int composite = 0;
 
 	*minor_status = 0;
 	*output_name = 0;
@@ -50,8 +51,17 @@ _gss_import_export_name(OM_uint32 *minor_status,
 	 */
 	if (len < 2)
 		return (GSS_S_BAD_NAME);
-	if (p[0] != 4 || p[1] != 1)
+	if (p[0] != 4)
 		return (GSS_S_BAD_NAME);
+	switch (p[1]) {
+	case 1:	/* non-composite name */
+		break;
+	case 2:	/* composite name */
+		composite = 1;
+		break;
+	default:
+		return (GSS_S_BAD_NAME);
+	}
 	p += 2;
 	len -= 2;
 
@@ -106,7 +116,7 @@ _gss_import_export_name(OM_uint32 *minor_status,
 	p += 4;
 	len -= 4;
 
-	if (len != t)
+	if (!composite && len != t)
 		return (GSS_S_BAD_NAME);
 
 	m = __gss_get_mechanism(&mech_oid);

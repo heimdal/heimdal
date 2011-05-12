@@ -38,6 +38,7 @@ _gsskrb5_authorize_localname(OM_uint32 *minor_status,
                              gss_const_buffer_t user_name,
                              gss_const_OID user_name_type)
 {
+#if 0
     krb5_context context;
     krb5_principal princ = (krb5_principal)input_name;
     char *user;
@@ -63,4 +64,8 @@ _gsskrb5_authorize_localname(OM_uint32 *minor_status,
     free(user);
 
     return user_ok ? GSS_S_COMPLETE : GSS_S_UNAUTHORIZED;
+#else
+    *minor_status = 0;
+    return GSS_S_UNAUTHORIZED;
+#endif
 }

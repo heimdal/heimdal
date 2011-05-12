@@ -379,7 +379,7 @@ _gss_load_mech(void)
 
 		if (m->gm_mech.gm_inquire_names_for_mech)
 			(*m->gm_mech.gm_inquire_names_for_mech)(&minor_status,
-	    		&m->gm_mech.gm_mech_oid, &m->gm_name_types);
+			&m->gm_mech.gm_mech_oid, &m->gm_name_types);
 
 		if (m->gm_name_types == NULL)
 			gss_create_empty_oid_set(&minor_status, &m->gm_name_types);

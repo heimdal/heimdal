@@ -1481,6 +1481,7 @@ add_enc_pa_rep(kdc_request_t r)
     free_Checksum(&checksum);
     if (ret)
 	return ret;
+    heim_assert(cdata.length == len, "ASN.1 internal error");
 
     if (r->ek.encrypted_pa_data == NULL) {
 	ALLOC(r->ek.encrypted_pa_data);

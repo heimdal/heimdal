@@ -987,7 +987,7 @@ tgs_make_reply(krb5_context context,
        CAST session key. Should the DES3 etype be added to the
        etype list, even if we don't want a session key with
        DES3? */
-    ret = _kdc_encode_reply(context, config, NULL, NULL, 0,
+    ret = _kdc_encode_reply(context, config, NULL, 0,
 			    &rep, &et, &ek, et.key.keytype,
 			    kvno,
 			    serverkey, 0, replykey, rk_is_subkey,

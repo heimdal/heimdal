@@ -755,7 +755,6 @@ log_patypes(krb5_context context,
 krb5_error_code
 _kdc_encode_reply(krb5_context context,
 		  krb5_kdc_configuration *config,
-		  const krb5_data *req_buffer,
 		  krb5_crypto armor_crypto, uint32_t nonce,
 		  KDC_REP *rep, EncTicketPart *et, EncKDCRepPart *ek,
 		  krb5_enctype etype,
@@ -2121,7 +2120,7 @@ _kdc_as_rep(kdc_request_t r,
      *
      */
 
-    ret = _kdc_encode_reply(context, config, NULL,
+    ret = _kdc_encode_reply(context, config,
 			    r->armor_crypto, req->req_body.nonce,
 			    &rep, &et, &ek, setype, r->server->entry.kvno,
 			    &skey->key, r->client->entry.kvno,

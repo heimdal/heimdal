@@ -752,63 +752,6 @@ log_patypes(krb5_context context,
  *
  */
 
-static krb5_error_code
-add_enc_pa_rep(krb5_context context,
-	       krb5_kdc_configuration *config,
-	       EncTicketPart *et, EncKDCRepPart *ek,
-	       const krb5_data *req_buffer,
-	       const krb5_keyblock *reply_key)
-{
-    krb5_error_code ret;
-    krb5_crypto crypto;
-    Checksum checksum;
-    krb5_data cdata;
-    size_t len;
-
-    et->flags.enc_pa_rep = ek->flags.enc_pa_rep = 1;
-
-    ret = krb5_crypto_init(context, reply_key, 0, &crypto);
-    if (ret) {
-	const char *msg = krb5_get_error_message(context, ret);
-	kdc_log(context, config, 0, "krb5_crypto_init failed: %s", msg);
-	krb5_free_error_message(context, msg);
-	return ret;
-    }
-
-    ret = krb5_create_checksum(context, crypto,
-			       KRB5_KU_AS_REQ, 0,
-			       req_buffer->data, req_buffer->length,
-			       &checksum);
-    krb5_crypto_destroy(context, crypto);
-    if (ret)
-	return ret;
-
-    ASN1_MALLOC_ENCODE(Checksum, cdata.data, cdata.length,
-		       &checksum, &len, ret);
-    free_Checksum(&checksum);
-    if (ret)
-	return ret;
-
-    if (ek->encrypted_pa_data == NULL) {
-	ALLOC(ek->encrypted_pa_data);
-	if (ek->encrypted_pa_data == NULL)
-	    return ENOMEM;
-    }
-    ret = krb5_padata_add(context, ek->encrypted_pa_data,
-			  KRB5_PADATA_REQ_ENC_PA_REP, cdata.data, cdata.length);
-    if (ret)
-	return ret;
-    
-    ret = krb5_padata_add(context, ek->encrypted_pa_data,
-			  KRB5_PADATA_FX_FAST, NULL, 0);
-
-    return ret;
-}
-
-/*
- *
- */
-
 krb5_error_code
 _kdc_encode_reply(krb5_context context,
 		  krb5_kdc_configuration *config,
@@ -827,13 +770,6 @@ _kdc_encode_reply(krb5_context context,
     size_t len = 0;
     krb5_error_code ret;
     krb5_crypto crypto;
-
-    if (req_buffer && rep->msg_type == krb_as_rep) {
-	ret = add_enc_pa_rep(context, config, 
-			     et, ek, req_buffer, reply_key);
-	if (ret)
-	    return ret;
-    }
 
     ASN1_MALLOC_ENCODE(EncTicketPart, buf, buf_size, et, &len, ret);
     if(ret) {
@@ -1517,6 +1453,53 @@ require_preauth_p(kdc_request_t r)
  *
  */
 
+static krb5_error_code
+add_enc_pa_rep(kdc_request_t r)
+{
+    krb5_error_code ret;
+    krb5_crypto crypto;
+    Checksum checksum;
+    krb5_data cdata;
+    size_t len;
+
+    r->et.flags.enc_pa_rep = r->ek.flags.enc_pa_rep = 1;
+
+    ret = krb5_crypto_init(r->context, &r->reply_key, 0, &crypto);
+    if (ret)
+	return ret;
+
+    ret = krb5_create_checksum(r->context, crypto,
+			       KRB5_KU_AS_REQ, 0,
+			       r->request.data, r->request.length,
+			       &checksum);
+    krb5_crypto_destroy(r->context, crypto);
+    if (ret)
+	return ret;
+
+    ASN1_MALLOC_ENCODE(Checksum, cdata.data, cdata.length,
+		       &checksum, &len, ret);
+    free_Checksum(&checksum);
+    if (ret)
+	return ret;
+
+    if (r->ek.encrypted_pa_data == NULL) {
+	ALLOC(r->ek.encrypted_pa_data);
+	if (r->ek.encrypted_pa_data == NULL)
+	    return ENOMEM;
+    }
+    ret = krb5_padata_add(r->context, r->ek.encrypted_pa_data,
+			  KRB5_PADATA_REQ_ENC_PA_REP, cdata.data, cdata.length);
+    if (ret)
+	return ret;
+    
+    return krb5_padata_add(r->context, r->ek.encrypted_pa_data,
+			   KRB5_PADATA_FX_FAST, NULL, 0);
+}
+
+/*
+ *
+ */
+
 krb5_error_code
 _kdc_as_rep(kdc_request_t r,
 	    krb5_data *reply,
@@ -1527,7 +1510,6 @@ _kdc_as_rep(kdc_request_t r,
     krb5_context context = r->context;
     krb5_kdc_configuration *config = r->config;
     KDC_REQ *req = &r->req;
-    const krb5_data *req_buffer = &r->request;
     KDC_REQ_BODY *b = NULL;
     AS_REP rep;
     KDCOptions f;
@@ -1537,8 +1519,9 @@ _kdc_as_rep(kdc_request_t r,
     krb5_error_code ret = 0;
     Key *ckey, *skey;
     int found_pa = 0;
-    int flags = 0;
+    int i, flags = 0;
     METHOD_DATA error_method;
+    const PA_DATA *pa;
 
     memset(&rep, 0, sizeof(rep));
     memset(&et, 0, sizeof(et));
@@ -1678,7 +1661,6 @@ _kdc_as_rep(kdc_request_t r,
      */
 
     if(req->padata){
-	const PA_DATA *pa;
 	unsigned int n;
 	int i;
 
@@ -2119,16 +2101,26 @@ _kdc_as_rep(kdc_request_t r,
 
     log_as_req(context, config, r->reply_key.keytype, setype, b);
 
-    {
-	const PA_DATA *pa;
-	int i = 0;
-
-	pa = _kdc_find_padata(req, &i, KRB5_PADATA_REQ_ENC_PA_REP);
-	if (pa == NULL)
-	    req_buffer = NULL;
+    /*
+     * Add REQ_ENC_PA_REP if client supports it
+     */
+    i = 0;
+    pa = _kdc_find_padata(req, &i, KRB5_PADATA_REQ_ENC_PA_REP);
+    if (pa) {
+	ret = add_enc_pa_rep(r);
+	if (ret) {
+	    const char *msg = krb5_get_error_message(r->context, ret);
+	    _kdc_r_log(r, 0, "add_enc_pa_rep failed: %d: %s", ret, msg);
+	    krb5_free_error_message(r->context, msg);
+	    goto out;
+	}
     }
 
-    ret = _kdc_encode_reply(context, config, req_buffer,
+    /*
+     *
+     */
+
+    ret = _kdc_encode_reply(context, config, NULL,
 			    r->armor_crypto, req->req_body.nonce,
 			    &rep, &et, &ek, setype, r->server->entry.kvno,
 			    &skey->key, r->client->entry.kvno,

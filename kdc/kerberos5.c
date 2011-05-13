@@ -1558,8 +1558,6 @@ _kdc_as_rep(kdc_request_t r,
     AS_REP rep;
     KDCOptions f;
     krb5_enctype setype;
-    EncTicketPart et;
-    EncKDCRepPart ek;
     krb5_error_code ret = 0;
     Key *ckey, *skey;
     int found_pa = 0;
@@ -1568,8 +1566,6 @@ _kdc_as_rep(kdc_request_t r,
     const PA_DATA *pa;
 
     memset(&rep, 0, sizeof(rep));
-    memset(&et, 0, sizeof(et));
-    memset(&ek, 0, sizeof(ek));
     error_method.len = 0;
     error_method.val = NULL;
 
@@ -1675,9 +1671,6 @@ _kdc_as_rep(kdc_request_t r,
 	goto out;
     }
 
-    memset(&et, 0, sizeof(et));
-    memset(&ek, 0, sizeof(ek));
-
     /*
      * Select a session enctype from the list of the crypto system
      * supported enctypes that is supported by the client and is one of
@@ -1729,7 +1722,7 @@ _kdc_as_rep(kdc_request_t r,
 			    "%s pre-authentication succeeded -- %s",
 			    pat[n].name, r->client_name);
 		    found_pa = 1;
-		    et.flags.pre_authent = 1;
+		    r->et.flags.pre_authent = 1;
 		}
 	    }
 	}
@@ -1842,23 +1835,23 @@ _kdc_as_rep(kdc_request_t r,
 	rep.ticket.sname.name_type = b->sname->name_type;
 #undef CNT
 
-    et.flags.initial = 1;
+    r->et.flags.initial = 1;
     if(r->client->entry.flags.forwardable && r->server->entry.flags.forwardable)
-	et.flags.forwardable = f.forwardable;
+	r->et.flags.forwardable = f.forwardable;
     else if (f.forwardable) {
 	_kdc_set_e_text(r, "Ticket may not be forwardable");
 	ret = KRB5KDC_ERR_POLICY;
 	goto out;
     }
     if(r->client->entry.flags.proxiable && r->server->entry.flags.proxiable)
-	et.flags.proxiable = f.proxiable;
+	r->et.flags.proxiable = f.proxiable;
     else if (f.proxiable) {
 	_kdc_set_e_text(r, "Ticket may not be proxiable");
 	ret = KRB5KDC_ERR_POLICY;
 	goto out;
     }
     if(r->client->entry.flags.postdate && r->server->entry.flags.postdate)
-	et.flags.may_postdate = f.allow_postdate;
+	r->et.flags.may_postdate = f.allow_postdate;
     else if (f.allow_postdate){
 	_kdc_set_e_text(r, "Ticket may not be postdate");
 	ret = KRB5KDC_ERR_POLICY;
@@ -1872,24 +1865,24 @@ _kdc_as_rep(kdc_request_t r,
 	goto out;
     }
 
-    ret = copy_PrincipalName(&rep.cname, &et.cname);
+    ret = copy_PrincipalName(&rep.cname, &r->et.cname);
     if (ret)
 	goto out;
-    ret = copy_Realm(&rep.crealm, &et.crealm);
+    ret = copy_Realm(&rep.crealm, &r->et.crealm);
     if (ret)
 	goto out;
 
     {
 	time_t start;
 	time_t t;
-
-	start = et.authtime = kdc_time;
+	
+	start = r->et.authtime = kdc_time;
 
 	if(f.postdated && req->req_body.from){
-	    ALLOC(et.starttime);
-	    start = *et.starttime = *req->req_body.from;
-	    et.flags.invalid = 1;
-	    et.flags.postdated = 1; /* XXX ??? */
+	    ALLOC(r->et.starttime);
+	    start = *r->et.starttime = *req->req_body.from;
+	    r->et.flags.invalid = 1;
+	    r->et.flags.postdated = 1; /* XXX ??? */
 	}
 	_kdc_fix_time(&b->till);
 	t = *b->till;
@@ -1903,8 +1896,8 @@ _kdc_as_rep(kdc_request_t r,
 #if 0
 	t = min(t, start + realm->max_life);
 #endif
-	et.endtime = t;
-	if(f.renewable_ok && et.endtime < *b->till){
+	r->et.endtime = t;
+	if(f.renewable_ok && r->et.endtime < *b->till){
 	    f.renewable = 1;
 	    if(b->rtime == NULL){
 		ALLOC(b->rtime);
@@ -1924,22 +1917,22 @@ _kdc_as_rep(kdc_request_t r,
 #if 0
 	    t = min(t, start + realm->max_renew);
 #endif
-	    ALLOC(et.renew_till);
-	    *et.renew_till = t;
-	    et.flags.renewable = 1;
+	    ALLOC(r->et.renew_till);
+	    *r->et.renew_till = t;
+	    r->et.flags.renewable = 1;
 	}
     }
 
     if (f.request_anonymous)
-	et.flags.anonymous = 1;
+	r->et.flags.anonymous = 1;
 
     if(b->addresses){
-	ALLOC(et.caddr);
-	copy_HostAddresses(b->addresses, et.caddr);
+	ALLOC(r->et.caddr);
+	copy_HostAddresses(b->addresses, r->et.caddr);
     }
 
-    et.transited.tr_type = DOMAIN_X500_COMPRESS;
-    krb5_data_zero(&et.transited.contents);
+    r->et.transited.tr_type = DOMAIN_X500_COMPRESS;
+    krb5_data_zero(&r->et.transited.contents);
 
     /* The MIT ASN.1 library (obviously) doesn't tell lengths encoded
      * as 0 and as 0x80 (meaning indefinite length) apart, and is thus
@@ -1950,58 +1943,58 @@ _kdc_as_rep(kdc_request_t r,
      * If there's a pw_end or valid_end we will use that,
      * otherwise just a dummy lr.
      */
-    ek.last_req.val = malloc(2 * sizeof(*ek.last_req.val));
-    if (ek.last_req.val == NULL) {
+    r->ek.last_req.val = malloc(2 * sizeof(*r->ek.last_req.val));
+    if (r->ek.last_req.val == NULL) {
 	ret = ENOMEM;
 	goto out;
     }
-    ek.last_req.len = 0;
+    r->ek.last_req.len = 0;
     if (r->client->entry.pw_end
 	&& (config->kdc_warn_pwexpire == 0
 	    || kdc_time + config->kdc_warn_pwexpire >= *r->client->entry.pw_end)) {
-	ek.last_req.val[ek.last_req.len].lr_type  = LR_PW_EXPTIME;
-	ek.last_req.val[ek.last_req.len].lr_value = *r->client->entry.pw_end;
-	++ek.last_req.len;
+	r->ek.last_req.val[r->ek.last_req.len].lr_type  = LR_PW_EXPTIME;
+	r->ek.last_req.val[r->ek.last_req.len].lr_value = *r->client->entry.pw_end;
+	++r->ek.last_req.len;
     }
     if (r->client->entry.valid_end) {
-	ek.last_req.val[ek.last_req.len].lr_type  = LR_ACCT_EXPTIME;
-	ek.last_req.val[ek.last_req.len].lr_value = *r->client->entry.valid_end;
-	++ek.last_req.len;
+	r->ek.last_req.val[r->ek.last_req.len].lr_type  = LR_ACCT_EXPTIME;
+	r->ek.last_req.val[r->ek.last_req.len].lr_value = *r->client->entry.valid_end;
+	++r->ek.last_req.len;
     }
-    if (ek.last_req.len == 0) {
-	ek.last_req.val[ek.last_req.len].lr_type  = LR_NONE;
-	ek.last_req.val[ek.last_req.len].lr_value = 0;
-	++ek.last_req.len;
+    if (r->ek.last_req.len == 0) {
+	r->ek.last_req.val[r->ek.last_req.len].lr_type  = LR_NONE;
+	r->ek.last_req.val[r->ek.last_req.len].lr_value = 0;
+	++r->ek.last_req.len;
     }
-    ek.nonce = b->nonce;
+    r->ek.nonce = b->nonce;
     if (r->client->entry.valid_end || r->client->entry.pw_end) {
-	ALLOC(ek.key_expiration);
+	ALLOC(r->ek.key_expiration);
 	if (r->client->entry.valid_end) {
 	    if (r->client->entry.pw_end)
-		*ek.key_expiration = min(*r->client->entry.valid_end,
+		*r->ek.key_expiration = min(*r->client->entry.valid_end,
 					 *r->client->entry.pw_end);
 	    else
-		*ek.key_expiration = *r->client->entry.valid_end;
+		*r->ek.key_expiration = *r->client->entry.valid_end;
 	} else
-	    *ek.key_expiration = *r->client->entry.pw_end;
+	    *r->ek.key_expiration = *r->client->entry.pw_end;
     } else
-	ek.key_expiration = NULL;
-    ek.flags = et.flags;
-    ek.authtime = et.authtime;
-    if (et.starttime) {
-	ALLOC(ek.starttime);
-	*ek.starttime = *et.starttime;
+	r->ek.key_expiration = NULL;
+    r->ek.flags = r->et.flags;
+    r->ek.authtime = r->et.authtime;
+    if (r->et.starttime) {
+	ALLOC(r->ek.starttime);
+	*r->ek.starttime = *r->et.starttime;
     }
-    ek.endtime = et.endtime;
-    if (et.renew_till) {
-	ALLOC(ek.renew_till);
-	*ek.renew_till = *et.renew_till;
+    r->ek.endtime = r->et.endtime;
+    if (r->et.renew_till) {
+	ALLOC(r->ek.renew_till);
+	*r->ek.renew_till = *r->et.renew_till;
     }
-    copy_Realm(&rep.ticket.realm, &ek.srealm);
-    copy_PrincipalName(&rep.ticket.sname, &ek.sname);
-    if(et.caddr){
-	ALLOC(ek.caddr);
-	copy_HostAddresses(et.caddr, ek.caddr);
+    copy_Realm(&rep.ticket.realm, &r->ek.srealm);
+    copy_PrincipalName(&rep.ticket.sname, &r->ek.sname);
+    if(r->et.caddr){
+	ALLOC(r->ek.caddr);
+	copy_HostAddresses(r->et.caddr, r->ek.caddr);
     }
 
     /*
@@ -2020,11 +2013,11 @@ _kdc_as_rep(kdc_request_t r,
 	goto out;
     }
 
-    ret = copy_EncryptionKey(&r->session_key, &et.key);
+    ret = copy_EncryptionKey(&r->session_key, &r->et.key);
     if (ret)
 	goto out;
 
-    ret = copy_EncryptionKey(&r->session_key, &ek.key);
+    ret = copy_EncryptionKey(&r->session_key, &r->ek.key);
     if (ret)
 	goto out;
 
@@ -2052,7 +2045,7 @@ _kdc_as_rep(kdc_request_t r,
 	    krb5_abortx(context, "internal asn.1 error");
 
 	/* sign using "returned session key" */
-	ret = krb5_crypto_init(context, &et.key, 0, &cryptox);
+	ret = krb5_crypto_init(context, &r->et.key, 0, &cryptox);
 	if (ret) {
 	    free(data.data);
 	    goto out;
@@ -2100,8 +2093,8 @@ _kdc_as_rep(kdc_request_t r,
 	generate_pac(r, skey);
     }
 
-    _kdc_log_timestamp(context, config, "AS-REQ", et.authtime, et.starttime,
-		       et.endtime, et.renew_till);
+    _kdc_log_timestamp(context, config, "AS-REQ", r->et.authtime, r->et.starttime,
+		       r->et.endtime, r->et.renew_till);
 
     /* do this as the last thing since this signs the EncTicketPart */
     ret = _kdc_add_KRB5SignedPath(context,
@@ -2111,7 +2104,7 @@ _kdc_as_rep(kdc_request_t r,
 				  r->client->entry.principal,
 				  NULL,
 				  NULL,
-				  &et);
+				  &r->et);
     if (ret)
 	goto out;
 
@@ -2120,6 +2113,7 @@ _kdc_as_rep(kdc_request_t r,
     /*
      * Add REQ_ENC_PA_REP if client supports it
      */
+
     i = 0;
     pa = _kdc_find_padata(req, &i, KRB5_PADATA_REQ_ENC_PA_REP);
     if (pa) {
@@ -2138,7 +2132,7 @@ _kdc_as_rep(kdc_request_t r,
 
     ret = _kdc_encode_reply(context, config,
 			    r->armor_crypto, req->req_body.nonce,
-			    &rep, &et, &ek, setype, r->server->entry.kvno,
+			    &rep, &r->et, &r->ek, setype, r->server->entry.kvno,
 			    &skey->key, r->client->entry.kvno,
 			    &r->reply_key, 0, &r->e_text, reply);
     if (ret)
@@ -2171,8 +2165,8 @@ out:
 	    goto out2;
     }
 out2:
-    free_EncTicketPart(&et);
-    free_EncKDCRepPart(&ek);
+    free_EncTicketPart(&r->et);
+    free_EncKDCRepPart(&r->ek);
 
     if (error_method.len)
 	free_METHOD_DATA(&error_method);

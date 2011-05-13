@@ -152,7 +152,8 @@ _gss_string_to_oid(const char* s, gss_OID oid)
 #define SYM(name)							\
 do {									\
 	m->gm_mech.gm_ ## name = dlsym(so, "gss_" #name);		\
-	if (!m->gm_mech.gm_ ## name) {					\
+	if (!m->gm_mech.gm_ ## name ||					\
+	    m->gm_mech.gm_ ##name == gss_ ## name) {			\
 		fprintf(stderr, "can't find symbol gss_" #name "\n");	\
 		goto bad;						\
 	}								\
@@ -161,6 +162,8 @@ do {									\
 #define OPTSYM(name)							\
 do {									\
 	m->gm_mech.gm_ ## name = dlsym(so, "gss_" #name);		\
+	if (m->gm_mech.gm_ ## name == gss_ ## name)			\
+		m->gm_mech.gm_ ## name = NULL;				\
 } while (0)
 
 #define OPTSPISYM(name)							\
@@ -171,6 +174,8 @@ do {									\
 #define COMPATSYM(name)							\
 do {									\
 	m->gm_mech.gm_compat->gmc_ ## name = dlsym(so, "gss_" #name);	\
+	if (m->gm_mech.gm_compat->gmc_ ## name == gss_ ## name)		\
+		m->gm_mech.gm_compat->gmc_ ## name = NULL;		\
 } while (0)
 
 /*

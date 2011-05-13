@@ -1428,6 +1428,50 @@ send_pac_p(krb5_context context, KDC_REQ *req)
     return TRUE;
 }
 
+/*
+ *
+ */
+
+static krb5_error_code
+generate_pac(kdc_request_t r, Key *skey)
+{
+    krb5_error_code ret;
+    krb5_pac p = NULL;
+    krb5_data data;
+
+    ret = _kdc_pac_generate(r->context, r->client, &p);
+    if (ret) {
+	_kdc_r_log(r, 0, "PAC generation failed for -- %s",
+		   r->client_name);
+	return ret;
+    }
+    if (p == NULL)
+	return 0;
+
+    ret = _krb5_pac_sign(r->context, p, r->et.authtime,
+			 r->client->entry.principal,
+			 &skey->key, /* Server key */
+			 &skey->key, /* FIXME: should be krbtgt key */
+			 &data);
+    krb5_pac_free(r->context, p);
+    if (ret) {
+	_kdc_r_log(r, 0, "PAC signing failed for -- %s",
+		   r->client_name);
+	return ret;
+    }
+    
+    ret = _kdc_tkt_add_if_relevant_ad(r->context, &r->et,
+				      KRB5_AUTHDATA_WIN2K_PAC,
+				      &data);
+    krb5_data_free(&data);
+
+    return ret;
+}
+
+/*
+ *
+ */
+
 krb5_boolean
 _kdc_is_anonymous(krb5_context context, krb5_principal principal)
 {
@@ -1691,7 +1735,7 @@ _kdc_as_rep(kdc_request_t r,
 	}
     }
 
-    if ((found_pa == 0 && require_preauth_p(r))  || b->kdc_options.request_anonymous) {
+    if (found_pa == 0 && (require_preauth_p(r) || b->kdc_options.request_anonymous)) {
 	size_t n;
 
 	for (n = 0; n < sizeof(pat) / sizeof(pat[0]); n++) {
@@ -2053,35 +2097,7 @@ _kdc_as_rep(kdc_request_t r,
 
     /* Add the PAC */
     if (send_pac_p(context, req)) {
-	krb5_pac p = NULL;
-	krb5_data data;
-
-	ret = _kdc_pac_generate(context, r->client, &p);
-	if (ret) {
-	    kdc_log(context, config, 0, "PAC generation failed for -- %s",
-		    r->client_name);
-	    goto out;
-	}
-	if (p != NULL) {
-	    ret = _krb5_pac_sign(context, p, et.authtime,
-				 r->client->entry.principal,
-				 &skey->key, /* Server key */
-				 &skey->key, /* FIXME: should be krbtgt key */
-				 &data);
-	    krb5_pac_free(context, p);
-	    if (ret) {
-		kdc_log(context, config, 0, "PAC signing failed for -- %s",
-			r->client_name);
-		goto out;
-	    }
-
-	    ret = _kdc_tkt_add_if_relevant_ad(context, &et,
-					      KRB5_AUTHDATA_WIN2K_PAC,
-					      &data);
-	    krb5_data_free(&data);
-	    if (ret)
-		goto out;
-	}
+	generate_pac(r, skey);
     }
 
     _kdc_log_timestamp(context, config, "AS-REQ", et.authtime, et.starttime,
@@ -2110,7 +2126,7 @@ _kdc_as_rep(kdc_request_t r,
 	ret = add_enc_pa_rep(r);
 	if (ret) {
 	    const char *msg = krb5_get_error_message(r->context, ret);
-	    _kdc_r_log(r, 0, "add_enc_pa_rep failed: %d: %s", ret, msg);
+	    _kdc_r_log(r, 0, "add_enc_pa_rep failed: %s: %d", msg, ret);
 	    krb5_free_error_message(r->context, msg);
 	    goto out;
 	}
@@ -2141,7 +2157,7 @@ out:
     /*
      * In case of a non proxy error, build an error message.
      */
-    if(ret != 0 && ret != HDB_ERR_NOT_FOUND_HERE){
+    if(ret != 0 && ret != HDB_ERR_NOT_FOUND_HERE) {
 	kdc_log(context, config, 10, "as-req: sending error: %d to client", ret);
 	ret = _kdc_fast_mk_error(context,
 				 &error_method,

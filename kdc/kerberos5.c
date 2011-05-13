@@ -2138,7 +2138,9 @@ _kdc_as_rep(kdc_request_t r,
     if (ret)
 	goto out;
 
-    /* */
+    /*
+     * Check if message too large
+     */
     if (datagram_reply && reply->length > config->max_datagram_reply_length) {
 	krb5_data_free(reply);
 	ret = KRB5KRB_ERR_RESPONSE_TOO_BIG;

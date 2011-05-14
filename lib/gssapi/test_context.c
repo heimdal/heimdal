@@ -44,6 +44,7 @@ static char *type_string;
 static char *mech_string;
 static char *ret_mech_string;
 static char *client_name;
+static char *password;
 static int dns_canon_flag = -1;
 static int mutual_auth_flag = 0;
 static int dce_style_flag = 0;
@@ -467,6 +468,7 @@ static struct getargs args[] = {
      "use dns to canonicalize", NULL },
     {"mutual-auth",0,	arg_flag,	&mutual_auth_flag,"mutual auth", NULL },
     {"client-name", 0,  arg_string,     &client_name, "client name", NULL },
+    {"password", 0,  arg_string,     &password, "password", NULL },
     {"limit-enctype",0,	arg_string,	&limit_enctype_string, "enctype", NULL },
     {"dce-style",0,	arg_flag,	&dce_style_flag, "dce-style", NULL },
     {"wrapunwrap",0,	arg_flag,	&wrapunwrap_flag, "wrap/unwrap", NULL },
@@ -566,10 +568,22 @@ main(int argc, char **argv)
 	    errx(1, "gss_import_name: %s",
 		 gssapi_err(maj_stat, min_stat, GSS_C_NO_OID));
 
-	maj_stat = gss_acquire_cred(&min_stat, cname, 0, NULL, 
-				    GSS_C_INITIATE, &client_cred, NULL, NULL);
+	if (password != NULL) {
+	    gss_buffer_desc pw;
+
+	    pw.length = strlen(password);
+	    pw.value = password;
+
+	    maj_stat = gss_acquire_cred_with_password(&min_stat, cname, &pw,
+						      0, NULL, GSS_C_INITIATE,
+						      &client_cred, NULL, NULL);
+	} else {
+	    maj_stat = gss_acquire_cred(&min_stat, cname, 0, NULL,
+					GSS_C_INITIATE, &client_cred, NULL, NULL);
+	}
 	if (GSS_ERROR(maj_stat))
-	    errx(1, "gss_import_name: %s",
+	    errx(1, "gss_acquire_cred%s: %s",
+		 password ? "_with_password" : "",
 		 gssapi_err(maj_stat, min_stat, GSS_C_NO_OID));
 	gss_release_name(&min_stat, &cname);
     }

@@ -178,6 +178,13 @@ do {									\
 		m->gm_mech.gm_compat->gmc_ ## name = NULL;		\
 } while (0)
 
+#define COMPATSPISYM(name)						\
+do {									\
+	m->gm_mech.gm_compat->gmc_ ## name = dlsym(so, "gssspi_" #name);\
+	if (m->gm_mech.gm_compat->gmc_ ## name == gss_ ## name)		\
+		m->gm_mech.gm_compat->gmc_ ## name = NULL;		\
+} while (0)
+
 /*
  *
  */
@@ -388,7 +395,7 @@ _gss_load_mech(void)
 			COMPATSYM(inquire_saslname_for_mech);
 			COMPATSYM(inquire_mech_for_saslname);
 			COMPATSYM(inquire_attrs_for_mech);
-			COMPATSYM(acquire_cred_with_password);
+			COMPATSPISYM(acquire_cred_with_password);
 		}
 
 		/* pick up the oid sets of names */

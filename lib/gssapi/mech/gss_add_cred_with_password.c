@@ -46,7 +46,7 @@ gss_add_cred_with_password(OM_uint32 *minor_status,
 	gssapi_mech_interface m;
 	struct _gss_cred *cred = (struct _gss_cred *) input_cred_handle;
 	struct _gss_cred *new_cred;
-	struct _gss_mechanism_cred *mc, *target_mc, *copy_mc;
+	struct _gss_mechanism_cred *mc;
 	struct _gss_mechanism_name *mn = NULL;
 	OM_uint32 junk, time_req;
 
@@ -73,19 +73,17 @@ gss_add_cred_with_password(OM_uint32 *minor_status,
 	HEIM_SLIST_INIT(&new_cred->gc_mc);
 
 	/*
-	 * We go through all the mc attached to the input_cred_handle
-	 * and check the mechanism. If it matches, we call
-	 * gss_add_cred for that mechanism, otherwise we copy the mc
-	 * to new_cred.
+	 * Copy credentials from un-desired mechanisms to the new credential.
 	 */
-	target_mc = 0;
 	if (cred) {
 		HEIM_SLIST_FOREACH(mc, &cred->gc_mc, gmc_link) {
+			struct _gss_mechanism_cred *copy_mc;
+
 			if (gss_oid_equal(mc->gmc_mech_oid, desired_mech)) {
-				target_mc = mc;
+				continue;
 			}
 			copy_mc = _gss_copy_cred(mc);
-			if (!copy_mc) {
+			if (copy_mc == NULL) {
 				gss_release_cred(&junk, (gss_cred_id_t *)&new_cred);
 				*minor_status = ENOMEM;
 				return (GSS_S_FAILURE);

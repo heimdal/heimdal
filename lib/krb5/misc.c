@@ -42,7 +42,7 @@ _krb5_s4u2self_to_checksumdata(krb5_context context,
     krb5_ssize_t ssize;
     krb5_storage *sp;
     size_t size;
-    int i;
+    size_t i;
 
     sp = krb5_storage_emem();
     if (sp == NULL) {
@@ -56,20 +56,20 @@ _krb5_s4u2self_to_checksumdata(krb5_context context,
     for (i = 0; i < self->name.name_string.len; i++) {
 	size = strlen(self->name.name_string.val[i]);
 	ssize = krb5_storage_write(sp, self->name.name_string.val[i], size);
-	if (ssize != size) {
+	if (ssize != (krb5_ssize_t)size) {
 	    ret = ENOMEM;
 	    goto out;
 	}
     }
     size = strlen(self->realm);
     ssize = krb5_storage_write(sp, self->realm, size);
-    if (ssize != size) {
+    if (ssize != (krb5_ssize_t)size) {
 	ret = ENOMEM;
 	goto out;
     }
     size = strlen(self->auth);
     ssize = krb5_storage_write(sp, self->auth, size);
-    if (ssize != size) {
+    if (ssize != (krb5_ssize_t)size) {
 	ret = ENOMEM;
 	goto out;
     }

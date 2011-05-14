@@ -177,7 +177,8 @@ parse_pem_private_key(hx509_context context, const char *fn,
 	const EVP_CIPHER *cipher;
 	const struct _hx509_password *pw;
 	hx509_lock lock;
-	int i, decrypted = 0;
+	int decrypted = 0;
+	size_t i;
 
 	lock = _hx509_collector_get_lock(c);
 	if (lock == NULL) {
@@ -329,7 +330,8 @@ pem_func(hx509_context context, const char *type,
 	 const void *data, size_t len, void *ctx)
 {
     struct pem_ctx *pem_ctx = (struct pem_ctx*)ctx;
-    int ret = 0, j;
+    int ret = 0;
+    size_t j;
 
     for (j = 0; j < sizeof(formats)/sizeof(formats[0]); j++) {
 	const char *q = formats[j].name;
@@ -436,7 +438,7 @@ file_init_common(hx509_context context,
 	else if (ret == HX509_PARSING_KEY_FAILED) {
 	    size_t length;
 	    void *ptr;
-	    int i;
+	    size_t i;
 
 	    ret = rk_undumpdata(p, &ptr, &length);
 	    if (ret) {

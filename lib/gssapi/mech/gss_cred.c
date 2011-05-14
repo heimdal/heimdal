@@ -85,7 +85,7 @@ gss_export_cred(OM_uint32 * minor_status,
 	}
 
 	ret = krb5_storage_write(sp, buffer.value, buffer.length);
-	if (ret != buffer.length) {
+	if (ret < 0 || (size_t)ret != buffer.length) {
 	    gss_release_buffer(minor_status, &buffer);
 	    krb5_storage_free(sp);
 	    *minor_status = EINVAL;

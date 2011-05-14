@@ -86,7 +86,7 @@ do_check_entry(krb5_principal principal, void *data)
 	ret = krb5_enctype_keysize(context,
 				   princ.key_data[i].key_data_type[0],
 				   &keysize);
-	if (ret == 0 && keysize != princ.key_data[i].key_data_length[0]) {
+	if (ret == 0 && keysize != (size_t)princ.key_data[i].key_data_length[0]) {
 	    krb5_warnx(context,
 		       "Principal %s enctype %d, wrong length: %lu\n",
 		       name, princ.key_data[i].key_data_type[0],

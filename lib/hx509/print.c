@@ -163,7 +163,7 @@ void
 hx509_bitstring_print(const heim_bit_string *b,
 		      hx509_vprint_func func, void *ctx)
 {
-    int i;
+    size_t i;
     print_func(func, ctx, "\tlength: %d\n\t", b->length);
     for (i = 0; i < (b->length + 7) / 8; i++)
 	print_func(func, ctx, "%02x%s%s",
@@ -481,7 +481,8 @@ check_CRLDistributionPoints(hx509_validate_ctx ctx,
 {
     CRLDistributionPoints dp;
     size_t size;
-    int ret, i;
+    int ret;
+    size_t i;
 
     check_Null(ctx, status, cf, e);
 
@@ -499,7 +500,7 @@ check_CRLDistributionPoints(hx509_validate_ctx ctx,
 	if (dp.val[i].distributionPoint) {
 	    DistributionPointName dpname;
 	    heim_any *data = dp.val[i].distributionPoint;
-	    int j;
+	    size_t j;
 	
 	    ret = decode_DistributionPointName(data->data, data->length,
 					       &dpname, NULL);
@@ -565,7 +566,8 @@ check_altName(hx509_validate_ctx ctx,
 {
     GeneralNames gn;
     size_t size;
-    int ret, i;
+    int ret;
+    size_t i;
 
     check_Null(ctx, status, cf, e);
 
@@ -717,7 +719,8 @@ check_authorityInfoAccess(hx509_validate_ctx ctx,
 {
     AuthorityInfoAccessSyntax aia;
     size_t size;
-    int ret, i;
+    int ret;
+    size_t i;
 
     check_Null(ctx, status, cf, e);
 
@@ -773,7 +776,7 @@ struct {
     { ext(certificateIssuer, Null), M_C },
     { ext(nameConstraints, Null), M_C },
     { ext(cRLDistributionPoints, CRLDistributionPoints), S_N_C },
-    { ext(certificatePolicies, Null) },
+    { ext(certificatePolicies, Null), 0 },
     { ext(policyMappings, Null), M_N_C },
     { ext(authorityKeyIdentifier, authorityKeyIdentifier), M_N_C },
     { ext(policyConstraints, Null), D_C },
@@ -789,7 +792,7 @@ struct {
       check_Null, D_C },
     { "Netscape cert comment", &asn1_oid_id_netscape_cert_comment,
       check_Null, D_C },
-    { NULL }
+    { NULL, NULL, NULL, 0 }
 };
 
 /**
@@ -936,7 +939,7 @@ hx509_validate_cert(hx509_context context,
     free(str);
 
     if (t->extensions) {
-	int i, j;
+	size_t i, j;
 
 	if (t->extensions->len == 0) {
 	    validate_print(ctx,

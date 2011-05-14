@@ -155,7 +155,7 @@ write_storage(krb5_context context, krb5_storage *sp, int fd)
 	return ret;
     }
     sret = write(fd, data.data, data.length);
-    ret = (sret != data.length);
+    ret = (sret != (ssize_t)data.length);
     krb5_data_free(&data);
     if (ret) {
 	ret = errno;
@@ -220,7 +220,7 @@ scrub_file (int fd)
         return errno;
     memset(buf, 0, sizeof(buf));
     while(pos > 0) {
-        ssize_t tmp = write(fd, buf, min(sizeof(buf), pos));
+        ssize_t tmp = write(fd, buf, min((off_t)sizeof(buf), pos));
 
 	if (tmp < 0)
 	    return errno;
@@ -334,11 +334,11 @@ fcc_gen_new(krb5_context context, krb5_ccache *id)
 
     fd = mkstemp(exp_file);
     if(fd < 0) {
-	int ret = errno;
-	krb5_set_error_message(context, ret, N_("mkstemp %s failed", ""), exp_file);
+	int xret = errno;
+	krb5_set_error_message(context, xret, N_("mkstemp %s failed", ""), exp_file);
 	free(f);
 	free(exp_file);
-	return ret;
+	return xret;
     }
     close(fd);
     f->filename = exp_file;

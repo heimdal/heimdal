@@ -46,15 +46,17 @@ static int random_key_flag;
 static const char *enctype_str = "des3-cbc-sha1";
 
 static struct getargs args[] = {
-    { "enctype", 'e', arg_string, rk_UNCONST(&enctype_str), "encryption type" },
+    { "enctype", 'e', arg_string, rk_UNCONST(&enctype_str), "encryption type",
+	NULL },
     { "key-file", 'k', arg_string, &keyfile, "master key file", "file" },
     { "convert-file", 0, arg_flag, &convert_flag,
-      "just convert keyfile to new format" },
+      "just convert keyfile to new format", NULL },
     { "master-key-fd", 0, arg_integer, &master_key_fd,
       "filedescriptor to read passphrase from", "fd" },
-    { "random-key", 0, arg_flag, &random_key_flag, "generate a random master key" },
-    { "help", 'h', arg_flag, &help_flag },
-    { "version", 0, arg_flag, &version_flag }
+    { "random-key", 0, arg_flag, &random_key_flag,
+	"generate a random master key", NULL },
+    { "help", 'h', arg_flag, &help_flag, NULL, NULL },
+    { "version", 0, arg_flag, &version_flag, NULL, NULL }
 };
 
 int num_args = sizeof(args) / sizeof(args[0]);

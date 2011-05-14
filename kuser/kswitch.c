@@ -35,11 +35,11 @@
 #include "kcc-commands.h"
 
 #ifdef HAVE_READLINE
-char *readline(char *prompt);
+char *readline(const char *prompt);
 #else
 
 static char *
-readline(char *prompt)
+readline(const char *prompt)
 {
     char buf[BUFSIZ];
     printf ("%s", prompt);

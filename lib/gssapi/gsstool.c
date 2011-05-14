@@ -132,7 +132,7 @@ supported_mechanisms(void *argptr, int argc, char **argv)
     return 0;
 }
 
-void static 
+static void
 print_mech_attr(const char *mechname, gss_const_OID mech, gss_OID_set set)
 {
     gss_buffer_desc name, desc;

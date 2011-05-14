@@ -393,7 +393,7 @@ unix_socket_ipc(void *ctx,
 
     if (net_write(s->fd, &len, sizeof(len)) != sizeof(len))
 	return -1;
-    if (net_write(s->fd, req->data, req->length) != req->length)
+    if (net_write(s->fd, req->data, req->length) != (ssize_t)req->length)
 	return -1;
 
     if (net_read(s->fd, &len, sizeof(len)) != sizeof(len))
@@ -407,7 +407,7 @@ unix_socket_ipc(void *ctx,
 	rep->data = malloc(rep->length);
 	if (rep->data == NULL)
 	    return -1;
-	if (net_read(s->fd, rep->data, rep->length) != rep->length)
+	if (net_read(s->fd, rep->data, rep->length) != (ssize_t)rep->length)
 	    return -1;
     } else
 	rep->data = NULL;
@@ -489,9 +489,9 @@ struct hipc_ops ipcs[] = {
     { "MACH", mach_init, mach_release, mach_ipc, mach_async },
 #endif
 #ifdef HAVE_DOOR
-    { "DOOR", door_init, common_release, door_ipc }
+    { "DOOR", door_init, common_release, door_ipc, NULL }
 #endif
-    { "UNIX", unix_socket_init, common_release, unix_socket_ipc }
+    { "UNIX", unix_socket_init, common_release, unix_socket_ipc, NULL }
 };
 
 struct heim_ipc {
@@ -546,29 +546,29 @@ heim_ipc_free_context(heim_ipc ctx)
 }
 
 int
-heim_ipc_call(heim_ipc ctx, const heim_idata *send, heim_idata *recv,
+heim_ipc_call(heim_ipc ctx, const heim_idata *snd, heim_idata *rcv,
 	      heim_icred *cred)
 {
     if (cred)
 	*cred = NULL;
-    return (ctx->ops->ipc)(ctx->ctx, send, recv, cred);
+    return (ctx->ops->ipc)(ctx->ctx, snd, rcv, cred);
 }
 
 int
-heim_ipc_async(heim_ipc ctx, const heim_idata *send, void *userctx,
+heim_ipc_async(heim_ipc ctx, const heim_idata *snd, void *userctx,
 	       void (*func)(void *, int, heim_idata *, heim_icred))
 {
     if (ctx->ops->async == NULL) {
-	heim_idata recv;
+	heim_idata rcv;
 	heim_icred cred = NULL;
 	int ret;
 
-	ret = (ctx->ops->ipc)(ctx->ctx, send, &recv, &cred);
-	(*func)(userctx, ret, &recv, cred);
+	ret = (ctx->ops->ipc)(ctx->ctx, snd, &rcv, &cred);
+	(*func)(userctx, ret, &rcv, cred);
 	heim_ipc_free_cred(cred);
-	free(recv.data);
+	free(rcv.data);
 	return ret;
     } else {
-	return (ctx->ops->async)(ctx->ctx, send, userctx, func);
+	return (ctx->ops->async)(ctx->ctx, snd, userctx, func);
     }
 }

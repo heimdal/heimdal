@@ -115,7 +115,8 @@ kdc_CFLAGS = $(CAPNG_CFLAGS)
 
 digest_service_LDADD = \
 	libkdc.la \
-	../lib/ipc/libheim-ipcs.la \
+	$(top_builddir)/lib/ntlm/libheimntlm.la \
+	$(top_builddir)/lib/ipc/libheim-ipcs.la \
 	$(LDADD) $(LIB_pidfile)
 kdc_replay_LDADD = libkdc.la $(LDADD) $(LIB_pidfile)
 

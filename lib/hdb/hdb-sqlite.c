@@ -416,6 +416,13 @@ hdb_sqlite_fetch_kvno(krb5_context context, HDB *db, krb5_const_principal princi
         }
     }
 
+    value.length = sqlite3_column_bytes(fetch, 0);
+    value.data = (void *) sqlite3_column_blob(fetch, 0);
+
+    ret = hdb_value2entry(context, &value, &entry->entry);
+    if(ret)
+        goto out;
+
     if (db->hdb_master_key_set && (flags & HDB_F_DECRYPT)) {
         ret = hdb_unseal_keys(context, db, &entry->entry);
         if(ret) {
@@ -423,13 +430,6 @@ hdb_sqlite_fetch_kvno(krb5_context context, HDB *db, krb5_const_principal princi
            goto out;
         }
     }
-
-    value.length = sqlite3_column_bytes(fetch, 0);
-    value.data = (void *) sqlite3_column_blob(fetch, 0);
-
-    ret = hdb_value2entry(context, &value, &entry->entry);
-    if(ret)
-        goto out;
     
     ret = 0;
 

@@ -55,7 +55,7 @@ add_tl(kadm5_principal_ent_rec *princ, int type, krb5_data *data)
 }
 
 static void
-add_constrained_delegation(krb5_context context,
+add_constrained_delegation(krb5_context contextp,
 			   kadm5_principal_ent_rec *princ,
 			   struct getarg_strings *strings)
 {
@@ -81,13 +81,13 @@ add_constrained_delegation(krb5_context context,
 	ext.data.u.allowed_to_delegate_to.len = strings->num_strings;
 	
 	for (i = 0; i < strings->num_strings; i++) {
-	    ret = krb5_parse_name(context, strings->strings[i], &p);
+	    ret = krb5_parse_name(contextp, strings->strings[i], &p);
 	    if (ret)
 		abort();
 	    ret = copy_Principal(p, &ext.data.u.allowed_to_delegate_to.val[i]);
 	    if (ret)
 		abort();
-	    krb5_free_principal(context, p);
+	    krb5_free_principal(contextp, p);
 	}
     }
 
@@ -103,7 +103,7 @@ add_constrained_delegation(krb5_context context,
 }
 
 static void
-add_aliases(krb5_context context, kadm5_principal_ent_rec *princ,
+add_aliases(krb5_context contextp, kadm5_principal_ent_rec *princ,
 	    struct getarg_strings *strings)
 {
     krb5_error_code ret;
@@ -128,9 +128,9 @@ add_aliases(krb5_context context, kadm5_principal_ent_rec *princ,
 	ext.data.u.aliases.aliases.len = strings->num_strings;
 	
 	for (i = 0; i < strings->num_strings; i++) {
-	    ret = krb5_parse_name(context, strings->strings[i], &p);
+	    ret = krb5_parse_name(contextp, strings->strings[i], &p);
 	    ret = copy_Principal(p, &ext.data.u.aliases.aliases.val[i]);
-	    krb5_free_principal(context, p);
+	    krb5_free_principal(contextp, p);
 	}
     }
 
@@ -146,7 +146,7 @@ add_aliases(krb5_context context, kadm5_principal_ent_rec *princ,
 }
 
 static void
-add_pkinit_acl(krb5_context context, kadm5_principal_ent_rec *princ,
+add_pkinit_acl(krb5_context contextp, kadm5_principal_ent_rec *princ,
 	       struct getarg_strings *strings)
 {
     krb5_error_code ret;

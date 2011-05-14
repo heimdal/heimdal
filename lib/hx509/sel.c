@@ -223,7 +223,7 @@ _hx509_expr_parse(const char *buf)
 }
 
 void
-_hx509_sel_yyerror (char *s)
+_hx509_sel_yyerror (const char *s)
 {
      if (_hx509_expr_input.error)
          free(_hx509_expr_input.error);

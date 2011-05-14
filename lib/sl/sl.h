@@ -41,10 +41,10 @@
 typedef int (*cmd_func)(int, char **);
 
 struct sl_cmd {
-  char *name;
+  const char *name;
   cmd_func func;
-  char *usage;
-  char *help;
+  const char *usage;
+  const char *help;
 };
 
 typedef struct sl_cmd SL_cmd;

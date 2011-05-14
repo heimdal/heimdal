@@ -372,7 +372,7 @@ _hdb_find_master_key(uint32_t *mkvno, hdb_master_key mkey)
 	if(mkvno == NULL) {
 	    if(ret == NULL || mkey->keytab.vno > ret->keytab.vno)
 		ret = mkey;
-	} else if(mkey->keytab.vno == *mkvno)
+	} else if((uint32_t)mkey->keytab.vno == *mkvno)
 	    return mkey;
 	mkey = mkey->next;
     }
@@ -459,7 +459,7 @@ hdb_unseal_key_mkey(krb5_context context, Key *k, hdb_master_key mkey)
 krb5_error_code
 hdb_unseal_keys_mkey(krb5_context context, hdb_entry *ent, hdb_master_key mkey)
 {
-    int i;
+    size_t i;
 
     for(i = 0; i < ent->keys.len; i++){
 	krb5_error_code ret;
@@ -526,7 +526,7 @@ hdb_seal_key_mkey(krb5_context context, Key *k, hdb_master_key mkey)
 krb5_error_code
 hdb_seal_keys_mkey(krb5_context context, hdb_entry *ent, hdb_master_key mkey)
 {
-    int i;
+    size_t i;
     for(i = 0; i < ent->keys.len; i++){
 	krb5_error_code ret;
 

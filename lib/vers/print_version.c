@@ -52,5 +52,7 @@ print_version(const char *progname)
 	package_list = "no version information";
     fprintf(stderr, "%s (%s)\n", progname, package_list);
     fprintf(stderr, "Copyright 1995-2011 Kungliga Tekniska Högskolan\n");
+#ifdef PACKAGE_BUGREPORT
     fprintf(stderr, "Send bug-reports to %s\n", PACKAGE_BUGREPORT);
+#endif
 }

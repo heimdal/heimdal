@@ -47,7 +47,7 @@ struct getargs args[] = {
     { "credential",	0,   arg_string, rk_UNCONST(&credential),
       "remove one credential", "principal" },
     { "cache",		'c', arg_string, rk_UNCONST(&cache), "cache to destroy", "cache" },
-    { "all",		'A', arg_flag, &all_flag, "destroy all caches" },
+    { "all",		'A', arg_flag, &all_flag, "destroy all caches", NULL },
 #ifndef NO_AFS
     { "unlog",		0,   arg_negative_flag, &unlog_flag,
       "do not destroy tokens", NULL },

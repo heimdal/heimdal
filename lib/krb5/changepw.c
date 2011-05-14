@@ -276,7 +276,7 @@ process_reply (krb5_context context,
 {
     krb5_error_code ret;
     u_char reply[1024 * 3];
-    ssize_t len;
+    size_t len;
     uint16_t pkt_len, pkt_ver;
     krb5_data ap_rep_data;
     int save_errno;
@@ -328,7 +328,7 @@ process_reply (krb5_context context,
 
     if (len < 6) {
 	str2data (result_string, "server %s sent to too short message "
-		  "(%ld bytes)", host, (long)len);
+		  "(%zu bytes)", host, len);
 	*result_code = KRB5_KPASSWD_MALFORMED;
 	return 0;
     }
@@ -496,7 +496,7 @@ static struct kpwd_proc {
 	chgpw_send_request,
 	process_reply
     },
-    { NULL }
+    { NULL, 0, NULL, NULL }
 };
 
 /*

@@ -142,7 +142,7 @@ kadm5_s_get_principal(void *server_handle,
     if(mask & KADM5_KVNO)
 	out->kvno = ent.entry.kvno;
     if(mask & KADM5_MKVNO) {
-	int n;
+	size_t n;
 	out->mkvno = 0; /* XXX */
 	for(n = 0; n < ent.entry.keys.len; n++)
 	    if(ent.entry.keys.val[n].mkvno) {
@@ -169,7 +169,7 @@ kadm5_s_get_principal(void *server_handle,
 	    out->max_renewable_life = INT_MAX;
     }
     if(mask & KADM5_KEY_DATA){
-	int i;
+	size_t i;
 	Key *key;
 	krb5_key_data *kd;
 	krb5_salt salt;

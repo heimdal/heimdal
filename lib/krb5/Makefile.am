@@ -42,7 +42,8 @@ TESTS =						\
 	test_princ				\
 	test_pkinit_dh2key			\
 	test_pknistkdf				\
-	test_time
+	test_time				\
+	test_x500
 
 check_DATA = test_config_strings.out
 
@@ -236,7 +237,7 @@ if versionscript
 libkrb5_la_LDFLAGS += $(LDFLAGS_VERSION_SCRIPT)$(srcdir)/version-script.map
 endif
 
-$(libkrb5_la_OBJECTS) $(verify_krb5_conf_OBJECTS): $(srcdir)/krb5-protos.h $(srcdir)/krb5-private.h
+$(libkrb5_la_OBJECTS) $(verify_krb5_conf_OBJECTS) $(librfc3961_la_OBJECTS): $(srcdir)/krb5-protos.h $(srcdir)/krb5-private.h krb5_err.h heim_err.h k524_err.h krb5_err.h krb_err.h k524_err.h
 
 librfc3961_la_SOURCES =				\
 	crc.c					\
@@ -329,7 +330,7 @@ dist_include_HEADERS = \
 	krb5-private.h \
 	krb5_ccapi.h
 
-nodist_include_HEADERS = krb5_err.h heim_err.h k524_err.h 
+nodist_include_HEADERS = krb5_err.h heim_err.h k524_err.h
 
 # XXX use nobase_include_HEADERS = krb5/locate_plugin.h
 krb5dir = $(includedir)/krb5
@@ -347,7 +348,7 @@ CLEANFILES = \
 	heim_err.c heim_err.h \
 	k524_err.c k524_err.h
 
-$(libkrb5_la_OBJECTS): krb5_err.h krb_err.h heim_err.h k524_err.h crypto.h
+$(libkrb5_la_OBJECTS): krb5_err.h krb_err.h heim_err.h k524_err.h
 
 test_config_strings.out: test_config_strings.cfg
 	$(CP) $(srcdir)/test_config_strings.cfg test_config_strings.out

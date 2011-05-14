@@ -44,7 +44,7 @@ static struct units acl_units[] = {
     { "modify",		KADM5_PRIV_MODIFY },
     { "add",		KADM5_PRIV_ADD },
     { "get", 		KADM5_PRIV_GET },
-    { NULL }
+    { NULL,		0 }
 };
 
 kadm5_ret_t

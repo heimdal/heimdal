@@ -172,6 +172,8 @@ if test "X$with_sqlite3" != Xyes ; then
 fi
 AM_CONDITIONAL(SQLITE3,  test "X$with_sqlite3" = Xyes)
 
+AC_DEFINE(HAVE_SQLITE3, 1, [Define if you want support for sqlite in Heimdal.])
+
 AC_ARG_ENABLE(sqlite-cache, 
 	AS_HELP_STRING([--disable-sqlite-cache],[if you want support for cache in sqlite]))
 if test "$enable_sqlite_cache" != no; then

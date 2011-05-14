@@ -135,7 +135,7 @@ static krb5_error_code
 check_transited(krb5_context context, Ticket *ticket, EncTicketPart *enc)
 {
     char **realms;
-    unsigned int num_realms;
+    unsigned int num_realms, n;
     krb5_error_code ret;
 	
     /*
@@ -161,6 +161,8 @@ check_transited(krb5_context context, Ticket *ticket, EncTicketPart *enc)
     ret = krb5_check_transited(context, enc->crealm,
 			       ticket->realm,
 			       realms, num_realms, NULL);
+    for (n = 0; n < num_realms; n++)
+	free(realms[n]);
     free(realms);
     return ret;
 }
@@ -466,7 +468,7 @@ krb5_verify_ap_req2(krb5_context context,
     ac->keytype = ETYPE_NULL;
 
     if (etypes.val) {
-	int i;
+	size_t i;
 
 	for (i = 0; i < etypes.len; i++) {
 	    if (krb5_enctype_valid(context, etypes.val[i]) == 0) {

@@ -557,7 +557,7 @@ update_client_creds(struct client *c)
 #endif
 #if defined(SOCKCREDSIZE) && defined(SCM_CREDS)
     /* NetBSD */
-    if (c->unixrights.uid == -1) {
+    if (c->unixrights.uid == (uid_t)-1) {
 	struct msghdr msg;
 	socklen_t crmsgsize;
 	void *crmsg;
@@ -959,7 +959,7 @@ handle_write(struct client *c)
     if (len <= 0) {
 	c->flags |= WAITING_CLOSE;
 	c->flags &= ~(WAITING_WRITE);
-    } else if (c->olen != len) {
+    } else if (c->olen != (size_t)len) {
 	memmove(&c->outmsg[0], &c->outmsg[len], c->olen - len);
 	c->olen -= len;
     } else {

@@ -62,7 +62,7 @@ kadm5_s_rename_principal(void *server_handle,
 	goto out2;
     {
 	/* fix salt */
-	int i;
+	size_t i;
 	Salt salt;
 	krb5_salt salt2;
 	memset(&salt, 0, sizeof(salt));

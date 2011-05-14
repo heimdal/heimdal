@@ -257,7 +257,7 @@ _kdc_do_digest(krb5_context context,
     /* check the server principal in the ticket matches digest/R@R */
     {
 	krb5_principal principal = NULL;
-	const char *p, *r;
+	const char *p, *rr;
 
 	ret = krb5_ticket_get_server(context, ticket, &principal);
 	if (ret)
@@ -280,12 +280,12 @@ _kdc_do_digest(krb5_context context,
 	    krb5_free_principal(context, principal);
 	    goto out;
 	}
-	r = krb5_principal_get_realm(context, principal);
-	if (r == NULL) {
+	rr = krb5_principal_get_realm(context, principal);
+	if (rr == NULL) {
 	    krb5_free_principal(context, principal);
 	    goto out;
 	}
-	if (strcmp(p, r) != 0) {
+	if (strcmp(p, rr) != 0) {
 	    krb5_free_principal(context, principal);
 	    goto out;
 	}
@@ -616,7 +616,7 @@ _kdc_do_digest(krb5_context context,
 	    EVP_MD_CTX *ctx;
 	    unsigned char md[MD5_DIGEST_LENGTH];
 	    char *mdx;
-	    char id;
+	    char idx;
 
 	    if ((config->digests_allowed & CHAP_MD5) == 0) {
 		kdc_log(context, config, 0, "Digest CHAP MD5 not allowed");
@@ -630,7 +630,7 @@ _kdc_do_digest(krb5_context context,
 		goto out;
 	    }
 	
-	    if (hex_decode(*ireq.u.digestRequest.identifier, &id, 1) != 1) {
+	    if (hex_decode(*ireq.u.digestRequest.identifier, &idx, 1) != 1) {
 		ret = EINVAL;
 		krb5_set_error_message(context, ret, "failed to decode identifier");
 		goto out;
@@ -645,7 +645,7 @@ _kdc_do_digest(krb5_context context,
 	    ctx = EVP_MD_CTX_create();
 
 	    EVP_DigestInit_ex(ctx, EVP_md5(), NULL);
-	    EVP_DigestUpdate(ctx, &id, 1);
+	    EVP_DigestUpdate(ctx, &idx, 1);
 	    EVP_DigestUpdate(ctx, password, strlen(password));
 	    EVP_DigestUpdate(ctx, serverNonce.data, serverNonce.length);
 	    EVP_DigestFinal_ex(ctx, md, NULL);
@@ -804,7 +804,7 @@ _kdc_do_digest(krb5_context context,
 	    const char *username;
 	    struct ntlm_buf answer;
 	    Key *key = NULL;
-	    EVP_MD_CTX *ctx;
+	    EVP_MD_CTX *ctp;
 
 	    if ((config->digests_allowed & MS_CHAP_V2) == 0) {
 		kdc_log(context, config, 0, "MS-CHAP-V2 not allowed");
@@ -831,10 +831,10 @@ _kdc_do_digest(krb5_context context,
 	    else
 		username++;
 
-	    ctx = EVP_MD_CTX_create();
+	    ctp = EVP_MD_CTX_create();
 
 	    /* ChallangeHash */
-	    EVP_DigestInit_ex(ctx, EVP_sha1(), NULL);
+	    EVP_DigestInit_ex(ctp, EVP_sha1(), NULL);
 	    {
 		ssize_t ssize;
 		krb5_data clientNonce;
@@ -845,7 +845,7 @@ _kdc_do_digest(krb5_context context,
 		    ret = ENOMEM;
 		    krb5_set_error_message(context, ret,
 					   "malloc: out of memory");
-		    EVP_MD_CTX_destroy(ctx);
+		    EVP_MD_CTX_destroy(ctp);
 		    goto out;
 		}
 
@@ -855,18 +855,18 @@ _kdc_do_digest(krb5_context context,
 		    ret = ENOMEM;
 		    krb5_set_error_message(context, ret,
 					   "Failed to decode clientNonce");
-		    EVP_MD_CTX_destroy(ctx);
+		    EVP_MD_CTX_destroy(ctp);
 		    goto out;
 		}
-		EVP_DigestUpdate(ctx, clientNonce.data, ssize);
+		EVP_DigestUpdate(ctp, clientNonce.data, ssize);
 		free(clientNonce.data);
 	    }
-	    EVP_DigestUpdate(ctx, serverNonce.data, serverNonce.length);
-	    EVP_DigestUpdate(ctx, username, strlen(username));
+	    EVP_DigestUpdate(ctp, serverNonce.data, serverNonce.length);
+	    EVP_DigestUpdate(ctp, username, strlen(username));
 
-	    EVP_DigestFinal_ex(ctx, challange, NULL);
+	    EVP_DigestFinal_ex(ctp, challange, NULL);
 
-	    EVP_MD_CTX_destroy(ctx);
+	    EVP_MD_CTX_destroy(ctp);
 
 	    /* NtPasswordHash */
 	    ret = krb5_parse_name(context, username, &clientprincipal);
@@ -923,39 +923,39 @@ _kdc_do_digest(krb5_context context,
 
 	    if (r.u.response.success) {
 		unsigned char hashhash[MD4_DIGEST_LENGTH];
-		EVP_MD_CTX *ctx;
+		EVP_MD_CTX *ctxp;
 
-		ctx = EVP_MD_CTX_create();
+		ctxp = EVP_MD_CTX_create();
 
 		/* hashhash */
 		{
-		    EVP_DigestInit_ex(ctx, EVP_md4(), NULL);
-		    EVP_DigestUpdate(ctx,
+		    EVP_DigestInit_ex(ctxp, EVP_md4(), NULL);
+		    EVP_DigestUpdate(ctxp,
 				     key->key.keyvalue.data,
 				     key->key.keyvalue.length);
-		    EVP_DigestFinal_ex(ctx, hashhash, NULL);
+		    EVP_DigestFinal_ex(ctxp, hashhash, NULL);
 		}
 
 		/* GenerateAuthenticatorResponse */
-		EVP_DigestInit_ex(ctx, EVP_sha1(), NULL);
-		EVP_DigestUpdate(ctx, hashhash, sizeof(hashhash));
-		EVP_DigestUpdate(ctx, answer.data, answer.length);
-		EVP_DigestUpdate(ctx, ms_chap_v2_magic1,
+		EVP_DigestInit_ex(ctxp, EVP_sha1(), NULL);
+		EVP_DigestUpdate(ctxp, hashhash, sizeof(hashhash));
+		EVP_DigestUpdate(ctxp, answer.data, answer.length);
+		EVP_DigestUpdate(ctxp, ms_chap_v2_magic1,
 				 sizeof(ms_chap_v2_magic1));
-		EVP_DigestFinal_ex(ctx, md, NULL);
+		EVP_DigestFinal_ex(ctxp, md, NULL);
 
-		EVP_DigestInit_ex(ctx, EVP_sha1(), NULL);
-		EVP_DigestUpdate(ctx, md, sizeof(md));
-		EVP_DigestUpdate(ctx, challange, 8);
-		EVP_DigestUpdate(ctx, ms_chap_v2_magic2,
+		EVP_DigestInit_ex(ctxp, EVP_sha1(), NULL);
+		EVP_DigestUpdate(ctxp, md, sizeof(md));
+		EVP_DigestUpdate(ctxp, challange, 8);
+		EVP_DigestUpdate(ctxp, ms_chap_v2_magic2,
 				 sizeof(ms_chap_v2_magic2));
-		EVP_DigestFinal_ex(ctx, md, NULL);
+		EVP_DigestFinal_ex(ctxp, md, NULL);
 
 		r.u.response.rsp = calloc(1, sizeof(*r.u.response.rsp));
 		if (r.u.response.rsp == NULL) {
 		    free(answer.data);
 		    krb5_clear_error_message(context);
-		    EVP_MD_CTX_destroy(ctx);
+		    EVP_MD_CTX_destroy(ctxp);
 		    ret = ENOMEM;
 		    goto out;
 		}
@@ -964,22 +964,22 @@ _kdc_do_digest(krb5_context context,
 		if (r.u.response.rsp == NULL) {
 		    free(answer.data);
 		    krb5_clear_error_message(context);
-		    EVP_MD_CTX_destroy(ctx);
+		    EVP_MD_CTX_destroy(ctxp);
 		    ret = ENOMEM;
 		    goto out;
 		}
 
 		/* get_master, rfc 3079 3.4 */
-		EVP_DigestInit_ex(ctx, EVP_sha1(), NULL);
-		EVP_DigestUpdate(ctx, hashhash, 16);
-		EVP_DigestUpdate(ctx, answer.data, answer.length);
-		EVP_DigestUpdate(ctx, ms_rfc3079_magic1,
+		EVP_DigestInit_ex(ctxp, EVP_sha1(), NULL);
+		EVP_DigestUpdate(ctxp, hashhash, 16);
+		EVP_DigestUpdate(ctxp, answer.data, answer.length);
+		EVP_DigestUpdate(ctxp, ms_rfc3079_magic1,
 				 sizeof(ms_rfc3079_magic1));
-		EVP_DigestFinal_ex(ctx, md, NULL);
+		EVP_DigestFinal_ex(ctxp, md, NULL);
 
 		free(answer.data);
 
-		EVP_MD_CTX_destroy(ctx);
+		EVP_MD_CTX_destroy(ctxp);
 
 		r.u.response.session_key =
 		    calloc(1, sizeof(*r.u.response.session_key));

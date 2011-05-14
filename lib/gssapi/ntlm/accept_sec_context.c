@@ -155,15 +155,15 @@ _gss_ntlm_accept_sec_context
 						 &out);
 	heim_ntlm_free_type1(&type1);
 	if (major_status != GSS_S_COMPLETE) {
-	    OM_uint32 junk;
-	    _gss_ntlm_delete_sec_context(&junk, context_handle, NULL);
+	    OM_uint32 gunk;
+	    _gss_ntlm_delete_sec_context(&gunk, context_handle, NULL);
 	    return major_status;
 	}
 
 	output_token->value = malloc(out.length);
 	if (output_token->value == NULL && out.length != 0) {
-	    OM_uint32 junk;
-	    _gss_ntlm_delete_sec_context(&junk, context_handle, NULL);
+	    OM_uint32 gunk;
+	    _gss_ntlm_delete_sec_context(&gunk, context_handle, NULL);
 	    *minor_status = ENOMEM;
 	    return GSS_S_FAILURE;
 	}

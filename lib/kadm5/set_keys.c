@@ -201,8 +201,8 @@ _kadm5_set_keys_randomly (kadm5_server_context *context,
 {
    krb5_keyblock *kblock = NULL;
    kadm5_ret_t ret = 0;
-   int i, des_keyblock;
-   size_t num_keys;
+   int des_keyblock;
+   size_t i, num_keys;
    Key *keys;
 
    ret = hdb_generate_key_set(context->context, ent->principal,

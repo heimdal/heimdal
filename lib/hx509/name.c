@@ -66,17 +66,17 @@ static const struct {
     const heim_oid *o;
     wind_profile_flags flags;
 } no[] = {
-    { "C", &asn1_oid_id_at_countryName },
-    { "CN", &asn1_oid_id_at_commonName },
-    { "DC", &asn1_oid_id_domainComponent },
-    { "L", &asn1_oid_id_at_localityName },
-    { "O", &asn1_oid_id_at_organizationName },
-    { "OU", &asn1_oid_id_at_organizationalUnitName },
-    { "S", &asn1_oid_id_at_stateOrProvinceName },
-    { "STREET", &asn1_oid_id_at_streetAddress },
-    { "UID", &asn1_oid_id_Userid },
-    { "emailAddress", &asn1_oid_id_pkcs9_emailAddress },
-    { "serialNumber", &asn1_oid_id_at_serialNumber }
+    { "C", &asn1_oid_id_at_countryName, 0 },
+    { "CN", &asn1_oid_id_at_commonName, 0 },
+    { "DC", &asn1_oid_id_domainComponent, 0 },
+    { "L", &asn1_oid_id_at_localityName, 0 },
+    { "O", &asn1_oid_id_at_organizationName, 0 },
+    { "OU", &asn1_oid_id_at_organizationalUnitName, 0 },
+    { "S", &asn1_oid_id_at_stateOrProvinceName, 0 },
+    { "STREET", &asn1_oid_id_at_streetAddress, 0 },
+    { "UID", &asn1_oid_id_Userid, 0 },
+    { "emailAddress", &asn1_oid_id_pkcs9_emailAddress, 0 },
+    { "serialNumber", &asn1_oid_id_at_serialNumber, 0 }
 };
 
 static char *
@@ -159,7 +159,8 @@ oidtostring(const heim_oid *type)
 static int
 stringtooid(const char *name, size_t len, heim_oid *oid)
 {
-    int i, ret;
+    int ret;
+    size_t i;
     char *s;
 
     memset(oid, 0, sizeof(*oid));
@@ -200,14 +201,16 @@ int
 _hx509_Name_to_string(const Name *n, char **str)
 {
     size_t total_len = 0;
-    int i, j, ret;
+    size_t i, j, m;
+    int ret;
 
     *str = strdup("");
     if (*str == NULL)
 	return ENOMEM;
 
-    for (i = n->u.rdnSequence.len - 1 ; i >= 0 ; i--) {
+    for (m = n->u.rdnSequence.len; m > 0; m--) {
 	size_t len;
+	i = m - 1;
 
 	for (j = 0; j < n->u.rdnSequence.val[i].len; j++) {
 	    DirectoryString *ds = &n->u.rdnSequence.val[i].val[j].value;
@@ -438,7 +441,8 @@ _hx509_name_ds_cmp(const DirectoryString *ds1,
 int
 _hx509_name_cmp(const Name *n1, const Name *n2, int *c)
 {
-    int ret, i, j;
+    int ret;
+    size_t i, j;
 
     *c = n1->u.rdnSequence.len - n2->u.rdnSequence.len;
     if (*c)
@@ -610,7 +614,7 @@ hx509_parse_name(hx509_context context, const char *str, hx509_name *name)
 	    goto out;
 	}
 	
-	if ((q - p) > len) {
+	if ((size_t)(q - p) > len) {
 	    ret = HX509_PARSING_NAME_FAILED;
 	    hx509_set_error_string(context, 0, ret, " = after , in %s", p);
 	    goto out;
@@ -727,7 +731,7 @@ hx509_name_expand(hx509_context context,
 		  hx509_env env)
 {
     Name *n = &name->der_name;
-    int i, j;
+    size_t i, j;
 
     if (env == NULL)
 	return 0;

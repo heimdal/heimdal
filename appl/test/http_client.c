@@ -237,12 +237,16 @@ http_query(const char *host, const char *page,
 		    in_ptr -= 2;
 		    break;
 		} else if (state == RESPONSE) {
-		    req->response = strndup(in_buf, p - in_buf);
+		    req->response = emalloc(p - in_buf + 1);
+		    memcpy(req->response, in_buf, p - in_buf);
+		    req->response[p - in_buf] = '\0';
 		    state = HEADER;
 		} else {
 		    req->headers = realloc(req->headers,
 					   (req->num_headers + 1) * sizeof(req->headers[0]));
-		    req->headers[req->num_headers] = strndup(in_buf, p - in_buf);
+		    req->headers[req->num_headers] = emalloc(p - in_buf + 1);
+		    memcpy(req->headers[req->num_headers], in_buf, p - in_buf);
+		    req->headers[req->num_headers][p - in_buf] = '\0';
 		    if (req->headers[req->num_headers] == NULL)
 			errx(1, "strdup");
 		    req->num_headers++;

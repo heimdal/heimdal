@@ -142,6 +142,7 @@ roken_gethostby(const char *hostname)
     int offset = 0;
     int n;
     char *p, *foo;
+    size_t len;
 
     if(dns_addr.sin_family == 0)
 	return NULL; /* no configured host */
@@ -160,7 +161,9 @@ roken_gethostby(const char *hostname)
 	free(request);
 	return NULL;
     }
-    if(write(s, request, strlen(request)) != strlen(request)) {
+
+    len = strlen(request);
+    if(write(s, request, len) != (ssize_t)len) {
 	close(s);
 	free(request);
 	return NULL;

@@ -171,7 +171,7 @@ hdb_remove_aliases(krb5_context context, HDB *db, krb5_data *key)
     krb5_error_code code;
     hdb_entry oldentry;
     krb5_data value;
-    int i;
+    size_t i;
 
     code = db->hdb__get(context, db, *key, &value);
     if (code == HDB_ERR_NOENTRY)
@@ -211,7 +211,7 @@ hdb_add_aliases(krb5_context context, HDB *db,
     const HDB_Ext_Aliases *aliases;
     krb5_error_code code;
     krb5_data key, value;
-    int i;
+    size_t i;
 
     code = hdb_entry_get_aliases(&entry->entry, &aliases);
     if (code || aliases == NULL)
@@ -240,7 +240,8 @@ static krb5_error_code
 hdb_check_aliases(krb5_context context, HDB *db, hdb_entry_ex *entry)
 {
     const HDB_Ext_Aliases *aliases;
-    int code, i;
+    int code;
+    size_t i;
 
     /* check if new aliases already is used */
 

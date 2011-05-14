@@ -362,7 +362,8 @@ hx509_cms_unenvelope(hx509_context context,
     heim_octet_string *params, params_data;
     heim_octet_string ivec;
     size_t size;
-    int ret, i, matched = 0, findflags = 0;
+    int ret, matched = 0, findflags = 0;
+    size_t i;
 
 
     memset(&key, 0, sizeof(key));
@@ -718,7 +719,8 @@ out:
 static int
 any_to_certs(hx509_context context, const SignedData *sd, hx509_certs certs)
 {
-    int ret, i;
+    int ret;
+    size_t i;
 
     if (sd->certificates == NULL)
 	return 0;
@@ -744,7 +746,7 @@ any_to_certs(hx509_context context, const SignedData *sd, hx509_certs certs)
 static const Attribute *
 find_attribute(const CMSAttributes *attr, const heim_oid *oid)
 {
-    int i;
+    size_t i;
     for (i = 0; i < attr->len; i++)
 	if (der_heim_oid_cmp(&attr->val[i].type, oid) == 0)
 	    return &attr->val[i];
@@ -790,7 +792,8 @@ hx509_cms_verify_signed(hx509_context context,
     hx509_certs certs = NULL;
     SignedData sd;
     size_t size;
-    int ret, i, found_valid_sig;
+    int ret, found_valid_sig;
+    size_t i;
 
     *signer_certs = NULL;
     content->data = NULL;

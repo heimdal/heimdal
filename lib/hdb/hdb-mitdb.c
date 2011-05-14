@@ -144,7 +144,7 @@ fix_salt(krb5_context context, hdb_entry *ent, int key_num)
     case KRB5_KDB_SALTTYPE_NOREALM:
     {
 	size_t len;
-	int i;
+	size_t i;
 	char *p;
 	
 	len = 0;

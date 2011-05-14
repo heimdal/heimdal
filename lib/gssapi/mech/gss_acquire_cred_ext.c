@@ -109,7 +109,30 @@ gss_acquire_cred_ext(OM_uint32 *minor_status,
 						  mc->gmc_mech_oid,
 						  cred_usage,
 						  &mc->gmc_cred);
-	} else if (credential_type != GSS_C_NO_OID) {
+	} else if (gss_oid_equal(credential_type, GSS_C_CRED_PASSWORD) &&
+		   m->gm_compat &&
+		   m->gm_compat->gmc_acquire_cred_with_password) {
+	    /*
+	     * Shim for mechanisms that adhere to API-as-SPI and do not
+	     * implement gss_acquire_cred_ext().
+	     */
+	    gss_OID_set_desc set2;
+	    _gss_acquire_cred_with_password_t *acwp
+		= m->gm_compat->gmc_acquire_cred_with_password;
+
+	    set2.count = 1;
+	    set2.elements = mc->gmc_mech_oid;
+
+	    major_status = acwp(minor_status,
+				desired_mech_name,
+				(const gss_buffer_t)credential_data,
+				time_req,
+				&set2,
+				cred_usage,
+				&mc->gmc_cred,
+				NULL,
+				NULL);
+	} else if (credential_type == GSS_C_NO_OID) {
 	    gss_OID_set_desc set2;
 
 	    set2.count = 1;

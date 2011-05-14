@@ -51,13 +51,44 @@ typedef OM_uint32 GSSAPI_CALLCONV _gss_inquire_attrs_for_mech_t (
 	       gss_OID_set *          /* known_mech_attrs */
 	    );
 
+typedef OM_uint32 GSSAPI_CALLCONV _gss_acquire_cred_with_password_t
+	      (OM_uint32 *,            /* minor_status */
+	       const gss_name_t,       /* desired_name */
+	       const gss_buffer_t,     /* password */
+	       OM_uint32,              /* time_req */
+	       const gss_OID_set,      /* desired_mechs */
+	       gss_cred_usage_t,       /* cred_usage */
+	       gss_cred_id_t *,        /* output_cred_handle */
+	       gss_OID_set *,          /* actual_mechs */
+	       OM_uint32 *             /* time_rec */
+	      );
+
+typedef OM_uint32 GSSAPI_CALLCONV _gss_add_cred_with_password_t (
+	       OM_uint32 *,            /* minor_status */
+	       const gss_cred_id_t,    /* input_cred_handle */
+	       const gss_name_t,       /* desired_name */
+	       const gss_OID,          /* desired_mech */
+	       const gss_buffer_t,     /* password */
+	       gss_cred_usage_t,       /* cred_usage */
+	       OM_uint32,              /* initiator_time_req */
+	       OM_uint32,              /* acceptor_time_req */
+	       gss_cred_id_t *,        /* output_cred_handle */
+	       gss_OID_set *,          /* actual_mechs */
+	       OM_uint32 *,            /* initiator_time_rec */
+	       OM_uint32 *             /* acceptor_time_rec */
+	      );
+
 /*
  * API-as-SPI compatibility for compatibility with MIT mechanisms;
  * native Heimdal mechanisms should not use these.
  */
 struct gss_mech_compat_desc_struct {
-        _gss_inquire_saslname_for_mech_t    *gmc_inquire_saslname_for_mech;
-        _gss_inquire_mech_for_saslname_t    *gmc_inquire_mech_for_saslname;
-        _gss_inquire_attrs_for_mech_t       *gmc_inquire_attrs_for_mech;
+	_gss_inquire_saslname_for_mech_t    *gmc_inquire_saslname_for_mech;
+	_gss_inquire_mech_for_saslname_t    *gmc_inquire_mech_for_saslname;
+	_gss_inquire_attrs_for_mech_t       *gmc_inquire_attrs_for_mech;
+	_gss_acquire_cred_with_password_t   *gmc_acquire_cred_with_password;
+#if 0
+	_gss_add_cred_with_password_t       *gmc_add_cred_with_password;
+#endif
 };
 

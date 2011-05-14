@@ -360,20 +360,20 @@ _gss_load_mech(void)
 		OPTSYM(export_cred);
 		OPTSYM(import_cred);
 		OPTSYM(acquire_cred_ext);
+#if 0
 		OPTSYM(iter_creds);
 		OPTSYM(destroy_cred);
 		OPTSYM(cred_hold);
 		OPTSYM(cred_unhold);
 		OPTSYM(cred_label_get);
 		OPTSYM(cred_label_set);
+#endif
 		OPTSYM(display_name_ext);
 		OPTSYM(inquire_name);
 		OPTSYM(get_name_attribute);
 		OPTSYM(set_name_attribute);
 		OPTSYM(delete_name_attribute);
 		OPTSYM(export_name_composite);
-		OPTSPISYM(acquire_cred_with_password);
-		OPTSYM(add_cred_with_password);
 		OPTSYM(pname_to_uid);
 		OPTSPISYM(authorize_localname);
 
@@ -388,6 +388,7 @@ _gss_load_mech(void)
 			COMPATSYM(inquire_saslname_for_mech);
 			COMPATSYM(inquire_mech_for_saslname);
 			COMPATSYM(inquire_attrs_for_mech);
+			COMPATSYM(acquire_cred_with_password);
 		}
 
 		/* pick up the oid sets of names */

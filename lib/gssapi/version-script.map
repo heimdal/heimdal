@@ -20,7 +20,7 @@ HEIMDAL_GSS_2.0 {
 		gss_acquire_cred_with_password;
 		gss_add_buffer_set_member;
 		gss_add_cred;
-		gss_add_cred_with_password;
+#		gss_add_cred_with_password;
 		gss_add_oid_set_member;
 		gss_authorize_localname;
 		gss_canonicalize_name;

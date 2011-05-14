@@ -130,9 +130,15 @@ gss_authorize_localname(OM_uint32 *minor_status,
     if (gss_name == GSS_C_NO_NAME || gss_user == GSS_C_NO_NAME)
         return GSS_S_CALL_INACCESSIBLE_READ;
 
-    /* user name must not be a MN */
+    /*
+     * We should check that the user name is not a mechanism name, but
+     * as Heimdal always calls the mechanism's gss_import_name(), it's
+     * not possible to make this check.
+     */
+#if 0
     if (HEIM_SLIST_FIRST(&user->gn_mn) != NULL)
         return GSS_S_BAD_NAME;
+#endif
 
     /* If mech returns yes, we return yes */
     major_status = mech_authorize_localname(minor_status, name, user);

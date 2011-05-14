@@ -46,10 +46,9 @@ gss_add_cred_with_password(OM_uint32 *minor_status,
 	gssapi_mech_interface m;
 	struct _gss_cred *cred = (struct _gss_cred *) input_cred_handle;
 	struct _gss_cred *new_cred;
-	gss_cred_id_t release_cred;
 	struct _gss_mechanism_cred *mc, *target_mc, *copy_mc;
-	struct _gss_mechanism_name *mn;
-	OM_uint32 junk;
+	struct _gss_mechanism_name *mn = NULL;
+	OM_uint32 junk, time_req;
 
 	*minor_status = 0;
 	*output_cred_handle = GSS_C_NO_CREDENTIAL;
@@ -60,7 +59,13 @@ gss_add_cred_with_password(OM_uint32 *minor_status,
 	if (actual_mechs)
 	    *actual_mechs = GSS_C_NO_OID_SET;
 
-	new_cred = malloc(sizeof(struct _gss_cred));
+	m = __gss_get_mechanism(desired_mech);
+	if (m == NULL) {
+		*minor_status = 0;
+		return (GSS_S_BAD_MECH);
+	}
+
+	new_cred = calloc(1, sizeof(struct _gss_cred));
 	if (!new_cred) {
 		*minor_status = ENOMEM;
 		return (GSS_S_FAILURE);
@@ -81,8 +86,7 @@ gss_add_cred_with_password(OM_uint32 *minor_status,
 			}
 			copy_mc = _gss_copy_cred(mc);
 			if (!copy_mc) {
-				release_cred = (gss_cred_id_t)new_cred;
-				gss_release_cred(&junk, &release_cred);
+				gss_release_cred(&junk, (gss_cred_id_t *)&new_cred);
 				*minor_status = ENOMEM;
 				return (GSS_S_FAILURE);
 			}
@@ -99,53 +103,50 @@ gss_add_cred_with_password(OM_uint32 *minor_status,
 					    desired_mech,
 					    &mn);
 		if (major_status != GSS_S_COMPLETE) {
-			free(new_cred);
-			return major_status;
+			gss_release_cred(&junk, (gss_cred_id_t *)&new_cred);
+			return (major_status);
 		}
-	} else {
-		mn = 0;
 	}
 
-	m = __gss_get_mechanism(desired_mech);
-	if (m->gm_add_cred_with_password == NULL) {
-		release_cred = (gss_cred_id_t)new_cred;
-		gss_release_cred(&junk, &release_cred);
-		return (GSS_S_UNAVAILABLE);
-	}
+	if (cred_usage == GSS_C_INITIATE)
+		time_req = initiator_time_req;
+	else if (cred_usage == GSS_C_ACCEPT)
+		time_req = acceptor_time_req;
+	else if (cred_usage == GSS_C_BOTH)
+		time_req = initiator_time_req > acceptor_time_req ? initiator_time_req : acceptor_time_req;
 
-	mc = malloc(sizeof(struct _gss_mechanism_cred));
-	if (!mc) {
-		release_cred = (gss_cred_id_t)new_cred;
-		gss_release_cred(&junk, &release_cred);
-		*minor_status = ENOMEM;
-		return (GSS_S_FAILURE);
-	}
-	mc->gmc_mech = m;
-	mc->gmc_mech_oid = &m->gm_mech_oid;
-
-	major_status = m->gm_add_cred_with_password(minor_status,
-	    target_mc ? target_mc->gmc_cred : GSS_C_NO_CREDENTIAL,
-	    desired_name ? mn->gmn_name : GSS_C_NO_NAME,
-	    desired_mech,
-	    password,
-	    cred_usage,
-	    initiator_time_req,
-	    acceptor_time_req,
-	    &mc->gmc_cred,
-	    actual_mechs,
-	    initiator_time_rec,
-	    acceptor_time_rec);
-
-	if (major_status) {
-		_gss_mg_error(m, major_status, *minor_status);
-		release_cred = (gss_cred_id_t)new_cred;
-		gss_release_cred(&junk, &release_cred);
-		free(mc);
+	major_status = _gss_acquire_mech_cred(minor_status, m, mn,
+					      GSS_C_CRED_PASSWORD, password,
+					      time_req, desired_mech,
+					      cred_usage, &mc);
+	if (major_status != GSS_S_COMPLETE) {
+		gss_release_cred(&junk, (gss_cred_id_t *)&new_cred);
 		return (major_status);
 	}
-	HEIM_SLIST_INSERT_HEAD(&new_cred->gc_mc, mc, gmc_link);
-	*output_cred_handle = (gss_cred_id_t) new_cred;
 
+	HEIM_SLIST_INSERT_HEAD(&new_cred->gc_mc, mc, gmc_link);
+
+	if (actual_mechs != NULL || initiator_time_rec != NULL || acceptor_time_rec != NULL) {
+		OM_uint32 time_rec;
+
+		major_status = gss_inquire_cred(minor_status,
+						(gss_cred_id_t)new_cred,
+						NULL,
+						&time_rec,
+						NULL,
+						actual_mechs);
+		if (GSS_ERROR(major_status)) {
+			gss_release_cred(&junk, (gss_cred_id_t *)&new_cred);
+			return (major_status);
+		}
+		if (initiator_time_rec != NULL &&
+		    (cred_usage == GSS_C_INITIATE || cred_usage == GSS_C_BOTH))
+			*initiator_time_rec = time_rec;
+		if (acceptor_time_rec != NULL &&
+		    (cred_usage == GSS_C_ACCEPT || cred_usage == GSS_C_BOTH))
+			*acceptor_time_rec = time_rec;
+	}
+
+	*output_cred_handle = (gss_cred_id_t) new_cred;
 	return (GSS_S_COMPLETE);
 }
-

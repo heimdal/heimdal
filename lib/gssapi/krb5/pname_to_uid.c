@@ -36,7 +36,7 @@ OM_uint32
 _gsskrb5_pname_to_uid(OM_uint32 *minor_status,
                       const gss_name_t pname,
                       const gss_OID mech_type,
-                      uid_t *uidp) 
+                      uid_t *uidp)
 {
     krb5_error_code ret;
     krb5_context context;

@@ -96,7 +96,7 @@ gss_acquire_cred_with_password(OM_uint32 *minor_status,
 	    *minor_status = 0;
 	    return GSS_S_NO_CRED;
 	}
-    
+
 	*output_cred_handle = (gss_cred_id_t)new_cred;
     }
 

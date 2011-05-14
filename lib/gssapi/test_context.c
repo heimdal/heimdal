@@ -581,7 +581,7 @@ main(int argc, char **argv)
 					credential_type, &credential_data,
 					0, GSS_C_NO_OID, GSS_C_INITIATE, &client_cred);
 	if (GSS_ERROR(maj_stat))
-	    errx(1, "gss_acquire_cred_ex: %s",
+	    errx(1, "gss_acquire_cred_ext: %s",
 		 gssapi_err(maj_stat, min_stat, GSS_C_NO_OID));
 	gss_release_name(&min_stat, &cname);
     } else if (credential_type) {

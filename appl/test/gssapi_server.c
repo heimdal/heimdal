@@ -300,6 +300,7 @@ doit (int port, const char *service)
     int sock, sock2;
     struct sockaddr_in my_addr;
     int one = 1;
+    int ret;
 
     sock = socket (AF_INET, SOCK_STREAM, 0);
     if (sock < 0)
@@ -317,14 +318,17 @@ doit (int port, const char *service)
     if (bind (sock, (struct sockaddr *)&my_addr, sizeof(my_addr)) < 0)
 	err (1, "bind");
 
-    if (listen (sock, 1) < 0)
-	err (1, "listen");
+    while (1) {
+        if (listen (sock, 1) < 0)
+	    err (1, "listen");
 
-    sock2 = accept (sock, NULL, NULL);
-    if (sock2 < 0)
-	err (1, "accept");
+        sock2 = accept (sock, NULL, NULL);
+        if (sock2 < 0)
+	    err (1, "accept");
 
-    return proto (sock2, service);
+        ret = proto (sock2, service);
+    }
+    return ret;
 }
 
 int
@@ -334,3 +338,4 @@ main(int argc, char **argv)
     int port = server_setup(&context, argc, argv);
     return doit (port, service);
 }
+

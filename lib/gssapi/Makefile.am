@@ -59,6 +59,7 @@ krb5src = \
 	krb5/inquire_mechs_for_name.c \
 	krb5/inquire_names_for_mech.c \
 	krb5/inquire_sec_context_by_oid.c \
+	krb5/pname_to_uid.c \
 	krb5/process_context_token.c \
 	krb5/prf.c \
 	krb5/release_buffer.c \
@@ -70,6 +71,7 @@ krb5src = \
 	krb5/set_sec_context_option.c \
 	krb5/ticket_flags.c \
 	krb5/unwrap.c \
+	krb5/authorize_localname.c \
 	krb5/verify_mic.c \
 	krb5/wrap.c
 
@@ -83,6 +85,7 @@ mechsrc = \
 	mech/gss_acquire_cred_ext.c \
 	mech/gss_acquire_cred_with_password.c \
 	mech/gss_add_cred.c \
+	mech/gss_add_cred_with_password.c \
 	mech/gss_add_oid_set_member.c \
 	mech/gss_aeap.c \
 	mech/gss_buffer_set.c \
@@ -123,6 +126,7 @@ mechsrc = \
 	mech/gss_oid.c \
 	mech/gss_oid_equal.c \
 	mech/gss_oid_to_str.c \
+	mech/gss_pname_to_uid.c \
 	mech/gss_process_context_token.c \
 	mech/gss_pseudo_random.c \
 	mech/gss_release_buffer.c \
@@ -139,6 +143,7 @@ mechsrc = \
 	mech/gss_test_oid_set_member.c \
 	mech/gss_unseal.c \
 	mech/gss_unwrap.c \
+	mech/gss_authorize_localname.c \
 	mech/gss_utils.c \
 	mech/gss_verify.c \
 	mech/gss_verify_mic.c \

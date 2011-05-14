@@ -447,6 +447,11 @@ extern GSSAPI_LIB_VARIABLE gss_OID_desc __gss_c_nt_export_name_oid_desc;
 #define GSS_S_BAD_MECH_ATTR (19ul << GSS_C_ROUTINE_ERROR_OFFSET)
 
 /*
+ * Apparently awating spec fix.
+ */
+#define GSS_S_CRED_UNAVAIL GSS_S_FAILURE
+
+/*
  * Supplementary info bits:
  */
 #define GSS_S_CONTINUE_NEEDED (1ul << (GSS_C_SUPPLEMENTARY_OFFSET + 0))
@@ -1020,6 +1025,56 @@ gss_display_mech_attr(OM_uint32 * minor_status,
 		      gss_buffer_t name,
 		      gss_buffer_t short_desc,
 		      gss_buffer_t long_desc);
+
+/*
+ * Solaris compat
+ */
+
+GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL gss_acquire_cred_with_password
+           (OM_uint32 * /*minor_status*/,
+            const gss_name_t /*desired_name*/,
+            const gss_buffer_t /*password*/,
+            OM_uint32 /*time_req*/,
+            const gss_OID_set /*desired_mechs*/,
+            gss_cred_usage_t /*cred_usage*/,
+            gss_cred_id_t * /*output_cred_handle*/,
+            gss_OID_set * /*actual_mechs*/,
+            OM_uint32 * /*time_rec*/
+           );
+
+GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL gss_add_cred_with_password (
+            OM_uint32 * /*minor_status*/,
+            const gss_cred_id_t /*input_cred_handle*/,
+            const gss_name_t /*desired_name*/,
+            const gss_OID /*desired_mech*/,
+            const gss_buffer_t /*password*/,
+            gss_cred_usage_t /*cred_usage*/,
+            OM_uint32 /*initiator_time_req*/,
+            OM_uint32 /*acceptor_time_req*/,
+            gss_cred_id_t * /*output_cred_handle*/,
+            gss_OID_set * /*actual_mechs*/,
+            OM_uint32 * /*initiator_time_rec*/,
+            OM_uint32 * /*acceptor_time_rec*/
+           );
+
+GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL
+gss_pname_to_uid(
+        OM_uint32 *minor,
+        const gss_name_t name,
+        const gss_OID mech_type,
+        uid_t *uidOut);
+
+GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL
+gss_authorize_localname(
+        OM_uint32 *minor,
+        const gss_name_t name,
+        const gss_name_t user);
+
+GSSAPI_LIB_FUNCTION int GSSAPI_LIB_CALL
+gss_userok(const gss_name_t name,
+           const char *user);
+
+extern GSSAPI_LIB_VARIABLE gss_buffer_t GSS_C_ATTR_LOCAL_LOGIN_USER;
 
 /*
  * Naming extensions

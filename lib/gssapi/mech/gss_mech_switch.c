@@ -310,6 +310,9 @@ _gss_load_mech(void)
 		m->gm_so = so;
 		m->gm_mech.gm_mech_oid = mech_oid;
 		m->gm_mech.gm_flags = 0;
+		m->gm_mech.gm_compat = calloc(1, sizeof(struct gss_mech_compat_desc_struct));
+		if (m->gm_mech.gm_compat == NULL)
+			goto bad;
 
 		major_status = gss_add_oid_set_member(&minor_status,
 		    &m->gm_mech.gm_mech_oid, &_gss_mech_oids);
@@ -369,6 +372,10 @@ _gss_load_mech(void)
 		OPTSYM(set_name_attribute);
 		OPTSYM(delete_name_attribute);
 		OPTSYM(export_name_composite);
+		OPTSPISYM(acquire_cred_with_password);
+		OPTSYM(add_cred_with_password);
+		OPTSYM(pname_to_uid);
+		OPTSPISYM(authorize_localname);
 
 		mi = dlsym(so, "gss_mo_init");
 		if (mi != NULL) {
@@ -376,6 +383,11 @@ _gss_load_mech(void)
 					  &m->gm_mech.gm_mo, &m->gm_mech.gm_mo_num);
 			if (GSS_ERROR(major_status))
 				goto bad;
+		} else {
+			/* API-as-SPI compatibility */
+			COMPATSYM(inquire_saslname_for_mech);
+			COMPATSYM(inquire_mech_for_saslname);
+			COMPATSYM(inquire_attrs_for_mech);
 		}
 
 		/* pick up the oid sets of names */
@@ -392,6 +404,7 @@ _gss_load_mech(void)
 
 	bad:
 		if (m != NULL) {
+			free(m->gm_mech.gm_compat);
 			free(m->gm_mech.gm_mech_oid.elements);
 			free(m);
 		}

@@ -460,12 +460,55 @@ struct gss_mo_desc_struct {
     int (*set)(gss_const_OID, gss_mo_desc *, int, gss_buffer_t);
 };
 
+typedef OM_uint32 GSSAPI_CALLCONV _gss_acquire_cred_with_password_t
+	      (OM_uint32 *,            /* minor_status */
+	       const gss_name_t,       /* desired_name */
+	       const gss_buffer_t,     /* password */
+	       OM_uint32,              /* time_req */
+	       const gss_OID_set,      /* desired_mechs */
+	       gss_cred_usage_t,       /* cred_usage */
+	       gss_cred_id_t *,        /* output_cred_handle */
+	       gss_OID_set *,          /* actual_mechs */
+	       OM_uint32 *             /* time_rec */
+	      );
+
+
+typedef OM_uint32 GSSAPI_CALLCONV _gss_add_cred_with_password_t (
+	       OM_uint32 *,            /* minor_status */
+	       const gss_cred_id_t,    /* input_cred_handle */
+	       const gss_name_t,       /* desired_name */
+	       const gss_OID,          /* desired_mech */
+	       const gss_buffer_t,     /* password */
+	       gss_cred_usage_t,       /* cred_usage */
+	       OM_uint32,              /* initiator_time_req */
+	       OM_uint32,              /* acceptor_time_req */
+	       gss_cred_id_t *,        /* output_cred_handle */
+	       gss_OID_set *,          /* actual_mechs */
+	       OM_uint32 *,            /* initiator_time_rec */
+	       OM_uint32 *             /* acceptor_time_rec */
+	      );
+
+typedef OM_uint32 GSSAPI_CALLCONV _gss_pname_to_uid_t (
+	       OM_uint32 *,		/* minor_status */
+	       const gss_name_t,	/* name */
+	       const gss_OID,		/* mech_type */
+	       uid_t *			/* uidOut */
+	      );
+
+typedef OM_uint32 GSSAPI_CALLCONV _gss_authorize_localname_t (
+	       OM_uint32 *,		/* minor_status */
+	       const gss_name_t,	/* name */
+	       gss_const_buffer_t,	/* user */
+	       gss_const_OID		/* user_name_type */
+	      );
+
+/* mechglue internal */
+struct gss_mech_compat_desc_struct;
 
 #define GMI_VERSION 5
 
 /* gm_flags */
 #define GM_USE_MG_CRED      	1	/* uses mech glue credentials */
-
 
 typedef struct gssapi_mech_interface_desc {
 	unsigned			gm_version;
@@ -521,12 +564,17 @@ typedef struct gssapi_mech_interface_desc {
 	_gss_cred_label_set_t		*gm_cred_label_set;
         gss_mo_desc			*gm_mo;
         size_t				 gm_mo_num;
+        _gss_pname_to_uid_t             *gm_pname_to_uid;
+        _gss_authorize_localname_t      *gm_authorize_localname;
         _gss_display_name_ext_t         *gm_display_name_ext;
         _gss_inquire_name_t             *gm_inquire_name;
         _gss_get_name_attribute_t       *gm_get_name_attribute;
         _gss_set_name_attribute_t       *gm_set_name_attribute;
         _gss_delete_name_attribute_t    *gm_delete_name_attribute;
         _gss_export_name_composite_t    *gm_export_name_composite;
+        _gss_acquire_cred_with_password_t   *gm_acquire_cred_with_password;
+        _gss_add_cred_with_password_t   *gm_add_cred_with_password;
+        struct gss_mech_compat_desc_struct  *gm_compat;
 } gssapi_mech_interface_desc, *gssapi_mech_interface;
 
 gssapi_mech_interface

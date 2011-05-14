@@ -39,3 +39,6 @@ struct _gss_cred {
 	struct _gss_mechanism_cred_list gc_mc;
 };
 
+struct _gss_mechanism_cred *
+_gss_copy_cred(struct _gss_mechanism_cred *mc);
+

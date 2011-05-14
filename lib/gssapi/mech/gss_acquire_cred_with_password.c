@@ -88,7 +88,7 @@ gss_acquire_cred_with_password(OM_uint32 *minor_status,
 		HEIM_SLIST_INSERT_HEAD(&new_cred->gc_mc, mc, gmc_link);
 	    }
 
-	    gss_release_cred(&tmp_minor, &tmp_cred);
+	    gss_release_cred(&tmp_minor, (gss_cred_id_t *)&tmp_cred);
 	}
 
 	if (!HEIM_SLIST_FIRST(&new_cred->gc_mc)) {

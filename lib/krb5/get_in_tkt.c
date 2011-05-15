@@ -510,6 +510,7 @@ krb5_get_in_cred(krb5_context context,
 				   NULL,
 				   nonce,
 				   flags,
+				   NULL,
 				   decrypt_proc,
 				   decryptarg);
     }

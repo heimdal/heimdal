@@ -116,11 +116,10 @@ ${akinit} --password-file=${objdir}/foopassword ${server}@${R} >/dev/null|| { ex
 echo "Checking for FAST avail"
 ${aklist} --hidden | grep fast_avail > /dev/null || { exit 1; }
 
-echo "Checking out with FAST armor ticket"
+echo "Getting client initial tickets with FAST armor ticket"
 ${kinit} --fast-armor-cache=${acache} \
    --password-file=${objdir}/foopassword foo@$R || \
 	{ ec=1 ; eval "${testfailed}"; }
-
 
 
 

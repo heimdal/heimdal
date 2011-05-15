@@ -77,7 +77,8 @@ EXPORTS
 	TypedData,
 	KrbFastResponse,
 	KrbFastFinished,
-	KrbFastReq
+	KrbFastReq,
+	KrbFastArmor
 	;
 
 NAME-TYPE ::= INTEGER {

@@ -466,6 +466,12 @@ verify_checksum(krb5_context context,
 	ret = get_checksum_key(context, crypto, usage, ct, &dkey);
 	if (ret)
 	    return ret;
+    } else if (crypto) {
+	krb5_set_error_message(context, KRB5_PROG_SUMTYPE_NOSUPP,
+			       N_("Checksum type %s is unkeyed, "
+				  "but caller expected key checksum %s", ""),
+			       ct->name, crypto->et->name);
+	return KRB5_PROG_SUMTYPE_NOSUPP; /* XXX */
     } else
 	dkey = NULL;
 

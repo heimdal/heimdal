@@ -75,6 +75,8 @@ typedef struct krb5_get_init_creds_ctx {
     krb5_prompter_fct prompter;
     void *prompter_data;
 
+    krb5_ccache fast_ccache;
+
     struct pa_info_data *ppaid;
     struct fast_state {
 	int flags;
@@ -1245,6 +1247,10 @@ process_pa_data_to_md(krb5_context context,
 
     pa_data_add_pac_request(context, ctx, *out_md);
 
+    ret = krb5_padata_add(context, *out_md, KRB5_PADATA_REQ_ENC_PA_REP, NULL, 0);
+    if (ret)
+	return ret;
+
     if ((*out_md)->len == 0) {
 	free(*out_md);
 	*out_md = NULL;
@@ -1626,6 +1632,15 @@ krb5_init_creds_set_keyblock(krb5_context context,
     return 0;
 }
 
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
+krb5_init_creds_set_fast_ccache(krb5_context context,
+				krb5_init_creds_context ctx,
+				krb5_ccache fast_ccache)
+{
+    ctx->fast_ccache = fast_ccache;
+    return 0;
+}
+
 /**
  * The core loop if krb5_get_init_creds() function family. Create the
  * packets and have the caller send them off to the KDC.
@@ -1720,14 +1735,15 @@ krb5_init_creds_step(krb5_context context,
 				       NULL,
 				       ctx->nonce,
 				       eflags,
+				       &ctx->req_buffer,
 				       NULL,
 				       NULL);
+	    if (ret == 0)
+		ret = copy_EncKDCRepPart(&rep.enc_part, &ctx->enc_part);
+
 	    krb5_free_keyblock(context, ctx->fast_state.reply_key);
 	    ctx->fast_state.reply_key = NULL;
 	    *flags = 0;
-
-	    if (ret == 0)
-		ret = copy_EncKDCRepPart(&rep.enc_part, &ctx->enc_part);
 
 	    free_AS_REP(&rep.kdc_rep);
 	    free_EncASRepPart(&rep.enc_part);
@@ -1886,6 +1902,43 @@ krb5_init_creds_get_error(krb5_context context,
     ret = copy_KRB_ERROR(&ctx->error, error);
     if (ret)
 	krb5_set_error_message(context, ret, N_("malloc: out of memory", ""));
+
+    return ret;
+}
+
+/**
+ *
+ * @ingroup krb5_credential
+ */
+
+krb5_error_code
+krb5_init_creds_store(krb5_context context,
+		      krb5_init_creds_context ctx,
+		      krb5_ccache id)
+{
+    krb5_error_code ret;
+
+    if (ctx->cred.client == NULL) {
+	ret = KRB5KDC_ERR_PREAUTH_REQUIRED;
+	krb5_set_error_message(context, ret, "init creds not completed yet");
+	return ret;
+    }
+
+    ret = krb5_cc_initialize(context, id, ctx->cred.client);
+    if (ret)
+	return ret;
+
+    ret = krb5_cc_store_cred(context, id, &ctx->cred);
+    if (ret)
+	return ret;
+
+    if (ctx->cred.flags.b.enc_pa_rep) {
+	krb5_data data = { 3, rk_UNCONST("yes") };
+	ret = krb5_cc_set_config(context, id, ctx->cred.server,
+				 "fast_avail", &data);
+	if (ret)
+	    return ret;
+    }
 
     return ret;
 }

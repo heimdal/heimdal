@@ -94,7 +94,7 @@ attr_authorize_localname(OM_uint32 *minor_status,
 					  &value,
 					  &display_value,
 					  &more);
-	if (GSS_ERROR(major_status)) {
+	if (GSS_ERROR(tmpMajor)) {
 	    major_status = tmpMajor;
 	    break;
 	}

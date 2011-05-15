@@ -71,7 +71,7 @@ attr_pname_to_uid(OM_uint32 *minor_status,
     while (more != 0) {
         gss_buffer_desc value;
         gss_buffer_desc display_value;
-        int authenticated = 0, complete = 0, code;
+        int authenticated = 0, complete = 0;
 #ifdef POSIX_GETPWNAM_R
         char pwbuf[2048];
         struct passwd pw, *pwd;
@@ -114,7 +114,7 @@ attr_pname_to_uid(OM_uint32 *minor_status,
         gss_release_buffer(&tmpMinor, &value);
         gss_release_buffer(&tmpMinor, &display_value);
 
-        if (code == 0 && pwd != NULL) {
+        if (pwd != NULL) {
             *uidp = pwd->pw_uid;
             major_status = GSS_S_COMPLETE;
             *minor_status = 0;

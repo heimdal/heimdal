@@ -33,7 +33,7 @@
 #include "mech_locl.h"
 
 static gss_buffer_desc localLoginUserAttr = {
-    sizeof("local-login-user"),
+    sizeof("local-login-user") - 1,
     "local-login-user"
 };
 

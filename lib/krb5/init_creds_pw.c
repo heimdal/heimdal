@@ -273,10 +273,10 @@ report_expiration (krb5_context context,
  * @param ctx The krb5_init_creds_context check for expiration.
  */
 
-static krb5_error_code
-process_last_request(krb5_context context,
-		     krb5_get_init_creds_opt *options,
-		     krb5_init_creds_context ctx)
+krb5_error_code
+krb5_process_last_request(krb5_context context,
+			  krb5_get_init_creds_opt *options,
+			  krb5_init_creds_context ctx)
 {
     krb5_const_realm realm;
     LastReq *lr;
@@ -2350,7 +2350,7 @@ krb5_get_init_creds_password(krb5_context context,
     ret = krb5_init_creds_get(context, ctx);
 
     if (ret == 0)
-	process_last_request(context, options, ctx);
+	krb5_process_last_request(context, options, ctx);
 
 
     if (ret == KRB5KDC_ERR_KEY_EXPIRED && chpw == 0) {
@@ -2425,7 +2425,7 @@ krb5_get_init_creds_keyblock(krb5_context context,
     ret = krb5_init_creds_get(context, ctx);
 
     if (ret == 0)
-        process_last_request(context, options, ctx);
+        krb5_process_last_request(context, options, ctx);
 
  out:
     if (ret == 0)
@@ -2471,7 +2471,7 @@ krb5_get_init_creds_keytab(krb5_context context,
 
     ret = krb5_init_creds_get(context, ctx);
     if (ret == 0)
-        process_last_request(context, options, ctx);
+        krb5_process_last_request(context, options, ctx);
 
  out:
     if (ret == 0)

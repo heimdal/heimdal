@@ -1573,8 +1573,10 @@ _kdc_as_rep(kdc_request_t r,
      * Look for FAST armor and unwrap
      */
     ret = _kdc_fast_unwrap_request(r);
-    if (ret)
+    if (ret) {
+	_kdc_r_log(r, 0, "FAST unwrap request from %s failed: %d", from, ret);
 	goto out;
+    }
 
     b = &req->req_body;
     f = b->kdc_options;
@@ -2117,6 +2119,7 @@ _kdc_as_rep(kdc_request_t r,
     i = 0;
     pa = _kdc_find_padata(req, &i, KRB5_PADATA_REQ_ENC_PA_REP);
     if (pa) {
+
 	ret = add_enc_pa_rep(r);
 	if (ret) {
 	    const char *msg = krb5_get_error_message(r->context, ret);
@@ -2154,7 +2157,6 @@ out:
      * In case of a non proxy error, build an error message.
      */
     if(ret != 0 && ret != HDB_ERR_NOT_FOUND_HERE) {
-	kdc_log(context, config, 10, "as-req: sending error: %d to client", ret);
 	ret = _kdc_fast_mk_error(context,
 				 &error_method,
 				 r->armor_crypto,

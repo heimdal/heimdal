@@ -764,6 +764,7 @@ HEIMDAL_KRB5_2.0 {
 		# kinit helper
 		krb5_get_init_creds_opt_set_pkinit_user_certs;
 		krb5_pk_enterprise_cert;
+		krb5_process_last_request;
 
 		# testing
 		_krb5_aes_cts_encrypt;

@@ -508,6 +508,12 @@ get_new_tickets(krb5_context context,
     if (ret)
 	krb5_err(context, 1, ret, "krb5_init_creds_init");
 
+    if (server_str) {
+	ret = krb5_init_creds_set_service(context, ctx, server_str);
+	if (ret)
+	    krb5_err(context, 1, ret, "krb5_init_creds_set_service");
+    }
+
     if (fast_armor_cache_string) {
 	krb5_ccache fastid;
 	
@@ -564,7 +570,6 @@ get_new_tickets(krb5_context context,
 
     ret = krb5_init_creds_get(context, ctx);
 
-    krb5_get_init_creds_opt_free(context, opt);
 #ifndef NO_NTLM
     if (ntlm_domain && passwd[0])
 	heim_ntlm_nt_key(passwd, &ntlmkey);
@@ -587,6 +592,8 @@ get_new_tickets(krb5_context context,
     default:
 	krb5_err(context, 1, ret, "krb5_get_init_creds");
     }
+
+    krb5_process_last_request(context, opt, ctx);
 
     if(ticket_life != 0) {
 	if(abs(cred.times.endtime - cred.times.starttime - ticket_life) > 30) {
@@ -644,6 +651,8 @@ get_new_tickets(krb5_context context,
 
 	krb5_cc_set_config(context, ccache, NULL, "realm-config", &data);
     }
+
+    krb5_get_init_creds_opt_free(context, opt);
 
     if (kt)			
 	krb5_kt_close(context, kt);

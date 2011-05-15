@@ -147,6 +147,7 @@ dist_libkrb5_la_SOURCES =			\
 	error_string.c				\
 	expand_hostname.c			\
 	expand_path.c				\
+	fast.c					\
 	fcache.c				\
 	free.c					\
 	free_host_realm.c			\

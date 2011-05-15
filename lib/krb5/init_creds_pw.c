@@ -75,17 +75,20 @@ typedef struct krb5_get_init_creds_ctx {
     krb5_prompter_fct prompter;
     void *prompter_data;
 
-    krb5_ccache fast_ccache;
-
     struct pa_info_data *ppaid;
     struct fast_state {
-	int flags;
+	enum PA_FX_FAST_REQUEST_enum type;
+	unsigned int flags;
 #define KRB5_FAST_REPLY_KEY_USE_TO_ENCRYPT_THE_REPLY 1
 #define KRB5_FAST_REPLY_KEY_USE_IN_TRANSACTION 2
 #define KRB5_FAST_KDC_REPLY_KEY_REPLACED 4
 #define KRB5_FAST_REPLY_REPLY_VERIFED 8
 #define KRB5_FAST_STRONG 16
+#define KRB5_FAST_EXPECTED 32
 	krb5_keyblock *reply_key;
+	krb5_ccache armor_ccache;
+	krb5_crypto armor_crypto;
+	krb5_keyblock armor_key;
     } fast_state;
 } krb5_get_init_creds_ctx;
 
@@ -150,6 +153,15 @@ free_init_creds_ctx(krb5_context context, krb5_init_creds_context ctx)
 	memset(ctx->password, 0, strlen(ctx->password));
 	free(ctx->password);
     }
+    /*
+     * FAST state 
+     */
+    if (ctx->fast_state.armor_ccache)
+	krb5_cc_close(context, ctx->fast_state.armor_ccache);
+    if (ctx->fast_state.armor_crypto)
+	krb5_crypto_destroy(context, ctx->fast_state.armor_crypto);
+    krb5_free_keyblock_contents(context, &ctx->fast_state.armor_key);
+
     krb5_data_free(&ctx->req_buffer);
     krb5_free_cred_contents(context, &ctx->cred);
     free_METHOD_DATA(&ctx->md);
@@ -1637,9 +1649,239 @@ krb5_init_creds_set_fast_ccache(krb5_context context,
 				krb5_init_creds_context ctx,
 				krb5_ccache fast_ccache)
 {
-    ctx->fast_ccache = fast_ccache;
+    ctx->fast_state.armor_ccache = fast_ccache;
     return 0;
 }
+
+/*
+ * FAST
+ */
+
+static krb5_error_code
+check_fast(krb5_context context, struct fast_state *state)
+{
+    if (state->flags & KRB5_FAST_EXPECTED) {
+	krb5_set_error_message(context, KRB5KRB_AP_ERR_MODIFIED,
+			       "Expected FAST not not found");
+	return KRB5KRB_AP_ERR_MODIFIED;
+    }
+    return 0;
+}
+
+
+static krb5_error_code
+fast_unwrap_as_rep(krb5_context context, struct fast_state *state, AS_REP *rep)
+{
+    if (state->armor_crypto == NULL)
+	return check_fast(context, state);
+
+    /*
+    unwrap_req(rep);
+    */
+
+    return 0;
+}
+
+static krb5_error_code
+fast_unwrap_error(krb5_context context, struct fast_state *state, KRB_ERROR *error)
+{
+    if (state->armor_crypto == NULL)
+	return check_fast(context, state);
+
+    return 0;
+}
+
+static krb5_error_code
+make_fast_ap_fxarmor(krb5_context context,
+		     struct fast_state *state,
+		     KrbFastArmor **armor)
+{
+    KrbFastArmor *fxarmor = NULL;
+    krb5_auth_context auth_context = NULL;
+    krb5_creds cred, *credp = NULL;
+    krb5_error_code ret;
+
+    ALLOC(fxarmor, 1);
+    if (fxarmor == NULL) {
+	ret = ENOMEM;
+	goto out;
+    }
+
+    fxarmor->armor_type = 1;
+
+    memset(&cred, 0, sizeof(cred));
+
+    ret = krb5_auth_con_init (context, &auth_context);
+    if (ret)
+	goto out;
+    
+    ret = krb5_cc_get_principal(context, state->armor_ccache, &cred.client);
+    if (ret)
+	goto out;
+    
+    ret = krb5_make_principal(context, &cred.server,
+			      cred.client->realm,
+			      KRB5_TGS_NAME,
+			      cred.client->realm,
+			      NULL);
+    if (ret) {
+	krb5_free_principal(context, cred.client);
+	goto out;
+    }
+    
+    ret = krb5_get_credentials(context, 0, state->armor_ccache, &cred, &credp);
+    krb5_free_principal(context, cred.server);
+    krb5_free_principal(context, cred.client);
+    if (ret)
+	goto out;
+    
+    ret = krb5_mk_req_extended(context,
+			       &auth_context,
+			       AP_OPTS_USE_SUBKEY,
+			       NULL,
+			       credp,
+			       &fxarmor->armor_value);
+    krb5_free_creds(context, credp);
+    if (ret)
+	goto out;
+    
+    if (state->armor_crypto)
+	krb5_crypto_destroy(context, state->armor_crypto);
+    krb5_free_keyblock_contents(context, &state->armor_key);
+
+    ret = _krb5_fast_armor_key(context,
+			       auth_context->keyblock,
+			       auth_context->local_subkey,
+			       &state->armor_key,
+			       &state->armor_crypto);
+    if (ret)
+	goto out;
+    
+    *armor = fxarmor;
+    fxarmor = NULL;
+ out:
+    if (fxarmor)
+	free_KrbFastArmor(fxarmor);
+    return ret;
+}
+
+
+static krb5_error_code
+fast_wrap_req(krb5_context context, struct fast_state *state, KDC_REQ *req)
+{
+    KrbFastArmor *fxarmor = NULL;
+    PA_FX_FAST_REQUEST fxreq;
+    krb5_error_code ret;
+    KrbFastReq fastreq;
+    krb5_data data;
+    size_t size;
+
+    memset(&fxreq, 0, sizeof(fxreq));
+    memset(&fastreq, 0, sizeof(fastreq));
+    krb5_data_zero(&data);
+
+    if (state->armor_crypto == NULL) {
+	if (state->armor_ccache) {
+	    /*
+	     * Instead of keeping state in FX_COOKIE in the KDC, we
+	     * rebuild a new armor key for every request, because this
+	     * is what the MIT KDC expect and RFC6113 is vage about
+	     * what the behavior should be.
+	     */
+	    state->type = choice_PA_FX_FAST_REQUEST_armored_data;
+	} else {
+	    return check_fast(context, state);
+	}
+    }
+
+    state->flags |= KRB5_FAST_EXPECTED;
+
+    fastreq.fast_options.hide_client_names = 1;
+
+    ret = copy_KDC_REQ_BODY(&req->req_body, &fastreq.req_body);
+    free_KDC_REQ_BODY(&req->req_body);
+
+    req->req_body.realm = strdup(KRB5_ANON_REALM);
+    ALLOC(req->req_body.cname, 1);
+    req->req_body.cname->name_type = KRB5_NT_PRINCIPAL;
+    ALLOC(req->req_body.cname->name_string.val, 2);
+    req->req_body.cname->name_string.len = 2;
+    req->req_body.cname->name_string.val[0] = strdup(KRB5_WELLKNOWN_NAME);
+    req->req_body.cname->name_string.val[1] = strdup(KRB5_ANON_NAME);
+
+    if (req->padata) {
+	ret = copy_METHOD_DATA(req->padata, &fastreq.padata);
+	free_METHOD_DATA(req->padata);
+    } else {
+	ALLOC(req->padata, 1);
+    }
+
+
+    ASN1_MALLOC_ENCODE(KrbFastReq, data.data, data.length, &fastreq, &size, ret);
+    if (ret)
+	goto out;
+    heim_assert(data.length == size, "ASN.1 internal error");
+
+    fxreq.element = state->type;
+
+    if (state->type == choice_PA_FX_FAST_REQUEST_armored_data) {
+	size_t len;
+	void *buf;
+
+	ret = make_fast_ap_fxarmor(context, state, &fxreq.u.armored_data.armor);
+	if (ret)
+	    goto out;
+
+	heim_assert(state->armor_crypto != NULL, "FAST armor key missing when FAST started");
+
+	ASN1_MALLOC_ENCODE(KDC_REQ_BODY, buf, len, &req->req_body, &size, ret);
+	if (ret)
+	    goto out;
+	heim_assert(len == size, "ASN.1 internal error");
+
+	ret = krb5_create_checksum(context, state->armor_crypto,
+				   KRB5_KU_FAST_REQ_CHKSUM, 0,
+				   buf, len, 
+				   &fxreq.u.armored_data.req_checksum);
+	free(buf);
+	if (ret)
+	    goto out;
+
+	ret = krb5_encrypt_EncryptedData(context, state->armor_crypto,
+					 KRB5_KU_FAST_ENC,
+					 data.data,
+					 data.length,
+					 0,
+					 &fxreq.u.armored_data.enc_fast_req);
+	krb5_data_free(&data);
+
+    } else {
+	krb5_data_free(&data);
+	heim_assert(false, "unknown FAST type, internal error");
+    }
+
+    ASN1_MALLOC_ENCODE(PA_FX_FAST_REQUEST, data.data, data.length, &fxreq, &size, ret);
+    if (ret)
+	goto out;
+    heim_assert(data.length == size, "ASN.1 internal error");
+
+
+    ret = krb5_padata_add(context, req->padata, KRB5_PADATA_FX_FAST, data.data, data.length);
+    if (ret)
+	goto out;
+    krb5_data_zero(&data);
+
+ out:
+    free_PA_FX_FAST_REQUEST(&fxreq);
+    if (fxarmor) {
+	free_KrbFastArmor(fxarmor);
+	free(fxarmor);
+    }
+    krb5_data_free(&data);
+
+    return ret;
+}
+
 
 /**
  * The core loop if krb5_get_init_creds() function family. Create the
@@ -1673,6 +1915,7 @@ krb5_init_creds_step(krb5_context context,
     krb5_error_code ret;
     size_t len = 0;
     size_t size;
+    AS_REQ req2;
 
     krb5_data_zero(out);
 
@@ -1708,6 +1951,13 @@ krb5_init_creds_step(krb5_context context,
 	ret = decode_AS_REP(in->data, in->length, &rep.kdc_rep, &size);
 	if (ret == 0) {
 	    unsigned eflags = EXTRACT_TICKET_AS_REQ | EXTRACT_TICKET_TIMESYNC;
+
+	    /*
+	     * Unwrap AS-REP
+	     */
+	    ret = fast_unwrap_as_rep(context, &ctx->fast_state, &rep.kdc_rep);
+	    if (ret)
+		goto out;
 
 	    if (ctx->flags.canonicalize) {
 		eflags |= EXTRACT_TICKET_ALLOW_SERVER_MISMATCH;
@@ -1764,6 +2014,17 @@ krb5_init_creds_step(krb5_context context,
 		_krb5_debug(context, 5, "krb5_get_init_creds: failed to read error");
 		goto out;
 	    }
+
+	    /*
+	     * Unwrap KRB-ERROR
+	     */
+	    ret = fast_unwrap_error(context, &ctx->fast_state, &ctx->error);
+	    if (ret)
+		goto out;
+
+	    /*
+	     *
+	     */
 
 	    ret = krb5_error_from_rd_error(context, &ctx->error, &ctx->cred);
 
@@ -1845,11 +2106,23 @@ krb5_init_creds_step(krb5_context context,
     if (ret)
 	goto out;
 
+    /*
+     * Wrap with FAST
+     */
+    copy_AS_REQ(&ctx->as_req, &req2);
+
+    ret = fast_wrap_req(context, &ctx->fast_state, &req2);
+    if (ret) {
+	free_AS_REQ(&req2);
+	goto out;
+    }
+
     krb5_data_free(&ctx->req_buffer);
 
     ASN1_MALLOC_ENCODE(AS_REQ,
 		       ctx->req_buffer.data, ctx->req_buffer.length,
-		       &ctx->as_req, &len, ret);
+		       &req2, &len, ret);
+    free_AS_REQ(&req2);
     if (ret)
 	goto out;
     if(len != ctx->req_buffer.length)

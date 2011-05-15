@@ -64,7 +64,7 @@ struct _krb5_checksum_type _krb5_checksum_none = {
     "none",
     1,
     0,
-    0,
+    F_DISABLED,
     NONE_checksum,
     NULL
 };

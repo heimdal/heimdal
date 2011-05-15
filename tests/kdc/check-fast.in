@@ -57,6 +57,7 @@ cache="FILE:${objdir}/cache.krb5"
 acache="FILE:${objdir}/acache.krb5"
 
 kinit="${kinit} -c $cache ${afs_no_afslog}"
+akinit="${kinit} -c $acache ${afs_no_afslog}"
 klist="${klist} -c $cache"
 aklist="${klist} -c $acache"
 kgetcred="${kgetcred} -c $cache"
@@ -102,13 +103,26 @@ ec=0
 echo "Getting client initial tickets"; > messages.log
 ${kinit} --password-file=${objdir}/foopassword foo@$R || \
 	{ ec=1 ; eval "${testfailed}"; }
+echo "Checking for FAST avail"
+${klist} --hidden | grep fast_avail > /dev/null || { exit 1; }
 echo "Getting tickets"; > messages.log
 ${kgetcred} ${server}@${R} || { ec=1 ; eval "${testfailed}"; }
 echo "Listing tickets"; > messages.log
 ${klist} > /dev/null || { ec=1 ; eval "${testfailed}"; }
 ${kdestroy}
 
-echo foo > ${objdir}/foopassword
+echo "Acquire host ticket"
+${akinit} --password-file=${objdir}/foopassword ${server}@${R} >/dev/null|| { exit 1; }
+echo "Checking for FAST avail"
+${aklist} --hidden | grep fast_avail > /dev/null || { exit 1; }
+
+echo "Checking out with FAST armor ticket"
+${kinit} --fast-armor-cache=${acache} \
+   --password-file=${objdir}/foopassword foo@$R || \
+	{ ec=1 ; eval "${testfailed}"; }
+
+
+
 
 kinitpty=${objdir}/foopassword.rkpty
 cat > ${kinitpty} <<EOF
@@ -130,11 +144,11 @@ if [ -f ${mit}/kinit ] ; then
 
    echo "Using plain to get a initial ticket"
    ${rkpty} ${kinitpty} ${mit}/kinit -c ${cache} foo@${R} >/dev/null|| { exit 1; }
-   (${aklist} | grep ${server} > /dev/null ) || { exit 1; }
+   (${klist} | grep foo > /dev/null ) || { exit 1; }
 
    echo "Using FAST to get a initial ticket"
    ${rkpty} ${kinitpty} ${mit}/kinit -c ${cache} -T ${acache} foo@${R} >/dev/null || { exit 1; }
-   (${aklist} | grep ${server} > /dev/null ) || { exit 1; }
+   (${klist} | grep foo > /dev/null ) || { exit 1; }
 
    echo "Checking for FAST avail"
    ${klist} --hidden | grep fast_avail > /dev/null || { exit 1; }

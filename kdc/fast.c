@@ -197,10 +197,8 @@ _kdc_fast_mk_error(krb5_context context,
 krb5_error_code
 _kdc_fast_unwrap_request(kdc_request_t r)
 {
-    krb5_crypto crypto_subkey = NULL, crypto_session = NULL;
     krb5_principal armor_server = NULL;
     hdb_entry_ex *armor_user = NULL;
-    krb5_data pepper1, pepper2;
     PA_FX_FAST_REQUEST fxreq;
     krb5_auth_context ac = NULL;
     krb5_ticket *ticket = NULL;
@@ -233,7 +231,7 @@ _kdc_fast_unwrap_request(kdc_request_t r)
 
     if (fxreq.element != choice_PA_FX_FAST_REQUEST_armored_data) {
 	kdc_log(r->context, r->config, 0,
-		"AS-REQ FAST contain unknown type");
+		"AS-REQ FAST contain unknown type: %d", (int)fxreq.element);
 	ret = KRB5KDC_ERR_PREAUTH_FAILED;
 	goto out;
     }
@@ -313,40 +311,16 @@ _kdc_fast_unwrap_request(kdc_request_t r)
 	goto out;
     }		
 
-    ret = krb5_crypto_init(r->context, ac->remote_subkey,
-			   0, &crypto_subkey);
-    if (ret) {
-	krb5_auth_con_free(r->context, ac);
-	krb5_free_ticket(r->context, ticket);
-	goto out;
-    }
-    ret = krb5_crypto_init(r->context, &ticket->ticket.key,
-			   0, &crypto_session);
-    krb5_free_ticket(r->context, ticket);
-    if (ret) {
-	krb5_auth_con_free(r->context, ac);
-	krb5_crypto_destroy(r->context, crypto_subkey);
-	goto out;
-    }
-
-    pepper1.data = "subkeyarmor";
-    pepper1.length = strlen(pepper1.data);
-    pepper2.data = "ticketarmor";
-    pepper2.length = strlen(pepper2.data);
-
-    ret = krb5_crypto_fx_cf2(r->context, crypto_subkey, crypto_session,
-			     &pepper1, &pepper2,
-			     ac->remote_subkey->keytype,
-			     &armorkey);
-    krb5_crypto_destroy(r->context, crypto_subkey);
-    krb5_crypto_destroy(r->context, crypto_session);
+    ret = _krb5_fast_armor_key(r->context,
+			       &ticket->ticket.key,
+			       ac->remote_subkey,
+			       &armorkey,
+			       &r->armor_crypto);
     krb5_auth_con_free(r->context, ac);
+    krb5_free_ticket(r->context, ticket);
     if (ret)
 	goto out;
 
-    ret = krb5_crypto_init(r->context, &armorkey, 0, &r->armor_crypto);
-    if (ret)
-	goto out;
     krb5_free_keyblock_contents(r->context, &armorkey);
 
     /* verify req-checksum of the outer body */
@@ -364,15 +338,21 @@ _kdc_fast_unwrap_request(kdc_request_t r)
 			       buf, len, 
 			       &fxreq.u.armored_data.req_checksum);
     free(buf);
-    if (ret)
+    if (ret) {
+	kdc_log(r->context, r->config, 0,
+		"FAST request have a bad checksum");
 	goto out;
+    }
 
     ret = krb5_decrypt_EncryptedData(r->context, r->armor_crypto,
 				     KRB5_KU_FAST_ENC,
 				     &fxreq.u.armored_data.enc_fast_req,
 				     &data);
-    if (ret)
+    if (ret) {
+	kdc_log(r->context, r->config, 0,
+		"Failed to decrypt FAST request");
 	goto out;
+    }
 
     ret = decode_KrbFastReq(data.data, data.length, &fastreq, &size);
     if (ret) {

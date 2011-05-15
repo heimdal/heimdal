@@ -148,9 +148,6 @@ gss_pname_to_uid(OM_uint32 *minor_status,
             major_status = attr_pname_to_uid(minor_status, mn, uidp);
     } else {
         HEIM_SLIST_FOREACH(mn, &name->gn_mn, gmn_link) {
-            if (mn->gmn_mech->gm_pname_to_uid == NULL)
-                continue;
-
             major_status = mech_pname_to_uid(minor_status, mn, uidp);
             if (major_status != GSS_S_COMPLETE)
                 major_status = attr_pname_to_uid(minor_status, mn, uidp);

@@ -68,10 +68,8 @@ gss_inquire_name(OM_uint32 *minor_status,
         if (major_status == GSS_S_COMPLETE) {
             if (name_is_MN != NULL)
                 *name_is_MN = 1;
-#if 0
-            if (*MN_mech == GSS_C_NO_OID)
+            if (MN_mech != NULL && *MN_mech == GSS_C_NO_OID)
                 *MN_mech = &m->gm_mech_oid;
-#endif
             break;
         }
         _gss_mg_error(m, major_status, *minor_status);

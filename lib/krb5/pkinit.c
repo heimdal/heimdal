@@ -2619,10 +2619,8 @@ krb5_pk_enterprise_cert(krb5_context context,
 
     if (res) {
 	ret = hx509_certs_init(context->hx509ctx, "MEMORY:", 0, NULL, res);
-	if (ret) {
-	    hx509_cert_free(cert);
+	if (ret)
 	    goto out;
-	}
 	
 	ret = hx509_certs_add(context->hx509ctx, *res, cert);
 	if (ret) {

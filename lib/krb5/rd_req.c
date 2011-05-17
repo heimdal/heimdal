@@ -177,7 +177,7 @@ find_etypelist(krb5_context context,
     krb5_authdata adIfRelevant;
     unsigned i;
 
-    adIfRelevant.len = 0;
+    krb5_data_zero(&adIfRelevant);
 
     etypes->len = 0;
     etypes->val = NULL;

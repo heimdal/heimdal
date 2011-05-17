@@ -173,7 +173,7 @@ setpw_send_request (krb5_context context,
     krb5_data krb_priv_data;
     krb5_data pwd_data;
     ChangePasswdDataMS chpw;
-    size_t len;
+    size_t len = 0;
     u_char header[4 + 6];
     u_char *p;
     struct iovec iov[3];

@@ -116,7 +116,7 @@ pk_check_pkauthenticator(krb5_context context,
     u_char *buf = NULL;
     size_t buf_size;
     krb5_error_code ret;
-    size_t len;
+    size_t len = 0;
     krb5_timestamp now;
     Checksum checksum;
 
@@ -921,7 +921,7 @@ pk_mk_pa_reply_enckey(krb5_context context,
     const heim_oid *envelopedAlg = NULL, *sdAlg = NULL, *evAlg = NULL;
     krb5_error_code ret;
     krb5_data buf, signed_data;
-    size_t size;
+    size_t size = 0;
     int do_win2k = 0;
 
     krb5_data_zero(&buf);
@@ -1101,7 +1101,7 @@ pk_mk_pa_reply_dh(krb5_context context,
     krb5_error_code ret;
     hx509_cert cert;
     hx509_query *q;
-    size_t size;
+    size_t size = 0;
 
     memset(&contentinfo, 0, sizeof(contentinfo));
     memset(&dh_info, 0, sizeof(dh_info));
@@ -1242,8 +1242,8 @@ _kdc_pk_mk_pa_reply(krb5_context context,
 		    METHOD_DATA *md)
 {
     krb5_error_code ret;
-    void *buf;
-    size_t len, size;
+    void *buf = NULL;
+    size_t len = 0, size = 0;
     krb5_enctype enctype;
     int pa_type;
     hx509_cert kdc_cert = NULL;
@@ -1872,7 +1872,7 @@ _kdc_add_inital_verified_cas(krb5_context context,
     AD_INITIAL_VERIFIED_CAS cas;
     krb5_error_code ret;
     krb5_data data;
-    size_t size;
+    size_t size = 0;
 
     memset(&cas, 0, sizeof(cas));
 

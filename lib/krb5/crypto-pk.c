@@ -110,7 +110,7 @@ encode_uvinfo(krb5_context context, krb5_const_principal p, krb5_data *data)
 {
     KRB5PrincipalName pn;
     krb5_error_code ret;
-    size_t size;
+    size_t size = 0;
 
     pn.principalName = p->name;
     pn.realm = p->realm;
@@ -143,7 +143,7 @@ encode_otherinfo(krb5_context context,
     PkinitSuppPubInfo pubinfo;
     krb5_error_code ret;
     krb5_data pub;
-    size_t size;
+    size_t size = 0;
 
     krb5_data_zero(other);
     memset(&otherinfo, 0, sizeof(otherinfo));

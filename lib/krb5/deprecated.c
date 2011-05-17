@@ -120,7 +120,7 @@ krb5_keytype_to_string(krb5_context context,
 		       krb5_keytype keytype,
 		       char **string)
 {
-    const char *name;
+    const char *name = NULL;
     int i;
 
     for(i = 0; i < num_keys; i++) {

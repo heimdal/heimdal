@@ -41,7 +41,7 @@ verify_checksum(krb5_context context,
     krb5_error_code ret;
     u_char *buf;
     size_t buf_size;
-    size_t len;
+    size_t len = 0;
     Checksum c;
     krb5_crypto crypto;
     krb5_keyblock *key;

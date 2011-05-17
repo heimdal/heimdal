@@ -113,7 +113,7 @@ _kdc_add_KRB5SignedPath(krb5_context context,
     KRB5SignedPath sp;
     krb5_data data;
     krb5_crypto crypto = NULL;
-    size_t size;
+    size_t size = 0;
 
     if (server && principals) {
 	ret = add_Principals(principals, server);
@@ -203,7 +203,7 @@ check_KRB5SignedPath(krb5_context context,
     if (ret == 0) {
 	KRB5SignedPathData spd;
 	KRB5SignedPath sp;
-	size_t size;
+	size_t size = 0;
 
 	ret = decode_KRB5SignedPath(data.data, data.length, &sp, NULL);
 	krb5_data_free(&data);
@@ -1004,7 +1004,7 @@ tgs_check_authenticator(krb5_context context,
 			krb5_keyblock *key)
 {
     krb5_authenticator auth;
-    size_t len;
+    size_t len = 0;
     unsigned char *buf;
     size_t buf_size;
     krb5_error_code ret;
@@ -1385,7 +1385,7 @@ build_server_referral(krb5_context context,
     krb5_error_code ret;
     EncryptedData ed;
     krb5_data data;
-    size_t size;
+    size_t size = 0;
 
     memset(&ref, 0, sizeof(ref));
 

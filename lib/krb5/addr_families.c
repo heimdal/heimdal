@@ -652,8 +652,10 @@ arange_order_addr(krb5_context context,
 	a = addr2->address.data;
 	a2 = addr1;
 	sign = -1;
-    } else
+    } else {
 	abort();
+        UNREACHABLE(return 0);
+    }
 	
     if(a2->addr_type == KRB5_ADDRESS_ARANGE) {
 	struct arange *b = a2->address.data;

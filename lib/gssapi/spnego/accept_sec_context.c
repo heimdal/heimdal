@@ -90,7 +90,7 @@ send_supported_mechs (OM_uint32 *minor_status,
 		      gss_buffer_t output_token)
 {
     NegotiationTokenWin nt;
-    size_t buf_len;
+    size_t buf_len = 0;
     gss_buffer_desc data;
     OM_uint32 ret;
 
@@ -132,8 +132,10 @@ send_supported_mechs (OM_uint32 *minor_status,
 	*minor_status = ret;
 	return GSS_S_FAILURE;
     }
-    if (data.length != buf_len)
+    if (data.length != buf_len) {
 	abort();
+        UNREACHABLE(return GSS_S_FAILURE);
+    }
 
     ret = gss_encapsulate_token(&data, GSS_SPNEGO_MECHANISM, output_token);
 
@@ -439,7 +441,7 @@ acceptor_complete(OM_uint32 * minor_status,
 	
 	if (verify_mic || *get_mic) {
 	    int eret;
-	    size_t buf_len;
+	    size_t buf_len = 0;
 	
 	    ASN1_MALLOC_ENCODE(MechTypeList,
 			       mech_buf->value, mech_buf->length,
@@ -448,8 +450,10 @@ acceptor_complete(OM_uint32 * minor_status,
 		*minor_status = eret;
 		return GSS_S_FAILURE;
 	    }
-	    if (buf.length != buf_len)
+	    if (buf.length != buf_len) {
 		abort();
+                UNREACHABLE(return GSS_S_FAILURE);
+            }
 	}
 	
 	if (verify_mic) {

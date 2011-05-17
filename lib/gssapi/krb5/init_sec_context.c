@@ -529,7 +529,7 @@ init_auth_restart
     Checksum cksum;
     krb5_enctype enctype;
     krb5_data fwd_data, timedata;
-    int32_t offset = 0, oldoffset;
+    int32_t offset = 0, oldoffset = 0;
     uint32_t flagmask;
 
     krb5_data_zero(&outbuf);

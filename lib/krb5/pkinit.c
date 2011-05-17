@@ -299,7 +299,7 @@ cert2epi(hx509_context context, void *ctx, hx509_cert c)
     {
 	IssuerAndSerialNumber iasn;
 	hx509_name issuer;
-	size_t size;
+	size_t size = 0;
 	
 	memset(&iasn, 0, sizeof(iasn));
 
@@ -365,7 +365,7 @@ build_auth_pack(krb5_context context,
 		const KDC_REQ_BODY *body,
 		AuthPack *a)
 {
-    size_t buf_size, len;
+    size_t buf_size, len = 0;
     krb5_error_code ret;
     void *buf;
     krb5_timestamp sec;
@@ -414,7 +414,7 @@ build_auth_pack(krb5_context context,
 	const char *moduli_file;
 	unsigned long dh_min_bits;
 	krb5_data dhbuf;
-	size_t size;
+	size_t size = 0;
 
 	krb5_data_zero(&dhbuf);
 
@@ -650,10 +650,10 @@ pk_mk_padata(krb5_context context,
 {
     struct ContentInfo content_info;
     krb5_error_code ret;
-    const heim_oid *oid;
-    size_t size;
+    const heim_oid *oid = NULL;
+    size_t size = 0;
     krb5_data buf, sd_buf;
-    int pa_type;
+    int pa_type = -1;
 
     krb5_data_zero(&buf);
     krb5_data_zero(&sd_buf);
@@ -2554,7 +2554,7 @@ krb5_pk_enterprise_cert(krb5_context context,
 #ifdef PKINIT
     krb5_error_code ret;
     hx509_certs certs, result;
-    hx509_cert cert;
+    hx509_cert cert = NULL;
     hx509_query *q;
     char *name;
 

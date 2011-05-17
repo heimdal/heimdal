@@ -55,7 +55,7 @@ make_pa_tgs_req(krb5_context context,
 {
     u_char *buf;
     size_t buf_size;
-    size_t len;
+    size_t len = 0;
     krb5_data in_data;
     krb5_error_code ret;
 
@@ -90,7 +90,7 @@ set_auth_data (krb5_context context,
 	       krb5_keyblock *subkey)
 {
     if(authdata->len) {
-	size_t len, buf_size;
+	size_t len = 0, buf_size;
 	unsigned char *buf;
 	krb5_crypto crypto;
 	krb5_error_code ret;
@@ -334,6 +334,8 @@ decrypt_tkt_with_subkey (krb5_context context,
 
     assert(usage == 0);
 
+    krb5_data_zero(&data);
+
     /*
      * start out with trying with subkey if we have one
      */
@@ -408,7 +410,7 @@ get_cred_kdc(krb5_context context,
     krb5_error_code ret;
     unsigned nonce;
     krb5_keyblock *subkey = NULL;
-    size_t len;
+    size_t len = 0;
     Ticket second_ticket_data;
     METHOD_DATA padata;
 
@@ -435,7 +437,7 @@ get_cred_kdc(krb5_context context,
 	PA_S4U2Self self;
 	krb5_data data;
 	void *buf;
-	size_t size;
+	size_t size = 0;
 
 	self.name = impersonate_principal->name;
 	self.realm = impersonate_principal->realm;

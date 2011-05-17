@@ -44,7 +44,7 @@ make_pa_enc_timestamp(krb5_context context, PA_DATA *pa,
     PA_ENC_TS_ENC p;
     unsigned char *buf;
     size_t buf_size;
-    size_t len;
+    size_t len = 0;
     EncryptedData encdata;
     krb5_error_code ret;
     int32_t usec;
@@ -380,7 +380,7 @@ krb5_get_in_cred(krb5_context context,
     AS_REQ a;
     krb5_kdc_rep rep;
     krb5_data req, resp;
-    size_t len;
+    size_t len = 0;
     krb5_salt salt;
     krb5_keyblock *key;
     size_t size;

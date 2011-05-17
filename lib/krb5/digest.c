@@ -244,7 +244,7 @@ digest_request(krb5_context context,
     DigestREP rep;
     krb5_error_code ret;
     krb5_data data, data2;
-    size_t size;
+    size_t size = 0;
     krb5_crypto crypto = NULL;
     krb5_auth_context ac = NULL;
     krb5_principal principal = NULL;

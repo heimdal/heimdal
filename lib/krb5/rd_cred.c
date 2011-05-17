@@ -68,6 +68,7 @@ krb5_rd_cred(krb5_context context,
     size_t i;
 
     memset(&enc_krb_cred_part, 0, sizeof(enc_krb_cred_part));
+    krb5_data_zero(&enc_krb_cred_part_data);
 
     if ((auth_context->flags &
 	 (KRB5_AUTH_CONTEXT_RET_TIME | KRB5_AUTH_CONTEXT_RET_SEQUENCE)) &&

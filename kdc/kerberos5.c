@@ -264,7 +264,7 @@ _kdc_encode_reply(krb5_context context,
 {
     unsigned char *buf;
     size_t buf_size;
-    size_t len;
+    size_t len = 0;
     krb5_error_code ret;
     krb5_crypto crypto;
 
@@ -1664,7 +1664,7 @@ _kdc_as_rep(krb5_context context,
 	krb5_data data;
 	PA_DATA pa;
 	krb5_crypto cryptox;
-	size_t len;
+	size_t len = 0;
 
 	memset(&canon, 0, sizeof(canon));
 
@@ -1826,7 +1826,7 @@ _kdc_tkt_add_if_relevant_ad(krb5_context context,
 			    const krb5_data *data)
 {
     krb5_error_code ret;
-    size_t size;
+    size_t size = 0;
 
     if (tkt->authorization_data == NULL) {
 	tkt->authorization_data = calloc(1, sizeof(*tkt->authorization_data));

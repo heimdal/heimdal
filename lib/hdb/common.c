@@ -37,7 +37,7 @@ int
 hdb_principal2key(krb5_context context, krb5_const_principal p, krb5_data *key)
 {
     Principal new;
-    size_t len;
+    size_t len = 0;
     int ret;
 
     ret = copy_Principal(p, &new);
@@ -61,7 +61,7 @@ hdb_key2principal(krb5_context context, krb5_data *key, krb5_principal p)
 int
 hdb_entry2value(krb5_context context, const hdb_entry *ent, krb5_data *value)
 {
-    size_t len;
+    size_t len = 0;
     int ret;
 
     ASN1_MALLOC_ENCODE(hdb_entry, value->data, value->length, ent, &len, ret);
@@ -81,7 +81,7 @@ hdb_entry_alias2value(krb5_context context,
 		      const hdb_entry_alias *alias,
 		      krb5_data *value)
 {
-    size_t len;
+    size_t len = 0;
     int ret;
 
     ASN1_MALLOC_ENCODE(hdb_entry_alias, value->data, value->length,

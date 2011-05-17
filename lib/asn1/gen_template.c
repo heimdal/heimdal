@@ -484,7 +484,7 @@ template_members(struct templatehead *temp, const char *basetype, const char *na
 	}
 	break;
     case TInteger: {
-	char *itype;
+	char *itype = NULL;
 
 	if (t->members)
 	    itype = "IMEMBER";
@@ -644,7 +644,7 @@ template_members(struct templatehead *temp, const char *basetype, const char *na
     }
     case TSetOf:
     case TSequenceOf: {
-	const char *type, *tname, *dupname;
+	const char *type = NULL, *tname, *dupname;
 	char *sename = NULL, *elname = NULL;
 	int subtype_is_struct = is_struct(t->subtype, 0);
 

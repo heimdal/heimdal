@@ -196,9 +196,9 @@ is_valid_plugin_filename(const char * n)
 
         return !stricmp(ext, ".dll");
     }
-#endif
-
+#else
     return 1;
+#endif
 }
 
 static void

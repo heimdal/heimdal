@@ -512,8 +512,8 @@ foreach_principal(const char *exp_str,
 		  const char *funcname,
 		  void *data)
 {
-    char **princs;
-    int num_princs;
+    char **princs = NULL;
+    int num_princs = 0;
     int i;
     krb5_error_code saved_ret = 0, ret = 0;
     krb5_principal princ_ent;

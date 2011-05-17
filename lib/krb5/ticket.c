@@ -661,7 +661,7 @@ _krb5_extract_ticket(krb5_context context,
 {
     krb5_error_code ret;
     krb5_principal tmp_principal;
-    size_t len;
+    size_t len = 0;
     time_t tmp_time;
     krb5_timestamp sec_now;
 

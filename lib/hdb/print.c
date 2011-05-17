@@ -209,7 +209,7 @@ entry2string_int (krb5_context context, krb5_storage *sp, hdb_entry *ent)
     if(ent->extensions && ent->extensions->len > 0) {
 	for(i = 0; i < ent->extensions->len; i++) {
 	    void *d;
-	    size_t size, sz;
+	    size_t size, sz = 0;
 
 	    ASN1_MALLOC_ENCODE(HDB_extension, d, size,
 			       &ent->extensions->val[i], &sz, ret);

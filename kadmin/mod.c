@@ -62,7 +62,7 @@ add_constrained_delegation(krb5_context contextp,
     krb5_error_code ret;
     HDB_extension ext;
     krb5_data buf;
-    size_t size;
+    size_t size = 0;
 	
     memset(&ext, 0, sizeof(ext));
     ext.mandatory = FALSE;
@@ -110,7 +110,7 @@ add_aliases(krb5_context contextp, kadm5_principal_ent_rec *princ,
     HDB_extension ext;
     krb5_data buf;
     krb5_principal p;
-    size_t size;
+    size_t size = 0;
     int i;
 
     memset(&ext, 0, sizeof(ext));
@@ -152,7 +152,7 @@ add_pkinit_acl(krb5_context contextp, kadm5_principal_ent_rec *princ,
     krb5_error_code ret;
     HDB_extension ext;
     krb5_data buf;
-    size_t size;
+    size_t size = 0;
     int i;
 
     memset(&ext, 0, sizeof(ext));

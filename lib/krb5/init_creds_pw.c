@@ -928,7 +928,7 @@ make_pa_enc_timestamp(krb5_context context, METHOD_DATA *md,
     PA_ENC_TS_ENC p;
     unsigned char *buf;
     size_t buf_size;
-    size_t len;
+    size_t len = 0;
     EncryptedData encdata;
     krb5_error_code ret;
     int32_t usec;
@@ -1109,7 +1109,7 @@ pa_data_add_pac_request(krb5_context context,
 			krb5_get_init_creds_ctx *ctx,
 			METHOD_DATA *md)
 {
-    size_t len, length;
+    size_t len = 0, length;
     krb5_error_code ret;
     PA_PAC_REQUEST req;
     void *buf;
@@ -1647,7 +1647,7 @@ krb5_init_creds_step(krb5_context context,
 		     unsigned int *flags)
 {
     krb5_error_code ret;
-    size_t len;
+    size_t len = 0;
     size_t size;
 
     krb5_data_zero(out);

@@ -202,12 +202,16 @@ dir_iter_end(hx509_context context,
 
 
 static struct hx509_keyset_ops keyset_dir = {
-    .name = "DIR",
-    .init = dir_init,
-    .free = dir_free,
-    .iter_start = dir_iter_start,
-    .iter = dir_iter,
-    .iter_end = dir_iter_end,
+    "DIR",
+    0,
+    dir_init,
+    NULL,
+    dir_free,
+    NULL,
+    NULL,
+    dir_iter_start,
+    dir_iter,
+    dir_iter_end
 };
 
 void

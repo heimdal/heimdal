@@ -214,19 +214,19 @@ static gss_mo_desc krb5_mo[] = {
     },
     {
 	GSS_C_MA_AUTH_TARG,
-	.flags = GSS_MO_MA
+	GSS_MO_MA
     },
     {
 	GSS_C_MA_AUTH_INIT_ANON,
-	.flags = GSS_MO_MA
+	GSS_MO_MA
     },
     {
 	GSS_C_MA_DELEG_CRED,
-	.flags = GSS_MO_MA
+	GSS_MO_MA
     },
     {
 	GSS_C_MA_INTEG_PROT,
-	.flags = GSS_MO_MA
+	GSS_MO_MA
     },
     {
 	GSS_C_MA_CONF_PROT,

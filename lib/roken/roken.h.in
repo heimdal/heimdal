@@ -105,6 +105,10 @@ typedef int rk_socket_t;
 
 #endif
 
+#ifndef IN_LOOPBACKNET
+#define IN_LOOPBACKNET 127
+#endif
+
 #ifdef _MSC_VER
 /* Declarations for Microsoft Visual C runtime on Windows */
 

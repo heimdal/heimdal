@@ -2074,6 +2074,10 @@ krb5_init_creds_step(krb5_context context,
 	    if (ret)
 		goto out;
 
+	    /*
+	     * Now check and extract the ticket
+	     */
+
 	    if (ctx->flags.canonicalize) {
 		eflags |= EXTRACT_TICKET_ALLOW_SERVER_MISMATCH;
 		eflags |= EXTRACT_TICKET_MATCH_REALM;

@@ -1528,6 +1528,10 @@ hx509_cms_create_signed(hx509_context context,
     }
 
     if (sigctx.sd.signerInfos.len) {
+
+	/*
+	 * For each signerInfo, collect all different digest types.
+	 */
 	for (i = 0; i < sigctx.sd.signerInfos.len; i++) {
 	    AlgorithmIdentifier *di =
 		&sigctx.sd.signerInfos.val[i].digestAlgorithm;
@@ -1535,7 +1539,7 @@ hx509_cms_create_signed(hx509_context context,
 	    for (j = 0; j < sigctx.sd.digestAlgorithms.len; j++)
 		if (cmp_AlgorithmIdentifier(di, &sigctx.sd.digestAlgorithms.val[j]) == 0)
 		    break;
-	    if (j < sigctx.sd.digestAlgorithms.len) {
+	    if (j == sigctx.sd.digestAlgorithms.len) {
 		ret = add_DigestAlgorithmIdentifiers(&sigctx.sd.digestAlgorithms, di);
 		if (ret) {
 		    hx509_clear_error_string(context);
@@ -1545,6 +1549,9 @@ hx509_cms_create_signed(hx509_context context,
 	}
     }
 
+    /*
+     * Add certs we think are needed, build as part of sig_process
+     */
     if (sigctx.certs) {
 	ALLOC(sigctx.sd.certificates, 1);
 	if (sigctx.sd.certificates == NULL) {

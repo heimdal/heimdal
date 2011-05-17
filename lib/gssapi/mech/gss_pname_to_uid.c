@@ -59,6 +59,9 @@ attr_pname_to_uid(OM_uint32 *minor_status,
                   struct _gss_mechanism_name *mn,
                   uid_t *uidp)
 {
+#ifdef NO_LOCALNAME
+    return GSS_S_UNAVAILABLE;
+#else
     OM_uint32 major_status = GSS_S_UNAVAILABLE;
     OM_uint32 tmpMinor;
     int more = -1;
@@ -124,6 +127,7 @@ attr_pname_to_uid(OM_uint32 *minor_status,
     }
 
     return major_status;
+#endif /* NO_LOCALNAME */
 }
 
 OM_uint32

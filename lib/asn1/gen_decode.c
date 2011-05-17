@@ -210,7 +210,7 @@ range_check(const char *name,
 static int
 decode_type (const char *name, const Type *t, int optional,
 	     const char *forwstr, const char *tmpstr, const char *dertype,
-	     size_t depth)
+	     unsigned int depth)
 {
     switch (t->type) {
     case TType: {
@@ -482,7 +482,7 @@ decode_type (const char *name, const Type *t, int optional,
 		tmpstr, tmpstr, typestring);
 	if(support_ber)
 	    fprintf(codefile,
-		    "int is_indefinite%zu;\n", depth);
+		    "int is_indefinite%u;\n", depth);
 
 	fprintf(codefile, "e = der_match_tag_and_length(p, len, %s, &%s, %s, "
 		"&%s_datalen, &l);\n",
@@ -518,9 +518,9 @@ decode_type (const char *name, const Type *t, int optional,
 		 tmpstr);
 	if(support_ber)
 	    fprintf (codefile,
-		     "if((is_indefinite%zu = _heim_fix_dce(%s_datalen, &len)) < 0)\n"
+		     "if((is_indefinite%u = _heim_fix_dce(%s_datalen, &len)) < 0)\n"
 		     "{ e = ASN1_BAD_FORMAT; %s; }\n"
-		     "if (is_indefinite%zu) { if (len < 2) { e = ASN1_OVERRUN; %s; } len -= 2; }",
+		     "if (is_indefinite%u) { if (len < 2) { e = ASN1_OVERRUN; %s; } len -= 2; }",
 		     depth, tmpstr, forwstr, depth, forwstr);
 	else
 	    fprintf(codefile,
@@ -531,7 +531,7 @@ decode_type (const char *name, const Type *t, int optional,
 	decode_type (name, t->subtype, 0, forwstr, tname, ide, depth + 1);
 	if(support_ber)
 	    fprintf(codefile,
-		    "if(is_indefinite%zu){\n"
+		    "if(is_indefinite%u){\n"
 		    "len += 2;\n"
 		    "e = der_match_tag_and_length(p, len, "
 		    "(Der_class)0, &%s, UT_EndOfContent, "

@@ -36,38 +36,36 @@
 
 krb5_error_code
 _krb5_fast_cf2(krb5_context context,
-	       krb5_keyblock *sessionkey,
-	       const char *sessionpepper,
-	       krb5_keyblock *subkey,
-	       const char *subkeypepper,
+	       krb5_keyblock *key1,
+	       const char *pepper1,
+	       krb5_keyblock *key2,
+	       const char *pepper2,
 	       krb5_keyblock *armorkey,
 	       krb5_crypto *armor_crypto)
 {
-    krb5_crypto crypto_subkey, crypto_session;
-    krb5_data pepper1, pepper2;
+    krb5_crypto crypto1, crypto2;
+    krb5_data pa1, pa2;
     krb5_error_code ret;
 
-    ret = krb5_crypto_init(context, subkey, 0, &crypto_subkey);
+    ret = krb5_crypto_init(context, key1, 0, &crypto1);
     if (ret)
 	return ret;
 
-    ret = krb5_crypto_init(context, sessionkey, 0, &crypto_session);
+    ret = krb5_crypto_init(context, key2, 0, &crypto2);
     if (ret) {
-	krb5_crypto_destroy(context, crypto_subkey);
+	krb5_crypto_destroy(context, crypto1);
 	return ret;
     }
 
-    pepper1.data = rk_UNCONST(sessionpepper);
-    pepper1.length = strlen(sessionpepper);
-    pepper2.data = rk_UNCONST(subkeypepper);
-    pepper2.length = strlen(subkeypepper);
+    pa1.data = rk_UNCONST(pepper1);
+    pa1.length = strlen(pepper1);
+    pa2.data = rk_UNCONST(pepper2);
+    pa2.length = strlen(pepper2);
 
-    ret = krb5_crypto_fx_cf2(context, crypto_subkey, crypto_session,
-			     &pepper1, &pepper2,
-			     subkey->keytype,
-			     armorkey);
-    krb5_crypto_destroy(context, crypto_subkey);
-    krb5_crypto_destroy(context, crypto_session);
+    ret = krb5_crypto_fx_cf2(context, crypto1, crypto2, &pa1, &pa2,
+			     key1->keytype, armorkey);
+    krb5_crypto_destroy(context, crypto1);
+    krb5_crypto_destroy(context, crypto2);
     if (ret)
 	return ret;
 
@@ -82,16 +80,16 @@ _krb5_fast_cf2(krb5_context context,
 
 krb5_error_code
 _krb5_fast_armor_key(krb5_context context,
-		     krb5_keyblock *sessionkey,
 		     krb5_keyblock *subkey,
+		     krb5_keyblock *sessionkey,
 		     krb5_keyblock *armorkey,
 		     krb5_crypto *armor_crypto)
 {
     return _krb5_fast_cf2(context,
-			  sessionkey,
-			  "ticketarmor",
 			  subkey,
 			  "subkeyarmor",
+			  sessionkey,
+			  "ticketarmor",
 			  armorkey,
 			  armor_crypto);
 }

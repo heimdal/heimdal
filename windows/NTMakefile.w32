@@ -55,6 +55,8 @@ SRC=$(MAKEDIR)\..
 SRC=$(MAKEDIR)\..\..
 !elseif exist($(MAKEDIR)\..\..\..\windows\NTMakefile.w32)
 SRC=$(MAKEDIR)\..\..\..
+!elseif exist($(MAKEDIR)\..\..\..\..\windows\NTMakefile.w32)
+SRC=$(MAKEDIR)\..\..\..\..
 !else
 !  error Cant determine source directory
 !endif

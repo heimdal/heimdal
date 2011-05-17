@@ -1672,14 +1672,96 @@ check_fast(krb5_context context, struct fast_state *state)
 static krb5_error_code
 fast_unwrap_as_rep(krb5_context context, struct fast_state *state, AS_REP *rep)
 {
-    if (state->armor_crypto == NULL)
+    PA_FX_FAST_REPLY fxfastrep;
+    KrbFastResponse fastrep;
+    KrbFastFinished finished;
+    krb5_error_code ret;
+    PA_DATA *pa = NULL;
+    int idx = 0;
+
+    if (state->armor_crypto == NULL || rep->padata == NULL)
 	return check_fast(context, state);
 
-    /*
-    unwrap_req(rep);
-    */
+    /* find PA_FX_FAST_REPLY */
 
-    return 0;
+    pa = krb5_find_padata(rep->padata->val, rep->padata->len,
+			  KRB5_PADATA_FX_FAST, &idx);
+    if (pa == NULL)
+	return check_fast(context, state);
+
+    memset(&fxfastrep, 0, sizeof(fxfastrep));
+    memset(&fastrep, 0, sizeof(fastrep));
+    memset(&finished, 0, sizeof(finished));
+
+    ret = decode_PA_FX_FAST_REPLY(pa->padata_value.data, pa->padata_value.length, &fxfastrep, NULL);
+    if (ret)
+	return ret;
+
+    if (fxfastrep.element == choice_PA_FX_FAST_REPLY_armored_data) {
+	krb5_data data;
+	ret = krb5_decrypt_EncryptedData(context,
+					 state->armor_crypto,
+					 KRB5_KU_FAST_REP,
+					 &fxfastrep.u.armored_data.enc_fast_rep,
+					 &data);
+	if (ret)
+	    goto out;
+
+	ret = decode_KrbFastResponse(data.data, data.length, &fastrep, NULL);
+	krb5_data_free(&data);
+	if (ret)
+	    goto out;
+
+    } else {
+	ret = EINVAL;
+	goto out;
+    }
+
+    free_METHOD_DATA(rep->padata);
+    ret = copy_METHOD_DATA(&fastrep.padata, rep->padata);
+    if (ret)
+	goto out;
+
+    if (fastrep.strengthen_key) {
+	krb5_keyblock result;
+
+	ret = _krb5_fast_cf2(context,
+			     state->reply_key,
+			     "",
+			     fastrep.strengthen_key,
+			     "",
+			     &result,
+			     NULL);
+	if (ret)
+	    goto out;
+	krb5_free_keyblock(context, state->reply_key);
+	state->reply_key = NULL;
+
+	ret = krb5_copy_keyblock(context, &result, &state->reply_key);
+	if (ret)
+	    goto out;
+	krb5_free_keyblock_contents(context, &result);
+    }
+#if 0
+    /* extract and replace */
+    fastrep.nonce;
+
+    if (fastrep.finished) {
+	/* validate */
+	finished.ticket_checksum;
+	/* store */
+	finished.timestamp;
+	finished.usec = 0;
+	/* update */
+	finished.crealm;
+	finished.cname;
+    }
+#endif
+
+ out:
+    free_PA_FX_FAST_REPLY(&fxfastrep);
+
+    return ret;
 }
 
 static krb5_error_code

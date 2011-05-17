@@ -1676,7 +1676,6 @@ fast_unwrap_as_rep(krb5_context context, int32_t nonce,
 {
     PA_FX_FAST_REPLY fxfastrep;
     KrbFastResponse fastrep;
-    KrbFastFinished finished;
     krb5_error_code ret;
     PA_DATA *pa = NULL;
     int idx = 0;
@@ -1693,7 +1692,6 @@ fast_unwrap_as_rep(krb5_context context, int32_t nonce,
 
     memset(&fxfastrep, 0, sizeof(fxfastrep));
     memset(&fastrep, 0, sizeof(fastrep));
-    memset(&finished, 0, sizeof(finished));
 
     ret = decode_PA_FX_FAST_REPLY(pa->padata_value.data, pa->padata_value.length, &fxfastrep, NULL);
     if (ret)
@@ -1746,6 +1744,9 @@ fast_unwrap_as_rep(krb5_context context, int32_t nonce,
 	goto out;
     }
     if (fastrep.finished) {
+	PrincipalName cname;
+	krb5_realm crealm = NULL;
+
 	if (chksumdata == NULL)
 	    return EINVAL;
 
@@ -1756,16 +1757,24 @@ fast_unwrap_as_rep(krb5_context context, int32_t nonce,
 	if (ret)
 	    goto out;
 
-	/* store */
-#if 0
-	finished.timestamp;
-	finished.usec = 0;
-#endif
 	/* update */
-#if 0
-	finished.crealm;
-	finished.cname;
+	ret = copy_Realm(&fastrep.finished->crealm, &crealm);
+	if (ret)
+	    goto out;
+	free_Realm(&rep->crealm);
+	rep->crealm = crealm;
+
+	ret = copy_PrincipalName(&fastrep.finished->cname, &cname);
+	if (ret)
+	    goto out;
+	free_PrincipalName(&rep->cname);
+	rep->cname = cname;
+	
+#if 0 /* store authenticated checksum as kdc-offset */
+	fastrep->finished.timestamp;
+	fastrep->finished.usec = 0;
 #endif
+
     } else if (chksumdata) {
 	/* expected fastrep.finish but didn't get it */
 	ret = EINVAL;

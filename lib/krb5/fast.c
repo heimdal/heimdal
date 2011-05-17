@@ -35,11 +35,13 @@
 
 
 krb5_error_code
-_krb5_fast_armor_key(krb5_context context,
-		     krb5_keyblock *sessionkey,
-		     krb5_keyblock *subkey,
-		     krb5_keyblock *armorkey,
-		     krb5_crypto *armor_crypto)
+_krb5_fast_cf2(krb5_context context,
+	       krb5_keyblock *sessionkey,
+	       const char *sessionpepper,
+	       krb5_keyblock *subkey,
+	       const char *subkeypepper,
+	       krb5_keyblock *armorkey,
+	       krb5_crypto *armor_crypto)
 {
     krb5_crypto crypto_subkey, crypto_session;
     krb5_data pepper1, pepper2;
@@ -55,10 +57,10 @@ _krb5_fast_armor_key(krb5_context context,
 	return ret;
     }
 
-    pepper1.data = "subkeyarmor";
-    pepper1.length = strlen(pepper1.data);
-    pepper2.data = "ticketarmor";
-    pepper2.length = strlen(pepper2.data);
+    pepper1.data = rk_UNCONST(sessionpepper);
+    pepper1.length = strlen(sessionpepper);
+    pepper2.data = rk_UNCONST(subkeypepper);
+    pepper2.length = strlen(subkeypepper);
 
     ret = krb5_crypto_fx_cf2(context, crypto_subkey, crypto_session,
 			     &pepper1, &pepper2,
@@ -69,9 +71,27 @@ _krb5_fast_armor_key(krb5_context context,
     if (ret)
 	return ret;
 
-    ret = krb5_crypto_init(context, armorkey, 0, armor_crypto);
-    if (ret)
-	krb5_free_keyblock_contents(context, armorkey);
+    if (armor_crypto) {
+	ret = krb5_crypto_init(context, armorkey, 0, armor_crypto);
+	if (ret)
+	    krb5_free_keyblock_contents(context, armorkey);
+    }
 
     return ret;
+}
+
+krb5_error_code
+_krb5_fast_armor_key(krb5_context context,
+		     krb5_keyblock *sessionkey,
+		     krb5_keyblock *subkey,
+		     krb5_keyblock *armorkey,
+		     krb5_crypto *armor_crypto)
+{
+    return _krb5_fast_cf2(context,
+			  sessionkey,
+			  "ticketarmor",
+			  subkey,
+			  "subkeyarmor",
+			  armorkey,
+			  armor_crypto);
 }

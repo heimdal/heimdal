@@ -60,12 +60,12 @@
 ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
 get_window_size(int fd, int *lines, int *columns)
 {
-    int ret;
     char *s;
 
 #if defined(TIOCGWINSZ)
     {
 	struct winsize ws;
+        int ret;
 	ret = ioctl(fd, TIOCGWINSZ, &ws);
 	if (ret != -1) {
 	    if (lines)
@@ -78,7 +78,7 @@ get_window_size(int fd, int *lines, int *columns)
 #elif defined(TIOCGSIZE)
     {
 	struct ttysize ts;
-	
+        int ret;
 	ret = ioctl(fd, TIOCGSIZE, &ts);
 	if (ret != -1) {
 	    if (lines)
@@ -107,10 +107,12 @@ get_window_size(int fd, int *lines, int *columns)
         fh = _get_osfhandle(fd);
         if (fh != (intptr_t) INVALID_HANDLE_VALUE &&
             GetConsoleScreenBufferInfo((HANDLE) fh, &sb_info)) {
-            wp->ws_row = 1 + sb_info.srWindow.Bottom - sb_info.srWindow.Top;
-            wp->ws_col = 1 + sb_info.srWindow.Right - sb_info.srWindow.Left;
+            if (lines)
+                *lines = 1 + sb_info.srWindow.Bottom - sb_info.srWindow.Top;
+            if (columns)
+                *columns = 1 + sb_info.srWindow.Right - sb_info.srWindow.Left;
 
-            ret = 0;
+            return 0;
         }
     }
 #endif

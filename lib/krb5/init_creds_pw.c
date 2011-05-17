@@ -1670,7 +1670,9 @@ check_fast(krb5_context context, struct fast_state *state)
 
 
 static krb5_error_code
-fast_unwrap_as_rep(krb5_context context, struct fast_state *state, AS_REP *rep)
+fast_unwrap_as_rep(krb5_context context, int32_t nonce,
+		   krb5_data *chksumdata,
+		   struct fast_state *state, AS_REP *rep)
 {
     PA_FX_FAST_REPLY fxfastrep;
     KrbFastResponse fastrep;
@@ -1726,37 +1728,48 @@ fast_unwrap_as_rep(krb5_context context, struct fast_state *state, AS_REP *rep)
 	krb5_keyblock result;
 
 	ret = _krb5_fast_cf2(context,
-			     state->reply_key,
-			     "",
 			     fastrep.strengthen_key,
-			     "",
+			     "strengthenkey", 
+			     state->reply_key,
+			     "replykey",
 			     &result,
 			     NULL);
 	if (ret)
 	    goto out;
-	krb5_free_keyblock(context, state->reply_key);
-	state->reply_key = NULL;
 
-	ret = krb5_copy_keyblock(context, &result, &state->reply_key);
+	krb5_free_keyblock_contents(context, state->reply_key);
+	*state->reply_key = result;
+    }
+
+    if (nonce != fastrep.nonce) {
+	ret = EINVAL;
+	goto out;
+    }
+    if (fastrep.finished) {
+	if (chksumdata == NULL)
+	    return EINVAL;
+
+	ret = krb5_verify_checksum(context, state->armor_crypto,
+				   KRB5_KU_FAST_FINISHED,
+				   chksumdata->data, chksumdata->length,
+				   &fastrep.finished->ticket_checksum);
 	if (ret)
 	    goto out;
-	krb5_free_keyblock_contents(context, &result);
-    }
-#if 0
-    /* extract and replace */
-    fastrep.nonce;
 
-    if (fastrep.finished) {
-	/* validate */
-	finished.ticket_checksum;
 	/* store */
+#if 0
 	finished.timestamp;
 	finished.usec = 0;
+#endif
 	/* update */
+#if 0
 	finished.crealm;
 	finished.cname;
-    }
 #endif
+    } else if (chksumdata) {
+	/* expected fastrep.finish but didn't get it */
+	ret = EINVAL;
+    }
 
  out:
     free_PA_FX_FAST_REPLY(&fxfastrep);
@@ -1832,8 +1845,8 @@ make_fast_ap_fxarmor(krb5_context context,
     krb5_free_keyblock_contents(context, &state->armor_key);
 
     ret = _krb5_fast_armor_key(context,
-			       auth_context->keyblock,
 			       auth_context->local_subkey,
+			       auth_context->keyblock,
 			       &state->armor_key,
 			       &state->armor_crypto);
     if (ret)
@@ -2033,11 +2046,20 @@ krb5_init_creds_step(krb5_context context,
 	ret = decode_AS_REP(in->data, in->length, &rep.kdc_rep, &size);
 	if (ret == 0) {
 	    unsigned eflags = EXTRACT_TICKET_AS_REQ | EXTRACT_TICKET_TIMESYNC;
+	    krb5_data data;
 
 	    /*
 	     * Unwrap AS-REP
 	     */
-	    ret = fast_unwrap_as_rep(context, &ctx->fast_state, &rep.kdc_rep);
+	    ASN1_MALLOC_ENCODE(Ticket, data.data, data.length,
+			       &rep.kdc_rep.ticket, &size, ret);
+	    if (ret)
+		goto out;
+	    heim_assert(data.length == size, "ASN.1 internal error");
+
+	    ret = fast_unwrap_as_rep(context, ctx->nonce, &data,
+				     &ctx->fast_state, &rep.kdc_rep);
+	    krb5_data_free(&data);
 	    if (ret)
 		goto out;
 

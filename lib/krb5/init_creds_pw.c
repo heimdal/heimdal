@@ -1713,7 +1713,7 @@ fast_unwrap_as_rep(krb5_context context, int32_t nonce,
 	    goto out;
 
     } else {
-	ret = EINVAL;
+	ret = KRB5KDC_ERR_PREAUTH_FAILED;
 	goto out;
     }
 
@@ -1740,15 +1740,17 @@ fast_unwrap_as_rep(krb5_context context, int32_t nonce,
     }
 
     if (nonce != fastrep.nonce) {
-	ret = EINVAL;
+	ret = KRB5KDC_ERR_PREAUTH_FAILED;
 	goto out;
     }
     if (fastrep.finished) {
 	PrincipalName cname;
 	krb5_realm crealm = NULL;
 
-	if (chksumdata == NULL)
-	    return EINVAL;
+	if (chksumdata == NULL) {
+	    ret = KRB5KDC_ERR_PREAUTH_FAILED;
+	    goto out;
+	}
 
 	ret = krb5_verify_checksum(context, state->armor_crypto,
 				   KRB5_KU_FAST_FINISHED,
@@ -1777,7 +1779,7 @@ fast_unwrap_as_rep(krb5_context context, int32_t nonce,
 
     } else if (chksumdata) {
 	/* expected fastrep.finish but didn't get it */
-	ret = EINVAL;
+	ret = KRB5KDC_ERR_PREAUTH_FAILED;
     }
 
  out:

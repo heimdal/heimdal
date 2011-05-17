@@ -1161,7 +1161,7 @@ KRB5_LIB_VARIABLE const krb5_cc_ops krb5_akcm_ops = {
 };
 
 
-krb5_boolean
+KRB5_LIB_FUNCTION krb5_boolean KRB5_LIB_CALL
 _krb5_kcm_is_running(krb5_context context)
 {
     krb5_error_code ret;
@@ -1186,7 +1186,7 @@ _krb5_kcm_is_running(krb5_context context)
  * Response:
  *
  */
-krb5_error_code
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 _krb5_kcm_noop(krb5_context context,
 	       krb5_ccache id)
 {
@@ -1214,7 +1214,7 @@ _krb5_kcm_noop(krb5_context context,
  * Repsonse:
  *
  */
-krb5_error_code
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 _krb5_kcm_get_initial_ticket(krb5_context context,
 			     krb5_ccache id,
 			     krb5_principal server,
@@ -1271,7 +1271,7 @@ _krb5_kcm_get_initial_ticket(krb5_context context,
  * Repsonse:
  *
  */
-krb5_error_code
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 _krb5_kcm_get_ticket(krb5_context context,
 		     krb5_ccache id,
 		     krb5_kdc_flags flags,

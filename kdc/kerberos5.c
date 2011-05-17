@@ -861,9 +861,11 @@ _kdc_encode_reply(krb5_context context,
 	/*
 	 * Hide client name of privacy reasons
 	 */
-	rep->crealm[0] = '\0';
-	free_PrincipalName(&rep->cname);
-	rep->cname.name_type = 0;
+	if (1 /* r->fast_options.hide_client_names */) {
+	    rep->crealm[0] = '\0';
+	    free_PrincipalName(&rep->cname);
+	    rep->cname.name_type = 0;
+	}
     }
 
     if(rep->msg_type == krb_as_rep && !config->encode_as_rep_as_tgs_rep)

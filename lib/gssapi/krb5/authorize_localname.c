@@ -32,7 +32,7 @@
 
 #include "gsskrb5_locl.h"
 
-OM_uint32
+OM_uint32 GSSAPI_CALLCONV
 _gsskrb5_authorize_localname(OM_uint32 *minor_status,
                              const gss_name_t input_name,
                              gss_const_buffer_t user_name,

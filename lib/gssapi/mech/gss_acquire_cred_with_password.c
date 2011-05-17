@@ -32,7 +32,7 @@
 
 #include "mech_locl.h"
 
-OM_uint32
+GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL
 gss_acquire_cred_with_password(OM_uint32 *minor_status,
 			       const gss_name_t desired_name,
 			       const gss_buffer_t password,

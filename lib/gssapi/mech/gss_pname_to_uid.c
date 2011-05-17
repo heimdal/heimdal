@@ -130,7 +130,7 @@ attr_pname_to_uid(OM_uint32 *minor_status,
 #endif /* NO_LOCALNAME */
 }
 
-OM_uint32
+GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL
 gss_pname_to_uid(OM_uint32 *minor_status,
                  const gss_name_t pname,
                  const gss_OID mech_type,

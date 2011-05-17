@@ -30,7 +30,7 @@
 
 #include "mech_locl.h"
 
-OM_uint32
+GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL
 _gss_acquire_mech_cred(OM_uint32 *minor_status,
 		       gssapi_mech_interface m,
 		       const struct _gss_mechanism_name *mn,

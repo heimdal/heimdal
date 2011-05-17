@@ -518,8 +518,8 @@ scc_resolve(krb5_context context, krb5_ccache *id, const char *res)
 	    sqlite3_reset(s->scache_name);
 	    krb5_set_error_message(context, KRB5_CC_END,
 				   N_("Cache name of wrong type "
-				      "for scache %ld", ""),
-				  (unsigned long)s->name);
+				      "for scache %s", ""),
+				   s->name);
 	    scc_free(s);
 	    return KRB5_CC_END;
 	}
@@ -902,8 +902,8 @@ scc_get_first (krb5_context context,
 	return KRB5_CC_END;
     }
 
-    ret = asprintf(&name, "credIteration%luPid%d",
-	     (unsigned long)ctx, (int)getpid());
+    ret = asprintf(&name, "credIteration%pPid%d",
+                   ctx, (int)getpid());
     if (ret < 0 || name == NULL) {
 	krb5_set_error_message(context, ENOMEM,
 			       N_("malloc: out of memory", ""));
@@ -1173,8 +1173,8 @@ scc_get_cache_first(krb5_context context, krb5_cc_cursor *cursor)
 	return ret;
     }
 
-    ret = asprintf(&name, "cacheIteration%luPid%d",
-	     (unsigned long)ctx, (int)getpid());
+    ret = asprintf(&name, "cacheIteration%pPid%d",
+                   ctx, (int)getpid());
     if (ret < 0 || name == NULL) {
 	krb5_set_error_message(context, ENOMEM,
 			       N_("malloc: out of memory", ""));

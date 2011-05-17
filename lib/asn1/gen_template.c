@@ -557,7 +557,7 @@ template_members(struct templatehead *temp, const char *basetype, const char *na
 	    break;
 	}
 
-	if (asprintf(&bname, "bmember_%s_%lu", name ? name : "", (unsigned long)t) < 0 || bname == NULL)
+	if (asprintf(&bname, "bmember_%s_%p", name ? name : "", t) < 0 || bname == NULL)
 	    errx(1, "malloc");
 	output_name(bname);
 
@@ -620,7 +620,7 @@ template_members(struct templatehead *temp, const char *basetype, const char *na
 	else
 	    sename = symbol_name(basetype, t->subtype);
 
-	if (asprintf(&tname, "tag_%s_%lu", name ? name : "", (unsigned long)t) < 0 || tname == NULL)
+	if (asprintf(&tname, "tag_%s_%p", name ? name : "", t) < 0 || tname == NULL)
 	    errx(1, "malloc");
 	output_name(tname);
 
@@ -670,7 +670,7 @@ template_members(struct templatehead *temp, const char *basetype, const char *na
 	else if (t->type == TSequenceOf) type = "A1_OP_SEQOF";
 	else abort();
 
-	if (asprintf(&elname, "%s_%s_%lu", basetype, tname, (unsigned long)t) < 0 || elname == NULL)
+	if (asprintf(&elname, "%s_%s_%p", basetype, tname, t) < 0 || elname == NULL)
 	    errx(1, "malloc");
 
 	generate_template_type(elname, &dupname, NULL, sename, NULL, t->subtype,

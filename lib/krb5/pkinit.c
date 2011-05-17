@@ -188,8 +188,8 @@ find_cert(krb5_context context, struct krb5_pk_identity *id,
 	{ "MS EKU" },
 	{ "any (or no)" }
     };
-    int ret;
-    size_t i, start;
+    int ret = HX509_CERT_NOT_FOUND;
+    size_t i, start = 1;
     unsigned oids[] = { 1, 2, 840, 113635, 100, 3, 2, 1 };
     const heim_oid mobileMe = { sizeof(oids)/sizeof(oids[0]), oids };
 

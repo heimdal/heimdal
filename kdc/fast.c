@@ -312,8 +312,8 @@ _kdc_fast_unwrap_request(kdc_request_t r)
     }		
 
     ret = _krb5_fast_armor_key(r->context,
-			       &ticket->ticket.key,
 			       ac->remote_subkey,
+			       &ticket->ticket.key,
 			       &armorkey,
 			       &r->armor_crypto);
     krb5_auth_con_free(r->context, ac);

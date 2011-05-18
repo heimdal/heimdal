@@ -93,6 +93,7 @@ _gss_ntlm_destroy_kcm_cred(gss_cred_id_t *cred_handle)
     krb5_storage *request, *response;
     krb5_data response_data;
     krb5_context context;
+    krb5_error_code ret;
     ntlm_cred cred;
 
     cred = (ntlm_cred)*cred_handle;

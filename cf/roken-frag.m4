@@ -201,7 +201,6 @@ AC_CHECK_FUNCS([				\
 	sysctl					\
 	tdelete					\
 	tfind					\
-	tsearch					\
 	twalk					\
 	uname					\
 	unvis					\
@@ -375,6 +374,7 @@ AC_BROKEN([					\
 	strtok_r				\
 	strupr					\
 	swab					\
+	tsearch					\
 	timegm					\
 	unsetenv				\
 	verr					\

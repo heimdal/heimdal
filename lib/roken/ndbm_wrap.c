@@ -122,6 +122,7 @@ dbm_get (DB *db, int flags)
 	DBT2DATUM(&value, &datum);
 #else
     db->seq(db, &key, &value, flags);
+    DBT2DATUM(&value, &datum);
 #endif
     return datum;
 }

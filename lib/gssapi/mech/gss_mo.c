@@ -403,7 +403,7 @@ test_mech_attrs(gssapi_mech_interface mi,
                 int except)
 {
     size_t n, m;
-    int eq;
+    int eq = 0;
 
     if (against_attrs == GSS_C_NO_OID_SET)
         return 1;

@@ -33,8 +33,6 @@
  * SUCH DAMAGE.
  */
 
-#define KRB5_DEPRECATED
-
 #include "krb5_locl.h"
 
 #ifdef __APPLE__
@@ -1302,11 +1300,11 @@ krb5_config_get_int (krb5_context context,
  * @ingroup krb5_deprecated
  */
 
-KRB5_DEPRECATED
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_config_parse_string_multi(krb5_context context,
 			       const char *string,
 			       krb5_config_section **res)
+    KRB5_DEPRECATED_FUNCTION("Use X instead")
 {
     const char *str;
     unsigned lineno = 0;

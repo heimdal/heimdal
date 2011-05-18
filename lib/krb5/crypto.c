@@ -31,8 +31,6 @@
  * SUCH DAMAGE.
  */
 
-#define KRB5_DEPRECATED
-
 #include "krb5_locl.h"
 
 struct _krb5_key_usage {
@@ -2578,12 +2576,12 @@ krb5_crypto_fx_cf2(krb5_context context,
  * @ingroup krb5_deprecated
  */
 
-KRB5_DEPRECATED
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_keytype_to_enctypes (krb5_context context,
 			  krb5_keytype keytype,
 			  unsigned *len,
 			  krb5_enctype **val)
+    KRB5_DEPRECATED_FUNCTION("Use X instead")
 {
     int i;
     unsigned n = 0;
@@ -2625,11 +2623,11 @@ krb5_keytype_to_enctypes (krb5_context context,
  */
 
 /* if two enctypes have compatible keys */
-KRB5_DEPRECATED
 KRB5_LIB_FUNCTION krb5_boolean KRB5_LIB_CALL
 krb5_enctypes_compatible_keys(krb5_context context,
 			      krb5_enctype etype1,
 			      krb5_enctype etype2)
+    KRB5_DEPRECATED_FUNCTION("Use X instead")
 {
     struct _krb5_encryption_type *e1 = _krb5_find_enctype(etype1);
     struct _krb5_encryption_type *e2 = _krb5_find_enctype(etype2);

@@ -31,8 +31,6 @@
  * SUCH DAMAGE.
  */
 
-#define KRB5_DEPRECATED
-
 #include "krb5_locl.h"
 
 #ifndef HEIMDAL_SMALLER
@@ -361,7 +359,6 @@ set_ptypes(krb5_context context,
     return(1);
 }
 
-KRB5_DEPRECATED
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_get_in_cred(krb5_context context,
 		 krb5_flags options,
@@ -375,6 +372,7 @@ krb5_get_in_cred(krb5_context context,
 		 krb5_const_pointer decryptarg,
 		 krb5_creds *creds,
 		 krb5_kdc_rep *ret_as_reply)
+    KRB5_DEPRECATED_FUNCTION("Use X instead")
 {
     krb5_error_code ret;
     AS_REQ a;
@@ -526,7 +524,6 @@ out:
     return ret;
 }
 
-KRB5_DEPRECATED
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_get_in_tkt(krb5_context context,
 		krb5_flags options,
@@ -540,6 +537,7 @@ krb5_get_in_tkt(krb5_context context,
 		krb5_creds *creds,
 		krb5_ccache ccache,
 		krb5_kdc_rep *ret_as_reply)
+    KRB5_DEPRECATED_FUNCTION("Use X instead")
 {
     krb5_error_code ret;
 

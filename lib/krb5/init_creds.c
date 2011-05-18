@@ -402,9 +402,9 @@ krb5_get_init_creds_opt_set_process_last_req(krb5_context context,
  * @ingroup krb5_deprecated
  */
 
-KRB5_DEPRECATED
 KRB5_LIB_FUNCTION void KRB5_LIB_CALL
 krb5_get_init_creds_opt_init(krb5_get_init_creds_opt *opt)
+    KRB5_DEPRECATED_FUNCTION("Use X instead")
 {
     memset (opt, 0, sizeof(*opt));
 }
@@ -416,11 +416,11 @@ krb5_get_init_creds_opt_init(krb5_get_init_creds_opt *opt)
  * @ingroup krb5_deprecated
  */
 
-KRB5_DEPRECATED
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_get_init_creds_opt_get_error(krb5_context context,
 				  krb5_get_init_creds_opt *opt,
 				  KRB_ERROR **error)
+    KRB5_DEPRECATED_FUNCTION("Use X instead")
 {
     *error = calloc(1, sizeof(**error));
     if (*error == NULL) {

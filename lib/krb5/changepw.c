@@ -31,8 +31,6 @@
  * SUCH DAMAGE.
  */
 
-#define KRB5_DEPRECATED
-
 #include "krb5_locl.h"
 
 #undef __attribute__
@@ -686,7 +684,6 @@ find_chpw_proto(const char *name)
  * @ingroup @krb5_deprecated
  */
 
-KRB5_DEPRECATED
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_change_password (krb5_context	context,
 		      krb5_creds	*creds,
@@ -694,6 +691,7 @@ krb5_change_password (krb5_context	context,
 		      int		*result_code,
 		      krb5_data		*result_code_string,
 		      krb5_data		*result_string)
+    KRB5_DEPRECATED_FUNCTION("Use X instead")
 {
     struct kpwd_proc *p = find_chpw_proto("change password");
 

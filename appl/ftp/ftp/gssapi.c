@@ -248,7 +248,7 @@ gss_adat(void *app_data, void *buf, size_t len)
 	gss_release_buffer(&new_stat, &status_string);
 	reply(431, "Security resource unavailable");
     }
-  out:
+
     if (client_name)
 	gss_release_name(&min_stat, &client_name);
     free(p);

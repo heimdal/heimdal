@@ -148,8 +148,10 @@ dbm_nextkey (DBM *db)
 ROKEN_LIB_FUNCTION DBM* ROKEN_LIB_CALL
 dbm_open (const char *file, int flags, mode_t mode)
 {
-    DB *db;
+#ifdef HAVE_DB3
     int myflags = 0;
+#endif
+    DB *db;
     char *fn = malloc(strlen(file) + 4);
     if(fn == NULL)
 	return NULL;

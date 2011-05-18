@@ -413,10 +413,6 @@ acceptor_complete(OM_uint32 * minor_status,
 {
     OM_uint32 ret;
     int require_mic, verify_mic;
-    gss_buffer_desc buf;
-
-    buf.length = 0;
-    buf.value = NULL;
 
     ret = _gss_spnego_require_mechlist_mic(minor_status, ctx, &require_mic);
     if (ret)
@@ -450,10 +446,8 @@ acceptor_complete(OM_uint32 * minor_status,
 		*minor_status = eret;
 		return GSS_S_FAILURE;
 	    }
-	    if (buf.length != buf_len) {
-		abort();
-                UNREACHABLE(return GSS_S_FAILURE);
-            }
+	    heim_assert(mech_buf->length == buf_len, "Internal ASN.1 error");
+	    UNREACHABLE(return GSS_S_FAILURE);
 	}
 	
 	if (verify_mic) {
@@ -461,15 +455,10 @@ acceptor_complete(OM_uint32 * minor_status,
 	    if (ret) {
 		if (*get_mic)
 		    send_reject (minor_status, output_token);
-		if (buf.value)
-		    free(buf.value);
 		return ret;
 	    }
 	    ctx->verified_mic = 1;
 	}
-	if (buf.value)
-	    free(buf.value);
-
     } else
 	*get_mic = 0;
 

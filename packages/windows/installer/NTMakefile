@@ -110,9 +110,11 @@ CRTNAME=CRT
 CRTNAME=DebugCRT
 !endif
 
+!if "$(MMDIR)"==""
 MMDIR=$(ProgramFiles)\Common Files\Merge Modules
 !if !exist($(MMDIR))
 MMDIR=$(SystemDrive)\Program Files (x86)\Common Files\Merge Modules
+!endif
 !endif
 
 !if exist("$(MMDIR)")

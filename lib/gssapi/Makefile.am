@@ -79,6 +79,7 @@ mechsrc = \
 	mech/context.h \
 	mech/context.c \
 	mech/cred.h \
+	mech/compat.h \
 	mech/doxygen.c \
 	mech/gss_accept_sec_context.c \
 	mech/gss_acquire_cred.c \

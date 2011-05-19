@@ -32,6 +32,9 @@
  */
 
 #include "krb5_locl.h"
+#ifdef HAVE_EXECINFO_H
+#include <execinfo.h>
+#endif
 
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 _krb5_s4u2self_to_checksumdata(krb5_context context,
@@ -88,4 +91,38 @@ krb5_enomem(krb5_context context)
 {
     krb5_set_error_message(context, ENOMEM, N_("malloc: out of memory", ""));
     return ENOMEM;
+}
+
+void
+_krb5_debug_backtrace(krb5_context context)
+{
+#if defined(HAVE_BACKTRACE) && !defined(HEIMDAL_SMALLER)
+    void *stack[128];
+    char **strs = NULL;
+    int i, frames = backtrace(stack, sizeof(stack) / sizeof(stack[0]));
+    if (frames > 0)
+	strs = backtrace_symbols(stack, frames);
+    if (strs) {
+	for (i = 0; i < frames; i++)
+	    _krb5_debug(context, 10, "frame %d: %s", i, strs[i]);
+	free(strs);
+    }
+#endif
+}
+
+krb5_error_code
+_krb5_einval(krb5_context context, const char *func, unsigned long argn)
+{
+#ifndef HEIMDAL_SMALLER
+    krb5_set_error_message(context, EINVAL,
+			   N_("programmer error: invalid argument to %s argument %lu",
+			      "function:line"), 
+			   func, argn);
+    if (_krb5_have_debug(context, 10)) {
+	_krb5_debug(context, 10, "invalid argument to function %s argument %lu",
+		    func, argn);
+	_krb5_debug_backtrace(context);
+    }
+#endif
+    return EINVAL;
 }

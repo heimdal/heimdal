@@ -256,7 +256,7 @@ static OM_uint32 acquire_acceptor_cred
 		  (OM_uint32 * minor_status,
 		   krb5_context context,
 		   gss_const_OID credential_type,
-		   void *credential_data,
+		   const void *credential_data,
 		   const gss_name_t desired_name,
 		   OM_uint32 time_req,
 		   gss_const_OID desired_mech,

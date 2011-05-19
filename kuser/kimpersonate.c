@@ -44,12 +44,14 @@ static char *ccache_str = NULL;
 static char *ticket_flags_str = NULL;
 static TicketFlags ticket_flags;
 static char *keytab_file = NULL;
-static const char *enc_type = "des-cbc-md5";
+static char *enctype_string = NULL;
 static int   expiration_time = 3600;
 static struct getarg_strings client_addresses;
 static int   version_flag = 0;
 static int   help_flag = 0;
 static int   use_krb5 = 1;
+
+static const char *enc_type = "des-cbc-md5";
 
 /*
  *
@@ -279,7 +281,7 @@ struct getargs args[] = {
       "lifetime of ticket in seconds", NULL },
     { "client-addresses", 'a', arg_strings, &client_addresses,
       "addresses of client", NULL },
-    { "enc-type", 't', arg_string, 	&enc_type,
+    { "enc-type", 't', arg_string, 	&enctype_string,
       "encryption type", NULL },
     { "ticket-flags", 'f', arg_string,   &ticket_flags_str,
       "ticket flags for krb5 ticket", NULL },
@@ -323,6 +325,9 @@ main (int argc, char **argv)
 	print_version(NULL);
 	return 0;
     }
+
+    if (enctype_string)
+	enc_type = enctype_string;
 
     setup_env(context, &kt);
 

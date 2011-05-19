@@ -48,6 +48,7 @@ Bugfixes, documentation, encouragement, and code has been contributed by:
 @item Brandon S. Allbery KF8NH
 @item Brian A May
 @item Chaskiel M Grundman
+@item Christos Zoulas
 @item Cizzi Storm
 @item Daniel Kouril
 @item David Love
@@ -80,14 +81,15 @@ Bugfixes, documentation, encouragement, and code has been contributed by:
 @item Milosz Kmieciak
 @item Miroslav Ruda
 @item Mustafa A. Hashmi
-@item Petr Holub
-@item Russ Allbery
 @item Patrik Lundin
+@item Petr Holub
 @item Phil Fisher
 @item Rafal Malinowski
 @item Rainer Toebbicke
 @item Richard Nyberg
+@item Roland C. Dowdeswell
 @item Roman Divacky
+@item Russ Allbery
 @item Sho Hosoda, 細田 将
 @item Stefan Metzmacher
 @item Ted Percival

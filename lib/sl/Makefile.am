@@ -29,7 +29,7 @@ libexec_heimdal_PROGRAMS = slc
 
 slc_SOURCES = slc-gram.y slc-lex.l slc.h
 
-CLEANFILES = snprintf.c strtok_r.c strdup.c strupr.c getprogname.c
+CLEANFILES = snprintf.c strtok_r.c strdup.c strupr.c getprogname.c slc-lex.c
 
 LDADD =	libsl.la $(LIB_roken)
 

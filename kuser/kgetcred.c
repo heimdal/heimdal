@@ -195,10 +195,13 @@ main(int argc, char **argv)
 	krb5_err (context, 1, ret, "krb5_parse_name %s", argv[0]);
 
     if (nametype_str) {
-	ret = krb5_parse_nametype(context, nametype_str,
-				  &server->name.name_type);
+	int32_t nametype;
+
+	ret = krb5_parse_nametype(context, nametype_str, &nametype);
 	if (ret)
 	    krb5_err(context, 1, ret, "krb5_parse_nametype");
+
+	server->name.name_type = (NAME_TYPE)nametype;
     }
 
     ret = krb5_get_creds(context, opt, cache, server, &out);

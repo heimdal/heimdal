@@ -390,7 +390,7 @@ fcc_open(krb5_context context,
     int fd;
 
     if (FCACHE(id) == NULL)
-        return EINVAL;
+        return krb5_einval(context, 2);
 
     filename = FILENAME(id);
 
@@ -423,7 +423,7 @@ fcc_initialize(krb5_context context,
     int fd;
 
     if (f == NULL)
-        return EINVAL;
+        return krb5_einval(context, 2);
 
     unlink (f->filename);
 
@@ -476,7 +476,7 @@ fcc_close(krb5_context context,
 	  krb5_ccache id)
 {
     if (FCACHE(id) == NULL)
-        return EINVAL;
+        return krb5_einval(context, 2);
 
     free (FILENAME(id));
     krb5_data_free(&id->data);
@@ -488,7 +488,7 @@ fcc_destroy(krb5_context context,
 	    krb5_ccache id)
 {
     if (FCACHE(id) == NULL)
-        return EINVAL;
+        return krb5_einval(context, 2);
 
     _krb5_erase_file(context, FILENAME(id));
     return 0;
@@ -719,7 +719,7 @@ fcc_get_first (krb5_context context,
     krb5_principal principal;
 
     if (FCACHE(id) == NULL)
-        return EINVAL;
+        return krb5_einval(context, 2);
 
     *cursor = malloc(sizeof(struct fcc_cursor));
     if (*cursor == NULL) {
@@ -755,10 +755,10 @@ fcc_get_next (krb5_context context,
     krb5_error_code ret;
 
     if (FCACHE(id) == NULL)
-        return EINVAL;
+        return krb5_einval(context, 2);
 
     if (FCC_CURSOR(*cursor) == NULL)
-        return EINVAL;
+        return krb5_einval(context, 3);
 
     if((ret = fcc_lock(context, id, FCC_CURSOR(*cursor)->fd, FALSE)) != 0)
 	return ret;
@@ -778,10 +778,10 @@ fcc_end_get (krb5_context context,
 {
 
     if (FCACHE(id) == NULL)
-        return EINVAL;
+        return krb5_einval(context, 2);
 
     if (FCC_CURSOR(*cursor) == NULL)
-        return EINVAL;
+        return krb5_einval(context, 3);
 
     krb5_storage_free(FCC_CURSOR(*cursor)->sp);
     close (FCC_CURSOR(*cursor)->fd);
@@ -802,7 +802,7 @@ fcc_remove_cred(krb5_context context,
     int fd;
 
     if (FCACHE(id) == NULL)
-        return EINVAL;
+        return krb5_einval(context, 2);
 
     ret = krb5_cc_new_unique(context, krb5_cc_type_memory, NULL, &copy);
     if (ret)
@@ -865,7 +865,7 @@ fcc_set_flags(krb5_context context,
 	      krb5_flags flags)
 {
     if (FCACHE(id) == NULL)
-        return EINVAL;
+        return krb5_einval(context, 2);
 
     return 0; /* XXX */
 }
@@ -908,7 +908,7 @@ fcc_get_cache_next(krb5_context context, krb5_cc_cursor cursor, krb5_ccache *id)
     char *expandedfn = NULL;
 
     if (iter == NULL)
-        return EINVAL;
+        return krb5_einval(context, 2);
 
     if (!iter->first) {
 	krb5_clear_error_message(context);
@@ -948,7 +948,7 @@ fcc_end_cache_get(krb5_context context, krb5_cc_cursor cursor)
     struct fcache_iter *iter = cursor;
 
     if (iter == NULL)
-        return EINVAL;
+        return krb5_einval(context, 2);
 
     free(iter);
     return 0;

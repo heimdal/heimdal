@@ -11,7 +11,7 @@ EXPORTS
 	__gss_c_attr_stream_sizes_oid_desc	DATA
 	gss_accept_sec_context
 	gss_acquire_cred
-	gss_acquire_cred_ext
+;!	gss_acquire_cred_ext
 	gss_acquire_cred_with_password
 	gss_add_buffer_set_member
 	gss_add_cred

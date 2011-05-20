@@ -366,8 +366,8 @@ _gss_load_mech(void)
 		OPTSYM(store_cred);
 		OPTSYM(export_cred);
 		OPTSYM(import_cred);
-		OPTSYM(acquire_cred_ext);
 #if 0
+		OPTSYM(acquire_cred_ext);
 		OPTSYM(iter_creds);
 		OPTSYM(destroy_cred);
 		OPTSYM(cred_hold);

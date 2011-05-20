@@ -44,7 +44,7 @@ _gss_copy_cred(struct _gss_mechanism_cred *mc);
 
 struct _gss_mechanism_name;
 
-GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL
+OM_uint32
 _gss_acquire_mech_cred(OM_uint32 *minor_status,
 		       gssapi_mech_interface m,
 		       const struct _gss_mechanism_name *mn,

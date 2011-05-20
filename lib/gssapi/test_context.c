@@ -507,8 +507,8 @@ main(int argc, char **argv)
     void *ctx;
     gss_OID nameoid, mechoid, actual_mech, actual_mech2;
     gss_cred_id_t client_cred = GSS_C_NO_CREDENTIAL, deleg_cred = GSS_C_NO_CREDENTIAL;
-    gss_OID credential_type;
-    gss_buffer_desc credential_data;
+    gss_name_t cname = GSS_C_NO_NAME;
+    gss_buffer_desc credential_data = GSS_C_EMPTY_BUFFER;
 
     setprogname(argv[0]);
 
@@ -561,35 +561,46 @@ main(int argc, char **argv)
     }
 
     if (client_password) {
-	credential_type = GSS_C_CRED_PASSWORD; 
 	credential_data.value = client_password;
 	credential_data.length = strlen(client_password);
-    } else
-	credential_type = GSS_C_NO_OID;
+    }
 
     if (client_name) {
 	gss_buffer_desc cn;
-	gss_name_t cname;
+
 	cn.value = client_name;
 	cn.length = strlen(client_name);
+
 	maj_stat = gss_import_name(&min_stat, &cn, GSS_C_NT_USER_NAME, &cname);
 	if (maj_stat)
 	    errx(1, "gss_import_name: %s",
 		 gssapi_err(maj_stat, min_stat, GSS_C_NO_OID));
+    }
 
-	maj_stat = gss_acquire_cred_ext(&min_stat, cname,
-					credential_type, &credential_data,
-					0, GSS_C_NO_OID, GSS_C_INITIATE, &client_cred);
+    if (client_password) {
+	maj_stat = gss_acquire_cred_with_password(&min_stat,
+						  cname,
+						  &credential_data,
+						  GSS_C_INDEFINITE,
+						  GSS_C_NO_OID_SET,
+						  GSS_C_INITIATE,
+						  &client_cred,
+						  NULL,
+						  NULL);
 	if (GSS_ERROR(maj_stat))
-	    errx(1, "gss_acquire_cred_ext: %s",
+	    errx(1, "gss_acquire_cred_with_password: %s",
 		 gssapi_err(maj_stat, min_stat, GSS_C_NO_OID));
-	gss_release_name(&min_stat, &cname);
-    } else if (credential_type) {
-	maj_stat = gss_acquire_cred_ext(&min_stat, GSS_C_NO_NAME,
-	                                credential_type, &credential_data,
-                                        0, GSS_C_NO_OID, GSS_C_INITIATE, &client_cred);
+    } else {
+	maj_stat = gss_acquire_cred(&min_stat,
+				    cname,
+				    GSS_C_INDEFINITE,
+				    GSS_C_NO_OID_SET,
+				    GSS_C_INITIATE,
+				    &client_cred,
+				    NULL,
+				    NULL);
 	if (GSS_ERROR(maj_stat))
-	    errx(1, "gss_acquire_cred_ext: %s",
+	    errx(1, "gss_acquire_cred_with_password: %s",
 		 gssapi_err(maj_stat, min_stat, GSS_C_NO_OID));
     }
 

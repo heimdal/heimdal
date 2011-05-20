@@ -17,7 +17,6 @@ HEIMDAL_GSS_2.0 {
 		GSS_C_ATTR_LOCAL_LOGIN_USER;
 		gss_accept_sec_context;
 		gss_acquire_cred;
-		gss_acquire_cred_ext;
 		gss_acquire_cred_with_password;
 		gss_add_buffer_set_member;
 		gss_add_cred;

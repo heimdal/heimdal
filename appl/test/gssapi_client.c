@@ -139,17 +139,18 @@ proto (int sock, const char *hostname, const char *service)
         pw.value = password;
         pw.length = strlen(password);
 
-        maj_stat = gss_acquire_cred_ext(&min_stat,
-                                        GSS_C_NO_NAME,
-                                        GSS_C_CRED_PASSWORD,
-                                        &pw,
-                                        GSS_C_INDEFINITE,
-                                        GSS_C_NO_OID,
-                                        GSS_C_INITIATE,
-                                        &cred);
+        maj_stat = gss_acquire_cred_with_password(&min_stat,
+						  GSS_C_NO_NAME,
+						  &pw,
+						  GSS_C_INDEFINITE,
+						  GSS_C_NO_OID_SET,
+						  GSS_C_INITIATE,
+						  &cred,
+						  NULL,
+						  NULL);
         if (GSS_ERROR(maj_stat))
             gss_err (1, min_stat,
-                     "Error acquiring initiator credentials");
+                     "Error acquiring default initiator credentials");
     }
 
     addrlen = sizeof(local);

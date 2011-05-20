@@ -7,7 +7,7 @@ ec=0
 
 if [ "$(uname -s)" = "Darwin" ] ; then
     echo "leaks check on $name ($pid)"
-    leaks $pid > leaks-log 2>&1 || \
+    leaks -exclude __CFInitialize $pid > leaks-log 2>&1 || \
         { echo "leaks failed: $?"; cat leaks-log; exit 1; }
 
     grep "Process $pid: 0 leaks for 0 total leaked bytes" leaks-log > /dev/null || \

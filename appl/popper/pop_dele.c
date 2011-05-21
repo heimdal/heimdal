@@ -83,14 +83,14 @@ pop_xdele(POP *p)
 	    continue; /* no point in returning error */
 	/*  Flag the message for deletion */
 	mp->flags |= DEL_FLAG;
-	
+
 #ifdef DEBUG
 	if(p->debug)
 	    pop_log(p, POP_DEBUG,
 		    "Deleting message %u at offset %ld of length %ld\n",
 		    mp->number, mp->offset, mp->length);
 #endif /* DEBUG */
-	
+
 	/*  Update the messages_deleted and bytes_deleted counters */
 	p->msgs_deleted++;
 	p->bytes_deleted += mp->length;

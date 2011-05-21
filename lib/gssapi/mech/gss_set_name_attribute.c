@@ -42,7 +42,7 @@ gss_set_name_attribute(OM_uint32 *minor_status,
     OM_uint32 major_status = GSS_S_UNAVAILABLE;
     struct _gss_name *name = (struct _gss_name *) input_name;
     struct _gss_mechanism_name *mn;
-        
+
     *minor_status = 0;
 
     if (input_name == GSS_C_NO_NAME)

@@ -221,10 +221,10 @@ add_enctype_to_key_set(Key **key_set, size_t *nkeyset,
 	    free_Key(&key);
 	    return ENOMEM;
 	}
-	
+
 	key.salt->type = salt->salttype;
 	krb5_data_zero (&key.salt->salt);
-	
+
 	ret = krb5_data_copy(&key.salt->salt,
 			     salt->saltvalue.data,
 			     salt->saltvalue.length);
@@ -290,7 +290,7 @@ hdb_generate_key_set(krb5_context context, krb5_principal principal,
 	    p = "des:afs3-salt";
 	else if (strcmp(p, "arcfour-hmac-md5") == 0)
 	    p = "arcfour-hmac-md5:pw-salt";
-	
+
 	memset(&salt, 0, sizeof(salt));
 
 	ret = parse_key_set(context, p,

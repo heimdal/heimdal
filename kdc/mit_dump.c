@@ -167,7 +167,7 @@ fix_salt(krb5_context context, hdb_entry *ent, int key_num)
 	size_t len;
 	size_t i;
 	char *p;
-	
+
 	len = 0;
 	for (i = 0; i < ent->principal->name.name_string.len; ++i)
 	    len += strlen(ent->principal->name.name_string.val[i]);
@@ -381,7 +381,7 @@ mit_prop_dump(void *arg, const char *file)
 	    high_kvno = kvno;
 	    ALLOC(ent.entry.keys.val[i].mkvno);
 	    *ent.entry.keys.val[i].mkvno = 1;
-	
+
 	    /* key version 0 -- actual key */
 	    ent.entry.keys.val[i].key.keytype = getint(&p); /* key type */
 	    tmp = getint(&p); /* key length */

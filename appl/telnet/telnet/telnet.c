@@ -2130,7 +2130,7 @@ my_telnet(char *user)
 		    printf("\nServer disconnected.\n");
 		    Exit(1);
 	    }
-		
+
 	}
 	if (printed_encrypt) {
 		printf("Encryption negotiated.\n");

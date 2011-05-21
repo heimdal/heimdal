@@ -195,7 +195,7 @@ main(int argc, char **argv)
 	print_version (NULL);
 	return 0;
     }
-	
+
     if (argc < 1)
 	usage (1);
 

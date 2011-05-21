@@ -211,7 +211,7 @@ loop(gss_OID mechoid,
 	    ;
 	else
 	    server_done = 1;
-    }	
+    }
     if (output_token.length != 0)
 	gss_release_buffer(&min_stat, &output_token);
     if (input_token.length != 0)
@@ -361,10 +361,10 @@ wrapunwrap_iov(gss_ctx_id_t cctx, gss_ctx_id_t sctx, int flags, gss_OID mechoid)
 	errx(1, "gss_wrap_iov failed");
 
     token.length =
-	iov[0].buffer.length + 
+	iov[0].buffer.length +
 	iov[1].buffer.length +
 	iov[2].buffer.length +
-	iov[3].buffer.length + 
+	iov[3].buffer.length +
 	iov[4].buffer.length +
 	iov[5].buffer.length;
     token.data = emalloc(token.length);
@@ -402,11 +402,11 @@ wrapunwrap_iov(gss_ctx_id_t cctx, gss_ctx_id_t sctx, int flags, gss_OID mechoid)
     } else {
 	maj_stat = gss_unwrap_iov(&min_stat, sctx, &conf_state2, &qop_state,
 				  iov, iov_len);
-	
+
 	if (maj_stat != GSS_S_COMPLETE)
 	    errx(1, "gss_unwrap_iov failed: %x %s", flags,
 		 gssapi_err(maj_stat, min_stat, mechoid));
-	
+
     }
     if (conf_state2 != conf_state)
 	errx(1, "conf state wrong for iov: %x", flags);
@@ -448,7 +448,7 @@ empty_release(void)
     gss_name_t name = GSS_C_NO_NAME;
     gss_OID_set oidset = GSS_C_NO_OID_SET;
     OM_uint32 junk;
-    
+
     gss_delete_sec_context(&junk, &ctx, NULL);
     gss_release_cred(&junk, &cred);
     gss_release_name(&junk, &name);
@@ -620,7 +620,7 @@ main(int argc, char **argv)
 	    errx(1, "client_cred missing");
 
 	maj_stat = gss_krb5_set_allowable_enctypes(&min_stat, client_cred,
-						   1, &limit_enctype); 
+						   1, &limit_enctype);
 	if (maj_stat)
 	    errx(1, "gss_krb5_set_allowable_enctypes: %s",
 		 gssapi_err(maj_stat, min_stat, GSS_C_NO_OID));
@@ -654,7 +654,7 @@ main(int argc, char **argv)
 	ret = krb5_timeofday(context, &now);
 	if (ret)
 	    errx(1, "krb5_timeofday failed");
-	
+
 	/* client */
 	maj_stat = gss_krb5_export_lucid_sec_context(&min_stat,
 						     &cctx,
@@ -663,13 +663,13 @@ main(int argc, char **argv)
 	if (maj_stat != GSS_S_COMPLETE)
 	    errx(1, "gss_krb5_export_lucid_sec_context failed: %s",
 		 gssapi_err(maj_stat, min_stat, actual_mech));
-	
-	
+
+
 	maj_stat = gss_krb5_free_lucid_sec_context(&maj_stat, ctx);
 	if (maj_stat != GSS_S_COMPLETE)
 	    errx(1, "gss_krb5_free_lucid_sec_context failed: %s",
 		     gssapi_err(maj_stat, min_stat, actual_mech));
-	
+
 	/* server */
 	maj_stat = gss_krb5_export_lucid_sec_context(&min_stat,
 						     &sctx,
@@ -692,7 +692,7 @@ main(int argc, char **argv)
 
 	if (time > now)
 	    errx(1, "gsskrb5_extract_authtime_from_sec_context failed: "
-		 "time authtime is before now: %ld %ld", 
+		 "time authtime is before now: %ld %ld",
 		 (long)time, (long)now);
 
  	maj_stat = gsskrb5_extract_service_keyblock(&min_stat,
@@ -716,7 +716,7 @@ main(int argc, char **argv)
 	    keyblock = NULL;
 	else if (limit_enctype && keyblock->keytype != limit_enctype)
 	    errx(1, "gsskrb5_get_subkey wrong enctype");
-	
+
  	maj_stat = gsskrb5_get_subkey(&min_stat,
 				      cctx,
 				      &keyblock2);
@@ -751,7 +751,7 @@ main(int argc, char **argv)
 	    ret = krb5_string_to_enctype(context,
 					 session_enctype_string,
 					 &enctype);
-	
+
 	    if (ret)
 		krb5_err(context, 1, ret, "krb5_string_to_enctype");
 
@@ -803,7 +803,7 @@ main(int argc, char **argv)
 	    errx(1, "prf len mismatch");
 	if (memcmp(out1.value, out2.value, out1.length) != 0)
 	    errx(1, "prf data mismatch");
-	
+
 	gss_release_buffer(&min_stat, &out1);
 
 	gss_pseudo_random(&min_stat, sctx, GSS_C_PRF_KEY_FULL, &in,
@@ -896,7 +896,7 @@ main(int argc, char **argv)
 	gss_buffer_desc cb;
 
 	if (verbose_flag)
-	    printf("checking actual mech (%s) on delegated cred\n", 
+	    printf("checking actual mech (%s) on delegated cred\n",
 		   oid_to_string(actual_mech));
 	loop(actual_mech, nameoid, argv[0], deleg_cred, &sctx, &cctx, &actual_mech2, &cred2);
 
@@ -928,12 +928,12 @@ main(int argc, char **argv)
 	    if (maj_stat != GSS_S_COMPLETE)
 		errx(1, "import failed: %s",
 		     gssapi_err(maj_stat, min_stat, NULL));
-	    
+
 	    gss_release_buffer(&min_stat, &cb);
 	    gss_release_cred(&min_stat, &deleg_cred);
-	    
+
 	    if (verbose_flag)
-		printf("checking actual mech (%s) on export/imported cred\n", 
+		printf("checking actual mech (%s) on export/imported cred\n",
 		       oid_to_string(actual_mech));
 	    loop(actual_mech, nameoid, argv[0], cred2, &sctx, &cctx,
 		 &actual_mech2, &deleg_cred);
@@ -950,7 +950,7 @@ main(int argc, char **argv)
 		 &actual_mech2, &deleg_cred);
 
 	    gss_release_cred(&min_stat, &deleg_cred);
-	    
+
 	    gss_delete_sec_context(&min_stat, &cctx, NULL);
 	    gss_delete_sec_context(&min_stat, &sctx, NULL);
 
@@ -963,7 +963,7 @@ main(int argc, char **argv)
     }
 
     empty_release();
-    
+
     krb5_free_context(context);
 
     return 0;

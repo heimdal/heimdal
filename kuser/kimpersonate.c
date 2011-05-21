@@ -85,7 +85,7 @@ encode_ticket (krb5_context context,
     copy_PrincipalName(&cred->client->name, &et.cname);
     {
 	krb5_data empty_string;
-	
+
 	krb5_data_zero(&empty_string);
 	et.transited.tr_type = DOMAIN_X500_COMPRESS;
 	et.transited.contents = empty_string;

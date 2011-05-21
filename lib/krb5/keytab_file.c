@@ -536,7 +536,7 @@ fkt_setup_keytab(krb5_context context,
 	id->version = KRB5_KT_VNO;
     return krb5_store_int8 (sp, id->version);
 }
-		
+
 static krb5_error_code KRB5_CALLCONV
 fkt_add_entry(krb5_context context,
 	      krb5_keytab id,

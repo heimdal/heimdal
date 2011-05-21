@@ -179,10 +179,10 @@ ftpd_logwtmp_wtmp(char *line, char *name, char *host)
     if(fd >= 0) {
 #ifdef WTMP_FILE
 	write(fd, &ut, sizeof(struct utmp)); /* XXX */
-#endif	
+#endif
 #ifdef WTMPX_FILE
 	write(fdx, &utx, sizeof(struct utmpx));
-#endif	
+#endif
     }
 }
 

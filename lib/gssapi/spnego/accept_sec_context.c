@@ -434,11 +434,11 @@ acceptor_complete(OM_uint32 * minor_status,
 	    verify_mic = 0;
 	    *get_mic = 1;
 	}
-	
+
 	if (verify_mic || *get_mic) {
 	    int eret;
 	    size_t buf_len = 0;
-	
+
 	    ASN1_MALLOC_ENCODE(MechTypeList,
 			       mech_buf->value, mech_buf->length,
 			       &ctx->initiator_mech_types, &buf_len, eret);
@@ -449,7 +449,7 @@ acceptor_complete(OM_uint32 * minor_status,
 	    heim_assert(mech_buf->length == buf_len, "Internal ASN.1 error");
 	    UNREACHABLE(return GSS_S_FAILURE);
 	}
-	
+
 	if (verify_mic) {
 	    ret = verify_mechlist_mic(minor_status, ctx, mech_buf, mic);
 	    if (ret) {
@@ -500,7 +500,7 @@ acceptor_start
 
     if (input_token_buffer->length == 0)
 	return send_supported_mechs (minor_status, output_token);
-	
+
     ret = _gss_spnego_alloc_sec_context(minor_status, context_handle);
     if (ret != GSS_S_COMPLETE)
 	return ret;
@@ -566,7 +566,7 @@ acceptor_start
 
 	if (ctx->mech_src_name != GSS_C_NO_NAME)
 	    gss_release_name(&junk, &ctx->mech_src_name);
-	
+
 	ret = gss_accept_sec_context(minor_status,
 				     &ctx->negotiated_ctx_id,
 				     acceptor_cred_handle,

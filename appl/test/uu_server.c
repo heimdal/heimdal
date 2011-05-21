@@ -121,7 +121,7 @@ proto (int sock, const char *service)
 			   NULL,
 			   NULL,
 			   NULL);
-			
+
     if (status)
 	krb5_err(context, 1, status, "krb5_sendauth");
 

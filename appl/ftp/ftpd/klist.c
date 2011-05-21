@@ -101,7 +101,7 @@ print_tickets (krb5_context context,
 				     &cursor,
 				     &cred)) == 0) {
 	if (print_cred(context, &cred))
-	    return 500;		
+	    return 500;
 	krb5_free_cred_contents (context, &cred);
     }
     if (ret != KRB5_CC_END) {
@@ -137,7 +137,7 @@ klist5(void)
     else
 	ret = krb5_cc_default (context, &ccache);
     if (ret) {
-	lreply(500, "krb5_cc_default: %d", ret);	
+	lreply(500, "krb5_cc_default: %d", ret);
 	return 500;
     }
 
@@ -155,7 +155,7 @@ klist5(void)
 
     ret = krb5_cc_close (context, ccache);
     if (ret) {
-	lreply(500, "krb5_cc_close: %d", ret);	
+	lreply(500, "krb5_cc_close: %d", ret);
 	exit_status = 500;
     }
 

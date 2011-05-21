@@ -91,7 +91,7 @@ EC_KEY *
 EC_KEY_new_by_curve_name(EC_GROUP_ID nid)
 {
     EC_KEY *key;
-    
+
     key = calloc(1, sizeof(*key));
     return key;
 }

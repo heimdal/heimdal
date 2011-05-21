@@ -818,7 +818,7 @@ sec_login(char *host)
 	    return -1;
 	}
 	app_data = tmp;
-	
+
 	if((*m)->init && (*(*m)->init)(app_data) != 0) {
 	    printf("Skipping %s...\n", (*m)->name);
 	    continue;
@@ -840,7 +840,7 @@ sec_login(char *host)
 	}
 
 	ret = (*(*m)->auth)(app_data, host);
-	
+
 	if(ret == AUTH_CONTINUE)
 	    continue;
 	else if(ret != AUTH_OK){

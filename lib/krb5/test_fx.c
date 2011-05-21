@@ -127,7 +127,7 @@ test_cf2(krb5_context context)
 					   &k2);
 	if (ret)
 	    krb5_err(context, 1, ret, "krb5_string_to_key_data_salt");
-	    
+
 	ret = krb5_crypto_init(context, &k2, 0, &c2);
 	if (ret)
 	    krb5_err(context, 1, ret, "krb5_crypto_init");

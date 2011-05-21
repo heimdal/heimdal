@@ -998,7 +998,7 @@ main (int argc, char **argv)
 	struct xxx{
 	    Pixel bg;
 	}res;
-	
+
 	XtResource Res[] = {
 	    { XtNbackground, XtCBackground, XtRPixel, sizeof(Pixel),
 	      XtOffsetOf(struct xxx, bg), XtRString, "black" }
@@ -1072,7 +1072,7 @@ main (int argc, char **argv)
 			 GrabModeAsync, XtWindow(widget),
 			 None, CurrentTime)) != 0)
 	errx(1, "Failed to grab pointer (%d)", i);
-	
+
     if((i = XGrabKeyboard(dpy, XtWindow(widget), True, GrabModeAsync,
 			  GrabModeAsync, CurrentTime)) != 0)
 	errx(1, "Failed to grab keyboard (%d)", i);

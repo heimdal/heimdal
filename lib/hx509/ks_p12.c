@@ -176,7 +176,7 @@ certBag_parser(hx509_context context,
 	    if (attr)
 		_hx509_set_cert_attribute(context, cert, oid,
 					  &attr->attrValues);
-	}	
+	}
     }
 
     hx509_cert_free(cert);
@@ -237,7 +237,7 @@ encryptedData_parser(hx509_context context,
     heim_octet_string content;
     heim_oid contentType;
     int ret;
-		
+
     memset(&contentType, 0, sizeof(contentType));
 
     ret = hx509_cms_decrypt_encrypted(context,
@@ -266,7 +266,7 @@ envelopedData_parser(hx509_context context,
     heim_oid contentType;
     hx509_lock lock;
     int ret;
-		
+
     memset(&contentType, 0, sizeof(contentType));
 
     lock = _hx509_collector_get_lock(c);
@@ -583,7 +583,7 @@ p12_store(hx509_context context,
     free_PKCS12_AuthenticatedSafe(&as);
     if (ret)
 	return ret;
-		
+
     ret = der_parse_hex_heim_integer("03", &pfx.version);
     if (ret) {
 	free(asdata.data);

@@ -327,7 +327,7 @@ build_context(struct client *ipeer, struct client *apeer,
     krb5_data_zero(&itoken);
 
     while (!iDone || !aDone) {
-	
+
 	if (iDone) {
 	    warnx("iPeer already done, aPeer want extra rtt");
 	    val = GSMERR_ERROR;
@@ -405,7 +405,7 @@ build_context(struct client *ipeer, struct client *apeer,
 out:
     return val;
 }
-			
+
 static void
 test_mic(struct client *c1, int32_t hc1, struct client *c2, int32_t hc2)
 {
@@ -540,17 +540,17 @@ test_token(struct client *c1, int32_t hc1, struct client *c2, int32_t hc2, int w
 	    if (val) return val;
 	    val = test_wrap_ext(c2, hc2, c1, hc1, 1, 0);
 	    if (val) return val;
-	    
+
 	    val = test_wrap_ext(c1, hc1, c2, hc2, 1, 1);
 	    if (val) return val;
 	    val = test_wrap_ext(c2, hc2, c1, hc1, 1, 1);
 	    if (val) return val;
-	    
+
 	    val = test_wrap_ext(c1, hc1, c2, hc2, 0, 0);
 	    if (val) return val;
 	    val = test_wrap_ext(c2, hc2, c1, hc1, 0, 0);
 	    if (val) return val;
-	    
+
 	    val = test_wrap_ext(c1, hc1, c2, hc2, 0, 1);
 	    if (val) return val;
 	    val = test_wrap_ext(c2, hc2, c1, hc1, 0, 1);
@@ -780,7 +780,7 @@ main(int argc, char **argv)
     if (password == NULL)
 	errx(1, "password missing from %s", user);
     *password++ = 0;
-	
+
     if (slaves.num_strings == 0)
 	errx(1, "no principals");
 
@@ -834,7 +834,7 @@ main(int argc, char **argv)
 	int32_t hCred, val, delegCred;
 	int32_t clientC, serverC;
 	struct client *c = clients[i];
-	
+
 	if (c->target_name == NULL)
 	    continue;
 
@@ -893,18 +893,18 @@ main(int argc, char **argv)
 	int32_t hCred, val, delegCred = 0;
 	int32_t clientC = 0, serverC = 0;
 	struct client *client, *server;
-	
+
 	p = list[i];
-	
+
 	client = get_client(p[0]);
-	
+
 	val = acquire_cred(client, user, password, 1, &hCred);
 	if (val != GSMERR_OK)
 	    errx(1, "failed to acquire_cred: %d", (int)val);
 
 	for (j = 1; j < num_clients + 1; j++) {
 	    server = get_client(p[j % num_clients]);
-	
+
 	    if (server->target_name == NULL)
 		break;
 
@@ -921,11 +921,11 @@ main(int argc, char **argv)
 		warnx("build_context failed: %d", (int)val);
 		break;
 	    }
-	
+
 	    val = test_token(client, clientC, server, serverC, wrap_ext);
 	    if (val)
 		break;
-	
+
 	    toast_resource(client, clientC);
 	    toast_resource(server, serverC);
 	    if (!delegCred) {

@@ -67,22 +67,22 @@ change(void *server_handle,
 
 	num_keys = ent.entry.keys.len;
 	keys     = ent.entry.keys.val;
-	
+
 	ent.entry.keys.len = 0;
 	ent.entry.keys.val = NULL;
-	
+
 	ret = _kadm5_set_keys(context, &ent.entry, password);
 	if(ret) {
 	    _kadm5_free_keys (context->context, num_keys, keys);
 	    goto out2;
 	}
-	
+
 	if (cond)
 	    existsp = _kadm5_exists_keys (ent.entry.keys.val,
 					  ent.entry.keys.len,
 					  keys, num_keys);
 	_kadm5_free_keys (context->context, num_keys, keys);
-	
+
 	if (existsp) {
 	    ret = KADM5_PASS_REUSE;
 	    krb5_set_error_message(context->context, ret,

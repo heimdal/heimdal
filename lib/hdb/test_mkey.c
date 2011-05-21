@@ -44,7 +44,7 @@ main(int argc, char **argv)
 	ret = hdb_read_master_key(context, mkey_file, &mkey);
 	if (ret)
 	    krb5_err(context, 1, ret, "failed to read master key %s", mkey_file);
-      
+
 	hdb_free_master_key(context, mkey);
     } else
       krb5_errx(context, 1, "no command option given");

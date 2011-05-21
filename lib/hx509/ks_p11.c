@@ -427,7 +427,7 @@ p11_get_session(hx509_context context,
 	    prompt.type = HX509_PROMPT_TYPE_PASSWORD;
 	    prompt.reply.data = pin;
 	    prompt.reply.length = sizeof(pin);
-	
+
 	    ret = hx509_lock_prompt(lock, &prompt);
 	    if (ret) {
 		free(str);
@@ -513,7 +513,7 @@ iterate_entries(hx509_context context,
 	}
 	if (object_count == 0)
 	    break;
-	
+
 	for (i = 0; i < num_query; i++)
 	    query[i].pValue = NULL;
 
@@ -535,7 +535,7 @@ iterate_entries(hx509_context context,
 	    ret = -1;
 	    goto out;
 	}
-	
+
 	ret = (*func)(context, p, slot, session, object, ptr, query, num_query);
 	if (ret)
 	    goto out;
@@ -561,7 +561,7 @@ iterate_entries(hx509_context context,
 
     return ret;
 }
-		
+
 static BIGNUM *
 getattr_bn(struct p11_module *p,
 	   struct p11_slot *slot,
@@ -704,10 +704,10 @@ collect_cert(hx509_context context,
 
     {
 	heim_octet_string data;
-	
+
 	data.data = query[0].pValue;
 	data.length = query[0].ulValueLen;
-	
+
 	_hx509_set_cert_attribute(context,
 				  cert,
 				  &asn1_oid_id_pkcs_9_at_localKeyId,
@@ -906,7 +906,7 @@ p11_init(hx509_context context,
 	    ret = ENOMEM;
 	    goto out;
 	}
-			
+
 	for (i = 0; i < p->num_slots; i++) {
 	    ret = p11_init_slot(context, p, lock, slot_ids[i], i, &p->slot[i]);
 	    if (ret)

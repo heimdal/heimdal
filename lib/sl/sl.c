@@ -72,7 +72,7 @@ mandoc_template(SL_cmd *cmds,
 	    continue; */
 	printf(".Op Fl %s", c->name);
 	printf("\n");
-	
+
     }
     if (extra_string && *extra_string)
 	printf (".Ar %s\n", extra_string);
@@ -311,7 +311,7 @@ sl_command_loop(SL_cmd *cmds, const char *prompt, void **data)
     char *buf;
     int argc;
     char **argv;
-	
+
     buf = sl_readline(prompt);
     if(buf == NULL)
 	return -2;

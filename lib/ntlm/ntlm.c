@@ -293,7 +293,7 @@ ret_sec_string(krb5_storage *sp, int ucs2, struct sec_buffer *desc, char **s)
     CHECK(krb5_storage_seek(sp, desc->offset, SEEK_SET), desc->offset);
     CHECK(ret_string(sp, ucs2, desc->length, s), 0);
  out:
-    return ret; 
+    return ret;
 }
 
 static krb5_error_code
@@ -1029,7 +1029,7 @@ splitandenc(unsigned char *hash,
     key[7] = (hash[6] << 1);
 
     EVP_CIPHER_CTX_init(&ctx);
-    
+
     EVP_CipherInit_ex(&ctx, EVP_des_cbc(), NULL, key, NULL, 1);
     EVP_Cipher(&ctx, answer, challenge, 8);
     EVP_CIPHER_CTX_cleanup(&ctx);
@@ -1133,7 +1133,7 @@ heim_ntlm_v1_base_session(void *key, size_t len,
 	session->length = 0;
 	return ENOMEM;
     }
-    
+
     m = EVP_MD_CTX_create();
     if (m == NULL) {
 	heim_ntlm_free_buf(session);

@@ -190,7 +190,7 @@ append_number(struct snprintf_state *state,
            no such wording for %x. This would mean that %#.o would
            output "0", but %#.x "". This does not make sense, and is
            also not what other printf implementations are doing. */
-	
+
 	if(prec <= nlen && nstr[nstart] != '0' && nstr[nstart] != '\0')
 	    prec = nlen + 1;
     }
@@ -208,13 +208,13 @@ append_number(struct snprintf_state *state,
 	    width -= prec;
 	else
 	    width -= nlen;
-	
+
 	if(use_alternative(flags, num, base))
 	    width -= 2;
-	
+
 	if(signchar != '\0')
 	    width--;
-	
+
 	/* pad to width */
 	len += pad(state, width, ' ');
     }
@@ -236,12 +236,12 @@ append_number(struct snprintf_state *state,
     } else
 	/* pad to prec with zeros */
 	len += pad(state, prec - nlen, '0');
-	
+
     while(nstr[nstart] != '\0') {
 	(*state->append_char)(state, nstr[nstart++]);
 	++len;
     }
-	
+
     if(flags & minus_flag)
 	len += pad(state, width - len, ' ');
 

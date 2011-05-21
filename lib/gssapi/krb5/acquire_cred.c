@@ -46,7 +46,7 @@ __gsskrb5_ccache_lifetime(OM_uint32 *minor_status,
 
     memset(&in_cred, 0, sizeof(in_cred));
     in_cred.client = principal;
-	
+
     realm = krb5_principal_get_realm(context,  principal);
     if (realm == NULL) {
 	_gsskrb5_clear_status ();

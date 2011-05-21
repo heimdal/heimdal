@@ -161,7 +161,7 @@ cmd
 				    socket_get_address(his_addr),
 				    socket_addr_size(his_addr)) != 0)) {
 			    usedefault = 1;
-			    reply(500, "Illegal PORT range rejected.");			    
+			    reply(500, "Illegal PORT range rejected.");
 			} else {
 			    usedefault = 0;
 			    if (pdata >= 0) {
@@ -1013,7 +1013,7 @@ struct tab sitetab[] = {
 	{ "FIND", LOCATE, STR1, 1,	"<sp> globexpr" },
 
 	{ "URL",  URL,  ARGS, 1,	"?" },
-	
+
 	{ NULL,   0,    0,    0,	0 }
 };
 

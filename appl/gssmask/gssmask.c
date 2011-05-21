@@ -229,7 +229,7 @@ acquire_cred(struct client *c,
 		   "krb5_get_init_creds failed: %d", ret);
 	return convert_krb5_to_gsm(ret);
     }
-	
+
     ret = krb5_cc_new_unique(context, "MEMORY", NULL, &id);
     if (ret)
 	krb5_err (context, 1, ret, "krb5_cc_initialize");
@@ -358,7 +358,7 @@ HandleOP(InitContext)
 	if (ctx)
 	    krb5_errx(context, 1, "initcreds, context not NULL, but first req");
     }
-	
+
     if ((flags & GSS_C_DELEG_FLAG) != 0)
 	logmessage(c, __FILE__, __LINE__, 0, "init_sec_context delegating");
     if ((flags & GSS_C_DCE_STYLE) != 0)
@@ -484,7 +484,7 @@ HandleOP(AcceptContext)
 	gss_release_cred(&min_stat, &deleg_cred);
 	deleg_hcred = 0;
     }
-	
+
 
     gsm_error = convert_gss_to_gsm(maj_stat);
 
@@ -799,7 +799,7 @@ HandleOP(Unwrap)
 
     if (maj_stat != GSS_S_COMPLETE)
 	errx(1, "gss_unwrap failed: %d/%d", maj_stat, min_stat);
-	
+
     krb5_data_free(&token);
     if (maj_stat == GSS_S_COMPLETE) {
 	token.data = output_token.value;
@@ -1013,7 +1013,7 @@ HandleOP(UnwrapExt)
 
     if (maj_stat != GSS_S_COMPLETE)
 	errx(1, "gss_unwrap failed: %d/%d", maj_stat, min_stat);
-	
+
     if (maj_stat == GSS_S_COMPLETE) {
 	token.data = iov[1].buffer.value;
 	token.length = iov[1].buffer.length;
@@ -1100,7 +1100,7 @@ create_client(int fd, int port, const char *moniker)
     {
 	c->salen = sizeof(c->sa);
 	getpeername(fd, (struct sockaddr *)&c->sa, &c->salen);
-	
+
 	getnameinfo((struct sockaddr *)&c->sa, c->salen,
 		    c->servername, sizeof(c->servername),
 		    NULL, 0, NI_NUMERICHOST);

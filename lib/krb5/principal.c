@@ -140,7 +140,7 @@ krb5_principal_get_realm(krb5_context context,
 			 krb5_const_principal principal)
 {
     return princ_realm(principal);
-}			
+}
 
 KRB5_LIB_FUNCTION const char* KRB5_LIB_CALL
 krb5_principal_get_comp_string(krb5_context context,
@@ -1028,7 +1028,7 @@ krb5_principal_match(krb5_context context,
  *
  * @ingroup krb5_principal
  */
-			
+
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_sname_to_principal (krb5_context context,
 			 const char *hostname,
@@ -1039,7 +1039,7 @@ krb5_sname_to_principal (krb5_context context,
     krb5_error_code ret;
     char localhost[MAXHOSTNAMELEN];
     char **realms, *host = NULL;
-	
+
     if(type != KRB5_NT_SRV_HST && type != KRB5_NT_UNKNOWN) {
 	krb5_set_error_message(context, KRB5_SNAME_UNSUPP_NAMETYPE,
 			       N_("unsupported name type %d", ""),
@@ -1053,7 +1053,7 @@ krb5_sname_to_principal (krb5_context context,
 	    krb5_set_error_message(context, ret,
 				   N_("Failed to get local hostname", ""));
 	    return ret;
-	}	
+	}
 	localhost[sizeof(localhost) - 1] = '\0';
 	hostname = localhost;
     }

@@ -2181,7 +2181,7 @@ tn(int argc, char **argv)
 			     addrstr, sizeof(addrstr),
 			     NULL, 0, NI_NUMERICHOST) != 0)
 		strlcpy (addrstr, "unknown address", sizeof(addrstr));
-			
+
 	    printf("Trying %s...\r\n", addrstr);
 
 	    net = socket (a->ai_family, a->ai_socktype, a->ai_protocol);

@@ -52,7 +52,7 @@ static struct getargs args[] = {
 	NULL
     },
     {
-	"help",	
+	"help",
 	'h',
 	arg_flag,
 	&help_flag,
@@ -60,7 +60,7 @@ static struct getargs args[] = {
 	NULL
     },
     {
-	"keytab",	
+	"keytab",
 	'k',
 	arg_string,
 	&keytab_string,
@@ -101,7 +101,7 @@ ktutil_open_keytab(void)
     }
     if (verbose_flag)
 	fprintf (stderr, "Using keytab %s\n", keytab_string);
-	
+
     return keytab;
 }
 

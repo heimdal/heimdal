@@ -59,7 +59,7 @@ decrypt_tkt_enc_part (krb5_context context,
 
     ret = decode_EncTicketPart(plain.data, plain.length, decr_part, &len);
     if (ret)
-        krb5_set_error_message(context, ret, 
+        krb5_set_error_message(context, ret,
 			       N_("Failed to decode encrypted "
 				  "ticket part", ""));
     krb5_data_free (&plain);
@@ -137,7 +137,7 @@ check_transited(krb5_context context, Ticket *ticket, EncTicketPart *enc)
     char **realms;
     unsigned int num_realms, n;
     krb5_error_code ret;
-	
+
     /*
      * Windows 2000 and 2003 uses this inside their TGT so it's normaly
      * not seen by others, however, samba4 joined with a Windows AD as
@@ -252,7 +252,7 @@ krb5_decrypt_ticket(krb5_context context,
 	    krb5_clear_error_message (context);
 	    return KRB5KRB_AP_ERR_TKT_EXPIRED;
 	}
-	
+
 	if(!t.flags.transited_policy_checked) {
 	    ret = check_transited(context, ticket, &t);
 	    if(ret) {
@@ -404,7 +404,7 @@ krb5_verify_ap_req2(krb5_context context,
     {
 	krb5_principal p1, p2;
 	krb5_boolean res;
-	
+
 	_krb5_principalname2krb5_principal(context,
 					   &p1,
 					   ac->authenticator->cname,
@@ -510,7 +510,7 @@ krb5_verify_ap_req2(krb5_context context,
 	krb5_auth_con_free (context, ac);
     return ret;
 }
-		
+
 /*
  *
  */
@@ -951,7 +951,7 @@ krb5_rd_req_ctx(krb5_context context,
 				  &o->ap_req_options,
 				  &o->ticket,
 				  KRB5_KU_AP_REQ_AUTH);
-	
+
 	if (ret)
 	    goto out;
 
@@ -974,7 +974,7 @@ krb5_rd_req_ctx(krb5_context context,
 	    goto out;
 
 	done = 0;
-	while (!done) { 
+	while (!done) {
 	    krb5_principal p;
 
 	    ret = krb5_kt_next_entry(context, id, &entry, &cursor);
@@ -1010,14 +1010,14 @@ krb5_rd_req_ctx(krb5_context context,
 	     * and update the service principal in the ticket to match
 	     * whatever is in the keytab.
 	     */
-	    
-	    ret = krb5_copy_keyblock(context, 
+
+	    ret = krb5_copy_keyblock(context,
 				     &entry.keyblock,
 				     &o->keyblock);
 	    if (ret) {
 		krb5_kt_free_entry (context, &entry);
 		goto out;
-	    }	    
+	    }
 
 	    ret = krb5_copy_principal(context, entry.principal, &p);
 	    if (ret) {
@@ -1026,7 +1026,7 @@ krb5_rd_req_ctx(krb5_context context,
 	    }
 	    krb5_free_principal(context, o->ticket->server);
 	    o->ticket->server = p;
-	    
+
 	    krb5_kt_free_entry (context, &entry);
 
 	    done = 1;
@@ -1048,7 +1048,7 @@ krb5_rd_req_ctx(krb5_context context,
 	    krb5_data_free(&data);
 	    if (ret)
 		goto out;
-	
+
 	    ret = krb5_pac_verify(context,
 				  pac,
 				  o->ticket->ticket.authtime,

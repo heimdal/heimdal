@@ -62,7 +62,7 @@ _kdc_db_fetch(krb5_context context,
 
     for(i = 0; i < config->num_db; i++) {
 	krb5_principal enterprise_principal = NULL;
-	if (!(config->db[i]->hdb_capability_flags & HDB_CAP_F_HANDLE_ENTERPRISE_PRINCIPAL) 
+	if (!(config->db[i]->hdb_capability_flags & HDB_CAP_F_HANDLE_ENTERPRISE_PRINCIPAL)
 	    && principal->name.name_type == KRB5_NT_ENTERPRISE_PRINCIPAL) {
 	    if (principal->name.name_string.len != 1) {
 		ret = KRB5_PARSE_MALFORMED;

@@ -287,7 +287,7 @@ _kadm5_ad_connect(void *server_handle)
 	if (r == NULL) {
 	    krb5_set_error_message(context->context, KADM5_NO_SRV, "Didn't find ldap dns");
 	    return KADM5_NO_SRV;
-	}	
+	}
 
 	for (rr = r->head ; rr != NULL; rr = rr->next) {
 	    if (rr->type != rk_ns_t_srv)
@@ -318,20 +318,20 @@ _kadm5_ad_connect(void *server_handle)
 	lp = ldap_init(servers[i].server, servers[i].port);
 	if (lp == NULL)
 	    continue;
-	
+
 	if (ldap_set_option(lp, LDAP_OPT_PROTOCOL_VERSION, &version)) {
 	    ldap_unbind(lp);
 	    continue;
 	}
-	
+
 	if (ldap_set_option(lp, LDAP_OPT_REFERRALS, LDAP_OPT_OFF)) {
 	    ldap_unbind(lp);
 	    continue;
 	}
-	
+
 #ifdef HAVE_TSASL
 	lret = ldap_tsasl_bind_s(lp, NULL, NULL, NULL, servers[i].server);
-				
+
 #else
 	lret = ldap_sasl_interactive_bind_s(lp, NULL, NULL, NULL, NULL,
 					    LDAP_SASL_QUIET,
@@ -358,7 +358,7 @@ _kadm5_ad_connect(void *server_handle)
 	int attrlen = 0;
 	char **vals;
 	int ret;
-	
+
 	laddattr(&attr, &attrlen, "defaultNamingContext");
 
 	ret = ldap_search_s(CTX2LP(context), "", LDAP_SCOPE_BASE,
@@ -640,7 +640,7 @@ kadm5_ad_create_principal(void *server_handle,
 	    s[0] = '$';
 	    s[1] = '\0';
 	}
-	
+
 	short_spn = strdup(p);
 	if (short_spn == NULL) {
 	    errno = ENOMEM;
@@ -733,7 +733,7 @@ kadm5_ad_create_principal(void *server_handle,
 
     } else {
 	/* create user account */
-	
+
 	a = &rattrs[0];
 	a->mod_op = LDAP_MOD_ADD;
 	a->mod_type = "userAccountControl";

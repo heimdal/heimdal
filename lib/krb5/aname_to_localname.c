@@ -72,7 +72,7 @@ krb5_aname_to_localname (krb5_context context,
 	ret = krb5_copy_principal(context, aname, &rootprinc);
 	if (ret)
 	    return ret;
-	
+
 	userok = krb5_kuserok(context, rootprinc, res);
 	krb5_free_principal(context, rootprinc);
 	if (!userok)

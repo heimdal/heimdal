@@ -224,7 +224,7 @@ krb5_c_decrypt(krb5_context context,
 	krb5_crypto_destroy(context, crypto);
 	return ret;
 	}
-	
+
 	if (blocksize > ivec->length) {
 	    krb5_crypto_destroy(context, crypto);
 	    return KRB5_BAD_MSIZE;

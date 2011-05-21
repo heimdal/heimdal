@@ -61,14 +61,14 @@ krb5_get_init_creds_opt_alloc(krb5_context context,
     *opt = NULL;
     o = calloc(1, sizeof(*o));
     if (o == NULL) {
-	krb5_set_error_message(context, ENOMEM, 
+	krb5_set_error_message(context, ENOMEM,
 			       N_("malloc: out of memory", ""));
 	return ENOMEM;
     }
 
     o->opt_private = calloc(1, sizeof(*o->opt_private));
     if (o->opt_private == NULL) {
-	krb5_set_error_message(context, ENOMEM, 
+	krb5_set_error_message(context, ENOMEM,
 			       N_("malloc: out of memory", ""));
 	free(o);
 	return ENOMEM;

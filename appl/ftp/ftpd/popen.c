@@ -196,8 +196,8 @@ ftpd_popen(char *program, char *type, int do_stderr, int no_glob)
 		close(pdes[0]);
 	}
 	pids[fileno(iop)] = pid;
-	
-pfree:	
+
+pfree:
 	for (argc = 1; gargv[argc] != NULL; argc++)
 	    free(gargv[argc]);
 

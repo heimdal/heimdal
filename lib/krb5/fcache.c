@@ -454,7 +454,7 @@ fcc_initialize(krb5_context context,
 	    }
 	}
 	ret |= krb5_store_principal(sp, primary_principal);
-	
+
 	ret |= write_storage(context, sp, fd);
 
 	krb5_storage_free(sp);
@@ -879,7 +879,7 @@ fcc_get_version(krb5_context context,
 
     return FCACHE(id)->version;
 }
-		
+
 struct fcache_iter {
     int first;
 };

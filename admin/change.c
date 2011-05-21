@@ -73,7 +73,7 @@ change_entry (krb5_keytab keytab,
 	    free(conf.realm);
 	    krb5_set_error_message(context, ENOMEM, "malloc failed");
 	    return ENOMEM;
-	}	
+	}
 	conf.mask |= KADM5_CONFIG_ADMIN_SERVER;
     }
 

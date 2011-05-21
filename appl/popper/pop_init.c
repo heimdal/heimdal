@@ -62,7 +62,7 @@ krb5_authenticate (POP *p, int s, u_char *buf, struct sockaddr *addr)
     if (memcmp (buf, "\x00\x00\x00\x13", 4) != 0)
 	return -1;
     len = (buf[0] << 24) | (buf[1] << 16) | (buf[2] << 8) | (buf[3]);
-	
+
     if (krb5_net_read(p->context, &s, buf, len) != len)
 	return -1;
     if (len != sizeof(KRB5_SENDAUTH_VERSION)

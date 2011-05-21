@@ -109,7 +109,7 @@ login_user(POP *p)
 	/*  Make a temporary copy of the user's maildrop */
 	/*    and set the group and user id */
 	if (pop_dropcopy(p, pw) != POP_SUCCESS) return (POP_FAILURE);
-	
+
 	/*  Get information about the maildrop */
 	if (pop_dropinfo(p) != POP_SUCCESS) return(POP_FAILURE);
     } else {
@@ -143,7 +143,7 @@ pop_pass (POP *p)
 #ifdef KRB5
 	if (p->version == 5) {
 	    char *name;
-	
+
 	    if (!krb5_kuserok (p->context, p->principal, p->user)) {
 		pop_log (p, POP_PRIORITY,
 			 "krb5 permission denied");

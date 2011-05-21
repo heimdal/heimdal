@@ -73,53 +73,53 @@ main(int argc, char **argv)
 	{ "=", 1 },
 	{ NULL }
     };
-    
+
     for(t = tests; t->string; t++) {
 	/* Better not be there */
 	p = (struct node *)rk_tfind((void *)t, (void **)&rootnode,
 				    node_compare);
-	
+
 	if (p) {
 	    warnx("erroneous list: found %d\n", p->order);
 	    numerr++;
 	}
-	
+
 	/* Put node into the tree. */
 	p = (struct node *) rk_tsearch((void *)t, (void **)&rootnode,
 				       node_compare);
-	
+
 	if (!p) {
 	    warnx("erroneous list: missing %d\n", t->order);
 	    numerr++;
 	}
     }
-    
+
     rk_twalk(rootnode, list_node);
-    
+
     for(t = tests; t->string; t++) {
 	/* Better be there */
 	p =  (struct node *) rk_tfind((void *)t, (void **)&rootnode,
 				      node_compare);
-	
+
 	if (!p) {
 	    warnx("erroneous list: missing %d\n", t->order);
 	    numerr++;
 	}
-	
+
 	/* pull out node */
 	(void) rk_tdelete((void *)t, (void **)&rootnode,
 			  node_compare);
-	
+
 	/* Better not be there */
 	p =  (struct node *) rk_tfind((void *)t, (void **)&rootnode,
 				      node_compare);
-	
+
 	if (p) {
 	    warnx("erroneous list: found %d\n", p->order);
 	    numerr++;
 	}
-	
+
     }
-    
+
     return numerr;
 }

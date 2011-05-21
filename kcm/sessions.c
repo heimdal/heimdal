@@ -62,18 +62,18 @@ kcm_session_setup_handler(void)
 	    for (;;) {
 		auditinfo_addr_t aio;
 		int event;
-	
+
 		if (au_sdev_read_aia(h, &event, &aio) != 0)
 		    continue;
 
-		/* 
+		/*
 		 * Ignore everything but END. This should relly be
 		 * CLOSE but since that is delayed until the credential
-		 * is reused, we can't do that 
+		 * is reused, we can't do that
 		 * */
 		if (event != AUE_SESSION_END)
 		    continue;
-		
+
 		dispatch_async(dispatch_get_main_queue(), ^{
 			kcm_cache_remove_session(aio.ai_asid);
 		    });

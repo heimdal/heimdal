@@ -528,7 +528,7 @@ dns_lookup_int(const char *domain, int rr_class, int rr_type)
     struct sockaddr_storage from;
     uint32_t fromsize = sizeof(from);
     dns_handle_t handle;
-    
+
     handle = dns_open(NULL);
     if (handle == NULL)
 	return NULL;

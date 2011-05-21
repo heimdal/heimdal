@@ -191,7 +191,7 @@ parse_auth_level(char *str)
 	else
 	    warnx("bad value for -a: `%s'", p);
     }
-    return ret;	
+    return ret;
 }
 
 /*
@@ -277,7 +277,7 @@ main(int argc, char **argv)
 
     if(help_flag)
 	usage(0);
-	
+
     if(version_flag) {
 	print_version(NULL);
 	exit(0);
@@ -288,7 +288,7 @@ main(int argc, char **argv)
     {
 	char *p;
 	long val = 0;
-	
+
 	if(guest_umask_string) {
 	    val = strtol(guest_umask_string, &p, 8);
 	    if (*p != '\0' || val < 0)
@@ -319,7 +319,7 @@ main(int argc, char **argv)
 	    else
 		warnx("bad value for -p");
     }
-		
+
     if (maxtimeout < ftpd_timeout)
 	maxtimeout = ftpd_timeout;
 
@@ -401,7 +401,7 @@ main(int argc, char **argv)
     show_file(_PATH_FTPWELCOME, 220);
     /* reply(220,) must follow */
     gethostname(hostname, sizeof(hostname));
-	
+
     reply(220, "%s FTP server (%s"
 #ifdef KRB5
 	  "+%s"
@@ -947,7 +947,7 @@ pass(char *passwd)
 	}
 	if(!do_login(230, passwd))
 	  return;
-	
+
 	/* Forget all about it... */
 	end_login();
 }
@@ -983,7 +983,7 @@ retrieve(const char *cmd, char *name)
 		    for(p = cmds; p->ext; p++){
 			char *tail = name + strlen(name) - strlen(p->ext);
 			char c = *tail;
-			
+
 			if(strcmp(tail, p->ext) == 0 &&
 			   (*tail  = 0) == 0 &&
 			   access(name, R_OK) == 0){
@@ -1007,7 +1007,7 @@ retrieve(const char *cmd, char *name)
 			        free(ext);
 			    }
 			}
-			
+
 		    }
 		    if(p->ext){
 			fin = ftpd_popen(line, "r", 0, 0);
@@ -1279,7 +1279,7 @@ dataconn(const char *name, off_t size, const char *mode)
 #if defined(IP_TOS) && defined(HAVE_SETSOCKOPT)
 		{
 		    int tos = IPTOS_THROUGHPUT;
-		
+
 		    setsockopt(s, IPPROTO_IP, IP_TOS, (void *)&tos,
 			       sizeof(tos));
 		}
@@ -1373,7 +1373,7 @@ send_data(FILE *instr, FILE *outstr)
 		goto data_err;
 	    reply(226, "Transfer complete.");
 	    return;
-		
+
 	case TYPE_I:
 	case TYPE_L:
 #if 0 /* XXX handle urg flag */
@@ -1557,13 +1557,13 @@ receive_data(FILE *instr, FILE *outstr)
 	urgflag = 0;
 	return (-1);
     }
-	
+
 data_err:
     transflag = 0;
     urgflag = 0;
     perror_reply(426, "Data Connection");
     return (-1);
-	
+
 file_err:
     transflag = 0;
     urgflag = 0;
@@ -1887,7 +1887,7 @@ dologout(int status)
     exit(status);
 #else
     _exit(status);
-#endif	
+#endif
 }
 
 void abor(void)
@@ -2097,7 +2097,7 @@ eprt(char *str)
 	case 2 :
 	    data_dest->sa_family = AF_INET6;
 	    break;
-#endif		
+#endif
 	case 1 :
 	    data_dest->sa_family = AF_INET;
 		break;
@@ -2338,7 +2338,7 @@ out:
     transflag = 0;
     if (dout != NULL){
 	sec_write(fileno(dout), buf, 0); /* XXX flush */
-	
+
 	fclose(dout);
     }
     data = -1;

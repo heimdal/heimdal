@@ -161,7 +161,7 @@ main(int argc, char **argv)
 	    return 1;
 	password = buf;
     }
-	
+
     if(version5){
 	krb5_parse_name(context, principal, &princ);
 	krb5_get_pw_salt(context, princ, &salt);

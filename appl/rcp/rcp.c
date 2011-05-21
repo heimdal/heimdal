@@ -101,7 +101,7 @@ main(int argc, char **argv)
 	    print_version (NULL);
 	    return 0;
 	}
-	
+
 	iamremote = (fflag || tflag);
 
 	argc -= optind;
@@ -384,7 +384,7 @@ rsource(char *name, struct stat *statp)
 		}
 	}
 	snprintf(path, sizeof(path),
-		 "D%04o %d %s\n", 
+		 "D%04o %d %s\n",
 		 (unsigned int)(statp->st_mode & MODEMASK), 0, last);
 	write(remout, path, strlen(path));
 	if (response() < 0) {

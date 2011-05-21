@@ -319,7 +319,7 @@ find_dynamic_method (krb5_context context,
 
     if (asprintf(&symbol, "hdb_%s_interface", prefix) == -1)
 	krb5_errx(context, 1, "out of memory");
-	
+
     mso = (struct hdb_so_method *) dlsym(dl, symbol);
     if (mso == NULL) {
 	krb5_warnx(context, "error finding symbol %s in %s: %s\n",
@@ -434,7 +434,7 @@ _hdb_keytab2hdb_entry(krb5_context context,
 
     entry->entry.keys.val[0].mkvno = NULL;
     entry->entry.keys.val[0].salt = NULL;
-    
+
     return krb5_copy_keyblock_contents(context,
 				       &ktentry->keyblock,
 				       &entry->entry.keys.val[0].key);

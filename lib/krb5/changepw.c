@@ -197,7 +197,7 @@ setpw_send_request (krb5_context context,
 	chpw.targname = NULL;
 	chpw.targrealm = NULL;
     }
-	
+
     ASN1_MALLOC_ENCODE(ChangePasswdDataMS, pwd_data.data, pwd_data.length,
 		       &chpw, &len, ret);
     if (ret) {
@@ -302,7 +302,7 @@ process_reply (krb5_context context,
 	    _krb5_get_int(reply, &size, 4);
 	    if (size + 4 < len)
 		continue;
-	    memmove(reply, reply + 4, size);		
+	    memmove(reply, reply + 4, size);
 	    len = size;
 	    break;
 	}
@@ -586,7 +586,7 @@ change_password_loop (krb5_context	context,
 
 		if (!replied) {
 		    replied = 0;
-		
+
 		    ret = (*proc->send_req) (context,
 					     &auth_context,
 					     creds,

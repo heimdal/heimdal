@@ -183,7 +183,7 @@ match_local_principals(krb5_context context,
     ret = krb5_get_default_realms (context, &realms);
     if (ret)
 	return FALSE;
-	
+
     for (r = realms; *r != NULL; ++r) {
 	if(strcmp(krb5_principal_get_realm(context, principal),
 		  *r) != 0)
@@ -227,7 +227,7 @@ match_local_principals(krb5_context context,
  * @param context Kerberos 5 context.
  * @param principal principal to check if allowed to login
  * @param luser local user id
- * 
+ *
  * @return returns TRUE if access should be granted, FALSE otherwise.
  *
  * @ingroup krb5_support

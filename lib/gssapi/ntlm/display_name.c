@@ -50,7 +50,7 @@ _gss_ntlm_display_name
 	ntlm_name n = (ntlm_name)input_name;
 	char *str = NULL;
 	int len;
-	
+
 	output_name_buffer->length = 0;
 	output_name_buffer->value = NULL;
 

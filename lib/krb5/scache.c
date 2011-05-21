@@ -240,7 +240,7 @@ default_db(krb5_context context, sqlite3 **db)
 	krb5_clear_error_message(context);
 	return ENOENT;
     }
-	
+
 #ifdef TRACEME
     sqlite3_trace(*db, trace, NULL);
 #endif
@@ -770,7 +770,7 @@ scc_store_cred(krb5_context context,
 	bind_principal(context, s->db, s->iprincipal, 1, creds->server);
 	sqlite3_bind_int(s->iprincipal, 2, 1);
 	sqlite3_bind_int(s->iprincipal, 3, credid);
-	
+
 	do {
 	    ret = sqlite3_step(s->iprincipal);
 	} while (ret == SQLITE_ROW);
@@ -788,7 +788,7 @@ scc_store_cred(krb5_context context,
 	bind_principal(context, s->db, s->iprincipal, 1, creds->client);
 	sqlite3_bind_int(s->iprincipal, 2, 0);
 	sqlite3_bind_int(s->iprincipal, 3, credid);
-	
+
 	do {
 	    ret = sqlite3_step(s->iprincipal);
 	} while (ret == SQLITE_ROW);
@@ -837,7 +837,7 @@ scc_get_principal(krb5_context context,
 			       s->name, s->file);
 	return KRB5_CC_END;
     }
-	
+
     if (sqlite3_column_type(s->scache, 0) != SQLITE_TEXT) {
 	sqlite3_reset(s->scache);
 	krb5_set_error_message(context, KRB5_CC_END,
@@ -1103,7 +1103,7 @@ scc_remove_cred(krb5_context context,
 	ret = decode_creds(context, data, len, &creds);
 	if (ret)
 	    break;
-	
+
 	ret = krb5_compare_creds(context, which, mcreds, &creds);
 	krb5_free_cred_contents(context, &creds);
 	if (ret) {
@@ -1144,7 +1144,7 @@ scc_set_flags(krb5_context context,
 {
     return 0; /* XXX */
 }
-		
+
 struct cache_iter {
     char *drop;
     sqlite3 *db;
@@ -1315,7 +1315,7 @@ scc_move(krb5_context context, krb5_ccache from, krb5_ccache to)
 
     if (sto->cid != SCACHE_INVALID_CID) {
 	/* drop old cache entry */
-	
+
 	sqlite3_bind_int(sfrom->dcache, 1, sto->cid);
 	do {
 	    ret = sqlite3_step(sfrom->dcache);

@@ -105,7 +105,7 @@ add_missing_headers(POP *p, MsgInfoList *mp)
                             p->user);
 	}
     }
-#endif	
+#endif
 #ifdef XOVER
     if (mp->subject == NULL)
 	mp->subject = "<none>";
@@ -219,7 +219,7 @@ pop_dropinfo(POP *p)
 	    pop_log(p,POP_DEBUG,
 		    "Msg %d at offset %ld is %ld octets long and has %u lines and id %s.",
                     mp->number,mp->offset,mp->length,mp->lines, mp->msg_id);
-#else	
+#else
             pop_log(p,POP_DEBUG,
                 "Msg %d at offset %d is %d octets long and has %u lines.",
                     mp->number,mp->offset,mp->length,mp->lines);

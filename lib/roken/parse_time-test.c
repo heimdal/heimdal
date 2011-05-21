@@ -66,7 +66,7 @@ main(int argc, char **argv)
 	if  (sz != tests[i].size)
 	    errx(1, "sz (%lu) != tests[%d].size (%lu)",
 		 (unsigned long)sz, i, (unsigned long)tests[i].size);
-	
+
 	for (buf_sz = 0; buf_sz < tests[i].size + 2; buf_sz++) {
 
 	    buf = rk_test_mem_alloc(RK_TM_OVERRUN, "overrun",

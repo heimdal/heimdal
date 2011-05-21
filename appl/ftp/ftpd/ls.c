@@ -425,19 +425,19 @@ lstat_file (const char *file, struct stat *sb)
 	static ino_t	   ino_counter = 0, ino_last = 0;
 	int		   ret;
 	const int	   maxsize = 2048;
-	
+
 	path_bkp = strdup (file);
 	if (path_bkp == NULL)
 	    return -1;
-	
+
 	a_params.out = malloc (maxsize);
 	if (a_params.out == NULL) {
 	    free (path_bkp);
 	    return -1;
 	}
-	
+
 	/* If path contains more than the filename alone - split it */
-	
+
 	last = strrchr (path_bkp, '/');
 	if (last != NULL) {
 	    if(last[1] == '\0')
@@ -457,10 +457,10 @@ lstat_file (const char *file, struct stat *sb)
 	    dir = ".";
 	    a_params.in = path_bkp;
 	}
-	
+
 	a_params.in_size  = strlen (a_params.in) + 1;
 	a_params.out_size = maxsize;
-	
+
 	ret = k_pioctl (dir, VIOC_AFS_STAT_MT_PT, &a_params, 0);
 	free (a_params.out);
 	if (ret < 0) {
@@ -602,7 +602,7 @@ list_files(FILE *out, const char **files, int n_files, int flags)
 	max_inode = find_log10(max_inode);
 	max_bsize = find_log10(max_bsize);
 	max_n_link = find_log10(max_n_link);
-	
+
 	if(n_print > 0)
 	    sec_fprintf2(out, "total %lu\r\n", (unsigned long)total_blocks);
 	if(flags & LS_SORT_REVERSE)

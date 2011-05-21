@@ -104,7 +104,7 @@ kt_add(struct add_options *opt, int argc, char **argv)
 	if (opt->hex_flag) {
 	    size_t len;
 	    void *data;
-	
+
 	    len = (strlen(opt->password_string) + 1) / 2;
 
 	    data = malloc(len);

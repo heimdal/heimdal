@@ -195,7 +195,7 @@ krb5_verify_user_opt(krb5_context context,
 	if (ret)
 	    return ret;
 	ret = KRB5_CONFIG_NODEFREALM;
-	
+
 	for (r = realms; *r != NULL && ret != 0; ++r) {
 	    ret = krb5_principal_set_realm(context, principal, *r);
 	    if (ret) {

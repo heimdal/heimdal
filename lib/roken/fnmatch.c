@@ -153,7 +153,7 @@ rangematch(const char *pattern, int test, int flags)
 	 */
 	if (negate = (*pattern == '!' || *pattern == '^'))
 		++pattern;
-	
+
 	for (ok = 0; (c = *pattern++) != ']';) {
 		if (c == '\\' && !(flags & FNM_NOESCAPE))
 			c = *pattern++;

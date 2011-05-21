@@ -134,7 +134,7 @@ main(int argc, char **argv)
 	else
 	    errx(1, "unknown method %s", rand_method);
     }
-	
+
     if (RAND_file_name(path, sizeof(path)) == NULL)
 	errx(1, "RAND_file_name failed");
 
@@ -161,7 +161,7 @@ main(int argc, char **argv)
 		c = c >> 1;
 	    }
 	}
-	
+
 	for (bit = 0; bit < 8; bit++) {
 
 	    res = ((double)abs(len - bits[bit] * 2)) / (double)len;

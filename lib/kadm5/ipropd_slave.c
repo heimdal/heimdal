@@ -63,14 +63,14 @@ connect_to_master (krb5_context context, const char *master,
 
     error = getaddrinfo (master, port_str, &hints, &ai);
     if (error) {
-	krb5_warnx(context, "Failed to get address of to %s: %s", 
+	krb5_warnx(context, "Failed to get address of to %s: %s",
 		   master, gai_strerror(error));
 	return -1;
     }
 
     for (a = ai; a != NULL; a = a->ai_next) {
 	char node[NI_MAXHOST];
-	error = getnameinfo(a->ai_addr, a->ai_addrlen, 
+	error = getnameinfo(a->ai_addr, a->ai_addrlen,
 			    node, sizeof(node), NULL, 0, NI_NUMERICHOST);
 	if (error)
 	    strlcpy(node, "[unknown-addr]", sizeof(node));
@@ -743,6 +743,6 @@ main(int argc, char **argv)
     else
 	krb5_warnx(context, "%s unexpected exit reason: %ld",
 		       getprogname(), (long)exit_flag);
-    
+
     return 0;
 }

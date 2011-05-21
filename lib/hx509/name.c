@@ -216,7 +216,7 @@ _hx509_Name_to_string(const Name *n, char **str)
 	    DirectoryString *ds = &n->u.rdnSequence.val[i].val[j].value;
 	    char *oidname;
 	    char *ss;
-	
+
 	    oidname = oidtostring(&n->u.rdnSequence.val[i].val[j].type);
 
 	    switch(ds->element) {
@@ -240,7 +240,7 @@ _hx509_Name_to_string(const Name *n, char **str)
 		ret = wind_ucs2utf8_length(bmp, bmplen, &k);
 		if (ret)
 		    return ret;
-		
+
 		ss = malloc(k + 1);
 		if (ss == NULL)
 		    _hx509_abort("allocation failure"); /* XXX */
@@ -458,7 +458,7 @@ _hx509_name_cmp(const Name *n1, const Name *n2, int *c)
 				  &n1->u.rdnSequence.val[i].val[j].type);
 	    if (*c)
 		return 0;
-			
+
 	    ret = _hx509_name_ds_cmp(&n1->u.rdnSequence.val[i].val[j].value,
 				     &n2->u.rdnSequence.val[i].val[j].value,
 				     c);
@@ -537,7 +537,7 @@ _hx509_name_modify(hx509_context context,
 		&name->u.rdnSequence.val[0],
 		name->u.rdnSequence.len *
 		sizeof(name->u.rdnSequence.val[0]));
-	
+
 	rdn = &name->u.rdnSequence.val[0];
     }
     rdn->val = malloc(sizeof(rdn->val[0]));
@@ -613,7 +613,7 @@ hx509_parse_name(hx509_context context, const char *str, hx509_name *name)
 				   "missing name before = in %s", p);
 	    goto out;
 	}
-	
+
 	if ((size_t)(q - p) > len) {
 	    ret = HX509_PARSING_NAME_FAILED;
 	    hx509_set_error_string(context, 0, ret, " = after , in %s", p);
@@ -627,12 +627,12 @@ hx509_parse_name(hx509_context context, const char *str, hx509_name *name)
 				   "unknown type: %.*s", (int)(q - p), p);
 	    goto out;
 	}
-	
+
 	{
 	    size_t pstr_len = len - (q - p) - 1;
 	    const char *pstr = p + (q - p) + 1;
 	    char *r;
-	
+
 	    r = malloc(pstr_len + 1);
 	    if (r == NULL) {
 		der_free_oid(&oid);

@@ -72,7 +72,7 @@ print_keys(krb5_context context, Key *keys, size_t nkeys)
 	    if (keys[i].salt->salt.length)
 		printf("%.*s", (int)keys[i].salt->salt.length,
 		       (char *)keys[i].salt->salt.data);
-	}	
+	}
 	printf("\n");
     }
     printf("end keys:\n");

@@ -184,7 +184,7 @@ krb5_kdc_get_config(krb5_context context, krb5_kdc_configuration **config)
 				     NULL);
 
 
-    c->pkinit_kdc_identity = 
+    c->pkinit_kdc_identity =
 	krb5_config_get_string(context, NULL,
 			       "kdc", "pkinit_identity", NULL);
     c->pkinit_kdc_anchors =
@@ -196,7 +196,7 @@ krb5_kdc_get_config(krb5_context context, krb5_kdc_configuration **config)
     c->pkinit_kdc_revoke =
 	krb5_config_get_strings(context, NULL,
 				"kdc", "pkinit_revoke", NULL);
-    c->pkinit_kdc_ocsp_file = 
+    c->pkinit_kdc_ocsp_file =
 	krb5_config_get_string(context, NULL,
 			       "kdc", "pkinit_kdc_ocsp", NULL);
     c->pkinit_kdc_friendly_name =
@@ -233,7 +233,7 @@ krb5_kdc_pkinit_config(krb5_context context, krb5_kdc_configuration *config)
 
     if (config->pkinit_kdc_identity == NULL) {
 	if (config->pkinit_kdc_friendly_name == NULL)
-	    config->pkinit_kdc_friendly_name = 
+	    config->pkinit_kdc_friendly_name =
 		strdup("O=System Identity,CN=com.apple.kerberos.kdc");
 	config->pkinit_kdc_identity = strdup("KEYCHAIN:");
     }
@@ -245,7 +245,7 @@ krb5_kdc_pkinit_config(krb5_context context, krb5_kdc_configuration *config)
     if (config->enable_pkinit) {
 	if (config->pkinit_kdc_identity == NULL)
 	    krb5_errx(context, 1, "pkinit enabled but no identity");
- 
+
 	if (config->pkinit_kdc_anchors == NULL)
 	    krb5_errx(context, 1, "pkinit enabled but no X509 anchors");
 
@@ -259,4 +259,4 @@ krb5_kdc_pkinit_config(krb5_context context, krb5_kdc_configuration *config)
 
     return 0;
 #endif /* PKINIT */
-}   
+}

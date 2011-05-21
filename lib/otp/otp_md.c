@@ -72,7 +72,7 @@ little_endian(unsigned char *res, size_t len)
 {
     unsigned char t;
     size_t i;
-    
+
     for (i = 0; i < len; i += 4) {
 	t = res[i + 0]; res[i + 0] = res[i + 3]; res[i + 3] = t;
 	t = res[i + 1]; res[i + 1] = res[i + 2]; res[i + 2] = t;
@@ -91,7 +91,7 @@ otp_md_init (OtpKey key,
     EVP_MD_CTX *ctx;
     char *p;
     int len;
-    
+
     ctx = EVP_MD_CTX_create();
 
     len = strlen(pwd) + strlen(seed);
@@ -110,7 +110,7 @@ otp_md_init (OtpKey key,
 
     if (le)
     	little_endian(res, ressz);
-    
+
     free (p);
     compressmd (key, res, ressz);
     return 0;

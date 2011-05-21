@@ -286,7 +286,7 @@ heim_oid2ecnid(heim_oid *oid)
 }
 
 static int
-parse_ECParameters(hx509_context context, 
+parse_ECParameters(hx509_context context,
 		   heim_octet_string *parameters, int *nid)
 {
     ECParameters ecparam;
@@ -404,7 +404,7 @@ ecdsa_verify_signature(hx509_context context,
 	ret = HX509_CRYPTO_SIG_INVALID_FORMAT;
 	return ret;
     }
-    
+
     return 0;
 }
 
@@ -552,7 +552,7 @@ rsa_verify_signature(hx509_context context,
 
     p = spi->subjectPublicKey.data;
     size = spi->subjectPublicKey.length / 8;
-    
+
     rsa = d2i_RSAPublicKey(NULL, &p, size);
     if (rsa == NULL) {
 	ret = ENOMEM;
@@ -587,14 +587,14 @@ rsa_verify_signature(hx509_context context,
 	if (ret) {
 	    goto out;
 	}
-	
+
 	/* Check for extra data inside the sigature */
 	if (size != (size_t)retsize) {
 	    ret = HX509_CRYPTO_SIG_INVALID_FORMAT;
 	    hx509_set_error_string(context, 0, ret, "size from decryption mismatch");
 	    goto out;
 	}
-	
+
 	if (sig_alg->digest_alg &&
 	    der_heim_oid_cmp(&di.digestAlgorithm.algorithm,
 			     &sig_alg->digest_alg->algorithm) != 0)
@@ -603,7 +603,7 @@ rsa_verify_signature(hx509_context context,
 	    hx509_set_error_string(context, 0, ret, "object identifier in RSA sig mismatch");
 	    goto out;
 	}
-	
+
 	/* verify that the parameters are NULL or the NULL-type */
 	if (di.digestAlgorithm.parameters != NULL &&
 	    (di.digestAlgorithm.parameters->length != 2 ||
@@ -960,11 +960,11 @@ ecdsa_private_key_import(hx509_context context,
 	ret = parse_ECParameters(context, keyai->parameters, &groupnid);
 	if (ret)
 	    return ret;
-	
+
 	key = EC_KEY_new();
 	if (key == NULL)
 	    return ENOMEM;
-	
+
 	group = EC_GROUP_new_by_curve_name(groupnid);
 	if (group == NULL) {
 	    EC_KEY_free(key);
@@ -1008,8 +1008,8 @@ ecdsa_generate_private_key(hx509_context context,
 }
 
 static BIGNUM *
-ecdsa_get_internal(hx509_context context, 
-		   hx509_private_key key, 
+ecdsa_get_internal(hx509_context context,
+		   hx509_private_key key,
 		   const char *type)
 {
     return NULL;
@@ -1162,7 +1162,7 @@ evp_md_create_signature(hx509_context context,
 	if (ret)
 	    return ret;
     }
-	
+
 
     sig->data = malloc(sigsize);
     if (sig->data == NULL) {
@@ -1495,7 +1495,7 @@ alg_for_privatekey(const hx509_private_key pk, int type)
 	    continue;
 	if (der_heim_oid_cmp(sig_algs[i]->key_oid, keytype) != 0)
 	    continue;
-	if (pk->ops->available && 
+	if (pk->ops->available &&
 	    pk->ops->available(pk, sig_algs[i]->sig_alg) == 0)
 	    continue;
 	if (type == HX509_SELECT_PUBLIC_SIG)
@@ -1687,7 +1687,7 @@ _hx509_public_encrypt(hx509_context context,
 
     p = spi->subjectPublicKey.data;
     size = spi->subjectPublicKey.length / 8;
-    
+
     rsa = d2i_RSAPublicKey(NULL, &p, size);
     if (rsa == NULL) {
 	hx509_set_error_string(context, 0, ENOMEM, "out of memory");
@@ -2609,7 +2609,7 @@ hx509_crypto_encrypt(hx509_crypto crypto,
 	ret = ENOMEM;
 	goto out;
     }
-	
+
     memcpy((*ciphertext)->data, data, length);
     if (padsize) {
 	size_t i;
@@ -2927,7 +2927,7 @@ _hx509_pbe_decrypt(hx509_context context,
 	hx509_crypto_destroy(crypto);
 	if (ret == 0)
 	    goto out;
-				
+
     }
 out:
     if (key.data)
@@ -3176,7 +3176,7 @@ hx509_crypto_available(hx509_context context,
 	    if (ptr == NULL)
 		goto out;
 	    *val = ptr;
-	
+
 	    ret = copy_AlgorithmIdentifier((ciphers[i].ai_func)(), &(*val)[len]);
 	    if (ret)
 		goto out;

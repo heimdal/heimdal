@@ -157,7 +157,7 @@ kt_get(struct get_options *opt, int argc, char **argv)
 	    if(kadm_handle == NULL)
 		break;
 	}
-	
+
 	ret = kadm5_create_principal(kadm_handle, &princ, mask, "x");
 	if(ret == 0)
 	    created = 1;
@@ -174,7 +174,7 @@ kt_get(struct get_options *opt, int argc, char **argv)
 	    failed++;
 	    continue;
 	}
-	
+
 	ret = kadm5_get_principal(kadm_handle, princ_ent, &princ,
 			      KADM5_PRINCIPAL | KADM5_KVNO | KADM5_ATTRIBUTES);
 	if (ret) {
@@ -226,7 +226,7 @@ kt_get(struct get_options *opt, int argc, char **argv)
 	    }
 	    krb5_free_keyblock_contents(context, &keys[j]);
 	}
-	
+
 	kadm5_free_principal_ent(kadm_handle, &princ);
 	krb5_free_principal(context, princ_ent);
     }

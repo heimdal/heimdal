@@ -63,7 +63,7 @@ add_constrained_delegation(krb5_context contextp,
     HDB_extension ext;
     krb5_data buf;
     size_t size = 0;
-	
+
     memset(&ext, 0, sizeof(ext));
     ext.mandatory = FALSE;
     ext.data.element = choice_HDB_extension_data_allowed_to_delegate_to;
@@ -79,7 +79,7 @@ add_constrained_delegation(krb5_context contextp,
 	    calloc(strings->num_strings,
 		   sizeof(ext.data.u.allowed_to_delegate_to.val[0]));
 	ext.data.u.allowed_to_delegate_to.len = strings->num_strings;
-	
+
 	for (i = 0; i < strings->num_strings; i++) {
 	    ret = krb5_parse_name(contextp, strings->strings[i], &p);
 	    if (ret)
@@ -126,7 +126,7 @@ add_aliases(krb5_context contextp, kadm5_principal_ent_rec *princ,
 	    calloc(strings->num_strings,
 		   sizeof(ext.data.u.aliases.aliases.val[0]));
 	ext.data.u.aliases.aliases.len = strings->num_strings;
-	
+
 	for (i = 0; i < strings->num_strings; i++) {
 	    ret = krb5_parse_name(contextp, strings->strings[i], &p);
 	    ret = copy_Principal(p, &ext.data.u.aliases.aliases.val[i]);
@@ -168,7 +168,7 @@ add_pkinit_acl(krb5_context contextp, kadm5_principal_ent_rec *princ,
 	    calloc(strings->num_strings,
 		   sizeof(ext.data.u.pkinit_acl.val[0]));
 	ext.data.u.pkinit_acl.len = strings->num_strings;
-	
+
 	for (i = 0; i < strings->num_strings; i++) {
 	    ext.data.u.pkinit_acl.val[i].subject = estrdup(strings->strings[i]);
 	}

@@ -54,7 +54,7 @@ check_linear(krb5_context context,
     krb5_data_zero(&tr);
 
     va_start(va, realm);
-    
+
     while (realm) {
 	inrealms = erealloc(inrealms, (num_inrealms + 2) * sizeof(inrealms[0]));
 	inrealms[num_inrealms] = rk_UNCONST(realm);

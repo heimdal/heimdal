@@ -103,7 +103,7 @@ perform_tl_data(krb5_context context,
 				   NULL);
 	if (ret)
 	    return KADM5_BAD_TL_TYPE;
-	
+
 	ret = hdb_replace_extension(context, &ent->entry, &ext);
 	free_HDB_extension(&ext);
     } else {

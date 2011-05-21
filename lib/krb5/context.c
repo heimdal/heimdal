@@ -317,7 +317,7 @@ kt_ops_copy(krb5_context context, const krb5_context src_context)
     return 0;
 }
 
-static const char *sysplugin_dirs[] =  { 
+static const char *sysplugin_dirs[] =  {
     LIBDIR "/plugin/krb5",
 #ifdef __APPLE__
     "/Library/KerberosPlugins/KerberosFrameworkPlugins",
@@ -332,7 +332,7 @@ init_context_once(void *ctx)
     krb5_context context = ctx;
 
     _krb5_load_plugins(context, "krb5", sysplugin_dirs);
-    
+
     bindtextdomain(HEIMDAL_TEXTDOMAIN, HEIMDAL_LOCALEDIR);
 }
 
@@ -392,7 +392,7 @@ krb5_init_context(krb5_context *context)
     ret = hx509_context_init(&p->hx509ctx);
     if (ret)
 	goto out;
-#endif	
+#endif
     if (rk_SOCK_INIT())
 	p->flags |= KRB5_CTX_F_SOCKETS_INITIALIZED;
 
@@ -433,7 +433,7 @@ copy_etypes (krb5_context context,
 
     *ret_enctypes = malloc(sizeof(ret_enctypes[0]) * i);
     if (*ret_enctypes == NULL) {
-	krb5_set_error_message(context, ENOMEM, 
+	krb5_set_error_message(context, ENOMEM,
 			       N_("malloc: out of memory", ""));
 	return ENOMEM;
     }
@@ -481,7 +481,7 @@ krb5_copy_context(krb5_context context, krb5_context *out)
 	p->default_cc_name = strdup(context->default_cc_name);
     if (context->default_cc_name_env)
 	p->default_cc_name_env = strdup(context->default_cc_name_env);
-    
+
     if (context->etypes) {
 	ret = copy_etypes(context, context->etypes, &p->etypes);
 	if (ret)
@@ -494,7 +494,7 @@ krb5_copy_context(krb5_context context, krb5_context *out)
     }
 
     if (context->default_realms) {
-	ret = krb5_copy_host_realm(context, 
+	ret = krb5_copy_host_realm(context,
 				   context->default_realms, &p->default_realms);
 	if (ret)
 	    goto out;
@@ -736,7 +736,7 @@ krb5_prepend_config_files_default(const char *filelist, char ***pfilenames)
     krb5_free_config_files(defpp);
     if (ret) {
 	return ret;
-    }	
+    }
     *pfilenames = pp;
     return 0;
 }

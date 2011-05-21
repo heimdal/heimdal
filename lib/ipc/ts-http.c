@@ -119,10 +119,10 @@ main(int argc, char **argv)
 
     if (getarg(args, num_args, argc, argv, &optidx))
 	usage(1);
-	
+
     if (help_flag)
 	usage(0);
-    
+
     if (version_flag) {
 	print_version(NULL);
 	exit(0);

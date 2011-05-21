@@ -73,7 +73,7 @@ fd_free(krb5_storage * sp)
 }
 
 /**
- * 
+ *
  *
  * @return A krb5_storage on success, or NULL on out of memory error.
  *

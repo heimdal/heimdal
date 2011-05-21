@@ -118,7 +118,7 @@ main(int argc, char **argv)
 		    krb5_err(context, 1, errno, "failed to read passphrase");
 		buf[n] = '\0';
 		buf[strcspn(buf, "\r\n")] = '\0';
-		
+
 	    } else {
 		if(UI_UTIL_read_pw_string(buf, sizeof(buf), "Master key: ", 1))
 		    exit(1);
@@ -126,7 +126,7 @@ main(int argc, char **argv)
 	    krb5_string_to_key_salt(context, enctype, buf, salt, &key);
 	}
 	ret = hdb_add_master_key(context, &key, &mkey);
-	
+
 	krb5_free_keyblock_contents(context, &key);
 
     }

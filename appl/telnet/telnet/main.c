@@ -164,7 +164,7 @@ main(int argc, char **argv)
 #ifdef KRB5
 	krb5_init();
 #endif
-	
+
 	tninit();		/* Clear out things */
 
 	TerminalSaveState();

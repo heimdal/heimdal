@@ -62,7 +62,7 @@ _gss_string_to_oid(const char* s, gss_OID oid)
 		if (q) q = q + 1;
 		number_count++;
 	}
-	
+
 	/*
 	 * The first two numbers are in the first byte and each
 	 * subsequent number is encoded in a variable byte sequence.
@@ -126,7 +126,7 @@ _gss_string_to_oid(const char* s, gss_OID oid)
 				while (bytes) {
 					if (res) {
 						int bit = 7*(bytes-1);
-						
+
 						*res = (number >> bit) & 0x7f;
 						if (bytes != 1)
 							*res |= 0x80;

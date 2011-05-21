@@ -162,7 +162,7 @@ main(int argc, char **argv)
 
     if(debug_flag) {
 	int debug_port;
-	
+
 	if(port_str == NULL)
 	    debug_port = krb5_getportbyname (context, "kerberos-adm",
 					     "tcp", 749);

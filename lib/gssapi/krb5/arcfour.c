@@ -309,7 +309,7 @@ _gssapi_verify_mic_arcfour(OM_uint32 * minor_status,
 
     {
 	EVP_CIPHER_CTX rc4_key;
-	
+
 	EVP_CIPHER_CTX_init(&rc4_key);
 	EVP_CipherInit_ex(&rc4_key, EVP_rc4(), NULL, (void *)k6_data, NULL, 0);
 	EVP_Cipher(&rc4_key, SND_SEQ, p, 8);
@@ -462,7 +462,7 @@ _gssapi_wrap_arcfour(OM_uint32 * minor_status,
 
     if(conf_req_flag) {
 	EVP_CIPHER_CTX rc4_key;
-	
+
 	EVP_CIPHER_CTX_init(&rc4_key);
 	EVP_CipherInit_ex(&rc4_key, EVP_rc4(), NULL, k6_data, NULL, 1);
 	EVP_Cipher(&rc4_key, p0 + 24, p0 + 24, 8 + datalen);
@@ -481,7 +481,7 @@ _gssapi_wrap_arcfour(OM_uint32 * minor_status,
 
     {
 	EVP_CIPHER_CTX rc4_key;
-	
+
 	EVP_CIPHER_CTX_init(&rc4_key);
 	EVP_CipherInit_ex(&rc4_key, EVP_rc4(), NULL, k6_data, NULL, 1);
 	EVP_Cipher(&rc4_key, p0 + 8, p0 + 8 /* SND_SEQ */, 8);
@@ -581,7 +581,7 @@ OM_uint32 _gssapi_unwrap_arcfour(OM_uint32 *minor_status,
 
     {
 	EVP_CIPHER_CTX rc4_key;
-	
+
 	EVP_CIPHER_CTX_init(&rc4_key);
 	EVP_CipherInit_ex(&rc4_key, EVP_rc4(), NULL, k6_data, NULL, 1);
 	EVP_Cipher(&rc4_key, SND_SEQ, p0 + 8, 8);
@@ -629,7 +629,7 @@ OM_uint32 _gssapi_unwrap_arcfour(OM_uint32 *minor_status,
 
     if(conf_flag) {
 	EVP_CIPHER_CTX rc4_key;
-	
+
 	EVP_CIPHER_CTX_init(&rc4_key);
 	EVP_CipherInit_ex(&rc4_key, EVP_rc4(), NULL, k6_data, NULL, 1);
 	EVP_Cipher(&rc4_key, Confounder, p0 + 24, 8);

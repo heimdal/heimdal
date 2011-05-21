@@ -142,7 +142,7 @@ tfm_rsa_public_encrypt(int flen, const unsigned char* from,
     memcpy(p, from, flen);
     p += flen;
     assert((p - p0) == size - 1);
-    
+
     fp_init_multi(&enc, &dec, NULL);
     fp_read_unsigned_bin(&dec, p0, size - 1);
     free(p0);

@@ -106,7 +106,7 @@ v5_prop(krb5_context context, HDB *db, hdb_entry_ex *entry, void *appdata)
 	    krb5_warn(context, ret, "hdb_unseal_keys_mkey");
 	    return ret;
 	}
-    }	
+    }
 
     ret = hdb_entry2value(context, &entry->entry, &data);
     if(ret) {
@@ -258,7 +258,7 @@ dump_database (krb5_context context, int type,
     pd.context      = context;
     pd.auth_context = NULL;
     pd.sock         = STDOUT_FILENO;
-	
+
     ret = iterate (context, database_name, db, type, &pd);
     if (ret)
 	krb5_errx(context, 1, "iterate failure");
@@ -344,7 +344,7 @@ propagate_database (krb5_context context, int type,
 	    close(fd);
 	    goto next_host;
 	}
-	
+
 	pd.context      = context;
 	pd.auth_context = auth_context;
 	pd.sock         = fd;
@@ -371,7 +371,7 @@ propagate_database (krb5_context context, int type,
 	    goto next_host;
 	} else
 	    krb5_data_free (&data);
-	
+
     next_host:
 	krb5_auth_con_free(context, auth_context);
 	close(fd);
@@ -465,7 +465,7 @@ main(int argc, char **argv)
 
     if(ccache != NULL)
 	krb5_cc_destroy(context, ccache);
-	
+
     if(db != NULL)
 	(*db->hdb_destroy)(context, db);
 

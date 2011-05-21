@@ -103,7 +103,7 @@ main(void)
 	olen = sizeof(out)/sizeof(out[0]);
 	assert(olen > t->olen);
 
-	ret = wind_stringprep(t->in, t->ilen, out, &olen, 
+	ret = wind_stringprep(t->in, t->ilen, out, &olen,
 			      WIND_PROFILE_LDAP_CASE);
 
 	if (ret) {

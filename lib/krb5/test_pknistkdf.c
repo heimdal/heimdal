@@ -213,7 +213,7 @@ fooTicket(void)
     ASN1_MALLOC_ENCODE(Ticket, data.data, data.length, &t, &size, ret);
     if (ret)
 	errx(1, "ASN1_MALLOC_ENCODE(Ticket)");
-	
+
     rk_dumpdata("foo", data.data, data.length);
     free(data.data);
 }

@@ -221,7 +221,7 @@ _gsskrb5_set_sec_context_option
 	    return maj_stat;
 
 	t = time(NULL) + offset;
-	
+
 	krb5_set_real_time(context, t, 0);
 
 	*minor_status = 0;

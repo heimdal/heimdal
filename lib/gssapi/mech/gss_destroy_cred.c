@@ -41,9 +41,9 @@ gss_destroy_cred(void *status,
 	return GSS_S_CALL_INACCESSIBLE_READ;
     if (*cred_handle == GSS_C_NO_CREDENTIAL)
 	return GSS_S_COMPLETE;
-    
+
     cred = (struct _gss_cred *)*cred_handle;
-    
+
     while (HEIM_SLIST_FIRST(&cred->gc_mc)) {
 	mc = HEIM_SLIST_FIRST(&cred->gc_mc);
 	HEIM_SLIST_REMOVE_HEAD(&cred->gc_mc, gmc_link);

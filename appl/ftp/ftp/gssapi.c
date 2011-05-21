@@ -158,7 +158,7 @@ sockaddr_to_gss_address (struct sockaddr *sa,
     }
     default :
 	errx (1, "unknown address family %d", sa->sa_family);
-	
+
     }
 }
 
@@ -187,7 +187,7 @@ gss_adat(void *app_data, void *buf, size_t len)
 	sockaddr_to_gss_address (ctrl_addr,
 				 &bindings->acceptor_addrtype,
 				 &bindings->acceptor_address);
-	
+
 	bindings->application_data.length = 0;
 	bindings->application_data.value = NULL;
     } else
@@ -302,7 +302,7 @@ import_name(const char *kname, const char *host, gss_name_t *target_name)
 	OM_uint32 new_stat;
 	OM_uint32 msg_ctx = 0;
 	gss_buffer_desc status_string;
-	
+
 	gss_display_status(&new_stat,
 			   min_stat,
 			   GSS_C_MECH_CODE,
@@ -337,7 +337,7 @@ gss_auth(void *app_data, char *host)
     OM_uint32 mech_flags = GSS_C_MUTUAL_FLAG | GSS_C_SEQUENCE_FLAG;
 
     const char *knames[] = { "ftp", "host", NULL }, **kname = knames;
-	
+
 
     if(import_name(*kname++, host, &target_name))
 	return AUTH_ERROR;
@@ -349,14 +349,14 @@ gss_auth(void *app_data, char *host)
 	bindings = malloc(sizeof(*bindings));
 	if (bindings == NULL)
 	    errx(1, "out of memory");
-	
+
 	sockaddr_to_gss_address (myctladdr,
 				 &bindings->initiator_addrtype,
 				 &bindings->initiator_address);
 	sockaddr_to_gss_address (hisctladdr,
 				 &bindings->acceptor_addrtype,
 				 &bindings->acceptor_address);
-	
+
 	bindings->application_data.length = 0;
 	bindings->application_data.value = NULL;
     } else
@@ -397,7 +397,7 @@ gss_auth(void *app_data, char *host)
 		}
 		continue;
 	    }
-	
+
 	    if (bindings != GSS_C_NO_CHANNEL_BINDINGS)
 		free(bindings);
 
@@ -490,7 +490,7 @@ gss_auth(void *app_data, char *host)
 	    gss_release_name(&min_stat, &targ_name);
 	} else
 	    printf("Failed to get gss name of peer.\n");
-    }	
+    }
 
 
     return AUTH_OK;

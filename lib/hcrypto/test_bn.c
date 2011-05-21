@@ -348,7 +348,7 @@ test_BN_CTX(void)
 
     if ((c = BN_CTX_new()) == NULL)
 	return 1;
-    
+
     for (i = 0; i < testnum; i++) {
 	BN_CTX_start(c);
 	BN_CTX_end(c);

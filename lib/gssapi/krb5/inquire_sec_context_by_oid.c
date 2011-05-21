@@ -159,10 +159,10 @@ static OM_uint32 inquire_sec_context_get_subkey
 
     {
 	gss_buffer_desc value;
-	
+
 	value.length = data.length;
 	value.value = data.data;
-	
+
 	maj_stat = gss_add_buffer_set_member(minor_status,
 					     &value,
 					     data_set);
@@ -504,10 +504,10 @@ get_service_keyblock
 
     {
 	gss_buffer_desc value;
-	
+
 	value.length = data.length;
 	value.value = data.data;
-	
+
 	maj_stat = gss_add_buffer_set_member(minor_status,
 					     &value,
 					     data_set);

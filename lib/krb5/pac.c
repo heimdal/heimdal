@@ -106,7 +106,7 @@ HMAC_MD5_any_checksum(krb5_context context,
     ret = _krb5_HMAC_MD5_checksum(context, &local_key, data, len, usage, result);
     if (ret)
 	krb5_data_free(&result->checksum);
-    
+
     krb5_free_keyblock(context, local_key.key);
     return ret;
 }

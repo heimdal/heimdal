@@ -154,14 +154,14 @@ print_mech_attr(const char *mechname, gss_const_OID mech, gss_OID_set set)
 	major = gss_display_mech_attr(&minor, &set->elements[n], &name, &desc, NULL);
 	if (major)
 	    continue;
-	
+
 	rtbl_add_column_entryv(ct, COL_OID, "%.*s",
 			       (int)name.length, (char *)name.value);
 	rtbl_add_column_entryv(ct, COL_DESC, "%.*s",
 			       (int)desc.length, (char *)desc.value);
 	if (mech) {
 	    gss_buffer_desc value;
-	    
+
 	    if (gss_mo_get(mech, &set->elements[n], &value) != 0)
 		value.length = 0;
 

@@ -55,7 +55,7 @@ free_realms(struct tr_realm *r)
 	r = r->next;
 	free(p->realm);
 	free(p);
-    }	
+    }
 }
 
 static int
@@ -71,7 +71,7 @@ make_path(krb5_context context, struct tr_realm *r,
 	from = to;
 	to = str;
     }
-	
+
     if(strcmp(from + strlen(from) - strlen(to), to) == 0){
 	p = from;
 	while(1){

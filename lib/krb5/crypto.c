@@ -477,7 +477,7 @@ verify_checksum(krb5_context context,
     if(ct->verify) {
 	ret = (*ct->verify)(context, dkey, data, len, usage, cksum);
 	if (ret)
-	    krb5_set_error_message(context, ret, 
+	    krb5_set_error_message(context, ret,
 				   N_("Decrypt integrity check failed for checksum "
 				      "type %s, key type %s", ""),
 				   ct->name, (crypto != NULL)? crypto->et->name : "(none)");
@@ -1672,7 +1672,7 @@ krb5_crypto_length(krb5_context context,
 	krb5_set_error_message(context, EINVAL, "not a derived crypto");
 	return EINVAL;
     }
-	
+
     switch(type) {
     case KRB5_CRYPTO_TYPE_EMPTY:
 	*len = 0;
@@ -2103,7 +2103,7 @@ krb5_crypto_destroy(krb5_context context,
 
 /**
  * Return the blocksize used algorithm referenced by the crypto context
- * 
+ *
  * @param context Kerberos context
  * @param crypto crypto context to query
  * @param blocksize the resulting blocksize
@@ -2124,7 +2124,7 @@ krb5_crypto_getblocksize(krb5_context context,
 
 /**
  * Return the encryption type used by the crypto context
- * 
+ *
  * @param context Kerberos context
  * @param crypto crypto context to query
  * @param enctype the resulting encryption type
@@ -2145,7 +2145,7 @@ krb5_crypto_getenctype(krb5_context context,
 
 /**
  * Return the padding size used by the crypto context
- * 
+ *
  * @param context Kerberos context
  * @param crypto crypto context to query
  * @param padsize the return padding size
@@ -2166,7 +2166,7 @@ krb5_crypto_getpadsize(krb5_context context,
 
 /**
  * Return the confounder size used by the crypto context
- * 
+ *
  * @param context Kerberos context
  * @param crypto crypto context to query
  * @param confoundersize the returned confounder size

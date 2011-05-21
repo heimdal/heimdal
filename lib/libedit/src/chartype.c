@@ -57,7 +57,7 @@ ct_conv_buff_resize(ct_buffer_t *conv, size_t mincsize, size_t minwsize)
 			conv->csize = 0;
 			el_free(conv->cbuff);
 			conv->cbuff = NULL;
-		} else 
+		} else
 			conv->cbuff = p;
 	}
 

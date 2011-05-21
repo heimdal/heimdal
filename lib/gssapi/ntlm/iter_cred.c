@@ -45,7 +45,7 @@ _gss_ntlm_iter_creds_f(OM_uint32 flags,
     krb5_context context = NULL;
     krb5_storage *request, *response;
     krb5_data response_data;
-    
+
     ret = krb5_init_context(&context);
     if (ret)
 	goto done;
@@ -96,4 +96,4 @@ _gss_ntlm_iter_creds_f(OM_uint32 flags,
 	krb5_free_context(context);
 #endif /* HAVE_KCM */
     (*cred_iter)(userctx, NULL, NULL);
-}		 
+}

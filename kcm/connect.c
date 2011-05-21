@@ -74,7 +74,7 @@ kcm_service(void *ctx, const heim_idata *req,
 
     request.data = buf + 2;
     request.length = len - 2;
-    
+
     /* buf is now pointing at opcode */
 
     ret = kcm_dispatch(kcm_context, &peercred, &request, &rep);

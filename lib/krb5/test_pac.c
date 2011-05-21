@@ -99,7 +99,7 @@ static const char *user = "w2003final$";
  * This pac from Christan Krause
  */
 
-static const unsigned char saved_pac2[] = 
+static const unsigned char saved_pac2[] =
     "\x05\x00\x00\x00\x00\x00\x00\x00\x01\x00\x00\x00\xc8\x01\x00\x00"
     "\x58\x00\x00\x00\x00\x00\x00\x00\x0a\x00\x00\x00\x18\x00\x00\x00"
     "\x20\x02\x00\x00\x00\x00\x00\x00\x0c\x00\x00\x00\x70\x00\x00\x00"
@@ -170,10 +170,10 @@ main(int argc, char **argv)
     ret = krb5_init_context(&context);
     if (ret)
 	errx(1, "krb5_init_contex");
-    
+
     krb5_enctype_enable(context, ETYPE_DES_CBC_MD5);
 
-    ret = krb5_parse_name_flags(context, user, 
+    ret = krb5_parse_name_flags(context, user,
 				KRB5_PRINCIPAL_PARSE_NO_REALM, &p);
     if (ret)
 	krb5_err(context, 1, ret, "krb5_parse_name");
@@ -242,24 +242,24 @@ main(int argc, char **argv)
 	    krb5_data_free(&data);
 	}
 	free(list);
-	
+
 	ret = _krb5_pac_sign(context, pac2, authtime, p,
 			     &member_keyblock, &kdc_keyblock, &data);
 	if (ret)
 	    krb5_err(context, 1, ret, "_krb5_pac_sign 4");
-	
+
 	krb5_pac_free(context, pac2);
 
 	ret = krb5_pac_parse(context, data.data, data.length, &pac2);
 	krb5_data_free(&data);
 	if (ret)
 	    krb5_err(context, 1, ret, "krb5_pac_parse 4");
-	
+
 	ret = krb5_pac_verify(context, pac2, authtime, p,
 			      &member_keyblock, &kdc_keyblock);
 	if (ret)
 	    krb5_err(context, 1, ret, "krb5_pac_verify 4");
-	
+
 	krb5_pac_free(context, pac2);
     }
 

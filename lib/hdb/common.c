@@ -178,7 +178,7 @@ hdb_remove_aliases(krb5_context context, HDB *db, krb5_data *key)
 	return 0;
     else if (code)
 	return code;
-	
+
     code = hdb_value2entry(context, &value, &oldentry);
     krb5_data_free(&value);
     if (code)
@@ -220,7 +220,7 @@ hdb_add_aliases(krb5_context context, HDB *db,
     for (i = 0; i < aliases->aliases.len; i++) {
 	hdb_entry_alias entryalias;
 	entryalias.principal = entry->entry.principal;
-	
+
 	hdb_principal2key(context, &aliases->aliases.val[i], &key);
 	code = hdb_entry_alias2value(context, &entryalias, &value);
 	if (code) {

@@ -987,7 +987,7 @@ setprompt(int argc, char **argv)
 void
 setglob(int argc, char **argv)
 {
-	
+
 	doglob = !doglob;
 	printf("Globbing %s.\n", onoff(doglob));
 	code = doglob;

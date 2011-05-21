@@ -272,7 +272,7 @@ change (krb5_auth_context auth_context,
 			"malformed ChangePasswdData");
 	    return;
 	}
-	
+
 
 	ret = krb5_copy_data(context, &chpw.newpasswd, &pwd_data);
 	if (ret) {
@@ -656,7 +656,7 @@ doit (krb5_keytab keytab, int port)
 	krb5_socklen_t sa_size = sizeof(__ss);
 
 	krb5_addr2sockaddr (context, &addrs.val[i], sa, &sa_size, port);
-	
+
 	sockets[i] = socket (sa->sa_family, SOCK_DGRAM, 0);
 	if (sockets[i] < 0)
 	    krb5_err (context, 1, errno, "socket");

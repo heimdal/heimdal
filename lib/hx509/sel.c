@@ -101,7 +101,7 @@ eval_comp(hx509_context context, hx509_env env, struct hx_expr *expr)
 	if (expr->op == comp_TAILEQ) {
 	    size_t len1 = strlen(s1);
 	    size_t len2 = strlen(s2);
-	
+
 	    if (len1 < len2)
 		return 0;
 	    ret = strcmp(s1 + (len1 - len2), s2) == 0;
@@ -133,7 +133,7 @@ eval_comp(hx509_context context, hx509_env env, struct hx_expr *expr)
 	    subenv = find_variable(context, env, subexpr);
 	    if (subenv == NULL)
 		return FALSE;
-	
+
 	    while (subenv) {
 		if (subenv->type != env_string)
 		    continue;

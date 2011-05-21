@@ -127,7 +127,7 @@ main(void)
 		    positives[i]);
 	    ++failures;
 	}
-	
+
     for (i = 0; i < sizeof(negatives)/sizeof(negatives[0]); ++i)
 	if (_wind_stringprep_error(negatives[i], WIND_PROFILE_NAME)) {
 	    printf ("code-point 0x%x not marked as non-prohibited\n",

@@ -507,7 +507,7 @@ kadm5_check_password_quality (krb5_context context,
 	if (msg)
 	    krb5_set_error_message(context, 0, "(old) password policy "
 				   "failed with %s", msg);
-	
+
     }
     return msg;
 }

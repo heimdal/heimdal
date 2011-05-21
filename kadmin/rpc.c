@@ -109,47 +109,47 @@ parse_name(const unsigned char *p, size_t len,
 	   const gss_OID oid, char **name)
 {
     size_t l;
-    
+
     if (len < 4)
 	return 1;
-    
+
     /* TOK_ID */
     if (memcmp(p, "\x04\x01", 2) != 0)
 	return 1;
     len -= 2;
     p += 2;
-    
+
     /* MECH_LEN */
     l = (p[0] << 8) | p[1];
     len -= 2;
     p += 2;
     if (l < 2 || len < l)
 	return 1;
-    
+
     /* oid wrapping */
     if (p[0] != 6 || p[1] != l - 2)
 	return 1;
     p += 2;
     l -= 2;
     len -= 2;
-    
+
     /* MECH */
     if (l != oid->length || memcmp(p, oid->elements, oid->length) != 0)
 	return 1;
     len -= l;
     p += l;
-    
+
     /* MECHNAME_LEN */
     if (len < 4)
 	return 1;
     l = p[0] << 24 | p[1] << 16 | p[2] << 8 | p[3];
     len -= 4;
     p += 4;
-    
+
     /* MECH NAME */
     if (len != l)
 	return 1;
-    
+
     *name = malloc(l + 1);
     INSIST(*name != NULL);
     memcpy(*name, p, l);
@@ -184,7 +184,7 @@ gss_error(krb5_context contextp,
 }
 
 static void
-gss_print_errors (krb5_context contextp, 
+gss_print_errors (krb5_context contextp,
 		  OM_uint32 maj_stat, OM_uint32 min_stat)
 {
     gss_error(contextp, GSS_C_NO_OID, GSS_C_GSS_CODE, maj_stat);
@@ -202,13 +202,13 @@ read_data(krb5_storage *sp, krb5_storage *msg, size_t len)
 
 	if (tlen > sizeof(buf))
 	    tlen = sizeof(buf);
-	
+
 	slen = krb5_storage_read(sp, buf, tlen);
 	INSIST((size_t)slen == tlen);
-	
+
 	slen = krb5_storage_write(msg, buf, tlen);
 	INSIST((size_t)slen == tlen);
-	
+
 	len -= tlen;
     }
     return 0;
@@ -226,7 +226,7 @@ collect_framents(krb5_storage *sp, krb5_storage *msg)
 	ret = krb5_ret_uint32(sp, &len);
 	if (ret)
 	    return ret;
-	
+
 	last_fragment = (len & LAST_FRAGMENT);
 	len &= ~LAST_FRAGMENT;
 
@@ -341,7 +341,7 @@ store_string_xdr(krb5_storage *sp, const char *str)
 	c.length = strlen(str) + 1;
     } else
 	krb5_data_zero(&c);
-	
+
     return store_data_xdr(sp, c);
 }
 
@@ -512,7 +512,7 @@ ret_principal_ent(krb5_context contextp,
     } else {
 	INSIST(ent->n_tl_data == 0);
     }
-	  
+
     CHECK(krb5_ret_uint32(sp, &num));
     INSIST(num == (uint32_t)ent->n_key_data);
 
@@ -637,7 +637,7 @@ proc_get_principal(kadm5_server_context *contextp,
 
 static void
 proc_chrand_principal_v2(kadm5_server_context *contextp,
-			 krb5_storage *in, 
+			 krb5_storage *in,
 			 krb5_storage *out)
 {
     krb5_error_code ret;
@@ -741,7 +741,7 @@ struct gctx {
 };
 
 static int
-process_stream(krb5_context contextp, 
+process_stream(krb5_context contextp,
 	       unsigned char *buf, size_t ilen,
 	       krb5_storage *sp)
 {
@@ -798,11 +798,11 @@ process_stream(krb5_context contextp,
 		buf = tmp;
 	    }
 	    INSIST(ilen >= 4);
-	    
+
 	    _krb5_get_int(buf, &len, 4);
 	    last_fragment = (len & LAST_FRAGMENT) != 0;
 	    len &= ~LAST_FRAGMENT;
-	    
+
 	    ilen -= 4;
 	    buf += 4;
 
@@ -820,7 +820,7 @@ process_stream(krb5_context contextp,
 	    }
 
 	    CHECK(read_data(sp, msg, len));
-	    
+
 	    if (!last_fragment) {
 		ret = collect_framents(sp, msg);
 		if (ret == HEIM_ERR_EOF)
@@ -880,7 +880,7 @@ process_stream(krb5_context contextp,
 	    INSIST(gctx.done);
 
 	    INSIST(krb5_data_cmp(&gcred.handle, &gctx.handle) == 0);
-	    
+
 	    CHECK(ret_data_xdr(msg, &data));
 
 	    gin.value = data.data;
@@ -904,7 +904,7 @@ process_stream(krb5_context contextp,
 	    INSIST(seq > gctx.seq_num);
 	    gctx.seq_num = seq;
 
-	    /* 
+	    /*
 	     * If contextp is setup, priv data have the seq_num stored
 	     * first in the block, so add it here before users data is
 	     * added.
@@ -914,7 +914,7 @@ process_stream(krb5_context contextp,
 	    if (chdr.proc >= sizeof(procs)/sizeof(procs[0])) {
 		krb5_warnx(contextp, "proc number out of array");
 	    } else if (procs[chdr.proc].func == NULL) {
-		krb5_warnx(contextp, "proc '%s' never implemented", 
+		krb5_warnx(contextp, "proc '%s' never implemented",
 			  procs[chdr.proc].name);
 	    } else {
 		krb5_warnx(contextp, "proc %s", procs[chdr.proc].name);
@@ -946,7 +946,7 @@ process_stream(krb5_context contextp,
 	    gout.length = 0;
 
 	    maj_stat = gss_accept_sec_context(&min_stat,
-					      &gctx.ctx, 
+					      &gctx.ctx,
 					      GSS_C_NO_CREDENTIAL,
 					      &gin,
 					      GSS_C_NO_CHANNEL_BINDINGS,
@@ -966,13 +966,13 @@ process_stream(krb5_context contextp,
 		char *client;
 
 		gctx.done = 1;
-		
+
 		memset(&realm_params, 0, sizeof(realm_params));
 
 		maj_stat = gss_export_name(&min_stat, src_name, &bufp);
 		INSIST(maj_stat == GSS_S_COMPLETE);
 
-		CHECK(parse_name(bufp.value, bufp.length, 
+		CHECK(parse_name(bufp.value, bufp.length,
 				 GSS_KRB5_MECHANISM, &client));
 
 		gss_release_buffer(&min_stat, &bufp);
@@ -992,7 +992,7 @@ process_stream(krb5_context contextp,
 	    INSIST(gctx.ctx != GSS_C_NO_CONTEXT);
 
 	    CHECK(krb5_store_uint32(dreply, 0));
-	    CHECK(store_gss_init_res(dreply, gctx.handle, 
+	    CHECK(store_gss_init_res(dreply, gctx.handle,
 				     maj_stat, min_stat, 1, &gout));
 	    if (gout.value)
 		gss_release_buffer(&min_stat, &gout);
@@ -1004,7 +1004,7 @@ process_stream(krb5_context contextp,
 	case RPG_DESTROY:
 	    krb5_errx(contextp, 1, "client destroyed gss contextp");
 	default:
-	    krb5_errx(contextp, 1, "client sent unknown gsscode %d", 
+	    krb5_errx(contextp, 1, "client sent unknown gsscode %d",
 		      (int)gcred.proc);
 	}
 
@@ -1061,16 +1061,16 @@ process_stream(krb5_context contextp,
 
 		gin.value = data.data;
 		gin.length = data.length;
-		
+
 		maj_stat = gss_wrap(&min_stat, gctx.ctx, 1, 0,
 				    &gin, &conf_state, &gout);
 		INSIST(maj_stat == GSS_S_COMPLETE);
 		INSIST(conf_state != 0);
 		krb5_data_free(&data);
-		
+
 		data.data = gout.value;
 		data.length = gout.length;
-		
+
 		store_data_xdr(reply, data);
 		gss_release_buffer(&min_stat, &gout);
 	    }
@@ -1099,7 +1099,7 @@ handle_mit(krb5_context contextp, void *buf, size_t len, krb5_socket_t sock)
 
     sp = krb5_storage_from_fd(sock);
     INSIST(sp != NULL);
-    
+
     process_stream(contextp, buf, len, sp);
 
     return 0;

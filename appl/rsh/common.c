@@ -105,7 +105,7 @@ do_read (int fd, void *buf, size_t sz, void *ivec)
 	    status = krb5_decrypt_ivec(context, crypto, key_usage,
 				       edata, outer_len, &data, ivec);
 	    free (edata);
-	
+
 	    if (status)
 		krb5_err (context, 1, status, "decrypting data");
 	    if(ivec != NULL) {

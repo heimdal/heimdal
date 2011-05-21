@@ -466,7 +466,7 @@ get_new_tickets(krb5_context context,
 	renew = parse_time (renewstr, "s");
 	if (renew < 0)
 	    errx (1, "unparsable time: %s", renewstr);
-	
+
 	krb5_get_init_creds_opt_set_renew_life (opt, renew);
     }
 
@@ -532,11 +532,11 @@ get_new_tickets(krb5_context context,
 
 	if (passwd[0] == '\0') {
 	    char *p, *prompt;
-	
+
 	    krb5_unparse_name (context, principal, &p);
 	    asprintf (&prompt, N_("%s's Password: ", ""), p);
 	    free (p);
-	
+
 	    if (UI_UTIL_read_pw_string(passwd, sizeof(passwd)-1, prompt, 0)){
 		memset(passwd, 0, sizeof(passwd));
 		exit(1);
@@ -544,7 +544,7 @@ get_new_tickets(krb5_context context,
 	    free (prompt);
 	}
 
-	
+
 	ret = krb5_get_init_creds_password (context,
 					    &cred,
 					    principal,
@@ -592,7 +592,7 @@ get_new_tickets(krb5_context context,
 	    char life[64];
 	    unparse_time_approx(cred.times.renew_till - cred.times.starttime,
 				life, sizeof(life));
-	    krb5_warnx(context, 
+	    krb5_warnx(context,
 		       N_("NOTICE: ticket renewable lifetime is %s", ""),
 		       life);
 	}
@@ -773,7 +773,7 @@ main (int argc, char **argv)
     } else if (anonymous_flag) {
 
 	ret = krb5_make_principal(context, &principal, argv[0],
-				  KRB5_WELLKNOWN_NAME, KRB5_ANON_NAME, 
+				  KRB5_WELLKNOWN_NAME, KRB5_ANON_NAME,
 				  NULL);
 	if (ret)
 	    krb5_err(context, 1, ret, "krb5_make_principal");
@@ -825,7 +825,7 @@ main (int argc, char **argv)
 		if (ret)
 		    krb5_err (context, 1, ret, N_("resolving credentials cache", ""));
 
-		/* 
+		/*
 		 * Check if the type support switching, and we do,
 		 * then do that instead over overwriting the current
 		 * default credential
@@ -904,7 +904,7 @@ main (int argc, char **argv)
 	    krb5_warnx(context, N_("permission denied: %s", ""), argv[1]);
 	else if(ret == EX_NOTFOUND)
 	    krb5_warnx(context, N_("command not found: %s", ""), argv[1]);
-	
+
 	krb5_cc_destroy(context, ccache);
 #ifndef NO_AFS
 	if(k_hasafs())

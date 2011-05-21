@@ -216,7 +216,7 @@ http_query(const char *host, const char *page,
 	    break;
 	else if (ret < 0)
 	    err (1, "read: %lu", (unsigned long)ret);
-	
+
 	in_buf[ret + in_len] = '\0';
 
 	if (state == HEADER || state == RESPONSE) {
@@ -362,7 +362,7 @@ main(int argc, char **argv)
 
 		if (verbose_flag)
 		    printf("Negotiate found\n");
-		
+
 		if (server == GSS_C_NO_NAME) {
 		    char *name;
 		    asprintf(&name, "%s@%s", gss_service, host);
@@ -474,7 +474,7 @@ main(int argc, char **argv)
 		    base64_encode(output_token.value,
 				  output_token.length,
 				  &neg_token);
-		
+
 		    asprintf(&headers[0], "Authorization: Negotiate %s",
 			     neg_token);
 

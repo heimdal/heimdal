@@ -74,7 +74,7 @@ krb5_net_write_block(krb5_context context,
 	  if (rk_SOCK_ERRNO == EINTR)
 	      continue;
 	  return -1;
-      } 
+      }
 
 #ifdef HAVE_WINSOCK
       if (ret == 0) {

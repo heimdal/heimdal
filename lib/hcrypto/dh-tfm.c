@@ -112,11 +112,11 @@ tfm_dh_generate_key(DH *dh)
 	    BN_free(dh->pub_key);
 
 	fp_init_multi(&pub, &priv_key, &g, &p, NULL);
-	
+
 	BN2mpz(&priv_key, dh->priv_key);
 	BN2mpz(&g, dh->g);
 	BN2mpz(&p, dh->p);
-	
+
 	res = fp_exptmod(&g, &priv_key, &p, &pub);
 
 	fp_zero(&priv_key);
@@ -129,7 +129,7 @@ tfm_dh_generate_key(DH *dh)
 	fp_zero(&pub);
 	if (dh->pub_key == NULL)
 	    return 0;
-	
+
 	if (DH_check_pubkey(dh, dh->pub_key, &codes) && codes == 0)
 	    break;
 	if (have_private_key)

@@ -569,7 +569,7 @@ _gssapi_wrap_cfx_iov(OM_uint32 *minor_status,
 	  plain packet:
 
 	  {data | "header" | gss-trailer (krb5 checksum)
-	  
+
 	  don't do RRC != 0
 
 	 */
@@ -651,7 +651,7 @@ unrotate_iov(OM_uint32 *minor_status, size_t rrc, gss_iov_buffer_desc *iov, int 
 	    GSS_IOV_BUFFER_TYPE(iov[i].type) == GSS_IOV_BUFFER_TYPE_PADDING ||
 	    GSS_IOV_BUFFER_TYPE(iov[i].type) == GSS_IOV_BUFFER_TYPE_TRAILER)
 	    len += iov[i].buffer.length;
-    
+
     p = malloc(len);
     if (p == NULL) {
 	*minor_status = ENOMEM;

@@ -172,7 +172,7 @@ main(int argc, char **argv)
 			    0, keytab, &ticket);
 	if(ret)
 	    krb5_err(context, 1, ret, "krb5_recvauth");
-	
+
 	ret = krb5_unparse_name(context, ticket->server, &server);
 	if (ret)
 	    krb5_err(context, 1, ret, "krb5_unparse_name");

@@ -63,7 +63,7 @@ OM_uint32 GSSAPI_CALLCONV _gss_ntlm_acquire_cred
 	maj_stat = _gss_ntlm_allocate_ctx(min_stat, &ctx);
 	if (maj_stat != GSS_S_COMPLETE)
 	    return maj_stat;
-	
+
 	maj_stat = (*ctx->server->nsi_probe)(min_stat, ctx->ictx,
 					     name->domain);
 	{
@@ -73,7 +73,7 @@ OM_uint32 GSSAPI_CALLCONV _gss_ntlm_acquire_cred
 	}
 	if (maj_stat)
 	    return maj_stat;
-    }	
+    }
     if (cred_usage == GSS_C_BOTH || cred_usage == GSS_C_INITIATE) {
 	ntlm_cred cred;
 

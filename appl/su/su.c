@@ -152,7 +152,7 @@ krb5_verify(const struct passwd *login_info,
     krb5_realm *realms, *r;
     char *login_name = NULL;
     int user_ok = 0;
-	
+
 #if defined(HAVE_GETLOGIN) && !defined(POSIX_GETLOGIN)
     login_name = getlogin();
 #endif
@@ -163,7 +163,7 @@ krb5_verify(const struct passwd *login_info,
 #endif
 	return 1;
     }
-	
+
     ret = krb5_get_default_realms(context, &realms);
     if (ret)
 	return 1;
@@ -186,7 +186,7 @@ krb5_verify(const struct passwd *login_info,
 	    krb5_free_host_realm(context, realms);
 	    return 1;
 	}
-	
+
 	/* if we are su-ing too root, check with krb5_kuserok */
 	if (su_info->pw_uid == 0 && !krb5_kuserok(context, p, su_info->pw_name))
 	    continue;
@@ -348,7 +348,7 @@ main(int argc, char **argv)
 	 full_login = 1;
 	 break;
       }
-	
+
     if(help_flag)
 	usage(0);
     if(version_flag) {
@@ -499,14 +499,14 @@ main(int argc, char **argv)
 	   args[i++] = "-c";
 	   args[i++] = cmd;
 	}
-	
+
 	if (csh_f_flag)
 	    args[i++] = "-f";
 
 	for (argv += optind; *argv; ++argv)
 	   args[i++] = *argv;
 	args[i] = NULL;
-	
+
 	if(setgid(su_info->pw_gid) < 0)
 	    err(1, "setgid");
 	if (initgroups (su_info->pw_name, su_info->pw_gid) < 0)

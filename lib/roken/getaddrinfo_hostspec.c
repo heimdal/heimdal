@@ -65,7 +65,7 @@ roken_getaddrinfo_hostspec2(const char *hostspec,
     memset(&hints, 0, sizeof(hints));
 
     hints.ai_socktype = socktype;
-	
+
     for(hstp = hst; hstp->prefix; hstp++) {
 	if(strncmp(hostspec, hstp->prefix, strlen(hstp->prefix)) == 0) {
 	    hints.ai_socktype = hstp->socktype;

@@ -120,7 +120,7 @@ struct tests camellia128_tests[] = {
 };
 
 struct tests rc4_tests[] = {
-    { 
+    {
 	"rc4 8",
 	"\x01\x23\x45\x67\x89\xAB\xCD\xEF",
 	8,

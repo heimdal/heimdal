@@ -89,7 +89,7 @@ hookup (const char *host, int port)
 	    strlcpy (hostnamebuf, a->ai_canonname, sizeof(hostnamebuf));
 
 	memcpy (hisctladdr, a->ai_addr, a->ai_addrlen);
-	
+
 	error = connect (s, a->ai_addr, a->ai_addrlen);
 	if (error < 0) {
 	    char addrstr[256];
@@ -98,7 +98,7 @@ hookup (const char *host, int port)
 			     addrstr, sizeof(addrstr),
 			     NULL, 0, NI_NUMERICHOST) != 0)
 		strlcpy (addrstr, "unknown address", sizeof(addrstr));
-			
+
 	    warn ("connect %s", addrstr);
 	    close (s);
 	    s = -1;
@@ -622,7 +622,7 @@ copy_stream (FILE * from, FILE * to)
 		    goto try_read;
 		break;
 	    }
-		
+
 	    res = sec_write (fileno (to), chunk, len);
 	    if (msync (chunk, len, MS_ASYNC))
 		warn ("msync");

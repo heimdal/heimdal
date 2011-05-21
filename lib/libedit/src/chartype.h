@@ -114,9 +114,9 @@ wchar_t *wcsdup(const wchar_t *s);
 #else /* NARROW */
 
 #define ct_mbtowc            error
-#define ct_mbtowc_reset      
+#define ct_mbtowc_reset
 #define ct_wctomb            error
-#define ct_wctomb_reset      
+#define ct_wctomb_reset
 #define ct_wcstombs(a, b, c)    (strncpy(a, b, c), strlen(a))
 #define ct_mbstowcs(a, b, c)    (strncpy(a, b, c), strlen(a))
 
@@ -213,7 +213,7 @@ protected size_t ct_enc_width(Char);
 #define VISUAL_WIDTH_MAX 8
 
 /* The terminal is thought of in terms of X columns by Y lines. In the cases
- * where a wide character takes up more than one column, the adjacent 
+ * where a wide character takes up more than one column, the adjacent
  * occupied column entries will contain this faux character. */
 #define MB_FILL_CHAR ((Char)-1)
 

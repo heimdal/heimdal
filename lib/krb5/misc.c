@@ -116,7 +116,7 @@ _krb5_einval(krb5_context context, const char *func, unsigned long argn)
 #ifndef HEIMDAL_SMALLER
     krb5_set_error_message(context, EINVAL,
 			   N_("programmer error: invalid argument to %s argument %lu",
-			      "function:line"), 
+			      "function:line"),
 			   func, argn);
     if (_krb5_have_debug(context, 10)) {
 	_krb5_debug(context, 10, "invalid argument to function %s argument %lu",

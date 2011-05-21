@@ -191,12 +191,12 @@ roken_gethostby(const char *hostname)
 	static char addrs[4 * MAX_ADDRS];
 	static char *addr_list[MAX_ADDRS + 1];
 	int num_addrs = 0;
-	
+
 	he.h_name = p;
 	he.h_aliases = NULL;
 	he.h_addrtype = AF_INET;
 	he.h_length = 4;
-	
+
 	while((p = strtok_r(NULL, " \t\r\n", &foo)) && num_addrs < MAX_ADDRS) {
 	    struct in_addr ip;
 	    inet_aton(p, &ip);

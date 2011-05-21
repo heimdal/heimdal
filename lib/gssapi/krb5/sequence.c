@@ -64,7 +64,7 @@ msg_order_alloc(OM_uint32 *minor_status,
     if (*o == NULL) {
 	*minor_status = ENOMEM;
 	return GSS_S_FAILURE;
-    }	
+    }
 
     *minor_status = 0;
     return GSS_S_COMPLETE;

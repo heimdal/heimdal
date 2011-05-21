@@ -315,7 +315,7 @@ unvis(char *cp, int c, int *astate, int flag)
 			*astate = SS(0, S_META1);
 		else if (c == '^')
 			*astate = SS(0, S_CTRL);
-		else 
+		else
 			goto bad;
 		return UNVIS_NOCHAR;
 

@@ -138,7 +138,7 @@ add_port_string (krb5_context context,
  */
 
 static void
-add_standard_ports (krb5_context context, 		
+add_standard_ports (krb5_context context,
 		    krb5_kdc_configuration *config,
 		    int family)
 {
@@ -162,7 +162,7 @@ add_standard_ports (krb5_context context,
  */
 
 static void
-parse_ports(krb5_context context, 		
+parse_ports(krb5_context context,
 	    krb5_kdc_configuration *config,
 	    const char *str)
 {
@@ -194,7 +194,7 @@ parse_ports(krb5_context context,
 		add_port_string(context, AF_INET, p, "tcp");
 	    }
 	}
-	
+
 	p = strtok_r(NULL, " \t", &pos);
     }
     free (str_copy);
@@ -377,7 +377,7 @@ descr_type(struct descr *d)
 }
 
 static void
-addr_to_string(krb5_context context, 		
+addr_to_string(krb5_context context,
 	       struct sockaddr *addr, size_t addr_len, char *str, size_t len)
 {
     krb5_address a;

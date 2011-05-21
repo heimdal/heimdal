@@ -250,7 +250,7 @@ optionstatus(void)
 
 static void __attribute__((format (printf, 3, 4)))
 qprintf(int quote, FILE *f, const char *fmt, ...)
-    
+
 {
     va_list va;
     if (quote)

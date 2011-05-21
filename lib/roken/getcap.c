@@ -43,7 +43,7 @@
 #elif defined(HAVE_DB_H)
 #include <db.h>
 #endif
-#include <errno.h>	
+#include <errno.h>
 #include <fcntl.h>
 #include <limits.h>
 #include <stdio.h>
@@ -238,7 +238,7 @@ getent(char **cap, size_t *len, char **db_array, int fd,
     int myfd = 0, eof, foundit;
     char *record;
     int tc_not_resolved;
-	
+
     /*
      * Return with ``loop detected'' error if we've recursed more than
      * MAX_RECURSION times.
@@ -356,7 +356,7 @@ getent(char **cap, size_t *len, char **db_array, int fd,
 		for (;;) {
 		    if (bp >= b_end) {
 			int n;
-		
+
 			n = read(fd, buf, sizeof(buf));
 			if (n <= 0) {
 			    if (myfd)
@@ -373,7 +373,7 @@ getent(char **cap, size_t *len, char **db_array, int fd,
 			b_end = buf+n;
 			bp = buf;
 		    }
-	
+
 		    c = *bp++;
 		    if (c == '\n') {
 			if (slash) {
@@ -442,13 +442,13 @@ getent(char **cap, size_t *len, char **db_array, int fd,
 		 */
 		if (eof)
 		    break;
-				
+
 		/*
 		 * Toss blank lines and comments.
 		 */
 		if (*record == '\0' || *record == '#')
 		    continue;
-	
+
 		/*
 		 * See if this is the record we want ...
 		 */
@@ -524,11 +524,11 @@ getent(char **cap, size_t *len, char **db_array, int fd,
 		    tc_not_resolved = 1;
 				/* couldn't resolve tc */
 		if (iret == -1) {
-		    *(s - 1) = ':';			
+		    *(s - 1) = ':';
 		    scan = s - 1;
 		    tc_not_resolved = 1;
 		    continue;
-					
+
 		}
 	    }
 	    /* not interested in name field of tc'ed record */
@@ -591,7 +591,7 @@ getent(char **cap, size_t *len, char **db_array, int fd,
 	     */
 	    scan = s-1;
 	}
-	
+
     }
     /*
      * Close file (if we opened it), give back any extra memory, and
@@ -606,12 +606,12 @@ getent(char **cap, size_t *len, char **db_array, int fd,
 	    errno = ENOMEM;
 	    return (-2);
 	}
-		
+
     *cap = record;
     if (tc_not_resolved)
 	return (1);
     return (0);
-}	
+}
 
 #ifdef USE_DB
 static int
@@ -640,7 +640,7 @@ cdbget(DB *capdbp, char **bp, const char *name)
 		key.data = (char *)data.data + 1;
 		key.size = data.size - 1;
 	}
-	
+
 	*bp = (char *)data.data + 1;
 	return (((char *)(data.data))[0] == TCERR ? 1 : 0);
 }
@@ -775,7 +775,7 @@ cgetnext(char **bp, char **db_array)
 		slash = 1;
 	    else
 		slash = 0;
-	}			
+	}
 
 
 	/*
@@ -1116,10 +1116,10 @@ nfcmp(char *nf, char *rec)
 {
     char *cp, tmp;
     int ret;
-	
+
     for (cp = rec; *cp != ':'; cp++)
 	;
-	
+
     tmp = *(cp + 1);
     *(cp + 1) = '\0';
     ret = strcmp(nf, rec);

@@ -325,7 +325,7 @@ add_st_object(void)
 	}
 	soft_token.object.objs = objs;
 	soft_token.object.objs[soft_token.object.num_objs++] = o;
-    }	
+    }
     soft_token.object.objs[i]->object_handle =
 	(random() & (~OBJECT_ID_MASK)) | i;
 
@@ -392,7 +392,7 @@ add_pubkey_info(hx509_context hxctx, struct st_object *o,
 			 &modulus_bits, sizeof(modulus_bits));
 
     free(modulus);
-	
+
     num = _hx509_private_key_get_internal(context,
 					  _hx509_cert_private_key(cert),
 					  "rsa-exponent");
@@ -727,10 +727,10 @@ read_conf_file(const char *fn, CK_USER_TYPE userType, const char *pin)
 	type = strtok_r(p, "\t", &s);
 	if (type == NULL)
 	    continue;
-	
+
 	if (strcasecmp("certificate", type) == 0) {
 	    char *cert, *id, *label;
-	
+
 	    id = strtok_r(NULL, "\t", &s);
 	    if (id == NULL) {
 		st_logf("no id\n");
@@ -747,9 +747,9 @@ read_conf_file(const char *fn, CK_USER_TYPE userType, const char *pin)
 		st_logf("no certfiicate store\n");
 		continue;
 	    }
-	
+
 	    st_logf("adding: %s: %s in file %s\n", id, label, cert);
-	
+
 	    ret = add_certificate(cert, pin, id, label);
 	    if (ret)
 		failed = ret;
@@ -774,7 +774,7 @@ read_conf_file(const char *fn, CK_USER_TYPE userType, const char *pin)
 	    }
 	    if (soft_token.logfile == NULL)
 		st_logf("failed to open file: %s\n", name);
-		
+
 	} else if (strcasecmp("app-fatal", type) == 0) {
 	    char *name;
 
@@ -1616,7 +1616,7 @@ C_VerifyInit(CK_SESSION_HANDLE hSession,
     ret = dup_mechanism(&state->verify_mechanism, pMechanism);
     if (ret == CKR_OK)
 	state->verify_object = OBJECT_ID(o);
-			
+
     return ret;
 }
 

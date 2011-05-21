@@ -421,7 +421,7 @@ ipv6_mask_boundary(krb5_context context, const krb5_address *inaddr,
 	sub_len = min(8, len);
 
 	m = 0xff << (8 - sub_len);
-	
+
 	laddr.s6_addr[i] = addr.s6_addr[i] & m;
 	haddr.s6_addr[i] = (addr.s6_addr[i] & m) | ~m;
 
@@ -491,7 +491,7 @@ arange_parse_addr (krb5_context context,
 	    krb5_free_addresses(context, &addrmask);
 	    return -1;
 	}
-	
+
 	address += p - address + 1;
 
 	num = strtol(address, &q, 10);
@@ -508,7 +508,7 @@ arange_parse_addr (krb5_context context,
 
     } else {
 	krb5_addresses low, high;
-	
+
 	strsep_copy(&address, "-", buf, sizeof(buf));
 	ret = krb5_parse_address(context, buf, &low);
 	if(ret)
@@ -517,14 +517,14 @@ arange_parse_addr (krb5_context context,
 	    krb5_free_addresses(context, &low);
 	    return -1;
 	}
-	
+
 	strsep_copy(&address, "-", buf, sizeof(buf));
 	ret = krb5_parse_address(context, buf, &high);
 	if(ret) {
 	    krb5_free_addresses(context, &low);
 	    return ret;
 	}
-	
+
 	if(high.len != 1 && high.val[0].addr_type != low.val[0].addr_type) {
 	    krb5_free_addresses(context, &low);
 	    krb5_free_addresses(context, &high);
@@ -610,7 +610,7 @@ arange_print_addr (const krb5_address *addr, char *str, size_t len)
     if (l > len)
 	l = len;
     size = l;
-	
+
     ret = krb5_print_address (&a->low, str + size, len - size, &l);
     if (ret)
 	return ret;
@@ -656,7 +656,7 @@ arange_order_addr(krb5_context context,
 	abort();
         UNREACHABLE(return 0);
     }
-	
+
     if(a2->addr_type == KRB5_ADDRESS_ARANGE) {
 	struct arange *b = a2->address.data;
 	tmp1 = krb5_address_order(context, &a->low, &b->low);

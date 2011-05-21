@@ -639,7 +639,7 @@ decrypt_tkt (krb5_context context,
 				   &size);
     krb5_data_free (&data);
     if (ret) {
-        krb5_set_error_message(context, ret, 
+        krb5_set_error_message(context, ret,
 			       N_("Failed to decode encpart in ticket", ""));
 	return ret;
     }
@@ -828,7 +828,7 @@ _krb5_extract_ticket(krb5_context context,
 	creds->addresses.val = NULL;
     }
     creds->flags.b = rep->enc_part.flags;
-	
+
     creds->authdata.len = 0;
     creds->authdata.val = NULL;
 

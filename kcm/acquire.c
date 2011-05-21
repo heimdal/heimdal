@@ -67,7 +67,7 @@ kcm_ccache_acquire(krb5_context context,
 		ccache->name);
 	return KRB5_FCC_INTERNAL;
     }
-	
+
     HEIMDAL_MUTEX_lock(&ccache->mutex);
 
     /* Fake up an internal ccache */

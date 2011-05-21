@@ -258,7 +258,7 @@ recv_krb5_auth (int s, u_char *buf,
     if (memcmp (buf, "\x00\x00\x00\x13", 4) != 0)
 	return -1;
     len = (buf[0] << 24) | (buf[1] << 16) | (buf[2] << 8) | (buf[3]);
-	
+
     if (net_read(s, buf, len) != len)
 	syslog_and_die ("reading auth info: %s", strerror(errno));
     if (len != sizeof(KRB5_SENDAUTH_VERSION)
@@ -394,7 +394,7 @@ recv_krb5_auth (int s, u_char *buf,
 		   *cmd);
 	    free (name);
 	}
-    }	
+    }
 
     krb5_auth_con_free(context, auth_context);
 
@@ -918,12 +918,12 @@ main(int argc, char **argv)
 	int error;
 	struct addrinfo *ai = NULL, hints;
 	char portstr[NI_MAXSERV];
-	
+
 	memset (&hints, 0, sizeof(hints));
 	hints.ai_flags    = AI_PASSIVE;
 	hints.ai_socktype = SOCK_STREAM;
 	hints.ai_family   = PF_UNSPEC;
-	
+
 	if(port_str != NULL) {
 	    error = getaddrinfo (NULL, port_str, &hints, &ai);
 	    if (error)

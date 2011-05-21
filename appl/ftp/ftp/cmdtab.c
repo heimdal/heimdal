@@ -196,7 +196,7 @@ struct cmd cmdtab[] = {
 #if defined(KRB5)
 	{ "afslog",	afsloghelp,	0,	1,	0,	afslog },
 #endif
-	
+
 	{ 0 },
 };
 

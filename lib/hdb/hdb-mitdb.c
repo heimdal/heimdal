@@ -146,7 +146,7 @@ fix_salt(krb5_context context, hdb_entry *ent, int key_num)
 	size_t len;
 	size_t i;
 	char *p;
-	
+
 	len = 0;
 	for (i = 0; i < ent->principal->name.name_string.len; ++i)
 	    len += strlen(ent->principal->name.name_string.val[i]);
@@ -212,7 +212,7 @@ mdb_value2entry(krb5_context context, krb5_data *data, krb5_kvno kvno, hdb_entry
 	krb5_set_error_message(context, ENOMEM, "out of memory");
 	return ENOMEM;
     }
-    
+
     krb5_storage_set_byteorder(sp, KRB5_STORAGE_BYTEORDER_LE);
 
     /*
@@ -422,7 +422,7 @@ mdb_value2entry(krb5_context context, krb5_data *data, krb5_kvno kvno, hdb_entry
 			}
 			k->salt->salt.length = u16;
 			krb5_storage_read(sp, k->salt->salt.data, k->salt->salt.length);
-		    }			
+		    }
 		    fix_salt(context, entry, entry->keys.len - 1);
 		} else {
 		    /*

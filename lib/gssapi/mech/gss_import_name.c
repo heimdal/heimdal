@@ -169,7 +169,7 @@ _gss_import_export_name(OM_uint32 *minor_status,
  *
  * @returns a gss_error code, see gss_display_status() about printing
  *        the error code.
- *  
+ *
  * @ingroup gssapi
  */
 
@@ -241,7 +241,7 @@ gss_import_name(OM_uint32 *minor_status,
 	HEIM_SLIST_FOREACH(m, &_gss_mechs, gm_link) {
 		int present = 0;
 
-		major_status = gss_test_oid_set_member(minor_status, 
+		major_status = gss_test_oid_set_member(minor_status,
 		    name_type, m->gm_name_types, &present);
 
 		if (major_status || present == 0)

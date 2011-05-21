@@ -90,7 +90,7 @@ main(int argc, char **argv)
     if (config->enable_pkinit) {
 	if (config->pkinit_kdc_identity == NULL)
 	    krb5_errx(context, 1, "pkinit enabled but no identity");
- 
+
 	if (config->pkinit_kdc_anchors == NULL)
 	    krb5_errx(context, 1, "pkinit enabled but no X509 anchors");
 

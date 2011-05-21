@@ -342,7 +342,7 @@ tlist_cmp(const struct tlist *tl, const struct tlist *ql)
 
     ret = strcmp(tl->header, ql->header);
     if (ret) return ret;
-	
+
     q = ASN1_TAILQ_FIRST(&ql->template);
     ASN1_TAILQ_FOREACH(t, &tl->template, members) {
 	if (q == NULL) return 1;
@@ -353,7 +353,7 @@ tlist_cmp(const struct tlist *tl, const struct tlist *ql)
 	} else {
 	    ret = strcmp(t->tt, q->tt);
 	    if (ret) return ret;
-	    
+
 	    ret = strcmp(t->offset, q->offset);
 	    if (ret) return ret;
 
@@ -479,7 +479,7 @@ template_members(struct templatehead *temp, const char *basetype, const char *na
 		     optional ? "|A1_FLAG_OPTIONAL" : "",
 		     poffset, t->symbol->gen_name);
 	} else {
-	    add_line_pointer(temp, t->symbol->gen_name, poffset, 
+	    add_line_pointer(temp, t->symbol->gen_name, poffset,
 			     "A1_OP_TYPE %s", optional ? "|A1_FLAG_OPTIONAL" : "");
 	}
 	break;
@@ -499,7 +499,7 @@ template_members(struct templatehead *temp, const char *basetype, const char *na
 	else
 	    errx(1, "%s: unsupported range %d -> %d",
 		 name, t->range->min, t->range->max);
-	   
+
 	add_line(temp, "{ A1_PARSE_T(A1T_%s), %s, NULL }", itype, poffset);
 	break;
     }
@@ -591,7 +591,7 @@ template_members(struct templatehead *temp, const char *basetype, const char *na
 
 	ASN1_TAILQ_FOREACH(m, t->members, members) {
 	    char *newbasename = NULL;
-	    
+
 	    if (m->ellipsis)
 		continue;
 
@@ -699,7 +699,7 @@ template_members(struct templatehead *temp, const char *basetype, const char *na
 	    char *elname = NULL;
 	    char *newbasename = NULL;
 	    int subtype_is_struct;
-	    
+
 	    if (m->ellipsis) {
 		ellipsis = 1;
 		continue;

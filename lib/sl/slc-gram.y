@@ -244,7 +244,7 @@ check_command(struct assignment *as)
 		ex(as, "multiple max_args strings");
 		ret++;
 	}
-	
+
 	return ret;
 }
 
@@ -472,7 +472,7 @@ gen_options(struct assignment *opt1, const char *name)
 	struct assignment *type;
 	struct type_handler *th;
 	char *s;
-	
+
 	s = make_name(tmp->u.assignment);
 	type = find(tmp->u.assignment, "type");
 	th = find_handler(type);
@@ -530,7 +530,7 @@ gen_wrapper(struct assignment *as)
 	struct assignment *help = find(tmp->u.assignment, "help");
 
 	struct type_handler *th;
-	
+
 	cprint(2, "{ ");
 	if(lopt)
 	    fprintf(cfile, "\"%s\", ", lopt->u.value);
@@ -566,7 +566,7 @@ gen_wrapper(struct assignment *as)
 	struct assignment *defval = find(tmp->u.assignment, "default");
 
 	struct type_handler *th;
-	
+
 	s = make_name(tmp->u.assignment);
 	th = find_handler(type);
 	(*th->defval)(s, defval);

@@ -158,7 +158,7 @@ cpw_entry(struct passwd_options *opt, int argc, char **argv)
 		"--random-key, --random-password, --password, --key\n");
 	return 1;
     }
-	
+
     if (opt->key_string) {
 	const char *error;
 

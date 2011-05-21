@@ -1398,7 +1398,7 @@ krb5_ret_creds(krb5_storage *sp, krb5_creds *creds)
     ret = krb5_ret_data (sp,  &creds->second_ticket);
 cleanup:
     if(ret) {
-#if 0	
+#if 0
 	krb5_free_cred_contents(context, creds); /* XXX */
 #endif
     }
@@ -1583,7 +1583,7 @@ krb5_ret_creds_tag(krb5_storage *sp,
 
 cleanup:
     if(ret) {
-#if 0	
+#if 0
 	krb5_free_cred_contents(context, creds); /* XXX */
 #endif
     }

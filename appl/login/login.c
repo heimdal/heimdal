@@ -365,7 +365,7 @@ do_login(const struct passwd *pwd, char *tty, char *ttyn)
 
 	read_limits_conf(file, pwd);
     }
-	
+
 #ifdef HAVE_SETPCRED
     if (setpcred (pwd->pw_name, NULL) == -1)
 	warn("setpcred(%s)", pwd->pw_name);
@@ -599,7 +599,7 @@ main(int argc, char **argv)
 	print_version (NULL);
 	return 0;
     }
-	
+
     if (geteuid() != 0)
 	errx(1, "only root may use login, use su");
 
@@ -687,7 +687,7 @@ main(int argc, char **argv)
                   sig_handler(0);
             }
          }
-	
+
 	if(pwd == NULL){
 	    fprintf(stderr, "Login incorrect.\n");
 	    ask = 1;

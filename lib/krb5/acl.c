@@ -224,7 +224,7 @@ krb5_acl_match_string(krb5_context context,
 	return EACCES;
     }
 }
-	
+
 /**
  * krb5_acl_match_file matches ACL format against each line in a file
  * using krb5_acl_match_string(). Lines starting with # are treated

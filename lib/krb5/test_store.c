@@ -203,14 +203,14 @@ test_truncate(krb5_context context, krb5_storage *sp, int fd)
 
     krb5_store_string(sp, "hej");
     krb5_storage_truncate(sp, 2);
-    
+
     if (fstat(fd, &sb) != 0)
 	krb5_err(context, 1, errno, "fstat");
     if (sb.st_size != 2)
 	krb5_errx(context, 1, "length not 2");
 
     krb5_storage_truncate(sp, 1024);
-    
+
     if (fstat(fd, &sb) != 0)
 	krb5_err(context, 1, errno, "fstat");
     if (sb.st_size != 1024)

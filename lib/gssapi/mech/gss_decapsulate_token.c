@@ -55,7 +55,7 @@ gss_decapsulate_token(gss_const_buffer_t input_token,
     if (ret) {
 	der_free_oid(&o);
 	return GSS_S_FAILURE;
-    }	
+    }
 
     if (der_heim_oid_cmp(&ct.thisMech, &o) == 0) {
 	status = GSS_S_COMPLETE;

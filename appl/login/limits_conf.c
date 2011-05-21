@@ -192,7 +192,7 @@ read_limits_conf(const char *file, const struct passwd *pwd)
 		continue;
 	    l->has_limit = level;
 	}
-	
+
 	/* XXX unclear: if you soft to more than default hard, should
            we set hard to soft? this code doesn't. */
 	if(strcasecmp(args[1], "soft") == 0 || strcmp(args[1], "-") == 0)

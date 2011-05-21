@@ -80,11 +80,11 @@ switch_environment(void)
 
 	if (initgroups(pw->pw_name, pw->pw_gid) < 0)
 	    err(1, "initgroups failed");
-	
+
 #ifndef HAVE_CAPNG
 	if (setgid(pw->pw_gid) < 0)
 	    err(1, "setgid(%s) failed", runas_string);
-	
+
 	if (setuid(pw->pw_uid) < 0)
 	    err(1, "setuid(%s)", runas_string);
 #else

@@ -182,7 +182,7 @@ status_output (int debugp)
 	printf ("%u\t%s\t%s\n", (unsigned)getpid(), display, xauthfile);
     else {
 	pid_t pid;
-	
+
 	pid = fork();
 	if (pid < 0) {
 	    err(1, "fork");
@@ -279,7 +279,7 @@ doit_passive (kx_context *kc)
 	     p++;
 	     p += kx_get_int (p, &tmp, 4, 0);
 	 }
-	
+
 	 ++nchild;
 	 child = fork ();
 	 if (child < 0) {
@@ -292,7 +292,7 @@ doit_passive (kx_context *kc)
 	     close (otherside);
 
 	     socket_set_port(kc->thataddr, htons(tmp));
-		
+
 	     fd = socket (kc->thataddr->sa_family, SOCK_STREAM, 0);
 	     if (fd < 0)
 		 err(1, "socket");

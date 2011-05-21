@@ -577,7 +577,7 @@ process_msg (krb5_context context, slave *s, int log_fd,
 	if (s->version == 0 && tmp != 0) {
 	    if (current_version < (uint32_t)tmp) {
 		krb5_warnx (context, "Slave %s (version %lu) have later version "
-			    "the master (version %lu) OUT OF SYNC", 
+			    "the master (version %lu) OUT OF SYNC",
 			    s->name, (unsigned long)tmp,
 			    (unsigned long)current_version);
 	    }
@@ -698,7 +698,7 @@ write_stats(krb5_context context, slave *slaves, uint32_t current_version)
 	    rtbl_add_column_entry(tbl, SLAVE_ADDRESS, str);
 	} else
 	    rtbl_add_column_entry(tbl, SLAVE_ADDRESS, "<unknown>");
-	
+
 	snprintf(str, sizeof(str), "%u", (unsigned)slaves->version);
 	rtbl_add_column_entry(tbl, SLAVE_VERSION, str);
 

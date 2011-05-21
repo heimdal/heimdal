@@ -70,10 +70,10 @@ test_match_string(krb5_context context)
     RETVAL(context, ret, 0, "liternal fnmatch");
     ret = krb5_acl_match_string(context, "foo/bar", "f", "foo/*");
     RETVAL(context, ret, 0, "foo/*");
-    ret = krb5_acl_match_string(context, "foo/bar.example.org", "f", 
+    ret = krb5_acl_match_string(context, "foo/bar.example.org", "f",
 				"foo/*.example.org");
     RETVAL(context, ret, 0, "foo/*.example.org");
-    ret = krb5_acl_match_string(context, "foo/bar.example.com", "f", 
+    ret = krb5_acl_match_string(context, "foo/bar.example.com", "f",
 				"foo/*.example.org");
     RETVAL(context, ret, EACCES, "foo/*.example.com");
 

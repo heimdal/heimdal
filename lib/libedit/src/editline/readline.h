@@ -97,7 +97,7 @@ typedef KEYMAP_ENTRY *Keymap;
 extern "C" {
 #endif
 extern const char	*rl_library_version;
-extern int 		rl_readline_version; 
+extern int 		rl_readline_version;
 extern char		*rl_readline_name;
 extern FILE		*rl_instream;
 extern FILE		*rl_outstream;

@@ -115,7 +115,7 @@ stash(struct stash_options *opt, int argc, char **argv)
 	    ret = ENOMEM;
 	    goto out;
 	}
-	
+
 	if(unlink(new) < 0 && errno != ENOENT) {
 	    ret = errno;
 	    goto out;

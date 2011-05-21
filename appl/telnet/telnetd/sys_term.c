@@ -391,7 +391,7 @@ int getpty(int *ptynum)
     {
 	char *clone[] = { "/dev/ptc", "/dev/ptmx", "/dev/ptm",
 			  "/dev/ptym/clone", 0 };
-	
+
 	char **q;
 	int p;
 	for(q=clone; *q; q++){
@@ -415,7 +415,7 @@ int getpty(int *ptynum)
 	int p;
 	char *cp, *p1, *p2;
 	int i;
-	
+
 #ifndef	__hpux
 	snprintf(line, sizeof(Xline), "/dev/ptyXX");
 	p1 = &line[8];
@@ -425,11 +425,11 @@ int getpty(int *ptynum)
 	p1 = &line[13];
 	p2 = &line[14];
 #endif
-	
-	
+
+
 	for (cp = "pqrstuvwxyzPQRST"; *cp; cp++) {
 	    struct stat stb;
-	
+
 	    *p1 = *cp;
 	    *p2 = '0';
 	    /*
@@ -446,7 +446,7 @@ int getpty(int *ptynum)
 #if SunOS == 40
 		    int dummy;
 #endif
-		
+
 #ifndef	__hpux
 		    line[5] = 't';
 #else
@@ -474,7 +474,7 @@ int getpty(int *ptynum)
 	extern lowpty, highpty;
 	struct stat sb;
 	int p;
-	
+
 	for (*ptynum = lowpty; *ptynum <= highpty; (*ptynum)++) {
 	    snprintf(myline, sizeof(myline), "/dev/pty/%03d", *ptynum);
 	    p = open(myline, 2);
@@ -856,7 +856,7 @@ void getptyslave(void)
 
 #ifdef  STREAMSPTY
     ttyfd = t;
-	
+
 
     /*
      * Not all systems have (or need) modules ttcompat and pckt so
@@ -876,7 +876,7 @@ void getptyslave(void)
 	       pushed (via autopush, for instance).
 
 	       */
-	
+
 	    char *ttymodules[] = { "ttcompat", "ldterm", "ptem", NULL };
 	    char *ptymodules[] = { "pckt", NULL };
 
@@ -1289,11 +1289,11 @@ start_login(const char *host, int autologin, char *name)
 	struct utmpx utmpx;
 	struct timeval tv;
 	char *clean_tty;
-	
+
 	/*
 	 * Create utmp entry for child
 	 */
-	
+
 	clean_tty = clean_ttyname(line);
 	memset(&utmpx, 0, sizeof(utmpx));
 	strncpy(utmpx.ut_user,  ".telnet", sizeof(utmpx.ut_user));
@@ -1302,9 +1302,9 @@ start_login(const char *host, int autologin, char *name)
 	strncpy(utmpx.ut_id, make_id(clean_tty), sizeof(utmpx.ut_id));
 #endif
 	utmpx.ut_pid = pid;
-	
+
 	utmpx.ut_type = LOGIN_PROCESS;
-	
+
 	gettimeofday (&tv, NULL);
 	utmpx.ut_tv.tv_sec = tv.tv_sec;
 	utmpx.ut_tv.tv_usec = tv.tv_usec;
@@ -1315,7 +1315,7 @@ start_login(const char *host, int autologin, char *name)
 #endif
 
     scrub_env();
-	
+
     /*
      * -h : pass on name of host.
      *		WARNING:  -h is accepted by login if and only if
@@ -1444,7 +1444,7 @@ rmut(void)
 #elif defined(__osf__) /* XXX */
 	utxp->ut_exit.ut_termination = 0;
 	utxp->ut_exit.ut_exit = 0;
-#else	
+#else
 	utxp->ut_exit.e_termination = 0;
 	utxp->ut_exit.e_exit = 0;
 #endif

@@ -58,7 +58,7 @@ gss_encapsulate_token(gss_const_buffer_t input_token,
     if (ret) {
 	_mg_buffer_zero(output_token);
 	return GSS_S_FAILURE;
-    }	
+    }
     if (output_token->length != size)
 	abort();
 

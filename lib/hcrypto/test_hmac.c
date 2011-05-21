@@ -71,6 +71,6 @@ main(int argc, char **argv)
 	printf("wrong answer\n");
 	return 1;
     }
-	
+
     return 0;
 }

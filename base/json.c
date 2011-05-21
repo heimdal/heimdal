@@ -139,9 +139,9 @@ heim_json2base(const void *data, size_t length)
 
  out:
     if (ret && o) {
-	heim_release(o);		       
+	heim_release(o);
 	o = NULL;
     }
-    
+
     return o;
 }

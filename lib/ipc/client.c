@@ -90,7 +90,7 @@ mach_init(const char *service, void **ctx)
 }
 
 static int
-mach_ipc(void *ctx, 
+mach_ipc(void *ctx,
 	 const heim_idata *request, heim_idata *response,
 	 heim_icred *cred)
 {
@@ -146,21 +146,21 @@ mach_ipc(void *ctx,
     if (errorcode) {
 	if (replyout_length)
 	    vm_deallocate (mach_task_self (), (vm_address_t) replyout,
-			   replyout_length); 
+			   replyout_length);
 	return errorcode;
     }
-    
+
     if (replyout_length) {
 	response->data = malloc(replyout_length);
 	if (response->data == NULL) {
 	    vm_deallocate (mach_task_self (), (vm_address_t) replyout,
-			   replyout_length); 
+			   replyout_length);
 	    return ENOMEM;
 	}
 	memcpy(response->data, replyout, replyout_length);
 	response->length = replyout_length;
 	vm_deallocate (mach_task_self (), (vm_address_t) replyout,
-		       replyout_length); 
+		       replyout_length);
     } else {
 	response->data = malloc(replyin_length);
 	if (response->data == NULL)
@@ -206,7 +206,7 @@ mheim_ado_acall_reply(mach_port_t server_port,
     (*c->func)(c->userctx, returnvalue, &response, NULL);
 
     if (replyoutCnt)
-	vm_deallocate (mach_task_self (), (vm_address_t) replyout, replyoutCnt); 
+	vm_deallocate (mach_task_self (), (vm_address_t) replyout, replyoutCnt);
 
     dispatch_source_cancel(c->source);
 
@@ -217,7 +217,7 @@ mheim_ado_acall_reply(mach_port_t server_port,
 
 
 static int
-mach_async(void *ctx, const heim_idata *request, void *userctx, 
+mach_async(void *ctx, const heim_idata *request, void *userctx,
 	   void (*func)(void *, int, heim_idata *, heim_icred))
 {
     struct mach_ctx *ipc = ctx;
@@ -246,12 +246,12 @@ mach_async(void *ctx, const heim_idata *request, void *userctx,
 
     dispatch_source_set_event_handler(c->source, ^{
 	    dispatch_mig_server(c->source,
-				sizeof(union __RequestUnion__mheim_ado_mheim_aipc_subsystem), 
+				sizeof(union __RequestUnion__mheim_ado_mheim_aipc_subsystem),
 				mheim_aipc_server);
 	});
 
     dispatch_source_set_cancel_handler(c->source, ^{
-	    mach_port_mod_refs(mach_task_self(), c->mp, 
+	    mach_port_mod_refs(mach_task_self(), c->mp,
 			       MACH_PORT_RIGHT_RECEIVE, -1);
 	    dispatch_release(c->queue);
 	    dispatch_release(c->source);
@@ -353,7 +353,7 @@ common_path_init(const char *service,
     s->fd = -1;
 
     asprintf(&s->path, "/var/run/.heim_%s-%s", service, file);
-	
+
     *ctx = s;
 
     return 0;
@@ -442,7 +442,7 @@ door_init(const char *service,
 }
 
 static int
-door_ipc(void *ctx, 
+door_ipc(void *ctx,
 	 const heim_idata *request, heim_idata *response,
 	 heim_icred *cred)
 {
@@ -460,7 +460,7 @@ door_ipc(void *ctx,
     close(fd);
     if (ret != 0)
 	return errno;
-	
+
     response->data = malloc(arg.rsize);
     if (response->data == NULL) {
 	munmap(arg.rbuf, arg.rsize);
@@ -480,7 +480,7 @@ struct hipc_ops {
     int (*init)(const char *, void **);
     int (*release)(void *);
     int (*ipc)(void *,const heim_idata *, heim_idata *, heim_icred *);
-    int (*async)(void *, const heim_idata *, void *, 
+    int (*async)(void *, const heim_idata *, void *,
 		 void (*)(void *, int, heim_idata *, heim_icred));
 };
 
@@ -509,20 +509,20 @@ heim_ipc_init_context(const char *name, heim_ipc *ctx)
     for(i = 0; i < sizeof(ipcs)/sizeof(ipcs[0]); i++) {
 	size_t prefix_len = strlen(ipcs[i].prefix);
 	heim_ipc c;
-	if(strncmp(ipcs[i].prefix, name, prefix_len) == 0 
+	if(strncmp(ipcs[i].prefix, name, prefix_len) == 0
 	   && name[prefix_len] == ':')  {
 	} else if (strncmp("ANY:", name, 4) == 0) {
 	    prefix_len = 3;
 	    any = 1;
 	} else
 	    continue;
-	    
+
 	c = calloc(1, sizeof(*c));
 	if (c == NULL)
 	    return ENOMEM;
-	
+
 	c->ops = &ipcs[i];
-	
+
 	ret = (c->ops->init)(name + prefix_len + 1, &c->ctx);
 	if (ret) {
 	    free(c);
@@ -530,7 +530,7 @@ heim_ipc_init_context(const char *name, heim_ipc *ctx)
 		continue;
 	    return ret;
 	}
-	
+
 	*ctx = c;
 	return 0;
     }

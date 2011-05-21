@@ -80,11 +80,11 @@ test_ipc(const char *service)
 
     req.length = 0;
     req.data = NULL;
-    
+
     ret = heim_ipc_call(ipc, &req, &rep, NULL);
     if (ret)
 	errx(1, "heim_ipc_call: %d", ret);
-    
+
     s = heim_ipc_semaphore_create(0);
     if (s == NULL)
 	errx(1, "heim_ipc_semaphore_create");
@@ -108,10 +108,10 @@ main(int argc, char **argv)
 
     if (getarg(args, num_args, argc, argv, &optidx))
 	usage(1);
-	
+
     if (help_flag)
 	usage(0);
-    
+
     if (version_flag) {
 	print_version(NULL);
 	exit(0);

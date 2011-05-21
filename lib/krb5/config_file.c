@@ -248,7 +248,7 @@ cfstring2cstring(CFStringRef string)
 {
     CFIndex len;
     char *str;
-    
+
     str = (char *) CFStringGetCStringPtr(string, kCFStringEncodingUTF8);
     if (str)
 	return strdup(str);
@@ -258,7 +258,7 @@ cfstring2cstring(CFStringRef string)
     str = malloc(len);
     if (str == NULL)
 	return NULL;
-	
+
     if (!CFStringGetCString (string, str, len, kCFStringEncodingUTF8)) {
 	free (str);
 	return NULL;
@@ -297,7 +297,7 @@ parse_plist_config(krb5_context context, const char *path, krb5_config_section *
     CFReadStreamRef s;
     CFDictionaryRef d;
     CFURLRef url;
-    
+
     url = CFURLCreateFromFileSystemRepresentation(kCFAllocatorDefault, (UInt8 *)path, strlen(path), FALSE);
     if (url == NULL) {
 	krb5_clear_error_message(context);
@@ -319,7 +319,7 @@ parse_plist_config(krb5_context context, const char *path, krb5_config_section *
 
 #ifdef HAVE_CFPROPERTYLISTCREATEWITHSTREAM
     d = (CFDictionaryRef)CFPropertyListCreateWithStream(NULL, s, 0, kCFPropertyListImmutable, NULL, NULL);
-#else 
+#else
     d = (CFDictionaryRef)CFPropertyListCreateFromStream(NULL, s, 0, kCFPropertyListImmutable, NULL, NULL);
 #endif
     CFRelease(s);
@@ -439,7 +439,7 @@ krb5_config_parse_file_multi (krb5_context context,
 	    home = getenv("HOME");
 
 	if (home == NULL) {
-	    struct passwd *pw = getpwuid(getuid());	
+	    struct passwd *pw = getpwuid(getuid());
 	    if(pw != NULL)
 		home = pw->pw_dir;
 	}
@@ -453,7 +453,7 @@ krb5_config_parse_file_multi (krb5_context context,
 	    fname = newfname;
 	}
 #else  /* KRB5_USE_PATH_TOKENS */
-	if (asprintf(&newfname, "%%{USERCONFIG}%s", &fname[1]) < 0 || 
+	if (asprintf(&newfname, "%%{USERCONFIG}%s", &fname[1]) < 0 ||
 	    newfname == NULL)
 	{
 	    krb5_set_error_message(context, ENOMEM,
@@ -475,7 +475,7 @@ krb5_config_parse_file_multi (krb5_context context,
 	    return ret;
 	}
 #else
-	krb5_set_error_message(context, ENOENT, 
+	krb5_set_error_message(context, ENOENT,
 			       "no support for plist configuration files");
 	return ENOENT;
 #endif
@@ -489,7 +489,7 @@ krb5_config_parse_file_multi (krb5_context context,
 		free(newfname);
 	    return ret;
 	}
-	
+
 	if (newfname)
 	    free(newfname);
 	fname = newfname = exp_fname;
@@ -505,7 +505,7 @@ krb5_config_parse_file_multi (krb5_context context,
 		free(newfname);
 	    return ret;
 	}
-	
+
 	ret = krb5_config_parse_debug (&f, res, &lineno, &str);
 	fclose(f.f);
 	if (ret) {
@@ -768,7 +768,7 @@ krb5_config_vget_list (krb5_context context,
  *
  * @ingroup krb5_support
  */
- 
+
 KRB5_LIB_FUNCTION const char* KRB5_LIB_CALL
 krb5_config_get_string (krb5_context context,
 			const krb5_config_section *c,

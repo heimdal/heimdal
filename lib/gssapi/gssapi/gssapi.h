@@ -371,7 +371,7 @@ extern GSSAPI_LIB_VARIABLE gss_OID_desc __gss_c_nt_anonymous_oid_desc;
  * to that gss_OID_desc.
  */
 extern GSSAPI_LIB_VARIABLE gss_OID_desc __gss_c_nt_export_name_oid_desc;
-#define GSS_C_NT_EXPORT_NAME (&__gss_c_nt_export_name_oid_desc) 
+#define GSS_C_NT_EXPORT_NAME (&__gss_c_nt_export_name_oid_desc)
 
 /* Major status codes */
 
@@ -831,7 +831,7 @@ typedef struct {
     size_t blocksize; /**< Specificed optimal size of messages, also
 			 is the maximum padding size
 			 (GSS_IOV_BUFFER_TYPE_PADDING) */
-} gss_context_stream_sizes; 
+} gss_context_stream_sizes;
 
 extern gss_OID_desc GSSAPI_LIB_VARIABLE __gss_c_attr_stream_sizes_oid_desc;
 #define GSS_C_ATTR_STREAM_SIZES (&__gss_c_attr_stream_sizes_oid_desc)

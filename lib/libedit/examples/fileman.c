@@ -4,7 +4,7 @@
 
    NOTE: this was taken from the GNU Readline documentation and ported
    to libedit. A commad to output the history list was added.
-   
+
    */
 
 #include <stdio.h>
@@ -453,7 +453,7 @@ com_pwd (char* ignore)
 
 /* The user wishes to quit using this program.  Just set DONE
    non-zero. */
-int 
+int
 com_quit (char *arg)
 {
    done = 1;

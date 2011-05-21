@@ -65,8 +65,8 @@ static krb5_error_code
 client_access(void *ctx,
 	      krb5_context context,
 	      krb5_kdc_configuration *config,
-	      hdb_entry_ex *client, const char *client_name, 
-	      hdb_entry_ex *server, const char *server_name, 
+	      hdb_entry_ex *client, const char *client_name,
+	      hdb_entry_ex *server, const char *server_name,
 	      KDC_REQ *req,
 	      krb5_data *e_data)
 {

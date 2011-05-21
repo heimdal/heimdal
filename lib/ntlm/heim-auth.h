@@ -56,7 +56,7 @@ heim_cram_md5_free(heim_cram_md5 ctx);
  * response = read_from_client();
  *
  * heim_digest_parse_response(d, response);
- * 
+ *
  * const char *user = heim_digest_get_key(d, "username");
  * heim_digest_set_key(d, "password", "sommar17");
  *

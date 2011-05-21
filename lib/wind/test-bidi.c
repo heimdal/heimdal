@@ -68,7 +68,7 @@ main(void)
 	    ++failures;
 	}
     }
-	
+
     for (i = 0; i < sizeof(failing_cases)/sizeof(failing_cases[0]); ++i) {
 	const struct test *t = &failing_cases[i];
 	if (!_wind_stringprep_testbidi(t->vals, t->len, WIND_PROFILE_NAME)) {

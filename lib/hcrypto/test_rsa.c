@@ -334,13 +334,13 @@ main(int argc, char **argv)
 		0x6d, 0x33, 0xf9, 0x40, 0x75, 0x5b, 0x4e, 0xc5, 0x90, 0x35,
 		0x48, 0xab, 0x75, 0x02, 0x09, 0x76, 0x9a, 0xb4, 0x7d, 0x6b
 	    };
-	
+
 	    check_rsa(sha1, sizeof(sha1), rsa, RSA_PKCS1_PADDING);
 	}
-	
+
 	for (i = 0; i < 128; i++) {
 	    unsigned char sha1[20];
-	
+
 	    RAND_bytes(sha1, sizeof(sha1));
 	    check_rsa(sha1, sizeof(sha1), rsa, RSA_PKCS1_PADDING);
 	}
@@ -371,9 +371,9 @@ main(int argc, char **argv)
 
 	e = BN_new();
 	BN_set_word(e, 0x10001);
-	
+
 	BN_GENCB_set(&cb, cb_func, NULL);
-	
+
 	RAND_bytes(&n, sizeof(n));
 	n &= 0x1ff;
 	n += 1024;
@@ -382,7 +382,7 @@ main(int argc, char **argv)
 	    errx(1, "RSA_generate_key_ex");
 
 	BN_free(e);
-	
+
 	for (j = 0; j < 8; j++) {
 	    unsigned char sha1[20];
 	    RAND_bytes(sha1, sizeof(sha1));

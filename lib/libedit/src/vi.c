@@ -981,7 +981,7 @@ vi_to_history_line(EditLine *el, Int c)
 		el->el_history.eventno = 1;
 		if (hist_get(el) == CC_ERROR)
 			return CC_ERROR;
-		el->el_history.eventno = 1 + el->el_history.ev.num 
+		el->el_history.eventno = 1 + el->el_history.ev.num
 					- el->el_state.argument;
 		if (el->el_history.eventno < 0) {
 			el->el_history.eventno = sv_event_no;

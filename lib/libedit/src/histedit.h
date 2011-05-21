@@ -128,7 +128,7 @@ unsigned char	_el_fn_complete(EditLine *, int);
  * For operations that support set or set/get, the argument types listed are for
  * the "set" operation. For "get", each listed type must be a pointer.
  * E.g. EL_EDITMODE takes an int when set, but an int* when get.
- * 
+ *
  * Operations that only support "get" have the correct argument types listed.
  */
 #define	EL_PROMPT	0	/* , prompt_func);		      set/get */

@@ -130,7 +130,7 @@ main(int argc, char **argv)
 
 	ret = krb5_string_to_enctype(context, etype_str, &enctype);
 	if (ret)
-	    krb5_errx (context, 1, N_("unrecognized enctype: %s", ""), 
+	    krb5_errx (context, 1, N_("unrecognized enctype: %s", ""),
 		       etype_str);
 	krb5_get_creds_opt_set_enctype(context, opt, enctype);
     }

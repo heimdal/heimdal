@@ -290,7 +290,7 @@ krb5_auth_con_getlocalsubkey(krb5_context context,
     return copy_key(context, auth_context->local_subkey, keyblock);
 }
 
-/* coverity[+alloc : arg-*2] */ 
+/* coverity[+alloc : arg-*2] */
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_auth_con_getremotesubkey(krb5_context context,
 			      krb5_auth_context auth_context,

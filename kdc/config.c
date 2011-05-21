@@ -180,7 +180,7 @@ configure(krb5_context context, int argc, char **argv)
 	ret = krb5_prepend_config_files_default(config_file, &files);
 	if (ret)
 	    krb5_err(context, 1, ret, "getting configuration files");
-	
+
 	ret = krb5_set_config_files(context, files);
 	krb5_free_config_files(files);
 	if(ret)
@@ -260,7 +260,7 @@ configure(krb5_context context, int argc, char **argv)
 							   "kdc",
 							   "detach", NULL);
 #endif /* SUPPORT_DETACH */
-    
+
     if(max_request_tcp == 0)
 	max_request_tcp = 64 * 1024;
     if(max_request_udp == 0)

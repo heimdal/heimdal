@@ -472,7 +472,7 @@ fn_complete(EditLine *el,
 		    (int)(cur_off - len), cur_off);
 	} else
 		matches = 0;
-	if (!attempted_completion_function || 
+	if (!attempted_completion_function ||
 	    (over != NULL && !*over && !matches))
 		matches = completion_matches(ct_encode_string(temp, &el->el_scratch), complet_func);
 
@@ -520,7 +520,7 @@ fn_complete(EditLine *el,
 			}
 			/* matches[1] through matches[i-1] are available */
 			matches_num = i - 1;
-				
+
 			/* newline to get on next line from command line */
 			(void)fprintf(el->el_outfile, "\n");
 

@@ -574,7 +574,7 @@ hx509_verify_ctx_f_allow_default_trustanchors(hx509_verify_ctx ctx, int boolean)
 }
 
 void
-hx509_verify_ctx_f_allow_best_before_signature_algs(hx509_context ctx, 
+hx509_verify_ctx_f_allow_best_before_signature_algs(hx509_context ctx,
 						    int boolean)
 {
     if (boolean)
@@ -969,7 +969,7 @@ _hx509_cert_is_parent_cmp(const Certificate *subject,
 	    return -1;
 	if (ai.authorityCertIssuer->val[0].element != choice_GeneralName_directoryName)
 	    return -1;
-	
+
 	name.element =
 	    ai.authorityCertIssuer->val[0].u.directoryName.element;
 	name.u.rdnSequence =
@@ -1126,7 +1126,7 @@ find_parent(hx509_context context,
 	    hx509_clear_error_string(context);
 	    return HX509_ISSUER_NOT_FOUND;
 	}
-	
+
 	hx509_set_error_string(context, 0, HX509_ISSUER_NOT_FOUND,
 			       "Failed to find issuer for "
 			       "certificate with subject: '%s'", str);
@@ -1515,7 +1515,7 @@ hx509_cert_get_SPKI_AlgorithmIdentifier(hx509_context context,
 }
 
 static int
-get_x_unique_id(hx509_context context, const char *name, 
+get_x_unique_id(hx509_context context, const char *name,
 		const heim_bit_string *cert, heim_bit_string *subject)
 {
     int ret;
@@ -1875,7 +1875,7 @@ match_tree(const GeneralSubtrees *t, const Certificate *c, int *match)
 	    && !subject_null_p(c))
 	{
 	    GeneralName certname;
-	
+
 	    memset(&certname, 0, sizeof(certname));
 	    certname.element = choice_GeneralName_directoryName;
 	    certname.u.directoryName.element =
@@ -1986,7 +1986,7 @@ hx509_verify_path(hx509_context context,
     memset(&proxy_issuer, 0, sizeof(proxy_issuer));
 
     ret = init_name_constraints(&nc);
-    if (ret)	
+    if (ret)
 	return ret;
 
     path.val = NULL;
@@ -2038,7 +2038,7 @@ hx509_verify_path(hx509_context context,
 	time_t t;
 
 	c = _hx509_get_cert(path.val[i]);
-	
+
 	/*
 	 * Lets do some basic check on issuer like
 	 * keyUsage.keyCertSign and basicConstraints.cA bit depending
@@ -2070,7 +2070,7 @@ hx509_verify_path(hx509_context context,
 
 	    break;
 	case PROXY_CERT: {
-	    ProxyCertInfo info;	
+	    ProxyCertInfo info;
 
 	    if (is_proxy_cert(context, c, &info) == 0) {
 		size_t j;
@@ -2087,7 +2087,7 @@ hx509_verify_path(hx509_context context,
 		}
 		/* XXX MUST check info.proxyPolicy */
 		free_ProxyCertInfo(&info);
-		
+
 		j = 0;
 		if (find_extension(c, &asn1_oid_id_x509_ce_subjectAltName, &j)) {
 		    ret = HX509_PROXY_CERT_INVALID;
@@ -2105,7 +2105,7 @@ hx509_verify_path(hx509_context context,
 					   "forbidden issuerAltName");
 		    goto out;
 		}
-			
+
 		/*
 		 * The subject name of the proxy certificate should be
 		 * CN=XXX,<proxy issuer>, prune of CN and check if its
@@ -2196,7 +2196,7 @@ hx509_verify_path(hx509_context context,
 		}
 		if (cert->basename)
 		    hx509_name_free(&cert->basename);
-		
+
 		ret = _hx509_name_from_Name(&proxy_issuer, &cert->basename);
 		if (ret) {
 		    hx509_clear_error_string(context);
@@ -2211,7 +2211,7 @@ hx509_verify_path(hx509_context context,
 				      i - proxy_cert_depth - selfsigned_depth);
 	if (ret)
 	    goto out;
-	
+
 	/*
 	 * Don't check the trust anchors expiration time since they
 	 * are transported out of band, from RFC3820.
@@ -2352,7 +2352,7 @@ hx509_verify_path(hx509_context context,
 				   "Failed to verify signature of certificate");
 	    goto out;
 	}
-	/* 
+	/*
 	 * Verify that the sigature algorithm "best-before" date is
 	 * before the creation date of the certificate, do this for
 	 * trust anchors too, since any trust anchor that is created
@@ -2362,7 +2362,7 @@ hx509_verify_path(hx509_context context,
 	 */
 
 	if (i != 0 && (ctx->flags & HX509_VERIFY_CTX_F_NO_BEST_BEFORE_CHECK) == 0) {
-	    time_t notBefore = 
+	    time_t notBefore =
 		_hx509_Time2time_t(&c->tbsCertificate.validity.notBefore);
 	    ret = _hx509_signature_best_before(context,
 					       &c->signatureAlgorithm,
@@ -2481,7 +2481,7 @@ hx509_verify_hostname(hx509_context context,
 		heim_printable_string hn;
 		hn.data = rk_UNCONST(hostname);
 		hn.length = strlen(hostname);
-		
+
 		if (der_printable_string_cmp(&san.val[j].u.dNSName, &hn) == 0) {
 		    free_GeneralNames(&san);
 		    return 0;
@@ -2659,7 +2659,7 @@ hx509_cert_get_friendly_name(hx509_cert cert)
     ret = decode_PKCS9_friendlyName(a->data.data, a->data.length, &n, &sz);
     if (ret)
 	return NULL;
-	
+
     if (n.len != 1) {
 	free_PKCS9_friendlyName(&n);
 	return NULL;
@@ -3524,10 +3524,10 @@ _hx509_cert_to_env(hx509_context context, hx509_cert cert, hx509_env *env)
 				   "Out of memory");
 	    goto out;
 	}
-	
+
 	ret = hx509_env_add(context, &envhash, "sha1", buf);
 	free(buf);
-	if (ret) 
+	if (ret)
 	    goto out;
 
 	ret = hx509_env_add_binding(context, &envcert, "hash", envhash);

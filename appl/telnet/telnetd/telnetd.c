@@ -338,7 +338,7 @@ main(int argc, char **argv)
 	case 'L':
 	    new_login = optarg;
 	    break;
-			
+
 	default:
 	    fprintf(stderr, "telnetd: %c: unknown option\n", ch);
 	    /* FALLTHROUGH */

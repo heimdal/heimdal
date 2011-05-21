@@ -87,27 +87,27 @@ find_db_spec(kadm5_server_context *ctx)
 	ret = hdb_get_dbinfo(context, &info);
 	if (ret)
 	    return ret;
-	
+
 	d = NULL;
 	while ((d = hdb_dbinfo_get_next(info, d)) != NULL) {
 	    const char *p = hdb_dbinfo_get_realm(context, d);
-	
+
 	    /* match default (realm-less) */
 	    if(p != NULL && strcmp(ctx->config.realm, p) != 0)
 		continue;
-	
+
 	    p = hdb_dbinfo_get_dbname(context, d);
 	    if (p)
 		ctx->config.dbname = strdup(p);
-	
+
 	    p = hdb_dbinfo_get_acl_file(context, d);
 	    if (p)
 		ctx->config.acl_file = strdup(p);
-	
+
 	    p = hdb_dbinfo_get_mkey_file(context, d);
 	    if (p)
 		ctx->config.stash_file = strdup(p);
-	
+
 	    p = hdb_dbinfo_get_log_file(context, d);
 	    if (p)
 		ctx->log_context.log_file = strdup(p);

@@ -76,7 +76,7 @@ do_list(struct list_options *opt, const char *keytab_str)
     }
 
     printf ("%s:\n\n", keytab_str);
-	
+
     table = rtbl_create();
     rtbl_add_column_by_id(table, 0, "Vno", RTBL_ALIGN_RIGHT);
     rtbl_add_column_by_id(table, 1, "Type", 0);
@@ -129,12 +129,12 @@ do_list(struct list_options *opt, const char *keytab_str)
 	if (entry.aliases) {
 	    unsigned int i;
 	    struct rk_strpool *p = NULL;
-	    
+
 	    for (i = 0; i< entry.aliases->len; i++) {
 		krb5_unparse_name_fixed(context, entry.principal, buf, sizeof(buf));
 		rk_strpoolprintf(p, "%s%s", buf,
 				 i + 1 < entry.aliases->len ? ", " : "");
-		
+
 	    }
 	    rtbl_add_column_entry_by_id(table, 5, rk_strpoolcollect(p));
 	}

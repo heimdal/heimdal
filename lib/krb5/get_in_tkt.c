@@ -74,7 +74,7 @@ make_pa_enc_timestamp(krb5_context context, PA_DATA *pa,
     krb5_crypto_destroy(context, crypto);
     if (ret)
 	return ret;
-		
+
     ASN1_MALLOC_ENCODE(EncryptedData, buf, buf_size, &encdata, &len, ret);
     free_EncryptedData(&encdata);
     if (ret)
@@ -298,7 +298,7 @@ init_as_req (krb5_context context,
 	add_padata(context, a->padata, creds->client,
 		   key_proc, keyseed, a->req_body.etype.val,
 		   a->req_body.etype.len, NULL);
-	
+
 	/* make a v4 salted pa-data */
 	salt.salttype = KRB5_PW_SALT;
 	krb5_data_zero(&salt.saltvalue);
@@ -481,12 +481,12 @@ krb5_get_in_cred(krb5_context context,
     if(pa) {
 	salt.salttype = pa->padata_type;
 	salt.saltvalue = pa->padata_value;
-	
+
 	ret = (*key_proc)(context, etype, salt, keyseed, &key);
     } else {
 	/* make a v5 salted pa-data */
 	ret = krb5_get_pw_salt (context, creds->client, &salt);
-	
+
 	if (ret)
 	    goto out;
 	ret = (*key_proc)(context, etype, salt, keyseed, &key);
@@ -494,7 +494,7 @@ krb5_get_in_cred(krb5_context context,
     }
     if (ret)
 	goto out;
-	
+
     {
 	unsigned flags = EXTRACT_TICKET_TIMESYNC;
 	if (opts.request_anonymous)

@@ -168,7 +168,7 @@ krb5_error_code kcm_debug_ccache(krb5_context context)
 	    krb5_unparse_name(context, p->client, &cpn);
 	if (p->server != NULL)
 	    krb5_unparse_name(context, p->server, &spn);
-	
+
 	kcm_log(7, "cache %08x: name %s refcnt %d flags %04x mode %04o "
 		"uid %d gid %d client %s server %s ncreds %d",
 		p, p->name, p->refcnt, p->flags, p->mode, p->uid, p->gid,

@@ -53,7 +53,7 @@ gss_store_cred(OM_uint32         *minor_status,
 	*elements_stored = NULL;
     if (cred_usage_stored)
 	*cred_usage_stored = 0;
-	
+
     if (cred == NULL)
 	return GSS_S_NO_CONTEXT;
 

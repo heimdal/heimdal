@@ -297,7 +297,7 @@ send_krb5_auth(int s,
     default:
 	abort();
     }
-	
+
     status = krb5_sendauth (context,
 			    &auth_context,
 			    &s,
@@ -645,7 +645,7 @@ doit_broken (int argc,
 
     if (connect (priv_socket1, ai->ai_addr, ai->ai_addrlen) < 0) {
 	int save_errno = errno;
-	
+
 	close(priv_socket1);
 	close(priv_socket2);
 

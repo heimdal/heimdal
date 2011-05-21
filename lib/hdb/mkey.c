@@ -153,7 +153,7 @@ read_master_mit(krb5_context context, const char *filename,
     krb5_storage *sp;
     int16_t enctype;
     krb5_keyblock key;
-	
+
     fd = open(filename, O_RDONLY | O_BINARY);
     if(fd < 0) {
 	int save_errno = errno;
@@ -200,7 +200,7 @@ read_master_encryptionkey(krb5_context context, const char *filename,
     unsigned char buf[256];
     ssize_t len;
     size_t ret_len;
-	
+
     fd = open(filename, O_RDONLY | O_BINARY);
     if(fd < 0) {
 	int save_errno = errno;
@@ -246,7 +246,7 @@ read_master_krb4(krb5_context context, const char *filename,
     krb5_error_code ret;
     unsigned char buf[256];
     ssize_t len;
-	
+
     fd = open(filename, O_RDONLY | O_BINARY);
     if(fd < 0) {
 	int save_errno = errno;
@@ -406,7 +406,7 @@ _hdb_mkey_encrypt(krb5_context context, hdb_master_key key,
 krb5_error_code
 hdb_unseal_key_mkey(krb5_context context, Key *k, hdb_master_key mkey)
 {
-	
+
     krb5_error_code ret;
     krb5_data res;
     size_t keysize;
@@ -415,7 +415,7 @@ hdb_unseal_key_mkey(krb5_context context, Key *k, hdb_master_key mkey)
 
     if(k->mkvno == NULL)
 	return 0;
-	
+
     key = _hdb_find_master_key(k->mkvno, mkey);
 
     if (key == NULL)
@@ -519,7 +519,7 @@ hdb_seal_key_mkey(krb5_context context, Key *k, hdb_master_key mkey)
 	    return ENOMEM;
     }
     *k->mkvno = key->keytab.vno;
-	
+
     return 0;
 }
 

@@ -131,7 +131,7 @@ peer_strings(hx509_context contextp,
 
     for (i = 0; i < s->num_strings; i++)
 	parse_oid(s->strings[i], NULL, &val[i].algorithm);
-	
+
     ret = hx509_peer_info_set_cms_algs(contextp, *peer, val, s->num_strings);
     if (ret)
 	hx509_err(contextp, 1, ret, "hx509_peer_info_set_cms_algs");
@@ -216,7 +216,7 @@ cms_verify_sd(struct cms_verify_sd_options *opt, int argc, char **argv)
 
 	pd.os = &co;
 	pd.detached_data = 0;
-	
+
 	f = fopen(argv[0], "r");
 	if (f == NULL)
 	    err(1, "Failed to open file %s", argv[0]);
@@ -337,11 +337,11 @@ print_signer(hx509_context contextp, void *ctx, hx509_cert cert)
     char *signer_name = NULL;
     hx509_name name;
     int ret;
-    
+
     ret = hx509_cert_get_subject(cert, &name);
     if (ret)
 	errx(1, "hx509_cert_get_subject");
-    
+
     ret = hx509_name_to_string(name, &signer_name);
     hx509_name_free(&name);
     if (ret)
@@ -411,13 +411,13 @@ cms_create_sd(struct cms_create_sd_options *opt, int argc, char **argv)
 	ret = hx509_query_alloc(context, &q);
 	if (ret)
 	    errx(1, "hx509_query_alloc: %d", ret);
-	
+
 	hx509_query_match_option(q, HX509_QUERY_OPTION_PRIVATE_KEY);
 	hx509_query_match_option(q, HX509_QUERY_OPTION_KU_DIGITALSIGNATURE);
-	
+
 	if (opt->signer_string)
 	    hx509_query_match_friendly_name(q, opt->signer_string);
-	
+
 	ret = hx509_certs_filter(context, store, q, &signer);
 	hx509_query_free(context, q);
 	if (ret)
@@ -486,7 +486,7 @@ cms_create_sd(struct cms_create_sd_options *opt, int argc, char **argv)
 	f = fopen(outfile, "w");
 	if (f == NULL)
 	    err(1, "open %s", outfile);
-	
+
 	ret = hx509_pem_write(context, "CMS SIGNEDDATA", header, f,
 			      o.data, o.length);
 	fclose(f);
@@ -680,7 +680,7 @@ print_certificate(hx509_context hxcontext, hx509_cert cert, int verbose)
 	hx509_validate_ctx_set_print(vctx, hx509_print_stdout, stdout);
 	hx509_validate_ctx_add_flags(vctx, HX509_VALIDATE_F_VALIDATE);
 	hx509_validate_ctx_add_flags(vctx, HX509_VALIDATE_F_VERBOSE);
-	
+
 	hx509_validate_cert(hxcontext, vctx, cert);
 
 	hx509_validate_ctx_free(vctx);
@@ -897,7 +897,7 @@ pcert_verify(struct verify_options *opt, int argc, char **argv)
 	if (p == NULL)
 	    errx(1, "Failed to parse time %s, need to be on format %%Y-%%m-%%d",
 		 opt->time_string);
-	
+
 	t = tm2time (tm, 0);
 
 	hx509_verify_set_time(ctx, t);
@@ -1100,7 +1100,7 @@ ocsp_fetch(struct ocsp_fetch_options *opt, int argc, char **argv)
     ret = hx509_ocsp_request(context, reqcerts, pool, NULL, NULL, &req, nonce);
     if (ret)
 	errx(1, "hx509_ocsp_request: req: %d", ret);
-	
+
     {
 	FILE *f;
 
@@ -1235,10 +1235,10 @@ get_key(const char *fn, const char *type, int optbits,
 
 	if (fn == NULL)
 	    errx(1, "no key argument, don't know here to store key");
-	
+
 	if (strcasecmp(type, "rsa") != 0)
 	    errx(1, "can only handle rsa keys for now");
-	
+
 	e = BN_new();
 	BN_set_word(e, 0x10001);
 
@@ -1260,13 +1260,13 @@ get_key(const char *fn, const char *type, int optbits,
 	p0 = p = malloc(len);
 	if (p == NULL)
 	    errx(1, "out of memory");
-	
+
 	i2d_RSAPrivateKey(rsa, &p);
 
 	rk_dumpdata(fn, p0, len);
 	memset(p0, 0, len);
 	free(p0);
-	
+
 	RSA_free(rsa);
 
     } else if (fn == NULL)
@@ -1674,7 +1674,7 @@ eval_types(hx509_context contextp,
 
     for (i = 0; i < opt->type_strings.num_strings; i++) {
 	const char *type = opt->type_strings.strings[i];
-	
+
 	for (j = 0; j < sizeof(certtypes)/sizeof(certtypes[0]); j++) {
 	    if (strcasecmp(type, certtypes[j].type) == 0) {
 		ret = (*certtypes[j].eval)(contextp, tbs, &ctopt);
@@ -1726,7 +1726,7 @@ eval_types(hx509_context contextp,
 	ret = hx509_ca_tbs_add_san_rfc822name(contextp, tbs, email);
 	if (ret)
 	    hx509_err(contextp, 1, ret, "hx509_ca_tbs_add_san_hostname");
-	
+
 	ret = hx509_ca_tbs_add_eku(contextp, tbs,
 				   &asn1_oid_id_pkix_kp_emailProtection);
 	if (ret)
@@ -1857,7 +1857,7 @@ hxtool_ca(struct certificate_sign_options *opt, int argc, char **argv)
 	_hx509_generate_private_key_free(&keyctx);
 	if (ret)
 	    hx509_err(context, 1, ret, "generate private key");
-	
+
 	ret = hx509_private_key2SPKI(context, cert_key, &spki);
 	if (ret)
 	    errx(1, "hx509_private_key2SPKI: %d\n", ret);
@@ -1887,7 +1887,7 @@ hxtool_ca(struct certificate_sign_options *opt, int argc, char **argv)
     ret = hx509_ca_tbs_init(context, &tbs);
     if (ret)
 	hx509_err(context, 1, ret, "hx509_ca_tbs_init");
-	
+
     if (opt->template_certificate_string) {
 	hx509_cert template;
 	hx509_certs tcerts;
@@ -1969,7 +1969,7 @@ hxtool_ca(struct certificate_sign_options *opt, int argc, char **argv)
 	ret = hx509_ca_tbs_set_notAfter_lifetime(context, tbs, delta);
 	if (ret)
 	    hx509_err(context, 1, ret, "hx509_ca_tbs_set_notAfter_lifetime");
-    }	
+    }
 
     if (opt->self_signed_flag) {
 	ret = hx509_ca_sign_self(context, tbs, private_key, &cert);
@@ -1985,7 +1985,7 @@ hxtool_ca(struct certificate_sign_options *opt, int argc, char **argv)
 	ret = _hx509_cert_assign_key(cert, cert_key);
 	if (ret)
 	    hx509_err(context, 1, ret, "_hx509_cert_assign_key");
-    }	
+    }
 
     {
 	hx509_certs certs;

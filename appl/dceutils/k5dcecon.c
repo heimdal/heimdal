@@ -601,7 +601,7 @@ int k5dcecreate(luid, luser, pname, krbtgt)
 				"Error while adding credentials for %s because %s\n",
 				username, err_string);
 	    goto abort;
-	  }	
+	  }
 	  DEEDEBUG("validating and certifying\n");
 	  /*
 	   * Now "validate" and certify the identity,

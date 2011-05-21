@@ -183,7 +183,7 @@ gss_import_cred(OM_uint32 * minor_status,
 	buffer.value = data.data;
 	buffer.length = data.length;
 
-	major = m->gm_import_cred(minor_status, 
+	major = m->gm_import_cred(minor_status,
 				  &buffer, &mcred);
 	krb5_data_free(&data);
 	if (major) {

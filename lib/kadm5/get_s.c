@@ -152,7 +152,7 @@ kadm5_s_get_principal(void *server_handle,
     }
 #if 0 /* XXX implement */
     if(mask & KADM5_AUX_ATTRIBUTES)
-	;	
+	;
     if(mask & KADM5_LAST_SUCCESS)
 	;
     if(mask & KADM5_LAST_FAILED)

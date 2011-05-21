@@ -168,20 +168,20 @@ write_state_init (struct write_state *w, int fd)
 static void
 write_state_add (struct write_state *w, void *v, size_t len)
 {
-    if(w->niovecs == w->allociovecs) {				
-	if(w->niovecs == w->maxiovecs) {				
-	    if(writev (w->fd, w->iovecs, w->niovecs) < 0)		
-		err(1, "writev");				
-	    w->niovecs = 0;					
-	} else {						
-	    w->allociovecs = min(w->allociovecs + STEP, w->maxiovecs);	
-	    w->iovecs = erealloc (w->iovecs,				
-				  w->allociovecs * sizeof(*w->iovecs));	
-	}							
-    }								
-    w->iovecs[w->niovecs].iov_base = v;				
-    w->iovecs[w->niovecs].iov_len  = len;				
-    ++w->niovecs;							
+    if(w->niovecs == w->allociovecs) {
+	if(w->niovecs == w->maxiovecs) {
+	    if(writev (w->fd, w->iovecs, w->niovecs) < 0)
+		err(1, "writev");
+	    w->niovecs = 0;
+	} else {
+	    w->allociovecs = min(w->allociovecs + STEP, w->maxiovecs);
+	    w->iovecs = erealloc (w->iovecs,
+				  w->allociovecs * sizeof(*w->iovecs));
+	}
+    }
+    w->iovecs[w->niovecs].iov_base = v;
+    w->iovecs[w->niovecs].iov_len  = len;
+    ++w->niovecs;
 }
 
 static void
@@ -310,12 +310,12 @@ doit(int s,
 	    else
 		err (1, "select");
 	}
-	
+
 	if (FD_ISSET(s, &readset)) {
 	    char *beg, *p;
 	    size_t rem;
 	    int blank_line = 0;
-	
+
 	    if(in_len >= in_buf_size) {
 		char *tmp = erealloc(in_buf, in_buf_size + PUSH_BUFSIZ + 1);
 		in_ptr = tmp + (in_ptr - in_buf);
@@ -328,11 +328,11 @@ doit(int s,
 		err (1, "read");
 	    else if (ret == 0)
 		errx (1, "EOF during read");
-	
+
 	    in_len += ret;
 	    in_ptr += ret;
 	    *in_ptr = '\0';
-	
+
 	    beg = in_buf;
 	    rem = in_len;
 	    while(rem > 1
@@ -727,7 +727,7 @@ main(int argc, char **argv)
 	print_version(NULL);
 	return 0;
     }
-	
+
     if (do_from && header_str == NULL)
 	header_str = "From:";
     else if (header_str != NULL)

@@ -149,7 +149,7 @@ do_mvis(char *dst, int c, int flag, int nextc, const char *extra)
 	    ((isspace(c) && (nextc == '\r' || nextc == '\n')) ||
 	    /* Out of range */
 	    (!isspace(c) && (c < 33 || (c > 60 && c < 62) || c > 126)) ||
-	    /* Specific char to be escaped */ 
+	    /* Specific char to be escaped */
 	    strchr("#$@[\\]^`{|}~", c) != NULL)) {
 		*dst++ = '=';
 		*dst++ = XTOA(((unsigned int)c >> 4) & 0xf);

@@ -135,7 +135,7 @@ Data(Authenticator *ap, int type, const void *d, int c)
 
     memcpy(p0, str_data, sizeof(str_data));
     p = p0 + sizeof(str_data);
-	
+
     if (auth_debug_mode) {
 	printf("%s:%d: [%d] (%d)",
 	       str_data[3] == TELQUAL_IS ? ">>>IS" : ">>>REPLY",
@@ -215,7 +215,7 @@ kerberos5_send(char *name, Authenticator *ap)
 	}
 	return 0;
     }
-	
+
     if ((ap->way & AUTH_HOW_MASK) == AUTH_HOW_MUTUAL)
 	ap_opts = AP_OPTS_MUTUAL_REQUIRED;
     else
@@ -418,13 +418,13 @@ kerberos5_is(Authenticator *ap, unsigned char *data, int cnt)
 		free (errbuf);
 	    return;
 	}
-	
+
 	{
 	    char ap_msg[2];
-	
+
 	    ap_msg[0] = ap->type;
 	    ap_msg[1] = ap->way;
-	
+
 	    ret = krb5_verify_authenticator_checksum(context,
 						     auth_context,
 						     ap_msg,
@@ -536,7 +536,7 @@ kerberos5_is(Authenticator *ap, unsigned char *data, int cnt)
 	}
 	auth_finished(ap, AUTH_USER);
 	krb5_free_keyblock(context, key_block);
-	
+
 	break;
     case KRB_FORWARD: {
 	struct passwd *pwd;
@@ -628,7 +628,7 @@ kerberos5_reply(Authenticator *ap, unsigned char *data, int cnt)
 	krb5_error_code ret;
 	Session_Key skey;
 	krb5_keyblock *keyblock;
-	
+
 	if ((ap->way & AUTH_HOW_MASK) == AUTH_HOW_MUTUAL &&
 	    !mutual_complete) {
 	    printf("[ Kerberos V5 accepted you, but didn't provide mutual authentication! ]\r\n");
@@ -639,7 +639,7 @@ kerberos5_reply(Authenticator *ap, unsigned char *data, int cnt)
 	    printf("[ Kerberos V5 accepts you as ``%.*s'' ]\r\n", cnt, data);
 	else
 	    printf("[ Kerberos V5 accepts you ]\r\n");
-	
+
 	ret = krb5_auth_con_getlocalsubkey (context,
 					    auth_context,
 					    &keyblock);
@@ -653,7 +653,7 @@ kerberos5_reply(Authenticator *ap, unsigned char *data, int cnt)
 	    auth_send_retry();
 	    return;
 	}
-	
+
 	skey.type = SK_DES;
 	skey.length = 8;
 	skey.data = keyblock->keyvalue.data;
@@ -670,7 +670,7 @@ kerberos5_reply(Authenticator *ap, unsigned char *data, int cnt)
 	  krb5_ap_rep_enc_part *reply;
 	  krb5_data inbuf;
 	  krb5_error_code ret;
-	
+
 	  inbuf.length = cnt;
 	  inbuf.data = (char *)data;
 

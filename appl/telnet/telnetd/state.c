@@ -506,7 +506,7 @@ willoption(int option)
 		changeok++;
 		break;
 #endif
-			
+
 	    default:
 		break;
 	    }

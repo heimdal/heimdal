@@ -124,7 +124,7 @@ proto (int sock, const char *hostname, const char *service)
     if (str == NULL)
 	errx(1, "malloc - out of memory");
     name_token.value = str;
-	
+
     maj_stat = gss_import_name (&min_stat,
 				&name_token,
 				GSS_C_NT_HOSTBASED_SERVICE,

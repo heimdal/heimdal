@@ -41,7 +41,7 @@
 static OM_uint32
 set_addresses (krb5_context context,
 	       krb5_auth_context ac,
-	       const gss_channel_bindings_t input_chan_bindings)	
+	       const gss_channel_bindings_t input_chan_bindings)
 {
     /* Port numbers are expected to be in application_data.value,
      * initator's port first */
@@ -453,11 +453,11 @@ init_auth
      * DNS canonicalizion.
      */
     ret = gsskrb5_get_creds(minor_status, context, ctx->ccache,
-			    ctx, name, 0, time_req, 
+			    ctx, name, 0, time_req,
 			    time_rec);
     if (ret && allow_dns)
 	ret = gsskrb5_get_creds(minor_status, context, ctx->ccache,
-				ctx, name, 1, time_req, 
+				ctx, name, 1, time_req,
 				time_rec);
     if (ret)
 	goto failure;
@@ -543,7 +543,7 @@ init_auth_restart
      */
     if (!ctx->kcred->flags.b.ok_as_delegate) {
 	krb5_data data;
-	
+
 	ret = krb5_cc_get_config(context, ctx->ccache, NULL,
 				 "realm-config", &data);
 	if (ret == 0) {
@@ -848,9 +848,9 @@ repl_mutual
 	    *minor_status = kret;
 	    return GSS_S_FAILURE;
 	}
-	
+
 	/* reset local seq number */
-	krb5_auth_con_setlocalseqnumber(context, ctx->auth_context, local_seq);	
+	krb5_auth_con_setlocalseqnumber(context, ctx->auth_context, local_seq);
 
 	output_token->length = outbuf.length;
 	output_token->value  = outbuf.data;
@@ -953,7 +953,7 @@ OM_uint32 GSSAPI_CALLCONV _gsskrb5_init_sec_context
 			ret_flags,
 			time_rec);
 	if (ret != GSS_S_COMPLETE)
-	    break;	
+	    break;
 	/* FALL THOUGH */
     case INITIATOR_RESTART:
 	ret = init_auth_restart(minor_status,

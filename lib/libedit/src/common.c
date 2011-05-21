@@ -449,7 +449,7 @@ ed_unassigned(EditLine *el, Int c __attribute__((__unused__)))
  */
 protected el_action_t
 /*ARGSUSED*/
-ed_tty_sigint(EditLine *el __attribute__((__unused__)), 
+ed_tty_sigint(EditLine *el __attribute__((__unused__)),
 	      Int c __attribute__((__unused__)))
 {
 
@@ -463,7 +463,7 @@ ed_tty_sigint(EditLine *el __attribute__((__unused__)),
  */
 protected el_action_t
 /*ARGSUSED*/
-ed_tty_dsusp(EditLine *el __attribute__((__unused__)), 
+ed_tty_dsusp(EditLine *el __attribute__((__unused__)),
 	     Int c __attribute__((__unused__)))
 {
 
@@ -477,7 +477,7 @@ ed_tty_dsusp(EditLine *el __attribute__((__unused__)),
  */
 protected el_action_t
 /*ARGSUSED*/
-ed_tty_flush_output(EditLine *el __attribute__((__unused__)), 
+ed_tty_flush_output(EditLine *el __attribute__((__unused__)),
 		    Int c __attribute__((__unused__)))
 {
 
@@ -491,7 +491,7 @@ ed_tty_flush_output(EditLine *el __attribute__((__unused__)),
  */
 protected el_action_t
 /*ARGSUSED*/
-ed_tty_sigquit(EditLine *el __attribute__((__unused__)), 
+ed_tty_sigquit(EditLine *el __attribute__((__unused__)),
 	       Int c __attribute__((__unused__)))
 {
 
@@ -505,7 +505,7 @@ ed_tty_sigquit(EditLine *el __attribute__((__unused__)),
  */
 protected el_action_t
 /*ARGSUSED*/
-ed_tty_sigtstp(EditLine *el __attribute__((__unused__)), 
+ed_tty_sigtstp(EditLine *el __attribute__((__unused__)),
 	       Int c __attribute__((__unused__)))
 {
 
@@ -519,7 +519,7 @@ ed_tty_sigtstp(EditLine *el __attribute__((__unused__)),
  */
 protected el_action_t
 /*ARGSUSED*/
-ed_tty_stop_output(EditLine *el __attribute__((__unused__)), 
+ed_tty_stop_output(EditLine *el __attribute__((__unused__)),
 		   Int c __attribute__((__unused__)))
 {
 
@@ -533,7 +533,7 @@ ed_tty_stop_output(EditLine *el __attribute__((__unused__)),
  */
 protected el_action_t
 /*ARGSUSED*/
-ed_tty_start_output(EditLine *el __attribute__((__unused__)), 
+ed_tty_start_output(EditLine *el __attribute__((__unused__)),
 		    Int c __attribute__((__unused__)))
 {
 
@@ -598,7 +598,7 @@ ed_clear_screen(EditLine *el, Int c __attribute__((__unused__)))
  */
 protected el_action_t
 /*ARGSUSED*/
-ed_redisplay(EditLine *el __attribute__((__unused__)), 
+ed_redisplay(EditLine *el __attribute__((__unused__)),
 	     Int c __attribute__((__unused__)))
 {
 
@@ -626,7 +626,7 @@ ed_start_over(EditLine *el, Int c __attribute__((__unused__)))
  */
 protected el_action_t
 /*ARGSUSED*/
-ed_sequence_lead_in(EditLine *el __attribute__((__unused__)), 
+ed_sequence_lead_in(EditLine *el __attribute__((__unused__)),
 		    Int c __attribute__((__unused__)))
 {
 
@@ -660,7 +660,7 @@ ed_prev_history(EditLine *el, Int c __attribute__((__unused__)))
 	if (hist_get(el) == CC_ERROR) {
 		if (el->el_map.type == MAP_VI) {
 			el->el_history.eventno = sv_event;
-			
+
 		}
 		beep = 1;
 		/* el->el_history.eventno was fixed by first call */

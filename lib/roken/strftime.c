@@ -286,7 +286,7 @@ strftime (char *buf, size_t maxsize, const char *format,
 				"%02d:%02d",
 				tm->tm_hour,
 				tm->tm_min);
-		
+
 	    case 's' :
 		ret = snprintf (buf, maxsize - n,
 				"%d", (int)mktime(rk_UNCONST(tm)));

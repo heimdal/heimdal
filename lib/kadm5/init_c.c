@@ -500,7 +500,7 @@ kadm_connect(kadm5_client_context *ctx)
 	    p.realm = ctx->realm;
 	}
 	ret = _kadm5_marshal_params(context, &p, &params);
-	
+
 	ret = krb5_write_priv_message(context, ctx->ac, &s, &params);
 	krb5_data_free(&params);
 	if(ret) {

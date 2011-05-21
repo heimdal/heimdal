@@ -67,7 +67,7 @@ test_default_name(krb5_context context)
 
     if (strcmp(p1, p2) != 0)
 	krb5_errx (context, 1, "krb5_cc_default_name no longer same");
-	
+
     ret = krb5_cc_set_default_name(context, test_cc_name);
     if (p == NULL)
 	krb5_errx (context, 1, "krb5_cc_set_default_name 1 failed");
@@ -180,7 +180,7 @@ test_init_vs_destroy(krb5_context context, const char *type)
 		 krb5_cc_get_type(context, id),
 		 krb5_cc_get_name(context, id)) < 0 || n == NULL)
 	errx(1, "malloc");
-	
+
 
     ret = krb5_cc_resolve(context, n, &id2);
     free(n);

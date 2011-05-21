@@ -63,15 +63,15 @@ static struct getargs args[] = {
 	"key-file",	'k',	arg_string, &keyfile,
 	"location of master key file", "file"
     },
-    {	
+    {
 	"realm",	'r',	arg_string,   &realm,
 	"realm to use", "realm"
     },
-    {	
+    {
 	"admin-server",	'a',	arg_string,   &admin_server,
 	"server to contact", "host"
     },
-    {	
+    {
 	"server-port",	's',	arg_integer,   &server_port,
 	"port to use", "port number"
     },
@@ -211,7 +211,7 @@ main(int argc, char **argv)
 
 	kadm5_setup_passwd_quality_check (context,
 					  check_library, check_function);
-	
+
 	for (i = 0; i < policy_libraries.num_strings; i++) {
 	    ret = kadm5_add_passwd_quality_verifier(context,
 						    policy_libraries.strings[i]);
@@ -221,7 +221,7 @@ main(int argc, char **argv)
 	ret = kadm5_add_passwd_quality_verifier(context, NULL);
 	if (ret)
 	    krb5_err(context, 1, ret, "kadm5_add_passwd_quality_verifier");
-	
+
 	ret = kadm5_s_init_with_password_ctx(context,
 					     KADM5_ADMIN_SERVICE,
 					     NULL,

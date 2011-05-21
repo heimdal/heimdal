@@ -648,7 +648,7 @@ mc_again:
 						    (el->el_cursor.h & 0370);
 						    i < (where & ~0x7);
 						    i += 8)
-							term__putc(el, '\t');	
+							term__putc(el, '\t');
 							/* then tab over */
 						el->el_cursor.h = where & ~0x7;
 					}
@@ -1343,7 +1343,7 @@ term_writec(EditLine *el, Int c)
  */
 protected int
 /*ARGSUSED*/
-term_telltc(EditLine *el, int argc __attribute__((__unused__)), 
+term_telltc(EditLine *el, int argc __attribute__((__unused__)),
     const Char **argv __attribute__((__unused__)))
 {
 	const struct termcapstr *t;

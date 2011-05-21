@@ -256,7 +256,7 @@ copy_out (kx_context *kc, int from_fd, int to_fd)
     }
     return krb5_write (kc, to_fd, buf, len);
 }
-	
+
 /*
  * Copy from the socket `from_fd' decrypting to `to_fd'.
  * Return 0, -1 or len.

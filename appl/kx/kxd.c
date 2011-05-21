@@ -424,7 +424,7 @@ close_connection(int fd, const char *message)
     p += mlen;
     while((p - buf) % 4)		/* pad to multiple of 4 bytes */
 	*p++ = 0;
-	
+
     /* now fill in length of additional data */
     if(lsb) {
 	buf[6] = (p - buf - 8) / 4;
@@ -502,7 +502,7 @@ doit_passive (kx_context *kc,
     memcpy (p, xauthfile, len);
     p += len;
     rem -= len;
-	
+
     if(kx_write (kc, sock, msg, p - msg) < 0) {
 	syslog (LOG_ERR, "write: %m");
 	cleanup(nsockets, sockets);
@@ -515,7 +515,7 @@ doit_passive (kx_context *kc,
 	int i;
 	int ret;
 	int cookiesp = TRUE;
-	
+
 	FD_ZERO(&fds);
 	if (sock >= FD_SETSIZE) {
 	    syslog (LOG_ERR, "fd too large");
@@ -640,7 +640,7 @@ doit_active (kx_context *kc,
 
     p = msg;
     *p++ = ACK;
-	
+
     if(kx_write (kc, sock, msg, p - msg) < 0) {
 	syslog (LOG_ERR, "write: %m");
 	return 1;
@@ -648,7 +648,7 @@ doit_active (kx_context *kc,
     for (;;) {
 	pid_t child;
 	int len;
-	
+
 	len = kx_read (kc, sock, msg, sizeof(msg));
 	if (len < 0) {
 	    syslog (LOG_ERR, "read: %m");

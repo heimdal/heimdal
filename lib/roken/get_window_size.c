@@ -91,7 +91,7 @@ get_window_size(int fd, int *lines, int *columns)
 #elif defined(HAVE__SCRSIZE)
     {
 	int dst[2];
- 	
+
  	_scrsize(dst);
 	if (lines)
 	    *lines = dst[1];

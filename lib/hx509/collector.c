@@ -133,7 +133,7 @@ _hx509_collector_private_key_add(hx509_context context,
 	return ENOMEM;
     }
     c->val.data = d;
-	
+
     ret = copy_AlgorithmIdentifier(alg, &key->alg);
     if (ret) {
 	hx509_set_error_string(context, 0, ret, "Failed to copy "
@@ -192,7 +192,7 @@ match_localkeyid(hx509_context context,
 
     ret = hx509_certs_find(context, certs, &q, &cert);
     if (ret == 0) {
-	
+
 	if (value->private_key)
 	    _hx509_cert_assign_key(cert, value->private_key);
 	hx509_cert_free(cert);

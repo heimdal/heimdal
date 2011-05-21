@@ -141,7 +141,7 @@ out:
     hdb_free_entry(context->context, &ent);
     return _kadm5_error_code(ret);
 }
-				
+
 
 kadm5_ret_t
 kadm5_s_create_principal(void *server_handle,

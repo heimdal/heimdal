@@ -693,7 +693,7 @@ replace_cookie(int xserver, int fd, char *filename, int cookiesp) /* XXX */
      if (f != NULL) {
 	 Xauth *auth = find_auth_cookie (f);
 	 u_char len[6] = {0, 0, 0, 0, 0, 0};
-	
+
 	 fclose (f);
 
 	 if (auth != NULL) {

@@ -212,7 +212,7 @@ log_patypes(krb5_context context,
     struct rk_strpool *p = NULL;
     char *str;
     size_t i;
-	
+
     for (i = 0; i < padata->len; i++) {
 	switch(padata->val[i].padata_type) {
 	case KRB5_PADATA_PK_AS_REQ:
@@ -240,7 +240,7 @@ log_patypes(krb5_context context,
     }
     if (p == NULL)
 	p = rk_strpoolprintf(p, "none");
-	
+
     str = rk_strpoolcollect(p);
     kdc_log(context, config, 0, "Client sent patypes: %s", str);
     free(str);
@@ -694,13 +694,13 @@ kdc_check_flags(krb5_context context,
 		    "Client (%s) has invalid bit set", client_name);
 	    return KRB5KDC_ERR_POLICY;
 	}
-	
+
 	if(!client->flags.client){
 	    kdc_log(context, config, 0,
 		    "Principal may not act as client -- %s", client_name);
 	    return KRB5KDC_ERR_POLICY;
 	}
-	
+
 	if (client->valid_start && *client->valid_start > kdc_time) {
 	    char starttime_str[100];
 	    krb5_format_time(context, *client->valid_start,
@@ -710,7 +710,7 @@ kdc_check_flags(krb5_context context,
 		    starttime_str, client_name);
 	    return KRB5KDC_ERR_CLIENT_NOTYET;
 	}
-	
+
 	if (client->valid_end && *client->valid_end < kdc_time) {
 	    char endtime_str[100];
 	    krb5_format_time(context, *client->valid_end,
@@ -720,7 +720,7 @@ kdc_check_flags(krb5_context context,
 		    endtime_str, client_name);
 	    return KRB5KDC_ERR_NAME_EXP;
 	}
-	
+
 	if (client->pw_end && *client->pw_end < kdc_time
 	    && (server_ex == NULL || !server_ex->entry.flags.change_pw)) {
 	    char pwend_str[100];
@@ -976,7 +976,7 @@ _kdc_as_rep(krb5_context context,
 	    goto out;
 	}
     } else if (b->kdc_options.request_anonymous) {
-	kdc_log(context, config, 0, 
+	kdc_log(context, config, 0,
 		"Request for a anonymous ticket with non "
 		"anonymous client name: %s", client_name);
 	ret = KRB5KDC_ERR_C_PRINCIPAL_UNKNOWN;
@@ -1111,7 +1111,7 @@ _kdc_as_rep(krb5_context context,
 
 	    ret = _kdc_pk_check_client(context,
 				       config,
-				       clientdb, 
+				       clientdb,
 				       client,
 				       pkp,
 				       &client_cert);
@@ -1119,7 +1119,7 @@ _kdc_as_rep(krb5_context context,
 		e_text = "PKINIT certificate not allowed to "
 		    "impersonate principal";
 		_kdc_pk_free_client_param(context, pkp);
-		
+
 		kdc_log(context, config, 0, "%s", e_text);
 		pkp = NULL;
 		goto out;
@@ -1148,9 +1148,9 @@ _kdc_as_rep(krb5_context context,
 	    EncryptedData enc_data;
 	    Key *pa_key;
 	    char *str;
-	
+
 	    found_pa = 1;
-	
+
 	    if (b->kdc_options.request_anonymous) {
 		ret = KRB5KRB_AP_ERR_BAD_INTEGRITY;
 		kdc_log(context, config, 0, "ENC-TS doesn't support anon");
@@ -1167,7 +1167,7 @@ _kdc_as_rep(krb5_context context,
 			client_name);
 		goto out;
 	    }
-	
+
 	    ret = hdb_enctype2key(context, &client->entry,
 				  enc_data.etype, &pa_key);
 	    if(ret){
@@ -1256,7 +1256,7 @@ _kdc_as_rep(krb5_context context,
 	    free_PA_ENC_TS_ENC(&p);
 	    if (abs(kdc_time - p.patimestamp) > context->max_skew) {
 		char client_time[100];
-		
+
 		krb5_format_time(context, p.patimestamp,
 				 client_time, sizeof(client_time), TRUE);
 
@@ -1384,7 +1384,7 @@ _kdc_as_rep(krb5_context context,
 		goto out;
 	    }
 	}
-	
+
 	ASN1_MALLOC_ENCODE(METHOD_DATA, buf, len, &method_data, &len, ret);
 	free_METHOD_DATA(&method_data);
 
@@ -1401,7 +1401,7 @@ _kdc_as_rep(krb5_context context,
     }
 
     if (clientdb->hdb_auth_status)
-	(clientdb->hdb_auth_status)(context, clientdb, client, 
+	(clientdb->hdb_auth_status)(context, clientdb, client,
 				    HDB_AUTH_SUCCESS);
 
     /*
@@ -1503,7 +1503,7 @@ _kdc_as_rep(krb5_context context,
     {
 	time_t start;
 	time_t t;
-	
+
 	start = et.authtime = kdc_time;
 
 	if(f.postdated && req->req_body.from){
@@ -1693,7 +1693,7 @@ _kdc_as_rep(krb5_context context,
 	krb5_crypto_destroy(context, cryptox);
 	if (ret)
 	    goto out;
-	
+
 	ASN1_MALLOC_ENCODE(PA_ClientCanonicalized, data.data, data.length,
 			   &canon, &len, ret);
 	free_Checksum(&canon.canon_checksum);
@@ -1835,7 +1835,7 @@ _kdc_tkt_add_if_relevant_ad(krb5_context context,
 	    return ENOMEM;
 	}
     }
-	
+
     /* add the entry to the last element */
     {
 	AuthorizationData ad = { 0, NULL };
@@ -1863,7 +1863,7 @@ _kdc_tkt_add_if_relevant_ad(krb5_context context,
 	}
 	if (ade.ad_data.length != size)
 	    krb5_abortx(context, "internal asn.1 encoder error");
-	
+
 	ret = add_AuthorizationData(tkt->authorization_data, &ade);
 	der_free_octet_string(&ade.ad_data);
 	if (ret) {

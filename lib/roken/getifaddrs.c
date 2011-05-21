@@ -632,7 +632,7 @@ rk_getifaddrs(struct ifaddrs **ifap)
 	default:
 	  continue;
 	}
-	
+
 	if (!build){
 	  if (max_ifindex < nlm_index)
 	    max_ifindex = nlm_index;
@@ -993,7 +993,7 @@ getifaddrs2(struct ifaddrs **ifap,
 	(*end)->ifa_data = NULL;
 
 	end = &(*end)->ifa_next;
-	
+
     }
     *ifap = start;
     close(fd);
@@ -1139,7 +1139,7 @@ getlifaddrs2(struct ifaddrs **ifap,
 	(*end)->ifa_data = NULL;
 
 	end = &(*end)->ifa_next;
-	
+
     }
     *ifap = start;
     close(fd);

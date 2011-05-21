@@ -48,7 +48,7 @@ add_db(krb5_context context, struct krb5_kdc_configuration *c,
 	return ENOMEM;
     }
     c->db = ptr;
-    
+
     ret = hdb_create(context, &c->db[c->num_db], conf);
     if(ret)
 	return ret;
@@ -78,13 +78,13 @@ krb5_kdc_set_dbinfo(krb5_context context, struct krb5_kdc_configuration *c)
 
     d = NULL;
     while ((d = hdb_dbinfo_get_next(info, d)) != NULL) {
-	
+
 	ret = add_db(context, c,
 		     hdb_dbinfo_get_dbname(context, d),
 		     hdb_dbinfo_get_mkey_file(context, d));
 	if (ret)
 	    goto out;
-	
+
 	kdc_log(context, c, 0, "label: %s",
 		hdb_dbinfo_get_label(context, d));
 	kdc_log(context, c, 0, "\tdbname: %s",

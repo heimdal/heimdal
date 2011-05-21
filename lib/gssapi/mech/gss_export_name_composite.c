@@ -40,7 +40,7 @@ gss_export_name_composite(OM_uint32 *minor_status,
     OM_uint32 major_status = GSS_S_UNAVAILABLE;
     struct _gss_name *name = (struct _gss_name *) input_name;
     struct _gss_mechanism_name *mn;
-        
+
     *minor_status = 0;
     _mg_buffer_zero(exp_composite_name);
 

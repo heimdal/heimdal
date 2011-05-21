@@ -67,7 +67,7 @@ ntlm_service(void *ctx, const heim_idata *req,
 
     kdc_log(context, config, 1, "digest-request: uid=%d",
 	    (int)heim_ipc_cred_get_uid(cred));
-    
+
     if (heim_ipc_cred_get_uid(cred) != 0) {
 	(*complete)(cctx, EPERM, NULL);
 	return;
@@ -129,10 +129,10 @@ ntlm_service(void *ctx, const heim_idata *req,
 
     if (ntq.ntChallengeResponce.length != 24) {
 	struct ntlm_buf infotarget, answer;
-	
+
 	answer.length = ntq.ntChallengeResponce.length;
 	answer.data = ntq.ntChallengeResponce.data;
-	
+
 	ret = heim_ntlm_verify_ntlm2(key->key.keyvalue.data,
 				     key->key.keyvalue.length,
 				     ntq.loginUserName,
@@ -145,17 +145,17 @@ ntlm_service(void *ctx, const heim_idata *req,
 	if (ret) {
 	    goto failed;
 	}
-	
+
 	free(infotarget.data);
 	/* XXX verify info target */
-	
+
     } else {
 	struct ntlm_buf answer;
-	
+
 	if (ntq.flags & NTLM_NEG_NTLM2_SESSION) {
 	    unsigned char sessionhash[MD5_DIGEST_LENGTH];
 	    EVP_MD_CTX *md5ctx;
-	    
+
 	    /* the first first 8 bytes is the challenge, what is the other 16 bytes ? */
 	    if (ntq.lmChallengeResponce.length != 24)
 		goto failed;
@@ -168,13 +168,13 @@ ntlm_service(void *ctx, const heim_idata *req,
 	    EVP_MD_CTX_destroy(md5ctx);
 	    memcpy(ntq.lmchallenge.data, sessionhash, ntq.lmchallenge.length);
 	}
-	
+
 	ret = heim_ntlm_calculate_ntlm1(key->key.keyvalue.data,
 					key->key.keyvalue.length,
 					ntq.lmchallenge.data, &answer);
 	if (ret)
 	    goto failed;
-	
+
 	if (ntq.ntChallengeResponce.length != answer.length ||
 	    memcmp(ntq.ntChallengeResponce.data, answer.data, answer.length) != 0) {
 	    free(answer.data);
@@ -182,10 +182,10 @@ ntlm_service(void *ctx, const heim_idata *req,
 	    goto failed;
 	}
 	free(answer.data);
-	
+
 	{
 	    EVP_MD_CTX *ctxp;
-	    
+
 	    ctxp = EVP_MD_CTX_create();
 	    EVP_DigestInit_ex(ctxp, EVP_md4(), NULL);
 	    EVP_DigestUpdate(ctxp, key->key.keyvalue.data, key->key.keyvalue.length);
@@ -201,7 +201,7 @@ ntlm_service(void *ctx, const heim_idata *req,
 	goto failed;
     if (rep.length != size)
 	abort();
-    
+
   failed:
     kdc_log(context, config, 1, "digest-request: %d", ret);
 
@@ -241,10 +241,10 @@ main(int argc, char **argv)
 
     if (getarg(args, num_args, argc, argv, &optidx))
 	usage(1);
-	
+
     if (help_flag)
 	usage(0);
-    
+
     if (version_flag) {
 	print_version(NULL);
 	exit(0);

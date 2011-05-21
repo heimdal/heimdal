@@ -114,8 +114,7 @@ mandoc_template(struct getargs *args,
     printf(".Os OPERATING_SYSTEM\n");
     printf(".Sh NAME\n");
     printf(".Nm %s\n", p);
-    printf(".Nd\n");
-    printf("in search of a description\n");
+    printf(".Nd in search of a description\n");
     printf(".Sh SYNOPSIS\n");
     printf(".Nm\n");
     for(i = 0; i < num_args; i++){

@@ -51,7 +51,8 @@ _gss_ntlm_import_name
 
     *output_name = GSS_C_NO_NAME;
 
-    if (!gss_oid_equal(input_name_type, GSS_C_NT_HOSTBASED_SERVICE))
+    if (!gss_oid_equal(input_name_type, GSS_C_NT_HOSTBASED_SERVICE)
+	&& !gss_oid_equal(input_name_type, GSS_C_NT_USER_NAME))
 	return GSS_S_BAD_NAMETYPE;
 
     name = malloc(input_name_buffer->length + 1);

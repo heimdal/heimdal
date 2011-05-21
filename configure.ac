@@ -331,6 +331,7 @@ AC_CHECK_HEADERS([\
 	bsdsetjmp.h				\
 	curses.h				\
 	dlfcn.h					\
+	execinfo.h				\
 	fnmatch.h				\
 	inttypes.h				\
 	io.h					\
@@ -458,6 +459,7 @@ AC_CHECK_FUNCS([				\
 	_getpty					\
 	_scrsize				\
 	arc4random				\
+	backtrace				\
 	fcntl					\
 	getpeereid				\
 	getpeerucred				\

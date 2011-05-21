@@ -40,17 +40,17 @@
 impersonate a user when there exist a srvtab, keyfile or KeyFile
 .Sh SYNOPSIS
 .Nm
-.Op Fl s Ar string \*(Ba Fl -server= Ns Ar string
-.Op Fl c Ar string \*(Ba Fl -client= Ns Ar string
-.Op Fl k Ar string \*(Ba Fl -keytab= Ns Ar string
-.Op Fl 5 | Fl -krb5
-.Op Fl e Ar integer \*(Ba Fl -expire-time= Ns Ar integer
-.Op Fl a Ar string \*(Ba Fl -client-address= Ns Ar string
-.Op Fl t Ar string \*(Ba Fl -enc-type= Ns Ar string
-.Op Fl f Ar string \*(Ba Fl -ticket-flags= Ns Ar string
-.Op Fl -verbose
-.Op Fl -version
-.Op Fl -help
+.Op Fl s Ar string \*(Ba Fl Fl server= Ns Ar string
+.Op Fl c Ar string \*(Ba Fl Fl client= Ns Ar string
+.Op Fl k Ar string \*(Ba Fl Fl keytab= Ns Ar string
+.Op Fl 5 | Fl Fl krb5
+.Op Fl e Ar integer \*(Ba Fl Fl expire-time= Ns Ar integer
+.Op Fl a Ar string \*(Ba Fl Fl client-address= Ns Ar string
+.Op Fl t Ar string \*(Ba Fl Fl enc-type= Ns Ar string
+.Op Fl f Ar string \*(Ba Fl Fl ticket-flags= Ns Ar string
+.Op Fl Fl verbose
+.Op Fl Fl version
+.Op Fl Fl help
 .Sh DESCRIPTION
 The
 .Nm
@@ -59,27 +59,27 @@ The service key can be read from a Kerberos 5 keytab, AFS KeyFile or
 (if compiled with support for Kerberos 4) a Kerberos 4 srvtab.
 Supported options:
 .Bl -tag -width Ds
-.It Fl s Ar string Ns , Fl -server= Ns Ar string
+.It Fl s Ar string Ns , Fl Fl server= Ns Ar string
 name of server principal
-.It Fl c Ar string Ns , Fl -client= Ns Ar string
+.It Fl c Ar string Ns , Fl Fl client= Ns Ar string
 name of client principal
-.It Fl k Ar string Ns , Fl -keytab= Ns Ar string
+.It Fl k Ar string Ns , Fl Fl keytab= Ns Ar string
 name of keytab file
-.It Fl 5 Ns , Fl -krb5
+.It Fl 5 Ns , Fl Fl krb5
 create a Kerberos 5 ticket
-.It Fl e Ar integer Ns , Fl -expire-time= Ns Ar integer
+.It Fl e Ar integer Ns , Fl Fl expire-time= Ns Ar integer
 lifetime of ticket in seconds
-.It Fl a Ar string Ns , Fl -client-address= Ns Ar string
+.It Fl a Ar string Ns , Fl Fl client-address= Ns Ar string
 address of client
-.It Fl t Ar string Ns , Fl -enc-type= Ns Ar string
+.It Fl t Ar string Ns , Fl Fl enc-type= Ns Ar string
 encryption type
-.It Fl f Ar string Ns , Fl -ticket-flags= Ns Ar string
+.It Fl f Ar string Ns , Fl Fl ticket-flags= Ns Ar string
 ticket flags for krb5 ticket
-.It Fl -verbose
+.It Fl Fl verbose
 Verbose output
-.It Fl -version
+.It Fl Fl version
 Print version
-.It Fl -help
+.It Fl Fl help
 .El
 .Sh FILES
 Uses

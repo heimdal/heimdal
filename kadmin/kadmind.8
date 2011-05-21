@@ -41,21 +41,21 @@
 .Nm
 .Bk -words
 .Oo Fl c Ar file \*(Ba Xo
-.Fl -config-file= Ns Ar file
+.Fl Fl config-file= Ns Ar file
 .Xc
 .Oc
 .Oo Fl k Ar file \*(Ba Xo
-.Fl -key-file= Ns Ar file
+.Fl Fl key-file= Ns Ar file
 .Xc
 .Oc
-.Op Fl -keytab= Ns Ar keytab
+.Op Fl Fl keytab= Ns Ar keytab
 .Oo Fl r Ar realm \*(Ba Xo
-.Fl -realm= Ns Ar realm
+.Fl Fl realm= Ns Ar realm
 .Xc
 .Oc
-.Op Fl d | Fl -debug
+.Op Fl d | Fl Fl debug
 .Oo Fl p Ar port \*(Ba Xo
-.Fl -ports= Ns Ar port
+.Fl Fl ports= Ns Ar port
 .Xc
 .Oc
 .Ek
@@ -67,7 +67,7 @@ assumes that it has been started by
 .Xr inetd 8 ,
 otherwise it behaves as a daemon, forking processes for each new
 connection. The
-.Fl -debug
+.Fl Fl debug
 option causes
 .Nm
 to accept exactly one connection, which is useful for debugging.
@@ -117,17 +117,17 @@ glob-style pattern.
 .Pp
 Supported options:
 .Bl -tag -width Ds
-.It Fl c Ar file , Fl -config-file= Ns Ar file
+.It Fl c Ar file , Fl Fl config-file= Ns Ar file
 location of config file
-.It Fl k Ar file , Fl -key-file= Ns Ar file
+.It Fl k Ar file , Fl Fl key-file= Ns Ar file
 location of master key file
-.It Fl -keytab= Ns Ar keytab
+.It Fl Fl keytab= Ns Ar keytab
 what keytab to use
-.It Fl r Ar realm , Fl -realm= Ns Ar realm
+.It Fl r Ar realm , Fl Fl realm= Ns Ar realm
 realm to use
-.It Fl d , Fl -debug
+.It Fl d , Fl Fl debug
 enable debugging
-.It Fl p Ar port , Fl -ports= Ns Ar port
+.It Fl p Ar port , Fl Fl ports= Ns Ar port
 ports to listen to. By default, if run as a daemon, it listens to port
 749, but you can add any number of ports with this option. The port
 string is a whitespace separated list of port specifications, with the
@@ -144,7 +144,7 @@ This will cause
 to listen to port 4711 in addition to any
 compiled in defaults:
 .Pp
-.D1 Nm Fl -ports Ns Li "=\*[q]+ 4711\*[q] &"
+.D1 Nm Fl Fl ports Ns Li "=\*[q]+ 4711\*[q] &"
 .Pp
 This acl file will grant Joe all rights, and allow Mallory to view and
 add host principals.

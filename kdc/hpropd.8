@@ -41,17 +41,17 @@
 .Nm
 .Bk -words
 .Oo Fl d Ar file \*(Ba Xo
-.Fl -database= Ns Ar file
+.Fl Fl database= Ns Ar file
 .Xc
 .Oc
-.Op Fl n | Fl -stdin
-.Op Fl -print
-.Op Fl i | Fl -no-inetd
+.Op Fl n | Fl Fl stdin
+.Op Fl Fl print
+.Op Fl i | Fl Fl no-inetd
 .Oo Fl k Ar keytab \*(Ba Xo
-.Fl -keytab= Ns Ar keytab
+.Fl Fl keytab= Ns Ar keytab
 .Xc
 .Oc
-.Op Fl 4 | Fl -v4dump
+.Op Fl 4 | Fl Fl v4dump
 .Ek
 .Sh DESCRIPTION
 .Nm
@@ -73,17 +73,17 @@ are accepted.
 .Pp
 Options supported:
 .Bl -tag -width Ds
-.It Fl d Ar file , Fl -database= Ns Ar file
+.It Fl d Ar file , Fl Fl database= Ns Ar file
 database
-.It Fl n , Fl -stdin
+.It Fl n , Fl Fl stdin
 read from stdin
-.It Fl -print
+.It Fl Fl print
 print dump to stdout
-.It Fl i , Fl -no-inetd
+.It Fl i , Fl Fl no-inetd
 not started from inetd
-.It Fl k Ar keytab , Fl -keytab= Ns Ar keytab
+.It Fl k Ar keytab , Fl Fl keytab= Ns Ar keytab
 keytab to use for authentication
-.It Fl 4 , Fl -v4dump
+.It Fl 4 , Fl Fl v4dump
 create v4 type DB
 .El
 .Sh SEE ALSO

@@ -41,13 +41,13 @@
 .Nm
 .Bk -words
 .Op Fl c Ar cachefile
-.Op Fl -credential= Ns Ar principal
-.Op Fl -cache= Ns Ar cachefile
-.Op Fl A | Fl -all
-.Op Fl -no-unlog
-.Op Fl -no-delete-v4
-.Op Fl -version
-.Op Fl -help
+.Op Fl Fl credential= Ns Ar principal
+.Op Fl Fl cache= Ns Ar cachefile
+.Op Fl A | Fl Fl all
+.Op Fl Fl no-unlog
+.Op Fl Fl no-delete-v4
+.Op Fl Fl version
+.Op Fl Fl help
 .Ek
 .Sh DESCRIPTION
 .Nm
@@ -63,11 +63,11 @@ from the credential cache if it exists.
 .It Fl cache= Ns Ar cachefile
 The cache file to remove.
 .It Fl A
-.It Fl -all
+.It Fl Fl all
 remove all credential caches.
-.It Fl -no-unlog
+.It Fl Fl no-unlog
 Do not remove AFS tokens.
-.It Fl -no-delete-v4
+.It Fl Fl no-delete-v4
 Do not remove v4 tickets.
 .El
 .Sh SEE ALSO

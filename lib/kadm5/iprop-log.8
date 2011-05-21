@@ -42,58 +42,58 @@
 maintain the iprop log file
 .Sh SYNOPSIS
 .Nm
-.Op Fl -version
-.Op Fl h | Fl -help
+.Op Fl Fl version
+.Op Fl h | Fl Fl help
 .Ar command
 .Pp
 .Nm iprop-log truncate
 .Oo Fl c Ar file \*(Ba Xo
-.Fl -config-file= Ns Ar file
+.Fl Fl config-file= Ns Ar file
 .Xc
 .Oc
 .Oo Fl r Ar string \*(Ba Xo
-.Fl -realm= Ns Ar string
+.Fl Fl realm= Ns Ar string
 .Xc
 .Oc
-.Op Fl h | Fl -help
+.Op Fl h | Fl Fl help
 .Pp
 .Nm iprop-log dump
 .Oo Fl c Ar file \*(Ba Xo
-.Fl -config-file= Ns Ar file
+.Fl Fl config-file= Ns Ar file
 .Xc
 .Oc
 .Oo Fl r Ar string \*(Ba Xo
-.Fl -realm= Ns Ar string
+.Fl Fl realm= Ns Ar string
 .Xc
 .Oc
-.Op Fl h | Fl -help
+.Op Fl h | Fl Fl help
 .Pp
 .Nm iprop-log replay
-.Op Fl -start-version= Ns Ar version-number
-.Op Fl -end-version= Ns Ar version-number
+.Op Fl Fl start-version= Ns Ar version-number
+.Op Fl Fl end-version= Ns Ar version-number
 .Oo Fl c Ar file \*(Ba Xo
-.Fl -config-file= Ns Ar file
+.Fl Fl config-file= Ns Ar file
 .Xc
 .Oc
 .Oo Fl r Ar string \*(Ba Xo
-.Fl -realm= Ns Ar string
+.Fl Fl realm= Ns Ar string
 .Xc
 .Oc
-.Op Fl h | Fl -help
+.Op Fl h | Fl Fl help
 .Sh DESCRIPTION
 Supported options:
 .Bl -tag -width Ds
-.It Fl -version
-.It Fl h , Fl -help
+.It Fl Fl version
+.It Fl h , Fl Fl help
 .El
 .Pp
 command can be one of the following:
 .Bl -tag -width truncate
 .It truncate
 .Bl -tag -width Ds
-.It Fl c Ar file , Fl -config-file= Ns Ar file
+.It Fl c Ar file , Fl Fl config-file= Ns Ar file
 configuration file
-.It Fl r Ar string , Fl -realm= Ns Ar string
+.It Fl r Ar string , Fl Fl realm= Ns Ar string
 realm
 .El
 .Pp
@@ -102,11 +102,11 @@ last entry of the old log.  If the log is truncted by emptying the
 file, the log will start over at the first version (0).
 .It dump
 .Bl -tag -width Ds
-.It Fl c Ar file , Fl -config-file= Ns Ar file
+.It Fl c Ar file , Fl Fl config-file= Ns Ar file
 configuration file
 .It Xo
 .Fl r Ar string ,
-.Fl -realm= Ns Ar string
+.Fl Fl realm= Ns Ar string
 .Xc
 realm
 .El
@@ -114,15 +114,15 @@ realm
 Print out all entries in the log to standard output.
 .It replay
 .Bl -tag -width Ds
-.It Fl -start-version= Ns Ar version-number
+.It Fl Fl start-version= Ns Ar version-number
 start replay with this version
 .It Xo
-.Fl -end-version= Ns Ar version-number
+.Fl Fl end-version= Ns Ar version-number
 .Xc
 end replay with this version
-.It Fl c Ar file , Fl -config-file= Ns Ar file
+.It Fl c Ar file , Fl Fl config-file= Ns Ar file
 configuration file
-.It Fl r Ar string , Fl -realm= Ns Ar string
+.It Fl r Ar string , Fl Fl realm= Ns Ar string
 realm
 .El
 .Pp
@@ -130,9 +130,9 @@ Replay the changes from specified entries (or all if none is
 specified) in the transaction log to the database.
 .It last-version
 .Bl -tag -width Ds
-.It Fl c Ar file , Fl -config-file= Ns Ar file
+.It Fl c Ar file , Fl Fl config-file= Ns Ar file
 configuration file
-.It Fl r Ar string , Fl -realm= Ns Ar string
+.It Fl r Ar string , Fl Fl realm= Ns Ar string
 realm
 .El
 .Pp

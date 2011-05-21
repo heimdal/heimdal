@@ -41,15 +41,15 @@
 .Nm
 .Oo
 .Fl p Ar port |
-.Fl -port Ns = Ns Ar port
+.Fl Fl port Ns = Ns Ar port
 .Oc
 .Op Fl i | -inetd
 .Oo
 .Fl R Ar regpag |
-.Fl -regpag Ns = Ns Ar regpag
+.Fl Fl regpag Ns = Ns Ar regpag
 .Oc
 .Op Fl h | -help
-.Op Fl -version
+.Op Fl Fl version
 .Sh DESCRIPTION
 This is the daemon for
 .Xr kf 1 .
@@ -57,14 +57,14 @@ Supported options:
 .Bl -tag -width indent
 .It Xo
 .Fl p Ar port ,
-.Fl -port Ns = Ns Ar port
+.Fl Fl port Ns = Ns Ar port
 .Xc
 port to listen to
 .It Fl i , -inetd
 not started from inetd
 .It Xo
 .Fl R Ar regpag ,
-.Fl -regpag= Ns Ar regpag
+.Fl Fl regpag= Ns Ar regpag
 .Xc
 path to regpag binary
 .El

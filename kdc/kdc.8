@@ -41,27 +41,27 @@
 .Nm
 .Bk -words
 .Oo Fl c Ar file \*(Ba Xo
-.Fl -config-file= Ns Ar file
+.Fl Fl config-file= Ns Ar file
 .Xc
 .Oc
-.Op Fl p | Fl -no-require-preauth
-.Op Fl -max-request= Ns Ar size
-.Op Fl H | Fl -enable-http
-.Op Fl -no-524
-.Op Fl -kerberos4
-.Op Fl -kerberos4-cross-realm
+.Op Fl p | Fl Fl no-require-preauth
+.Op Fl Fl max-request= Ns Ar size
+.Op Fl H | Fl Fl enable-http
+.Op Fl Fl no-524
+.Op Fl Fl kerberos4
+.Op Fl Fl kerberos4-cross-realm
 .Oo Fl r Ar string \*(Ba Xo
-.Fl -v4-realm= Ns Ar string
+.Fl Fl v4-realm= Ns Ar string
 .Xc
 .Oc
-.Op Fl K | Fl -kaserver
+.Op Fl K | Fl Fl kaserver
 .Oo Fl P Ar portspec \*(Ba Xo
-.Fl -ports= Ns Ar portspec
+.Fl Fl ports= Ns Ar portspec
 .Xc
 .Oc
-.Op Fl -detach
-.Op Fl -disable-des
-.Op Fl -addresses= Ns Ar list of addresses
+.Op Fl Fl detach
+.Op Fl Fl disable-des
+.Op Fl Fl addresses= Ns Ar list of addresses
 .Ek
 .Sh DESCRIPTION
 .Nm
@@ -72,11 +72,11 @@ or from a default compiled-in value.
 .Pp
 Options supported:
 .Bl -tag -width Ds
-.It Fl c Ar file , Fl -config-file= Ns Ar file
+.It Fl c Ar file , Fl Fl config-file= Ns Ar file
 Specifies the location of the config file, the default is
 .Pa /var/heimdal/kdc.conf .
 This is the only value that can't be specified in the config file.
-.It Fl p , Fl -no-require-preauth
+.It Fl p , Fl Fl no-require-preauth
 Turn off the requirement for pre-autentication in the initial AS-REQ
 for all principals.
 The use of pre-authentication makes it more difficult to do offline
@@ -89,20 +89,20 @@ pre-athentication.
 The default is to require pre-authentication.
 Adding the require-preauth per principal is a more flexible way of
 handling this.
-.It Fl -max-request= Ns Ar size
+.It Fl Fl max-request= Ns Ar size
 Gives an upper limit on the size of the requests that the kdc is
 willing to handle.
-.It Fl H , Fl -enable-http
+.It Fl H , Fl Fl enable-http
 Makes the kdc listen on port 80 and handle requests encapsulated in HTTP.
-.It Fl -no-524
+.It Fl Fl no-524
 don't respond to 524 requests
-.It Fl -kerberos4
+.It Fl Fl kerberos4
 respond to Kerberos 4 requests
-.It Fl -kerberos4-cross-realm
+.It Fl Fl kerberos4-cross-realm
 respond to Kerberos 4 requests from foreign realms.
 This is a known security hole and should not be enabled unless you
 understand the consequences and are willing to live with them.
-.It Fl r Ar string , Fl -v4-realm= Ns Ar string
+.It Fl r Ar string , Fl Fl v4-realm= Ns Ar string
 What realm this server should act as when dealing with version 4
 requests.
 The database can contain any number of realms, but since the version 4
@@ -112,21 +112,21 @@ The default is whatever is returned by
 .Fn krb_get_lrealm .
 This option is only available if the KDC has been compiled with version
 4 support.
-.It Fl K , Fl -kaserver
+.It Fl K , Fl Fl kaserver
 Enable kaserver emulation (in case it's compiled in).
-.It Fl P Ar portspec , Fl -ports= Ns Ar portspec
+.It Fl P Ar portspec , Fl Fl ports= Ns Ar portspec
 Specifies the set of ports the KDC should listen on.
 It is given as a
 white-space separated list of services or port numbers.
-.It Fl -addresses= Ns Ar list of addresses
+.It Fl Fl addresses= Ns Ar list of addresses
 The list of addresses to listen for requests on.
 By default, the kdc will listen on all the locally configured
 addresses.
 If only a subset is desired, or the automatic detection fails, this
 option might be used.
-.It Fl -detach
+.It Fl Fl detach
 detach from pty and run as a daemon.
-.It Fl -disable-des
+.It Fl Fl disable-des
 disable add des encryption types, makes the kdc not use them.
 .El
 .Pp
@@ -153,7 +153,7 @@ specified as:
 .Dl require-preauth = no
 .Pp
 (in fact you can specify the option as
-.Fl -require-preauth=no ) .
+.Fl Fl require-preauth=no ) .
 .Pp
 And there are some configuration options which do not have
 command-line equivalents:

@@ -133,7 +133,7 @@ mandoc_template(struct getargs *args,
 	    }
 	    if(args[i].long_name) {
 		print_arg(buf, sizeof(buf), 1, 1, args + i, i18n);
-		printf("Fl -%s%s%s",
+		printf("Fl Fl %s%s%s",
 		       args[i].type == arg_negative_flag ? "no-" : "",
 		       args[i].long_name, buf);
 	    }
@@ -142,7 +142,7 @@ mandoc_template(struct getargs *args,
 	    print_arg(buf, sizeof(buf), 1, 0, args + i, i18n);
 	    printf(".Oo Fl %c%s \\*(Ba Xo\n", args[i].short_name, buf);
 	    print_arg(buf, sizeof(buf), 1, 1, args + i, i18n);
-	    printf(".Fl -%s%s\n.Xc\n.Oc\n", args[i].long_name, buf);
+	    printf(".Fl Fl %s%s\n.Xc\n.Oc\n", args[i].long_name, buf);
 	}
     /*
 	    if(args[i].type == arg_strings)
@@ -165,7 +165,7 @@ mandoc_template(struct getargs *args,
 	    printf("\n");
 	}
 	if(args[i].long_name){
-	    printf(".Fl -%s%s",
+	    printf(".Fl Fl %s%s",
 		   args[i].type == arg_negative_flag ? "no-" : "",
 		   args[i].long_name);
 	    print_arg(buf, sizeof(buf), 1, 1, args + i, i18n);

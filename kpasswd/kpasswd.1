@@ -39,9 +39,9 @@
 .Nd Kerberos 5 password changing program
 .Sh SYNOPSIS
 .Nm
-.Op Fl -admin-principal= Ns Ar principal
+.Op Fl Fl admin-principal= Ns Ar principal
 .Oo Fl c Ar cache \*(Ba Xo
-.Fl -cache= Ns Ar cache
+.Fl Fl cache= Ns Ar cache
 .Xc
 .Oc
 .Op Ar principal ...
@@ -58,7 +58,7 @@ If the administrator isn't specified on the command prompt, the
 principal of the default credential cache will be used.
 .Pp
 If a credential cache is given, the
-.Fl -admin-principal
+.Fl Fl admin-principal
 flag is ignored and use the default name of the credential cache is
 used instead.
 .Sh DIAGNOSTICS

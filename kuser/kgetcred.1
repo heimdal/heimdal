@@ -39,18 +39,18 @@
 .Nd "get a ticket for a particular service"
 .Sh SYNOPSIS
 .Nm
-.Op Fl -canonicalize
+.Op Fl Fl canonicalize
 .Oo Fl c cache \*(Ba Xo
-.Fl -cache= Ns Ar cache
+.Fl Fl cache= Ns Ar cache
 .Xc
 .Oc
 .Oo Fl e Ar enctype \*(Ba Xo
-.Fl -enctype= Ns Ar enctype
+.Fl Fl enctype= Ns Ar enctype
 .Xc
 .Oc
-.Op Fl -no-transit-check
-.Op Fl -version
-.Op Fl -help
+.Op Fl Fl no-transit-check
+.Op Fl Fl version
+.Op Fl Fl help
 .Ar service
 .Sh DESCRIPTION
 .Nm
@@ -61,16 +61,16 @@ ticket or of a special type.
 .Pp
 Supported options:
 .Bl -tag -width Ds
-.It Fl -canonicalize
+.It Fl Fl canonicalize
 requests that the KDC canonicalize the principal.
-.It Fl c Ar cache , Fl -cache= Ns Ar cache
+.It Fl c Ar cache , Fl Fl cache= Ns Ar cache
 the credential cache to use.
-.It Fl e Ar enctype , Fl -enctype= Ns Ar enctype
+.It Fl e Ar enctype , Fl Fl enctype= Ns Ar enctype
 encryption type to use.
-.It Fl -no-transit-check
+.It Fl Fl no-transit-check
 requests that the KDC doesn't do transit checking.
-.It Fl -version
-.It Fl -help
+.It Fl Fl version
+.It Fl Fl help
 .El
 .Sh SEE ALSO
 .Xr kinit 1 ,

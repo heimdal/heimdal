@@ -41,9 +41,9 @@ creates a new credential cache sandbox
 .Sh SYNOPSIS
 .Nm
 .Op Fl c Ar command-string
-.Op Fl h | Fl -help
-.Op Fl -version
-.Op Fl -cache-type= Ns Ar string
+.Op Fl h | Fl Fl help
+.Op Fl Fl version
+.Op Fl Fl cache-type= Ns Ar string
 .Ar command [args...]
 .Sh DESCRIPTION
 Supported options:
@@ -54,14 +54,14 @@ Executes command(s) contained in
 .Ar command-string .
 .Xc
 .It Xo
-.Fl -cache-type= Ns Ar string
+.Fl Fl cache-type= Ns Ar string
 .Xc
 .It Xo
 .Fl h ,
-.Fl -help
+.Fl Fl help
 .Xc
 .It Xo
-.Fl -version
+.Fl Fl version
 .Xc
 .El
 .Pp
@@ -75,7 +75,7 @@ the credential cache type that was used at the time of
 .Nm
 invocation.
 The credential cache type can be controlled by the option
-.Fl -cache-type .
+.Fl Fl cache-type .
 .Sh EXAMPLES
 Create a new sandbox where new credentials can be used, while the old
 credentials can be used by other processes.

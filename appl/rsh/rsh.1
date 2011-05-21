@@ -63,7 +63,7 @@ Valid options are:
 .Bl -tag -width Ds
 .It Xo
 .Fl 4 ,
-.Fl -krb4
+.Fl Fl krb4
 .Xc
 The
 .Fl 4
@@ -72,7 +72,7 @@ authentication mechanisms will be tried, but in some cases more
 explicit control is desired.
 .It Xo
 .Fl 5 ,
-.Fl -krb5
+.Fl Fl krb5
 .Xc
 The
 .Fl 5
@@ -81,7 +81,7 @@ option requests Kerberos 5 authentication. This is analogous to the
 option.
 .It Xo
 .Fl K ,
-.Fl -broken
+.Fl Fl broken
 .Xc
 The
 .Fl K
@@ -90,7 +90,7 @@ mode relies on reserved ports. The long name is an indication of how
 good this is.
 .It Xo
 .Fl n ,
-.Fl -no-input
+.Fl Fl no-input
 .Xc
 The
 .Fl n
@@ -105,13 +105,13 @@ Enable
 socket debugging.
 .It Xo
 .Fl e ,
-.Fl -no-stderr
+.Fl Fl no-stderr
 .Xc
 Don't use a separate socket for the stderr stream. This can be
 necessary if rsh-ing through a NAT bridge.
 .It Xo
 .Fl x ,
-.Fl -encrypt
+.Fl Fl encrypt
 .Xc
 The
 .Fl x
@@ -132,7 +132,7 @@ section of
 when using Kerberos 5.
 .It Xo
 .Fl f ,
-.Fl -forward
+.Fl Fl forward
 .Xc
 Forward Kerberos 5 credentials to the remote host.
 Also settable via
@@ -141,7 +141,7 @@ Also settable via
 .Xr krb5.conf ) .
 .It Xo
 .Fl F ,
-.Fl -forwardable
+.Fl Fl forwardable
 .Xc
 Make the forwarded credentials re-forwardable. 
 Also settable via
@@ -150,7 +150,7 @@ Also settable via
 .Xr krb5.conf ) .
 .It Xo
 .Fl l Ar string ,
-.Fl -user= Ns Ar string
+.Fl Fl user= Ns Ar string
 .Xc
 By default the remote username is the same as the local. The
 .Fl l
@@ -159,7 +159,7 @@ option or the
 format allow the remote name to be specified.
 .It Xo
 .Fl n ,
-.Fl -no-input
+.Fl Fl no-input
 .Xc
 Direct input from 
 .Pa /dev/null
@@ -168,7 +168,7 @@ Direct input from
 section).
 .It Xo
 .Fl p Ar number-or-service ,
-.Fl -port= Ns Ar number-or-service
+.Fl Fl port= Ns Ar number-or-service
 .Xc
 Connect to this port instead of the default (which is 514 when using
 old port based authentication, 544 for Kerberos 5 and non-encrypted
@@ -177,7 +177,7 @@ the contents of
 .Pa /etc/services ) .
 .It Xo
 .Fl P Ar N|O|1|2 ,
-.Fl -protocol= Ns Ar N|O|1|2
+.Fl Fl protocol= Ns Ar N|O|1|2
 .Xc
 Specifies the protocol version to use with Kerberos 5.
 .Ar N
@@ -193,20 +193,20 @@ default. Unless asked for a specific version,
 will try both.  This behaviour may change in the future.
 .It Xo
 .Fl u ,
-.Fl -unique
+.Fl Fl unique
 .Xc
 Make sure the remote credentials cache is unique, that is, don't reuse
 any existing cache. Mutually exclusive to
 .Fl U .
 .It Xo
 .Fl U Pa string ,
-.Fl -tkfile= Ns Pa string
+.Fl Fl tkfile= Ns Pa string
 .Xc
 Name of the remote credentials cache. Mutually exclusive to
 .Fl u .
 .It Xo
 .Fl x ,
-.Fl -encrypt
+.Fl Fl encrypt
 .Xc
 The
 .Fl x

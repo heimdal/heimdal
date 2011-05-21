@@ -40,27 +40,27 @@
 obtain AFS tokens
 .Sh SYNOPSIS
 .Nm
-.Op Fl h | Fl -help
-.Op Fl -no-v4
-.Op Fl -no-v5
-.Op Fl u | Fl -unlog
-.Op Fl v | Fl -verbose
-.Op Fl -version
+.Op Fl h | Fl Fl help
+.Op Fl Fl no-v4
+.Op Fl Fl no-v5
+.Op Fl u | Fl Fl unlog
+.Op Fl v | Fl Fl verbose
+.Op Fl Fl version
 .Oo Fl c Ar cell \*(Ba Xo
-.Fl -cell= Ns Ar cell
+.Fl Fl cell= Ns Ar cell
 .Xc
 .Oc
 .Oo Fl k Ar realm \*(Ba Xo
-.Fl -realm= Ns Ar realm
+.Fl Fl realm= Ns Ar realm
 .Xc
 .Oc
 .Oo Fl P Ar principal \*(Ba Xo
-.Fl -principal= Ns Ar principal
+.Fl Fl principal= Ns Ar principal
 .Xc
 .Oc
 .Bk -words
 .Oo Fl p Ar path \*(Ba Xo
-.Fl -file= Ns Ar path
+.Fl Fl file= Ns Ar path
 .Xc
 .Oc
 .Ek
@@ -77,51 +77,51 @@ decides upon.
 .Pp
 Supported options:
 .Bl -tag -width Ds
-.It Fl -no-v4
+.It Fl Fl no-v4
 This makes
 .Nm
 not try using Kerberos 4.
-.It Fl -no-v5
+.It Fl Fl no-v5
 This makes
 .Nm
 not try using Kerberos 5.
 .It Xo
 .Fl P Ar principal ,
-.Fl -principal Ar principal
+.Fl Fl principal Ar principal
 .Xc
 select what Kerberos 5 principal to use.
-.It Fl -cache Ar cache
+.It Fl Fl cache Ar cache
 select what Kerberos 5 credential cache to use.
-.Fl -principal
+.Fl Fl principal
 overrides this option.
 .It Xo
 .Fl u ,
-.Fl -unlog
+.Fl Fl unlog
 .Xc
 Destroy tokens instead of obtaining new. If this is specified, all
 other options are ignored (except for
-.Fl -help
+.Fl Fl help
 and
-.Fl -version ) .
+.Fl Fl version ) .
 .It Xo
 .Fl v ,
-.Fl -verbose
+.Fl Fl verbose
 .Xc
 Adds more verbosity for what is actually going on.
 .It Xo
 .Fl c Ar cell,
-.Fl -cell= Ns Ar cell
+.Fl Fl cell= Ns Ar cell
 .Xc
 This specified one or more cell names to get tokens for.
 .It Xo
 .Fl k Ar realm ,
-.Fl -realm= Ns Ar realm
+.Fl Fl realm= Ns Ar realm
 .Xc
 This is the Kerberos realm the AFS servers live in, this should
 normally not be specified.
 .It Xo
 .Fl p Ar path ,
-.Fl -file= Ns Ar path
+.Fl Fl file= Ns Ar path
 .Xc
 This specified one or more file paths for which tokens should be
 obtained.

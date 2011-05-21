@@ -39,16 +39,16 @@
 .Nd substitute user identity
 .Sh SYNOPSIS
 .Nm su
-.Op Fl K | Fl -no-kerberos
+.Op Fl K | Fl Fl no-kerberos
 .Op Fl f
-.Op Fl l | Fl -full
+.Op Fl l | Fl Fl full
 .Op Fl m
 .Oo Fl i Ar instance \*(Ba Xo
-.Fl -instance= Ns Ar instance
+.Fl Fl instance= Ns Ar instance
 .Xc
 .Oc
 .Oo Fl c Ar command \*(Ba Xo
-.Fl -command= Ns Ar command
+.Fl Fl command= Ns Ar command
 .Xc
 .Oc
 .Op Ar login Op Ar "shell arguments"
@@ -100,24 +100,24 @@ The options are as follows:
 .Bl -item -width Ds
 .It
 .Fl K ,
-.Fl -no-kerberos
+.Fl Fl no-kerberos
 don't use Kerberos.
 .It
 .Fl f
 don't read .cshrc.
 .It
 .Fl l ,
-.Fl -full
+.Fl Fl full
 simulate full login.
 .It
 .Fl m
 leave environment unmodified.
 .It
 .Fl i Ar instance ,
-.Fl -instance= Ns Ar instance
+.Fl Fl instance= Ns Ar instance
 root instance to use.
 .It
 .Fl c Ar command ,
-.Fl -command= Ns Ar command
+.Fl Fl command= Ns Ar command
 command to execute.
 .El

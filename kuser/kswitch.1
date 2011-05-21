@@ -39,48 +39,48 @@ switch between default credential caches
 .Sh SYNOPSIS
 .Nm
 .Oo Fl t Ar type \*(Ba Xo
-.Fl -type= Ns Ar type
+.Fl Fl type= Ns Ar type
 .Xc
 .Oc
 .Oo Fl c Ar cache \*(Ba Xo
-.Fl -cache= Ns Ar cache
+.Fl Fl cache= Ns Ar cache
 .Xc
 .Oc
 .Oo Fl p Ar principal \*(Ba Xo
-.Fl -principal= Ns Ar principal
+.Fl Fl principal= Ns Ar principal
 .Xc
 .Oc
-.Op Fl i | Fl -interactive
-.Op Fl -version
-.Op Fl -help
+.Op Fl i | Fl Fl interactive
+.Op Fl Fl version
+.Op Fl Fl help
 .Sh DESCRIPTION
 Supported options:
 .Bl -tag -width Ds
 .It Xo
 .Fl t Ar type ,
-.Fl -type= Ns Ar type
+.Fl Fl type= Ns Ar type
 .Xc
 type of credential cache
 .It Xo
 .Fl c Ar cache ,
-.Fl -cache= Ns Ar cache
+.Fl Fl cache= Ns Ar cache
 .Xc
 name of credential cache to switch to
 .It Xo
 .Fl p Ar principal ,
-.Fl -principal= Ns Ar principal
+.Fl Fl principal= Ns Ar principal
 .Xc
 name of principal to switch to
 .It Xo
 .Fl i ,
-.Fl -interactive
+.Fl Fl interactive
 .Xc
 interactive switching between credentials.
 .It Xo
-.Fl -version
+.Fl Fl version
 .Xc
 print version
 .It Xo
-.Fl -help
+.Fl Fl help
 .Xc
 .El

@@ -41,20 +41,20 @@
 .Nm
 .Oo
 .Fl p Ar port |
-.Fl -port Ns = Ns Ar port
+.Fl Fl port Ns = Ns Ar port
 .Oc
 .Oo
 .Fl l Ar login |
-.Fl -login Ns = Ns Ar login
+.Fl Fl login Ns = Ns Ar login
 .Oc
 .Oo
 .Fl c Ar ccache |
-.Fl -ccache Ns = Ns Ar ccache
+.Fl Fl ccache Ns = Ns Ar ccache
 .Oc
 .Op Fl F | -forwardable
 .Op Fl G | -no-forwardable
 .Op Fl h | -help
-.Op Fl -version
+.Op Fl Fl version
 .Ar host ...
 .Sh DESCRIPTION
 The
@@ -65,17 +65,17 @@ Options supported are:
 .Bl -tag -width indent
 .It Xo
 .Fl p Ar port ,
-.Fl -port Ns = Ns Ar port
+.Fl Fl port Ns = Ns Ar port
 .Xc
 port to connect to
 .It Xo
 .Fl l Ar login ,
-.Fl -login Ns = Ns Ar login
+.Fl Fl login Ns = Ns Ar login
 .Xc
 remote login name
 .It Xo
 .Fl c Ar ccache ,
-.Fl -ccache Ns = Ns Ar ccache
+.Fl Fl ccache Ns = Ns Ar ccache
 .Xc
 remote cred cache
 .It Fl F , -forwardable
@@ -83,7 +83,7 @@ forward forwardable credentials
 .It Fl G , -no-forwardable
 do not forward forwardable credentials
 .It Fl h , -help
-.It Fl -version
+.It Fl Fl version
 .El
 .Pp
 .Nm
@@ -94,7 +94,7 @@ In order for
 .Nm
 to work you will need to acquire your initial ticket with forwardable
 flag, i.e.
-.Nm kinit Fl -forwardable .
+.Nm kinit Fl Fl forwardable .
 .Pp
 .Nm telnet
 is able to forward tickets by itself.

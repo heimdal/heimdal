@@ -246,20 +246,20 @@ or
 .Pp
 Long option names are prefixed with -- (double dash), and the value
 with a = (equal),
-.Fl -foo= Ns Ar bar .
+.Fl Fl foo= Ns Ar bar .
 Long option flags can either be specified as they are
-.Pf ( Fl -help ) ,
+.Pf ( Fl Fl help ) ,
 or with an (boolean parsable) option
-.Pf ( Fl -help= Ns Ar yes ,
-.Fl -help= Ns Ar true ,
+.Pf ( Fl Fl help= Ns Ar yes ,
+.Fl Fl help= Ns Ar true ,
 or similar), or they can also be negated
-.Pf ( Fl -no-help
+.Pf ( Fl Fl no-help
 is the same as
-.Fl -help= Ns no ) ,
+.Fl Fl help= Ns no ) ,
 and if you're really confused you can do it multiple times
-.Pf ( Fl -no-no-help= Ns Ar false ,
+.Pf ( Fl Fl no-no-help= Ns Ar false ,
 or even
-.Fl -no-no-help= Ns Ar maybe ) .
+.Fl Fl no-no-help= Ns Ar maybe ) .
 .Sh EXAMPLE
 .Bd -literal
 #include <stdio.h>

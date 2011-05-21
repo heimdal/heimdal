@@ -47,7 +47,7 @@ POP3 server
 .Op Fl d
 .Op Fl i
 .Op Fl p Ar port
-.Op Fl -address-log= Ns Pa file
+.Op Fl Fl address-log= Ns Pa file
 .Sh DESCRIPTION
 .Nm
 serves mail via the Post Office Protocol.  Supported options include:
@@ -60,7 +60,7 @@ which authentication mode is acceptable,
 enables SASL (RFC2222),  and
 .Ar otp
 enables OTP (RFC1938) authentication. Both disable plaintext passwords.
-.It Fl -address-log= Ns Pa file
+.It Fl Fl address-log= Ns Pa file
 Logs the addresses (along with a timestamp) of all clients to the
 specified file. This can be used to implement POP-before-SMTP
 authentication.

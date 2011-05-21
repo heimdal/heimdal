@@ -38,23 +38,23 @@
 .Sh SYNOPSIS
 .Nm
 .Bk -words
-.Op Fl -addresses= Ns Ar address
-.Op Fl -check-library= Ns Ar library
-.Op Fl -check-function= Ns Ar function
+.Op Fl Fl addresses= Ns Ar address
+.Op Fl Fl check-library= Ns Ar library
+.Op Fl Fl check-function= Ns Ar function
 .Oo Fl k Ar kspec \*(Ba Xo
-.Fl -keytab= Ns Ar kspec
+.Fl Fl keytab= Ns Ar kspec
 .Xc
 .Oc
 .Oo Fl r Ar realm \*(Ba Xo
-.Fl -realm= Ns Ar realm
+.Fl Fl realm= Ns Ar realm
 .Xc
 .Oc
 .Oo Fl p Ar string \*(Ba Xo
-.Fl -port= Ns Ar string
+.Fl Fl port= Ns Ar string
 .Xc
 .Oc
-.Op Fl -version
-.Op Fl -help
+.Op Fl Fl version
+.Op Fl Fl help
 .Ek
 .Sh DESCRIPTION
 .Nm
@@ -64,14 +64,14 @@ the database directly and should thus only run on the master KDC.
 .Pp
 Supported options:
 .Bl -tag -width Ds
-.It Fl -addresses= Ns Ar address
+.It Fl Fl addresses= Ns Ar address
 For each till the argument is given, add the address to what kpasswdd
 should listen too.
-.It Fl -check-library= Ns Ar library
+.It Fl Fl check-library= Ns Ar library
 If your system has support for dynamic loading of shared libraries,
 you can use an external function to check password quality. This
 option specifies which library to load.
-.It Fl -check-function= Ns Ar function
+.It Fl Fl check-function= Ns Ar function
 This is the function to call in the loaded library. The function
 should look like this:
 .Pp
@@ -86,11 +86,11 @@ is the one who tries to change passwords, and
 is the new password. Note that the password (in
 .Fa password->data )
 is not zero terminated.
-.It Fl k Ar kspec , Fl -keytab= Ns Ar kspec
+.It Fl k Ar kspec , Fl Fl keytab= Ns Ar kspec
 Keytab to get authentication key from.
-.It Fl r Ar realm , Fl -realm= Ns Ar realm
+.It Fl r Ar realm , Fl Fl realm= Ns Ar realm
 Default realm.
-.It Fl p Ar string , Fl -port= Ns Ar string
+.It Fl p Ar string , Fl Fl port= Ns Ar string
 Port to listen on (default service kpasswd - 464).
 .El
 .Sh DIAGNOSTICS

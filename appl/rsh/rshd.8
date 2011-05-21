@@ -52,14 +52,14 @@ service.  Supported options are:
 .Bl -tag -width Ds
 .It Xo
 .Fl n ,
-.Fl -no-keepalive
+.Fl Fl no-keepalive
 .Xc
 Disables keep-alive messages.
 Keep-alives are packets sent at certain intervals to make sure that the
 client is still there, even when it doesn't send any data.
 .It Xo
 .Fl k ,
-.Fl -kerberos
+.Fl Fl kerberos
 .Xc
 Assume that clients connecting to this server will use some form of
 Kerberos authentication. See the
@@ -69,7 +69,7 @@ section for a sample
 configuration.
 .It Xo
 .Fl x ,
-.Fl -encrypt
+.Fl Fl encrypt
 .Xc
 For Kerberos 4 this means that the connections are encrypted. Kerberos
 5 can negotiate encryption even without this option, but if it's
@@ -79,14 +79,14 @@ will deny unencrypted connections. This option implies
 .Fl k .
 .\".It Xo
 .\".Fl l ,
-.\".Fl -no-rhosts
+.\".Fl Fl no-rhosts
 .\".Xc
 .\"When using old port-based authentication, the user's
 .\".Pa .rhosts
 .\"files are normally checked. This option disables this.
 .It Xo
 .Fl v ,
-.Fl -vacuous
+.Fl Fl vacuous
 .Xc
 If the connecting client does not use any Kerberised authentication,
 print a message that complains about this fact, and exit. This is
@@ -104,7 +104,7 @@ it possible to share tokens between sessions. This is only useful in
 peculiar environments, such as some batch systems.
 .It Xo
 .Fl i ,
-.Fl -no-inetd
+.Fl Fl no-inetd
 .Xc
 The
 .Fl i
@@ -115,7 +115,7 @@ to create a socket, instead of assuming that its stdin came from
 This is mostly useful for debugging.
 .It Xo
 .Fl p Ar port ,
-.Fl -port= Ns Ar port
+.Fl Fl port= Ns Ar port
 .Xc
 Port to use with
 .Fl i .

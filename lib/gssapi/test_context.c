@@ -600,7 +600,7 @@ main(int argc, char **argv)
 				    NULL,
 				    NULL);
 	if (GSS_ERROR(maj_stat))
-	    errx(1, "gss_acquire_cred_with_password: %s",
+	    errx(1, "gss_acquire_cred: %s",
 		 gssapi_err(maj_stat, min_stat, GSS_C_NO_OID));
     }
 

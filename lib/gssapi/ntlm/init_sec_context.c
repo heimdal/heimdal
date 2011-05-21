@@ -186,7 +186,7 @@ _gss_ntlm_get_user_cred(const ntlm_name target_name,
 static int
 _gss_copy_cred(ntlm_cred from, ntlm_cred *to)
 {
-    *to = calloc(1, sizeof(*to));
+    *to = calloc(1, sizeof(**to));
     if (*to == NULL)
 	return ENOMEM;
     (*to)->username = strdup(from->username);

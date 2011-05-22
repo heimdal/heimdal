@@ -53,11 +53,19 @@ _gss_ntlm_inquire_cred
 	return GSS_S_NO_CRED;
 
     if (name) {
-	ret = _gss_ntlm_duplicate_name(minor_status,
-				       (gss_name_t)cred_handle,
-				       name);
-	if (ret)
-	    goto out;
+	ntlm_name n = calloc(1, sizeof(*n));
+	ntlm_cred c = (ntlm_cred)cred_handle;
+	if (n) {
+	    n->user = strdup(c->username);
+	    n->domain = strdup(c->domain);
+	}
+	if (n == NULL || n->user == NULL || n->domain == NULL) {
+	    if (n)
+		free(n->user);
+	    *minor_status = ENOMEM;
+	    return GSS_S_FAILURE;
+	}
+	*name = (gss_name_t)n;
     }
     if (lifetime)
 	*lifetime = GSS_C_INDEFINITE;

@@ -33,7 +33,7 @@
 
 #include "der_locl.h"
 
-RCSID("$Id$");
+#define ASN1_MAX_YEAR	2000
 
 static int
 is_leap(unsigned y)
@@ -57,6 +57,12 @@ _der_timegm (struct tm *tm)
 {
   time_t res = 0;
   int i;
+
+  /*
+   * See comment in _der_gmtime
+   */
+  if (tm->tm_year > ASN1_MAX_YEAR)
+      return 0;
 
   if (tm->tm_year < 0)
       return -1;
@@ -101,9 +107,10 @@ _der_gmtime(time_t t, struct tm *tm)
     /*
      * Refuse to calculate time ~ 2000 years into the future, this is
      * not possible for systems where time_t is a int32_t, however,
-     * when time_t is a int64_t, that can happen.
+     * when time_t is a int64_t, that can happen, and this becomes a
+     * denial of sevice.
      */
-    if (days > 356000)
+    if (days > (ASN1_MAX_YEAR * 365))
 	return NULL;
 
     tm->tm_year = 70;

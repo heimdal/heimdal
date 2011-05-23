@@ -84,20 +84,15 @@ make_path(krb5_context context, struct tr_realm *r,
 	    if(strcmp(p, to) == 0)
 		break;
 	    tmp = calloc(1, sizeof(*tmp));
-	    if(tmp == NULL){
-		krb5_set_error_message(context, ENOMEM,
-				       N_("malloc: out of memory", ""));
-		return ENOMEM;
-	    }
+	    if(tmp == NULL)
+		return krb5_enomem(context);
 	    tmp->next = r->next;
 	    r->next = tmp;
 	    tmp->realm = strdup(p);
 	    if(tmp->realm == NULL){
 		r->next = tmp->next;
 		free(tmp);
-		krb5_set_error_message(context, ENOMEM,
-				       N_("malloc: out of memory", ""));
-		return ENOMEM;;
+		return krb5_enomem(context);
 	    }
 	}
     }else if(strncmp(from, to, strlen(to)) == 0){
@@ -110,20 +105,15 @@ make_path(krb5_context context, struct tr_realm *r,
 	    if(strncmp(to, from, p - from) == 0)
 		break;
 	    tmp = calloc(1, sizeof(*tmp));
-	    if(tmp == NULL){
-		krb5_set_error_message(context, ENOMEM,
-				       N_("malloc: out of memory", ""));
-		return ENOMEM;
-	    }
+	    if(tmp == NULL)
+		return krb5_enomem(context);
 	    tmp->next = r->next;
 	    r->next = tmp;
 	    tmp->realm = malloc(p - from + 1);
 	    if(tmp->realm == NULL){
 		r->next = tmp->next;
 		free(tmp);
-		krb5_set_error_message(context, ENOMEM,
-				       N_("malloc: out of memory", ""));
-		return ENOMEM;
+		return krb5_enomem(context);
 	    }
 	    memcpy(tmp->realm, from, p - from);
 	    tmp->realm[p - from] = '\0';
@@ -187,9 +177,7 @@ expand_realms(krb5_context context,
 	    tmp = realloc(r->realm, len);
 	    if(tmp == NULL){
 		free_realms(realms);
-		krb5_set_error_message(context, ENOMEM,
-				       N_("malloc: out of memory", ""));
-		return ENOMEM;
+		return krb5_enomem(context);
 	    }
 	    r->realm = tmp;
 	    strlcat(r->realm, prev_realm, len);
@@ -202,9 +190,7 @@ expand_realms(krb5_context context,
 	    tmp = malloc(len);
 	    if(tmp == NULL){
 		free_realms(realms);
-		krb5_set_error_message(context, ENOMEM,
-				       N_("malloc: out of memory", ""));
-		return ENOMEM;
+		return krb5_enomem(context);
 	    }
 	    strlcpy(tmp, prev_realm, len);
 	    strlcat(tmp, r->realm, len);
@@ -288,19 +274,14 @@ decode_realms(krb5_context context,
 	}
 	if(tr[i] == ','){
 	    tmp = malloc(tr + i - start + 1);
-	    if(tmp == NULL){
-		krb5_set_error_message(context, ENOMEM,
-				       N_("malloc: out of memory", ""));
-		return ENOMEM;
-	    }
+	    if(tmp == NULL)
+		return krb5_enomem(context);
 	    memcpy(tmp, start, tr + i - start);
 	    tmp[tr + i - start] = '\0';
 	    r = make_realm(tmp);
 	    if(r == NULL){
 		free_realms(*realms);
-		krb5_set_error_message(context, ENOMEM,
-				       N_("malloc: out of memory", ""));
-		return ENOMEM;
+		return krb5_enomem(context);
 	    }
 	    *realms = append_realm(*realms, r);
 	    start = tr + i + 1;
@@ -309,18 +290,14 @@ decode_realms(krb5_context context,
     tmp = malloc(tr + i - start + 1);
     if(tmp == NULL){
 	free(*realms);
-	krb5_set_error_message(context, ENOMEM,
-			       N_("malloc: out of memory", ""));
-	return ENOMEM;
+	return krb5_enomem(context);
     }
     memcpy(tmp, start, tr + i - start);
     tmp[tr + i - start] = '\0';
     r = make_realm(tmp);
     if(r == NULL){
 	free_realms(*realms);
-	krb5_set_error_message(context, ENOMEM,
-			       N_("malloc: out of memory", ""));
-	return ENOMEM;
+	return krb5_enomem(context);
     }
     *realms = append_realm(*realms, r);
 
@@ -377,7 +354,7 @@ krb5_domain_x500_decode(krb5_context context,
 	char **R;
 	R = malloc((*num_realms + 1) * sizeof(*R));
 	if (R == NULL)
-	    return ENOMEM;
+	    return krb5_enomem(context);
 	*realms = R;
 	while(r){
 	    *R++ = r->realm;

@@ -69,7 +69,7 @@ client_access(void *ctx,
 	      hdb_entry_ex *client, const char *client_name,
 	      hdb_entry_ex *server, const char *server_name,
 	      KDC_REQ *req,
-	      krb5_data *e_data)
+	      METHOD_DATA *data)
 {
     krb5_warnx(context, "client_access");
     return 0;

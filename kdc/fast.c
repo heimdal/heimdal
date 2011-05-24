@@ -275,7 +275,6 @@ _kdc_fast_unwrap_request(kdc_request_t r)
 	kdc_log(r->context, r->config, 5,
 		"armor key does not have secrets at this KDC, "
 		"need to proxy");
-	ret = KRB5KDC_ERR_S_PRINCIPAL_UNKNOWN;
 	goto out;
     } if(ret){
 	free_AP_REQ(&ap_req);

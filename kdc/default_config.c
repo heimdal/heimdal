@@ -51,10 +51,10 @@ krb5_kdc_get_config(krb5_context context, krb5_kdc_configuration **config)
     c->require_preauth = TRUE;
     c->kdc_warn_pwexpire = 0;
     c->encode_as_rep_as_tgs_rep = FALSE;
-    c->as_use_strongest_session_key = TRUE;
-    c->preauth_use_strongest_session_key = TRUE;
-    c->tgs_use_strongest_session_key = TRUE;
-    c->use_strongest_server_key = TRUE;
+    c->as_use_strongest_session_key = FALSE;
+    c->preauth_use_strongest_session_key = FALSE;
+    c->tgs_use_strongest_session_key = FALSE;
+    c->use_strongest_server_key = FALSE;
     c->check_ticket_addresses = TRUE;
     c->allow_null_ticket_addresses = TRUE;
     c->allow_anonymous = FALSE;

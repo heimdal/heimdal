@@ -98,6 +98,7 @@ unwrap_des
   if(cstate) {
       /* decrypt data */
       memcpy (&deskey, key->keyvalue.data, sizeof(deskey));
+      memset (&zero, 0, sizeof(zero));
 
       for (i = 0; i < sizeof(deskey); ++i)
 	  deskey[i] ^= 0xf0;

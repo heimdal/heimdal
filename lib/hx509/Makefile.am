@@ -199,6 +199,9 @@ LDADD = libhx509.la
 test_soft_pkcs11_LDADD = libhx509.la
 test_soft_pkcs11_CPPFLAGS = -I$(srcdir)/ref
 
+test_name_CPPFLAGS = $(INCLUDE_hcrypto)
+test_name_LDADD = libhx509.la $(LIB_roken)
+
 TESTS = $(SCRIPT_TESTS) $(PROGRAM_TESTS)
 
 PROGRAM_TESTS = 		\

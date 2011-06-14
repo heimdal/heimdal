@@ -292,8 +292,10 @@ typedef enum krb5_key_usage {
     /* Checksum key usage used in the digest opaque field */
     KRB5_KU_KRB5SIGNEDPATH = -21,
     /* Checksum key usage on KRB5SignedPath */
-    KRB5_KU_CANONICALIZED_NAMES = -23
+    KRB5_KU_CANONICALIZED_NAMES = -23,
     /* Checksum key usage on PA-CANONICALIZED */
+    KRB5_KU_H5L_COOKIE = -25
+    /* encrypted foo */
 } krb5_key_usage;
 
 typedef krb5_key_usage krb5_keyusage;

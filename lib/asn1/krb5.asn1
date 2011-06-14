@@ -78,7 +78,9 @@ EXPORTS
 	KrbFastResponse,
 	KrbFastFinished,
 	KrbFastReq,
-	KrbFastArmor
+	KrbFastArmor,
+	KDCFastState,
+	KDCFastCookie
 	;
 
 NAME-TYPE ::= INTEGER {
@@ -824,6 +826,25 @@ KrbFastArmoredRep ::= SEQUENCE {
 PA-FX-FAST-REPLY ::= CHOICE {
 	armored-data [0] KrbFastArmoredRep,
 	...
+}
+
+KDCFastFlags ::= BIT STRING {
+	use_reply_key(0),
+	reply_key_used(1),
+	reply_key_replaced(2),
+	kdc_verfied(3)
+}
+
+-- KDCFastState is stored in FX_COOKIE
+KDCFastState ::= SEQUENCE {
+	flags [0] KDCFastFlags,
+	expiration [1] GeneralizedTime,
+	fast-state [2] METHOD-DATA
+}
+
+KDCFastCookie ::= SEQUENCE {
+	version [0] UTF8String,
+	cookie [1] EncryptedData
 }
 
 END

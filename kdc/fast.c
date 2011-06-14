@@ -193,6 +193,71 @@ _kdc_fast_mk_error(krb5_context context,
     return ret;
 }
 
+static krb5_error_code
+fast_parse_cookie(kdc_request_t r, const PA_DATA *pa)
+{
+    krb5_principal fast_princ;
+    hdb_entry_ex *fast_user = NULL;
+    krb5_crypto crypto = NULL;
+    Key *cookie_key = NULL;
+    krb5_error_code ret;
+    KDCFastCookie data;
+    krb5_data d1;
+    size_t len;
+
+    ret = decode_KDCFastCookie(pa->padata_value.data,
+			       pa->padata_value.length,
+			       &data, &len);
+    if (ret)
+	return ret;
+
+    if (len != pa->padata_value.length || strcmp("H5L1", data.version) != 0) {
+	free_KDCFastCookie(&data);
+	return KRB5KDC_ERR_POLICY;
+    }
+
+    ret = krb5_make_principal(r->context, &fast_princ,
+			      "WELLKNOWN:ORG.H5L",
+			      "WELLKNOWN", "org.h5l.fast-cookie", NULL);
+    if (ret)
+	goto out;
+
+    ret = _kdc_db_fetch(r->context, r->config, fast_princ,
+			HDB_F_GET_CLIENT, NULL, NULL, &fast_user);
+    krb5_free_principal(r->context, fast_princ);
+    if (ret)
+	goto out;
+
+    ret = hdb_enctype2key(r->context, &fast_user->entry,
+			  data.cookie.e0type, &cookie_key);
+    if (ret)
+	goto out;
+
+    ret = krb5_crypto_init(r->context, &cookie_key->key, 0, &crypto);
+    if (ret)
+	goto out;
+
+    ret = krb5_decode_EncryptedData(crypto, crypto,
+				    KRB5_KU_H5L_COOKIE,
+				    &data.cookie, &d1);
+    krb5_crypto_destroy(r->context, crypto);
+    if (ret)
+	goto out;
+
+    ret = decode_KDCFastState(d1.data, d1.length, &r->fast, &len);
+    krb5_data_free(&d1);
+    if (ret)
+	goto out;
+
+ out:
+    free_KDCFastCookie(&data);
+    if (fast_user)
+	_kdc_free_ent(r->context, fast_user);
+
+    return ret;
+}
+
+
 
 krb5_error_code
 _kdc_fast_unwrap_request(kdc_request_t r)
@@ -214,6 +279,17 @@ _kdc_fast_unwrap_request(kdc_request_t r)
     const PA_DATA *pa;
     int i = 0;
 
+    /*
+     * First look for FX_COOKIE and and process it
+     */
+    pa = _kdc_find_padata(&r->req, &i, KRB5_PADATA_FX_COOKIE);
+    if (pa) {
+	ret = fast_parse_cookie(r, pa);
+	if (ret)
+	    goto out;
+    }
+			  
+    i = 0;
     pa = _kdc_find_padata(&r->req, &i, KRB5_PADATA_FX_FAST);
     if (pa == NULL)
 	return 0;

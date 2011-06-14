@@ -84,7 +84,7 @@ struct kdc_request_desc {
 
     krb5_crypto armor_crypto;
 
-    heim_dict_t pastate;
+    KDCFastState fast;
 };
 
 

@@ -373,42 +373,62 @@
       <ComponentRef Id='comp.kcc' />
 
       <?ifdef LsaCache ?>
-      <?ifdef Target32?>
-      <ComponentGroupRef Id='comps.LSACache.32' />
-      <?endif?>
       <?ifdef Target64?>
       <ComponentGroupRef Id='comps.LSACache.64' />
+      <?else?>
+      <ComponentGroupRef Id='comps.LSACache.32' />
       <?endif?>
       <?endif?>
 
       <?ifdef ApiCache ?>
-      <?ifdef Target32?>
-      <ComponentGroupRef Id='comps.APICache.32' />
-      <?endif?>
       <?ifdef Target64?>
       <ComponentGroupRef Id='comps.APICache.64' />
+      <?else?>
+      <ComponentGroupRef Id='comps.APICache.32' />
       <?endif?>
       <?endif?>
 
       <?ifdef MKShim ?>
-      <?ifdef Target32?>
-      <ComponentGroupRef Id='comp.Heimdal.MKShim.32' />
-      <?endif?>
       <?ifdef Target64?>
       <ComponentGroupRef Id='comp.Heimdal.MKShim.64' />
+      <?else?>
+      <ComponentGroupRef Id='comp.Heimdal.MKShim.32' />
       <?endif?>
-      <?endif?>
-
-      <?ifdef Target32?>
-      <MergeRef Id='Heimdal.Assemblies.32' />
-      <MergeRef Id='Heimdal.Policy.32' />
-      <MergeRef Id='Runtime.32' />
       <?endif?>
 
       <?ifdef Target64?>
       <MergeRef Id='Heimdal.Assemblies.64' />
       <MergeRef Id='Heimdal.Policy.64' />
       <MergeRef Id='Runtime.64' />
+      <?else?>
+      <MergeRef Id='Heimdal.Assemblies.32' />
+      <MergeRef Id='Heimdal.Policy.32' />
+      <MergeRef Id='Runtime.32' />
+      <?endif?>
+
+      <?ifdef Target32?>
+      <?ifdef Target64?>
+      <!-- If we are building the combined installer, the 32-bit
+           libraries go into a separate feature. -->
+      <Feature Id='feature.32BitLibraries'
+               ConfigurableDirectory='INSTALLDIR32'
+               Title='!(loc.Fea32BitTitle)'
+               Description='!(loc.Fea32BitDesc)'
+               Level='1' TypicalDefault='install' InstallDefault='local'>
+        <?ifdef LsaCache ?>
+        <ComponentGroupRef Id='comps.LSACache.32' />
+        <?endif?>
+        <?ifdef ApiCache ?>
+        <ComponentGroupRef Id='comps.APICache.32' />
+        <?endif?>
+        <?ifdef MKShim ?>
+        <ComponentGroupRef Id='comp.Heimdal.MKShim.32' />
+        <?endif?>
+        <MergeRef Id='Heimdal.Assemblies.32' />
+        <MergeRef Id='Heimdal.Policy.32' />
+        <MergeRef Id='Runtime.32' />
+      </Feature>
+      <?endif?>
       <?endif?>
 
     </Feature>

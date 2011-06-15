@@ -671,7 +671,7 @@ init_as_req (krb5_context context,
 	*a->req_body.rtime = creds->times.renew_till;
     }
     a->req_body.nonce = 0;
-    ret = krb5_init_etype (context,
+    ret = _krb5_init_etype(context,
 			   KRB5_PDU_AS_REQUEST,
 			   &a->req_body.etype.len,
 			   &a->req_body.etype.val,

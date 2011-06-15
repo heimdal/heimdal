@@ -893,34 +893,49 @@ krb5_kerberos_enctypes(krb5_context context)
 }
 
 /*
+ *
+ */
+
+static krb5_error_code
+copy_enctypes(krb5_context context, const krb5_enctype *in, krb5_enctype **out)
+{
+    krb5_enctype *p = NULL;
+    krb5_error_code ret;
+    size_t m, n;
+
+    for (n = 0; in[n]; n++)
+	;
+    n++;
+    ALLOC(p, n);
+    if(p == NULL)
+	return krb5_enomem(context);
+    for (n = 0, m = 0; in[n]; n++) {
+	ret = krb5_enctype_valid(context, in[n]);
+	if (ret)
+	    continue;
+	p[m++] = in[n];
+    }
+    p[m] = KRB5_ENCTYPE_NULL;
+    if (m == 0) {
+	free(p);
+	krb5_set_error_message (context, KRB5_PROG_ETYPE_NOSUPP,
+				N_("no valid enctype set", ""));
+	return KRB5_PROG_ETYPE_NOSUPP;
+    }
+    *out = p;
+    return 0;
+}
+
+
+/*
  * set `etype' to a malloced list of the default enctypes
  */
 
 static krb5_error_code
 default_etypes(krb5_context context, krb5_enctype **etype)
 {
-    const krb5_enctype *p;
-    krb5_enctype *e = NULL, *ep;
-    int i, n = 0;
-
-    p = krb5_kerberos_enctypes(context);
-
-    for (i = 0; p[i] != ETYPE_NULL; i++) {
-	if (krb5_enctype_valid(context, p[i]) != 0)
-	    continue;
-	ep = realloc(e, (n + 2) * sizeof(*e));
-	if (ep == NULL) {
-	    free(e);
-	    krb5_set_error_message (context, ENOMEM, N_("malloc: out of memory", ""));
-	    return ENOMEM;
-	}
-	e = ep;
-	e[n] = p[i];
-	e[n + 1] = ETYPE_NULL;
-	n++;
-    }
-    *etype = e;
-    return 0;
+    const krb5_enctype *p = krb5_kerberos_enctypes(context);
+    return copy_enctypes(context, p, etype);
 }
 
 /**
@@ -942,31 +957,11 @@ krb5_set_default_in_tkt_etypes(krb5_context context,
 {
     krb5_error_code ret;
     krb5_enctype *p = NULL;
-    unsigned int n, m;
 
     if(etypes) {
-	for (n = 0; etypes[n]; n++)
-	    ;
-	n++;
-	ALLOC(p, n);
-	if(!p) {
-	    krb5_set_error_message (context, ENOMEM,
-				    N_("malloc: out of memory", ""));
-	    return ENOMEM;
-	}
-	for (n = 0, m = 0; etypes[n]; n++) {
-	    ret = krb5_enctype_valid(context, etypes[n]);
-	    if (ret)
-		continue;
-	    p[m++] = etypes[n];
-	}
-	p[m] = ETYPE_NULL;
-	if (m == 0) {
-	    free(p);
-	    krb5_set_error_message (context, KRB5_PROG_ETYPE_NOSUPP,
-				    N_("no valid enctype set", ""));
-	    return KRB5_PROG_ETYPE_NOSUPP;
-	}
+	ret = copy_enctypes(context, etypes, &p);
+	if (ret)
+	    return ret;
     }
     if(context->etypes)
 	free(context->etypes);
@@ -993,13 +988,13 @@ krb5_get_default_in_tkt_etypes(krb5_context context,
 			       krb5_pdu pdu_type,
 			       krb5_enctype **etypes)
 {
-    krb5_enctype *enctypes;
-    krb5_enctype *p;
-    int i;
+    krb5_enctype *enctypes = NULL;
     krb5_error_code ret;
+    krb5_enctype *p;
 
-    assert(pdu_type == KRB5_PDU_AS_REQUEST || pdu_type == KRB5_PDU_TGS_REQUEST
-	   || pdu_type == KRB5_PDU_NONE);
+    heim_assert(pdu_type == KRB5_PDU_AS_REQUEST || 
+		pdu_type == KRB5_PDU_TGS_REQUEST ||
+		pdu_type == KRB5_PDU_NONE, "pdu contant not as expected");
 
     if (pdu_type == KRB5_PDU_AS_REQUEST && context->as_etypes != NULL)
 	enctypes = context->as_etypes;
@@ -1009,14 +1004,9 @@ krb5_get_default_in_tkt_etypes(krb5_context context,
 	enctypes = context->etypes;
 
     if (enctypes != NULL) {
-	for (i = 0; enctypes[i]; i++);
-	++i;
-	ALLOC (p, i);
-	if (!p) {
-	    krb5_set_error_message (context, ENOMEM, N_("malloc: out of memory", ""));
-	    return ENOMEM;
-	}
-	memmove(p, enctypes, i * sizeof(krb5_enctype));
+	ret = copy_enctypes(context, enctypes, &p);
+	if (ret)
+	    return ret;
     } else {
 	ret = default_etypes(context, &p);
 	if (ret)
@@ -1421,10 +1411,11 @@ krb5_set_max_time_skew (krb5_context context, time_t t)
     context->max_skew = t;
 }
 
-/**
+/*
  * Init encryption types in len, val with etypes.
  *
  * @param context Kerberos 5 context.
+ * @param pdu_type type of pdu
  * @param len output length of val.
  * @param val output array of enctypes.
  * @param etypes etypes to set val and len to, if NULL, use default enctypes.
@@ -1436,40 +1427,16 @@ krb5_set_max_time_skew (krb5_context context, time_t t)
  */
 
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
-krb5_init_etype (krb5_context context,
+_krb5_init_etype(krb5_context context,
 		 krb5_pdu pdu_type,
 		 unsigned *len,
 		 krb5_enctype **val,
 		 const krb5_enctype *etypes)
 {
-    unsigned int i;
-    krb5_error_code ret;
-    krb5_enctype *tmp = NULL;
+    if (etypes == NULL)
+	return krb5_get_default_in_tkt_etypes(context, pdu_type, val);
 
-    ret = 0;
-    if (etypes == NULL) {
-	ret = krb5_get_default_in_tkt_etypes(context, pdu_type, &tmp);
-	if (ret)
-	    return ret;
-	etypes = tmp;
-    }
-
-    for (i = 0; etypes[i]; ++i)
-	;
-    *len = i;
-    *val = malloc(i * sizeof(**val));
-    if (i != 0 && *val == NULL) {
-	ret = ENOMEM;
-	krb5_set_error_message(context, ret, N_("malloc: out of memory", ""));
-	goto cleanup;
-    }
-    memmove (*val,
-	     etypes,
-	     i * sizeof(*tmp));
-cleanup:
-    if (tmp != NULL)
-	free (tmp);
-    return ret;
+    return copy_enctypes(context, etypes, val);
 }
 
 /*

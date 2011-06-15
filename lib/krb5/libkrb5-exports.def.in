@@ -392,7 +392,6 @@ EXPORTS
 	krb5_hmac
 	krb5_init_context
 	krb5_init_ets
-	krb5_init_etype
 	krb5_initlog
 	krb5_is_config_principal
 	krb5_is_thread_safe

@@ -354,7 +354,7 @@
 
     <Feature Id='feature.Main' ConfigurableDirectory='$(var.ConfigDir)'
              Title='!(loc.FeaMainTitle)'
-             Description='!(loc.FeaMainDesc)'
+             Description='!(loc.FeaMainDesc)' Display='expand'
              Level='1' TypicalDefault='install' InstallDefault='local'>
 
       <ComponentRef Id='comp.HX509.chm' />
@@ -445,9 +445,7 @@
 
     <Property Id='ALLUSERS' Value='1' Secure='yes' />
 
-    <Property Id='WIXUI_INSTALLDIR' Value='$(var.ConfigDir)' />
-
-    <UIRef Id='WixUI_InstallDir' />
+    <UIRef Id='WixUI_FeatureTree' />
 
   </Product>
 </Wix>

@@ -598,6 +598,11 @@ AH_BOTTOM([#ifdef ROKEN_RENAME
 #include "roken_rename.h"
 #endif])
 
+AC_ARG_ENABLE(heimdal-documentation,
+	AS_HELP_STRING([--disable-heimdal-documentation],
+		[if you want disable to heimdal documentation]))
+AM_CONDITIONAL(HEIMDAL_DOCUMENTATION, test "$enable_heimdal_documentation" != no)
+
 AC_CONFIG_FILES(Makefile 		\
 	etc/Makefile			\
 	include/Makefile		\

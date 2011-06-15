@@ -93,7 +93,6 @@ hex_decode(const char *str, void *data, size_t len)
     if ((l/2) + (l&1) > len)
 	return -1;
 
-    i = 0;
     if (l & 1) {
 	p[0] = pos(str[0]);
 	str++;

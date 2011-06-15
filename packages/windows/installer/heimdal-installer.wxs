@@ -217,7 +217,7 @@
       <Component Id='comp.Plugin.Reg.32' Feature='feature.Main'
                  Guid='4BC44234-70A4-4CC1-A5AF-4CA76E9F9487' Win64='no'>
         <RegistryKey Action='createAndRemoveOnUninstall' Root='HKLM'
-                     Key='Software\Kerberos'>
+                     Key='Software\Heimdal'>
           <RegistryValue Name='plugin_dir' Type='multiString' Action='append'
                          Value='"[PLUGINDIR32]"' KeyPath='yes' />
         </RegistryKey>
@@ -230,7 +230,7 @@
       <Component Id='comp.Plugin.Reg.64' Feature='feature.Main'
                  Guid='5A99A52E-A4CD-40F8-AFFD-AD61939FC547' Win64='yes'>
         <RegistryKey Action='createAndRemoveOnUninstall' Root='HKLM'
-                     Key='Software\Kerberos'>
+                     Key='Software\Heimdal'>
           <RegistryValue Name='plugin_dir' Type='multiString' Action='append'
                          Value='"[PLUGINDIR64]"' KeyPath='yes' />
         </RegistryKey>

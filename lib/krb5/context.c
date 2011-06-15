@@ -897,10 +897,11 @@ krb5_kerberos_enctypes(krb5_context context)
  */
 
 static krb5_error_code
-copy_enctypes(krb5_context context, const krb5_enctype *in, krb5_enctype **out)
+copy_enctypes(krb5_context context,
+	      const krb5_enctype *in,
+	      krb5_enctype **out)
 {
     krb5_enctype *p = NULL;
-    krb5_error_code ret;
     size_t m, n;
 
     for (n = 0; in[n]; n++)
@@ -910,8 +911,7 @@ copy_enctypes(krb5_context context, const krb5_enctype *in, krb5_enctype **out)
     if(p == NULL)
 	return krb5_enomem(context);
     for (n = 0, m = 0; in[n]; n++) {
-	ret = krb5_enctype_valid(context, in[n]);
-	if (ret)
+	if (krb5_enctype_valid(context, in[n]) != 0)
 	    continue;
 	p[m++] = in[n];
     }
@@ -1433,10 +1433,21 @@ _krb5_init_etype(krb5_context context,
 		 krb5_enctype **val,
 		 const krb5_enctype *etypes)
 {
-    if (etypes == NULL)
-	return krb5_get_default_in_tkt_etypes(context, pdu_type, val);
+    krb5_error_code ret;
 
-    return copy_enctypes(context, etypes, val);
+    if (etypes == NULL)
+	ret = krb5_get_default_in_tkt_etypes(context, pdu_type, val);
+    else
+	ret = copy_enctypes(context, etypes, val);
+    if (ret)
+	return ret;
+
+    if (len) {
+	*len = 0;
+	while ((*val)[*len] != KRB5_ENCTYPE_NULL)
+	    (*len)++;
+    }
+    return 0;
 }
 
 /*

@@ -274,7 +274,7 @@ encode_type (const char *name, const Type *t, const char *tmpstr)
 	    else if(m->defval)
 		gen_compare_defval(s + 1, m->defval);
 	    fprintf (codefile, "{\n");
-	    fprintf (codefile, "size_t %s_oldret = ret;\n", tmpstr);
+	    fprintf (codefile, "size_t %s_oldret HEIMDAL_UNUSED_ATTRIBUTE = ret;\n", tmpstr);
 	    fprintf (codefile, "ret = 0;\n");
 	    encode_type (s, m->type, m->gen_name);
 	    fprintf (codefile, "ret += %s_oldret;\n", tmpstr);
@@ -503,7 +503,7 @@ void
 generate_type_encode (const Symbol *s)
 {
     fprintf (codefile, "int ASN1CALL\n"
-	     "encode_%s(unsigned char *p, size_t len,"
+	     "encode_%s(unsigned char *p HEIMDAL_UNUSED_ATTRIBUTE, size_t len HEIMDAL_UNUSED_ATTRIBUTE,"
 	     " const %s *data, size_t *size)\n"
 	     "{\n",
 	     s->gen_name, s->gen_name);
@@ -534,10 +534,9 @@ generate_type_encode (const Symbol *s)
     case TType:
     case TChoice:
 	fprintf (codefile,
-		 "size_t ret = 0;\n"
-		 "size_t l;\n"
-		 "int i, e;\n\n");
-	fprintf(codefile, "i = 0;\n"); /* hack to avoid `unused variable' */
+		 "size_t ret HEIMDAL_UNUSED_ATTRIBUTE = 0;\n"
+		 "size_t l HEIMDAL_UNUSED_ATTRIBUTE;\n"
+		 "int i HEIMDAL_UNUSED_ATTRIBUTE, e HEIMDAL_UNUSED_ATTRIBUTE;\n\n");
 
 	encode_type("data", s->type, "Top");
 

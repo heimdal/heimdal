@@ -609,7 +609,7 @@ decode_type (const char *name, const Type *t, int optional,
 		    "(%s)->element = %s;\n"
 		    "p += len;\n"
 		    "ret += len;\n"
-		    "len -= len;\n"
+		    "len = 0;\n"
 		    "}\n",
 		    name, have_ellipsis->gen_name,
 		    name, have_ellipsis->gen_name,
@@ -666,8 +666,8 @@ generate_type_decode (const Symbol *s)
     int preserve = preserve_type(s->name) ? TRUE : FALSE;
 
     fprintf (codefile, "int ASN1CALL\n"
-	     "decode_%s(const unsigned char *p,"
-	     " size_t len, %s *data, size_t *size)\n"
+	     "decode_%s(const unsigned char *p HEIMDAL_UNUSED_ATTRIBUTE,"
+	     " size_t len HEIMDAL_UNUSED_ATTRIBUTE, %s *data, size_t *size)\n"
 	     "{\n",
 	     s->gen_name, s->gen_name);
 
@@ -698,8 +698,8 @@ generate_type_decode (const Symbol *s)
     case TChoice:
 	fprintf (codefile,
 		 "size_t ret = 0;\n"
-		 "size_t l;\n"
-		 "int e;\n");
+		 "size_t l HEIMDAL_UNUSED_ATTRIBUTE;\n"
+		 "int e HEIMDAL_UNUSED_ATTRIBUTE;\n");
 	if (preserve)
 	    fprintf (codefile, "const unsigned char *begin = p;\n");
 

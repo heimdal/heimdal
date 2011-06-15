@@ -1099,7 +1099,7 @@ _kdc_as_rep(krb5_context context,
 			  NULL);
     if (ret) {
 	kdc_log(context, config, 0,
-		"Client (%s) from %s has no common enctypes with KDC"
+		"Client (%s) from %s has no common enctypes with KDC "
 		"to use for the session key",
 		client_name, from);
 	goto out;

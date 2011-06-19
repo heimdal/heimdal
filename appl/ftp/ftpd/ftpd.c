@@ -1271,7 +1271,7 @@ dataconn(const char *name, off_t size, const char *mode)
 		}
 		close(pdata);
 		pdata = s;
-#if defined(IP_TOS) && defined(HAVE_SETSOCKOPT)
+#if defined(IP_TOS)
 		if (from->sa_family == AF_INET)
 		    socket_set_tos(s, IPTOS_THROUGHPUT);
 #endif

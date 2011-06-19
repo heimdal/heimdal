@@ -35,7 +35,8 @@
 #error  config_reg.c is only for Windows
 #endif
 
-#define REGPATH "SOFTWARE\\Kerberos"
+#define REGPATH_KERBEROS "SOFTWARE\\Kerberos"
+#define REGPATH_HEIMDAL  "SOFTWARE\\Heimdal"
 
 /**
  * Parse a registry value as a string
@@ -420,6 +421,26 @@ parse_reg_root(krb5_context context,
     return parse_reg_subkeys(context, key, parent);
 }
 
+static krb5_error_code
+load_config_from_regpath(krb5_context context,
+                         HKEY hk_root,
+                         const char* key_path,
+                         krb5_config_section ** res)
+{
+    HKEY            key  = NULL;
+    LONG            rcode;
+    krb5_error_code code = 0;
+
+    rcode = RegOpenKeyEx(hk_root, key_path, 0, KEY_READ, &key);
+    if (rcode == ERROR_SUCCESS) {
+        code = parse_reg_root(context, key, res);
+        RegCloseKey(key);
+        key = NULL;
+    }
+
+    return code;
+}
+
 /**
  * Load configuration from registry
  *
@@ -436,29 +457,26 @@ krb5_error_code
 _krb5_load_config_from_registry(krb5_context context,
                                 krb5_config_section ** res)
 {
-    HKEY        key = NULL;
-    LONG        rcode;
-    krb5_error_code code = 0;
+    krb5_error_code code;
 
-    rcode = RegOpenKeyEx(HKEY_LOCAL_MACHINE, REGPATH, 0, KEY_READ, &key);
-    if (rcode == ERROR_SUCCESS) {
-        code = parse_reg_root(context, key, res);
-        RegCloseKey(key);
-        key = NULL;
+    code = load_config_from_regpath(context, HKEY_LOCAL_MACHINE,
+                                    REGPATH_KERBEROS, res);
+    if (code)
+        return code;
 
-        if (code)
-            return code;
-    }
+    code = load_config_from_regpath(context, HKEY_LOCAL_MACHINE,
+                                    REGPATH_HEIMDAL, res);
+    if (code)
+        return code;
 
-    rcode = RegOpenKeyEx(HKEY_CURRENT_USER, REGPATH, 0, KEY_READ, &key);
-    if (rcode == ERROR_SUCCESS) {
-        code = parse_reg_root(context, key, res);
-        RegCloseKey(key);
-        key = NULL;
+    code = load_config_from_regpath(context, HKEY_CURRENT_USER,
+                                    REGPATH_KERBEROS, res);
+    if (code)
+        return code;
 
-        if (code)
-            return code;
-    }
-
+    code = load_config_from_regpath(context, HKEY_CURRENT_USER,
+                                    REGPATH_HEIMDAL, res);
+    if (code)
+        return code;
     return 0;
 }

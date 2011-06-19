@@ -2043,6 +2043,7 @@ server_lookup:
 	}
 
 	krb5_data_free(&rspac);
+
 	/*
 	 * generate the PAC for the user.
 	 *
@@ -2054,8 +2055,6 @@ server_lookup:
 			&clientkey->key, &tkey_check->key,
 			ekey, &tkey_sign->key,
 			&adtkt, &rspac, &ad_signedpath);
-	if (ret == 0 && !ad_signedpath)
-	    ret = KRB5KDC_ERR_BADOPTION;
 	if (ret) {
 	    const char *msg = krb5_get_error_message(context, ret);
 	    kdc_log(context, config, 0,
@@ -2072,12 +2071,10 @@ server_lookup:
 	ret = check_KRB5SignedPath(context,
 				   config,
 				   krbtgt,
-				   tp,
+				   cp,
 				   &adtkt,
 				   NULL,
 				   &ad_signedpath);
-	if (ret == 0 && !ad_signedpath)
-	    ret = KRB5KDC_ERR_BADOPTION;
 	if (ret) {
 	    const char *msg = krb5_get_error_message(context, ret);
 	    kdc_log(context, config, 0,
@@ -2086,6 +2083,16 @@ server_lookup:
 		    "from %s failed with %s",
 		    spn, tpn, cpn, from, msg);
 	    krb5_free_error_message(context, msg);
+	    goto out;
+	}
+
+	if (!ad_signedpath) {
+	    ret = KRB5KDC_ERR_BADOPTION;
+	    kdc_log(context, config, 0,
+		    "Ticket not signed with PAC nor SignedPath service %s failed "
+		    "for delegation to %s for client %s "
+		    "from %s",
+		    spn, tpn, cpn, from);
 	    goto out;
 	}
 

@@ -346,14 +346,9 @@ main(int argc, char **argv)
 	syslog(LOG_ERR, "getsockname (%s): %m",argv[0]);
 	exit(1);
     }
-#if defined(IP_TOS) && defined(HAVE_SETSOCKOPT)
-    {
-	int tos = IPTOS_LOWDELAY;
-
-	if (setsockopt(STDIN_FILENO, IPPROTO_IP, IP_TOS,
-		       (void *)&tos, sizeof(int)) < 0)
-	    syslog(LOG_WARNING, "setsockopt (IP_TOS): %m");
-    }
+#if defined(IP_TOS)
+    if (ctrl_addr->sa_family == AF_INET)
+	socket_set_tos(STDIN_FILENO, IP_TOS);
 #endif
     data_source->sa_family = ctrl_addr->sa_family;
     socket_set_port (data_source,
@@ -1277,12 +1272,8 @@ dataconn(const char *name, off_t size, const char *mode)
 		close(pdata);
 		pdata = s;
 #if defined(IP_TOS) && defined(HAVE_SETSOCKOPT)
-		{
-		    int tos = IPTOS_THROUGHPUT;
-
-		    setsockopt(s, IPPROTO_IP, IP_TOS, (void *)&tos,
-			       sizeof(tos));
-		}
+		if (from->sa_family == AF_INET)
+		    socket_set_tos(s, IPTOS_THROUGHPUT);
 #endif
 		reply(150, "Opening %s mode data connection for '%s'%s.",
 		     type == TYPE_A ? "ASCII" : "BINARY", name, sizebuf);

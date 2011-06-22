@@ -306,7 +306,7 @@ gen_assign_defval(const char *var, struct value *val)
 	fprintf(codefile, "if((%s = strdup(\"%s\")) == NULL)\nreturn ENOMEM;\n", var, val->u.stringvalue);
 	break;
     case integervalue:
-	fprintf(codefile, "%s = %d;\n", var, val->u.integervalue);
+	fprintf(codefile, "%s = %lld;\n", var, val->u.integervalue);
 	break;
     case booleanvalue:
 	if(val->u.booleanvalue)
@@ -327,7 +327,7 @@ gen_compare_defval(const char *var, struct value *val)
 	fprintf(codefile, "if(strcmp(%s, \"%s\") != 0)\n", var, val->u.stringvalue);
 	break;
     case integervalue:
-	fprintf(codefile, "if(%s != %d)\n", var, val->u.integervalue);
+	fprintf(codefile, "if(%s != %lld)\n", var, val->u.integervalue);
 	break;
     case booleanvalue:
 	if(val->u.booleanvalue)
@@ -400,7 +400,7 @@ generate_constant (const Symbol *s)
     case booleanvalue:
 	break;
     case integervalue:
-	fprintf (headerfile, "enum { %s = %d };\n\n",
+	fprintf (headerfile, "enum { %s = %lld };\n\n",
 		 s->gen_name, s->value->u.integervalue);
 	break;
     case nullvalue:
@@ -543,7 +543,7 @@ define_asn1 (int level, Type *t)
 	if(t->members == NULL) {
             fprintf (headerfile, "INTEGER");
 	    if (t->range)
-		fprintf (headerfile, " (%d..%d)",
+		fprintf (headerfile, " (%lld..%lld)",
 			 t->range->min, t->range->max);
         } else {
 	    Member *m;
@@ -726,14 +726,16 @@ define_type (int level, const char *name, const char *basename, Type *t, int typ
             fprintf (headerfile, "} %s;\n", name);
 	} else if (t->range == NULL) {
 	    fprintf (headerfile, "heim_integer %s;\n", name);
-	} else if (t->range->min == INT_MIN && t->range->max == INT_MAX) {
+	} else if (t->range->min < INT_MIN && t->range->max <= INT64_MAX) {
+	    fprintf (headerfile, "int64_t %s;\n", name);
+	} else if (t->range->min >= 0 && t->range->max > UINT_MAX) {
+	    fprintf (headerfile, "uint64_t %s;\n", name);
+	} else if (t->range->min >= INT_MIN && t->range->max <= INT_MAX) {
 	    fprintf (headerfile, "int %s;\n", name);
-	} else if (t->range->min == 0 && t->range->max == UINT_MAX) {
-	    fprintf (headerfile, "unsigned int %s;\n", name);
-	} else if (t->range->min == 0 && t->range->max == INT_MAX) {
+	} else if (t->range->min >= 0 && t->range->max <= UINT_MAX) {
 	    fprintf (headerfile, "unsigned int %s;\n", name);
 	} else
-	    errx(1, "%s: unsupported range %d -> %d",
+	    errx(1, "%s: unsupported range %lld -> %lld",
 		 name, t->range->min, t->range->max);
 	break;
     case TBoolean:

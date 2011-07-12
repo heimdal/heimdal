@@ -89,7 +89,7 @@ HDB-Ext-Aliases ::= SEQUENCE {
 
 hdb_keyset ::= SEQUENCE {
 	kvno[0]		INTEGER (0..4294967295),
-	replace-time[1]	KerberosTime,	-- time this key was replaced
+	set-time[1]	KerberosTime,	-- time this key was created/set
 	keys[2]		SEQUENCE OF Key
 }
 

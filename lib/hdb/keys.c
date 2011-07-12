@@ -247,7 +247,7 @@ hdb_add_current_keys_to_history(krb5_context context, hdb_entry *entry)
     hist_keys->val[0].keys.val = entry->keys.val;
     hist_keys->val[0].keys.len = entry->keys.len;
     hist_keys->val[0].kvno = entry->kvno;
-    hist_keys->val[0].replace_time = time(NULL);
+    (void) hdb_entry_get_pw_change_time(entry, &hist_keys->val[0].set_time);
 
     if (add) {
 	ret = hdb_replace_extension(context, entry, ext);

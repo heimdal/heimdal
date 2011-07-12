@@ -549,7 +549,7 @@ hdb_unseal_keys_kvno(krb5_context context, HDB *db, krb5_kvno kvno,
 	tmp_keys[0].keys.len = ent->keys.len;
 	tmp_keys[0].keys.val = ent->keys.val;
 	tmp_keys[0].kvno = ent->kvno;
-	tmp_keys[0].replace_time = time(NULL);
+	(void) hdb_entry_get_pw_change_time(ent, &tmp_keys[0].set_time);
 	i++;
 	ent->keys.len = hist_keys->val[i].keys.len;
 	ent->keys.val = hist_keys->val[i].keys.val;

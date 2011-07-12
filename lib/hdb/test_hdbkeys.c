@@ -88,7 +88,7 @@ main(int argc, char **argv)
     memset(&keyset, 0, sizeof(keyset));
 
     keyset.kvno = kvno_integer;
-    keyset.replace_time = time(NULL);
+    keyset.set_time = time(NULL);
 
     ret = hdb_generate_key_set_password(context, principal, password_str,
 					&keyset.keys.val, &len);

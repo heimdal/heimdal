@@ -485,7 +485,7 @@ hdb_unseal_keys_kvno(krb5_context context, HDB *db, krb5_kvno kvno,
 		     hdb_entry *ent)
 {
     krb5_error_code ret = KRB5KRB_AP_ERR_NOKEY;	/* XXX need a better code? */
-    HDB_extension *tmp;
+    HDB_extension *ext;
     HDB_Ext_KeySet *hist_keys;
     hdb_keyset *tmp_keys;
     Key *tmp_val;
@@ -495,15 +495,15 @@ hdb_unseal_keys_kvno(krb5_context context, HDB *db, krb5_kvno kvno,
 
     assert(kvno == 0 || kvno < ent->kvno);
 
-    tmp = hdb_find_extension(ent, choice_HDB_extension_data_hist_keys);
-    if (tmp == NULL)
+    ext = hdb_find_extension(ent, choice_HDB_extension_data_hist_keys);
+    if (ext == NULL)
 	return ret;
 
     tmp_len = ent->keys.len;
     tmp_val = ent->keys.val;
     tmp_kvno = ent->kvno;
 
-    hist_keys = &tmp->data.u.hist_keys;
+    hist_keys = &ext->data.u.hist_keys;
 
     for (i = hist_keys->len - 1; i >= 0; i++) {
 	if (kvno != 0 && hist_keys->val[i].kvno != kvno)
@@ -606,14 +606,31 @@ hdb_seal_key_mkey(krb5_context context, Key *k, hdb_master_key mkey)
 krb5_error_code
 hdb_seal_keys_mkey(krb5_context context, hdb_entry *ent, hdb_master_key mkey)
 {
-    size_t i;
-    for(i = 0; i < ent->keys.len; i++){
-	krb5_error_code ret;
+    HDB_extension *ext;
+    HDB_Ext_KeySet *hist_keys;
+    size_t i, k;
+    krb5_error_code ret;
 
+    for(i = 0; i < ent->keys.len; i++){
 	ret = hdb_seal_key_mkey(context, &ent->keys.val[i], mkey);
 	if (ret)
 	    return ret;
     }
+
+    ext = hdb_find_extension(ent, choice_HDB_extension_data_hist_keys);
+    if (ext == NULL)
+	return 0;
+    hist_keys = &ext->data.u.hist_keys;
+
+    for (i = 0; i < hist_keys->len; i++) {
+	for (k = 0; k < hist_keys->val[i].keys.len; i++) {
+	    ret = hdb_seal_key_mkey(context, &hist_keys->val[i].keys.val[k],
+				    mkey);
+	    if (ret)
+		return ret;
+	}
+    }
+
     return 0;
 }
 

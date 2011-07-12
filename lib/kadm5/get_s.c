@@ -64,6 +64,57 @@ add_tl_data(kadm5_principal_ent_t ent, int16_t type,
 KRB5_LIB_FUNCTION krb5_ssize_t KRB5_LIB_CALL
 _krb5_put_int(void *buffer, unsigned long value, size_t size); /* XXX */
 
+static
+krb5_error_code
+copy_keyset_to_kadm5(kadm5_server_context *context, krb5_kvno kvno,
+		     size_t n_keys, Key *keys, krb5_salt *salt,
+		     size_t out_offset, kadm5_principal_ent_t out)
+{
+    size_t i;
+    Key *key;
+    krb5_key_data *kd;
+    krb5_data *sp;
+    krb5_error_code ret = 0;
+
+    for (i = 0; i < n_keys; i++) {
+	key = &keys[i];
+	kd = &out->key_data[out_offset + i];
+	kd->key_data_ver = 2;
+	kd->key_data_kvno = kvno;
+	kd->key_data_type[0] = key->key.keytype;
+	if(key->salt)
+	    kd->key_data_type[1] = key->salt->type;
+	else
+	    kd->key_data_type[1] = KRB5_PADATA_PW_SALT;
+	/* setup key */
+	kd->key_data_length[0] = key->key.keyvalue.length;
+	kd->key_data_contents[0] = malloc(kd->key_data_length[0]);
+	if(kd->key_data_contents[0] == NULL && kd->key_data_length[0] != 0){
+	    ret = ENOMEM;
+	    break;
+	}
+	memcpy(kd->key_data_contents[0], key->key.keyvalue.data,
+	       kd->key_data_length[0]);
+	/* setup salt */
+	if(key->salt)
+	    sp = &key->salt->salt;
+	else
+	    sp = &salt->saltvalue;
+	kd->key_data_length[1] = sp->length;
+	kd->key_data_contents[1] = malloc(kd->key_data_length[1]);
+	if(kd->key_data_length[1] != 0
+	   && kd->key_data_contents[1] == NULL) {
+	    memset(kd->key_data_contents[0], 0, kd->key_data_length[0]);
+	    ret = ENOMEM;
+	    break;
+	}
+	memcpy(kd->key_data_contents[1], sp->data, kd->key_data_length[1]);
+	out->n_key_data = i + 1;
+    }
+
+    return ret;
+}
+
 kadm5_ret_t
 kadm5_s_get_principal(void *server_handle,
 		      krb5_principal princ,
@@ -170,50 +221,36 @@ kadm5_s_get_principal(void *server_handle,
     }
     if(mask & KADM5_KEY_DATA){
 	size_t i;
-	Key *key;
-	krb5_key_data *kd;
+	size_t n_keys = ent.entry.keys.len;
+	size_t offset = ent.entry.keys.len;
 	krb5_salt salt;
-	krb5_data *sp;
+	HDB_extension *ext;
+	HDB_Ext_KeySet *hist_keys = NULL;
+
+	ext = hdb_find_extension(&ent.entry, choice_HDB_extension_data_hist_keys);
+	if (ext != NULL)
+	    hist_keys = &ext->data.u.hist_keys;
+
 	krb5_get_pw_salt(context->context, ent.entry.principal, &salt);
-	out->key_data = malloc(ent.entry.keys.len * sizeof(*out->key_data));
-	if (out->key_data == NULL && ent.entry.keys.len != 0) {
+	for (i = 0; hist_keys != NULL && i < hist_keys->len; i++)
+	    n_keys += hist_keys->val[i].keys.len;
+	out->key_data = malloc(n_keys * sizeof(*out->key_data));
+	if (out->key_data == NULL && n_keys != 0) {
 	    ret = ENOMEM;
 	    goto out;
 	}
-	for(i = 0; i < ent.entry.keys.len; i++){
-	    key = &ent.entry.keys.val[i];
-	    kd = &out->key_data[i];
-	    kd->key_data_ver = 2;
-	    kd->key_data_kvno = ent.entry.kvno;
-	    kd->key_data_type[0] = key->key.keytype;
-	    if(key->salt)
-		kd->key_data_type[1] = key->salt->type;
-	    else
-		kd->key_data_type[1] = KRB5_PADATA_PW_SALT;
-	    /* setup key */
-	    kd->key_data_length[0] = key->key.keyvalue.length;
-	    kd->key_data_contents[0] = malloc(kd->key_data_length[0]);
-	    if(kd->key_data_contents[0] == NULL && kd->key_data_length[0] != 0){
-		ret = ENOMEM;
-		break;
-	    }
-	    memcpy(kd->key_data_contents[0], key->key.keyvalue.data,
-		   kd->key_data_length[0]);
-	    /* setup salt */
-	    if(key->salt)
-		sp = &key->salt->salt;
-	    else
-		sp = &salt.saltvalue;
-	    kd->key_data_length[1] = sp->length;
-	    kd->key_data_contents[1] = malloc(kd->key_data_length[1]);
-	    if(kd->key_data_length[1] != 0
-	       && kd->key_data_contents[1] == NULL) {
-		memset(kd->key_data_contents[0], 0, kd->key_data_length[0]);
-		ret = ENOMEM;
-		break;
-	    }
-	    memcpy(kd->key_data_contents[1], sp->data, kd->key_data_length[1]);
-	    out->n_key_data = i + 1;
+	ret = copy_keyset_to_kadm5(context, ent.entry.kvno, ent.entry.keys.len,
+				   ent.entry.keys.val, &salt, 0, out);
+	if (ret)
+	    goto out;
+	for (i = 0; hist_keys != NULL && i < hist_keys->len; i++) {
+	    ret = copy_keyset_to_kadm5(context, hist_keys->val[i].kvno,
+				       hist_keys->val[i].keys.len,
+				       hist_keys->val[i].keys.val,
+				       &salt, offset, out);
+	    if (ret)
+		goto out;
+	    offset += hist_keys->val[i].keys.len;
 	}
 	krb5_free_salt(context->context, salt);
     }

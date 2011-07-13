@@ -196,12 +196,226 @@ fix_salt(krb5_context context, hdb_entry *ent, int key_num)
     return 0;
 }
 
+/**
+ * This function outputs a pointer to a Key or array of @key_count Keys
+ * where the caller may place Keys.
+ *
+ * @param context   Context
+ * @param entry	    HDB entry
+ * @param kvno	    kvno of the keys to be added
+ * @param is_hist   Whether the keys will be historical keys or current keys
+ * @param key_count Size of array of keys to set.  MUST be zero if !is_hist.
+ * @param out	    Pointer to Key * variable where to put the resulting Key *
+ *
+ * See three call sites below for more information.
+ */
+static krb5_error_code
+get_entry_key_location(krb5_context context, hdb_entry *entry, krb5_kvno kvno,
+		       krb5_boolean is_hist, size_t key_count, Key **out)
+{
+    HDB_extension ext;
+    HDB_Ext_KeySet *hist_keys;
+    hdb_keyset *keyset = NULL;
+    size_t keyset_count = 0;
+    Key *k = NULL;
+    size_t i;
+    krb5_error_code ret;
 
+    *out = NULL;
+
+    if (!is_hist) {
+	Key *tmp;
+
+	/* Extend current keyset */
+	tmp = realloc(entry->keys.val, sizeof(entry->keys.val[0]) * (entry->keys.len + 1));
+	if (tmp == NULL) {
+	    ret = ENOMEM;
+	    goto out;
+	}
+	entry->keys.val = tmp;
+
+	/* k points to current Key */
+	k = &entry->keys.val[entry->keys.len];
+
+	memset(k, 0, sizeof(*k));
+	entry->keys.len += 1;
+
+	goto done;
+    }
+
+    /* Find a history keyset and extend it or extend the history keyset */
+    memset(&ext, 0, sizeof (ext));
+    ext.data.element = choice_HDB_extension_data_hist_keys;
+    hist_keys = &ext.data.u.hist_keys;
+
+    /* hdb_replace_extension() makes a copy of ext */
+    ret = hdb_replace_extension(context, entry, &ext);
+    if (ret)
+	return ret;
+
+    for (i = 0; i < hist_keys->len; i++) {
+	if (hist_keys->val[i].kvno == kvno) {
+	    /* We're adding a key to an existing history keyset */
+	    keyset = &hist_keys->val[i];
+	    if ((keyset->keys.len % 8) == 0) {
+		Key *tmp;
+
+		/* We're adding the 9th, 17th, ... key to the set */
+		tmp = realloc(keyset->keys.val,
+			      (keyset->keys.len + 8) * sizeof (*tmp));
+		if (tmp == NULL) {
+		    ret = ENOMEM;
+		    goto out;
+		}
+	    }
+	    break;
+	}
+    }
+
+    if (keyset == NULL) {
+	/* We're adding the first key of a new history keyset */
+	if (hist_keys->val == NULL) {
+	    if (key_count == 0)
+		keyset_count = 8; /* There's not that many enctypes */
+	    else
+		keyset_count = key_count;
+	    hist_keys->val = calloc(keyset_count,
+				    sizeof (*hist_keys->val));
+	    if (hist_keys->val == NULL) {
+		ret = ENOMEM;
+		goto out;
+	    }
+	    keyset = &hist_keys->val[0];
+	} else if (hist_keys->len == keyset_count) {
+	    hdb_keyset *tmp;
+
+	    keyset_count *= 2;
+	    tmp = realloc(hist_keys->val,
+			  keyset_count * sizeof (*hist_keys->val));
+	    if (tmp == NULL) {
+		ret = ENOMEM;
+		goto out;
+	    }
+	    hist_keys->val = tmp;
+	}
+    }
+
+    k = &keyset->keys.val[keyset->keys.len];
+
+    if (key_count != 0)
+	keyset->keys.len += key_count;
+    
+done:
+    memset(k, 0, sizeof (*k));
+    k->mkvno = malloc(sizeof(*k->mkvno));
+    if (k->mkvno == NULL) {
+	ret = ENOMEM;
+	goto out;
+    }
+    *k->mkvno = 1;
+    *out = k;
+
+out:
+    if (ret && !is_hist)
+	entry->keys.len--;
+    if (is_hist)
+	free_HDB_extension(&ext);
+    return ret;
+}
+
+
+/**
+ * This function takes a key from a krb5_storage from an MIT KDB encoded
+ * entry and places it in the given Key object.
+ *
+ * @param context   Context
+ * @param entry	    HDB entry
+ * @param sp	    krb5_storage with current offset set to the beginning of a
+ *		    key
+ * @param version   See comments in caller body for the backstory on this
+ * @param k	    Key * to load the key into
+ */
+static krb5_error_code
+mdb_keyvalue2key(krb5_context context, hdb_entry *entry, krb5_storage *sp, uint16_t version, Key *k)
+{
+    size_t i;
+    uint16_t u16, type;
+    krb5_error_code ret;
+
+    for (i = 0; i < version; i++) {
+	CHECK(ret = krb5_ret_uint16(sp, &type));
+	CHECK(ret = krb5_ret_uint16(sp, &u16));
+	if (i == 0) {
+	    /* This "version" means we have a key */
+	    k->key.keytype = type;
+	    if (u16 < 2) {
+		ret = EINVAL;
+		goto out;
+	    }
+	    /*
+	     * MIT stores keys encrypted keys as {16-bit length
+	     * of plaintext key, {encrypted key}}.  The reason
+	     * for this is that the Kerberos cryptosystem is not
+	     * length-preserving.  Heimdal's approach is to
+	     * truncate the plaintext to the expected length of
+	     * the key given its enctype, so we ignore this
+	     * 16-bit length-of-plaintext-key field.
+	     */
+	    krb5_storage_seek(sp, 2, SEEK_CUR); /* skip real length */
+	    k->key.keyvalue.length = u16 - 2;   /* adjust cipher len */
+	    k->key.keyvalue.data = malloc(k->key.keyvalue.length);
+	    krb5_storage_read(sp, k->key.keyvalue.data,
+			      k->key.keyvalue.length);
+	} else if (i == 1) {
+	    /* This "version" means we have a salt */
+	    k->salt = calloc(1, sizeof(*k->salt));
+	    if (k->salt == NULL) {
+		ret = ENOMEM;
+		goto out;
+	    }
+	    k->salt->type = type;
+	    if (u16 != 0) {
+		k->salt->salt.data = malloc(u16);
+		if (k->salt->salt.data == NULL) {
+		    ret = ENOMEM;
+		    goto out;
+		}
+		k->salt->salt.length = u16;
+		krb5_storage_read(sp, k->salt->salt.data, k->salt->salt.length);
+	    }
+	    fix_salt(context, entry, entry->keys.len - 1);
+	} else {
+	    /*
+	     * Whatever this "version" might be, we skip it
+	     *
+	     * XXX A krb5.conf parameter requesting that we log
+	     * about strangeness like this, or return an error
+	     * from here, might be nice.
+	     */
+	    krb5_storage_seek(sp, u16, SEEK_CUR);
+	}
+    }
+
+    return 0;
+
+out:
+    free_Key(k);
+    memset(k, 0, sizeof (*k));
+    return ret;
+}
+
+
+/**
+ * This function parses an MIT krb5 encoded KDB entry and fills in the
+ * given HDB entry with it.
+ */
 static krb5_error_code
 mdb_value2entry(krb5_context context, krb5_data *data, krb5_kvno kvno, hdb_entry *entry)
 {
     krb5_error_code ret;
     krb5_storage *sp;
+    Key *k;
+    krb5_kvno key_kvno;
     uint32_t u32;
     uint16_t u16, num_keys, num_tl;
     size_t i, j;
@@ -328,125 +542,63 @@ mdb_value2entry(krb5_context context, krb5_data *data, krb5_kvno kvno, hdb_entry
     for (i = 0; i < num_keys; i++) {
 	int keep = 0;
 	uint16_t version;
-	void *ptr;
 
 	CHECK(ret = krb5_ret_uint16(sp, &u16));
 	version = u16;
 	CHECK(ret = krb5_ret_uint16(sp, &u16));
+	key_kvno = u16;
 
 	/*
 	 * First time through, and until we find one matching key,
 	 * entry->kvno == 0.
 	 */
-	if ((entry->kvno < u16) && (kvno == 0 || kvno == u16)) {
-	    keep = 1;
-	    entry->kvno = u16;
+	if ((entry->kvno < key_kvno) && (kvno == 0 || kvno == key_kvno)) {
 	    /*
-	     * Found a higher kvno than earlier, so free the old highest
-	     * kvno keys.
-	     *
-	     * XXX Of course, we actually want to extract the old kvnos
-	     * as well, for some of the kadm5 APIs.  We shouldn't free
-	     * these keys, but keep them elsewhere.
+	     * Found a higher kvno than earlier, we aren't looking for
+	     * any particular kvno, so save the previously saved keys as
+	     * historical keys.
 	     */
+	    keep = 1;
+
+	    /* Get an array of Keys to save the current keyset into */
+	    ret = get_entry_key_location(context, entry, entry->kvno, TRUE,
+					 entry->keys.len, &k);
+
+	    for (j = 0; j < entry->keys.len; j++)
+		copy_Key(&entry->keys.val[j], &k[j]);
+
+	    /* Change the entry's current kvno */
+	    entry->kvno = key_kvno;
+
 	    for (j = 0; j < entry->keys.len; j++)
 		free_Key(&entry->keys.val[j]);
 	    free(entry->keys.val);
 	    entry->keys.len = 0;
 	    entry->keys.val = NULL;
-	} else if (entry->kvno == u16)
+	} else if (entry->kvno == key_kvno)
 	    /* Accumulate keys */
 	    keep = 1;
 
 	if (keep) {
-	    Key *k;
-
-	    ptr = realloc(entry->keys.val, sizeof(entry->keys.val[0]) * (entry->keys.len + 1));
-	    if (ptr == NULL) {
-		ret = ENOMEM;
+	    ret = get_entry_key_location(context, entry, key_kvno,
+					 FALSE, 0, &k);
+	    if (ret)
 		goto out;
-	    }
-	    entry->keys.val = ptr;
 
-	    /* k points to current Key */
-	    k = &entry->keys.val[entry->keys.len];
-
-	    memset(k, 0, sizeof(*k));
-	    entry->keys.len += 1;
-
-	    k->mkvno = malloc(sizeof(*k->mkvno));
-	    if (k->mkvno == NULL) {
-		ret = ENOMEM;
+	    ret = mdb_keyvalue2key(context, entry, sp, version, k);
+	    if (ret)
 		goto out;
-	    }
-	    *k->mkvno = 1;
-
-	    for (j = 0; j < version; j++) {
-		uint16_t type;
-		CHECK(ret = krb5_ret_uint16(sp, &type));
-		CHECK(ret = krb5_ret_uint16(sp, &u16));
-		if (j == 0) {
-		    /* This "version" means we have a key */
-		    k->key.keytype = type;
-		    if (u16 < 2) {
-			ret = EINVAL;
-			goto out;
-		    }
-		    /*
-		     * MIT stores keys encrypted keys as {16-bit length
-		     * of plaintext key, {encrypted key}}.  The reason
-		     * for this is that the Kerberos cryptosystem is not
-		     * length-preserving.  Heimdal's approach is to
-		     * truncate the plaintext to the expected length of
-		     * the key given its enctype, so we ignore this
-		     * 16-bit length-of-plaintext-key field.
-		     */
-		    krb5_storage_seek(sp, 2, SEEK_CUR); /* skip real length */
-		    k->key.keyvalue.length = u16 - 2;   /* adjust cipher len */
-		    k->key.keyvalue.data = malloc(k->key.keyvalue.length);
-		    krb5_storage_read(sp, k->key.keyvalue.data,
-				      k->key.keyvalue.length);
-		} else if (j == 1) {
-		    /* This "version" means we have a salt */
-		    k->salt = calloc(1, sizeof(*k->salt));
-		    if (k->salt == NULL) {
-			ret = ENOMEM;
-			goto out;
-		    }
-		    k->salt->type = type;
-		    if (u16 != 0) {
-			k->salt->salt.data = malloc(u16);
-			if (k->salt->salt.data == NULL) {
-			    ret = ENOMEM;
-			    goto out;
-			}
-			k->salt->salt.length = u16;
-			krb5_storage_read(sp, k->salt->salt.data, k->salt->salt.length);
-		    }
-		    fix_salt(context, entry, entry->keys.len - 1);
-		} else {
-		    /*
-		     * Whatever this "version" might be, we skip it
-		     *
-		     * XXX A krb5.conf parameter requesting that we log
-		     * about strangeness like this, or return an error
-		     * from here, might be nice.
-		     */
-		    krb5_storage_seek(sp, u16, SEEK_CUR);
-		}
-	    }
 	} else {
 	    /*
 	     * XXX For now we skip older kvnos, but we should extract
-	     * them...
+	     * them... XXX Finish.
 	     */
-	    for (j = 0; j < version; j++) {
-		/* enctype */
-		CHECK(ret = krb5_ret_uint16(sp, &u16));
-		/* encrypted key (or plaintext salt) */
-		CHECK(ret = krb5_ret_uint16(sp, &u16));
-		krb5_storage_seek(sp, u16, SEEK_CUR);
-	    }
+	    ret = get_entry_key_location(context, entry, key_kvno, TRUE, 0, &k);
+	    if (ret)
+		goto out;
+	    ret = mdb_keyvalue2key(context, entry, sp, version, k);
+	    if (ret)
+		goto out;
 	}
     }
 
@@ -581,19 +733,25 @@ static krb5_error_code
 mdb_rename(krb5_context context, HDB *db, const char *new_name)
 {
     int ret;
-    char *old, *new;
+    char *old = NULL;
+    char *new = NULL;
 
-    asprintf(&old, "%s.db", db->hdb_name);
-    asprintf(&new, "%s.db", new_name);
+    if (asprintf(&old, "%s.db", db->hdb_name) < 0)
+	goto out;
+    if (asprintf(&new, "%s.db", new_name) < 0)
+	goto out;
     ret = rename(old, new);
-    free(old);
-    free(new);
     if(ret)
-	return errno;
+	goto out;
 
     free(db->hdb_name);
     db->hdb_name = strdup(new_name);
-    return 0;
+    errno = 0;
+
+out:
+    free(old);
+    free(new);
+    return errno;
 }
 
 static krb5_error_code
@@ -732,8 +890,7 @@ mdb_open(krb5_context context, HDB *db, int flags, mode_t mode)
     char *fn;
     krb5_error_code ret;
 
-    asprintf(&fn, "%s.db", db->hdb_name);
-    if (fn == NULL) {
+    if (asprintf(&fn, "%s.db", db->hdb_name) < 0) {
 	krb5_set_error_message(context, ENOMEM, "malloc: out of memory");
 	return ENOMEM;
     }

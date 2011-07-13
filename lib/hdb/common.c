@@ -312,6 +312,8 @@ _hdb_store(krb5_context context, HDB *db, unsigned flags, hdb_entry_ex *entry)
     krb5_data key, value;
     int code;
 
+    if (entry->entry.flags.do_not_store)
+	return HDB_ERR_MISUSE;
     /* check if new aliases already is used */
     code = hdb_check_aliases(context, db, entry);
     if (code)

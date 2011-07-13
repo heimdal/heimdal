@@ -554,6 +554,7 @@ hdb_unseal_keys_kvno(krb5_context context, HDB *db, krb5_kvno kvno,
 	ent->keys.len = hist_keys->val[i].keys.len;
 	ent->keys.val = hist_keys->val[i].keys.val;
 	ent->kvno = kvno;
+	ent->flags.do_not_store = 1;
     }
 
     return (ret);

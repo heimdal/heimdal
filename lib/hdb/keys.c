@@ -210,6 +210,14 @@ parse_key_set(krb5_context context, const char *key,
 }
 
 
+/**
+ * This function adds an HDB entry's current keyset to the entry's key
+ * history.  The current keyset is left alone; the caller is responsible
+ * for freeing it.
+ *
+ * @param context   Context
+ * @param entry	    HDB entry
+ */
 krb5_error_code
 hdb_add_current_keys_to_history(krb5_context context, hdb_entry *entry)
 {
@@ -217,7 +225,8 @@ hdb_add_current_keys_to_history(krb5_context context, hdb_entry *entry)
     HDB_extension *ext;
     HDB_Ext_KeySet *hist_keys;
     hdb_keyset *tmp_keysets;
-    int add = 0;
+    size_t i;
+    size_t add = 0;
 
     ext = hdb_find_extension(entry, choice_HDB_extension_data_hist_keys);
     if (ext != NULL) {
@@ -244,15 +253,21 @@ hdb_add_current_keys_to_history(krb5_context context, hdb_entry *entry)
 	hist_keys->len = 1;
     }
 
-    hist_keys->val[0].keys.val = entry->keys.val;
-    hist_keys->val[0].keys.len = entry->keys.len;
+    hist_keys->val[0].keys.len = 0;
+    hist_keys->val[0].keys.val = calloc(entry->keys.len,
+					sizeof (*hist_keys->val[0].keys.val));
+    for (i = 0; i < entry->keys.len; i++, hist_keys->val[0].keys.len++) {
+	ret = copy_Key(&entry->keys.val[i], &hist_keys->val[0].keys.val[i]);
+	if (ret) {
+	    free_HDB_extension(ext);
+	    return ret;
+	}
+    }
     hist_keys->val[0].kvno = entry->kvno;
     (void) hdb_entry_get_pw_change_time(entry, &hist_keys->val[0].set_time);
 
-    entry->keys.val = NULL;
-    entry->keys.len = 0;
-
     if (add) {
+	/* XXX hdb_replace_extension() deep-copies ext; what a waste */
 	ret = hdb_replace_extension(context, entry, ext);
 	if (ret) {
 	    free_HDB_extension(ext);

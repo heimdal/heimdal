@@ -64,15 +64,35 @@ _kadm5_init_keys (Key *keys, int len)
 }
 
 /*
+ * return 1 if any key in `keys1, len1' exists in hist_keys
+ */
+int
+_kadm5_exists_keys_hist(Key *keys1, int len1, HDB_Ext_KeySet *hist_keys)
+{
+    size_t i;
+
+    for (i = 0; i < hist_keys->len; i++) {
+	if (_kadm5_exists_keys(keys1, len1,
+			       hist_keys->val[i].keys.val,
+			       hist_keys->val[i].keys.len))
+	    return 1;
+    }
+
+    return 0;
+}
+
+
+/*
  * return 1 if any key in `keys1, len1' exists in `keys2, len2'
  */
-
 int
 _kadm5_exists_keys(Key *keys1, int len1, Key *keys2, int len2)
 {
-    int i, j;
+    size_t i, j;
+    size_t checked_all_this_enctype;
 
     for (i = 0; i < len1; ++i) {
+	checked_all_this_enctype = 1;
 	for (j = 0; j < len2; j++) {
 	    if ((keys1[i].salt != NULL && keys2[j].salt == NULL)
 		|| (keys1[i].salt == NULL && keys2[j].salt != NULL))
@@ -87,8 +107,10 @@ _kadm5_exists_keys(Key *keys1, int len1, Key *keys2, int len2)
 			    keys1[i].salt->salt.length) != 0)
 		    continue;
 	    }
-	    if (keys1[i].key.keytype != keys2[j].key.keytype)
+	    if (keys1[i].key.keytype != keys2[j].key.keytype) {
+		checked_all_this_enctype = 0;
 		continue;
+	    }
 	    if (keys1[i].key.keyvalue.length != keys2[j].key.keyvalue.length)
 		continue;
 	    if (memcmp (keys1[i].key.keyvalue.data, keys2[j].key.keyvalue.data,
@@ -97,6 +119,10 @@ _kadm5_exists_keys(Key *keys1, int len1, Key *keys2, int len2)
 
 	    return 1;
 	}
+
+	/* Optimization */
+	if (checked_all_this_enctype)
+	    return 0;
     }
     return 0;
 }

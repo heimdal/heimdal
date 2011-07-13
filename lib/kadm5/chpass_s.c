@@ -77,15 +77,20 @@ change(void *server_handle,
 
 	ret = _kadm5_set_keys(context, &ent.entry, password);
 	if(ret) {
-	    _kadm5_free_keys (context->context, num_keys, keys);
+	    _kadm5_free_keys(context->context, num_keys, keys);
 	    goto out2;
 	}
+	_kadm5_free_keys(context->context, num_keys, keys);
 
-	if (cond)
-	    existsp = _kadm5_exists_keys (ent.entry.keys.val,
-					  ent.entry.keys.len,
-					  keys, num_keys);
-	_kadm5_free_keys (context->context, num_keys, keys);
+	if (cond) {
+	    HDB_extension *ext;
+
+	    ext = hdb_find_extension(&ent.entry, choice_HDB_extension_data_hist_keys);
+	    if (ext != NULL)
+		existsp = _kadm5_exists_keys_hist(ent.entry.keys.val,
+						  ent.entry.keys.len,
+						  &ext->data.u.hist_keys);
+	}
 
 	if (existsp) {
 	    ret = KADM5_PASS_REUSE;

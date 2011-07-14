@@ -112,6 +112,11 @@ typedef struct {
     void*   key_data_contents[2];/* Array of pointers */
 } krb5_key_data;
 
+typedef struct _krb5_keysalt {
+    int16_t               type;
+    krb5_data             data;                 /* Length, data */
+} krb5_keysalt;
+
 typedef struct _krb5_tl_data {
     struct _krb5_tl_data* tl_data_next;
     int16_t tl_data_type;

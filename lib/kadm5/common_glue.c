@@ -53,6 +53,13 @@ kadm5_chpass_principal_3(void *server_handle,
 		         krb5_key_salt_tuple *ks_tuple,
 		         const char *password)
 {
+    /*
+     * We should get around to implementing this...  This can be useful
+     * for, e.g., x-realm principals.  For now we need the _3() to get
+     * certain applications written to the kadm5 API to build and run.
+     */
+    if (n_ks_tuple > 0)
+	return KADM5_KS_TUPLE_NOSUPP;
     return __CALL(chpass_principal, (server_handle, princ, password));
 }
 
@@ -103,9 +110,10 @@ kadm5_get_principal(void *server_handle,
     return __CALL(get_principal, (server_handle, princ, out, mask));
 }
 
-#if 0
 /**
- * Extract decrypted keys from kadm5_principal_ent_t object.
+ * Extract decrypted keys from kadm5_principal_ent_t object.  Mostly a
+ * no-op for Heimdal because we fetch the entry with decrypted keys.
+ * Sadly this is not fully a no-op, as we have to allocate a copy.
  *
  * @server_handle is the kadm5 handle
  * @entry is the HDB entry for the principal in question
@@ -123,12 +131,27 @@ kadm5_decrypt_key(void *server_handle,
 		  int32_t kvno, krb5_keyblock *keyblock,
                   krb5_keysalt *keysalt, int *kvnop)
 {
-	int i;
+    size_t i;
 
-	for (i = 0; i < entry->n_key_data; i++) {
-	}
+    if (kvno < 1 || stype != -1)
+	return KADM5_DECRYPT_USAGE_NOSUPP;
+
+    for (i = 0; i < entry->n_key_data; i++) {
+	if (ktype != entry->key_data[i].key_data_kvno)
+	    continue;
+
+	keyblock->keytype = ktype;
+	keyblock->keyvalue.length = entry->key_data[i].key_data_length[0];
+	keyblock->keyvalue.data = malloc(keyblock->keyvalue.length);
+	if (keyblock->keyvalue.data == NULL)
+	    return ENOMEM;
+	memcpy(keyblock->keyvalue.data,
+	       entry->key_data[i].key_data_contents[0],
+	       keyblock->keyvalue.length);
+    }
+
+    return 0;
 }
-#endif
 
 kadm5_ret_t
 kadm5_modify_principal(void *server_handle,
@@ -183,4 +206,122 @@ kadm5_get_privs(void *server_handle,
 		uint32_t *privs)
 {
     return __CALL(get_privs, (server_handle, privs));
+}
+
+
+/**
+ * This function is allows the caller to set new keys for a principal.
+ * This is a trivial wrapper around kadm5_setkey_principal_3().
+ */
+kadm5_ret_t
+kadm5_setkey_principal(void *server_handle,
+                       krb5_principal princ,
+                       krb5_keyblock *new_keys,
+                       int n_keys)
+{
+    return kadm5_setkey_principal_3(server_handle, princ, 0, 0, NULL,
+				    new_keys, n_keys);
+}
+
+/**
+ * This function is allows the caller to set new keys for a principal.
+ * This is a simple wrapper around kadm5_get_principal() and
+ * kadm5_modify_principal().
+ */
+kadm5_ret_t
+kadm5_setkey_principal_3(void *server_handle,
+                         krb5_principal princ,
+                         krb5_boolean keepold,
+                         int n_ks_tuple, krb5_key_salt_tuple *ks_tuple,
+                         krb5_keyblock *keyblocks,
+                         int n_keys)
+{
+    kadm5_principal_ent_rec princ_ent;
+    kadm5_ret_t ret;
+    krb5_key_data *new_key_data = NULL;
+    size_t i;
+
+    if (n_keys < 1)
+	return EINVAL;
+    if (n_ks_tuple > 0 && n_ks_tuple != n_keys)
+	return KADM5_SETKEY3_ETYPE_MISMATCH;
+
+    ret = kadm5_get_principal(server_handle, princ, &princ_ent,
+                              KADM5_PRINCIPAL | KADM5_KEY_DATA);
+    if (ret)
+	return ret;
+
+    if (keepold) {
+	new_key_data = malloc((n_keys + princ_ent.n_key_data) * sizeof(*new_key_data));
+	if (new_key_data == NULL) {
+	    ret = ENOMEM;
+	    goto out;
+	}
+
+	memcpy(&new_key_data[n_keys], &princ_ent.key_data[0],
+		princ_ent.n_key_data * sizeof (princ_ent.key_data[0]));
+    } else {
+	new_key_data = malloc(n_keys * sizeof(*new_key_data));
+	if (new_key_data == NULL) {
+	    ret = ENOMEM;
+	    goto out;
+	}
+    }
+
+    for (i = 0; i < n_keys; i++) {
+	new_key_data[i].key_data_ver = 2;
+
+	/* Key */
+	new_key_data[i].key_data_kvno = princ_ent.kvno;
+	new_key_data[i].key_data_type[0] = keyblocks[i].keytype;
+	new_key_data[i].key_data_length[0] = keyblocks[i].keyvalue.length;
+	new_key_data[i].key_data_contents[0] =
+	    malloc(keyblocks[i].keyvalue.length);
+	if (new_key_data[i].key_data_contents[0] == NULL) {
+	    ret = ENOMEM;
+	    goto out;
+	}
+	memcpy(new_key_data[i].key_data_contents[0],
+	       keyblocks[i].keyvalue.data,
+	       keyblocks[i].keyvalue.length);
+
+	/*
+	 * Salt (but there's no salt, just salttype, which is kinda
+	 * silly -- what's the point of setkey_3() then, besides
+	 * keepold?!)
+	 */
+	new_key_data[i].key_data_type[1] = 0;
+	if (n_ks_tuple > 0) {
+	    if (ks_tuple[i].ks_enctype != keyblocks[i].keytype)
+		return KADM5_SETKEY3_ETYPE_MISMATCH;
+	    new_key_data[i].key_data_type[1] = ks_tuple[i].ks_salttype;
+	}
+	new_key_data[i].key_data_length[1] = 0;
+	new_key_data[i].key_data_contents[1] = NULL;
+    }
+
+    /* Free old keys */
+    if (!keepold) {
+	for (i = 0; i < princ_ent.n_key_data; i++) {
+	    free(princ_ent.key_data[i].key_data_contents[0]);
+	    free(princ_ent.key_data[i].key_data_contents[1]);
+	}
+    }
+    free(princ_ent.key_data);
+    princ_ent.key_data = new_key_data;
+    new_key_data = NULL;
+
+    /* Modify the principal */
+    ret = kadm5_modify_principal(server_handle, &princ_ent, KADM5_KEY_DATA);
+
+out:
+    if (new_key_data != NULL) {
+	for (i = 0; i < n_keys; i++) {
+	    free(new_key_data[i].key_data_contents[0]);
+	    free(new_key_data[i].key_data_contents[1]);
+	}
+	free(new_key_data);
+    }
+    kadm5_free_principal_ent(server_handle, &princ_ent);
+    return ret;
 }

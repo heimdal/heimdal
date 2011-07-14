@@ -384,7 +384,8 @@ hdb_generate_key_set(krb5_context context, krb5_principal principal,
 		     int n_ks_tuple, krb5_key_salt_tuple *ks_tuple,
 		     Key **ret_key_set, size_t *nkeyset, int no_salt)
 {
-    char **ktypes, **kp;
+    char **ktypes = NULL;
+    char **kp;
     krb5_error_code ret;
     Key *k, *key_set;
     size_t i, j;

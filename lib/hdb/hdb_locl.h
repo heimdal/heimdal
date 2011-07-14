@@ -36,6 +36,8 @@
 #ifndef __HDB_LOCL_H__
 #define __HDB_LOCL_H__
 
+#include <assert.h>
+
 #include <config.h>
 
 #include <stdio.h>

@@ -35,6 +35,22 @@
 
 RCSID("$Id$");
 
+static kadm5_ret_t
+kadm5_s_lock(void *server_handle)
+{
+    kadm5_server_context *context = server_handle;
+
+    return context->db->hdb_lock(context->context, context->db, HDB_WLOCK);
+}
+
+static kadm5_ret_t
+kadm5_s_unlock(void *server_handle)
+{
+    kadm5_server_context *context = server_handle;
+
+    return context->db->hdb_unlock(context->context, context->db);
+}
+
 static void
 set_funcs(kadm5_server_context *c)
 {
@@ -51,6 +67,8 @@ set_funcs(kadm5_server_context *c)
     SET(c, modify_principal);
     SET(c, randkey_principal);
     SET(c, rename_principal);
+    SET(c, lock);
+    SET(c, unlock);
 }
 
 #ifndef NO_UNIX_SOCKETS

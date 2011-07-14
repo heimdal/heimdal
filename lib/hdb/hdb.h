@@ -103,6 +103,8 @@ typedef struct HDB{
     hdb_master_key hdb_master_key;
     int hdb_openp;
     int hdb_capability_flags;
+    int lock_count;
+    int lock_type;
     /**
      * Open (or create) the a Kerberos database.
      *

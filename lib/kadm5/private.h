@@ -54,6 +54,8 @@ struct kadm_func {
     kadm5_ret_t (*rename_principal) (void*, krb5_principal, krb5_principal);
     kadm5_ret_t (*chpass_principal_with_key) (void *, krb5_principal,
 					      int, krb5_key_data *);
+    kadm5_ret_t (*lock) (void *);
+    kadm5_ret_t (*unlock) (void *);
 };
 
 /* XXX should be integrated */

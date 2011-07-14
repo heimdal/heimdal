@@ -325,3 +325,16 @@ out:
     kadm5_free_principal_ent(server_handle, &princ_ent);
     return ret;
 }
+
+
+kadm5_ret_t
+kadm5_lock(void *server_handle)
+{
+    return __CALL(lock, (server_handle));
+}
+
+kadm5_ret_t
+kadm5_unlock(void *server_handle)
+{
+    return __CALL(unlock, (server_handle));
+}

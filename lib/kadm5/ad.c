@@ -1333,6 +1333,18 @@ kadm5_ad_chpass_principal_with_key(void *server_handle,
     return KADM5_RPC_ERROR;
 }
 
+static kadm5_ret_t
+kadm5_ad_lock(void *server_handle)
+{
+    return ENOTSUP;
+}
+
+static kadm5_ret_t
+kadm5_ad_unlock(void *server_handle)
+{
+    return ENOTSUP;
+}
+
 static void
 set_funcs(kadm5_ad_context *c)
 {
@@ -1349,6 +1361,8 @@ set_funcs(kadm5_ad_context *c)
     SET(c, modify_principal);
     SET(c, randkey_principal);
     SET(c, rename_principal);
+    SET(c, lock);
+    SET(c, unlock);
 }
 
 kadm5_ret_t

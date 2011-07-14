@@ -75,9 +75,21 @@ DB_lock(krb5_context context, HDB *db, int operation)
 {
     DB *d = (DB*)db->hdb_db;
     int fd;
+    krb5_error_code ret;
+
+    if (db->lock_count > 0) {
+	assert( db->lock_type == HDB_WLOCK );
+	db->lock_count++;
+	return 0;
+    }
+
     if ((*d->fd)(d, &fd))
 	return HDB_ERR_CANT_LOCK_DB;
-    return hdb_lock(fd, operation);
+    ret = hdb_lock(fd, operation);
+    if (ret)
+	return ret;
+    db->lock_count++;
+    return 0;
 }
 
 static krb5_error_code
@@ -85,6 +97,14 @@ DB_unlock(krb5_context context, HDB *db)
 {
     DB *d = (DB*)db->hdb_db;
     int fd;
+
+    if (db->lock_count > 1) {
+	db->lock_count--;
+	return 0;
+    }
+    assert( db->lock_count == 1 );
+    db->lock_count--;
+
     if ((*d->fd)(d, &fd))
 	return HDB_ERR_CANT_LOCK_DB;
     return hdb_unlock(fd);

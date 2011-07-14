@@ -93,6 +93,16 @@ kadm5_get_principal(void *server_handle,
 }
 
 kadm5_ret_t
+kadm5_decrypt_key(void *server_handle,
+                  kadm5_principal_ent_t entry,
+		  int32_t ktype, int32_t stype,
+		  int32_t kvno, krb5_keyblock *keyblock,
+                  krb5_keysalt *keysalt, int *kvnop)
+{
+	
+}
+
+kadm5_ret_t
 kadm5_modify_principal(void *server_handle,
 		       kadm5_principal_ent_t princ,
 		       uint32_t mask)
@@ -106,7 +116,21 @@ kadm5_randkey_principal(void *server_handle,
 			krb5_keyblock **new_keys,
 			int *n_keys)
 {
-    return __CALL(randkey_principal, (server_handle, princ, new_keys, n_keys));
+    return __CALL(randkey_principal, (server_handle, princ, FALSE, 0, NULL,
+		  new_keys, n_keys));
+}
+
+kadm5_ret_t
+kadm5_randkey_principal_3(void *server_handle,
+			  krb5_principal princ,
+			  krb5_boolean keepold,
+			  int n_ks_tuple,
+			  krb5_key_salt_tuple *ks_tuple,
+			  krb5_keyblock **new_keys,
+			  int *n_keys)
+{
+    return __CALL(randkey_principal, (server_handle, princ, keepold,
+				      n_ks_tuple, ks_tuple, new_keys, n_keys));
 }
 
 kadm5_ret_t

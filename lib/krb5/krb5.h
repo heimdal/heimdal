@@ -876,6 +876,11 @@ typedef struct {
 typedef krb5_error_code
 (KRB5_CALLCONV * krb5_gic_process_last_req)(krb5_context, krb5_last_req_entry **, void *);
 
+typedef struct {
+    krb5_enctype	ks_enctype;
+    krb5int32		ks_salttype;
+}krb5_key_salt_tuple;
+
 /*
  *
  */

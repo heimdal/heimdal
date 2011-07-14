@@ -33,6 +33,7 @@
  */
 
 #include "hdb_locl.h"
+#include <assert.h>
 
 /*
  * free all the memory used by (len, keys)
@@ -328,6 +329,50 @@ add_enctype_to_key_set(Key **key_set, size_t *nkeyset,
 }
 
 
+static
+krb5_error_code
+ks_tuple2str(krb5_context context, int n_ks_tuple,
+	     krb5_key_salt_tuple *ks_tuple, char ***ks_tuple_strs)
+{
+	int i;
+	char **ksnames;
+	char *ename, *sname;
+	krb5_error_code rc = KRB5_PROG_ETYPE_NOSUPP;
+
+	*ks_tuple_strs = NULL;
+	if (n_ks_tuple < 1)
+		return 0;
+
+	if ((ksnames = calloc(n_ks_tuple, sizeof (*ksnames))) == NULL)
+		return (errno);
+
+	for (i = 0; i < n_ks_tuple; i++) {
+	    if (krb5_enctype_to_string(context, ks_tuple[i].ks_enctype, &ename))
+		goto out;
+	    if (krb5_salttype_to_string(context, ks_tuple[i].ks_enctype,
+					ks_tuple[i].ks_salttype, &sname))
+		goto out;
+
+	    if (asprintf(&ksnames[i], "%s:%s", ename, sname) == -1) {
+		    rc = errno;
+		    free(ename);
+		    free(sname);
+		    goto out;
+	    }
+	    free(ename);
+	    free(sname);
+	}
+
+	*ks_tuple_strs = ksnames;
+	rc = 0;
+
+out:
+	for (i = 0; i < n_ks_tuple; i++)
+		free(ksnames[i]);
+	free(ksnames);
+	return (rc);
+}
+
 /*
  * Generate the `key_set' from the [kadmin]default_keys statement. If
  * `no_salt' is set, salt is not important (and will not be set) since
@@ -336,12 +381,14 @@ add_enctype_to_key_set(Key **key_set, size_t *nkeyset,
 
 krb5_error_code
 hdb_generate_key_set(krb5_context context, krb5_principal principal,
+		     int n_ks_tuple, krb5_key_salt_tuple *ks_tuple,
 		     Key **ret_key_set, size_t *nkeyset, int no_salt)
 {
     char **ktypes, **kp;
     krb5_error_code ret;
     Key *k, *key_set;
     size_t i, j;
+    char **ks_tuple_strs;
     static const char *default_keytypes[] = {
 	"aes256-cts-hmac-sha1-96:pw-salt",
 	"des3-cbc-sha1:pw-salt",
@@ -349,15 +396,17 @@ hdb_generate_key_set(krb5_context context, krb5_principal principal,
 	NULL
     };
 
-    ktypes = krb5_config_get_strings(context, NULL, "kadmin",
-				     "default_keys", NULL);
+    if ((ret = ks_tuple2str(context, n_ks_tuple, ks_tuple, &ks_tuple_strs)))
+	    return ret;
+
+    if (ks_tuple_strs == NULL)
+	ktypes = krb5_config_get_strings(context, NULL, "kadmin",
+					 "default_keys", NULL);
     if (ktypes == NULL)
 	ktypes = (char **)(intptr_t)default_keytypes;
 
     *ret_key_set = key_set = NULL;
     *nkeyset = 0;
-
-    ret = 0;
 
     for(kp = ktypes; kp && *kp; kp++) {
 	const char *p;
@@ -451,7 +500,7 @@ hdb_generate_key_set_password(krb5_context context,
     krb5_error_code ret;
     size_t i;
 
-    ret = hdb_generate_key_set(context, principal,
+    ret = hdb_generate_key_set(context, principal, 0, NULL,
 				keys, num_keys, 0);
     if (ret)
 	return ret;

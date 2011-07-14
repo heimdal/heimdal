@@ -1224,9 +1224,13 @@ kadm5_ad_modify_principal(void *server_handle,
 #endif
 }
 
+/*ARGSUSED*/
 static kadm5_ret_t
 kadm5_ad_randkey_principal(void *server_handle,
 			   krb5_principal principal,
+			   krb5_boolean keepold,
+			   int n_ks_tuple,
+			   krb5_key_salt_tuple *ks_tuple,
 			   krb5_keyblock **keys,
 			   int *n_keys)
 {

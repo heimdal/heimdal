@@ -48,8 +48,9 @@ struct kadm_func {
     kadm5_ret_t (*get_principals) (void*, const char*, char***, int*);
     kadm5_ret_t (*get_privs) (void*, uint32_t*);
     kadm5_ret_t (*modify_principal) (void*, kadm5_principal_ent_t, uint32_t);
-    kadm5_ret_t (*randkey_principal) (void*, krb5_principal,
-				      krb5_keyblock**, int*);
+    kadm5_ret_t (*randkey_principal) (void*, krb5_principal, krb5_boolean, int,
+				      krb5_key_salt_tuple*, krb5_keyblock**,
+				      int*);
     kadm5_ret_t (*rename_principal) (void*, krb5_principal, krb5_principal);
     kadm5_ret_t (*chpass_principal_with_key) (void *, krb5_principal,
 					      int, krb5_key_data *);

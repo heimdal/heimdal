@@ -196,6 +196,8 @@ is_des_key_p(int keytype)
 kadm5_ret_t
 _kadm5_set_keys_randomly (kadm5_server_context *context,
 			  hdb_entry *ent,
+			  int n_ks_tuple,
+			  krb5_key_salt_tuple *ks_tuple,
 			  krb5_keyblock **new_keys,
 			  int *n_keys)
 {
@@ -206,7 +208,7 @@ _kadm5_set_keys_randomly (kadm5_server_context *context,
    Key *keys;
 
    ret = hdb_generate_key_set(context->context, ent->principal,
-			       &keys, &num_keys, 1);
+			      n_ks_tuple, ks_tuple, &keys, &num_keys, 1);
    if (ret)
 	return ret;
 

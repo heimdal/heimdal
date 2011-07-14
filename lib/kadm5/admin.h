@@ -195,10 +195,6 @@ typedef struct _kadm5_policy_ent_t {
 #define KADM5_PRIV_CPW		(1 << 5)
 #define KADM5_PRIV_ALL		(KADM5_PRIV_GET | KADM5_PRIV_ADD | KADM5_PRIV_MODIFY | KADM5_PRIV_DELETE | KADM5_PRIV_LIST | KADM5_PRIV_CPW)
 
-typedef struct {
-    int XXX;
-}krb5_key_salt_tuple;
-
 typedef struct _kadm5_config_params {
     uint32_t mask;
 

@@ -38,14 +38,18 @@ RCSID("$Id$");
 kadm5_ret_t
 kadm5_c_randkey_principal(void *server_handle,
 			  krb5_principal princ,
+			  krb5_boolean keepold,
+			  int n_ks_tuple,
+			  krb5_key_salt_tuple *ks_tuple,
 			  krb5_keyblock **new_keys,
 			  int *n_keys)
 {
     kadm5_client_context *context = server_handle;
     kadm5_ret_t ret;
     krb5_storage *sp;
-    unsigned char buf[1024];
+    unsigned char buf[1536];
     int32_t tmp;
+    int i;
     krb5_data reply;
 
     ret = _kadm5_connect(server_handle);
@@ -57,12 +61,41 @@ kadm5_c_randkey_principal(void *server_handle,
 	krb5_clear_error_message(context->context);
 	return ENOMEM;
     }
+
+    /*
+     * NOTE WELL: This message is extensible.  It currently consists of:
+     *
+     *  - opcode (kadm_randkey)
+     *  - principal name (princ)
+     *
+     * followed by optional items, each of which must be present if
+     * there are any items following them that are also present:
+     *
+     *  - keepold boolean (whether to delete old kvnos)
+     *  - number of key/salt type tuples
+     *  - array of {enctype, salttype}
+     *
+     * Eventually we may add:
+     *
+     *  - opaque string2key parameters (salt, rounds, ...)
+     */
     krb5_store_int32(sp, kadm_randkey);
     krb5_store_principal(sp, princ);
     ret = _kadm5_client_send(context, sp);
     krb5_storage_free(sp);
     if (ret)
 	return ret;
+
+    if (keepold == TRUE || n_ks_tuple > 0)
+	krb5_store_uint32(sp, keepold);
+    if (n_ks_tuple > 0)
+	krb5_store_uint32(sp, n_ks_tuple);
+    for (i = 0; i < n_ks_tuple; i++) {
+	krb5_store_int32(sp, ks_tuple[i].ks_enctype);
+	krb5_store_int32(sp, ks_tuple[i].ks_salttype);
+    }
+
+    /* Future extensions go here */
     ret = _kadm5_client_recv(context, &reply);
     if(ret)
 	return ret;

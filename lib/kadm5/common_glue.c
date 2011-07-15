@@ -338,3 +338,14 @@ kadm5_unlock(void *server_handle)
 {
     return __CALL(unlock, (server_handle));
 }
+
+
+kadm5_ret_t
+kadm5_get_policies(void *server_handle, char *exp, char ***pols, int *count)
+{
+    *count = 0;
+    *pols = NULL;
+
+    return 0;
+}
+

@@ -1216,7 +1216,7 @@ tgs_parse_request(krb5_context context,
     }
 
     if(ap_req.ticket.enc_part.kvno &&
-       (size_t)*ap_req.ticket.enc_part.kvno != (*krbtgt)->entry.kvno){
+       *ap_req.ticket.enc_part.kvno != (*krbtgt)->entry.kvno){
 	char *p;
 
 	ret = krb5_unparse_name (context, princ, &p);

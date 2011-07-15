@@ -35,6 +35,35 @@
 
 RCSID("$Id$");
 
+static int
+check_policy_exists(kadm5_server_context *context, const char *pol_name)
+{
+    char **pols;
+    char **pol;
+    char *pend;
+    size_t len;
+
+    pols = krb5_config_get_strings(context->context, "kadmin",
+				   "policies", NULL);
+    if (pols == NULL) {
+	if (strcmp(pol_name, "default") == 0)
+	    return 1;
+	return 0;
+    }
+
+    for (pol = pols; *pol != NULL; pol++) {
+	pend = strchr(pol, ':');
+	if (pend == NULL)
+	    len = strlen(*pol);
+	else
+	    len = pend - *pol;
+	if (strncmp(pol_name, *pol, len) == 0 && pol_name[len] == '\0')
+	    return 1;
+    }
+
+    return 0;
+}
+
 static kadm5_ret_t
 modify_principal(void *server_handle,
 		 kadm5_principal_ent_t princ,
@@ -44,10 +73,13 @@ modify_principal(void *server_handle,
     kadm5_server_context *context = server_handle;
     hdb_entry_ex ent;
     kadm5_ret_t ret;
+
     if((mask & forbidden_mask))
 	return KADM5_BAD_MASK;
-    if((mask & KADM5_POLICY) && strcmp(princ->policy, "default"))
-	return KADM5_UNK_POLICY;
+    if((mask & KADM5_POLICY)) {
+	if (!check_policy_exists(context, princ->policy))
+	    return KADM5_UNK_POLICY;
+    }
 
     memset(&ent, 0, sizeof(ent));
     ret = context->db->hdb_open(context->context, context->db, O_RDWR, 0);
@@ -67,6 +99,21 @@ modify_principal(void *server_handle,
     ret = hdb_seal_keys(context->context, context->db, &ent.entry);
     if (ret)
 	goto out2;
+
+    if((mask & KADM5_POLICY)) {
+	HDB_extension ext;
+
+	ext.data.element = choice_HDB_extension_data_policy;
+	ext.data.u.policy = strdup(princ->policy);
+	if (ext.data.u.policy == NULL) {
+	    ret = ENOMEM;
+	    goto out2;
+	}
+	/* This calls free_HDB_extension(), freeing ext.data.u.policy */
+	ret = hdb_replace_extension(context->context, &ent.entry, &ext);
+	if (ret)
+	    goto out2;
+    }
 
     ret = context->db->hdb_store(context->context, context->db,
 			     HDB_F_REPLACE, &ent);

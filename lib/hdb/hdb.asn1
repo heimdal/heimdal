@@ -112,6 +112,7 @@ HDB-extension ::= SEQUENCE {
 		last-pw-change[7]		KerberosTime,
 	        pkinit-cert[8]  		HDB-Ext-PKINIT-cert,
 	        hist-keys[9]			HDB-Ext-KeySet,
+	        policy[10]			UTF8String,
 		...
 	},
 	...

@@ -211,8 +211,21 @@ kadm5_s_get_principal(void *server_handle,
     if(mask & KADM5_FAIL_AUTH_COUNT)
 	;
 #endif
-    if(mask & KADM5_POLICY)
-	out->policy = NULL;
+    if(mask & KADM5_POLICY) {
+	HDB_extension *ext;
+
+	ext = hdb_find_extension(&ent.entry, choice_HDB_extension_data_policy);
+	if (ext == NULL) {
+	    out->policy = strdup("default");
+	    /* It's OK if we retun NULL instead of "default" */
+	} else {
+	    out->policy = strdup(ext->data.u.policy);
+	    if (out->policy == NULL) {
+		ret = ENOMEM;
+		goto out;
+	    }
+	}
+    }
     if(mask & KADM5_MAX_RLIFE) {
 	if(ent.entry.max_renew)
 	    out->max_renewable_life = *ent.entry.max_renew;

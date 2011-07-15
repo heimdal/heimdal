@@ -229,7 +229,7 @@ fast_parse_cookie(kdc_request_t r, const PA_DATA *pa)
 	goto out;
 
     ret = hdb_enctype2key(r->context, &fast_user->entry,
-			  data.cookie.e0type, &cookie_key);
+			  data.cookie.etype, &cookie_key);
     if (ret)
 	goto out;
 

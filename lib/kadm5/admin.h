@@ -223,38 +223,4 @@ typedef krb5_error_code kadm5_ret_t;
 
 #include "kadm5-protos.h"
 
-#if 0
-/* unimplemented functions */
-kadm5_ret_t
-kadm5_decrypt_key(void *server_handle,
-		  kadm5_principal_ent_t entry, int32_t
-		  ktype, int32_t stype, int32_t
-		  kvno, krb5_keyblock *keyblock,
-		  krb5_keysalt *keysalt, int *kvnop);
-
-kadm5_ret_t
-kadm5_create_policy(void *server_handle,
-		    kadm5_policy_ent_t policy, uint32_t mask);
-
-kadm5_ret_t
-kadm5_delete_policy(void *server_handle, char *policy);
-
-
-kadm5_ret_t
-kadm5_modify_policy(void *server_handle,
-		    kadm5_policy_ent_t policy,
-		    uint32_t mask);
-
-kadm5_ret_t
-kadm5_get_policy(void *server_handle, char *policy, kadm5_policy_ent_t ent);
-
-kadm5_ret_t
-kadm5_get_policies(void *server_handle, char *exp,
-		   char ***pols, int *count);
-
-void
-kadm5_free_policy_ent(kadm5_policy_ent_t policy);
-
-#endif
-
 #endif /* __KADM5_ADMIN_H__ */

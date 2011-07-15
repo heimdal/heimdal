@@ -377,3 +377,16 @@ kadm5_get_policies(void *server_handle, char *exp, char ***pols, int *count)
 
     return KADM5_POLICY_OP_NOSUPP;
 }
+
+kadm5_ret_t
+kadm5_free_policy_ent(kadm5_policy_ent_t ent)
+{
+    if (ent->policy)
+	free(ent->policy);
+    /*
+     * Not clear if we should free ent or not.  It might be an automatic
+     * struct, so we don't free it for now, just in case.
+     */
+    return 0;
+}
+

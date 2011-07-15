@@ -68,9 +68,9 @@ DB_lock(krb5_context context, HDB *db, int operation)
     krb5_error_code ret;
 
     if (db->lock_count > 0) {
-	assert( db->lock_type == HDB_WLOCK );
 	db->lock_count++;
-	return 0;
+	if (db->lock_type == HDB_WLOCK || db->lock_type == operation)
+	    return 0;
     }
 
     if(fd < 0) {

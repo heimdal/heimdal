@@ -341,11 +341,39 @@ kadm5_unlock(void *server_handle)
 
 
 kadm5_ret_t
+kadm5_create_policy(void *server_handle,
+	                         kadm5_policy_ent_t policy, long mask)
+{
+    return KADM5_POLICY_OP_NOSUPP;
+}
+
+kadm5_ret_t
+kadm5_delete_policy(void *server_handle, char *name)
+{
+    return KADM5_POLICY_OP_NOSUPP;
+}
+
+
+kadm5_ret_t
+kadm5_modify_policy(void *server_handle, kadm5_policy_ent_t policy,
+		    uint32_t mask)
+{
+    return KADM5_POLICY_OP_NOSUPP;
+}
+
+kadm5_ret_t
+kadm5_get_policy(void *server_handle, char *policy, kadm5_policy_ent_t ent)
+{
+    memset(ent, 0, sizeof (*ent));
+    return KADM5_POLICY_OP_NOSUPP;
+}
+
+
+kadm5_ret_t
 kadm5_get_policies(void *server_handle, char *exp, char ***pols, int *count)
 {
     *count = 0;
     *pols = NULL;
 
-    return 0;
+    return KADM5_POLICY_OP_NOSUPP;
 }
-

@@ -207,6 +207,7 @@ do_mod_entry(krb5_principal principal, void *data)
        e->expiration_time_string ||
        e->pw_expiration_time_string ||
        e->attributes_string ||
+       e->policy_string ||
        e->kvno_integer != -1 ||
        e->constrained_delegation_strings.num_strings ||
        e->alias_strings.num_strings ||
@@ -216,7 +217,8 @@ do_mod_entry(krb5_principal principal, void *data)
 			e->max_renewable_life_string,
 			e->expiration_time_string,
 			e->pw_expiration_time_string,
-			e->attributes_string);
+			e->attributes_string,
+			e->policy_string);
 	if(e->kvno_integer != -1) {
 	    princ.kvno = e->kvno_integer;
 	    mask |= KADM5_KVNO;

@@ -179,6 +179,12 @@ command = {
 		type = "flag"
 		help = "use default values"
 	}
+	option = {
+		long = "policy"
+		type = "string"
+		argument = "policy"
+		help = "policy name"
+	}
 	argument = "principal..."
 	min_args = "1"
 	help = "Adds a principal to the database."
@@ -352,6 +358,12 @@ command = {
 		type = "strings"
 		argument = "subject dn"
 		help = "aliases"
+	}
+	option = {
+		long = "policy"
+		type = "string"
+		argument = "policy"
+		help = "policy name"
 	}
 	argument = "principal"
 	min_args = "1"

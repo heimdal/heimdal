@@ -68,6 +68,7 @@ add_one_principal (const char *name,
 		   int rand_password,
 		   int use_defaults,
 		   char *password,
+		   char *policy,
 		   krb5_key_data *key_data,
 		   const char *max_ticket_life,
 		   const char *max_renewable_life,
@@ -94,7 +95,7 @@ add_one_principal (const char *name,
 
     ret = set_entry(context, &princ, &mask,
 		    max_ticket_life, max_renewable_life,
-		    expiration, pw_expiration, attributes);
+		    expiration, pw_expiration, attributes, policy);
     if (ret)
 	goto out;
 
@@ -245,6 +246,7 @@ add_new_key(struct add_options *opt, int argc, char **argv)
 				 opt->random_password_flag,
 				 opt->use_defaults_flag,
 				 opt->password_string,
+				 opt->policy_string,
 				 kdp,
 				 opt->max_ticket_life_string,
 				 opt->max_renewable_life_string,

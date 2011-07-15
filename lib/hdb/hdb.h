@@ -58,6 +58,7 @@ enum hdb_lockop{ HDB_RLOCK, HDB_WLOCK };
 #define HDB_F_ADMIN_DATA	64	/* want data that kdc don't use  */
 #define HDB_F_KVNO_SPECIFIED	128	/* we want a particular KVNO */
 #define HDB_F_CURRENT_KVNO	256	/* we want the current KVNO */
+#define HDB_F_ALL_KVNOS		512	/* we want all the keys */
 
 /* hdb_capability_flags */
 #define HDB_CAP_F_HANDLE_ENTERPRISE_PRINCIPAL 1

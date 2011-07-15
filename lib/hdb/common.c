@@ -155,37 +155,46 @@ _hdb_fetch_kvno(krb5_context context, HDB *db, krb5_const_principal principal,
 	}
     }
     krb5_data_free(&value);
-    if (db->hdb_master_key_set && (flags & HDB_F_DECRYPT)) {
-	if ((flags & HDB_F_KVNO_SPECIFIED) == 0 &&
-	    (flags & HDB_F_CURRENT_KVNO) == 0) {
-
+    if (db->hdb_master_key_set && (flags & HDB_F_DECRYPT) &&
+	(flags & HDB_F_ALL_KVNOS)) {
+	/* Decrypt the current keys */
+	ret = hdb_unseal_keys(context, db, &entry->entry);
+	if (ret) {
+	    hdb_free_entry(context, entry);
+	    return ret;
+	}
+	/* Decrypt the key history too */
+	ret = hdb_unseal_keys_kvno(context, db, 0, &entry->entry);
+	if (ret) {
+	    hdb_free_entry(context, entry);
+	    return ret;
+	}
+    } else if (db->hdb_master_key_set && (flags & HDB_F_DECRYPT)) {
+	if ((flags & HDB_F_KVNO_SPECIFIED) == 0 || kvno == entry->entry.kvno) {
+	    /* Decrypt the current keys */
+	    ret = hdb_unseal_keys(context, db, &entry->entry);
+	    if (ret) {
+		hdb_free_entry(context, entry);
+		return ret;
+	    }
+	} else {
 	    /*
-	     * Decrypt all the old keys too, since we don't know which
-	     * the caller will need.
+	     * Find and decrypt the keys from the history that we want,
+	     * and swap them with the current keys
 	     */
 	    ret = hdb_unseal_keys_kvno(context, db, 0, &entry->entry);
 	    if (ret) {
 		hdb_free_entry(context, entry);
 		return ret;
 	    }
-	} else if ((flags & HDB_F_KVNO_SPECIFIED) != 0 &&
-	    kvno != entry->entry.kvno &&
-	    kvno < entry->entry.kvno &&
-	    kvno > 0) {
-
-	    /* Decrypt the keys we were asked for, if not the current ones */
-	    ret = hdb_unseal_keys_kvno(context, db, kvno, &entry->entry);
+	}
+	if ((flags & HDB_F_ALL_KVNOS)) {
+	    /* Decrypt the history, post current/requested switcheroo */
+	    ret = hdb_unseal_keys_kvno(context, db, 0, &entry->entry);
 	    if (ret) {
 		hdb_free_entry(context, entry);
 		return ret;
 	    }
-	}
-
-	/* Always decrypt the current keys too */
-	ret = hdb_unseal_keys(context, db, &entry->entry);
-	if (ret) {
-	    hdb_free_entry(context, entry);
-	    return ret;
 	}
     }
 

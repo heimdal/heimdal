@@ -508,11 +508,26 @@ hdb_unseal_keys_kvno(krb5_context context, HDB *db, krb5_kvno kvno,
     for (i = hist_keys->len - 1; i >= 0; i++) {
 	if (kvno != 0 && hist_keys->val[i].kvno != kvno)
 	    continue;
+
+	/* Either the keys we want, or all the keys */
 	for (k = 0; k < hist_keys->val[i].keys.len; k++) {
 	    ret = hdb_unseal_key_mkey(context,
 				      &hist_keys->val[i].keys.val[k],
 				      db->hdb_master_key);
-	    if (ret)
+	    /*
+	     * If kvno == 0 we might not want to bail here!  E.g., if we
+	     * no longer have the right master key, so just ignore this.
+	     *
+	     * Might we want to filter out keys that we can't decrypt
+	     * because of HDB_ERR_NO_MKEY?  Probably.  If nothing else
+	     * so we don't leave turds behind.  But also in case of old
+	     * master keys derived from passwords -- we don't want to
+	     * help kadmin clients with fetch authorization be able to
+	     * mount dictionary attacks on old master keys.  Also,
+	     * mayber we're misconfigured and simply can't find a live
+	     * master key.
+	     */
+	    if (ret != HDB_ERR_NO_MKEY)
 		return (ret);
 	}
 
@@ -520,12 +535,12 @@ hdb_unseal_keys_kvno(krb5_context context, HDB *db, krb5_kvno kvno,
 	    continue;
 
 	/*
-	 * NOTE: What follows is a bit of an ugly hack.
+	 * What follows is a bit of a hack.
 	 *
-	 * This is the keyset we're being asked for, so we add the
-	 * current keyset to the history, leave the one we were asked
-	 * for in the history, and pretend the one we were asked for is
-	 * also the current keyset.
+	 * This is the keyset we're being asked for, but it's not the
+	 * current keyset.  So we add the current keyset to the history,
+	 * leave the one we were asked for in the history, and pretend
+	 * the one we were asked for is also the current keyset.
 	 *
 	 * This is a bit of a defensive hack in case an entry fetched
 	 * this way ever gets modified then stored: if the keyset is not

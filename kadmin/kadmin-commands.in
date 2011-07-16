@@ -175,6 +175,18 @@ command = {
 		help = "password expiration time"
 	}
 	option = {
+		long = "hist-kvno-diff-clnt"
+		type = "string"
+		argument = "kvno diff"
+		help = "historic keys allowed for client"
+	}
+	option = {
+		long = "hist-kvno-diff-svc"
+		type = "string"
+		argument = "kvno diff"
+		help = "historic keys allowed for service"
+	}
+	option = {
 		long = "use-defaults"
 		type = "flag"
 		help = "use default values"
@@ -364,6 +376,18 @@ command = {
 		type = "string"
 		argument = "policy"
 		help = "policy name"
+	}
+	option = {
+		long = "hist-kvno-diff-clnt"
+		type = "string"
+		argument = "kvno diff"
+		help = "historic keys allowed for client"
+	}
+	option = {
+		long = "hist-kvno-diff-svc"
+		type = "string"
+		argument = "kvno diff"
+		help = "historic keys allowed for service"
 	}
 	argument = "principal"
 	min_args = "1"

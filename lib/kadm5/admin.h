@@ -134,6 +134,8 @@ typedef struct _krb5_tl_data {
 #define KRB5_TL_EXTENSION           	0x0008
 #define KRB5_TL_PKINIT_ACL           	0x0009
 #define KRB5_TL_ALIASES           	0x000a
+#define KRB5_TL_HIST_KVNO_DIFF_CLNT	0x000b
+#define KRB5_TL_HIST_KVNO_DIFF_SVC	0x000c
 
 typedef struct _kadm5_principal_ent_t {
     krb5_principal principal;

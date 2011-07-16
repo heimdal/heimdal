@@ -490,6 +490,7 @@ hdb_unseal_keys_kvno(krb5_context context, HDB *db, krb5_kvno kvno,
     hdb_keyset *tmp_keys;
     Key *tmp_val;
     unsigned int tmp_len;
+    unsigned int kvno_diff = 0;
     krb5_kvno tmp_kvno;
     int i, k;
     int exclude_dead = 0;
@@ -498,6 +499,10 @@ hdb_unseal_keys_kvno(krb5_context context, HDB *db, krb5_kvno kvno,
     if ((flags & HDB_F_LIVE_CLNT_KVNOS) || (flags & HDB_F_LIVE_SVC_KVNOS)) {
 	exclude_dead = 1;
 	now = time(NULL);
+	if (HDB_F_LIVE_CLNT_KVNOS)
+	    kvno_diff = hdb_entry_get_kvno_diff_clnt(ent);
+	else
+	    kvno_diff = hdb_entry_get_kvno_diff_svc(ent);
     }
 
     assert(kvno == 0 || kvno < ent->kvno);
@@ -516,8 +521,11 @@ hdb_unseal_keys_kvno(krb5_context context, HDB *db, krb5_kvno kvno,
 	if (kvno != 0 && hist_keys->val[i].kvno != kvno)
 	    continue;
 
-	if (exclude_dead && ent->max_life != NULL &&
-	    hist_keys->val[i].set_time < (now - (*ent->max_life)))
+	if (exclude_dead &&
+	    ((ent->max_life != NULL &&
+	      hist_keys->val[i].set_time < (now - (*ent->max_life))) ||
+	    (hist_keys->val[i].kvno < kvno &&
+	     (kvno - hist_keys->val[i].kvno) > kvno_diff)))
 	    /*
 	     * The KDC may want to to check for this keyset's set_time
 	     * is within the TGS principal's max_life, say.  But we stop

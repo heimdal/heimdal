@@ -64,6 +64,8 @@ static struct field_name {
     { "password", KADM5_TL_DATA, KRB5_TL_PASSWORD, KADM5_KEY_DATA, "Password", "Password", 0 },
     { "pkinit-acl", KADM5_TL_DATA, KRB5_TL_PKINIT_ACL, 0, "PK-INIT ACL", "PK-INIT ACL", 0 },
     { "aliases", KADM5_TL_DATA, KRB5_TL_ALIASES, 0, "Aliases", "Aliases", 0 },
+    { "hist-kvno-diff-clnt", KADM5_TL_DATA, KRB5_TL_HIST_KVNO_DIFF_CLNT, 0, "Clnt hist keys", "Historic keys allowed for client", 0 },
+    { "hist-kvno-diff-svc", KADM5_TL_DATA, KRB5_TL_HIST_KVNO_DIFF_SVC, 0, "Svc hist keys", "Historic keys allowed for service", 0 },
     { NULL }
 };
 

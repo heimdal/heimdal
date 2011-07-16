@@ -482,7 +482,7 @@ hdb_unseal_keys(krb5_context context, HDB *db, hdb_entry *ent)
 
 krb5_error_code
 hdb_unseal_keys_kvno(krb5_context context, HDB *db, krb5_kvno kvno,
-		     hdb_entry *ent)
+		     unsigned flags, hdb_entry *ent)
 {
     krb5_error_code ret = KRB5KRB_AP_ERR_NOKEY;	/* XXX need a better code? */
     HDB_extension *ext;
@@ -492,6 +492,13 @@ hdb_unseal_keys_kvno(krb5_context context, HDB *db, krb5_kvno kvno,
     unsigned int tmp_len;
     krb5_kvno tmp_kvno;
     int i, k;
+    int exclude_dead = 0;
+    KerberosTime now = 0;
+
+    if ((flags & HDB_F_LIVE_CLNT_KVNOS) || (flags & HDB_F_LIVE_SVC_KVNOS)) {
+	exclude_dead = 1;
+	now = time(NULL);
+    }
 
     assert(kvno == 0 || kvno < ent->kvno);
 
@@ -509,6 +516,15 @@ hdb_unseal_keys_kvno(krb5_context context, HDB *db, krb5_kvno kvno,
 	if (kvno != 0 && hist_keys->val[i].kvno != kvno)
 	    continue;
 
+	if (exclude_dead && ent->max_life != NULL &&
+	    hist_keys->val[i].set_time < (now - (*ent->max_life)))
+	    /*
+	     * The KDC may want to to check for this keyset's set_time
+	     * is within the TGS principal's max_life, say.  But we stop
+	     * here.
+	     */
+	    continue;
+
 	/* Either the keys we want, or all the keys */
 	for (k = 0; k < hist_keys->val[i].keys.len; k++) {
 	    ret = hdb_unseal_key_mkey(context,
@@ -518,14 +534,9 @@ hdb_unseal_keys_kvno(krb5_context context, HDB *db, krb5_kvno kvno,
 	     * If kvno == 0 we might not want to bail here!  E.g., if we
 	     * no longer have the right master key, so just ignore this.
 	     *
-	     * Might we want to filter out keys that we can't decrypt
-	     * because of HDB_ERR_NO_MKEY?  Probably.  If nothing else
-	     * so we don't leave turds behind.  But also in case of old
-	     * master keys derived from passwords -- we don't want to
-	     * help kadmin clients with fetch authorization be able to
-	     * mount dictionary attacks on old master keys.  Also,
-	     * mayber we're misconfigured and simply can't find a live
-	     * master key.
+	     * We could filter out keys that we can't decrypt here
+	     * because of HDB_ERR_NO_MKEY.  However, it seems safest to
+	     * filter them out only where necessary, say, in kadm5.
 	     */
 	    if (ret != HDB_ERR_NO_MKEY)
 		return (ret);

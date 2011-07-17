@@ -176,15 +176,17 @@ command = {
 	}
 	option = {
 		long = "hist-kvno-diff-clnt"
-		type = "string"
+		type = "integer"
 		argument = "kvno diff"
 		help = "historic keys allowed for client"
+		default = "-1"
 	}
 	option = {
 		long = "hist-kvno-diff-svc"
-		type = "string"
+		type = "integer"
 		argument = "kvno diff"
 		help = "historic keys allowed for service"
+		default = "-1"
 	}
 	option = {
 		long = "use-defaults"
@@ -379,15 +381,17 @@ command = {
 	}
 	option = {
 		long = "hist-kvno-diff-clnt"
-		type = "string"
+		type = "integer"
 		argument = "kvno diff"
 		help = "historic keys allowed for client"
+		default = "-1"
 	}
 	option = {
 		long = "hist-kvno-diff-svc"
-		type = "string"
+		type = "integer"
 		argument = "kvno diff"
 		help = "historic keys allowed for service"
+		default = "-1"
 	}
 	argument = "principal"
 	min_args = "1"

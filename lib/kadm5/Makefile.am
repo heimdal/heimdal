@@ -179,6 +179,7 @@ $(srcdir)/kadm5-private.h:
 		|| rm -f kadm5-private.h
 
 EXTRA_DIST = \
+	NTMakefile \
 	kadm5_err.et \
 	iprop-commands.in \
 	$(man_MANS) \

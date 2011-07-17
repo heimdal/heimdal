@@ -20,4 +20,4 @@ libtelnet_a_SOURCES = \
 	misc.c		\
 	misc.h
 
-EXTRA_DIST = rsaencpwd.c spx.c
+EXTRA_DIST = NTMakefile rsaencpwd.c spx.c

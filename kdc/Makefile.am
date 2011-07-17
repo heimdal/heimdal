@@ -128,4 +128,4 @@ krb5_HEADERS = windc_plugin.h
 
 build_HEADERZ = $(krb5_HEADERS) # XXX
 
-EXTRA_DIST = $(man_MANS) version-script.map
+EXTRA_DIST = NTMakefile $(man_MANS) version-script.map

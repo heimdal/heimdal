@@ -355,6 +355,7 @@ test_config_strings.out: test_config_strings.cfg
 	$(CP) $(srcdir)/test_config_strings.cfg test_config_strings.out
 
 EXTRA_DIST = \
+	NTMakefile \
 	krb5_err.et \
 	krb_err.et \
 	heim_err.et \

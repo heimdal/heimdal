@@ -299,6 +299,7 @@ test_query: test_query.in Makefile
 	mv test_query.tmp test_query
 
 EXTRA_DIST = \
+	NTMakefile \
 	version-script.map \
 	crmf.asn1 \
 	hx509_err.et \

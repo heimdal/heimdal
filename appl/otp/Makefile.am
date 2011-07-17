@@ -14,4 +14,4 @@ otpprint_LDADD  = $(LIB_hcrypto) $(LIB_roken) $(top_builddir)/lib/otp/libotp.la
 
 man_MANS = otp.1  otpprint.1
 
-EXTRA_DIST = $(man_MANS)
+EXTRA_DIST = NTMakefile $(man_MANS)

@@ -230,6 +230,7 @@ endif
 
 
 EXTRA_DIST = \
+	NTMakefile \
 	roken.awk roken.h.in \
 	$(man_MANS) \
 	test-mem.h \

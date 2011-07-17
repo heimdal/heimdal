@@ -333,6 +333,7 @@ gss-commands.c gss-commands.h: gss-commands.in
 $(gsstool_OBJECTS): gss-commands.h
 
 EXTRA_DIST = \
+	NTMakefile \
 	$(man_MANS) \
 	krb5/gkrb5_err.et \
 	mech/gssapi.asn1 \

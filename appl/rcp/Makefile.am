@@ -10,6 +10,6 @@ rcp_SOURCES  = rcp.c util.c rcp_locl.h extern.h
 
 man_MANS = rcp.1
 
-EXTRA_DIST = $(man_MANS)
+EXTRA_DIST = NTMakefile $(man_MANS)
 
 LDADD = $(LIB_roken)

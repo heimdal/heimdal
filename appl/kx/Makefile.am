@@ -46,7 +46,7 @@ kxd_SOURCES = \
 
 EXTRA_kxd_SOURCES = writeauth.c
 
-EXTRA_DIST = rxterm.in rxtelnet.in tenletxr.in $(man_MANS)
+EXTRA_DIST = NTMakefile rxterm.in rxtelnet.in tenletxr.in $(man_MANS)
 
 man_MANS = kx.1 rxtelnet.1 rxterm.1 tenletxr.1 kxd.8
 

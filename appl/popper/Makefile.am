@@ -44,6 +44,6 @@ LDADD = \
 
 man_MANS = popper.8
 
-EXTRA_DIST = pop3.rfc1081 pop3e.rfc1082 \
+EXTRA_DIST = NTMakefile pop3.rfc1081 pop3e.rfc1082 \
 	popper.README.release README-FIRST \
 	$(man_MANS)

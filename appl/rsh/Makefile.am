@@ -25,4 +25,4 @@ LDADD = $(LIB_kafs) \
 	$(LIB_hcrypto) \
 	$(LIB_roken)
 
-EXTRA_DIST = $(man_MANS)
+EXTRA_DIST = NTMakefile $(man_MANS)

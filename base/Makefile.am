@@ -26,4 +26,4 @@ dist_libheimbase_la_SOURCES =	\
 
 test_base_LDADD = $(LIB_heimbase)
 
-EXTRA_DIST = version-script.map
+EXTRA_DIST = NTMakefile version-script.map

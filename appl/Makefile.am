@@ -25,3 +25,5 @@ SUBDIRS = 					\
 	  kx					\
 	  kf					\
 	  $(dir_dce)
+
+EXTRA_DIST = NTMakefile

@@ -47,3 +47,5 @@ getprogname.c:
 	$(LN_S) $(srcdir)/../roken/getprogname.c .
 
 slc-lex.c: slc-gram.h
+
+EXTRA_DIST = NTMakefile

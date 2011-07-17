@@ -21,4 +21,4 @@ LDADD = ../libtelnet/libtelnet.a \
 	$(LIB_kdfs) \
 	$(LIB_roken)
 
-EXTRA_DIST = $(man_MANS)
+EXTRA_DIST = NTMakefile $(man_MANS)

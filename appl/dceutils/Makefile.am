@@ -24,6 +24,7 @@ k5dcecon_SOURCES  = k5dcecon.c k5dce.h
 dpagaix_SOURCES = dpagaix.c
 
 EXTRA_DIST = \
+	NTMakefile \
 	dfspag.exp \
 	README.dcedfs \
 	README.original \

@@ -226,6 +226,7 @@ test_asn1_files: asn1_compile$(EXEEXT) $(srcdir)/test.asn1
 
 
 EXTRA_DIST =		\
+	NTMakefile	\
 	cms.asn1	\
 	cms.opt		\
 	asn1_err.et	\

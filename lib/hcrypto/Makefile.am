@@ -313,6 +313,7 @@ CLEANFILES = \
 	test_crypto.tmp
 
 EXTRA_DIST = \
+	NTMakefile \
 	DESperate.txt \
 	dllmain.c \
 	ec.h \

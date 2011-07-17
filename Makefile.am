@@ -19,6 +19,8 @@ endif
 ACLOCAL_AMFLAGS = -I cf
 
 EXTRA_DIST = \
+	NTMakefile \
+	windows \
 	TODO \
 	LICENSE \
 	README \

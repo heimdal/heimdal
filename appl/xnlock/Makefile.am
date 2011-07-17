@@ -21,7 +21,8 @@ CHECK_LOCAL = no-check-local
 man_MANS = xnlock.1
 
 EXTRA_DIST = $(man_MANS) nose.0.left nose.0.right nose.1.left nose.1.right \
-	nose.down nose.front nose.left.front nose.right.front
+	nose.down nose.front nose.left.front nose.right.front \
+	NTMakefile
 
 LDADD = \
 	$(LIB_kafs) \

@@ -131,6 +131,7 @@ test_mkey_LIBS = $(test_hdbkeys_LIBS)
 hdb_err.h: hdb_err.et
 
 EXTRA_DIST = \
+	NTMakefile \
 	hdb.asn1 \
 	hdb_err.et \
 	hdb.schema \

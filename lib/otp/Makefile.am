@@ -82,4 +82,4 @@ CLEANFILES = \
 	strlwr.c \
 	strncasecmp.c
 
-EXTRA_DIST = version-script.map
+EXTRA_DIST = NTMakefile version-script.map

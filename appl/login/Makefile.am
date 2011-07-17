@@ -37,4 +37,4 @@ $(srcdir)/login-protos.h:
 
 $(login_OBJECTS): $(srcdir)/login-protos.h
 
-EXTRA_DIST = $(man_MANS)
+EXTRA_DIST = NTMakefile $(man_MANS)

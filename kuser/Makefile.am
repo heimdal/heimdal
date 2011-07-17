@@ -72,7 +72,7 @@ LDADD = \
 	$(top_builddir)/lib/asn1/libasn1.la \
 	$(LIB_roken)
 
-EXTRA_DIST = $(man_MANS) \
+EXTRA_DIST = NTMakefile $(man_MANS) \
 	kuser_locl.h kcc-commands.in kdigest-commands.in copy_cred_cache.1
 
 # make sure install-exec-hook doesn't have any commands in Makefile.am.common

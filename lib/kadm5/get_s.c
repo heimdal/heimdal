@@ -32,6 +32,7 @@
  */
 
 #include "kadm5_locl.h"
+#include <assert.h>
 
 RCSID("$Id$");
 
@@ -68,7 +69,7 @@ static
 krb5_error_code
 copy_keyset_to_kadm5(kadm5_server_context *context, krb5_kvno kvno,
 		     size_t n_keys, Key *keys, krb5_salt *salt,
-		     size_t out_offset, kadm5_principal_ent_t out)
+		     kadm5_principal_ent_t out)
 {
     size_t i;
     Key *key;
@@ -78,7 +79,7 @@ copy_keyset_to_kadm5(kadm5_server_context *context, krb5_kvno kvno,
 
     for (i = 0; i < n_keys; i++) {
 	key = &keys[i];
-	kd = &out->key_data[out_offset + i];
+	kd = &out->key_data[out->n_key_data];
 	kd->key_data_ver = 2;
 	kd->key_data_kvno = kvno;
 	kd->key_data_type[0] = key->key.keytype;
@@ -109,7 +110,7 @@ copy_keyset_to_kadm5(kadm5_server_context *context, krb5_kvno kvno,
 	    break;
 	}
 	memcpy(kd->key_data_contents[1], sp->data, kd->key_data_length[1]);
-	out->n_key_data = i + 1;
+	out->n_key_data++;
     }
 
     return ret;
@@ -236,7 +237,6 @@ kadm5_s_get_principal(void *server_handle,
     if(mask & KADM5_KEY_DATA){
 	size_t i;
 	size_t n_keys = ent.entry.keys.len;
-	size_t offset = ent.entry.keys.len;
 	krb5_salt salt;
 	HDB_extension *ext;
 	HDB_Ext_KeySet *hist_keys = NULL;
@@ -253,20 +253,21 @@ kadm5_s_get_principal(void *server_handle,
 	    ret = ENOMEM;
 	    goto out;
 	}
+	out->n_key_data = 0;
 	ret = copy_keyset_to_kadm5(context, ent.entry.kvno, ent.entry.keys.len,
-				   ent.entry.keys.val, &salt, 0, out);
+				   ent.entry.keys.val, &salt, out);
 	if (ret)
 	    goto out;
 	for (i = 0; hist_keys != NULL && i < hist_keys->len; i++) {
 	    ret = copy_keyset_to_kadm5(context, hist_keys->val[i].kvno,
 				       hist_keys->val[i].keys.len,
 				       hist_keys->val[i].keys.val,
-				       &salt, offset, out);
+				       &salt, out);
 	    if (ret)
 		goto out;
-	    offset += hist_keys->val[i].keys.len;
 	}
 	krb5_free_salt(context->context, salt);
+	assert( out->n_key_data == n_keys );
     }
     if(ret){
 	kadm5_free_principal_ent(context, out);

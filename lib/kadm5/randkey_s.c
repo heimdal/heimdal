@@ -62,9 +62,11 @@ kadm5_s_randkey_principal(void *server_handle,
     if(ret)
 	goto out;
 
-    ret = hdb_add_current_keys_to_history(context->context, &ent.entry);
-    if (ret)
-        goto out2;
+    if (keepold) {
+	ret = hdb_add_current_keys_to_history(context->context, &ent.entry);
+	if (ret)
+	    goto out2;
+    }
 
     ret = _kadm5_set_keys_randomly (context,
 				    &ent.entry,
@@ -83,9 +85,18 @@ kadm5_s_randkey_principal(void *server_handle,
     if (ret)
 	goto out2;
 
-    ret = hdb_seal_keys(context->context, context->db, &ent.entry);
-    if (ret)
-	goto out2;
+    if (keepold) {
+	ret = hdb_seal_keys(context->context, context->db, &ent.entry);
+	if (ret)
+	    goto out2;
+    } else {
+	HDB_extension ext;
+
+	ext.data.element = choice_HDB_extension_data_hist_keys;
+	ext.data.u.hist_keys.len = 0;
+	ext.data.u.hist_keys.val = NULL;
+	hdb_replace_extension(context->context, &ent.entry, &ext);
+    }
 
     ret = context->db->hdb_store(context->context, context->db,
 				 HDB_F_REPLACE, &ent);

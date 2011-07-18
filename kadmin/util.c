@@ -186,7 +186,9 @@ edit_policy (const char *prompt, char **policy, int *mask, int bit)
     if (mask && (*mask & bit))
 	return 0;
 
-    strlcpy(buf, *policy, sizeof (buf));
+    buf[0] = '\0';
+    if (*policy)
+	strlcpy(buf, *policy, sizeof (buf));
     for (;;) {
 	if(get_response("Policy", buf, resp, sizeof(resp)) != 0)
 	    return 1;
@@ -444,6 +446,14 @@ set_defaults(kadm5_principal_ent_t ent, int *mask,
 	&& (default_mask & KADM5_ATTRIBUTES)
 	&& !(*mask & KADM5_ATTRIBUTES))
 	ent->attributes = default_ent->attributes & ~KRB5_KDB_DISALLOW_ALL_TIX;
+
+    if (default_ent
+	&& (default_mask & KADM5_POLICY)
+	&& !(*mask & KADM5_POLICY)) {
+	ent->policy = strdup(default_ent->policy);
+	if (ent->policy == NULL)
+	    abort();
+    }
 }
 
 int

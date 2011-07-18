@@ -495,6 +495,7 @@ hdb_unseal_keys_kvno(krb5_context context, HDB *db, krb5_kvno kvno,
     int i, k;
     int exclude_dead = 0;
     KerberosTime now = 0;
+    time_t *set_time;
 
     if ((flags & HDB_F_LIVE_CLNT_KVNOS) || (flags & HDB_F_LIVE_SVC_KVNOS)) {
 	exclude_dead = 1;
@@ -523,6 +524,7 @@ hdb_unseal_keys_kvno(krb5_context context, HDB *db, krb5_kvno kvno,
 
 	if (exclude_dead &&
 	    ((ent->max_life != NULL &&
+	      hist_keys->val[i].set_time != NULL &&
 	      hist_keys->val[i].set_time < (now - (*ent->max_life))) ||
 	    (hist_keys->val[i].kvno < kvno &&
 	     (kvno - hist_keys->val[i].kvno) > kvno_diff)))
@@ -573,6 +575,9 @@ hdb_unseal_keys_kvno(krb5_context context, HDB *db, krb5_kvno kvno,
 	 * so there's no danger that we'll dump this entry and load it
 	 * again, repeatedly causing the history to grow boundelessly.
 	 */
+	set_time = malloc(*set_time);
+	if (set_time == NULL)
+	    return ENOMEM;
 	tmp_keys = realloc(hist_keys->val,
 		      sizeof (*hist_keys->val) * (hist_keys->len + 1));
 	if (tmp_keys == NULL)
@@ -583,7 +588,8 @@ hdb_unseal_keys_kvno(krb5_context context, HDB *db, krb5_kvno kvno,
 	tmp_keys[0].keys.len = ent->keys.len;
 	tmp_keys[0].keys.val = ent->keys.val;
 	tmp_keys[0].kvno = ent->kvno;
-	(void) hdb_entry_get_pw_change_time(ent, &tmp_keys[0].set_time);
+	tmp_keys[0].set_time = set_time;
+	(void) hdb_entry_get_pw_change_time(ent, tmp_keys[0].set_time);
 	i++;
 	ent->keys.len = hist_keys->val[i].keys.len;
 	ent->keys.val = hist_keys->val[i].keys.val;

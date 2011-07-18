@@ -227,7 +227,7 @@ hdb_add_current_keys_to_history(krb5_context context, hdb_entry *entry)
     HDB_Ext_KeySet *hist_keys;
     hdb_keyset *tmp_keysets;
     size_t i;
-    size_t add = 0;
+    size_t replace = 0;
 
     ext = hdb_find_extension(entry, choice_HDB_extension_data_hist_keys);
     if (ext != NULL) {
@@ -240,7 +240,7 @@ hdb_add_current_keys_to_history(krb5_context context, hdb_entry *entry)
 	memmove(&hist_keys->val[1], hist_keys->val,
 		sizeof (*hist_keys->val) * hist_keys->len++);
     } else {
-	add = 1;
+	replace = 1;
 	ext = calloc(1, sizeof (*ext));
 	if (ext == NULL)
 	    return ENOMEM;
@@ -265,19 +265,22 @@ hdb_add_current_keys_to_history(krb5_context context, hdb_entry *entry)
 	}
     }
     hist_keys->val[0].kvno = entry->kvno;
-    (void) hdb_entry_get_pw_change_time(entry, &hist_keys->val[0].set_time);
+    hist_keys->val[0].set_time = malloc(sizeof (*hist_keys->val[0].set_time));
+    if (hist_keys->val[0].set_time == NULL) {
+	free_HDB_extension(ext);
+	return ENOMEM;
+    }
+    (void) hdb_entry_get_pw_change_time(entry, hist_keys->val[0].set_time);
 
-    if (add) {
-	/* XXX hdb_replace_extension() deep-copies ext; what a waste */
+    if (replace) {
+	/* hdb_replace_extension() deep-copies ext; what a waste */
 	ret = hdb_replace_extension(context, entry, ext);
 	if (ret) {
 	    free_HDB_extension(ext);
 	    return ret;
 	}
+	free_HDB_extension(ext);
     }
-
-    /* hdb_replace_extension() copies ext, so we have to free it */
-    free_HDB_extension(ext);
     return 0;
 }
 

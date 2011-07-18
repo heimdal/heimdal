@@ -42,7 +42,7 @@ kadm5_chpass_principal(void *server_handle,
 		       krb5_principal princ,
 		       const char *password)
 {
-    return __CALL(chpass_principal, (server_handle, princ, password));
+    return __CALL(chpass_principal, (server_handle, princ, 0, password));
 }
 
 kadm5_ret_t
@@ -60,7 +60,7 @@ kadm5_chpass_principal_3(void *server_handle,
      */
     if (n_ks_tuple > 0)
 	return KADM5_KS_TUPLE_NOSUPP;
-    return __CALL(chpass_principal, (server_handle, princ, password));
+    return __CALL(chpass_principal, (server_handle, princ, keepold, password));
 }
 
 kadm5_ret_t

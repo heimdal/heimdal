@@ -230,6 +230,11 @@ command = {
 		type = "string"
 		help = "DES key in hex"
 	}
+	option = {
+		long = "keepold"
+		type = "flag"
+		help = "keep old keys/password"
+	}
 	argument = "principal..."
 	min_args = "1"
 	help = "Changes the password of one or more principals matching the expressions."

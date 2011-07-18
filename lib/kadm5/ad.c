@@ -508,6 +508,7 @@ ad_get_cred(kadm5_ad_context *context, const char *password)
 static kadm5_ret_t
 kadm5_ad_chpass_principal(void *server_handle,
 			  krb5_principal principal,
+			  int keepold,
 			  const char *password)
 {
     kadm5_ad_context *context = server_handle;

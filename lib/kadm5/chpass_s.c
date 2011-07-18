@@ -38,6 +38,7 @@ RCSID("$Id$");
 static kadm5_ret_t
 change(void *server_handle,
        krb5_principal princ,
+       int keepold,
        const char *password,
        int cond)
 {
@@ -58,6 +59,10 @@ change(void *server_handle,
     if(ret)
 	goto out;
 
+    /*
+     * We save these for now so we can handle password history checking;
+     * we handle keepold further below.
+     */
     ret = hdb_add_current_keys_to_history(context->context, &ent.entry);
     if (ret)
 	goto out;
@@ -98,12 +103,23 @@ change(void *server_handle,
 				   "Password reuse forbidden");
 	    goto out2;
 	}
+    }
+    ent.entry.kvno++;
 
+    if (keepold) {
 	ret = hdb_seal_keys(context->context, context->db, &ent.entry);
 	if (ret)
 	    goto out2;
+    } else {
+	HDB_extension ext;
+
+	ext.data.element = choice_HDB_extension_data_hist_keys;
+	ext.data.u.hist_keys.len = 0;
+	ext.data.u.hist_keys.val = NULL;
+	ret = hdb_replace_extension(context->context, &ent.entry, &ext);
+	if (ret)
+	    goto out2;
     }
-    ent.entry.kvno++;
 
     ret = _kadm5_set_modifier(context, &ent.entry);
     if(ret)
@@ -140,9 +156,10 @@ out:
 kadm5_ret_t
 kadm5_s_chpass_principal_cond(void *server_handle,
 			      krb5_principal princ,
+			      int keepold,
 			      const char *password)
 {
-    return change (server_handle, princ, password, 1);
+    return change (server_handle, princ, keepold, password, 1);
 }
 
 /*
@@ -152,9 +169,10 @@ kadm5_s_chpass_principal_cond(void *server_handle,
 kadm5_ret_t
 kadm5_s_chpass_principal(void *server_handle,
 			 krb5_principal princ,
+			 int keepold,
 			 const char *password)
 {
-    return change (server_handle, princ, password, 0);
+    return change (server_handle, princ, keepold, password, 0);
 }
 
 /*

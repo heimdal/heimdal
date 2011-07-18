@@ -401,7 +401,7 @@ change (krb5_auth_context auth_context,
     tmp = pwd_data->data;
     tmp[pwd_data->length - 1] = '\0';
 
-    ret = kadm5_s_chpass_principal_cond (kadm5_handle, principal, tmp);
+    ret = kadm5_s_chpass_principal_cond (kadm5_handle, principal, 1, tmp);
     krb5_free_data (context, pwd_data);
     pwd_data = NULL;
     if (ret) {

@@ -698,19 +698,21 @@ krb5_enctype_valid(krb5_context context,
 		   krb5_enctype etype)
 {
     struct _krb5_encryption_type *e = _krb5_find_enctype(etype);
+    if(e != NULL && !(e->flags & F_DISABLED))
+	return 0;
+    if (!context)
+	return KRB5_PROG_ETYPE_NOSUPP;
     if(e == NULL) {
 	krb5_set_error_message (context, KRB5_PROG_ETYPE_NOSUPP,
 				N_("encryption type %d not supported", ""),
 				etype);
 	return KRB5_PROG_ETYPE_NOSUPP;
     }
-    if (e->flags & F_DISABLED) {
-	krb5_set_error_message (context, KRB5_PROG_ETYPE_NOSUPP,
-				N_("encryption type %s is disabled", ""),
-				e->name);
-	return KRB5_PROG_ETYPE_NOSUPP;
-    }
-    return 0;
+    /* Must be (e->flags & F_DISABLED) */
+    krb5_set_error_message (context, KRB5_PROG_ETYPE_NOSUPP,
+			    N_("encryption type %s is disabled", ""),
+			    e->name);
+    return KRB5_PROG_ETYPE_NOSUPP;
 }
 
 /**

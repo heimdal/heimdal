@@ -699,7 +699,28 @@ kadm5_log_replay_modify (kadm5_server_context *context,
 	size_t num;
 	size_t i;
 
-	/* XXX Take care of key history!! */
+	/*
+	 * We don't need to do anything about key history here because
+	 * we always log KADM5_TL_DATA when we change keys/passwords, so
+	 * the code below this will handle key history implicitly.
+	 * However, if we had to, the code to handle key history here
+	 * would look like this:
+	 *
+	 * HDB_extension *ext;
+	 * ...
+	 * ext = hdb_find_extension(&log_ent.entry,
+	 *                          choice_HDB_extension_data_hist_keys);
+	 * if (ext);
+	 *    ret = hdb_replace_extension(context->context, &ent.entry, ext);
+	 * else
+	 *    ret = hdb_clear_extension(context->context, &ent.entry,
+	 *                              choice_HDB_extension_data_hist_keys);
+	 *
+	 * Maybe we should do this here anyways, wasteful as it would
+	 * be, as a defensive programming measure?  For now we stick an
+	 * assert().
+	 */
+	assert( (mask & KADM5_TL_DATA) );
 
 	for (i = 0; i < ent.entry.keys.len; ++i)
 	    free_Key(&ent.entry.keys.val[i]);

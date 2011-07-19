@@ -128,7 +128,7 @@ static krb5_error_code
 entry2string_int (krb5_context context, krb5_storage *sp, hdb_entry *ent)
 {
     char *p;
-    int i;
+    size_t i;
     krb5_error_code ret;
 
     /* --- principal */

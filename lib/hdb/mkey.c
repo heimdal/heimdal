@@ -492,7 +492,7 @@ hdb_unseal_keys_kvno(krb5_context context, HDB *db, krb5_kvno kvno,
     unsigned int tmp_len;
     unsigned int kvno_diff = 0;
     krb5_kvno tmp_kvno;
-    int i, k;
+    size_t i, k;
     int exclude_dead = 0;
     KerberosTime now = 0;
     time_t *set_time;
@@ -518,7 +518,7 @@ hdb_unseal_keys_kvno(krb5_context context, HDB *db, krb5_kvno kvno,
 
     hist_keys = &ext->data.u.hist_keys;
 
-    for (i = hist_keys->len - 1; i >= 0; i++) {
+    for (i = 0; i < hist_keys->len; i++) {
 	if (kvno != 0 && hist_keys->val[i].kvno != kvno)
 	    continue;
 

@@ -33,7 +33,6 @@
  */
 
 #include "hdb_locl.h"
-#include <assert.h>
 
 /*
  * free all the memory used by (len, keys)
@@ -42,7 +41,7 @@
 void
 hdb_free_keys(krb5_context context, int len, Key *keys)
 {
-    int i;
+    size_t i;
 
     for (i = 0; i < len; i++) {
 	free(keys[i].mkvno);
@@ -60,7 +59,7 @@ hdb_free_keys(krb5_context context, int len, Key *keys)
 void
 hdb_free_keysets(krb5_context context, int len, hdb_keyset *keysets)
 {
-    int i;
+    size_t i;
 
     for (i = 0; i < len; i++) {
 	hdb_free_keys(context, keysets[i].keys.len, keysets[i].keys.val);
@@ -337,7 +336,7 @@ krb5_error_code
 ks_tuple2str(krb5_context context, int n_ks_tuple,
 	     krb5_key_salt_tuple *ks_tuple, char ***ks_tuple_strs)
 {
-	int i;
+	size_t i;
 	char **ksnames;
 	char *ename, *sname;
 	krb5_error_code rc = KRB5_PROG_ETYPE_NOSUPP;

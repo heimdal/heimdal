@@ -49,7 +49,7 @@ kadm5_c_randkey_principal(void *server_handle,
     krb5_storage *sp;
     unsigned char buf[1536];
     int32_t tmp;
-    int i;
+    size_t i;
     krb5_data reply;
 
     ret = _kadm5_connect(server_handle);

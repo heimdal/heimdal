@@ -218,10 +218,15 @@ kadmind_dispatch(void *kadm_handlep, krb5_boolean initial,
     case kadm_chpass:{
 	op = "CHPASS";
 	ret = krb5_ret_principal(sp, &princ);
-	if(ret)
+	if (ret)
 	    goto fail;
 	ret = krb5_ret_string(sp, &password);
-	if(ret){
+	if (ret) {
+	    krb5_free_principal(contextp->context, princ);
+	    goto fail;
+	}
+	ret = krb5_ret_int32(sp, &keepold);
+	if (ret && ret != HEIM_ERR_EOF) {
 	    krb5_free_principal(contextp->context, princ);
 	    goto fail;
 	}
@@ -262,7 +267,8 @@ kadmind_dispatch(void *kadm_handlep, krb5_boolean initial,
 	    free(password);
 	    goto fail;
 	}
-	ret = kadm5_chpass_principal(kadm_handlep, princ, password);
+	ret = kadm5_chpass_principal_3(kadm_handlep, princ, keepold, 0, NULL,
+				       password);
 	krb5_free_principal(contextp->context, princ);
 	memset(password, 0, strlen(password));
 	free(password);
@@ -282,6 +288,11 @@ kadmind_dispatch(void *kadm_handlep, krb5_boolean initial,
 	    goto fail;
 	ret = krb5_ret_int32(sp, &n_key_data);
 	if (ret) {
+	    krb5_free_principal(contextp->context, princ);
+	    goto fail;
+	}
+	ret = krb5_ret_int32(sp, &keepold);
+	if (ret && ret != HEIM_ERR_EOF) {
 	    krb5_free_principal(contextp->context, princ);
 	    goto fail;
 	}
@@ -329,8 +340,8 @@ kadmind_dispatch(void *kadm_handlep, krb5_boolean initial,
 	    krb5_free_principal(contextp->context, princ);
 	    goto fail;
 	}
-	ret = kadm5_chpass_principal_with_key(kadm_handlep, princ,
-					      n_key_data, key_data);
+	ret = kadm5_chpass_principal_with_key_3(kadm_handlep, princ, keepold,
+					        n_key_data, key_data);
 	{
 	    int16_t dummy = n_key_data;
 	    kadm5_free_key_data (contextp, &dummy, key_data);

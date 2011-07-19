@@ -70,7 +70,18 @@ kadm5_chpass_principal_with_key(void *server_handle,
 				krb5_key_data *key_data)
 {
     return __CALL(chpass_principal_with_key,
-		  (server_handle, princ, n_key_data, key_data));
+		  (server_handle, princ, 0, n_key_data, key_data));
+}
+
+kadm5_ret_t
+kadm5_chpass_principal_with_key_3(void *server_handle,
+				  krb5_principal princ,
+				  int keepold,
+				  int n_key_data,
+				  krb5_key_data *key_data)
+{
+    return __CALL(chpass_principal_with_key,
+		  (server_handle, princ, keepold, n_key_data, key_data));
 }
 
 kadm5_ret_t

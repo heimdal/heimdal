@@ -81,10 +81,6 @@ kadm5_c_randkey_principal(void *server_handle,
      */
     krb5_store_int32(sp, kadm_randkey);
     krb5_store_principal(sp, princ);
-    ret = _kadm5_client_send(context, sp);
-    krb5_storage_free(sp);
-    if (ret)
-	return ret;
 
     if (keepold == TRUE || n_ks_tuple > 0)
 	krb5_store_uint32(sp, keepold);
@@ -94,8 +90,12 @@ kadm5_c_randkey_principal(void *server_handle,
 	krb5_store_int32(sp, ks_tuple[i].ks_enctype);
 	krb5_store_int32(sp, ks_tuple[i].ks_salttype);
     }
-
     /* Future extensions go here */
+
+    ret = _kadm5_client_send(context, sp);
+    krb5_storage_free(sp);
+    if (ret)
+	return ret;
     ret = _kadm5_client_recv(context, &reply);
     if(ret)
 	return ret;

@@ -516,6 +516,9 @@ kadm5_ad_chpass_principal(void *server_handle,
     int result_code;
     kadm5_ret_t ret;
 
+    if (keepold)
+	return KADM5_KEEPOLD_NOSUPP;
+
     ret = ad_get_cred(context, NULL);
     if (ret)
 	return ret;
@@ -1237,6 +1240,9 @@ kadm5_ad_randkey_principal(void *server_handle,
 {
     kadm5_ad_context *context = server_handle;
 
+    if (keepold)
+	return KADM5_KEEPOLD_NOSUPP;
+
     /*
      * random key
      */
@@ -1326,6 +1332,7 @@ kadm5_ad_rename_principal(void *server_handle,
 static kadm5_ret_t
 kadm5_ad_chpass_principal_with_key(void *server_handle,
 				   krb5_principal princ,
+				   int keepold,
 				   int n_key_data,
 				   krb5_key_data *key_data)
 {

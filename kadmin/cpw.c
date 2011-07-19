@@ -112,8 +112,8 @@ set_key_data (krb5_principal principal, krb5_key_data *key_data, int keepold)
 {
     krb5_error_code ret;
 
-    ret = kadm5_chpass_principal_with_key (kadm_handle, principal,
-					   3, key_data);
+    ret = kadm5_chpass_principal_with_key_3(kadm_handle, principal, keepold,
+					    3, key_data);
     return ret;
 }
 

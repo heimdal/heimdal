@@ -45,13 +45,14 @@ modify_principal(void *server_handle,
     hdb_entry_ex ent;
     kadm5_ret_t ret;
 
+    memset(&ent, 0, sizeof(ent));
+
     if((mask & forbidden_mask))
 	return KADM5_BAD_MASK;
     if((mask & KADM5_POLICY) && strcmp(princ->policy, "default"))
 	return KADM5_UNK_POLICY;
     }
 
-    memset(&ent, 0, sizeof(ent));
     ret = context->db->hdb_open(context->context, context->db, O_RDWR, 0);
     if(ret)
 	return ret;

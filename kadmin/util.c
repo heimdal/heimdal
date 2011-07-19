@@ -166,6 +166,7 @@ parse_policy (const char *resp, char **policy, int *mask, int bit)
 	}
 	if (mask)
 	    *mask |= bit;
+	return 0;
     } else if(*resp == '?') {
 	print_flags_table (kdb_attrs, stderr);
     } else {
@@ -197,6 +198,8 @@ edit_policy (const char *prompt, char **policy, int *mask, int bit)
 	if (parse_policy (resp, policy, mask, bit) == 0)
 	    break;
     }
+    if (*policy)
+	strlcpy(buf, *policy, sizeof (buf));
     return 0;
 }
 

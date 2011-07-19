@@ -79,7 +79,7 @@ kadmind_dispatch(void *kadm_handlep, krb5_boolean initial,
 	krb5_unparse_name_fixed(contextp->context, princ, name, sizeof(name));
 	krb5_warnx(contextp->context, "%s: %s %s", client, op, name);
 	ret = _kadm5_acl_check_permission(contextp, KADM5_PRIV_GET_KEYS, princ);
-	if (!ret)
+	if (ret == 0)
 	    keys_ok = 1;
 	else
 	    ret = _kadm5_acl_check_permission(contextp, KADM5_PRIV_GET, princ);
@@ -93,9 +93,9 @@ kadmind_dispatch(void *kadm_handlep, krb5_boolean initial,
 	krb5_store_int32(sp, ret);
 	if(ret == 0){
 	    if (keys_ok)
-		kadm5_store_principal_ent_nokeys(sp, &ent);
-	    else
 		kadm5_store_principal_ent(sp, &ent);
+	    else
+		kadm5_store_principal_ent_nokeys(sp, &ent);
 	    kadm5_free_principal_ent(kadm_handlep, &ent);
 	}
 	krb5_free_principal(contextp->context, princ);

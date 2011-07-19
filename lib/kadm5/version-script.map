@@ -10,14 +10,19 @@ HEIMDAL_KAMD5_SERVER_1.0 {
 		kadm5_chpass_principal_3;
 		kadm5_chpass_principal_with_key;
 		kadm5_chpass_principal_with_key_3;
+		kadm5_create_policy;
 		kadm5_create_principal;
 		kadm5_delete_principal;
 		kadm5_destroy;
 		kadm5_decrypt_key;
+		kadm5_delete_policy;
 		kadm5_flush;
 		kadm5_free_key_data;
 		kadm5_free_name_list;
+		kadm5_free_policy_ent;
 		kadm5_free_principal_ent;
+		kadm5_get_policy;
+		kadm5_get_policies;
 		kadm5_get_principal;
 		kadm5_get_principals;
 		kadm5_get_privs;
@@ -29,6 +34,7 @@ HEIMDAL_KAMD5_SERVER_1.0 {
 		kadm5_init_with_skey_ctx;
 		kadm5_lock;
 		kadm5_modify_principal;
+		kadm5_modify_policy;
 		kadm5_randkey_principal;
 		kadm5_randkey_principal_3;
 		kadm5_rename_principal;

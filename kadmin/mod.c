@@ -99,7 +99,7 @@ add_constrained_delegation(krb5_context contextp,
     if (buf.length != size)
 	abort();
 
-    add_tl(princ, KRB5_TL_EXTENSION, &buf); /* XXX wrong type */
+    add_tl(princ, KRB5_TL_EXTENSION, &buf);
 }
 
 static void
@@ -142,7 +142,7 @@ add_aliases(krb5_context contextp, kadm5_principal_ent_rec *princ,
     if (buf.length != size)
 	abort();
 
-    add_tl(princ, KRB5_TL_ALIASES, &buf);
+    add_tl(princ, KRB5_TL_EXTENSION, &buf);
 }
 
 static void
@@ -182,7 +182,7 @@ add_pkinit_acl(krb5_context contextp, kadm5_principal_ent_rec *princ,
     if (buf.length != size)
 	abort();
 
-    add_tl(princ, KRB5_TL_PKINIT_ACL, &buf);
+    add_tl(princ, KRB5_TL_EXTENSION, &buf);
 }
 
 static void
@@ -203,11 +203,9 @@ add_kvno_diff(krb5_context context, kadm5_principal_ent_rec *princ,
     if (is_svc_diff) {
 	ext.data.element = choice_HDB_extension_data_hist_kvno_diff_svc;
 	ext.data.u.hist_kvno_diff_svc = (unsigned int)kvno_diff;
-	type = KRB5_TL_HIST_KVNO_DIFF_SVC;
     } else {
 	ext.data.element = choice_HDB_extension_data_hist_kvno_diff_clnt;
 	ext.data.u.hist_kvno_diff_clnt = (unsigned int)kvno_diff;
-	type = KRB5_TL_HIST_KVNO_DIFF_CLNT;
     }
     ASN1_MALLOC_ENCODE(HDB_extension, buf.data, buf.length,
 		       &ext, &size, ret);
@@ -216,7 +214,7 @@ add_kvno_diff(krb5_context context, kadm5_principal_ent_rec *princ,
     if (buf.length != size)
 	abort();
 
-    add_tl(princ, type, &buf);
+    add_tl(princ, KRB5_TL_EXTENSION, &buf);
 }
 
 static int

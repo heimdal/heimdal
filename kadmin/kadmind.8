@@ -107,6 +107,8 @@ add
 .It
 get
 .It
+get-keys
+.It
 all
 .El
 .Pp
@@ -147,10 +149,11 @@ compiled in defaults:
 .D1 Nm Fl Fl ports Ns Li "=\*[q]+ 4711\*[q] &"
 .Pp
 This acl file will grant Joe all rights, and allow Mallory to view and
-add host principals.
+add host principals, as well as extract host principal keys (e.g., into
+keytabs).
 .Bd -literal -offset indent
 joe/admin@EXAMPLE.COM      all
-mallory/admin@EXAMPLE.COM  add,get  host/*@EXAMPLE.COM
+mallory/admin@EXAMPLE.COM  add,get-keys  host/*@EXAMPLE.COM
 .Ed
 .\".Sh DIAGNOSTICS
 .Sh SEE ALSO

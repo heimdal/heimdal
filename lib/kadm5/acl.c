@@ -179,7 +179,7 @@ check_flags (unsigned op,
     if(res & KADM5_PRIV_GET)
 	return KADM5_AUTH_GET;
     if(res & KADM5_PRIV_GET_KEYS)
-	return KADM5_AUTH_GET;
+	return KADM5_AUTH_GET_KEYS;
     if(res & KADM5_PRIV_ADD)
 	return KADM5_AUTH_ADD;
     if(res & KADM5_PRIV_MODIFY)

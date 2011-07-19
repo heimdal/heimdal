@@ -169,7 +169,7 @@ void
 hdb_free_entry(krb5_context context, hdb_entry_ex *ent)
 {
     Key *k;
-    int i;
+    size_t i;
 
     if (ent->free_entry)
 	(*ent->free_entry)(context, ent);

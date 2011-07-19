@@ -35,35 +35,6 @@
 
 RCSID("$Id$");
 
-static int
-check_policy_exists(kadm5_server_context *context, const char *pol_name)
-{
-    char **pols;
-    char **pol;
-    char *pend;
-    size_t len;
-
-    pols = krb5_config_get_strings(context->context, "kadmin",
-				   "policies", NULL);
-    if (pols == NULL) {
-	if (strcmp(pol_name, "default") == 0)
-	    return 1;
-	return 0;
-    }
-
-    for (pol = pols; *pol != NULL; pol++) {
-	pend = strchr(pol, ':');
-	if (pend == NULL)
-	    len = strlen(*pol);
-	else
-	    len = pend - *pol;
-	if (strncmp(pol_name, *pol, len) == 0 && pol_name[len] == '\0')
-	    return 1;
-    }
-
-    return 0;
-}
-
 static kadm5_ret_t
 modify_principal(void *server_handle,
 		 kadm5_principal_ent_t princ,
@@ -76,9 +47,8 @@ modify_principal(void *server_handle,
 
     if((mask & forbidden_mask))
 	return KADM5_BAD_MASK;
-    if((mask & KADM5_POLICY)) {
-	if (!check_policy_exists(context, princ->policy))
-	    return KADM5_UNK_POLICY;
+    if((mask & KADM5_POLICY) && strcmp(princ->policy, "default"))
+	return KADM5_UNK_POLICY;
     }
 
     memset(&ent, 0, sizeof(ent));

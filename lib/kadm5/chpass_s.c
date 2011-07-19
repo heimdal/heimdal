@@ -59,13 +59,15 @@ change(void *server_handle,
     if(ret)
 	goto out;
 
-    /*
-     * We save these for now so we can handle password history checking;
-     * we handle keepold further below.
-     */
-    ret = hdb_add_current_keys_to_history(context->context, &ent.entry);
-    if (ret)
-	goto out;
+    if (keepold || cond) {
+	/*
+	 * We save these for now so we can handle password history checking;
+	 * we handle keepold further below.
+	 */
+	ret = hdb_add_current_keys_to_history(context->context, &ent.entry);
+	if (ret)
+	    goto out;
+    }
 
     if (context->db->hdb_capability_flags & HDB_CAP_F_HANDLE_PASSWORDS) {
 	ret = context->db->hdb_password(context->context, context->db,

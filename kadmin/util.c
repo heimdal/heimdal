@@ -188,8 +188,7 @@ edit_policy (const char *prompt, char **policy, int *mask, int bit)
 	return 0;
 
     buf[0] = '\0';
-    if (*policy)
-	strlcpy(buf, *policy, sizeof (buf));
+    strlcpy(buf, "default", sizeof (buf));
     for (;;) {
 	if(get_response("Policy", buf, resp, sizeof(resp)) != 0)
 	    return 1;
@@ -198,8 +197,6 @@ edit_policy (const char *prompt, char **policy, int *mask, int bit)
 	if (parse_policy (resp, policy, mask, bit) == 0)
 	    break;
     }
-    if (*policy)
-	strlcpy(buf, *policy, sizeof (buf));
     return 0;
 }
 

@@ -120,8 +120,10 @@ kadm5_c_randkey_principal(void *server_handle,
 	}
 	for(i = 0; i < tmp; i++)
 	    krb5_ret_keyblock(sp, &k[i]);
-	*n_keys = tmp;
-	*new_keys = k;
+	if (n_keys && new_keys) {
+	    *n_keys = tmp;
+	    *new_keys = k;
+	}
     }
 out:
     krb5_storage_free(sp);

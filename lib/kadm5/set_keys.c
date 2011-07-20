@@ -309,8 +309,10 @@ out:
    _kadm5_free_keys (context->context, ent->keys.len, ent->keys.val);
    ent->keys.val = keys;
    ent->keys.len = num_keys;
-   *new_keys     = kblock;
-   *n_keys       = num_keys;
+   if (n_keys && new_keys) {
+       *new_keys     = kblock;
+       *n_keys       = num_keys;
+   }
 
    hdb_entry_set_pw_change_time(context->context, ent, 0);
    hdb_entry_clear_password(context->context, ent);

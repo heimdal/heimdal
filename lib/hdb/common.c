@@ -155,10 +155,7 @@ _hdb_fetch_kvno(krb5_context context, HDB *db, krb5_const_principal principal,
 	}
     }
     krb5_data_free(&value);
-    if (!db->hdb_master_key_set && (flags & HDB_F_DECRYPT))
-	return 0; /* HDB_F_DECRYPT isn't critical, oddly enough */
-    if (db->hdb_master_key_set && (flags & HDB_F_DECRYPT) &&
-	(flags & HDB_F_ALL_KVNOS)) {
+    if ((flags & HDB_F_DECRYPT) && (flags & HDB_F_ALL_KVNOS)) {
 	/* Decrypt the current keys */
 	ret = hdb_unseal_keys(context, db, &entry->entry);
 	if (ret) {
@@ -171,7 +168,7 @@ _hdb_fetch_kvno(krb5_context context, HDB *db, krb5_const_principal principal,
 	    hdb_free_entry(context, entry);
 	    return ret;
 	}
-    } else if (db->hdb_master_key_set && (flags & HDB_F_DECRYPT)) {
+    } else if ((flags & HDB_F_DECRYPT)) {
 	if ((flags & HDB_F_KVNO_SPECIFIED) == 0 || kvno == entry->entry.kvno) {
 	    /* Decrypt the current keys */
 	    ret = hdb_unseal_keys(context, db, &entry->entry);

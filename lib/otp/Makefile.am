@@ -43,6 +43,8 @@ dist_libotp_la_SOURCES = \
 
 nodist_libotp_la_SOURCES = $(ndbm_wrap) $(ROKEN_SRCS)
 
+libotp_la_DEPENDENCIES = version-script.map
+
 if do_roken_rename
 ROKEN_SRCS = snprintf.c strcasecmp.c strncasecmp.c strlwr.c strlcpy.c strlcat.c
 endif

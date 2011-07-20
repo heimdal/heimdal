@@ -26,6 +26,8 @@ if do_roken_rename
 nodist_libcom_err_la_SOURCES = snprintf.c strlcpy.c
 endif
 
+libcom_err_la_DEPENDENCIES = version-script.map
+
 $(compile_et_OBJECTS): parse.h parse.c ## XXX broken automake 1.4s
 
 compile_et_LDADD = \

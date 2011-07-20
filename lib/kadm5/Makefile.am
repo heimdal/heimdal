@@ -113,6 +113,9 @@ nodist_libkadm5srv_la_SOURCES = 		\
 	kadm5_err.c				\
 	kadm5_err.h
 
+libkadm5srv_la_DEPENDENCIES =			\
+	version-script.map
+
 dist_iprop_log_SOURCES = iprop-log.c
 nodist_iprop_log_SOURCES = iprop-commands.c
 

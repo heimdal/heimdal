@@ -693,14 +693,24 @@ krb5_enctype_to_keytype(krb5_context context,
     return 0;
 }
 
+/**
+ * Check if a enctype is valid, return 0 if it is.
+ *
+ * @param context Kerberos context
+ * @param etype enctype to check if its valid or not
+ *
+ * @return Return an error code for an failure or 0 on success (enctype valid).
+ * @ingroup krb5_crypto
+ */
+
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_enctype_valid(krb5_context context,
 		   krb5_enctype etype)
 {
     struct _krb5_encryption_type *e = _krb5_find_enctype(etype);
-    if(e != NULL && !(e->flags & F_DISABLED))
+    if(e && (e->flags & F_DISABLED) == 0)
 	return 0;
-    if (!context)
+    if (context == NULL)
 	return KRB5_PROG_ETYPE_NOSUPP;
     if(e == NULL) {
 	krb5_set_error_message (context, KRB5_PROG_ETYPE_NOSUPP,

@@ -42,6 +42,8 @@ $(code:.c=.lo): $(built)
 dist_libwind_la_SOURCES = $(code) $(built)
 nodist_libwind_la_SOURCES = wind_err.c wind_err.h
 
+libwind_la_DEPENDENCIES = version-script.map
+
 dist_include_HEADERS = wind.h
 nodist_include_HEADERS = wind_err.h
 

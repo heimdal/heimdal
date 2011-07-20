@@ -105,6 +105,8 @@ nodist_libasn1base_la_SOURCES = 	\
 
 nodist_libasn1_la_SOURCES = $(BUILT_SOURCES)
 
+libasn1_la_DEPENDENCIES = version-script.map
+
 asn1_compile_LDADD = \
 	$(LIB_roken) $(LEXLIB)
 

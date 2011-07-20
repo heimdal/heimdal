@@ -93,6 +93,8 @@ dist_libhdb_la_SOURCES =			\
 
 nodist_libhdb_la_SOURCES = $(BUILT_SOURCES)
 
+libhdb_la_DEPENDENCIES = version-script.map
+
 include_HEADERS = hdb.h hdb-protos.h
 nodist_include_HEADERS =  hdb_err.h hdb_asn1.h
 

@@ -89,6 +89,8 @@ dist_libhx509_la_SOURCES = \
 
 sel-lex.c: sel-gram.h
 
+libhx509_la_DEPENDENCIES = version-script.map
+
 libhx509_la_LIBADD = \
 	$(LIB_com_err) \
 	$(LIB_hcrypto) \

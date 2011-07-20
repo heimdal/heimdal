@@ -72,6 +72,23 @@ _kadm5_set_keys(kadm5_server_context *context,
     return 0;
 }
 
+static void
+setup_Key(Key *k, Salt *s, krb5_key_data *kd, size_t kd_offset)
+{
+    memset(k, 0, sizeof (*k)); /* sets mkvno and salt */
+    k->key.keytype = kd[kd_offset].key_data_type[0];
+    k->key.keyvalue.length = kd[kd_offset].key_data_length[0];
+    k->key.keyvalue.data = kd[kd_offset].key_data_contents[0];
+
+    if(kd[kd_offset].key_data_ver == 2) {
+	memset(s, 0, sizeof (*s));
+	s->type = kd[kd_offset].key_data_type[1];
+	s->salt.length = kd[kd_offset].key_data_length[1];
+	s->salt.data = kd[kd_offset].key_data_contents[1];
+	k->salt = s;
+    }
+}
+
 /*
  * Set the keys of `ent' to (`n_key_data', `key_data')
  */
@@ -83,51 +100,78 @@ _kadm5_set_keys2(kadm5_server_context *context,
 		 krb5_key_data *key_data)
 {
     krb5_error_code ret;
-    int i;
-    unsigned len;
-    Key *keys;
+    size_t i, k;
+    HDB_extension ext;
+    HDB_Ext_KeySet *hist_keys = &ext.data.u.hist_keys;
+    Key key;
+    Salt salt;
+    Keys keys;
+    hdb_keyset hkset;
 
-    len  = n_key_data;
-    keys = malloc (len * sizeof(*keys));
-    if (keys == NULL && len != 0)
-	return ENOMEM;
-
-    _kadm5_init_keys (keys, len);
+    memset(&keys, 0, sizeof (keys));
+    memset(&hkset, 0, sizeof (hkset)); /* set set_time */
+    ext.data.element = choice_HDB_extension_data_hist_keys;
+    memset(hist_keys, 0, sizeof (*hist_keys));
 
     for(i = 0; i < n_key_data; i++) {
-	keys[i].mkvno = NULL;
-	keys[i].key.keytype = key_data[i].key_data_type[0];
-	ret = krb5_data_copy(&keys[i].key.keyvalue,
-			     key_data[i].key_data_contents[0],
-			     key_data[i].key_data_length[0]);
-	if(ret)
-	    goto out;
-	if(key_data[i].key_data_ver == 2) {
-	    Salt *salt;
+	if (key_data[i].key_data_kvno == ent->kvno) {
+	    /* A current key; add to current key set */
+	    setup_Key(&key, &salt, key_data, i);
+	    ret = add_Keys(&keys, &key);
+	    continue;
+	}
 
-	    salt = calloc(1, sizeof(*salt));
-	    if(salt == NULL) {
-		ret = ENOMEM;
+	/*
+	 * This kvno is historical.  Build an hdb_keyset for keys of
+	 * this enctype and add them to the new key history.
+	 */
+	for (k = 0; k < hist_keys->len; k++) {
+	    if (hist_keys->val[k].kvno == key_data[i].key_data_kvno)
+		break;
+	}
+	if (hist_keys->len > k &&
+	    hist_keys->val[k].kvno == key_data[i].key_data_kvno)
+	    /* We've added all keys of this kvno already (see below) */
+	    continue;
+
+	memset(&hkset, 0, sizeof (hkset)); /* set set_time */
+	hkset.kvno = key_data[i].key_data_kvno;
+	for (k = 0; k < n_key_data; k++) {
+	    /* Find all keys of this kvno and add them to the new keyset */
+	    if (key_data[k].key_data_kvno != hkset.kvno)
+		continue;
+
+	    setup_Key(&key, &salt, key_data, k);
+	    ret = add_Keys(&hkset.keys, &key);
+	    if (ret)
 		goto out;
-	    }
-	    keys[i].salt = salt;
-	    salt->type = key_data[i].key_data_type[1];
-	    krb5_data_copy(&salt->salt,
-			   key_data[i].key_data_contents[1],
-			   key_data[i].key_data_length[1]);
-	} else
-	    keys[i].salt = NULL;
+	}
+	ret = add_HDB_Ext_KeySet(hist_keys, &hkset);
+	if (ret)
+	    goto out;
     }
-    _kadm5_free_keys (context->context, ent->keys.len, ent->keys.val);
-    ent->keys.len = len;
-    ent->keys.val = keys;
+    
+    /*
+     * A structure copy is more efficient here than this would be:
+     *
+     * copy_Keys(&keys, &ent->keys);
+     * free_Keys(&keys);
+     */
+    free_Keys(&ent->keys);
+    ent->keys = keys;
+
+    /* XXX We should try to keep the set_time values from the old hist keys */
+    hdb_replace_extension(context->context, ent, &ext);
 
     hdb_entry_set_pw_change_time(context->context, ent, 0);
     hdb_entry_clear_password(context->context, ent);
 
     return 0;
- out:
-    _kadm5_free_keys (context->context, len, keys);
+
+out:
+    free_Keys(&keys);
+    free_hdb_keyset(&hkset);
+    free_HDB_extension(&ext);
     return ret;
 }
 

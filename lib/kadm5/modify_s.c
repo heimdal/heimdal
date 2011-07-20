@@ -51,7 +51,6 @@ modify_principal(void *server_handle,
 	return KADM5_BAD_MASK;
     if((mask & KADM5_POLICY) && strcmp(princ->policy, "default"))
 	return KADM5_UNK_POLICY;
-    }
 
     ret = context->db->hdb_open(context->context, context->db, O_RDWR, 0);
     if(ret)

@@ -155,6 +155,8 @@ _hdb_fetch_kvno(krb5_context context, HDB *db, krb5_const_principal principal,
 	}
     }
     krb5_data_free(&value);
+    if (!db->hdb_master_key_set && (flags & HDB_F_DECRYPT))
+	return HDB_ERR_NO_MKEY;
     if (db->hdb_master_key_set && (flags & HDB_F_DECRYPT) &&
 	(flags & HDB_F_ALL_KVNOS)) {
 	/* Decrypt the current keys */
@@ -178,19 +180,13 @@ _hdb_fetch_kvno(krb5_context context, HDB *db, krb5_const_principal principal,
 		return ret;
 	    }
 	} else {
+	    if ((flags & HDB_F_ALL_KVNOS))
+		kvno = 0;
 	    /*
 	     * Find and decrypt the keys from the history that we want,
 	     * and swap them with the current keys
 	     */
-	    ret = hdb_unseal_keys_kvno(context, db, 0, flags, &entry->entry);
-	    if (ret) {
-		hdb_free_entry(context, entry);
-		return ret;
-	    }
-	}
-	if ((flags & HDB_F_ALL_KVNOS)) {
-	    /* Decrypt the history, post current/requested switcheroo */
-	    ret = hdb_unseal_keys_kvno(context, db, 0, flags, &entry->entry);
+	    ret = hdb_unseal_keys_kvno(context, db, kvno, flags, &entry->entry);
 	    if (ret) {
 		hdb_free_entry(context, entry);
 		return ret;

@@ -487,8 +487,8 @@ hdb_unseal_keys_kvno(krb5_context context, HDB *db, krb5_kvno kvno,
     krb5_error_code ret = KRB5KRB_AP_ERR_NOKEY;	/* XXX need a better code? */
     HDB_extension *ext;
     HDB_Ext_KeySet *hist_keys;
-    hdb_keyset *tmp_keys;
     Key *tmp_val;
+    time_t tmp_set_time;
     unsigned int tmp_len;
     unsigned int kvno_diff = 0;
     krb5_kvno tmp_kvno;
@@ -496,6 +496,9 @@ hdb_unseal_keys_kvno(krb5_context context, HDB *db, krb5_kvno kvno,
     int exclude_dead = 0;
     KerberosTime now = 0;
     time_t *set_time;
+
+    if (kvno == 0)
+	ret = 0;
 
     if ((flags & HDB_F_LIVE_CLNT_KVNOS) || (flags & HDB_F_LIVE_SVC_KVNOS)) {
 	exclude_dead = 1;
@@ -512,9 +515,11 @@ hdb_unseal_keys_kvno(krb5_context context, HDB *db, krb5_kvno kvno,
     if (ext == NULL)
 	return ret;
 
+    /* For swapping; see below */
     tmp_len = ent->keys.len;
     tmp_val = ent->keys.val;
     tmp_kvno = ent->kvno;
+    (void) hdb_entry_get_pw_change_time(ent, &tmp_set_time);
 
     hist_keys = &ext->data.u.hist_keys;
 
@@ -525,7 +530,7 @@ hdb_unseal_keys_kvno(krb5_context context, HDB *db, krb5_kvno kvno,
 	if (exclude_dead &&
 	    ((ent->max_life != NULL &&
 	      hist_keys->val[i].set_time != NULL &&
-	      hist_keys->val[i].set_time < (now - (*ent->max_life))) ||
+	      (*hist_keys->val[i].set_time) < (now - (*ent->max_life))) ||
 	    (hist_keys->val[i].kvno < kvno &&
 	     (kvno - hist_keys->val[i].kvno) > kvno_diff)))
 	    /*
@@ -548,7 +553,9 @@ hdb_unseal_keys_kvno(krb5_context context, HDB *db, krb5_kvno kvno,
 	     * because of HDB_ERR_NO_MKEY.  However, it seems safest to
 	     * filter them out only where necessary, say, in kadm5.
 	     */
-	    if (ret != HDB_ERR_NO_MKEY)
+	    if (ret && kvno != 0)
+		return ret;
+	    if (ret && ret != HDB_ERR_NO_MKEY)
 		return (ret);
 	}
 
@@ -575,26 +582,52 @@ hdb_unseal_keys_kvno(krb5_context context, HDB *db, krb5_kvno kvno,
 	 * so there's no danger that we'll dump this entry and load it
 	 * again, repeatedly causing the history to grow boundelessly.
 	 */
-	set_time = malloc(*set_time);
+	set_time = malloc(sizeof (*set_time));
 	if (set_time == NULL)
 	    return ENOMEM;
+
+	/* Swap key sets */
+	ent->kvno = hist_keys->val[i].kvno;
+	ent->keys.val = hist_keys->val[i].keys.val;
+	ent->keys.len = hist_keys->val[i].keys.len;
+	if (hist_keys->val[i].set_time != NULL)
+	    /* Sloppy, but the callers we expect won't care */
+	    (void) hdb_entry_set_pw_change_time(context, ent,
+						*hist_keys->val[i].set_time);
+	hist_keys->val[i].kvno = tmp_kvno;
+	hist_keys->val[i].keys.val = tmp_val;
+	hist_keys->val[i].keys.len = tmp_len;
+	if (hist_keys->val[i].set_time != NULL)
+	    /* Sloppy, but the callers we expect won't care */
+	    *hist_keys->val[i].set_time = tmp_set_time;
+
+	return 0;
+
+#if 0
 	tmp_keys = realloc(hist_keys->val,
 		      sizeof (*hist_keys->val) * (hist_keys->len + 1));
 	if (tmp_keys == NULL)
 	    return ENOMEM;
 
 	memmove(&tmp_keys[1], tmp_keys,
-		sizeof (*hist_keys->val) * hist_keys->len++);
+		sizeof (*tmp_keys) * hist_keys->len);
 	tmp_keys[0].keys.len = ent->keys.len;
 	tmp_keys[0].keys.val = ent->keys.val;
 	tmp_keys[0].kvno = ent->kvno;
 	tmp_keys[0].set_time = set_time;
 	(void) hdb_entry_get_pw_change_time(ent, tmp_keys[0].set_time);
 	i++;
-	ent->keys.len = hist_keys->val[i].keys.len;
-	ent->keys.val = hist_keys->val[i].keys.val;
+	ent->keys.len = tmp_keys[i].keys.len;
+	ent->keys.val = tmp_keys[i].keys.val;
 	ent->kvno = kvno;
 	ent->flags.do_not_store = 1;
+	hist_keys->val = tmp_keys;
+
+	memmove(&tmp_keys[i], &tmp_keys[i + 1],
+		sizeof (*tmp_keys) * (hist_keys->len - i));
+	tmp_keys[hist_keys->len].keys.len = 0;
+	tmp_keys[hist_keys->len].keys.val = 0;
+#endif
     }
 
     return (ret);
@@ -664,7 +697,7 @@ hdb_seal_keys_mkey(krb5_context context, hdb_entry *ent, hdb_master_key mkey)
     hist_keys = &ext->data.u.hist_keys;
 
     for (i = 0; i < hist_keys->len; i++) {
-	for (k = 0; k < hist_keys->val[i].keys.len; i++) {
+	for (k = 0; k < hist_keys->val[i].keys.len; k++) {
 	    ret = hdb_seal_key_mkey(context, &hist_keys->val[i].keys.val[k],
 				    mkey);
 	    if (ret)

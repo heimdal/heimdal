@@ -156,7 +156,7 @@ _hdb_fetch_kvno(krb5_context context, HDB *db, krb5_const_principal principal,
     }
     krb5_data_free(&value);
     if (!db->hdb_master_key_set && (flags & HDB_F_DECRYPT))
-	return HDB_ERR_NO_MKEY;
+	return 0; /* HDB_F_DECRYPT isn't critical, oddly enough */
     if (db->hdb_master_key_set && (flags & HDB_F_DECRYPT) &&
 	(flags & HDB_F_ALL_KVNOS)) {
 	/* Decrypt the current keys */
@@ -194,7 +194,7 @@ _hdb_fetch_kvno(krb5_context context, HDB *db, krb5_const_principal principal,
 	}
     }
 
-    return ret;
+    return 0;
 }
 
 static krb5_error_code

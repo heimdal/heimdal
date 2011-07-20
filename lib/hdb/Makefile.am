@@ -34,7 +34,8 @@ gen_files_hdb = \
 	asn1_HDB_extensions.x \
 	asn1_hdb_entry.x \
 	asn1_hdb_entry_alias.x \
-	asn1_hdb_keyset.x
+	asn1_hdb_keyset.x \
+	asn1_Keys.x
 
 CLEANFILES = $(BUILT_SOURCES) $(gen_files_hdb) \
 	hdb_asn1{,-priv}.h* hdb_asn1_files hdb_asn1-template.c*
@@ -120,7 +121,7 @@ $(srcdir)/hdb-private.h:
 $(gen_files_hdb) hdb_asn1.hx hdb_asn1-priv.hx: hdb_asn1_files
 
 hdb_asn1_files: $(ASN1_COMPILE_DEP) $(srcdir)/hdb.asn1
-	$(ASN1_COMPILE) --sequence=HDB-Ext-KeySet $(srcdir)/hdb.asn1 hdb_asn1
+	$(ASN1_COMPILE) --sequence=HDB-Ext-KeySet --sequence=Keys $(srcdir)/hdb.asn1 hdb_asn1
 
 test_dbinfo_LIBS = libhdb.la
 

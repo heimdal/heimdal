@@ -90,7 +90,7 @@ main(int argc, char **argv)
     keyset.kvno = kvno_integer;
     keyset.set_time = malloc(sizeof (*keyset.set_time));
     if (keyset.set_time == NULL)
-	errx(1, "couldn't allocate set_time field of keyset", ret);
+	errx(1, "couldn't allocate set_time field of keyset");
     *keyset.set_time = time(NULL);
 
     ret = hdb_generate_key_set_password(context, principal, password_str,

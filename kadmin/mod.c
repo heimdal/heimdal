@@ -193,7 +193,6 @@ add_kvno_diff(krb5_context context, kadm5_principal_ent_rec *princ,
     HDB_extension ext;
     krb5_data buf;
     size_t size = 0;
-    int type;
 
     if (kvno_diff < 0)
 	return;

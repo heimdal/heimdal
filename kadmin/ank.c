@@ -163,7 +163,6 @@ add_one_principal (const char *name,
 	princ.kvno = 1;
 	kadm5_modify_principal(kadm_handle, &princ,
 			       KADM5_ATTRIBUTES | KADM5_KVNO);
-	kadm5_free_principal_ent(kadm_handle, &princ);
     } else if (key_data) {
 	ret = kadm5_chpass_principal_with_key (kadm_handle, princ_ent,
 					       3, key_data);
@@ -174,7 +173,6 @@ add_one_principal (const char *name,
 			    KADM5_PRINCIPAL | KADM5_ATTRIBUTES);
 	princ.attributes &= (~KRB5_KDB_DISALLOW_ALL_TIX);
 	kadm5_modify_principal(kadm_handle, &princ, KADM5_ATTRIBUTES);
-	kadm5_free_principal_ent(kadm_handle, &princ);
     } else if (rand_password) {
 	char *princ_name;
 
@@ -183,8 +181,7 @@ add_one_principal (const char *name,
 	free (princ_name);
     }
 out:
-    if (princ_ent)
-	krb5_free_principal (context, princ_ent);
+    kadm5_free_principal_ent(kadm_handle, &princ); /* frees princ_ent */
     if(default_ent)
 	kadm5_free_principal_ent (kadm_handle, default_ent);
     if (password != NULL)

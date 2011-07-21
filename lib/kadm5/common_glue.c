@@ -320,10 +320,12 @@ kadm5_setkey_principal_3(void *server_handle,
     }
     free(princ_ent.key_data);
     princ_ent.key_data = new_key_data;
+    princ_ent.n_key_data = n_keys + (keepold ? princ_ent.n_key_data : 0);
     new_key_data = NULL;
 
     /* Modify the principal */
-    ret = kadm5_modify_principal(server_handle, &princ_ent, KADM5_KEY_DATA);
+    princ_ent.kvno++;
+    ret = kadm5_modify_principal(server_handle, &princ_ent, KADM5_KVNO | KADM5_KEY_DATA);
 
 out:
     if (new_key_data != NULL) {

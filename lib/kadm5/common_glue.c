@@ -258,7 +258,7 @@ kadm5_setkey_principal_3(void *server_handle,
 	return KADM5_SETKEY3_ETYPE_MISMATCH;
 
     ret = kadm5_get_principal(server_handle, princ, &princ_ent,
-                              KADM5_PRINCIPAL | KADM5_KEY_DATA);
+                              KADM5_KVNO | KADM5_PRINCIPAL | KADM5_KEY_DATA);
     if (ret)
 	return ret;
 

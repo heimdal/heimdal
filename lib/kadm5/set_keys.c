@@ -102,19 +102,71 @@ _kadm5_set_keys2(kadm5_server_context *context,
     krb5_error_code ret;
     size_t i, k;
     HDB_extension ext;
-    HDB_extension *extp;
+    HDB_extension *extp = NULL;
     HDB_Ext_KeySet *hist_keys = &ext.data.u.hist_keys;
     Key key;
     Salt salt;
     Keys keys;
     hdb_keyset hkset;
+    krb5_kvno kvno = -1;
+    int one_key_set = 1;
+    int replace_hist_keys = 0;
+
+    if (n_key_data == 0) {
+	/* Clear all keys! */
+	ret = hdb_clear_extension(context->context, ent,
+				  choice_HDB_extension_data_hist_keys);
+	if (ret)
+	    return ret;
+	free_Keys(&ent->keys);
+	return 0;
+    }
 
     memset(&keys, 0, sizeof (keys));
     memset(&hkset, 0, sizeof (hkset)); /* set set_time */
     ext.data.element = choice_HDB_extension_data_hist_keys;
     memset(hist_keys, 0, sizeof (*hist_keys));
 
-    for(i = 0; i < n_key_data; i++) {
+    for (i = 0; i < n_key_data; i++) {
+	if (kvno != -1 && kvno != key_data[i].key_data_kvno) {
+	    one_key_set = 0;
+	    break;
+	}
+	kvno = key_data[i].key_data_kvno;
+    }
+    if (one_key_set) {
+	/*
+	 * If we're updating KADM5_KEY_DATA with a single keyset then we
+	 * assume we must be setting the principal's kvno as well!
+	 *
+	 * Just have to be careful about old clients that might have
+	 * sent 0 as the kvno...  This may seem ugly, but it's the price
+	 * of backwards compatibility with pre-multi-kvno kadmin clients
+	 * (besides, who's to say that updating KADM5_KEY_DATA requires
+	 * updating the entry's kvno?)
+	 *
+	 * Note that we do nothing special for the case where multiple
+	 * keysets are given but the entry's kvno is not set and not in
+	 * the given set of keysets.  If this happens we'll just update
+	 * the key history only and leave the current keyset alone.
+	 */
+	if (kvno == 0) {
+	    /* Force kvno to 1 if it was 0; (ank would do this anyways) */
+	    if (ent->kvno == 0)
+		ent->kvno = 1;
+	    /* Below we need key_data[*].kvno to be reasonable */
+	    for (i = 0; i < n_key_data; i++)
+		key_data[i].key_data_kvno = ent->kvno;
+	} else {
+	    /*
+	     * Or force the entry's kvno to match the one from the new,
+	     * singular keyset
+	     */
+	    ent->kvno = kvno;
+	}
+    }
+
+    for (i = 0; i < n_key_data; i++) {
 	if (key_data[i].key_data_kvno == ent->kvno) {
 	    /* A current key; add to current key set */
 	    setup_Key(&key, &salt, key_data, i);
@@ -150,22 +202,20 @@ _kadm5_set_keys2(kadm5_server_context *context,
 	ret = add_HDB_Ext_KeySet(hist_keys, &hkset);
 	if (ret)
 	    goto out;
+	replace_hist_keys = 1;
     }
-    
-    /*
-     * A structure copy is more efficient here than this would be:
-     *
-     * copy_Keys(&keys, &ent->keys);
-     * free_Keys(&keys);
-     */
-    free_Keys(&ent->keys);
-    ent->keys = keys;
 
-    /* Try to keep the set_time values from the old hist keys */
-    extp = hdb_find_extension(ent, choice_HDB_extension_data_hist_keys);
+    if (replace_hist_keys)
+	/* No key history given -> leave it alone */
+	extp = hdb_find_extension(ent, choice_HDB_extension_data_hist_keys);
     if (extp != NULL) {
 	HDB_Ext_KeySet *old_hist_keys;
 
+	/*
+	 * Try to keep the very useful set_time values from the old hist
+	 * keys.  kadm5 loses this info, so this heuristic is the best we
+	 * can do.
+	 */
 	old_hist_keys = &extp->data.u.hist_keys;
 	for (i = 0; i < old_hist_keys->len; i++) {
 	    if (old_hist_keys->val[i].set_time == NULL)
@@ -179,7 +229,23 @@ _kadm5_set_keys2(kadm5_server_context *context,
 	}
     }
 
-    hdb_replace_extension(context->context, ent, &ext);
+    if (replace_hist_keys) {
+	/* If hist keys not given in key_data then don't blow away hist_keys */
+	ret = hdb_replace_extension(context->context, ent, &ext);
+	if (ret)
+	    goto out;
+    }
+    
+    /*
+     * A structure copy is more efficient here than this would be:
+     *
+     * copy_Keys(&keys, &ent->keys);
+     * free_Keys(&keys);
+     *
+     * Of course, the above hdb_replace_extension() is not at all efficient...
+     */
+    free_Keys(&ent->keys);
+    ent->keys = keys;
     hdb_entry_set_pw_change_time(context->context, ent, 0);
     hdb_entry_clear_password(context->context, ent);
 

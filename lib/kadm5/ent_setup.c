@@ -178,8 +178,27 @@ _kadm5_setup_entry(kadm5_server_context *context,
 	}
     }
     if(mask & KADM5_KVNO
-       && princ_mask & KADM5_KVNO)
-	ent->entry.kvno = princ->kvno;
+       && princ_mask & KADM5_KVNO) {
+	/*
+	 * For some reason kadmin's ank changes the kvno after calling
+	 * randkey.  Now that we have key history, what are we to do
+	 * when we update kvno but not keys?!
+	 *
+	 * For now just clear the key history if the kvno changes.
+	 * Eventually we may want to search the key history for matching
+	 * keys and use those to replace the current key set (putting
+	 * the old current keyset in the history keysets list?!).
+	 */
+	if (ent->entry.kvno != princ->kvno &&
+	    (mask & princ_mask & KADM5_KEY_DATA)) {
+	    hdb_clear_extension(context->context, &ent->entry,
+				choice_HDB_extension_data_hist_keys);
+	    princ->kvno = ent->entry.kvno;
+	} else {
+	    /* _kadm5_set_keys2() expects this to have been done here */
+	    ent->entry.kvno = princ->kvno;
+	}
+    }
     if(mask & KADM5_MAX_RLIFE) {
 	if(princ_mask & KADM5_MAX_RLIFE) {
 	  if(princ->max_renewable_life)

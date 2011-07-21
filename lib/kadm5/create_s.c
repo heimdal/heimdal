@@ -111,6 +111,12 @@ kadm5_s_create_principal_with_key(void *server_handle,
     hdb_entry_ex ent;
     kadm5_server_context *context = server_handle;
 
+    if ((mask & KADM5_KVNO) == 0) {
+	/* create_principal() through _kadm5_setup_entry(), will need this */
+	princ->kvno = 1;
+	mask |= KADM5_KVNO;
+    }
+
     ret = create_principal(context, princ, mask, &ent,
 			   KADM5_PRINCIPAL | KADM5_KEY_DATA,
 			   KADM5_LAST_PWD_CHANGE | KADM5_MOD_TIME
@@ -120,9 +126,6 @@ kadm5_s_create_principal_with_key(void *server_handle,
 			   | KADM5_LAST_FAILED | KADM5_FAIL_AUTH_COUNT);
     if(ret)
 	goto out;
-
-    if ((mask & KADM5_KVNO) == 0)
-	ent.entry.kvno = 1;
 
     ret = hdb_seal_keys(context->context, context->db, &ent.entry);
     if (ret)
@@ -153,6 +156,12 @@ kadm5_s_create_principal(void *server_handle,
     hdb_entry_ex ent;
     kadm5_server_context *context = server_handle;
 
+    if ((mask & KADM5_KVNO) == 0) {
+	/* create_principal() through _kadm5_setup_entry(), will need this */
+	princ->kvno = 1;
+	mask |= KADM5_KVNO;
+    }
+
     ret = create_principal(context, princ, mask, &ent,
 			   KADM5_PRINCIPAL,
 			   KADM5_LAST_PWD_CHANGE | KADM5_MOD_TIME
@@ -162,9 +171,6 @@ kadm5_s_create_principal(void *server_handle,
 			   | KADM5_LAST_FAILED | KADM5_FAIL_AUTH_COUNT);
     if(ret)
 	goto out;
-
-    if ((mask & KADM5_KVNO) == 0)
-	ent.entry.kvno = 1;
 
     ent.entry.keys.len = 0;
     ent.entry.keys.val = NULL;

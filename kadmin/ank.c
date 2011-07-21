@@ -160,6 +160,12 @@ add_one_principal (const char *name,
 	kadm5_get_principal(kadm_handle, princ_ent, &princ,
 			    KADM5_PRINCIPAL | KADM5_KVNO | KADM5_ATTRIBUTES);
 	princ.attributes &= (~KRB5_KDB_DISALLOW_ALL_TIX);
+	/*
+	 * Updating kvno w/o key data and vice-versa gives _kadm5_setup_entry()
+	 * and _kadm5_set_keys2() headaches.  But we used to, so we handle
+	 * this in in those two functions.  Might as well leave this code as
+	 * it was then.
+	 */
 	princ.kvno = 1;
 	kadm5_modify_principal(kadm_handle, &princ,
 			       KADM5_ATTRIBUTES | KADM5_KVNO);

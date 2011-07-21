@@ -64,6 +64,7 @@ filespec_from_dir_path(const char * path, char * buffer, size_t cch_buffer)
 {
     char *comp, *t;
     size_t pos;
+    int found_sep = 0;
 
     if (strcpy_s(buffer, cch_buffer, path) != 0)
         return NULL;
@@ -71,12 +72,17 @@ filespec_from_dir_path(const char * path, char * buffer, size_t cch_buffer)
     comp = strrchr(buffer, '\\');
     if (comp == NULL)
         comp = buffer;
+    else
+        found_sep = 1;
 
     t = strrchr(comp, '/');
-    if (t != NULL)
+    if (t != NULL) {
         comp = t;
+        found_sep = 1;
+    }
 
-    comp++;
+    if (found_sep)
+        comp++;
 
     pos = strcspn(comp, "*?");
     if (comp[pos] != '\0')

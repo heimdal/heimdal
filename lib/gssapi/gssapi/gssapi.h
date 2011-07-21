@@ -1041,7 +1041,8 @@ GSSAPI_LIB_FUNCTION int GSSAPI_LIB_CALL
 gss_userok(const gss_name_t name,
            const char *user);
 
-extern GSSAPI_LIB_VARIABLE gss_buffer_t GSS_C_ATTR_LOCAL_LOGIN_USER;
+extern GSSAPI_LIB_VARIABLE gss_buffer_t __gss_c_attr_local_login_user;
+#define GSS_C_ATTR_LOCAL_LOGIN_USER (&__gss_c_attr_local_login_user)
 
 /*
  * Naming extensions

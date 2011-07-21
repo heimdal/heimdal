@@ -1254,14 +1254,13 @@ check_TESTMechTypeList(void)
 {
     TESTMechTypeList tl;
     unsigned oid1[] =  { 1, 2, 840, 48018, 1, 2, 2};
-    TESTMechType t1 = { 7, oid1 };
     unsigned oid2[] =  { 1, 2, 840, 113554, 1, 2, 2};
-    TESTMechType t2 = { 7, oid2 };
     unsigned oid3[] =   { 1, 3, 6, 1, 4, 1, 311, 2, 2, 30};
-    TESTMechType t3 = { 10, oid3 };
     unsigned oid4[] =   { 1, 3, 6, 1, 4, 1, 311, 2, 2, 10};
-    TESTMechType t4 = { 10, oid4 };
-    TESTMechType array[4] = { t1, t2, t3, t4 };
+    TESTMechType array[] = {{ 7, oid1 },
+                            { 7, oid2 },
+                            { 10, oid3 },
+                            { 10, oid4 }};
     size_t size, len;
     void *ptr;
     int ret;

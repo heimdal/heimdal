@@ -172,6 +172,7 @@ EXPORTS
 	krb5_copy_address
 	krb5_copy_addresses
 	krb5_copy_checksum
+        krb5_copy_context
 	krb5_copy_creds
 	krb5_copy_creds_contents
 	krb5_copy_data
@@ -291,7 +292,7 @@ EXPORTS
 	krb5_free_creds_contents
 	krb5_free_data
 	krb5_free_data_contents
-        krb5_free_default_realm         ;!
+        krb5_free_default_realm
 	krb5_free_error
 	krb5_free_error_contents
 	krb5_free_error_string
@@ -615,6 +616,7 @@ EXPORTS
 	krb5_storage_set_byteorder
 	krb5_storage_set_eof_code
 	krb5_storage_set_flags
+        krb5_storage_set_max_alloc
 	krb5_storage_to_data
 	krb5_storage_truncate
 	krb5_storage_write

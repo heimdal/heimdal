@@ -102,6 +102,7 @@ _kadm5_set_keys2(kadm5_server_context *context,
     krb5_error_code ret;
     size_t i, k;
     HDB_extension ext;
+    HDB_extension *extp;
     HDB_Ext_KeySet *hist_keys = &ext.data.u.hist_keys;
     Key key;
     Salt salt;
@@ -160,9 +161,25 @@ _kadm5_set_keys2(kadm5_server_context *context,
     free_Keys(&ent->keys);
     ent->keys = keys;
 
-    /* XXX We should try to keep the set_time values from the old hist keys */
-    hdb_replace_extension(context->context, ent, &ext);
+    /* Try to keep the set_time values from the old hist keys */
+    extp = hdb_find_extension(ent, choice_HDB_extension_data_hist_keys);
+    if (extp != NULL) {
+	HDB_Ext_KeySet *old_hist_keys;
 
+	old_hist_keys = &extp->data.u.hist_keys;
+	for (i = 0; i < old_hist_keys->len; i++) {
+	    if (old_hist_keys->val[i].set_time == NULL)
+		continue;
+	    for (k = 0; k < hist_keys->len; k++) {
+		if (hist_keys->val[k].kvno != old_hist_keys->val[k].kvno)
+		    continue;
+		hist_keys->val[k].set_time = old_hist_keys->val[k].set_time;
+		old_hist_keys->val[k].set_time = NULL;
+	    }
+	}
+    }
+
+    hdb_replace_extension(context->context, ent, &ext);
     hdb_entry_set_pw_change_time(context->context, ent, 0);
     hdb_entry_clear_password(context->context, ent);
 

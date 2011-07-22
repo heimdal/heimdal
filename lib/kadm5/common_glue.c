@@ -279,6 +279,7 @@ kadm5_setkey_principal_3(void *server_handle,
 	}
     }
 
+    princ_ent.kvno++;
     for (i = 0; i < n_keys; i++) {
 	new_key_data[i].key_data_ver = 2;
 
@@ -324,7 +325,6 @@ kadm5_setkey_principal_3(void *server_handle,
     new_key_data = NULL;
 
     /* Modify the principal */
-    princ_ent.kvno++;
     ret = kadm5_modify_principal(server_handle, &princ_ent, KADM5_KVNO | KADM5_KEY_DATA);
 
 out:

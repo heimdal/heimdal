@@ -61,6 +61,11 @@
 #endif
 #endif
 
+/* Compatiblity with MIT Kerberos on the Mac */
+#if defined(__APPLE__) && (defined(__ppc__) || defined(__ppc64__) || defined(__i386__) || defined(__x86_64__))
+#pragma pack(push,2)
+#endif
+
 #ifdef __cplusplus
 #define GSSAPI_CPP_START	extern "C" {
 #define GSSAPI_CPP_END		}
@@ -1105,6 +1110,10 @@ GSSAPI_LIB_FUNCTION gss_OID GSSAPI_LIB_CALL
 gss_name_to_oid(const char *name);
 
 GSSAPI_CPP_END
+
+#if defined(__APPLE__) && (defined(__ppc__) || defined(__ppc64__) || defined(__i386__) || defined(__x86_64__))
+#pragma pack(pop)
+#endif
 
 #undef GSSAPI_DEPRECATED_FUNCTION
 

@@ -174,7 +174,7 @@ test_init_vs_destroy(krb5_context context, const char *type)
 
     ret = krb5_cc_new_unique(context, type, NULL, &id);
     if (ret)
-	krb5_err(context, 1, ret, "krb5_cc_new_unique");
+	krb5_err(context, 1, ret, "krb5_cc_new_unique: %s", type);
 
     if (asprintf(&n, "%s:%s",
 		 krb5_cc_get_type(context, id),
@@ -216,7 +216,7 @@ test_cache_remove(krb5_context context, const char *type)
 
     ret = krb5_cc_new_unique(context, type, NULL, &id);
     if (ret)
-	krb5_err(context, 1, ret, "krb5_cc_gen_new");
+	krb5_err(context, 1, ret, "krb5_cc_gen_new: %s", type);
 
     ret = krb5_cc_initialize(context, id, p);
     if (ret)
@@ -458,7 +458,7 @@ test_copy(krb5_context context, const char *from, const char *to)
 
     ret = krb5_cc_new_unique(context, from, NULL, &fromid);
     if (ret)
-	krb5_err(context, 1, ret, "krb5_cc_new_unique");
+	krb5_err(context, 1, ret, "krb5_cc_new_unique: %s", from);
 
     ret = krb5_cc_initialize(context, fromid, p);
     if (ret)
@@ -466,7 +466,7 @@ test_copy(krb5_context context, const char *from, const char *to)
 
     ret = krb5_cc_new_unique(context, to, NULL, &toid);
     if (ret)
-	krb5_err(context, 1, ret, "krb5_cc_gen_new");
+	krb5_err(context, 1, ret, "krb5_cc_gen_new: %s", to);
 
     ret = krb5_cc_copy_cache(context, fromid, toid);
     if (ret)
@@ -502,7 +502,7 @@ test_move(krb5_context context, const char *type)
     if (ret == KRB5_CC_NOSUPP)
 	return;
     else if (ret)
-	krb5_err(context, 1, ret, "krb5_cc_new_unique");
+	krb5_err(context, 1, ret, "krb5_cc_new_unique: %s", type);
 
     ret = krb5_parse_name(context, "lha@SU.SE", &p);
     if (ret)

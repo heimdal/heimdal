@@ -127,13 +127,17 @@ kadm5_s_get_principal(void *server_handle,
     hdb_entry_ex ent;
 
     memset(&ent, 0, sizeof(ent));
-    ret = context->db->hdb_open(context->context, context->db, O_RDONLY, 0);
-    if(ret)
-	return ret;
+
+    if (!context->keep_open) {
+	ret = context->db->hdb_open(context->context, context->db, O_RDONLY, 0);
+	if(ret)
+	    return ret;
+    }
     ret = context->db->hdb_fetch_kvno(context->context, context->db, princ,
 				      HDB_F_DECRYPT|HDB_F_ALL_KVNOS|
 				      HDB_F_GET_ANY|HDB_F_ADMIN_DATA, 0, &ent);
-    context->db->hdb_close(context->context, context->db);
+    if (!context->keep_open)
+	context->db->hdb_close(context->context, context->db);
     if(ret)
 	return _kadm5_error_code(ret);
 

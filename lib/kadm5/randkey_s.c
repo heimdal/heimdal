@@ -54,9 +54,11 @@ kadm5_s_randkey_principal(void *server_handle,
     kadm5_ret_t ret;
 
     memset(&ent, 0, sizeof(ent));
-    ret = context->db->hdb_open(context->context, context->db, O_RDWR, 0);
-    if(ret)
-	return ret;
+    if (!context->keep_open) {
+	ret = context->db->hdb_open(context->context, context->db, O_RDWR, 0);
+	if(ret)
+	    return ret;
+    }
     ret = context->db->hdb_fetch_kvno(context->context, context->db, princ,
 				      HDB_F_GET_ANY|HDB_F_ADMIN_DATA, 0, &ent);
     if(ret)
@@ -122,6 +124,7 @@ out3:
 out2:
     hdb_free_entry(context->context, &ent);
 out:
-    context->db->hdb_close(context->context, context->db);
+    if (!context->keep_open)
+	context->db->hdb_close(context->context, context->db);
     return _kadm5_error_code(ret);
 }

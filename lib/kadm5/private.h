@@ -92,6 +92,7 @@ typedef struct kadm5_server_context {
     /* */
     kadm5_config_params config;
     HDB *db;
+    int keep_open;
     krb5_principal caller;
     unsigned acl_flags;
     kadm5_log_context log_context;

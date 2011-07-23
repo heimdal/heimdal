@@ -131,11 +131,14 @@ kadm5_s_create_principal_with_key(void *server_handle,
     if (ret)
 	goto out;
 
-    ret = context->db->hdb_open(context->context, context->db, O_RDWR, 0);
-    if(ret)
-	goto out;
+    if (!context->keep_open) {
+	ret = context->db->hdb_open(context->context, context->db, O_RDWR, 0);
+	if(ret)
+	    goto out;
+    }
     ret = context->db->hdb_store(context->context, context->db, 0, &ent);
-    context->db->hdb_close(context->context, context->db);
+    if (!context->keep_open)
+	context->db->hdb_close(context->context, context->db);
     if (ret)
 	goto out;
     kadm5_log_create (context, &ent.entry);
@@ -183,11 +186,14 @@ kadm5_s_create_principal(void *server_handle,
     if (ret)
 	goto out;
 
-    ret = context->db->hdb_open(context->context, context->db, O_RDWR, 0);
-    if(ret)
-	goto out;
+    if (!context->keep_open) {
+	ret = context->db->hdb_open(context->context, context->db, O_RDWR, 0);
+	if(ret)
+	    goto out;
+    }
     ret = context->db->hdb_store(context->context, context->db, 0, &ent);
-    context->db->hdb_close(context->context, context->db);
+    if (!context->keep_open)
+	context->db->hdb_close(context->context, context->db);
     if (ret)
 	goto out;
 

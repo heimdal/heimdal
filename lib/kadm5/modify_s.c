@@ -52,9 +52,11 @@ modify_principal(void *server_handle,
     if((mask & KADM5_POLICY) && strcmp(princ->policy, "default"))
 	return KADM5_UNK_POLICY;
 
-    ret = context->db->hdb_open(context->context, context->db, O_RDWR, 0);
-    if(ret)
-	return ret;
+    if (!context->keep_open) {
+	ret = context->db->hdb_open(context->context, context->db, O_RDWR, 0);
+	if(ret)
+	    return ret;
+    }
     ret = context->db->hdb_fetch_kvno(context->context, context->db,
 				      princ->principal, HDB_F_GET_ANY|HDB_F_ADMIN_DATA, 0, &ent);
     if(ret)
@@ -97,7 +99,8 @@ modify_principal(void *server_handle,
 out2:
     hdb_free_entry(context->context, &ent);
 out:
-    context->db->hdb_close(context->context, context->db);
+    if (!context->keep_open)
+	context->db->hdb_close(context->context, context->db);
     return _kadm5_error_code(ret);
 }
 

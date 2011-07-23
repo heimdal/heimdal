@@ -50,9 +50,11 @@ change(void *server_handle,
     int existsp = 0;
 
     memset(&ent, 0, sizeof(ent));
-    ret = context->db->hdb_open(context->context, context->db, O_RDWR, 0);
-    if(ret)
-	return ret;
+    if (!context->keep_open) {
+	ret = context->db->hdb_open(context->context, context->db, O_RDWR, 0);
+	if(ret)
+	    return ret;
+    }
 
     ret = context->db->hdb_fetch_kvno(context->context, context->db, princ,
 				      HDB_F_DECRYPT|HDB_F_GET_ANY|HDB_F_ADMIN_DATA, 0, &ent);
@@ -145,7 +147,8 @@ change(void *server_handle,
 out2:
     hdb_free_entry(context->context, &ent);
 out:
-    context->db->hdb_close(context->context, context->db);
+    if (!context->keep_open)
+	context->db->hdb_close(context->context, context->db);
     return _kadm5_error_code(ret);
 }
 
@@ -193,9 +196,11 @@ kadm5_s_chpass_principal_with_key(void *server_handle,
     kadm5_ret_t ret;
 
     memset(&ent, 0, sizeof(ent));
-    ret = context->db->hdb_open(context->context, context->db, O_RDWR, 0);
-    if(ret)
-	return ret;
+    if (!context->keep_open) {
+	ret = context->db->hdb_open(context->context, context->db, O_RDWR, 0);
+	if(ret)
+	    return ret;
+    }
     ret = context->db->hdb_fetch_kvno(context->context, context->db, princ, 0,
 				      HDB_F_GET_ANY|HDB_F_ADMIN_DATA, &ent);
     if(ret == HDB_ERR_NOENTRY)
@@ -244,6 +249,7 @@ kadm5_s_chpass_principal_with_key(void *server_handle,
 out2:
     hdb_free_entry(context->context, &ent);
 out:
-    context->db->hdb_close(context->context, context->db);
+    if (!context->keep_open)
+	context->db->hdb_close(context->context, context->db);
     return _kadm5_error_code(ret);
 }

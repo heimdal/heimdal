@@ -39,16 +39,46 @@ static kadm5_ret_t
 kadm5_s_lock(void *server_handle)
 {
     kadm5_server_context *context = server_handle;
+    kadm5_ret_t ret;
 
-    return context->db->hdb_lock(context->context, context->db, HDB_WLOCK);
+    if (context->keep_open) {
+	/*
+	 * We open/close around every operation, but we retain the DB
+	 * open if the DB was locked with a prior call to kadm5_lock(),
+	 * so if it's open here that must be because the DB is locked.
+	 */
+	assert( context->db->lock_count > 0 );
+	return KADM5_ALREADY_LOCKED;
+    }
+
+    ret = context->db->hdb_open(context->context, context->db, O_RDWR, 0);
+    if (ret)
+	return ret;
+
+    ret = context->db->hdb_lock(context->context, context->db, HDB_WLOCK);
+    if (ret)
+	return ret;
+
+    context->keep_open = 1;
+    return 0;
 }
 
 static kadm5_ret_t
 kadm5_s_unlock(void *server_handle)
 {
     kadm5_server_context *context = server_handle;
+    kadm5_ret_t ret;
 
-    return context->db->hdb_unlock(context->context, context->db);
+    if (!context->keep_open)
+	return KADM5_NOT_LOCKED;
+
+    (void) context->db->hdb_close(context->context, context->db);
+
+    context->keep_open = 0;
+    ret = context->db->hdb_unlock(context->context, context->db);
+    if (ret)
+	return ret;
+    return 0;
 }
 
 static void

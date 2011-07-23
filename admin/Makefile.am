@@ -40,4 +40,4 @@ LDADD = \
 	$(LIB_readline) \
 	$(LIB_roken)
 
-EXTRA_DIST = NTMakefile $(man_MANS) ktutil-commands.in
+EXTRA_DIST = NTMakefile ktutil-version.rc $(man_MANS) ktutil-commands.in

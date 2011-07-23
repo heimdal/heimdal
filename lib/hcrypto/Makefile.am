@@ -315,6 +315,8 @@ CLEANFILES = \
 EXTRA_DIST = \
 	NTMakefile \
 	DESperate.txt \
+	passwd_dialog.rc \
+	libhcrypto-exports.def \
 	dllmain.c \
 	ec.h \
 	ecdh.h \

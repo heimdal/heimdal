@@ -334,6 +334,8 @@ $(gsstool_OBJECTS): gss-commands.h
 
 EXTRA_DIST = \
 	NTMakefile \
+	libgssapi-version.rc \
+	libgssapi-exports.def \
 	$(man_MANS) \
 	krb5/gkrb5_err.et \
 	mech/gssapi.asn1 \

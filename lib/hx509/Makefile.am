@@ -300,6 +300,8 @@ test_query: test_query.in Makefile
 
 EXTRA_DIST = \
 	NTMakefile \
+	hxtool-version.rc \
+	libhx509-exports.def \
 	version-script.map \
 	crmf.asn1 \
 	hx509_err.et \

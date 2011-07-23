@@ -38,4 +38,9 @@ snprintf.c:
 strlcpy.c:
 	$(LN_S) $(srcdir)/../roken/strlcpy.c .
 
-EXTRA_DIST = NTMakefile version-script.map
+EXTRA_DIST = \
+	NTMakefile \
+	compile_et-version.rc \
+	libcom_err-version.rc \
+	libcom_err-exports.def \
+	version-script.map

@@ -128,4 +128,12 @@ krb5_HEADERS = windc_plugin.h
 
 build_HEADERZ = $(krb5_HEADERS) # XXX
 
-EXTRA_DIST = NTMakefile $(man_MANS) version-script.map
+EXTRA_DIST = \
+	hprop-version.rc \
+	hpropd-version.rc \
+	kdc-version.rc \
+	kstash-version.rc \
+	libkdc-version.rc \
+	string2key-version.rc \
+	libkdc-exports.def \
+	NTMakefile $(man_MANS) version-script.map

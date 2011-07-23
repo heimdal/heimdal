@@ -73,6 +73,12 @@ LDADD = \
 	$(LIB_roken)
 
 EXTRA_DIST = NTMakefile $(man_MANS) \
+	kcc-version.rc \
+	kdestroy-version.rc \
+	kdigest-version.rc \
+	kgetcred-version.rc \
+	kimpersonate-version.rc \
+	kinit-version.rc \
 	kuser_locl.h kcc-commands.in kdigest-commands.in copy_cred_cache.1
 
 # make sure install-exec-hook doesn't have any commands in Makefile.am.common

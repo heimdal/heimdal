@@ -132,6 +132,8 @@ hdb_err.h: hdb_err.et
 
 EXTRA_DIST = \
 	NTMakefile \
+	libhdb-version.rc \
+	libhdb-exports.def \
 	hdb.asn1 \
 	hdb_err.et \
 	hdb.schema \

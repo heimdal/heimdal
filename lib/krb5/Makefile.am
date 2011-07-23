@@ -356,6 +356,7 @@ test_config_strings.out: test_config_strings.cfg
 
 EXTRA_DIST = \
 	NTMakefile \
+	verify_krb5_conf-version.rc \
 	krb5_err.et \
 	krb_err.et \
 	heim_err.et \

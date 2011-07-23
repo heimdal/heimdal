@@ -41,10 +41,11 @@ pac_generate(void *ctx, krb5_context context,
 
 static krb5_error_code
 pac_verify(void *ctx, krb5_context context,
-	   const krb5_principal client_principal,
-	   struct hdb_entry_ex *client,
-	   struct hdb_entry_ex *server,
-	   struct hdb_entry_ex *krbtgt,
+	   const krb5_principal new_ticket_client,
+	   const krb5_principal delegation_proxy,
+	   struct hdb_entry_ex * client,
+	   struct hdb_entry_ex * server,
+	   struct hdb_entry_ex * krbtgt,
 	   krb5_pac *pac)
 {
     krb5_error_code ret;

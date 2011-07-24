@@ -228,7 +228,7 @@ read_master_encryptionkey(krb5_context context, const char *filename,
        should cover all cases, but will break if someone has hacked
        this code to really use des-cbc-md5 -- but then that's not my
        problem. */
-    if(key.keytype == KEYTYPE_DES || key.keytype == ETYPE_DES_CBC_MD5)
+    if(key.keytype == ETYPE_DES_CBC_CRC || key.keytype == ETYPE_DES_CBC_MD5)
 	key.keytype = ETYPE_DES_CFB64_NONE;
 
     ret = hdb_process_master_key(context, 0, &key, 0, mkey);

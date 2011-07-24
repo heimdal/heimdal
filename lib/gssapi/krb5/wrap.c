@@ -174,8 +174,8 @@ _gsskrb5_wrap_size_limit (
       ret = GSS_S_FAILURE;
 #endif
       break;
-  case KEYTYPE_ARCFOUR:
-  case KEYTYPE_ARCFOUR_56:
+  case ENCTYPE_ARCFOUR_HMAC_MD5:
+  case ENCTYPE_ARCFOUR_HMAC_MD5_56:
       ret = _gssapi_wrap_size_arcfour(minor_status, ctx, context,
 				      conf_req_flag, qop_req,
 				      req_output_size, max_input_size, key);

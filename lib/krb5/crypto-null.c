@@ -38,7 +38,7 @@
 #endif
 
 static struct _krb5_key_type keytype_null = {
-    KEYTYPE_NULL,
+    ENCTYPE_NULL,
     "null",
     0,
     0,

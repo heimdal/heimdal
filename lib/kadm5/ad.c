@@ -508,12 +508,16 @@ ad_get_cred(kadm5_ad_context *context, const char *password)
 static kadm5_ret_t
 kadm5_ad_chpass_principal(void *server_handle,
 			  krb5_principal principal,
+			  int keepold,
 			  const char *password)
 {
     kadm5_ad_context *context = server_handle;
     krb5_data result_code_string, result_string;
     int result_code;
     kadm5_ret_t ret;
+
+    if (keepold)
+	return KADM5_KEEPOLD_NOSUPP;
 
     ret = ad_get_cred(context, NULL);
     if (ret)
@@ -1224,13 +1228,20 @@ kadm5_ad_modify_principal(void *server_handle,
 #endif
 }
 
+/*ARGSUSED*/
 static kadm5_ret_t
 kadm5_ad_randkey_principal(void *server_handle,
 			   krb5_principal principal,
+			   krb5_boolean keepold,
+			   int n_ks_tuple,
+			   krb5_key_salt_tuple *ks_tuple,
 			   krb5_keyblock **keys,
 			   int *n_keys)
 {
     kadm5_ad_context *context = server_handle;
+
+    if (keepold)
+	return KADM5_KEEPOLD_NOSUPP;
 
     /*
      * random key
@@ -1321,12 +1332,25 @@ kadm5_ad_rename_principal(void *server_handle,
 static kadm5_ret_t
 kadm5_ad_chpass_principal_with_key(void *server_handle,
 				   krb5_principal princ,
+				   int keepold,
 				   int n_key_data,
 				   krb5_key_data *key_data)
 {
     kadm5_ad_context *context = server_handle;
     krb5_set_error_message(context->context, KADM5_RPC_ERROR, "Function not implemented");
     return KADM5_RPC_ERROR;
+}
+
+static kadm5_ret_t
+kadm5_ad_lock(void *server_handle)
+{
+    return ENOTSUP;
+}
+
+static kadm5_ret_t
+kadm5_ad_unlock(void *server_handle)
+{
+    return ENOTSUP;
 }
 
 static void
@@ -1345,6 +1369,8 @@ set_funcs(kadm5_ad_context *c)
     SET(c, modify_principal);
     SET(c, randkey_principal);
     SET(c, rename_principal);
+    SET(c, lock);
+    SET(c, unlock);
 }
 
 kadm5_ret_t

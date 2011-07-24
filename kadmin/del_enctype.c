@@ -106,6 +106,10 @@ del_enctype(void *opt, int argc, char **argv)
     }
 
     free (princ.key_data);
+    if (j == 0) {
+	free(new_key_data);
+	new_key_data = NULL;
+    }
     princ.n_key_data = j;
     princ.key_data   = new_key_data;
 

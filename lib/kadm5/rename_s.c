@@ -48,13 +48,16 @@ kadm5_s_rename_principal(void *server_handle,
     memset(&ent, 0, sizeof(ent));
     if(krb5_principal_compare(context->context, source, target))
 	return KADM5_DUP; /* XXX is this right? */
-    ret = context->db->hdb_open(context->context, context->db, O_RDWR, 0);
-    if(ret)
-	return ret;
+    if (!context->keep_open) {
+	ret = context->db->hdb_open(context->context, context->db, O_RDWR, 0);
+	if(ret)
+	    return ret;
+    }
     ret = context->db->hdb_fetch_kvno(context->context, context->db,
 				      source, HDB_F_GET_ANY|HDB_F_ADMIN_DATA, 0, &ent);
     if(ret){
-	context->db->hdb_close(context->context, context->db);
+	if (!context->keep_open)
+	    context->db->hdb_close(context->context, context->db);
 	goto out;
     }
     ret = _kadm5_set_modifier(context, &ent.entry);
@@ -103,7 +106,8 @@ kadm5_s_rename_principal(void *server_handle,
     ret = context->db->hdb_remove(context->context, context->db, oldname);
     ent.entry.principal = oldname;
 out2:
-    context->db->hdb_close(context->context, context->db);
+    if (!context->keep_open)
+	context->db->hdb_close(context->context, context->db);
     hdb_free_entry(context->context, &ent);
 out:
     return _kadm5_error_code(ret);

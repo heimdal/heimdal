@@ -65,6 +65,7 @@ create_principal(kadm5_server_context *context,
     kadm5_principal_ent_rec defrec, *defent;
     uint32_t def_mask;
 
+    memset(ent, 0, sizeof(*ent));
     if((mask & required_mask) != required_mask)
 	return KADM5_BAD_MASK;
     if((mask & forbidden_mask))
@@ -72,7 +73,6 @@ create_principal(kadm5_server_context *context,
     if((mask & KADM5_POLICY) && strcmp(princ->policy, "default"))
 	/* XXX no real policies for now */
 	return KADM5_UNK_POLICY;
-    memset(ent, 0, sizeof(*ent));
     ret  = krb5_copy_principal(context->context, princ->principal,
 			       &ent->entry.principal);
     if(ret)
@@ -111,6 +111,12 @@ kadm5_s_create_principal_with_key(void *server_handle,
     hdb_entry_ex ent;
     kadm5_server_context *context = server_handle;
 
+    if ((mask & KADM5_KVNO) == 0) {
+	/* create_principal() through _kadm5_setup_entry(), will need this */
+	princ->kvno = 1;
+	mask |= KADM5_KVNO;
+    }
+
     ret = create_principal(context, princ, mask, &ent,
 			   KADM5_PRINCIPAL | KADM5_KEY_DATA,
 			   KADM5_LAST_PWD_CHANGE | KADM5_MOD_TIME
@@ -121,18 +127,18 @@ kadm5_s_create_principal_with_key(void *server_handle,
     if(ret)
 	goto out;
 
-    if ((mask & KADM5_KVNO) == 0)
-	ent.entry.kvno = 1;
-
     ret = hdb_seal_keys(context->context, context->db, &ent.entry);
     if (ret)
 	goto out;
 
-    ret = context->db->hdb_open(context->context, context->db, O_RDWR, 0);
-    if(ret)
-	goto out;
+    if (!context->keep_open) {
+	ret = context->db->hdb_open(context->context, context->db, O_RDWR, 0);
+	if(ret)
+	    goto out;
+    }
     ret = context->db->hdb_store(context->context, context->db, 0, &ent);
-    context->db->hdb_close(context->context, context->db);
+    if (!context->keep_open)
+	context->db->hdb_close(context->context, context->db);
     if (ret)
 	goto out;
     kadm5_log_create (context, &ent.entry);
@@ -153,6 +159,12 @@ kadm5_s_create_principal(void *server_handle,
     hdb_entry_ex ent;
     kadm5_server_context *context = server_handle;
 
+    if ((mask & KADM5_KVNO) == 0) {
+	/* create_principal() through _kadm5_setup_entry(), will need this */
+	princ->kvno = 1;
+	mask |= KADM5_KVNO;
+    }
+
     ret = create_principal(context, princ, mask, &ent,
 			   KADM5_PRINCIPAL,
 			   KADM5_LAST_PWD_CHANGE | KADM5_MOD_TIME
@@ -162,9 +174,6 @@ kadm5_s_create_principal(void *server_handle,
 			   | KADM5_LAST_FAILED | KADM5_FAIL_AUTH_COUNT);
     if(ret)
 	goto out;
-
-    if ((mask & KADM5_KVNO) == 0)
-	ent.entry.kvno = 1;
 
     ent.entry.keys.len = 0;
     ent.entry.keys.val = NULL;
@@ -177,11 +186,14 @@ kadm5_s_create_principal(void *server_handle,
     if (ret)
 	goto out;
 
-    ret = context->db->hdb_open(context->context, context->db, O_RDWR, 0);
-    if(ret)
-	goto out;
+    if (!context->keep_open) {
+	ret = context->db->hdb_open(context->context, context->db, O_RDWR, 0);
+	if(ret)
+	    goto out;
+    }
     ret = context->db->hdb_store(context->context, context->db, 0, &ent);
-    context->db->hdb_close(context->context, context->db);
+    if (!context->keep_open)
+	context->db->hdb_close(context->context, context->db);
     if (ret)
 	goto out;
 

@@ -187,6 +187,8 @@ ec=0
 echo "Getting client initial tickets"; > messages.log
 ${kinit} --password-file=${objdir}/foopassword foo@$R || \
 	{ ec=1 ; eval "${testfailed}"; }
+echo "Doing krbtgt key rollover"; > messages.log
+${kadmin} cpw -r --keepold krbtgt/${R}@${R} || exit 1
 echo "Getting tickets"; > messages.log
 ${kgetcred} ${server}@${R} || { ec=1 ; eval "${testfailed}"; }
 echo "Listing tickets"; > messages.log

@@ -44,15 +44,19 @@ modify_principal(void *server_handle,
     kadm5_server_context *context = server_handle;
     hdb_entry_ex ent;
     kadm5_ret_t ret;
+
+    memset(&ent, 0, sizeof(ent));
+
     if((mask & forbidden_mask))
 	return KADM5_BAD_MASK;
     if((mask & KADM5_POLICY) && strcmp(princ->policy, "default"))
 	return KADM5_UNK_POLICY;
 
-    memset(&ent, 0, sizeof(ent));
-    ret = context->db->hdb_open(context->context, context->db, O_RDWR, 0);
-    if(ret)
-	return ret;
+    if (!context->keep_open) {
+	ret = context->db->hdb_open(context->context, context->db, O_RDWR, 0);
+	if(ret)
+	    return ret;
+    }
     ret = context->db->hdb_fetch_kvno(context->context, context->db,
 				      princ->principal, HDB_F_GET_ANY|HDB_F_ADMIN_DATA, 0, &ent);
     if(ret)
@@ -68,6 +72,21 @@ modify_principal(void *server_handle,
     if (ret)
 	goto out2;
 
+    if((mask & KADM5_POLICY)) {
+	HDB_extension ext;
+
+	ext.data.element = choice_HDB_extension_data_policy;
+	ext.data.u.policy = strdup(princ->policy);
+	if (ext.data.u.policy == NULL) {
+	    ret = ENOMEM;
+	    goto out2;
+	}
+	/* This calls free_HDB_extension(), freeing ext.data.u.policy */
+	ret = hdb_replace_extension(context->context, &ent.entry, &ext);
+	if (ret)
+	    goto out2;
+    }
+
     ret = context->db->hdb_store(context->context, context->db,
 			     HDB_F_REPLACE, &ent);
     if (ret)
@@ -80,7 +99,8 @@ modify_principal(void *server_handle,
 out2:
     hdb_free_entry(context->context, &ent);
 out:
-    context->db->hdb_close(context->context, context->db);
+    if (!context->keep_open)
+	context->db->hdb_close(context->context, context->db);
     return _kadm5_error_code(ret);
 }
 

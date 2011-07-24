@@ -62,11 +62,12 @@ append_string(krb5_context context, krb5_storage *sp, const char *fmt, ...)
 {
     krb5_error_code ret;
     char *s;
+    int rc;
     va_list ap;
     va_start(ap, fmt);
-    vasprintf(&s, fmt, ap);
+    rc = vasprintf(&s, fmt, ap);
     va_end(ap);
-    if(s == NULL) {
+    if(rc < 0) {
 	krb5_set_error_message(context, ENOMEM, "malloc: out of memory");
 	return ENOMEM;
     }
@@ -233,7 +234,6 @@ entry2string_int (krb5_context context, krb5_storage *sp, hdb_entry *ent)
 	}
     } else
 	append_string(context, sp, "-");
-
 
     return 0;
 }

@@ -146,7 +146,8 @@ enctypes.
 .Oc
 .Ar principal...
 .Bd -ragged -offset indent
-Creates a keytab with the keys of the specified principals.
+Creates a keytab with the keys of the specified principals.  Requires
+get-keys rights.
 .Ed
 .Pp
 .Nm get
@@ -228,6 +229,7 @@ kadmin -l modify -a -disallow-proxiable user
 .Ed
 .Pp
 .Nm passwd
+.Op Fl Fl keepold
 .Op Fl r | Fl Fl random-key
 .Op Fl Fl random-password
 .Oo Fl p Ar string \*(Ba Xo
@@ -260,6 +262,7 @@ Lists the operations you are allowed to perform. These include
 .Li delete ,
 .Li del_enctype ,
 .Li get ,
+.Li get-keys ,
 .Li list ,
 and
 .Li modify .

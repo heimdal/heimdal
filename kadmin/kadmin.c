@@ -112,6 +112,18 @@ exit_kadmin (void *opt, int argc, char **argv)
     return 0;
 }
 
+int
+lock(void *opt, int argc, char **argv)
+{
+    return kadm5_lock(kadm_handle);
+}
+
+int
+unlock(void *opt, int argc, char **argv)
+{
+    return kadm5_unlock(kadm_handle);
+}
+
 static void
 usage(int ret)
 {

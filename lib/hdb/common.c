@@ -105,7 +105,6 @@ _hdb_fetch_kvno(krb5_context context, HDB *db, krb5_const_principal principal,
     krb5_principal enterprise_principal = NULL;
     krb5_data key, value;
     krb5_error_code ret;
-    int code;
 
     if (principal->name.name_type == KRB5_NT_ENTERPRISE_PRINCIPAL) {
 	if (principal->name.name_string.len != 1) {
@@ -125,43 +124,74 @@ _hdb_fetch_kvno(krb5_context context, HDB *db, krb5_const_principal principal,
     hdb_principal2key(context, principal, &key);
     if (enterprise_principal)
 	krb5_free_principal(context, enterprise_principal);
-    code = db->hdb__get(context, db, key, &value);
+    ret = db->hdb__get(context, db, key, &value);
     krb5_data_free(&key);
-    if(code)
-	return code;
-    code = hdb_value2entry(context, &value, &entry->entry);
-    if (code == ASN1_BAD_ID && (flags & HDB_F_CANON) == 0) {
+    if(ret)
+	return ret;
+    ret = hdb_value2entry(context, &value, &entry->entry);
+    if (ret == ASN1_BAD_ID && (flags & HDB_F_CANON) == 0) {
 	krb5_data_free(&value);
 	return HDB_ERR_NOENTRY;
-    } else if (code == ASN1_BAD_ID) {
+    } else if (ret == ASN1_BAD_ID) {
 	hdb_entry_alias alias;
 
-	code = hdb_value2entry_alias(context, &value, &alias);
-	if (code) {
+	ret = hdb_value2entry_alias(context, &value, &alias);
+	if (ret) {
 	    krb5_data_free(&value);
-	    return code;
+	    return ret;
 	}
 	hdb_principal2key(context, alias.principal, &key);
 	krb5_data_free(&value);
 	free_hdb_entry_alias(&alias);
 
-	code = db->hdb__get(context, db, key, &value);
+	ret = db->hdb__get(context, db, key, &value);
 	krb5_data_free(&key);
-	if (code)
-	    return code;
-	code = hdb_value2entry(context, &value, &entry->entry);
-	if (code) {
+	if (ret)
+	    return ret;
+	ret = hdb_value2entry(context, &value, &entry->entry);
+	if (ret) {
 	    krb5_data_free(&value);
-	    return code;
+	    return ret;
 	}
     }
     krb5_data_free(&value);
-    if (db->hdb_master_key_set && (flags & HDB_F_DECRYPT)) {
-	code = hdb_unseal_keys (context, db, &entry->entry);
-	if (code)
+    if ((flags & HDB_F_DECRYPT) && (flags & HDB_F_ALL_KVNOS)) {
+	/* Decrypt the current keys */
+	ret = hdb_unseal_keys(context, db, &entry->entry);
+	if (ret) {
 	    hdb_free_entry(context, entry);
+	    return ret;
+	}
+	/* Decrypt the key history too */
+	ret = hdb_unseal_keys_kvno(context, db, 0, flags, &entry->entry);
+	if (ret) {
+	    hdb_free_entry(context, entry);
+	    return ret;
+	}
+    } else if ((flags & HDB_F_DECRYPT)) {
+	if ((flags & HDB_F_KVNO_SPECIFIED) == 0 || kvno == entry->entry.kvno) {
+	    /* Decrypt the current keys */
+	    ret = hdb_unseal_keys(context, db, &entry->entry);
+	    if (ret) {
+		hdb_free_entry(context, entry);
+		return ret;
+	    }
+	} else {
+	    if ((flags & HDB_F_ALL_KVNOS))
+		kvno = 0;
+	    /*
+	     * Find and decrypt the keys from the history that we want,
+	     * and swap them with the current keys
+	     */
+	    ret = hdb_unseal_keys_kvno(context, db, kvno, flags, &entry->entry);
+	    if (ret) {
+		hdb_free_entry(context, entry);
+		return ret;
+	    }
+	}
     }
-    return code;
+
+    return 0;
 }
 
 static krb5_error_code
@@ -284,6 +314,8 @@ _hdb_store(krb5_context context, HDB *db, unsigned flags, hdb_entry_ex *entry)
     krb5_data key, value;
     int code;
 
+    if (entry->entry.flags.do_not_store)
+	return HDB_ERR_MISUSE;
     /* check if new aliases already is used */
     code = hdb_check_aliases(context, db, entry);
     if (code)

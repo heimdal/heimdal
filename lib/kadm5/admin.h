@@ -112,6 +112,11 @@ typedef struct {
     void*   key_data_contents[2];/* Array of pointers */
 } krb5_key_data;
 
+typedef struct _krb5_keysalt {
+    int16_t               type;
+    krb5_data             data;                 /* Length, data */
+} krb5_keysalt;
+
 typedef struct _krb5_tl_data {
     struct _krb5_tl_data* tl_data_next;
     int16_t tl_data_type;
@@ -129,6 +134,8 @@ typedef struct _krb5_tl_data {
 #define KRB5_TL_EXTENSION           	0x0008
 #define KRB5_TL_PKINIT_ACL           	0x0009
 #define KRB5_TL_ALIASES           	0x000a
+#define KRB5_TL_HIST_KVNO_DIFF_CLNT	0x000b
+#define KRB5_TL_HIST_KVNO_DIFF_SVC	0x000c
 
 typedef struct _kadm5_principal_ent_t {
     krb5_principal principal;
@@ -193,11 +200,8 @@ typedef struct _kadm5_policy_ent_t {
 #define KADM5_PRIV_DELETE	(1 << 3)
 #define KADM5_PRIV_LIST		(1 << 4)
 #define KADM5_PRIV_CPW		(1 << 5)
+#define KADM5_PRIV_GET_KEYS	(1 << 6)
 #define KADM5_PRIV_ALL		(KADM5_PRIV_GET | KADM5_PRIV_ADD | KADM5_PRIV_MODIFY | KADM5_PRIV_DELETE | KADM5_PRIV_LIST | KADM5_PRIV_CPW)
-
-typedef struct {
-    int XXX;
-}krb5_key_salt_tuple;
 
 typedef struct _kadm5_config_params {
     uint32_t mask;
@@ -220,39 +224,5 @@ typedef struct _kadm5_config_params {
 typedef krb5_error_code kadm5_ret_t;
 
 #include "kadm5-protos.h"
-
-#if 0
-/* unimplemented functions */
-kadm5_ret_t
-kadm5_decrypt_key(void *server_handle,
-		  kadm5_principal_ent_t entry, int32_t
-		  ktype, int32_t stype, int32_t
-		  kvno, krb5_keyblock *keyblock,
-		  krb5_keysalt *keysalt, int *kvnop);
-
-kadm5_ret_t
-kadm5_create_policy(void *server_handle,
-		    kadm5_policy_ent_t policy, uint32_t mask);
-
-kadm5_ret_t
-kadm5_delete_policy(void *server_handle, char *policy);
-
-
-kadm5_ret_t
-kadm5_modify_policy(void *server_handle,
-		    kadm5_policy_ent_t policy,
-		    uint32_t mask);
-
-kadm5_ret_t
-kadm5_get_policy(void *server_handle, char *policy, kadm5_policy_ent_t ent);
-
-kadm5_ret_t
-kadm5_get_policies(void *server_handle, char *exp,
-		   char ***pols, int *count);
-
-void
-kadm5_free_policy_ent(kadm5_policy_ent_t policy);
-
-#endif
 
 #endif /* __KADM5_ADMIN_H__ */

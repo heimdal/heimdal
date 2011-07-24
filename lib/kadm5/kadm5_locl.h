@@ -38,6 +38,7 @@
 
 #include <config.h>
 #include <roken.h>
+#include <heimbase.h>
 
 #include <stdio.h>
 #include <stdlib.h>

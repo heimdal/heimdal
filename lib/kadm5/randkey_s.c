@@ -43,6 +43,9 @@ RCSID("$Id$");
 kadm5_ret_t
 kadm5_s_randkey_principal(void *server_handle,
 			  krb5_principal princ,
+			  krb5_boolean keepold,
+			  int n_ks_tuple,
+			  krb5_key_salt_tuple *ks_tuple,
 			  krb5_keyblock **new_keys,
 			  int *n_keys)
 {
@@ -51,16 +54,26 @@ kadm5_s_randkey_principal(void *server_handle,
     kadm5_ret_t ret;
 
     memset(&ent, 0, sizeof(ent));
-    ret = context->db->hdb_open(context->context, context->db, O_RDWR, 0);
-    if(ret)
-	return ret;
+    if (!context->keep_open) {
+	ret = context->db->hdb_open(context->context, context->db, O_RDWR, 0);
+	if(ret)
+	    return ret;
+    }
     ret = context->db->hdb_fetch_kvno(context->context, context->db, princ,
 				      HDB_F_GET_ANY|HDB_F_ADMIN_DATA, 0, &ent);
     if(ret)
 	goto out;
 
+    if (keepold) {
+	ret = hdb_add_current_keys_to_history(context->context, &ent.entry);
+	if (ret)
+	    goto out2;
+    }
+
     ret = _kadm5_set_keys_randomly (context,
 				    &ent.entry,
+				    n_ks_tuple,
+				    ks_tuple,
 				    new_keys,
 				    n_keys);
     if (ret)
@@ -74,9 +87,18 @@ kadm5_s_randkey_principal(void *server_handle,
     if (ret)
 	goto out2;
 
-    ret = hdb_seal_keys(context->context, context->db, &ent.entry);
-    if (ret)
-	goto out2;
+    if (keepold) {
+	ret = hdb_seal_keys(context->context, context->db, &ent.entry);
+	if (ret)
+	    goto out2;
+    } else {
+	HDB_extension ext;
+
+	ext.data.element = choice_HDB_extension_data_hist_keys;
+	ext.data.u.hist_keys.len = 0;
+	ext.data.u.hist_keys.val = NULL;
+	hdb_replace_extension(context->context, &ent.entry, &ext);
+    }
 
     ret = context->db->hdb_store(context->context, context->db,
 				 HDB_F_REPLACE, &ent);
@@ -102,6 +124,7 @@ out3:
 out2:
     hdb_free_entry(context->context, &ent);
 out:
-    context->db->hdb_close(context->context, context->db);
+    if (!context->keep_open)
+	context->db->hdb_close(context->context, context->db);
     return _kadm5_error_code(ret);
 }

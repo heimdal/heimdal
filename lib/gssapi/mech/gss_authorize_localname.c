@@ -32,7 +32,7 @@
 
 #include "mech_locl.h"
 
-GSSAPI_LIB_VARIABLE gss_buffer_desc __gss_c_attr_local_login_user =  {
+gss_buffer_desc GSSAPI_LIB_VARIABLE __gss_c_attr_local_login_user =  {
     sizeof("local-login-user") - 1,
     "local-login-user"
 };

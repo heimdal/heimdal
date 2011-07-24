@@ -38,7 +38,7 @@
  */
 
 static struct _krb5_key_type keytype_aes128 = {
-    ENCTYPE_AES128_CTS_HMAC_SHA1_96,
+    KRB5_ENCTYPE_AES128_CTS_HMAC_SHA1_96,
     "aes-128",
     128,
     16,
@@ -52,7 +52,7 @@ static struct _krb5_key_type keytype_aes128 = {
 };
 
 static struct _krb5_key_type keytype_aes256 = {
-    ENCTYPE_AES256_CTS_HMAC_SHA1_96,
+    KRB5_ENCTYPE_AES256_CTS_HMAC_SHA1_96,
     "aes-256",
     256,
     32,

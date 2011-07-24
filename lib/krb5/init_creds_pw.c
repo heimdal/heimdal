@@ -859,7 +859,7 @@ pa_pw_or_afs3_salt(krb5_context context,
 		   heim_octet_string *data)
 {
     krb5_error_code ret;
-    if (paid->etype == ENCTYPE_NULL)
+    if (paid->etype == KRB5_ENCTYPE_NULL)
 	return NULL;
     ret = set_paid(paid, context,
 		   paid->etype,
@@ -1204,7 +1204,7 @@ process_pa_data_to_md(krb5_context context,
 
 	paid = calloc(1, sizeof(*paid));
 
-	paid->etype = ENCTYPE_NULL;
+	paid->etype = KRB5_ENCTYPE_NULL;
 	ppaid = process_pa_info(context, creds->client, a, paid, in_md);
 
  	if (ppaid)

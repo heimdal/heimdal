@@ -94,13 +94,13 @@ static struct {
     const char *name;
     krb5_keytype type;
 } keys[] = {
-    { "null", ENCTYPE_NULL },
-    { "des", ETYPE_DES_CBC_CRC },
-    { "des3", ETYPE_OLD_DES3_CBC_SHA1 },
-    { "aes-128", ETYPE_AES128_CTS_HMAC_SHA1_96 },
-    { "aes-256", ETYPE_AES256_CTS_HMAC_SHA1_96 },
-    { "arcfour", ETYPE_ARCFOUR_HMAC_MD5 },
-    { "arcfour-56", ETYPE_ARCFOUR_HMAC_MD5_56 }
+    { "null", KRB5_ENCTYPE_NULL },
+    { "des", KRB5_ENCTYPE_DES_CBC_CRC },
+    { "des3", KRB5_ENCTYPE_OLD_DES3_CBC_SHA1 },
+    { "aes-128", KRB5_ENCTYPE_AES128_CTS_HMAC_SHA1_96 },
+    { "aes-256", KRB5_ENCTYPE_AES256_CTS_HMAC_SHA1_96 },
+    { "arcfour", KRB5_ENCTYPE_ARCFOUR_HMAC_MD5 },
+    { "arcfour-56", KRB5_ENCTYPE_ARCFOUR_HMAC_MD5_56 }
 };
 
 static int num_keys = sizeof(keys) / sizeof(keys[0]);

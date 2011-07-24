@@ -38,7 +38,7 @@
 #include "krb5_locl.h"
 
 static struct _krb5_key_type keytype_arcfour = {
-    ENCTYPE_ARCFOUR_HMAC_MD5,
+    KRB5_ENCTYPE_ARCFOUR_HMAC_MD5,
     "arcfour",
     128,
     16,

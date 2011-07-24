@@ -640,7 +640,7 @@ krb_enc_test(krb5_context context)
 static int
 iov_test(krb5_context context)
 {
-    krb5_enctype enctype = ENCTYPE_AES256_CTS_HMAC_SHA1_96;
+    krb5_enctype enctype = KRB5_ENCTYPE_AES256_CTS_HMAC_SHA1_96;
     krb5_error_code ret;
     krb5_crypto crypto;
     krb5_keyblock key;

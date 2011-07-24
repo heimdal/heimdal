@@ -113,6 +113,10 @@ kadm5_c_randkey_principal(void *server_handle,
 	int i;
 
 	krb5_ret_int32(sp, &tmp);
+	if (tmp < 0) {
+	    ret = EOVERFLOW;
+	    goto out;
+	}
 	k = malloc(tmp * sizeof(*k));
 	if (k == NULL) {
 	    ret = ENOMEM;

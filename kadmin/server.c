@@ -395,6 +395,12 @@ kadmind_dispatch(void *kadm_handlep, krb5_boolean initial,
 	} else if (ret == 0) {
 	    size_t i;
 
+	    if (n_ks_tuple < 0) {
+		ret = EOVERFLOW;
+		krb5_free_principal(contextp->context, princ);
+		goto fail;
+	    }
+
 	    if ((ks_tuple = calloc(n_ks_tuple, sizeof (*ks_tuple))) == NULL) {
 		ret = errno;
 		krb5_free_principal(contextp->context, princ);

@@ -717,10 +717,10 @@ kadm5_log_replay_modify (kadm5_server_context *context,
 	 *                              choice_HDB_extension_data_hist_keys);
 	 *
 	 * Maybe we should do this here anyways, wasteful as it would
-	 * be, as a defensive programming measure?  For now we stick an
-	 * assert().
+	 * be, as a defensive programming measure?  For now we heim_assert().
 	 */
-	assert( (mask & KADM5_TL_DATA) );
+	heim_assert((mask & KADM5_TL_DATA),
+		    "Wouldn't log and replay key history");
 
 	for (i = 0; i < ent.entry.keys.len; ++i)
 	    free_Key(&ent.entry.keys.val[i]);

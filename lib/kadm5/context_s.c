@@ -47,7 +47,8 @@ kadm5_s_lock(void *server_handle)
 	 * open if the DB was locked with a prior call to kadm5_lock(),
 	 * so if it's open here that must be because the DB is locked.
 	 */
-	assert( context->db->lock_count > 0 );
+	heim_assert(context->db->lock_count > 0,
+		    "Internal error in tracking HDB locks");
 	return KADM5_ALREADY_LOCKED;
     }
 

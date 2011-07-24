@@ -98,3 +98,5 @@ EXPORTS
 	length_HDB_Ext_PKINIT_acl
 	length_HDB_extension
         length_Key
+	add_Keys
+	add_HDB_Ext_Keyset

@@ -111,6 +111,8 @@ HEIMDAL_HDB_1.0 {
 		length_Key;
 		length_Keys;
 		remove_Keys;
+		add_Keys;
+		add_HDB_Ext_Keyset;
 
 	local:
 		*;

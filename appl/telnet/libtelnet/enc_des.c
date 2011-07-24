@@ -400,9 +400,8 @@ static void fb64_session(Session_Key *key, int server, struct fb *fbp)
 	DES_set_key_checked((DES_cblock *)&fbp->krbdes_key,
 			    &fbp->krbdes_sched);
 	/*
-	 * Now look to see if krbdes_start() was was waiting for
-	 * the key to show up.  If so, go ahead an call it now
-	 * that we have the key.
+	 * Now look to see if krbdes_start() was waiting for the key to
+	 * show up.  If so, go ahead an call it now that we have the key.
 	 */
 	if (fbp->need_start) {
 		fbp->need_start = 0;

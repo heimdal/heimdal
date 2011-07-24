@@ -362,7 +362,7 @@ update_dns(void)
 	    size_t len;
 
 	    len = strlen(update->realm);
-	    asprintf(&dnsdata, "%c%s", len, update->realm);
+	    asprintf(&dnsdata, "%c%s", (int)len, update->realm);
 	    if (dnsdata == NULL)
 		errx(1, "malloc");
 

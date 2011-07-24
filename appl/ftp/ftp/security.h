@@ -37,10 +37,11 @@
 #define __security_h__
 
 enum protection_level {
-    prot_clear,
-    prot_safe,
-    prot_confidential,
-    prot_private
+    prot_invalid = -1,
+    prot_clear = 0,
+    prot_safe = 1,
+    prot_confidential = 2,
+    prot_private = 3
 };
 
 struct sec_client_mech {

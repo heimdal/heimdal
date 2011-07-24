@@ -68,6 +68,7 @@ add_one_principal (const char *name,
 		   int rand_password,
 		   int use_defaults,
 		   char *password,
+		   char *policy,
 		   krb5_key_data *key_data,
 		   const char *max_ticket_life,
 		   const char *max_renewable_life,
@@ -94,7 +95,7 @@ add_one_principal (const char *name,
 
     ret = set_entry(context, &princ, &mask,
 		    max_ticket_life, max_renewable_life,
-		    expiration, pw_expiration, attributes);
+		    expiration, pw_expiration, attributes, policy);
     if (ret)
 	goto out;
 
@@ -159,10 +160,15 @@ add_one_principal (const char *name,
 	kadm5_get_principal(kadm_handle, princ_ent, &princ,
 			    KADM5_PRINCIPAL | KADM5_KVNO | KADM5_ATTRIBUTES);
 	princ.attributes &= (~KRB5_KDB_DISALLOW_ALL_TIX);
+	/*
+	 * Updating kvno w/o key data and vice-versa gives _kadm5_setup_entry()
+	 * and _kadm5_set_keys2() headaches.  But we used to, so we handle
+	 * this in in those two functions.  Might as well leave this code as
+	 * it was then.
+	 */
 	princ.kvno = 1;
 	kadm5_modify_principal(kadm_handle, &princ,
 			       KADM5_ATTRIBUTES | KADM5_KVNO);
-	kadm5_free_principal_ent(kadm_handle, &princ);
     } else if (key_data) {
 	ret = kadm5_chpass_principal_with_key (kadm_handle, princ_ent,
 					       3, key_data);
@@ -173,7 +179,6 @@ add_one_principal (const char *name,
 			    KADM5_PRINCIPAL | KADM5_ATTRIBUTES);
 	princ.attributes &= (~KRB5_KDB_DISALLOW_ALL_TIX);
 	kadm5_modify_principal(kadm_handle, &princ, KADM5_ATTRIBUTES);
-	kadm5_free_principal_ent(kadm_handle, &princ);
     } else if (rand_password) {
 	char *princ_name;
 
@@ -182,8 +187,7 @@ add_one_principal (const char *name,
 	free (princ_name);
     }
 out:
-    if (princ_ent)
-	krb5_free_principal (context, princ_ent);
+    kadm5_free_principal_ent(kadm_handle, &princ); /* frees princ_ent */
     if(default_ent)
 	kadm5_free_principal_ent (kadm_handle, default_ent);
     if (password != NULL)
@@ -245,6 +249,7 @@ add_new_key(struct add_options *opt, int argc, char **argv)
 				 opt->random_password_flag,
 				 opt->use_defaults_flag,
 				 opt->password_string,
+				 opt->policy_string,
 				 kdp,
 				 opt->max_ticket_life_string,
 				 opt->max_renewable_life_string,

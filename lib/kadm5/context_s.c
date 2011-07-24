@@ -35,6 +35,53 @@
 
 RCSID("$Id$");
 
+static kadm5_ret_t
+kadm5_s_lock(void *server_handle)
+{
+    kadm5_server_context *context = server_handle;
+    kadm5_ret_t ret;
+
+    if (context->keep_open) {
+	/*
+	 * We open/close around every operation, but we retain the DB
+	 * open if the DB was locked with a prior call to kadm5_lock(),
+	 * so if it's open here that must be because the DB is locked.
+	 */
+	heim_assert(context->db->lock_count > 0,
+		    "Internal error in tracking HDB locks");
+	return KADM5_ALREADY_LOCKED;
+    }
+
+    ret = context->db->hdb_open(context->context, context->db, O_RDWR, 0);
+    if (ret)
+	return ret;
+
+    ret = context->db->hdb_lock(context->context, context->db, HDB_WLOCK);
+    if (ret)
+	return ret;
+
+    context->keep_open = 1;
+    return 0;
+}
+
+static kadm5_ret_t
+kadm5_s_unlock(void *server_handle)
+{
+    kadm5_server_context *context = server_handle;
+    kadm5_ret_t ret;
+
+    if (!context->keep_open)
+	return KADM5_NOT_LOCKED;
+
+    (void) context->db->hdb_close(context->context, context->db);
+
+    context->keep_open = 0;
+    ret = context->db->hdb_unlock(context->context, context->db);
+    if (ret)
+	return ret;
+    return 0;
+}
+
 static void
 set_funcs(kadm5_server_context *c)
 {
@@ -51,6 +98,8 @@ set_funcs(kadm5_server_context *c)
     SET(c, modify_principal);
     SET(c, randkey_principal);
     SET(c, rename_principal);
+    SET(c, lock);
+    SET(c, unlock);
 }
 
 #ifndef NO_UNIX_SOCKETS

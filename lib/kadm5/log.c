@@ -585,7 +585,8 @@ kadm5_log_replay_modify (kadm5_server_context *context,
     memset(&ent, 0, sizeof(ent));
     ret = context->db->hdb_fetch_kvno(context->context, context->db,
 				      log_ent.entry.principal,
-				      HDB_F_DECRYPT|HDB_F_GET_ANY|HDB_F_ADMIN_DATA, 0, &ent);
+				      HDB_F_DECRYPT|HDB_F_ALL_KVNOS|
+				      HDB_F_GET_ANY|HDB_F_ADMIN_DATA, 0, &ent);
     if (ret)
 	goto out;
     if (mask & KADM5_PRINC_EXPIRE_TIME) {
@@ -697,6 +698,29 @@ kadm5_log_replay_modify (kadm5_server_context *context,
     if (mask & KADM5_KEY_DATA) {
 	size_t num;
 	size_t i;
+
+	/*
+	 * We don't need to do anything about key history here because
+	 * we always log KADM5_TL_DATA when we change keys/passwords, so
+	 * the code below this will handle key history implicitly.
+	 * However, if we had to, the code to handle key history here
+	 * would look like this:
+	 *
+	 * HDB_extension *ext;
+	 * ...
+	 * ext = hdb_find_extension(&log_ent.entry,
+	 *                          choice_HDB_extension_data_hist_keys);
+	 * if (ext);
+	 *    ret = hdb_replace_extension(context->context, &ent.entry, ext);
+	 * else
+	 *    ret = hdb_clear_extension(context->context, &ent.entry,
+	 *                              choice_HDB_extension_data_hist_keys);
+	 *
+	 * Maybe we should do this here anyways, wasteful as it would
+	 * be, as a defensive programming measure?  For now we heim_assert().
+	 */
+	heim_assert((mask & KADM5_TL_DATA),
+		    "Wouldn't log and replay key history");
 
 	for (i = 0; i < ent.entry.keys.len; ++i)
 	    free_Key(&ent.entry.keys.val[i]);

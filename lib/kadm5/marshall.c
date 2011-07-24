@@ -54,6 +54,38 @@ kadm5_store_key_data(krb5_storage *sp,
 }
 
 kadm5_ret_t
+kadm5_store_fake_key_data(krb5_storage *sp,
+		          krb5_key_data *key)
+{
+    char buf[4] = {0};
+    krb5_data c;
+
+    krb5_store_int32(sp, key->key_data_ver);
+    krb5_store_int32(sp, key->key_data_kvno);
+    krb5_store_int32(sp, key->key_data_type[0]);
+
+    /*
+     * This is the key contents.  We want it to be obvious to the client
+     * (if it really did want the keys) that the key won't work.
+     * 32-bit keys are no good for any enctype, so that should do.
+     * Clients that didn't need keys will ignore this, and clients that
+     * did want keys will either fail or they'll, say, create bogus
+     * keytab entries that will subsequently fail to be useful.
+     */
+    c.length = sizeof (buf);
+    c.data = buf;
+    memset(buf, 0xdeadcee5, sizeof (buf)); /* bad bad hexspeak for deadkeys */
+    krb5_store_data(sp, c);
+
+    /* This is the salt -- no need to send garbage */
+    krb5_store_int32(sp, key->key_data_type[1]);
+    c.length = key->key_data_length[1];
+    c.data = key->key_data_contents[1];
+    krb5_store_data(sp, c);
+    return 0;
+}
+
+kadm5_ret_t
 kadm5_ret_key_data(krb5_storage *sp,
 		   krb5_key_data *key)
 {
@@ -105,7 +137,7 @@ kadm5_ret_tl_data(krb5_storage *sp,
 static kadm5_ret_t
 store_principal_ent(krb5_storage *sp,
 		    kadm5_principal_ent_t princ,
-		    uint32_t mask)
+		    uint32_t mask, int wkeys)
 {
     int i;
 
@@ -149,8 +181,12 @@ store_principal_ent(krb5_storage *sp,
 	krb5_store_int32(sp, princ->fail_auth_count);
     if (mask & KADM5_KEY_DATA) {
 	krb5_store_int32(sp, princ->n_key_data);
-	for(i = 0; i < princ->n_key_data; i++)
-	    kadm5_store_key_data(sp, &princ->key_data[i]);
+	for(i = 0; i < princ->n_key_data; i++) {
+	    if (wkeys)
+		kadm5_store_key_data(sp, &princ->key_data[i]);
+	    else
+		kadm5_store_fake_key_data(sp, &princ->key_data[i]);
+	}
     }
     if (mask & KADM5_TL_DATA) {
 	krb5_tl_data *tp;
@@ -167,7 +203,14 @@ kadm5_ret_t
 kadm5_store_principal_ent(krb5_storage *sp,
 			  kadm5_principal_ent_t princ)
 {
-    return store_principal_ent (sp, princ, ~0);
+    return store_principal_ent (sp, princ, ~0, 1);
+}
+
+kadm5_ret_t
+kadm5_store_principal_ent_nokeys(krb5_storage *sp,
+			        kadm5_principal_ent_t princ)
+{
+    return store_principal_ent (sp, princ, ~0, 0);
 }
 
 kadm5_ret_t
@@ -176,7 +219,7 @@ kadm5_store_principal_ent_mask(krb5_storage *sp,
 			       uint32_t mask)
 {
     krb5_store_int32(sp, mask);
-    return store_principal_ent (sp, princ, mask);
+    return store_principal_ent (sp, princ, mask, 1);
 }
 
 static kadm5_ret_t

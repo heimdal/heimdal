@@ -78,8 +78,9 @@ add_enctype(struct add_enctype_options*opt, int argc, char **argv)
 	goto out2;
     }
 
+    /* The principal might have zero keys, but it will still have a kvno! */
     ret = kadm5_get_principal(kadm_handle, princ_ent, &princ,
-			      KADM5_PRINCIPAL | KADM5_KEY_DATA);
+			      KADM5_KVNO | KADM5_PRINCIPAL | KADM5_KEY_DATA);
     if (ret) {
 	krb5_free_principal (context, princ_ent);
 	krb5_warnx (context, "no such principal: %s", princ_name);
@@ -98,6 +99,7 @@ add_enctype(struct add_enctype_options*opt, int argc, char **argv)
 
 	for (j = 0; j < n_etypes; ++j) {
 	    if (etypes[j] == key->key_data_type[0]) {
+		/* XXX Should this be an error?  The admin can del_enctype... */
 		krb5_warnx(context, "enctype %d already exists",
 			   (int)etypes[j]);
 		free(new_key_data);
@@ -113,7 +115,7 @@ add_enctype(struct add_enctype_options*opt, int argc, char **argv)
 
 	memset(&new_key_data[n], 0, sizeof(new_key_data[n]));
 	new_key_data[n].key_data_ver = 2;
-	new_key_data[n].key_data_kvno = 0;
+	new_key_data[n].key_data_kvno = princ.kvno;
 
 	ret = krb5_generate_random_keyblock (context, etypes[i], &keyblock);
 	if (ret) {

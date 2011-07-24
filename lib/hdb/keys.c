@@ -39,9 +39,9 @@
  */
 
 void
-hdb_free_keys (krb5_context context, int len, Key *keys)
+hdb_free_keys(krb5_context context, int len, Key *keys)
 {
-    int i;
+    size_t i;
 
     for (i = 0; i < len; i++) {
 	free(keys[i].mkvno);
@@ -196,6 +196,81 @@ parse_key_set(krb5_context context, const char *key,
     return 0;
 }
 
+
+/**
+ * This function adds an HDB entry's current keyset to the entry's key
+ * history.  The current keyset is left alone; the caller is responsible
+ * for freeing it.
+ *
+ * @param context   Context
+ * @param entry	    HDB entry
+ */
+krb5_error_code
+hdb_add_current_keys_to_history(krb5_context context, hdb_entry *entry)
+{
+    krb5_error_code ret;
+    HDB_extension *ext;
+    HDB_Ext_KeySet *hist_keys;
+    hdb_keyset *tmp_keysets;
+    size_t i;
+    size_t replace = 0;
+
+    ext = hdb_find_extension(entry, choice_HDB_extension_data_hist_keys);
+    if (ext != NULL) {
+	hist_keys = &ext->data.u.hist_keys;
+	tmp_keysets = realloc(hist_keys->val,
+			      sizeof (*hist_keys->val) * (hist_keys->len + 1));
+	if (tmp_keysets == NULL)
+	    return ENOMEM;
+	hist_keys->val = tmp_keysets;
+	memmove(&hist_keys->val[1], hist_keys->val,
+		sizeof (*hist_keys->val) * hist_keys->len++);
+    } else {
+	replace = 1;
+	ext = calloc(1, sizeof (*ext));
+	if (ext == NULL)
+	    return ENOMEM;
+	ext->data.element = choice_HDB_extension_data_hist_keys;
+	hist_keys = &ext->data.u.hist_keys;
+	hist_keys->val = calloc(1, sizeof (*hist_keys->val));
+	if (hist_keys->val == NULL) {
+	    free(hist_keys);
+	    return ENOMEM;
+	}
+	hist_keys->len = 1;
+    }
+
+    hist_keys->val[0].keys.len = 0;
+    hist_keys->val[0].keys.val = calloc(entry->keys.len,
+					sizeof (*hist_keys->val[0].keys.val));
+    for (i = 0; i < entry->keys.len; i++, hist_keys->val[0].keys.len++) {
+	ret = copy_Key(&entry->keys.val[i], &hist_keys->val[0].keys.val[i]);
+	if (ret) {
+	    free_HDB_extension(ext);
+	    return ret;
+	}
+    }
+    hist_keys->val[0].kvno = entry->kvno;
+    hist_keys->val[0].set_time = malloc(sizeof (*hist_keys->val[0].set_time));
+    if (hist_keys->val[0].set_time == NULL) {
+	free_HDB_extension(ext);
+	return ENOMEM;
+    }
+    (void) hdb_entry_get_pw_change_time(entry, hist_keys->val[0].set_time);
+
+    if (replace) {
+	/* hdb_replace_extension() deep-copies ext; what a waste */
+	ret = hdb_replace_extension(context, entry, ext);
+	if (ret) {
+	    free_HDB_extension(ext);
+	    return ret;
+	}
+	free_HDB_extension(ext);
+    }
+    return 0;
+}
+
+
 static krb5_error_code
 add_enctype_to_key_set(Key **key_set, size_t *nkeyset,
 		       krb5_enctype enctype, krb5_salt *salt)
@@ -243,6 +318,50 @@ add_enctype_to_key_set(Key **key_set, size_t *nkeyset,
 }
 
 
+static
+krb5_error_code
+ks_tuple2str(krb5_context context, int n_ks_tuple,
+	     krb5_key_salt_tuple *ks_tuple, char ***ks_tuple_strs)
+{
+	size_t i;
+	char **ksnames;
+	char *ename, *sname;
+	krb5_error_code rc = KRB5_PROG_ETYPE_NOSUPP;
+
+	*ks_tuple_strs = NULL;
+	if (n_ks_tuple < 1)
+		return 0;
+
+	if ((ksnames = calloc(n_ks_tuple, sizeof (*ksnames))) == NULL)
+		return (errno);
+
+	for (i = 0; i < n_ks_tuple; i++) {
+	    if (krb5_enctype_to_string(context, ks_tuple[i].ks_enctype, &ename))
+		goto out;
+	    if (krb5_salttype_to_string(context, ks_tuple[i].ks_enctype,
+					ks_tuple[i].ks_salttype, &sname))
+		goto out;
+
+	    if (asprintf(&ksnames[i], "%s:%s", ename, sname) == -1) {
+		    rc = errno;
+		    free(ename);
+		    free(sname);
+		    goto out;
+	    }
+	    free(ename);
+	    free(sname);
+	}
+
+	*ks_tuple_strs = ksnames;
+	rc = 0;
+
+out:
+	for (i = 0; i < n_ks_tuple; i++)
+		free(ksnames[i]);
+	free(ksnames);
+	return (rc);
+}
+
 /*
  * Generate the `key_set' from the [kadmin]default_keys statement. If
  * `no_salt' is set, salt is not important (and will not be set) since
@@ -251,12 +370,15 @@ add_enctype_to_key_set(Key **key_set, size_t *nkeyset,
 
 krb5_error_code
 hdb_generate_key_set(krb5_context context, krb5_principal principal,
+		     int n_ks_tuple, krb5_key_salt_tuple *ks_tuple,
 		     Key **ret_key_set, size_t *nkeyset, int no_salt)
 {
-    char **ktypes, **kp;
+    char **ktypes = NULL;
+    char **kp;
     krb5_error_code ret;
     Key *k, *key_set;
     size_t i, j;
+    char **ks_tuple_strs;
     static const char *default_keytypes[] = {
 	"aes256-cts-hmac-sha1-96:pw-salt",
 	"des3-cbc-sha1:pw-salt",
@@ -264,15 +386,17 @@ hdb_generate_key_set(krb5_context context, krb5_principal principal,
 	NULL
     };
 
-    ktypes = krb5_config_get_strings(context, NULL, "kadmin",
-				     "default_keys", NULL);
+    if ((ret = ks_tuple2str(context, n_ks_tuple, ks_tuple, &ks_tuple_strs)))
+	    return ret;
+
+    if (ks_tuple_strs == NULL)
+	ktypes = krb5_config_get_strings(context, NULL, "kadmin",
+					 "default_keys", NULL);
     if (ktypes == NULL)
 	ktypes = (char **)(intptr_t)default_keytypes;
 
     *ret_key_set = key_set = NULL;
     *nkeyset = 0;
-
-    ret = 0;
 
     for(kp = ktypes; kp && *kp; kp++) {
 	const char *p;
@@ -366,7 +490,7 @@ hdb_generate_key_set_password(krb5_context context,
     krb5_error_code ret;
     size_t i;
 
-    ret = hdb_generate_key_set(context, principal,
+    ret = hdb_generate_key_set(context, principal, 0, NULL,
 				keys, num_keys, 0);
     if (ret)
 	return ret;

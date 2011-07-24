@@ -99,7 +99,7 @@ test_cf2(krb5_context context)
     for (i = 0; i < sizeof(cf2)/sizeof(cf2[0]); i++) {
 	pw.data = cf2[i].p1;
 	pw.length = strlen(cf2[i].p1);
-	salt.salttype = KRB5_PADATA_PW_SALT;
+	salt.salttype = (krb5_salttype)KRB5_PADATA_PW_SALT;
 	salt.saltvalue.data = cf2[i].p1;
 	salt.saltvalue.length = strlen(cf2[i].p1);
 

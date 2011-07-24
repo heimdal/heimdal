@@ -56,19 +56,6 @@ hdb_free_keys(krb5_context context, int len, Key *keys)
     free (keys);
 }
 
-void
-hdb_free_keysets(krb5_context context, int len, hdb_keyset *keysets)
-{
-    size_t i;
-
-    for (i = 0; i < len; i++) {
-	hdb_free_keys(context, keysets[i].keys.len, keysets[i].keys.val);
-	keysets[i].keys.val = NULL;
-	keysets[i].keys.len = 0;
-    }
-    free (keysets);
-}
-
 /*
  * for each entry in `default_keys' try to parse it as a sequence
  * of etype:salttype:salt, syntax of this if something like:

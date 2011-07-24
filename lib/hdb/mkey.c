@@ -32,7 +32,6 @@
  */
 
 #include "hdb_locl.h"
-#include <assert.h>
 #ifndef O_BINARY
 #define O_BINARY 0
 #endif
@@ -484,7 +483,7 @@ krb5_error_code
 hdb_unseal_keys_kvno(krb5_context context, HDB *db, krb5_kvno kvno,
 		     unsigned flags, hdb_entry *ent)
 {
-    krb5_error_code ret = KRB5KRB_AP_ERR_NOKEY;	/* XXX need a better code? */
+    krb5_error_code ret = HDB_ERR_NOENTRY;
     HDB_extension *ext;
     HDB_Ext_KeySet *hist_keys;
     Key *tmp_val;
@@ -508,8 +507,6 @@ hdb_unseal_keys_kvno(krb5_context context, HDB *db, krb5_kvno kvno,
 	else
 	    kvno_diff = hdb_entry_get_kvno_diff_svc(ent);
     }
-
-    assert(kvno == 0 || kvno < ent->kvno);
 
     ext = hdb_find_extension(ent, choice_HDB_extension_data_hist_keys);
     if (ext == NULL)
@@ -602,32 +599,6 @@ hdb_unseal_keys_kvno(krb5_context context, HDB *db, krb5_kvno kvno,
 	    *hist_keys->val[i].set_time = tmp_set_time;
 
 	return 0;
-
-#if 0
-	tmp_keys = realloc(hist_keys->val,
-		      sizeof (*hist_keys->val) * (hist_keys->len + 1));
-	if (tmp_keys == NULL)
-	    return ENOMEM;
-
-	memmove(&tmp_keys[1], tmp_keys,
-		sizeof (*tmp_keys) * hist_keys->len);
-	tmp_keys[0].keys.len = ent->keys.len;
-	tmp_keys[0].keys.val = ent->keys.val;
-	tmp_keys[0].kvno = ent->kvno;
-	tmp_keys[0].set_time = set_time;
-	(void) hdb_entry_get_pw_change_time(ent, tmp_keys[0].set_time);
-	i++;
-	ent->keys.len = tmp_keys[i].keys.len;
-	ent->keys.val = tmp_keys[i].keys.val;
-	ent->kvno = kvno;
-	ent->flags.do_not_store = 1;
-	hist_keys->val = tmp_keys;
-
-	memmove(&tmp_keys[i], &tmp_keys[i + 1],
-		sizeof (*tmp_keys) * (hist_keys->len - i));
-	tmp_keys[hist_keys->len].keys.len = 0;
-	tmp_keys[hist_keys->len].keys.val = 0;
-#endif
     }
 
     return (ret);

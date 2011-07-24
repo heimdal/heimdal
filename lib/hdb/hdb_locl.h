@@ -37,6 +37,7 @@
 #define __HDB_LOCL_H__
 
 #include <assert.h>
+#include <heimbase.h>
 
 #include <config.h>
 

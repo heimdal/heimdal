@@ -102,7 +102,7 @@ DB_unlock(krb5_context context, HDB *db)
 	db->lock_count--;
 	return 0;
     }
-    assert( db->lock_count == 1 );
+    heim_assert(db->lock_count == 1, "HDB lock/unlock sequence does not match");
     db->lock_count--;
 
     if ((*d->fd)(d, &fd))

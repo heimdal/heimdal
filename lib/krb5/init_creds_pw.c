@@ -915,7 +915,7 @@ process_pa_info(krb5_context context,
 	PA_DATA *pa = find_pa_data(md, pa_prefs[i].type);
 	if (pa == NULL)
 	    continue;
-	paid->salt.salttype = pa_prefs[i].type;
+	paid->salt.salttype = (krb5_salttype)pa_prefs[i].type;
 	p = (*pa_prefs[i].salt_info)(context, client, asreq,
 				     paid, &pa->padata_value);
     }

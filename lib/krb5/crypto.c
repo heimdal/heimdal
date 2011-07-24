@@ -1898,11 +1898,11 @@ _krb5_derive_key(krb5_context context,
 
     /* XXX keytype dependent post-processing */
     switch(kt->type) {
-    case KEYTYPE_DES3:
+    case ETYPE_OLD_DES3_CBC_SHA1:
 	_krb5_DES3_random_to_key(context, key->key, k, nblocks * et->blocksize);
 	break;
-    case KEYTYPE_AES128:
-    case KEYTYPE_AES256:
+    case ENCTYPE_AES128_CTS_HMAC_SHA1_96:
+    case ENCTYPE_AES256_CTS_HMAC_SHA1_96:
 	memcpy(key->key->keyvalue.data, k, key->key->keyvalue.length);
 	break;
     default:

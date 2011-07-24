@@ -81,7 +81,7 @@ name_to_level(const char *name)
     for(i = 0; i < sizeof(level_names) / sizeof(level_names[0]); i++)
 	if(!strncasecmp(level_names[i].name, name, strlen(name)))
 	    return level_names[i].level;
-    return (enum protection_level)-1;
+    return prot_invalid;
 }
 #endif
 
@@ -683,7 +683,7 @@ set_command_prot(enum protection_level level)
 	ret = command("CCC");
 	if(ret != COMPLETE) {
 	    printf("Failed to clear command channel.\n");
-	    return -1;
+	    return prot_invalid;
 	}
     }
     command_prot = level;

@@ -32,12 +32,10 @@
 
 #include "mech_locl.h"
 
-static gss_buffer_desc localLoginUserAttr = {
+GSSAPI_LIB_VARIABLE gss_buffer_desc __gss_c_attr_local_login_user =  {
     sizeof("local-login-user") - 1,
     "local-login-user"
 };
-
-gss_buffer_t GSSAPI_LIB_VARIABLE __gss_c_attr_local_login_user = &localLoginUserAttr;
 
 static OM_uint32
 mech_authorize_localname(OM_uint32 *minor_status,

@@ -250,10 +250,9 @@ hdb_add_current_keys_to_history(krb5_context context, hdb_entry *entry)
     }
 
  out:
-    if (ext) {
+    if (replace && ext) {
 	free_HDB_extension(ext);
-	if (replace)
-	    free(ext);
+	free(ext);
     }
     return ret;
 }

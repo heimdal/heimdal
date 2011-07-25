@@ -1,9 +1,9 @@
 /*
- * Copyright (c) 1997-2007 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997-2011 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  *
- * Portions Copyright (c) 2010 Apple Inc. All rights reserved.
+ * Portions Copyright (c) 2010 - 2011 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -165,7 +165,7 @@ fast_add_cookie(kdc_request_t r, METHOD_DATA *method_data)
 		       &shell, &size, ret);
     free_EncryptedData(&shell.cookie);
     if (ret)
-	return ret;
+	goto out;
     heim_assert(size == data.length, "internal asn1 encoder error");
     
     ret = krb5_padata_add(r->context, method_data,

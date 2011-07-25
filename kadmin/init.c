@@ -237,7 +237,8 @@ init(struct init_options *opt, int argc, char **argv)
 			    KRB5_WELLKNOWN_NAME, "org.h5l.fast-cookie", NULL);
 	create_random_entry(princ, 60*60, 60*60,
 			    KRB5_KDB_REQUIRES_PRE_AUTH|
-			    KRB5_KDB_DISALLOW_TGT_BASED);
+			    KRB5_KDB_DISALLOW_TGT_BASED|
+			    KRB5_KDB_DISALLOW_ALL_TIX);
 	krb5_free_principal(context, princ);
 
 	/* Create `default' */

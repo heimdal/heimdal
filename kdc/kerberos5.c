@@ -1796,7 +1796,7 @@ _kdc_as_rep(kdc_request_t r,
 	goto out;
 
     /*
-     * Selelct the best encryption type for the KDC with out regard to
+     * Select the best encryption type for the KDC with out regard to
      * the client since the client never needs to read that data.
      */
 

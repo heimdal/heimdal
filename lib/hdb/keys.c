@@ -208,66 +208,54 @@ parse_key_set(krb5_context context, const char *key,
 krb5_error_code
 hdb_add_current_keys_to_history(krb5_context context, hdb_entry *entry)
 {
+    krb5_boolean replace = FALSE;
     krb5_error_code ret;
     HDB_extension *ext;
-    HDB_Ext_KeySet *hist_keys;
-    hdb_keyset *tmp_keysets;
-    size_t i;
-    size_t replace = 0;
+    hdb_keyset newkey;
+    time_t newtime;
+
 
     ext = hdb_find_extension(entry, choice_HDB_extension_data_hist_keys);
-    if (ext != NULL) {
-	hist_keys = &ext->data.u.hist_keys;
-	tmp_keysets = realloc(hist_keys->val,
-			      sizeof (*hist_keys->val) * (hist_keys->len + 1));
-	if (tmp_keysets == NULL)
-	    return ENOMEM;
-	hist_keys->val = tmp_keysets;
-	memmove(&hist_keys->val[1], hist_keys->val,
-		sizeof (*hist_keys->val) * hist_keys->len++);
-    } else {
-	replace = 1;
+    if (ext == NULL) {
+	replace = TRUE;
 	ext = calloc(1, sizeof (*ext));
 	if (ext == NULL)
-	    return ENOMEM;
+	    return krb5_enomem(context);
+
 	ext->data.element = choice_HDB_extension_data_hist_keys;
-	hist_keys = &ext->data.u.hist_keys;
-	hist_keys->val = calloc(1, sizeof (*hist_keys->val));
-	if (hist_keys->val == NULL) {
-	    free(hist_keys);
-	    return ENOMEM;
-	}
-	hist_keys->len = 1;
     }
 
-    hist_keys->val[0].keys.len = 0;
-    hist_keys->val[0].keys.val = calloc(entry->keys.len,
-					sizeof (*hist_keys->val[0].keys.val));
-    for (i = 0; i < entry->keys.len; i++, hist_keys->val[0].keys.len++) {
-	ret = copy_Key(&entry->keys.val[i], &hist_keys->val[0].keys.val[i]);
-	if (ret) {
-	    free_HDB_extension(ext);
-	    return ret;
-	}
-    }
-    hist_keys->val[0].kvno = entry->kvno;
-    hist_keys->val[0].set_time = malloc(sizeof (*hist_keys->val[0].set_time));
-    if (hist_keys->val[0].set_time == NULL) {
-	free_HDB_extension(ext);
-	return ENOMEM;
-    }
-    (void) hdb_entry_get_pw_change_time(entry, hist_keys->val[0].set_time);
+    /*
+     * Copy in newest old keyset
+     */
+
+    ret = hdb_entry_get_pw_change_time(entry, &newtime);
+    if (ret)
+	goto out;
+
+    memset(&newkey, 0, sizeof(newkey));
+    newkey.keys = entry->keys;
+    newkey.kvno = entry->kvno;
+    newkey.set_time = &newtime;
+
+    ret = add_HDB_Ext_KeySet(&ext->data.u.hist_keys, &newkey);
+    if (ret)
+	goto out;
 
     if (replace) {
 	/* hdb_replace_extension() deep-copies ext; what a waste */
 	ret = hdb_replace_extension(context, entry, ext);
-	if (ret) {
-	    free_HDB_extension(ext);
-	    return ret;
-	}
-	free_HDB_extension(ext);
+	if (ret)
+	    goto out;
     }
-    return 0;
+
+ out:
+    if (ext) {
+	free_HDB_extension(ext);
+	if (replace)
+	    free(ext);
+    }
+    return ret;
 }
 
 

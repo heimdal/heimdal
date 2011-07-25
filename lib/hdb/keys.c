@@ -68,15 +68,15 @@ hdb_free_keys(krb5_context context, int len, Key *keys)
  */
 
 static const krb5_enctype des_etypes[] = {
-    ETYPE_DES_CBC_MD5,
-    ETYPE_DES_CBC_MD4,
-    ETYPE_DES_CBC_CRC
+    KRB5_ENCTYPE_DES_CBC_MD5,
+    KRB5_ENCTYPE_DES_CBC_MD4,
+    KRB5_ENCTYPE_DES_CBC_CRC
 };
 
 static const krb5_enctype all_etypes[] = {
-    ETYPE_AES256_CTS_HMAC_SHA1_96,
-    ETYPE_ARCFOUR_HMAC_MD5,
-    ETYPE_DES3_CBC_SHA1
+    KRB5_ENCTYPE_AES256_CTS_HMAC_SHA1_96,
+    KRB5_ENCTYPE_ARCFOUR_HMAC_MD5,
+    KRB5_ENCTYPE_DES3_CBC_SHA1
 };
 
 static krb5_error_code
@@ -114,7 +114,7 @@ parse_key_set(krb5_context context, const char *key,
 		enctypes = des_etypes;
 		num_enctypes = sizeof(des_etypes)/sizeof(des_etypes[0]);
 	    } else if(strcmp(buf[i], "des3") == 0) {
-		e = ETYPE_DES3_CBC_SHA1;
+		e = KRB5_ENCTYPE_DES3_CBC_SHA1;
 		enctypes = &e;
 		num_enctypes = 1;
 	    } else {

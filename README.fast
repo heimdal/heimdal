@@ -5,7 +5,9 @@
 - client: don't support ENC-TS in FAST
 
 - client: plugin support for fast plugins
+
 - kdc: plugin support for fast plugins
+	partly done with "struct kdc_patypes"
 
 - kcm: support FAST armor ticket
 -- using PK-INIT anonymous

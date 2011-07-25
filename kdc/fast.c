@@ -114,6 +114,12 @@ fast_parse_cookie(kdc_request_t r, const PA_DATA *pa)
     if (ret)
 	goto out;
 
+    if (r->fast.expiration < kdc_time) {
+	kdc_log(r->context, r->config, 0, "fast cookie expired");
+	ret = KRB5KDC_ERR_POLICY;
+	goto out;
+    }
+
  out:
     free_KDCFastCookie(&data);
 
@@ -130,6 +136,8 @@ fast_add_cookie(kdc_request_t r, METHOD_DATA *method_data)
     size_t size;
 
     memset(&shell, 0, sizeof(shell));
+
+    r->fast.expiration = kdc_time + FAST_EXPIRATION_TIME;
 
     ASN1_MALLOC_ENCODE(KDCFastState, data.data, data.length, 
 		       &r->fast, &size, ret);

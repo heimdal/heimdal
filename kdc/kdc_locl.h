@@ -47,6 +47,8 @@ typedef struct kdc_request_desc *kdc_request_t;
 
 #include <kdc-private.h>
 
+#define FAST_EXPIRATION_TIME (3 * 60)
+
 struct kdc_request_desc {
     krb5_context context;
     krb5_kdc_configuration *config;

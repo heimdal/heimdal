@@ -775,7 +775,6 @@ _kdc_encode_reply(krb5_context context,
 	const char *msg = krb5_get_error_message(context, ret);
 	kdc_log(context, config, 0, "Failed to encode ticket: %s", msg);
 	krb5_free_error_message(context, msg);
-	krb5_crypto_destroy(context, crypto);
 	return ret;
     }
     if(buf_size != len)
@@ -1687,13 +1686,13 @@ _kdc_as_rep(kdc_request_t r,
      */
 
     ret = _kdc_find_etype(context, config->as_use_strongest_session_key, FALSE,
-			  client, b->etype.val, b->etype.len, &sessionetype,
+			  r->client, b->etype.val, b->etype.len, &r->sessionetype,
 			  NULL);
     if (ret) {
 	kdc_log(context, config, 0,
 		"Client (%s) from %s has no common enctypes with KDC "
 		"to use for the session key",
-		client_name, from);
+		r->client_name, from);
 	goto out;
     }
 
@@ -1749,7 +1748,7 @@ _kdc_as_rep(kdc_request_t r,
 	 */
 	ret = _kdc_find_etype(context,
 			      config->preauth_use_strongest_session_key, TRUE,
-			      client, b->etype.val, b->etype.len, NULL, &ckey);
+			      r->client, b->etype.val, b->etype.len, NULL, &ckey);
 	if (ret == 0) {
 
 	    /*

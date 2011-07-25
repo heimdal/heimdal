@@ -686,6 +686,7 @@ typedef EncAPRepPart krb5_ap_rep_enc_part;
 #define KRB5_WELLKNOWN_NAME ("WELLKNOWN")
 #define KRB5_ANON_NAME ("ANONYMOUS")
 #define KRB5_ANON_REALM ("WELLKNOWN:ANONYMOUS")
+#define KRB5_WELLKNOWN_ORG_H5L_REALM ("WELLKNOWN:ORG.H5L")
 #define KRB5_DIGEST_NAME ("digest")
 
 typedef enum {

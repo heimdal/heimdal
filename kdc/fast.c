@@ -46,8 +46,8 @@ get_fastuser_crypto(kdc_request_t r, krb5_enctype enctype, krb5_crypto *crypto)
     *crypto = NULL;
 
     ret = krb5_make_principal(r->context, &fast_princ,
-			      "WELLKNOWN:ORG.H5L",
-			      "WELLKNOWN", "org.h5l.fast-cookie", NULL);
+			      KRB5_WELLKNOWN_ORG_H5L_REALM,
+			      KRB5_WELLKNOWN_NAME, "org.h5l.fast-cookie", NULL);
     if (ret)
 	goto out;
 

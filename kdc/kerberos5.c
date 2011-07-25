@@ -1814,7 +1814,7 @@ _kdc_as_rep(kdc_request_t r,
     }
 
     /*
-     * Build repy
+     * Build reply
      */
 
     rep.pvno = 5;

@@ -237,7 +237,7 @@ fast_parse_cookie(kdc_request_t r, const PA_DATA *pa)
     if (ret)
 	goto out;
 
-    ret = krb5_decrypt_EncryptedData(crypto, crypto,
+    ret = krb5_decrypt_EncryptedData(r->context, crypto,
 				     KRB5_KU_H5L_COOKIE,
 				     &data.cookie, &d1);
     krb5_crypto_destroy(r->context, crypto);

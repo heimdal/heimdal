@@ -539,7 +539,6 @@ _gsskrb5_wrap
   krb5_context context;
   krb5_keyblock *key;
   OM_uint32 ret;
-  krb5_keytype keytype;
   const gsskrb5_ctx ctx = (const gsskrb5_ctx) context_handle;
 
   output_message_buffer->value = NULL;

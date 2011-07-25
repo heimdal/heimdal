@@ -1508,7 +1508,7 @@ tgs_build_reply(krb5_context context,
 
     Key *tkey_check;
     Key *tkey_sign;
-    int flags = 0;
+    int flags = HDB_F_FOR_TGS_REQ;
 
     memset(&sessionkey, 0, sizeof(sessionkey));
     memset(&adtkt, 0, sizeof(adtkt));

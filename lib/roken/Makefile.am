@@ -128,9 +128,6 @@ EXTRA_libroken_la_SOURCES =	\
 	search.hin		\
 	vis.hin	
 
-libroken_la_DEPENDENCIES = 	\
-	version-script.map
-
 libroken_la_LIBADD = @LTLIBOBJS@ $(LIB_crypt)
 
 $(LTLIBOBJS) $(libroken_la_OBJECTS): roken.h $(XHEADERS)

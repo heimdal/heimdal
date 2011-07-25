@@ -839,7 +839,8 @@ KDCFastFlags ::= BIT STRING {
 KDCFastState ::= SEQUENCE {
 	flags [0] KDCFastFlags,
 	expiration [1] GeneralizedTime,
-	fast-state [2] METHOD-DATA
+	fast-state [2] METHOD-DATA,
+	expected-pa-types [3] SEQUENCE OF PADATA-TYPE OPTIONAL
 }
 
 KDCFastCookie ::= SEQUENCE {

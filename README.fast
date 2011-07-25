@@ -7,5 +7,9 @@
 - client: plugin support for fast plugins
 - kdc: plugin support for fast plugins
 
+- kcm: support FAST armor ticket
+-- using PK-INIT anonymous
+-- using host key
+
 - client: tgs-req fast support
 - kdc: tgs-req fast support

@@ -35,6 +35,140 @@
 
 #include "kdc_locl.h"
 
+static krb5_error_code
+get_fastuser_crypto(kdc_request_t r, krb5_enctype enctype, krb5_crypto *crypto)
+{
+    krb5_principal fast_princ;
+    hdb_entry_ex *fast_user = NULL;
+    Key *cookie_key = NULL;
+    krb5_error_code ret;
+
+    *crypto = NULL;
+
+    ret = krb5_make_principal(r->context, &fast_princ,
+			      "WELLKNOWN:ORG.H5L",
+			      "WELLKNOWN", "org.h5l.fast-cookie", NULL);
+    if (ret)
+	goto out;
+
+    ret = _kdc_db_fetch(r->context, r->config, fast_princ,
+			HDB_F_GET_CLIENT, NULL, NULL, &fast_user);
+    krb5_free_principal(r->context, fast_princ);
+    if (ret)
+	goto out;
+
+    if (enctype == KRB5_ENCTYPE_NULL)
+	ret = _kdc_get_preferred_key(r->context, r->config, fast_user,
+				     "fast-cookie", &enctype, &cookie_key);
+    else
+	ret = hdb_enctype2key(r->context, &fast_user->entry,
+			      enctype, &cookie_key);
+    if (ret)
+	goto out;
+
+    ret = krb5_crypto_init(r->context, &cookie_key->key, 0, crypto);
+    if (ret)
+	goto out;
+
+ out:
+    if (fast_user)
+	_kdc_free_ent(r->context, fast_user);
+
+    return ret;
+}
+
+
+static krb5_error_code
+fast_parse_cookie(kdc_request_t r, const PA_DATA *pa)
+{
+    krb5_crypto crypto = NULL;
+    krb5_error_code ret;
+    KDCFastCookie data;
+    krb5_data d1;
+    size_t len;
+
+    ret = decode_KDCFastCookie(pa->padata_value.data,
+			       pa->padata_value.length,
+			       &data, &len);
+    if (ret)
+	return ret;
+
+    if (len != pa->padata_value.length || strcmp("H5L1", data.version) != 0) {
+	free_KDCFastCookie(&data);
+	return KRB5KDC_ERR_POLICY;
+    }
+
+    ret = get_fastuser_crypto(r, data.cookie.etype, &crypto);
+    if (ret)
+	goto out;
+
+    ret = krb5_decrypt_EncryptedData(r->context, crypto,
+				     KRB5_KU_H5L_COOKIE,
+				     &data.cookie, &d1);
+    krb5_crypto_destroy(r->context, crypto);
+    if (ret)
+	goto out;
+
+    ret = decode_KDCFastState(d1.data, d1.length, &r->fast, &len);
+    krb5_data_free(&d1);
+    if (ret)
+	goto out;
+
+ out:
+    free_KDCFastCookie(&data);
+
+    return ret;
+}
+
+static krb5_error_code
+fast_add_cookie(kdc_request_t r, METHOD_DATA *method_data)
+{
+    krb5_crypto crypto = NULL;
+    KDCFastCookie shell;
+    krb5_error_code ret;
+    krb5_data data;
+    size_t size;
+
+    memset(&shell, 0, sizeof(shell));
+
+    ASN1_MALLOC_ENCODE(KDCFastState, data.data, data.length, 
+		       &r->fast, &size, ret);
+    if (ret)
+	return ret;
+    heim_assert(size == data.length, "internal asn1 encoder error");
+
+    ret = get_fastuser_crypto(r, KRB5_ENCTYPE_NULL, &crypto);
+    if (ret)
+	goto out;
+
+    ret = krb5_encrypt_EncryptedData(r->context, crypto,
+				     KRB5_KU_H5L_COOKIE,
+				     data.data, data.length, 0,
+				     &shell.cookie);
+    krb5_crypto_destroy(r->context, crypto);
+    if (ret)
+	goto out;
+    
+    free(data.data);
+
+    shell.version = "H5L1";
+
+    ASN1_MALLOC_ENCODE(KDCFastCookie, data.data, data.length, 
+		       &shell, &size, ret);
+    free_EncryptedData(&shell.cookie);
+    if (ret)
+	return ret;
+    heim_assert(size == data.length, "internal asn1 encoder error");
+    
+    ret = krb5_padata_add(r->context, method_data,
+			  KRB5_PADATA_FX_COOKIE,
+			  data.data, data.length);
+ out:
+    if (ret)
+	free(data.data);
+    return ret;
+}
+
 krb5_error_code
 _kdc_fast_mk_response(krb5_context context,
 		      krb5_crypto armor_crypto,
@@ -96,6 +230,7 @@ _kdc_fast_mk_response(krb5_context context,
 
 krb5_error_code
 _kdc_fast_mk_error(krb5_context context,
+		   kdc_request_t r,
 		   METHOD_DATA *error_method,
 		   krb5_crypto armor_crypto,
 		   const KDC_REQ_BODY *req_body,
@@ -147,11 +282,17 @@ _kdc_fast_mk_error(krb5_context context,
 	    e_text = NULL;
 	}
 
-	ret = krb5_padata_add(context, error_method,
-			      KRB5_PADATA_FX_COOKIE,
-			      NULL, 0);
-	if (ret)
+	if (r)
+	    ret = fast_add_cookie(r, error_method);
+	else
+	    ret = krb5_padata_add(context, error_method,
+				  KRB5_PADATA_FX_COOKIE,
+				  NULL, 0);
+	if (ret) {
+	    kdc_log(r->context, r->config, 0, "failed to add fast cookie with: %d", ret);
+	    free_METHOD_DATA(error_method);
 	    return ret;
+	}
 	
 	ret = _kdc_fast_mk_response(context, armor_crypto,
 				    error_method, NULL, NULL, 
@@ -163,9 +304,6 @@ _kdc_fast_mk_error(krb5_context context,
 	ret = krb5_padata_add(context, error_method,
 			      KRB5_PADATA_FX_FAST,
 			      e_data.data, e_data.length);
-	if (ret)
-	    return ret;
-
 	if (ret)
 	    return ret;
     }
@@ -192,72 +330,6 @@ _kdc_fast_mk_error(krb5_context context,
 
     return ret;
 }
-
-static krb5_error_code
-fast_parse_cookie(kdc_request_t r, const PA_DATA *pa)
-{
-    krb5_principal fast_princ;
-    hdb_entry_ex *fast_user = NULL;
-    krb5_crypto crypto = NULL;
-    Key *cookie_key = NULL;
-    krb5_error_code ret;
-    KDCFastCookie data;
-    krb5_data d1;
-    size_t len;
-
-    ret = decode_KDCFastCookie(pa->padata_value.data,
-			       pa->padata_value.length,
-			       &data, &len);
-    if (ret)
-	return ret;
-
-    if (len != pa->padata_value.length || strcmp("H5L1", data.version) != 0) {
-	free_KDCFastCookie(&data);
-	return KRB5KDC_ERR_POLICY;
-    }
-
-    ret = krb5_make_principal(r->context, &fast_princ,
-			      "WELLKNOWN:ORG.H5L",
-			      "WELLKNOWN", "org.h5l.fast-cookie", NULL);
-    if (ret)
-	goto out;
-
-    ret = _kdc_db_fetch(r->context, r->config, fast_princ,
-			HDB_F_GET_CLIENT, NULL, NULL, &fast_user);
-    krb5_free_principal(r->context, fast_princ);
-    if (ret)
-	goto out;
-
-    ret = hdb_enctype2key(r->context, &fast_user->entry,
-			  data.cookie.etype, &cookie_key);
-    if (ret)
-	goto out;
-
-    ret = krb5_crypto_init(r->context, &cookie_key->key, 0, &crypto);
-    if (ret)
-	goto out;
-
-    ret = krb5_decrypt_EncryptedData(r->context, crypto,
-				     KRB5_KU_H5L_COOKIE,
-				     &data.cookie, &d1);
-    krb5_crypto_destroy(r->context, crypto);
-    if (ret)
-	goto out;
-
-    ret = decode_KDCFastState(d1.data, d1.length, &r->fast, &len);
-    krb5_data_free(&d1);
-    if (ret)
-	goto out;
-
- out:
-    free_KDCFastCookie(&data);
-    if (fast_user)
-	_kdc_free_ent(r->context, fast_user);
-
-    return ret;
-}
-
-
 
 krb5_error_code
 _kdc_fast_unwrap_request(kdc_request_t r)

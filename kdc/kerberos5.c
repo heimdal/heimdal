@@ -2158,7 +2158,7 @@ out:
      * In case of a non proxy error, build an error message.
      */
     if(ret != 0 && ret != HDB_ERR_NOT_FOUND_HERE) {
-	ret = _kdc_fast_mk_error(context,
+	ret = _kdc_fast_mk_error(context, r,
 				 &error_method,
 				 r->armor_crypto,
 				 &req->req_body,

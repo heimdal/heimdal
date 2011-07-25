@@ -2362,7 +2362,7 @@ out:
 	
 
 	kdc_log(context, config, 10, "tgs-req: sending error: %d to client", ret);
-	ret = _kdc_fast_mk_error(context,
+	ret = _kdc_fast_mk_error(context, NULL,
 				 &error_method,
 				 NULL,
 				 NULL,

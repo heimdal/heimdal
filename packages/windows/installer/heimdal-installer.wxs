@@ -191,8 +191,8 @@
                  Guid='$(var.GuidKcc)'
                  Win64='$(var.Win64)'>
         <File Name='kcc.exe' KeyPath='yes'>
-          <CopyFile Id='klist.exe' DestinationName='klist.exe' />
-          <CopyFile Id='kswitch.exe' DestinationName='kswitch.exe' />
+          <CopyFile Id='klist.exe' DestinationName='klist.exe' DestinationProperty='$(var.ToolsBinDir)' />
+          <CopyFile Id='kswitch.exe' DestinationName='kswitch.exe' DestinationProperty='$(var.ToolsBinDir)' />
         </File>
         <File Name='kcc.pdb'>
           <CopyFile Id='klist.pdb' DestinationName='klist.pdb' />

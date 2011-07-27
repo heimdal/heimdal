@@ -494,7 +494,6 @@ hdb_unseal_keys_kvno(krb5_context context, HDB *db, krb5_kvno kvno,
     size_t i, k;
     int exclude_dead = 0;
     KerberosTime now = 0;
-    time_t *set_time;
 
     if (kvno == 0)
 	ret = 0;
@@ -579,9 +578,6 @@ hdb_unseal_keys_kvno(krb5_context context, HDB *db, krb5_kvno kvno,
 	 * so there's no danger that we'll dump this entry and load it
 	 * again, repeatedly causing the history to grow boundelessly.
 	 */
-	set_time = malloc(sizeof (*set_time));
-	if (set_time == NULL)
-	    return ENOMEM;
 
 	/* Swap key sets */
 	ent->kvno = hist_keys->val[i].kvno;

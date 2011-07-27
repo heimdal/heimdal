@@ -492,11 +492,14 @@ gen_wrapper(struct assignment *as)
     struct assignment *tmp;
     char *n, *f;
     int nargs = 0;
+    int narguments = 0;
 
     name = find(as, "name");
     n = strdup(name->u.value);
     gen_name(n);
     arg = find(as, "argument");
+    if (arg)
+        narguments++;
     opt1 = find(as, "option");
     function = find(as, "function");
     if(function)
@@ -547,9 +550,10 @@ gen_wrapper(struct assignment *as)
 	    fprintf(cfile, "\"%s\", ", help->u.value);
 	else
 	    fprintf(cfile, "NULL, ");
-	if(aarg)
+	if(aarg) {
 	    fprintf(cfile, "\"%s\"", aarg->u.value);
-	else
+            narguments++;
+	} else
 	    fprintf(cfile, "NULL");
 	fprintf(cfile, " },\n");
     }
@@ -589,7 +593,7 @@ gen_wrapper(struct assignment *as)
 	int min_args = -1;
 	int max_args = -1;
 	char *end;
-	if(arg == NULL) {
+	if(narguments == 0) {
 	    max_args = 0;
 	} else {
 	    if((tmp = find(as, "min_args")) != NULL) {

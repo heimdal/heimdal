@@ -1482,7 +1482,7 @@ tgs_build_reply(krb5_context context,
 		const struct sockaddr *from_addr)
 {
     krb5_error_code ret;
-    krb5_principal cp = NULL, sp = NULL, tp = NULL, dp = NULL;
+    krb5_principal cp = NULL, sp = NULL, rsp = NULL, tp = NULL, dp = NULL;
     krb5_principal krbtgt_principal = NULL;
     char *spn = NULL, *cpn = NULL, *tpn = NULL, *dpn = NULL;
     hdb_entry_ex *server = NULL, *client = NULL, *s4u2self_impersonated_client = NULL;
@@ -1518,8 +1518,10 @@ tgs_build_reply(krb5_context context,
     s = b->sname;
     r = b->realm;
 
-    if (b->kdc_options.canonicalize)
-	flags |= HDB_F_CANON;
+    /* 
+     * Always to do CANON, see comment below about returned server principal (rsp).
+     */
+    flags |= HDB_F_CANON;
 
     if(b->kdc_options.enc_tkt_in_skey){
 	Ticket *t;
@@ -1658,6 +1660,18 @@ server_lookup:
 	    ret = KRB5KDC_ERR_S_PRINCIPAL_UNKNOWN;
 	goto out;
     }
+
+    /* the name returned to the client depend on what was asked for,
+     * return canonical name if kdc_options.canonicalize was set, the
+     * client wants the true name of the principal, if not it just
+     * wants the name its asked for.
+     */
+
+    if (b->kdc_options.canonicalize)
+	rsp = server->entry.principal;
+    else
+	rsp = sp;
+
 
     /*
      * Select enctype, return key and kvno.
@@ -2208,7 +2222,7 @@ server_lookup:
 			 kvno,
 			 *auth_data,
 			 server,
-			 server->entry.principal,
+			 rsp,
 			 spn,
 			 client,
 			 cp,

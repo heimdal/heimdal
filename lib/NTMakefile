@@ -30,9 +30,6 @@
 # 
 
 
-!ifdef KRB4
-dir_45 = 45
-!endif
 !ifdef OTP
 dir_otp = otp
 !endif

@@ -5,6 +5,9 @@ New features
  - Support GSS name extensions/attributes
  - SHA512 support
  - No Kerberos 4 support
+ - Basic support for MIT Admin protocol (SECGSS flavor)
+   in kadmind (extract keytab)
+ - Replace editline with libedit
 
 Release Notes - Heimdal - Version Heimdal 1.4
 

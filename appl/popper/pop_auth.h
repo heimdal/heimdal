@@ -52,9 +52,6 @@ void pop_auth_set_error(const char *message);
 #ifdef KRB5
 extern struct auth_mech gssapi_mech;
 #endif
-#ifdef KRB4
-extern struct auth_mech krb4_mech;
-#endif
 
 
 #endif /* __pop_auth_h__ */

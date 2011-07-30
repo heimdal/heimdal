@@ -196,12 +196,6 @@ DIR_hdbdir="$with_hdbdir"
 AC_SUBST([DIR_hdbdir])
 
 
-dnl no kerberos4 any more
-with_krb4=no
-AC_SUBST(INCLUDE_krb4)
-AC_SUBST(LIB_krb4)
-AM_CONDITIONAL(KRB4, false)
-
 AM_CONDITIONAL(KRB5, true)
 AM_CONDITIONAL(do_roken_rename, true)
 

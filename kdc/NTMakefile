@@ -67,11 +67,6 @@ $(LIBEXECDIR)\hprop.exe: $(OBJ)\hprop.obj $(OBJ)\mit_dump.obj $(BIN_LIBS) $(OBJ)
 	$(EXECONLINK)
 	$(EXEPREP)
 
-!ifdef KRB4
-$(LIBEXECDIR)\hprop.exe: $(OBJ)\v4_dump.obj
-!endif
-
-
 $(LIBEXECDIR)\hpropd.exe: $(OBJ)\hpropd.obj $(BIN_LIBS) $(OBJ)\hpropd-version.res
 	$(EXECONLINK)
 	$(EXEPREP)
@@ -108,12 +103,6 @@ LIBKDC_OBJS=\
 	$(OBJ)\process.obj	\
 	$(OBJ)\windc.obj
 
-!ifdef KRB4
-LIBKDC_OBJS=$(LIBKDC_OBJS) \
-	$(OBJ)\524.obj		\
-	$(OBJ)\kerberos4.obj
-!endif
-
 LIBKDC_LIBS=\
 	$(LIBHDB)	\
 	$(LIBHEIMDAL)	\
@@ -145,12 +134,6 @@ libkdc_la_SOURCES = 		\
 	process.c		\
 	windc.c			\
 	rx.h
-
-!ifdef KRB4
-libkdc_la_SOURCES=$(libkdc_la_SOURCES) \
-	524.c			\
-	kerberos4.c
-!endif
 
 $(OBJ)\kdc-protos.h: $(libkdc_la_SOURCES)
 	$(PERL) ..\cf\make-proto.pl -q -P remove -o $@ $(libkdc_la_SOURCES) \

@@ -1,12 +1,4 @@
 EXPORTS
-#ifdef KRB4
-	krb524_convert_creds_kdc
-	krb524_convert_creds_kdc_ccache
-        krb5_425_conv_principal
-        krb5_425_conv_principal_ext
-        krb5_425_conv_principal_ext2
-        krb5_524_conv_principal
-#endif
 	krb5_abort
 	krb5_abortx
 	krb5_acl_match_file
@@ -741,21 +733,6 @@ EXPORTS
 	_krb5_crc_update
 	_krb5_get_krbtgt
 	_krb5_build_authenticator
-
-#ifdef KRB4
-        ; V4 compat glue
-	_krb5_krb_tf_setup
-	_krb5_krb_dest_tkt
-	_krb5_krb_life_to_time
-	_krb5_krb_decomp_ticket
-	_krb5_krb_create_ticket
-	_krb5_krb_create_ciph
-	_krb5_krb_create_auth_reply
-	_krb5_krb_rd_req
-	_krb5_krb_free_auth_data
-	_krb5_krb_time_to_life
-	_krb5_krb_cr_err_reply
-#endif
 
 	; Shared with libkdc
 	_krb5_AES_string_to_default_iterator

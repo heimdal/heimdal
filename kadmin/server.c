@@ -219,14 +219,17 @@ kadmind_dispatch(void *kadm_handlep, krb5_boolean initial,
 
 	/*
 	 * The change is allowed if at least one of:
-
-	 * a) it's for the principal him/herself and this was an
+	 *
+	 * a) allowed by sysadmin
+	 * b) it's for the principal him/herself and this was an
 	 *    initial ticket, but then, check with the password quality
 	 *    function.
-	 * b) the user is on the CPW ACL.
+	 * c) the user is on the CPW ACL.
 	 */
 
-	if (initial
+	if (krb5_config_get_bool_default(contextp->context, NULL, TRUE,
+					 "kadmin", "allow_self_change_password", NULL)
+	    && initial
 	    && krb5_principal_compare (contextp->context, contextp->caller,
 				       princ))
 	{

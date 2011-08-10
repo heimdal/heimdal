@@ -2,7 +2,7 @@
 
 include $(top_srcdir)/Makefile.am.common
 
-AM_CPPFLAGS += $(INCLUDE_libintl) $(INCLUDE_krb4) $(INCLUDE_hcrypto) -I$(srcdir)/../lib/krb5
+AM_CPPFLAGS += $(INCLUDE_libintl) $(INCLUDE_hcrypto) -I$(srcdir)/../lib/krb5
 
 lib_LTLIBRARIES = libkdc.la
 
@@ -68,7 +68,7 @@ $(srcdir)/kdc-private.h:
 hprop_LDADD = \
 	$(top_builddir)/lib/hdb/libhdb.la \
 	$(top_builddir)/lib/krb5/libkrb5.la \
-	$(LIB_kdb) $(LIB_krb4) \
+	$(LIB_kdb)  \
 	$(LIB_hcrypto) \
 	$(top_builddir)/lib/asn1/libasn1.la \
 	$(LIB_roken) \
@@ -77,7 +77,7 @@ hprop_LDADD = \
 hpropd_LDADD = \
 	$(top_builddir)/lib/hdb/libhdb.la \
 	$(top_builddir)/lib/krb5/libkrb5.la \
-	$(LIB_kdb) $(LIB_krb4) \
+	$(LIB_kdb)  \
 	$(LIB_hcrypto) \
 	$(top_builddir)/lib/asn1/libasn1.la \
 	$(LIB_roken) \
@@ -91,7 +91,7 @@ libkdc_la_LIBADD = \
 	$(LIB_pkinit) \
 	$(top_builddir)/lib/hdb/libhdb.la \
 	$(top_builddir)/lib/krb5/libkrb5.la \
-	$(LIB_kdb) $(LIB_krb4) \
+	$(LIB_kdb)  \
 	$(top_builddir)/lib/ntlm/libheimntlm.la \
 	$(LIB_hcrypto) \
 	$(top_builddir)/lib/asn1/libasn1.la \
@@ -100,7 +100,6 @@ libkdc_la_LIBADD = \
 
 LDADD = $(top_builddir)/lib/hdb/libhdb.la \
 	$(top_builddir)/lib/krb5/libkrb5.la \
-	$(LIB_krb4) \
 	$(LIB_hcrypto) \
 	$(top_builddir)/lib/asn1/libasn1.la \
 	$(LIB_roken) \

@@ -2,7 +2,7 @@
 
 include $(top_srcdir)/Makefile.am.common
 
-AM_CPPFLAGS += $(INCLUDE_krb4) $(INCLUDE_hcrypto)
+AM_CPPFLAGS += $(INCLUDE_hcrypto)
 
 bin_PROGRAMS = su
 bin_SUIDS = su

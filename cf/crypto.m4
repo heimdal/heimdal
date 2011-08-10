@@ -70,52 +70,6 @@ AC_MSG_CHECKING([for crypto library])
 
 openssl=no
 
-if test "$crypto_lib" = "unknown" -a "$with_krb4" != "no"; then
-	save_CPPFLAGS="$CPPFLAGS"
-	save_LIBS="$LIBS"
-
-	cdirs= clibs=
-	for i in $LIB_krb4; do
-		case "$i" in
-		-L*) cdirs="$cdirs $i";;
-		-l*) clibs="$clibs $i";;
-		esac
-	done
-
-	ires=
-	for i in $INCLUDE_krb4; do
-		CFLAGS="-DHAVE_OPENSSL $i $save_CFLAGS"
-		for j in $cdirs; do
-			for k in $clibs; do
-				LIBS="$j $k $save_LIBS"
-				AC_LINK_IFELSE([AC_LANG_PROGRAM([test_headers],
-						[test_body])],
-					[openssl=yes ires="$i" lres="$j $k"; break 3])
-			done
-		done
-		CFLAGS="$i $save_CFLAGS"
-		for j in $cdirs; do
-			for k in $clibs; do
-				LIBS="$j $k $save_LIBS"
-				AC_LINK_IFELSE([AC_LANG_PROGRAM([test_headers],[test_body])],
-					[openssl=no ires="$i" lres="$j $k"; break 3])
-			done
-		done
-	done
-		
-	CFLAGS="$save_CFLAGS"
-	LIBS="$save_LIBS"
-	if test "$ires" -a "$lres"; then
-		INCLUDE_hcrypto="$ires"
-		LIB_hcrypto="$lres"
-		crypto_lib=krb4
-		AC_MSG_RESULT([same as krb4])
-		LIB_hcrypto_a='$(LIB_hcrypto)'
-		LIB_hcrypto_so='$(LIB_hcrypto)'
-		LIB_hcrypto_appl='$(LIB_hcrypto)'
-	fi
-fi
-
 if test "$crypto_lib" = "unknown" -a "$with_openssl" != "no"; then
 	save_CFLAGS="$CFLAGS"
 	save_LIBS="$LIBS"
@@ -157,12 +111,6 @@ if test "$crypto_lib" = "unknown"; then
 
   AC_MSG_RESULT([included libhcrypto])
 
-fi
-
-if test "$with_krb4" != no -a "$crypto_lib" != krb4; then
-	AC_MSG_ERROR([the crypto library used by krb4 lacks features
-required by Kerberos 5; to continue, you need to install a newer 
-Kerberos 4 or configure --without-krb4])
 fi
 
 if test "$openssl" = "yes"; then

@@ -88,6 +88,9 @@ else
 
    ASN1_COMPILE_DEP=
    SLC_DEP=
+
+   ac_cv_prog_compile_et=${with_cross_tools}compile_et
+
 fi
 
 AC_SUBST([ASN1_COMPILE])

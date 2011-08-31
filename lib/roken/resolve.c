@@ -589,6 +589,9 @@ dns_lookup_int(const char *domain, int rr_class, int rr_type)
     len = min(len, size);
     r = parse_reply(reply, len);
     free(reply);
+
+    resolve_free_handle(handle);
+
     return r;
 }
 

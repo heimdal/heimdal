@@ -51,12 +51,33 @@ static void free_key_schedule(krb5_context,
 			      struct _krb5_key_data *,
 			      struct _krb5_encryption_type *);
 
-static krb5_error_code _krb5_unsupported_enctype(krb5_context,
-                                                 krb5_enctype);
+/* 
+ * Converts etype to a user readable string and sets as a side effect
+ * the krb5_error_message containing this string. Returns
+ * KRB5_PROG_ETYPE_NOSUPP in not the conversion of the etype failed in
+ * which case the error code of the etype convesion is returned.
+ */
 
-/************************************************************
- *                                                          *
- ************************************************************/
+static krb5_error_code
+unsupported_enctype(krb5_context context, krb5_enctype etype)
+{
+    krb5_error_code ret;
+    char *name;
+
+    ret = krb5_enctype_to_string(context, etype, &name);
+    if (ret)
+	return ret;
+
+    krb5_set_error_message(context, KRB5_PROG_ETYPE_NOSUPP,
+			   N_("Encryption type %s not supported", ""),
+			   name);
+    free(name);
+    return KRB5_PROG_ETYPE_NOSUPP;
+}
+
+/*
+ *
+ */
 
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_enctype_keysize(krb5_context context,
@@ -65,7 +86,7 @@ krb5_enctype_keysize(krb5_context context,
 {
     struct _krb5_encryption_type *et = _krb5_find_enctype(type);
     if(et == NULL) {
-        return _krb5_unsupported_enctype (context, type);
+        return unsupported_enctype (context, type);
     }
     *keysize = et->keytype->size;
     return 0;
@@ -78,7 +99,7 @@ krb5_enctype_keybits(krb5_context context,
 {
     struct _krb5_encryption_type *et = _krb5_find_enctype(type);
     if(et == NULL) {
-        return _krb5_unsupported_enctype (context, type);
+        return unsupported_enctype (context, type);
     }
     *keybits = et->keytype->bits;
     return 0;
@@ -92,7 +113,7 @@ krb5_generate_random_keyblock(krb5_context context,
     krb5_error_code ret;
     struct _krb5_encryption_type *et = _krb5_find_enctype(type);
     if(et == NULL) {
-        return _krb5_unsupported_enctype (context, type);
+        return unsupported_enctype (context, type);
     }
     ret = krb5_data_alloc(&key->keyvalue, et->keytype->size);
     if(ret)
@@ -115,7 +136,7 @@ _key_schedule(krb5_context context,
     struct _krb5_key_type *kt;
 
     if (et == NULL) {
-        return _krb5_unsupported_enctype (context,
+        return unsupported_enctype (context,
                                key->key->keytype);
     }
 
@@ -676,7 +697,7 @@ krb5_enctype_to_keytype(krb5_context context,
 {
     struct _krb5_encryption_type *e = _krb5_find_enctype(etype);
     if(e == NULL) {
-        return _krb5_unsupported_enctype (context, etype);
+        return unsupported_enctype (context, etype);
     }
     *keytype = e->keytype->type; /* XXX */
     return 0;
@@ -702,7 +723,7 @@ krb5_enctype_valid(krb5_context context,
     if (context == NULL)
 	return KRB5_PROG_ETYPE_NOSUPP;
     if(e == NULL) {
-        return _krb5_unsupported_enctype (context, etype);
+        return unsupported_enctype (context, etype);
     }
     /* Must be (e->flags & F_DISABLED) */
     krb5_set_error_message (context, KRB5_PROG_ETYPE_NOSUPP,
@@ -1940,7 +1961,7 @@ krb5_derive_key(krb5_context context,
 
     et = _krb5_find_enctype (etype);
     if (et == NULL) {
-        return _krb5_unsupported_enctype (context, etype);
+        return unsupported_enctype (context, etype);
     }
 
     ret = krb5_copy_keyblock(context, key, &d.key);
@@ -1954,32 +1975,6 @@ krb5_derive_key(krb5_context context,
     _krb5_free_key_data(context, &d, et);
     return ret;
 }
-
-/* 
- * _krb5_unsupported_enctype() converts etype to a user readable
- * string and sets as a side effect the krb5_error_message containing
- * this string. Returns KRB5_PROG_ETYPE_NOSUPP in not the conversion
- * of the etype failed in which case the error code of the etype
- * convesion is returned.
- */
-static krb5_error_code
-_krb5_unsupported_enctype(krb5_context context,
-                          krb5_enctype etype)
-{
-    int errcode;
-    char *etypename = NULL;
-
-    if (errcode = krb5_enctype_to_string (context, etype, &etypename))
-        return errcode;
-    else {
-        krb5_set_error_message (context, KRB5_PROG_ETYPE_NOSUPP,
-                                N_("encryption type %s not supported", ""),
-                                etypename);
-        free(etypename);
-        return KRB5_PROG_ETYPE_NOSUPP;
-    }
-}
-
 
 static krb5_error_code
 _get_derived_key(krb5_context context,
@@ -2044,7 +2039,7 @@ krb5_crypto_init(krb5_context context,
     if((*crypto)->et == NULL || ((*crypto)->et->flags & F_DISABLED)) {
 	free(*crypto);
 	*crypto = NULL;
-	return _krb5_unsupported_enctype (context, etype);
+	return unsupported_enctype(context, etype);
     }
     if((*crypto)->et->keytype->size != key->keyvalue.length) {
 	free(*crypto);

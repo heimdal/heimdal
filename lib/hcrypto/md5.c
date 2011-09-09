@@ -214,13 +214,13 @@ MD5_Update (struct md5 *m, const void *v, size_t len)
     if(offset == 64){
 #if defined(WORDS_BIGENDIAN)
       int i;
-      uint32_t current[16];
+      uint32_t swapped[16];
       struct x32 *us = (struct x32*)m->save;
       for(i = 0; i < 8; i++){
-	current[2*i+0] = swap_uint32_t(us[i].a);
-	current[2*i+1] = swap_uint32_t(us[i].b);
+	swapped[2*i+0] = swap_uint32_t(us[i].a);
+	swapped[2*i+1] = swap_uint32_t(us[i].b);
       }
-      calc(m, current);
+      calc(m, swapped);
 #else
       calc(m, (uint32_t*)m->save);
 #endif

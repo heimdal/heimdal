@@ -313,12 +313,22 @@ my $depstr = "";
 my $undepstr = "";
 foreach (keys %depfunction) {
     $depstr .= "#ifndef $_
-#if defined(__GNUC__) && ((__GNUC__ > 3) || ((__GNUC__ == 3) && (__GNUC_MINOR__ >= 1 )))
+#ifndef __has_extension
+#define __has_extension 0
+#define ${_}has_extension 1
+#endif
+#if __has_extension(attribute_deprecated_with_message)
+#define $_(x) __attribute__((deprecated(x)))
+#elif defined(__GNUC__) && ((__GNUC__ > 3) || ((__GNUC__ == 3) && (__GNUC_MINOR__ >= 1 )))
 #define $_(X) __attribute__((__deprecated__))
 #else
 #define $_(X)
 #endif
+#ifdef ${_}has_extension
+#undef __has_extension
+#undef ${_}has_extension
 #endif
+#endif /* $_ */
 
 
 ";

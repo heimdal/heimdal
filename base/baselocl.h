@@ -68,7 +68,15 @@
 #define heim_base_atomic_type	unsigned int
 #define heim_base_atomic_max    UINT_MAX
 
+#ifndef __has_builtin
+#define __has_builtin(x) 0
+#endif
+
+#if __has_builtin(__sync_swap)
+#define heim_base_exchange_pointer(t,v) __sync_swap((t), (v))
+#else
 #define heim_base_exchange_pointer(t,v) __sync_lock_test_and_set((t), (v))
+#endif
 
 #elif defined(_WIN32)
 

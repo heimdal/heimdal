@@ -1736,21 +1736,27 @@ server_lookup:
 	goto out;
     }
 
-    /* Now refetch the primary krbtgt, and get the current kvno (the
+    /* 
+     * Now refetch the primary krbtgt, and get the current kvno (the
      * sign check may have been on an old kvno, and the server may
-     * have been an incoming trust) */
-    ret = krb5_make_principal(context, &krbtgt_principal,
-			      krb5_principal_get_comp_string(context,
-							     krbtgt->entry.principal,
-							     1),
-			      KRB5_TGS_NAME,
-			      krb5_principal_get_comp_string(context,
-							     krbtgt->entry.principal,
-							     1), NULL);
-    if(ret) {
-	kdc_log(context, config, 0,
+     * have been an incoming trust)
+     */
+    
+    {
+	const char *remote_realm = 
+	    krb5_principal_get_comp_string(context, krbtgt->entry.principal, 1);
+
+	ret = krb5_make_principal(context,
+				  &krbtgt_principal,
+				  remote_realm,
+				  KRB5_TGS_NAME,
+				  remote_realm,
+				  NULL);
+	if(ret) {
+	    kdc_log(context, config, 0,
 		    "Failed to generate krbtgt principal");
-	goto out;
+	    goto out;
+	}
     }
 
     ret = _kdc_db_fetch(context, config, krbtgt_principal, HDB_F_GET_KRBTGT, NULL, NULL, &krbtgt_out);
@@ -1771,11 +1777,13 @@ server_lookup:
 	goto out;
     }
 
-    /* The first realm is the realm of the service, the second is
+    /* 
+     * The first realm is the realm of the service, the second is
      * krbtgt/<this>/@REALM component of the krbtgt DN the request was
      * encrypted to.  The redirection via the krbtgt_out entry allows
      * the DB to possibly correct the case of the realm (Samba4 does
-     * this) before the strcmp() */
+     * this) before the strcmp() 
+     */
     if (strcmp(krb5_principal_get_realm(context, server->entry.principal),
 	       krb5_principal_get_realm(context, krbtgt_out->entry.principal)) != 0) {
 	char *ktpn;
@@ -1786,6 +1794,7 @@ server_lookup:
 	if(ret == 0)
 	    free(ktpn);
 	ret = KRB5KRB_AP_ERR_NOT_US;
+	goto out;
     }
 
     ret = hdb_enctype2key(context, &krbtgt_out->entry,
@@ -1796,12 +1805,15 @@ server_lookup:
 	goto out;
     }
 
-    /* Check if we would know the krbtgt key for the PAC.  We would
+    /* 
+     * Check if we would know the krbtgt key for the PAC.  We would
      * only know this if the krbtgt principal was the same (ie, in our
-     * realm, regardless of KVNO) */
-    if (krb5_principal_compare(context, krbtgt_out->entry.principal, krbtgt->entry.principal)) {
+     * realm, regardless of KVNO) 
+     */
+    
+    if (krb5_principal_compare(context, krbtgt_out->entry.principal, krbtgt->entry.principal))
 	tkey_krbtgt_check = tkey_check;
-    }
+
 
     ret = _kdc_db_fetch(context, config, cp, HDB_F_GET_CLIENT | flags,
 			NULL, &clientdb, &client);

@@ -314,7 +314,7 @@ my $undepstr = "";
 foreach (keys %depfunction) {
     $depstr .= "#ifndef $_
 #ifndef __has_extension
-#define __has_extension 0
+#define __has_extension(x) 0
 #define ${_}has_extension 1
 #endif
 #if __has_extension(attribute_deprecated_with_message)

@@ -318,7 +318,7 @@ foreach (keys %depfunction) {
 #define ${_}has_extension 1
 #endif
 #if __has_extension(attribute_deprecated_with_message)
-#define $_(x) __attribute__((deprecated(x)))
+#define $_(x) __attribute__((__deprecated__(x)))
 #elif defined(__GNUC__) && ((__GNUC__ > 3) || ((__GNUC__ == 3) && (__GNUC_MINOR__ >= 1 )))
 #define $_(X) __attribute__((__deprecated__))
 #else

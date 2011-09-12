@@ -96,7 +96,9 @@ clean::
 ######################################################################
 # Runtime modules
 
-!if [ $(PERL) $(SRC)\cf\w32-detect-vc-version.pl $(CC) ]==15
+!if [ $(PERL) $(SRC)\cf\w32-detect-vc-version.pl $(CC) ]==16
+VCVER=VC100
+!elseif [ $(PERL) $(SRC)\cf\w32-detect-vc-version.pl $(CC) ]==15
 VCVER=VC90
 !elseif [ $(PERL) $(SRC)\cf\w32-detect-vc-version.pl $(CC) ]==14
 VCVER=VC80

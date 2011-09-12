@@ -1,6 +1,7 @@
 EXPORTS
 	encode_hdb_keyset
 	hdb_add_master_key
+	hdb_add_current_keys_to_history
 	hdb_check_db_format
 	hdb_clear_extension
 	hdb_clear_master_key
@@ -91,8 +92,10 @@ EXPORTS
 	free_HDB_extension
 	free_HDB_extensions
 	free_Key
+	free_Keys
         free_Salt
 	free_hdb_entry
+	free_hdb_keyset
 	int2HDBFlags
 	length_HDB_Ext_Aliases
 	length_HDB_Ext_PKINIT_acl

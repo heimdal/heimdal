@@ -211,9 +211,11 @@ hdb_add_current_keys_to_history(krb5_context context, hdb_entry *entry)
     krb5_boolean replace = FALSE;
     krb5_error_code ret;
     HDB_extension *ext;
-    hdb_keyset newkey;
+    hdb_keyset newkeyset;
     time_t newtime;
 
+    if (entry->keys.len == 0)
+	return 0; /* nothing to do */
 
     ext = hdb_find_extension(entry, choice_HDB_extension_data_hist_keys);
     if (ext == NULL) {
@@ -228,17 +230,16 @@ hdb_add_current_keys_to_history(krb5_context context, hdb_entry *entry)
     /*
      * Copy in newest old keyset
      */
-
     ret = hdb_entry_get_pw_change_time(entry, &newtime);
     if (ret)
 	goto out;
 
-    memset(&newkey, 0, sizeof(newkey));
-    newkey.keys = entry->keys;
-    newkey.kvno = entry->kvno;
-    newkey.set_time = &newtime;
+    memset(&newkeyset, 0, sizeof(newkeyset));
+    newkeyset.keys = entry->keys;
+    newkeyset.kvno = entry->kvno;
+    newkeyset.set_time = &newtime;
 
-    ret = add_HDB_Ext_KeySet(&ext->data.u.hist_keys, &newkey);
+    ret = add_HDB_Ext_KeySet(&ext->data.u.hist_keys, &newkeyset);
     if (ret)
 	goto out;
 
@@ -254,6 +255,124 @@ hdb_add_current_keys_to_history(krb5_context context, hdb_entry *entry)
 	free_HDB_extension(ext);
 	free(ext);
     }
+    return ret;
+}
+
+/**
+ * This function adds a key to an HDB entry's key history.
+ *
+ * @param context   Context
+ * @param entry	    HDB entry
+ * @param kvno	    Key version number of the key to add to the history
+ * @param key	    The Key to add
+ */
+krb5_error_code
+hdb_add_history_key(krb5_context context, hdb_entry *entry, krb5_kvno kvno, Key *key)
+{
+    size_t i;
+    hdb_keyset keyset;
+    HDB_Ext_KeySet *hist_keys;
+    HDB_extension ext;
+    HDB_extension *extp;
+    krb5_error_code ret;
+
+    memset(&keyset, 0, sizeof (keyset));
+    memset(&ext, 0, sizeof (ext));
+
+    extp = hdb_find_extension(entry, choice_HDB_extension_data_hist_keys);
+    if (extp == NULL) {
+	ext.data.element = choice_HDB_extension_data_hist_keys;
+	extp = &ext;
+    }
+
+    hist_keys = &extp->data.u.hist_keys;
+
+    for (i = 0; i < hist_keys->len; i++) {
+	if (hist_keys->val[i].kvno == kvno) {
+	    ret = add_Keys(&hist_keys->val[i].keys, key);
+	    goto out;
+	}
+    }
+
+    keyset.kvno = kvno;
+    ret = add_Keys(&keyset.keys, key);
+    if (ret)
+	goto out;
+    ret = add_HDB_Ext_KeySet(hist_keys, &keyset);
+    if (ret)
+	goto out;
+    if (extp == &ext) {
+	ret = hdb_replace_extension(context, entry, &ext);
+	if (ret)
+	    goto out;
+    }
+
+out:
+    free_hdb_keyset(&keyset);
+    free_HDB_extension(&ext);
+    return ret;
+}
+
+
+/**
+ * This function changes an hdb_entry's kvno, swapping the current key
+ * set with a historical keyset.  If no historical keys are found then
+ * an error is returned (the caller can still set entry->kvno directly).
+ *
+ * @param context	krb5_context
+ * @param new_kvno	New kvno for the entry
+ * @param entry		hdb_entry to modify
+ */
+krb5_error_code
+hdb_change_kvno(krb5_context context, krb5_kvno new_kvno, hdb_entry *entry)
+{
+    HDB_extension ext;
+    HDB_extension *extp;
+    hdb_keyset keyset;
+    HDB_Ext_KeySet *hist_keys;
+    size_t i;
+    int found = 0;
+    krb5_error_code ret;
+
+    if (entry->kvno == new_kvno)
+	return 0;
+
+    extp = hdb_find_extension(entry, choice_HDB_extension_data_hist_keys);
+    if (extp == NULL) {
+	memset(&ext, 0, sizeof (ext));
+	ext.data.element = choice_HDB_extension_data_hist_keys;
+	extp = &ext;
+    }
+
+    memset(&keyset, 0, sizeof (keyset));
+    hist_keys = &extp->data.u.hist_keys;
+    for (i = 0; i < hist_keys->len; i++) {
+	if (hist_keys->val[i].kvno == new_kvno) {
+	    found = 1;
+	    ret = copy_hdb_keyset(&hist_keys->val[i], &keyset);
+	    if (ret)
+		goto out;
+	    ret = remove_HDB_Ext_KeySet(hist_keys, i);
+	    if (ret)
+		goto out;
+	    break;
+	}
+    }
+
+    if (!found)
+	return HDB_ERR_KVNO_NOT_FOUND;
+
+    ret = hdb_add_current_keys_to_history(context, entry);
+    if (ret)
+	goto out;
+
+    /* Note: we do nothing with keyset.set_time */
+    entry->kvno = new_kvno;
+    entry->keys = keyset.keys; /* shortcut */
+    memset(&keyset.keys, 0, sizeof (keyset.keys));
+
+out:
+    free_hdb_keyset(&keyset);
     return ret;
 }
 

@@ -196,133 +196,6 @@ fix_salt(krb5_context context, hdb_entry *ent, int key_num)
     return 0;
 }
 
-/**
- * This function outputs a pointer to a Key or array of @key_count Keys
- * where the caller may place Keys.
- *
- * @param context   Context
- * @param entry	    HDB entry
- * @param kvno	    kvno of the keys to be added
- * @param is_hist   Whether the keys will be historical keys or current keys
- * @param key_count Size of array of keys to set.  MUST be zero if !is_hist.
- * @param out	    Pointer to Key * variable where to put the resulting Key *
- *
- * See three call sites below for more information.
- */
-static krb5_error_code
-get_entry_key_location(krb5_context context, hdb_entry *entry, krb5_kvno kvno,
-		       krb5_boolean is_hist, size_t key_count, Key **out)
-{
-    HDB_extension ext;
-    HDB_Ext_KeySet *hist_keys;
-    hdb_keyset *keyset = NULL;
-    size_t keyset_count = 0;
-    Key *k = NULL;
-    size_t i;
-    krb5_error_code ret;
-
-    *out = NULL;
-
-    if (!is_hist) {
-	Key *tmp;
-
-	/* Extend current keyset */
-	tmp = realloc(entry->keys.val, sizeof(entry->keys.val[0]) * (entry->keys.len + 1));
-	if (tmp == NULL) {
-	    ret = ENOMEM;
-	    goto out;
-	}
-	entry->keys.val = tmp;
-
-	/* k points to current Key */
-	k = &entry->keys.val[entry->keys.len];
-
-	memset(k, 0, sizeof(*k));
-	entry->keys.len += 1;
-
-	goto done;
-    }
-
-    /* Find a history keyset and extend it or extend the history keyset */
-    memset(&ext, 0, sizeof (ext));
-    ext.data.element = choice_HDB_extension_data_hist_keys;
-    hist_keys = &ext.data.u.hist_keys;
-
-    /* hdb_replace_extension() makes a copy of ext */
-    ret = hdb_replace_extension(context, entry, &ext);
-    if (ret)
-	return ret;
-
-    for (i = 0; i < hist_keys->len; i++) {
-	if (hist_keys->val[i].kvno == kvno) {
-	    /* We're adding a key to an existing history keyset */
-	    keyset = &hist_keys->val[i];
-	    if ((keyset->keys.len % 8) == 0) {
-		Key *tmp;
-
-		/* We're adding the 9th, 17th, ... key to the set */
-		tmp = realloc(keyset->keys.val,
-			      (keyset->keys.len + 8) * sizeof (*tmp));
-		if (tmp == NULL) {
-		    ret = ENOMEM;
-		    goto out;
-		}
-	    }
-	    break;
-	}
-    }
-
-    if (keyset == NULL) {
-	/* We're adding the first key of a new history keyset */
-	if (hist_keys->val == NULL) {
-	    if (key_count == 0)
-		keyset_count = 8; /* There's not that many enctypes */
-	    else
-		keyset_count = key_count;
-	    hist_keys->val = calloc(keyset_count,
-				    sizeof (*hist_keys->val));
-	    if (hist_keys->val == NULL) {
-		ret = ENOMEM;
-		goto out;
-	    }
-	    keyset = &hist_keys->val[0];
-	} else if (hist_keys->len == keyset_count) {
-	    hdb_keyset *tmp;
-
-	    keyset_count *= 2;
-	    tmp = realloc(hist_keys->val,
-			  keyset_count * sizeof (*hist_keys->val));
-	    if (tmp == NULL) {
-		ret = ENOMEM;
-		goto out;
-	    }
-	    hist_keys->val = tmp;
-	}
-    }
-
-    k = &keyset->keys.val[keyset->keys.len];
-
-    if (key_count != 0)
-	keyset->keys.len += key_count;
-    
-done:
-    memset(k, 0, sizeof (*k));
-    k->mkvno = malloc(sizeof(*k->mkvno));
-    if (k->mkvno == NULL) {
-	ret = ENOMEM;
-	goto out;
-    }
-    *k->mkvno = 1;
-    *out = k;
-
-out:
-    if (ret && !is_hist)
-	entry->keys.len--;
-    if (is_hist)
-	free_HDB_extension(&ext);
-    return ret;
-}
-
 
 /**
  * This function takes a key from a krb5_storage from an MIT KDB encoded
@@ -341,6 +214,13 @@ mdb_keyvalue2key(krb5_context context, hdb_entry *entry, krb5_storage *sp, uint1
     size_t i;
     uint16_t u16, type;
     krb5_error_code ret;
+
+    k->mkvno = malloc(sizeof(*k->mkvno));
+    if (k->mkvno == NULL) {
+	ret = ENOMEM;
+	goto out;
+    }
+    *k->mkvno = 1;
 
     for (i = 0; i < version; i++) {
 	CHECK(ret = krb5_ret_uint16(sp, &type));
@@ -400,7 +280,6 @@ mdb_keyvalue2key(krb5_context context, hdb_entry *entry, krb5_storage *sp, uint1
 
 out:
     free_Key(k);
-    memset(k, 0, sizeof (*k));
     return ret;
 }
 
@@ -408,18 +287,27 @@ out:
 /**
  * This function parses an MIT krb5 encoded KDB entry and fills in the
  * given HDB entry with it.
+ *
+ * @param context	krb5_context
+ * @param data		Encoded MIT KDB entry
+ * @param target_kvno	Desired kvno, or 0 for the entry's current kvno
+ * @param entry		Desired kvno, or 0 for the entry's current kvno
  */
 static krb5_error_code
-mdb_value2entry(krb5_context context, krb5_data *data, krb5_kvno kvno, hdb_entry *entry)
+mdb_value2entry(krb5_context context, krb5_data *data, krb5_kvno target_kvno,
+		hdb_entry *entry)
 {
     krb5_error_code ret;
     krb5_storage *sp;
-    Key *k;
+    Key k;
     krb5_kvno key_kvno;
     uint32_t u32;
     uint16_t u16, num_keys, num_tl;
-    size_t i, j;
+    size_t i;
     char *p;
+
+    memset(&k, 0, sizeof (k));
+    memset(entry, 0, sizeof(*entry));
 
     sp = krb5_storage_from_data(data);
     if (sp == NULL) {
@@ -442,7 +330,8 @@ mdb_value2entry(krb5_context context, krb5_data *data, krb5_kvno kvno, hdb_entry
      * XXX But... surely we ought to log about this extra data, or skip
      * it, or something, in case anyone has MIT KDBs with ancient
      * entries in them...  Logging would allow the admin to know which
-     * entries to dump with MIT krb5's kdb5_util.
+     * entries to dump with MIT krb5's kdb5_util.  But logging would be
+     * noisy.  For now we do nothing.
      */
     CHECK(ret = krb5_ret_uint16(sp, &u16));
     if (u16 != KDB_V1_BASE_LENGTH) { ret = EINVAL; goto out; }
@@ -540,7 +429,6 @@ mdb_value2entry(krb5_context context, krb5_data *data, krb5_kvno kvno, hdb_entry
      * That's right... hold that gag reflex, you can do it.
      */
     for (i = 0; i < num_keys; i++) {
-	int keep = 0;
 	uint16_t version;
 
 	CHECK(ret = krb5_ret_uint16(sp, &u16));
@@ -548,70 +436,81 @@ mdb_value2entry(krb5_context context, krb5_data *data, krb5_kvno kvno, hdb_entry
 	CHECK(ret = krb5_ret_uint16(sp, &u16));
 	key_kvno = u16;
 
-	/*
-	 * First time through, and until we find one matching key,
-	 * entry->kvno == 0.
-	 */
-	if ((entry->kvno < key_kvno) && (kvno == 0 || kvno == key_kvno)) {
+	ret = mdb_keyvalue2key(context, entry, sp, version, &k);
+	if (ret)
+	    goto out;
+	if (k.key.keytype == 0 || k.key.keyvalue.length == 0) {
 	    /*
-	     * Found a higher kvno than earlier, we aren't looking for
-	     * any particular kvno, so save the previously saved keys as
-	     * historical keys.
+	     * Older MIT KDBs may have enctype 0 / length 0 keys.  We
+	     * ignore these.
 	     */
-	    keep = 1;
+	    free_Key(&k);
+	    continue;
+	}
 
-	    /* Get an array of Keys to save the current keyset into */
-	    ret = get_entry_key_location(context, entry, entry->kvno, TRUE,
-					 entry->keys.len, &k);
-
-	    for (j = 0; j < entry->keys.len; j++)
-		copy_Key(&entry->keys.val[j], &k[j]);
-
-	    /* Change the entry's current kvno */
+	if ((target_kvno == 0 && entry->kvno < key_kvno) ||
+	    (target_kvno == key_kvno && entry->kvno != target_kvno)) {
+	    /*
+	     * MIT's KDB doesn't keep track of kvno.  The highest kvno
+	     * is the current kvno, and we just found a new highest
+	     * kvno or the desired kvno.
+	     *
+	     * Note that there's no guarantee of any key ordering, but
+	     * generally MIT KDB entries have keys in strictly
+	     * descending kvno order.
+	     *
+	     * XXX We do assume that keys are clustered by kvno.  If
+	     * not, then bad.  It might be possible to construct
+	     * non-clustered keys via the kadm5 API.  It wouldn't be
+	     * hard to cope with this, since if it happens the worst
+	     * that will happen is that some of the current keys can be
+	     * found in the history extension, and we could just pull
+	     * them back out in that case.
+	     */
+	    ret = hdb_add_current_keys_to_history(context, entry);
+	    if (ret)
+		goto out;
+	    free_Keys(&entry->keys);
+	    ret = add_Keys(&entry->keys, &k);
+	    free_Key(&k);
+	    if (ret)
+		goto out;
 	    entry->kvno = key_kvno;
+	    continue;
+	}
 
-	    for (j = 0; j < entry->keys.len; j++)
-		free_Key(&entry->keys.val[j]);
-	    free(entry->keys.val);
-	    entry->keys.len = 0;
-	    entry->keys.val = NULL;
-	} else if (entry->kvno == key_kvno)
-	    /* Accumulate keys */
-	    keep = 1;
-
-	if (keep) {
-	    ret = get_entry_key_location(context, entry, key_kvno,
-					 FALSE, 0, &k);
-	    if (ret)
-		goto out;
-
-	    ret = mdb_keyvalue2key(context, entry, sp, version, k);
-	    if (ret)
-		goto out;
-	} else {
+	if (entry->kvno == key_kvno) {
 	    /*
-	     * XXX For now we skip older kvnos, but we should extract
-	     * them... XXX Finish.
+	     * Note that if key_kvno == 0 and target_kvno == 0 then we
+	     * end up adding those keys here.  Yeah, kvno 0 is very
+	     * special for us, but just in case, we keep such keys.
 	     */
-	    ret = get_entry_key_location(context, entry, key_kvno, TRUE, 0, &k);
+	    ret = add_Keys(&entry->keys, &k);
+	    free_Key(&k);
 	    if (ret)
 		goto out;
-	    ret = mdb_keyvalue2key(context, entry, sp, version, k);
+	    entry->kvno = key_kvno;
+	} else  {
+	    ret = hdb_add_history_key(context, entry, key_kvno, &k);
 	    if (ret)
 		goto out;
+	    free_Key(&k);
 	}
     }
 
-    if (entry->kvno == 0 && kvno != 0) {
-	ret = HDB_ERR_NOT_FOUND_HERE;
+    if (target_kvno != 0 && entry->kvno != target_kvno) {
+	ret = HDB_ERR_KVNO_NOT_FOUND;
 	goto out;
     }
 
     return 0;
- out:
+
+out:
     if (ret == HEIM_ERR_EOF)
 	/* Better error code than "end of file" */
 	ret = HEIM_ERR_BAD_HDBENT_ENCODING;
+    free_hdb_entry(entry);
+    free_Key(&k);
     return ret;
 }
 

@@ -125,6 +125,8 @@ ${kinit} --password-file=${objdir}/foopassword lha@$R || \
 env KRB5CCNAME=${cache} \
     ${gssclient} --port=4717 --service=host localhost || exit 1
 
+sleep 5
+
 kill ${javapid}
 
 grep 'Exception in thread' output.tmp && exit 1

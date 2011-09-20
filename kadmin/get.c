@@ -154,8 +154,11 @@ format_keytype(krb5_key_data *k, krb5_salt *def_salt, char *buf, size_t buf_len)
 		  (char *)k->key_data_contents[1]);
     strlcat(buf, s, buf_len);
     free(s);
-
+    asprintf (&s, "[%d]", k->key_data_kvno);
     strlcat(buf, ")", buf_len);
+
+    strlcat(buf, s, buf_len);
+    free(s);
 }
 
 static void

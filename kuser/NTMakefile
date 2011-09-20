@@ -57,6 +57,9 @@ NOINSTPROGRAMS=\
 BINLIBS=\
 	$(LIBHEIMDAL)	\
 	$(LIBHEIMNTLM)	\
+!if !defined(NO_AFS)
+        $(LIBKAFS)      \
+!endif
 	$(LIBROKEN)	\
 	$(LIBVERS)
 

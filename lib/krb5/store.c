@@ -792,12 +792,15 @@ krb5_ret_stringz(krb5_storage *sp,
     ssize_t ret;
 
     while((ret = sp->fetch(sp, &c, 1)) == 1){
+	krb5_error_code eret;
 	char *tmp;
 
 	len++;
-	ret = size_too_large(sp, len);
-	if (ret)
-	    break;
+	eret = size_too_large(sp, len);
+	if (eret) {
+	    free(s);
+	    return eret;
+	}
 	tmp = realloc (s, len);
 	if (tmp == NULL) {
 	    free (s);
@@ -852,6 +855,7 @@ krb5_ret_stringnl(krb5_storage *sp,
     ssize_t ret;
 
     while((ret = sp->fetch(sp, &c, 1)) == 1){
+	krb5_error_code eret;
 	char *tmp;
 
 	if (c == '\r') {
@@ -864,9 +868,11 @@ krb5_ret_stringnl(krb5_storage *sp,
 	}
 
 	len++;
-	ret = size_too_large(sp, len);
-	if (ret)
-	    break;
+	eret = size_too_large(sp, len);
+	if (eret) {
+	    free(s);
+	    return eret;
+	}
 	tmp = realloc (s, len);
 	if (tmp == NULL) {
 	    free (s);

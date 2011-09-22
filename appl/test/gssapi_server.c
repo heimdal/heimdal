@@ -128,6 +128,25 @@ process_it(int sock,
     gss_release_buffer (&min_stat, input_token);
     gss_release_buffer (&min_stat, output_token);
 
+    input_token->value = "hejhej";
+    input_token->length = 6;
+
+    maj_stat = gss_wrap (&min_stat,
+			 context_hdl,
+			 1,
+			 GSS_C_QOP_DEFAULT,
+			 input_token,
+			 NULL,
+			 output_token);
+
+    write_token (sock, output_token);
+    gss_release_buffer (&min_stat, output_token);
+
+    read_token (sock, input_token);
+
+    if (input_token->length != 6 && memcmp(input_token->value, "hejhej", 6) != 0)
+	errx(1, "invalid reply");
+
     return 0;
 }
 
@@ -301,6 +320,9 @@ doit (int port, const char *service)
     struct sockaddr_in my_addr;
     int one = 1;
     int ret;
+
+    if (keytab_str)
+	gsskrb5_register_acceptor_identity(keytab_str);
 
     sock = socket (AF_INET, SOCK_STREAM, 0);
     if (sock < 0)

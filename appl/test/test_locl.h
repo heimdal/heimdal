@@ -80,6 +80,7 @@
 
 extern char *service;
 extern char *mech;
+extern char *keytab_str;
 extern krb5_keytab keytab;
 extern int fork_flag;
 int server_setup(krb5_context*, int, char**);

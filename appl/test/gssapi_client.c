@@ -45,6 +45,7 @@ do_trans (int sock, gss_ctx_id_t context_hdl)
     gss_buffer_desc real_input_token, real_output_token;
     gss_buffer_t input_token = &real_input_token,
 	output_token = &real_output_token;
+    int conf_flag;
 
     /* get_mic */
 
@@ -90,6 +91,21 @@ do_trans (int sock, gss_ctx_id_t context_hdl)
 	gss_err (1, min_stat, "gss_wrap");
 
     write_token (sock, output_token);
+
+    read_token (sock, input_token);
+
+    maj_stat = gss_unwrap (&min_stat,
+			   context_hdl,
+			   input_token,
+			   output_token,
+			   &conf_flag,
+			   NULL);
+    if(GSS_ERROR(maj_stat))
+	gss_err (1, min_stat, "gss_unwrap");
+	
+    write_token (sock, output_token);
+
+    gss_release_buffer(&min_stat, output_token);
 
     return 0;
 }

@@ -38,7 +38,7 @@ RCSID("$Id$");
 static int help_flag;
 static int version_flag;
 static char *port_str;
-static char *keytab_str;
+char *keytab_str;
 krb5_keytab keytab;
 char *service = SERVICE;
 char *mech = "krb5";

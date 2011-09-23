@@ -95,7 +95,7 @@ done
 # RAND_file_name() when the enviroment is lacking those.
 #
 
-if [ -e /dev/random -o -e /dev/urandom -o -e /dev/srandom -o -e /dev/arandom ] ; then
+if [ -r /dev/random -o -r /dev/urandom -o -r /dev/srandom -o -r /dev/arandom ] ; then
 
     # try hard to unset HOME and RANDFILE
     HOME=

@@ -34,7 +34,7 @@
  */
 
 #include <stdio.h>
-#include <err.h>
+#include <stdlib.h>
 
 #include "heimbase.h"
 #include "heimbasepriv.h"

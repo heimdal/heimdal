@@ -190,41 +190,6 @@ krb5_vprepend_error_message(krb5_context context, krb5_error_code ret,
     HEIMDAL_MUTEX_unlock(context->mutex);
 }
 
-
-/**
- * Return the error message in context. On error or no error string,
- * the function returns NULL.
- *
- * @param context Kerberos 5 context
- *
- * @return an error string, needs to be freed with
- * krb5_free_error_message(). The functions return NULL on error.
- *
- * @ingroup krb5_error
- */
-
-KRB5_LIB_FUNCTION char * KRB5_LIB_CALL
-krb5_get_error_string(krb5_context context)
-{
-    char *ret = NULL;
-
-    HEIMDAL_MUTEX_lock(context->mutex);
-    if (context->error_string)
-	ret = strdup(context->error_string);
-    HEIMDAL_MUTEX_unlock(context->mutex);
-    return ret;
-}
-
-KRB5_LIB_FUNCTION krb5_boolean KRB5_LIB_CALL
-krb5_have_error_string(krb5_context context)
-{
-    char *str;
-    HEIMDAL_MUTEX_lock(context->mutex);
-    str = context->error_string;
-    HEIMDAL_MUTEX_unlock(context->mutex);
-    return str != NULL;
-}
-
 /**
  * Return the error message for `code' in context. On memory
  * allocation error the function returns NULL.
@@ -305,7 +270,7 @@ krb5_free_error_message(krb5_context context, const char *msg)
 
 KRB5_LIB_FUNCTION const char* KRB5_LIB_CALL
 krb5_get_err_text(krb5_context context, krb5_error_code code)
-    KRB5_DEPRECATED_FUNCTION("Use X instead")
+    KRB5_DEPRECATED_FUNCTION("Use krb5_get_error_message instead")
 {
     const char *p = NULL;
     if(context != NULL)
@@ -316,3 +281,4 @@ krb5_get_err_text(krb5_context context, krb5_error_code code)
 	p = "Unknown error";
     return p;
 }
+

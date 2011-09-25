@@ -122,6 +122,19 @@ public class jgssapi_server {
 	    System.err.println("wrap conf failed");
 
 
+	/*
+	 * wrap conf
+	 */
+	System.out.println("warp conf");
+	intoken = new byte[] { 0x66, 0x6f, 0x6f };
+	outtoken = context.wrap(intoken, 0, intoken.length, new MessageProp(0, true));
+	putMessage(outStream, outtoken);
+	outtoken = getMessage(inStream);
+
+
+	context.dispose();
+
+
 	System.exit(0);
     }
 }

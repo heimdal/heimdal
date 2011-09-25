@@ -39,6 +39,7 @@ libheimbase_OBJS =		\
 	$(OBJ)\array.obj	\
 	$(OBJ)\bool.obj		\
 	$(OBJ)\dict.obj		\
+	$(OBJ)\error.obj	\
 	$(OBJ)\heimbase.obj	\
 	$(OBJ)\null.obj		\
 	$(OBJ)\number.obj	\

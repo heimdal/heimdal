@@ -185,4 +185,22 @@ heim_auto_release_t heim_auto_release_create(void);
 void heim_auto_release_drain(heim_auto_release_t);
 void heim_auto_release(heim_object_t);
 
+
+/*
+ *
+ */
+
+typedef struct heim_error * heim_error_t;
+
+heim_error_t	heim_error_create(int, const char *, ...)
+    HEIMDAL_PRINTF_ATTRIBUTE((printf, 2, 3));
+
+heim_error_t	heim_error_createv(int, const char *, va_list)
+    HEIMDAL_PRINTF_ATTRIBUTE((printf, 2, 0));
+
+heim_string_t heim_error_copy_string(heim_error_t);
+int heim_error_get_code(heim_error_t);
+
+heim_error_t heim_error_append(heim_error_t, heim_error_t);
+
 #endif /* HEIM_BASE_H */

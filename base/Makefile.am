@@ -17,6 +17,7 @@ dist_libheimbase_la_SOURCES =	\
 	baselocl.h		\
 	bool.c			\
 	dict.c			\
+	error.c			\
 	heimbase.c		\
 	heimbasepriv.h		\
 	heimqueue.h		\

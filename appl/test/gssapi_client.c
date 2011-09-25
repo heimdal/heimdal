@@ -63,6 +63,24 @@ do_trans (int sock, gss_ctx_id_t context_hdl)
     write_token (sock, input_token);
     write_token (sock, output_token);
 
+    gss_release_buffer(&min_stat, output_token);
+
+    /* verify mic */
+
+    read_token (sock, input_token);
+    read_token (sock, output_token);
+
+    maj_stat = gss_verify_mic(&min_stat,
+			      context_hdl,
+			      input_token,
+			      output_token,
+			      NULL);
+    if (GSS_ERROR(maj_stat))
+	gss_err (1, min_stat, "gss_verify_mic");
+
+    gss_release_buffer (&min_stat, input_token);
+    gss_release_buffer (&min_stat, output_token);
+
     /* wrap */
 
     input_token->length = 7;

@@ -89,6 +89,7 @@ public class jgssapi_server {
 	 */
 	System.out.println("mic test");
 
+	System.out.println("  verify mic");
 
 	byte[] intoken = getMessage(inStream);
 	byte[] outtoken = getMessage(inStream);
@@ -96,6 +97,14 @@ public class jgssapi_server {
 
 	context.verifyMIC(outtoken, 0, outtoken.length, 
 			  intoken, 0, intoken.length, new MessageProp(0, false));
+
+	System.out.println("  create mic");
+
+	bytes = new byte[] { 0x66, 0x6f, 0x6f };
+
+	outtoken = context.getMIC(bytes, 0, bytes.length, new MessageProp(0, false));
+	putMessage(outStream, bytes);
+	putMessage(outStream, outtoken);
 
 	/*
 	 * wrap int
@@ -131,9 +140,7 @@ public class jgssapi_server {
 	putMessage(outStream, outtoken);
 	outtoken = getMessage(inStream);
 
-
 	context.dispose();
-
 
 	System.exit(0);
     }

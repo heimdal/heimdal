@@ -90,6 +90,24 @@ process_it(int sock,
     gss_release_buffer (&min_stat, input_token);
     gss_release_buffer (&min_stat, output_token);
 
+    /* create mic */
+
+    input_token->length = 6;
+    input_token->value  = strdup("hejsan");
+
+    maj_stat = gss_get_mic(&min_stat,
+			   context_hdl,
+			   GSS_C_QOP_DEFAULT,
+			   input_token,
+			   output_token);
+    if (GSS_ERROR(maj_stat))
+	gss_err (1, min_stat, "gss_get_mic");
+
+    write_token (sock, input_token);
+    write_token (sock, output_token);
+
+    gss_release_buffer (&min_stat, output_token);
+
     /* gss_unwrap */
 
     read_token (sock, input_token);

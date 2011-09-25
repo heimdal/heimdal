@@ -106,30 +106,39 @@ java \
     KerberosInit > output.tmp 2>&1 || { cat output.tmp ; exit 1; }
 
 
-echo "start server"
-java \
-    -Dsun.security.krb5.debug=true \
-    -Djava.security.krb5.conf="${objdir}"/krb5.conf \
-    -Djavax.security.auth.useSubjectCredsOnly=false \
-    -Djava.security.auth.login.config="${srcdir}/jaas.conf" \
-    jgssapi_server > output.tmp 2>&1 &
-javapid=$!
-sleep 5
+# Disabled because of:
+#
+# http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=7077646
+# http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=7077640
+#
 
-trap "kill -9 ${kdcpid} ${javapid}; echo signal killing kdc java; exit 1;" EXIT
+if false ; then
 
-echo "Getting client initial tickets"; > messages.log
-${kinit} --password-file=${objdir}/foopassword lha@$R || \
-	{ echo "kinit failed" ; exit 1; }
-
-env KRB5CCNAME=${cache} \
-    ${gssclient} --port=4717 --service=host localhost || exit 1
-
-sleep 5
-
-kill ${javapid}
-
-grep 'Exception in thread' output.tmp && exit 1
+    echo "start server"
+    java \
+        -Dsun.security.krb5.debug=true \
+        -Djava.security.krb5.conf="${objdir}"/krb5.conf \
+        -Djavax.security.auth.useSubjectCredsOnly=false \
+        -Djava.security.auth.login.config="${srcdir}/jaas.conf" \
+        jgssapi_server > output.tmp 2>&1 &
+    javapid=$!
+    sleep 5
+    
+    trap "kill -9 ${kdcpid} ${javapid}; echo signal killing kdc java; exit 1;" EXIT
+    
+    echo "Getting client initial tickets"; > messages.log
+    ${kinit} --password-file=${objdir}/foopassword lha@$R || \
+    	{ echo "kinit failed" ; exit 1; }
+    
+    env KRB5CCNAME=${cache} \
+        ${gssclient} --port=4717 --service=host localhost || exit 1
+    
+    sleep 5
+    
+    kill ${javapid}
+    
+    grep 'Exception in thread' output.tmp && exit 1
+fi
 
 echo "Done"
 

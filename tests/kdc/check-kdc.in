@@ -156,7 +156,7 @@ ${EGREP} -v '^FILE:' tempfile | ${EGREP} -v '^Vno' | ${EGREP} -v '^$' | \
     awk '$1 !~ /1/  { exit 1 }' || exit 1
 
 ${kadmin} get foo@${R} > tempfile || exit 1
-enctypes=`grep Keytypes: tempfile | sed 's/(pw-salt)//g' | sed 's/,//g' | sed 's/Keytypes://'`
+enctypes=`grep Keytypes: tempfile | sed 's/(pw-salt)//g' | sed 's/,//g' | sed 's/Keytypes://' | sed 's/\[[0-9]*\]//g'`
 
 enctype_sans_aes=`echo $enctypes | sed 's/aes[^ ]*//g'`
 enctype_sans_des3=`echo $enctypes | sed 's/des3-cbc-sha1//g'`

@@ -287,7 +287,7 @@ typedef struct krb5_context_data {
     char *default_cc_name;
     char *default_cc_name_env;
     int default_cc_name_set;
-    void *mutex;			/* protects error_string/error_buf */
+    void *mutex;			/* protects error_string */
     int large_msg_size;
     int flags;
 #define KRB5_CTX_F_DNS_CANONICALIZE_HOSTNAME	1

@@ -2280,6 +2280,26 @@ krb5_allow_weak_crypto(krb5_context context,
     return 0;
 }
 
+/**
+ * Returns is the encryption is strong or weak
+ *
+ * @param context Kerberos 5 context
+ * @param enctype encryption type to probe
+ *
+ * @return Returns true if encryption type is weak or is not supported.
+ *
+ * @ingroup krb5_crypto
+ */
+
+KRB5_LIB_FUNCTION krb5_boolean KRB5_LIB_CALL
+krb5_is_enctype_weak(krb5_context context, krb5_enctype enctype)
+{
+    struct _krb5_encryption_type *et = _krb5_find_enctype(enctype);
+    if(et == NULL || (et->flags & F_WEAK))
+	return TRUE;
+    return FALSE;
+}
+
 static size_t
 wrapped_length (krb5_context context,
 		krb5_crypto  crypto,

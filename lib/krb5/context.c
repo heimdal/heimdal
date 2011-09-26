@@ -885,6 +885,32 @@ krb5_kerberos_enctypes(krb5_context context)
 	ETYPE_ARCFOUR_HMAC_MD5,
 	ETYPE_NULL
     };
+
+    static const krb5_enctype weak[] = {
+	ETYPE_AES256_CTS_HMAC_SHA1_96,
+	ETYPE_AES128_CTS_HMAC_SHA1_96,
+	ETYPE_DES3_CBC_SHA1,
+	ETYPE_DES3_CBC_MD5,
+	ETYPE_ARCFOUR_HMAC_MD5,
+	ETYPE_DES_CBC_MD5,
+	ETYPE_DES_CBC_MD4,
+	ETYPE_DES_CBC_CRC,
+	ETYPE_NULL
+    };
+
+    /*
+     * if the list of enctypes enabled by "allow_weak_crypto"
+     * are valid, then return the former default enctype list
+     * that contained the weak entries.
+     */
+    if (krb5_enctype_valid(context, ETYPE_DES_CBC_CRC) == 0 &&
+        krb5_enctype_valid(context, ETYPE_DES_CBC_MD4) == 0 &&
+        krb5_enctype_valid(context, ETYPE_DES_CBC_MD5) == 0 &&
+        krb5_enctype_valid(context, ETYPE_DES_CBC_NONE) == 0 &&
+        krb5_enctype_valid(context, ETYPE_DES_CFB64_NONE) == 0 &&
+        krb5_enctype_valid(context, ETYPE_DES_PCBC_NONE) == 0)
+        return weak;
+
     return p;
 }
 

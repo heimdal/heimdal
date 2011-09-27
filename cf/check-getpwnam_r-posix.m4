@@ -14,7 +14,7 @@ if test "$ac_cv_func_getpwnam_r" = yes; then
 int main(int argc, char **argv)
 {
 	struct passwd pw, *pwd;
-	return getpwnam_r("", &pw, NULL, 0, &pwd) < 0;
+	return getpwnam_r("", &pw, 0, 0, &pwd) < 0;
 }
 ]])],[ac_cv_func_getpwnam_r_posix=yes],[ac_cv_func_getpwnam_r_posix=no],[:])
 LIBS="$ac_libs")
@@ -26,7 +26,7 @@ LIBS="$ac_libs")
 int main(int argc, char **argv)
 {
 	struct passwd pw, *pwd;
-	return getpwnam_r("", &pw, NULL, 0, &pwd) < 0;
+	return getpwnam_r("", &pw, 0, 0, &pwd) < 0;
 }
 ]])],[ac_cv_func_getpwnam_r_posix_def=no],[ac_cv_func_getpwnam_r_posix_def=yes],[:])
 LIBS="$ac_libs")

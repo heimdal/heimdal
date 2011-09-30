@@ -503,9 +503,13 @@ mdb_value2entry(krb5_context context, krb5_data *data, krb5_kvno target_kvno,
 	goto out;
     }
 
+    krb5_storage_free(sp);
+
     return 0;
 
 out:
+    krb5_storage_free(sp);
+
     if (ret == HEIM_ERR_EOF)
 	/* Better error code than "end of file" */
 	ret = HEIM_ERR_BAD_HDBENT_ENCODING;

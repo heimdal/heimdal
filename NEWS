@@ -1,3 +1,10 @@
+Release Notes - Heimdal - Version Heimdal 1.5.1
+
+ Bug fixes
+ - Fix building on Solaris, requires c99
+ - Fix building on Windows
+ - Build system updates
+
 Release Notes - Heimdal - Version Heimdal 1.5
 
 New features

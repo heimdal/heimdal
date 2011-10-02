@@ -63,9 +63,6 @@ struct hx_expr_input _hx509_expr_input;
 #undef YY_INPUT
 #define YY_INPUT(buf,res,maxsize) (res = lex_input(buf, maxsize))
 
-#undef input
-#define input() lex_classic_input()
-
 #undef ECHO
 
 %}
@@ -141,16 +138,3 @@ lex_input(char *buf, int max_size)
 
     return n;
 }
-
-static int
-lex_classic_inputinput(void)
-{
-    int n;
-
-    n = _hx509_expr_input.length - _hx509_expr_input.offset;
-    if (n <= 0)
-	return YY_NULL;
-
-    return _hx509_expr_input.buf[_hx509_expr_input.offset++];
-}
-

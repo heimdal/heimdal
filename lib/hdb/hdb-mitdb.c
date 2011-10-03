@@ -128,10 +128,10 @@ mdb_principal2key(krb5_context context,
 #define KRB5_KDB_SALTTYPE_CERTHASH	6
 
 static krb5_error_code
-fix_salt(krb5_context context, hdb_entry *ent, int key_num)
+fix_salt(krb5_context context, hdb_entry *ent, Key *k)
 {
     krb5_error_code ret;
-    Salt *salt = ent->keys.val[key_num].salt;
+    Salt *salt = k->salt;
     /* fix salt type */
     switch((int)salt->type) {
     case KRB5_KDB_SALTTYPE_NORMAL:
@@ -187,8 +187,8 @@ fix_salt(krb5_context context, hdb_entry *ent, int key_num)
 	break;
     case KRB5_KDB_SALTTYPE_CERTHASH:
 	krb5_data_free(&salt->salt);
-	free(ent->keys.val[key_num].salt);
-	ent->keys.val[key_num].salt = NULL;
+	free(k->salt);
+	k->salt = NULL;
 	break;
     default:
 	abort();
@@ -263,7 +263,7 @@ mdb_keyvalue2key(krb5_context context, hdb_entry *entry, krb5_storage *sp, uint1
 		k->salt->salt.length = u16;
 		krb5_storage_read(sp, k->salt->salt.data, k->salt->salt.length);
 	    }
-	    fix_salt(context, entry, entry->keys.len - 1);
+	    fix_salt(context, entry, k);
 	} else {
 	    /*
 	     * Whatever this "version" might be, we skip it

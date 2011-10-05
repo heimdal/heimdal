@@ -228,10 +228,6 @@ mdb_keyvalue2key(krb5_context context, hdb_entry *entry, krb5_storage *sp, uint1
 	if (i == 0) {
 	    /* This "version" means we have a key */
 	    k->key.keytype = type;
-	    if (u16 < 2) {
-		ret = EINVAL;
-		goto out;
-	    }
 	    /*
 	     * MIT stores keys encrypted keys as {16-bit length
 	     * of plaintext key, {encrypted key}}.  The reason
@@ -242,10 +238,16 @@ mdb_keyvalue2key(krb5_context context, hdb_entry *entry, krb5_storage *sp, uint1
 	     * 16-bit length-of-plaintext-key field.
 	     */
 	    krb5_storage_seek(sp, 2, SEEK_CUR); /* skip real length */
-	    k->key.keyvalue.length = u16 - 2;   /* adjust cipher len */
-	    k->key.keyvalue.data = malloc(k->key.keyvalue.length);
-	    krb5_storage_read(sp, k->key.keyvalue.data,
-			      k->key.keyvalue.length);
+	    if (u16 >= 2) {
+		k->key.keyvalue.length = u16 - 2;   /* adjust cipher len */
+		k->key.keyvalue.data = malloc(k->key.keyvalue.length);
+		krb5_storage_read(sp, k->key.keyvalue.data,
+				  k->key.keyvalue.length);
+	    } else {
+		/* We'll ignore this key; see our caller */
+		k->key.keyvalue.length = 0;
+		krb5_storage_seek(sp, u16, SEEK_CUR);
+	    }
 	} else if (i == 1) {
 	    /* This "version" means we have a salt */
 	    k->salt = calloc(1, sizeof(*k->salt));

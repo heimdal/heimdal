@@ -237,8 +237,8 @@ mdb_keyvalue2key(krb5_context context, hdb_entry *entry, krb5_storage *sp, uint1
 	     * the key given its enctype, so we ignore this
 	     * 16-bit length-of-plaintext-key field.
 	     */
-	    krb5_storage_seek(sp, 2, SEEK_CUR); /* skip real length */
-	    if (u16 >= 2) {
+	    if (u16 > 2) {
+		krb5_storage_seek(sp, 2, SEEK_CUR); /* skip real length */
 		k->key.keyvalue.length = u16 - 2;   /* adjust cipher len */
 		k->key.keyvalue.data = malloc(k->key.keyvalue.length);
 		krb5_storage_read(sp, k->key.keyvalue.data,
@@ -246,7 +246,8 @@ mdb_keyvalue2key(krb5_context context, hdb_entry *entry, krb5_storage *sp, uint1
 	    } else {
 		/* We'll ignore this key; see our caller */
 		k->key.keyvalue.length = 0;
-		krb5_storage_seek(sp, u16, SEEK_CUR);
+		k->key.keyvalue.data = NULL;
+		krb5_storage_seek(sp, u16, SEEK_CUR); /* skip real length */
 	    }
 	} else if (i == 1) {
 	    /* This "version" means we have a salt */

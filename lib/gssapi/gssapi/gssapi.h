@@ -1030,6 +1030,13 @@ GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL gss_add_cred_with_password (
            );
 
 GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL
+gss_localname(
+        OM_uint32 *minor,
+        const gss_name_t name,
+        const gss_OID mech_type,
+        gss_buffer_t localname);
+
+GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL
 gss_pname_to_uid(
         OM_uint32 *minor,
         const gss_name_t name,

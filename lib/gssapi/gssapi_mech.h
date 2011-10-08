@@ -460,11 +460,11 @@ struct gss_mo_desc_struct {
     int (*set)(gss_const_OID, gss_mo_desc *, int, gss_buffer_t);
 };
 
-typedef OM_uint32 GSSAPI_CALLCONV _gss_pname_to_uid_t (
+typedef OM_uint32 GSSAPI_CALLCONV _gss_localname_t (
 	       OM_uint32 *,		/* minor_status */
 	       const gss_name_t,	/* name */
 	       const gss_OID,		/* mech_type */
-	       uid_t *			/* uidOut */
+	       gss_buffer_t		/* localname */
 	      );
 
 typedef OM_uint32 GSSAPI_CALLCONV _gss_authorize_localname_t (
@@ -536,7 +536,7 @@ typedef struct gssapi_mech_interface_desc {
 	_gss_cred_label_set_t		*gm_cred_label_set;
         gss_mo_desc			*gm_mo;
         size_t				 gm_mo_num;
-        _gss_pname_to_uid_t             *gm_pname_to_uid;
+        _gss_localname_t                *gm_localname;
         _gss_authorize_localname_t      *gm_authorize_localname;
         _gss_display_name_ext_t         *gm_display_name_ext;
         _gss_inquire_name_t             *gm_inquire_name;

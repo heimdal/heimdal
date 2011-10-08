@@ -65,6 +65,7 @@ EXPORTS
 	gss_krb5_get_tkt_flags
 	gss_krb5_import_cred
 	gss_krb5_set_allowable_enctypes
+	gss_localname
 	gss_mg_collect_error
         gss_mo_get
         gss_mo_set

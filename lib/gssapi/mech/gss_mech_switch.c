@@ -381,7 +381,7 @@ _gss_load_mech(void)
 		OPTSYM(set_name_attribute);
 		OPTSYM(delete_name_attribute);
 		OPTSYM(export_name_composite);
-		OPTSYM(pname_to_uid);
+		OPTSYM(localname);
 		OPTSPISYM(authorize_localname);
 
 		mi = dlsym(so, "gss_mo_init");

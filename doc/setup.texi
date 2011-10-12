@@ -1452,6 +1452,45 @@ Mar 26 23:40:10  Mar 27 09:40:10  krbtgt/EXAMPLE.ORG@@EXAMPLE.ORG
 
 @section Configure the KDC
 
+Configuration options for the KDC.
+
+@table @asis
+@item enable-pkinit = bool
+
+Enable PKINIT for this KDC.
+
+@item pkinit_identity = string
+
+Identity that the KDC will use when talking to clients.
+
+@item pkinit_anchors = string
+
+Trust anchors that the KDC will use when evaluating the trust of the
+client certificate.
+
+@item pkinit_pool = strings ...
+
+Extra certificate the KDC will use when building trust chains if it
+can't find enough certificates in the request from the client.
+
+@item pkinit_allow_proxy_certificate = bool
+
+Allow clients to use proxy certificates, its the root certificate that
+is clients EE certificate that is used for authorisation.
+
+@item pkinit_win2k_require_binding = bool
+
+Require windows clients up be upgrade to not allow cut and paste
+attack on encrypted data, applies to Windows XP and windows 2000
+servers.
+
+@item pkinit_principal_in_certificate = bool
+
+Enable the KDC to use id-pkinit-san to determine to determine the
+mapping between a certificate and principal.
+
+@end table
+
 @example
 [kdc]
 	enable-pkinit = yes

@@ -84,7 +84,6 @@ Setting up a realm
 * Creating the database::       
 * Modifying the database::      
 * keytabs::                     
-* Serving Kerberos 4/524/kaserver::  
 * Remote administration::       
 * Password changing::           
 * Testing clients and servers::  

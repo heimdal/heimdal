@@ -112,7 +112,6 @@ Kerberos 4 issues
 
 * Principal conversion issues::  
 * Converting a version 4 database::  
-* kaserver::                    
 
 Windows compatibility
 

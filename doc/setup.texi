@@ -17,7 +17,6 @@ doing so.  It will make life easier for you and everyone else.
 * Modifying the database::
 * Checking the setup::
 * keytabs::
-* Serving Kerberos 4/524/kaserver::
 * Remote administration::
 * Password changing::
 * Testing clients and servers::

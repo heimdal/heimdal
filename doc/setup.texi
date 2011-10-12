@@ -1434,8 +1434,6 @@ Credentials cache: API:4
 Mar 26 23:40:10  Mar 27 09:40:10  krbtgt/EXAMPLE.ORG@@EXAMPLE.ORG
 @end example
 
-TODO: Write about the KDC.
-
 @section Configure the client
 
 @example

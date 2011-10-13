@@ -204,8 +204,8 @@ match_local_principals(krb5_context context,
  *
  * The user may have a ~/.k5login file listing principals that are
  * allowed to login as that user. If that file does not exist, all
- * principals with a first component identical to the username, and a
- * realm considered local, are allowed access.
+ * principals with a only one component that is identical to the
+ * username, and a realm considered local, are allowed access.
  *
  * The .k5login file must contain one principal per line, be owned by
  * user and not be writable by group or other (but must be readable by

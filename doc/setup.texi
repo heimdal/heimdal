@@ -1259,9 +1259,12 @@ the mapping in the principals entry in the kerberos database.
 
 @section Certificates
 
-This section documents the requirements on the KDC and client
-certificates and the format used in the id-pkinit-san OtherName
-extention.
+This and following subsection documents the requirements on the KDC
+and client certificates and the format used in the id-pkinit-san
+OtherName extention.
+
+On how to create certificates, you should read @xref{Use OpenSSL to
+create certificates}.
 
 @subsection KDC certificate
 

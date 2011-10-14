@@ -1248,8 +1248,8 @@ certificates to get the initial ticket (usually the krbtgt
 ticket-granting ticket).
 
 To use PK-INIT you must first have a PKI. If you don't have one, it is
-time to create it. You should first read the whole chapter of the
-document to see the requirements imposed on the CA software.
+time to create it. You should first read the whole current chapter of
+the document to see the requirements imposed on the CA software.
 
 A mapping between the PKI certificate and what principals that
 certificate is allowed to use must exist. There are several ways to do
@@ -1291,7 +1291,7 @@ secret.
 @subsection Client certificate
 
 The client certificate may need to have a EKU id-pkekuoid
-(1.3.6.1.5.2.3.4) set depending on the certifiate on the KDC.
+(1.3.6.1.5.2.3.4) set depending on the configuration on the KDC.
 
 It possible to store the principal (if allowed by the KDC) in the
 certificate and thus delegate responsibility to do the mapping between
@@ -1461,12 +1461,12 @@ Enable PKINIT for this KDC.
 
 @item pkinit_identity = string
 
-Identity that the KDC will use when talking to clients.
+Identity that the KDC will use when talking to clients. Mandatory.
 
 @item pkinit_anchors = string
 
 Trust anchors that the KDC will use when evaluating the trust of the
-client certificate.
+client certificate. Mandatory.
 
 @item pkinit_pool = strings ...
 

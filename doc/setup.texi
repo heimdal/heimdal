@@ -1516,6 +1516,13 @@ lha@@EXAMPLE.ORG:CN=Love,UID=lha
 
 @subsection Using the Kerberos database
 
+You can also store the subject of the certificate in the principal
+entry in the kerberos database.
+
+@example
+kadmin modify --pkinit-acl="CN=baz,DC=test,DC=h5l,DC=se" user@@REALM
+@end example
+
 @section Use hxtool to create certificates
 
 @subsection Generate certificates

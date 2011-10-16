@@ -53,7 +53,7 @@ _krb5_principalname2krb5_principal (krb5_context context,
     krb5_error_code ret;
     krb5_principal p;
 
-    p = malloc(sizeof(*p));
+    p = calloc(1, sizeof(*p));
     if (p == NULL)
 	return ENOMEM;
     ret = copy_PrincipalName(&from, &p->name);

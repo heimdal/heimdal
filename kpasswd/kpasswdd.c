@@ -293,6 +293,7 @@ change (krb5_auth_context auth_context,
 	if (chpw.targname) {
 	    krb5_principal_data princ;
 
+	    memset(&princ, 0, sizeof (princ));
 	    princ.name = *chpw.targname;
 	    princ.realm = *chpw.targrealm;
 	    if (princ.realm == NULL) {

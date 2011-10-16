@@ -1608,6 +1608,7 @@ match_rfc_san(krb5_context context,
 	    return KRB5_KDC_ERR_CLIENT_NAME_MISMATCH;
 	}
 
+	memset(&principal, 0, sizeof (principal));
 	principal.name = kn.principalName;
 	principal.realm = kn.realm;
 

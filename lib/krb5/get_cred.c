@@ -1116,6 +1116,68 @@ _krb5_get_cred_kdc_any(krb5_context context,
 				ret_tgts);
 }
 
+static krb5_error_code
+check_cc(krb5_context context, krb5_flags options, krb5_ccache ccache,
+	 krb5_creds *in_creds, krb5_creds *out_creds)
+{
+    krb5_error_code ret;
+    krb5_timestamp timeret;
+
+    /*
+     * If we got a credential, check if credential is expired before
+     * returning it.
+     */
+    ret = krb5_cc_retrieve_cred(context, ccache,
+				options & KRB5_TC_MATCH_KEYTYPE,
+                                in_creds, out_creds);
+    if (ret != 0)
+	return ret; /* Caller will check for KRB5_CC_END */
+
+    /*
+     * If we got a credential, check if credential is expired before
+     * returning it, but only if KRB5_GC_EXPIRED_OK is not set.
+     */
+
+    /* If expired ok, don't bother checking */
+    if (options & KRB5_GC_EXPIRED_OK)
+	return 0;
+
+    krb5_timeofday(context, &timeret);
+    if (out_creds->times.endtime > timeret)
+	return 0;
+
+    /* Expired and not ok; remove and pretend we didn't find it */
+    if (options & KRB5_GC_CACHED)
+	krb5_cc_remove_cred(context, ccache, 0, out_creds);
+
+    krb5_free_cred_contents(context, out_creds);
+    memset(out_creds, 0, sizeof (*out_creds));
+    return KRB5_CC_END;
+}
+
+static void
+store_cred(krb5_context context, krb5_ccache ccache,
+	   krb5_const_principal server_princ, krb5_creds *creds)
+{
+    krb5_error_code ret;
+    krb5_principal tmp_princ = creds->server;
+    krb5_principal p;
+
+    krb5_cc_store_cred(context, ccache, creds);
+    if (strcmp(server_princ->realm, "") != 0)
+	return;
+
+    ret = krb5_copy_principal(context, server_princ, &p);
+    if (ret)
+	return;
+    if (p->name.name_type == KRB5_NT_SRV_HST_NEEDS_CANON)
+	p->name.name_type = KRB5_NT_SRV_HST;
+    creds->server = p;
+    krb5_cc_store_cred(context, ccache, creds);
+    creds->server = tmp_princ;
+    krb5_free_principal(context, p);
+}
+
 
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_get_credentials_with_flags(krb5_context context,
@@ -1126,7 +1188,10 @@ krb5_get_credentials_with_flags(krb5_context context,
 				krb5_creds **out_creds)
 {
     krb5_error_code ret;
+    krb5_name_canon_iterator name_canon_iter = NULL;
+    krb5_name_canon_rule_options rule_opts;
     krb5_creds **tgts;
+    krb5_creds *try_creds;
     krb5_creds *res_creds;
     int i;
 
@@ -1134,6 +1199,7 @@ krb5_get_credentials_with_flags(krb5_context context,
 	ret = krb5_enctype_valid(context, in_creds->session.keytype);
 	if (ret)
 	    return ret;
+	options |= KRB5_TC_MATCH_KEYTYPE;
     }
 
     *out_creds = NULL;
@@ -1144,46 +1210,43 @@ krb5_get_credentials_with_flags(krb5_context context,
 	return ENOMEM;
     }
 
-    if (in_creds->session.keytype)
-	options |= KRB5_TC_MATCH_KEYTYPE;
-
-    /*
-     * If we got a credential, check if credential is expired before
-     * returning it.
-     */
-    ret = krb5_cc_retrieve_cred(context,
-                                ccache,
-                                in_creds->session.keytype ?
-                                KRB5_TC_MATCH_KEYTYPE : 0,
-                                in_creds, res_creds);
-    /*
-     * If we got a credential, check if credential is expired before
-     * returning it, but only if KRB5_GC_EXPIRED_OK is not set.
-     */
-    if (ret == 0) {
-	krb5_timestamp timeret;
-
-	/* If expired ok, don't bother checking */
-        if(options & KRB5_GC_EXPIRED_OK) {
-            *out_creds = res_creds;
-            return 0;
-        }
-
-	krb5_timeofday(context, &timeret);
-	if(res_creds->times.endtime > timeret) {
+    if (in_creds->server->name.name_type == KRB5_NT_SRV_HST_NEEDS_CANON) {
+	ret = check_cc(context, options, ccache, in_creds, res_creds);
+	if (ret == 0) {
 	    *out_creds = res_creds;
 	    return 0;
 	}
-	if(options & KRB5_GC_CACHED)
-	    krb5_cc_remove_cred(context, ccache, 0, res_creds);
-
-    } else if(ret != KRB5_CC_END) {
-        free(res_creds);
-        return ret;
     }
-    free(res_creds);
+
+    ret = krb5_name_canon_iterator_start(context, NULL, in_creds,
+					 &name_canon_iter);
+    if (ret)
+	return ret;
+
+next_rule:
+    krb5_free_cred_contents(context, res_creds);
+    memset(res_creds, 0, sizeof (res_creds));
+    ret = krb5_name_canon_iterate_creds(context, &name_canon_iter, &try_creds,
+					&rule_opts);
+    if (ret)
+	goto out;
+    if (name_canon_iter == NULL) {
+	if (options & KRB5_GC_CACHED)
+	    ret = KRB5_CC_NOTFOUND;
+	else
+	    ret = KRB5KDC_ERR_S_PRINCIPAL_UNKNOWN;
+	goto out;
+    }
+
+    ret = check_cc(context, options, ccache, try_creds, res_creds);
+    if (ret == 0) {
+	*out_creds = res_creds;
+	goto out;
+    } else if(ret != KRB5_CC_END) {
+        goto out;
+    }
     if(options & KRB5_GC_CACHED)
-	return not_found(context, in_creds->server, KRB5_CC_NOTFOUND);
+	goto next_rule;
 
     if(options & KRB5_GC_USER_USER)
 	flags.b.enc_tkt_in_skey = 1;
@@ -1192,15 +1255,26 @@ krb5_get_credentials_with_flags(krb5_context context,
 
     tgts = NULL;
     ret = _krb5_get_cred_kdc_any(context, flags, ccache,
-				 in_creds, NULL, NULL, out_creds, &tgts);
+				 try_creds, NULL, NULL, out_creds, &tgts);
     for(i = 0; tgts && tgts[i]; i++) {
 	krb5_cc_store_cred(context, ccache, tgts[i]);
 	krb5_free_creds(context, tgts[i]);
     }
     free(tgts);
+    if (ret == KRB5KDC_ERR_S_PRINCIPAL_UNKNOWN &&
+	!(rule_opts & KRB5_NCRO_SECURE))
+	goto next_rule;
+
     if(ret == 0 && (options & KRB5_GC_NO_STORE) == 0)
-	krb5_cc_store_cred(context, ccache, *out_creds);
-    return ret;
+	store_cred(context, ccache, in_creds->server, *out_creds);
+
+out:
+    krb5_free_name_canon_iterator(context, name_canon_iter);
+    if (!ret) {
+	krb5_free_creds(context, res_creds);
+	return not_found(context, in_creds->server, ret);
+    }
+    return 0;
 }
 
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
@@ -1315,7 +1389,6 @@ krb5_get_creds_opt_set_ticket(krb5_context context,
 }
 
 
-
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_get_creds(krb5_context context,
 	       krb5_get_creds_opt opt,
@@ -1328,7 +1401,10 @@ krb5_get_creds(krb5_context context,
     krb5_creds in_creds;
     krb5_error_code ret;
     krb5_creds **tgts;
+    krb5_creds *try_creds;
     krb5_creds *res_creds;
+    krb5_name_canon_iterator name_canon_iter = NULL;
+    krb5_name_canon_rule_options rule_opts;
     int i;
 
     if (opt && opt->enctype) {
@@ -1364,48 +1440,42 @@ krb5_get_creds(krb5_context context,
 	options |= KRB5_TC_MATCH_KEYTYPE;
     }
 
-    /*
-     * If we got a credential, check if credential is expired before
-     * returning it.
-     */
-    ret = krb5_cc_retrieve_cred(context,
-                                ccache,
-				options & KRB5_TC_MATCH_KEYTYPE,
-                                &in_creds, res_creds);
-    /*
-     * If we got a credential, check if credential is expired before
-     * returning it, but only if KRB5_GC_EXPIRED_OK is not set.
-     */
-    if (ret == 0) {
-	krb5_timestamp timeret;
-
-	/* If expired ok, don't bother checking */
-        if(options & KRB5_GC_EXPIRED_OK) {
-            *out_creds = res_creds;
-	    krb5_free_principal(context, in_creds.client);
-            goto out;
-        }
-
-	krb5_timeofday(context, &timeret);
-	if(res_creds->times.endtime > timeret) {
+    /* Check for entry in ccache */
+    if (inprinc->name.name_type == KRB5_NT_SRV_HST_NEEDS_CANON) {
+	ret = check_cc(context, options, ccache, &in_creds, res_creds);
+	if (ret == 0) {
 	    *out_creds = res_creds;
-	    krb5_free_principal(context, in_creds.client);
-            goto out;
+	    goto out;
 	}
-	if(options & KRB5_GC_CACHED)
-	    krb5_cc_remove_cred(context, ccache, 0, res_creds);
+    }
 
+    ret = krb5_name_canon_iterator_start(context, NULL, &in_creds,
+					 &name_canon_iter);
+    if (ret)
+	goto out;
+
+next_rule:
+    ret = krb5_name_canon_iterate_creds(context, &name_canon_iter, &try_creds,
+					&rule_opts);
+    if (ret)
+	return ret;
+    if (name_canon_iter == NULL) {
+	if (options & KRB5_GC_CACHED)
+	    ret = KRB5_CC_NOTFOUND;
+	else
+	    ret = KRB5KDC_ERR_S_PRINCIPAL_UNKNOWN;
+	goto out;
+    }
+    ret = check_cc(context, options, ccache, try_creds, res_creds);
+    if (ret == 0) {
+	*out_creds = res_creds;
+	goto out;
     } else if(ret != KRB5_CC_END) {
-        free(res_creds);
-	krb5_free_principal(context, in_creds.client);
 	goto out;
     }
-    free(res_creds);
-    if(options & KRB5_GC_CACHED) {
-	krb5_free_principal(context, in_creds.client);
-	ret = not_found(context, in_creds.server, KRB5_CC_NOTFOUND);
-	goto out;
-    }
+    if(options & KRB5_GC_CACHED)
+	goto next_rule;
+
     if(options & KRB5_GC_USER_USER) {
 	flags.b.enc_tkt_in_skey = 1;
 	options |= KRB5_GC_NO_STORE;
@@ -1423,18 +1493,28 @@ krb5_get_creds(krb5_context context,
 
     tgts = NULL;
     ret = _krb5_get_cred_kdc_any(context, flags, ccache,
-				 &in_creds, opt->self, opt->ticket,
+				 try_creds, opt->self, opt->ticket,
 				 out_creds, &tgts);
-    krb5_free_principal(context, in_creds.client);
     for(i = 0; tgts && tgts[i]; i++) {
 	krb5_cc_store_cred(context, ccache, tgts[i]);
 	krb5_free_creds(context, tgts[i]);
     }
     free(tgts);
-    if(ret == 0 && (options & KRB5_GC_NO_STORE) == 0)
-	krb5_cc_store_cred(context, ccache, *out_creds);
 
- out:
+    if (ret == KRB5KDC_ERR_S_PRINCIPAL_UNKNOWN &&
+	!(rule_opts & KRB5_NCRO_SECURE))
+	goto next_rule;
+
+    if(ret == 0 && (options & KRB5_GC_NO_STORE) == 0)
+	store_cred(context, ccache, inprinc, *out_creds);
+
+out:
+    if (ret != 0) {
+	krb5_free_creds(context, res_creds);
+	ret = not_found(context, inprinc, ret);
+    }
+    krb5_free_principal(context, in_creds.client);
+    krb5_free_name_canon_iterator(context, name_canon_iter);
     _krb5_debug(context, 5, "krb5_get_creds: ret = %d", ret);
 
     return ret;

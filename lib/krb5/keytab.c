@@ -588,30 +588,13 @@ _krb5_kt_principal_not_found(krb5_context context,
     return ret;
 }
 
-
-/**
- * Retrieve the keytab entry for `principal, kvno, enctype' into `entry'
- * from the keytab `id'. Matching is done like krb5_kt_compare().
- *
- * @param context a Keberos context.
- * @param id a keytab.
- * @param principal principal to match, NULL matches all principals.
- * @param kvno key version to match, 0 matches all key version numbers.
- * @param enctype encryption type to match, 0 matches all encryption types.
- * @param entry the returned entry, free with krb5_kt_free_entry().
- *
- * @return Return an error code or 0, see krb5_get_error_message().
- *
- * @ingroup krb5_keytab
- */
-
-KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
-krb5_kt_get_entry(krb5_context context,
-		  krb5_keytab id,
-		  krb5_const_principal principal,
-		  krb5_kvno kvno,
-		  krb5_enctype enctype,
-		  krb5_keytab_entry *entry)
+static krb5_error_code
+krb5_kt_get_entry_wrapped(krb5_context context,
+			  krb5_keytab id,
+			  krb5_const_principal principal,
+			  krb5_kvno kvno,
+			  krb5_enctype enctype,
+			  krb5_keytab_entry *entry)
 {
     krb5_keytab_entry tmp;
     krb5_error_code ret;
@@ -652,6 +635,56 @@ krb5_kt_get_entry(krb5_context context,
 	return _krb5_kt_principal_not_found(context, KRB5_KT_NOTFOUND,
 					    id, principal, enctype, kvno);
     return 0;
+}
+
+/**
+ * Retrieve the keytab entry for `principal, kvno, enctype' into `entry'
+ * from the keytab `id'. Matching is done like krb5_kt_compare().
+ *
+ * @param context a Keberos context.
+ * @param id a keytab.
+ * @param principal principal to match, NULL matches all principals.
+ * @param kvno key version to match, 0 matches all key version numbers.
+ * @param enctype encryption type to match, 0 matches all encryption types.
+ * @param entry the returned entry, free with krb5_kt_free_entry().
+ *
+ * @return Return an error code or 0, see krb5_get_error_message().
+ *
+ * @ingroup krb5_keytab
+ */
+
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
+krb5_kt_get_entry(krb5_context context,
+		  krb5_keytab id,
+		  krb5_const_principal principal,
+		  krb5_kvno kvno,
+		  krb5_enctype enctype,
+		  krb5_keytab_entry *entry)
+{
+    krb5_error_code ret;
+    krb5_principal try_princ;
+    krb5_name_canon_iterator name_canon_iter;
+
+    if (!principal || principal->name.name_type != KRB5_NT_SRV_HST_NEEDS_CANON)
+	return krb5_kt_get_entry_wrapped(context, id, principal, kvno, enctype,
+					 entry);
+
+    ret = krb5_name_canon_iterator_start(context, principal, NULL,
+					 &name_canon_iter);
+    if (ret)
+	return ret;
+
+    do {
+	ret = krb5_name_canon_iterate_princ(context, &name_canon_iter,
+					    &try_princ, NULL);
+	if (ret)
+	    break;
+	ret = krb5_kt_get_entry_wrapped(context, id, try_princ, kvno,
+					enctype, entry);
+    } while (ret == KRB5_KT_NOTFOUND && name_canon_iter);
+
+    krb5_free_name_canon_iterator(context, name_canon_iter);
+    return ret;
 }
 
 /**

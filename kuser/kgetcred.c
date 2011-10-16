@@ -85,7 +85,7 @@ main(int argc, char **argv)
     krb5_creds *out;
     int optidx = 0;
     krb5_get_creds_opt opt;
-    krb5_principal server;
+    krb5_principal server = NULL;
     krb5_principal impersonate = NULL;
 
     setprogname (argv[0]);
@@ -107,9 +107,6 @@ main(int argc, char **argv)
 
     argc -= optidx;
     argv += optidx;
-
-    if (argc != 1)
-	usage (1);
 
     if(cache_str) {
 	ret = krb5_cc_resolve(context, cache_str, &cache);
@@ -190,18 +187,70 @@ main(int argc, char **argv)
 				       KRB5_GC_CONSTRAINED_DELEGATION);
     }
 
-    ret = krb5_parse_name(context, argv[0], &server);
-    if (ret)
-	krb5_err (context, 1, ret, "krb5_parse_name %s", argv[0]);
-
     if (nametype_str) {
 	int32_t nametype;
+	int do_sn2p = 1;
+	char *sname = NULL;
+	char *hname = NULL;
 
 	ret = krb5_parse_nametype(context, nametype_str, &nametype);
 	if (ret)
 	    krb5_err(context, 1, ret, "krb5_parse_nametype");
 
-	server->name.name_type = (NAME_TYPE)nametype;
+	if (nametype == KRB5_NT_SRV_HST) {
+	    if (argc == 1) {
+		char *cp;
+
+		for (cp = sname; *cp; cp++) {
+		    if (cp[0] == '\\') {
+			cp++;
+		    } else if (cp[0] == '@' && cp[1] != '\0') {
+			/* If a realm is given we assume no canon is needed */
+			do_sn2p = 0;
+			break;
+		    }
+		}
+		if (do_sn2p) {
+		    sname = argv[0];
+		    for (cp = sname; *cp; cp++) {
+			if (cp[0] == '\\') {
+			    cp++;
+			} else if (cp[0] == '/') {
+			    *cp = '\0';
+			    hname = cp + 1;
+			} else if (cp[0] == '@') {
+			    *cp = '\0';
+			    break;
+			}
+		    }
+		}
+	    } else if (argc == 2) {
+		sname = argv[0];
+		hname = argv[1];
+	    } else if (argc != 0) {
+		usage(1);
+	    }
+	    ret = krb5_sname_to_principal(context, hname, sname,
+					   KRB5_NT_SRV_HST, &server);
+	    if (ret)
+		krb5_err(context, 1, ret, "krb5_sname_to_principal %s/%s",
+			 (sname && *sname) ? sname : "<default>",
+			 (hname && *hname) ? hname : "<default>");
+
+	} else {
+	    if (argc != 1)
+		usage(1);
+	    ret = krb5_parse_name(context, argv[0], &server);
+	    if (ret)
+		krb5_err (context, 1, ret, "krb5_parse_name %s", argv[0]);
+	    server->name.name_type = (NAME_TYPE)nametype;
+	}
+    } else if (argc == 1) {
+	ret = krb5_parse_name(context, argv[0], &server);
+	if (ret)
+	    krb5_err (context, 1, ret, "krb5_parse_name %s", argv[0]);
+    } else {
+	usage(1);
     }
 
     ret = krb5_get_creds(context, opt, cache, server, &out);

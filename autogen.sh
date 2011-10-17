@@ -4,4 +4,4 @@
 # tool-chain installed
 set -e
 autoreconf -f -i || { echo "autoreconf failed: $?"; exit 1; }
-find . \( -name '*-private.h' -o -name '*-protos.h' \) | xargs rm
+find . \( -name '*-private.h' -o -name '*-protos.h' \) | xargs rm -f

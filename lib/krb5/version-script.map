@@ -42,6 +42,7 @@ HEIMDAL_KRB5_2.0 {
 		krb5_auth_con_getrcache;
 		krb5_auth_con_getremoteseqnumber;
 		krb5_auth_con_getremotesubkey;
+		krb5_auth_con_getsendsubkey;
 		krb5_auth_con_init;
 		krb5_auth_con_removeflags;
 		krb5_auth_con_setaddrs;

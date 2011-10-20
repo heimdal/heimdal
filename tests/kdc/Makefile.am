@@ -3,6 +3,7 @@ include $(top_srcdir)/Makefile.am.common
 noinst_DATA = \
 	krb5.conf \
 	krb5-canon.conf \
+	krb5-canon2.conf \
 	krb5-hdb-mitdb.conf.in \
 	krb5-weak.conf \
 	krb5-pkinit.conf \
@@ -52,7 +53,7 @@ do_subst = sed $(do_dlopen) \
 
 LDADD = ../../lib/krb5/libkrb5.la $(LIB_roken)
 
-check-canon: check-canon.in Makefile krb5-canon.conf
+check-canon: check-canon.in Makefile krb5-canon.conf krb5-canon2.conf
 	$(do_subst) < $(srcdir)/check-canon.in > check-canon.tmp
 	chmod +x check-canon.tmp
 	mv check-canon.tmp check-canon
@@ -141,6 +142,13 @@ krb5-canon.conf: krb5-canon.conf.in Makefile
 	   -e 's,[@]kdc[@],,g' < $(srcdir)/krb5-canon.conf.in > krb5-canon.conf.tmp
 	mv krb5-canon.conf.tmp krb5-canon.conf
 
+krb5-canon2.conf: krb5-canon2.conf.in Makefile
+	$(do_subst) \
+	   -e 's,[@]WEAK[@],false,g' \
+	   -e 's,[@]dk[@],,g' \
+	   -e 's,[@]kdc[@],,g' < $(srcdir)/krb5-canon2.conf.in > krb5-canon2.conf.tmp
+	mv krb5-canon2.conf.tmp krb5-canon2.conf
+
 krb5-hdb-mitdb.conf: krb5-hdb-mitdb.conf.in Makefile
 	$(do_subst) \
 	   -e 's,[@]WEAK[@],false,g' \
@@ -185,6 +193,7 @@ CLEANFILES= \
 	foopassword \
 	krb5.conf \
 	krb5-canon.conf \
+	krb5-canon2.conf \
 	krb5-weak.conf \
 	krb5.conf.keys \
 	krb5-cc.conf \
@@ -240,6 +249,7 @@ EXTRA_DIST = \
 	krb5-pkinit.conf.in \
 	krb5.conf.in \
 	krb5-canon.conf.in \
+	krb5-canon2.conf.in \
 	krb5.conf.keys.in \
 	ntlm-user-file.txt \
 	leaks-kill.sh \

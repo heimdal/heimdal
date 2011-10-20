@@ -56,7 +56,7 @@ kdestroy="${kdestroy} -c $cache ${afs_no_unlog}"
 KRB5_CONFIG="${objdir}/krb5-canon.conf"
 export KRB5_CONFIG
 
-testfailed="echo test failed; ${klist} -v ; exit 1"
+testfailed="echo test failed; ${klist}; exit 1"
 
 rm -f ${keytabfile}
 rm -f current-db*
@@ -88,7 +88,7 @@ ${kadmin} add -p foo --use-defaults host/t11.test1.h5l.se@${R1} || exit 1
 ${kadmin} add -p foo --use-defaults host/t12.test1.h5l.se@${R2} || exit 1
 ${kadmin} add -p foo --use-defaults host/t22.test2.h5l.se@${R2} || exit 1
 ${kadmin} add -p foo --use-defaults host/t23.test2.h5l.se@${R3} || exit 1
-${kadmin} add -p foo --use-defaults host/t33.test2.h5l.se@${R3} || exit 1
+${kadmin} add -p foo --use-defaults host/t33.test3.h5l.se@${R3} || exit 1
 
 
 echo "Doing database check"
@@ -123,7 +123,7 @@ ${kgetcred} --name-type=SRV_HST host t3 || { ec=1 ; eval "${testfailed}"; }
 ${kgetcred} --name-type=SRV_HST host t11 || { ec=1 ; eval "${testfailed}"; }
 ${kgetcred} --name-type=SRV_HST host t12 || { ec=1 ; eval "${testfailed}"; }
 ${kgetcred} --name-type=SRV_HST host t22 || { ec=1 ; eval "${testfailed}"; }
-${kgetcred} --name-type=SRV_HST host t23 && { ec=1 ; eval "${testfailed}"; }
+${kgetcred} --name-type=SRV_HST host t23 2> /dev/null && { ec=1 ; eval "${testfailed}"; }
 ${kgetcred} --name-type=SRV_HST host t33 || { ec=1 ; eval "${testfailed}"; }
 
 echo "check result"
@@ -141,7 +141,7 @@ ${klist} | grep "host/t3@${R3}" > /dev/null ||
     { ec=1 ; echo "canonicalized t3 entry not present";  eval "${testfailed}"; }
 ${klist} | grep 'host/t11@$' > /dev/null ||
     { ec=1 ; echo "t11 referral entry not present";  eval "${testfailed}"; }
-${klist} | grep "host/t11.test1.h5l.se@${R2}" > /dev/null ||
+${klist} | grep "host/t11.test1.h5l.se@${R1}" > /dev/null ||
     { ec=1 ; echo "canonicalized t11 entry not present";  eval "${testfailed}"; }
 ${klist} | grep 'host/t12@$' > /dev/null ||
     { ec=1 ; echo "t12 referral entry not present";  eval "${testfailed}"; }
@@ -153,8 +153,54 @@ ${klist} | grep "host/t22.test2.h5l.se@${R2}" > /dev/null ||
     { ec=1 ; echo "canonicalized t22 entry not present";  eval "${testfailed}"; }
 ${klist} | grep 'host/t33@$' > /dev/null ||
     { ec=1 ; echo "t33 referral entry not present";  eval "${testfailed}"; }
-${klist} | grep "host/t33.test2.h5l.se@${R2}" > /dev/null ||
+${klist} | grep "host/t33.test3.h5l.se@${R3}" > /dev/null ||
     { ec=1 ; echo "canonicalized t33 entry not present";  eval "${testfailed}"; }
+
+
+${kdestroy}
+
+# This may not be portable.  It'd be nice to be able to set more of the
+# resolver configuration via the environment!
+LOCALDOMAIN=test1.h5l.se
+export LOCALDOMAIN
+KRB5_CONFIG="${objdir}/krb5-canon2.conf"
+export KRB5_CONFIG
+
+echo "Getting client initial tickets (round 2)";
+${kinit} --password-file=${objdir}/foopassword foo@${R1} || \
+	{ ec=1 ; eval "${testfailed}"; }
+
+echo "get service tickets"
+${kgetcred} --name-type=SRV_HST host t1 || { ec=1 ; eval "${testfailed}"; }
+${kgetcred} --name-type=SRV_HST host t2 || { ec=1 ; eval "${testfailed}"; }
+${kgetcred} --name-type=SRV_HST host t3 || { ec=1 ; eval "${testfailed}"; }
+${kgetcred} --name-type=SRV_HST host t11 || { ec=1 ; eval "${testfailed}"; }
+${kgetcred} --name-type=SRV_HST host t12 2> /dev/null &&
+    { ec=1 ; eval "${testfailed}"; }
+${kgetcred} --name-type=SRV_HST host t22 2> /dev/null &&
+    { ec=1 ; eval "${testfailed}"; }
+${kgetcred} --name-type=SRV_HST host t23 2> /dev/null &&
+    { ec=1 ; eval "${testfailed}"; }
+${kgetcred} --name-type=SRV_HST host t33 2> /dev/null &&
+    { ec=1 ; eval "${testfailed}"; }
+
+echo "check result"
+${klist} | grep 'host/t1@$' > /dev/null ||
+    { ec=1 ; echo "t1 referral entry not present";  eval "${testfailed}"; }
+${klist} | grep "host/t1@${R1}" > /dev/null ||
+    { ec=1 ; echo "canonicalized t1 entry not present";  eval "${testfailed}"; }
+${klist} | grep 'host/t2@$' > /dev/null ||
+    { ec=1 ; echo "t2 referral entry not present";  eval "${testfailed}"; }
+${klist} | grep "host/t2@${R2}" > /dev/null ||
+    { ec=1 ; echo "canonicalized t2 entry not present";  eval "${testfailed}"; }
+${klist} | grep 'host/t3@$' > /dev/null ||
+    { ec=1 ; echo "t3 referral entry not present";  eval "${testfailed}"; }
+${klist} | grep "host/t3@${R3}" > /dev/null ||
+    { ec=1 ; echo "canonicalized t3 entry not present";  eval "${testfailed}"; }
+${klist} | grep 'host/t11@$' > /dev/null ||
+    { ec=1 ; echo "t11 referral entry not present";  eval "${testfailed}"; }
+${klist} | grep "host/t11.test1.h5l.se@${R1}" > /dev/null ||
+    { ec=1 ; echo "canonicalized t11 entry not present";  eval "${testfailed}"; }
 
 
 ${kdestroy}

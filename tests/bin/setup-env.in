@@ -33,6 +33,7 @@ gsstool="${TESTS_ENVIRONMENT} ${top_builddir}/lib/gssapi/gsstool"
 
 # regression test tools
 test_ap_req="${TESTS_ENVIRONMENT} ${top_builddir}/lib/krb5/test_ap-req"
+test_canon="${TESTS_ENVIRONMENT} ${top_builddir}/lib/krb5/test_canon"
 test_gic="${TESTS_ENVIRONMENT} ${top_builddir}/lib/krb5/test_gic"
 test_renew="${TESTS_ENVIRONMENT} ${top_builddir}/lib/krb5/test_renew"
 test_ntlm="${TESTS_ENVIRONMENT} ${top_builddir}/lib/gssapi/test_ntlm"

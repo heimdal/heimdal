@@ -8,14 +8,15 @@ bin_PROGRAMS = verify_krb5_conf
 
 noinst_PROGRAMS =				\
 	krbhst-test				\
-	test_gic				\
 	test_alname				\
+	test_canon				\
 	test_crypto				\
-	test_rfc3961				\
+	test_forward				\
 	test_get_addrs				\
+	test_gic				\
 	test_kuserok				\
 	test_renew				\
-	test_forward
+	test_rfc3961				
 
 noinst_LTLIBRARIES =				\
 	librfc3961.la

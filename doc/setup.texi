@@ -1263,7 +1263,7 @@ This and following subsection documents the requirements on the KDC
 and client certificates and the format used in the id-pkinit-san
 OtherName extention.
 
-On how to create certificates, you should read @xref{Use OpenSSL to
+On how to create certificates, you should read @ref{Use OpenSSL to
 create certificates}.
 
 @subsection KDC certificate
@@ -1594,6 +1594,7 @@ hxtool validate FILE:user.pem
 @end example
 
 @section Use OpenSSL to create certificates
+@anchor{Use OpenSSL to create certificates}
 
 This section tries to give the CA owners hints how to create
 certificates using OpenSSL (or CA software based on OpenSSL).

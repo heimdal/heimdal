@@ -57,8 +57,6 @@ host/admin@H5L.ORG
 #include <fnmatch.h>
 #include "resolve.h"
 
-#include <assert.h>
-
 #define princ_num_comp(P) ((P)->name.name_string.len)
 #define princ_type(P) ((P)->name.name_type)
 #define princ_comp(P) ((P)->name.name_string.val)
@@ -1354,7 +1352,8 @@ expand_search_list(krb5_context context, krb5_name_canon_rule *r, size_t *n,
     int ret;
 
     /* Sanitize */
-    assert((*n) > insert_point);
+    heim_assert((*n) > insert_point,
+		"name canon search list rule expansion: internal error");
     free((*r)[insert_point].domain);
     free((*r)[insert_point].realm);
     (*r)[insert_point].domain = NULL;
@@ -1663,7 +1662,8 @@ _krb5_apply_name_canon_rule(krb5_context context, krb5_name_canon_rule rule,
     char *new_hostname;
     const char *cp;
 
-    assert(in_princ->name.name_type == KRB5_NT_SRV_HST_NEEDS_CANON);
+    heim_assert(in_princ->name.name_type == KRB5_NT_SRV_HST_NEEDS_CANON,
+		"internal error: principal does not need canon");
     *out_princ = NULL;
     if (rule_opts)
 	*rule_opts = 0;
@@ -1707,7 +1707,12 @@ _krb5_apply_name_canon_rule(krb5_context context, krb5_name_canon_rule rule,
 	goto out;
 	break;
     case KRB5_NCRT_QUALIFY:
-	assert(rule->domain != NULL);
+	/*
+	 * Note that we should never get these rules even if specified
+	 * in krb5.conf.  See rule parser.
+	 */
+	heim_assert(rule->domain != NULL,
+		    "missing domain for qualify name canon rule");
 	cp = strchr(hostname, '.');
 	if (cp && (cp = strstr(cp, rule->domain))) {
 	    new_hostname = strdup(hostname);

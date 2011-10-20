@@ -105,9 +105,7 @@ set_auth_data (krb5_context context,
 	ALLOC(req_body->enc_authorization_data, 1);
 	if (req_body->enc_authorization_data == NULL) {
 	    free (buf);
-	    krb5_set_error_message(context, ENOMEM,
-				   N_("malloc: out of memory", ""));
-	    return ENOMEM;
+	    return krb5_enomem(context);
 	}
 	ret = krb5_crypto_init(context, subkey, 0, &crypto);
 	if (ret) {
@@ -159,9 +157,7 @@ init_tgs_req (krb5_context context,
     if (in_creds->session.keytype) {
 	ALLOC_SEQ(&t->req_body.etype, 1);
 	if(t->req_body.etype.val == NULL) {
-	    ret = ENOMEM;
-	    krb5_set_error_message(context, ret,
-				   N_("malloc: out of memory", ""));
+	    ret = krb5_enomem(context);
 	    goto fail;
 	}
 	t->req_body.etype.val[0] = in_creds->session.keytype;
@@ -181,8 +177,7 @@ init_tgs_req (krb5_context context,
 	goto fail;
     ALLOC(t->req_body.sname, 1);
     if (t->req_body.sname == NULL) {
-	ret = ENOMEM;
-	krb5_set_error_message(context, ret, N_("malloc: out of memory", ""));
+	ret = krb5_enomem(context);
 	goto fail;
     }
 
@@ -197,8 +192,7 @@ init_tgs_req (krb5_context context,
        but old MIT code (like DCE secd) doesn't like that */
     ALLOC(t->req_body.till, 1);
     if(t->req_body.till == NULL){
-	ret = ENOMEM;
-	krb5_set_error_message(context, ret, N_("malloc: out of memory", ""));
+	ret = krb5_enomem(context);
 	goto fail;
     }
     *t->req_body.till = in_creds->times.endtime;
@@ -207,16 +201,12 @@ init_tgs_req (krb5_context context,
     if(second_ticket){
 	ALLOC(t->req_body.additional_tickets, 1);
 	if (t->req_body.additional_tickets == NULL) {
-	    ret = ENOMEM;
-	    krb5_set_error_message(context, ret,
-				   N_("malloc: out of memory", ""));
+	    ret = krb5_enomem(context);
 	    goto fail;
 	}
 	ALLOC_SEQ(t->req_body.additional_tickets, 1);
 	if (t->req_body.additional_tickets->val == NULL) {
-	    ret = ENOMEM;
-	    krb5_set_error_message(context, ret,
-				   N_("malloc: out of memory", ""));
+	    ret = krb5_enomem(context);
 	    goto fail;
 	}
 	ret = copy_Ticket(second_ticket, t->req_body.additional_tickets->val);
@@ -225,14 +215,12 @@ init_tgs_req (krb5_context context,
     }
     ALLOC(t->padata, 1);
     if (t->padata == NULL) {
-	ret = ENOMEM;
-	krb5_set_error_message(context, ret, N_("malloc: out of memory", ""));
+	ret = krb5_enomem(context);
 	goto fail;
     }
     ALLOC_SEQ(t->padata, 1 + padata->len);
     if (t->padata->val == NULL) {
-	ret = ENOMEM;
-	krb5_set_error_message(context, ret, N_("malloc: out of memory", ""));
+	ret = krb5_enomem(context);
 	goto fail;
     }
     {
@@ -642,11 +630,8 @@ krb5_get_kdc_cred(krb5_context context,
     krb5_creds *krbtgt;
 
     *out_creds = calloc(1, sizeof(**out_creds));
-    if(*out_creds == NULL) {
-	krb5_set_error_message(context, ENOMEM,
-			       N_("malloc: out of memory", ""));
-	return ENOMEM;
-    }
+    if(*out_creds == NULL)
+	return krb5_enomem(context);
     ret = _krb5_get_krbtgt (context,
 			    id,
 			    in_creds->server->realm,
@@ -719,11 +704,8 @@ add_cred(krb5_context context, krb5_creds const *tkt, krb5_creds ***tgts)
 
     for(i = 0; tmp && tmp[i]; i++); /* XXX */
     tmp = realloc(tmp, (i+2)*sizeof(*tmp));
-    if(tmp == NULL) {
-	krb5_set_error_message(context, ENOMEM,
-			       N_("malloc: out of memory", ""));
-	return ENOMEM;
-    }
+    if(tmp == NULL)
+	return krb5_enomem(context);
     *tgts = tmp;
     ret = krb5_copy_creds(context, tkt, &tmp[i]);
     tmp[i+1] = NULL;
@@ -777,9 +759,7 @@ get_cred_kdc_capath_worker(krb5_context context,
 
 	    *out_creds = calloc(1, sizeof(**out_creds));
 	    if(*out_creds == NULL) {
-		ret = ENOMEM;
-		krb5_set_error_message(context, ret,
-				       N_("malloc: out of memory", ""));
+		ret = krb5_enomem(context);
 	    } else {
 		ret = get_cred_kdc_address(context, ccache, flags, NULL,
 					   in_creds, &tgts,
@@ -850,8 +830,7 @@ get_cred_kdc_capath_worker(krb5_context context,
     krb5_free_principal(context, tmp_creds.client);
     *out_creds = calloc(1, sizeof(**out_creds));
     if(*out_creds == NULL) {
-	ret = ENOMEM;
-	krb5_set_error_message(context, ret, N_("malloc: out of memory", ""));
+	ret = krb5_enomem(context);
     } else {
 	ret = get_cred_kdc_address (context, ccache, flags, NULL,
 				    in_creds, tgt, impersonate_principal,
@@ -1204,11 +1183,8 @@ krb5_get_credentials_with_flags(krb5_context context,
 
     *out_creds = NULL;
     res_creds = calloc(1, sizeof(*res_creds));
-    if (res_creds == NULL) {
-	krb5_set_error_message(context, ENOMEM,
-			       N_("malloc: out of memory", ""));
-	return ENOMEM;
-    }
+    if (res_creds == NULL)
+	return krb5_enomem(context);
 
     if (in_creds->server->name.name_type == KRB5_NT_SRV_HST_NEEDS_CANON) {
 	ret = check_cc(context, options, ccache, in_creds, res_creds);
@@ -1302,11 +1278,8 @@ KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_get_creds_opt_alloc(krb5_context context, krb5_get_creds_opt *opt)
 {
     *opt = calloc(1, sizeof(**opt));
-    if (*opt == NULL) {
-	krb5_set_error_message(context, ENOMEM,
-			       N_("malloc: out of memory", ""));
-	return ENOMEM;
-    }
+    if (*opt == NULL)
+	return krb5_enomem(context);
     return 0;
 }
 
@@ -1371,11 +1344,8 @@ krb5_get_creds_opt_set_ticket(krb5_context context,
 	krb5_error_code ret;
 
 	opt->ticket = malloc(sizeof(*ticket));
-	if (opt->ticket == NULL) {
-	    krb5_set_error_message(context, ENOMEM,
-				   N_("malloc: out of memory", ""));
-	    return ENOMEM;
-	}
+	if (opt->ticket == NULL)
+	    return krb5_enomem(context);
 	ret = copy_Ticket(ticket, opt->ticket);
 	if (ret) {
 	    free(opt->ticket);
@@ -1430,9 +1400,7 @@ krb5_get_creds(krb5_context context,
     res_creds = calloc(1, sizeof(*res_creds));
     if (res_creds == NULL) {
 	krb5_free_principal(context, in_creds.client);
-	krb5_set_error_message(context, ENOMEM,
-			       N_("malloc: out of memory", ""));
-	return ENOMEM;
+	return krb5_enomem(context);
     }
 
     if (opt && opt->enctype) {

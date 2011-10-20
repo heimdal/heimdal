@@ -239,19 +239,14 @@ krb5_parse_name_flags(krb5_context context,
 	}
     }
     comp = calloc(ncomp, sizeof(*comp));
-    if (comp == NULL) {
-	krb5_set_error_message(context, ENOMEM,
-			       N_("malloc: out of memory", ""));
-	return ENOMEM;
-    }
+    if (comp == NULL)
+	return krb5_enomem(context);
 
     n = 0;
     p = start = q = s = strdup(name);
     if (start == NULL) {
 	free (comp);
-	krb5_set_error_message(context, ENOMEM,
-			       N_("malloc: out of memory", ""));
-	return ENOMEM;
+	return krb5_enomem(context);
     }
     while(*p){
 	c = *p++;
@@ -283,9 +278,7 @@ krb5_parse_name_flags(krb5_context context,
 	    }else{
 		comp[n] = malloc(q - start + 1);
 		if (comp[n] == NULL) {
-		    ret = ENOMEM;
-		    krb5_set_error_message(context, ret,
-					   N_("malloc: out of memory", ""));
+		    ret = krb5_enomem(context);
 		    goto exit;
 		}
 		memcpy(comp[n], start, q - start);
@@ -315,9 +308,7 @@ krb5_parse_name_flags(krb5_context context,
 	}
 	realm = malloc(q - start + 1);
 	if (realm == NULL) {
-	    ret = ENOMEM;
-	    krb5_set_error_message(context, ret,
-				   N_("malloc: out of memory", ""));
+	    ret = krb5_enomem(context);
 	    goto exit;
 	}
 	memcpy(realm, start, q - start);
@@ -339,9 +330,7 @@ krb5_parse_name_flags(krb5_context context,
 
 	comp[n] = malloc(q - start + 1);
 	if (comp[n] == NULL) {
-	    ret = ENOMEM;
-	    krb5_set_error_message(context, ret,
-				   N_("malloc: out of memory", ""));
+	    ret = krb5_enomem(context);
 	    goto exit;
 	}
 	memcpy(comp[n], start, q - start);
@@ -350,9 +339,7 @@ krb5_parse_name_flags(krb5_context context,
     }
     *principal = calloc(1, sizeof(**principal));
     if (*principal == NULL) {
-	ret = ENOMEM;
-	krb5_set_error_message(context, ret,
-			       N_("malloc: out of memory", ""));
+	ret = krb5_enomem(context);
 	goto exit;
     }
     if (enterprise)
@@ -573,11 +560,8 @@ unparse_name(krb5_context context,
     }
     len++; /* '\0' */
     *name = malloc(len);
-    if(*name == NULL) {
-	krb5_set_error_message(context, ENOMEM,
-			       N_("malloc: out of memory", ""));
-	return ENOMEM;
-    }
+    if(*name == NULL)
+	return krb5_enomem(context);
     ret = unparse_name_fixed(context, principal, *name, len, flags);
     if(ret) {
 	free(*name);
@@ -671,11 +655,8 @@ krb5_principal_set_realm(krb5_context context,
 	free(princ_realm(principal));
 
     princ_realm(principal) = strdup(realm);
-    if (princ_realm(principal) == NULL) {
-	krb5_set_error_message(context, ENOMEM,
-			       N_("malloc: out of memory", ""));
-	return ENOMEM;
-    }
+    if (princ_realm(principal) == NULL)
+	return krb5_enomem(context);
     return 0;
 }
 
@@ -755,18 +736,12 @@ append_component(krb5_context context, krb5_principal p,
     size_t len = princ_num_comp(p);
 
     tmp = realloc(princ_comp(p), (len + 1) * sizeof(*tmp));
-    if(tmp == NULL) {
-	krb5_set_error_message(context, ENOMEM,
-			       N_("malloc: out of memory", ""));
-	return ENOMEM;
-    }
+    if(tmp == NULL)
+	return krb5_enomem(context);
     princ_comp(p) = tmp;
     princ_ncomp(p, len) = malloc(comp_len + 1);
-    if (princ_ncomp(p, len) == NULL) {
-	krb5_set_error_message(context, ENOMEM,
-			       N_("malloc: out of memory", ""));
-	return ENOMEM;
-    }
+    if (princ_ncomp(p, len) == NULL)
+	return krb5_enomem(context);
     memcpy (princ_ncomp(p, len), comp, comp_len);
     princ_ncomp(p, len)[comp_len] = '\0';
     princ_num_comp(p)++;
@@ -810,19 +785,14 @@ build_principal(krb5_context context,
     krb5_principal p;
 
     p = calloc(1, sizeof(*p));
-    if (p == NULL) {
-	krb5_set_error_message(context, ENOMEM,
-			       N_("malloc: out of memory", ""));
-	return ENOMEM;
-    }
+    if (p == NULL)
+	return krb5_enomem(context);
     princ_type(p) = KRB5_NT_PRINCIPAL;
 
     princ_realm(p) = strdup(realm);
     if(p->realm == NULL){
 	free(p);
-	krb5_set_error_message(context, ENOMEM,
-			       N_("malloc: out of memory", ""));
-	return ENOMEM;
+	return krb5_enomem(context);
     }
 
     (*func)(context, p, ap);
@@ -885,16 +855,11 @@ krb5_copy_principal(krb5_context context,
 		    krb5_principal *outprinc)
 {
     krb5_principal p = malloc(sizeof(*p));
-    if (p == NULL) {
-	krb5_set_error_message(context, ENOMEM,
-			       N_("malloc: out of memory", ""));
-	return ENOMEM;
-    }
+    if (p == NULL)
+	return krb5_enomem(context);
     if(copy_Principal(inprinc, p)) {
 	free(p);
-	krb5_set_error_message(context, ENOMEM,
-			       N_("malloc: out of memory", ""));
-	return ENOMEM;
+	return krb5_enomem(context);
     }
     *outprinc = p;
     return 0;
@@ -1244,7 +1209,7 @@ krb5_sname_to_principal(krb5_context context,
 
     remote_host = strdup(hostname);
     if (!remote_host)
-	return ENOMEM;
+	return krb5_enomem(context);
 
     if (type == KRB5_NT_SRV_HST) {
 	krb5_name_canon_rule rules;
@@ -1350,12 +1315,12 @@ rule_parse_token(krb5_context context, krb5_name_canon_rule rule,
 	free(rule->domain);
 	rule->domain = strdup(tok + strlen("domain="));
 	if (!rule->domain)
-	    return ENOMEM;
+	    return krb5_enomem(context);
     } else if (strncmp(tok, "realm=", strlen("realm=")) == 0) {
 	free(rule->realm);
 	rule->realm = strdup(tok + strlen("realm="));
 	if (!rule->realm)
-	    return ENOMEM;
+	    return krb5_enomem(context);
     } else if (strncmp(tok, "mindots=", strlen("mindots=")) == 0) {
 	errno = 0;
 	n = strtol(tok + strlen("mindots="), NULL, 10);
@@ -1433,12 +1398,12 @@ expand_search_list(krb5_context context, krb5_name_canon_rule *r, size_t *n,
      */
     domains = calloc(srch_list_len, sizeof (*domains));
     if (domains == NULL)
-	return ENOMEM;
+	return krb5_enomem(context);
     for (i = 0; i < srch_list_len; i++) {
 	if ((domains[i] = strdup(dnsrch[i])) == NULL) {
 	    for (i--; i >= 0; i--)
 		free(domains[i]);
-	    return ENOMEM;
+	    return krb5_enomem(context);
 	}
     }
 
@@ -1449,7 +1414,7 @@ expand_search_list(krb5_context context, krb5_name_canon_rule *r, size_t *n,
 	    for (i = 0; i < srch_list_len; i++)
 		free(domains[i]);
 	    free(domains);
-	    return ENOMEM;
+	    return krb5_enomem(context);
 	}
     } else {
 	new_r = *r; /* srch_list_len == 1 */
@@ -1521,7 +1486,7 @@ parse_name_canon_rules(krb5_context context, char **rulestrs,
 	n++;
 
     if ((r = calloc(n, sizeof (*r))) == NULL)
-	return ENOMEM;
+	return krb5_enomem(context);
 
     /* This code is written without use of strtok_r() :( */
     for (i = 0, k = 0; i < n; i++) {
@@ -1621,7 +1586,7 @@ _krb5_get_name_canon_rules(krb5_context context, krb5_name_canon_rule *rules)
     if (!values || !values[0]) {
 	/* Default rule: do the dreaded getaddrinfo()/getnameinfo() dance */
 	if ((*rules = calloc(1, sizeof (**rules))) == NULL)
-	    return ENOMEM;
+	    return krb5_enomem(context);
 	(*rules)->type = KRB5_NCRT_NSS;
 	return 0;
     }
@@ -1747,7 +1712,7 @@ _krb5_apply_name_canon_rule(krb5_context context, krb5_name_canon_rule rule,
 	if (cp && (cp = strstr(cp, rule->domain))) {
 	    new_hostname = strdup(hostname);
 	    if (new_hostname == NULL) {
-		ret = ENOMEM;
+		ret = krb5_enomem(context);
 		goto out;
 	    }
 
@@ -1756,7 +1721,7 @@ _krb5_apply_name_canon_rule(krb5_context context, krb5_name_canon_rule rule,
 
 	    len = strlen(hostname) + strlen(rule->domain) + 2;
 	    if ((new_hostname = malloc(len)) == NULL) {
-		ret = ENOMEM;
+		ret = krb5_enomem(context);
 		goto out;
 	    }
 	    /* We use strcpy() and strcat() for portability for now */
@@ -1876,7 +1841,7 @@ krb5_name_canon_iterator_start(krb5_context context,
 
     state = calloc(1, sizeof (*state));
     if (state == NULL)
-	return ENOMEM;
+	return krb5_enomem(context);
     princ = in_princ ? in_princ : in_creds->server;
 
     if (princ_type(princ) != KRB5_NT_SRV_HST_NEEDS_CANON) {
@@ -1904,7 +1869,7 @@ krb5_name_canon_iterator_start(krb5_context context,
 
 err:
     krb5_free_name_canon_iterator(context, state);
-    return ENOMEM;
+    return krb5_enomem(context);
 }
 
 /*

@@ -1484,7 +1484,6 @@ out:
     krb5_free_principal(context, in_creds.client);
     krb5_free_name_canon_iterator(context, name_canon_iter);
     _krb5_debug(context, 5, "krb5_get_creds: ret = %d", ret);
-
     return ret;
 }
 

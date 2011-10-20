@@ -1630,10 +1630,10 @@ get_host_realm(krb5_context context, const char *hostname, char **realm)
     if ((ret = krb5_get_host_realm(context, hostname, &hrealms)))
 	return ret;
     if (!hrealms)
-	return KRB5_ERR_HOST_REALM_UNKNOWN;
+	return KRB5_ERR_HOST_REALM_UNKNOWN; /* krb5_set_error() already done */
     if (!hrealms[0]) {
 	krb5_free_host_realm(context, hrealms);
-	return KRB5_ERR_HOST_REALM_UNKNOWN;
+	return KRB5_ERR_HOST_REALM_UNKNOWN; /* krb5_set_error() already done */
     }
     *realm = strdup(hrealms[0]);
     krb5_free_host_realm(context, hrealms);
@@ -1774,9 +1774,11 @@ _krb5_apply_name_canon_rule(krb5_context context, krb5_name_canon_rule rule,
     }
 
 out:
-    if (!ret && out_princ) {
+    if (!ret && *out_princ) {
+	krb5_error_code ret2;
 	char *unparsed;
-	ret = krb5_unparse_name(context, *out_princ, &unparsed);
+
+	ret2 = krb5_unparse_name(context, *out_princ, &unparsed);
 	if (ret) {
 	    _krb5_debug(context, 5, "Couldn't unparse resulting princ! (%d)",
 			ret);
@@ -1794,6 +1796,9 @@ out:
 	free(realm);
     if (*out_princ)
 	(*out_princ)->name.name_type = KRB5_NT_SRV_HST;
+    if (ret)
+	krb5_set_error_message(context, ret,
+			       N_("Name canon rule application failed", ""));
     return ret;
 }
 

@@ -884,16 +884,8 @@ typedef struct {
 }krb5_key_salt_tuple;
 
 /*
- * Name canonicalization rules
+ * Name canonicalization rule options
  */
-
-typedef enum krb5_name_canon_rule_type {
-	KRB5_NCRT_BOGUS = 0,
-	KRB5_NCRT_AS_IS,
-	KRB5_NCRT_QUALIFY,
-	KRB5_NCRT_RES_SEARCHLIST,
-	KRB5_NCRT_NSS
-} krb5_name_canon_rule_type;
 
 typedef enum krb5_name_canon_rule_options {
 	KRB5_NCRO_GC_ONLY = 1 << 0,
@@ -902,18 +894,7 @@ typedef enum krb5_name_canon_rule_options {
 } krb5_name_canon_rule_options;
 
 typedef struct krb5_name_canon_rule *krb5_name_canon_rule;
-struct krb5_name_canon_rule {
-	krb5_name_canon_rule next;
-	krb5_name_canon_rule_type type;
-	krb5_name_canon_rule_options options;
-	char *domain;
-	char *realm;
-	unsigned int mindots;
-};
-
 typedef struct krb5_name_canon_iterator *krb5_name_canon_iterator;
-
-#define krb5int_name_canon_rule_next(context, rule) (rule->next)
 
 /*
  *

@@ -1175,6 +1175,23 @@ krb5_principal_is_krbtgt(krb5_context context, krb5_const_principal p)
 
 }
 
+typedef enum krb5_name_canon_rule_type {
+	KRB5_NCRT_BOGUS = 0,
+	KRB5_NCRT_AS_IS,
+	KRB5_NCRT_QUALIFY,
+	KRB5_NCRT_RES_SEARCHLIST,
+	KRB5_NCRT_NSS
+} krb5_name_canon_rule_type;
+
+struct krb5_name_canon_rule {
+	krb5_name_canon_rule next;
+	krb5_name_canon_rule_type type;
+	krb5_name_canon_rule_options options;
+	char *domain;
+	char *realm;
+	unsigned int mindots;
+};
+
 /**
  * Create a principal for the given service running on the given
  * hostname. If KRB5_NT_SRV_HST is used, the hostname is canonicalized
@@ -1237,7 +1254,7 @@ krb5_sname_to_principal(krb5_context context,
 	    if (isupper((int) (*cp)))
 		*cp = tolower((int) (*cp));
 
-	ret = krb5int_get_name_canon_rules(context, &rules);
+	ret = _krb5_get_name_canon_rules(context, &rules);
 	if (ret) {
 	    _krb5_debug(context, 5, "Failed to get name canon rules: ret = %d",
 			ret);
@@ -1252,10 +1269,10 @@ krb5_sname_to_principal(krb5_context context,
 						 KRB5_NT_SRV_HST,
 						 ret_princ);
 	    free(remote_host);
-	    krb5int_free_name_canon_rules(context, rules);
+	    _krb5_free_name_canon_rules(context, rules);
 	    return ret;
 	}
-	krb5int_free_name_canon_rules(context, rules);
+	_krb5_free_name_canon_rules(context, rules);
     }
 
     /* Trailing dot(s) would be bad */
@@ -1574,8 +1591,8 @@ parse_name_canon_rules(krb5_context context, char **rulestrs,
  * @param context A Kerberos context.
  * @param rules   Output location for array of rules.
  */
-KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
-krb5int_get_name_canon_rules(krb5_context context, krb5_name_canon_rule *rules)
+KRB5_LIB_FUNCTION krb5_error_code
+_krb5_get_name_canon_rules(krb5_context context, krb5_name_canon_rule *rules)
 {
     krb5_error_code ret;
     char **values = NULL;
@@ -1668,8 +1685,8 @@ get_host_realm(krb5_context context, const char *hostname, char **realm)
  * @param out_print resulting principal name
  * @param rule_opts options for this rule
  */
-KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
-krb5int_apply_name_canon_rule(krb5_context context, krb5_name_canon_rule rule,
+KRB5_LIB_FUNCTION krb5_error_code
+_krb5_apply_name_canon_rule(krb5_context context, krb5_name_canon_rule rule,
 	krb5_const_principal in_princ, krb5_principal *out_princ,
 	krb5_name_canon_rule_options *rule_opts)
 {
@@ -1813,8 +1830,8 @@ out:
 /**
  * Free name canonicalization rules
  */
-KRB5_LIB_FUNCTION void KRB5_LIB_CALL
-krb5int_free_name_canon_rules(krb5_context context, krb5_name_canon_rule rules)
+KRB5_LIB_FUNCTION void
+_krb5_free_name_canon_rules(krb5_context context, krb5_name_canon_rule rules)
 {
     krb5_name_canon_rule r;
 
@@ -1870,7 +1887,7 @@ krb5_name_canon_iterator_start(krb5_context context,
 	state->is_trivial = 1;
 	state->creds = in_creds;
     } else {
-	ret = krb5int_get_name_canon_rules(context, &state->rules);
+	ret = _krb5_get_name_canon_rules(context, &state->rules);
 	if (ret) goto err;
 	state->rule = state->rules;
     }
@@ -1916,7 +1933,7 @@ krb5_name_canon_iterate(krb5_context context,
 
     krb5_free_principal(context, state->tmp_princ);
     do {
-	ret = krb5int_apply_name_canon_rule(context, state->rule,
+	ret = _krb5_apply_name_canon_rule(context, state->rule,
 	    state->in_princ, &state->tmp_princ, rule_opts);
 	if (ret)
 	    return ret;
@@ -2003,7 +2020,7 @@ krb5_free_name_canon_iterator(krb5_context context,
 	}
 	if (iter->tmp_princ)
 	    krb5_free_principal(context, iter->tmp_princ);
-	krb5int_free_name_canon_rules(context, iter->rules);
+	_krb5_free_name_canon_rules(context, iter->rules);
     }
     free(iter);
 }

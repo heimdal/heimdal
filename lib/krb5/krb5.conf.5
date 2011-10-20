@@ -260,6 +260,28 @@ If set to "ignore", the framework will ignore any the server input to
 .Xr krb5_rd_req 3,
 this is very useful when the GSS-API server input the
 wrong server name into the gss_accept_sec_context call.
+.It Li name_canon_rules = Va rules
+One or more name canonicalization rules.  Each rule consists of one or
+more tokens separated by colon (':').  The first token must be a rule
+type, one of: as-is, qualify, use-resolver-searchlist, or nss.  The
+remaining tokens must be options tokens: secure, ccache_only,
+use_referrals, no_referrals, mindots=
+.Va number
+, domain=
+.Va domain
+, and realm=
+.Va realm.
+These rules are applied to host-based service principal names in order
+until one rule succeeds or all fail.  The as-is rules match on number of
+dots in the hostname or domain suffix of the hostname and attempt the
+hostname as-is on match.  The qualify rules qualify the hostname with
+the given domain (and realm, if given) if necessary and attempt the
+resulting hostname.  The resolver searchlist rule expands to qualify
+rules using the corresponding domainnames from the DNS resolver's
+searchlist.  The "nss" rule performs a hostname lookup.  The secure
+option indicates that an insecure service principal unknown error will
+result in immediate failure.  Name canonicalization is deferred unless
+only the default rule is given.  Default: nss.
 .El
 .It Li [domain_realm]
 This is a list of mappings from DNS domain to Kerberos realm.
@@ -529,6 +551,10 @@ configuration file for Kerberos 5.
 .Bd -literal -offset indent
 [libdefaults]
 	default_realm = FOO.SE
+	name_canon_rules = as-is:realm=FOO.SE
+	name_canon_rules = qualify:domain=foo.se:realm=FOO.SE
+	name_canon_rules = qualify:domain=bar.se:realm=FOO.SE
+	name_canon_rules = nss
 [domain_realm]
 	.foo.se = FOO.SE
 	.bar.se = FOO.SE

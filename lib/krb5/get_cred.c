@@ -1444,6 +1444,12 @@ next_rule:
     if(options & KRB5_GC_CACHED)
 	goto next_rule;
 
+    if(rule_opts & KRB5_NCRO_USE_REFERRALS)
+	flags.b.canonicalize = 1;
+    else if(rule_opts & KRB5_NCRO_NO_REFERRALS)
+	flags.b.canonicalize = 0;
+    else
+	flags.b.canonicalize = (options & KRB5_GC_CANONICALIZE) ? 1 : 0;
     if(options & KRB5_GC_USER_USER) {
 	flags.b.enc_tkt_in_skey = 1;
 	options |= KRB5_GC_NO_STORE;
@@ -1456,8 +1462,6 @@ next_rule:
 	flags.b.request_anonymous = 1; /* XXX ARGH confusion */
 	flags.b.constrained_delegation = 1;
     }
-    if (options & KRB5_GC_CANONICALIZE)
-	flags.b.canonicalize = 1;
 
     tgts = NULL;
     ret = _krb5_get_cred_kdc_any(context, flags, ccache,

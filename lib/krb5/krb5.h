@@ -889,7 +889,8 @@ typedef struct {
 
 typedef enum krb5_name_canon_rule_options {
 	KRB5_NCRO_GC_ONLY = 1 << 0,
-	KRB5_NCRO_NO_REFERRALS = 1 << 1,
+	KRB5_NCRO_USE_REFERRALS = 1 << 1,
+	KRB5_NCRO_NO_REFERRALS = 1 << 2,
 	KRB5_NCRO_SECURE = 1 << 2
 } krb5_name_canon_rule_options;
 

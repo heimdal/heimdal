@@ -61,7 +61,7 @@ struct getargs args[] = {
       NP_("encryption type to use", ""), "enctype"},
     { "impersonate",	0,   arg_string, &impersonate_str,
       NP_("client to impersonate", ""), "principal"},
-    { "name-type",		0,   arg_string, &nametype_str, NULL, NULL },
+    { "name-type",	0,   arg_string, &nametype_str, NULL, NULL },
     { "version", 	0,   arg_flag, &version_flag, NULL, NULL },
     { "help",		0,   arg_flag, &help_flag, NULL, NULL }
 };
@@ -189,7 +189,6 @@ main(int argc, char **argv)
 
     if (nametype_str) {
 	int32_t nametype;
-	int do_sn2p = 1;
 	char *sname = NULL;
 	char *hname = NULL;
 
@@ -197,46 +196,15 @@ main(int argc, char **argv)
 	if (ret)
 	    krb5_err(context, 1, ret, "krb5_parse_nametype");
 
-	if (nametype == KRB5_NT_SRV_HST) {
-	    if (argc == 1) {
-		char *cp;
-
-		for (cp = sname; *cp; cp++) {
-		    if (cp[0] == '\\') {
-			cp++;
-		    } else if (cp[0] == '@' && cp[1] != '\0') {
-			/* If a realm is given we assume no canon is needed */
-			do_sn2p = 0;
-			break;
-		    }
-		}
-		if (do_sn2p) {
-		    sname = argv[0];
-		    for (cp = sname; *cp; cp++) {
-			if (cp[0] == '\\') {
-			    cp++;
-			} else if (cp[0] == '/') {
-			    *cp = '\0';
-			    hname = cp + 1;
-			} else if (cp[0] == '@') {
-			    *cp = '\0';
-			    break;
-			}
-		    }
-		}
-	    } else if (argc == 2) {
-		sname = argv[0];
-		hname = argv[1];
-	    } else if (argc != 0) {
-		usage(1);
-	    }
+	if (nametype == KRB5_NT_SRV_HST && argc == 2) {
+	    sname = argv[0];
+	    hname = argv[1];
 	    ret = krb5_sname_to_principal(context, hname, sname,
 					   KRB5_NT_SRV_HST, &server);
 	    if (ret)
 		krb5_err(context, 1, ret, "krb5_sname_to_principal %s/%s",
 			 (sname && *sname) ? sname : "<default>",
 			 (hname && *hname) ? hname : "<default>");
-
 	} else {
 	    if (argc != 1)
 		usage(1);

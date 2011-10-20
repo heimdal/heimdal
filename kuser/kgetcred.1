@@ -48,10 +48,16 @@
 .Fl Fl enctype= Ns Ar enctype
 .Xc
 .Oc
+.Op Fl name-type= Ns Ar name-type
 .Op Fl Fl no-transit-check
 .Op Fl Fl version
 .Op Fl Fl help
 .Ar service
+.Nm
+.Op options
+.Fl name-type= Ns Ar SRV_HST
+.Ar service
+.Ar hostname
 .Sh DESCRIPTION
 .Nm
 obtains a ticket for a service.
@@ -59,16 +65,25 @@ Usually tickets for services are obtained automatically when needed
 but sometimes for some odd reason you want to obtain a particular
 ticket or of a special type.
 .Pp
+The second form applies hostname canonicalization using local name
+canonicalization rules just as applications normally would, possibly
+enabling canonicalization via referrals.
+.Pp
 Supported options:
 .Bl -tag -width Ds
 .It Fl Fl canonicalize
 requests that the KDC canonicalize the principal.
+.It Fl Fl name-type= Ns Ar name-type
+the name-type to use when parsing the principal name.
 .It Fl c Ar cache , Fl Fl cache= Ns Ar cache
 the credential cache to use.
+.It Fl Fl delegation-credential-cache= Ns Ar cache
+the credential cache to use for delegation.
 .It Fl e Ar enctype , Fl Fl enctype= Ns Ar enctype
 encryption type to use.
 .It Fl Fl no-transit-check
 requests that the KDC doesn't do transit checking.
+.It Fl Fl forwardable
 .It Fl Fl version
 .It Fl Fl help
 .El

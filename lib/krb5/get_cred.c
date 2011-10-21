@@ -1246,7 +1246,7 @@ next_rule:
 
 out:
     krb5_free_name_canon_iterator(context, name_canon_iter);
-    if (!ret) {
+    if (ret) {
 	krb5_free_creds(context, res_creds);
 	return not_found(context, in_creds->server, ret);
     }
@@ -1481,7 +1481,7 @@ next_rule:
 	store_cred(context, ccache, inprinc, *out_creds);
 
 out:
-    if (ret != 0) {
+    if (ret) {
 	krb5_free_creds(context, res_creds);
 	ret = not_found(context, inprinc, ret);
     }

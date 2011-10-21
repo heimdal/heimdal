@@ -9,7 +9,6 @@ bin_PROGRAMS = verify_krb5_conf
 noinst_PROGRAMS =				\
 	krbhst-test				\
 	test_alname				\
-	test_canon				\
 	test_crypto				\
 	test_forward				\
 	test_get_addrs				\
@@ -48,7 +47,7 @@ TESTS =						\
 
 check_DATA = test_config_strings.out
 
-check_PROGRAMS = $(TESTS) test_hostname test_ap-req
+check_PROGRAMS = $(TESTS) test_hostname test_ap-req test_canon
 
 LDADD = libkrb5.la \
 	$(LIB_hcrypto) \

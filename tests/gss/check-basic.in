@@ -114,6 +114,11 @@ ${acquire_cred} \
     --acquire-type=accept \
     --acquire-name=host@host.test.h5l.se || exit 1
 
+echo "keytab w/ short-form name and name canon rules"
+${acquire_cred} \
+    --acquire-type=accept \
+    --acquire-name=host@host || exit 1
+
 echo "keytab w/o name"
 ${acquire_cred} \
     --acquire-type=accept || exit 1

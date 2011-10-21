@@ -81,8 +81,6 @@ ${kadmin} \
 # add both lucid and lucid.test.h5l.se to simulate aliases
 ${kadmin} add -p p1 --use-defaults host/lucid.test.h5l.se@${R} || exit 1
 ${kadmin} ext -k ${keytab} host/lucid.test.h5l.se@${R} || exit 1
-${kadmin} add -p p1 --use-defaults host/lucid@${R} || exit 1
-${kadmin} ext -k ${keytab} host/lucid@${R} || exit 1
 
 ${kadmin} add -p p1 --use-defaults host/ok-delegate.test.h5l.se@${R} || exit 1
 ${kadmin} mod --attributes=+ok-as-delegate host/ok-delegate.test.h5l.se@${R} || exit 1
@@ -152,12 +150,21 @@ echo "======test naming combinations"
 echo "plain"  ; > messages.log
 ${context} --name-type=hostbased-service host@lucid.test.h5l.se || \
 	{ eval "$testfailed"; }
+echo "plain w/ short-form hostname"  ; > messages.log
+${context} --name-type=hostbased-service host@lucid || \
+	{ eval "$testfailed"; }
 echo "plain (krb5)" ; > messages.log
 ${context} --name-type=krb5-principal-name host/lucid.test.h5l.se@${R} || \
 	{ eval "$testfailed"; }
 echo "plain (krb5 realmless)" ; > messages.log
 ${context} --name-type=krb5-principal-name host/lucid.test.h5l.se || \
 	{ eval "$testfailed"; }
+echo "plain (krb5 realmless short-form should fail)" ; > messages.log
+${context} --name-type=krb5-principal-name host/lucid 2>/dev/null && \
+	{ eval "$testfailed"; }
+echo "creating short-form princ"
+${kadmin} add -p p1 --use-defaults host/lucid@${R} || exit 1
+${kadmin} ext -k ${keytab} host/lucid@${R} || exit 1
 echo "dns canon on (long name) OFF, need dns_wrapper" ; > messages.log
 #${context} --dns-canon host@lucid.test.h5l.se || \
 #	{ eval "$testfailed"; }

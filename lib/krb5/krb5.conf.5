@@ -260,6 +260,17 @@ If set to "ignore", the framework will ignore any the server input to
 .Xr krb5_rd_req 3,
 this is very useful when the GSS-API server input the
 wrong server name into the gss_accept_sec_context call.
+.It Li aname2lname-text-db = Va filename
+The named file must be a sorted (in increasing order) text file where
+every line consists of an unparsed principal name optionally followed by
+whitespace and a username.  The aname2lname function will do a binary
+search on this file, if configured, looking for lines that match the
+given principal name, and if found the given username will be used, or,
+if the username is missing, an error will be returned.  If the file
+doesn't exist, or if no matching line is found then other plugins will
+be allowed to run.  Note: large
+.Va aname2lname-text-db
+files are not supported on small memory systems/processes.
 .It Li name_canon_rules = Va rules
 One or more name canonicalization rules.  Each rule consists of one or
 more tokens separated by colon (':').  The first token must be a rule

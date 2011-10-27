@@ -46,9 +46,8 @@ consult_cdb (krb5_context context,
 {
     krb5_error_code ret;
     struct cdb the_cdb, *cdb = NULL;
-    unsigned klen, vlen, vpos;
+    unsigned vlen, vpos;
     int fd;
-    char *key, *val;
     char *astring = NULL;
 
     ret = krb5_unparse_name(context, aname, &astring);

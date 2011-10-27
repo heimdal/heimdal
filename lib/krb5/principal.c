@@ -1477,7 +1477,7 @@ parse_name_canon_rules(krb5_context context, char **rulestrs,
     char *tok;
     char *cp;
     char **cpp;
-    unsigned int n = 0;
+    size_t n = 0;
     unsigned int i, k;
     krb5_name_canon_rule r;
 

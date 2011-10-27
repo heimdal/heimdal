@@ -54,7 +54,6 @@ LDADD = libkrb5.la \
 	$(LIB_hcrypto) \
 	$(top_builddir)/lib/asn1/libasn1.la \
 	$(top_builddir)/lib/wind/libwind.la \
-	/usr/lib/libcdb.a \
 	$(LIB_roken)
 
 if PKINIT
@@ -78,6 +77,7 @@ libkrb5_la_LIBADD = \
 	$(LIBADD_roken) \
 	$(PTHREAD_LIBADD) \
 	$(LIB_door_create) \
+	/usr/lib/libcdb.a \
 	$(LIB_dlopen)
 
 librfc3961_la_LIBADD = \

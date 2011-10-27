@@ -33,6 +33,57 @@
 
 #include "krb5_locl.h"
 
+#include <cdb.h>
+
+#define ANAME2LNAME_CDB	"/etc/krb5/aname2lname.db"
+
+
+static krb5_error_code
+consult_cdb (krb5_context context,
+	     krb5_const_principal aname,
+	     size_t lnsize,
+	     char *lname)
+{
+    krb5_error_code ret;
+    struct cdb the_cdb, *cdb = NULL;
+    unsigned klen, vlen, vpos;
+    int fd;
+    char *key, *val;
+    char *astring = NULL;
+
+    ret = krb5_unparse_name(context, aname, &astring);
+    if (ret)
+	return ret;
+
+    ret = KRB5_NO_LOCALNAME;
+    fd = open(ANAME2LNAME_CDB, O_RDONLY);
+    if (fd == -1)
+	goto done;
+
+    if (cdb_init(&the_cdb, fd))
+	goto done;
+
+    cdb = &the_cdb;
+
+    if (cdb_find(cdb, astring, strlen(astring)) > 0) {
+	vpos = cdb_datapos(cdb);
+	vlen = cdb_datalen(cdb);
+
+	if (vlen < lnsize) {
+	    cdb_read(cdb, lname, vlen, vpos);
+	    lname[vlen] = '\0';
+	    ret = 0;
+	}
+    }
+
+done:
+    free(astring);
+    close(fd);
+    if (cdb)
+	cdb_free(cdb);
+    return ret;
+}
+
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_aname_to_localname (krb5_context context,
 			 krb5_const_principal aname,
@@ -44,6 +95,10 @@ krb5_aname_to_localname (krb5_context context,
     int valid;
     size_t len;
     const char *res;
+
+    ret = consult_cdb(context, aname, lnsize, lname);
+    if (ret == 0)
+	return 0;
 
     ret = krb5_get_default_realms (context, &lrealms);
     if (ret)

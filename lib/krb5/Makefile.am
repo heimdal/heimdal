@@ -9,6 +9,7 @@ bin_PROGRAMS = verify_krb5_conf
 noinst_PROGRAMS =				\
 	krbhst-test				\
 	test_alname				\
+	test_alname2				\
 	test_crypto				\
 	test_forward				\
 	test_get_addrs				\
@@ -53,6 +54,7 @@ LDADD = libkrb5.la \
 	$(LIB_hcrypto) \
 	$(top_builddir)/lib/asn1/libasn1.la \
 	$(top_builddir)/lib/wind/libwind.la \
+	/usr/lib/libcdb.a \
 	$(LIB_roken)
 
 if PKINIT

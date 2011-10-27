@@ -1,0 +1,15 @@
+Source: heimdal
+Section: unknown
+Priority: extra
+Maintainer: elric <elric@imrryr.org>
+Build-Depends: bison, debhelper (>= 7), autotools-dev, dh-autoreconf, flex, libdb-dev, libedit-dev, libhesiod-dev, libldap2-dev, libncurses5-dev, libsqlite3-dev, libx11-dev, libxau-dev, libxt-dev, pkg-config, python, texinfo, x11proto-core-dev
+Standards-Version: 3.8.3
+Homepage: http://www.h5l.org/
+
+Package: heimdal
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: Heimdal Kerberos
+    This is a packaging of the Heimdal Kerberos implementation in
+    /usr/heimdal so that it does not conflict with the existing
+    Kerberos implementation which may be installed.

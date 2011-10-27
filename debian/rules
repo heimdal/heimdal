@@ -10,7 +10,7 @@
 #export DH_VERBOSE=1
 
 %:
-	dh  $@
+	dh  $@ --with autoreconf
 
 override_dh_auto_configure:
 	dh_auto_configure -- --prefix=/usr/heimdal --without-openldap	\

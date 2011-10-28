@@ -950,7 +950,7 @@ krb5_principal_compare(krb5_context context,
 
 	ret = krb5_name_canon_iterator_start(context, princ2canon, NULL, &nci);
 	if (ret)
-	    return ret;
+	    return FALSE;
 	do {
 	    ret = krb5_name_canon_iterate_princ(context, &nci, &try_princ,
 						NULL);

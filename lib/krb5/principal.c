@@ -1863,21 +1863,23 @@ krb5_name_canon_iterator_start(krb5_context context,
 	state->creds = in_creds;
     } else {
 	ret = _krb5_get_name_canon_rules(context, &state->rules);
-	if (ret) goto err;
+	if (ret)
+	    goto out;
 	state->rule = state->rules;
     }
 
     state->in_princ = princ;
     if (in_creds) {
 	ret = krb5_copy_creds(context, in_creds, &state->creds);
-	if (ret) goto err;
+	if (ret)
+	    goto out;
 	state->tmp_princ = state->creds->server; /* so we don't leak */
     }
 
     *iter = state;
     return 0;
 
-err:
+out:
     krb5_free_name_canon_iterator(context, state);
     return krb5_enomem(context);
 }

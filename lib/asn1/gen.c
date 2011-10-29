@@ -888,7 +888,7 @@ define_type (int level, const char *name, const char *basename, Type *t, int typ
 	    fprintf(headerfile, "heim_octet_string _save;\n");
 	}
 	space(level + 1);
-	fprintf (headerfile, "enum {\n");
+	fprintf (headerfile, "enum %s_enum {\n", newbasename);
 	m = have_ellipsis(t);
 	if (m) {
 	    space(level + 2);

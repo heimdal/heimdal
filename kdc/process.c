@@ -57,19 +57,25 @@ kdc_as_req(krb5_context context,
 	   int datagram_reply,
 	   int *claim)
 {
+    struct kdc_request_desc r;
     krb5_error_code ret;
-    KDC_REQ req;
     size_t len;
 
-    ret = decode_AS_REQ(req_buffer->data, req_buffer->length, &req, &len);
+    memset(&r, 0, sizeof(r));
+
+    ret = decode_AS_REQ(req_buffer->data, req_buffer->length, &r.req, &len);
     if (ret)
 	return ret;
 
+    r.context = context;
+    r.config = config;
+    r.request.data = req_buffer->data;
+    r.request.length = req_buffer->length;
+
     *claim = 1;
 
-    ret = _kdc_as_rep(context, config, &req, req_buffer,
-		      reply, from, addr, datagram_reply);
-    free_AS_REQ(&req);
+    ret = _kdc_as_rep(&r, reply, from, addr, datagram_reply);
+    free_AS_REQ(&r.req);
     return ret;
 }
 

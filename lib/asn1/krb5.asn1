@@ -63,6 +63,8 @@ EXPORTS
 	PA-ServerReferralData,
 	PA-SvrReferralData,
 	PADATA-TYPE,
+	PA-FX-FAST-REQUEST,
+	PA-FX-FAST-REPLY,
 	Principal,
 	PrincipalName,
 	Principals,
@@ -72,7 +74,13 @@ EXPORTS
 	Ticket,
 	TicketFlags,
 	TransitedEncoding,
-	TypedData
+	TypedData,
+	KrbFastResponse,
+	KrbFastFinished,
+	KrbFastReq,
+	KrbFastArmor,
+	KDCFastState,
+	KDCFastCookie
 	;
 
 NAME-TYPE ::= INTEGER {
@@ -771,12 +779,12 @@ PA-ServerReferralData ::= SEQUENCE {
 FastOptions ::= BIT STRING {
 	    reserved(0),
 	    hide-client-names(1),
-	    kdc-follow--referrals(16)
+	    kdc-follow-referrals(16)
 }
 
 KrbFastReq ::= SEQUENCE {
 	fast-options [0] FastOptions,
-	padata       [1] SEQUENCE OF PA-DATA,
+	padata       [1] METHOD-DATA,
 	req-body     [2] KDC-REQ-BODY,
 	...
 }
@@ -803,15 +811,15 @@ KrbFastFinished ::= SEQUENCE {
 	usec        [1] krb5int32,
 	crealm      [2] Realm,
 	cname       [3] PrincipalName,
-	checksum    [4] Checksum,
-	ticket-checksum [5] Checksum,
+	ticket-checksum [4] Checksum,
 	...
 }
 
 KrbFastResponse ::= SEQUENCE {
-	padata      [0] SEQUENCE OF PA-DATA,
-	rep-key     [1] EncryptionKey OPTIONAL,
-	finished    [2] KrbFastFinished OPTIONAL,
+	padata      	[0] METHOD-DATA,
+        strengthen-key	[1] EncryptionKey OPTIONAL,
+	finished	[2] KrbFastFinished OPTIONAL,
+        nonce		[3] krb5uint32,
 	...
 }
 
@@ -823,6 +831,26 @@ KrbFastArmoredRep ::= SEQUENCE {
 PA-FX-FAST-REPLY ::= CHOICE {
 	armored-data [0] KrbFastArmoredRep,
 	...
+}
+
+KDCFastFlags ::= BIT STRING {
+	use_reply_key(0),
+	reply_key_used(1),
+	reply_key_replaced(2),
+	kdc_verfied(3)
+}
+
+-- KDCFastState is stored in FX_COOKIE
+KDCFastState ::= SEQUENCE {
+	flags [0] KDCFastFlags,
+	expiration [1] GeneralizedTime,
+	fast-state [2] METHOD-DATA,
+	expected-pa-types [3] SEQUENCE OF PADATA-TYPE OPTIONAL
+}
+
+KDCFastCookie ::= SEQUENCE {
+	version [0] UTF8String,
+	cookie [1] EncryptedData
 }
 
 END

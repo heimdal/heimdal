@@ -987,7 +987,7 @@ tgs_make_reply(krb5_context context,
        CAST session key. Should the DES3 etype be added to the
        etype list, even if we don't want a session key with
        DES3? */
-    ret = _kdc_encode_reply(context, config,
+    ret = _kdc_encode_reply(context, config, NULL, 0
 			    &rep, &et, &ek, serverkey->keytype,
 			    kvno,
 			    serverkey, 0, replykey, rk_is_subkey,
@@ -2362,6 +2362,14 @@ _kdc_tgs_rep(krb5_context context,
 	goto out;
     }
 
+    {
+	int i = 0;
+	const PA_DATA *pa = _kdc_find_padata(req, &i, KRB5_PADATA_FX_FAST);
+	if (pa)
+	    kdc_log(context, config, 10, "Got TGS FAST request"); 
+    }
+
+
     ret = tgs_build_reply(context,
 			  config,
 			  req,
@@ -2392,17 +2400,22 @@ _kdc_tgs_rep(krb5_context context,
 out:
     if (replykey)
 	krb5_free_keyblock(context, replykey);
+
     if(ret && ret != HDB_ERR_NOT_FOUND_HERE && data->data == NULL){
-	krb5_mk_error(context,
-		      ret,
-		      NULL,
-		      NULL,
-		      NULL,
-		      NULL,
-		      csec,
-		      cusec,
-		      data);
-	ret = 0;
+	/* XXX add fast wrapping on the error */
+	METHOD_DATA error_method = { 0, NULL };
+	
+
+	kdc_log(context, config, 10, "tgs-req: sending error: %d to client", ret);
+	ret = _kdc_fast_mk_error(context, NULL,
+				 &error_method,
+				 NULL,
+				 NULL,
+				 ret, NULL,
+				 NULL, NULL,
+				 csec, cusec,
+				 data);
+	free_METHOD_DATA(&error_method);
     }
     free(csec);
     free(cusec);

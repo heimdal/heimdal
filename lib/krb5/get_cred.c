@@ -544,6 +544,7 @@ get_cred_kdc(krb5_context context,
 				   &krbtgt->addresses,
 				   nonce,
 				   eflags,
+				   NULL,
 				   decrypt_tkt_with_subkey,
 				   subkey);
     out2:

@@ -43,7 +43,52 @@
 typedef struct pk_client_params pk_client_params;
 struct DigestREQ;
 struct Kx509Request;
+typedef struct kdc_request_desc *kdc_request_t;
+
 #include <kdc-private.h>
+
+#define FAST_EXPIRATION_TIME (3 * 60)
+
+struct kdc_request_desc {
+    krb5_context context;
+    krb5_kdc_configuration *config;
+
+    /* */
+
+    krb5_data request;
+    KDC_REQ req;
+    METHOD_DATA *padata;
+
+    /* out */
+
+    METHOD_DATA outpadata;
+    
+    KDC_REP rep;
+    EncTicketPart et;
+    EncKDCRepPart ek;
+
+    /* PA methods can affect both the reply key and the session key (pkinit) */
+    krb5_enctype sessionetype;
+    krb5_keyblock reply_key;
+    krb5_keyblock session_key;
+
+    const char *e_text;
+
+    /* state */
+    krb5_principal client_princ;
+    char *client_name;
+    hdb_entry_ex *client;
+    HDB *clientdb;
+
+    krb5_principal server_princ;
+    char *server_name;
+    hdb_entry_ex *server;
+
+    krb5_crypto armor_crypto;
+
+    KDCFastState fast;
+};
+
 
 extern sig_atomic_t exit_flag;
 extern size_t max_request_udp;

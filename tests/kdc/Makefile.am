@@ -18,6 +18,7 @@ SCRIPT_TESTS = \
 	check-delegation \
 	check-des \
 	check-digest \
+	check-fast \
 	check-kadmin \
 	check-hdb-mitdb \
 	check-kdc \
@@ -77,6 +78,11 @@ check-hdb-mitdb: check-hdb-mitdb.in Makefile krb5-hdb-mitdb.conf
 	$(do_subst) < $(srcdir)/check-hdb-mitdb.in > check-hdb-mitdb.tmp
 	chmod +x check-hdb-mitdb.tmp
 	mv check-hdb-mitdb.tmp check-hdb-mitdb
+
+check-fast: check-fast.in Makefile
+	$(do_subst) < $(srcdir)/check-fast.in > check-fast.tmp
+	chmod +x check-fast.tmp
+	mv check-fast.tmp check-fast
 
 check-kdc: check-kdc.in Makefile
 	$(do_subst) < $(srcdir)/check-kdc.in > check-kdc.tmp

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997 - 2006 Kungliga Tekniska Högskolan
+ * Copyright (c) 2011 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  *
@@ -31,87 +31,65 @@
  * SUCH DAMAGE.
  */
 
-/*
- * $Id$
- */
+#include "krb5_locl.h"
 
-#ifndef __HEADERS_H__
-#define __HEADERS_H__
 
-#include <config.h>
+krb5_error_code
+_krb5_fast_cf2(krb5_context context,
+	       krb5_keyblock *key1,
+	       const char *pepper1,
+	       krb5_keyblock *key2,
+	       const char *pepper2,
+	       krb5_keyblock *armorkey,
+	       krb5_crypto *armor_crypto)
+{
+    krb5_crypto crypto1, crypto2;
+    krb5_data pa1, pa2;
+    krb5_error_code ret;
 
-#include <limits.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <errno.h>
-#include <signal.h>
-#include <stdarg.h>
-#ifdef HAVE_SYS_TYPES_H
-#include <sys/types.h>
-#endif
-#ifdef HAVE_FCNTL_H
-#include <fcntl.h>
-#endif
-#ifdef HAVE_SYS_SELECT_H
-#include <sys/select.h>
-#endif
-#ifdef HAVE_SYS_SOCKET_H
-#include <sys/socket.h>
-#endif
-#ifdef HAVE_NETINET_IN_H
-#include <netinet/in.h>
-#endif
-#ifdef HAVE_NETINET_IN6_H
-#include <netinet/in6.h>
-#endif
-#ifdef HAVE_NETINET6_IN6_H
-#include <netinet6/in6.h>
-#endif
-#ifdef HAVE_ARPA_INET_H
-#include <arpa/inet.h>
-#endif
-#ifdef HAVE_SYS_WAIT_H
-#include <sys/wait.h>
-#endif
-#ifdef HAVE_NETDB_H
-#include <netdb.h>
-#endif
-#ifdef HAVE_UTIL_H
-#include <util.h>
-#endif
-#ifdef HAVE_LIBUTIL_H
-#include <libutil.h>
-#endif
-#include <err.h>
-#include <roken.h>
-#include <getarg.h>
-#include <base64.h>
-#include <parse_units.h>
-#include <krb5.h>
-#include <krb5_locl.h>
-#ifdef DIGEST
-#include <digest_asn1.h>
-#endif
-#ifdef KX509
-#include <kx509_asn1.h>
-#endif
-#include <hdb.h>
-#include <hdb_err.h>
-#include <der.h>
+    ret = krb5_crypto_init(context, key1, 0, &crypto1);
+    if (ret)
+	return ret;
 
-#ifndef NO_NTLM
-#include <heimntlm.h>
-#endif
-#include <kdc.h>
-#include <windc_plugin.h>
+    ret = krb5_crypto_init(context, key2, 0, &crypto2);
+    if (ret) {
+	krb5_crypto_destroy(context, crypto1);
+	return ret;
+    }
 
-#include <heimbase.h>
+    pa1.data = rk_UNCONST(pepper1);
+    pa1.length = strlen(pepper1);
+    pa2.data = rk_UNCONST(pepper2);
+    pa2.length = strlen(pepper2);
 
-#undef ALLOC
-#define ALLOC(X) ((X) = calloc(1, sizeof(*(X))))
-#undef ALLOC_SEQ
-#define ALLOC_SEQ(X, N) do { (X)->len = (N); \
-(X)->val = calloc((X)->len, sizeof(*(X)->val)); } while(0)
+    ret = krb5_crypto_fx_cf2(context, crypto1, crypto2, &pa1, &pa2,
+			     key1->keytype, armorkey);
+    krb5_crypto_destroy(context, crypto1);
+    krb5_crypto_destroy(context, crypto2);
+    if (ret)
+	return ret;
 
-#endif /* __HEADERS_H__ */
+    if (armor_crypto) {
+	ret = krb5_crypto_init(context, armorkey, 0, armor_crypto);
+	if (ret)
+	    krb5_free_keyblock_contents(context, armorkey);
+    }
+
+    return ret;
+}
+
+krb5_error_code
+_krb5_fast_armor_key(krb5_context context,
+		     krb5_keyblock *subkey,
+		     krb5_keyblock *sessionkey,
+		     krb5_keyblock *armorkey,
+		     krb5_crypto *armor_crypto)
+{
+    return _krb5_fast_cf2(context,
+			  subkey,
+			  "subkeyarmor",
+			  sessionkey,
+			  "ticketarmor",
+			  armorkey,
+			  armor_crypto);
+}

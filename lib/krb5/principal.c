@@ -1421,8 +1421,8 @@ expand_search_list(krb5_context context, krb5_name_canon_rule *r, size_t *n,
 
     /* Make room for the new rules */
     if (insert_point < (*n) - 1) {
-	_krb5_debug(context, 5, "Inserting %d qualify rules in place of a "
-		    "resolver searchlist rule", srch_list_len);
+	_krb5_debug(context, 5, "Inserting %ld qualify rules in place of a "
+		    "resolver searchlist rule", (unsigned long)srch_list_len);
 	/*
 	 * Move the rules that follow the search list rule down by
 	 * srch_list_len - 1 rules.
@@ -1444,7 +1444,7 @@ expand_search_list(krb5_context context, krb5_name_canon_rule *r, size_t *n,
 		    dnsrch[i]);
 	new_r[insert_point + i].type = KRB5_NCRT_QUALIFY;
 	new_r[insert_point + i].domain = domains[i];
-	new_r[insert_point + i].options = new_r[insert_point].options;
+	new_r[insert_point + i].options = opts;
     }
     free(domains);
 
@@ -1600,9 +1600,9 @@ _krb5_get_name_canon_rules(krb5_context context, krb5_name_canon_rule *rules)
 	krb5_name_canon_rule r;
 	for (k = 0, r = *rules; r; r = r->next, k++) {
 	    _krb5_debug(context, 5,
-		    "Name canon rule %d type=%d, options=%x, mindots=%d, "
+		    "Name canon rule %ld type=%d, options=%x, mindots=%d, "
 		    "domain=%s, realm=%s",
-		    k, r->type, r->options, r->mindots,
+		    (unsigned long)k, r->type, r->options, r->mindots,
 		    r->domain ? r->domain : "<none>",
 		    r->realm ? r->realm : "<none>"
 		   );
@@ -1779,7 +1779,7 @@ out:
 	char *unparsed;
 
 	ret2 = krb5_unparse_name(context, *out_princ, &unparsed);
-	if (ret) {
+	if (ret2) {
 	    _krb5_debug(context, 5, "Couldn't unparse resulting princ! (%d)",
 			ret);
 	} else {

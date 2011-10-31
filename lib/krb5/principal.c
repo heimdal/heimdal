@@ -1872,7 +1872,7 @@ krb5_name_canon_iterator_start(krb5_context context,
     if (in_creds) {
 	if (!state->is_trivial) {
 	    ret = krb5_copy_creds(context, in_creds, &state->creds);
-	    if (ret) goto err;
+	    if (ret) goto out;
 	}
 	state->tmp_princ = state->creds->server; /* so we don't leak */
     }

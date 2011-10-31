@@ -1870,9 +1870,10 @@ krb5_name_canon_iterator_start(krb5_context context,
 
     state->in_princ = princ;
     if (in_creds) {
-	ret = krb5_copy_creds(context, in_creds, &state->creds);
-	if (ret)
-	    goto out;
+	if (!state->is_trivial) {
+	    ret = krb5_copy_creds(context, in_creds, &state->creds);
+	    if (ret) goto err;
+	}
 	state->tmp_princ = state->creds->server; /* so we don't leak */
     }
 
@@ -1908,8 +1909,8 @@ krb5_name_canon_iterate(krb5_context context,
 	return 0;
     }
 
-    krb5_free_principal(context, state->tmp_princ);
     do {
+	krb5_free_principal(context, state->tmp_princ);
 	ret = _krb5_apply_name_canon_rule(context, state->rule,
 	    state->in_princ, &state->tmp_princ, rule_opts);
 	if (ret)

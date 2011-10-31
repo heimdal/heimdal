@@ -16,6 +16,8 @@ AM_PROG_CC_C_O
 AC_PROG_CPP
 AC_PROG_LIBTOOL
 
+m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])
+
 AC_PREFIX_DEFAULT(/usr/heimdal)
 
 test "$sysconfdir" = '${prefix}/etc' && sysconfdir='/etc'

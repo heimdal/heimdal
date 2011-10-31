@@ -124,6 +124,7 @@ _kadm5_set_keys2(kadm5_server_context *context,
 
     memset(&keys, 0, sizeof (keys));
     memset(&hkset, 0, sizeof (hkset)); /* set set_time */
+    memset(&ext, 0, sizeof (ext));
     ext.data.element = choice_HDB_extension_data_hist_keys;
     memset(hist_keys, 0, sizeof (*hist_keys));
 

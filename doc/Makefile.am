@@ -57,7 +57,11 @@ vars.texi: vars.tin Makefile
 	chmod +x vars.texi.tmp
 	mv vars.texi.tmp vars.texi
 
-PROJECTS = hcrypto hdb hx509 gssapi krb5 ntlm wind 
+PROJECTS = hdb hx509 gssapi krb5 ntlm wind 
+
+if !HAVE_OPENSSL
+PROJECTS += hcrypto
+endif
 
 doxyout doxygen: hdb.dxy hx509.dxy hcrypto.dxy gssapi.dxy krb5.dxy ntlm.dxy wind.dxy
 	@find $(srcdir)/doxyout -type d ! -perm -200 -exec chmod u+w {} ';' ; \

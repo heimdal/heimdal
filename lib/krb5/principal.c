@@ -1400,8 +1400,8 @@ expand_search_list(krb5_context context, krb5_name_canon_rule *r, size_t *n,
 	return krb5_enomem(context);
     for (i = 0; i < srch_list_len; i++) {
 	if ((domains[i] = strdup(dnsrch[i])) == NULL) {
-	    for (i--; i >= 0; i--)
-		free(domains[i]);
+	    while (i > 0)
+		free(domains[--i]);
 	    return krb5_enomem(context);
 	}
     }
@@ -1895,6 +1895,9 @@ krb5_name_canon_iterate(krb5_context context,
 {
     krb5_error_code ret;
     krb5_name_canon_iterator state = *iter;
+
+    if (rule_opts)
+	*rule_opts = 0;
 
     if (!state)
 	return 0;

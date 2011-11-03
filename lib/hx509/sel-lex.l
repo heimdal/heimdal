@@ -34,6 +34,11 @@
 
 /* $Id$ */
 
+#ifdef __GNUC__
+#pragma GCC diagnostic ignored "-Wunused-function"
+#endif
+
+
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif

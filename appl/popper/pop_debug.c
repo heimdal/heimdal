@@ -103,6 +103,7 @@ doit_v5 (char *host, int port)
     krb5_auth_context auth_context = NULL;
     krb5_principal server;
     int s = get_socket (host, port);
+    const char *estr;
 
     ret = krb5_init_context (&context);
     if (ret)
@@ -114,8 +115,9 @@ doit_v5 (char *host, int port)
 				   KRB5_NT_SRV_HST,
 				   &server);
     if (ret) {
-	warnx ("krb5_sname_to_principal: %s",
-	       krb5_get_err_text (context, ret));
+	estr = krb5_get_error_message(context, ret);
+	warnx ("krb5_sname_to_principal: %s", estr);
+	krb5_free_error_message(context, estr);
 	return 1;
     }
     ret = krb5_sendauth (context,
@@ -131,13 +133,14 @@ doit_v5 (char *host, int port)
 			 NULL,
 			 NULL,
 			 NULL);
-     if (ret) {
-	 warnx ("krb5_sendauth: %s",
-		krb5_get_err_text (context, ret));
-	 return 1;
-     }
-     loop (s);
-     return 0;
+    if (ret) {
+	estr = krb5_get_error_message(context, ret);
+	warnx ("krb5_sendauth: %s", estr);
+	krb5_free_error_message(context, estr);
+	return 1;
+    }
+    loop (s);
+    return 0;
 }
 #endif
 

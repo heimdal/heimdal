@@ -2033,7 +2033,7 @@ krb5_crypto_init(krb5_context context,
 	krb5_set_error_message(context, ENOMEM, N_("malloc: out of memory", ""));
 	return ENOMEM;
     }
-    if(etype == ETYPE_NULL)
+    if(etype == (krb5_enctype)ETYPE_NULL)
 	etype = key->keytype;
     (*crypto)->et = _krb5_find_enctype(etype);
     if((*crypto)->et == NULL || ((*crypto)->et->flags & F_DISABLED)) {

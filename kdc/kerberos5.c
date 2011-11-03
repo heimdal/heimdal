@@ -92,9 +92,9 @@ _kdc_is_weak_exception(krb5_principal principal, krb5_enctype etype)
 {
     if (principal->name.name_string.len > 0 &&
 	strcmp(principal->name.name_string.val[0], "afs") == 0 &&
-	(etype == ETYPE_DES_CBC_CRC
-	 || etype == ETYPE_DES_CBC_MD4
-	 || etype == ETYPE_DES_CBC_MD5))
+	(etype == (krb5_enctype)ETYPE_DES_CBC_CRC
+	 || etype == (krb5_enctype)ETYPE_DES_CBC_MD4
+	 || etype == (krb5_enctype)ETYPE_DES_CBC_MD5))
 	return TRUE;
     return FALSE;
 }
@@ -143,7 +143,7 @@ _kdc_find_etype(krb5_context context, krb5_boolean use_strongest_session_key,
 
     if (use_strongest_session_key) {
 	const krb5_enctype *p;
-	krb5_enctype clientbest = ETYPE_NULL;
+	krb5_enctype clientbest = (krb5_enctype)ETYPE_NULL;
 	int j;
 
 	/*
@@ -159,16 +159,18 @@ _kdc_find_etype(krb5_context context, krb5_boolean use_strongest_session_key,
 
 	/* drive the search with local supported enctypes list */
 	p = krb5_kerberos_enctypes(context);
-	for (i = 0; p[i] != ETYPE_NULL && enctype == ETYPE_NULL; i++) {
+	for (i = 0;
+	    p[i] != (krb5_enctype)ETYPE_NULL && enctype == (krb5_enctype)ETYPE_NULL;
+	    i++) {
 	    if (krb5_enctype_valid(context, p[i]) != 0)
 		continue;
 
 	    /* check that the client supports it too */
-	    for (j = 0; j < len && enctype == ETYPE_NULL; j++) {
+	    for (j = 0; j < len && enctype == (krb5_enctype)ETYPE_NULL; j++) {
 		if (p[i] != etypes[j])
 		    continue;
 		/* save best of union of { client, crypto system } */
-		if (clientbest == ETYPE_NULL)
+		if (clientbest == (krb5_enctype)ETYPE_NULL)
 		    clientbest = p[i];
 		/* check target princ support */
 		ret = hdb_enctype2key(context, &princ->entry, p[i], &key);
@@ -179,9 +181,10 @@ _kdc_find_etype(krb5_context context, krb5_boolean use_strongest_session_key,
 		enctype = p[i];
 	    }
 	}
-	if (clientbest != ETYPE_NULL && enctype == ETYPE_NULL)
+	if (clientbest != (krb5_enctype)ETYPE_NULL &&
+	    enctype == (krb5_enctype)ETYPE_NULL)
 	    enctype = clientbest;
-	else if (enctype == ETYPE_NULL)
+	else if (enctype == (krb5_enctype)ETYPE_NULL)
 	    ret = KRB5KDC_ERR_ETYPE_NOSUPP;
 	if (ret == 0 && ret_enctype != NULL)
 	    *ret_enctype = enctype;

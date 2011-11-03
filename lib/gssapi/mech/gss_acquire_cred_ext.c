@@ -152,7 +152,6 @@ _gss_acquire_cred_ext(OM_uint32 *minor_status,
     for (i = 0; i < mechs->count; i++) {
 	struct _gss_mechanism_name *mn = NULL;
 	struct _gss_mechanism_cred *mc = NULL;
-	gss_name_t desired_mech_name = GSS_C_NO_NAME;
 
 	m = __gss_get_mechanism(&mechs->elements[i]);
 	if (!m)
@@ -163,8 +162,6 @@ _gss_acquire_cred_ext(OM_uint32 *minor_status,
 					&mechs->elements[i], &mn);
 	    if (major_status != GSS_S_COMPLETE)
 		continue;
-
-	    desired_mech_name = mn->gmn_name;
 	}
 
 	major_status = _gss_acquire_mech_cred(minor_status, m, mn,

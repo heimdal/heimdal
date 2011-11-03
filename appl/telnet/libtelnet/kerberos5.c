@@ -605,7 +605,7 @@ kerberos5_is(Authenticator *ap, unsigned char *data, int cnt)
 	    if (ret2 != -1)
 		errbuf2 = errbuf;
 	    Data(ap, KRB_FORWARD_REJECT, errbuf, -1);
-	    log_message("Could not read forwarded credentials: %s", errbuf);
+	    log_message("Could not read forwarded credentials: %s", errbuf2);
 
 	    if (ret2 != -1)
 		free (errbuf);

@@ -770,10 +770,9 @@ main(int argc, char **argv)
     slave *slaves = NULL;
     uint32_t current_version = 0, old_version = 0;
     krb5_keytab keytab;
-    int optidx;
     char **files;
 
-    optidx = krb5_program_setup(&context, argc, argv, args, num_args, NULL);
+    (void) krb5_program_setup(&context, argc, argv, args, num_args, NULL);
 
     if(help_flag)
 	krb5_std_usage(0, args, num_args);

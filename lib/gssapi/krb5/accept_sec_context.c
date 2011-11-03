@@ -104,7 +104,6 @@ _gsskrb5_register_acceptor_identity(OM_uint32 *min_stat, const char *identity)
 void
 _gsskrb5i_is_cfx(krb5_context context, gsskrb5_ctx ctx, int acceptor)
 {
-    krb5_error_code ret;
     krb5_keyblock *key;
 
     if (acceptor) {
@@ -144,7 +143,8 @@ _gsskrb5i_is_cfx(krb5_context context, gsskrb5_ctx ctx, int acceptor)
     }
     if (ctx->crypto)
         krb5_crypto_destroy(context, ctx->crypto);
-    ret = krb5_crypto_init(context, key, 0, &ctx->crypto);
+    /* XXX We really shouldn't ignore this; will come back to this */
+    (void) krb5_crypto_init(context, key, 0, &ctx->crypto);
 }
 
 

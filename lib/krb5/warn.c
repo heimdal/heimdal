@@ -86,6 +86,12 @@ _warnerr(krb5_context context, int do_errtext,
     ret = _warnerr(context, ETEXT, CODE, LEVEL, fmt, ap); 		\
     va_end(ap);
 
+#define FUNC_NORET(ETEXT, CODE, LEVEL)					\
+    va_list ap;								\
+    va_start(ap, fmt);							\
+    (void) _warnerr(context, ETEXT, CODE, LEVEL, fmt, ap); 		\
+    va_end(ap);
+
 #undef __attribute__
 #define __attribute__(X)
 
@@ -202,7 +208,7 @@ krb5_err(krb5_context context, int eval, krb5_error_code code,
 	 const char *fmt, ...)
      __attribute__ ((noreturn, format (printf, 4, 5)))
 {
-    FUNC(1, code, 0);
+    FUNC_NORET(1, code, 0);
     exit(eval);
     UNREACHABLE(return 0);
 }
@@ -241,7 +247,7 @@ KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_errx(krb5_context context, int eval, const char *fmt, ...)
      __attribute__ ((noreturn, format (printf, 3, 4)))
 {
-    FUNC(0, 0, 0);
+    FUNC_NORET(0, 0, 0);
     exit(eval);
     UNREACHABLE(return 0);
 }
@@ -283,7 +289,7 @@ KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_abort(krb5_context context, krb5_error_code code, const char *fmt, ...)
      __attribute__ ((noreturn, format (printf, 3, 4)))
 {
-    FUNC(1, code, 0);
+    FUNC_NORET(1, code, 0);
     abort();
     UNREACHABLE(return 0);
 }
@@ -311,7 +317,7 @@ KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_abortx(krb5_context context, const char *fmt, ...)
      __attribute__ ((noreturn, format (printf, 2, 3)))
 {
-    FUNC(0, 0, 0);
+    FUNC_NORET(0, 0, 0);
     abort();
     UNREACHABLE(return 0);
 }

@@ -287,6 +287,102 @@ out:
 }
 
 
+static krb5_error_code
+add_1des_dup(krb5_context context, Keys *keys, Key *key, krb5_keytype keytype)
+{
+    key->key.keytype = keytype;
+    return add_Keys(keys, key);
+}
+
+/*
+ * This monstrosity is here so we can avoid having to do enctype
+ * similarity checking in the KDC.  This helper function dups 1DES keys
+ * in a keyset for all the similar 1DES enctypes for which keys are
+ * missing.  And, of course, we do this only if there's any 1DES keys in
+ * the keyset to begin with.
+ */
+static krb5_error_code
+dup_similar_keys_in_keyset(krb5_context context, Keys *keys)
+{
+    krb5_error_code ret;
+    size_t i, k;
+    Key key;
+    int keyset_has_1des = 0;
+    int keyset_has_1des_crc = 0;
+    int keyset_has_1des_md4 = 0;
+    int keyset_has_1des_md5 = 0;
+
+    memset(&key, 0, sizeof (key));
+    k = keys->len;
+    for (i = 0; i < keys->len; i++) {
+	if (keys->val[i].key.keytype == ETYPE_DES_CBC_CRC) {
+	    keyset_has_1des_crc = 1;
+	    if (k == keys->len)
+		k = i;
+	} else if (keys->val[i].key.keytype == ETYPE_DES_CBC_MD4) {
+	    keyset_has_1des_crc = 1;
+	    if (k == keys->len)
+		k = i;
+	} else if (keys->val[i].key.keytype == ETYPE_DES_CBC_MD5) {
+	    keyset_has_1des_crc = 1;
+	    if (k == keys->len)
+		k = i;
+	}
+    }
+    if (k == keys->len)
+	return 0;
+
+    keyset_has_1des = 1;
+    ret = copy_Key(&keys->val[k], &key);
+    if (ret)
+	return ret;
+    if (!keyset_has_1des_crc) {
+	ret = add_1des_dup(context, keys, &key, ETYPE_DES_CBC_CRC);
+	if (ret)
+	    goto out;
+    }
+    if (!keyset_has_1des_md4) {
+	ret = add_1des_dup(context, keys, &key, ETYPE_DES_CBC_MD4);
+	if (ret)
+	    goto out;
+    }
+    if (!keyset_has_1des_md5) {
+	ret = add_1des_dup(context, keys, &key, ETYPE_DES_CBC_MD5);
+	if (ret)
+	    goto out;
+    }
+
+out:
+    free_Key(&key);
+    return ret;
+}
+
+
+static krb5_error_code
+dup_similar_keys(krb5_context context, hdb_entry *entry)
+{
+    krb5_error_code ret;
+    HDB_Ext_KeySet *hist_keys;
+    HDB_extension *extp;
+    size_t i;
+
+    ret = dup_similar_keys_in_keyset(context, &entry->keys);
+    if (ret)
+	return ret;
+    extp = hdb_find_extension(entry, choice_HDB_extension_data_hist_keys);
+    if (extp == NULL)
+	return 0;
+
+    hist_keys = &extp->data.u.hist_keys;
+    for (i = 0; i < hist_keys->len; i++) {
+	ret = dup_similar_keys_in_keyset(context, &hist_keys->val[i].keys);
+	if (ret)
+	    return ret;
+    }
+    return 0;
+}
+
+
 /**
  * This function parses an MIT krb5 encoded KDB entry and fills in the
  * given HDB entry with it.
@@ -508,7 +604,7 @@ mdb_value2entry(krb5_context context, krb5_data *data, krb5_kvno target_kvno,
 
     krb5_storage_free(sp);
 
-    return 0;
+    return dup_similar_keys(context, entry);
 
 out:
     krb5_storage_free(sp);

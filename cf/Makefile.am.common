@@ -255,3 +255,10 @@ distdir-in-tree: $(DISTFILES) $(INFO_DEPS)
 	  (cd $$subdir && $(MAKE) $(AM_MAKEFLAGS) distdir-in-tree) ; \
 	  fi ; \
 	done
+
+
+#silent-rules
+
+heim_verbose = $(heim_verbose_$(V))
+heim_verbose_ = $(heim_verbose_$(AM_DEFAULT_VERBOSITY))
+heim_verbose_0 = @echo "  GEN    "$@;

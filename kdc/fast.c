@@ -61,7 +61,7 @@ get_fastuser_crypto(kdc_request_t r, krb5_enctype enctype, krb5_crypto *crypto)
 	ret = _kdc_get_preferred_key(r->context, r->config, fast_user,
 				     "fast-cookie", &enctype, &cookie_key);
     else
-	ret = hdb_enctype2key(r->context, &fast_user->entry,
+	ret = hdb_enctype2key(r->context, &fast_user->entry, NULL,
 			      enctype, &cookie_key);
     if (ret)
 	goto out;
@@ -438,7 +438,7 @@ _kdc_fast_unwrap_request(kdc_request_t r)
 	goto out;
     }
 
-    ret = hdb_enctype2key(r->context, &armor_user->entry,
+    ret = hdb_enctype2key(r->context, &armor_user->entry, NULL,
 			  ap_req.ticket.enc_part.etype,
 			  &armor_key);
     if (ret) {

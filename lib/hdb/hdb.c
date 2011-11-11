@@ -92,19 +92,42 @@ static struct hdb_method dbmetod =
     { HDB_INTERFACE_VERSION, "", hdb_ndbm_create };
 #endif
 
+const Keys *
+hdb_kvno2keys(krb5_context context,
+	      const hdb_entry *e,
+	      krb5_kvno kvno)
+{
+    HDB_Ext_KeySet *hist_keys;
+    HDB_extension *extp;
+    size_t i;
+
+    if (kvno == 0)
+	return &e->keys;
+
+    extp = hdb_find_extension(e, choice_HDB_extension_data_hist_keys);
+    if (extp == NULL)
+	return 0;
+
+    hist_keys = &extp->data.u.hist_keys;
+    for (i = 0; i < hist_keys->len; i++) {
+	if (hist_keys->val[i].kvno == kvno)
+	    return &hist_keys->val[i].keys;
+    }
+
+    return NULL;
+}
 
 krb5_error_code
 hdb_next_enctype2key(krb5_context context,
 		     const hdb_entry *e,
+		     const Keys *keyset,
 		     krb5_enctype enctype,
 		     Key **key)
 {
+    const Keys *keys = keyset ? keyset : &e->keys;
     Key *k;
 
-    for (k = *key ? (*key) + 1 : e->keys.val;
-	 k < e->keys.val + e->keys.len;
-	 k++)
-    {
+    for (k = *key ? (*key) + 1 : keys->val; k < keys->val + keys->len; k++) {
 	if(k->key.keytype == enctype){
 	    *key = k;
 	    return 0;
@@ -119,11 +142,12 @@ hdb_next_enctype2key(krb5_context context,
 krb5_error_code
 hdb_enctype2key(krb5_context context,
 		hdb_entry *e,
+		const Keys *keyset,
 		krb5_enctype enctype,
 		Key **key)
 {
     *key = NULL;
-    return hdb_next_enctype2key(context, e, enctype, key);
+    return hdb_next_enctype2key(context, e, keyset, enctype, key);
 }
 
 void

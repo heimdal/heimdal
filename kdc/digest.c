@@ -883,7 +883,7 @@ _kdc_do_digest(krb5_context context,
 		goto failed;
 	    }
 
-	    ret = hdb_enctype2key(context, &user->entry,
+	    ret = hdb_enctype2key(context, &user->entry, NULL,
 				  ETYPE_ARCFOUR_HMAC_MD5, &key);
 	    if (ret) {
 		krb5_set_error_message(context, ret,
@@ -1209,7 +1209,7 @@ _kdc_do_digest(krb5_context context,
 	    goto out;
 	}
 
-	ret = hdb_enctype2key(context, &user->entry,
+	ret = hdb_enctype2key(context, &user->entry, NULL,
 			      ETYPE_ARCFOUR_HMAC_MD5, &key);
 	if (ret) {
 	    krb5_set_error_message(context, ret, "NTLM missing arcfour key");

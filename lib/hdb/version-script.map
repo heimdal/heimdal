@@ -47,6 +47,7 @@ HEIMDAL_HDB_1.0 {
 		hdb_get_dbinfo;
 		hdb_init_db;
 		hdb_key2principal;
+		hdb_kvno2keys;
 		hdb_list_builtin;
 		hdb_lock;
 		hdb_next_enctype2key;

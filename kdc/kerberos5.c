@@ -173,7 +173,7 @@ _kdc_find_etype(krb5_context context, krb5_boolean use_strongest_session_key,
 		if (clientbest == (krb5_enctype)ETYPE_NULL)
 		    clientbest = p[i];
 		/* check target princ support */
-		ret = hdb_enctype2key(context, &princ->entry, p[i], &key);
+		ret = hdb_enctype2key(context, &princ->entry, NULL, p[i], &key);
 		if (ret)
 		    continue;
 		if (is_preauth && !is_default_salt_p(&def_salt, key))
@@ -206,7 +206,8 @@ _kdc_find_etype(krb5_context context, krb5_boolean use_strongest_session_key,
 		!_kdc_is_weak_exception(princ->entry.principal, etypes[i]))
 		continue;
 
-	    while (hdb_next_enctype2key(context, &princ->entry, etypes[i], &key) == 0) {
+	    while (hdb_next_enctype2key(context, &princ->entry, NULL,
+					etypes[i], &key) == 0) {
 		if (key->key.keyvalue.length == 0) {
 		    ret = KRB5KDC_ERR_NULL_KEY;
 		    continue;
@@ -552,7 +553,7 @@ pa_enc_ts_validate(kdc_request_t r, const PA_DATA *pa)
 	goto out;
     }
 	
-    ret = hdb_enctype2key(r->context, &r->client->entry,
+    ret = hdb_enctype2key(r->context, &r->client->entry, NULL,
 			  enc_data.etype, &pa_key);
     if(ret){
 	char *estr;
@@ -608,7 +609,7 @@ pa_enc_ts_validate(kdc_request_t r, const PA_DATA *pa)
 	krb5_free_error_message(r->context, msg);
 	free(str);
 
-	if(hdb_next_enctype2key(r->context, &r->client->entry,
+	if(hdb_next_enctype2key(r->context, &r->client->entry, NULL,
 				enc_data.etype, &pa_key) == 0)
 	    goto try_next_key;
 

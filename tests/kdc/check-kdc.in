@@ -77,6 +77,7 @@ kgetcred="${kgetcred} -c $cache"
 kgetcred_imp="${kgetcred} -c $cache --out-cache=${ocache}"
 kdestroy="${kdestroy} -c $cache ${afs_no_unlog}"
 kimpersonate="${kimpersonate} -k ${keytab} --ccache=${ocache}"
+test_set_kvno0="${test_set_kvno0} -c $cache -n"
 
 rm -f ${keytabfile}
 rm -f current-db*
@@ -242,6 +243,33 @@ for a in $enctypes; do
 		{ ec=1 ; eval "${testfailed}"; }
 	${kdestroy} --credential=${server2}@${R2}
 done
+${kdestroy}
+
+echo "Trying x-realm TGT with kvno 0 case";
+${kinit} --password-file=${objdir}/foopassword foo@$R ||
+	{ ec=1 ; eval "${testfailed}"; }
+${test_set_kvno0} || { ec=1 ; eval "${testfailed}"; }
+echo "Getting cross realm tickets"; > messages.log
+${kgetcred} krbtgt/${R2}@${R} || { ec=1 ; eval "${testfailed}"; }
+${test_set_kvno0} || { ec=1 ; eval "${testfailed}"; }
+echo "Getting service ticket"; > messages.log
+${kgetcred} ${server2}@${R2} || { ec=1 ; eval "${testfailed}"; }
+${klist} -v
+${kdestroy}
+
+echo "Trying x-realm TGT with kvno 0 case with key rollover";
+${kinit} --password-file=${objdir}/foopassword foo@$R ||
+	{ ec=1 ; eval "${testfailed}"; }
+${test_set_kvno0} || { ec=1 ; eval "${testfailed}"; }
+echo "Getting cross realm tickets"; > messages.log
+${kgetcred} krbtgt/${R2}@${R} || { ec=1 ; eval "${testfailed}"; }
+echo "Rolling over cross realm keys"; > messages.log
+${kadmin} cpw -r --keepold krbtgt/${R2}@${R} || { ec=1 ; eval "${testfailed}"; }
+${kadmin} cpw -r --keepold krbtgt/${R}@${R2} || { ec=1 ; eval "${testfailed}"; }
+${test_set_kvno0} || { ec=1 ; eval "${testfailed}"; }
+echo "Getting service ticket"; > messages.log
+${kgetcred} ${server2}@${R2} || { ec=1 ; eval "${testfailed}"; }
+${klist} -v
 ${kdestroy}
 
 echo "try all permutations"; > messages.log

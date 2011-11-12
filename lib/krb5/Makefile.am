@@ -47,7 +47,7 @@ TESTS =						\
 
 check_DATA = test_config_strings.out
 
-check_PROGRAMS = $(TESTS) test_hostname test_ap-req test_canon
+check_PROGRAMS = $(TESTS) test_hostname test_ap-req test_canon test_set_kvno0
 
 LDADD = libkrb5.la \
 	$(LIB_hcrypto) \

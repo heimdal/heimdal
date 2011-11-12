@@ -254,7 +254,6 @@ ${kgetcred} krbtgt/${R2}@${R} || { ec=1 ; eval "${testfailed}"; }
 ${test_set_kvno0} || { ec=1 ; eval "${testfailed}"; }
 echo "Getting service ticket"; > messages.log
 ${kgetcred} ${server2}@${R2} || { ec=1 ; eval "${testfailed}"; }
-${klist} -v
 ${kdestroy}
 
 echo "Trying x-realm TGT with kvno 0 case with key rollover";
@@ -264,12 +263,13 @@ ${test_set_kvno0} || { ec=1 ; eval "${testfailed}"; }
 echo "Getting cross realm tickets"; > messages.log
 ${kgetcred} krbtgt/${R2}@${R} || { ec=1 ; eval "${testfailed}"; }
 echo "Rolling over cross realm keys"; > messages.log
+${kadmin} cpw -r --keepold krbtgt/${R}@${R} || { ec=1 ; eval "${testfailed}"; }
 ${kadmin} cpw -r --keepold krbtgt/${R2}@${R} || { ec=1 ; eval "${testfailed}"; }
 ${kadmin} cpw -r --keepold krbtgt/${R}@${R2} || { ec=1 ; eval "${testfailed}"; }
 ${test_set_kvno0} || { ec=1 ; eval "${testfailed}"; }
 echo "Getting service ticket"; > messages.log
+echo "Start tracing kdc, then hit return"
 ${kgetcred} ${server2}@${R2} || { ec=1 ; eval "${testfailed}"; }
-${klist} -v
 ${kdestroy}
 
 echo "try all permutations"; > messages.log

@@ -148,6 +148,9 @@ sub parse_if
     } elsif (m/^([^&]+)\&\&(.*)$/) {
 	print "$1 and $2\n" if ($debug);
 	return parse_if($1) and parse_if($2);
+    } elsif (m/^\(([^&]+)\&\&(.*)$/) {
+	print "$1 and $2\n" if ($debug);
+	return parse_if($1) and parse_if($2);
     } elsif (m/^([^\|]+)\|\|(.*)$/) {
 	print "$1 or $2\n" if ($debug);
 	return parse_if($1) or parse_if($2);

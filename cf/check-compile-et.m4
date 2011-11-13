@@ -3,12 +3,12 @@ dnl
 dnl CHECK_COMPILE_ET
 AC_DEFUN([CHECK_COMPILE_ET], [
 
-AC_CHECK_PROG(COMPILE_ET, compile_et, [compile_et])
+AC_CHECK_PROG(COMPILE_ET, compile_et, [compile_et], [no])
 
 krb_cv_compile_et="no"
 krb_cv_com_err_need_r=""
 krb_cv_compile_et_cross=no
-if test "${COMPILE_ET}" = "compile_et"; then
+if test "${COMPILE_ET}" != "no"; then
 
 dnl We have compile_et.  Now let's see if it supports `prefix' and `index'.
 AC_MSG_CHECKING(whether compile_et has the features we need)

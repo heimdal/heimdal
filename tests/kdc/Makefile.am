@@ -4,7 +4,7 @@ noinst_DATA = \
 	krb5.conf \
 	krb5-canon.conf \
 	krb5-canon2.conf \
-	krb5-hdb-mitdb.conf.in \
+	krb5-hdb-mitdb.conf \
 	krb5-weak.conf \
 	krb5-pkinit.conf \
 	krb5-pkinit-win.conf \
@@ -256,6 +256,7 @@ EXTRA_DIST = \
 	krb5.conf.in \
 	krb5-canon.conf.in \
 	krb5-canon2.conf.in \
+	krb5-hdb-mitdb.conf.in \
 	krb5.conf.keys.in \
 	ntlm-user-file.txt \
 	leaks-kill.sh \

@@ -34,11 +34,16 @@
  */
 
 #include "baselocl.h"
+#include <ctype.h>
 
 
 int
 heim_base2json(heim_object_t obj,
-	       void (*out)(char *, void *), void *ctx)
+	       void (*out)(const char *, void *), void *ctx);
+
+int
+heim_base2json(heim_object_t obj,
+	       void (*out)(const char *, void *), void *ctx)
 {
     heim_tid_t type = heim_get_tid(obj);
     __block int fail = 0, needcomma = 0;
@@ -92,55 +97,274 @@ heim_base2json(heim_object_t obj,
     return fail;
 }
 
-static int
-parse_dict(heim_dict_t dict, char * const *pp, size_t *len)
-{
-    const char *p = *pp;
-    while (*len) {
-	(*len)--;
+struct parse_ctx {
+    unsigned long lineno;
+    const uint8_t *p;
+    const uint8_t *pstart;
+    const uint8_t *pend;
+    heim_error_t error;
+};
 
-	if (*p == '\n') {
-	    p += 1;
-	} else if (isspace(*p)) {
-	    p += 1;
-	} else if (*p == '}') {
-	    *pp = p + 1;
+
+static heim_object_t
+parse_value(struct parse_ctx *ctx);
+
+static int
+white_spaces(struct parse_ctx *ctx)
+{
+    while (ctx->p < ctx->pend) {
+	uint8_t c = *ctx->p;
+	if (c == ' ' || c == '\t' || c == '\r') {
+
+	} else if (c == '\n') {
+	    ctx->lineno++;
+	} else
 	    return 0;
-	} else {
-	}
+	(ctx->p)++;
     }
-    return ENOENT;
+    return -1;
+}
+
+static int
+is_number(uint8_t n)
+{
+    return ('0' <= n && n <= '9');
+}
+
+static heim_number_t
+parse_number(struct parse_ctx *ctx)
+{
+    int number = 0, neg = 1;
+
+    if (ctx->p >= ctx->pend)
+	return NULL;
+
+    if (*ctx->p == '-') {
+	neg = -1;
+	ctx->p += 1;
+    }
+
+    while (ctx->p < ctx->pend) {
+	if (is_number(*ctx->p)) {
+	    number = (number * 10) + (*ctx->p - '0');
+	} else {
+	    break;
+	}
+	ctx->p += 1;
+    }
+
+    return heim_number_create(number * neg);
+}
+
+static heim_string_t
+parse_string(struct parse_ctx *ctx)
+{
+    const uint8_t *start;
+
+    heim_assert(*ctx->p == '"', "string doesnt' start with \"");
+    start = ++ctx->p;
+
+    while (ctx->p < ctx->pend) {
+	if (*ctx->p == '\n') {
+	    ctx->lineno++;
+	} else if (*ctx->p == '"') {
+	    heim_object_t o;
+
+	    /* XXX handle quotes */
+	    o = heim_string_create_with_bytes(start, ctx->p - start);
+	    ctx->p += 1;
+
+	    return o;
+	}    
+	ctx->p += 1;
+    }
+    ctx->error = heim_error_create(EINVAL, "ran out of string");
+    return NULL;
+}
+
+static int
+parse_pair(heim_dict_t dict, struct parse_ctx *ctx)
+{
+    heim_string_t key;
+    heim_object_t value;
+
+    if (white_spaces(ctx))
+	return -1;
+
+    if (*ctx->p == '}')
+	return 0;
+
+    key = parse_string(ctx);
+    if (key == NULL)
+	return -1;
+
+    if (white_spaces(ctx))
+	return -1;
+
+    if (*ctx->p != ':') {
+	heim_release(key);
+	return -1;
+    }
+
+    ctx->p += 1;
+
+    if (white_spaces(ctx)) {
+	heim_release(key);
+	return -1;
+    }
+
+    value = parse_value(ctx);
+    if (value == NULL) {
+	heim_release(key);
+	return -1;
+    }
+    heim_dict_set_value(dict, key, value);
+    heim_release(key);
+    heim_release(value);
+
+    if (white_spaces(ctx))
+	return -1;
+
+    if (*ctx->p == '}') {
+	ctx->p++;
+	return 0;
+    } else if (*ctx->p == ',') {
+	ctx->p++;
+	return 1;
+    }
+    return -1;
+}
+
+static heim_dict_t
+parse_dict(struct parse_ctx *ctx)
+{
+    heim_dict_t dict = heim_dict_create(11);
+    int ret;
+
+    heim_assert(*ctx->p == '{', "string doesn't start with {");
+    ctx->p += 1;
+
+    while ((ret = parse_pair(dict, ctx)) > 0)
+	;
+    if (ret < 0) {
+	heim_release(dict);
+	return NULL;
+    }
+    return dict;
+}
+
+static int
+parse_item(heim_array_t array, struct parse_ctx *ctx)
+{
+    heim_object_t value;
+
+    if (white_spaces(ctx))
+	return -1;
+
+    if (*ctx->p == ']')
+	return 0;
+
+    value = parse_value(ctx);
+    if (value == NULL)
+	return -1;
+
+    heim_array_append_value(array, value);
+    heim_release(value);
+
+    if (white_spaces(ctx))
+	return -1;
+
+    if (*ctx->p == ']') {
+	ctx->p++;
+	return 0;
+    } else if (*ctx->p == ',') {
+	ctx->p++;
+	return 1;
+    }
+    return -1;
+}
+
+static heim_array_t
+parse_array(struct parse_ctx *ctx)
+{
+    heim_array_t array = heim_array_create();
+    int ret;
+
+    heim_assert(*ctx->p == '[', "array doesn't start with [");
+    ctx->p += 1;
+
+    while ((ret = parse_item(array, ctx)) > 0)
+	;
+    if (ret < 0) {
+	heim_release(array);
+	return NULL;
+    }
+    return array;
+}
+
+static heim_object_t
+parse_value(struct parse_ctx *ctx)
+{
+    size_t len;
+
+    if (white_spaces(ctx))
+	return NULL;
+
+    if (*ctx->p == '"') {
+	return parse_string(ctx);
+    } else if (*ctx->p == '{') {
+	return parse_dict(ctx);
+    } else if (*ctx->p == '[') {
+	return parse_array(ctx);
+    } else if (is_number(*ctx->p) || *ctx->p == '-') {
+	return parse_number(ctx);
+    }
+
+    len = ctx->pend - ctx->p;
+
+    if (len >= 4 && memcmp(ctx->p, "null", 4) == 0) {
+	ctx->p += 4;
+	return heim_null_create();
+    } else if (len >= 4 && strncasecmp((char *)ctx->p, "true", 4) == 0) {
+	ctx->p += 4;
+	return heim_bool_create(1);
+    } else if (len >= 5 && strncasecmp((char *)ctx->p, "false", 5) == 0) {
+	ctx->p += 5;
+	return heim_bool_create(0);
+    }
+
+    ctx->error = heim_error_create(EINVAL, "unknown char %c at %lu line %lu",
+				   (char)*ctx->p, 
+				   (unsigned long)(ctx->p - ctx->pstart),
+				   ctx->lineno);
+    return NULL;
 }
 
 
 heim_object_t
-heim_json2base(const void *data, size_t length)
+heim_json_create(const char *string, heim_error_t *error)
 {
-    heim_array_t stack;
-    heim_object_t o = NULL;
-    const char *p = data;
-    unsigned long lineno = 1;
+    return heim_json_create_with_bytes(string, strlen(string), error);
+}
 
-    while (length) {
-	length--;
+heim_object_t
+heim_json_create_with_bytes(const void *data, size_t length, heim_error_t *error)
+{
+    struct parse_ctx ctx;
+    heim_object_t o;
 
-	if (*p == '\n') {
-	    lineno++;
-	} else if (isspace((int)*p)) {
-	    ;
-	} else if (*p == '{') {
-	    o = heim_dict_create();
+    ctx.lineno = 1;
+    ctx.p = data;
+    ctx.pstart = data;
+    ctx.pend = ((uint8_t *)data) + length;
+    ctx.error = NULL;
 
-	    if ((ret = parse_dict(&p, &length)) != 0)
-		goto out;
-	} else
-	    abort();
-    }
+    o = parse_value(&ctx);
 
- out:
-    if (ret && o) {
-	heim_release(o);
-	o = NULL;
+    if (o == NULL && error) {
+	*error = ctx.error;
+    } else if (ctx.error) {
+	heim_release(ctx.error);
     }
 
     return o;

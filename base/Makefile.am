@@ -6,6 +6,8 @@ check_PROGRAMS = test_base
 
 libheimbase_la_LDFLAGS = -version-info 1:0:0
 
+TESTS = test_base
+
 if versionscript
 libheimbase_la_LDFLAGS += $(LDFLAGS_VERSION_SCRIPT)$(srcdir)/version-script.map
 endif

@@ -21,12 +21,13 @@ dist_libheimbase_la_SOURCES =	\
 	heimbase.c		\
 	heimbasepriv.h		\
 	heimqueue.h		\
+	json.c			\
 	null.c			\
 	number.c		\
 	string.c
 
 libheimbase_la_DEPENDENCIES = version-script.map
 
-test_base_LDADD = $(LIB_heimbase)
+test_base_LDADD = libheimbase.la
 
 EXTRA_DIST = NTMakefile version-script.map

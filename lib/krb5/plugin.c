@@ -426,7 +426,7 @@ _krb5_load_plugins(krb5_context context, const char *name, const char **paths)
 	}
     }
 
-    module = heim_dict_copy_value(modules, s);
+    module = heim_dict_get_value(modules, s);
     if (module == NULL) {
 	module = heim_dict_create(11);
 	if (module == NULL) {
@@ -434,7 +434,8 @@ _krb5_load_plugins(krb5_context context, const char *name, const char **paths)
 	    heim_release(s);
 	    return;
 	}
-	heim_dict_add_value(modules, s, module);
+	heim_dict_set_value(modules, s, module);
+	heim_release(module);
     }
     heim_release(s);
 
@@ -475,7 +476,7 @@ _krb5_load_plugins(krb5_context context, const char *name, const char **paths)
 	    }
 
 	    /* check if already cached */
-	    p = heim_dict_copy_value(module, spath);
+	    p = heim_dict_get_value(module, spath);
 	    if (p == NULL) {
 		p = heim_alloc(sizeof(*p), "krb5-plugin", plug_dealloc);
 		if (p)
@@ -484,16 +485,15 @@ _krb5_load_plugins(krb5_context context, const char *name, const char **paths)
 		if (p->dsohandle) {
 		    p->path = heim_retain(spath);
 		    p->names = heim_dict_create(11);
-		    heim_dict_add_value(module, spath, p);
+		    heim_dict_set_value(module, spath, p);
 		}
+		heim_release(p);
 	    }
 	    heim_release(spath);
-	    heim_release(p);
 	    free(path);
 	}
 	closedir(d);
     }
-    heim_release(module);
     HEIMDAL_MUTEX_unlock(&plugin_mutex);
 #endif /* HAVE_DLOPEN */
 }
@@ -548,7 +548,7 @@ search_modules(void *ctx, heim_object_t key, heim_object_t value)
 {
     struct iter_ctx *s = ctx;
     struct plugin2 *p = value;
-    struct plug *pl = heim_dict_copy_value(p->names, s->n);
+    struct plug *pl = heim_dict_get_value(p->names, s->n);
     struct common_plugin_method *cpm;
 
     if (pl == NULL) {
@@ -565,15 +565,14 @@ search_modules(void *ctx, heim_object_t key, heim_object_t value)
 	    if (ret)
 		cpm = pl->dataptr = NULL;
 	}
-	heim_dict_add_value(p->names, s->n, pl);
+	heim_dict_set_value(p->names, s->n, pl);
+	heim_release(pl);
     } else {
 	cpm = pl->dataptr;
     }
 
     if (cpm && cpm->version >= s->min_version)
 	heim_array_append_value(s->result, pl);
-
-    heim_release(pl);
 }
 
 static void
@@ -603,7 +602,7 @@ _krb5_plugin_run_f(krb5_context context,
 
     HEIMDAL_MUTEX_lock(&plugin_mutex);
 
-    dict = heim_dict_copy_value(modules, m);
+    dict = heim_dict_get_value(modules, m);
     heim_release(m);
     if (dict == NULL) {
 	HEIMDAL_MUTEX_unlock(&plugin_mutex);
@@ -619,8 +618,6 @@ _krb5_plugin_run_f(krb5_context context,
     s.userctx = userctx;
 
     heim_dict_iterate_f(dict, search_modules, &s);
-
-    heim_release(dict);
 
     HEIMDAL_MUTEX_unlock(&plugin_mutex);
 

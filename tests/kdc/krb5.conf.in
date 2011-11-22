@@ -76,7 +76,7 @@
 	iprop-acl = @srcdir@/iprop-acl
 
 [logging]
-	kdc = 0-/FILE:@objdir@/messages.log
+	kdc = 0-/FILE=@objdir@/messages.log
 	default = 0-/FILE:@objdir@/messages.log
 
 [kadmin]

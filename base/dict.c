@@ -168,7 +168,7 @@ _search(heim_dict_t dict, heim_object_t ptr)
  */
 
 heim_object_t
-heim_dict_copy_value(heim_dict_t dict, heim_object_t key)
+heim_dict_get_value(heim_dict_t dict, heim_object_t key)
 {
     struct hashentry *p;
     p = _search(dict, key);
@@ -189,7 +189,7 @@ heim_dict_copy_value(heim_dict_t dict, heim_object_t key)
  */
 
 int
-heim_dict_add_value(heim_dict_t dict, heim_object_t key, heim_object_t value)
+heim_dict_set_value(heim_dict_t dict, heim_object_t key, heim_object_t value)
 {
     struct hashentry **tabptr, *h;
 

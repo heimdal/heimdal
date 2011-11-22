@@ -1,0 +1,12 @@
+[
+	{
+	"op" : "repeat",
+	"num" : 100,
+	"value" : {
+		"op" : "kinit",
+		"client" : "foo@TEST.H5L.SE",
+		"password" : "foo"
+		}
+	}
+]
+

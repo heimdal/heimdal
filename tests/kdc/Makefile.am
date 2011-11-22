@@ -28,6 +28,7 @@ SCRIPT_TESTS = \
 	check-pkinit \
 	check-iprop \
 	check-referral \
+	check-tester \
 	check-uu
 
 TESTS = $(SCRIPT_TESTS)
@@ -93,6 +94,11 @@ check-kdc-weak: check-kdc-weak.in Makefile
 	$(do_subst) < $(srcdir)/check-kdc-weak.in > check-kdc-weak.tmp
 	chmod +x check-kdc-weak.tmp
 	mv check-kdc-weak.tmp check-kdc-weak
+
+check-tester: check-tester.in Makefile
+	$(do_subst) < $(srcdir)/check-tester.in > check-tester.tmp
+	chmod +x check-tester.tmp
+	mv check-tester.tmp check-tester
 
 check-keys: check-keys.in Makefile
 	$(do_subst) < $(srcdir)/check-keys.in > check-keys.tmp
@@ -248,6 +254,7 @@ EXTRA_DIST = \
 	check-kpasswdd.in \
 	check-pkinit.in \
 	check-referral.in \
+	check-tester.in \
 	check-uu.in \
 	donotexists.txt \
 	heimdal.acl \

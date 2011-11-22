@@ -145,14 +145,14 @@ heim_tid_t heim_dict_get_type_id(void);
 
 typedef void (*heim_dict_iterator_f_t)(heim_object_t, heim_object_t, void *);
 
-int	heim_dict_add_value(heim_dict_t, heim_object_t, heim_object_t);
+int	heim_dict_set_value(heim_dict_t, heim_object_t, heim_object_t);
 void	heim_dict_iterate_f(heim_dict_t, heim_dict_iterator_f_t, void *);
 #ifdef __BLOCKS__
 void	heim_dict_iterate(heim_dict_t, void (^)(heim_object_t, heim_object_t));
 #endif
 
 heim_object_t
-	heim_dict_copy_value(heim_dict_t, heim_object_t);
+	heim_dict_get_value(heim_dict_t, heim_object_t);
 void	heim_dict_delete_key(heim_dict_t, heim_object_t);
 
 /*
@@ -162,6 +162,7 @@ void	heim_dict_delete_key(heim_dict_t, heim_object_t);
 typedef struct heim_string_data *heim_string_t;
 
 heim_string_t heim_string_create(const char *);
+heim_string_t heim_string_create_with_bytes(const void *, size_t);
 heim_tid_t heim_string_get_type_id(void);
 const char * heim_string_get_utf8(heim_string_t);
 
@@ -202,5 +203,12 @@ heim_string_t heim_error_copy_string(heim_error_t);
 int heim_error_get_code(heim_error_t);
 
 heim_error_t heim_error_append(heim_error_t, heim_error_t);
+
+/*
+ * JSON
+ */
+heim_object_t heim_json_create(const char *, heim_error_t *);
+heim_object_t heim_json_create_with_bytes(const void *, size_t, heim_error_t *);
+
 
 #endif /* HEIM_BASE_H */

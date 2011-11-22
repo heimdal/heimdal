@@ -38,25 +38,24 @@
 static krb5_kdc_configuration *kdc_config;
 static krb5_context kdc_context;
 
-#if 0
-
 static struct sockaddr_storage sa;
-static krb5_socklen_t salen = sizeof(sa);
 static const char *astr = "0.0.0.0";
 
-static void
-send_to_kdc(krb5_context context)
+static krb5_error_code
+send_to_kdc(krb5_context c, void *ptr, krb5_krbhst_info *hi, time_t timeout,
+	    const krb5_data *in, krb5_data *out)
 {
     krb5_error_code ret;
 
     ret = krb5_kdc_process_request(kdc_context, kdc_config,
-				   d.data, d.length,
-				   &r, NULL, astr,
+				   in->data, in->length,
+				   out, NULL, astr,
 				   (struct sockaddr *)&sa, 0);
     if (ret)
-	krb5_err(context, 1, ret, "krb5_kdc_process_request");
+	krb5_err(c, 1, ret, "krb5_kdc_process_request");
+
+    return 0;
 }
-#endif
 
 /*
  *
@@ -177,26 +176,29 @@ main(int argc, char **argv)
     if (argc == 0)
 	errx(1, "missing operations");
 
+    krb5_set_send_to_kdc_func(kdc_context, send_to_kdc, NULL);
 
-    void *buf;
-    size_t size;
-    heim_object_t o;
+    {
+	void *buf;
+	size_t size;
+	heim_object_t o;
 
-    if (rk_undumpdata(argv[0], &buf, &size))
-	errx(1, "undumpdata: %s", argv[0]);
-
-    o = heim_json_create_with_bytes(buf, size, NULL);
-    free(buf);
-    if (o == NULL)
+	if (rk_undumpdata(argv[0], &buf, &size))
+	    errx(1, "undumpdata: %s", argv[0]);
+	
+	o = heim_json_create_with_bytes(buf, size, NULL);
+	free(buf);
+	if (o == NULL)
 	errx(1, "heim_json");
+	
+	/*
+	 * do the work here
+	 */
+	
+	eval_object(o);
 
-    /*
-     * do the work here
-     */
-
-    eval_object(o);
-
-    heim_release(o);
+	heim_release(o);
+    }
 
     krb5_free_context(kdc_context);
     return 0;

@@ -79,12 +79,19 @@ struct heim_type_data _heim_string_object = {
 heim_string_t
 heim_string_create(const char *string)
 {
-    size_t len = strlen(string);
+    return heim_string_create_with_bytes(string, strlen(string));
+}
+
+heim_string_t
+heim_string_create_with_bytes(const void *data, size_t len)
+{
     heim_string_t s;
 
     s = _heim_alloc_object(&_heim_string_object, len + 1);
-    if (s)
-	memcpy(s, string, len + 1);
+    if (s) {
+	memcpy(s, data, len);
+	((char *)s)[len] = '\0';
+    }
     return s;
 }
 

@@ -623,7 +623,7 @@ _krb5_plugin_run_f(krb5_context context,
 
     s.ret = KRB5_PLUGIN_NO_HANDLE;
 
-    heim_array_iterate_f(s.result, eval_results, &s);
+    heim_array_iterate_f(s.result, &s, eval_results);
 
     heim_release(s.result);
     heim_release(s.n);

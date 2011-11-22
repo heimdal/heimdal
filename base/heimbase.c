@@ -138,6 +138,14 @@ heim_release(void *ptr)
 	heim_abort("over release");
 }
 
+void
+_heim_make_permanent(heim_object_t ptr)
+{
+    struct heim_base *p = PTR2BASE(ptr);
+    p->ref_cnt = heim_base_atomic_max;
+}
+
+
 static heim_type_t tagged_isa[9] = {
     &_heim_number_object,
     &_heim_null_object,

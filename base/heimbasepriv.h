@@ -85,6 +85,9 @@ _heim_alloc_object(heim_type_t type, size_t size);
 heim_tid_t
 _heim_type_get_tid(heim_type_t type);
 
+void
+_heim_make_permanent(heim_object_t ptr);
+
 /* tagged tid */
 extern struct heim_type_data _heim_null_object;
 extern struct heim_type_data _heim_bool_object;

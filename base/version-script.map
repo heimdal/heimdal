@@ -3,7 +3,7 @@ HEIMDAL_BASE_1.0 {
 		heim_abort;
 		heim_alloc;
 		heim_array_append_value;
-		heim_array_copy_value;
+		heim_array_get_value;
 		heim_array_create;
 		heim_array_delete_value;
 		heim_array_get_length;

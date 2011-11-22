@@ -120,3 +120,40 @@ heim_string_get_utf8(heim_string_t string)
 {
     return (const char *)string;
 }
+
+/*
+ *
+ */
+
+static void
+init_string(void *ptr)
+{
+    heim_dict_t *dict = ptr;
+    *dict = heim_dict_create(101);
+    heim_assert(*dict != NULL, "__heim_string_constant");
+}
+
+heim_string_t
+__heim_string_constant(const char *_str)
+{
+    static HEIMDAL_MUTEX mutex = HEIMDAL_MUTEX_INITIALIZER;
+    static heim_base_once_t once;
+    static heim_dict_t dict = NULL;
+    heim_string_t s, s2;
+
+    heim_base_once_f(&once, &dict, init_string);
+    s = heim_string_create(_str);
+
+    HEIMDAL_MUTEX_lock(&mutex);
+    s2 = heim_dict_get_value(dict, s);
+    if (s2) {
+	heim_release(s);
+	s = s2;
+    } else {
+	_heim_make_permanent(s);
+	heim_dict_set_value(dict, s, s);
+    }
+    HEIMDAL_MUTEX_unlock(&mutex);
+
+    return s;
+}

@@ -122,13 +122,13 @@ heim_tid_t heim_array_get_type_id(void);
 typedef void (*heim_array_iterator_f_t)(heim_object_t, void *);
 
 int	heim_array_append_value(heim_array_t, heim_object_t);
-void	heim_array_iterate_f(heim_array_t, heim_array_iterator_f_t, void *);
+void	heim_array_iterate_f(heim_array_t, void *, heim_array_iterator_f_t);
 #ifdef __BLOCKS__
 void	heim_array_iterate(heim_array_t, void (^)(heim_object_t));
 #endif
 size_t	heim_array_get_length(heim_array_t);
 heim_object_t
-	heim_array_copy_value(heim_array_t, size_t);
+	heim_array_get_value(heim_array_t, size_t);
 void	heim_array_delete_value(heim_array_t, size_t);
 #ifdef __BLOCKS__
 void	heim_array_filter(heim_array_t, int (^)(heim_object_t));
@@ -165,6 +165,9 @@ heim_string_t heim_string_create(const char *);
 heim_string_t heim_string_create_with_bytes(const void *, size_t);
 heim_tid_t heim_string_get_type_id(void);
 const char * heim_string_get_utf8(heim_string_t);
+
+#define HSTR(_str) (__heim_string_constant("" _str ""))
+heim_string_t __heim_string_constant(const char *);
 
 /*
  * Number

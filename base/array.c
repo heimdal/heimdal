@@ -124,12 +124,12 @@ heim_array_append_value(heim_array_t array, heim_object_t object)
  * Iterate over all objects in array
  *
  * @param array array to iterate over
- * @param fn function to call on each object
  * @param ctx context passed to fn
+ * @param fn function to call on each object
  */
 
 void
-heim_array_iterate_f(heim_array_t array, heim_array_iterator_f_t fn, void *ctx)
+heim_array_iterate_f(heim_array_t array, void *ctx, heim_array_iterator_f_t fn)
 {
     size_t n;
     for (n = 0; n < array->len; n++)
@@ -178,11 +178,11 @@ heim_array_get_length(heim_array_t array)
  */
 
 heim_object_t
-heim_array_copy_value(heim_array_t array, size_t idx)
+heim_array_get_value(heim_array_t array, size_t idx)
 {
     if (idx >= array->len)
 	heim_abort("index too large");
-    return heim_retain(array->val[idx]);
+    return array->val[idx];
 }
 
 /**

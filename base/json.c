@@ -160,6 +160,7 @@ static heim_string_t
 parse_string(struct parse_ctx *ctx)
 {
     const uint8_t *start;
+    int quote = 0;
 
     heim_assert(*ctx->p == '"', "string doesnt' start with \"");
     start = ++ctx->p;
@@ -167,17 +168,38 @@ parse_string(struct parse_ctx *ctx)
     while (ctx->p < ctx->pend) {
 	if (*ctx->p == '\n') {
 	    ctx->lineno++;
+	} else if (*ctx->p == '\\') {
+	    if (ctx->p + 1 == ctx->pend)
+		goto out;
+	    ctx->p += 1;
+	    quote = 1;
 	} else if (*ctx->p == '"') {
 	    heim_object_t o;
 
-	    /* XXX handle quotes */
-	    o = heim_string_create_with_bytes(start, ctx->p - start);
+	    if (quote) {
+		char *p0, *p;
+		p = p0 = malloc(ctx->p - start);
+		if (p == NULL)
+		    goto out;
+		while (start < ctx->p) {
+		    if (*start == '\\') {
+			start++;
+			/* XXX validate qouted char */
+		    }
+		    *p++ = *start++;
+		}
+		o = heim_string_create_with_bytes(p0, p - p0);
+		free(p0);
+	    } else {
+		o = heim_string_create_with_bytes(start, ctx->p - start);
+	    }
 	    ctx->p += 1;
 
 	    return o;
 	}    
 	ctx->p += 1;
     }
+    out:
     ctx->error = heim_error_create(EINVAL, "ran out of string");
     return NULL;
 }

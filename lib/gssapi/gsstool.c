@@ -72,7 +72,7 @@ usage (int ret)
 #define COL_SASL	"SASL"
 
 int
-supported_mechanisms(void *argptr, int argc, char **argv)
+mechanisms(void *argptr, int argc, char **argv)
 {
     OM_uint32 maj_stat, min_stat;
     gss_OID_set mechs;
@@ -184,7 +184,7 @@ print_mech_attr(const char *mechname, gss_const_OID mech, gss_OID_set set)
 
 
 int
-attrs_for_mech(struct attrs_for_mech_options *opt, int argc, char **argv)
+attributes(struct attributes_options *opt, int argc, char **argv)
 {
     gss_OID_set mech_attr = NULL, known_mech_attrs = NULL;
     gss_OID mech = GSS_C_NO_OID;
@@ -250,7 +250,7 @@ main(int argc, char **argv)
     if (argc != 0) {
 	ret = sl_command(commands, argc, argv);
 	if(ret == -1)
-	    warnx("unrecognized command: %s", argv[0]);
+	    sl_did_you_mean(commands, argv[0]);
 	else if (ret == -2)
 	    ret = 0;
 	if(ret != 0)

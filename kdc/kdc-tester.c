@@ -76,13 +76,76 @@ send_to_kdc(krb5_context c, void *ptr, krb5_krbhst_info *hi, time_t timeout,
  *
  */
 
+static krb5_ccache fast_ccache = NULL;
+static void
+get_fast_armor_ccache(const char *fast_armor_princ, const char *keytab,
+		      krb5_ccache *cc)
+{
+    krb5_keytab kt = NULL;
+    krb5_init_creds_context ctx;
+    krb5_principal princ;
+    krb5_creds creds;
+    krb5_error_code ret;
+
+    if (fast_ccache) {
+	*cc = fast_ccache;
+	return;
+    }
+
+    ret = krb5_parse_name(kdc_context, fast_armor_princ, &princ);
+    if (ret)
+	krb5_err(kdc_context, 1, ret, "krb5_parse_name");
+
+    if (keytab) {
+	ret = krb5_kt_resolve(kdc_context, keytab, &kt);
+	if (ret)
+	    krb5_err(kdc_context, 1, ret, "krb5_kt_resolve");
+    } else {
+	ret = krb5_kt_default(kdc_context, &kt);
+	if (ret)
+	    krb5_err(kdc_context, 1, ret, "krb5_kt_default");
+    }
+
+    ret = krb5_cc_new_unique(kdc_context, "MEMORY", NULL, &fast_ccache);
+    if (ret)
+	krb5_err(kdc_context, 1, ret, "krb5_cc_new_unique");
+
+    ret = krb5_cc_initialize(kdc_context, fast_ccache, princ);
+    if (ret)
+	krb5_err(kdc_context, 1, ret, "krb5_cc_initialize");
+
+    ret = krb5_init_creds_init(kdc_context, princ, NULL, NULL, 0, NULL, &ctx);
+    if (ret)
+	krb5_err(kdc_context, 1, ret, "krb5_init_creds_init");
+
+    ret = krb5_init_creds_set_keytab(kdc_context, ctx, kt);
+    if (ret)
+	krb5_err(kdc_context, 1, ret, "krb5_init_creds_set_keytab");
+
+    ret = krb5_init_creds_get(kdc_context, ctx);
+    if (ret)
+	krb5_err(kdc_context, 1, ret, "krb5_init_creds_get");
+
+    ret = krb5_init_creds_get_creds(kdc_context, ctx, &creds);
+    if (ret)
+	krb5_err(kdc_context, 1, ret, "krb5_init_creds_get_creds");
+
+    ret = krb5_cc_store_cred(kdc_context, fast_ccache, &creds);
+    if (ret)
+	krb5_err(kdc_context, 1, ret, "krb5_cc_store_cred");
+    *cc = fast_ccache;
+
+    return;
+}
+
 static void
 eval_kinit(heim_dict_t o)
 {
-    heim_string_t user, password, keytab;
+    heim_string_t user, password, keytab, fast_armor_princ;
     krb5_init_creds_context ctx;
     krb5_principal client;
     krb5_keytab kt = NULL;
+    krb5_ccache fast_cc;
     krb5_error_code ret;
 
     if (ptop)
@@ -104,6 +167,13 @@ eval_kinit(heim_dict_t o)
     ret = krb5_init_creds_init(kdc_context, client, NULL, NULL, 0, NULL, &ctx);
     if (ret)
 	krb5_err(kdc_context, 1, ret, "krb5_init_creds_init");
+
+    fast_armor_princ = heim_dict_get_value(o, HSTR("fast-armor-princ"));
+    if (fast_armor_princ != NULL) {
+	get_fast_armor_ccache(heim_string_get_utf8(fast_armor_princ),
+			      heim_string_get_utf8(keytab), &fast_cc);
+	ret = krb5_init_creds_set_fast_ccache(kdc_context, ctx, fast_cc);
+    }
     
     if (password) {
 	ret = krb5_init_creds_set_password(kdc_context, ctx, 

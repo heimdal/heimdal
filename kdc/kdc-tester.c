@@ -35,6 +35,14 @@
 
 #include "kdc_locl.h"
 
+struct perf {
+    unsigned long as_req;
+    unsigned long tgs_req;
+    struct timeval start;
+    struct timeval stop;
+    struct perf *next;
+} *ptop;
+
 static krb5_kdc_configuration *kdc_config;
 static krb5_context kdc_context;
 
@@ -71,6 +79,9 @@ eval_kinit(heim_dict_t o)
     krb5_principal client;
     krb5_error_code ret;
 
+    if (ptop)
+	ptop->as_req++;
+
     user = heim_dict_get_value(o, HSTR("client"));
     if (user == NULL)
 	krb5_errx(kdc_context, 1, "no client");
@@ -98,7 +109,9 @@ eval_kinit(heim_dict_t o)
 
     krb5_init_creds_free(kdc_context, ctx);
 
+#if 0
     printf("kinit success %s\n", heim_string_get_utf8(user));
+#endif
 }
 
 /*
@@ -129,6 +142,13 @@ eval_object(heim_object_t o)
 	    heim_object_t or = heim_dict_get_value(o, HSTR("value"));
 	    heim_number_t n = heim_dict_get_value(o, HSTR("num"));
 	    int i, num;
+	    struct perf perf;
+
+	    memset(&perf, 0, sizeof(perf));
+
+	    gettimeofday(&perf.start, NULL);
+	    perf.next = ptop;
+	    ptop = &perf;
 
 	    heim_assert(or != NULL, "value missing");
 	    heim_assert(n != NULL, "num missing");
@@ -138,6 +158,33 @@ eval_object(heim_object_t o)
 
 	    for (i = 0; i < num; i++)
 		eval_object(or);
+
+	    gettimeofday(&perf.stop, NULL);
+	    ptop = perf.next;
+
+	    if (ptop) {
+		ptop->as_req += perf.as_req;
+		ptop->tgs_req += perf.tgs_req;
+	    }
+
+	    timevalsub(&perf.stop, &perf.start);
+	    printf("time: %lu.%06lu\n",
+		   (unsigned long)perf.stop.tv_sec,
+		   (unsigned long)perf.stop.tv_usec);
+
+#define USEC_PER_SEC 1000000
+
+	    if (perf.as_req) {
+		double as_ps = 0.0;
+		as_ps = (perf.as_req * USEC_PER_SEC) / (double)((perf.stop.tv_sec * USEC_PER_SEC) + perf.stop.tv_usec);
+		printf("as-req/s %.2lf\n", as_ps);
+	    }
+	    
+	    if (perf.tgs_req) {
+		double tgs_ps = 0.0;
+		tgs_ps = (perf.tgs_req * USEC_PER_SEC) / (double)((perf.stop.tv_sec * USEC_PER_SEC) + perf.stop.tv_usec);
+		printf("tgs-req/s %.2lf\n", tgs_ps);
+	    }
 
 	} else if (strcmp(op, "kinit") == 0) {
 	    eval_kinit(o);

@@ -43,6 +43,11 @@ struct perf {
     struct perf *next;
 } *ptop;
 
+#ifdef SUPPORT_DETACH
+int detach_from_console = -1;
+#define DETACH_IS_DEFAULT FALSE
+#endif
+
 static krb5_kdc_configuration *kdc_config;
 static krb5_context kdc_context;
 

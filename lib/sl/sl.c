@@ -330,7 +330,7 @@ sl_command_loop(SL_cmd *cmds, const char *prompt, void **data)
     if (argc >= 1) {
 	ret = sl_command(cmds, argc, argv);
 	if(ret == -1) {
-	    printf ("Unrecognized command: %s\n", argv[0]);
+	    sl_did_you_mean(cmds, argv[0]);
 	    ret = 0;
 	}
     }

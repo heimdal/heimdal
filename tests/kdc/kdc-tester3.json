@@ -1,0 +1,13 @@
+[
+	{
+	"op" : "repeat",
+	"num" : 333,
+	"value" : {
+		"op" : "kinit",
+		"client" : "foo@TEST.H5L.SE",
+		"keytab" : "FILE:server.keytab",
+		"fast-armor-princ" : "host/datan.test.h5l.se"
+		}
+	}
+]
+

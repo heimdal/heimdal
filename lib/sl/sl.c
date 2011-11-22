@@ -443,10 +443,18 @@ osad(const char *s1, const char *s2)
     return cost;
 }
 
+/**
+ * Will propose a list of command that are almost matching the command
+ * used, if there is no matching, will ask the user to use "help".
+ *
+ * @param cmds command array to use for matching
+ * @param match the command that didn't exists
+ */
+
 void
 sl_did_you_mean(SL_cmd *cmds, const char *match)
 {
-    int *metrics, best_match = INT_MAX, print = 0;
+    int *metrics, best_match = INT_MAX;
     SL_cmd *c;
     size_t n;
 
@@ -467,14 +475,21 @@ sl_did_you_mean(SL_cmd *cmds, const char *match)
         return;
     }
 
-    fprintf(stderr, "%s is not a known command, did you mean:", match);
-    for (n = 0; cmds[n].name; n++) {
-      if (metrics[n] == best_match) {
-	  fprintf(stderr, "%s %s", print ? "," : "", cmds[n].name);
-	  print = 1;
-      }
+    /* if match distance is low, propose that for the user */
+    if (best_match < 7) {
+
+	fprintf(stderr, "error: %s is not a known command, did you mean ?\n", match);
+	for (n = 0; cmds[n].name; n++) {
+	    if (metrics[n] == best_match) {
+		fprintf(stderr, "\t%s\n", cmds[n].name);
+	    }
+	}
+	fprintf(stderr, "\n");
+
+    } else {
+
+	fprintf(stderr, "error: %s is not a command, use \"help\" for more list of commands.\n", match);
     }
-    fprintf(stderr, " ?\n");
 
     free(metrics);
 

@@ -58,11 +58,54 @@ send_to_kdc(krb5_context context)
 }
 #endif
 
-static void eval_object(heim_object_t);
-
+/*
+ *
+ */
 
 static void
-eval_array(heim_object_t o, void *ptr)
+eval_kinit(heim_dict_t o)
+{
+    heim_string_t user, password;
+    krb5_init_creds_context ctx;
+    krb5_principal client;
+    krb5_error_code ret;
+
+    user = heim_dict_get_value(o, HSTR("client"));
+    if (user == NULL)
+	krb5_errx(kdc_context, 1, "no client");
+    password = heim_dict_get_value(o, HSTR("password"));
+    if (password == NULL)
+	krb5_errx(kdc_context, 1, "no password");
+
+    ret = krb5_parse_name(kdc_context, heim_string_get_utf8(user), &client);
+    if (ret)
+	krb5_err(kdc_context, 1, ret, "krb5_unparse_name");
+
+    ret = krb5_init_creds_init(kdc_context, client, NULL, NULL, 0, NULL, &ctx);
+    if (ret)
+	krb5_err(kdc_context, 1, ret, "krb5_init_creds_init");
+    
+    ret = krb5_init_creds_set_password(kdc_context, ctx, 
+				       heim_string_get_utf8(password));
+    if (ret)
+	krb5_err(kdc_context, 1, ret, "krb5_init_creds_set_password");
+
+
+    ret = krb5_init_creds_get(kdc_context, ctx);
+    if (ret)
+	krb5_err(kdc_context, 1, ret, "krb5_init_creds_get");
+
+    krb5_init_creds_free(kdc_context, ctx);
+}
+
+/*
+ *
+ */
+
+static void eval_object(heim_object_t);
+
+static void
+eval_array_element(heim_object_t o, void *ptr)
 {
     eval_object(o);
 }
@@ -73,7 +116,7 @@ eval_object(heim_object_t o)
     heim_tid_t t = heim_get_tid(o);
 
     if (t == heim_array_get_type_id()) {
-	heim_array_iterate_f(o, NULL, eval_array);
+	heim_array_iterate_f(o, NULL, eval_array_element);
     } else if (t == heim_dict_get_type_id()) {
 	const char *op = heim_dict_get_value(o, HSTR("op"));
 
@@ -98,7 +141,7 @@ eval_object(heim_object_t o)
 		eval_object(or);
 
 	} else if (strcmp(op, "kinit") == 0) {
-
+	    eval_kinit(o);
 	} else {
 	    errx(1, "unsupported ops %s", op);
 	}

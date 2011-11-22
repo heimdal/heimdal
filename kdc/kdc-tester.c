@@ -47,6 +47,8 @@ send_to_kdc(krb5_context c, void *ptr, krb5_krbhst_info *hi, time_t timeout,
 {
     krb5_error_code ret;
 
+    krb5_kdc_update_time(NULL);
+
     ret = krb5_kdc_process_request(kdc_context, kdc_config,
 				   in->data, in->length,
 				   out, NULL, astr,
@@ -95,6 +97,8 @@ eval_kinit(heim_dict_t o)
 	krb5_err(kdc_context, 1, ret, "krb5_init_creds_get");
 
     krb5_init_creds_free(kdc_context, ctx);
+
+    printf("kinit success %s\n", heim_string_get_utf8(user));
 }
 
 /*
@@ -121,8 +125,6 @@ eval_object(heim_object_t o)
 
 	heim_assert(op != NULL, "op missing");
 
-	printf("op: %s\n", op);
-
 	if (strcmp(op, "repeat") == 0) {
 	    heim_object_t or = heim_dict_get_value(o, HSTR("value"));
 	    heim_number_t n = heim_dict_get_value(o, HSTR("num"));
@@ -133,8 +135,6 @@ eval_object(heim_object_t o)
 
 	    num = heim_number_get_int(n);
 	    heim_assert(num >= 0, "num >= 0");
-
-	    printf("num %d\n", num);
 
 	    for (i = 0; i < num; i++)
 		eval_object(or);

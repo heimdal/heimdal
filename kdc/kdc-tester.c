@@ -79,9 +79,10 @@ send_to_kdc(krb5_context c, void *ptr, krb5_krbhst_info *hi, time_t timeout,
 static void
 eval_kinit(heim_dict_t o)
 {
-    heim_string_t user, password;
+    heim_string_t user, password, keytab;
     krb5_init_creds_context ctx;
     krb5_principal client;
+    krb5_keytab kt = NULL;
     krb5_error_code ret;
 
     if (ptop)
@@ -90,9 +91,11 @@ eval_kinit(heim_dict_t o)
     user = heim_dict_get_value(o, HSTR("client"));
     if (user == NULL)
 	krb5_errx(kdc_context, 1, "no client");
+
     password = heim_dict_get_value(o, HSTR("password"));
-    if (password == NULL)
-	krb5_errx(kdc_context, 1, "no password");
+    keytab = heim_dict_get_value(o, HSTR("keytab"));
+    if (password == NULL && keytab == NULL)
+	krb5_errx(kdc_context, 1, "no password nor keytab");
 
     ret = krb5_parse_name(kdc_context, heim_string_get_utf8(user), &client);
     if (ret)
@@ -102,11 +105,21 @@ eval_kinit(heim_dict_t o)
     if (ret)
 	krb5_err(kdc_context, 1, ret, "krb5_init_creds_init");
     
-    ret = krb5_init_creds_set_password(kdc_context, ctx, 
-				       heim_string_get_utf8(password));
-    if (ret)
-	krb5_err(kdc_context, 1, ret, "krb5_init_creds_set_password");
+    if (password) {
+	ret = krb5_init_creds_set_password(kdc_context, ctx, 
+					   heim_string_get_utf8(password));
+	if (ret)
+	    krb5_err(kdc_context, 1, ret, "krb5_init_creds_set_password");
+    }
+    if (keytab) {
+	ret = krb5_kt_resolve(kdc_context, heim_string_get_utf8(keytab), &kt);
+	if (ret)
+	    krb5_err(kdc_context, 1, ret, "krb5_kt_resolve");
 
+	ret = krb5_init_creds_set_keytab(kdc_context, ctx, kt);
+	if (ret)
+	    krb5_err(kdc_context, 1, ret, "krb5_init_creds_set_keytab");
+    }
 
     ret = krb5_init_creds_get(kdc_context, ctx);
     if (ret)
@@ -114,6 +127,8 @@ eval_kinit(heim_dict_t o)
 
     krb5_init_creds_free(kdc_context, ctx);
 
+    if (kt)
+	krb5_kt_close(kdc_context, kt);
 #if 0
     printf("kinit success %s\n", heim_string_get_utf8(user));
 #endif

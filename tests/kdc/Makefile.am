@@ -259,6 +259,8 @@ EXTRA_DIST = \
 	donotexists.txt \
 	heimdal.acl \
 	iprop-acl \
+	kdc-tester1.json \
+	kdc-tester2.json \
 	krb5-pkinit.conf.in \
 	krb5.conf.in \
 	krb5-canon.conf.in \

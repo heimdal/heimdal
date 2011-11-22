@@ -48,6 +48,9 @@ ${have_db} || exit 77
 
 R=TEST.H5L.SE
 
+keytabfile=${objdir}/server.keytab
+keytab="FILE:${keytabfile}"
+
 kadmin="${kadmin} -l -r $R"
 
 server=host/datan.test.h5l.se
@@ -68,11 +71,13 @@ ${kadmin} \
     ${R} || exit 1
 
 ${kadmin} add -p foo --use-defaults foo@${R} || exit 1
+${kadmin} ext -k ${keytab} foo@${R} || exit 1
 
-echo "Doing database check"
-${kadmin} check ${R} || exit 1
-
+echo "password"
 ${kdc_tester} ${srcdir}/kdc-tester1.json || exit 1
+
+echo "keytab"
+${kdc_tester} ${srcdir}/kdc-tester2.json || exit 1
 
 
 exit $ec

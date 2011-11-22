@@ -5,7 +5,7 @@
 	"value" : {
 		"op" : "kinit",
 		"client" : "foo@TEST.H5L.SE",
-		"password" : "foo"
+		"keytab" : "FILE:server.keytab"
 		}
 	}
 ]

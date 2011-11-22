@@ -12,7 +12,7 @@ sbin_PROGRAMS = kstash
 
 libexec_PROGRAMS = hprop hpropd kdc digest-service
 
-noinst_PROGRAMS = kdc-replay
+noinst_PROGRAMS = kdc-replay kdc-tester
 
 man_MANS = kdc.8 kstash.8 hprop.8 hpropd.8 string2key.8
 
@@ -30,6 +30,10 @@ kdc_SOURCES = connect.c	\
 	config.c	\
 	announce.c	\
 	main.c
+
+kdc_tester_SOURCES = \
+	config.c	\
+	kdc-tester.c
 
 libkdc_la_SOURCES = 		\
 	kdc-private.h	 	\
@@ -119,6 +123,7 @@ digest_service_LDADD = \
 	$(top_builddir)/lib/ipc/libheim-ipcs.la \
 	$(LDADD) $(LIB_pidfile)
 kdc_replay_LDADD = libkdc.la $(LDADD) $(LIB_pidfile)
+kdc_tester_LDADD = libkdc.la $(LDADD) $(LIB_pidfile)
 
 include_HEADERS = kdc.h kdc-protos.h
 

@@ -120,7 +120,7 @@ void
 loop(krb5_context context, krb5_kdc_configuration *config);
 
 krb5_kdc_configuration *
-configure(krb5_context context, int argc, char **argv);
+configure(krb5_context context, int argc, char **argv, int *optidx);
 
 #ifdef __APPLE__
 void bonjour_announce(krb5_context, krb5_kdc_configuration *);

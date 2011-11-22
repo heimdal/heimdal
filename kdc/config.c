@@ -55,6 +55,21 @@ static int builtin_hdb_flag;
 static int help_flag;
 static int version_flag;
 
+/* Should we enable the HTTP hack? */
+int enable_http = -1;
+
+/* Log over requests to the KDC */
+const char *request_log;
+
+/* A string describing on what ports to listen */
+const char *port_str;
+
+krb5_addresses explicit_addresses;
+
+size_t max_request_udp;
+size_t max_request_tcp;
+
+
 static struct getarg_strings addresses_str;	/* addresses to listen on */
 
 char *runas_string;
@@ -134,15 +149,17 @@ add_one_address (krb5_context context, const char *str, int first)
 }
 
 krb5_kdc_configuration *
-configure(krb5_context context, int argc, char **argv)
+configure(krb5_context context, int argc, char **argv, int *optidx)
 {
     krb5_kdc_configuration *config;
     krb5_error_code ret;
-    int optidx = 0;
+    
     const char *p;
 
-    while(getarg(args, num_args, argc, argv, &optidx))
-	warnx("error at argument `%s'", argv[optidx]);
+    *optidx = 0;
+
+    while(getarg(args, num_args, argc, argv, optidx))
+	warnx("error at argument `%s'", argv[*optidx]);
 
     if(help_flag)
 	usage (0);
@@ -161,12 +178,6 @@ configure(krb5_context context, int argc, char **argv)
 	free(list);
 	exit(0);
     }
-
-    argc -= optidx;
-    argv += optidx;
-
-    if (argc != 0)
-	usage(1);
 
     {
 	char **files;

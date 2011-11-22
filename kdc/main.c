@@ -108,6 +108,7 @@ main(int argc, char **argv)
     krb5_error_code ret;
     krb5_context context;
     krb5_kdc_configuration *config;
+    int optidx = 0;
 
     setprogname(argv[0]);
 
@@ -121,7 +122,7 @@ main(int argc, char **argv)
     if (ret)
 	errx (1, "krb5_kt_register(HDB) failed: %d", ret);
 
-    config = configure(context, argc, argv);
+    config = configure(context, argc, argv, &optidx);
 
 #ifdef HAVE_SIGACTION
     {

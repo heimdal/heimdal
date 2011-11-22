@@ -36,7 +36,7 @@
 #include "baselocl.h"
 #include <ctype.h>
 
-
+#if 0
 int
 heim_base2json(heim_object_t obj,
 	       void (*out)(const char *, void *), void *ctx);
@@ -96,6 +96,12 @@ heim_base2json(heim_object_t obj,
     }
     return fail;
 }
+
+#endif
+
+/*
+ *
+ */
 
 struct parse_ctx {
     unsigned long lineno;

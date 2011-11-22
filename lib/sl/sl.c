@@ -474,7 +474,7 @@ sl_did_you_mean(SL_cmd *cmds, const char *match)
 	  print = 1;
       }
     }
-    fprintf(stderr, ".\n");
+    fprintf(stderr, " ?\n");
 
     free(metrics);
 

@@ -229,9 +229,10 @@ help(void *opt, int argc, char **argv)
 int
 main(int argc, char **argv)
 {
-    int optidx = 0;
+    int exit_status = 0, ret, optidx = 0;
 
     setprogname(argv[0]);
+
     if(getarg(args, sizeof(args) / sizeof(args[0]), argc, argv, &optidx))
 	usage(1);
 
@@ -246,10 +247,18 @@ main(int argc, char **argv)
     argc -= optidx;
     argv += optidx;
 
-    if (argc == 0) {
-	help(NULL, argc, argv);
-	return 1;
+    if (argc != 0) {
+	ret = sl_command(commands, argc, argv);
+	if(ret == -1)
+	    warnx("unrecognized command: %s", argv[0]);
+	else if (ret == -2)
+	    ret = 0;
+	if(ret != 0)
+	    exit_status = 1;
+    } else {
+	sl_slc_help(commands, argc, argv);
+	exit_status = 1;
     }
 
-    return sl_command (commands, argc, argv);
+    return exit_status;
 }

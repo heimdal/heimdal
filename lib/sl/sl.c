@@ -396,3 +396,87 @@ sl_slc_help (SL_cmd *cmds, int argc, char **argv)
 	}
     }
 }
+
+/* OptimalStringAlignmentDistance */
+
+static int
+osad(const char *s1, const char *s2)
+{
+    size_t l1 = strlen(s1), l2 = strlen(s2), i, j;
+    int *row0, *row1, *row2, *tmp, cost;
+
+    row0 = calloc(sizeof(int), l2 + 1);
+    row1 = calloc(sizeof(int), l2 + 1);
+    row2 = calloc(sizeof(int), l2 + 1);
+
+    for (j = 0; j < l2 + 1; j++)
+        row1[j] = j;
+
+    for (i = 0; i < l1; i++) {
+
+        row2[0] = i + 1;
+
+        for (j = 0; j < l2; j++) {
+
+	    row2[j + 1] = row1[j] + (s1[i] != s2[j]); /* substitute */
+	    
+	    if (row2[j + 1] > row1[j + 1] + 1) /* delete */
+		row2[j + 1] = row1[j + 1] + 1;
+	    if (row2[j + 1] > row2[j] + 1) /* insert */
+		row2[j + 1] = row2[j] + 1;
+	    if (j > 0 && i > 0 && s1[i - 1] != s2[j - 1] && s1[i - 1] == s2[j] && s1[i] == s2[j - 1] && row2[j + 1] < row0[j - 1]) /* transposition */
+	        row2[j + 1] = row0[j - 1] + 1;
+	}
+
+	tmp = row0;
+	row0 = row1;
+	row1 = row2;
+	row2 = tmp;
+    }
+
+    cost = row1[l2];
+
+    free(row0);
+    free(row1);
+    free(row2);
+
+    return cost;
+}
+
+void
+sl_did_you_mean(SL_cmd *cmds, const char *match)
+{
+    int *metrics, best_match = INT_MAX, print = 0;
+    SL_cmd *c;
+    size_t n;
+
+    for (n = 0, c = cmds; c->name; c++, n++)
+        ;
+    metrics = calloc(n, sizeof(metrics[0]));
+    if (metrics == NULL)
+        return;
+
+    for (n = 0; cmds[n].name; n++) {
+        metrics[n] = osad(match, cmds[n].name);
+	if (metrics[n] < best_match)
+	    best_match = metrics[n];
+    }
+    if (best_match == INT_MAX) {
+        free(metrics);
+        fprintf(stderr, "What kind of command is %s", match);
+        return;
+    }
+
+    fprintf(stderr, "%s is not a known command, did you mean:", match);
+    for (n = 0; cmds[n].name; n++) {
+      if (metrics[n] == best_match) {
+	  fprintf(stderr, "%s %s", print ? "," : "", cmds[n].name);
+	  print = 1;
+      }
+    }
+    fprintf(stderr, ".\n");
+
+    free(metrics);
+
+    return;
+}

@@ -169,6 +169,12 @@ test_json(void)
     heim_assert(strcmp("string", heim_string_get_utf8(o)) == 0, "wrong string");
     heim_release(o);
 
+    o = heim_json_create(" \"foo\\\"bar\" ]", NULL);
+    heim_assert(o != NULL, "string");
+    heim_assert(heim_get_tid(o) == heim_string_get_type_id(), "string-tid");
+    heim_assert(strcmp("foo\"bar", heim_string_get_utf8(o)) == 0, "wrong string");
+    heim_release(o);
+
     o = heim_json_create(" { \"key\" : \"value\" }", NULL);
     heim_assert(o != NULL, "dict");
     heim_assert(heim_get_tid(o) == heim_dict_get_type_id(), "dict-tid");

@@ -1552,7 +1552,7 @@ krb5_init_creds_set_keytab(krb5_context context,
     krb5_enctype *etypes = NULL;
     krb5_error_code ret;
     size_t netypes = 0;
-    int kvno = 0;
+    int kvno = 0, found = 0;
 
     a = malloc(sizeof(*a));
     if (a == NULL) {
@@ -1585,6 +1585,8 @@ krb5_init_creds_set_keytab(krb5_context context,
 	if (!krb5_principal_compare(context, entry.principal, ctx->cred.client))
 	    goto next;
 
+	found = 1;
+
 	/* check if we ahve this kvno already */
 	if (entry.vno > kvno) {
 	    /* remove old list of etype */
@@ -1602,8 +1604,11 @@ krb5_init_creds_set_keytab(krb5_context context,
 
 	/* add enctype to supported list */
 	ptr = realloc(etypes, sizeof(etypes[0]) * (netypes + 2));
-	if (ptr == NULL)
-	    goto next;
+	if (ptr == NULL) {
+	    free(etypes);
+	    ret = krb5_enomem(context);
+	    goto out;
+	}
 
 	etypes = ptr;
 	etypes[netypes] = entry.keyblock.keytype;
@@ -1621,7 +1626,13 @@ krb5_init_creds_set_keytab(krb5_context context,
     }
 
  out:
-    return 0;
+    if (!found) {
+	if (ret == 0)
+	    ret = KRB5_KT_NOTFOUND;
+	_krb5_kt_principal_not_found(context, ret, keytab, ctx->cred.client, 0, 0);
+    }
+
+    return ret;
 }
 
 static krb5_error_code KRB5_CALLCONV

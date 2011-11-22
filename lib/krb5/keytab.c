@@ -563,7 +563,8 @@ _krb5_kt_principal_not_found(krb5_context context,
 
     krb5_unparse_name_fixed (context, principal, princ, sizeof(princ));
     krb5_kt_get_full_name (context, id, &kt_name);
-    krb5_enctype_to_string(context, enctype, &enctype_str);
+    if (enctype)
+	krb5_enctype_to_string(context, enctype, &enctype_str);
 
     if (kvno)
 	snprintf(kvno_str, sizeof(kvno_str), "(kvno %d)", kvno);
@@ -578,7 +579,8 @@ _krb5_kt_principal_not_found(krb5_context context,
 			    kt_name ? kt_name : "unknown keytab",
 			    enctype_str ? enctype_str : "unknown enctype");
     free(kt_name);
-    free(enctype_str);
+    if (enctype_str)
+	free(enctype_str);
     return ret;
 }
 

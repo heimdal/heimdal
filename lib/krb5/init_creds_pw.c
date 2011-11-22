@@ -154,10 +154,10 @@ free_init_creds_ctx(krb5_context context, krb5_init_creds_context ctx)
 	free(ctx->password);
     }
     /*
-     * FAST state 
+     * FAST state (we don't close the armor_ccache because we might have
+     * to destroy it, and how would we know? also, the caller should
+     * take care of cleaning up the armor_ccache).
      */
-    if (ctx->fast_state.armor_ccache)
-	krb5_cc_close(context, ctx->fast_state.armor_ccache);
     if (ctx->fast_state.armor_crypto)
 	krb5_crypto_destroy(context, ctx->fast_state.armor_crypto);
     krb5_free_keyblock_contents(context, &ctx->fast_state.armor_key);

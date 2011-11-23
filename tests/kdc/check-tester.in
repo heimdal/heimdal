@@ -108,41 +108,6 @@ sed 's/^/	/' out-log
 
 
 if test "$pkinit" = yes ; then
-    KRB5_CONFIG="${1-${objdir}/krb5-pkinit.conf}"
-    export KRB5_CONFIG
-    echo "Setting up certificates"
-    ${hxtool} request-create \
-	     --subject="CN=kdc,DC=test,DC=h5l,DC=se" \
-	     --key=FILE:${keyfile2} \
-	     req-kdc.der || exit 1
-    ${hxtool} request-create \
-	     --subject="CN=foo,DC=test,DC=h5l,DC=se" \
-	     --key=FILE:${keyfile2} \
-	     req-pkinit.der || exit 1
-
-    echo "issue self-signed ca cert"
-    ${hxtool} issue-certificate \
-	      --self-signed \
-	      --issue-ca \
-	      --ca-private-key=FILE:${keyfile} \
-	      --subject="CN=CA,DC=test,DC=h5l,DC=se" \
-	      --certificate="FILE:ca.crt" || exit 1
-
-    echo "issue kdc certificate"
-    ${hxtool} issue-certificate \
-	      --ca-certificate=FILE:$objdir/ca.crt,${keyfile} \
-	      --type="pkinit-kdc" \
-	      --pk-init-principal="krbtgt/TEST.H5L.SE@TEST.H5L.SE" \
-	      --req="PKCS10:req-kdc.der" \
-	      --certificate="FILE:kdc.crt" || exit 1
-
-    echo "issue user certificate (pkinit san)"
-    ${hxtool} issue-certificate \
-	      --ca-certificate=FILE:$objdir/ca.crt,${keyfile} \
-	      --type="pkinit-client" \
-	      --pk-init-principal="foo@TEST.H5L.SE" \
-	      --req="PKCS10:req-pkinit.der" \
-	      --certificate="FILE:pkinit.crt" || exit 1
 
     echo "pkinit"
     ${kdc_tester} ${objdir}/kdc-tester4.json > out-log 2>&1 || exit 1

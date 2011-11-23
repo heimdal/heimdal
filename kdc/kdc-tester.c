@@ -54,6 +54,13 @@ static krb5_context kdc_context;
 static struct sockaddr_storage sa;
 static const char *astr = "0.0.0.0";
 
+static void eval_object(heim_object_t);
+
+
+/*
+ *
+ */
+
 static krb5_error_code
 send_to_kdc(krb5_context c, void *ptr, krb5_krbhst_info *hi, time_t timeout,
 	    const krb5_data *in, krb5_data *out)
@@ -76,77 +83,70 @@ send_to_kdc(krb5_context c, void *ptr, krb5_krbhst_info *hi, time_t timeout,
  *
  */
 
-static krb5_ccache fast_ccache = NULL;
 static void
-get_fast_armor_ccache(const char *fast_armor_princ, const char *keytab,
-		      krb5_ccache *cc)
+eval_repeat(heim_dict_t o)
 {
-    krb5_keytab kt = NULL;
-    krb5_init_creds_context ctx;
-    krb5_principal princ;
-    krb5_creds creds;
-    krb5_error_code ret;
+    heim_object_t or = heim_dict_get_value(o, HSTR("value"));
+    heim_number_t n = heim_dict_get_value(o, HSTR("num"));
+    int i, num;
+    struct perf perf;
 
-    if (fast_ccache) {
-	*cc = fast_ccache;
-	return;
+    memset(&perf, 0, sizeof(perf));
+
+    gettimeofday(&perf.start, NULL);
+    perf.next = ptop;
+    ptop = &perf;
+
+    heim_assert(or != NULL, "value missing");
+    heim_assert(n != NULL, "num missing");
+
+    num = heim_number_get_int(n);
+    heim_assert(num >= 0, "num >= 0");
+
+    for (i = 0; i < num; i++)
+	eval_object(or);
+
+    gettimeofday(&perf.stop, NULL);
+    ptop = perf.next;
+
+    if (ptop) {
+	ptop->as_req += perf.as_req;
+	ptop->tgs_req += perf.tgs_req;
     }
 
-    ret = krb5_parse_name(kdc_context, fast_armor_princ, &princ);
-    if (ret)
-	krb5_err(kdc_context, 1, ret, "krb5_parse_name");
+    timevalsub(&perf.stop, &perf.start);
+    printf("time: %lu.%06lu\n",
+	   (unsigned long)perf.stop.tv_sec,
+	   (unsigned long)perf.stop.tv_usec);
 
-    if (keytab) {
-	ret = krb5_kt_resolve(kdc_context, keytab, &kt);
-	if (ret)
-	    krb5_err(kdc_context, 1, ret, "krb5_kt_resolve");
-    } else {
-	ret = krb5_kt_default(kdc_context, &kt);
-	if (ret)
-	    krb5_err(kdc_context, 1, ret, "krb5_kt_default");
+#define USEC_PER_SEC 1000000
+
+    if (perf.as_req) {
+	double as_ps = 0.0;
+	as_ps = (perf.as_req * USEC_PER_SEC) / (double)((perf.stop.tv_sec * USEC_PER_SEC) + perf.stop.tv_usec);
+	printf("as-req/s %.2lf\n", as_ps);
     }
-
-    ret = krb5_cc_new_unique(kdc_context, "MEMORY", NULL, &fast_ccache);
-    if (ret)
-	krb5_err(kdc_context, 1, ret, "krb5_cc_new_unique");
-
-    ret = krb5_cc_initialize(kdc_context, fast_ccache, princ);
-    if (ret)
-	krb5_err(kdc_context, 1, ret, "krb5_cc_initialize");
-
-    ret = krb5_init_creds_init(kdc_context, princ, NULL, NULL, 0, NULL, &ctx);
-    if (ret)
-	krb5_err(kdc_context, 1, ret, "krb5_init_creds_init");
-
-    ret = krb5_init_creds_set_keytab(kdc_context, ctx, kt);
-    if (ret)
-	krb5_err(kdc_context, 1, ret, "krb5_init_creds_set_keytab");
-
-    ret = krb5_init_creds_get(kdc_context, ctx);
-    if (ret)
-	krb5_err(kdc_context, 1, ret, "krb5_init_creds_get");
-
-    ret = krb5_init_creds_get_creds(kdc_context, ctx, &creds);
-    if (ret)
-	krb5_err(kdc_context, 1, ret, "krb5_init_creds_get_creds");
-
-    ret = krb5_cc_store_cred(kdc_context, fast_ccache, &creds);
-    if (ret)
-	krb5_err(kdc_context, 1, ret, "krb5_cc_store_cred");
-    *cc = fast_ccache;
-
-    return;
+	    
+    if (perf.tgs_req) {
+	double tgs_ps = 0.0;
+	tgs_ps = (perf.tgs_req * USEC_PER_SEC) / (double)((perf.stop.tv_sec * USEC_PER_SEC) + perf.stop.tv_usec);
+	printf("tgs-req/s %.2lf\n", tgs_ps);
+    }
 }
+
+/*
+ *
+ */
 
 static void
 eval_kinit(heim_dict_t o)
 {
-    heim_string_t user, password, keytab, fast_armor_princ, pk_user_id;
+    heim_string_t user, password, keytab, fast_armor_cc, pk_user_id, ccache;
     krb5_get_init_creds_opt *opt;
     krb5_init_creds_context ctx;
     krb5_principal client;
     krb5_keytab kt = NULL;
-    krb5_ccache fast_cc;
+    krb5_ccache fast_cc = NULL;
     krb5_error_code ret;
 
     if (ptop)
@@ -161,6 +161,8 @@ eval_kinit(heim_dict_t o)
     pk_user_id = heim_dict_get_value(o, HSTR("pkinit-user-cert-id"));
     if (password == NULL && keytab == NULL && pk_user_id == NULL)
 	krb5_errx(kdc_context, 1, "password, keytab, nor PKINIT user cert ID");
+
+    ccache = heim_dict_get_value(o, HSTR("ccache"));
 
     ret = krb5_parse_name(kdc_context, heim_string_get_utf8(user), &client);
     if (ret)
@@ -185,11 +187,16 @@ eval_kinit(heim_dict_t o)
     if (ret)
 	krb5_err(kdc_context, 1, ret, "krb5_init_creds_init");
 
-    fast_armor_princ = heim_dict_get_value(o, HSTR("fast-armor-princ"));
-    if (fast_armor_princ != NULL) {
-	get_fast_armor_ccache(heim_string_get_utf8(fast_armor_princ),
-			      heim_string_get_utf8(keytab), &fast_cc);
+    fast_armor_cc = heim_dict_get_value(o, HSTR("fast-armor-cc"));
+    if (fast_armor_cc) {
+
+	ret = krb5_cc_resolve(kdc_context, heim_string_get_utf8(fast_armor_cc), &fast_cc);
+	if (ret)
+	    krb5_err(kdc_context, 1, ret, "krb5_cc_resolve");
+
 	ret = krb5_init_creds_set_fast_ccache(kdc_context, ctx, fast_cc);
+	if (ret)
+	    krb5_err(kdc_context, 1, ret, "krb5_init_creds_set_fast_ccache");
     }
     
     if (password) {
@@ -212,20 +219,68 @@ eval_kinit(heim_dict_t o)
     if (ret)
 	krb5_err(kdc_context, 1, ret, "krb5_init_creds_get");
 
+    if (ccache) {
+	const char *name = heim_string_get_utf8(ccache);
+	krb5_creds cred;
+	krb5_ccache cc;
+
+	ret = krb5_init_creds_get_creds(kdc_context, ctx, &cred);
+	if (ret)
+	    krb5_err(kdc_context, 1, ret, "krb5_init_creds_get_creds");
+
+	ret = krb5_cc_resolve(kdc_context, name, &cc);
+	if (ret)
+	    krb5_err(kdc_context, 1, ret, "krb5_cc_resolve");
+
+	krb5_init_creds_store(kdc_context, ctx, cc);
+
+	ret = krb5_cc_close(kdc_context, cc);
+	if (ret)
+	    krb5_err(kdc_context, 1, ret, "krb5_cc_close");
+
+	krb5_free_cred_contents(kdc_context, &cred);
+    }
+
     krb5_init_creds_free(kdc_context, ctx);
 
     if (kt)
 	krb5_kt_close(kdc_context, kt);
+    if (fast_cc)
+	krb5_cc_close(kdc_context, fast_cc);
+
 #if 0
     printf("kinit success %s\n", heim_string_get_utf8(user));
 #endif
 }
 
+
 /*
  *
  */
 
-static void eval_object(heim_object_t);
+static void
+eval_kdestroy(heim_dict_t o)
+{
+    heim_string_t ccache = heim_dict_get_value(o, HSTR("ccache"));;
+    krb5_error_code ret;
+    const char *name;
+    krb5_ccache cc;
+
+    heim_assert(ccache != NULL, "ccache_missing");
+	
+    name = heim_string_get_utf8(ccache);
+
+    ret = krb5_cc_resolve(kdc_context, name, &cc);
+    if (ret)
+	krb5_err(kdc_context, 1, ret, "krb5_cc_resolve");
+
+    krb5_cc_destroy(kdc_context, cc);
+}
+
+
+/*
+ *
+ */
 
 static void
 eval_array_element(heim_object_t o, void *ptr)
@@ -246,55 +301,11 @@ eval_object(heim_object_t o)
 	heim_assert(op != NULL, "op missing");
 
 	if (strcmp(op, "repeat") == 0) {
-	    heim_object_t or = heim_dict_get_value(o, HSTR("value"));
-	    heim_number_t n = heim_dict_get_value(o, HSTR("num"));
-	    int i, num;
-	    struct perf perf;
-
-	    memset(&perf, 0, sizeof(perf));
-
-	    gettimeofday(&perf.start, NULL);
-	    perf.next = ptop;
-	    ptop = &perf;
-
-	    heim_assert(or != NULL, "value missing");
-	    heim_assert(n != NULL, "num missing");
-
-	    num = heim_number_get_int(n);
-	    heim_assert(num >= 0, "num >= 0");
-
-	    for (i = 0; i < num; i++)
-		eval_object(or);
-
-	    gettimeofday(&perf.stop, NULL);
-	    ptop = perf.next;
-
-	    if (ptop) {
-		ptop->as_req += perf.as_req;
-		ptop->tgs_req += perf.tgs_req;
-	    }
-
-	    timevalsub(&perf.stop, &perf.start);
-	    printf("time: %lu.%06lu\n",
-		   (unsigned long)perf.stop.tv_sec,
-		   (unsigned long)perf.stop.tv_usec);
-
-#define USEC_PER_SEC 1000000
-
-	    if (perf.as_req) {
-		double as_ps = 0.0;
-		as_ps = (perf.as_req * USEC_PER_SEC) / (double)((perf.stop.tv_sec * USEC_PER_SEC) + perf.stop.tv_usec);
-		printf("as-req/s %.2lf\n", as_ps);
-	    }
-	    
-	    if (perf.tgs_req) {
-		double tgs_ps = 0.0;
-		tgs_ps = (perf.tgs_req * USEC_PER_SEC) / (double)((perf.stop.tv_sec * USEC_PER_SEC) + perf.stop.tv_usec);
-		printf("tgs-req/s %.2lf\n", tgs_ps);
-	    }
-
+	    eval_repeat(o);
 	} else if (strcmp(op, "kinit") == 0) {
 	    eval_kinit(o);
+	} else if (strcmp(op, "kdestroy") == 0) {
+	    eval_kdestroy(o);
 	} else {
 	    errx(1, "unsupported ops %s", op);
 	}

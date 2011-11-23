@@ -141,7 +141,8 @@ get_fast_armor_ccache(const char *fast_armor_princ, const char *keytab,
 static void
 eval_kinit(heim_dict_t o)
 {
-    heim_string_t user, password, keytab, fast_armor_princ;
+    heim_string_t user, password, keytab, fast_armor_princ, pk_user_id;
+    krb5_get_init_creds_opt *opt;
     krb5_init_creds_context ctx;
     krb5_principal client;
     krb5_keytab kt = NULL;
@@ -157,14 +158,30 @@ eval_kinit(heim_dict_t o)
 
     password = heim_dict_get_value(o, HSTR("password"));
     keytab = heim_dict_get_value(o, HSTR("keytab"));
-    if (password == NULL && keytab == NULL)
-	krb5_errx(kdc_context, 1, "no password nor keytab");
+    pk_user_id = heim_dict_get_value(o, HSTR("pkinit-user-cert-id"));
+    if (password == NULL && keytab == NULL && pk_user_id == NULL)
+	krb5_errx(kdc_context, 1, "password, keytab, nor PKINIT user cert ID");
 
     ret = krb5_parse_name(kdc_context, heim_string_get_utf8(user), &client);
     if (ret)
 	krb5_err(kdc_context, 1, ret, "krb5_unparse_name");
 
-    ret = krb5_init_creds_init(kdc_context, client, NULL, NULL, 0, NULL, &ctx);
+    /* PKINIT parts */
+    ret = krb5_get_init_creds_opt_alloc (kdc_context, &opt);
+    if (ret)
+	krb5_err(kdc_context, 1, ret, "krb5_get_init_creds_opt_alloc");
+
+    if (pk_user_id) {
+	ret = krb5_get_init_creds_opt_set_pkinit(kdc_context, opt,
+						 client,
+						 heim_string_get_utf8(pk_user_id),
+						 NULL, NULL, NULL, 0,
+						 NULL, NULL, NULL);
+	if (ret)
+	    krb5_err(kdc_context, 1, ret, "krb5_get_init_creds_opt_set_pkinit");
+    }
+
+    ret = krb5_init_creds_init(kdc_context, client, NULL, NULL, 0, opt, &ctx);
     if (ret)
 	krb5_err(kdc_context, 1, ret, "krb5_init_creds_init");
 

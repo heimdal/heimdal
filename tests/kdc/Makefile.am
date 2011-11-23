@@ -1,6 +1,7 @@
 include $(top_srcdir)/Makefile.am.common
 
 noinst_DATA = \
+	kdc-tester4.json \
 	krb5.conf \
 	krb5-canon.conf \
 	krb5-canon2.conf \
@@ -45,6 +46,7 @@ endif
 
 do_subst = sed $(do_dlopen) \
 	-e 's,[@]env_setup[@],$(top_builddir)/tests/bin/setup-env,g' \
+	-e 's,[@]top_srcdir[@],$(top_srcdir),g' \
 	-e 's,[@]srcdir[@],$(srcdir),g' \
 	-e 's,[@]port[@],$(port),g' \
 	-e 's,[@]admport[@],$(admport),g' \
@@ -95,7 +97,7 @@ check-kdc-weak: check-kdc-weak.in Makefile
 	chmod +x check-kdc-weak.tmp
 	mv check-kdc-weak.tmp check-kdc-weak
 
-check-tester: check-tester.in Makefile
+check-tester: check-tester.in kdc-tester4.json Makefile
 	$(do_subst) < $(srcdir)/check-tester.in > check-tester.tmp
 	chmod +x check-tester.tmp
 	mv check-tester.tmp check-tester
@@ -139,6 +141,10 @@ check-kpasswdd: check-kpasswdd.in Makefile
 	$(do_subst) < $(srcdir)/check-kpasswdd.in > check-kpasswdd.tmp
 	chmod +x check-kpasswdd.tmp
 	mv check-kpasswdd.tmp check-kpasswdd
+
+kdc-tester4.json: kdc-tester4.json.in Makefile
+	$(do_subst) < $(srcdir)/kdc-tester4.json.in > kdc-tester4.json.tmp
+	mv kdc-tester4.json.tmp kdc-tester4.json
 
 krb5.conf: krb5.conf.in Makefile
 	$(do_subst) \
@@ -203,6 +209,7 @@ CLEANFILES= \
 	iprop.keytab \
 	digest-reply \
 	foopassword \
+	kdc-tester4.json \
 	krb5.conf \
 	krb5-canon.conf \
 	krb5-canon2.conf \
@@ -261,6 +268,7 @@ EXTRA_DIST = \
 	iprop-acl \
 	kdc-tester1.json \
 	kdc-tester2.json \
+	kdc-tester4.json.in \
 	krb5-pkinit.conf.in \
 	krb5.conf.in \
 	krb5-canon.conf.in \

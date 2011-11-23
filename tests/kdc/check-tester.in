@@ -50,11 +50,30 @@ R=TEST.H5L.SE
 
 keytabfile=${objdir}/server.keytab
 keytab="FILE:${keytabfile}"
+keyfile="${hx509_data}/key.der"
+keyfile2="${hx509_data}/key2.der"
 
 kadmin="${kadmin} -l -r $R"
 
 server=host/datan.test.h5l.se
 
+rsa=yes
+pkinit=no
+if ${hxtool} info | grep 'rsa: hx509 null RSA' > /dev/null ; then
+    rsa=no
+fi
+if ${hxtool} info | grep 'rand: not available' > /dev/null ; then
+    rsa=no
+fi
+
+if ${kinit} --help 2>&1 | grep "CA certificates" > /dev/null; then
+    pkinit=yes
+fi
+
+# If we doesn't support pkinit and have RSA, give up
+if test "$rsa" != yes ; then
+    pkinit=no
+fi
 
 rm -f ${keytabfile}
 rm -f current-db*
@@ -84,5 +103,45 @@ ${kdc_tester} ${srcdir}/kdc-tester2.json || exit 1
 echo "fast + keytab"
 ${kdc_tester} ${srcdir}/kdc-tester3.json || exit 1
 
+if test "$pkinit" = yes ; then
+    KRB5_CONFIG="${1-${objdir}/krb5-pkinit.conf}"
+    export KRB5_CONFIG
+    echo "Setting up certificates"
+    ${hxtool} request-create \
+	     --subject="CN=kdc,DC=test,DC=h5l,DC=se" \
+	     --key=FILE:${keyfile2} \
+	     req-kdc.der || exit 1
+    ${hxtool} request-create \
+	     --subject="CN=foo,DC=test,DC=h5l,DC=se" \
+	     --key=FILE:${keyfile2} \
+	     req-pkinit.der || exit 1
+
+    echo "issue self-signed ca cert"
+    ${hxtool} issue-certificate \
+	      --self-signed \
+	      --issue-ca \
+	      --ca-private-key=FILE:${keyfile} \
+	      --subject="CN=CA,DC=test,DC=h5l,DC=se" \
+	      --certificate="FILE:ca.crt" || exit 1
+
+    echo "issue kdc certificate"
+    ${hxtool} issue-certificate \
+	      --ca-certificate=FILE:$objdir/ca.crt,${keyfile} \
+	      --type="pkinit-kdc" \
+	      --pk-init-principal="krbtgt/TEST.H5L.SE@TEST.H5L.SE" \
+	      --req="PKCS10:req-kdc.der" \
+	      --certificate="FILE:kdc.crt" || exit 1
+
+    echo "issue user certificate (pkinit san)"
+    ${hxtool} issue-certificate \
+	      --ca-certificate=FILE:$objdir/ca.crt,${keyfile} \
+	      --type="pkinit-client" \
+	      --pk-init-principal="foo@TEST.H5L.SE" \
+	      --req="PKCS10:req-pkinit.der" \
+	      --certificate="FILE:pkinit.crt" || exit 1
+
+    echo "pkinit"
+    ${kdc_tester} ${srcdir}/kdc-tester4.json || exit 1
+fi
 
 exit $ec

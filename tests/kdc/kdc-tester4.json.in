@@ -1,0 +1,12 @@
+[
+	{
+	"op" : "repeat",
+	"num" : 333,
+	"value" : {
+		"op" : "kinit",
+		"client" : "foo@TEST.H5L.SE",
+		"pkinit-user-cert-id" : "FILE:@objdir@/pkinit.crt,@top_srcdir@/lib/hx509/data/key2.der"
+		}
+	}
+]
+

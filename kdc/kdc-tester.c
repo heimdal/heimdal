@@ -186,10 +186,14 @@ eval_kinit(heim_dict_t o)
 	krb5_err(kdc_context, 1, ret, "krb5_get_init_creds_opt_alloc");
 
     if (pk_user_id) {
+	heim_bool_t rsaobj = heim_dict_get_value(o, HSTR("pkinit-use-rsa"));
+	int use_rsa = rsaobj ? heim_bool_val(rsaobj) : 0;
+
 	ret = krb5_get_init_creds_opt_set_pkinit(kdc_context, opt,
 						 client,
 						 heim_string_get_utf8(pk_user_id),
-						 NULL, NULL, NULL, 0,
+						 NULL, NULL, NULL,
+						 use_rsa ? 2 : 0,
 						 NULL, NULL, NULL);
 	if (ret)
 	    krb5_err(kdc_context, 1, ret, "krb5_get_init_creds_opt_set_pkinit");

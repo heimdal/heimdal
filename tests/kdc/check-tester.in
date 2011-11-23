@@ -145,7 +145,7 @@ if test "$pkinit" = yes ; then
 	      --certificate="FILE:pkinit.crt" || exit 1
 
     echo "pkinit"
-    ${kdc_tester} ${srcdir}/kdc-tester4.json > out-log 2>&1 || exit 1
+    ${kdc_tester} ${objdir}/kdc-tester4.json > out-log 2>&1 || exit 1
     sed 's/^/	/' out-log
 
 fi

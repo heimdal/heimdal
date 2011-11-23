@@ -268,6 +268,7 @@ EXTRA_DIST = \
 	iprop-acl \
 	kdc-tester1.json \
 	kdc-tester2.json \
+	kdc-tester3.json \
 	kdc-tester4.json.in \
 	krb5-pkinit.conf.in \
 	krb5.conf.in \

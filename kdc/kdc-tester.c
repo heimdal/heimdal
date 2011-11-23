@@ -79,6 +79,47 @@ send_to_kdc(krb5_context c, void *ptr, krb5_krbhst_info *hi, time_t timeout,
     return 0;
 }
 
+static void
+perf_start(struct perf *perf)
+{
+    memset(perf, 0, sizeof(*perf));
+
+    gettimeofday(&perf->start, NULL);
+    perf->next = ptop;
+    ptop = perf;
+}
+
+static void
+perf_stop(struct perf *perf)
+{
+    gettimeofday(&perf->stop, NULL);
+    ptop = perf->next;
+
+    if (ptop) {
+	ptop->as_req += perf->as_req;
+	ptop->tgs_req += perf->tgs_req;
+    }
+
+    timevalsub(&perf->stop, &perf->start);
+    printf("time: %lu.%06lu\n",
+	   (unsigned long)perf->stop.tv_sec,
+	   (unsigned long)perf->stop.tv_usec);
+
+#define USEC_PER_SEC 1000000
+
+    if (perf->as_req) {
+	double as_ps = 0.0;
+	as_ps = (perf->as_req * USEC_PER_SEC) / (double)((perf->stop.tv_sec * USEC_PER_SEC) + perf->stop.tv_usec);
+	printf("as-req/s %.2lf\n", as_ps);
+    }
+	    
+    if (perf->tgs_req) {
+	double tgs_ps = 0.0;
+	tgs_ps = (perf->tgs_req * USEC_PER_SEC) / (double)((perf->stop.tv_sec * USEC_PER_SEC) + perf->stop.tv_usec);
+	printf("tgs-req/s %.2lf\n", tgs_ps);
+    }
+}
+
 /*
  *
  */
@@ -91,11 +132,7 @@ eval_repeat(heim_dict_t o)
     int i, num;
     struct perf perf;
 
-    memset(&perf, 0, sizeof(perf));
-
-    gettimeofday(&perf.start, NULL);
-    perf.next = ptop;
-    ptop = &perf;
+    perf_start(&perf);
 
     heim_assert(or != NULL, "value missing");
     heim_assert(n != NULL, "num missing");
@@ -106,32 +143,7 @@ eval_repeat(heim_dict_t o)
     for (i = 0; i < num; i++)
 	eval_object(or);
 
-    gettimeofday(&perf.stop, NULL);
-    ptop = perf.next;
-
-    if (ptop) {
-	ptop->as_req += perf.as_req;
-	ptop->tgs_req += perf.tgs_req;
-    }
-
-    timevalsub(&perf.stop, &perf.start);
-    printf("time: %lu.%06lu\n",
-	   (unsigned long)perf.stop.tv_sec,
-	   (unsigned long)perf.stop.tv_usec);
-
-#define USEC_PER_SEC 1000000
-
-    if (perf.as_req) {
-	double as_ps = 0.0;
-	as_ps = (perf.as_req * USEC_PER_SEC) / (double)((perf.stop.tv_sec * USEC_PER_SEC) + perf.stop.tv_usec);
-	printf("as-req/s %.2lf\n", as_ps);
-    }
-	    
-    if (perf.tgs_req) {
-	double tgs_ps = 0.0;
-	tgs_ps = (perf.tgs_req * USEC_PER_SEC) / (double)((perf.stop.tv_sec * USEC_PER_SEC) + perf.stop.tv_usec);
-	printf("tgs-req/s %.2lf\n", tgs_ps);
-    }
+    perf_stop(&perf);
 }
 
 /*
@@ -247,10 +259,6 @@ eval_kinit(heim_dict_t o)
 	krb5_kt_close(kdc_context, kt);
     if (fast_cc)
 	krb5_cc_close(kdc_context, fast_cc);
-
-#if 0
-    printf("kinit success %s\n", heim_string_get_utf8(user));
-#endif
 }
 
 
@@ -354,7 +362,7 @@ main(int argc, char **argv)
 	o = heim_json_create_with_bytes(buf, size, NULL);
 	free(buf);
 	if (o == NULL)
-	errx(1, "heim_json");
+	    errx(1, "heim_json");
 	
 	/*
 	 * do the work here

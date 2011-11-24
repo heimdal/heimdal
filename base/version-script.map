@@ -13,6 +13,7 @@ HEIMDAL_BASE_1.0 {
 		heim_auto_release_create;
 		heim_auto_release_drain;
 		heim_base_once_f;
+		heim_bool_val;
 		heim_cmp;
 		heim_dict_create;
 		heim_dict_delete_key;

@@ -85,7 +85,7 @@ parse_file(krb5_context context, krb5_principal principal, int no_salt)
     size_t nkeys;
     Key *keys;
 
-    ret = hdb_generate_key_set(context, principal, 0, NULL, &keys, &nkeys,
+    ret = hdb_generate_key_set(context, principal, NULL, 0, &keys, &nkeys,
 			       no_salt);
     if (ret)
 	krb5_err(context, 1, ret, "hdb_generate_key_set");

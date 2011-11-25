@@ -336,7 +336,7 @@ _kadm5_set_keys_randomly (kadm5_server_context *context,
    Key *keys;
 
    ret = hdb_generate_key_set(context->context, ent->principal,
-			      n_ks_tuple, ks_tuple, &keys, &num_keys, 1);
+			      ks_tuple, n_ks_tuple, &keys, &num_keys, 1);
    if (ret)
 	return ret;
 

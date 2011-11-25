@@ -476,7 +476,7 @@ out:
 
 krb5_error_code
 hdb_generate_key_set(krb5_context context, krb5_principal principal,
-		     int n_ks_tuple, krb5_key_salt_tuple *ks_tuple,
+		     krb5_key_salt_tuple *ks_tuple, int n_ks_tuple,
 		     Key **ret_key_set, size_t *nkeyset, int no_salt)
 {
     char **ktypes = NULL;
@@ -596,7 +596,7 @@ hdb_generate_key_set_password(krb5_context context,
     krb5_error_code ret;
     size_t i;
 
-    ret = hdb_generate_key_set(context, principal, 0, NULL,
+    ret = hdb_generate_key_set(context, principal, NULL, 0,
 				keys, num_keys, 0);
     if (ret)
 	return ret;

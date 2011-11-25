@@ -1689,7 +1689,10 @@ _kdc_as_rep(kdc_request_t r,
      * decrypt.
      */
 
-    ret = _kdc_find_etype(context, config->as_use_strongest_session_key, FALSE,
+    ret = _kdc_find_etype(context,
+			  krb5_principal_is_krbtgt(context, r->server_princ) ?
+			  config->tgt_use_strongest_session_key :
+			  config->svc_use_strongest_session_key, FALSE,
 			  r->client, b->etype.val, b->etype.len, &r->sessionetype,
 			  NULL);
     if (ret) {

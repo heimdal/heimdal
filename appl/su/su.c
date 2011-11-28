@@ -433,8 +433,12 @@ main(int argc, char **argv)
 #endif
     {
 	char *tty = ttyname (STDERR_FILENO);
-	syslog (LOG_NOTICE | LOG_AUTH, tty ? "%s to %s on %s" : "%s to %s",
-		login_info->pw_name, su_info->pw_name, tty);
+	if (tty)
+	    syslog (LOG_NOTICE | LOG_AUTH, "%s to %s on %s",
+		    login_info->pw_name, su_info->pw_name, tty);
+	else
+	    syslog (LOG_NOTICE | LOG_AUTH, "%s to %s",
+		    login_info->pw_name, su_info->pw_name);
     }
 
 

@@ -42,6 +42,8 @@ RCSID("$Id$");
 kadm5_ret_t
 _kadm5_set_keys(kadm5_server_context *context,
 		hdb_entry *ent,
+		int n_ks_tuple,
+		krb5_key_salt_tuple *ks_tuple,
 		const char *password)
 {
     Key *keys;
@@ -50,7 +52,9 @@ _kadm5_set_keys(kadm5_server_context *context,
 
     ret = hdb_generate_key_set_password(context->context,
 					ent->principal,
-					password, &keys, &num_keys);
+					password,
+					ks_tuple, n_ks_tuple, 
+					&keys, &num_keys);
     if (ret)
 	return ret;
 

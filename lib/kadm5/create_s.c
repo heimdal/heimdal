@@ -178,7 +178,7 @@ kadm5_s_create_principal(void *server_handle,
     ent.entry.keys.len = 0;
     ent.entry.keys.val = NULL;
 
-    ret = _kadm5_set_keys(context, &ent.entry, password);
+    ret = _kadm5_set_keys(context, &ent.entry, 0, NULL, password);
     if (ret)
 	goto out;
 

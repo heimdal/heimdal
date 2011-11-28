@@ -600,12 +600,13 @@ krb5_error_code
 hdb_generate_key_set_password(krb5_context context,
 			      krb5_principal principal,
 			      const char *password,
+			      krb5_key_salt_tuple *ks_tuple, int n_ks_tuple, 
 			      Key **keys, size_t *num_keys)
 {
     krb5_error_code ret;
     size_t i;
 
-    ret = hdb_generate_key_set(context, principal, NULL, 0,
+    ret = hdb_generate_key_set(context, principal, ks_tuple, n_ks_tuple,
 				keys, num_keys, 0);
     if (ret)
 	return ret;

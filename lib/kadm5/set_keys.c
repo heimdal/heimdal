@@ -53,7 +53,7 @@ _kadm5_set_keys(kadm5_server_context *context,
     ret = hdb_generate_key_set_password(context->context,
 					ent->principal,
 					password,
-					ks_tuple, n_ks_tuple, 
+					ks_tuple, n_ks_tuple,
 					&keys, &num_keys);
     if (ret)
 	return ret;
@@ -240,7 +240,7 @@ _kadm5_set_keys2(kadm5_server_context *context,
 	if (ret)
 	    goto out;
     }
-    
+ 
     /*
      * A structure copy is more efficient here than this would be:
      *

@@ -1,5 +1,5 @@
-heimdal (20011027) unstable; urgency=low
+heimdal (20111029-1) unstable; urgency=low
 
-  * Initial release (Closes: #nnnn)  <nnnn is the bug number of your ITP>
+  * Initial release
 
- -- root <root@unknown>  Mon, 22 Aug 2011 14:08:46 +0100
+ -- elric <elric@imrryr.org>  Mon, 22 Aug 2011 14:08:46 +0100

@@ -111,6 +111,7 @@ dist_libkrb5_la_SOURCES =			\
 	acl.c					\
 	add_et_list.c				\
 	addr_families.c				\
+	an2ln_plugin.h				\
 	aname_to_localname.c			\
 	appdefault.c				\
 	asn1_glue.c				\
@@ -339,7 +340,7 @@ nodist_include_HEADERS = krb5_err.h heim_err.h k524_err.h
 
 # XXX use nobase_include_HEADERS = krb5/locate_plugin.h
 krb5dir = $(includedir)/krb5
-krb5_HEADERS = locate_plugin.h send_to_kdc_plugin.h ccache_plugin.h
+krb5_HEADERS = locate_plugin.h send_to_kdc_plugin.h ccache_plugin.h an2ln_plugin.h
 
 build_HEADERZ = \
 	$(krb5_HEADERS) \

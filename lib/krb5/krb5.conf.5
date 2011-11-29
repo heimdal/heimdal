@@ -269,8 +269,6 @@ given principal name, and if found the given username will be used, or,
 if the username is missing, an error will be returned.  If the file
 doesn't exist, or if no matching line is found then other plugins will
 be allowed to run.  Note: large
-.Va aname2lname-text-db
-files are not supported on small memory systems/processes.
 .It Li name_canon_rules = Va rules
 One or more name canonicalization rules.  Each rule consists of one or
 more tokens separated by colon (':').  The first token must be a rule
@@ -363,6 +361,62 @@ See
 .It Li tgs_require_subkey
 a boolan variable that defaults to false.
 Old DCE secd (pre 1.1) might need this to be true.
+.It Li auth_to_local_names = {
+.Bl -tag -width "xxx" -offset indent
+.It Va principal_name = Va username
+The given
+.Va principal_name
+will be mapped to the given
+.Va username
+if the
+.Va REALM
+is a default realm.
+.El
+.It Li }
+.It Li auth_to_local = HEIMDAL_DEFAULT
+Use the Heimdal default principal to username mapping.
+Applies to principals from the
+.Va REALM
+if and only if
+.Va REALM
+is a default realm.
+.It Li auth_to_local = DEFAULT
+Use the MIT default principal to username mapping.
+Applies to principals from the
+.Va REALM
+if and only if
+.Va REALM
+is a default realm.
+.It Li auth_to_local = DB:/path/to/db.txt
+Use a binary search of the given DB.  The DB must be a flat-text
+file sortedf in the "C" locale, with each record being a line
+(separated by either LF or CRLF) consisting of a principal name
+followed by whitespace followed by a username.
+Applies to principals from the
+.Va REALM
+if and only if
+.Va REALM
+is a default realm.
+.It Li auth_to_local = DB:/path/to/db
+Use the given DB, if there's a plugin for it.
+Applies to principals from the
+.Va REALM
+if and only if
+.Va REALM
+is a default realm.
+.It Li auth_to_local = RULE:...
+Use the given rule, if there's a plugin for it.
+Applies to principals from the
+.Va REALM
+if and only if
+.Va REALM
+is a default realm.
+.It Li auth_to_local = NONE
+No additional principal to username mapping is done. Note that
+.Va auth_to_local_names
+and any preceding
+.Va auth_to_local
+rules have precedence.
 .El
 .It Li }
 .El

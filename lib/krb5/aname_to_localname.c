@@ -32,20 +32,9 @@
  */
 
 #include "krb5_locl.h"
+#include "an2ln_plugin.h"
 
-#define KRB5_PLUGIN_AN2LN "an2ln"
-#define KRB5_PLUGIN_AN2LN_VERSION_0 0
-
-typedef krb5_error_code (*set_result_f)(void *, const char *);
-
-typedef struct krb5plugin_an2ln_ftable_desc {
-    int			minor_version;
-    krb5_error_code	(*init)(krb5_context, void **);
-    void		(*fini)(void *);
-    krb5_error_code	(*an2ln)(void *, krb5_context, krb5_const_principal, set_result_f, void *);
-} krb5plugin_an2ln_ftable;
-
-/* Default plugin follows */
+/* Default plugin (DB using binary search of sorted text file) follows */
 static krb5_error_code
 an2ln_def_plug_init(krb5_context context, void **ctx)
 {
@@ -58,164 +47,75 @@ an2ln_def_plug_fini(void *ctx)
 {
 }
 
-/* Find a non-quoted new-line */
-static char *
-find_line(char *buf, size_t i, size_t right)
-{
-    for (; i < right; i++) {
-	/* Seek a two non-quote char sequence */
-	if (buf[i] != '\\' && (i + 1) < right && buf[i + 1] != '\\') {
-	    /* Seek a non-quoted new-line */
-	    for (i += 1; i < right; i++) {
-		if (buf[i] == '\n')
-		    break;
-		if (buf[i] == '\\' && (i + 1) < right && buf[i + 1] != '\n')
-		    i++; /* skip quoted char */
-	    }
-	    break;
-	}
-    }
-
-    if (buf[i] == '\n' && (i + 1) < right)
-	return &buf[i + 1];
-    return NULL;
-}
-
 static krb5_error_code
 an2ln_def_plug_an2ln(void *plug_ctx, krb5_context context,
-		     krb5_const_principal princ,
+		     const char *rule,
+		     krb5_const_principal aname,
 		     set_result_f set_res_f, void *set_res_ctx)
 {
     krb5_error_code ret;
     const char *an2ln_db_fname;
-    char *fdata = NULL;
+    const char *ext;
+    bsearch_file_handle bfh = NULL;
     char *unparsed = NULL;
-    char *cp;
-    char *p;
-    char *u;
-    int fd = -1;
-    int cmp;
-    size_t sz, l, r, i, k;
-    struct stat st;
+    char *value = NULL;
 
-    an2ln_db_fname = krb5_config_get_string(context, NULL, "libdefaults",
-				 "aname2lname-text-db", NULL);
-    if (an2ln_db_fname)
+    if (strncmp(rule, "DB:", strlen("DB:") != 0))
 	return KRB5_PLUGIN_NO_HANDLE;
 
-    ret = krb5_unparse_name(context, princ, &unparsed);
+    /*
+     * This plugin implements a binary search of a sorted text file
+     * (sorted in the C locale).  We really need to know that the file
+     * is text, so we implement a trivial heuristic: the file name must
+     * end in .txt.
+     */
+    an2ln_db_fname = &rule[strlen("DB:")];
+    if (!*an2ln_db_fname)
+	return KRB5_PLUGIN_NO_HANDLE;
+    if (strlen(an2ln_db_fname) < (strlen(".txt") + 1))
+	return KRB5_PLUGIN_NO_HANDLE;
+    ext = strrchr(an2ln_db_fname, '.');
+    if (!ext || strcmp(ext, ".txt") != 0)
+	return KRB5_PLUGIN_NO_HANDLE;
+
+    ret = krb5_unparse_name(context, aname, &unparsed);
     if (ret)
 	return ret;
 
-    fd = open(an2ln_db_fname, O_RDONLY);
-    if (fd == -1) {
+    ret = __bsearch_file_open(an2ln_db_fname, 0, 0, &bfh, NULL);
+    if (ret) {
+	krb5_set_error_message(context, ret,
+			       N_("Couldn't open aname2lname-text-db", ""));
 	ret = KRB5_PLUGIN_NO_HANDLE;
 	goto cleanup;
     }
 
-    if (fstat(fd, &st) == -1 || st.st_size == 0) {
+    /* Binary search; file should be sorted (in C locale) */
+    ret = __bsearch_file(bfh, unparsed, &value, NULL, NULL, NULL);
+    if (ret > 0) {
+	krb5_set_error_message(context, ret,
+			       N_("Couldn't map principal name to username", ""));
 	ret = KRB5_PLUGIN_NO_HANDLE;
 	goto cleanup;
-    }
-
-    /*
-     * This is a dead-simple DB, so simple that we read the whole file
-     * in and do the search in memory.  This means that in 32-bit
-     * processes we can't handle large files.  But this should not be a
-     * large file anyways, else use another plugin.
-     */
-    sz = (size_t)st.st_size;
-    if (st.st_size != (off_t)sz) {
-	ret = E2BIG;
+    } else if (ret < 0) {
+	ret = KRB5_PLUGIN_NO_HANDLE;
 	goto cleanup;
-    }
-
-    fdata = malloc(sz + 1);
-    if (fdata == NULL) {
-	ret = krb5_enomem(context);
-	goto cleanup;
-    }
-    if (read(fd, fdata, sz) < sz) {
-	krb5_set_error_message(context, errno, "read: reading aname2lname DB");
-	ret = errno;
-	goto cleanup;
-    }
-    fdata[sz] = '\0';
-    close(fd);
-    fd = -1;
-
-    /* Binary search; file should be sorted */
-    for (l = 0, r = sz, i = sz >> 1; i > l && i < r; ) {
-	heim_assert(i > 0 && i < sz, "invalid aname2lname db index");
-
-	/* fdata[i] is likely in the middle of a line; find the next line */
-	cp = find_line(fdata, i, r);
-	if (cp == NULL) {
-	    /*
-	     * No new line found to the right; search to the left then
-	     * (this isn't optimal, but it's simple)
-	     */
-	    r = i;
-	    i = (r - l) >> 1;
+    } else {
+	/* ret == 0 -> found */
+	if (!value || !*value) {
+	    krb5_set_error_message(context, ret,
+				   N_("Principal mapped to empty username", ""));
+	    ret = KRB5_NO_LOCALNAME;
+	    goto cleanup;
 	}
-	i = cp - fdata;
-	heim_assert(i > l && i < r, "invalid aname2lname db index");
-
-	/* Got a line; check it */
-
-	/* Search for and split on unquoted whitespace */
-	for (p = &fdata[i], u = NULL, k = i; k < r; k++) {
-	    if (fdata[k] == '\\') {
-		k++;
-		continue;
-	    }
-	    /* The one concession to CRLF here */
-	    if (fdata[k] == '\r' || fdata[k] == '\n') {
-		fdata[k] = '\0';
-		break;
-	    }
-	    if (isspace(fdata[k])) {
-		fdata[k] = '\0';
-		for (; k < r; k++) {
-		    if (fdata[k] == '\\') {
-			k++;
-			continue;
-		    }
-		    if (fdata[k] == '\n')
-			fdata[k] = '\0';
-		    while (isspace(fdata[k]))
-			k++;
-		    break;
-		}
-		u = &fdata[k];
-		break;
-	    }
-	}
-
-	cmp = strcmp(p, unparsed);
-	if (cmp < 0) {
-	    /* search left */
-	    r = i;
-	    i = (r - l) >> 1;
-	} else if (cmp > 0) {
-	    /* search right */
-	    l = i;
-	    i = (r - l) >> 1;
-	} else {
-	    /* match! */
-	    if (u == NULL)
-		ret = KRB5_NO_LOCALNAME;
-	    else
-		ret = set_res_f(set_res_ctx, u);
-	    break;
-	}
+	ret = set_res_f(set_res_ctx, value);
     }
 
 cleanup:
-    if (fd != -1)
-	close(fd);
+    if (bfh)
+	__bsearch_file_close(&bfh);
     free(unparsed);
-    free(fdata);
+    free(value);
     return ret;
 }
 
@@ -226,9 +126,11 @@ krb5plugin_an2ln_ftable an2ln_def_plug = {
     an2ln_def_plug_an2ln,
 };
 
+/* Plugin engine code follows */
 struct plctx {
     krb5_const_principal aname;
     heim_string_t luser;
+    const char *rule;
 };
 
 static krb5_error_code KRB5_LIB_CALL
@@ -251,29 +153,41 @@ plcallback(krb5_context context,
     if (plctx->luser)
 	return 0;
     
-    return locate->an2ln(plugctx, context, plctx->aname, set_res, plctx);
+    return locate->an2ln(plugctx, context, plctx->rule, plctx->aname, set_res, plctx);
 }
 
 static krb5_error_code
-an2lnplugin(krb5_context context, krb5_const_principal aname, heim_string_t *ures)
+an2ln_plugin(krb5_context context, const char *rule, krb5_const_principal aname,
+	     size_t lnsize, char *lname)
 {
+    krb5_error_code ret;
     struct plctx ctx;
 
+    ctx.rule = rule;
     ctx.aname = aname;
     ctx.luser = NULL;
 
-    _krb5_plugin_run_f(context, "krb5", KRB5_PLUGIN_AN2LN,
-		       KRB5_PLUGIN_AN2LN_VERSION_0,
-		       0, &ctx, plcallback);
-    
+    /*
+     * Order of plugin invocation is non-deterministic, but there should
+     * really be no more than one plugin that can handle any given kind
+     * rule, so the effect should be deterministic anyways.
+     */
+    ret = _krb5_plugin_run_f(context, "krb5", KRB5_PLUGIN_AN2LN,
+			     KRB5_PLUGIN_AN2LN_VERSION_0, 0, &ctx, plcallback);
+    if (ret != 0) {
+	heim_release(ctx.luser);
+	return ret;
+    }
+
     if (ctx.luser == NULL)
-	return KRB5_NO_LOCALNAME;
+	return KRB5_PLUGIN_NO_HANDLE;
 
-    *ures = ctx.luser;
+    if (strlcpy(lname, heim_string_get_utf8(ctx.luser), lnsize) >= lnsize)
+	ret = KRB5_CONFIG_NOTENUFSPACE;
 
+    heim_release(ctx.luser);
     return 0;
 }
-
 
 static void
 reg_def_plugins_once(void *ctx)
@@ -281,29 +195,22 @@ reg_def_plugins_once(void *ctx)
     krb5_error_code ret;
     krb5_context context = ctx;
 
-    ret = krb5_plugin_register(context, PLUGIN_TYPE_FUNC,
+    ret = krb5_plugin_register(context, PLUGIN_TYPE_DATA,
 			       KRB5_PLUGIN_AN2LN, &an2ln_def_plug);
 }
 
-KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
-krb5_aname_to_localname (krb5_context context,
-			 krb5_const_principal aname,
-			 size_t lnsize,
-			 char *lname)
+static int
+princ_realm_is_default(krb5_context context,
+		       krb5_const_principal aname)
 {
-    static heim_base_once_t reg_def_plugins = HEIM_BASE_ONCE_INIT;
     krb5_error_code ret;
-    krb5_realm *lrealms, *r;
-    heim_string_t ures = NULL;
+    krb5_realm *lrealms = NULL;
+    krb5_realm *r;
     int valid;
-    size_t len;
-    const char *res;
 
-    heim_base_once_f(&reg_def_plugins, context, reg_def_plugins_once);
-
-    ret = krb5_get_default_realms (context, &lrealms);
+    ret = krb5_get_default_realms(context, &lrealms);
     if (ret)
-	return ret;
+	return 0;
 
     valid = 0;
     for (r = lrealms; *r != NULL; ++r) {
@@ -313,13 +220,96 @@ krb5_aname_to_localname (krb5_context context,
 	}
     }
     krb5_free_host_realm (context, lrealms);
-    if (valid == 0)
-	return KRB5_NO_LOCALNAME;
+    return valid;
+}
 
-    if (aname->name.name_string.len == 1)
+/*
+ * This function implements MIT's auth_to_local_names configuration for
+ * configuration compatibility.  Specifically:
+ *
+ * [realms]
+ *     <realm-name> = {
+ *         auth_to_local_names = {
+ *             <unparsed-principal-name> = <username>
+ *         }
+ *     }
+ *
+ * If multiple usernames are configured then the last one is taken.
+ *
+ * The configuration can only be expected to hold a relatively small
+ * number of mappings.  For lots of mappings use a DB.
+ */
+static krb5_error_code
+an2ln_local_names(krb5_context context,
+		  krb5_const_principal aname,
+		  size_t lnsize,
+		  char *lname)
+{
+    krb5_error_code ret;
+    char *unparsed;
+    char **values;
+    char *res;
+    size_t i;
+
+    if (!princ_realm_is_default(context, aname))
+	return KRB5_PLUGIN_NO_HANDLE;
+
+    ret = krb5_unparse_name_flags(context, aname,
+				  KRB5_PRINCIPAL_UNPARSE_NO_REALM,
+				  &unparsed);
+    if (ret)
+	return ret;
+
+    ret = KRB5_PLUGIN_NO_HANDLE;
+    values = krb5_config_get_strings(context, NULL, "realms", aname->realm,
+				     "auth_to_local_names", unparsed, NULL);
+    free(unparsed);
+    if (!values)
+	return ret;
+    /* Take the last value, just like MIT */
+    for (res = NULL, i = 0; values[i]; i++)
+	res = values[i];
+    if (res) {
+	ret = 0;
+	if (strlcpy(lname, res, lnsize) >= lnsize)
+	    ret = KRB5_CONFIG_NOTENUFSPACE;
+
+	if (!*res || strcmp(res, ":") == 0)
+	    ret = KRB5_NO_LOCALNAME;
+    }
+
+    krb5_config_free_strings(values);
+    return ret;
+}
+
+/*
+ * Heimdal's default aname2lname mapping.
+ */
+static krb5_error_code
+an2ln_default(krb5_context context,
+	      int root_princs_ok,
+	      krb5_const_principal aname,
+	      size_t lnsize, char *lname)
+{
+    krb5_error_code ret;
+    const char *res;
+
+    if (!princ_realm_is_default(context, aname))
+	return KRB5_PLUGIN_NO_HANDLE;
+
+    if (aname->name.name_string.len == 1) {
+	/*
+	 * One component principal names in default realm -> the one
+	 * component is the username.
+	 */
 	res = aname->name.name_string.val[0];
-    else if (aname->name.name_string.len == 2
-	     && strcmp (aname->name.name_string.val[1], "root") == 0) {
+    } else if (aname->name.name_string.len == 2 &&
+	       strcmp (aname->name.name_string.val[1], "root") == 0) {
+	/*
+	 * Two-component principal names in default realm where the
+	 * first component is "root" -> root IFF the principal is in
+	 * root's .k5login (or whatever krb5_kuserok() does).
+	 */
 	krb5_principal rootprinc;
 	krb5_boolean userok;
 
@@ -333,21 +323,91 @@ krb5_aname_to_localname (krb5_context context,
 	krb5_free_principal(context, rootprinc);
 	if (!userok)
 	    return KRB5_NO_LOCALNAME;
-
     } else {
-	ret = an2lnplugin(context, aname, &ures);
-	if (ret)
-	    return ret;
-	res = heim_string_get_utf8(ures);
+	return KRB5_PLUGIN_NO_HANDLE;
     }
 
-    len = strlen (res);
-    if (len >= lnsize)
-	return ERANGE;
-    strlcpy (lname, res, lnsize);
-
-    if (ures)
-	heim_release(ures);
+    if (strlcpy(lname, res, lnsize) >= lnsize)
+	return KRB5_CONFIG_NOTENUFSPACE;
 
     return 0;
+}
+
+/**
+ * Map a principal name to a local username.
+ *
+ * Returns 0 on success, KRB5_NO_LOCALNAME if no mapping was found, or
+ * some Kerberos or system error.
+ *
+ * Inputs:
+ *
+ * @context    A krb5_context
+ * @aname      A principal name
+ * @lnsize     The size of the buffer into which the username will be written
+ * @lname      The buffer into which the username will be written
+ */
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
+krb5_aname_to_localname(krb5_context context,
+			krb5_const_principal aname,
+			size_t lnsize,
+			char *lname)
+{
+    static heim_base_once_t reg_def_plugins = HEIM_BASE_ONCE_INIT;
+    krb5_error_code ret;
+    size_t i;
+    char **rules = NULL;
+    char *rule;
+
+    if (lnsize)
+	lname[0] = '\0';
+
+    heim_base_once_f(&reg_def_plugins, context, reg_def_plugins_once);
+
+    /* Try MIT's auth_to_local_names config first */
+    ret = an2ln_local_names(context, aname, lnsize, lname);
+    if (ret != KRB5_PLUGIN_NO_HANDLE)
+	return ret;
+
+    rules = krb5_config_get_strings(context, NULL, "realms", aname->realm,
+				    "auth_to_local", NULL);
+    if (!rules) {
+	/* Heimdal's default rule */
+	ret = an2ln_default(context, 1, aname, lnsize, lname);
+	if (ret == KRB5_PLUGIN_NO_HANDLE)
+	    return KRB5_NO_LOCALNAME;
+	return ret;
+    }
+
+    /* MIT rules */
+    for (ret = KRB5_PLUGIN_NO_HANDLE, i = 0; rules[i]; i++) {
+	rule = rules[i];
+	if (!*rule || strcmp(rule, "NONE") == 0)
+	    break;
+	else if (strcmp(rule, "HEIMDAL_DEFAULT") == 0)
+	    ret = an2ln_default(context, 1, aname, lnsize, lname);
+	else if (strcmp(rule, "DEFAULT") == 0)
+	    ret = an2ln_default(context, 0, aname, lnsize, lname);
+	else
+	    /* Let the plugins handle DBs and RULEs and anything else*/
+	    ret = an2ln_plugin(context, rule, aname, lnsize, lname);
+
+	if (ret == 0 && lnsize && lname[0])
+	    break;
+	/*
+	 * Note that RULEs and DBs only have white-list functionality,
+	 * thus RULEs and DBs that we don't understand we simply ignore.
+	 *
+	 * This means that plugins that implement black-lists are
+	 * dangerous: if a black-list plugin isn't found, the black-list
+	 * won't be enforced.  But black-lists are dangerous anyways.
+	 */
+	if (ret != KRB5_PLUGIN_NO_HANDLE)
+	    break;
+    }
+
+    if (ret == KRB5_PLUGIN_NO_HANDLE)
+	ret = KRB5_NO_LOCALNAME;
+
+    krb5_config_free_strings(rules);
+    return ret;
 }

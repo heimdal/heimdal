@@ -599,15 +599,13 @@ _krb5_plugin_run_f(krb5_context context,
     heim_string_t m = heim_string_create(module);
     heim_dict_t dict;
     struct iter_ctx s;
+    struct krb5_plugin *registered_plugins = NULL;
+    struct krb5_plugin *p;
+
+    /* Get registered plugins */
+    (void) _krb5_plugin_find(context, SYMBOL, name, &registered_plugins);
 
     HEIMDAL_MUTEX_lock(&plugin_mutex);
-
-    dict = heim_dict_get_value(modules, m);
-    heim_release(m);
-    if (dict == NULL) {
-	HEIMDAL_MUTEX_unlock(&plugin_mutex);
-	return KRB5_PLUGIN_NO_HANDLE;
-    }
 
     s.context = context;
     s.name = name;
@@ -616,14 +614,30 @@ _krb5_plugin_run_f(krb5_context context,
     s.result = heim_array_create();
     s.func = func;
     s.userctx = userctx;
-
-    heim_dict_iterate_f(dict, search_modules, &s);
-
-    HEIMDAL_MUTEX_unlock(&plugin_mutex);
-
     s.ret = KRB5_PLUGIN_NO_HANDLE;
 
-    heim_array_iterate_f(s.result, &s, eval_results);
+    /* Get loaded plugins */
+    dict = heim_dict_get_value(modules, m);
+    heim_release(m);
+
+    /* Add loaded plugins to s.result array */
+    if (dict)
+	heim_dict_iterate_f(dict, search_modules, &s);
+
+    /* We don't need to hold plugin_mutex during plugin invocation */
+    HEIMDAL_MUTEX_unlock(&plugin_mutex);
+
+    /* Invoke registered plugins */
+    for (p = registered_plugins; p; p = p->next) {
+	if (s.ret != KRB5_PLUGIN_NO_HANDLE)
+	    break;
+	s.ret = s.func(s.context, p->symbol, NULL, s.userctx);
+    }
+    _krb5_plugin_free(registered_plugins);
+
+    /* Invoke loaded plugins */
+    if (s.ret != KRB5_PLUGIN_NO_HANDLE)
+	heim_array_iterate_f(s.result, &s, eval_results);
 
     heim_release(s.result);
     heim_release(s.n);

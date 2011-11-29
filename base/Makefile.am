@@ -17,6 +17,7 @@ include_HEADERS	= heimbase.h
 dist_libheimbase_la_SOURCES =	\
 	array.c			\
 	baselocl.h		\
+	bsearch.c		\
 	bool.c			\
 	data.c			\
 	dict.c			\

@@ -235,5 +235,20 @@ const void *	heim_data_get_ptr(heim_data_t);
 size_t		heim_data_get_length(heim_data_t);
 
 
+/*
+ * Binary search.
+ *
+ * Note: these are private until integrated into the heimbase object system.
+ */
+typedef struct bsearch_file_handle *bsearch_file_handle;
+int __bsearch_text(const char *buf, size_t buf_sz, const char *key,
+		   char **value, size_t *location, size_t *loops);
+int __bsearch_file_open(const char *fname, size_t max_sz, size_t page_sz,
+			bsearch_file_handle *bfh, size_t *reads);
+int __bsearch_file(bsearch_file_handle bfh, const char *key, char **value,
+		   size_t *location, size_t *loops, size_t *reads);
+void __bsearch_file_info(bsearch_file_handle bfh, size_t *page_sz,
+			 size_t *max_sz, int *blockwise);
+void __bsearch_file_close(bsearch_file_handle *bfh);
 
 #endif /* HEIM_BASE_H */

@@ -637,6 +637,7 @@ AC_CONFIG_FILES(Makefile 		\
 	kdc/Makefile			\
 	appl/Makefile			\
 	appl/afsutil/Makefile		\
+	appl/dbutils/Makefile		\
 	appl/ftp/Makefile		\
 	appl/ftp/common/Makefile	\
 	appl/ftp/ftp/Makefile		\

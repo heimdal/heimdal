@@ -39,6 +39,11 @@ HEIMDAL_BASE_1.0 {
 		heim_string_create_with_bytes;
 		heim_string_get_type_id;
 		heim_string_get_utf8;
+		__bsearch_text;
+		__bsearch_file_open;
+		__bsearch_file;
+		__bsearch_file_info;
+		__bsearch_file_close;
 	local:
 		*;
 };

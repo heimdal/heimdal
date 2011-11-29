@@ -73,6 +73,7 @@ libkrb5_OBJS =			\
 	$(OBJ)\error_string.obj		    \
 	$(OBJ)\expand_hostname.obj	    \
 	$(OBJ)\expand_path.obj	    	    \
+	$(OBJ)\fast.obj			    \
 	$(OBJ)\fcache.obj		    \
 	$(OBJ)\free.obj			    \
 	$(OBJ)\free_host_realm.obj	    \

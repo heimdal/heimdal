@@ -54,12 +54,14 @@ test_alname(krb5_context context, krb5_const_realm realm,
 
     ret = krb5_aname_to_localname(context, p, sizeof(localname), localname);
     krb5_free_principal(context, p);
-    free(princ);
     if (ret) {
-	if (!ok)
+	if (!ok) {
+	    free(princ);
 	    return;
+	}
 	krb5_err(context, 1, ret, "krb5_aname_to_localname: %s -> %s",
 		 princ, localuser);
+	free(princ);
     }
 
     if (strcmp(localname, localuser) != 0) {
@@ -74,10 +76,16 @@ test_alname(krb5_context context, krb5_const_realm realm,
 
 }
 
+static int simple_flag = 0;
+static int verbose_flag = 0;
 static int version_flag = 0;
 static int help_flag	= 0;
 
 static struct getargs args[] = {
+    {"simple",	0,	arg_flag,	&simple_flag, /* Used for scripting */
+     "map the given principal and print the resulting localname", NULL },
+    {"verbose",	0,	arg_flag,	&verbose_flag,
+     "print the actual principal name as well as the localname", NULL },
     {"version",	0,	arg_flag,	&version_flag,
      "print version", NULL },
     {"help",	0,	arg_flag,	&help_flag,
@@ -119,14 +127,51 @@ main(int argc, char **argv)
     argc -= optidx;
     argv += optidx;
 
-    if (argc != 1)
-	errx(1, "first argument should be a local user that in root .k5login");
-
-    user = argv[0];
-
     ret = krb5_init_context(&context);
     if (ret)
 	errx (1, "krb5_init_context failed: %d", ret);
+
+    if (simple_flag) {
+	krb5_principal princ;
+	char localname[1024];
+	char *unparsed;
+	krb5_error_code ret;
+
+	/* Map then print the result and exit */
+	if (argc != 1)
+	    errx(1, "One argument is required and it must be a principal name");
+
+	ret = krb5_parse_name(context, argv[0], &princ);
+	if (ret)
+	    krb5_err(context, 1, ret, "krb5_build_principal");
+
+	ret = krb5_unparse_name(context, princ, &unparsed);
+	if (ret)
+	    krb5_err(context, 1, ret, "krb5_unparse_name");
+
+	ret = krb5_aname_to_localname(context, princ, sizeof(localname),
+				      localname);
+	if (ret == KRB5_NO_LOCALNAME) {
+	    if (verbose_flag)
+		fprintf(stderr, "No mapping obtained for %s\n", unparsed);
+	    exit(1);
+	}
+	if (ret == KRB5_PLUGIN_NO_HANDLE) {
+	    fprintf(stderr, "Error: KRB5_PLUGIN_NO_HANDLE leaked!\n");
+	    exit(2);
+	}
+	if (verbose_flag)
+	    printf("%s ", unparsed);
+	free(unparsed);
+	krb5_free_principal(context, princ);
+	printf("%s\n", localname);
+	exit(0);
+    }
+
+    if (argc != 1)
+	errx(1, "first argument should be a local user that is in root .k5login");
+
+    user = argv[0];
 
     ret = krb5_get_default_realm(context, &realm);
     if (ret)

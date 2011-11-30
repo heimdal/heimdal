@@ -31,7 +31,6 @@ kpasswdd="${TESTS_ENVIRONMENT} ${top_builddir}/kpasswd/kpasswdd"
 kswitch="${TESTS_ENVIRONMENT} ${top_builddir}/kuser/kcc kswitch"
 ktutil="${TESTS_ENVIRONMENT} ${top_builddir}/admin/ktutil"
 gsstool="${TESTS_ENVIRONMENT} ${top_builddir}/lib/gssapi/gsstool"
-test_set_kvno0="${TESTS_ENVIRONMENT} ${top_builddir}/lib/krb5/test_set_kvno0"
 
 # regression test tools
 test_ap_req="${TESTS_ENVIRONMENT} ${top_builddir}/lib/krb5/test_ap-req"
@@ -41,6 +40,8 @@ test_renew="${TESTS_ENVIRONMENT} ${top_builddir}/lib/krb5/test_renew"
 test_ntlm="${TESTS_ENVIRONMENT} ${top_builddir}/lib/gssapi/test_ntlm"
 test_context="${TESTS_ENVIRONMENT} ${top_builddir}/lib/gssapi/test_context"
 rkpty="${TESTS_ENVIRONMENT} ${top_builddir}/lib/roken/rkpty"
+test_set_kvno0="${TESTS_ENVIRONMENT} ${top_builddir}/lib/krb5/test_set_kvno0"
+test_alname="${TESTS_ENVIRONMENT} ${top_builddir}/lib/krb5/test_alname"
 
 # misc apps
 have_db="${top_builddir}/tests/db/have-db"

@@ -1,0 +1,26 @@
+[libdefaults]
+	default_realm = TEST.H5L.SE TEST2.H5L.SE TEST3.H5L.SE
+	no-addresses = TRUE
+
+[appdefaults]
+
+[realms]
+	TEST.H5L.SE = {
+	    auth_to_local_names = {
+		foo/mapped1 = foo
+		foo/mapped2 = bar
+		mapped1 = foo
+		mapped2 = bar
+	    }
+	    auth_to_local = NONE
+	}
+	TEST2.H5L.SE = {
+	    auth_to_local = DB:@objdir@/an2ln-db.txt
+	}
+	TEST3.H5L.SE = {
+	    auth_to_local = DEFAULT
+	}
+
+[logging]
+	default = 0-/FILE:@objdir@/messages.log
+

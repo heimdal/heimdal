@@ -170,10 +170,13 @@ init_generate (const char *filename, const char *base)
 	     "  int negative;\n"
 	     "} heim_integer;\n\n");
     fprintf (headerfile,
+	     "#ifndef __HEIM_OCTET_STRING__\n"
+	     "#define __HEIM_OCTET_STRING__\n"
 	     "typedef struct heim_octet_string {\n"
 	     "  size_t length;\n"
 	     "  void *data;\n"
-	     "} heim_octet_string;\n\n");
+	     "} heim_octet_string;\n"
+	     "#endif\n\n");
     fprintf (headerfile,
 	     "typedef char *heim_general_string;\n\n"
 	     );

@@ -213,5 +213,27 @@ heim_error_t heim_error_append(heim_error_t, heim_error_t);
 heim_object_t heim_json_create(const char *, heim_error_t *);
 heim_object_t heim_json_create_with_bytes(const void *, size_t, heim_error_t *);
 
+/*
+ *
+ */
+
+#ifndef __HEIM_OCTET_STRING__
+#define __HEIM_OCTET_STRING__
+typedef struct heim_octet_string {
+    size_t length;
+    void *data;
+} heim_octet_string;
+#endif
+
+typedef struct heim_data * heim_data_t;
+
+heim_data_t	heim_data_create(const void *, size_t);
+heim_tid_t	heim_data_get_type_id(void);
+const heim_octet_string *
+		heim_data_get_data(heim_data_t);
+const void *	heim_data_get_ptr(heim_data_t);
+size_t		heim_data_get_length(heim_data_t);
+
+
 
 #endif /* HEIM_BASE_H */

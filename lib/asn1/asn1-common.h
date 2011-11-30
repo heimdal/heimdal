@@ -13,10 +13,13 @@ typedef struct heim_integer {
     int negative;
 } heim_integer;
 
+#ifndef __HEIM_OCTET_STRING__
+#define __HEIM_OCTET_STRING__
 typedef struct heim_octet_string {
     size_t length;
     void *data;
 } heim_octet_string;
+#endif
 
 typedef char *heim_general_string;
 typedef char *heim_utf8_string;

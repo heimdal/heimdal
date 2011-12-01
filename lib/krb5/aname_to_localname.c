@@ -186,7 +186,7 @@ an2ln_plugin(krb5_context context, const char *rule, krb5_const_principal aname,
 	ret = KRB5_CONFIG_NOTENUFSPACE;
 
     heim_release(ctx.luser);
-    return 0;
+    return ret;
 }
 
 static void
@@ -287,12 +287,23 @@ an2ln_local_names(krb5_context context,
  */
 static krb5_error_code
 an2ln_default(krb5_context context,
-	      int root_princs_ok,
+	      char *rule,
 	      krb5_const_principal aname,
 	      size_t lnsize, char *lname)
 {
     krb5_error_code ret;
     const char *res;
+    int root_princs_ok;
+
+    if (strcmp(rule, "NONE") == 0)
+	return KRB5_NO_LOCALNAME;
+
+    if (strcmp(rule, "DEFAULT") == 0)
+	root_princs_ok = 0;
+    else if (strcmp(rule, "HEIMDAL_DEFAULT") == 0)
+	root_princs_ok = 1;
+    else
+	return KRB5_PLUGIN_NO_HANDLE;
 
     if (!princ_realm_is_default(context, aname))
 	return KRB5_PLUGIN_NO_HANDLE;
@@ -303,7 +314,7 @@ an2ln_default(krb5_context context,
 	 * component is the username.
 	 */
 	res = aname->name.name_string.val[0];
-    } else if (aname->name.name_string.len == 2 &&
+    } else if (root_princs_ok && aname->name.name_string.len == 2 &&
 	       strcmp (aname->name.name_string.val[1], "root") == 0) {
 	/*
 	 * Two-component principal names in default realm where the
@@ -372,41 +383,42 @@ krb5_aname_to_localname(krb5_context context,
 				    "auth_to_local", NULL);
     if (!rules) {
 	/* Heimdal's default rule */
-	ret = an2ln_default(context, 1, aname, lnsize, lname);
+	ret = an2ln_default(context, "HEIMDAL_DEFAULT", aname, lnsize, lname);
 	if (ret == KRB5_PLUGIN_NO_HANDLE)
 	    return KRB5_NO_LOCALNAME;
 	return ret;
     }
 
-    /* MIT rules */
+    /*
+     * MIT rules.
+     *
+     * Note that RULEs and DBs only have white-list functionality,
+     * thus RULEs and DBs that we don't understand we simply ignore.
+     *
+     * This means that plugins that implement black-lists are
+     * dangerous: if a black-list plugin isn't found, the black-list
+     * won't be enforced.  But black-lists are dangerous anyways.
+     */
     for (ret = KRB5_PLUGIN_NO_HANDLE, i = 0; rules[i]; i++) {
 	rule = rules[i];
-	if (!*rule || strcmp(rule, "NONE") == 0)
-	    break;
-	else if (strcmp(rule, "HEIMDAL_DEFAULT") == 0)
-	    ret = an2ln_default(context, 1, aname, lnsize, lname);
-	else if (strcmp(rule, "DEFAULT") == 0)
-	    ret = an2ln_default(context, 0, aname, lnsize, lname);
-	else
-	    /* Let the plugins handle DBs and RULEs and anything else*/
+
+	/* Try NONE, DEFAULT, and HEIMDAL_DEFAULT rules */
+	ret = an2ln_default(context, rule, aname, lnsize, lname);
+	if (ret == KRB5_PLUGIN_NO_HANDLE)
+	    /* Try DB, RULE, ... plugins */
 	    ret = an2ln_plugin(context, rule, aname, lnsize, lname);
 
-	if (ret == 0 && lnsize && lname[0])
-	    break;
-	/*
-	 * Note that RULEs and DBs only have white-list functionality,
-	 * thus RULEs and DBs that we don't understand we simply ignore.
-	 *
-	 * This means that plugins that implement black-lists are
-	 * dangerous: if a black-list plugin isn't found, the black-list
-	 * won't be enforced.  But black-lists are dangerous anyways.
-	 */
-	if (ret != KRB5_PLUGIN_NO_HANDLE)
+	if (ret == 0 && lnsize && !lname[0])
+	    continue; /* Success but no lname?!  lies! */
+	else if (ret != KRB5_PLUGIN_NO_HANDLE)
 	    break;
     }
 
-    if (ret == KRB5_PLUGIN_NO_HANDLE)
+    if (ret == KRB5_PLUGIN_NO_HANDLE) {
+	if (lnsize)
+	    lname[0] = '\0';
 	ret = KRB5_NO_LOCALNAME;
+    }
 
     krb5_config_free_strings(rules);
     return ret;

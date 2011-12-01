@@ -43,6 +43,9 @@ test_alname="${test_alname} --simple"
 rm -f localname
 
 check_localname() {
+    if test "$2" -ne 0; then
+	exec 2> /dev/null
+    fi
     ${test_alname} "$1" > localname
     status=$?
     if test $status -ne "$2"; then
@@ -98,6 +101,15 @@ check_localname foo/mapped1@${R4} 1
 check_localname bar/mapped1@${R4} 1
 check_localname foo/notmapped1@${R4} 1
 check_localname bar/notmapped1@${R4} 1
+
+echo "Checking for overflow"
+test_alname="${test_alname} --simple --lname-size=1"
+check_localname mapped1@${R} 3
+check_localname mapped2@${R} 3
+check_localname mapped1@${R2} 3
+check_localname mapped2@${R2} 3
+check_localname mapped1@${R3} 3
+check_localname mapped2@${R3} 3
 
 rm -f messages.log
 

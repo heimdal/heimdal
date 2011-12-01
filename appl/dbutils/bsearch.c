@@ -66,29 +66,9 @@ struct getargs args[] = {
 static int num_args = sizeof(args) / sizeof(args[0]);
 
 static void
-usage(const char *progname, int status)
+usage(int status)
 {
-    arg_printusage(args, num_args, progname, "\n"
-"\tThis program does a binary search of the given file for the\n"
-"\tgiven keys.  Two binary search algorithms are implemented\n"
-"\twhole-file and block-wise.\n\n"
-"\tIf keys are not given as arguments keys are read from stdin.\n\n"
-"\tExit status will be 1 for errors, 2 if any keys are not found,\n"
-"\tand 0 if all keys are found.\n\n"
-"\tOptions:\n"
-"\t\t-K \tPrint keys\n"
-"\t\t-V \tDon't print values\n"
-"\t\t-b size\tUse block-wise search with give blocksize\n"
-"\t\t-m size\tRead DB in if its size is less than given\n"
-"\t\t-v \tVerbose (includes count of reads and comparisons)\n"
-"\t\t-h \tPrint usage message and exit\n"
-"\tIf blocksize is not given, empty, or zero then the\n"
-"\tfilesystem's block size (st_blksize) will be used.\n"
-"\tBlock sizes should be powers of two, and larger than 256.\n"
-"\tIf the max file size is not given or empty then the max\n"
-"\tfile size for non-block-wise search will be 1MB.\n"
-"\tKeys from stdin must not be longer than 1023 bytes.\n\n"
-	    );
+    arg_printusage(args, num_args, NULL, "file [key ...]");
     exit(status);
 }
 
@@ -99,7 +79,6 @@ int
 main(int argc, char **argv)
 {
     char keybuf[1024];
-    char *progname = argv[0];
     char *fname;
     char *key = keybuf;
     char *value;
@@ -116,8 +95,9 @@ main(int argc, char **argv)
     int blockwise;
     int ret = 0;
 
+    setprogname(argv[0]);
     if (getarg(args, num_args, argc, argv, &optidx))
-	usage(progname, 1);
+	usage(1);
 
     if (version_flag) {
 	print_version(NULL);
@@ -125,7 +105,7 @@ main(int argc, char **argv)
     }
 
     if (help_flag)
-	usage(progname, 0);
+	usage(0);
 
     if (block_size_int != 0 && block_size_int < 512) {
 	fprintf(stderr, "Invalid block size: too small\n");
@@ -147,14 +127,14 @@ main(int argc, char **argv)
 	block_size = block_size_int;
     }
     if (max_size_int < 0)
-	usage(progname, 1);
+	usage(1);
     max_size = max_size_int;
 
     argc -= optind;
     argv += optind;
 
     if (argc == 0)
-	usage(progname, 1);
+	usage(1);
 
     fname = argv[0];
     argc--;

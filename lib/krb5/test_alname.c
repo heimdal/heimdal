@@ -34,13 +34,33 @@
 #include <getarg.h>
 #include <err.h>
 
+char localname[1024];
+static size_t lname_size = sizeof (localname);
+static int lname_size_arg = 0;
+static int simple_flag = 0;
+static int verbose_flag = 0;
+static int version_flag = 0;
+static int help_flag	= 0;
+
+static struct getargs args[] = {
+    {"lname-size",	0,	arg_integer,	&lname_size_arg,
+     "set localname size (0 means use default, must be 0..1023)", "integer" },
+    {"simple",	0,	arg_flag,	&simple_flag, /* Used for scripting */
+     "map the given principal and print the resulting localname", NULL },
+    {"verbose",	0,	arg_flag,	&verbose_flag,
+     "print the actual principal name as well as the localname", NULL },
+    {"version",	0,	arg_flag,	&version_flag,
+     "print version", NULL },
+    {"help",	0,	arg_flag,	&help_flag,
+     NULL, NULL }
+};
+
 static void
 test_alname(krb5_context context, krb5_const_realm realm,
 	    const char *user, const char *inst,
 	    const char *localuser, int ok)
 {
     krb5_principal p;
-    char localname[1024];
     krb5_error_code ret;
     char *princ;
 
@@ -52,7 +72,7 @@ test_alname(krb5_context context, krb5_const_realm realm,
     if (ret)
 	krb5_err(context, 1, ret, "krb5_unparse_name");
 
-    ret = krb5_aname_to_localname(context, p, sizeof(localname), localname);
+    ret = krb5_aname_to_localname(context, p, lname_size, localname);
     krb5_free_principal(context, p);
     if (ret) {
 	if (!ok) {
@@ -75,22 +95,6 @@ test_alname(krb5_context context, krb5_const_realm realm,
     }
 
 }
-
-static int simple_flag = 0;
-static int verbose_flag = 0;
-static int version_flag = 0;
-static int help_flag	= 0;
-
-static struct getargs args[] = {
-    {"simple",	0,	arg_flag,	&simple_flag, /* Used for scripting */
-     "map the given principal and print the resulting localname", NULL },
-    {"verbose",	0,	arg_flag,	&verbose_flag,
-     "print the actual principal name as well as the localname", NULL },
-    {"version",	0,	arg_flag,	&version_flag,
-     "print version", NULL },
-    {"help",	0,	arg_flag,	&help_flag,
-     NULL, NULL }
-};
 
 static void
 usage (int ret)
@@ -133,9 +137,9 @@ main(int argc, char **argv)
 
     if (simple_flag) {
 	krb5_principal princ;
-	char localname[1024];
 	char *unparsed;
 	krb5_error_code ret;
+	int status = 0;
 
 	/* Map then print the result and exit */
 	if (argc != 1)
@@ -149,23 +153,40 @@ main(int argc, char **argv)
 	if (ret)
 	    krb5_err(context, 1, ret, "krb5_unparse_name");
 
-	ret = krb5_aname_to_localname(context, princ, sizeof(localname),
-				      localname);
+	if (lname_size_arg > 0 && lname_size_arg < 1024)
+	    lname_size = lname_size_arg;
+	else if (lname_size_arg != 0)
+	    errx(1, "local name size must be between 0 and 1023 (inclusive)");
+
+	ret = krb5_aname_to_localname(context, princ, lname_size, localname);
 	if (ret == KRB5_NO_LOCALNAME) {
 	    if (verbose_flag)
 		fprintf(stderr, "No mapping obtained for %s\n", unparsed);
 	    exit(1);
 	}
-	if (ret == KRB5_PLUGIN_NO_HANDLE) {
+	switch (ret) {
+	case KRB5_PLUGIN_NO_HANDLE:
 	    fprintf(stderr, "Error: KRB5_PLUGIN_NO_HANDLE leaked!\n");
-	    exit(2);
+	    status = 2;
+	    break;
+	case KRB5_CONFIG_NOTENUFSPACE:
+	    fprintf(stderr, "Error: lname-size (%lu) too small\n",
+		    (long unsigned)lname_size);
+	    status = 3;
+	    break;
+	case 0:
+	    if (verbose_flag)
+		printf("%s ", unparsed);
+	    printf("%s\n", localname);
+	    break;
+	default:
+	    krb5_err(context, 4, ret, "krb5_aname_to_localname");
+	    break;
 	}
-	if (verbose_flag)
-	    printf("%s ", unparsed);
 	free(unparsed);
 	krb5_free_principal(context, princ);
-	printf("%s\n", localname);
-	exit(0);
+	krb5_free_context(context);
+	exit(status);
     }
 
     if (argc != 1)

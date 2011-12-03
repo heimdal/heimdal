@@ -15,7 +15,7 @@
 	    auth_to_local = NONE
 	}
 	TEST2.H5L.SE = {
-	    auth_to_local = DB:@objdir@/an2ln-db.txt
+	    auth_to_local = DB:@srcdir@/an2ln-db.txt
 	}
 	TEST3.H5L.SE = {
 	    auth_to_local = DEFAULT

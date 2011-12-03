@@ -544,7 +544,7 @@ struct iter_ctx {
 };
 
 static void
-search_modules(void *ctx, heim_object_t key, heim_object_t value)
+search_modules(heim_object_t key, heim_object_t value, void *ctx)
 {
     struct iter_ctx *s = ctx;
     struct plugin2 *p = value;

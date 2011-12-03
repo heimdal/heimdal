@@ -49,7 +49,7 @@ check_localname() {
     ${test_alname} "$1" > localname
     status=$?
     if test $status -ne "$2"; then
-	echo "Unexpected exit code from test_alname: $status"
+	echo "Unexpected exit code from test_alname $1: $status"
 	exit 1
     fi
     if test $status -ne 0; then

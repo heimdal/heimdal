@@ -125,7 +125,7 @@ init_ccapi(krb5_context context)
 #ifdef KRB5_USE_PATH_TOKENS
     {
       char * explib = NULL;
-      if (_krb5_expand_path_tokens(context, lib, &explib) == 0) {
+      if (_krb5_expand_path_tokens(context, lib, NULL, &explib) == 0) {
 	cc_handle = dlopen(explib, RTLD_LAZY|RTLD_LOCAL);
 	free(explib);
       }

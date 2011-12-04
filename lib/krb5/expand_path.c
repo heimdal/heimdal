@@ -310,6 +310,22 @@ _expand_userid(krb5_context context, PTYPE param, const char *postfix, char **st
 #endif /* _WIN32 */
 
 /**
+ * Expand a %{luser} token
+ */
+
+static int
+_expand_luser(krb5_context context, const char *luser, char **ret)
+{
+    *ret = strdup(luser);
+    if (*ret == NULL) {
+	if (context)
+	    krb5_set_error_message(context, ENOMEM, "Out of memory");
+	return ENOMEM;
+    }
+    return 0;
+}
+
+/**
  * Expand a %{null} token
  *
  * The expansion of a %{null} token is always the empty string.
@@ -374,6 +390,7 @@ static int
 _expand_token(krb5_context context,
 	      const char *token,
 	      const char *token_end,
+	      const char *luser,
 	      char **ret)
 {
     size_t i;
@@ -387,6 +404,9 @@ _expand_token(krb5_context context,
 	return EINVAL;
     }
 
+    if (strncmp(token+2, "luser", (token_end - token) - 2) == 0)
+	return _expand_luser(context, luser, ret);
+
     for (i = 0; i < sizeof(tokens)/sizeof(tokens[0]); i++) {
 	if (!strncmp(token+2, tokens[i].tok, (token_end - token) - 2))
 	    return tokens[i].exp_func(context, tokens[i].param,
@@ -398,9 +418,23 @@ _expand_token(krb5_context context,
     return EINVAL;
 }
 
+/**
+ * Internal function to expand tokens in paths.
+ *
+ * Inputs:
+ *
+ * @context   A krb5_context
+ * @path_in   The path to expand tokens from
+ * @luser     A local username (optional, for krb5_kuserok())
+ * 
+ * Outputs:
+ *
+ * @ppath_out Path with expanded tokens (caller must free() this)
+ */
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 _krb5_expand_path_tokens(krb5_context context,
 			 const char *path_in,
+			 const char *luser,
 			 char **ppath_out)
 {
     char *tok_begin, *tok_end, *append;
@@ -439,7 +473,7 @@ _krb5_expand_path_tokens(krb5_context context,
 		return EINVAL;
 	    }
 
-	    if (_expand_token(context, tok_begin, tok_end, &append)) {
+	    if (_expand_token(context, tok_begin, tok_end, luser, &append)) {
 		if (*ppath_out)
 		    free(*ppath_out);
 		*ppath_out = NULL;

@@ -2220,7 +2220,7 @@ _krb5_parse_moduli(krb5_context context, const char *file,
     {
         char * exp_file;
 
-        if (_krb5_expand_path_tokens(context, file, &exp_file) == 0) {
+        if (_krb5_expand_path_tokens(context, file, NULL, &exp_file) == 0) {
             f = fopen(exp_file, "r");
             krb5_xfree(exp_file);
         } else {

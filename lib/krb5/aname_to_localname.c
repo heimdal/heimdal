@@ -330,7 +330,7 @@ an2ln_default(krb5_context context,
 	if (ret)
 	    return ret;
 
-	userok = krb5_kuserok(context, rootprinc, res);
+	userok = _krb5_kuserok(context, rootprinc, res, FALSE);
 	krb5_free_principal(context, rootprinc);
 	if (!userok)
 	    return KRB5_NO_LOCALNAME;

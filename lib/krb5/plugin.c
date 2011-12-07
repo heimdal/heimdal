@@ -405,6 +405,16 @@ plug_dealloc(void *ptr)
 }
 
 
+/**
+ * Load plugins (new system) for the given module @name (typicall
+ * "krb5") from the given directory @paths.
+ *
+ * Inputs:
+ *
+ * @context A krb5_context
+ * @name    Name of plugin module (typically "krb5")
+ * @paths   Array of directory paths where to look
+ */
 void
 _krb5_load_plugins(krb5_context context, const char *name, const char **paths)
 {
@@ -498,6 +508,9 @@ _krb5_load_plugins(krb5_context context, const char *name, const char **paths)
 #endif /* HAVE_DLOPEN */
 }
 
+/**
+ * Unload plugins (new system)
+ */
 void
 _krb5_unload_plugins(krb5_context context, const char *name)
 {
@@ -587,6 +600,35 @@ eval_results(heim_object_t value, void *ctx)
     s->ret = s->func(s->context, pl->dataptr, pl->ctx, s->userctx);
 }
 
+/**
+ * Run plugins for the given @module (e.g., "krb5") and @name (e.g.,
+ * "kuserok").  Specifically, the @func is invoked once per-plugin with
+ * four arguments: the @context, the plugin symbol value (a pointer to a
+ * struct whose first three fields are the same as struct common_plugin_method),
+ * a context value produced by the plugin's init method, and @userctx.
+ *
+ * @func should unpack arguments for a plugin function and invoke it
+ * with arguments taken from @userctx.  @func should save plugin
+ * outputs, if any, in @userctx.
+ *
+ * All loaded and registered plugins are invoked via @func until @func
+ * returns something other than KRB5_PLUGIN_NO_HANDLE.  Plugins that
+ * have nothing to do for the given arguments should return
+ * KRB5_PLUGIN_NO_HANDLE.
+ *
+ * Inputs:
+ *
+ * @context     A krb5_context
+ * @module      Name of module (typically "krb5")
+ * @name        Name of pluggable interface (e.g., "kuserok")
+ * @min_version Lowest acceptable plugin minor version number
+ * @flags       Flags (none defined at this time)
+ * @userctx     Callback data for the callback function @func
+ * @func        A callback function, invoked once per-plugin
+ *
+ * Outputs: None, other than the return value and such outputs as are
+ *          gathered by @func.
+ */
 krb5_error_code
 _krb5_plugin_run_f(krb5_context context,
 		   const char *module,
@@ -598,6 +640,8 @@ _krb5_plugin_run_f(krb5_context context,
 {
     heim_string_t m = heim_string_create(module);
     heim_dict_t dict;
+    void *plug_ctx;
+    struct common_plugin_method *cpm;
     struct iter_ctx s;
     struct krb5_plugin *registered_plugins = NULL;
     struct krb5_plugin *p;
@@ -627,15 +671,32 @@ _krb5_plugin_run_f(krb5_context context,
     /* We don't need to hold plugin_mutex during plugin invocation */
     HEIMDAL_MUTEX_unlock(&plugin_mutex);
 
-    /* Invoke registered plugins */
+    /* Invoke registered plugins (old system) */
     for (p = registered_plugins; p; p = p->next) {
+	/*
+	 * XXX This is the wrong way to handle registered plugins, as we
+	 * call init/fini on each invocation!  We do this because we
+	 * have nowhere in the struct plugin registered list to store
+	 * the context allocated by the plugin's init function.  (But at
+	 * least we do call init/fini!)
+	 *
+	 * What we should do is adapt the old plugin system to the new
+	 * one and change how we register plugins so that we use the new
+	 * struct plug to keep track of their context structures, that
+	 * way we can init once, invoke many times, then fini.
+	 */
+	cpm = (struct common_plugin_method *)p->symbol;
+	s.ret = cpm->init(context, &plug_ctx);
+	if (s.ret)
+	    continue;
+	s.ret = s.func(s.context, p->symbol, plug_ctx, s.userctx);
+	cpm->fini(plug_ctx);
 	if (s.ret != KRB5_PLUGIN_NO_HANDLE)
 	    break;
-	s.ret = s.func(s.context, p->symbol, NULL, s.userctx);
     }
     _krb5_plugin_free(registered_plugins);
 
-    /* Invoke loaded plugins */
+    /* Invoke loaded plugins (new system) */
     if (s.ret != KRB5_PLUGIN_NO_HANDLE)
 	heim_array_iterate_f(s.result, &s, eval_results);
 

@@ -1,9 +1,11 @@
 include $(top_srcdir)/Makefile.am.common
 
 noinst_DATA = \
+	an2ln-db.txt \
 	kdc-tester4.json \
 	krb5.conf \
-	krb5-an2ln.conf \
+	krb5-authz.conf \
+	krb5-authz2.conf \
 	krb5-canon.conf \
 	krb5-canon2.conf \
 	krb5-hdb-mitdb.conf \
@@ -15,7 +17,7 @@ noinst_DATA = \
 check_SCRIPTS = $(SCRIPT_TESTS) 
 
 SCRIPT_TESTS = \
-	check-an2ln \
+	check-authz \
 	check-canon \
 	check-cc \
 	check-delegation \
@@ -59,10 +61,10 @@ do_subst = sed $(do_dlopen) \
 
 LDADD = ../../lib/krb5/libkrb5.la $(LIB_roken)
 
-check-an2ln: check-an2ln.in Makefile krb5-an2ln.conf
-	$(do_subst) < $(srcdir)/check-an2ln.in > check-an2ln.tmp
-	chmod +x check-an2ln.tmp
-	mv check-an2ln.tmp check-an2ln
+check-authz: check-authz.in Makefile krb5-authz.conf krb5-authz2.conf
+	$(do_subst) < $(srcdir)/check-authz.in > check-authz.tmp
+	chmod +x check-authz.tmp
+	mv check-authz.tmp check-authz
 
 check-canon: check-canon.in Makefile krb5-canon.conf krb5-canon2.conf
 	$(do_subst) < $(srcdir)/check-canon.in > check-canon.tmp
@@ -160,9 +162,13 @@ krb5.conf: krb5.conf.in Makefile
 	   -e 's,[@]kdc[@],,g' < $(srcdir)/krb5.conf.in > krb5.conf.tmp
 	mv krb5.conf.tmp krb5.conf
 
-krb5-an2ln.conf: krb5-an2ln.conf.in Makefile
-	$(do_subst) < $(srcdir)/krb5-an2ln.conf.in > krb5-an2ln.conf.tmp
-	mv krb5-an2ln.conf.tmp krb5-an2ln.conf
+krb5-authz.conf: krb5-authz.conf.in Makefile
+	$(do_subst) < $(srcdir)/krb5-authz.conf.in > krb5-authz.conf.tmp
+	mv krb5-authz.conf.tmp krb5-authz.conf
+
+krb5-authz2.conf: krb5-authz2.conf.in Makefile
+	$(do_subst) < $(srcdir)/krb5-authz2.conf.in > krb5-authz2.conf.tmp
+	mv krb5-authz2.conf.tmp krb5-authz2.conf
 
 krb5-canon.conf: krb5-canon.conf.in Makefile
 	$(do_subst) \
@@ -222,7 +228,8 @@ CLEANFILES= \
 	foopassword \
 	kdc-tester4.json \
 	krb5.conf \
-	krb5-an2ln.conf \
+	krb5-authz.conf \
+	krb5-authz2.conf \
 	krb5-canon.conf \
 	krb5-canon2.conf \
 	krb5-weak.conf \
@@ -259,7 +266,7 @@ CLEANFILES= \
 
 EXTRA_DIST = \
 	NTMakefile \
-	check-an2ln.in \
+	check-authz.in \
 	check-canon.in \
 	check-cc.in \
 	check-delegation.in \
@@ -285,7 +292,8 @@ EXTRA_DIST = \
 	kdc-tester4.json.in \
 	krb5-pkinit.conf.in \
 	krb5.conf.in \
-	krb5-an2ln.conf.in \
+	krb5-authz.conf.in \
+	krb5-authz2.conf.in \
 	krb5-canon.conf.in \
 	krb5-canon2.conf.in \
 	krb5-hdb-mitdb.conf.in \

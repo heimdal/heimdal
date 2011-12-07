@@ -100,5 +100,8 @@ main(int argc, char **argv)
 
     printf("%s is %sallowed to login as %s\n", p, ret ? "" : "NOT ", argv[1]);
 
-    return 0;
+    if (ret)
+	return 0;
+
+    return 1;
 }

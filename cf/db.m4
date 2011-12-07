@@ -22,6 +22,11 @@ AC_ARG_ENABLE(ndbm-db,
                                       [if you don't want ndbm db]),[
 ])
 
+AC_ARG_ENABLE(mdb-db,
+                       AS_HELP_STRING([--disable-mdb-db],
+                                      [if you don't want OpenLDAP libmdb db]),[
+])
+
 have_ndbm=no
 db_type=unknown
 
@@ -120,6 +125,14 @@ dnl test for ndbm compatability
 
 ]) # fi berkeley db
 
+if test "$enable_mdb_db" != "no"; then
+  if test "$db_type" = "unknown"; then
+    AC_CHECK_HEADER(mdb.h, [
+		AC_CHECK_LIB(mdb, mdb_env_create, db_type=mdb; DBLIB="-lmdb"
+		AC_DEFINE(HAVE_MDB, 1, [define if you have the OpenLDAP mdb library]))])
+  fi
+fi
+
 if test "$enable_ndbm_db" != "no"; then
 
   if test "$db_type" = "unknown" -o "$ac_cv_func_dbm_firstkey" = ""; then
@@ -215,6 +228,7 @@ fi
 
 AM_CONDITIONAL(HAVE_DB1, test "$db_type" = db1)dnl
 AM_CONDITIONAL(HAVE_DB3, test "$db_type" = db3)dnl
+AM_CONDITIONAL(HAVE_MDB, test "$db_type" = mdb)dnl
 AM_CONDITIONAL(HAVE_NDBM, test "$db_type" = ndbm)dnl
 AM_CONDITIONAL(HAVE_DBHEADER, test "$dbheader" != "")dnl
 

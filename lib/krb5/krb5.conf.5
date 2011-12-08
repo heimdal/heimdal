@@ -260,6 +260,37 @@ If set to "ignore", the framework will ignore any the server input to
 .Xr krb5_rd_req 3,
 this is very useful when the GSS-API server input the
 wrong server name into the gss_accept_sec_context call.
+.It Li k5login_directory = Va directory
+Alternative location for user .k5login files. Tokens in the form of
+%{luser} are expanded to the name of the user whose .k5login file is
+%needed.
+.It Li k5login_authoritative = Va boolean
+If true then if a principal is not found in k5login files then
+krb5_userok() will not fallback on principal to username mapping.
+.It Li kuserok = Va rule ...
+Specifies krb5_kuserok(3) behavior.  If multiple values are given, then
+krb5_kuserok(3) will try them in order until one succeeds or all fail.
+Rules are implemented by plugins, with three built-in plugins described
+below.  Default: USER-K5LOGIN SIMPLE.
+.It Li kuserok = Va SIMPLE
+If set then krb5_userok(3) will use principal to username mapping (see
+auth_to_local below).  If the principal maps to the requested username
+then access is allowed.
+.It Li kuserok = Va SYSTEM-K5LOGIN[:directory]
+If set then krb5_userok(3) will use k5login files named after the
+.Va luser
+argument to krb5_kuserok(3) in the given directory or in
+/etc/k5login.d/.  If a directory is given then tokens will be expanded;
+the %{luser} token will be replaced with the
+.Va luser
+argument to krb5_kuserok(3). K5login files are text files, with each
+line containing just a principal name; principals apearing in a user's
+k5login file are permitted access to the user's account. Note: this rule
+performs no ownership nor permissions checks on k5login files.
+.It Li kuserok = Va USER-K5LOGIN
+If set then krb5_userok(3) will use ~luser/.k5login and
+~luser/.k5login.d/*. User k5login files and directories must be owned
+by the user and must not have world nor group write permissions.
 .It Li aname2lname-text-db = Va filename
 The named file must be a sorted (in increasing order) text file where
 every line consists of an unparsed principal name optionally followed by

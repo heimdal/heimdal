@@ -189,7 +189,7 @@ allocate_ccache (krb5_context context,
 #ifdef KRB5_USE_PATH_TOKENS
     char * exp_residual = NULL;
 
-    ret = _krb5_expand_path_tokens(context, residual, NULL, &exp_residual);
+    ret = _krb5_expand_path_tokens(context, residual, &exp_residual);
     if (ret)
 	return ret;
 
@@ -410,7 +410,7 @@ krb5_cc_get_ops(krb5_context context, krb5_ccache id)
 krb5_error_code
 _krb5_expand_default_cc_name(krb5_context context, const char *str, char **res)
 {
-    return _krb5_expand_path_tokens(context, str, NULL, res);
+    return _krb5_expand_path_tokens(context, str, res);
 }
 
 /*
@@ -559,7 +559,7 @@ krb5_cc_set_default_name(krb5_context context, const char *name)
 	return ENOMEM;
     }
 
-    ret = _krb5_expand_path_tokens(context, p, NULL, &exp_p);
+    ret = _krb5_expand_path_tokens(context, p, &exp_p);
     free(p);
     if (ret)
 	return ret;

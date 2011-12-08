@@ -241,7 +241,7 @@ load_plugins(krb5_context context)
         char * dir = *di;
 
 #ifdef KRB5_USE_PATH_TOKENS
-        if (_krb5_expand_path_tokens(context, *di, NULL, &dir))
+        if (_krb5_expand_path_tokens(context, *di, &dir))
             goto next_dir;
 #endif
 

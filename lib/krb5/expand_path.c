@@ -32,6 +32,8 @@
 
 #include "krb5_locl.h"
 
+#include <stdarg.h>
+
 typedef int PTYPE;
 
 #ifdef _WIN32
@@ -310,13 +312,13 @@ _expand_userid(krb5_context context, PTYPE param, const char *postfix, char **st
 #endif /* _WIN32 */
 
 /**
- * Expand a %{luser} token
+ * Expand an extra token
  */
 
 static int
-_expand_luser(krb5_context context, const char *luser, char **ret)
+_expand_extra_token(krb5_context context, const char *value, char **ret)
 {
-    *ret = strdup(luser);
+    *ret = strdup(value);
     if (*ret == NULL) {
 	if (context)
 	    krb5_set_error_message(context, ENOMEM, "Out of memory");
@@ -390,10 +392,11 @@ static int
 _expand_token(krb5_context context,
 	      const char *token,
 	      const char *token_end,
-	      const char *luser,
+	      char **extra_tokens,
 	      char **ret)
 {
     size_t i;
+    char **p;
 
     *ret = NULL;
 
@@ -404,8 +407,10 @@ _expand_token(krb5_context context,
 	return EINVAL;
     }
 
-    if (strncmp(token+2, "luser", (token_end - token) - 2) == 0)
-	return _expand_luser(context, luser, ret);
+    for (p = extra_tokens; p && p[0]; p += 2) {
+	if (strncmp(token+2, p[0], (token_end - token) - 2) == 0)
+	    return _expand_extra_token(context, p[1], ret);
+    }
 
     for (i = 0; i < sizeof(tokens)/sizeof(tokens[0]); i++) {
 	if (!strncmp(token+2, tokens[i].tok, (token_end - token) - 2))
@@ -425,7 +430,6 @@ _expand_token(krb5_context context,
  *
  * @context   A krb5_context
  * @path_in   The path to expand tokens from
- * @luser     A local username (optional, for krb5_kuserok())
  * 
  * Outputs:
  *
@@ -434,12 +438,48 @@ _expand_token(krb5_context context,
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 _krb5_expand_path_tokens(krb5_context context,
 			 const char *path_in,
-			 const char *luser,
 			 char **ppath_out)
 {
+    return _krb5_expand_path_tokensv(context, path_in, ppath_out, NULL);
+}
+
+static void
+free_extra_tokens(char **extra_tokens)
+{
+    char **p;
+
+    for (p = extra_tokens; p && *p; p++)
+	free(*p);
+    free(extra_tokens);
+}
+
+/**
+ * Internal function to expand tokens in paths.
+ *
+ * Inputs:
+ *
+ * @context   A krb5_context
+ * @path_in   The path to expand tokens from
+ * @token     Variable number of pairs of strings, the first of each
+ *            being a token (e.g., "luser") and the second a string to
+ *            replace it with.  The list is terminated by a NULL.
+ * 
+ * Outputs:
+ *
+ * @ppath_out Path with expanded tokens (caller must free() this)
+ */
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
+_krb5_expand_path_tokensv(krb5_context context,
+			  const char *path_in,
+			  char **ppath_out, ...)
+{
     char *tok_begin, *tok_end, *append;
+    char **extra_tokens = NULL;
     const char *path_left;
+    const char *s;
+    size_t nextra_tokens = 0;
     size_t len = 0;
+    va_list ap;
 
     if (path_in == NULL || *path_in == '\0') {
         *ppath_out = strdup("");
@@ -447,6 +487,42 @@ _krb5_expand_path_tokens(krb5_context context,
     }
 
     *ppath_out = NULL;
+
+    va_start(ap, ppath_out);
+    while ((s = va_arg(ap, const char *))) {
+	nextra_tokens++;
+	s = va_arg(ap, const char *);
+    }
+    va_end(ap);
+
+    /* Get extra tokens */
+    if (nextra_tokens) {
+	size_t i;
+
+	extra_tokens = calloc(nextra_tokens + 2, sizeof (*extra_tokens));
+	if (extra_tokens == NULL)
+	    return context ? krb5_enomem(context) : ENOMEM;
+	va_start(ap, ppath_out);
+	for (i = 0; i < nextra_tokens; i++) {
+	    s = va_arg(ap, const char *);
+	    if (s == NULL)
+		break;
+	    extra_tokens[i] = strdup(s);
+	    if (extra_tokens[i++] == NULL) {
+		free_extra_tokens(extra_tokens);
+		return context ? krb5_enomem(context) : ENOMEM;
+	    }
+	    s = va_arg(ap, const char *);
+	    if (s == NULL)
+		break;
+	    extra_tokens[i] = strdup(s);
+	    if (extra_tokens[i] == NULL) {
+		free_extra_tokens(extra_tokens);
+		return context ? krb5_enomem(context) : ENOMEM;
+	    }
+	}
+	va_end(ap);
+    }
 
     for (path_left = path_in; path_left && *path_left; ) {
 
@@ -465,6 +541,7 @@ _krb5_expand_path_tokens(krb5_context context,
 
 	    tok_end = strchr(tok_begin, '}');
 	    if (tok_end == NULL) {
+		free_extra_tokens(extra_tokens);
 		if (*ppath_out)
 		    free(*ppath_out);
 		*ppath_out = NULL;
@@ -473,7 +550,9 @@ _krb5_expand_path_tokens(krb5_context context,
 		return EINVAL;
 	    }
 
-	    if (_expand_token(context, tok_begin, tok_end, luser, &append)) {
+	    if (_expand_token(context, tok_begin, tok_end, extra_tokens,
+			      &append)) {
+		free_extra_tokens(extra_tokens);
 		if (*ppath_out)
 		    free(*ppath_out);
 		*ppath_out = NULL;
@@ -490,6 +569,7 @@ _krb5_expand_path_tokens(krb5_context context,
 
 	if (append == NULL) {
 
+	    free_extra_tokens(extra_tokens);
 	    if (*ppath_out)
 		free(*ppath_out);
 	    *ppath_out = NULL;
@@ -504,6 +584,7 @@ _krb5_expand_path_tokens(krb5_context context,
 	    char * new_str = realloc(*ppath_out, len + append_len + 1);
 
 	    if (new_str == NULL) {
+		free_extra_tokens(extra_tokens);
 		free(append);
 		if (*ppath_out)
 		    free(*ppath_out);
@@ -530,5 +611,6 @@ _krb5_expand_path_tokens(krb5_context context,
     }
 #endif
 
+    free_extra_tokens(extra_tokens);
     return 0;
 }

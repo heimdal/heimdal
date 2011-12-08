@@ -465,7 +465,8 @@ kuserok_sys_k5login_plug_f(void *plug_ctx, krb5_context context,
     else
 	profile_dir++;
 
-    ret = _krb5_expand_path_tokens(context, profile_dir, luser, &path);
+    ret = _krb5_expand_path_tokensv(context, profile_dir, &path,
+				    "luser", luser, NULL);
     if (ret)
 	return ret;
 
@@ -495,6 +496,7 @@ kuserok_user_k5login_plug_f(void *plug_ctx, krb5_context context,
     return KRB5_PLUGIN_NO_HANDLE;
 #else
     char *path;
+    char *path_exp;
     const char *profile_dir = NULL;
     krb5_error_code ret;
     krb5_boolean found_file = FALSE;
@@ -524,6 +526,14 @@ kuserok_user_k5login_plug_f(void *plug_ctx, krb5_context context,
 
     if (asprintf(&path, "%s/.k5login.d", profile_dir) == -1)
 	return ENOMEM;
+
+    ret = _krb5_expand_path_tokensv(context, path, &path_exp,
+				    "luser", luser, NULL);
+    free(path);
+    if (ret)
+	return ret;
+    path = path_exp;
+
     /* check user's ~/.k5login */
     path[strlen(path) - strlen(".d")] = '\0';
     ret = check_one_file(context, path, luser, FALSE, principal, result);

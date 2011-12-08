@@ -483,7 +483,7 @@ krb5_config_parse_file_multi (krb5_context context,
 #ifdef KRB5_USE_PATH_TOKENS
 	char * exp_fname = NULL;
 
-	ret = _krb5_expand_path_tokens(context, fname, NULL, &exp_fname);
+	ret = _krb5_expand_path_tokens(context, fname, &exp_fname);
 	if (ret) {
 	    if (newfname)
 		free(newfname);

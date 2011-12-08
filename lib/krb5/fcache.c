@@ -328,7 +328,7 @@ fcc_gen_new(krb5_context context, krb5_ccache *id)
 			       N_("malloc: out of memory", ""));
 	return KRB5_CC_NOMEM;
     }
-    ret = _krb5_expand_path_tokens(context, file, NULL, &exp_file);
+    ret = _krb5_expand_path_tokens(context, file, &exp_file);
     free(file);
     if (ret)
 	return ret;

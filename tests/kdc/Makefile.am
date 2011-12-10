@@ -298,6 +298,7 @@ EXTRA_DIST = \
 	krb5-canon2.conf.in \
 	krb5-hdb-mitdb.conf.in \
 	krb5.conf.keys.in \
+	k5login/foo \
 	ntlm-user-file.txt \
 	leaks-kill.sh \
 	pki-mapping \

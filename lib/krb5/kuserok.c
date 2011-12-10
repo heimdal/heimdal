@@ -552,6 +552,10 @@ kuserok_user_k5login_plug_f(void *plug_ctx, krb5_context context,
 
     profile_dir = k5login_dir;
     if (profile_dir == NULL) {
+	/* Don't deadlock with gssd or anything of the sort */
+	if (!_krb5_homedir_access(context))
+	    return KRB5_PLUGIN_NO_HANDLE;
+
 #ifdef POSIX_GETPWNAM_R
 	if (getpwnam_r(luser, &pw, pwbuf, sizeof(pwbuf), &pwd) != 0) {
 	    krb5_set_error_message(context, errno, "User unknown (getpwnam_r())");
@@ -560,6 +564,7 @@ kuserok_user_k5login_plug_f(void *plug_ctx, krb5_context context,
 #else
 	pwd = getpwnam (luser);
 #endif
+
 	if (pwd == NULL) {
 	    krb5_set_error_message(context, errno, "User unknown (getpwnam())");
 	    return KRB5_PLUGIN_NO_HANDLE;

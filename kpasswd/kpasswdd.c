@@ -123,21 +123,26 @@ make_result (krb5_data *data,
 	     uint16_t result_code,
 	     const char *expl)
 {
-    char *str;
-    krb5_data_zero (data);
+    krb5_error_code ret;
+    krb5_storage *sp;
 
-    data->length = asprintf (&str,
-			     "%c%c%s",
-			     (result_code >> 8) & 0xFF,
-			     result_code & 0xFF,
-			     expl);
+    sp = krb5_storage_emem();
+    if (sp == NULL) goto out;
+    ret = krb5_store_uint32(sp, result_code);
+    if (ret) goto out;
+    ret = krb5_store_stringz(sp, expl);
+    if (ret) goto out;
+    ret = krb5_storage_to_data(sp, data);
+    if (ret) goto out;
+    krb5_storage_free(sp);
 
-    if (str == NULL) {
-	krb5_warnx (context, "Out of memory generating error reply");
-	return 1;
-    }
-    data->data = str;
     return 0;
+ out:
+    if (sp)
+	krb5_storage_free(sp);
+
+    krb5_warnx (context, "Out of memory generating error reply");
+    return 1;
 }
 
 static void

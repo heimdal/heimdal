@@ -128,7 +128,7 @@ make_result (krb5_data *data,
 
     sp = krb5_storage_emem();
     if (sp == NULL) goto out;
-    ret = krb5_store_uint32(sp, result_code);
+    ret = krb5_store_uint16(sp, result_code);
     if (ret) goto out;
     ret = krb5_store_stringz(sp, expl);
     if (ret) goto out;

@@ -75,6 +75,12 @@ test_uint64(void)
     for (i = 0; i < ntests; i++)
 	tests[i].val = &values[i];
 
+    if (sizeof(TESTuint64) != sizeof(uint64_t)) {
+	ret += 1;
+	printf("sizeof(TESTuint64) %d != sizeof(uint64_t) %d\n",
+	       (int)sizeof(TESTuint64), (int)sizeof(uint64_t));
+    }
+
     ret += generic_test (tests, ntests, sizeof(TESTuint64),
 			 (generic_encode)encode_TESTuint64,
 			 (generic_length)length_TESTuint64,

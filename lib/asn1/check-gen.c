@@ -790,6 +790,12 @@ check_tag_length64(void)
     int i, ret, failed = 0;
     void *buf;
 
+    if (sizeof(TESTuint64) != sizeof(uint64_t)) {
+	ret += 1;
+	printf("sizeof(TESTuint64) %d != sizeof(uint64_t) %d\n",
+	       (int)sizeof(TESTuint64), (int)sizeof(uint64_t));
+    }
+
     for (i = 0; i < sizeof(td)/sizeof(td[0]); i++) {
 	struct map_page *page;
 

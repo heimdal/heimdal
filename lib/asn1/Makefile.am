@@ -54,7 +54,7 @@ asn1_print_SOURCES = asn1_print.c
 check_der_SOURCES = check-der.c check-common.c check-common.h
 
 check_template_SOURCES = check-template.c check-common.c check-common.h
-nodist_check_template_SOURCES = $(gen_files_test_template:.x=.c)
+nodist_check_template_SOURCES = $(gen_files_test_template)
 
 dist_check_gen_SOURCES = check-gen.c check-common.c check-common.h
 nodist_check_gen_SOURCES = $(gen_files_test:.x=.c)
@@ -182,7 +182,7 @@ $(asn1_compile_OBJECTS): asn1parse.h asn1parse.c $(srcdir)/der-protos.h $(srcdir
 $(libasn1_la_OBJECTS): $(nodist_include_HEADERS) $(priv_headers) asn1_err.h $(srcdir)/der-protos.h $(srcdir)/der-private.h
 $(libasn1base_la_OBJECTS): asn1_err.h $(srcdir)/der-protos.h $(srcdir)/der-private.h
 $(check_gen_OBJECTS): test_asn1.h
-$(check_template_OBJECTS): test_template_asn1.h test_template_asn1_files
+$(check_template_OBJECTS): test_template_asn1.h test_template_asn1-priv.h test_template_asn1_files
 $(asn1_print_OBJECTS): krb5_asn1.h
 
 asn1parse.h: asn1parse.c

@@ -401,9 +401,8 @@ _krb5_kuserok(krb5_context context,
 {
     static heim_base_once_t reg_def_plugins = HEIM_BASE_ONCE_INIT;
     krb5_error_code ret;
-    size_t i;
-    char **rules;
     struct plctx ctx;
+    char **rules;
 
     /*
      * XXX we should have a struct with a krb5_context field and a
@@ -424,6 +423,7 @@ _krb5_kuserok(krb5_context context,
 
     if (an2ln_ok)
 	ctx.flags |= KUSEROK_ANAME_TO_LNAME_OK;
+
     if (krb5_config_get_bool_default(context, NULL, FALSE, "libdefaults",
 				     "k5login_authoritative", NULL))
 	ctx.flags |= KUSEROK_K5LOGIN_IS_AUTHORITATIVE;
@@ -436,28 +436,34 @@ _krb5_kuserok(krb5_context context,
     if (rules == NULL) {
 	/* Default: check ~/.k5login */
 	ctx.rule = "USER-K5LOGIN";
+
 	ret = plcallback(context, &kuserok_user_k5login_plug, NULL, &ctx);
 	if (ret == 0)
 	    goto out;
+
 	ctx.rule = "SIMPLE";
 	ret = plcallback(context, &kuserok_simple_plug, NULL, &ctx);
 	if (ret == 0)
 	    goto out;
-	ctx.result = FALSE;
-	goto out;
-    }
 
-    for (i = 0; rules[i]; i++) {
-	ctx.rule = rules[i];
-	ret = _krb5_plugin_run_f(context, "krb5", KRB5_PLUGIN_KUSEROK,
-				 KRB5_PLUGIN_KUSEROK_VERSION_0, 0,
-				 &ctx, plcallback);
-	if (ret != KRB5_PLUGIN_NO_HANDLE) 
-	    goto out;
+	ctx.result = FALSE;
+    } else {
+	size_t n;
+
+	for (n = 0; rules[n]; n++) {
+	    ctx.rule = rules[n];
+
+	    ret = _krb5_plugin_run_f(context, "krb5", KRB5_PLUGIN_KUSEROK,
+				     KRB5_PLUGIN_KUSEROK_VERSION_0, 0,
+				     &ctx, plcallback);
+	    if (ret != KRB5_PLUGIN_NO_HANDLE) 
+		goto out;
+	}
     }
 
 out:
     krb5_config_free_strings(rules);
+
     return ctx.result;
 }
 
@@ -472,11 +478,14 @@ kuserok_simple_plug_f(void *plug_ctx, krb5_context context, const char *rule,
 		      krb5_boolean *result)
 {
     krb5_error_code ret;
+
     if (strcmp(rule, "SIMPLE") != 0 || (flags & KUSEROK_ANAME_TO_LNAME_OK) == 0)
 	return KRB5_PLUGIN_NO_HANDLE;
+
     ret = check_an2ln(context, principal, luser, result);
     if (ret == 0 && *result == FALSE)
 	return KRB5_PLUGIN_NO_HANDLE;
+
     return 0;
 }
 
@@ -496,6 +505,7 @@ kuserok_sys_k5login_plug_f(void *plug_ctx, krb5_context context,
     krb5_error_code ret;
 
     *result = FALSE;
+
     if (strcmp(rule, "SYSTEM-K5LOGIN") != 0 &&
 	strncmp(rule, "SYSTEM-K5LOGIN:", strlen("SYSTEM-K5LOGIN:")) != 0)
 	return KRB5_PLUGIN_NO_HANDLE;

@@ -306,7 +306,7 @@ gen_assign_defval(const char *var, struct value *val)
 	fprintf(codefile, "if((%s = strdup(\"%s\")) == NULL)\nreturn ENOMEM;\n", var, val->u.stringvalue);
 	break;
     case integervalue:
-	fprintf(codefile, "%s = %lld;\n", var, val->u.integervalue);
+	fprintf(codefile, "%s = %lld;\n", var, (long long)val->u.integervalue);
 	break;
     case booleanvalue:
 	if(val->u.booleanvalue)
@@ -327,7 +327,8 @@ gen_compare_defval(const char *var, struct value *val)
 	fprintf(codefile, "if(strcmp(%s, \"%s\") != 0)\n", var, val->u.stringvalue);
 	break;
     case integervalue:
-	fprintf(codefile, "if(%s != %lld)\n", var, val->u.integervalue);
+	fprintf(codefile, "if(%s != %lld)\n", var,
+		(long long)val->u.integervalue);
 	break;
     case booleanvalue:
 	if(val->u.booleanvalue)
@@ -400,8 +401,8 @@ generate_constant (const Symbol *s)
     case booleanvalue:
 	break;
     case integervalue:
-	fprintf (headerfile, "enum { %s = %lld };\n\n",
-		 s->gen_name, s->value->u.integervalue);
+	fprintf(headerfile, "enum { %s = %lld };\n\n", s->gen_name,
+		(long long)s->value->u.integervalue);
 	break;
     case nullvalue:
 	break;
@@ -542,9 +543,10 @@ define_asn1 (int level, Type *t)
     case TInteger:
 	if(t->members == NULL) {
             fprintf (headerfile, "INTEGER");
-	    if (t->range)
-		fprintf (headerfile, " (%lld..%lld)",
-			 t->range->min, t->range->max);
+	    if (t->range) {
+		fprintf(headerfile, " (%lld..%lld)",
+			(long long)t->range->min, (long long)t->range->max);
+	    }
         } else {
 	    Member *m;
             fprintf (headerfile, "INTEGER {\n");
@@ -734,9 +736,10 @@ define_type (int level, const char *name, const char *basename, Type *t, int typ
 	    fprintf (headerfile, "int %s;\n", name);
 	} else if (t->range->min >= 0 && t->range->max <= UINT_MAX) {
 	    fprintf (headerfile, "unsigned int %s;\n", name);
-	} else
+	} else {
 	    errx(1, "%s: unsupported range %lld -> %lld",
-		 name, t->range->min, t->range->max);
+		 name, (long long)t->range->min, (long long)t->range->max);
+	}
 	break;
     case TBoolean:
 	space(level);

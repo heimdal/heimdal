@@ -90,7 +90,7 @@ length_type (const char *name, const Type *t,
 	    length_primitive ("unsigned", name, variable);
 	} else
 	    errx(1, "%s: unsupported range %lld -> %lld",
-		 name, t->range->min, t->range->max);
+		 name, (long long)t->range->min, (long long)t->range->max);
 
 	break;
     case TBoolean:

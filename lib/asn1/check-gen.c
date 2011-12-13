@@ -815,12 +815,13 @@ check_tag_length64(void)
 	    }
 	    if (td[i].expected_len != sz) {
 		printf("wrong expected size for tag test %d\n", i);
-		printf("sz = %d\n", sz);
+		printf("sz = %lu\n", (unsigned long)sz);
 		failed = 1;
 	    }
 	    if (values[i] != u) {
 		printf("wrong value for tag test %d\n", i);
-		printf("Expected value: %lld\nActual value: %lld\n", values[i], u);
+		printf("Expected value: %llu\nActual value: %llu\n",
+		       (unsigned long long)values[i], (unsigned long long)u);
 		failed = 1;
 	    }
 	}
@@ -874,12 +875,13 @@ check_tag_length64s(void)
 	    }
 	    if (td[i].expected_len != sz) {
 		printf("wrong expected size for tag test %d\n", i);
-		printf("sz = %d\n", sz);
+		printf("sz = %lu\n", (unsigned long)sz);
 		failed = 1;
 	    }
 	    if (values[i] != u) {
 		printf("wrong value for tag test %d\n", i);
-		printf("Expected value: %lld\nActual value: %lld\n", values[i], u);
+		printf("Expected value: %lld\nActual value: %lld\n",
+		       (long long)values[i], (long long)u);
 		failed = 1;
 	    }
 	}

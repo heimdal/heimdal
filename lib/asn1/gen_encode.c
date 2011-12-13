@@ -139,7 +139,7 @@ encode_type (const char *name, const Type *t, const char *tmpstr)
 	    encode_primitive ("unsigned", name);
 	} else
 	    errx(1, "%s: unsupported range %lld -> %lld",
-		 name, t->range->min, t->range->max);
+		 name, (long long)t->range->min, (long long)t->range->max);
 	constructed = 0;
 	break;
     case TBoolean:

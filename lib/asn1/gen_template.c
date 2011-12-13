@@ -502,7 +502,7 @@ template_members(struct templatehead *temp, const char *basetype, const char *na
 	    itype = "UNSIGNED";
 	else
 	    errx(1, "%s: unsupported range %lld -> %lld",
-		 name, t->range->min, t->range->max);
+		 name, (long long)t->range->min, (long long)t->range->max);
 
 	add_line(temp, "{ A1_PARSE_T(A1T_%s), %s, NULL }", itype, poffset);
 	break;

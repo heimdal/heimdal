@@ -102,17 +102,23 @@ reg_def_plugins_once(void *ctx)
  *
  * Inputs:
  *
- * @context            A krb5_context
- * @is_system_location TRUE if the dir/file are system locations or
- *                     FALSE if they are user home directory locations
- * @dir                Directory (optional)
- * @dirlstat           A pointer to struct stat for the directory (optional)
- * @file               File (optional)
- * @owner              Name of user that is expected to own the file
+ * @param context            A krb5_context
+ * @param filename	     Name of item to introspection
+ * @param is_system_location TRUE if the dir/file are system locations or
+ *                     	     FALSE if they are user home directory locations
+ * @param dir                Directory (optional)
+ * @param dirlstat           A pointer to struct stat for the directory (optional)
+ * @param file               File (optional)
+ * @param owner              Name of user that is expected to own the file
  */
+
 static krb5_error_code
-check_owner(krb5_context context, krb5_boolean is_system_location,
-	    DIR *dir, struct stat *dirlstat, FILE *file, const char *owner)
+check_owner_dir(krb5_context context,
+		const char *filename,
+		krb5_boolean is_system_location,
+		DIR *dir,
+		struct stat *dirlstat,
+		const char *owner)
 {
 #ifdef _WIN32
     /*
@@ -132,78 +138,123 @@ check_owner(krb5_context context, krb5_boolean is_system_location,
 			   "User k5login files not supported on Windows");
     return EACCES;
 #else
-    struct stat st;
-    struct passwd *pwd = NULL;
-#ifdef POSIX_GETPWNAM_R
+    struct passwd pw, *pwd = NULL;
     char pwbuf[2048];
-    struct passwd pw;
-#endif
-#endif
+    struct stat st;
 
-#ifdef POSIX_GETPWNAM_R
-    if (owner != NULL && getpwnam_r(owner, &pw, pwbuf, sizeof(pwbuf), &pwd) != 0) {
-	krb5_set_error_message(context, errno, "User unknown (getpwnam_r())");
+    heim_assert(owner != NULL, "no directory owner ?");
+
+    if (rk_getpwnam_r(owner, &pw, pwbuf, sizeof(pwbuf), &pwd) != 0) {
+	krb5_set_error_message(context, errno,
+			       "User unknown %s (getpwnam_r())", owner);
 	return EACCES;
     }
-#else
-    pwd = getpwnam(luser);
-    if (owner != NULL && pwd == NULL) {
-	krb5_set_error_message(context, errno, "User unknown (getpwnam())");
+    if (pwd == NULL) {
+	krb5_set_error_message(context, EACCES, "no user %s", owner);
 	return EACCES;
     }
+
+    if (fstat(dirfd(dir), &st) == -1) {
+	krb5_set_error_message(context, EACCES,
+			       "fstat(%s) of k5login.d failed",
+			       filename);
+	return EACCES;
+    }
+    if (!S_ISDIR(st.st_mode)) {
+	krb5_set_error_message(context, ENOTDIR, "%s not a directory",
+			       filename);
+	return ENOTDIR;
+    }
+    if (st.st_dev != dirlstat->st_dev || st.st_ino != dirlstat->st_ino) {
+	krb5_set_error_message(context, EACCES,
+			       "%s was renamed during kuserok "
+			       "operation", filename);
+	return EACCES;
+    }
+    if ((st.st_mode & (S_IWGRP | S_IWOTH)) != 0) {
+	krb5_set_error_message(context, EACCES,
+			       "%s has world and/or group write "
+			       "permissions", filename);
+	return EACCES;
+    }
+    if (pwd->pw_uid != st.st_uid && st.st_uid != 0) {
+	krb5_set_error_message(context, EACCES,
+			       "%s not owned by the user (%s) or root",
+			       filename, owner);
+	return EACCES;
+    }
+    
+    return 0;
 #endif
-    if (dir) {
-	if (fstat(dirfd(dir), &st) == -1) {
-	    krb5_set_error_message(context, errno, "fstat() of k5login.d failed");
-	    return errno;
-	}
-	if (!S_ISDIR(st.st_mode)) {
-	    krb5_set_error_message(context, ENOTDIR, "k5login.d not a directory");
-	    return ENOTDIR;
-	}
-	if (st.st_dev != dirlstat->st_dev || st.st_ino != dirlstat->st_ino) {
-	    krb5_set_error_message(context, EACCES,
-				   "k5login.d was renamed during kuserok "
-				   "operation");
-	    return EACCES;
-	}
-	if ((st.st_mode & (S_IWGRP | S_IWOTH)) != 0) {
-	    krb5_set_error_message(context, EACCES,
-				   "k5login.d has world and/or group write "
-				   "permissions");
-	    return EACCES; /* XXX We should have a better code */
-	}
-	if (pwd != NULL && pwd->pw_uid != st.st_uid && st.st_uid != 0) {
-	    krb5_set_error_message(context, EACCES,
-				   "k5login.d not owned by the user or root");
-	    return EACCES;
-	}
-	if (file == NULL)
-	    return 0;
-    }
-    if (file) {
-	if (fstat(fileno(file), &st) == -1) {
-	    krb5_set_error_message(context, errno, "fstat() of k5login failed");
-	    return errno;
-	}
-	if (S_ISDIR(st.st_mode)) {
-	    krb5_set_error_message(context, EISDIR, "k5login is a directory");
-	    return EISDIR;
-	}
-	if ((st.st_mode & (S_IWGRP | S_IWOTH)) != 0) {
-	    krb5_set_error_message(context, EISDIR,
-				   "k5login has world and/or group write "
-				   "permissions");
-	    return EACCES; /* XXX We should have a better code */
-	}
-	if (pwd == NULL || pwd->pw_uid == st.st_uid || st.st_uid == 0)
-	    return 0;
-    }
+}
+
+static krb5_error_code
+check_owner_file(krb5_context context,
+		 const char *filename,
+		 FILE *file, const char *owner)
+{
+#ifdef _WIN32
+    /*
+     * XXX Implement this!
+     *
+     * The thing to do is to call _get_osfhandle() on fileno(file) and
+     * dirfd(dir) to get HANDLEs to the same, then call
+     * GetSecurityInfo() on those HANDLEs to get the security descriptor
+     * (SD), then check the owner and DACL.  Checking the DACL sounds
+     * like a lot of work (what, derive a mode from the ACL the way
+     * NFSv4 servers do?).  Checking the owner means doing an LSARPC
+     * lookup at least (to get the user's SID). 
+     */
+    if (is_system_location || owner == NULL)
+	return 0;
 
     krb5_set_error_message(context, EACCES,
-			   "k5login not owned by the user or root");
+			   "User k5login files not supported on Windows");
     return EACCES;
+#else
+    struct passwd pw, *pwd = NULL;
+    char pwbuf[2048];
+    struct stat st;
+
+    heim_assert(owner != NULL, "no file owner ?");
+
+    if (rk_getpwnam_r(owner, &pw, pwbuf, sizeof(pwbuf), &pwd) != 0) {
+	krb5_set_error_message(context, errno,
+			       "User unknown %s (getpwnam_r())", owner);
+	return EACCES;
+    }
+    if (pwd == NULL) {
+	krb5_set_error_message(context, EACCES, "no user %s", owner);
+	return EACCES;
+    }
+
+    if (fstat(fileno(file), &st) == -1) {
+	krb5_set_error_message(context, EACCES, "fstat(%s) of k5login failed",
+			       filename);
+	return EACCES;
+    }
+    if (S_ISDIR(st.st_mode)) {
+	krb5_set_error_message(context, EISDIR, "k5login: %s is a directory",
+			       filename);
+	return EISDIR;
+    }
+    if ((st.st_mode & (S_IWGRP | S_IWOTH)) != 0) {
+	krb5_set_error_message(context, EISDIR,
+			       "k5login %s has world and/or group write "
+			       "permissions", filename);
+	return EACCES;
+    }
+    if (pwd->pw_uid != st.st_uid || st.st_uid != 0) {
+	krb5_set_error_message(context, EACCES,
+			       "k5login %s not owned by the user or root",
+			       filename);
+	return EACCES;
+    }
+
+    return 0;
+#endif
 }
+
 
 /* see if principal is mentioned in the filename access file, return
    TRUE (in result) if so, FALSE otherwise */
@@ -227,7 +278,7 @@ check_one_file(krb5_context context,
 	return errno;
     rk_cloexec_file(f);
 
-    ret = check_owner(context, 0, NULL, NULL, f, owner);
+    ret = check_owner_file(context, filename, f, owner);
     if (ret)
 	goto out;
 
@@ -291,7 +342,7 @@ check_directory(krb5_context context,
 	return errno;
     }
 
-    ret = check_owner(context, is_system_location, d, &st, NULL, owner);
+    ret = check_owner_dir(context, dirname, is_system_location, d, &st, owner);
     if (ret)
 	goto out;
 
@@ -551,11 +602,8 @@ kuserok_user_k5login_plug_f(void *plug_ctx, krb5_context context,
     const char *profile_dir = NULL;
     krb5_error_code ret;
     krb5_boolean found_file = FALSE;
-    struct passwd *pwd = NULL;
-#ifdef POSIX_GETPWNAM_R
-    struct passwd pw;
+    struct passwd pw, *pwd = NULL;
     char pwbuf[2048];
-#endif
 
     if (strcmp(rule, "USER-K5LOGIN") != 0)
 	return KRB5_PLUGIN_NO_HANDLE;
@@ -566,15 +614,10 @@ kuserok_user_k5login_plug_f(void *plug_ctx, krb5_context context,
 	if (!_krb5_homedir_access(context))
 	    return KRB5_PLUGIN_NO_HANDLE;
 
-#ifdef POSIX_GETPWNAM_R
 	if (getpwnam_r(luser, &pw, pwbuf, sizeof(pwbuf), &pwd) != 0) {
 	    krb5_set_error_message(context, errno, "User unknown (getpwnam_r())");
 	    return KRB5_PLUGIN_NO_HANDLE;
 	}
-#else
-	pwd = getpwnam (luser);
-#endif
-
 	if (pwd == NULL) {
 	    krb5_set_error_message(context, errno, "User unknown (getpwnam())");
 	    return KRB5_PLUGIN_NO_HANDLE;

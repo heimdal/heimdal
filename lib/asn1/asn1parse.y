@@ -47,8 +47,6 @@
 #include "gen_locl.h"
 #include "der.h"
 
-RCSID("$Id$");
-
 static Type *new_type (Typetype t);
 static struct constraint_spec *new_constraint_spec(enum ctype);
 static Type *new_tag(int tagclass, int tagvalue, int tagenv, Type *oldtype);
@@ -474,6 +472,11 @@ OctetStringType	: kw_OCTET kw_STRING size
 		{
 		    Type *t = new_type(TOctetString);
 		    t->range = $3;
+		    if (t->range) {
+			if (t->range->min < 0)
+			    lex_error_message("can't use a negative SIZE range "
+					      "length for OCTET STRING");
+		    }
 		    $$ = new_tag(ASN1_C_UNIV, UT_OctetString,
 				 TE_EXPLICIT, t);
 		}
@@ -511,6 +514,11 @@ SequenceOfType	: kw_SEQUENCE size kw_OF Type
 		{
 		  $$ = new_type(TSequenceOf);
 		  $$->range = $2;
+		  if ($2) {
+		      if ($2->min < 0)
+			  lex_error_message("can't use a negative SIZE range "
+					    "length for SEQUENCE OF");
+		  }
 		  $$->subtype = $4;
 		  $$ = new_tag(ASN1_C_UNIV, UT_Sequence, TE_EXPLICIT, $$);
 		}

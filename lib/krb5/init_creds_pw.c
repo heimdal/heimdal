@@ -84,7 +84,9 @@ typedef struct krb5_get_init_creds_ctx {
 #define KRB5_FAST_KDC_REPLY_KEY_REPLACED 4
 #define KRB5_FAST_REPLY_REPLY_VERIFED 8
 #define KRB5_FAST_STRONG 16
-#define KRB5_FAST_EXPECTED 32
+#define KRB5_FAST_EXPECTED 32 /* in exchange with KDC, fast was discovered */
+#define KRB5_FAST_REQUIRED 64 /* fast required by action of caller */
+#define KRB5_FAST_DISABLED 128
 	krb5_keyblock *reply_key;
 	krb5_ccache armor_ccache;
 	krb5_crypto armor_crypto;
@@ -1259,9 +1261,11 @@ process_pa_data_to_md(krb5_context context,
 
     pa_data_add_pac_request(context, ctx, *out_md);
 
-    ret = krb5_padata_add(context, *out_md, KRB5_PADATA_REQ_ENC_PA_REP, NULL, 0);
-    if (ret)
-	return ret;
+    if ((ctx->fast_state.flags & KRB5_FAST_DISABLED) == 0) {
+ 	ret = krb5_padata_add(context, *out_md, KRB5_PADATA_REQ_ENC_PA_REP, NULL, 0);
+ 	if (ret)
+ 	    return ret;
+    }
 
     if ((*out_md)->len == 0) {
 	free(*out_md);
@@ -1661,6 +1665,7 @@ krb5_init_creds_set_fast_ccache(krb5_context context,
 				krb5_ccache fast_ccache)
 {
     ctx->fast_state.armor_ccache = fast_ccache;
+    ctx->fast_state.flags |= KRB5_FAST_REQUIRED;
     return 0;
 }
 
@@ -1893,6 +1898,11 @@ fast_wrap_req(krb5_context context, struct fast_state *state, KDC_REQ *req)
     KrbFastReq fastreq;
     krb5_data data;
     size_t size;
+
+    if (state->flags & KRB5_FAST_DISABLED) {
+	_krb5_debug(context, 10, "fast disabled, not doing any fast wrapping");
+	return 0;
+    }
 
     memset(&fxreq, 0, sizeof(fxreq));
     memset(&fastreq, 0, sizeof(fastreq));
@@ -2215,6 +2225,19 @@ krb5_init_creds_step(krb5_context context,
 					       *ctx->error.crealm);
 
 		ctx->used_pa_types = 0;
+ 	    } else if (ret == KRB5KDC_ERR_PREAUTH_FAILED) {
+ 
+ 		if (ctx->fast_state.flags & KRB5_FAST_DISABLED)
+ 		    goto out;
+ 		if (ctx->fast_state.flags & (KRB5_FAST_REQUIRED | KRB5_FAST_EXPECTED))
+ 		    goto out;
+ 
+ 		_krb5_debug(context, 10, "preauth failed with FAST, "
+			    "and told by KD or user, trying w/o FAST");
+ 
+ 		ctx->fast_state.flags |= KRB5_FAST_DISABLED;
+ 		ctx->used_pa_types = 0;
+		ret = 0;
 	    }
 	    if (ret)
 		goto out;

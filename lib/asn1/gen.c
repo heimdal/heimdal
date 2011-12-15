@@ -752,7 +752,7 @@ define_type (int level, const char *name, const char *basename, Type *t, int typ
     case TBitString: {
 	Member *m;
 	Type i;
-	struct range range = { 0, INT_MAX };
+	struct range range = { 0, UINT_MAX };
 
 	i.type = TInteger;
 	i.range = &range;
@@ -851,7 +851,7 @@ define_type (int level, const char *name, const char *basename, Type *t, int typ
     case TSetOf:
     case TSequenceOf: {
 	Type i;
-	struct range range = { 0, INT_MAX };
+	struct range range = { 0, UINT_MAX };
 
 	getnewbasename(&newbasename, typedefp, basename, name);
 

@@ -216,7 +216,8 @@ check_owner_file(krb5_context context,
     char pwbuf[2048];
     struct stat st;
 
-    heim_assert(owner != NULL, "no file owner ?");
+    if (owner == NULL)
+	return 0;
 
     if (rk_getpwnam_r(owner, &pw, pwbuf, sizeof(pwbuf), &pwd) != 0) {
 	krb5_set_error_message(context, errno,
@@ -244,7 +245,7 @@ check_owner_file(krb5_context context,
 			       "permissions", filename);
 	return EACCES;
     }
-    if (pwd->pw_uid != st.st_uid || st.st_uid != 0) {
+    if (pwd->pw_uid != st.st_uid && st.st_uid != 0) {
 	krb5_set_error_message(context, EACCES,
 			       "k5login %s not owned by the user or root",
 			       filename);

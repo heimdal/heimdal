@@ -253,7 +253,7 @@ heim_dict_delete_key(heim_dict_t dict, heim_object_t key)
  */
 
 void
-heim_dict_iterate_f(heim_dict_t dict, heim_dict_iterator_f_t func, void *arg)
+heim_dict_iterate_f(heim_dict_t dict, void *arg, heim_dict_iterator_f_t func)
 {
     struct hashentry **h, *g;
 

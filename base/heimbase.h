@@ -67,6 +67,8 @@ typedef long heim_base_once_t; /* XXX arch dependant */
 void *	heim_retain(heim_object_t);
 void	heim_release(heim_object_t);
 
+void	heim_show(heim_object_t);
+
 typedef void (*heim_type_dealloc)(void *);
 
 void *
@@ -146,7 +148,7 @@ heim_tid_t heim_dict_get_type_id(void);
 typedef void (*heim_dict_iterator_f_t)(heim_object_t, heim_object_t, void *);
 
 int	heim_dict_set_value(heim_dict_t, heim_object_t, heim_object_t);
-void	heim_dict_iterate_f(heim_dict_t, heim_dict_iterator_f_t, void *);
+void	heim_dict_iterate_f(heim_dict_t, void *, heim_dict_iterator_f_t);
 #ifdef __BLOCKS__
 void	heim_dict_iterate(heim_dict_t, void (^)(heim_object_t, heim_object_t));
 #endif

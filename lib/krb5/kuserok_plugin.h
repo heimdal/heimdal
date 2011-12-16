@@ -32,7 +32,7 @@
 #ifndef HEIMDAL_KRB5_KUSEROK_PLUGIN_H
 #define HEIMDAL_KRB5_KUSEROK_PLUGIN_H 1
 
-#define KRB5_PLUGIN_KUSEROK "kuserok"
+#define KRB5_PLUGIN_KUSEROK "kuserok-plugin"
 #define KRB5_PLUGIN_KUSEROK_VERSION_0 0
 
 typedef krb5_error_code (*set_result_f)(void *, const char *);

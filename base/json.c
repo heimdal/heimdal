@@ -36,68 +36,117 @@
 #include "baselocl.h"
 #include <ctype.h>
 
-#if 0
-int
-heim_base2json(heim_object_t obj,
-	       void (*out)(const char *, void *), void *ctx);
+struct twojson {
+    void *ctx;
+    size_t indent;
+    void (*out)(void *, const char *);
+};
 
-int
-heim_base2json(heim_object_t obj,
-	       void (*out)(const char *, void *), void *ctx)
+static int
+base2json(heim_object_t, struct twojson *);
+
+static void
+indent(struct twojson *j)
 {
-    heim_tid_t type = heim_get_tid(obj);
-    __block int fail = 0, needcomma = 0;
+    size_t indent = j->indent;
+    while (indent--)
+	j->out(j->ctx, "\t");
+}
 
+static void
+array2json(heim_object_t value, void *ctx)
+{
+    struct twojson *j = ctx;
+    indent(j);
+    base2json(value, j);
+    j->out(j->ctx, ",\n");
+    j->indent--;
+}
+
+static void
+dict2json(heim_object_t key, heim_object_t value, void *ctx)
+{
+    struct twojson *j = ctx;
+    indent(j);
+    base2json(key, j);
+    j->out(j->ctx, " = ");
+    base2json(value, j);
+    j->out(j->ctx, ",\n");
+}
+
+static int
+base2json(heim_object_t obj, struct twojson *j)
+{
+    heim_tid_t type;
+
+    if (obj == NULL) {
+	indent(j);
+	j->out(j->ctx, "<NULL>\n");
+    }
+
+    type = heim_get_tid(obj);
     switch (type) {
     case HEIM_TID_ARRAY:
-	out("[ ", ctx);
-	heim_array_iterate(obj, ^(heim_object_t sub) {
-		if (needcomma)
-		    out(", ", ctx);
-		fail |= heim_base2json(sub, out, ctx);
-		needcomma = 1;
-	    });
-	out("]", ctx);
+	indent(j);
+	j->out(j->ctx, "[\n");
+	j->indent++;
+	heim_array_iterate_f(obj, j, array2json);
+	j->indent--;
+	indent(j);
+	j->out(j->ctx, "]\n");
 	break;
 
     case HEIM_TID_DICT:
-	out("{ ", ctx);
-	heim_dict_iterate(obj, ^(heim_object_t key, heim_object_t value) {
-		if (needcomma)
-		    out(", ", ctx);
-		fail |= heim_base2json(key, out, ctx);
-		out(" = ", ctx);
-		fail |= heim_base2json(value, out, ctx);
-		needcomma = 1;
-	    });
-	out("}", ctx);
+	indent(j);
+	j->out(j->ctx, "{\n");
+	j->indent++;
+	heim_dict_iterate_f(obj, j, dict2json);
+	j->indent--;
+	indent(j);
+	j->out(j->ctx, "}\n");
 	break;
 
     case HEIM_TID_STRING:
-	out("\"", ctx);
-	out(heim_string_get_utf8(obj), ctx);
-	out("\"", ctx);
+	indent(j);
+	j->out(j->ctx, "\"");
+	j->out(j->ctx, heim_string_get_utf8(obj));
+	j->out(j->ctx, "\"");
 	break;
 
     case HEIM_TID_NUMBER: {
 	char num[16];
+	indent(j);
 	snprintf(num, sizeof(num), "%d", heim_number_get_int(obj));
-	out(num, ctx);
+	j->out(j->ctx, num);
 	break;
     }
     case HEIM_TID_NULL:
-	out("null", ctx);
+	indent(j);
+	j->out(j->ctx, "null");
 	break;
     case HEIM_TID_BOOL:
-	out(heim_bool_val(obj) ? "true" : "false", ctx);
+	indent(j);
+	j->out(j->ctx, heim_bool_val(obj) ? "true" : "false");
 	break;
     default:
 	return 1;
     }
-    return fail;
+    return 0;
 }
 
-#endif
+static int
+heim_base2json(heim_object_t obj, void *ctx,
+	       void (*out)(void *, const char *))
+{
+    struct twojson j;
+
+    j.indent = 0;
+    j.ctx = ctx;
+    j.out = out;
+
+    return base2json(obj, &j);
+}
+
 
 /*
  *
@@ -396,4 +445,17 @@ heim_json_create_with_bytes(const void *data, size_t length, heim_error_t *error
     }
 
     return o;
+}
+
+
+static void
+show_printf(void *ctx, const char *str)
+{
+    fprintf(ctx, "%s", str);
+}
+
+void
+heim_show(heim_object_t obj)
+{
+    heim_base2json(obj, stderr, show_printf);
 }

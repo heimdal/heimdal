@@ -13,18 +13,31 @@ override_dh_auto_configure:
 override_dh_install:
 	dh_install --sourcedir=$(DESTDIR) --list-missing
 	#
+	mkdir -m755 -p debian/heimdal/etc/default
 	install -m644 debian/extras/default debian/heimdal/etc/default/heimdal
+	# Fix broken symlink
+	rm debian/heimdal/opt/heimdal/share/man/man5/qop.5
+	ln -s mech.5 debian/heimdal/opt/heimdal/share/man/man5/qop.5
 	# remove unwanted files
-	rm -f debian/heimdal/opt/heimdal/lib/windc.so
+	rm -f debian/heimdal/opt/heimdal/lib/windc.so*
 	rm -f debian/heimdal/opt/heimdal/lib/windc.a
 	rm -f debian/heimdal/opt/heimdal/lib/windc.la
+	#
+	rm -f debian/heimdal/opt/heimdal/bin/login
+	rm -f debian/heimdal/opt/heimdal/share/man/man1/login.1
 	rm -f debian/heimdal/opt/heimdal/bin/telnet
-	rm -f debian/heimdal/opt/heimdal/bin/ftp
-	rm -f debian/heimdal/opt/heimdal/bin/rsh
-	rm -f debian/heimdal/opt/heimdal/bin/rcp
-	rm -f debian/heimdal/opt/heimdal/bin/su
 	rm -f debian/heimdal/opt/heimdal/share/man/man1/telnet.1
+	rm -f debian/heimdal/opt/heimdal/bin/ftp
 	rm -f debian/heimdal/opt/heimdal/share/man/man1/ftp.1
+	rm -f debian/heimdal/opt/heimdal/bin/rsh
 	rm -f debian/heimdal/opt/heimdal/share/man/man1/rsh.1
+	rm -f debian/heimdal/opt/heimdal/bin/rcp
 	rm -f debian/heimdal/opt/heimdal/share/man/man1/rcp.1
+	rm -f debian/heimdal/opt/heimdal/bin/su
 	rm -f debian/heimdal/opt/heimdal/share/man/man1/su.1
+	rm -f debian/heimdal/opt/heimdal/bin/kx
+	rm -f debian/heimdal/opt/heimdal/share/man/man1/kx.1
+	rm -f debian/heimdal/opt/heimdal/libexec/kxd
+	rm -f debian/heimdal/opt/heimdal/share/man/man8/kxd.8
+	rm -f debian/heimdal/opt/heimdal/bin/xnlock
+	rm -f debian/heimdal/opt/heimdal/share/man/man1/xnlock.1

@@ -26,7 +26,7 @@ KPASSWDD_ENABLED=no
 IPROP_MASTER=$DAEMON_DIRECTORY/ipropd-master
 IPROP_SLAVE=$DAEMON_DIRECTORY/ipropd-slave
 MASTER_NAME=ipropd-master
-SLAVE_SLAVE=ipropd-slave
+SLAVE_NAME=ipropd-slave
 
 # On the master, these are created via local kadmin or krb5_admin
 # before the KDC starts. On slaves, these are created via krb5_admin
@@ -61,7 +61,7 @@ lookup_princ() {
 for sprinc in $REQUIRED_SPRINCS
 do
 	kdcent=$(lookup_princ "$sprinc/$FQDN") &&
-	[ "${kdcent%@*}" = "$sprinc" ] || { KDC_ENABLED="no"; break; }
+	[ "${kdcent%@*}" = "$sprinc/$FQDN" ] || { KDC_ENABLED="no"; break; }
 done
 
 # Check to see whether we're the master.

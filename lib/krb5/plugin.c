@@ -666,7 +666,7 @@ _krb5_plugin_run_f(krb5_context context,
 
     /* Add loaded plugins to s.result array */
     if (dict)
-	heim_dict_iterate_f(dict, search_modules, &s);
+	heim_dict_iterate_f(dict, &s, search_modules);
 
     /* We don't need to hold plugin_mutex during plugin invocation */
     HEIMDAL_MUTEX_unlock(&plugin_mutex);

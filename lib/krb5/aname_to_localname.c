@@ -352,10 +352,12 @@ an2ln_default(krb5_context context,
  *
  * Inputs:
  *
- * @context    A krb5_context
- * @aname      A principal name
- * @lnsize     The size of the buffer into which the username will be written
- * @lname      The buffer into which the username will be written
+ * @param context    A krb5_context
+ * @param aname      A principal name
+ * @param lnsize     The size of the buffer into which the username will be written
+ * @param lname      The buffer into which the username will be written
+ *
+ * @ingroup krb5_support
  */
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_aname_to_localname(krb5_context context,

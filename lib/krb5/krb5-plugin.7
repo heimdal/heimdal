@@ -88,7 +88,7 @@ KRB5_PLUGIN_NO_HANDLE to indicate that the plugin was not applicable.  Most
 plugin types obtain deterministic plugin behavior in spite of the
 non-deterministic invokation order by, for example, invoking all plugins for
 each "rule" and passing the rule to each plugin with the expectation that just
-one plugin will match any given rul.
+one plugin will match any given rule.
 .Pp
 The krb5-kuserok plugin adds a single field to its struct: a pointer to
 a function that implements kuserok functionality with the following
@@ -120,12 +120,12 @@ argument provides an alternative k5login file location, if not NULL.
 The
 .Va flags
 argument indicates whether the plugin may call
-.Xr krb5_aname_to_lname 3
+.Xr krb5_aname_to_localname 3
 (KUSEROK_ANAME_TO_LNAME_OK), and whether k5login databases are expected to be
 authoritative (KUSEROK_K5LOGIN_IS_AUTHORITATIVE).
 .Pp
 The plugin for
-.Xr krb5_aname_to_lname 3
+.Xr krb5_aname_to_localname 3
 is named "an2ln" and has a single extra field for the plugin struct:
 .Bd -literal -offset indent
 typedef krb5_error_code (*set_result_f)(void *, const char *);
@@ -156,6 +156,8 @@ An example an2ln plugin that maps principals to a constant "nouser"
 follows:
 .Pp
 .Bd -literal -offset indent
+#include <krb5/an2ln_plugin.h>
+
 static krb5_error_code
 nouser_plug_init(krb5_context context, void **ctx)
 {
@@ -188,5 +190,45 @@ krb5plugin_an2ln_ftable an2ln = {
     nouser_plug_an2ln,
 };
 .Ed
+.Pp
+An example kuserok plugin that rejects all requests follows.  (Note that
+there exists a built-in plugin with this functionality; see
+.Xr krb5_kuserok 3
+).
+.Pp
+.Bd -literal -offset indent
+#include <krb5/kuserok_plugin.h>
+
+static krb5_error_code
+reject_plug_init(krb5_context context, void **ctx)
+{
+    *ctx = NULL;
+    return 0;
+}
+
+static void reject_plug_fini(void *ctx) { }
+
+static krb5_error_code
+reject_plug_kuserok(void *plug_ctx, krb5_context context, const char *rule,
+                    unsigned int flags, const char *k5login_dir,
+                    const char *luser, krb5_const_principal principal,
+                    krb5_boolean *result)
+{
+    if (strcmp(rule, "REJECT") != 0)
+        return KRB5_PLUGIN_NO_HANDLE;
+
+    *result = FALSE;
+    return 0;
+}
+
+krb5plugin_kuserok_ftable kuserok = {
+    KRB5_PLUGIN_KUSEROK_VERSION_0,
+    reject_plug_init,
+    reject_plug_fini,
+    reject_plug_kuserok,
+};
+.Ed
 .Sh SEE ALSO
 .Xr krb5_plugin_register 3
+.Xr krb5_kuserok 3
+.Xr krb5_aname_to_localname 3

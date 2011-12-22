@@ -2456,7 +2456,7 @@ krb5_get_init_creds_password(krb5_context context,
 			     krb5_get_init_creds_opt *options)
 {
     krb5_init_creds_context ctx;
-    char buf[BUFSIZ];
+    char buf[BUFSIZ], buf2[BUFSIZ];
     krb5_error_code ret;
     int chpw = 0;
 
@@ -2508,8 +2508,6 @@ krb5_get_init_creds_password(krb5_context context,
 
 
     if (ret == KRB5KDC_ERR_KEY_EXPIRED && chpw == 0) {
-	char buf2[1024];
-
 	/* try to avoid recursion */
 	if (in_tkt_service != NULL && strcmp(in_tkt_service, "kadmin/changepw") == 0)
 	   goto out;
@@ -2522,12 +2520,13 @@ krb5_get_init_creds_password(krb5_context context,
 			       client,
 			       ctx->password,
 			       buf2,
-			       sizeof(buf),
+			       sizeof(buf2),
 			       prompter,
 			       data,
 			       options);
 	if (ret)
 	    goto out;
+	password = buf2;
 	chpw = 1;
 	krb5_init_creds_free(context, ctx);
 	goto again;
@@ -2541,6 +2540,7 @@ krb5_get_init_creds_password(krb5_context context,
 	krb5_init_creds_free(context, ctx);
 
     memset(buf, 0, sizeof(buf));
+    memset(buf2, 0, sizeof(buf2));
     return ret;
 }
 

@@ -123,7 +123,7 @@ digest_service_LDADD = \
 	$(top_builddir)/lib/ipc/libheim-ipcs.la \
 	$(LDADD) $(LIB_pidfile)
 kdc_replay_LDADD = libkdc.la $(LDADD) $(LIB_pidfile)
-kdc_tester_LDADD = libkdc.la $(LDADD) $(LIB_pidfile)
+kdc_tester_LDADD = libkdc.la $(LDADD) $(LIB_pidfile) $(LIB_heimbase)
 
 include_HEADERS = kdc.h kdc-protos.h
 

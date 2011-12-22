@@ -41,6 +41,44 @@
 
 typedef krb5_error_code (*set_result_f)(void *, const char *);
 
+/** @struct krb5plugin_an2ln_ftable_desc
+ *
+ * @brief Description of the krb5_aname_to_lname(3) plugin facility.
+ *
+ * The krb5_aname_to_lname(3) function is pluggable.  The plugin is
+ * named KRB5_PLUGIN_AN2LN ("an2ln"), with a single minor version,
+ * KRB5_PLUGIN_AN2LN_VERSION_0 (0).
+ *
+ * The plugin for krb5_aname_to_lname(3) consists of a data symbol
+ * referencing a structure of type krb5plugin_an2ln_ftable, with four
+ * fields:
+ *
+ * @param init          Plugin initialization function (see krb5-plugin(7))
+ *
+ * @param minor_version The plugin minor version number (0)
+ *
+ * @param fini          Plugin finalization function
+ *
+ * @param an2ln         Plugin aname_to_lname function
+ *
+ * The an2ln field is the plugin entry point that performs the
+ * traditional aname_to_lname operation however the plugin desires.  It
+ * is invoked in no particular order relative to other an2ln plugins,
+ * but it has a 'rule' argument that indicates which plugin is intended
+ * to act on the rule.  The plugin an2ln function must return
+ * KRB5_PLUGIN_NO_HANDLE if the rule is not applicable to it.
+ *
+ * The plugin an2ln function has the following arguments, in this order:
+ *
+ * -# plug_ctx, the context value output by the plugin's init function
+ * -# context, a krb5_context
+ * -# rule, the aname_to_lname rule being evaluated (from krb5.conf(5))
+ * -# aname, the krb5_principal to be mapped to an lname
+ * -# set_res_f, a function the plugin must call to set its result
+ * -# set_res_ctx, the first argument to set_res_f (the second is the result lname string)
+ *
+ * @ingroup krb5_support
+ */
 typedef struct krb5plugin_an2ln_ftable_desc {
     int			minor_version;
     krb5_error_code	(*init)(krb5_context, void **);

@@ -35,8 +35,46 @@
 #define KRB5_PLUGIN_KUSEROK "kuserok-plugin"
 #define KRB5_PLUGIN_KUSEROK_VERSION_0 0
 
-typedef krb5_error_code (*set_result_f)(void *, const char *);
-
+/** @struct krb5plugin_kuserok_ftable_desc
+ *
+ * @brief Description of the krb5_kuserok(3) plugin facility.
+ *
+ * The krb5_kuserok(3) function is pluggable.  The plugin is named
+ * KRB5_PLUGIN_KUSEROK ("kuserok-plugin"), with a single minor version,
+ * KRB5_PLUGIN_KUSEROK_VERSION_0 (0).
+ *
+ * The plugin for krb5_kuserok(3) consists of a data symbol referencing
+ * a structure of type krb5plugin_kuserok_ftable, with four fields:
+ *
+ * @param init          Plugin initialization function (see krb5-plugin(7))
+ *
+ * @param minor_version The plugin minor version number (0)
+ *
+ * @param fini          Plugin finalization function
+ *
+ * @param kuserok       Plugin kuserok function
+ *
+ * The kuserok field is the plugin entry point that performs the
+ * traditional kuserok operation however the plugin desires.  It is
+ * invoked in no particular order relative to other kuserok plugins, but
+ * it has a 'rule' argument that indicates which plugin is intended to
+ * act on the rule.  The plugin kuserok function must return
+ * KRB5_PLUGIN_NO_HANDLE if the rule is not applicable to it.
+ *
+ * The plugin kuserok function has the following arguments, in this
+ * order:
+ *
+ * -# plug_ctx, the context value output by the plugin's init function
+ * -# context, a krb5_context
+ * -# rule, the kuserok rule being evaluated (from krb5.conf(5))
+ * -# flags
+ * -# k5login_dir, configured location of k5login per-user files if any
+ * -# luser, name of the local user account to which principal is attempting to access.
+ * -# principal, the krb5_principal trying to access the luser account
+ * -# result, a krb5_boolean pointer where the plugin will output its result
+ *
+ * @ingroup krb5_support
+ */
 typedef struct krb5plugin_kuserok_ftable_desc {
     int			minor_version;
     krb5_error_code	(*init)(krb5_context, void **);

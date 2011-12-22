@@ -718,7 +718,7 @@ krb5_change_password (krb5_context	context,
  * @param context a Keberos context
  * @param creds The initial kadmin/passwd for the principal or an admin principal
  * @param newpw The new password to set
- * @param targprinc if unset, the default principal is used.
+ * @param targprinc if unset, the client principal from creds is used
  * @param result_code Result code, KRB5_KPASSWD_SUCCESS is when password is changed.
  * @param result_code_string binary message from the server, contains
  * at least the result_code.
@@ -748,7 +748,7 @@ krb5_set_password(krb5_context context,
     krb5_data_zero(result_string);
 
     if (targprinc == NULL) {
-	ret = krb5_get_default_principal(context, &principal);
+	ret = krb5_copy_principal(context, creds->client, &principal);
 	if (ret)
 	    return ret;
     } else

@@ -274,6 +274,7 @@ eval_kgetcred(heim_dict_t o)
 {
     heim_string_t server, ccache;
     krb5_get_creds_opt opt;
+    heim_bool_t nostore;
     krb5_error_code ret;
     krb5_ccache cc = NULL;
     krb5_principal s;
@@ -290,6 +291,10 @@ eval_kgetcred(heim_dict_t o)
     if (ccache == NULL)
 	krb5_errx(kdc_context, 1, "no ccache");
 
+    nostore = heim_dict_get_value(o, HSTR("nostore"));
+    if (nostore == NULL)
+	nostore = HEIM_BOOL_TRUE;
+
     ret = krb5_cc_resolve(kdc_context, heim_string_get_utf8(ccache), &cc);
     if (ret)
 	krb5_err(kdc_context, 1, ret, "krb5_cc_resolve");
@@ -301,6 +306,9 @@ eval_kgetcred(heim_dict_t o)
     ret = krb5_get_creds_opt_alloc(kdc_context, &opt);
     if (ret)
 	krb5_err(kdc_context, 1, ret, "krb5_get_creds_opt_alloc");
+
+    if (heim_bool_val(nostore))
+	krb5_get_creds_opt_add_options(kdc_context, opt, KRB5_GC_NO_STORE);
 
     ret = krb5_get_creds(kdc_context, opt, cc, s, &out);
     if (ret)

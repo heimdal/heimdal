@@ -94,6 +94,7 @@ libroken_la_OBJS =			\
 	$(OBJ)\strerror_r.obj		\
 	$(OBJ)\strlcat.obj		\
 	$(OBJ)\strlcpy.obj		\
+	$(OBJ)\strndup.obj		\
 	$(OBJ)\strpool.obj		\
 	$(OBJ)\strptime.obj		\
 	$(OBJ)\strsep.obj		\

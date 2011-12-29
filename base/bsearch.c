@@ -33,6 +33,9 @@
 
 #include <sys/types.h>
 #include <sys/stat.h>
+#ifdef HAVE_IO_H
+#include <io.h>
+#endif
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
@@ -75,8 +78,8 @@
  *
  * bsearch_common() contains the common text block binary search code.
  *
- * __bsearch_text() is the interface for searching in-core text.
- * __bsearch_file() is the interface for block-wise searching files.
+ * _bsearch_text() is the interface for searching in-core text.
+ * _bsearch_file() is the interface for block-wise searching files.
  */
 
 struct bsearch_file_handle {
@@ -104,7 +107,7 @@ find_line(const char *buf, size_t i, size_t right)
     return NULL;
 }
 
-/**
+/*
  * Common routine for binary searching text in core.
  *
  * Perform a binary search of a char array containing a block from a
@@ -150,7 +153,7 @@ bsearch_common(const char *buf, size_t sz, const char *key,
     const char *linep;
     size_t key_start, key_len; /* key string in buf */
     size_t val_start, val_len; /* value string in buf */
-    int key_cmp;
+    int key_cmp = -1;
     size_t k;
     size_t l;    /* left side of buffer for binary search */
     size_t r;    /* right side of buffer for binary search */
@@ -289,7 +292,7 @@ bsearch_common(const char *buf, size_t sz, const char *key,
     return ret;
 }
 
-/**
+/*
  * Binary search a char array containing sorted text records separated
  * by new-lines (or CRLF).  Each record consists of a key and an
  * optional value following the key, separated from the key by unquoted
@@ -315,7 +318,7 @@ bsearch_common(const char *buf, size_t sz, const char *key,
  *           needed for the search (useful for benchmarking)
  */
 int
-__bsearch_text(const char *buf, size_t buf_sz, const char *key,
+_bsearch_text(const char *buf, size_t buf_sz, const char *key,
 	       char **value, size_t *location, size_t *loops)
 {
     return bsearch_common(buf, buf_sz, key, 1, value, location, NULL, loops);
@@ -323,7 +326,7 @@ __bsearch_text(const char *buf, size_t buf_sz, const char *key,
 
 #define MAX_BLOCK_SIZE (1024 * 1024)
 #define DEFAULT_MAX_FILE_SIZE (1024 * 1024)
-/**
+/*
  * Open a file for binary searching.  The file will be read in entirely
  * if it is smaller than @max_sz, else a cache of @max_sz bytes will be
  * allocated.
@@ -339,14 +342,14 @@ __bsearch_text(const char *buf, size_t buf_sz, const char *key,
  * 
  * Outputs:
  *
- * @bfh     Handle for use with __bsearch_file() and __bsearch_file_close()
+ * @bfh     Handle for use with _bsearch_file() and _bsearch_file_close()
  * @reads   Number of reads performed
  */
 int
-__bsearch_file_open(const char *fname, size_t max_sz, size_t page_sz,
+_bsearch_file_open(const char *fname, size_t max_sz, size_t page_sz,
 		    bsearch_file_handle *bfh, size_t *reads)
 {
-    bsearch_file_handle new_bfh;
+    bsearch_file_handle new_bfh = NULL;
     struct stat st;
     size_t i;
     int fd;
@@ -469,12 +472,12 @@ err:
     return ret;
 }
 
-/**
+/*
  * Indicate whether the given binary search file handle will be searched
  * with block-wise method.
  */
 void
-__bsearch_file_info(bsearch_file_handle bfh,
+_bsearch_file_info(bsearch_file_handle bfh,
 		    size_t *page_sz, size_t *max_sz, int *blockwise)
 {
     if (page_sz)
@@ -485,7 +488,7 @@ __bsearch_file_info(bsearch_file_handle bfh,
 	*blockwise = (bfh->file_sz != bfh->cache_sz);
 }
 
-/**
+/*
  * Close the given binary file search handle.
  *
  * Inputs:
@@ -493,7 +496,7 @@ __bsearch_file_info(bsearch_file_handle bfh,
  * @bfh Pointer to variable containing handle to close.
  */
 void
-__bsearch_file_close(bsearch_file_handle *bfh)
+_bsearch_file_close(bsearch_file_handle *bfh)
 {
     if (!*bfh)
 	return;
@@ -507,7 +510,7 @@ __bsearch_file_close(bsearch_file_handle *bfh)
     *bfh = NULL;
 }
 
-/**
+/*
  * Private function to get a page from a cache.  The cache is a char
  * array of 2^n - 1 double-size page worth of bytes, where n is the
  * number of tree levels that the cache stores.  The cache can be
@@ -567,7 +570,7 @@ get_page_from_cache(bsearch_file_handle bfh, size_t level, size_t page_idx,
     return 1;
 }
 
-/**
+/*
  * Private function to read a page of @page_sz from @fd at offset @off
  * into @buf, outputing the number of bytes read, which will be the same
  * as @page_sz unless the page being read is the last page, in which
@@ -646,7 +649,7 @@ read_page(bsearch_file_handle bfh, size_t level, size_t page_idx, size_t page,
     return 0;
 }
 
-/**
+/*
  * Perform a binary search of a file where each line is a record (LF and
  * CRLF supported).  Each record consists of a key followed by an
  * optional value separated from the key by whitespace.  Whitespace can
@@ -685,7 +688,7 @@ read_page(bsearch_file_handle bfh, size_t level, size_t page_idx, size_t page,
  *               (useful for confirming logarithmic performance)
  */
 int
-__bsearch_file(bsearch_file_handle bfh, const char *key,
+_bsearch_file(bsearch_file_handle bfh, const char *key,
 	       char **value, size_t *location, size_t *loops, size_t *reads)
 {
     int ret;
@@ -707,7 +710,7 @@ __bsearch_file(bsearch_file_handle bfh, const char *key,
 
     /* If whole file is in memory then search that and we're done */
     if (bfh->file_sz == bfh->cache_sz)
-	return __bsearch_text(bfh->cache, bfh->cache_sz, key, value, location, loops);
+	return _bsearch_text(bfh->cache, bfh->cache_sz, key, value, location, loops);
 
     /* Else block-wise binary search */
 
@@ -794,3 +797,89 @@ __bsearch_file(bsearch_file_handle bfh, const char *key,
     return -1;
 }
 
+
+static int
+stdb_open(void *plug, const char *dbtype, const char *dbname,
+	     heim_dict_t options, void **db, heim_error_t *error)
+{
+    bsearch_file_handle bfh;
+    char *p;
+    int ret;
+
+    if (error)
+	*error = NULL;
+    if (dbname == NULL || *dbname == '\0') {
+	if (error)
+	    *error = heim_error_create(EINVAL,
+				       N_("DB name required for sorted-text DB "
+					  "plugin", ""));
+	return EINVAL;
+    }
+    p = strrchr(dbname, '.');
+    if (p == NULL || strcmp(p, ".txt") != 0) {
+	if (error)
+	    *error = heim_error_create(ENOTSUP,
+				       N_("Text file (name ending in .txt) "
+				       "required for sorted-text DB plugin",
+				       ""));
+	return ENOTSUP;
+    }
+
+    ret = _bsearch_file_open(dbname, 0, 0, &bfh, NULL);
+    if (ret)
+	return ret;
+
+    *db = bfh;
+    return 0;
+}
+
+static int
+stdb_close(void *db, heim_error_t *error)
+{
+    bsearch_file_handle bfh = db;
+
+    if (error)
+	*error = NULL;
+    _bsearch_file_close(&bfh);
+    return 0;
+}
+
+static heim_data_t
+stdb_copy_value(void *db, heim_string_t table, heim_data_t key,
+	       heim_error_t *error)
+{
+    bsearch_file_handle bfh = db;
+    const char *k;
+    char *v;
+    heim_data_t value;
+    int ret;
+
+    if (error)
+	*error = NULL;
+
+    if (table == NULL)
+	table = HSTR("");
+
+    if (table != HSTR(""))
+	return NULL;
+
+    if (heim_get_tid(key) == HEIM_TID_STRING)
+	k = heim_string_get_utf8((heim_string_t)key);
+    else
+	k = (const char *)heim_data_get_ptr(key);
+    ret = _bsearch_file(bfh, k, &v, NULL, NULL, NULL);
+    if (ret != 0) {
+	if (ret > 0 && error)
+	    *error = heim_error_create(ret, "%s", strerror(ret));
+	return NULL;
+    }
+    value = heim_data_create(v, strlen(v));
+    free(v);
+    /* XXX Handle ENOMEM */
+    return value;
+}
+
+struct heim_db_type heim_sorted_text_file_dbtype = {
+    1, stdb_open, NULL, stdb_close, NULL, NULL, NULL, NULL, NULL, NULL,
+    stdb_copy_value, NULL, NULL, NULL
+};

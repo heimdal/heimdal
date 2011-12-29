@@ -53,7 +53,7 @@ LDADD = libkrb5.la \
 	$(LIB_hcrypto) \
 	$(top_builddir)/lib/asn1/libasn1.la \
 	$(top_builddir)/lib/wind/libwind.la \
-	$(LIB_roken)
+	$(LIB_heimbase) $(LIB_roken)
 
 if PKINIT
 LIB_pkinit = ../hx509/libhx509.la
@@ -142,6 +142,8 @@ dist_libkrb5_la_SOURCES =			\
 	crypto-rand.c				\
 	doxygen.c				\
 	data.c					\
+	db_plugin.c				\
+	db_plugin.h				\
 	deprecated.c				\
 	digest.c				\
 	eai_to_heim_errno.c			\
@@ -341,7 +343,7 @@ nodist_include_HEADERS = krb5_err.h heim_err.h k524_err.h
 
 # XXX use nobase_include_HEADERS = krb5/locate_plugin.h
 krb5dir = $(includedir)/krb5
-krb5_HEADERS = locate_plugin.h send_to_kdc_plugin.h ccache_plugin.h an2ln_plugin.h
+krb5_HEADERS = locate_plugin.h send_to_kdc_plugin.h ccache_plugin.h an2ln_plugin.h db_plugin.h
 
 build_HEADERZ = \
 	$(krb5_HEADERS) \

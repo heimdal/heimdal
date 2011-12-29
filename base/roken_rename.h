@@ -36,9 +36,6 @@
 #ifndef __heimbase_roken_rename_h__
 #define __heimbase_roken_rename_h__
 
-#ifndef HAVE_SNPRINTF
-#define rk_snprintf heimbase_snprintf
-#endif
 #ifndef HAVE_VSNPRINTF
 #define rk_vsnprintf heimbase_vsnprintf
 #endif
@@ -53,6 +50,12 @@
 #endif
 #ifndef HAVE_VASNPRINTF
 #define rk_vasnprintf heimbase_vasnprintf
+#endif
+#ifndef HAVE_STRDUP
+#define rk_strdup heimbase_strdup
+#endif
+#ifndef HAVE_STRNDUP
+#define rk_strndup heimbase_strndup
 #endif
 
 #endif /* __heimbase_roken_rename_h__ */

@@ -140,13 +140,13 @@ main(int argc, char **argv)
     argc--;
     argv++;
 
-    ret = __bsearch_file_open(fname, max_size, block_size, &bfh, &reads);
+    ret = _bsearch_file_open(fname, max_size, block_size, &bfh, &reads);
     if (ret != 0) {
 	perror("bsearch_file_open");
 	return 1;
     }
 
-    __bsearch_file_info(bfh, &block_size, &max_size, &blockwise);
+    _bsearch_file_info(bfh, &block_size, &max_size, &blockwise);
     if (verbose_flag && blockwise) {
 	fprintf(stderr, "Using block-wise method with block size %lu and "
 		"cache size %lu\n",
@@ -172,11 +172,11 @@ main(int argc, char **argv)
 	    if (!*key)
 		continue;
 	}
-	ret = __bsearch_file(bfh, key, &value, &loc, &loops, &reads);
+	ret = _bsearch_file(bfh, key, &value, &loc, &loops, &reads);
 	if (ret != 0) {
 	    if (ret > 0) {
 		fprintf(stderr, "Error: %s\n", strerror(ret));
-		__bsearch_file_close(&bfh);
+		_bsearch_file_close(&bfh);
 		return 1;
 	    }
 	    if (verbose_flag)
@@ -200,6 +200,6 @@ main(int argc, char **argv)
     }
     if (failures)
 	return 2;
-    __bsearch_file_close(&bfh);
+    _bsearch_file_close(&bfh);
     return 0;
 }

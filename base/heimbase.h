@@ -67,6 +67,8 @@ typedef long heim_base_once_t; /* XXX arch dependant */
 void *	heim_retain(heim_object_t);
 void	heim_release(heim_object_t);
 
+void	heim_show(heim_object_t);
+
 typedef void (*heim_type_dealloc)(void *);
 
 void *
@@ -122,13 +124,13 @@ heim_tid_t heim_array_get_type_id(void);
 typedef void (*heim_array_iterator_f_t)(heim_object_t, void *);
 
 int	heim_array_append_value(heim_array_t, heim_object_t);
-void	heim_array_iterate_f(heim_array_t, heim_array_iterator_f_t, void *);
+void	heim_array_iterate_f(heim_array_t, void *, heim_array_iterator_f_t);
 #ifdef __BLOCKS__
 void	heim_array_iterate(heim_array_t, void (^)(heim_object_t));
 #endif
 size_t	heim_array_get_length(heim_array_t);
 heim_object_t
-	heim_array_copy_value(heim_array_t, size_t);
+	heim_array_get_value(heim_array_t, size_t);
 void	heim_array_delete_value(heim_array_t, size_t);
 #ifdef __BLOCKS__
 void	heim_array_filter(heim_array_t, int (^)(heim_object_t));
@@ -145,14 +147,14 @@ heim_tid_t heim_dict_get_type_id(void);
 
 typedef void (*heim_dict_iterator_f_t)(heim_object_t, heim_object_t, void *);
 
-int	heim_dict_add_value(heim_dict_t, heim_object_t, heim_object_t);
-void	heim_dict_iterate_f(heim_dict_t, heim_dict_iterator_f_t, void *);
+int	heim_dict_set_value(heim_dict_t, heim_object_t, heim_object_t);
+void	heim_dict_iterate_f(heim_dict_t, void *, heim_dict_iterator_f_t);
 #ifdef __BLOCKS__
 void	heim_dict_iterate(heim_dict_t, void (^)(heim_object_t, heim_object_t));
 #endif
 
 heim_object_t
-	heim_dict_copy_value(heim_dict_t, heim_object_t);
+	heim_dict_get_value(heim_dict_t, heim_object_t);
 void	heim_dict_delete_key(heim_dict_t, heim_object_t);
 
 /*
@@ -162,8 +164,12 @@ void	heim_dict_delete_key(heim_dict_t, heim_object_t);
 typedef struct heim_string_data *heim_string_t;
 
 heim_string_t heim_string_create(const char *);
+heim_string_t heim_string_create_with_bytes(const void *, size_t);
 heim_tid_t heim_string_get_type_id(void);
 const char * heim_string_get_utf8(heim_string_t);
+
+#define HSTR(_str) (__heim_string_constant("" _str ""))
+heim_string_t __heim_string_constant(const char *);
 
 /*
  * Number
@@ -202,5 +208,49 @@ heim_string_t heim_error_copy_string(heim_error_t);
 int heim_error_get_code(heim_error_t);
 
 heim_error_t heim_error_append(heim_error_t, heim_error_t);
+
+/*
+ * JSON
+ */
+heim_object_t heim_json_create(const char *, heim_error_t *);
+heim_object_t heim_json_create_with_bytes(const void *, size_t, heim_error_t *);
+
+/*
+ *
+ */
+
+#ifndef __HEIM_OCTET_STRING__
+#define __HEIM_OCTET_STRING__
+typedef struct heim_octet_string {
+    size_t length;
+    void *data;
+} heim_octet_string;
+#endif
+
+typedef struct heim_data * heim_data_t;
+
+heim_data_t	heim_data_create(const void *, size_t);
+heim_tid_t	heim_data_get_type_id(void);
+const heim_octet_string *
+		heim_data_get_data(heim_data_t);
+const void *	heim_data_get_ptr(heim_data_t);
+size_t		heim_data_get_length(heim_data_t);
+
+
+/*
+ * Binary search.
+ *
+ * Note: these are private until integrated into the heimbase object system.
+ */
+typedef struct bsearch_file_handle *bsearch_file_handle;
+int __bsearch_text(const char *buf, size_t buf_sz, const char *key,
+		   char **value, size_t *location, size_t *loops);
+int __bsearch_file_open(const char *fname, size_t max_sz, size_t page_sz,
+			bsearch_file_handle *bfh, size_t *reads);
+int __bsearch_file(bsearch_file_handle bfh, const char *key, char **value,
+		   size_t *location, size_t *loops, size_t *reads);
+void __bsearch_file_info(bsearch_file_handle bfh, size_t *page_sz,
+			 size_t *max_sz, int *blockwise);
+void __bsearch_file_close(bsearch_file_handle *bfh);
 
 #endif /* HEIM_BASE_H */

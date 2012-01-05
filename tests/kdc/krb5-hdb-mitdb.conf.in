@@ -1,7 +1,7 @@
 [libdefaults]
 	default_realm = TEST.H5L.SE TEST2.H5L.SE
 	no-addresses = TRUE
-	allow_weak_crypto = @WEAK@
+	allow_weak_crypto = TRUE
 
 [appdefaults]
 	pkinit_anchors = FILE:@srcdir@/../../lib/hx509/data/ca.crt
@@ -37,9 +37,9 @@
 
 	database = {
 		label = { 
-			dbname = mit-db:@objdir@/hdb-mitdb
+			dbname = mit-db:@srcdir@/hdb-mitdb
 			realm = TEST.H5L.SE
-			mkey_file = @objdir@/hdb-mitdb.mkey
+			mkey_file = @srcdir@/hdb-mitdb.mkey
 			acl_file = @srcdir@/heimdal.acl
 			log_file = @objdir@/current@kdc@.log
 		}

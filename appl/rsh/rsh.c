@@ -167,20 +167,23 @@ krb5_forward_cred (krb5_auth_context auth_context,
     krb5_kdc_flags  flags;
     krb5_data       out_data;
     krb5_principal  principal;
+    const char *estr;
 
     memset (&creds, 0, sizeof(creds));
 
     ret = krb5_cc_default (context, &ccache);
     if (ret) {
-	warnx ("could not forward creds: krb5_cc_default: %s",
-	       krb5_get_err_text (context, ret));
+	estr = krb5_get_error_message(context, ret);
+	warnx ("could not forward creds: krb5_cc_default: %s", estr);
+	krb5_free_error_message(context, estr);
 	return 1;
     }
 
     ret = krb5_cc_get_principal (context, ccache, &principal);
     if (ret) {
-	warnx ("could not forward creds: krb5_cc_get_principal: %s",
-	       krb5_get_err_text (context, ret));
+	estr = krb5_get_error_message(context, ret);
+	warnx ("could not forward creds: krb5_cc_get_principal: %s", estr);
+	krb5_free_error_message(context, estr);
 	return 1;
     }
 
@@ -194,8 +197,9 @@ krb5_forward_cred (krb5_auth_context auth_context,
 			      NULL);
 
     if (ret) {
-	warnx ("could not forward creds: krb5_make_principal: %s",
-	       krb5_get_err_text (context, ret));
+	estr = krb5_get_error_message(context, ret);
+	warnx ("could not forward creds: krb5_make_principal: %s", estr);
+	krb5_free_error_message(context, estr);
 	return 1;
     }
 
@@ -213,8 +217,9 @@ krb5_forward_cred (krb5_auth_context auth_context,
 				    &creds,
 				    &out_data);
     if (ret) {
-	warnx ("could not forward creds: krb5_get_forwarded_creds: %s",
-	       krb5_get_err_text (context, ret));
+	estr = krb5_get_error_message(context, ret);
+	warnx ("could not forward creds: krb5_get_forwarded_creds: %s", estr);
+	krb5_free_error_message(context, estr);
 	return 1;
     }
 
@@ -223,9 +228,11 @@ krb5_forward_cred (krb5_auth_context auth_context,
 			      &out_data);
     krb5_data_free (&out_data);
 
-    if (ret)
-	warnx ("could not forward creds: krb5_write_message: %s",
-	       krb5_get_err_text (context, ret));
+    if (ret) {
+	estr = krb5_get_error_message(context, ret);
+	warnx ("could not forward creds: krb5_write_message: %s", estr);
+	krb5_free_error_message(context, estr);
+    }
     return 0;
 }
 
@@ -248,6 +255,7 @@ send_krb5_auth(int s,
     krb5_auth_context auth_context = NULL;
     const char *protocol_string = NULL;
     krb5_flags ap_opts;
+    const char *estr;
     char *str;
 
     status = krb5_sname_to_principal(context,
@@ -256,7 +264,9 @@ send_krb5_auth(int s,
 				     KRB5_NT_SRV_HST,
 				     &server);
     if (status) {
-	warnx ("%s: %s", hostname, krb5_get_err_text(context, status));
+	estr = krb5_get_error_message(context, status);
+	warnx ("%s: %s", hostname, estr);
+	krb5_free_error_message(context, estr);
 	return 1;
     }
 
@@ -341,7 +351,9 @@ send_krb5_auth(int s,
     if(keyblock == NULL)
 	status = krb5_auth_con_getkey (context, auth_context, &keyblock);
     if (status) {
-	warnx ("krb5_auth_con_getkey: %s", krb5_get_err_text(context, status));
+	estr = krb5_get_error_message(context, status);
+	warnx ("krb5_auth_con_getkey: %s", estr);
+	krb5_free_error_message(context, estr);
 	return 1;
     }
 
@@ -349,14 +361,17 @@ send_krb5_auth(int s,
 					     auth_context,
 					     &s);
     if (status) {
-        warnx("krb5_auth_con_setaddrs_from_fd: %s",
-	      krb5_get_err_text(context, status));
+	estr = krb5_get_error_message(context, status);
+        warnx("krb5_auth_con_setaddrs_from_fd: %s", estr);
+	krb5_free_error_message(context, estr);
         return(1);
     }
 
     status = krb5_crypto_init(context, keyblock, 0, &crypto);
     if(status) {
-	warnx ("krb5_crypto_init: %s", krb5_get_err_text(context, status));
+	estr = krb5_get_error_message(context, status);
+	warnx ("krb5_crypto_init: %s", estr);
+	krb5_free_error_message(context, estr);
 	return 1;
     }
 

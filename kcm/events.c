@@ -398,6 +398,7 @@ kcm_run_events(krb5_context context, time_t now)
 {
     krb5_error_code ret;
     kcm_event **e;
+    const char *estr;
 
     HEIMDAL_MUTEX_lock(&events_mutex);
 
@@ -415,14 +416,18 @@ kcm_run_events(krb5_context context, time_t now)
 	if (now >= (*e)->fire_time) {
 	    ret = kcm_fire_event(context, e);
 	    if (ret) {
+		estr = krb5_get_error_message(context, ret);
 		kcm_log(1, "Could not fire event for cache %s: %s",
-			(*e)->ccache->name, krb5_get_err_text(context, ret));
+			(*e)->ccache->name, estr);
+		krb5_free_error_message(context, estr);
 	    }
 	} else if ((*e)->expire_time && now >= (*e)->expire_time) {
 	    ret = kcm_remove_event_internal(context, e);
 	    if (ret) {
+		estr = krb5_get_error_message(context, ret);
 		kcm_log(1, "Could not expire event for cache %s: %s",
-			(*e)->ccache->name, krb5_get_err_text(context, ret));
+			(*e)->ccache->name, estr);
+		krb5_free_error_message(context, estr);
 	    }
 	}
 

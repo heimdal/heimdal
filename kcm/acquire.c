@@ -48,6 +48,7 @@ kcm_ccache_acquire(krb5_context context,
     krb5_get_init_creds_opt *opt = NULL;
     krb5_ccache_data ccdata;
     char *in_tkt_service = NULL;
+    const char *estr;
 
     memset(&cred, 0, sizeof(cred));
 
@@ -77,8 +78,10 @@ kcm_ccache_acquire(krb5_context context,
     if (ccache->server != NULL) {
 	ret = krb5_unparse_name(context, ccache->server, &in_tkt_service);
 	if (ret) {
+	    estr = krb5_get_error_message(context, ret);
 	    kcm_log(0, "Failed to unparse service principal name for cache %s: %s",
-		    ccache->name, krb5_get_err_text(context, ret));
+		    ccache->name, estr);
+	    krb5_free_error_message(context, estr);
 	    return ret;
 	}
     }
@@ -114,8 +117,10 @@ kcm_ccache_acquire(krb5_context context,
     }
 
     if (ret) {
+	estr = krb5_get_error_message(context, ret);
 	kcm_log(0, "Failed to acquire credentials for cache %s: %s",
-		ccache->name, krb5_get_err_text(context, ret));
+		ccache->name, estr);
+	krb5_free_error_message(context, estr);
 	if (in_tkt_service != NULL)
 	    free(in_tkt_service);
 	goto out;
@@ -129,8 +134,10 @@ kcm_ccache_acquire(krb5_context context,
 
     ret = kcm_ccache_store_cred_internal(context, ccache, &cred, 0, credp);
     if (ret) {
+	estr = krb5_get_error_message(context, ret);
 	kcm_log(0, "Failed to store credentials for cache %s: %s",
-		ccache->name, krb5_get_err_text(context, ret));
+		ccache->name, estr);
+	krb5_free_error_message(context, estr);
 	krb5_free_cred_contents(context, &cred);
 	goto out;
     }

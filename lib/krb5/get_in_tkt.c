@@ -31,6 +31,8 @@
  * SUCH DAMAGE.
  */
 
+#define KRB5_DEPRECATED_FUNCTION(x)
+
 #include "krb5_locl.h"
 
 #ifndef HEIMDAL_SMALLER
@@ -113,7 +115,7 @@ add_padata(krb5_context context,
     if (!enctypes) {
 	enctypes = context->etypes;
 	netypes = 0;
-	for (ep = enctypes; *ep != ETYPE_NULL; ep++)
+	for (ep = enctypes; *ep != (krb5_enctype)ETYPE_NULL; ep++)
 	    netypes++;
     }
     pa2 = realloc (md->val, (md->len + netypes) * sizeof(*md->val));
@@ -510,6 +512,7 @@ krb5_get_in_cred(krb5_context context,
 				   NULL,
 				   nonce,
 				   flags,
+				   NULL,
 				   decrypt_proc,
 				   decryptarg);
     }

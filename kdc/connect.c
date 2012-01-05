@@ -33,20 +33,6 @@
 
 #include "kdc_locl.h"
 
-/* Should we enable the HTTP hack? */
-int enable_http = -1;
-
-/* Log over requests to the KDC */
-const char *request_log;
-
-/* A string describing on what ports to listen */
-const char *port_str;
-
-krb5_addresses explicit_addresses;
-
-size_t max_request_udp;
-size_t max_request_tcp;
-
 /*
  * a tuple describing on what to listen
  */

@@ -524,6 +524,7 @@ do_v5 (const char *host,
     krb5_error_code ret;
     krb5_auth_context auth_context = NULL;
     krb5_principal server;
+    const char *estr;
     int s;
 
     s = do_connect (host, port, 1);
@@ -536,8 +537,9 @@ do_v5 (const char *host,
 				   KRB5_NT_SRV_HST,
 				   &server);
     if (ret) {
-	warnx ("krb5_sname_to_principal: %s",
-	       krb5_get_err_text (context, ret));
+	estr = krb5_get_error_message(context, ret);
+	warnx ("krb5_sname_to_principal: %s", estr);
+	krb5_free_error_message(context, estr);
 	return 1;
     }
 
@@ -556,8 +558,9 @@ do_v5 (const char *host,
 			 NULL);
     krb5_free_principal (context, server);
     if (ret) {
-	warnx ("krb5_sendauth: %s",
-	       krb5_get_err_text (context, ret));
+	estr = krb5_get_error_message(context, ret);
+	warnx ("krb5_sendauth: %s", estr);
+	krb5_free_error_message(context, estr);
 	return 1;
     }
     return doit (s, host, user, filename, header_str, leavep, verbose, forkp);

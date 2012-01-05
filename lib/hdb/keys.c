@@ -438,7 +438,7 @@ ks_tuple2str(krb5_context context, int n_ks_tuple,
 	if (n_ks_tuple < 1)
 		return 0;
 
-	if ((ksnames = calloc(n_ks_tuple, sizeof (*ksnames))) == NULL)
+	if ((ksnames = calloc(n_ks_tuple + 1, sizeof (*ksnames))) == NULL)
 		return (errno);
 
 	for (i = 0; i < n_ks_tuple; i++) {
@@ -458,8 +458,9 @@ ks_tuple2str(krb5_context context, int n_ks_tuple,
 	    free(sname);
 	}
 
+	ksnames[i] = NULL;
 	*ks_tuple_strs = ksnames;
-	rc = 0;
+	return 0;
 
 out:
 	for (i = 0; i < n_ks_tuple; i++)
@@ -476,7 +477,7 @@ out:
 
 krb5_error_code
 hdb_generate_key_set(krb5_context context, krb5_principal principal,
-		     int n_ks_tuple, krb5_key_salt_tuple *ks_tuple,
+		     krb5_key_salt_tuple *ks_tuple, int n_ks_tuple,
 		     Key **ret_key_set, size_t *nkeyset, int no_salt)
 {
     char **ktypes = NULL;
@@ -485,6 +486,7 @@ hdb_generate_key_set(krb5_context context, krb5_principal principal,
     Key *k, *key_set;
     size_t i, j;
     char **ks_tuple_strs;
+    char **config_ktypes = NULL;
     static const char *default_keytypes[] = {
 	"aes256-cts-hmac-sha1-96:pw-salt",
 	"des3-cbc-sha1:pw-salt",
@@ -495,9 +497,12 @@ hdb_generate_key_set(krb5_context context, krb5_principal principal,
     if ((ret = ks_tuple2str(context, n_ks_tuple, ks_tuple, &ks_tuple_strs)))
 	    return ret;
 
-    if (ks_tuple_strs == NULL)
-	ktypes = krb5_config_get_strings(context, NULL, "kadmin",
-					 "default_keys", NULL);
+    ktypes = ks_tuple_strs;
+    if (ktypes == NULL) {
+	config_ktypes = krb5_config_get_strings(context, NULL, "kadmin",
+						"default_keys", NULL);
+	ktypes = config_ktypes;
+    }
     if (ktypes == NULL)
 	ktypes = (char **)(intptr_t)default_keytypes;
 
@@ -567,8 +572,12 @@ hdb_generate_key_set(krb5_context context, krb5_principal principal,
     *ret_key_set = key_set;
 
  out:
-    if (ktypes != (char **)(intptr_t)default_keytypes)
-	krb5_config_free_strings(ktypes);
+    if (config_ktypes != NULL)
+	krb5_config_free_strings(config_ktypes);
+
+    for(kp = ks_tuple_strs; kp && *kp; kp++)
+	free(kp);
+    free(ks_tuple_strs);
 
     if (ret) {
 	krb5_warn(context, ret,
@@ -591,12 +600,13 @@ krb5_error_code
 hdb_generate_key_set_password(krb5_context context,
 			      krb5_principal principal,
 			      const char *password,
+			      krb5_key_salt_tuple *ks_tuple, int n_ks_tuple,
 			      Key **keys, size_t *num_keys)
 {
     krb5_error_code ret;
     size_t i;
 
-    ret = hdb_generate_key_set(context, principal, 0, NULL,
+    ret = hdb_generate_key_set(context, principal, ks_tuple, n_ks_tuple,
 				keys, num_keys, 0);
     if (ret)
 	return ret;

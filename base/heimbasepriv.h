@@ -55,6 +55,7 @@ enum {
     HEIM_TID_STRING = 131,
     HEIM_TID_AUTORELEASE = 132,
     HEIM_TID_ERROR = 133,
+    HEIM_TID_DATA = 134,
     HEIM_TID_USER = 255
 
 };
@@ -84,6 +85,9 @@ _heim_alloc_object(heim_type_t type, size_t size);
 
 heim_tid_t
 _heim_type_get_tid(heim_type_t type);
+
+void
+_heim_make_permanent(heim_object_t ptr);
 
 /* tagged tid */
 extern struct heim_type_data _heim_null_object;

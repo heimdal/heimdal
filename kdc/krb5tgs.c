@@ -139,7 +139,7 @@ _kdc_add_KRB5SignedPath(krb5_context context,
 
     {
 	Key *key;
-	ret = hdb_enctype2key(context, &krbtgt->entry, enctype, &key);
+	ret = hdb_enctype2key(context, &krbtgt->entry, NULL, enctype, &key);
 	if (ret == 0)
 	    ret = krb5_crypto_init(context, &key->key, 0, &crypto);
 	if (ret) {
@@ -226,7 +226,8 @@ check_KRB5SignedPath(krb5_context context,
 
 	{
 	    Key *key;
-	    ret = hdb_enctype2key(context, &krbtgt->entry, sp.etype, &key);
+	    ret = hdb_enctype2key(context, &krbtgt->entry, NULL, /* XXX use correct kvno! */
+				  sp.etype, &key);
 	    if (ret == 0)
 		ret = krb5_crypto_init(context, &key->key, 0, &crypto);
 	    if (ret) {
@@ -987,7 +988,7 @@ tgs_make_reply(krb5_context context,
        CAST session key. Should the DES3 etype be added to the
        etype list, even if we don't want a session key with
        DES3? */
-    ret = _kdc_encode_reply(context, config,
+    ret = _kdc_encode_reply(context, config, NULL, 0,
 			    &rep, &et, &ek, serverkey->keytype,
 			    kvno,
 			    serverkey, 0, replykey, rk_is_subkey,
@@ -1156,6 +1157,10 @@ tgs_parse_request(krb5_context context,
     krb5_flags ap_req_options;
     krb5_flags verify_ap_req_flags;
     krb5_crypto crypto;
+    krb5uint32 krbtgt_kvno;     /* kvno used for the PA-TGS-REQ AP-REQ Ticket */
+    krb5uint32 krbtgt_kvno_try;
+    int kvno_search_tries = 4;  /* number of kvnos to try when tkt_vno == 0 */
+    const Keys *krbtgt_keys;/* keyset for TGT tkt_vno */
     Key *tkey;
     krb5_keyblock *subkey = NULL;
     unsigned usage;
@@ -1186,20 +1191,52 @@ tgs_parse_request(krb5_context context,
 				       ap_req.ticket.sname,
 				       ap_req.ticket.realm);
 
-    ret = _kdc_db_fetch(context, config, princ, HDB_F_GET_KRBTGT, ap_req.ticket.enc_part.kvno, NULL, krbtgt);
+    krbtgt_kvno = ap_req.ticket.enc_part.kvno ? *ap_req.ticket.enc_part.kvno : 0;
+    ret = _kdc_db_fetch(context, config, princ, HDB_F_GET_KRBTGT,
+			&krbtgt_kvno, NULL, krbtgt);
+    krbtgt_kvno_try = krbtgt_kvno ? krbtgt_kvno : (*krbtgt)->entry.kvno;
 
-    if(ret == HDB_ERR_NOT_FOUND_HERE) {
+    if (ret == HDB_ERR_NOT_FOUND_HERE) {
+	/* XXX Factor out this unparsing of the same princ all over */
 	char *p;
 	ret = krb5_unparse_name(context, princ, &p);
 	if (ret != 0)
 	    p = failed;
 	krb5_free_principal(context, princ);
-	kdc_log(context, config, 5, "Ticket-granting ticket account %s does not have secrets at this KDC, need to proxy", p);
+	kdc_log(context, config, 5,
+		"Ticket-granting ticket account %s does not have secrets at "
+		"this KDC, need to proxy", p);
 	if (ret == 0)
 	    free(p);
 	ret = HDB_ERR_NOT_FOUND_HERE;
 	goto out;
-    } else if(ret){
+    } else if (ret == HDB_ERR_KVNO_NOT_FOUND) {
+	char *p;
+	ret = krb5_unparse_name(context, princ, &p);
+	if (ret != 0)
+	    p = failed;
+	krb5_free_principal(context, princ);
+	kdc_log(context, config, 5,
+		"Ticket-granting ticket account %s does not have keys for "
+		"kvno %d at this KDC", p, krbtgt_kvno);
+	if (ret == 0)
+	    free(p);
+	ret = HDB_ERR_KVNO_NOT_FOUND;
+	goto out;
+    } else if (ret == HDB_ERR_NO_MKEY) {
+	char *p;
+	ret = krb5_unparse_name(context, princ, &p);
+	if (ret != 0)
+	    p = failed;
+	krb5_free_principal(context, princ);
+	kdc_log(context, config, 5,
+		"Missing master key for decrypting keys for ticket-granting "
+		"ticket account %s with kvno %d at this KDC", p, krbtgt_kvno);
+	if (ret == 0)
+	    free(p);
+	ret = HDB_ERR_KVNO_NOT_FOUND;
+	goto out;
+    } else if (ret) {
 	const char *msg = krb5_get_error_message(context, ret);
 	char *p;
 	ret = krb5_unparse_name(context, princ, &p);
@@ -1215,30 +1252,17 @@ tgs_parse_request(krb5_context context,
 	goto out;
     }
 
-    if(ap_req.ticket.enc_part.kvno &&
-       *ap_req.ticket.enc_part.kvno != (*krbtgt)->entry.kvno){
-	char *p;
-
-	ret = krb5_unparse_name (context, princ, &p);
-	krb5_free_principal(context, princ);
-	if (ret != 0)
-	    p = failed;
-	kdc_log(context, config, 0,
-		"Ticket kvno = %d, DB kvno = %d (%s)",
-		*ap_req.ticket.enc_part.kvno,
-		(*krbtgt)->entry.kvno,
-		p);
-	if (ret == 0)
-	    free (p);
-	ret = KRB5KRB_AP_ERR_BADKEYVER;
-	goto out;
-    }
-
     *krbtgt_etype = ap_req.ticket.enc_part.etype;
 
-    ret = hdb_enctype2key(context, &(*krbtgt)->entry,
+next_kvno:
+    krbtgt_keys = hdb_kvno2keys(context, &(*krbtgt)->entry, krbtgt_kvno_try);
+    ret = hdb_enctype2key(context, &(*krbtgt)->entry, krbtgt_keys,
 			  ap_req.ticket.enc_part.etype, &tkey);
-    if(ret){
+    if (ret && krbtgt_kvno == 0 && kvno_search_tries > 0) {
+	kvno_search_tries--;
+	krbtgt_kvno_try--;
+	goto next_kvno;
+    } else if (ret) {
 	char *str = NULL, *p = NULL;
 
 	krb5_enctype_to_string(context, ap_req.ticket.enc_part.etype, &str);
@@ -1267,6 +1291,11 @@ tgs_parse_request(krb5_context context,
 			      &ap_req_options,
 			      ticket,
 			      KRB5_KU_TGS_REQ_AUTH);
+    if (ret == KRB5KRB_AP_ERR_BAD_INTEGRITY && kvno_search_tries > 0) {
+	kvno_search_tries--;
+	krbtgt_kvno_try--;
+	goto next_kvno;
+    }
 
     krb5_free_principal(context, princ);
     if(ret) {
@@ -1483,8 +1512,8 @@ tgs_build_reply(krb5_context context,
 {
     krb5_error_code ret;
     krb5_principal cp = NULL, sp = NULL, rsp = NULL, tp = NULL, dp = NULL;
-    krb5_principal krbtgt_principal = NULL;
-    char *spn = NULL, *cpn = NULL, *tpn = NULL, *dpn = NULL;
+    krb5_principal krbtgt_out_principal = NULL;
+    char *spn = NULL, *cpn = NULL, *tpn = NULL, *dpn = NULL, *krbtgt_out_n = NULL;
     hdb_entry_ex *server = NULL, *client = NULL, *s4u2self_impersonated_client = NULL;
     HDB *clientdb, *s4u2self_impersonated_clientdb;
     krb5_realm ref_realm = NULL;
@@ -1554,7 +1583,7 @@ tgs_build_reply(krb5_context context,
 		ret = KRB5KDC_ERR_S_PRINCIPAL_UNKNOWN;
 	    goto out;
 	}
-	ret = hdb_enctype2key(context, &uu->entry,
+	ret = hdb_enctype2key(context, &uu->entry, NULL,
 			      t->enc_part.etype, &uukey);
 	if(ret){
 	    _kdc_free_ent(context, uu);
@@ -1700,7 +1729,9 @@ server_lookup:
 	    Key *skey;
 
 	    ret = _kdc_find_etype(context,
-				  config->tgs_use_strongest_session_key, FALSE,
+				  krb5_principal_is_krbtgt(context, sp) ?
+				  config->tgt_use_strongest_session_key :
+				  config->svc_use_strongest_session_key, FALSE,
 				  server, b->etype.val, b->etype.len, &etype,
 				  NULL);
 	    if(ret) {
@@ -1734,7 +1765,7 @@ server_lookup:
      * Validate authoriation data
      */
 
-    ret = hdb_enctype2key(context, &krbtgt->entry,
+    ret = hdb_enctype2key(context, &krbtgt->entry, NULL, /* XXX use the right kvno! */
 			  krbtgt_etype, &tkey_check);
     if(ret) {
 	kdc_log(context, config, 0,
@@ -1753,32 +1784,36 @@ server_lookup:
 	    krb5_principal_get_comp_string(context, krbtgt->entry.principal, 1);
 
 	ret = krb5_make_principal(context,
-				  &krbtgt_principal,
+				  &krbtgt_out_principal,
 				  remote_realm,
 				  KRB5_TGS_NAME,
 				  remote_realm,
 				  NULL);
 	if(ret) {
 	    kdc_log(context, config, 0,
-		    "Failed to generate krbtgt principal");
+		    "Failed to make krbtgt principal name object for "
+		    "authz-data signatures");
+	    goto out;
+	}
+	ret = krb5_unparse_name(context, krbtgt_out_principal, &krbtgt_out_n);
+	if (ret) {
+	    kdc_log(context, config, 0,
+		    "Failed to make krbtgt principal name object for "
+		    "authz-data signatures");
 	    goto out;
 	}
     }
 
-    ret = _kdc_db_fetch(context, config, krbtgt_principal, HDB_F_GET_KRBTGT, NULL, NULL, &krbtgt_out);
-    krb5_free_principal(context, krbtgt_principal);
+    ret = _kdc_db_fetch(context, config, krbtgt_out_principal,
+			HDB_F_GET_KRBTGT, NULL, NULL, &krbtgt_out);
     if (ret) {
-	krb5_error_code ret2;
-	char *ktpn, *ktpn2;
+	char *ktpn = NULL;
 	ret = krb5_unparse_name(context, krbtgt->entry.principal, &ktpn);
-	ret2 = krb5_unparse_name(context, krbtgt_principal, &ktpn2);
 	kdc_log(context, config, 0,
-		"Request with wrong krbtgt: %s, %s not found in our database",
-		(ret == 0) ? ktpn : "<unknown>", (ret2 == 0) ? ktpn2 : "<unknown>");
-	if(ret == 0)
-	    free(ktpn);
-	if(ret2 == 0)
-	    free(ktpn2);
+		"No such principal %s (needed for authz-data signature keys) "
+		"while processing TGS-REQ for service %s with krbtg %s",
+		krbtgt_out_n, spn, (ret == 0) ? ktpn : "<unknown>");
+	free(ktpn);
 	ret = KRB5KRB_AP_ERR_NOT_US;
 	goto out;
     }
@@ -1803,8 +1838,15 @@ server_lookup:
 	goto out;
     }
 
-    ret = hdb_enctype2key(context, &krbtgt_out->entry,
-			  krbtgt_etype, &tkey_sign);
+    ret = _kdc_get_preferred_key(context, config, krbtgt_out, krbtgt_out_n,
+				 NULL, &tkey_sign);
+    if (ret) {
+	kdc_log(context, config, 0,
+		    "Failed to find key for krbtgt PAC signature");
+	goto out;
+    }
+    ret = hdb_enctype2key(context, &krbtgt_out->entry, NULL,
+			  tkey_sign->key.keytype, &tkey_sign);
     if(ret) {
 	kdc_log(context, config, 0,
 		    "Failed to find key for krbtgt PAC signature");
@@ -2054,6 +2096,8 @@ server_lookup:
 	t = &b->additional_tickets->val[0];
 
 	ret = hdb_enctype2key(context, &client->entry,
+			      hdb_kvno2keys(context, &client->entry,
+					    t->enc_part.kvno ? * t->enc_part.kvno : 0),
 			      t->enc_part.etype, &clientkey);
 	if(ret){
 	    ret = KRB5KDC_ERR_ETYPE_NOSUPP; /* XXX */
@@ -2254,7 +2298,7 @@ server_lookup:
 			 client,
 			 cp,
 			 krbtgt_out,
-			 krbtgt_etype,
+			 tkey_sign->key.keytype,
 			 spp,
 			 &rspac,
 			 &enc_pa_data,
@@ -2266,8 +2310,8 @@ out:
 	    free(tpn);
     free(spn);
     free(cpn);
-    if (dpn)
-	free(dpn);
+    free(dpn);
+    free(krbtgt_out_n);
 
     krb5_data_free(&rspac);
     krb5_free_keyblock_contents(context, &sessionkey);
@@ -2282,12 +2326,10 @@ out:
 
     if (tp && tp != cp)
 	krb5_free_principal(context, tp);
-    if (cp)
-	krb5_free_principal(context, cp);
-    if (dp)
-	krb5_free_principal(context, dp);
-    if (sp)
-	krb5_free_principal(context, sp);
+    krb5_free_principal(context, cp);
+    krb5_free_principal(context, dp);
+    krb5_free_principal(context, sp);
+    krb5_free_principal(context, krbtgt_out_principal);
     if (ref_realm)
 	free(ref_realm);
     free_METHOD_DATA(&enc_pa_data);
@@ -2362,6 +2404,14 @@ _kdc_tgs_rep(krb5_context context,
 	goto out;
     }
 
+    {
+	int i = 0;
+	const PA_DATA *pa = _kdc_find_padata(req, &i, KRB5_PADATA_FX_FAST);
+	if (pa)
+	    kdc_log(context, config, 10, "Got TGS FAST request"); 
+    }
+
+
     ret = tgs_build_reply(context,
 			  config,
 			  req,
@@ -2392,17 +2442,22 @@ _kdc_tgs_rep(krb5_context context,
 out:
     if (replykey)
 	krb5_free_keyblock(context, replykey);
+
     if(ret && ret != HDB_ERR_NOT_FOUND_HERE && data->data == NULL){
-	krb5_mk_error(context,
-		      ret,
-		      NULL,
-		      NULL,
-		      NULL,
-		      NULL,
-		      csec,
-		      cusec,
-		      data);
-	ret = 0;
+	/* XXX add fast wrapping on the error */
+	METHOD_DATA error_method = { 0, NULL };
+	
+
+	kdc_log(context, config, 10, "tgs-req: sending error: %d to client", ret);
+	ret = _kdc_fast_mk_error(context, NULL,
+				 &error_method,
+				 NULL,
+				 NULL,
+				 ret, NULL,
+				 NULL, NULL,
+				 csec, cusec,
+				 data);
+	free_METHOD_DATA(&error_method);
     }
     free(csec);
     free(cusec);

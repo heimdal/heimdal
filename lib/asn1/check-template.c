@@ -54,6 +54,44 @@ cmp_dummy (void *a, void *b)
 }
 
 static int
+test_uint64(void)
+{
+    struct test_case tests[] = {
+        { NULL, 3, "\x02\x01\x00", "uint64 0" },
+        { NULL, 7, "\x02\x05\x01\xff\xff\xff\xff", "uint64 1" },
+        { NULL, 7, "\x02\x05\x02\x00\x00\x00\x00", "uint64 2" },
+        { NULL, 9, "\x02\x07\x7f\xff\xff\xff\xff\xff\xff", "uint64 3" },
+        { NULL, 10, "\x02\x08\x00\x80\x00\x00\x00\x00\x00\x00", "uint64 4" },
+        { NULL, 10, "\x02\x08\x7f\xff\xff\xff\xff\xff\xff\xff", "uint64 5" },
+        { NULL, 11, "\x02\x09\x00\xff\xff\xff\xff\xff\xff\xff\xff", "uint64 6" }
+    };
+
+    size_t i;
+    int ret = 0, ntests = sizeof(tests) / sizeof(*tests);
+    TESTuint64 values[] = { 0, 8589934591LL, 8589934592LL,
+			    36028797018963967LL, 36028797018963968LL,
+			    9223372036854775807LL, 18446744073709551615ULL };
+
+    for (i = 0; i < ntests; i++)
+	tests[i].val = &values[i];
+
+    if (sizeof(TESTuint64) != sizeof(uint64_t)) {
+	ret += 1;
+	printf("sizeof(TESTuint64) %d != sizeof(uint64_t) %d\n",
+	       (int)sizeof(TESTuint64), (int)sizeof(uint64_t));
+    }
+
+    ret += generic_test (tests, ntests, sizeof(TESTuint64),
+			 (generic_encode)encode_TESTuint64,
+			 (generic_length)length_TESTuint64,
+			 (generic_decode)decode_TESTuint64,
+			 (generic_free)free_TESTuint64,
+			 cmp_dummy,
+			 NULL);
+    return ret;
+}
+
+static int
 test_seqofseq(void)
 {
     struct test_case tests[] = {
@@ -246,6 +284,7 @@ main(int argc, char **argv)
 {
     int ret = 0;
 
+    ret += test_uint64();
     ret += test_seqofseq();
     ret += test_seqofseq2();
     ret += test_seqof2();

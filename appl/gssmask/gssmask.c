@@ -427,7 +427,6 @@ HandleOP(AcceptContext)
     gss_ctx_id_t ctx;
     gss_cred_id_t deleg_cred = GSS_C_NO_CREDENTIAL;
     gss_buffer_desc input_token, output_token;
-    gss_buffer_t input_token_ptr = GSS_C_NO_BUFFER;
 
     ret32(c, hContext);
     ret32(c, flags);
@@ -440,7 +439,6 @@ HandleOP(AcceptContext)
     if (in_token.length) {
 	input_token.length = in_token.length;
 	input_token.value = in_token.data;
-	input_token_ptr = &input_token;
     } else {
 	input_token.length = 0;
 	input_token.value = NULL;

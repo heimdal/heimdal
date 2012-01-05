@@ -170,10 +170,13 @@ init_generate (const char *filename, const char *base)
 	     "  int negative;\n"
 	     "} heim_integer;\n\n");
     fprintf (headerfile,
+	     "#ifndef __HEIM_OCTET_STRING__\n"
+	     "#define __HEIM_OCTET_STRING__\n"
 	     "typedef struct heim_octet_string {\n"
 	     "  size_t length;\n"
 	     "  void *data;\n"
-	     "} heim_octet_string;\n\n");
+	     "} heim_octet_string;\n"
+	     "#endif\n\n");
     fprintf (headerfile,
 	     "typedef char *heim_general_string;\n\n"
 	     );
@@ -303,7 +306,7 @@ gen_assign_defval(const char *var, struct value *val)
 	fprintf(codefile, "if((%s = strdup(\"%s\")) == NULL)\nreturn ENOMEM;\n", var, val->u.stringvalue);
 	break;
     case integervalue:
-	fprintf(codefile, "%s = %d;\n", var, val->u.integervalue);
+	fprintf(codefile, "%s = %lld;\n", var, (long long)val->u.integervalue);
 	break;
     case booleanvalue:
 	if(val->u.booleanvalue)
@@ -324,7 +327,8 @@ gen_compare_defval(const char *var, struct value *val)
 	fprintf(codefile, "if(strcmp(%s, \"%s\") != 0)\n", var, val->u.stringvalue);
 	break;
     case integervalue:
-	fprintf(codefile, "if(%s != %d)\n", var, val->u.integervalue);
+	fprintf(codefile, "if(%s != %lld)\n", var,
+		(long long)val->u.integervalue);
 	break;
     case booleanvalue:
 	if(val->u.booleanvalue)
@@ -397,8 +401,8 @@ generate_constant (const Symbol *s)
     case booleanvalue:
 	break;
     case integervalue:
-	fprintf (headerfile, "enum { %s = %d };\n\n",
-		 s->gen_name, s->value->u.integervalue);
+	fprintf(headerfile, "enum { %s = %lld };\n\n", s->gen_name,
+		(long long)s->value->u.integervalue);
 	break;
     case nullvalue:
 	break;
@@ -539,9 +543,10 @@ define_asn1 (int level, Type *t)
     case TInteger:
 	if(t->members == NULL) {
             fprintf (headerfile, "INTEGER");
-	    if (t->range)
-		fprintf (headerfile, " (%d..%d)",
-			 t->range->min, t->range->max);
+	    if (t->range) {
+		fprintf(headerfile, " (%lld..%lld)",
+			(long long)t->range->min, (long long)t->range->max);
+	    }
         } else {
 	    Member *m;
             fprintf (headerfile, "INTEGER {\n");
@@ -723,15 +728,18 @@ define_type (int level, const char *name, const char *basename, Type *t, int typ
             fprintf (headerfile, "} %s;\n", name);
 	} else if (t->range == NULL) {
 	    fprintf (headerfile, "heim_integer %s;\n", name);
-	} else if (t->range->min == INT_MIN && t->range->max == INT_MAX) {
+	} else if (t->range->min < INT_MIN && t->range->max <= INT64_MAX) {
+	    fprintf (headerfile, "int64_t %s;\n", name);
+	} else if (t->range->min >= 0 && t->range->max > UINT_MAX) {
+	    fprintf (headerfile, "uint64_t %s;\n", name);
+	} else if (t->range->min >= INT_MIN && t->range->max <= INT_MAX) {
 	    fprintf (headerfile, "int %s;\n", name);
-	} else if (t->range->min == 0 && t->range->max == UINT_MAX) {
+	} else if (t->range->min >= 0 && t->range->max <= UINT_MAX) {
 	    fprintf (headerfile, "unsigned int %s;\n", name);
-	} else if (t->range->min == 0 && t->range->max == INT_MAX) {
-	    fprintf (headerfile, "unsigned int %s;\n", name);
-	} else
-	    errx(1, "%s: unsupported range %d -> %d",
-		 name, t->range->min, t->range->max);
+	} else {
+	    errx(1, "%s: unsupported range %lld -> %lld",
+		 name, (long long)t->range->min, (long long)t->range->max);
+	}
 	break;
     case TBoolean:
 	space(level);
@@ -744,7 +752,7 @@ define_type (int level, const char *name, const char *basename, Type *t, int typ
     case TBitString: {
 	Member *m;
 	Type i;
-	struct range range = { 0, INT_MAX };
+	struct range range = { 0, UINT_MAX };
 
 	i.type = TInteger;
 	i.range = &range;
@@ -843,7 +851,7 @@ define_type (int level, const char *name, const char *basename, Type *t, int typ
     case TSetOf:
     case TSequenceOf: {
 	Type i;
-	struct range range = { 0, INT_MAX };
+	struct range range = { 0, UINT_MAX };
 
 	getnewbasename(&newbasename, typedefp, basename, name);
 
@@ -888,7 +896,7 @@ define_type (int level, const char *name, const char *basename, Type *t, int typ
 	    fprintf(headerfile, "heim_octet_string _save;\n");
 	}
 	space(level + 1);
-	fprintf (headerfile, "enum {\n");
+	fprintf (headerfile, "enum %s_enum {\n", newbasename);
 	m = have_ellipsis(t);
 	if (m) {
 	    space(level + 2);

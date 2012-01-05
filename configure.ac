@@ -16,6 +16,8 @@ AM_PROG_CC_C_O
 AC_PROG_CPP
 AC_PROG_LIBTOOL
 
+m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])
+
 AC_PREFIX_DEFAULT(/usr/heimdal)
 
 test "$sysconfdir" = '${prefix}/etc' && sysconfdir='/etc'
@@ -635,6 +637,7 @@ AC_CONFIG_FILES(Makefile 		\
 	kdc/Makefile			\
 	appl/Makefile			\
 	appl/afsutil/Makefile		\
+	appl/dbutils/Makefile		\
 	appl/ftp/Makefile		\
 	appl/ftp/common/Makefile	\
 	appl/ftp/ftp/Makefile		\

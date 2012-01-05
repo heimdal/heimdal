@@ -145,8 +145,6 @@ proto (int sock, const char *hostname, const char *service)
     OM_uint32 maj_stat, min_stat;
     gss_name_t server;
     gss_buffer_desc name_token;
-    u_char init_buf[4];
-    u_char acct_buf[4];
     gss_OID mech_oid;
     char *str;
 
@@ -201,6 +199,8 @@ proto (int sock, const char *hostname, const char *service)
 
 #if 0
     struct gss_channel_bindings_struct input_chan_bindings;
+    u_char init_buf[4];
+    u_char acct_buf[4];
 
     input_chan_bindings.initiator_addrtype = GSS_C_AF_INET;
     input_chan_bindings.initiator_address.length = 4;

@@ -191,13 +191,11 @@ receive_loop (krb5_context context,
      */
     do {
 	int32_t len, timestamp, tmp;
-	enum kadm_ops op;
 
 	if(krb5_ret_int32 (sp, &vers) != 0)
 	    return;
 	krb5_ret_int32 (sp, &timestamp);
 	krb5_ret_int32 (sp, &tmp);
-	op = tmp;
 	krb5_ret_int32 (sp, &len);
 	if ((uint32_t)vers <= server_context->log_context.version)
 	    krb5_storage_seek(sp, len + 8, SEEK_CUR);

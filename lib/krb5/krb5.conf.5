@@ -260,6 +260,73 @@ If set to "ignore", the framework will ignore any the server input to
 .Xr krb5_rd_req 3,
 this is very useful when the GSS-API server input the
 wrong server name into the gss_accept_sec_context call.
+.It Li k5login_directory = Va directory
+Alternative location for user .k5login files. Tokens in the form of
+%{luser} are expanded to the name of the user whose .k5login file is
+needed. This option is provided for compatibility with MIT krb5
+configuration files.
+.It Li k5login_authoritative = Va boolean
+If true then if a principal is not found in k5login files then
+.Xr krb5_userok 3
+will not fallback on principal to username mapping. This option is
+provided for compatibility with MIT krb5 configuration files.
+.It Li kuserok = Va rule ...
+Specifies
+.Xr krb5_userok 3
+behavior.  If multiple values are given, then
+.Xr krb5_userok 3
+will evaluate them in order until one succeeds or all fail.  Rules are
+implemented by plugins, with three built-in plugins
+described below. Default: USER-K5LOGIN SIMPLE DENY.
+.It Li kuserok = Va DENY
+If set and evaluated then
+.Xr krb5_userok 3
+will deny access to the given username no matter what the principal name
+might be.
+.It Li kuserok = Va SIMPLE
+If set and evaluated then
+.Xr krb5_userok 3
+will use principal to username mapping (see auth_to_local below).  If
+the principal maps to the requested username then access is allowed.
+.It Li kuserok = Va SYSTEM-K5LOGIN[:directory]
+If set and evaluated then
+.Xr krb5_userok 3
+will use k5login files named after the
+.Va luser
+argument to
+.Xr krb5_userok 3
+in the given directory or in
+.Pa /etc/k5login.d/ .
+If a directory is given
+then tokens will be expanded; the %{luser} token will be replaced with
+the
+.Va luser
+argument to
+.Xr krb5_userok 3 .
+K5login files are text files, with each line containing just a principal
+name; principals apearing in a user's k5login file are permitted access
+to the user's account. Note: this rule performs no ownership nor
+permissions checks on k5login files; proper ownership and
+permissions/ACLs are expected due to the system k5login location being a
+system location.
+.It Li kuserok = Va USER-K5LOGIN
+If set and evaluated then
+.Xr krb5_userok 3
+will use
+.Pa ~luser/.k5login
+and
+.Pa ~luser/.k5login.d/* .
+User k5login files and directories must be owned by the user and must
+not have world nor group write permissions.
+.It Li aname2lname-text-db = Va filename
+The named file must be a sorted (in increasing order) text file where
+every line consists of an unparsed principal name optionally followed by
+whitespace and a username.  The aname2lname function will do a binary
+search on this file, if configured, looking for lines that match the
+given principal name, and if found the given username will be used, or,
+if the username is missing, an error will be returned.  If the file
+doesn't exist, or if no matching line is found then other plugins will
+be allowed to run.
 .It Li name_canon_rules = Va rules
 One or more name canonicalization rules.  Each rule consists of one or
 more tokens separated by colon (':').  The first token must be a rule
@@ -352,6 +419,62 @@ See
 .It Li tgs_require_subkey
 a boolan variable that defaults to false.
 Old DCE secd (pre 1.1) might need this to be true.
+.It Li auth_to_local_names = {
+.Bl -tag -width "xxx" -offset indent
+.It Va principal_name = Va username
+The given
+.Va principal_name
+will be mapped to the given
+.Va username
+if the
+.Va REALM
+is a default realm.
+.El
+.It Li }
+.It Li auth_to_local = HEIMDAL_DEFAULT
+Use the Heimdal default principal to username mapping.
+Applies to principals from the
+.Va REALM
+if and only if
+.Va REALM
+is a default realm.
+.It Li auth_to_local = DEFAULT
+Use the MIT default principal to username mapping.
+Applies to principals from the
+.Va REALM
+if and only if
+.Va REALM
+is a default realm.
+.It Li auth_to_local = DB:/path/to/db.txt
+Use a binary search of the given DB.  The DB must be a flat-text
+file sortedf in the "C" locale, with each record being a line
+(separated by either LF or CRLF) consisting of a principal name
+followed by whitespace followed by a username.
+Applies to principals from the
+.Va REALM
+if and only if
+.Va REALM
+is a default realm.
+.It Li auth_to_local = DB:/path/to/db
+Use the given DB, if there's a plugin for it.
+Applies to principals from the
+.Va REALM
+if and only if
+.Va REALM
+is a default realm.
+.It Li auth_to_local = RULE:...
+Use the given rule, if there's a plugin for it.
+Applies to principals from the
+.Va REALM
+if and only if
+.Va REALM
+is a default realm.
+.It Li auth_to_local = NONE
+No additional principal to username mapping is done. Note that
+.Va auth_to_local_names
+and any preceding
+.Va auth_to_local
+rules have precedence.
 .El
 .It Li }
 .El
@@ -432,19 +555,22 @@ Default is the same as
 .Va enable-kerberos4 .
 .It Li enable-http = Va BOOL
 Should the kdc answer kdc-requests over http.
-.It Li as-use-strongest-session-key = Va BOOL
+.It Li tgt-use-strongest-session-key = Va BOOL
 If this is TRUE then the KDC will prefer the strongest key from the
-client's AS-REQ enctype list, that is also supported by the KDC and the
-target principal, for the ticket session key. Else it will prefer the
-first key from the client's AS-REQ enctype list that is also supported
-by the KDC and the target principal. Defaults to TRUE.
+client's AS-REQ or TGS-REQ enctype list for the ticket session key that
+is supported by the KDC and the target principal when the target
+principal is a krbtgt principal.  Else it will prefer the first key from
+the client's AS-REQ enctype list that is also supported by the KDC and
+the target principal. Defaults to TRUE.
+.It Li svc-use-strongest-session-key = Va BOOL
+Like tgt-use-strongest-session-key, but applies to the session key
+enctype of tickets for services other than krbtgt principals. Defaults
+to TRUE.
 .It Li preauth-use-strongest-session-key = Va BOOL
-Like as-use-strongest-session-key, but applies to the session key
-enctype selection for PA-ETYPE-INFO2 (i.e., for password-based
-pre-authentication). Defaults to TRUE.
-.It Li tgs-use-strongest-session-key = Va BOOL
-Like as-use-strongest-session-key, but applies to the session key
-enctype of tickets issued by the TGS. Defaults to TRUE.
+If TRUE then select the strongest possible enctype from the client's
+AS-REQ for PA-ETYPE-INFO2 (i.e., for password-based pre-authentication).
+Else pick the first supported enctype from the client's AS-REQ. Defaults
+to TRUE.
 .It Li use-strongest-server-key = Va BOOL
 If TRUE then the KDC picks, for the ticket encrypted part's key, the
 first supported enctype from the target service principal's hdb entry's

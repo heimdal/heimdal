@@ -74,6 +74,7 @@ int pk_use_enckey	= 0;
 static int canonicalize_flag = 0;
 static int enterprise_flag = 0;
 static int ok_as_delegate_flag = 0;
+static char *fast_armor_cache_string = NULL;
 static int use_referrals_flag = 0;
 static int windows_flag = 0;
 #ifndef NO_NTLM
@@ -186,6 +187,9 @@ static struct getargs args[] = {
 
     { "ok-as-delegate",	0,  arg_flag, &ok_as_delegate_flag,
       NP_("honor ok-as-delegate on tickets", ""), NULL },
+
+    { "fast-armor-cache",	0,  arg_string, &fast_armor_cache_string,
+      NP_("use this credential cache as FAST armor cache", ""), "cache" },
 
     { "use-referrals",	0,  arg_flag, &use_referrals_flag,
       NP_("only use referrals, no dns canalisation", ""), NULL },
@@ -360,6 +364,8 @@ get_new_tickets(krb5_context context,
     const char *renewstr = NULL;
     krb5_enctype *enctype = NULL;
     krb5_ccache tempccache;
+    krb5_keytab kt = NULL;
+    krb5_init_creds_context ctx;
 #ifndef NO_NTLM
     struct ntlm_buf ntlmkey;
     memset(&ntlmkey, 0, sizeof(ntlmkey));
@@ -498,32 +504,43 @@ get_new_tickets(krb5_context context,
 					       etype_str.num_strings);
     }
 
+    ret = krb5_init_creds_init(context, principal, krb5_prompter_posix, NULL, start_time, opt, &ctx);
+    if (ret)
+	krb5_err(context, 1, ret, "krb5_init_creds_init");
+
+    if (server_str) {
+	ret = krb5_init_creds_set_service(context, ctx, server_str);
+	if (ret)
+	    krb5_err(context, 1, ret, "krb5_init_creds_set_service");
+    }
+
+    if (fast_armor_cache_string) {
+	krb5_ccache fastid;
+	
+	ret = krb5_cc_resolve(context, fast_armor_cache_string, &fastid);
+	if (ret)
+	    krb5_err(context, 1, ret, "krb5_cc_resolve(FAST cache)");
+	
+	ret = krb5_init_creds_set_fast_ccache(context, ctx, fastid);
+	if (ret)
+	    krb5_err(context, 1, ret, "krb5_init_creds_set_fast_ccache");
+    }
+
     if(use_keytab || keytab_str) {
-	krb5_keytab kt;
+
 	if(keytab_str)
 	    ret = krb5_kt_resolve(context, keytab_str, &kt);
 	else
 	    ret = krb5_kt_default(context, &kt);
 	if (ret)
-	    krb5_err (context, 1, ret, "resolving keytab");
-	ret = krb5_get_init_creds_keytab (context,
-					  &cred,
-					  principal,
-					  kt,
-					  start_time,
-					  server_str,
-					  opt);
-	krb5_kt_close(context, kt);
+	    krb5_err(context, 1, ret, "resolving keytab");
+
+	ret = krb5_init_creds_set_keytab(context, ctx, kt);
+	if (ret)
+	    krb5_err(context, 1, ret, "krb5_init_creds_set_keytab");
+
     } else if (pk_user_id || ent_user_id || anonymous_flag) {
-	ret = krb5_get_init_creds_password (context,
-					    &cred,
-					    principal,
-					    passwd,
-					    krb5_prompter_posix,
-					    NULL,
-					    start_time,
-					    server_str,
-					    opt);
+
     } else if (!interactive) {
 	krb5_warnx(context, "Not interactive, failed to get initial ticket");
 	krb5_get_init_creds_opt_free(context, opt);
@@ -539,23 +556,20 @@ get_new_tickets(krb5_context context,
 
 	    if (UI_UTIL_read_pw_string(passwd, sizeof(passwd)-1, prompt, 0)){
 		memset(passwd, 0, sizeof(passwd));
-		exit(1);
+		errx(1, "failed to read password");
 	    }
 	    free (prompt);
 	}
 
-
-	ret = krb5_get_init_creds_password (context,
-					    &cred,
-					    principal,
-					    passwd,
-					    krb5_prompter_posix,
-					    NULL,
-					    start_time,
-					    server_str,
-					    opt);
+	if (passwd[0]) {
+	    ret = krb5_init_creds_set_password(context, ctx, passwd);
+	    if (ret)
+		krb5_err(context, 1, ret, "krb5_init_creds_set_password");
+	}
     }
-    krb5_get_init_creds_opt_free(context, opt);
+
+    ret = krb5_init_creds_get(context, ctx);
+
 #ifndef NO_NTLM
     if (ntlm_domain && passwd[0])
 	heim_ntlm_nt_key(passwd, &ntlmkey);
@@ -578,6 +592,8 @@ get_new_tickets(krb5_context context,
     default:
 	krb5_err(context, 1, ret, "krb5_get_init_creds");
     }
+
+    krb5_process_last_request(context, opt, ctx);
 
     if(ticket_life != 0) {
 	if(abs(cred.times.endtime - cred.times.starttime - ticket_life) > 30) {
@@ -603,15 +619,11 @@ get_new_tickets(krb5_context context,
     if (ret)
 	krb5_err (context, 1, ret, "krb5_cc_new_unique");
 
-    ret = krb5_cc_initialize (context, tempccache, cred.client);
+    ret = krb5_init_creds_store(context, ctx, tempccache);
     if (ret)
-	krb5_err (context, 1, ret, "krb5_cc_initialize");
+	krb5_err(context, 1, ret, "krb5_init_creds_store");
 
-    ret = krb5_cc_store_cred (context, tempccache, &cred);
-    if (ret)
-	krb5_err (context, 1, ret, "krb5_cc_store_cred");
-
-    krb5_free_cred_contents (context, &cred);
+    krb5_init_creds_free(context, ctx);
 
     ret = krb5_cc_move(context, tempccache, ccache);
     if (ret)
@@ -640,7 +652,10 @@ get_new_tickets(krb5_context context,
 	krb5_cc_set_config(context, ccache, NULL, "realm-config", &data);
     }
 
+    krb5_get_init_creds_opt_free(context, opt);
 
+    if (kt)			
+	krb5_kt_close(context, kt);
     if (enctype)
 	free(enctype);
 

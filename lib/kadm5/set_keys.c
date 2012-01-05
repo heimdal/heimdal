@@ -42,6 +42,8 @@ RCSID("$Id$");
 kadm5_ret_t
 _kadm5_set_keys(kadm5_server_context *context,
 		hdb_entry *ent,
+		int n_ks_tuple,
+		krb5_key_salt_tuple *ks_tuple,
 		const char *password)
 {
     Key *keys;
@@ -50,7 +52,9 @@ _kadm5_set_keys(kadm5_server_context *context,
 
     ret = hdb_generate_key_set_password(context->context,
 					ent->principal,
-					password, &keys, &num_keys);
+					password,
+					ks_tuple, n_ks_tuple,
+					&keys, &num_keys);
     if (ret)
 	return ret;
 
@@ -124,6 +128,7 @@ _kadm5_set_keys2(kadm5_server_context *context,
 
     memset(&keys, 0, sizeof (keys));
     memset(&hkset, 0, sizeof (hkset)); /* set set_time */
+    memset(&ext, 0, sizeof (ext));
     ext.data.element = choice_HDB_extension_data_hist_keys;
     memset(hist_keys, 0, sizeof (*hist_keys));
 
@@ -235,7 +240,7 @@ _kadm5_set_keys2(kadm5_server_context *context,
 	if (ret)
 	    goto out;
     }
-    
+ 
     /*
      * A structure copy is more efficient here than this would be:
      *
@@ -335,7 +340,7 @@ _kadm5_set_keys_randomly (kadm5_server_context *context,
    Key *keys;
 
    ret = hdb_generate_key_set(context->context, ent->principal,
-			      n_ks_tuple, ks_tuple, &keys, &num_keys, 1);
+			      ks_tuple, n_ks_tuple, &keys, &num_keys, 1);
    if (ret)
 	return ret;
 

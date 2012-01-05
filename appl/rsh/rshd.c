@@ -162,6 +162,7 @@ save_krb5_creds (int s,
 {
     int ret;
     krb5_data remote_cred;
+    const char *estr;
 
     krb5_data_zero (&remote_cred);
     ret= krb5_read_message (context, (void *)&s, &remote_cred);
@@ -180,9 +181,11 @@ save_krb5_creds (int s,
 
     krb5_cc_initialize(context,ccache,client);
     ret = krb5_rd_cred2(context, auth_context, ccache, &remote_cred);
-    if(ret != 0)
-	syslog(LOG_INFO|LOG_AUTH,
-	       "reading creds: %s", krb5_get_err_text(context, ret));
+    if(ret != 0) {
+	estr = krb5_get_error_message(context, ret);
+	syslog(LOG_INFO|LOG_AUTH, "reading creds: %s", estr);
+	krb5_free_error_message(context, estr);
+    }
     krb5_data_free (&remote_cred);
     if (ret)
 	return 0;
@@ -193,25 +196,24 @@ static void
 krb5_start_session (void)
 {
     krb5_error_code ret;
-    char *estr;
+    const char *estr;
 
     ret = krb5_cc_resolve (context, tkfile, &ccache2);
     if (ret) {
-	estr = krb5_get_error_string(context);
+	estr = krb5_get_error_message(context, ret);
 	syslog(LOG_WARNING, "resolve cred cache %s: %s",
 	       tkfile,
-	       estr ? estr : krb5_get_err_text(context, ret));
-	free(estr);
+	       estr ? estr : "could not get error string");
+	krb5_free_error_message(context, estr);
 	krb5_cc_destroy(context, ccache);
 	return;
     }
 
     ret = krb5_cc_copy_cache (context, ccache, ccache2);
     if (ret) {
-	estr = krb5_get_error_string(context);
-	syslog(LOG_WARNING, "storing credentials: %s",
-	       estr ? estr : krb5_get_err_text(context, ret));
-	free(estr);
+	estr = krb5_get_error_message(context, ret);
+	syslog(LOG_WARNING, "storing credentials: %s", estr);
+	krb5_free_error_message(context, estr);
 	krb5_cc_destroy(context, ccache);
 	return ;
     }
@@ -253,6 +255,7 @@ recv_krb5_auth (int s, u_char *buf,
     krb5_error_code status;
     krb5_data cksum_data;
     krb5_principal server;
+    const char *estr;
     char *str;
 
     if (memcmp (buf, "\x00\x00\x00\x13", 4) != 0)
@@ -270,9 +273,11 @@ recv_krb5_auth (int s, u_char *buf,
 				     "host",
 				     KRB5_NT_SRV_HST,
 				     &server);
-    if (status)
-	syslog_and_die ("krb5_sock_to_principal: %s",
-			krb5_get_err_text(context, status));
+    if (status) {
+	estr = krb5_get_error_message(context, status);
+	syslog_and_die ("krb5_sock_to_principal: %s", estr);
+	krb5_free_error_message(context, estr);
+    }
 
     status = krb5_recvauth_match_version(context,
 					 &auth_context,
@@ -284,9 +289,11 @@ recv_krb5_auth (int s, u_char *buf,
 					 NULL,
 					 &ticket);
     krb5_free_principal (context, server);
-    if (status)
-	syslog_and_die ("krb5_recvauth: %s",
-			krb5_get_err_text(context, status));
+    if (status) {
+	estr = krb5_get_error_message(context, status);
+	syslog_and_die ("krb5_recvauth: %s", estr);
+	krb5_free_error_message(context, estr);
+    }
 
     *server_username = read_str (s, USERNAME_SZ, "remote username");
     *cmd = read_str (s, ARG_MAX + 1, "command");
@@ -302,14 +309,18 @@ recv_krb5_auth (int s, u_char *buf,
 	if(status != 0 || keyblock == NULL)
 	    syslog_and_die("failed to get key");
     }
-    if (status != 0 || keyblock == NULL)
-       syslog_and_die ("krb5_auth_con_getkey: %s",
-                       krb5_get_err_text(context, status));
+    if (status != 0 || keyblock == NULL) {
+	estr = krb5_get_error_message(context, status);
+        syslog_and_die ("krb5_auth_con_getkey: %s", estr);
+	krb5_free_error_message(context, estr);
+    }
 
     status = krb5_crypto_init(context, keyblock, 0, &crypto);
-    if(status)
-	syslog_and_die("krb5_crypto_init: %s",
-		       krb5_get_err_text(context, status));
+    if (status) {
+	estr = krb5_get_error_message(context, status);
+	syslog_and_die("krb5_crypto_init: %s", estr);
+	krb5_free_error_message(context, estr);
+    }
 
 
     cksum_data.length = asprintf (&str,
@@ -326,9 +337,11 @@ recv_krb5_auth (int s, u_char *buf,
 						cksum_data.data,
 						cksum_data.length);
 
-    if (status)
-	syslog_and_die ("krb5_verify_authenticator_checksum: %s",
-			krb5_get_err_text(context, status));
+    if (status) {
+	estr = krb5_get_error_message(context, status);
+	syslog_and_die ("krb5_verify_authenticator_checksum: %s", estr);
+	krb5_free_error_message(context, estr);
+    }
 
     free (cksum_data.data);
 

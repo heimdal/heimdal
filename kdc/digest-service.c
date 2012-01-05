@@ -44,6 +44,8 @@
 typedef struct pk_client_params pk_client_params;
 struct DigestREQ;
 struct Kx509Request;
+typedef struct kdc_request_desc *kdc_request_t;
+
 #include <kdc-private.h>
 
 krb5_kdc_configuration *config;
@@ -116,7 +118,7 @@ ntlm_service(void *ctx, const heim_idata *req,
 	if (ret)
 	    goto failed;
 
-	ret = hdb_enctype2key(context, &user->entry,
+	ret = hdb_enctype2key(context, &user->entry, NULL,
 			      ETYPE_ARCFOUR_HMAC_MD5, &key);
 	if (ret) {
 	    krb5_set_error_message(context, ret, "NTLM missing arcfour key");

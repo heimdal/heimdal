@@ -274,14 +274,28 @@ typedef enum krb5_key_usage {
     /* Encryption type of the kdc session contribution in pk-init */
     KRB5_KU_AS_REQ = 56,
     /* Checksum of over the AS-REQ send by the KDC in PA-REQ-ENC-PA-REP */
+    KRB5_KU_FAST_REQ_CHKSUM = 50,
+    /* FAST armor checksum */
+    KRB5_KU_FAST_ENC = 51,
+    /* FAST armor encryption */
+    KRB5_KU_FAST_REP = 52,
+    /* FAST armor reply */
+    KRB5_KU_FAST_FINISHED = 53,
+    /* FAST finished checksum */
+    KRB5_KU_ENC_CHALLENGE_CLIENT = 54,
+    /* fast challange from client */
+    KRB5_KU_ENC_CHALLENGE_KDC = 55,
+    /* fast challange from kdc */
     KRB5_KU_DIGEST_ENCRYPT = -18,
     /* Encryption key usage used in the digest encryption field */
     KRB5_KU_DIGEST_OPAQUE = -19,
     /* Checksum key usage used in the digest opaque field */
     KRB5_KU_KRB5SIGNEDPATH = -21,
     /* Checksum key usage on KRB5SignedPath */
-    KRB5_KU_CANONICALIZED_NAMES = -23
+    KRB5_KU_CANONICALIZED_NAMES = -23,
     /* Checksum key usage on PA-CANONICALIZED */
+    KRB5_KU_H5L_COOKIE = -25
+    /* encrypted foo */
 } krb5_key_usage;
 
 typedef krb5_key_usage krb5_keyusage;
@@ -671,6 +685,8 @@ typedef EncAPRepPart krb5_ap_rep_enc_part;
 #define KRB5_TGS_NAME ("krbtgt")
 #define KRB5_WELLKNOWN_NAME ("WELLKNOWN")
 #define KRB5_ANON_NAME ("ANONYMOUS")
+#define KRB5_ANON_REALM ("WELLKNOWN:ANONYMOUS")
+#define KRB5_WELLKNOWN_ORG_H5L_REALM ("WELLKNOWN:ORG.H5L")
 #define KRB5_DIGEST_NAME ("digest")
 
 typedef enum {

@@ -10,6 +10,7 @@ dir_dce = dceutils
 endif
 SUBDIRS = 					\
 	  afsutil				\
+	  dbutils				\
 	  ftp					\
 	  login					\
 	  $(dir_otp)				\

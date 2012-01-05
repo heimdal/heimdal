@@ -766,11 +766,27 @@ HEIMDAL_KRB5_2.0 {
 		# kinit helper
 		krb5_get_init_creds_opt_set_pkinit_user_certs;
 		krb5_pk_enterprise_cert;
+		krb5_process_last_request;
+		krb5_init_creds_init;
+		krb5_init_creds_set_service;
+		krb5_init_creds_set_fast_ccache;
+		krb5_init_creds_set_keytab;
+		krb5_init_creds_get;
+		krb5_init_creds_get_creds;
+		krb5_init_creds_get_error;
+		krb5_init_creds_set_password;
+		krb5_init_creds_store;
+		krb5_init_creds_free;
 
 		# testing
 		_krb5_aes_cts_encrypt;
 		_krb5_n_fold;
 		_krb5_expand_default_cc_name;
+		
+		# FAST
+		_krb5_fast_cf2;
+		_krb5_fast_armor_key;
+
 	local:
 		*;
 };

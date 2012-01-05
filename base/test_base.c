@@ -77,8 +77,8 @@ test_dict(void)
 
     dict = heim_dict_create(10);
 
-    heim_dict_add_value(dict, a1, a2);
-    heim_dict_add_value(dict, a3, a4);
+    heim_dict_set_value(dict, a1, a2);
+    heim_dict_set_value(dict, a3, a4);
 
     heim_dict_delete_key(dict, a3);
     heim_dict_delete_key(dict, a1);
@@ -157,6 +157,76 @@ test_error(void)
     return 0;
 }
 
+static int
+test_json(void)
+{
+    heim_object_t o, o2;
+    heim_string_t k1 = heim_string_create("k1");
+
+    o = heim_json_create("\"string\"", NULL);
+    heim_assert(o != NULL, "string");
+    heim_assert(heim_get_tid(o) == heim_string_get_type_id(), "string-tid");
+    heim_assert(strcmp("string", heim_string_get_utf8(o)) == 0, "wrong string");
+    heim_release(o);
+
+    o = heim_json_create(" \"foo\\\"bar\" ]", NULL);
+    heim_assert(o != NULL, "string");
+    heim_assert(heim_get_tid(o) == heim_string_get_type_id(), "string-tid");
+    heim_assert(strcmp("foo\"bar", heim_string_get_utf8(o)) == 0, "wrong string");
+    heim_release(o);
+
+    o = heim_json_create(" { \"key\" : \"value\" }", NULL);
+    heim_assert(o != NULL, "dict");
+    heim_assert(heim_get_tid(o) == heim_dict_get_type_id(), "dict-tid");
+    heim_release(o);
+
+    o = heim_json_create(" { \"k1\" : \"s1\", \"k2\" : \"s2\" }", NULL);
+    heim_assert(o != NULL, "dict");
+    heim_assert(heim_get_tid(o) == heim_dict_get_type_id(), "dict-tid");
+    o2 = heim_dict_get_value(o, k1);
+    heim_assert(heim_get_tid(o2) == heim_string_get_type_id(), "string-tid");
+    heim_release(o);
+
+    o = heim_json_create(" { \"k1\" : { \"k2\" : \"s2\" } }", NULL);
+    heim_assert(o != NULL, "dict");
+    heim_assert(heim_get_tid(o) == heim_dict_get_type_id(), "dict-tid");
+    o2 = heim_dict_get_value(o, k1);
+    heim_assert(heim_get_tid(o2) == heim_dict_get_type_id(), "dict-tid");
+    heim_release(o);
+
+    o = heim_json_create("{ \"k1\" : 1 }", NULL);
+    heim_assert(o != NULL, "array");
+    heim_assert(heim_get_tid(o) == heim_dict_get_type_id(), "dict-tid");
+    o2 = heim_dict_get_value(o, k1);
+    heim_assert(heim_get_tid(o2) == heim_number_get_type_id(), "number-tid");
+    heim_release(o);
+
+    o = heim_json_create("-10", NULL);
+    heim_assert(o != NULL, "number");
+    heim_assert(heim_get_tid(o) == heim_number_get_type_id(), "number-tid");
+    heim_release(o);
+
+    o = heim_json_create("99", NULL);
+    heim_assert(o != NULL, "number");
+    heim_assert(heim_get_tid(o) == heim_number_get_type_id(), "number-tid");
+    heim_release(o);
+
+    o = heim_json_create(" [ 1 ]", NULL);
+    heim_assert(o != NULL, "array");
+    heim_assert(heim_get_tid(o) == heim_array_get_type_id(), "array-tid");
+    heim_release(o);
+
+    o = heim_json_create(" [ -1 ]", NULL);
+    heim_assert(o != NULL, "array");
+    heim_assert(heim_get_tid(o) == heim_array_get_type_id(), "array-tid");
+    heim_release(o);
+
+    heim_release(k1);
+
+    return 0;
+}
+
+
 int
 main(int argc, char **argv)
 {
@@ -167,6 +237,7 @@ main(int argc, char **argv)
     res |= test_auto_release();
     res |= test_string();
     res |= test_error();
+    res |= test_json();
 
     return res ? 1 : 0;
 }

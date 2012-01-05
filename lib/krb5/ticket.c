@@ -592,7 +592,9 @@ check_client_referral(krb5_context context,
     return 0;
 
 noreferral:
-    if (krb5_principal_compare(context, requested, mapped) == FALSE) {
+    if (krb5_principal_compare(context, requested, mapped) == FALSE &&
+	!rep->enc_part.flags.enc_pa_rep)
+    {
 	krb5_set_error_message(context, KRB5KRB_AP_ERR_MODIFIED,
 			       N_("Not same client principal returned "
 				  "as requested", ""));
@@ -656,6 +658,7 @@ _krb5_extract_ticket(krb5_context context,
 		     krb5_addresses *addrs,
 		     unsigned nonce,
 		     unsigned flags,
+		     krb5_data *request,
 		     krb5_decrypt_proc decrypt_proc,
 		     krb5_const_pointer decryptarg)
 {
@@ -674,6 +677,48 @@ _krb5_extract_ticket(krb5_context context,
     if (ret)
 	goto out;
 
+    if (rep->enc_part.flags.enc_pa_rep && request) {
+	krb5_crypto crypto = NULL;
+	Checksum cksum;
+	PA_DATA *pa = NULL;
+	int idx = 0;
+
+	_krb5_debug(context, 5, "processing enc-ap-rep");
+
+	if (rep->enc_part.encrypted_pa_data == NULL ||
+	    (pa = krb5_find_padata(rep->enc_part.encrypted_pa_data->val,
+				   rep->enc_part.encrypted_pa_data->len,
+				   KRB5_PADATA_REQ_ENC_PA_REP,
+				   &idx)) == NULL)
+	{
+	    _krb5_debug(context, 5, "KRB5_PADATA_REQ_ENC_PA_REP missing");
+	    ret = KRB5KRB_AP_ERR_MODIFIED;
+	    goto out;
+	}
+	
+	ret = krb5_crypto_init(context, key, 0, &crypto);
+	if (ret)
+	    goto out;
+	
+	ret = decode_Checksum(pa->padata_value.data,
+			      pa->padata_value.length,
+			      &cksum, NULL);
+	if (ret) {
+	    krb5_crypto_destroy(context, crypto);
+	    goto out;
+	}
+	
+	ret = krb5_verify_checksum(context, crypto,
+				   KRB5_KU_AS_REQ,
+				   request->data, request->length,
+				   &cksum);
+	krb5_crypto_destroy(context, crypto);
+	free_Checksum(&cksum);
+	_krb5_debug(context, 5, "enc-ap-rep: %svalid", (ret == 0) ? "" : "in");
+	if (ret)
+	    goto out;
+    }
+
     /* save session key */
 
     creds->session.keyvalue.length = 0;
@@ -688,10 +733,10 @@ _krb5_extract_ticket(krb5_context context,
     }
 
     /* compare client and save */
-    ret = _krb5_principalname2krb5_principal (context,
-					      &tmp_principal,
-					      rep->kdc_rep.cname,
-					      rep->kdc_rep.crealm);
+    ret = _krb5_principalname2krb5_principal(context,
+					     &tmp_principal,
+					     rep->kdc_rep.cname,
+					     rep->kdc_rep.crealm);
     if (ret)
 	goto out;
 

@@ -1,10 +1,14 @@
 include $(top_srcdir)/Makefile.am.common
 
 noinst_DATA = \
+	an2ln-db.txt \
+	kdc-tester4.json \
 	krb5.conf \
+	krb5-authz.conf \
+	krb5-authz2.conf \
 	krb5-canon.conf \
 	krb5-canon2.conf \
-	krb5-hdb-mitdb.conf.in \
+	krb5-hdb-mitdb.conf \
 	krb5-weak.conf \
 	krb5-pkinit.conf \
 	krb5-pkinit-win.conf \
@@ -13,11 +17,13 @@ noinst_DATA = \
 check_SCRIPTS = $(SCRIPT_TESTS) 
 
 SCRIPT_TESTS = \
+	check-authz \
 	check-canon \
 	check-cc \
 	check-delegation \
 	check-des \
 	check-digest \
+	check-fast \
 	check-kadmin \
 	check-hdb-mitdb \
 	check-kdc \
@@ -27,6 +33,7 @@ SCRIPT_TESTS = \
 	check-pkinit \
 	check-iprop \
 	check-referral \
+	check-tester \
 	check-uu
 
 TESTS = $(SCRIPT_TESTS)
@@ -43,6 +50,7 @@ endif
 
 do_subst = sed $(do_dlopen) \
 	-e 's,[@]env_setup[@],$(top_builddir)/tests/bin/setup-env,g' \
+	-e 's,[@]top_srcdir[@],$(top_srcdir),g' \
 	-e 's,[@]srcdir[@],$(srcdir),g' \
 	-e 's,[@]port[@],$(port),g' \
 	-e 's,[@]admport[@],$(admport),g' \
@@ -52,6 +60,11 @@ do_subst = sed $(do_dlopen) \
 	-e 's,[@]EGREP[@],$(EGREP),g' 
 
 LDADD = ../../lib/krb5/libkrb5.la $(LIB_roken)
+
+check-authz: check-authz.in Makefile krb5-authz.conf krb5-authz2.conf
+	$(do_subst) < $(srcdir)/check-authz.in > check-authz.tmp
+	chmod +x check-authz.tmp
+	mv check-authz.tmp check-authz
 
 check-canon: check-canon.in Makefile krb5-canon.conf krb5-canon2.conf
 	$(do_subst) < $(srcdir)/check-canon.in > check-canon.tmp
@@ -78,6 +91,11 @@ check-hdb-mitdb: check-hdb-mitdb.in Makefile krb5-hdb-mitdb.conf
 	chmod +x check-hdb-mitdb.tmp
 	mv check-hdb-mitdb.tmp check-hdb-mitdb
 
+check-fast: check-fast.in Makefile
+	$(do_subst) < $(srcdir)/check-fast.in > check-fast.tmp
+	chmod +x check-fast.tmp
+	mv check-fast.tmp check-fast
+
 check-kdc: check-kdc.in Makefile
 	$(do_subst) < $(srcdir)/check-kdc.in > check-kdc.tmp
 	chmod +x check-kdc.tmp
@@ -87,6 +105,11 @@ check-kdc-weak: check-kdc-weak.in Makefile
 	$(do_subst) < $(srcdir)/check-kdc-weak.in > check-kdc-weak.tmp
 	chmod +x check-kdc-weak.tmp
 	mv check-kdc-weak.tmp check-kdc-weak
+
+check-tester: check-tester.in kdc-tester4.json Makefile
+	$(do_subst) < $(srcdir)/check-tester.in > check-tester.tmp
+	chmod +x check-tester.tmp
+	mv check-tester.tmp check-tester
 
 check-keys: check-keys.in Makefile
 	$(do_subst) < $(srcdir)/check-keys.in > check-keys.tmp
@@ -128,12 +151,24 @@ check-kpasswdd: check-kpasswdd.in Makefile
 	chmod +x check-kpasswdd.tmp
 	mv check-kpasswdd.tmp check-kpasswdd
 
+kdc-tester4.json: kdc-tester4.json.in Makefile
+	$(do_subst) < $(srcdir)/kdc-tester4.json.in > kdc-tester4.json.tmp
+	mv kdc-tester4.json.tmp kdc-tester4.json
+
 krb5.conf: krb5.conf.in Makefile
 	$(do_subst) \
 	   -e 's,[@]WEAK[@],false,g' \
 	   -e 's,[@]dk[@],,g' \
 	   -e 's,[@]kdc[@],,g' < $(srcdir)/krb5.conf.in > krb5.conf.tmp
 	mv krb5.conf.tmp krb5.conf
+
+krb5-authz.conf: krb5-authz.conf.in Makefile
+	$(do_subst) < $(srcdir)/krb5-authz.conf.in > krb5-authz.conf.tmp
+	mv krb5-authz.conf.tmp krb5-authz.conf
+
+krb5-authz2.conf: krb5-authz2.conf.in Makefile
+	$(do_subst) < $(srcdir)/krb5-authz2.conf.in > krb5-authz2.conf.tmp
+	mv krb5-authz2.conf.tmp krb5-authz2.conf
 
 krb5-canon.conf: krb5-canon.conf.in Makefile
 	$(do_subst) \
@@ -191,7 +226,10 @@ CLEANFILES= \
 	iprop.keytab \
 	digest-reply \
 	foopassword \
+	kdc-tester4.json \
 	krb5.conf \
+	krb5-authz.conf \
+	krb5-authz2.conf \
 	krb5-canon.conf \
 	krb5-canon2.conf \
 	krb5-weak.conf \
@@ -228,6 +266,7 @@ CLEANFILES= \
 
 EXTRA_DIST = \
 	NTMakefile \
+	check-authz.in \
 	check-canon.in \
 	check-cc.in \
 	check-delegation.in \
@@ -242,15 +281,24 @@ EXTRA_DIST = \
 	check-kpasswdd.in \
 	check-pkinit.in \
 	check-referral.in \
+	check-tester.in \
 	check-uu.in \
 	donotexists.txt \
 	heimdal.acl \
 	iprop-acl \
+	kdc-tester1.json \
+	kdc-tester2.json \
+	kdc-tester3.json \
+	kdc-tester4.json.in \
 	krb5-pkinit.conf.in \
 	krb5.conf.in \
+	krb5-authz.conf.in \
+	krb5-authz2.conf.in \
 	krb5-canon.conf.in \
 	krb5-canon2.conf.in \
+	krb5-hdb-mitdb.conf.in \
 	krb5.conf.keys.in \
+	k5login/foo \
 	ntlm-user-file.txt \
 	leaks-kill.sh \
 	pki-mapping \

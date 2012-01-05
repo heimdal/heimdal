@@ -6,6 +6,8 @@ check_PROGRAMS = test_base
 
 libheimbase_la_LDFLAGS = -version-info 1:0:0
 
+TESTS = test_base
+
 if versionscript
 libheimbase_la_LDFLAGS += $(LDFLAGS_VERSION_SCRIPT)$(srcdir)/version-script.map
 endif
@@ -15,18 +17,21 @@ include_HEADERS	= heimbase.h
 dist_libheimbase_la_SOURCES =	\
 	array.c			\
 	baselocl.h		\
+	bsearch.c		\
 	bool.c			\
+	data.c			\
 	dict.c			\
 	error.c			\
 	heimbase.c		\
 	heimbasepriv.h		\
 	heimqueue.h		\
+	json.c			\
 	null.c			\
 	number.c		\
 	string.c
 
 libheimbase_la_DEPENDENCIES = version-script.map
 
-test_base_LDADD = $(LIB_heimbase)
+test_base_LDADD = libheimbase.la
 
 EXTRA_DIST = NTMakefile version-script.map

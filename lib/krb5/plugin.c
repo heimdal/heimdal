@@ -405,6 +405,16 @@ plug_dealloc(void *ptr)
 }
 
 
+/**
+ * Load plugins (new system) for the given module @name (typicall
+ * "krb5") from the given directory @paths.
+ *
+ * Inputs:
+ *
+ * @context A krb5_context
+ * @name    Name of plugin module (typically "krb5")
+ * @paths   Array of directory paths where to look
+ */
 void
 _krb5_load_plugins(krb5_context context, const char *name, const char **paths)
 {
@@ -426,7 +436,7 @@ _krb5_load_plugins(krb5_context context, const char *name, const char **paths)
 	}
     }
 
-    module = heim_dict_copy_value(modules, s);
+    module = heim_dict_get_value(modules, s);
     if (module == NULL) {
 	module = heim_dict_create(11);
 	if (module == NULL) {
@@ -434,7 +444,8 @@ _krb5_load_plugins(krb5_context context, const char *name, const char **paths)
 	    heim_release(s);
 	    return;
 	}
-	heim_dict_add_value(modules, s, module);
+	heim_dict_set_value(modules, s, module);
+	heim_release(module);
     }
     heim_release(s);
 
@@ -475,7 +486,7 @@ _krb5_load_plugins(krb5_context context, const char *name, const char **paths)
 	    }
 
 	    /* check if already cached */
-	    p = heim_dict_copy_value(module, spath);
+	    p = heim_dict_get_value(module, spath);
 	    if (p == NULL) {
 		p = heim_alloc(sizeof(*p), "krb5-plugin", plug_dealloc);
 		if (p)
@@ -484,20 +495,22 @@ _krb5_load_plugins(krb5_context context, const char *name, const char **paths)
 		if (p->dsohandle) {
 		    p->path = heim_retain(spath);
 		    p->names = heim_dict_create(11);
-		    heim_dict_add_value(module, spath, p);
+		    heim_dict_set_value(module, spath, p);
 		}
+		heim_release(p);
 	    }
 	    heim_release(spath);
-	    heim_release(p);
 	    free(path);
 	}
 	closedir(d);
     }
-    heim_release(module);
     HEIMDAL_MUTEX_unlock(&plugin_mutex);
 #endif /* HAVE_DLOPEN */
 }
 
+/**
+ * Unload plugins (new system)
+ */
 void
 _krb5_unload_plugins(krb5_context context, const char *name)
 {
@@ -544,11 +557,11 @@ struct iter_ctx {
 };
 
 static void
-search_modules(void *ctx, heim_object_t key, heim_object_t value)
+search_modules(heim_object_t key, heim_object_t value, void *ctx)
 {
     struct iter_ctx *s = ctx;
     struct plugin2 *p = value;
-    struct plug *pl = heim_dict_copy_value(p->names, s->n);
+    struct plug *pl = heim_dict_get_value(p->names, s->n);
     struct common_plugin_method *cpm;
 
     if (pl == NULL) {
@@ -565,15 +578,14 @@ search_modules(void *ctx, heim_object_t key, heim_object_t value)
 	    if (ret)
 		cpm = pl->dataptr = NULL;
 	}
-	heim_dict_add_value(p->names, s->n, pl);
+	heim_dict_set_value(p->names, s->n, pl);
+	heim_release(pl);
     } else {
 	cpm = pl->dataptr;
     }
 
     if (cpm && cpm->version >= s->min_version)
 	heim_array_append_value(s->result, pl);
-
-    heim_release(pl);
 }
 
 static void
@@ -588,6 +600,35 @@ eval_results(heim_object_t value, void *ctx)
     s->ret = s->func(s->context, pl->dataptr, pl->ctx, s->userctx);
 }
 
+/**
+ * Run plugins for the given @module (e.g., "krb5") and @name (e.g.,
+ * "kuserok").  Specifically, the @func is invoked once per-plugin with
+ * four arguments: the @context, the plugin symbol value (a pointer to a
+ * struct whose first three fields are the same as struct common_plugin_method),
+ * a context value produced by the plugin's init method, and @userctx.
+ *
+ * @func should unpack arguments for a plugin function and invoke it
+ * with arguments taken from @userctx.  @func should save plugin
+ * outputs, if any, in @userctx.
+ *
+ * All loaded and registered plugins are invoked via @func until @func
+ * returns something other than KRB5_PLUGIN_NO_HANDLE.  Plugins that
+ * have nothing to do for the given arguments should return
+ * KRB5_PLUGIN_NO_HANDLE.
+ *
+ * Inputs:
+ *
+ * @context     A krb5_context
+ * @module      Name of module (typically "krb5")
+ * @name        Name of pluggable interface (e.g., "kuserok")
+ * @min_version Lowest acceptable plugin minor version number
+ * @flags       Flags (none defined at this time)
+ * @userctx     Callback data for the callback function @func
+ * @func        A callback function, invoked once per-plugin
+ *
+ * Outputs: None, other than the return value and such outputs as are
+ *          gathered by @func.
+ */
 krb5_error_code
 _krb5_plugin_run_f(krb5_context context,
 		   const char *module,
@@ -599,16 +640,16 @@ _krb5_plugin_run_f(krb5_context context,
 {
     heim_string_t m = heim_string_create(module);
     heim_dict_t dict;
+    void *plug_ctx;
+    struct common_plugin_method *cpm;
     struct iter_ctx s;
+    struct krb5_plugin *registered_plugins = NULL;
+    struct krb5_plugin *p;
+
+    /* Get registered plugins */
+    (void) _krb5_plugin_find(context, SYMBOL, name, &registered_plugins);
 
     HEIMDAL_MUTEX_lock(&plugin_mutex);
-
-    dict = heim_dict_copy_value(modules, m);
-    heim_release(m);
-    if (dict == NULL) {
-	HEIMDAL_MUTEX_unlock(&plugin_mutex);
-	return KRB5_PLUGIN_NO_HANDLE;
-    }
 
     s.context = context;
     s.name = name;
@@ -617,16 +658,47 @@ _krb5_plugin_run_f(krb5_context context,
     s.result = heim_array_create();
     s.func = func;
     s.userctx = userctx;
-
-    heim_dict_iterate_f(dict, search_modules, &s);
-
-    heim_release(dict);
-
-    HEIMDAL_MUTEX_unlock(&plugin_mutex);
-
     s.ret = KRB5_PLUGIN_NO_HANDLE;
 
-    heim_array_iterate_f(s.result, eval_results, &s);
+    /* Get loaded plugins */
+    dict = heim_dict_get_value(modules, m);
+    heim_release(m);
+
+    /* Add loaded plugins to s.result array */
+    if (dict)
+	heim_dict_iterate_f(dict, &s, search_modules);
+
+    /* We don't need to hold plugin_mutex during plugin invocation */
+    HEIMDAL_MUTEX_unlock(&plugin_mutex);
+
+    /* Invoke registered plugins (old system) */
+    for (p = registered_plugins; p; p = p->next) {
+	/*
+	 * XXX This is the wrong way to handle registered plugins, as we
+	 * call init/fini on each invocation!  We do this because we
+	 * have nowhere in the struct plugin registered list to store
+	 * the context allocated by the plugin's init function.  (But at
+	 * least we do call init/fini!)
+	 *
+	 * What we should do is adapt the old plugin system to the new
+	 * one and change how we register plugins so that we use the new
+	 * struct plug to keep track of their context structures, that
+	 * way we can init once, invoke many times, then fini.
+	 */
+	cpm = (struct common_plugin_method *)p->symbol;
+	s.ret = cpm->init(context, &plug_ctx);
+	if (s.ret)
+	    continue;
+	s.ret = s.func(s.context, p->symbol, plug_ctx, s.userctx);
+	cpm->fini(plug_ctx);
+	if (s.ret != KRB5_PLUGIN_NO_HANDLE)
+	    break;
+    }
+    _krb5_plugin_free(registered_plugins);
+
+    /* Invoke loaded plugins (new system) */
+    if (s.ret != KRB5_PLUGIN_NO_HANDLE)
+	heim_array_iterate_f(s.result, &s, eval_results);
 
     heim_release(s.result);
     heim_release(s.n);

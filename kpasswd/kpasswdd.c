@@ -123,21 +123,26 @@ make_result (krb5_data *data,
 	     uint16_t result_code,
 	     const char *expl)
 {
-    char *str;
-    krb5_data_zero (data);
+    krb5_error_code ret;
+    krb5_storage *sp;
 
-    data->length = asprintf (&str,
-			     "%c%c%s",
-			     (result_code >> 8) & 0xFF,
-			     result_code & 0xFF,
-			     expl);
+    sp = krb5_storage_emem();
+    if (sp == NULL) goto out;
+    ret = krb5_store_uint16(sp, result_code);
+    if (ret) goto out;
+    ret = krb5_store_stringz(sp, expl);
+    if (ret) goto out;
+    ret = krb5_storage_to_data(sp, data);
+    if (ret) goto out;
+    krb5_storage_free(sp);
 
-    if (str == NULL) {
-	krb5_warnx (context, "Out of memory generating error reply");
-	return 1;
-    }
-    data->data = str;
     return 0;
+ out:
+    if (sp)
+	krb5_storage_free(sp);
+
+    krb5_warnx (context, "Out of memory generating error reply");
+    return 1;
 }
 
 static void
@@ -440,7 +445,8 @@ verify (krb5_auth_context *auth_context,
 	struct sockaddr *sa,
 	int sa_size,
 	u_char *msg,
-	size_t len)
+	size_t len,
+	krb5_address *client_addr)
 {
     krb5_error_code ret;
     uint16_t pkt_len, pkt_ver, ap_req_len;
@@ -541,6 +547,21 @@ verify (krb5_auth_context *auth_context,
     krb_priv_data.data   = msg + 6 + ap_req_len;
     krb_priv_data.length = len - 6 - ap_req_len;
 
+    /*
+     * Only enforce client addresses on on tickets with addresses.  If
+     * its addressless, we are guessing its behind NAT and really
+     * can't know this information.
+     */
+
+    if ((*ticket)->ticket.caddr && (*ticket)->ticket.caddr->len > 0) {
+	ret = krb5_auth_con_setaddrs (context, *auth_context,
+				      NULL, client_addr);
+	if (ret) {
+	    krb5_warn (context, ret, "krb5_auth_con_setaddr(this)");
+	    goto out;
+	}
+    }
+
     ret = krb5_rd_priv (context,
 			*auth_context,
 			&krb_priv_data,
@@ -577,7 +598,7 @@ process (krb5_realm *realms,
     krb5_address other_addr;
     uint16_t version;
 
-
+    memset(&other_addr, 0, sizeof(other_addr));
     krb5_data_zero (&out_data);
 
     ret = krb5_auth_con_init (context, &auth_context);
@@ -595,18 +616,27 @@ process (krb5_realm *realms,
 	goto out;
     }
 
-    ret = krb5_auth_con_setaddrs (context,
-				  auth_context,
-				  this_addr,
-				  &other_addr);
-    krb5_free_address (context, &other_addr);
+    ret = krb5_auth_con_setaddrs (context, auth_context, this_addr, NULL);
     if (ret) {
-	krb5_warn (context, ret, "krb5_auth_con_setaddr");
+	krb5_warn (context, ret, "krb5_auth_con_setaddr(this)");
 	goto out;
     }
 
     if (verify (&auth_context, realms, keytab, &ticket, &out_data,
-		&version, s, sa, sa_size, msg, len) == 0) {
+		&version, s, sa, sa_size, msg, len, &other_addr) == 0)
+    {
+	/*
+	 * We always set the client_addr, to assume that the client
+	 * can ignore it if it choose to do so (just the server does
+	 * so for addressless tickets).
+	 */
+	ret = krb5_auth_con_setaddrs (context, auth_context, 
+				      this_addr, &other_addr);
+	if (ret) {
+	    krb5_warn (context, ret, "krb5_auth_con_setaddr(other)");
+	    goto out;
+	}
+
 	change (auth_context,
 		ticket->client,
 		version,
@@ -618,8 +648,9 @@ process (krb5_realm *realms,
     }
 
 out:
-    krb5_data_free (&out_data);
-    krb5_auth_con_free (context, auth_context);
+    krb5_free_address(context, &other_addr);
+    krb5_data_free(&out_data);
+    krb5_auth_con_free(context, auth_context);
 }
 
 static int

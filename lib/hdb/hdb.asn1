@@ -118,6 +118,7 @@ HDB-extension ::= SEQUENCE {
 		hist-kvno-diff-clnt[10]		INTEGER (0..4294967295),
 		hist-kvno-diff-svc[11]		INTEGER (0..4294967295),
 	        policy[12]			UTF8String,
+		principal-id[13]		INTEGER(-9223372036854775808..9223372036854775807),
 		...
 	},
 	...

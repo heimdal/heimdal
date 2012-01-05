@@ -47,8 +47,6 @@
 #include "gen_locl.h"
 #include "der.h"
 
-RCSID("$Id$");
-
 static Type *new_type (Typetype t);
 static struct constraint_spec *new_constraint_spec(enum ctype);
 static Type *new_tag(int tagclass, int tagvalue, int tagenv, Type *oldtype);
@@ -69,7 +67,7 @@ struct string_list {
 %}
 
 %union {
-    int constant;
+    int64_t constant;
     struct value *value;
     struct range *range;
     char *name;
@@ -370,14 +368,14 @@ range		: '(' Value RANGE Value ')'
 			lex_error_message("Non-integer in first part of range");
 		    $$ = ecalloc(1, sizeof(*$$));
 		    $$->min = $2->u.integervalue;
-		    $$->max = $2->u.integervalue - 1;
+		    $$->max = INT_MAX;
 		}
 		| '(' kw_MIN RANGE Value ')'
 		{
 		    if($4->type != integervalue)
 			lex_error_message("Non-integer in second part of range");
 		    $$ = ecalloc(1, sizeof(*$$));
-		    $$->min = $4->u.integervalue + 2;
+		    $$->min = INT_MIN;
 		    $$->max = $4->u.integervalue;
 		}
 		| '(' Value ')'
@@ -474,6 +472,11 @@ OctetStringType	: kw_OCTET kw_STRING size
 		{
 		    Type *t = new_type(TOctetString);
 		    t->range = $3;
+		    if (t->range) {
+			if (t->range->min < 0)
+			    lex_error_message("can't use a negative SIZE range "
+					      "length for OCTET STRING");
+		    }
 		    $$ = new_tag(ASN1_C_UNIV, UT_OctetString,
 				 TE_EXPLICIT, t);
 		}
@@ -511,6 +514,11 @@ SequenceOfType	: kw_SEQUENCE size kw_OF Type
 		{
 		  $$ = new_type(TSequenceOf);
 		  $$->range = $2;
+		  if ($2) {
+		      if ($2->min < 0)
+			  lex_error_message("can't use a negative SIZE range "
+					    "length for SEQUENCE OF");
+		  }
 		  $$->subtype = $4;
 		  $$ = new_tag(ASN1_C_UNIV, UT_Sequence, TE_EXPLICIT, $$);
 		}

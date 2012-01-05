@@ -45,6 +45,7 @@ EXPORTS
 	hdb_init_db
         hdb_interface_version   DATA
 	hdb_key2principal
+	hdb_kvno2keys
 	hdb_list_builtin
 	hdb_lock
 	hdb_next_enctype2key

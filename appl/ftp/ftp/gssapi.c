@@ -114,20 +114,21 @@ gss_overhead(void *app_data, int level, int len)
 static int
 gss_encode(void *app_data, void *from, int length, int level, void **to)
 {
-    OM_uint32 maj_stat, min_stat;
+    OM_uint32 min_stat;
     gss_buffer_desc input, output;
     int conf_state;
     struct gssapi_data *d = app_data;
 
     input.length = length;
     input.value = from;
-    maj_stat = gss_wrap (&min_stat,
-			 d->context_hdl,
-			 level == prot_private,
-			 GSS_C_QOP_DEFAULT,
-			 &input,
-			 &conf_state,
-			 &output);
+    /* XXX We should really display the major status... */
+    (void) gss_wrap(&min_stat,
+		    d->context_hdl,
+		    level == prot_private,
+		    GSS_C_QOP_DEFAULT,
+		    &input,
+		    &conf_state,
+		    &output);
     *to = output.value;
     return output.length;
 }

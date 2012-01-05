@@ -53,7 +53,7 @@ kdc_openlog(krb5_context context,
 	char *ss;
 	if (asprintf(&ss, "0-1/FILE:%s/%s", hdb_db_dir(context),
 	    KDC_LOG_FILE) < 0)
-	    err(1, NULL);
+	    err(1, "out of memory");
 	krb5_addlog_dest(context, config->logf, ss);
 	free(ss);
     }

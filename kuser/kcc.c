@@ -150,7 +150,7 @@ main(int argc, char **argv)
     if (argc != 0) {
 	ret = sl_command(commands, argc, argv);
 	if(ret == -1)
-	    krb5_warnx(kcc_context, "unrecognized command: %s", argv[0]);
+	    sl_did_you_mean(commands, argv[0]);
 	else if (ret == -2)
 	    ret = 0;
 	if(ret != 0)

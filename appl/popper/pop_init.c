@@ -57,6 +57,7 @@ krb5_authenticate (POP *p, int s, u_char *buf, struct sockaddr *addr)
     krb5_auth_context auth_context = NULL;
     uint32_t len;
     krb5_ticket *ticket;
+    const char *estr;
     char *server;
 
     if (memcmp (buf, "\x00\x00\x00\x13", 4) != 0)
@@ -78,16 +79,18 @@ krb5_authenticate (POP *p, int s, u_char *buf, struct sockaddr *addr)
 			 NULL,
 			 &ticket);
     if (ret) {
-	pop_log(p, POP_PRIORITY, "krb5_recvauth: %s",
-		krb5_get_err_text(p->context, ret));
+	estr = krb5_get_error_message(p->context, ret);
+	pop_log(p, POP_PRIORITY, "krb5_recvauth: %s", estr);
+	krb5_free_error_message(p->context, estr);
 	return -1;
     }
 
 
     ret = krb5_unparse_name(p->context, ticket->server, &server);
     if(ret) {
-	pop_log(p, POP_PRIORITY, "krb5_unparse_name: %s",
-		krb5_get_err_text(p->context, ret));
+	estr = krb5_get_error_message(p->context, ret);
+	pop_log(p, POP_PRIORITY, "krb5_unparse_name: %s", estr);
+	krb5_free_error_message(p->context, estr);
 	ret = -1;
 	goto out;
     }

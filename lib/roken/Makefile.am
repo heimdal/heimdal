@@ -26,6 +26,7 @@ check_PROGRAMS = 				\
 		base64-test			\
 		getaddrinfo-test		\
 		getifaddrs-test			\
+		getxxyyy-test			\
 		hex-test			\
 		test-readenv			\
 		parse_bytes-test		\
@@ -63,6 +64,9 @@ tsearch_test_SOURCES	= tsearch-test.c
 tsearch_test_LDADD = libtest.la $(LDADD)
 tsearch_test_CFLAGS	= -DTEST_TSEARCH
 
+getxxyyy_test_SOURCES	= getxxyyy.c
+getxxyyy_test_CFLAGS	= -DTEST_GETXXYYY
+
 resolve_test_SOURCES = resolve-test.c
 
 libroken_la_SOURCES =		\
@@ -83,6 +87,7 @@ libroken_la_SOURCES =		\
 	getarg.c		\
 	getnameinfo_verified.c	\
 	getprogname.c		\
+	getxxyyy.c		\
 	h_errno.c		\
 	hex.c			\
 	hostent_find_fqdn.c	\

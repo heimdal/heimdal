@@ -509,6 +509,8 @@ static kadm5_ret_t
 kadm5_ad_chpass_principal(void *server_handle,
 			  krb5_principal principal,
 			  int keepold,
+			  int n_ks_tuple,
+			  krb5_key_salt_tuple *ks_tuple,
 			  const char *password)
 {
     kadm5_ad_context *context = server_handle;
@@ -518,6 +520,9 @@ kadm5_ad_chpass_principal(void *server_handle,
 
     if (keepold)
 	return KADM5_KEEPOLD_NOSUPP;
+
+    if (n_ks_tuple > 0)
+       return KADM5_KS_TUPLE_NOSUPP;
 
     ret = ad_get_cred(context, NULL);
     if (ret)

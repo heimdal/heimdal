@@ -189,22 +189,22 @@ range_check(const char *name,
 {
     if (r->min == r->max + 2 || r->min < r->max)
 	fprintf (codefile,
-		 "if ((%s)->%s > %d) {\n"
+		 "if ((%s)->%s > %lld) {\n"
 		 "e = ASN1_MAX_CONSTRAINT; %s;\n"
 		 "}\n",
-		 name, length, r->max, forwstr);
+		 name, length, (long long)r->max, forwstr);
     if (r->min - 1 == r->max || r->min < r->max)
 	fprintf (codefile,
-		 "if ((%s)->%s < %d) {\n"
+		 "if ((%s)->%s < %lld) {\n"
 		 "e = ASN1_MIN_CONSTRAINT; %s;\n"
 		 "}\n",
-		 name, length, r->min, forwstr);
+		 name, length, (long long)r->min, forwstr);
     if (r->max == r->min)
 	fprintf (codefile,
-		 "if ((%s)->%s != %d) {\n"
+		 "if ((%s)->%s != %lld) {\n"
 		 "e = ASN1_EXACT_CONSTRAINT; %s;\n"
 		 "}\n",
-		 name, length, r->min, forwstr);
+		 name, length, (long long)r->min, forwstr);
 }
 
 static int
@@ -252,15 +252,17 @@ decode_type (const char *name, const Type *t, int optional,
 		    name);
 	} else if (t->range == NULL) {
 	    decode_primitive ("heim_integer", name, forwstr);
-	} else if (t->range->min == INT_MIN && t->range->max == INT_MAX) {
+	} else if (t->range->min < INT_MIN && t->range->max <= INT64_MAX) {
+	    decode_primitive ("integer64", name, forwstr);
+	} else if (t->range->min >= 0 && t->range->max > UINT_MAX) {
+	    decode_primitive ("unsigned64", name, forwstr);
+	} else if (t->range->min >= INT_MIN && t->range->max <= INT_MAX) {
 	    decode_primitive ("integer", name, forwstr);
-	} else if (t->range->min == 0 && t->range->max == UINT_MAX) {
-	    decode_primitive ("unsigned", name, forwstr);
-	} else if (t->range->min == 0 && t->range->max == INT_MAX) {
+	} else if (t->range->min >= 0 && t->range->max <= UINT_MAX) {
 	    decode_primitive ("unsigned", name, forwstr);
 	} else
-	    errx(1, "%s: unsupported range %d -> %d",
-		 name, t->range->min, t->range->max);
+	    errx(1, "%s: unsupported range %lld -> %lld",
+		 name, (long long)t->range->min, (long long)t->range->max);
 	break;
     case TBoolean:
       decode_primitive ("boolean", name, forwstr);

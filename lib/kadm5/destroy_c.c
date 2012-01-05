@@ -51,5 +51,6 @@ kadm5_c_destroy(void *server_handle)
 	krb5_auth_con_free(context->context, context->ac);
     if(context->my_context)
 	krb5_free_context(context->context);
+    free(context);
     return 0;
 }

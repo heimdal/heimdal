@@ -140,10 +140,10 @@ _kdc_get_preferred_key(krb5_context context,
     if (config->use_strongest_server_key) {
 	const krb5_enctype *p = krb5_kerberos_enctypes(context);
 
-	for (i = 0; p[i] != ETYPE_NULL; i++) {
+	for (i = 0; p[i] != (krb5_enctype)ETYPE_NULL; i++) {
 	    if (krb5_enctype_valid(context, p[i]) != 0)
 		continue;
-	    ret = hdb_enctype2key(context, &h->entry, p[i], key);
+	    ret = hdb_enctype2key(context, &h->entry, NULL, p[i], key);
 	    if (ret != 0)
 		continue;
 	    if (enctype != NULL)
@@ -157,8 +157,8 @@ _kdc_get_preferred_key(krb5_context context,
 	    if (krb5_enctype_valid(context, h->entry.keys.val[i].key.keytype)
 		!= 0)
 		continue;
-	    ret = hdb_enctype2key(context, &h->entry,
-		h->entry.keys.val[i].key.keytype, key);
+	    ret = hdb_enctype2key(context, &h->entry, NULL,
+				  h->entry.keys.val[i].key.keytype, key);
 	    if (ret != 0)
 		continue;
 	    if (enctype != NULL)

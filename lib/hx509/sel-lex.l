@@ -34,6 +34,11 @@
 
 /* $Id$ */
 
+#ifdef __GNUC__
+#pragma GCC diagnostic ignored "-Wunused-function"
+#endif
+
+
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif
@@ -50,7 +55,6 @@ unsigned lineno = 1;
 
 static char * handle_string(void);
 static int lex_input(char *, int);
-static int lex_classic_input(void);
 
 struct hx_expr_input _hx509_expr_input;
 

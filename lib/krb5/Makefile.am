@@ -48,7 +48,7 @@ TESTS =						\
 
 check_DATA = test_config_strings.out
 
-check_PROGRAMS = $(TESTS) test_hostname test_ap-req test_canon
+check_PROGRAMS = $(TESTS) test_hostname test_ap-req test_canon test_set_kvno0
 
 LDADD = libkrb5.la \
 	$(LIB_hcrypto) \
@@ -113,6 +113,7 @@ dist_libkrb5_la_SOURCES =			\
 	acl.c					\
 	add_et_list.c				\
 	addr_families.c				\
+	an2ln_plugin.h				\
 	aname_to_localname.c			\
 	appdefault.c				\
 	asn1_glue.c				\
@@ -149,6 +150,7 @@ dist_libkrb5_la_SOURCES =			\
 	error_string.c				\
 	expand_hostname.c			\
 	expand_path.c				\
+	fast.c					\
 	fcache.c				\
 	free.c					\
 	free_host_realm.c			\
@@ -288,6 +290,7 @@ $(srcdir)/krb5-private.h:
 man_MANS =					\
 	kerberos.8				\
 	krb5.conf.5				\
+	krb5-plugin.7				\
 	krb524_convert_creds_kdc.3		\
 	krb5_425_conv_principal.3		\
 	krb5_acl_match_file.3			\
@@ -340,7 +343,7 @@ nodist_include_HEADERS = krb5_err.h heim_err.h k524_err.h
 
 # XXX use nobase_include_HEADERS = krb5/locate_plugin.h
 krb5dir = $(includedir)/krb5
-krb5_HEADERS = locate_plugin.h send_to_kdc_plugin.h ccache_plugin.h
+krb5_HEADERS = locate_plugin.h send_to_kdc_plugin.h ccache_plugin.h an2ln_plugin.h
 
 build_HEADERZ = \
 	$(krb5_HEADERS) \

@@ -1237,7 +1237,7 @@ _kdc_pk_mk_pa_reply(krb5_context context,
 		    krb5_enctype sessionetype,
 		    const KDC_REQ *req,
 		    const krb5_data *req_buffer,
-		    krb5_keyblock **reply_key,
+		    krb5_keyblock *reply_key,
 		    krb5_keyblock *sessionkey,
 		    METHOD_DATA *md)
 {
@@ -1563,7 +1563,7 @@ out:
 	hx509_cert_free(kdc_cert);
 
     if (ret == 0)
-	*reply_key = &cp->reply_key;
+	ret = krb5_copy_keyblock_contents(context, &cp->reply_key, reply_key);
     return ret;
 }
 

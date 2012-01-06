@@ -1,0 +1,181 @@
+#! /bin/sh
+### BEGIN INIT INFO
+# Provides:          heimdal-kdc
+# Required-Start:    $remote_fs $syslog
+# Required-Stop:     $remote_fs $syslog
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+# Short-Description: Start KDC server
+### END INIT INFO
+
+BIN_DIRECTORY=/opt/heimdal/bin
+SBIN_DIRECTORY=/opt/heimdal/sbin
+DAEMON_DIRECTORY=/opt/heimdal/libexec
+CONFIG_DIRECTORY=/etc/opt/heimdal
+MASTER_FILE=$CONFIG_DIRECTORY/master
+
+PATH=$SBIN_DIRECTORY:$BIN_DIRECTORY:/sbin:/bin:/usr/sbin:/usr/bin
+KDC_DAEMON=$DAEMON_DIRECTORY/kdc
+KDC_NAME=heimdal-kdc
+KDC_DESC="Heimdal KDC"
+KPASSWDD_DAEMON=$DAEMON_DIRECTORY/kpasswdd
+KPASSWDD_NAME=kpasswdd
+KPASSWDD_DESC="Heimdal password server"
+KPASSWDD_ENABLED=no
+
+IPROP_MASTER=$DAEMON_DIRECTORY/ipropd-master
+IPROP_SLAVE=$DAEMON_DIRECTORY/ipropd-slave
+MASTER_NAME=ipropd-master
+SLAVE_NAME=ipropd-slave
+
+# On the master, these are created via local kadmin or krb5_admin
+# before the KDC starts. On slaves, these are created via krb5_admin
+# against the running master, before the slave is ready to run!
+#
+# So if these are missing, whether we're master or slave, the KDC is
+# not ready for prime-time. If these are present, odds are good we've
+# a reasonable Kerberos database for our clients.
+#
+REQUIRED_SPRINCS="host iprop krb5_admin"
+
+if [ -f "/etc/default/heimdal" ] ; then
+	. /etc/default/heimdal
+fi
+
+test -f $KDC_DAEMON || exit 0
+test -f $KPASSWDD_DAEMON || exit 0
+
+# Need the FQDN of this host to construct database readiness queries
+# and to determine whether we're the master.
+#
+FQDN=$(uname -n)
+
+lookup_princ() {
+	kadmin -l list -s -o principal= "$1" 2>/dev/null | egrep -v '^$'
+}
+
+# Test for the requird service principals, allow for the possibility
+# that "kadmin -l list" may change to append the default realm to terse
+# output in the future.
+#
+for sprinc in $REQUIRED_SPRINCS
+do
+	kdcent=$(lookup_princ "$sprinc/$FQDN") &&
+	[ "${kdcent%@*}" = "$sprinc/$FQDN" ] || { KDC_ENABLED="no"; break; }
+done
+
+# Check to see whether we're the master.
+#
+MFQDN=
+[ ! -f "$MASTER_FILE" ] || {
+    MFQDN=$(awk '/^(#|[ \t]*$)/ {next}; {print; exit}' "$MASTER_FILE")
+}
+if   [ -z "$MFQDN" ]; then MASTER_ENABLED=no; SLAVE_ENABLED=no;
+elif [ "$MFQDN" = "$(uname -n)" ]; then MASTER_ENABLED=yes; SLAVE_ENABLED=no;
+else MASTER_ENABLED=no; SLAVE_ENABLED=yes; fi
+
+# Only run kpasswdd on the master!
+#
+if [ "$KDC_ENABLED" != "yes" -o "$MASTER_ENABLED" != "yes" ]; then
+    KPASSWDD_ENABLED="no"
+fi
+
+# commented out due to bug #574425.
+# set -e
+
+case "$1" in
+  start)
+	if [ "$KDC_ENABLED" = "yes" ];
+	then
+		echo -n "Starting $KDC_DESC: "
+		start-stop-daemon --start --quiet --background \
+			--make-pidfile --pidfile /var/run/$KDC_NAME.pid \
+			--exec $KDC_DAEMON -- $KDC_PARAMS
+		echo "$KDC_NAME."
+	fi
+	if [ "$KPASSWDD_ENABLED" = "yes" ];
+	then
+		echo -n "Starting $KPASSWDD_DESC: "
+		start-stop-daemon --start --quiet --background \
+			--make-pidfile --pidfile /var/run/$KPASSWDD_NAME.pid \
+			--exec $KPASSWDD_DAEMON -- $KPASSWDD_PARAMS
+		echo "$KPASSWDD_NAME."
+	fi
+	if [ "$MASTER_ENABLED" = "yes" ];
+	then
+		echo -n "Starting incremental propagation master: "
+		start-stop-daemon --start --quiet --background \
+			--make-pidfile --pidfile /var/run/$MASTER_NAME.pid \
+			--exec "$IPROP_MASTER" -- $MASTER_PARAMS
+		echo "$MASTER_NAME."
+	fi
+	if [ "$SLAVE_ENABLED" = "yes" ];
+	then
+		echo -n "Starting incremental propagation slave: "
+		start-stop-daemon --start --quiet --background \
+			--make-pidfile --pidfile /var/run/$SLAVE_NAME.pid \
+			--exec "$IPROP_SLAVE" -- $SLAVE_PARAMS "$MFQDN"
+		echo "$SLAVE_NAME."
+	fi
+	;;
+  stop)
+	if [ -f /var/run/$KPASSWDD_NAME.pid ]
+	then
+		echo -n "Stopping $KPASSWDD_DESC: "
+		start-stop-daemon --stop --oknodo --quiet --pidfile /var/run/$KPASSWDD_NAME.pid \
+			--exec $KPASSWDD_DAEMON -- $KPASSWDD_PARAMS
+		echo "$KPASSWDD_NAME."
+	fi
+	if [ -f /var/run/$KDC_NAME.pid  ]
+	then
+		echo -n "Stopping $KDC_DESC: "
+		start-stop-daemon --stop --oknodo --quiet --pidfile /var/run/$KDC_NAME.pid \
+			--exec $KDC_DAEMON -- $KDC_PARAMS
+		echo "$KDC_NAME."
+	fi
+	if [ -f /var/run/$MASTER_NAME.pid ]
+	then
+		echo -n "Stopping incremental propagation master: "
+		start-stop-daemon --stop --oknodo --quiet --pidfile /var/run/$MASTER_NAME.pid \
+			--exec "$IPROP_MASTER" -- $MASTER_PARAMS
+		echo "$MASTER_NAME."
+	fi
+	if [ -f /var/run/$SLAVE_NAME.pid ]
+	then
+		echo -n "Stopping incremental propagation slave: "
+		start-stop-daemon --stop --oknodo --quiet --pidfile /var/run/$SLAVE_NAME.pid \
+			--exec "$IPROP_SLAVE" -- $SLAVE_PARAMS
+		echo "/usr/sbin/$SLAVE_NAME."
+	fi
+	;;
+  #reload)
+	#
+	#	If the daemon can reload its config files on the fly
+	#	for example by sending it SIGHUP, do it here.
+	#
+	#	If the daemon responds to changes in its config file
+	#	directly anyway, make this a do-nothing entry.
+	#
+	# echo "Reloading $DESC configuration files."
+	# start-stop-daemon --stop --signal 1 --quiet --pidfile \
+	#	/var/run/$NAME.pid --exec $DAEMON
+  #;;
+  restart|force-reload)
+	#
+	#	If the "reload" option is implemented, move the "force-reload"
+	#	option to the "reload" entry above. If not, "force-reload" is
+	#	just the same as "restart".
+	#
+	/etc/init.d/heimdal stop
+	sleep 1
+	/etc/init.d/heimdal start
+	;;
+  *)
+	N=/etc/init.d/$NAME
+	# echo "Usage: $N {start|stop|restart|reload|force-reload}" >&2
+	echo "Usage: $N {start|stop|restart|force-reload}" >&2
+	exit 1
+	;;
+esac
+
+exit 0

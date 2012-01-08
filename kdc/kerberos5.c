@@ -1095,7 +1095,7 @@ _kdc_as_rep(krb5_context context,
      * decrypt.
      */
     ret = _kdc_find_etype(context,
-			  krb5_principal_is_krbtgt(context, r->server_princ) ?
+			  krb5_principal_is_krbtgt(context, server_princ) ?
 			  config->tgt_use_strongest_session_key :
 			  config->svc_use_strongest_session_key, FALSE,
 			  client, b->etype.val, b->etype.len, &sessionetype,

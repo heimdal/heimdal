@@ -15,13 +15,7 @@
 		mapped1 = foo
 		mapped2 = bar
 	    }
-	    auth_to_local = NONE
-	}
-	TEST2.H5L.SE = {
-	    auth_to_local = DB:@srcdir@/an2ln-db.txt
-	}
-	TEST3.H5L.SE = {
-	    auth_to_local = DEFAULT
+	    auth_to_local = DB:./an2ln-db.txt DEFAULT
 	}
 
 [logging]

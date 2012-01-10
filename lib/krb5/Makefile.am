@@ -77,7 +77,6 @@ libkrb5_la_LIBADD = \
 	$(LIBADD_roken) \
 	$(PTHREAD_LIBADD) \
 	$(LIB_door_create) \
-	/usr/lib/libcdb_pic.a \
 	$(LIB_dlopen)
 
 librfc3961_la_LIBADD = \

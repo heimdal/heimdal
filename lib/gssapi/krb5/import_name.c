@@ -83,7 +83,7 @@ import_krb5_name (OM_uint32 *minor_status,
 
 OM_uint32
 _gsskrb5_canon_name(OM_uint32 *minor_status, krb5_context context,
-		    int use_dns, krb5_const_principal sourcename, gss_name_t targetname,
+		    krb5_const_principal sourcename, gss_name_t targetname,
 		    krb5_principal *out)
 {
     krb5_principal p = (krb5_principal)targetname;
@@ -93,15 +93,9 @@ _gsskrb5_canon_name(OM_uint32 *minor_status, krb5_context context,
     *minor_status = 0;
 
     /* If its not a hostname */
-    if (krb5_principal_get_type(context, p) != MAGIC_HOSTBASED_NAME_TYPE) {
+    if (krb5_principal_get_type(context, p) != KRB5_NT_SRV_HST &&
+	krb5_principal_get_type(context, p) != KRB5_NT_SRV_HST_NEEDS_CANON) {
 	ret = krb5_copy_principal(context, p, out);
-    } else if (!use_dns) {
-	ret = krb5_copy_principal(context, p, out);
-	if (ret)
-	    goto out;
-	krb5_principal_set_type(context, *out, KRB5_NT_SRV_HST);
-	if (sourcename)
-	    ret = krb5_principal_set_realm(context, *out, sourcename->realm);
     } else {
 	if (p->name.name_string.len == 0)
 	    return GSS_S_BAD_NAME;
@@ -161,7 +155,7 @@ import_hostbased_name (OM_uint32 *minor_status,
     else if (kerr)
 	return GSS_S_FAILURE;
 
-    krb5_principal_set_type(context, princ, MAGIC_HOSTBASED_NAME_TYPE);
+    krb5_principal_set_type(context, princ, KRB5_NT_SRV_HST_NEEDS_CANON);
     *output_name = (gss_name_t)princ;
 
     return 0;

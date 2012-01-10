@@ -1076,16 +1076,18 @@ _krb5_get_cred_kdc_any(krb5_context context,
 	context->kdc_usec_offset = 0;
     }
 
-    ret = get_cred_kdc_referral(context,
-				flags,
-				ccache,
-				in_creds,
-				impersonate_principal,
-				second_ticket,
-				out_creds,
-				ret_tgts);
-    if (ret == 0 || flags.b.canonicalize)
-	return ret;
+    if (flags.b.canonicalize) {
+	ret = get_cred_kdc_referral(context,
+				    flags,
+				    ccache,
+				    in_creds,
+				    impersonate_principal,
+				    second_ticket,
+				    out_creds,
+				    ret_tgts);
+	if (!ret)
+	    return 0;
+    }
     return get_cred_kdc_capath(context,
 				flags,
 				ccache,
@@ -1445,9 +1447,9 @@ next_rule:
     if(options & KRB5_GC_CACHED)
 	goto next_rule;
 
-    if(rule_opts & KRB5_NCRO_USE_REFERRALS)
+    if (try_creds->server->name.name_type == KRB5_NT_SRV_HST)
 	flags.b.canonicalize = 1;
-    else if(rule_opts & KRB5_NCRO_NO_REFERRALS)
+    if (rule_opts & KRB5_NCRO_NO_REFERRALS)
 	flags.b.canonicalize = 0;
     else
 	flags.b.canonicalize = (options & KRB5_GC_CANONICALIZE) ? 1 : 0;

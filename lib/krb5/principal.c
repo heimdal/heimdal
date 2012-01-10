@@ -1303,10 +1303,6 @@ rule_parse_token(krb5_context context, krb5_name_canon_rule rule,
 	rule->options |= KRB5_NCRO_GC_ONLY;
     } else if (strcmp(tok, "no_referrals") == 0) {
 	rule->options |= KRB5_NCRO_NO_REFERRALS;
-	rule->options &= ~KRB5_NCRO_USE_REFERRALS;
-    } else if (strcmp(tok, "use_referrals") == 0) {
-	rule->options |= KRB5_NCRO_USE_REFERRALS;
-	rule->options &= ~KRB5_NCRO_NO_REFERRALS;
     /* Rule ancilliary data: */
     } else if (strncmp(tok, "domain=", strlen("domain=")) == 0) {
 	free(rule->domain);

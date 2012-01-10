@@ -367,6 +367,7 @@ krb5_aname_to_localname(krb5_context context,
 {
     static heim_base_once_t reg_def_plugins = HEIM_BASE_ONCE_INIT;
     krb5_error_code ret;
+    krb5_realm realm;
     size_t i;
     char **rules = NULL;
     char *rule;
@@ -381,8 +382,13 @@ krb5_aname_to_localname(krb5_context context,
     if (ret != KRB5_PLUGIN_NO_HANDLE)
 	return ret;
 
-    rules = krb5_config_get_strings(context, NULL, "realms", aname->realm,
+    ret = krb5_get_default_realm(context, &realm);
+    if (ret)
+	return ret;
+
+    rules = krb5_config_get_strings(context, NULL, "realms", realm,
 				    "auth_to_local", NULL);
+    krb5_xfree(realm);
     if (!rules) {
 	/* Heimdal's default rule */
 	ret = an2ln_default(context, "HEIMDAL_DEFAULT", aname, lnsize, lname);

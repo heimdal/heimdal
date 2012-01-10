@@ -79,8 +79,8 @@ check_localname mapped1@${R2} 0 m1 || exit 1
 check_localname mapped2@${R2} 0 m2 || exit 1
 check_localname mapped1@${R3} 0 mapped1 || exit 1
 check_localname mapped2@${R3} 0 mapped2 || exit 1
-check_localname notmapped1@${R} 1 || exit 1
-check_localname notmapped1@${R2} 1 || exit 1
+check_localname notmapped1@${R} 0 notmapped1 || exit 1
+check_localname notmapped1@${R2} 0 notmapped1 || exit 1
 check_localname notmapped1@${R3} 0 notmapped1 || exit 1
 
 echo "Checking 1-component principal names in non-default realm"

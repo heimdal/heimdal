@@ -1,4 +1,4 @@
-/*
+/*-
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
@@ -47,13 +47,13 @@
 #include <stdint.h>
 
 /*
- * Convert a string to a long long integer.
+ * Convert a string to an unsigned long long integer.
  *
  * Assumes that the upper and lower case
  * alphabets and digits are each contiguous.
  */
-ROKEN_LIB_FUNCTION long long ROKEN_LIB_CALL
-strtoll(const char * __restrict nptr, char ** __restrict endptr, int base)
+ROKEN_LIB_FUNCTION unsigned long long ROKEN_LIB_CALL
+strtoull(const char * __restrict nptr, char ** __restrict endptr, int base)
 {
     const char *s;
     unsigned long long acc;
@@ -62,9 +62,7 @@ strtoll(const char * __restrict nptr, char ** __restrict endptr, int base)
     int neg, any, cutlim;
 
     /*
-     * Skip white space and pick up leading +/- sign if any.
-     * If base is 0, allow 0x for hex and 0 for octal, else
-     * assume decimal; if base is already 16, allow 0x.
+     * See strtoq for comments as to the logic used.
      */
     s = nptr;
     do {
@@ -93,28 +91,8 @@ strtoll(const char * __restrict nptr, char ** __restrict endptr, int base)
     if (base < 2 || base > 36)
 	goto noconv;
 
-    /*
-     * Compute the cutoff value between legal numbers and illegal
-     * numbers.  That is the largest legal value, divided by the
-     * base.  An input number that is greater than this value, if
-     * followed by a legal input character, is too big.  One that
-     * is equal to this value may be valid or not; the limit
-     * between valid and invalid numbers is then based on the last
-     * digit.  For instance, if the range for quads is
-     * [-9223372036854775808..9223372036854775807] and the input base
-     * is 10, cutoff will be set to 922337203685477580 and cutlim to
-     * either 7 (neg==0) or 8 (neg==1), meaning that if we have
-     * accumulated a value > 922337203685477580, or equal but the
-     * next digit is > 7 (or 8), the number is too big, and we will
-     * return a range error.
-     *
-     * Set 'any' if any `digits' consumed; make it negative to indicate
-     * overflow.
-     */
-    cutoff = neg ? (unsigned long long)-(LLONG_MIN + LLONG_MAX) + LLONG_MAX
-        : LLONG_MAX;
-    cutlim = cutoff % base;
-    cutoff /= base;
+    cutoff = ULLONG_MAX / base;
+    cutlim = ULLONG_MAX % base;
     for ( ; ; c = *s++) {
 	if (c >= '0' && c <= '9')
 	    c -= '0';
@@ -135,7 +113,7 @@ strtoll(const char * __restrict nptr, char ** __restrict endptr, int base)
 	}
     }
     if (any < 0) {
-	acc = neg ? LLONG_MIN : LLONG_MAX;
+	acc = ULLONG_MAX;
 	errno = ERANGE;
     } else if (!any) {
 noconv:

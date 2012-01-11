@@ -205,7 +205,7 @@ check_owner_file(krb5_context context,
      * NFSv4 servers do?).  Checking the owner means doing an LSARPC
      * lookup at least (to get the user's SID). 
      */
-    if (is_system_location || owner == NULL)
+    if (owner == NULL)
 	return 0;
 
     krb5_set_error_message(context, EACCES,

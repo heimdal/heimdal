@@ -33,16 +33,19 @@
 
 #include <sys/types.h>
 #include <sys/stat.h>
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
+#endif
 #include <fcntl.h>
 #include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#ifdef HAVE_STRINGS_H
 #include <strings.h>
+#endif
 #include <errno.h>
 #include <assert.h>
-#include <getopt.h>
 
 /*
  * This file contains functions for binary searching flat text in memory
@@ -267,9 +270,12 @@ bsearch_common(const char *buf, size_t sz, const char *key,
 		*location = key_start;
 	    ret = 0;
 	    if (val_len && value) {
-		*value = strndup(&buf[val_start], val_len);
+		/* Avoid strndup() so we don't need libroken here yet */
+		*value = malloc(val_len + 1);
 		if (!*value)
 		    ret = errno;
+		(void) memcpy(*value, &buf[val_start], val_len);
+		(*value)[val_len] = '\0';
 	    }
 	    break;
 	}
@@ -376,7 +382,11 @@ __bsearch_file_open(const char *fname, size_t max_sz, size_t page_sz,
 	}
     }
     if (page_sz == 0)
+#ifdef HAVE_STRUCT_STAT_ST_BLKSIZE
 	page_sz = st.st_blksize;
+#else
+	page_sz = 4096;
+#endif
     for (i = page_sz; i; i >>= 1) {
 	/* Make sure page_sz is a power of two */
 	if ((i % 2) && (i >> 1)) {

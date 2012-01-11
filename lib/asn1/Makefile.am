@@ -4,6 +4,8 @@ include $(top_srcdir)/Makefile.am.common
 
 YFLAGS = -d -t
 
+AM_CPPFLAGS += $(ROKEN_RENAME)
+
 lib_LTLIBRARIES = libasn1.la
 libasn1_la_LDFLAGS = -version-info 8:0:0
 

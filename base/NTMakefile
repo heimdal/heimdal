@@ -37,6 +37,7 @@ INCFILES=$(INCDIR)\heimbase.h
 
 libheimbase_OBJS =		\
 	$(OBJ)\array.obj	\
+	$(OBJ)\bsearch.obj	\
 	$(OBJ)\bool.obj		\
 	$(OBJ)\dict.obj		\
 	$(OBJ)\error.obj	\

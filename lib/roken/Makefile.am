@@ -114,7 +114,6 @@ libroken_la_SOURCES =		\
 	socket.c		\
 	strcollect.c		\
 	strerror_r.c		\
-	strtoll.c		\
 	strpool.c		\
 	timeval.c		\
 	tm2time.c		\

@@ -299,6 +299,8 @@ EXPORTS
 	copy_IssuerAndSerialNumber
 	copy_KDCDHKeyInfo
 	copy_KDCDHKeyInfo_Win2k
+	copy_KDCFastCookie
+	copy_KDCFastState
 	copy_KDCOptions
 	copy_KDC_REP
 	copy_KDC_REQ
@@ -551,6 +553,8 @@ EXPORTS
 	decode_IssuerAndSerialNumber
 	decode_KDCDHKeyInfo
 	decode_KDCDHKeyInfo_Win2k
+	decode_KDCFastCookie
+	decode_KDCFastState
 	decode_KDCOptions
 	decode_KDC_REP
 	decode_KDC_REQ
@@ -699,6 +703,7 @@ EXPORTS
 	der_copy_heim_integer
 	der_copy_ia5_string
 	der_copy_integer
+	der_copy_integer64
 	der_copy_octet_string
 	der_copy_oid
 	der_copy_printable_string
@@ -714,6 +719,7 @@ EXPORTS
 	der_free_heim_integer
 	der_free_ia5_string
 	der_free_integer
+	der_free_integer64
 	der_free_octet_string
 	der_free_oid
 	der_free_printable_string
@@ -732,6 +738,7 @@ EXPORTS
 	der_get_heim_integer
 	der_get_ia5_string
 	der_get_integer
+	der_get_integer64
 	der_get_length
 	der_get_octet_string
 	der_get_octet_string_ber
@@ -763,6 +770,7 @@ EXPORTS
 	der_length_heim_integer
 	der_length_ia5_string
 	der_length_integer
+	der_length_integer64
 	der_length_len
 	der_length_octet_string
 	der_length_oid
@@ -789,6 +797,8 @@ EXPORTS
 	der_put_heim_integer
 	der_put_ia5_string
 	der_put_integer
+	der_put_integer64
+	der_put_integer64
 	der_put_length
 	der_put_length_and_tag
 	der_put_octet_string
@@ -911,6 +921,8 @@ EXPORTS
 	encode_IssuerAndSerialNumber
 	encode_KDCDHKeyInfo
 	encode_KDCDHKeyInfo_Win2k
+	encode_KDCFastCookie
+	encode_KDCFastState
 	encode_KDCOptions
 	encode_KDC_REP
 	encode_KDC_REQ
@@ -1163,6 +1175,8 @@ EXPORTS
 	free_IssuerAndSerialNumber
 	free_KDCDHKeyInfo
 	free_KDCDHKeyInfo_Win2k
+	free_KDCFastCookie
+	free_KDCFastState
 	free_KDCOptions
 	free_KDC_REP
 	free_KDC_REQ
@@ -1426,6 +1440,8 @@ EXPORTS
 	length_IssuerAndSerialNumber
 	length_KDCDHKeyInfo
 	length_KDCDHKeyInfo_Win2k
+	length_KDCFastCookie
+	length_KDCFastState
 	length_KDCOptions
 	length_KDC_REP
 	length_KDC_REQ

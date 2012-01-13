@@ -293,7 +293,7 @@ eval_kgetcred(heim_dict_t o)
 
     nostore = heim_dict_get_value(o, HSTR("nostore"));
     if (nostore == NULL)
-	nostore = HEIM_BOOL_TRUE;
+	nostore = heim_bool_create(1);
 
     ret = krb5_cc_resolve(kdc_context, heim_string_get_utf8(ccache), &cc);
     if (ret)

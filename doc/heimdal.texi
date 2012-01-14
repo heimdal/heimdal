@@ -97,6 +97,7 @@ Setting up a realm
 * Using LDAP to store the database::  
 * Providing Kerberos credentials to servers and programs::  
 * Setting up PK-INIT::
+* Debugging Kerberos problems::
 
 Applications
 

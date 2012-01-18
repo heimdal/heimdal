@@ -111,13 +111,18 @@ main(int argc, char **argv)
     struct passwd pwd, *result;
     char buf[1024];
     int ret;
+    const char *user;
 
-    ret = rk_getpwnam_r(getenv("USER"), &pwd, buf, sizeof(buf), &result);
+    user = getenv("USER");
+    if (!user)
+	user = "root";
+
+    ret = rk_getpwnam_r(user, &pwd, buf, sizeof(buf), &result);
     if (ret)
 	errx(1, "rk_getpwnam_r");
     print_result(result);
 
-    ret = rk_getpwnam_r(getenv("USER"), &pwd, buf, 1, &result);
+    ret = rk_getpwnam_r(user, &pwd, buf, 1, &result);
     if (ret == 0)
 	errx(1, "rk_getpwnam_r too small buf");
 

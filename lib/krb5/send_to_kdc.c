@@ -48,7 +48,9 @@ static int
 timed_connect(int s, struct addrinfo *addr, time_t tmout)
 {
     struct timeval timeout;
+    socklen_t sl;
     fd_set wfds;
+    int err;
     int flags;
     int ret;
 
@@ -77,6 +79,13 @@ timed_connect(int s, struct addrinfo *addr, time_t tmout)
     fcntl(s, F_SETFL, flags);
 
     if (ret != 1)
+	return -1;
+
+    sl = sizeof(err);
+    ret = getsockopt(s, SOL_SOCKET, SO_ERROR, &err, &sl);
+    if (ret == -1)
+	return -1;
+    if (err != 0)
 	return -1;
 
     return 0;

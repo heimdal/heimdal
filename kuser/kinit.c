@@ -595,6 +595,10 @@ get_new_tickets(krb5_context context,
 
     krb5_process_last_request(context, opt, ctx);
 
+    ret = krb5_init_creds_get_creds(context, ctx, &cred);
+    if (ret)
+	    krb5_err(context, 1, ret, "krb5_init_creds_get_creds");
+
     if(ticket_life != 0) {
 	if(abs(cred.times.endtime - cred.times.starttime - ticket_life) > 30) {
 	    char life[64];

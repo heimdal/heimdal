@@ -1,6 +1,12 @@
 
 include $(top_srcdir)/Makefile.am.common
 
+if do_roken_rename
+ES = base64.c
+endif
+
+AM_CPPFLAGS += $(ROKEN_RENAME)
+
 lib_LTLIBRARIES = libheimbase.la
 check_PROGRAMS = test_base
 
@@ -20,6 +26,7 @@ dist_libheimbase_la_SOURCES =	\
 	bsearch.c		\
 	bool.c			\
 	data.c			\
+	db.c			\
 	dict.c			\
 	error.c			\
 	heimbase.c		\
@@ -28,10 +35,22 @@ dist_libheimbase_la_SOURCES =	\
 	json.c			\
 	null.c			\
 	number.c		\
+	roken_rename.h		\
 	string.c
+
+nodist_libsl_la_SOURCES = $(ES)
+
+# install these?
 
 libheimbase_la_DEPENDENCIES = version-script.map
 
-test_base_LDADD = libheimbase.la
+test_base_LDADD = libheimbase.la $(LIB_roken)
+
+CLEANFILES = base64.c
 
 EXTRA_DIST = NTMakefile version-script.map
+
+base64.c:
+	$(RM) base64.c
+	$(LN_S) $(srcdir)/../roken/base64.c .
+

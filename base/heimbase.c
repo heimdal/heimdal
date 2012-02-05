@@ -76,7 +76,7 @@ struct heim_auto_release {
 
 
 /**
- * Retain object
+ * Retain object (i.e., take a reference)
  *
  * @param object to be released, NULL is ok
  *
@@ -100,7 +100,7 @@ heim_retain(void *ptr)
 }
 
 /**
- * Release object, free is reference count reaches zero
+ * Release object, free if reference count reaches zero
  *
  * @param object to be released
  */
@@ -257,6 +257,18 @@ struct heim_type_data memory_object = {
     NULL
 };
 
+/**
+ * Allocate memory for an object of anonymous type
+ *
+ * @param size size of object to be allocated
+ * @param name name of ad-hoc type
+ * @param dealloc destructor function
+ *
+ * Objects allocated with this interface do not serialize.
+ *
+ * @return allocated object
+ */
+
 void *
 heim_alloc(size_t size, const char *name, heim_type_dealloc dealloc)
 {
@@ -308,6 +320,18 @@ _heim_alloc_object(heim_type_t type, size_t size)
     p->ref_cnt = 1;
 
     return BASE2PTR(p);
+}
+
+void *
+_heim_get_isaextra(heim_object_t ptr, size_t idx)
+{
+    struct heim_base *p = (struct heim_base *)PTR2BASE(ptr);
+
+    heim_assert(ptr != NULL, "internal error");
+    if (p->isa == &memory_object)
+	return NULL;
+    heim_assert(idx < 3, "invalid private heim_base extra data index");
+    return &p->isaextra[idx];
 }
 
 heim_tid_t
@@ -489,7 +513,11 @@ static struct heim_type_data _heim_autorel_object = {
 };
 
 /**
+ * Create thread-specific object auto-release pool
  *
+ * Objects placed on the per-thread auto-release pool (with
+ * heim_auto_release()) can be released in one fell swoop by calling
+ * heim_auto_release_drain().
  */
 
 heim_auto_release_t
@@ -515,7 +543,9 @@ heim_auto_release_create(void)
 }
 
 /**
- * Mark the current object as a
+ * Place the current object on the thread's auto-release pool
+ *
+ * @param ptr object
  */
 
 void
@@ -546,7 +576,7 @@ heim_auto_release(heim_object_t ptr)
 }
 
 /**
- *
+ * Release all objects on the given auto-release pool
  */
 
 void
@@ -565,3 +595,369 @@ heim_auto_release_drain(heim_auto_release_t autorel)
     }
     HEIMDAL_MUTEX_unlock(&autorel->pool_mutex);
 }
+
+/*
+ * Helper for heim_path_vget() and heim_path_delete().  On success
+ * outputs the node named by the path and the parent node and key
+ * (useful for heim_path_delete()).
+ */
+
+static heim_object_t
+heim_path_vget2(heim_object_t ptr, heim_object_t *parent, heim_object_t *key,
+		heim_error_t *error, va_list ap)
+{
+    heim_object_t path_element;
+    heim_object_t node, next_node;
+    heim_tid_t node_type;
+
+    *parent = NULL;
+    *key = NULL;
+    if (ptr == NULL)
+	return NULL;
+
+    for (node = ptr; node != NULL; ) {
+	path_element = va_arg(ap, heim_object_t);
+	if (path_element == NULL) {
+	    *parent = node;
+	    *key = path_element;
+	    return node;
+	}
+
+	node_type = heim_get_tid(node);
+	switch (node_type) {
+	case HEIM_TID_ARRAY:
+	case HEIM_TID_DICT:
+	case HEIM_TID_DB:
+	    break;
+	default:
+	    if (node == ptr)
+		heim_abort("heim_path_get() only operates on container types");
+	    return NULL;
+	}
+
+	if (node_type == HEIM_TID_DICT) {
+	    next_node = heim_dict_get_value(node, path_element);
+	} else if (node_type == HEIM_TID_DB) {
+	    next_node = _heim_db_get_value(node, NULL, path_element, NULL);
+	} else if (node_type == HEIM_TID_ARRAY) {
+	    int idx = -1;
+
+	    if (heim_get_tid(path_element) == HEIM_TID_NUMBER)
+		idx = heim_number_get_int(path_element);
+	    if (idx < 0) {
+		if (error)
+		    *error = heim_error_create(EINVAL,
+					       "heim_path_get() path elements "
+					       "for array nodes must be "
+					       "numeric and positive");
+		return NULL;
+	    }
+	    next_node = heim_array_get_value(node, idx);
+	} else {
+	    if (error)
+		*error = heim_error_create(EINVAL,
+					   "heim_path_get() node in path "
+					   "not a container type");
+	    return NULL;
+	}
+	node = next_node;
+    }
+    return NULL;
+}
+
+/**
+ * Get a node in a heim_object tree by path
+ *
+ * @param ptr tree
+ * @param error error (output)
+ * @param ap NULL-terminated va_list of heim_object_ts that form a path
+ *
+ * @return object (not retained) if found
+ *
+ * @addtogroup heimbase
+ */
+
+heim_object_t
+heim_path_vget(heim_object_t ptr, heim_error_t *error, va_list ap)
+{
+    heim_object_t p, k;
+
+    return heim_path_vget2(ptr, &p, &k, error, ap);
+}
+
+/**
+ * Get a node in a tree by path, with retained reference
+ *
+ * @param ptr tree
+ * @param error error (output)
+ * @param ap NULL-terminated va_list of heim_object_ts that form a path
+ *
+ * @return retained object if found
+ *
+ * @addtogroup heimbase
+ */
+
+heim_object_t
+heim_path_vcopy(heim_object_t ptr, heim_error_t *error, va_list ap)
+{
+    heim_object_t p, k;
+
+    return heim_retain(heim_path_vget2(ptr, &p, &k, error, ap));
+}
+
+/**
+ * Get a node in a tree by path
+ *
+ * @param ptr tree
+ * @param error error (output)
+ * @param ... NULL-terminated va_list of heim_object_ts that form a path
+ *
+ * @return object (not retained) if found
+ *
+ * @addtogroup heimbase
+ */
+
+heim_object_t
+heim_path_get(heim_object_t ptr, heim_error_t *error, ...)
+{
+    heim_object_t o;
+    heim_object_t p, k;
+    va_list ap;
+
+    if (ptr == NULL)
+	return NULL;
+
+    va_start(ap, error);
+    o = heim_path_vget2(ptr, &p, &k, error, ap);
+    va_end(ap);
+    return o;
+}
+
+/**
+ * Get a node in a tree by path, with retained reference
+ *
+ * @param ptr tree
+ * @param error error (output)
+ * @param ... NULL-terminated va_list of heim_object_ts that form a path
+ *
+ * @return retained object if found
+ *
+ * @addtogroup heimbase
+ */
+
+heim_object_t
+heim_path_copy(heim_object_t ptr, heim_error_t *error, ...)
+{
+    heim_object_t o;
+    heim_object_t p, k;
+    va_list ap;
+
+    if (ptr == NULL)
+	return NULL;
+
+    va_start(ap, error);
+    o = heim_retain(heim_path_vget2(ptr, &p, &k, error, ap));
+    va_end(ap);
+    return o;
+}
+
+/**
+ * Create a path in a heim_object_t tree
+ *
+ * @param ptr the tree
+ * @param size the size of the heim_dict_t nodes to be created
+ * @param leaf leaf node to be added, if any
+ * @param error error (output)
+ * @param ap NULL-terminated of path component objects
+ *
+ * Create a path of heim_dict_t interior nodes in a given heim_object_t
+ * tree, as necessary, and set/replace a leaf, if given (if leaf is NULL
+ * then the leaf is not deleted).
+ *
+ * @return 0 on success, else a system error
+ *
+ * @addtogroup heimbase
+ */
+
+int
+heim_path_vcreate(heim_object_t ptr, size_t size, heim_object_t leaf,
+		  heim_error_t *error, va_list ap)
+{
+    heim_object_t path_element = va_arg(ap, heim_object_t);
+    heim_object_t next_path_element = NULL;
+    heim_object_t node = ptr;
+    heim_object_t next_node = NULL;
+    heim_tid_t node_type;
+    int ret;
+
+    if (ptr == NULL)
+	heim_abort("heim_path_vcreate() does not create root nodes");
+
+    while (path_element != NULL) {
+	next_path_element = va_arg(ap, heim_object_t);
+	node_type = heim_get_tid(node);
+
+	if (node_type == HEIM_TID_DICT) {
+	    next_node = heim_dict_get_value(node, path_element);
+	} else if (node_type == HEIM_TID_ARRAY) {
+	    int idx = -1;
+
+	    if (heim_get_tid(path_element) == HEIM_TID_NUMBER)
+		idx = heim_number_get_int(path_element);
+	    if (idx < 0) {
+		if (error)
+		    *error = heim_error_create(EINVAL,
+					       "heim_path() path elements for "
+					       "array nodes must be numeric "
+					       "and positive");
+		return EINVAL;
+	    }
+	    if (idx < heim_array_get_length(node))
+		next_node = heim_array_get_value(node, idx);
+	    else
+		next_node = NULL;
+	} else if (node_type == HEIM_TID_DB && next_path_element != NULL) {
+	    if (error)
+		*error = heim_error_create(EINVAL, "Interior node is a DB");
+	    return EINVAL;
+	}
+
+	if (next_path_element == NULL)
+	    break;
+
+	/* Create missing interior node */
+	if (next_node == NULL) {
+	    next_node = heim_dict_create(size); /* no arrays or DBs, just dicts */
+	    if (next_node == NULL) {
+		ret = ENOMEM;
+		goto err;
+	    }
+
+	    if (node_type == HEIM_TID_DICT) {
+		ret = heim_dict_set_value(node, path_element, next_node);
+	    } else if (node_type == HEIM_TID_ARRAY &&
+		heim_number_get_int(path_element) <= heim_array_get_length(node)) {
+		ret = heim_array_insert_value(node,
+					      heim_number_get_int(path_element),
+					      next_node);
+	    } else {
+		ret = EINVAL;
+		if (error)
+		    *error = heim_error_create(ret, "Node in path not a "
+					       "container");
+		goto err;
+	    }
+	    heim_release(next_node);
+	    if (ret)
+		goto err;
+	}
+
+	path_element = next_path_element;
+	node = next_node;
+	next_node = NULL;
+    }
+
+    if (path_element == NULL)
+	goto err;
+
+    /* Add the leaf */
+    if (leaf != NULL) {
+	if (node_type == HEIM_TID_DICT)
+	    ret = heim_dict_set_value(node, path_element, leaf);
+	else
+	    ret = heim_array_insert_value(node,
+					  heim_number_get_int(path_element),
+					  leaf);
+    }
+    return 0;
+
+err:
+    if (error && !*error) {
+	if (ret == ENOMEM)
+	    *error = heim_error_enomem();
+	else
+	    *error = heim_error_create(ret, "Could not set "
+				       "dict value");
+    }
+    return ret;
+}
+
+/**
+ * Create a path in a heim_object_t tree
+ *
+ * @param ptr the tree
+ * @param size the size of the heim_dict_t nodes to be created
+ * @param leaf leaf node to be added, if any
+ * @param error error (output)
+ * @param ... NULL-terminated list of path component objects
+ *
+ * Create a path of heim_dict_t interior nodes in a given heim_object_t
+ * tree, as necessary, and set/replace a leaf, if given (if leaf is NULL
+ * then the leaf is not deleted).
+ *
+ * @return 0 on success, else a system error
+ *
+ * @addtogroup heimbase
+ */
+
+int
+heim_path_create(heim_object_t ptr, size_t size, heim_object_t leaf,
+		 heim_error_t *error, ...)
+{
+    va_list ap;
+    int ret;
+
+    va_start(ap, error);
+    ret = heim_path_vcreate(ptr, size, leaf, error, ap);
+    va_end(ap);
+    return ret;
+}
+
+/**
+ * Delete leaf node named by a path in a heim_object_t tree
+ *
+ * @param ptr the tree
+ * @param error error (output)
+ * @param ap NULL-terminated list of path component objects
+ *
+ * @addtogroup heimbase
+ */
+
+void
+heim_path_vdelete(heim_object_t ptr, heim_error_t *error, va_list ap)
+{
+    heim_object_t parent, key, child;
+
+    child = heim_path_vget2(ptr, &parent, &key, error, ap);
+    if (child != NULL) {
+	if (heim_get_tid(parent) == HEIM_TID_DICT)
+	    heim_dict_delete_key(parent, key);
+	else if (heim_get_tid(parent) == HEIM_TID_DB)
+	    heim_db_delete_key(parent, NULL, key, error);
+	else if (heim_get_tid(parent) == HEIM_TID_ARRAY)
+	    heim_array_delete_value(parent, heim_number_get_int(key));
+	heim_release(child);
+    }
+}
+
+/**
+ * Delete leaf node named by a path in a heim_object_t tree
+ *
+ * @param ptr the tree
+ * @param error error (output)
+ * @param ap NULL-terminated list of path component objects
+ *
+ * @addtogroup heimbase
+ */
+
+void
+heim_path_delete(heim_object_t ptr, heim_error_t *error, ...)
+{
+    va_list ap;
+
+    va_start(ap, error);
+    heim_path_vdelete(ptr, error, ap);
+    va_end(ap);
+    return;
+}
+

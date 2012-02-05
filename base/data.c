@@ -37,6 +37,19 @@
 static void
 data_dealloc(void *ptr)
 {
+    heim_data_t d = ptr;
+    heim_octet_string *os = (heim_octet_string *)d;
+    heim_data_free_f_t *deallocp;
+    heim_data_free_f_t dealloc;
+
+    if (os->data == NULL)
+	return;
+
+    /* Possible string ref */
+    deallocp = _heim_get_isaextra(os, 0);
+    dealloc = *deallocp;
+    if (dealloc != NULL)
+	dealloc(os->data);
 }
 
 static int
@@ -92,10 +105,28 @@ heim_data_create(const void *data, size_t length)
     return (heim_data_t)os;
 }
 
+heim_data_t
+heim_data_ref_create(const void *data, size_t length,
+		     heim_data_free_f_t dealloc)
+{
+    heim_octet_string *os;
+    heim_data_free_f_t *deallocp;
+
+    os = _heim_alloc_object(&_heim_data_object, sizeof(*os) + length);
+    if (os) {
+	os->data = (void *)data;
+	os->length = length;
+	deallocp = _heim_get_isaextra(os, 0);
+	*deallocp = dealloc;
+    }
+    return (heim_data_t)os;
+}
+
+
 /**
  * Return the type ID of data objects
  *
- * @return type id of string objects
+ * @return type id of data objects
  */
 
 heim_tid_t
@@ -115,16 +146,19 @@ heim_data_get_type_id(void)
 const heim_octet_string *
 heim_data_get_data(heim_data_t data)
 {
+    /* Note that this works for data and data_ref objects */
     return (const heim_octet_string *)data;
 }
 
 const void *
 heim_data_get_ptr(heim_data_t data)
 {
+    /* Note that this works for data and data_ref objects */
     return ((const heim_octet_string *)data)->data;
 }
 
 size_t	heim_data_get_length(heim_data_t data)
 {
+    /* Note that this works for data and data_ref objects */
     return ((const heim_octet_string *)data)->length;
 }

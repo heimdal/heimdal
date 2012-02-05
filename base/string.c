@@ -39,11 +39,37 @@
 static void
 string_dealloc(void *ptr)
 {
+    heim_string_t s = ptr;
+    heim_string_free_f_t *deallocp;
+    heim_string_free_f_t dealloc;
+
+    if (*(const char *)ptr != '\0')
+	return;
+
+    /* Possible string ref */
+    deallocp = _heim_get_isaextra(s, 0);
+    dealloc = *deallocp;
+    if (dealloc != NULL) {
+	char **strp = _heim_get_isaextra(s, 1);
+	dealloc(*strp);
+    }
 }
 
 static int
 string_cmp(void *a, void *b)
 {
+    if (*(char *)a == '\0') {
+	char **strp = _heim_get_isaextra(a, 1);
+
+	if (*strp != NULL)
+	    a = *strp; /* a is a string ref */
+    }
+    if (*(char *)b == '\0') {
+	char **strp = _heim_get_isaextra(b, 1);
+
+	if (*strp != NULL)
+	    b = *strp; /* b is a string ref */
+    }
     return strcmp(a, b);
 }
 
@@ -82,6 +108,43 @@ heim_string_create(const char *string)
     return heim_string_create_with_bytes(string, strlen(string));
 }
 
+/**
+ * Create a string object without copying the source.
+ *
+ * @param string the string to referenced, must be UTF-8
+ * @param dealloc the function to use to release the referece to the string
+ *
+ * @return string object
+ */
+
+heim_string_t
+heim_string_ref_create(const char *string, heim_string_free_f_t dealloc)
+{
+    heim_string_t s;
+    heim_string_free_f_t *deallocp;
+
+    s = _heim_alloc_object(&_heim_string_object, 1);
+    if (s) {
+	const char **strp;
+
+	((char *)s)[0] = '\0';
+	deallocp = _heim_get_isaextra(s, 0);
+	*deallocp = dealloc;
+	strp = _heim_get_isaextra(s, 1);
+	*strp = string;
+    }
+    return s;
+}
+
+/**
+ * Create a string object
+ *
+ * @param string the string to create, must be an utf8 string
+ * @param len the length of the string
+ *
+ * @return string object
+ */
+
 heim_string_t
 heim_string_create_with_bytes(const void *data, size_t len)
 {
@@ -118,6 +181,14 @@ heim_string_get_type_id(void)
 const char *
 heim_string_get_utf8(heim_string_t string)
 {
+    if (*(const char *)string == '\0') {
+	const char **strp;
+
+	/* String ref */
+	strp = _heim_get_isaextra(string, 1);
+	if (*strp != NULL)
+	    return *strp;
+    }
     return (const char *)string;
 }
 

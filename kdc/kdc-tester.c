@@ -420,7 +420,7 @@ main(int argc, char **argv)
 	if (rk_undumpdata(argv[0], &buf, &size))
 	    errx(1, "undumpdata: %s", argv[0]);
 	
-	o = heim_json_create_with_bytes(buf, size, NULL);
+	o = heim_json_create_with_bytes(buf, size, 10, 0, NULL);
 	free(buf);
 	if (o == NULL)
 	    errx(1, "heim_json");

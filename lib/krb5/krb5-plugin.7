@@ -41,6 +41,7 @@
 .In krb5.h
 .In krb5/an2ln_plugin.h
 .In krb5/ccache_plugin.h
+.In krb5/db_plugin.h
 .In krb5/kuserok_plugin.h
 .In krb5/locate_plugin.h
 .In krb5/send_to_kdc_plugin.h
@@ -48,8 +49,8 @@
 Heimdal has a plugin interface.  Plugins may be statically linked into
 Heimdal and registered via the
 .Xr krb5_plugin_register 3
-function, or they may be loaded from shared objects present in the
-Heimdal plugins directories.
+function, or they may be dynamically loaded from shared objects present
+in the Heimdal plugins directories.
 .Pp
 Plugins consist of a C struct whose struct name is given in the
 associated header file, such as, for example,
@@ -57,7 +58,7 @@ associated header file, such as, for example,
 and a pointer to which is either registered via
 .Xr krb5_plugin_register 3
 or found in a shared object via a symbol lookup for the symbol name
-defined in the associated header file (e.g., "kuserok-plugin" for the
+defined in the associated header file (e.g., "kuserok" for the
 plugin for
 .Xr krb5_kuserok 3
 ).
@@ -81,16 +82,26 @@ be output through the init function's second argument.
 plugin's context to be destroyed, and returning void.
 .El
 .Pp
-Each plugin type must add one or more fields to this struct following
-the above three.  Plugins are typically invoked in no particular order until
-one succeeds or fails, or all return a special return value such as
-KRB5_PLUGIN_NO_HANDLE to indicate that the plugin was not applicable.  Most
-plugin types obtain deterministic plugin behavior in spite of the
-non-deterministic invokation order by, for example, invoking all plugins for
-each "rule" and passing the rule to each plugin with the expectation that just
-one plugin will match any given rule.
+Each plugin type must add zero or more fields to this struct following
+the above three.  Plugins are typically invoked in no particular order
+until one succeeds or fails, or all return a special return value such
+as KRB5_PLUGIN_NO_HANDLE to indicate that the plugin was not applicable.
+Most plugin types obtain deterministic plugin behavior in spite of the
+non-deterministic invokation order by, for example, invoking all plugins
+for each "rule" and passing the rule to each plugin with the expectation
+that just one plugin will match any given rule.
 .Pp
-The krb5-kuserok plugin adds a single field to its struct: a pointer to
+There is a database plugin system intended for many of the uses of
+databases in Heimdal.  The plugin is expected to call
+.Xr heim_db_register 3
+from its
+.Va init
+entry point to register a DB type.  The DB plugin's
+.Va fini
+function must do nothing, and the plugin must not provide any other
+entry points.
+.Pp
+The krb5_kuserok plugin adds a single field to its struct: a pointer to
 a function that implements kuserok functionality with the following
 form:
 .Bd -literal -offset indent

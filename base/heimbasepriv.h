@@ -44,11 +44,11 @@ enum {
     HEIM_TID_NUMBER = 0,
     HEIM_TID_NULL = 1,
     HEIM_TID_BOOL = 2,
-    HEIM_TID_TAGGED_UNUSED2 = 3,
-    HEIM_TID_TAGGED_UNUSED3 = 4,
-    HEIM_TID_TAGGED_UNUSED4 = 5,
-    HEIM_TID_TAGGED_UNUSED5 = 6,
-    HEIM_TID_TAGGED_UNUSED6 = 7,
+    HEIM_TID_TAGGED_UNUSED2 = 3, /* reserved for tagged object types */
+    HEIM_TID_TAGGED_UNUSED3 = 4, /* reserved for tagged object types */
+    HEIM_TID_TAGGED_UNUSED4 = 5, /* reserved for tagged object types */
+    HEIM_TID_TAGGED_UNUSED5 = 6, /* reserved for tagged object types */
+    HEIM_TID_TAGGED_UNUSED6 = 7, /* reserved for tagged object types */
     HEIM_TID_MEMORY = 128,
     HEIM_TID_ARRAY = 129,
     HEIM_TID_DICT = 130,
@@ -56,6 +56,7 @@ enum {
     HEIM_TID_AUTORELEASE = 132,
     HEIM_TID_ERROR = 133,
     HEIM_TID_DATA = 134,
+    HEIM_TID_DB = 135,
     HEIM_TID_USER = 255
 
 };
@@ -83,11 +84,18 @@ _heim_create_type(const char *name,
 heim_object_t
 _heim_alloc_object(heim_type_t type, size_t size);
 
+void *
+_heim_get_isaextra(heim_object_t o, size_t idx);
+
 heim_tid_t
 _heim_type_get_tid(heim_type_t type);
 
 void
 _heim_make_permanent(heim_object_t ptr);
+
+heim_data_t
+_heim_db_get_value(heim_db_t, heim_string_t, heim_data_t, heim_error_t *);
+
 
 /* tagged tid */
 extern struct heim_type_data _heim_null_object;

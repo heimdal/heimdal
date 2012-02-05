@@ -164,11 +164,31 @@ _search(heim_dict_t dict, heim_object_t ptr)
  * @value dict the dict to search in
  * @value key the key to search for
  *
- * @return a retained copy of the value for key or NULL if not found
+ * @return a not-retained copy of the value for key or NULL if not found
  */
 
 heim_object_t
 heim_dict_get_value(heim_dict_t dict, heim_object_t key)
+{
+    struct hashentry *p;
+    p = _search(dict, key);
+    if (p == NULL)
+	return NULL;
+
+    return p->value;
+}
+
+/**
+ * Search for element in hash table
+ *
+ * @value dict the dict to search in
+ * @value key the key to search for
+ *
+ * @return a retained copy of the value for key or NULL if not found
+ */
+
+heim_object_t
+heim_dict_copy_value(heim_dict_t dict, heim_object_t key)
 {
     struct hashentry *p;
     p = _search(dict, key);

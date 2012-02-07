@@ -46,8 +46,13 @@ testfailed="echo test failed; cat messages.log; exit 1"
 ${have_db} || exit 77
 
 R=TEST.H5L.SE
+RH=TEST-HTTP.H5L.SE
 R2=TEST2.H5L.SE
-R3=TEST-HTTP.H5L.SE
+R3=TEST3.H5L.SE
+R4=TEST4.H5L.SE
+R5=SOME-REALM5.FR
+R6=SOME-REALM6.US
+R7=SOME-REALM7.UK
 
 port=@port@
 
@@ -105,12 +110,48 @@ ${kadmin} \
     --realm-max-renewable-life=1month \
     ${R3} || exit 1
 
+${kadmin} \
+    init \
+    --realm-max-ticket-life=1day \
+    --realm-max-renewable-life=1month \
+    ${R4} || exit 1
+
+${kadmin} \
+    init \
+    --realm-max-ticket-life=1day \
+    --realm-max-renewable-life=1month \
+    ${R5} || exit 1
+
+${kadmin} \
+    init \
+    --realm-max-ticket-life=1day \
+    --realm-max-renewable-life=1month \
+    ${R6} || exit 1
+
+${kadmin} \
+    init \
+    --realm-max-ticket-life=1day \
+    --realm-max-renewable-life=1month \
+    ${R7} || exit 1
+
+${kadmin} \
+    init \
+    --realm-max-ticket-life=1day \
+    --realm-max-renewable-life=1month \
+    ${RH} || exit 1
+
 ${kadmin} cpw -r krbtgt/${R}@${R} || exit 1
 ${kadmin} cpw -r krbtgt/${R}@${R} || exit 1
 ${kadmin} cpw -r krbtgt/${R}@${R} || exit 1
 ${kadmin} cpw -r krbtgt/${R}@${R} || exit 1
 
 ${kadmin} add -p foo --use-defaults foo@${R} || exit 1
+${kadmin} add -p foo --use-defaults foo@${R2} || exit 1
+${kadmin} add -p foo --use-defaults foo@${R3} || exit 1
+${kadmin} add -p foo --use-defaults foo@${R4} || exit 1
+${kadmin} add -p foo --use-defaults foo@${R5} || exit 1
+${kadmin} add -p foo --use-defaults foo@${R6} || exit 1
+${kadmin} add -p foo --use-defaults foo@${R7} || exit 1
 ${kadmin} add -p bar --use-defaults bar@${R} || exit 1
 ${kadmin} add -p foo --use-defaults remove@${R} || exit 1
 ${kadmin} add -p kaka --use-defaults ${server}@${R} || exit 1
@@ -138,10 +179,28 @@ ${kadmin} modify --alias=${alias2}@${R} ${alias1}@${R}
 ${kadmin} add -p cross1 --use-defaults krbtgt/${R2}@${R} || exit 1
 ${kadmin} add -p cross2 --use-defaults krbtgt/${R}@${R2} || exit 1
 
+${kadmin} add -p cross1 --use-defaults krbtgt/${R3}@${R2} || exit 1
+${kadmin} add -p cross2 --use-defaults krbtgt/${R2}@${R3} || exit 1
+
+${kadmin} add -p cross1 --use-defaults krbtgt/${R4}@${R2} || exit 1
+${kadmin} add -p cross2 --use-defaults krbtgt/${R2}@${R4} || exit 1
+
+${kadmin} add -p cross1 --use-defaults krbtgt/${R4}@${R3} || exit 1
+${kadmin} add -p cross2 --use-defaults krbtgt/${R3}@${R4} || exit 1
+
+${kadmin} add -p cross1 --use-defaults krbtgt/${R5}@${R} || exit 1
+${kadmin} add -p cross2 --use-defaults krbtgt/${R}@${R5} || exit 1
+
+${kadmin} add -p cross1 --use-defaults krbtgt/${R6}@${R5} || exit 1
+${kadmin} add -p cross2 --use-defaults krbtgt/${R5}@${R6} || exit 1
+
+${kadmin} add -p cross1 --use-defaults krbtgt/${R7}@${R6} || exit 1
+${kadmin} add -p cross2 --use-defaults krbtgt/${R6}@${R7} || exit 1
+
 ${kadmin} add -p foo --use-defaults pw-expire@${R} || exit 1
 ${kadmin} modify --pw-expiration-time=+1day  pw-expire@${R} || exit 1
 
-${kadmin} add -p foo --use-defaults foo@${R3} || exit 1
+${kadmin} add -p foo --use-defaults foo@${RH} || exit 1
 
 echo "Check parser"
 ${kadmin} add -p foo --use-defaults -- -p || exit 1
@@ -150,6 +209,11 @@ ${kadmin} delete -- -p || exit 1
 echo "Doing database check"
 ${kadmin} check ${R} || exit 1
 ${kadmin} check ${R2} || exit 1
+${kadmin} check ${R3} || exit 1
+${kadmin} check ${R4} || exit 1
+${kadmin} check ${R5} || exit 1
+${kadmin} check ${R6} || exit 1
+${kadmin} check ${R7} || exit 1
 
 echo "Extracting enctypes"
 ${ktutil} -k ${keytab} list > tempfile || exit 1
@@ -199,8 +263,48 @@ ${test_ap_req} ${server}@${R} ${keytab} ${cache} || \
 ${kdestroy}
 
 echo "Getting client initial tickets (http transport)"; > messages.log
-${kinit} --password-file=${objdir}/foopassword foo@${R3} || \
+${kinit} --password-file=${objdir}/foopassword foo@${RH} || \
 	{ ec=1 ; eval "${testfailed}"; }
+${kdestroy}
+
+echo "Testing capaths logic"
+${kinit} --password-file=${objdir}/foopassword \
+    -e ${aesenctype} -e ${aesenctype} \
+    foo@$R || \
+	{ ec=1 ; eval "${testfailed}"; }
+
+echo "Getting x-realm tickets with capaths for $R -> $R2"
+${kgetcred} foo@${R2} || { ec=1 ; eval "${testfailed}"; }
+echo "Getting x-realm tickets with capaths for $R -> $R3"
+${kgetcred} foo@${R3} || { ec=1 ; eval "${testfailed}"; }
+echo "Getting x-realm tickets with capaths for $R -> $R4"
+${kgetcred} foo@${R4} || { ec=1 ; eval "${testfailed}"; }
+echo "Getting x-realm tickets with capaths for $R -> $R5"
+${kgetcred} foo@${R5} || { ec=1 ; eval "${testfailed}"; }
+echo "Getting x-realm tickets with capaths for $R -> $R6"
+${kgetcred} foo@${R6} || { ec=1 ; eval "${testfailed}"; }
+echo "Getting x-realm tickets with capaths for $R -> $R7"
+${kgetcred} foo@${R7} || { ec=1 ; eval "${testfailed}"; }
+${kdestroy}
+
+echo "Testing capaths logic (reverse order)"
+${kinit} --password-file=${objdir}/foopassword \
+    -e ${aesenctype} -e ${aesenctype} \
+    foo@$R || \
+	{ ec=1 ; eval "${testfailed}"; }
+
+echo "Getting x-realm tickets with capaths for $R -> $R4"
+${kgetcred} foo@${R4} || { ec=1 ; eval "${testfailed}"; }
+echo "Getting x-realm tickets with capaths for $R -> $R3"
+${kgetcred} foo@${R3} || { ec=1 ; eval "${testfailed}"; }
+echo "Getting x-realm tickets with capaths for $R -> $R2"
+${kgetcred} foo@${R2} || { ec=1 ; eval "${testfailed}"; }
+echo "Getting x-realm tickets with capaths for $R -> $R7"
+${kgetcred} foo@${R7} || { ec=1 ; eval "${testfailed}"; }
+echo "Getting x-realm tickets with capaths for $R -> $R6"
+${kgetcred} foo@${R6} || { ec=1 ; eval "${testfailed}"; }
+echo "Getting x-realm tickets with capaths for $R -> $R5"
+${kgetcred} foo@${R5} || { ec=1 ; eval "${testfailed}"; }
 ${kdestroy}
 
 echo "Specific enctype"; > messages.log

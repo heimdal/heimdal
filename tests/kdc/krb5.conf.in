@@ -28,6 +28,15 @@
 	TEST4.H5L.SE = {
 		kdc = localhost:@port@
 	}
+	SOME-REALM5.FR = {
+		kdc = localhost:@port@
+	}
+	SOME-REALM6.US = {
+		kdc = localhost:@port@
+	}
+	SOME-REALM7.UK = {
+		kdc = localhost:@port@
+	}
 	TEST-HTTP.H5L.SE = {
 		kdc = http/localhost:@port@
 	}
@@ -85,9 +94,11 @@
 
 [capaths]
 	TEST.H5L.SE = {
+		TEST2.H5L.SE = .
+		SOME-REALM5.FR = 1
 		TEST3.H5L.SE = TEST2.H5L.SE
-	}
-	TEST.H5L.SE = {
 		TEST4.H5L.SE = TEST2.H5L.SE
 		TEST4.H5L.SE = TEST3.H5L.SE
+		SOME-REALM6.US = SOME-REALM5.FR
+		SOME-REALM7.UK = SOME-REALM6.US
 	}

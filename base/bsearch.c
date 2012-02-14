@@ -194,6 +194,7 @@ bsearch_common(const char *buf, size_t sz, const char *key,
 	/* Got a line; check it */
 
 	/* Search for and split on unquoted whitespace */
+	val_start = 0;
 	for (key_start = i, key_len = 0, val_len = 0, k = i; k < rmax; k++) {
 	    if (buf[k] == '\\') {
 		k++;
@@ -204,10 +205,10 @@ bsearch_common(const char *buf, size_t sz, const char *key,
 		key_len = k - i;
 		break;
 	    }
-	    if (!isspace(buf[k]))
+	    if (!isspace((unsigned char)buf[k]))
 		continue;
 
-	    while (k < rmax && isspace(buf[k])) {
+	    while (k < rmax && isspace((unsigned char)buf[k])) {
 		key_len = k - i;
 		k++;
 	    }

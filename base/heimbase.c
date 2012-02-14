@@ -788,7 +788,7 @@ heim_path_vcreate(heim_object_t ptr, size_t size, heim_object_t leaf,
     heim_object_t node = ptr;
     heim_object_t next_node = NULL;
     heim_tid_t node_type;
-    int ret;
+    int ret = 0;
 
     if (ptr == NULL)
 	heim_abort("heim_path_vcreate() does not create root nodes");

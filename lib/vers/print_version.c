@@ -33,8 +33,9 @@
 
 
 #include <config.h>
+#include <krb5-types.h>
 
-#define VERSION_HIDDEN static
+#define VERSION_HIDDEN static HEIMDAL_UNUSED_ATTRIBUTE
 
 #include "roken.h"
 

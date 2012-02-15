@@ -38,7 +38,7 @@ dist_libheimbase_la_SOURCES =	\
 	roken_rename.h		\
 	string.c
 
-nodist_libsl_la_SOURCES = $(ES)
+nodist_libheimbase_la_SOURCES = $(ES)
 
 # install these?
 

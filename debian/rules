@@ -8,7 +8,8 @@ override_dh_auto_configure:
 	    --prefix=/opt/heimdal --libexecdir=/opt/heimdal/libexec	\
 	    --with-hdbdir=/var/opt/heimdal --with-readline-lib=/usr/lib	\
 	    --without-openldap --without-krb4 --with-sqlite3=/usr	\
-	    --with-readline-include=/usr/include/editline/
+	    --with-readline-include=/usr/include/editline/		\
+	    --with-openssl=/usr
 
 override_dh_install:
 	dh_install --sourcedir=$(DESTDIR) --list-missing

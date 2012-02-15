@@ -2,7 +2,7 @@ Source: heimdal
 Section: unknown
 Priority: extra
 Maintainer: elric <elric@imrryr.org>
-Build-Depends: bison, debhelper (>= 7), autotools-dev, dh-autoreconf, flex, libdb-dev, libedit-dev, libhesiod-dev, libldap2-dev, libncurses5-dev, libsqlite3-dev, libx11-dev, libxau-dev, libxt-dev, pkg-config, python, texinfo, x11proto-core-dev
+Build-Depends: bison, debhelper (>= 7), autotools-dev, dh-autoreconf, flex, libdb-dev, libedit-dev, libhesiod-dev, libldap2-dev, libncurses5-dev, libsqlite3-dev, libx11-dev, libxau-dev, libxt-dev, pkg-config, python, texinfo, x11proto-core-dev, libssl-dev
 Standards-Version: 3.8.3
 Homepage: http://www.h5l.org/
 

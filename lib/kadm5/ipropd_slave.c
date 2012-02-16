@@ -460,12 +460,16 @@ receive_everything (krb5_context context, int fd,
 }
 
 static void
-slave_status(const char *file, const char *status, ...)
-     __attribute__ ((format (printf, 2, 3)));
+slave_status(krb5_context context,
+	     const char *file,
+	     const char *status, ...)
+     __attribute__ ((format (printf, 3, 4)));
 
 
 static void
-slave_status(const char *file, const char *fmt, ...)
+slave_status(krb5_context context,
+	     const char *file,
+	     const char *fmt, ...)
 {
     char *status = NULL;
     va_list args;
@@ -478,6 +482,7 @@ slave_status(const char *file, const char *fmt, ...)
 	unlink(file);
 	return;
     }
+    krb5_warnx(context, "slave status change: %s", status);
     
     rk_dumpdata(file, status, len);
     free(status);
@@ -494,7 +499,7 @@ is_up_to_date(krb5_context context, const char *file,
 	unlink(file);
 	return;
     }
-    slave_status(file, "up-to-date with version: %lu at %s\n",
+    slave_status(context, file, "up-to-date with version: %lu at %s\n",
 		 (unsigned long)server_context->log_context.version, buf);
 }
 
@@ -607,7 +612,7 @@ main(int argc, char **argv)
 	    krb5_errx(context, 1, "can't allocate status file buffer"); 
     }
 
-    slave_status(status_file, "bootstrapping\n");
+    slave_status(context, status_file, "bootstrapping\n");
 
 #ifdef SUPPORT_DETACH
     if (detach_from_console)
@@ -625,7 +630,7 @@ main(int argc, char **argv)
     if (time_before_lost < 0)
 	krb5_errx (context, 1, "couldn't parse time: %s", server_time_lost);
 
-    slave_status(status_file, "getting credentials from keytab/database\n");
+    slave_status(context, status_file, "getting credentials from keytab/database\n");
 
     memset(&conf, 0, sizeof(conf));
     if(realm) {
@@ -643,7 +648,7 @@ main(int argc, char **argv)
 
     server_context = (kadm5_server_context *)kadm_handle;
 
-    slave_status(status_file, "creating log file\n");
+    slave_status(context, status_file, "creating log file\n");
 
     ret = kadm5_log_init (server_context);
     if (ret)
@@ -682,7 +687,7 @@ main(int argc, char **argv)
 	}
 	before = now;
 
-	slave_status(status_file, "connecting to master: %s\n", master);
+	slave_status(context, status_file, "connecting to master: %s\n", master);
 
 	master_fd = connect_to_master (context, master, port_str);
 	if (master_fd < 0)
@@ -715,7 +720,7 @@ main(int argc, char **argv)
 
 	connected = TRUE;
 
-	slave_status(status_file, "connected to master, waiting instructions\n");
+	slave_status(context, status_file, "connected to master, waiting instructions\n");
 
 	while (connected && !exit_flag) {
 	    krb5_data out;
@@ -796,7 +801,7 @@ main(int argc, char **argv)
 
 	}
 
-	slave_status(status_file, "disconnected from master");
+	slave_status(context, status_file, "disconnected from master");
     retry:
 	if (connected == FALSE)
 	    krb5_warnx (context, "disconnected for server");
@@ -809,7 +814,7 @@ main(int argc, char **argv)
 
 	reconnect += backoff;
 	if (reconnect > reconnect_max) {
-	    slave_status(status_file, "disconnected from master for a long time");
+	    slave_status(context, status_file, "disconnected from master for a long time");
 	    reconnect = reconnect_max;
 	}
     }

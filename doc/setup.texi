@@ -596,6 +596,18 @@ slave#  /usr/heimdal/libexec/ipropd-slave master &
 To manage the iprop log file you should use the @command{iprop-log}
 command. With it you can dump, truncate and replay the logfile.
 
+@subsection Status of iprop master and slave
+
+Both the master and slave provides status of the world as they see it.
+
+The master write outs the current status of the slaves, last seen and
+their version number in @file{/var/heimdal/slaves-stats}.
+
+The slave write out the current status in @file{/var/heimdal/ipropd-slave-status}.
+
+These locations can be changed with command line options, and in the
+case of @command{ipropd_master}, the configuration file.
+
 @node Encryption types and salting, Credential cache server - KCM, Incremental propagation, Setting up a realm
 @section Encryption types and salting
 @cindex Salting

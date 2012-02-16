@@ -310,11 +310,6 @@ error:
     remove_slave(context, s, root);
 }
 
-struct prop_context {
-    krb5_auth_context auth_context;
-    krb5_socket_t fd;
-};
-
 static int
 prop_one (krb5_context context, HDB *db, hdb_entry_ex *entry, void *v)
 {
@@ -464,9 +459,19 @@ send_diffs (krb5_context context, slave *s, int log_fd,
     int ret = 0;
 
     if (s->version == current_version) {
+	char buf[4];
+
+	sp = krb5_storage_from_mem(buf, 4);
+	if (sp == NULL)
+	    krb5_errx(context, 1, "krb5_storage_from_mem");
+	krb5_store_int32(sp, YOU_HAVE_LAST_VERSION);
+	krb5_storage_free(sp);
+	data.data   = buf;
+	data.length = 4;
+	ret = krb5_write_priv_message(context, s->ac, &s->fd, &data);
 	krb5_warnx(context, "slave %s in sync already at version %ld",
 		   s->name, (long)s->version);
-	return 0;
+	return ret;
     }
 
     if (s->flags & SLAVE_F_DEAD)

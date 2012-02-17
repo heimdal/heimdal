@@ -1096,6 +1096,13 @@ _krb5_get_cred_kdc_any(krb5_context context,
 	context->kdc_usec_offset = 0;
     }
 
+    if (in_creds->flags.b.renewable)
+	flags.b.renewable = 1;
+    if (in_creds->flags.b.forwardable)
+	flags.b.forwardable = 1;
+    if (in_creds->flags.b.proxiable)
+	flags.b.proxiable = 1;
+
     ret = get_cred_kdc_referral(context,
 				flags,
 				ccache,

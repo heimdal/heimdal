@@ -45,6 +45,7 @@ stash(struct stash_options *opt, int argc, char **argv)
     krb5_error_code ret;
     krb5_enctype enctype;
     hdb_master_key mkey;
+    int aret;
 
     if(!local_flag) {
 	krb5_warnx(context, "stash is only available in local (-l) mode");
@@ -58,8 +59,8 @@ stash(struct stash_options *opt, int argc, char **argv)
     }
 
     if(opt->key_file_string == NULL) {
-	asprintf(&opt->key_file_string, "%s/m-key", hdb_db_dir(context));
-	if (opt->key_file_string == NULL)
+	aret = asprintf(&opt->key_file_string, "%s/m-key", hdb_db_dir(context));
+	if (aret == -1)
 	    errx(1, "out of memory");
     }
 
@@ -108,10 +109,16 @@ stash(struct stash_options *opt, int argc, char **argv)
     }
 
     {
-	char *new, *old;
-	asprintf(&old, "%s.old", opt->key_file_string);
-	asprintf(&new, "%s.new", opt->key_file_string);
-	if(old == NULL || new == NULL) {
+	char *new = NULL, *old = NULL;
+	int aret;
+
+	aret = asprintf(&old, "%s.old", opt->key_file_string);
+	if (aret == -1) {
+	    ret = ENOMEM;
+	    goto out;
+	}
+	aret = asprintf(&new, "%s.new", opt->key_file_string);
+	if (aret == -1) {
 	    ret = ENOMEM;
 	    goto out;
 	}

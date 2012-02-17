@@ -77,7 +77,8 @@ setup_int(const char *proxy_host, short proxy_port,
 	if(make_address(dns_host, &dns_addr.sin_addr) != 0)
 	    return -1;
 	dns_addr.sin_port = htons(dns_port);
-	asprintf(&dns_req, "%s", dns_path);
+	if (asprintf(&dns_req, "%s", dns_path) < 0)
+	    return -1;
     }
     dns_addr.sin_family = AF_INET;
     return 0;

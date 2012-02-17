@@ -103,6 +103,7 @@ get_user_ccache(const ntlm_name name, char **username, struct ntlm_buf *key)
     krb5_error_code ret;
     char *confname;
     krb5_data data;
+    int aret;
 
     *username = NULL;
     krb5_data_zero(&data);
@@ -128,8 +129,8 @@ get_user_ccache(const ntlm_name name, char **username, struct ntlm_buf *key)
     if (ret)
 	goto out;
 
-    asprintf(&confname, "ntlm-key-%s", name->domain);
-    if (confname == NULL) {
+    aret = asprintf(&confname, "ntlm-key-%s", name->domain);
+    if (aret == -1 || confname == NULL) {
 	krb5_clear_error_message(context);
 	ret = ENOMEM;
 	goto out;

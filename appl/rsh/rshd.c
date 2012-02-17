@@ -597,7 +597,8 @@ setup_environment (char ***env, const struct passwd *pwd)
 	if (asprintf (&e[i++], "PATH=%s",  _PATH_DEFPATH) == -1)
 	    syslog_and_die ("asprintf: out of memory");
     }
-    asprintf (&e[i++], "SSH_CLIENT=only_to_make_bash_happy");
+    if (asprintf (&e[i++], "SSH_CLIENT=only_to_make_bash_happy") == -1)
+	syslog_and_die ("asprintf: out of memory");
     if (do_unique_tkfile)
 	if (asprintf (&e[i++], "KRB5CCNAME=%s", tkfile) == -1)
 	    syslog_and_die ("asprintf: out of memory");
@@ -853,30 +854,31 @@ doit (void)
 }
 
 struct getargs args[] = {
-    { NULL,		'a',	arg_flag,	&do_addr_verify },
-    { "keepalive",	'n',	arg_negative_flag,	&do_keepalive },
+    { NULL,		'a',	arg_flag,	&do_addr_verify, NULL, NULL },
+    { "keepalive",	'n',	arg_negative_flag,	&do_keepalive, NULL,
+      NULL },
     { "inetd",		'i',	arg_negative_flag,	&do_inetd,
-      "Not started from inetd" },
+      "Not started from inetd", NULL },
 #if defined(KRB5)
     { "kerberos",	'k',	arg_flag,	&do_kerberos,
-      "Implement kerberised services" },
+      "Implement kerberised services", NULL },
     { "encrypt",	'x',	arg_flag,		&do_encrypt,
-      "Implement encrypted service" },
+      "Implement encrypted service", NULL },
 #endif
     { "rhosts",		'l',	arg_negative_flag, &do_rhosts,
-      "Don't check users .rhosts" },
+      "Don't check users .rhosts", NULL },
     { "port",		'p',	arg_string,	&port_str,	"Use this port",
       "port" },
     { "vacuous",	'v',	arg_flag, &do_vacuous,
-      "Don't accept non-kerberised connections" },
+      "Don't accept non-kerberised connections", NULL },
 #if defined(KRB5)
     { NULL,		'P',	arg_negative_flag, &do_newpag,
-      "Don't put process in new PAG" },
+      "Don't put process in new PAG", NULL },
 #endif
     /* compatibility flag: */
-    { NULL,		'L',	arg_flag, &do_log },
-    { "version",	0, 	arg_flag,		&do_version },
-    { "help",		0, 	arg_flag,		&do_help }
+    { NULL,		'L',	arg_flag, &do_log,     NULL, NULL },
+    { "version",	0, 	arg_flag, &do_version, NULL, NULL },
+    { "help",		0, 	arg_flag, &do_help,    NULL, NULL }
 };
 
 static void

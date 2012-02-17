@@ -42,6 +42,8 @@ loop(int s)
     char cmd[1024];
     char buf[1024];
     fd_set fds;
+    int ret;
+
     while(1){
 	FD_ZERO(&fds);
 	FD_SET(0, &fds);
@@ -49,10 +51,11 @@ loop(int s)
 	if(select(s+1, &fds, 0, 0, 0) < 0)
 	    err(1, "select");
 	if(FD_ISSET(0, &fds)){
-	    fgets(cmd, sizeof(cmd), stdin);
+	    if (fgets(cmd, sizeof(cmd), stdin) == NULL)
+		cmd[0] = '\0';
 	    cmd[strlen(cmd) - 1] = '\0';
 	    strlcat (cmd, "\r\n", sizeof(cmd));
-	    write(s, cmd, strlen(cmd));
+	    ret = write(s, cmd, strlen(cmd));
 	}
 	if(FD_ISSET(s, &fds)){
 	    int n = read(s, buf, sizeof(buf));

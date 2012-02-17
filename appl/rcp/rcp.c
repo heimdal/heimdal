@@ -58,21 +58,23 @@ static int fflag, tflag;
 static int version_flag, help_flag;
 
 struct getargs args[] = {
-    { NULL,	'4', arg_flag,		&usekrb4,	"use Kerberos 4 authentication" },
-    { NULL,	'5', arg_flag,		&usekrb5,	"use Kerberos 5 authentication" },
-    { NULL,	'F', arg_flag,		&forwardtkt,	"forward credentials" },
-    { NULL,	'K', arg_flag,		&usebroken,	"use BSD authentication" },
-    { NULL,	'P', arg_string,	&port,		"non-default port", "port" },
-    { NULL,	'p', arg_flag,		&pflag,	"preserve file permissions" },
-    { NULL,	'r', arg_flag,		&iamrecursive,	"recursive mode" },
-    { NULL,	'x', arg_flag,		&doencrypt,	"use encryption" },
-    { NULL,	'z', arg_flag,		&noencrypt,	"don't encrypt" },
-    { NULL,	'd', arg_flag,		&targetshouldbedirectory },
-    { NULL,	'e', arg_flag,		&eflag, 	"passed to rsh" },
-    { NULL,	'f', arg_flag,		&fflag },
-    { NULL,	't', arg_flag,		&tflag },
-    { "version", 0,  arg_flag,		&version_flag },
-    { "help",	 0,  arg_flag,		&help_flag }
+    { NULL,	'4', arg_flag,	 &usekrb4,	"use Kerberos 4 authentication",      NULL },
+    { NULL,	'5', arg_flag,	 &usekrb5,	"use Kerberos 5 authentication",      NULL },
+    { NULL,	'F', arg_flag,	 &forwardtkt,	"forward credentials", NULL },
+    { NULL,	'K', arg_flag,	 &usebroken,	"use BSD authentication",
+      NULL },
+    { NULL,	'P', arg_string, &port,		"non-default port", "port" },
+    { NULL,	'p', arg_flag,	 &pflag,	"preserve file permissions",
+      NULL },
+    { NULL,	'r', arg_flag,	 &iamrecursive,	"recursive mode", NULL },
+    { NULL,	'x', arg_flag,	 &doencrypt,	"use encryption", NULL },
+    { NULL,	'z', arg_flag,	 &noencrypt,	"don't encrypt", NULL },
+    { NULL,	'd', arg_flag,	 &targetshouldbedirectory, NULL, NULL },
+    { NULL,	'e', arg_flag,	 &eflag,	"passed to rsh", NULL },
+    { NULL,	'f', arg_flag,	 &fflag,	NULL, NULL },
+    { NULL,	't', arg_flag,	 &tflag,	NULL, NULL },
+    { "version", 0,  arg_flag,	 &version_flag,	NULL, NULL },
+    { "help",	 0,  arg_flag,	 &help_flag,	NULL, NULL }
 };
 
 static void

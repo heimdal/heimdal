@@ -125,10 +125,18 @@ add_one_principal (const char *name,
     } else if(password == NULL) {
 	char *princ_name;
 	char *prompt;
+	int aret;
 
-	krb5_unparse_name(context, princ_ent, &princ_name);
-	asprintf (&prompt, "%s's Password: ", princ_name);
+	ret = krb5_unparse_name(context, princ_ent, &princ_name);
+	if (ret)
+	    goto out;
+	aret = asprintf (&prompt, "%s's Password: ", princ_name);
 	free (princ_name);
+	if (aret == -1) {
+	    ret = ENOMEM;
+	    krb5_set_error_message(context, ret, "out of memory");
+	    goto out;
+	}
 	ret = UI_UTIL_read_pw_string (pwbuf, sizeof(pwbuf), prompt, 1);
 	free (prompt);
 	if (ret) {

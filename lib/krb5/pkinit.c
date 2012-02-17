@@ -183,10 +183,10 @@ find_cert(krb5_context context, struct krb5_pk_identity *id,
 	  hx509_query *q, hx509_cert *cert)
 {
     struct certfind cf[4] = {
-	{ "MobileMe EKU" },
-	{ "PKINIT EKU" },
-	{ "MS EKU" },
-	{ "any (or no)" }
+	{ "MobileMe EKU", NULL },
+	{ "PKINIT EKU", NULL },
+	{ "MS EKU", NULL },
+	{ "any (or no)", NULL }
     };
     int ret = HX509_CERT_NOT_FOUND;
     size_t i, start = 1;

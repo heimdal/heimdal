@@ -211,7 +211,10 @@ static struct hx509_keyset_ops keyset_dir = {
     NULL,
     dir_iter_start,
     dir_iter,
-    dir_iter_end
+    dir_iter_end,
+    NULL,
+    NULL,
+    NULL
 };
 
 void

@@ -263,7 +263,16 @@ static const krb5_cc_ops krb5_kcmss_ops = {
     kcmss_end_get,
     kcmss_remove_cred,
     kcmss_set_flags,
-    kcmss_get_version
+    kcmss_get_version,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
 };
 
 krb5_error_code

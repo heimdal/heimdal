@@ -136,7 +136,7 @@ struct salt_type _krb5_des3_salt[] = {
 	"pw-salt",
 	DES3_string_to_key
     },
-    { 0 }
+    { 0, NULL, NULL }
 };
 #endif
 
@@ -146,5 +146,5 @@ struct salt_type _krb5_des3_salt_derived[] = {
 	"pw-salt",
 	DES3_string_to_key_derived
     },
-    { 0 }
+    { 0, NULL, NULL }
 };

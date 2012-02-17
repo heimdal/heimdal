@@ -257,5 +257,7 @@ const krb5_kt_ops krb5_any_ops = {
     any_next_entry,
     any_end_seq_get,
     any_add_entry,
-    any_remove_entry
+    any_remove_entry,
+    NULL,
+    0
 };

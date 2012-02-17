@@ -2035,7 +2035,12 @@ krb5_kdc_pk_initialize(krb5_context context,
 				  "pkinit_mappings_file",
 				  NULL);
     if (file == NULL) {
-	asprintf(&fn, "%s/pki-mapping", hdb_db_dir(context));
+	int aret;
+
+	aret = asprintf(&fn, "%s/pki-mapping", hdb_db_dir(context));
+	if (aret == -1)
+	    fn = NULL;
+
 	file = fn;
     }
 

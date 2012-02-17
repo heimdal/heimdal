@@ -146,13 +146,14 @@ kswitch(struct kswitch_options *opt, int argc, char **argv)
     } else if (opt->cache_string) {
 	const krb5_cc_ops *ops;
 	char *str;
+	int aret;
 
 	ops = krb5_cc_get_prefix_ops(kcc_context, opt->type_string);
 	if (ops == NULL)
 	    krb5_err(kcc_context, 1, 0, "krb5_cc_get_prefix_ops");
 
-	asprintf(&str, "%s:%s", ops->prefix, opt->cache_string);
-	if (str == NULL)
+	aret = asprintf(&str, "%s:%s", ops->prefix, opt->cache_string);
+	if (aret == -1 || str == NULL)
 	    krb5_errx(kcc_context, 1, N_("out of memory", ""));
 
 	ret = krb5_cc_resolve(kcc_context, str, &id);

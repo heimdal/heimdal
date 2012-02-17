@@ -209,7 +209,7 @@ unparse_CMSIdentifier(hx509_context context,
 		      CMSIdentifier *id,
 		      char **str)
 {
-    int ret;
+    int ret = -1;
 
     *str = NULL;
     switch (id->element) {
@@ -227,8 +227,8 @@ unparse_CMSIdentifier(hx509_context context,
 	    free(name);
 	    return ret;
 	}
-	asprintf(str, "certificate issued by %s with serial number %s",
-		 name, serial);
+	ret = asprintf(str, "certificate issued by %s with serial number %s",
+		       name, serial);
 	free(name);
 	free(serial);
 	break;
@@ -242,15 +242,19 @@ unparse_CMSIdentifier(hx509_context context,
 	if (len < 0)
 	    return ENOMEM;
 
-	asprintf(str, "certificate with id %s", keyid);
+	ret = asprintf(str, "certificate with id %s", keyid);
 	free(keyid);
 	break;
     }
     default:
-	asprintf(str, "certificate have unknown CMSidentifier type");
+	ret = asprintf(str, "certificate have unknown CMSidentifier type");
 	break;
     }
-    if (*str == NULL)
+    /*
+     * In the following if, we check ret and *str which should be returned/set
+     * by asprintf(3) in every branch of the switch statement.
+     */
+    if (ret == -1 || *str == NULL)
 	return ENOMEM;
     return 0;
 }

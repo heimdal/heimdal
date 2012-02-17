@@ -420,5 +420,7 @@ krb5_kt_ops hdb_kt_ops = {
     hdb_next_entry,
     hdb_end_seq_get,
     NULL,		/* add */
-    NULL		/* remove */
+    NULL,		/* remove */
+    NULL,
+    0
 };

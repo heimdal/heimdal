@@ -336,7 +336,7 @@ doit_conn (kx_context *kc,
     }
 #endif
     memset (&__ss_addr, 0, sizeof(__ss_addr));
-    addr->sa_family = kc->thisaddr->sa_family;
+    __ss_addr.ss_family = kc->thisaddr->sa_family;
     if (kc->thisaddr_len > sizeof(__ss_addr)) {
 	syslog(LOG_ERR, "error in af");
 	return 1;
@@ -403,6 +403,7 @@ close_connection(int fd, const char *message)
     char *p;
     int lsb = 0;
     size_t mlen;
+    ssize_t ret;
 
     mlen = strlen(message);
     if(mlen > 255)
@@ -433,7 +434,7 @@ close_connection(int fd, const char *message)
 	buf[6] = 0;
 	buf[7] = (p - buf - 8) / 4;
     }
-    write(fd, buf, p - buf);
+    ret = write(fd, buf, p - buf);
     close(fd);
 }
 
@@ -707,12 +708,13 @@ static int help_flag		= 0;
 
 struct getargs args[] = {
     { "inetd",		'i',	arg_negative_flag,	&inetd_flag,
-      "Not started from inetd" },
-    { "tcp",		't',	arg_flag,	&tcp_flag,	"Use TCP" },
+      "Not started from inetd", NULL },
+    { "tcp",		't',	arg_flag,	&tcp_flag,	"Use TCP",
+      NULL },
     { "port",		'p',	arg_string,	&port_str,	"Use this port",
       "port" },
-    { "version",	0, 	arg_flag,		&version_flag },
-    { "help",		0, 	arg_flag,		&help_flag }
+    { "version",	0, 	arg_flag,	&version_flag,	NULL, NULL },
+    { "help",		0, 	arg_flag,	&help_flag,	NULL, NULL }
 };
 
 static void

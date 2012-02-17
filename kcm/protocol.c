@@ -1070,6 +1070,7 @@ kcm_op_get_default_cache(krb5_context context,
     krb5_error_code ret;
     const char *name = NULL;
     char *n = NULL;
+    int aret;
 
     KCM_LOG_REQUEST(context, client, opcode);
 
@@ -1083,8 +1084,9 @@ kcm_op_get_default_cache(krb5_context context,
 	name = n = kcm_ccache_first_name(client);
 
     if (name == NULL) {
-	asprintf(&n, "%d", (int)client->uid);
-	name = n;
+	aret = asprintf(&n, "%d", (int)client->uid);
+	if (aret != -1)
+	    name = n;
     }
     if (name == NULL)
 	return ENOMEM;

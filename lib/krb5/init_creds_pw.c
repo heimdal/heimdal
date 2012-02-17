@@ -2473,10 +2473,19 @@ krb5_get_init_creds_password(krb5_context context,
 	krb5_prompt prompt;
 	krb5_data password_data;
 	char *p, *q;
+	int aret = -1;
 
-	krb5_unparse_name (context, client, &p);
-	asprintf (&q, "%s's Password: ", p);
-	free (p);
+	ret = krb5_unparse_name (context, client, &p);
+	if (!ret) {
+	    aret = asprintf (&q, "%s's Password: ", p);
+	    free (p);
+	}
+	if (!ret || aret == -1 || !q) {
+	    if (!ret)
+		ret = ENOMEM;
+	    krb5_clear_error_message (context);
+	    goto out;
+	}
 	prompt.prompt = q;
 	password_data.data   = buf;
 	password_data.length = sizeof(buf);

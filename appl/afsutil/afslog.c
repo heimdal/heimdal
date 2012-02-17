@@ -61,15 +61,16 @@ struct getargs args[] = {
     { "cell",	'c', arg_strings, &cells, "cells to get tokens for", "cell" },
     { "file",	'p', arg_strings, &files, "files to get tokens for", "path" },
     { "realm",	'k', arg_string, &realm, "realm for afs cell", "realm" },
-    { "unlog",	'u', arg_flag, &unlog_flag, "remove tokens" },
+    { "unlog",	'u', arg_flag, &unlog_flag, "remove tokens", NULL },
 #ifdef KRB5
     { "principal",'P',arg_string,&client_string,"principal to use","principal"},
     { "cache",   0,  arg_string, &cache_string, "ccache to use", "cache"},
-    { "v5",	 0,  arg_negative_flag, &use_krb5, "don't use Kerberos 5" },
+    { "v5",	 0,  arg_negative_flag, &use_krb5, "don't use Kerberos 5",
+      NULL },
 #endif
-    { "verbose",'v', arg_flag, &verbose },
-    { "version", 0,  arg_flag, &version_flag },
-    { "help",	'h', arg_flag, &help_flag },
+    { "verbose",'v', arg_flag, &verbose, NULL, NULL },
+    { "version", 0,  arg_flag, &version_flag, NULL, NULL },
+    { "help",	'h', arg_flag, &help_flag, NULL, NULL },
 };
 
 static int num_args = sizeof(args) / sizeof(args[0]);

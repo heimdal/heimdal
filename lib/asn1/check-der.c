@@ -58,16 +58,16 @@ static int
 test_integer (void)
 {
     struct test_case tests[] = {
-	{NULL, 1, "\x00"},
-	{NULL, 1, "\x7f"},
-	{NULL, 2, "\x00\x80"},
-	{NULL, 2, "\x01\x00"},
-	{NULL, 1, "\x80"},
-	{NULL, 2, "\xff\x7f"},
-	{NULL, 1, "\xff"},
-	{NULL, 2, "\xff\x01"},
-	{NULL, 2, "\x00\xff"},
-	{NULL, 4, "\x7f\xff\xff\xff"}
+	{NULL, 1, "\x00",		NULL},
+	{NULL, 1, "\x7f",		NULL},
+	{NULL, 2, "\x00\x80",		NULL},
+	{NULL, 2, "\x01\x00",		NULL},
+	{NULL, 1, "\x80",		NULL},
+	{NULL, 2, "\xff\x7f",		NULL},
+	{NULL, 1, "\xff",		NULL},
+	{NULL, 2, "\xff\x01",		NULL},
+	{NULL, 2, "\x00\xff",		NULL},
+	{NULL, 4, "\x7f\xff\xff\xff",	NULL}
     };
 
     int values[] = {0, 127, 128, 256, -128, -129, -1, -255, 255,
@@ -184,14 +184,14 @@ static int
 test_unsigned (void)
 {
     struct test_case tests[] = {
-	{NULL, 1, "\x00"},
-	{NULL, 1, "\x7f"},
-	{NULL, 2, "\x00\x80"},
-	{NULL, 2, "\x01\x00"},
-	{NULL, 2, "\x02\x00"},
-	{NULL, 3, "\x00\x80\x00"},
-	{NULL, 5, "\x00\x80\x00\x00\x00"},
-	{NULL, 4, "\x7f\xff\xff\xff"}
+	{NULL, 1, "\x00",			NULL},
+	{NULL, 1, "\x7f",			NULL},
+	{NULL, 2, "\x00\x80",			NULL},
+	{NULL, 2, "\x01\x00",			NULL},
+	{NULL, 2, "\x02\x00",			NULL},
+	{NULL, 3, "\x00\x80\x00",		NULL},
+	{NULL, 5, "\x00\x80\x00\x00\x00",	NULL},
+	{NULL, 4, "\x7f\xff\xff\xff",		NULL}
     };
 
     unsigned int values[] = {0, 127, 128, 256, 512, 32768,
@@ -237,7 +237,7 @@ test_octet_string (void)
     heim_octet_string s1 = {8, "\x01\x23\x45\x67\x89\xab\xcd\xef"};
 
     struct test_case tests[] = {
-	{NULL, 8, "\x01\x23\x45\x67\x89\xab\xcd\xef"}
+	{NULL, 8, "\x01\x23\x45\x67\x89\xab\xcd\xef", NULL}
     };
     int ntests = sizeof(tests) / sizeof(*tests);
     int ret;
@@ -278,8 +278,8 @@ test_bmp_string (void)
     heim_bmp_string s2 = { 2, bmp_d2 };
 
     struct test_case tests[] = {
-	{NULL, 2, "\x00\x20"},
-	{NULL, 4, "\x00\x20\x00\x20"}
+	{NULL, 2, "\x00\x20",		NULL},
+	{NULL, 4, "\x00\x20\x00\x20",	NULL}
     };
     int ntests = sizeof(tests) / sizeof(*tests);
     int ret;
@@ -326,8 +326,8 @@ test_universal_string (void)
     heim_universal_string s2 = { 2, universal_d2 };
 
     struct test_case tests[] = {
-	{NULL, 4, "\x00\x00\x00\x20"},
-	{NULL, 8, "\x00\x00\x00\x20\x00\x00\x00\x20"}
+	{NULL, 4, "\x00\x00\x00\x20",			NULL},
+	{NULL, 8, "\x00\x00\x00\x20\x00\x00\x00\x20",	NULL}
     };
     int ntests = sizeof(tests) / sizeof(*tests);
     int ret;
@@ -370,7 +370,7 @@ test_general_string (void)
     char *s1 = "Test User 1";
 
     struct test_case tests[] = {
-	{NULL, 11, "\x54\x65\x73\x74\x20\x55\x73\x65\x72\x20\x31"}
+	{NULL, 11, "\x54\x65\x73\x74\x20\x55\x73\x65\x72\x20\x31", NULL}
     };
     int ret, ntests = sizeof(tests) / sizeof(*tests);
 
@@ -404,8 +404,8 @@ static int
 test_generalized_time (void)
 {
     struct test_case tests[] = {
-	{NULL, 15, "19700101000000Z"},
-	{NULL, 15, "19851106210627Z"}
+	{NULL, 15, "19700101000000Z",	NULL},
+	{NULL, 15, "19851106210627Z",	NULL}
     };
     time_t values[] = {0, 500159187};
     int i, ret;
@@ -446,10 +446,10 @@ static int
 test_oid (void)
 {
     struct test_case tests[] = {
-	{NULL, 2, "\x29\x01"},
-	{NULL, 1, "\x29"},
-	{NULL, 2, "\xff\x01"},
-	{NULL, 1, "\xff"}
+	{NULL, 2, "\x29\x01",	NULL},
+	{NULL, 1, "\x29",	NULL},
+	{NULL, 2, "\xff\x01",	NULL},
+	{NULL, 1, "\xff",	NULL}
     };
     heim_oid values[] = {
 	{ 3, oid_comp1 },
@@ -490,7 +490,7 @@ static int
 test_bit_string (void)
 {
     struct test_case tests[] = {
-	{NULL, 1, "\x00"}
+	{NULL, 1, "\x00", NULL}
     };
     heim_bit_string values[] = {
 	{ 0, "" }
@@ -528,13 +528,13 @@ static int
 test_heim_integer (void)
 {
     struct test_case tests[] = {
-	{NULL, 2, "\xfe\x01"},
-	{NULL, 2, "\xef\x01"},
-	{NULL, 3, "\xff\x00\xff"},
-	{NULL, 3, "\xff\x01\x00"},
-	{NULL, 1, "\x00"},
-	{NULL, 1, "\x01"},
-	{NULL, 2, "\x00\x80"}
+	{NULL, 2, "\xfe\x01",		NULL},
+	{NULL, 2, "\xef\x01",		NULL},
+	{NULL, 3, "\xff\x00\xff",	NULL},
+	{NULL, 3, "\xff\x01\x00",	NULL},
+	{NULL, 1, "\x00",		NULL},
+	{NULL, 1, "\x01",		NULL},
+	{NULL, 2, "\x00\x80",		NULL}
     };
 
     heim_integer values[] = {
@@ -592,8 +592,8 @@ static int
 test_boolean (void)
 {
     struct test_case tests[] = {
-	{NULL, 1, "\xff"},
-	{NULL, 1, "\x00"}
+	{NULL, 1, "\xff", NULL},
+	{NULL, 1, "\x00", NULL}
     };
 
     int values[] = { 1, 0 };

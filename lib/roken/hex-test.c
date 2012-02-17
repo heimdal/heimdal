@@ -55,7 +55,7 @@ main(int argc, char **argv)
 	{ "abcdef", 6, "616263646566" },
 	{ "abcdefg", 7, "61626364656667" },
 	{ "=", 1, "3D" },
-	{ NULL }
+	{ NULL, 0, NULL }
     };
     for(t = tests; t->data; t++) {
 	char *str;

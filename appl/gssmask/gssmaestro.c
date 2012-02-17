@@ -280,7 +280,7 @@ wait_log(struct client *c)
     if (fd < 0)
 	err(1, "failed to build socket for %s's logging port", c->moniker);
 
-    ((struct sockaddr *)&sast)->sa_family = c->sa->sa_family;
+    sast.ss_family = c->sa->sa_family;
     ret = bind(fd, (struct sockaddr *)&sast, c->salen);
     if (ret < 0)
 	err(1, "failed to bind %s's logging port", c->moniker);

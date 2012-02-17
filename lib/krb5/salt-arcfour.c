@@ -108,5 +108,5 @@ struct salt_type _krb5_arcfour_salt[] = {
 	"pw-salt",
 	ARCFOUR_string_to_key
     },
-    { 0 }
+    { 0, NULL, NULL }
 };

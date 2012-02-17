@@ -404,9 +404,10 @@ send_krb5_auth(int s,
     if (!do_forward
 	|| krb5_forward_cred (auth_context, s, hostname, do_forwardable)) {
 	/* Empty forwarding info */
+	int ret;
 
 	u_char zero[4] = {0, 0, 0, 0};
-	write (s, &zero, 4);
+	ret = write (s, &zero, 4);
     }
     krb5_auth_con_free (context, auth_context);
     return 0;
@@ -573,8 +574,8 @@ proto (int s, int errsock,
 	warnx ("Error from rshd at %s:", hostname);
 
 	while ((ret = read (s, buf, sizeof(buf))) > 0)
-	    write (STDOUT_FILENO, buf, ret);
-        write (STDOUT_FILENO,"\n",1);
+	    ret = write (STDOUT_FILENO, buf, ret);
+        ret = write (STDOUT_FILENO,"\n",1);
 	close (errsock2);
 	return 1;
     }
@@ -799,34 +800,41 @@ doit (const char *hostname,
 
 struct getargs args[] = {
 #ifdef KRB5
-    { "krb5",	'5', arg_flag,		&use_v5,	"Use Kerberos V5" },
-    { "forward", 'f', arg_flag,		&do_forward,	"Forward credentials [krb5]"},
+    { "krb5",	'5', arg_flag,		&use_v5, "Use Kerberos V5", NULL },
+    { "forward", 'f', arg_flag,		&do_forward,
+      "Forward credentials [krb5]", NULL },
     { "forwardable", 'F', arg_flag,	&do_forwardable,
-      "Forward forwardable credentials [krb5]" },
-    { NULL, 'G', arg_negative_flag,&do_forward,	"Don't forward credentials" },
+      "Forward forwardable credentials [krb5]", NULL },
+    { NULL, 'G', arg_negative_flag, &do_forward, "Don't forward credentials",
+      NULL },
     { "unique", 'u', arg_flag,	&do_unique_tkfile,
-      "Use unique remote credentials cache [krb5]" },
+      "Use unique remote credentials cache [krb5]", NULL },
     { "tkfile", 'U', arg_string,  &unique_tkfile,
-      "Specifies remote credentials cache [krb5]" },
+      "Specifies remote credentials cache [krb5]", NULL },
     { "protocol", 'P', arg_string,      &protocol_version_str,
       "Protocol version [krb5]", "protocol" },
 #endif
-    { "broken", 'K', arg_flag,		&use_only_broken, "Use only priv port" },
+    { "broken", 'K', arg_flag,		&use_only_broken, "Use only priv port",
+      NULL },
 #if defined(KRB5)
-    { "encrypt", 'x', arg_flag,		&do_encrypt,	"Encrypt connection" },
-    { NULL, 	'z', arg_negative_flag,      &do_encrypt,
-      "Don't encrypt connection", NULL },
+    { "encrypt", 'x', arg_flag,		&do_encrypt, "Encrypt connection",
+      NULL },
+    { NULL, 	'z', arg_negative_flag,	&do_encrypt, "Don't encrypt connection",
+      NULL },
 #endif
-    { NULL,	'd', arg_flag,		&sock_debug, "Enable socket debugging" },
-    { "input",	'n', arg_negative_flag,	&input,		"Close stdin" },
+    { NULL,	'd', arg_flag,		&sock_debug, "Enable socket debugging",
+      NULL },
+    { "input",	'n', arg_negative_flag,	&input, 	"Close stdin", NULL },
     { "port",	'p', arg_string,	&port_str,	"Use this port",
       "port" },
-    { "user",	'l', arg_string,	&user,		"Run as this user", "login" },
-    { "stderr", 'e', arg_negative_flag, &do_errsock,	"Don't open stderr"},
+    { "user",	'l', arg_string,	&user,		"Run as this user",
+      "login" },
+    { "stderr", 'e', arg_negative_flag, &do_errsock,	"Don't open stderr",
+      NULL },
 #ifdef KRB5
 #endif
-    { "version", 0,  arg_flag,		&do_version,	NULL },
-    { "help",	 0,  arg_flag,		&do_help,	NULL }
+    { "version", 0,  arg_flag,		&do_version,	NULL, NULL },
+    { "help",	 0,  arg_flag,		&do_help,	NULL, NULL }
 };
 
 static void

@@ -166,10 +166,10 @@ Authenticator authenticators[] = {
       rsaencpwd_status,
       rsaencpwd_printsub },
 #endif
-    { 0, },
+    { 0, 0, NULL, NULL, NULL, NULL, NULL, NULL },
 };
 
-static Authenticator NoAuth = { 0 };
+static Authenticator NoAuth = { 0, 0, NULL, NULL, NULL, NULL, NULL, NULL };
 
 static int	i_support = 0;
 static int	i_wont_support = 0;

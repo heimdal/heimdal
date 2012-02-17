@@ -2,6 +2,8 @@
 
 include $(top_srcdir)/Makefile.am.common
 
+WFLAGS += -Wno-extra -Wno-strict-aliasing -Wno-unused-result
+
 bin_PROGRAMS = rcp
 
 rcp_SOURCES  = rcp.c util.c rcp_locl.h extern.h

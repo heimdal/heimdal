@@ -353,227 +353,227 @@ struct entry {
 };
 
 struct entry all_strings[] = {
-    { "", krb5_config_string, NULL },
-    { NULL }
+    { "", krb5_config_string, NULL, 0 },
+    { NULL, 0, NULL, 0 }
 };
 
 struct entry all_boolean[] = {
-    { "", krb5_config_string, check_boolean },
-    { NULL }
+    { "", krb5_config_string, check_boolean, 0 },
+    { NULL, 0, NULL, 0 }
 };
 
 
 struct entry v4_name_convert_entries[] = {
-    { "host", krb5_config_list, all_strings },
-    { "plain", krb5_config_list, all_strings },
-    { NULL }
+    { "host", krb5_config_list, all_strings, 0 },
+    { "plain", krb5_config_list, all_strings, 0 },
+    { NULL, 0, NULL, 0 }
 };
 
 struct entry libdefaults_entries[] = {
-    { "accept_null_addresses", krb5_config_string, check_boolean },
-    { "allow_weak_crypto", krb5_config_string, check_boolean },
+    { "accept_null_addresses", krb5_config_string, check_boolean, 0 },
+    { "allow_weak_crypto", krb5_config_string, check_boolean, 0 },
     { "capath", krb5_config_list, all_strings, 1 },
-    { "check_pac", krb5_config_string, check_boolean },
-    { "clockskew", krb5_config_string, check_time },
-    { "date_format", krb5_config_string, NULL },
-    { "default_cc_name", krb5_config_string, NULL },
-    { "default_etypes", krb5_config_string, NULL },
-    { "default_etypes_des", krb5_config_string, NULL },
-    { "default_keytab_modify_name", krb5_config_string, NULL },
-    { "default_keytab_name", krb5_config_string, NULL },
-    { "default_realm", krb5_config_string, NULL },
-    { "dns_canonize_hostname", krb5_config_string, check_boolean },
-    { "dns_proxy", krb5_config_string, NULL },
-    { "dns_lookup_kdc", krb5_config_string, check_boolean },
-    { "dns_lookup_realm", krb5_config_string, check_boolean },
-    { "dns_lookup_realm_labels", krb5_config_string, NULL },
-    { "egd_socket", krb5_config_string, NULL },
-    { "encrypt", krb5_config_string, check_boolean },
-    { "extra_addresses", krb5_config_string, NULL },
-    { "fcache_version", krb5_config_string, check_numeric },
-    { "fcc-mit-ticketflags", krb5_config_string, check_boolean },
-    { "forward", krb5_config_string, check_boolean },
-    { "forwardable", krb5_config_string, check_boolean },
-    { "http_proxy", krb5_config_string, check_host /* XXX */ },
-    { "ignore_addresses", krb5_config_string, NULL },
-    { "kdc_timeout", krb5_config_string, check_time },
-    { "kdc_timesync", krb5_config_string, check_boolean },
-    { "log_utc", krb5_config_string, check_boolean },
-    { "maxretries", krb5_config_string, check_numeric },
-    { "scan_interfaces", krb5_config_string, check_boolean },
-    { "srv_lookup", krb5_config_string, check_boolean },
-    { "srv_try_txt", krb5_config_string, check_boolean },
-    { "ticket_lifetime", krb5_config_string, check_time },
-    { "time_format", krb5_config_string, NULL },
-    { "transited_realms_reject", krb5_config_string, NULL },
-    { "no-addresses", krb5_config_string, check_boolean },
-    { "v4_instance_resolve", krb5_config_string, check_boolean },
-    { "v4_name_convert", krb5_config_list, v4_name_convert_entries },
-    { "verify_ap_req_nofail", krb5_config_string, check_boolean },
-    { "max_retries", krb5_config_string, check_time },
-    { "renew_lifetime", krb5_config_string, check_time },
-    { "proxiable", krb5_config_string, check_boolean },
-    { "warn_pwexpire", krb5_config_string, check_time },
+    { "check_pac", krb5_config_string, check_boolean, 0 },
+    { "clockskew", krb5_config_string, check_time, 0 },
+    { "date_format", krb5_config_string, NULL, 0 },
+    { "default_cc_name", krb5_config_string, NULL, 0 },
+    { "default_etypes", krb5_config_string, NULL, 0 },
+    { "default_etypes_des", krb5_config_string, NULL, 0 },
+    { "default_keytab_modify_name", krb5_config_string, NULL, 0 },
+    { "default_keytab_name", krb5_config_string, NULL, 0 },
+    { "default_realm", krb5_config_string, NULL, 0 },
+    { "dns_canonize_hostname", krb5_config_string, check_boolean, 0 },
+    { "dns_proxy", krb5_config_string, NULL, 0 },
+    { "dns_lookup_kdc", krb5_config_string, check_boolean, 0 },
+    { "dns_lookup_realm", krb5_config_string, check_boolean, 0 },
+    { "dns_lookup_realm_labels", krb5_config_string, NULL, 0 },
+    { "egd_socket", krb5_config_string, NULL, 0 },
+    { "encrypt", krb5_config_string, check_boolean, 0 },
+    { "extra_addresses", krb5_config_string, NULL, 0 },
+    { "fcache_version", krb5_config_string, check_numeric, 0 },
+    { "fcc-mit-ticketflags", krb5_config_string, check_boolean, 0 },
+    { "forward", krb5_config_string, check_boolean, 0 },
+    { "forwardable", krb5_config_string, check_boolean, 0 },
+    { "http_proxy", krb5_config_string, check_host /* XXX */, 0 },
+    { "ignore_addresses", krb5_config_string, NULL, 0 },
+    { "kdc_timeout", krb5_config_string, check_time, 0 },
+    { "kdc_timesync", krb5_config_string, check_boolean, 0 },
+    { "log_utc", krb5_config_string, check_boolean, 0 },
+    { "maxretries", krb5_config_string, check_numeric, 0 },
+    { "scan_interfaces", krb5_config_string, check_boolean, 0 },
+    { "srv_lookup", krb5_config_string, check_boolean, 0 },
+    { "srv_try_txt", krb5_config_string, check_boolean, 0 },
+    { "ticket_lifetime", krb5_config_string, check_time, 0 },
+    { "time_format", krb5_config_string, NULL, 0 },
+    { "transited_realms_reject", krb5_config_string, NULL, 0 },
+    { "no-addresses", krb5_config_string, check_boolean, 0 },
+    { "v4_instance_resolve", krb5_config_string, check_boolean, 0 },
+    { "v4_name_convert", krb5_config_list, v4_name_convert_entries, 0 },
+    { "verify_ap_req_nofail", krb5_config_string, check_boolean, 0 },
+    { "max_retries", krb5_config_string, check_time, 0 },
+    { "renew_lifetime", krb5_config_string, check_time, 0 },
+    { "proxiable", krb5_config_string, check_boolean, 0 },
+    { "warn_pwexpire", krb5_config_string, check_time, 0 },
     /* MIT stuff */
-    { "permitted_enctypes", krb5_config_string, mit_entry },
-    { "default_tgs_enctypes", krb5_config_string, mit_entry },
-    { "default_tkt_enctypes", krb5_config_string, mit_entry },
-    { NULL }
+    { "permitted_enctypes", krb5_config_string, mit_entry, 0 },
+    { "default_tgs_enctypes", krb5_config_string, mit_entry, 0 },
+    { "default_tkt_enctypes", krb5_config_string, mit_entry, 0 },
+    { NULL, 0, NULL, 0 }
 };
 
 struct entry appdefaults_entries[] = {
-    { "afslog", krb5_config_string, check_boolean },
-    { "afs-use-524", krb5_config_string, check_524 },
-    { "encrypt", krb5_config_string, check_boolean },
-    { "forward", krb5_config_string, check_boolean },
-    { "forwardable", krb5_config_string, check_boolean },
-    { "proxiable", krb5_config_string, check_boolean },
-    { "ticket_lifetime", krb5_config_string, check_time },
-    { "renew_lifetime", krb5_config_string, check_time },
-    { "no-addresses", krb5_config_string, check_boolean },
-    { "krb4_get_tickets", krb5_config_string, check_boolean },
-    { "pkinit_anchors", krb5_config_string, NULL },
-    { "pkinit_win2k", krb5_config_string, NULL },
-    { "pkinit_win2k_require_binding", krb5_config_string, NULL },
-    { "pkinit_require_eku", krb5_config_string, NULL },
-    { "pkinit_require_krbtgt_otherName", krb5_config_string, NULL },
-    { "pkinit_require_hostname_match", krb5_config_string, NULL },
+    { "afslog", krb5_config_string, check_boolean, 0 },
+    { "afs-use-524", krb5_config_string, check_524, 0 },
+    { "encrypt", krb5_config_string, check_boolean, 0 },
+    { "forward", krb5_config_string, check_boolean, 0 },
+    { "forwardable", krb5_config_string, check_boolean, 0 },
+    { "proxiable", krb5_config_string, check_boolean, 0 },
+    { "ticket_lifetime", krb5_config_string, check_time, 0 },
+    { "renew_lifetime", krb5_config_string, check_time, 0 },
+    { "no-addresses", krb5_config_string, check_boolean, 0 },
+    { "krb4_get_tickets", krb5_config_string, check_boolean, 0 },
+    { "pkinit_anchors", krb5_config_string, NULL, 0 },
+    { "pkinit_win2k", krb5_config_string, NULL, 0 },
+    { "pkinit_win2k_require_binding", krb5_config_string, NULL, 0 },
+    { "pkinit_require_eku", krb5_config_string, NULL, 0 },
+    { "pkinit_require_krbtgt_otherName", krb5_config_string, NULL, 0 },
+    { "pkinit_require_hostname_match", krb5_config_string, NULL, 0 },
 #if 0
-    { "anonymous", krb5_config_string, check_boolean },
+    { "anonymous", krb5_config_string, check_boolean, 0 },
 #endif
-    { "", krb5_config_list, appdefaults_entries },
-    { NULL }
+    { "", krb5_config_list, appdefaults_entries, 0 },
+    { NULL, 0, NULL, 0 }
 };
 
 struct entry realms_entries[] = {
-    { "forwardable", krb5_config_string, check_boolean },
-    { "proxiable", krb5_config_string, check_boolean },
-    { "ticket_lifetime", krb5_config_string, check_time },
-    { "renew_lifetime", krb5_config_string, check_time },
-    { "warn_pwexpire", krb5_config_string, check_time },
-    { "kdc", krb5_config_string, check_host },
-    { "admin_server", krb5_config_string, check_host },
-    { "kpasswd_server", krb5_config_string, check_host },
-    { "krb524_server", krb5_config_string, check_host },
-    { "v4_name_convert", krb5_config_list, v4_name_convert_entries },
-    { "v4_instance_convert", krb5_config_list, all_strings },
-    { "v4_domains", krb5_config_string, NULL },
-    { "default_domain", krb5_config_string, NULL },
-    { "win2k_pkinit", krb5_config_string, NULL },
+    { "forwardable", krb5_config_string, check_boolean, 0 },
+    { "proxiable", krb5_config_string, check_boolean, 0 },
+    { "ticket_lifetime", krb5_config_string, check_time, 0 },
+    { "renew_lifetime", krb5_config_string, check_time, 0 },
+    { "warn_pwexpire", krb5_config_string, check_time, 0 },
+    { "kdc", krb5_config_string, check_host, 0 },
+    { "admin_server", krb5_config_string, check_host, 0 },
+    { "kpasswd_server", krb5_config_string, check_host, 0 },
+    { "krb524_server", krb5_config_string, check_host, 0 },
+    { "v4_name_convert", krb5_config_list, v4_name_convert_entries, 0 },
+    { "v4_instance_convert", krb5_config_list, all_strings, 0 },
+    { "v4_domains", krb5_config_string, NULL, 0 },
+    { "default_domain", krb5_config_string, NULL, 0 },
+    { "win2k_pkinit", krb5_config_string, NULL, 0 },
     /* MIT stuff */
-    { "admin_keytab", krb5_config_string, mit_entry },
-    { "acl_file", krb5_config_string, mit_entry },
-    { "dict_file", krb5_config_string, mit_entry },
-    { "kadmind_port", krb5_config_string, mit_entry },
-    { "kpasswd_port", krb5_config_string, mit_entry },
-    { "master_key_name", krb5_config_string, mit_entry },
-    { "master_key_type", krb5_config_string, mit_entry },
-    { "key_stash_file", krb5_config_string, mit_entry },
-    { "max_life", krb5_config_string, mit_entry },
-    { "max_renewable_life", krb5_config_string, mit_entry },
-    { "default_principal_expiration", krb5_config_string, mit_entry },
-    { "default_principal_flags", krb5_config_string, mit_entry },
-    { "supported_enctypes", krb5_config_string, mit_entry },
-    { "database_name", krb5_config_string, mit_entry },
-    { NULL }
+    { "admin_keytab", krb5_config_string, mit_entry, 0 },
+    { "acl_file", krb5_config_string, mit_entry, 0 },
+    { "dict_file", krb5_config_string, mit_entry, 0 },
+    { "kadmind_port", krb5_config_string, mit_entry, 0 },
+    { "kpasswd_port", krb5_config_string, mit_entry, 0 },
+    { "master_key_name", krb5_config_string, mit_entry, 0 },
+    { "master_key_type", krb5_config_string, mit_entry, 0 },
+    { "key_stash_file", krb5_config_string, mit_entry, 0 },
+    { "max_life", krb5_config_string, mit_entry, 0 },
+    { "max_renewable_life", krb5_config_string, mit_entry, 0 },
+    { "default_principal_expiration", krb5_config_string, mit_entry, 0 },
+    { "default_principal_flags", krb5_config_string, mit_entry, 0 },
+    { "supported_enctypes", krb5_config_string, mit_entry, 0 },
+    { "database_name", krb5_config_string, mit_entry, 0 },
+    { NULL, 0, NULL, 0 }
 };
 
 struct entry realms_foobar[] = {
-    { "", krb5_config_list, realms_entries },
-    { NULL }
+    { "", krb5_config_list, realms_entries, 0 },
+    { NULL, 0, NULL, 0 }
 };
 
 
 struct entry kdc_database_entries[] = {
-    { "realm", krb5_config_string, NULL },
-    { "dbname", krb5_config_string, NULL },
-    { "mkey_file", krb5_config_string, NULL },
-    { "acl_file", krb5_config_string, NULL },
-    { "log_file", krb5_config_string, NULL },
-    { NULL }
+    { "realm", krb5_config_string, NULL, 0 },
+    { "dbname", krb5_config_string, NULL, 0 },
+    { "mkey_file", krb5_config_string, NULL, 0 },
+    { "acl_file", krb5_config_string, NULL, 0 },
+    { "log_file", krb5_config_string, NULL, 0 },
+    { NULL, 0, NULL, 0 }
 };
 
 struct entry kdc_entries[] = {
-    { "database", krb5_config_list, kdc_database_entries },
-    { "key-file", krb5_config_string, NULL },
-    { "logging", krb5_config_string, check_log },
-    { "max-request", krb5_config_string, check_bytes },
-    { "require-preauth", krb5_config_string, check_boolean },
-    { "ports", krb5_config_string, NULL },
-    { "addresses", krb5_config_string, NULL },
-    { "enable-kerberos4", krb5_config_string, check_boolean },
-    { "enable-524", krb5_config_string, check_boolean },
-    { "enable-http", krb5_config_string, check_boolean },
-    { "check-ticket-addresses", krb5_config_string, check_boolean },
-    { "allow-null-ticket-addresses", krb5_config_string, check_boolean },
-    { "allow-anonymous", krb5_config_string, check_boolean },
-    { "v4_realm", krb5_config_string, NULL },
+    { "database", krb5_config_list, kdc_database_entries, 0 },
+    { "key-file", krb5_config_string, NULL, 0 },
+    { "logging", krb5_config_string, check_log, 0 },
+    { "max-request", krb5_config_string, check_bytes, 0 },
+    { "require-preauth", krb5_config_string, check_boolean, 0 },
+    { "ports", krb5_config_string, NULL, 0 },
+    { "addresses", krb5_config_string, NULL, 0 },
+    { "enable-kerberos4", krb5_config_string, check_boolean, 0 },
+    { "enable-524", krb5_config_string, check_boolean, 0 },
+    { "enable-http", krb5_config_string, check_boolean, 0 },
+    { "check-ticket-addresses", krb5_config_string, check_boolean, 0 },
+    { "allow-null-ticket-addresses", krb5_config_string, check_boolean, 0 },
+    { "allow-anonymous", krb5_config_string, check_boolean, 0 },
+    { "v4_realm", krb5_config_string, NULL, 0 },
     { "enable-kaserver", krb5_config_string, check_boolean, 1 },
-    { "encode_as_rep_as_tgs_rep", krb5_config_string, check_boolean },
-    { "kdc_warn_pwexpire", krb5_config_string, check_time },
-    { "use_2b", krb5_config_list, NULL },
-    { "enable-pkinit", krb5_config_string, check_boolean },
-    { "pkinit_identity", krb5_config_string, NULL },
-    { "pkinit_anchors", krb5_config_string, NULL },
-    { "pkinit_pool", krb5_config_string, NULL },
-    { "pkinit_revoke", krb5_config_string, NULL },
-    { "pkinit_kdc_ocsp", krb5_config_string, NULL },
-    { "pkinit_principal_in_certificate", krb5_config_string, NULL },
-    { "pkinit_dh_min_bits", krb5_config_string, NULL },
-    { "pkinit_allow_proxy_certificate", krb5_config_string, NULL },
-    { "hdb-ldap-create-base", krb5_config_string, NULL },
-    { "v4-realm", krb5_config_string, NULL },
-    { NULL }
+    { "encode_as_rep_as_tgs_rep", krb5_config_string, check_boolean, 0 },
+    { "kdc_warn_pwexpire", krb5_config_string, check_time, 0 },
+    { "use_2b", krb5_config_list, NULL, 0 },
+    { "enable-pkinit", krb5_config_string, check_boolean, 0 },
+    { "pkinit_identity", krb5_config_string, NULL, 0 },
+    { "pkinit_anchors", krb5_config_string, NULL, 0 },
+    { "pkinit_pool", krb5_config_string, NULL, 0 },
+    { "pkinit_revoke", krb5_config_string, NULL, 0 },
+    { "pkinit_kdc_ocsp", krb5_config_string, NULL, 0 },
+    { "pkinit_principal_in_certificate", krb5_config_string, NULL, 0 },
+    { "pkinit_dh_min_bits", krb5_config_string, NULL, 0 },
+    { "pkinit_allow_proxy_certificate", krb5_config_string, NULL, 0 },
+    { "hdb-ldap-create-base", krb5_config_string, NULL, 0 },
+    { "v4-realm", krb5_config_string, NULL, 0 },
+    { NULL, 0, NULL, 0 }
 };
 
 struct entry kadmin_entries[] = {
-    { "password_lifetime", krb5_config_string, check_time },
-    { "default_keys", krb5_config_string, NULL },
-    { "use_v4_salt", krb5_config_string, NULL },
-    { "require-preauth", krb5_config_string, check_boolean },
-    { NULL }
+    { "password_lifetime", krb5_config_string, check_time, 0 },
+    { "default_keys", krb5_config_string, NULL, 0 },
+    { "use_v4_salt", krb5_config_string, NULL, 0 },
+    { "require-preauth", krb5_config_string, check_boolean, 0 },
+    { NULL, 0, NULL, 0 }
 };
 struct entry log_strings[] = {
-    { "", krb5_config_string, check_log },
-    { NULL }
+    { "", krb5_config_string, check_log, 0 },
+    { NULL, 0, NULL, 0 }
 };
 
 
 /* MIT stuff */
 struct entry kdcdefaults_entries[] = {
-    { "kdc_ports", krb5_config_string, mit_entry },
-    { "v4_mode", krb5_config_string, mit_entry },
-    { NULL }
+    { "kdc_ports", krb5_config_string, mit_entry, 0 },
+    { "v4_mode", krb5_config_string, mit_entry, 0 },
+    { NULL, 0, NULL, 0 }
 };
 
 struct entry capaths_entries[] = {
-    { "", krb5_config_list, all_strings },
-    { NULL }
+    { "", krb5_config_list, all_strings, 0 },
+    { NULL, 0, NULL, 0 }
 };
 
 struct entry password_quality_entries[] = {
-    { "policies", krb5_config_string, NULL },
-    { "external_program", krb5_config_string, NULL },
-    { "min_classes", krb5_config_string, check_numeric },
-    { "min_length", krb5_config_string, check_numeric },
-    { "", krb5_config_list, all_strings },
-    { NULL }
+    { "policies", krb5_config_string, NULL, 0 },
+    { "external_program", krb5_config_string, NULL, 0 },
+    { "min_classes", krb5_config_string, check_numeric, 0 },
+    { "min_length", krb5_config_string, check_numeric, 0 },
+    { "", krb5_config_list, all_strings, 0 },
+    { NULL, 0, NULL, 0 }
 };
 
 struct entry toplevel_sections[] = {
-    { "libdefaults" , krb5_config_list, libdefaults_entries },
-    { "realms", krb5_config_list, realms_foobar },
-    { "domain_realm", krb5_config_list, all_strings },
-    { "logging", krb5_config_list, log_strings },
-    { "kdc", krb5_config_list, kdc_entries },
-    { "kadmin", krb5_config_list, kadmin_entries },
-    { "appdefaults", krb5_config_list, appdefaults_entries },
-    { "gssapi", krb5_config_list, NULL },
-    { "capaths", krb5_config_list, capaths_entries },
-    { "password_quality", krb5_config_list, password_quality_entries },
+    { "libdefaults" , krb5_config_list, libdefaults_entries, 0 },
+    { "realms", krb5_config_list, realms_foobar, 0 },
+    { "domain_realm", krb5_config_list, all_strings, 0 },
+    { "logging", krb5_config_list, log_strings, 0 },
+    { "kdc", krb5_config_list, kdc_entries, 0 },
+    { "kadmin", krb5_config_list, kadmin_entries, 0 },
+    { "appdefaults", krb5_config_list, appdefaults_entries, 0 },
+    { "gssapi", krb5_config_list, NULL, 0 },
+    { "capaths", krb5_config_list, capaths_entries, 0 },
+    { "password_quality", krb5_config_list, password_quality_entries, 0 },
     /* MIT stuff */
-    { "kdcdefaults", krb5_config_list, kdcdefaults_entries },
-    { NULL }
+    { "kdcdefaults", krb5_config_list, kdcdefaults_entries, 0 },
+    { NULL, 0, NULL, 0 }
 };
 
 

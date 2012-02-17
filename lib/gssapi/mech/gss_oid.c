@@ -254,13 +254,13 @@ struct _gss_oid_name_table _gss_ont_ma[] = {
   { GSS_C_MA_AUTH_INIT_INIT, "GSS_C_MA_AUTH_INIT_INIT", "auth-init-princ-initial", "" },
   { GSS_C_MA_MECH_CONCRETE, "GSS_C_MA_MECH_CONCRETE", "concrete-mech", "Indicates that a mech is neither a pseudo-mechanism nor a composite mechanism" },
   { GSS_C_MA_SASL_MECH_NAME, "GSS_C_MA_SASL_MECH_NAME", "SASL mechanism name", "The name of the SASL mechanism" },
-  { NULL }
+  { NULL, NULL, NULL, NULL }
 };
 
 struct _gss_oid_name_table _gss_ont_mech[] = {
   { GSS_KRB5_MECHANISM, "GSS_KRB5_MECHANISM", "Kerberos 5", "Heimdal Kerberos 5 mechanism" },
   { GSS_SPNEGO_MECHANISM, "GSS_SPNEGO_MECHANISM", "SPNEGO", "Heimdal SPNEGO mechanism" },
   { GSS_NTLM_MECHANISM, "GSS_NTLM_MECHANISM", "NTLM", "Heimdal NTLM mechanism" },
-  { NULL }
+  { NULL, NULL, NULL, NULL }
 };
 

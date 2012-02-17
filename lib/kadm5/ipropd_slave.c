@@ -107,6 +107,7 @@ get_creds(krb5_context context, const char *keytab_str,
     krb5_creds creds;
     char *server;
     char keytab_buf[256];
+    int aret;
 
     if (keytab_str == NULL) {
 	ret = krb5_kt_default_name (context, keytab_buf, sizeof(keytab_buf));
@@ -127,8 +128,8 @@ get_creds(krb5_context context, const char *keytab_str,
     ret = krb5_get_init_creds_opt_alloc(context, &init_opts);
     if (ret) krb5_err(context, 1, ret, "krb5_get_init_creds_opt_alloc");
 
-    asprintf (&server, "%s/%s", IPROP_NAME, serverhost);
-    if (server == NULL)
+    aret = asprintf (&server, "%s/%s", IPROP_NAME, serverhost);
+    if (aret == -1 || server == NULL)
 	krb5_errx (context, 1, "malloc: no memory");
 
     ret = krb5_get_init_creds_keytab(context, &creds, client, keytab,
@@ -374,7 +375,9 @@ receive_everything (krb5_context context, int fd,
 
     krb5_warnx(context, "receive complete database");
 
-    asprintf(&dbname, "%s-NEW", server_context->db->hdb_name);
+    ret = asprintf(&dbname, "%s-NEW", server_context->db->hdb_name);
+    if (ret == -1)
+	krb5_err(context, 1, ENOMEM, "asprintf");
     ret = hdb_create(context, &mydb, dbname);
     if(ret)
 	krb5_err(context,1, ret, "hdb_create");
@@ -563,6 +566,7 @@ main(int argc, char **argv)
     time_t reconnect_max;
     time_t reconnect;
     time_t before = 0;
+    int aret;
 
     const char *master;
 
@@ -615,8 +619,13 @@ main(int argc, char **argv)
     slave_status(context, status_file, "bootstrapping\n");
 
 #ifdef SUPPORT_DETACH
-    if (detach_from_console)
-	daemon(0, 0);
+    if (detach_from_console){
+	aret = daemon(0, 0);
+	if (aret == -1) {
+	    /* not much to do if detaching fails... */
+	    krb5_warnx(context, "failed to daemon(3)ise");
+	}
+    }
 #endif
     pidfile (NULL);
     krb5_openlog (context, "ipropd-slave", &log_facility);

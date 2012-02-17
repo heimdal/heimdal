@@ -217,7 +217,10 @@ krb5_rc_store(krb5_context context,
 	return ret;
     }
     rk_cloexec_file(f);
-    fread(&tmp, sizeof(ent), 1, f);
+    ret = fread(&tmp, sizeof(ent), 1, f);
+    if(ret != 1) {
+	/* XXXrcd: hmmm, probably should return an error message? */
+    }
     t = ent.stamp - tmp.stamp;
     while(fread(&tmp, sizeof(ent), 1, f)){
 	if(tmp.stamp < t)

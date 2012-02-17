@@ -66,7 +66,7 @@ static struct field_name {
     { "aliases", KADM5_TL_DATA, KRB5_TL_ALIASES, 0, "Aliases", "Aliases", 0 },
     { "hist-kvno-diff-clnt", KADM5_TL_DATA, KRB5_TL_HIST_KVNO_DIFF_CLNT, 0, "Clnt hist keys", "Historic keys allowed for client", 0 },
     { "hist-kvno-diff-svc", KADM5_TL_DATA, KRB5_TL_HIST_KVNO_DIFF_SVC, 0, "Svc hist keys", "Historic keys allowed for service", 0 },
-    { NULL }
+    { NULL, 0, 0, 0, NULL, NULL, 0 }
 };
 
 struct field_info {
@@ -125,12 +125,17 @@ format_keytype(krb5_key_data *k, krb5_salt *def_salt, char *buf, size_t buf_len)
 {
     krb5_error_code ret;
     char *s;
+    int aret;
 
+    buf[0] = '\0';
     ret = krb5_enctype_to_string (context,
 				  k->key_data_type[0],
 				  &s);
-    if (ret)
-	asprintf (&s, "unknown(%d)", k->key_data_type[0]);
+    if (ret) {
+	aret = asprintf (&s, "unknown(%d)", k->key_data_type[0]);
+	if (aret == -1)
+	    return;	/* Nothing to do here, we have no way to pass the err */
+    }
     strlcpy(buf, s, buf_len);
     free(s);
 
@@ -140,21 +145,29 @@ format_keytype(krb5_key_data *k, krb5_salt *def_salt, char *buf, size_t buf_len)
 				   k->key_data_type[0],
 				   k->key_data_type[1],
 				   &s);
-    if (ret)
-	asprintf (&s, "unknown(%d)", k->key_data_type[1]);
+    if (ret) {
+	aret = asprintf (&s, "unknown(%d)", k->key_data_type[1]);
+	if (aret == -1)
+	    return;	/* Again, nothing else to do... */
+    }
     strlcat(buf, s, buf_len);
     free(s);
 
+    aret = 0;
     if (cmp_salt(def_salt, k) == 0)
 	s = strdup("");
     else if(k->key_data_length[1] == 0)
 	s = strdup("()");
     else
-	asprintf (&s, "(%.*s)", k->key_data_length[1],
-		  (char *)k->key_data_contents[1]);
+	aret = asprintf (&s, "(%.*s)", k->key_data_length[1],
+			 (char *)k->key_data_contents[1]);
+    if (aret == -1 || s == NULL)
+	return;		/* Again, nothing else we can do... */
     strlcat(buf, s, buf_len);
     free(s);
-    asprintf (&s, "[%d]", k->key_data_kvno);
+    aret = asprintf (&s, "[%d]", k->key_data_kvno);
+    if (aret == -1)
+	return;
     strlcat(buf, ")", buf_len);
 
     strlcat(buf, s, buf_len);

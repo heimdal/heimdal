@@ -73,12 +73,12 @@ static char *typename_arg;
 #endif
 
 struct getargs getargs[] = {
-    { NULL,	'c', arg_flag, &c_flag },
+    { NULL,	'c', arg_flag, &c_flag, NULL, NULL },
 #ifdef KRB5
-    { "cache-type", 0,  arg_string, &typename_arg },
+    { "cache-type", 0,  arg_string, &typename_arg, NULL, NULL },
 #endif
-    { "version", 0,  arg_flag, &version_flag },
-    { "help",	'h', arg_flag, &help_flag },
+    { "version", 0,  arg_flag, &version_flag, NULL, NULL },
+    { "help",	'h', arg_flag, &help_flag, NULL, NULL },
 };
 
 static int num_args = sizeof(getargs) / sizeof(getargs[0]);

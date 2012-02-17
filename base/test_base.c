@@ -279,7 +279,7 @@ test_json(void)
 	for (k = strlen(j[i]) - 1; k > 0; k--) {
 	    o = heim_json_create_with_bytes(j[i], k, 10, 0, NULL);
 	    if (o != NULL) {
-		fprintf(stderr, "Invalid JSON parsed: %.*s\n", k, j[i]);
+		fprintf(stderr, "Invalid JSON parsed: %.*s\n", (int)k, j[i]);
 		return EINVAL;
 	    }
 	}

@@ -624,11 +624,14 @@ open_stats(krb5_context context)
     char *statfile = NULL;
     const char *fn;
     FILE *f;
+    int ret;
 
     if (slave_stats_file)
 	fn = slave_stats_file;
     else {
-	asprintf(&statfile,  "%s/slaves-stats", hdb_db_dir(context));
+	ret = asprintf(&statfile,  "%s/slaves-stats", hdb_db_dir(context));
+	if (ret == -1)
+	    statfile = NULL;	/* XXXrcd: is this right? */
 	fn = krb5_config_get_string_default(context,
 					    NULL,
 					    statfile,
@@ -776,6 +779,7 @@ main(int argc, char **argv)
     uint32_t current_version = 0, old_version = 0;
     krb5_keytab keytab;
     char **files;
+    int aret;
 
     (void) krb5_program_setup(&context, argc, argv, args, num_args, NULL);
 
@@ -789,8 +793,8 @@ main(int argc, char **argv)
     setup_signal();
 
     if (config_file == NULL) {
-	asprintf(&config_file, "%s/kdc.conf", hdb_db_dir(context));
-	if (config_file == NULL)
+	aret = asprintf(&config_file, "%s/kdc.conf", hdb_db_dir(context));
+	if (aret == -1 || config_file == NULL)
 	    errx(1, "out of memory");
     }
 
@@ -811,8 +815,13 @@ main(int argc, char **argv)
 	krb5_errx (context, 1, "couldn't parse time: %s", slave_time_missing);
 
 #ifdef SUPPORT_DETACH
-    if (detach_from_console)
-	daemon(0, 0);
+    if (detach_from_console) {
+	aret = daemon(0, 0);
+	if (aret == -1) {
+	    /* not much to do if detaching fails... */
+	    krb5_warnx(context, "failed to daemon(3)ise");
+	}
+    }
 #endif
     pidfile (NULL);
     krb5_openlog (context, "ipropd-master", &log_facility);

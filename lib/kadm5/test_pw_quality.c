@@ -42,10 +42,10 @@ static char *principal;
 static char *password;
 
 static struct getargs args[] = {
-    { "principal", 0, arg_string, &principal },
-    { "password", 0, arg_string, &password },
-    { "version", 0, arg_flag, &version_flag },
-    { "help", 0, arg_flag, &help_flag }
+    { "principal", 0, arg_string, &principal, NULL, NULL },
+    { "password", 0, arg_string, &password, NULL, NULL },
+    { "version", 0, arg_flag, &version_flag, NULL, NULL },
+    { "help", 0, arg_flag, &help_flag, NULL, NULL }
 };
 int num_args = sizeof(args) / sizeof(args[0]);
 

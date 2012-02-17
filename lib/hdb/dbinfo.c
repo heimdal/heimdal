@@ -153,12 +153,14 @@ hdb_get_dbinfo(krb5_context context, struct hdb_dbinfo **dbp)
 	    p = strrchr(di->dbname, '.');
 	    if(p == NULL || strchr(p, '/') != NULL)
 		/* final pathname component does not contain a . */
-		asprintf(&di->mkey_file, "%s.mkey", di->dbname);
+		ret = asprintf(&di->mkey_file, "%s.mkey", di->dbname);
 	    else
 		/* the filename is something.else, replace .else with
                    .mkey */
-		asprintf(&di->mkey_file, "%.*s.mkey",
-			 (int)(p - di->dbname), di->dbname);
+		ret = asprintf(&di->mkey_file, "%.*s.mkey",
+			       (int)(p - di->dbname), di->dbname);
+	    if (ret == -1)
+		di->mkey_file = NULL; /* XXXrcd: not the right answer */
 	}
 	if(di->acl_file == NULL)
 	    di->acl_file = strdup(default_acl);

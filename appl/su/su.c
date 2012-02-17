@@ -80,19 +80,19 @@ char tkfile[256];
 
 struct getargs args[] = {
     { "kerberos", 'K', arg_negative_flag, &kerberos_flag,
-      "don't use kerberos" },
+      "don't use kerberos", NULL },
     { NULL,	  'f', arg_flag,	  &csh_f_flag,
-      "don't read .cshrc" },
+      "don't read .cshrc", NULL },
     { "full",	  'l', arg_flag,          &full_login,
-      "simulate full login" },
+      "simulate full login", NULL },
     { NULL,	  'm', arg_flag,          &env_flag,
-      "leave environment unmodified" },
+      "leave environment unmodified", NULL },
     { "instance", 'i', arg_string,        &kerberos_instance,
-      "root instance to use" },
+      "root instance to use", NULL },
     { "command",  'c', arg_string,        &cmd,
-      "command to execute" },
-    { "help", 	  'h', arg_flag,          &help_flag },
-    { "version",  0,   arg_flag,          &version_flag },
+      "command to execute", NULL },
+    { "help",	  'h', arg_flag,          &help_flag, NULL, NULL },
+    { "version",  0,   arg_flag,          &version_flag, NULL, NULL },
 };
 
 

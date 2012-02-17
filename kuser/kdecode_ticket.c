@@ -79,8 +79,8 @@ print_and_decode_tkt (krb5_context context,
 struct getargs args[] = {
     { "enctype",	'e', arg_string, &etype_str,
       "encryption type to use", "enctype"},
-    { "version", 	0,   arg_flag, &version_flag },
-    { "help",		0,   arg_flag, &help_flag }
+    { "version", 	0,   arg_flag, &version_flag, NULL, NULL },
+    { "help",		0,   arg_flag, &help_flag, NULL, NULL }
 };
 
 static void

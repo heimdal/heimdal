@@ -2,6 +2,8 @@
 
 include $(top_srcdir)/Makefile.am.common
 
+WFLAGS += -Wno-extra -Wno-strict-aliasing -Wno-unused-result
+
 AM_CPPFLAGS += -I$(srcdir)/.. $(INCLUDE_hcrypto)
 
 noinst_LIBRARIES = libtelnet.a

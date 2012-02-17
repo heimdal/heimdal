@@ -48,7 +48,7 @@ struct limit {
     int has_limit;
     struct rlimit limit;
 } limits[] = {
-#define LIM(X, S) { #X, RLIMIT_##X, S, 0 }
+#define LIM(X, S) { #X, RLIMIT_##X, S, 0, {0, 0} }
     LIM(CORE, 1024),
     LIM(CPU, 60),
     LIM(DATA, 1024),
@@ -75,7 +75,7 @@ struct limit {
       maxlogins
       priority
     */
-    { NULL, 0 }
+    { NULL, 0, 0, 0, {0, 0}  }
 };
 
 static struct limit *

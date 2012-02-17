@@ -176,16 +176,24 @@ DB_rename(krb5_context context, HDB *db, const char *new_name)
     int ret;
     char *old, *new;
 
-    asprintf(&old, "%s.db", db->hdb_name);
-    asprintf(&new, "%s.db", new_name);
+    ret = asprintf(&old, "%s.db", db->hdb_name);
+    if (ret == -1 || old == NULL)
+	return ENOMEM;
+    ret = asprintf(&new, "%s.db", new_name);
+    if (ret == -1 || new == NULL) {
+	free(old);
+	return ENOMEM;
+    }
     ret = rename(old, new);
     free(old);
-    free(new);
-    if(ret)
+    if(ret) {
+	free(new);
 	return errno;
+    }
 
     free(db->hdb_name);
-    db->hdb_name = strdup(new_name);
+    new[strlen(new) - 3] = '\0';
+    db->hdb_name = new;
     return 0;
 }
 
@@ -271,6 +279,7 @@ DB_open(krb5_context context, HDB *db, int flags, mode_t mode)
     krb5_error_code ret;
     DB *d;
     int myflags = 0;
+    int aret;
 
     if (flags & O_CREAT)
       myflags |= DB_CREATE;
@@ -284,8 +293,8 @@ DB_open(krb5_context context, HDB *db, int flags, mode_t mode)
     if (flags & O_TRUNC)
       myflags |= DB_TRUNCATE;
 
-    asprintf(&fn, "%s.db", db->hdb_name);
-    if (fn == NULL) {
+    aret = asprintf(&fn, "%s.db", db->hdb_name);
+    if (aret == -1 || fn == NULL) {
 	krb5_set_error_message(context, ENOMEM, "malloc: out of memory");
 	return ENOMEM;
     }

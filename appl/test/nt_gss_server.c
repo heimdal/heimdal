@@ -58,8 +58,8 @@ static struct getargs args[] = {
     { "service", 's', arg_string, &service, "service to use", "service" },
     { "dump-auth", 0, arg_string, &auth_file, "dump authorization data",
       "file" },
-    { "help", 'h', arg_flag, &help_flag },
-    { "version", 0, arg_flag, &version_flag }
+    { "help", 'h', arg_flag, &help_flag, NULL, NULL },
+    { "version", 0, arg_flag, &version_flag, NULL, NULL }
 };
 
 static int num_args = sizeof(args) / sizeof(args[0]);

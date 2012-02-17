@@ -86,22 +86,22 @@ static struct getargs args[] = {
     },
     {
 	"launchd",	0,	arg_flag, &launchd_flag,
-	"when in use by launchd"
+	"when in use by launchd", NULL
     },
 #ifdef SUPPORT_DETACH
 #if DETACH_IS_DEFAULT
     {
 	"detach",       'D',      arg_negative_flag, &detach_from_console,
-	"don't detach from console"
+	"don't detach from console", NULL
     },
 #else
     {
 	"detach",       0 ,      arg_flag, &detach_from_console,
-	"detach from console"
+	"detach from console", NULL
     },
 #endif
 #endif
-    {	"help",		'h',	arg_flag,   &help_flag },
+    {	"help",		'h',	arg_flag,   &help_flag, NULL, NULL },
     {
 	"system-principal",	'k',	arg_string,	&system_principal,
 	"system principal name",	"principal"
@@ -116,11 +116,11 @@ static struct getargs args[] = {
     },
     {
 	"name-constraints",	'n', arg_negative_flag, &name_constraints,
-	"disable credentials cache name constraints"
+	"disable credentials cache name constraints", NULL
     },
     {
 	"disallow-getting-krbtgt", 0, arg_flag, &disallow_getting_krbtgt,
-	"disable fetching krbtgt from the cache"
+	"disable fetching krbtgt from the cache", NULL
     },
     {
 	"renewable-life",	'r', arg_string, &renew_life,
@@ -148,7 +148,7 @@ static struct getargs args[] = {
 	"user",		'u',	arg_string,	&system_user,
 	"system cache owner",	"user"
     },
-    {	"version",	'v',	arg_flag,   &version_flag }
+    {	"version",	'v',	arg_flag,   &version_flag, NULL, NULL }
 };
 
 static int num_args = sizeof(args) / sizeof(args[0]);

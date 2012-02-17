@@ -349,9 +349,11 @@ _kafs_try_get_cred(struct kafs_data *data, const char *user, const char *cell,
     if (kafs_verbose) {
 	const char *estr = (*data->get_error)(data, ret);
 	char *str;
-	asprintf(&str, "%s tried afs%s%s@%s -> %s (%d)",
-		 data->name, cell ? "/" : "",
-		 cell ? cell : "", realm, estr ? estr : "unknown", ret);
+	ret = asprintf(&str, "%s tried afs%s%s@%s -> %s (%d)",
+		       data->name, cell ? "/" : "",
+		       cell ? cell : "", realm, estr ? estr : "unknown", ret);
+	if (ret == -1)
+	    str = NULL;	/* XXXrcd: not the right answer... */
 	(*kafs_verbose)(kafs_verbose_ctx, str);
 	if (estr)
 	    (*data->free_error)(data, estr);

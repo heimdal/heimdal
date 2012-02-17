@@ -776,7 +776,9 @@ const krb5_kt_ops krb5_fkt_ops = {
     fkt_next_entry,
     fkt_end_seq_get,
     fkt_add_entry,
-    fkt_remove_entry
+    fkt_remove_entry,
+    NULL,
+    0
 };
 
 const krb5_kt_ops krb5_wrfkt_ops = {
@@ -790,7 +792,9 @@ const krb5_kt_ops krb5_wrfkt_ops = {
     fkt_next_entry,
     fkt_end_seq_get,
     fkt_add_entry,
-    fkt_remove_entry
+    fkt_remove_entry,
+    NULL,
+    0
 };
 
 const krb5_kt_ops krb5_javakt_ops = {
@@ -804,5 +808,7 @@ const krb5_kt_ops krb5_javakt_ops = {
     fkt_next_entry,
     fkt_end_seq_get,
     fkt_add_entry,
-    fkt_remove_entry
+    fkt_remove_entry,
+    NULL,
+    0
 };

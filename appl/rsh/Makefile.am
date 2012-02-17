@@ -4,6 +4,8 @@ include $(top_srcdir)/Makefile.am.common
 
 AM_CPPFLAGS += -I$(srcdir)/../login $(INCLUDE_hcrypto)
 
+WFLAGS += -Wno-extra -Wno-strict-aliasing -Wno-unused-result
+
 bin_PROGRAMS = rsh
 
 man_MANS = rsh.1 rshd.8

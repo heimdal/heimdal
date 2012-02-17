@@ -117,6 +117,10 @@ typedef unsigned long u_longest;
 typedef long longest;
 #endif
 
+#ifndef HAVE_UINTPTR_T
+typedef u_longest uintptr_t;
+#endif
+
 
 
 static size_t
@@ -498,7 +502,7 @@ xyzprintf (struct snprintf_state *state, const char *char_format, va_list ap)
 		break;
 	    }
 	    case 'p' : {
-		u_longest arg = (u_longest)va_arg(ap, void*);
+		uintptr_t arg = (uintptr_t)va_arg(ap, void*);
 
 		len += append_number (state, arg, 0x10, "0123456789ABCDEF",
 				      width, prec, flags, 0);

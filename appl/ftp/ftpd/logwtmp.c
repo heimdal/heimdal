@@ -107,7 +107,9 @@ static void
 ftpd_logwtmp_wtmp(char *line, char *name, char *host)
 {
     static int init = 0;
+#ifdef WTMP_FILE
     static int fd;
+#endif
 #ifdef WTMPX_FILE
     static int fdx;
 #endif

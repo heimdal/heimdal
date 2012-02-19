@@ -2,7 +2,7 @@
 
 include $(top_srcdir)/Makefile.am.common
 
-WFLAGS += -Wno-extra -Wno-strict-aliasing -Wno-unused-result
+WFLAGS += $(WFLAGS_LITE)
 
 bin_PROGRAMS = rcp
 

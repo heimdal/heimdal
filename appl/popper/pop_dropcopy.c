@@ -84,10 +84,7 @@ pop_dropcopy(POP *p, struct passwd *pwp)
     }
 
     /* Now give this file to the user	*/
-    ret = chown(template, pwp->pw_uid, pwp->pw_gid);
-    if (ret == -1)
-	pop_log(p, POP_PRIORITY, "Can't chown() temporary maildrop '%s': %s",
-	    template, strerror(errno));
+    chown(template, pwp->pw_uid, pwp->pw_gid);
     chmod(template, 0600);
 
     /* Now link this file to the temporary maildrop.  If this fails it
@@ -95,7 +92,7 @@ pop_dropcopy(POP *p, struct passwd *pwp)
      * this is ok.  We can just go on our way, because by the time we try
      * to write into the file we will be running as the user.
      */
-    ret = link(template,p->temp_drop);
+    link(template,p->temp_drop);
     fclose(tf);
     unlink(template);
 
@@ -152,21 +149,16 @@ pop_dropcopy(POP *p, struct passwd *pwp)
                see the new mail until the error goes away.
                Should let them process the current backlog,  in case
                the error is a quota problem requiring deletions! */
-            ret = ftruncate(dfd,(int)offset) ;
+            ftruncate(dfd,(int)offset) ;
         } else {
             /* Mail transferred!  Zero the mail drop NOW,  that we
                do not have to do gymnastics to figure out what's new
                and what is old later */
-            ret = ftruncate(mfd,0) ;
+            ftruncate(mfd,0) ;
         }
 
         /*  Close the actual mail drop */
         close (mfd);
-
-	/* ftruncate(2) may have returned an error, we should return it */
-	if (ret == -1)
-            return pop_msg(p,POP_FAILURE, "ftruncate: '%s': %s", p->drop_name,
-		strerror(errno));
     }
 
     /*  Acquire a stream pointer for the temporary maildrop */

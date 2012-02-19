@@ -2038,8 +2038,10 @@ krb5_kdc_pk_initialize(krb5_context context,
 	int aret;
 
 	aret = asprintf(&fn, "%s/pki-mapping", hdb_db_dir(context));
-	if (aret == -1)
-	    fn = NULL;
+	if (aret == -1) {
+	    krb5_warnx(context, "PKINIT: out of memory");
+	    return ENOMEM;
+	}
 
 	file = fn;
     }

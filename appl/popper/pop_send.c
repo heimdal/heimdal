@@ -100,8 +100,7 @@ pop_send(POP *p)
 
     if(!IS_MAILDIR(p)) {
 	/*  Skip the first line (the sendmail "From" line) */
-	if (fgets (buffer,MAXMSGLINELEN,p->drop) == NULL)
-	    buffer[0] = '\0';
+	fgets (buffer,MAXMSGLINELEN,p->drop);
 
 #ifdef RETURN_PATH_HANDLING
 	if (strncmp(buffer,"From ",5) == 0) {

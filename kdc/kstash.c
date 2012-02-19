@@ -88,7 +88,7 @@ main(int argc, char **argv)
     if (keyfile == NULL) {
 	aret = asprintf(&keyfile, "%s/m-key", hdb_db_dir(context));
 	if (aret == -1)
-	    keyfile = NULL;
+	    krb5_errx(context, 1, "out of memory");
     }
 
     ret = krb5_string_to_enctype(context, enctype_str, &enctype);

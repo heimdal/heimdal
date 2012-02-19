@@ -174,19 +174,19 @@ find_db_spec(kadm5_server_context *ctx)
 	aret = asprintf(&ctx->config.acl_file, "%s/kadmind.acl",
 			hdb_db_dir(context));
 	if (aret == -1)
-		ctx->config.acl_file = NULL;	/* XXXrcd: not right. */
+	    return ENOMEM;
     }
     if (ctx->config.stash_file == NULL) {
 	aret = asprintf(&ctx->config.stash_file, "%s/m-key",
 			hdb_db_dir(context));
 	if (aret == -1)
-		ctx->config.stash_file = NULL;	/* XXXrcd: not right. */
+	    return ENOMEM;
     }
     if (ctx->log_context.log_file == NULL) {
 	aret = asprintf(&ctx->log_context.log_file, "%s/log",
 			hdb_db_dir(context));
 	if (aret == -1)
-		ctx->log_context.log_file = NULL;	/* XXXrcd: not right. */
+	    return ENOMEM;
     }
 
 #ifndef NO_UNIX_SOCKETS

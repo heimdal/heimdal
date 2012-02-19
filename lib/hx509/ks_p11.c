@@ -333,8 +333,8 @@ p11_init_slot(hx509_context context,
 
     ret = asprintf(&slot->name, "%.*s", (int)i,
 		   slot_info.slotDescription);
-    if (ret == -1 || slot->name == NULL)
-	return ENOMEM;	/* XXXrcd: correct error message?? */
+    if (ret == -1)
+	return ENOMEM;
 
     if ((slot_info.flags & CKF_TOKEN_PRESENT) == 0)
 	return 0;

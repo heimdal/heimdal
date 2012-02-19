@@ -35,8 +35,6 @@ pop_updt (POP *p)
 
     int			    blank_line;
 
-    int			    ret;
-
 #ifdef DEBUG
     if (p->debug) {
         pop_log(p,POP_DEBUG,"Performing maildrop update...");
@@ -49,9 +47,8 @@ pop_updt (POP *p)
 
     if (p->msgs_deleted == p->msg_count) {
         /* Truncate before close, to avoid race condition,  DO NOT UNLINK!
-           Another process may have opened,  and not yet tried to lock
-	   we assign ret = ftruncate() to avoid warnings. */
-        ret = ftruncate ((int)fileno(p->drop),0);
+           Another process may have opened,  and not yet tried to lock */
+        ftruncate ((int)fileno(p->drop),0);
         fclose(p->drop) ;
         return (POP_SUCCESS);
     }
@@ -86,16 +83,14 @@ pop_updt (POP *p)
         }
     if ( nchar != 0 ) {
         fclose(md) ;
-	/* We assign ftruncate's results to ret to avoid warnings. */
-        ret = ftruncate((int)fileno(p->drop),(int)offset) ;
+        ftruncate((int)fileno(p->drop),(int)offset) ;
         fclose(p->drop) ;
         return pop_msg(p,POP_FAILURE,standard_error);
     }
 
     rewind(md);
     lseek(mfd,0,SEEK_SET);
-    /* We assign ftruncate's results to ret to avoid warnings. */
-    ret = ftruncate(mfd,0) ;
+    ftruncate(mfd,0) ;
 
     /* Synch stdio and the kernel for the POP drop */
     rewind(p->drop);
@@ -174,8 +169,7 @@ pop_updt (POP *p)
 
     fflush(md) ;
     if (ferror(md)) {
-	/* We assign ftruncate's results to ret to avoid warnings. */
-        ret = ftruncate(mfd,0) ;
+        ftruncate(mfd,0) ;
         fclose(md) ;
         fclose(p->drop) ;
         return pop_msg(p,POP_FAILURE,standard_error);
@@ -190,8 +184,7 @@ pop_updt (POP *p)
             break ;
         }
     if ( nchar != 0 ) {
-	/* We assign ftruncate's results to ret to avoid warnings. */
-        ret = ftruncate(mfd,0) ;
+        ftruncate(mfd,0) ;
         fclose(md) ;
         fclose(p->drop) ;
         return pop_msg(p,POP_FAILURE,standard_error);
@@ -199,8 +192,7 @@ pop_updt (POP *p)
 
     /*  Close the maildrop and empty temporary maildrop */
     fclose(md);
-    /* We assign ftruncate's results to ret to avoid warnings. */
-    ret = ftruncate((int)fileno(p->drop),0);
+    ftruncate((int)fileno(p->drop),0);
     fclose(p->drop);
 
     return(pop_quit(p));

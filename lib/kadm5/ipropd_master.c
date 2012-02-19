@@ -623,7 +623,6 @@ open_stats(krb5_context context)
 {
     char *statfile = NULL;
     const char *fn;
-    FILE *f;
     int ret;
 
     if (slave_stats_file)
@@ -631,19 +630,18 @@ open_stats(krb5_context context)
     else {
 	ret = asprintf(&statfile,  "%s/slaves-stats", hdb_db_dir(context));
 	if (ret == -1)
-	    statfile = NULL;	/* XXXrcd: is this right? */
+	    return NULL;
 	fn = krb5_config_get_string_default(context,
 					    NULL,
 					    statfile,
 					    "kdc",
 					    "iprop-stats",
 					    NULL);
-    }
-    f = fopen(fn, "w");
-    if (statfile)
 	free(statfile);
-
-    return f;
+    }
+    if (fn == NULL)
+	return NULL;
+    return fopen(fn, "w");
 }
 
 static void
@@ -819,7 +817,7 @@ main(int argc, char **argv)
 	aret = daemon(0, 0);
 	if (aret == -1) {
 	    /* not much to do if detaching fails... */
-	    krb5_warnx(context, "failed to daemon(3)ise");
+	    krb5_err(context, 1, aret, "failed to daemon(3)ise");
 	}
     }
 #endif

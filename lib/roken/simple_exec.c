@@ -166,7 +166,7 @@ pipe_execv(FILE **stdin_fd, FILE **stdout_fd, FILE **stderr_fd,
 	close(out_fd[1]);
 	close(err_fd[0]);
 	close(err_fd[1]);
-	return SE_E_FORKFAILED; /* XXXrcd: wrong return value. */
+	return SE_E_UNSPECIFIED;
     }
 
     pid = fork();

@@ -102,7 +102,7 @@ kadm5_s_get_principals(void *server_handle,
 	aret = asprintf(&d.exp2, "%s@%s", expression, r);
 	free(r);
 	if (aret == -1 || d.exp2 == NULL) {
-	    return ENOMEM;	/* XXXrcd: not right. */
+	    return ENOMEM;
 	}
     }
     d.princs = NULL;

@@ -160,7 +160,7 @@ hdb_get_dbinfo(krb5_context context, struct hdb_dbinfo **dbp)
 		ret = asprintf(&di->mkey_file, "%.*s.mkey",
 			       (int)(p - di->dbname), di->dbname);
 	    if (ret == -1)
-		di->mkey_file = NULL; /* XXXrcd: not the right answer */
+		return ENOMEM;
 	}
 	if(di->acl_file == NULL)
 	    di->acl_file = strdup(default_acl);

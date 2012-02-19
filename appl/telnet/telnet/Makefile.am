@@ -2,8 +2,7 @@
 
 include $(top_srcdir)/Makefile.am.common
 
-WFLAGS += -Wno-missing-field-initializers
-WFLAGS += -Wno-extra -Wno-strict-aliasing -Wno-unused-result
+WFLAGS += $(WFLAGS_LITE)
 
 AM_CPPFLAGS += -I$(srcdir)/.. $(INCLUDE_hcrypto)
 

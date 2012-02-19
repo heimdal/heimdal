@@ -120,7 +120,7 @@ ftpd_logwtmp_wtmp(char *line, char *name, char *host)
     struct utmpx utx;
 #endif
 #if defined(WTMP_FILE) || defined(WTMPX_FILE)
-    int ret;
+    ssize_t ret;
 #endif
 
 #ifdef HAVE_UTMPX_H

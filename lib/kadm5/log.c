@@ -1021,7 +1021,7 @@ kadm5_log_signal_socket(krb5_context context)
     if (!default_signal)
 	ret = asprintf(&default_signal, "%s/signal", hdb_db_dir(context));
     if (ret == -1)
-	default_signal = NULL;	/* XXXrcd: is this right? */
+	default_signal = NULL;
     HEIMDAL_MUTEX_unlock(&signal_mutex);
 
     return krb5_config_get_string_default(context,

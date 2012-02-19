@@ -2,6 +2,8 @@
 
 include $(top_srcdir)/Makefile.am.common
 
+WFLAGS += $(WFLAGS_LITE)
+
 noinst_PROGRAMS = pop_debug
 
 libexec_PROGRAMS = popper

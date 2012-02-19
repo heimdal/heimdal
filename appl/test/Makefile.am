@@ -2,7 +2,7 @@
 
 include $(top_srcdir)/Makefile.am.common
 
-WFLAGS += -Wno-extra -Wno-unused-result
+WFLAGS += $(WFLAGS_LITE)
 
 noinst_PROGRAMS = tcp_client tcp_server gssapi_server gssapi_client \
 	uu_server uu_client nt_gss_server nt_gss_client http_client

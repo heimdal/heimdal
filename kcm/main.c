@@ -103,7 +103,7 @@ main(int argc, char **argv)
 #ifdef SUPPORT_DETACH
     if (detach_from_console)
 	if (daemon(0, 0) == -1)
-	    warn("daemon");
+	    err(1, "daemon");
 #endif
     pidfile(NULL);
 

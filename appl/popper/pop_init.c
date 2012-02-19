@@ -153,7 +153,7 @@ static int version_flag;
 
 static struct getargs args[] = {
 #if defined(KRB5)
-    { "kerberos", 'k', arg_flag, &kerberos_flag, "use kerberos", NULL },
+    { "kerberos", 'k', arg_flag, &kerberos_flag, "use kerberos" },
 #endif
     { "auth-mode", 'a', arg_string, &auth_str, "required authentication",
       "plaintext"
@@ -164,15 +164,14 @@ static struct getargs args[] = {
       "|sasl"
 #endif
     },
-    { "debug", 'd', arg_flag, &debug_flag, NULL, NULL },
-    { "interactive", 'i', arg_flag, &interactive_flag, "create new socket",
-      NULL },
+    { "debug", 'd', arg_flag, &debug_flag },
+    { "interactive", 'i', arg_flag, &interactive_flag, "create new socket" },
     { "port", 'p', arg_string, &port_str, "port to listen to", "port" },
     { "trace-file", 't', arg_string, &trace_file, "trace all command to file", "file" },
     { "timeout", 'T', arg_integer, &timeout, "timeout", "seconds" },
     { "address-log", 0, arg_string, &addr_log, "enable address log", "file" },
-    { "help", 'h', arg_flag, &help_flag, NULL, NULL },
-    { "version", 'v', arg_flag, &version_flag, NULL, NULL }
+    { "help", 'h', arg_flag, &help_flag },
+    { "version", 'v', arg_flag, &version_flag }
 };
 
 static int num_args = sizeof(args) / sizeof(args[0]);
@@ -318,7 +317,7 @@ pop_init(POP *p,int argcount,char **argmessage)
 
     /*  Save the dotted decimal form of the client's IP address
         in the POP parameter block */
-    inet_ntop (cs_ss.ss_family, socket_get_address (cs),
+    inet_ntop (cs->sa_family, socket_get_address (cs),
 	       p->ipaddr, sizeof(p->ipaddr));
 
     /*  Save the client's port */

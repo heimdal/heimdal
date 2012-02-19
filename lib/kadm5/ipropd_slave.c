@@ -623,7 +623,7 @@ main(int argc, char **argv)
 	aret = daemon(0, 0);
 	if (aret == -1) {
 	    /* not much to do if detaching fails... */
-	    krb5_warnx(context, "failed to daemon(3)ise");
+	    krb5_err(context, 1, aret, "failed to daemon(3)ise");
 	}
     }
 #endif

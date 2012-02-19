@@ -205,6 +205,7 @@ krb5_rc_store(krb5_context context,
     time_t t;
     FILE *f;
     int ret;
+    size_t count;
 
     ent.stamp = time(NULL);
     checksum_authenticator(rep, ent.data);
@@ -217,10 +218,9 @@ krb5_rc_store(krb5_context context,
 	return ret;
     }
     rk_cloexec_file(f);
-    ret = fread(&tmp, sizeof(ent), 1, f);
-    if(ret != 1) {
-	/* XXXrcd: hmmm, probably should return an error message? */
-    }
+    count = fread(&tmp, sizeof(ent), 1, f);
+    if(count != 1)
+	return KRB5_RC_IO_UNKNOWN;
     t = ent.stamp - tmp.stamp;
     while(fread(&tmp, sizeof(ent), 1, f)){
 	if(tmp.stamp < t)

@@ -193,7 +193,7 @@ range_check(const char *name,
 		 "e = ASN1_MAX_CONSTRAINT; %s;\n"
 		 "}\n",
 		 name, length, (long long)r->max, forwstr);
-    if (r->min - 1 == r->max || r->min < r->max)
+    if ((r->min - 1 == r->max || r->min < r->max) && r->min > 0)
 	fprintf (codefile,
 		 "if ((%s)->%s < %lld) {\n"
 		 "e = ASN1_MIN_CONSTRAINT; %s;\n"

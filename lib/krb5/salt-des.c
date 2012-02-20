@@ -219,6 +219,6 @@ struct salt_type _krb5_des_salt[] = {
 	DES_AFS3_string_to_key
     },
 #endif
-    { 0 }
+    { 0, NULL, NULL }
 };
 #endif

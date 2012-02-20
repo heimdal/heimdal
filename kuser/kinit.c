@@ -332,9 +332,10 @@ store_ntlmkey(krb5_context context, krb5_ccache id,
     krb5_error_code ret;
     krb5_data data;
     char *name;
+    int aret;
 
-    asprintf(&name, "ntlm-key-%s", domain);
-    if (name == NULL) {
+    aret = asprintf(&name, "ntlm-key-%s", domain);
+    if (aret == -1 || name == NULL) {
 	krb5_clear_error_message(context);
 	return ENOMEM;
     }
@@ -549,10 +550,15 @@ get_new_tickets(krb5_context context,
 
 	if (passwd[0] == '\0') {
 	    char *p, *prompt;
+	    int aret = 0;
 
-	    krb5_unparse_name (context, principal, &p);
-	    asprintf (&prompt, N_("%s's Password: ", ""), p);
-	    free (p);
+	    ret = krb5_unparse_name (context, principal, &p);
+	    if (!ret) {
+		aret = asprintf (&prompt, N_("%s's Password: ", ""), p);
+		free (p);
+	    }
+	    if (ret || aret == -1)
+		errx(1, "failed to generate passwd prompt: not enough memory");
 
 	    if (UI_UTIL_read_pw_string(passwd, sizeof(passwd)-1, prompt, 0)){
 		memset(passwd, 0, sizeof(passwd));

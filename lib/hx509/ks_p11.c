@@ -226,6 +226,7 @@ static const RSA_METHOD p11_rsa_pkcs1_method = {
     0,
     NULL,
     NULL,
+    NULL,
     NULL
 };
 
@@ -330,8 +331,10 @@ p11_init_slot(hx509_context context,
 	break;
     }
 
-    asprintf(&slot->name, "%.*s",
-	     (int)i, slot_info.slotDescription);
+    ret = asprintf(&slot->name, "%.*s", (int)i,
+		   slot_info.slotDescription);
+    if (ret == -1)
+	return ENOMEM;
 
     if ((slot_info.flags & CKF_TOKEN_PRESENT) == 0)
 	return 0;
@@ -422,7 +425,12 @@ p11_get_session(hx509_context context,
 
 	    memset(&prompt, 0, sizeof(prompt));
 
-	    asprintf(&str, "PIN code for %s: ", slot->name);
+	    ret = asprintf(&str, "PIN code for %s: ", slot->name);
+	    if (ret == -1 || str == NULL) {
+		if (context)
+		    hx509_set_error_string(context, 0, ENOMEM, "out of memory");
+		return ENOMEM;
+	    }
 	    prompt.prompt = str;
 	    prompt.type = HX509_PROMPT_TYPE_PASSWORD;
 	    prompt.reply.data = pin;
@@ -717,9 +725,9 @@ collect_cert(hx509_context context,
     if ((CK_LONG)query[2].ulValueLen != -1) {
 	char *str;
 
-	asprintf(&str, "%.*s",
-		 (int)query[2].ulValueLen, (char *)query[2].pValue);
-	if (str) {
+	ret = asprintf(&str, "%.*s",
+		       (int)query[2].ulValueLen, (char *)query[2].pValue);
+	if (ret != -1 && str) {
 	    hx509_cert_set_friendly_name(cert, str);
 	    free(str);
 	}
@@ -1176,7 +1184,9 @@ static struct hx509_keyset_ops keyset_pkcs11 = {
     p11_iter_start,
     p11_iter,
     p11_iter_end,
-    p11_printinfo
+    p11_printinfo,
+    NULL,
+    NULL
 };
 
 #endif /* HAVE_DLOPEN */

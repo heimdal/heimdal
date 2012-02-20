@@ -46,16 +46,16 @@ static int version_flag;
 static int help_flag;
 
 struct getargs args[] = {
-    { "list", 'l', arg_flag, &listp, "list OTP status" },
-    { "delete", 'd', arg_flag, &deletep, "delete OTP" },
-    { "open", 'o', arg_flag, &openp, "open a locked OTP" },
-    { "renew", 'r', arg_flag, &renewp, "securely renew OTP" },
+    { "list", 'l', arg_flag, &listp, "list OTP status", NULL },
+    { "delete", 'd', arg_flag, &deletep, "delete OTP", NULL },
+    { "open", 'o', arg_flag, &openp, "open a locked OTP", NULL },
+    { "renew", 'r', arg_flag, &renewp, "securely renew OTP", NULL },
     { "hash", 'f', arg_string, &alg_string,
       "hash algorithm (md4, md5, or sha)", "algorithm"},
     { "user", 'u', arg_string, &user,
       "user other than current user (root only)", "user" },
-    { "version", 0, arg_flag, &version_flag },
-    { "help", 'h', arg_flag, &help_flag }
+    { "version", 0, arg_flag, &version_flag, NULL, NULL },
+    { "help", 'h', arg_flag, &help_flag, NULL, NULL }
 };
 
 int num_args = sizeof(args) / sizeof(args[0]);

@@ -3425,7 +3425,9 @@ _hx509_cert_to_env(hx509_context context, hx509_cert cert, hx509_env *env)
     *env = NULL;
 
     /* version */
-    asprintf(&buf, "%d", _hx509_cert_get_version(_hx509_get_cert(cert)));
+    ret = asprintf(&buf, "%d", _hx509_cert_get_version(_hx509_get_cert(cert)));
+    if (ret == -1)
+	goto out;
     ret = hx509_env_add(context, &envcert, "version", buf);
     free(buf);
     if (ret)

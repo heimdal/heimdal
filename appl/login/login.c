@@ -246,18 +246,19 @@ static char *remote_host;
 static char *auth_level = NULL;
 
 struct getargs args[] = {
-    { NULL, 'a', arg_string,    &auth_level,    "authentication mode" },
+    { NULL, 'a', arg_string,    &auth_level,    "authentication mode", NULL },
 #if 0
-    { NULL, 'd' },
+    { NULL, 'd', NULL,          NULL,           NULL, NULL },
 #endif
-    { NULL, 'f', arg_flag,	&f_flag,	"pre-authenticated" },
+    { NULL, 'f', arg_flag,	&f_flag,	"pre-authenticated", NULL },
     { NULL, 'h', arg_string,	&remote_host,	"remote host", "hostname" },
-    { NULL, 'p', arg_flag,	&p_flag,	"don't purge environment" },
+    { NULL, 'p', arg_flag,	&p_flag,	"don't purge environment",
+      NULL },
 #if 0
-    { NULL, 'r', arg_flag,	&r_flag,	"rlogin protocol" },
+    { NULL, 'r', arg_flag,	&r_flag,	"rlogin protocol", NULL },
 #endif
-    { "version", 0,  arg_flag,	&version_flag },
-    { "help",	 0,  arg_flag,&help_flag, }
+    { "version", 0,  arg_flag,	&version_flag,  NULL, NULL },
+    { "help",	 0,  arg_flag,&help_flag,       NULL, NULL }
 };
 
 int nargs = sizeof(args) / sizeof(args[0]);

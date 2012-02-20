@@ -171,7 +171,7 @@ bsearch_common(const char *buf, size_t sz, const char *key,
 
     /* Binary search; file should be sorted */
     for (l = 0, r = rmax = sz, i = sz >> 1; i >= l && i < rmax; loop_count++) {
-	heim_assert(i >= 0 && i < sz, "invalid aname2lname db index");
+	heim_assert(i < sz, "invalid aname2lname db index");
 
 	/* buf[i] is likely in the middle of a line; find the next line */
 	linep = find_line(buf, i, rmax);

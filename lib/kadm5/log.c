@@ -1015,9 +1015,13 @@ static HEIMDAL_MUTEX signal_mutex = HEIMDAL_MUTEX_INITIALIZER;
 const char *
 kadm5_log_signal_socket(krb5_context context)
 {
+    int ret = 0;
+
     HEIMDAL_MUTEX_lock(&signal_mutex);
     if (!default_signal)
-	asprintf(&default_signal, "%s/signal", hdb_db_dir(context));
+	ret = asprintf(&default_signal, "%s/signal", hdb_db_dir(context));
+    if (ret == -1)
+	default_signal = NULL;
     HEIMDAL_MUTEX_unlock(&signal_mutex);
 
     return krb5_config_get_string_default(context,

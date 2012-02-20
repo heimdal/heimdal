@@ -479,11 +479,12 @@ kadm_connect(kadm5_client_context *ctx)
     }
 
     if (ctx->realm)
-	asprintf(&service_name, "%s@%s", KADM5_ADMIN_SERVICE, ctx->realm);
+	error = asprintf(&service_name, "%s@%s", KADM5_ADMIN_SERVICE,
+			 ctx->realm);
     else
-	asprintf(&service_name, "%s", KADM5_ADMIN_SERVICE);
+	error = asprintf(&service_name, "%s", KADM5_ADMIN_SERVICE);
 
-    if (service_name == NULL) {
+    if (error == -1 || service_name == NULL) {
 	freeaddrinfo (ai);
 	rk_closesocket(s);
 	krb5_clear_error_message(context);

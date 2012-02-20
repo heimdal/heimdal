@@ -212,25 +212,32 @@ static int version_flag;
 static const char *good_chars = "+-=_,.";
 
 struct getargs args[] = {
-    { NULL, 'a', arg_string, &auth_string, "required authentication" },
-    { NULL, 'i', arg_flag, &interactive_flag, "don't assume stdin is a socket" },
-    { NULL, 'p', arg_string, &port_string, "what port to listen to" },
-    { NULL, 'g', arg_string, &guest_umask_string, "umask for guest logins" },
+    { NULL, 'a', arg_string, &auth_string, "required authentication", NULL },
+    { NULL, 'i', arg_flag, &interactive_flag, "don't assume stdin is a socket",
+      NULL },
+    { NULL, 'p', arg_string, &port_string, "what port to listen to", NULL },
+    { NULL, 'g', arg_string, &guest_umask_string, "umask for guest logins",
+      NULL },
     { NULL, 'l', arg_counter, &logging, "log more stuff", "" },
-    { NULL, 't', arg_integer, &ftpd_timeout, "initial timeout" },
-    { NULL, 'T', arg_integer, &maxtimeout, "max timeout" },
-    { NULL, 'u', arg_string, &umask_string, "umask for user logins" },
-    { NULL, 'U', arg_negative_flag, &restricted_data_ports, "don't use high data ports" },
-    { NULL, 'd', arg_flag, &debug, "enable debugging" },
-    { NULL, 'v', arg_flag, &debug, "enable debugging" },
-    { "builtin-ls", 'B', arg_flag, &use_builtin_ls, "use built-in ls to list files" },
-    { "good-chars", 0, arg_string, &good_chars, "allowed anonymous upload filename chars" },
-    { "insecure-oob", 'I', arg_negative_flag, &allow_insecure_oob, "don't allow insecure OOB ABOR/STAT" },
+    { NULL, 't', arg_integer, &ftpd_timeout, "initial timeout", NULL },
+    { NULL, 'T', arg_integer, &maxtimeout, "max timeout", NULL },
+    { NULL, 'u', arg_string, &umask_string, "umask for user logins", NULL },
+    { NULL, 'U', arg_negative_flag, &restricted_data_ports,
+      "don't use high data ports", NULL },
+    { NULL, 'd', arg_flag, &debug, "enable debugging", NULL },
+    { NULL, 'v', arg_flag, &debug, "enable debugging", NULL },
+    { "builtin-ls", 'B', arg_flag, &use_builtin_ls,
+      "use built-in ls to list files", NULL },
+    { "good-chars", 0, arg_string, &good_chars,
+      "allowed anonymous upload filename chars", NULL },
+    { "insecure-oob", 'I', arg_negative_flag, &allow_insecure_oob,
+      "don't allow insecure OOB ABOR/STAT", NULL },
 #ifdef KRB5
-    { "gss-bindings", 0,  arg_flag, &ftp_do_gss_bindings, "Require GSS-API bindings", NULL},
+    { "gss-bindings", 0,  arg_flag, &ftp_do_gss_bindings,
+      "Require GSS-API bindings", NULL},
 #endif
-    { "version", 0, arg_flag, &version_flag },
-    { "help", 'h', arg_flag, &help_flag }
+    { "version", 0, arg_flag, &version_flag, NULL, NULL },
+    { "help", 'h', arg_flag, &help_flag, NULL, NULL }
 };
 
 static int num_args = sizeof(args) / sizeof(args[0]);
@@ -972,7 +979,7 @@ retrieve(const char *cmd, char *name)
 			{".tar.Z", "/bin/gtar ZcPf - %s", NULL},
 			{".gz", "/bin/gzip -c -- %s", "/bin/gzip -c -d -- %s"},
 			{".Z", "/bin/compress -c -- %s", "/bin/uncompress -c -- %s"},
-			{NULL, NULL}
+			{NULL, NULL, NULL}
 		    };
 		    struct cmds *p;
 		    for(p = cmds; p->ext; p++){
@@ -1272,7 +1279,7 @@ dataconn(const char *name, off_t size, const char *mode)
 		close(pdata);
 		pdata = s;
 #if defined(IPTOS_THROUGHPUT)
-		if (from->sa_family == AF_INET)
+		if (from_ss.ss_family == AF_INET)
 		    socket_set_tos(s, IPTOS_THROUGHPUT);
 #endif
 		reply(150, "Opening %s mode data connection for '%s'%s.",

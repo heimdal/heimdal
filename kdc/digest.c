@@ -406,11 +406,12 @@ _kdc_do_digest(krb5_context context,
 
 	if (ireq.u.init.channel) {
 	    char *s;
+	    int aret;
 
-	    asprintf(&s, "%s-%s:%s", r.u.initReply.nonce,
-		     ireq.u.init.channel->cb_type,
-		     ireq.u.init.channel->cb_binding);
-	    if (s == NULL) {
+	    aret = asprintf(&s, "%s-%s:%s", r.u.initReply.nonce,
+			    ireq.u.init.channel->cb_type,
+			    ireq.u.init.channel->cb_binding);
+	    if (aret == -1 || s == NULL) {
 		ret = ENOMEM;
 		krb5_set_error_message(context, ret,
 				       "Failed to allocate channel binding");
@@ -427,6 +428,8 @@ _kdc_do_digest(krb5_context context,
 	}
 
 	if (strcasecmp(ireq.u.init.type, "CHAP") == 0) {
+	    int aret;
+
 	    r.u.initReply.identifier =
 		malloc(sizeof(*r.u.initReply.identifier));
 	    if (r.u.initReply.identifier == NULL) {
@@ -435,8 +438,8 @@ _kdc_do_digest(krb5_context context,
 		goto out;
 	    }
 
-	    asprintf(r.u.initReply.identifier, "%02X", identifier & 0xff);
-	    if (*r.u.initReply.identifier == NULL) {
+	    aret = asprintf(r.u.initReply.identifier, "%02X", identifier&0xff);
+	    if (aret == -1 || *r.u.initReply.identifier == NULL) {
 		ret = ENOMEM;
 		krb5_set_error_message(context, ret, "malloc: out of memory");
 		goto out;
@@ -997,10 +1000,12 @@ _kdc_do_digest(krb5_context context,
 	    }
 
 	} else {
+	    int aret;
+
 	    r.element = choice_DigestRepInner_error;
-	    asprintf(&r.u.error.reason, "Unsupported digest type %s",
-		     ireq.u.digestRequest.type);
-	    if (r.u.error.reason == NULL) {
+	    aret = asprintf(&r.u.error.reason, "Unsupported digest type %s",
+			    ireq.u.digestRequest.type);
+	    if (aret == -1 || r.u.error.reason == NULL) {
 		ret = ENOMEM;
 		krb5_set_error_message(context, ret, "malloc: out of memory");
 		goto out;

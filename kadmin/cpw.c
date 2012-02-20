@@ -85,14 +85,19 @@ set_password (krb5_principal principal, char *password, int keepold)
 {
     krb5_error_code ret = 0;
     char pwbuf[128];
+    int aret;
 
     if(password == NULL) {
 	char *princ_name;
 	char *prompt;
 
-	krb5_unparse_name(context, principal, &princ_name);
-	asprintf(&prompt, "%s's Password: ", princ_name);
+	ret = krb5_unparse_name(context, principal, &princ_name);
+	if (ret)
+	    return ret;
+	aret = asprintf(&prompt, "%s's Password: ", princ_name);
 	free (princ_name);
+	if (aret == -1)
+	    return ENOMEM;
 	ret = UI_UTIL_read_pw_string(pwbuf, sizeof(pwbuf), prompt, 1);
 	free (prompt);
 	if(ret){

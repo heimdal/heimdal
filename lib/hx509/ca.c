@@ -965,8 +965,8 @@ build_proxy_prefix(hx509_context context, const Name *issuer, Name *subject)
     }
 
     t = time(NULL);
-    asprintf(&tstr, "ts-%lu", (unsigned long)t);
-    if (tstr == NULL) {
+    ret = asprintf(&tstr, "ts-%lu", (unsigned long)t);
+    if (ret == -1 || tstr == NULL) {
 	hx509_set_error_string(context, 0, ENOMEM,
 			       "Failed to copy subject name");
 	return ENOMEM;

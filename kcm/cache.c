@@ -42,12 +42,15 @@ char *kcm_ccache_nextid(pid_t pid, uid_t uid, gid_t gid)
 {
     unsigned n;
     char *name;
+    int ret;
 
     HEIMDAL_MUTEX_lock(&ccache_mutex);
     n = ++ccache_nextid;
     HEIMDAL_MUTEX_unlock(&ccache_mutex);
 
-    asprintf(&name, "%ld:%u", (long)uid, n);
+    ret = asprintf(&name, "%ld:%u", (long)uid, n);
+    if (ret == -1)
+	return NULL;
 
     return name;
 }

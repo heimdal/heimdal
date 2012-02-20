@@ -689,7 +689,7 @@ doit (krb5_keytab keytab, int port)
 
 	krb5_addr2sockaddr (context, &addrs.val[i], sa, &sa_size, port);
 
-	sockets[i] = socket (sa->sa_family, SOCK_DGRAM, 0);
+	sockets[i] = socket (__ss.ss_family, SOCK_DGRAM, 0);
 	if (sockets[i] < 0)
 	    krb5_err (context, 1, errno, "socket");
 	if (bind (sockets[i], sa, sa_size) < 0) {
@@ -798,6 +798,7 @@ main (int argc, char **argv)
     krb5_error_code ret;
     char **files;
     int port, i;
+    int aret;
 
     krb5_program_setup(&context, argc, argv, args, num_args, NULL);
 
@@ -809,8 +810,8 @@ main (int argc, char **argv)
     }
 
     if (config_file == NULL) {
-	asprintf(&config_file, "%s/kdc.conf", hdb_db_dir(context));
-	if (config_file == NULL)
+	aret = asprintf(&config_file, "%s/kdc.conf", hdb_db_dir(context));
+	if (aret == -1)
 	    errx(1, "out of memory");
     }
 

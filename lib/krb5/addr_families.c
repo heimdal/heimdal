@@ -799,6 +799,7 @@ static struct addr_operations at[] = {
 	NULL,
 	NULL,
 	NULL,
+	NULL,
 	NULL
     }
 };

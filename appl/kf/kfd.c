@@ -49,8 +49,8 @@ static struct getargs args[] = {
     { "inetd",'i',arg_flag, &do_inetd,
        "Not started from inetd", NULL },
     { "regpag",'R',arg_string,&regpag_str,"path to regpag binary","regpag"},
-    { "help", 'h', arg_flag, &help_flag },
-    { "version", 0, arg_flag, &version_flag }
+    { "help", 'h', arg_flag, &help_flag, NULL, NULL },
+    { "version", 0, arg_flag, &version_flag, NULL, NULL }
 };
 
 static int num_args = sizeof(args) / sizeof(args[0]);

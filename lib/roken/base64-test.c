@@ -53,7 +53,7 @@ main(int argc, char **argv)
 	{ "4444", 4, "NDQ0NA==" },
 	{ "55555", 5, "NTU1NTU=" },
 	{ "abc:def", 7, "YWJjOmRlZg==" },
-	{ NULL }
+	{ NULL, 0, NULL }
     };
     for(t = tests; t->data; t++) {
 	char *str;

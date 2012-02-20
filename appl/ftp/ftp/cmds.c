@@ -210,7 +210,7 @@ struct	types {
 	{ "image",	"I",	TYPE_I,	0 },
 	{ "ebcdic",	"E",	TYPE_E,	0 },
 	{ "tenex",	"L",	TYPE_L,	bytename },
-	{ NULL }
+	{ NULL, NULL, 0, NULL }
 };
 
 /*
@@ -1316,7 +1316,8 @@ user(int argc, char **argv)
 	if (n == CONTINUE) {
 		if (argc < 4) {
 			printf("Account: "); fflush(stdout);
-			fgets(acctstr, sizeof(acctstr) - 1, stdin);
+			if (fgets(acctstr, sizeof(acctstr) - 1, stdin) == NULL)
+				acctstr[0] = '\0';
 			acctstr[strcspn(acctstr, "\r\n")] = '\0';
 			argv[3] = acctstr; argc++;
 		}

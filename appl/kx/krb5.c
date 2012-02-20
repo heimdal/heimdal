@@ -65,17 +65,19 @@ ksyslog(krb5_context context, krb5_error_code ret, const char *fmt, ...)
     const char *msg;
     char *str = NULL;
     va_list va;
+    int aret;
 
     msg = krb5_get_error_message(context, ret);
 
     va_start(va, fmt);
-    vasprintf(&str, fmt, va);
+    aret = vasprintf(&str, fmt, va);
     va_end(va);
 
-    syslog(LOG_ERR, "%s: %s", str, msg);
+    syslog(LOG_ERR, "%s: %s", aret != -1 ? str : "(nil)", msg);
 
     krb5_free_error_message(context, msg);
-    free(str);
+    if (aret != -1)
+	free(str);
 }
 
 /*

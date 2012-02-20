@@ -462,7 +462,9 @@ const krb5_kt_ops krb5_akf_ops = {
     akf_next_entry,
     akf_end_seq_get,
     akf_add_entry,
-    NULL /* remove */
+    NULL, /* remove */
+    NULL,
+    0
 };
 
 #endif /* HEIMDAL_SMALLER */

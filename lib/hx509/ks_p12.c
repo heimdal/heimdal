@@ -697,7 +697,10 @@ static struct hx509_keyset_ops keyset_pkcs12 = {
     NULL,
     p12_iter_start,
     p12_iter,
-    p12_iter_end
+    p12_iter_end,
+    NULL,
+    NULL,
+    NULL
 };
 
 void

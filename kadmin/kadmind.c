@@ -119,8 +119,10 @@ main(int argc, char **argv)
     argv += optidx;
 
     if (config_file == NULL) {
-	asprintf(&config_file, "%s/kdc.conf", hdb_db_dir(context));
-	if (config_file == NULL)
+	int aret;
+
+	aret = asprintf(&config_file, "%s/kdc.conf", hdb_db_dir(context));
+	if (aret == -1)
 	    errx(1, "out of memory");
     }
 

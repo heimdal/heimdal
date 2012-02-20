@@ -752,11 +752,12 @@ _hx509_pi_printf(int (*func)(void *, const char *), void *ctx,
 {
     va_list ap;
     char *str;
+    int ret;
 
     va_start(ap, fmt);
-    vasprintf(&str, fmt, ap);
+    ret = vasprintf(&str, fmt, ap);
     va_end(ap);
-    if (str == NULL)
+    if (ret == -1 || str == NULL)
 	return;
     (*func)(ctx, str);
     free(str);

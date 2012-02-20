@@ -128,7 +128,7 @@ static long i_support_encrypt = typemask(ENCTYPE_DES_CFB64)
 	   ofb64_keyid,
 	   ofb64_printsub },
 #endif
-	 { 0, },
+	 { 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL },
      };
 
 static unsigned char str_send[64] = { IAC, SB, TELOPT_ENCRYPT,

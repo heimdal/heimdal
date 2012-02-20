@@ -96,9 +96,14 @@ kadm5_s_get_principals(void *server_handle,
     d.exp = expression;
     {
 	krb5_realm r;
+	int aret;
+
 	krb5_get_default_realm(context->context, &r);
-	asprintf(&d.exp2, "%s@%s", expression, r);
+	aret = asprintf(&d.exp2, "%s@%s", expression, r);
 	free(r);
+	if (aret == -1 || d.exp2 == NULL) {
+	    return ENOMEM;
+	}
     }
     d.princs = NULL;
     d.count = 0;

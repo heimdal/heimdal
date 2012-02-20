@@ -44,13 +44,14 @@ static int version_flag;
 static int help_flag;
 
 struct getargs args[] = {
-    { "extended", 'e', arg_flag, &extendedp, "print keys in extended format" },
-    { "count", 'n', arg_integer, &count, "number of keys to print" },
-    { "hexadecimal", 'h', arg_flag, &hexp, "output in hexadecimal" },
+    { "extended", 'e', arg_flag, &extendedp, "print keys in extended format",
+      NULL },
+    { "count", 'n', arg_integer, &count, "number of keys to print", NULL },
+    { "hexadecimal", 'h', arg_flag, &hexp, "output in hexadecimal", NULL },
     { "hash", 'f', arg_string, &alg_string,
       "hash algorithm (md4, md5, or sha)", "algorithm"},
-    { "version", 0, arg_flag, &version_flag },
-    { "help", 0, arg_flag, &help_flag }
+    { "version", 0, arg_flag, &version_flag, NULL, NULL },
+    { "help", 0, arg_flag, &help_flag, NULL, NULL }
 };
 
 int num_args = sizeof(args) / sizeof(args[0]);

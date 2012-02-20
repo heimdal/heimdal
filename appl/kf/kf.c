@@ -51,8 +51,8 @@ static struct getargs args[] = {
        "Forward forwardable credentials", NULL },
     { "forwardable",'G',arg_negative_flag,&forwardable,
        "Don't forward forwardable credentials", NULL },
-    { "help", 'h', arg_flag, &help_flag },
-    { "version", 0, arg_flag, &version_flag }
+    { "help", 'h', arg_flag, &help_flag, NULL, NULL },
+    { "version", 0, arg_flag, &version_flag, NULL, NULL }
 };
 
 static int num_args = sizeof(args) / sizeof(args[0]);

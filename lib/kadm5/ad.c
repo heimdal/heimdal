@@ -484,13 +484,14 @@ ad_get_cred(kadm5_ad_context *context, const char *password)
     kadm5_ret_t ret;
     krb5_ccache cc;
     char *service;
+    int aret;
 
     if (context->ccache)
 	return 0;
 
-    asprintf(&service, "%s/%s@%s", KRB5_TGS_NAME,
-	     context->realm, context->realm);
-    if (service == NULL)
+    aret = asprintf(&service, "%s/%s@%s", KRB5_TGS_NAME,
+		    context->realm, context->realm);
+    if (aret == -1 || service == NULL)
 	return ENOMEM;
 
     ret = _kadm5_c_get_cred_cache(context->context,

@@ -352,10 +352,12 @@ common_path_init(const char *service,
 	return ENOMEM;
     s->fd = -1;
 
-    asprintf(&s->path, "/var/run/.heim_%s-%s", service, file);
+    if (asprintf(&s->path, "/var/run/.heim_%s-%s", service, file) == -1) {
+	free(s);
+	return ENOMEM;
+    }
 
     *ctx = s;
-
     return 0;
 }
 

@@ -47,7 +47,7 @@
 static size_t
 parse_vector(char *buf, uint32_t *v)
 {
-    char *last;
+    char *last = NULL;
     unsigned ret = 0;
     const char *n;
     unsigned u;

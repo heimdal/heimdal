@@ -585,14 +585,22 @@ static void
 test_db_iter(heim_data_t k, heim_data_t v, void *arg)
 {
     int *ret = arg;
+    const void *kptr, *vptr;
+    size_t klen, vlen;
 
     heim_assert(heim_get_tid(k) == heim_data_get_type_id(), "...");
 
-    if (heim_data_get_length(k) == strlen("msg") && strncmp(heim_data_get_ptr(k), "msg", strlen("msg")) == 0 &&
-	heim_data_get_length(v) == strlen("abc") && strncmp(heim_data_get_ptr(v), "abc", strlen("abc")) == 0)
+    kptr = heim_data_get_ptr(k);
+    klen = heim_data_get_length(k);
+    vptr = heim_data_get_ptr(v);
+    vlen = heim_data_get_length(v);
+
+    if (klen == strlen("msg") && !strncmp(kptr, "msg", strlen("msg")) &&
+	vlen == strlen("abc") && !strncmp(vptr, "abc", strlen("abc")))
 	*ret &= ~(1);
-    else if (heim_data_get_length(k) == strlen("msg2") && strncmp(heim_data_get_ptr(k), "msg2", strlen("msg2")) == 0 &&
-	heim_data_get_length(v) == strlen("FooBar") && strncmp(heim_data_get_ptr(v), "FooBar", strlen("FooBar")) == 0)
+    else if (klen == strlen("msg2") &&
+	!strncmp(kptr, "msg2", strlen("msg2")) &&
+	vlen == strlen("FooBar") && !strncmp(vptr, "FooBar", strlen("FooBar")))
 	*ret &= ~(2);
     else
 	*ret |= 4;

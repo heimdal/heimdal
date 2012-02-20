@@ -356,7 +356,7 @@ _kafs_try_get_cred(struct kafs_data *data, const char *user, const char *cell,
 			cell ? cell : "", realm, estr ? estr : "unknown", ret);
 	if (aret != -1) {
 	    (*kafs_verbose)(kafs_verbose_ctx, str);
-	    free(str)
+	    free(str);
 	} else {
 	    (*kafs_verbose)(kafs_verbose_ctx, "out of memory");
 	}

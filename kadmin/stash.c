@@ -110,7 +110,6 @@ stash(struct stash_options *opt, int argc, char **argv)
 
     {
 	char *new = NULL, *old = NULL;
-	int aret;
 
 	aret = asprintf(&old, "%s.old", opt->key_file_string);
 	if (aret == -1) {

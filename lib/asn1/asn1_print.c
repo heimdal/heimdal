@@ -174,12 +174,11 @@ loop (unsigned char *buf, size_t len, int indent)
 		printf ("(length %lu), ", (unsigned long)length);
 
 		if (inner_flag) {
-		    Der_class class;
-		    Der_type type;
-		    unsigned int tag;
+		    Der_class c;
+		    Der_type ty;
+		    unsigned int ta;
 
-		    ret = der_get_tag(str.data, str.length,
-				      &class, &type, &tag, &sz);
+		    ret = der_get_tag(str.data, str.length, &c, &ty, &ta, &sz);
 		    if (ret || sz > str.length ||
 			type != CONS || tag != UT_Sequence)
 			goto just_an_octet_string;

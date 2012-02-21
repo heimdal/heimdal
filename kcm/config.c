@@ -328,11 +328,11 @@ void
 kcm_configure(int argc, char **argv)
 {
     krb5_error_code ret;
-    int optind = 0;
+    int optidx = 0;
     const char *p;
 
-    while(getarg(args, num_args, argc, argv, &optind))
-	warnx("error at argument `%s'", argv[optind]);
+    while(getarg(args, num_args, argc, argv, &optidx))
+	warnx("error at argument `%s'", argv[optidx]);
 
     if(help_flag)
 	usage (0);
@@ -342,8 +342,8 @@ kcm_configure(int argc, char **argv)
 	exit(0);
     }
 
-    argc -= optind;
-    argv += optind;
+    argc -= optidx;
+    argv += optidx;
 
     if (argc != 0)
 	usage(1);

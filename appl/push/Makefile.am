@@ -4,6 +4,8 @@ include $(top_srcdir)/Makefile.am.common
 
 AM_CPPFLAGS += $(INCLUDE_hesiod)
 
+WFLAGS += $(WFLAGS_LITE)
+
 bin_SCRIPTS		= pfrom
 
 libexec_PROGRAMS	= push

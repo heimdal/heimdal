@@ -71,10 +71,10 @@ base2json(heim_object_t, struct twojson *);
 static void
 indent(struct twojson *j)
 {
-    size_t indent = j->indent;
+    size_t i = j->indent;
     if (j->flags & HEIM_JSON_F_ONE_LINE)
 	return;
-    while (indent--)
+    while (i--)
 	j->out(j->ctx, "\t");
 }
 

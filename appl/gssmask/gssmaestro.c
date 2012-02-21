@@ -667,8 +667,6 @@ connect_client(const char *slave)
     }
 
     if (logfile) {
-	int fd;
-
 	printf("starting log socket to client %s\n", c->moniker);
 
 	fd = wait_log(c);

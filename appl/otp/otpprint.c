@@ -66,7 +66,7 @@ usage(int code)
 static int
 print (int argc,
        char **argv,
-       int count,
+       int incount,
        OtpAlgorithm *alg,
        void (*print_fn)(OtpKey, char *, size_t))
 {
@@ -87,7 +87,7 @@ print (int argc,
     char s[64];
 
     alg->next (key);
-    if (i >= n - count) {
+    if (i >= n - incount) {
       (*print_fn)(key, s, sizeof(s));
       printf ("%d: %s\n", i + 1, s);
     }
@@ -98,12 +98,12 @@ print (int argc,
 int
 main (int argc, char **argv)
 {
-    int optind = 0;
+    int optidx = 0;
     void (*fn)(OtpKey, char *, size_t);
     OtpAlgorithm *alg = otp_find_alg (OTP_ALG_DEFAULT);
 
     setprogname (argv[0]);
-    if(getarg(args, num_args, argc, argv, &optind))
+    if(getarg(args, num_args, argc, argv, &optidx))
 	usage(1);
     if(help_flag)
 	usage(0);
@@ -117,8 +117,8 @@ main (int argc, char **argv)
 	if (alg == NULL)
 	    errx(1, "Unknown algorithm: %s", alg_string);
     }
-    argc -= optind;
-    argv += optind;
+    argc -= optidx;
+    argv += optidx;
 
     if (hexp) {
 	if (extendedp)

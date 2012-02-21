@@ -27,7 +27,7 @@ if test -z "$WFLAGS" -a "$GCC" = "yes"; then
   # that fail for various bits of older code in appl/.  Let's not use it
   # for the main libraries, though.
 
-  WFLAGS_LITE="-Wno-extra -Wno-missing-field-initializers -Wno-strict-aliasing -Wno-unused-result"
+  WFLAGS_LITE="-Wno-extra -Wno-missing-field-initializers -Wno-strict-aliasing -Wno-unused-result -Wno-shadow"
 fi
 AC_SUBST(WFLAGS)dnl
 AC_SUBST(WFLAGS_LITE)dnl

@@ -150,25 +150,25 @@ main(int argc, char **argv)
 	    }
 	    case rk_ns_t_sshfp : {
 		struct rk_sshfp_record *sshfp = rr->u.sshfp;
-		size_t i;
+		size_t j;
 
 		printf ("alg %u type %u length %lu data ", sshfp->algorithm,
 			sshfp->type,  (unsigned long)sshfp->sshfp_len);
-		for (i = 0; i < sshfp->sshfp_len; i++)
-		    printf("%02X", sshfp->sshfp_data[i]);
+		for (j = 0; j < sshfp->sshfp_len; j++)
+		    printf("%02X", sshfp->sshfp_data[j]);
 		printf("\n");
 
 		break;
 	    }
 	    case rk_ns_t_ds : {
 		struct rk_ds_record *ds = rr->u.ds;
-		size_t i;
+		size_t j;
 
 		printf ("key tag %u alg %u type %u length %lu data ",
 			ds->key_tag, ds->algorithm, ds->digest_type,
 			(unsigned long)ds->digest_len);
-		for (i = 0; i < ds->digest_len; i++)
-		    printf("%02X", ds->digest_data[i]);
+		for (j = 0; j < ds->digest_len; j++)
+		    printf("%02X", ds->digest_data[j]);
 		printf("\n");
 
 		break;

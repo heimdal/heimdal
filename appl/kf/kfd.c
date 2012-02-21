@@ -56,19 +56,19 @@ static struct getargs args[] = {
 static int num_args = sizeof(args) / sizeof(args[0]);
 
 static void
-usage(int code, struct getargs *args, int num_args)
+usage(int code, struct getargs *inargs, int num_inargs)
 {
-    arg_printusage(args, num_args, NULL, "");
+    arg_printusage(inargs, num_inargs, NULL, "");
     exit(code);
 }
 
 static int
-server_setup(krb5_context *context, int argc, char **argv)
+server_setup(krb5_context *ctx, int argc, char **argv)
 {
     int port = 0;
     int local_argc;
 
-    local_argc = krb5_program_setup(context, argc, argv, args, num_args, usage);
+    local_argc = krb5_program_setup(ctx, argc, argv, args, num_args, usage);
 
     if(help_flag)
 	(*usage)(0, args, num_args);
@@ -92,7 +92,7 @@ server_setup(krb5_context *context, int argc, char **argv)
     }
 
     if (port == 0)
-	port = krb5_getportbyname (*context, KF_PORT_NAME, "tcp", KF_PORT_NUM);
+	port = krb5_getportbyname (*ctx, KF_PORT_NAME, "tcp", KF_PORT_NUM);
 
     if(argv[local_argc] != NULL)
         usage(1, args, num_args);
@@ -120,7 +120,7 @@ kfd_match_version(const void *arg, const char *version)
 }
 
 static int
-proto (int sock, const char *service)
+proto (int sock, const char *svc)
 {
     krb5_auth_context auth_context;
     krb5_error_code status;
@@ -151,7 +151,7 @@ proto (int sock, const char *service)
 
     status = krb5_sname_to_principal (context,
 				      hostname,
-				      service,
+				      svc,
 				      KRB5_NT_SRV_HST,
 				      &server);
     if (status)
@@ -281,11 +281,11 @@ proto (int sock, const char *service)
 }
 
 static int
-doit (int port, const char *service)
+doit (int port, const char *svc)
 {
     if (do_inetd)
 	mini_inetd(port, NULL);
-    return proto (STDIN_FILENO, service);
+    return proto (STDIN_FILENO, svc);
 }
 
 int

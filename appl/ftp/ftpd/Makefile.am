@@ -4,6 +4,8 @@ include $(top_srcdir)/Makefile.am.common
 
 AM_CPPFLAGS += -I$(srcdir)/../common -DFTP_SERVER
 
+WFLAGS += $(WFLAGS_LITE)
+
 libexec_PROGRAMS = ftpd
 
 CHECK_LOCAL = 

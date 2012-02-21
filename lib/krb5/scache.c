@@ -309,7 +309,6 @@ scc_alloc(krb5_context context, const char *name)
 	char *file;
 
 	if (*name == '\0') {
-	    krb5_error_code ret;
 	    ret = get_def_name(context, &s->name);
 	    if (ret)
 		s->name = strdup(SCACHE_DEF_NAME);

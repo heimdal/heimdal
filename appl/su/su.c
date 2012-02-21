@@ -145,7 +145,7 @@ static krb5_ccache ccache;
 static int
 krb5_verify(const struct passwd *login_info,
 	    const struct passwd *su_info,
-	    const char *kerberos_instance)
+	    const char *instance)
 {
     krb5_error_code ret;
     krb5_principal p;
@@ -176,7 +176,7 @@ krb5_verify(const struct passwd *login_info,
 	if (strcmp (su_info->pw_name, "root") == 0)
 	    ret = krb5_make_principal(context, &p, *r,
 				      login_name,
-				      kerberos_instance,
+				      instance,
 				      NULL);
 	else
 	    ret = krb5_make_principal(context, &p, *r,
@@ -327,7 +327,7 @@ verify_unix(struct passwd *login, struct passwd *su)
 int
 main(int argc, char **argv)
 {
-    int i, optind = 0;
+    int i, optidx = 0;
     char *su_user;
     struct passwd *su_info;
     struct passwd *login_info;
@@ -340,10 +340,10 @@ main(int argc, char **argv)
 
     setprogname (argv[0]);
 
-    if(getarg(args, sizeof(args) / sizeof(args[0]), argc, argv, &optind))
+    if(getarg(args, sizeof(args) / sizeof(args[0]), argc, argv, &optidx))
 	usage(1);
 
-    for (i=0; i < optind; i++)
+    for (i=0; i < optidx; i++)
       if (strcmp(argv[i], "-") == 0) {
 	 full_login = 1;
 	 break;
@@ -355,10 +355,10 @@ main(int argc, char **argv)
 	print_version(NULL);
 	exit(0);
     }
-    if(optind >= argc)
+    if(optidx >= argc)
 	su_user = "root";
     else
-	su_user = argv[optind++];
+	su_user = argv[optidx++];
 
     if (!issuid() && getuid() != 0)
 	warnx("Not setuid and you are not root, expect this to fail");
@@ -446,7 +446,7 @@ main(int argc, char **argv)
 	if(full_login) {
 	    char *t = getenv ("TERM");
 	    char **newenv = NULL;
-	    int i, j;
+	    int j;
 
 	    i = read_environment(_PATH_ETC_ENVIRONMENT, &newenv);
 
@@ -477,8 +477,7 @@ main(int argc, char **argv)
     }
 
     {
-	int i;
-	char **args;
+	char **new_argv;
 	char *p;
 
 	p = strrchr(shell, '/');
@@ -490,26 +489,27 @@ main(int argc, char **argv)
 	if (strcmp(p, "csh") != 0)
 	    csh_f_flag = 0;
 
-        args = malloc(((cmd ? 2 : 0) + 1 + argc - optind + 1 + csh_f_flag) * sizeof(*args));
-	if (args == NULL)
+        new_argv = malloc(((cmd ? 2 : 0) + 1 + argc - optidx + 1 + csh_f_flag)
+	    * sizeof(*new_argv));
+	if (new_argv == NULL)
 	    err (1, "malloc");
 	i = 0;
 	if(full_login) {
-	    if (asprintf(&args[i++], "-%s", p) == -1)
+	    if (asprintf(&new_argv[i++], "-%s", p) == -1)
 		errx (1, "malloc");
 	} else
-	    args[i++] = p;
+	    new_argv[i++] = p;
 	if (cmd) {
-	   args[i++] = "-c";
-	   args[i++] = cmd;
+	   new_argv[i++] = "-c";
+	   new_argv[i++] = cmd;
 	}
 
 	if (csh_f_flag)
-	    args[i++] = "-f";
+	    new_argv[i++] = "-f";
 
-	for (argv += optind; *argv; ++argv)
-	   args[i++] = *argv;
-	args[i] = NULL;
+	for (argv += optidx; *argv; ++argv)
+	   new_argv[i++] = *argv;
+	new_argv[i] = NULL;
 
 	if(setgid(su_info->pw_gid) < 0)
 	    err(1, "setgid");
@@ -523,7 +523,7 @@ main(int argc, char **argv)
         if (ok == 5)
            krb5_start_session();
 #endif
-	execve(shell, args, environ);
+	execve(shell, new_argv, environ);
     }
 
     exit(1);

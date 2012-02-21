@@ -439,7 +439,7 @@ heim_db_create(const char *dbtype, const char *dbname,
 heim_db_t
 heim_db_clone(heim_db_t db, heim_error_t *error)
 {
-    heim_db_t clone;
+    heim_db_t result;
     int ret;
 
     if (heim_get_tid(db) != HEIM_TID_DB)
@@ -453,25 +453,25 @@ heim_db_clone(heim_db_t db, heim_error_t *error)
 			      db->options, error);
     }
 
-    clone = _heim_alloc_object(&db_object, sizeof(*clone));
-    if (clone == NULL) {
+    result = _heim_alloc_object(&db_object, sizeof(*result));
+    if (result == NULL) {
 	if (error)
 	    *error = heim_error_enomem();
 	return NULL;
     }
 
-    clone->set_keys = NULL;
-    clone->del_keys = NULL;
-    ret = db->plug->clonef(db->db_data, &clone->db_data, error);
+    result->set_keys = NULL;
+    result->del_keys = NULL;
+    ret = db->plug->clonef(db->db_data, &result->db_data, error);
     if (ret) {
-	heim_release(clone);
+	heim_release(result);
 	if (error && !*error)
 	    *error = heim_error_create(ENOENT,
 				       N_("Could not re-open DB while cloning", ""));
 	return NULL;
     }
     db->db_data = NULL;
-    return clone;
+    return result;
 }
 
 /**
@@ -1550,7 +1550,7 @@ json_db_copy_value(void *db, heim_string_t table, heim_data_t key,
     heim_string_t key_string;
     const heim_octet_string *key_data = heim_data_get_data(key);
     struct stat st;
-    heim_data_t ret;
+    heim_data_t result;
 
     if (error)
 	*error = NULL;
@@ -1592,9 +1592,9 @@ json_db_copy_value(void *db, heim_string_t table, heim_data_t key,
 	return NULL;
     }
 
-    ret = heim_path_copy(jsondb->dict, error, table, key_string, NULL);
+    result = heim_path_copy(jsondb->dict, error, table, key_string, NULL);
     heim_release(key_string);
-    return ret;
+    return result;
 }
 
 static int

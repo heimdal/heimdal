@@ -104,12 +104,12 @@ expand_cell_name(const char *cell)
 {
     FILE *f;
     const char *c;
-    const char **fn, *files[] = { _PATH_CELLSERVDB,
-				  _PATH_ARLA_CELLSERVDB,
-				  _PATH_OPENAFS_DEBIAN_CELLSERVDB,
-				  _PATH_ARLA_DEBIAN_CELLSERVDB,
-				  NULL };
-    for(fn = files; *fn; fn++) {
+    const char **fn, *fns[] = { _PATH_CELLSERVDB,
+				_PATH_ARLA_CELLSERVDB,
+				_PATH_OPENAFS_DEBIAN_CELLSERVDB,
+				_PATH_ARLA_DEBIAN_CELLSERVDB,
+				NULL };
+    for(fn = fns; *fn; fn++) {
 	f = fopen(*fn, "r");
 	if(f == NULL)
 	    continue;
@@ -212,7 +212,7 @@ log_func(void *ctx, const char *str)
 int
 main(int argc, char **argv)
 {
-    int optind = 0;
+    int optidx = 0;
     int i;
     int num;
     int ret = 0;
@@ -221,7 +221,7 @@ main(int argc, char **argv)
 
     setprogname(argv[0]);
 
-    if(getarg(args, num_args, argc, argv, &optind))
+    if(getarg(args, num_args, argc, argv, &optidx))
 	usage(1);
     if(help_flag)
 	usage(0);
@@ -278,7 +278,7 @@ main(int argc, char **argv)
 	num++;
     }
     free_getarg_strings (&cells);
-    for(i = optind; i < argc; i++){
+    for(i = optidx; i < argc; i++){
 	num++;
 	if(strcmp(argv[i], ".") == 0 ||
 	   strcmp(argv[i], "..") == 0 ||

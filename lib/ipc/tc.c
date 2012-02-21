@@ -60,7 +60,7 @@ usage(int ret)
 }
 
 static void
-reply(void *ctx, int errorcode, heim_idata *reply, heim_icred cred)
+reply(void *ctx, int errorcode, heim_idata *rep, heim_icred cred)
 {
     printf("got reply\n");
     heim_ipc_semaphore_signal((heim_isemaphore)ctx); /* tell caller we are done */

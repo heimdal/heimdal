@@ -263,15 +263,15 @@ init_words (int argc, char **argv)
 static void
 ScreenSaver(int save)
 {
-    static int timeout, interval, prefer_blank, allow_exp;
+    static int timeout, ival, prefer_blank, allow_exp;
     if(!appres.no_screensaver){
 	if (save) {
-	    XGetScreenSaver(dpy, &timeout, &interval,
+	    XGetScreenSaver(dpy, &timeout, &ival,
 			    &prefer_blank, &allow_exp);
-	    XSetScreenSaver(dpy, 0, interval, prefer_blank, allow_exp);
+	    XSetScreenSaver(dpy, 0, ival, prefer_blank, allow_exp);
 	} else
 	    /* restore state */
-	    XSetScreenSaver(dpy, timeout, interval, prefer_blank, allow_exp);
+	    XSetScreenSaver(dpy, timeout, ival, prefer_blank, allow_exp);
     }
 }
 
@@ -504,11 +504,11 @@ post_prompt_box(Window window)
 static void
 RaiseWindow(Widget w, XEvent *ev, String *s, Cardinal *n)
 {
-  Widget x;
+  Widget new;
   if(!XtIsRealized(w))
     return;
-  x = XtParent(w);
-  XRaiseWindow(dpy, XtWindow(x));
+  new = XtParent(w);
+  XRaiseWindow(dpy, XtWindow(new));
 }
 
 

@@ -792,7 +792,7 @@ hdb_sqlite_remove(krb5_context context, HDB *db,
     krb5_error_code ret;
     char *principal_string;
     hdb_sqlite_db *hsdb = (hdb_sqlite_db*)(db->hdb_db);
-    sqlite3_stmt *remove = hsdb->remove;
+    sqlite3_stmt *rm = hsdb->remove;
 
     ret = krb5_unparse_name(context, principal, &principal_string);
     if (ret) {
@@ -800,9 +800,9 @@ hdb_sqlite_remove(krb5_context context, HDB *db,
         return ret;
     }
 
-    sqlite3_bind_text(remove, 1, principal_string, -1, SQLITE_STATIC);
+    sqlite3_bind_text(rm, 1, principal_string, -1, SQLITE_STATIC);
 
-    ret = hdb_sqlite_step(context, hsdb->db, remove);
+    ret = hdb_sqlite_step(context, hsdb->db, rm);
     if (ret != SQLITE_DONE) {
 	ret = EINVAL;
         krb5_set_error_message(context, ret,
@@ -811,8 +811,8 @@ hdb_sqlite_remove(krb5_context context, HDB *db,
     } else
         ret = 0;
 
-    sqlite3_clear_bindings(remove);
-    sqlite3_reset(remove);
+    sqlite3_clear_bindings(rm);
+    sqlite3_reset(rm);
 
     return ret;
 }

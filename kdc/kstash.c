@@ -137,7 +137,6 @@ main(int argc, char **argv)
 
     {
 	char *new = NULL, *old = NULL;
-	int aret;
 
 	aret = asprintf(&old, "%s.old", keyfile);
 	if (aret == -1) {

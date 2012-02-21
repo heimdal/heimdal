@@ -28,7 +28,10 @@ dnl C characteristics
 AC_REQUIRE([AC_C___ATTRIBUTE__])
 AC_REQUIRE([AC_C_INLINE])
 AC_REQUIRE([AC_C_CONST])
-rk_WFLAGS(-Wall -Wextra -Wno-sign-compare -Wno-unused-parameter -Wmissing-prototypes -Wpointer-arith -Wbad-function-cast -Wmissing-declarations -Wnested-externs)
+rk_WFLAGS(-Wall -Wextra -Wno-sign-compare -Wno-unused-parameter -Wmissing-prototypes -Wpointer-arith -Wbad-function-cast -Wmissing-declarations -Wnested-externs -Wshadow)
+
+dnl -Wmissing-prototypes -Wpointer-arith -Wreturn-type -Wstrict-prototypes
+dnl -Wcast-qual -Wswitch -Wformat=2 -Wwrite-strings
 
 AC_REQUIRE([rk_DB])
 

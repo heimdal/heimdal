@@ -576,7 +576,7 @@ hdb_generate_key_set(krb5_context context, krb5_principal principal,
 	krb5_config_free_strings(config_ktypes);
 
     for(kp = ks_tuple_strs; kp && *kp; kp++)
-	free(kp);
+	free(*kp);
     free(ks_tuple_strs);
 
     if (ret) {

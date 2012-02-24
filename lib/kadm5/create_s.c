@@ -153,6 +153,8 @@ kadm5_ret_t
 kadm5_s_create_principal(void *server_handle,
 			 kadm5_principal_ent_t princ,
 			 uint32_t mask,
+			 int n_ks_tuple,
+			 krb5_key_salt_tuple *ks_tuple,
 			 const char *password)
 {
     kadm5_ret_t ret;
@@ -178,7 +180,7 @@ kadm5_s_create_principal(void *server_handle,
     ent.entry.keys.len = 0;
     ent.entry.keys.val = NULL;
 
-    ret = _kadm5_set_keys(context, &ent.entry, 0, NULL, password);
+    ret = _kadm5_set_keys(context, &ent.entry, n_ks_tuple, ks_tuple, password);
     if (ret)
 	goto out;
 

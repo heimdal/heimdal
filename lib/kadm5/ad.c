@@ -571,6 +571,8 @@ static kadm5_ret_t
 kadm5_ad_create_principal(void *server_handle,
 			  kadm5_principal_ent_t entry,
 			  uint32_t mask,
+			  int n_ks_tuple,
+			  krb5_key_salt_tuple *ks_tuple,
 			  const char *password)
 {
     kadm5_ad_context *context = server_handle;
@@ -595,6 +597,14 @@ kadm5_ad_create_principal(void *server_handle,
 
     if ((mask & KADM5_PRINCIPAL) == 0)
 	return KADM5_BAD_MASK;
+
+    /*
+     * We should get around to implementing this...  At the moment, the
+     * the server side API is implemented but the wire protocol has not
+     * been updated.
+     */
+    if (n_ks_tuple > 0)
+       return KADM5_KS_TUPLE_NOSUPP;
 
     for (i = 0; i < sizeof(rattrs)/sizeof(rattrs[0]); i++)
 	attrs[i] = &rattrs[i];

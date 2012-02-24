@@ -80,12 +80,25 @@ kadm5_chpass_principal_with_key_3(void *server_handle,
 }
 
 kadm5_ret_t
+kadm5_create_principal_3(void *server_handle,
+			 kadm5_principal_ent_t princ,
+			 uint32_t mask,
+			 int n_ks_tuple,
+			 krb5_key_salt_tuple *ks_tuple,
+			 char *password)
+{
+    return __CALL(create_principal,
+		  (server_handle, princ, mask, n_ks_tuple, ks_tuple, password));
+}
+
+kadm5_ret_t
 kadm5_create_principal(void *server_handle,
 		       kadm5_principal_ent_t princ,
 		       uint32_t mask,
 		       const char *password)
 {
-    return __CALL(create_principal, (server_handle, princ, mask, password));
+    return __CALL(create_principal,
+		  (server_handle, princ, mask, 0, NULL, password));
 }
 
 kadm5_ret_t

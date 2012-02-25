@@ -1,3 +1,9 @@
+heimdal (20120106-3) unstable; urgency=low
+
+  * apply a few patches that krb5_admind will need.
+
+ -- elric <elric@imrryr.org>  Sat, 25 Feb 2012 21:40:00 +0000
+
 heimdal (20120106-2) unstable; urgency=low
 
   * build with openssl rather than hcrypto.

@@ -40,13 +40,13 @@ static void generate_template_type(const char *, const char **, const char *, co
 				   Type *, int, int, int);
 
 static const char *
-ttype_symbol(const char *basename, const Type *t)
+ttype_symbol(const char *base, const Type *t)
 {
     return t->symbol->gen_name;
 }
 
 static const char *
-integer_symbol(const char *basename, const Type *t)
+integer_symbol(const char *base, const Type *t)
 {
     if (t->members)
 	return "int"; /* XXX enum foo */
@@ -67,89 +67,89 @@ integer_symbol(const char *basename, const Type *t)
 }
 
 static const char *
-boolean_symbol(const char *basename, const Type *t)
+boolean_symbol(const char *base, const Type *t)
 {
     return "int";
 }
 
 
 static const char *
-octetstring_symbol(const char *basename, const Type *t)
+octetstring_symbol(const char *base, const Type *t)
 {
     return "heim_octet_string";
 }
 
 static const char *
-sequence_symbol(const char *basename, const Type *t)
+sequence_symbol(const char *base, const Type *t)
 {
-    return basename;
+    return base;
 }
 
 static const char *
-time_symbol(const char *basename, const Type *t)
+time_symbol(const char *base, const Type *t)
 {
     return "time_t";
 }
 
 static const char *
-tag_symbol(const char *basename, const Type *t)
+tag_symbol(const char *base, const Type *t)
 {
-    return symbol_name(basename, t->subtype);
+    return symbol_name(base, t->subtype);
 }
 
 static const char *
-generalstring_symbol(const char *basename, const Type *t)
+generalstring_symbol(const char *base, const Type *t)
 {
     return "heim_general_string";
 }
 
 static const char *
-printablestring_symbol(const char *basename, const Type *t)
+printablestring_symbol(const char *base, const Type *t)
 {
     return "heim_printable_string";
 }
 
 static const char *
-ia5string_symbol(const char *basename, const Type *t)
+ia5string_symbol(const char *base, const Type *t)
 {
     return "heim_ia5_string";
 }
 
 static const char *
-visiblestring_symbol(const char *basename, const Type *t)
+visiblestring_symbol(const char *base, const Type *t)
 {
     return "heim_visible_string";
 }
 
 static const char *
-utf8string_symbol(const char *basename, const Type *t)
+utf8string_symbol(const char *base, const Type *t)
 {
     return "heim_utf8_string";
 }
 
 static const char *
-bmpstring_symbol(const char *basename, const Type *t)
+bmpstring_symbol(const char *base, const Type *t)
 {
     return "heim_bmp_string";
 }
 
 static const char *
-universalstring_symbol(const char *basename, const Type *t)
+universalstring_symbol(const char *base, const Type *t)
 {
     return "heim_universal_string";
 }
 
 static const char *
-oid_symbol(const char *basename, const Type *t)
+oid_symbol(const char *base, const Type *t)
 {
     return "heim_oid";
 }
 
 static const char *
-bitstring_symbol(const char *basename, const Type *t)
+bitstring_symbol(const char *base, const Type *t)
 {
     if (t->members)
-	return basename;
+	return base;
     return "heim_bit_string";
 }
 
@@ -210,13 +210,13 @@ is_template_compat (const Symbol *s)
 }
 
 static const char *
-symbol_name(const char *basename, const Type *t)
+symbol_name(const char *base, const Type *t)
 {
     size_t i;
 
     for (i = 0; i < sizeof(types)/sizeof(types[0]); i++)
 	if (t->type == types[i].type)
-	    return (types[i].symbol_name)(basename, t);
+	    return (types[i].symbol_name)(base, t);
     printf("unknown der type: %d\n", t->type);
     exit(1);
 }

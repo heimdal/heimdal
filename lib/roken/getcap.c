@@ -250,12 +250,12 @@ getent(char **cap, size_t *len, char **db_array, int fd,
      * Check if we have a top record from cgetset().
      */
     if (depth == 0 && toprec != NULL && cgetmatch(toprec, name) == 0) {
-	size_t len = topreclen + BFRAG;
-	if ((record = malloc (len)) == NULL) {
+	size_t tmplen = topreclen + BFRAG;
+	if ((record = malloc (tmplen)) == NULL) {
 	    errno = ENOMEM;
 	    return (-2);
 	}
-	(void)strlcpy(record, toprec, len);
+	(void)strlcpy(record, toprec, tmplen);
 	db_p = db_array;
 	rp = record + topreclen + 1;
 	r_end = rp + BFRAG;

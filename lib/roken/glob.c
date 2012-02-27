@@ -404,7 +404,7 @@ static int
 glob0(const Char *pattern, glob_t *pglob)
 {
 	const Char *qpatnext;
-	int c, err, oldpathc;
+	int c, ret, oldpathc;
 	Char *bufnext, patbuf[MaxPathLen+1];
 	size_t limit = 0;
 
@@ -464,8 +464,8 @@ glob0(const Char *pattern, glob_t *pglob)
 	qprintf("glob0:", patbuf);
 #endif
 
-	if ((err = glob1(patbuf, pglob, &limit)) != 0)
-		return(err);
+	if ((ret = glob1(patbuf, pglob, &limit)) != 0)
+		return(ret);
 
 	/*
 	 * If there was no match we are going to append the pattern
@@ -572,7 +572,7 @@ glob3(Char *pathbuf, Char *pathend, Char *pattern, Char *restpattern,
 {
 	struct dirent *dp;
 	DIR *dirp;
-	int err;
+	int ret;
 	char buf[MaxPathLen];
 
 	/*
@@ -597,7 +597,7 @@ glob3(Char *pathbuf, Char *pathend, Char *pattern, Char *restpattern,
 		return(0);
 	}
 
-	err = 0;
+	ret = 0;
 
 	/* Search directory for matching names. */
 	if (pglob->gl_flags & GLOB_ALTDIRFUNC)
@@ -618,8 +618,8 @@ glob3(Char *pathbuf, Char *pathend, Char *pattern, Char *restpattern,
 			*pathend = CHAR_EOS;
 			continue;
 		}
-		err = glob2(pathbuf, --dc, restpattern, pglob, limit);
-		if (err)
+		ret = glob2(pathbuf, --dc, restpattern, pglob, limit);
+		if (ret)
 			break;
 	}
 
@@ -627,7 +627,7 @@ glob3(Char *pathbuf, Char *pathend, Char *pattern, Char *restpattern,
 		(*pglob->gl_closedir)(dirp);
 	else
 		closedir(dirp);
-	return(err);
+	return(ret);
 }
 
 

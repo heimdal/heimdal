@@ -48,6 +48,7 @@ HDBFlags ::= BIT STRING {
 	allow-digest(16),		-- Allow digest requests
 	locked-out(17),			-- Account is locked out,
 					-- authentication will be denied
+	require-pwchange(18),		-- require a passwd change
 	do-not-store(31)		-- Not to be modified and stored in HDB
 }
 

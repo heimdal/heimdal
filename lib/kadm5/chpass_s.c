@@ -113,6 +113,8 @@ change(void *server_handle,
     }
     ent.entry.kvno++;
 
+    ent.entry.flags.require_pwchange = 0;
+
     if (keepold) {
 	ret = hdb_seal_keys(context->context, context->db, &ent.entry);
 	if (ret)

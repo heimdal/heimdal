@@ -57,6 +57,7 @@ R7=SOME-REALM7.UK
 port=@port@
 
 kadmin="${kadmin} -l -r $R"
+kadmin5="${kadmin} -l -r $R5"
 kdc="${kdc} --addresses=localhost -P $port"
 
 server=host/datan.test.h5l.se
@@ -116,7 +117,7 @@ ${kadmin} \
     --realm-max-renewable-life=1month \
     ${R4} || exit 1
 
-${kadmin} \
+${kadmin5} \
     init \
     --realm-max-ticket-life=1day \
     --realm-max-renewable-life=1month \
@@ -149,7 +150,7 @@ ${kadmin} add -p foo --use-defaults foo@${R} || exit 1
 ${kadmin} add -p foo --use-defaults foo@${R2} || exit 1
 ${kadmin} add -p foo --use-defaults foo@${R3} || exit 1
 ${kadmin} add -p foo --use-defaults foo@${R4} || exit 1
-${kadmin} add -p foo --use-defaults foo@${R5} || exit 1
+${kadmin5} add -p foo --use-defaults foo@${R5} || exit 1
 ${kadmin} add -p foo --use-defaults foo@${R6} || exit 1
 ${kadmin} add -p foo --use-defaults foo@${R7} || exit 1
 ${kadmin} add -p bar --use-defaults bar@${R} || exit 1
@@ -189,9 +190,9 @@ ${kadmin} add -p cross1 --use-defaults krbtgt/${R4}@${R3} || exit 1
 ${kadmin} add -p cross2 --use-defaults krbtgt/${R3}@${R4} || exit 1
 
 ${kadmin} add -p cross1 --use-defaults krbtgt/${R5}@${R} || exit 1
-${kadmin} add -p cross2 --use-defaults krbtgt/${R}@${R5} || exit 1
+${kadmin5} add -p cross2 --use-defaults krbtgt/${R}@${R5} || exit 1
 
-${kadmin} add -p cross1 --use-defaults krbtgt/${R6}@${R5} || exit 1
+${kadmin5} add -p cross1 --use-defaults krbtgt/${R6}@${R5} || exit 1
 ${kadmin} add -p cross2 --use-defaults krbtgt/${R5}@${R6} || exit 1
 
 ${kadmin} add -p cross1 --use-defaults krbtgt/${R7}@${R6} || exit 1
@@ -211,7 +212,7 @@ ${kadmin} check ${R} || exit 1
 ${kadmin} check ${R2} || exit 1
 ${kadmin} check ${R3} || exit 1
 ${kadmin} check ${R4} || exit 1
-${kadmin} check ${R5} || exit 1
+${kadmin5} check ${R5} || exit 1
 ${kadmin} check ${R6} || exit 1
 ${kadmin} check ${R7} || exit 1
 

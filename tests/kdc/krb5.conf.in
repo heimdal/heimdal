@@ -78,6 +78,13 @@
 			acl_file = @srcdir@/heimdal.acl
 			log_file = @objdir@/current@kdc@.log
 		}
+		label3 = { 
+			dbname = sqlite:@objdir@/current-db@kdc@.sqlite3
+			realm = SOME-REALM5.FR
+			mkey_file = @objdir@/mkey.file
+			acl_file = @srcdir@/heimdal.acl
+			log_file = @objdir@/current@kdc@.log
+		}
 	}
 
 	signal_socket = @objdir@/signal

@@ -281,11 +281,11 @@ test_rfc3961_LDADD = 				\
 	$(LIB_hcrypto)				\
 	$(LIB_roken)
 
-$(srcdir)/krb5-protos.h:
-	cd $(srcdir) && perl ../../cf/make-proto.pl -E KRB5_LIB -q -P comment -o krb5-protos.h $(dist_libkrb5_la_SOURCES) || rm -f krb5-protos.h
+$(srcdir)/krb5-protos.h: @MAINTAINER_MODE_TRUE@ $(dist_libkrb5_la_SOURCES)
+	@cd $(srcdir) && perl ../../cf/make-proto.pl -E KRB5_LIB -q -P comment -o krb5-protos.h $(dist_libkrb5_la_SOURCES) || rm -f krb5-protos.h
 
-$(srcdir)/krb5-private.h:
-	cd $(srcdir) && perl ../../cf/make-proto.pl -q -P comment -p krb5-private.h $(dist_libkrb5_la_SOURCES) || rm -f krb5-private.h
+$(srcdir)/krb5-private.h: @MAINTAINER_MODE_TRUE@ $(dist_libkrb5_la_SOURCES)
+	@cd $(srcdir) && perl ../../cf/make-proto.pl -q -P comment -p krb5-private.h $(dist_libkrb5_la_SOURCES) || rm -f krb5-private.h
 
 man_MANS =					\
 	kerberos.8				\

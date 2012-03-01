@@ -9,6 +9,7 @@ AC_ARG_ENABLE(developer,
 if test "X$enable_developer" = Xyes; then
     dwflags="-Werror"
 fi
+AM_CONDITIONAL(DEVELOPER_MODE, test "X$enable_developer" = Xyes)
 
 WFLAGS_NOUNUSED=""
 WFLAGS_NOIMPLICITINT=""

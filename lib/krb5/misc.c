@@ -79,7 +79,7 @@ _krb5_s4u2self_to_checksumdata(krb5_context context,
 KRB5_LIB_FUNCTION void KRB5_LIB_CALL
 _krb5_debug_backtrace(krb5_context context)
 {
-#if defined(HAVE_BACKTRACE) && !defined(HEIMDAL_SMALLER)
+#if defined(HAVE_BACKTRACE) && defined(HAVE_BACKTRACE_SYMBOLS) && !defined(HEIMDAL_SMALLER)
     void *stack[128];
     char **strs = NULL;
     int i, frames = backtrace(stack, sizeof(stack) / sizeof(stack[0]));

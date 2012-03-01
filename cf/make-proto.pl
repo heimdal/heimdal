@@ -3,6 +3,7 @@
 
 ##use Getopt::Std;
 require 'getopts.pl';
+use File::Compare;
 
 my $comment = 0;
 my $if_0 = 0;
@@ -192,14 +193,14 @@ sub foo {
 }
 
 if($opt_o) {
-    open(OUT, ">$opt_o");
+    open(OUT, ">${opt_o}.new");
     $block = &foo($opt_o);
 } else {
     $block = "__public_h__";
 }
 
 if($opt_p) {
-    open(PRIV, ">$opt_p");
+    open(PRIV, ">${opt_p}.new");
     $private = &foo($opt_p);
 } else {
     $private = "__private_h__";
@@ -412,3 +413,22 @@ if($opt_p) {
 
 close OUT;
 close PRIV;
+
+if ($opt_o) {
+
+    if (compare("${opt_o}.new", ${opt_o}) != 0) {
+	printf("updating ${opt_o}\n");
+	rename("${opt_o}.new", ${opt_o});
+    } else {
+	unlink("${opt_o}.new");
+    }
+}
+	
+if ($opt_p) {
+    if (compare("${opt_p}.new", ${opt_p}) != 0) {
+	printf("updating ${opt_p}\n");
+	rename("${opt_p}.new", ${opt_p});
+    } else {
+	unlink("${opt_p}.new");
+    }
+}

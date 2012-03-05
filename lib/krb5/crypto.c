@@ -679,11 +679,17 @@ krb5_string_to_enctype(krb5_context context,
 		       krb5_enctype *etype)
 {
     int i;
-    for(i = 0; i < _krb5_num_etypes; i++)
+    for(i = 0; i < _krb5_num_etypes; i++) {
 	if(strcasecmp(_krb5_etypes[i]->name, string) == 0){
 	    *etype = _krb5_etypes[i]->type;
 	    return 0;
 	}
+	if(_krb5_etypes[i]->alias != NULL &&
+	   strcasecmp(_krb5_etypes[i]->alias, string) == 0){
+	    *etype = _krb5_etypes[i]->type;
+	    return 0;
+	}
+    }
     krb5_set_error_message (context, KRB5_PROG_ETYPE_NOSUPP,
 			    N_("encryption type %s not supported", ""),
 			    string);

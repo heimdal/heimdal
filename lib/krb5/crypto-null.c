@@ -87,6 +87,7 @@ NULL_encrypt(krb5_context context,
 struct _krb5_encryption_type _krb5_enctype_null = {
     ETYPE_NULL,
     "null",
+    NULL,
     1,
     1,
     0,

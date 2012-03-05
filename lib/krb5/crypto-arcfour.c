@@ -312,6 +312,7 @@ ARCFOUR_encrypt(krb5_context context,
 struct _krb5_encryption_type _krb5_enctype_arcfour_hmac_md5 = {
     ETYPE_ARCFOUR_HMAC_MD5,
     "arcfour-hmac-md5",
+    "rc4-hmac",
     1,
     1,
     8,

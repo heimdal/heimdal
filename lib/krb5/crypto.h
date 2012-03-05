@@ -103,6 +103,7 @@ struct _krb5_checksum_type {
 struct _krb5_encryption_type {
     krb5_enctype type;
     const char *name;
+    const char *alias;
     size_t blocksize;
     size_t padsize;
     size_t confoundersize;

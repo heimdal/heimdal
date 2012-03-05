@@ -131,6 +131,7 @@ struct _krb5_checksum_type _krb5_checksum_hmac_sha1_des3 = {
 struct _krb5_encryption_type _krb5_enctype_des3_cbc_md5 = {
     ETYPE_DES3_CBC_MD5,
     "des3-cbc-md5",
+    NULL,
     8,
     8,
     8,
@@ -147,6 +148,7 @@ struct _krb5_encryption_type _krb5_enctype_des3_cbc_md5 = {
 struct _krb5_encryption_type _krb5_enctype_des3_cbc_sha1 = {
     ETYPE_DES3_CBC_SHA1,
     "des3-cbc-sha1",
+    NULL,
     8,
     8,
     8,
@@ -163,6 +165,7 @@ struct _krb5_encryption_type _krb5_enctype_des3_cbc_sha1 = {
 struct _krb5_encryption_type _krb5_enctype_old_des3_cbc_sha1 = {
     ETYPE_OLD_DES3_CBC_SHA1,
     "old-des3-cbc-sha1",
+    NULL,
     8,
     8,
     8,
@@ -179,6 +182,7 @@ struct _krb5_encryption_type _krb5_enctype_old_des3_cbc_sha1 = {
 struct _krb5_encryption_type _krb5_enctype_des3_cbc_none = {
     ETYPE_DES3_CBC_NONE,
     "des3-cbc-none",
+    NULL,
     8,
     8,
     0,

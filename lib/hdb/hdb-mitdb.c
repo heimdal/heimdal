@@ -445,6 +445,7 @@ mdb_value2entry(krb5_context context, krb5_data *data, krb5_kvno target_kvno,
     entry->flags.invalid =	!!(u32 & KRB5_KDB_DISALLOW_ALL_TIX);
     entry->flags.require_preauth =!!(u32 & KRB5_KDB_REQUIRES_PRE_AUTH);
     entry->flags.require_hwauth =!!(u32 & KRB5_KDB_REQUIRES_HW_AUTH);
+    entry->flags.require_pwchange =!!(u32 & KRB5_KDB_REQUIRES_PWCHANGE);
     entry->flags.server =	 !(u32 & KRB5_KDB_DISALLOW_SVR);
     entry->flags.change_pw = 	!!(u32 & KRB5_KDB_PWCHANGE_SERVICE);
     entry->flags.client =	   1; /* XXX */

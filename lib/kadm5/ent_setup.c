@@ -51,6 +51,7 @@ attr_to_flags(unsigned attr, HDBFlags *flags)
     /* DUP_SKEY */
     flags->invalid =	       !!(attr & KRB5_KDB_DISALLOW_ALL_TIX);
     flags->require_preauth =   !!(attr & KRB5_KDB_REQUIRES_PRE_AUTH);
+    flags->require_pwchange =  !!(attr & KRB5_KDB_REQUIRES_PWCHANGE);
     /* HW_AUTH */
     flags->server =		!(attr & KRB5_KDB_DISALLOW_SVR);
     flags->change_pw = 	       !!(attr & KRB5_KDB_PWCHANGE_SERVICE);

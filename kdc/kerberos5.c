@@ -1284,6 +1284,13 @@ kdc_check_flags(krb5_context context,
 	    return KRB5KDC_ERR_NAME_EXP;
 	}
 
+	if (client->flags.require_pwchange &&
+	    (server_ex == NULL || !server_ex->entry.flags.change_pw)) {
+	    kdc_log(context, config, 0,
+		    "Client's key must be changed -- %s", client_name);
+	    return KRB5KDC_ERR_KEY_EXPIRED;
+	}
+
 	if (client->pw_end && *client->pw_end < kdc_time
 	    && (server_ex == NULL || !server_ex->entry.flags.change_pw)) {
 	    char pwend_str[100];

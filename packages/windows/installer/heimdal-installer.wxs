@@ -15,7 +15,7 @@
   <?define GuidKvno=2B932C2B-9167-4051-BDF7-A104E9983CE6 ?>
   <?define GuidKcpytkt=17734691-7CB3-4E9A-AADC-6D4205795F43 ?>
   <?define GuidKdeltkt=3E853905-8CDA-4E14-8EBA-C0C4EEDB811A ?>
-  <?define GuidKcc=F411A9F1-A186-40CB-B55B-CADBE0166268 ?>
+  <?define GuidHeimtools=F411A9F1-A186-40CB-B55B-CADBE0166268 ?>
 
   <?define ConfigDir=INSTALLDIR64 ?>
 
@@ -33,7 +33,7 @@
   <?define GuidKvno=4C6015BE-1347-4D12-8841-FF90E0B9D6A8 ?>
   <?define GuidKcpytkt=CBCDFC80-601B-4F26-A020-7D1278735B95 ?>
   <?define GuidKdeltkt=6450EE72-E472-4709-B457-B579BFB2472B ?>
-  <?define GuidKcc=11800964-4A5F-466E-B2FE-DD2EFC54DDB9 ?>
+  <?define GuidHeimtools=11800964-4A5F-466E-B2FE-DD2EFC54DDB9 ?>
 
   <?define ConfigDir=INSTALLDIR32 ?>
 
@@ -187,14 +187,14 @@
         <File Name='kdeltkt.pdb' />
       </Component>
 
-      <Component Id='comp.kcc'
-                 Guid='$(var.GuidKcc)'
+      <Component Id='comp.heimtools'
+                 Guid='$(var.GuidHeimtools)'
                  Win64='$(var.Win64)'>
-        <File Name='kcc.exe' KeyPath='yes'>
+        <File Name='heimtools.exe' KeyPath='yes'>
           <CopyFile Id='klist.exe' DestinationName='klist.exe' DestinationProperty='$(var.ToolsBinDir)' />
           <CopyFile Id='kswitch.exe' DestinationName='kswitch.exe' DestinationProperty='$(var.ToolsBinDir)' />
         </File>
-        <File Name='kcc.pdb'>
+        <File Name='heimtools.pdb'>
           <CopyFile Id='klist.pdb' DestinationName='klist.pdb' />
           <CopyFile Id='kswitch.pdb' DestinationName='kswitch.pdb' />
         </File>
@@ -370,7 +370,7 @@
       <ComponentRef Id='comp.krb5.ini.move' />
       <ComponentRef Id='comp.ktutil' />
       <ComponentRef Id='comp.kvno' />
-      <ComponentRef Id='comp.kcc' />
+      <ComponentRef Id='comp.heimtool' />
 
       <?ifdef LsaCache ?>
       <?ifdef Target64?>

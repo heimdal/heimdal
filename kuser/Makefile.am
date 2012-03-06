@@ -15,7 +15,7 @@ man_MANS = \
 	kgetcred.1 \
 	kimpersonate.8
 
-bin_PROGRAMS = kinit kdestroy kgetcred kcc
+bin_PROGRAMS = kinit kdestroy kgetcred heimtools
 libexec_PROGRAMS = kdigest kimpersonate
 
 noinst_PROGRAMS = kverify kdecode_ticket generate-requests
@@ -33,15 +33,15 @@ kdestroy_LDADD	= $(kinit_LDADD)
 
 kimpersonate_LDADD = $(kinit_LDADD)
 
-kcc_LDADD = \
+heimtools_LDADD = \
 	$(top_builddir)/lib/sl/libsl.la \
 	$(kinit_LDADD) \
 	$(LIB_readline)
 
-dist_kcc_SOURCES = kcc.c klist.c kswitch.c copy_cred_cache.c
-nodist_kcc_SOURCES = kcc-commands.c
+dist_heimtools_SOURCES = heimtools.c klist.c kswitch.c copy_cred_cache.c
+nodist_heimtools_SOURCES = heimtools-commands.c
 
-$(kcc_OBJECTS): kcc-commands.h
+$(heimtools_OBJECTS): heimtools-commands.h
 
 dist_kdigest_SOURCES = kdigest.c
 nodist_kdigest_SOURCES = kdigest-commands.c
@@ -58,13 +58,13 @@ $(kdigest_OBJECTS): kdigest-commands.h
 
 CLEANFILES = \
 	kdigest-commands.h kdigest-commands.c \
-	kcc-commands.h kcc-commands.c
+	heimtools-commands.h heimtools-commands.c
 
 kdigest-commands.c kdigest-commands.h: kdigest-commands.in
 	$(SLC) $(srcdir)/kdigest-commands.in
 
-kcc-commands.c kcc-commands.h: kcc-commands.in
-	$(SLC) $(srcdir)/kcc-commands.in
+heimtools-commands.c heimtools-commands.h: heimtools-commands.in
+	$(SLC) $(srcdir)/heimtools-commands.in
 
 LDADD = \
 	$(top_builddir)/lib/krb5/libkrb5.la \
@@ -73,16 +73,16 @@ LDADD = \
 	$(LIB_roken)
 
 EXTRA_DIST = NTMakefile $(man_MANS) \
-	kcc-version.rc \
+	heimtools-version.rc \
 	kdestroy-version.rc \
 	kdigest-version.rc \
 	kgetcred-version.rc \
 	kimpersonate-version.rc \
 	kinit-version.rc \
-	kuser_locl.h kcc-commands.in kdigest-commands.in copy_cred_cache.1
+	kuser_locl.h heimtools-commands.in kdigest-commands.in copy_cred_cache.1
 
 # make sure install-exec-hook doesn't have any commands in Makefile.am.common
 install-exec-hook:
-	(cd $(DESTDIR)$(bindir) && rm -f klist && $(LN_S) kcc klist)
-	(cd $(DESTDIR)$(bindir) && rm -f kswitch && $(LN_S) kcc kswitch)
+	(cd $(DESTDIR)$(bindir) && rm -f klist && $(LN_S) heimtools klist)
+	(cd $(DESTDIR)$(bindir) && rm -f kswitch && $(LN_S) heimtools kswitch)
 

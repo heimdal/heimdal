@@ -36,7 +36,7 @@
 #include "kuser_locl.h"
 #include "rtbl.h"
 #include "parse_units.h"
-#include "kcc-commands.h"
+#include "heimtools-commands.h"
 
 static char*
 printable_time_internal(time_t t, int x)
@@ -583,7 +583,7 @@ klist(struct klist_options *opt, int argc, char **argv)
 	opt->s_flag;
 
     if (opt->list_all_flag) {
-	exit_status = list_caches(kcc_context);
+	exit_status = list_caches(heimtools_context);
 	return exit_status;
     }
 
@@ -593,30 +593,30 @@ klist(struct klist_options *opt, int argc, char **argv)
 	if (opt->all_content_flag) {
 	    krb5_cc_cache_cursor cursor;
 
-	    ret = krb5_cc_cache_get_first(kcc_context, NULL, &cursor);
+	    ret = krb5_cc_cache_get_first(heimtools_context, NULL, &cursor);
 	    if (ret)
-		krb5_err(kcc_context, 1, ret, "krb5_cc_cache_get_first");
+		krb5_err(heimtools_context, 1, ret, "krb5_cc_cache_get_first");
 
 
-	    while (krb5_cc_cache_next(kcc_context, cursor, &id) == 0) {
-		exit_status |= display_v5_ccache(kcc_context, id, do_test,
+	    while (krb5_cc_cache_next(heimtools_context, cursor, &id) == 0) {
+		exit_status |= display_v5_ccache(heimtools_context, id, do_test,
 						 do_verbose, opt->flags_flag,
 						 opt->hidden_flag);
 		printf("\n\n");
 	    }
-	    krb5_cc_cache_end_seq_get(kcc_context, cursor);
+	    krb5_cc_cache_end_seq_get(heimtools_context, cursor);
 
 	} else {
 	    if(opt->cache_string) {
-		ret = krb5_cc_resolve(kcc_context, opt->cache_string, &id);
+		ret = krb5_cc_resolve(heimtools_context, opt->cache_string, &id);
 		if (ret)
-		    krb5_err(kcc_context, 1, ret, "%s", opt->cache_string);
+		    krb5_err(heimtools_context, 1, ret, "%s", opt->cache_string);
 	    } else {
-		ret = krb5_cc_default(kcc_context, &id);
+		ret = krb5_cc_default(heimtools_context, &id);
 		if (ret)
-		    krb5_err(kcc_context, 1, ret, "krb5_cc_resolve");
+		    krb5_err(heimtools_context, 1, ret, "krb5_cc_resolve");
 	    }
-	    exit_status = display_v5_ccache(kcc_context, id, do_test,
+	    exit_status = display_v5_ccache(heimtools_context, id, do_test,
 					    do_verbose, opt->flags_flag,
 					    opt->hidden_flag);
 	}

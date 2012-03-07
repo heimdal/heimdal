@@ -162,6 +162,9 @@ client_doit (const char *hostname, int port, const char *service,
 	s = socket (a->ai_family, a->ai_socktype, a->ai_protocol);
 	if (s < 0)
 	    continue;
+
+	socket_set_ipv6only(s, 1);
+
 	if (connect (s, a->ai_addr, a->ai_addrlen) < 0) {
 	    warn ("connect(%s)", hostname);
 	    close (s);

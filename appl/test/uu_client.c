@@ -39,7 +39,7 @@ krb5_context context;
 static int
 proto (int sock, const char *hostname, const char *service)
 {
-    struct sockaddr_in remote, local;
+    struct sockaddr_storage remote, local;
     socklen_t addrlen;
     krb5_address remote_addr, local_addr;
     krb5_context context;
@@ -54,12 +54,12 @@ proto (int sock, const char *hostname, const char *service)
 
     addrlen = sizeof(local);
     if (getsockname (sock, (struct sockaddr *)&local, &addrlen) < 0
-	|| addrlen != sizeof(local))
+	|| addrlen > sizeof(local))
 	err (1, "getsockname(%s)", hostname);
 
     addrlen = sizeof(remote);
     if (getpeername (sock, (struct sockaddr *)&remote, &addrlen) < 0
-	|| addrlen != sizeof(remote))
+	|| addrlen > sizeof(remote))
 	err (1, "getpeername(%s)", hostname);
 
     status = krb5_init_context(&context);
@@ -74,13 +74,12 @@ proto (int sock, const char *hostname, const char *service)
     if (status)
 	krb5_err(context, 1, status, "krb5_auth_con_init");
 
-    local_addr.addr_type = AF_INET;
-    local_addr.address.length = sizeof(local.sin_addr);
-    local_addr.address.data   = &local.sin_addr;
-
-    remote_addr.addr_type = AF_INET;
-    remote_addr.address.length = sizeof(remote.sin_addr);
-    remote_addr.address.data   = &remote.sin_addr;
+    status = krb5_sockaddr2address (context, (struct sockaddr *)&local, &local_addr);
+    if (status)
+	krb5_err(context, 1, status, "krb5_sockaddr2address(local)");
+    status = krb5_sockaddr2address (context, (struct sockaddr *)&remote, &remote_addr);
+    if (status)
+	krb5_err(context, 1, status, "krb5_sockaddr2address(remote)");
 
     status = krb5_auth_con_setaddrs (context,
 				     auth_context,

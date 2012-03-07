@@ -73,13 +73,10 @@ kadm5_s_unlock(void *server_handle)
     if (!context->keep_open)
 	return KADM5_NOT_LOCKED;
 
-    (void) context->db->hdb_close(context->context, context->db);
-
     context->keep_open = 0;
     ret = context->db->hdb_unlock(context->context, context->db);
-    if (ret)
-	return ret;
-    return 0;
+    (void) context->db->hdb_close(context->context, context->db);
+    return ret;
 }
 
 static void

@@ -1084,6 +1084,7 @@ pk_verify_host(krb5_context context,
     if (ctx->require_krbtgt_otherName) {
 	hx509_octet_string_list list;
 	size_t i;
+	int matched = 0;
 
 	ret = hx509_cert_find_subjectAltName_otherName(context->hx509ctx,
 						       host->cert,
@@ -1098,7 +1099,14 @@ pk_verify_host(krb5_context context,
 	    return ret;
 	}
 
-	for (i = 0; i < list.len; i++) {
+	/*
+	 * subjectAltNames are multi-valued, and a single KDC may serve
+	 * multiple realms. The SAN validation here must accept
+	 * the KDC's cert if *any* of the SANs match the expected KDC.
+	 * It is OK for *some* of the SANs to not match, provided at least
+	 * one does.
+	 */
+	for (i = 0; matched == 0 && i < list.len; i++) {
 	    KRB5PrincipalName r;
 
 	    ret = decode_KRB5PrincipalName(list.val[i].data,
@@ -1114,22 +1122,22 @@ pk_verify_host(krb5_context context,
 		break;
 	    }
 
-	    if (r.principalName.name_string.len != 2 ||
-		strcmp(r.principalName.name_string.val[0], KRB5_TGS_NAME) != 0 ||
-		strcmp(r.principalName.name_string.val[1], realm) != 0 ||
-		strcmp(r.realm, realm) != 0)
-		{
-		    ret = KRB5_KDC_ERR_INVALID_CERTIFICATE;
-		    krb5_set_error_message(context, ret,
-					   N_("KDC have wrong realm name in "
-					      "the certificate", ""));
-		}
+	    if (r.principalName.name_string.len == 2 &&
+		strcmp(r.principalName.name_string.val[0], KRB5_TGS_NAME) == 0
+		&& strcmp(r.principalName.name_string.val[1], realm) == 0
+		&& strcmp(r.realm, realm) == 0)
+		matched = 1;
 
 	    free_KRB5PrincipalName(&r);
-	    if (ret)
-		break;
 	}
 	hx509_free_octet_string_list(&list);
+	if (matched == 0) {
+	    ret = KRB5_KDC_ERR_INVALID_CERTIFICATE;
+	    /* XXX: Lost in translation... */
+	    krb5_set_error_message(context, ret,
+				   N_("KDC have wrong realm name in "
+				      "the certificate", ""));
+	}
     }
     if (ret)
 	return ret;

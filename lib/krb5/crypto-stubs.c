@@ -90,6 +90,15 @@ krb5_log(krb5_context context,
     return 0;
 }
 
+void KRB5_LIB_FUNCTION
+_krb5_debug(krb5_context context,
+	    int level,
+	    const char *fmt,
+	    ...)
+{
+}
+
+
 /* This function is currently just used to get the location of the EGD
  * socket. If we're not using an EGD, then we can just return NULL */
 

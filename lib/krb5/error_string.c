@@ -115,6 +115,8 @@ krb5_vset_error_message (krb5_context context, krb5_error_code ret,
     if (r < 0)
 	context->error_string = NULL;
     HEIMDAL_MUTEX_unlock(context->mutex);
+    if (context->error_string)
+	_krb5_debug(context, 100, "error message: %s: %d", context->error_string, ret);
 }
 
 /**

@@ -2472,18 +2472,17 @@ krb5_get_init_creds_password(krb5_context context,
     if (prompter != NULL && ctx->password == NULL && password == NULL) {
 	krb5_prompt prompt;
 	krb5_data password_data;
-	char *p, *q;
-	int aret = -1;
+	char *p, *q = NULL;
+	int aret;
 
-	ret = krb5_unparse_name (context, client, &p);
-	if (!ret) {
-	    aret = asprintf (&q, "%s's Password: ", p);
-	    free (p);
-	}
-	if (!ret || aret == -1 || !q) {
-	    if (!ret)
-		ret = ENOMEM;
-	    krb5_clear_error_message (context);
+	ret = krb5_unparse_name(context, client, &p);
+	if (ret)
+	    goto out;
+
+	aret = asprintf(&q, "%s's Password: ", p);
+	free (p);
+	if (aret == -1 || q == NULL) {
+	    ret = krb5_enomem(context);
 	    goto out;
 	}
 	prompt.prompt = q;

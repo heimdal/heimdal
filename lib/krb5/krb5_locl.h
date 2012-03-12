@@ -47,6 +47,8 @@
 #include <stdlib.h>
 #include <limits.h>
 
+#include <sys/poll.h>
+
 #include <krb5-types.h>
 
 #ifdef HAVE_SYS_TYPES_H

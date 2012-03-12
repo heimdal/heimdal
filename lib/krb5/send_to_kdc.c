@@ -47,9 +47,7 @@ struct send_to_kdc {
 static int
 timed_connect(int s, struct addrinfo *addr, time_t tmout)
 {
-    struct timeval timeout;
     socklen_t sl;
-    fd_set wfds;
     int err;
     int flags;
     int ret;
@@ -67,12 +65,13 @@ timed_connect(int s, struct addrinfo *addr, time_t tmout)
 	return -1;
 
     for (;;) {
-	FD_ZERO(&wfds);
-	FD_SET(s, &wfds);
-	timeout.tv_sec = tmout;
-	timeout.tv_usec = 0;
+	struct pollfd fds;
 
-	ret = select(s + 1, NULL, &wfds, NULL, &timeout);
+	fds.fd = s;
+	fds.events = POLLIN | POLLOUT;
+	fds.revents = 0;
+
+	ret = poll(&fds, 1, tmout * 1000);
 	if (ret != -1 || errno != EINTR)
 	    break;
     }

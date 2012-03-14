@@ -370,7 +370,7 @@
       <ComponentRef Id='comp.krb5.ini.move' />
       <ComponentRef Id='comp.ktutil' />
       <ComponentRef Id='comp.kvno' />
-      <ComponentRef Id='comp.heimtool' />
+      <ComponentRef Id='comp.heimtools' />
 
       <?ifdef LsaCache ?>
       <?ifdef Target64?>

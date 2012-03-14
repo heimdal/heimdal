@@ -39,7 +39,7 @@
 #define KRB5_PLUGIN_AN2LN "an2ln"
 #define KRB5_PLUGIN_AN2LN_VERSION_0 0
 
-typedef krb5_error_code (*set_result_f)(void *, const char *);
+typedef krb5_error_code (KRB5_LIB_CALL *set_result_f)(void *, const char *);
 
 /** @struct krb5plugin_an2ln_ftable_desc
  *
@@ -81,9 +81,9 @@ typedef krb5_error_code (*set_result_f)(void *, const char *);
  */
 typedef struct krb5plugin_an2ln_ftable_desc {
     int			minor_version;
-    krb5_error_code	(*init)(krb5_context, void **);
-    void		(*fini)(void *);
-    krb5_error_code	(*an2ln)(void *, krb5_context, const char *,
+    krb5_error_code	(KRB5_LIB_CALL *init)(krb5_context, void **);
+    void		(KRB5_LIB_CALL *fini)(void *);
+    krb5_error_code	(KRB5_LIB_CALL *an2ln)(void *, krb5_context, const char *,
 	                         krb5_const_principal, set_result_f, void *);
 } krb5plugin_an2ln_ftable;
 

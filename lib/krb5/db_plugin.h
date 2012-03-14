@@ -60,8 +60,8 @@
  */
 typedef struct krb5plugin_db_ftable_desc {
     int			minor_version;
-    krb5_error_code	(*init)(krb5_context, void **);
-    void		(*fini)(void *);
+    krb5_error_code	(KRB5_LIB_CALL *init)(krb5_context, void **);
+    void		(KRB5_LIB_CALL *fini)(void *);
 } krb5plugin_db_ftable;
 
 #endif /* HEIMDAL_KRB5_DB_PLUGIN_H */

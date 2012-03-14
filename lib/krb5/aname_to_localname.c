@@ -36,9 +36,9 @@
 #include "db_plugin.h"
 
 /* Default plugin (DB using binary search of sorted text file) follows */
-static krb5_error_code an2ln_def_plug_init(krb5_context, void **);
-static void an2ln_def_plug_fini(void *);
-static krb5_error_code an2ln_def_plug_an2ln(void *, krb5_context, const char *,
+static krb5_error_code KRB5_LIB_CALL an2ln_def_plug_init(krb5_context, void **);
+static void KRB5_LIB_CALL an2ln_def_plug_fini(void *);
+static krb5_error_code KRB5_LIB_CALL an2ln_def_plug_an2ln(void *, krb5_context, const char *,
 					    krb5_const_principal, set_result_f,
 					    void *);
 
@@ -349,14 +349,14 @@ krb5_aname_to_localname(krb5_context context,
     return ret;
 }
 
-static krb5_error_code
+static krb5_error_code KRB5_LIB_CALL
 an2ln_def_plug_init(krb5_context context, void **ctx)
 {
     *ctx = NULL;
     return 0;
 }
 
-static void
+static void KRB5_LIB_CALL
 an2ln_def_plug_fini(void *ctx)
 {
 }
@@ -369,7 +369,7 @@ sorted_text_db_init_f(void *arg)
     (void) heim_db_register("sorted-text", NULL, &heim_sorted_text_file_dbtype);
 }
 
-static krb5_error_code
+static krb5_error_code KRB5_LIB_CALL
 an2ln_def_plug_an2ln(void *plug_ctx, krb5_context context,
 		     const char *rule,
 		     krb5_const_principal aname,

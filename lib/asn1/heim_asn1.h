@@ -34,7 +34,7 @@
 #ifndef __HEIM_ANY_H__
 #define __HEIM_ANY_H__ 1
 
-#include <stdint.h>
+#include <roken.h>
 
 int	encode_heim_any(unsigned char *, size_t, const heim_any *, size_t *);
 int	decode_heim_any(const unsigned char *, size_t, heim_any *, size_t *);

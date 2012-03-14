@@ -36,7 +36,7 @@
 #ifndef __DER_H__
 #define __DER_H__
 
-#include <stdint.h>
+#include <roken.h>
 
 typedef enum {
     ASN1_C_UNIV = 0,

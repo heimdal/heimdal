@@ -123,6 +123,8 @@ typedef int rk_socket_t;
 #endif
 
 #ifdef _MSC_VER
+#include <intsafe.h>
+
 /* Declarations for Microsoft Visual C runtime on Windows */
 
 #include<process.h>

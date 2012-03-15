@@ -129,6 +129,28 @@ sleep 2
 KRB5_CONFIG="${objdir}/krb5-slave.conf" \
 ${kadmin} -l get host/foo@${R} > /dev/null || exit 1
 
+echo "Rollover host keys"
+${kadmin} -l cpw -r --keepold host/foo@${R} || exit 1
+${kadmin} -l cpw -r --keepold host/foo@${R} || exit 1
+${kadmin} -l cpw -r --keepold host/foo@${R} || exit 1
+sleep 2
+KRB5_CONFIG="${objdir}/krb5-slave.conf" \
+${kadmin} -l get host/foo@${R} | \
+    ${EGREP} Keytypes: | cut -d: -f2 | tr ' ' '
+' | sed 's/^.*[[]\(.*\)[]].*$/\1/' | grep '[0-9]' | sort -nu | tr -d '
+' | ${EGREP} 1234 > /dev/null || exit 1
+
+echo "Delete 3DES keys"
+${kadmin} -l del_enctype host/foo@${R} des3-cbc-sha1
+KRB5_CONFIG="${objdir}/krb5-slave.conf" \
+${kadmin} -l get host/foo@${R} | \
+    ${EGREP} Keytypes: | cut -d: -f2 | tr ' ' '
+' | sed 's/^.*[[]\(.*\)[]].*$/\1/' | grep '[0-9]' | sort -nu | tr -d '
+' | ${EGREP} 1234 > /dev/null || exit 1
+KRB5_CONFIG="${objdir}/krb5-slave.conf" \
+${kadmin} -l get host/foo@${R} | \
+    ${EGREP} 'Keytypes:.*des3-cbc-sha1' > /dev/null && exit 1
+
 echo "Rename host"
 ${kadmin} -l rename host/foo@${R} host/bar@${R} || exit 1
 sleep 2

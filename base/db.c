@@ -94,6 +94,7 @@ struct heim_type_data db_object = {
     db_dealloc,
     NULL,
     NULL,
+    NULL,
     NULL
 };
 

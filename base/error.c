@@ -72,7 +72,8 @@ struct heim_type_data _heim_error_object = {
     error_dealloc,
     NULL,
     error_cmp,
-    error_hash
+    error_hash,
+    NULL
 };
 
 heim_error_t

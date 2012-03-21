@@ -80,7 +80,8 @@ struct heim_type_data _heim_data_object = {
     data_dealloc,
     NULL,
     data_cmp,
-    data_hash
+    data_hash,
+    NULL
 };
 
 /**

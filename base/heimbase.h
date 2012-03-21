@@ -177,6 +177,7 @@ heim_string_t heim_string_ref_create(const char *, heim_string_free_f_t);
 heim_string_t heim_string_create_with_bytes(const void *, size_t);
 heim_string_t heim_string_ref_create_with_bytes(const void *, size_t,
 						heim_string_free_f_t);
+heim_string_t heim_string_create_with_format(const char *, ...);
 heim_tid_t heim_string_get_type_id(void);
 const char * heim_string_get_utf8(heim_string_t);
 
@@ -336,7 +337,7 @@ typedef struct heim_auto_release * heim_auto_release_t;
 
 heim_auto_release_t heim_auto_release_create(void);
 void heim_auto_release_drain(heim_auto_release_t);
-void heim_auto_release(heim_object_t);
+heim_object_t heim_auto_release(heim_object_t);
 
 /*
  * JSON
@@ -361,6 +362,13 @@ heim_object_t heim_json_create_with_bytes(const void *, size_t, size_t,
 heim_string_t heim_serialize(heim_object_t, heim_json_flags_t flags,
 			     heim_error_t *);
 
+
+/*
+ * Debug
+ */
+
+heim_string_t
+heim_description(heim_object_t ptr);
 
 /*
  * Binary search.

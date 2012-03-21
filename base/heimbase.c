@@ -138,6 +138,20 @@ heim_release(void *ptr)
 	heim_abort("over release");
 }
 
+/**
+ * If used require wrapped in autorelease pool
+ */
+
+heim_string_t
+heim_description(heim_object_t ptr)
+{
+    struct heim_base *p = PTR2BASE(ptr);
+    if (p->isa->desc == NULL)
+	return heim_auto_release(heim_string_ref_create(p->isa->name, NULL));
+    return heim_auto_release(p->isa->desc(ptr));
+}
+
+
 void
 _heim_make_permanent(heim_object_t ptr)
 {
@@ -254,6 +268,7 @@ struct heim_type_data memory_object = {
     memory_dealloc,
     NULL,
     NULL,
+    NULL,
     NULL
 };
 
@@ -290,7 +305,8 @@ _heim_create_type(const char *name,
 		  heim_type_dealloc dealloc,
 		  heim_type_copy copy,
 		  heim_type_cmp cmp,
-		  heim_type_hash hash)
+		  heim_type_hash hash,
+		  heim_type_description desc)
 {
     heim_type_t type;
 
@@ -305,6 +321,7 @@ _heim_create_type(const char *name,
     type->copy = copy;
     type->cmp = cmp;
     type->hash = hash;
+    type->desc = desc;
 
     return type;
 }
@@ -509,7 +526,8 @@ static struct heim_type_data _heim_autorel_object = {
     autorel_dealloc,
     NULL,
     autorel_cmp,
-    autorel_hash
+    autorel_hash,
+    NULL
 };
 
 /**
@@ -548,7 +566,7 @@ heim_auto_release_create(void)
  * @param ptr object
  */
 
-void
+heim_object_t
 heim_auto_release(heim_object_t ptr)
 {
     struct heim_base *p = PTR2BASE(ptr);
@@ -556,7 +574,7 @@ heim_auto_release(heim_object_t ptr)
     heim_auto_release_t ar;
 
     if (ptr == NULL || heim_base_is_tagged(ptr))
-	return;
+	return ptr;
 
     /* drop from old pool */
     if ((ar = p->autorelpool) != NULL) {
@@ -573,6 +591,8 @@ heim_auto_release(heim_object_t ptr)
     HEIM_TAILQ_INSERT_HEAD(&ar->pool, p, autorel);
     p->autorelpool = ar;
     HEIMDAL_MUTEX_unlock(&ar->pool_mutex);
+
+    return ptr;
 }
 
 /**

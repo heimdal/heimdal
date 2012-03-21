@@ -63,6 +63,7 @@ struct heim_type_data array_object = {
     array_dealloc,
     NULL,
     NULL,
+    NULL,
     NULL
 };
 

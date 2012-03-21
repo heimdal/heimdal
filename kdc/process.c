@@ -199,6 +199,7 @@ krb5_kdc_process_request(krb5_context context,
     unsigned int i;
     krb5_data req_buffer;
     int claim = 0;
+    heim_auto_release_t pool = heim_auto_release_create();
 
     req_buffer.data = buf;
     req_buffer.length = len;
@@ -210,9 +211,13 @@ krb5_kdc_process_request(krb5_context context,
 	if (claim) {
 	    if (services[i].flags & KS_NO_LENGTH)
 		*prependlength = 0;
+
+	    heim_auto_release_drain(pool);
 	    return ret;
 	}
     }
+
+    heim_auto_release_drain(pool);
 
     return -1;
 }

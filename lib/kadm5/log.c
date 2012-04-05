@@ -701,26 +701,12 @@ kadm5_log_replay_modify (kadm5_server_context *context,
 
 	/*
 	 * We don't need to do anything about key history here because
-	 * we always log KADM5_TL_DATA when we change keys/passwords, so
-	 * the code below this will handle key history implicitly.
-	 * However, if we had to, the code to handle key history here
-	 * would look like this:
-	 *
-	 * HDB_extension *ext;
-	 * ...
-	 * ext = hdb_find_extension(&log_ent.entry,
-	 *                          choice_HDB_extension_data_hist_keys);
-	 * if (ext);
-	 *    ret = hdb_replace_extension(context->context, &ent.entry, ext);
-	 * else
-	 *    ret = hdb_clear_extension(context->context, &ent.entry,
-	 *                              choice_HDB_extension_data_hist_keys);
-	 *
-	 * Maybe we should do this here anyways, wasteful as it would
-	 * be, as a defensive programming measure?  For now we heim_assert().
+	 * the log entry contains a complete entry, including hdb
+	 * extensions.  We do need to make sure that KADM5_TL_DATA is in
+	 * the mask though, since that's what it takes to update the
+	 * extensions (see below).
 	 */
-	heim_assert((mask & KADM5_TL_DATA),
-		    "Wouldn't log and replay key history");
+	mask |= KADM5_TL_DATA;
 
 	for (i = 0; i < ent.entry.keys.len; ++i)
 	    free_Key(&ent.entry.keys.val[i]);
@@ -1015,9 +1001,13 @@ static HEIMDAL_MUTEX signal_mutex = HEIMDAL_MUTEX_INITIALIZER;
 const char *
 kadm5_log_signal_socket(krb5_context context)
 {
+    int ret = 0;
+
     HEIMDAL_MUTEX_lock(&signal_mutex);
     if (!default_signal)
-	asprintf(&default_signal, "%s/signal", hdb_db_dir(context));
+	ret = asprintf(&default_signal, "%s/signal", hdb_db_dir(context));
+    if (ret == -1)
+	default_signal = NULL;
     HEIMDAL_MUTEX_unlock(&signal_mutex);
 
     return krb5_config_get_string_default(context,

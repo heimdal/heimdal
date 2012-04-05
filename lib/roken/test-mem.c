@@ -70,13 +70,16 @@ static RETSIGTYPE
 segv_handler(int sig)
 {
     int fd;
+    ssize_t ret;
     char msg[] = "SIGSEGV i current test: ";
 
     fd = open("/dev/stdout", O_WRONLY, 0600);
     if (fd >= 0) {
-	(void)write(fd, msg, sizeof(msg) - 1);
-	(void)write(fd, testname, strlen(testname));
-	(void)write(fd, "\n", 1);
+	ret = write(fd, msg, sizeof(msg) - 1);
+	if (ret != -1)
+	    ret = write(fd, testname, strlen(testname));
+	if (ret != -1)
+	    ret = write(fd, "\n", 1);
 	close(fd);
     }
     _exit(1);

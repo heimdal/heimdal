@@ -110,13 +110,13 @@ perf_stop(struct perf *perf)
     if (perf->as_req) {
 	double as_ps = 0.0;
 	as_ps = (perf->as_req * USEC_PER_SEC) / (double)((perf->stop.tv_sec * USEC_PER_SEC) + perf->stop.tv_usec);
-	printf("as-req/s %.2lf\n", as_ps);
+	printf("as-req/s %.2lf  (total %lu requests)\n", as_ps, perf->as_req);
     }
 	    
     if (perf->tgs_req) {
 	double tgs_ps = 0.0;
 	tgs_ps = (perf->tgs_req * USEC_PER_SEC) / (double)((perf->stop.tv_sec * USEC_PER_SEC) + perf->stop.tv_usec);
-	printf("tgs-req/s %.2lf\n", tgs_ps);
+	printf("tgs-req/s %.2lf (total %lu requests)\n", tgs_ps, perf->tgs_req);
     }
 }
 
@@ -265,6 +265,61 @@ eval_kinit(heim_dict_t o)
 	krb5_cc_close(kdc_context, fast_cc);
 }
 
+/*
+ *
+ */
+
+static void
+eval_kgetcred(heim_dict_t o)
+{
+    heim_string_t server, ccache;
+    krb5_get_creds_opt opt;
+    heim_bool_t nostore;
+    krb5_error_code ret;
+    krb5_ccache cc = NULL;
+    krb5_principal s;
+    krb5_creds *out = NULL;
+
+    if (ptop)
+	ptop->tgs_req++;
+
+    server = heim_dict_get_value(o, HSTR("server"));
+    if (server == NULL)
+	krb5_errx(kdc_context, 1, "no server");
+
+    ccache = heim_dict_get_value(o, HSTR("ccache"));
+    if (ccache == NULL)
+	krb5_errx(kdc_context, 1, "no ccache");
+
+    nostore = heim_dict_get_value(o, HSTR("nostore"));
+    if (nostore == NULL)
+	nostore = heim_bool_create(1);
+
+    ret = krb5_cc_resolve(kdc_context, heim_string_get_utf8(ccache), &cc);
+    if (ret)
+	krb5_err(kdc_context, 1, ret, "krb5_cc_resolve");
+
+    ret = krb5_parse_name(kdc_context, heim_string_get_utf8(server), &s);
+    if (ret)
+	krb5_err(kdc_context, 1, ret, "krb5_parse_name");
+
+    ret = krb5_get_creds_opt_alloc(kdc_context, &opt);
+    if (ret)
+	krb5_err(kdc_context, 1, ret, "krb5_get_creds_opt_alloc");
+
+    if (heim_bool_val(nostore))
+	krb5_get_creds_opt_add_options(kdc_context, opt, KRB5_GC_NO_STORE);
+
+    ret = krb5_get_creds(kdc_context, opt, cc, s, &out);
+    if (ret)
+	krb5_err(kdc_context, 1, ret, "krb5_get_creds");
+    
+    krb5_free_creds(kdc_context, out);
+    krb5_free_principal(kdc_context, s);
+    krb5_get_creds_opt_free(kdc_context, opt);
+    krb5_cc_close(kdc_context, cc);
+}
+
 
 /*
  *
@@ -316,6 +371,8 @@ eval_object(heim_object_t o)
 	    eval_repeat(o);
 	} else if (strcmp(op, "kinit") == 0) {
 	    eval_kinit(o);
+	} else if (strcmp(op, "kgetcred") == 0) {
+	    eval_kgetcred(o);
 	} else if (strcmp(op, "kdestroy") == 0) {
 	    eval_kdestroy(o);
 	} else {
@@ -363,7 +420,7 @@ main(int argc, char **argv)
 	if (rk_undumpdata(argv[0], &buf, &size))
 	    errx(1, "undumpdata: %s", argv[0]);
 	
-	o = heim_json_create_with_bytes(buf, size, NULL);
+	o = heim_json_create_with_bytes(buf, size, 10, 0, NULL);
 	free(buf);
 	if (o == NULL)
 	    errx(1, "heim_json");

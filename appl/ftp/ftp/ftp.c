@@ -1708,9 +1708,11 @@ reset (int argc, char **argv)
 
     FD_ZERO (&mask);
     while (nfnd > 0) {
-	if (fileno (cin) >= FD_SETSIZE)
+	int fd = fileno(cin);
+
+	if (fd >= FD_SETSIZE)
 	    errx (1, "fd too large");
-	FD_SET (fileno (cin), &mask);
+	FD_SET (fd, &mask);
 	if ((nfnd = empty (&mask, 0)) < 0) {
 	    warn ("reset");
 	    code = -1;
@@ -1772,6 +1774,7 @@ abort_remote (FILE * din)
     char buf[BUFSIZ];
     int nfnd;
     fd_set mask;
+    int din_fd = -1;
 
     /*
      * send IAC in urgent mode instead of DM because 4.3BSD places oob mark
@@ -1790,9 +1793,10 @@ abort_remote (FILE * din)
 	errx (1, "fd too large");
     FD_SET (fileno (cin), &mask);
     if (din) {
-	if (fileno (din) >= FD_SETSIZE)
+	din_fd = fileno (din);
+	if (din_fd >= FD_SETSIZE)
 	    errx (1, "fd too large");
-	FD_SET (fileno (din), &mask);
+	FD_SET (din_fd, &mask);
     }
     if ((nfnd = empty (&mask, 10)) <= 0) {
 	if (nfnd < 0) {
@@ -1802,8 +1806,8 @@ abort_remote (FILE * din)
 	    code = -1;
 	lostpeer (0);
     }
-    if (din && FD_ISSET (fileno (din), &mask)) {
-	while (read (fileno (din), buf, BUFSIZ) > 0)
+    if (din && FD_ISSET (din_fd, &mask)) {
+	while (read (din_fd, buf, BUFSIZ) > 0)
 	     /* LOOP */ ;
     }
     if (getreply (0) == ERROR && code == 552) {

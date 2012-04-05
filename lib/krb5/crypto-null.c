@@ -45,6 +45,9 @@ static struct _krb5_key_type keytype_null = {
     0,
     NULL,
     NULL,
+    NULL,
+    NULL,
+    NULL,
     NULL
 };
 

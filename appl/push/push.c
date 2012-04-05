@@ -223,7 +223,7 @@ doit(int s,
     unsigned sent_xdele = 0;
     int out_fd;
     char from_line[128];
-    size_t from_line_length;
+    ssize_t from_line_length;
     time_t now;
     struct write_state write_state;
     unsigned int numheaders = 1;

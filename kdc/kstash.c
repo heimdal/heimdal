@@ -66,6 +66,7 @@ main(int argc, char **argv)
 {
     char buf[1024];
     krb5_error_code ret;
+    int aret;
 
     krb5_enctype enctype;
 
@@ -84,8 +85,11 @@ main(int argc, char **argv)
 	krb5_errx(context, 1, "random-key and master-key-fd "
 		  "is mutual exclusive");
 
-    if (keyfile == NULL)
-	asprintf(&keyfile, "%s/m-key", hdb_db_dir(context));
+    if (keyfile == NULL) {
+	aret = asprintf(&keyfile, "%s/m-key", hdb_db_dir(context));
+	if (aret == -1)
+	    krb5_errx(context, 1, "out of memory");
+    }
 
     ret = krb5_string_to_enctype(context, enctype_str, &enctype);
     if(ret)
@@ -132,9 +136,20 @@ main(int argc, char **argv)
     }
 
     {
-	char *new, *old;
-	asprintf(&old, "%s.old", keyfile);
-	asprintf(&new, "%s.new", keyfile);
+	char *new = NULL, *old = NULL;
+
+	aret = asprintf(&old, "%s.old", keyfile);
+	if (aret == -1) {
+	    old = NULL;
+	    ret = ENOMEM;
+	    goto out;
+	}
+	aret = asprintf(&new, "%s.new", keyfile);
+	if (aret == -1) {
+	    new = NULL;
+	    ret = ENOMEM;
+	    goto out;
+	}
 	if(unlink(new) < 0 && errno != ENOENT) {
 	    ret = errno;
 	    goto out;

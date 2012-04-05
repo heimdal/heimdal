@@ -646,7 +646,7 @@ command = {
 	}
 	option = {
 		long = "pk-init-principal"
-		type = "string"
+		type = "strings"
 		help = "PK-INIT principal (for SAN)"
 	}
 	option = {

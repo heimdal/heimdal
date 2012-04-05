@@ -75,6 +75,8 @@ while(<>) {
     if ("$(ENV_HACK)") { print "#define ENV_HACK 1\n"; }
     if ("$(HAVE_KCM)") { print "#define HAVE_KCM 1\n"; }
     if ("$(HAVE_SCC)") { print "#define HAVE_SCC 1\n"; }
+    if ("$(HAVE_STDINT_H)") { print "#define HAVE_STDINT_H 1\n"; }
+    if ("$(HAVE_INT64_T)") { print "#define HAVE_INT64_T 1\n"; }
     if ("$(DIR_hdbdir)") { print "#define HDB_DB_DIR \"".'$(DIR_hdbdir)'."\"\n"; }
     if ("$(HAVE_MSLSA_CACHE)") { print "#define HAVE_MSLSA_CACHE 1\n"; }
     if ("$(NO_LOCALNAME)") { print "#define NO_LOCALNAME 1\n"; }

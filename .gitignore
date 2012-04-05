@@ -160,7 +160,7 @@ asn1_*.[cx]
 /kpasswd/kpasswdd
 /kuser/copy_cred_cache
 /kuser/generate-requests
-/kuser/kcc
+/kuser/heimtools
 /kuser/kdecode_ticket
 /kuser/kdestroy
 /kuser/kdigest

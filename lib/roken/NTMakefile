@@ -94,11 +94,14 @@ libroken_la_OBJS =			\
 	$(OBJ)\strerror_r.obj		\
 	$(OBJ)\strlcat.obj		\
 	$(OBJ)\strlcpy.obj		\
+	$(OBJ)\strndup.obj		\
 	$(OBJ)\strpool.obj		\
 	$(OBJ)\strptime.obj		\
 	$(OBJ)\strsep.obj		\
 	$(OBJ)\strsep_copy.obj		\
 	$(OBJ)\strtok_r.obj		\
+	$(OBJ)\strtoll.obj		\
+	$(OBJ)\strtoull.obj		\
 	$(OBJ)\syslogc.obj		\
 	$(OBJ)\timegm.obj		\
 	$(OBJ)\timeval.obj		\
@@ -161,6 +164,10 @@ INCFILES = 			\
 	$(INCDIR)\syslog.h	\
 	$(INCDIR)\vis.h		\
 	$(INCDIR)\xdbm.h
+
+#!ifndef HAVE_STDINT_H
+#INCFILES += $(INCDIR)\stdint.h
+#!endif
 
 clean::
 	-$(RM) $(XHEADERS)

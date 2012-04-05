@@ -47,7 +47,10 @@ struct hx509_lock_data {
 };
 
 static struct hx509_lock_data empty_lock_data = {
-    { 0, NULL }
+    { 0, NULL },
+    NULL,
+    NULL,
+    NULL
 };
 
 hx509_lock _hx509_empty_lock = &empty_lock_data;

@@ -40,7 +40,7 @@ static int
 login_conf_init(void)
 {
     char *files[] = { _PATH_LOGIN_CONF, NULL };
-    return cgetent(&confbuf, files, "default");
+    return cgetent(&confbuf, (void *)files, "default");
 }
 
 char *

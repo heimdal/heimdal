@@ -77,9 +77,9 @@
  */
 typedef struct krb5plugin_kuserok_ftable_desc {
     int			minor_version;
-    krb5_error_code	(*init)(krb5_context, void **);
-    void		(*fini)(void *);
-    krb5_error_code	(*kuserok)(void *, krb5_context, const char *,
+    krb5_error_code	(KRB5_LIB_CALL *init)(krb5_context, void **);
+    void		(KRB5_LIB_CALL *fini)(void *);
+    krb5_error_code	(KRB5_LIB_CALL *kuserok)(void *, krb5_context, const char *,
 				   unsigned int, const char *, const char *,
 				   krb5_const_principal,
 				   krb5_boolean *);

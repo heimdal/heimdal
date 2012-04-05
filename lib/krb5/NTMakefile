@@ -66,6 +66,7 @@ libkrb5_OBJS =			\
 	$(OBJ)\crypto-pk.obj		    \
 	$(OBJ)\crypto-rand.obj		    \
 	$(OBJ)\data.obj			    \
+	$(OBJ)\db_plugin.obj		    \
 	$(OBJ)\deprecated.obj		    \
 	$(OBJ)\digest.obj		    \
 	$(OBJ)\dll.obj			    \
@@ -329,8 +330,13 @@ $(OBJ)\k524_err.c $(OBJ)\k524_err.h: k524_err.et
 #----------------------------------------------------------------------
 # libkrb5
 
-$(LIBKRB5): $(libkrb5_OBJS) $(libkrb5_gen_OBJS)
-	$(LIBCON)
+$(LIBKRB5): $(libkrb5_OBJS)  $(libkrb5_gen_OBJS)
+	$(LIBCON_C) -OUT:$@ $(LIBHEIMBASE) @<<
+$(libkrb5_OBJS: =
+)
+$(libkrb5_gen_OBJS: =
+)
+<<
 
 all:: $(LIBKRB5)
 

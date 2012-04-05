@@ -309,7 +309,6 @@ scc_alloc(krb5_context context, const char *name)
 	char *file;
 
 	if (*name == '\0') {
-	    krb5_error_code ret;
 	    ret = get_def_name(context, &s->name);
 	    if (ret)
 		s->name = strdup(SCACHE_DEF_NAME);
@@ -1445,7 +1444,10 @@ KRB5_LIB_VARIABLE const krb5_cc_ops krb5_scc_ops = {
     scc_end_cache_get,
     scc_move,
     scc_get_default_name,
-    scc_set_default
+    scc_set_default,
+    NULL,
+    NULL,
+    NULL
 };
 
 #endif

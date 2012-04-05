@@ -51,38 +51,38 @@ static struct getargs args[] = {
        "Forward forwardable credentials", NULL },
     { "forwardable",'G',arg_negative_flag,&forwardable,
        "Don't forward forwardable credentials", NULL },
-    { "help", 'h', arg_flag, &help_flag },
-    { "version", 0, arg_flag, &version_flag }
+    { "help", 'h', arg_flag, &help_flag, NULL, NULL },
+    { "version", 0, arg_flag, &version_flag, NULL, NULL }
 };
 
 static int num_args = sizeof(args) / sizeof(args[0]);
 
 static void
-usage(int code, struct getargs *args, int num_args)
+usage(int code, struct getargs *inargs, int num_inargs)
 {
-    arg_printusage(args, num_args, NULL, "hosts");
+    arg_printusage(inargs, num_inargs, NULL, "hosts");
     exit(code);
 }
 
 static int
-client_setup(krb5_context *context, int *argc, char **argv)
+client_setup(krb5_context *ctx, int *argc, char **argv)
 {
-    int optind = 0;
+    int optidx = 0;
     int port = 0;
     int status;
 
     setprogname (argv[0]);
 
-    status = krb5_init_context (context);
+    status = krb5_init_context (ctx);
     if (status)
 	errx(1, "krb5_init_context failed: %d", status);
 
-    forwardable = krb5_config_get_bool (*context, NULL,
+    forwardable = krb5_config_get_bool (*ctx, NULL,
 					"libdefaults",
 					"forwardable",
 					NULL);
 
-    if (getarg (args, num_args, *argc, argv, &optind))
+    if (getarg (args, num_args, *argc, argv, &optidx))
 	usage(1, args, num_args);
 
     if(help_flag)
@@ -107,11 +107,11 @@ client_setup(krb5_context *context, int *argc, char **argv)
     }
 
     if (port == 0)
-	port = krb5_getportbyname (*context, KF_PORT_NAME, "tcp", KF_PORT_NUM);
+	port = krb5_getportbyname (*ctx, KF_PORT_NAME, "tcp", KF_PORT_NUM);
 
-    if(*argc - optind < 1)
+    if(*argc - optidx < 1)
         usage(1, args, num_args);
-    *argc = optind;
+    *argc = optidx;
 
     return port;
 }
@@ -122,7 +122,7 @@ client_setup(krb5_context *context, int *argc, char **argv)
  */
 
 static int
-proto (int sock, const char *hostname, const char *service,
+proto (int sock, const char *hostname, const char *svc,
        char *message, size_t len)
 {
     krb5_auth_context auth_context;
@@ -153,7 +153,7 @@ proto (int sock, const char *hostname, const char *service,
 
     status = krb5_sname_to_principal (context,
 				      hostname,
-				      service,
+				      svc,
 				      KRB5_NT_SRV_HST,
 				      &server);
     if (status) {
@@ -281,7 +281,7 @@ proto (int sock, const char *hostname, const char *service,
 }
 
 static int
-doit (const char *hostname, int port, const char *service,
+doit (const char *hostname, int port, const char *svc,
       char *message, size_t len)
 {
     struct addrinfo *ai, *a;
@@ -312,7 +312,7 @@ doit (const char *hostname, int port, const char *service,
 	    continue;
 	}
 	freeaddrinfo (ai);
-	return proto (s, hostname, service, message, len);
+	return proto (s, hostname, svc, message, len);
     }
     warnx ("failed to contact %s", hostname);
     freeaddrinfo (ai);

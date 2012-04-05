@@ -174,12 +174,11 @@ loop (unsigned char *buf, size_t len, int indent)
 		printf ("(length %lu), ", (unsigned long)length);
 
 		if (inner_flag) {
-		    Der_class class;
-		    Der_type type;
-		    unsigned int tag;
+		    Der_class c;
+		    Der_type ty;
+		    unsigned int ta;
 
-		    ret = der_get_tag(str.data, str.length,
-				      &class, &type, &tag, &sz);
+		    ret = der_get_tag(str.data, str.length, &c, &ty, &ta, &sz);
 		    if (ret || sz > str.length ||
 			type != CONS || tag != UT_Sequence)
 			goto just_an_octet_string;
@@ -315,10 +314,11 @@ doit (const char *filename)
 static int version_flag;
 static int help_flag;
 struct getargs args[] = {
-    { "indent", 0, arg_negative_flag, &indent_flag },
-    { "inner", 0, arg_flag, &inner_flag, "try to parse inner structures of OCTET STRING" },
-    { "version", 0, arg_flag, &version_flag },
-    { "help", 0, arg_flag, &help_flag }
+    { "indent", 0, arg_negative_flag, &indent_flag, NULL, NULL },
+    { "inner", 0, arg_flag, &inner_flag,
+      "try to parse inner structures of OCTET STRING", NULL },
+    { "version", 0, arg_flag, &version_flag, NULL, NULL },
+    { "help", 0, arg_flag, &help_flag, NULL, NULL }
 };
 int num_args = sizeof(args) / sizeof(args[0]);
 

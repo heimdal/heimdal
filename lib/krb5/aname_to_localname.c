@@ -33,93 +33,16 @@
 
 #include "krb5_locl.h"
 #include "an2ln_plugin.h"
+#include "db_plugin.h"
 
 /* Default plugin (DB using binary search of sorted text file) follows */
-static krb5_error_code
-an2ln_def_plug_init(krb5_context context, void **ctx)
-{
-    *ctx = NULL;
-    return 0;
-}
+static krb5_error_code KRB5_LIB_CALL an2ln_def_plug_init(krb5_context, void **);
+static void KRB5_LIB_CALL an2ln_def_plug_fini(void *);
+static krb5_error_code KRB5_LIB_CALL an2ln_def_plug_an2ln(void *, krb5_context, const char *,
+					    krb5_const_principal, set_result_f,
+					    void *);
 
-static void
-an2ln_def_plug_fini(void *ctx)
-{
-}
-
-static krb5_error_code
-an2ln_def_plug_an2ln(void *plug_ctx, krb5_context context,
-		     const char *rule,
-		     krb5_const_principal aname,
-		     set_result_f set_res_f, void *set_res_ctx)
-{
-    krb5_error_code ret;
-    const char *an2ln_db_fname;
-    const char *ext;
-    bsearch_file_handle bfh = NULL;
-    char *unparsed = NULL;
-    char *value = NULL;
-
-    if (strncmp(rule, "DB:", strlen("DB:") != 0))
-	return KRB5_PLUGIN_NO_HANDLE;
-
-    /*
-     * This plugin implements a binary search of a sorted text file
-     * (sorted in the C locale).  We really need to know that the file
-     * is text, so we implement a trivial heuristic: the file name must
-     * end in .txt.
-     */
-    an2ln_db_fname = &rule[strlen("DB:")];
-    if (!*an2ln_db_fname)
-	return KRB5_PLUGIN_NO_HANDLE;
-    if (strlen(an2ln_db_fname) < (strlen(".txt") + 1))
-	return KRB5_PLUGIN_NO_HANDLE;
-    ext = strrchr(an2ln_db_fname, '.');
-    if (!ext || strcmp(ext, ".txt") != 0)
-	return KRB5_PLUGIN_NO_HANDLE;
-
-    ret = krb5_unparse_name(context, aname, &unparsed);
-    if (ret)
-	return ret;
-
-    ret = __bsearch_file_open(an2ln_db_fname, 0, 0, &bfh, NULL);
-    if (ret) {
-	krb5_set_error_message(context, ret,
-			       N_("Couldn't open aname2lname-text-db", ""));
-	ret = KRB5_PLUGIN_NO_HANDLE;
-	goto cleanup;
-    }
-
-    /* Binary search; file should be sorted (in C locale) */
-    ret = __bsearch_file(bfh, unparsed, &value, NULL, NULL, NULL);
-    if (ret > 0) {
-	krb5_set_error_message(context, ret,
-			       N_("Couldn't map principal name to username", ""));
-	ret = KRB5_PLUGIN_NO_HANDLE;
-	goto cleanup;
-    } else if (ret < 0) {
-	ret = KRB5_PLUGIN_NO_HANDLE;
-	goto cleanup;
-    } else {
-	/* ret == 0 -> found */
-	if (!value || !*value) {
-	    krb5_set_error_message(context, ret,
-				   N_("Principal mapped to empty username", ""));
-	    ret = KRB5_NO_LOCALNAME;
-	    goto cleanup;
-	}
-	ret = set_res_f(set_res_ctx, value);
-    }
-
-cleanup:
-    if (bfh)
-	__bsearch_file_close(&bfh);
-    free(unparsed);
-    free(value);
-    return ret;
-}
-
-krb5plugin_an2ln_ftable an2ln_def_plug = {
+static krb5plugin_an2ln_ftable an2ln_def_plug = {
     0,
     an2ln_def_plug_init,
     an2ln_def_plug_fini,
@@ -431,3 +354,98 @@ krb5_aname_to_localname(krb5_context context,
     krb5_config_free_strings(rules);
     return ret;
 }
+
+static krb5_error_code KRB5_LIB_CALL
+an2ln_def_plug_init(krb5_context context, void **ctx)
+{
+    *ctx = NULL;
+    return 0;
+}
+
+static void KRB5_LIB_CALL
+an2ln_def_plug_fini(void *ctx)
+{
+}
+
+static heim_base_once_t sorted_text_db_init_once = HEIM_BASE_ONCE_INIT;
+
+static void
+sorted_text_db_init_f(void *arg)
+{
+    (void) heim_db_register("sorted-text", NULL, &heim_sorted_text_file_dbtype);
+}
+
+static krb5_error_code KRB5_LIB_CALL
+an2ln_def_plug_an2ln(void *plug_ctx, krb5_context context,
+		     const char *rule,
+		     krb5_const_principal aname,
+		     set_result_f set_res_f, void *set_res_ctx)
+{
+    krb5_error_code ret;
+    const char *an2ln_db_fname;
+    heim_db_t dbh = NULL;
+    heim_dict_t db_options;
+    heim_data_t k, v;
+    heim_error_t error;
+    char *unparsed = NULL;
+    char *value = NULL;
+
+    _krb5_load_db_plugins(context);
+    heim_base_once_f(&sorted_text_db_init_once, NULL, sorted_text_db_init_f);
+
+    if (strncmp(rule, "DB:", strlen("DB:") != 0))
+	return KRB5_PLUGIN_NO_HANDLE;
+
+    an2ln_db_fname = &rule[strlen("DB:")];
+    if (!*an2ln_db_fname)
+	return KRB5_PLUGIN_NO_HANDLE;
+
+    ret = krb5_unparse_name(context, aname, &unparsed);
+    if (ret)
+	return ret;
+
+    db_options = heim_dict_create(11);
+    if (db_options != NULL)
+	heim_dict_set_value(db_options, HSTR("read-only"),
+			    heim_number_create(1));
+    dbh = heim_db_create(NULL, an2ln_db_fname, db_options, &error);
+    if (dbh == NULL) {
+	krb5_set_error_message(context, heim_error_get_code(error),
+			       N_("Couldn't open aname2lname-text-db", ""));
+	ret = KRB5_PLUGIN_NO_HANDLE;
+	goto cleanup;
+    }
+
+    /* Binary search; file should be sorted (in C locale) */
+    k = heim_data_ref_create(unparsed, strlen(unparsed), NULL);
+    if (k == NULL)
+	return krb5_enomem(context);
+    v = heim_db_copy_value(dbh, NULL, k, &error);
+    heim_release(k);
+    if (v == NULL && error != NULL) {
+	krb5_set_error_message(context, heim_error_get_code(error),
+			       N_("Lookup in aname2lname-text-db failed", ""));
+	ret = heim_error_get_code(error);
+	goto cleanup;
+    } else if (v == NULL) {
+	ret = KRB5_PLUGIN_NO_HANDLE;
+	goto cleanup;
+    } else {
+	/* found */
+	if (heim_data_get_length(v) == 0) {
+	    krb5_set_error_message(context, ret,
+				   N_("Principal mapped to empty username", ""));
+	    ret = KRB5_NO_LOCALNAME;
+	    goto cleanup;
+	}
+	ret = set_res_f(set_res_ctx, heim_data_get_ptr(v));
+	heim_release(v);
+    }
+
+cleanup:
+    heim_release(dbh);
+    free(unparsed);
+    free(value);
+    return ret;
+}
+

@@ -186,7 +186,7 @@ add_pkinit_acl(krb5_context contextp, kadm5_principal_ent_rec *princ,
 }
 
 static void
-add_kvno_diff(krb5_context context, kadm5_principal_ent_rec *princ,
+add_kvno_diff(krb5_context contextp, kadm5_principal_ent_rec *princ,
 	      int is_svc_diff, krb5_kvno kvno_diff)
 {
     krb5_error_code ret;

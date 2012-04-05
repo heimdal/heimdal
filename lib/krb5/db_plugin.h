@@ -1,5 +1,5 @@
-/***********************************************************************
- * Copyright (c) 2010, Secure Endpoints Inc.
+/*
+ * Copyright (c) 2011, Secure Endpoints Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -26,11 +26,43 @@
  * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
  * OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
+/* $Id$ */
+
+#ifndef HEIMDAL_KRB5_DB_PLUGIN_H
+#define HEIMDAL_KRB5_DB_PLUGIN_H 1
+
+#define KRB5_PLUGIN_DB "krb5_db_plug"
+#define KRB5_PLUGIN_DB_VERSION_0 0
+
+/** @struct krb5plugin_db_ftable_desc
  *
- **********************************************************************/
+ * @brief Description of the krb5 DB plugin facility.
+ *
+ * The krb5_aname_to_lname(3) function's DB rule is pluggable.  The
+ * plugin is named KRB5_PLUGIN_DB ("krb5_db_plug"), with a single minor
+ * version, KRB5_PLUGIN_DB_VERSION_0 (0).
+ *
+ * The plugin consists of a data symbol referencing a structure of type
+ * krb5plugin_db_ftable_desc, with three fields:
+ *
+ * @param init          Plugin initialization function (see krb5-plugin(7))
+ *
+ * @param minor_version The plugin minor version number (0)
+ *
+ * @param fini          Plugin finalization function
+ *
+ * The init entry point is expected to call heim_db_register().  The
+ * fini entry point is expected to do nothing.
+ *
+ * @ingroup krb5_support
+ */
+typedef struct krb5plugin_db_ftable_desc {
+    int			minor_version;
+    krb5_error_code	(KRB5_LIB_CALL *init)(krb5_context, void **);
+    void		(KRB5_LIB_CALL *fini)(void *);
+} krb5plugin_db_ftable;
 
-#define RC_FILE_TYPE VFT_APP
-#define RC_FILE_DESC_0409 "Ticket tool"
-#define RC_FILE_ORIG_0409 "kcc.exe"
+#endif /* HEIMDAL_KRB5_DB_PLUGIN_H */
 
-#include "../windows/version.rc"

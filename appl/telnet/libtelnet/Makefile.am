@@ -4,6 +4,8 @@ include $(top_srcdir)/Makefile.am.common
 
 AM_CPPFLAGS += -I$(srcdir)/.. $(INCLUDE_hcrypto)
 
+WFLAGS += $(WFLAGS_LITE)
+
 noinst_LIBRARIES = libtelnet.a
 
 libtelnet_a_SOURCES = \

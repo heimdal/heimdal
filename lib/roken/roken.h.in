@@ -123,6 +123,8 @@ typedef int rk_socket_t;
 #endif
 
 #ifdef _MSC_VER
+#include <intsafe.h>
+
 /* Declarations for Microsoft Visual C runtime on Windows */
 
 #include<process.h>
@@ -1031,6 +1033,22 @@ mini_inetd (int, rk_socket_t *);
 #define localtime_r rk_localtime_r
 ROKEN_LIB_FUNCTION struct tm * ROKEN_LIB_CALL
 localtime_r(const time_t *, struct tm *);
+#endif
+
+#if !defined(HAVE_STRTOLL) || defined(NEED_STRTOLL_PROTO)
+#ifndef HAVE_STRTOLL
+#define strtoll rk_strtoll
+#endif
+ROKEN_LIB_FUNCTION long long ROKEN_LIB_CALL
+strtoll(const char * __restrict nptr, char ** __restrict endptr, int base);
+#endif
+
+#if !defined(HAVE_STRTOULL) || defined(NEED_STRTOULL_PROTO)
+#ifndef HAVE_STRTOULL
+#define strtoull rk_strtoull
+#endif
+ROKEN_LIB_FUNCTION unsigned long long ROKEN_LIB_CALL
+strtoull(const char * __restrict nptr, char ** __restrict endptr, int base);
 #endif
 
 #if !defined(HAVE_STRSVIS) || defined(NEED_STRSVIS_PROTO)

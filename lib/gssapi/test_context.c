@@ -501,7 +501,7 @@ usage (int ret)
 int
 main(int argc, char **argv)
 {
-    int optind = 0;
+    int optidx = 0;
     OM_uint32 min_stat, maj_stat;
     gss_ctx_id_t cctx, sctx;
     void *ctx;
@@ -519,7 +519,7 @@ main(int argc, char **argv)
 
     cctx = sctx = GSS_C_NO_CONTEXT;
 
-    if(getarg(args, sizeof(args) / sizeof(args[0]), argc, argv, &optind))
+    if(getarg(args, sizeof(args) / sizeof(args[0]), argc, argv, &optidx))
 	usage(1);
 
     if (help_flag)
@@ -530,8 +530,8 @@ main(int argc, char **argv)
 	exit(0);
     }
 
-    argc -= optind;
-    argv += optind;
+    argc -= optidx;
+    argv += optidx;
 
     if (argc != 1)
 	usage(1);
@@ -644,7 +644,7 @@ main(int argc, char **argv)
 
     /* XXX should be actual_mech */
     if (gss_oid_equal(mechoid, GSS_KRB5_MECHANISM)) {
-	time_t time;
+	time_t sc_time;
 	gss_buffer_desc authz_data;
 	gss_buffer_desc in, out1, out2;
 	krb5_keyblock *keyblock, *keyblock2;
@@ -685,15 +685,15 @@ main(int argc, char **argv)
 
  	maj_stat = gsskrb5_extract_authtime_from_sec_context(&min_stat,
 							     sctx,
-							     &time);
+							     &sc_time);
 	if (maj_stat != GSS_S_COMPLETE)
 	    errx(1, "gsskrb5_extract_authtime_from_sec_context failed: %s",
 		     gssapi_err(maj_stat, min_stat, actual_mech));
 
-	if (time > now)
+	if (sc_time > now)
 	    errx(1, "gsskrb5_extract_authtime_from_sec_context failed: "
 		 "time authtime is before now: %ld %ld",
-		 (long)time, (long)now);
+		 (long)sc_time, (long)now);
 
  	maj_stat = gsskrb5_extract_service_keyblock(&min_stat,
 						    sctx,

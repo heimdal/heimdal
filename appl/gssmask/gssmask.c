@@ -73,10 +73,13 @@ logmessage(struct client *c, const char *file, unsigned int lineno,
     char *message;
     va_list ap;
     int32_t ackid;
+    int ret;
 
     va_start(ap, fmt);
-    vasprintf(&message, fmt, ap);
+    ret = vasprintf(&message, fmt, ap);
     va_end(ap);
+    if (ret == -1)
+	errx(1, "out of memory");
 
     if (logfile)
 	fprintf(logfile, "%s:%u: %d %s\n", file, lineno, level, message);
@@ -643,6 +646,7 @@ HandleOP(GetVersionAndCapabilities)
 {
     int32_t cap = HAS_MONIKER;
     char name[256] = "unknown", *str;
+    int ret;
 
     if (targetname)
 	cap |= ISSERVER; /* is server */
@@ -657,7 +661,9 @@ HandleOP(GetVersionAndCapabilities)
     }
 #endif
 
-    asprintf(&str, "gssmask %s %s", PACKAGE_STRING, name);
+    ret = asprintf(&str, "gssmask %s %s", PACKAGE_STRING, name);
+    if (ret == -1)
+	errx(1, "out of memory");
 
     put32(c, GSSMAGGOTPROTOCOL);
     put32(c, cap);
@@ -1084,6 +1090,7 @@ static struct client *
 create_client(int fd, int port, const char *moniker)
 {
     struct client *c;
+    int ret;
 
     c = ecalloc(1, sizeof(*c));
 
@@ -1092,8 +1099,13 @@ create_client(int fd, int port, const char *moniker)
     } else {
 	char hostname[MAXHOSTNAMELEN];
 	gethostname(hostname, sizeof(hostname));
-	asprintf(&c->moniker, "gssmask: %s:%d", hostname, port);
+	ret = asprintf(&c->moniker, "gssmask: %s:%d", hostname, port);
+	if (ret == -1)
+	    c->moniker = NULL;
     }
+
+    if (!c->moniker)
+	errx(1, "out of memory");
 
     {
 	c->salen = sizeof(c->sa);

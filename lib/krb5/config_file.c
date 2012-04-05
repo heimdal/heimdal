@@ -444,8 +444,10 @@ krb5_config_parse_file_multi (krb5_context context,
 		home = pw->pw_dir;
 	}
 	if (home) {
-	    asprintf(&newfname, "%s%s", home, &fname[1]);
-	    if (newfname == NULL) {
+	    int aret;
+
+	    aret = asprintf(&newfname, "%s%s", home, &fname[1]);
+	    if (aret == -1 || newfname == NULL) {
 		krb5_set_error_message(context, ENOMEM,
 				       N_("malloc: out of memory", ""));
 		return ENOMEM;

@@ -145,7 +145,7 @@ main(int argc, char **argv)
 	if(getpeername(sock, sa, &sin_len) < 0)
 	    krb5_err(context, 1, errno, "getpeername");
 
-	if (inet_ntop(sa->sa_family,
+	if (inet_ntop(ss.ss_family,
 		      socket_get_address (sa),
 		      addr_name,
 		      sizeof(addr_name)) == NULL)
@@ -207,7 +207,11 @@ main(int argc, char **argv)
     }
 
     if(!print_dump) {
-	asprintf(&tmp_db, "%s~", database);
+	int aret;
+
+	aret = asprintf(&tmp_db, "%s~", database);
+	if (aret == -1)
+	    krb5_errx(context, 1, "hdb_create: out of memory");
 
 	ret = hdb_create(context, &db, tmp_db);
 	if(ret)

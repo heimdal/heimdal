@@ -551,7 +551,7 @@ struct iter_ctx {
     const char *name;
     int min_version;
     heim_array_t result;
-    krb5_error_code (*func)(krb5_context, const void *, void *, void *);
+    krb5_error_code (KRB5_LIB_CALL *func)(krb5_context, const void *, void *, void *);
     void *userctx;
     krb5_error_code ret;
 };
@@ -636,7 +636,7 @@ _krb5_plugin_run_f(krb5_context context,
 		   int min_version,
 		   int flags,
 		   void *userctx,
-		   krb5_error_code (*func)(krb5_context, const void *, void *, void *))
+		   krb5_error_code (KRB5_LIB_CALL *func)(krb5_context, const void *, void *, void *))
 {
     heim_string_t m = heim_string_create(module);
     heim_dict_t dict;

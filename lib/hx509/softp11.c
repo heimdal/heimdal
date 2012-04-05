@@ -615,7 +615,11 @@ add_certificate(const char *cert_file,
 
     if (pin) {
 	char *str;
-	asprintf(&str, "PASS:%s", pin);
+	ret = asprintf(&str, "PASS:%s", pin);
+	if (ret == -1 || !str) {
+	    st_logf("failed to allocate memory\n");
+	    return CKR_GENERAL_ERROR;
+	}
 
 	hx509_lock_init(context, &lock);
 	hx509_lock_command_string(lock, str);
@@ -815,6 +819,7 @@ get_config_file_for_user(void)
 
 #ifndef _WIN32
     char *home = NULL;
+    int ret;
 
     if (!issuid()) {
         fn = getenv("SOFTPKCS11RC");
@@ -828,9 +833,11 @@ get_config_file_for_user(void)
             home = pw->pw_dir;
     }
     if (fn == NULL) {
-        if (home)
-            asprintf(&fn, "%s/.soft-token.rc", home);
-        else
+        if (home) {
+            ret = asprintf(&fn, "%s/.soft-token.rc", home);
+	    if (ret == -1)
+		fn = NULL;
+        } else
             fn = strdup("/etc/soft-token.rc");
     }
 #else  /* Windows */
@@ -1205,8 +1212,13 @@ C_Login(CK_SESSION_HANDLE hSession,
     VERIFY_SESSION_HANDLE(hSession, NULL);
 
     if (pPin != NULL_PTR) {
-	asprintf(&pin, "%.*s", (int)ulPinLen, pPin);
-	st_logf("type: %d password: %s\n", (int)userType, pin);
+	int aret;
+
+	aret = asprintf(&pin, "%.*s", (int)ulPinLen, pPin);
+	if (aret != -1 && pin)
+		st_logf("type: %d password: %s\n", (int)userType, pin);
+	else
+		st_logf("memory error: asprintf failed\n");
     }
 
     /*

@@ -66,11 +66,19 @@ static gss_mo_desc spnego_mo[] = {
     },
     {
 	GSS_C_MA_MECH_NEGO,
-	GSS_MO_MA
+	GSS_MO_MA,
+	NULL,
+	NULL,
+	NULL,
+	NULL
     },
     {
 	GSS_C_MA_MECH_PSEUDO,
-	GSS_MO_MA
+	GSS_MO_MA,
+	NULL,
+	NULL,
+	NULL,
+	NULL
     }
 };
 
@@ -128,6 +136,9 @@ static gssapi_mech_interface_desc spnego_mech = {
     NULL,
     spnego_mo,
     sizeof(spnego_mo) / sizeof(spnego_mo[0]),
+    NULL,
+    NULL,
+    NULL,
     NULL,
     NULL,
     NULL,

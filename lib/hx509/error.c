@@ -194,13 +194,14 @@ hx509_err(hx509_context context, int exit_code,
     va_list ap;
     const char *msg;
     char *str;
+    int ret;
 
     va_start(ap, fmt);
-    vasprintf(&str, fmt, ap);
+    ret = vasprintf(&str, fmt, ap);
     va_end(ap);
     msg = hx509_get_error_string(context, error_code);
     if (msg == NULL)
 	msg = "no error";
 
-    errx(exit_code, "%s: %s", str, msg);
+    errx(exit_code, "%s: %s", ret != -1 ? str : "ENOMEM", msg);
 }

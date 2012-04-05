@@ -110,7 +110,6 @@ kadm5_c_randkey_principal(void *server_handle,
     ret = tmp;
     if(ret == 0){
 	krb5_keyblock *k;
-	int i;
 
 	krb5_ret_int32(sp, &tmp);
 	if (tmp < 0) {

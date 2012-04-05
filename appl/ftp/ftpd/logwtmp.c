@@ -107,7 +107,9 @@ static void
 ftpd_logwtmp_wtmp(char *line, char *name, char *host)
 {
     static int init = 0;
+#ifdef WTMP_FILE
     static int fd;
+#endif
 #ifdef WTMPX_FILE
     static int fdx;
 #endif
@@ -116,6 +118,9 @@ ftpd_logwtmp_wtmp(char *line, char *name, char *host)
 #endif
 #if defined(WTMPX_FILE) || defined(HAVE_UTMPX_H)
     struct utmpx utx;
+#endif
+#if defined(WTMP_FILE) || defined(WTMPX_FILE)
+    ssize_t ret;
 #endif
 
 #ifdef HAVE_UTMPX_H
@@ -176,14 +181,18 @@ ftpd_logwtmp_wtmp(char *line, char *name, char *host)
 #endif
 	init = 1;
     }
+#if defined(WTMP_FILE) || defined(WTMPX_FILE)
     if(fd >= 0) {
 #ifdef WTMP_FILE
-	write(fd, &ut, sizeof(struct utmp)); /* XXX */
+	ret = write(fd, &ut, sizeof(struct utmp)); /* XXX */
 #endif
 #ifdef WTMPX_FILE
-	write(fdx, &utx, sizeof(struct utmpx));
+	ret = write(fdx, &utx, sizeof(struct utmpx));
 #endif
+	if (ret == -1)
+	    syslog(LOG_ERR, "ftpd_logwtmp_wtmp(): write(2) failed: %m");
     }
+#endif
 }
 
 #endif /* !HAVE_ASL_H */

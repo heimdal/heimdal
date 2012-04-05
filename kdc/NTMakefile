@@ -94,6 +94,7 @@ LIBKDC_OBJS=\
 	$(OBJ)\default_config.obj	\
 	$(OBJ)\set_dbinfo.obj 	\
 	$(OBJ)\digest.obj	\
+	$(OBJ)\fast.obj	\
 	$(OBJ)\kerberos5.obj	\
 	$(OBJ)\krb5tgs.obj	\
 	$(OBJ)\pkinit.obj	\
@@ -105,6 +106,7 @@ LIBKDC_OBJS=\
 
 LIBKDC_LIBS=\
 	$(LIBHDB)	\
+	$(LIBHEIMBASE)	\
 	$(LIBHEIMDAL)	\
 	$(LIBHEIMNTLM)	\
 	$(LIBROKEN)
@@ -124,6 +126,7 @@ libkdc_la_SOURCES = 		\
 	default_config.c 	\
 	set_dbinfo.c	 	\
 	digest.c		\
+	fast.c		\
 	kdc_locl.h		\
 	kerberos5.c		\
 	krb5tgs.c		\

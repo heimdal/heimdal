@@ -47,11 +47,12 @@ get_kadmin_context(const char *config_file, char *realm)
     krb5_error_code ret;
     void *kadm_handle;
     char **files;
+    int aret;
 
     if (config_file == NULL) {
 	char *file;
-	asprintf(&file, "%s/kdc.conf", hdb_db_dir(context));
-	if (file == NULL)
+	aret = asprintf(&file, "%s/kdc.conf", hdb_db_dir(context));
+	if (aret == -1 || file == NULL)
 	    errx(1, "out of memory");
 	config_file = file;
     }

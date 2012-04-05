@@ -125,6 +125,8 @@ HEIMDAL_ROKEN_1.0 {
 		rk_strsvis;
 		rk_strsvis;
 		rk_strsvisx;
+		rk_strtoll;
+		rk_strtoull;
 		rk_strunvis;
 		rk_strunvis;
 		rk_strunvisx;

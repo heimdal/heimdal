@@ -96,6 +96,7 @@ generate_requests (const char *filename, unsigned nreq)
 	int result_code;
 	krb5_data result_code_string, result_string;
 	char *old_pwd, *new_pwd;
+	int aret;
 
 	krb5_get_init_creds_opt_alloc (context, &opt);
 	krb5_get_init_creds_opt_set_tkt_life (opt, 300);
@@ -106,8 +107,12 @@ generate_requests (const char *filename, unsigned nreq)
 	if (ret)
 	    krb5_err (context, 1, ret, "krb5_parse_name %s", name);
 
-	asprintf (&old_pwd, "%s", name);
-	asprintf (&new_pwd, "%s2", name);
+	aret = asprintf (&old_pwd, "%s", name);
+	if (aret == -1)
+	    krb5_errx(context, 1, "out of memory");
+	aret = asprintf (&new_pwd, "%s2", name);
+	if (aret == -1)
+	    krb5_errx(context, 1, "out of memory");
 
 	ret = krb5_get_init_creds_password (context,
 					    &cred,
@@ -163,8 +168,8 @@ static int version_flag	= 0;
 static int help_flag	= 0;
 
 static struct getargs args[] = {
-    { "version", 	0,   arg_flag, &version_flag },
-    { "help",		0,   arg_flag, &help_flag }
+    { "version", 	0,   arg_flag, &version_flag, NULL, NULL },
+    { "help",		0,   arg_flag, &help_flag,    NULL, NULL }
 };
 
 static void
@@ -180,12 +185,12 @@ usage (int ret)
 int
 main(int argc, char **argv)
 {
-    int optind = 0;
+    int optidx = 0;
     int nreq;
     char *end;
 
     setprogname(argv[0]);
-    if(getarg(args, sizeof(args) / sizeof(args[0]), argc, argv, &optind))
+    if(getarg(args, sizeof(args) / sizeof(args[0]), argc, argv, &optidx))
 	usage(1);
     if (help_flag)
 	usage (0);
@@ -193,8 +198,8 @@ main(int argc, char **argv)
 	print_version(NULL);
 	return 0;
     }
-    argc -= optind;
-    argv += optind;
+    argc -= optidx;
+    argv += optidx;
 
     if (argc != 2)
 	usage (1);

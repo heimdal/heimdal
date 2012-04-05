@@ -138,7 +138,6 @@ main(int argc, char **argv)
     if (simple_flag) {
 	krb5_principal princ;
 	char *unparsed;
-	krb5_error_code ret;
 	int status = 0;
 
 	/* Map then print the result and exit */

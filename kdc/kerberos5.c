@@ -1716,7 +1716,6 @@ _kdc_as_rep(kdc_request_t r,
 
     if(req->padata){
 	unsigned int n;
-	int i;
 
 	log_patypes(context, config, req->padata);
 
@@ -2045,7 +2044,7 @@ _kdc_as_rep(kdc_request_t r,
     if (f.canonicalize) {
 	PA_ClientCanonicalized canon;
 	krb5_data data;
-	PA_DATA pa;
+	PA_DATA tmppa;
 	krb5_crypto cryptox;
 	size_t len = 0;
 
@@ -2085,9 +2084,9 @@ _kdc_as_rep(kdc_request_t r,
 	if (data.length != len)
 	    krb5_abortx(context, "internal asn.1 error");
 
-	pa.padata_type = KRB5_PADATA_CLIENT_CANONICALIZED;
-	pa.padata_value = data;
-	ret = add_METHOD_DATA(&r->outpadata, &pa);
+	tmppa.padata_type = KRB5_PADATA_CLIENT_CANONICALIZED;
+	tmppa.padata_value = data;
+	ret = add_METHOD_DATA(&r->outpadata, &tmppa);
 	free(data.data);
 	if (ret)
 	    goto out;

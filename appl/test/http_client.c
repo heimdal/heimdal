@@ -117,15 +117,17 @@ static char *port_str = "http";
 static char *gss_service = "HTTP";
 
 static struct getargs http_args[] = {
-    { "verbose", 'v', arg_flag, &verbose_flag, "verbose logging", },
+    { "verbose", 'v', arg_flag, &verbose_flag, "verbose logging", NULL },
     { "port", 'p', arg_string, &port_str, "port to connect to", "port" },
-    { "delegate", 0, arg_flag, &delegate_flag, "gssapi delegate credential" },
+    { "delegate", 0, arg_flag, &delegate_flag, "gssapi delegate credential",
+      NULL },
     { "gss-service", 's', arg_string, &gss_service, "gssapi service to use",
       "service" },
     { "mech", 'm', arg_string, &mech, "gssapi mech to use", "mech" },
-    { "mutual", 0, arg_negative_flag, &mutual_flag, "no gssapi mutual auth" },
-    { "help", 'h', arg_flag, &help_flag },
-    { "version", 0, arg_flag, &version_flag }
+    { "mutual", 0, arg_negative_flag, &mutual_flag, "no gssapi mutual auth",
+      NULL },
+    { "help", 'h', arg_flag, &help_flag, NULL, NULL },
+    { "version", 0, arg_flag, &version_flag, NULL, NULL }
 };
 
 static int num_http_args = sizeof(http_args) / sizeof(http_args[0]);

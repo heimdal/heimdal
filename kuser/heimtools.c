@@ -33,9 +33,9 @@
 
 #include "kuser_locl.h"
 #include <sl.h>
-#include "kcc-commands.h"
+#include "heimtools-commands.h"
 
-krb5_context kcc_context;
+krb5_context heimtools_context;
 static int version_flag;
 static int help_flag;
 
@@ -112,14 +112,14 @@ main(int argc, char **argv)
     bindtextdomain ("heimdal_kuser", HEIMDAL_LOCALEDIR);
     textdomain("heimdal_kuser");
 
-    ret = krb5_init_context(&kcc_context);
+    ret = krb5_init_context(&heimtools_context);
     if (ret == KRB5_CONFIG_BADFORMAT)
 	errx (1, "krb5_init_context failed to parse configuration file");
     else if (ret)
 	errx(1, "krb5_init_context failed: %d", ret);
 
     /*
-     * Support linking of kcc to commands
+     * Support linking of heimtools to commands
      */
 
     if (!command_alias(getprogname())) {
@@ -160,6 +160,6 @@ main(int argc, char **argv)
 	exit_status = 1;
     }
 
-    krb5_free_context(kcc_context);
+    krb5_free_context(heimtools_context);
     return exit_status;
 }

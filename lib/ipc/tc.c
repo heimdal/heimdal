@@ -46,8 +46,8 @@ static int help_flag;
 static int version_flag;
 
 static struct getargs args[] = {
-    {	"help",		'h',	arg_flag,   &help_flag },
-    {	"version",	'v',	arg_flag,   &version_flag }
+    {	"help",		'h',	arg_flag,   &help_flag,    NULL, NULL },
+    {	"version",	'v',	arg_flag,   &version_flag, NULL, NULL }
 };
 
 static int num_args = sizeof(args) / sizeof(args[0]);
@@ -60,7 +60,7 @@ usage(int ret)
 }
 
 static void
-reply(void *ctx, int errorcode, heim_idata *reply, heim_icred cred)
+reply(void *ctx, int errorcode, heim_idata *rep, heim_icred cred)
 {
     printf("got reply\n");
     heim_ipc_semaphore_signal((heim_isemaphore)ctx); /* tell caller we are done */

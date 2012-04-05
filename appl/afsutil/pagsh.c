@@ -73,12 +73,12 @@ static char *typename_arg;
 #endif
 
 struct getargs getargs[] = {
-    { NULL,	'c', arg_flag, &c_flag },
+    { NULL,	'c', arg_flag, &c_flag, NULL, NULL },
 #ifdef KRB5
-    { "cache-type", 0,  arg_string, &typename_arg },
+    { "cache-type", 0,  arg_string, &typename_arg, NULL, NULL },
 #endif
-    { "version", 0,  arg_flag, &version_flag },
-    { "help",	'h', arg_flag, &help_flag },
+    { "version", 0,  arg_flag, &version_flag, NULL, NULL },
+    { "help",	'h', arg_flag, &help_flag, NULL, NULL },
 };
 
 static int num_args = sizeof(getargs) / sizeof(getargs[0]);
@@ -104,10 +104,10 @@ main(int argc, char **argv)
     char *path;
     char **args;
     unsigned int i;
-    int optind = 0;
+    int optidx = 0;
 
     setprogname(argv[0]);
-    if(getarg(getargs, num_args, argc, argv, &optind))
+    if(getarg(getargs, num_args, argc, argv, &optidx))
 	usage(1);
     if(help_flag)
 	usage(0);
@@ -116,8 +116,8 @@ main(int argc, char **argv)
 	exit(0);
     }
 
-    argc -= optind;
-    argv += optind;
+    argc -= optidx;
+    argv += optidx;
 
 #ifdef KRB5
     {

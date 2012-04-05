@@ -349,13 +349,19 @@ _kafs_try_get_cred(struct kafs_data *data, const char *user, const char *cell,
     if (kafs_verbose) {
 	const char *estr = (*data->get_error)(data, ret);
 	char *str;
-	asprintf(&str, "%s tried afs%s%s@%s -> %s (%d)",
-		 data->name, cell ? "/" : "",
-		 cell ? cell : "", realm, estr ? estr : "unknown", ret);
-	(*kafs_verbose)(kafs_verbose_ctx, str);
+	int aret;
+
+	aret = asprintf(&str, "%s tried afs%s%s@%s -> %s (%d)",
+			data->name, cell ? "/" : "",
+			cell ? cell : "", realm, estr ? estr : "unknown", ret);
+	if (aret != -1) {
+	    (*kafs_verbose)(kafs_verbose_ctx, str);
+	    free(str);
+	} else {
+	    (*kafs_verbose)(kafs_verbose_ctx, "out of memory");
+	}
 	if (estr)
 	    (*data->free_error)(data, estr);
-	free(str);
     }
 
     return ret;

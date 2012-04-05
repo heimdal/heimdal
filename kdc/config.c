@@ -181,10 +181,11 @@ configure(krb5_context context, int argc, char **argv, int *optidx)
 
     {
 	char **files;
+	int aret;
 
 	if (config_file == NULL) {
-	    asprintf(&config_file, "%s/kdc.conf", hdb_db_dir(context));
-	    if (config_file == NULL)
+	    aret = asprintf(&config_file, "%s/kdc.conf", hdb_db_dir(context));
+	    if (aret == -1 || config_file == NULL)
 		errx(1, "out of memory");
 	}
 

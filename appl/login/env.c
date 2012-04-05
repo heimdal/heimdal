@@ -53,10 +53,11 @@ extend_env(char *str)
 void
 add_env(const char *var, const char *value)
 {
+    int aret;
     int i;
     char *str;
-    asprintf(&str, "%s=%s", var, value);
-    if(str == NULL)
+    aret = asprintf(&str, "%s=%s", var, value);
+    if(aret == -1)
 	errx(1, "Out of memory!");
     for(i = 0; i < num_env; i++)
 	if(strncmp(env[i], var, strlen(var)) == 0 &&

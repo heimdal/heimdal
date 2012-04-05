@@ -127,6 +127,7 @@ find_db_spec(kadm5_server_context *ctx)
     krb5_context context = ctx->context;
     struct hdb_dbinfo *info, *d;
     krb5_error_code ret;
+    int aret;
 
     if (ctx->config.realm) {
 	/* fetch the databases */
@@ -166,12 +167,24 @@ find_db_spec(kadm5_server_context *ctx)
 
     if (ctx->config.dbname == NULL)
 	ctx->config.dbname = strdup(hdb_default_db(context));
-    if (ctx->config.acl_file == NULL)
-	asprintf(&ctx->config.acl_file, "%s/kadmind.acl", hdb_db_dir(context));
-    if (ctx->config.stash_file == NULL)
-	asprintf(&ctx->config.stash_file, "%s/m-key", hdb_db_dir(context));
-    if (ctx->log_context.log_file == NULL)
-	asprintf(&ctx->log_context.log_file, "%s/log", hdb_db_dir(context));
+    if (ctx->config.acl_file == NULL) {
+	aret = asprintf(&ctx->config.acl_file, "%s/kadmind.acl",
+			hdb_db_dir(context));
+	if (aret == -1)
+	    return ENOMEM;
+    }
+    if (ctx->config.stash_file == NULL) {
+	aret = asprintf(&ctx->config.stash_file, "%s/m-key",
+			hdb_db_dir(context));
+	if (aret == -1)
+	    return ENOMEM;
+    }
+    if (ctx->log_context.log_file == NULL) {
+	aret = asprintf(&ctx->log_context.log_file, "%s/log",
+			hdb_db_dir(context));
+	if (aret == -1)
+	    return ENOMEM;
+    }
 
 #ifndef NO_UNIX_SOCKETS
     set_socket_name(context, &ctx->log_context.socket_name);

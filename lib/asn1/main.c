@@ -70,16 +70,16 @@ char *option_file;
 int version_flag;
 int help_flag;
 struct getargs args[] = {
-    { "template", 0, arg_flag, &template_flag },
-    { "encode-rfc1510-bit-string", 0, arg_flag, &rfc1510_bitstring },
-    { "decode-dce-ber", 0, arg_flag, &support_ber },
-    { "support-ber", 0, arg_flag, &support_ber },
-    { "preserve-binary", 0, arg_strings, &preserve },
-    { "sequence", 0, arg_strings, &seq },
-    { "one-code-file", 0, arg_flag, &one_code_file },
-    { "option-file", 0, arg_string, &option_file },
-    { "version", 0, arg_flag, &version_flag },
-    { "help", 0, arg_flag, &help_flag }
+    { "template", 0, arg_flag, &template_flag, NULL, NULL },
+    { "encode-rfc1510-bit-string", 0, arg_flag, &rfc1510_bitstring, NULL, NULL},
+    { "decode-dce-ber", 0, arg_flag, &support_ber, NULL, NULL },
+    { "support-ber", 0, arg_flag, &support_ber, NULL, NULL },
+    { "preserve-binary", 0, arg_strings, &preserve, NULL, NULL },
+    { "sequence", 0, arg_strings, &seq, NULL, NULL },
+    { "one-code-file", 0, arg_flag, &one_code_file, NULL, NULL },
+    { "option-file", 0, arg_string, &option_file, NULL, NULL },
+    { "version", 0, arg_flag, &version_flag, NULL, NULL },
+    { "help", 0, arg_flag, &help_flag, NULL, NULL }
 };
 int num_args = sizeof(args) / sizeof(args[0]);
 

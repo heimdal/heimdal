@@ -161,6 +161,7 @@ mcc_initialize(krb5_context context,
 	       krb5_principal primary_principal)
 {
     krb5_mcache *m = MCACHE(id);
+    heim_assert(m->refcnt != 0, "resurection released mcache");
     m->dead = 0;
     m->mtime = time(NULL);
     return krb5_copy_principal (context,

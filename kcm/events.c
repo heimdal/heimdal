@@ -61,10 +61,10 @@ kcm_enqueue_event(krb5_context context,
 }
 
 static void
-print_times(time_t time, char buf[64])
+print_times(time_t t, char buf[64])
 {
-    if (time)
-	strftime(buf, 64, "%m-%dT%H:%M", gmtime(&time));
+    if (t)
+	strftime(buf, 64, "%m-%dT%H:%M", gmtime(&t));
     else
 	strlcpy(buf, "never", 64);
 }

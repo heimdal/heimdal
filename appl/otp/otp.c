@@ -46,16 +46,16 @@ static int version_flag;
 static int help_flag;
 
 struct getargs args[] = {
-    { "list", 'l', arg_flag, &listp, "list OTP status" },
-    { "delete", 'd', arg_flag, &deletep, "delete OTP" },
-    { "open", 'o', arg_flag, &openp, "open a locked OTP" },
-    { "renew", 'r', arg_flag, &renewp, "securely renew OTP" },
+    { "list", 'l', arg_flag, &listp, "list OTP status", NULL },
+    { "delete", 'd', arg_flag, &deletep, "delete OTP", NULL },
+    { "open", 'o', arg_flag, &openp, "open a locked OTP", NULL },
+    { "renew", 'r', arg_flag, &renewp, "securely renew OTP", NULL },
     { "hash", 'f', arg_string, &alg_string,
       "hash algorithm (md4, md5, or sha)", "algorithm"},
     { "user", 'u', arg_string, &user,
       "user other than current user (root only)", "user" },
-    { "version", 0, arg_flag, &version_flag },
-    { "help", 'h', arg_flag, &help_flag }
+    { "version", 0, arg_flag, &version_flag, NULL, NULL },
+    { "help", 'h', arg_flag, &help_flag, NULL, NULL }
 };
 
 int num_args = sizeof(args) / sizeof(args[0]);
@@ -73,7 +73,7 @@ usage(int code)
  */
 
 static int
-renew (int argc, char **argv, OtpAlgorithm *alg, char *user)
+renew (int argc, char **argv, OtpAlgorithm *alg, char *inuser)
 {
     OtpContext newctx, *ctx;
     char prompt[128];
@@ -82,7 +82,7 @@ renew (int argc, char **argv, OtpAlgorithm *alg, char *user)
     int ret;
 
     newctx.alg = alg;
-    newctx.user = user;
+    newctx.user = inuser;
     newctx.n = atoi (argv[0]);
     strlcpy (newctx.seed, argv[1], sizeof(newctx.seed));
     strlwr(newctx.seed);
@@ -136,7 +136,7 @@ verify_user_otp(char *username)
  */
 
 static int
-set (int argc, char **argv, OtpAlgorithm *alg, char *user)
+set (int argc, char **argv, OtpAlgorithm *alg, char *inuser)
 {
     void *db;
     OtpContext ctx;
@@ -145,7 +145,7 @@ set (int argc, char **argv, OtpAlgorithm *alg, char *user)
     int i;
 
     ctx.alg = alg;
-    ctx.user = strdup (user);
+    ctx.user = strdup (inuser);
     if (ctx.user == NULL)
 	err (1, "out of memory");
 
@@ -178,7 +178,7 @@ set (int argc, char **argv, OtpAlgorithm *alg, char *user)
  */
 
 static int
-delete_otp (int argc, char **argv, char *user)
+delete_otp (int argc, char **argv, char *inuser)
 {
     void *db;
     OtpContext ctx;
@@ -188,7 +188,7 @@ delete_otp (int argc, char **argv, char *user)
     if(db == NULL)
 	errx (1, "otp_db_open failed");
 
-    ctx.user = user;
+    ctx.user = inuser;
     ret = otp_delete(db, &ctx);
     otp_db_close (db);
     return ret;
@@ -199,7 +199,7 @@ delete_otp (int argc, char **argv, char *user)
  */
 
 static int
-has_an_otp(char *user)
+has_an_otp(char *inuser)
 {
     void *db;
     OtpContext ctx;
@@ -211,7 +211,7 @@ has_an_otp(char *user)
 	return 0; /* if no db no otp! */
     }
 
-    ctx.user = user;
+    ctx.user = inuser;
     ret = otp_simple_get(db, &ctx);
 
     otp_db_close (db);
@@ -223,11 +223,11 @@ has_an_otp(char *user)
  */
 
 static void
-print_otp_entry_for_name (void *db, char *user)
+print_otp_entry_for_name (void *db, char *inuser)
 {
     OtpContext ctx;
 
-    ctx.user = user;
+    ctx.user = inuser;
     if (!otp_simple_get(db, &ctx)) {
 	fprintf(stdout,
 		"%s\totp-%s %d %s",
@@ -242,7 +242,7 @@ print_otp_entry_for_name (void *db, char *user)
 }
 
 static int
-open_otp (int argc, char **argv, char *user)
+open_otp (int argc, char **argv, char *inuser)
 {
     void *db;
     OtpContext ctx;
@@ -252,7 +252,7 @@ open_otp (int argc, char **argv, char *user)
     if (db == NULL)
 	errx (1, "otp_db_open failed");
 
-    ctx.user = user;
+    ctx.user = inuser;
     ret = otp_simple_get (db, &ctx);
     if (ret == 0)
 	ret = otp_put (db, &ctx);
@@ -265,7 +265,7 @@ open_otp (int argc, char **argv, char *user)
  */
 
 static int
-list_otps (int argc, char **argv, char *user)
+list_otps (int argc, char **argv, char *inuser)
 {
     void *db;
     struct passwd *pw;
@@ -274,8 +274,8 @@ list_otps (int argc, char **argv, char *user)
     if(db == NULL)
 	errx (1, "otp_db_open failed");
 
-    if (user)
-	print_otp_entry_for_name(db, user);
+    if (inuser)
+	print_otp_entry_for_name(db, inuser);
     else
 	/* scans all users... so as to get a deterministic order */
 	while ((pw = getpwent()))
@@ -291,10 +291,10 @@ main (int argc, char **argv)
     int defaultp = 0;
     int uid = getuid();
     OtpAlgorithm *alg = otp_find_alg (OTP_ALG_DEFAULT);
-    int optind = 0;
+    int optidx = 0;
 
     setprogname (argv[0]);
-    if(getarg(args, num_args, argc, argv, &optind))
+    if(getarg(args, num_args, argc, argv, &optidx))
 	usage(1);
     if(help_flag)
 	usage(0);
@@ -312,8 +312,8 @@ main (int argc, char **argv)
     }
     if (user && uid != 0)
 	errx (1, "Only root can use `-u'");
-    argc -= optind;
-    argv += optind;
+    argc -= optidx;
+    argv += optidx;
 
     if (!(listp || deletep || renewp || openp))
 	defaultp = 1;

@@ -99,5 +99,5 @@ struct salt_type _krb5_AES_salt[] = {
 	"pw-salt",
 	AES_string_to_key
     },
-    { 0 }
+    { 0, NULL, NULL }
 };

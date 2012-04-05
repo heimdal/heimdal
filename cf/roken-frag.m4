@@ -28,7 +28,10 @@ dnl C characteristics
 AC_REQUIRE([AC_C___ATTRIBUTE__])
 AC_REQUIRE([AC_C_INLINE])
 AC_REQUIRE([AC_C_CONST])
-rk_WFLAGS(-Wall -Wmissing-prototypes -Wpointer-arith -Wbad-function-cast -Wmissing-declarations -Wnested-externs)
+rk_WFLAGS(-Wall -Wextra -Wno-sign-compare -Wno-unused-parameter -Wmissing-prototypes -Wpointer-arith -Wbad-function-cast -Wmissing-declarations -Wnested-externs -Wshadow)
+
+dnl -Wmissing-prototypes -Wpointer-arith -Wreturn-type -Wstrict-prototypes
+dnl -Wcast-qual -Wswitch -Wformat=2 -Wwrite-strings
 
 AC_REQUIRE([rk_DB])
 
@@ -370,6 +373,8 @@ AC_BROKEN([					\
 	strsep					\
 	strsep_copy				\
 	strtok_r				\
+	strtoll					\
+	strtoull				\
 	strupr					\
 	swab					\
 	tsearch					\
@@ -390,6 +395,14 @@ AM_CONDITIONAL(have_fnmatch_h,
 
 AC_FOREACH([rk_func], [strndup strsep strtok_r],
 	[AC_NEED_PROTO([#include <string.h>], rk_func)])
+
+AC_CHECK_FUNC([strtoll],
+    [AC_DEFINE_UNQUOTED(HAVE_STRTOLL, 1,
+        [Define if you have the function strtoll.])])
+
+AC_CHECK_FUNC([strtoull],
+    [AC_DEFINE_UNQUOTED(HAVE_STRTOULL, 1,
+        [Define if you have the function strtoull.])])
 
 AC_FOREACH([rk_func], [strsvis strsvisx strunvis strvis strvisx svis unvis vis],
 [AC_NEED_PROTO([#ifdef HAVE_VIS_H

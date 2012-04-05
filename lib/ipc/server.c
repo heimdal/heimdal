@@ -525,7 +525,7 @@ update_client_creds(struct client *c)
 	}
     }
 #endif
-#ifdef SO_PEERCRED
+#if defined(SO_PEERCRED) && defined(__linux__)
     /* Linux */
     {
 	struct ucred pc;

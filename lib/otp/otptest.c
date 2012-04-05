@@ -107,7 +107,7 @@ test (void)
     {"sha", "OTP's are good", "correct", 0, "d51f3e99bf8e6f0b", "RUST WELT KICK FELL TAIL FRAU"},
     {"sha", "OTP's are good", "correct", 1, "82aeb52d943774e4", "FLIT DOSE ALSO MEW DRUM DEFY"},
     {"sha", "OTP's are good", "correct", 99, "4f296a74fe1567ec", "AURA ALOE HURL WING BERG WAIT"},
-    {NULL}
+    {NULL, NULL, NULL, 0, NULL, NULL}
   };
 
   struct test *t;

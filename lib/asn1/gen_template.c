@@ -807,7 +807,7 @@ generate_template_type(const char *varname,
 		       int optional, int isstruct, int need_offset)
 {
     struct tlist *tl;
-    const char *dup;
+    const char *d;
     int have_ellipsis = 0;
 
     tl = tlist_new(varname);
@@ -831,11 +831,11 @@ generate_template_type(const char *varname,
 		 have_ellipsis ? "|A1_HF_ELLIPSIS" : "",
 		 isstruct ? "struct " : "", basetype, tlist_count(tl));
 
-    dup = tlist_find_dup(tl);
-    if (dup) {
-	if (strcmp(dup, tl->name) == 0)
+    d = tlist_find_dup(tl);
+    if (d) {
+	if (strcmp(d, tl->name) == 0)
 	    errx(1, "found dup of ourself");
-	*dupname = dup;
+	*dupname = d;
     } else {
 	*dupname = tl->name;
 	tlist_print(tl);

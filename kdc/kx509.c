@@ -381,15 +381,15 @@ _kdc_do_kx509(krb5_context context,
 
     /* Verify that the key is encoded RSA key */
     {
-	RSAPublicKey key;
-	size_t size;
+	RSAPublicKey rsapkey;
+	size_t rsapkeysize;
 
 	ret = decode_RSAPublicKey(req->pk_key.data, req->pk_key.length,
-				  &key, &size);
+				  &rsapkey, &rsapkeysize);
 	if (ret)
 	    goto out;
-	free_RSAPublicKey(&key);
-	if (size != req->pk_key.length) {
+	free_RSAPublicKey(&rsapkey);
+	if (rsapkeysize != req->pk_key.length) {
 	    ret = ASN1_EXTRA_DATA;
 	    goto out;
 	}

@@ -55,7 +55,7 @@ struct plctx {
     krb5_boolean         result;
 };
 
-static krb5_error_code
+static krb5_error_code KRB5_LIB_CALL
 plcallback(krb5_context context, const void *plug, void *plugctx, void *userctx)
 {
     const krb5plugin_kuserok_ftable *locate = plug;
@@ -205,7 +205,7 @@ check_owner_file(krb5_context context,
      * NFSv4 servers do?).  Checking the owner means doing an LSARPC
      * lookup at least (to get the user's SID). 
      */
-    if (is_system_location || owner == NULL)
+    if (owner == NULL)
 	return 0;
 
     krb5_set_error_message(context, EACCES,
@@ -523,7 +523,7 @@ out:
  * Simple kuserok: check that the lname for the aname matches luser.
  */
 
-static krb5_error_code
+static krb5_error_code KRB5_LIB_CALL
 kuserok_simple_plug_f(void *plug_ctx, krb5_context context, const char *rule,
 		      unsigned int flags, const char *k5login_dir,
 		      const char *luser, krb5_const_principal principal,
@@ -546,7 +546,7 @@ kuserok_simple_plug_f(void *plug_ctx, krb5_context context, const char *rule,
  * directories.
  */
 
-static krb5_error_code
+static krb5_error_code KRB5_LIB_CALL
 kuserok_sys_k5login_plug_f(void *plug_ctx, krb5_context context,
 			   const char *rule, unsigned int flags,
 			   const char *k5login_dir, const char *luser,
@@ -588,7 +588,7 @@ kuserok_sys_k5login_plug_f(void *plug_ctx, krb5_context context,
  * Check ~luser/.k5login and/or ~/luser/.k5login.d
  */
 
-static krb5_error_code
+static krb5_error_code KRB5_LIB_CALL
 kuserok_user_k5login_plug_f(void *plug_ctx, krb5_context context,
 			    const char *rule, unsigned int flags,
 			    const char *k5login_dir, const char *luser,
@@ -665,7 +665,7 @@ kuserok_user_k5login_plug_f(void *plug_ctx, krb5_context context,
 #endif
 }
 
-static krb5_error_code
+static krb5_error_code KRB5_LIB_CALL
 kuserok_deny_plug_f(void *plug_ctx, krb5_context context, const char *rule,
 		    unsigned int flags, const char *k5login_dir,
 		    const char *luser, krb5_const_principal principal,
@@ -678,14 +678,14 @@ kuserok_deny_plug_f(void *plug_ctx, krb5_context context, const char *rule,
     return 0;
 }
 
-static krb5_error_code
+static krb5_error_code KRB5_LIB_CALL
 kuser_ok_null_plugin_init(krb5_context context, void **ctx)
 {
     *ctx = NULL;
     return 0;
 }
 
-static void
+static void KRB5_LIB_CALL
 kuser_ok_null_plugin_fini(void *ctx)
 {
     return;

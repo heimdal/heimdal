@@ -232,5 +232,7 @@ const krb5_kt_ops krb5_mkt_ops = {
     mkt_next_entry,
     mkt_end_seq_get,
     mkt_add_entry,
-    mkt_remove_entry
+    mkt_remove_entry,
+    NULL,
+    0
 };

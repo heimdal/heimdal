@@ -305,9 +305,9 @@ eval_parent(pid_t pid)
 
 static struct getargs args[] = {
     { "timeout", 	't', arg_integer, &timeout, "timout", "seconds" },
-    { "verbose", 	'v', arg_counter, &verbose, "verbose debugging" },
-    { "version",	0, arg_flag,	&version_flag, "print version" },
-    { "help",		0, arg_flag,	&help_flag, NULL }
+    { "verbose", 	'v', arg_counter, &verbose, "verbose debugging", NULL },
+    { "version",	0, arg_flag,	&version_flag, "print version", NULL },
+    { "help",		0, arg_flag,	&help_flag, NULL, NULL }
 };
 
 static void

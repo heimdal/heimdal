@@ -31,24 +31,51 @@
 
 RELDIR=base
 
+intcflags=-I$(SRCDIR) -I$(OBJ)
+
 !include ../windows/NTMakefile.w32
 
 INCFILES=$(INCDIR)\heimbase.h
 
+test_binaries = $(OBJ)\test_base.exe
+
 libheimbase_OBJS =		\
 	$(OBJ)\array.obj	\
 	$(OBJ)\bool.obj		\
+	$(OBJ)\bsearch.obj	\
+	$(OBJ)\data.obj		\
+	$(OBJ)\db.obj		\
 	$(OBJ)\dict.obj		\
 	$(OBJ)\error.obj	\
 	$(OBJ)\heimbase.obj	\
+	$(OBJ)\json.obj		\
 	$(OBJ)\null.obj		\
 	$(OBJ)\number.obj	\
 	$(OBJ)\string.obj
 
 $(LIBHEIMBASE): $(libheimbase_OBJS)
-	$(LIBCON)
+	$(LIBCON_C) -OUT:$@ $(LIBROKEN) @<<
+$(libheimbase_OBJS: =
+)
+<<
+
+test:: test-binaries test-run
+
+test-run:
+	cd $(OBJ)
+	test_base.exe
+	cd $(SRCDIR)
 
 all:: $(INCFILES) $(LIBHEIMBASE)
 
 clean::
 	-$(RM) $(INCFILES)
+
+test-binaries: $(test_binaries)
+
+$(test_binaries): $$(@R).obj $(LIBHEIMBASE) $(LIBVERS) $(LIBROKEN)
+	$(EXECONLINK)
+	$(EXEPREP_NODIST)
+
+$(test_binaries:.exe=.obj): $$(@B).c
+	$(C2OBJ_C) -Fo$@ -Fd$(@D)\ $** -DBlah

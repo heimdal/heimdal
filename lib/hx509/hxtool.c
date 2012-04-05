@@ -1692,12 +1692,13 @@ eval_types(hx509_context contextp,
 	}
     }
 
-    if (opt->pk_init_principal_string) {
+    for (i = 0; i < opt->pk_init_principal_strings.num_strings; i++) {
+	const char *pk_init_princ = opt->pk_init_principal_strings.strings[i];
+
 	if (!ctopt.pkinit)
 	    errx(1, "pk-init principal given but no pk-init oid");
 
-	ret = hx509_ca_tbs_add_san_pkinit(contextp, tbs,
-					  opt->pk_init_principal_string);
+	ret = hx509_ca_tbs_add_san_pkinit(contextp, tbs, pk_init_princ);
 	if (ret)
 	    hx509_err(contextp, 1, ret, "hx509_ca_tbs_add_san_pkinit");
     }

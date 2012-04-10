@@ -47,7 +47,7 @@ typedef struct krb5_mcache {
     struct krb5_mcache *next;
     time_t mtime;
     krb5_deltat kdc_offset;
-    pthread_mutex_t mutex;
+    HEIMDAL_MUTEX mutex;
 } krb5_mcache;
 
 static HEIMDAL_MUTEX mcc_mutex = HEIMDAL_MUTEX_INITIALIZER;

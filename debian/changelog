@@ -1,3 +1,9 @@
+heimdal (20120419-1) unstable; urgency=low
+
+  * pull changes from most recent Heimdal amongst other patches.
+
+ -- elric <elric@imrryr.org>  Thu, 19 Apr 2012 23:38:23 +0000
+
 heimdal (20120106-3) unstable; urgency=low
 
   * apply a few patches that krb5_admind will need.

@@ -71,6 +71,7 @@ struct heim_type_data dict_object = {
     dict_dealloc,
     NULL,
     NULL,
+    NULL,
     NULL
 };
 

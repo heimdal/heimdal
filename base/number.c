@@ -73,7 +73,8 @@ struct heim_type_data _heim_number_object = {
     number_dealloc,
     NULL,
     number_cmp,
-    number_hash
+    number_hash,
+    NULL
 };
 
 /**

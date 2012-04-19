@@ -122,7 +122,11 @@ MMDIR=$(SystemDrive)\Program Files (x86)\Common Files\Merge Modules
 !if exist("$(MMDIR)")
 
 RUNTIMEMODULE32="$(MMDIR)\Microsoft_$(VCVER)_$(CRTNAME)_x86.msm"
+!if "$(VCVER)"=="VC100"
+RUNTIMEMODULE64="$(MMDIR)\Microsoft_$(VCVER)_$(CRTNAME)_x64.msm"
+!else
 RUNTIMEMODULE64="$(MMDIR)\Microsoft_$(VCVER)_$(CRTNAME)_x86_x64.msm"
+!endif
 
 !else
 

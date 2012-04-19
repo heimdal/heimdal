@@ -91,7 +91,8 @@ struct heim_type_data _heim_string_object = {
     string_dealloc,
     NULL,
     string_cmp,
-    string_hash
+    string_hash,
+    NULL
 };
 
 /**
@@ -155,6 +156,45 @@ heim_string_create_with_bytes(const void *data, size_t len)
 	memcpy(s, data, len);
 	((char *)s)[len] = '\0';
     }
+    return s;
+}
+
+/*
+ *
+ */
+
+static void
+string_free(void *ptr)
+{
+    free(ptr);
+}
+
+/**
+ * Create a string object using a format string
+ *
+ * @param fmt format string
+ * @param ...
+ *
+ * @return string object
+ */
+
+heim_string_t
+heim_string_create_with_format(const char *fmt, ...)
+{
+    heim_string_t s;
+    char *str = NULL;
+    va_list ap;
+    int ret;
+
+    va_start(ap, fmt);
+    ret = vasprintf(&str, fmt, ap);
+    va_end(ap);
+    if (ret < 0 || str == NULL)
+	return NULL;
+
+    s = heim_string_ref_create(str, string_dealloc);
+    if (s == NULL)
+	free(str);
     return s;
 }
 

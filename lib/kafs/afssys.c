@@ -40,7 +40,12 @@ struct procdata {
     unsigned long param1;
     unsigned long syscall;
 };
+#ifdef __GNU__
+#define _IOT_procdata _IOT(_IOTS(long), 5, 0, 0, 0, 0)
+#define VIOC_SYSCALL_PROC _IOW('C', 1, struct procdata)
+#else
 #define VIOC_SYSCALL_PROC _IOW('C', 1, void *)
+#endif
 
 struct devdata {
     unsigned long syscall;
@@ -52,6 +57,9 @@ struct devdata {
     unsigned long param6;
     unsigned long retval;
 };
+#ifdef __GNU__
+#define _IOT_devdata _IOT(_IOTS(long), 8, 0, 0, 0, 0)
+#endif
 #ifdef _IOWR
 #define VIOC_SYSCALL_DEV _IOWR('C', 2, struct devdata)
 #define VIOC_SYSCALL_DEV_OPENAFS _IOWR('C', 1, struct devdata)

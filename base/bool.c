@@ -42,6 +42,7 @@ struct heim_type_data _heim_bool_object = {
     NULL,
     NULL,
     NULL,
+    NULL,
     NULL
 };
 

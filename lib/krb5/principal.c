@@ -1762,10 +1762,10 @@ _krb5_apply_name_canon_rule(krb5_context context, krb5_name_canon_rule rule,
 		goto out;
 	}
 	_krb5_debug(context, 5, "As-is rule building a princ with realm=%s, "
-		    "sname=%s, and hostname=%s", rule->realm, sname, hostname);
+		    "sname=%s, and hostname=%s", realm, sname, hostname);
 	ret = krb5_build_principal(context, out_princ,
-				      strlen(rule->realm),
-				      rule->realm, sname, hostname,
+				      strlen(realm),
+				      realm, sname, hostname,
 				      (char *)0);
 	goto out;
 	break;
@@ -1806,7 +1806,7 @@ _krb5_apply_name_canon_rule(krb5_context context, krb5_name_canon_rule rule,
 		goto out;
 	}
 	_krb5_debug(context, 5, "Building a princ with realm=%s, sname=%s, "
-		    "and hostname=%s", rule->realm, sname, new_hostname);
+		    "and hostname=%s", realm, sname, new_hostname);
 	ret = krb5_build_principal(context, out_princ,
 				      strlen(realm), realm,
 				      sname, new_hostname, (char *)0);

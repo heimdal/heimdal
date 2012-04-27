@@ -23,7 +23,9 @@ override_dh_install:
 	rm -f debian/heimdal/opt/heimdal/lib/windc.so*
 	rm -f debian/heimdal/opt/heimdal/lib/windc.a
 	rm -f debian/heimdal/opt/heimdal/lib/windc.la
-	#
+	# remove all .la files with prejudice, they are full of lies!
+	rm -f debian/heimdal/opt/heimdal/lib/*.la
+	#	
 	rm -f debian/heimdal/opt/heimdal/bin/login
 	rm -f debian/heimdal/opt/heimdal/share/man/man1/login.1
 	rm -f debian/heimdal/opt/heimdal/bin/telnet

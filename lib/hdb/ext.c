@@ -496,3 +496,35 @@ hdb_entry_clear_kvno_diff_svc(krb5_context context, hdb_entry *entry)
     return hdb_clear_extension(context, entry,
 			       choice_HDB_extension_data_hist_kvno_diff_svc);
 }
+
+krb5_error_code
+hdb_set_last_modified_by(krb5_context context, hdb_entry *entry,
+                         krb5_principal modby, time_t modtime)
+{
+    krb5_error_code ret;
+    Event *old_ev;
+    Event *ev;
+
+    old_ev = entry->modified_by;
+
+    ev = calloc(1, sizeof (*ev));
+    if (!ev)
+        return ENOMEM;
+    if (modby)
+        ret = krb5_copy_principal(context, modby, &ev->principal);
+    else
+        ret = krb5_parse_name(context, "root/admin", &ev->principal);
+    if (ret) {
+        free(ev);
+        return ret;
+    }
+    ev->time = modtime;
+    if (!ev->time)
+        time(&ev->time);
+
+    entry->modified_by = ev;
+    if (old_ev)
+        free_Event(old_ev);
+    return 0;
+}
+

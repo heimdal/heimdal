@@ -100,7 +100,7 @@ typedef struct hdb_entry_ex {
  * query the backend database when talking about principals.
  */
 
-typedef struct HDB{
+typedef struct HDB {
     void *hdb_db;
     void *hdb_dbc; /** don't use, only for DB3 */
     char *hdb_name;
@@ -267,6 +267,17 @@ struct hdb_so_method {
     int version;
     const char *prefix;
     krb5_error_code (*create)(krb5_context, HDB **, const char *filename);
+};
+
+/* dump entry format, for hdb_print_entry() */
+typedef enum hdb_dump_format {
+    HDB_DUMP_HEIMDAL = 0,
+    HDB_DUMP_MIT = 1,
+} hdb_dump_format_t;
+
+struct hdb_print_entry_arg {
+    FILE *out;
+    hdb_dump_format_t fmt;
 };
 
 typedef krb5_error_code (*hdb_foreach_func_t)(krb5_context, HDB*,

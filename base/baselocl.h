@@ -60,8 +60,6 @@
 #define bindtextdomain(package, localedir)
 #endif
 
-#include <roken.h>
-
 #include "heimqueue.h"
 #include "heim_threads.h"
 #include "heimbase.h"

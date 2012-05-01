@@ -31,6 +31,10 @@
  * SUCH DAMAGE.
  */
 
+/*
+ * A sample server that uses the GSSAPI.
+ */
+
 #include "test_locl.h"
 #include <gssapi/gssapi.h>
 #include <gssapi/gssapi_krb5.h>
@@ -331,13 +335,12 @@ proto (int sock, const char *service)
     }
 }
 
-static int
-doit (int port, const char *service)
+static void
+loop (int port, const char *service)
 {
     int sock, sock2;
     struct sockaddr_in my_addr;
     int one = 1;
-    int ret;
 
     if (keytab_str)
 	gsskrb5_register_acceptor_identity(keytab_str);
@@ -366,16 +369,19 @@ doit (int port, const char *service)
         if (sock2 < 0)
 	    err (1, "accept");
 
-        ret = proto (sock2, service);
+        proto (sock2, service);
     }
-    return ret;
 }
 
+/*
+ * Iterative server; process one connection at a time.
+ */
 int
 main(int argc, char **argv)
 {
     krb5_context context = NULL; /* XXX */
     int port = server_setup(&context, argc, argv);
-    return doit (port, service);
+    loop (port, service);
+    return 0;
 }
 

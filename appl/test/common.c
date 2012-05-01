@@ -115,12 +115,18 @@ server_setup(krb5_context *context, int argc, char **argv)
 
     if(argv[argc] != NULL)
 	server_usage(1, args, num_args);
-    if (keytab_str != NULL)
-	ret = krb5_kt_resolve (*context, keytab_str, &keytab);
-    else
-	ret = krb5_kt_default (*context, &keytab);
+    if (keytab_str != NULL) {
+        ret = krb5_kt_resolve (*context, keytab_str, &keytab);
+        if (ret)
+            krb5_err (*context, 1, ret, "krb5_kt_resolve");
+    } else {
+        ret = krb5_kt_default (*context, &keytab);
+        if (ret)
+            krb5_err (*context, 1, ret, "krb5_kt_default");
+    }
+    ret = krb5_kt_have_content(*context, keytab);
     if (ret)
-	krb5_err (*context, 1, ret, "krb5_kt_resolve/default");
+        krb5_err (*context, 1, ret, "krb5_kt_have_content");
     return port;
 }
 

@@ -31,6 +31,10 @@
  * SUCH DAMAGE.
  */
 
+/*
+ * A sample server that uses the Kerberos V5 API.
+ */
+
 #include "test_locl.h"
 RCSID("$Id$");
 
@@ -160,6 +164,9 @@ doit (int port, const char *service)
     return proto (STDIN_FILENO, service);
 }
 
+/*
+ * Process only one connection and then exit.
+ */
 int
 main(int argc, char **argv)
 {

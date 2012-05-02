@@ -289,14 +289,18 @@ When running in local mode, the following commands can also be used:
 .Pp
 .Nm dump
 .Op Fl d | Fl Fl decrypt
+.Op Fl f Ns Ar format | Fl Fl format= Ns Ar format
 .Op Ar dump-file
 .Bd -ragged -offset indent
 Writes the database in
-.Dq human readable
+.Dq machine readable text
 form to the specified file, or standard out. If the database is
 encrypted, the dump will also have encrypted keys, unless
 .Fl Fl decrypt
-is used.
+is used.  If
+.Fl Fl format=MIT
+is used then the dump will be in MIT format.  Otherwise it will be in
+Heimdal format.
 .Ed
 .Pp
 .Nm init

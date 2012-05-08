@@ -33,11 +33,15 @@
 
 /*
  * A sample server that uses the Kerberos V5 API.
+ *
+ * See "Introduction to the Kerberos 5 API" in the Doxygen documentation
+ * for a walkthrough of this code.
  */
 
 #include "test_locl.h"
 RCSID("$Id$");
 
+/* The API needs one Kerberos context per thread. */
 krb5_context context;
 
 static int
@@ -54,20 +58,22 @@ proto (int sock, const char *service)
     uint32_t len, net_len;
     ssize_t n;
 
+    /* Initialize the authentication context, to be used to authenticate the peer. */
     status = krb5_auth_con_init (context, &auth_context);
     if (status)
 	krb5_err (context, 1, status, "krb5_auth_con_init");
 
+    /* Extract the local and remote address from the socket into auth_context. */
     status = krb5_auth_con_setaddrs_from_fd (context,
 					     auth_context,
 					     &sock);
-
     if (status)
 	krb5_err (context, 1, status, "krb5_auth_con_setaddrs_from_fd");
 
-    if(gethostname (hostname, sizeof(hostname)) < 0)
+    if (gethostname (hostname, sizeof(hostname)) < 0)
 	krb5_err (context, 1, errno, "gethostname");
 
+    /* Create principal "server" for "service" on "hostname" (this host). */
     status = krb5_sname_to_principal (context,
 				      hostname,
 				      service,
@@ -76,17 +82,22 @@ proto (int sock, const char *service)
     if (status)
 	krb5_err (context, 1, status, "krb5_sname_to_principal");
 
+    /*
+     * Perform the server side of the sendauth protocol. On success, "ticket"
+     * contains the authenticated credentials of the client.
+     */
     status = krb5_recvauth (context,
 			    &auth_context,
 			    &sock,
 			    VERSION,
 			    server,
-			    0,
+			    0,            /* flags */
 			    keytab,
 			    &ticket);
     if (status)
 	krb5_err (context, 1, status, "krb5_recvauth");
 
+    /* Extract the client name as a string. */
     status = krb5_unparse_name (context,
 				ticket->client,
 				&name);
@@ -99,6 +110,9 @@ proto (int sock, const char *service)
     krb5_data_zero (&data);
     krb5_data_zero (&packet);
 
+    /*
+     * Read the payload (encoded as length, value).
+     */
     n = krb5_net_read (context, &sock, &net_len, 4);
     if (n == 0)
 	krb5_errx (context, 1, "EOF in krb5_net_read");
@@ -115,6 +129,9 @@ proto (int sock, const char *service)
     if (n < 0)
 	krb5_err (context, 1, errno, "krb5_net_read");
 
+    /*
+     * Expect a KRB_SAFE message (authenticated, not encrypted)
+     */
     status = krb5_rd_safe (context,
 			   auth_context,
 			   &packet,
@@ -126,6 +143,9 @@ proto (int sock, const char *service)
     fprintf (stderr, "safe packet: %.*s\n", (int)data.length,
 	    (char *)data.data);
 
+    /*
+     * Read the payload (encoded as length, value).
+     */
     n = krb5_net_read (context, &sock, &net_len, 4);
     if (n == 0)
 	krb5_errx (context, 1, "EOF in krb5_net_read");
@@ -142,6 +162,9 @@ proto (int sock, const char *service)
     if (n < 0)
 	krb5_err (context, 1, errno, "krb5_net_read");
 
+    /*
+     * Expect a KRB_PRIV message (authenticated and encrypted)
+     */
     status = krb5_rd_priv (context,
 			   auth_context,
 			   &packet,
@@ -159,6 +182,7 @@ proto (int sock, const char *service)
 static int
 doit (int port, const char *service)
 {
+    /* Block waiting for a connection. */
     mini_inetd (port, NULL);
 
     return proto (STDIN_FILENO, service);

@@ -33,6 +33,15 @@
 
 #include "krb5_locl.h"
 
+/**
+ * Read \a len bytes from socket \a p_fd into buffer \a buf.
+ * Block until \a len bytes are read or until an error.
+ *
+ * @return If successful, the number of bytes read: \a len.
+ *         On end-of-file, 0.
+ *         On error, less than 0 (if single-threaded, the error can be found
+ *         in the errno global variable).
+ */
 KRB5_LIB_FUNCTION krb5_ssize_t KRB5_LIB_CALL
 krb5_net_read (krb5_context context,
 	       void *p_fd,

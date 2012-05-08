@@ -33,6 +33,16 @@
 
 #include "krb5_locl.h"
 
+/**
+ * Allocate and initialize an autentication context.
+ *
+ * @param context      A kerberos context.
+ * @param auth_context The authentication context to be initialized.
+ *
+ * Use krb5_auth_con_free() to release the memory when done using the context.
+ *
+ * @return An krb5 error code, see krb5_get_error_message().
+ */
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_auth_con_init(krb5_context context,
 		   krb5_auth_context *auth_context)
@@ -64,6 +74,15 @@ krb5_auth_con_init(krb5_context context,
     return 0;
 }
 
+/**
+ * Deallocate an authentication context previously initialized with
+ * krb5_auth_con_init().
+ *
+ * @param context      A kerberos context.
+ * @param auth_context The authentication context to be deallocated.
+ *
+ * @return An krb5 error code, see krb5_get_error_message().
+ */
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_auth_con_free(krb5_context context,
 		   krb5_auth_context auth_context)
@@ -154,6 +173,12 @@ krb5_auth_con_setaddrs(krb5_context context,
     return 0;
 }
 
+/**
+ * Update the authentication context \a auth_context with the local
+ * and remote addresses from socket \a fd, according to \a flags.
+ *
+ * @return An krb5 error code, see krb5_get_error_message().
+ */
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_auth_con_genaddrs(krb5_context context,
 		       krb5_auth_context auth_context,

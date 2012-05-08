@@ -308,8 +308,8 @@
  *
  * In this case, mutual authentication will be tried. That means that the server
  * will authenticate to the client. Using mutual authentication
- * is good since it enables the user to verify that they are talking to the
- * right server (a server that knows the key).
+ * is required to avoid man-in-the-middle attacks, since it enables the user to
+ * verify that they are talking to the right server (a server that knows the key).
  *
  * If you are using a non-blocking socket you will need to do all work of
  * krb5_sendauth() yourself. Basically you need to send over the

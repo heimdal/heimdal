@@ -680,10 +680,22 @@ krb5_rd_req_out_ctx_free(krb5_context context, krb5_rd_req_out_ctx ctx)
     free(ctx);
 }
 
-/*
+/**
+ * Process an AP_REQ message.
  *
+ * @param context        Kerberos 5 context.
+ * @param auth_context   authentication context of the peer.
+ * @param inbuf          the AP_REQ message, obtained for example with krb5_read_message().
+ * @param server         server principal.
+ * @param keytab         server keytab.
+ * @param ap_req_options set to the AP_REQ options. See the AP_OPTS_* defines.
+ * @param ticket         on success, set to the authenticated client credentials.
+ *                       Must be deallocated with krb5_free_ticket(). If not
+ *                       interested, pass a NULL value.
+ *
+ * @return 0 to indicate success. Otherwise a Kerberos error code is
+ *         returned, see krb5_get_error_message().
  */
-
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_rd_req(krb5_context context,
 	    krb5_auth_context *auth_context,
@@ -822,12 +834,12 @@ out:
  *        default values for the authentication context will used.
  * @param inbuf the (AP-REQ) authentication buffer
  *
- * @param server the server with authenticate as, if NULL the function
+ * @param server the server to authenticate to. If NULL the function
  *        will try to find any available credential in the keytab
  *        that will verify the reply. The function will prefer the
- *        server the server client specified in the AP-REQ, but if
+ *        server specified in the AP-REQ, but if
  *        there is no mach, it will try all keytab entries for a
- *        match. This have serious performance issues for larger keytabs.
+ *        match. This has serious performance issues for large keytabs.
  *
  * @param inctx control the behavior of the function, if NULL, the
  *        default behavior is used.
@@ -870,7 +882,7 @@ krb5_rd_req_ctx(krb5_context context,
     if(ret)
 	goto out;
 
-    /* Save that principal that was in the request */
+    /* Save the principal that was in the request */
     ret = _krb5_principalname2krb5_principal(context,
 					     &o->server,
 					     ap_req.ticket.sname,

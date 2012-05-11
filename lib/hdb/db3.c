@@ -77,10 +77,15 @@ DB_lock(krb5_context context, HDB *db, int operation)
     int fd;
     krb5_error_code ret;
 
-    if (db->lock_count > 1) {
-	db->lock_count++;
-	if (db->lock_count == HDB_WLOCK || db->lock_count == operation)
+    if (db->lock_count) {
+	/*
+	 * If we are upgrading a read lock to a write lock, then we
+	 * must fall through.
+	 */
+	if (operation != HDB_WLOCK || db->lock_type == HDB_WLOCK) {
+	    db->lock_count++;
 	    return 0;
+	}
     }
 
     if ((*d->fd)(d, &fd))
@@ -88,6 +93,7 @@ DB_lock(krb5_context context, HDB *db, int operation)
     ret = hdb_lock(fd, operation);
     if (ret)
 	return ret;
+    db->lock_type = operation;
     db->lock_count++;
     return 0;
 }

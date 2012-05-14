@@ -2,7 +2,7 @@
 	default_realm = TEST.H5L.SE TEST2.H5L.SE TEST3.H5L.SE
 	no-addresses = TRUE
 	k5login_authoritative = TRUE
-	k5login_directory = @srcdir@/k5login/%{luser}
+	k5login_directory = @srcdir@/k5login
 	kuserok = SYSTEM-K5LOGIN
 	kuserok = SIMPLE
 

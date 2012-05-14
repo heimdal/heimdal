@@ -325,6 +325,7 @@ check_directory(krb5_context context,
     DIR *d;
     struct dirent *dent;
     char filename[MAXPATHLEN];
+    size_t len;
     krb5_error_code ret = 0;
     struct stat st;
 
@@ -348,16 +349,25 @@ check_directory(krb5_context context,
 	goto out;
 
     while ((dent = readdir(d)) != NULL) {
+	/*
+	 * XXX: Should we also skip files whose names start with "."?
+	 * Vim ".filename.swp" files are also good candidates to skip.
+	 * Once we ignore "#*" and "*~", it is not clear what other
+	 * heuristics to apply.
+	 */
 	if (strcmp(dent->d_name, ".") == 0 ||
 	   strcmp(dent->d_name, "..") == 0 ||
 	   dent->d_name[0] == '#' ||			  /* emacs autosave */
 	   dent->d_name[strlen(dent->d_name) - 1] == '~') /* emacs backup */
 	    continue;
-	snprintf(filename, sizeof(filename), "%s/%s", dirname, dent->d_name);
-	ret = check_one_file(context, filename, owner, is_system_location,
-			     principal, result);
-	if (ret == 0 && *result == TRUE)
-	    break;
+	len = snprintf(filename, sizeof(filename), "%s/%s", dirname, dent->d_name);
+	/* Skip too-long filenames that got truncated by snprintf() */
+	if (len < sizeof(filename)) {
+	    ret = check_one_file(context, filename, owner, is_system_location,
+				 principal, result);
+	    if (ret == 0 && *result == TRUE)
+		break;
+	}
 	ret = 0; /* don't propagate errors upstream */
     }
 
@@ -552,7 +562,8 @@ kuserok_sys_k5login_plug_f(void *plug_ctx, krb5_context context,
 			   const char *k5login_dir, const char *luser,
 			   krb5_const_principal principal, krb5_boolean *result)
 {
-    char *path = NULL;
+    char filename[MAXPATHLEN];
+    size_t len;
     const char *profile_dir = NULL;
     krb5_error_code ret;
 
@@ -568,17 +579,14 @@ kuserok_sys_k5login_plug_f(void *plug_ctx, krb5_context context,
     else
 	profile_dir++;
 
-    ret = _krb5_expand_path_tokensv(context, profile_dir, &path,
-				    "luser", luser, NULL);
-    if (ret)
-	return ret;
+    len = snprintf(filename, sizeof(filename), "%s/%s", profile_dir, luser);
+    if (len < sizeof(filename)) {
+	ret = check_one_file(context, filename, NULL, TRUE, principal, result);
 
-    ret = check_one_file(context, path, NULL, TRUE, principal, result);
-    free(path);
-
-    if (ret == 0 &&
-	((flags & KUSEROK_K5LOGIN_IS_AUTHORITATIVE) || *result == TRUE))
-	return 0;
+	if (ret == 0 &&
+	    ((flags & KUSEROK_K5LOGIN_IS_AUTHORITATIVE) || *result == TRUE))
+	    return 0;
+    }
 
     *result = FALSE;
     return KRB5_PLUGIN_NO_HANDLE;

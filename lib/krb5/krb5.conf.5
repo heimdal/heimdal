@@ -261,10 +261,8 @@ If set to "ignore", the framework will ignore any the server input to
 this is very useful when the GSS-API server input the
 wrong server name into the gss_accept_sec_context call.
 .It Li k5login_directory = Va directory
-Alternative location for user .k5login files. Tokens in the form of
-%{luser} are expanded to the name of the user whose .k5login file is
-needed. This option is provided for compatibility with MIT krb5
-configuration files.
+Alternative location for user .k5login files. This option is provided
+for compatibility with MIT krb5 configuration files.
 .It Li k5login_authoritative = Va boolean
 If true then if a principal is not found in k5login files then
 .Xr krb5_userok 3
@@ -297,12 +295,6 @@ argument to
 .Xr krb5_userok 3
 in the given directory or in
 .Pa /etc/k5login.d/ .
-If a directory is given
-then tokens will be expanded; the %{luser} token will be replaced with
-the
-.Va luser
-argument to
-.Xr krb5_userok 3 .
 K5login files are text files, with each line containing just a principal
 name; principals apearing in a user's k5login file are permitted access
 to the user's account. Note: this rule performs no ownership nor

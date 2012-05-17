@@ -338,7 +338,7 @@ DB_open(krb5_context context, HDB *db, int flags, mode_t mode)
 	return ret;
     }
 
-    ret = (*d->cursor)(d, NULL, &dbc, 0);
+    ret = (*d->cursor)(d, NULL, &dbc, DB_CURSOR_BULK);
     if (ret) {
 	krb5_set_error_message(context, ret, "d->cursor: %s", strerror(ret));
         return ret;

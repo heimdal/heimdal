@@ -1172,6 +1172,8 @@ getint(char **p)
 {
     int val;
     char *q = nexttoken(p);
+    if (!q)
+        return -1;
     sscanf(q, "%d", &val);
     return val;
 }
@@ -1181,6 +1183,8 @@ getuint(char **p)
 {
     int val;
     char *q = nexttoken(p);
+    if (!q)
+        return 0;
     sscanf(q, "%u", &val);
     return val;
 }

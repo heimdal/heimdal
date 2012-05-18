@@ -153,7 +153,8 @@ mit_prop_dump(void *arg, const char *file)
     sp = krb5_storage_emem();
     if (!sp)
         goto out;
-    while ((ret = my_fgetln(f, &line, &line_bufsz, &line_len)) == 0) {
+    while ((ret = my_fgetln(f, &line, &line_bufsz, &line_len)) == 0 &&
+           !feof(f)) {
         char *p = line;
         char *q;
         lineno++;
@@ -185,12 +186,18 @@ mit_prop_dump(void *arg, const char *file)
 	}
         krb5_storage_truncate(sp, 0);
         ret = _hdb_mit_dump2mitdb_entry(pd->context, line, sp);
-        if (ret) break;
+        if (ret) {
+            warnx("line: %d: failed to parse; ignoring", lineno);
+            continue;
+        }
         ret = krb5_storage_to_data(sp, &kdb_ent);
         if (ret) break;
         ret = _hdb_mdb_value2entry(pd->context, &kdb_ent, 0, &ent.entry);
         krb5_data_free(&kdb_ent);
-        if (ret) break;
+        if (ret) {
+            warnx("line: %d: failed to store; ignoring", lineno);
+            continue;
+        }
 	ret = v5_prop(pd->context, NULL, &ent, arg);
         hdb_free_entry(pd->context, &ent);
         if (ret) break;

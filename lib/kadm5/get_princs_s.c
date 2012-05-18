@@ -87,7 +87,7 @@ kadm5_s_get_principals(void *server_handle,
     kadm5_ret_t ret;
 
     if (!context->keep_open) {
-	ret = context->db->hdb_open(context->context, context->db, O_RDWR, 0);
+	ret = context->db->hdb_open(context->context, context->db, O_RDONLY, 0);
 	if(ret) {
 	    krb5_warn(context->context, ret, "opening database");
 	    return ret;

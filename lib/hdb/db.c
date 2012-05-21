@@ -321,7 +321,7 @@ hdb_db_create(krb5_context context, HDB **db,
 	      const char *filename)
 {
     DB1_HDB **db1 = (DB1_HDB **)db;
-    *db = calloc(1, sizeof(**db1));	/* Allocate space for the larger db3 */
+    *db = calloc(1, sizeof(**db1));	/* Allocate space for the larger db1 */
     if (*db == NULL) {
 	krb5_set_error_message(context, ENOMEM, "malloc: out of memory");
 	return ENOMEM;

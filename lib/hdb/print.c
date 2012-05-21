@@ -149,12 +149,14 @@ append_mit_key(krb5_context context, krb5_storage *sp,
                unsigned int kvno, Key *key)
 {
     krb5_error_code ret;
+    krb5_salt k5salt;
     ssize_t sz;
     size_t key_versions = key->salt ? 2 : 1;
     size_t decrypted_key_length;
     char buf[2];
     krb5_data keylenbytes;
     unsigned int salttype;
+
 
     sz = append_string(context, sp, "\t%u\t%u\t%d\t%d\t", key_versions, kvno,
                         key->key.keytype, key->key.keyvalue.length + 2);
@@ -172,8 +174,8 @@ append_mit_key(krb5_context context, krb5_storage *sp,
         return sz;
     
     /* Map salt to MIT KDB style */
-    if (key->salt->type == KRB5_PADATA_PW_SALT) {
-        krb5_salt k5salt;
+    switch (key->salt->type) {
+    case KRB5_PADATA_PW_SALT:
 
         /*
          * Compute normal salt and then see whether it matches the stored one
@@ -188,16 +190,24 @@ append_mit_key(krb5_context context, krb5_storage *sp,
                  memcmp(key->salt->salt.data, princ->realm,
                         key->salt->salt.length) == 0)
             salttype = KRB5_KDB_SALTTYPE_ONLYREALM; /* matches realm */
-        else if (key->salt->salt.length == k5salt.saltvalue.length - strlen(princ->realm) &&
+        else if (key->salt->salt.length ==
+		 k5salt.saltvalue.length - strlen(princ->realm) &&
                  memcmp((char *)k5salt.saltvalue.data + strlen(princ->realm),
                         key->salt->salt.data, key->salt->salt.length) == 0)
             salttype = KRB5_KDB_SALTTYPE_NOREALM; /* matches w/o realm */
         else
             salttype = KRB5_KDB_SALTTYPE_NORMAL;  /* hope for best */
 
-    } else if (key->salt->type == KRB5_PADATA_AFS3_SALT) {
+	break;
+
+    case KRB5_PADATA_AFS3_SALT:
         salttype = KRB5_KDB_SALTTYPE_AFS3;
+	break;
+
+    default:
+	return -1;
     }
+
     sz = append_string(context, sp, "\t%u\t%u\t", salttype,
                        key->salt->salt.length);
     if (sz == -1) return sz;

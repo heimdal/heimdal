@@ -69,7 +69,7 @@ DB_close(krb5_context context, HDB *db)
     db->hdb_dbc = 0;
     (*d->close)(d, 0);
     db->hdb_db = 0;
- 
+
     if (db3->lock_fd >= 0) {
 	close(db3->lock_fd);
 	db3->lock_fd = -1;
@@ -265,11 +265,11 @@ _open_db(DB *d, char *fn, int myflags, int flags, mode_t mode, int *fd)
     if (*fd == -1)
        return errno;
 
-    /*  
+    /*
      * Without DB_FCNTL_LOCKING, the DB library complains when initializing
      * a database in an empty file. Since the database is our lock file,
      * we create it before Berkeley DB does, so a new DB always starts empty.
-     */ 
+     */
     myflags |= DB_FCNTL_LOCKING;
 
     ret = flock(*fd, (myflags&DB_RDONLY) ? LOCK_SH : LOCK_EX);

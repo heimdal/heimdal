@@ -157,7 +157,6 @@ append_mit_key(krb5_context context, krb5_storage *sp,
     krb5_data keylenbytes;
     unsigned int salttype;
 
-
     sz = append_string(context, sp, "\t%u\t%u\t%d\t%d\t", key_versions, kvno,
                         key->key.keytype, key->key.keyvalue.length + 2);
     if (sz == -1) return sz;
@@ -172,7 +171,7 @@ append_mit_key(krb5_context context, krb5_storage *sp,
     sz = append_hex(context, sp, 1, 1, &key->key.keyvalue);
     if (!key->salt)
         return sz;
-    
+
     /* Map salt to MIT KDB style */
     switch (key->salt->type) {
     case KRB5_PADATA_PW_SALT:

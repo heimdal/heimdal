@@ -89,6 +89,7 @@ KRB5_LIB_FUNCTION krb5_storage * KRB5_LIB_CALL
 krb5_storage_from_fd(krb5_socket_t fd_in)
 {
     krb5_storage *sp;
+    int saved_errno;
     int fd;
 
 #ifdef SOCKET_IS_NOT_AN_FD
@@ -108,16 +109,22 @@ krb5_storage_from_fd(krb5_socket_t fd_in)
     if (fd < 0)
 	return NULL;
 
+    errno = ENOMEM;
     sp = malloc(sizeof(krb5_storage));
     if (sp == NULL) {
+	saved_errno = errno;
 	close(fd);
+	errno = saved_errno;
 	return NULL;
     }
 
+    errno = ENOMEM;
     sp->data = malloc(sizeof(fd_storage));
     if (sp->data == NULL) {
+	saved_errno = errno;
 	close(fd);
 	free(sp);
+	errno = saved_errno;
 	return NULL;
     }
     sp->flags = 0;

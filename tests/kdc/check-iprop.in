@@ -142,6 +142,7 @@ ${kadmin} -l get host/foo@${R} | \
 
 echo "Delete 3DES keys"
 ${kadmin} -l del_enctype host/foo@${R} des3-cbc-sha1
+sleep 2
 KRB5_CONFIG="${objdir}/krb5-slave.conf" \
 ${kadmin} -l get host/foo@${R} | \
     ${EGREP} Keytypes: | cut -d: -f2 | tr ' ' '

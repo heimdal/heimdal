@@ -60,7 +60,7 @@ static char *nada_tgt_principal[] = { "krbtgt", "NADA.KTH.SE" };
 
 
 #define IF_OPT_COMPARE(ac,bc,e) \
-	if (((ac)->e == NULL && (bc)->e != NULL) || (((ac)->e != NULL && (bc)->e == NULL))) return 1; if ((ab)->e)
+	if (((ac)->e == NULL && (bc)->e != NULL) || (((ac)->e != NULL && (bc)->e == NULL))) return 1; if ((ac)->e)
 #define COMPARE_OPT_STRING(ac,bc,e) \
 	do { if (strcmp(*(ac)->e, *(bc)->e) != 0) return 1; } while(0)
 #define COMPARE_OPT_OCTECT_STRING(ac,bc,e) \
@@ -73,6 +73,8 @@ static char *nada_tgt_principal[] = { "krbtgt", "NADA.KTH.SE" };
 	do { if (*(ac)->e != *(bc)->e) return 1; } while(0)
 #define COMPARE_MEM(ac,bc,e,len) \
 	do { if (memcmp((ac)->e, (bc)->e,len) != 0) return 1; } while(0)
+#define COMPARE_OCTECT_STRING(ac,bc,e) \
+	do { if ((ac)->e.length != (bc)->e.length || memcmp((ac)->e.data, (bc)->e.data, (ac)->e.length) != 0) return 1; } while(0)
 
 static int
 cmp_principal (void *a, void *b)
@@ -1407,6 +1409,178 @@ check_TESTMechTypeList(void)
     return 0;
 }
 
+static int
+cmp_TESTSeqOf4(void *a, void *b)
+{
+    TESTSeqOf4 *aa = a;
+    TESTSeqOf4 *ab = b;
+    int i;
+
+    IF_OPT_COMPARE(aa, ab, b1) {
+	COMPARE_INTEGER(aa->b1, ab->b1, len);
+	for (i = 0; i < aa->b1->len; ++i) {
+	    COMPARE_INTEGER(aa->b1->val+i, ab->b1->val+i, u1);
+	    COMPARE_INTEGER(aa->b1->val+i, ab->b1->val+i, u2);
+	    COMPARE_OCTECT_STRING(aa->b1->val+i, ab->b1->val+i, s1);
+	    COMPARE_OCTECT_STRING(aa->b1->val+i, ab->b1->val+i, s2);
+	}
+    }
+    IF_OPT_COMPARE(aa, ab, b2) {
+	COMPARE_INTEGER(aa->b2, ab->b2, len);
+	for (i = 0; i < aa->b2->len; ++i) {
+	    COMPARE_INTEGER(aa->b2->val+i, ab->b2->val+i, u1);
+	    COMPARE_INTEGER(aa->b2->val+i, ab->b2->val+i, u2);
+	    COMPARE_INTEGER(aa->b2->val+i, ab->b2->val+i, u3);
+	    COMPARE_OCTECT_STRING(aa->b2->val+i, ab->b2->val+i, s1);
+	    COMPARE_OCTECT_STRING(aa->b2->val+i, ab->b2->val+i, s2);
+	    COMPARE_OCTECT_STRING(aa->b2->val+i, ab->b2->val+i, s3);
+	}
+    }
+    IF_OPT_COMPARE(aa, ab, b3) {
+	COMPARE_INTEGER(aa->b3, ab->b3, len);
+	for (i = 0; i < aa->b3->len; ++i) {
+	    COMPARE_INTEGER(aa->b3->val+i, ab->b3->val+i, u1);
+	    COMPARE_INTEGER(aa->b3->val+i, ab->b3->val+i, u2);
+	    COMPARE_INTEGER(aa->b3->val+i, ab->b3->val+i, u3);
+	    COMPARE_INTEGER(aa->b3->val+i, ab->b3->val+i, u4);
+	    COMPARE_OCTECT_STRING(aa->b3->val+i, ab->b3->val+i, s1);
+	    COMPARE_OCTECT_STRING(aa->b3->val+i, ab->b3->val+i, s2);
+	    COMPARE_OCTECT_STRING(aa->b3->val+i, ab->b3->val+i, s3);
+	    COMPARE_OCTECT_STRING(aa->b3->val+i, ab->b3->val+i, s4);
+	}
+    }
+    return 0;
+}
+
+static int
+test_seq4 (void)
+{
+    struct test_case tests[] = {
+	{ NULL,  2,
+	  "\x30\x00",
+	  "seq4 0" },
+	{ NULL,  4,
+	  "\x30\x02" "\xa1\x00",
+	  "seq4 1" },
+	{ NULL,  8,
+	  "\x30\x06" "\xa0\x02\x30\x00" "\xa1\x00",
+	  "seq4 2" },
+	{ NULL,  2 + (2 + 0x18) + (2 + 0x27) + (2 + 0x31),
+	  "\x30\x76"					/* 2 SEQ */
+	   "\xa0\x18\x30\x16"				/* 4 [0] SEQ */
+	    "\x30\x14"					/* 2 SEQ */
+	     "\x04\x00"					/* 2 OCTET-STRING */
+             "\x04\x02\x01\x02"				/* 4 OCTET-STRING */
+	     "\x02\x01\x01"				/* 3 INT */
+	     "\x02\x09\x00\xff\xff\xff\xff\xff\xff\xff\xff"
+							/* 11 INT */
+	   "\xa1\x27"					/* 2 [1] IMPL SEQ */
+	    "\x30\x25"					/* 2 SEQ */
+	     "\x02\x01\x01"				/* 3 INT */
+	     "\x02\x09\x00\xff\xff\xff\xff\xff\xff\xff\xff"
+							/* 11 INT */
+	     "\x02\x09\x00\x80\x00\x00\x00\x00\x00\x00\x00"
+							/* 11 INT */
+	     "\x04\x00"					/* 2 OCTET-STRING */
+             "\x04\x02\x01\x02"				/* 4 OCTET-STRING */
+             "\x04\x04\x00\x01\x02\x03"			/* 6 OCTET-STRING */
+	   "\xa2\x31"					/* 2 [2] IMPL SEQ */
+	    "\x30\x2f"					/* 2 SEQ */
+	     "\x04\x00"					/* 2 OCTET-STRING */
+	     "\x02\x01\x01"				/* 3 INT */
+             "\x04\x02\x01\x02"				/* 4 OCTET-STRING */
+	     "\x02\x09\x00\xff\xff\xff\xff\xff\xff\xff\xff"
+							/* 11 INT */
+             "\x04\x04\x00\x01\x02\x03"			/* 6 OCTET-STRING */
+	     "\x02\x09\x00\x80\x00\x00\x00\x00\x00\x00\x00"
+							/* 11 INT */
+	     "\x04\x01\x00"				/* 3 OCTET-STRING */
+	     "\x02\x05\x01\x00\x00\x00\x00",		/* 7 INT */
+	  "seq4 3" },
+    };
+
+    int ret = 0, ntests = sizeof(tests) / sizeof(*tests);
+    TESTSeqOf4 c[4];
+    struct TESTSeqOf4_b1 b1[4];
+    struct TESTSeqOf4_b2 b2[4];
+    struct TESTSeqOf4_b3 b3[4];
+    struct TESTSeqOf4_b1_val b1val[4];
+    struct TESTSeqOf4_b2_val b2val[4];
+    struct TESTSeqOf4_b3_val b3val[4];
+
+    c[0].b1 = NULL;
+    c[0].b2 = NULL;
+    c[0].b3 = NULL;
+    tests[0].val = &c[0];
+
+    b2[1].len = 0;
+    b2[1].val = NULL;
+    c[1].b1 = NULL;
+    c[1].b2 = &b2[1];
+    c[1].b3 = NULL;
+    tests[1].val = &c[1];
+
+    b1[2].len = 0;
+    b1[2].val = NULL;
+    b2[2].len = 0;
+    b2[2].val = NULL;
+    c[2].b1 = &b1[2];
+    c[2].b2 = &b2[2];
+    c[2].b3 = NULL;
+    tests[2].val = &c[2];
+
+    b1val[3].s1.data = "";
+    b1val[3].s1.length = 0;
+    b1val[3].u1 = 1LL;
+    b1val[3].s2.data = "\x01\x02";
+    b1val[3].s2.length = 2;
+    b1val[3].u2 = -1LL;
+
+    b2val[3].s1.data = "";
+    b2val[3].s1.length = 0;
+    b2val[3].u1 = 1LL;
+    b2val[3].s2.data = "\x01\x02";
+    b2val[3].s2.length = 2;
+    b2val[3].u2 = -1LL;
+    b2val[3].s3.data = "\x00\x01\x02\x03";
+    b2val[3].s3.length = 4;
+    b2val[3].u3 = 1LL<<63;
+
+    b3val[3].s1.data = "";
+    b3val[3].s1.length = 0;
+    b3val[3].u1 = 1LL;
+    b3val[3].s2.data = "\x01\x02";
+    b3val[3].s2.length = 2;
+    b3val[3].u2 = -1LL;
+    b3val[3].s3.data = "\x00\x01\x02\x03";
+    b3val[3].s3.length = 4;
+    b3val[3].u3 = 1LL<<63;
+    b3val[3].s4.data = "\x00";
+    b3val[3].s4.length = 1;
+    b3val[3].u4 = 1LL<<32;
+
+    b1[3].len = 1;
+    b1[3].val = &b1val[3];
+    b2[3].len = 1;
+    b2[3].val = &b2val[3];
+    b3[3].len = 1;
+    b3[3].val = &b3val[3];
+    c[3].b1 = &b1[3];
+    c[3].b2 = &b2[3];
+    c[3].b3 = &b3[3];
+    tests[3].val = &c[3];
+
+    ret += generic_test (tests, ntests, sizeof(TESTSeqOf4),
+			 (generic_encode)encode_TESTSeqOf4,
+			 (generic_length)length_TESTSeqOf4,
+			 (generic_decode)decode_TESTSeqOf4,
+			 (generic_free)free_TESTSeqOf4,
+			 cmp_TESTSeqOf4,
+			 (generic_copy)copy_TESTSeqOf4);
+
+    return ret;
+}
+
 int
 main(int argc, char **argv)
 {
@@ -1439,6 +1613,7 @@ main(int argc, char **argv)
     ret += check_seq_of_size();
 
     ret += check_TESTMechTypeList();
+    ret += test_seq4();
 
     return ret;
 }

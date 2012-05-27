@@ -278,6 +278,133 @@ test_seqof3(void)
     return ret;
 }
 
+static int
+test_seqof4(void)
+{
+    struct test_case tests[] = {
+	{ NULL,  2,
+	  "\x30\x00",
+	  "seq4 0" },
+	{ NULL,  4,
+	  "\x30\x02" "\xa1\x00",
+	  "seq4 1" },
+	{ NULL,  8,
+	  "\x30\x06" "\xa0\x02\x30\x00" "\xa1\x00",
+	  "seq4 2" },
+	{ NULL,  2 + (2 + 0x18) + (2 + 0x27) + (2 + 0x31),
+	  "\x30\x76"					/* 2 SEQ */
+	   "\xa0\x18\x30\x16"				/* 4 [0] SEQ */
+	    "\x30\x14"					/* 2 SEQ */
+	     "\x04\x00"					/* 2 OCTET-STRING */
+             "\x04\x02\x01\x02"				/* 4 OCTET-STRING */
+	     "\x02\x01\x01"				/* 3 INT */
+	     "\x02\x09\x00\xff\xff\xff\xff\xff\xff\xff\xff"
+							/* 11 INT */
+	   "\xa1\x27"					/* 2 [1] IMPL SEQ */
+	    "\x30\x25"					/* 2 SEQ */
+	     "\x02\x01\x01"				/* 3 INT */
+	     "\x02\x09\x00\xff\xff\xff\xff\xff\xff\xff\xff"
+							/* 11 INT */
+	     "\x02\x09\x00\x80\x00\x00\x00\x00\x00\x00\x00"
+							/* 11 INT */
+	     "\x04\x00"					/* 2 OCTET-STRING */
+             "\x04\x02\x01\x02"				/* 4 OCTET-STRING */
+             "\x04\x04\x00\x01\x02\x03"			/* 6 OCTET-STRING */
+	   "\xa2\x31"					/* 2 [2] IMPL SEQ */
+	    "\x30\x2f"					/* 2 SEQ */
+	     "\x04\x00"					/* 2 OCTET-STRING */
+	     "\x02\x01\x01"				/* 3 INT */
+             "\x04\x02\x01\x02"				/* 4 OCTET-STRING */
+	     "\x02\x09\x00\xff\xff\xff\xff\xff\xff\xff\xff"
+							/* 11 INT */
+             "\x04\x04\x00\x01\x02\x03"			/* 6 OCTET-STRING */
+	     "\x02\x09\x00\x80\x00\x00\x00\x00\x00\x00\x00"
+							/* 11 INT */
+	     "\x04\x01\x00"				/* 3 OCTET-STRING */
+	     "\x02\x05\x01\x00\x00\x00\x00",		/* 7 INT */
+	  "seq4 3" },
+    };
+
+    int ret = 0, ntests = sizeof(tests) / sizeof(*tests);
+    TESTSeqOf4 c[4];
+    struct TESTSeqOf4_b1 b1[4];
+    struct TESTSeqOf4_b2 b2[4];
+    struct TESTSeqOf4_b3 b3[4];
+    struct TESTSeqOf4_b1_val b1val[4];
+    struct TESTSeqOf4_b2_val b2val[4];
+    struct TESTSeqOf4_b3_val b3val[4];
+
+    c[0].b1 = NULL;
+    c[0].b2 = NULL;
+    c[0].b3 = NULL;
+    tests[0].val = &c[0];
+
+    b2[1].len = 0;
+    b2[1].val = NULL;
+    c[1].b1 = NULL;
+    c[1].b2 = &b2[1];
+    c[1].b3 = NULL;
+    tests[1].val = &c[1];
+
+    b1[2].len = 0;
+    b1[2].val = NULL;
+    b2[2].len = 0;
+    b2[2].val = NULL;
+    c[2].b1 = &b1[2];
+    c[2].b2 = &b2[2];
+    c[2].b3 = NULL;
+    tests[2].val = &c[2];
+
+    b1val[3].s1.data = "";
+    b1val[3].s1.length = 0;
+    b1val[3].u1 = 1LL;
+    b1val[3].s2.data = "\x01\x02";
+    b1val[3].s2.length = 2;
+    b1val[3].u2 = -1LL;
+
+    b2val[3].s1.data = "";
+    b2val[3].s1.length = 0;
+    b2val[3].u1 = 1LL;
+    b2val[3].s2.data = "\x01\x02";
+    b2val[3].s2.length = 2;
+    b2val[3].u2 = -1LL;
+    b2val[3].s3.data = "\x00\x01\x02\x03";
+    b2val[3].s3.length = 4;
+    b2val[3].u3 = 1LL<<63;
+
+    b3val[3].s1.data = "";
+    b3val[3].s1.length = 0;
+    b3val[3].u1 = 1LL;
+    b3val[3].s2.data = "\x01\x02";
+    b3val[3].s2.length = 2;
+    b3val[3].u2 = -1LL;
+    b3val[3].s3.data = "\x00\x01\x02\x03";
+    b3val[3].s3.length = 4;
+    b3val[3].u3 = 1LL<<63;
+    b3val[3].s4.data = "\x00";
+    b3val[3].s4.length = 1;
+    b3val[3].u4 = 1LL<<32;
+
+    b1[3].len = 1;
+    b1[3].val = &b1val[3];
+    b2[3].len = 1;
+    b2[3].val = &b2val[3];
+    b3[3].len = 1;
+    b3[3].val = &b3val[3];
+    c[3].b1 = &b1[3];
+    c[3].b2 = &b2[3];
+    c[3].b3 = &b3[3];
+    tests[3].val = &c[3];
+
+    ret += generic_test (tests, ntests, sizeof(TESTSeqOf4),
+			 (generic_encode)encode_TESTSeqOf4,
+			 (generic_length)length_TESTSeqOf4,
+			 (generic_decode)decode_TESTSeqOf4,
+			 (generic_free)free_TESTSeqOf4,
+			 cmp_dummy,
+			 NULL);
+    return ret;
+}
 
 int
 main(int argc, char **argv)
@@ -289,6 +416,7 @@ main(int argc, char **argv)
     ret += test_seqofseq2();
     ret += test_seqof2();
     ret += test_seqof3();
+    ret += test_seqof4();
 
     return ret;
 }

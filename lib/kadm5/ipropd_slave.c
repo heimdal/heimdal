@@ -395,6 +395,7 @@ receive_everything (krb5_context context, int fd,
 	krb5_err (context, 1, ret, "db->open");
 
     sp = NULL;
+    krb5_data_zero(&data);
     do {
 	ret = krb5_read_priv_message(context, auth_context, &fd, &data);
 

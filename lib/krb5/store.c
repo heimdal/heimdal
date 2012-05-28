@@ -191,6 +191,25 @@ krb5_storage_truncate(krb5_storage *sp, off_t offset)
 }
 
 /**
+ * Sync the storage buffer to its backing store.  If there is no
+ * backing store this function will return success.
+ *
+ * @param sp the storage buffer to sync
+ *
+ * @return A Kerberos 5 error code
+ *
+ * @ingroup krb5_storage
+ */
+
+KRB5_LIB_FUNCTION int KRB5_LIB_CALL
+krb5_storage_fsync(krb5_storage *sp)
+{
+    if (sp->fsync != NULL)
+	return sp->fsync(sp);
+    return 0;
+}
+
+/**
  * Read to the storage buffer.
  *
  * @param sp the storage buffer to read from

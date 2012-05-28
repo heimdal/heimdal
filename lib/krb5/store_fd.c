@@ -66,6 +66,14 @@ fd_trunc(krb5_storage * sp, off_t offset)
     return 0;
 }
 
+static int
+fd_sync(krb5_storage * sp)
+{
+    if (fsync(FD(sp)) == -1)
+	return errno;
+    return 0;
+}
+
 static void
 fd_free(krb5_storage * sp)
 {
@@ -134,6 +142,7 @@ krb5_storage_from_fd(krb5_socket_t fd_in)
     sp->store = fd_store;
     sp->seek = fd_seek;
     sp->trunc = fd_trunc;
+    sp->fsync = fd_sync;
     sp->free = fd_free;
     sp->max_alloc = UINT_MAX/8;
     return sp;

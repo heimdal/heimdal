@@ -189,6 +189,7 @@ krb5_storage_emem(void)
     sp->store = emem_store;
     sp->seek = emem_seek;
     sp->trunc = emem_trunc;
+    sp->fsync = NULL;
     sp->free = emem_free;
     sp->max_alloc = UINT_MAX/8;
     return sp;

@@ -345,7 +345,11 @@ DB_open(krb5_context context, HDB *db, int flags, mode_t mode)
 	return ret;
     }
 
+#ifndef DB_CURSOR_BULK
+# define DB_CURSOR_BULK 0	/* Missing with DB < 4.8 */
+#endif
     ret = (*d->cursor)(d, NULL, &dbc, DB_CURSOR_BULK);
+
     if (ret) {
 	krb5_set_error_message(context, ret, "d->cursor: %s", strerror(ret));
         return ret;

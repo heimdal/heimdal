@@ -124,6 +124,7 @@ kadm5_ret_t
 kadm5_log_reinit (kadm5_server_context *context)
 {
     int fd;
+    int ret;
     kadm5_log_context *log_context = &context->log_context;
 
     if (log_context->log_fd != -1) {
@@ -131,12 +132,18 @@ kadm5_log_reinit (kadm5_server_context *context)
 	close (log_context->log_fd);
 	log_context->log_fd = -1;
     }
-    fd = open (log_context->log_file, O_RDWR | O_CREAT | O_TRUNC, 0600);
+    fd = open (log_context->log_file, O_RDWR | O_CREAT, 0600);
     if (fd < 0)
 	return errno;
     if (flock (fd, LOCK_EX) < 0) {
+	ret = errno;
 	close (fd);
-	return errno;
+	return ret;
+    }
+    if (ftruncate(fd, 0) < 0) {
+	ret = errno;
+	close(fd);
+	return ret;
     }
 
     log_context->version = 0;

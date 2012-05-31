@@ -57,7 +57,7 @@ ARCFOUR_string_to_key(krb5_context context,
     ret = wind_utf8ucs2_length(password.data, &len);
     if (ret) {
 	krb5_set_error_message (context, ret,
-				N_("Password not an UCS2 string", ""));
+				N_("Password is not valid UTF-8", ""));
 	goto out;
     }
 
@@ -70,7 +70,7 @@ ARCFOUR_string_to_key(krb5_context context,
     ret = wind_utf8ucs2(password.data, s, &len);
     if (ret) {
 	krb5_set_error_message (context, ret,
-				N_("Password not an UCS2 string", ""));
+				N_("Password is not valid UTF-8", ""));
 	goto out;
     }
 

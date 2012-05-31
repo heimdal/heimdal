@@ -739,8 +739,8 @@ build_logon_name(krb5_context context,
 
 	ret = wind_utf8ucs2_length(s, &ucs2_len);
 	if (ret) {
+	    krb5_set_error_message(context, ret, "Principal %s is not valid UTF-8", s);
 	    free(s);
-	    krb5_set_error_message(context, ret, "Failed to count length of UTF-8 string");
 	    return ret;
 	}
 
@@ -751,12 +751,13 @@ build_logon_name(krb5_context context,
 	}
 
 	ret = wind_utf8ucs2(s, ucs2, &ucs2_len);
-	free(s);
 	if (ret) {
 	    free(ucs2);
-	    krb5_set_error_message(context, ret, "Failed to convert string to UCS-2");
+	    krb5_set_error_message(context, ret, "Principal %s is not valid UTF-8", s);
+	    free(s);
 	    return ret;
-	}
+	} else 
+	    free(s);
 
 	s2_len = (ucs2_len + 1) * 2;
 	s2 = malloc(s2_len);

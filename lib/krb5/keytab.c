@@ -893,7 +893,7 @@ krb5_kt_remove_entry(krb5_context context,
  * @ingroup krb5_keytab
  */
 
-KRB5_LIB_FUNCTION krb5_boolean KRB5_LIB_CALL
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_kt_have_content(krb5_context context,
 		     krb5_keytab id)
 {

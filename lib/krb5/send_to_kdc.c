@@ -268,6 +268,7 @@ send_via_proxy (krb5_context context,
     int ret;
     krb5_socket_t s = rk_INVALID_SOCKET;
     char portstr[NI_MAXSERV];
+    int tmp;
 
     if (proxy == NULL)
 	return ENOMEM;
@@ -280,8 +281,8 @@ send_via_proxy (krb5_context context,
     memset (&hints, 0, sizeof(hints));
     hints.ai_family   = PF_UNSPEC;
     hints.ai_socktype = SOCK_STREAM;
-    snprintf (portstr, sizeof(portstr), "%d",
-	      ntohs(init_port (colon, htons(80))));
+    tmp = init_port (colon, htons(80));
+    snprintf (portstr, sizeof(portstr), "%d", ntohs(tmp));
     ret = getaddrinfo (proxy, portstr, &hints, &ai);
     free (proxy2);
     if (ret)

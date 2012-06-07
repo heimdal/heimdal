@@ -74,13 +74,13 @@ pidfile_cleanup(void)
 }
 
 ROKEN_LIB_FUNCTION void ROKEN_LIB_CALL
-pidfile(const char *basename)
+pidfile(const char *bname)
 {
     if(pidfile_path != NULL)
 	return;
-    if(basename == NULL)
-	basename = getprogname();
-    pidfile_path = pid_file_write(basename);
+    if(bname == NULL)
+	bname = getprogname();
+    pidfile_path = pid_file_write(bname);
 #if defined(HAVE_ATEXIT)
     atexit(pidfile_cleanup);
 #elif defined(HAVE_ON_EXIT)

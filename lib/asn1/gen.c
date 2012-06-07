@@ -706,14 +706,14 @@ define_asn1 (int level, Type *t)
 }
 
 static void
-getnewbasename(char **newbasename, int typedefp, const char *basename, const char *name)
+getnewbasename(char **newbasename, int typedefp, const char *base, const char *name)
 {
     if (typedefp)
 	*newbasename = strdup(name);
     else {
 	if (name[0] == '*')
 	    name++;
-	if (asprintf(newbasename, "%s_%s", basename, name) < 0)
+	if (asprintf(newbasename, "%s_%s", base, name) < 0)
 	    errx(1, "malloc");
     }
     if (*newbasename == NULL)
@@ -721,7 +721,7 @@ getnewbasename(char **newbasename, int typedefp, const char *basename, const cha
 }
 
 static void
-define_type (int level, const char *name, const char *basename, Type *t, int typedefp, int preservep)
+define_type (int level, const char *name, const char *base, Type *t, int typedefp, int preservep)
 {
     char *newbasename = NULL;
 
@@ -779,7 +779,7 @@ define_type (int level, const char *name, const char *basename, Type *t, int typ
 	    fprintf (headerfile, "heim_bit_string %s;\n", name);
 	else {
 	    int pos = 0;
-	    getnewbasename(&newbasename, typedefp, basename, name);
+	    getnewbasename(&newbasename, typedefp, base, name);
 
 	    fprintf (headerfile, "struct %s {\n", newbasename);
 	    ASN1_TAILQ_FOREACH(m, t->members, members) {
@@ -838,7 +838,7 @@ define_type (int level, const char *name, const char *basename, Type *t, int typ
     case TSequence: {
 	Member *m;
 
-	getnewbasename(&newbasename, typedefp, basename, name);
+	getnewbasename(&newbasename, typedefp, base, name);
 
 	space(level);
 	fprintf (headerfile, "struct %s {\n", newbasename);
@@ -868,7 +868,7 @@ define_type (int level, const char *name, const char *basename, Type *t, int typ
 	Type i;
 	struct range range = { 0, UINT_MAX };
 
-	getnewbasename(&newbasename, typedefp, basename, name);
+	getnewbasename(&newbasename, typedefp, base, name);
 
 	i.type = TInteger;
 	i.range = &range;
@@ -896,13 +896,13 @@ define_type (int level, const char *name, const char *basename, Type *t, int typ
 	fprintf (headerfile, "heim_general_string %s;\n", name);
 	break;
     case TTag:
-	define_type (level, name, basename, t->subtype, typedefp, preservep);
+	define_type (level, name, base, t->subtype, typedefp, preservep);
 	break;
     case TChoice: {
 	int first = 1;
 	Member *m;
 
-	getnewbasename(&newbasename, typedefp, basename, name);
+	getnewbasename(&newbasename, typedefp, base, name);
 
 	space(level);
 	fprintf (headerfile, "struct %s {\n", newbasename);

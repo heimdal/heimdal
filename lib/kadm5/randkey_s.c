@@ -80,6 +80,8 @@ kadm5_s_randkey_principal(void *server_handle,
 	goto out2;
     ent.entry.kvno++;
 
+    ent.entry.flags.require_pwchange = 0;
+
     ret = _kadm5_set_modifier(context, &ent.entry);
     if(ret)
 	goto out3;
@@ -106,11 +108,10 @@ kadm5_s_randkey_principal(void *server_handle,
     if (ret)
 	goto out2;
 
-    kadm5_log_modify (context,
-		      &ent.entry,
-		      KADM5_PRINCIPAL | KADM5_MOD_NAME | KADM5_MOD_TIME |
-		      KADM5_KEY_DATA | KADM5_KVNO | KADM5_PW_EXPIRATION |
-		      KADM5_TL_DATA);
+    kadm5_log_modify(context, &ent.entry,
+		     KADM5_ATTRIBUTES | KADM5_PRINCIPAL | KADM5_MOD_NAME |
+		     KADM5_MOD_TIME | KADM5_KEY_DATA | KADM5_KVNO |
+		     KADM5_PW_EXPIRATION | KADM5_TL_DATA);
 
 out3:
     if (ret) {

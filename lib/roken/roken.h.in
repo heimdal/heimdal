@@ -99,26 +99,6 @@ typedef int rk_socket_t;
 
 #endif  /* WinSock */
 
-/* Microsoft VC 2010 POSIX definitions */
-#ifndef EAFNOSUPPORT
-#define EAFNOSUPPORT            102
-#endif
-#ifndef ENOTSOCK
-#define ENOTSOCK		128
-#endif
-#ifndef ENOTSUP
-#define ENOTSUP                 129
-#endif
-#ifndef EOVERFLOW
-#define EOVERFLOW               132
-#endif
-#ifndef ETIMEDOUT
-#define ETIMEDOUT               138
-#endif
-#ifndef EWOULDBLOCK
-#define EWOULDBLOCK             140
-#endif
-
 #ifndef IN_LOOPBACKNET
 #define IN_LOOPBACKNET 127
 #endif
@@ -1160,6 +1140,27 @@ rk_qsort(void *, size_t, size_t, int (*)(const void *, const void *));
 #define socket(_fam,_type,_prot) rk_socket(_fam,_type,_prot)
 int ROKEN_LIB_FUNCTION rk_socket(int, int, int);
 #endif
+
+/* Microsoft VC 2010 POSIX definitions */
+#ifndef EAFNOSUPPORT
+#define EAFNOSUPPORT            102
+#endif
+#ifndef ENOTSOCK
+#define ENOTSOCK		128
+#endif
+#ifndef ENOTSUP
+#define ENOTSUP                 129
+#endif
+#ifndef EOVERFLOW
+#define EOVERFLOW               132
+#endif
+#ifndef ETIMEDOUT
+#define ETIMEDOUT               138
+#endif
+#ifndef EWOULDBLOCK
+#define EWOULDBLOCK             140
+#endif
+
 
 #ifdef SOCKET_WRAPPER_REPLACE
 #include <socket_wrapper.h>

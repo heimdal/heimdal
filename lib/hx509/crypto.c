@@ -92,6 +92,7 @@ struct signature_alg {
 #define PROVIDE_CONF	0x1
 #define REQUIRE_SIGNER	0x2
 #define SELF_SIGNED_OK	0x4
+#define WEAK_SIG_ALG	0x8
 
 #define SIG_DIGEST	0x100
 #define SIG_PUBLIC_SIG	0x200
@@ -1350,7 +1351,7 @@ static const struct signature_alg rsa_with_md5_alg = {
     &_hx509_signature_rsa_with_md5_data,
     ASN1_OID_ID_PKCS1_RSAENCRYPTION,
     &_hx509_signature_md5_data,
-    PROVIDE_CONF|REQUIRE_SIGNER|RA_RSA_USES_DIGEST_INFO|SIG_PUBLIC_SIG,
+    PROVIDE_CONF|REQUIRE_SIGNER|RA_RSA_USES_DIGEST_INFO|SIG_PUBLIC_SIG|WEAK_SIG_ALG,
     1230739889,
     NULL,
     rsa_verify_signature,
@@ -1434,7 +1435,7 @@ static const struct signature_alg md5_alg = {
     &_hx509_signature_md5_data,
     NULL,
     NULL,
-    SIG_DIGEST,
+    SIG_DIGEST|WEAK_SIG_ALG,
     0,
     EVP_md5,
     evp_md_verify_signature,
@@ -1539,9 +1540,7 @@ hx509_find_private_alg(const heim_oid *oid)
  */
 
 int
-_hx509_signature_best_before(hx509_context context,
-			     const AlgorithmIdentifier *alg,
-			     time_t t)
+_hx509_signature_is_weak(hx509_context context, const AlgorithmIdentifier *alg)
 {
     const struct signature_alg *md;
 
@@ -1550,10 +1549,9 @@ _hx509_signature_best_before(hx509_context context,
 	hx509_clear_error_string(context);
 	return HX509_SIG_ALG_NO_SUPPORTED;
     }
-    if (md->best_before && md->best_before < t) {
+    if (md->flags & WEAK_SIG_ALG) {
 	hx509_set_error_string(context, 0, HX509_CRYPTO_ALGORITHM_BEST_BEFORE,
-			       "Algorithm %s has passed it best before date",
-			       md->name);
+			       "Algorithm %s is weak", md->name);
 	return HX509_CRYPTO_ALGORITHM_BEST_BEFORE;
     }
     return 0;

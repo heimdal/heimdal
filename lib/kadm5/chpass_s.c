@@ -144,11 +144,10 @@ change(void *server_handle,
     if (ret)
 	goto out2;
 
-    kadm5_log_modify (context,
-		      &ent.entry,
-		      KADM5_PRINCIPAL | KADM5_MOD_NAME | KADM5_MOD_TIME |
-		      KADM5_KEY_DATA | KADM5_KVNO | KADM5_PW_EXPIRATION |
-		      KADM5_TL_DATA);
+    kadm5_log_modify(context, &ent.entry,
+		     KADM5_ATTRIBUTES | KADM5_PRINCIPAL | KADM5_MOD_NAME |
+		     KADM5_MOD_TIME | KADM5_KEY_DATA | KADM5_KVNO |
+		     KADM5_PW_EXPIRATION | KADM5_TL_DATA);
 
 out2:
     hdb_free_entry(context->context, &ent);

@@ -436,7 +436,6 @@ out:
 
 static int
 verify (krb5_auth_context *auth_context,
-	krb5_realm *realms,
 	krb5_keytab keytab,
 	krb5_ticket **ticket,
 	krb5_data *out_data,
@@ -452,7 +451,9 @@ verify (krb5_auth_context *auth_context,
     uint16_t pkt_len, pkt_ver, ap_req_len;
     krb5_data ap_req_data;
     krb5_data krb_priv_data;
-    krb5_realm *r;
+    krb5_const_realm client_realm;
+    krb5_principal sprinc;
+    int same;
 
     /*
      * Only send an error reply if the request passes basic length
@@ -501,47 +502,38 @@ verify (krb5_auth_context *auth_context,
 	return 1;
     }
 
-    /* verify realm and principal */
-    for (r = realms; *r != NULL; r++) {
-	krb5_principal principal;
-	krb5_boolean same;
-
-	ret = krb5_make_principal (context,
-				   &principal,
-				   *r,
-				   "kadmin",
-				   "changepw",
-				   NULL);
-	if (ret)
-	    krb5_err (context, 1, ret, "krb5_make_principal");
-
-	same = krb5_principal_compare(context, principal, (*ticket)->server);
-	krb5_free_principal(context, principal);
-	if (same == TRUE)
-	    break;
-    }
-    if (*r == NULL) {
-	char *str;
-	krb5_unparse_name(context, (*ticket)->server, &str);
-	krb5_warnx (context, "client used not valid principal %s", str);
-	free(str);
-	reply_error (NULL, s, sa, sa_size, ret, 1,
-		     "Bad request");
-	goto out;
-    }
-
-    if (strcmp((*ticket)->server->realm, (*ticket)->client->realm) != 0) {
-	krb5_warnx (context, "server realm (%s) not same a client realm (%s)",
-		    (*ticket)->server->realm, (*ticket)->client->realm);
-	reply_error ((*ticket)->server->realm, s, sa, sa_size, ret, 1,
-		     "Bad request");
-	goto out;
-    }
-
     if (!(*ticket)->ticket.flags.initial) {
-	krb5_warnx (context, "initial flag not set");
-	reply_error ((*ticket)->server->realm, s, sa, sa_size, ret, 1,
-		     "Bad request");
+	krb5_warnx(context, "initial flag not set");
+	reply_error((*ticket)->server->realm, s, sa, sa_size, ret, 1,
+		    "Bad request");
+	goto out;
+    }
+
+    /*
+     * The service principal must be kadmin/changepw@CLIENT-REALM, there
+     * is no reason to require the KDC's default realm(s) to be the same
+     * as the realm(s) it serves. The only potential issue is when a KDC
+     * is a master for realm A and a slave for realm B, in which case it
+     * should not accept requests to change passwords for realm B, these
+     * should be sent to realm B's master. This same issue is present in
+     * the checks that only accepted local realms, there is no new risk.
+     */
+
+    client_realm = krb5_principal_get_realm(context, (*ticket)->client);
+    ret = krb5_make_principal(context, &sprinc, client_realm,
+			      "kadmin", "changepw", NULL);
+    if (ret)
+	goto out;
+    same = krb5_principal_compare(context, sprinc, (*ticket)->server);
+    krb5_free_principal(context, sprinc);
+
+    if (!same) {
+	char *sname;
+
+	krb5_unparse_name(context, (*ticket)->server, &sname);
+	krb5_warnx(context, "Invalid kpasswd service principal %s", sname);
+	free(sname);
+	reply_error(NULL, s, sa, sa_size, ret, 1, "Bad request");
 	goto out;
     }
     krb_priv_data.data   = msg + 6 + ap_req_len;
@@ -582,8 +574,7 @@ out:
 }
 
 static void
-process (krb5_realm *realms,
-	 krb5_keytab keytab,
+process (krb5_keytab keytab,
 	 int s,
 	 krb5_address *this_addr,
 	 struct sockaddr *sa,
@@ -622,7 +613,7 @@ process (krb5_realm *realms,
 	goto out;
     }
 
-    if (verify (&auth_context, realms, keytab, &ticket, &out_data,
+    if (verify (&auth_context, keytab, &ticket, &out_data,
 		&version, s, sa, sa_size, msg, len, &other_addr) == 0)
     {
 	/*
@@ -659,16 +650,11 @@ doit (krb5_keytab keytab, int port)
     krb5_error_code ret;
     int *sockets;
     int maxfd;
-    krb5_realm *realms;
     krb5_addresses addrs;
     unsigned n, i;
     fd_set real_fdset;
     struct sockaddr_storage __ss;
     struct sockaddr *sa = (struct sockaddr *)&__ss;
-
-    ret = krb5_get_default_realms(context, &realms);
-    if (ret)
-	krb5_err (context, 1, ret, "krb5_get_default_realms");
 
     if (explicit_addresses.len) {
 	addrs = explicit_addresses;
@@ -736,7 +722,7 @@ doit (krb5_keytab keytab, int port)
 			krb5_err (context, 1, errno, "recvfrom");
 		}
 
-		process (realms, keytab, sockets[i],
+		process (keytab, sockets[i],
 			 &addrs.val[i],
 			 sa, addrlen,
 			 buf, retx);
@@ -748,7 +734,6 @@ doit (krb5_keytab keytab, int port)
     free(sockets);
 
     krb5_free_addresses (context, &addrs);
-    krb5_free_host_realm (context, realms);
     krb5_free_context (context);
     return 0;
 }

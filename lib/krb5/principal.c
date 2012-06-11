@@ -747,30 +747,38 @@ append_component(krb5_context context, krb5_principal p,
     return 0;
 }
 
-static void
+static krb5_error_code
 va_ext_princ(krb5_context context, krb5_principal p, va_list ap)
 {
-    while(1){
+    krb5_error_code ret = 0;
+
+    while (1){
 	const char *s;
 	int len;
-	len = va_arg(ap, int);
-	if(len == 0)
+
+	if ((len = va_arg(ap, int)) == 0)
 	    break;
 	s = va_arg(ap, const char*);
-	append_component(context, p, s, len);
+	if ((ret = append_component(context, p, s, len)) != 0)
+	    break;
     }
+    return ret;
 }
 
-static void
+static krb5_error_code
 va_princ(krb5_context context, krb5_principal p, va_list ap)
 {
-    while(1){
+    krb5_error_code ret = 0;
+
+    while (1){
 	const char *s;
-	s = va_arg(ap, const char*);
-	if(s == NULL)
+
+	if ((s = va_arg(ap, const char*)) == NULL)
 	    break;
-	append_component(context, p, s, strlen(s));
+	if ((ret = append_component(context, p, s, strlen(s))) != 0)
+	    break;
     }
+    return ret;
 }
 
 static krb5_error_code
@@ -778,9 +786,10 @@ build_principal(krb5_context context,
 		krb5_principal *principal,
 		int rlen,
 		krb5_const_realm realm,
-		void (*func)(krb5_context, krb5_principal, va_list),
+		krb5_error_code (*func)(krb5_context, krb5_principal, va_list),
 		va_list ap)
 {
+    krb5_error_code ret;
     krb5_principal p;
 
     p = calloc(1, sizeof(*p));
@@ -789,14 +798,17 @@ build_principal(krb5_context context,
     princ_type(p) = KRB5_NT_PRINCIPAL;
 
     princ_realm(p) = strdup(realm);
-    if(p->realm == NULL){
+    if (p->realm == NULL) {
 	free(p);
 	return krb5_enomem(context);
     }
 
-    (*func)(context, p, ap);
-    *principal = p;
-    return 0;
+    ret = func(context, p, ap);
+    if (ret == 0)
+	*principal = p;
+    else
+	krb5_free_principal(context, p);
+    return ret;
 }
 
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL

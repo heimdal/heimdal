@@ -2,10 +2,6 @@ HEIMDAL_KRB5_2.0 {
 	global:
 		krb524_convert_creds_kdc;
 		krb524_convert_creds_kdc_ccache;
-		krb5_425_conv_principal;
-		krb5_425_conv_principal_ext2;
-		krb5_425_conv_principal_ext;
-		krb5_524_conv_principal;
 		krb5_abort;
 		krb5_abortx;
 		krb5_acl_match_file;
@@ -729,19 +725,6 @@ HEIMDAL_KRB5_2.0 {
 		_krb5_crc_update;		
 		_krb5_get_krbtgt;
 		_krb5_build_authenticator;
-
-		# V4 compat glue
-		_krb5_krb_tf_setup;
-		_krb5_krb_dest_tkt;
-		_krb5_krb_life_to_time;
-		_krb5_krb_decomp_ticket;
-		_krb5_krb_create_ticket;
-		_krb5_krb_create_ciph;
-		_krb5_krb_create_auth_reply;
-		_krb5_krb_rd_req;
-		_krb5_krb_free_auth_data;
-		_krb5_krb_time_to_life;
-		_krb5_krb_cr_err_reply;
 
 		# Shared with libkdc
 		_krb5_AES_string_to_default_iterator;

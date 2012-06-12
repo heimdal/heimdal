@@ -735,7 +735,6 @@ HEIMDAL_KRB5_2.0 {
 		_krb5_krb_dest_tkt;
 		_krb5_krb_life_to_time;
 		_krb5_krb_decomp_ticket;
-		_krb5_krb_decomp_ticket;
 		_krb5_krb_create_ticket;
 		_krb5_krb_create_ciph;
 		_krb5_krb_create_auth_reply;

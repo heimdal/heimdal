@@ -51,6 +51,7 @@ libkrb5_OBJS =			\
 	$(OBJ)\config_reg.obj		    \
 	$(OBJ)\constants.obj		    \
 	$(OBJ)\context.obj		    \
+        $(OBJ)\convert_creds.obj            \
 	$(OBJ)\copy_host_realm.obj	    \
 	$(OBJ)\crc.obj			    \
 	$(OBJ)\creds.obj		    \

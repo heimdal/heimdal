@@ -58,6 +58,7 @@ EXPORTS
 	hdb_seal_key_mkey
 	hdb_seal_keys
 	hdb_seal_keys_mkey
+        hdb_set_last_modified_by
 	hdb_set_master_key
 	hdb_set_master_keyfile
 	hdb_unlock
@@ -73,21 +74,28 @@ EXPORTS
 
 	hdb_kt_ops
 
+; MIT KDB related entries
+        _hdb_mdb_value2entry
+        _hdb_mit_dump2mitdb_entry
+
 ; some random bits needed for libkadm
 	HDBFlags2int
 	asn1_HDBFlags_units
 	copy_Event
 	copy_HDB_extensions
 	copy_Key
+        copy_Keys
 	copy_Salt
 	decode_HDB_Ext_Aliases
 	decode_HDB_Ext_PKINIT_acl
 	decode_HDB_extension
         decode_Key
+        decode_Keys
 	encode_HDB_Ext_Aliases
 	encode_HDB_Ext_PKINIT_acl
 	encode_HDB_extension
         encode_Key
+        encode_Keys
 	free_Event
 	free_HDB_Ext_Aliases
 	free_HDB_Ext_PKINIT_acl
@@ -103,5 +111,7 @@ EXPORTS
 	length_HDB_Ext_PKINIT_acl
 	length_HDB_extension
         length_Key
+        length_Keys
 	add_Keys
 	add_HDB_Ext_KeySet
+        remove_Keys

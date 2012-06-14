@@ -115,21 +115,19 @@ change(void *server_handle,
 
     ent.entry.flags.require_pwchange = 0;
 
-    if (keepold) {
-	ret = hdb_seal_keys(context->context, context->db, &ent.entry);
-	if (ret)
-	    goto out2;
-    } else {
+    if (!keepold) {
 	HDB_extension ext;
 
 	memset(&ext, 0, sizeof (ext));
 	ext.data.element = choice_HDB_extension_data_hist_keys;
-	ext.data.u.hist_keys.len = 0;
-	ext.data.u.hist_keys.val = NULL;
 	ret = hdb_replace_extension(context->context, &ent.entry, &ext);
 	if (ret)
 	    goto out2;
     }
+
+    ret = hdb_seal_keys(context->context, context->db, &ent.entry);
+    if (ret)
+        goto out2;
 
     ret = _kadm5_set_modifier(context, &ent.entry);
     if(ret)

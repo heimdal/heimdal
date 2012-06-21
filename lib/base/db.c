@@ -53,11 +53,10 @@
 #include <string.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-#ifndef WIN32
-#include <sys/file.h>
-#endif
-#ifdef HAVE_IO_H
+#ifdef WIN32
 #include <io.h>
+#else
+#include <sys/file.h>
 #endif
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>

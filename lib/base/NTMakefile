@@ -29,11 +29,11 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
-RELDIR=base
+RELDIR=lib\base
 
 intcflags=-I$(SRCDIR) -I$(OBJ)
 
-!include ../windows/NTMakefile.w32
+!include ../../windows/NTMakefile.w32
 
 INCFILES=$(INCDIR)\heimbase.h
 

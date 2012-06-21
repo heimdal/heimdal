@@ -6,7 +6,7 @@ if KCM
 kcm_dir = kcm
 endif
 
-SUBDIRS=  include lib/roken base lib kuser kdc admin kadmin kpasswd 
+SUBDIRS=  include lib kuser kdc admin kadmin kpasswd 
 SUBDIRS+= $(kcm_dir) appl tools tests packages etc po
 
 if HEIMDAL_DOCUMENTATION

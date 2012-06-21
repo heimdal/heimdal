@@ -33,7 +33,7 @@
 thirdparty=thirdparty
 !endif
 
-SUBDIRS = include lib\roken base lib kuser kdc admin kadmin kpasswd appl doc \
+SUBDIRS = include lib kuser kdc admin kadmin kpasswd appl doc \
 	tools tests packages etc $(thirdparty) packages\windows\installer
 
 !include windows/NTMakefile.w32

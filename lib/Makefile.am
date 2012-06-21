@@ -23,6 +23,7 @@ endif
 
 SUBDIRS = \
 	roken \
+	base \
 	vers \
 	$(dir_editline) \
 	$(dir_com_err) \

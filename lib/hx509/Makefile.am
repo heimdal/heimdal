@@ -96,7 +96,7 @@ libhx509_la_LIBADD = \
 	$(LIB_hcrypto) \
 	$(top_builddir)/lib/asn1/libasn1.la \
 	$(top_builddir)/lib/wind/libwind.la \
-	$(top_builddir)/base/libheimbase.la \
+	$(top_builddir)/lib/base/libheimbase.la \
 	$(LIBADD_roken) \
 	$(LIB_dlopen)
 

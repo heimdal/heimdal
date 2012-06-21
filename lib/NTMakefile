@@ -40,7 +40,7 @@ dir_dce = kdfs
 dir_hcrypto = hcrypto
 !endif
 
-SUBDIRS = vers com_err sl wind asn1 sqlite \
+SUBDIRS = roken base vers com_err sl wind asn1 sqlite \
 	$(dir_hcrypto) hx509 krb5 heimdal ntlm kafs gssapi hdb \
 	kadm5 $(dir_45) $(dir_otp) $(dir_dce) ..\packages\windows\assembly
 

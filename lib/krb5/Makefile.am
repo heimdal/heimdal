@@ -67,7 +67,7 @@ libkrb5_la_LIBADD = \
 	$(top_builddir)/lib/asn1/libasn1.la \
 	$(top_builddir)/lib/ipc/libheim-ipcc.la \
 	$(top_builddir)/lib/wind/libwind.la \
-	$(top_builddir)/base/libheimbase.la \
+	$(top_builddir)/lib/base/libheimbase.la \
 	$(LIB_pkinit) \
 	$(use_sqlite) \
 	$(LIB_com_err) \

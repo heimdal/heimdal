@@ -104,7 +104,9 @@ typedef int rk_socket_t;
 #endif
 
 #ifdef _MSC_VER
+#ifndef HAVE_STDINT_H
 #include <intsafe.h>
+#endif
 
 /* Declarations for Microsoft Visual C runtime on Windows */
 

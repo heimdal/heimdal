@@ -163,11 +163,10 @@ INCFILES = 			\
 	$(INCDIR)\stdbool.h	\
 	$(INCDIR)\syslog.h	\
 	$(INCDIR)\vis.h		\
+!ifndef HAVE_STDINT_H
+	$(INCDIR)\stdint.h	\
+!endif
 	$(INCDIR)\xdbm.h
-
-#!ifndef HAVE_STDINT_H
-#INCFILES += $(INCDIR)\stdint.h
-#!endif
 
 clean::
 	-$(RM) $(XHEADERS)

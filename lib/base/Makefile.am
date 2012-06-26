@@ -51,5 +51,5 @@ CLEANFILES = base64.c
 EXTRA_DIST = NTMakefile version-script.map
 
 base64.c:
-	$(RM) base64.c
+	rm -f base64.c
 	$(LN_S) $(srcdir)/../roken/base64.c .

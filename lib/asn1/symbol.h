@@ -36,8 +36,8 @@
 #ifndef _SYMBOL_H
 #define _SYMBOL_H
 
-#include <roken.h>
 #include "asn1_queue.h"
+#include <stdint.h>
 
 enum typetype {
     TBitString,

@@ -44,6 +44,7 @@
 #include <errno.h>
 #include <ctype.h>
 #include <stdlib.h>
+#include <stdint.h>
 
 /*
  * Convert a string to a long long integer.

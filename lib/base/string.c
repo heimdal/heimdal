@@ -159,16 +159,6 @@ heim_string_create_with_bytes(const void *data, size_t len)
     return s;
 }
 
-/*
- *
- */
-
-static void
-string_free(void *ptr)
-{
-    free(ptr);
-}
-
 /**
  * Create a string object using a format string
  *

@@ -36,6 +36,8 @@
 #ifndef __HDB_H__
 #define __HDB_H__
 
+#include <stdio.h>
+
 #include <krb5.h>
 
 #include <hdb_err.h>

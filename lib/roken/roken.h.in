@@ -352,6 +352,26 @@ rk_vsnprintf (char *str, size_t sz, const char *format, va_list args);
  S_ISBLK(m)
 */
 
+#if !defined(ROKEN_NO_DEFINE_ALLOCATORS)
+/* Ensure that a common memory allocator is used by all */
+#define calloc  rk_calloc
+#define free    rk_free
+#define malloc  rk_malloc
+#define realloc rk_realloc
+#endif
+
+ROKEN_LIB_FUNCTION void * ROKEN_LIB_CALL
+rk_calloc(size_t, size_t);
+
+ROKEN_LIB_FUNCTION void ROKEN_LIB_CALL
+rk_free(void *);
+
+ROKEN_LIB_FUNCTION void * ROKEN_LIB_CALL
+rk_malloc(size_t);
+
+ROKEN_LIB_FUNCTION void * ROKEN_LIB_CALL
+rk_realloc(void *, size_t);
+
 #endif  /* _MSC_VER */
 
 #ifdef HAVE_WINSOCK

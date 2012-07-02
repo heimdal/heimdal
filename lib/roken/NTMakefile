@@ -116,6 +116,7 @@ libroken_la_OBJS =			\
 	$(OBJ)\warn.obj			\
 	$(OBJ)\warnerr.obj		\
 	$(OBJ)\warnx.obj		\
+        $(OBJ)\win32_alloc.obj          \
 	$(OBJ)\xfree.obj
 
 !if $(NMAKE_WINVER) < 0x0600

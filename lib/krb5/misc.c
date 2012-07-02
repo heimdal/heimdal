@@ -86,13 +86,6 @@ out:
     return ret;
 }
 
-krb5_error_code
-krb5_enomem(krb5_context context)
-{
-    krb5_set_error_message(context, ENOMEM, N_("malloc: out of memory", ""));
-    return ENOMEM;
-}
-
 void
 _krb5_debug_backtrace(krb5_context context)
 {

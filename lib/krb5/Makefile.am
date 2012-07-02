@@ -147,6 +147,7 @@ dist_libkrb5_la_SOURCES =			\
 	deprecated.c				\
 	digest.c				\
 	eai_to_heim_errno.c			\
+        enomem.c                                \
 	error_string.c				\
 	expand_hostname.c			\
 	expand_path.c				\

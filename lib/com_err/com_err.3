@@ -134,10 +134,11 @@ This routine provides an interface, equivalent to
 which may be used by higher-level variadic functions (functions which
 accept variable numbers of arguments).
 .It Fn error_message "code"
-Returns the character string error message associate with
+Returns the character string error message associated with
 .Fa code .
 If
-.Fa code is associated with an unknown error table, or if
+.Fa code
+is associated with an unknown error table, or if
 .Fa code
 is associated with a known error table but is not in the table, a
 string of the form `Unknown code XXXX NN' is returned, where XXXX is

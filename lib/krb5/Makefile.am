@@ -10,6 +10,7 @@ noinst_PROGRAMS =				\
 	krbhst-test				\
 	test_alname				\
 	test_crypto				\
+	test_expand_toks			\
 	test_forward				\
 	test_get_addrs				\
 	test_gic				\

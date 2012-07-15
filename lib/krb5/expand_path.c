@@ -445,7 +445,8 @@ free_extra_tokens(char **extra_tokens)
  *
  * @context   A krb5_context
  * @path_in   The path to expand tokens from
- * @token     Variable number of pairs of strings, the first of each
+ * @ppath_out The expanded path
+ * @...       Variable number of pairs of strings, the first of each
  *            being a token (e.g., "luser") and the second a string to
  *            replace it with.  The list is terminated by a NULL.
  * 
@@ -462,7 +463,7 @@ _krb5_expand_path_tokensv(krb5_context context,
     char **extra_tokens = NULL;
     const char *path_left;
     const char *s;
-    size_t nextra_tokens = 0;
+    size_t nargs = 0;
     size_t len = 0;
     va_list ap;
 
@@ -475,21 +476,22 @@ _krb5_expand_path_tokensv(krb5_context context,
 
     va_start(ap, ppath_out);
     while ((s = va_arg(ap, const char *))) {
-	nextra_tokens++;
-	s = va_arg(ap, const char *);
+	nargs++;
+        s = va_arg(ap, const char *);
     }
     va_end(ap);
+    nargs *= 2;
 
     /* Get extra tokens */
-    if (nextra_tokens) {
+    if (nargs) {
 	size_t i;
 
-	extra_tokens = calloc(nextra_tokens + 2, sizeof (*extra_tokens));
+	extra_tokens = calloc(nargs + 1, sizeof (*extra_tokens));
 	if (extra_tokens == NULL)
 	    return krb5_enomem(context);
 	va_start(ap, ppath_out);
-	for (i = 0; i < nextra_tokens; i++) {
-	    s = va_arg(ap, const char *);
+	for (i = 0; i < nargs; i++) {
+	    s = va_arg(ap, const char *); /* token key */
 	    if (s == NULL)
 		break;
 	    extra_tokens[i] = strdup(s);
@@ -497,9 +499,9 @@ _krb5_expand_path_tokensv(krb5_context context,
 		free_extra_tokens(extra_tokens);
 		return krb5_enomem(context);
 	    }
-	    s = va_arg(ap, const char *);
+	    s = va_arg(ap, const char *); /* token value */
 	    if (s == NULL)
-		break;
+		s = "";
 	    extra_tokens[i] = strdup(s);
 	    if (extra_tokens[i] == NULL) {
 		free_extra_tokens(extra_tokens);

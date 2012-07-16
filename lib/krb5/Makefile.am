@@ -10,7 +10,6 @@ noinst_PROGRAMS =				\
 	krbhst-test				\
 	test_alname				\
 	test_crypto				\
-	test_expand_toks			\
 	test_forward				\
 	test_get_addrs				\
 	test_gic				\
@@ -44,6 +43,7 @@ TESTS =						\
 	test_pkinit_dh2key			\
 	test_pknistkdf				\
 	test_time				\
+	test_expand_toks			\
 	test_x500
 
 check_DATA = test_config_strings.out

@@ -93,6 +93,14 @@ typedef struct hx509_name_constraints {
 #define GeneralSubtrees_SET(g,var) \
 	(g)->len = (var)->len, (g)->val = (var)->val;
 
+static void
+init_context_once(void *ignored)
+{
+
+    ENGINE_add_conf_module();
+    OpenSSL_add_all_algorithms();
+}
+
 /**
  * Creates a hx509 context that most functions in the library
  * uses. The context is only allowed to be used by one thread at each
@@ -108,9 +116,13 @@ typedef struct hx509_name_constraints {
 int
 hx509_context_init(hx509_context *context)
 {
+    static heim_base_once_t init_context = HEIM_BASE_ONCE_INIT;
+
     *context = calloc(1, sizeof(**context));
     if (*context == NULL)
 	return ENOMEM;
+
+    heim_base_once_f(&init_context, NULL, init_context_once);
 
     _hx509_ks_null_register(*context);
     _hx509_ks_mem_register(*context);
@@ -119,9 +131,6 @@ hx509_context_init(hx509_context *context)
     _hx509_ks_pkcs11_register(*context);
     _hx509_ks_dir_register(*context);
     _hx509_ks_keychain_register(*context);
-
-    ENGINE_add_conf_module();
-    OpenSSL_add_all_algorithms();
 
     (*context)->ocsp_time_diff = HX509_DEFAULT_OCSP_TIME_DIFF;
 

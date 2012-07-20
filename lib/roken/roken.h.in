@@ -359,6 +359,7 @@ rk_vsnprintf (char *str, size_t sz, const char *format, va_list args);
 #define malloc  rk_malloc
 #define realloc rk_realloc
 #define strdup  rk_strdup
+#define wcsdup  rk_wcsdup
 #endif
 
 ROKEN_LIB_FUNCTION void * ROKEN_LIB_CALL
@@ -375,6 +376,9 @@ rk_realloc(void *, size_t);
 
 ROKEN_LIB_FUNCTION char * ROKEN_LIB_CALL
 rk_strdup(const char *);
+
+ROKEN_LIB_FUNCTION unsigned short * ROKEN_LIB_CALL
+rk_wcsdup(const unsigned short *);
 
 #endif  /* _MSC_VER */
 

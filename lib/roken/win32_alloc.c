@@ -33,6 +33,7 @@
 #undef calloc
 #undef malloc
 #undef free
+#undef strdup
 
 /*
  * Windows executables and dlls suffer when memory is
@@ -59,4 +60,10 @@ ROKEN_LIB_FUNCTION void * ROKEN_LIB_CALL
 rk_malloc(size_t size)
 {
     return malloc( size);
+}
+
+ROKEN_LIB_FUNCTION char * ROKEN_LIB_CALL
+rk_strdup(const char *str)
+{
+    return strdup( str);
 }

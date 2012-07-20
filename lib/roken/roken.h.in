@@ -3,22 +3,22 @@
  * Copyright (c) 1995-2005 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright
  *    notice, this list of conditions and the following disclaimer.
- * 
+ *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 
+ *
  * 3. Neither the name of the Institute nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE INSTITUTE AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -65,7 +65,7 @@
 #include <ws2tcpip.h>
 
 /*
- * error codes for inet_ntop/inet_pton 
+ * error codes for inet_ntop/inet_pton
  */
 typedef SOCKET rk_socket_t;
 
@@ -358,6 +358,7 @@ rk_vsnprintf (char *str, size_t sz, const char *format, va_list args);
 #define free    rk_free
 #define malloc  rk_malloc
 #define realloc rk_realloc
+#define strdup  rk_strdup
 #endif
 
 ROKEN_LIB_FUNCTION void * ROKEN_LIB_CALL
@@ -371,6 +372,9 @@ rk_malloc(size_t);
 
 ROKEN_LIB_FUNCTION void * ROKEN_LIB_CALL
 rk_realloc(void *, size_t);
+
+ROKEN_LIB_FUNCTION char * ROKEN_LIB_CALL
+rk_strdup(const char *);
 
 #endif  /* _MSC_VER */
 
@@ -441,7 +445,7 @@ ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
 #ifndef HAVE_VSNPRINTF
 #define vsnprintf rk_vsnprintf
 #endif
-ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL 
+ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
      rk_vsnprintf (char *, size_t, const char *, va_list)
      __attribute__((format (printf, 3, 0)));
 #endif
@@ -689,7 +693,7 @@ ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL innetgr(const char*, const char*,
 
 #ifndef HAVE_IRUSEROK
 #define iruserok rk_iruserok
-ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL iruserok(unsigned, int, 
+ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL iruserok(unsigned, int,
     const char *, const char *);
 #endif
 
@@ -944,7 +948,7 @@ getnameinfo_verified(const struct sockaddr *, socklen_t,
 		     int);
 
 ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
-roken_getaddrinfo_hostspec(const char *, int, struct addrinfo **); 
+roken_getaddrinfo_hostspec(const char *, int, struct addrinfo **);
 ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
 roken_getaddrinfo_hostspec2(const char *, int, int, struct addrinfo **);
 
@@ -991,7 +995,7 @@ ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
 roken_gethostby_setup(const char*, const char*);
 ROKEN_LIB_FUNCTION struct hostent* ROKEN_LIB_CALL
 roken_gethostbyname(const char*);
-ROKEN_LIB_FUNCTION struct hostent* ROKEN_LIB_CALL 
+ROKEN_LIB_FUNCTION struct hostent* ROKEN_LIB_CALL
 roken_gethostbyaddr(const void*, size_t, int);
 
 #ifdef GETSERVBYNAME_PROTO_COMPATIBLE

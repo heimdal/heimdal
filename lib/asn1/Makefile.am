@@ -152,7 +152,8 @@ CLEANFILES = \
 	test_template_asn1_files test_template_asn1*.h* \
 	test_asn1_files test_asn1*.h*
 
-dist_include_HEADERS = der.h heim_asn1.h der-protos.h der-private.h
+dist_include_HEADERS  = der.h heim_asn1.h
+dist_include_HEADERS += $(srcdir)/der-protos.h $(srcdir)/der-private.h
 dist_include_HEADERS += asn1-common.h
 
 nodist_include_HEADERS = asn1_err.h
@@ -180,9 +181,8 @@ priv_headers += test_asn1.h test_asn1-priv.h
 
 
 
-$(asn1_compile_OBJECTS): asn1parse.h asn1parse.c $(srcdir)/der-protos.h $(srcdir)/der-private.h
-$(libasn1_la_OBJECTS): $(nodist_include_HEADERS) $(priv_headers) asn1_err.h $(srcdir)/der-protos.h $(srcdir)/der-private.h
-$(libasn1base_la_OBJECTS): asn1_err.h $(srcdir)/der-protos.h $(srcdir)/der-private.h
+$(asn1_compile_OBJECTS): asn1parse.h asn1parse.c
+$(libasn1_la_OBJECTS): $(nodist_include_HEADERS) $(priv_headers)
 $(check_gen_OBJECTS): test_asn1.h
 $(check_template_OBJECTS): test_template_asn1.h test_template_asn1-priv.h test_template_asn1_files
 $(asn1_print_OBJECTS): krb5_asn1.h
@@ -257,8 +257,19 @@ EXTRA_DIST =		\
 	test.gen	\
 	version-script.map
 
-$(srcdir)/der-protos.h:
+DER_PROTOS = $(srcdir)/der-protos.h $(srcdir)/der-private.h
+
+ALL_OBJECTS  = $(libasn1_la_OBJECTS)
+ALL_OBJECTS += $(libasn1base_la_OBJECTS)
+ALL_OBJECTS += $(asn1_print_OBJECTS)
+ALL_OBJECTS += $(asn1_compile_OBJECTS)
+ALL_OBJECTS += $(asn1_gen_OBJECTS)
+ALL_OBJECTS += $(check_template_OBJECTS)
+
+$(ALL_OBJECTS): $(DER_PROTOS) asn1_err.h
+
+$(srcdir)/der-protos.h: $(dist_libasn1base_la_SOURCES)
 	cd $(srcdir) && perl ../../cf/make-proto.pl -q -P comment -o der-protos.h $(dist_libasn1base_la_SOURCES) || rm -f der-protos.h
 
-$(srcdir)/der-private.h:
+$(srcdir)/der-private.h: $(dist_libasn1base_la_SOURCES)
 	cd $(srcdir) && perl ../../cf/make-proto.pl -q -P comment -p der-private.h $(dist_libasn1base_la_SOURCES) || rm -f der-private.h

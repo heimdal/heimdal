@@ -36,8 +36,6 @@ kdc_tester_SOURCES = \
 	kdc-tester.c
 
 libkdc_la_SOURCES = 		\
-	kdc-private.h	 	\
-	kdc-protos.h	 	\
 	default_config.c 	\
 	set_dbinfo.c	 	\
 	digest.c		\
@@ -53,8 +51,19 @@ libkdc_la_SOURCES = 		\
 	windc.c			\
 	rx.h
 
+KDC_PROTOS = $(srcdir)/kdc-protos.h $(srcdir)/kdc-private.h
 
-$(libkdc_la_OBJECTS): $(srcdir)/kdc-protos.h $(srcdir)/kdc-private.h
+ALL_OBJECTS  = $(kdc_OBJECTS)
+ALL_OBJECTS += $(kdc_replay_OBJECTS)
+ALL_OBJECTS += $(kdc_tester_OBJECTS)
+ALL_OBJECTS += $(libkdc_la_OBJECTS)
+ALL_OBJECTS += $(string_to_key_OBJECTS)
+ALL_OBJECTS += $(kstash_OBJECTS)
+ALL_OBJECTS += $(hprop_OBJECTS)
+ALL_OBJECTS += $(hpropd_OBJECTS)
+ALL_OBJECTS += $(digest_service_OBJECTS)
+
+$(ALL_OBJECTS): $(KDC_PROTOS)
 
 libkdc_la_LDFLAGS = -version-info 2:0:0
 
@@ -63,10 +72,10 @@ libkdc_la_LDFLAGS += $(LDFLAGS_VERSION_SCRIPT)$(srcdir)/version-script.map
 endif
 $(libkdc_la_OBJECTS): $(srcdir)/version-script.map
 
-$(srcdir)/kdc-protos.h:
+$(srcdir)/kdc-protos.h: $(libkdc_la_SOURCES)
 	cd $(srcdir) && perl ../cf/make-proto.pl -q -P comment -o kdc-protos.h $(libkdc_la_SOURCES) || rm -f kdc-protos.h
 
-$(srcdir)/kdc-private.h:
+$(srcdir)/kdc-private.h: $(libkdc_la_SOURCES)
 	cd $(srcdir) && perl ../cf/make-proto.pl -q -P comment -p kdc-private.h $(libkdc_la_SOURCES) || rm -f kdc-private.h
 
 
@@ -125,7 +134,7 @@ digest_service_LDADD = \
 kdc_replay_LDADD = libkdc.la $(LDADD) $(LIB_pidfile)
 kdc_tester_LDADD = libkdc.la $(LDADD) $(LIB_pidfile) $(LIB_heimbase)
 
-include_HEADERS = kdc.h kdc-protos.h
+include_HEADERS = kdc.h $(srcdir)/kdc-protos.h
 
 
 krb5dir = $(includedir)/krb5

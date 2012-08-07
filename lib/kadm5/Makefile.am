@@ -33,7 +33,7 @@ kadm5includedir = $(includedir)/kadm5
 buildkadm5include = $(buildinclude)/kadm5
 
 dist_kadm5include_HEADERS = admin.h private.h kadm5-pwcheck.h
-dist_kadm5include_HEADERS += kadm5-protos.h kadm5-private.h
+dist_kadm5include_HEADERS += $(srcdir)/kadm5-protos.h $(srcdir)/kadm5-private.h
 
 nodist_kadm5include_HEADERS = kadm5_err.h
 
@@ -164,17 +164,29 @@ CLEANFILES = kadm5_err.c kadm5_err.h iprop-commands.h iprop-commands.c
 
 kadm5_err.h: kadm5_err.et
 
-$(libkadm5clnt_la_OBJECTS) $(libkadm5srv_la_OBJECTS): $(srcdir)/kadm5-protos.h $(srcdir)/kadm5-private.h
+ALL_OBJECTS  = $(libkadm5clnt_la_OBJECTS)
+ALL_OBJECTS += $(libkadm5srv_la_OBJECTS)
+ALL_OBJECTS += $(ipropd_master_OBJECTS)
+ALL_OBJECTS += $(ipropd_slave_OBJECTS)
+ALL_OBJECTS += $(iprop_log_OBJECTS)
+ALL_OBJECTS += $(test_pw_quality_OBJECTS)
+ALL_OBJECTS += $(sample_passwd_check_la_OBJECTS)
+ALL_OBJECTS += $(default_keys_OBJECTS)
+
+$(ALL_OBJECTS): $(srcdir)/kadm5-protos.h $(srcdir)/kadm5-private.h
+
+KADM5_PROTOS_SRCS  = $(dist_libkadm5clnt_la_SOURCES)
+KADM5_PROTOS_SRCS += $(dist_libkadm5srv_la_SOURCES)
 
 proto_opts = -q -R '^(_|kadm5_c_|kadm5_s_|kadm5_log)' -P comment
-$(srcdir)/kadm5-protos.h:
+$(srcdir)/kadm5-protos.h: $(KADM5_PROTOS_SRCS)
 	cd $(srcdir); perl ../../cf/make-proto.pl $(proto_opts) \
 		-o kadm5-protos.h \
 		$(dist_libkadm5clnt_la_SOURCES) \
 		$(dist_libkadm5srv_la_SOURCES) \
 		|| rm -f kadm5-protos.h
 
-$(srcdir)/kadm5-private.h:
+$(srcdir)/kadm5-private.h: $(KADM5_PROTOS_SRCS)
 	cd $(srcdir); perl ../../cf/make-proto.pl $(proto_opts) \
 		-p kadm5-private.h \
 		$(dist_libkadm5clnt_la_SOURCES) \

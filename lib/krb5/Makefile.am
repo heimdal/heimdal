@@ -15,7 +15,8 @@ noinst_PROGRAMS =				\
 	test_gic				\
 	test_kuserok				\
 	test_renew				\
-	test_rfc3961				
+	test_rfc3961
+
 
 noinst_LTLIBRARIES =				\
 	librfc3961.la
@@ -247,7 +248,22 @@ if versionscript
 libkrb5_la_LDFLAGS += $(LDFLAGS_VERSION_SCRIPT)$(srcdir)/version-script.map
 endif
 
-$(libkrb5_la_OBJECTS) $(verify_krb5_conf_OBJECTS) $(librfc3961_la_OBJECTS): $(srcdir)/krb5-protos.h $(srcdir)/krb5-private.h krb5_err.h heim_err.h k524_err.h krb5_err.h krb_err.h k524_err.h
+ALL_OBJECTS  = $(libkrb5_la_OBJECTS)
+ALL_OBJECTS += $(verify_krb5_conf_OBJECTS)
+ALL_OBJECTS += $(librfc3961_la_OBJECTS)
+ALL_OBJECTS += $(librfc3961_la_OBJECTS)
+ALL_OBJECTS += $(krbhst_test_OBJECTS)
+ALL_OBJECTS += $(test_alname_OBJECTS)
+ALL_OBJECTS += $(test_crypto_OBJECTS)
+ALL_OBJECTS += $(test_forward_OBJECTS)
+ALL_OBJECTS += $(test_get_addrs_OBJECTS)
+ALL_OBJECTS += $(test_gic_OBJECTS)
+ALL_OBJECTS += $(test_kuserok_OBJECTS)
+ALL_OBJECTS += $(test_renew_OBJECTS)
+ALL_OBJECTS += $(test_rfc3961_OBJECTS)
+
+$(ALL_OBJECTS): $(srcdir)/krb5-protos.h $(srcdir)/krb5-private.h
+$(ALL_OBJECTS): krb5_err.h heim_err.h k524_err.h krb5_err.h krb_err.h k524_err.h
 
 librfc3961_la_SOURCES =				\
 	crc.c					\
@@ -341,8 +357,8 @@ man_MANS =					\
 
 dist_include_HEADERS = \
 	krb5.h \
-	krb5-protos.h \
-	krb5-private.h \
+	$(srcdir)/krb5-protos.h \
+	$(srcdir)/krb5-private.h \
 	krb5_ccapi.h
 
 nodist_include_HEADERS = krb5_err.h heim_err.h k524_err.h

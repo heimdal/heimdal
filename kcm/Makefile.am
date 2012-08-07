@@ -17,14 +17,13 @@ kcm_SOURCES =		\
 	glue.c		\
 	headers.h	\
 	kcm_locl.h	\
-	kcm-protos.h	\
 	log.c		\
 	main.c		\
 	protocol.c	\
 	sessions.c	\
 	renew.c
 
-$(srcdir)/kcm-protos.h:
+$(srcdir)/kcm-protos.h: $(kcm_SOURCES)
 	cd $(srcdir); perl ../cf/make-proto.pl -o kcm-protos.h -q -P comment $(kcm_SOURCES) || rm -f kcm-protos.h
 
 $(kcm_OBJECTS): $(srcdir)/kcm-protos.h

@@ -6,7 +6,7 @@ AM_CPPFLAGS += $(INCLUDE_hcrypto)
 
 lib_LTLIBRARIES = libheimntlm.la
 
-dist_include_HEADERS = heimntlm.h heimntlm-protos.h
+dist_include_HEADERS = heimntlm.h $(srcdir)/heimntlm-protos.h
 
 nodist_include_HEADERS = ntlm_err.h
 
@@ -26,7 +26,7 @@ libheimntlm_la_LIBADD = \
 	$(LIB_hcrypto) \
 	$(LIBADD_roken)
 
-$(srcdir)/heimntlm-protos.h:
+$(srcdir)/heimntlm-protos.h: $(dist_libheimntlm_la_SOURCES)
 	cd $(srcdir) && perl ../../cf/make-proto.pl -q -P comment -o heimntlm-protos.h $(dist_libheimntlm_la_SOURCES) || rm -f heimntlm-protos.h
 
 $(libheimntlm_la_OBJECTS): $(srcdir)/heimntlm-protos.h ntlm_err.h

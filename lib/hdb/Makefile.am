@@ -85,7 +85,6 @@ dist_libhdb_la_SOURCES =			\
 	hdb-keytab.c				\
 	hdb-mitdb.c				\
 	hdb_locl.h				\
-	hdb-private.h				\
 	keys.c					\
 	keytab.c				\
 	dbinfo.c				\
@@ -97,7 +96,7 @@ nodist_libhdb_la_SOURCES = $(BUILT_SOURCES)
 
 libhdb_la_DEPENDENCIES = version-script.map
 
-include_HEADERS = hdb.h hdb-protos.h
+include_HEADERS = hdb.h $(srcdir)/hdb-protos.h
 nodist_include_HEADERS =  hdb_err.h hdb_asn1.h
 
 libhdb_la_LIBADD = \
@@ -111,13 +110,21 @@ libhdb_la_LIBADD = \
 	$(DBLIB) \
 	$(LIB_NDBM)
 
-$(libhdb_la_OBJECTS): $(srcdir)/hdb-protos.h $(srcdir)/hdb-private.h
+HDB_PROTOS = $(srcdir)/hdb-protos.h $(srcdir)/hdb-private.h
+
+ALL_OBJECTS  = $(libhdb_la_OBJECTS)
+ALL_OBJECTS += $(test_dbinfo_OBJECTS)
+ALL_OBJECTS += $(test_hdbkeys_OBJECTS)
+ALL_OBJECTS += $(test_mkey_OBJECTS)
+
+$(ALL_OBJECTS): $(HDB_PROTOS)
+
 $(libhdb_la_OBJECTS): hdb_asn1.h hdb_asn1-priv.h hdb_err.h
 
-$(srcdir)/hdb-protos.h:
+$(srcdir)/hdb-protos.h: $(dist_libhdb_la_SOURCES)
 	cd $(srcdir); perl ../../cf/make-proto.pl -q -P comment -o hdb-protos.h $(dist_libhdb_la_SOURCES) || rm -f hdb-protos.h
 
-$(srcdir)/hdb-private.h:
+$(srcdir)/hdb-private.h: $(dist_libhdb_la_SOURCES)
 	cd $(srcdir); perl ../../cf/make-proto.pl -q -P comment -p hdb-private.h $(dist_libhdb_la_SOURCES) || rm -f hdb-private.h
 
 $(gen_files_hdb) hdb_asn1.hx hdb_asn1-priv.hx: hdb_asn1_files

@@ -79,9 +79,6 @@ generate_c(void)
     if(id_str)
 	fprintf(c_file, "/* %s */\n", id_str);
     fprintf(c_file, "\n");
-    fprintf(c_file, "#ifdef HAVE_CONFIG_H\n");
-    fprintf(c_file, "#include <config.h>\n");
-    fprintf(c_file, "#endif\n");
     fprintf(c_file, "#include <stddef.h>\n");
     fprintf(c_file, "#include <com_err.h>\n");
     fprintf(c_file, "#include \"%s\"\n", hfn);

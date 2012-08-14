@@ -47,6 +47,7 @@ struct send_to_kdc {
 static int
 timed_connect(int s, struct addrinfo *addr, time_t tmout)
 {
+#ifdef HAVE_POLL
     socklen_t sl;
     int so_err;
     int flags;
@@ -88,6 +89,9 @@ timed_connect(int s, struct addrinfo *addr, time_t tmout)
 	return -1;
 
     return 0;
+#else
+    return connect(s, addr->ai_addr, addr->ai_addrlen);
+#endif
 }
 
 /*

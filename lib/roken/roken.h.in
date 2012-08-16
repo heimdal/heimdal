@@ -1051,7 +1051,7 @@ localtime_r(const time_t *, struct tm *);
 #define strtoll rk_strtoll
 #endif
 ROKEN_LIB_FUNCTION long long ROKEN_LIB_CALL
-strtoll(const char * __restrict nptr, char ** __restrict endptr, int base);
+strtoll(const char * nptr, char ** endptr, int base);
 #endif
 
 #if !defined(HAVE_STRTOULL) || defined(NEED_STRTOULL_PROTO)
@@ -1059,7 +1059,7 @@ strtoll(const char * __restrict nptr, char ** __restrict endptr, int base);
 #define strtoull rk_strtoull
 #endif
 ROKEN_LIB_FUNCTION unsigned long long ROKEN_LIB_CALL
-strtoull(const char * __restrict nptr, char ** __restrict endptr, int base);
+strtoull(const char * nptr, char ** endptr, int base);
 #endif
 
 #if !defined(HAVE_STRSVIS) || defined(NEED_STRSVIS_PROTO)

@@ -53,7 +53,7 @@
  * alphabets and digits are each contiguous.
  */
 ROKEN_LIB_FUNCTION long long ROKEN_LIB_CALL
-strtoll(const char * __restrict nptr, char ** __restrict endptr, int base)
+strtoll(const char * nptr, char ** endptr, int base)
 {
     const char *s;
     unsigned long long acc;

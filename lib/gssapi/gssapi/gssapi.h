@@ -378,6 +378,19 @@ extern GSSAPI_LIB_VARIABLE gss_OID_desc __gss_c_nt_anonymous_oid_desc;
 extern GSSAPI_LIB_VARIABLE gss_OID_desc __gss_c_nt_export_name_oid_desc;
 #define GSS_C_NT_EXPORT_NAME (&__gss_c_nt_export_name_oid_desc)
 
+/*
+ * The implementation must reserve static storage for a
+ * gss_OID_desc object containing the value
+ * {6, (void *)"\x2b\x06\x01\x05\x06\x06"},
+ * corresponding to an object-identifier value of
+ * {1(iso), 3(org), 6(dod), 1(internet), 5(security),
+ * 6(nametypes), 6(gss-composite-export)}.  The constant
+ * GSS_C_NT_COMPOSITE_EXPORT should be initialized to point
+ * to that gss_OID_desc.
+ */
+extern GSSAPI_LIB_VARIABLE gss_OID_desc __gss_c_nt_composite_export_oid_desc;
+#define GSS_C_NT_COMPOSITE_EXPORT (&__gss_c_nt_composite_export_oid_desc)
+
 /* Major status codes */
 
 #define GSS_S_COMPLETE 0

@@ -143,6 +143,20 @@ gss_OID_desc GSSAPI_LIB_VARIABLE __gss_c_nt_export_name_oid_desc =
     {6, rk_UNCONST("\x2b\x06\x01\x05\x06\x04") };
 
 /*
+ * The implementation must reserve static storage for a
+ * gss_OID_desc object containing the value
+ * {6, (void *)"\x2b\x06\x01\x05\x06\x06"},
+ * corresponding to an object-identifier value of
+ * {1(iso), 3(org), 6(dod), 1(internet), 5(security),
+ * 6(nametypes), 6(gss-composite-export)}.  The constant
+ * GSS_C_NT_COMPOSITE_EXPORT should be initialized to point
+ * to that gss_OID_desc.
+ */
+
+gss_OID_desc GSSAPI_LIB_VARIABLE __gss_c_nt_composite_export_oid_desc =
+    {6, rk_UNCONST("\x2b\x06\x01\x05\x06\x06") };
+
+/*
  *   This name form shall be represented by the Object Identifier {iso(1)
  *   member-body(2) United States(840) mit(113554) infosys(1) gssapi(2)
  *   krb5(2) krb5_name(1)}.  The recommended symbolic name for this type

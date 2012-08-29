@@ -31,6 +31,7 @@
 static OM_uint32
 _gss_import_export_name(OM_uint32 *minor_status,
     const gss_buffer_t input_name_buffer,
+    const gss_OID input_name_type,
     gss_name_t *output_name)
 {
 	OM_uint32 major_status;
@@ -127,7 +128,7 @@ _gss_import_export_name(OM_uint32 *minor_status,
 	 * Ask the mechanism to import the name.
 	 */
 	major_status = m->gm_import_name(minor_status,
-	    input_name_buffer, GSS_C_NT_EXPORT_NAME, &new_canonical_name);
+	    input_name_buffer, input_name_type, &new_canonical_name);
 	if (major_status != GSS_S_COMPLETE) {
 		_gss_mg_error(m, major_status, *minor_status);
 		return major_status;
@@ -156,6 +157,7 @@ _gss_import_export_name(OM_uint32 *minor_status,
  * - GSS_C_NT_USER_NAME
  * - GSS_C_NT_HOSTBASED_SERVICE
  * - GSS_C_NT_EXPORT_NAME
+ * - GSS_C_NT_COMPOSITE_EXPORT
  * - GSS_C_NT_ANONYMOUS
  * - GSS_KRB5_NT_PRINCIPAL_NAME
  *
@@ -206,9 +208,10 @@ gss_import_name(OM_uint32 *minor_status,
 	 * the mechanism and then import it as an MN. See RFC 2743
 	 * section 3.2 for a description of the format.
 	 */
-	if (gss_oid_equal(name_type, GSS_C_NT_EXPORT_NAME)) {
+	if (gss_oid_equal(name_type, GSS_C_NT_EXPORT_NAME) ||
+	    gss_oid_equal(name_type, GSS_C_NT_COMPOSITE_EXPORT)) {
 		return _gss_import_export_name(minor_status,
-		    input_name_buffer, output_name);
+		    input_name_buffer, name_type, output_name);
 	}
 
 

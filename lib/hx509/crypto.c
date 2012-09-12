@@ -740,10 +740,12 @@ rsa_create_signature(hx509_context context,
 			       "RSA private encrypt failed: %d", ret);
 	return ret;
     }
-    if ((size_t)ret > sig->length)
+    if (sig->length > (size_t)ret) {
+	size = sig->length - ret;
+	memmove((uint8_t *)sig->data + size, sig->data, ret);
+	memset(sig->data, 0, size);
+    } else if (sig->length < (size_t)ret)
 	_hx509_abort("RSA signature prelen longer the output len");
-
-    sig->length = ret;
 
     return 0;
 }

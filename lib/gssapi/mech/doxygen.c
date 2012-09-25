@@ -39,13 +39,12 @@
  * - SPNEGO
  * - NTLM
  *
- * See @ref gssapi_mechs for more describtion about these mechanisms.
- *
- * The project web page: http://www.h5l.org/
+ * @sa
  *
  * - @ref gssapi_services_intro
  * - @ref gssapi_mechs
  * - @ref gssapi_api_INvsMN
+ * - The project web page: http://www.h5l.org/
  */
 
 /**
@@ -105,27 +104,27 @@
  * @page internalVSmechname Internal names and mechanism names
  * @section gssapi_api_INvsMN Name forms
  *
- * There are two forms of name in GSS-API, Internal form and
- * Contiguous string ("flat") form. gss_export_name() and
+ * There are two name representations in GSS-API: Internal form and
+ * Contiguous string ("flat") form. Functions gss_export_name() and
  * gss_import_name() can be used to convert between the two forms.
  *
  * - The contiguous string form is described by an oid specificing the
  *   type and an octet string. A special form of the contiguous
  *   string form is the exported name object. The exported name
  *   defined for each mechanism, is something that can be stored and
- *   complared later. The exported name is what should be used for
+ *   compared later. The exported name is what should be used for
  *   ACLs comparisons.
  *
- * - The Internal form
+ * - The Internal form is opaque to the application programmer and
+ *   is implementation-dependent.
  *
- *   There is also special form of the Internal Name (IN), and that is
+ * - There is also a special form of the Internal Name (IN), and that is
  *   the Mechanism Name (MN). In the mechanism name all the generic
  *   information is stripped of and only contain the information for
  *   one mechanism.  In GSS-API some function return MN and some
  *   require MN as input. Each of these function is marked up as such.
  *
- *
- * Describe relationship between import_name, canonicalize_name,
+ * @TODO Describe relationship between import_name, canonicalize_name,
  * export_name and friends.
  */
 

@@ -28,6 +28,20 @@
 
 #include "mech_locl.h"
 
+/**
+ * Convert a GGS-API name from internal form to contiguous string.
+ *
+ * @sa gss_import_name(), @ref internalVSmechname.
+ *
+ * @param minor_status   minor status code
+ * @param input_name     input name in internal name form
+ * @param exported_name  output name in contiguos string form
+ *
+ * @returns a gss_error code, see gss_display_status() about printing
+ *        the error code.
+ *
+ * @ingroup gssapi
+ */
 GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL
 gss_export_name(OM_uint32 *minor_status,
     const gss_name_t input_name,

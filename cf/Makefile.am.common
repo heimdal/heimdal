@@ -1,6 +1,6 @@
 # $Id$
 
-SUFFIXES = .et .h
+SUFFIXES = .et .h .pc.in .pc
 
 DEFAULT_INCLUDES = -I. -I$(srcdir) -I$(top_builddir)/include -I$(top_srcdir)/include
 

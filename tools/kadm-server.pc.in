@@ -1,0 +1,10 @@
+prefix=@prefix@
+exec_prefix=@exec_prefix@
+libdir=@libdir@
+includedir=@includedir@
+
+Name: kadm-server
+Description: Kadmin server library.
+Version: @VERSION@
+Requires: krb5-gssapi
+Libs: -lkadm5srv @LIB_dbopen@

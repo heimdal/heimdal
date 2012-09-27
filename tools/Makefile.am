@@ -6,7 +6,13 @@ bin_SCRIPTS = krb5-config
 
 pkgconfigdir = $(libdir)/pkgconfig
 
-pkgconfig_DATA = heimdal-gssapi.pc
+pkgconfig_DATA = \
+	heimdal-gssapi.pc \
+	kafs.pc \
+	kadm-client.pc \
+	kadm-server.pc \
+	krb5.pc \
+	krb5-gssapi.pc
 
 man_MANS = krb5-config.1
 
@@ -35,8 +41,8 @@ krb5-config: krb5-config.in
 	mv $@.new $@
 	chmod +x $@
 
-heimdal-gssapi.pc: heimdal-gssapi.pc.in
-	$(subst) $(srcdir)/heimdal-gssapi.pc.in > $@.new
+.pc.in.pc:
+	$(subst) $< > $@.new
 	mv $@.new $@
 
 EXTRA_DIST = \

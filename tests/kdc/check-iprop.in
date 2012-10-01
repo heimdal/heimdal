@@ -114,7 +114,7 @@ env ${HEIM_MALLOC_DEBUG} \
 KRB5_CONFIG="${objdir}/krb5-slave.conf" \
 ${ipropd_slave} --hostname=slave.test.h5l.se -k ${keytab} localhost &
 ipds=$!
-sh ${wait_kdc} ipropd-slave || exit 1
+sh ${wait_kdc} ipropd-slave messages.log 'slave status change: up-to-date' || exit 1
 sleep 1
 
 echo "checking slave is up"
@@ -191,7 +191,7 @@ env ${HEIM_MALLOC_DEBUG} \
 KRB5_CONFIG="${objdir}/krb5-slave.conf" \
 ${ipropd_slave} --hostname=slave.test.h5l.se -k ${keytab} localhost &
 ipds=$!
-sh ${wait_kdc} ipropd-slave || exit 1
+sh ${wait_kdc} ipropd-slave messages.log 'slave status change: up-to-date' || exit 1
 sleep 1
 
 echo "checking slave is up again"
@@ -212,7 +212,7 @@ env ${HEIM_MALLOC_DEBUG} \
 KRB5_CONFIG="${objdir}/krb5-slave.conf" \
 ${ipropd_slave} --hostname=slave.test.h5l.se -k ${keytab} localhost &
 ipds=$!
-sh ${wait_kdc} ipropd-slave || exit 1
+sh ${wait_kdc} ipropd-slave messages.log 'slave status change: up-to-date' || exit 1
 sleep 1
 
 echo "checking slave is up again"
@@ -264,7 +264,7 @@ env ${HEIM_MALLOC_DEBUG} \
 KRB5_CONFIG="${objdir}/krb5-slave.conf" \
 ${ipropd_slave} --hostname=slave.test.h5l.se -k ${keytab} localhost &
 ipds=$!
-sh ${wait_kdc} ipropd-slave || exit 1
+sh ${wait_kdc} ipropd-slave messages.log 'slave status change: up-to-date' || exit 1
 sleep 1
 
 echo "checking slave is up again"

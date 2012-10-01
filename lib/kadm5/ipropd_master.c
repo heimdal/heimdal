@@ -470,12 +470,13 @@ send_complete (krb5_context context, slave *s, const char *database,
     }
 
     fd = open(dfn, O_CREAT|O_RDWR, 0600);
-    free(dfn);
     if (fd == -1) {
 	ret = errno;
 	krb5_warn(context, ret, "Cannot open/create iprop dumpfile %s", dfn);
+	free(dfn);
         return ret;
     }
+    free(dfn);
 
     dump = krb5_storage_from_fd(fd);
     if (!dump) {

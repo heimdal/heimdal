@@ -250,6 +250,12 @@ hdb_free_dbinfo(krb5_context context, struct hdb_dbinfo **dbp)
 const char *
 hdb_db_dir(krb5_context context)
 {
+    const char *p;
+
+    p = krb5_config_get_string(context, NULL, "hdb", "db-dir", NULL);
+    if (p)
+	return p;
+
     return HDB_DB_DIR;
 }
 

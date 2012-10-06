@@ -1061,8 +1061,8 @@ mdb_open(krb5_context context, HDB *db, int flags, mode_t mode)
 }
 
 krb5_error_code
-hdb_mdb_create(krb5_context context, HDB **db,
-	       const char *filename)
+hdb_mitdb_create(krb5_context context, HDB **db,
+		 const char *filename)
 {
     *db = calloc(1, sizeof(**db));
     if (*db == NULL) {

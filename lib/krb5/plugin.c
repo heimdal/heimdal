@@ -584,7 +584,7 @@ search_modules(heim_object_t key, heim_object_t value, void *ctx)
 	cpm = pl->dataptr;
     }
 
-    if (cpm && cpm->version >= s->min_version)
+    if (cpm && cpm->version >= 0 && cpm->version >= s->min_version)
 	heim_array_append_value(s->result, pl);
 }
 

@@ -96,25 +96,25 @@ ipropd_slave="${ipropd_slave} --status-file=iprop-slave-status"
 
 trap "echo 'killing ipropd s + m + kdc'; kill -9 \${ipdm} \${ipds} \${kdcpid} >/dev/null 2>/dev/null; tail messages.log ; tail iprop-stats; exit 1;" EXIT
 
-echo Starting kdc
+echo Starting kdc ; > messages.log
 ${kdc} &
 kdcpid=$!
 
 sh ${wait_kdc} || exit 1
 
-echo "starting master"
+echo "starting master" ; > messages.log
 env ${HEIM_MALLOC_DEBUG} \
 ${ipropd_master} --hostname=localhost -k ${keytab} \
     --database=${objdir}/current-db &
 ipdm=$!
 sh ${wait_kdc} ipropd-master || exit 1
 
-echo "starting slave"
+echo "starting slave" ; > messages.log
 env ${HEIM_MALLOC_DEBUG} \
 KRB5_CONFIG="${objdir}/krb5-slave.conf" \
 ${ipropd_slave} --hostname=slave.test.h5l.se -k ${keytab} localhost &
 ipds=$!
-sh ${wait_kdc} ipropd-slave || exit 1
+sh ${wait_kdc} ipropd-slave messages.log 'slave status change: up-to-date' || exit 1
 sleep 1
 
 echo "checking slave is up"
@@ -184,14 +184,13 @@ cp ${objdir}/current.log ${objdir}/current.log.tmp
 
 # ----------------- checking: checking that master and slaves resyncs
 
-echo "starting slave again"
+echo "starting slave again" ; > messages.log
 > iprop-stats
-> messages.log
 env ${HEIM_MALLOC_DEBUG} \
 KRB5_CONFIG="${objdir}/krb5-slave.conf" \
 ${ipropd_slave} --hostname=slave.test.h5l.se -k ${keytab} localhost &
 ipds=$!
-sh ${wait_kdc} ipropd-slave || exit 1
+sh ${wait_kdc} ipropd-slave messages.log 'slave status change: up-to-date' || exit 1
 sleep 1
 
 echo "checking slave is up again"
@@ -207,12 +206,12 @@ sleep 2
 rm current.slave.log current-db.slave* || exit 1
 > iprop-stats
 rm -f iprop-slave-status
-> messages.log
+echo "starting slave" ; > messages.log
 env ${HEIM_MALLOC_DEBUG} \
 KRB5_CONFIG="${objdir}/krb5-slave.conf" \
 ${ipropd_slave} --hostname=slave.test.h5l.se -k ${keytab} localhost &
 ipds=$!
-sh ${wait_kdc} ipropd-slave || exit 1
+sh ${wait_kdc} ipropd-slave messages.log 'slave status change: up-to-date' || exit 1
 sleep 1
 
 echo "checking slave is up again"
@@ -252,19 +251,19 @@ cmp master-last.tmp slave-last.tmp || exit 1
 echo "Going back to old version of the master log file"
 cp ${objdir}/current.log.tmp ${objdir}/current.log
 
-echo "starting master"
+echo "starting master"  ; > messages.log
 env ${HEIM_MALLOC_DEBUG} \
 ${ipropd_master} --hostname=localhost -k ${keytab} \
     --database=${objdir}/current-db &
 ipdm=$!
 sh ${wait_kdc} ipropd-master || exit 1
 
-echo "starting slave"
+echo "starting slave" ; > messages.log
 env ${HEIM_MALLOC_DEBUG} \
 KRB5_CONFIG="${objdir}/krb5-slave.conf" \
 ${ipropd_slave} --hostname=slave.test.h5l.se -k ${keytab} localhost &
 ipds=$!
-sh ${wait_kdc} ipropd-slave || exit 1
+sh ${wait_kdc} ipropd-slave messages.log 'slave status change: up-to-date' || exit 1
 sleep 1
 
 echo "checking slave is up again"
@@ -294,7 +293,7 @@ kill -0 ${ipds}  || { echo "slave no longer there"; exit 1; }
 
 > messages.log
 
-echo "Staring master again"
+echo "Staring master again" ; > messages.log
 env ${HEIM_MALLOC_DEBUG} \
 ${ipropd_master} --hostname=localhost -k ${keytab} \
     --database=${objdir}/current-db &

@@ -235,7 +235,7 @@ done
 
 echo foo > ${objdir}/foopassword
 
-echo Starting kdc
+echo Starting kdc ; > messages.log
 env MallocStackLogging=1 MallocStackLoggingNoCompact=1 MallocErrorAbort=1 MallocLogFile=${objdir}/malloc-log \
 ${kdc} &
 kdcpid=$!

@@ -894,7 +894,7 @@ heim_path_vcreate(heim_object_t ptr, size_t size, heim_object_t leaf,
 err:
     if (error && !*error) {
 	if (ret == ENOMEM)
-	    *error = heim_error_enomem();
+	    *error = heim_error_create_enomem();
 	else
 	    *error = heim_error_create(ret, "Could not set "
 				       "dict value");

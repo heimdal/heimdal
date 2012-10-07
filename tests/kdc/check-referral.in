@@ -100,7 +100,7 @@ ${kadmin} check ${R2} || exit 1
 
 echo foo > ${objdir}/foopassword
 
-echo Starting kdc
+echo Starting kdc ; > messages.log
 ${kdc} &
 kdcpid=$!
 

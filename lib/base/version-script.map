@@ -55,9 +55,10 @@ HEIMDAL_BASE_1.0 {
 		heim_dict_set_value;
 		heim_error_append;
 		heim_error_copy_string;
+		heim_error_create_opt;
 		heim_error_create;
 		heim_error_createv;
-		heim_error_enomem;
+		heim_error_create_enomem;
 		heim_error_get_code;
 		heim_get_hash;
 		heim_get_tid;

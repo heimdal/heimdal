@@ -93,7 +93,7 @@ ${kadmin} check ${R} || exit 1
 
 echo $password > ${objdir}/foopassword
 
-echo "Starting kdc"
+echo "Starting kdc" ; > messages.log
 env ${HEIM_MALLOC_DEBUG} ${kdc} &
 kdcpid=$!
 

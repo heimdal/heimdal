@@ -540,11 +540,11 @@ _kdc_pk_rd_padata(krb5_context context,
 	unsigned int i;
 
 	for (i = 0; i < pc->len; i++) {
-	    ret = hx509_cert_init_data(context->hx509ctx,
-				       pc->val[i].cert.data,
-				       pc->val[i].cert.length,
-				       &cert);
-	    if (ret)
+	    cert = hx509_cert_init_data(context->hx509ctx,
+					pc->val[i].cert.data,
+					pc->val[i].cert.length,
+					NULL);
+	    if (cert == NULL)
 		continue;
 	    hx509_certs_add(context->hx509ctx, trust_anchors, cert);
 	    hx509_cert_free(cert);
@@ -1742,11 +1742,11 @@ _kdc_pk_check_client(krb5_context context,
 	size_t j;
 
 	for (j = 0; j < pc->len; j++) {
-	    ret = hx509_cert_init_data(context->hx509ctx,
-				       pc->val[j].cert.data,
-				       pc->val[j].cert.length,
-				       &cert);
-	    if (ret)
+	    cert = hx509_cert_init_data(context->hx509ctx,
+					pc->val[j].cert.data,
+					pc->val[j].cert.length,
+					NULL);
+	    if (cert == NULL)
 		continue;
 	    ret = hx509_cert_cmp(cert, cp->cert);
 	    hx509_cert_free(cert);

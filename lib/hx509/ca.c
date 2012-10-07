@@ -987,6 +987,7 @@ ca_sign(hx509_context context,
 	const Name *issuername,
 	hx509_cert *certificate)
 {
+    heim_error_t error = NULL;
     heim_octet_string data;
     Certificate c;
     TBSCertificate *tbsc;
@@ -1408,9 +1409,12 @@ ca_sign(hx509_context context,
     if (ret)
 	goto out;
 
-    ret = hx509_cert_init(context, &c, certificate);
-    if (ret)
+    *certificate = hx509_cert_init(context, &c, &error);
+    if (*certificate == NULL) {
+	ret = heim_error_get_code(error);
+	heim_release(error);
 	goto out;
+    }
 
     free_Certificate(&c);
 

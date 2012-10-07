@@ -420,8 +420,8 @@ keychain_iter_start(hx509_context context,
 
 	    SecCertificateGetData(cr, &cssm);
 
-	    ret = hx509_cert_init_data(context, cssm.Data, cssm.Length, &cert);
-	    if (ret)
+	    cert = hx509_cert_init_data(context, cssm.Data, cssm.Length, NULL);
+	    if (cert == NULL)
 		continue;
 
 	    ret = hx509_certs_add(context, iter->certs, cert);
@@ -470,6 +470,7 @@ keychain_iter(hx509_context context,
     UInt32 attrFormat[1] = { 0 };
     SecKeychainItemRef itemRef;
     SecItemAttr item[1];
+    heim_error_t error = NULL;
     struct iter *iter = cursor;
     OSStatus ret;
     UInt32 len;
@@ -501,9 +502,12 @@ keychain_iter(hx509_context context,
     if (ret)
 	return EINVAL;
 
-    ret = hx509_cert_init_data(context, ptr, len, cert);
-    if (ret)
+    cert = hx509_cert_init_data(context, ptr, len, &error);
+    if (cert == NULL) {
+	ret = heim_error_get_code(error);
+	heim_release(error);
 	goto out;
+    }
 
     /*
      * Find related private key if there is one by looking at

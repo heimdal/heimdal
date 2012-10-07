@@ -68,7 +68,7 @@
 
 #define HEIM_ENOMEM(ep) \
     (((ep) && !*(ep)) ? \
-	heim_error_get_code((*(ep) = heim_error_enomem())) : ENOMEM)
+	heim_error_get_code((*(ep) = heim_error_create_enomem())) : ENOMEM)
 
 #define HEIM_ERROR_HELPER(ep, ec, args) \
     (((ep) && !*(ep)) ? \
@@ -326,7 +326,7 @@ heim_db_create(const char *dbtype, const char *dbname,
 	options = heim_dict_create(11);
 	if (options == NULL) {
 	    if (error)
-		*error = heim_error_enomem();
+		*error = heim_error_create_enomem();
 	    return NULL;
 	}
     } else {
@@ -413,7 +413,7 @@ heim_db_create(const char *dbtype, const char *dbname,
 	if (!db->dbtype || ! db->dbname) {
 	    heim_release(db);
 	    if (error)
-		*error = heim_error_enomem();
+		*error = heim_error_create_enomem();
 	    return NULL;
 	}
     }
@@ -456,7 +456,7 @@ heim_db_clone(heim_db_t db, heim_error_t *error)
     result = _heim_alloc_object(&db_object, sizeof(*result));
     if (result == NULL) {
 	if (error)
-	    *error = heim_error_enomem();
+	    *error = heim_error_create_enomem();
 	return NULL;
     }
 
@@ -763,7 +763,7 @@ heim_db_copy_value(heim_db_t db, heim_string_t table, heim_data_t key,
 	key64 = to_base64(key, error);
 	if (key64 == NULL) {
 	    if (error)
-		*error = heim_error_enomem();
+		*error = heim_error_create_enomem();
 	    return NULL;
 	}
 
@@ -1126,7 +1126,7 @@ heim_string_t to_base64(heim_data_t data, heim_error_t *error)
 enomem:
     free(b64);
     if (error)
-	*error = heim_error_enomem();
+	*error = heim_error_create_enomem();
     return NULL;
 }
 
@@ -1150,7 +1150,7 @@ heim_data_t from_base64(heim_string_t s, heim_error_t *error)
 enomem:
     free(buf);
     if (error)
-	*error = heim_error_enomem();
+	*error = heim_error_create_enomem();
     return NULL;
 }
 

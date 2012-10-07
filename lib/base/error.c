@@ -77,10 +77,22 @@ struct heim_type_data _heim_error_object = {
 };
 
 heim_error_t
-heim_error_enomem(void)
+heim_error_create_enomem(void)
 {
     /* This is an immediate object; see heim_number_create() */
     return (heim_error_t)heim_number_create(ENOMEM);
+}
+
+
+void
+heim_error_create_opt(heim_error_t *error, int error_code, const char *fmt, ...)
+{
+    if (error) {
+	va_list ap;
+	va_start(ap, fmt);
+	*error = heim_error_createv(error_code, fmt, ap);
+	va_end(ap);
+    }
 }
 
 heim_error_t
@@ -107,7 +119,7 @@ heim_error_createv(int error_code, const char *fmt, va_list ap)
     str = malloc(1024);
     errno = save_errno;
     if (str == NULL)
-        return heim_error_enomem();
+        return heim_error_create_enomem();
     len = vsnprintf(str, 1024, fmt, ap);
     errno = save_errno;
     if (len < 0) {
@@ -141,6 +153,8 @@ heim_error_copy_string(heim_error_t error)
 int
 heim_error_get_code(heim_error_t error)
 {
+    if (error == NULL)
+	return -1;
     if (heim_get_tid(error) != HEIM_TID_ERROR) {
 	if (heim_get_tid(error) == heim_number_get_type_id())
 	    return heim_number_get_int((heim_number_t)error);

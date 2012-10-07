@@ -218,42 +218,43 @@ _hx509_cert_get_version(const Certificate *t)
  *
  * @param context A hx509 context.
  * @param c
- * @param cert
+ * @param error
  *
- * @return Returns an hx509 error code.
+ * @return Returns an hx509 certificate
  *
  * @ingroup hx509_cert
  */
 
-int
-hx509_cert_init(hx509_context context, const Certificate *c, hx509_cert *cert)
+hx509_cert
+hx509_cert_init(hx509_context context, const Certificate *c, heim_error_t *error)
 {
+    hx509_cert cert;
     int ret;
 
-    *cert = malloc(sizeof(**cert));
-    if (*cert == NULL)
-	return ENOMEM;
-    (*cert)->ref = 1;
-    (*cert)->friendlyname = NULL;
-    (*cert)->attrs.len = 0;
-    (*cert)->attrs.val = NULL;
-    (*cert)->private_key = NULL;
-    (*cert)->basename = NULL;
-    (*cert)->release = NULL;
-    (*cert)->ctx = NULL;
+    cert = malloc(sizeof(*cert));
+    if (cert == NULL)
+	return heim_error_create_enomem();
+    cert->ref = 1;
+    cert->friendlyname = NULL;
+    cert->attrs.len = 0;
+    cert->attrs.val = NULL;
+    cert->private_key = NULL;
+    cert->basename = NULL;
+    cert->release = NULL;
+    cert->ctx = NULL;
 
-    (*cert)->data = calloc(1, sizeof(*(*cert)->data));
-    if ((*cert)->data == NULL) {
-	free(*cert);
-	return ENOMEM;
+    cert->data = calloc(1, sizeof(*(cert->data)));
+    if (cert->data == NULL) {
+	free(cert);
+	return heim_error_create_enomem();
     }
-    ret = copy_Certificate(c, (*cert)->data);
+    ret = copy_Certificate(c, cert->data);
     if (ret) {
-	free((*cert)->data);
-	free(*cert);
-	*cert = NULL;
+	free(cert->data);
+	free(cert);
+	cert = NULL;
     }
-    return ret;
+    return cert;
 }
 
 /**
@@ -268,39 +269,38 @@ hx509_cert_init(hx509_context context, const Certificate *c, hx509_cert *cert)
  * @param context A hx509 context.
  * @param ptr pointer to memory region containing encoded certificate.
  * @param len length of memory region.
- * @param cert a return pointer to a hx509 certificate object, will
- * contain NULL on error.
+ * @param error possibly returns an error
  *
- * @return An hx509 error code, see hx509_get_error_string().
+ * @return An hx509 certificate
  *
  * @ingroup hx509_cert
  */
 
-int
+hx509_cert
 hx509_cert_init_data(hx509_context context,
 		     const void *ptr,
 		     size_t len,
-		     hx509_cert *cert)
+		     heim_error_t *error)
 {
+    hx509_cert cert;
     Certificate t;
     size_t size;
     int ret;
 
     ret = decode_Certificate(ptr, len, &t, &size);
     if (ret) {
-	hx509_set_error_string(context, 0, ret, "Failed to decode certificate");
-	return ret;
+	*error = heim_error_create(ret, "Failed to decode certificate");
+	return NULL;
     }
     if (size != len) {
 	free_Certificate(&t);
-	hx509_set_error_string(context, 0, HX509_EXTRA_DATA_AFTER_STRUCTURE,
-			       "Extra data after certificate");
-	return HX509_EXTRA_DATA_AFTER_STRUCTURE;
+	return heim_error_create(HX509_EXTRA_DATA_AFTER_STRUCTURE,
+				 "Extra data after certificate");
     }
 
-    ret = hx509_cert_init(context, &t, cert);
+    cert = hx509_cert_init(context, &t, error);
     free_Certificate(&t);
-    return ret;
+    return cert;
 }
 
 void

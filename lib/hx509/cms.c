@@ -730,14 +730,18 @@ any_to_certs(hx509_context context, const SignedData *sd, hx509_certs certs)
 	return 0;
 
     for (i = 0; i < sd->certificates->len; i++) {
+	heim_error_t error;
 	hx509_cert c;
 
-	ret = hx509_cert_init_data(context,
-				   sd->certificates->val[i].data,
-				   sd->certificates->val[i].length,
-				   &c);
-	if (ret)
+	c = hx509_cert_init_data(context,
+				 sd->certificates->val[i].data,
+				 sd->certificates->val[i].length,
+				 &error);
+	if (c == NULL) {
+	    ret = heim_error_get_code(error);
+	    heim_release(error);
 	    return ret;
+	}
 	ret = hx509_certs_add(context, certs, c);
 	hx509_cert_free(c);
 	if (ret)

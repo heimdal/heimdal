@@ -361,8 +361,8 @@ load_ocsp(hx509_context context, struct revoke_ocsp *ocsp)
 	for (i = 0; i < basic.certs->len; i++) {
 	    hx509_cert c;
 
-	    ret = hx509_cert_init(context, &basic.certs->val[i], &c);
-	    if (ret)
+	    c = hx509_cert_init(context, &basic.certs->val[i], NULL);
+	    if (c == NULL)
 		continue;
 
 	    ret = hx509_certs_add(context, certs, c);

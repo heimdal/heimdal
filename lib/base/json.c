@@ -390,7 +390,7 @@ parse_string(struct parse_ctx *ctx)
 	    } else {
 		o = heim_string_create_with_bytes(start, ctx->p - start);
 		if (o == NULL) {
-		    ctx->error = heim_error_enomem();
+		    ctx->error = heim_error_create_enomem();
 		    return NULL;
 		}
 
@@ -407,7 +407,7 @@ parse_string(struct parse_ctx *ctx)
 			buf = malloc(len);
 			if (buf == NULL) {
 			    heim_release(o);
-			    ctx->error = heim_error_enomem();
+			    ctx->error = heim_error_create_enomem();
 			    return NULL;
 			}
 			len = base64_decode(s, buf);
@@ -511,7 +511,7 @@ parse_dict(struct parse_ctx *ctx)
 
     dict = heim_dict_create(11);
     if (dict == NULL) {
-	ctx->error = heim_error_enomem();
+	ctx->error = heim_error_create_enomem();
 	return NULL;
     }
 
@@ -538,7 +538,7 @@ parse_dict(struct parse_ctx *ctx)
 	    if (buf == NULL) {
 		heim_release(dict);
 		heim_release(v);
-		ctx->error = heim_error_enomem();
+		ctx->error = heim_error_create_enomem();
 		return NULL;
 	    }
 	    len = base64_decode(heim_string_get_utf8(v), buf);
@@ -777,7 +777,7 @@ heim_serialize(heim_object_t obj, heim_json_flags_t flags, heim_error_t *error)
     strbuf.str = malloc(STRBUF_INIT_SZ);
     if (strbuf.str == NULL) {
 	if (error)
-	    *error = heim_error_enomem();
+	    *error = heim_error_create_enomem();
 	return NULL;
     }
     strbuf.len = 0;
@@ -789,7 +789,7 @@ heim_serialize(heim_object_t obj, heim_json_flags_t flags, heim_error_t *error)
     if (ret || strbuf.enomem) {
 	if (error) {
 	    if (strbuf.enomem || ret == ENOMEM)
-		*error = heim_error_enomem();
+		*error = heim_error_create_enomem();
 	    else
 		*error = heim_error_create(1, "Impossible to JSON-encode "
 					   "object");
@@ -804,7 +804,7 @@ heim_serialize(heim_object_t obj, heim_json_flags_t flags, heim_error_t *error)
     str = heim_string_ref_create(strbuf.str, free);
     if (str == NULL) {
 	if (error)
-	    *error = heim_error_enomem();
+	    *error = heim_error_create_enomem();
 	free(strbuf.str);
     }
     return str;

@@ -688,6 +688,7 @@ collect_cert(hx509_context context,
 	     void *ptr, CK_ATTRIBUTE *query, int num_query)
 {
     struct hx509_collector *collector = ptr;
+    heim_error_t error = NULL;
     hx509_cert cert;
     int ret;
 
@@ -697,10 +698,13 @@ collect_cert(hx509_context context,
 	return 0;
     }
 
-    ret = hx509_cert_init_data(context, query[1].pValue,
-			       query[1].ulValueLen, &cert);
-    if (ret)
+    cert = hx509_cert_init_data(context, query[1].pValue,
+			       query[1].ulValueLen, &error);
+    if (cert == NULL) {
+	ret = heim_error_get_code(error);
+	heim_release(error);
 	return ret;
+    }
 
     if (p->ref == 0)
 	_hx509_abort("pkcs11 ref == 0 on alloc");

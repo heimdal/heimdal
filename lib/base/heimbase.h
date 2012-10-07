@@ -189,10 +189,14 @@ heim_string_t __heim_string_constant(const char *);
  */
 
 typedef struct heim_error * heim_error_t;
-heim_error_t heim_error_enomem(void);
+
+heim_error_t heim_error_create_enomem(void);
 
 heim_error_t	heim_error_create(int, const char *, ...)
     HEIMDAL_PRINTF_ATTRIBUTE((printf, 2, 3));
+
+void		heim_error_create_opt(heim_error_t *error, int error_code, const char *fmt, ...)
+    HEIMDAL_PRINTF_ATTRIBUTE((printf, 3, 4));
 
 heim_error_t	heim_error_createv(int, const char *, va_list)
     HEIMDAL_PRINTF_ATTRIBUTE((printf, 2, 0));

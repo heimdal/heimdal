@@ -52,12 +52,16 @@ parse_certificate(hx509_context context, const char *fn,
 		  const void *data, size_t len,
 		  const AlgorithmIdentifier *ai)
 {
+    heim_error_t error = NULL;
     hx509_cert cert;
     int ret;
 
-    ret = hx509_cert_init_data(context, data, len, &cert);
-    if (ret)
+    cert = hx509_cert_init_data(context, data, len, &error);
+    if (cert == NULL) {
+	ret = heim_error_get_code(error);
+	heim_release(error);
 	return ret;
+    }
 
     ret = _hx509_collector_certs_add(context, c, cert);
     hx509_cert_free(cert);

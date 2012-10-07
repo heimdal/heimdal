@@ -40,8 +40,6 @@ waitsec=35
 
 echo "Waiting for ${name} to start, looking logfile ${log}"
 
-#echo "wait string: $waitfor"
-
 while true ; do
     if grep "${waitfor}" ${log} > /dev/null; then
 	break

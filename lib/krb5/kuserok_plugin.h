@@ -32,7 +32,7 @@
 #ifndef HEIMDAL_KRB5_KUSEROK_PLUGIN_H
 #define HEIMDAL_KRB5_KUSEROK_PLUGIN_H 1
 
-#define KRB5_PLUGIN_KUSEROK "kuserok"
+#define KRB5_PLUGIN_KUSEROK "krb5_plugin_kuserok"
 #define KRB5_PLUGIN_KUSEROK_VERSION_0 0
 
 /** @struct krb5plugin_kuserok_ftable_desc
@@ -40,8 +40,8 @@
  * @brief Description of the krb5_kuserok(3) plugin facility.
  *
  * The krb5_kuserok(3) function is pluggable.  The plugin is named
- * KRB5_PLUGIN_KUSEROK ("kuserok"), with a single minor version,
- * KRB5_PLUGIN_KUSEROK_VERSION_0 (0).
+ * KRB5_PLUGIN_KUSEROK ("krb5_plugin_kuserok"), with a single minor
+ * version, KRB5_PLUGIN_KUSEROK_VERSION_0 (0).
  *
  * The plugin for krb5_kuserok(3) consists of a data symbol referencing
  * a structure of type krb5plugin_kuserok_ftable, with four fields:

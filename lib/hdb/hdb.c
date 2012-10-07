@@ -70,6 +70,9 @@ static struct hdb_method methods[] = {
 #if HAVE_DB1
     { HDB_INTERFACE_VERSION, "mit-db:",	hdb_mitdb_create},
 #endif
+#if HAVE_MDB
+    { HDB_INTERFACE_VERSION, "mdb:",	hdb_mdb_create},
+#endif
 #if HAVE_NDBM
     { HDB_INTERFACE_VERSION, "ndbm:",	hdb_ndbm_create},
 #endif

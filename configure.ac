@@ -490,7 +490,7 @@ AC_CHECK_FUNCS([				\
 
 AC_MSG_CHECKING([checking for __sync_add_and_fetch])
 AC_LINK_IFELSE([AC_LANG_PROGRAM([[#include <sys/types.h>]],
-	[[unsigned int foo; __sync_add_and_fetch(&foo, 1);]])],
+	[[unsigned int foo, bar; bar = __sync_add_and_fetch(&foo, 1);]])],
 	[ac_rk_have___sync_add_and_fetch=yes], [ac_rk_have___sync_add_and_fetch=no])
 if test "$ac_rk_have___sync_add_and_fetch" = "yes" ; then
 	AC_DEFINE_UNQUOTED(HAVE___SYNC_ADD_AND_FETCH, 1, [have __sync_add_and_fetch])

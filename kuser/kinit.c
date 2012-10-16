@@ -543,8 +543,13 @@ get_new_tickets(krb5_context context,
     } else if (pk_user_id || ent_user_id || anonymous_flag) {
 
     } else if (!interactive) {
-	krb5_warnx(context, "Not interactive, failed to get initial ticket");
+	static int already_warned = 0;
+
+	if (!already_warned)
+	    krb5_warnx(context, "Not interactive, failed to get "
+	      "initial ticket");
 	krb5_get_init_creds_opt_free(context, opt);
+	already_warned = 1;
 	return 0;
     } else {
 
@@ -674,12 +679,13 @@ get_new_tickets(krb5_context context,
 }
 
 static time_t
-ticket_lifetime(krb5_context context, krb5_ccache cache,
-		krb5_principal client, const char *server)
+ticket_lifetime(krb5_context context, krb5_ccache cache, krb5_principal client,
+		const char *server, time_t *renew)
 {
     krb5_creds in_cred, *cred;
     krb5_error_code ret;
     time_t timeout;
+    time_t curtime;
 
     memset(&in_cred, 0, sizeof(in_cred));
 
@@ -703,9 +709,15 @@ ticket_lifetime(krb5_context context, krb5_ccache cache,
 	krb5_warn(context, ret, "krb5_get_credentials");
 	return 0;
     }
-    timeout = cred->times.endtime - cred->times.starttime;
+    curtime = time(NULL);
+    timeout = cred->times.endtime - curtime;
     if (timeout < 0)
 	timeout = 0;
+    if (renew) {
+	*renew = cred->times.renew_till - curtime;
+	if (*renew < 0)
+	    *renew = 0;
+    }
     krb5_free_creds(context, cred);
     return timeout;
 }
@@ -721,30 +733,48 @@ static time_t
 renew_func(void *ptr)
 {
     struct renew_ctx *ctx = ptr;
-    krb5_error_code ret;
     time_t expire;
-    int new_tickets = 0;
+    time_t renew_expire;
+    static time_t exp_delay = 1;
 
-    if (renewable_flag) {
-	ret = renew_validate(ctx->context, renewable_flag, validate_flag,
-			     ctx->ccache, server_str, ctx->ticket_life);
-	if (ret)
-	    new_tickets = 1;
-    } else
-	new_tickets = 1;
+    expire = ticket_lifetime(ctx->context, ctx->ccache, ctx->principal,
+			     server_str, &renew_expire);
 
-    if (new_tickets)
+    if (renew_expire > expire) {
+	renew_validate(ctx->context, 1, validate_flag, ctx->ccache,
+		       server_str, ctx->ticket_life);
+        expire = ticket_lifetime(ctx->context, ctx->ccache, ctx->principal,
+				 server_str, &renew_expire);
+    }
+
+    if (expire < ctx->ticket_life / 2) {
 	get_new_tickets(ctx->context, ctx->principal,
 			ctx->ccache, ctx->ticket_life, 0);
+        expire = ticket_lifetime(ctx->context, ctx->ccache, ctx->principal,
+				 server_str, &renew_expire);
+    }
 
 #ifndef NO_AFS
     if(do_afslog && k_hasafs())
 	krb5_afslog(ctx->context, ctx->ccache, NULL, NULL);
 #endif
 
-    expire = ticket_lifetime(ctx->context, ctx->ccache, ctx->principal,
-			     server_str) / 2;
-    return expire + 1;
+    /*
+     * If our tickets have expired and we been able to either renew them
+     * or obtain new tickets, then we still call this function but we use
+     * an exponential backoff.  This should take care of the case where
+     * we are using stored credentials but the KDC has been unavailable
+     * for some reason...
+     */
+
+    if (expire < 1) {
+        if (exp_delay < 7200)
+	    exp_delay *= 2;
+	return exp_delay;
+    }
+    exp_delay = 1;
+
+    return expire / 2 + 1;
 }
 
 int
@@ -915,7 +945,8 @@ main (int argc, char **argv)
 	struct renew_ctx ctx;
 	time_t timeout;
 
-	timeout = ticket_lifetime(context, ccache, principal, server_str) / 2;
+	timeout = ticket_lifetime(context, ccache, principal,
+				  server_str, NULL) / 2;
 
 	ctx.context = context;
 	ctx.ccache = ccache;

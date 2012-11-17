@@ -1223,7 +1223,7 @@ krb5_get_credentials_with_flags(krb5_context context,
 
 next_rule:
     krb5_free_cred_contents(context, res_creds);
-    memset(res_creds, 0, sizeof (res_creds));
+    memset(res_creds, 0, sizeof (*res_creds));
     ret = krb5_name_canon_iterate_creds(context, &name_canon_iter, &try_creds,
 					&rule_opts);
     if (ret)

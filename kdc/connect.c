@@ -846,7 +846,7 @@ realloc_descrs(struct descr **d, unsigned int *ndescr)
 
     tmp = realloc(*d, (*ndescr + 4) * sizeof(**d));
     if(tmp == NULL)
-        return TRUE;
+        return FALSE;
 
     *d = tmp;
     reinit_descrs (*d, *ndescr);
@@ -856,7 +856,7 @@ realloc_descrs(struct descr **d, unsigned int *ndescr)
 
     *ndescr += 4;
 
-    return FALSE;
+    return TRUE;
 }
 
 int

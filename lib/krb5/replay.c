@@ -139,6 +139,7 @@ krb5_rc_initialize(krb5_context context,
 	krb5_set_error_message(context, ret, "open(%s): %s", id->name, buf);
 	return ret;
     }
+    memset(&tmp, 0, sizeof(tmp));
     tmp.stamp = auth_lifespan;
     fwrite(&tmp, 1, sizeof(tmp), f);
     fclose(f);

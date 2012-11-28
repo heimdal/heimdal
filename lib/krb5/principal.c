@@ -1035,7 +1035,7 @@ krb5_sname_to_principal_old(krb5_context context,
 {
     krb5_error_code ret;
     char localhost[MAXHOSTNAMELEN];
-    char **realms, *host = NULL;
+    char **realms = NULL, *host = NULL;
 
     if(type != KRB5_NT_SRV_HST && type != KRB5_NT_UNKNOWN) {
 	krb5_set_error_message(context, KRB5_SNAME_UNSUPP_NAMETYPE,
@@ -1079,7 +1079,8 @@ krb5_sname_to_principal_old(krb5_context context,
 			      hostname, NULL);
     if(host)
 	free(host);
-    krb5_free_host_realm(context, realms);
+    if (realms)
+	krb5_free_host_realm(context, realms);
     return ret;
 }
 

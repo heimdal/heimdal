@@ -341,7 +341,6 @@ propagate_database (krb5_context context, int type,
 	if(ret) {
 	    failed++;
 	    krb5_warn(context, ret, "krb5_sendauth (%s)", host);
-	    close(fd);
 	    goto next_host;
 	}
 

@@ -839,7 +839,6 @@ p11_init(hx509_context context,
     }
 
     p->dl_handle = dlopen(list, RTLD_NOW);
-    free(list);
     if (p->dl_handle == NULL) {
 	ret = HX509_PKCS11_LOAD;
 	hx509_set_error_string(context, 0, ret,
@@ -935,10 +934,14 @@ p11_init(hx509_context context,
 	}
     }
 
+    free(list);
+
     *data = p;
 
     return 0;
  out:
+    if (list)
+	free(list);
     p11_release_module(p);
     return ret;
 }

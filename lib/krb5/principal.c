@@ -1178,6 +1178,7 @@ struct krb5_name_canon_rule {
  * @ingroup krb5_principal
  */
 
+/* coverity[+alloc : arg-*4] */
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_sname_to_principal(krb5_context context,
 			const char *hostname,
@@ -1189,6 +1190,8 @@ krb5_sname_to_principal(krb5_context context,
     krb5_error_code ret;
     register char *cp;
     char localname[MAXHOSTNAMELEN];
+
+    *ret_princ = NULL;
 
     if ((type != KRB5_NT_UNKNOWN) &&
 	(type != KRB5_NT_SRV_HST))

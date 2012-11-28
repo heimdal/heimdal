@@ -191,7 +191,7 @@ http_find_header(struct http_req *req, const char *header)
 
 static int
 http_query(const char *host, const char *page,
-	   char **headers, int num_headers, struct http_req *req)
+	   char **headers, struct http_req *req)
 {
     enum { RESPONSE, HEADER, BODY } state;
     ssize_t ret;
@@ -206,7 +206,7 @@ http_query(const char *host, const char *page,
 	errx(1, "connection failed");
 
     fdprintf(s, "GET %s HTTP/1.0\r\n", page);
-    for (i = 0; i < num_headers; i++)
+    for (i = 0; headers[i]; i++)
 	fdprintf(s, "%s\r\n", headers[i]);
     fdprintf(s, "Host: %s\r\n\r\n", host);
 
@@ -292,8 +292,8 @@ main(int argc, char **argv)
     struct http_req req;
     const char *host, *page;
     int i, done, print_body, gssapi_done, gssapi_started;
-    char *headers[10]; /* XXX */
-    int num_headers;
+    char *headers[10] = { 0 };
+    int num_headers = 0;
     gss_ctx_id_t context_hdl = GSS_C_NO_CONTEXT;
     gss_name_t server = GSS_C_NO_NAME;
     int optind = 0;
@@ -339,9 +339,11 @@ main(int argc, char **argv)
     do {
 	print_body = 0;
 
-	http_query(host, page, headers, num_headers, &req);
-	for (i = 0 ; i < num_headers; i++)
+	http_query(host, page, headers, &req);
+	for (i = 0 ; headers[i]; i++) {
 	    free(headers[i]);
+	    headers[i] = NULL;
+	}
 	num_headers = 0;
 
 	if (strstr(req.response, " 200 ") != NULL) {
@@ -477,10 +479,9 @@ main(int argc, char **argv)
 				  output_token.length,
 				  &neg_token);
 
-		    asprintf(&headers[0], "Authorization: Negotiate %s",
+		    asprintf(&headers[num_headers++], "Authorization: Negotiate %s",
 			     neg_token);
 
-		    num_headers = 1;
 		    free(neg_token);
 		    gss_release_buffer(&min_stat, &output_token);
 		}

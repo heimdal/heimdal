@@ -458,9 +458,9 @@ send_complete (krb5_context context, slave *s, const char *database,
 {
     krb5_error_code ret;
     krb5_storage *dump = NULL;
+    uint32_t vno = 0;
     krb5_data data;
     int fd = -1;
-    uint32_t vno;
     char *dfn;
 
     ret = asprintf(&dfn, "%s/ipropd.dumpfile", hdb_db_dir(context));

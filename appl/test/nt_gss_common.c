@@ -86,6 +86,8 @@ nt_read_token (int sock, gss_buffer_t buf)
 	| (net_len[2] << 16)
 	| (net_len[3] << 24);
 
+    if (len > INT_MAX/16)
+	errx(1, "len too large");
     buf->length = len;
     buf->value  = malloc(len);
     if (read (sock, buf->value, len) != len)

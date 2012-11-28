@@ -702,6 +702,7 @@ krb5_build_principal(krb5_context context,
  * @ingroup krb5_principal
  */
 
+/* coverity[+alloc : arg-*1] */
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_make_principal(krb5_context context,
 		    krb5_principal *principal,

@@ -302,6 +302,10 @@ process_reply (krb5_context context,
 	    _krb5_get_int(reply, &size, 4);
 	    if (size + 4 < len)
 		continue;
+	    if (sizeof(reply) - 4 < size) {
+		krb5_set_error_message(context, ERANGE, "size from server too large %s", host);
+		return ERANGE;
+	    }
 	    memmove(reply, reply + 4, size);
 	    len = size;
 	    break;

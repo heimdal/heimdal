@@ -232,8 +232,11 @@ hx509_cert_init(hx509_context context, const Certificate *c, heim_error_t *error
     int ret;
 
     cert = malloc(sizeof(*cert));
-    if (cert == NULL)
-	return heim_error_create_enomem();
+    if (cert == NULL) {
+	if (error)
+	    *error = heim_error_create_enomem();
+	return NULL;
+    }
     cert->ref = 1;
     cert->friendlyname = NULL;
     cert->attrs.len = 0;
@@ -246,7 +249,9 @@ hx509_cert_init(hx509_context context, const Certificate *c, heim_error_t *error
     cert->data = calloc(1, sizeof(*(cert->data)));
     if (cert->data == NULL) {
 	free(cert);
-	return heim_error_create_enomem();
+	if (error)
+	    *error = heim_error_create_enomem();
+	return NULL;
     }
     ret = copy_Certificate(c, cert->data);
     if (ret) {
@@ -289,13 +294,16 @@ hx509_cert_init_data(hx509_context context,
 
     ret = decode_Certificate(ptr, len, &t, &size);
     if (ret) {
-	*error = heim_error_create(ret, "Failed to decode certificate");
+	if (error)
+	    *error = heim_error_create(ret, "Failed to decode certificate");
 	return NULL;
     }
     if (size != len) {
 	free_Certificate(&t);
-	return heim_error_create(HX509_EXTRA_DATA_AFTER_STRUCTURE,
-				 "Extra data after certificate");
+	if (error)
+	    *error = heim_error_create(HX509_EXTRA_DATA_AFTER_STRUCTURE,
+				       "Extra data after certificate");
+	return NULL;
     }
 
     cert = hx509_cert_init(context, &t, error);

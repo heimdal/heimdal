@@ -1487,8 +1487,9 @@ next_rule:
 
     tgts = NULL;
     ret = _krb5_get_cred_kdc_any(context, flags, ccache,
-				 try_creds, opt->self, opt->ticket,
-				 out_creds, &tgts);
+				 try_creds, opt ? opt->self : 0,
+				 opt ? opt->ticket : 0, out_creds,
+				 &tgts);
     for(i = 0; tgts && tgts[i]; i++) {
 	krb5_cc_store_cred(context, ccache, tgts[i]);
 	krb5_free_creds(context, tgts[i]);

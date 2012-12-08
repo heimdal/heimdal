@@ -32,13 +32,13 @@ echo "Install"
 make install DESTDIR=${destdir} > /dev/null || exit 1 
 
 echo "Build package"
-/Developer/usr/bin/packagemaker \
-    --version "${version}" \
-    --root ${destdir} \
-    --info ${base}/Info.plist \
-    --out ${imgdir}/Heimdal.pkg \
+xcrun productbuild \
+    --identifier org.h5l.heimdal \
+    --version ${version} \
+    --root ${destdir} / \
     --resources ${base}/Resources \
-    --domain system || exit 1
+    --sign 'Developer ID Installer:' \
+    ${imgdir}/Heimdal-${version}.pkg
 
 cd ..
 echo "Build disk image"

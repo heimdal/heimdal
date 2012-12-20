@@ -401,6 +401,10 @@ socket_set_debug (rk_socket_t);
 ROKEN_LIB_FUNCTION void ROKEN_LIB_CALL
 socket_set_tos (rk_socket_t, int);
 
+#define socket_set_nonblocking rk_socket_set_nonblocking
+ROKEN_LIB_FUNCTION void ROKEN_LIB_CALL
+socket_set_nonblocking(rk_socket_t, int);
+
 #define socket_set_reuseaddr rk_socket_set_reuseaddr
 ROKEN_LIB_FUNCTION void ROKEN_LIB_CALL
 socket_set_reuseaddr (rk_socket_t, int);

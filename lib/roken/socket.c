@@ -260,6 +260,29 @@ socket_set_tos (rk_socket_t sock, int tos)
 }
 
 /*
+ * Set the non-blocking-ness of the socket.
+ */
+
+ROKEN_LIB_FUNCTION void ROKEN_LIB_CALL
+socket_set_nonblocking(rk_socket_t sock, int nonblock)
+{
+    int flags;
+#if defined(O_NONBLOCK)
+    flags = fcntl(sock, F_GETFL, 0);
+    if (flags == -1)
+	return;
+    if (nonblock)
+	flags |= O_NONBLOCK;
+    else
+	flags &= ~O_NONBLOCK;
+    fcntl(sock, F_SETFL, flags);
+#elif defined(FIOBIO)
+    flags = !!nonblock;
+    return ioctl(sock, FIOBIO, &flags);
+#endif
+}
+
+/*
  * set the reuse of addresses on `sock' to `val'.
  */
 

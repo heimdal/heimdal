@@ -55,16 +55,19 @@ static krb5_boolean
 fail_verify_is_ok (krb5_context context,
 		   krb5_verify_init_creds_opt *options)
 {
-    if ((options->flags & KRB5_VERIFY_INIT_CREDS_OPT_AP_REQ_NOFAIL
-	 && options->ap_req_nofail != 0)
-	|| krb5_config_get_bool (context,
-				 NULL,
-				 "libdefaults",
-				 "verify_ap_req_nofail",
-				 NULL))
+
+    if (options && (options->flags & KRB5_VERIFY_INIT_CREDS_OPT_AP_REQ_NOFAIL)
+	&& options->ap_req_nofail != 0)
 	return FALSE;
-    else
-	return TRUE;
+
+    if (krb5_config_get_bool(context,
+			     NULL,
+			     "libdefaults",
+			     "verify_ap_req_nofail",
+			     NULL))
+	return FALSE;
+
+    return TRUE;
 }
 
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL

@@ -32,55 +32,40 @@
 
 #include "krb5_locl.h"
 
-static krb5_error_code
-rr13(unsigned char *buf, size_t len)
+static void
+rr13(uint8_t *dst1, uint8_t *dst2, uint8_t *src, size_t len)
 {
-    unsigned char *tmp;
     int bytes = (len + 7) / 8;
     int i;
-    if(len == 0)
-	return 0;
-    {
-	const int bits = 13 % len;
-	const int lbit = len % 8;
+    const int bits = 13 % len;
 
-	tmp = malloc(bytes);
-	if (tmp == NULL)
-	    return ENOMEM;
-	memcpy(tmp, buf, bytes);
-	if(lbit) {
-	    /* pad final byte with inital bits */
-	    tmp[bytes - 1] &= 0xff << (8 - lbit);
-	    for(i = lbit; i < 8; i += len)
-		tmp[bytes - 1] |= buf[0] >> i;
-	}
-	for(i = 0; i < bytes; i++) {
-	    int bb;
-	    int b1, s1, b2, s2;
-	    /* calculate first bit position of this byte */
-	    bb = 8 * i - bits;
-	    while(bb < 0)
-		bb += len;
-	    /* byte offset and shift count */
-	    b1 = bb / 8;
-	    s1 = bb % 8;
+    for (i = 0; i < bytes; i++) {
+	int bb;
+	int b1, s1, b2, s2;
+	/* calculate first bit position of this byte */
+	bb = 8 * i - bits;
+	while(bb < 0)
+	    bb += len;
+	/* byte offset and shift count */
+	b1 = bb / 8;
+	s1 = bb % 8;
 
-	    if(bb + 8 > bytes * 8)
-		/* watch for wraparound */
-		s2 = (len + 8 - s1) % 8;
-	    else
-		s2 = 8 - s1;
-	    b2 = (b1 + 1) % bytes;
-	    buf[i] = (tmp[b1] << s1) | (tmp[b2] >> s2);
-	}
-	free(tmp);
+	if (bb + 8 > bytes * 8)
+	    /* watch for wraparound */
+	    s2 = (len + 8 - s1) % 8;
+	else
+	    s2 = 8 - s1;
+	b2 = (b1 + 1) % bytes;
+	dst1[i] = (src[b1] << s1) | (src[b2] >> s2);
+	dst2[i] = dst1[i];
     }
-    return 0;
+
+    return;
 }
 
 /* Add `b' to `a', both being one's complement numbers. */
 static void
-add1(unsigned char *a, unsigned char *b, size_t len)
+add1(uint8_t *a, uint8_t *b, size_t len)
 {
     int i;
     int carry = 0;
@@ -104,22 +89,21 @@ _krb5_n_fold(const void *str, size_t len, void *key, size_t size)
     krb5_error_code ret = 0;
     size_t maxlen = 2 * max(size, len);
     size_t l = 0;
-    unsigned char *tmp = malloc(maxlen);
-    unsigned char *buf = malloc(len);
+    uint8_t *tmp = malloc(maxlen + 2 * len);
+    uint8_t *tmpbuf;
+    uint8_t *buf1 = tmp + maxlen;
+    uint8_t *buf2 = tmp + maxlen + len;
 
-    if (tmp == NULL || buf == NULL) {
+    if (tmp == NULL) {
         ret = ENOMEM;
 	goto out;
     }
 
-    memcpy(buf, str, len);
     memset(key, 0, size);
+    memcpy(buf1, str, len);
+    memcpy(tmp, buf1, len);
     do {
-	memcpy(tmp + l, buf, len);
 	l += len;
-	ret = rr13(buf, len * 8);
-	if (ret)
-	    goto out;
 	while(l >= size) {
 	    add1(key, tmp, size);
 	    l -= size;
@@ -127,14 +111,14 @@ _krb5_n_fold(const void *str, size_t len, void *key, size_t size)
 		break;
 	    memmove(tmp, tmp + size, l);
 	}
+	rr13(tmp + l, buf2, buf1, len * 8);
+	tmpbuf = buf1;
+	buf1 = buf2;
+	buf2 = tmpbuf;
     } while(l != 0);
 out:
-    if (buf) {
-        memset(buf, 0, len);
-	free(buf);
-    }
     if (tmp) {
-        memset(tmp, 0, maxlen);
+        memset(tmp, 0, maxlen + 2 * len);
 	free(tmp);
     }
     return ret;

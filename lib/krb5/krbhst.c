@@ -585,42 +585,43 @@ add_locate(void *ctx, int type, struct sockaddr *addr)
     return 0;
 }
 
+struct ghcontext {
+    struct krb5_krbhst_data *kd;
+    enum locate_service_type type;
+};
+
+static krb5_error_code KRB5_LIB_CALL
+ghcallback(krb5_context context, const void *plug, void *plugctx, void *userctx)
+{
+    krb5plugin_service_locate_ftable *service;
+    struct ghcontext *uc = userctx;
+    krb5_error_code ret;
+
+    service = (krb5plugin_service_locate_ftable *)plug;
+    
+    ret = service->lookup(plugctx, uc->type, uc->kd->realm, 0, 0,
+			  add_locate, uc->kd);
+    if (ret && ret != KRB5_PLUGIN_NO_HANDLE) {
+
+    } else if (ret) {
+	_krb5_debug(context, 2, "plugin found result for realm %s", uc->kd->realm);
+	uc->kd->flags |= KD_CONFIG_EXISTS;
+    }
+    return ret;
+}
+
 static void
 plugin_get_hosts(krb5_context context,
 		 struct krb5_krbhst_data *kd,
 		 enum locate_service_type type)
 {
-    struct krb5_plugin *list = NULL, *e;
-    krb5_error_code ret;
+    struct ghcontext userctx;
 
-    ret = _krb5_plugin_find(context, PLUGIN_TYPE_DATA,
-			    KRB5_PLUGIN_LOCATE, &list);
-    if(ret != 0 || list == NULL)
-	return;
+    userctx.kd = kd;
+    userctx.type = type;
 
-    for (e = list; e != NULL; e = _krb5_plugin_get_next(e)) {
-	krb5plugin_service_locate_ftable *service;
-	void *ctx;
-
-	service = _krb5_plugin_get_symbol(e);
-	if (service->minor_version != 0)
-	    continue;
-
-	(*service->init)(context, &ctx);
-	ret = (*service->lookup)(ctx, type, kd->realm, 0, 0, add_locate, kd);
-	(*service->fini)(ctx);
-	if (ret && ret != KRB5_PLUGIN_NO_HANDLE) {
-	    krb5_set_error_message(context, ret,
-				   N_("Locate plugin failed to lookup realm %s: %d", ""),
-				   kd->realm, ret);
-	    break;
-	} else if (ret == 0) {
-	    _krb5_debug(context, 2, "plugin found result for realm %s", kd->realm);
-	    kd->flags |= KD_CONFIG_EXISTS;
-	}
-
-    }
-    _krb5_plugin_free(list);
+    (void)_krb5_plugin_run_f(context, "krb5", KRB5_PLUGIN_LOCATE,
+			     0, 0, &userctx, ghcallback);
 }
 
 /*

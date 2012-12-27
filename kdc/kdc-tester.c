@@ -249,7 +249,6 @@ eval_kinit(heim_dict_t o)
 	if (ret)
 	    krb5_err(kdc_context, 1, ret, "krb5_kt_resolve");
 
-#if 0
 	ret = krb5_kt_resolve(kdc_context, "MEMORY:keytab", &ktmem);
 	if (ret)
 	    krb5_err(kdc_context, 1, ret, "krb5_kt_resolve(MEMORY)");
@@ -259,9 +258,6 @@ eval_kinit(heim_dict_t o)
 	    krb5_err(kdc_context, 1, ret, "copy_keytab");
 
 	krb5_kt_close(kdc_context, kt);
-#else
-	ktmem = kt;
-#endif
 
 	ret = krb5_init_creds_set_keytab(kdc_context, ctx, ktmem);
 	if (ret)

@@ -150,6 +150,27 @@ eval_repeat(heim_dict_t o)
  *
  */
 
+static krb5_error_code
+copy_keytab(krb5_context context, krb5_keytab from, krb5_keytab to)
+{
+    krb5_keytab_entry entry;
+    krb5_kt_cursor cursor;
+    krb5_error_code ret;
+
+    ret = krb5_kt_start_seq_get(context, from, &cursor);
+    if (ret)
+	return ret;
+    while((ret = krb5_kt_next_entry(context, from, &entry, &cursor)) == 0){
+	krb5_kt_add_entry(context, to, &entry);
+	krb5_kt_free_entry(context, &entry);
+    }
+    return krb5_kt_end_seq_get(context, from, &cursor);
+}	    
+
+/*
+ *
+ */
+
 static void
 eval_kinit(heim_dict_t o)
 {
@@ -157,7 +178,7 @@ eval_kinit(heim_dict_t o)
     krb5_get_init_creds_opt *opt;
     krb5_init_creds_context ctx;
     krb5_principal client;
-    krb5_keytab kt = NULL;
+    krb5_keytab ktmem = NULL;
     krb5_ccache fast_cc = NULL;
     krb5_error_code ret;
 
@@ -222,11 +243,27 @@ eval_kinit(heim_dict_t o)
 	    krb5_err(kdc_context, 1, ret, "krb5_init_creds_set_password");
     }
     if (keytab) {
+	krb5_keytab kt = NULL;
+
 	ret = krb5_kt_resolve(kdc_context, heim_string_get_utf8(keytab), &kt);
 	if (ret)
 	    krb5_err(kdc_context, 1, ret, "krb5_kt_resolve");
 
-	ret = krb5_init_creds_set_keytab(kdc_context, ctx, kt);
+#if 0
+	ret = krb5_kt_resolve(kdc_context, "MEMORY:keytab", &ktmem);
+	if (ret)
+	    krb5_err(kdc_context, 1, ret, "krb5_kt_resolve(MEMORY)");
+
+	ret = copy_keytab(kdc_context, kt, ktmem);
+	if (ret)
+	    krb5_err(kdc_context, 1, ret, "copy_keytab");
+
+	krb5_kt_close(kdc_context, kt);
+#else
+	ktmem = kt;
+#endif
+
+	ret = krb5_init_creds_set_keytab(kdc_context, ctx, ktmem);
 	if (ret)
 	    krb5_err(kdc_context, 1, ret, "krb5_init_creds_set_keytab");
     }
@@ -259,8 +296,8 @@ eval_kinit(heim_dict_t o)
 
     krb5_init_creds_free(kdc_context, ctx);
 
-    if (kt)
-	krb5_kt_close(kdc_context, kt);
+    if (ktmem)
+	krb5_kt_close(kdc_context, ktmem);
     if (fast_cc)
 	krb5_cc_close(kdc_context, fast_cc);
 }

@@ -102,7 +102,7 @@ static struct getargs args[] = {
     { "cache", 		'c', arg_string, &cred_cache,
       NP_("credentials cache", ""), "cachename" },
 
-    { "forwardable",	0, arg_negative_flag, &forwardable_flag,
+    { "forwardable",	'F', arg_negative_flag, &forwardable_flag,
       NP_("get tickets not forwardable", ""), NULL },
 
     { NULL,		'f', arg_flag, &forwardable_flag,

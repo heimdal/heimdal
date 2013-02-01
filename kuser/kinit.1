@@ -99,9 +99,10 @@ Supported options:
 .It Fl c Ar cachename Fl Fl cache= Ns Ar cachename
 The credentials cache to put the acquired ticket in, if other than
 default.
-.It Fl f Fl Fl no-forwardable
-Get ticket that can be forwarded to another host, or if the negative
-flags use, don't get a forwardable flag.
+.It Fl f Fl Fl forwardable
+Obtain a ticket than can be forwarded to another host.
+.It Fl F Fl Fl no-forwardable
+Do not obtain a forwardable ticket.
 .It Fl t Ar keytabname , Fl Fl keytab= Ns Ar keytabname
 Don't ask for a password, but instead get the key from the specified
 keytab.

@@ -813,26 +813,28 @@ static FILE *
 open_stats(krb5_context context)
 {
     char *statfile = NULL;
-    const char *fn;
-    int ret;
+    const char *fn = NULL;
+    FILE *out = NULL;
 
+    /*
+     * krb5_config_get_string_default() returs default value as-is,
+     * delay free() of "statfile" until we're done with "fn".
+     */
     if (slave_stats_file)
 	fn = slave_stats_file;
-    else {
-	ret = asprintf(&statfile,  "%s/slaves-stats", hdb_db_dir(context));
-	if (ret == -1)
-	    return NULL;
+    else if (asprintf(&statfile,  "%s/slaves-stats", hdb_db_dir(context)) != -1
+	     && statfile != NULL)
 	fn = krb5_config_get_string_default(context,
 					    NULL,
 					    statfile,
 					    "kdc",
 					    "iprop-stats",
 					    NULL);
+    if (fn != NULL)
+	out = fopen(fn, "w");
+    if (statfile != NULL)
 	free(statfile);
-    }
-    if (fn == NULL)
-	return NULL;
-    return fopen(fn, "w");
+    return out;
 }
 
 static void

@@ -103,6 +103,7 @@
 
 [logging]
 	kdc = 0-/FILE:@objdir@/messages.log
+	krb5 = 0-/FILE:@objdir@/messages.log
 	default = 0-/FILE:@objdir@/messages.log
 
 # If you are doing preformance measurements on OSX you want to change

@@ -261,6 +261,7 @@ typedef struct krb5_context_data {
     char **default_realms;
     time_t max_skew;
     time_t kdc_timeout;
+    time_t host_timeout;
     unsigned max_retries;
     int32_t kdc_sec_offset;
     int32_t kdc_usec_offset;
@@ -293,6 +294,8 @@ typedef struct krb5_context_data {
     int default_cc_name_set;
     void *mutex;			/* protects error_string */
     int large_msg_size;
+    int max_msg_size;
+    int tgs_negative_timeout;		/* timeout for TGS negative cache */
     int flags;
 #define KRB5_CTX_F_DNS_CANONICALIZE_HOSTNAME	1
 #define KRB5_CTX_F_CHECK_PAC			2
@@ -303,6 +306,7 @@ typedef struct krb5_context_data {
 #ifdef PKINIT
     hx509_context hx509ctx;
 #endif
+    unsigned int num_kdc_requests;
 } krb5_context_data;
 
 #ifndef KRB5_USE_PATH_TOKENS
@@ -338,6 +342,14 @@ typedef struct krb5_context_data {
 
 #ifndef KRB5_FORWARDABLE_DEFAULT
 #define KRB5_FORWARDABLE_DEFAULT TRUE
+#endif
+
+#ifndef KRB5_CONFIGURATION_CHANGE_NOTIFY_NAME
+#define KRB5_CONFIGURATION_CHANGE_NOTIFY_NAME "org.h5l.Kerberos.configuration-changed"
+#endif
+
+#ifndef KRB5_FALLBACK_DEFAULT
+#define KRB5_FALLBACK_DEFAULT TRUE
 #endif
 
 #ifdef PKINIT

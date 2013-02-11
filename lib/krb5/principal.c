@@ -1127,6 +1127,64 @@ krb5_parse_nametype(krb5_context context, const char *str, int32_t *nametype)
 }
 
 /**
+ * Returns true if name is Kerberos NULL name
+ *
+ * @ingroup krb5_principal
+ */
+
+krb5_boolean KRB5_LIB_FUNCTION
+krb5_principal_is_null(krb5_context context, krb5_const_principal principal)
+{
+    if (principal->name.name_type == KRB5_NT_WELLKNOWN &&
+	principal->name.name_string.len == 2 &&
+	strcmp(principal->name.name_string.val[0], "WELLKNOWN") == 0 &&
+	strcmp(principal->name.name_string.val[1], "NULL") == 0)
+	return TRUE;
+    return FALSE;
+}
+
+const char _krb5_wellknown_lkdc[] = "WELLKNOWN:COM.APPLE.LKDC";
+static const char lkdc_prefix[] = "LKDC:";
+
+/**
+ * Returns true if name is Kerberos an LKDC realm
+ *
+ * @ingroup krb5_principal
+ */
+
+krb5_boolean KRB5_LIB_FUNCTION
+krb5_realm_is_lkdc(const char *realm)
+{
+
+    return strncmp(realm, lkdc_prefix, sizeof(lkdc_prefix)-1) == 0 ||
+	strncmp(realm, _krb5_wellknown_lkdc, sizeof(_krb5_wellknown_lkdc) - 1) == 0;
+}
+
+/**
+ * Returns true if name is Kerberos an LKDC realm
+ *
+ * @ingroup krb5_principal
+ */
+
+krb5_boolean KRB5_LIB_FUNCTION
+krb5_principal_is_lkdc(krb5_context context, krb5_const_principal principal)
+{
+    return krb5_realm_is_lkdc(principal->realm);
+}
+
+/**
+ * Returns true if name is Kerberos an LKDC realm
+ *
+ * @ingroup krb5_principal
+ */
+
+krb5_boolean KRB5_LIB_FUNCTION
+krb5_principal_is_pku2u(krb5_context context, krb5_const_principal principal)
+{
+    return strcmp(principal->realm, KRB5_PKU2U_REALM_NAME) == 0;
+}
+
+/**
  * Check if the cname part of the principal is a krbtgt principal
  *
  * @ingroup krb5_principal

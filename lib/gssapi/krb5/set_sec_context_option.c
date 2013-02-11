@@ -178,23 +178,9 @@ _gsskrb5_set_sec_context_option
 
     } else if (gss_oid_equal(desired_object, GSS_KRB5_SEND_TO_KDC_X)) {
 
-	if (value == NULL || value->length == 0) {
-	    krb5_set_send_to_kdc_func(context, NULL, NULL);
-	} else {
-	    struct gsskrb5_send_to_kdc c;
+	*minor_status = EINVAL;
+	return GSS_S_FAILURE;
 
-	    if (value->length != sizeof(c)) {
-		*minor_status = EINVAL;
-		return GSS_S_FAILURE;
-	    }
-	    memcpy(&c, value->value, sizeof(c));
-	    krb5_set_send_to_kdc_func(context,
-				      (krb5_send_to_kdc_func)c.func,
-				      c.ptr);
-	}
-
-	*minor_status = 0;
-	return GSS_S_COMPLETE;
     } else if (gss_oid_equal(desired_object, GSS_KRB5_CCACHE_NAME_X)) {
 	char *str;
 

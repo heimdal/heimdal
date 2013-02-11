@@ -648,4 +648,97 @@ krb5_have_error_string(krb5_context context)
     return str != NULL;
 }
 
+struct send_to_kdc {
+    krb5_send_to_kdc_func func;
+    void *data;
+};
+
+/*
+ * Send the data `send' to one host from `handle` and get back the reply
+ * in `receive'.
+ */
+
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
+krb5_sendto (krb5_context context,
+	     const krb5_data *send_data,
+	     krb5_krbhst_handle handle,
+	     krb5_data *receive)
+{
+    krb5_error_code ret;
+    krb5_sendto_ctx ctx;
+
+    ret = krb5_sendto_ctx_alloc(context, &ctx);
+    if (ret)
+	return ret;
+    _krb5_sendto_ctx_set_krb5hst(context, ctx, handle);
+
+    ret = krb5_sendto_context(context, ctx, send_data, (char *)_krb5_krbhst_get_realm(handle), receive);
+    krb5_sendto_ctx_free(context, ctx);
+    return ret;
+}
+
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
+krb5_sendto_kdc(krb5_context context,
+		const krb5_data *send_data,
+		const krb5_realm *realm,
+		krb5_data *receive)
+{
+    return krb5_sendto_kdc_flags(context, send_data, realm, receive, 0);
+}
+
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
+krb5_sendto_kdc_flags(krb5_context context,
+		      const krb5_data *send_data,
+		      const krb5_realm *realm,
+		      krb5_data *receive,
+		      int flags)
+{
+    krb5_error_code ret;
+    krb5_sendto_ctx ctx;
+
+    ret = krb5_sendto_ctx_alloc(context, &ctx);
+    if (ret)
+	return ret;
+    krb5_sendto_ctx_add_flags(ctx, flags);
+    krb5_sendto_ctx_set_func(ctx, _krb5_kdc_retry, NULL);
+
+    ret = krb5_sendto_context(context, ctx, send_data, *realm, receive);
+    krb5_sendto_ctx_free(context, ctx);
+    return ret;
+}
+
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
+krb5_set_send_to_kdc_func(krb5_context context,
+			  krb5_send_to_kdc_func func,
+			  void *data)
+{
+    free(context->send_to_kdc);
+    if (func == NULL) {
+	context->send_to_kdc = NULL;
+	return 0;
+    }
+
+    context->send_to_kdc = malloc(sizeof(*context->send_to_kdc));
+    if (context->send_to_kdc == NULL) {
+	krb5_set_error_message(context, ENOMEM,
+			       N_("malloc: out of memory", ""));
+	return ENOMEM;
+    }
+
+    context->send_to_kdc->func = func;
+    context->send_to_kdc->data = data;
+    return 0;
+}
+
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
+_krb5_copy_send_to_kdc_func(krb5_context context, krb5_context to)
+{
+    if (context->send_to_kdc)
+	return krb5_set_send_to_kdc_func(to,
+					 context->send_to_kdc->func,
+					 context->send_to_kdc->data);
+    else
+	return krb5_set_send_to_kdc_func(to, NULL, NULL);
+}
+
 #endif /* HEIMDAL_SMALLER */

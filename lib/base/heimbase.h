@@ -41,6 +41,8 @@
 #include <stdarg.h>
 #include <stdbool.h>
 
+#define HEIM_BASE_API_VERSION 20130210
+
 typedef void * heim_object_t;
 typedef unsigned int heim_tid_t;
 typedef heim_object_t heim_bool_t;
@@ -121,15 +123,16 @@ typedef struct heim_array_data *heim_array_t;
 heim_array_t heim_array_create(void);
 heim_tid_t heim_array_get_type_id(void);
 
-typedef void (*heim_array_iterator_f_t)(heim_object_t, void *);
+typedef void (*heim_array_iterator_f_t)(heim_object_t, void *, int *);
+typedef int (*heim_array_filter_f_t)(heim_object_t, void *);
 
 int	heim_array_append_value(heim_array_t, heim_object_t);
 int	heim_array_insert_value(heim_array_t, size_t idx, heim_object_t);
 void	heim_array_iterate_f(heim_array_t, void *, heim_array_iterator_f_t);
 void	heim_array_iterate_reverse_f(heim_array_t, void *, heim_array_iterator_f_t);
 #ifdef __BLOCKS__
-void	heim_array_iterate(heim_array_t, void (^)(heim_object_t));
-void	heim_array_iterate_reverse(heim_array_t, void (^)(heim_object_t));
+void	heim_array_iterate(heim_array_t, void (^)(heim_object_t, int *));
+void	heim_array_iterate_reverse(heim_array_t, void (^)(heim_object_t, int *));
 #endif
 size_t	heim_array_get_length(heim_array_t);
 heim_object_t
@@ -138,6 +141,7 @@ heim_object_t
 	heim_array_copy_value(heim_array_t, size_t);
 void	heim_array_set_value(heim_array_t, size_t, heim_object_t);
 void	heim_array_delete_value(heim_array_t, size_t);
+void	heim_array_filter_f(heim_array_t, void *, heim_array_filter_f_t);
 #ifdef __BLOCKS__
 void	heim_array_filter(heim_array_t, int (^)(heim_object_t));
 #endif

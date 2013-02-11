@@ -589,7 +589,7 @@ search_modules(heim_object_t key, heim_object_t value, void *ctx)
 }
 
 static void
-eval_results(heim_object_t value, void *ctx)
+eval_results(heim_object_t value, void *ctx, int *stop)
 {
     struct plug *pl = value;
     struct iter_ctx *s = ctx;

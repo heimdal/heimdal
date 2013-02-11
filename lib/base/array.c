@@ -255,8 +255,12 @@ void
 heim_array_iterate_f(heim_array_t array, void *ctx, heim_array_iterator_f_t fn)
 {
     size_t n;
-    for (n = 0; n < array->len; n++)
-	fn(array->val[n], ctx);
+    int stop = 0;
+    for (n = 0; n < array->len; n++) {
+	fn(array->val[n], ctx, &stop);
+	if (stop)
+	    return;
+    }
 }
 
 #ifdef __BLOCKS__
@@ -268,11 +272,15 @@ heim_array_iterate_f(heim_array_t array, void *ctx, heim_array_iterator_f_t fn)
  */
 
 void
-heim_array_iterate(heim_array_t array, void (^fn)(heim_object_t))
+heim_array_iterate(heim_array_t array, void (^fn)(heim_object_t, int *))
 {
     size_t n;
-    for (n = 0; n < array->len; n++)
-	fn(array->val[n]);
+    int stop = 0;
+    for (n = 0; n < array->len; n++) {
+	fn(array->val[n], &stop);
+	if (stop)
+	    return;
+    }
 }
 #endif
 
@@ -288,8 +296,13 @@ void
 heim_array_iterate_reverse_f(heim_array_t array, void *ctx, heim_array_iterator_f_t fn)
 {
     size_t n;
-    for (n = array->len; n > 0; n--)
-	fn(array->val[n - 1], ctx);
+    int stop = 0;
+
+    for (n = array->len; n > 0; n--) {
+	fn(array->val[n - 1], ctx, &stop);
+	if (stop)
+	    return;
+    }
 }
 
 #ifdef __BLOCKS__
@@ -301,11 +314,15 @@ heim_array_iterate_reverse_f(heim_array_t array, void *ctx, heim_array_iterator_
  */
 
 void
-heim_array_iterate_reverse(heim_array_t array, void (^fn)(heim_object_t))
+heim_array_iterate_reverse(heim_array_t array, void (^fn)(heim_object_t, int *))
 {
     size_t n;
-    for (n = array->len; n > 0; n--)
-	fn(array->val[n - 1]);
+    int stop = 0;
+    for (n = array->len; n > 0; n--) {
+	fn(array->val[n - 1], &stop);
+	if (stop)
+	    return;
+    }
 }
 #endif
 
@@ -414,12 +431,34 @@ heim_array_delete_value(heim_array_t array, size_t idx)
     heim_release(obj);
 }
 
-#ifdef __BLOCKS__
 /**
- * Get value at idx
+ * Filter out entres of array when function return true
  *
  * @param array the array to modify
- * @param idx the key to delete
+ * @param fn filter function
+ */
+
+void
+heim_array_filter_f(heim_array_t array, void *ctx, heim_array_filter_f_t fn)
+{
+    size_t n = 0;
+
+    while (n < array->len) {
+	if (fn(array->val[n], ctx)) {
+	    heim_array_delete_value(array, n);
+	} else {
+	    n++;
+	}
+    }
+}
+
+#ifdef __BLOCKS__
+
+/**
+ * Filter out entres of array when block return true
+ *
+ * @param array the array to modify
+ * @param block filter block
  */
 
 void

@@ -100,7 +100,8 @@ init_context_from_config_file(krb5_context context)
     krb5_enctype *tmptypes;
 
     INIT_FIELD(context, time, max_skew, 5 * 60, "clockskew");
-    INIT_FIELD(context, time, kdc_timeout, 3, "kdc_timeout");
+    INIT_FIELD(context, time, kdc_timeout, 30, "kdc_timeout");
+    INIT_FIELD(context, time, host_timeout, 3, "host_timeout");
     INIT_FIELD(context, int, max_retries, 3, "max_retries");
 
     INIT_FIELD(context, string, http_proxy, NULL, "http_proxy");
@@ -220,6 +221,7 @@ init_context_from_config_file(krb5_context context)
     INIT_FIELD(context, bool, srv_lookup, TRUE, "srv_lookup");
     INIT_FIELD(context, bool, srv_lookup, context->srv_lookup, "dns_lookup_kdc");
     INIT_FIELD(context, int, large_msg_size, 1400, "large_message_size");
+    INIT_FIELD(context, int, max_msg_size, 1000 * 1024, "maximum_message_size");
     INIT_FLAG(context, flags, KRB5_CTX_F_DNS_CANONICALIZE_HOSTNAME, TRUE, "dns_canonicalize_hostname");
     INIT_FLAG(context, flags, KRB5_CTX_F_CHECK_PAC, TRUE, "check_pac");
     context->default_cc_name = NULL;

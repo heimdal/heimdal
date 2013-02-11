@@ -689,6 +689,13 @@ typedef EncAPRepPart krb5_ap_rep_enc_part;
 #define KRB5_WELLKNOWN_ORG_H5L_REALM ("WELLKNOWN:ORG.H5L")
 #define KRB5_DIGEST_NAME ("digest")
 
+
+#define KRB5_PKU2U_REALM_NAME ("WELLKNOWN:PKU2U")
+#define KRB5_LKDC_REALM_NAME ("WELLKNOWN:COM.APPLE.LKDC")
+
+#define KRB5_GSS_HOSTBASED_SERVICE_NAME ("WELLKNOWN:ORG.H5L.HOSTBASED-SERVICE")
+#define KRB5_GSS_REFERALS_REALM_NAME ("WELLKNOWN:ORG.H5L.REFERALS-REALM")
+
 typedef enum {
     KRB5_PROMPT_TYPE_PASSWORD		= 0x1,
     KRB5_PROMPT_TYPE_NEW_PASSWORD	= 0x2,
@@ -822,6 +829,7 @@ enum {
     KRB5_KRBHST_FLAGS_LARGE_MSG	  = 2
 };
 
+typedef krb5_error_code (*krb5_sendto_prexmit)(krb5_context, int, void *, int, krb5_data *);
 typedef krb5_error_code
 (KRB5_CALLCONV * krb5_send_to_kdc_func)(krb5_context, void *, krb5_krbhst_info *, time_t,
 					const krb5_data *, krb5_data *);
@@ -843,8 +851,13 @@ enum {
 typedef struct krb5_sendto_ctx_data *krb5_sendto_ctx;
 
 #define KRB5_SENDTO_DONE	0
-#define KRB5_SENDTO_RESTART	1
+#define KRB5_SENDTO_RESET	1
 #define KRB5_SENDTO_CONTINUE	2
+#define KRB5_SENDTO_TIMEOUT	3
+#define KRB5_SENDTO_INITIAL	4
+#define KRB5_SENDTO_FILTER	5
+#define KRB5_SENDTO_FAILED	6
+#define KRB5_SENDTO_KRBHST	7
 
 typedef krb5_error_code
 (KRB5_CALLCONV * krb5_sendto_ctx_func)(krb5_context, krb5_sendto_ctx, void *,

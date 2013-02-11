@@ -795,7 +795,7 @@ struct test_array_iter_ctx {
     char buf[256];
 };
 
-static void test_array_iter(heim_object_t elt, void *arg)
+static void test_array_iter(heim_object_t elt, void *arg, int *stop)
 {
     struct test_array_iter_ctx *iter_ctx = arg;
 

@@ -79,7 +79,7 @@ indent(struct twojson *j)
 }
 
 static void
-array2json(heim_object_t value, void *ctx)
+array2json(heim_object_t value, void *ctx, int *stop)
 {
     struct twojson *j = ctx;
     if (j->ret)

@@ -383,7 +383,7 @@ eval_kdestroy(heim_dict_t o)
  */
 
 static void
-eval_array_element(heim_object_t o, void *ptr)
+eval_array_element(heim_object_t o, void *ptr, int *stop)
 {
     eval_object(o);
 }

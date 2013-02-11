@@ -106,7 +106,7 @@
 	default = 0-/FILE:@objdir@/messages.log
 
 # If you are doing preformance measurements on OSX you want to change
-# the kdc LOG line to - to = below to keep the FILE open and avoid
+# the kdc LOG line from = to - below to keep the FILE open and avoid
 # open/write/close which is blocking (rdar:// ) on OSX.
 #	kdc = 0-/FILE=@objdir@/messages.log
 

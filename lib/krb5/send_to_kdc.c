@@ -1111,7 +1111,7 @@ krb5_sendto_context(krb5_context context,
 	switch (action) {
 	case KRB5_SENDTO_INITIAL:
 	    ret = realm_via_plugin(context, realm, context->kdc_timeout,
-				   send_data, receive);
+				   send_data, &ctx->response);
 	    if (ret == 0 || ret != KRB5_PLUGIN_NO_HANDLE) {
 		action = KRB5_SENDTO_DONE;
 		break;

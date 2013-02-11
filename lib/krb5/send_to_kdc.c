@@ -549,7 +549,7 @@ recv_http(krb5_context context, struct host *host, krb5_data *data)
 
     len = host->data.length - (p - (char *)host->data.data);
     if (len < 4)
-	return KRB5KRB_ERR_FIELD_TOOLONG;
+	return -1;
 
     _krb5_get_int(p, &rep_len, 4);
     if (len < rep_len)

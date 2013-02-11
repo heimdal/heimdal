@@ -34,6 +34,7 @@
  */
 
 #include "kdc_locl.h"
+#include "send_to_kdc_plugin.h"
 
 struct perf {
     unsigned long as_req;
@@ -62,10 +63,37 @@ static void eval_object(heim_object_t);
  */
 
 static krb5_error_code
-send_to_kdc(krb5_context c, void *ptr, krb5_krbhst_info *hi, time_t timeout,
-	    const krb5_data *in, krb5_data *out)
+plugin_init(krb5_context context, void **pctx)
 {
-    krb5_error_code ret;
+    *pctx = NULL;
+    return 0;
+}
+
+static void
+plugin_fini(void *ctx)
+{
+}
+
+static krb5_error_code
+plugin_send_to_kdc(krb5_context context,
+		   void *ctx,
+		   krb5_krbhst_info *ho,
+		   time_t timeout,
+		   const krb5_data *in,
+		   krb5_data *out)
+{
+    return KRB5_PLUGIN_NO_HANDLE;
+}
+
+static krb5_error_code
+plugin_send_to_realm(krb5_context context,
+		     void *ctx,
+		     krb5_const_realm realm,
+		     time_t timeout,
+		     const krb5_data *in,
+		     krb5_data *out)
+{
+    int ret;
 
     krb5_kdc_update_time(NULL);
 
@@ -74,10 +102,18 @@ send_to_kdc(krb5_context c, void *ptr, krb5_krbhst_info *hi, time_t timeout,
 				   out, NULL, astr,
 				   (struct sockaddr *)&sa, 0);
     if (ret)
-	krb5_err(c, 1, ret, "krb5_kdc_process_request");
+	krb5_err(kdc_context, 1, ret, "krb5_kdc_process_request");
 
     return 0;
 }
+
+static krb5plugin_send_to_kdc_ftable send_to_kdc = {
+    KRB5_PLUGIN_SEND_TO_KDC_VERSION_2,
+    plugin_init,
+    plugin_fini,
+    plugin_send_to_kdc,
+    plugin_send_to_realm
+};
 
 static void
 perf_start(struct perf *perf)
@@ -443,7 +479,8 @@ main(int argc, char **argv)
     if (argc == 0)
 	errx(1, "missing operations");
 
-    krb5_set_send_to_kdc_func(kdc_context, send_to_kdc, NULL);
+    krb5_plugin_register(kdc_context, PLUGIN_TYPE_DATA,
+			 KRB5_PLUGIN_SEND_TO_KDC, &send_to_kdc);
 
     {
 	void *buf;

@@ -113,7 +113,7 @@ main(int argc, char **argv)
 
     while(krb5_krbhst_next_as_string(context, handle, host, sizeof(host)) == 0){
 	found++;
- 	if (strcmp(host, "127.0.0.2") != 0)
+ 	if (strcmp(host, "127.0.0.2") != 0 && strcmp(host, "tcp/127.0.0.2") != 0)
 	    krb5_errx(context, 1, "wrong address: %s", host);
     }
     if (!found)

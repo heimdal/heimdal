@@ -404,6 +404,9 @@ krb5_init_context(krb5_context *context)
     if(ret)
 	goto out;
 
+    /* done enough to load plugins */
+    heim_base_once_f(&init_context, p, init_context_once);
+
     /* init error tables */
     krb5_init_ets(p);
     cc_ops_register(p);
@@ -421,8 +424,6 @@ out:
     if(ret) {
 	krb5_free_context(p);
 	p = NULL;
-    } else {
-	heim_base_once_f(&init_context, p, init_context_once);
     }
     *context = p;
     return ret;

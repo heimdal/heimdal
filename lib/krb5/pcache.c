@@ -36,31 +36,30 @@
 #endif
 #include <assert.h>
 
+static krb5_error_code KRB5_LIB_CALL
+callback(krb5_context context, const void *plug, void *plugctx, void *userctx)
+{
+    krb5_cc_ops *ccops = (krb5_cc_ops *)plug;
+    krb5_error_code ret;
+
+    if (ccops != NULL && ccops->version >= KRB5_CC_OPS_VERSION)
+	return KRB5_PLUGIN_NO_HANDLE;
+
+    ret = krb5_cc_register(context, ccops, TRUE);
+    if (ret != 0)
+	*((krb5_error_code *)userctx) = ret;
+
+    return KRB5_PLUGIN_NO_HANDLE;
+}
+
+
 krb5_error_code
 _krb5_load_ccache_plugins(krb5_context context)
 {
-    struct krb5_plugin * plist = NULL;
-    struct krb5_plugin *p;
-    krb5_error_code code;
+    krb5_error_code userctx = 0;
 
-    code = _krb5_plugin_find(context, PLUGIN_TYPE_DATA, KRB5_PLUGIN_CCACHE,
-                             &plist);
-    if (code)
-        return code;
+    (void)_krb5_plugin_run_f(context, "krb5", KRB5_PLUGIN_CCACHE,
+			     0, 0, &userctx, callback);
 
-    for (p = plist; p != NULL; p = _krb5_plugin_get_next(p)) {
-        krb5_cc_ops * ccops;
-        krb5_error_code c_load;
-
-        ccops = _krb5_plugin_get_symbol(p);
-        if (ccops != NULL && ccops->version == KRB5_CC_OPS_VERSION) {
-            c_load = krb5_cc_register(context, ccops, TRUE);
-            if (c_load != 0)
-                code = c_load;
-        }
-    }
-
-    _krb5_plugin_free(plist);
-
-    return code;
+    return userctx;
 }

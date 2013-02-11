@@ -43,6 +43,7 @@ static void *windcctx;
 krb5_error_code
 krb5_kdc_windc_init(krb5_context context)
 {
+#if 0
     struct krb5_plugin *list = NULL, *e;
     krb5_error_code ret;
 
@@ -65,7 +66,7 @@ krb5_kdc_windc_init(krb5_context context)
 	windcft = NULL;
 	return ENOENT;
     }
-
+#endif
     return 0;
 }
 

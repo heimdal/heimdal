@@ -361,8 +361,7 @@ krb5_verify_ap_req2(krb5_context context,
 
     t = calloc(1, sizeof(*t));
     if (t == NULL) {
-	ret = ENOMEM;
-	krb5_clear_error_message (context);
+	ret = krb5_enomem(context);
 	goto out;
     }
 
@@ -545,11 +544,8 @@ KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_rd_req_in_ctx_alloc(krb5_context context, krb5_rd_req_in_ctx *ctx)
 {
     *ctx = calloc(1, sizeof(**ctx));
-    if (*ctx == NULL) {
-	krb5_set_error_message(context, ENOMEM,
-			       N_("malloc: out of memory", ""));
-	return ENOMEM;
-    }
+    if (*ctx == NULL)
+	return krb5_enomem(context);
     (*ctx)->check_pac = (context->flags & KRB5_CTX_F_CHECK_PAC) ? 1 : 0;
     return 0;
 }
@@ -866,11 +862,8 @@ krb5_rd_req_ctx(krb5_context context,
     *outctx = NULL;
 
     o = calloc(1, sizeof(*o));
-    if (o == NULL) {
-	krb5_set_error_message(context, ENOMEM,
-			       N_("malloc: out of memory", ""));
-	return ENOMEM;
-    }
+    if (o == NULL)
+	return krb5_enomem(context);
 
     if (*auth_context == NULL) {
 	ret = krb5_auth_con_init(context, auth_context);

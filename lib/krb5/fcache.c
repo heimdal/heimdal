@@ -555,8 +555,7 @@ init_fcc (krb5_context context,
 
     sp = krb5_storage_from_fd(fd);
     if(sp == NULL) {
-	krb5_clear_error_message(context);
-	ret = ENOMEM;
+	ret = krb5_enomem(context);
 	goto out;
     }
     krb5_storage_set_eof_code(sp, KRB5_CC_END);
@@ -722,10 +721,8 @@ fcc_get_first (krb5_context context,
         return krb5_einval(context, 2);
 
     *cursor = malloc(sizeof(struct fcc_cursor));
-    if (*cursor == NULL) {
-        krb5_set_error_message(context, ENOMEM, N_("malloc: out of memory", ""));
-	return ENOMEM;
-    }
+    if (*cursor == NULL)
+	return krb5_enomem(context);
     memset(*cursor, 0, sizeof(struct fcc_cursor));
 
     ret = init_fcc (context, id, &FCC_CURSOR(*cursor)->sp,
@@ -823,7 +820,7 @@ fcc_remove_cred(krb5_context context,
     ret = asprintf(&newname, "FILE:%s.XXXXXX", FILENAME(id));
     if (ret < 0 || newname == NULL) {
 	krb5_cc_destroy(context, copy);
-	return ENOMEM;
+	return krb5_enomem(context);
     }
 
     fd = mkstemp(&newname[5]);
@@ -890,10 +887,8 @@ fcc_get_cache_first(krb5_context context, krb5_cc_cursor *cursor)
     struct fcache_iter *iter;
 
     iter = calloc(1, sizeof(*iter));
-    if (iter == NULL) {
-	krb5_set_error_message(context, ENOMEM, N_("malloc: out of memory", ""));
-	return ENOMEM;
-    }
+    if (iter == NULL)
+	return krb5_enomem(context);
     iter->first = 1;
     *cursor = iter;
     return 0;

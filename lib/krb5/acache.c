@@ -303,8 +303,7 @@ make_cred_from_ccred(krb5_context context,
     return 0;
 
 nomem:
-    ret = ENOMEM;
-    krb5_set_error_message(context, ret, N_("malloc: out of memory", "malloc"));
+    ret = krb5_enomem(context);
 
 fail:
     krb5_free_cred_contents(context, cred);
@@ -905,10 +904,8 @@ acc_get_cache_first(krb5_context context, krb5_cc_cursor *cursor)
 	return ret;
 
     iter = calloc(1, sizeof(*iter));
-    if (iter == NULL) {
-	krb5_set_error_message(context, ENOMEM, "malloc: out of memory");
-	return ENOMEM;
-    }
+    if (iter == NULL)
+	return krb5_enomem(context);
 
     error = (*init_func)(&iter->context, ccapi_version_3, NULL, NULL);
     if (error) {
@@ -1036,10 +1033,8 @@ acc_get_default_name(krb5_context context, char **str)
     (*name->func->release)(name);
     (*cc->func->release)(cc);
 
-    if (error < 0 || *str == NULL) {
-	krb5_set_error_message(context, ENOMEM, N_("malloc: out of memory", ""));
-	return ENOMEM;
-    }
+    if (error < 0 || *str == NULL)
+	return krb5_enomem(context);
     return 0;
 }
 

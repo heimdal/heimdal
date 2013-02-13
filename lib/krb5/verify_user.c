@@ -100,11 +100,8 @@ KRB5_LIB_FUNCTION int KRB5_LIB_CALL
 krb5_verify_opt_alloc(krb5_context context, krb5_verify_opt **opt)
 {
     *opt = calloc(1, sizeof(**opt));
-    if ((*opt) == NULL) {
-	krb5_set_error_message(context, ENOMEM,
-			       N_("malloc: out of memory", ""));
-	return ENOMEM;
-    }
+    if ((*opt) == NULL)
+	return krb5_enomem(context);
     krb5_verify_opt_init(*opt);
     return 0;
 }

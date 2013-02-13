@@ -75,10 +75,8 @@ _krb5_HMAC_MD5_checksum(krb5_context context,
     krb5_error_code ret;
 
     m = EVP_MD_CTX_create();
-    if (m == NULL) {
-	krb5_set_error_message(context, ENOMEM, N_("malloc: out of memory", ""));
-	return ENOMEM;
-    }
+    if (m == NULL)
+	return krb5_enomem(context);
     ksign_c.checksum.length = sizeof(ksign_c_data);
     ksign_c.checksum.data   = ksign_c_data;
     ret = _krb5_internal_hmac(context, c, signature, sizeof(signature),

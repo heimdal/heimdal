@@ -305,11 +305,8 @@ krb5_get_server_rcache(krb5_context context,
     char *tmp = malloc(4 * piece->length + 1);
     char *name;
 
-    if(tmp == NULL) {
-	krb5_set_error_message(context, ENOMEM,
-			       N_("malloc: out of memory", ""));
-	return ENOMEM;
-    }
+    if (tmp == NULL)
+	return krb5_enomem(context);
     strvisx(tmp, piece->data, piece->length, VIS_WHITE | VIS_OCTAL);
 #ifdef HAVE_GETEUID
     ret = asprintf(&name, "FILE:rc_%s_%u", tmp, (unsigned)geteuid());
@@ -317,11 +314,8 @@ krb5_get_server_rcache(krb5_context context,
     ret = asprintf(&name, "FILE:rc_%s", tmp);
 #endif
     free(tmp);
-    if(ret < 0 || name == NULL) {
-	krb5_set_error_message(context, ENOMEM,
-			       N_("malloc: out of memory", ""));
-	return ENOMEM;
-    }
+    if (ret < 0 || name == NULL)
+	return krb5_enomem(context);
 
     ret = krb5_rc_resolve_full(context, &rcache, name);
     free(name);

@@ -96,7 +96,7 @@ krb5_c_get_checksum(krb5_context context, const krb5_checksum *cksum,
     if (data) {
 	*data = malloc(sizeof(**data));
 	if (*data == NULL)
-	    return ENOMEM;
+	    return krb5_enomem(context);
 
 	ret = der_copy_octet_string(&cksum->checksum, *data);
 	if (ret) {
@@ -167,7 +167,7 @@ krb5_copy_checksum (krb5_context context,
 {
     *new = malloc(sizeof(**new));
     if (*new == NULL)
-	return ENOMEM;
+	return krb5_enomem(context);
     return copy_Checksum(old, *new);
 }
 

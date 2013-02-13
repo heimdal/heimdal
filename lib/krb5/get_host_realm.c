@@ -189,16 +189,13 @@ _krb5_get_host_realm_int (krb5_context context,
     if(p != NULL) {
 	p++;
 	*realms = malloc(2 * sizeof(krb5_realm));
-	if (*realms == NULL) {
-	    krb5_set_error_message(context, ENOMEM, N_("malloc: out of memory", ""));
-	    return ENOMEM;
-	}
+	if (*realms == NULL)
+	    return krb5_enomem(context);
 
 	(*realms)[0] = strdup(p);
 	if((*realms)[0] == NULL) {
 	    free(*realms);
-	    krb5_set_error_message(context, ENOMEM, N_("malloc: out of memory", ""));
-	    return ENOMEM;
+	    return krb5_enomem(context);
 	}
 	strupr((*realms)[0]);
 	(*realms)[1] = NULL;

@@ -579,10 +579,8 @@ parse_reg_root(krb5_context context,
     krb5_error_code     code = 0;
 
     libdefaults = _krb5_config_get_entry(parent, "libdefaults", krb5_config_list);
-    if (libdefaults == NULL) {
-        krb5_set_error_message(context, ENOMEM, "Out of memory while parsing configuration");
-        return ENOMEM;
-    }
+    if (libdefaults == NULL)
+        return krb5_enomem(context);
 
     code = parse_reg_values(context, key, &libdefaults->u.list);
     if (code)

@@ -101,9 +101,7 @@ srv_find_realm(krb5_context context, krb5_krbhst_info ***res, int *count,
     *res = malloc(num_srv * sizeof(**res));
     if(*res == NULL) {
 	rk_dns_free_data(r);
-	krb5_set_error_message(context, ENOMEM,
-			       N_("malloc: out of memory", ""));
-	return ENOMEM;
+	return krb5_enomem(context);
     }
 
     rk_dns_srv_order(r);
@@ -120,7 +118,7 @@ srv_find_realm(krb5_context context, krb5_krbhst_info ***res, int *count,
 		    free((*res)[num_srv]);
 		free(*res);
 		*res = NULL;
-		return ENOMEM;
+		return krb5_enomem(context);
 	    }
 	    (*res)[num_srv++] = hi;
 
@@ -280,11 +278,8 @@ _krb5_krbhost_info_move(krb5_context context,
     size_t hostnamelen = strlen(from->hostname);
     /* trailing NUL is included in structure */
     *to = calloc(1, sizeof(**to) + hostnamelen);
-    if(*to == NULL) {
-	krb5_set_error_message(context, ENOMEM,
-			       N_("malloc: out of memory", ""));
-	return ENOMEM;
-    }
+    if (*to == NULL)
+	return krb5_enomem(context);
 
     (*to)->proto = from->proto;
     (*to)->port = from->port;
@@ -321,7 +316,7 @@ append_host_string(krb5_context context, struct krb5_krbhst_data *kd,
 
     hi = parse_hostspec(context, kd, host, def_port, port);
     if(hi == NULL)
-	return ENOMEM;
+	return krb5_enomem(context);
 
     append_host_hostinfo(kd, hi);
     return 0;
@@ -1083,7 +1078,7 @@ gethostlist(krb5_context context, const char *realm,
     *hostlist = calloc(nhost + 1, sizeof(**hostlist));
     if(*hostlist == NULL) {
 	krb5_krbhst_free(context, handle);
-	return ENOMEM;
+	return krb5_enomem(context);
     }
 
     krb5_krbhst_reset(context, handle);
@@ -1093,7 +1088,7 @@ gethostlist(krb5_context context, const char *realm,
 	if(((*hostlist)[nhost++] = strdup(host)) == NULL) {
 	    krb5_free_krbhst(context, *hostlist);
 	    krb5_krbhst_free(context, handle);
-	    return ENOMEM;
+	    return krb5_enomem(context);
 	}
     }
     (*hostlist)[nhost] = NULL;

@@ -509,11 +509,8 @@ static krb5_error_code KRB5_CALLCONV
 mcc_default_name(krb5_context context, char **str)
 {
     *str = strdup("MEMORY:");
-    if (*str == NULL) {
-	krb5_set_error_message(context, ENOMEM,
-			       N_("malloc: out of memory", ""));
-	return ENOMEM;
-    }
+    if (*str == NULL)
+	return krb5_enomem(context);
     return 0;
 }
 

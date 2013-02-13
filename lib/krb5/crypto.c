@@ -147,10 +147,8 @@ _key_schedule(krb5_context context,
     if (key->schedule != NULL)
 	return 0;
     ALLOC(key->schedule, 1);
-    if(key->schedule == NULL) {
-	krb5_set_error_message(context, ENOMEM, N_("malloc: out of memory", ""));
-	return ENOMEM;
-    }
+    if (key->schedule == NULL)
+	return krb5_enomem(context);
     ret = krb5_data_alloc(key->schedule, kt->schedule_size);
     if(ret) {
 	free(key->schedule);
@@ -325,10 +323,8 @@ get_checksum_key(krb5_context context,
 	size_t i;
 
 	*key = _new_derived_key(crypto, 0xff/* KRB5_KU_RFC1510_VARIANT */);
-	if(*key == NULL) {
-	    krb5_set_error_message(context, ENOMEM, N_("malloc: out of memory", ""));
-	    return ENOMEM;
-	}
+	if (*key == NULL)
+	    return krb5_enomem(context);
 	ret = krb5_copy_keyblock(context, crypto->key.key, &(*key)->key);
 	if(ret)
 	    return ret;
@@ -666,10 +662,8 @@ krb5_enctype_to_string(krb5_context context,
 	return KRB5_PROG_ETYPE_NOSUPP;
     }
     *string = strdup(e->name);
-    if(*string == NULL) {
-	krb5_set_error_message(context, ENOMEM, N_("malloc: out of memory", ""));
-	return ENOMEM;
-    }
+    if (*string == NULL)
+	return krb5_enomem(context);
     return 0;
 }
 
@@ -836,10 +830,8 @@ encrypt_internal_derived(krb5_context context,
     block_sz = (sz + et->padsize - 1) &~ (et->padsize - 1); /* pad */
     total_sz = block_sz + checksum_sz;
     p = calloc(1, total_sz);
-    if(p == NULL) {
-	krb5_set_error_message(context, ENOMEM, N_("malloc: out of memory", ""));
-	return ENOMEM;
-    }
+    if (p == NULL)
+	return krb5_enomem(context);
 
     q = p;
     krb5_generate_random_block(q, et->confoundersize); /* XXX */
@@ -900,10 +892,8 @@ encrypt_internal(krb5_context context,
     sz = et->confoundersize + checksum_sz + len;
     block_sz = (sz + et->padsize - 1) &~ (et->padsize - 1); /* pad */
     p = calloc(1, block_sz);
-    if(p == NULL) {
-	krb5_set_error_message(context, ENOMEM, N_("malloc: out of memory", ""));
-	return ENOMEM;
-    }
+    if (p == NULL)
+	return krb5_enomem(context);
 
     q = p;
     krb5_generate_random_block(q, et->confoundersize); /* XXX */
@@ -962,10 +952,8 @@ encrypt_internal_special(krb5_context context,
     krb5_error_code ret;
 
     tmp = malloc (sz);
-    if (tmp == NULL) {
-	krb5_set_error_message(context, ENOMEM, N_("malloc: out of memory", ""));
-	return ENOMEM;
-    }
+    if (tmp == NULL)
+	return krb5_enomem(context);
     p = tmp;
     memset (p, 0, cksum_sz);
     p += cksum_sz;
@@ -1014,10 +1002,8 @@ decrypt_internal_derived(krb5_context context,
     }
 
     p = malloc(len);
-    if(len != 0 && p == NULL) {
-	krb5_set_error_message(context, ENOMEM, N_("malloc: out of memory", ""));
-	return ENOMEM;
-    }
+    if (len != 0 && p == NULL)
+	return krb5_enomem(context);
     memcpy(p, data, len);
 
     len -= checksum_sz;
@@ -1057,8 +1043,7 @@ decrypt_internal_derived(krb5_context context,
     result->data = realloc(p, l);
     if(result->data == NULL && l != 0) {
 	free(p);
-	krb5_set_error_message(context, ENOMEM, N_("malloc: out of memory", ""));
-	return ENOMEM;
+	return krb5_enomem(context);
     }
     result->length = l;
     return 0;
@@ -1091,10 +1076,8 @@ decrypt_internal(krb5_context context,
     }
 
     p = malloc(len);
-    if(len != 0 && p == NULL) {
-	krb5_set_error_message(context, ENOMEM, N_("malloc: out of memory", ""));
-	return ENOMEM;
-    }
+    if (len != 0 && p == NULL)
+	return krb5_enomem(context);
     memcpy(p, data, len);
 
     ret = _key_schedule(context, &crypto->key);
@@ -1125,8 +1108,7 @@ decrypt_internal(krb5_context context,
     result->data = realloc(p, l);
     if(result->data == NULL && l != 0) {
 	free(p);
-	krb5_set_error_message(context, ENOMEM, N_("malloc: out of memory", ""));
-	return ENOMEM;
+	return krb5_enomem(context);
     }
     result->length = l;
     return 0;
@@ -1159,10 +1141,8 @@ decrypt_internal_special(krb5_context context,
     }
 
     p = malloc (len);
-    if (p == NULL) {
-	krb5_set_error_message(context, ENOMEM, N_("malloc: out of memory", ""));
-	return ENOMEM;
-    }
+    if (p == NULL)
+	return krb5_enomem(context);
     memcpy(p, data, len);
 
     ret = (*et->encrypt)(context, &crypto->key, p, len, FALSE, usage, ivec);
@@ -1175,8 +1155,7 @@ decrypt_internal_special(krb5_context context,
     result->data = realloc(p, sz);
     if(result->data == NULL && sz != 0) {
 	free(p);
-	krb5_set_error_message(context, ENOMEM, N_("malloc: out of memory", ""));
-	return ENOMEM;
+	return krb5_enomem(context);
     }
     result->length = sz;
     return 0;
@@ -1864,13 +1843,12 @@ _krb5_derive_key(krb5_context context,
 	nblocks = (kt->bits + et->blocksize * 8 - 1) / (et->blocksize * 8);
 	k = malloc(nblocks * et->blocksize);
 	if(k == NULL) {
-	    ret = ENOMEM;
-	    krb5_set_error_message(context, ret, N_("malloc: out of memory", ""));
+	    ret = krb5_enomem(context);
 	    goto out;
 	}
 	ret = _krb5_n_fold(constant, len, k, et->blocksize);
 	if (ret) {
-	    krb5_set_error_message(context, ret, N_("malloc: out of memory", ""));
+	    krb5_enomem(context);
 	    goto out;
 	}
 
@@ -1888,8 +1866,7 @@ _krb5_derive_key(krb5_context context,
 	size_t res_len = (kt->bits + 7) / 8;
 
 	if(len != 0 && c == NULL) {
-	    ret = ENOMEM;
-	    krb5_set_error_message(context, ret, N_("malloc: out of memory", ""));
+	    ret = krb5_enomem(context);
 	    goto out;
 	}
 	memcpy(c, constant, len);
@@ -1897,14 +1874,13 @@ _krb5_derive_key(krb5_context context,
 	k = malloc(res_len);
 	if(res_len != 0 && k == NULL) {
 	    free(c);
-	    ret = ENOMEM;
-	    krb5_set_error_message(context, ret, N_("malloc: out of memory", ""));
+	    ret = krb5_enomem(context);
 	    goto out;
 	}
 	ret = _krb5_n_fold(c, len, k, res_len);
 	free(c);
 	if (ret) {
-	    krb5_set_error_message(context, ret, N_("malloc: out of memory", ""));
+	    krb5_enomem(context);
 	    goto out;
 	}
     }
@@ -1998,10 +1974,8 @@ _get_derived_key(krb5_context context,
 	    return 0;
 	}
     d = _new_derived_key(crypto, usage);
-    if(d == NULL) {
-	krb5_set_error_message(context, ENOMEM, N_("malloc: out of memory", ""));
-	return ENOMEM;
-    }
+    if (d == NULL)
+	return krb5_enomem(context);
     krb5_copy_keyblock(context, crypto->key.key, &d->key);
     _krb5_put_int(constant, usage, 5);
     _krb5_derive_key(context, crypto->et, d, constant, sizeof(constant));
@@ -2035,10 +2009,8 @@ krb5_crypto_init(krb5_context context,
 {
     krb5_error_code ret;
     ALLOC(*crypto, 1);
-    if(*crypto == NULL) {
-	krb5_set_error_message(context, ENOMEM, N_("malloc: out of memory", ""));
-	return ENOMEM;
-    }
+    if (*crypto == NULL)
+	return krb5_enomem(context);
     if(etype == (krb5_enctype)ETYPE_NULL)
 	etype = key->keytype;
     (*crypto)->et = _krb5_find_enctype(etype);
@@ -2641,10 +2613,8 @@ krb5_keytype_to_enctypes (krb5_context context,
     }
 
     ret = malloc(n * sizeof(*ret));
-    if (ret == NULL && n != 0) {
-	krb5_set_error_message(context, ENOMEM, "malloc: out of memory");
-	return ENOMEM;
-    }
+    if (ret == NULL && n != 0)
+	return krb5_enomem(context);
     n = 0;
     for (i = _krb5_num_etypes - 1; i >= 0; --i) {
 	if (_krb5_etypes[i]->keytype->type == keytype

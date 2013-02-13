@@ -59,10 +59,8 @@ krb5_kt_ret_data(krb5_context context,
 	return ret;
     data->length = size;
     data->data = malloc(size);
-    if (data->data == NULL) {
-	krb5_set_error_message(context, ENOMEM, N_("malloc: out of memory", ""));
-	return ENOMEM;
-    }
+    if (data->data == NULL)
+	return krb5_enomem(context);
     ret = krb5_storage_read(sp, data->data, size);
     if(ret != size)
 	return (ret < 0)? errno : KRB5_KT_END;
@@ -80,10 +78,8 @@ krb5_kt_ret_string(krb5_context context,
     if(ret)
 	return ret;
     *data = malloc(size + 1);
-    if (*data == NULL) {
-	krb5_set_error_message(context, ENOMEM, N_("malloc: out of memory", ""));
-	return ENOMEM;
-    }
+    if (*data == NULL)
+	return krb5_enomem(context);
     ret = krb5_storage_read(sp, *data, size);
     (*data)[size] = '\0';
     if(ret != size)
@@ -188,11 +184,8 @@ krb5_kt_ret_principal(krb5_context context,
     int16_t len;
 
     ALLOC(p, 1);
-    if(p == NULL) {
-	krb5_set_error_message(context, ENOMEM,
-			       N_("malloc: out of memory", ""));
-	return ENOMEM;
-    }
+    if(p == NULL)
+	return krb5_enomem(context);
 
     ret = krb5_ret_int16(sp, &len);
     if(ret) {
@@ -221,8 +214,7 @@ krb5_kt_ret_principal(krb5_context context,
     }
     p->name.name_string.val = calloc(len, sizeof(*p->name.name_string.val));
     if(p->name.name_string.val == NULL) {
-	ret = ENOMEM;
-	krb5_set_error_message(context, ret, N_("malloc: out of memory", ""));
+	ret = krb5_enomem(context);
 	goto out;
     }
     p->name.name_string.len = len;
@@ -292,15 +284,12 @@ fkt_resolve(krb5_context context, const char *name, krb5_keytab id)
     struct fkt_data *d;
 
     d = malloc(sizeof(*d));
-    if(d == NULL) {
-	krb5_set_error_message(context, ENOMEM, N_("malloc: out of memory", ""));
-	return ENOMEM;
-    }
+    if(d == NULL)
+	return krb5_enomem(context);
     d->filename = strdup(name);
     if(d->filename == NULL) {
 	free(d);
-	krb5_set_error_message(context, ENOMEM, N_("malloc: out of memory", ""));
-	return ENOMEM;
+	return krb5_enomem(context);
     }
     d->flags = 0;
     id->data = d;
@@ -397,9 +386,7 @@ fkt_start_seq_get_int(krb5_context context,
     if (c->sp == NULL) {
 	_krb5_xunlock(context, c->fd);
 	close(c->fd);
-	krb5_set_error_message(context, ENOMEM,
-			       N_("malloc: out of memory", ""));
-	return ENOMEM;
+	return krb5_enomem(context);
     }
     krb5_storage_set_eof_code(c->sp, KRB5_KT_END);
     ret = krb5_ret_int8(c->sp, &pvno);
@@ -622,9 +609,7 @@ fkt_add_entry(krb5_context context,
 	krb5_storage *emem;
 	emem = krb5_storage_emem();
 	if(emem == NULL) {
-	    ret = ENOMEM;
-	    krb5_set_error_message(context, ret,
-				   N_("malloc: out of memory", ""));
+	    ret = krb5_enomem(context);
 	    goto out;
 	}
 	ret = krb5_kt_store_principal(context, emem, entry->principal);

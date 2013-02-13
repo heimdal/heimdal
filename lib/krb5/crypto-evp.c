@@ -72,10 +72,8 @@ _krb5_evp_encrypt(krb5_context context,
 	/* alloca ? */
 	size_t len2 = EVP_CIPHER_CTX_iv_length(c);
 	void *loiv = malloc(len2);
-	if (loiv == NULL) {
-	    krb5_clear_error_message(context);
-	    return ENOMEM;
-	}
+	if (loiv == NULL)
+	    return krb5_enomem(context);
 	memset(loiv, 0, len2);
 	EVP_CipherInit_ex(c, NULL, NULL, NULL, loiv, -1);
 	free(loiv);

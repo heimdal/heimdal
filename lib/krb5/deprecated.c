@@ -84,10 +84,8 @@ krb5_keytype_to_enctypes_default (krb5_context context,
     for (n = 0; context->etypes_des[n]; ++n)
 	;
     ret = malloc (n * sizeof(*ret));
-    if (ret == NULL && n != 0) {
-	krb5_set_error_message(context, ENOMEM, N_("malloc: out of memory", ""));
-	return ENOMEM;
-    }
+    if (ret == NULL && n != 0)
+	return krb5_enomem(context);
     for (i = 0; i < n; ++i)
 	ret[i] = context->etypes_des[i];
     *len = n;
@@ -140,11 +138,8 @@ krb5_keytype_to_string(krb5_context context,
 	return KRB5_PROG_KEYTYPE_NOSUPP;
     }
     *string = strdup(name);
-    if(*string == NULL) {
-	krb5_set_error_message(context, ENOMEM,
-			       N_("malloc: out of memory", ""));
-	return ENOMEM;
-    }
+    if (*string == NULL)
+	return krb5_enomem(context);
     return 0;
 }
 
@@ -201,10 +196,8 @@ krb5_password_key_proc (krb5_context context,
     char buf[BUFSIZ];
 
     *key = malloc (sizeof (**key));
-    if (*key == NULL) {
-	krb5_set_error_message(context, ENOMEM, "malloc: out of memory");
-	return ENOMEM;
-    }
+    if (*key == NULL)
+	return krb5_enomem(context);
     if (password == NULL) {
 	if(UI_UTIL_read_pw_string (buf, sizeof(buf), "Password: ", 0)) {
 	    free (*key);

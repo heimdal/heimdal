@@ -553,9 +553,7 @@ kcm_get_first (krb5_context context,
 
     c = calloc(1, sizeof(*c));
     if (c == NULL) {
-	ret = ENOMEM;
-	krb5_set_error_message(context, ret,
-			       N_("malloc: out of memory", ""));
+	ret = krb5_enomem(context);
 	return ret;
     }
 
@@ -577,9 +575,7 @@ kcm_get_first (krb5_context context,
 	if (ptr == NULL) {
 	    free(c->uuids);
 	    free(c);
-	    krb5_set_error_message(context, ENOMEM,
-				   N_("malloc: out of memory", ""));
-	    return ENOMEM;
+	    return krb5_enomem(context);
 	}
 	c->uuids = ptr;
 
@@ -788,9 +784,7 @@ kcm_get_cache_first(krb5_context context, krb5_cc_cursor *cursor)
 
     c = calloc(1, sizeof(*c));
     if (c == NULL) {
-	ret = ENOMEM;
-	krb5_set_error_message(context, ret,
-			       N_("malloc: out of memory", ""));
+	ret = krb5_enomem(context);
 	goto out;
     }
 
@@ -819,9 +813,7 @@ kcm_get_cache_first(krb5_context context, krb5_cc_cursor *cursor)
 
 	ptr = realloc(c->uuids, sizeof(c->uuids[0]) * (c->length + 1));
 	if (ptr == NULL) {
-	    ret = ENOMEM;
-	    krb5_set_error_message(context, ret,
-				   N_("malloc: out of memory", ""));
+	    ret = krb5_enomem(context);
 	    goto out;
 	}
 	c->uuids = ptr;

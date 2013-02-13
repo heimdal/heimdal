@@ -69,8 +69,7 @@ set_etypes (krb5_context context,
 	etypes = malloc((i+1) * sizeof(*etypes));
 	if (etypes == NULL) {
 	    krb5_config_free_strings (etypes_str);
-	    krb5_set_error_message (context, ENOMEM, N_("malloc: out of memory", ""));
-	    return ENOMEM;
+	    return krb5_enomem(context);
 	}
 	for(j = 0, k = 0; j < i; j++) {
 	    krb5_enctype e;
@@ -325,11 +324,8 @@ kt_ops_copy(krb5_context context, const krb5_context src_context)
 	return 0;
 
     context->kt_types = malloc(sizeof(context->kt_types[0]) * src_context->num_kt_types);
-    if (context->kt_types == NULL) {
-	krb5_set_error_message(context, ENOMEM,
-			       N_("malloc: out of memory", ""));
-	return ENOMEM;
-    }
+    if (context->kt_types == NULL)
+	return krb5_enomem(context);
 
     context->num_kt_types = src_context->num_kt_types;
     memcpy(context->kt_types, src_context->kt_types,
@@ -454,11 +450,8 @@ copy_etypes (krb5_context context,
     i++;
 
     *ret_enctypes = malloc(sizeof(ret_enctypes[0]) * i);
-    if (*ret_enctypes == NULL) {
-	krb5_set_error_message(context, ENOMEM,
-			       N_("malloc: out of memory", ""));
-	return ENOMEM;
-    }
+    if (*ret_enctypes == NULL)
+	return krb5_enomem(context);
     memcpy(*ret_enctypes, enctypes, sizeof(ret_enctypes[0]) * i);
     return 0;
 }
@@ -485,16 +478,13 @@ krb5_copy_context(krb5_context context, krb5_context *out)
     *out = NULL;
 
     p = calloc(1, sizeof(*p));
-    if (p == NULL) {
-	krb5_set_error_message(context, ENOMEM, N_("malloc: out of memory", ""));
-	return ENOMEM;
-    }
+    if (p == NULL)
+	return krb5_enomem(context);
 
     p->mutex = malloc(sizeof(HEIMDAL_MUTEX));
     if (p->mutex == NULL) {
-	krb5_set_error_message(context, ENOMEM, N_("malloc: out of memory", ""));
 	free(p);
-	return ENOMEM;
+	return krb5_enomem(context);
     }
     HEIMDAL_MUTEX_init(p->mutex);
 
@@ -1158,10 +1148,8 @@ krb5_set_extra_addresses(krb5_context context, const krb5_addresses *addresses)
     }
     if(context->extra_addresses == NULL) {
 	context->extra_addresses = malloc(sizeof(*context->extra_addresses));
-	if(context->extra_addresses == NULL) {
-	    krb5_set_error_message (context, ENOMEM, N_("malloc: out of memory", ""));
-	    return ENOMEM;
-	}
+	if (context->extra_addresses == NULL)
+	    return krb5_enomem(context);
     }
     return krb5_copy_addresses(context, addresses, context->extra_addresses);
 }
@@ -1240,10 +1228,8 @@ krb5_set_ignore_addresses(krb5_context context, const krb5_addresses *addresses)
     }
     if(context->ignore_addresses == NULL) {
 	context->ignore_addresses = malloc(sizeof(*context->ignore_addresses));
-	if(context->ignore_addresses == NULL) {
-	    krb5_set_error_message (context, ENOMEM, N_("malloc: out of memory", ""));
-	    return ENOMEM;
-	}
+	if (context->ignore_addresses == NULL)
+	    return krb5_enomem(context);
     }
     return krb5_copy_addresses(context, addresses, context->ignore_addresses);
 }

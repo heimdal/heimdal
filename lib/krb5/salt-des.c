@@ -191,10 +191,8 @@ krb5_DES_string_to_key(krb5_context context,
 
     len = password.length + salt.saltvalue.length;
     s = malloc(len);
-    if(len > 0 && s == NULL) {
-	krb5_set_error_message(context, ENOMEM, N_("malloc: out of memory", ""));
-	return ENOMEM;
-    }
+    if (len > 0 && s == NULL)
+	return krb5_enomem(context);
     memcpy(s, password.data, password.length);
     memcpy(s + password.length, salt.saltvalue.data, salt.saltvalue.length);
     DES_string_to_key_int(s, len, &tmp);

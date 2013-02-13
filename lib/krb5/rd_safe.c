@@ -191,8 +191,7 @@ krb5_rd_safe(krb5_context context,
     outbuf->length = safe.safe_body.user_data.length;
     outbuf->data   = malloc(outbuf->length);
     if (outbuf->data == NULL && outbuf->length != 0) {
-	ret = ENOMEM;
-	krb5_set_error_message(context, ret, N_("malloc: out of memory", ""));
+	ret = krb5_enomem(context);
 	krb5_data_zero(outbuf);
 	goto failure;
     }

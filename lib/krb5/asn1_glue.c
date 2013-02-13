@@ -55,7 +55,7 @@ _krb5_principalname2krb5_principal (krb5_context context,
 
     p = calloc(1, sizeof(*p));
     if (p == NULL)
-	return ENOMEM;
+	return krb5_enomem(context);
     ret = copy_PrincipalName(&from, &p->name);
     if (ret) {
 	free(p);
@@ -65,7 +65,7 @@ _krb5_principalname2krb5_principal (krb5_context context,
     if (p->realm == NULL) {
 	free_PrincipalName(&p->name);
         free(p);
-	return ENOMEM;
+	return krb5_enomem(context);
     }
     *principal = p;
     return 0;

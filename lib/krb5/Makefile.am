@@ -281,6 +281,7 @@ librfc3961_la_SOURCES =				\
 	crypto-rand.c				\
 	crypto-stubs.c				\
 	data.c					\
+	enomem.c				\
 	error_string.c				\
 	keyblock.c				\
 	n-fold.c				\

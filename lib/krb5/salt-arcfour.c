@@ -48,8 +48,7 @@ ARCFOUR_string_to_key(krb5_context context,
 
     m = EVP_MD_CTX_create();
     if (m == NULL) {
-	ret = ENOMEM;
-	krb5_set_error_message(context, ret, N_("malloc: out of memory", ""));
+	ret = krb5_enomem(context);
 	goto out;
     }
 
@@ -64,9 +63,7 @@ ARCFOUR_string_to_key(krb5_context context,
 
     s = malloc (len * sizeof(s[0]));
     if (len != 0 && s == NULL) {
-	krb5_set_error_message (context, ENOMEM,
-				N_("malloc: out of memory", ""));
-	ret = ENOMEM;
+	ret = krb5_enomem(context);
 	goto out;
     }
 
@@ -89,7 +86,7 @@ ARCFOUR_string_to_key(krb5_context context,
     key->keytype = enctype;
     ret = krb5_data_alloc (&key->keyvalue, 16);
     if (ret) {
-	krb5_set_error_message (context, ENOMEM, N_("malloc: out of memory", ""));
+	krb5_enomem(context);
 	goto out;
     }
     EVP_DigestFinal_ex (m, key->keyvalue.data, NULL);

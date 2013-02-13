@@ -48,41 +48,31 @@ _krb5_s4u2self_to_checksumdata(krb5_context context,
     size_t i;
 
     sp = krb5_storage_emem();
-    if (sp == NULL) {
-	krb5_clear_error_message(context);
-	return ENOMEM;
-    }
+    if (sp == NULL)
+	return krb5_enomem(context);
     krb5_storage_set_flags(sp, KRB5_STORAGE_BYTEORDER_LE);
     ret = krb5_store_int32(sp, self->name.name_type);
-    if (ret)
-	goto out;
+    if (ret) {
+	krb5_clear_error_message(context);
+	return ret;
+    }
     for (i = 0; i < self->name.name_string.len; i++) {
 	size = strlen(self->name.name_string.val[i]);
 	ssize = krb5_storage_write(sp, self->name.name_string.val[i], size);
-	if (ssize != (krb5_ssize_t)size) {
-	    ret = ENOMEM;
-	    goto out;
-	}
+	if (ssize != (krb5_ssize_t)size)
+	    return krb5_enomem(context);
     }
     size = strlen(self->realm);
     ssize = krb5_storage_write(sp, self->realm, size);
-    if (ssize != (krb5_ssize_t)size) {
-	ret = ENOMEM;
-	goto out;
-    }
+    if (ssize != (krb5_ssize_t)size)
+	return krb5_enomem(context);
     size = strlen(self->auth);
     ssize = krb5_storage_write(sp, self->auth, size);
-    if (ssize != (krb5_ssize_t)size) {
-	ret = ENOMEM;
-	goto out;
-    }
+    if (ssize != (krb5_ssize_t)size)
+	return krb5_enomem(context);
 
     ret = krb5_storage_to_data(sp, data);
     krb5_storage_free(sp);
-    return ret;
-
-out:
-    krb5_clear_error_message(context);
     return ret;
 }
 

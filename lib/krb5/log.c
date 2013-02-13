@@ -121,17 +121,12 @@ krb5_initlog(krb5_context context,
 	     krb5_log_facility **fac)
 {
     krb5_log_facility *f = calloc(1, sizeof(*f));
-    if(f == NULL) {
-	krb5_set_error_message(context, ENOMEM,
-			       N_("malloc: out of memory", ""));
-	return ENOMEM;
-    }
+    if (f == NULL)
+	return krb5_enomem(context);
     f->program = strdup(program);
     if(f->program == NULL){
 	free(f);
-	krb5_set_error_message(context, ENOMEM,
-			       N_("malloc: out of memory", ""));
-	return ENOMEM;
+	return krb5_enomem(context);
     }
     *fac = f;
     return 0;
@@ -147,11 +142,8 @@ krb5_addlog_func(krb5_context context,
 		 void *data)
 {
     struct facility *fp = log_realloc(fac);
-    if(fp == NULL) {
-	krb5_set_error_message(context, ENOMEM,
-			       N_("malloc: out of memory", ""));
-	return ENOMEM;
-    }
+    if (fp == NULL)
+	return krb5_enomem(context);
     fp->min = min;
     fp->max = max;
     fp->log_func = log_func;
@@ -190,11 +182,8 @@ open_syslog(krb5_context context,
     struct _heimdal_syslog_data *sd = malloc(sizeof(*sd));
     int i;
 
-    if(sd == NULL) {
-	krb5_set_error_message(context, ENOMEM,
-			       N_("malloc: out of memory", ""));
-	return ENOMEM;
-    }
+    if (sd == NULL)
+	return krb5_enomem(context);
     i = find_value(sev, syslogvals);
     if(i == -1)
 	i = LOG_ERR;
@@ -255,11 +244,8 @@ open_file(krb5_context context, krb5_log_facility *fac, int min, int max,
 	  const char *filename, const char *mode, FILE *f, int keep_open)
 {
     struct file_data *fd = malloc(sizeof(*fd));
-    if(fd == NULL) {
-	krb5_set_error_message(context, ENOMEM,
-			       N_("malloc: out of memory", ""));
-	return ENOMEM;
-    }
+    if (fd == NULL)
+	return krb5_enomem(context);
     fd->filename = filename;
     fd->mode = mode;
     fd->fd = f;
@@ -307,11 +293,8 @@ krb5_addlog_dest(krb5_context context, krb5_log_facility *f, const char *orig)
 	FILE *file = NULL;
 	int keep_open = 0;
 	fn = strdup(p + 5);
-	if(fn == NULL) {
-	    krb5_set_error_message(context, ENOMEM,
-				   N_("malloc: out of memory", ""));
-	    return ENOMEM;
-	}
+	if (fn == NULL)
+	    return krb5_enomem(context);
 	if(p[4] == '='){
 	    int i = open(fn, O_WRONLY | O_CREAT |
 			 O_TRUNC | O_APPEND, 0666);

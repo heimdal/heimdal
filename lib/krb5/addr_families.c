@@ -1172,11 +1172,8 @@ krb5_parse_address(krb5_context context,
 	    krb5_address addr;
 	    if((*at[i].parse_addr)(context, string, &addr) == 0) {
 		ALLOC_SEQ(addresses, 1);
-		if (addresses->val == NULL) {
-		    krb5_set_error_message(context, ENOMEM,
-					   N_("malloc: out of memory", ""));
-		    return ENOMEM;
-		}
+		if (addresses->val == NULL)
+		    return krb5_enomem(context);
 		addresses->val[0] = addr;
 		return 0;
 	    }
@@ -1199,10 +1196,8 @@ krb5_parse_address(krb5_context context,
 
     ALLOC_SEQ(addresses, n);
     if (addresses->val == NULL) {
-	krb5_set_error_message(context, ENOMEM,
-			       N_("malloc: out of memory", ""));
 	freeaddrinfo(ai);
-	return ENOMEM;
+	return krb5_enomem(context);
     }
 
     addresses->len = 0;
@@ -1412,7 +1407,7 @@ krb5_copy_addresses(krb5_context context,
     size_t i;
     ALLOC_SEQ(outaddr, inaddr->len);
     if(inaddr->len > 0 && outaddr->val == NULL)
-	return ENOMEM;
+	return krb5_enomem(context);
     for(i = 0; i < inaddr->len; i++)
 	krb5_copy_address(context, &inaddr->val[i], &outaddr->val[i]);
     return 0;
@@ -1441,11 +1436,8 @@ krb5_append_addresses(krb5_context context,
     size_t i;
     if(source->len > 0) {
 	tmp = realloc(dest->val, (dest->len + source->len) * sizeof(*tmp));
-	if(tmp == NULL) {
-	    krb5_set_error_message (context, ENOMEM,
-				    N_("malloc: out of memory", ""));
-	    return ENOMEM;
-	}
+	if (tmp == NULL)
+	    return krb5_enomem(context);
 	dest->val = tmp;
 	for(i = 0; i < source->len; i++) {
 	    /* skip duplicates */
@@ -1484,19 +1476,14 @@ krb5_make_addrport (krb5_context context,
     u_char *p;
 
     *res = malloc (sizeof(**res));
-    if (*res == NULL) {
-	krb5_set_error_message (context, ENOMEM,
-				N_("malloc: out of memory", ""));
-	return ENOMEM;
-    }
+    if (*res == NULL)
+	return krb5_enomem(context);
     (*res)->addr_type = KRB5_ADDRESS_ADDRPORT;
     ret = krb5_data_alloc (&(*res)->address, len);
     if (ret) {
-	krb5_set_error_message (context, ret,
-				N_("malloc: out of memory", ""));
 	free (*res);
 	*res = NULL;
-	return ret;
+	return krb5_enomem(context);
     }
     p = (*res)->address.data;
     *p++ = 0;

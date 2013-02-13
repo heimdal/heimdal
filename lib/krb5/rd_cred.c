@@ -249,9 +249,7 @@ krb5_rd_cred(krb5_context context,
 			sizeof(**ret_creds));
 
     if (*ret_creds == NULL) {
-	ret = ENOMEM;
-	krb5_set_error_message(context, ret,
-			       N_("malloc: out of memory", ""));
+	ret = krb5_enomem(context);
 	goto out;
     }
 
@@ -261,9 +259,7 @@ krb5_rd_cred(krb5_context context,
 
 	creds = calloc(1, sizeof(*creds));
 	if(creds == NULL) {
-	    ret = ENOMEM;
-	    krb5_set_error_message(context, ret,
-				   N_("malloc: out of memory", ""));
+	    ret = krb5_enomem(context);
 	    goto out;
 	}
 

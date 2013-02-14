@@ -63,22 +63,48 @@ rr13(uint8_t *dst1, uint8_t *dst2, uint8_t *src, size_t len)
     return;
 }
 
-/* Add `b' to `a', both being one's complement numbers. */
+/*
+ * Add `b' to `a', both being one's complement numbers.
+ * This function assumes that inputs *a, *b are aligned
+ * to 4 bytes.
+ */
 static void
 add1(uint8_t *a, uint8_t *b, size_t len)
 {
     int i;
     int carry = 0;
-    for(i = len - 1; i >= 0; i--){
-	int x = a[i] + b[i] + carry;
+    uint32_t x;
+    uint32_t left, right;
+
+    for (i = len - 1; (i+1) % 4; i--) {
+	x = a[i] + b[i] + carry;
 	carry = x > 0xff;
 	a[i] = x & 0xff;
     }
-    for(i = len - 1; carry && i >= 0; i--){
-	int x = a[i] + carry;
+
+    for (i = len / 4 - 1; i >= 0; i--) {
+	left = ntohl(((uint32_t *)a)[i]);
+	right = ntohl(((uint32_t *)b)[i]);
+	x = left + right + carry;
+	carry = x < left || x < right;
+	((uint32_t *)a)[i]  = x;
+    }
+
+    for (i = len - 1; (i+1) % 4; i--) {
+	x = a[i] + carry;
 	carry = x > 0xff;
 	a[i] = x & 0xff;
     }
+
+    for (i = len / 4 - 1; carry && i >= 0; i--) {
+        left = ((uint32_t *)a)[i];
+        x = left + carry;
+        carry = x < left;
+        ((uint32_t *)a)[i] = x;
+    }
+
+    for (i = len / 4 - 1; i >=0; i--)
+        ((uint32_t *)a)[i] = htonl(((uint32_t *)a)[i]);
 }
 
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
@@ -86,18 +112,19 @@ _krb5_n_fold(const void *str, size_t len, void *key, size_t size)
 {
     /* if len < size we need at most N * len bytes, ie < 2 * size;
        if len > size we need at most 2 * len */
-    krb5_error_code ret = 0;
     size_t maxlen = 2 * max(size, len);
     size_t l = 0;
-    uint8_t *tmp = malloc(maxlen + 2 * len);
+    uint8_t *tmp;
     uint8_t *tmpbuf;
-    uint8_t *buf1 = tmp + maxlen;
-    uint8_t *buf2 = tmp + maxlen + len;
+    uint8_t *buf1;
+    uint8_t *buf2;
 
-    if (tmp == NULL) {
-        ret = ENOMEM;
-	goto out;
-    }
+    tmp = malloc(maxlen + 2 * len);
+    if (tmp == NULL)
+        return ENOMEM;
+
+    buf1 = tmp + maxlen;
+    buf2 = tmp + maxlen + len;
 
     memset(key, 0, size);
     memcpy(buf1, str, len);
@@ -116,10 +143,8 @@ _krb5_n_fold(const void *str, size_t len, void *key, size_t size)
 	buf1 = buf2;
 	buf2 = tmpbuf;
     } while(l != 0);
-out:
-    if (tmp) {
-        memset(tmp, 0, maxlen + 2 * len);
-	free(tmp);
-    }
-    return ret;
+
+    memset(tmp, 0, maxlen + 2 * len);
+    free(tmp);
+    return 0;
 }

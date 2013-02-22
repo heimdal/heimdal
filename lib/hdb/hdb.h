@@ -263,9 +263,12 @@ typedef struct HDB {
     krb5_error_code (*hdb_check_s4u2self)(krb5_context, struct HDB *, hdb_entry_ex *, krb5_const_principal);
 }HDB;
 
-#define HDB_INTERFACE_VERSION	7
+#define HDB_INTERFACE_VERSION	8
 
 struct hdb_so_method {
+    int			minor_version;
+    krb5_error_code	(KRB5_LIB_CALL *init)(krb5_context, void **);
+    void		(KRB5_LIB_CALL *fini)(void *);
     int version;
     const char *prefix;
     krb5_error_code (*create)(krb5_context, HDB **, const char *filename);

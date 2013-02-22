@@ -476,42 +476,43 @@ _hdb_keytab2hdb_entry(krb5_context context,
  * use O_CREAT to tell the backend to create the file.
  */
 
+struct cb_s {
+    const char *residual;
+    const char *filename;
+    const struct hdb_method *h;
+};
+
+static krb5_error_code KRB5_LIB_CALL
+callback(krb5_context context, const void *plug, void *plugctx, void *userctx)
+{
+    struct cb_s *cb_ctx = (struct cb_s *)userctx;
+
+    if (strncmp (cb_ctx->filename, cb_ctx->h->prefix, strlen(cb_ctx->h->prefix)) == 0) {
+	cb_ctx->residual = cb_ctx->filename + strlen(cb_ctx->h->prefix);
+	return 0;
+    }
+   return KRB5_PLUGIN_NO_HANDLE;
+}
+
 krb5_error_code
 hdb_create(krb5_context context, HDB **db, const char *filename)
 {
-    const struct hdb_method *h;
-    const char *residual;
-    krb5_error_code ret;
-    struct krb5_plugin *list = NULL, *e;
+    struct cb_s cb_ctx;
 
-    if(filename == NULL)
+    if (filename == NULL)
 	filename = HDB_DEFAULT_DB;
-    krb5_add_et_list(context, initialize_hdb_error_table_r);
-    h = find_method (filename, &residual);
+    cb_ctx.h = find_method (filename, &cb_ctx.residual);
+    cb_ctx.filename = filename;
 
-    if (h == NULL) {
-	    ret = _krb5_plugin_find(context, PLUGIN_TYPE_DATA, "hdb", &list);
-	    if(ret == 0 && list != NULL) {
-		    for (e = list; e != NULL; e = _krb5_plugin_get_next(e)) {
-			    h = _krb5_plugin_get_symbol(e);
-			    if (strncmp (filename, h->prefix, strlen(h->prefix)) == 0
-				&& h->interface_version == HDB_INTERFACE_VERSION) {
-				    residual = filename + strlen(h->prefix);
-				    break;
-			    }
-		    }
-		    if (e == NULL) {
-			    h = NULL;
-			    _krb5_plugin_free(list);
-		    }
-	    }
+    if (cb_ctx.h == NULL) {
+	    (void)_krb5_plugin_run_f(context, "krb5", "hdb",
+			     HDB_INTERFACE_VERSION, 0, &cb_ctx, callback);
     }
-
 #ifdef HAVE_DLOPEN
-    if (h == NULL)
-	h = find_dynamic_method (context, filename, &residual);
+    if (cb_ctx.h == NULL)
+	cb_ctx.h = find_dynamic_method (context, cb_ctx.filename, &cb_ctx.residual);
 #endif
-    if (h == NULL)
-	krb5_errx(context, 1, "No database support for %s", filename);
-    return (*h->create)(context, db, residual);
+    if (cb_ctx.h == NULL)
+	krb5_errx(context, 1, "No database support for %s", cb_ctx.filename);
+    return (*cb_ctx.h->create)(context, db, cb_ctx.residual);
 }

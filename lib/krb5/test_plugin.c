@@ -77,7 +77,8 @@ krb5plugin_service_locate_ftable resolve = {
     0,
     resolve_init,
     resolve_fini,
-    resolve_lookup
+    resolve_lookup,
+    NULL
 };
 
 

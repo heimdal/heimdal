@@ -869,6 +869,8 @@ enum krb5_plugin_type {
     PLUGIN_TYPE_FUNC
 };
 
+#define KRB5_PLUGIN_INVOKE_ALL  1
+
 struct credentials; /* this is to keep the compiler happy */
 struct getargs;
 struct sockaddr;

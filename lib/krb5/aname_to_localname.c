@@ -115,11 +115,10 @@ an2ln_plugin(krb5_context context, const char *rule, krb5_const_principal aname,
 static void
 reg_def_plugins_once(void *ctx)
 {
-    krb5_error_code ret;
     krb5_context context = ctx;
 
-    ret = krb5_plugin_register(context, PLUGIN_TYPE_DATA,
-			       KRB5_PLUGIN_AN2LN, &an2ln_def_plug);
+    krb5_plugin_register(context, PLUGIN_TYPE_DATA, KRB5_PLUGIN_AN2LN,
+                         &an2ln_def_plug);
 }
 
 static int

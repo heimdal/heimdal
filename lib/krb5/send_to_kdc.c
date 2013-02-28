@@ -1239,7 +1239,7 @@ krb5_sendto_context(krb5_context context,
     }
 
     _krb5_debug(context, 1,
-		"krb5_sendto_context %s done: %d hosts %lu packets %lu wc: %ld.%06d nr: %ld.%06d kh: %ld.%06d tid: %08x",
+		"krb5_sendto_context %s done: %d hosts %lu packets %lu wc: %ld.%06ld nr: %ld.%06ld kh: %ld.%06ld tid: %08x",
 		realm, ret,
 		ctx->stats.num_hosts, ctx->stats.sent_packets,
 		stop_time.tv_sec, stop_time.tv_usec,

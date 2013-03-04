@@ -1933,13 +1933,13 @@ hdb_ldapi_create(krb5_context context, HDB ** db, const char *arg)
 #ifdef OPENLDAP_MODULE
 
 
-krb5_error_code	KRB5_LIB_CALL *
+static krb5_error_code	KRB5_LIB_CALL *
 init(krb5_context context, void **ctx)
 {
     *ctx = NULL;
 }
 
-void KRB5_LIB_CALL *
+static void KRB5_LIB_CALL *
 fini(void *ctx)
 {
 }

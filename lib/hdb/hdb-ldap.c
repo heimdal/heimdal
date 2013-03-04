@@ -1932,14 +1932,30 @@ hdb_ldapi_create(krb5_context context, HDB ** db, const char *arg)
 
 #ifdef OPENLDAP_MODULE
 
-struct hdb_so_method hdb_ldap_interface = {
+
+krb5_error_code	KRB5_LIB_CALL *
+init(krb5_context context, void **ctx)
+{
+    *ctx = NULL;
+}
+
+void KRB5_LIB_CALL *
+fini(void *ctx)
+{
+}
+
+struct hdb_method hdb_ldap_interface = {
     HDB_INTERFACE_VERSION,
+    init,
+    fini,
     "ldap",
     hdb_ldap_create
 };
 
 struct hdb_so_method hdb_ldapi_interface = {
     HDB_INTERFACE_VERSION,
+    init,
+    fini,
     "ldapi",
     hdb_ldapi_create
 };

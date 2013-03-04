@@ -265,11 +265,10 @@ typedef struct HDB {
 
 #define HDB_INTERFACE_VERSION	8
 
-struct hdb_so_method {
-    int			minor_version;
+struct hdb_method {
+    int			version;
     krb5_error_code	(KRB5_LIB_CALL *init)(krb5_context, void **);
     void		(KRB5_LIB_CALL *fini)(void *);
-    int version;
     const char *prefix;
     krb5_error_code (*create)(krb5_context, HDB **, const char *filename);
 };
@@ -288,12 +287,6 @@ struct hdb_print_entry_arg {
 typedef krb5_error_code (*hdb_foreach_func_t)(krb5_context, HDB*,
 					      hdb_entry_ex*, void*);
 extern krb5_kt_ops hdb_kt_ops;
-
-struct hdb_method {
-    int interface_version;
-    const char *prefix;
-    krb5_error_code (*create)(krb5_context, HDB **, const char *filename);
-};
 
 extern const int hdb_interface_version;
 

@@ -65,34 +65,34 @@ const int hdb_interface_version = HDB_INTERFACE_VERSION;
 
 static struct hdb_method methods[] = {
 #if HAVE_DB1 || HAVE_DB3
-    { HDB_INTERFACE_VERSION, "db:",	hdb_db_create},
+    { HDB_INTERFACE_VERSION, NULL, NULL, "db:",	hdb_db_create},
 #endif
 #if HAVE_DB1
-    { HDB_INTERFACE_VERSION, "mit-db:",	hdb_mitdb_create},
+    { HDB_INTERFACE_VERSION, NULL, NULL, "mit-db:",	hdb_mitdb_create},
 #endif
 #if HAVE_MDB
-    { HDB_INTERFACE_VERSION, "mdb:",	hdb_mdb_create},
+    { HDB_INTERFACE_VERSION, NULL, NULL, "mdb:",	hdb_mdb_create},
 #endif
 #if HAVE_NDBM
-    { HDB_INTERFACE_VERSION, "ndbm:",	hdb_ndbm_create},
+    { HDB_INTERFACE_VERSION, NULL, NULL, "ndbm:",	hdb_ndbm_create},
 #endif
-    { HDB_INTERFACE_VERSION, "keytab:",	hdb_keytab_create},
+    { HDB_INTERFACE_VERSION, NULL, NULL, "keytab:",	hdb_keytab_create},
 #if defined(OPENLDAP) && !defined(OPENLDAP_MODULE)
-    { HDB_INTERFACE_VERSION, "ldap:",	hdb_ldap_create},
-    { HDB_INTERFACE_VERSION, "ldapi:",	hdb_ldapi_create},
+    { HDB_INTERFACE_VERSION, NULL, NULL, "ldap:",	hdb_ldap_create},
+    { HDB_INTERFACE_VERSION, NULL, NULL, "ldapi:",	hdb_ldapi_create},
 #endif
 #ifdef HAVE_SQLITE3
-    { HDB_INTERFACE_VERSION, "sqlite:", hdb_sqlite_create},
+    { HDB_INTERFACE_VERSION, NULL, NULL, "sqlite:", hdb_sqlite_create},
 #endif
-    {0, NULL,	NULL}
+    { 0, NULL, NULL, NULL, NULL}
 };
 
 #if HAVE_DB1 || HAVE_DB3
 static struct hdb_method dbmetod =
-    { HDB_INTERFACE_VERSION, "", hdb_db_create };
+    { HDB_INTERFACE_VERSION, NULL, NULL, "", hdb_db_create };
 #elif defined(HAVE_NDBM)
 static struct hdb_method dbmetod =
-    { HDB_INTERFACE_VERSION, "", hdb_ndbm_create };
+    { HDB_INTERFACE_VERSION, NULL, NULL, "", hdb_ndbm_create };
 #endif
 
 const Keys *
@@ -292,100 +292,6 @@ hdb_init_db(krb5_context context, HDB *db)
     }
     return ret2;
 }
-
-#ifdef HAVE_DLOPEN
-
- /*
- * Load a dynamic backend from /usr/heimdal/lib/hdb_NAME.so,
- * looking for the hdb_NAME_create symbol.
- */
-
-static const struct hdb_method *
-find_dynamic_method (krb5_context context,
-		     const char *filename,
-		     const char **rest)
-{
-    static struct hdb_method method;
-    struct hdb_so_method *mso;
-    char *prefix, *path, *symbol;
-    const char *p;
-    void *dl;
-    size_t len;
-
-    p = strchr(filename, ':');
-
-    /* if no prefix, don't know what module to load, just ignore it */
-    if (p == NULL)
-	return NULL;
-
-    len = p - filename;
-    *rest = filename + len + 1;
-
-    prefix = malloc(len + 1);
-    if (prefix == NULL)
-	krb5_errx(context, 1, "out of memory");
-    strlcpy(prefix, filename, len + 1);
-
-    if (asprintf(&path, LIBDIR "/hdb_%s.so", prefix) == -1)
-	krb5_errx(context, 1, "out of memory");
-
-#ifndef RTLD_NOW
-#define RTLD_NOW 0
-#endif
-#ifndef RTLD_GLOBAL
-#define RTLD_GLOBAL 0
-#endif
-
-    dl = dlopen(path, RTLD_NOW | RTLD_GLOBAL);
-    if (dl == NULL) {
-	krb5_warnx(context, "error trying to load dynamic module %s: %s\n",
-		   path, dlerror());
-	free(prefix);
-	free(path);
-	return NULL;
-    }
-
-    if (asprintf(&symbol, "hdb_%s_interface", prefix) == -1)
-	krb5_errx(context, 1, "out of memory");
-
-    mso = (struct hdb_so_method *) dlsym(dl, symbol);
-    if (mso == NULL) {
-	krb5_warnx(context, "error finding symbol %s in %s: %s\n",
-		   symbol, path, dlerror());
-	dlclose(dl);
-	free(symbol);
-	free(prefix);
-	free(path);
-	return NULL;
-    }
-    free(path);
-    free(symbol);
-
-    if (mso->version != HDB_INTERFACE_VERSION) {
-	krb5_warnx(context,
-		   "error wrong version in shared module %s "
-		   "version: %d should have been %d\n",
-		   prefix, mso->version, HDB_INTERFACE_VERSION);
-	dlclose(dl);
-	free(prefix);
-	return NULL;
-    }
-
-    if (mso->create == NULL) {
-	krb5_errx(context, 1,
-		  "no entry point function in shared mod %s ",
-		   prefix);
-	dlclose(dl);
-	free(prefix);
-	return NULL;
-    }
-
-    method.create = mso->create;
-    method.prefix = prefix;
-
-    return &method;
-}
-#endif /* HAVE_DLOPEN */
 
 /*
  * find the relevant method for `filename', returning a pointer to the

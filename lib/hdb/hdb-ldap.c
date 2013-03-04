@@ -1239,21 +1239,24 @@ LDAP_message2entry(krb5_context context, HDB * db, LDAPMessage * msg,
     if (ret == 0) {
 	time_t delta;
 
-	if (ent->entry.pw_end == NULL) {
-            ent->entry.pw_end = malloc(sizeof(*ent->entry.pw_end));
-            if (ent->entry.pw_end == NULL) {
-                ret = ENOMEM;
-                krb5_set_error_message(context, ret, "malloc: out of memory");
-                goto out;
-            }
-        }
-
 	delta = krb5_config_get_time_default(context, NULL,
-					     365 * 24 * 60 * 60,
+					     0,
 					     "kadmin",
 					     "password_lifetime",
 					     NULL);
-        *ent->entry.pw_end = tmp_time + delta;
+
+	if (delta) {
+		if (ent->entry.pw_end == NULL) {
+		    ent->entry.pw_end = malloc(sizeof(*ent->entry.pw_end));
+		    if (ent->entry.pw_end == NULL) {
+			ret = ENOMEM;
+			krb5_set_error_message(context, ret, "malloc: out of memory");
+			goto out;
+		    }
+		}
+
+		*ent->entry.pw_end = tmp_time + delta;
+	}
     }
 
     ret = LDAP_get_integer_value(db, msg, "sambaPwdMustChange", &tmp_time);

@@ -414,9 +414,11 @@ hdb_create(krb5_context context, HDB **db, const char *filename)
 	    (void)_krb5_plugin_run_f(context, "krb5", "hdb",
 			     HDB_INTERFACE_VERSION, 0, &cb_ctx, callback);
     }
+#if 0 /* XXX */
 #ifdef HAVE_DLOPEN
     if (cb_ctx.h == NULL)
 	cb_ctx.h = find_dynamic_method (context, cb_ctx.filename, &cb_ctx.residual);
+#endif
 #endif
     if (cb_ctx.h == NULL)
 	krb5_errx(context, 1, "No database support for %s", cb_ctx.filename);

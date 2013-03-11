@@ -615,7 +615,13 @@ verify_logonname(krb5_context context,
 	uint64_t t1, t2;
 	t1 = unix2nttime(authtime);
 	t2 = ((uint64_t)time2 << 32) | time1;
-	if (t1 != t2) {
+	/*
+	 * When neither the ticket nor the PAC set an explicit authtime,
+	 * both times are zero, but relative to different time scales.
+	 * So we must compare "not set" values without converting to a
+	 * common time reference.
+         */
+	if (t1 != t2 && (t2 != 0 && authtime != 0)) {
 	    krb5_storage_free(sp);
 	    krb5_set_error_message(context, EINVAL, "PAC timestamp mismatch");
 	    return EINVAL;

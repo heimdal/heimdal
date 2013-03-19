@@ -484,6 +484,10 @@ host_connect(krb5_context context, krb5_sendto_ctx ctx, struct host *host)
     debug_host(context, 5, host, "connecting to host");
 
     if (connect(host->fd, ai->ai_addr, ai->ai_addrlen) < 0) {
+#ifdef HAVE_WINSOCK
+	if (WSAGetLastError() == WSAEWOULDBLOCK)
+	    errno = EINPROGRESS;
+#endif /* HAVE_WINSOCK */
 	if (errno == EINPROGRESS && (hi->proto == KRB5_KRBHST_HTTP || hi->proto == KRB5_KRBHST_TCP)) {
 	    debug_host(context, 5, host, "connecting to %d", host->fd);
 	    host->state = CONNECTING;

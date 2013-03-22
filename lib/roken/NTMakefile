@@ -237,7 +237,7 @@ $(OBJ)\snprintf-test.exe: $(OBJ)\snprintf-test.obj $(OBJ)\libtest.lib $(LIBROKEN
 $(OBJ)\resolve-test.exe: $(OBJ)\resolve-test.obj $(LIBROKEN)
 	$(EXECONLINK) DnsAPI.lib
 
-$(OBJ)\base64-test.exe: $(OBJ)\base64-test.obj $(OBJ)\base64.obj
+$(OBJ)\base64-test.exe: $(OBJ)\base64-test.obj $(OBJ)\base64.obj $(LIBROKEN)
 	$(EXECONLINK)
 
 $(OBJ)\getaddrinfo-test.exe: $(OBJ)\getaddrinfo-test.obj $(LIBROKEN)

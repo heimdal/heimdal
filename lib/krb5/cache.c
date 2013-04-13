@@ -898,7 +898,7 @@ krb5_cc_copy_match_f(krb5_context context,
     }
 
     while ((ret = krb5_cc_next_cred(context, from, &cursor, &cred)) == 0) {
-	   if (match == NULL || (*match)(context, matchctx, &cred) == 0) {
+	   if (match == NULL || (*match)(context, matchctx, &cred)) {
 	       if (matched)
 		   (*matched)++;
 	       ret = krb5_cc_store_cred(context, to, &cred);

@@ -1807,7 +1807,6 @@ hdb_ldap_common(krb5_context context,
 {
     struct hdbldapdb *h;
     const char *create_base = NULL;
-    char *ldap_url = NULL;
 
     if (url == NULL || url[0] == '\0') {
 	const char *p;
@@ -1816,9 +1815,7 @@ hdb_ldap_common(krb5_context context,
 	if (p == NULL)
 		p = default_ldap_url;
 
-	ldap_url = strdup(p);
-    } else {
-	ldap_url = strdup(url);
+	url = p;
     }
 
     if (search_base == NULL && search_base[0] == '\0') {
@@ -1868,7 +1865,7 @@ hdb_ldap_common(krb5_context context,
 	return ENOMEM;
     }
 
-    h->h_url = strdup(ldap_url);
+    h->h_url = strdup(url);
     h->h_base = strdup(search_base);
     if (h->h_url == NULL || h->h_base == NULL) {
 	LDAP_destroy(context, *db);

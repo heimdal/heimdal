@@ -58,6 +58,8 @@ struct hdbldapdb {
     int   h_msgid;
     char *h_base;
     char *h_url;
+    char *h_bind_dn;
+    char *h_bind_password;
     char *h_createbase;
 };
 
@@ -67,6 +69,8 @@ struct hdbldapdb {
 	do { ((struct hdbldapdb *)(db)->hdb_db)->h_msgid = msgid; } while(0)
 #define HDB2BASE(dn) (((struct hdbldapdb *)(db)->hdb_db)->h_base)
 #define HDB2URL(dn) (((struct hdbldapdb *)(db)->hdb_db)->h_url)
+#define HDB2BINDDN(db) (((struct hdbldapdb *)(db)->hdb_db)->h_bind_dn)
+#define HDB2BINDPW(db) (((struct hdbldapdb *)(db)->hdb_db)->h_bind_password)
 #define HDB2CREATE(db) (((struct hdbldapdb *)(db)->hdb_db)->h_createbase)
 
 /*
@@ -1543,6 +1547,16 @@ LDAP__connect(krb5_context context, HDB * db)
      * bind in progress message.
      */
     struct berval bv = { 0, "" };
+    const char *sasl_method = "EXTERNAL";
+    const char *bind_dn = NULL;
+
+    if (HDB2BINDDN(db) != NULL && HDB2BINDPW(db) != NULL) {
+	/* A bind DN was specified; use SASL SIMPLE */
+	bind_dn = HDB2BINDDN(db);
+	sasl_method = LDAP_SASL_SIMPLE;
+	bv.bv_val = HDB2BINDPW(db);
+	bv.bv_len = strlen(bv.bv_val);
+    }
 
     if (HDB2LDAP(db)) {
 	/* connection has been opened. ping server. */
@@ -1576,7 +1590,7 @@ LDAP__connect(krb5_context context, HDB * db)
 	return HDB_ERR_BADVERSION;
     }
 
-    rc = ldap_sasl_bind_s(HDB2LDAP(db), NULL, "EXTERNAL", &bv,
+    rc = ldap_sasl_bind_s(HDB2LDAP(db), bind_dn, sasl_method, &bv,
 			  NULL, NULL, NULL);
     if (rc != LDAP_SUCCESS) {
 	krb5_set_error_message(context, HDB_ERR_BADVERSION,
@@ -1807,6 +1821,7 @@ hdb_ldap_common(krb5_context context,
 {
     struct hdbldapdb *h;
     const char *create_base = NULL;
+    const char *ldap_secret_file = NULL;
 
     if (url == NULL || url[0] == '\0') {
 	const char *p;
@@ -1872,6 +1887,30 @@ hdb_ldap_common(krb5_context context,
 	*db = NULL;
 	krb5_set_error_message(context, ENOMEM, "strdup: out of memory");
 	return ENOMEM;
+    }
+
+    ldap_secret_file = krb5_config_get_string(context, NULL, "kdc",
+					      "hdb-ldap-secret-file", NULL);
+    if (ldap_secret_file != NULL) {
+	krb5_config_binding *tmp;
+	krb5_error_code ret;
+	const char *p;
+	
+	ret = krb5_config_parse_file(context, ldap_secret_file, &tmp);
+	if (ret)
+	    return ret;
+
+	p = krb5_config_get_string(context, tmp, "kdc",
+				   "hdb-ldap-bind-dn", NULL);
+	if (p != NULL)
+	    h->h_bind_dn = strdup(p);
+	
+	p = krb5_config_get_string(context, tmp, "kdc",
+				   "hdb-ldap-bind-password", NULL);
+	if (p != NULL)
+	    h->h_bind_password = strdup(p);
+
+	krb5_config_file_free(context, tmp);
     }
 
     create_base = krb5_config_get_string(context, NULL, "kdc",

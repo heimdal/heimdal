@@ -50,6 +50,7 @@ LDAP_message2entry(krb5_context context, HDB * db, LDAPMessage * msg,
 
 static const char *default_structural_object = "account";
 static char *structural_object;
+static const char *default_ldap_url = "ldapi:///";
 static krb5_boolean samba_forwardable;
 
 struct hdbldapdb {
@@ -1806,6 +1807,19 @@ hdb_ldap_common(krb5_context context,
 {
     struct hdbldapdb *h;
     const char *create_base = NULL;
+    char *ldap_url = NULL;
+
+    if (url == NULL || url[0] == '\0') {
+	const char *p;
+	p = krb5_config_get_string(context, NULL, "kdc",
+				   "hdb-ldap-url", NULL);
+	if (p == NULL)
+		p = default_ldap_url;
+
+	ldap_url = strdup(p);
+    } else {
+	ldap_url = strdup(url);
+    }
 
     if (search_base == NULL && search_base[0] == '\0') {
 	krb5_set_error_message(context, ENOMEM, "ldap search base not configured");
@@ -1854,7 +1868,7 @@ hdb_ldap_common(krb5_context context,
 	return ENOMEM;
     }
 
-    h->h_url = strdup(url);
+    h->h_url = strdup(ldap_url);
     h->h_base = strdup(search_base);
     if (h->h_url == NULL || h->h_base == NULL) {
 	LDAP_destroy(context, *db);
@@ -1900,7 +1914,7 @@ hdb_ldap_common(krb5_context context,
 krb5_error_code
 hdb_ldap_create(krb5_context context, HDB ** db, const char *arg)
 {
-    return hdb_ldap_common(context, db, arg, "ldapi:///");
+    return hdb_ldap_common(context, db, arg, NULL);
 }
 
 krb5_error_code

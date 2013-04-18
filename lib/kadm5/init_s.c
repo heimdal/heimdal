@@ -32,8 +32,26 @@
  */
 
 #include "kadm5_locl.h"
+#include <fcntl.h>
 
 RCSID("$Id$");
+
+#ifndef O_NONBLOCK
+#define NBLK FNDELAY
+#else
+#define NBLK O_NONBLOCK
+#endif
+
+static int non_blocking(int fd, int on)
+{
+    int     flags;
+
+    if ((flags = fcntl(fd, F_GETFL, 0)) < 0)
+	return -1;
+    if (fcntl(fd, F_SETFL, on ? flags | NBLK : flags & ~NBLK) < 0)
+	return -1;
+    return ((flags & NBLK) != 0);
+}
 
 
 static kadm5_ret_t
@@ -91,6 +109,8 @@ kadm5_s_init_with_context(krb5_context context,
 					 ctx->log_context.socket_info->ai_socktype,
 					 ctx->log_context.socket_info->ai_protocol);
 #endif
+
+    non_blocking(ctx->log_context.socket_fd, 1);
 
     ret = krb5_parse_name(ctx->context, client_name, &ctx->caller);
     if(ret)

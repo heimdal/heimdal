@@ -759,9 +759,12 @@ main(int argc, char **argv)
 		else
 		    krb5_err (context, 1, errno, "select");
 	    }
-	    if (ret == 0)
-		krb5_errx (context, 1, "server didn't send a message "
+	    if (ret == 0) {
+		krb5_warn (context, 1, "server didn't send a message "
 			   "in %d seconds", time_before_lost);
+		connected = FALSE;
+		continue;
+	    }
 
 	    ret = krb5_read_priv_message(context, auth_context, &master_fd, &out);
 	    if (ret) {

@@ -1053,7 +1053,8 @@ Its also possible to configure the ldap backend as a shared module,
 see option --hdb-openldap-module to configure.
 
 @item
-Configure OpenLDAP with @kbd{--enable-local} to enable the local transport.
+Optionally configure OpenLDAP with @kbd{--enable-local} to enable the
+local transport.
 
 @item
 Add the hdb schema to the LDAP server, it's included in the source-tree
@@ -1064,8 +1065,8 @@ include /usr/local/etc/openldap/schema/hdb.schema
 @end example
 
 @item
-Configure the LDAP server ACLs to accept writes from clients over the
-local transport. For example:
+Configure the LDAP server ACLs to accept writes from clients. For
+example:
 
 @example
 access to *
@@ -1085,10 +1086,15 @@ krb5Principal aux object with krb5PrincipalName set so that the
 Another option is to create an admins group and add the dn to that
 group.
 
-Since Heimdal talks to the LDAP server over a UNIX domain socket, and
-uses external sasl authentication, it's not possible to require
-security layer quality (ssf in cyrus-sasl lingo). So that requirement
-has to be turned off in OpenLDAP @command{slapd} configuration file
+If a non-local LDAP connection is used, the authz-regexp is not
+needed as Heimdal will bind to LDAP over the network using
+provided credentials.
+
+Since Heimdal talks to the LDAP server over a UNIX domain socket when
+configured for ldapi:///, and uses external sasl authentication, it's
+not possible to require security layer quality (ssf in cyrus-sasl lingo).
+So that requirement has to be turned off in OpenLDAP @command{slapd}
+configuration file
 @file{slapd.conf}.
 
 @example
@@ -1116,9 +1122,13 @@ enter the path to the kadmin acl file:
 
 @example
 [kdc]
+	# Optional configuration
+	hdb-ldap-structural-object = inetOrgPerson
+	hdb-ldap-url = ldapi:/// (default), ldap://hostname or ldaps://hostname
+	hdb-ldap-secret-file = /path/to/file/containing/ldap/credentials
+
         database = @{
                 dbname = ldap:ou=KerberosPrincipals,dc=example,dc=com
-                hdb-ldap-structural-object = inetOrgPerson
                 acl_file = /path/to/kadmind.acl
                 mkey_file = /path/to/mkey
         @}
@@ -1129,7 +1139,18 @@ directory to have the raw keys inside it.  The
 hdb-ldap-structural-object is not necessary if you do not need Samba
 comatibility.
 
+If connecting to a server over a non-local transport, the @samp{hdb-ldap-url}
+and @samp{hdb-ldap-secret-file} options must be provided. The
+@samp{hdb-ldap-secret-file} must contain the bind credentials:
 
+@example
+[kdc]
+	hdb-ldap-bind-dn = uid=heimdal,dc=services,dc=example,dc=com
+	hdb-ldap-bind-password = secretBindPassword
+@end example
+
+The @samp{hdb-ldap-secret-file} and should be protected with appropriate
+file permissions
 
 @item
 Once you have built Heimdal and started the LDAP server, run kadmin

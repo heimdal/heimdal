@@ -1126,6 +1126,7 @@ enter the path to the kadmin acl file:
 	hdb-ldap-structural-object = inetOrgPerson
 	hdb-ldap-url = ldapi:/// (default), ldap://hostname or ldaps://hostname
 	hdb-ldap-secret-file = /path/to/file/containing/ldap/credentials
+	hdb-ldap-start-tls = false
 
         database = @{
                 dbname = ldap:ou=KerberosPrincipals,dc=example,dc=com

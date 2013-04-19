@@ -60,6 +60,7 @@ struct hdbldapdb {
     char *h_url;
     char *h_bind_dn;
     char *h_bind_password;
+    krb5_boolean h_start_tls;
     char *h_createbase;
 };
 
@@ -1590,6 +1591,17 @@ LDAP__connect(krb5_context context, HDB * db)
 	return HDB_ERR_BADVERSION;
     }
 
+    if (((struct hdbldapdb *)db->hdb_db)->h_start_tls) {
+	rc = ldap_start_tls_s(HDB2LDAP(db), NULL, NULL);
+
+	if (rc != LDAP_SUCCESS) {
+	    krb5_set_error_message(context, HDB_ERR_BADVERSION,
+				   "ldap_start_tls_s: %s", ldap_err2string(rc));
+	    LDAP_close(context, db);
+	    return HDB_ERR_BADVERSION;
+	}
+    }
+
     rc = ldap_sasl_bind_s(HDB2LDAP(db), bind_dn, sasl_method, &bv,
 			  NULL, NULL, NULL);
     if (rc != LDAP_SUCCESS) {
@@ -1912,6 +1924,10 @@ hdb_ldap_common(krb5_context context,
 
 	krb5_config_file_free(context, tmp);
     }
+
+    h->h_start_tls =
+	krb5_config_get_bool_default(context, NULL, FALSE,
+				     "kdc", "hdb-ldap-start-tls", NULL);
 
     create_base = krb5_config_get_string(context, NULL, "kdc",
 					 "hdb-ldap-create-base", NULL);

@@ -57,6 +57,8 @@ typedef struct krb5_kdc_configuration {
     struct HDB **db;
     int num_db;
 
+    int num_kdc_processes;
+
     krb5_boolean encode_as_rep_as_tgs_rep; /* bug compatibility */
 
     krb5_boolean tgt_use_strongest_session_key;

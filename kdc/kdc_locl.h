@@ -113,7 +113,7 @@ extern char *runas_string;
 extern char *chroot_string;
 
 void
-loop(krb5_context context, krb5_kdc_configuration *config);
+start_kdc(krb5_context context, krb5_kdc_configuration *config);
 
 krb5_kdc_configuration *
 configure(krb5_context context, int argc, char **argv, int *optidx);

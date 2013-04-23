@@ -267,6 +267,8 @@ init_socket(krb5_context context,
     d->type = type;
     d->port = port;
 
+    socket_set_nonblocking(d->s, 1);
+
     if(rk_IS_SOCKET_ERROR(bind(d->s, sa, sa_size))){
 	char a_str[256];
 	size_t len;
@@ -457,16 +459,18 @@ handle_udp(krb5_context context,
     ssize_t n;
 
     buf = malloc(max_request_udp);
-    if(buf == NULL){
-	kdc_log(context, config, 0, "Failed to allocate %lu bytes", (unsigned long)max_request_udp);
+    if (buf == NULL){
+	kdc_log(context, config, 0, "Failed to allocate %lu bytes",
+	        (unsigned long)max_request_udp);
 	return;
     }
 
     d->sock_len = sizeof(d->__ss);
     n = recvfrom(d->s, buf, max_request_udp, 0, d->sa, &d->sock_len);
-    if(rk_IS_SOCKET_ERROR(n))
-	krb5_warn(context, rk_SOCK_ERRNO, "recvfrom");
-    else {
+    if (rk_IS_SOCKET_ERROR(n)) {
+	if (rk_SOCK_ERRNO != EAGAIN && rk_SOCK_ERRNO != EINTR)
+	    krb5_warn(context, rk_SOCK_ERRNO, "recvfrom");
+    } else {
 	addr_to_string (context, d->sa, d->sock_len,
 			d->addr_string, sizeof(d->addr_string));
 	if ((size_t)n == max_request_udp) {
@@ -542,7 +546,8 @@ add_new_tcp (krb5_context context,
     d[child].sock_len = sizeof(d[child].__ss);
     s = accept(d[parent].s, d[child].sa, &d[child].sock_len);
     if(rk_IS_BAD_SOCKET(s)) {
-	krb5_warn(context, rk_SOCK_ERRNO, "accept");
+	if (rk_SOCK_ERRNO != EAGAIN && rk_SOCK_ERRNO != EINTR)
+	    krb5_warn(context, rk_SOCK_ERRNO, "accept");
 	return;
     }
 
@@ -824,6 +829,17 @@ handle_tcp(krb5_context context,
     }
 }
 
+static void
+handle_islive(int fd)
+{
+    char buf[2];
+    int ret;
+
+    ret = read(fd, buf, 2);
+    if (ret == 0)
+	exit_flag = -1;
+}
+
 krb5_boolean
 realloc_descrs(struct descr **d, unsigned int *ndescr)
 {
@@ -866,29 +882,24 @@ next_min_free(krb5_context context, struct descr **d, unsigned int *ndescr)
     return min_free;
 }
 
-void
-loop(krb5_context context, krb5_kdc_configuration *config)
+static void
+loop(krb5_context context, krb5_kdc_configuration *config,
+     struct descr *d, unsigned int ndescr, int islive)
 {
-    struct descr *d;
-    unsigned int ndescr;
-    int ret;
 
-    ndescr = init_sockets(context, config, &d);
-    if(ndescr <= 0)
-	krb5_errx(context, 1, "No sockets!");
-    kdc_log(context, config, 0, "KDC started");
-    roken_detach_finish(NULL, daemon_child);
-    while(exit_flag == 0){
+    while (exit_flag == 0) {
 	struct timeval tmout;
 	fd_set fds;
 	int min_free = -1;
-	int max_fd = 0;
+	int max_fd;
 	size_t i;
 
 	FD_ZERO(&fds);
-	for(i = 0; i < ndescr; i++) {
-	    if(!rk_IS_BAD_SOCKET(d[i].s)){
-		if(d[i].type == SOCK_STREAM &&
+	FD_SET(islive, &fds);
+	max_fd = islive;
+	for (i = 0; i < ndescr; i++) {
+	    if (!rk_IS_BAD_SOCKET(d[i].s)) {
+		if (d[i].type == SOCK_STREAM &&
 		   d[i].timeout && d[i].timeout < time(NULL)) {
 		    kdc_log(context, config, 1,
 			    "TCP-connection from %s expired after %lu bytes",
@@ -897,7 +908,7 @@ loop(krb5_context context, krb5_kdc_configuration *config)
 		    continue;
 		}
 #ifndef NO_LIMIT_FD_SETSIZE
-		if(max_fd < d[i].s)
+		if (max_fd < d[i].s)
 		    max_fd = d[i].s;
 #ifdef FD_SETSIZE
 		if (max_fd >= FD_SETSIZE)
@@ -918,25 +929,249 @@ loop(krb5_context context, krb5_kdc_configuration *config)
 		krb5_warn(context, rk_SOCK_ERRNO, "select");
 	    break;
 	default:
-	    for(i = 0; i < ndescr; i++)
-		if(!rk_IS_BAD_SOCKET(d[i].s) && FD_ISSET(d[i].s, &fds)) {
-            min_free = next_min_free(context, &d, &ndescr);
+	    if (FD_ISSET(islive, &fds))
+		handle_islive(islive);
+	    for (i = 0; i < ndescr; i++)
+		if (!rk_IS_BAD_SOCKET(d[i].s) && FD_ISSET(d[i].s, &fds)) {
+		    min_free = next_min_free(context, &d, &ndescr);
 
-            if(d[i].type == SOCK_DGRAM)
-                handle_udp(context, config, &d[i]);
-            else if(d[i].type == SOCK_STREAM)
-                handle_tcp(context, config, d, i, min_free);
+		    if (d[i].type == SOCK_DGRAM)
+			handle_udp(context, config, &d[i]);
+		    else if (d[i].type == SOCK_STREAM)
+			handle_tcp(context, config, d, i, min_free);
 		}
 	}
     }
-    if (0);
+
+    switch (exit_flag) {
+    case -1:
+	kdc_log(context, config, 0, "sub-KDC exiting because Master KDC "
+		"exited.");
+	break;
 #ifdef SIGXCPU
-    else if(exit_flag == SIGXCPU)
+    case SIGXCPU:
 	kdc_log(context, config, 0, "CPU time limit exceeded");
+	break;
 #endif
-    else if(exit_flag == SIGINT || exit_flag == SIGTERM)
+    case SIGINT:
+    case SIGTERM:
 	kdc_log(context, config, 0, "Terminated");
-    else
+	break;
+    default:
 	kdc_log(context, config, 0, "Unexpected exit reason: %d", exit_flag);
+	break;
+    }
+}
+
+#ifdef __APPLE__
+static void
+bonjour_kid(krb5_context, krb5_kdc_configuration *config, int islive)
+{
+    char buf[2];
+
+    if (fork())
+	return;
+    bonjour_announce(context, config);
+
+    while (read(islive, buf, 1) != 0)
+	;
+    exit(0);
+}
+#endif
+
+static void
+kill_kids(pid_t *pids, int max_kids, int sig)
+{
+    int i;
+
+    for (i=0; i < max_kids; i++)
+	if (pids[i] > 0)
+	    kill(sig, pids[i]);
+}
+
+static int
+reap_kid(krb5_context context, krb5_kdc_configuration *config,
+	 pid_t *pids, int max_kids, int options)
+{
+    pid_t pid;
+    int status;
+    int i;
+
+    pid = waitpid(-1, &status, options);
+
+    if (pid < 1)
+	return 0;
+
+    for (i=0; i < max_kids; i++)
+	if (pids[i] == pid)
+	    break;
+
+    if (i == max_kids)
+	/* XXXrcd: this should not happen, have to do something, though */
+	return 0;
+
+    /* XXXrcd: should likely log exit code and the like */
+    kdc_log(context, config, 0, "sub-KDC reaped: %d", pid);
+    pids[i] = 0;
+
+    return 1;
+}
+
+static int
+reap_kids(krb5_context context, krb5_kdc_configuration *config,
+	  pid_t *pids, int max_kids)
+{
+    int reaped = 0;
+
+    for (;;) {
+	if (reap_kid(context, config, pids, max_kids, WNOHANG) == 0)
+	    break;
+	reaped++;
+    }
+
+    return reaped;
+}
+
+static void
+select_sleep(int microseconds)
+{
+    struct timeval tv;
+
+    tv.tv_sec = microseconds / 1000000;
+    tv.tv_usec = microseconds % 1000000;
+    select(0, NULL, NULL, NULL, &tv);
+}
+
+void
+start_kdc(krb5_context context,
+	  krb5_kdc_configuration *config)
+{
+    struct timeval tv1;
+    struct timeval tv2;
+    struct descr *d;
+    unsigned int ndescr;
+    pid_t pid;
+    pid_t *pids;
+    int max_kdcs = config->num_kdc_processes;
+    int num_kdcs = 0;
+    int i;
+    int islive[2];
+
+#ifdef _SC_NPROCESSORS_ONLN
+    if (max_kdcs == -1)
+	max_kdcs = sysconf(_SC_NPROCESSORS_ONLN);
+#endif
+
+    if (max_kdcs == -1)
+	max_kdcs = 1;
+
+    ndescr = init_sockets(context, config, &d);
+    if(ndescr <= 0)
+	krb5_errx(context, 1, "No sockets!");
+
+    pids = malloc(max_kdcs * sizeof(*pids));
+    if (!pids)
+	krb5_err(context, 1, errno, "malloc");
+    memset(pids, 0x0, max_kdcs * sizeof(*pids));
+
+    /*
+     * We open a socketpair of which we hand one end to each of our kids.
+     * When we exit, for whatever reason, the children will notice an EOF
+     * on their end and be able to cleanly exit.
+     */
+
+    if (socketpair(PF_LOCAL, SOCK_STREAM, 0, islive) == -1)
+	krb5_errx(context, 1, "socketpair");
+    socket_set_nonblocking(islive[1], 1);
+
+#ifdef __APPLE__
+    bonjour_kid(context, config, islive[1]);
+#endif
+
+    kdc_log(context, config, 0, "Master KDC started pid=%d", getpid());
+    roken_detach_finish(NULL, daemon_child);
+
+    tv1.tv_sec  = 0;
+    tv1.tv_usec = 0;
+
+    while (exit_flag == 0) {
+
+	/* Slow down the creation of KDCs... */
+
+	gettimeofday(&tv2, NULL);
+	if (tv1.tv_sec == tv2.tv_sec && tv2.tv_usec - tv1.tv_usec < 25000) {
+#if 0	/* XXXrcd: should print a message... */
+	    kdc_log(context, config, 0, "Spawning KDCs too quickly, "
+		"pausing for 50ms");
+#endif
+	    select_sleep(12500);
+	    continue;
+	}
+
+	if (num_kdcs >= max_kdcs) {
+	    num_kdcs -= reap_kid(context, config, pids, max_kdcs, 0);
+	    continue;
+	}
+
+	if (num_kdcs > 0)
+	    num_kdcs -= reap_kids(context, config, pids, max_kdcs);
+
+	pid = fork();
+	switch (pid) {
+	case 0:
+	    close(islive[0]);
+	    loop(context, config, d, ndescr, islive[1]);
+	    exit(0);
+	case -1:
+	    /* XXXrcd: hmmm, do something useful?? */
+	    sleep(10);
+	    break;
+	default:
+	    for (i=0; i < max_kdcs; i++)
+		if (pids[i] == 0)
+		    break;
+	    pids[i] = pid;
+	    kdc_log(context, config, 0, "sub-KDC started: %d", pid);
+	    num_kdcs++;
+	    gettimeofday(&tv1, NULL);
+	    break;
+	}
+    }
+
+    /* Closing these sockets should cause the kids to die... */
+
+    close(islive[0]);
+    close(islive[1]);
+
+    gettimeofday(&tv1, NULL);
+
+    for (;;) {
+	num_kdcs -= reap_kids(context, config, pids, max_kdcs);
+	if (num_kdcs == 0)
+	    break;
+	/*
+	 * Using select to sleep will fail with EINTR if we receive a
+	 * SIGCHLD.  This is desirable.
+	 */
+	select_sleep(200000);
+	kill_kids(pids, max_kdcs, SIGTERM);
+	gettimeofday(&tv2, NULL);
+	if (tv2.tv_sec - tv1.tv_sec > 10)
+	    break;
+    }
+
+    for (;;) {
+	kill_kids(pids, max_kdcs, SIGKILL);
+	num_kdcs -= reap_kids(context, config, pids, max_kdcs);
+	if (num_kdcs == 0)
+	    break;
+	select_sleep(200000);
+	gettimeofday(&tv2, NULL);
+	if (tv2.tv_sec - tv1.tv_sec > 15)
+	    break;
+    }
+
+    kdc_log(context, config, 0, "master KDC exiting", pid);
+
     free (d);
 }

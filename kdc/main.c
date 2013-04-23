@@ -48,6 +48,11 @@ int detach_from_console = -1;
 int daemon_child = -1;
 
 static RETSIGTYPE
+sigchld(int sig)
+{
+}
+
+static RETSIGTYPE
 sigterm(int sig)
 {
     exit_flag = sig;
@@ -140,6 +145,9 @@ main(int argc, char **argv)
 	sigaction(SIGXCPU, &sa, NULL);
 #endif
 
+	sa.sa_handler = sigchld;
+	sigaction(SIGCHLD, &sa, NULL);
+
 	sa.sa_handler = SIG_IGN;
 #ifdef SIGPIPE
 	sigaction(SIGPIPE, &sa, NULL);
@@ -148,6 +156,7 @@ main(int argc, char **argv)
 #else
     signal(SIGINT, sigterm);
     signal(SIGTERM, sigterm);
+    signal(SIGCHLD, sigchld);
 #ifdef SIGXCPU
     signal(SIGXCPU, sigterm);
 #endif
@@ -155,14 +164,11 @@ main(int argc, char **argv)
     signal(SIGPIPE, SIG_IGN);
 #endif
 #endif
-#ifdef __APPLE__
-    bonjour_announce(context, config);
-#endif
     pidfile(NULL);
 
     switch_environment();
 
-    loop(context, config);
+    start_kdc(context, config);
     krb5_free_context(context);
     return 0;
 }

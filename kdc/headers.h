@@ -47,6 +47,7 @@
 #include <errno.h>
 #include <signal.h>
 #include <stdarg.h>
+#include <unistd.h>
 #ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
 #endif

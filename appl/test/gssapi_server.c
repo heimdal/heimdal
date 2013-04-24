@@ -40,7 +40,6 @@
 #include <gssapi/gssapi_krb5.h>
 #include <gssapi/gssapi_spnego.h>
 #include "gss_common.h"
-RCSID("$Id$");
 
 static int
 process_it(int sock,
@@ -380,7 +379,13 @@ int
 main(int argc, char **argv)
 {
     krb5_context context = NULL; /* XXX */
+    krb5_error_code ret;
     int port = server_setup(&context, argc, argv);
+
+    ret = krb5_kt_have_content(context, keytab);
+    if (ret)
+        krb5_err (context, 1, ret, "krb5_kt_have_content");
+
     loop (port, service);
     return 0;
 }

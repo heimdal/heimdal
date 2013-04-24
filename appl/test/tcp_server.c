@@ -195,5 +195,11 @@ int
 main(int argc, char **argv)
 {
     int port = server_setup(&context, argc, argv);
+    krb5_error_code ret;
+
+    ret = krb5_kt_have_content(context, keytab);
+    if (ret)
+        krb5_err (context, 1, ret, "krb5_kt_have_content");
+
     return doit (port, service);
 }

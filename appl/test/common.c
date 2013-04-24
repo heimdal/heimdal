@@ -33,8 +33,6 @@
 
 #include "test_locl.h"
 
-RCSID("$Id$");
-
 static int help_flag;
 static int version_flag;
 static char *port_str;
@@ -124,9 +122,6 @@ server_setup(krb5_context *context, int argc, char **argv)
         if (ret)
             krb5_err (*context, 1, ret, "krb5_kt_default");
     }
-    ret = krb5_kt_have_content(*context, keytab);
-    if (ret)
-        krb5_err (*context, 1, ret, "krb5_kt_have_content");
     return port;
 }
 

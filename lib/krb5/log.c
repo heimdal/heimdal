@@ -202,6 +202,7 @@ struct file_data{
     const char *mode;
     FILE *fd;
     int keep_open;
+    int freefilename;
 };
 
 static void KRB5_CALLCONV
@@ -236,20 +237,27 @@ close_file(void *data)
     struct file_data *f = data;
     if(f->keep_open && f->filename)
 	fclose(f->fd);
+    if (f->filename && f->freefilename)
+	free((char *)f->filename);
     free(data);
 }
 
 static krb5_error_code
 open_file(krb5_context context, krb5_log_facility *fac, int min, int max,
-	  const char *filename, const char *mode, FILE *f, int keep_open)
+	  const char *filename, const char *mode, FILE *f, int keep_open,
+	  int freefilename)
 {
     struct file_data *fd = malloc(sizeof(*fd));
-    if (fd == NULL)
+    if (fd == NULL) {
+	if (freefilename && filename)
+	    free((char *)filename);
 	return krb5_enomem(context);
+    }
     fd->filename = filename;
     fd->mode = mode;
     fd->fd = f;
     fd->keep_open = keep_open;
+    fd->freefilename = freefilename;
 
     return krb5_addlog_func(context, fac, min, max, log_file, close_file, fd);
 }
@@ -285,9 +293,9 @@ krb5_addlog_dest(krb5_context context, krb5_log_facility *f, const char *orig)
 	p++;
     }
     if(strcmp(p, "STDERR") == 0){
-	ret = open_file(context, f, min, max, NULL, NULL, stderr, 1);
+	ret = open_file(context, f, min, max, NULL, NULL, stderr, 1, 0);
     }else if(strcmp(p, "CONSOLE") == 0){
-	ret = open_file(context, f, min, max, "/dev/console", "w", NULL, 0);
+	ret = open_file(context, f, min, max, "/dev/console", "w", NULL, 0, 0);
     }else if(strncmp(p, "FILE", 4) == 0 && (p[4] == ':' || p[4] == '=')){
 	char *fn;
 	FILE *file = NULL;
@@ -319,9 +327,9 @@ krb5_addlog_dest(krb5_context context, krb5_log_facility *f, const char *orig)
 	    }
 	    keep_open = 1;
 	}
-	ret = open_file(context, f, min, max, fn, "a", file, keep_open);
+	ret = open_file(context, f, min, max, fn, "a", file, keep_open, 1);
     }else if(strncmp(p, "DEVICE", 6) == 0 && (p[6] == ':' || p[6] == '=')){
-	ret = open_file(context, f, min, max, strdup(p + 7), "w", NULL, 0);
+	ret = open_file(context, f, min, max, strdup(p + 7), "w", NULL, 0, 1);
     }else if(strncmp(p, "SYSLOG", 6) == 0 && (p[6] == '\0' || p[6] == ':')){
 	char severity[128] = "";
 	char facility[128] = "";

@@ -1512,8 +1512,8 @@ can't find enough certificates in the request from the client.
 
 @item pkinit_allow_proxy_certificate = bool
 
-Allow clients to use proxy certificates, its the root certificate that
-is clients EE certificate that is used for authorisation.
+Allow clients to use proxy certificates. The root certificate
+of the client's End Entity certificate is used for authorisation.
 
 @item pkinit_win2k_require_binding = bool
 
@@ -1542,7 +1542,7 @@ mapping between a certificate and principal.
 
 @subsection Using pki-mapping file
 
-Note that the file name is space sensitive.
+Note that the file contents are space sensitive.
 
 @example
 # cat /var/heimdal/pki-mapping

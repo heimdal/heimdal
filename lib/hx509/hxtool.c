@@ -1135,6 +1135,45 @@ ocsp_print(struct ocsp_print_options *opt, int argc, char **argv)
     return 0;
 }
 
+int
+revoke_print(struct revoke_print_options *opt, int argc, char **argv)
+{
+    hx509_revoke_ctx revoke_ctx;
+    int ret;
+
+    ret = hx509_revoke_init(context, &revoke_ctx);
+    if (ret)
+	errx(1, "hx509_revoke_init: %d", ret);
+
+    while(argc--) {
+	char *s = *argv++;
+
+	if (strncmp(s, "crl:", 4) == 0) {
+	    s += 4;
+
+	    ret = hx509_revoke_add_crl(context, revoke_ctx, s);
+	    if (ret)
+		errx(1, "hx509_revoke_add_crl: %s: %d", s, ret);
+
+	} else if (strncmp(s, "ocsp:", 4) == 0) {
+	    s += 5;
+
+	    ret = hx509_revoke_add_ocsp(context, revoke_ctx, s);
+	    if (ret)
+		errx(1, "hx509_revoke_add_ocsp: %s: %d", s, ret);
+
+	} else {
+	    errx(1, "unknown option to verify: `%s'\n", s);
+	}
+    }
+
+    ret = hx509_revoke_print(context, revoke_ctx, stdout);
+    if (ret)
+	warnx("hx509_revoke_print: %d", ret);
+
+    return ret;
+}
+
 /*
  *
  */

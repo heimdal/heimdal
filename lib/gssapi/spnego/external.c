@@ -84,7 +84,7 @@ static gssapi_mech_interface_desc spnego_mech = {
     _gss_spnego_init_sec_context,
     _gss_spnego_accept_sec_context,
     _gss_spnego_process_context_token,
-    _gss_spnego_internal_delete_sec_context,
+    _gss_spnego_delete_sec_context,
     _gss_spnego_context_time,
     _gss_spnego_get_mic,
     _gss_spnego_verify_mic,

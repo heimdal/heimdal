@@ -74,7 +74,7 @@ AC_PROG_GCC_TRADITIONAL
 #AC_FUNC_REALLOC
 AC_TYPE_SIGNAL
 AC_FUNC_STAT
-AC_CHECK_FUNCS([endpwent isascii memchr memset re_comp regcomp strcasecmp strchr strcspn strdup strerror strrchr strstr strtol issetugid wcsdup])
+AC_CHECK_FUNCS([endpwent isascii memchr memset re_comp regcomp strcasecmp strchr strcspn strdup strlcpy strlcat strerror strrchr strstr strtol issetugid wcsdup])
 EL_GETPW_R_POSIX
 EL_GETPW_R_DRAFT
 

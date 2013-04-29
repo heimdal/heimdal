@@ -702,6 +702,7 @@ HEIMDAL_KRB5_2.0 {
 		initialize_k524_error_table;
 
 		# variables
+		krb5_dcc_ops;
 		krb5_mcc_ops;
 		krb5_acc_ops;
 		krb5_fcc_ops;

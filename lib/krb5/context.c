@@ -264,6 +264,7 @@ cc_ops_register(krb5_context context)
     krb5_cc_register(context, &krb5_acc_ops, TRUE);
 #endif
     krb5_cc_register(context, &krb5_fcc_ops, TRUE);
+    krb5_cc_register(context, &krb5_dcc_ops, TRUE);
     krb5_cc_register(context, &krb5_mcc_ops, TRUE);
 #ifdef HAVE_SCC
     krb5_cc_register(context, &krb5_scc_ops, TRUE);

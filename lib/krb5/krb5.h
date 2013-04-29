@@ -943,6 +943,7 @@ extern KRB5_LIB_VARIABLE const char *krb5_defkeyname;
 
 
 extern KRB5_LIB_VARIABLE const krb5_cc_ops krb5_acc_ops;
+extern KRB5_LIB_VARIABLE const krb5_cc_ops krb5_dcc_ops;
 extern KRB5_LIB_VARIABLE const krb5_cc_ops krb5_fcc_ops;
 extern KRB5_LIB_VARIABLE const krb5_cc_ops krb5_mcc_ops;
 extern KRB5_LIB_VARIABLE const krb5_cc_ops krb5_kcm_ops;

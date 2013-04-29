@@ -146,6 +146,7 @@ dist_libkrb5_la_SOURCES =			\
 	data.c					\
 	db_plugin.c				\
 	db_plugin.h				\
+	dcache.c				\
 	deprecated.c				\
 	digest.c				\
 	eai_to_heim_errno.c			\

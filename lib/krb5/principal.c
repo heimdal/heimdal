@@ -35,8 +35,8 @@
  * @page krb5_principal_intro The principal handing functions.
  *
  * A Kerberos principal is a email address looking string that
- * contains to parts separeted by a @.  The later part is the kerbero
- * realm the principal belongs to and the former is a list of 0 or
+ * contains two parts separated by @.  The second part is the kerberos
+ * realm the principal belongs to and the first is a list of 0 or
  * more components. For example
  * @verbatim
 lha@SU.SE

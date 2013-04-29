@@ -6,7 +6,7 @@
  */
 
 #ifdef sun
-/* Transarc obfascates these routines */
+/* Transarc obfuscates these routines */
 #ifdef DCE_1_1
 
 #define krb5_init_ets                   _dce_PkjKqOaklP

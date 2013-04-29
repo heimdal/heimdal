@@ -508,6 +508,7 @@ static const RSA_METHOD rsa_null_method = {
     0,
     NULL,
     NULL,
+    NULL,
     NULL
 };
 

@@ -717,6 +717,7 @@ HEIMDAL_KRB5_2.0 {
 		krb5_config_file;
 		krb5_defkeyname;
 		krb5_cc_type_api;
+		krb5_cc_type_dcc;
 		krb5_cc_type_file;
 		krb5_cc_type_memory;
 		krb5_cc_type_kcm;

@@ -44,6 +44,10 @@ typedef struct krb5_dcache{
 #define DCACHE(X) ((krb5_dcache*)(X)->data.data)
 #define D2FCACHE(X) ((X)->fcache)
 
+static krb5_error_code KRB5_CALLCONV dcc_close(krb5_context, krb5_ccache);
+static krb5_error_code KRB5_CALLCONV dcc_get_default_name(krb5_context, char **);
+
+
 static char *
 primary_create(krb5_dcache *dc)
 {
@@ -146,6 +150,13 @@ get_default_cache(krb5_context context, krb5_dcache *dc, char **residual)
 
     f = fopen(primary, "r");
     if (f == NULL) {
+	if (errno == ENOENT) {
+	    free(primary);
+	    *residual = strdup("tkt");
+	    if (*residual == NULL)
+		return krb5_enomem(context);
+	    return 0;
+	}
 	ret = errno;
 	krb5_set_error_message(context, ret, "failed to open %s", primary);
 	free(primary);
@@ -229,6 +240,7 @@ dcc_release(krb5_context context, krb5_dcache *dc)
 	free(dc->dir);
     if (dc->name)
 	free(dc->name);
+    memset(dc, 0, sizeof(*dc));
     free(dc);
 }
 
@@ -263,7 +275,7 @@ dcc_resolve(krb5_context context, krb5_ccache *id, const char *res)
     if (res[0] == ':') {
 	char *q;
 
-	dc->dir = strdup(res);
+	dc->dir = strdup(&res[1]);
 	q = strrchr(dc->dir, '/');
 	if (q) {
 	    *q++ = '\0';
@@ -294,17 +306,23 @@ dcc_resolve(krb5_context context, krb5_ccache *id, const char *res)
 
     } else {
 	char *residual;
-
-	ret = verify_directory(context, res);
-	if (ret) {
-	    dcc_release(context, dc);
-	    return ret;
-	}
+	size_t len;
 
 	dc->dir = strdup(res);
 	if (dc->dir == NULL) {
 	    dcc_release(context, dc);
 	    return krb5_enomem(context);
+	}
+
+	len = strlen(dc->dir);
+
+	if (dc->dir[len - 1] == '/')
+	    dc->dir[len - 1] = '\0';
+
+	ret = verify_directory(context, dc->dir);
+	if (ret) {
+	    dcc_release(context, dc);
+	    return ret;
 	}
 
 	ret = get_default_cache(context, dc, &residual);
@@ -339,25 +357,60 @@ dcc_resolve(krb5_context context, krb5_ccache *id, const char *res)
     return 0;
 }
 
-#if 0
 static krb5_error_code KRB5_CALLCONV
 dcc_gen_new(krb5_context context, krb5_ccache *id)
 {
+    krb5_error_code ret;
+    const char *defname;
+    char *name = NULL;
     krb5_dcache *dc;
+    size_t len;
+    int fd;
 
-    dc = malloc(sizeof(*dc));
-    if (dc == NULL) {
-	krb5_set_error_message(context, KRB5_CC_NOMEM,
-			       N_("malloc: out of memory", ""));
-	return KRB5_CC_NOMEM;
+    len = strlen(krb5_dcc_ops.prefix);
+
+    defname = krb5_cc_default_name(context);
+    if (defname == NULL ||
+	strncmp(defname, krb5_dcc_ops.prefix, len) != 0 ||
+	defname[len] != ':')
+    {
+	ret = dcc_get_default_name(context, &name);
+	if (ret) {
+	    krb5_set_error_message(context, KRB5_CC_FORMAT,
+				   N_("Can't generate DIR caches unless its the default type", ""));
+	    return KRB5_CC_FORMAT;
+	}
+	defname = name;
+    }	
+
+    ret = dcc_resolve(context, id, &defname[len + 1]);
+    if (name) {
+	free(name);
+	name = NULL;
     }
+    if (ret)
+	return ret;
 
-    (*id)->data.data = dc;
-    (*id)->data.length = sizeof(*dc);
+    dc = DCACHE((*id));
+
+    asprintf(&name, ":%s/tktXXXXXX", dc->dir);
+    if (name == NULL) {
+	dcc_close(context, *id);
+	return krb5_enomem(context);
+    }
+    free(dc->name);
+
+    fd = mkstemp(&name[1]);
+    if (fd < 0) {
+	dcc_close(context, *id);
+	return krb5_enomem(context);
+    }
+    close(fd);
+
+    dc->name = name;
+
     return 0;
 }
-#endif
-
 
 static krb5_error_code KRB5_CALLCONV
 dcc_initialize(krb5_context context,
@@ -372,10 +425,7 @@ static krb5_error_code KRB5_CALLCONV
 dcc_close(krb5_context context,
 	  krb5_ccache id)
 {
-    krb5_dcache *dc = DCACHE(id);
-    (void)krb5_cc_close(context, D2FCACHE(dc));
-    free(dc->dir);
-    free(dc);
+    dcc_release(context, DCACHE(id));
     return 0;
 }
 
@@ -384,7 +434,9 @@ dcc_destroy(krb5_context context,
 	    krb5_ccache id)
 {
     krb5_dcache *dc = DCACHE(id);
-    return krb5_cc_destroy(context, D2FCACHE(dc));
+    krb5_ccache fcache = D2FCACHE(dc);
+    dc->fcache = NULL;
+    return krb5_cc_destroy(context, fcache);
 }
 
 static krb5_error_code KRB5_CALLCONV
@@ -568,7 +620,7 @@ KRB5_LIB_VARIABLE const krb5_cc_ops krb5_dcc_ops = {
     "DIR",
     dcc_get_name,
     dcc_resolve,
-    NULL /* dcc_gen_new */,
+    dcc_gen_new,
     dcc_initialize,
     dcc_destroy,
     dcc_close,

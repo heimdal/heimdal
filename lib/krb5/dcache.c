@@ -357,16 +357,9 @@ dcc_resolve(krb5_context context, krb5_ccache *id, const char *res)
     return 0;
 }
 
-static krb5_error_code KRB5_CALLCONV
-dcc_gen_new(krb5_context context, krb5_ccache *id)
+static char *
+copy_default_dcc_cache(krb5_context context)
 {
-    krb5_error_code ret;
-    const char *defname;
-    char *name = NULL;
-    krb5_dcache *dc;
-    size_t len;
-    int fd;
-
     len = strlen(krb5_dcc_ops.prefix);
 
     defname = krb5_cc_default_name(context);
@@ -375,19 +368,35 @@ dcc_gen_new(krb5_context context, krb5_ccache *id)
 	defname[len] != ':')
     {
 	ret = dcc_get_default_name(context, &name);
-	if (ret) {
-	    krb5_set_error_message(context, KRB5_CC_FORMAT,
-				   N_("Can't generate DIR caches unless its the default type", ""));
-	    return KRB5_CC_FORMAT;
-	}
-	defname = name;
-    }	
+	if (ret)
+	    return NULL;
 
-    ret = dcc_resolve(context, id, &defname[len + 1]);
-    if (name) {
-	free(name);
-	name = NULL;
+	return name;
+    } else {
+	return strdup(&defname[len + 1]);
     }
+}
+
+
+static krb5_error_code KRB5_CALLCONV
+dcc_gen_new(krb5_context context, krb5_ccache *id)
+{
+    krb5_error_code ret;
+    char *name = NULL;
+    krb5_dcache *dc;
+    size_t len;
+    int fd;
+
+    name = copy_default_dcc_cache(context);
+    if (name == NULL) {
+	krb5_set_error_message(context, KRB5_CC_FORMAT,
+			       N_("Can't generate DIR caches unless its the default type", ""));
+	return KRB5_CC_FORMAT;
+    }
+
+    ret = dcc_resolve(context, id, name);
+    free(name);
+    name = NULL;
     if (ret)
 	return ret;
 
@@ -514,19 +523,39 @@ dcc_get_version(krb5_context context,
 
 struct dcache_iter {
     int first;
+    krb5_dcache *dc;
 };
 
 static krb5_error_code KRB5_CALLCONV
 dcc_get_cache_first(krb5_context context, krb5_cc_cursor *cursor)
 {
     struct dcache_iter *iter;
+    char *name;
 
     iter = calloc(1, sizeof(*iter));
     if (iter == NULL)
 	return krb5_enomem(context);
     iter->first = 1;
+
+    name = copy_default_dcc_cache(context);
+    if (name == NULL) {
+	krb5_set_error_message(context, KRB5_CC_FORMAT,
+			       N_("Can't generate DIR caches unless its the default type", ""));
+	return KRB5_CC_FORMAT;
+    }
+
+#if 1
+    free(name);
+    return KRB5_CC_FORMAT;
+#else
+
+    /* XXX */
+    ret = dcc_resolve(context, NULL, name);
+    free(name);
+
     *cursor = iter;
     return 0;
+#endif
 }
 
 static krb5_error_code KRB5_CALLCONV
@@ -554,6 +583,8 @@ dcc_end_cache_get(krb5_context context, krb5_cc_cursor cursor)
     if (iter == NULL)
         return krb5_einval(context, 2);
 
+    if (iter->dc)
+	dcc_release(iter->dc);
     free(iter);
     return 0;
 }

@@ -1,8 +1,8 @@
 # Make prototypes from .c files
 # $Id$
 
-##use Getopt::Std;
-require 'getopts.pl';
+use Getopt::Std;
+use File::Compare;
 
 my $comment = 0;
 my $if_0 = 0;
@@ -13,7 +13,7 @@ my $oproto = 1;
 my $private_func_re = "^_";
 my %depfunction = ();
 
-Getopts('x:m:o:p:dqE:R:P:') || die "foo";
+getopts('x:m:o:p:dqE:R:P:') || die "foo";
 
 if($opt_d) {
     $debug = 1;
@@ -192,14 +192,14 @@ sub foo {
 }
 
 if($opt_o) {
-    open(OUT, ">$opt_o");
+    open(OUT, ">${opt_o}.new");
     $block = &foo($opt_o);
 } else {
     $block = "__public_h__";
 }
 
 if($opt_p) {
-    open(PRIV, ">$opt_p");
+    open(PRIV, ">${opt_p}.new");
     $private = &foo($opt_p);
 } else {
     $private = "__private_h__";
@@ -313,12 +313,22 @@ my $depstr = "";
 my $undepstr = "";
 foreach (keys %depfunction) {
     $depstr .= "#ifndef $_
-#if defined(__GNUC__) && ((__GNUC__ > 3) || ((__GNUC__ == 3) && (__GNUC_MINOR__ >= 1 )))
+#ifndef __has_extension
+#define __has_extension(x) 0
+#define ${_}has_extension 1
+#endif
+#if __has_extension(attribute_deprecated_with_message)
+#define $_(x) __attribute__((__deprecated__(x)))
+#elif defined(__GNUC__) && ((__GNUC__ > 3) || ((__GNUC__ == 3) && (__GNUC_MINOR__ >= 1 )))
 #define $_(X) __attribute__((__deprecated__))
 #else
 #define $_(X)
 #endif
+#ifdef ${_}has_extension
+#undef __has_extension
+#undef ${_}has_extension
 #endif
+#endif /* $_ */
 
 
 ";
@@ -402,3 +412,22 @@ if($opt_p) {
 
 close OUT;
 close PRIV;
+
+if ($opt_o) {
+
+    if (compare("${opt_o}.new", ${opt_o}) != 0) {
+	printf("updating ${opt_o}\n");
+	rename("${opt_o}.new", ${opt_o});
+    } else {
+	unlink("${opt_o}.new");
+    }
+}
+	
+if ($opt_p) {
+    if (compare("${opt_p}.new", ${opt_p}) != 0) {
+	printf("updating ${opt_p}\n");
+	rename("${opt_p}.new", ${opt_p});
+    } else {
+	unlink("${opt_p}.new");
+    }
+}

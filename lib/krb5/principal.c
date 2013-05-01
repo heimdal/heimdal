@@ -1730,7 +1730,7 @@ _krb5_apply_name_canon_rule(krb5_context context, krb5_name_canon_rule rule,
     char *realm = NULL;
     const char *sname = NULL;
     const char *hostname = NULL;
-    char *new_hostname;
+    char *new_hostname = NULL;
     const char *cp;
 
     heim_assert(in_princ->name.name_type == KRB5_NT_SRV_HST_NEEDS_CANON,
@@ -1800,16 +1800,13 @@ _krb5_apply_name_canon_rule(krb5_context context, krb5_name_canon_rule rule,
 	} else {
 	    size_t len;
 
-	    len = strlen(hostname) + strlen(rule->domain) + 2;
-	    if ((new_hostname = malloc(len)) == NULL) {
+	    asprintf(&new_hostname, "%s%s%s", hostname,
+		     rule->domain[0] != '.' ? "." : "",
+		     rule->domain);
+	    if (new_hostname == NULL) {
 		ret = krb5_enomem(context);
 		goto out;
 	    }
-	    /* We use strcpy() and strcat() for portability for now */
-	    strcpy(new_hostname, hostname);
-	    if (rule->domain[0] != '.')
-		strcat(new_hostname, ".");
-	    strcat(new_hostname, rule->domain);
 	}
 	realm = rule->realm;
 	if (!realm) {
@@ -1870,6 +1867,8 @@ out:
     } else {
 	_krb5_debug(context, 5, "Name canon rule application error: %d", ret);
     }
+    if (new_hostname)
+	free(new_hostname);
     if (realm != rule->realm)
 	free(realm);
     if (*out_princ)

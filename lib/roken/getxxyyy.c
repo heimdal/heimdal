@@ -36,10 +36,11 @@
 #include "roken.h"
 
 #ifdef TEST_GETXXYYY
+#undef rk_getpwnam_r
+
 ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
 rk_getpwnam_r(const char *, struct passwd *, char *, size_t, struct passwd **);
 #endif
-
 
 #if !defined(POSIX_GETPWNAM_R) || defined(TEST_GETXXYYY)
 

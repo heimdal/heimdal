@@ -173,7 +173,6 @@ main(int argc, char **argv)
 	mini_inetd(debug_port, &sfd);
     } else {
 #ifdef _WIN32
-	pidfile(NULL);
 	start_server(context, port_str);
 #else
 	struct sockaddr_storage __ss;
@@ -187,7 +186,6 @@ main(int argc, char **argv)
 
 	if(roken_getsockname(STDIN_FILENO, sa, &sa_size) < 0 &&
 	   rk_SOCK_ERRNO == ENOTSOCK) {
-	    pidfile(NULL);
 	    start_server(context, port_str);
 	}
 #endif /* _WIN32 */

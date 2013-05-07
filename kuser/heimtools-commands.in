@@ -84,10 +84,20 @@ command = {
 		help = "List all caches"
 	}
 	option = {
+		long = "json"
+		type = "flag"
+		help = "JSON formated output"
+	}
+	option = {
 		long = "verbose"
 		short = "v"
 		type = "flag"
 		help = "Verbose output"
+	}
+	option = {
+		long = "version"
+		type = "flag"
+		help = "version"
 	}
 	option = {
 		name = "a"

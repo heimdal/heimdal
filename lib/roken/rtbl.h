@@ -61,6 +61,7 @@ typedef struct rtbl_data *rtbl_t;
 
 /* flags */
 #define RTBL_HEADER_STYLE_NONE	1
+#define RTBL_JSON		2
 
 ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
 rtbl_add_column (rtbl_t, const char*, unsigned int);
@@ -91,6 +92,9 @@ rtbl_destroy (rtbl_t);
 
 ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
 rtbl_format (rtbl_t, FILE*);
+
+ROKEN_LIB_FUNCTION char * ROKEN_LIB_CALL
+rtbl_format_str (rtbl_t);
 
 ROKEN_LIB_FUNCTION unsigned int ROKEN_LIB_CALL
 rtbl_get_flags (rtbl_t);

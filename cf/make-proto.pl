@@ -15,11 +15,11 @@ my $line = "";
 my $debug = 0;
 my $oproto = 1;
 my $private_func_re = "^_";
-my %depfunction = ();
-my %exported = {};
-my %deprecated = {};
+my %depfunction;
+my %exported;
+my %deprecated;
 my $apple = 0;
-my %documentation = {};
+my %documentation;
 
 getopts('x:m:o:p:dqE:R:P:') || die "foo";
 if($opt_a) {
@@ -296,6 +296,10 @@ if($oproto) {
 }
 $private_h_trailer = "";
 
+foreach(sort keys %exported){
+    printf(" exported $_\n");
+}
+
 foreach(sort keys %funcs){
     if(/^(main)$/) { next }
     if ($funcs{$_} =~ /\^/) {
@@ -305,7 +309,8 @@ foreach(sort keys %funcs){
 	$beginblock = $endblock = "";
     }
     # if we have an export table and doesn't have content, or matches private RE
-    if(($#exported ne 0 && !exists $exported{$_} ) || /$private_func_re/) {
+    print "exported $_ " . scalar(keys(%exported)) . " " . keys(%exported) . "\n";
+    if((scalar(keys(%exported)) ne 0 && !exists $exported{$_} ) || /$private_func_re/) {
 	$private_h .= $beginblock;
 	$private_h .= $funcs{$_} . "\n" ;
 	$private_h .= $endblock . "\n";

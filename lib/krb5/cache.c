@@ -1127,6 +1127,7 @@ krb5_cc_cache_match (krb5_context context,
     krb5_cccol_cursor cursor;
     krb5_error_code ret;
     krb5_ccache cache = NULL;
+    krb5_ccache expired_match = NULL;
 
     *id = NULL;
 
@@ -1134,26 +1135,46 @@ krb5_cc_cache_match (krb5_context context,
     if (ret)
 	return ret;
 
-    while (krb5_cccol_cursor_next (context, cursor, &cache) == 0 && cache != NULL) {
+    while (krb5_cccol_cursor_next(context, cursor, &cache) == 0 && cache != NULL) {
 	krb5_principal principal;
+	krb5_boolean match;
+	time_t lifetime;
 
 	ret = krb5_cc_get_principal(context, cache, &principal);
-	if (ret == 0) {
-	    krb5_boolean match;
+	if (ret)
+	    goto next;
 
+	if (client->name.name_string.len == 0)
+	    match = (strcmp(client->realm, principal->realm) == 0);
+	else
 	    match = krb5_principal_compare(context, principal, client);
-	    krb5_free_principal(context, principal);
-	    if (match)
-		break;
-	}
+	krb5_free_principal(context, principal);
+	
+	if (!match)
+	    goto next;
 
-	krb5_cc_close(context, cache);
+	if (expired_match == NULL &&
+	    (krb5_cc_get_lifetime(context, cache, &lifetime) != 0 || lifetime == 0)) {
+	    expired_match = cache;
+	    cache = NULL;
+	    goto next;
+	}
+	break;
+
+    next:
+        if (cache)
+	    krb5_cc_close(context, cache);
 	cache = NULL;
     }
 
     krb5_cccol_cursor_free(context, &cursor);
 
-    if (cache == NULL) {
+    if (cache == NULL && expired_match) {
+	cache = expired_match;
+	expired_match = NULL;
+    } else if (expired_match) {
+	krb5_cc_close(context, expired_match);
+    } else if (cache == NULL) {
 	char *str;
 
 	krb5_unparse_name(context, client, &str);
@@ -1166,6 +1187,7 @@ krb5_cc_cache_match (krb5_context context,
 	    free(str);
 	return KRB5_CC_NOTFOUND;
     }
+
     *id = cache;
 
     return 0;
@@ -1619,7 +1641,7 @@ krb5_cc_get_lifetime(krb5_context context, krb5_ccache id, time_t *t)
     krb5_cc_cursor cursor;
     krb5_error_code ret;
     krb5_creds cred;
-    time_t now;
+    time_t now, endtime = 0;
 
     *t = 0;
     now = time(NULL);
@@ -1629,15 +1651,38 @@ krb5_cc_get_lifetime(krb5_context context, krb5_ccache id, time_t *t)
 	return ret;
 
     while ((ret = krb5_cc_next_cred(context, id, &cursor, &cred)) == 0) {
-	if (cred.flags.b.initial) {
+	/**
+	 * If we find a krbtgt in the cache, use that as the lifespan.
+	 */
+	if (krb5_principal_is_root_krbtgt(context, cred.client)) {
 	    if (now < cred.times.endtime)
-		*t = cred.times.endtime - now;
+		endtime = cred.times.endtime;
 	    krb5_free_cred_contents(context, &cred);
 	    break;
 	}
+	/*
+	 * Skip config entries
+	 */
+	if (krb5_is_config_principal(context, cred.server)) {
+	    krb5_free_cred_contents(context, &cred);
+	    continue;
+	}
+	/**
+	 * If there was no krbtgt, use the shortest lifetime of
+	 * service tickets that have yet to expire.  If all
+	 * credentials are expired, krb5_cc_get_lifetime() will fail.
+	 */
+	if ((endtime == 0 || cred.times.endtime < endtime) && now < cred.times.endtime)
+	    endtime = cred.times.endtime;
 	krb5_free_cred_contents(context, &cred);
     }
 
+    /* if we found an endtime use that */
+    if (endtime) {
+	*t = endtime - now;
+	ret = 0;
+    }
+    
     krb5_cc_end_seq_get(context, id, &cursor);
 
     return ret;

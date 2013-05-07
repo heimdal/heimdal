@@ -360,6 +360,11 @@ dcc_resolve(krb5_context context, krb5_ccache *id, const char *res)
 static char *
 copy_default_dcc_cache(krb5_context context)
 {
+    const char *defname;
+    krb5_error_code ret;
+    char *name = NULL;
+    size_t len;
+
     len = strlen(krb5_dcc_ops.prefix);
 
     defname = krb5_cc_default_name(context);
@@ -384,7 +389,6 @@ dcc_gen_new(krb5_context context, krb5_ccache *id)
     krb5_error_code ret;
     char *name = NULL;
     krb5_dcache *dc;
-    size_t len;
     int fd;
 
     name = copy_default_dcc_cache(context);
@@ -584,7 +588,7 @@ dcc_end_cache_get(krb5_context context, krb5_cc_cursor cursor)
         return krb5_einval(context, 2);
 
     if (iter->dc)
-	dcc_release(iter->dc);
+	dcc_release(context, iter->dc);
     free(iter);
     return 0;
 }

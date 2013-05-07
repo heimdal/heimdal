@@ -1210,6 +1210,40 @@ krb5_principal_is_krbtgt(krb5_context context, krb5_const_principal p)
 
 }
 
+/**
+ * Returns true iff name is an WELLKNOWN:ORG.H5L.HOSTBASED-SERVICE
+ *
+ * @ingroup krb5_principal
+ */
+
+krb5_boolean KRB5_LIB_FUNCTION
+krb5_principal_is_gss_hostbased_service(krb5_context context,
+					krb5_const_principal principal)
+{
+    if (principal == NULL)
+	return FALSE;
+    if (principal->name.name_string.len != 2)
+	return FALSE;
+    if (strcmp(principal->name.name_string.val[1], KRB5_GSS_HOSTBASED_SERVICE_NAME) != 0)
+	return FALSE;
+    return TRUE;
+}
+
+/**
+ * Check if the cname part of the principal is a initial or renewed krbtgt principal
+ *
+ * @ingroup krb5_principal
+ */
+
+krb5_boolean KRB5_LIB_FUNCTION
+krb5_principal_is_root_krbtgt(krb5_context context, krb5_const_principal p)
+{
+    return p->name.name_string.len == 2 &&
+	strcmp(p->name.name_string.val[0], KRB5_TGS_NAME) == 0 &&
+	strcmp(p->name.name_string.val[1], p->realm) == 0;
+}
+
+
 typedef enum krb5_name_canon_rule_type {
 	KRB5_NCRT_BOGUS = 0,
 	KRB5_NCRT_AS_IS,
@@ -1798,8 +1832,6 @@ _krb5_apply_name_canon_rule(krb5_context context, krb5_name_canon_rule rule,
 	    }
 
 	} else {
-	    size_t len;
-
 	    asprintf(&new_hostname, "%s%s%s", hostname,
 		     rule->domain[0] != '.' ? "." : "",
 		     rule->domain);

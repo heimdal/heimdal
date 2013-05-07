@@ -296,10 +296,6 @@ if($oproto) {
 }
 $private_h_trailer = "";
 
-foreach(sort keys %exported){
-    printf(" exported $_\n");
-}
-
 foreach(sort keys %funcs){
     if(/^(main)$/) { next }
     if ($funcs{$_} =~ /\^/) {
@@ -309,7 +305,6 @@ foreach(sort keys %funcs){
 	$beginblock = $endblock = "";
     }
     # if we have an export table and doesn't have content, or matches private RE
-    print "exported $_ " . scalar(keys(%exported)) . " " . keys(%exported) . "\n";
     if((scalar(keys(%exported)) ne 0 && !exists $exported{$_} ) || /$private_func_re/) {
 	$private_h .= $beginblock;
 	$private_h .= $funcs{$_} . "\n" ;

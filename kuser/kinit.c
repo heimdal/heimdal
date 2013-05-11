@@ -63,6 +63,7 @@ static int switch_cache_flags = 1;
 struct getarg_strings etype_str;
 int use_keytab		= 0;
 char *keytab_str	= NULL;
+static krb5_keytab kt	= NULL;
 int do_afslog		= -1;
 int fcache_version;
 char *password_file	= NULL;
@@ -361,7 +362,6 @@ get_new_tickets(krb5_context context,
     const char *renewstr = NULL;
     krb5_enctype *enctype = NULL;
     krb5_ccache tempccache;
-    krb5_keytab kt = NULL;
     krb5_init_creds_context ctx;
 #ifndef NO_NTLM
     struct ntlm_buf ntlmkey;
@@ -524,18 +524,9 @@ get_new_tickets(krb5_context context,
     }
 
     if (use_keytab || keytab_str) {
-
-	if (keytab_str)
-	    ret = krb5_kt_resolve(context, keytab_str, &kt);
-	else
-	    ret = krb5_kt_default(context, &kt);
-	if (ret)
-	    krb5_err(context, 1, ret, "resolving keytab");
-
 	ret = krb5_init_creds_set_keytab(context, ctx, kt);
 	if (ret)
 	    krb5_err(context, 1, ret, "krb5_init_creds_set_keytab");
-
     } else if (pk_user_id || ent_user_id || anonymous_flag) {
 
     } else if (!interactive) {
@@ -666,8 +657,6 @@ get_new_tickets(krb5_context context,
 
     krb5_get_init_creds_opt_free(context, opt);
 
-    if (kt)			
-	krb5_kt_close(context, kt);
     if (enctype)
 	free(enctype);
 
@@ -773,16 +762,208 @@ renew_func(void *ptr)
     return expire / 2 + 1;
 }
 
+static void
+parse_name_flags(krb5_context context,
+		 const char *name,
+		 int flags,
+		 krb5_principal *princ)
+{
+    krb5_error_code ret = krb5_parse_name_flags(context, name, flags, princ);
+    if (ret)
+	krb5_err(context, 1, ret, "krb5_parse_name_flags");
+}
+
+static char *
+get_realm(krb5_context context)
+{
+    char *realm;
+    krb5_error_code ret = krb5_get_default_realm(context, &realm);
+
+    if (ret)
+        krb5_err(context, 1, ret, "krb5_get_default_realm");
+    return realm;
+}
+
+static void
+set_realm(krb5_context context, const char *realm)
+{
+    krb5_error_code ret = krb5_set_default_realm(context, realm);
+
+    if (ret)
+	krb5_err(context, 1, ret, "krb5_set_default_realm");
+}
+
+/*
+ * Set default realm to the "user_realm".
+ * Return previous default realm, or NULL if unchanged.
+ */
+static char *
+set_user_realm(krb5_context context)
+{
+    krb5_error_code ret;
+    char *def_realm = get_realm(context);
+    char *user_realm;
+
+    /*
+     * If memory allocation fails, we don't try to use the wrong realm,
+     * that will trigger misleading error messages complicate support.
+     */
+    krb5_appdefault_string(context, "kinit", NULL, "user_realm", "",
+			   &user_realm);
+    if (user_realm == NULL) {
+	ret = krb5_enomem(context);
+	krb5_err(context, 1, ret, "krb5_appdefault_string");
+    }
+
+    if (*user_realm == 0 || strcmp(user_realm, def_realm) == 0) {
+    	free(user_realm);
+	free(def_realm);
+	return NULL;
+    }
+
+    set_realm(context, user_realm);
+    free(user_realm);
+    return def_realm;
+}
+
+static void
+get_princ(krb5_context context, krb5_principal *principal, const char *name)
+{
+    krb5_error_code ret;
+    char *def_realm;
+
+    if (name == NULL) {
+	krb5_ccache ccache;
+
+	/* If credential cache provides a client principal, use that. */
+	if (krb5_cc_default(context, &ccache) == 0) {
+	    ret = krb5_cc_get_principal(context, ccache, principal);
+	    krb5_cc_close(context, ccache);
+	    if (ret == 0)
+		return;
+	}
+    }
+
+    def_realm = set_user_realm(context);
+
+    if (name == NULL) {
+	/* The default principal uses the user_realm */
+	ret = krb5_get_default_principal(context, principal);
+	if (ret)
+	    krb5_err(context, 1, ret, "krb5_get_default_principal");
+    } else {
+	krb5_principal tmp;
+	int parseflags = 0;
+
+	if (canonicalize_flag || enterprise_flag)
+	    parseflags |= KRB5_PRINCIPAL_PARSE_ENTERPRISE;
+	parse_name_flags(context, name, parseflags, &tmp);
+
+	/* If principal is instance qualified, reparse with default realm. */
+	if (!def_realm || krb5_principal_get_num_comp(context, tmp) == 1) {
+	    *principal = tmp;
+	} else {
+	    krb5_free_principal(context, tmp);
+	    set_realm(context, def_realm);
+	    parse_name_flags(context, name, parseflags, principal);
+	}
+    }
+
+    if (def_realm)
+	free(def_realm);
+}
+
+static void
+get_princ_kt(krb5_context context,
+	     krb5_principal *principal,
+	     char *name)
+{
+    krb5_error_code ret;
+    krb5_principal tmp;
+    krb5_ccache ccache;
+    krb5_kt_cursor cursor;
+    krb5_keytab_entry entry;
+    int parseflags = 0;
+    char *def_realm;
+
+    if (name == NULL) {
+	/*
+	 * If the credential cache exists and specifies a client principal,
+	 * use that.
+	 */
+	if (krb5_cc_default(context, &ccache) == 0) {
+	    ret = krb5_cc_get_principal(context, ccache, principal);
+	    krb5_cc_close(context, ccache);
+	    if (ret == 0)
+		return;
+	}
+    }
+
+    def_realm = get_realm(context);
+
+    if (name) {
+	/*
+	 * If the principal specifies an explicit realm, just use that.
+	 */
+	parseflags |= KRB5_PRINCIPAL_PARSE_NO_REALM;
+	ret = krb5_parse_name_flags(context, name, parseflags, &tmp);
+	parseflags &= ~KRB5_PRINCIPAL_PARSE_NO_REALM;
+	if (ret) {
+	    parse_name_flags(context, name, parseflags, principal);
+	    return;
+	}
+    } else {
+	/*
+	 * Otherwise, search the keytab for the bare name of the default
+	 * principal.
+	 */
+	if ((ret = krb5_get_default_principal(context, &tmp)) != 0)
+	    krb5_err(context, 1, ret, "krb5_get_default_principal");
+	if ((ret = krb5_principal_set_realm(context, tmp, NULL)) != 0)
+	    krb5_err(context, 1, ret, "krb5_principal_set_realm");
+    }
+
+    ret = krb5_kt_start_seq_get(context, kt, &cursor);
+    if (ret)
+	krb5_err(context, 1, ret, "krb5_kt_start_seq_get");
+
+    while (ret == 0 &&
+           krb5_kt_next_entry(context, kt, &entry, &cursor) == 0) {
+        const char *realm;
+
+        if (!krb5_principal_compare_any_realm(context, tmp, entry.principal))
+            continue;
+        if (*principal &&
+	    krb5_principal_compare(context, *principal, entry.principal))
+            continue;
+        /* The default realm takes precedence */
+        realm = krb5_principal_get_realm(context, entry.principal);
+        if (*principal && strcmp(def_realm, realm) == 0) {
+            krb5_free_principal(context, *principal);
+            ret = krb5_copy_principal(context, entry.principal, principal);
+            break;
+        }
+        if (!*principal)
+            ret = krb5_copy_principal(context, entry.principal, principal);
+    }
+    if (ret != 0 || (ret = krb5_kt_end_seq_get(context, kt, &cursor)) != 0)
+	krb5_err(context, 1, ret, "get_princ_kt");
+    if (!*principal)
+	parse_name_flags(context, name, parseflags, principal);
+
+    krb5_free_principal(context, tmp);
+    free(def_realm);
+}
+
 int
 main(int argc, char **argv)
 {
     krb5_error_code ret;
     krb5_context context;
     krb5_ccache  ccache;
-    krb5_principal principal;
+    krb5_principal principal = NULL;
     int optidx = 0;
     krb5_deltat ticket_life = 0;
-    int parseflags = 0;
 
     setprogname(argv[0]);
 
@@ -810,8 +991,18 @@ main(int argc, char **argv)
     argc -= optidx;
     argv += optidx;
 
-    if (canonicalize_flag || enterprise_flag)
-	parseflags |= KRB5_PRINCIPAL_PARSE_ENTERPRISE;
+    /*
+     * Open the keytab now, we use the keytab to determine the principal's
+     * realm when the requested principal has no realm.
+     */
+    if (use_keytab || keytab_str) {
+	if (keytab_str)
+	    ret = krb5_kt_resolve(context, keytab_str, &kt);
+	else
+	    ret = krb5_kt_default(context, &kt);
+	if (ret)
+	    krb5_err(context, 1, ret, "resolving keytab");
+    }
 
     if (pk_enterprise_flag) {
 	ret = krb5_pk_enterprise_cert(context, pk_user_id,
@@ -831,17 +1022,10 @@ main(int argc, char **argv)
 	    krb5_err(context, 1, ret, "krb5_make_principal");
 	krb5_principal_set_type(context, principal, KRB5_NT_WELLKNOWN);
 
+    } else if (use_keytab || keytab_str) {
+	get_princ_kt(context, &principal, argv[0]);
     } else {
-	if (argv[0]) {
-	    ret = krb5_parse_name_flags(context, argv[0], parseflags,
-					&principal);
-	    if (ret)
-		krb5_err(context, 1, ret, "krb5_parse_name");
-	} else {
-	    ret = krb5_get_default_principal(context, &principal);
-	    if (ret)
-		krb5_err(context, 1, ret, "krb5_get_default_principal");
-	}
+	get_princ(context, &principal, argv[0]);
     }
 
     if (fcache_version)
@@ -969,6 +1153,8 @@ main(int argc, char **argv)
 	ret = 0;
     }
     krb5_free_principal(context, principal);
+    if (kt)			
+	krb5_kt_close(context, kt);
     krb5_free_context(context);
     return ret;
 }

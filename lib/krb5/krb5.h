@@ -838,7 +838,9 @@ typedef krb5_error_code
 enum {
     KRB5_PRINCIPAL_PARSE_NO_REALM = 1, /**< Require that there are no realm */
     KRB5_PRINCIPAL_PARSE_REQUIRE_REALM = 2, /**< Require a realm present */
-    KRB5_PRINCIPAL_PARSE_ENTERPRISE = 4 /**< Parse as a NT-ENTERPRISE name */
+    KRB5_PRINCIPAL_PARSE_ENTERPRISE = 4, /**< Parse as a NT-ENTERPRISE name */
+    KRB5_PRINCIPAL_PARSE_IGNORE_REALM = 8, /**< Ignore realm if present */
+    KRB5_PRINCIPAL_PARSE_NO_DEF_REALM = 16 /**< Don't default the realm */
 };
 
 /** flags for krb5_unparse_name_flags */

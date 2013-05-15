@@ -227,36 +227,37 @@ krb5_parse_name_flags_realm(krb5_context context,
     char c;
     int got_realm = 0;
     int first_at = 1;
-    int enterprise = (flags & KRB5_PRINCIPAL_PARSE_ENTERPRISE);
+    int no_realm = flags & KRB5_PRINCIPAL_PARSE_NO_REALM;
+    int require_realm = flags & KRB5_PRINCIPAL_PARSE_REQUIRE_REALM;
+    int enterprise = flags & KRB5_PRINCIPAL_PARSE_ENTERPRISE;
+    int ignore_realm = flags & KRB5_PRINCIPAL_PARSE_IGNORE_REALM;
+    int no_def_realm = flags & KRB5_PRINCIPAL_PARSE_NO_DEF_REALM;
 
     *principal = NULL;
 
-#define RFLAGS (KRB5_PRINCIPAL_PARSE_NO_REALM|KRB5_PRINCIPAL_PARSE_REQUIRE_REALM)
-
-    if ((flags & RFLAGS) == RFLAGS) {
+    if (no_realm && require_realm) {
 	krb5_set_error_message(context, KRB5_ERR_NO_SERVICE,
 			       N_("Can't require both realm and "
 				  "no realm at the same time", ""));
 	return KRB5_ERR_NO_SERVICE;
     }
-#undef RFLAGS
 
     /* count number of component,
      * enterprise names only have one component
      */
     ncomp = 1;
     if (!enterprise) {
-	for(p = name; *p; p++){
-	    if(*p=='\\'){
-		if(!p[1]) {
+	for (p = name; *p; p++) {
+	    if (*p=='\\') {
+		if (!p[1]) {
 		    krb5_set_error_message(context, KRB5_PARSE_MALFORMED,
 					   N_("trailing \\ in principal name", ""));
 		    return KRB5_PARSE_MALFORMED;
 		}
 		p++;
-	    } else if(*p == '/')
+	    } else if (*p == '/')
 		ncomp++;
-	    else if(*p == '@')
+	    else if (*p == '@')
 		break;
 	}
     }
@@ -267,37 +268,37 @@ krb5_parse_name_flags_realm(krb5_context context,
     n = 0;
     p = start = q = s = strdup(name);
     if (start == NULL) {
-	free (comp);
+	free(comp);
 	return krb5_enomem(context);
     }
-    while(*p){
+    while (*p) {
 	c = *p++;
-	if(c == '\\'){
+	if (c == '\\') {
 	    c = *p++;
-	    if(c == 'n')
+	    if (c == 'n')
 		c = '\n';
-	    else if(c == 't')
+	    else if (c == 't')
 		c = '\t';
-	    else if(c == 'b')
+	    else if (c == 'b')
 		c = '\b';
-	    else if(c == '0')
+	    else if (c == '0')
 		c = '\0';
-	    else if(c == '\0') {
+	    else if (c == '\0') {
 		ret = KRB5_PARSE_MALFORMED;
 		krb5_set_error_message(context, ret,
 				       N_("trailing \\ in principal name", ""));
 		goto exit;
 	    }
-	}else if(enterprise && first_at) {
+	} else if (enterprise && first_at) {
 	    if (c == '@')
 		first_at = 0;
-	}else if((c == '/' && !enterprise) || c == '@'){
-	    if(got_realm){
+	} else if ((c == '/' && !enterprise) || c == '@') {
+	    if (got_realm) {
 		ret = KRB5_PARSE_MALFORMED;
 		krb5_set_error_message(context, ret,
 				       N_("part after realm in principal name", ""));
 		goto exit;
-	    }else{
+	    } else {
 		comp[n] = malloc(q - start + 1);
 		if (comp[n] == NULL) {
 		    ret = krb5_enomem(context);
@@ -307,12 +308,12 @@ krb5_parse_name_flags_realm(krb5_context context,
 		comp[n][q - start] = 0;
 		n++;
 	    }
-	    if(c == '@')
+	    if (c == '@')
 		got_realm = 1;
 	    start = q;
 	    continue;
 	}
-	if(got_realm && (c == '/' || c == '\0')) {
+	if (got_realm && (c == '/' || c == '\0')) {
 	    ret = KRB5_PARSE_MALFORMED;
 	    krb5_set_error_message(context, ret,
 				   N_("part after realm in principal name", ""));
@@ -320,32 +321,34 @@ krb5_parse_name_flags_realm(krb5_context context,
 	}
 	*q++ = c;
     }
-    if(got_realm){
-	if (flags & KRB5_PRINCIPAL_PARSE_NO_REALM) {
+    if (got_realm) {
+	if (no_realm) {
 	    ret = KRB5_PARSE_MALFORMED;
 	    krb5_set_error_message(context, ret,
 				   N_("realm found in 'short' principal "
 				      "expected to be without one", ""));
 	    goto exit;
 	}
-	realm = malloc(q - start + 1);
-	if (realm == NULL) {
-	    ret = krb5_enomem(context);
-	    goto exit;
+	if (!ignore_realm) {
+	    realm = malloc(q - start + 1);
+	    if (realm == NULL) {
+		ret = krb5_enomem(context);
+		goto exit;
+	    }
+	    memcpy(realm, start, q - start);
+	    realm[q - start] = 0;
 	}
-	memcpy(realm, start, q - start);
-	realm[q - start] = 0;
-    }else{
-	if (flags & KRB5_PRINCIPAL_PARSE_REQUIRE_REALM) {
+    } else {
+	if (require_realm) {
 	    ret = KRB5_PARSE_MALFORMED;
 	    krb5_set_error_message(context, ret,
 				   N_("realm NOT found in principal "
 				      "expected to be with one", ""));
 	    goto exit;
-	} else if (flags & KRB5_PRINCIPAL_PARSE_NO_REALM) {
+	} else if (no_realm || no_def_realm) {
 	    realm = NULL;
 	} else if (def_realm == NULL) {
-	    ret = krb5_get_default_realm (context, &realm);
+	    ret = krb5_get_default_realm(context, &realm);
 	    if (ret)
 		goto exit;
 	} else {
@@ -380,7 +383,7 @@ krb5_parse_name_flags_realm(krb5_context context,
     free(s);
     return 0;
 exit:
-    while(n>0){
+    while (n>0) {
 	free(comp[--n]);
     }
     free(comp);

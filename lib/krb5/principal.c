@@ -652,8 +652,9 @@ krb5_principal_set_realm(krb5_context context,
     if (princ_realm(principal))
 	free(princ_realm(principal));
 
-    princ_realm(principal) = strdup(realm);
-    if (princ_realm(principal) == NULL)
+    if (realm == NULL)
+	princ_realm(principal) = NULL;
+    else if ((princ_realm(principal) = strdup(realm)) == NULL)
 	return krb5_enomem(context);
     return 0;
 }

@@ -189,6 +189,30 @@ krb5_parse_name_flags(krb5_context context,
 		      int flags,
 		      krb5_principal *principal)
 {
+    return krb5_parse_name_flags_realm(context, name, flags, NULL, principal);
+}
+
+/**
+ * Parse a name into a krb5_principal structure, flags controls the behavior.
+ *
+ * @param context Kerberos 5 context
+ * @param name name to parse into a Kerberos principal
+ * @param flags flags to control the behavior
+ * @param realm, default realm, uses config-default if NULL.
+ * @param principal returned principal, free with krb5_free_principal().
+ *
+ * @return An krb5 error code, see krb5_get_error_message().
+ *
+ * @ingroup krb5_principal
+ */
+
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
+krb5_parse_name_flags_realm(krb5_context context,
+			    const char *name,
+			    int flags,
+			    const char *def_realm,
+			    krb5_principal *principal)
+{
     krb5_error_code ret;
     heim_general_string *comp;
     heim_general_string realm = NULL;
@@ -320,10 +344,16 @@ krb5_parse_name_flags(krb5_context context,
 	    goto exit;
 	} else if (flags & KRB5_PRINCIPAL_PARSE_NO_REALM) {
 	    realm = NULL;
-	} else {
+	} else if (def_realm == NULL) {
 	    ret = krb5_get_default_realm (context, &realm);
 	    if (ret)
 		goto exit;
+	} else {
+	    realm = strdup(def_realm);
+	    if (realm == NULL) {
+		ret = krb5_enomem(context);
+		goto exit;
+	    }
 	}
 
 	comp[n] = malloc(q - start + 1);

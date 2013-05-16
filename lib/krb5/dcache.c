@@ -255,17 +255,17 @@ dcc_resolve(krb5_context context, krb5_ccache *id, const char *res)
     p = res;
     do {
 	p = strstr(p, "/..");
-	if (p && (*p == '/' || *p == '\0')) {
+	if (p && (p[3] == '/' || p[3] == '\0')) {
 	    krb5_set_error_message(context, KRB5_CC_FORMAT,
 				   N_("Path contains a .. component", ""));
 	    return KRB5_CC_FORMAT;
 	}
 	if (p)
-	    p++;
+	    p += 3;
     } while (p);
 
     dc = calloc(1, sizeof(*dc));
-    if(dc == NULL) {
+    if (dc == NULL) {
 	krb5_set_error_message(context, KRB5_CC_NOMEM,
 			       N_("malloc: out of memory", ""));
 	return KRB5_CC_NOMEM;
@@ -390,6 +390,7 @@ dcc_gen_new(krb5_context context, krb5_ccache *id)
     char *name = NULL;
     krb5_dcache *dc;
     int fd;
+    size_t len;
 
     name = copy_default_dcc_cache(context);
     if (name == NULL) {
@@ -398,7 +399,13 @@ dcc_gen_new(krb5_context context, krb5_ccache *id)
 	return KRB5_CC_FORMAT;
     }
 
-    ret = dcc_resolve(context, id, name);
+    len = strlen(krb5_dcc_ops.prefix);
+    if (strncmp(name, krb5_dcc_ops.prefix, len) == 0 && name[len] == ':')
+	++len;
+    else
+	len = 0;
+
+    ret = dcc_resolve(context, id, name + len);
     free(name);
     name = NULL;
     if (ret)

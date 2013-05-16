@@ -695,8 +695,10 @@ main(int argc, char **argv)
     test_cache_iter(context, krb5_cc_type_api, 0);
     test_cache_iter(context, krb5_cc_type_scc, 0);
     test_cache_iter(context, krb5_cc_type_scc, 1);
+#if 0
     test_cache_iter(context, krb5_cc_type_dcc, 0);
     test_cache_iter(context, krb5_cc_type_dcc, 1);
+#endif
 
     test_copy(context, krb5_cc_type_file, krb5_cc_type_file);
     test_copy(context, krb5_cc_type_memory, krb5_cc_type_memory);
@@ -706,9 +708,11 @@ main(int argc, char **argv)
     test_copy(context, krb5_cc_type_file, krb5_cc_type_scc);
     test_copy(context, krb5_cc_type_scc, krb5_cc_type_memory);
     test_copy(context, krb5_cc_type_memory, krb5_cc_type_scc);
+#if 0
     test_copy(context, krb5_cc_type_dcc, krb5_cc_type_memory);
     test_copy(context, krb5_cc_type_dcc, krb5_cc_type_file);
     test_copy(context, krb5_cc_type_dcc, krb5_cc_type_scc);
+#endif
 
     test_move(context, krb5_cc_type_file);
     test_move(context, krb5_cc_type_memory);
@@ -716,7 +720,9 @@ main(int argc, char **argv)
     test_move(context, krb5_cc_type_kcm);
 #endif
     test_move(context, krb5_cc_type_scc);
+#if 0
     test_move(context, krb5_cc_type_dcc);
+#endif
 
     test_prefix_ops(context, "FILE:/tmp/foo", &krb5_fcc_ops);
     test_prefix_ops(context, "FILE", &krb5_fcc_ops);
@@ -727,8 +733,10 @@ main(int argc, char **argv)
     test_prefix_ops(context, "SCC:", &krb5_scc_ops);
     test_prefix_ops(context, "SCC:foo", &krb5_scc_ops);
 #endif
+#if 0
     test_prefix_ops(context, "DIR:", &krb5_dcc_ops);
     test_prefix_ops(context, "DIR:tkt1", &krb5_dcc_ops);
+#endif
 
     krb5_cc_destroy(context, id1);
     krb5_cc_destroy(context, id2);

@@ -1885,7 +1885,6 @@ _krb5_apply_name_canon_rule(krb5_context context, krb5_name_canon_rule rule,
 	ret = krb5_build_principal(context, out_princ,
 				      strlen(realm), realm,
 				      sname, new_hostname, (char *)0);
-	free(new_hostname);
 	goto out;
 	break;
 

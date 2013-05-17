@@ -763,6 +763,17 @@ renew_func(void *ptr)
 }
 
 static void
+set_princ_realm(krb5_context context,
+		krb5_principal principal,
+		const char *realm)
+{
+    krb5_error_code ret;
+
+    if ((ret = krb5_principal_set_realm(context, principal, realm)) != 0)
+	krb5_err(context, 1, ret, "krb5_principal_set_realm");
+}
+
+static void
 parse_name_realm(krb5_context context,
 		 const char *name,
 		 int flags,
@@ -770,10 +781,13 @@ parse_name_realm(krb5_context context,
 		 krb5_principal *princ)
 {
     krb5_error_code ret;
-
-    ret = krb5_parse_name_flags_realm(context, name, flags, realm, princ);
-    if (ret)
-	krb5_err(context, 1, ret, "krb5_parse_name_flags_realm");
+    
+    if (realm)
+	flags |= KRB5_PRINCIPAL_PARSE_NO_DEF_REALM;
+    if ((ret = krb5_parse_name_flags(context, name, flags, princ)) != 0)
+	krb5_err(context, 1, ret, "krb5_parse_name_flags");
+    if (realm && krb5_principal_get_realm(context, *princ) == NULL)
+	set_princ_realm(context, *princ, realm);
 }
 
 static char *
@@ -794,17 +808,6 @@ get_default_principal(krb5_context context, krb5_principal *princ)
 
     if ((ret = krb5_get_default_principal(context, princ)) != 0)
 	krb5_err(context, 1, ret, "krb5_get_default_principal");
-}
-
-static void
-set_princ_realm(krb5_context context,
-		krb5_principal principal,
-		const char *realm)
-{
-    krb5_error_code ret;
-
-    if ((ret = krb5_principal_set_realm(context, principal, realm)) != 0)
-	krb5_err(context, 1, ret, "krb5_principal_set_realm");
 }
 
 static char *

@@ -367,8 +367,8 @@ heim_object_t heim_json_create(const char *, size_t, heim_json_flags_t,
 heim_object_t heim_json_create_with_bytes(const void *, size_t, size_t,
 					  heim_json_flags_t,
 					  heim_error_t *);
-heim_string_t heim_serialize(heim_object_t, heim_json_flags_t flags,
-			     heim_error_t *);
+heim_string_t heim_copy_serialize(heim_object_t, heim_json_flags_t,
+				  heim_error_t *);
 
 
 /*

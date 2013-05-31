@@ -79,7 +79,7 @@ HEIMDAL_BASE_1.0 {
 		heim_path_vcopy;
 		heim_release;
 		heim_retain;
-		heim_serialize;
+		heim_copy_serialize;
 		heim_show;
 		heim_sorted_text_file_dbtype;
 		heim_string_create;

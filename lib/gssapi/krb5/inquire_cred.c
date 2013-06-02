@@ -35,7 +35,7 @@
 
 OM_uint32 GSSAPI_CALLCONV _gsskrb5_inquire_cred
 (OM_uint32 * minor_status,
- const gss_cred_id_t cred_handle,
+ gss_const_cred_id_t cred_handle,
  gss_name_t * output_name,
  OM_uint32 * lifetime,
  gss_cred_usage_t * cred_usage,

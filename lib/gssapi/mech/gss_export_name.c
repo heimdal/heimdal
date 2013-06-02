@@ -44,7 +44,7 @@
  */
 GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL
 gss_export_name(OM_uint32 *minor_status,
-    const gss_name_t input_name,
+    gss_const_name_t input_name,
     gss_buffer_t exported_name)
 {
 	struct _gss_name *name = (struct _gss_name *) input_name;

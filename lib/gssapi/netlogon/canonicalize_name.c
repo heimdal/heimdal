@@ -37,7 +37,7 @@
 
 OM_uint32 _netlogon_canonicalize_name (
             OM_uint32 * minor_status,
-            const gss_name_t input_name,
+            gss_const_name_t input_name,
             const gss_OID mech_type,
             gss_name_t * output_name
            )

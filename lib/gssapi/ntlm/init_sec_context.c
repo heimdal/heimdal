@@ -217,9 +217,9 @@ _gss_copy_cred(ntlm_cred from, ntlm_cred *to)
 OM_uint32 GSSAPI_CALLCONV
 _gss_ntlm_init_sec_context
            (OM_uint32 * minor_status,
-            const gss_cred_id_t initiator_cred_handle,
+            gss_const_cred_id_t initiator_cred_handle,
             gss_ctx_id_t * context_handle,
-            const gss_name_t target_name,
+            gss_const_name_t target_name,
             const gss_OID mech_type,
             OM_uint32 req_flags,
             OM_uint32 time_req,

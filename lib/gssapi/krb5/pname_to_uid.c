@@ -34,7 +34,7 @@
 
 OM_uint32 GSSAPI_CALLCONV
 _gsskrb5_localname(OM_uint32 *minor_status,
-                   const gss_name_t pname,
+                   gss_const_name_t pname,
                    const gss_OID mech_type,
                    gss_buffer_t localname)
 {

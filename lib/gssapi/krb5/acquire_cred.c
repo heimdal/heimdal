@@ -106,7 +106,7 @@ static OM_uint32 acquire_initiator_cred
 		   krb5_context context,
 		   gss_const_OID credential_type,
 		   const void *credential_data,
-		   const gss_name_t desired_name,
+		   gss_const_name_t desired_name,
 		   OM_uint32 time_req,
 		   gss_const_OID desired_mech,
 		   gss_cred_usage_t cred_usage,
@@ -257,7 +257,7 @@ static OM_uint32 acquire_acceptor_cred
 		   krb5_context context,
 		   gss_const_OID credential_type,
 		   const void *credential_data,
-		   const gss_name_t desired_name,
+		   gss_const_name_t desired_name,
 		   OM_uint32 time_req,
 		   gss_const_OID desired_mech,
 		   gss_cred_usage_t cred_usage,
@@ -318,7 +318,7 @@ end:
 
 OM_uint32 GSSAPI_CALLCONV _gsskrb5_acquire_cred
 (OM_uint32 * minor_status,
- const gss_name_t desired_name,
+ gss_const_name_t desired_name,
  OM_uint32 time_req,
  const gss_OID_set desired_mechs,
  gss_cred_usage_t cred_usage,
@@ -366,7 +366,7 @@ OM_uint32 GSSAPI_CALLCONV _gsskrb5_acquire_cred
 
 OM_uint32 GSSAPI_CALLCONV _gsskrb5_acquire_cred_ext
 (OM_uint32 * minor_status,
- const gss_name_t desired_name,
+ gss_const_name_t desired_name,
  gss_const_OID credential_type,
  const void *credential_data,
  OM_uint32 time_req,

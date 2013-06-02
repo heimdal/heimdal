@@ -44,7 +44,7 @@ updateusage(gss_cred_usage_t usage, int *usagemask)
 
 GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL
 gss_inquire_cred(OM_uint32 *minor_status,
-    const gss_cred_id_t cred_handle,
+    gss_const_cred_id_t cred_handle,
     gss_name_t *name_ret,
     OM_uint32 *lifetime,
     gss_cred_usage_t *cred_usage,

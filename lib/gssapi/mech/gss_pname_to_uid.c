@@ -101,7 +101,7 @@ attr_localname(OM_uint32 *minor_status,
 
 GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL
 gss_localname(OM_uint32 *minor_status,
-              const gss_name_t pname,
+              gss_const_name_t pname,
               const gss_OID mech_type,
               gss_buffer_t localname)
 {
@@ -138,7 +138,7 @@ gss_localname(OM_uint32 *minor_status,
 
 GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL
 gss_pname_to_uid(OM_uint32 *minor_status,
-                 const gss_name_t pname,
+                 gss_const_name_t pname,
                  const gss_OID mech_type,
                  uid_t *uidp)
 {

@@ -106,7 +106,7 @@ _gss_acquire_mech_cred(OM_uint32 *minor_status,
 
 OM_uint32
 _gss_acquire_cred_ext(OM_uint32 *minor_status,
-    const gss_name_t desired_name,
+    gss_const_name_t desired_name,
     gss_const_OID credential_type,
     const void *credential_data,
     OM_uint32 time_req,

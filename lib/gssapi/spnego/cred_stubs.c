@@ -56,7 +56,7 @@ _gss_spnego_release_cred(OM_uint32 *minor_status, gss_cred_id_t *cred_handle)
  */
 OM_uint32 GSSAPI_CALLCONV _gss_spnego_acquire_cred
 (OM_uint32 *minor_status,
- const gss_name_t desired_name,
+ gss_const_name_t desired_name,
  OM_uint32 time_req,
  const gss_OID_set desired_mechs,
  gss_cred_usage_t cred_usage,
@@ -129,7 +129,7 @@ out:
 
 OM_uint32 GSSAPI_CALLCONV _gss_spnego_inquire_cred
            (OM_uint32 * minor_status,
-            const gss_cred_id_t cred_handle,
+            gss_const_cred_id_t cred_handle,
             gss_name_t * name,
             OM_uint32 * lifetime,
             gss_cred_usage_t * cred_usage,
@@ -171,7 +171,7 @@ OM_uint32 GSSAPI_CALLCONV _gss_spnego_inquire_cred
 
 OM_uint32 GSSAPI_CALLCONV _gss_spnego_inquire_cred_by_mech (
             OM_uint32 * minor_status,
-            const gss_cred_id_t cred_handle,
+            gss_const_cred_id_t cred_handle,
             const gss_OID mech_type,
             gss_name_t * name,
             OM_uint32 * initiator_lifetime,
@@ -216,7 +216,7 @@ OM_uint32 GSSAPI_CALLCONV _gss_spnego_inquire_cred_by_mech (
 
 OM_uint32 GSSAPI_CALLCONV _gss_spnego_inquire_cred_by_oid
            (OM_uint32 * minor_status,
-            const gss_cred_id_t cred_handle,
+            gss_const_cred_id_t cred_handle,
             const gss_OID desired_object,
             gss_buffer_set_t *data_set)
 {

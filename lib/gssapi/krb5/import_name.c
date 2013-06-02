@@ -83,10 +83,10 @@ import_krb5_name (OM_uint32 *minor_status,
 
 OM_uint32
 _gsskrb5_canon_name(OM_uint32 *minor_status, krb5_context context,
-		    int use_dns, krb5_const_principal sourcename, gss_name_t targetname,
-		    krb5_principal *out)
+		    int use_dns, krb5_const_principal sourcename,
+                    gss_const_name_t targetname, krb5_principal *out)
 {
-    krb5_principal p = (krb5_principal)targetname;
+    krb5_const_principal p = (krb5_const_principal)targetname;
     krb5_error_code ret;
     char *hostname = NULL, *service;
 

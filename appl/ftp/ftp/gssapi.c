@@ -332,7 +332,7 @@ gss_auth(void *app_data, char *host)
     gss_buffer_desc input, output_token;
     int context_established = 0;
     char *p;
-    int n;
+    int n = 0;
     gss_channel_bindings_t bindings;
     struct gssapi_data *d = app_data;
     OM_uint32 mech_flags = GSS_C_MUTUAL_FLAG | GSS_C_SEQUENCE_FLAG;
@@ -426,7 +426,7 @@ gss_auth(void *app_data, char *host)
 	    n = command("ADAT %s", p);
 	    free(p);
 	}
-	if (GSS_ERROR(maj_stat)) {
+	if (GSS_ERROR(maj_stat) || n >= 4) {
 	    if (d->context_hdl != GSS_C_NO_CONTEXT)
 		gss_delete_sec_context (&min_stat,
 					&d->context_hdl,

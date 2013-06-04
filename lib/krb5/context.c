@@ -355,8 +355,17 @@ static void
 init_context_once(void *ctx)
 {
     krb5_context context = ctx;
+    char **dirs;
 
-    _krb5_load_plugins(context, "krb5", sysplugin_dirs);
+    dirs = krb5_config_get_strings(context, NULL, "libdefaults",
+				   "plugin_dir", NULL);
+    if (dirs == NULL)
+	dirs = rk_UNCONST(sysplugin_dirs);
+
+    _krb5_load_plugins(context, "krb5", (const char **)dirs);
+
+    if (dirs != rk_UNCONST(sysplugin_dirs))
+	krb5_config_free_strings(dirs);
 
     bindtextdomain(HEIMDAL_TEXTDOMAIN, HEIMDAL_LOCALEDIR);
 }

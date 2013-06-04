@@ -502,8 +502,8 @@ keychain_iter(hx509_context context,
     if (ret)
 	return EINVAL;
 
-    cert = hx509_cert_init_data(context, ptr, len, &error);
-    if (cert == NULL) {
+    *cert = hx509_cert_init_data(context, ptr, len, &error);
+    if (*cert == NULL) {
 	ret = heim_error_get_code(error);
 	heim_release(error);
 	goto out;

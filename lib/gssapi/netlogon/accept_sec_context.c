@@ -43,7 +43,7 @@ OM_uint32
 _netlogon_accept_sec_context
 (OM_uint32 * minor_status,
  gss_ctx_id_t * context_handle,
- const gss_cred_id_t acceptor_cred_handle,
+ gss_const_cred_id_t acceptor_cred_handle,
  const gss_buffer_t input_token_buffer,
  const gss_channel_bindings_t input_chan_bindings,
  gss_name_t * src_name,

@@ -144,7 +144,7 @@ choose_mech(const gss_buffer_t input, gss_OID mech_oid)
 GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL
 gss_accept_sec_context(OM_uint32 *minor_status,
     gss_ctx_id_t *context_handle,
-    const gss_cred_id_t acceptor_cred_handle,
+    gss_const_cred_id_t acceptor_cred_handle,
     const gss_buffer_t input_token,
     const gss_channel_bindings_t input_chan_bindings,
     gss_name_t *src_name,

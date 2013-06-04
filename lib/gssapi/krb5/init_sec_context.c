@@ -204,7 +204,7 @@ gsskrb5_get_creds(
 	krb5_context context,
 	krb5_ccache ccache,
 	gsskrb5_ctx ctx,
-	const gss_name_t target_name,
+	gss_const_name_t target_name,
 	int use_dns,
 	OM_uint32 time_req,
 	OM_uint32 * time_rec)
@@ -378,7 +378,7 @@ init_auth
  gsskrb5_cred cred,
  gsskrb5_ctx ctx,
  krb5_context context,
- gss_name_t name,
+ gss_const_name_t name,
  const gss_OID mech_type,
  OM_uint32 req_flags,
  OM_uint32 time_req,
@@ -865,9 +865,9 @@ repl_mutual
 
 OM_uint32 GSSAPI_CALLCONV _gsskrb5_init_sec_context
 (OM_uint32 * minor_status,
- const gss_cred_id_t cred_handle,
+ gss_const_cred_id_t cred_handle,
  gss_ctx_id_t * context_handle,
- const gss_name_t target_name,
+ gss_const_name_t target_name,
  const gss_OID mech_type,
  OM_uint32 req_flags,
  OM_uint32 time_req,

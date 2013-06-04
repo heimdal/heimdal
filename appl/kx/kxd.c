@@ -403,7 +403,6 @@ close_connection(int fd, const char *message)
     char *p;
     int lsb = 0;
     size_t mlen;
-    ssize_t ret;
 
     mlen = strlen(message);
     if(mlen > 255)
@@ -434,7 +433,7 @@ close_connection(int fd, const char *message)
 	buf[6] = 0;
 	buf[7] = (p - buf - 8) / 4;
     }
-    ret = write(fd, buf, p - buf);
+    write(fd, buf, p - buf);
     close(fd);
 }
 

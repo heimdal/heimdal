@@ -114,8 +114,8 @@ attr_authorize_localname(OM_uint32 *minor_status,
 
 GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL
 gss_authorize_localname(OM_uint32 *minor_status,
-	                const gss_name_t gss_name,
-	                const gss_name_t gss_user)
+	                gss_const_name_t gss_name,
+	                gss_const_name_t gss_user)
 
 {
     OM_uint32 major_status;
@@ -164,7 +164,7 @@ gss_authorize_localname(OM_uint32 *minor_status,
 }
 
 GSSAPI_LIB_FUNCTION int GSSAPI_LIB_CALL
-gss_userok(const gss_name_t name,
+gss_userok(gss_const_name_t name,
            const char *user)
 {
     OM_uint32 major_status, minor_status;

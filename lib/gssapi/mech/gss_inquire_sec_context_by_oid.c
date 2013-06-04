@@ -34,7 +34,7 @@
 
 GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL
 gss_inquire_sec_context_by_oid (OM_uint32 *minor_status,
-	                        const gss_ctx_id_t context_handle,
+	                        gss_const_ctx_id_t context_handle,
 	                        const gss_OID desired_object,
 	                        gss_buffer_set_t *data_set)
 {

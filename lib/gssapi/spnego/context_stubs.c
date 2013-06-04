@@ -68,18 +68,18 @@ spnego_supported_mechs(OM_uint32 *minor_status, gss_OID_set *mechs)
 
 OM_uint32 GSSAPI_CALLCONV _gss_spnego_process_context_token
            (OM_uint32 *minor_status,
-            const gss_ctx_id_t context_handle,
+            gss_const_ctx_id_t context_handle,
             const gss_buffer_t token_buffer
            )
 {
-    gss_ctx_id_t context ;
+    gss_ctx_id_t context;
     gssspnego_ctx ctx;
     OM_uint32 ret;
 
     if (context_handle == GSS_C_NO_CONTEXT)
 	return GSS_S_NO_CONTEXT;
 
-    context = context_handle;
+    context = (gss_ctx_id_t)context_handle;
     ctx = (gssspnego_ctx)context_handle;
 
     HEIMDAL_MUTEX_lock(&ctx->ctx_id_mutex);
@@ -121,7 +121,7 @@ OM_uint32 GSSAPI_CALLCONV _gss_spnego_delete_sec_context
 
 OM_uint32 GSSAPI_CALLCONV _gss_spnego_context_time
            (OM_uint32 *minor_status,
-            const gss_ctx_id_t context_handle,
+            gss_const_ctx_id_t context_handle,
             OM_uint32 *time_rec
            )
 {
@@ -145,7 +145,7 @@ OM_uint32 GSSAPI_CALLCONV _gss_spnego_context_time
 
 OM_uint32 GSSAPI_CALLCONV _gss_spnego_get_mic
            (OM_uint32 *minor_status,
-            const gss_ctx_id_t context_handle,
+            gss_const_ctx_id_t context_handle,
             gss_qop_t qop_req,
             const gss_buffer_t message_buffer,
             gss_buffer_t message_token
@@ -171,7 +171,7 @@ OM_uint32 GSSAPI_CALLCONV _gss_spnego_get_mic
 
 OM_uint32 GSSAPI_CALLCONV _gss_spnego_verify_mic
            (OM_uint32 * minor_status,
-            const gss_ctx_id_t context_handle,
+            gss_const_ctx_id_t context_handle,
             const gss_buffer_t message_buffer,
             const gss_buffer_t token_buffer,
             gss_qop_t * qop_state
@@ -200,7 +200,7 @@ OM_uint32 GSSAPI_CALLCONV _gss_spnego_verify_mic
 
 OM_uint32 GSSAPI_CALLCONV _gss_spnego_wrap
            (OM_uint32 * minor_status,
-            const gss_ctx_id_t context_handle,
+            gss_const_ctx_id_t context_handle,
             int conf_req_flag,
             gss_qop_t qop_req,
             const gss_buffer_t input_message_buffer,
@@ -233,7 +233,7 @@ OM_uint32 GSSAPI_CALLCONV _gss_spnego_wrap
 
 OM_uint32 GSSAPI_CALLCONV _gss_spnego_unwrap
            (OM_uint32 * minor_status,
-            const gss_ctx_id_t context_handle,
+            gss_const_ctx_id_t context_handle,
             const gss_buffer_t input_message_buffer,
             gss_buffer_t output_message_buffer,
             int * conf_state,
@@ -264,8 +264,8 @@ OM_uint32 GSSAPI_CALLCONV _gss_spnego_unwrap
 
 OM_uint32 GSSAPI_CALLCONV _gss_spnego_compare_name
            (OM_uint32 *minor_status,
-            const gss_name_t name1,
-            const gss_name_t name2,
+            gss_const_name_t name1,
+            gss_const_name_t name2,
             int * name_equal
            )
 {
@@ -288,7 +288,7 @@ OM_uint32 GSSAPI_CALLCONV _gss_spnego_compare_name
 
 OM_uint32 GSSAPI_CALLCONV _gss_spnego_display_name
            (OM_uint32 * minor_status,
-            const gss_name_t input_name,
+            gss_const_name_t input_name,
             gss_buffer_t output_name_buffer,
             gss_OID * output_name_type
            )
@@ -342,7 +342,7 @@ OM_uint32 GSSAPI_CALLCONV _gss_spnego_import_name
 
 OM_uint32 GSSAPI_CALLCONV _gss_spnego_export_name
            (OM_uint32  * minor_status,
-            const gss_name_t input_name,
+            gss_const_name_t input_name,
             gss_buffer_t exported_name
            )
 {
@@ -382,7 +382,7 @@ OM_uint32 GSSAPI_CALLCONV _gss_spnego_release_name
 
 OM_uint32 GSSAPI_CALLCONV _gss_spnego_inquire_context (
             OM_uint32 * minor_status,
-            const gss_ctx_id_t context_handle,
+            gss_const_ctx_id_t context_handle,
             gss_name_t * src_name,
             gss_name_t * targ_name,
             OM_uint32 * lifetime_rec,
@@ -449,7 +449,7 @@ enomem:
 
 OM_uint32 GSSAPI_CALLCONV _gss_spnego_wrap_size_limit (
             OM_uint32 * minor_status,
-            const gss_ctx_id_t context_handle,
+            gss_const_ctx_id_t context_handle,
             int conf_req_flag,
             gss_qop_t qop_req,
             OM_uint32 req_output_size,
@@ -602,7 +602,7 @@ out:
 
 OM_uint32 GSSAPI_CALLCONV _gss_spnego_inquire_mechs_for_name (
             OM_uint32 * minor_status,
-            const gss_name_t input_name,
+            gss_const_name_t input_name,
             gss_OID_set * mech_types
            )
 {
@@ -623,7 +623,7 @@ OM_uint32 GSSAPI_CALLCONV _gss_spnego_inquire_mechs_for_name (
 
 OM_uint32 GSSAPI_CALLCONV _gss_spnego_canonicalize_name (
             OM_uint32 * minor_status,
-            const gss_name_t input_name,
+            gss_const_name_t input_name,
             const gss_OID mech_type,
             gss_name_t * output_name
            )
@@ -634,7 +634,7 @@ OM_uint32 GSSAPI_CALLCONV _gss_spnego_canonicalize_name (
 
 OM_uint32 GSSAPI_CALLCONV _gss_spnego_duplicate_name (
             OM_uint32 * minor_status,
-            const gss_name_t src_name,
+            gss_const_name_t src_name,
             gss_name_t * dest_name
            )
 {
@@ -707,7 +707,7 @@ _gss_spnego_wrap_iov_length(OM_uint32 * minor_status,
 #if 0
 OM_uint32 GSSAPI_CALLCONV _gss_spnego_complete_auth_token
            (OM_uint32 * minor_status,
-            const gss_ctx_id_t context_handle,
+            gss_const_ctx_id_t context_handle,
 	    gss_buffer_t input_message_buffer)
 {
     gssspnego_ctx ctx;
@@ -732,7 +732,7 @@ OM_uint32 GSSAPI_CALLCONV _gss_spnego_complete_auth_token
 
 OM_uint32 GSSAPI_CALLCONV _gss_spnego_inquire_sec_context_by_oid
            (OM_uint32 * minor_status,
-            const gss_ctx_id_t context_handle,
+            gss_const_ctx_id_t context_handle,
             const gss_OID desired_object,
             gss_buffer_set_t *data_set)
 {

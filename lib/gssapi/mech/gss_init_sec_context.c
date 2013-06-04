@@ -29,7 +29,7 @@
 #include "mech_locl.h"
 
 static gss_cred_id_t
-_gss_mech_cred_find(gss_cred_id_t cred_handle, gss_OID mech_type)
+_gss_mech_cred_find(gss_const_cred_id_t cred_handle, gss_OID mech_type)
 {
 	struct _gss_cred *cred = (struct _gss_cred *)cred_handle;
 	struct _gss_mechanism_cred *mc;
@@ -107,9 +107,9 @@ _gss_mech_cred_find(gss_cred_id_t cred_handle, gss_OID mech_type)
 
 GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL
 gss_init_sec_context(OM_uint32 * minor_status,
-    const gss_cred_id_t initiator_cred_handle,
+    gss_const_cred_id_t initiator_cred_handle,
     gss_ctx_id_t * context_handle,
-    const gss_name_t target_name,
+    gss_const_name_t target_name,
     const gss_OID input_mech_type,
     OM_uint32 req_flags,
     OM_uint32 time_req,
@@ -125,7 +125,7 @@ gss_init_sec_context(OM_uint32 * minor_status,
 	struct _gss_name *name = (struct _gss_name *) target_name;
 	struct _gss_mechanism_name *mn;
 	struct _gss_context *ctx = (struct _gss_context *) *context_handle;
-	gss_cred_id_t cred_handle;
+	gss_const_cred_id_t cred_handle;
 	int allocated_ctx;
 	gss_OID mech_type = input_mech_type;
 

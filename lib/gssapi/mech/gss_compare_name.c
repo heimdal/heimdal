@@ -30,8 +30,8 @@
 
 GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL
 gss_compare_name(OM_uint32 *minor_status,
-    const gss_name_t name1_arg,
-    const gss_name_t name2_arg,
+    gss_const_name_t name1_arg,
+    gss_const_name_t name2_arg,
     int *name_equal)
 {
 	struct _gss_name *name1 = (struct _gss_name *) name1_arg;

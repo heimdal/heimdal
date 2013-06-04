@@ -37,8 +37,8 @@
 
 OM_uint32 _netlogon_compare_name
            (OM_uint32 * minor_status,
-            const gss_name_t name1,
-            const gss_name_t name2,
+            gss_const_name_t name1,
+            gss_const_name_t name2,
             int * name_equal
            )
 {

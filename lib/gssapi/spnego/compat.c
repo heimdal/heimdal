@@ -234,7 +234,7 @@ _gss_spnego_indicate_mechtypelist (OM_uint32 *minor_status,
 				   gss_name_t target_name,
 				   OM_uint32 (*func)(gss_name_t, gss_OID),
 				   int includeMSCompatOID,
-				   const gss_cred_id_t cred_handle,
+				   gss_const_cred_id_t cred_handle,
 				   MechTypeList *mechtypelist,
 				   gss_OID *preferred_mech)
 {

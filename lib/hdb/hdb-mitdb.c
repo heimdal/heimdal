@@ -318,7 +318,6 @@ dup_similar_keys_in_keyset(krb5_context context, Keys *keys)
     krb5_error_code ret;
     size_t i, k;
     Key key;
-    int keyset_has_1des = 0;
     int keyset_has_1des_crc = 0;
     int keyset_has_1des_md4 = 0;
     int keyset_has_1des_md5 = 0;
@@ -343,7 +342,6 @@ dup_similar_keys_in_keyset(krb5_context context, Keys *keys)
     if (k == keys->len)
 	return 0;
 
-    keyset_has_1des = 1;
     ret = copy_Key(&keys->val[k], &key);
     if (ret)
 	return ret;

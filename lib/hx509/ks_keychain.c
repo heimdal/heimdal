@@ -35,6 +35,9 @@
 
 #ifdef HAVE_FRAMEWORK_SECURITY
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
+
 #include <Security/Security.h>
 
 /* Missing function decls in pre Leopard */
@@ -244,6 +247,7 @@ static const RSA_METHOD kc_rsa_pkcs1_method = {
     kc_rsa_init,
     kc_rsa_finish,
     0,
+    NULL,
     NULL,
     NULL,
     NULL
@@ -590,8 +594,13 @@ struct hx509_keyset_ops keyset_keychain = {
     NULL,
     keychain_iter_start,
     keychain_iter,
-    keychain_iter_end
+    keychain_iter_end,
+    NULL,
+    NULL,
+    NULL
 };
+
+#pragma clang diagnostic pop
 
 #endif /* HAVE_FRAMEWORK_SECURITY */
 

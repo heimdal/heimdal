@@ -39,7 +39,7 @@ gen_files_pkinit = asn1_pkinit_asn1.x
 gen_files_pkcs12 = asn1_pkcs12_asn1.x
 gen_files_pkcs8 = asn1_pkcs8_asn1.x
 gen_files_pkcs9 = asn1_pkcs9_asn1.x
-gen_files_test_template = asn1_test_asn1-template.x
+gen_files_test_template = test_template_asn1-template.x
 gen_files_test = asn1_test_asn1.x
 gen_files_digest = asn1_digest_asn1.x
 gen_files_kx509 = asn1_kx509_asn1.x
@@ -201,7 +201,7 @@ $(gen_files_kx509) kx509_asn1.hx kx509_asn1-priv.hx: kx509_asn1_files
 $(gen_files_rfc2459) rfc2459_asn1.hx rfc2459_asn1-priv.hx: rfc2459_asn1_files
 $(gen_files_cms) cms_asn1.hx cms_asn1-priv.hx: cms_asn1_files
 $(gen_files_test) test_asn1.hx test_asn1-priv.hx: test_asn1_files
-$(gen_files_test_template) test_asn1_template.hx test_asn1_template-priv.hx: test_asn1_files
+$(gen_files_test_template) test_template_asn1.hx test_template_asn1-priv.hx: test_template_asn1_files
 
 rfc2459_asn1_files: asn1_compile$(EXEEXT) $(srcdir)/rfc2459.asn1
 	$(ASN1_COMPILE) --one-code-file --preserve-binary=TBSCertificate --preserve-binary=TBSCRLCertList --preserve-binary=Name --sequence=GeneralNames --sequence=Extensions --sequence=CRLDistributionPoints $(srcdir)/rfc2459.asn1 rfc2459_asn1 || (rm -f rfc2459_asn1_files ; exit 1)

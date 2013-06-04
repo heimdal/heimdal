@@ -987,7 +987,7 @@ _hx509_cert_is_parent_cmp(const Certificate *subject,
 	if (ai.authorityCertIssuer->val[0].element != choice_GeneralName_directoryName)
 	    return -1;
 
-	name.element =
+	name.element = (enum Name_enum)
 	    ai.authorityCertIssuer->val[0].u.directoryName.element;
 	name.u.rdnSequence =
 	    ai.authorityCertIssuer->val[0].u.directoryName.u.rdnSequence;
@@ -1820,12 +1820,12 @@ match_general_name(const GeneralName *c, const GeneralName *n, int *match)
 
 	c_name._save.data = NULL;
 	c_name._save.length = 0;
-	c_name.element = c->u.directoryName.element;
+	c_name.element = (enum Name_enum)c->u.directoryName.element;
 	c_name.u.rdnSequence = c->u.directoryName.u.rdnSequence;
 
 	n_name._save.data = NULL;
 	n_name._save.length = 0;
-	n_name.element = n->u.directoryName.element;
+	n_name.element = (enum Name_enum)n->u.directoryName.element;
 	n_name.u.rdnSequence = n->u.directoryName.u.rdnSequence;
 
 	ret = match_X501Name(&c_name, &n_name);
@@ -1895,7 +1895,7 @@ match_tree(const GeneralSubtrees *t, const Certificate *c, int *match)
 
 	    memset(&certname, 0, sizeof(certname));
 	    certname.element = choice_GeneralName_directoryName;
-	    certname.u.directoryName.element =
+	    certname.u.directoryName.element = (enum GeneralName_directoryName_enum)
 		c->tbsCertificate.subject.element;
 	    certname.u.directoryName.u.rdnSequence =
 		c->tbsCertificate.subject.u.rdnSequence;

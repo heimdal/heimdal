@@ -242,6 +242,14 @@ decode_type (const char *name, const Type *t, int optional,
     }
     case TInteger:
 	if(t->members) {
+	    /*
+	     * This will produce a worning, how its hard to fix since:
+	     * if its enum to an NameType, we can add appriate
+	     * type-cast. If its not though, we have to figure out if
+	     * there is negative enum enum and use appropriate
+	     * signness and size on the intertype we cast the result
+	     * too.
+	     */
 	    fprintf(codefile,
 		    "{\n"
 		    "int enumint;\n");

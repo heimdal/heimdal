@@ -163,7 +163,7 @@ der_parse_heim_oid (const char *str, const char *sep, heim_oid *data)
 	    free(s);
 	    return EINVAL;
 	}
-	data->components[data->length++] = l;
+	data->components[data->length++] = (unsigned int)l;
     }
     free(s);
     return 0;

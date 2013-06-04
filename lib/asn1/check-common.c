@@ -33,9 +33,7 @@
  * SUCH DAMAGE.
  */
 
-#ifdef HAVE_CONFIG_H
 #include <config.h>
-#endif
 #ifdef HAVE_SYS_MMAN_H
 #include <sys/mman.h>
 #endif
@@ -46,8 +44,6 @@
 
 #include "asn1-common.h"
 #include "check-common.h"
-
-RCSID("$Id$");
 
 struct map_page {
     void *start;
@@ -178,20 +174,15 @@ static RETSIGTYPE
 segv_handler(int sig)
 {
     int fd;
-    ssize_t ret;
     char msg[] = "SIGSEGV i current test: ";
 
     fd = open("/dev/stdout", O_WRONLY, 0600);
     if (fd >= 0) {
-	ret = write(fd, msg, sizeof(msg));
-	if (ret != -1)
-	    ret = write(fd, current_test, strlen(current_test));
-	if (ret != -1)
-	    ret = write(fd, " ", 1);
-	if (ret != -1)
-	    ret = write(fd, current_state, strlen(current_state));
-	if (ret != -1)
-	    ret = write(fd, "\n", 1);
+	write(fd, msg, sizeof(msg));
+	write(fd, current_test, strlen(current_test));
+	write(fd, " ", 1);
+	write(fd, current_state, strlen(current_state));
+	write(fd, "\n", 1);
 	close(fd);
     }
     _exit(1);

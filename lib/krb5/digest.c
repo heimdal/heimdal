@@ -889,13 +889,13 @@ krb5_ntlm_init_get_flags(krb5_context context,
 }
 
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
-krb5_ntlm_init_get_challange(krb5_context context,
+krb5_ntlm_init_get_challenge(krb5_context context,
 			     krb5_ntlm ntlm,
-			     krb5_data *challange)
+			     krb5_data *challenge)
 {
     krb5_error_code ret;
 
-    ret = der_copy_octet_string(&ntlm->initReply.challange, challange);
+    ret = der_copy_octet_string(&ntlm->initReply.challenge, challenge);
     if (ret)
 	krb5_clear_error_message(context);
 

@@ -37,7 +37,6 @@
 #define _SYMBOL_H
 
 #include "asn1_queue.h"
-#include <stdint.h>
 
 enum typetype {
     TBitString,
@@ -130,6 +129,7 @@ struct type {
     struct tagtype tag;
     struct range *range;
     struct constraint_spec *constraint;
+    unsigned long id;
 };
 
 typedef struct type Type;

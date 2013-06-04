@@ -451,7 +451,7 @@ EXPORTS
 	krb5_net_write_block
 	krb5_ntlm_alloc
 	krb5_ntlm_free
-	krb5_ntlm_init_get_challange
+	krb5_ntlm_init_get_challenge
 	krb5_ntlm_init_get_flags
 	krb5_ntlm_init_get_opaque
 	krb5_ntlm_init_get_targetinfo

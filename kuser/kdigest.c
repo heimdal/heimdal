@@ -458,9 +458,9 @@ ntlm_server_init(struct ntlm_server_init_options *opt,
      *
      */
 
-    ret = krb5_ntlm_init_get_challange(context, ntlm, &challenge);
+    ret = krb5_ntlm_init_get_challenge(context, ntlm, &challenge);
     if (ret)
-	krb5_err(context, 1, ret, "krb5_ntlm_init_get_challange");
+	krb5_err(context, 1, ret, "krb5_ntlm_init_get_challenge");
 
     if (challenge.length != sizeof(type2.challenge))
 	krb5_errx(context, 1, "ntlm challenge have wrong length");

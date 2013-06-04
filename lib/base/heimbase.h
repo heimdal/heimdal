@@ -233,15 +233,16 @@ void heim_path_delete(heim_object_t ptr, heim_error_t *error, ...);
  * Data (octet strings)
  */
 
-#ifndef __HEIM_OCTET_STRING__
-#define __HEIM_OCTET_STRING__
-typedef struct heim_octet_string {
+#ifndef __HEIM_BASE_DATA__
+#define __HEIM_BASE_DATA__
+struct heim_base_data {
     size_t length;
     void *data;
-} heim_octet_string;
+};
+typedef struct heim_base_data heim_octet_string;
 #endif
 
-typedef struct heim_data * heim_data_t;
+typedef struct heim_base_data * heim_data_t;
 typedef void (*heim_data_free_f_t)(void *);
 
 heim_data_t	heim_data_create(const void *, size_t);

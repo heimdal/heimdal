@@ -7,24 +7,26 @@
 #ifndef __asn1_common_definitions__
 #define __asn1_common_definitions__
 
+#ifndef __HEIM_BASE_DATA__
+#define __HEIM_BASE_DATA__ 1
+struct heim_base_data {
+	size_t length;
+	void *data;
+};
+#endif
+
 typedef struct heim_integer {
     size_t length;
     void *data;
     int negative;
 } heim_integer;
 
-#ifndef __HEIM_OCTET_STRING__
-#define __HEIM_OCTET_STRING__
-typedef struct heim_octet_string {
-    size_t length;
-    void *data;
-} heim_octet_string;
-#endif
+typedef struct heim_base_data heim_octet_string;
 
 typedef char *heim_general_string;
 typedef char *heim_utf8_string;
-typedef struct heim_octet_string heim_printable_string;
-typedef struct heim_octet_string heim_ia5_string;
+typedef struct heim_base_data heim_printable_string;
+typedef struct heim_base_data heim_ia5_string;
 
 typedef struct heim_bmp_string {
     size_t length;
@@ -48,8 +50,8 @@ typedef struct heim_bit_string {
     void *data;
 } heim_bit_string;
 
-typedef struct heim_octet_string heim_any;
-typedef struct heim_octet_string heim_any_set;
+typedef struct heim_base_data heim_any;
+typedef struct heim_base_data heim_any_set;
 
 #define ASN1_MALLOC_ENCODE(T, B, BL, S, L, R)                  \
   do {                                                         \

@@ -39,7 +39,7 @@ typedef struct heim_ipc *heim_ipc;
 typedef struct heim_sipc *heim_sipc;
 typedef struct heim_icred *heim_icred;
 typedef struct heim_isemaphore *heim_isemaphore;
-typedef struct heim_octet_string heim_idata;
+typedef struct heim_base_data heim_idata;
 typedef struct heim_sipc_call *heim_sipc_call;
 
 /* common */

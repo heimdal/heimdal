@@ -33,8 +33,6 @@
 
 #include "gen_locl.h"
 
-RCSID("$Id$");
-
 static void
 encode_primitive (const char *typename, const char *name)
 {
@@ -50,7 +48,7 @@ classname(Der_class class)
 {
     const char *cn[] = { "ASN1_C_UNIV", "ASN1_C_APPL",
 			 "ASN1_C_CONTEXT", "ASN1_C_PRIV" };
-    if(class > ASN1_C_PRIVATE)
+    if ((int)class >= sizeof(cn) / sizeof(cn[0]))
 	return "???";
     return cn[class];
 }
@@ -140,6 +138,7 @@ encode_type (const char *name, const Type *t, const char *tmpstr)
 	} else
 	    errx(1, "%s: unsupported range %lld -> %lld",
 		 name, (long long)t->range->min, (long long)t->range->max);
+
 	constructed = 0;
 	break;
     case TBoolean:
@@ -289,7 +288,7 @@ encode_type (const char *name, const Type *t, const char *tmpstr)
 
 	fprintf(codefile,
 		"{\n"
-		"struct heim_octet_string *val;\n"
+		"heim_octet_string *val;\n"
 		"size_t elen = 0, totallen = 0;\n"
 		"int eret = 0;\n");
 

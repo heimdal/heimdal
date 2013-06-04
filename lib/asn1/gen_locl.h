@@ -92,10 +92,13 @@ void gen_template_import(const Symbol *);
 
 
 extern FILE *privheaderfile, *headerfile, *codefile, *logfile, *templatefile;
+const char *fuzzer_string;
 extern int support_ber;
 extern int template_flag;
 extern int rfc1510_bitstring;
 extern int one_code_file;
+extern int parse_units_flag;
+extern char *type_file_string;
 
 extern int error_flag;
 

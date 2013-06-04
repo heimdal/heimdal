@@ -35,7 +35,7 @@
 
 struct test_case {
     void *val;
-    int byte_len;
+    ssize_t byte_len;
     const char *bytes;
     char *name;
 };

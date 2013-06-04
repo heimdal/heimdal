@@ -801,7 +801,7 @@ _kdc_do_digest(krb5_context context,
 	    }
 
 	} else if (strcasecmp(ireq.u.digestRequest.type, "MS-CHAP-V2") == 0) {
-	    unsigned char md[SHA_DIGEST_LENGTH], challange[SHA_DIGEST_LENGTH];
+	    unsigned char md[SHA_DIGEST_LENGTH], challenge[SHA_DIGEST_LENGTH];
 	    krb5_principal clientprincipal = NULL;
 	    char *mdx;
 	    const char *username;
@@ -836,7 +836,7 @@ _kdc_do_digest(krb5_context context,
 
 	    ctp = EVP_MD_CTX_create();
 
-	    /* ChallangeHash */
+	    /* ChallengeHash */
 	    EVP_DigestInit_ex(ctp, EVP_sha1(), NULL);
 	    {
 		ssize_t ssize;
@@ -867,7 +867,7 @@ _kdc_do_digest(krb5_context context,
 	    EVP_DigestUpdate(ctp, serverNonce.data, serverNonce.length);
 	    EVP_DigestUpdate(ctp, username, strlen(username));
 
-	    EVP_DigestFinal_ex(ctp, challange, NULL);
+	    EVP_DigestFinal_ex(ctp, challenge, NULL);
 
 	    EVP_MD_CTX_destroy(ctp);
 
@@ -898,7 +898,7 @@ _kdc_do_digest(krb5_context context,
 	    /* ChallengeResponse */
 	    ret = heim_ntlm_calculate_ntlm1(key->key.keyvalue.data,
 					    key->key.keyvalue.length,
-					    challange, &answer);
+					    challenge, &answer);
 	    if (ret) {
 		krb5_set_error_message(context, ret, "NTLM missing arcfour key");
 		goto failed;
@@ -949,7 +949,7 @@ _kdc_do_digest(krb5_context context,
 
 		EVP_DigestInit_ex(ctxp, EVP_sha1(), NULL);
 		EVP_DigestUpdate(ctxp, md, sizeof(md));
-		EVP_DigestUpdate(ctxp, challange, 8);
+		EVP_DigestUpdate(ctxp, challenge, 8);
 		EVP_DigestUpdate(ctxp, ms_chap_v2_magic2,
 				 sizeof(ms_chap_v2_magic2));
 		EVP_DigestFinal_ex(ctxp, md, NULL);
@@ -1064,15 +1064,15 @@ _kdc_do_digest(krb5_context context,
 	    krb5_set_error_message(context, ret, "malloc: out of memory");
 	    goto out;
 	}
-	r.u.ntlmInitReply.challange.data = malloc(8);
-	if (r.u.ntlmInitReply.challange.data == NULL) {
+	r.u.ntlmInitReply.challenge.data = malloc(8);
+	if (r.u.ntlmInitReply.challenge.data == NULL) {
 	    ret = ENOMEM;
 	    krb5_set_error_message(context, ret, "malloc: out of memory");
 	    goto out;
 	}
-	r.u.ntlmInitReply.challange.length = 8;
-	if (RAND_bytes(r.u.ntlmInitReply.challange.data,
-		       r.u.ntlmInitReply.challange.length) != 1)
+	r.u.ntlmInitReply.challenge.length = 8;
+	if (RAND_bytes(r.u.ntlmInitReply.challenge.data,
+		       r.u.ntlmInitReply.challenge.length) != 1)
 	    {
 		ret = ENOMEM;
 		krb5_set_error_message(context, ret, "out of random error");
@@ -1107,10 +1107,10 @@ _kdc_do_digest(krb5_context context,
 	    goto out;
 	}
 
-	ret = krb5_storage_write(sp, r.u.ntlmInitReply.challange.data, 8);
+	ret = krb5_storage_write(sp, r.u.ntlmInitReply.challenge.data, 8);
 	if (ret != 8) {
 	    ret = ENOMEM;
-	    krb5_set_error_message(context, ret, "storage write challange");
+	    krb5_set_error_message(context, ret, "storage write challenge");
 	    goto out;
 	}
 	ret = krb5_store_uint32(sp, r.u.ntlmInitReply.flags);
@@ -1144,7 +1144,7 @@ _kdc_do_digest(krb5_context context,
     case choice_DigestReqInner_ntlmRequest: {
 	krb5_principal clientprincipal;
 	unsigned char sessionkey[16];
-	unsigned char challange[8];
+	unsigned char challenge[8];
 	uint32_t flags;
 	Key *key = NULL;
 	int version;
@@ -1193,10 +1193,10 @@ _kdc_do_digest(krb5_context context,
 	    goto out;
 	}
 
-	ret = krb5_storage_read(sp, challange, sizeof(challange));
-	if (ret != sizeof(challange)) {
+	ret = krb5_storage_read(sp, challenge, sizeof(challenge));
+	if (ret != sizeof(challenge)) {
 	    ret = ENOMEM;
-	    krb5_set_error_message(context, ret, "NTLM storage read challange");
+	    krb5_set_error_message(context, ret, "NTLM storage read challenge");
 	    goto out;
 	}
 	ret = krb5_ret_uint32(sp, &flags);
@@ -1248,7 +1248,7 @@ _kdc_do_digest(krb5_context context,
 					 ireq.u.ntlmRequest.username,
 					 targetname,
 					 0,
-					 challange,
+					 challenge,
 					 &answer,
 					 &infotarget,
 					 sessionkey);
@@ -1289,10 +1289,10 @@ _kdc_do_digest(krb5_context context,
 
 		EVP_DigestInit_ex(ctx, EVP_md5(), NULL);
 
-		EVP_DigestUpdate(ctx, challange, sizeof(challange));
+		EVP_DigestUpdate(ctx, challenge, sizeof(challenge));
 		EVP_DigestUpdate(ctx, ireq.u.ntlmRequest.lm.data, 8);
 		EVP_DigestFinal_ex(ctx, sessionhash, NULL);
-		memcpy(challange, sessionhash, sizeof(challange));
+		memcpy(challenge, sessionhash, sizeof(challenge));
 
 		EVP_MD_CTX_destroy(ctx);
 
@@ -1305,7 +1305,7 @@ _kdc_do_digest(krb5_context context,
 
 	    ret = heim_ntlm_calculate_ntlm1(key->key.keyvalue.data,
 					    key->key.keyvalue.length,
-					    challange, &answer);
+					    challenge, &answer);
 	    if (ret) {
 		krb5_set_error_message(context, ret, "NTLM missing arcfour key");
 		goto failed;

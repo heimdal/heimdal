@@ -82,28 +82,28 @@ der_put_unsigned64 (unsigned char *p, size_t len, const uint64_t *v, size_t *siz
     uint64_t val = *v;
 
     if (val) {
-	while (len > 0 && val) {
-	    *p-- = val % 256;
-	    val /= 256;
-	    --len;
-	}
-	if (val != 0)
-	    return ASN1_OVERFLOW;
-	else {
-	    if(p[1] >= 128) {
-		if(len < 1)
-		    return ASN1_OVERFLOW;
-		*p-- = 0;
-	    }
-	    *size = base - p;
-	    return 0;
-	}
+       while (len > 0 && val) {
+           *p-- = val % 256;
+           val /= 256;
+           --len;
+       }
+       if (val != 0)
+           return ASN1_OVERFLOW;
+       else {
+           if(p[1] >= 128) {
+               if(len < 1)
+                   return ASN1_OVERFLOW;
+               *p-- = 0;
+           }
+           *size = base - p;
+           return 0;
+       }
     } else if (len < 1)
-	return ASN1_OVERFLOW;
+       return ASN1_OVERFLOW;
     else {
-	*p    = 0;
-	*size = 1;
-	return 0;
+       *p    = 0;
+       *size = 1;
+       return 0;
     }
 }
 
@@ -154,34 +154,34 @@ der_put_integer64 (unsigned char *p, size_t len, const int64_t *v, size_t *size)
     int64_t val = *v;
 
     if(val >= 0) {
-	do {
-	    if(len < 1)
-		return ASN1_OVERFLOW;
-	    *p-- = val % 256;
-	    len--;
-	    val /= 256;
-	} while(val);
-	if(p[1] >= 128) {
-	    if(len < 1)
-		return ASN1_OVERFLOW;
-	    *p-- = 0;
-	    len--;
-	}
+       do {
+           if(len < 1)
+               return ASN1_OVERFLOW;
+           *p-- = val % 256;
+           len--;
+           val /= 256;
+       } while(val);
+       if(p[1] >= 128) {
+           if(len < 1)
+               return ASN1_OVERFLOW;
+           *p-- = 0;
+           len--;
+       }
     } else {
-	val = ~val;
-	do {
-	    if(len < 1)
-		return ASN1_OVERFLOW;
-	    *p-- = ~(val % 256);
-	    len--;
-	    val /= 256;
-	} while(val);
-	if(p[1] < 128) {
-	    if(len < 1)
-		return ASN1_OVERFLOW;
-	    *p-- = 0xff;
-	    len--;
-	}
+       val = ~val;
+       do {
+           if(len < 1)
+               return ASN1_OVERFLOW;
+           *p-- = ~(val % 256);
+           len--;
+           val /= 256;
+       } while(val);
+       if(p[1] < 128) {
+           if(len < 1)
+               return ASN1_OVERFLOW;
+           *p-- = 0xff;
+           len--;
+       }
     }
     *size = base - p;
     return 0;
@@ -339,7 +339,8 @@ der_put_heim_integer (unsigned char *p, size_t len,
     len -= data->length;
 
     if (data->negative) {
-	int i, carry;
+	ssize_t i;
+	int carry;
 	for (i = data->length - 1, carry = 1; i >= 0; i--) {
 	    *p = buf[i] ^ 0xff;
 	    if (carry)
@@ -415,7 +416,7 @@ der_put_oid (unsigned char *p, size_t len,
 	     const heim_oid *data, size_t *size)
 {
     unsigned char *base = p;
-    int n;
+    size_t n;
 
     for (n = data->length - 1; n >= 2; --n) {
 	unsigned u = data->components[n];
@@ -540,12 +541,12 @@ der_put_bit_string (unsigned char *p, size_t len,
 int
 _heim_der_set_sort(const void *a1, const void *a2)
 {
-    const struct heim_octet_string *s1 = a1, *s2 = a2;
+    const heim_octet_string *s1 = a1, *s2 = a2;
     int ret;
 
     ret = memcmp(s1->data, s2->data,
 		 s1->length < s2->length ? s1->length : s2->length);
     if(ret)
 	return ret;
-    return s1->length - s2->length;
+    return (int)(s1->length - s2->length);
 }

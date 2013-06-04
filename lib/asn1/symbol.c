@@ -78,7 +78,7 @@ addsym(char *name)
     key.name = name;
     s = (Symbol *) hashtabsearch(htab, (void *) &key);
     if (s == NULL) {
-	s = (Symbol *) emalloc(sizeof(*s));
+	s = (Symbol *) ecalloc(1, sizeof(*s));
 	s->name = name;
 	s->gen_name = estrdup(name);
 	output_name(s->gen_name);

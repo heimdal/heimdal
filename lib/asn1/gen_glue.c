@@ -147,7 +147,8 @@ generate_glue (const Type *t, const char *gen_name)
 	if (!ASN1_TAILQ_EMPTY(t->members)) {
 	    generate_2int (t, gen_name);
 	    generate_int2 (t, gen_name);
-	    generate_units (t, gen_name);
+	    if (parse_units_flag)
+		generate_units (t, gen_name);
 	}
 	break;
     default :

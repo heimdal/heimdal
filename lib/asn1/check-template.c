@@ -69,25 +69,25 @@ test_uint64(void)
     size_t i;
     int ret = 0, ntests = sizeof(tests) / sizeof(*tests);
     TESTuint64 values[] = { 0, 8589934591LL, 8589934592LL,
-			    36028797018963967LL, 36028797018963968LL,
-			    9223372036854775807LL, 18446744073709551615ULL };
+                           36028797018963967LL, 36028797018963968LL,
+                           9223372036854775807LL, 18446744073709551615ULL };
 
     for (i = 0; i < ntests; i++)
-	tests[i].val = &values[i];
+       tests[i].val = &values[i];
 
     if (sizeof(TESTuint64) != sizeof(uint64_t)) {
-	ret += 1;
-	printf("sizeof(TESTuint64) %d != sizeof(uint64_t) %d\n",
-	       (int)sizeof(TESTuint64), (int)sizeof(uint64_t));
+       ret += 1;
+       printf("sizeof(TESTuint64) %d != sizeof(uint64_t) %d\n",
+              (int)sizeof(TESTuint64), (int)sizeof(uint64_t));
     }
 
     ret += generic_test (tests, ntests, sizeof(TESTuint64),
-			 (generic_encode)encode_TESTuint64,
-			 (generic_length)length_TESTuint64,
-			 (generic_decode)decode_TESTuint64,
-			 (generic_free)free_TESTuint64,
-			 cmp_dummy,
-			 NULL);
+                        (generic_encode)encode_TESTuint64,
+                        (generic_length)length_TESTuint64,
+                        (generic_decode)decode_TESTuint64,
+                        (generic_free)free_TESTuint64,
+                        cmp_dummy,
+                        NULL);
     return ret;
 }
 
@@ -277,6 +277,7 @@ test_seqof3(void)
 			 NULL);
     return ret;
 }
+
 
 static int
 test_seqof4(void)

@@ -91,7 +91,6 @@ length_type (const char *name, const Type *t,
 	} else
 	    errx(1, "%s: unsupported range %lld -> %lld",
 		 name, (long long)t->range->min, (long long)t->range->max);
-
 	break;
     case TBoolean:
 	fprintf (codefile, "%s += 1;\n", variable);
@@ -190,14 +189,15 @@ length_type (const char *name, const Type *t,
 	fprintf (codefile,
 		 "{\n"
 		 "size_t %s_oldret = %s;\n"
-		 "int i;\n"
+		 "unsigned int n_%s;\n"
 		 "%s = 0;\n",
-		 tmpstr, variable, variable);
+		 tmpstr, variable, tmpstr, variable);
 
-	fprintf (codefile, "for(i = (%s)->len - 1; i >= 0; --i){\n", name);
+	fprintf (codefile, "for(n_%s = (%s)->len; n_%s > 0; --n_%s){\n",
+		 tmpstr, name, tmpstr, tmpstr);
 	fprintf (codefile, "size_t %s_for_oldret = %s;\n"
 		 "%s = 0;\n", tmpstr, variable, variable);
-	if (asprintf (&n, "&(%s)->val[i]", name) < 0  || n == NULL)
+	if (asprintf (&n, "&(%s)->val[n_%s - 1]", name, tmpstr) < 0  || n == NULL)
 	    errx(1, "malloc");
 	if (asprintf (&sname, "%s_S_Of", tmpstr) < 0 || sname == NULL)
 	    errx(1, "malloc");

@@ -620,6 +620,9 @@ rsa_verify_signature(hx509_context context,
 				      &di.digestAlgorithm,
 				      data,
 				      &di.digest);
+	if (ret)
+	    goto out;
+
     } else {
 	if ((size_t)retsize != data->length ||
 	    ct_memcmp(to, data->data, retsize) != 0)
@@ -629,8 +632,8 @@ rsa_verify_signature(hx509_context context,
 	    goto out;
 	}
 	free(to);
+	ret = 0;
     }
-    ret = 0;
 
  out:
     free_DigestInfo(&di);

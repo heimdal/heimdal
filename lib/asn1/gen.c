@@ -148,7 +148,7 @@ init_generate (const char *filename, const char *base)
     fn = NULL;
 
     /* template file */
-    if (asprintf(&template, "%s-template.c", headerbase) < 0 || template == NULL)
+    if (asprintf(&template, "%s-template.x", headerbase) < 0 || template == NULL)
 	errx(1, "malloc");
     fprintf (headerfile,
 	     "/* Generated from %s */\n"

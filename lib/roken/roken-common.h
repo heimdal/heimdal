@@ -151,7 +151,11 @@
 #endif	/* !_WIN32 */
 
 #ifndef PATH_MAX
+#ifdef MAX_PATH
 #define PATH_MAX MAX_PATH
+#else
+#define PATH_MAX 4096
+#endif
 #endif
 
 #ifndef RETSIGTYPE

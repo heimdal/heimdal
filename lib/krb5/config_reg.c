@@ -190,7 +190,7 @@ _krb5_store_string_to_reg_value(krb5_context context,
                                        GetLastError());
         }
 
-        rcode = RegSetValueEx(key, valuename, 0, type, dwData, sizeof(DWORD));
+	rcode = RegSetValueEx(key, valuename, 0, type, (BYTE *)&dwData, sizeof(DWORD));
         if (rcode)
         {
             if (context)

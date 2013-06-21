@@ -39,6 +39,7 @@
 #include <stdint.h>
 #endif
 #include <string.h>
+#include <limits.h>
 #include <signal.h>
 
 #ifndef ROKEN_LIB_FUNCTION

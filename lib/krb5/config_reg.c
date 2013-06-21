@@ -156,7 +156,6 @@ _krb5_store_string_to_reg_value(krb5_context context,
     case REG_MULTI_SZ:
         if (separator && *separator)
         {
-            int i;
             char *cp;
 
             if (data != static_buffer)

@@ -32,11 +32,7 @@
  */
 
 #include "ntlm.h"
-
-uint32_t
-_krb5_crc_update (const char *p, size_t len, uint32_t res);
-void
-_krb5_crc_init_table(void);
+#include "krb5-private.h"
 
 /*
  *

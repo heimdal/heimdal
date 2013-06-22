@@ -266,9 +266,8 @@ socket_set_tos (rk_socket_t sock, int tos)
 ROKEN_LIB_FUNCTION void ROKEN_LIB_CALL
 socket_set_nonblocking(rk_socket_t sock, int nonblock)
 {
-    int flags;
 #if defined(O_NONBLOCK)
-    flags = fcntl(sock, F_GETFL, 0);
+    int flags = fcntl(sock, F_GETFL, 0);
     if (flags == -1)
 	return;
     if (nonblock)
@@ -277,7 +276,7 @@ socket_set_nonblocking(rk_socket_t sock, int nonblock)
 	flags &= ~O_NONBLOCK;
     fcntl(sock, F_SETFL, flags);
 #elif defined(FIOBIO)
-    flags = !!nonblock;
+    int flags = !!nonblock;
     return ioctl(sock, FIOBIO, &flags);
 #endif
 }

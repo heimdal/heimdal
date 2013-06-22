@@ -209,7 +209,7 @@ verify_directory(krb5_context context, const char *path)
     if (stat(path, &sb) != 0) {
 	if (errno == ENOENT) {
 	    /* XXX should use mkdirx_np()  */
-	    if (mkdir(path, S_IRWXU) == 0)
+	    if (rk_mkdir(path, S_IRWXU) == 0)
 		return 0;
 
 	    krb5_set_error_message(context, ENOENT,

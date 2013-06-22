@@ -1,6 +1,6 @@
 ########################################################################
 #
-# Copyright (c) 2009, Secure Endpoints Inc.
+# Copyright (c) 2009 - 2013, Secure Endpoints Inc.
 # All rights reserved.
 # 
 # Redistribution and use in source and binary forms, with or without
@@ -67,6 +67,7 @@ libkrb5_OBJS =			\
 	$(OBJ)\crypto-pk.obj		    \
 	$(OBJ)\crypto-rand.obj		    \
 	$(OBJ)\data.obj			    \
+	$(OBJ)\dcache.obj                   \
 	$(OBJ)\db_plugin.obj		    \
 	$(OBJ)\deprecated.obj		    \
 	$(OBJ)\digest.obj		    \
@@ -116,7 +117,9 @@ libkrb5_OBJS =			\
 	$(OBJ)\n-fold.obj		    \
 	$(OBJ)\pac.obj			    \
 	$(OBJ)\padata.obj		    \
+	$(OBJ)\pcache.obj		    \
 	$(OBJ)\pkinit.obj		    \
+	$(OBJ)\plugin.obj                   \
 	$(OBJ)\principal.obj		    \
 	$(OBJ)\prog_setup.obj		    \
 	$(OBJ)\prompter_posix.obj	    \
@@ -144,8 +147,6 @@ libkrb5_OBJS =			\
 	$(OBJ)\store_emem.obj		    \
 	$(OBJ)\store_fd.obj		    \
 	$(OBJ)\store_mem.obj		    \
-	$(OBJ)\pcache.obj		    \
-	$(OBJ)\plugin.obj		    \
 	$(OBJ)\ticket.obj		    \
 	$(OBJ)\time.obj			    \
 	$(OBJ)\transited.obj		    \
@@ -212,8 +213,10 @@ dist_libkrb5_la_SOURCES =			\
 	crypto-evp.c				\
 	crypto-pk.c				\
 	crypto-rand.c				\
+	db_plugin.c                             \
 	doxygen.c				\
 	data.c					\
+	dcache.c                                \
 	deprecated.c				\
 	digest.c				\
 	eai_to_heim_errno.c			\
@@ -265,6 +268,7 @@ dist_libkrb5_la_SOURCES =			\
 	pac.c					\
 	padata.c				\
 	pkinit.c				\
+	plugin.c                                \
 	principal.c				\
 	prog_setup.c				\
 	prompter_posix.c			\

@@ -196,6 +196,7 @@ EXPORTS
 	hx509_revoke_free
 	hx509_revoke_init
 	hx509_revoke_ocsp_print
+	hx509_revoke_print
 	hx509_revoke_verify
 	hx509_set_error_string
 	hx509_set_error_stringv

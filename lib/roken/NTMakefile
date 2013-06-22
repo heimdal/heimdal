@@ -69,6 +69,7 @@ libroken_la_OBJS =			\
 	$(OBJ)\issuid.obj		\
 	$(OBJ)\localtime_r.obj		\
 	$(OBJ)\lstat.obj		\
+	$(OBJ)\mkdir.obj                \
 	$(OBJ)\mini_inetd.obj		\
 	$(OBJ)\mkstemp.obj		\
 	$(OBJ)\net_read.obj		\

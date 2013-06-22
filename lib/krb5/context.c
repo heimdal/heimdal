@@ -779,7 +779,7 @@ krb5_prepend_config_files_default(const char *filelist, char ***pfilenames)
  * to find the configuration file location in the
  * SOFTWARE\MIT\Kerberos registry key under the value "config".
  */
-char *
+KRB5_LIB_FUNCTION char * KRB5_LIB_CALL
 _krb5_get_default_config_config_files_from_registry()
 {
     static const char * KeyName = "Software\\MIT\\Kerberos";
@@ -1485,7 +1485,7 @@ _krb5_init_etype(krb5_context context,
 static HEIMDAL_MUTEX homedir_mutex = HEIMDAL_MUTEX_INITIALIZER;
 static krb5_boolean allow_homedir = TRUE;
 
-krb5_boolean
+KRB5_LIB_FUNCTION krb5_boolean KRB5_LIB_CALL
 _krb5_homedir_access(krb5_context context)
 {
     krb5_boolean allow;

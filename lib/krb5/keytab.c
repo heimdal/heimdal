@@ -550,7 +550,7 @@ krb5_kt_compare(krb5_context context,
     return TRUE;
 }
 
-krb5_error_code
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 _krb5_kt_principal_not_found(krb5_context context,
 			     krb5_error_code ret,
 			     krb5_keytab id,

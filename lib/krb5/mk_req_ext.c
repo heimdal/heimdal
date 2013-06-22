@@ -33,7 +33,7 @@
 
 #include "krb5_locl.h"
 
-krb5_error_code
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 _krb5_mk_req_internal(krb5_context context,
 		      krb5_auth_context *auth_context,
 		      const krb5_flags ap_req_options,

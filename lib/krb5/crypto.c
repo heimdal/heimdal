@@ -177,7 +177,7 @@ SHA1_checksum(krb5_context context,
 }
 
 /* HMAC according to RFC2104 */
-krb5_error_code
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 _krb5_internal_hmac(krb5_context context,
 		    struct _krb5_checksum_type *cm,
 		    const void *data,
@@ -298,7 +298,7 @@ struct _krb5_checksum_type _krb5_checksum_sha1 = {
     NULL
 };
 
-struct _krb5_checksum_type *
+KRB5_LIB_FUNCTION struct _krb5_checksum_type * KRB5_LIB_CALL
 _krb5_find_checksum(krb5_cksumtype type)
 {
     int i;
@@ -636,7 +636,7 @@ krb5_checksum_disable(krb5_context context,
  *                                                          *
  ************************************************************/
 
-struct _krb5_encryption_type *
+KRB5_LIB_FUNCTION struct _krb5_encryption_type * KRB5_LIB_CALL
 _krb5_find_enctype(krb5_enctype type)
 {
     int i;
@@ -1824,7 +1824,7 @@ krb5_decrypt_EncryptedData(krb5_context context,
  *                                                          *
  ************************************************************/
 
-krb5_error_code
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 _krb5_derive_key(krb5_context context,
 		 struct _krb5_encryption_type *et,
 		 struct _krb5_key_data *key,
@@ -2049,7 +2049,7 @@ free_key_schedule(krb5_context context,
     krb5_free_data(context, key->schedule);
 }
 
-void
+KRB5_LIB_FUNCTION void KRB5_LIB_CALL
 _krb5_free_key_data(krb5_context context, struct _krb5_key_data *key,
 	      struct _krb5_encryption_type *et)
 {

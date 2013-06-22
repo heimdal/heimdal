@@ -76,7 +76,7 @@ _krb5_s4u2self_to_checksumdata(krb5_context context,
     return ret;
 }
 
-void
+KRB5_LIB_FUNCTION void KRB5_LIB_CALL
 _krb5_debug_backtrace(krb5_context context)
 {
 #if defined(HAVE_BACKTRACE) && !defined(HEIMDAL_SMALLER)
@@ -93,7 +93,7 @@ _krb5_debug_backtrace(krb5_context context)
 #endif
 }
 
-krb5_error_code
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 _krb5_einval(krb5_context context, const char *func, unsigned long argn)
 {
 #ifndef HEIMDAL_SMALLER

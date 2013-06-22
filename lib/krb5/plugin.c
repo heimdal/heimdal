@@ -134,7 +134,7 @@ add_symbol(krb5_context context, struct krb5_plugin **list, void *symbol)
     return 0;
 }
 
-krb5_error_code
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 _krb5_plugin_find(krb5_context context,
 		  enum krb5_plugin_type type,
 		  const char *name,
@@ -181,7 +181,7 @@ _krb5_plugin_find(krb5_context context,
     return 0;
 }
 
-void
+KRB5_LIB_FUNCTION void KRB5_LIB_CALL
 _krb5_plugin_free(struct krb5_plugin *list)
 {
     struct krb5_plugin *next;
@@ -230,7 +230,7 @@ plug_dealloc(void *ptr)
  * @name    Name of plugin module (typically "krb5")
  * @paths   Array of directory paths where to look
  */
-void
+KRB5_LIB_FUNCTION void KRB5_LIB_CALL
 _krb5_load_plugins(krb5_context context, const char *name, const char **paths)
 {
 #ifdef HAVE_DLOPEN
@@ -326,7 +326,7 @@ _krb5_load_plugins(krb5_context context, const char *name, const char **paths)
 /**
  * Unload plugins (new system)
  */
-void
+KRB5_LIB_FUNCTION void KRB5_LIB_CALL
 _krb5_unload_plugins(krb5_context context, const char *name)
 {
     HEIMDAL_MUTEX_lock(&plugin_mutex);
@@ -448,7 +448,7 @@ eval_results(heim_object_t value, void *ctx, int *stop)
  * Outputs: None, other than the return value and such outputs as are
  *          gathered by @func.
  */
-krb5_error_code
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 _krb5_plugin_run_f(krb5_context context,
 		   const char *module,
 		   const char *name,

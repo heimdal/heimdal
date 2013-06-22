@@ -53,7 +53,7 @@ callback(krb5_context context, const void *plug, void *plugctx, void *userctx)
 }
 
 
-krb5_error_code
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 _krb5_load_ccache_plugins(krb5_context context)
 {
     krb5_error_code userctx = 0;

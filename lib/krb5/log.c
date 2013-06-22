@@ -498,7 +498,7 @@ _krb5_debug(krb5_context context,
     va_end(ap);
 }
 
-krb5_boolean KRB5_LIB_FUNCTION
+KRB5_LIB_FUNCTION krb5_boolean KRB5_LIB_CALL
 _krb5_have_debug(krb5_context context, int level)
 {
     if (context == NULL || context->debug_dest == NULL)

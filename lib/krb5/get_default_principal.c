@@ -56,7 +56,7 @@ get_env_user(void)
  * avoid recursive calls.
  */
 
-krb5_error_code
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 _krb5_get_default_principal_local (krb5_context context,
 				   krb5_principal *princ)
 {
@@ -100,7 +100,7 @@ _krb5_get_default_principal_local (krb5_context context,
 #define SECURITY_WIN32
 #include <security.h>
 
-krb5_error_code
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 _krb5_get_default_principal_local(krb5_context context,
 				  krb5_principal *princ)
 {

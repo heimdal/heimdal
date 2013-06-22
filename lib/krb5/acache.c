@@ -168,7 +168,7 @@ init_ccapi(krb5_context context)
 #endif
 }
 
-void
+KRB5_LIB_FUNCTION void KRB5_LIB_CALL
 _heim_krb5_ipc_client_set_target_uid(uid_t uid)
 {
     init_ccapi(NULL);
@@ -176,7 +176,7 @@ _heim_krb5_ipc_client_set_target_uid(uid_t uid)
         (*set_target_uid)(uid);
 }
 
-void
+KRB5_LIB_FUNCTION void KRB5_LIB_CALL
 _heim_krb5_ipc_client_clear_target(void)
 {
     init_ccapi(NULL);

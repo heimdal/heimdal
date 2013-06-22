@@ -39,7 +39,7 @@
  * A = A xor B. A & B are 8 bytes.
  */
 
-void
+KRB5_LIB_FUNCTION void KRB5_LIB_CALL
 _krb5_xor (DES_cblock *key, const unsigned char *b)
 {
     unsigned char *a = (unsigned char*)key;
@@ -54,7 +54,7 @@ _krb5_xor (DES_cblock *key, const unsigned char *b)
 }
 
 #if defined(DES3_OLD_ENCTYPE) || defined(HEIM_WEAK_CRYPTO)
-krb5_error_code
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 _krb5_des_checksum(krb5_context context,
 		   const EVP_MD *evp_md,
 		   struct _krb5_key_data *key,
@@ -85,7 +85,7 @@ _krb5_des_checksum(krb5_context context,
     return 0;
 }
 
-krb5_error_code
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 _krb5_des_verify(krb5_context context,
 		 const EVP_MD *evp_md,
 		 struct _krb5_key_data *key,

@@ -255,7 +255,7 @@ krb5_sendto_ctx_free(krb5_context context, krb5_sendto_ctx ctx)
     heim_release(ctx);
 }
 
-krb5_error_code
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 _krb5_kdc_retry(krb5_context context, krb5_sendto_ctx ctx, void *data,
 		const krb5_data *reply, int *action)
 {

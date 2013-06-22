@@ -34,7 +34,7 @@
 #include "krb5_locl.h"
 
 
-krb5_error_code
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 _krb5_fast_cf2(krb5_context context,
 	       krb5_keyblock *key1,
 	       const char *pepper1,
@@ -78,7 +78,7 @@ _krb5_fast_cf2(krb5_context context,
     return ret;
 }
 
-krb5_error_code
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 _krb5_fast_armor_key(krb5_context context,
 		     krb5_keyblock *subkey,
 		     krb5_keyblock *sessionkey,

@@ -265,7 +265,7 @@ ARCFOUR_subdecrypt(krb5_context context,
  * draft-brezak-win2k-krb-rc4-hmac-04.txt
  */
 
-krb5_error_code
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 _krb5_usage2arcfour(krb5_context context, unsigned *usage)
 {
     switch (*usage) {

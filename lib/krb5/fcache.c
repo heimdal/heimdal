@@ -68,7 +68,7 @@ fcc_get_name(krb5_context context,
     return FILENAME(id);
 }
 
-int
+KRB5_LIB_FUNCTION int KRB5_LIB_CALL
 _krb5_xlock(krb5_context context, int fd, krb5_boolean exclusive,
 	    const char *filename)
 {
@@ -112,7 +112,7 @@ _krb5_xlock(krb5_context context, int fd, krb5_boolean exclusive,
     return ret;
 }
 
-int
+KRB5_LIB_FUNCTION int KRB5_LIB_CALL
 _krb5_xunlock(krb5_context context, int fd)
 {
     int ret;
@@ -244,7 +244,7 @@ scrub_file (int fd)
  * hardlink)
  */
 
-krb5_error_code
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 _krb5_erase_file(krb5_context context, const char *filename)
 {
     int fd;

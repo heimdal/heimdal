@@ -191,7 +191,7 @@ krbhst_get_default_port(struct krb5_krbhst_data *kd)
  *
  */
 
-const char *
+KRB5_LIB_FUNCTION const char * KRB5_LIB_CALL
 _krb5_krbhst_get_realm(krb5_krbhst_handle handle)
 {
     return handle->realm;
@@ -262,7 +262,7 @@ parse_hostspec(krb5_context context, struct krb5_krbhst_data *kd,
     return hi;
 }
 
-void
+KRB5_LIB_FUNCTION void KRB5_LIB_CALL
 _krb5_free_krbhst_info(krb5_krbhst_info *hi)
 {
     if (hi->ai != NULL)
@@ -270,7 +270,7 @@ _krb5_free_krbhst_info(krb5_krbhst_info *hi)
     free(hi);
 }
 
-krb5_error_code
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 _krb5_krbhost_info_move(krb5_context context,
 			krb5_krbhst_info *from,
 			krb5_krbhst_info **to)
@@ -648,7 +648,7 @@ struct plctx {
     unsigned long flags;
 };
 
-static krb5_error_code
+static KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 plcallback(krb5_context context,
 	   const void *plug, void *plugctx, void *userctx)
 {
@@ -1025,7 +1025,7 @@ krb5_krbhst_next_as_string(krb5_context context,
  *
  */
 
-krb5_error_code KRB5_LIB_FUNCTION
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_krbhst_set_hostname(krb5_context context,
 			 krb5_krbhst_handle handle,
 			 const char *hostname)

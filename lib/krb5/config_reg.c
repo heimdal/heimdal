@@ -86,7 +86,7 @@
  * krb5_set_error_message().
  *
  */
-int
+KRB5_LIB_FUNCTION int KRB5_LIB_CALL
 _krb5_store_string_to_reg_value(krb5_context context,
                                 HKEY key, const char * valuename,
                                 DWORD type, const char *data, DWORD cb_data,
@@ -212,7 +212,7 @@ _krb5_store_string_to_reg_value(krb5_context context,
  *
  * @see _krb5_parse_reg_value_as_multi_string()
  */
-char *
+KRB5_LIB_FUNCTION char * KRB5_LIB_CALL
 _krb5_parse_reg_value_as_string(krb5_context context,
                                 HKEY key, const char * valuename,
                                 DWORD type, DWORD cb_data)
@@ -251,7 +251,7 @@ _krb5_parse_reg_value_as_string(krb5_context context,
  * If NULL is returned, an error message has been set using
  * krb5_set_error_message().
  */
-char *
+KRB5_LIB_FUNCTION char * KRB5_LIB_CALL
 _krb5_parse_reg_value_as_multi_string(krb5_context context,
                                       HKEY key, const char * valuename,
                                       DWORD type, DWORD cb_data, char *separator)
@@ -620,7 +620,7 @@ load_config_from_regpath(krb5_context context,
  *
  * @see parse_reg_value() for details about how each type of value is handled.
  */
-krb5_error_code
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 _krb5_load_config_from_registry(krb5_context context,
                                 krb5_config_section ** res)
 {

@@ -291,7 +291,7 @@ fail:
     return ret;
 }
 
-krb5_error_code
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 _krb5_get_krbtgt(krb5_context context,
 		 krb5_ccache  id,
 		 krb5_realm realm,
@@ -1078,7 +1078,7 @@ out:
  * codebase.
  */
 
-krb5_error_code
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 _krb5_get_cred_kdc_any(krb5_context context,
 		       krb5_kdc_flags flags,
 		       krb5_ccache ccache,

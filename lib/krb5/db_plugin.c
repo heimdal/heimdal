@@ -23,7 +23,7 @@ db_plugins_init(void *arg)
 			     db_plugins_plcallback);
 }
 
-void
+KRB5_LIB_FUNCTION void KRB5_LIB_CALL
 _krb5_load_db_plugins(krb5_context context)
 {
     heim_base_once_f(&db_plugins_once, context, db_plugins_init);

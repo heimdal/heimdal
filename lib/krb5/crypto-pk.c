@@ -35,7 +35,7 @@
 
 #include <pkinit_asn1.h>
 
-krb5_error_code
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 _krb5_pk_octetstring2key(krb5_context context,
 			 krb5_enctype type,
 			 const void *dhdata,
@@ -191,7 +191,7 @@ encode_otherinfo(krb5_context context,
 
 
 
-krb5_error_code
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 _krb5_pk_kdf(krb5_context context,
 	     const struct AlgorithmIdentifier *ai,
 	     const void *dhdata,

@@ -155,7 +155,7 @@ krb5_cc_register(krb5_context context,
  * `ops'. Returns 0 or and error code.
  */
 
-krb5_error_code
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 _krb5_cc_allocate(krb5_context context,
 		  const krb5_cc_ops *ops,
 		  krb5_ccache *id)
@@ -406,7 +406,7 @@ krb5_cc_get_ops(krb5_context context, krb5_ccache id)
  * Expand variables in `str' into `res'
  */
 
-krb5_error_code
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 _krb5_expand_default_cc_name(krb5_context context, const char *str, char **res)
 {
     return _krb5_expand_path_tokens(context, str, res);
@@ -1741,7 +1741,7 @@ krb5_cc_get_kdc_offset(krb5_context context, krb5_ccache id, krb5_deltat *offset
 #ifdef _WIN32
 
 #define REGPATH_MIT_KRB5 "SOFTWARE\\MIT\\Kerberos5"
-char *
+KRB5_LIB_FUNCTION char * KRB5_LIB_CALL
 _krb5_get_default_cc_name_from_registry(krb5_context context)
 {
     HKEY hk_k5 = 0;
@@ -1763,7 +1763,7 @@ _krb5_get_default_cc_name_from_registry(krb5_context context)
     return ccname;
 }
 
-int
+KRB5_LIB_FUNCTION int KRB5_LIB_CALL
 _krb5_set_default_cc_name_to_registry(krb5_context context, krb5_ccache id)
 {
     HKEY hk_k5 = 0;

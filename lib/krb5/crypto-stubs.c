@@ -75,7 +75,7 @@ krb5_free_context(krb5_context context)
     free(context);
 }
 
-krb5_boolean
+KRB5_LIB_FUNCTION krb5_boolean KRB5_LIB_CALL
 _krb5_homedir_access(krb5_context context) {
     return 0;
 }

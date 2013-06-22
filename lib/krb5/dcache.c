@@ -92,10 +92,12 @@ set_default_cache(krb5_context context, krb5_dcache *dc, const char *residual)
 	goto out;
     }
     rk_cloexec(fd);
+#ifndef _WIN32
     if (fchmod(fd, S_IRUSR | S_IWUSR) < 0) {
 	ret = errno;
 	goto out;
     }
+#endif
     len = strlen(residual);
 
     iov[0].iov_base = rk_UNCONST(residual);

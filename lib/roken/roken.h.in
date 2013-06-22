@@ -260,6 +260,10 @@ struct sockaddr_dl;
 #include <dirent.h>
 #endif
 
+#ifdef HAVE_DIRECT_H
+#include <direct.h>
+#endif
+
 #ifdef BACKSLASH_PATH_DELIM
 #define rk_PATH_DELIM '\\'
 #endif

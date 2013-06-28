@@ -959,8 +959,14 @@ main (int argc, char **argv)
 	ret = krb5_init_context(&context);
 	if (ret)
 	    errx (1, "krb5_init_context failed: %d", ret);
-	krb5_get_default_principal(context, &client);
-	krb5_unparse_name(context, client, &str);
+
+	ret = krb5_get_default_principal(context, &client);
+	if (ret)
+	    krb5_err(context, 1, ret, "getting default principal failed");
+
+	ret = krb5_unparse_name(context, client, &str);
+	if (ret)
+	    krb5_err(context, 1, ret, "krb5_unparse_name");
 	snprintf(userprompt, sizeof(userprompt), "User: %s", str);
 	free(str);
     }

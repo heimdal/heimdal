@@ -163,8 +163,13 @@ main(int argc, char **argv)
     }
 
     if(version5){
-	krb5_parse_name(context, principal, &princ);
-	krb5_get_pw_salt(context, princ, &salt);
+	ret = krb5_parse_name(context, principal, &princ);
+	if (ret)
+	    krb5_err(context, 1, ret, "failed to unparse name: %s", principal);
+	ret = krb5_get_pw_salt(context, princ, &salt);
+	if (ret)
+	    krb5_err(context, 1, ret, "failed to get salt for %s", principal);
+
 	tokey(context, etype, password, salt, "Kerberos 5 (%s)");
 	krb5_free_salt(context, salt);
     }

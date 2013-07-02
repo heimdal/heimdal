@@ -40,6 +40,7 @@ static HEIMDAL_MUTEX crypto_mutex = HEIMDAL_MUTEX_INITIALIZER;
 static int
 seed_something(void)
 {
+#ifndef NO_RANDFILE
     char buf[1024], seedfile[256];
 
     /* If there is a seed file, load it. But such a file cannot be trusted,
@@ -58,11 +59,12 @@ seed_something(void)
 	    seedfile[0] = '\0';
     } else
 	seedfile[0] = '\0';
+#endif
 
     /* Calling RAND_status() will try to use /dev/urandom if it exists so
        we do not have to deal with it. */
     if (RAND_status() != 1) {
-#ifndef _WIN32
+#ifndef NO_RAND_EGD_METHOD
 	krb5_context context;
 	const char *p;
 
@@ -81,9 +83,11 @@ seed_something(void)
     }
 
     if (RAND_status() == 1)	{
+#ifndef NO_RANDFILE
 	/* Update the seed file */
 	if (seedfile[0])
 	    RAND_write_file(seedfile);
+#endif
 
 	return 0;
     } else

@@ -122,6 +122,10 @@
 #define O_ACCMODE	003
 #endif
 
+#ifndef O_NOFOLLOW
+#define O_NOFOLLOW 0
+#endif
+
 #ifndef _WIN32
 
 #ifndef _PATH_DEV

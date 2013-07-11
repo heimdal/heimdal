@@ -513,7 +513,9 @@ pa_enc_chal_validate(kdc_request_t r, const PA_DATA *pa)
 	set_salt_padata(&r->outpadata, k->salt);
 	krb5_free_keyblock_contents(r->context,  &r->reply_key);
 	ret = krb5_copy_keyblock_contents(r->context, &k->key, &r->reply_key);
-	ret = 0;
+	if (ret)
+	    goto out;
+
 	break;
     }
     if (i < r->client->entry.keys.len)
@@ -1571,7 +1573,7 @@ _kdc_as_rep(kdc_request_t r,
     KDCOptions f;
     krb5_enctype setype;
     krb5_error_code ret = 0;
-    Key *ckey, *skey;
+    Key *skey;
     int found_pa = 0;
     int i, flags = HDB_F_FOR_AS_REQ;
     METHOD_DATA error_method;
@@ -1744,7 +1746,8 @@ _kdc_as_rep(kdc_request_t r,
 	}
     }
 
-    if (found_pa == 0 && (require_preauth_p(r) || b->kdc_options.request_anonymous)) {
+    if (found_pa == 0) {
+	Key *ckey = NULL;
 	size_t n;
 
 	for (n = 0; n < sizeof(pat) / sizeof(pat[0]); n++) {
@@ -1788,9 +1791,25 @@ _kdc_as_rep(kdc_request_t r,
 		goto out;
 	}
 
-	ret = KRB5KDC_ERR_PREAUTH_REQUIRED;
-	_kdc_set_e_text(r, "Need to use PA-ENC-TIMESTAMP/PA-PK-AS-REQ");
-	goto out;
+	/* 
+	 * send requre preauth is its required or anon is requested,
+	 * anon is today only allowed via preauth mechanisms.
+	 */
+	if (require_preauth_p(r) || b->kdc_options.request_anonymous) {
+	    ret = KRB5KDC_ERR_PREAUTH_REQUIRED;
+	    _kdc_set_e_text(r, "Need to use PA-ENC-TIMESTAMP/PA-PK-AS-REQ");
+	    goto out;
+	}
+
+	if (ckey == NULL) {
+	    ret = KRB5KDC_ERR_CLIENT_NOTYET;
+	    _kdc_set_e_text(r, "Doesn't have a client key available");
+	    goto out;
+	}
+	krb5_free_keyblock_contents(r->context,  &r->reply_key);
+	ret = krb5_copy_keyblock_contents(r->context, &ckey->key, &r->reply_key);
+	if (ret)
+	    goto out;
     }
 
     if (r->clientdb->hdb_auth_status)

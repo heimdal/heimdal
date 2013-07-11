@@ -277,7 +277,7 @@ _krb5_erase_file(krb5_context context, const char *filename)
         close (fd);
         return errno;
     }
-    ret = fstat (fd, &sb2);
+    ret = fstat(fd, &sb2);
     if (ret < 0) {
 	_krb5_xunlock(context, fd);
 	close (fd);
@@ -288,7 +288,7 @@ _krb5_erase_file(krb5_context context, const char *filename)
 
     if (sb1.st_dev != sb2.st_dev || sb1.st_ino != sb2.st_ino) {
 	_krb5_xunlock(context, fd);
-	close (fd);
+	close(fd);
 	return EPERM;
     }
 
@@ -296,18 +296,18 @@ _krb5_erase_file(krb5_context context, const char *filename)
 
     if (sb2.st_nlink != 0) {
 	_krb5_xunlock(context, fd);
-        close (fd);
+        close(fd);
         return 0;
     }
 
-    ret = scrub_file (fd);
+    ret = scrub_file(fd);
     if (ret) {
 	_krb5_xunlock(context, fd);
 	close(fd);
 	return ret;
     }
     ret = _krb5_xunlock(context, fd);
-    close (fd);
+    close(fd);
     return ret;
 }
 
@@ -325,7 +325,7 @@ fcc_gen_new(krb5_context context, krb5_ccache *id)
 			       N_("malloc: out of memory", ""));
 	return KRB5_CC_NOMEM;
     }
-    ret = asprintf (&file, "%sXXXXXX", KRB5_DEFAULT_CCFILE_ROOT);
+    ret = asprintf(&file, "%sXXXXXX", KRB5_DEFAULT_CCFILE_ROOT);
     if(ret < 0 || file == NULL) {
 	free(f);
 	krb5_set_error_message(context, KRB5_CC_NOMEM,
@@ -394,12 +394,23 @@ fcc_open(krb5_context context,
 			      (flags | O_RDWR) == flags);
     krb5_error_code ret;
     const char *filename;
+    struct stat sb1, sb2;
     int fd;
 
     if (FCACHE(id) == NULL)
         return krb5_einval(context, 2);
 
     filename = FILENAME(id);
+
+    if ((flags & O_CREAT) == 0) {
+	ret = lstat(filename, &sb1);
+	if (ret < 0) {
+	    krb5_set_error_message(context, ret, N_("%s lstat(%s)", "file, error"),
+				   operation, filename);
+	    return errno;
+	    
+	}
+    }
 
     fd = open(filename, flags, mode);
     if(fd < 0) {
@@ -411,6 +422,39 @@ fcc_open(krb5_context context,
 	return ret;
     }
     rk_cloexec(fd);
+
+    if ((flags & O_CREAT) == 0) {
+
+	ret = fstat(fd, &sb2);
+	if (ret < 0) {
+	    krb5_clear_error_message(context);
+	    return errno;
+	}
+
+	if (!S_ISREG(sb2.st_mode)) {
+	    krb5_set_error_message(context, EPERM, N_("Refuses to open non files caches: FILE:%s", ""), filename);
+	    close(fd);
+	    return EPERM;
+	}
+
+	if (sb1.st_dev != sb2.st_dev || sb1.st_ino != sb2.st_ino) {
+	    krb5_set_error_message(context, EPERM, N_("Refuses to open symlinks for caches FILE:%s", ""), filename);
+	    close(fd);
+	    return EPERM;
+	}
+	if (sb2.st_nlink != 1) {
+	    krb5_set_error_message(context, EPERM, N_("Refuses to open hardlinks for caches FILE:%s", ""), filename);
+	    close(fd);
+	    return EPERM;
+	}
+	if ((sb2.st_mode & 077) != 0) {
+	    krb5_set_error_message(context, EPERM,
+				   N_("Refuses to open group/other readable files FILE:%s", ""), filename);
+	    close(fd);
+	    return EPERM;
+	}
+
+    }
 
     if((ret = fcc_lock(context, id, fd, exclusive)) != 0) {
 	close(fd);
@@ -434,7 +478,7 @@ fcc_initialize(krb5_context context,
 
     unlink (f->filename);
 
-    ret = fcc_open(context, id, "initialize", &fd, O_RDWR | O_CREAT | O_EXCL | O_BINARY | O_CLOEXEC, 0600);
+    ret = fcc_open(context, id, "initialize", &fd, O_RDWR | O_CREAT | O_EXCL | O_BINARY | O_CLOEXEC | O_NOFOLLOW, 0600);
     if(ret)
 	return ret;
     {
@@ -509,7 +553,7 @@ fcc_store_cred(krb5_context context,
     int ret;
     int fd;
 
-    ret = fcc_open(context, id, "store", &fd, O_WRONLY | O_APPEND | O_BINARY | O_CLOEXEC, 0);
+    ret = fcc_open(context, id, "store", &fd, O_WRONLY | O_APPEND | O_BINARY | O_CLOEXEC | O_NOFOLLOW, 0);
     if(ret)
 	return ret;
     {
@@ -557,7 +601,7 @@ init_fcc(krb5_context context,
     if (kdc_offset)
 	*kdc_offset = 0;
 
-    ret = fcc_open(context, id, operation, &fd, O_RDONLY | O_BINARY | O_CLOEXEC, 0);
+    ret = fcc_open(context, id, operation, &fd, O_RDONLY | O_BINARY | O_CLOEXEC | O_NOFOLLOW, 0);
     if(ret)
 	return ret;
 
@@ -991,14 +1035,14 @@ fcc_move(krb5_context context, krb5_ccache from, krb5_ccache to)
 	int fd1, fd2;
 	char buf[BUFSIZ];
 
-	ret = fcc_open(context, from, "move/from", &fd1, O_RDONLY | O_BINARY | O_CLOEXEC, 0);
+	ret = fcc_open(context, from, "move/from", &fd1, O_RDONLY | O_BINARY | O_CLOEXEC | O_NOFOLLOW, 0);
 	if(ret)
 	    return ret;
 
 	unlink(FILENAME(to));
 
 	ret = fcc_open(context, to, "move/to", &fd2,
-		       O_WRONLY | O_CREAT | O_EXCL | O_BINARY | O_CLOEXEC, 0600);
+		       O_WRONLY | O_CREAT | O_EXCL | O_BINARY | O_CLOEXEC | O_NOFOLLOW, 0600);
 	if(ret)
 	    goto out1;
 
@@ -1067,7 +1111,7 @@ fcc_lastchange(krb5_context context, krb5_ccache id, krb5_timestamp *mtime)
     struct stat sb;
     int fd;
 
-    ret = fcc_open(context, id, "lastchange", &fd, O_RDONLY | O_BINARY | O_CLOEXEC, 0);
+    ret = fcc_open(context, id, "lastchange", &fd, O_RDONLY | O_BINARY | O_CLOEXEC | O_NOFOLLOW, 0);
     if(ret)
 	return ret;
     ret = fstat(fd, &sb);

@@ -250,6 +250,11 @@ init_context_from_config_file(krb5_context context)
 	if (strcasecmp(tmp, "ignore") == 0)
 	    context->flags |= KRB5_CTX_F_RD_REQ_IGNORE;
     }
+    ret = krb5_config_get_bool_default(context, NULL, TRUE,
+				       "libdefaults",
+				       "fcache_strict_checking", NULL);
+    if (ret)
+	context->flags |= KRB5_CTX_F_FCACHE_STRICT_CHECKING;
 
     return 0;
 }

@@ -395,6 +395,7 @@ fcc_open(krb5_context context,
     krb5_error_code ret;
     const char *filename;
     struct stat sb1, sb2;
+    int strict_checking;;
     int fd;
 
     if (FCACHE(id) == NULL)
@@ -402,7 +403,10 @@ fcc_open(krb5_context context,
 
     filename = FILENAME(id);
 
-    if ((flags & O_CREAT) == 0) {
+    strict_checking = (flags & O_CREAT) == 0 &&
+	(context->flags & KRB5_CTX_F_FCACHE_STRICT_CHECKING) != 0;
+
+    if (strict_checking) {
 	ret = lstat(filename, &sb1);
 	if (ret < 0) {
 	    krb5_set_error_message(context, ret, N_("%s lstat(%s)", "file, error"),
@@ -423,7 +427,7 @@ fcc_open(krb5_context context,
     }
     rk_cloexec(fd);
 
-    if ((flags & O_CREAT) == 0) {
+    if (strict_checking) {
 
 	ret = fstat(fd, &sb2);
 	if (ret < 0) {

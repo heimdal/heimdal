@@ -391,6 +391,7 @@ struct entry libdefaults_entries[] = {
     { "encrypt", krb5_config_string, check_boolean, 0 },
     { "extra_addresses", krb5_config_string, NULL, 0 },
     { "fcache_version", krb5_config_string, check_numeric, 0 },
+    { "fcache_strict_checking", krb5_config_string, check_boolean, 0 },
     { "fcc-mit-ticketflags", krb5_config_string, check_boolean, 0 },
     { "forward", krb5_config_string, check_boolean, 0 },
     { "forwardable", krb5_config_string, check_boolean, 0 },

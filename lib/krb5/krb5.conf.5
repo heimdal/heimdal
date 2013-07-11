@@ -319,6 +319,9 @@ given principal name, and if found the given username will be used, or,
 if the username is missing, an error will be returned.  If the file
 doesn't exist, or if no matching line is found then other plugins will
 be allowed to run.
+.It Li fcache_strict_checking
+strict checking in FILE credential caches that owner, no symlink and
+permissions is correct.
 .El
 .It Li [domain_realm]
 This is a list of mappings from DNS domain to Kerberos realm.

@@ -688,6 +688,12 @@ ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL rk_rename(const char *, const char *);
 #define rk_rename(__rk_rn_from,__rk_rn_to) rename(__rk_rn_from,__rk_rn_to)
 #endif
 
+#ifdef MKDIR_DOES_NOT_HAVE_MODE
+#define mkdir rk_mkdir
+#else
+#define rk_mkdir(__rk_rn_name, __rk_rn_mode) mkdir(__rk_rn_name,__rk_rn_mode)
+#endif
+
 #if !defined(HAVE_DAEMON) || defined(NEED_DAEMON_PROTO)
 #ifndef HAVE_DAEMON
 #define daemon rk_daemon

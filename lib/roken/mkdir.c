@@ -43,7 +43,7 @@
 int ROKEN_LIB_FUNCTION
 rk_mkdir(const char *pathname, mode_t mode)
 {
-#ifndef _WIN32
+#ifndef MKDIR_DOES_NOT_HAVE_MODE
     return mkdir(pathname, mode);
 #else
     /* Windows does not provide the ability to set access permissions */

@@ -94,8 +94,8 @@ libroken_la_SOURCES =		\
 	issuid.c		\
 	k_getpwnam.c		\
 	k_getpwuid.c		\
-	mkdir.c                 \
 	mini_inetd.c		\
+	mkdir.c                 \
 	net_read.c		\
 	net_write.c		\
 	parse_bytes.c		\

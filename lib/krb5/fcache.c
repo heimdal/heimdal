@@ -451,6 +451,11 @@ fcc_open(krb5_context context,
 	    close(fd);
 	    return EPERM;
 	}
+	if (sb2.st_uid != getuid()) {
+	    krb5_set_error_message(context, EPERM, N_("Refuses to open cache files not own by myself FILE:%s (owned by %d)", ""), filename, (int)sb2.st_uid);
+	    close(fd);
+	    return EPERM;
+	}
 	if ((sb2.st_mode & 077) != 0) {
 	    krb5_set_error_message(context, EPERM,
 				   N_("Refuses to open group/other readable files FILE:%s", ""), filename);

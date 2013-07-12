@@ -395,7 +395,7 @@ fcc_open(krb5_context context,
     krb5_error_code ret;
     const char *filename;
     struct stat sb1, sb2;
-    int strict_checking;;
+    int strict_checking;
     int fd;
 
     if (FCACHE(id) == NULL)
@@ -451,11 +451,13 @@ fcc_open(krb5_context context,
 	    close(fd);
 	    return EPERM;
 	}
+#ifndef _WIN32
 	if (sb2.st_uid != getuid()) {
 	    krb5_set_error_message(context, EPERM, N_("Refuses to open cache files not own by myself FILE:%s (owned by %d)", ""), filename, (int)sb2.st_uid);
 	    close(fd);
 	    return EPERM;
 	}
+#endif
 	if ((sb2.st_mode & 077) != 0) {
 	    krb5_set_error_message(context, EPERM,
 				   N_("Refuses to open group/other readable files FILE:%s", ""), filename);

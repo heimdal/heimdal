@@ -1890,6 +1890,7 @@ _krb5_derive_key(krb5_context context,
     case KRB5_ENCTYPE_OLD_DES3_CBC_SHA1:
 	_krb5_DES3_random_to_key(context, key->key, k, nblocks * et->blocksize);
 	break;
+    case ETYPE_DES3_CBC_SHA1:
     case KRB5_ENCTYPE_AES128_CTS_HMAC_SHA1_96:
     case KRB5_ENCTYPE_AES256_CTS_HMAC_SHA1_96:
 	memcpy(key->key->keyvalue.data, k, key->key->keyvalue.length);

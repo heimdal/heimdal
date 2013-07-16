@@ -52,6 +52,59 @@ DES3_random_key(krb5_context context,
 	    DES_is_weak_key(&k[2]));
 }
 
+static krb5_error_code
+DES3_prf(krb5_context context,
+	 krb5_crypto crypto,
+	 const krb5_data *in,
+	 krb5_data *out)
+{
+    struct _krb5_checksum_type *ct = crypto->et->checksum;
+    krb5_error_code ret;
+    Checksum result;
+    krb5_keyblock *derived;
+
+    result.cksumtype = ct->type;
+    ret = krb5_data_alloc(&result.checksum, ct->checksumsize);
+    if (ret) {
+	krb5_set_error_message(context, ret, N_("malloc: out memory", ""));
+	return ret;
+    }
+
+    ret = (*ct->checksum)(context, NULL, in->data, in->length, 0, &result);
+    if (ret) {
+	krb5_data_free(&result.checksum);
+	return ret;
+    }
+
+    if (result.checksum.length < crypto->et->blocksize)
+	krb5_abortx(context, "internal prf error");
+
+    derived = NULL;
+    ret = krb5_derive_key(context, crypto->key.key,
+			  crypto->et->type, "prf", 3, &derived);
+    if (ret)
+	krb5_abortx(context, "krb5_derive_key");
+
+    ret = krb5_data_alloc(out, crypto->et->blocksize);
+    if (ret)
+	krb5_abortx(context, "malloc failed");
+
+    {
+	const EVP_CIPHER *c = (*crypto->et->keytype->evp)();
+	EVP_CIPHER_CTX ctx;
+
+	EVP_CIPHER_CTX_init(&ctx); /* ivec all zero */
+	EVP_CipherInit_ex(&ctx, c, NULL, derived->keyvalue.data, NULL, 1);
+	EVP_Cipher(&ctx, out->data, result.checksum.data,
+		   crypto->et->blocksize);
+	EVP_CIPHER_CTX_cleanup(&ctx);
+    }
+
+    krb5_data_free(&result.checksum);
+    krb5_free_keyblock(context, derived);
+
+    return ret;
+}
 
 #ifdef DES3_OLD_ENCTYPE
 static struct _krb5_key_type keytype_des3 = {
@@ -158,7 +211,7 @@ struct _krb5_encryption_type _krb5_enctype_des3_cbc_sha1 = {
     F_DERIVED,
     _krb5_evp_encrypt,
     0,
-    NULL
+    DES3_prf
 };
 
 #ifdef DES3_OLD_ENCTYPE

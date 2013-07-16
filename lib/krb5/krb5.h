@@ -655,6 +655,8 @@ typedef struct krb5_auth_context_data {
 
     krb5_keytype keytype;	/* ¿requested key type ? */
     krb5_cksumtype cksumtype;	/* ¡requested checksum type! */
+    
+    AuthorizationData *auth_data;
 
 }krb5_auth_context_data, *krb5_auth_context;
 

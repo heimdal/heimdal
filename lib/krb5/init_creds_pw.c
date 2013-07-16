@@ -1805,6 +1805,9 @@ make_fast_ap_fxarmor(krb5_context context,
     krb5_auth_context auth_context = NULL;
     krb5_creds cred, *credp = NULL;
     krb5_error_code ret;
+    krb5_data empty;
+
+    krb5_data_zero(&empty);
 
     ALLOC(fxarmor, 1);
     if (fxarmor == NULL) {
@@ -1840,6 +1843,10 @@ make_fast_ap_fxarmor(krb5_context context,
     if (ret)
 	goto out;
     
+    ret = krb5_auth_con_add_AuthorizationData(context, auth_context, KRB5_PADATA_FX_FAST_ARMOR, &empty);
+    if (ret)
+	goto out;
+
     ret = krb5_mk_req_extended(context,
 			       &auth_context,
 			       AP_OPTS_USE_SUBKEY,

@@ -599,7 +599,7 @@ heim_db_commit(heim_db_t db, heim_error_t *error)
 	    heim_release(a);
 	    goto err;
 	}
-	journal_contents = heim_copy_serialize(a, 0, error);
+	journal_contents = heim_json_copy_serialize(a, 0, error);
 	heim_release(a);
 
 	/* Write replay log */
@@ -1491,7 +1491,7 @@ json_db_sync(void *db, heim_error_t *error)
 
     heim_assert(jsondb->fd > -1, "DB not locked when sync attempted");
 
-    json = heim_copy_serialize(jsondb->dict, 0, &e);
+    json = heim_json_copy_serialize(jsondb->dict, 0, &e);
     if (json == NULL) {
 	if (error)
 	    *error = e;

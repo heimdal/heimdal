@@ -764,7 +764,7 @@ strbuf_add(void *ctx, const char *str)
 #define STRBUF_INIT_SZ 64
 
 heim_string_t
-heim_copy_serialize(heim_object_t obj, heim_json_flags_t flags, heim_error_t *error)
+heim_json_copy_serialize(heim_object_t obj, heim_json_flags_t flags, heim_error_t *error)
 {
     heim_string_t str;
     struct strbuf strbuf;

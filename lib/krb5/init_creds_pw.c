@@ -34,6 +34,7 @@
  */
 
 #include "krb5_locl.h"
+#include <heim-ipc.h>
 
 typedef struct krb5_get_init_creds_ctx {
     KDCOptions flags;
@@ -87,10 +88,13 @@ typedef struct krb5_get_init_creds_ctx {
 #define KRB5_FAST_EXPECTED 32 /* in exchange with KDC, fast was discovered */
 #define KRB5_FAST_REQUIRED 64 /* fast required by action of caller */
 #define KRB5_FAST_DISABLED 128
+#define KRB5_FAST_AP_ARMOR_SERVICE 256
 	krb5_keyblock *reply_key;
 	krb5_ccache armor_ccache;
+	krb5_principal armor_service;
 	krb5_crypto armor_crypto;
 	krb5_keyblock armor_key;
+	krb5_keyblock *strengthen_key;
     } fast_state;
 } krb5_get_init_creds_ctx;
 
@@ -160,8 +164,14 @@ free_init_creds_ctx(krb5_context context, krb5_init_creds_context ctx)
      * to destroy it, and how would we know? also, the caller should
      * take care of cleaning up the armor_ccache).
      */
+    if (ctx->fast_state.armor_ccache)
+	krb5_cc_close(context, ctx->fast_state.armor_ccache);
+    if (ctx->fast_state.armor_service)
+	krb5_free_principal(context, ctx->fast_state.armor_service);
     if (ctx->fast_state.armor_crypto)
 	krb5_crypto_destroy(context, ctx->fast_state.armor_crypto);
+    if (ctx->fast_state.strengthen_key)
+	krb5_free_keyblock(context, ctx->fast_state.strengthen_key);
     krb5_free_keyblock_contents(context, &ctx->fast_state.armor_key);
 
     krb5_data_free(&ctx->req_buffer);
@@ -1651,6 +1661,26 @@ krb5_init_creds_set_fast_ccache(krb5_context context,
     return 0;
 }
 
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
+krb5_init_creds_set_fast_ap_armor_service(krb5_context context,
+					  krb5_init_creds_context ctx,
+					  krb5_const_principal armor_service)
+{
+    krb5_error_code ret;
+
+    if (ctx->fast_state.armor_service)
+	krb5_free_principal(context, ctx->fast_state.armor_service);
+    if (armor_service) {
+	ret = krb5_copy_principal(context, armor_service, &ctx->fast_state.armor_service);
+	if (ret)
+	    return ret;
+    } else {
+	ctx->fast_state.armor_service = NULL;
+    }
+    ctx->fast_state.flags |= KRB5_FAST_REQUIRED | KRB5_FAST_AP_ARMOR_SERVICE;
+    return 0;
+}
+
 /*
  * FAST
  */
@@ -1722,20 +1752,12 @@ fast_unwrap_as_rep(krb5_context context, int32_t nonce,
 	goto out;
 
     if (fastrep.strengthen_key) {
-	krb5_keyblock result;
+	if (state->strengthen_key)
+	    krb5_free_keyblock(context, state->strengthen_key);
 
-	ret = _krb5_fast_cf2(context,
-			     fastrep.strengthen_key,
-			     "strengthenkey", 
-			     state->reply_key,
-			     "replykey",
-			     &result,
-			     NULL);
+	ret = krb5_copy_keyblock(context, fastrep.strengthen_key, &state->strengthen_key);
 	if (ret)
 	    goto out;
-
-	krb5_free_keyblock_contents(context, state->reply_key);
-	*state->reply_key = result;
     }
 
     if (nonce != fastrep.nonce) {
@@ -1796,12 +1818,13 @@ fast_unwrap_error(krb5_context context, struct fast_state *state, KRB_ERROR *err
     return 0;
 }
 
-static krb5_error_code
-make_fast_ap_fxarmor(krb5_context context,
-		     struct fast_state *state,
-		     KrbFastArmor **armor)
+krb5_error_code
+_krb5_make_fast_ap_fxarmor(krb5_context context,
+			   krb5_ccache armor_ccache,
+			   krb5_data *armor_value,
+			   krb5_keyblock *armor_key,
+			   krb5_crypto *armor_crypto)
 {
-    KrbFastArmor *fxarmor = NULL;
     krb5_auth_context auth_context = NULL;
     krb5_creds cred, *credp = NULL;
     krb5_error_code ret;
@@ -1809,21 +1832,13 @@ make_fast_ap_fxarmor(krb5_context context,
 
     krb5_data_zero(&empty);
 
-    ALLOC(fxarmor, 1);
-    if (fxarmor == NULL) {
-	ret = ENOMEM;
-	goto out;
-    }
-
-    fxarmor->armor_type = 1;
-
     memset(&cred, 0, sizeof(cred));
 
     ret = krb5_auth_con_init (context, &auth_context);
     if (ret)
 	goto out;
     
-    ret = krb5_cc_get_principal(context, state->armor_ccache, &cred.client);
+    ret = krb5_cc_get_principal(context, armor_ccache, &cred.client);
     if (ret)
 	goto out;
     
@@ -1837,7 +1852,7 @@ make_fast_ap_fxarmor(krb5_context context,
 	goto out;
     }
     
-    ret = krb5_get_credentials(context, 0, state->armor_ccache, &cred, &credp);
+    ret = krb5_get_credentials(context, 0, armor_ccache, &cred, &credp);
     krb5_free_principal(context, cred.server);
     krb5_free_principal(context, cred.client);
     if (ret)
@@ -1852,31 +1867,119 @@ make_fast_ap_fxarmor(krb5_context context,
 			       AP_OPTS_USE_SUBKEY,
 			       NULL,
 			       credp,
-			       &fxarmor->armor_value);
+			       armor_value);
     krb5_free_creds(context, credp);
     if (ret)
 	goto out;
     
+    ret = _krb5_fast_armor_key(context,
+			       auth_context->local_subkey,
+			       auth_context->keyblock,
+			       armor_key,
+			       armor_crypto);
+    if (ret)
+	goto out;
+
+ out:
+    return ret;
+}
+
+static heim_base_once_t armor_service_once = HEIM_BASE_ONCE_INIT;
+static heim_ipc armor_service = NULL;
+
+static void
+fast_armor_init_ipc(void *ctx)
+{
+    heim_ipc *ipc = ctx;
+    heim_ipc_init_context("ANY:org.h5l.armor-service", ipc);
+}
+
+
+static krb5_error_code
+make_fast_ap_fxarmor(krb5_context context,
+		     struct fast_state *state,
+		     const char *realm,
+		     KrbFastArmor **armor)
+{
+    KrbFastArmor *fxarmor = NULL;
+    krb5_error_code ret;
+
     if (state->armor_crypto)
 	krb5_crypto_destroy(context, state->armor_crypto);
     krb5_free_keyblock_contents(context, &state->armor_key);
 
-    ret = _krb5_fast_armor_key(context,
-			       auth_context->local_subkey,
-			       auth_context->keyblock,
-			       &state->armor_key,
-			       &state->armor_crypto);
-    if (ret)
+
+    ALLOC(fxarmor, 1);
+    if (fxarmor == NULL) {
+	ret = ENOMEM;
 	goto out;
+    }
+
+    if (state->flags & KRB5_FAST_AP_ARMOR_SERVICE) {
+	KERB_ARMOR_SERVICE_REPLY msg;
+	krb5_data request, reply;
+
+	heim_base_once_f(&armor_service_once, &armor_service, fast_armor_init_ipc);
+	if (armor_service == NULL) {
+	    krb5_set_error_message(context, ENOENT, "Failed to open fast armor service");
+	    return ENOENT;
+	}
+
+	krb5_data_zero(&reply);
+
+	request.data = rk_UNCONST(realm);
+	request.length = strlen(realm);
+
+	ret = heim_ipc_call(armor_service, &request, &reply, NULL);
+	heim_release(send);
+	if (ret) {
+	    krb5_set_error_message(context, ret, "Failed to get armor service credential");
+	    return ret;
+	}
+
+	ret = decode_KERB_ARMOR_SERVICE_REPLY(reply.data, reply.length, &msg, NULL);
+	krb5_data_free(&reply);
+	if (ret)
+	    goto out;
+
+	ret = copy_KrbFastArmor(fxarmor, &msg.armor);
+	if (ret) {
+	    free_KERB_ARMOR_SERVICE_REPLY(&msg);
+	    goto out;
+	}
+
+	ret = krb5_copy_keyblock_contents(context, &msg.armor_key, &state->armor_key);
+	free_KERB_ARMOR_SERVICE_REPLY(&msg);
+	if (ret)
+	    goto out;
+
+	ret = krb5_crypto_init(context, &state->armor_key, 0, &state->armor_crypto);
+	if (ret)
+	    goto out;
+
+    } else {
+
+	fxarmor->armor_type = 1;
+
+	ret = _krb5_make_fast_ap_fxarmor(context,
+					 state->armor_ccache,
+					 &fxarmor->armor_value,
+					 &state->armor_key,
+					 &state->armor_crypto);
+	if (ret)
+	    goto out;
+    }
     
+
     *armor = fxarmor;
     fxarmor = NULL;
  out:
-    if (fxarmor)
+    if (fxarmor) {
 	free_KrbFastArmor(fxarmor);
+	free(fxarmor);
+    }
     return ret;
 }
-
 
 static krb5_error_code
 fast_wrap_req(krb5_context context, struct fast_state *state, KDC_REQ *req)
@@ -1925,6 +2028,8 @@ fast_wrap_req(krb5_context context, struct fast_state *state, KDC_REQ *req)
     req->req_body.cname->name_string.len = 2;
     req->req_body.cname->name_string.val[0] = strdup(KRB5_WELLKNOWN_NAME);
     req->req_body.cname->name_string.val[1] = strdup(KRB5_ANON_NAME);
+    ALLOC(req->req_body.till, 1);
+    *req->req_body.till = 0;
 
     if (req->padata) {
 	ret = copy_METHOD_DATA(req->padata, &fastreq.padata);
@@ -1945,7 +2050,7 @@ fast_wrap_req(krb5_context context, struct fast_state *state, KDC_REQ *req)
 	size_t len;
 	void *buf;
 
-	ret = make_fast_ap_fxarmor(context, state, &fxreq.u.armored_data.armor);
+	ret = make_fast_ap_fxarmor(context, state, fastreq.req_body.realm, &fxreq.u.armored_data.armor);
 	if (ret)
 	    goto out;
 

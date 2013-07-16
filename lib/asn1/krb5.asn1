@@ -80,7 +80,13 @@ EXPORTS
 	KrbFastReq,
 	KrbFastArmor,
 	KDCFastState,
-	KDCFastCookie
+	KDCFastCookie,
+	KDC-PROXY-MESSAGE,
+	KERB-TIMES,
+	KERB-CRED,
+	KERB-TGS-REQ-IN,
+	KERB-TGS-REQ-OUT,
+	KERB-ARMOR-SERVICE-REPLY
 	;
 
 NAME-TYPE ::= INTEGER {
@@ -100,7 +106,7 @@ NAME-TYPE ::= INTEGER {
 	KRB5_NT_NTLM(-1200), -- NTLM name, realm is domain
 	KRB5_NT_X509_GENERAL_NAME(-1201), -- x509 general name (base64 encoded)
 	KRB5_NT_GSS_HOSTBASED_SERVICE(-1202),
-	KRB5_NT_CACHE_UUID(-1203), -- name is actually a uuid pointing to ccache, use client name in cache,
+	KRB5_NT_CACHE_UUID(-1203), -- name is actually a uuid pointing to ccache, use client name in cache
 	KRB5_NT_SRV_HST_NEEDS_CANON (-195894762) -- -(0x0bad1dea)
 }
 
@@ -154,6 +160,7 @@ PADATA-TYPE ::= INTEGER {
 	KRB5-PADATA-SAM-CHALLENGE2(30),		-- (kenh@pobox.com)
 	KRB5-PADATA-SAM-RESPONSE2(31),		-- (kenh@pobox.com)
 	KRB5-PA-EXTRA-TGT(41),			-- Reserved extra TGT
+	KRB5-PADATA-FX-FAST-ARMOR(71),		-- fast armor
 	KRB5-PADATA-TD-KRB-PRINCIPAL(102),	-- PrincipalName
 	KRB5-PADATA-PK-TD-TRUSTED-CERTIFIERS(104), -- PKINIT
 	KRB5-PADATA-PK-TD-CERTIFICATE-INDEX(105), -- PKINIT
@@ -281,10 +288,6 @@ PrincipalName ::= SEQUENCE {
 Principal ::= SEQUENCE {
 	name[0]			PrincipalName,
 	realm[1]		Realm
-       -- Note that while it'd be nice to be able to add OPTIONAL
-       -- fields at the end here there are issues regarding
-       -- applications that allocate krb5_principal_data's on the
-       -- stack.
 }
 
 Principals ::= SEQUENCE OF Principal
@@ -911,6 +914,11 @@ KERB-TGS-REP-OUT ::= SEQUENCE {
 	cache		[0] OCTET STRING SIZE (16),
 	cred		[1] KERB-CRED,
 	subkey		[2] EncryptionKey
+}
+
+KERB-ARMOR-SERVICE-REPLY ::= SEQUENCE {
+	armor		[0] KrbFastArmor,
+	armor-key	[1] EncryptionKey
 }
 
 

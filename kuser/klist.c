@@ -349,43 +349,20 @@ print_tickets (krb5_context context,
  */
 
 static int
-check_for_tgt (krb5_context context,
-	       krb5_ccache ccache,
-	       krb5_principal principal,
-	       time_t *expiration)
+check_expiration(krb5_context context,
+		 krb5_ccache ccache,
+		 time_t *expiration)
 {
     krb5_error_code ret;
-    krb5_creds pattern;
-    krb5_creds creds;
-    krb5_const_realm client_realm;
-    int expired;
+    time_t t;
 
-    krb5_cc_clear_mcred(&pattern);
+    ret = krb5_cc_get_lifetime(context, ccache, &t);
+    if (ret || t == 0)
+	return 1;
 
-    client_realm = krb5_principal_get_realm(context, principal);
+    *expiration = time(NULL) + t;
 
-    ret = krb5_make_principal (context, &pattern.server,
-			       client_realm, KRB5_TGS_NAME, client_realm, NULL);
-    if (ret)
-	krb5_err (context, 1, ret, "krb5_make_principal");
-    pattern.client = principal;
-
-    ret = krb5_cc_retrieve_cred (context, ccache, 0, &pattern, &creds);
-    krb5_free_principal (context, pattern.server);
-    if (ret) {
-	if (ret == KRB5_CC_NOTFOUND)
-	    return 1;
-	krb5_err (context, 1, ret, "krb5_cc_retrieve_cred");
-    }
-
-    expired = time(NULL) > creds.times.endtime;
-
-    if (expiration)
-	*expiration = creds.times.endtime;
-
-    krb5_free_cred_contents (context, &creds);
-
-    return expired;
+    return 0;
 }
 
 /*
@@ -491,7 +468,7 @@ display_v5_ccache (krb5_context context, krb5_ccache ccache,
 	    krb5_err (context, 1, ret, "krb5_cc_get_principal");
     }
     if (do_test)
-	exit_status = check_for_tgt (context, ccache, principal, NULL);
+	exit_status = check_expiration(context, ccache, NULL);
     else
 	print_tickets (context, ccache, principal, do_verbose,
 		       do_flags, do_hidden, do_json);
@@ -543,16 +520,11 @@ list_caches(krb5_context context, struct klist_options *opt)
 	rtbl_set_flags(ct, RTBL_JSON);
 
     while (krb5_cccol_cursor_next(context, cursor, &id) == 0) {
-	krb5_principal principal = NULL;
 	int expired = 0;
 	char *name;
 	time_t t;
 
-	ret = krb5_cc_get_principal(context, id, &principal);
-	if (ret)
-	    continue;
-
-	expired = check_for_tgt (context, id, principal, &t);
+	expired = check_expiration(context, id, &t);
 
 	ret = krb5_cc_get_friendly_name(context, id, &name);
 	if (ret == 0) {
@@ -583,8 +555,6 @@ list_caches(krb5_context context, struct klist_options *opt)
 	    krb5_xfree(fname);
 	}
 	krb5_cc_close(context, id);
-
-	krb5_free_principal(context, principal);
     }
 
     krb5_cccol_cursor_free(context, &cursor);

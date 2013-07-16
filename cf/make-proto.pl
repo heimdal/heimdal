@@ -120,7 +120,7 @@ while(<>) {
 	s/^\s*//;
 	s/\s*$//;
 	s/\s+/ /g;
-	if($_ =~ /\)$/){
+	if($_ =~ /\)/){
 	    if(!/^static/ && !/^PRIVATE/){
 		$attr = "";
 		if(m/(.*)(__attribute__\s?\(.*\))/) {
@@ -135,6 +135,10 @@ while(<>) {
 		if(m/(.*)\s(\w+DEPRECATED)(.*)/) {
 		    $attr .= " $2";
 		    $_ = "$1 $3";
+		}
+		if(m/(.*)\s(HEIMDAL_\w+_ATTRIBUTE)\s?(\(.*\))?(.*)/) {
+		    $attr .= " $2$3";
+		    $_ = "$1 $4";
 		}
 		# remove outer ()
 		s/\s*\(/</;
@@ -296,8 +300,9 @@ if($oproto) {
 }
 $private_h_trailer = "";
 
+
 foreach(sort keys %funcs){
-    if(/^(main)$/) { next }
+    if(/^(DllMain|main)$/) { next }
     if ($funcs{$_} =~ /\^/) {
 	$beginblock = "#ifdef __BLOCKS__\n";
 	$endblock = "#endif /* __BLOCKS__ */\n";
@@ -305,8 +310,11 @@ foreach(sort keys %funcs){
 	$beginblock = $endblock = "";
     }
     # if we have an export table and doesn't have content, or matches private RE
-    if((scalar(keys(%exported)) ne 0 && !exists $exported{$_} ) || /$private_func_re/) {
+    if(((scalar keys %exported) ne 0 && !exists $exported{$_} ) || /$private_func_re/) {
 	$private_h .= $beginblock;
+#	if ($apple and not /$private_func_re/) {
+#	    $private_h .= "#define $_ __ApplePrivate_${_}\n";
+#	}
 	$private_h .= $funcs{$_} . "\n" ;
 	$private_h .= $endblock . "\n";
 	if($funcs{$_} =~ /__attribute__/) {
@@ -316,7 +324,7 @@ foreach(sort keys %funcs){
 	if($documentation{$_}) {
 	    $public_h .= "/**\n";
 	    $public_h .= "$documentation{$_}";
-	    $public_h .= " */\n";
+	    $public_h .= " */\n\n";
 	}
 	if($flags{"function-blocking"}) {
 	    $fupper = uc $_;

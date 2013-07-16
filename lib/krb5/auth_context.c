@@ -98,6 +98,10 @@ krb5_auth_con_free(krb5_context context,
 	krb5_free_keyblock(context, auth_context->keyblock);
 	krb5_free_keyblock(context, auth_context->remote_subkey);
 	krb5_free_keyblock(context, auth_context->local_subkey);
+	if (auth_context->auth_data) {
+	    free_AuthorizationData(auth_context->auth_data);
+	    free(auth_context->auth_data);
+	}
 	free (auth_context);
     }
     return 0;

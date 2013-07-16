@@ -173,50 +173,17 @@ find_etypelist(krb5_context context,
 	       EtypeList *etypes)
 {
     krb5_error_code ret;
-    krb5_authdata *ad;
-    krb5_authdata adIfRelevant;
-    unsigned i;
-
-    memset(&adIfRelevant, 0, sizeof(adIfRelevant));
-
-    etypes->len = 0;
-    etypes->val = NULL;
-
-    ad = auth_context->authenticator->authorization_data;
-    if (ad == NULL)
-	return 0;
-
-    for (i = 0; i < ad->len; i++) {
-	if (ad->val[i].ad_type == KRB5_AUTHDATA_IF_RELEVANT) {
-	    ret = decode_AD_IF_RELEVANT(ad->val[i].ad_data.data,
-					ad->val[i].ad_data.length,
-					&adIfRelevant,
-					NULL);
-	    if (ret)
-		return ret;
-
-	    if (adIfRelevant.len == 1 &&
-		adIfRelevant.val[0].ad_type ==
-			KRB5_AUTHDATA_GSS_API_ETYPE_NEGOTIATION) {
-		break;
-	    }
-	    free_AD_IF_RELEVANT(&adIfRelevant);
-	    adIfRelevant.len = 0;
-	}
-    }
-
-    if (adIfRelevant.len == 0)
-	return 0;
-
-    ret = decode_EtypeList(adIfRelevant.val[0].ad_data.data,
-			   adIfRelevant.val[0].ad_data.length,
-			   etypes,
-			   NULL);
+    krb5_data data;
+  
+    ret = _krb5_get_ad(context, auth_context->authenticator->authorization_data, NULL, KRB5_AUTHDATA_GSS_API_ETYPE_NEGOTIATION, &data);
     if (ret)
-	krb5_clear_error_message(context);
-
-    free_AD_IF_RELEVANT(&adIfRelevant);
-
+  	return 0;
+    
+    ret = decode_EtypeList(data.data, data.length, etypes, NULL);
+    krb5_data_free(&data);
+    if (ret)
+  	krb5_clear_error_message(context);
+    
     return ret;
 }
 
@@ -491,6 +458,8 @@ krb5_verify_ap_req2(krb5_context context,
 	    *ap_req_options |= AP_OPTS_MUTUAL_REQUIRED;
     }
 
+    memset(&etypes, 0, sizeof(etypes));
+
     if(ticket)
 	*ticket = t;
     else
@@ -503,6 +472,7 @@ krb5_verify_ap_req2(krb5_context context,
     free_EtypeList(&etypes);
     return 0;
  out:
+    free_EtypeList(&etypes);
     if (t)
 	krb5_free_ticket (context, t);
     if (auth_context == NULL || *auth_context == NULL)

@@ -34,7 +34,9 @@
  */
 
 #include "krb5_locl.h"
+#ifndef WIN32
 #include <heim-ipc.h>
+#endif /* WIN32 */
 
 typedef struct krb5_get_init_creds_ctx {
     KDCOptions flags;
@@ -1884,6 +1886,7 @@ _krb5_make_fast_ap_fxarmor(krb5_context context,
     return ret;
 }
 
+#ifndef WIN32
 static heim_base_once_t armor_service_once = HEIM_BASE_ONCE_INIT;
 static heim_ipc armor_service = NULL;
 
@@ -1893,6 +1896,7 @@ fast_armor_init_ipc(void *ctx)
     heim_ipc *ipc = ctx;
     heim_ipc_init_context("ANY:org.h5l.armor-service", ipc);
 }
+#endif /* WIN32 */
 
 
 static krb5_error_code
@@ -1916,6 +1920,10 @@ make_fast_ap_fxarmor(krb5_context context,
     }
 
     if (state->flags & KRB5_FAST_AP_ARMOR_SERVICE) {
+#ifdef WIN32
+	krb5_set_error_message(context, ENOTSUP, "Fast armor IPC service not supportted yet on Windows");
+	return ENOTSUP;
+#else /* WIN32 */
 	KERB_ARMOR_SERVICE_REPLY msg;
 	krb5_data request, reply;
 
@@ -1956,7 +1964,7 @@ make_fast_ap_fxarmor(krb5_context context,
 	ret = krb5_crypto_init(context, &state->armor_key, 0, &state->armor_crypto);
 	if (ret)
 	    goto out;
-
+#endif /* WIN32 */
     } else {
 
 	fxarmor->armor_type = 1;

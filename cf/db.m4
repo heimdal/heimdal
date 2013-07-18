@@ -43,6 +43,7 @@ AS_IF([test "x$with_berkeley_db" != xno],
 		    fi
 		   ])],
     [AC_CHECK_HEADERS([					\
+	           db6/db.h				\
 	           db5/db.h				\
 	           db4/db.h				\
 	           db3/db.h				\

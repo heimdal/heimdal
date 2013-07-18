@@ -56,6 +56,8 @@ dnl db_create is used by db3 and db4 and db5
   #include <stdio.h>
   #ifdef HAVE_DBHEADER
   #include <$dbheader/db.h>
+  #elif HAVE_DB6_DB_H
+  #include <db6/db.h>
   #elif HAVE_DB5_DB_H
   #include <db5/db.h>
   #elif HAVE_DB4_DB_H

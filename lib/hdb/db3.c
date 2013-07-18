@@ -39,6 +39,8 @@
 
 #ifdef HAVE_DBHEADER
 #include <db.h>
+#elif HAVE_DB6_DB_H
+#include <db6/db.h>
 #elif HAVE_DB5_DB_H
 #include <db5/db.h>
 #elif HAVE_DB4_DB_H
@@ -281,7 +283,7 @@ _open_db(DB *d, char *fn, int myflags, int flags, mode_t mode, int *fd)
 
     d->set_cachesize(d, 0, cache_size, 0);
 
-#if (DB_VERSION_MAJOR >= 4) && (DB_VERSION_MINOR >= 1)
+#if (DB_VERSION_MAJOR > 4) || ((DB_VERSION_MAJOR == 4) && (DB_VERSION_MINOR >= 1))
     ret = (*d->open)(d, NULL, fn, NULL, DB_BTREE, myflags, mode);
 #else
     ret = (*d->open)(d, fn, NULL, DB_BTREE, myflags, mode);

@@ -1519,8 +1519,6 @@ add_enc_pa_rep(kdc_request_t r)
     krb5_data cdata;
     size_t len;
 
-    r->et.flags.enc_pa_rep = r->ek.flags.enc_pa_rep = 1;
-
     ret = krb5_crypto_init(r->context, &r->reply_key, 0, &crypto);
     if (ret)
 	return ret;
@@ -2144,6 +2142,12 @@ _kdc_as_rep(kdc_request_t r,
 	goto out;
 
     log_as_req(context, config, r->reply_key.keytype, setype, b);
+
+    /*
+     * We always say we support FAST/enc-pa-rep
+     */
+
+    r->et.flags.enc_pa_rep = r->ek.flags.enc_pa_rep = 1;
 
     /*
      * Add REQ_ENC_PA_REP if client supports it

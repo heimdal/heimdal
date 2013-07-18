@@ -315,6 +315,8 @@ krb5_verify_ap_req2(krb5_context context,
     krb5_error_code ret;
     EtypeList etypes;
 
+    memset(&etypes, 0, sizeof(etypes));
+
     if (ticket)
 	*ticket = NULL;
 
@@ -457,8 +459,6 @@ krb5_verify_ap_req2(krb5_context context,
 	if (ap_req->ap_options.mutual_required)
 	    *ap_req_options |= AP_OPTS_MUTUAL_REQUIRED;
     }
-
-    memset(&etypes, 0, sizeof(etypes));
 
     if(ticket)
 	*ticket = t;

@@ -540,7 +540,7 @@ pa_enc_ts_validate(kdc_request_t r, const PA_DATA *pa)
 	
     if (r->req.req_body.kdc_options.request_anonymous) {
 	ret = KRB5KRB_AP_ERR_BAD_INTEGRITY;
-	_kdc_set_e_text(r, "ENC-TS doesn't suport anon");
+	_kdc_set_e_text(r, "ENC-TS doesn't support anon");
 	goto out;
     }
 

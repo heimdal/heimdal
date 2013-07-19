@@ -166,8 +166,6 @@ free_init_creds_ctx(krb5_context context, krb5_init_creds_context ctx)
      * to destroy it, and how would we know? also, the caller should
      * take care of cleaning up the armor_ccache).
      */
-    if (ctx->fast_state.armor_ccache)
-	krb5_cc_close(context, ctx->fast_state.armor_ccache);
     if (ctx->fast_state.armor_service)
 	krb5_free_principal(context, ctx->fast_state.armor_service);
     if (ctx->fast_state.armor_crypto)

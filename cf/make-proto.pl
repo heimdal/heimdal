@@ -120,7 +120,7 @@ while(<>) {
 	s/^\s*//;
 	s/\s*$//;
 	s/\s+/ /g;
-	if($_ =~ /\)/){
+	if($_ =~ /\)$/){
 	    if(!/^static/ && !/^PRIVATE/){
 		$attr = "";
 		if(m/(.*)(__attribute__\s?\(.*\))/) {
@@ -310,7 +310,7 @@ foreach(sort keys %funcs){
 	$beginblock = $endblock = "";
     }
     # if we have an export table and doesn't have content, or matches private RE
-    if(((scalar keys %exported) ne 0 && !exists $exported{$_} ) || /$private_func_re/) {
+    if((scalar(keys(%exported)) ne 0 && !exists $exported{$_} ) || /$private_func_re/) {
 	$private_h .= $beginblock;
 #	if ($apple and not /$private_func_re/) {
 #	    $private_h .= "#define $_ __ApplePrivate_${_}\n";

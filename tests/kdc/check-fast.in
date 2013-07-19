@@ -96,7 +96,7 @@ if [ "$?" != 0 ] ; then
     exit 1
 fi
 
-trap "kill -9 ${kdcpid}; echo signal killing kdc; exit 1;" EXIT
+trap "kill -9 ${kdcpid}; echo signal killing kdc; cat messages.log; exit 1;" EXIT
 
 ec=0
 
@@ -115,21 +115,21 @@ echo "Listing tickets"; > messages.log
 ${klist} > /dev/null || { ec=1 ; eval "${testfailed}"; }
 ${kdestroy}
 
-echo "Acquire host ticket to be used as an ARMOR ticket"
+echo "Acquire host ticket to be used as an ARMOR ticket"; > messages.log
 ${akinit} --password-file=${objdir}/foopassword ${server}@${R} >/dev/null|| { exit 1; }
-echo "Checking for FAST avail (in the FAST armor cache)"
+echo "Checking for FAST avail (in the FAST armor cache)"; > messages.log
 ${aklist} --hidden | grep fast_avail > /dev/null || { exit 1; }
 
 #
 # Client tests
 #
 
-echo "Getting client initial tickets with FAST armor ticket"
+echo "Getting client initial tickets with FAST armor ticket"; > messages.log
 ${kinit} --fast-armor-cache=${acache} \
    --password-file=${objdir}/foopassword foo@$R || \
 	{ ec=1 ; eval "${testfailed}"; }
 
-echo "Checking for FAST avail (in the FAST acquired cache)"
+echo "Checking for FAST avail (in the FAST acquired cache)"; > messages.log
 ${klist} --hidden | grep fast_avail > /dev/null || { exit 1; }
 
 echo "Getting service ticket"
@@ -151,25 +151,25 @@ expect Password
 password foo\n
 EOF
 
-   echo "Acquire host ticket"
+   echo "Acquire host ticket"; > messages.log
    ${rkpty} ${kinitpty} ${mit}/kinit -c ${acache} ${server}@${R} >/dev/null|| { exit 1; }
    (${aklist} | grep ${server} > /dev/null ) || { exit 1; }
 
-   echo "Checking for FAST avail"
+   echo "Checking for FAST avail"; > messages.log
    ${aklist} --hidden | grep fast_avail > /dev/null || { exit 1; }
 
-   echo "Using plain to get a initial ticket"
+   echo "Using plain to get a initial ticket"; > messages.log
    ${rkpty} ${kinitpty} ${mit}/kinit -c ${cache} foo@${R} >/dev/null|| { exit 1; }
    (${klist} | grep foo > /dev/null ) || { exit 1; }
 
-   echo "Using FAST to get a initial ticket"
+   echo "Using FAST to get a initial ticket"; > messages.log
    ${rkpty} ${kinitpty} ${mit}/kinit -c ${cache} -T ${acache} foo@${R} >/dev/null || { exit 1; }
    (${klist} | grep foo > /dev/null ) || { exit 1; }
 
-   echo "Checking for FAST avail"
+   echo "Checking for FAST avail"; > messages.log
    ${klist} --hidden | grep fast_avail > /dev/null || { exit 1; }
 
-   echo "Getting service ticket"
+   echo "Getting service ticket"; > messages.log
    ${mit}/kvno -c ${cache} ${server}@${R} || { exit 1; }
 
 fi

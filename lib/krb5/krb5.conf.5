@@ -418,21 +418,21 @@ client's AS-REQ or TGS-REQ enctype list for the ticket session key that
 is supported by the KDC and the target principal when the target
 principal is a krbtgt principal.  Else it will prefer the first key from
 the client's AS-REQ enctype list that is also supported by the KDC and
-the target principal. Defaults to TRUE.
+the target principal.  Defaults to FALSE.
 .It Li svc-use-strongest-session-key = Va BOOL
 Like tgt-use-strongest-session-key, but applies to the session key
 enctype of tickets for services other than krbtgt principals. Defaults
-to TRUE.
+to FALSE.
 .It Li preauth-use-strongest-session-key = Va BOOL
 If TRUE then select the strongest possible enctype from the client's
 AS-REQ for PA-ETYPE-INFO2 (i.e., for password-based pre-authentication).
-Else pick the first supported enctype from the client's AS-REQ. Defaults
-to TRUE.
+Else pick the first supported enctype from the client's AS-REQ.  Defaults
+to FALSE.
 .It Li use-strongest-server-key = Va BOOL
 If TRUE then the KDC picks, for the ticket encrypted part's key, the
 first supported enctype from the target service principal's hdb entry's
 current keyset. Else the KDC picks the first supported enctype from the
-target service principal's hdb entry's current keyset. Defaults to TRUE.
+target service principal's hdb entry's current keyset.  Defaults to FALSE.
 .It Li check-ticket-addresses = Va BOOL
 Verify the addresses in the tickets used in tgs requests.
 .\" XXX

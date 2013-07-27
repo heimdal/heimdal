@@ -131,8 +131,11 @@ _kdc_find_etype(krb5_context context, krb5_boolean use_strongest_session_key,
     krb5_error_code ret;
     krb5_salt def_salt;
     krb5_enctype enctype = ETYPE_NULL;
+    krb5_enctype clientbest = (krb5_enctype)ETYPE_NULL;
+    const krb5_enctype *p;
     Key *key;
-    int i;
+    int i, k;
+    int client_offered_1des = 0;
 
     /* We'll want to avoid keys with v4 salted keys in the pre-auth case... */
     ret = krb5_get_pw_salt(context, princ->entry.principal, &def_salt);
@@ -142,9 +145,6 @@ _kdc_find_etype(krb5_context context, krb5_boolean use_strongest_session_key,
     ret = KRB5KDC_ERR_ETYPE_NOSUPP;
 
     if (use_strongest_session_key) {
-	const krb5_enctype *p;
-	krb5_enctype clientbest = (krb5_enctype)ETYPE_NULL;
-	int j;
 
 	/*
 	 * Pick the strongest key that the KDC, target service, and
@@ -166,10 +166,14 @@ _kdc_find_etype(krb5_context context, krb5_boolean use_strongest_session_key,
 		continue;
 
 	    /* check that the client supports it too */
-	    for (j = 0; j < len && enctype == (krb5_enctype)ETYPE_NULL; j++) {
-		if (p[i] != etypes[j])
+	    for (k = 0; k < len && enctype == (krb5_enctype)ETYPE_NULL; k++) {
+                if (krb5_enctype_valid(context, etypes[k]) != 0 &&
+                    !_kdc_is_weak_exception(princ->entry.principal, etypes[k]))
+                    continue;
+                if (etypes[k] == ETYPE_DES_CBC_CRC)
+                    client_offered_1des = 1;
+		if (p[i] != etypes[k])
 		    continue;
-		/* save best of union of { client, crypto system } */
 		if (clientbest == (krb5_enctype)ETYPE_NULL)
 		    clientbest = p[i];
 		/* check target princ support */
@@ -182,10 +186,18 @@ _kdc_find_etype(krb5_context context, krb5_boolean use_strongest_session_key,
 	    }
 	}
 	if (clientbest != (krb5_enctype)ETYPE_NULL &&
-	    enctype == (krb5_enctype)ETYPE_NULL)
+	    enctype == (krb5_enctype)ETYPE_NULL) {
+            ret = 0;
 	    enctype = clientbest;
-	else if (enctype == (krb5_enctype)ETYPE_NULL)
-	    ret = KRB5KDC_ERR_ETYPE_NOSUPP;
+        } else if (enctype == (krb5_enctype)ETYPE_NULL) {
+            if (client_offered_1des &&
+                _kdc_is_weak_exception(princ->entry.principal, ETYPE_DES_CBC_CRC)) {
+                ret = 0;
+                enctype = ETYPE_DES_CBC_CRC;
+            } else {
+                ret = KRB5KDC_ERR_ETYPE_NOSUPP;
+            }
+        }
 	if (ret == 0 && ret_enctype != NULL)
 	    *ret_enctype = enctype;
 	if (ret == 0 && ret_key != NULL)

@@ -167,7 +167,9 @@ _kdc_find_etype(krb5_context context, krb5_boolean use_strongest_session_key,
 		if (krb5_enctype_valid(context, etypes[k]) != 0 &&
 		    !_kdc_is_weak_exception(princ->entry.principal, etypes[k]))
 		    continue;
-		if (etypes[k] == ETYPE_DES_CBC_CRC)
+		if (etypes[k] == (krb5_enctype)ETYPE_DES_CBC_CRC ||
+		    etypes[k] == (krb5_enctype)ETYPE_DES_CBC_MD4 ||
+		    etypes[k] == (krb5_enctype)ETYPE_DES_CBC_MD5)
 		    client_offered_1des = 1;
 		if (p[i] != etypes[k])
 		    continue;

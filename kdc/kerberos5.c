@@ -133,7 +133,7 @@ _kdc_find_etype(krb5_context context, krb5_boolean use_strongest_session_key,
     krb5_enctype enctype = ETYPE_NULL;
     krb5_enctype clientbest = (krb5_enctype)ETYPE_NULL;
     const krb5_enctype *p;
-    Key *key;
+    Key *key = NULL;
     int i, k;
     int client_offered_1des = 0;
 
@@ -178,6 +178,8 @@ _kdc_find_etype(krb5_context context, krb5_boolean use_strongest_session_key,
 		    continue;
 		if (clientbest == (krb5_enctype)ETYPE_NULL)
 		    clientbest = p[i];
+                if (key)
+                    continue; /* already picked a key below */
 		/* check target princ support */
 		ret = hdb_enctype2key(context, &princ->entry, NULL, p[i], &key);
 		if (ret)

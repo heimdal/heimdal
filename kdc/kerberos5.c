@@ -219,7 +219,7 @@ _kdc_find_etype(krb5_context context, krb5_boolean use_strongest_session_key,
     }
 
     if (enctype == (krb5_enctype)ETYPE_NULL &&
-        clientbest ! = (krb5_enctype)ETYPE_NULL) {
+        clientbest != (krb5_enctype)ETYPE_NULL) {
         ret = 0;
         enctype = clientbest;
     } else if (enctype == (krb5_enctype)ETYPE_NULL) {

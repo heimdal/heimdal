@@ -144,7 +144,8 @@ _kdc_get_preferred_key(krb5_context context,
 	const krb5_enctype *p = krb5_kerberos_enctypes(context);
 
 	for (i = 0; p[i] != (krb5_enctype)ETYPE_NULL; i++) {
-	    if (krb5_enctype_valid(context, p[i]) != 0)
+	    if (krb5_enctype_valid(context, p[i]) != 0 &&
+		!_kdc_is_weak_exception(h->entry.principal, p[i]))
 		continue;
 	    ret = hdb_enctype2key(context, &h->entry, NULL, p[i], key);
 	    if (ret != 0)
@@ -157,8 +158,8 @@ _kdc_get_preferred_key(krb5_context context,
 	*key = NULL;
 
 	for (i = 0; i < h->entry.keys.len; i++) {
-	    if (krb5_enctype_valid(context, h->entry.keys.val[i].key.keytype)
-		!= 0)
+	    if (krb5_enctype_valid(context, h->entry.keys.val[i].key.keytype) != 0 &&
+		!_kdc_is_weak_exception(h->entry.principal, h->entry.keys.val[i].key.keytype))
 		continue;
 	    ret = hdb_enctype2key(context, &h->entry, NULL,
 				  h->entry.keys.val[i].key.keytype, key);

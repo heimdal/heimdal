@@ -969,10 +969,10 @@ tgs_make_reply(krb5_context context,
 	    goto out;
     }
 
-    if (krb5_enctype_valid(context, et.key.keytype) != 0
-	&& _kdc_is_weak_exception(server->entry.principal, et.key.keytype))
+    if (krb5_enctype_valid(context, serverkey->keytype) != 0
+	&& _kdc_is_weak_exception(server->entry.principal, serverkey->keytype))
     {
-	krb5_enctype_enable(context, et.key.keytype);
+	krb5_enctype_enable(context, serverkey->keytype);
 	is_weak = 1;
     }
 
@@ -993,7 +993,7 @@ tgs_make_reply(krb5_context context,
 			    serverkey, 0, replykey, rk_is_subkey,
 			    e_text, reply);
     if (is_weak)
-	krb5_enctype_disable(context, et.key.keytype);
+	krb5_enctype_disable(context, serverkey->keytype);
 
 out:
     free_TGS_REP(&rep);

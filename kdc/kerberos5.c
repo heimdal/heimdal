@@ -171,17 +171,17 @@ _kdc_find_etype(krb5_context context, krb5_boolean use_strongest_session_key,
 
 		/* check target princ support */
 		key = NULL;
-		while (ret != 0 &&
-		       hdb_next_enctype2key(context, &princ->entry,
+		while (hdb_next_enctype2key(context, &princ->entry,
 					     p[i], &key) == 0) {
 		    if (key->key.keyvalue.length == 0) {
 			ret = KRB5KDC_ERR_NULL_KEY;
 			continue;
 		    }
-		    if (is_preauth && !is_default_salt_p(&def_salt, key))
-			continue;
 		    enctype = p[i];
 		    ret = 0;
+		    if (is_preauth && ret_key != NULL &&
+			!is_default_salt_p(&def_salt, key))
+			continue;
 		}
 	    }
 	}
@@ -209,10 +209,11 @@ _kdc_find_etype(krb5_context context, krb5_boolean use_strongest_session_key,
 		    ret = KRB5KDC_ERR_NULL_KEY;
 		    continue;
 		}
-		if (is_preauth && !is_default_salt_p(&def_salt, key))
-		    continue;
 		enctype = etypes[i];
 		ret = 0;
+		if (is_preauth && ret_key != NULL &&
+		    !is_default_salt_p(&def_salt, key))
+		    continue;
 	    }
 	}
     }

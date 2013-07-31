@@ -42,6 +42,8 @@ typedef struct krb5_fcache{
 
 struct fcc_cursor {
     int fd;
+    off_t cred_start;
+    off_t cred_end;
     krb5_storage *sp;
 };
 
@@ -397,6 +399,8 @@ fcc_open(krb5_context context,
     struct stat sb1, sb2;
     int strict_checking;
     int fd;
+
+    *fd_ret = -1;
 
     if (FCACHE(id) == NULL)
         return krb5_einval(context, 2);
@@ -827,10 +831,15 @@ fcc_get_next (krb5_context context,
 
     if((ret = fcc_lock(context, id, FCC_CURSOR(*cursor)->fd, FALSE)) != 0)
 	return ret;
+    FCC_CURSOR(*cursor)->cred_start = lseek(FCC_CURSOR(*cursor)->fd,
+					   0, SEEK_CUR);
 
     ret = krb5_ret_creds(FCC_CURSOR(*cursor)->sp, creds);
     if (ret)
 	krb5_clear_error_message(context);
+
+    FCC_CURSOR(*cursor)->cred_end = lseek(FCC_CURSOR(*cursor)->fd,
+					 0, SEEK_CUR);
 
     fcc_unlock(context, FCC_CURSOR(*cursor)->fd);
     return ret;
@@ -855,73 +864,112 @@ fcc_end_get (krb5_context context,
     return 0;
 }
 
+static void KRB5_CALLCONV
+cred_delete(krb5_context context,
+	    krb5_ccache id,
+	    krb5_cc_cursor *cursor,
+	    krb5_creds *cred)
+{
+    krb5_error_code ret = EINVAL;
+    krb5_storage *sp;
+    off_t new_cred_sz;
+    int fd;
+    krb5_const_realm srealm = krb5_principal_get_realm(context, cred->server);
+
+    heim_assert(FCC_CURSOR(*cursor)->cred_start < FCC_CURSOR(*cursor)->cred_end,
+		"fcache internal error");
+
+    /* Mark the cred for deletion */
+    cred->times.endtime = 1;
+
+    /* Further mark config creds because we don't check their endtimes */
+    if (srealm && strcmp(srealm, "X-CACHECONF:") == 0) {
+	ret = krb5_principal_set_realm(context, cred->server, "X-RMED-CONF:");
+	if (ret)
+	    return;
+    }
+
+    sp = krb5_storage_emem();
+    krb5_storage_set_eof_code(sp, KRB5_CC_END);
+    storage_set_flags(context, sp, FCACHE(id)->version);
+    if (!krb5_config_get_bool_default(context, NULL, TRUE,
+				      "libdefaults",
+				      "fcc-mit-ticketflags",
+				      NULL))
+	krb5_storage_set_flags(sp, KRB5_STORAGE_CREDS_FLAGS_WRONG_BITORDER);
+
+    ret = krb5_store_creds(sp, cred);
+    if (ret)
+	goto out;
+
+    /* The new cred must be the same size as the old cred */
+    new_cred_sz = krb5_storage_seek(sp, 0, SEEK_END);
+    if (new_cred_sz !=
+	(FCC_CURSOR(*cursor)->cred_end - FCC_CURSOR(*cursor)->cred_start)) {
+	/* XXX This really can't happen.  Assert like above? */
+	krb5_set_error_message(context, EINVAL,
+			       N_("Credential deletion failed on ccache "
+				  "FILE:%s: new credential size did not "
+				  "match old credential size", ""),
+			       FILENAME(id));
+	goto out;
+    }
+
+    ret = fcc_open(context, id, "remove_cred", &fd,
+		   O_WRONLY | O_BINARY | O_CLOEXEC | O_NOFOLLOW, 0);
+    if (ret == 0) {
+	if (lseek(fd, FCC_CURSOR(*cursor)->cred_start, SEEK_SET) == (off_t)-1) {
+	    char buf[128];
+	    rk_strerror_r(ret, buf, sizeof(buf));
+	    ret = errno;
+	    krb5_set_error_message(context, ret, N_("seek %s: %s", ""),
+				   FILENAME(id), buf);
+	} else {
+	    ret = write_storage(context, sp, fd);
+	}
+    }
+    fcc_unlock(context, fd);
+    if (close(fd) < 0) {
+	if (ret == 0) {
+	    char buf[128];
+	    rk_strerror_r(ret, buf, sizeof(buf));
+	    ret = errno;
+	    krb5_set_error_message(context, ret, N_("close %s: %s", ""),
+				   FILENAME(id), buf);
+	}
+    }
+
+out:
+    krb5_storage_free(sp);
+}
+
 static krb5_error_code KRB5_CALLCONV
 fcc_remove_cred(krb5_context context,
-		 krb5_ccache id,
-		 krb5_flags which,
-		 krb5_creds *cred)
+		krb5_ccache id,
+		krb5_flags which,
+		krb5_creds *mcred)
 {
     krb5_error_code ret;
-    krb5_ccache copy, newfile;
-    char *newname = NULL;
-    int fd;
+    krb5_cc_cursor cursor;
+    krb5_creds found_cred;
 
     if (FCACHE(id) == NULL)
-        return krb5_einval(context, 2);
+	return krb5_einval(context, 2);
 
-    ret = krb5_cc_new_unique(context, krb5_cc_type_memory, NULL, &copy);
+    ret = krb5_cc_start_seq_get(context, id, &cursor);
     if (ret)
 	return ret;
-
-    ret = krb5_cc_copy_cache(context, id, copy);
-    if (ret) {
-	krb5_cc_destroy(context, copy);
+    while ((ret = krb5_cc_next_cred(context, id, &cursor, &found_cred)) == 0) {
+	if (!krb5_compare_creds(context, which, mcred, &found_cred))
+	    continue;
+	cred_delete(context, id, &cursor, &found_cred);
+	krb5_free_cred_contents(context, &found_cred);
+    }
+    if (ret && ret != KRB5_CC_END) {
+	krb5_cc_end_seq_get(context, id, &cursor);
 	return ret;
     }
-
-    ret = krb5_cc_remove_cred(context, copy, which, cred);
-    if (ret) {
-	krb5_cc_destroy(context, copy);
-	return ret;
-    }
-
-    ret = asprintf(&newname, "FILE:%s.XXXXXX", FILENAME(id));
-    if (ret < 0 || newname == NULL) {
-	krb5_cc_destroy(context, copy);
-	return ENOMEM;
-    }
-
-    fd = mkstemp(&newname[5]);
-    if (fd < 0) {
-	ret = errno;
-	krb5_cc_destroy(context, copy);
-	return ret;
-    }
-    close(fd);
-
-    ret = krb5_cc_resolve(context, newname, &newfile);
-    if (ret) {
-	unlink(&newname[5]);
-	free(newname);
-	krb5_cc_destroy(context, copy);
-	return ret;
-    }
-
-    ret = krb5_cc_copy_cache(context, copy, newfile);
-    krb5_cc_destroy(context, copy);
-    if (ret) {
-	free(newname);
-	krb5_cc_destroy(context, newfile);
-	return ret;
-    }
-
-    ret = rk_rename(&newname[5], FILENAME(id));
-    if (ret)
-	ret = errno;
-    free(newname);
-    krb5_cc_close(context, newfile);
-
-    return ret;
+    return krb5_cc_end_seq_get(context, id, &cursor);
 }
 
 static krb5_error_code KRB5_CALLCONV

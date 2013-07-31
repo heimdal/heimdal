@@ -957,7 +957,7 @@ krb5_rd_req_ctx(krb5_context context,
 		_krb5_kt_principal_not_found(context, ret, id, o->server,
 					     ap_req.ticket.enc_part.etype,
 					     kvno);
-		goto out;
+		break;
 	    }
 
 	    if (entry.keyblock.keytype != ap_req.ticket.enc_part.etype) {
@@ -990,13 +990,13 @@ krb5_rd_req_ctx(krb5_context context,
 				     &o->keyblock);
 	    if (ret) {
 		krb5_kt_free_entry (context, &entry);
-		goto out;
+		break;
 	    }
 
 	    ret = krb5_copy_principal(context, entry.principal, &p);
 	    if (ret) {
 		krb5_kt_free_entry (context, &entry);
-		goto out;
+		break;
 	    }
 	    krb5_free_principal(context, o->ticket->server);
 	    o->ticket->server = p;
@@ -1006,6 +1006,8 @@ krb5_rd_req_ctx(krb5_context context,
 	    done = 1;
 	}
 	krb5_kt_end_seq_get (context, id, &cursor);
+        if (ret)
+            goto out;
     }
 
     /* If there is a PAC, verify its server signature */

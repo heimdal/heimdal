@@ -38,7 +38,11 @@
 #endif
 
 #include "roken.h"
-#undef mkdir
+#ifdef MKDIR_DOES_NOT_HAVE_MODE
+ #undef mkdir
+#else
+ #undef rk_mkdir
+#endif
 
 int ROKEN_LIB_FUNCTION
 rk_mkdir(const char *pathname, mode_t mode)

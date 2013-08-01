@@ -354,15 +354,15 @@ get_new_tickets(krb5_context context,
 		int interactive)
 {
     krb5_error_code ret;
-    krb5_get_init_creds_opt *opt;
     krb5_creds cred;
     char passwd[256];
     krb5_deltat start_time = 0;
     krb5_deltat renew = 0;
     const char *renewstr = NULL;
     krb5_enctype *enctype = NULL;
-    krb5_ccache tempccache;
-    krb5_init_creds_context ctx;
+    krb5_ccache tempccache = NULL;
+    krb5_init_creds_context ctx = NULL;
+    krb5_get_init_creds_opt *opt = NULL;
 #ifndef NO_NTLM
     struct ntlm_buf ntlmkey;
     memset(&ntlmkey, 0, sizeof(ntlmkey));
@@ -376,14 +376,18 @@ get_new_tickets(krb5_context context,
 	    f = stdin;
 	else
 	    f = fopen(password_file, "r");
-	if (f == NULL)
-	    krb5_errx(context, 1, "Failed to open the password file %s",
-		      password_file);
+	if (f == NULL) {
+	    krb5_warnx(context, "Failed to open the password file %s",
+		       password_file);
+	    return errno;
+	}
 
-	if (fgets(passwd, sizeof(passwd), f) == NULL)
-	    krb5_errx(context, 1,
-		      N_("Failed to read password from file %s", ""),
-		      password_file);
+	if (fgets(passwd, sizeof(passwd), f) == NULL) {
+	    krb5_warnx(context, N_("Failed to read password from file %s", ""),
+		       password_file);
+	    fclose(f);
+	    return EINVAL; /* XXX Need a better error */
+	}
 	if (f != stdin)
 	    fclose(f);
 	passwd[strcspn(passwd, "\n")] = '\0';
@@ -420,8 +424,10 @@ get_new_tickets(krb5_context context,
     memset(&cred, 0, sizeof(cred));
 
     ret = krb5_get_init_creds_opt_alloc(context, &opt);
-    if (ret)
-	krb5_err(context, 1, ret, "krb5_get_init_creds_opt_alloc");
+    if (ret) {
+	krb5_warn(context, ret, "krb5_get_init_creds_opt_alloc");
+	goto out;
+    }
 
     krb5_get_init_creds_opt_set_default_flags(context, "kinit",
 	krb5_principal_get_realm(context, principal), opt);
@@ -451,8 +457,10 @@ get_new_tickets(krb5_context context,
 						 krb5_prompter_posix,
 						 NULL,
 						 passwd);
-	if (ret)
-	    krb5_err(context, 1, ret, "krb5_get_init_creds_opt_set_pkinit");
+	if (ret) {
+	    krb5_warn(context, ret, "krb5_get_init_creds_opt_set_pkinit");
+	    goto out;
+	}
 	if (ent_user_id)
 	    krb5_get_init_creds_opt_set_pkinit_user_certs(context, opt, ent_user_id);
     }
@@ -502,31 +510,41 @@ get_new_tickets(krb5_context context,
     }
 
     ret = krb5_init_creds_init(context, principal, krb5_prompter_posix, NULL, start_time, opt, &ctx);
-    if (ret)
-	krb5_err(context, 1, ret, "krb5_init_creds_init");
+    if (ret) {
+	krb5_warn(context, ret, "krb5_init_creds_init");
+	goto out;
+    }
 
     if (server_str) {
 	ret = krb5_init_creds_set_service(context, ctx, server_str);
-	if (ret)
-	    krb5_err(context, 1, ret, "krb5_init_creds_set_service");
+	if (ret) {
+	    krb5_warn(context, ret, "krb5_init_creds_set_service");
+	    goto out;
+	}
     }
 
     if (fast_armor_cache_string) {
 	krb5_ccache fastid;
 	
 	ret = krb5_cc_resolve(context, fast_armor_cache_string, &fastid);
-	if (ret)
-	    krb5_err(context, 1, ret, "krb5_cc_resolve(FAST cache)");
+	if (ret) {
+	    krb5_warn(context, ret, "krb5_cc_resolve(FAST cache)");
+	    goto out;
+	}
 	
 	ret = krb5_init_creds_set_fast_ccache(context, ctx, fastid);
-	if (ret)
-	    krb5_err(context, 1, ret, "krb5_init_creds_set_fast_ccache");
+	if (ret) {
+	    krb5_warn(context, ret, "krb5_init_creds_set_fast_ccache");
+	    goto out;
+	}
     }
 
     if (use_keytab || keytab_str) {
 	ret = krb5_init_creds_set_keytab(context, ctx, kt);
-	if (ret)
-	    krb5_err(context, 1, ret, "krb5_init_creds_set_keytab");
+	if (ret) {
+	    krb5_warn(context, ret, "krb5_init_creds_set_keytab");
+	    goto out;
+	}
     } else if (pk_user_id || ent_user_id || anonymous_flag) {
 
     } else if (!interactive) {
@@ -561,8 +579,10 @@ get_new_tickets(krb5_context context,
 
 	if (passwd[0]) {
 	    ret = krb5_init_creds_set_password(context, ctx, passwd);
-	    if (ret)
-		krb5_err(context, 1, ret, "krb5_init_creds_set_password");
+	    if (ret) {
+		krb5_warn(context, ret, "krb5_init_creds_set_password");
+		goto out;
+	    }
 	}
     }
 
@@ -583,20 +603,23 @@ get_new_tickets(krb5_context context,
     case KRB5KRB_AP_ERR_MODIFIED:
     case KRB5KDC_ERR_PREAUTH_FAILED:
     case KRB5_GET_IN_TKT_LOOP:
-	krb5_errx(context, 1, N_("Password incorrect", ""));
-	break;
+	krb5_warnx(context, N_("Password incorrect", ""));
+	goto out;
     case KRB5KRB_AP_ERR_V4_REPLY:
-	krb5_errx(context, 1, N_("Looks like a Kerberos 4 reply", ""));
-	break;
+	krb5_warnx(context, N_("Looks like a Kerberos 4 reply", ""));
+	goto out;
     default:
-	krb5_err(context, 1, ret, "krb5_get_init_creds");
+	krb5_warn(context, ret, "krb5_get_init_creds");
+	goto out;
     }
 
     krb5_process_last_request(context, opt, ctx);
 
     ret = krb5_init_creds_get_creds(context, ctx, &cred);
-    if (ret)
-	    krb5_err(context, 1, ret, "krb5_init_creds_get_creds");
+    if (ret) {
+	krb5_warn(context, ret, "krb5_init_creds_get_creds");
+	goto out;
+    }
 
     if (ticket_life != 0) {
 	if (abs(cred.times.endtime - cred.times.starttime - ticket_life) > 30) {
@@ -619,18 +642,26 @@ get_new_tickets(krb5_context context,
 
     ret = krb5_cc_new_unique(context, krb5_cc_get_type(context, ccache),
 			     NULL, &tempccache);
-    if (ret)
-	krb5_err(context, 1, ret, "krb5_cc_new_unique");
+    if (ret) {
+	krb5_warn(context, ret, "krb5_cc_new_unique");
+	goto out;
+    }
 
     ret = krb5_init_creds_store(context, ctx, tempccache);
-    if (ret)
-	krb5_err(context, 1, ret, "krb5_init_creds_store");
+    if (ret) {
+	krb5_warn(context, ret, "krb5_init_creds_store");
+	goto out;
+    }
 
     krb5_init_creds_free(context, ctx);
+    ctx = NULL;
 
     ret = krb5_cc_move(context, tempccache, ccache);
-    if (ret)
-	krb5_err(context, 1, ret, "krb5_cc_move");
+    if (ret) {
+	krb5_warn(context, ret, "krb5_cc_move");
+	goto out;
+    }
+    tempccache = NULL;
 
     if (switch_cache_flags)
 	krb5_cc_switch(context, ccache);
@@ -655,12 +686,17 @@ get_new_tickets(krb5_context context,
 	krb5_cc_set_config(context, ccache, NULL, "realm-config", &data);
     }
 
+out:
     krb5_get_init_creds_opt_free(context, opt);
+    if (ctx)
+	krb5_init_creds_free(context, ctx);
+    if (tempccache)
+	krb5_cc_close(context, tempccache);
 
     if (enctype)
 	free(enctype);
 
-    return 0;
+    return ret;
 }
 
 static time_t
@@ -1115,7 +1151,9 @@ main(int argc, char **argv)
 	exit(ret != 0);
     }
 
-    get_new_tickets(context, principal, ccache, ticket_life, 1);
+    ret = get_new_tickets(context, principal, ccache, ticket_life, 1);
+    if (ret)
+	exit(1);
 
 #ifndef NO_AFS
     if (do_afslog && k_hasafs())

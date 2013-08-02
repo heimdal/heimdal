@@ -363,11 +363,15 @@ get_new_tickets(krb5_context context,
     krb5_ccache tempccache = NULL;
     krb5_init_creds_context ctx = NULL;
     krb5_get_init_creds_opt *opt = NULL;
+    krb5_prompter_fct prompter = krb5_prompter_posix;
 #ifndef NO_NTLM
     struct ntlm_buf ntlmkey;
     memset(&ntlmkey, 0, sizeof(ntlmkey));
 #endif
     passwd[0] = '\0';
+
+    if (!interactive)
+	prompter = NULL;
 
     if (password_file) {
 	FILE *f;
@@ -454,7 +458,7 @@ get_new_tickets(krb5_context context,
 						 NULL,
 						 pk_use_enckey ? 2 : 0 |
 						 anonymous_flag ? 4 : 0,
-						 krb5_prompter_posix,
+						 prompter,
 						 NULL,
 						 passwd);
 	if (ret) {
@@ -509,7 +513,7 @@ get_new_tickets(krb5_context context,
 					       etype_str.num_strings);
     }
 
-    ret = krb5_init_creds_init(context, principal, krb5_prompter_posix, NULL, start_time, opt, &ctx);
+    ret = krb5_init_creds_init(context, principal, prompter, NULL, start_time, opt, &ctx);
     if (ret) {
 	krb5_warn(context, ret, "krb5_init_creds_init");
 	goto out;
@@ -547,7 +551,7 @@ get_new_tickets(krb5_context context,
 	}
     } else if (pk_user_id || ent_user_id || anonymous_flag) {
 
-    } else if (!interactive) {
+    } else if (!interactive && passwd[0] == '\0') {
 	static int already_warned = 0;
 
 	if (!already_warned)

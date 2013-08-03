@@ -112,7 +112,8 @@ copy_cred_cache(struct copy_cred_cache_options *opt, int argc, char **argv)
 	time_t t = parse_time(opt->valid_for_string, "s");
 	if(t < 0)
 	    errx(1, "unknown time \"%s\"", opt->valid_for_string);
-	ctx.mcreds.times.endtime = time(NULL) + t;
+	krb5_timeofday(heimtools_context, &ctx.mcreds.times.endtime);
+	ctx.mcreds.times.endtime += t;
 	ctx.whichfields |= KRB5_TC_MATCH_TIMES;
     }
     if (opt->fcache_version_integer)

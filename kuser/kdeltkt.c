@@ -4,6 +4,7 @@
 static char *etypestr = 0;
 static char *ccachestr = 0;
 static char *flagstr = 0;
+static int   exp_only = 0;
 static int   quiet_flag = 0;
 static int   help_flag = 0;
 static int   version_flag = 0;
@@ -15,6 +16,8 @@ struct getargs args[] = {
       "Encryption type", "enctype" },
     { "flags", 'f', arg_string, &flagstr,
       "Flags", "flags" },
+    { "expired-only", 'E', arg_flag, &exp_only,
+	"Delete only expired tickets" },
     { "quiet", 'q', arg_flag, &quiet_flag, "Quiet" },
     { "version",        0, arg_flag, &version_flag },
     { "help",           0, arg_flag, &help_flag }
@@ -123,6 +126,11 @@ static void do_kdeltkt (int count, char *names[],
 	}
 
 	in_creds.session.keytype = etype;
+
+	if (exp_only) {
+	    krb5_timeofday(context, &in_creds.times.endtime);
+	    retflags |= KRB5_TC_MATCH_TIMES;
+	}
 
         ret = krb5_cc_retrieve_cred(context, ccache, retflags,
                                     &in_creds, &out_creds);

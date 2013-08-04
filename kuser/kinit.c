@@ -225,6 +225,53 @@ get_server(krb5_context context,
 			       KRB5_TGS_NAME, realm, NULL);
 }
 
+static krb5_error_code
+copy_configs(krb5_context context,
+	     krb5_ccache dst,
+	     krb5_ccache src,
+	     krb5_principal start_ticket_server)
+{
+    krb5_error_code ret;
+    const char *cfg_names[] = {"realm-config", "FriendlyName", NULL};
+    const char *cfg_names_w_pname[] = {"fast_avail", NULL};
+    krb5_data cfg_data;
+    size_t i;
+
+    for (i = 0; cfg_names[i]; i++) {
+	ret = krb5_cc_get_config(context, src, NULL, cfg_names[i], &cfg_data);
+	if (ret == KRB5_CC_NOTFOUND || ret == KRB5_CC_END) {
+	    continue;
+	} else if (ret) {
+	    krb5_warn(context, ret, "krb5_cc_get_config");
+	    return ret;
+	}
+	ret = krb5_cc_set_config(context, dst, NULL, cfg_names[i], &cfg_data);
+	if (ret)
+	    krb5_warn(context, ret, "krb5_cc_set_config");
+    }
+    for (i = 0; start_ticket_server && cfg_names_w_pname[i]; i++) {
+	ret = krb5_cc_get_config(context, src, start_ticket_server,
+				 cfg_names_w_pname[i], &cfg_data);
+	if (ret == KRB5_CC_NOTFOUND || ret == KRB5_CC_END) {
+	    continue;
+	} else if (ret) {
+	    krb5_warn(context, ret, "krb5_cc_get_config");
+	    return ret;
+	}
+	ret = krb5_cc_set_config(context, dst, start_ticket_server,
+				 cfg_names_w_pname[i], &cfg_data);
+	if (ret && ret != KRB5_CC_NOTFOUND)
+	    krb5_warn(context, ret, "krb5_cc_set_config");
+    }
+    /*
+     * We don't copy cc configs for any other principals though (mostly
+     * those are per-target time offsets and the like, so it's bad to
+     * lose them, but hardly the end of the world, and as they may not
+     * expire anyways, it's good to let them go).
+     */
+    return 0;
+}
+
 static int
 renew_validate(krb5_context context,
 	       int renew,
@@ -234,6 +281,7 @@ renew_validate(krb5_context context,
 	       krb5_deltat life)
 {
     krb5_error_code ret;
+    krb5_ccache tempccache = NULL;
     krb5_creds in, *out = NULL;
     krb5_kdc_flags flags;
 
@@ -294,28 +342,52 @@ renew_validate(krb5_context context,
 	krb5_warn(context, ret, "krb5_get_kdc_cred");
 	goto out;
     }
-    ret = krb5_cc_initialize(context, cache, in.client);
+
+    ret = krb5_cc_new_unique(context, krb5_cc_get_type(context, cache),
+			     NULL, &tempccache);
     if (ret) {
-	krb5_free_creds(context, out);
+	krb5_warn(context, ret, "krb5_cc_new_unique");
+	goto out;
+    }
+
+    ret = krb5_cc_initialize(context, tempccache, in.client);
+    if (ret) {
 	krb5_warn(context, ret, "krb5_cc_initialize");
 	goto out;
     }
-    ret = krb5_cc_store_cred(context, cache, out);
 
-    if (ret == 0 && server == NULL) {
-	/* only do this if it's a general renew-my-tgt request */
-#ifndef NO_AFS
-	if (do_afslog && k_hasafs())
-	    krb5_afslog(context, cache, NULL, NULL);
-#endif
-    }
-
-    krb5_free_creds(context, out);
+    ret = krb5_cc_store_cred(context, tempccache, out);
     if (ret) {
 	krb5_warn(context, ret, "krb5_cc_store_cred");
 	goto out;
     }
+
+    /*
+     * We want to preserve cc configs as some are security-relevant, and
+     * anyways it's the friendly thing to do.
+     */
+    ret = copy_configs(context, tempccache, cache, out->server);
+    if (ret)
+	goto out;
+
+    ret = krb5_cc_move(context, tempccache, cache);
+    if (ret) {
+	krb5_warn(context, ret, "krb5_cc_move");
+	goto out;
+    }
+    tempccache = NULL;
+
+#ifndef NO_AFS
+    /* only do this if it's a general renew-my-tgt request */
+    if (server == NULL && do_afslog && k_hasafs())
+	krb5_afslog(context, cache, NULL, NULL);
+#endif
+
 out:
+    if (tempccache)
+	krb5_cc_close(context, tempccache);
+    if (out)
+	krb5_free_creds(context, out);
     krb5_free_cred_contents(context, &in);
     return ret;
 }

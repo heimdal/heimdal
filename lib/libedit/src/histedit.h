@@ -43,7 +43,9 @@
 #define	LIBEDIT_MAJOR 2
 #define	LIBEDIT_MINOR 11
 
+#ifdef HAVE_STDINT_H
 #include <stdint.h>
+#endif
 
 #include <sys/types.h>
 #include <stdio.h>

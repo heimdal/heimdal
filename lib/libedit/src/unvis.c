@@ -39,7 +39,10 @@ __RCSID("$NetBSD: unvis.c,v 1.32 2010/11/27 21:22:11 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
+
+#ifdef HAVE_STDINT_H
 #include <stdint.h>
+#endif
 
 #include <assert.h>
 #include <ctype.h>

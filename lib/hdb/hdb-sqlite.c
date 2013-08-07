@@ -411,10 +411,28 @@ hdb_sqlite_fetch_kvno(krb5_context context, HDB *db, krb5_const_principal princi
     hdb_sqlite_db *hsdb = (hdb_sqlite_db*)(db->hdb_db);
     sqlite3_stmt *fetch = hsdb->fetch;
     krb5_data value;
+    krb5_principal enterprise_principal = NULL;
+
+    if (principal->name.name_type == KRB5_NT_ENTERPRISE_PRINCIPAL) {
+	if (principal->name.name_string.len != 1) {
+	    ret = KRB5_PARSE_MALFORMED;
+	    krb5_set_error_message(context, ret, "malformed principal: "
+				   "enterprise name with %d name components",
+				   principal->name.name_string.len);
+	    return ret;
+	}
+	ret = krb5_parse_name(context, principal->name.name_string.val[0],
+			      &enterprise_principal);
+	if (ret)
+	    return ret;
+	principal = enterprise_principal;
+    }
 
     ret = bind_principal(context, principal, fetch, 1);
     if (ret)
 	return ret;
+
+    krb5_free_principal(context, enterprise_principal);
 
     sqlite_error = hdb_sqlite_step(context, hsdb->db, fetch);
     if (sqlite_error != SQLITE_ROW) {

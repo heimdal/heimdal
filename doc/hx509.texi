@@ -39,14 +39,12 @@
 @def@copyrightstart{}
 @def@copyrightend{}
 @end iftex
-@ifinfo
 @macro copynext
 @end macro
 @macro copyrightstart
 @end macro
 @macro copyrightend
 @end macro
-@end ifinfo
 
 @page
 @copyrightstart

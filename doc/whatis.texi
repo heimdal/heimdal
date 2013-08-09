@@ -43,9 +43,11 @@ services can authenticate each other.
 
 @ifhtml
 @macro sub{arg}
+
 @html
 <sub>\arg\</sub>
 @end html
+
 @end macro
 @end ifhtml
 

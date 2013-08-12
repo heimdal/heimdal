@@ -272,7 +272,7 @@ copy_configs(krb5_context context,
     return 0;
 }
 
-static int
+static krb5_error_code
 renew_validate(krb5_context context,
 	       int renew,
 	       int validate,
@@ -376,12 +376,6 @@ renew_validate(krb5_context context,
 	goto out;
     }
     tempccache = NULL;
-
-#ifndef NO_AFS
-    /* only do this if it's a general renew-my-tgt request */
-    if (server == NULL && do_afslog && k_hasafs())
-	krb5_afslog(context, cache, NULL, NULL);
-#endif
 
 out:
     if (tempccache)
@@ -829,30 +823,39 @@ struct renew_ctx {
 static time_t
 renew_func(void *ptr)
 {
+    krb5_error_code ret;
     struct renew_ctx *ctx = ptr;
     time_t expire;
     time_t renew_expire;
     static time_t exp_delay = 1;
 
+    /*
+     * NOTE: We count on the ccache implementation to notice changes to the
+     * actual ccache filesystem/whatever objects.  There should be no ccache
+     * types for which this is not the case, but it might not hurt to
+     * re-krb5_cc_resolve() after each successful renew_validate()/
+     * get_new_tickets() call.
+     */
+
     expire = ticket_lifetime(ctx->context, ctx->ccache, ctx->principal,
 			     server_str, &renew_expire);
 
     if (renew_expire > expire) {
-	renew_validate(ctx->context, 1, validate_flag, ctx->ccache,
+	ret = renew_validate(ctx->context, 1, validate_flag, ctx->ccache,
 		       server_str, ctx->ticket_life);
         expire = ticket_lifetime(ctx->context, ctx->ccache, ctx->principal,
 				 server_str, &renew_expire);
     }
 
     if (expire < ctx->ticket_life / 2) {
-	get_new_tickets(ctx->context, ctx->principal,
+	ret = get_new_tickets(ctx->context, ctx->principal,
 			ctx->ccache, ctx->ticket_life, 0);
         expire = ticket_lifetime(ctx->context, ctx->ccache, ctx->principal,
 				 server_str, &renew_expire);
     }
 
 #ifndef NO_AFS
-    if (do_afslog && k_hasafs())
+    if (ret == 0 && server_str == NULL && do_afslog && k_hasafs())
 	krb5_afslog(ctx->context, ctx->ccache, NULL, NULL);
 #endif
 
@@ -865,8 +868,16 @@ renew_func(void *ptr)
      */
 
     if (expire < 1) {
+	/*
+	 * We can't ask to keep spamming stderr but not syslog, so we warn
+	 * only once.
+	 */
+	if (exp_delay == 1) {
+	    krb5_warnx(ctx->context, N_("NOTICE: Could not renew/refresh "
+					"tickets", ""));
+	}
         if (exp_delay < 7200)
-	    exp_delay *= 2;
+	    exp_delay += exp_delay / 2 + 1;
 	return exp_delay;
     }
     exp_delay = 1;
@@ -1224,6 +1235,12 @@ main(int argc, char **argv)
     if (renew_flag || validate_flag) {
 	ret = renew_validate(context, renew_flag, validate_flag,
 			     ccache, server_str, ticket_life);
+
+#ifndef NO_AFS
+	if (ret == 0 && server_str == NULL && do_afslog && k_hasafs())
+	    krb5_afslog(context, ccache, NULL, NULL);
+#endif
+
 	exit(ret != 0);
     }
 
@@ -1232,9 +1249,10 @@ main(int argc, char **argv)
 	exit(1);
 
 #ifndef NO_AFS
-    if (do_afslog && k_hasafs())
+    if (ret == 0 && server_str == NULL && do_afslog && k_hasafs())
 	krb5_afslog(context, ccache, NULL, NULL);
 #endif
+
     if (argc > 1) {
 	struct renew_ctx ctx;
 	time_t timeout;

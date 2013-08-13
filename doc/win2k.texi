@@ -311,4 +311,5 @@ Other useful programs include these:
 
 @itemize @bullet
 @item pwdump2
-@uref{http://www.bindview.com/Support/RAZOR/Utilities/Windows/pwdump2_readme.cfm}@end itemize
+@uref{http://www.bindview.com/Support/RAZOR/Utilities/Windows/pwdump2_readme.cfm}
+@end itemize

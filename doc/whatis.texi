@@ -35,16 +35,19 @@ services can authenticate each other.
 @end macro
 @end ifinfo
 
-@tex
-@def@xsub#1{$_{#1}$}
-@global@let@sub=@xsub
-@end tex
+@iftex
+@macro sub{arg}
+@textsubscript{\arg\}
+@end macro
+@end iftex
 
 @ifhtml
 @macro sub{arg}
+
 @html
 <sub>\arg\</sub>
 @end html
+
 @end macro
 @end ifhtml
 

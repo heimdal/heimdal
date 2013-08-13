@@ -43,6 +43,10 @@
 #include "heimntlm.h"
 #endif
 
+#ifndef SIGINFO
+#define SIGINFO SIGUSR1
+#endif
+
 int forwardable_flag	= -1;
 int proxiable_flag	= -1;
 int renewable_flag	= -1;
@@ -813,6 +817,53 @@ ticket_lifetime(krb5_context context, krb5_ccache cache, krb5_principal client,
     return timeout;
 }
 
+static time_t expire;
+
+static char siginfo_msg[1024] = "No credentials\n";
+
+static void
+update_siginfo_msg(time_t exp, const char *srv)
+{
+    /* Note that exp is relative time */
+    memset(siginfo_msg, 0, sizeof(siginfo_msg));
+    memcpy(&siginfo_msg, "Updating...\n", sizeof("Updating...\n"));
+    if (exp) {
+	if (srv == NULL) {
+	    snprintf(siginfo_msg, sizeof(siginfo_msg),
+		     N_("kinit: TGT expires in %llu seconds\n", ""),
+		     (unsigned long long)expire);
+	} else {
+	    snprintf(siginfo_msg, sizeof(siginfo_msg),
+		     N_("kinit: Ticket for %s expired\n", ""), srv);
+	}
+	return;
+    }
+
+    /* Expired creds */
+    if (srv == NULL) {
+	snprintf(siginfo_msg, sizeof(siginfo_msg),
+		 N_("kinit: TGT expired\n", ""));
+    } else {
+	snprintf(siginfo_msg, sizeof(siginfo_msg),
+		 N_("kinit: Ticket for %s expired\n", ""), srv);
+    }
+}
+
+#ifdef HAVE_SIGACTION
+static void
+handle_siginfo(int sig)
+{
+    struct iovec iov[2];
+
+    iov[0].iov_base = rk_UNCONST(siginfo_msg);
+    iov[0].iov_len = strlen(siginfo_msg);
+    iov[1].iov_base = "\n";
+    iov[1].iov_len = 1;
+
+    writev(2, iov, sizeof(iov)/sizeof(iov[0]));
+}
+#endif
+
 struct renew_ctx {
     krb5_context context;
     krb5_ccache  ccache;
@@ -825,7 +876,6 @@ renew_func(void *ptr)
 {
     krb5_error_code ret;
     struct renew_ctx *ctx = ptr;
-    time_t expire;
     time_t renew_expire;
     static time_t exp_delay = 1;
 
@@ -858,6 +908,8 @@ renew_func(void *ptr)
     if (ret == 0 && server_str == NULL && do_afslog && k_hasafs())
 	krb5_afslog(ctx->context, ctx->ccache, NULL, NULL);
 #endif
+
+    update_siginfo_msg(expire, server_str);
 
     /*
      * If our tickets have expired and we been able to either renew them
@@ -1086,6 +1138,9 @@ main(int argc, char **argv)
     krb5_principal principal = NULL;
     int optidx = 0;
     krb5_deltat ticket_life = 0;
+#ifdef HAVE_SIGACTION
+    struct sigaction sa;
+#endif
 
     setprogname(argv[0]);
 
@@ -1264,6 +1319,14 @@ main(int argc, char **argv)
 	ctx.ccache = ccache;
 	ctx.principal = principal;
 	ctx.ticket_life = ticket_life;
+
+#ifdef HAVE_SIGACTION
+	memset(&sa, 0, sizeof(sa));
+	sigemptyset(&sa.sa_mask);
+	sa.sa_handler = handle_siginfo;
+
+	sigaction(SIGINFO, &sa, NULL);
+#endif
 
 	ret = simple_execvp_timed(argv[1], argv+1,
 				  renew_func, &ctx, timeout);

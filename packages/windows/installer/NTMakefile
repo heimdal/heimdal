@@ -83,9 +83,21 @@ $(OBJ)\heimdal-policy.wixobj: heimdal-policy.wxs
 $(SDKREDISTDIR)\Heimdal.Policy.msm: $(POLICYMODULE)
 	$(CP) $** $@
 
+COMMANDMODULE=$(INSTDIR)\Heimdal.Command.msm
+
+$(COMMANDMODULE): $(OBJ)\heimdal-command.wixobj
+	$(LIGHT) -out $@ $**
+
+# OBJECT COMPILED BELOW
+
+$(SDKREDISTDIR)\Heimdal.Command.msm: $(ASSEMBLYMODULE)
+	$(CP) $** $@
+
 all:: $(ASSEMBLYMODULE) $(SDKREDISTDIR)\Heimdal.msm
 
 all:: $(POLICYMODULE) $(SDKREDISTDIR)\Heimdal.Policy.msm
+
+all:: $(COMMANDMODULE) $(SDKREDISTDIR)\Heimdal.Command.msm
 
 clean::
 	-$(RM) $(ASSEMBLYMODULE)
@@ -129,7 +141,6 @@ RUNTIMEMODULE64="$(MMDIR)\Microsoft_$(VCVER)_$(CRTNAME)_x86_x64.msm"
 !endif
 
 !else
-
 RUNTIMEMODULE32="$(MSSDK)\Redist\VC\microsoft.vcxx.crt.x86_msm.msm"
 RUNTIMEMODULE64="$(MSSDK)\Redist\VC\microsoft.vcxx.crt.x64_msm.msm"
 
@@ -207,6 +218,10 @@ $(INSTALLER): $(WIXOBJ) $(THIRDPARTYOBJS) $(INSTDEPS) lang\en-us.wxl
 
 $(WIXOBJ): heimdal-installer.wxs
 	$(CANDLE) -arch $(PLATFORM) -o $@ heimdal-installer.wxs \
+		$(CANDLEOPTS) $(THIRDPARTYOPTS)
+
+$(OBJ)\heimdal-command.wixobj: heimdal-command.wxs
+	$(CANDLE) -arch $(PLATFORM) -o $@ heimdal-command.wxs \
 		$(CANDLEOPTS) $(THIRDPARTYOPTS)
 
 all:: $(INSTALLER)

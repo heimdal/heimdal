@@ -83,8 +83,7 @@
     <DirectoryRef Id='dirBin32' DiskId='1'>
       <Component Id='comp.SearchPath.32' Feature='feature.Main'
                  Guid='BA6C1A53-E479-4E87-9B61-7BA793DBAE56' Win64='no'>
-        <RegistryKey Action='createAndRemoveOnUninstall' Root='HKLM'
-                     Key='Software\Heimdal\CurrentVersion'>
+	<RegistryKey Root='HKLM' Key='Software\Heimdal\CurrentVersion'>
           <RegistryValue Name='InstallPath' Type='string'
                          Value='[dirBin32]' KeyPath='yes' />
         </RegistryKey>
@@ -108,8 +107,7 @@
     <DirectoryRef Id='dirBin64' DiskId='1'>
       <Component Id='comp.SearchPath.64' Feature='feature.Main'
                  Guid='2F189729-2253-47A1-AA68-06FE3A9697A7' Win64='yes'>
-        <RegistryKey Action='createAndRemoveOnUninstall' Root='HKLM'
-                     Key='Software\Heimdal\CurrentVersion'>
+	<RegistryKey Root='HKLM' Key='Software\Heimdal\CurrentVersion'>
           <RegistryValue Name='InstallPath' Type='string'
                          Value='[dirBin64]' KeyPath='yes' />
         </RegistryKey>
@@ -216,8 +214,7 @@
     <DirectoryRef Id='PLUGINDIR32'>
       <Component Id='comp.Plugin.Reg.32' Feature='feature.Main'
                  Guid='4BC44234-70A4-4CC1-A5AF-4CA76E9F9487' Win64='no'>
-        <RegistryKey Action='createAndRemoveOnUninstall' Root='HKLM'
-                     Key='Software\Heimdal'>
+	<RegistryKey Root='HKLM' Key='Software\Heimdal'>
           <RegistryValue Name='plugin_dir' Type='multiString' Action='append'
                          Value='"[PLUGINDIR32]"' KeyPath='yes' />
         </RegistryKey>
@@ -229,8 +226,7 @@
     <DirectoryRef Id='PLUGINDIR64'>
       <Component Id='comp.Plugin.Reg.64' Feature='feature.Main'
                  Guid='5A99A52E-A4CD-40F8-AFFD-AD61939FC547' Win64='yes'>
-        <RegistryKey Action='createAndRemoveOnUninstall' Root='HKLM'
-                     Key='Software\Heimdal'>
+	<RegistryKey Root='HKLM' Key='Software\Heimdal'>
           <RegistryValue Name='plugin_dir' Type='multiString' Action='append'
                          Value='"[PLUGINDIR64]"' KeyPath='yes' />
         </RegistryKey>
@@ -248,8 +244,7 @@
             <File Name='krb5.conf' KeyPath='yes' Id='krb5_conf' />
             <Environment Id='KRB5_CONFIG_by_krb5.conf' Name='KRB5_CONFIG' Action='set' System='yes' Value='[#krb5_conf]' />
             <!-- Backwards compatibility -->
-            <RegistryKey Action='createAndRemoveOnUninstall' Root='HKLM'
-                         Key='Software\MIT\Kerberos'>
+	    <RegistryKey Root='HKLM' Key='Software\MIT\Kerberos'>
               <RegistryValue Name='config' Type='string' Value='[#krb_conf]' />
             </RegistryKey>
             <Condition>Not LEGACYKRB5INI And Not LEGACYKRB5CONF And Not LEGACYKRB5REG32 And Not LEGACYKRB5REG64</Condition>
@@ -263,14 +258,12 @@
                       SourceProperty='LEGACYKRB5INI' />
             <Environment Id='KRB5_CONFIG_by_legacy_krb5.ini' Name='KRB5_CONFIG'
                          Action='set' System='yes' Value='[dirCommonKerberos]krb5.conf' />
-            <RegistryKey Action='createAndRemoveOnUninstall' Root='HKLM'
-                         Key='Software\Heimdal\CurrentVersion'>
+	    <RegistryKey Root='HKLM' Key='Software\Heimdal\CurrentVersion'>
               <RegistryValue Name='LegacyKrb5IniLocation' Type='string'
                              Value='[LEGACYKRB5INI]' KeyPath='yes' />
             </RegistryKey>
             <!-- Backwards compatibility -->
-            <RegistryKey Action='createAndRemoveOnUninstall' Root='HKLM'
-                         Key='Software\MIT\Kerberos'>
+	    <RegistryKey Root='HKLM' Key='Software\MIT\Kerberos'>
               <RegistryValue Name='config' Type='string'
                              Value='[dirCommonKerberos]krb5.conf' />
             </RegistryKey>
@@ -285,14 +278,12 @@
                       SourceProperty='LEGACYKRB5CONF' />
             <Environment Id='KRB5_CONFIG_by_legacy_krb5.conf' Name='KRB5_CONFIG'
                          Action='set' System='yes' Value='[dirCommonKerberos]krb5.conf' />
-            <RegistryKey Action='createAndRemoveOnUninstall' Root='HKLM'
-                         Key='Software\Heimdal\CurrentVersion'>
+	    <RegistryKey Root='HKLM' Key='Software\Heimdal\CurrentVersion'>
               <RegistryValue Name='LegacyKrb5ConfLocation' Type='string'
                              Value='[LEGACYKRB5CONF]' KeyPath='yes' />
             </RegistryKey>
             <!-- Backwards compatibility -->
-            <RegistryKey Action='createAndRemoveOnUninstall' Root='HKLM'
-                         Key='Software\MIT\Kerberos'>
+	    <RegistryKey Root='HKLM' Key='Software\MIT\Kerberos'>
               <RegistryValue Name='config' Type='string'
                              Value='[dirCommonKerberos]krb5.conf' />
             </RegistryKey>

@@ -39,7 +39,16 @@
 #include <sys/types.h>
 #include <krb5-types.h>
 #include <stdarg.h>
+#ifdef HAVE_STDBOOL_H
 #include <stdbool.h>
+#else
+#ifndef false
+#define false 0
+#endif
+#ifndef true
+#define true 1
+#endif
+#endif
 
 #define HEIM_BASE_API_VERSION 20130210
 

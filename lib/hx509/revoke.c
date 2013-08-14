@@ -1151,7 +1151,7 @@ print_ocsp(hx509_context context, struct revoke_ocsp *ocsp, FILE *out)
 	    status = "element unknown";
 	}
 
-	fprintf(out, "\t%zu. status: %s\n", i, status);
+	fprintf(out, "\t%llu. status: %s\n", (unsigned long long)i, status);
 
 	fprintf(out, "\tthisUpdate: %s\n",
 		printable_time(ocsp->ocsp.tbsResponseData.responses.val[i].thisUpdate));

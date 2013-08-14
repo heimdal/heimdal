@@ -530,8 +530,8 @@ fn_complete(EditLine *el,
 			 */
 			if (matches_num > query_items) {
 				(void)fprintf(el->el_outfile,
-				    "Display all %zu possibilities? (y or n) ",
-				    matches_num);
+				    "Display all %llu possibilities? (y or n) ",
+				    (unsigned long long)matches_num);
 				(void)fflush(el->el_outfile);
 				if (getc(stdin) != 'y')
 					match_display = 0;

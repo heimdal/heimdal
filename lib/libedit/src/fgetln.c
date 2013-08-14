@@ -99,7 +99,7 @@ main(int argc, char *argv[])
 	size_t len;
 
 	while ((p = fgetln(stdin, &len)) != NULL) {
-		(void)printf("%zu %s", len, p);
+		(void)printf("%llu %s", (unsigned long long)len, p);
 		free(p);
 	}
 	return 0;

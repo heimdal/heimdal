@@ -637,11 +637,12 @@ get_new_tickets(krb5_context context,
 	    int aret = 0;
 
 	    ret = krb5_unparse_name(context, principal, &p);
-	    if (!ret) {
-		aret = asprintf(&prompt, N_("%s's Password: ", ""), p);
-		free(p);
-	    }
-	    if (ret || aret == -1)
+	    if (ret)
+		errx(1, "failed to generate passwd prompt: not enough memory");
+
+	    aret = asprintf(&prompt, N_("%s's Password: ", ""), p);
+	    free(p);
+	    if (aret == -1)
 		errx(1, "failed to generate passwd prompt: not enough memory");
 
 	    if (UI_UTIL_read_pw_string(passwd, sizeof(passwd)-1, prompt, 0)){

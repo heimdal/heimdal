@@ -62,20 +62,20 @@ DB_close(krb5_context context, HDB *db)
 {
     DB3_HDB *db3 = (DB3_HDB *)db;
     DB *d = (DB*)db->hdb_db;
-    DBC *dbcp;
+    DBC *dbcp = (DBC*)db->hdb_dbc;
 
     heim_assert(d != 0, "Closing already closed HDB");
 
-    dbcp = (DBC*)db->hdb_dbc;
-    (*dbcp->c_close)(dbcp);
-    db->hdb_dbc = 0;
-    (*d->close)(d, 0);
-    db->hdb_db = 0;
-
-    if (db3->lock_fd >= 0) {
+    if (dbcp != NULL)
+	dbcp->c_close(dbcp);
+    if (d != NULL)
+	d->close(d, 0);
+    if (db3->lock_fd >= 0)
 	close(db3->lock_fd);
-	db3->lock_fd = -1;
-    }
+
+    db3->lock_fd = -1;
+    db->hdb_dbc = 0;
+    db->hdb_db = 0;
 
     return 0;
 }
@@ -278,6 +278,7 @@ _open_db(DB *d, char *fn, int myflags, int flags, mode_t mode, int *fd)
     if (ret == -1) {
 	ret = errno;
 	close(*fd);
+	*fd = -1;
 	return ret;
     }
 
@@ -289,8 +290,10 @@ _open_db(DB *d, char *fn, int myflags, int flags, mode_t mode, int *fd)
     ret = (*d->open)(d, fn, NULL, DB_BTREE, myflags, mode);
 #endif
 
-    if (ret != 0)
-       close(*fd);
+    if (ret != 0) {
+	close(*fd);
+	*fd = -1;
+    }
 
     return ret;
 }
@@ -333,15 +336,17 @@ DB_open(krb5_context context, HDB *db, int flags, mode_t mode)
     }
     db->hdb_db = d;
 
+    /* From here on out always DB_close() before returning on error */
+
     ret = _open_db(d, fn, myflags, flags, mode, &db3->lock_fd);
     free(fn);
     if (ret == ENOENT) {
 	/* try to open without .db extension */
-	ret = _open_db(d, db->hdb_name, myflags, flags,
-		       mode, &db3->lock_fd);
+	ret = _open_db(d, db->hdb_name, myflags, flags, mode, &db3->lock_fd);
     }
 
     if (ret) {
+	DB_close(context, db);
 	krb5_set_error_message(context, ret, "opening %s: %s",
 			       db->hdb_name, strerror(ret));
 	return ret;
@@ -353,6 +358,7 @@ DB_open(krb5_context context, HDB *db, int flags, mode_t mode)
     ret = (*d->cursor)(d, NULL, &dbc, DB_CURSOR_BULK);
 
     if (ret) {
+	DB_close(context, db);
 	krb5_set_error_message(context, ret, "d->cursor: %s", strerror(ret));
         return ret;
     }

@@ -116,6 +116,11 @@ check-keys: check-keys.in Makefile
 	chmod +x check-keys.tmp
 	mv check-keys.tmp check-keys
 
+check-kinit: check-kinit.in Makefile
+	$(do_subst) < $(srcdir)/check-kinit.in > check-kinit.tmp
+	chmod +x check-kinit.tmp
+	mv check-kinit.tmp check-kinit
+
 check-kadmin: check-kadmin.in Makefile
 	$(do_subst) < $(srcdir)/check-kadmin.in > check-kadmin.tmp
 	chmod +x check-kadmin.tmp

@@ -57,7 +57,7 @@ test_default_name(krb5_context context)
     p1 = estrdup(p);
 
     ret = krb5_cc_set_default_name(context, NULL);
-    if (p == NULL)
+    if (ret)
 	krb5_errx (context, 1, "krb5_cc_set_default_name failed");
 
     p = krb5_cc_default_name(context);
@@ -69,7 +69,7 @@ test_default_name(krb5_context context)
 	krb5_errx (context, 1, "krb5_cc_default_name no longer same");
 
     ret = krb5_cc_set_default_name(context, test_cc_name);
-    if (p == NULL)
+    if (ret)
 	krb5_errx (context, 1, "krb5_cc_set_default_name 1 failed");
 
     p = krb5_cc_default_name(context);
@@ -549,14 +549,15 @@ test_prefix_ops(krb5_context context, const char *name, const krb5_cc_ops *ops)
 }
 
 static void
-test_cc_config(krb5_context context)
+test_cc_config(krb5_context context, const char *cc_type,
+	       const char *cc_name, size_t count)
 {
     krb5_error_code ret;
     krb5_principal p;
     krb5_ccache id;
     unsigned int i;
 
-    ret = krb5_cc_new_unique(context, "MEMORY", "bar", &id);
+    ret = krb5_cc_new_unique(context, cc_type, cc_name, &id);
     if (ret)
 	krb5_err(context, 1, ret, "krb5_cc_new_unique");
 
@@ -568,7 +569,7 @@ test_cc_config(krb5_context context)
     if (ret)
 	krb5_err(context, 1, ret, "krb5_cc_initialize");
 
-    for (i = 0; i < 1000; i++) {
+    for (i = 0; i < count; i++) {
 	krb5_data data, data2;
 	const char *name = "foo";
 	krb5_principal p1 = NULL;
@@ -579,6 +580,10 @@ test_cc_config(krb5_context context)
 	data.data = rk_UNCONST(name);
 	data.length = strlen(name);
 
+	/*
+	 * Because of how krb5_cc_set_config() this will also test
+	 * krb5_cc_remove_cred().
+	 */
 	ret = krb5_cc_set_config(context, id, p1, "FriendlyName", &data);
 	if (ret)
 	    krb5_errx(context, 1, "krb5_cc_set_config: add");
@@ -586,7 +591,15 @@ test_cc_config(krb5_context context)
 	ret = krb5_cc_get_config(context, id, p1, "FriendlyName", &data2);
 	if (ret)
 	    krb5_errx(context, 1, "krb5_cc_get_config: first");
+
+	if (data.length != data2.length ||
+	    memcmp(data.data, data2.data, data.length) != 0)
+	    krb5_errx(context, 1, "krb5_cc_get_config: did not fetch what was set");
+
 	krb5_data_free(&data2);
+
+	data.data = rk_UNCONST("bar");
+	data.length = strlen("bar");
 
 	ret = krb5_cc_set_config(context, id, p1, "FriendlyName", &data);
 	if (ret)
@@ -595,6 +608,11 @@ test_cc_config(krb5_context context)
 	ret = krb5_cc_get_config(context, id, p1, "FriendlyName", &data2);
 	if (ret)
 	    krb5_errx(context, 1, "krb5_cc_get_config: second");
+
+	if (data.length != data2.length ||
+	    memcmp(data.data, data2.data, data.length) != 0)
+	    krb5_errx(context, 1, "krb5_cc_get_config: replace failed");
+
 	krb5_data_free(&data2);
 
 	ret = krb5_cc_set_config(context, id, p1, "FriendlyName", NULL);
@@ -604,6 +622,9 @@ test_cc_config(krb5_context context)
 	ret = krb5_cc_get_config(context, id, p1, "FriendlyName", &data2);
 	if (ret == 0)
 	    krb5_errx(context, 1, "krb5_cc_get_config: non-existant");
+
+	if (data2.length)
+	    krb5_errx(context, 1, "krb5_cc_get_config: delete failed");
     }
 
     krb5_cc_destroy(context, id);
@@ -741,7 +762,8 @@ main(int argc, char **argv)
     krb5_cc_destroy(context, id1);
     krb5_cc_destroy(context, id2);
 
-    test_cc_config(context);
+    test_cc_config(context, "MEMORY", "bar", 1000);  /* 1000 because fast */
+    test_cc_config(context, "FILE", "/tmp/foocc", 30); /* 30 because slower */
 
     krb5_free_context(context);
 

@@ -901,19 +901,58 @@ cred_delete(krb5_context context,
 	    krb5_cc_cursor *cursor,
 	    krb5_creds *cred)
 {
-    krb5_error_code ret = EINVAL;
+    krb5_error_code ret;
     krb5_storage *sp;
+    krb5_data orig_cred_data;
+    unsigned char *cred_data_in_file = NULL;
     off_t new_cred_sz;
-    int fd;
+    struct stat sb1, sb2;
+    int fd = -1;
+    size_t bytes;
+    krb5_flags flags = 0;
     krb5_const_realm srealm = krb5_principal_get_realm(context, cred->server);
+
+    /* This is best-effort code; if we lose track of errors here it's OK */
 
     heim_assert(FCC_CURSOR(*cursor)->cred_start < FCC_CURSOR(*cursor)->cred_end,
 		"fcache internal error");
 
-    /* Mark the cred for deletion */
-    cred->times.endtime = 1;
+    krb5_data_zero(&orig_cred_data);
+    if (!krb5_config_get_bool_default(context, NULL, TRUE,
+				      "libdefaults",
+				      "fcc-mit-ticketflags",
+				      NULL))
+	flags = KRB5_STORAGE_CREDS_FLAGS_WRONG_BITORDER;
 
-    /* Further mark config creds because we don't check their endtimes */
+    sp = krb5_storage_emem();
+    if (sp == NULL)
+	return;
+    krb5_storage_set_eof_code(sp, KRB5_CC_END);
+    storage_set_flags(context, sp, FCACHE(id)->version);
+    if (flags)
+	krb5_storage_set_flags(sp, KRB5_STORAGE_CREDS_FLAGS_WRONG_BITORDER);
+
+    /* Get a copy of what the cred should look like in the file; see below */
+    ret = krb5_store_creds(sp, cred);
+    if (ret)
+	goto out;
+
+    ret = krb5_storage_to_data(sp, &orig_cred_data);
+    if (ret)
+	goto out;
+    krb5_storage_free(sp);
+
+    cred_data_in_file = malloc(orig_cred_data.length);
+    if (cred_data_in_file == NULL)
+	goto out;
+
+    /*
+     * Mark the cred expired; krb5_cc_retrieve_cred() callers should use
+     * KRB5_TC_MATCH_TIMES, so this should be good enough...
+     */
+    cred->times.endtime = 0;
+
+    /* ...except for config creds because we don't check their endtimes */
     if (srealm && strcmp(srealm, "X-CACHECONF:") == 0) {
 	ret = krb5_principal_set_realm(context, cred->server, "X-RMED-CONF:");
 	if (ret)
@@ -921,21 +960,18 @@ cred_delete(krb5_context context,
     }
 
     sp = krb5_storage_emem();
+    if (sp == NULL)
+	return;
     krb5_storage_set_eof_code(sp, KRB5_CC_END);
     storage_set_flags(context, sp, FCACHE(id)->version);
-    if (!krb5_config_get_bool_default(context, NULL, TRUE,
-				      "libdefaults",
-				      "fcc-mit-ticketflags",
-				      NULL))
+    if (flags)
 	krb5_storage_set_flags(sp, KRB5_STORAGE_CREDS_FLAGS_WRONG_BITORDER);
 
     ret = krb5_store_creds(sp, cred);
-    if (ret)
-	goto out;
 
     /* The new cred must be the same size as the old cred */
     new_cred_sz = krb5_storage_seek(sp, 0, SEEK_END);
-    if (new_cred_sz !=
+    if (new_cred_sz != orig_cred_data.length || new_cred_sz !=
 	(FCC_CURSOR(*cursor)->cred_end - FCC_CURSOR(*cursor)->cred_start)) {
 	/* XXX This really can't happen.  Assert like above? */
 	krb5_set_error_message(context, EINVAL,
@@ -947,31 +983,55 @@ cred_delete(krb5_context context,
     }
 
     ret = fcc_open(context, id, "remove_cred", &fd,
-		   O_WRONLY | O_BINARY | O_CLOEXEC | O_NOFOLLOW, 0);
-    if (ret == 0) {
-	if (lseek(fd, FCC_CURSOR(*cursor)->cred_start, SEEK_SET) == (off_t)-1) {
+		   O_RDWR | O_BINARY | O_CLOEXEC | O_NOFOLLOW, 0);
+    if (ret)
+	goto out;
+
+    /*
+     * Check that we're updating the same file where we got the
+     * cred's offset, else we'd be corrupting a new ccache.
+     */
+    if (fstat(FCC_CURSOR(*cursor)->fd, &sb1) == -1 ||
+	fstat(fd, &sb2) == -1)
+	goto out;
+    if (sb1.st_dev != sb2.st_dev || sb1.st_ino != sb2.st_ino)
+	goto out;
+
+    /*
+     * Make sure what we overwrite is what we expected.
+     *
+     * FIXME: We *really* need the ccache v4 tag for ccache ID.  This
+     * check that we're only overwriting something that looks exactly
+     * like what we want to is probably good enough in practice, but
+     * it's not guaranteed to work.
+     */
+    if (lseek(fd, FCC_CURSOR(*cursor)->cred_start, SEEK_SET) == (off_t)-1)
+	goto out;
+    bytes = read(fd, cred_data_in_file, orig_cred_data.length);
+    if (bytes != orig_cred_data.length)
+	goto out;
+    if (memcmp(orig_cred_data.data, cred_data_in_file, bytes) != 0)
+	goto out;
+    if (lseek(fd, FCC_CURSOR(*cursor)->cred_start, SEEK_SET) == (off_t)-1)
+	goto out;
+    ret = write_storage(context, sp, fd);
+out:
+    if (fd > -1) {
+	fcc_unlock(context, fd);
+	if (close(fd) < 0 && ret == 0) {
 	    char buf[128];
-	    rk_strerror_r(ret, buf, sizeof(buf));
-	    ret = errno;
-	    krb5_set_error_message(context, ret, N_("seek %s: %s", ""),
-				   FILENAME(id), buf);
-	} else {
-	    ret = write_storage(context, sp, fd);
-	}
-    }
-    fcc_unlock(context, fd);
-    if (close(fd) < 0) {
-	if (ret == 0) {
-	    char buf[128];
+
+	    /* This error might be useful */
 	    rk_strerror_r(ret, buf, sizeof(buf));
 	    ret = errno;
 	    krb5_set_error_message(context, ret, N_("close %s: %s", ""),
 				   FILENAME(id), buf);
 	}
     }
-
-out:
+    krb5_data_free(&orig_cred_data);
+    free(cred_data_in_file);
     krb5_storage_free(sp);
+    return;
 }
 
 static krb5_error_code KRB5_CALLCONV
@@ -980,7 +1040,7 @@ fcc_remove_cred(krb5_context context,
 		krb5_flags which,
 		krb5_creds *mcred)
 {
-    krb5_error_code ret;
+    krb5_error_code ret, ret2;
     krb5_cc_cursor cursor;
     krb5_creds found_cred;
 
@@ -996,11 +1056,12 @@ fcc_remove_cred(krb5_context context,
 	cred_delete(context, id, &cursor, &found_cred);
 	krb5_free_cred_contents(context, &found_cred);
     }
-    if (ret && ret != KRB5_CC_END) {
-	krb5_cc_end_seq_get(context, id, &cursor);
-	return ret;
-    }
-    return krb5_cc_end_seq_get(context, id, &cursor);
+    ret2 = krb5_cc_end_seq_get(context, id, &cursor);
+    if (ret == 0)
+	return ret2;
+    if (ret == KRB5_CC_END)
+	return 0;
+    return ret;
 }
 
 static krb5_error_code KRB5_CALLCONV

@@ -396,10 +396,13 @@ fcc_open(krb5_context context,
 			      (flags | O_RDWR) == flags);
     krb5_error_code ret;
     const char *filename;
-    struct stat sb1, sb2, sb3;
+    struct stat sb1, sb2;
+#ifndef _WIN32
+    struct stat sb3;
+    size_t tries = 3;
+#endif
     int strict_checking;
     int fd;
-    size_t tries = 3;
 
     *fd_ret = -1;
 
@@ -412,20 +415,18 @@ fcc_open(krb5_context context,
 	(context->flags & KRB5_CTX_F_FCACHE_STRICT_CHECKING) != 0;
 
 again:
-    if (strict_checking) {
-	ret = lstat(filename, &sb1);
-	if (ret < 0) {
-	    krb5_set_error_message(context, ret, N_("%s lstat(%s)", "file, error"),
-				   operation, filename);
-	    return errno;
+    memset(&sb1, 0, sizeof(sb1));
+    ret = lstat(filename, &sb1);
+    if (ret == 0) {
+	if (!S_ISREG(sb1.st_mode)) {
+	    krb5_set_error_message(context, EPERM,
+				   N_("Refuses to open symlinks for caches FILE:%s", ""), filename);
+	    return EPERM;
 	}
-    }
-
-    if (!S_ISREG(sb1.st_mode)) {
-	krb5_set_error_message(context, EPERM
-			N_("Refuses to open symlinks for "
-			   "caches FILE:%s", ""), filename);
-	return EPERM;
+    } else if (errno != ENOENT || !(flags & O_CREAT)) {
+	krb5_set_error_message(context, ret, N_("%s lstat(%s)", "file, error"),
+			       operation, filename);
+	return errno;
     }
 
     fd = open(filename, flags, mode);
@@ -439,51 +440,55 @@ again:
     }
     rk_cloexec(fd);
 
-    if (strict_checking) {
+    ret = fstat(fd, &sb2);
+    if (ret < 0) {
+	krb5_clear_error_message(context);
+	return errno;
+    }
 
-	ret = fstat(fd, &sb2);
-	if (ret < 0) {
-	    krb5_clear_error_message(context);
-	    return errno;
-	}
-
-	if (!S_ISREG(sb2.st_mode)) {
-	    krb5_set_error_message(context, EPERM, N_("Refuses to open non files caches: FILE:%s", ""), filename);
-	    close(fd);
-	    return EPERM;
-	}
+    if (!S_ISREG(sb2.st_mode)) {
+	krb5_set_error_message(context, EPERM, N_("Refuses to open non files caches: FILE:%s", ""), filename);
+	close(fd);
+	return EPERM;
+    }
 
 #ifndef _WIN32
-	/* All of the following could be #ifndef O_NOFOLLOW, FYI */
-	if (sb1.st_dev != sb2.st_dev || sb1.st_ino != sb2.st_ino) {
-	    /*
-	     * Perhaps we raced with a rename().  To complain about
-	     * symlinks in that case would cause unnecessary concern, so
-	     * we check for that possibility and loop.  This has no
-	     * TOCTOU problems because we redo the open() (and if we
-	     * have O_NOFOLLOW we could even avoid that too).
-	     */
-	    close(fd);
-	    ret = lstat(filename, &sb3);
-	    if (ret || sb1.st_dev != sb2.st_dev ||
-		 sb3.st_dev != sb2.st_dev || sb3.st_ino != sb2.st_ino) {
-		krb5_set_error_message(context, EPERM, N_("Refuses to open possible symlink for caches: FILE:%s", ""), filename);
-		return EPERM;
-	    }
-	    if (--tries == 0) {
-		krb5_set_error_message(context, EPERM, N_("Raced too many times with renames of FILE:%s", ""), filename);
-		return EPERM;
-	    }
-	    goto again;
+    if (sb1.st_dev && sb1.st_ino &&
+	(sb1.st_dev != sb2.st_dev || sb1.st_ino != sb2.st_ino)) {
+	/*
+	 * Perhaps we raced with a rename().  To complain about
+	 * symlinks in that case would cause unnecessary concern, so
+	 * we check for that possibility and loop.  This has no
+	 * TOCTOU problems because we redo the open() (and if we
+	 * have O_NOFOLLOW we could even avoid that too).
+	 */
+	close(fd);
+	ret = lstat(filename, &sb3);
+	if (ret || sb1.st_dev != sb2.st_dev ||
+	    sb3.st_dev != sb2.st_dev || sb3.st_ino != sb2.st_ino) {
+	    krb5_set_error_message(context, EPERM, N_("Refuses to open possible symlink for caches: FILE:%s", ""), filename);
+	    return EPERM;
 	}
+	if (--tries == 0) {
+	    krb5_set_error_message(context, EPERM, N_("Raced too many times with renames of FILE:%s", ""), filename);
+	    return EPERM;
+	}
+	goto again;
+    }
 #endif
 
-	if (sb2.st_nlink != 1) {
-	    krb5_set_error_message(context, EPERM, N_("Refuses to open hardlinks for caches FILE:%s", ""), filename);
-	    close(fd);
-	    return EPERM;
-	}
+    if (sb2.st_nlink != 1) {
+	krb5_set_error_message(context, EPERM, N_("Refuses to open hardlinks for caches FILE:%s", ""), filename);
+	close(fd);
+	return EPERM;
+    }
+
+    if (strict_checking) {
 #ifndef _WIN32
+	/*
+	 * XXX WIN32: Needs to have ACL checking code!
+	 * st_mode comes out as 100666, and st_uid is no use.
+	 */
 	/*
 	 * XXX Should probably add options to improve control over this
 	 * check.  We might want strict checking of everything except
@@ -908,7 +913,7 @@ cred_delete(krb5_context context,
     off_t new_cred_sz;
     struct stat sb1, sb2;
     int fd = -1;
-    size_t bytes;
+    ssize_t bytes;
     krb5_flags flags = 0;
     krb5_const_realm srealm = krb5_principal_get_realm(context, cred->server);
 

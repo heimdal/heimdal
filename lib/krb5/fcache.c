@@ -261,7 +261,7 @@ _krb5_erase_file(krb5_context context, const char *filename)
     if (ret < 0)
 	return errno;
 
-    fd = open(filename, O_RDWR | O_BINARY);
+    fd = open(filename, O_RDWR | O_BINARY | O_CLOEXEC | O_NOFOLLOW);
     if(fd < 0) {
 	if(errno == ENOENT)
 	    return 0;
@@ -404,6 +404,8 @@ fcc_open(krb5_context context,
     int strict_checking;
     int fd;
 
+    flags |= O_BINARY | O_CLOEXEC | O_NOFOLLOW;
+
     *fd_ret = -1;
 
     if (FCACHE(id) == NULL)
@@ -459,8 +461,8 @@ again:
 	 * Perhaps we raced with a rename().  To complain about
 	 * symlinks in that case would cause unnecessary concern, so
 	 * we check for that possibility and loop.  This has no
-	 * TOCTOU problems because we redo the open() (and if we
-	 * have O_NOFOLLOW we could even avoid that too).
+	 * TOCTOU problems because we redo the open().  We could also
+	 * not do any of this checking if O_NOFOLLOW != 0...
 	 */
 	close(fd);
 	ret = lstat(filename, &sb3);
@@ -531,7 +533,7 @@ fcc_initialize(krb5_context context,
 
     unlink (f->filename);
 
-    ret = fcc_open(context, id, "initialize", &fd, O_RDWR | O_CREAT | O_EXCL | O_BINARY | O_CLOEXEC | O_NOFOLLOW, 0600);
+    ret = fcc_open(context, id, "initialize", &fd, O_RDWR | O_CREAT | O_EXCL, 0600);
     if(ret)
 	return ret;
     {
@@ -606,7 +608,7 @@ fcc_store_cred(krb5_context context,
     int ret;
     int fd;
 
-    ret = fcc_open(context, id, "store", &fd, O_WRONLY | O_APPEND | O_BINARY | O_CLOEXEC | O_NOFOLLOW, 0);
+    ret = fcc_open(context, id, "store", &fd, O_WRONLY | O_APPEND, 0);
     if(ret)
 	return ret;
     {
@@ -654,7 +656,7 @@ init_fcc(krb5_context context,
     if (kdc_offset)
 	*kdc_offset = 0;
 
-    ret = fcc_open(context, id, operation, &fd, O_RDONLY | O_BINARY | O_CLOEXEC | O_NOFOLLOW, 0);
+    ret = fcc_open(context, id, operation, &fd, O_RDONLY, 0);
     if(ret)
 	return ret;
 
@@ -987,8 +989,7 @@ cred_delete(krb5_context context,
 	goto out;
     }
 
-    ret = fcc_open(context, id, "remove_cred", &fd,
-		   O_RDWR | O_BINARY | O_CLOEXEC | O_NOFOLLOW, 0);
+    ret = fcc_open(context, id, "remove_cred", &fd, O_RDWR, 0);
     if (ret)
 	goto out;
 
@@ -1193,14 +1194,14 @@ fcc_move(krb5_context context, krb5_ccache from, krb5_ccache to)
 	int fd1, fd2;
 	char buf[BUFSIZ];
 
-	ret = fcc_open(context, from, "move/from", &fd1, O_RDONLY | O_BINARY | O_CLOEXEC | O_NOFOLLOW, 0);
+	ret = fcc_open(context, from, "move/from", &fd1, O_RDONLY, 0);
 	if(ret)
 	    return ret;
 
 	unlink(FILENAME(to));
 
 	ret = fcc_open(context, to, "move/to", &fd2,
-		       O_WRONLY | O_CREAT | O_EXCL | O_BINARY | O_CLOEXEC | O_NOFOLLOW, 0600);
+		       O_WRONLY | O_CREAT | O_EXCL, 0600);
 	if(ret)
 	    goto out1;
 
@@ -1269,7 +1270,7 @@ fcc_lastchange(krb5_context context, krb5_ccache id, krb5_timestamp *mtime)
     struct stat sb;
     int fd;
 
-    ret = fcc_open(context, id, "lastchange", &fd, O_RDONLY | O_BINARY | O_CLOEXEC | O_NOFOLLOW, 0);
+    ret = fcc_open(context, id, "lastchange", &fd, O_RDONLY, 0);
     if(ret)
 	return ret;
     ret = fstat(fd, &sb);

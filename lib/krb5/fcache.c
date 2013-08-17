@@ -396,9 +396,10 @@ fcc_open(krb5_context context,
 			      (flags | O_RDWR) == flags);
     krb5_error_code ret;
     const char *filename;
-    struct stat sb1, sb2;
+    struct stat sb1, sb2, sb3;
     int strict_checking;
     int fd;
+    size_t tries = 3;
 
     *fd_ret = -1;
 
@@ -410,14 +411,21 @@ fcc_open(krb5_context context,
     strict_checking = (flags & O_CREAT) == 0 &&
 	(context->flags & KRB5_CTX_F_FCACHE_STRICT_CHECKING) != 0;
 
+again:
     if (strict_checking) {
 	ret = lstat(filename, &sb1);
 	if (ret < 0) {
 	    krb5_set_error_message(context, ret, N_("%s lstat(%s)", "file, error"),
 				   operation, filename);
 	    return errno;
-	    
 	}
+    }
+
+    if (!S_ISREG(sb1.st_mode)) {
+	krb5_set_error_message(context, EPERM
+			N_("Refuses to open symlinks for "
+			   "caches FILE:%s", ""), filename);
+	return EPERM;
     }
 
     fd = open(filename, flags, mode);
@@ -446,10 +454,27 @@ fcc_open(krb5_context context,
 	}
 
 #ifndef _WIN32
+	/* All of the following could be #ifndef O_NOFOLLOW, FYI */
 	if (sb1.st_dev != sb2.st_dev || sb1.st_ino != sb2.st_ino) {
-	    krb5_set_error_message(context, EPERM, N_("Refuses to open symlinks for caches FILE:%s", ""), filename);
+	    /*
+	     * Perhaps we raced with a rename().  To complain about
+	     * symlinks in that case would cause unnecessary concern, so
+	     * we check for that possibility and loop.  This has no
+	     * TOCTOU problems because we redo the open() (and if we
+	     * have O_NOFOLLOW we could even avoid that too).
+	     */
 	    close(fd);
-	    return EPERM;
+	    ret = lstat(filename, &sb3);
+	    if (ret || sb1.st_dev != sb2.st_dev ||
+		 sb3.st_dev != sb2.st_dev || sb3.st_ino != sb2.st_ino) {
+		krb5_set_error_message(context, EPERM, N_("Refuses to open possible symlink for caches: FILE:%s", ""), filename);
+		return EPERM;
+	    }
+	    if (--tries == 0) {
+		krb5_set_error_message(context, EPERM, N_("Raced too many times with renames of FILE:%s", ""), filename);
+		return EPERM;
+	    }
+	    goto again;
 	}
 #endif
 
@@ -459,6 +484,12 @@ fcc_open(krb5_context context,
 	    return EPERM;
 	}
 #ifndef _WIN32
+	/*
+	 * XXX Should probably add options to improve control over this
+	 * check.  We might want strict checking of everything except
+	 * this, and we might want st_uid == getuid() || st_uid == geteuid()
+	 * to be OK.
+	 */
 	if (sb2.st_uid != getuid()) {
 	    krb5_set_error_message(context, EPERM, N_("Refuses to open cache files not own by myself FILE:%s (owned by %d)", ""), filename, (int)sb2.st_uid);
 	    close(fd);

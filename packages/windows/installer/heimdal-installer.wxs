@@ -55,10 +55,6 @@
       <Directory Id='ProgramFilesFolder'>
         <Directory Id='INSTALLDIR32' Name='Heimdal'>
           <Directory Id='dirBin32' Name='bin'>
-            <Directory Id='dirPlugin32' Name='plugin'>
-              <Directory Id='PLUGINDIR32' Name='krb5'>
-              </Directory>
-            </Directory>
           </Directory>
         </Directory>
       </Directory>
@@ -68,10 +64,6 @@
       <Directory Id='ProgramFiles64Folder'>
         <Directory Id='INSTALLDIR64' Name='Heimdal'>
           <Directory Id='dirBin64' Name='bin'>
-            <Directory Id='dirPlugin64' Name='plugin'>
-              <Directory Id='PLUGINDIR64' Name='krb5'>
-              </Directory>
-            </Directory>
           </Directory>
         </Directory>
       </Directory>
@@ -212,35 +204,9 @@
 
     </DirectoryRef>
 
-    <?ifdef Target32?>
-    <DirectoryRef Id='PLUGINDIR32'>
-      <Component Id='comp.Plugin.Reg.32' Feature='feature.Main'
-                 Guid='4BC44234-70A4-4CC1-A5AF-4CA76E9F9487' Win64='no'>
-	<RegistryKey ForceDeleteOnUninstall='yes' Root='HKLM'
-		     Key='Software\Heimdal'>
-          <RegistryValue Name='plugin_dir' Type='multiString' Action='append'
-                         Value='"[PLUGINDIR32]"' KeyPath='yes' />
-        </RegistryKey>
-      </Component>
-    </DirectoryRef>
-    <?endif?>
-
-    <?ifdef Target64?>
-    <DirectoryRef Id='PLUGINDIR64'>
-      <Component Id='comp.Plugin.Reg.64' Feature='feature.Main'
-                 Guid='5A99A52E-A4CD-40F8-AFFD-AD61939FC547' Win64='yes'>
-	<RegistryKey ForceDeleteOnUninstall='yes' Root='HKLM'
-		     Key='Software\Heimdal'>
-          <RegistryValue Name='plugin_dir' Type='multiString' Action='append'
-                         Value='"[PLUGINDIR64]"' KeyPath='yes' />
-        </RegistryKey>
-      </Component>
-    </DirectoryRef>
-    <?endif?>
-
     <DirectoryRef Id='TARGETDIR'>
       <Directory Id='CommonAppDataFolder' Name='ProgramData'>
-        <Directory Id='dirCommonKerberos' Name='Kerberos' FileSource='$(var.SrcDir)'>
+	<Directory Id='dirCommonKerberos' Name='Kerberos' FileSource='$(var.SrcDir)'>
 
           <Component Id='comp.krb5.conf'
                      Guid='ED28951F-7B17-4DF5-91D7-4DC11C810E66'

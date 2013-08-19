@@ -879,6 +879,9 @@ renew_func(void *ptr)
     struct renew_ctx *ctx = ptr;
     time_t renew_expire;
     static time_t exp_delay = 1;
+#ifndef NO_AFS;
+    size_t got_tix = 0;
+#endif
 
     /*
      * NOTE: We count on the ccache implementation to notice changes to the
@@ -896,6 +899,9 @@ renew_func(void *ptr)
 		       server_str, ctx->ticket_life);
         expire = ticket_lifetime(ctx->context, ctx->ccache, ctx->principal,
 				 server_str, &renew_expire);
+#ifndef NO_AFS
+	got_tix = ret == 0;
+#endif
     }
 
     if (expire < ctx->ticket_life / 2) {
@@ -903,10 +909,13 @@ renew_func(void *ptr)
 			ctx->ccache, ctx->ticket_life, 0);
         expire = ticket_lifetime(ctx->context, ctx->ccache, ctx->principal,
 				 server_str, &renew_expire);
+#ifndef NO_AFS
+	got_tix = got_tix || ret == 0;
+#endif
     }
 
 #ifndef NO_AFS
-    if (ret == 0 && server_str == NULL && do_afslog && k_hasafs())
+    if (got_tix && server_str == NULL && do_afslog && k_hasafs())
 	krb5_afslog(ctx->context, ctx->ccache, NULL, NULL);
 #endif
 

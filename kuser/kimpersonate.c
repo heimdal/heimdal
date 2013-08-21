@@ -45,17 +45,15 @@ static char *ticket_flags_str = NULL;
 static TicketFlags ticket_flags;
 static char *keytab_file = NULL;
 static char *enctype_string = NULL;
+static char *session_enctype_string = NULL;
 static int   expiration_time = 3600;
 static struct getarg_strings client_addresses;
 static int   version_flag = 0;
 static int   help_flag = 0;
 static int   use_krb5 = 1;
 
-static const char *enc_type = "des-cbc-md5";
-
-/*
- *
- */
+static const char *enc_type = "aes256-cts-hmac-sha1-96";
+static const char *session_enc_type = NULL;
 
 static void
 encode_ticket (krb5_context context,
@@ -148,13 +146,17 @@ create_krb5_tickets (krb5_context context, krb5_keytab kt)
     krb5_keytab_entry entry;
     krb5_creds cred;
     krb5_enctype etype;
+    krb5_enctype session_etype;
     krb5_ccache ccache;
 
     memset (&cred, 0, sizeof(cred));
 
     ret = krb5_string_to_enctype (context, enc_type, &etype);
     if (ret)
-	krb5_err (context, 1, ret, "krb5_string_to_enctype");
+	krb5_err (context, 1, ret, "krb5_string_to_enctype (enc-type)");
+    ret = krb5_string_to_enctype (context, session_enc_type, &session_etype);
+    if (ret)
+	krb5_err (context, 1, ret, "krb5_string_to_enctype (sess-enc-type)");
     ret = krb5_kt_get_entry (context, kt, server_principal,
 			     0, etype, &entry);
     if (ret)
@@ -171,7 +173,7 @@ create_krb5_tickets (krb5_context context, krb5_keytab kt)
     ret = krb5_copy_principal (context, server_principal, &cred.server);
     if (ret)
 	krb5_err (context, 1, ret, "krb5_copy_principal");
-    krb5_generate_random_keyblock(context, etype, &cred.session);
+    krb5_generate_random_keyblock(context, session_etype, &cred.session);
 
     cred.times.authtime = time(NULL);
     cred.times.starttime = time(NULL);
@@ -245,7 +247,13 @@ setup_env (krb5_context context, krb5_keytab *kt)
 	krb5_errx (context, 1, "missing server principal");
     ret = krb5_parse_name (context, server_principal_str, &server_principal);
     if (ret)
-	krb5_err (context, 1, ret, "resolvning client name");
+	krb5_err (context, 1, ret, "resolvning server name");
+
+    /* If no sess-enc-type specified on command line and this is an afs */
+    /* service ticket, change default of session_enc_type to DES.       */
+    if (session_enctype_string == NULL 
+	&& strcmp("afs", *server_principal->name.name_string.val) == 0)
+	session_enc_type = "des-cbc-crc";
 
     if (ticket_flags_str) {
 	int ticket_flags_int;
@@ -282,6 +290,8 @@ struct getargs args[] = {
     { "client-addresses", 'a', arg_strings, &client_addresses,
       "addresses of client", NULL },
     { "enc-type", 't', arg_string, 	&enctype_string,
+      "encryption type", NULL },
+    { "sess-enc-type", 0, arg_string, 	&session_enctype_string,
       "encryption type", NULL },
     { "ticket-flags", 'f', arg_string,   &ticket_flags_str,
       "ticket flags for krb5 ticket", NULL },
@@ -328,6 +338,10 @@ main (int argc, char **argv)
 
     if (enctype_string)
 	enc_type = enctype_string;
+    if (session_enctype_string)
+	session_enc_type = session_enctype_string;
+    else
+	session_enc_type = enc_type;
 
     setup_env(context, &kt);
 

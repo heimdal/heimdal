@@ -46,6 +46,7 @@
 .Op Fl e Ar integer \*(Ba Fl Fl expire-time= Ns Ar integer
 .Op Fl a Ar string \*(Ba Fl Fl client-address= Ns Ar string
 .Op Fl t Ar string \*(Ba Fl Fl enc-type= Ns Ar string
+.Op Fl Fl sess-enc-type= Ns Ar string
 .Op Fl f Ar string \*(Ba Fl Fl ticket-flags= Ns Ar string
 .Op Fl Fl verbose
 .Op Fl Fl version
@@ -71,7 +72,9 @@ lifetime of ticket in seconds
 .It Fl a Ar string Ns , Fl Fl client-address= Ns Ar string
 address of client
 .It Fl t Ar string Ns , Fl Fl enc-type= Ns Ar string
-encryption type
+encryption type (defaults to "aes256-cts-hmac-sha1-96")
+.It Fl Fl sess-enc-type= Ns Ar string
+session encryption type (defaults to enc-type or "des-cbc-crc" for afs service tickets)
 .It Fl f Ar string Ns , Fl Fl ticket-flags= Ns Ar string
 ticket flags for krb5 ticket
 .It Fl Fl verbose

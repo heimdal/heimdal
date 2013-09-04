@@ -156,7 +156,7 @@ create_krb5_tickets (krb5_context context, krb5_keytab kt)
 	krb5_err (context, 1, ret, "krb5_string_to_enctype (enc-type)");
     ret = krb5_string_to_enctype (context, session_enc_type, &session_etype);
     if (ret)
-	krb5_err (context, 1, ret, "krb5_string_to_enctype (sess-enc-type)");
+	krb5_err (context, 1, ret, "krb5_string_to_enctype (session-enc-type)");
     ret = krb5_kt_get_entry (context, kt, server_principal,
 			     0, etype, &entry);
     if (ret)
@@ -249,7 +249,7 @@ setup_env (krb5_context context, krb5_keytab *kt)
     if (ret)
 	krb5_err (context, 1, ret, "resolvning server name");
 
-    /* If no sess-enc-type specified on command line and this is an afs */
+    /* If no session-enc-type specified on command line and this is an afs */
     /* service ticket, change default of session_enc_type to DES.       */
     if (session_enctype_string == NULL 
 	&& strcmp("afs", *server_principal->name.name_string.val) == 0)
@@ -289,9 +289,9 @@ struct getargs args[] = {
       "lifetime of ticket in seconds", NULL },
     { "client-addresses", 'a', arg_strings, &client_addresses,
       "addresses of client", NULL },
-    { "enc-type", 't', arg_string, 	&enctype_string,
+    { "enc-type", 't', arg_string,	&enctype_string,
       "encryption type", NULL },
-    { "sess-enc-type", 0, arg_string, 	&session_enctype_string,
+    { "session-enc-type", 0, arg_string,&session_enctype_string,
       "encryption type", NULL },
     { "ticket-flags", 'f', arg_string,   &ticket_flags_str,
       "ticket flags for krb5 ticket", NULL },

@@ -163,3 +163,38 @@ dlsym(void * vhm, const char * func_name)
     return (DLSYM_RET_TYPE)(ULONG_PTR)GetProcAddress(hm, func_name);
 }
 
+ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
+dladdr(void *addr, Dl_info *dli)
+{
+    HMODULE hm;
+    int ret;
+    DWORD nsize;
+    char *p;
+
+    memset(dli, 0, sizeof(*dli));
+
+    if (!GetModuleHandleEx(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS |
+                           GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT,
+                           (LPCTSTR)addr, &hm))
+        return -1;
+
+    nsize = GetModuleFileName(hm, dli->_dli_buf, sizeof(dli->_dli_buf));
+    dli->_dli_buf[sizeof(dli->_dli_buf) - 1] = '\0';
+    if (nsize >= sizeof(dli->_dli_buf))
+        return 0; /* truncated? can't be... */
+
+    /*
+     * Normalize path component separators, since our caller may want to
+     * portably take the dirname or basename of dli->dli_fname,
+     * searching for the last '/'.
+     */
+    for (p = dli->_dli_buf;
+         p < &dli->_dli_buf[sizeof(dli->_dli_buf) - 1] && *p;
+         p++) {
+        if (*p == '\\')
+            *p = '/';
+    }
+
+    dli->dli_fname = dli->_dli_buf;
+    return 1;
+}

@@ -500,6 +500,7 @@ AC_MSG_RESULT($ac_rk_have___sync_add_and_fetch)
 AC_FUNC_MMAP
 
 KRB_CAPABILITIES
+rk_DLADDR
 
 AC_CHECK_GETPWNAM_R_POSIX
 

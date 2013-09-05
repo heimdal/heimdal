@@ -348,8 +348,12 @@ kt_ops_copy(krb5_context context, const krb5_context src_context)
 }
 
 static const char *sysplugin_dirs[] =  {
-    LIBDIR "/plugin/krb5",
+    "$ORIGIN/../lib/plugin/krb5",
+#ifdef _WIN32
+    "$ORIGIN/../lib",
+#endif
 #ifdef __APPLE__
+    LIBDIR "/plugin/krb5",
     "/Library/KerberosPlugins/KerberosFrameworkPlugins",
     "/System/Library/KerberosPlugins/KerberosFrameworkPlugins",
 #endif
@@ -362,10 +366,14 @@ init_context_once(void *ctx)
     krb5_context context = ctx;
     char **dirs;
 
+#ifdef _WIN32
+    dirs = rk_UNCONST(sysplugin_dirs);
+#else
     dirs = krb5_config_get_strings(context, NULL, "libdefaults",
 				   "plugin_dir", NULL);
     if (dirs == NULL)
 	dirs = rk_UNCONST(sysplugin_dirs);
+#endif
 
     _krb5_load_plugins(context, "krb5", (const char **)dirs);
 

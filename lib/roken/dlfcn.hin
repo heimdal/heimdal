@@ -32,6 +32,8 @@
 #ifndef __dlfcn_h__
 #define __dlfcn_h__
 
+#include <windows.h>
+
 #ifndef ROKEN_LIB_FUNCTION
 #ifdef _WIN32
 #define ROKEN_LIB_FUNCTION
@@ -74,6 +76,11 @@ dlopen(const char *, int);
 
 ROKEN_LIB_FUNCTION DLSYM_RET_TYPE ROKEN_LIB_CALL
 dlsym(void *, const char *);
+
+typedef struct Dl_info {
+    char    *dli_fname;
+    char    _dli_buf[MAX_PATH + 2];
+} Dl_info, Dl_info_t;
 
 #ifdef __cplusplus
 } /* extern "C" */

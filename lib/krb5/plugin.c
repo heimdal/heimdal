@@ -219,6 +219,38 @@ plug_dealloc(void *ptr)
 	dlclose(p->dsohandle);
 }
 
+static char *
+resolve_origin(const char *di)
+{
+#ifdef HAVE_DLADDR
+    Dl_info dl_info;
+    const char *dname;
+    char *path, *p;
+#endif
+
+    if (strncmp(di, "$ORIGIN/", sizeof("$ORIGIN/") - 1) &&
+        strcmp(di, "$ORIGIN"))
+        return strdup(di);
+
+#ifndef HAVE_DLADDR
+    return strdup(LIBDIR "/plugin/krb5");
+#else
+    di += sizeof("$ORIGIN") - 1;
+
+    if (dladdr(_krb5_load_plugins, &dl_info) == 0)
+        return strdup(LIBDIR "/plugin/krb5");
+
+    dname = dl_info.dli_fname;
+    p = strrchr(dname, '/');
+    if (p)
+        *p = '\0';
+
+    if (asprintf(&path, "%s%s", dname, di) == -1)
+        return NULL;
+    return path;
+#endif
+}
+
 
 /**
  * Load plugins (new system) for the given module @name (typicall
@@ -239,6 +271,7 @@ _krb5_load_plugins(krb5_context context, const char *name, const char **paths)
     struct dirent *entry;
     krb5_error_code ret;
     const char **di;
+    char *dirname = NULL;
     DIR *d;
 
     HEIMDAL_MUTEX_lock(&plugin_mutex);
@@ -264,7 +297,11 @@ _krb5_load_plugins(krb5_context context, const char *name, const char **paths)
     heim_release(s);
 
     for (di = paths; *di != NULL; di++) {
-	d = opendir(*di);
+        free(dirname);
+        dirname = resolve_origin(*di);
+        if (dirname == NULL)
+            continue;
+	d = opendir(dirname);
 	if (d == NULL)
 	    continue;
 	rk_cloexec_dir(d);
@@ -279,16 +316,21 @@ _krb5_load_plugins(krb5_context context, const char *name, const char **paths)
 	    if (n[0] == '.' && (n[1] == '\0' || (n[1] == '.' && n[2] == '\0')))
 		continue;
 
+#ifdef _WIN32
+            if (strncmp(n, "plugin_krb5_", sizeof("plugin_krb5_") - 1))
+                continue;
+#endif
+
 	    ret = 0;
 #ifdef __APPLE__
 	    { /* support loading bundles on MacOS */
 		size_t len = strlen(n);
 		if (len > 7 && strcmp(&n[len - 7],  ".bundle") == 0)
-		    ret = asprintf(&path, "%s/%s/Contents/MacOS/%.*s", *di, n, (int)(len - 7), n);
+		    ret = asprintf(&path, "%s/%s/Contents/MacOS/%.*s", dirname, n, (int)(len - 7), n);
 	    }
 #endif
 	    if (ret < 0 || path == NULL)
-		ret = asprintf(&path, "%s/%s", *di, n);
+		ret = asprintf(&path, "%s/%s", dirname, n);
 
 	    if (ret < 0 || path == NULL)
 		continue;
@@ -318,6 +360,7 @@ _krb5_load_plugins(krb5_context context, const char *name, const char **paths)
 	}
 	closedir(d);
     }
+    free(dirname);
     HEIMDAL_MUTEX_unlock(&plugin_mutex);
     heim_release(module);
 #endif /* HAVE_DLOPEN */

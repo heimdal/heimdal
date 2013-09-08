@@ -115,7 +115,7 @@ LIBKDCRES=$(OBJ)\libkdc-version.res
 
 $(LIBEXECDIR)\libkdc.dll: $(LIBKDC_OBJS) $(LIBKDC_LIBS) $(LIBKDCRES)
 	$(DLLGUILINK) -implib:$(LIBKDC) -def:libkdc-exports.def
-	$(DLLPREP)
+	$(DLLPREP_NODIST)
 
 $(LIBKDC): $(LIBEXECDIR)\libkdc.dll
 

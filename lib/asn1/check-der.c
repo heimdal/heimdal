@@ -1099,14 +1099,10 @@ struct randomcheck {
 };
 
 static void
-asn1rand(uint8_t *rand, size_t len)
+asn1rand(uint8_t *randbytes, size_t len)
 {
     while (len) {
-#ifdef HAVE_ARC4RANDOM
-	*rand++ = arc4random();
-#else
-	*rand++ = random();
-#endif
+	*randbytes++ = rk_random();
 	len--;
     }
 }

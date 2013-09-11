@@ -441,11 +441,14 @@ fcc_open(krb5_context context,
 	    return EPERM;
 	}
 
+#ifndef _WIN32
 	if (sb1.st_dev != sb2.st_dev || sb1.st_ino != sb2.st_ino) {
 	    krb5_set_error_message(context, EPERM, N_("Refuses to open symlinks for caches FILE:%s", ""), filename);
 	    close(fd);
 	    return EPERM;
 	}
+#endif
+
 	if (sb2.st_nlink != 1) {
 	    krb5_set_error_message(context, EPERM, N_("Refuses to open hardlinks for caches FILE:%s", ""), filename);
 	    close(fd);
@@ -457,14 +460,13 @@ fcc_open(krb5_context context,
 	    close(fd);
 	    return EPERM;
 	}
-#endif
 	if ((sb2.st_mode & 077) != 0) {
 	    krb5_set_error_message(context, EPERM,
 				   N_("Refuses to open group/other readable files FILE:%s", ""), filename);
 	    close(fd);
 	    return EPERM;
 	}
-
+#endif
     }
 
     if((ret = fcc_lock(context, id, fd, exclusive)) != 0) {

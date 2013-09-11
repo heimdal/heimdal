@@ -111,7 +111,7 @@ opendir(const char * path)
     struct _finddata_t fd;
     intptr_t           fd_handle;
     const char         *filespec;
-    char               path_buffer[1024];
+    char               path_buffer[1024]="";
 
     memset(&fd, 0, sizeof(fd));
 

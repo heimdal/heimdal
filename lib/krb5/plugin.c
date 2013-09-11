@@ -277,6 +277,14 @@ _krb5_load_plugins(krb5_context context, const char *name, const char **paths)
     const char **di;
     char *dirname = NULL;
     DIR *d;
+#ifdef _WIN32
+    const char * plugin_prefix;
+    size_t plugin_prefix_len;
+
+    if (asprintf(&plugin_prefix, "plugin_%s_", name) == -1)
+	return;
+    plugin_prefix_len = (plugin_prefix ? strlen(plugin_prefix) : 0);
+#endif
 
     HEIMDAL_MUTEX_lock(&plugin_mutex);
 
@@ -321,8 +329,20 @@ _krb5_load_plugins(krb5_context context, const char *name, const char **paths)
 		continue;
 
 #ifdef _WIN32
-            if (strncmp(n, "plugin_krb5_", sizeof("plugin_krb5_") - 1))
-                continue;
+	    /*
+	     * On Windows, plugins must be loaded from the same directory as
+	     * heimdal.dll (typically the assembly directory) and must have
+	     * the name form "plugin_<module>_<name>.dll".
+	     */
+	    {
+		char *ext;
+
+		if (strnicmp(n, plugin_prefix, plugin_prefix_len))
+		    continue;
+		ext = strrchr(n, '.');
+		if (ext == NULL || stricmp(ext, ".dll"))
+		     continue;
+	    }
 #endif
 
 	    ret = 0;
@@ -367,6 +387,10 @@ _krb5_load_plugins(krb5_context context, const char *name, const char **paths)
     free(dirname);
     HEIMDAL_MUTEX_unlock(&plugin_mutex);
     heim_release(module);
+#ifdef _WIN32
+    if (plugin_prefix)
+	free(plugin_prefix);
+#endif
 #endif /* HAVE_DLOPEN */
 }
 

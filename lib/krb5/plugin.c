@@ -241,6 +241,10 @@ resolve_origin(const char *di)
         return strdup(LIBDIR "/plugin/krb5");
 
     dname = dl_info.dli_fname;
+#ifdef _WIN32
+    p = strrchr(dname, '\\');
+    if (p == NULL)
+#endif
     p = strrchr(dname, '/');
     if (p)
         *p = '\0';

@@ -375,4 +375,11 @@ enum krb5_pk_type {
 
 #endif /* PKINIT */
 
+#define ISTILDE(x) (x == '~')
+#ifdef _WIN32
+# define ISPATHSEP(x) (x == '/' || x =='\\')
+#else
+# define ISPATHSEP(x) (x == '/')
+#endif
+
 #endif /* __KRB5_LOCL_H__ */

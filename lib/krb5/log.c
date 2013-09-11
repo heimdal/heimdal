@@ -271,10 +271,13 @@ krb5_addlog_dest(krb5_context context, krb5_log_facility *f, const char *orig)
     int min = 0, max = -1, n;
     char c;
     const char *p = orig;
+#ifdef _WIN32
+    const char *q;
+#endif
 
     n = sscanf(p, "%d%c%d/", &min, &c, &max);
     if(n == 2){
-	if(c == '/') {
+	if(ISPATHSEP(c)) {
 	    if(min < 0){
 		max = -min;
 		min = 0;
@@ -284,6 +287,12 @@ krb5_addlog_dest(krb5_context context, krb5_log_facility *f, const char *orig)
 	}
     }
     if(n){
+#ifdef _WIN32
+	q = strrchr(p, '\\');
+	if (q != NULL)
+	    p = q;
+	else
+#endif
 	p = strchr(p, '/');
 	if(p == NULL) {
 	    krb5_set_error_message(context, HEIM_ERR_LOG_PARSE,

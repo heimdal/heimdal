@@ -170,7 +170,7 @@ keytab_name(const char *name, const char **type, size_t *type_len)
     residual = strchr(name, ':');
 
     if (residual == NULL ||
-	name[0] == '/'
+	ISPATHSEP(name[0])
 #ifdef _WIN32
         /* Avoid treating <drive>:<path> as a keytab type
          * specification */

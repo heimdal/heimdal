@@ -979,7 +979,7 @@ krb5_cc_get_prefix_ops(krb5_context context, const char *prefix)
 
     if (prefix == NULL)
 	return KRB5_DEFAULT_CCTYPE;
-    if (prefix[0] == '/')
+    if (ISPATHSEP(prefix[0]))
 	return &krb5_fcc_ops;
 
     p = strdup(prefix);

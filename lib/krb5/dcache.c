@@ -256,8 +256,8 @@ dcc_resolve(krb5_context context, krb5_ccache *id, const char *res)
 
     p = res;
     do {
-	p = strstr(p, "/..");
-	if (p && (p[3] == '/' || p[3] == '\0')) {
+	p = strstr(p, "..");
+	if (p && (p == res || ISPATHSEP(p[-1])) && (ISPATHSEP(p[2]) || p[2] == '\0')) {
 	    krb5_set_error_message(context, KRB5_CC_FORMAT,
 				   N_("Path contains a .. component", ""));
 	    return KRB5_CC_FORMAT;
@@ -278,6 +278,10 @@ dcc_resolve(krb5_context context, krb5_ccache *id, const char *res)
 	char *q;
 
 	dc->dir = strdup(&res[1]);
+#ifdef _WIN32
+	q = strrchr(dc->dir, '\\');
+	if (q == NULL)
+#endif
 	q = strrchr(dc->dir, '/');
 	if (q) {
 	    *q++ = '\0';
@@ -318,7 +322,7 @@ dcc_resolve(krb5_context context, krb5_ccache *id, const char *res)
 
 	len = strlen(dc->dir);
 
-	if (dc->dir[len - 1] == '/')
+	if (ISPATHSEP(dc->dir[len - 1]))
 	    dc->dir[len - 1] = '\0';
 
 	ret = verify_directory(context, dc->dir);

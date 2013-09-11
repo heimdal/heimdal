@@ -289,10 +289,13 @@ check_log(krb5_context context, const char *path, char *data)
     int min = 0, max = -1, n;
     char c;
     const char *p = data;
+#ifdef _WIN32
+    const char *q;
+#endif
 
     n = sscanf(p, "%d%c%d/", &min, &c, &max);
     if(n == 2){
-	if(c == '/') {
+	if(ISPATHSEP(c)) {
 	    if(min < 0){
 		max = -min;
 		min = 0;
@@ -302,6 +305,12 @@ check_log(krb5_context context, const char *path, char *data)
 	}
     }
     if(n){
+#ifdef _WIN32
+	q = strrchr(p, '\\');
+	if (q != NULL)
+	    p = q;
+	else
+#endif
 	p = strchr(p, '/');
 	if(p == NULL) {
 	    krb5_warnx(context, "%s: failed to parse \"%s\"", path, data);

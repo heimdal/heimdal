@@ -425,7 +425,7 @@ krb5_config_parse_file_multi (krb5_context context,
      * current users home directory. The behavior can be disabled and
      * enabled by calling krb5_set_home_dir_access().
      */
-    if (fname[0] == '~' && fname[1] == '/') {
+    if (ISTILDE(fname[0]) && ISPATHSEP(fname[1])) {
 #ifndef KRB5_USE_PATH_TOKENS
 	const char *home = NULL;
 

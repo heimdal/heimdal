@@ -476,7 +476,6 @@ HEIMDAL_KRB5_2.0 {
 		krb5_passwd_result_to_string;
 		krb5_password_key_proc;
 		krb5_get_permitted_enctypes;
-		krb5_load_plugins;
 		krb5_plugin_register;
 		krb5_prepend_config_files;
 		krb5_prepend_config_files_default;

@@ -783,12 +783,9 @@ EXPORTS
 	_krb5_fast_armor_key
 
 	; Recent additions
-	krb5_ntlm_init_get_challenge;
 	krb5_cc_type_dcc;
 	krb5_dcc_ops;
-	_krb5_load_plugins;
 	_krb5_plugin_find;
 	_krb5_plugin_free;
-	_krb5_plugin_run_f;
 	_krb5_expand_path_tokensv;
 

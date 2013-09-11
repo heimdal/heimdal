@@ -82,6 +82,9 @@ typedef struct Dl_info {
     char    _dli_buf[MAX_PATH + 2];
 } Dl_info, Dl_info_t;
 
+ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
+dladdr(void *addr, Dl_info *dli);
+
 #ifdef __cplusplus
 } /* extern "C" */
 #endif

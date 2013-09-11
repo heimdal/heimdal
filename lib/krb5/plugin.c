@@ -257,7 +257,7 @@ resolve_origin(const char *di)
 
 
 /**
- * Load plugins (new system) for the given module @name (typicall
+ * Load plugins (new system) for the given module @name (typically
  * "krb5") from the given directory @paths.
  *
  * Inputs:

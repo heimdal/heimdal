@@ -348,9 +348,10 @@ kt_ops_copy(krb5_context context, const krb5_context src_context)
 }
 
 static const char *sysplugin_dirs[] =  {
-    "$ORIGIN/../lib/plugin/krb5",
 #ifdef _WIN32
-    "$ORIGIN/../lib",
+    "$ORIGIN",
+#else
+    "$ORIGIN/../lib/plugin/krb5",
 #endif
 #ifdef __APPLE__
     LIBDIR "/plugin/krb5",

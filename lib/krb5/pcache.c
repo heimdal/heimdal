@@ -36,22 +36,27 @@
 #endif
 #include <assert.h>
 
+/*
+ * cc_plugin_register_to_context is executed once per krb5_init_context().
+ * Its job is to register the plugin's krb5_cc_ops structure with the
+ * krb5_context.
+ */
+
 static krb5_error_code KRB5_LIB_CALL
-callback(krb5_context context, const void *plug, void *plugctx, void *userctx)
+cc_plugin_register_to_context(krb5_context context, const void *plug, void *plugctx, void *userctx)
 {
-    krb5_cc_ops *ccops = (krb5_cc_ops *)plug;
+    krb5_cc_ops *ccops = (krb5_cc_ops *)plugctx;
     krb5_error_code ret;
 
-    if (ccops != NULL && ccops->version >= KRB5_CC_OPS_VERSION)
-	return KRB5_PLUGIN_NO_HANDLE;
+    if (ccops == NULL && ccops->version < KRB5_CC_OPS_VERSION)
+       return KRB5_PLUGIN_NO_HANDLE;
 
     ret = krb5_cc_register(context, ccops, TRUE);
     if (ret != 0)
-	*((krb5_error_code *)userctx) = ret;
+       *((krb5_error_code *)userctx) = ret;
 
     return KRB5_PLUGIN_NO_HANDLE;
 }
-
 
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 _krb5_load_ccache_plugins(krb5_context context)
@@ -59,7 +64,7 @@ _krb5_load_ccache_plugins(krb5_context context)
     krb5_error_code userctx = 0;
 
     (void)_krb5_plugin_run_f(context, "krb5", KRB5_PLUGIN_CCACHE,
-			     0, 0, &userctx, callback);
+			     0, 0, &userctx, cc_plugin_register_to_context);
 
     return userctx;
 }

@@ -496,7 +496,7 @@ $(test_binaries): $$(@R).obj $(LIBHEIMDAL) $(LIBVERS) $(LIBROKEN)
 	$(EXECONLINK)
 	$(EXEPREP_NODIST)
 
-$(OBJ)\test_rfc3961.exe: $(OBJ)\test_rfc3961.obj $(LIBRFC3961) $(LIBHEIMDAL) $(LIBVERS) $(LIBROKEN)
+$(OBJ)\test_rfc3961.exe: $(OBJ)\test_rfc3961.obj $(LIBRFC3961) $(LIBHEIMDAL) $(LIBVERS) $(LIBCOMERR) $(LIBROKEN)
 	$(EXECONLINK)
 	$(EXEPREP_NODIST)
 

@@ -1073,7 +1073,7 @@ krb5_sendto_context(krb5_context context,
 		    krb5_const_realm realm,
 		    krb5_data *receive)
 {
-    krb5_error_code ret;
+    krb5_error_code ret = 0;
     krb5_krbhst_handle handle = NULL;
     struct timeval nrstart, nrstop, stop_time;
     int type, freectx = 0;

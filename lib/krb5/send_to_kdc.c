@@ -371,7 +371,7 @@ send_stream(krb5_context context, struct host *host)
 {
     ssize_t len;
 
-    len = write(host->fd, host->data.data, host->data.length);
+    len = krb5_net_write(context, &host->fd, host->data.data, host->data.length);
 
     if (len < 0)
 	return errno;
@@ -409,7 +409,7 @@ recv_stream(krb5_context context, struct host *host)
     if (ret)
 	return ret;
 
-    sret = read(host->fd, ((uint8_t *)host->data.data) + oldlen, nbytes);
+    sret = krb5_net_read(context, &host->fd, ((uint8_t *)host->data.data) + oldlen, nbytes);
     if (sret <= 0) {
 	ret = errno;
 	return ret;

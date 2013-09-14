@@ -167,7 +167,6 @@ ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
 dladdr(void *addr, Dl_info *dli)
 {
     HMODULE hm;
-    int ret;
     DWORD nsize;
     char *p;
 
@@ -175,7 +174,7 @@ dladdr(void *addr, Dl_info *dli)
 
     if (!GetModuleHandleEx(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS |
                            GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT,
-                           (LPCTSTR)addr, &hm))
+			   (LPCTSTR)(ULONG_PTR)addr, &hm))
         return -1;
 
     nsize = GetModuleFileName(hm, dli->_dli_buf, sizeof(dli->_dli_buf));

@@ -88,6 +88,3 @@ $(LIBHEIMDAL): $(LIBASN1) $(LIBWIND) $(LIBHCRYPTO) $(LIBHX509) $(LIBKRB5) $(LIBH
 !endif
 
 all:: $(LIBHEIMDAL)
-
-clean::
-	-$(RM) $(LIBHEIMDAL)

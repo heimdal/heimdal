@@ -168,7 +168,6 @@ dladdr(void *addr, Dl_info *dli)
 {
     HMODULE hm;
     DWORD nsize;
-    char *p;
 
     memset(dli, 0, sizeof(*dli));
 
@@ -181,18 +180,6 @@ dladdr(void *addr, Dl_info *dli)
     dli->_dli_buf[sizeof(dli->_dli_buf) - 1] = '\0';
     if (nsize >= sizeof(dli->_dli_buf))
         return 0; /* truncated? can't be... */
-
-    /*
-     * Normalize path component separators, since our caller may want to
-     * portably take the dirname or basename of dli->dli_fname,
-     * searching for the last '/'.
-     */
-    for (p = dli->_dli_buf;
-         p < &dli->_dli_buf[sizeof(dli->_dli_buf) - 1] && *p;
-         p++) {
-        if (*p == '\\')
-            *p = '/';
-    }
 
     dli->dli_fname = dli->_dli_buf;
     return 1;

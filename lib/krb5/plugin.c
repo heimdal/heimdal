@@ -328,6 +328,7 @@ _krb5_load_plugins(krb5_context context, const char *name, const char **paths)
 	    if (n[0] == '.' && (n[1] == '\0' || (n[1] == '.' && n[2] == '\0')))
 		continue;
 
+	    ret = 0;
 #ifdef _WIN32
 	    /*
 	     * On Windows, plugins must be loaded from the same directory as
@@ -342,10 +343,12 @@ _krb5_load_plugins(krb5_context context, const char *name, const char **paths)
 		ext = strrchr(n, '.');
 		if (ext == NULL || stricmp(ext, ".dll"))
 		     continue;
+
+		ret = asprintf(&path, "%s\\%s", dirname, n);
+		if (ret < 0 || path == NULL)
+		    continue;
 	    }
 #endif
-
-	    ret = 0;
 #ifdef __APPLE__
 	    { /* support loading bundles on MacOS */
 		size_t len = strlen(n);

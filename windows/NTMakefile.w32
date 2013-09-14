@@ -371,38 +371,38 @@ announce-tools:
 prep:: mkdirs
 
 mkdirs:
-!  if !exist($(OBJ))
-	$(MKDIR) $(OBJ)
+!  if !exist("$(OBJ)")
+	-$(MKDIR) "$(OBJ)"
 !  endif
-!  if !exist($(DESTDIR))
-	$(MKDIR) $(DESTDIR)
+!  if !exist("$(DESTDIR)")
+	-$(MKDIR) "$(DESTDIR)"
 !  endif
-!  if !exist($(LIBDIR))
-	$(MKDIR) $(LIBDIR)
+!  if !exist("$(LIBDIR)")
+	-$(MKDIR) "$(LIBDIR)"
 !  endif
-!  if !exist($(BINDIR))
-	$(MKDIR) $(BINDIR)
+!  if !exist("$(BINDIR)")
+	-$(MKDIR) "$(BINDIR)"
 !  endif
-!  if !exist($(PLUGINDIR))
-	$(MKDIR) $(PLUGINDIR)
+!  if !exist("$(PLUGINDIR)")
+	-$(MKDIR) "$(PLUGINDIR)"
 !  endif
-!  if !exist($(INCDIR))
-	$(MKDIR) $(INCDIR)
+!  if !exist("$(INCDIR)")
+	-$(MKDIR) "$(INCDIR)"
 !  endif
-!  if !exist($(DOCDIR))
-	$(MKDIR) $(DOCDIR)
+!  if !exist("$(DOCDIR)")
+	-$(MKDIR) "$(DOCDIR)"
 !  endif
-!  if !exist($(INCDIR)\gssapi)
-	$(MKDIR) $(INCDIR)\gssapi
+!  if !exist("$(INCDIR)\gssapi")
+	-$(MKDIR) "$(INCDIR)\gssapi"
 !  endif
-!  if !exist($(INCDIR)\hcrypto)
-	$(MKDIR) $(INCDIR)\hcrypto
+!  if !exist("$(INCDIR)\hcrypto")
+	-$(MKDIR) "$(INCDIR)\hcrypto"
 !  endif
-!  if !exist($(INCDIR)\kadm5)
-	$(MKDIR) $(INCDIR)\kadm5
+!  if !exist("$(INCDIR)\kadm5")
+	-$(MKDIR) "$(INCDIR)\kadm5"
 !  endif
-!  if !exist($(INCDIR)\krb5)
-	$(MKDIR) $(INCDIR)\krb5
+!  if !exist("$(INCDIR)\krb5")
+	-$(MKDIR) "$(INCDIR)\krb5"
 !  endif
 
 #----------------------------------------------------------------------

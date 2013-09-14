@@ -144,7 +144,7 @@ dlopen(const char *fn, int flags)
 
     old_error_mode = SetErrorMode(SEM_FAILCRITICALERRORS);
 
-    hm = LoadLibrary(fn);
+    hm = LoadLibraryEx(fn, 0, LOAD_WITH_ALTERED_SEARCH_PATH);
 
     if (hm == NULL) {
 	set_error_from_last();

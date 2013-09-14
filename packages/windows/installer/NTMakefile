@@ -177,6 +177,7 @@ TYPEOPT=
 !endif
 
 INSTDEPS=$(INSTDIR32)\Heimdal.msm \
+	$(INSTDIR32)\Heimdal.Command.msm \
 	$(INSTDIR32)\Heimdal.Policy.msm	\
 	$(ASSEMBLYMODULE) $(POLICYMODULE)
 

@@ -1,4 +1,4 @@
-########################################################################
+git ########################################################################
 #
 # Copyright (c) 2009, Secure Endpoints Inc.
 # All rights reserved.
@@ -86,7 +86,7 @@ while(<>) {
     if ("$(VER_PRERELEASE)") { print "#define VER_PRERELEASE 1\n"; }
     if ("$(VER_PRIVATE)") { print "#define VER_PRIVATE \"$(VER_PRIVATE)\"\n"; }
     if ("$(VER_SPECIAL)") { print "#define VER_SPECIAL \"$(VER_SPECIAL)\"\n"; }
-    if ("$(BUILD)" =~ "dbg") { print "#define VER_DEBUG 1\n"; }
+    if ("$(BUILD)" eq "dbg") { print "#define VER_DEBUG 1\n"; }
     print "#define HOST \"$(COMPUTERNAME)\"\n";
 
   } else {

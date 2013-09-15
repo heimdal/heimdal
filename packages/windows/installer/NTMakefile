@@ -180,7 +180,7 @@ CANDLEOPTS=$(CANDLEOPTS) -dTarget64	\
 	-dRuntimeModule64=$(RUNTIMEMODULE64)	\
 
 !ifdef MULTIPLATFORM_INSTALLER
-CANDLEOPTS=$(CANDLEOPTS) -dTarget32
+CANDLEOPTS_MULTI= -dTarget32
 TYPEOPT=-full
 !else
 !  message Excluding 32-bit components from installer
@@ -221,7 +221,7 @@ $(INSTALLER): $(WIXOBJ) $(THIRDPARTYOBJS) $(INSTDEPS) lang\en-us.wxl
 
 $(WIXOBJ): heimdal-installer.wxs
 	$(CANDLE) -arch $(PLATFORM) -o $@ heimdal-installer.wxs \
-		$(CANDLEOPTS) $(THIRDPARTYOPTS)
+		$(CANDLEOPTS) $(CANDLEOPTS_MULTI) $(THIRDPARTYOPTS)
 
 !if exist(thirdparty\installer\heimdal-command.wxs)
 CMD_WXS=thirdparty\installer\heimdal-command.wxs

@@ -104,7 +104,7 @@ $(COMMANDMODULE): $(OBJ)\heimdal-command.wixobj
 
 # OBJECT COMPILED BELOW
 
-$(SDKREDISTDIR)\Heimdal.Command.msm: $(ASSEMBLYMODULE)
+$(SDKREDISTDIR)\Heimdal.Command.msm: $(COMMANDMODULE)
 	$(CP) $** $@
 
 all:: $(ASSEMBLYMODULE) $(SDKREDISTDIR)\Heimdal.msm

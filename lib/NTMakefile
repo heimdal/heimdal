@@ -40,9 +40,22 @@ dir_dce = kdfs
 dir_hcrypto = hcrypto
 !endif
 
+# Third party plugins must be added to the assembly
+# Permit third party assembly scripts
+
+!if exist(..\thirdparty\plugin\NTMakefile)
+plugin=..\thirdparty\plugin
+!endif
+
+!if exist(..\thirdparty\assembly\NTMakefile)
+assembly=..\thirdparty\assembly
+!else
+assembly=..\packages\windows\assembly
+!endif
+
 SUBDIRS = roken base vers com_err sl wind asn1 sqlite \
 	$(dir_hcrypto) hx509 krb5 heimdal ntlm kafs gssapi hdb \
-	kadm5 $(dir_45) $(dir_otp) $(dir_dce) ..\packages\windows\assembly
+	kadm5 $(dir_45) $(dir_otp) $(dir_dce) $(plugin) $(assembly)
 
 !include ../windows/NTMakefile.w32
 

@@ -41,7 +41,7 @@ RELDIR=packages\windows\assembly
 # ..to derive the public key token.
 #
 !ifndef CODESIGN_PKT
-!  error CODESIGN_PKT should be set to the public key token for codesigning certificate
+!  error CODESIGN_PKT should be set to the public key token for codesigning certificate.  (See Windows\README).
 !endif
 
 prep:: mk-asm-dirs
@@ -69,11 +69,21 @@ ASMKRBBINS=\
 	$(ASMKRBDIR)\libhdb.pdb		\
 	$(ASMKRBDIR)\libkadm5srv.pdb
 
+!if ("$(CPU)" == "i386")
+ARCH=32
+!elseif ("$(CPU)" == "x86")
+ARCH=32
+!else
+ARCH=64
+!endif
+
 $(ASMKRBDIR)\$(ASMKRBMAN).nohash: Heimdal.Kerberos.manifest.in
 	$(SED)  -e "s,[@]name[@],$(ASMKRBNAME),g" \
 		-e "s,[@]cpu[@],$(MCPU),g" \
 		-e "s,[@]version[@],$(ASMKRBVER),g" \
-		-e "s,[@]pkt[@],$(CODESIGN_PKT),g" < $** > $@
+		-e "s,[@]pkt[@],$(CODESIGN_PKT),g" \
+		-e "s,[@]arch[@],$(ARCH),g" \
+		< $** > $@
 
 $(ASMKRBDIR)\$(ASMKRBMAN) $(ASMKRBDIR)\$(ASMKRBMAN).cdf: \
 		$(ASMKRBDIR)\$(ASMKRBMAN).nohash $(ASMKRBBINS)
@@ -85,8 +95,6 @@ $(ASMKRBDIR)\$(ASMKRBNAME).cat: $(ASMKRBDIR)\$(ASMKRBMAN).cdf
 	cd $(ASMKRBDIR)
 	$(MAKECAT) $**
 	$(_CODESIGN)
-#	$(RM) $(ASMKRBMAN).cdf
-#	$(RM) $(ASMKRBMAN).nohash
 	cd $(SRCDIR)
 
 asm-krb: \

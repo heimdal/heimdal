@@ -979,8 +979,16 @@ krb5_cc_get_prefix_ops(krb5_context context, const char *prefix)
 
     if (prefix == NULL)
 	return KRB5_DEFAULT_CCTYPE;
+
+    /* Is absolute path? Or UNC path? */
     if (ISPATHSEP(prefix[0]))
 	return &krb5_fcc_ops;
+
+#ifdef _WIN32
+    /* Is drive letter? */
+    if (isalpha(prefix[0]) && prefix[1] == ':')
+	return &krb5_fcc_ops;
+#endif
 
     p = strdup(prefix);
     if (p == NULL) {

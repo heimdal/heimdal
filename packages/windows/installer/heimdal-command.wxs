@@ -52,10 +52,6 @@
       <Directory Id='ProgramFilesFolder'>
 	<Directory Id='INSTALLDIR32' Name='Heimdal'>
 	  <Directory Id='dirBin32' Name='bin'>
-	    <Directory Id='dirPlugin32' Name='plugin'>
-	      <Directory Id='PLUGINDIR32' Name='krb5'>
-	      </Directory>
-	    </Directory>
 	  </Directory>
 	</Directory>
       </Directory>
@@ -65,10 +61,6 @@
       <Directory Id='ProgramFiles64Folder'>
 	<Directory Id='INSTALLDIR64' Name='Heimdal'>
 	  <Directory Id='dirBin64' Name='bin'>
-	    <Directory Id='dirPlugin64' Name='plugin'>
-	      <Directory Id='PLUGINDIR64' Name='krb5'>
-	      </Directory>
-	    </Directory>
 	  </Directory>
 	</Directory>
       </Directory>

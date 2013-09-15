@@ -189,30 +189,6 @@
 
     </DirectoryRef>
 
-    <?ifdef Target32?>
-    <DirectoryRef Id='PLUGINDIR32'>
-      <Component Id='comp.Plugin.Reg.32'
-		 Guid='4BC44234-70A4-4CC1-A5AF-4CA76E9F9487' Win64='no'>
-	<RegistryKey Root='HKLM' Key='Software\Heimdal'>
-	  <RegistryValue Name='plugin_dir' Type='multiString' Action='append'
-			 Value='"[PLUGINDIR32]"' KeyPath='yes' />
-	</RegistryKey>
-      </Component>
-    </DirectoryRef>
-    <?endif?>
-
-    <?ifdef Target64?>
-    <DirectoryRef Id='PLUGINDIR64'>
-      <Component Id='comp.Plugin.Reg.64'
-		 Guid='5A99A52E-A4CD-40F8-AFFD-AD61939FC547' Win64='yes'>
-	<RegistryKey Root='HKLM' Key='Software\Heimdal'>
-	  <RegistryValue Name='plugin_dir' Type='multiString' Action='append'
-			 Value='"[PLUGINDIR64]"' KeyPath='yes' />
-	</RegistryKey>
-      </Component>
-    </DirectoryRef>
-    <?endif?>
-
     <DirectoryRef Id='TARGETDIR'>
       <Directory Id='CommonAppDataFolder' Name='ProgramData'>
 	<Directory Id='dirCommonKerberos' Name='Kerberos' FileSource='$(var.SrcDir)'>
@@ -303,22 +279,6 @@
 	<FileSearch Name='krb5.ini' />
       </RegistrySearch>
     </Property>
-    <?endif?>
-
-    <?ifdef LsaCache ?>
-    <?ifdef Target64?>
-    <ComponentGroupRef Id='comps.LSACache.64' />
-    <?else?>
-    <ComponentGroupRef Id='comps.LSACache.32' />
-    <?endif?>
-    <?endif?>
-
-    <?ifdef ApiCache ?>
-    <?ifdef Target64?>
-    <ComponentGroupRef Id='comps.APICache.64' />
-    <?else?>
-    <ComponentGroupRef Id='comps.APICache.32' />
-    <?endif?>
     <?endif?>
 
   </Module>

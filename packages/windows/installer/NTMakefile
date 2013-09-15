@@ -54,12 +54,18 @@ DEBUGOPT=-$(BUILD)
 ######################################################################
 # Heimdal Merge Modules
 
+!if exist(thirdparty\installer\heimdal-assemblies.wxs)
+ASM_WXS=thirdparty\installer\heimdal-assemblies.wxs
+!else
+ASM_WXS=heimdal-assemblies.wxs
+!endif
+
 ASSEMBLYMODULE=$(INSTDIR)\Heimdal.msm
 
 $(ASSEMBLYMODULE): $(OBJ)\heimdal-assemblies.wixobj
 	$(LIGHT) -out $@ $**
 
-$(OBJ)\heimdal-assemblies.wixobj: heimdal-assemblies.wxs
+$(OBJ)\heimdal-assemblies.wixobj: $(ASM_WXS)
 	$(CANDLE) -arch $(PLATFORM) -o $@ $**	\
 		-dVersion=$(VERSION)		\
 		-dBinDir=$(BINDIR)		\
@@ -69,12 +75,18 @@ $(OBJ)\heimdal-assemblies.wixobj: heimdal-assemblies.wxs
 $(SDKREDISTDIR)\Heimdal.msm: $(ASSEMBLYMODULE)
 	$(CP) $** $@
 
+!if exist(thirdparty\installer\heimdal-policy.wxs)
+POLICY_WXS=thirdparty\installer\heimdal-policy.wxs
+!else
+POLICY_WXS=heimdal-policy.wxs
+!endif
+
 POLICYMODULE=$(INSTDIR)\Heimdal.Policy.msm
 
 $(POLICYMODULE): $(OBJ)\heimdal-policy.wixobj
 	$(LIGHT) -out $@ $**
 
-$(OBJ)\heimdal-policy.wixobj: heimdal-policy.wxs
+$(OBJ)\heimdal-policy.wixobj: $(POLICY_WXS)
 	$(CANDLE) -arch $(PLATFORM) -o $@ $**	\
 		-dVersion=$(VERSION)		\
 		-dBinDir=$(BINDIR)		\
@@ -102,10 +114,7 @@ all:: $(POLICYMODULE) $(SDKREDISTDIR)\Heimdal.Policy.msm
 all:: $(COMMANDMODULE) $(SDKREDISTDIR)\Heimdal.Command.msm
 
 clean::
-	-$(RM) $(ASSEMBLYMODULE)
-	-$(RM) $(POLICYMODULE)
-	-$(RM) $(SDKREDISTDIR)\Heimdal.msm
-	-$(RM) $(SDKREDISTDIR)\Heimdal.Policy.msm
+	-$(RM) $(SDKREDISTDIR)\*.*
 
 ######################################################################
 # Runtime modules
@@ -191,15 +200,6 @@ CANDLEOPTS=$(CANDLEOPTS) -dTarget32		\
 
 !endif
 
-!if exist($(SRC)\thirdparty)
-THIRDPARTYOBJS=$(INSTDIR)\apicache.wixobj $(INSTDIR)\lsacache.wixobj
-THIRDPARTYOPTS=-dApiCache=1 -dLsaCache=1
-
-!if "$(CPU)"=="AMD64"
-THIRDPARTYOBJS=$(THIRDPARTYOBJS) $(INSTDIR32)\apicache.wixobj $(INSTDIR32)\lsacache.wixobj
-!endif
-!endif
-
 !if exist($(SRC)\thirdparty\MKShim)
 THIRDPARTYOBJS=$(THIRDPARTYOBJS) $(INSTDIR)\MKShim.wixlib
 THIRDPARTYOPTS=$(THIRDPARTYOPTS) -dMKShim=1
@@ -222,6 +222,12 @@ $(INSTALLER): $(WIXOBJ) $(THIRDPARTYOBJS) $(INSTDEPS) lang\en-us.wxl
 $(WIXOBJ): heimdal-installer.wxs
 	$(CANDLE) -arch $(PLATFORM) -o $@ heimdal-installer.wxs \
 		$(CANDLEOPTS) $(THIRDPARTYOPTS)
+
+!if exist(thirdparty\installer\heimdal-command.wxs)
+CMD_WXS=thirdparty\installer\heimdal-command.wxs
+!else
+CMD_WXS=heimdal-command.wxs
+!endif
 
 $(OBJ)\heimdal-command.wixobj: heimdal-command.wxs
 	$(CANDLE) -arch $(PLATFORM) -o $@ heimdal-command.wxs \

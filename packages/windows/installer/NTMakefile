@@ -31,7 +31,7 @@
 
 RELDIR=packages\windows\installer
 
-!include ../../../windows/NTMakefile.w32
+!include ..\..\..\windows/NTMakefile.w32
 
 !ifdef BUILD_INSTALLERS
 
@@ -54,8 +54,8 @@ DEBUGOPT=-$(BUILD)
 ######################################################################
 # Heimdal Merge Modules
 
-!if exist(thirdparty\installer\heimdal-assemblies.wxs)
-ASM_WXS=thirdparty\installer\heimdal-assemblies.wxs
+!if exist(..\..\..\thirdparty\installer\heimdal-assemblies.wxs)
+ASM_WXS=..\..\..\thirdparty\installer\heimdal-assemblies.wxs
 !else
 ASM_WXS=heimdal-assemblies.wxs
 !endif
@@ -75,8 +75,8 @@ $(OBJ)\heimdal-assemblies.wixobj: $(ASM_WXS)
 $(SDKREDISTDIR)\Heimdal.msm: $(ASSEMBLYMODULE)
 	$(CP) $** $@
 
-!if exist(thirdparty\installer\heimdal-policy.wxs)
-POLICY_WXS=thirdparty\installer\heimdal-policy.wxs
+!if exist(..\..\..\thirdparty\installer\heimdal-policy.wxs)
+POLICY_WXS=..\..\..\thirdparty\installer\heimdal-policy.wxs
 !else
 POLICY_WXS=heimdal-policy.wxs
 !endif
@@ -167,7 +167,7 @@ CANDLEOPTS=	\
 	-dDocDir=$(DOCDIR)			\
 	-dSrcDir=$(SRC)				\
 	-dPlatform=$(PLATFORM)			\
-	-dPolPrefix=$(POLPREFIX)		\
+	-dPolPrefix=$(POLPREFIX)
 
 !if "$(CPU)"=="AMD64"
 
@@ -177,7 +177,7 @@ CANDLEOPTS=$(CANDLEOPTS) -dTarget64	\
 	-dInstDir32=$(INSTDIR32)	\
 	-dInstDir64=$(INSTDIR)			\
 	-dRuntimeModule32=$(RUNTIMEMODULE32)	\
-	-dRuntimeModule64=$(RUNTIMEMODULE64)	\
+	-dRuntimeModule64=$(RUNTIMEMODULE64)
 
 !ifdef MULTIPLATFORM_INSTALLER
 CANDLEOPTS_MULTI= -dTarget32

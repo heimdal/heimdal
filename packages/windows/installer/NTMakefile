@@ -63,6 +63,7 @@ $(OBJ)\heimdal-assemblies.wixobj: heimdal-assemblies.wxs
 	$(CANDLE) -arch $(PLATFORM) -o $@ $**	\
 		-dVersion=$(VERSION)		\
 		-dBinDir=$(BINDIR)		\
+		-dAsmKrbName=$(ASMKRBNAME)		\
 		-dPlatform=$(PLATFORM)
 
 $(SDKREDISTDIR)\Heimdal.msm: $(ASSEMBLYMODULE)
@@ -77,6 +78,7 @@ $(OBJ)\heimdal-policy.wixobj: heimdal-policy.wxs
 	$(CANDLE) -arch $(PLATFORM) -o $@ $**	\
 		-dVersion=$(VERSION)		\
 		-dBinDir=$(BINDIR)		\
+		-dAsmKrbName=$(ASMKRBNAME)		\
 		-dPlatform=$(PLATFORM)		\
 		-dPolPrefix=$(POLPREFIX)
 

@@ -561,7 +561,19 @@ LIBSQLITE   =$(LIBDIR)\libsqlite.lib
 LIBVERS	    =$(LIBDIR)\libvers.lib
 LIBWIND	    =$(LIBDIR)\libwind.lib
 
-ASMKRBNAME  =Heimdal.Kerberos
-ASMGSSNAME  =Heimdal.GSSAPI
+!ifdef VER_DEBUG
+ASM_DBG=.Debug
+!endif
+!ifdef VER_PRERELEASE
+ASM_PRE=.Pre
+!endif
+!ifdef VER_PRIVATE
+ASM_PVT=.Private
+!endif
+!ifdef VER_SPECIAL
+ASM_SPC=.Special
+!endif
+
+ASMKRBNAME  =Heimdal.Kerberos$(ASM_SPC)$(ASM_PVT)$(ASM_PRE)$(ASM_DBG)
 APPMANIFEST =$(INCDIR)\Heimdal.Application.$(MCPU).manifest
 

@@ -24,8 +24,8 @@
              Platform="$(var.Platform)" />
 
     <Directory Id='TARGETDIR' Name='SourceDir'>
-      <Directory Id="dir.Heimdal.Kerberos" Name="Heimdal.Kerberos"
-                 FileSource="$(var.BinDir)\Heimdal.Kerberos">
+      <Directory Id="dir.Heimdal.Kerberos" Name="$(var.AsmKrbName)"
+		 FileSource="$(var.BinDir)\$(var.AsmKrbName)">
         <Component Id="comp.Heimdal.Kerberos"
                    Guid="$(var.GuidKerberos)"
                    Win64="$(var.Win64)">
@@ -38,8 +38,8 @@
           <File Name="com_err.pdb" />
           <File Name="heimntlm.pdb" />
           <File Name="gssapi.pdb" />
-          <File Name="Heimdal.Kerberos.cat" />
-          <File Name="Heimdal.Kerberos.manifest" Id="id.Heimdal.Kerberos.manifest" />
+	  <File Name="$(var.AsmKrbName).cat" />
+	  <File Name="$(var.AsmKrbName).manifest" Id="id.Heimdal.Kerberos.manifest" />
         </Component>
       </Directory>
     </Directory>

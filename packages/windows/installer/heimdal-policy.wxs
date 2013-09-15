@@ -32,8 +32,8 @@
 
     <Directory Id='TARGETDIR' Name='SourceDir'>
       <Directory Id='dir.policy.Heimdal.Kerberos'
-                 Name='$(var.PolPrefix).Heimdal.Kerberos'
-                 FileSource='$(var.BinDir)\$(var.PolPrefix).Heimdal.Kerberos'>
+		 Name='$(var.PolPrefix).$(var.AsmKrbName)'
+		 FileSource='$(var.BinDir)\$(var.PolPrefix).$(var.AsmKrbName)'>
 
         <Component Id='comp.policy.Heimdal.Kerberos'
                    Guid='$(var.GuidPolKerberos)'

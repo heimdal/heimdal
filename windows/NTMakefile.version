@@ -30,6 +30,11 @@ VER_OLD_END_PATCH=65535
 
 VER_PACKAGE_VERSION=$(VER_PRODUCT_MAJOR).$(VER_PRODUCT_MINOR).$(VER_PRODUCT_AUX)
 
+# Debug build flag
+!ifndef NODEBUG
+VER_DEBUG=1
+!endif
+
 # Define to 1 if this is a pre-release build.  Undefine otherwise
 VER_PRERELEASE=1
 
@@ -44,4 +49,3 @@ VER_PRERELEASE=1
 # version numbers.
 
 #VER_SPECIAL=Special build for testing ticket 12345
-

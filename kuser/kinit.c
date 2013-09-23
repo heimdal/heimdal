@@ -870,6 +870,7 @@ struct renew_ctx {
     krb5_ccache  ccache;
     krb5_principal principal;
     krb5_deltat ticket_life;
+    krb5_deltat timeout;
 };
 
 static time_t
@@ -879,9 +880,6 @@ renew_func(void *ptr)
     struct renew_ctx *ctx = ptr;
     time_t renew_expire;
     static time_t exp_delay = 1;
-#ifndef NO_AFS;
-    size_t got_tix = 0;
-#endif
 
     /*
      * NOTE: We count on the ccache implementation to notice changes to the
@@ -894,28 +892,28 @@ renew_func(void *ptr)
     expire = ticket_lifetime(ctx->context, ctx->ccache, ctx->principal,
 			     server_str, &renew_expire);
 
+    /*
+     * When a keytab is available to obtain new tickets, if we are within
+     * half of the original ticket lifetime of the renew limit, get a new
+     * TGT instead of renewing the existing TGT.  Note, ctx->ticket_life
+     * is zero by default (without a '-l' option) and cannot be used to
+     * set the time scale on which we decide whether we're "close to the
+     * renew limit".
+     */
+    if (use_keytab || keytab_str)
+	expire += ctx->timeout;
     if (renew_expire > expire) {
 	ret = renew_validate(ctx->context, 1, validate_flag, ctx->ccache,
 		       server_str, ctx->ticket_life);
-        expire = ticket_lifetime(ctx->context, ctx->ccache, ctx->principal,
-				 server_str, &renew_expire);
-#ifndef NO_AFS
-	got_tix = ret == 0;
-#endif
+    } else {
+	ret = get_new_tickets(ctx->context, ctx->principal, ctx->ccache,
+			      ctx->ticket_life, 0);
     }
-
-    if (expire < ctx->ticket_life / 2) {
-	ret = get_new_tickets(ctx->context, ctx->principal,
-			ctx->ccache, ctx->ticket_life, 0);
-        expire = ticket_lifetime(ctx->context, ctx->ccache, ctx->principal,
-				 server_str, &renew_expire);
-#ifndef NO_AFS
-	got_tix = got_tix || ret == 0;
-#endif
-    }
+    expire = ticket_lifetime(ctx->context, ctx->ccache, ctx->principal,
+			     server_str, &renew_expire);
 
 #ifndef NO_AFS
-    if (got_tix && server_str == NULL && do_afslog && k_hasafs())
+    if (ret == 0 && server_str == NULL && do_afslog && k_hasafs())
 	krb5_afslog(ctx->context, ctx->ccache, NULL, NULL);
 #endif
 
@@ -1013,7 +1011,7 @@ get_user_realm(krb5_context context)
     }
 
     if (*user_realm == 0) {
-    	free(user_realm);
+	free(user_realm);
 	user_realm = NULL;
     }
 
@@ -1329,6 +1327,7 @@ main(int argc, char **argv)
 	ctx.ccache = ccache;
 	ctx.principal = principal;
 	ctx.ticket_life = ticket_life;
+	ctx.timeout = timeout;
 
 #ifdef HAVE_SIGACTION
 	memset(&sa, 0, sizeof(sa));

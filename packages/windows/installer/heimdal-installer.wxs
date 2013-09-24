@@ -87,8 +87,14 @@
       <Merge Id='Heimdal.Assemblies.32' Language='0'
              SourceFile='$(var.InstDir32)\Heimdal.msm' />
 
+<!--
+   Until we have a work around for this bug on XP
+     http://sourceforge.net/p/wix/bugs/2034/
+   We need to punt on installing policy assemblies.
+
       <Merge Id='Heimdal.Policy.32' Language='0'
              SourceFile='$(var.InstDir32)\Heimdal.Policy.msm' />
+-->
 
       <Merge Id='Runtime.32' Language='0'
              SourceFile='$(var.RuntimeModule32)' />
@@ -112,8 +118,14 @@
       <Merge Id='Heimdal.Assemblies.64' Language='0'
              SourceFile='$(var.InstDir64)\Heimdal.msm' />
 
+<!--
+   Until we have a work around for this bug on XP
+     http://sourceforge.net/p/wix/bugs/2034/
+   We need to punt on installing policy assemblies.
+
       <Merge Id='Heimdal.Policy.64' Language='0'
              SourceFile='$(var.InstDir64)\Heimdal.Policy.msm' />
+-->
 
       <Merge Id='Runtime.64' Language='0'
              SourceFile='$(var.RuntimeModule64)' />
@@ -348,13 +360,23 @@
 
       <?ifdef Target64?>
       <MergeRef Id='Heimdal.Assemblies.64' />
-      <MergeRef Id='Heimdal.Policy.64' />
       <MergeRef Id='Runtime.64' />
       <?else?>
       <MergeRef Id='Heimdal.Assemblies.32' />
-      <MergeRef Id='Heimdal.Policy.32' />
       <MergeRef Id='Runtime.32' />
       <?endif?>
+
+<!--
+   Until we have a work around for this bug on XP
+     http://sourceforge.net/p/wix/bugs/2034/
+   We need to punt on installing policy assemblies.
+
+      <?ifdef Target64?>
+      <MergeRef Id='Heimdal.Policy.64' />
+      <?else?>
+      <MergeRef Id='Heimdal.Policy.32' />
+      <?endif?>
+-->
 
       <?ifdef Target32?>
       <?ifdef Target64?>

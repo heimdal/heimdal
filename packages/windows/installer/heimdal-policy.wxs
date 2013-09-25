@@ -38,6 +38,7 @@
         <Component Id='comp.policy.Heimdal.Kerberos'
                    Guid='$(var.GuidPolKerberos)'
                    Win64='$(var.Win64)'>
+	  <Condition>VersionNT &gt; 501</Condition>
           <File Name='$(var.Version).pol' KeyPath='yes' Assembly='win32'
                 Id='policy.Kerberos' AssemblyManifest='policy.Kerberos' />
           <File Name='$(var.Version).cat' Id='policy.Kerberos.cat' />

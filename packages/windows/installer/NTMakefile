@@ -126,6 +126,14 @@ VCVER=VC80
 !  error Cant determine Visual C compiler version
 !endif
 
+$(SDKREDISTDIR)\heimdal-version.mak:
+   @echo HEIMDAL_VCVER=$(VCVER)  > $@
+!if "$(BUILD)"!="rel"
+   @echo HEIMDAL_CRT_DEBUG=yes   >> $@
+!endif
+
+all:: $(SDKREDISTDIR)\heimdal-version.mak
+
 !if "$(BUILD)"=="rel"
 CRTNAME=CRT
 !else

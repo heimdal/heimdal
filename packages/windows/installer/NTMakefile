@@ -1,6 +1,6 @@
 ########################################################################
 #
-# Copyright (c) 2010, Secure Endpoints Inc.
+# Copyright (c) 2010-2013, Secure Endpoints Inc.
 # All rights reserved.
 # 
 # Redistribution and use in source and binary forms, with or without
@@ -94,9 +94,6 @@ $(OBJ)\heimdal-policy.wixobj: $(POLICY_WXS)
 		-dPlatform=$(PLATFORM)		\
 		-dPolPrefix=$(POLPREFIX)
 
-$(SDKREDISTDIR)\Heimdal.Policy.msm: $(POLICYMODULE)
-	$(CP) $** $@
-
 COMMANDMODULE=$(INSTDIR)\Heimdal.Command.msm
 
 $(COMMANDMODULE): $(OBJ)\heimdal-command.wixobj
@@ -109,7 +106,7 @@ $(SDKREDISTDIR)\Heimdal.Command.msm: $(COMMANDMODULE)
 
 all:: $(ASSEMBLYMODULE) $(SDKREDISTDIR)\Heimdal.msm
 
-all:: $(POLICYMODULE) $(SDKREDISTDIR)\Heimdal.Policy.msm
+all:: $(POLICYMODULE)
 
 all:: $(COMMANDMODULE) $(SDKREDISTDIR)\Heimdal.Command.msm
 

@@ -861,7 +861,7 @@ handle_siginfo(int sig)
     iov[1].iov_base = "\n";
     iov[1].iov_len = 1;
 
-    writev(2, iov, sizeof(iov)/sizeof(iov[0]));
+    writev(STDERR_FILENO, iov, sizeof(iov)/sizeof(iov[0]));
 }
 #endif
 

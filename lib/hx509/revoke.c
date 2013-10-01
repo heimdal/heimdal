@@ -653,7 +653,7 @@ hx509_revoke_add_crl(hx509_context context,
     path += 5;
 
     for (i = 0; i < ctx->crls.len; i++) {
-	if (strcmp(ctx->crls.val[0].path, path) == 0)
+	if (strcmp(ctx->crls.val[i].path, path) == 0)
 	    return 0;
     }
 

@@ -360,7 +360,8 @@ check_expiration(krb5_context context,
     if (ret || t == 0)
 	return 1;
 
-    *expiration = time(NULL) + t;
+    if (expiration)
+	*expiration = time(NULL) + t;
 
     return 0;
 }

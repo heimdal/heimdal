@@ -494,10 +494,9 @@ again:
 	/*
 	 * XXX Should probably add options to improve control over this
 	 * check.  We might want strict checking of everything except
-	 * this, and we might want st_uid == getuid() || st_uid == geteuid()
-	 * to be OK.
+	 * this.
 	 */
-	if (sb2.st_uid != getuid()) {
+	if (sb2.st_uid != geteuid()) {
 	    krb5_set_error_message(context, EPERM, N_("Refuses to open cache files not own by myself FILE:%s (owned by %d)", ""), filename, (int)sb2.st_uid);
 	    close(fd);
 	    return EPERM;

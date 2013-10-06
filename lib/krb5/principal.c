@@ -1256,7 +1256,7 @@ typedef enum krb5_name_canon_rule_type {
 	KRB5_NCRT_NSS
 } krb5_name_canon_rule_type;
 
-struct krb5_name_canon_rule {
+struct krb5_name_canon_rule_data {
 	krb5_name_canon_rule next;
 	krb5_name_canon_rule_type type;
 	krb5_name_canon_rule_options options;
@@ -1931,7 +1931,7 @@ _krb5_free_name_canon_rules(krb5_context context, krb5_name_canon_rule rules)
     rules = NULL;
 }
 
-struct krb5_name_canon_iterator {
+struct krb5_name_canon_iterator_data {
     krb5_name_canon_rule	rules;
     krb5_name_canon_rule	rule;
     krb5_const_principal	in_princ;

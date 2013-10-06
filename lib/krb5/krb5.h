@@ -929,8 +929,8 @@ typedef enum krb5_name_canon_rule_options {
 	KRB5_NCRO_SECURE = 1 << 2
 } krb5_name_canon_rule_options;
 
-typedef struct krb5_name_canon_rule *krb5_name_canon_rule;
-typedef struct krb5_name_canon_iterator *krb5_name_canon_iterator;
+typedef struct krb5_name_canon_rule_data *krb5_name_canon_rule;
+typedef struct krb5_name_canon_iterator_data *krb5_name_canon_iterator;
 
 /*
  *

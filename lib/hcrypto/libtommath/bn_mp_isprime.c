@@ -8,7 +8,7 @@
  * Tom St Denis, tomstdenis@gmail.com
  */
 #include <tommath.h>
-
+#ifdef BN_MP_ISPRIME_C
 /* a few primes */
 static const mp_digit primes[256] = {
   0x0002, 0x0003, 0x0005, 0x0007, 0x000B, 0x000D, 0x0011, 0x0013,
@@ -73,3 +73,4 @@ int mp_isprime(mp_int *a)
    }
    return MP_YES;
 }
+#endif

@@ -5,7 +5,7 @@
  * Love Hornquist Astrand <lha@h5l.org>
  */
 #include <tommath.h>
-
+#ifdef BN_MP_FIND_PRIME_C
 int mp_find_prime(mp_int *a)
 {
   int res;
@@ -24,3 +24,4 @@ int mp_find_prime(mp_int *a)
 
   return res;
 }
+#endif

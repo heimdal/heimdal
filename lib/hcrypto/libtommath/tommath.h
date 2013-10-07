@@ -189,8 +189,8 @@ typedef int ltm_prime_callback(unsigned char *dst, int len, void *dat);
 #define DIGIT(m,k) ((m)->dp[(k)])
 #define SIGN(m)    ((m)->sign)
 
-/* error code to char* string */
-char *mp_error_to_string(int code);
+/* error code to const char* string */
+const char *mp_error_to_string(int code);
 
 /* ---> init and deinit bignum functions <--- */
 /* init a bignum */

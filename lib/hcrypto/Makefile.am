@@ -240,7 +240,6 @@ ltmsources = \
 	libtommath/bn_mp_prime_is_prime.c \
 	libtommath/bn_mp_prime_next_prime.c \
 	libtommath/bn_mp_find_prime.c \
-	libtommath/bn_mp_isprime.c \
 	libtommath/bn_mp_dr_reduce.c \
 	libtommath/bn_mp_dr_is_modulus.c \
 	libtommath/bn_mp_dr_setup.c \

@@ -49,7 +49,11 @@
     <Package Id='*' Description='!(loc.Description)'
       Manufacturer='!(loc.Manufacturer)'
       InstallerVersion='300' Languages='!(loc.LanguageCode)'
-      Compressed='yes' SummaryCodepage='1252' />
+      Compressed='yes' SummaryCodepage='1252'
+      Platform='$(var.Platform)'
+      InstallScope='perMachine'
+      InstallPrivileges='elevated'
+      Keywords='Heimdal,Kerberos,GSS' />
 
     <Directory Id='TARGETDIR' Name='SourceDir' DiskId='1'>
 
@@ -396,8 +400,6 @@
     <Property Id='ARPURLINFOABOUT' Value='http://www.h5l.org' />
 
     <!-- Other properties -->
-
-    <Property Id='ALLUSERS' Value='1' Secure='yes' />
 
     <UIRef Id='WixUI_FeatureTree' />
 

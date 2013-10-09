@@ -16,6 +16,7 @@
   <?define GuidKcpytkt=17734691-7CB3-4E9A-AADC-6D4205795F43 ?>
   <?define GuidKdeltkt=3E853905-8CDA-4E14-8EBA-C0C4EEDB811A ?>
   <?define GuidHeimtools=F411A9F1-A186-40CB-B55B-CADBE0166268 ?>
+  <?define GuidGssDll=9368D1E7-D4CB-4BDC-A2A6-AB1C992151AD ?>
 
   <?define ConfigDir=INSTALLDIR64 ?>
 
@@ -34,6 +35,7 @@
   <?define GuidKcpytkt=CBCDFC80-601B-4F26-A020-7D1278735B95 ?>
   <?define GuidKdeltkt=6450EE72-E472-4709-B457-B579BFB2472B ?>
   <?define GuidHeimtools=11800964-4A5F-466E-B2FE-DD2EFC54DDB9 ?>
+  <?define GuidGssDll=5F38982B-A325-4A7B-A2FC-EA40314F4D00 ?>
 
   <?define ConfigDir=INSTALLDIR32 ?>
 
@@ -192,6 +194,13 @@
         </File>
       </Component>
 
+      <Component Id='comp.gssdll'
+		 Guid='$(var.GuidGssDll)'
+		 Win64='$(var.Win64)'>
+	<File Name='gssapi.dll' KeyPath='yes' />
+	<File Name='gssapi.pdb' />
+      </Component>
+
       <Component Id='comp.Heimdal.chm'
                  Guid='785F6668-EBDB-4F18-8BEF-F72ECECB43D6'>
         <File Source='$(var.DocDir)\heimdal.chm' />
@@ -325,6 +334,7 @@
 
       <ComponentRef Id='comp.HX509.chm' />
       <ComponentRef Id='comp.Heimdal.chm' />
+      <ComponentRef Id='comp.gssdll' />
       <ComponentRef Id='comp.kcpytkt' />
       <ComponentRef Id='comp.kdeltkt' />
       <ComponentRef Id='comp.kdestroy' />

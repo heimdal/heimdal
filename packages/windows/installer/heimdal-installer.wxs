@@ -403,5 +403,8 @@
 
     <UIRef Id='WixUI_FeatureTree' />
 
+    <WixVariable Id="WixUIBannerBmp" Value="images\Heimdal_banner.bmp" />
+    <WixVariable Id="WixUIDialogBmp" Value="images\Heimdal_dialog.bmp" />
+
   </Product>
 </Wix>

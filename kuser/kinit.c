@@ -1073,7 +1073,6 @@ get_princ_kt(krb5_context context,
     krb5_ccache ccache;
     krb5_kt_cursor cursor;
     krb5_keytab_entry entry;
-    int parseflags = 0;
     char *def_realm;
 
     if (name == NULL) {
@@ -1091,7 +1090,8 @@ get_princ_kt(krb5_context context,
 
     if (name) {
 	/* If the principal specifies an explicit realm, just use that. */
-	parseflags |= KRB5_PRINCIPAL_PARSE_NO_DEF_REALM;
+	int parseflags = KRB5_PRINCIPAL_PARSE_NO_DEF_REALM;
+
 	parse_name_realm(context, name, parseflags, NULL, &tmp);
 	if (krb5_principal_get_realm(context, tmp) != NULL) {
 	    *principal = tmp;
@@ -1131,7 +1131,7 @@ get_princ_kt(krb5_context context,
     if (ret != 0 || (ret = krb5_kt_end_seq_get(context, kt, &cursor)) != 0)
 	krb5_err(context, 1, ret, "get_princ_kt");
     if (!*principal)
-	parse_name_realm(context, name, parseflags, NULL, principal);
+	parse_name_realm(context, name, 0, NULL, principal);
 
     krb5_free_principal(context, tmp);
     free(def_realm);

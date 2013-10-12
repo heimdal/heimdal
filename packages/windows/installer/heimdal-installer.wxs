@@ -201,7 +201,7 @@
       <Component Id='comp.gssdll'
 		 Guid='$(var.GuidGssDll)'
 		 Win64='$(var.Win64)'>
-	<File Name='gssapi.dll' KeyPath='yes' />
+	<File Name='gssapi.dll' KeyPath='yes' Source='$(var.BinDir)\$(var.AsmKrbName)\gssapi.dll' />
 	<File Name='gssapi.pdb' />
       </Component>
 

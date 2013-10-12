@@ -172,6 +172,7 @@ CANDLEOPTS=	\
 	-dDocDir=$(DOCDIR)			\
 	-dSrcDir=$(SRC)				\
 	-dPlatform=$(PLATFORM)			\
+	-dAsmKrbName=$(ASMKRBNAME)		\
 	-dPolPrefix=$(POLPREFIX)
 
 !if "$(CPU)"=="AMD64"

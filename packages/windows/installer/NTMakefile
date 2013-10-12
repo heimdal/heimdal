@@ -104,13 +104,26 @@ $(COMMANDMODULE): $(OBJ)\heimdal-command.wixobj
 $(SDKREDISTDIR)\Heimdal.Command.msm: $(COMMANDMODULE)
 	$(CP) $** $@
 
+GSSMODULE=$(INSTDIR)\Heimdal.GSS.msm
+
+$(GSSMODULE): $(OBJ)\heimdal-gss.wixobj
+	$(LIGHT) -out $@ $**
+
+# OBJECT COMPILED BELOW
+
 all:: $(ASSEMBLYMODULE) $(SDKREDISTDIR)\Heimdal.msm
 
 all:: $(POLICYMODULE)
 
 all:: $(COMMANDMODULE) $(SDKREDISTDIR)\Heimdal.Command.msm
 
+all:: $(GSSMODULE)
+
 clean::
+	-$(RM) $(ASSEMBLYMODULE)
+	-$(RM) $(POLICYMODULE)
+	-$(RM) $(COMMANDMODULE)
+	-$(RM) $(GSSMODULE)
 	-$(RM) $(SDKREDISTDIR)\*.*
 
 ######################################################################
@@ -188,15 +201,20 @@ CANDLEOPTS=$(CANDLEOPTS) -dTarget64	\
 !ifdef MULTIPLATFORM_INSTALLER
 CANDLEOPTS_MULTI= -dTarget32
 TYPEOPT=-full
+
+INSTDEPS= \
+	$(INSTDIR32)\Heimdal.msm \
+	$(INSTDIR32)\Heimdal.GSS.msm	\
+	$(INSTDIR32)\Heimdal.Policy.msm	\
+	$(ASSEMBLYMODULE) $(GSSMODULE) $(POLICYMODULE)
 !else
 !  message Excluding 32-bit components from installer
 TYPEOPT=
+
+INSTDEPS= \
+	$(ASSEMBLYMODULE) $(GSSMODULE) $(POLICYMODULE)
 !endif
 
-INSTDEPS=$(INSTDIR32)\Heimdal.msm \
-	$(INSTDIR32)\Heimdal.Command.msm \
-	$(INSTDIR32)\Heimdal.Policy.msm	\
-	$(ASSEMBLYMODULE) $(POLICYMODULE)
 
 !else
 
@@ -204,6 +222,8 @@ CANDLEOPTS=$(CANDLEOPTS) -dTarget32		\
 	-dInstDir32=$(INSTDIR)			\
 	-dRuntimeModule32=$(RUNTIMEMODULE32)	\
 
+INSTDEPS= \
+	$(ASSEMBLYMODULE) $(GSSMODULE) $(POLICYMODULE)
 !endif
 
 !if exist($(SRC)\thirdparty\MKShim)
@@ -235,8 +255,18 @@ CMD_WXS=thirdparty\installer\heimdal-command.wxs
 CMD_WXS=heimdal-command.wxs
 !endif
 
-$(OBJ)\heimdal-command.wixobj: heimdal-command.wxs
-	$(CANDLE) -arch $(PLATFORM) -o $@ heimdal-command.wxs \
+$(OBJ)\heimdal-command.wixobj: $(CMD_WXS)
+	$(CANDLE) -arch $(PLATFORM) -o $@ $(CMD_WXS) \
+		$(CANDLEOPTS) $(THIRDPARTYOPTS)
+
+!if exist(thirdparty\installer\heimdal-gss.wxs)
+GSS_WXS=thirdparty\installer\heimdal-gss.wxs
+!else
+GSS_WXS=heimdal-gss.wxs
+!endif
+
+$(OBJ)\heimdal-gss.wixobj: $(GSS_WXS)
+	$(CANDLE) -arch $(PLATFORM) -o $@ $(GSS_WXS) \
 		$(CANDLEOPTS) $(THIRDPARTYOPTS)
 
 all:: $(INSTALLER)

@@ -16,7 +16,6 @@
   <?define GuidKcpytkt=17734691-7CB3-4E9A-AADC-6D4205795F43 ?>
   <?define GuidKdeltkt=3E853905-8CDA-4E14-8EBA-C0C4EEDB811A ?>
   <?define GuidHeimtools=F411A9F1-A186-40CB-B55B-CADBE0166268 ?>
-  <?define GuidGssDll=9368D1E7-D4CB-4BDC-A2A6-AB1C992151AD ?>
 
   <?define ConfigDir=INSTALLDIR64 ?>
 
@@ -93,6 +92,9 @@
       <Merge Id='Heimdal.Assemblies.32' Language='0'
              SourceFile='$(var.InstDir32)\Heimdal.msm' />
 
+      <Merge Id='Heimdal.GSS.32' Language='0'
+	     SourceFile='$(var.InstDir32)\Heimdal.GSS.msm' />
+
       <Merge Id='Heimdal.Policy.32' Language='0'
              SourceFile='$(var.InstDir32)\Heimdal.Policy.msm' />
 
@@ -117,6 +119,9 @@
 
       <Merge Id='Heimdal.Assemblies.64' Language='0'
              SourceFile='$(var.InstDir64)\Heimdal.msm' />
+
+      <Merge Id='Heimdal.GSS.64' Language='0'
+	     SourceFile='$(var.InstDir64)\Heimdal.GSS.msm' />
 
       <Merge Id='Heimdal.Policy.64' Language='0'
              SourceFile='$(var.InstDir64)\Heimdal.Policy.msm' />
@@ -196,13 +201,6 @@
           <CopyFile Id='klist.pdb' DestinationName='klist.pdb' />
           <CopyFile Id='kswitch.pdb' DestinationName='kswitch.pdb' />
         </File>
-      </Component>
-
-      <Component Id='comp.gssdll'
-		 Guid='$(var.GuidGssDll)'
-		 Win64='$(var.Win64)'>
-	<File Name='gssapi.dll' KeyPath='yes' Source='$(var.BinDir)\$(var.AsmKrbName)\gssapi.dll' />
-	<File Name='gssapi.pdb' />
       </Component>
 
       <Component Id='comp.Heimdal.chm'
@@ -338,7 +336,6 @@
 
       <ComponentRef Id='comp.HX509.chm' />
       <ComponentRef Id='comp.Heimdal.chm' />
-      <ComponentRef Id='comp.gssdll' />
       <ComponentRef Id='comp.kcpytkt' />
       <ComponentRef Id='comp.kdeltkt' />
       <ComponentRef Id='comp.kdestroy' />
@@ -362,10 +359,12 @@
 
       <?ifdef Target64?>
       <MergeRef Id='Heimdal.Assemblies.64' />
+      <MergeRef Id='Heimdal.GSS.64' />
       <MergeRef Id='Heimdal.Policy.64' />
       <MergeRef Id='Runtime.64' />
       <?else?>
       <MergeRef Id='Heimdal.Assemblies.32' />
+      <MergeRef Id='Heimdal.GSS.32' />
       <MergeRef Id='Heimdal.Policy.32' />
       <MergeRef Id='Runtime.32' />
       <?endif?>
@@ -383,6 +382,7 @@
         <ComponentGroupRef Id='comp.Heimdal.MKShim.32' />
         <?endif?>
         <MergeRef Id='Heimdal.Assemblies.32' />
+	<MergeRef Id='Heimdal.GSS.32' />
         <MergeRef Id='Heimdal.Policy.32' />
         <MergeRef Id='Runtime.32' />
       </Feature>

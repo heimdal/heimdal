@@ -65,7 +65,7 @@ hdb_resolve(krb5_context context, const char *name, krb5_keytab id)
     }
     db = name;
     mkey = strstr(name, ":mkey=");
-    if(mkey == NULL || mkey[5] == '\0') {
+    if(mkey == NULL || mkey[6] == '\0') {
 	if(*name == '\0')
 	    d->dbname = NULL;
 	else {
@@ -87,7 +87,7 @@ hdb_resolve(krb5_context context, const char *name, krb5_keytab id)
 	memmove(d->dbname, db, mkey - db);
 	d->dbname[mkey - db] = '\0';
 
-	d->mkey = strdup(mkey + 5);
+	d->mkey = strdup(mkey + 6);
 	if(d->mkey == NULL) {
 	    free(d->dbname);
 	    free(d);

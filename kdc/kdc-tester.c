@@ -467,7 +467,7 @@ main(int argc, char **argv)
     else if (ret)
 	errx (1, "krb5_init_context failed: %d", ret);
 
-    ret = krb5_kt_register(kdc_context, &hdb_kt_ops);
+    ret = krb5_kt_register(kdc_context, &hdb_get_kt_ops);
     if (ret)
 	errx (1, "krb5_kt_register(HDB) failed: %d", ret);
 

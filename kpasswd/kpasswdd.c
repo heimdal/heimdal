@@ -747,7 +747,7 @@ sigterm(int sig)
 static const char *check_library  = NULL;
 static const char *check_function = NULL;
 static getarg_strings policy_libraries = { 0, NULL };
-static char sHDB[] = "HDB:";
+static char sHDB[] = "HDBGET:";
 static char *keytab_str = sHDB;
 static char *realm_str;
 static int version_flag;
@@ -831,7 +831,7 @@ main (int argc, char **argv)
     } else
 	port = krb5_getportbyname (context, "kpasswd", "udp", KPASSWD_PORT);
 
-    ret = krb5_kt_register(context, &hdb_kt_ops);
+    ret = krb5_kt_register(context, &hdb_get_kt_ops);
     if(ret)
 	krb5_err(context, 1, ret, "krb5_kt_register");
 

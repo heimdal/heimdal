@@ -921,7 +921,7 @@ write_stats(krb5_context context, slave *slaves, uint32_t current_version)
 }
 
 
-static char sHDB[] = "HDB:";
+static char sHDB[] = "HDBGET:";
 static char *realm;
 static int version_flag;
 static int help_flag;
@@ -1020,7 +1020,7 @@ main(int argc, char **argv)
     krb5_openlog (context, "ipropd-master", &log_facility);
     krb5_set_warn_dest(context, log_facility);
 
-    ret = krb5_kt_register(context, &hdb_kt_ops);
+    ret = krb5_kt_register(context, &hdb_get_kt_ops);
     if(ret)
 	krb5_err(context, 1, ret, "krb5_kt_register");
 

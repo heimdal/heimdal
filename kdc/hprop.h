@@ -46,7 +46,7 @@ struct prop_data{
 
 #define HPROP_VERSION "hprop-0.0"
 #define HPROP_NAME "hprop"
-#define HPROP_KEYTAB "HDB:"
+#define HPROP_KEYTAB "HDBGET:"
 #define HPROP_PORT 754
 
 #ifndef NEVERDATE

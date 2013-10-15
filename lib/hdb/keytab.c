@@ -424,3 +424,19 @@ krb5_kt_ops hdb_kt_ops = {
     NULL,
     0
 };
+
+krb5_kt_ops hdb_get_kt_ops = {
+    "HDBGET",
+    hdb_resolve,
+    hdb_get_name,
+    hdb_close,
+    NULL,
+    hdb_get_entry,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    0
+};

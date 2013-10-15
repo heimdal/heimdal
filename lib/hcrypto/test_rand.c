@@ -149,12 +149,19 @@ main(int argc, char **argv)
 
     /* head vs tail */
     if (len >= 100000) {
-	int bit, i;
+	unsigned bytes[256]; 
+	unsigned bits[8];
+	size_t bit, i;
 	double res;
-	int bits[8] = { 0, 0, 0, 0, 0, 0, 0, 0 };
+
+	memset(bits, 0, sizeof(bit));
+	memset(bytes, 0, sizeof(bytes));
 
 	for (i = 0; i < len; i++) {
 	    unsigned char c = ((unsigned char *)buffer)[i];
+
+	    bytes[c]++;
+
 	    for (bit = 0; bit < 8 && c; bit++) {
 		if (c & 1)
 		    bits[bit]++;
@@ -164,13 +171,23 @@ main(int argc, char **argv)
 
 	for (bit = 0; bit < 8; bit++) {
 
-	    res = ((double)abs(len - bits[bit] * 2)) / (double)len;
+	    res = 1.0 - (((double)(bits[bit]) / (double)len) * 2);
 	    if (res > 0.005)
-		errx(1, "head%d vs tail%d > 0.5%%%% %lf == %d vs %d",
-		     bit, bit, res, len, bits[bit]);
+		errx(1, "head%u vs tail%u > 0.5%% %lf == %d of %d",
+		     (unsigned)bit, (unsigned)bit, res, len, bits[bit]);
 
-	    printf("head vs tails bit%d: %lf\n", bit, res);
+	    printf("head vs tails bit%u: %lf\n", (unsigned)bit, res);
 	}
+
+	for (i = 0; i < 256; i++) {
+	    res = 1.0 - (((double)(bytes[i]) / (double)len) * 256);
+	    if (res > 0.005)
+		errx(1, "byte %u > 0.5%%%% %lf",
+		     (unsigned)i, res);
+	    printf("byte %u: %lf\n", (unsigned)i, res);
+	}
+
+
     }
 
     free(buffer);

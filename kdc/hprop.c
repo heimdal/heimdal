@@ -161,7 +161,7 @@ get_creds(krb5_context context, krb5_ccache *cache)
     krb5_preauthtype preauth = KRB5_PADATA_ENC_TIMESTAMP;
     krb5_creds creds;
 
-    ret = krb5_kt_register(context, &hdb_kt_ops);
+    ret = krb5_kt_register(context, &hdb_get_kt_ops);
     if(ret) krb5_err(context, 1, ret, "krb5_kt_register");
 
     ret = krb5_kt_resolve(context, ktname, &keytab);

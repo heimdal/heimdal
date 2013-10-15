@@ -73,6 +73,7 @@ EXPORTS
         initialize_hdb_error_table_r
 
 	hdb_kt_ops
+	hdb_get_kt_ops
 
 ; MIT KDB related entries
         _hdb_mdb_value2entry

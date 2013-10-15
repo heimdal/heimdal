@@ -238,7 +238,7 @@ _kdc_do_digest(krb5_context context,
 
     kdc_log(context, config, 0, "Digest request from %s", from);
 
-    ret = krb5_kt_resolve(context, "HDB:", &id);
+    ret = krb5_kt_resolve(context, "HDBGET:", &id);
     if (ret) {
 	kdc_log(context, config, 0, "Can't open database for digest");
 	goto out;

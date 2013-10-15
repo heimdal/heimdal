@@ -80,6 +80,7 @@ HEIMDAL_HDB_1.0 {
                 _hdb_mit_dump2mitdb_entry;
 
 		hdb_kt_ops;
+		hdb_get_kt_ops;
 
 		# some random bits needed for libkadm
 		add_HDB_Ext_KeySet;

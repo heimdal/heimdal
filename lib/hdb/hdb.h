@@ -287,6 +287,7 @@ struct hdb_print_entry_arg {
 typedef krb5_error_code (*hdb_foreach_func_t)(krb5_context, HDB*,
 					      hdb_entry_ex*, void*);
 extern krb5_kt_ops hdb_kt_ops;
+extern krb5_kt_ops hdb_get_kt_ops;
 
 extern const int hdb_interface_version;
 

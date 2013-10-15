@@ -154,7 +154,7 @@ main(int argc, char **argv)
 
 	krb5_log(context, fac, 0, "Connection from %s", addr_name);
 
-	ret = krb5_kt_register(context, &hdb_kt_ops);
+	ret = krb5_kt_register(context, &hdb_get_kt_ops);
 	if (ret)
 	    krb5_err(context, 1, ret, "krb5_kt_register");
 

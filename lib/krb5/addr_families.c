@@ -1161,6 +1161,7 @@ krb5_parse_address(krb5_context context,
 {
     int i, n;
     struct addrinfo *ai, *a;
+    struct addrinfo hint;
     int error;
     int save_errno;
 
@@ -1180,7 +1181,10 @@ krb5_parse_address(krb5_context context,
 	}
     }
 
-    error = getaddrinfo (string, NULL, NULL, &ai);
+    /* if not parsed as numeric address, do a name lookup */
+    memset(&hint, 0, sizeof(hint));
+    hint.ai_family = AF_UNSPEC;
+    error = getaddrinfo (string, NULL, &hint, &ai);
     if (error) {
 	krb5_error_code ret2;
 	save_errno = errno;

@@ -36,6 +36,8 @@
 #include <config.h>
 
 #include <stdio.h>
+#include <stdlib.h>
+#include <math.h>
 
 #include <roken.h>
 #include <getarg.h>
@@ -153,8 +155,9 @@ main(int argc, char **argv)
 	unsigned bits[8];
 	size_t bit, i;
 	double res;
+	double slen = sqrt((double)len);
 
-	memset(bits, 0, sizeof(bit));
+	memset(bits, 0, sizeof(bits));
 	memset(bytes, 0, sizeof(bytes));
 
 	for (i = 0; i < len; i++) {
@@ -169,25 +172,39 @@ main(int argc, char **argv)
 	    }
 	}
 
+	/*
+	 * The count for each bit value has a mean of n*p = len/2,
+	 * and a standard deviation of sqrt(n*p*q) ~ sqrt(len/4).
+	 * Normalizing by dividing by "n*p", we get a mean of 1 and
+	 * a standard deviation of sqrt(q/n*p) = 1/sqrt(len).
+	 *
+	 * We tolerate 5-sigma events (1 in ~2 million builds will
+	 * erroneously report RNG failure when the RNG is unbiased).
+	 */
 	for (bit = 0; bit < 8; bit++) {
-
-	    res = 1.0 - (((double)(bits[bit]) / (double)len) * 2);
-	    if (res > 0.005)
-		errx(1, "head%u vs tail%u > 0.5%% %lf == %d of %d",
-		     (unsigned)bit, (unsigned)bit, res, len, bits[bit]);
-
-	    printf("head vs tails bit%u: %lf\n", (unsigned)bit, res);
+	    res = slen * fabs(1.0 - 2 * (double)bits[bit] / len);
+	    if (res > 5)
+		errx(1, "head%d vs tail%d: %.1f-sigma (%d of %d)",
+		     bit, bit, res, bits[bit], len);
+	    printf("head vs tails bit%d: %f-sigma\n", bit, res);
 	}
 
+	/*
+	 * The count of each byte value has a mean of n*p = len/256,
+	 * and a standard deviation of sqrt(n*p*q) ~ sqrt(len/256).
+	 * Normalizing by dividing by "n*p", we get a mean of 1 and
+	 * a standard deviation of sqrt(q/n*p) ~ 16/sqrt(len).
+	 *
+	 * We tolerate 5-sigma events (1 in ~2 million builds will
+	 * erroneously report RNG failure when the RNG is unbiased).
+	 */
 	for (i = 0; i < 256; i++) {
-	    res = 1.0 - (((double)(bytes[i]) / (double)len) * 256);
-	    if (res > 0.005)
-		errx(1, "byte %u > 0.5%%%% %lf",
-		     (unsigned)i, res);
-	    printf("byte %u: %lf\n", (unsigned)i, res);
+	    res = (slen / 16) * fabs(1.0 - 256 * (double)bytes[i] / len);
+	    if (res > 5)
+		errx(1, "byte %d: %.1f-sigma (%d of %d)",
+		     i, res, bytes[i], len);
+	    printf("byte %d: %f-sigma\n", i, res);
 	}
-
-
     }
 
     free(buffer);

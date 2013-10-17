@@ -178,12 +178,17 @@ main(int argc, char **argv)
 	 * Normalizing by dividing by "n*p", we get a mean of 1 and
 	 * a standard deviation of sqrt(q/n*p) = 1/sqrt(len).
 	 *
-	 * We tolerate 5-sigma events (1 in ~2 million builds will
-	 * erroneously report RNG failure when the RNG is unbiased).
+	 * A 5.33-sigma event happens 1 time in 10 million.
+	 * A 5.73-sigma event happens 1 time in 100 million.
+	 * A 6.11-sigma event happens 1 time in 1000 million.
+	 *
+	 * We tolerate 5.33-sigma events (we have 8 not entirely
+	 * independent chances of skewed results) and want to fail
+	 * with a good RNG less often than 1 time in million.
 	 */
 	for (bit = 0; bit < 8; bit++) {
 	    res = slen * fabs(1.0 - 2 * (double)bits[bit] / len);
-	    if (res > 5)
+	    if (res > 5.33)
 		errx(1, "head%d vs tail%d: %.1f-sigma (%d of %d)",
 		     (int)bit, (int)bit, res, bits[bit], len);
 	    printf("head vs tails bit%d: %f-sigma\n", (int)bit, res);
@@ -195,12 +200,13 @@ main(int argc, char **argv)
 	 * Normalizing by dividing by "n*p", we get a mean of 1 and
 	 * a standard deviation of sqrt(q/n*p) ~ 16/sqrt(len).
 	 *
-	 * We tolerate 5-sigma events (1 in ~2 million builds will
-	 * erroneously report RNG failure when the RNG is unbiased).
+	 * We tolerate 5.73-sigma events (we have 256 not entirely
+	 * independent chances of skewed results).  Note, for example,
+	 * a 5.2-sigma event was observed in ~5,000 runs.
 	 */
 	for (i = 0; i < 256; i++) {
 	    res = (slen / 16) * fabs(1.0 - 256 * (double)bytes[i] / len);
-	    if (res > 5)
+	    if (res > 5.73)
 		errx(1, "byte %d: %.1f-sigma (%d of %d)",
 		     (int) i, res, bytes[i], len);
 	    printf("byte %d: %f-sigma\n", (int)i, res);

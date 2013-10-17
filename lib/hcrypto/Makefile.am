@@ -86,6 +86,7 @@ check_SCRIPTS = $(SCRIPT_TESTS)
 TESTS = $(PROGRAM_TESTS) $(SCRIPT_TESTS)
 
 LDADD = $(lib_LTLIBRARIES) $(LIB_roken)
+test_rand_LDADD = $(LDADD) -lm
 
 libhcrypto_la_SOURCES =	\
 	$(ltmsources)	\

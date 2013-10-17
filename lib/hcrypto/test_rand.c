@@ -185,8 +185,8 @@ main(int argc, char **argv)
 	    res = slen * fabs(1.0 - 2 * (double)bits[bit] / len);
 	    if (res > 5)
 		errx(1, "head%d vs tail%d: %.1f-sigma (%d of %d)",
-		     bit, bit, res, bits[bit], len);
-	    printf("head vs tails bit%d: %f-sigma\n", bit, res);
+		     (int)bit, (int)bit, res, bits[bit], len);
+	    printf("head vs tails bit%d: %f-sigma\n", (int)bit, res);
 	}
 
 	/*
@@ -202,8 +202,8 @@ main(int argc, char **argv)
 	    res = (slen / 16) * fabs(1.0 - 256 * (double)bytes[i] / len);
 	    if (res > 5)
 		errx(1, "byte %d: %.1f-sigma (%d of %d)",
-		     i, res, bytes[i], len);
-	    printf("byte %d: %f-sigma\n", i, res);
+		     (int) i, res, bytes[i], len);
+	    printf("byte %d: %f-sigma\n", (int)i, res);
 	}
     }
 

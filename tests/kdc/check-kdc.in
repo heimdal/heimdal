@@ -158,6 +158,9 @@ ${kadmin} add -p foo --use-defaults remove@${R} || exit 1
 ${kadmin} add -p kaka --use-defaults ${server}@${R} || exit 1
 ${kadmin} add -p kaka --use-defaults ${server}-des3@${R} || exit 1
 ${kadmin} add -p kaka --use-defaults kt-des3@${R} || exit 1
+${kadmin} add -p kaka --use-defaults foo/des3-only@${R} || exit 1
+${kadmin} add -p kaka --use-defaults bar/des3-only@${R} || exit 1
+${kadmin} add -p kaka --use-defaults foo/aes-only@${R} || exit 1
 ${kadmin} add -p foo --use-defaults ${ps} || exit 1
 ${kadmin} modify --attributes=+trusted-for-delegation ${ps} || exit 1
 ${kadmin} modify --constrained-delegation=${server} ${ps} || exit 1
@@ -232,6 +235,22 @@ ${kadmin} ext -k ${keytab} kt-des3@${R} || exit 1
 for a in ${enctype_sans_des3} ; do
    ${ktutil} -k ${keytab} remove -p kt-des3@${R} -e $a
 done
+
+echo "checking globbing keys rules"
+${kadmin} get foo/des3-only@${R} > tempfile || exit 1
+enctypes=`grep Keytypes: tempfile | sed 's/(pw-salt)//g' | sed 's/,//g' | sed 's/Keytypes://' | sed 's/\[[0-9]*\]//g' | sed 's/ //g'`
+if [ X"$enctypes" != Xdes3-cbc-sha1 ] ; then
+    echo "des3 only is not only des3: $enctypes"
+    exit 1
+fi
+
+${kadmin} get foo/aes-only@${R} > tempfile || exit 1
+enctypes=`grep Keytypes: tempfile | sed 's/(pw-salt)//g' | sed 's/,//g' | sed 's/Keytypes://' | sed 's/\[[0-9]*\]//g' | sed 's/ //g'`
+if [ X"$enctypes" != Xaes256-cts-hmac-sha1-96 ] ; then
+    echo "aes only is not only aes: $enctypes"
+    exit 1
+fi
+
 
 echo foo > ${objdir}/foopassword
 

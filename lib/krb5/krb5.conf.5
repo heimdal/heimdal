@@ -614,13 +614,20 @@ The Kerberos 5 salt
 The Kerberos 4 salt
 .Va des:pw-salt:
 .El
+.It Li default_key_rules = Va {
+.Bl -tag -width "xxx" -offset indent
+.It Va globing-rule Li = Va keytypes...
+a globbing rule to matching a principal, and when true, use the
+keytypes as specified the same format as [kadmin]default_keys .
+.El
+.It Li }
+.El
 .It Li use_v4_salt = Va BOOL
 When true, this is the same as
 .Pp
 .Va default_keys = Va des3:pw-salt Va v4
 .Pp
 and is only left for backwards compatibility.
-.El
 .It Li [password_quality]
 Check the Password quality assurance in the info documentation for
 more information.
@@ -666,6 +673,10 @@ configuration file for Kerberos 5.
 	kdc = FILE:/var/heimdal/kdc.log
 	kdc = SYSLOG:INFO
 	default = SYSLOG:INFO:USER
+[kadmin]
+	default_key_rules = {
+		*/ppp@* = arcfour-hmac-md5:pw-salt
+	}
 .Ed
 .Sh DIAGNOSTICS
 Since

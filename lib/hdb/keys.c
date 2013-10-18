@@ -470,6 +470,39 @@ out:
 }
 
 /*
+ *
+ */
+
+static char **
+glob_rules_keys(krb5_context context, krb5_const_principal principal)
+{
+    const krb5_config_binding *list;
+    krb5_principal pattern;
+    krb5_error_code ret;
+
+    list = krb5_config_get_list(context, NULL, "kadmin",
+				"default_key_rules", NULL);
+    if (list == NULL)
+	return NULL;
+
+    while (list) {
+	if (list->type == krb5_config_string) {
+	    ret = krb5_parse_name(context, list->name, &pattern);
+	    if (ret == 0) {
+		ret = krb5_principal_match(context, principal, pattern);
+		krb5_free_principal(context, pattern);
+		if (ret) {
+		    return krb5_config_get_strings(context, list, 
+						   list->name, NULL);
+		}
+	    }
+	}
+	list = list->next;
+    }
+    return NULL;    
+}
+
+/*
  * Generate the `key_set' from the [kadmin]default_keys statement. If
  * `no_salt' is set, salt is not important (and will not be set) since
  * it's random keys that is going to be created.
@@ -498,6 +531,9 @@ hdb_generate_key_set(krb5_context context, krb5_principal principal,
 	    return ret;
 
     ktypes = ks_tuple_strs;
+    if (ktypes == NULL) {
+	ktypes = glob_rules_keys(context, principal);
+    }
     if (ktypes == NULL) {
 	config_ktypes = krb5_config_get_strings(context, NULL, "kadmin",
 						"default_keys", NULL);

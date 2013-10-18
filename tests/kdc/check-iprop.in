@@ -156,7 +156,7 @@ echo "Change policy host"
 ${kadmin} -l modify --policy=default host/foo@${R} || exit 1
 sleep 2
 KRB5_CONFIG="${objdir}/krb5-slave.conf" \
-${kadmin} -l get host/foo@${R} > /dev/null 2>/dev/nill || exit 1
+${kadmin} -l get host/foo@${R} > /dev/null 2>/dev/null || exit 1
 
 echo "Rename host"
 ${kadmin} -l rename host/foo@${R} host/bar@${R} || exit 1

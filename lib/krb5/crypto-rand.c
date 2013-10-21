@@ -142,6 +142,12 @@ krb5_generate_random(void *buf, size_t len)
  *
  * This function can NOT fail, instead it will abort() and program will crash.
  *
+ * If this function is called after a successful krb5_init_context(),
+ * the chance of it failing is low due to that krb5_init_context()
+ * pulls out some random, and quite commonly the randomness sources
+ * will not fail once it have started to produce good output,
+ * /dev/urandom behavies that way.
+ *
  * @param buf a buffer to fill with randomness
  * @param len length of memory that buf points to.
  *

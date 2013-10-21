@@ -2002,6 +2002,16 @@ hx509_verify_path(hx509_context context,
 
     memset(&proxy_issuer, 0, sizeof(proxy_issuer));
 
+    if ((ctx->flags & HX509_VERIFY_CTX_F_ALLOW_PROXY_CERTIFICATE) == 0 &&
+	is_proxy_cert(context, cert->data, NULL) == 0)
+    {
+	ret = HX509_PROXY_CERT_INVALID;
+	hx509_set_error_string(context, 0, ret,
+			       "Proxy certificate is not allowed as an EE "
+			       "certificae if proxy certificate is disabled");
+	return ret;
+    }
+
     ret = init_name_constraints(&nc);
     if (ret)
 	return ret;

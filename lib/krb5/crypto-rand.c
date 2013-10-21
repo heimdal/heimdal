@@ -33,6 +33,9 @@
 
 #include "krb5_locl.h"
 
+#undef HEIMDAL_WARN_UNUSED_RESULT_ATTRIBUTE
+#define HEIMDAL_WARN_UNUSED_RESULT_ATTRIBUTE
+
 #define ENTROPY_NEEDED 128
 
 static HEIMDAL_MUTEX crypto_mutex = HEIMDAL_MUTEX_INITIALIZER;
@@ -94,20 +97,62 @@ seed_something(void)
 	return -1;
 }
 
-KRB5_LIB_FUNCTION void KRB5_LIB_CALL
-krb5_generate_random_block(void *buf, size_t len)
+/**
+ * Fill buffer buf with len bytes of PRNG randomness that is ok to use
+ * for key generation, padding and public diclosing the randomness w/o
+ * disclosing the randomness source.
+ *
+ * This function can fail, and callers must check the return value.
+ *
+ * @param buf a buffer to fill with randomness
+ * @param len length of memory that buf points to.
+ *
+ * @return return 0 on success or HEIM_ERR_RANDOM_OFFLINE if the
+ * funcation failed to initialize the randomness source.
+ *
+ * @ingroup krb5_crypto
+ */
+
+HEIMDAL_WARN_UNUSED_RESULT_ATTRIBUTE
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
+krb5_generate_random(void *buf, size_t len)
 {
     static int rng_initialized = 0;
+    int ret;
 
     HEIMDAL_MUTEX_lock(&crypto_mutex);
     if (!rng_initialized) {
 	if (seed_something())
-	    krb5_abortx(NULL, "Fatal: could not seed the "
-			"random number generator");
-
+	    return HEIM_ERR_RANDOM_OFFLINE;
 	rng_initialized = 1;
     }
-    HEIMDAL_MUTEX_unlock(&crypto_mutex);
     if (RAND_bytes(buf, len) <= 0)
+	ret = HEIM_ERR_RANDOM_OFFLINE;
+    else
+	ret = 0;
+    HEIMDAL_MUTEX_unlock(&crypto_mutex);
+
+    return ret;
+}
+
+/**
+ * Fill buffer buf with len bytes of PRNG randomness that is ok to use
+ * for key generation, padding and public diclosing the randomness w/o
+ * disclosing the randomness source.
+ *
+ * This function can NOT fail, instead it will abort() and program will crash.
+ *
+ * @param buf a buffer to fill with randomness
+ * @param len length of memory that buf points to.
+ *
+ * @ingroup krb5_crypto
+ */
+
+
+KRB5_LIB_FUNCTION void KRB5_LIB_CALL
+krb5_generate_random_block(void *buf, size_t len)
+{
+    int ret = krb5_generate_random(buf, len);
+    if (ret)
 	krb5_abortx(NULL, "Failed to generate random block");
 }

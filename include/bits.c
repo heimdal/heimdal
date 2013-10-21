@@ -255,39 +255,55 @@ int main(int argc, char **argv)
 
 #endif /* KRB5 */
 
+    fprintf(f, "#if !defined(__has_extension)\n");
+    fprintf(f, "#define __has_extension(x) 0\n");
+    fprintf(f, "#endif\n\n");
+
+    fprintf(f, "#ifndef KRB5TYPES_REQUIRE_GNUC\n");
+    fprintf(f, "#define KRB5TYPES_REQUIRE_GNUC(m,n,p) \\\n");
+    fprintf(f, "    (((__GNUC__ * 10000) + (__GNUC_MINOR__ * 100) + __GNUC_PATCHLEVEL__) >= \\\n");
+    fprintf(f, "     (((m) * 10000) + ((n) * 100) + (p)))\n");
+    fprintf(f, "#endif\n\n");
+
     fprintf(f, "#ifndef HEIMDAL_DEPRECATED\n");
-    fprintf(f, "#if defined(__GNUC__) && ((__GNUC__ > 3) || ((__GNUC__ == 3) && (__GNUC_MINOR__ >= 1 )))\n");
+    fprintf(f, "#if __has_extension(deprecated) || KRB5TYPES_REQUIRE_GNUC(3,1,0)\n");
     fprintf(f, "#define HEIMDAL_DEPRECATED __attribute__((deprecated))\n");
     fprintf(f, "#elif defined(_MSC_VER) && (_MSC_VER>1200)\n");
     fprintf(f, "#define HEIMDAL_DEPRECATED __declspec(deprecated)\n");
     fprintf(f, "#else\n");
     fprintf(f, "#define HEIMDAL_DEPRECATED\n");
     fprintf(f, "#endif\n");
-    fprintf(f, "#endif\n");
+    fprintf(f, "#endif\n\n");
 
     fprintf(f, "#ifndef HEIMDAL_PRINTF_ATTRIBUTE\n");
-    fprintf(f, "#if defined(__GNUC__) && ((__GNUC__ > 3) || ((__GNUC__ == 3) && (__GNUC_MINOR__ >= 1 )))\n");
+    fprintf(f, "#if __has_extension(format) || KRB5TYPES_REQUIRE_GNUC(3,1,0)\n");
     fprintf(f, "#define HEIMDAL_PRINTF_ATTRIBUTE(x) __attribute__((format x))\n");
     fprintf(f, "#else\n");
     fprintf(f, "#define HEIMDAL_PRINTF_ATTRIBUTE(x)\n");
     fprintf(f, "#endif\n");
-    fprintf(f, "#endif\n");
+    fprintf(f, "#endif\n\n");
 
     fprintf(f, "#ifndef HEIMDAL_NORETURN_ATTRIBUTE\n");
-    fprintf(f, "#if defined(__GNUC__) && ((__GNUC__ > 3) || ((__GNUC__ == 3) && (__GNUC_MINOR__ >= 1 )))\n");
+    fprintf(f, "#if __has_extension(noreturn) || KRB5TYPES_REQUIRE_GNUC(3,1,0)\n");
     fprintf(f, "#define HEIMDAL_NORETURN_ATTRIBUTE __attribute__((noreturn))\n");
     fprintf(f, "#else\n");
     fprintf(f, "#define HEIMDAL_NORETURN_ATTRIBUTE\n");
     fprintf(f, "#endif\n");
-    fprintf(f, "#endif\n");
+    fprintf(f, "#endif\n\n");
 
     fprintf(f, "#ifndef HEIMDAL_UNUSED_ATTRIBUTE\n");
-    fprintf(f, "#if defined(__GNUC__) && ((__GNUC__ > 3) || ((__GNUC__ == 3) && (__GNUC_MINOR__ >= 1 )))\n");
+    fprintf(f, "#if __has_extension(unused) || KRB5TYPES_REQUIRE_GNUC(3,1,0)\n");
     fprintf(f, "#define HEIMDAL_UNUSED_ATTRIBUTE __attribute__((unused))\n");
     fprintf(f, "#else\n");
     fprintf(f, "#define HEIMDAL_UNUSED_ATTRIBUTE\n");
     fprintf(f, "#endif\n");
+    fprintf(f, "#endif\n\n");
+
+    fprintf(f, "#ifndef HEIMDAL_WARN_UNUSED_RESULT_ATTRIBUTE\n");
+    fprintf(f, "#if __has_extension(warn_unused_result) || KRB5TYPES_REQUIRE_GNUC(3,3,0)\n");
+    fprintf(f, "#define HEIMDAL_WARN_UNUSED_RESULT_ATTRIBUTE __attribute__((warn_unused_result))\n");
     fprintf(f, "#endif\n");
+    fprintf(f, "#endif\n\n");
 
     fprintf(f, "#endif /* %s */\n", hb);
 

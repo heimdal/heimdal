@@ -97,6 +97,15 @@ init_context_from_config_file(krb5_context context)
     const char * tmp;
     char **s;
     krb5_enctype *tmptypes;
+    uint8_t rnd;
+
+    /*
+     * Pick one random character to make sure our random-ness source
+     * is alive.
+     */
+    ret = krb5_generate_random(&rnd, sizeof(rnd));
+    if (ret)
+	return ret;
 
     INIT_FIELD(context, time, max_skew, 5 * 60, "clockskew");
     INIT_FIELD(context, time, kdc_timeout, 30, "kdc_timeout");

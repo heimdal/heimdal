@@ -1,3 +1,31 @@
+Release Notes - Heimdal - Version Heimdal 1.6
+
+ Security
+ - ...
+
+ Feature
+ - Allow setting what encryption types a principal should have with
+   [kadmin] default_key_rules, see krb5.conf manpage for more info.
+ - Unify libhcrypto with LTC (libtomcrypto)
+ - Many more
+
+ Bug fixes
+ - Many
+
+Release Notes - Heimdal - Version Heimdal 1.5.3
+
+ Bug fixes
+ - Fix leaking file descriptors in KDC
+ - Better socket/timeout handling in libkrb5
+ - General bug fixes
+ - Build fixes
+
+Release Notes - Heimdal - Version Heimdal 1.5.2
+
+ Security fixes
+ - CVE-2011-4862 Buffer overflow in libtelnet/encrypt.c in telnetd - escalation of privilege
+ - Check that key types strictly match - denial of service
+
 Release Notes - Heimdal - Version Heimdal 1.5.1
 
  Bug fixes

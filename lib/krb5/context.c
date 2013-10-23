@@ -97,15 +97,6 @@ init_context_from_config_file(krb5_context context)
     const char * tmp;
     char **s;
     krb5_enctype *tmptypes;
-    uint8_t rnd;
-
-    /*
-     * Pick one random character to make sure our random-ness source
-     * is alive.
-     */
-    ret = krb5_generate_random(&rnd, sizeof(rnd));
-    if (ret)
-	return ret;
 
     INIT_FIELD(context, time, max_skew, 5 * 60, "clockskew");
     INIT_FIELD(context, time, kdc_timeout, 30, "kdc_timeout");
@@ -404,7 +395,8 @@ init_context_once(void *ctx)
  * @return Returns 0 to indicate success.  Otherwise an errno code is
  * returned.  Failure means either that something bad happened during
  * initialization (typically ENOMEM) or that Kerberos should not be
- * used ENXIO.
+ * used ENXIO. If the function returns HEIM_ERR_RANDOM_OFFLINE, the
+ * random source is not available and later Kerberos calls might fail.
  *
  * @ingroup krb5
  */
@@ -416,8 +408,22 @@ krb5_init_context(krb5_context *context)
     krb5_context p;
     krb5_error_code ret;
     char **files;
+    uint8_t rnd;
 
     *context = NULL;
+
+    /**
+     * krb5_init_context() will get one random byte to make sure our
+     * random is alive.  Assumption is that once the non blocking
+     * source allows us to pull bytes, its all seeded and allows us to
+     * pull more bytes.
+     *
+     * Most Kerberos users calls krb5_init_context(), so this is
+     * useful point where we can do the checking.
+     */
+    ret = krb5_generate_random(&rnd, sizeof(rnd));
+    if (ret)
+	return ret;
 
     p = calloc(1, sizeof(*p));
     if(!p)

@@ -1139,6 +1139,8 @@ unless no extra data
 
 */
 
+#if 0
+/* Why ever did we loop? */
 static char *
 nexttoken(char **p)
 {
@@ -1148,13 +1150,30 @@ nexttoken(char **p)
     } while(q && *q == '\0');
     return q;
 }
+#endif
+
+static char *
+nexttoken(char **p, size_t len)
+{
+    char *q;
+
+    if (*p == NULL)
+        return NULL;
+
+    q = *p;
+    *p += len;
+    /* Must be followed by a delimiter (right?) */
+    if (strsep(p, " \t") != q + len)
+        return NULL;
+    return q;
+}
 
 static size_t
 getdata(char **p, unsigned char *buf, size_t len)
 {
     size_t i;
     int v;
-    char *q = nexttoken(p);
+    char *q = nexttoken(p, 0);
     i = 0;
     while(*q && i < len) {
 	if(sscanf(q, "%02x", &v) != 1)
@@ -1169,7 +1188,7 @@ static int
 getint(char **p)
 {
     int val;
-    char *q = nexttoken(p);
+    char *q = nexttoken(p, 0);
     if (!q)
         return -1;
     sscanf(q, "%d", &val);
@@ -1180,7 +1199,7 @@ static unsigned int
 getuint(char **p)
 {
     int val;
-    char *q = nexttoken(p);
+    char *q = nexttoken(p, 0);
     if (!q)
         return 0;
     sscanf(q, "%u", &val);
@@ -1227,7 +1246,7 @@ _hdb_mit_dump2mitdb_entry(krb5_context context, char *line, krb5_storage *sp)
 
     krb5_storage_set_byteorder(sp, KRB5_STORAGE_BYTEORDER_LE);
 
-    q = nexttoken(&p);
+    q = nexttoken(&p, 0);
     if (strcmp(q, "kdb5_util") == 0 || strcmp(q, "policy") == 0 ||
         strcmp(q, "princ") != 0) {
         return -1;
@@ -1238,11 +1257,12 @@ _hdb_mit_dump2mitdb_entry(krb5_context context, char *line, krb5_storage *sp)
     ret = krb5_store_int16(sp, KDB_V1_BASE_LENGTH);
     if (ret) return ret;
 
-    nexttoken(&p); /* length of principal */
+    princ_len = getuint(&p); /* length of principal */
+    if (princ_len > (1<<15) - 1) return EINVAL;
     num_tl_data = getuint(&p); /* number of tl-data */
     num_key_data = getuint(&p); /* number of key-data */
     getint(&p);  /* length of extra data */
-    princ = nexttoken(&p); /* principal name */
+    princ = nexttoken(&p, (int)princ_len); /* principal name */
 
     attributes = getuint(&p); /* attributes */
     ret = krb5_store_uint32(sp, attributes);
@@ -1295,7 +1315,6 @@ _hdb_mit_dump2mitdb_entry(krb5_context context, char *line, krb5_storage *sp)
 
     /* add principal unparsed name length and unparsed name */
     princ_len = strlen(princ);
-    if (princ_len > (1<<15) - 1) return EINVAL;
     princ_len++; /* must count and write the NUL in the on-disk encoding */
     ret = krb5_store_uint16(sp, princ_len);
     if (ret) return ret;
@@ -1325,7 +1344,7 @@ _hdb_mit_dump2mitdb_entry(krb5_context context, char *line, krb5_storage *sp)
             free(buf);
             if (sz == -1) return ENOMEM;
         } else {
-            if (strcmp(nexttoken(&p), "-1") != 0) return EINVAL;
+            if (strcmp(nexttoken(&p, 0), "-1") != 0) return EINVAL;
         }
     }
 
@@ -1366,7 +1385,7 @@ _hdb_mit_dump2mitdb_entry(krb5_context context, char *line, krb5_storage *sp)
                 free(buf);
                 if (sz == -1) return ENOMEM;
             } else {
-                if (strcmp(nexttoken(&p), "-1") != 0) return EINVAL;
+                if (strcmp(nexttoken(&p, 0), "-1") != 0) return EINVAL;
             }
         }
     }
@@ -1374,7 +1393,7 @@ _hdb_mit_dump2mitdb_entry(krb5_context context, char *line, krb5_storage *sp)
      * The rest is "extra data", but there's never any and we wouldn't
      * know what to do with it.
      */
-    /* nexttoken(&p); */
+    /* nexttoken(&p, 0); */
     return 0;
 }
 

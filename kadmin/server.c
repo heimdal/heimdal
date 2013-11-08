@@ -318,9 +318,10 @@ kadmind_dispatch(void *kadm_handlep, krb5_boolean initial,
 	 *
 	 * a) allowed by sysadmin
 	 * b) it's for the principal him/herself and this was an
-	 *    initial ticket, but then, check with the password quality
-	 *    function.
+	 *    initial ticket
 	 * c) the user is on the CPW ACL.
+	 *
+	 * All changes are checked for password quality.
 	 */
 
 	if (krb5_config_get_bool_default(contextp->context, NULL, TRUE,
@@ -329,6 +330,12 @@ kadmind_dispatch(void *kadm_handlep, krb5_boolean initial,
 	    && krb5_principal_compare (contextp->context, contextp->caller,
 				       princ))
 	{
+	    ret = 0;
+	} else {
+	    ret = _kadm5_acl_check_permission(contextp, KADM5_PRIV_CPW, princ);
+	}
+
+	if (ret == 0) {
 	    krb5_data pwd_data;
 	    const char *pwd_reason;
 
@@ -339,10 +346,7 @@ kadmind_dispatch(void *kadm_handlep, krb5_boolean initial,
 						       princ, &pwd_data);
 	    if (pwd_reason != NULL)
 		ret = KADM5_PASS_Q_DICT;
-	    else
-		ret = 0;
-	} else
-	    ret = _kadm5_acl_check_permission(contextp, KADM5_PRIV_CPW, princ);
+        }
 
 	if(ret) {
 	    krb5_free_principal(contextp->context, princ);

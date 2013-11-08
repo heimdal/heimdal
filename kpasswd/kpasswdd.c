@@ -366,24 +366,8 @@ change (krb5_auth_context auth_context,
 	goto out;
     }
 
-    /*
-     * Check password quality if not changing as administrator
-     */
-
-    if (krb5_principal_compare(context, admin_principal, principal) == TRUE) {
-
-	pwd_reason = kadm5_check_password_quality (context, principal,
-						   pwd_data);
-	if (pwd_reason != NULL ) {
-	    krb5_warnx (context,
-			"%s didn't pass password quality check with error: %s",
-			client, pwd_reason);
-	    reply_priv (auth_context, s, sa, sa_size,
-			KRB5_KPASSWD_SOFTERROR, pwd_reason);
-	    goto out;
-	}
-	krb5_warnx (context, "Changing password for %s", client);
-    } else {
+    /* Check the ACL if this is an administrator password change. */
+    if (krb5_principal_compare(context, admin_principal, principal) != TRUE) {
 	ret = _kadm5_acl_check_permission(kadm5_handle, KADM5_PRIV_CPW,
 					  principal);
 	if (ret) {
@@ -394,8 +378,29 @@ change (krb5_auth_context auth_context,
 			KRB5_KPASSWD_HARDERROR, "permission denied");
 	    goto out;
 	}
-	krb5_warnx (context, "%s is changing password for %s", admin, client);
     }
+
+    /*
+     * Check password quality.  This is done regardless of whether the user is
+     * an administrator since the password quality hook is also how password
+     * history is managed, and administrator password changes should go into
+     * history.
+     */
+    pwd_reason = kadm5_check_password_quality (context, principal, pwd_data);
+    if (pwd_reason != NULL ) {
+	krb5_warnx (context,
+		    "%s didn't pass password quality check with error: %s",
+		    client, pwd_reason);
+	reply_priv (auth_context, s, sa, sa_size,
+		    KRB5_KPASSWD_SOFTERROR, pwd_reason);
+	goto out;
+    }
+
+    /* Log the change. */
+    if (krb5_principal_compare(context, admin_principal, principal) == TRUE)
+	krb5_warnx (context, "Changing password for %s", client);
+    else
+	krb5_warnx (context, "%s is changing password for %s", admin, client);
 
     ret = krb5_data_realloc(pwd_data, pwd_data->length + 1);
     if (ret) {

@@ -1153,7 +1153,7 @@ nexttoken(char **p)
 #endif
 
 static char *
-nexttoken(char **p, size_t len)
+nexttoken(char **p, size_t len, const char *what)
 {
     char *q;
 
@@ -1163,17 +1163,23 @@ nexttoken(char **p, size_t len)
     q = *p;
     *p += len;
     /* Must be followed by a delimiter (right?) */
-    if (strsep(p, " \t") != q + len)
+    if (strsep(p, " \t") != q + len) {
+        warnx("No tokens left in dump entry while looking for %s", what);
         return NULL;
+    }
+    if (*q == '\0')
+        warnx("Empty last token in dump entry while looking for %s", what);
     return q;
 }
 
 static size_t
-getdata(char **p, unsigned char *buf, size_t len)
+getdata(char **p, unsigned char *buf, size_t len, const char *what)
 {
     size_t i;
     int v;
-    char *q = nexttoken(p, 0);
+    char *q = nexttoken(p, 0, what);
+    if (q == NULL)
+        warnx("Failed to find hex-encoded binary data (%s) in dump", what);
     i = 0;
     while(*q && i < len) {
 	if(sscanf(q, "%02x", &v) != 1)
@@ -1185,23 +1191,27 @@ getdata(char **p, unsigned char *buf, size_t len)
 }
 
 static int
-getint(char **p)
+getint(char **p, const char *what)
 {
     int val;
-    char *q = nexttoken(p, 0);
-    if (!q)
+    char *q = nexttoken(p, 0, what);
+    if (!q) {
+        warnx("Failed to find a signed integer (%s) in dump", what);
         return -1;
+    }
     sscanf(q, "%d", &val);
     return val;
 }
 
 static unsigned int
-getuint(char **p)
+getuint(char **p, const char *what)
 {
     int val;
-    char *q = nexttoken(p, 0);
-    if (!q)
+    char *q = nexttoken(p, 0, what);
+    if (!q) {
+        warnx("Failed to find an unsigned integer (%s) in dump", what);
         return 0;
+    }
     sscanf(q, "%u", &val);
     return val;
 }
@@ -1246,59 +1256,72 @@ _hdb_mit_dump2mitdb_entry(krb5_context context, char *line, krb5_storage *sp)
 
     krb5_storage_set_byteorder(sp, KRB5_STORAGE_BYTEORDER_LE);
 
-    q = nexttoken(&p, 0);
+    q = nexttoken(&p, 0, "record type (princ or policy)");
     if (strcmp(q, "kdb5_util") == 0 || strcmp(q, "policy") == 0 ||
         strcmp(q, "princ") != 0) {
+        warnx("Supposed MIT dump entry does not start with 'kdb5_util', "
+              "'policy', nor 'princ'");
         return -1;
     }
-    if (getint(&p) != 38)
+    if (getint(&p, "constant '38'") != 38) {
+        warnx("Dump entry does not start with '38<TAB>'");
         return EINVAL;
+    }
 #define KDB_V1_BASE_LENGTH 38
     ret = krb5_store_int16(sp, KDB_V1_BASE_LENGTH);
     if (ret) return ret;
 
-    princ_len = getuint(&p); /* length of principal */
-    if (princ_len > (1<<15) - 1) return EINVAL;
-    num_tl_data = getuint(&p); /* number of tl-data */
-    num_key_data = getuint(&p); /* number of key-data */
-    getint(&p);  /* length of extra data */
-    princ = nexttoken(&p, (int)princ_len); /* principal name */
+    princ_len = getuint(&p, "principal name length");
+    if (princ_len > (1<<15) - 1) {
+        warnx("Principal name in dump entry too long (%llu)",
+              (unsigned long long)princ_len);
+        return EINVAL;
+    }
+    num_tl_data = getuint(&p, "number of TL data");
+    num_key_data = getuint(&p, "number of key data");
+    getint(&p, "5th field, length of 'extra data'");
+    princ = nexttoken(&p, (int)princ_len, "principal name");
+    if (princ == NULL) {
+        warnx("Failed to read principal name (expected length %llu)",
+              (unsigned long long)princ_len);
+        return -1;
+    }
 
-    attributes = getuint(&p); /* attributes */
+    attributes = getuint(&p, "attributes");
     ret = krb5_store_uint32(sp, attributes);
     if (ret) return ret;
 
-    tmp = getint(&p); /* max life */
+    tmp = getint(&p, "max life");
     CHECK_UINT(tmp);
     ret = krb5_store_uint32(sp, tmp);
     if (ret) return ret;
 
-    tmp = getint(&p); /* max renewable life */
+    tmp = getint(&p, "max renewable life");
     CHECK_UINT(tmp);
     ret = krb5_store_uint32(sp, tmp);
     if (ret) return ret;
 
-    tmp = getint(&p); /* expiration */
+    tmp = getint(&p, "expiration");
     CHECK_UINT(tmp);
     ret = krb5_store_uint32(sp, tmp);
     if (ret) return ret;
 
-    tmp = getint(&p); /* pw expiration */
+    tmp = getint(&p, "pw expiration");
     CHECK_UINT(tmp);
     ret = krb5_store_uint32(sp, tmp);
     if (ret) return ret;
 
-    tmp = getint(&p); /* last auth */
+    tmp = getint(&p, "last auth");
     CHECK_UINT(tmp);
     ret = krb5_store_uint32(sp, tmp);
     if (ret) return ret;
 
-    tmp = getint(&p); /* last failed auth */
+    tmp = getint(&p, "last failed auth");
     CHECK_UINT(tmp);
     ret = krb5_store_uint32(sp, tmp);
     if (ret) return ret;
 
-    tmp = getint(&p); /* fail auth count */
+    tmp = getint(&p,"fail auth count");
     CHECK_UINT(tmp);
     ret = krb5_store_uint32(sp, tmp);
     if (ret) return ret;
@@ -1323,12 +1346,21 @@ _hdb_mit_dump2mitdb_entry(krb5_context context, char *line, krb5_storage *sp)
 
     /* scan and write TL data */
     for (i = 0; i < num_tl_data; i++) {
+        char *reading_what;
         int tl_type, tl_length;
         unsigned char *buf;
 
-        tl_type = getint(&p); /* data type */
-        tl_length = getint(&p); /* data length */
+        tl_type = getint(&p, "TL data type");
+        tl_length = getint(&p, "data length");
 
+        if (asprintf(&reading_what, "TL data type %d (length %d)",
+                     tl_type, tl_length) < 0)
+            return ENOMEM;
+
+        /*
+         * XXX Leaking reading_what, but only on ENOMEM cases anyways,
+         * so we don't care.
+         */
         CHECK_UINT16(tl_type);
         ret = krb5_store_uint16(sp, tl_type);
         if (ret) return ret;
@@ -1339,13 +1371,15 @@ _hdb_mit_dump2mitdb_entry(krb5_context context, char *line, krb5_storage *sp)
         if (tl_length) {
             buf = malloc(tl_length);
             if (!buf) return ENOMEM;
-            if (getdata(&p, buf, tl_length) != tl_length) return EINVAL;
+            if (getdata(&p, buf, tl_length, reading_what) != tl_length)
+                return EINVAL;
             sz = krb5_storage_write(sp, buf, tl_length);
             free(buf);
             if (sz == -1) return ENOMEM;
         } else {
-            if (strcmp(nexttoken(&p, 0), "-1") != 0) return EINVAL;
+            if (strcmp(nexttoken(&p, 0, "'-1' field"), "-1") != 0) return EINVAL;
         }
+        free(reading_what);
     }
 
     for (i = 0; i < num_key_data; i++) {
@@ -1356,23 +1390,23 @@ _hdb_mit_dump2mitdb_entry(krb5_context context, char *line, krb5_storage *sp)
         int keylen;
         size_t k;
 
-        key_versions = getint(&p); /* key data version */
+        key_versions = getint(&p, "key data 'version'");
         CHECK_UINT16(key_versions);
         ret = krb5_store_int16(sp, key_versions);
         if (ret) return ret;
 
-        kvno = getint(&p);
+        kvno = getint(&p, "kvno");
         CHECK_UINT16(kvno);
         ret = krb5_store_int16(sp, kvno);
         if (ret) return ret;
 
         for (k = 0; k < key_versions; k++) {
-            keytype = getint(&p);
+            keytype = getint(&p, "enctype");
             CHECK_UINT16(keytype);
             ret = krb5_store_int16(sp, keytype);
             if (ret) return ret;
 
-            keylen = getint(&p);
+            keylen = getint(&p, "encrypted key length");
             CHECK_UINT16(keylen);
             ret = krb5_store_int16(sp, keylen);
             if (ret) return ret;
@@ -1380,12 +1414,18 @@ _hdb_mit_dump2mitdb_entry(krb5_context context, char *line, krb5_storage *sp)
             if (keylen) {
                 buf = malloc(keylen);
                 if (!buf) return ENOMEM;
-                if (getdata(&p, buf, keylen) != keylen) return EINVAL;
+                if (getdata(&p, buf, keylen, "key (or salt) data") != keylen)
+                    return EINVAL;
                 sz = krb5_storage_write(sp, buf, keylen);
                 free(buf);
                 if (sz == -1) return ENOMEM;
             } else {
-                if (strcmp(nexttoken(&p, 0), "-1") != 0) return EINVAL;
+                if (strcmp(nexttoken(&p, 0,
+                                     "'-1' zero-length key/salt field"),
+                           "-1") != 0) {
+                    warnx("Expected '-1' field because key/salt length is 0");
+                    return -1;
+                }
             }
         }
     }
@@ -1393,7 +1433,7 @@ _hdb_mit_dump2mitdb_entry(krb5_context context, char *line, krb5_storage *sp)
      * The rest is "extra data", but there's never any and we wouldn't
      * know what to do with it.
      */
-    /* nexttoken(&p, 0); */
+    /* nexttoken(&p, 0, "extra data"); */
     return 0;
 }
 

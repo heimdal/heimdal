@@ -97,6 +97,7 @@ nexttoken(char **p)
 
 #include <kadm5/admin.h>
 
+/* XXX This is broken: what if the princ name has a \n?! */
 static int
 my_fgetln(FILE *f, char **buf, size_t *sz, size_t *len)
 {
@@ -110,13 +111,13 @@ my_fgetln(FILE *f, char **buf, size_t *sz, size_t *len)
             *sz = 2048;
     }
     *len = 0;
-    while ((p = fgets(&(*buf)[*len], *sz, f))) {
-        if (strcspn(*buf, "\r\n") || feof(f)) {
-            *len = strlen(*buf);
+    while ((p = fgets(&(*buf)[*len], *sz - *len, f))) {
+        *len = strlen(*buf);
+        if (feof(f))
             return 0;
-        }
-        *len += strlen(&(*buf)[*len]); /* *len should be == *sz */
-        n = realloc(buf, *sz + (*sz >> 1));
+        if (strchr(*buf, '\n'))
+            return 0;
+        n = realloc(*buf, *sz + (*sz >> 1));
         if (!n) {
             free(*buf);
             *buf = NULL;
@@ -187,7 +188,10 @@ mit_prop_dump(void *arg, const char *file)
         krb5_storage_truncate(sp, 0);
         ret = _hdb_mit_dump2mitdb_entry(pd->context, line, sp);
         if (ret) {
-            warnx("line: %d: failed to parse; ignoring", lineno);
+            if (ret > 0)
+                warn("line: %d: failed to parse; ignoring", lineno);
+            else
+                warnx("line: %d: failed to parse; ignoring", lineno);
             continue;
         }
         ret = krb5_storage_to_data(sp, &kdb_ent);

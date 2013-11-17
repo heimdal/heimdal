@@ -261,6 +261,13 @@ ascii2ucs2le(const char *string, int up, struct ntlm_buf *buf)
 }
 
 /*
+ * Sizes in bytes
+ */
+
+#define SIZE_SEC_BUFFER		(2+2+4)
+#define SIZE_OS_VERSION		(8)
+
+/*
  *
  */
 
@@ -722,24 +729,28 @@ heim_ntlm_encode_type1(const struct ntlm_type1 *type1, struct ntlm_buf *data)
     struct sec_buffer domain, hostname;
     krb5_storage *out;
     uint32_t base, flags;
+    int ucs2 = 0;
 
     flags = type1->flags;
     base = 16;
 
+    if (flags & NTLM_NEG_UNICODE)
+	ucs2 = 1;
+
     if (type1->domain) {
-	base += 8;
+	base += SIZE_SEC_BUFFER;
 	flags |= NTLM_OEM_SUPPLIED_DOMAIN;
     }
     if (type1->hostname) {
-	base += 8;
+	base += SIZE_SEC_BUFFER;
 	flags |= NTLM_OEM_SUPPLIED_WORKSTATION;
     }
     if (flags & NTLM_NEG_VERSION)
-	base += 8; /* os */
+	base += SIZE_OS_VERSION; /* os */
 
     domain.offset = base;
     if (type1->domain) {
-	domain.length = len_string(0, type1->domain);
+	domain.length = len_string(ucs2, type1->domain);
 	domain.allocated = domain.length;
     } else {
 	domain.length = 0;
@@ -748,7 +759,7 @@ heim_ntlm_encode_type1(const struct ntlm_type1 *type1, struct ntlm_buf *data)
 
     hostname.offset = domain.allocated + domain.offset;
     if (type1->hostname) {
-	hostname.length = len_string(0, type1->hostname);
+	hostname.length = len_string(ucs2, type1->hostname);
 	hostname.allocated = hostname.length;
     } else {
 	hostname.length = 0;
@@ -771,9 +782,9 @@ heim_ntlm_encode_type1(const struct ntlm_type1 *type1, struct ntlm_buf *data)
 	CHECK(encode_os_version(out), 0);
     }
     if (type1->domain)
-	CHECK(put_string(out, 0, type1->domain), 0);
+	CHECK(put_string(out, ucs2, type1->domain), 0);
     if (type1->hostname)
-	CHECK(put_string(out, 0, type1->hostname), 0);
+	CHECK(put_string(out, ucs2, type1->hostname), 0);
 
     {
 	krb5_data d;
@@ -881,7 +892,7 @@ heim_ntlm_encode_type2(const struct ntlm_type2 *type2, struct ntlm_buf *data)
     base = 48;
 
     if (type2->flags & NTLM_NEG_VERSION)
-	base += 8;
+	base += SIZE_OS_VERSION;
 
     if (type2->flags & NTLM_NEG_UNICODE)
 	ucs2 = 1;
@@ -1003,12 +1014,12 @@ heim_ntlm_decode_type3(const struct ntlm_buf *buf,
 	min_offset = MIN(min_offset, sessionkey.offset);
 	CHECK(krb5_ret_uint32(in, &type3->flags), 0);
     }
-    if (min_offset >= 52 + 8 + 4 + 8) {
+    if (min_offset >= 52 + SIZE_SEC_BUFFER + 4 + SIZE_OS_VERSION) {
 	CHECK(krb5_ret_uint32(in, &type3->os[0]), 0);
 	CHECK(krb5_ret_uint32(in, &type3->os[1]), 0);
     }
-    if (min_offset >= 52 + 8 + 4 + 8 + 16) {
-	type3->mic_offset = 52 + 8 + 4 + 8;
+    if (min_offset >= 52 + SIZE_SEC_BUFFER + 4 + SIZE_OS_VERSION + 16) {
+	type3->mic_offset = 52 + SIZE_SEC_BUFFER + 4 + SIZE_OS_VERSION;
 	CHECK_SIZE(krb5_storage_read(in, type3->mic, sizeof(type3->mic)), sizeof(type3->mic));
     } else
 	type3->mic_offset = 0;
@@ -1063,7 +1074,7 @@ heim_ntlm_encode_type3(const struct ntlm_type3 *type3, struct ntlm_buf *data, si
     base += 8; /* sessionkey sec buf */
     base += 4; /* flags */
     if (type3->flags & NTLM_NEG_VERSION)
-	base += 8; /* os flags */
+	base += SIZE_OS_VERSION; /* os flags */
 
     if (mic_offset) {
 	*mic_offset = base;

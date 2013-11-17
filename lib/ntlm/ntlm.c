@@ -670,6 +670,7 @@ heim_ntlm_decode_type1(const struct ntlm_buf *buf, struct ntlm_type1 *data)
     uint32_t type;
     struct sec_buffer domain, hostname;
     krb5_storage *in;
+    int ucs2;
 
     memset(data, 0, sizeof(*data));
 
@@ -685,20 +686,25 @@ heim_ntlm_decode_type1(const struct ntlm_buf *buf, struct ntlm_type1 *data)
     CHECK(krb5_ret_uint32(in, &type), 0);
     CHECK(type, 1);
     CHECK(krb5_ret_uint32(in, &data->flags), 0);
-    if (data->flags & NTLM_OEM_SUPPLIED_DOMAIN)
-	CHECK(ret_sec_buffer(in, &domain), 0);
-    if (data->flags & NTLM_OEM_SUPPLIED_WORKSTATION)
-	CHECK(ret_sec_buffer(in, &hostname), 0);
-#if 0
-    if (domain.offset > 32) {
+
+    ucs2 = !!(data->flags & NTLM_NEG_UNICODE);
+
+    /*
+     * domain and hostname are unconditionally encoded regardless of
+     * NTLMSSP_NEGOTIATE_OEM_{HOSTNAME,WORKSTATION}_SUPPLIED flag
+     */
+    CHECK(ret_sec_buffer(in, &domain), 0);
+    CHECK(ret_sec_buffer(in, &hostname), 0);
+
+    if (data->flags & NTLM_NEG_VERSION) {
 	CHECK(krb5_ret_uint32(in, &data->os[0]), 0);
 	CHECK(krb5_ret_uint32(in, &data->os[1]), 0);
     }
-#endif
+
     if (data->flags & NTLM_OEM_SUPPLIED_DOMAIN)
-	CHECK(ret_sec_string(in, 0, &domain, &data->domain), 0);
+	CHECK(ret_sec_string(in, ucs2, &domain, &data->domain), 0);
     if (data->flags & NTLM_OEM_SUPPLIED_WORKSTATION)
-	CHECK(ret_sec_string(in, 0, &hostname, &data->hostname), 0);
+	CHECK(ret_sec_string(in, ucs2, &hostname, &data->hostname), 0);
 
 out:
     if (in)
@@ -748,20 +754,22 @@ heim_ntlm_encode_type1(const struct ntlm_type1 *type1, struct ntlm_buf *data)
     if (flags & NTLM_NEG_VERSION)
 	base += SIZE_OS_VERSION; /* os */
 
-    domain.offset = base;
     if (type1->domain) {
+	domain.offset = base;
 	domain.length = len_string(ucs2, type1->domain);
 	domain.allocated = domain.length;
     } else {
+	domain.offset = 0;
 	domain.length = 0;
 	domain.allocated = 0;
     }
 
-    hostname.offset = domain.allocated + domain.offset;
     if (type1->hostname) {
+	hostname.offset = domain.allocated + domain.offset;
 	hostname.length = len_string(ucs2, type1->hostname);
 	hostname.allocated = hostname.length;
     } else {
+	hostname.offset = 0;
 	hostname.length = 0;
 	hostname.allocated = 0;
     }
@@ -778,6 +786,7 @@ heim_ntlm_encode_type1(const struct ntlm_type1 *type1, struct ntlm_buf *data)
 
     CHECK(store_sec_buffer(out, &domain), 0);
     CHECK(store_sec_buffer(out, &hostname), 0);
+
     if (flags & NTLM_NEG_VERSION) {
 	CHECK(encode_os_version(out), 0);
     }

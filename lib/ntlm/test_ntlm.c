@@ -41,13 +41,14 @@
 #include <krb5-types.h> /* or <inttypes.h> */
 #include <heimntlm.h>
 
-#ifdef ENABLE_NTLM
+static int dumpdata_flag;
 
 static int
 test_parse(void)
 {
     const char *user = "foo",
 	*domain = "mydomain",
+	*hostname = "myhostname",
 	*password = "digestpassword",
 	*target = "DOMAIN";
     struct ntlm_type1 type1;
@@ -60,7 +61,7 @@ test_parse(void)
 
     type1.flags = NTLM_NEG_UNICODE|NTLM_NEG_TARGET|NTLM_NEG_NTLM|NTLM_NEG_VERSION;
     type1.domain = rk_UNCONST(domain);
-    type1.hostname = NULL;
+    type1.hostname = rk_UNCONST(hostname);
     type1.os[0] = 0;
     type1.os[1] = 0;
 
@@ -70,10 +71,19 @@ test_parse(void)
 
     memset(&type1, 0, sizeof(type1));
 
+    if (dumpdata_flag)
+	rk_dumpdata("ntlm-type1", data.data, data.length);
+
     ret = heim_ntlm_decode_type1(&data, &type1);
     free(data.data);
     if (ret)
 	errx(1, "heim_ntlm_encode_type1");
+
+    if (strcmp(type1.domain, domain) != 0)
+	errx(1, "parser got domain wrong: %s", type1.domain);
+
+    if (strcmp(type1.hostname, hostname) != 0)
+	errx(1, "parser got hostname wrong: %s", type1.hostname);
 
     heim_ntlm_free_type1(&type1);
 
@@ -96,6 +106,9 @@ test_parse(void)
 	errx(1, "heim_ntlm_encode_type2");
 
     memset(&type2, 0, sizeof(type2));
+
+    if (dumpdata_flag)
+	rk_dumpdata("ntlm-type2", data.data, data.length);
 
     ret = heim_ntlm_decode_type2(&data, &type2);
     free(data.data);
@@ -132,6 +145,9 @@ test_parse(void)
     free(type3.ntlm.data);
 
     memset(&type3, 0, sizeof(type3));
+
+    if (dumpdata_flag)
+	rk_dumpdata("ntlm-type3", data.data, data.length);
 
     ret = heim_ntlm_decode_type3(&data, 1, &type3);
     free(data.data);
@@ -532,7 +548,6 @@ test_jp(void)
     return 0;
 }
 
-#endif
 
 static int verbose_flag = 0;
 static int version_flag = 0;
@@ -570,36 +585,33 @@ main(int argc, char **argv)
 	exit(0);
     }
 
-#ifdef ENABLE_NTLM
-
     if (verbose_flag)
 	printf("test_parse\n");
-    ret += test_parse();
+    ret |= test_parse();
 
     if (verbose_flag)
 	printf("test_keys\n");
-    ret += test_keys();
+    ret |= test_keys();
 
     if (verbose_flag)
 	printf("test_ntlm2_session_resp\n");
-    ret += test_ntlm2_session_resp();
+    ret |= test_ntlm2_session_resp();
 
     if (verbose_flag)
 	printf("test_targetinfo\n");
-    ret += test_targetinfo();
+    ret |= test_targetinfo();
 	
     if (verbose_flag)
 	printf("test_ntlmv2\n");
-    ret += test_ntlmv2();
+    ret |= test_ntlmv2();
 
     if (verbose_flag)
 	printf("test_string2key\n");
-    ret += test_string2key();
+    ret |= test_string2key();
 
     if (verbose_flag)
 	printf("test_jp\n");
-    ret += test_jp();
+    ret |= test_jp();
 
-#endif
     return ret;
 }

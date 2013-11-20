@@ -131,7 +131,7 @@ test_libntlm_v1(int flags)
 	free(key.data);
     }
 
-    ret = heim_ntlm_encode_type3(&type3, &data);
+    ret = heim_ntlm_encode_type3(&type3, &data, NULL);
     if (ret)
 	errx(1, "heim_ntlm_encode_type3");
 
@@ -260,7 +260,7 @@ test_libntlm_v2(int flags)
 	}
     }
 
-    ret = heim_ntlm_encode_type3(&type3, &data);
+    ret = heim_ntlm_encode_type3(&type3, &data, NULL);
     if (ret)
 	errx(1, "heim_ntlm_encode_type3");
 

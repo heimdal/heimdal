@@ -473,7 +473,7 @@ _gss_ntlm_init_sec_context
 
 
 
-	ret = heim_ntlm_encode_type3(&type3, &data);
+	ret = heim_ntlm_encode_type3(&type3, &data, NULL);
 	free(type3.sessionkey.data);
 	if (type3.lm.data)
 	    free(type3.lm.data);

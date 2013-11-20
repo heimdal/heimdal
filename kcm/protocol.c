@@ -1629,7 +1629,7 @@ kcm_op_do_ntlm(krb5_context context,
     }
 #endif
 
-    ret = heim_ntlm_encode_type3(&type3, &ndata);
+    ret = heim_ntlm_encode_type3(&type3, &ndata, NULL);
     if (ret)
 	goto error;
 

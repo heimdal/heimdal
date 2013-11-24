@@ -2,9 +2,10 @@ prefix=@prefix@
 exec_prefix=@exec_prefix@
 libdir=@libdir@
 includedir=@includedir@
-vendor=Heimdal
 
-Name: kadm-client
+Name: heimdal-kadm-client
 Description: Kadmin client library.
 Version: @VERSION@
-Depends: heimdal-kadm-client
+Requires: heimdal-gssapi
+Libs: -L${libdir} -lkadm5clnt
+Cflags: -I${includedir}

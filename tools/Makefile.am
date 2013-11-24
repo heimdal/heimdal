@@ -9,6 +9,8 @@ pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = \
 	heimdal-gssapi.pc \
 	heimdal-krb5.pc \
+	heimdal-kadm-client.pc \
+	heimdal-kadm-server.pc \
 	kafs.pc \
 	kadm-client.pc \
 	kadm-server.pc \

@@ -837,12 +837,12 @@ tgs_make_reply(krb5_context context,
     }
     if(et.renew_till){
 	time_t renew;
-	renew = *et.renew_till - et.authtime;
+	renew = *et.renew_till - *et.starttime;
 	if(client && client->entry.max_renew)
 	    renew = min(renew, *client->entry.max_renew);
 	if(server->entry.max_renew)
 	    renew = min(renew, *server->entry.max_renew);
-	*et.renew_till = et.authtime + renew;
+	*et.renew_till = *et.starttime + renew;
     }
 
     if(et.renew_till){

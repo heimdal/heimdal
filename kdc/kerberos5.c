@@ -1893,6 +1893,13 @@ _kdc_as_rep(kdc_request_t r,
 
 	log_patypes(context, config, req->padata);
 
+	if (r->client->entry.flags.locked_out) {
+	    ret = KRB5KDC_ERR_CLIENT_REVOKED;
+	    kdc_log(context, config, 0,
+		    "Client (%s) is locked out", r->client_name);
+	    goto out;
+	}
+
 	/* Check if preauth matching */
 
 	for (n = 0; !found_pa && n < sizeof(pat) / sizeof(pat[0]); n++) {

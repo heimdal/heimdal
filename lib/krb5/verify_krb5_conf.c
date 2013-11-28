@@ -533,6 +533,8 @@ struct entry kdc_entries[] = {
     { "pkinit_allow_proxy_certificate", krb5_config_string, NULL, 0 },
     { "hdb-ldap-create-base", krb5_config_string, NULL, 0 },
     { "v4-realm", krb5_config_string, NULL, 0 },
+    { "enable-digest", krb5_config_string, check_boolean, 0 },
+    { "digests_allowed", krb5_config_string, NULL, 0 },
     { NULL, 0, NULL, 0 }
 };
 
@@ -541,6 +543,7 @@ struct entry kadmin_entries[] = {
     { "default_keys", krb5_config_string, NULL, 0 },
     { "use_v4_salt", krb5_config_string, NULL, 0 },
     { "require-preauth", krb5_config_string, check_boolean, 0 },
+    { "save-password", krb5_config_string, check_boolean, 0 },
     { NULL, 0, NULL, 0 }
 };
 struct entry log_strings[] = {

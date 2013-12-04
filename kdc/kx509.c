@@ -161,8 +161,6 @@ build_certificate(krb5_context context,
     if (ret)
 	goto out;
 
-    krb5_xfree(name);
-
     {
 	hx509_certs certs;
 	hx509_query *q;
@@ -263,6 +261,9 @@ build_certificate(krb5_context context,
     hx509_cert_free(cert);
     if (ret)
 	goto out;
+
+    /* cleanup on success */
+    krb5_xfree(name);
 
     return 0;
 out:

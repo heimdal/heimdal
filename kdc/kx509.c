@@ -342,6 +342,7 @@ _kdc_do_kx509(krb5_context context,
     Kx509Response rep;
     size_t size;
     krb5_keyblock *key = NULL;
+    krb5_boolean def_bool;
 
     krb5_data_zero(reply);
     memset(&rep, 0, sizeof(rep));
@@ -373,6 +374,18 @@ _kdc_do_kx509(krb5_context context,
     ret = krb5_ticket_get_client(context, ticket, &cprincipal);
     if (ret)
 	goto out;
+
+    def_bool = krb5_config_get_bool_default(context, NULL, TRUE, "kdc",
+                                            "require_initial_kca_tickets",
+                                            NULL);
+    if (!ticket->ticket.flags.initial &&
+        krb5_config_get_bool_default(context, NULL, def_bool, "kdc",
+                                      krb5_principal_get_realm(context,
+                                                               cprincipal),
+                                      "require_initial_kca_tickets", NULL)) {
+        ret = KRB5KDC_ERR_POLICY;
+        goto out;
+    }
 
     ret = krb5_unparse_name(context, cprincipal, &cname);
     if (ret)

@@ -110,10 +110,13 @@ Commands include:
 .Op Fl Fl attributes= Ns Ar attributes
 .Op Fl Fl expiration-time= Ns Ar time
 .Op Fl Fl pw-expiration-time= Ns Ar time
+.Op Fl Fl policy= Ns Ar policy-name
 .Ar principal...
 .Bd -ragged -offset indent
 Adds a new principal to the database. The options not passed on the
 command line will be promped for.
+The only policy supported by Heimdal servers is
+.Q1 default .
 .Ed
 .Pp
 .Nm add_enctype
@@ -201,11 +204,15 @@ and
 .Op Fl Fl expiration-time= Ns Ar time
 .Op Fl Fl pw-expiration-time= Ns Ar time
 .Op Fl Fl kvno= Ns Ar number
+.Op Fl Fl policy= Ns Ar policy-name
 .Ar principal...
 .Bd -ragged -offset indent
 Modifies certain attributes of a principal. If run without command
 line options, you will be prompted. With command line options, it will
 only change the ones specified.
+.Pp
+Only policy supported by Heimdal is
+.Q1 default .
 .Pp
 Possible attributes are:
 .Li new-princ ,

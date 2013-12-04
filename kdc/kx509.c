@@ -143,21 +143,25 @@ build_certificate(krb5_context context,
 		  krb5_principal principal,
 		  krb5_data *certificate)
 {
+    char *name = NULL;
     hx509_ca_tbs tbs = NULL;
     hx509_env env = NULL;
     hx509_cert cert = NULL;
     hx509_cert signer = NULL;
     int ret;
 
-    if (krb5_principal_get_comp_string(context, principal, 1) != NULL) {
-	kdc_log(context, config, 0, "Principal is not a user");
-	return EINVAL;
-    }
-
-    ret = hx509_env_add(context->hx509ctx, &env, "principal-name",
-			krb5_principal_get_comp_string(context, principal, 0));
+    ret = krb5_unparse_name_flags(context, principal,
+				  KRB5_PRINCIPAL_UNPARSE_NO_REALM,
+				  &name);
     if (ret)
 	goto out;
+
+    ret = hx509_env_add(context->hx509ctx, &env, "principal-name",
+			name);
+    if (ret)
+	goto out;
+
+    krb5_xfree(name);
 
     {
 	hx509_certs certs;
@@ -262,6 +266,8 @@ build_certificate(krb5_context context,
 
     return 0;
 out:
+    if (name)
+	krb5_xfree(name);
     if (env)
 	hx509_env_free(&env);
     if (tbs)

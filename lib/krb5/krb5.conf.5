@@ -586,7 +586,42 @@ Should the kdc answer digest requests. The default is FALSE.
 .It Li digests_allowed = Va list of digests
 Specifies the digests the kdc will reply to. The default is
 .Li ntlm-v2 .
+.It Li kx509_ca = Va file
+Specifies the PEM credentials for the kx509 certification authority.
+.It Li require_initial_kca_tickets = Va boolean
+Specified whether to require that tickets for the
+.Li kca_service
+service principal be INITIAL.
+This may be set on a per-realm basis as well as globally.
+Defaults to true for the global setting.
+.It Li kx509_include_pkinit_san = Va boolean
+If true then the kx509 client principal's name and realm will be
+included in an
+.Li id-pkinit-san
+certificate extension.
+This can be set on a per-realm basis as well as globally.
+Defaults to true for the global setting.
+.It Li kx509_template = Va file
+Specifies the PEM file with a template for the certificates to be
+issued.
+The following variables can be interpolated in the subject name using
+${variable} syntax:
+.Bl -tag -width "xxx" -offset indent
+.It principal-name
+The full name of the kx509 client principal.
+.It principal-name-without-realm
+The full name of the kx509 client principal, excluding the realm name.
+.It principal-name-realm
+The name of the client principal's realm.
 .El
+.El
+The 
+.Li kx509 ,
+.Li kx509_template ,
+.Li kx509_include_pkinit_san ,
+and
+.Li require_initial_kca_tickets
+parameters may be set on a per-realm basis as well.
 .It Li [kadmin]
 .Bl -tag -width "xxx" -offset indent
 .It Li password_lifetime = Va time

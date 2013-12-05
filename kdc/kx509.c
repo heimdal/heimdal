@@ -144,10 +144,12 @@ build_certificate(krb5_context context,
 		  krb5_data *certificate)
 {
     char *name = NULL;
+    const char *kx509_ca;
     hx509_ca_tbs tbs = NULL;
     hx509_env env = NULL;
     hx509_cert cert = NULL;
     hx509_cert signer = NULL;
+    krb5_boolean def_bool;
     int ret;
 
     ret = krb5_unparse_name_flags(context, principal,
@@ -156,10 +158,38 @@ build_certificate(krb5_context context,
     if (ret)
 	goto out;
 
+    ret = hx509_env_add(context->hx509ctx, &env, "principal-name-without-realm",
+			name);
+    krb5_xfree(name);
+    name = NULL;
+    if (ret)
+	goto out;
+
+    /*
+     * Include the realm in the principal-name env var; the template
+     * might not use $principal-name-realm after all.
+     */
+    ret = krb5_unparse_name(context, principal, &name);
+    if (ret)
+	goto out;
+
     ret = hx509_env_add(context->hx509ctx, &env, "principal-name",
 			name);
     if (ret)
 	goto out;
+
+    ret = hx509_env_add(context->hx509ctx, &env, "principal-name-realm",
+			krb5_principal_get_realm(context, principal));
+    if (ret)
+	goto out;
+
+    /* Pick an issuer based on the crealm if we can */
+    kx509_ca = krb5_config_get_string(context, NULL, "kdc",
+                                      krb5_principal_get_realm(context,
+                                                               principal),
+                                      "kx509_ca", NULL);
+    if (kx509_ca == NULL)
+        kx509_ca = config->kx509_ca;
 
     {
 	hx509_certs certs;
@@ -245,6 +275,19 @@ build_certificate(krb5_context context,
 	    goto out;
     }
 
+    def_bool = krb5_config_get_bool_default(context, NULL, TRUE, "kdc",
+                                            "kx509_include_pkinit_san",
+                                            NULL);
+    if (krb5_config_get_bool_default(context, NULL, def_bool, "kdc",
+                                     krb5_principal_get_realm(context,
+                                                              principal),
+                                     "kx509_include_pkinit_san",
+                                     NULL)) {
+        ret = hx509_ca_tbs_add_san_pkinit(context->hx509ctx, tbs, name);
+        if (ret)
+            goto out;
+    }
+
     hx509_ca_tbs_set_notAfter(context->hx509ctx, tbs, endtime);
 
     hx509_ca_tbs_subject_expand(context->hx509ctx, tbs, env);
@@ -299,6 +342,7 @@ _kdc_do_kx509(krb5_context context,
     Kx509Response rep;
     size_t size;
     krb5_keyblock *key = NULL;
+    krb5_boolean def_bool;
 
     krb5_data_zero(reply);
     memset(&rep, 0, sizeof(rep));
@@ -330,6 +374,18 @@ _kdc_do_kx509(krb5_context context,
     ret = krb5_ticket_get_client(context, ticket, &cprincipal);
     if (ret)
 	goto out;
+
+    def_bool = krb5_config_get_bool_default(context, NULL, TRUE, "kdc",
+                                            "require_initial_kca_tickets",
+                                            NULL);
+    if (!ticket->ticket.flags.initial &&
+        krb5_config_get_bool_default(context, NULL, def_bool, "kdc",
+                                      krb5_principal_get_realm(context,
+                                                               cprincipal),
+                                      "require_initial_kca_tickets", NULL)) {
+        ret = KRB5KDC_ERR_POLICY;
+        goto out;
+    }
 
     ret = krb5_unparse_name(context, cprincipal, &cname);
     if (ret)

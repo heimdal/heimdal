@@ -535,6 +535,9 @@ struct entry kdc_entries[] = {
     { "v4-realm", krb5_config_string, NULL, 0 },
     { "enable-digest", krb5_config_string, check_boolean, 0 },
     { "digests_allowed", krb5_config_string, NULL, 0 },
+    { "require_initial_kca_tickets", krb5_config_string, check_boolean, 0 },
+    { "kx509_include_pkinit_san", krb5_config_string, check_boolean, 0 },
+    { "kx509_ca", krb5_config_string, NULL, 0 },
     { NULL, 0, NULL, 0 }
 };
 

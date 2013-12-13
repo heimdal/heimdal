@@ -244,9 +244,9 @@ resolve_origin(const char *di)
 #ifdef _WIN32
     p = strrchr(dname, '\\');
     if (p == NULL)
-#endif
-
+#else
     p = strrchr(dname, '/');
+#endif
     if (p) {
         if (asprintf(&path, "%.*s%s", (int) (p - dname), dname, di) == -1)
             return NULL;

@@ -245,12 +245,16 @@ resolve_origin(const char *di)
     p = strrchr(dname, '\\');
     if (p == NULL)
 #endif
-    p = strrchr(dname, '/');
-    if (p)
-        *p = '\0';
 
-    if (asprintf(&path, "%s%s", dname, di) == -1)
-        return NULL;
+    p = strrchr(dname, '/');
+    if (p) {
+        if (asprintf(&path, "%.*s%s", (int) (p - dname), dname, di) == -1)
+            return NULL;
+    } else {
+        if (asprintf(&path, "%s%s", dname, di) == -1)
+            return NULL;
+    }
+
     return path;
 #endif
 }

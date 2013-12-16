@@ -7,6 +7,7 @@ libkadm5srv_la_LDFLAGS = -version-info 8:1:0
 libkadm5clnt_la_LDFLAGS = -version-info 7:1:0
 
 if versionscript
+libkadm5clnt_la_LDFLAGS += $(LDFLAGS_VERSION_SCRIPT)$(srcdir)/version-script-client.map
 libkadm5srv_la_LDFLAGS += $(LDFLAGS_VERSION_SCRIPT)$(srcdir)/version-script.map
 endif
 

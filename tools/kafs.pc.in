@@ -6,5 +6,5 @@ includedir=@includedir@
 Name: kafs
 Description: Libraries for application that uses kafs.
 Version: @VERSION@
-Requires: krb5
+Requires: heimdal-krb5
 Libs: -lkafs

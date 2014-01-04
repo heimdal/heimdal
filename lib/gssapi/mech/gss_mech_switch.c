@@ -315,6 +315,7 @@ _gss_load_mech(void)
 			goto bad;
 
 		m->gm_so = so;
+		m->gm_mech_oid = mech_oid;
 		m->gm_mech.gm_mech_oid = mech_oid;
 		m->gm_mech.gm_flags = 0;
 		m->gm_mech.gm_compat = calloc(1, sizeof(struct gss_mech_compat_desc_struct));

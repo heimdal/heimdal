@@ -650,30 +650,40 @@ kuserok_user_k5login_plug_f(void *plug_ctx, krb5_context context,
     path[strlen(path) - strlen(".d")] = '\0';
     ret = check_one_file(context, path, luser, FALSE, principal, result);
 
-    if (ret == 0 &&
-	((flags & KUSEROK_K5LOGIN_IS_AUTHORITATIVE) || *result == TRUE)) {
+    /*
+     * A match in ~/.k5login is sufficient.  A non-match, falls through to the
+     * .k5login.d code below.
+     */
+    if (ret == 0 && *result == TRUE) {
 	free(path);
 	return 0;
     }
-
     if (ret != ENOENT)
 	found_file = TRUE;
 
-    path[strlen(path)] = '.'; /* put back the .d; clever|hackish? you decide */
+    /*
+     * A match in ~/.k5login.d/somefile is sufficient.  A non-match, falls
+     * through to the code below that handles negative results.
+     *
+     * XXX: put back the .d; clever|hackish? you decide
+     */
+    path[strlen(path)] = '.';
     ret = check_directory(context, path, luser, FALSE, principal, result);
     free(path);
-    if (ret == 0 &&
-	((flags & KUSEROK_K5LOGIN_IS_AUTHORITATIVE) || *result == TRUE))
+    if (ret == 0 && *result == TRUE)
 	return 0;
-
     if (ret != ENOENT && ret != ENOTDIR)
 	found_file = TRUE;
 
+    /*
+     * When either ~/.k5login or ~/.k5login.d/ exists, but neither matches
+     * and we're authoritative, we're done.  Otherwise, give other plugins
+     * a chance.
+     */
     *result = FALSE;
-    if (found_file == FALSE)
-	return KRB5_PLUGIN_NO_HANDLE;
-
-    return 0;
+    if (found_file && (flags & KUSEROK_K5LOGIN_IS_AUTHORITATIVE))
+	return 0;
+    return KRB5_PLUGIN_NO_HANDLE;
 #endif
 }
 

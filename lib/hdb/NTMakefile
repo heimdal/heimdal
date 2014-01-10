@@ -149,13 +149,17 @@ clean::
 
 test:: test-binaries test-run
 
-test-binaries: $(OBJ)\test_dbinfo.exe $(OBJ)\test_hdbkeys.exe
+test-binaries: $(OBJ)\test_dbinfo.exe $(OBJ)\test_hdbkeys.exe $(OBJ)\test_hdbplugin.exe
 
 $(OBJ)\test_dbinfo.exe: $(OBJ)\test_dbinfo.obj $(LIBHDB) $(LIBHEIMDAL) $(LIBROKEN) $(LIBVERS)
 	$(EXECONLINK)
 	$(EXEPREP_NODIST)
 
 $(OBJ)\test_hdbkeys.exe: $(OBJ)\test_hdbkeys.obj $(LIBHDB) $(LIBHEIMDAL) $(LIBROKEN) $(LIBVERS)
+	$(EXECONLINK)
+	$(EXEPREP_NODIST)
+
+$(OBJ)\test_hdbplugin.exe: $(OBJ)\test_hdbplugin.obj $(LIBHDB) $(LIBHEIMDAL) $(LIBROKEN) $(LIBVERS)
 	$(EXECONLINK)
 	$(EXEPREP_NODIST)
 

@@ -44,6 +44,9 @@
 static krb5_error_code LDAP__connect(krb5_context context, HDB *);
 static krb5_error_code LDAP_close(krb5_context context, HDB *);
 
+static krb5_error_code hdb_ldap_create(krb5_context context, HDB **, const char *);
+static krb5_error_code hdb_ldapi_create(krb5_context context, HDB **, const char *);
+
 static krb5_error_code
 LDAP_message2entry(krb5_context context, HDB * db, LDAPMessage * msg,
 		   int flags, hdb_entry_ex * ent);
@@ -803,10 +806,10 @@ need_quote(unsigned char c)
 	(c == 0x7f);
 }
 
-const static char hexchar[] = "0123456789ABCDEF";
+static const char hexchar[] = "0123456789ABCDEF";
 
 static krb5_error_code
-escape_value(krb5_context context, const unsigned char *unquoted, char **quoted)
+escape_value(krb5_context context, const char *unquoted, char **quoted)
 {
     size_t i, len;
 
@@ -822,7 +825,7 @@ escape_value(krb5_context context, const unsigned char *unquoted, char **quoted)
     }
 
     for (i = 0; unquoted[0] ; unquoted++) {
-	if (need_quote((unsigned char *)unquoted[0])) {
+	if (need_quote((unsigned char)unquoted[0])) {
 	    (*quoted)[i++] = '\\';
 	    (*quoted)[i++] = hexchar[(unquoted[0] >> 4) & 0xf];
 	    (*quoted)[i++] = hexchar[(unquoted[0]     ) & 0xf];
@@ -1019,7 +1022,6 @@ LDAP_message2entry(krb5_context context, HDB * db, LDAPMessage * msg,
 
     keys = ldap_get_values_len(HDB2LDAP(db), msg, "krb5Key");
     if (keys != NULL) {
-	int i;
 	size_t l;
 
 	ent->entry.keys.len = ldap_count_values_len(keys);
@@ -1051,8 +1053,6 @@ LDAP_message2entry(krb5_context context, HDB * db, LDAPMessage * msg,
 
     vals = ldap_get_values_len(HDB2LDAP(db), msg, "krb5EncryptionType");
     if (vals != NULL) {
-	int i;
-
 	ent->entry.etypes = malloc(sizeof(*(ent->entry.etypes)));
 	if (ent->entry.etypes == NULL) {
 	    ret = ENOMEM;
@@ -1095,8 +1095,6 @@ LDAP_message2entry(krb5_context context, HDB * db, LDAPMessage * msg,
     ret = LDAP_get_string_value(db, msg, "sambaNTPassword", &ntPasswordIN);
     if (ret == 0 && have_arcfour == 0) {
 	unsigned *etypes;
-	Key *keys;
-	int i;
 
 	keys = realloc(ent->entry.keys.val,
 		       (ent->entry.keys.len + 1) * sizeof(ent->entry.keys.val[0]));
@@ -1342,7 +1340,6 @@ LDAP_message2entry(krb5_context context, HDB * db, LDAPMessage * msg,
 
 	*/
 
-	int i;
 	int flags_len = strlen(samba_acct_flags);
 
 	if (flags_len < 2)
@@ -1999,13 +1996,14 @@ hdb_ldapi_create(krb5_context context, HDB ** db, const char *arg)
 #ifdef OPENLDAP_MODULE
 
 
-static krb5_error_code	KRB5_LIB_CALL *
+static krb5_error_code
 init(krb5_context context, void **ctx)
 {
     *ctx = NULL;
+    return 0;
 }
 
-static void KRB5_LIB_CALL *
+static void
 fini(void *ctx)
 {
 }
@@ -2018,7 +2016,7 @@ struct hdb_method hdb_ldap_interface = {
     hdb_ldap_create
 };
 
-struct hdb_so_method hdb_ldapi_interface = {
+struct hdb_method hdb_ldapi_interface = {
     HDB_INTERFACE_VERSION,
     init,
     fini,

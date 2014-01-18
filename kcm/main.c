@@ -35,17 +35,9 @@
 
 RCSID("$Id$");
 
-sig_atomic_t exit_flag = 0;
-
 krb5_context kcm_context = NULL;
 
 const char *service_name = "org.h5l.kcm";
-
-static RETSIGTYPE
-sigterm(int sig)
-{
-    exit_flag = 1;
-}
 
 static RETSIGTYPE
 sigusr1(int sig)
@@ -78,13 +70,9 @@ main(int argc, char **argv)
 	struct sigaction sa;
 
 	sa.sa_flags = 0;
-	sa.sa_handler = sigterm;
+	sa.sa_handler = sigusr1;
 	sigemptyset(&sa.sa_mask);
 
-	sigaction(SIGINT, &sa, NULL);
-	sigaction(SIGTERM, &sa, NULL);
-
-	sa.sa_handler = sigusr1;
 	sigaction(SIGUSR1, &sa, NULL);
 
 	sa.sa_handler = sigusr2;
@@ -94,8 +82,6 @@ main(int argc, char **argv)
 	sigaction(SIGPIPE, &sa, NULL);
     }
 #else
-    signal(SIGINT, sigterm);
-    signal(SIGTERM, sigterm);
     signal(SIGUSR1, sigusr1);
     signal(SIGUSR2, sigusr2);
     signal(SIGPIPE, SIG_IGN);

@@ -24,6 +24,7 @@ asn1_*.[cx]
 *_asn1-priv.h
 *_asn1-priv.hx
 *_asn1-template.c
+*_asn1-template.x
 *_asn1_files
 *_err.[ch]
 !/lib/com_err/com_err.[ch]
@@ -50,12 +51,14 @@ asn1_*.[cx]
 /ltmain.sh
 /missing
 /setupbuild.cmd
+/test-driver
 /ylwrap
 
 /lib/libedit/aclocal.m4
 /lib/libedit/autom4te.cache
 /lib/libedit/compile
 /lib/libedit/config.guess
+/lib/libedit/config.h
 /lib/libedit/config.log
 /lib/libedit/config.status
 /lib/libedit/config.sub
@@ -67,13 +70,21 @@ asn1_*.[cx]
 /lib/libedit/missing
 /lib/libedit/setupbuild.cmd
 /lib/libedit/ylwrap
-
+/lib/libedit/src/common.h
+/lib/libedit/src/emacs.h
+/lib/libedit/src/fcns.c
+/lib/libedit/src/fcns.h
+/lib/libedit/src/help.c
+/lib/libedit/src/help.h
+/lib/libedit/src/vi.h
+/lib/libedit/stamp-h1
 
 # Files in subdirectories.
 
 /admin/ktutil
 /appl/afsutil/afslog
 /appl/afsutil/pagsh
+/appl/dbutils/bsearch
 /appl/ftp/ftp/ftp
 /appl/ftp/ftpd/ftpcmd.c
 /appl/ftp/ftpd/ftpd
@@ -153,6 +164,7 @@ asn1_*.[cx]
 /kdc/kdc-protos.h
 /kdc/kdc-private.h
 /kdc/kdc-replay
+/kdc/kdc-tester
 /kdc/kstash
 /kdc/string2key
 /kpasswd/kpasswd
@@ -289,6 +301,12 @@ asn1_*.[cx]
 /tests/db/krb5.conf-sqlite
 /tests/gss/krb5.conf
 /tests/java/krb5.conf
+/tests/kdc/kdc-tester4.json
+/tests/kdc/krb5-authz.conf
+/tests/kdc/krb5-authz2.conf
+/tests/kdc/krb5-canon.conf
+/tests/kdc/krb5-canon2.conf
+/tests/kdc/krb5-hdb-mitdb.conf
 /tests/kdc/krb5-pkinit-win.conf
 /tests/kdc/krb5-pkinit.conf
 /tests/kdc/krb5-slave.conf
@@ -297,4 +315,12 @@ asn1_*.[cx]
 /tests/ldap/krb5.conf
 /tests/plugin/krb5.conf
 /tools/heimdal-gssapi.pc
+/tools/heimdal-kadm-client.pc
+/tools/heimdal-kadm-server.pc
+/tools/heimdal-krb5.pc
+/tools/kadm-client.pc
+/tools/kadm-server.pc
+/tools/kafs.pc
+/tools/krb5-gssapi.pc
+/tools/krb5.pc
 /tools/krb5-config

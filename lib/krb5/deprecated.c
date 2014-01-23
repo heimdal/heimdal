@@ -31,6 +31,11 @@
  * SUCH DAMAGE.
  */
 
+#ifdef __GNUC__
+/* For some GCCs there's no way to shut them up about deprecated functions */
+#define KRB5_DEPRECATED_FUNCTION(x)
+#endif
+
 #include "krb5_locl.h"
 
 #undef __attribute__

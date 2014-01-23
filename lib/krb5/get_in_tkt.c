@@ -31,6 +31,8 @@
  * SUCH DAMAGE.
  */
 
+#define KRB5_DEPRECATED_FUNCTION(x)
+
 #include "krb5_locl.h"
 
 #ifndef HEIMDAL_SMALLER

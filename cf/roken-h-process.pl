@@ -1,10 +1,10 @@
 #!/usr/bin/perl
 
-require 'getopts.pl';
+use Getopt::Std;
 
 my $debug = 0;
 
-Getopts('dc:p:o:') || die "foo";
+getopts('dc:p:o:') || die "foo";
 
 if ($opt_d) {
     $debug = 1;

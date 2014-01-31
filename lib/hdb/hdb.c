@@ -391,10 +391,12 @@ struct cb_s {
 static krb5_error_code KRB5_LIB_CALL
 callback(krb5_context context, const void *plug, void *plugctx, void *userctx)
 {
+    const struct hdb_method *h = (const struct hdb_method *)plug;
     struct cb_s *cb_ctx = (struct cb_s *)userctx;
 
-    if (strncmp (cb_ctx->filename, cb_ctx->h->prefix, strlen(cb_ctx->h->prefix)) == 0) {
-	cb_ctx->residual = cb_ctx->filename + strlen(cb_ctx->h->prefix);
+    if (strncmp(cb_ctx->filename, h->prefix, strlen(h->prefix)) == 0) {
+	cb_ctx->residual = cb_ctx->filename + strlen(h->prefix);
+	cb_ctx->h = h;
 	return 0;
     }
    return KRB5_PLUGIN_NO_HANDLE;

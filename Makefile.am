@@ -38,6 +38,7 @@ EXTRA_DIST = \
 	autogen.sh \
 	krb5.conf \
 	cf/make-proto.pl \
+	cf/roken-h-process.pl \
 	cf/install-catman.sh \
 	cf/ChangeLog \
 	cf/c-function.m4 \

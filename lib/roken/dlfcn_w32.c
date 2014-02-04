@@ -175,7 +175,7 @@ dladdr(void *addr, Dl_info *dli)
     if (!GetModuleHandleEx(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS |
                            GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT,
 			   (LPCTSTR)(ULONG_PTR)addr, &hm))
-        return -1;
+        return 0;
 
     nsize = GetModuleFileName(hm, dli->_dli_buf, sizeof(dli->_dli_buf));
     dli->_dli_buf[sizeof(dli->_dli_buf) - 1] = '\0';

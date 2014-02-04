@@ -170,6 +170,7 @@ dladdr(void *addr, Dl_info *dli)
     DWORD nsize;
 
     memset(dli, 0, sizeof(*dli));
+    dli->dli_fname = dli->_dli_buf;
 
     if (!GetModuleHandleEx(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS |
                            GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT,
@@ -180,7 +181,5 @@ dladdr(void *addr, Dl_info *dli)
     dli->_dli_buf[sizeof(dli->_dli_buf) - 1] = '\0';
     if (nsize >= sizeof(dli->_dli_buf))
         return 0; /* truncated? can't be... */
-
-    dli->dli_fname = dli->_dli_buf;
     return 1;
 }

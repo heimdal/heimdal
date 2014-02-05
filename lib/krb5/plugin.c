@@ -234,7 +234,7 @@ resolve_origin(const char *di)
 
 #ifndef HAVE_DLADDR
     return strdup(LIBDIR "/plugin/krb5");
-#else
+#else /* !HAVE_DLADDR */
     di += sizeof("$ORIGIN") - 1;
 
     if (dladdr(_krb5_load_plugins, &dl_info) == 0)
@@ -245,8 +245,7 @@ resolve_origin(const char *di)
     p = strrchr(dname, '\\');
     if (p == NULL)
 #endif
-
-    p = strrchr(dname, '/');
+	p = strrchr(dname, '/');
     if (p) {
         if (asprintf(&path, "%.*s%s", (int) (p - dname), dname, di) == -1)
             return NULL;
@@ -256,7 +255,7 @@ resolve_origin(const char *di)
     }
 
     return path;
-#endif
+#endif /* !HAVE_DLADDR */
 }
 
 

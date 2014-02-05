@@ -113,7 +113,7 @@ typedef struct kadm5_client_context {
     char *realm;
     char *admin_server;
     int kadmind_port;
-    int sock;
+    krb5_socket_t sock;
     char *client_name;
     char *service_name;
     krb5_prompter_fct prompter;

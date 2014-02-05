@@ -1097,7 +1097,7 @@ handle_mit(krb5_context contextp, void *buf, size_t len, krb5_socket_t sock)
 
     dcontext = contextp;
 
-    sp = krb5_storage_from_fd(sock);
+    sp = krb5_storage_from_socket(sock);
     INSIST(sp != NULL);
 
     process_stream(contextp, buf, len, sp);

@@ -603,7 +603,8 @@ EXPORTS
 	krb5_storage_from_fd
 	krb5_storage_from_mem
 	krb5_storage_from_readonly_mem
-        krb5_storage_fsync
+	krb5_storage_from_socket
+	krb5_storage_fsync
 	krb5_storage_get_byteorder
 	krb5_storage_get_eof_code
 	krb5_storage_is_flags

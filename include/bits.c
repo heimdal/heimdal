@@ -302,6 +302,8 @@ int main(int argc, char **argv)
     fprintf(f, "#ifndef HEIMDAL_WARN_UNUSED_RESULT_ATTRIBUTE\n");
     fprintf(f, "#if __has_extension(warn_unused_result) || KRB5TYPES_REQUIRE_GNUC(3,3,0)\n");
     fprintf(f, "#define HEIMDAL_WARN_UNUSED_RESULT_ATTRIBUTE __attribute__((warn_unused_result))\n");
+    fprintf(f, "#else\n");
+    fprintf(f, "#define HEIMDAL_WARN_UNUSED_RESULT_ATTRIBUTE\n");
     fprintf(f, "#endif\n");
     fprintf(f, "#endif\n\n");
 

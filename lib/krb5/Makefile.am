@@ -227,6 +227,7 @@ dist_libkrb5_la_SOURCES =			\
 	store_emem.c				\
 	store_fd.c				\
 	store_mem.c				\
+	store_sock.c				\
 	plugin.c				\
 	ticket.c				\
 	time.c					\

@@ -34,84 +34,54 @@
 #include "krb5_locl.h"
 #include "store-int.h"
 
-typedef struct fd_storage {
-    int fd;
-} fd_storage;
+#ifdef _WIN32
+#include <winsock2.h>
+#endif
 
-#define FD(S) (((fd_storage*)(S)->data)->fd)
+typedef struct socket_storage {
+    krb5_socket_t sock;
+} socket_storage;
+
+#define SOCK(S) (((socket_storage*)(S)->data)->sock)
 
 static ssize_t
-fd_fetch(krb5_storage * sp, void *data, size_t size)
+socket_fetch(krb5_storage * sp, void *data, size_t size)
 {
-    char *cbuf = (char *)data;
-    ssize_t count;
-    size_t rem = size;
-
-    /* similar pattern to net_read() to support pipes */
-    while (rem > 0) {
-	count = read (FD(sp), cbuf, rem);
-	if (count < 0) {
-	    if (errno == EINTR)
-		continue;
-	    else
-		return count;
-	} else if (count == 0) {
-	    return count;
-	}
-	cbuf += count;
-	rem -= count;
-    }
-    return size;
+    return net_read(SOCK(sp), data, size);
 }
 
 static ssize_t
-fd_store(krb5_storage * sp, const void *data, size_t size)
+socket_store(krb5_storage * sp, const void *data, size_t size)
 {
-    const char *cbuf = (const char *)data;
-    ssize_t count;
-    size_t rem = size;
-
-    /* similar pattern to net_write() to support pipes */
-    while (rem > 0) {
-	count = write(FD(sp), cbuf, rem);
-	if (count < 0) {
-	    if (errno == EINTR)
-		continue;
-	    else
-		return count;
-	}
-	cbuf += count;
-	rem -= count;
-    }
-    return size;
+    return net_write(SOCK(sp), data, size);
 }
 
 static off_t
-fd_seek(krb5_storage * sp, off_t offset, int whence)
+socket_seek(krb5_storage * sp, off_t offset, int whence)
 {
-    return lseek(FD(sp), offset, whence);
+    return lseek(SOCK(sp), offset, whence);
 }
 
 static int
-fd_trunc(krb5_storage * sp, off_t offset)
+socket_trunc(krb5_storage * sp, off_t offset)
 {
-    if (ftruncate(FD(sp), offset) == -1)
+    if (ftruncate(SOCK(sp), offset) == -1)
 	return errno;
     return 0;
 }
 
 static int
-fd_sync(krb5_storage * sp)
+socket_sync(krb5_storage * sp)
 {
-    if (fsync(FD(sp)) == -1)
+    if (fsync(SOCK(sp)) == -1)
 	return errno;
     return 0;
 }
 
 static void
-fd_free(krb5_storage * sp)
+socket_free(krb5_storage * sp)
 {
-    close(FD(sp));
+    rk_closesocket(SOCK(sp));
 }
 
 /**
@@ -125,59 +95,61 @@ fd_free(krb5_storage * sp)
  * @sa krb5_storage_from_mem()
  * @sa krb5_storage_from_readonly_mem()
  * @sa krb5_storage_from_data()
- * @sa krb5_storage_from_socket()
+ * @sa krb5_storage_from_fd()
  */
 
 KRB5_LIB_FUNCTION krb5_storage * KRB5_LIB_CALL
-krb5_storage_from_fd(int fd_in)
+krb5_storage_from_socket(krb5_socket_t sock_in)
 {
     krb5_storage *sp;
     int saved_errno;
-    int fd;
+    krb5_socket_t sock;
 
-#ifdef _MSC_VER
-    /*
-     * This function used to try to pass the input to
-     * _get_osfhandle() to test if the value is a HANDLE
-     * but this doesn't work because doing so throws an
-     * exception that will result in Watson being triggered
-     * to file a Windows Error Report.
-     */
-    fd = _dup(fd_in);
+#ifdef _WIN32
+    WSAPROTOCOL_INFO info;
+
+    if (WSADuplicateSocket(sock_in, GetCurrentProcessId(), &info) == 0)
+    {
+
+	sock = WSASocket( FROM_PROTOCOL_INFO,
+			  FROM_PROTOCOL_INFO,
+			  FROM_PROTOCOL_INFO,
+			  &info, 0, 0);
+    }
 #else
-    fd = dup(fd_in);
+    sock = dup(sock_in);
 #endif
 
-    if (fd < 0)
+    if (sock == rk_INVALID_SOCKET)
 	return NULL;
 
     errno = ENOMEM;
     sp = malloc(sizeof(krb5_storage));
     if (sp == NULL) {
 	saved_errno = errno;
-	close(fd);
+	rk_closesocket(sock);
 	errno = saved_errno;
 	return NULL;
     }
 
     errno = ENOMEM;
-    sp->data = malloc(sizeof(fd_storage));
+    sp->data = malloc(sizeof(socket_storage));
     if (sp->data == NULL) {
 	saved_errno = errno;
-	close(fd);
+	rk_closesocket(sock);
 	free(sp);
 	errno = saved_errno;
 	return NULL;
     }
     sp->flags = 0;
     sp->eof_code = HEIM_ERR_EOF;
-    FD(sp) = fd;
-    sp->fetch = fd_fetch;
-    sp->store = fd_store;
-    sp->seek = fd_seek;
-    sp->trunc = fd_trunc;
-    sp->fsync = fd_sync;
-    sp->free = fd_free;
+    SOCK(sp) = sock;
+    sp->fetch = socket_fetch;
+    sp->store = socket_store;
+    sp->seek = socket_seek;
+    sp->trunc = socket_trunc;
+    sp->fsync = socket_sync;
+    sp->free = socket_free;
     sp->max_alloc = UINT_MAX/8;
     return sp;
 }

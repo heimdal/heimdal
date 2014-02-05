@@ -156,6 +156,7 @@ emem_free(krb5_storage *sp)
  * @sa krb5_storage_from_readonly_mem()
  * @sa krb5_storage_from_fd()
  * @sa krb5_storage_from_data()
+ * @sa krb5_storage_from_socket()
  */
 
 KRB5_LIB_FUNCTION krb5_storage * KRB5_LIB_CALL

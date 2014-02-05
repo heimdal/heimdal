@@ -147,6 +147,7 @@ libkrb5_OBJS =			\
 	$(OBJ)\store_emem.obj		    \
 	$(OBJ)\store_fd.obj		    \
 	$(OBJ)\store_mem.obj		    \
+	$(OBJ)\store_sock.obj		    \
 	$(OBJ)\ticket.obj		    \
 	$(OBJ)\time.obj			    \
 	$(OBJ)\transited.obj		    \
@@ -297,6 +298,7 @@ dist_libkrb5_la_SOURCES =			\
 	store_emem.c				\
 	store_fd.c				\
 	store_mem.c				\
+	store_sock.c				\
 	pcache.c				\
 	plugin.c				\
 	ticket.c				\

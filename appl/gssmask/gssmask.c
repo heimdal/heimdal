@@ -687,7 +687,8 @@ static int
 HandleOP(SetLoggingSocket)
 {
     int32_t portnum;
-    int fd, ret;
+    krb5_socket_t sock;
+    int ret;
 
     ret32(c, portnum);
 
@@ -696,22 +697,22 @@ HandleOP(SetLoggingSocket)
 
     socket_set_port((struct sockaddr *)(&c->sa), htons(portnum));
 
-    fd = socket(((struct sockaddr *)&c->sa)->sa_family, SOCK_STREAM, 0);
-    if (fd < 0)
+    sock = socket(((struct sockaddr *)&c->sa)->sa_family, SOCK_STREAM, 0);
+    if (sock == rk_INVALID_SOCKET)
 	return 0;
 
-    ret = connect(fd, (struct sockaddr *)&c->sa, c->salen);
+    ret = connect(sock, (struct sockaddr *)&c->sa, c->salen);
     if (ret < 0) {
 	logmessage(c, __FILE__, __LINE__, 0, "failed connect to log port: %s",
 		   strerror(errno));
-	close(fd);
+	rk_closesocket(sock);
 	return 0;
     }
 
     if (c->logging)
 	krb5_storage_free(c->logging);
-    c->logging = krb5_storage_from_fd(fd);
-    close(fd);
+    c->logging = krb5_storage_from_socket(sock);
+    rk_closesocket(sock);
 
     krb5_store_int32(c->logging, eLogSetMoniker);
     store_string(c->logging, c->moniker);
@@ -1087,7 +1088,7 @@ find_op(int32_t op)
 }
 
 static struct client *
-create_client(int fd, int port, const char *moniker)
+create_client(krb5_socket_t sock, int port, const char *moniker)
 {
     struct client *c;
     int ret;
@@ -1109,18 +1110,18 @@ create_client(int fd, int port, const char *moniker)
 
     {
 	c->salen = sizeof(c->sa);
-	getpeername(fd, (struct sockaddr *)&c->sa, &c->salen);
+	getpeername(sock, (struct sockaddr *)&c->sa, &c->salen);
 
 	getnameinfo((struct sockaddr *)&c->sa, c->salen,
 		    c->servername, sizeof(c->servername),
 		    NULL, 0, NI_NUMERICHOST);
     }
 
-    c->sock = krb5_storage_from_fd(fd);
+    c->sock = krb5_storage_from_socket(sock);
     if (c->sock == NULL)
-	errx(1, "krb5_storage_from_fd");
+	errx(1, "krb5_storage_from_socket");
 
-    close(fd);
+    rk_closesocket(sock);
 
     return c;
 }

@@ -270,26 +270,27 @@ wait_log(struct client *c)
     int32_t port;
     struct sockaddr_storage sast;
     socklen_t salen = sizeof(sast);
-    int fd, fd2, ret;
+    krb5_socket_t sock, sock2;
+    int ret;
 
     memset(&sast, 0, sizeof(sast));
 
     assert(sizeof(sast) >= c->salen);
 
-    fd = socket(c->sa->sa_family, SOCK_STREAM, 0);
-    if (fd < 0)
+    sock = socket(c->sa->sa_family, SOCK_STREAM, 0);
+    if (sock == rk_INVALID_SOCKET)
 	err(1, "failed to build socket for %s's logging port", c->moniker);
 
     sast.ss_family = c->sa->sa_family;
-    ret = bind(fd, (struct sockaddr *)&sast, c->salen);
+    ret = bind(sock, (struct sockaddr *)&sast, c->salen);
     if (ret < 0)
 	err(1, "failed to bind %s's logging port", c->moniker);
 
-    if (listen(fd, SOMAXCONN) < 0)
+    if (listen(sock, SOMAXCONN) < 0)
 	err(1, "failed to listen %s's logging port", c->moniker);
 
     salen = sizeof(sast);
-    ret = getsockname(fd, (struct sockaddr *)&sast, &salen);
+    ret = getsockname(sock, (struct sockaddr *)&sast, &salen);
     if (ret < 0)
 	err(1, "failed to get address of local socket for %s", c->moniker);
 
@@ -299,12 +300,12 @@ wait_log(struct client *c)
     put32(c, ntohs(port));
 
     salen = sizeof(sast);
-    fd2 = accept(fd, (struct sockaddr *)&sast, &salen);
-    if (fd2 < 0)
+    sock2 = accept(sock, (struct sockaddr *)&sast, &salen);
+    if (sock2 == rk_INVALID_SOCKET)
 	err(1, "failed to accept local socket for %s", c->moniker);
-    close(fd);
+    rk_closesocket(sock);
 
-    return fd2;
+    return sock2;
 }
 
 
@@ -610,7 +611,8 @@ connect_client(const char *slave)
     char *name, *port;
     struct client *c = ecalloc(1, sizeof(*c));
     struct addrinfo hints, *res0, *res;
-    int ret, fd;
+    int ret;
+    krb5_socket_t sock;
 
     name = estrdup(slave);
     port = strchr(name, ':');
@@ -628,13 +630,13 @@ connect_client(const char *slave)
     if (ret)
 	errx(1, "error resolving %s", name);
 
-    for (res = res0, fd = -1; res; res = res->ai_next) {
-	fd = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
-	if (fd < 0)
+    for (res = res0, sock = rk_INVALID_SOCKET; res; res = res->ai_next) {
+	sock = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
+	if (sock == rk_INVALID_SOCKET)
 	    continue;
-	if (connect(fd, res->ai_addr, res->ai_addrlen) < 0) {
-	    close(fd);
-	    fd = -1;
+	if (connect(sock, res->ai_addr, res->ai_addrlen) < 0) {
+	    rk_closesocket(sock);
+	    sock = rk_INVALID_SOCKET;
 	    continue;
 	}
 	c->sa = ecalloc(1, res->ai_addrlen);
@@ -642,12 +644,12 @@ connect_client(const char *slave)
 	c->salen = res->ai_addrlen;
 	break;  /* okay we got one */
     }
-    if (fd < 0)
+    if (sock == rk_INVALID_SOCKET)
 	err(1, "connect to host: %s", name);
     freeaddrinfo(res);
 
-    c->sock = krb5_storage_from_fd(fd);
-    close(fd);
+    c->sock = krb5_storage_from_socket(sock);
+    rk_closesocket(sock);
     if (c->sock == NULL)
 	errx(1, "krb5_storage_from_fd");
 
@@ -669,10 +671,10 @@ connect_client(const char *slave)
     if (logfile) {
 	printf("starting log socket to client %s\n", c->moniker);
 
-	fd = wait_log(c);
+	sock = wait_log(c);
 
-	c->logsock = krb5_storage_from_fd(fd);
-	close(fd);
+	c->logsock = krb5_storage_from_socket(sock);
+	rk_closesocket(sock);
 	if (c->logsock == NULL)
 	    errx(1, "failed to create log krb5_storage");
 #ifdef ENABLE_PTHREAD_SUPPORT

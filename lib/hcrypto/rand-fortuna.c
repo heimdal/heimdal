@@ -177,6 +177,7 @@ init_state(FState * st)
     for (i = 0; i < NUM_POOLS; i++)
 	md_init(&st->pool[i]);
     st->pid = getpid();
+    /* Skip st->ciph until there is entropy for a key, in reseed(). */
 }
 
 /*
@@ -391,10 +392,10 @@ extract_data(FState * st, unsigned count, unsigned char *dst)
     unsigned	block_nr = 0;
     pid_t	pid = getpid();
 
-    /* Should we reseed? */
-    if (st->pool0_bytes >= POOL0_FILL || st->reseed_count == 0)
-	if (enough_time_passed(st))
-	    reseed(st);
+    /* Do the initial seeding, and check if we should reseed. */
+    if (st->reseed_count == 0 ||
+	(st->pool0_bytes > POOL0_FILL && enough_time_passed(st)))
+	reseed(st);
 
     /* Do some randomization on first call */
     if (!st->tricks_done)

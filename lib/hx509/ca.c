@@ -61,7 +61,7 @@ struct hx509_ca_tbs {
     CRLDistributionPoints crldp;
     heim_bit_string subjectUniqueID;
     heim_bit_string issuerUniqueID;
-
+    AlgorithmIdentifier *sigalg;
 };
 
 /**
@@ -109,6 +109,10 @@ hx509_ca_tbs_free(hx509_ca_tbs *tbs)
     der_free_bit_string(&(*tbs)->subjectUniqueID);
     der_free_bit_string(&(*tbs)->issuerUniqueID);
     hx509_name_free(&(*tbs)->subject);
+    if ((*tbs)->sigalg) {
+	free_AlgorithmIdentifier((*tbs)->sigalg);
+	free((*tbs)->sigalg);
+    }
 
     memset(*tbs, 0, sizeof(**tbs));
     free(*tbs);
@@ -904,6 +908,39 @@ hx509_ca_tbs_subject_expand(hx509_context context,
     return hx509_name_expand(context, tbs->subject, env);
 }
 
+/**
+ * Set signature algorithm on the to be signed certificate
+ *
+ * @param context A hx509 context.
+ * @param tbs object to be signed.
+ * @param sigalg signature algorithm to use
+ *
+ * @return An hx509 error code, see hx509_get_error_string().
+ *
+ * @ingroup hx509_ca
+ */
+
+int
+hx509_ca_tbs_set_signature_algorithm(hx509_context context,
+				     hx509_ca_tbs tbs,
+				     const AlgorithmIdentifier *sigalg)
+{
+    int ret;
+
+    tbs->sigalg = calloc(1, sizeof(*tbs->sigalg));
+    if (tbs->sigalg == NULL) {
+	hx509_set_error_string(context, 0, ENOMEM, "Out of memory");
+	return ENOMEM;
+    }
+    ret = copy_AlgorithmIdentifier(sigalg, tbs->sigalg);
+    if (ret) {
+	free(tbs->sigalg);
+	tbs->sigalg = NULL;
+	return ret;
+    }
+    return 0;
+}
+
 /*
  *
  */
@@ -998,7 +1035,9 @@ ca_sign(hx509_context context,
     time_t notAfter;
     unsigned key_usage;
 
-    sigalg = _hx509_crypto_default_sig_alg;
+    sigalg = tbs->sigalg;
+    if (sigalg == NULL)
+	sigalg = _hx509_crypto_default_sig_alg;
 
     memset(&c, 0, sizeof(c));
 

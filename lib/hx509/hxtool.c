@@ -1928,6 +1928,17 @@ hxtool_ca(struct certificate_sign_options *opt, int argc, char **argv)
     if (ret)
 	hx509_err(context, 1, ret, "hx509_ca_tbs_init");
 
+    if (opt->signature_algorithm_string) {
+	const AlgorithmIdentifier *sigalg;
+	if (strcasecmp(opt->signature_algorithm_string, "rsa-with-sha1") == 0)
+	    sigalg = hx509_signature_rsa_with_sha1();
+	else if (strcasecmp(opt->signature_algorithm_string, "rsa-with-sha256") == 0)
+	    sigalg = hx509_signature_rsa_with_sha256();
+	else
+	    errx(1, "unsupported sigature algorith");
+	hx509_ca_tbs_set_signature_algorithm(context, tbs, sigalg);
+    }
+
     if (opt->template_certificate_string) {
 	hx509_cert template;
 	hx509_certs tcerts;

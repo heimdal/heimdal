@@ -635,6 +635,11 @@ command = {
 		help = "Lifetime of certificate"
 	}
 	option = {
+		long = "signature-algorithm"
+		type = "string"
+		help = "Signature algorithm to use"
+	}
+	option = {
 		long = "serial-number"
 		type = "string"
 		help = "serial-number of certificate"

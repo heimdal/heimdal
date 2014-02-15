@@ -1681,7 +1681,7 @@ _krb5_get_name_canon_rules(krb5_context context, krb5_name_canon_rule *rules)
 
     if (realm) {
 	values = krb5_config_get_strings(context, NULL,
-					 "libdefaults",
+					 "realms",
 					 realm,
 					 "name_canon_rules", NULL);
 	free(realm);

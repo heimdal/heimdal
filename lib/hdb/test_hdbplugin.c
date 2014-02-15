@@ -88,7 +88,7 @@ main(int argc, char **argv)
 	    krb5_err(context, 1, ret, "krb5_plugin_register");
     }
 
-    ret = hdb_create(context, &db, "HDB:test&1234");
+    ret = hdb_create(context, &db, "test:test&1234");
     if(ret) {
 	    krb5_err(context, 1, ret, "hdb_create");
     }

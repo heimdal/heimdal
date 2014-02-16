@@ -46,7 +46,7 @@ libheimbase_la_DEPENDENCIES = version-script.map
 
 test_base_LDADD = libheimbase.la $(LIB_roken)
 
-CLEANFILES = base64.c
+CLEANFILES = base64.c test_db.json
 
 EXTRA_DIST = NTMakefile version-script.map
 

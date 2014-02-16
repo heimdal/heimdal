@@ -5,22 +5,22 @@ Release Notes - Heimdal - Version Heimdal 1.6
  - kx509 realm-chopping security bug
 
  Feature
- - RFC 6113 Flexible Authentication, Secure Tunnel (FAST)
+
+ - RFC 6113  Generalized Framework for Kerberos Pre-Authentication (FAST)
  - New GSS APIs:
    . gss_localname
-   .
  - Allow setting what encryption types a principal should have with
-   [kadmin] default_key_rules, see krb5.conf manpage for more info.
- - Unify libhcrypto with LTC (libtomcrypto).
- - asn1_compile 64-bit INTEGER functionality.
- - HDB key history support including --keepold kadmin password option.
- - Improved cross-realm key rollover safety.
- - New krb5_kuserok() plug-in interface.
+   [kadmin] default_key_rules, see krb5.conf manpage for more info
+ - Unify libhcrypto with LTC (libtomcrypto)
+ - asn1_compile 64-bit INTEGER functionality
+ - HDB key history support including --keepold kadmin password option
+ - Improved cross-realm key rollover safety
+ - New krb5_kuserok() plug-in interface
  - Improved MIT compatibility
    . kadm5 API
    . Migration from MIT KDB via "mitdb" HDB backend.
-   . Capable of writing the HDB in MIT dump format.
- - Improved Active Directory interoperability.
+   . Capable of writing the HDB in MIT dump format
+ - Improved Active Directory interoperability
    . Enctype selection issues for PAC and other authz-data signatures
    . Cross realm key rollover (kvno 0)
  - New [kdc] enctype negotiation configuration:
@@ -35,11 +35,11 @@ Release Notes - Heimdal - Version Heimdal 1.6
    . kca_service
    . kx509_include_pkinit_san
    . kx509_template
- - Improved Heimdal library/plugin version safety.
+ - Improved Heimdal library/plugin version safety
  - Name canonicalization
    . DNS resolver searchlist
- - Pluggable libheimbase interface for DBs.
- - IPv6 Support
+ - Pluggable libheimbase interface for DBs
+ - Improve IPv6 Support
  - LDAP
    . Bind DN and password
    . Start TLS
@@ -48,28 +48,28 @@ Release Notes - Heimdal - Version Heimdal 1.6
  - Many more
 
  Bug fixes
- - Include non-loopback addresses assigned to loopback interfaces.
-   when requesting tickets with addresses.
- - KDC 1DES session key selection (for AFS rxkad-k5 compatibility).
- - Keytab file descriptor and lock leak.
- - Credential cache corruption bugs.
+ - Include non-loopback addresses assigned to loopback interfaces
+   when requesting tickets with addresses
+ - KDC 1DES session key selection (for AFS rxkad-k5 compatibility)
+ - Keytab file descriptor and lock leak
+ - Credential cache corruption bugs
    (NOTE: The FILE ccache is still not entirely safe due to the
-   fundamentally unsafe design of POSIX file locking.)
- - gss_pseudo_random() interop bug.
- - Plugins are now preferentially loaded from the run-time install tree.
- - Reauthentication after password change in init_creds_password.
- - Memory leak in the client kadmin library.
+   fundamentally unsafe design of POSIX file locking)
+ - gss_pseudo_random() interop bug
+ - Plugins are now preferentially loaded from the run-time install tree
+ - Reauthentication after password change in init_creds_password
+ - Memory leak in the client kadmin library
  - TGS client requests renewable/forwardable/proxiable when possible.
- - Locking issues in DB1 and DB3 HDB backends.
- - Master HDB can remain locked while waiting for network I/O.
- - Renewal/refresh logic when kinit is provided with a command.
- - KDC handling of enterprise principals.
+ - Locking issues in DB1 and DB3 HDB backends
+ - Master HDB can remain locked while waiting for network I/O
+ - Renewal/refresh logic when kinit is provided with a command
+ - KDC handling of enterprise principals
  - Many more
 
  Acknowledgements
 
  This release of Heimdal includes contributions from:
-   Andrew Bartlett, Andrew tridgell, Arran Cudbard-Bell, Arvid Requate,
+   Andrew Bartlett, Andrew Tridgell, Arran Cudbard-Bell, Arvid Requate,
    Ben Kaduk, Dana Koch, Daniel Schepler, Eray Aslan, Fredrik Pettai,
    Gustavo Zacarias, Harald Barth, Howard Chu, Igor Sobrado, Ingo Schwarze,
    James Le Cuirot, James Lee, Jeffrey Altman, Jeffrey Clark, Jeffrey Hutzelman,
@@ -80,7 +80,6 @@ Release Notes - Heimdal - Version Heimdal 1.6
    Ross L Richardson, Russ Allbery, Samuel Thibault, Simon Wilkinson,
    Stef Walter, Stefan Metzmacher, Steffen Jaeckel, Tollef Fog Heen, Tony Acero,
    Viktor Dukhovni
-
 
 Release Notes - Heimdal - Version Heimdal 1.5.3
 

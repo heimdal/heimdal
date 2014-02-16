@@ -271,6 +271,7 @@ CLEANFILES= \
 
 EXTRA_DIST = \
 	NTMakefile \
+	an2ln-db.txt \
 	check-authz.in \
 	check-canon.in \
 	check-cc.in \

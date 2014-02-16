@@ -182,6 +182,7 @@ dist_libkrb5_la_SOURCES =			\
 	krb5-v4compat.h				\
 	krbhst.c				\
 	kuserok.c				\
+	kuserok_plugin.h			\
 	log.c					\
 	mcache.c				\
 	misc.c					\

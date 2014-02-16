@@ -15,13 +15,9 @@ SUBDIRS = 					\
 	  login					\
 	  $(dir_otp)				\
 	  gssmask				\
-	  popper				\
 	  push					\
-	  rsh					\
-	  rcp					\
 	  su					\
 	  xnlock				\
-	  telnet				\
 	  test					\
 	  kx					\
 	  kf					\

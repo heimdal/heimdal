@@ -100,6 +100,7 @@ dist_libasn1base_la_SOURCES =			\
 	fuzzer.c				\
 	heim_asn1.h				\
 	extra.c					\
+	roken_rename.h				\
 	template.c				\
 	timegm.c
 

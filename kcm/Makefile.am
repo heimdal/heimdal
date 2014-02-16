@@ -23,6 +23,8 @@ kcm_SOURCES =		\
 	sessions.c	\
 	renew.c
 
+noinst_HEADERS = $(srcdir)/kcm-protos.h
+
 $(srcdir)/kcm-protos.h: $(kcm_SOURCES)
 	cd $(srcdir); perl ../cf/make-proto.pl -o kcm-protos.h -q -P comment $(kcm_SOURCES) || rm -f kcm-protos.h
 

@@ -75,8 +75,8 @@ install-suid-programs:
 
 install-exec-hook: install-suid-programs
 
-install-build-headers:: $(include_HEADERS) $(dist_include_HEADERS) $(nodist_include_HEADERS) $(build_HEADERZ) $(nobase_include_HEADERS)
-	@foo='$(include_HEADERS) $(dist_include_HEADERS) $(nodist_include_HEADERS) $(build_HEADERZ)'; \
+install-build-headers:: $(include_HEADERS) $(dist_include_HEADERS) $(nodist_include_HEADERS) $(build_HEADERZ) $(nobase_include_HEADERS) $(noinst_HEADERS)
+	@foo='$(include_HEADERS) $(dist_include_HEADERS) $(nodist_include_HEADERS) $(build_HEADERZ) $(noinst_HEADERS)'; \
 	for f in $$foo; do \
 		f=`basename $$f`; \
 		if test -f "$(srcdir)/$$f"; then file="$(srcdir)/$$f"; \

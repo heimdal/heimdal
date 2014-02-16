@@ -114,6 +114,8 @@ KRB5CCNAME=$cache1 ${uu_server} > uuserver.log &
 uuspid=$!
 sleep 5
 
+trap "kill -9 ${kdcpid} ${uuspid}; echo signal killing kdc and uu server; exit 1;" EXIT
+
 echo "trying to contact server with client (using user2)"
 KRB5CCNAME=$cache2 ${uu_client} localhost > messages.log 2>&1 || \
     { ec=1; eval "${testfailed}"; }

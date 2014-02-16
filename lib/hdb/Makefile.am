@@ -100,6 +100,8 @@ libhdb_la_DEPENDENCIES = version-script.map
 include_HEADERS = hdb.h $(srcdir)/hdb-protos.h
 nodist_include_HEADERS =  hdb_err.h hdb_asn1.h
 
+noinst_HEADERS = $(srcdir)/hdb-private.h
+
 libhdb_la_LIBADD = \
 	$(LIB_com_err) \
 	../krb5/libkrb5.la \

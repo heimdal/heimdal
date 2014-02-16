@@ -114,7 +114,9 @@ $(gen_files_ocsp) ocsp_asn1.hx ocsp_asn1-priv.hx: ocsp_asn1_files
 $(gen_files_pkcs10) pkcs10_asn1.hx pkcs10_asn1-priv.hx: pkcs10_asn1_files
 $(gen_files_crmf) crmf_asn1.hx crmf_asn1-priv.hx: crmf_asn1_files
 
-dist_include_HEADERS = hx509.h $(srcdir)/hx509-protos.h
+HX509_PROTOS = $(srcdir)/hx509-protos.h $(srcdir)/hx509-private.h
+
+dist_include_HEADERS = hx509.h $(HX509_PROTOS)
 
 nodist_include_HEADERS = hx509_err.h
 nodist_include_HEADERS += ocsp_asn1.h
@@ -134,8 +136,6 @@ pkcs10_asn1_files: $(ASN1_COMPILE_DEP) $(srcdir)/pkcs10.asn1 $(srcdir)/pkcs10.op
 
 crmf_asn1_files: $(ASN1_COMPILE_DEP) $(srcdir)/crmf.asn1
 	$(heim_verbose)$(ASN1_COMPILE) $(srcdir)/crmf.asn1 crmf_asn1 || (rm -f crmf_asn1_files ; exit 1)
-
-HX509_PROTOS = $(srcdir)/hx509-protos.h $(srcdir)/hx509-private.h
 
 ALL_OBJECTS  = $(libhx509_la_OBJECTS)
 ALL_OBJECTS += $(hxtool_OBJECTS)

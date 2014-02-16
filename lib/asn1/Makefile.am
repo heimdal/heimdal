@@ -152,7 +152,9 @@ CLEANFILES = \
 	pkcs12_asn1_files pkcs12_asn1*.h* \
 	digest_asn1_files digest_asn1*.h* \
 	kx509_asn1_files kx509_asn1*.h* \
-	test_asn1_files test_asn1*.h*
+	test_asn1_files test_asn1*.h* \
+	test_template_asn1_* \
+	asn1_*.x
 
 dist_include_HEADERS = der.h heim_asn1.h
 dist_include_HEADERS += $(srcdir)/der-protos.h $(srcdir)/der-private.h

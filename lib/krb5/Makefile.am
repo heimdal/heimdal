@@ -362,8 +362,10 @@ man_MANS =					\
 dist_include_HEADERS = \
 	krb5.h \
 	$(srcdir)/krb5-protos.h \
-	$(srcdir)/krb5-private.h \
 	krb5_ccapi.h
+
+noinst_HEADERS = $(srcdir)/krb5-private.h
+
 
 nodist_include_HEADERS = krb5_err.h heim_err.h k524_err.h
 

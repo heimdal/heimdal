@@ -220,31 +220,37 @@ krb5-pkinit-win.conf: krb5-pkinit.conf.in Makefile
 
 CLEANFILES= \
 	$(TESTS) \
-	iprop-stats \
+	*.tmp \
+	acache.krb5 \
 	barpassword \
+	ca.crt \
 	cache.krb5 \
 	cdigest-reply \
-	*.tmp \
 	client-cache \
-	current-db* \
 	current*.log \
-	iprop.keytab \
+	current-db* \
 	digest-reply \
 	foopassword \
+	foopassword.rkpty \
+	iprop-stats \
+	iprop.keytab \
+	ipropd.dumpfile \
 	kdc-tester4.json \
-	krb5.conf \
+	kdc.crt \
 	krb5-authz.conf \
 	krb5-authz2.conf \
 	krb5-canon.conf \
 	krb5-canon2.conf \
-	krb5-weak.conf \
-	krb5.conf.keys \
 	krb5-cc.conf \
-	krb5-slave.conf \
-	krb5-pkinit.conf \
+	krb5-hdb-mitdb.conf \
 	krb5-pkinit-win.conf \
-	signal \
+	krb5-pkinit.conf \
+	krb5-slave.conf \
+	krb5-weak.conf \
+	krb5.conf \
+	krb5.conf.keys \
 	leaks-log \
+	localname \
 	malloc-log \
 	malloc-log-master \
 	malloc-log-slave \
@@ -252,22 +258,22 @@ CLEANFILES= \
 	o2cache.krb5 \
 	o2digest-reply \
 	ocache.krb5 \
-	s2digest-reply \
-	sdigest-init \
-	sdigest-reply \
-	server.keytab \
-	req-pkinit.der \
-	req-pkinit2.der \
-	req-kdc.der \
+	out-log \
 	pkinit.crt \
 	pkinit2.crt \
 	pkinit3.crt \
 	pkinit4.crt \
-	kdc.crt \
-	ca.crt \
-	uuserver.log \
+	req-kdc.der \
+	req-pkinit.der \
+	req-pkinit2.der \
+	s2digest-reply \
+	sdigest-init \
+	sdigest-reply \
+	server.keytab \
+	signal \
 	tempfile \
-	test-rc-file.rc
+	test-rc-file.rc \
+	uuserver.log
 
 EXTRA_DIST = \
 	NTMakefile \

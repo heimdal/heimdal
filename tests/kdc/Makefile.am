@@ -279,11 +279,11 @@ EXTRA_DIST = \
 	check-des.in \
 	check-digest.in \
 	check-fast.in \
+	check-hdb-mitdb.in \
 	check-iprop.in \
 	check-kadmin.in \
-	check-hdb-mitdb.in \
-	check-kdc.in \
 	check-kdc-weak.in \
+	check-kdc.in \
 	check-keys.in \
 	check-kpasswdd.in \
 	check-pkinit.in \
@@ -291,23 +291,26 @@ EXTRA_DIST = \
 	check-tester.in \
 	check-uu.in \
 	donotexists.txt \
+	hdb-mitdb \
+	hdb-mitdb.kadm5 \
+	hdb-mitdb.mkey \
 	heimdal.acl \
 	iprop-acl \
+	k5login/foo \
 	kdc-tester1.json \
 	kdc-tester2.json \
 	kdc-tester3.json \
 	kdc-tester4.json.in \
-	krb5-pkinit.conf.in \
-	krb5.conf.in \
 	krb5-authz.conf.in \
 	krb5-authz2.conf.in \
 	krb5-canon.conf.in \
 	krb5-canon2.conf.in \
 	krb5-hdb-mitdb.conf.in \
+	krb5-pkinit.conf.in \
+	krb5.conf.in \
 	krb5.conf.keys.in \
-	k5login/foo \
-	ntlm-user-file.txt \
 	leaks-kill.sh \
+	ntlm-user-file.txt \
 	pki-mapping \
 	uuserver.txt \
 	wait-kdc.sh

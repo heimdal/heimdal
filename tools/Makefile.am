@@ -53,11 +53,12 @@ EXTRA_DIST = \
 	$(man_MANS) \
 	krb5-config.in \
 	heimdal-gssapi.pc.in \
-	kdc-log-analyze.pl
+	kdc-log-analyze.pl \
+	$(pkgconfig_DATA:.pc=.pc.in)
 
 CLEANFILES = \
 	krb5-config \
 	krb5-config.new \
-	heimdal-gssapi.pc \
-	heimdal-gssapi.pc.new
+	$(pkgconfig_DATA) \
+	$(pkgconfig_DATA:.pc=.pc.new)
 

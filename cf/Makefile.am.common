@@ -66,14 +66,28 @@ libexec_heimdaldir = $(libexecdir)/heimdal
 install-suid-programs:
 	@foo='$(bin_SUIDS)'; \
 	for file in $$foo; do \
-	x=$(DESTDIR)$(bindir)/$$file; \
-	if chown 0:0 $$x && chmod u+s $$x; then :; else \
-	echo "*"; \
-	echo "* Failed to install $$x setuid root"; \
-	echo "*"; \
-	fi; done
+		x=$(DESTDIR)$(bindir)/$$file; \
+		if chown 0:0 $$x && chmod u+s $$x; then :; else \
+			echo "*"; \
+			echo "* Failed to install $$x setuid root"; \
+			echo "*"; \
+		fi; \
+	done
 
-install-exec-hook: install-suid-programs
+install-exec-local: install-suid-programs
+
+codesign-all:
+	@if [ X"$$CODE_SIGN_IDENTITY" != X ] ; then \
+		foo='$(bin_PROGRAMS) $(sbin_PROGRAMS) $(libexec_PROGRAMS)' ; \
+		for file in $$foo ; do \
+			echo "CODESIGN $$file" ; \
+			codesign -f -s "$$CODE_SIGN_IDENTITY" $$file || exit 1 ; \
+		done ; \
+	fi
+	
+
+
+all-local: codesign-all
 
 install-build-headers:: $(include_HEADERS) $(dist_include_HEADERS) $(nodist_include_HEADERS) $(build_HEADERZ) $(nobase_include_HEADERS) $(noinst_HEADERS)
 	@foo='$(include_HEADERS) $(dist_include_HEADERS) $(nodist_include_HEADERS) $(build_HEADERZ) $(noinst_HEADERS)'; \

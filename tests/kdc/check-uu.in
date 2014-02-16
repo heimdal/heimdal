@@ -131,7 +131,7 @@ ${kdestroy2}
 
 echo "killing kdc uu_server (${kdcpid} ${uuspid})"
 sh ${leaks_kill} kdc $kdcpid || exit 1
-
+kill ${uuspid} ; sleep 3 ; kill -9 ${uuspid}
 
 trap "" EXIT
 

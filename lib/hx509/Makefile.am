@@ -173,11 +173,11 @@ hxtool_LDADD = \
 
 CLEANFILES = $(BUILT_SOURCES) sel-gram.c sel-lex.c \
 	$(gen_files_ocsp) ocsp_asn1_files ocsp_asn1{,-priv}.h* \
-	ocsp_asn1-template.[ch]* \
+	ocsp_asn1-template.[chx]* \
 	$(gen_files_pkcs10) pkcs10_asn1_files pkcs10_asn1{,-priv}.h* \
-	pkcs10_asn1-template.[ch]* \
+	pkcs10_asn1-template.[chx]* \
 	$(gen_files_crmf) crmf_asn1_files crmf_asn1{,-priv}.h* \
-	crmf_asn1-template.[ch]* \
+	crmf_asn1-template.[chx]* \
 	$(TESTS) \
 	hxtool-commands.c hxtool-commands.h *.tmp \
 	request.out \

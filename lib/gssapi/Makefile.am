@@ -274,8 +274,8 @@ BUILT_SOURCES = $(spnego_files:.x=.c) $(gssapi_files:.x=.c)
 
 CLEANFILES = $(BUILT_SOURCES) \
 	gkrb5_err.h gkrb5_err.c \
-	$(spnego_files) spnego_asn1*.h* spnego_asn1_files spnego_asn1-template.c \
-	$(gssapi_files) gssapi_asn1*.h* gssapi_asn1_files gssapi_asn1-template.c \
+	$(spnego_files) spnego_asn1*.h* spnego_asn1_files spnego_asn1-template.[cx] \
+	$(gssapi_files) gssapi_asn1*.h* gssapi_asn1_files gssapi_asn1-template.[cx] \
 	gss-commands.h gss-commands.c
 
 $(spnego_files) spnego_asn1.hx spnego_asn1-priv.hx: spnego_asn1_files

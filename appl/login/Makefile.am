@@ -22,6 +22,8 @@ login_SOURCES =					\
 		utmp_login.c			\
 		utmpx_login.c
 
+noinst_HEADERS = $(srcdir)/login-protos.h
+
 LDADD = $(LIB_otp) \
 	$(LIB_kafs) \
 	$(top_builddir)/lib/krb5/libkrb5.la \

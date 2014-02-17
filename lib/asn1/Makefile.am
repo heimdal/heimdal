@@ -153,7 +153,7 @@ CLEANFILES = \
 	digest_asn1_files digest_asn1*.h* \
 	kx509_asn1_files kx509_asn1*.h* \
 	test_asn1_files test_asn1*.h* \
-	test_template_asn1_* \
+	test_template_asn1* \
 	asn1_*.x
 
 dist_include_HEADERS = der.h heim_asn1.h

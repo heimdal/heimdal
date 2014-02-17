@@ -191,6 +191,7 @@ asn1_*.[cx]
 /lib/asn1/der-private.h
 /lib/asn1/lex.c
 /lib/auth/Makefile.in
+/lib/base/base64.c
 /lib/com_err/compile_et
 /lib/com_err/lex.c
 /lib/com_err/parse.c

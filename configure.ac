@@ -647,16 +647,9 @@ AC_CONFIG_FILES(Makefile 		\
 	appl/kx/Makefile		\
 	appl/login/Makefile		\
 	appl/otp/Makefile		\
-	appl/popper/Makefile		\
 	appl/push/Makefile		\
-	appl/rsh/Makefile		\
-	appl/rcp/Makefile		\
 	appl/su/Makefile		\
 	appl/xnlock/Makefile		\
-	appl/telnet/Makefile		\
-	appl/telnet/libtelnet/Makefile	\
-	appl/telnet/telnet/Makefile	\
-	appl/telnet/telnetd/Makefile	\
 	appl/test/Makefile		\
 	appl/kf/Makefile		\
 	appl/dceutils/Makefile		\

@@ -1993,11 +1993,6 @@ _kdc_as_rep(kdc_request_t r,
 	    goto out;
     }
 
-    if (r->clientdb->hdb_auth_status) {
-	r->clientdb->hdb_auth_status(context, r->clientdb, r->client, 
-				     HDB_AUTH_SUCCESS);
-    }
-
     /*
      * Verify flags after the user been required to prove its identity
      * with in a preauth mech.
@@ -2017,6 +2012,11 @@ _kdc_as_rep(kdc_request_t r,
 	}
 
 	r->et.flags.anonymous = 1;
+    }
+
+    if (r->clientdb->hdb_auth_status) {
+	r->clientdb->hdb_auth_status(context, r->clientdb, r->client, 
+				     HDB_AUTH_SUCCESS);
     }
 
     /*

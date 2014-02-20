@@ -365,7 +365,7 @@ static char *ptsname(int fd)
 
 int getpty(int *ptynum)
 {
-#if defined(HAVE_OPENPTY) || defined(__linux) || defined(__osf__) /* XXX */
+#if defined(HAVE_OPENPTY) || defined(__osf__) /* XXX */
     {
 	int master;
 	int slave;

@@ -39,7 +39,6 @@ CLEANFILES =			\
 	com_err.h		\
 	com_right.h		\
 	crmf_asn1.h		\
-	crypto-headers.h	\
 	db_plugin.h		\
 	der-private.h 		\
 	der-protos.h 		\
@@ -59,7 +58,6 @@ CLEANFILES =			\
 	heim-ipc.h		\
 	heim_asn1.h		\
 	heim_err.h		\
-	heim_threads.h		\
 	heimbase.h		\
 	heimntlm-protos.h	\
 	heimntlm.h		\

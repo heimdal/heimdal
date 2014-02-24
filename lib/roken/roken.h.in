@@ -969,6 +969,9 @@ gai_strerror(int);
 ROKEN_LIB_FUNCTION unsigned int ROKEN_LIB_CALL
 sleep(unsigned int seconds);
 
+ROKEN_LIB_FUNCTION unsigned int ROKEN_LIB_CALL
+usleep(unsigned int useconds);
+
 #endif
 
 ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL

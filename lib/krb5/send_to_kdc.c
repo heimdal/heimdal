@@ -291,8 +291,8 @@ struct host;
 
 struct host_fun {
     krb5_error_code (*prepare)(krb5_context, struct host *, const krb5_data *);
-    krb5_error_code (*send)(krb5_context, struct host *);
-    krb5_error_code (*recv)(krb5_context, struct host *, krb5_data *);
+    krb5_error_code (*send_fn)(krb5_context, struct host *);
+    krb5_error_code (*recv_fn)(krb5_context, struct host *, krb5_data *);
     int ntries;
 };
 
@@ -722,7 +722,7 @@ eval_host_state(krb5_context context,
 
 	debug_host(context, 5, host, "reading packet");
 
-	ret = host->fun->recv(context, host, &ctx->response);
+	ret = host->fun->recv_fn(context, host, &ctx->response);
 	if (ret == -1) {
 	    /* not done yet */
 	} else if (ret == 0) {
@@ -741,7 +741,7 @@ eval_host_state(krb5_context context,
 
 	debug_host(context, 5, host, "writing packet");
 
-	ret = host->fun->send(context, host);
+	ret = host->fun->send_fn(context, host);
 	if (ret == -1) {
 	    /* not done yet */
 	} else if (ret) {

@@ -495,10 +495,10 @@ copy_etypes (krb5_context context,
 	;
     i++;
 
-    *ret_enctypes = malloc(sizeof(ret_enctypes[0]) * i);
+    *ret_enctypes = malloc(sizeof(enctypes[0]) * i);
     if (*ret_enctypes == NULL)
 	return krb5_enomem(context);
-    memcpy(*ret_enctypes, enctypes, sizeof(ret_enctypes[0]) * i);
+    memcpy(*ret_enctypes, enctypes, sizeof(enctypes[0]) * i);
     return 0;
 }
 

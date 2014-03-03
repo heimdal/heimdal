@@ -128,7 +128,8 @@ find_all_addresses (krb5_context context, krb5_addresses *res, int flags)
     /* Allocate storage for them. */
     res->val = calloc(num, sizeof(*res->val));
     if (res->val == NULL) {
-	krb5_free_addresses(context, &ignore_addresses);
+	if (flags & EXTRA_ADDRESSES)
+	    krb5_free_addresses(context, &ignore_addresses);
 	freeifaddrs(ifa0);
 	return krb5_enomem(context);
     }

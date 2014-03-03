@@ -57,7 +57,7 @@ struct twojson {
     int first;
 };
 
-struct strbuf {
+struct heim_strbuf {
     char *str;
     size_t len;
     size_t alloced;
@@ -723,7 +723,7 @@ heim_show(heim_object_t obj)
 static void
 strbuf_add(void *ctx, const char *str)
 {
-    struct strbuf *strbuf = ctx;
+    struct heim_strbuf *strbuf = ctx;
     size_t len;
 
     if (strbuf->enomem)
@@ -767,7 +767,7 @@ heim_string_t
 heim_json_copy_serialize(heim_object_t obj, heim_json_flags_t flags, heim_error_t *error)
 {
     heim_string_t str;
-    struct strbuf strbuf;
+    struct heim_strbuf strbuf;
     int ret;
 
     if (error)

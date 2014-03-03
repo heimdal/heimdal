@@ -1142,7 +1142,7 @@ fcc_get_cache_next(krb5_context context, krb5_cc_cursor cursor, krb5_ccache *id)
 	    return ret;
 	fn = expandedfn;
     }
-    /* check if file exists, don't return a non existant "next" */
+    /* check if file exists, don't return a non existent "next" */
     if (strncasecmp(fn, "FILE:", 5) == 0) {
 	struct stat sb;
 	ret = stat(fn + 5, &sb);

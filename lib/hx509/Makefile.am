@@ -349,15 +349,15 @@ EXTRA_DIST = \
 	tst-crypto-select6 \
 	tst-crypto-select7 \
 	data/n0ll.pem \
-	data/secp160r1TestCA.cert.pem \
-	data/secp160r1TestCA.key.pem \
-	data/secp160r1TestCA.pem \
-	data/secp160r2TestClient.cert.pem \
-	data/secp160r2TestClient.key.pem \
-	data/secp160r2TestClient.pem \
-	data/secp160r2TestServer.cert.pem \
-	data/secp160r2TestServer.key.pem \
-	data/secp160r2TestServer.pem \
+	data/secp256r1TestCA.cert.pem \
+	data/secp256r1TestCA.key.pem \
+	data/secp256r1TestCA.pem \
+	data/secp256r2TestClient.cert.pem \
+	data/secp256r2TestClient.key.pem \
+	data/secp256r2TestClient.pem \
+	data/secp256r2TestServer.cert.pem \
+	data/secp256r2TestServer.key.pem \
+	data/secp256r2TestServer.pem \
 	data/bleichenbacher-bad.pem \
 	data/bleichenbacher-good.pem \
 	data/bleichenbacher-sf-pad-correct.pem \

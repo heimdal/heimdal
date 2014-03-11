@@ -1114,8 +1114,8 @@ fcc_get_cache_next(krb5_context context, krb5_cc_cursor cursor, krb5_ccache *id)
 {
     struct fcache_iter *iter = cursor;
     krb5_error_code ret;
-    const char *fn;
-    char *expandedfn = NULL;
+    const char *fn, *cc_type;
+    krb5_ccache cc;
 
     if (iter == NULL)
         return krb5_einval(context, 2);
@@ -1127,36 +1127,25 @@ fcc_get_cache_next(krb5_context context, krb5_cc_cursor cursor, krb5_ccache *id)
     iter->first = 0;
 
     /*
-     * Can't call krb5_cc_default_name here since it refers back to
-     * krb5_cc_cache_match() which will call back into this function.
-     *
-     * Just use the default value if its set, otherwise, use the
-     * default hardcoded value.
+     * Note: do not allow krb5_cc_default_name() to recurse via
+     * krb5_cc_cache_match().
+     * Note that context->default_cc_name will be NULL even though
+     * KRB5CCNAME is set in the environment if
+     * krb5_cc_set_default_name() hasn't
      */
-    fn = context->default_cc_name;
-    if (fn == NULL || strncasecmp(fn, "FILE:", 5) != 0) {
-	ret = _krb5_expand_default_cc_name(context,
-					   KRB5_DEFAULT_CCNAME_FILE,
-					   &expandedfn);
-	if (ret)
-	    return ret;
-	fn = expandedfn;
+    fn = krb5_cc_default_name(context);
+    ret = krb5_cc_resolve(context, fn, &cc);
+    if (ret != 0)
+        return ret;
+    cc_type = krb5_cc_get_type(context, cc);
+    if (strcmp(cc_type, "FILE") != 0) {
+        krb5_cc_close(context, cc);
+        return KRB5_CC_END;
     }
-    /* check if file exists, don't return a non existant "next" */
-    if (strncasecmp(fn, "FILE:", 5) == 0) {
-	struct stat sb;
-	ret = stat(fn + 5, &sb);
-	if (ret) {
-	    ret = KRB5_CC_END;
-	    goto out;
-	}
-    }
-    ret = krb5_cc_resolve(context, fn, id);
- out:
-    if (expandedfn)
-	free(expandedfn);
 
-    return ret;
+    *id = cc;
+
+    return 0;
 }
 
 static krb5_error_code KRB5_CALLCONV

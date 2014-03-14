@@ -2551,13 +2551,11 @@ krb5_crypto_fx_cf2(krb5_context context,
     krb5_data_zero(&os1);
     krb5_data_zero(&os2);
 
-    ret = krb5_enctype_keysize(context, enctype, &keysize);
+    ret = krb5_enctype_keybits(context, enctype, &keysize);
     if (ret)
 	return ret;
+    keysize = (keysize + 7) / 8;
 
-    ret = krb5_data_alloc(&res->keyvalue, keysize);
-    if (ret)
-	goto out;
     ret = krb5_crypto_prfplus(context, crypto1, pepper1, keysize, &os1);
     if (ret)
 	goto out;
@@ -2567,13 +2565,12 @@ krb5_crypto_fx_cf2(krb5_context context,
 
     res->keytype = enctype;
     {
-	unsigned char *p1 = os1.data, *p2 = os2.data, *p3 = res->keyvalue.data;
+	unsigned char *p1 = os1.data, *p2 = os2.data;
 	for (i = 0; i < keysize; i++)
-	    p3[i] = p1[i] ^ p2[i];
+	    p1[i] ^= p2[i];
     }
+    ret = krb5_random_to_key(context, enctype, os1.data, keysize, res);
  out:
-    if (ret)
-	krb5_data_free(&res->keyvalue);
     krb5_data_free(&os1);
     krb5_data_free(&os2);
 

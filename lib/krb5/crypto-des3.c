@@ -85,7 +85,7 @@ DES3_prf(krb5_context context,
     if (ret)
 	krb5_abortx(context, "krb5_derive_key");
 
-    ret = krb5_data_alloc(out, crypto->et->blocksize);
+    ret = krb5_data_alloc(out, crypto->et->prf_length);
     if (ret)
 	krb5_abortx(context, "malloc failed");
 
@@ -96,7 +96,7 @@ DES3_prf(krb5_context context,
 	EVP_CIPHER_CTX_init(&ctx); /* ivec all zero */
 	EVP_CipherInit_ex(&ctx, c, NULL, derived->keyvalue.data, NULL, 1);
 	EVP_Cipher(&ctx, out->data, result.checksum.data,
-		   crypto->et->blocksize);
+		   crypto->et->prf_length);
 	EVP_CIPHER_CTX_cleanup(&ctx);
     }
 
@@ -210,7 +210,7 @@ struct _krb5_encryption_type _krb5_enctype_des3_cbc_sha1 = {
     &_krb5_checksum_hmac_sha1_des3,
     F_DERIVED,
     _krb5_evp_encrypt,
-    0,
+    16,
     DES3_prf
 };
 

@@ -427,8 +427,8 @@ krb5_check_transited(krb5_context context,
 	    krb5_config_free_strings(tr_realms);
 	    krb5_set_error_message (context, KRB5KRB_AP_ERR_ILL_CR_TKT,
 				    N_("no transit allowed "
-				       "through realm %s", ""),
-				    realms[i]);
+				       "through realm %s from %s to %s", ""),
+				       realms[i], client_realm, server_realm);
 	    if(bad_realm)
 		*bad_realm = i;
 	    return KRB5KRB_AP_ERR_ILL_CR_TKT;

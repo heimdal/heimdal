@@ -42,10 +42,17 @@ AC_DEFINE([_GNU_SOURCE], 1,
 AC_OBJEXT
 AC_EXEEXT
 
-AC_KRB_PROG_PERL
-AC_KRB_PERL_MOD(Getopt::Std)
-AC_KRB_PERL_MOD(File::Compare)
-AC_KRB_PERL_MOD(JSON)
+dnl
+dnl this is needed when der-protos.h or der-private.h has to be generated
+dnl
+if ! test -f "$srcdir/lib/asn1/der-protos.h" ||
+   ! test -f "$srcdir/lib/asn1/der-private.h"; then
+    AC_KRB_PROG_PERL
+    AC_KRB_PERL_MOD(Getopt::Std)
+    AC_KRB_PERL_MOD(File::Compare)
+    AC_KRB_PERL_MOD(JSON)
+fi
+
 dnl AC_KRB_PROG_YACC
 AC_PROG_YACC
 AM_PROG_LEX

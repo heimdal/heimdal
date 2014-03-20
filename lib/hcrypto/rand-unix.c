@@ -73,19 +73,6 @@ _hc_unix_device_fd(int flags, const char **fn)
 static void
 unix_seed(const void *indata, int size)
 {
-    int fd;
-
-    if (size <= 0)
-	return;
-
-    fd = _hc_unix_device_fd(O_WRONLY, NULL);
-    if (fd < 0)
-	return;
-
-    if (write(fd, indata, size) != size)
-	; /* don't care */
-    close(fd);
-
 }
 
 

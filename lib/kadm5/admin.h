@@ -201,7 +201,11 @@ typedef struct _kadm5_policy_ent_t {
 #define KADM5_PRIV_LIST		(1 << 4)
 #define KADM5_PRIV_CPW		(1 << 5)
 #define KADM5_PRIV_GET_KEYS	(1 << 6)
+
+/* Note: KADM5_PRIV_GET_KEYS not included */
 #define KADM5_PRIV_ALL		(KADM5_PRIV_GET | KADM5_PRIV_ADD | KADM5_PRIV_MODIFY | KADM5_PRIV_DELETE | KADM5_PRIV_LIST | KADM5_PRIV_CPW)
+
+#define KADM5_BOGUS_KEY_DATA    "\xe5\xe5\xe5\xe5"
 
 typedef struct _kadm5_config_params {
     uint32_t mask;

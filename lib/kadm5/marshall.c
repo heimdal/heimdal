@@ -57,7 +57,6 @@ kadm5_ret_t
 kadm5_store_fake_key_data(krb5_storage *sp,
 		          krb5_key_data *key)
 {
-    char buf[4] = {0};
     krb5_data c;
 
     krb5_store_int32(sp, key->key_data_ver);
@@ -72,9 +71,8 @@ kadm5_store_fake_key_data(krb5_storage *sp,
      * did want keys will either fail or they'll, say, create bogus
      * keytab entries that will subsequently fail to be useful.
      */
-    c.length = sizeof (buf);
-    c.data = buf;
-    memset(buf, 0xdeadcee5, sizeof (buf)); /* bad bad hexspeak for deadkeys */
+    c.length = sizeof (KADM5_BOGUS_KEY_DATA) - 1;
+    c.data = KADM5_BOGUS_KEY_DATA;
     krb5_store_data(sp, c);
 
     /* This is the salt -- no need to send garbage */

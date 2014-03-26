@@ -150,7 +150,8 @@ enctypes.
 .Ar principal...
 .Bd -ragged -offset indent
 Creates a keytab with the keys of the specified principals.  Requires
-get-keys rights.
+get-keys rights, otherwise the principal's keys are changed and saved in
+the keytab.
 .Ed
 .Pp
 .Nm get

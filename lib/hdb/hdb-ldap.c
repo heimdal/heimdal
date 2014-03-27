@@ -44,9 +44,6 @@
 static krb5_error_code LDAP__connect(krb5_context context, HDB *);
 static krb5_error_code LDAP_close(krb5_context context, HDB *);
 
-static krb5_error_code hdb_ldap_create(krb5_context context, HDB **, const char *);
-static krb5_error_code hdb_ldapi_create(krb5_context context, HDB **, const char *);
-
 static krb5_error_code
 LDAP_message2entry(krb5_context context, HDB * db, LDAPMessage * msg,
 		   int flags, hdb_entry_ex * ent);

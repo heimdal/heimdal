@@ -61,6 +61,7 @@ static void
 set_funcs(kadm5_client_context *c)
 {
 #define SET(C, F) (C)->funcs.F = kadm5 ## _c_ ## F
+#define SETNOTIMP(C, F) (C)->funcs.F = 0
     SET(c, chpass_principal);
     SET(c, chpass_principal_with_key);
     SET(c, create_principal);
@@ -75,6 +76,7 @@ set_funcs(kadm5_client_context *c)
     SET(c, rename_principal);
     SET(c, lock);
     SET(c, unlock);
+    SETNOTIMP(c, setkey_principal_3);
 }
 
 kadm5_ret_t

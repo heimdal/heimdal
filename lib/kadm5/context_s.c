@@ -97,6 +97,7 @@ set_funcs(kadm5_server_context *c)
     SET(c, rename_principal);
     SET(c, lock);
     SET(c, unlock);
+    SET(c, setkey_principal_3);
 }
 
 #ifndef NO_UNIX_SOCKETS

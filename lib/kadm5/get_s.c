@@ -266,6 +266,10 @@ kadm5_s_get_principal(void *server_handle,
 	HDB_extension *ext;
 	HDB_Ext_KeySet *hist_keys = NULL;
 
+	/* Don't return stale keys to kadm5 clients */
+	ret = hdb_prune_keys(context->context, &ent.entry);
+	if (ret)
+	    goto out;
 	ext = hdb_find_extension(&ent.entry, choice_HDB_extension_data_hist_keys);
 	if (ext != NULL)
 	    hist_keys = &ext->data.u.hist_keys;

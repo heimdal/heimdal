@@ -62,6 +62,9 @@ struct kadm_func {
 					      int, krb5_key_data *);
     kadm5_ret_t (*lock) (void *);
     kadm5_ret_t (*unlock) (void *);
+    kadm5_ret_t (*setkey_principal_3) (void *, krb5_principal, krb5_boolean,
+				       int, krb5_key_salt_tuple *,
+				       krb5_keyblock *, int);
 };
 
 /* XXX should be integrated */
@@ -70,7 +73,7 @@ typedef struct kadm5_common_context {
     krb5_boolean my_context;
     struct kadm_func funcs;
     void *data;
-}kadm5_common_context;
+} kadm5_common_context;
 
 typedef struct kadm5_log_peer {
     int fd;
@@ -123,7 +126,7 @@ typedef struct kadm5_client_context {
     const char *keytab;
     krb5_ccache ccache;
     kadm5_config_params *realm_params;
-}kadm5_client_context;
+} kadm5_client_context;
 
 typedef struct kadm5_ad_context {
     krb5_context context;

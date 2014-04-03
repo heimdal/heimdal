@@ -106,6 +106,7 @@ dist_libkadm5srv_la_SOURCES =			\
 	randkey_s.c				\
 	rename_s.c				\
 	server_glue.c				\
+	setkey3_s.c				\
 	set_keys.c				\
 	set_modifier.c				\
 	admin.h

@@ -721,7 +721,13 @@ a globbing rule to matching a principal, and when true, use the
 keytypes as specified the same format as [kadmin]default_keys .
 .El
 .It Li }
-.El
+.It Li prune-key-history = Va BOOL
+When adding keys to the key history, drop keys that are too old to match
+unexpired tickets (based on the principal's maximum ticket lifetime).
+If the KDC keystore is later compromised traffic protected with the
+discarded older keys may remain protected.  This also keeps the HDB
+records for principals with key history from growing without bound.
+The default (backwards compatible) value is "false".
 .It Li use_v4_salt = Va BOOL
 When true, this is the same as
 .Pp

@@ -88,6 +88,7 @@ HEIMDAL_BASE_1.0 {
 		heim_string_get_type_id;
 		heim_string_get_utf8;
 		heim_string_ref_create;
+                heim_switch_environment;
 	local:
 		*;
 };

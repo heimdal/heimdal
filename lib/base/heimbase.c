@@ -981,3 +981,55 @@ heim_path_delete(heim_object_t ptr, heim_error_t *error, ...)
     return;
 }
 
+/*
+ * Allow dropping root bit, since heimdal reopens the database all the
+ * time the database needs to be owned by the user you are switched
+ * too. A better solution is to split the kdc in to more processes and
+ * run the network facing part with very low privilege.
+ */
+void
+heim_switch_environment( const char *runas_string,
+                         const char *chroot_string)
+{
+#ifdef HAVE_GETEUID
+    if ((runas_string || chroot_string) && geteuid() != 0)
+	errx(1, "no running as root, can't switch user/chroot");
+
+    if (chroot_string) {
+	if (chroot(chroot_string))
+	    err(1, "chroot(%s) failed", chroot_string);
+	if (chdir("/"))
+	    err(1, "chdir(/) after chroot failed");
+    }
+
+    if (runas_string) {
+	struct passwd *pw;
+
+	pw = getpwnam(runas_string);
+	if (pw == NULL)
+	    errx(1, "unknown user %s", runas_string);
+
+	if (initgroups(pw->pw_name, pw->pw_gid) < 0)
+	    err(1, "initgroups failed");
+
+#ifndef HAVE_CAPNG
+	if (setgid(pw->pw_gid) < 0)
+	    err(1, "setgid(%s) failed", runas_string);
+
+	if (setuid(pw->pw_uid) < 0)
+	    err(1, "setuid(%s)", runas_string);
+#else
+	capng_clear (CAPNG_EFFECTIVE | CAPNG_PERMITTED);
+	if (capng_updatev (CAPNG_ADD, CAPNG_EFFECTIVE | CAPNG_PERMITTED,
+	                   CAP_NET_BIND_SERVICE, CAP_SETPCAP, -1) < 0)
+	    err(1, "capng_updateev");
+
+	if (capng_change_id(pw->pw_uid, pw->pw_gid,
+	                    CAPNG_CLEAR_BOUNDING) < 0)
+	    err(1, "capng_change_id(%s)", runas_string);
+#endif
+    }
+#endif
+}
+
+

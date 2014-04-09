@@ -49,6 +49,11 @@
 #define true 1
 #endif
 #endif
+#ifdef HAVE_CAPNG
+#include <cap-ng.h>
+#endif
+
+
 
 #define HEIM_BASE_API_VERSION 20130210
 
@@ -379,6 +384,12 @@ heim_object_t heim_json_create_with_bytes(const void *, size_t, size_t,
 					  heim_error_t *);
 heim_string_t heim_json_copy_serialize(heim_object_t, heim_json_flags_t,
 				       heim_error_t *);
+
+/*
+ * Switch env
+ * Drop privileges
+ */
+void heim_switch_environment(const char *, const char *);
 
 
 /*

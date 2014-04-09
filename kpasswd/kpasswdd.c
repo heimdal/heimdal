@@ -755,6 +755,9 @@ static int help_flag;
 static char *port_str;
 static char *config_file;
 
+static char *runas_string;
+static char *chroot_string;
+
 struct getargs args[] = {
 #ifdef HAVE_DLOPEN
     { "check-library", 0, arg_string, &check_library,
@@ -771,6 +774,12 @@ struct getargs args[] = {
     { "config-file", 'c', arg_string, &config_file, NULL, NULL },
     { "realm", 'r', arg_string, &realm_str, "default realm", "realm" },
     { "port",  'p', arg_string, &port_str, "port", NULL },
+    { "runas-user",	0,	arg_string, &runas_string,
+	"run as this user when connected to network", NULL
+    },
+    { "chroot",	0,	arg_string, &chroot_string,
+	"chroot directory to run in", NULL
+    },
     { "version", 0, arg_flag, &version_flag, NULL, NULL },
     { "help", 0, arg_flag, &help_flag, NULL, NULL }
 };
@@ -888,6 +897,8 @@ main (int argc, char **argv)
 #endif
 
     pidfile(NULL);
+
+    heim_switch_environment((const char *) runas_string, (const char *) chroot_string);
 
     return doit (keytab, port);
 }

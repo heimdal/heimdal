@@ -199,6 +199,7 @@ external_passwd_quality (krb5_context context,
 	fclose(out);
 	fclose(error);
 	wait_for_process(child);
+	free(p);
 	return 1;
     }
     reply[strcspn(reply, "\n")] = '\0';

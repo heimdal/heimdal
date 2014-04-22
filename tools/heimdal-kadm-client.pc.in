@@ -6,6 +6,6 @@ includedir=@includedir@
 Name: heimdal-kadm-client
 Description: Kadmin client library.
 Version: @VERSION@
-Requires: heimdal-gssapi
+Requires.private: heimdal-gssapi
 Libs: -L${libdir} -lkadm5clnt
 Cflags: -I${includedir}

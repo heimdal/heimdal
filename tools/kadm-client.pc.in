@@ -7,4 +7,4 @@ vendor=Heimdal
 Name: kadm-client
 Description: Kadmin client library.
 Version: @VERSION@
-Depends: heimdal-kadm-client
+Requires: heimdal-kadm-client

@@ -7,4 +7,4 @@ vendor=Heimdal
 Name: kadm-server
 Description: Kadmin server library.
 Version: @VERSION@
-Depends: heimdal-kadm-server
+Requires: heimdal-kadm-server

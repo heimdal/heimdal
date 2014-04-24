@@ -6,6 +6,7 @@ includedir=@includedir@
 Name: heimdal-kadm-server
 Description: Kadmin server library.
 Version: @VERSION@
-Requires: heimdal-gssapi
-Libs: -L${libdir} -lkadm5srv @LIB_dbopen@
+Requires.private: heimdal-gssapi
+Libs: -L${libdir} -lkadm5srv
+Libs.private: @LIB_dbopen@
 Cflags: -I${includedir}

@@ -892,7 +892,7 @@ hx509_ca_tbs_set_unique(hx509_context context,
  *
  * @param context A hx509 context.
  * @param tbs object to be signed.
- * @param env enviroment variable to expand variables in the subject
+ * @param env environment variable to expand variables in the subject
  * name, see hx509_env_init().
  *
  * @return An hx509 error code, see hx509_get_error_string().

@@ -82,4 +82,4 @@
  * See the @ref page_ca for description and examples. */
 /** @defgroup hx509_peer hx509 certificate selecting functions */
 /** @defgroup hx509_print hx509 printing functions */
-/** @defgroup hx509_env hx509 enviroment functions */
+/** @defgroup hx509_env hx509 environment functions */

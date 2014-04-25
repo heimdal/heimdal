@@ -1935,7 +1935,7 @@ hxtool_ca(struct certificate_sign_options *opt, int argc, char **argv)
 	else if (strcasecmp(opt->signature_algorithm_string, "rsa-with-sha256") == 0)
 	    sigalg = hx509_signature_rsa_with_sha256();
 	else
-	    errx(1, "unsupported sigature algorith");
+	    errx(1, "unsupported sigature algorithm");
 	hx509_ca_tbs_set_signature_algorithm(context, tbs, sigalg);
     }
 

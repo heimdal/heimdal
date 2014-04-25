@@ -350,7 +350,7 @@ main (int argc, char **argv)
 	    errx (1, "Only root can set an initial OTP");
 	} else { /* Check the next OTP (RFC 1938/8.0: SHOULD) */
 	    if (verify_user_otp(user) != 0) {
-		errx (1, "User authentification failed");
+		errx (1, "User authentication failed");
 	    }
 	}
     }

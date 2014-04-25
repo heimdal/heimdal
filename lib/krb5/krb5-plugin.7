@@ -87,7 +87,7 @@ the above three.  Plugins are typically invoked in no particular order
 until one succeeds or fails, or all return a special return value such
 as KRB5_PLUGIN_NO_HANDLE to indicate that the plugin was not applicable.
 Most plugin types obtain deterministic plugin behavior in spite of the
-non-deterministic invokation order by, for example, invoking all plugins
+non-deterministic invocation order by, for example, invoking all plugins
 for each "rule" and passing the rule to each plugin with the expectation
 that just one plugin will match any given rule.
 .Pp

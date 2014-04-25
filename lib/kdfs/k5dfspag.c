@@ -236,7 +236,7 @@ int krb5_dfs_getpag()
  * user.
  *
  * And it should be called before access to the home directory
- * as this may be in DFS, not accessable by root, and require
+ * as this may be in DFS, not accessible by root, and require
  * the PAG to have been setup.
  *
  * The krb5_afs_pag can be called after this routine to

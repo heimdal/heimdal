@@ -546,7 +546,7 @@ main(int argc, char **argv)
     else if (strcmp(type_string, "krb5-principal-name") == 0)
 	nameoid = GSS_KRB5_NT_PRINCIPAL_NAME;
     else
-	errx(1, "%s not suppported", type_string);
+	errx(1, "%s not supported", type_string);
 
     if (mech_string == NULL)
 	mechoid = GSS_KRB5_MECHANISM;

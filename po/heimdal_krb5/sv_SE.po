@@ -1126,7 +1126,7 @@ msgstr ""
 
 #: lib/krb5/log.c:311
 #, c-format
-msgid "open(%s) logile: %s"
+msgid "open(%s) logfile: %s"
 msgstr ""
 
 #: lib/krb5/log.c:322

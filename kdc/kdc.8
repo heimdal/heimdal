@@ -47,9 +47,6 @@
 .Op Fl p | Fl Fl no-require-preauth
 .Op Fl Fl max-request= Ns Ar size
 .Op Fl H | Fl Fl enable-http
-.Op Fl Fl no-524
-.Op Fl Fl kerberos4
-.Op Fl Fl kerberos4-cross-realm
 .Oo Fl r Ar string \*(Ba Xo
 .Fl Fl v4-realm= Ns Ar string
 .Xc
@@ -93,14 +90,6 @@ Gives an upper limit on the size of the requests that the kdc is
 willing to handle.
 .It Fl H , Fl Fl enable-http
 Makes the kdc listen on port 80 and handle requests encapsulated in HTTP.
-.It Fl Fl no-524
-don't respond to 524 requests
-.It Fl Fl kerberos4
-respond to Kerberos 4 requests
-.It Fl Fl kerberos4-cross-realm
-respond to Kerberos 4 requests from foreign realms.
-This is a known security hole and should not be enabled unless you
-understand the consequences and are willing to live with them.
 .It Fl r Ar string , Fl Fl v4-realm= Ns Ar string
 What realm this server should act as when dealing with version 4
 requests.

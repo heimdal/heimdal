@@ -120,6 +120,10 @@ test_cf2(krb5_context context)
     unsigned int i;
     unsigned int errors = 0;
 
+    ret = krb5_allow_weak_crypto(context, 1);
+    if (ret)
+        krb5_err(context, 1, ret, "krb5_allow_weak_crypto");
+
     for (i = 0; i < sizeof(cf2)/sizeof(cf2[0]); i++) {
 	pw.data = cf2[i].p1;
 	pw.length = strlen(cf2[i].p1);

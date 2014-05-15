@@ -1207,6 +1207,9 @@ int ROKEN_LIB_FUNCTION rk_socket(int, int, int);
 #ifndef EINPROGRESS
 #define EINPROGRESS             112
 #endif
+#ifndef ELOOP
+#define ELOOP			114
+#endif
 #ifndef ENOTSOCK
 #define ENOTSOCK		128
 #endif

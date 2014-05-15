@@ -1137,6 +1137,59 @@ get_princ_kt(krb5_context context,
     free(def_realm);
 }
 
+static krb5_error_code
+get_switched_ccache(krb5_context context,
+		    const char * type,
+		    krb5_principal principal,
+		    krb5_ccache *ccache)
+{
+    krb5_error_code ret;
+
+#ifdef _WIN32
+    if (strcmp(type, "API") == 0) {
+	/*
+	 * Windows stores the default ccache name in the
+	 * registry which is shared across multiple logon
+	 * sessions for the same user.  The API credential
+	 * cache provides a unique name space per logon
+	 * session.  Therefore there is no need to generate
+	 * a unique ccache name.  Instead use the principal
+	 * name.  This provides a friendlier user experience.
+	 */
+	char * unparsed_name;
+	char * cred_cache;
+
+	ret = krb5_unparse_name(context, principal,
+				&unparsed_name);
+	if (ret)
+	    krb5_err(context, 1, ret,
+		     N_("unparsing principal name", ""));
+
+	ret = asprintf(&cred_cache, "API:%s", unparsed_name);
+	krb5_free_unparsed_name(context, unparsed_name);
+	if (ret == -1 || cred_cache == NULL)
+	    krb5_err(context, 1, ret,
+		      N_("building credential cache name", ""));
+
+	ret = krb5_cc_resolve(context, cred_cache, ccache);
+	free(cred_cache);
+    } else if (strcmp(type, "MSLSA") == 0) {
+	/*
+	 * The Windows MSLSA cache when it is writeable
+	 * stores tickets for multiple client principals
+	 * in a single credential cache.
+	 */
+	ret = krb5_cc_resolve(context, "MSLSA:", ccache);
+    } else {
+	ret = krb5_cc_new_unique(context, type, NULL, ccache);
+    }
+#else /* !_WIN32 */
+    ret = krb5_cc_new_unique(context, type, NULL, ccache);
+#endif /* _WIN32 */
+
+    return ret;
+}
+
 int
 main(int argc, char **argv)
 {
@@ -1255,7 +1308,8 @@ main(int argc, char **argv)
 		type = krb5_cc_get_type(context, ccache);
 		if (krb5_cc_support_switch(context, type)) {
 		    krb5_cc_close(context, ccache);
-		    ret = krb5_cc_new_unique(context, type, NULL, &ccache);
+		    ret = get_switched_ccache(context, type, principal,
+					      &ccache);
 		}
 	    }
 	}

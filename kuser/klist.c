@@ -224,7 +224,7 @@ print_cred_verbose(krb5_context context, krb5_creds *cred, int do_json)
 }
 
 /*
- * Print all tickets in `ccache' on stdout, verbosily iff do_verbose.
+ * Print all tickets in `ccache' on stdout, verbosely if do_verbose.
  */
 
 static void

@@ -36,7 +36,7 @@
 .Os Heimdal
 .Sh NAME
 .Nm kimpersonate
-.Nd impersonate a user when there exist a srvtab, keyfile or KeyFile
+.Nd impersonate a user when there exist a keyfile or KeyFile
 .Sh SYNOPSIS
 .Nm
 .Op Fl s Ar string \*(Ba Fl Fl server= Ns Ar string
@@ -55,8 +55,7 @@
 The
 .Nm
 program creates a "fake" ticket using the service-key of the service.
-The service key can be read from a Kerberos 5 keytab, AFS KeyFile or
-(if compiled with support for Kerberos 4) a Kerberos 4 srvtab.
+The service key can be read from a Kerberos 5 keytab or AFS KeyFile.
 Supported options:
 .Bl -tag -width Ds
 .It Fl s Ar string Ns , Fl Fl server= Ns Ar string
@@ -86,7 +85,6 @@ Print version
 .Sh FILES
 Uses
 .Pa /etc/krb5.keytab,
-.Pa /etc/srvtab
 and
 .Pa /usr/afs/etc/KeyFile
 when available and the

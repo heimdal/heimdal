@@ -39,8 +39,7 @@ proper authentication). With
 .Fl f
 the user will be logged in without further questions.
 .Pp
-For password authentication Kerberos 5, Kerberos 4 (if compiled in),
-OTP (if compiled in) and local
+For password authentication Kerberos 5, OTP (if compiled in) and local
 .No ( Pa /etc/passwd )
 passwords are supported. OTP will be used if the the user is
 registered to use it, and
@@ -136,9 +135,6 @@ set to whatever is passed to
 .It Dv KRB5CCNAME
 if the password is verified via Kerberos 5, this will point to the
 credentials cache file
-.It Dv KRBTKFILE
-if the password is verified via Kerberos 4, this will point to the
-ticket file
 .El
 .Sh FILES
 .Bl -tag -compact -width Ds

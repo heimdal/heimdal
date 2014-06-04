@@ -814,8 +814,6 @@ tgs_make_reply(krb5_context context,
     rep.ticket.tkt_vno = 5;
 
     ek.caddr = et.caddr;
-    if(et.caddr == NULL)
-	et.caddr = tgt->caddr;
 
     {
 	time_t life;

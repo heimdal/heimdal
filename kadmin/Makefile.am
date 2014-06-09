@@ -4,11 +4,11 @@ include $(top_srcdir)/Makefile.am.common
 
 AM_CPPFLAGS += $(INCLUDE_libintl) $(INCLUDE_readline) $(INCLUDE_hcrypto) -I$(srcdir)/../lib/krb5 -I$(top_builddir)/include/gssapi
 
-sbin_PROGRAMS = kadmin
+bin_PROGRAMS = kadmin
 
 libexec_PROGRAMS = kadmind
 
-man_MANS = kadmin.8 kadmind.8
+man_MANS = kadmin.1 kadmind.8
 
 noinst_PROGRAMS = add_random_users
 

@@ -188,7 +188,7 @@ der_get_general_string (const unsigned char *p, size_t len,
 	    return ASN1_BAD_CHARACTER;
 	}
     }
-    if (len > len + 1) {
+    if (len == SIZE_MAX) {
 	*str = NULL;
 	return ASN1_BAD_LENGTH;
     }
@@ -217,7 +217,7 @@ int
 der_get_printable_string(const unsigned char *p, size_t len,
 			 heim_printable_string *str, size_t *size)
 {
-    if (len > len + 1) {
+    if (len == SIZE_MAX) {
 	gen_data_zero(str);
 	return ASN1_BAD_LENGTH;
     }
@@ -493,7 +493,7 @@ der_get_time (const unsigned char *p, size_t len,
     char *times;
     int e;
 
-    if (len > len + 1 || len == 0)
+    if (len == SIZE_MAX || len == 0)
 	return ASN1_BAD_LENGTH;
 
     times = malloc(len + 1);
@@ -531,7 +531,7 @@ der_get_oid (const unsigned char *p, size_t len,
     if (len < 1)
 	return ASN1_OVERRUN;
 
-    if (len > len + 1)
+    if (len == SIZE_MAX)
 	return ASN1_BAD_LENGTH;
 
     if (len + 1 > UINT_MAX/sizeof(data->components[0]))

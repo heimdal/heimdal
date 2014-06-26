@@ -72,6 +72,7 @@ AC_CHECK_HEADERS([\
 	shadow.h				\
 	stdint.h				\
 	sys/bswap.h				\
+	sys/errno.h				\
 	sys/ioctl.h				\
 	sys/mman.h				\
 	sys/param.h				\

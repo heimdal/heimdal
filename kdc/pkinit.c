@@ -573,7 +573,7 @@ _kdc_pk_rd_padata(krb5_context context,
 
 	type = "PK-INIT-Win2k";
 
-	if (req->req_body.kdc_options.request_anonymous) {
+	if (_kdc_is_anon_request(&req->req_body)) {
 	    ret = KRB5_KDC_ERR_PUBLIC_KEY_ENCRYPTION_NOT_SUPPORTED;
 	    krb5_set_error_message(context, ret,
 				   "Anon not supported in RSA mode");
@@ -719,7 +719,7 @@ _kdc_pk_rd_padata(krb5_context context,
 	hx509_certs signer_certs;
 	int flags = HX509_CMS_VS_ALLOW_DATA_OID_MISMATCH; /* BTMM */
 
-	if (req->req_body.kdc_options.request_anonymous)
+	if (_kdc_is_anon_request(&req->req_body))
 	    flags |= HX509_CMS_VS_ALLOW_ZERO_SIGNER;
 
 	ret = hx509_cms_verify_signed(context->hx509ctx,
@@ -804,7 +804,7 @@ _kdc_pk_rd_padata(krb5_context context,
 	    goto out;
 	}
 
-	if (req->req_body.kdc_options.request_anonymous &&
+	if (_kdc_is_anon_request(&req->req_body) &&
 	    ap.clientPublicValue == NULL) {
 	    free_AuthPack(&ap);
 	    ret = KRB5_KDC_ERR_PUBLIC_KEY_ENCRYPTION_NOT_SUPPORTED;

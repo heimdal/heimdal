@@ -338,8 +338,8 @@ TicketFlags ::= BIT STRING {
 	hw-authent(11),
 	transited-policy-checked(12),
 	ok-as-delegate(13),
-	anonymous(14),
-	enc-pa-rep(15)
+	enc-pa-rep(15),
+	anonymous(16)
 }
 
 KDCOptions ::= BIT STRING {
@@ -351,9 +351,9 @@ KDCOptions ::= BIT STRING {
 	allow-postdate(5),
 	postdated(6),
 	renewable(8),
-	request-anonymous(14),
+	constrained-delegation(14), -- ms extension (aka cname-in-addl-tkt)
 	canonicalize(15),
-	constrained-delegation(16), -- ms extension
+	request-anonymous(16),
 	disable-transited-check(26),
 	renewable-ok(27),
 	enc-tkt-in-skey(28),

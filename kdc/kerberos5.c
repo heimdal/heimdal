@@ -717,9 +717,14 @@ static const struct kdc_patypes pat[] = {
 	KRB5_PADATA_PK_AS_REQ_WIN, "PK-INIT(win2k)", PA_ANNOUNCE,
 	pa_pkinit_validate
     },
+    {
+	KRB5_PADATA_PKINIT_KX, "Anonymous PK-INIT", PA_ANNOUNCE,
+	NULL
+    },
 #else
     { KRB5_PADATA_PK_AS_REQ, "PK-INIT(ietf)", 0, NULL },
     { KRB5_PADATA_PK_AS_REQ_WIN, "PK-INIT(win2k)", 0, NULL },
+    { KRB5_PADATA_PKINIT_KX, "Anonymous PK-INIT", 0, NULL },
 #endif
     { KRB5_PADATA_PA_PK_OCSP_RESPONSE , "OCSP", 0, NULL },
     { 

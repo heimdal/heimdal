@@ -1872,7 +1872,11 @@ _kdc_as_rep(kdc_request_t r,
     rep.pvno = 5;
     rep.msg_type = krb_as_rep;
 
-    ret = copy_Realm(&r->client->entry.principal->realm, &rep.crealm);
+    if (_kdc_is_anonymous(context, r->client_princ)) {
+	Realm anon_realm=KRB5_ANON_REALM;
+	ret = copy_Realm(&anon_realm, &rep.crealm);
+    } else
+	ret = copy_Realm(&r->client->entry.principal->realm, &rep.crealm);
     if (ret)
 	goto out;
     ret = _krb5_principal2principalname(&rep.cname, r->client->entry.principal);

@@ -207,4 +207,5 @@ EXTRA_DIST = \
 	check-cracklib.pl \
 	flush.c \
 	sample_passwd_check.c \
-	version-script.map
+	version-script.map \
+	version-script-client.map

@@ -1211,7 +1211,6 @@ tgs_parse_request(krb5_context context,
     krbtgt_kvno = ap_req.ticket.enc_part.kvno ? *ap_req.ticket.enc_part.kvno : 0;
     ret = _kdc_db_fetch(context, config, princ, HDB_F_GET_KRBTGT,
 			&krbtgt_kvno, NULL, krbtgt);
-    krbtgt_kvno_try = krbtgt_kvno ? krbtgt_kvno : (*krbtgt)->entry.kvno;
 
     if (ret == HDB_ERR_NOT_FOUND_HERE) {
 	/* XXX Factor out this unparsing of the same princ all over */
@@ -1269,6 +1268,7 @@ tgs_parse_request(krb5_context context,
 	goto out;
     }
 
+    krbtgt_kvno_try = krbtgt_kvno ? krbtgt_kvno : (*krbtgt)->entry.kvno;
     *krbtgt_etype = ap_req.ticket.enc_part.etype;
 
 next_kvno:

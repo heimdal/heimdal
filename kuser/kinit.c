@@ -1131,7 +1131,10 @@ get_princ_kt(krb5_context context,
     if (ret != 0 || (ret = krb5_kt_end_seq_get(context, kt, &cursor)) != 0)
 	krb5_err(context, 1, ret, "get_princ_kt");
     if (!*principal)
-	parse_name_realm(context, name, 0, NULL, principal);
+	if (name)
+	    parse_name_realm(context, name, 0, NULL, principal);
+	else
+	    krb5_err(context, 1, KRB5_CC_NOTFOUND, "get_princ_kt");
 
     krb5_free_principal(context, tmp);
     free(def_realm);

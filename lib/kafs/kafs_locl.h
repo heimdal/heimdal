@@ -150,6 +150,9 @@ _kafs_v4_to_kt(CREDENTIALS *, uid_t, struct kafs_token *);
 void
 _kafs_fixup_viceid(struct ClearToken *, uid_t);
 
+int
+_kafs_derive_des_key(krb5_enctype, void *, size_t, char[8]);
+
 #ifdef _AIX
 int aix_pioctl(char*, int, struct ViceIoctl*, int);
 int aix_setpag(void);

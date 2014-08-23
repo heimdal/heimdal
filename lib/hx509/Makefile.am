@@ -242,72 +242,72 @@ do_subst = $(heim_verbose)sed -e 's,[@]srcdir[@],$(srcdir),g' \
 
 test_ca: test_ca.in Makefile
 	$(do_subst) < $(srcdir)/test_ca.in > test_ca.tmp
-	chmod +x test_ca.tmp
+	$(heim_verbose)chmod +x test_ca.tmp
 	mv test_ca.tmp test_ca
 
 test_cert: test_cert.in Makefile
 	$(do_subst) < $(srcdir)/test_cert.in > test_cert.tmp
-	chmod +x test_cert.tmp
+	$(heim_verbose)chmod +x test_cert.tmp
 	mv test_cert.tmp test_cert
 
 test_chain: test_chain.in Makefile
 	$(do_subst) < $(srcdir)/test_chain.in > test_chain.tmp
-	chmod +x test_chain.tmp
+	$(heim_verbose)chmod +x test_chain.tmp
 	mv test_chain.tmp test_chain
 
 test_cms: test_cms.in Makefile
 	$(do_subst) < $(srcdir)/test_cms.in > test_cms.tmp
-	chmod +x test_cms.tmp
+	$(heim_verbose)chmod +x test_cms.tmp
 	mv test_cms.tmp test_cms
 
 test_crypto: test_crypto.in Makefile
 	$(do_subst) < $(srcdir)/test_crypto.in > test_crypto.tmp
-	chmod +x test_crypto.tmp
+	$(heim_verbose)chmod +x test_crypto.tmp
 	mv test_crypto.tmp test_crypto
 
 test_nist: test_nist.in Makefile
 	$(do_subst) < $(srcdir)/test_nist.in > test_nist.tmp
-	chmod +x test_nist.tmp
+	$(heim_verbose)chmod +x test_nist.tmp
 	mv test_nist.tmp test_nist
 
 test_nist2: test_nist2.in Makefile
 	$(do_subst) < $(srcdir)/test_nist2.in > test_nist2.tmp
-	chmod +x test_nist2.tmp
+	$(heim_verbose)chmod +x test_nist2.tmp
 	mv test_nist2.tmp test_nist2
 
 test_pkcs11: test_pkcs11.in Makefile
 	$(do_subst) < $(srcdir)/test_pkcs11.in > test_pkcs11.tmp
-	chmod +x test_pkcs11.tmp
+	$(heim_verbose)chmod +x test_pkcs11.tmp
 	mv test_pkcs11.tmp test_pkcs11
 
 test_java_pkcs11: test_java_pkcs11.in Makefile
 	$(do_subst) < $(srcdir)/test_java_pkcs11.in > test_java_pkcs11.tmp
-	chmod +x test_java_pkcs11.tmp
+	$(heim_verbose)chmod +x test_java_pkcs11.tmp
 	mv test_java_pkcs11.tmp test_java_pkcs11
 
 test_nist_cert: test_nist_cert.in Makefile
 	$(do_subst) < $(srcdir)/test_nist_cert.in > test_nist_cert.tmp
-	chmod +x test_nist_cert.tmp
+	$(heim_verbose)chmod +x test_nist_cert.tmp
 	mv test_nist_cert.tmp test_nist_cert
 
 test_nist_pkcs12: test_nist_pkcs12.in Makefile
 	$(do_subst) < $(srcdir)/test_nist_pkcs12.in > test_nist_pkcs12.tmp
-	chmod +x test_nist_pkcs12.tmp
+	$(heim_verbose)chmod +x test_nist_pkcs12.tmp
 	mv test_nist_pkcs12.tmp test_nist_pkcs12
 
 test_req: test_req.in Makefile
 	$(do_subst) < $(srcdir)/test_req.in > test_req.tmp
-	chmod +x test_req.tmp
+	$(heim_verbose)chmod +x test_req.tmp
 	mv test_req.tmp test_req
 
 test_windows: test_windows.in Makefile
 	$(do_subst) < $(srcdir)/test_windows.in > test_windows.tmp
-	chmod +x test_windows.tmp
+	$(heim_verbose)chmod +x test_windows.tmp
 	mv test_windows.tmp test_windows
 
 test_query: test_query.in Makefile
 	$(do_subst) < $(srcdir)/test_query.in > test_query.tmp
-	chmod +x test_query.tmp
+	$(heim_verbose)chmod +x test_query.tmp
 	mv test_query.tmp test_query
 
 EXTRA_DIST = \

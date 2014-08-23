@@ -1115,7 +1115,7 @@ heim_string_t to_base64(heim_data_t data, heim_error_t *error)
     int ret;
 
     d = heim_data_get_data(data);
-    ret = base64_encode(d->data, d->length, &b64);
+    ret = rk_base64_encode(d->data, d->length, &b64);
     if (ret < 0 || b64 == NULL)
 	goto enomem;
     s = heim_string_ref_create(b64, free);
@@ -1141,7 +1141,7 @@ heim_data_t from_base64(heim_string_t s, heim_error_t *error)
     if (buf == NULL)
 	goto enomem;
 
-    len = base64_decode(heim_string_get_utf8(s), buf);
+    len = rk_base64_decode(heim_string_get_utf8(s), buf);
     d = heim_data_ref_create(buf, len, free);
     if (d == NULL)
 	goto enomem;

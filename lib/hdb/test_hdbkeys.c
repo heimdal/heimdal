@@ -112,7 +112,7 @@ main(int argc, char **argv)
 
     krb5_free_context(context);
 
-    ret = base64_encode(data, length, &str);
+    ret = rk_base64_encode(data, length, &str);
     if (ret < 0)
 	errx(1, "base64_encode");
 

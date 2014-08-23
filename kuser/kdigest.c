@@ -485,7 +485,7 @@ ntlm_server_init(struct ntlm_server_init_options *opt,
      *
      */
 
-    base64_encode(data.data, data.length, &s);
+    rk_base64_encode(data.data, data.length, &s);
     free(data.data);
     printf("type2=%s\n", s);
     free(s);
@@ -498,7 +498,7 @@ ntlm_server_init(struct ntlm_server_init_options *opt,
     if (ret)
 	krb5_err(context, 1, ret, "krb5_ntlm_init_get_opaque");
 
-    base64_encode(opaque.data, opaque.length, &s);
+    rk_base64_encode(opaque.data, opaque.length, &s);
     krb5_data_free(&opaque);
     printf("opaque=%s\n", s);
     free(s);

@@ -348,7 +348,7 @@ sec_read_msg(char *s, int level)
     int return_code;
 
     buf = malloc(strlen(s));
-    len = base64_decode(s + 4, buf); /* XXX */
+    len = rk_base64_decode(s + 4, buf); /* XXX */
 
     len = (*mech->decode)(app_data, buf, len, level);
     if(len < 0)
@@ -386,7 +386,7 @@ sec_vfprintf(FILE *f, const char *fmt, va_list ap)
 	printf("Failed to encode command.\n");
 	return -1;
     }
-    if(base64_encode(enc, len, &buf) < 0){
+    if(rk_base64_encode(enc, len, &buf) < 0){
 	free(enc);
 	printf("Out of memory base64-encoding.\n");
 	return -1;
@@ -469,7 +469,7 @@ adat(char *auth_data)
     if(mech && !sec_complete) {
 	void *buf = malloc(strlen(auth_data));
 	size_t len;
-	len = base64_decode(auth_data, buf);
+	len = rk_base64_decode(auth_data, buf);
 	(*mech->adat)(app_data, buf, len);
 	free(buf);
     } else
@@ -554,7 +554,7 @@ void mec(char *msg, enum protection_level level)
 	reply(501, "Failed to allocate %lu", (unsigned long)buf_size);
 	return;
     }
-    len = base64_decode(msg, buf);
+    len = rk_base64_decode(msg, buf);
     command_prot = level;
     if(len == (size_t)-1) {
 	free(buf);

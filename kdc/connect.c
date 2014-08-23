@@ -681,7 +681,7 @@ handle_http_tcp (krb5_context context,
 	free(data);
 	return -1;
     }
-    len = base64_decode(t, data);
+    len = rk_base64_decode(t, data);
     if(len <= 0){
 	const char *msg =
 	    " 404 Not found\r\n"

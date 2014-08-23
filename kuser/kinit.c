@@ -683,6 +683,9 @@ get_new_tickets(krb5_context context,
     case KRB5KRB_AP_ERR_V4_REPLY:
 	krb5_warnx(context, N_("Looks like a Kerberos 4 reply", ""));
 	goto out;
+    case KRB5KDC_ERR_KEY_EXPIRED:
+	krb5_warnx(context, N_("Password expired", ""));
+	goto out;
     default:
 	krb5_warn(context, ret, "krb5_get_init_creds");
 	goto out;

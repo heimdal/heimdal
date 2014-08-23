@@ -55,10 +55,12 @@ R6=SOME-REALM6.US
 R7=SOME-REALM7.UK
 
 port=@port@
+pwport=@pwport@
 
 kadmin="${kadmin} -l -r $R"
 kadmin5="${kadmin} -l -r $R5"
 kdc="${kdc} --addresses=localhost -P $port"
+kpasswdd="${kpasswdd} --addresses=localhost -p $pwport"
 
 server=host/datan.test.h5l.se
 server2=host/computer.example.com
@@ -204,6 +206,12 @@ ${kadmin} add -p cross2 --use-defaults krbtgt/${R6}@${R7} || exit 1
 ${kadmin} add -p foo --use-defaults pw-expire@${R} || exit 1
 ${kadmin} modify --pw-expiration-time=+1day  pw-expire@${R} || exit 1
 
+${kadmin} add -p foo --use-defaults pw-expired@${R} || exit 1
+${kadmin} modify --pw-expiration-time=2012-06-12  pw-expired@${R} || exit 1
+
+${kadmin} add -p foo --use-defaults account-expired@${R} || exit 1
+${kadmin} modify --expiration-time=2012-06-12  account-expired@${R} || exit 1
+
 ${kadmin} add -p foo --use-defaults foo@${RH} || exit 1
 
 echo "Check parser"
@@ -265,7 +273,12 @@ if [ "$?" != 0 ] ; then
     exit 1
 fi
 
-trap "kill -9 ${kdcpid}; echo signal killing kdc; exit 1;" EXIT
+echo Starting kpasswdd; > messages.log
+env ${HEIM_MALLOC_DEBUG} ${kpasswdd} &
+kpasswddpid=$!
+
+
+trap "kill -9 ${kdcpid} ${kpasswddpid}; echo signal killing kdc kpasswdd; exit 1;" EXIT
 
 ec=0
 
@@ -720,7 +733,7 @@ echo "testing removal of keytab"
 ${ktutil} -k ${keytab} destroy || { ec=1 ; eval "${testfailed}"; }
 test -f ${keytabfile} && { ec=1 ; eval "${testfailed}"; }
 
-echo "Getting client pw expire"; > messages.log
+echo "Checking client pw expire"; > messages.log
 ${kinit} --password-file=${objdir}/foopassword \
         pw-expire@${R} 2>kinit-log.tmp|| \
 	{ ec=1 ; eval "${testfailed}"; }
@@ -733,8 +746,30 @@ ${EGREP} "^e type: 6" kinit-log.tmp > /dev/null  || \
 echo "   test_gic passes"
 ${kdestroy}
 
-echo "killing kdc (${kdcpid})"
+echo "Checking password expiration" ; > messages.log
+
+kinitpty=${objdir}/foopassword.rkpty
+cat > ${kinitpty} <<EOF
+expect Password
+password foo\n
+expect Password has expired
+expect New password
+password Foobar11\n
+expect password
+password Foobar11\n
+expect Success: Password changed
+EOF
+
+echo "Checking client pw expire"; > messages.log
+${rkpty} ${kinitpty} ${kinit} pw-expired@${R}|| \
+	{ ec=1 ; eval "${testfailed}"; }
+
+${kdestroy}
+
+
+echo "killing kdc (${kdcpid}) kpasswdd (${kpasswddpid})"
 sh ${leaks_kill} kdc $kdcpid || exit 1
+sh ${leaks_kill} kpasswdd $kpasswddpid || exit 1
 
 trap "" EXIT
 

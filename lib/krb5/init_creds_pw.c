@@ -64,6 +64,10 @@ typedef struct krb5_get_init_creds_ctx {
     krb5_pk_init_ctx pk_init_ctx;
     int ic_flags;
 
+    struct {
+	unsigned change_password:1;
+    } runflags;
+
     int used_pa_types;
 #define  USED_PKINIT	1
 #define  USED_PKINIT_W2K	2
@@ -2325,6 +2329,34 @@ krb5_init_creds_step(krb5_context context,
 					       *ctx->error.crealm);
 
 		ctx->used_pa_types = 0;
+	    } else if (ret == KRB5KDC_ERR_KEY_EXP && ctx->runflags.change_password == 0 && ctx->prompter) {
+		char buf2[1024];
+
+		ctx->runflags.change_password = 1;
+
+		ctx->prompter(context, ctx->prompter_data, NULL, N_("Password has expired", ""), 0, NULL);
+
+
+		/* try to avoid recursion */
+		if (ctx->in_tkt_service != NULL && strcmp(ctx->in_tkt_service, "kadmin/changepw") == 0)
+		    goto out;
+
+		ret = change_password(context,
+				      ctx->cred.client,
+				      ctx->password,
+				      buf2,
+				      sizeof(buf2),
+				      ctx->prompter,
+				      ctx->prompter_data,
+				      NULL);
+		if (ret)
+		    goto out;
+
+		krb5_init_creds_set_password(context, ctx, buf2);
+
+ 		ctx->used_pa_types = 0;
+		ret = 0;
+
  	    } else if (ret == KRB5KDC_ERR_PREAUTH_FAILED) {
  
  		if (ctx->fast_state.flags & KRB5_FAST_DISABLED)

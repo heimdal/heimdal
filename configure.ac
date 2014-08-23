@@ -10,11 +10,14 @@ AC_CONFIG_MACRO_DIR([cf])
 AM_INIT_AUTOMAKE([foreign 1.11])
 AM_MAINTAINER_MODE
 
+LT_PREREQ([2.2])
+LT_INIT([shared static win32-dll])
+
+
 dnl Checks for programs.
 AC_PROG_CC
 AM_PROG_CC_C_O
 AC_PROG_CPP
-AC_PROG_LIBTOOL
 
 m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])
 
@@ -54,9 +57,6 @@ CC="$CC $abi"
 libdir="$libdir$abilibdirext"
 
 AC_C___ATTRIBUTE__
-
-LT_PREREQ([2.2])
-LT_INIT([shared static win32-dll])
 
 AM_CONDITIONAL(ENABLE_SHARED, test "$enable_shared" = "yes")
 rk_VERSIONSCRIPT

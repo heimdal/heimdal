@@ -213,7 +213,7 @@ gss_adat(void *app_data, void *buf, size_t len)
 	free(bindings);
 
     if(output_token.length) {
-	if(base64_encode(output_token.value, output_token.length, &p) < 0) {
+	if(rk_base64_encode(output_token.value, output_token.length, &p) < 0) {
 	    reply(535, "Out of memory base64-encoding.");
 	    return -1;
 	}
@@ -421,7 +421,7 @@ gss_auth(void *app_data, char *host)
 	    input.length = 0;
 	}
 	if (output_token.length != 0) {
-	    base64_encode(output_token.value, output_token.length, &p);
+	    rk_base64_encode(output_token.value, output_token.length, &p);
 	    gss_release_buffer(&min_stat, &output_token);
 	    n = command("ADAT %s", p);
 	    free(p);
@@ -444,7 +444,7 @@ gss_auth(void *app_data, char *host)
 	    } else {
 		p+=5;
 		input.value = malloc(strlen(p));
-		input.length = base64_decode(p, input.value);
+		input.length = rk_base64_decode(p, input.value);
 	    }
 	} else {
 	    if(code != 235) {

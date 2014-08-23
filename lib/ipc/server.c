@@ -822,7 +822,7 @@ handle_http_tcp(struct client *c)
 	free(data);
 	return NULL;
     }
-    len = base64_decode(t, data);
+    len = rk_base64_decode(t, data);
     if(len <= 0){
 	const char *msg =
 	    " 404 Not found\r\n"

@@ -392,7 +392,7 @@ main(int argc, char **argv)
 		    if (len == 0)
 			errx(1, "invalid Negotiate token");
 		    input_token.value = emalloc(len);
-		    len = base64_decode(&h[i], input_token.value);
+		    len = rk_base64_decode(&h[i], input_token.value);
 		    if (len < 0)
 			errx(1, "invalid base64 Negotiate token %s", &h[i]);
 		    input_token.length = len;
@@ -475,9 +475,9 @@ main(int argc, char **argv)
 		if (output_token.length) {
 		    char *neg_token;
 
-		    base64_encode(output_token.value,
-				  output_token.length,
-				  &neg_token);
+		    rk_base64_encode(output_token.value,
+				     output_token.length,
+				     &neg_token);
 
 		    asprintf(&headers[num_headers++], "Authorization: Negotiate %s",
 			     neg_token);

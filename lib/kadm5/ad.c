@@ -1275,7 +1275,7 @@ kadm5_ad_randkey_principal(void *server_handle,
     {
 	char p[64];
 	krb5_generate_random_block(p, sizeof(p));
-	plen = base64_encode(p, sizeof(p), &password);
+	plen = rk_base64_encode(p, sizeof(p), &password);
 	if (plen < 0)
 	    return ENOMEM;
     }

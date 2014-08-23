@@ -98,7 +98,7 @@ hx509_pem_write(hx509_context context, const char *type,
 	if (length > ENCODE_LINE_LENGTH)
 	    length = ENCODE_LINE_LENGTH;
 
-	l = base64_encode(p, length, &line);
+	l = rk_base64_encode(p, length, &line);
 	if (l < 0) {
 	    hx509_set_error_string(context, 0, ENOMEM,
 				   "malloc - out of memory");
@@ -255,7 +255,7 @@ hx509_pem_read(hx509_context context,
 	    }
 
 	    p = emalloc(i);
-	    i = base64_decode(buf, p);
+	    i = rk_base64_decode(buf, p);
 	    if (i < 0) {
 		free(p);
 		goto out;

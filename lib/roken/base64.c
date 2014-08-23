@@ -52,7 +52,7 @@ pos(char c)
 }
 
 ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
-base64_encode(const void *data, int size, char **str)
+rk_base64_encode(const void *data, int size, char **str)
 {
     char *s, *p;
     int i;
@@ -121,7 +121,7 @@ token_decode(const char *token)
 }
 
 ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
-base64_decode(const char *str, void *data)
+rk_base64_decode(const char *str, void *data)
 {
     const char *p;
     unsigned char *q;

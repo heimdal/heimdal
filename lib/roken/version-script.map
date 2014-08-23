@@ -2,8 +2,6 @@ HEIMDAL_ROKEN_1.0 {
 	global:
 		arg_printusage;
 		arg_printusage_i18n;
-		base64_decode;
-		base64_encode;
 		cgetcap;
 		cgetclose;
 		cgetmatch;
@@ -36,6 +34,8 @@ HEIMDAL_ROKEN_1.0 {
 		print_units_table;
 		rk_asnprintf;
 		rk_asprintf;
+		rk_base64_decode;
+		rk_base64_encode;
 		rk_bswap16;
 		rk_bswap32;
 		rk_cgetent;

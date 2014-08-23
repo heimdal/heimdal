@@ -514,7 +514,7 @@ prepare_http(krb5_context context, struct host *host, const krb5_data *data)
 
     heim_assert(host->data.length == 0, "prepare_http called twice");
 
-    len = base64_encode(data->data, data->length, &str);
+    len = rk_base64_encode(data->data, data->length, &str);
     if(len < 0)
 	return ENOMEM;
 

@@ -184,7 +184,7 @@ base2json(heim_object_t obj, struct twojson *j)
 	    return EINVAL; /* JSON doesn't do binary */
 
 	data = heim_data_get_data(obj);
-	ret = base64_encode(data->data, data->length, &b64);
+	ret = rk_base64_encode(data->data, data->length, &b64);
 	if (ret < 0 || b64 == NULL)
 	    return ENOMEM;
 
@@ -410,7 +410,7 @@ parse_string(struct parse_ctx *ctx)
 			    ctx->error = heim_error_create_enomem();
 			    return NULL;
 			}
-			len = base64_decode(s, buf);
+			len = rk_base64_decode(s, buf);
 			if (len == -1) {
 			    free(buf);
 			    return o;
@@ -541,7 +541,7 @@ parse_dict(struct parse_ctx *ctx)
 		ctx->error = heim_error_create_enomem();
 		return NULL;
 	    }
-	    len = base64_decode(heim_string_get_utf8(v), buf);
+	    len = rk_base64_decode(heim_string_get_utf8(v), buf);
 	    heim_release(v);
 	    if (len == -1) {
 		free(buf);

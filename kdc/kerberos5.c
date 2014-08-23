@@ -432,7 +432,7 @@ pa_enc_chal_validate(kdc_request_t r, const PA_DATA *pa)
 
     heim_assert(r->armor_crypto != NULL, "ENC-CHAL called for non FAST");
     
-    if (b->kdc_options.request_anonymous) {
+    if (_kdc_is_anon_request(b)) {
 	ret = KRB5KRB_AP_ERR_BAD_INTEGRITY;
 	kdc_log(r->context, r->config, 0, "ENC-CHALL doesn't support anon");
 	return ret;
@@ -555,7 +555,7 @@ pa_enc_ts_validate(kdc_request_t r, const PA_DATA *pa)
     Key *pa_key;
     char *str;
 	
-    if (r->req.req_body.kdc_options.request_anonymous) {
+    if (_kdc_is_anon_request(&r->req.req_body)) {
 	ret = KRB5KRB_AP_ERR_BAD_INTEGRITY;
 	_kdc_set_e_text(r, "ENC-TS doesn't support anon");
 	goto out;
@@ -717,9 +717,14 @@ static const struct kdc_patypes pat[] = {
 	KRB5_PADATA_PK_AS_REQ_WIN, "PK-INIT(win2k)", PA_ANNOUNCE,
 	pa_pkinit_validate
     },
+    {
+	KRB5_PADATA_PKINIT_KX, "Anonymous PK-INIT", PA_ANNOUNCE,
+	NULL
+    },
 #else
     { KRB5_PADATA_PK_AS_REQ, "PK-INIT(ietf)", 0, NULL },
     { KRB5_PADATA_PK_AS_REQ_WIN, "PK-INIT(win2k)", 0, NULL },
+    { KRB5_PADATA_PKINIT_KX, "Anonymous PK-INIT", 0, NULL },
 #endif
     { KRB5_PADATA_PA_PK_OCSP_RESPONSE , "OCSP", 0, NULL },
     { 
@@ -1656,12 +1661,12 @@ _kdc_as_rep(kdc_request_t r,
      */
 
     if (_kdc_is_anonymous(context, r->client_princ)) {
-	if (!b->kdc_options.request_anonymous) {
+	if (!_kdc_is_anon_request(b)) {
 	    kdc_log(context, config, 0, "Anonymous ticket w/o anonymous flag");
 	    ret = KRB5KDC_ERR_C_PRINCIPAL_UNKNOWN;
 	    goto out;
 	}
-    } else if (b->kdc_options.request_anonymous) {
+    } else if (_kdc_is_anon_request(b)) {
 	kdc_log(context, config, 0,
 		"Request for a anonymous ticket with non "
 		"anonymous client name: %s", r->client_name);
@@ -1810,7 +1815,7 @@ _kdc_as_rep(kdc_request_t r,
 	 * send requre preauth is its required or anon is requested,
 	 * anon is today only allowed via preauth mechanisms.
 	 */
-	if (require_preauth_p(r) || b->kdc_options.request_anonymous) {
+	if (require_preauth_p(r) || _kdc_is_anon_request(b)) {
 	    ret = KRB5KDC_ERR_PREAUTH_REQUIRED;
 	    _kdc_set_e_text(r, "Need to use PA-ENC-TIMESTAMP/PA-PK-AS-REQ");
 	    goto out;
@@ -1854,7 +1859,7 @@ _kdc_as_rep(kdc_request_t r,
 	goto out;
 
     if(f.renew || f.validate || f.proxy || f.forwarded || f.enc_tkt_in_skey
-       || (f.request_anonymous && !config->allow_anonymous)) {
+       || (_kdc_is_anon_request(b) && !config->allow_anonymous)) {
 	ret = KRB5KDC_ERR_BADOPTION;
 	_kdc_set_e_text(r, "Bad KDC options");
 	goto out;
@@ -1867,7 +1872,11 @@ _kdc_as_rep(kdc_request_t r,
     rep.pvno = 5;
     rep.msg_type = krb_as_rep;
 
-    ret = copy_Realm(&r->client->entry.principal->realm, &rep.crealm);
+    if (_kdc_is_anonymous(context, r->client_princ)) {
+	Realm anon_realm=KRB5_ANON_REALM;
+	ret = copy_Realm(&anon_realm, &rep.crealm);
+    } else
+	ret = copy_Realm(&r->client->entry.principal->realm, &rep.crealm);
     if (ret)
 	goto out;
     ret = _krb5_principal2principalname(&rep.cname, r->client->entry.principal);
@@ -1973,7 +1982,7 @@ _kdc_as_rep(kdc_request_t r,
 	}
     }
 
-    if (f.request_anonymous)
+    if (_kdc_is_anon_request(b))
 	r->et.flags.anonymous = 1;
 
     if(b->addresses){
@@ -2319,4 +2328,15 @@ _kdc_tkt_add_if_relevant_ad(krb5_context context,
     }
 
     return 0;
+}
+
+krb5_boolean
+_kdc_is_anon_request(const KDC_REQ_BODY *b)
+{
+	/* some versions of heimdal use bit 14 instead of 16 for
+	   request_anonymous, as indicated in the anonymous draft prior to
+	   version 11. Bit 14 is assigned to S4U2Proxy, but all S4U2Proxy
+	   requests will have a second ticket; don't consider those anonymous */
+	return (b->kdc_options.request_anonymous ||
+		(b->kdc_options.constrained_delegation && !b->additional_tickets));
 }

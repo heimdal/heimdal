@@ -616,11 +616,6 @@ fcc_store_cred(krb5_context context,
 	sp = krb5_storage_emem();
 	krb5_storage_set_eof_code(sp, KRB5_CC_END);
 	storage_set_flags(context, sp, FCACHE(id)->version);
-	if (!krb5_config_get_bool_default(context, NULL, TRUE,
-					  "libdefaults",
-					  "fcc-mit-ticketflags",
-					  NULL))
-	    krb5_storage_set_flags(sp, KRB5_STORAGE_CREDS_FLAGS_WRONG_BITORDER);
 	ret = krb5_store_creds(sp, creds);
 	if (ret == 0)
 	    ret = write_storage(context, sp, fd);
@@ -915,7 +910,6 @@ cred_delete(krb5_context context,
     struct stat sb1, sb2;
     int fd = -1;
     ssize_t bytes;
-    krb5_flags flags = 0;
     krb5_const_realm srealm = krb5_principal_get_realm(context, cred->server);
 
     /* This is best-effort code; if we lose track of errors here it's OK */
@@ -924,19 +918,12 @@ cred_delete(krb5_context context,
 		"fcache internal error");
 
     krb5_data_zero(&orig_cred_data);
-    if (!krb5_config_get_bool_default(context, NULL, TRUE,
-				      "libdefaults",
-				      "fcc-mit-ticketflags",
-				      NULL))
-	flags = KRB5_STORAGE_CREDS_FLAGS_WRONG_BITORDER;
 
     sp = krb5_storage_emem();
     if (sp == NULL)
 	return;
     krb5_storage_set_eof_code(sp, KRB5_CC_END);
     storage_set_flags(context, sp, FCACHE(id)->version);
-    if (flags)
-	krb5_storage_set_flags(sp, KRB5_STORAGE_CREDS_FLAGS_WRONG_BITORDER);
 
     /* Get a copy of what the cred should look like in the file; see below */
     ret = krb5_store_creds(sp, cred);
@@ -970,8 +957,6 @@ cred_delete(krb5_context context,
 	return;
     krb5_storage_set_eof_code(sp, KRB5_CC_END);
     storage_set_flags(context, sp, FCACHE(id)->version);
-    if (flags)
-	krb5_storage_set_flags(sp, KRB5_STORAGE_CREDS_FLAGS_WRONG_BITORDER);
 
     ret = krb5_store_creds(sp, cred);
 

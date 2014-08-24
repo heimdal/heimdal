@@ -1347,14 +1347,9 @@ krb5_store_creds(krb5_storage *sp, krb5_creds *creds)
     ret = krb5_store_int8(sp, creds->second_ticket.length != 0); /* is_skey */
     if(ret)
 	return ret;
-
-    if(krb5_storage_is_flags(sp, KRB5_STORAGE_CREDS_FLAGS_WRONG_BITORDER))
-	ret = krb5_store_int32(sp, creds->flags.i);
-    else
-	ret = krb5_store_int32(sp, bitswap32(TicketFlags2int(creds->flags.b)));
+    ret = krb5_store_int32(sp, bitswap32(TicketFlags2int(creds->flags.b)));
     if(ret)
 	return ret;
-
     ret = krb5_store_addrs(sp, creds->addresses);
     if(ret)
 	return ret;
@@ -1399,23 +1394,7 @@ krb5_ret_creds(krb5_storage *sp, krb5_creds *creds)
     if(ret) goto cleanup;
     ret = krb5_ret_int32 (sp,  &dummy32);
     if(ret) goto cleanup;
-    /*
-     * Runtime detect the what is the higher bits of the bitfield. If
-     * any of the higher bits are set in the input data, it's either a
-     * new ticket flag (and this code need to be removed), or it's a
-     * MIT cache (or new Heimdal cache), lets change it to our current
-     * format.
-     */
-    {
-	uint32_t mask = 0xffff0000;
-	creds->flags.i = 0;
-	creds->flags.b.anonymous = 1;
-	if (creds->flags.i & mask)
-	    mask = ~mask;
-	if (dummy32 & mask)
-	    dummy32 = bitswap32(dummy32);
-    }
-    creds->flags.i = dummy32;
+    creds->flags.b = int2TicketFlags(bitswap32(dummy32));
     ret = krb5_ret_addrs (sp,  &creds->addresses);
     if(ret) goto cleanup;
     ret = krb5_ret_authdata (sp,  &creds->authdata);
@@ -1574,23 +1553,7 @@ krb5_ret_creds_tag(krb5_storage *sp,
     if(ret) goto cleanup;
     ret = krb5_ret_int32 (sp,  &dummy32);
     if(ret) goto cleanup;
-    /*
-     * Runtime detect the what is the higher bits of the bitfield. If
-     * any of the higher bits are set in the input data, it's either a
-     * new ticket flag (and this code need to be removed), or it's a
-     * MIT cache (or new Heimdal cache), lets change it to our current
-     * format.
-     */
-    {
-	uint32_t mask = 0xffff0000;
-	creds->flags.i = 0;
-	creds->flags.b.anonymous = 1;
-	if (creds->flags.i & mask)
-	    mask = ~mask;
-	if (dummy32 & mask)
-	    dummy32 = bitswap32(dummy32);
-    }
-    creds->flags.i = dummy32;
+    creds->flags.b = int2TicketFlags(bitswap32(dummy32));
     if (header & SC_ADDRESSES) {
 	ret = krb5_ret_addrs (sp,  &creds->addresses);
 	if(ret) goto cleanup;

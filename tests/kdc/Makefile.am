@@ -59,7 +59,7 @@ do_subst = $(heim_verbose)sed $(do_dlopen) \
 	-e 's,[@]top_builddir[@],$(top_builddir),g' \
 	-e 's,[@]EGREP[@],$(EGREP),g' 
 
-chmod = $(heim_verbose)chmod
+chmod = chmod
 
 LDADD = ../../lib/krb5/libkrb5.la $(LIB_roken)
 

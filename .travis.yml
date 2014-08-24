@@ -1,8 +1,24 @@
 language: c
-script: ./autogen.sh && ./configure && make && make check
+
+before_script:
+    - mkdir ci-build
+
+script:
+  - ./autogen.sh
+  - cd ci-build
+  - ../configure
+  - make
+  - make check
+
 compiler:
   - clang
   - gcc
+
 install:
   - sudo apt-get update
   - sudo apt-get install -qq bison comerr-dev flex libcap-ng-dev libdb-dev libedit-dev libhesiod-dev libjson-perl libldap2-dev libncurses5-dev libperl4-corelibs-perl libsqlite3-dev libx11-dev libxau-dev libxt-dev pkg-config python ss-dev texinfo x11proto-core-dev unzip netbase
+
+notifications:
+    email:
+        on_success: change
+        on_failure: always

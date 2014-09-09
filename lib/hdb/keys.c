@@ -75,8 +75,8 @@ static const krb5_enctype des_etypes[] = {
 
 static const krb5_enctype all_etypes[] = {
     KRB5_ENCTYPE_AES256_CTS_HMAC_SHA1_96,
-    KRB5_ENCTYPE_ARCFOUR_HMAC_MD5,
-    KRB5_ENCTYPE_DES3_CBC_SHA1
+    KRB5_ENCTYPE_DES3_CBC_SHA1,
+    KRB5_ENCTYPE_ARCFOUR_HMAC_MD5
 };
 
 static krb5_error_code

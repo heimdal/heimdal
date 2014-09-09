@@ -6,12 +6,6 @@ AM_CPPFLAGS += $(INCLUDE_libintl) $(INCLUDE_readline) $(INCLUDE_hcrypto) -I$(src
 
 sbin_PROGRAMS = kadmin
 
-# Install a symbolic link from ${sbindir}/kadmin to ${bindir}/kadmin for
-# backwards compatibility
-
-install-exec-hook::
-	$(LN_S) $(bindir)/kadmin $(DESTDIR)$(sbindir)/kadmin
-
 libexec_PROGRAMS = kadmind
 
 man_MANS = kadmin.8 kadmind.8

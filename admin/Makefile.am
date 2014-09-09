@@ -8,12 +8,6 @@ man_MANS = ktutil.8
 
 sbin_PROGRAMS = ktutil
 
-# Install a symbolic link from ${sbindir}/ktutil to ${bindir}/ktutil for
-# backwards compatibility
-
-install-exec-hook::
-	$(LN_S) $(bindir)/ktutil $(DESTDIR)$(sbindir)/ktutil
-
 dist_ktutil_SOURCES =				\
 	add.c					\
 	change.c				\

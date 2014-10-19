@@ -80,7 +80,7 @@ main(int argc, char **argv)
     if (ret)
 	errx (1, "krb5_init_context failed: %d", ret);
 
-    ret = _krb5_expand_path_tokensv(context, "/tmp/%{foo}/%{bar}%{baz}/x",
+    ret = _krb5_expand_path_tokensv(context, "/tmp/%{foo}/%{bar}%{baz}/x", 0,
                                     &expanded,
                                     "foo", "abc",
                                     "bar", "dce",

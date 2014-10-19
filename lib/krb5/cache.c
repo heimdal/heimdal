@@ -188,8 +188,13 @@ allocate_ccache (krb5_context context,
     krb5_error_code ret;
 #ifdef KRB5_USE_PATH_TOKENS
     char * exp_residual = NULL;
+    int filepath;
 
-    ret = _krb5_expand_path_tokens(context, residual, &exp_residual);
+    filepath = (strcmp("FILE", ops->prefix) == 0
+		 || strcmp("DIR", ops->prefix) == 0
+		 || strcmp("SCC", ops->prefix) == 0);
+
+    ret = _krb5_expand_path_tokens(context, residual, filepath, &exp_residual);
     if (ret)
 	return ret;
 
@@ -409,7 +414,13 @@ krb5_cc_get_ops(krb5_context context, krb5_ccache id)
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 _krb5_expand_default_cc_name(krb5_context context, const char *str, char **res)
 {
-    return _krb5_expand_path_tokens(context, str, res);
+    int filepath;
+
+    filepath = (strncmp("FILE:", str, 5) == 0
+		 || strncmp("DIR:", str, 4) == 0
+		 || strncmp("SCC:", str, 4) == 0);
+
+    return _krb5_expand_path_tokens(context, str, filepath, res);
 }
 
 /*
@@ -501,6 +512,7 @@ krb5_cc_set_default_name(krb5_context context, const char *name)
 {
     krb5_error_code ret = 0;
     char *p = NULL, *exp_p = NULL;
+    int filepath;
 
     if (name == NULL) {
 	const char *e = NULL;
@@ -556,15 +568,20 @@ krb5_cc_set_default_name(krb5_context context, const char *name)
     if (p == NULL)
 	return krb5_enomem(context);
 
-    ret = _krb5_expand_path_tokens(context, p, &exp_p);
+    filepath = (strncmp("FILE:", p, 5) == 0
+		 || strncmp("DIR:", p, 4) == 0
+		 || strncmp("SCC:", p, 4) == 0);
+
+    ret = _krb5_expand_path_tokens(context, p, filepath, &exp_p);
     free(p);
+    p = exp_p;
     if (ret)
 	return ret;
 
     if (context->default_cc_name)
 	free(context->default_cc_name);
 
-    context->default_cc_name = exp_p;
+    context->default_cc_name = p;
 
     return 0;
 }

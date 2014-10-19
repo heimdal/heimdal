@@ -639,7 +639,7 @@ kuserok_user_k5login_plug_f(void *plug_ctx, krb5_context context,
     if (asprintf(&path, "%s/.k5login.d", profile_dir) == -1)
 	return krb5_enomem(context);
 
-    ret = _krb5_expand_path_tokensv(context, path, &path_exp,
+    ret = _krb5_expand_path_tokensv(context, path, 1, &path_exp,
 				    "luser", luser, NULL);
     free(path);
     if (ret)

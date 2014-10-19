@@ -424,9 +424,10 @@ _expand_token(krb5_context context,
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 _krb5_expand_path_tokens(krb5_context context,
 			 const char *path_in,
+			 int filepath,
 			 char **ppath_out)
 {
-    return _krb5_expand_path_tokensv(context, path_in, ppath_out, NULL);
+    return _krb5_expand_path_tokensv(context, path_in, filepath, ppath_out, NULL);
 }
 
 static void
@@ -458,6 +459,7 @@ free_extra_tokens(char **extra_tokens)
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 _krb5_expand_path_tokensv(krb5_context context,
 			  const char *path_in,
+			  int filepath,
 			  char **ppath_out, ...)
 {
     char *tok_begin, *tok_end, *append;
@@ -587,8 +589,9 @@ _krb5_expand_path_tokensv(krb5_context context,
 
 #ifdef _WIN32
     /* Also deal with slashes */
-    if (*ppath_out) {
+    if (filepath && *ppath_out) {
 	char * c;
+
 	for (c = *ppath_out; *c; c++)
 	    if (*c == '/')
 		*c = '\\';

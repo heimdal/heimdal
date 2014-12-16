@@ -387,10 +387,10 @@ bervalstrcmp(struct berval *v, const char *str)
 
 static krb5_error_code
 LDAP_entry2mods(krb5_context context, HDB * db, hdb_entry_ex * ent,
-		LDAPMessage * msg, LDAPMod *** pmods)
+		LDAPMessage * msg, LDAPMod *** pmods, krb5_boolean *pis_new_entry)
 {
     krb5_error_code ret;
-    krb5_boolean is_new_entry;
+    krb5_boolean is_new_entry = FALSE;
     char *tmp = NULL;
     LDAPMod **mods = NULL;
     hdb_entry_ex orig;
@@ -411,8 +411,6 @@ LDAP_entry2mods(krb5_context context, HDB * db, hdb_entry_ex * ent,
 	ret = LDAP_message2entry(context, db, msg, 0, &orig);
 	if (ret)
 	    goto out;
-
-	is_new_entry = FALSE;
 
 	vals = ldap_get_values_len(HDB2LDAP(db), msg, "objectClass");
 	if (vals) {
@@ -452,12 +450,12 @@ LDAP_entry2mods(krb5_context context, HDB * db, hdb_entry_ex * ent,
 	 * orig being intiialized to zero */
 	memset(&orig, 0, sizeof(orig));
 
-	ret = LDAP_addmod(&mods, LDAP_MOD_ADD, "objectClass", "top");
-	if (ret)
-	    goto out;
-
 	/* account is the structural object class */
 	if (is_account == FALSE) {
+	    ret = LDAP_addmod(&mods, LDAP_MOD_ADD, "objectClass", "top");
+	    if (ret)
+		goto out;
+
 	    ret = LDAP_addmod(&mods, LDAP_MOD_ADD, "objectClass",
 			      structural_object);
 	    is_account = TRUE;
@@ -729,6 +727,8 @@ LDAP_entry2mods(krb5_context context, HDB * db, hdb_entry_ex * ent,
     ret = 0;
 
  out:
+
+    *pis_new_entry = is_new_entry;
 
     if (ret == 0)
 	*pmods = mods;
@@ -1677,6 +1677,7 @@ LDAP_store(krb5_context context, HDB * db, unsigned flags,
     int rc;
     LDAPMessage *msg = NULL, *e = NULL;
     char *dn = NULL, *name = NULL;
+    krb5_boolean is_new_entry;
 
     ret = LDAP_principal2message(context, db, entry->entry.principal, &msg);
     if (ret == 0)
@@ -1693,7 +1694,7 @@ LDAP_store(krb5_context context, HDB * db, unsigned flags,
 	goto out;
 
     /* turn new entry into LDAPMod array */
-    ret = LDAP_entry2mods(context, db, entry, e, &mods);
+    ret = LDAP_entry2mods(context, db, entry, e, &mods, &is_new_entry);
     if (ret)
 	goto out;
 
@@ -1704,8 +1705,9 @@ LDAP_store(krb5_context context, HDB * db, unsigned flags,
 	    krb5_set_error_message(context, ret, "asprintf: out of memory");
 	    goto out;
 	}
-    } else if (flags & HDB_F_REPLACE) {
+    } else if ((flags & HDB_F_REPLACE) || (is_new_entry)) {
 	/* Entry exists, and we're allowed to replace it. */
+	/* Entry may also exist but need to be modified to create a new principal. */
 	dn = ldap_get_dn(HDB2LDAP(db), e);
     } else {
 	/* Entry exists, but we're not allowed to replace it. Bail. */
@@ -1779,6 +1781,8 @@ LDAP_remove(krb5_context context, HDB *db, krb5_const_principal principal)
 			      ldap_err2string(rc));
 	goto out;
     }
+
+    /* HACK: This should check if we need to delete the object or just some attributes */
 
     rc = ldap_delete_ext_s(HDB2LDAP(db), dn, NULL, NULL );
     if (check_ldap(context, db, rc)) {

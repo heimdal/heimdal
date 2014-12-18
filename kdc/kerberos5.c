@@ -1782,13 +1782,14 @@ _kdc_as_rep(kdc_request_t r,
 	    pa = _kdc_find_padata(req, &i, pat[n].type);
 	    if (pa) {
 		ret = pat[n].validate(r, pa);
-		if (ret == 0) {
-		    kdc_log(context, config, 0,
-			    "%s pre-authentication succeeded -- %s",
-			    pat[n].name, r->client_name);
-		    found_pa = 1;
-		    r->et.flags.pre_authent = 1;
+		if (ret != 0) {
+		    goto out;
 		}
+		kdc_log(context, config, 0,
+			"%s pre-authentication succeeded -- %s",
+			pat[n].name, r->client_name);
+		found_pa = 1;
+		r->et.flags.pre_authent = 1;
 	    }
 	}
     }

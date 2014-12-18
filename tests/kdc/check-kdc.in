@@ -268,6 +268,7 @@ fi
 
 
 echo foo > ${objdir}/foopassword
+echo notfoo > ${objdir}/notfoopassword
 
 echo Starting kdc ; > messages.log
 env MallocStackLogging=1 MallocStackLoggingNoCompact=1 MallocErrorAbort=1 MallocLogFile=${objdir}/malloc-log \
@@ -289,6 +290,12 @@ trap "kill -9 ${kdcpid} ${kpasswddpid}; echo signal killing kdc kpasswdd; exit 1
 
 ec=0
 
+echo "Getting client initial tickets with wrong password"; > messages.log
+${kinit} --password-file=${objdir}/notfoopassword \
+        foo@${R} 2>kinit-log.tmp && \
+	{ ec=1 ; eval "${testfailed}"; }
+grep 'Password incorrect' kinit-log.tmp > /dev/null || \
+	{ ec=1 ; eval "${testfailed}"; }
 echo "Getting client initial tickets"; > messages.log
 ${kinit} --password-file=${objdir}/foopassword foo@$R || \
 	{ ec=1 ; eval "${testfailed}"; }

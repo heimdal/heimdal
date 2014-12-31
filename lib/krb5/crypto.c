@@ -132,8 +132,13 @@ _key_schedule(krb5_context context,
 	      struct _krb5_key_data *key)
 {
     krb5_error_code ret;
-    struct _krb5_encryption_type *et = _krb5_find_enctype(key->key->keytype);
+    struct _krb5_encryption_type *et;
     struct _krb5_key_type *kt;
+
+    if (key->schedule != NULL)
+	return 0;
+
+    et = _krb5_find_enctype(key->key->keytype);
 
     if (et == NULL) {
         return unsupported_enctype (context,
@@ -143,8 +148,6 @@ _key_schedule(krb5_context context,
     kt = et->keytype;
 
     if(kt->schedule == NULL)
-	return 0;
-    if (key->schedule != NULL)
 	return 0;
     ALLOC(key->schedule, 1);
     if (key->schedule == NULL)

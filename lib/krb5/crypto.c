@@ -1545,7 +1545,7 @@ iov_pad_validate(const struct _krb5_encryption_type *et,
 	    return KRB5_BAD_MSIZE;
 	piv->data.length = pad_sz;
 	if (pad_sz)
-	    memset(piv->data.data, pad_sz, pad_sz);
+	    memset(piv->data.data, 0, pad_sz);
 	else
 	    piv = NULL;
     }

@@ -155,6 +155,7 @@ iprop-commands.c iprop-commands.h: iprop-commands.in
 	$(SLC) $(srcdir)/iprop-commands.in
 
 $(libkadm5srv_la_OBJECTS): kadm5_err.h
+$(libkadm5clnt_la_OBJECTS): kadm5_err.h
 $(iprop_log_OBJECTS): iprop-commands.h
 
 client_glue.lo server_glue.lo: $(srcdir)/common_glue.c

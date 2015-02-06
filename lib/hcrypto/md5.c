@@ -42,7 +42,7 @@
 #define D m->counter[3]
 #define X data
 
-void
+int
 MD5_Init (struct md5 *m)
 {
   m->sz[0] = 0;
@@ -51,6 +51,7 @@ MD5_Init (struct md5 *m)
   C = 0x98badcfe;
   B = 0xefcdab89;
   A = 0x67452301;
+  return 1;
 }
 
 #define F(x,y,z) CRAYFIX((x & y) | (~x & z))
@@ -194,7 +195,7 @@ struct x32{
   unsigned int b:32;
 };
 
-void
+int
 MD5_Update (struct md5 *m, const void *v, size_t len)
 {
   const unsigned char *p = v;
@@ -227,9 +228,10 @@ MD5_Update (struct md5 *m, const void *v, size_t len)
       offset = 0;
     }
   }
+  return 1;
 }
 
-void
+int
 MD5_Final (void *res, struct md5 *m)
 {
   unsigned char zeros[72];
@@ -267,4 +269,5 @@ MD5_Final (void *res, struct md5 *m)
       r[i] = swap_uint32_t (m->counter[i]);
   }
 #endif
+    return 1;
 }

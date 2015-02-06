@@ -42,7 +42,7 @@
 #define D m->counter[3]
 #define X data
 
-void
+int
 MD4_Init (struct md4 *m)
 {
   m->sz[0] = 0;
@@ -51,6 +51,7 @@ MD4_Init (struct md4 *m)
   C = 0x98badcfe;
   B = 0xefcdab89;
   A = 0x67452301;
+  return 1;
 }
 
 #define F(x,y,z) CRAYFIX((x & y) | (~x & z))
@@ -170,7 +171,7 @@ struct x32{
   unsigned int b:32;
 };
 
-void
+int
 MD4_Update (struct md4 *m, const void *v, size_t len)
 {
     const unsigned char *p = v;
@@ -203,9 +204,10 @@ MD4_Update (struct md4 *m, const void *v, size_t len)
 	    offset = 0;
 	}
     }
+    return 1;
 }
 
-void
+int
 MD4_Final (void *res, struct md4 *m)
 {
   unsigned char zeros[72];
@@ -243,4 +245,5 @@ MD4_Final (void *res, struct md4 *m)
       r[i] = swap_uint32_t (m->counter[i]);
   }
 #endif
+  return 1;
 }

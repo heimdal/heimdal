@@ -33,10 +33,25 @@
 
 HINSTANCE _krb5_hInstance = NULL;
 
+#if NTDDI_VERSION >= NTDDI_VISTA
+extern BOOL WINAPI
+_hc_w32crypto_DllMain(HINSTANCE hinstDLL,
+		      DWORD fdwReason,
+		      LPVOID lpvReserved);
+#endif
+
 BOOL WINAPI DllMain(HINSTANCE hinstDLL,
 		    DWORD fdwReason,
 		    LPVOID lpvReserved)
 {
+#if NTDDI_VERSION >= NTDDI_VISTA
+    BOOL ret;
+
+    ret = _hc_w32crypto_DllMain(hinstDLL, fdwReason, lpvReserved);
+    if (!ret)
+	return ret;
+#endif
+
     switch (fdwReason) {
     case DLL_PROCESS_ATTACH:
 

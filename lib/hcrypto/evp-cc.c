@@ -148,9 +148,12 @@ init_cc_key(int encp, CCAlgorithm alg, CCOptions opts, const void *key,
 	CCCryptorRelease(*ref);
     }
 
-    ret = CCCryptorCreate(op, alg, opts, key, keylen, iv, ref);
-    if (ret)
-	return 0;
+    if (key) {
+        ret = CCCryptorCreate(op, alg, opts, key, keylen, iv, ref);
+        if (ret)
+	    return 0;
+    }
+
     return 1;
 }
 
@@ -375,7 +378,8 @@ cc_aes_cfb8_init(EVP_CIPHER_CTX *ctx,
 		int encp)
 {
     struct cc_key *cc = ctx->cipher_data;
-    memcpy(ctx->iv, iv, ctx->cipher->iv_len);
+    if (iv)
+        memcpy(ctx->iv, iv, ctx->cipher->iv_len);
     return init_cc_key(1, kCCAlgorithmAES128, kCCOptionECBMode,
 		       key, ctx->cipher->key_len, NULL, &cc->href);
 }

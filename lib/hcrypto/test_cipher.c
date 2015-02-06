@@ -46,6 +46,7 @@
 #include <evp.h>
 #include <evp-hcrypto.h>
 #include <evp-cc.h>
+#include <evp-w32.h>
 #include <hex.h>
 #include <err.h>
 
@@ -80,10 +81,24 @@ struct tests aes_cfb_tests[] = {
       "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00",
       16,
       "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00",
-      "\x66\xe9\x4b\xd4\xef\x8a\x2c\x3b\x88\x4c\xfa\x59\xca\x34\x2b\x2e",
+      "\x66\x16\xf9\x2e\x42\xa8\xf1\x1a\x91\x16\x68\x57\x8e\xc3\xaa\x0f",
       NULL
     }
 };
+
+
+struct tests rc2_tests[] = {
+    { "rc2",
+      "\x88\xbc\xa9\x0e\x90\x87\x5a\x7f\x0f\x79\xc3\x84\x62\x7b\xaf\xb2",
+      16,
+      "\x00\x00\x00\x00\x00\x00\x00\x00",
+      8,
+      "\x00\x00\x00\x00\x00\x00\x00\x00",
+      "\x22\x69\x55\x2a\xb0\xf8\x5c\xa6",
+      NULL
+    }
+};
+
 
 struct tests rc2_40_tests[] = {
     { "rc2-40",
@@ -264,7 +279,7 @@ test_cipher(int i, const EVP_CIPHER *c, struct tests *t)
     d = emalloc(t->datasize);
 
     if (!EVP_Cipher(&ectx, d, t->indata, t->datasize))
-	return 1;
+	errx(1, "%s: %d EVP_Cipher encrypt failed", t->name, i);
 
     if (memcmp(d, t->outdata, t->datasize) != 0) {
 	char *s, *s2;
@@ -274,7 +289,7 @@ test_cipher(int i, const EVP_CIPHER *c, struct tests *t)
     }
 
     if (!EVP_Cipher(&dctx, d, d, t->datasize))
-	return 1;
+	errx(1, "%s: %d EVP_Cipher decrypt failed", t->name, i);
 
     if (memcmp(d, t->indata, t->datasize) != 0) {
 	char *s;
@@ -338,7 +353,8 @@ main(int argc, char **argv)
 	ret += test_cipher(i, EVP_hcrypto_aes_256_cbc(), &aes_tests[i]);
     for (i = 0; i < sizeof(aes_cfb_tests)/sizeof(aes_cfb_tests[0]); i++)
 	ret += test_cipher(i, EVP_hcrypto_aes_128_cfb8(), &aes_cfb_tests[i]);
-
+    for (i = 0; i < sizeof(rc2_tests)/sizeof(rc2_tests[0]); i++)
+	ret += test_cipher(i, EVP_hcrypto_rc2_cbc(), &rc2_tests[i]);
     for (i = 0; i < sizeof(rc2_40_tests)/sizeof(rc2_40_tests[0]); i++)
 	ret += test_cipher(i, EVP_hcrypto_rc2_40_cbc(), &rc2_40_tests[i]);
     for (i = 0; i < sizeof(des_ede3_tests)/sizeof(des_ede3_tests[0]); i++)
@@ -353,10 +369,8 @@ main(int argc, char **argv)
 #ifdef __APPLE__
     for (i = 0; i < sizeof(aes_tests)/sizeof(aes_tests[0]); i++)
 	ret += test_cipher(i, EVP_cc_aes_256_cbc(), &aes_tests[i]);
-#if 0
     for (i = 0; i < sizeof(aes_cfb_tests)/sizeof(aes_cfb_tests[0]); i++)
 	ret += test_cipher(i, EVP_cc_aes_128_cfb8(), &aes_cfb_tests[i]);
-#endif
     for (i = 0; i < sizeof(rc2_40_tests)/sizeof(rc2_40_tests[0]); i++)
 	ret += test_cipher(i, EVP_cc_rc2_40_cbc(), &rc2_40_tests[i]);
     for (i = 0; i < sizeof(des_ede3_tests)/sizeof(des_ede3_tests[0]); i++)
@@ -366,7 +380,23 @@ main(int argc, char **argv)
 			   &camellia128_tests[i]);
     for (i = 0; i < sizeof(rc4_tests)/sizeof(rc4_tests[0]); i++)
 	ret += test_cipher(i, EVP_cc_rc4(), &rc4_tests[i]);
-#endif
+#endif /* __APPLE__ */
+
+    /* Windows CNG (if available) */
+#ifdef WIN32
+    for (i = 0; i < sizeof(aes_tests)/sizeof(aes_tests[0]); i++)
+	ret += test_cipher(i, EVP_w32crypto_aes_256_cbc(), &aes_tests[i]);
+    for (i = 0; i < sizeof(aes_cfb_tests)/sizeof(aes_cfb_tests[0]); i++)
+	ret += test_cipher(i, EVP_w32crypto_aes_128_cfb8(), &aes_cfb_tests[i]);
+    for (i = 0; i < sizeof(rc2_tests)/sizeof(rc2_tests[0]); i++)
+	ret += test_cipher(i, EVP_w32crypto_rc2_cbc(), &rc2_tests[i]);
+    for (i = 0; i < sizeof(rc2_40_tests)/sizeof(rc2_40_tests[0]); i++)
+	ret += test_cipher(i, EVP_w32crypto_rc2_40_cbc(), &rc2_40_tests[i]);
+    for (i = 0; i < sizeof(des_ede3_tests)/sizeof(des_ede3_tests[0]); i++)
+	ret += test_cipher(i, EVP_w32crypto_des_ede3_cbc(), &des_ede3_tests[i]);
+    for (i = 0; i < sizeof(rc4_tests)/sizeof(rc4_tests[0]); i++)
+	ret += test_cipher(i, EVP_w32crypto_rc4(), &rc4_tests[i]);
+#endif /* WIN32 */
 
     return ret;
 }

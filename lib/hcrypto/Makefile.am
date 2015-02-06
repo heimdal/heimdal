@@ -60,6 +60,7 @@ PROGRAM_TESTS = \
 	rc2test  \
 	rctest \
 	test_bn \
+	test_bulk \
 	test_cipher \
 	test_engine_dso \
 	test_hmac \

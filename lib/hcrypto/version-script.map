@@ -289,6 +289,7 @@ HEIMDAL_CRYPTO_1.0 {
 		hc_EVP_CIPHER_CTX_ctrl;
 		hc_EVP_CIPHER_CTX_rand_key;
 		hc_EVP_CIPHER_CTX_set_key_length;
+		hc_EVP_hcrypto_rc2_cbc;
 		hc_EVP_hcrypto_rc2_40_cbc;
 		hc_EVP_hcrypto_camellia_128_cbc;
 		hc_EVP_CipherUpdate;

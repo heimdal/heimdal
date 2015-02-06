@@ -62,6 +62,8 @@ INCFILES=	\
 	$(HCRYPTOINCLUDEDIR)\evp.h	\
 	$(HCRYPTOINCLUDEDIR)\evp-hcrypto.h	\
 	$(HCRYPTOINCLUDEDIR)\evp-cc.h	\
+	$(HCRYPTOINCLUDEDIR)\evp-wincng.h	\
+	$(HCRYPTOINCLUDEDIR)\evp-w32.h	\
 	$(HCRYPTOINCLUDEDIR)\hmac.h	\
 	$(HCRYPTOINCLUDEDIR)\md2.h	\
 	$(HCRYPTOINCLUDEDIR)\md4.h	\
@@ -103,6 +105,8 @@ libhcrypto_OBJs = 			\
 	$(OBJ)\evp.obj			\
 	$(OBJ)\evp-hcrypto.obj		\
 	$(OBJ)\evp-cc.obj		\
+	$(OBJ)\evp-wincng.obj		\
+	$(OBJ)\evp-w32.obj		\
 	$(OBJ)\engine.obj		\
 	$(OBJ)\hmac.obj			\
 	$(OBJ)\md2.obj			\
@@ -150,6 +154,7 @@ test-binaries:				\
 	$(OBJ)\rc2test.exe		\
 	$(OBJ)\rctest.exe		\
 	$(OBJ)\test_bn.exe		\
+	$(OBJ)\test_bulk.exe		\
 	$(OBJ)\test_cipher.exe		\
 	$(OBJ)\test_engine_dso.exe	\
 	$(OBJ)\test_hmac.exe		\
@@ -181,6 +186,10 @@ $(OBJ)\rctest.exe: $(OBJ)\rctest.obj $(LIBHEIMDAL) $(LIBROKEN)
 	$(EXEPREP_NODIST)
 
 $(OBJ)\test_bn.exe: $(OBJ)\test_bn.obj $(LIBHEIMDAL) $(LIBROKEN)
+	$(EXECONLINK)
+	$(EXEPREP_NODIST)
+
+$(OBJ)\test_bulk.exe: $(OBJ)\test_bulk.obj $(TESTLIB) $(LIBHEIMDAL) $(LIBROKEN) $(LIBVERS)
 	$(EXECONLINK)
 	$(EXEPREP_NODIST)
 
@@ -231,6 +240,7 @@ test-run:
 	rc2test.exe
 	rctest.exe
 	test_bn.exe
+	test_bulk.exe
 	test_cipher.exe
 	test_engine_dso.exe
 	test_hmac.exe

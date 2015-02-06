@@ -69,7 +69,7 @@ aes_init(EVP_CIPHER_CTX *ctx,
 	 int encp)
 {
     AES_KEY *k = ctx->cipher_data;
-    if (ctx->encrypt)
+    if (ctx->encrypt || EVP_CIPHER_CTX_mode(ctx) == EVP_CIPH_CFB8_MODE)
 	AES_set_encrypt_key(key, ctx->cipher->key_len * 8, k);
     else
 	AES_set_decrypt_key(key, ctx->cipher->key_len * 8, k);
@@ -83,7 +83,7 @@ aes_do_cipher(EVP_CIPHER_CTX *ctx,
 	      unsigned int size)
 {
     AES_KEY *k = ctx->cipher_data;
-    if (ctx->flags & EVP_CIPH_CFB8_MODE)
+    if (EVP_CIPHER_CTX_mode(ctx) == EVP_CIPH_CFB8_MODE)
         AES_cfb8_encrypt(in, out, size, k, ctx->iv, ctx->encrypt);
     else
         AES_cbc_encrypt(in, out, size, k, ctx->iv, ctx->encrypt);

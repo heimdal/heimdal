@@ -175,6 +175,26 @@ EXPORTS
 ;!	hc_EVP_cc_aes_192_cfb8
 ;!	hc_EVP_cc_aes_256_cfb8
 
+	hc_EVP_w32crypto_md2		;!
+	hc_EVP_w32crypto_md4		;!
+	hc_EVP_w32crypto_md5		;!
+	hc_EVP_w32crypto_sha1		;!
+	hc_EVP_w32crypto_sha256		;!
+	hc_EVP_w32crypto_sha384		;!
+	hc_EVP_w32crypto_sha512		;!
+	hc_EVP_w32crypto_des_ede3_cbc	;!
+	hc_EVP_w32crypto_aes_128_cbc	;!
+	hc_EVP_w32crypto_aes_192_cbc	;!
+	hc_EVP_w32crypto_aes_256_cbc	;!
+	hc_EVP_w32crypto_rc2_40_cbc	;!
+	hc_EVP_w32crypto_rc2_cbc	;!
+	hc_EVP_w32crypto_rc4		;!
+	hc_EVP_w32crypto_rc4_40		;!
+
+	hc_EVP_w32crypto_aes_128_cfb8	;!
+	hc_EVP_w32crypto_aes_192_cfb8	;!
+	hc_EVP_w32crypto_aes_256_cfb8	;!
+
 	hc_EVP_hcrypto_md2
 	hc_EVP_hcrypto_md4
 	hc_EVP_hcrypto_md5
@@ -284,6 +304,7 @@ EXPORTS
 	hc_EVP_CIPHER_CTX_ctrl
 	hc_EVP_CIPHER_CTX_rand_key
 	hc_EVP_CIPHER_CTX_set_key_length
+	hc_EVP_hcrypto_rc2_cbc
 	hc_EVP_hcrypto_rc2_40_cbc
 	hc_EVP_hcrypto_camellia_128_cbc
 	hc_EVP_CipherUpdate

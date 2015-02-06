@@ -47,6 +47,7 @@
 #include <evp.h>
 #include <evp-hcrypto.h>
 #include <evp-cc.h>
+#include <evp-w32.h>
 
 #include <krb5-types.h>
 #include <roken.h>
@@ -175,10 +176,13 @@ EVP_MD_CTX_destroy(EVP_MD_CTX *ctx)
 int
 EVP_MD_CTX_cleanup(EVP_MD_CTX *ctx) HC_DEPRECATED
 {
-    if (ctx->md && ctx->md->cleanup)
-	(ctx->md->cleanup)(ctx);
-    else if (ctx->md)
+    if (ctx->md && ctx->md->cleanup) {
+	int ret = (ctx->md->cleanup)(ctx);
+	if (!ret)
+	    return ret;
+    } else if (ctx->md) {
 	memset(ctx->ptr, 0, ctx->md->ctx_size);
+    }
     ctx->md = NULL;
     ctx->engine = NULL;
     free(ctx->ptr);
@@ -258,8 +262,7 @@ EVP_DigestInit_ex(EVP_MD_CTX *ctx, const EVP_MD *md, ENGINE *engine)
 	if (ctx->ptr == NULL)
 	    return 0;
     }
-    (ctx->md->init)(ctx->ptr);
-    return 1;
+    return (ctx->md->init)(ctx->ptr);
 }
 
 /**
@@ -582,8 +585,11 @@ EVP_CIPHER_CTX_init(EVP_CIPHER_CTX *c)
 int
 EVP_CIPHER_CTX_cleanup(EVP_CIPHER_CTX *c)
 {
-    if (c->cipher && c->cipher->cleanup)
-	c->cipher->cleanup(c);
+    if (c->cipher && c->cipher->cleanup) {
+	int ret = c->cipher->cleanup(c);
+	if (!ret)
+	    return ret;
+    }
     if (c->cipher_data) {
 	memset(c->cipher_data, 0, c->cipher->ctx_size);
 	free(c->cipher_data);
@@ -814,7 +820,7 @@ EVP_CipherInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *c, ENGINE *engine,
     }
 
     if (key || (ctx->cipher->flags & EVP_CIPH_ALWAYS_CALL_INIT))
-	ctx->cipher->init(ctx, key, iv, encp);
+	return ctx->cipher->init(ctx, key, iv, encp);
 
     return 1;
 }

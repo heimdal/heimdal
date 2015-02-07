@@ -242,6 +242,21 @@ krb5_kt_resolve(krb5_context context,
     return ret;
 }
 
+/*
+ * Default ktname from context with possible environment
+ * override
+ */
+static const char *default_ktname(krb5_context context)
+{
+    const char *tmp = NULL;
+
+    if(!issuid())
+	tmp = getenv("KRB5_KTNAME");
+    if(tmp != NULL)
+	return tmp;
+    return context->default_keytab;
+}
+
 /**
  * copy the name of the default keytab into `name'.
  *
@@ -257,7 +272,7 @@ krb5_kt_resolve(krb5_context context,
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_kt_default_name(krb5_context context, char *name, size_t namesize)
 {
-    if (strlcpy (name, context->default_keytab, namesize) >= namesize) {
+    if (strlcpy (name, default_ktname(context), namesize) >= namesize) {
 	krb5_clear_error_message (context);
 	return KRB5_CONFIG_NOTENUFSPACE;
     }
@@ -279,17 +294,18 @@ krb5_kt_default_name(krb5_context context, char *name, size_t namesize)
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_kt_default_modify_name(krb5_context context, char *name, size_t namesize)
 {
-    const char *kt = NULL;
+    const char *kt;
+
     if(context->default_keytab_modify == NULL) {
-	if(strncasecmp(context->default_keytab, "ANY:", 4) != 0)
-	    kt = context->default_keytab;
-	else {
-	    size_t len = strcspn(context->default_keytab + 4, ",");
-	    if(len >= namesize) {
+	kt = default_ktname(context);
+
+	if (strncasecmp(kt, "ANY:", 4) == 0) {
+	    size_t len = strcspn(kt + 4, ",");
+	    if (len >= namesize) {
 		krb5_clear_error_message(context);
 		return KRB5_CONFIG_NOTENUFSPACE;
 	    }
-	    strlcpy(name, context->default_keytab + 4, namesize);
+	    strlcpy(name, kt + 4, namesize);
 	    name[len] = '\0';
 	    return 0;
 	}
@@ -316,7 +332,7 @@ krb5_kt_default_modify_name(krb5_context context, char *name, size_t namesize)
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_kt_default(krb5_context context, krb5_keytab *id)
 {
-    return krb5_kt_resolve (context, context->default_keytab, id);
+    return krb5_kt_resolve (context, default_ktname(context), id);
 }
 
 /**

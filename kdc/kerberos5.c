@@ -1712,6 +1712,31 @@ _kdc_as_rep(kdc_request_t r,
 	kdc_log(context, config, 5, "client %s does not have secrets at this KDC, need to proxy",
 		r->client_name);
 	goto out;
+    } else if (ret == HDB_ERR_WRONG_REALM) {
+	char *fixed_client_name = NULL;
+
+	ret = krb5_unparse_name(context, r->client->entry.principal,
+				&fixed_client_name);
+	if (ret) {
+	    goto out;
+	}
+
+	kdc_log(context, config, 0, "WRONG_REALM - %s -> %s",
+		r->client_name, fixed_client_name);
+	free(fixed_client_name);
+
+	ret = _kdc_fast_mk_error(context, r,
+				 &error_method,
+				 r->armor_crypto,
+				 &req->req_body,
+				 KRB5_KDC_ERR_WRONG_REALM,
+				 NULL,
+				 r->server_princ,
+				 NULL,
+				 &r->client->entry.principal->realm,
+				 NULL, NULL,
+				 reply);
+	goto out;
     } else if(ret){
 	const char *msg = krb5_get_error_message(context, ret);
 	kdc_log(context, config, 0, "UNKNOWN -- %s: %s", r->client_name, msg);
@@ -2193,7 +2218,7 @@ out:
     /*
      * In case of a non proxy error, build an error message.
      */
-    if(ret != 0 && ret != HDB_ERR_NOT_FOUND_HERE) {
+    if(ret != 0 && ret != HDB_ERR_NOT_FOUND_HERE && reply->length == 0) {
 	ret = _kdc_fast_mk_error(context, r,
 				 &error_method,
 				 r->armor_crypto,

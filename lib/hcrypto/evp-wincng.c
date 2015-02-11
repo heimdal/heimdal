@@ -581,7 +581,7 @@ wincng_md_hash_init(BCRYPT_ALG_HANDLE hAlgorithm,
 			       0);
     if (!BCRYPT_SUCCESS(status))
 	return 0;
- 
+
     status = BCryptCreateHash(hAlgorithm,
 			      &cng->hHash,
 			      cng->rgbHashObject,

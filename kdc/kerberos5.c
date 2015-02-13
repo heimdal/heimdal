@@ -2199,7 +2199,9 @@ out:
 				 r->armor_crypto,
 				 &req->req_body,
 				 ret, r->e_text,
-				 r->client_princ, r->server_princ,
+				 r->server_princ,
+				 &r->client_princ->name,
+				 &r->client_princ->realm,
 				 NULL, NULL,
 				 reply);
 	if (ret)

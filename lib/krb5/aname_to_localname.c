@@ -392,7 +392,7 @@ an2ln_def_plug_an2ln(void *plug_ctx, krb5_context context,
     _krb5_load_db_plugins(context);
     heim_base_once_f(&sorted_text_db_init_once, NULL, sorted_text_db_init_f);
 
-    if (strncmp(rule, "DB:", strlen("DB:") != 0))
+    if (strncmp(rule, "DB:", strlen("DB:")) != 0)
 	return KRB5_PLUGIN_NO_HANDLE;
 
     an2ln_db_fname = &rule[strlen("DB:")];

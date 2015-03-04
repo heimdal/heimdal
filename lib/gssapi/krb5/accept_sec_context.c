@@ -164,12 +164,13 @@ gsskrb5_accept_delegated_token
 
     /* XXX Create a new delegated_cred_handle? */
     if (delegated_cred_handle == NULL) {
-	kret = krb5_cc_default (context, &ccache);
-    } else {
-	*delegated_cred_handle = NULL;
-	kret = krb5_cc_new_unique (context, krb5_cc_type_memory,
-				   NULL, &ccache);
+        ret = GSS_S_COMPLETE;
+        goto out;
     }
+
+    *delegated_cred_handle = NULL;
+    kret = krb5_cc_new_unique (context, krb5_cc_type_memory,
+                               NULL, &ccache);
     if (kret) {
 	ctx->flags &= ~GSS_C_DELEG_FLAG;
 	goto out;
@@ -270,7 +271,7 @@ gsskrb5_acceptor_ready(OM_uint32 * minor_status,
 					     ctx,
 					     context,
 					     delegated_cred_handle);
-	if (ret)
+	if (ret != GSS_S_COMPLETE)
 	    return ret;
     } else {
 	/* Well, looks like it wasn't there after all */

@@ -121,8 +121,12 @@ struct signature_alg {
 static const struct signature_alg *
 find_sig_alg(const heim_oid *oid);
 
-/*
+/*-
+ * RFC5758 specifies no parameters for ecdsa-with-SHA<N> signatures
+ * RFC5754 specifies NULL parameters for sha<N>WithRSAEncryption signatures
  *
+ * XXX: Make sure that the parameters are either NULL in both the tbs and the
+ * signature, or absent from both the tbs and the signature.
  */
 
 static const heim_octet_string null_entry_oid = { 2, rk_UNCONST("\x05\x00") };
@@ -169,27 +173,27 @@ const AlgorithmIdentifier _hx509_signature_ecdsa_with_sha1_data = {
 
 static const unsigned rsa_with_sha512_oid[] ={ 1, 2, 840, 113549, 1, 1, 13 };
 const AlgorithmIdentifier _hx509_signature_rsa_with_sha512_data = {
-    { 7, rk_UNCONST(rsa_with_sha512_oid) }, NULL
+    { 7, rk_UNCONST(rsa_with_sha512_oid) }, rk_UNCONST(&null_entry_oid)
 };
 
 static const unsigned rsa_with_sha384_oid[] ={ 1, 2, 840, 113549, 1, 1, 12 };
 const AlgorithmIdentifier _hx509_signature_rsa_with_sha384_data = {
-    { 7, rk_UNCONST(rsa_with_sha384_oid) }, NULL
+    { 7, rk_UNCONST(rsa_with_sha384_oid) }, rk_UNCONST(&null_entry_oid)
 };
 
 static const unsigned rsa_with_sha256_oid[] ={ 1, 2, 840, 113549, 1, 1, 11 };
 const AlgorithmIdentifier _hx509_signature_rsa_with_sha256_data = {
-    { 7, rk_UNCONST(rsa_with_sha256_oid) }, NULL
+    { 7, rk_UNCONST(rsa_with_sha256_oid) }, rk_UNCONST(&null_entry_oid)
 };
 
 static const unsigned rsa_with_sha1_oid[] ={ 1, 2, 840, 113549, 1, 1, 5 };
 const AlgorithmIdentifier _hx509_signature_rsa_with_sha1_data = {
-    { 7, rk_UNCONST(rsa_with_sha1_oid) }, NULL
+    { 7, rk_UNCONST(rsa_with_sha1_oid) }, rk_UNCONST(&null_entry_oid)
 };
 
 static const unsigned rsa_with_md5_oid[] ={ 1, 2, 840, 113549, 1, 1, 4 };
 const AlgorithmIdentifier _hx509_signature_rsa_with_md5_data = {
-    { 7, rk_UNCONST(rsa_with_md5_oid) }, NULL
+    { 7, rk_UNCONST(rsa_with_md5_oid) }, rk_UNCONST(&null_entry_oid)
 };
 
 static const unsigned rsa_oid[] ={ 1, 2, 840, 113549, 1, 1, 1 };

@@ -17,9 +17,7 @@ SUBDIRS = 					\
 	  gssmask				\
 	  push					\
 	  su					\
-	  xnlock				\
 	  test					\
-	  kx					\
 	  kf					\
 	  $(dir_dce)
 

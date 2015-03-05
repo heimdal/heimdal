@@ -644,12 +644,10 @@ AC_CONFIG_FILES(Makefile 		\
 	appl/ftp/ftp/Makefile		\
 	appl/ftp/ftpd/Makefile		\
 	appl/gssmask/Makefile		\
-	appl/kx/Makefile		\
 	appl/login/Makefile		\
 	appl/otp/Makefile		\
 	appl/push/Makefile		\
 	appl/su/Makefile		\
-	appl/xnlock/Makefile		\
 	appl/test/Makefile		\
 	appl/kf/Makefile		\
 	appl/dceutils/Makefile		\

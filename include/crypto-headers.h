@@ -22,9 +22,13 @@
 #include <openssl/pkcs12.h>
 #include <openssl/pem.h>
 #include <openssl/hmac.h>
+#include <openssl/rsa.h>
+#include <openssl/dsa.h>
 #include <openssl/ec.h>
 #include <openssl/ecdsa.h>
 #include <openssl/ecdh.h>
+#include <openssl/dh.h>
+#include <openssl/bn.h>
 #ifndef BN_is_negative
 #define BN_set_negative(bn, flag) ((bn)->neg=(flag)?1:0)
 #define BN_is_negative(bn) ((bn)->neg != 0)

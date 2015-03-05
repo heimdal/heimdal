@@ -1126,6 +1126,12 @@ ca_sign(hx509_context context,
 	    goto out;
 	}
     } else {
+	/*
+	 * If no explicit serial number is specified, 20 random bytes should be
+	 * sufficiently collision resistant.  Since the serial number must be a
+	 * positive integer, ensure minimal ASN.1 DER form by forcing the high
+	 * bit off and the next bit on (thus avoiding an all zero first octet).
+	 */
 	tbsc->serialNumber.length = 20;
 	tbsc->serialNumber.data = malloc(tbsc->serialNumber.length);
 	if (tbsc->serialNumber.data == NULL){
@@ -1133,9 +1139,9 @@ ca_sign(hx509_context context,
 	    hx509_set_error_string(context, 0, ret, "Out of memory");
 	    goto out;
 	}
-	/* XXX diffrent */
 	RAND_bytes(tbsc->serialNumber.data, tbsc->serialNumber.length);
 	((unsigned char *)tbsc->serialNumber.data)[0] &= 0x7f;
+	((unsigned char *)tbsc->serialNumber.data)[0] |= 0x40;
     }
     /* signature            AlgorithmIdentifier, */
     ret = copy_AlgorithmIdentifier(sigalg, &tbsc->signature);

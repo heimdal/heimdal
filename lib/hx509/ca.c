@@ -1126,36 +1126,16 @@ ca_sign(hx509_context context,
 	    goto out;
 	}
     } else {
-	uint8_t *p;
-
-	tbsc->serialNumber.length = 30;
+	tbsc->serialNumber.length = 20;
 	tbsc->serialNumber.data = malloc(tbsc->serialNumber.length);
 	if (tbsc->serialNumber.data == NULL){
 	    ret = ENOMEM;
 	    hx509_set_error_string(context, 0, ret, "Out of memory");
 	    goto out;
 	}
+	/* XXX diffrent */
 	RAND_bytes(tbsc->serialNumber.data, tbsc->serialNumber.length);
-	/*
-	 * Trim of leading 0x80 bit and make sure that top most byte
-	 * are not zero, this introduces a bias, but that fine since
-	 * since this is a serial number and just really need to be
-	 * unique enough.
-	 */
-#define MINIUM_SERIAL_NUMBER_LEN 10
-	p = tbsc->serialNumber.data;
-	while ((p[0] & 0x7f) == 0 && tbsc->serialNumber.length > MINIUM_SERIAL_NUMBER_LEN) {
-	    tbsc->serialNumber.length--;
-	    memmove(&p[0], &p[1], tbsc->serialNumber.length);
-	}
-	if (tbsc->serialNumber.length <= MINIUM_SERIAL_NUMBER_LEN) {
-	    ret = EINVAL;
-	    hx509_set_error_string(context, 0, ret,
-				   "Serial number too short (shorter then 2^%d",
-				   MINIUM_SERIAL_NUMBER_LEN);
-	    goto out;
-	}
-	p[0] &= 0x7f;
+	((unsigned char *)tbsc->serialNumber.data)[0] &= 0x7f;
     }
     /* signature            AlgorithmIdentifier, */
     ret = copy_AlgorithmIdentifier(sigalg, &tbsc->signature);

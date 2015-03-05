@@ -174,7 +174,7 @@ _kafs_derive_des_key(krb5_enctype enctype, void *keydata, size_t keylen,
 {
     int ret = 0;
 
-    switch (enctype) {
+    switch ((int)enctype) {
     case ETYPE_DES_CBC_CRC:
     case ETYPE_DES_CBC_MD4:
     case ETYPE_DES_CBC_MD5:

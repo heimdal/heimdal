@@ -1466,7 +1466,10 @@ do_umask(int argc, char **argv)
 	int oldverbose = verbose;
 
 	verbose = 1;
-	command(argc == 1 ? "SITE UMASK" : "SITE UMASK %s", argv[1]);
+	if (argc == 1)
+		command("SITE UMASK");
+	else
+		command("SITE UMASK %s", argv[1]);
 	verbose = oldverbose;
 }
 
@@ -1476,7 +1479,10 @@ ftp_idle(int argc, char **argv)
 	int oldverbose = verbose;
 
 	verbose = 1;
-	command(argc == 1 ? "SITE IDLE" : "SITE IDLE %s", argv[1]);
+	if (argc == 1)
+		command("SITE IDLE");
+	else
+		command("SITE IDLE %s", argv[1]);
 	verbose = oldverbose;
 }
 
@@ -1489,7 +1495,10 @@ rmthelp(int argc, char **argv)
 	int oldverbose = verbose;
 
 	verbose = 1;
-	command(argc == 1 ? "HELP" : "HELP %s", argv[1]);
+	if (argc == 1)
+		command("HELP");
+	else
+		command("HELP %s", argv[1]);
 	verbose = oldverbose;
 }
 
@@ -2119,7 +2128,10 @@ void
 rmtstatus(int argc, char **argv)
 {
 
-	command(argc > 1 ? "STAT %s" : "STAT" , argv[1]);
+	if (argc == 1)
+		command("STAT");
+	else
+		command("STAT %s", argv[1]);
 }
 
 /*

@@ -384,7 +384,6 @@ krb5_parse_name(krb5_context context,
 
 static const char quotable_chars[] = " \n\t\b\\/@";
 static const char replace_chars[] = " ntb\\/@";
-static const char nq_chars[] = "    \\/@";
 
 #define add_char(BASE, INDEX, LEN, C) do { if((INDEX) < (LEN)) (BASE)[(INDEX)++] = (C); }while(0);
 

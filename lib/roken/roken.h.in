@@ -697,6 +697,7 @@ ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL rk_rename(const char *, const char *);
 #define rk_mkdir(__rk_rn_name, __rk_rn_mode) mkdir(__rk_rn_name,__rk_rn_mode)
 #endif
 
+
 #if !defined(HAVE_DAEMON) || defined(NEED_DAEMON_PROTO)
 #ifndef HAVE_DAEMON
 #define daemon rk_daemon
@@ -1174,6 +1175,12 @@ rk_timegm(struct tm *tm);
 #define qsort rk_qsort
 void
 rk_qsort(void *, size_t, size_t, int (*)(const void *, const void *));
+#endif
+
+#ifndef HAVE_MEMSET_S
+#define memset_s rk_memset_s
+ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL memset_s(void *s, size_t smax,
+					int c, size_t n);
 #endif
 
 #if defined(HAVE_ARC4RANDOM)

@@ -351,6 +351,7 @@ AC_BROKEN([					\
 	localtime_r				\
 	lstat					\
 	memmove					\
+	memset_s				\
 	mkstemp					\
 	putenv					\
 	rcmd					\

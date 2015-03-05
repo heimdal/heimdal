@@ -63,6 +63,20 @@ m4_define([test_body], [
 		DES_cbc_encrypt(0, 0, 0, schedule, 0, 0);
 		RC4(0, 0, 0, 0);])
 
+m4_define([bn_headers], [
+		#include <stdlib.h>
+		#include <openssl/bn.h>
+		])
+m4_define([bn_body], [
+		BIGNUM *bn = BN_new();
+		BN_set_word(bn, 1);
+		if (BN_is_negative(bn))
+			exit(EXIT_FAILURE);
+		BN_set_negative(bn, 1);
+		if (!BN_is_negative(bn))
+			exit(EXIT_FAILURE);
+		exit(EXIT_SUCCESS);
+		])
 
 AC_DEFUN([KRB_CRYPTO],[
 crypto_lib=unknown
@@ -96,6 +110,9 @@ if test "$crypto_lib" = "unknown" -a "$with_openssl" != "no"; then
 		AC_LINK_IFELSE([AC_LANG_PROGRAM([test_headers],[test_body])], [
 			crypto_lib=libcrypto openssl=yes
 			AC_MSG_RESULT([libcrypto])
+			AC_RUN_IFELSE([AC_LANG_PROGRAM([bn_headers],[bn_body])], [
+			  AC_DEFINE([HAVE_BN_IS_NEGATIVE], 1, [define if OpenSSL provides BN_is_negative])
+			])
 		])
 		if test "$crypto_lib" = libcrypto ; then
 			break;

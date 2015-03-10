@@ -53,9 +53,11 @@ _kdc_db_fetch(krb5_context context,
 
     *h = NULL;
 
-    if (kvno_ptr) {
-	    kvno = *kvno_ptr;
+    if (kvno_ptr != NULL) {
+	if (*kvno_ptr != 0)
 	    flags |= HDB_F_KVNO_SPECIFIED;
+	else
+	    flags |= HDB_F_ALL_KVNOS;
     }
 
     ent = calloc(1, sizeof (*ent));

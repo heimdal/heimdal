@@ -157,7 +157,9 @@ ${kadmin} add -p foo --use-defaults foo@${R6} || exit 1
 ${kadmin} add -p foo --use-defaults foo@${R7} || exit 1
 ${kadmin} add -p bar --use-defaults bar@${R} || exit 1
 ${kadmin} add -p foo --use-defaults remove@${R} || exit 1
-${kadmin} add -p kaka --use-defaults ${server}@${R} || exit 1
+${kadmin} add -p nop --use-defaults ${server}@${R} || exit 1
+${kadmin} cpw -p bla --keepold ${server}@${R} || exit 1
+${kadmin} cpw -p kaka --keepold ${server}@${R} || exit 1
 ${kadmin} add -p kaka --use-defaults ${server}-des3@${R} || exit 1
 ${kadmin} add -p kaka --use-defaults kt-des3@${R} || exit 1
 ${kadmin} add -p kaka --use-defaults foo/des3-only@${R} || exit 1
@@ -230,7 +232,12 @@ ${kadmin} check ${R7} || exit 1
 echo "Extracting enctypes"
 ${ktutil} -k ${keytab} list > tempfile || exit 1
 ${EGREP} -v '^FILE:' tempfile | ${EGREP} -v '^Vno' | ${EGREP} -v '^$' | \
+    ${EGREP} -v "$server" |                 # we did cpw for this one
     awk '$1 !~ /1/  { exit 1 }' || exit 1
+${EGREP} -v '^FILE:' tempfile | ${EGREP} -v '^Vno' | ${EGREP} -v '^$' | \
+    ${EGREP} "$server" | head -1 |
+    awk '$1 !~ /3/  { exit 1 }' || exit 1
+
 
 ${kadmin} get foo@${R} > tempfile || exit 1
 enctypes=`grep Keytypes: tempfile | sed 's/(pw-salt)//g' | sed 's/,//g' | sed 's/Keytypes://' | sed 's/\[[0-9]*\]//g'`

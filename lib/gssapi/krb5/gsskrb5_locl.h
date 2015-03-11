@@ -134,7 +134,4 @@ extern HEIMDAL_MUTEX gssapi_keytab_mutex;
 #define SC_LOCAL_SUBKEY	  0x08
 #define SC_REMOTE_SUBKEY  0x10
 
-/* type to signal that that dns canon maybe should be done */
-#define MAGIC_HOSTBASED_NAME_TYPE 4711
-
 #endif

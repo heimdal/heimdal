@@ -1131,7 +1131,8 @@ _krb5_get_cred_kdc_any(krb5_context context,
 				second_ticket,
 				out_creds);
 
-    if (ret == 0 || flags.b.canonicalize)
+    /* "Empty realm" -> only do referrals */
+    if (ret == 0 || strcmp(in_creds->server->realm, "") == 0)
 	return ret;
 
     /* Try capaths */
@@ -1484,9 +1485,9 @@ next_rule:
     if(options & KRB5_GC_CACHED)
 	goto next_rule;
 
-    if(rule_opts & KRB5_NCRO_USE_REFERRALS)
+    if (try_creds->server->name.name_type == KRB5_NT_SRV_HST)
 	flags.b.canonicalize = 1;
-    else if(rule_opts & KRB5_NCRO_NO_REFERRALS)
+    if (rule_opts & KRB5_NCRO_NO_REFERRALS)
 	flags.b.canonicalize = 0;
     else
 	flags.b.canonicalize = (options & KRB5_GC_CANONICALIZE) ? 1 : 0;

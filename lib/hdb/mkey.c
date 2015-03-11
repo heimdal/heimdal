@@ -490,6 +490,14 @@ hdb_unseal_keys(krb5_context context, HDB *db, hdb_entry *ent)
     return hdb_unseal_keys_mkey(context, ent, db->hdb_master_key);
 }
 
+/*
+ * Unseal the keys for the given kvno (or all of them) of entry.
+ *
+ * If kvno == 0 -> unseal all.
+ * if kvno != 0 -> unseal the requested kvno and make sure it's the one listed
+ *                 as the current keyset for the entry (swapping it with a
+ *                 historical keyset if need be).
+ */
 krb5_error_code
 hdb_unseal_keys_kvno(krb5_context context, HDB *db, krb5_kvno kvno,
 		     unsigned flags, hdb_entry *ent)
@@ -519,8 +527,8 @@ hdb_unseal_keys_kvno(krb5_context context, HDB *db, krb5_kvno kvno,
     }
 
     ext = hdb_find_extension(ent, choice_HDB_extension_data_hist_keys);
-    if (ext == NULL)
-	return ret;
+    if (ext == NULL || (&ext->data.u.hist_keys)->len == 0)
+	return hdb_unseal_keys_mkey(context, ent, db->hdb_master_key);
 
     /* For swapping; see below */
     tmp_len = ent->keys.len;

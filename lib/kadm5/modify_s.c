@@ -68,11 +68,25 @@ modify_principal(void *server_handle,
     if(ret)
 	goto out2;
 
+    /*
+     * If any keys are bogus, disallow the modify.  If the keys were
+     * bogus as stored in the HDB we could allow those through, but
+     * distinguishing that case from a pre-1.6 client using add_enctype
+     * without the get-keys privilege requires more work (mainly: checking that
+     * the bogus keys in princ->key_data[] have corresponding bogus keys in ent
+     * before calling _kadm5_setup_entry()).
+     */
+    if ((mask & KADM5_KEY_DATA) &&
+	kadm5_some_keys_are_bogus(princ->n_key_data, princ->key_data)) {
+	ret = KADM5_AUTH_GET_KEYS; /* Not quite appropriate, but it'll do */
+	goto out2;
+    }
+
     ret = hdb_seal_keys(context->context, context->db, &ent.entry);
     if (ret)
 	goto out2;
 
-    if((mask & KADM5_POLICY)) {
+    if ((mask & KADM5_POLICY)) {
 	HDB_extension ext;
 
 	ext.data.element = choice_HDB_extension_data_policy;

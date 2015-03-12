@@ -35,6 +35,39 @@
 
 RCSID("$Id$");
 
+int
+kadm5_some_keys_are_bogus(size_t n_keys, krb5_key_data *keys)
+{
+    size_t i;
+
+    for (i = 0; i < n_keys; i++) {
+	krb5_key_data *key = &keys[i];
+	if (key->key_data_length[0] == sizeof(KADM5_BOGUS_KEY_DATA) - 1 &&
+	    ct_memcmp(key->key_data_contents[1], KADM5_BOGUS_KEY_DATA,
+		      key->key_data_length[0]) == 0)
+	    return 1;
+    }
+    return 0;
+}
+
+int
+kadm5_all_keys_are_bogus(size_t n_keys, krb5_key_data *keys)
+{
+    size_t i;
+
+    if (n_keys == 0)
+	return 0;
+
+    for (i = 0; i < n_keys; i++) {
+	krb5_key_data *key = &keys[i];
+	if (key->key_data_length[0] != sizeof(KADM5_BOGUS_KEY_DATA) - 1 ||
+	    ct_memcmp(key->key_data_contents[1], KADM5_BOGUS_KEY_DATA,
+		      key->key_data_length[0]) != 0)
+	    return 0;
+    }
+    return 1;
+}
+
 kadm5_ret_t
 kadm5_store_key_data(krb5_storage *sp,
 		     krb5_key_data *key)

@@ -82,6 +82,11 @@ del_enctype(void *opt, int argc, char **argv)
 	goto out2;
     }
 
+    if (kadm5_all_keys_are_bogus(princ.n_key_data, princ.key_data)) {
+	krb5_warnx(context, "user lacks get-keys privilege");
+	goto out;
+    }
+
     new_key_data   = malloc(princ.n_key_data * sizeof(*new_key_data));
     if (new_key_data == NULL && princ.n_key_data != 0) {
 	krb5_warnx (context, "out of memory");

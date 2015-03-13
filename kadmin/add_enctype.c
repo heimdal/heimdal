@@ -55,7 +55,7 @@ add_enctype(struct add_enctype_options*opt, int argc, char **argv)
 	return 0;
     }
 
-    memset (&princ, 0, sizeof(princ));
+    memset(&princ, 0, sizeof(princ));
     princ_name = argv[0];
     n_etypes   = argc - 1;
     etypes     = malloc (n_etypes * sizeof(*etypes));
@@ -65,7 +65,7 @@ add_enctype(struct add_enctype_options*opt, int argc, char **argv)
     }
     argv++;
     for (i = 0; i < n_etypes; ++i) {
-	ret = krb5_string_to_enctype (context, argv[i], &etypes[i]);
+	ret = krb5_string_to_enctype(context, argv[i], &etypes[i]);
 	if (ret) {
 	    krb5_warnx (context, "bad enctype \"%s\"", argv[i]);
 	    goto out2;
@@ -74,7 +74,7 @@ add_enctype(struct add_enctype_options*opt, int argc, char **argv)
 
     ret = krb5_parse_name(context, princ_name, &princ_ent);
     if (ret) {
-	krb5_warn (context, ret, "krb5_parse_name %s", princ_name);
+	krb5_warn(context, ret, "krb5_parse_name %s", princ_name);
 	goto out2;
     }
 

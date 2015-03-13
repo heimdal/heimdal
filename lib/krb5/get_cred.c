@@ -778,6 +778,10 @@ get_cred_kdc_capath_worker(krb5_context context,
     {
 	krb5_creds tgts;
 
+	/*
+	 * If we have krbtgt/server_realm@try_realm cached, use it and we're
+	 * done.
+	 */
 	ret = find_cred(context, ccache, tmp_creds.server,
 			*ret_tgts, &tgts);
 	if (ret == 0) {
@@ -811,7 +815,16 @@ get_cred_kdc_capath_worker(krb5_context context,
 	goto out;
     }
 
-    /* XXX this can loop forever */
+    /*
+     * XXX This can loop forever, plus we recurse, so we can't just keep a
+     * count here.  The count would have to get passed around by reference.
+     *
+     * The KDCs check for transit loops for us, and capath data is finite, so
+     * in fact we'll fall out of this loop at some point.  We should do our own
+     * transit loop checking (like get_cred_kdc_referral()), and we should
+     * impose a max number of iterations altogether.  But barring malicious or
+     * broken KDCs, this is good enough.
+     */
     while (1) {
 	heim_general_string tgt_inst;
 

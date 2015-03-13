@@ -49,6 +49,7 @@ del_enctype(void *opt, int argc, char **argv)
     krb5_key_data *new_key_data;
     int n_etypes;
     krb5_enctype *etypes;
+    krb5_key_data *key;
 
     memset (&princ, 0, sizeof(princ));
     princ_name = argv[0];
@@ -88,14 +89,15 @@ del_enctype(void *opt, int argc, char **argv)
     }
 
     for (i = 0, j = 0; i < princ.n_key_data; ++i) {
-	krb5_key_data *key = &princ.key_data[i];
 	int docopy = 1;
+	key = &princ.key_data[i];
 
-	for (k = 0; k < n_etypes; ++k)
+	for (k = 0; k < n_etypes; ++k) {
 	    if (etypes[k] == key->key_data_type[0]) {
 		docopy = 0;
 		break;
 	    }
+	}
 	if (docopy) {
 	    new_key_data[j++] = *key;
 	} else {

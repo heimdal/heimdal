@@ -46,7 +46,7 @@ do_ext_keytab(krb5_principal principal, void *data)
     struct ext_keytab_data *e = data;
     krb5_keytab_entry *keys = NULL;
     krb5_keyblock *k = NULL;
-    int i;
+    size_t i;
     int n_k = 0;
 
     ret = kadm5_get_principal(kadm_handle, principal, &princ,
@@ -57,9 +57,8 @@ do_ext_keytab(krb5_principal principal, void *data)
     if (princ.n_key_data) {
 	keys = calloc(sizeof(*keys), princ.n_key_data);
 	if (keys == NULL) {
-	    kadm5_free_principal_ent(kadm_handle, &princ);
-	    krb5_clear_error_message(context);
-	    return ENOMEM;
+	    ret = krb5_enomem(context);
+	    goto out;
 	}
 	for (i = 0; i < princ.n_key_data; i++) {
 	    krb5_key_data *kd = &princ.key_data[i];
@@ -86,15 +85,13 @@ do_ext_keytab(krb5_principal principal, void *data)
     if (n_k == 0) {
         /* Probably lack get-keys privilege, but we may be able to set keys */
 	ret = kadm5_randkey_principal(kadm_handle, principal, &k, &n_k);
-	if (ret) {
-	    kadm5_free_principal_ent(kadm_handle, &princ);
-	    return ret;
-	}
+	if (ret)
+	    goto out;
+
 	keys = calloc(sizeof(*keys), n_k);
 	if (keys == NULL) {
-	    kadm5_free_principal_ent(kadm_handle, &princ);
-	    krb5_clear_error_message(context);
-	    return ENOMEM;
+	    ret = krb5_enomem(context);
+	    goto out;
 	}
 	for (i = 0; i < n_k; i++) {
 	    keys[i].principal = principal;
@@ -110,13 +107,13 @@ do_ext_keytab(krb5_principal principal, void *data)
 	    krb5_warn(context, ret, "krb5_kt_add_entry(%d)", i);
     }
 
+  out:
+    kadm5_free_principal_ent(kadm_handle, &princ);
     if (k) {
 	memset(k, 0, n_k * sizeof(*k));
 	free(k);
     }
-    if (keys)
-	free(keys);
-    kadm5_free_principal_ent(kadm_handle, &princ);
+    free(keys);
     return 0;
 }
 

@@ -308,6 +308,7 @@ typedef struct krb5_context_data {
     hx509_context hx509ctx;
 #endif
     unsigned int num_kdc_requests;
+    krb5_name_canon_rule name_canon_rules;
 } krb5_context_data;
 
 #ifndef KRB5_USE_PATH_TOKENS

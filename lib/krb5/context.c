@@ -601,6 +601,7 @@ krb5_copy_context(krb5_context context, krb5_context *out)
 KRB5_LIB_FUNCTION void KRB5_LIB_CALL
 krb5_free_context(krb5_context context)
 {
+    _krb5_free_name_canon_rules(context, context->name_canon_rules);
     if (context->default_cc_name)
 	free(context->default_cc_name);
     if (context->default_cc_name_env)

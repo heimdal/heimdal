@@ -519,7 +519,7 @@ krb5_kt_destroy(krb5_context context,
  */
 
 static krb5_boolean
-compare_aliseses(krb5_context context,
+compare_aliases(krb5_context context,
 		 krb5_keytab_entry *entry,
 		 krb5_const_principal principal)
 {
@@ -555,13 +555,19 @@ krb5_kt_compare(krb5_context context,
 		krb5_kvno vno,
 		krb5_enctype enctype)
 {
-    if(principal != NULL &&
-       !(krb5_principal_compare(context, entry->principal, principal) ||
-	 compare_aliseses(context, entry, principal)))
+    /* krb5_principal_compare() does not special-case the referral realm */
+    if (principal != NULL && strcmp(principal->realm, "") == 0 &&
+        !(krb5_principal_compare_any_realm(context, entry->principal, principal) ||
+          compare_aliases(context, entry, principal))) {
+        return FALSE;
+    } else if (principal != NULL && strcmp(principal->realm, "") != 0 &&
+        !(krb5_principal_compare(context, entry->principal, principal) ||
+          compare_aliases(context, entry, principal))) {
 	return FALSE;
-    if(vno && vno != entry->vno)
+    }
+    if (vno && vno != entry->vno)
 	return FALSE;
-    if(enctype && enctype != entry->keyblock.keytype)
+    if (enctype && enctype != entry->keyblock.keytype)
 	return FALSE;
     return TRUE;
 }
@@ -674,23 +680,26 @@ krb5_kt_get_entry(krb5_context context,
 		  krb5_keytab_entry *entry)
 {
     krb5_error_code ret;
-    krb5_principal try_princ;
+    krb5_const_principal try_princ;
     krb5_name_canon_iterator name_canon_iter;
 
-    if (!principal || principal->name.name_type != KRB5_NT_SRV_HST_NEEDS_CANON)
+    if (!principal)
 	return krb5_kt_get_entry_wrapped(context, id, principal, kvno, enctype,
 					 entry);
 
-    ret = krb5_name_canon_iterator_start(context, principal, NULL,
-					 &name_canon_iter);
+    ret = krb5_name_canon_iterator_start(context, principal, &name_canon_iter);
     if (ret)
 	return ret;
 
     do {
-	ret = krb5_name_canon_iterate_princ(context, &name_canon_iter,
-					    &try_princ, NULL);
+	ret = krb5_name_canon_iterate(context, &name_canon_iter, &try_princ,
+                                      NULL);
 	if (ret)
 	    break;
+        if (try_princ == NULL) {
+            ret = KRB5_KT_NOTFOUND;
+            continue;
+        }
 	ret = krb5_kt_get_entry_wrapped(context, id, try_princ, kvno,
 					enctype, entry);
     } while (ret == KRB5_KT_NOTFOUND && name_canon_iter);

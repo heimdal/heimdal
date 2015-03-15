@@ -923,13 +923,16 @@ typedef struct {
  */
 
 typedef enum krb5_name_canon_rule_options {
-	KRB5_NCRO_GC_ONLY = 1 << 0,
-	KRB5_NCRO_USE_REFERRALS = 1 << 1,
-	KRB5_NCRO_NO_REFERRALS = 1 << 2,
-	KRB5_NCRO_SECURE = 1 << 2
+        KRB5_NCRO_GC_ONLY       = 1 << 0,
+        KRB5_NCRO_USE_REFERRALS = 1 << 1,
+        KRB5_NCRO_NO_REFERRALS  = 1 << 2,
+        KRB5_NCRO_USE_FAST      = 1 << 3,
+        KRB5_NCRO_USE_DNSSEC    = 1 << 4,
+        KRB5_NCRO_LOOKUP_REALM  = 1 << 5
 } krb5_name_canon_rule_options;
 
 typedef struct krb5_name_canon_rule_data *krb5_name_canon_rule;
+typedef const struct krb5_name_canon_rule_data *krb5_const_name_canon_rule;
 typedef struct krb5_name_canon_iterator_data *krb5_name_canon_iterator;
 
 /*

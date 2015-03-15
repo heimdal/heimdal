@@ -1159,9 +1159,8 @@ check_cc(krb5_context context, krb5_flags options, krb5_ccache ccache,
 {
     krb5_error_code ret;
     krb5_timestamp now;
-    krb5_times save_times;
-
-    save_times = in_creds->times;
+    krb5_times save_times = in_creds->times;
+    NAME_TYPE save_type = in_creds->server->name.name_type;
 
     krb5_timeofday(context, &now);
 
@@ -1171,12 +1170,20 @@ check_cc(krb5_context context, krb5_flags options, krb5_ccache ccache,
 	krb5_timeofday(context, &in_creds->times.endtime);
 	options |= KRB5_TC_MATCH_TIMES;
     }
+
+    if (save_type == KRB5_NT_SRV_HST_NEEDS_CANON) {
+        /* Avoid name canonicalization in krb5_cc_retrieve_cred() */
+        krb5_principal_set_type(context, in_creds->server, KRB5_NT_SRV_HST);
+    }
+
     ret = krb5_cc_retrieve_cred(context, ccache,
 				(options &
-				 (KRB5_TC_MATCH_KEYTYPE |
+				 (KRB5_TC_DONT_MATCH_REALM |
+                                  KRB5_TC_MATCH_KEYTYPE |
 				  KRB5_TC_MATCH_TIMES)),
 				in_creds, out_creds);
 
+    in_creds->server->name.name_type = save_type;
     in_creds->times = save_times;
     return ret;
 }
@@ -1185,23 +1192,19 @@ static void
 store_cred(krb5_context context, krb5_ccache ccache,
 	   krb5_const_principal server_princ, krb5_creds *creds)
 {
-    krb5_error_code ret;
-    krb5_principal tmp_princ = creds->server;
-    krb5_principal p;
+    if (strcmp(server_princ->realm, "") == 0) {
+        krb5_principal tmp_princ = creds->server;
+        /*
+         * Store the cred with the pre-canon server princ first so it
+         * can be found quickly in the future.
+         */
+        creds->server = (krb5_principal)server_princ;
+        krb5_cc_store_cred(context, ccache, creds);
+        creds->server = tmp_princ;
+        /* Then store again with the canonicalized server princ */
+    }
 
     krb5_cc_store_cred(context, ccache, creds);
-    if (strcmp(server_princ->realm, "") != 0)
-	return;
-
-    ret = krb5_copy_principal(context, server_princ, &p);
-    if (ret)
-	return;
-    if (p->name.name_type == KRB5_NT_SRV_HST_NEEDS_CANON)
-	p->name.name_type = KRB5_NT_SRV_HST;
-    creds->server = p;
-    krb5_cc_store_cred(context, ccache, creds);
-    creds->server = tmp_princ;
-    krb5_free_principal(context, p);
 }
 
 
@@ -1216,8 +1219,9 @@ krb5_get_credentials_with_flags(krb5_context context,
     krb5_error_code ret;
     krb5_name_canon_iterator name_canon_iter = NULL;
     krb5_name_canon_rule_options rule_opts;
+    krb5_const_principal try_princ = NULL;
+    krb5_principal save_princ = in_creds->server;
     krb5_creds **tgts;
-    krb5_creds *try_creds;
     krb5_creds *res_creds;
     int i;
 
@@ -1233,15 +1237,7 @@ krb5_get_credentials_with_flags(krb5_context context,
     if (res_creds == NULL)
 	return krb5_enomem(context);
 
-    if (in_creds->server->name.name_type == KRB5_NT_SRV_HST_NEEDS_CANON) {
-	ret = check_cc(context, options, ccache, in_creds, res_creds);
-	if (ret == 0) {
-	    *out_creds = res_creds;
-	    return 0;
-	}
-    }
-
-    ret = krb5_name_canon_iterator_start(context, NULL, in_creds,
+    ret = krb5_name_canon_iterator_start(context, in_creds->server,
 					 &name_canon_iter);
     if (ret)
 	return ret;
@@ -1249,10 +1245,12 @@ krb5_get_credentials_with_flags(krb5_context context,
 next_rule:
     krb5_free_cred_contents(context, res_creds);
     memset(res_creds, 0, sizeof (*res_creds));
-    ret = krb5_name_canon_iterate_creds(context, &name_canon_iter, &try_creds,
-					&rule_opts);
+    ret = krb5_name_canon_iterate(context, &name_canon_iter, &try_princ,
+                                  &rule_opts);
+    in_creds->server = rk_UNCONST(try_princ);
     if (ret)
 	goto out;
+
     if (name_canon_iter == NULL) {
 	if (options & KRB5_GC_CACHED)
 	    ret = KRB5_CC_NOTFOUND;
@@ -1261,14 +1259,15 @@ next_rule:
 	goto out;
     }
 
-    ret = check_cc(context, options, ccache, try_creds, res_creds);
+    ret = check_cc(context, options, ccache, in_creds, res_creds);
     if (ret == 0) {
 	*out_creds = res_creds;
+        res_creds = NULL;
 	goto out;
     } else if(ret != KRB5_CC_END) {
         goto out;
     }
-    if(options & KRB5_GC_CACHED)
+    if (options & KRB5_GC_CACHED)
 	goto next_rule;
 
     if(options & KRB5_GC_USER_USER)
@@ -1278,26 +1277,28 @@ next_rule:
 
     tgts = NULL;
     ret = _krb5_get_cred_kdc_any(context, flags, ccache,
-				 try_creds, NULL, NULL, out_creds, &tgts);
+				 in_creds, NULL, NULL, out_creds, &tgts);
     for (i = 0; tgts && tgts[i]; i++) {
 	if ((options & KRB5_GC_NO_STORE) == 0)
 	    krb5_cc_store_cred(context, ccache, tgts[i]);
 	krb5_free_creds(context, tgts[i]);
     }
     free(tgts);
+
+    /* We don't yet have TGS w/ FAST, so we can't protect KBR-ERRORs */
     if (ret == KRB5KDC_ERR_S_PRINCIPAL_UNKNOWN &&
-	!(rule_opts & KRB5_NCRO_SECURE))
+	!(rule_opts & KRB5_NCRO_USE_FAST))
 	goto next_rule;
 
     if(ret == 0 && (options & KRB5_GC_NO_STORE) == 0)
 	store_cred(context, ccache, in_creds->server, *out_creds);
 
 out:
+    in_creds->server = save_princ;
+    krb5_free_creds(context, res_creds);
     krb5_free_name_canon_iterator(context, name_canon_iter);
-    if (ret) {
-	krb5_free_creds(context, res_creds);
+    if (ret)
 	return not_found(context, in_creds->server, ret);
-    }
     return 0;
 }
 
@@ -1419,8 +1420,8 @@ krb5_get_creds(krb5_context context,
     krb5_creds in_creds;
     krb5_error_code ret;
     krb5_creds **tgts;
-    krb5_creds *try_creds;
     krb5_creds *res_creds;
+    krb5_const_principal try_princ = NULL;
     krb5_name_canon_iterator name_canon_iter = NULL;
     krb5_name_canon_rule_options rule_opts;
     int i;
@@ -1456,25 +1457,18 @@ krb5_get_creds(krb5_context context,
 	options |= KRB5_TC_MATCH_KEYTYPE;
     }
 
-    /* Check for entry in ccache */
-    if (inprinc->name.name_type == KRB5_NT_SRV_HST_NEEDS_CANON) {
-	ret = check_cc(context, options, ccache, &in_creds, res_creds);
-	if (ret == 0) {
-	    *out_creds = res_creds;
-	    goto out;
-	}
-    }
-
-    ret = krb5_name_canon_iterator_start(context, NULL, &in_creds,
+    ret = krb5_name_canon_iterator_start(context, in_creds.server,
 					 &name_canon_iter);
     if (ret)
 	goto out;
 
 next_rule:
-    ret = krb5_name_canon_iterate_creds(context, &name_canon_iter, &try_creds,
-					&rule_opts);
+    ret = krb5_name_canon_iterate(context, &name_canon_iter, &try_princ,
+                                  &rule_opts);
+    in_creds.server = rk_UNCONST(try_princ);
     if (ret)
-	return ret;
+	goto out;
+
     if (name_canon_iter == NULL) {
 	if (options & KRB5_GC_CACHED)
 	    ret = KRB5_CC_NOTFOUND;
@@ -1482,23 +1476,25 @@ next_rule:
 	    ret = KRB5KDC_ERR_S_PRINCIPAL_UNKNOWN;
 	goto out;
     }
-    ret = check_cc(context, options, ccache, try_creds, res_creds);
+
+    ret = check_cc(context, options, ccache, &in_creds, res_creds);
     if (ret == 0) {
 	*out_creds = res_creds;
+        res_creds = NULL;
 	goto out;
-    } else if(ret != KRB5_CC_END) {
+    } else if (ret != KRB5_CC_END) {
 	goto out;
     }
-    if(options & KRB5_GC_CACHED)
+    if (options & KRB5_GC_CACHED)
 	goto next_rule;
 
-    if (try_creds->server->name.name_type == KRB5_NT_SRV_HST)
+    if (try_princ->name.name_type == KRB5_NT_SRV_HST)
 	flags.b.canonicalize = 1;
     if (rule_opts & KRB5_NCRO_NO_REFERRALS)
 	flags.b.canonicalize = 0;
     else
 	flags.b.canonicalize = (options & KRB5_GC_CANONICALIZE) ? 1 : 0;
-    if(options & KRB5_GC_USER_USER) {
+    if (options & KRB5_GC_USER_USER) {
 	flags.b.enc_tkt_in_skey = 1;
 	options |= KRB5_GC_NO_STORE;
     }
@@ -1513,7 +1509,7 @@ next_rule:
 
     tgts = NULL;
     ret = _krb5_get_cred_kdc_any(context, flags, ccache,
-				 try_creds, opt ? opt->self : 0,
+				 &in_creds, opt ? opt->self : 0,
 				 opt ? opt->ticket : 0, out_creds,
 				 &tgts);
     for (i = 0; tgts && tgts[i]; i++) {
@@ -1523,21 +1519,20 @@ next_rule:
     }
     free(tgts);
 
+    /* We don't yet have TGS w/ FAST, so we can't protect KBR-ERRORs */
     if (ret == KRB5KDC_ERR_S_PRINCIPAL_UNKNOWN &&
-	!(rule_opts & KRB5_NCRO_SECURE))
+	!(rule_opts & KRB5_NCRO_USE_FAST))
 	goto next_rule;
 
-    if(ret == 0 && (options & KRB5_GC_NO_STORE) == 0)
+    if (ret == 0 && (options & KRB5_GC_NO_STORE) == 0)
 	store_cred(context, ccache, inprinc, *out_creds);
 
 out:
-    if (ret) {
-	krb5_free_creds(context, res_creds);
-	ret = not_found(context, inprinc, ret);
-    }
+    krb5_free_creds(context, res_creds);
     krb5_free_principal(context, in_creds.client);
     krb5_free_name_canon_iterator(context, name_canon_iter);
-    _krb5_debug(context, 5, "krb5_get_creds: ret = %d", ret);
+    if (ret)
+	return not_found(context, inprinc, ret);
     return ret;
 }
 

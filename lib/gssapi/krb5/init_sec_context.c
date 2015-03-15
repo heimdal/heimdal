@@ -224,8 +224,8 @@ gsskrb5_get_creds(
 	ctx->kcred = NULL;
     }
 
-    ret = _gsskrb5_canon_name(minor_status, context, ctx->source,
-			      target_name, &ctx->target);
+    ret = _gsskrb5_canon_name(minor_status, context, target_name,
+                              &ctx->target);
     if (ret)
 	return ret;
 

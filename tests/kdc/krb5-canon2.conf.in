@@ -5,7 +5,7 @@
 	name_canon_rules = as-is:realm=TEST.H5L.SE
 	name_canon_rules = as-is:realm=TEST2.H5L.SE
 	name_canon_rules = as-is:realm=TEST3.H5L.SE
-	name_canon_rules = use-resolver-searchlist
+	name_canon_rules = nss
 
 [appdefaults]
 	pkinit_anchors = FILE:@srcdir@/../../lib/hx509/data/ca.crt

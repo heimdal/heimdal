@@ -399,7 +399,7 @@ OM_uint32 GSSAPI_CALLCONV _gsskrb5_acquire_cred_ext
     HEIMDAL_MUTEX_init(&handle->cred_id_mutex);
 
     if (desired_name != GSS_C_NO_NAME) {
-	ret = _gsskrb5_canon_name(minor_status, context, NULL,
+	ret = _gsskrb5_canon_name(minor_status, context,
 				  desired_name, &handle->principal);
 	if (ret) {
 	    HEIMDAL_MUTEX_destroy(&handle->cred_id_mutex);

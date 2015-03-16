@@ -70,6 +70,24 @@ do_ext_keytab(krb5_principal principal, void *data)
                        "get-keys privilege for %s", unparsed);
             goto out;
         }
+        /*
+         * kadmin clients and servers from master between 1.5 and 1.6
+         * can have corrupted a principal's keys in the HDB.  If some
+         * are bogus but not all are, then that must have happened.
+         *
+         * If all keys are bogus then the server may be a pre-1.6,
+         * post-1.5 server and the client lacks get-keys privilege, or
+         * the keys are corrupted.  We can't tell here.
+         */
+        if (kadm5_all_keys_are_bogus(princ.n_key_data, princ.key_data)) {
+            krb5_warnx(context, "user lacks get-keys privilege for %s",
+                       unparsed);
+            goto out;
+        }
+        if (kadm5_some_keys_are_bogus(princ.n_key_data, princ.key_data)) {
+            krb5_warnx(context, "some keys for %s are corrupted in the HDB",
+                       unparsed);
+        }
 	keys = calloc(sizeof(*keys), princ.n_key_data);
 	if (keys == NULL) {
 	    ret = krb5_enomem(context);
@@ -77,21 +95,10 @@ do_ext_keytab(krb5_principal principal, void *data)
 	}
 	for (i = 0; i < princ.n_key_data; i++) {
 	    krb5_key_data *kd = &princ.key_data[i];
-	    int warned = 0;
 
-            /*
-             * If the kadm5 client princ lacks get-keys then it may get
-             * bogus keys.  This should only happen with kadmind servers
-             * running master code from somewhere between 1.5 and 1.6.
-             */
-            if (kadm5_some_keys_are_bogus(1, kd)) {
-		if (!warned) {
-		    krb5_warnx(context, "user lacks get-keys privilege for %s",
-			       unparsed);
-		    warned = 1;
-		}
+            /* Don't extract bogus keys */
+            if (kadm5_all_keys_are_bogus(1, kd))
                 continue;
-	    }
 
 	    keys[i].principal = princ.principal;
 	    keys[i].vno = kd->key_data_kvno;
@@ -102,7 +109,6 @@ do_ext_keytab(krb5_principal principal, void *data)
             n_k++;
 	}
     } else if (e->random_key_flag) {
-        /* Probably lack get-keys privilege, but we may be able to set keys */
 	ret = kadm5_randkey_principal(kadm_handle, principal, &k, &n_k);
 	if (ret)
 	    goto out;

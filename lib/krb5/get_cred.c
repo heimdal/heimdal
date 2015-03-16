@@ -796,16 +796,15 @@ get_cred_kdc_capath_worker(krb5_context context,
 				   impersonate_principal,
 				   second_ticket,
 				   *out_creds);
-	    if (ret == 0
-		 && !krb5_principal_compare(context, in_creds->server,
-					    (*out_creds)->server)) {
-		krb5_free_cred_contents(context, *out_creds);
+            krb5_free_cred_contents(context, &tgts);
+	    if (ret == 0 &&
+                !krb5_principal_compare(context, in_creds->server,
+                                        (*out_creds)->server)) {
 		ret = KRB5KDC_ERR_S_PRINCIPAL_UNKNOWN;
 	    }
 	    if (ret == 0 && ok_as_delegate == 0)
 		(*out_creds)->flags.b.ok_as_delegate = 0;
 
-	    krb5_free_cred_contents(context, &tgts);
 	    goto out;
 	}
     }
@@ -863,11 +862,19 @@ get_cred_kdc_capath_worker(krb5_context context,
     ret = get_cred_kdc_address (context, ccache, flags, NULL,
 				 in_creds, tgt, impersonate_principal,
 				 second_ticket, *out_creds);
+    if (ret == 0 &&
+        !krb5_principal_compare(context, in_creds->server,
+                                    (*out_creds)->server)) {
+        krb5_free_cred_contents(context, *out_creds);
+        ret = KRB5KDC_ERR_S_PRINCIPAL_UNKNOWN;
+    }
+    if (ret == 0 && ok_as_delegate == 0)
+        (*out_creds)->flags.b.ok_as_delegate = 0;
 
 out:
     if (ret) {
-	free (*out_creds);
-	*out_creds = NULL;
+	krb5_free_creds(context, *out_creds);
+        *out_creds = NULL;
     }
     if (tmp_creds.server)
 	krb5_free_principal(context, tmp_creds.server);

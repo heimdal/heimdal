@@ -87,9 +87,35 @@ kadmind_dispatch(void *kadm_handlep, krb5_boolean initial,
         }
 
         /* Then check to see if it is ok to return keys */
-        ret = _kadm5_acl_check_permission(contextp, KADM5_PRIV_GET_KEYS, princ);
-        if (ret == 0)
-            keys_ok = 1;
+        if ((mask & KADM5_KEY_DATA) != 0) {
+            ret = _kadm5_acl_check_permission(contextp, KADM5_PRIV_GET_KEYS,
+                                              princ);
+            if (ret == 0) {
+                keys_ok = 1;
+            } else if ((mask == (KADM5_PRINCIPAL|KADM5_KEY_DATA)) ||
+                       (mask == (KADM5_PRINCIPAL|KADM5_KVNO|KADM5_KEY_DATA))) {
+                /*
+                 * Requests for keys will get bogus keys, which is useful if
+                 * the client just wants to see what (kvno, enctype)s the
+                 * principal has keys for, but terrible if the client wants to
+                 * write the keys into a keytab or modify the principal and
+                 * write the bogus keys back to the server.
+                 *
+                 * We use a heuristic to detect which case we're handling here.
+                 * If the client only asks for the flags in the above
+                 * condition, then it's very likely a kadmin ext_keytab,
+                 * add_enctype, or other request that should not see bogus
+                 * keys.  We deny them.
+                 *
+                 * The kadmin get command can be coaxed into making a request
+                 * with the same mask.  But the default long and terse output
+                 * modes request other things too, so in all likelihood this
+                 * heuristic will not hurt any kadmin get uses.
+                 */
+                krb5_free_principal(contextp->context, princ);
+                goto fail;
+            }
+        }
 
 	ret = kadm5_get_principal(kadm_handlep, princ, &ent, mask);
 	krb5_storage_free(sp);

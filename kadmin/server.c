@@ -78,20 +78,24 @@ kadmind_dispatch(void *kadm_handlep, krb5_boolean initial,
 	mask |= KADM5_PRINCIPAL;
 	krb5_unparse_name_fixed(contextp->context, princ, name, sizeof(name));
 	krb5_warnx(contextp->context, "%s: %s %s", client, op, name);
-	ret = _kadm5_acl_check_permission(contextp, KADM5_PRIV_GET_KEYS, princ);
-	if (ret == 0)
-	    keys_ok = 1;
-	else
-	    ret = _kadm5_acl_check_permission(contextp, KADM5_PRIV_GET, princ);
-	if(ret){
+
+        /* If the caller doesn't have KADM5_PRIV_GET, we're done. */
+	ret = _kadm5_acl_check_permission(contextp, KADM5_PRIV_GET, princ);
+        if (ret) {
 	    krb5_free_principal(contextp->context, princ);
 	    goto fail;
-	}
+        }
+
+        /* Then check to see if it is ok to return keys */
+        ret = _kadm5_acl_check_permission(contextp, KADM5_PRIV_GET_KEYS, princ);
+        if (ret == 0)
+            keys_ok = 1;
+
 	ret = kadm5_get_principal(kadm_handlep, princ, &ent, mask);
 	krb5_storage_free(sp);
 	sp = krb5_storage_emem();
 	krb5_store_int32(sp, ret);
-	if(ret == 0){
+	if (ret == 0){
 	    if (keys_ok)
 		kadm5_store_principal_ent(sp, &ent);
 	    else

@@ -36,6 +36,7 @@
 
 struct ext_keytab_data {
     krb5_keytab keytab;
+    int random_key_flag;
 };
 
 static int
@@ -48,10 +49,14 @@ do_ext_keytab(krb5_principal principal, void *data)
     krb5_keyblock *k = NULL;
     size_t i;
     int n_k = 0;
+    uint32_t mask;
     char *unparsed = NULL;
 
-    ret = kadm5_get_principal(kadm_handle, principal, &princ,
-			      KADM5_PRINCIPAL|KADM5_KVNO|KADM5_KEY_DATA);
+    mask = KADM5_PRINCIPAL;
+    if (!e->random_key_flag)
+        mask |= KADM5_KVNO | KADM5_KEY_DATA;
+
+    ret = kadm5_get_principal(kadm_handle, principal, &princ, mask);
     if (ret)
 	return ret;
 
@@ -59,7 +64,12 @@ do_ext_keytab(krb5_principal principal, void *data)
     if (ret)
 	goto out;
 
-    if (princ.n_key_data) {
+    if (!e->random_key_flag) {
+        if (princ.n_key_data == 0) {
+            krb5_warnx(context, "principal has no keys, or user lacks "
+                       "get-keys privilege for %s", unparsed);
+            goto out;
+        }
 	keys = calloc(sizeof(*keys), princ.n_key_data);
 	if (keys == NULL) {
 	    ret = krb5_enomem(context);
@@ -71,11 +81,10 @@ do_ext_keytab(krb5_principal principal, void *data)
 
             /*
              * If the kadm5 client princ lacks get-keys then it may get
-             * bogus keys four bytes long.
+             * bogus keys.  This should only happen with kadmind servers
+             * running master code from somewhere between 1.5 and 1.6.
              */
-	    if ((kd->key_data_length[0] == sizeof (KADM5_BOGUS_KEY_DATA) - 1)
-		 && (ct_memcmp(kd->key_data_contents[0], KADM5_BOGUS_KEY_DATA,
-			       kd->key_data_length[0]) == 0)) {
+            if (kadm5_some_keys_are_bogus(1, kd)) {
 		if (!warned) {
 		    krb5_warnx(context, "user lacks get-keys privilege for %s",
 			       unparsed);
@@ -92,9 +101,7 @@ do_ext_keytab(krb5_principal principal, void *data)
 	    keys[i].timestamp = time(NULL);
             n_k++;
 	}
-    }
-
-    if (n_k == 0) {
+    } else if (e->random_key_flag) {
         /* Probably lack get-keys privilege, but we may be able to set keys */
 	ret = kadm5_randkey_principal(kadm_handle, principal, &k, &n_k);
 	if (ret)
@@ -113,6 +120,9 @@ do_ext_keytab(krb5_principal principal, void *data)
 	}
     }
 
+    if (n_k == 0)
+        krb5_warn(context, ret, "no keys written to keytab for %s", unparsed);
+
     for (i = 0; i < n_k; i++) {
 	ret = krb5_kt_add_entry(context, e->keytab, &keys[i]);
 	if (ret)
@@ -122,7 +132,8 @@ do_ext_keytab(krb5_principal principal, void *data)
   out:
     kadm5_free_principal_ent(kadm_handle, &princ);
     if (k) {
-	memset(k, 0, n_k * sizeof(*k));
+        for (i = 0; i < n_k; i++)
+            memset(k[i].keyvalue.data, 0, k[i].keyvalue.length);
 	free(k);
     }
     free(unparsed);
@@ -146,6 +157,8 @@ ext_keytab(struct ext_keytab_options *opt, int argc, char **argv)
 	krb5_warn(context, ret, "krb5_kt_resolve");
 	return 1;
     }
+
+    data.random_key_flag = opt->random_key_flag;
 
     for(i = 0; i < argc; i++) {
 	ret = foreach_principal(argv[i], do_ext_keytab, "ext", &data);

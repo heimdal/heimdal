@@ -280,6 +280,12 @@ command = {
 		type = "string"
 		help = "keytab to use"
 	}
+	option = {
+		long = "random-key"
+		short = "r"
+		type = "flag"
+		help = "set random key"
+	}
 	argument = "principal..."
 	min_args = "1"
 	help = "Extracts the keys of all principals matching the expressions, and stores them in a keytab." 

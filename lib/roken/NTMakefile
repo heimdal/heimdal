@@ -39,6 +39,7 @@ libroken_la_OBJS =			\
 	$(OBJ)\concat.obj		\
 	$(OBJ)\cloexec.obj		\
 	$(OBJ)\ct.obj			\
+	$(OBJ)\detach.obj		\
 	$(OBJ)\dirent.obj		\
 	$(OBJ)\dlfcn_w32.obj		\
 	$(OBJ)\dumpdata.obj		\
@@ -189,6 +190,7 @@ TEST_PROGS =			    \
 	$(OBJ)\getaddrinfo-test.exe \
 	$(OBJ)\getifaddrs-test.exe  \
 	$(OBJ)\hex-test.exe	    \
+	$(OBJ)\test-detach.exe	    \
 	$(OBJ)\test-readenv.exe	    \
 	$(OBJ)\parse_bytes-test.exe \
 	$(OBJ)\parse_reply-test.exe \
@@ -250,6 +252,9 @@ $(OBJ)\hex-test.exe: $(OBJ)\hex-test.obj $(LIBROKEN)
 	$(EXECONLINK)
 
 $(OBJ)\parse_bytes-test.exe: $(OBJ)\parse_bytes-test.obj $(LIBROKEN)
+	$(EXECONLINK)
+
+$(OBJ)\test-detach.exe: $(OBJ)\test-detach.obj $(OBJ)\detach.obj $(LIBROKEN)
 	$(EXECONLINK)
 
 $(OBJ)\dirent-test.exe: $(OBJ)\dirent-test.obj $(LIBROKEN)

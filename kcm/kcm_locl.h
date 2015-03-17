@@ -169,9 +169,8 @@ extern char *door_path;
 extern size_t max_request;
 extern sig_atomic_t exit_flag;
 extern int name_constraints;
-#ifdef SUPPORT_DETACH
 extern int detach_from_console;
-#endif
+extern int daemon_child;
 extern int launchd_flag;
 extern int disallow_getting_krbtgt;
 

@@ -36,29 +36,42 @@
 #include "roken.h"
 
 ROKEN_LIB_FUNCTION char * ROKEN_LIB_CALL
-pid_file_write (const char *progname)
+pid_file_write(const char *progname)
 {
+    const char *pidfile_dir = NULL;
     char *ret = NULL;
     FILE *fp;
 
-    if (asprintf (&ret, "%s%s.pid", _PATH_VARRUN, progname) < 0 || ret == NULL)
+    /*
+     * Maybe we could have a version of this function (and pidfile())
+     * where we get a directory from the caller.  That would allow us to
+     * have command-line options for the daemons for this.
+     *
+     * For now we use an environment variable.
+     */
+    if (!issuid())
+        pidfile_dir = getenv("HEIM_PIDFILE_DIR");
+    if (pidfile_dir == NULL)
+        pidfile_dir = _PATH_VARRUN;
+
+    if (asprintf(&ret, "%s%s.pid", pidfile_dir, progname) < 0 || ret == NULL)
 	return NULL;
-    fp = fopen (ret, "w");
+    fp = fopen(ret, "w");
     if (fp == NULL) {
-	free (ret);
+	free(ret);
 	return NULL;
     }
-    fprintf (fp, "%u", (unsigned)getpid());
-    fclose (fp);
+    fprintf(fp, "%u", (unsigned)getpid());
+    fclose(fp);
     return ret;
 }
 
 ROKEN_LIB_FUNCTION void ROKEN_LIB_CALL
-pid_file_delete (char **filename)
+pid_file_delete(char **filename)
 {
     if (*filename != NULL) {
-	unlink (*filename);
-	free (*filename);
+	unlink(*filename);
+	free(*filename);
 	*filename = NULL;
     }
 }
@@ -69,16 +82,16 @@ static char *pidfile_path;
 static void
 pidfile_cleanup(void)
 {
-    if(pidfile_path != NULL)
+    if (pidfile_path != NULL)
 	pid_file_delete(&pidfile_path);
 }
 
 ROKEN_LIB_FUNCTION void ROKEN_LIB_CALL
 pidfile(const char *bname)
 {
-    if(pidfile_path != NULL)
+    if (pidfile_path != NULL)
 	return;
-    if(bname == NULL)
+    if (bname == NULL)
 	bname = getprogname();
     pidfile_path = pid_file_write(bname);
 #if defined(HAVE_ATEXIT)

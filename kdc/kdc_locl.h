@@ -99,12 +99,8 @@ extern krb5_addresses explicit_addresses;
 
 extern int enable_http;
 
-#ifdef SUPPORT_DETACH
-
-#define DETACH_IS_DEFAULT FALSE
-
 extern int detach_from_console;
-#endif
+extern int daemon_child;
 
 extern const struct units _kdc_digestunits[];
 

@@ -1609,7 +1609,7 @@ make_rules_safe(krb5_context context, krb5_name_canon_rule rules)
      * conversion.  Better let the user get failures and make them think about
      * their naming rules.
      */
-    if (rules != NULL)
+    if (rules == NULL)
         return;
     for (; rules[0].type != KRB5_NCRT_BOGUS; rules++) {
         if (rules->type == KRB5_NCRT_NSS)
@@ -1843,7 +1843,7 @@ apply_name_canon_rule(krb5_context context, krb5_name_canon_rule rules,
     }
 
     /* If we stripped off a :port, add it back in */
-    if (port != NULL) {
+    if (port != NULL && new_hostname != NULL) {
         if (asprintf(&hostname_with_port, "%s%s", new_hostname, port) == -1 ||
             hostname_with_port == NULL) {
             ret = krb5_enomem(context);

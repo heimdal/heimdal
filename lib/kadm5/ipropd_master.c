@@ -929,9 +929,8 @@ static char *keytab_str = sHDB;
 static char *database;
 static char *config_file;
 static char *port_str;
-#ifdef SUPPORT_DETACH
-static int detach_from_console = 0;
-#endif
+static int detach_from_console;
+static int daemon_child = -1;
 
 static struct getargs args[] = {
     { "config-file", 'c', arg_string, &config_file, NULL, NULL },
@@ -947,10 +946,10 @@ static struct getargs args[] = {
       "time of inactivity after which a slave is considered gone", "time"},
     { "port", 0, arg_string, &port_str,
       "port ipropd will listen to", "port"},
-#ifdef SUPPORT_DETACH
     { "detach", 0, arg_flag, &detach_from_console,
       "detach from console", NULL },
-#endif
+    { "daemon-child",       0 ,      arg_integer, &daemon_child,
+      "private argument, do not use", NULL },
     { "hostname", 0, arg_string, rk_UNCONST(&master_hostname),
       "hostname of master (if not same as hostname)", "hostname" },
     { "version", 0, arg_flag, &version_flag, NULL, NULL },
@@ -973,15 +972,28 @@ main(int argc, char **argv)
     krb5_keytab keytab;
     char **files;
     int aret;
+    int optidx = 0;
 
-    (void) krb5_program_setup(&context, argc, argv, args, num_args, NULL);
+    setprogname(argv[0]);
 
-    if(help_flag)
+    if (getarg(args, num_args, argc, argv, &optidx))
+        krb5_std_usage(1, args, num_args);
+
+    if (help_flag)
 	krb5_std_usage(0, args, num_args);
-    if(version_flag) {
+
+    if (version_flag) {
 	print_version(NULL);
 	exit(0);
     }
+
+    if (detach_from_console && daemon_child == -1)
+        roken_detach_prep(argc, argv, "--daemon-child");
+    pidfile(NULL);
+
+    ret = krb5_init_context(&context);
+    if (ret)
+        errx(1, "krb5_init_context failed: %d", ret);
 
     setup_signal();
 
@@ -1007,17 +1019,7 @@ main(int argc, char **argv)
     if (time_before_missing < 0)
 	krb5_errx (context, 1, "couldn't parse time: %s", slave_time_missing);
 
-#ifdef SUPPORT_DETACH
-    if (detach_from_console) {
-	aret = daemon(0, 0);
-	if (aret == -1) {
-	    /* not much to do if detaching fails... */
-	    krb5_err(context, 1, aret, "failed to daemon(3)ise");
-	}
-    }
-#endif
-    pidfile (NULL);
-    krb5_openlog (context, "ipropd-master", &log_facility);
+    krb5_openlog(context, "ipropd-master", &log_facility);
     krb5_set_warn_dest(context, log_facility);
 
     ret = krb5_kt_register(context, &hdb_get_kt_ops);
@@ -1059,7 +1061,9 @@ main(int argc, char **argv)
     krb5_warnx(context, "ipropd-master started at version: %lu",
 	       (unsigned long)current_version);
 
-    while(exit_flag == 0){
+    roken_detach_finish(NULL, daemon_child);
+
+    while (exit_flag == 0){
 	slave *p;
 	fd_set readset;
 	int max_fd = 0;

@@ -514,9 +514,8 @@ static int version_flag;
 static int help_flag;
 static char *keytab_str;
 static char *port_str;
-#ifdef SUPPORT_DETACH
-static int detach_from_console = 0;
-#endif
+static int detach_from_console;
+static int daemon_child = -1;
 
 static struct getargs args[] = {
     { "config-file", 'c', arg_string, &config_file, NULL, NULL },
@@ -529,10 +528,10 @@ static struct getargs args[] = {
       "file to write out status into", "file" },
     { "port", 0, arg_string, &port_str,
       "port ipropd-slave will connect to", "port"},
-#ifdef SUPPORT_DETACH
     { "detach", 0, arg_flag, &detach_from_console,
       "detach from console", NULL },
-#endif
+    { "daemon-child",       0 ,      arg_integer, &daemon_child,
+      "private argument, do not use", NULL },
     { "hostname", 0, arg_string, rk_UNCONST(&slave_str),
       "hostname of slave (if not same as hostname)", "hostname" },
     { "version", 0, arg_flag, &version_flag, NULL, NULL },
@@ -572,15 +571,20 @@ main(int argc, char **argv)
 
     setprogname(argv[0]);
 
-    if(getarg(args, num_args, argc, argv, &optidx))
+    if (getarg(args, num_args, argc, argv, &optidx))
 	usage(1);
 
-    if(help_flag)
+    if (help_flag)
 	usage(0);
-    if(version_flag) {
+
+    if (version_flag) {
 	print_version(NULL);
 	exit(0);
     }
+
+    if (detach_from_console && daemon_child == -1)
+        roken_detach_prep(argc, argv, "--daemon-child");
+    pidfile(NULL);
 
     ret = krb5_init_context(&context);
     if (ret)
@@ -616,17 +620,7 @@ main(int argc, char **argv)
 	    krb5_errx(context, 1, "can't allocate status file buffer"); 
     }
 
-#ifdef SUPPORT_DETACH
-    if (detach_from_console){
-	int aret = daemon(0, 0);
-	if (aret == -1) {
-	    /* not much to do if detaching fails... */
-	    krb5_err(context, 1, aret, "failed to daemon(3)ise");
-	}
-    }
-#endif
-    pidfile (NULL);
-    krb5_openlog (context, "ipropd-slave", &log_facility);
+    krb5_openlog(context, "ipropd-slave", &log_facility);
     krb5_set_warn_dest(context, log_facility);
 
     slave_status(context, status_file, "bootstrapping");
@@ -682,6 +676,8 @@ main(int argc, char **argv)
     reconnect = reconnect_min;
 
     slave_status(context, status_file, "ipropd-slave started");
+
+    roken_detach_finish(NULL, daemon_child);
 
     while (!exit_flag) {
 	time_t now, elapsed;

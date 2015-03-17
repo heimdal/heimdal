@@ -44,10 +44,8 @@ char *door_path = NULL;
 
 static char *max_request_str;	/* `max_request' as a string */
 
-#ifdef SUPPORT_DETACH
 int detach_from_console = -1;
-#define DETACH_IS_DEFAULT FALSE
-#endif
+int daemon_child = -1;
 
 static const char *system_cache_name = NULL;
 static const char *system_keytab = NULL;
@@ -88,19 +86,14 @@ static struct getargs args[] = {
 	"launchd",	0,	arg_flag, &launchd_flag,
 	"when in use by launchd", NULL
     },
-#ifdef SUPPORT_DETACH
-#if DETACH_IS_DEFAULT
-    {
-	"detach",       'D',      arg_negative_flag, &detach_from_console,
-	"don't detach from console", NULL
-    },
-#else
     {
 	"detach",       0 ,      arg_flag, &detach_from_console,
 	"detach from console", NULL
     },
-#endif
-#endif
+    {
+        "daemon-child",       0 ,      arg_integer, &daemon_child,
+        "private argument, do not use", NULL
+    },
     {	"help",		'h',	arg_flag,   &help_flag, NULL, NULL },
     {
 	"system-principal",	'k',	arg_string,	&system_principal,
@@ -331,10 +324,10 @@ kcm_configure(int argc, char **argv)
     int optidx = 0;
     const char *p;
 
-    while(getarg(args, num_args, argc, argv, &optidx))
+    while (getarg(args, num_args, argc, argv, &optidx))
 	warnx("error at argument `%s'", argv[optidx]);
 
-    if(help_flag)
+    if (help_flag)
 	usage (0);
 
     if (version_flag) {
@@ -387,13 +380,11 @@ kcm_configure(int argc, char **argv)
 	    krb5_err(kcm_context, 1, ret, "initializing system ccache");
     }
 
-#ifdef SUPPORT_DETACH
     if(detach_from_console == -1)
 	detach_from_console = krb5_config_get_bool_default(kcm_context, NULL,
-							   DETACH_IS_DEFAULT,
+							   FALSE,
 							   "kcm",
 							   "detach", NULL);
-#endif
     kcm_openlog();
     if(max_request == 0)
 	max_request = 64 * 1024;

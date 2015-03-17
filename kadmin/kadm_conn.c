@@ -36,6 +36,8 @@
 #include <sys/wait.h>
 #endif
 
+extern int daemon_child;
+
 struct kadm_port {
     char *port;
     unsigned short def_port;
@@ -291,6 +293,8 @@ start_server(krb5_context contextp, const char *port_str)
     }
     if(num_socks == 0)
 	krb5_errx(contextp, 1, "no sockets to listen to - exiting");
+
+    roken_detach_finish(NULL, daemon_child);
 
     wait_for_connection(contextp, socks, num_socks);
 }

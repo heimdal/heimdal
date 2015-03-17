@@ -20,7 +20,9 @@ if HAVE_DBHEADER
 AM_CPPFLAGS += -I$(DBHEADER)
 endif
 
-noinst_PROGRAMS = snprintf-test resolve-test rkpty
+noinst_PROGRAMS = snprintf-test resolve-test rkpty test-detach
+
+CHECK_LOCAL = snprintf-test resolve-test rkpty make-roken
 
 check_PROGRAMS = 				\
 		base64-test			\
@@ -50,6 +52,8 @@ parse_reply_test_CFLAGS  = -DTEST_RESOLVE
 
 test_readenv_SOURCES = test-readenv.c test-mem.c
 
+test_detach_SOURCES = test-detach.c
+
 rkpty_LDADD = $(LIB_openpty) $(LDADD)
 
 parse_time_test_SOURCES = parse_time-test.c test-mem.c
@@ -75,6 +79,7 @@ libroken_la_SOURCES =		\
 	concat.c		\
 	cloexec.c		\
 	ct.c			\
+	detach.c		\
 	doxygen.c		\
 	dumpdata.c		\
 	environment.c		\

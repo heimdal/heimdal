@@ -86,11 +86,8 @@ main(int argc, char **argv)
     signal(SIGUSR2, sigusr2);
     signal(SIGPIPE, SIG_IGN);
 #endif
-#ifdef SUPPORT_DETACH
-    if (detach_from_console)
-	if (daemon(0, 0) == -1)
-	    err(1, "daemon");
-#endif
+    if (detach_from_console && !launchd_flag && daemon_child == -1)
+        roken_detach_prep(argc, argv, "--daemon-child");
     pidfile(NULL);
 
     if (launchd_flag) {
@@ -100,6 +97,8 @@ main(int argc, char **argv)
 	heim_sipc un;
 	heim_sipc_service_unix(service_name, kcm_service, NULL, &un);
     }
+
+    roken_detach_finish(NULL, daemon_child);
 
     heim_ipc_main();
 

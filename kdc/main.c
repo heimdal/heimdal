@@ -44,9 +44,8 @@
 
 sig_atomic_t exit_flag = 0;
 
-#ifdef SUPPORT_DETACH
 int detach_from_console = -1;
-#endif
+int daemon_child = -1;
 
 static RETSIGTYPE
 sigterm(int sig)
@@ -105,7 +104,6 @@ switch_environment(void)
 #endif
 }
 
-
 int
 main(int argc, char **argv)
 {
@@ -156,10 +154,6 @@ main(int argc, char **argv)
 #ifdef SIGPIPE
     signal(SIGPIPE, SIG_IGN);
 #endif
-#endif
-#ifdef SUPPORT_DETACH
-    if (detach_from_console)
-	daemon(0, 0);
 #endif
 #ifdef __APPLE__
     bonjour_announce(context, config);

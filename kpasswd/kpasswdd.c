@@ -644,8 +644,46 @@ out:
     krb5_auth_con_free(context, auth_context);
 }
 
+static const char *check_library  = NULL;
+static const char *check_function = NULL;
+static getarg_strings policy_libraries = { 0, NULL };
+static char sHDB[] = "HDBGET:";
+static char *keytab_str = sHDB;
+static char *realm_str;
+static int version_flag;
+static int help_flag;
+static int detach_from_console;
+static int daemon_child = -1;
+static char *port_str;
+static char *config_file;
+
+struct getargs args[] = {
+#ifdef HAVE_DLOPEN
+    { "check-library", 0, arg_string, &check_library,
+      "library to load password check function from", "library" },
+    { "check-function", 0, arg_string, &check_function,
+      "password check function to load", "function" },
+    { "policy-libraries", 0, arg_strings, &policy_libraries,
+      "password check function to load", "function" },
+#endif
+    { "addresses", 0, arg_strings, &addresses_str,
+      "addresses to listen on", "list of addresses" },
+    { "detach", 0, arg_flag, &detach_from_console,
+      "detach from console", NULL },
+    { "daemon-child",       0 ,      arg_integer, &daemon_child,
+      "private argument, do not use", NULL },
+    { "keytab", 'k', arg_string, &keytab_str,
+      "keytab to get authentication key from", "kspec" },
+    { "config-file", 'c', arg_string, &config_file, NULL, NULL },
+    { "realm", 'r', arg_string, &realm_str, "default realm", "realm" },
+    { "port",  'p', arg_string, &port_str, "port", NULL },
+    { "version", 0, arg_flag, &version_flag, NULL, NULL },
+    { "help", 0, arg_flag, &help_flag, NULL, NULL }
+};
+int num_args = sizeof(args) / sizeof(args[0]);
+
 static int
-doit (krb5_keytab keytab, int port)
+doit(krb5_keytab keytab, int port)
 {
     krb5_error_code ret;
     int *sockets;
@@ -659,54 +697,56 @@ doit (krb5_keytab keytab, int port)
     if (explicit_addresses.len) {
 	addrs = explicit_addresses;
     } else {
-	ret = krb5_get_all_server_addrs (context, &addrs);
+	ret = krb5_get_all_server_addrs(context, &addrs);
 	if (ret)
-	    krb5_err (context, 1, ret, "krb5_get_all_server_addrs");
+	    krb5_err(context, 1, ret, "krb5_get_all_server_addrs");
     }
     n = addrs.len;
 
-    sockets = malloc (n * sizeof(*sockets));
+    sockets = malloc(n * sizeof(*sockets));
     if (sockets == NULL)
-	krb5_errx (context, 1, "out of memory");
+	krb5_errx(context, 1, "out of memory");
     maxfd = -1;
     FD_ZERO(&real_fdset);
     for (i = 0; i < n; ++i) {
 	krb5_socklen_t sa_size = sizeof(__ss);
 
-	krb5_addr2sockaddr (context, &addrs.val[i], sa, &sa_size, port);
+	krb5_addr2sockaddr(context, &addrs.val[i], sa, &sa_size, port);
 
-	sockets[i] = socket (__ss.ss_family, SOCK_DGRAM, 0);
+	sockets[i] = socket(__ss.ss_family, SOCK_DGRAM, 0);
 	if (sockets[i] < 0)
-	    krb5_err (context, 1, errno, "socket");
-	if (bind (sockets[i], sa, sa_size) < 0) {
+	    krb5_err(context, 1, errno, "socket");
+	if (bind(sockets[i], sa, sa_size) < 0) {
 	    char str[128];
 	    size_t len;
 	    int save_errno = errno;
 
-	    ret = krb5_print_address (&addrs.val[i], str, sizeof(str), &len);
+	    ret = krb5_print_address(&addrs.val[i], str, sizeof(str), &len);
 	    if (ret)
 		strlcpy(str, "unknown address", sizeof(str));
-	    krb5_warn (context, save_errno, "bind(%s)", str);
+	    krb5_warn(context, save_errno, "bind(%s)", str);
 	    continue;
 	}
-	maxfd = max (maxfd, sockets[i]);
+	maxfd = max(maxfd, sockets[i]);
 	if (maxfd >= FD_SETSIZE)
-	    krb5_errx (context, 1, "fd too large");
+	    krb5_errx(context, 1, "fd too large");
 	FD_SET(sockets[i], &real_fdset);
     }
     if (maxfd == -1)
-	krb5_errx (context, 1, "No sockets!");
+	krb5_errx(context, 1, "No sockets!");
 
-    while(exit_flag == 0) {
+    roken_detach_finish(NULL, daemon_child);
+
+    while (exit_flag == 0) {
 	krb5_ssize_t retx;
 	fd_set fdset = real_fdset;
 
-	retx = select (maxfd + 1, &fdset, NULL, NULL, NULL);
+	retx = select(maxfd + 1, &fdset, NULL, NULL, NULL);
 	if (retx < 0) {
 	    if (errno == EINTR)
 		continue;
 	    else
-		krb5_err (context, 1, errno, "select");
+		krb5_err(context, 1, errno, "select");
 	}
 	for (i = 0; i < n; ++i)
 	    if (FD_ISSET(sockets[i], &fdset)) {
@@ -716,13 +756,13 @@ doit (krb5_keytab keytab, int port)
 		retx = recvfrom(sockets[i], buf, sizeof(buf), 0,
 				sa, &addrlen);
 		if (retx < 0) {
-		    if(errno == EINTR)
+		    if (errno == EINTR)
 			break;
 		    else
-			krb5_err (context, 1, errno, "recvfrom");
+			krb5_err(context, 1, errno, "recvfrom");
 		}
 
-		process (keytab, sockets[i],
+		process(keytab, sockets[i],
 			 &addrs.val[i],
 			 sa, addrlen,
 			 buf, retx);
@@ -733,8 +773,8 @@ doit (krb5_keytab keytab, int port)
 	close(sockets[i]);
     free(sockets);
 
-    krb5_free_addresses (context, &addrs);
-    krb5_free_context (context);
+    krb5_free_addresses(context, &addrs);
+    krb5_free_context(context);
     return 0;
 }
 
@@ -744,40 +784,8 @@ sigterm(int sig)
     exit_flag = 1;
 }
 
-static const char *check_library  = NULL;
-static const char *check_function = NULL;
-static getarg_strings policy_libraries = { 0, NULL };
-static char sHDB[] = "HDBGET:";
-static char *keytab_str = sHDB;
-static char *realm_str;
-static int version_flag;
-static int help_flag;
-static char *port_str;
-static char *config_file;
-
-struct getargs args[] = {
-#ifdef HAVE_DLOPEN
-    { "check-library", 0, arg_string, &check_library,
-      "library to load password check function from", "library" },
-    { "check-function", 0, arg_string, &check_function,
-      "password check function to load", "function" },
-    { "policy-libraries", 0, arg_strings, &policy_libraries,
-      "password check function to load", "function" },
-#endif
-    { "addresses",	0,	arg_strings, &addresses_str,
-      "addresses to listen on", "list of addresses" },
-    { "keytab", 'k', arg_string, &keytab_str,
-      "keytab to get authentication key from", "kspec" },
-    { "config-file", 'c', arg_string, &config_file, NULL, NULL },
-    { "realm", 'r', arg_string, &realm_str, "default realm", "realm" },
-    { "port",  'p', arg_string, &port_str, "port", NULL },
-    { "version", 0, arg_flag, &version_flag, NULL, NULL },
-    { "help", 0, arg_flag, &help_flag, NULL, NULL }
-};
-int num_args = sizeof(args) / sizeof(args[0]);
-
 int
-main (int argc, char **argv)
+main(int argc, char **argv)
 {
     krb5_keytab keytab;
     krb5_error_code ret;
@@ -787,12 +795,16 @@ main (int argc, char **argv)
 
     krb5_program_setup(&context, argc, argv, args, num_args, NULL);
 
-    if(help_flag)
+    if (help_flag)
 	krb5_std_usage(0, args, num_args);
-    if(version_flag) {
+
+    if (version_flag) {
 	print_version(NULL);
 	exit(0);
     }
+
+    if (detach_from_console > 0 && daemon_child == -1)
+        roken_detach_prep(argc, argv, "--daemon-child");
 
     if (config_file == NULL) {
 	aret = asprintf(&config_file, "%s/kdc.conf", hdb_db_dir(context));
@@ -809,37 +821,37 @@ main (int argc, char **argv)
     if (ret)
 	krb5_err(context, 1, ret, "reading configuration files");
 
-    if(realm_str)
+    if (realm_str)
 	krb5_set_default_realm(context, realm_str);
 
-    krb5_openlog (context, "kpasswdd", &log_facility);
+    krb5_openlog(context, "kpasswdd", &log_facility);
     krb5_set_warn_dest(context, log_facility);
 
     if (port_str != NULL) {
-	struct servent *s = roken_getservbyname (port_str, "udp");
+	struct servent *s = roken_getservbyname(port_str, "udp");
 
 	if (s != NULL)
 	    port = s->s_port;
 	else {
 	    char *ptr;
 
-	    port = strtol (port_str, &ptr, 10);
+	    port = strtol(port_str, &ptr, 10);
 	    if (port == 0 && ptr == port_str)
-		krb5_errx (context, 1, "bad port `%s'", port_str);
+		krb5_errx(context, 1, "bad port `%s'", port_str);
 	    port = htons(port);
 	}
     } else
-	port = krb5_getportbyname (context, "kpasswd", "udp", KPASSWD_PORT);
+	port = krb5_getportbyname(context, "kpasswd", "udp", KPASSWD_PORT);
 
     ret = krb5_kt_register(context, &hdb_get_kt_ops);
-    if(ret)
+    if (ret)
 	krb5_err(context, 1, ret, "krb5_kt_register");
 
     ret = krb5_kt_resolve(context, keytab_str, &keytab);
-    if(ret)
+    if (ret)
 	krb5_err(context, 1, ret, "%s", keytab_str);
 
-    kadm5_setup_passwd_quality_check (context, check_library, check_function);
+    kadm5_setup_passwd_quality_check(context, check_library, check_function);
 
     for (i = 0; i < policy_libraries.num_strings; i++) {
 	ret = kadm5_add_passwd_quality_verifier(context,
@@ -858,16 +870,16 @@ main (int argc, char **argv)
 	int j;
 
 	for (j = 0; j < addresses_str.num_strings; ++j)
-	    add_one_address (addresses_str.strings[j], j == 0);
-	free_getarg_strings (&addresses_str);
+	    add_one_address(addresses_str.strings[j], j == 0);
+	free_getarg_strings(&addresses_str);
     } else {
-	char **foo = krb5_config_get_strings (context, NULL,
+	char **foo = krb5_config_get_strings(context, NULL,
 					      "kdc", "addresses", NULL);
 
 	if (foo != NULL) {
-	    add_one_address (*foo++, TRUE);
+	    add_one_address(*foo++, TRUE);
 	    while (*foo)
-		add_one_address (*foo++, FALSE);
+		add_one_address(*foo++, FALSE);
 	}
     }
 
@@ -889,5 +901,5 @@ main (int argc, char **argv)
 
     pidfile(NULL);
 
-    return doit (keytab, port);
+    return doit(keytab, port);
 }

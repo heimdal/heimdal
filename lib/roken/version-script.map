@@ -162,6 +162,8 @@ HEIMDAL_ROKEN_1.0 {
 		rk_warnerr;
 		rk_xfree;
 		roken_concat;
+		roken_detach_prep;
+		roken_detach_finish;
 		roken_getaddrinfo_hostspec2;
 		roken_getaddrinfo_hostspec;
 		roken_gethostby_setup;

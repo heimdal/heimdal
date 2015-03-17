@@ -72,7 +72,7 @@ daemon(int nochdir, int noclose)
 	dup2(fd, STDOUT_FILENO);
 	dup2(fd, STDERR_FILENO);
 	if (fd > 2)
-	    close (fd);
+	    (void) close(fd);
     }
     return (0);
 }

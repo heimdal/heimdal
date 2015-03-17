@@ -126,7 +126,11 @@
 #define O_NOFOLLOW 0
 #endif
 
-#ifndef _WIN32
+#ifdef _WIN32
+
+#define _PATH_DEVNULL "\\\\.\\NUL"
+
+#else
 
 #ifndef _PATH_DEV
 #define _PATH_DEV "/dev/"

@@ -45,6 +45,9 @@ static int debug_flag;
 static char *port_str;
 char *realm;
 
+static int detach_from_console = -1;
+int daemon_child = -1;
+
 static struct getargs args[] = {
     {
 	"config-file",	'c',	arg_string,	&config_file,
@@ -67,6 +70,14 @@ static struct getargs args[] = {
 #endif
     {	"debug",	'd',	arg_flag,   &debug_flag,
 	"enable debugging", NULL
+    },
+    {
+        "detach",       0 ,      arg_flag, &detach_from_console,
+        "detach from console", NULL
+    },
+    {
+        "daemon-child",       0 ,      arg_integer, &daemon_child,
+        "private argument, do not use", NULL
     },
     {	"ports",	'p',	arg_string, &port_str,
 	"ports to listen to", "port" },
@@ -98,10 +109,6 @@ main(int argc, char **argv)
 
     setprogname(argv[0]);
 
-    ret = krb5_init_context(&context);
-    if (ret)
-	errx (1, "krb5_init_context failed: %d", ret);
-
     if (getarg(args, num_args, argc, argv, &optidx)) {
 	warnx("error at argument `%s'", argv[optidx]);
 	usage(1);
@@ -114,6 +121,13 @@ main(int argc, char **argv)
 	print_version(NULL);
 	exit(0);
     }
+
+    if (detach_from_console > 0 && daemon_child == -1)
+        roken_detach_prep(argc, argv, "--daemon-child");
+
+    ret = krb5_init_context(&context);
+    if (ret)
+	errx (1, "krb5_init_context failed: %d", ret);
 
     argc -= optidx;
     argv += optidx;

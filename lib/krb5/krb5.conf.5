@@ -311,6 +311,90 @@ be allowed to run.
 .It Li fcache_strict_checking
 strict checking in FILE credential caches that owner, no symlink and
 permissions is correct.
+.It Li name_canon_rules = Va rules
+One or more service principal name canonicalization rules.  Each rule
+consists of one or more tokens separated by colon (':').  Currently
+these rules are used only for hostname canonicalization (usually when
+getting a service ticket, from a ccache or a TGS, but also when
+acquiring GSS initiator credentials from a keytab).  These rules can be
+used to implement DNS resolver-like search lists without having to use
+DNS.
+.Pp
+NOTE: Name canonicalization rules are an experimental feature.
+.Pp
+The first token is a rule type, one of:
+.Va as-is,
+.Va qualify, or
+.Va nss.
+.Pp
+Any remaining tokens must be options tokens:
+.Va use_fast
+(use FAST to protect TGS exchanges; currently not supported),
+.Va use_dnssec
+(use DNSSEC to protect hostname lookups; currently not supported),
+.Va ccache_only
+,
+.Va use_referrals,
+.Va no_referrals,
+.Va lookup_realm,
+.Va mindots=N,
+.Va maxdots=N,
+.Va order=N,
+domain=
+.Va domain,
+realm=
+.Va realm,
+match_domain=
+.Va domain,
+and match_realm=
+.Va realm.
+.Pp
+When trying to obtain a service ticket for a host-based service
+principal name, name canonicalization rules are applied to that name in
+the order given, one by one, until one succeds (a service ticket is
+obtained), or all fail.  Similarly when acquiring GSS initiator
+credentials from a keytab, and when comparing a non-canonical GSS name
+to a canonical one.
+.Pp
+For each rule the system checks that the hostname has at least
+.Va mindots
+periods (if given) in it, at most
+.Va maxdots
+periods (if given), that the hostname ends in the given
+.Va match_domain
+(if given),
+and that the realm of the principal matches the
+.Va match_realm
+(if given).
+.Pp
+.Va As-is
+rules leave the hostname unmodified but may set a realm.
+.Va Qualify
+rules qualify the hostname with the given
+.Va domain
+and also may set the realm.
+The
+.Va nss
+rule uses the system resolver to lookup the host's canonical name and is
+usually not secure.  Note that using the
+.Va nss
+rule type implies having to have principal aliases in the HDB (though
+not necessarily in keytabs).
+.Pp
+The empty realm denotes "ask the client's realm's TGS".  The empty realm
+may be set as well as matched.
+.Pp
+The order in which rules are applied is as follows: first all the rules
+with explicit
+.Va order
+then all other rules in the order in which they appear.  If any two
+rules have the same explicit
+.Va order
+their order of appearance in krb5.conf breaks the tie.  Explicitly
+specifying order can be useful where tools read and write the
+configuration file without preserving parameter order.
+.Pp
+Malformed rules are ignored.
 .El
 .It Li [domain_realm]
 This is a list of mappings from DNS domain to Kerberos realm.
@@ -651,6 +735,10 @@ configuration file for Kerberos 5.
 .Bd -literal -offset indent
 [libdefaults]
 	default_realm = FOO.SE
+	name_canon_rules = as-is:realm=FOO.SE
+	name_canon_rules = qualify:domain=foo.se:realm=FOO.SE
+	name_canon_rules = qualify:domain=bar.se:realm=FOO.SE
+	name_canon_rules = nss
 [domain_realm]
 	.foo.se = FOO.SE
 	.bar.se = FOO.SE

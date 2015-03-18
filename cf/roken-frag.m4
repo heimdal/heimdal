@@ -71,6 +71,7 @@ AC_CHECK_HEADERS([\
 	search.h				\
 	shadow.h				\
 	stdint.h				\
+	sys/auxv.h				\
 	sys/bswap.h				\
 	sys/errno.h				\
 	sys/ioctl.h				\
@@ -184,6 +185,7 @@ AC_CHECK_FUNCS([				\
 	asprintf				\
 	atexit					\
 	cgetent					\
+	getauxval				\
 	getconfattr				\
 	getprogname				\
 	getrlimit				\

@@ -169,5 +169,7 @@ kswitch(struct kswitch_options *opt, int argc, char **argv)
     if (ret)
 	krb5_err(heimtools_context, 1, ret, "krb5_cc_switch");
 
+    krb5_cc_close(heimtools_context, id);
+
     return 0;
 }

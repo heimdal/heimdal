@@ -60,12 +60,13 @@ kadm5_free_principal_ent(void *server_handle,
 			 kadm5_principal_ent_t princ)
 {
     kadm5_server_context *context = server_handle;
-    if(princ->principal)
+
+    if (princ->principal)
 	krb5_free_principal(context->context, princ->principal);
-    if(princ->mod_name)
+    if (princ->mod_name)
 	krb5_free_principal(context->context, princ->mod_name);
     kadm5_free_key_data(server_handle, &princ->n_key_data, princ->key_data);
-    while(princ->n_tl_data && princ->tl_data) {
+    while (princ->n_tl_data && princ->tl_data) {
 	krb5_tl_data *tp;
 	tp = princ->tl_data;
 	princ->tl_data = tp->tl_data_next;
@@ -75,7 +76,9 @@ kadm5_free_principal_ent(void *server_handle,
 	free(tp);
     }
     if (princ->key_data != NULL)
-	free (princ->key_data);
+	free(princ->key_data);
+    if (princ->policy)
+        free(princ->policy);
 }
 
 void

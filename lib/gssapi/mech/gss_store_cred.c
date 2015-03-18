@@ -69,11 +69,8 @@ gss_store_cred(OM_uint32         *minor_status,
 	if (m == NULL || m->gm_store_cred == NULL)
 	    continue;
 
-	if (desired_mech) {
-	    maj = gss_oid_equal(&m->gm_mech_oid, desired_mech);
-	    if (maj != 0)
-		continue;
-	}
+        if (desired_mech && !gss_oid_equal(&m->gm_mech_oid, desired_mech))
+            continue;
 
 	maj = (m->gm_store_cred)(minor_status, mc->gmc_cred,
 				 cred_usage, desired_mech, overwrite_cred,

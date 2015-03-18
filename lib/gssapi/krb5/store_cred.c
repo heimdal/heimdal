@@ -56,7 +56,8 @@ _gsskrb5_store_cred(OM_uint32         *minor_status,
 	return GSS_S_FAILURE;
     }
 
-    if (gss_oid_equal(desired_mech, GSS_KRB5_MECHANISM) == 0)
+    if (desired_mech != GSS_C_NO_OID &&
+        gss_oid_equal(desired_mech, GSS_KRB5_MECHANISM) == 0)
 	return GSS_S_BAD_MECH;
 
     cred = (gsskrb5_cred)input_cred_handle;

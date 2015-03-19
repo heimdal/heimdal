@@ -4,7 +4,7 @@ include $(top_srcdir)/Makefile.am.common
 
 noinst_DATA = krb5.conf
 
-SCRIPT_TESTS = check-gss check-gssmask check-context check-spnego check-ntlm
+SCRIPT_TESTS = check-basic check-gss check-gssmask check-context check-spnego check-ntlm
 
 TESTS = $(SCRIPT_TESTS)
 

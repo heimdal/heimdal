@@ -437,8 +437,13 @@ an2ln_def_plug_an2ln(void *plug_ctx, krb5_context context,
 	    ret = KRB5_NO_LOCALNAME;
 	    goto cleanup;
 	}
-	ret = set_res_f(set_res_ctx, heim_data_get_ptr(v));
+        value = strndup(heim_data_get_ptr(v), heim_data_get_length(v));
 	heim_release(v);
+        if (value == NULL) {
+            ret = krb5_enomem(context);
+            goto cleanup;
+        }
+	ret = set_res_f(set_res_ctx, value);
     }
 
 cleanup:

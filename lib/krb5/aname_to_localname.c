@@ -417,8 +417,10 @@ an2ln_def_plug_an2ln(void *plug_ctx, krb5_context context,
 
     /* Binary search; file should be sorted (in C locale) */
     k = heim_data_ref_create(unparsed, strlen(unparsed), NULL);
-    if (k == NULL)
-	return krb5_enomem(context);
+    if (k == NULL) {
+	ret = krb5_enomem(context);
+        goto cleanup;
+    }
     v = heim_db_copy_value(dbh, NULL, k, &error);
     heim_release(k);
     if (v == NULL && error != NULL) {

@@ -302,11 +302,13 @@ test_cfx_SOURCES = krb5/test_cfx.c
 check_PROGRAMS = test_acquire_cred $(TESTS)
 
 bin_PROGRAMS = gsstool
-noinst_PROGRAMS = test_cred test_kcred test_context test_ntlm
+noinst_PROGRAMS = test_cred test_kcred test_context test_ntlm test_add_store_cred
 
 test_context_SOURCES = test_context.c test_common.c test_common.h
 test_ntlm_SOURCES = test_ntlm.c test_common.c test_common.h
 test_acquire_cred_SOURCES = test_acquire_cred.c test_common.c test_common.h
+
+test_add_store_cred_SOURCES = test_add_store_cred.c
 
 test_ntlm_LDADD = \
 	$(top_builddir)/lib/ntlm/libheimntlm.la \

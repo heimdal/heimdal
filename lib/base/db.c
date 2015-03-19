@@ -1072,17 +1072,25 @@ db_replay_log(heim_db_t db, heim_error_t *error)
 	return 0;
 
     ret = read_json(heim_string_get_utf8(journal_fname), &journal, error);
-    if (ret == ENOENT)
+    if (ret == ENOENT) {
+        heim_release(journal_fname);
 	return 0;
-    if (ret == 0 && journal == NULL)
+    }
+    if (ret == 0 && journal == NULL) {
+        heim_release(journal_fname);
 	return 0;
-    if (ret != 0)
+    }
+    if (ret != 0) {
+        heim_release(journal_fname);
 	return ret;
+    }
 
-    if (heim_get_tid(journal) != HEIM_TID_ARRAY)
+    if (heim_get_tid(journal) != HEIM_TID_ARRAY) {
+        heim_release(journal_fname);
 	return HEIM_ERROR(error, EINVAL,
 			  (ret, N_("Invalid journal contents; delete journal",
 				   "")));
+    }
 
     len = heim_array_get_length(journal);
 
@@ -1091,11 +1099,14 @@ db_replay_log(heim_db_t db, heim_error_t *error)
     if (len > 1)
 	db->del_keys = heim_array_get_value(journal, 1);
     ret = db_do_log_actions(db, error);
-    if (ret)
+    if (ret) {
+        heim_release(journal_fname);
 	return ret;
+    }
 
     /* Truncate replay log and we're done */
     ret = open_file(heim_string_get_utf8(journal_fname), 1, 0, NULL, error);
+    heim_release(journal_fname);
     if (ret)
 	return ret;
     heim_release(db->set_keys);

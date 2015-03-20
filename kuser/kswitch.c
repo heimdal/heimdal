@@ -90,8 +90,10 @@ kswitch(struct kswitch_options *opt, int argc, char **argv)
 	    char num[10];
 
 	    ret = krb5_cc_get_principal(heimtools_context, id, &p);
-	    if (ret)
+	    if (ret) {
+                krb5_cc_close(heimtools_context, id);
 		continue;
+            }
 
 	    ret = krb5_unparse_name(heimtools_context, p, &name);
 	    krb5_free_principal(heimtools_context, p);

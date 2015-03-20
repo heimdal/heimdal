@@ -1718,7 +1718,10 @@ apply_name_canon_rule(krb5_context context, krb5_name_canon_rule rules,
     const char *orig_hostname = NULL;
     const char *new_hostname = NULL;
     const char *new_realm = NULL;
+    const char *port = "";
     const char *cp;
+    char *hostname_sans_port = NULL;
+    char *hostname_with_port = NULL;
     char *tmp_hostname = NULL;
     char *tmp_realm = NULL;
 
@@ -1732,6 +1735,18 @@ apply_name_canon_rule(krb5_context context, krb5_name_canon_rule rules,
 
     sname = krb5_principal_get_comp_string(context, in_princ, 0);
     orig_hostname = krb5_principal_get_comp_string(context, in_princ, 1);
+
+    /*
+     * Some apps want to use the very non-standard svc/hostname:port@REALM
+     * form.  We do our best to support that here :(
+     */
+    port = strchr(orig_hostname, ':');
+    if (port != NULL) {
+        hostname_sans_port = strndup(orig_hostname, port - orig_hostname);
+        if (hostname_sans_port == NULL)
+            return krb5_enomem(context);
+        orig_hostname = hostname_sans_port;
+    }
 
     _krb5_debug(context, 5, N_("Applying a name rule (type %d) to %s", ""),
                 rule->type, orig_hostname);
@@ -1827,6 +1842,16 @@ apply_name_canon_rule(krb5_context context, krb5_name_canon_rule rules,
         new_realm = tmp_realm;
     }
 
+    /* If we stripped off a :port, add it back in */
+    if (port != NULL) {
+        if (asprintf(&hostname_with_port, "%s%s", new_hostname, port) == -1 ||
+            hostname_with_port == NULL) {
+            ret = krb5_enomem(context);
+            goto out;
+        }
+        new_hostname = hostname_with_port;
+    }
+
     if (new_realm != NULL)
         krb5_principal_set_realm(context, *out_princ, new_realm);
     if (new_hostname != NULL)
@@ -1854,6 +1879,8 @@ apply_name_canon_rule(krb5_context context, krb5_name_canon_rule rules,
     }
 
 out:
+    free(hostname_sans_port);
+    free(hostname_with_port);
     free(tmp_hostname);
     free(tmp_realm);
     krb5_free_principal(context, nss);

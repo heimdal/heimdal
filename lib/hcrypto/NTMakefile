@@ -233,21 +233,22 @@ $(OBJ)\test_crypto.sh: test_crypto.in NTMakefile
 test-run:
 	cd $(OBJ)
 !ifdef SH
-	$(SH) test_crypto.sh
+	-$(SH) test_crypto.sh
 !endif
-	destest.exe
-	mdtest.exe
-	rc2test.exe
-	rctest.exe
-	test_bn.exe
-	test_bulk.exe
-	test_cipher.exe
-	test_engine_dso.exe
-	test_hmac.exe
-	test_pkcs5.exe
-	test_pkcs12.exe
-	test_rsa.exe
-	test_dh.exe
+	-destest.exe
+	-mdtest.exe
+	-rc2test.exe
+	-rctest.exe
+	-test_bn.exe
+	-test_bulk.exe --provider=hcrypto
+	-test_bulk.exe --provider=w32crypto
+	-test_cipher.exe
+	-test_engine_dso.exe
+	-test_hmac.exe
+	-test_pkcs5.exe
+	-test_pkcs12.exe
+	-test_rsa.exe
+	-test_dh.exe
 	cd $(SRCDIR)
 
 test:: $(TESTLIB) test-binaries test-run

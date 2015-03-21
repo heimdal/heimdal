@@ -63,7 +63,7 @@ test:: test-binaries test-run
 
 test-run:
 	cd $(OBJ)
-	test_base.exe
+	-test_base.exe
 	cd $(SRCDIR)
 
 all:: $(INCFILES) $(LIBHEIMBASE)

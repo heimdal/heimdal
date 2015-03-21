@@ -257,6 +257,10 @@ EXPORTS
 	$(DLLPREP_NODIST)
 
 test-run:
+	cd $(OBJ)
+	-default_keys.exe
+	-test_pw_quality.exe
+	cd $(SRCDIR)
 
 {$(OBJ)}.h{$(KADM5INCDIR)}.h:
 	$(CP) $< $@

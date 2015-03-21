@@ -265,19 +265,19 @@ test-binaries: $(TEST_PROGS) $(TMP_PROGS)
 
 test-run:
 	cd $(OBJ)
-	test-mini_inetd.exe
-	dirent-test.exe
-	base64-test.exe
-	getaddrinfo-test.exe
-	getifaddrs-test.exe
-	hex-test.exe
-	test-readenv.exe
-	parse_bytes-test.exe
+	-test-mini_inetd.exe
+	-dirent-test.exe
+	-base64-test.exe
+	-getaddrinfo-test.exe
+	-getifaddrs-test.exe
+	-hex-test.exe
+	-test-readenv.exe
+	-parse_bytes-test.exe
 # Need to rewrite this test:
-#	parse_reply-test.exe
-	parse_time-test.exe
-	snprintf-test.exe
-	strpftime-test.exe
+#	-parse_reply-test.exe
+	-parse_time-test.exe
+	-snprintf-test.exe
+	-strpftime-test.exe
 	cd $(SRCDIR)
 
 test:: test-binaries test-run

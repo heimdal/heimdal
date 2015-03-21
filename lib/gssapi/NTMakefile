@@ -630,10 +630,10 @@ test-binaries: $(LIBGSSAPI) $(TEST_BINARIES)
 
 run-test:
 	cd $(OBJ)
-	test_oid
-	test_names
-	test_cfx
-	test_kcred
+	-test_oid
+	-test_names
+	-test_cfx
+	-test_kcred
 	cd $(SRCDIR)
 
 test:: test-binaries run-test

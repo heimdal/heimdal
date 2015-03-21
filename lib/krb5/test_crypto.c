@@ -158,9 +158,11 @@ main(int argc, char **argv)
     krb5_salt salt;
 
     krb5_enctype enctypes[] = {
+#if 0
 	ETYPE_DES_CBC_CRC,
 	ETYPE_DES3_CBC_SHA1,
 	ETYPE_ARCFOUR_HMAC_MD5,
+#endif
 	ETYPE_AES128_CTS_HMAC_SHA1_96,
 	ETYPE_AES256_CTS_HMAC_SHA1_96
     };

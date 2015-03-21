@@ -61,11 +61,20 @@ static void hdb_test_fini(void *ctx)
 
 struct hdb_method hdb_test =
 {
+#ifdef WIN32
+	/* Not c99 */
+	HDB_INTERFACE_VERSION,
+	hdb_test_init,
+	hdb_test_fini,
+	"test",
+	hdb_test_create
+#else
 	.version = HDB_INTERFACE_VERSION,
 	.init = hdb_test_init,
 	.fini = hdb_test_fini,
 	.prefix = "test",
 	.create = hdb_test_create
+#endif
 };
 
 int

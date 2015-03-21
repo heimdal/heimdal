@@ -165,7 +165,9 @@ $(OBJ)\test_hdbplugin.exe: $(OBJ)\test_hdbplugin.obj $(LIBHDB) $(LIBHEIMDAL) $(L
 
 test-run:
 	cd $(OBJ)
-	test_dbinfo.exe
+	-test_dbinfo.exe
+	-test_hdbkeys.exe
+	-test_hdbplugin.exe
 	cd $(SRCDIR)
 
 !ifdef OPENLDAP_INC

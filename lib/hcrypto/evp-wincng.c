@@ -35,8 +35,6 @@
 #include <windows.h>
 #include <assert.h>
 
-#if NTDDI_VERSION >= NTDDI_VISTA
-
 #include <evp.h>
 #include <evp-wincng.h>
 
@@ -706,5 +704,3 @@ void _hc_wincng_cleanup(void)
     wincng_md_algorithm_cleanup();
     wincng_cipher_algorithm_cleanup();
 }
-
-#endif /* NTDDI_VERSION >= NTDDI_VISTA */

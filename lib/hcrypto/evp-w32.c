@@ -44,8 +44,6 @@
 #include <evp-w32.h>
 #include <evp-hcrypto.h>
 
-#if NTDDI_VERSION >= NTDDI_VISTA
-
 #include <evp-wincng.h>
 
 static LONG wincng_available = -1;
@@ -101,13 +99,6 @@ _hc_w32crypto_DllMain(HINSTANCE hinstDLL,
 	else						    \
 	    return hc_EVP_hcrypto_ ##name ();		    \
     }
-
-#else
-
-#define EVP_W32CRYPTO_PROVIDER(type, name)		    \
-	EVP_W32CRYPTO_PROVIDER_CNG_UNAVAILABLE(type, name)
-
-#endif /* NTDDI_VERSION >= NTDDI_VISTA */
 
 #define EVP_W32CRYPTO_PROVIDER_CNG_UNAVAILABLE(type, name)  \
 							    \

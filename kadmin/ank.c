@@ -167,6 +167,8 @@ add_one_principal (const char *name,
 	    free(new_keys);
 	kadm5_get_principal(kadm_handle, princ_ent, &princ,
 			    KADM5_PRINCIPAL | KADM5_KVNO | KADM5_ATTRIBUTES);
+        krb5_free_principal(context, princ_ent);
+        princ_ent = princ.principal;
 	princ.attributes &= (~KRB5_KDB_DISALLOW_ALL_TIX);
 	/*
 	 * Updating kvno w/o key data and vice-versa gives _kadm5_setup_entry()
@@ -185,6 +187,8 @@ add_one_principal (const char *name,
 	}
 	kadm5_get_principal(kadm_handle, princ_ent, &princ,
 			    KADM5_PRINCIPAL | KADM5_ATTRIBUTES);
+        krb5_free_principal(context, princ_ent);
+        princ_ent = princ.principal;
 	princ.attributes &= (~KRB5_KDB_DISALLOW_ALL_TIX);
 	kadm5_modify_principal(kadm_handle, &princ, KADM5_ATTRIBUTES);
     } else if (rand_password) {

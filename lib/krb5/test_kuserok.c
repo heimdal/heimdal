@@ -96,11 +96,11 @@ main(int argc, char **argv)
 
     ret = krb5_kuserok(context, principal, argv[1]);
 
-    free(p);
     krb5_free_principal(context, principal);
     krb5_free_context(context);
 
     printf("%s is %sallowed to login as %s\n", p, ret ? "" : "NOT ", argv[1]);
+    free(p);
 
     if (ret)
 	return 0;

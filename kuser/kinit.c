@@ -717,6 +717,7 @@ get_new_tickets(krb5_context context,
 		       life);
 	}
     }
+    krb5_free_cred_contents(context, &cred);
 
     ret = krb5_cc_new_unique(context, krb5_cc_get_type(context, ccache),
 			     NULL, &tempccache);

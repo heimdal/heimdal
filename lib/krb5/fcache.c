@@ -1041,8 +1041,10 @@ fcc_remove_cred(krb5_context context,
     if (ret)
 	return ret;
     while ((ret = krb5_cc_next_cred(context, id, &cursor, &found_cred)) == 0) {
-	if (!krb5_compare_creds(context, which, mcred, &found_cred))
+	if (!krb5_compare_creds(context, which, mcred, &found_cred)) {
+            krb5_free_cred_contents(context, &found_cred);
 	    continue;
+        }
 	cred_delete(context, id, &cursor, &found_cred);
 	krb5_free_cred_contents(context, &found_cred);
     }

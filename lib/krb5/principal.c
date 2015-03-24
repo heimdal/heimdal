@@ -963,47 +963,6 @@ krb5_principal_compare(krb5_context context,
 		       krb5_const_principal princ1,
 		       krb5_const_principal princ2)
 {
-    if ((princ_type(princ1) == KRB5_NT_SRV_HST_NEEDS_CANON ||
-	princ_type(princ2) == KRB5_NT_SRV_HST_NEEDS_CANON) &&
-	princ_type(princ2) != princ_type(princ1)) {
-	krb5_error_code ret;
-	krb5_boolean princs_eq;
-	krb5_const_principal princ2canon;
-	krb5_const_principal other_princ;
-	krb5_const_principal try_princ;
-	krb5_name_canon_iterator nci;
-
-        /* One princ needs canonicalization, the other doesn't */
-
-	if (princ_type(princ1) == KRB5_NT_SRV_HST_NEEDS_CANON) {
-	    princ2canon = princ1;
-	    other_princ = princ2;
-	} else {
-	    princ2canon = princ2;
-	    other_princ = princ1;
-	}
-
-	ret = krb5_name_canon_iterator_start(context, princ2canon, &nci);
-	if (ret)
-	    return FALSE;
-	do {
-	    ret = krb5_name_canon_iterate(context, &nci, &try_princ, NULL);
-	    if (ret || try_princ == NULL)
-		break;
-	    princs_eq = krb5_principal_compare(context, try_princ, other_princ);
-	    if (princs_eq) {
-		krb5_free_name_canon_iterator(context, nci);
-		return TRUE;
-	    }
-	} while (nci != NULL);
-	krb5_free_name_canon_iterator(context, nci);
-    }
-
-    /*
-     * Either neither princ requires canonicalization, both do, or
-     * no applicable name canonicalization rules were found and we fell
-     * through (chances are we'll fail here too in that last case).
-     */
     if (!krb5_realm_compare(context, princ1, princ2))
 	return FALSE;
     return krb5_principal_compare_any_realm(context, princ1, princ2);

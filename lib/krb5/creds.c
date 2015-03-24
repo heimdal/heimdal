@@ -160,8 +160,9 @@ krb5_copy_creds (krb5_context context,
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_free_creds (krb5_context context, krb5_creds *c)
 {
-    krb5_free_cred_contents (context, c);
-    free (c);
+    if (c != NULL)
+        krb5_free_cred_contents(context, c);
+    free(c);
     return 0;
 }
 

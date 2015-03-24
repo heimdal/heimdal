@@ -86,7 +86,7 @@ main(int argc, char **argv)
     int optidx = 0;
     krb5_get_creds_opt opt;
     krb5_principal server = NULL;
-    krb5_principal impersonate = NULL;
+    krb5_principal impersonate;
 
     setprogname (argv[0]);
 
@@ -138,6 +138,7 @@ main(int argc, char **argv)
 	    krb5_err (context, 1, ret, "krb5_parse_name %s", impersonate_str);
 	krb5_get_creds_opt_set_impersonate(context, opt, impersonate);
 	krb5_get_creds_opt_add_options(context, opt, KRB5_GC_NO_STORE);
+        krb5_free_principal(context, impersonate);
     }
 
     if (out_cache_str)

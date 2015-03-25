@@ -44,7 +44,9 @@ static int is_hostbased_flag;
 static int is_canonical_flag;
 static char *impersonate_str;
 static char *nametype_str;
-static int debug;
+static int store_flag = 1;
+static int cached_only_flag;
+static int debug_flag;
 static int version_flag;
 static int help_flag;
 
@@ -70,7 +72,11 @@ struct getargs args[] = {
       NP_("Kerberos name type", ""), NULL },
     { "hostbased",	'H', arg_flag, &is_hostbased_flag,
       NP_("indicate that the name is a host-based service name", ""), NULL },
-    { "debug", 	        0,   arg_flag, &debug, NULL, NULL },
+    { "store", 	        0,   arg_negative_flag, &store_flag,
+      NP_("don't store the tickets obtained in the cache", ""), NULL },
+    { "cached-only", 	        0,   arg_flag, &cached_only_flag,
+      NP_("don't talk to the KDC, just search the cache", ""), NULL },
+    { "debug", 	        0,   arg_flag, &debug_flag, NULL, NULL },
     { "version", 	0,   arg_flag, &version_flag, NULL, NULL },
     { "help",		0,   arg_flag, &help_flag, NULL, NULL }
 };
@@ -118,7 +124,7 @@ main(int argc, char **argv)
     argc -= optidx;
     argv += optidx;
 
-    if (debug) {
+    if (debug_flag) {
         ret = krb5_set_debug_dest(context, getprogname(), "STDERR");
         if (ret)
             krb5_warn(context, ret, "krb5_set_debug_dest");
@@ -166,6 +172,10 @@ main(int argc, char **argv)
 	krb5_get_creds_opt_add_options(context, opt, KRB5_GC_NO_TRANSIT_CHECK);
     if (canonicalize_flag)
 	krb5_get_creds_opt_add_options(context, opt, KRB5_GC_CANONICALIZE);
+    if (!store_flag)
+	krb5_get_creds_opt_add_options(context, opt, KRB5_GC_NO_STORE);
+    if (cached_only_flag)
+	krb5_get_creds_opt_add_options(context, opt, KRB5_GC_CACHED);
 
     if (delegation_cred_str) {
 	krb5_ccache id;

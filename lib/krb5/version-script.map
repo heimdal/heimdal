@@ -567,6 +567,7 @@ HEIMDAL_KRB5_2.0 {
 		krb5_sendto_kdc;
 		krb5_sendto_kdc_flags;
 		krb5_set_config_files;
+		krb5_set_debug_dest;
 		krb5_set_default_in_tkt_etypes;
 		krb5_set_default_realm;
 		krb5_set_dns_canonicalize_hostname;

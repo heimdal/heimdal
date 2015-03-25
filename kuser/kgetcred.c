@@ -42,6 +42,7 @@ static int forwardable_flag;
 static int canonicalize_flag;
 static char *impersonate_str;
 static char *nametype_str;
+static int debug;
 static int version_flag;
 static int help_flag;
 
@@ -62,6 +63,7 @@ struct getargs args[] = {
     { "impersonate",	0,   arg_string, &impersonate_str,
       NP_("client to impersonate", ""), "principal"},
     { "name-type",	0,   arg_string, &nametype_str, NULL, NULL },
+    { "debug", 	        0,   arg_flag, &debug, NULL, NULL },
     { "version", 	0,   arg_flag, &version_flag, NULL, NULL },
     { "help",		0,   arg_flag, &help_flag, NULL, NULL }
 };
@@ -69,10 +71,10 @@ struct getargs args[] = {
 static void
 usage (int ret)
 {
-    arg_printusage (args,
-		    sizeof(args)/sizeof(*args),
-		    NULL,
-		    "service");
+    arg_printusage(args,
+		   sizeof(args)/sizeof(*args),
+		   NULL,
+		   "service");
     exit (ret);
 }
 
@@ -88,19 +90,19 @@ main(int argc, char **argv)
     krb5_principal server = NULL;
     krb5_principal impersonate;
 
-    setprogname (argv[0]);
+    setprogname(argv[0]);
 
-    ret = krb5_init_context (&context);
+    ret = krb5_init_context(&context);
     if (ret)
 	errx(1, "krb5_init_context failed: %d", ret);
 
-    if(getarg(args, sizeof(args) / sizeof(args[0]), argc, argv, &optidx))
+    if (getarg(args, sizeof(args) / sizeof(args[0]), argc, argv, &optidx))
 	usage(1);
 
     if (help_flag)
 	usage (0);
 
-    if(version_flag) {
+    if (version_flag) {
 	print_version(NULL);
 	exit(0);
     }
@@ -108,34 +110,40 @@ main(int argc, char **argv)
     argc -= optidx;
     argv += optidx;
 
-    if(cache_str) {
+    if (debug) {
+        ret = krb5_set_debug_dest(context, getprogname(), "STDERR");
+        if (ret)
+            krb5_warn(context, ret, "krb5_set_debug_dest");
+    }
+
+    if (cache_str) {
 	ret = krb5_cc_resolve(context, cache_str, &cache);
 	if (ret)
-	    krb5_err (context, 1, ret, "%s", cache_str);
+	    krb5_err(context, 1, ret, "%s", cache_str);
     } else {
 	ret = krb5_cc_default (context, &cache);
 	if (ret)
-	    krb5_err (context, 1, ret, "krb5_cc_resolve");
+	    krb5_err(context, 1, ret, "krb5_cc_resolve");
     }
 
     ret = krb5_get_creds_opt_alloc(context, &opt);
     if (ret)
-	krb5_err (context, 1, ret, "krb5_get_creds_opt_alloc");
+	krb5_err(context, 1, ret, "krb5_get_creds_opt_alloc");
 
     if (etype_str) {
 	krb5_enctype enctype;
 
 	ret = krb5_string_to_enctype(context, etype_str, &enctype);
 	if (ret)
-	    krb5_errx (context, 1, N_("unrecognized enctype: %s", ""),
-		       etype_str);
+	    krb5_errx(context, 1, N_("unrecognized enctype: %s", ""),
+		      etype_str);
 	krb5_get_creds_opt_set_enctype(context, opt, enctype);
     }
 
     if (impersonate_str) {
 	ret = krb5_parse_name(context, impersonate_str, &impersonate);
 	if (ret)
-	    krb5_err (context, 1, ret, "krb5_parse_name %s", impersonate_str);
+	    krb5_err(context, 1, ret, "krb5_parse_name %s", impersonate_str);
 	krb5_get_creds_opt_set_impersonate(context, opt, impersonate);
 	krb5_get_creds_opt_add_options(context, opt, KRB5_GC_NO_STORE);
         krb5_free_principal(context, impersonate);

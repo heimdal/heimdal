@@ -514,3 +514,21 @@ _krb5_have_debug(krb5_context context, int level)
 	return 0 ;
     return 1;
 }
+
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
+krb5_set_debug_dest(krb5_context context, const char *program,
+                    const char *log_spec)
+{
+    krb5_error_code ret;
+
+    if (context->debug_dest == NULL) {
+        ret = krb5_initlog(context, program, &context->debug_dest);
+        if (ret)
+            return ret;
+    }
+
+    ret = krb5_addlog_dest(context, context->debug_dest, log_spec);
+    if (ret)
+        return ret;
+    return 0;
+}

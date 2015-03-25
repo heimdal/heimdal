@@ -48,6 +48,7 @@
 .Fl Fl enctype= Ns Ar enctype
 .Xc
 .Oc
+.Op Fl Fl debug
 .Op Fl name-type= Ns Ar name-type
 .Op Fl Fl no-transit-check
 .Op Fl Fl version
@@ -73,6 +74,8 @@ Supported options:
 .Bl -tag -width Ds
 .It Fl Fl canonicalize
 requests that the KDC canonicalize the principal.
+.It Fl Fl canonical
+turns off local canonicalization of the principal.
 .It Fl Fl name-type= Ns Ar name-type
 the name-type to use when parsing the principal name.
 .It Fl c Ar cache , Fl Fl cache= Ns Ar cache
@@ -84,9 +87,13 @@ encryption type to use.
 .It Fl Fl no-transit-check
 requests that the KDC doesn't do transit checking.
 .It Fl Fl forwardable
+.It Fl Fl debug
+enables debug output to stderr.
 .It Fl Fl version
 .It Fl Fl help
 .El
 .Sh SEE ALSO
 .Xr kinit 1 ,
-.Xr klist 1
+.Xr klist 1 ,
+.Xr krb5.conf 5 ,
+.Xr krb5_openlog 3

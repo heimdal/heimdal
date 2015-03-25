@@ -40,37 +40,16 @@ __gsskrb5_ccache_lifetime(OM_uint32 *minor_status,
 			  krb5_principal principal,
 			  OM_uint32 *lifetime)
 {
-    krb5_creds in_cred, out_cred;
-    krb5_const_realm realm;
     krb5_error_code kret;
+    time_t exp;
 
-    memset(&in_cred, 0, sizeof(in_cred));
-    in_cred.client = principal;
-
-    realm = krb5_principal_get_realm(context,  principal);
-    if (realm == NULL) {
-	_gsskrb5_clear_status ();
-	*minor_status = KRB5_PRINC_NOMATCH; /* XXX */
-	return GSS_S_FAILURE;
-    }
-
-    kret = krb5_make_principal(context, &in_cred.server,
-			       realm, KRB5_TGS_NAME, realm, NULL);
+    kret = krb5_cc_get_lifetime(context, id, &exp);
     if (kret) {
-	*minor_status = kret;
-	return GSS_S_FAILURE;
+        *minor_status = kret;
+        return GSS_S_FAILURE;
     }
 
-    kret = krb5_cc_retrieve_cred(context, id, 0, &in_cred, &out_cred);
-    krb5_free_principal(context, in_cred.server);
-    if (kret) {
-	*minor_status = 0;
-	*lifetime = 0;
-	return GSS_S_COMPLETE;
-    }
-
-    *lifetime = out_cred.times.endtime;
-    krb5_free_cred_contents(context, &out_cred);
+    *lifetime = exp;
 
     return GSS_S_COMPLETE;
 }

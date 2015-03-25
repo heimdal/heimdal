@@ -381,6 +381,7 @@ typedef struct krb5_cccol_cursor_data *krb5_cccol_cursor;
 typedef struct krb5_ccache_data {
     const struct krb5_cc_ops *ops;
     krb5_data data;
+    int initialized; /* if non-zero: krb5_cc_initialize() called, now empty */
 }krb5_ccache_data;
 
 typedef struct krb5_ccache_data *krb5_ccache;

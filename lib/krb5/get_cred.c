@@ -951,7 +951,8 @@ get_cred_kdc_referral(krb5_context context,
 		      Ticket *second_ticket,
 		      krb5_creds **out_creds)
 {
-    krb5_const_realm client_realm;
+    krb5_realm start_realm = NULL;
+    krb5_data config_start_realm;
     krb5_error_code ret;
     krb5_creds tgt, referral, ticket;
     krb5_creds **referral_tgts = NULL;  /* used for loop detection */
@@ -972,33 +973,49 @@ get_cred_kdc_referral(krb5_context context,
 
     *out_creds = NULL;
 
-    client_realm = krb5_principal_get_realm(context, in_creds->client);
+
+    ret = krb5_cc_get_config(context, ccache, NULL, "start_realm", &config_start_realm);
+    if (ret == 0) {
+        start_realm = strndup(config_start_realm.data, config_start_realm.length);
+	krb5_data_free(&config_start_realm);
+    } else {
+        start_realm = strdup(krb5_principal_get_realm(context, in_creds->client));
+    }
+    if (start_realm == NULL)
+        return krb5_enomem(context);
 
     /* find tgt for the clients base realm */
     {
 	krb5_principal tgtname;
 
 	ret = krb5_make_principal(context, &tgtname,
-				  client_realm,
+				  start_realm,
 				  KRB5_TGS_NAME,
-				  client_realm,
+				  start_realm,
 				  NULL);
-	if(ret)
+	if (ret) {
+            free(start_realm);
 	    return ret;
+        }
 
 	ret = find_cred(context, ccache, tgtname, NULL, &tgt);
 	krb5_free_principal(context, tgtname);
-	if (ret)
+	if (ret) {
+            free(start_realm);
 	    return ret;
+        }
     }
 
     referral = *in_creds;
     ret = krb5_copy_principal(context, in_creds->server, &referral.server);
     if (ret) {
 	krb5_free_cred_contents(context, &tgt);
+        free(start_realm);
 	return ret;
     }
-    ret = krb5_principal_set_realm(context, referral.server, client_realm);
+    ret = krb5_principal_set_realm(context, referral.server, start_realm);
+    free(start_realm);
+    start_realm = NULL;
     if (ret) {
 	krb5_free_cred_contents(context, &tgt);
 	krb5_free_principal(context, referral.server);

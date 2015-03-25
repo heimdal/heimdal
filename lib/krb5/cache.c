@@ -639,7 +639,12 @@ krb5_cc_initialize(krb5_context context,
 		   krb5_ccache id,
 		   krb5_principal primary_principal)
 {
-    return (*id->ops->init)(context, id, primary_principal);
+    krb5_error_code ret;
+
+    ret = (*id->ops->init)(context, id, primary_principal);
+    if (ret == 0)
+        id->initialized = 1;
+    return ret;
 }
 
 
@@ -696,7 +701,36 @@ krb5_cc_store_cred(krb5_context context,
 		   krb5_ccache id,
 		   krb5_creds *creds)
 {
-    return (*id->ops->store)(context, id, creds);
+    krb5_error_code ret;
+    krb5_data realm;
+
+    ret = (*id->ops->store)(context, id, creds);
+
+    /* Look for and mark the first root TGT's realm as the start realm */
+    if (ret == 0 && id->initialized &&
+        !krb5_is_config_principal(context, creds->server) &&
+        krb5_principal_is_root_krbtgt(context, creds->server)) {
+
+        id->initialized = 1;
+        realm.length = strlen(creds->server->realm) + 1;
+        realm.data = creds->server->realm;
+        (void) krb5_cc_set_config(context, id, NULL, "start_realm", &realm);
+    } else if (ret == 0 && id->initialized &&
+        krb5_is_config_principal(context, creds->server) &&
+        strcmp(creds->server->name.name_string.val[1], "start_realm") == 0) {
+
+        /*
+         * But if the caller is storing a start_realm ccconfig, then
+         * stop looking for root TGTs to mark as the start_realm.
+         *
+         * By honoring any start_realm cc config stored, we interop
+         * both, with ccache implementations that don't preserve
+         * insertion order, and Kerberos implementations that store this
+         * cc config before the TGT.
+         */
+        id->initialized = 1;
+    }
+    return ret;
 }
 
 /**
@@ -1679,6 +1713,11 @@ krb5_cc_get_lifetime(krb5_context context, krb5_ccache id, time_t *t)
 	/**
 	 * If we find a krbtgt in the cache, use that as the lifespan.
 	 */
+        /*
+         * FIXME We should try to find the start_realm cc config and
+         * look for root TGTs for that realm instead of any random
+         * (first) root TGT.
+         */
 	if (krb5_principal_is_root_krbtgt(context, cred.server)) {
 	    if (now < cred.times.endtime)
 		endtime = cred.times.endtime;

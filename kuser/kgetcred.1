@@ -54,35 +54,70 @@
 .Fl Fl hostbased
 .Xc
 .Oc
-.Op Fl name-type= Ns Ar name-type
+.Op Fl Fl name-type= Ns Ar name-type
 .Op Fl Fl no-transit-check
 .Op Fl Fl no-store
 .Op Fl Fl cached-only
 .Op Fl Fl version
 .Op Fl Fl help
-.Ar service
+.Ar principal
 .Nm
 .Op options
-.Fl name-type= Ns Ar SRV_HST
+.Fl Fl hostbased
+.Ar principal
+.Nm
+.Op options
+.Fl Fl hostbased
 .Ar service
 .Ar hostname
+.Ar [extra-components]
 .Sh DESCRIPTION
 .Nm
-obtains a ticket for a service.
+obtains a ticket for the given service principal.
 Usually tickets for services are obtained automatically when needed
 but sometimes for some odd reason you want to obtain a particular
 ticket or of a special type.
 .Pp
-The second form applies hostname canonicalization using local name
-canonicalization rules just as applications normally would, possibly
-enabling canonicalization via referrals.
+If
+.Fl Fl hostbased
+is given then the given service principal name will be canonicalized
+(see below).
+.Pp
+The third form constructs a host-based principal from the given service
+name and hostname.  The service name "host" is used if the given
+.Ar service
+name in the third usage is the empty string.
+.Pp
+For host-based names, the local host's hostname is used if the given
+.Ar hostname
+is the empty string or if the
+.Ar principal
+has a single component.
+.Pp
+Any additional components will be included, even for host-based service
+principal names, but there are no defaults nor local canonicalization
+rules for additional components.
+.Pp
+Local name canonicalization rules are applied unless the
+.Fl Fl canonical
+option is given.  Currently local name canonicalization rules are
+supported only for host-based principal names' hostname component.
+.Pp
+The principal's realm name may be canonicalized by following Kerberos
+referrals from the client principal's home realm if the
+.Fl Fl canonicalize
+option is given or if the local name canonicalization rules are
+configured to use referrals.
 .Pp
 Supported options:
 .Bl -tag -width Ds
 .It Fl Fl canonicalize
-requests that the KDC canonicalize the principal.
+requests that the KDC canonicalize the principal.  Currently this only
+canonicalizes the realm by chasing referrals from the user's start
+realm, but in the future this may also enable the KDC to canonicalize
+the complete principal name.
 .It Fl Fl canonical
-turns off local canonicalization of the principal.
+turns off local canonicalization of the principal name.
 .It Fl Fl name-type= Ns Ar name-type
 the name-type to use when parsing the principal name.
 .It Fl Fl hostbased

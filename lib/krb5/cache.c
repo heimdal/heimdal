@@ -1679,7 +1679,7 @@ krb5_cc_get_lifetime(krb5_context context, krb5_ccache id, time_t *t)
 	/**
 	 * If we find a krbtgt in the cache, use that as the lifespan.
 	 */
-	if (krb5_principal_is_root_krbtgt(context, cred.client)) {
+	if (krb5_principal_is_root_krbtgt(context, cred.server)) {
 	    if (now < cred.times.endtime)
 		endtime = cred.times.endtime;
 	    krb5_free_cred_contents(context, &cred);

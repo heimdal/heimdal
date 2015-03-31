@@ -63,6 +63,9 @@ host/admin@H5L.ORG
 #define princ_ncomp(P, N) ((P)->name.name_string.val[(N)])
 #define princ_realm(P) ((P)->realm)
 
+static krb5_error_code append_component(krb5_context, krb5_principal,
+                                        const char *, size_t);
+
 /**
  * Frees a Kerberos principal allocated by the library with
  * krb5_parse_name(), krb5_make_principal() or any other related
@@ -668,8 +671,10 @@ krb5_principal_set_comp_string(krb5_context context,
                                const char *component)
 {
     char *s;
-    if (k >= princ_num_comp(principal))
-        return ERANGE;
+    size_t i;
+
+    for (i = princ_num_comp(principal); i <= k; i++)
+        append_component(context, principal, "", 0);
     s = strdup(component);
     if (s == NULL)
         return krb5_enomem(context);

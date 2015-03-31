@@ -497,6 +497,7 @@ EXPORTS
 	krb5_principal_get_type
 	krb5_principal_is_krbtgt
 	krb5_principal_match
+	krb5_principal_set_comp_string
 	krb5_principal_set_realm
 	krb5_principal_set_type
 	krb5_print_address

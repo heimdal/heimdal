@@ -426,7 +426,7 @@ again:
 	    return EPERM;
 	}
     } else if (errno != ENOENT || !(flags & O_CREAT)) {
-	krb5_set_error_message(context, ret, N_("%s lstat(%s)", "file, error"),
+	krb5_set_error_message(context, errno, N_("%s lstat(%s)", "file, error"),
 			       operation, filename);
 	return errno;
     }
@@ -570,8 +570,8 @@ fcc_initialize(krb5_context context,
 	    char buf[128];
 	    ret = errno;
 	    rk_strerror_r(ret, buf, sizeof(buf));
-	    krb5_set_error_message (context, ret, N_("close %s: %s", ""),
-				    FILENAME(id), buf);
+	    krb5_set_error_message(context, ret, N_("close %s: %s", ""),
+				   FILENAME(id), buf);
 	}
     return ret;
 }
@@ -627,8 +627,8 @@ fcc_store_cred(krb5_context context,
 	    char buf[128];
 	    rk_strerror_r(ret, buf, sizeof(buf));
 	    ret = errno;
-	    krb5_set_error_message (context, ret, N_("close %s: %s", ""),
-				    FILENAME(id), buf);
+	    krb5_set_error_message(context, ret, N_("close %s: %s", ""),
+				   FILENAME(id), buf);
 	}
     }
     return ret;
@@ -662,7 +662,7 @@ init_fcc(krb5_context context,
     }
     krb5_storage_set_eof_code(sp, KRB5_CC_END);
     ret = krb5_ret_int8(sp, &pvno);
-    if(ret != 0) {
+    if (ret != 0) {
 	if(ret == KRB5_CC_END) {
 	    ret = ENOENT;
 	    krb5_set_error_message(context, ret,
@@ -674,7 +674,7 @@ init_fcc(krb5_context context,
 				   FILENAME(id));
 	goto out;
     }
-    if(pvno != 5) {
+    if (pvno != 5) {
 	ret = KRB5_CCACHE_BADVNO;
 	krb5_set_error_message(context, ret, N_("Bad version number in credential "
 						"cache file: %s", ""),
@@ -682,7 +682,7 @@ init_fcc(krb5_context context,
 	goto out;
     }
     ret = krb5_ret_int8(sp, &tag); /* should not be host byte order */
-    if(ret != 0) {
+    if (ret != 0) {
 	ret = KRB5_CC_FORMAT;
 	krb5_set_error_message(context, ret, "Error reading tag in "
 			      "cache file: %s", FILENAME(id));
@@ -1009,13 +1009,8 @@ out:
     if (fd > -1) {
 	fcc_unlock(context, fd);
 	if (close(fd) < 0 && ret == 0) {
-	    char buf[128];
-
-	    /* This error might be useful */
-	    rk_strerror_r(ret, buf, sizeof(buf));
-	    ret = errno;
-	    krb5_set_error_message(context, ret, N_("close %s: %s", ""),
-				   FILENAME(id), buf);
+	    krb5_set_error_message(context, errno, N_("close %s", ""),
+				   FILENAME(id));
 	}
     }
     krb5_data_free(&orig_cred_data);

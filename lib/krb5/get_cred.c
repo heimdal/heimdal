@@ -859,9 +859,9 @@ get_cred_kdc_capath_worker(krb5_context context,
 	    goto out;
     }
 
-    ret = get_cred_kdc_address (context, ccache, flags, NULL,
-				 in_creds, tgt, impersonate_principal,
-				 second_ticket, *out_creds);
+    ret = get_cred_kdc_address(context, ccache, flags, NULL,
+			       in_creds, tgt, impersonate_principal,
+			       second_ticket, *out_creds);
     if (ret == 0 &&
         !krb5_principal_compare(context, in_creds->server,
                                     (*out_creds)->server)) {
@@ -1050,12 +1050,11 @@ get_cred_kdc_referral(krb5_context context,
 	krb5_cc_clear_mcred(&mcreds);
 	mcreds.server = ticket.server;
 
-	while(tickets && *tickets){
-	    if(krb5_compare_creds(context,
+	while (tickets && *tickets){
+	    if (krb5_compare_creds(context,
 				  KRB5_TC_DONT_MATCH_REALM,
 				  &mcreds,
-				  *tickets))
-	    {
+				  *tickets)) {
 		krb5_set_error_message(context, KRB5_GET_IN_TKT_LOOP,
 				       N_("Referral from %s "
 					  "loops back to realm %s", ""),
@@ -1077,6 +1076,8 @@ get_cred_kdc_referral(krb5_context context,
 	    ticket.flags.b.ok_as_delegate = 0;
 	}
 
+        _krb5_debug(context, 6, "get_cred_kdc_referral: got referral "
+                    "to %s from %s", referral_realm, referral.server->realm);
 	ret = add_cred(context, &ticket, &referral_tgts);
 	if (ret)
 	    goto out;
@@ -1144,13 +1145,13 @@ _krb5_get_cred_kdc_any(krb5_context context,
 
     /* Try capaths */
     return get_cred_kdc_capath(context,
-				flags,
-				ccache,
-				in_creds,
-				impersonate_principal,
-				second_ticket,
-				out_creds,
-				ret_tgts);
+			       flags,
+			       ccache,
+			       in_creds,
+			       impersonate_principal,
+			       second_ticket,
+			       out_creds,
+			       ret_tgts);
 }
 
 static krb5_error_code
@@ -1225,6 +1226,20 @@ krb5_get_credentials_with_flags(krb5_context context,
     krb5_creds *res_creds;
     int i;
 
+    if (_krb5_have_debug(context, 5)) {
+        char *unparsed;
+
+        ret = krb5_unparse_name(context, in_creds->server, &unparsed);
+        if (ret) {
+            _krb5_debug(context, 5, "krb5_get_creds: unable to display "
+                        "requested service principal");
+        } else {
+            _krb5_debug(context, 5, "krb5_get_creds: requesting a ticket "
+                        "for %s", unparsed);
+            free(unparsed);
+        }
+    }
+
     if (in_creds->session.keytype) {
 	ret = krb5_enctype_valid(context, in_creds->session.keytype);
 	if (ret)
@@ -1292,6 +1307,20 @@ next_rule:
 
     if(ret == 0 && (options & KRB5_GC_NO_STORE) == 0)
 	store_cred(context, ccache, in_creds->server, *out_creds);
+
+    if (_krb5_have_debug(context, 5)) {
+        char *unparsed;
+
+        ret = krb5_unparse_name(context, (*out_creds)->server, &unparsed);
+        if (ret) {
+            _krb5_debug(context, 5, "krb5_get_creds: unable to display "
+                        "service principal");
+        } else {
+            _krb5_debug(context, 5, "krb5_get_creds: got a ticket for %s",
+                        unparsed);
+            free(unparsed);
+        }
+    }
 
 out:
     in_creds->server = save_princ;
@@ -1426,14 +1455,28 @@ krb5_get_creds(krb5_context context,
     krb5_name_canon_rule_options rule_opts;
     int i;
 
+    memset(&in_creds, 0, sizeof(in_creds));
+    in_creds.server = rk_UNCONST(inprinc);
+
+    if (_krb5_have_debug(context, 5)) {
+        char *unparsed;
+
+        ret = krb5_unparse_name(context, in_creds.server, &unparsed);
+        if (ret) {
+            _krb5_debug(context, 5, "krb5_get_creds: unable to display "
+                        "requested service principal");
+        } else {
+            _krb5_debug(context, 5, "krb5_get_creds: requesting a ticket "
+                        "for %s", unparsed);
+            free(unparsed);
+        }
+    }
+
     if (opt && opt->enctype) {
 	ret = krb5_enctype_valid(context, opt->enctype);
 	if (ret)
 	    return ret;
     }
-
-    memset(&in_creds, 0, sizeof(in_creds));
-    in_creds.server = rk_UNCONST(inprinc);
 
     ret = krb5_cc_get_principal(context, ccache, &in_creds.client);
     if (ret)
@@ -1526,6 +1569,20 @@ next_rule:
 
     if (ret == 0 && (options & KRB5_GC_NO_STORE) == 0)
 	store_cred(context, ccache, inprinc, *out_creds);
+
+    if (_krb5_have_debug(context, 5)) {
+        char *unparsed;
+
+        ret = krb5_unparse_name(context, (*out_creds)->server, &unparsed);
+        if (ret) {
+            _krb5_debug(context, 5, "krb5_get_creds: unable to display "
+                        "service principal");
+        } else {
+            _krb5_debug(context, 5, "krb5_get_creds: got a ticket for %s",
+                        unparsed);
+            free(unparsed);
+        }
+    }
 
 out:
     krb5_free_creds(context, res_creds);

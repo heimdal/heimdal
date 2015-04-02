@@ -1531,8 +1531,6 @@ _krb5_homedir_access(krb5_context context)
  * For home directory access to be allowed, both the global state and
  * the krb5_context state have to be allowed.
  *
- * Administrator (root user), never uses the home directory.
- *
  * @param context a Kerberos 5 context or NULL
  * @param allow allow if TRUE home directory
  * @return the old value

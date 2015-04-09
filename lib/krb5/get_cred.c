@@ -316,8 +316,13 @@ _krb5_get_krbtgt(krb5_context context,
 	krb5_free_principal(context, tmp_cred.client);
 	return ret;
     }
+    /*
+     * The forwardable TGT might not be the start TGT, in which case, it is
+     * generally, but not always already cached.  Just in case, get it again if
+     * lost.
+     */
     ret = krb5_get_credentials(context,
-			       KRB5_GC_CACHED,
+			       0,
 			       id,
 			       &tmp_cred,
 			       cred);

@@ -789,6 +789,7 @@ submit_request(krb5_context context, krb5_sendto_ctx ctx, krb5_krbhst_info *hi)
 	char *el, *proxy  = proxy2;
 	struct addrinfo hints;
 	char portstr[NI_MAXSERV];
+	unsigned short nport;
 	
 	if (proxy == NULL)
 	    return ENOMEM;
@@ -809,8 +810,9 @@ submit_request(krb5_context context, krb5_sendto_ctx ctx, krb5_krbhst_info *hi)
 	hints.ai_family   = PF_UNSPEC;
 	hints.ai_socktype = SOCK_STREAM;
 
-	snprintf(portstr, sizeof(portstr), "%d",
-		 ntohs(init_port(el, htons(80))));
+	/* On some systems ntohs(foo(..., htons(...))) causes shadowing */
+	nport = init_port(el, htons(80));
+	snprintf(portstr, sizeof(portstr), "%d", ntohs(nport));
 
 	ret = getaddrinfo(proxy, portstr, &hints, &ai);
 	free(proxy2);

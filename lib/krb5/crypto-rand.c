@@ -67,7 +67,7 @@ seed_something(void)
     /* Calling RAND_status() will try to use /dev/urandom if it exists so
        we do not have to deal with it. */
     if (RAND_status() != 1) {
-#ifndef NO_RAND_EGD_METHOD
+#if !defined(NO_RAND_EGD_METHOD) && defined(HAVE_RAND_EGD)
 	krb5_context context;
 	const char *p;
 

@@ -63,7 +63,6 @@ main(int argc, char **argv)
     for (i = 0; i < sizeof(tests)/sizeof(tests[0]); ++i) {
 	char buf[256];
 	int val = parse_bytes (tests[i].str, tests[i].def_unit);
-	int len;
 
 	if (val != tests[i].val) {
 	    printf ("parse_bytes (%s, %s) = %d != %d\n",
@@ -73,7 +72,7 @@ main(int argc, char **argv)
 	    ++ret;
 	}
 	if (tests[i].canonicalp) {
-	    len = unparse_bytes (tests[i].val, buf, sizeof(buf));
+	    (void) unparse_bytes (tests[i].val, buf, sizeof(buf));
 	    if (strcmp (tests[i].str, buf) != 0) {
 		printf ("unparse_bytes (%d) = \"%s\" != \"%s\"\n",
 			tests[i].val, buf, tests[i].str);

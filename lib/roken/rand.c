@@ -33,6 +33,10 @@
 
 #include "roken.h"
 
+#ifdef HAVE_WIN32_RAND_S
+static int hasRand_s = 1;
+#endif
+
 void ROKEN_LIB_FUNCTION
 rk_random_init(void)
 {
@@ -43,6 +47,32 @@ rk_random_init(void)
 #elif defined(HAVE_RANDOM)
     srandom(time(NULL));
 #else
+# ifdef HAVE_WIN32_RAND_S
+    OSVERSIONINFO osInfo;
+
+    osInfo.dwOSVersionInfoSize = sizeof(osInfo);
+    hasRand_s =
+	(GetVersionEx(&osInfo)
+	  && ((osInfo.dwMajorVersion > 5) ||
+	       (osInfo.dwMajorVersion == 5) && (osInfo.dwMinorVersion >= 1)));
+# endif
     srand (time(NULL));
 #endif
 }
+
+#ifdef HAVE_WIN32_RAND_S
+unsigned int ROKEN_LIB_FUNCTION
+rk_random(void)
+{
+    if (hasRand_s) {
+	unsigned int n;
+	int code;
+
+	code = rand_s(&n);
+	if (code == 0)
+	    return n;
+    }
+
+    return rand();
+}
+#endif

@@ -32,6 +32,12 @@
  * SUCH DAMAGE.
  */
 
+#if defined(_WIN32) && _MSC_VER >= 1400
+/* _CRT_RAND_S must be defined before including stdlib.h */
+# define _CRT_RAND_S
+# define HAVE_WIN32_RAND_S 1
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
@@ -1187,11 +1193,16 @@ ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL memset_s(void *s, size_t smax,
 #endif
 
 #if defined(HAVE_ARC4RANDOM)
-#define rk_random() arc4random()
+# define rk_random() arc4random()
 #elif defined(HAVE_RANDOM)
-#define rk_random() random()
+# define rk_random() random()
 #else
-#define rk_random() rand()
+# ifdef HAVE_WIN32_RAND_S
+ROKEN_LIB_FUNCTION unsigned int ROKEN_LIB_CALL
+rk_random(void);
+# else
+#  define rk_random() rand()
+# endif
 #endif
 
 #ifndef HAVE_TDELETE

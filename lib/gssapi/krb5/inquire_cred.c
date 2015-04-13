@@ -198,7 +198,7 @@ OM_uint32 GSSAPI_CALLCONV _gsskrb5_inquire_cred
     if (lifetime != NULL) {
         ret = _gsskrb5_lifetime_left(minor_status,
                                      context,
-                                     cred->lifetime,
+                                     cred->endtime,
                                      lifetime);
         if (ret)
             goto out;

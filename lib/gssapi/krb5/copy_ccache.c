@@ -129,11 +129,7 @@ _gsskrb5_krb5_import_cred(OM_uint32 *minor_status,
 	    free(handle);
 	    return ret;
 	}
-	/*
-	 * XXX: This is a stored value, hence an absolute time, and the field
-	 * name is misleading.
-	 */
-	handle->lifetime = now + left;
+	handle->endtime = now + left;
 
 	kret = krb5_cc_get_full_name(context, id, &str);
 	if (kret)

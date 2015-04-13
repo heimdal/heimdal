@@ -100,6 +100,7 @@ static OM_uint32 acquire_initiator_cred
     krb5_error_code kret;
     int try_get_init_creds = 0;
     time_t now;
+    OM_uint32 left;
 
     keytab = NULL;
     ccache = NULL;
@@ -218,11 +219,7 @@ found:
         krb5_cc_close(context, ccache);
         goto end;
     }
-    /*
-     * XXX: This is persistent state, and needs to be absolute not
-     * relative time, and so the field name is wrong!
-     */
-    handle->lifetime = now + left;
+    handle->endtime = now + left;
     handle->ccache = ccache;
     ret = GSS_S_COMPLETE;
     kret = 0;

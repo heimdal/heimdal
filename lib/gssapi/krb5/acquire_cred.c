@@ -165,14 +165,20 @@ static OM_uint32 acquire_initiator_cred
 	    goto end;
 	if (credential_type != GSS_C_NO_OID &&
 	    gss_oid_equal(credential_type, GSS_C_CRED_PASSWORD)) {
-	    gss_buffer_t password = (gss_buffer_t)credential_data;
+	    gss_buffer_t pwbuf = (gss_buffer_t)credential_data;
+            char *pw;
 
-	    /* XXX are we requiring password to be NUL terminated? */
+            /* Add possibly-missing NUL terminator */
+            pw = strndup(pwbuf->value, pwbuf->length);
+            if (pw == NULL) {
+                kret = krb5_enomem(context);
+                goto end;
+            }
 
-	    kret = krb5_get_init_creds_password(context, &cred,
-						handle->principal,
-						password->value,
-						NULL, NULL, 0, NULL, opt);
+            kret = krb5_get_init_creds_password(context, &cred,
+                                                handle->principal, pw,
+                                                NULL, NULL, 0, NULL, opt);
+            free(pw);
 	} else {
 	    kret = get_keytab(context, &keytab);
 	    if (kret) {

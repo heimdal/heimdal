@@ -1147,7 +1147,7 @@ _krb5_get_cred_kdc_any(krb5_context context,
     krb5_deltat offset;
 
     ret = krb5_cc_get_kdc_offset(context, ccache, &offset);
-    if (ret) {
+    if (ret == 0) {
 	context->kdc_sec_offset = offset;
 	context->kdc_usec_offset = 0;
     }

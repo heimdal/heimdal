@@ -1208,7 +1208,7 @@ krb5_cc_cache_match (krb5_context context,
 	else
 	    match = krb5_principal_compare(context, principal, client);
 	krb5_free_principal(context, principal);
-	
+
 	if (!match)
 	    goto next;
 
@@ -1761,7 +1761,7 @@ krb5_cc_get_lifetime(krb5_context context, krb5_ccache id, time_t *t)
 	*t = endtime - now;
 	ret = 0;
     }
-    
+
     krb5_cc_end_seq_get(context, id, &cursor);
 
     return ret;

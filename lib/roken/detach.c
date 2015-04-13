@@ -159,7 +159,7 @@ roken_detach_prep(int argc, char **argv, char *special_arg)
 ROKEN_LIB_FUNCTION void ROKEN_LIB_CALL
 roken_detach_finish(const char *dir, int daemon_child_fd)
 {
-    char buf[1];
+    char buf[1] = "";
     ssize_t bytes;
     int fd;
 
@@ -187,7 +187,6 @@ roken_detach_finish(const char *dir, int daemon_child_fd)
         err(1, "failed to chdir to /");
 #endif
 
-    buf[1] = 0;
     do {
         bytes = write(pipefds[1], buf, sizeof(buf));
     } while (bytes == -1 && errno == EINTR);

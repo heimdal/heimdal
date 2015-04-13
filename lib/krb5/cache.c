@@ -1697,6 +1697,8 @@ krb5_cc_set_friendly_name(krb5_context context,
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_cc_get_lifetime(krb5_context context, krb5_ccache id, time_t *t)
 {
+    krb5_data config_start_realm;
+    char *start_realm;
     krb5_cc_cursor cursor;
     krb5_error_code ret;
     krb5_creds cred;
@@ -1705,20 +1707,32 @@ krb5_cc_get_lifetime(krb5_context context, krb5_ccache id, time_t *t)
     *t = 0;
     now = time(NULL);
 
+    ret = krb5_cc_get_config(context, id, NULL, "start_realm", &config_start_realm);
+    if (ret == 0) {
+	start_realm = strndup(config_start_realm.data, config_start_realm.length);
+	krb5_data_free(&config_start_realm);
+    } else {
+	krb5_principal client;
+
+	ret = krb5_cc_get_principal(context, id, &client);
+	if (ret)
+	    return ret;
+	start_realm = strdup(krb5_principal_get_realm(context, client));
+	krb5_free_principal(context, client);
+    }
+    if (start_realm == NULL)
+	return krb5_enomem(context);
+
     ret = krb5_cc_start_seq_get(context, id, &cursor);
     if (ret)
 	return ret;
 
     while ((ret = krb5_cc_next_cred(context, id, &cursor, &cred)) == 0) {
 	/**
-	 * If we find a krbtgt in the cache, use that as the lifespan.
+	 * If we find the start krbtgt in the cache, use that as the lifespan.
 	 */
-        /*
-         * FIXME We should try to find the start_realm cc config and
-         * look for root TGTs for that realm instead of any random
-         * (first) root TGT.
-         */
-	if (krb5_principal_is_root_krbtgt(context, cred.server)) {
+	if (krb5_principal_is_root_krbtgt(context, cred.server) &&
+	    strcmp(cred.server->realm, start_realm) == 0) {
 	    if (now < cred.times.endtime)
 		endtime = cred.times.endtime;
 	    krb5_free_cred_contents(context, &cred);
@@ -1740,6 +1754,7 @@ krb5_cc_get_lifetime(krb5_context context, krb5_ccache id, time_t *t)
 	    endtime = cred.times.endtime;
 	krb5_free_cred_contents(context, &cred);
     }
+    free(start_realm);
 
     /* if we found an endtime use that */
     if (endtime) {

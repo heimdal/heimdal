@@ -89,6 +89,8 @@ _gsskrb5_krb5_import_cred(OM_uint32 *minor_status,
     handle->usage = 0;
 
     if (id) {
+	time_t now;
+	OM_uint32 left;
 	char *str;
 
 	handle->usage |= GSS_C_INITIATE;
@@ -116,17 +118,22 @@ _gsskrb5_krb5_import_cred(OM_uint32 *minor_status,
 	    }
 	}
 
+	krb5_timeofday(context, &now);
 	ret = __gsskrb5_ccache_lifetime(minor_status,
 					context,
 					id,
 					handle->principal,
-					&handle->lifetime);
+					&left);
 	if (ret != GSS_S_COMPLETE) {
 	    krb5_free_principal(context, handle->principal);
 	    free(handle);
 	    return ret;
 	}
-
+	/*
+	 * XXX: This is a stored value, hence an absolute time, and the field
+	 * name is misleading.
+	 */
+	handle->lifetime = now + left;
 
 	kret = krb5_cc_get_full_name(context, id, &str);
 	if (kret)

@@ -41,15 +41,15 @@ __gsskrb5_ccache_lifetime(OM_uint32 *minor_status,
 			  OM_uint32 *lifetime)
 {
     krb5_error_code kret;
-    time_t exp;
+    time_t left;
 
-    kret = krb5_cc_get_lifetime(context, id, &exp);
+    kret = krb5_cc_get_lifetime(context, id, &left);
     if (kret) {
         *minor_status = kret;
         return GSS_S_FAILURE;
     }
 
-    *lifetime = exp;
+    *lifetime = left;
 
     return GSS_S_COMPLETE;
 }
@@ -99,6 +99,7 @@ static OM_uint32 acquire_initiator_cred
     krb5_keytab keytab;
     krb5_error_code kret;
     int try_get_init_creds = 0;
+    time_t now;
 
     keytab = NULL;
     ccache = NULL;
@@ -207,18 +208,24 @@ static OM_uint32 acquire_initiator_cred
     }
 
 found:
+    krb5_timeofday(context, &now);
     ret = __gsskrb5_ccache_lifetime(minor_status,
                                     context,
                                     ccache,
                                     handle->principal,
-                                    &handle->lifetime);
+                                    &left);
     if (ret != GSS_S_COMPLETE) {
         krb5_cc_close(context, ccache);
         goto end;
     }
-    kret = 0;
+    /*
+     * XXX: This is persistent state, and needs to be absolute not
+     * relative time, and so the field name is wrong!
+     */
+    handle->lifetime = now + left;
     handle->ccache = ccache;
     ret = GSS_S_COMPLETE;
+    kret = 0;
 
 end:
     if (cred.client != NULL)

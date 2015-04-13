@@ -1152,28 +1152,31 @@ _krb5_get_cred_kdc_any(krb5_context context,
 	context->kdc_usec_offset = 0;
     }
 
-    /* Try referrals */
-    ret = get_cred_kdc_referral(context,
-				flags,
-				ccache,
-				in_creds,
-				impersonate_principal,
-				second_ticket,
-				out_creds);
+    if (strcmp(in_creds->server->realm, "") != 0) {
+        /*
+         * Non-empty realm?  Try capaths first.  We might have local
+         * policy (capaths) to honor.
+         */
+        ret = get_cred_kdc_capath(context,
+                                  flags,
+                                  ccache,
+                                  in_creds,
+                                  impersonate_principal,
+                                  second_ticket,
+                                  out_creds,
+                                  ret_tgts);
+        if (ret == 0)
+            return ret;
+    }
 
-    /* "Empty realm" -> only do referrals */
-    if (ret == 0 || strcmp(in_creds->server->realm, "") == 0)
-	return ret;
-
-    /* Try capaths */
-    return get_cred_kdc_capath(context,
-			       flags,
-			       ccache,
-			       in_creds,
-			       impersonate_principal,
-			       second_ticket,
-			       out_creds,
-			       ret_tgts);
+    /* Otherwise try referrals */
+    return get_cred_kdc_referral(context,
+                                 flags,
+                                 ccache,
+                                 in_creds,
+                                 impersonate_principal,
+                                 second_ticket,
+                                 out_creds);
 }
 
 static krb5_error_code

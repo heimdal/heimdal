@@ -104,6 +104,12 @@ _gss_acquire_mech_cred(OM_uint32 *minor_status,
     return major_status;
 }
 
+/**
+ * This function is not a public interface and is deprecated anyways, do
+ * not use.  Use gss_acquire_cred_with_password() instead for now.
+ *
+ * @deprecated
+ */
 OM_uint32
 _gss_acquire_cred_ext(OM_uint32 *minor_status,
     gss_const_name_t desired_name,
@@ -168,8 +174,11 @@ _gss_acquire_cred_ext(OM_uint32 *minor_status,
 					      credential_type, credential_data,
 					      time_req, desired_mech, cred_usage,
 					      &mc);
-	if (GSS_ERROR(major_status))
+	if (GSS_ERROR(major_status)) {
+            if (mechs->count == 1)
+                _gss_mg_error(m, major_status, *minor_status);
 	    continue;
+        }
 
 	HEIM_SLIST_INSERT_HEAD(&cred->gc_mc, mc, gmc_link);
     }
@@ -180,7 +189,8 @@ _gss_acquire_cred_ext(OM_uint32 *minor_status,
      */
     if (!HEIM_SLIST_FIRST(&cred->gc_mc)) {
 	free(cred);
-	*minor_status = 0;
+        if (mechs->count > 1)
+            *minor_status = 0;
 	return GSS_S_NO_CRED;
     }
 

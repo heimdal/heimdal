@@ -93,7 +93,8 @@ gss_acquire_cred_with_password(OM_uint32 *minor_status,
 
 	if (!HEIM_SLIST_FIRST(&new_cred->gc_mc)) {
 	    free(new_cred);
-	    *minor_status = 0;
+            if (desired_mechs->count > 1)
+                *minor_status = 0;
 	    return GSS_S_NO_CRED;
 	}
 

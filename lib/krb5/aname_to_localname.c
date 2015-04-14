@@ -31,6 +31,7 @@
  * SUCH DAMAGE.
  */
 
+#include <string.h>
 #include "krb5_locl.h"
 #include "an2ln_plugin.h"
 #include "db_plugin.h"

@@ -711,7 +711,7 @@ krb5_cc_store_cred(krb5_context context,
         !krb5_is_config_principal(context, creds->server) &&
         krb5_principal_is_root_krbtgt(context, creds->server)) {
 
-        id->initialized = 1;
+        id->initialized = 0;
         realm.length = strlen(creds->server->realm) + 1;
         realm.data = creds->server->realm;
         (void) krb5_cc_set_config(context, id, NULL, "start_realm", &realm);
@@ -728,7 +728,7 @@ krb5_cc_store_cred(krb5_context context,
          * insertion order, and Kerberos implementations that store this
          * cc config before the TGT.
          */
-        id->initialized = 1;
+        id->initialized = 0;
     }
     return ret;
 }

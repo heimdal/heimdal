@@ -36,27 +36,27 @@
 OM_uint32
 _gsskrb5_lifetime_left(OM_uint32 *minor_status,
 		       krb5_context context,
-		       OM_uint32 lifetime,
+		       OM_uint32 endtime,
 		       OM_uint32 *lifetime_rec)
 {
-    krb5_timestamp timeret;
+    krb5_timestamp now;
     krb5_error_code kret;
 
-    if (lifetime == 0) {
+    if (endtime == 0) {
 	*lifetime_rec = GSS_C_INDEFINITE;
 	return GSS_S_COMPLETE;
     }
 
-    kret = krb5_timeofday(context, &timeret);
+    kret = krb5_timeofday(context, &now);
     if (kret) {
 	*minor_status = kret;
 	return GSS_S_FAILURE;
     }
 
-    if (lifetime < timeret)
+    if (endtime < now)
 	*lifetime_rec = 0;
     else
-	*lifetime_rec = lifetime - timeret;
+	*lifetime_rec = endtime - now;
 
     return GSS_S_COMPLETE;
 }
@@ -69,18 +69,18 @@ OM_uint32 GSSAPI_CALLCONV _gsskrb5_context_time
            )
 {
     krb5_context context;
-    OM_uint32 lifetime;
+    OM_uint32 endtime;
     OM_uint32 major_status;
     const gsskrb5_ctx ctx = (const gsskrb5_ctx) context_handle;
 
     GSSAPI_KRB5_INIT (&context);
 
     HEIMDAL_MUTEX_lock(&ctx->ctx_id_mutex);
-    lifetime = ctx->lifetime;
+    endtime = ctx->endtime;
     HEIMDAL_MUTEX_unlock(&ctx->ctx_id_mutex);
 
     major_status = _gsskrb5_lifetime_left(minor_status, context,
-					  lifetime, time_rec);
+					  endtime, time_rec);
     if (major_status != GSS_S_COMPLETE)
 	return major_status;
 

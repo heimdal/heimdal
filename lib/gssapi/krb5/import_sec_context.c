@@ -192,9 +192,13 @@ _gsskrb5_import_sec_context (
     if (krb5_ret_int32 (sp, &tmp))
 	goto failure;
     ctx->more_flags = tmp;
+    /*
+     * XXX endtime should be a 64-bit int, but we don't have
+     * krb5_ret_int64() yet.
+     */
     if (krb5_ret_int32 (sp, &tmp))
 	goto failure;
-    ctx->lifetime = tmp;
+    ctx->endtime = tmp;
 
     ret = _gssapi_msg_order_import(minor_status, sp, &ctx->order);
     if (ret)

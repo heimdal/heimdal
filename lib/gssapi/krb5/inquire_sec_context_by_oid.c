@@ -333,7 +333,8 @@ export_lucid_sec_context_v1(OM_uint32 *minor_status,
     if (ret) goto out;
     ret = krb5_store_int32(sp, (context_handle->more_flags & LOCAL) ? 1 : 0);
     if (ret) goto out;
-    ret = krb5_store_int32(sp, context_handle->lifetime);
+    /* XXX need krb5_store_int64() */
+    ret = krb5_store_int32(sp, context_handle->endtime);
     if (ret) goto out;
     krb5_auth_con_getlocalseqnumber (context,
 				     context_handle->auth_context,

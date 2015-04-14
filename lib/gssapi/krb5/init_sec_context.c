@@ -128,7 +128,7 @@ _gsskrb5_create_ctx(
     ctx->service_keyblock	= NULL;
     ctx->ticket			= NULL;
     krb5_data_zero(&ctx->fwd_data);
-    ctx->lifetime		= GSS_C_INDEFINITE;
+    ctx->endtime		= 0;
     ctx->order			= NULL;
     ctx->crypto			= NULL;
     HEIMDAL_MUTEX_init(&ctx->ctx_id_mutex);
@@ -254,10 +254,10 @@ gsskrb5_get_creds(
 	return GSS_S_FAILURE;
     }
 
-    ctx->lifetime = ctx->kcred->times.endtime;
+    ctx->endtime = ctx->kcred->times.endtime;
 
     ret = _gsskrb5_lifetime_left(minor_status, context,
-				 ctx->lifetime, &lifetime_rec);
+				 ctx->endtime, &lifetime_rec);
     if (ret) return ret;
 
     if (lifetime_rec == 0) {
@@ -439,7 +439,7 @@ init_auth
     if (ret)
 	goto failure;
 
-    ctx->lifetime = ctx->kcred->times.endtime;
+    ctx->endtime = ctx->kcred->times.endtime;
 
     ret = _gss_DES3_get_mic_compat(minor_status, ctx, context);
     if (ret)
@@ -447,7 +447,7 @@ init_auth
 
     ret = _gsskrb5_lifetime_left(minor_status,
 				 context,
-				 ctx->lifetime,
+				 ctx->endtime,
 				 &lifetime_rec);
     if (ret)
 	goto failure;
@@ -797,7 +797,7 @@ repl_mutual
     if (time_rec) {
 	ret = _gsskrb5_lifetime_left(minor_status,
 				     context,
-				     ctx->lifetime,
+				     ctx->endtime,
 				     time_rec);
     } else {
 	ret = GSS_S_COMPLETE;

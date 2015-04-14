@@ -444,7 +444,7 @@ gsskrb5_acceptor_start(OM_uint32 * minor_status,
 	if (kret == 0)
 	    kret = krb5_rd_req_out_get_keyblock(context, out,
 						&ctx->service_keyblock);
-	ctx->lifetime = ctx->ticket->ticket.endtime;
+	ctx->endtime = ctx->ticket->ticket.endtime;
 
 	krb5_rd_req_out_ctx_free(context, out);
 	if (kret) {
@@ -631,7 +631,7 @@ gsskrb5_acceptor_start(OM_uint32 * minor_status,
 
     /* Remember the flags */
 
-    ctx->lifetime = ctx->ticket->ticket.endtime;
+    ctx->endtime = ctx->ticket->ticket.endtime;
     ctx->more_flags |= OPEN;
 
     if (mech_type)
@@ -640,7 +640,7 @@ gsskrb5_acceptor_start(OM_uint32 * minor_status,
     if (time_rec) {
 	ret = _gsskrb5_lifetime_left(minor_status,
 				     context,
-				     ctx->lifetime,
+				     ctx->endtime,
 				     time_rec);
 	if (ret) {
 	    return ret;
@@ -758,7 +758,7 @@ acceptor_wait_for_dcestyle(OM_uint32 * minor_status,
 
 	ret = _gsskrb5_lifetime_left(minor_status,
 				     context,
-				     ctx->lifetime,
+				     ctx->endtime,
 				     &lifetime_rec);
 	if (ret) {
 	    return ret;

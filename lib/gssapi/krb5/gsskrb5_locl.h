@@ -81,7 +81,7 @@ typedef struct gsskrb5_ctx {
   krb5_creds *kcred;
   krb5_ccache ccache;
   struct krb5_ticket *ticket;
-  OM_uint32 lifetime;
+  time_t endtime;
   HEIMDAL_MUTEX ctx_id_mutex;
   struct gss_msg_order *order;
   krb5_keyblock *service_keyblock;

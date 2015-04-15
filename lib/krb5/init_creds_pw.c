@@ -1230,6 +1230,8 @@ process_pa_data_to_md(krb5_context context,
  	unsigned flag;
 
 	paid = calloc(1, sizeof(*paid));
+        if (paid == NULL)
+            return krb5_enomem(context);
 
 	paid->etype = KRB5_ENCTYPE_NULL;
 	ppaid = process_pa_info(context, creds->client, a, paid, in_md);
@@ -1242,6 +1244,7 @@ process_pa_data_to_md(krb5_context context,
  	if (ctx->used_pa_types & flag) {
  	    if (ppaid)
  		free_paid(context, ppaid);
+            free(paid);
  	    krb5_set_error_message(context, KRB5_GET_IN_TKT_LOOP,
  				   "Already tried ENC-TS-%s, looping",
  				   flag == USED_ENC_TS_INFO ? "info" : "guess");

@@ -100,7 +100,10 @@ _gss_acquire_mech_cred(OM_uint32 *minor_status,
 	mc= NULL;
     }
 
-    *output_cred_handle = mc;
+    if (major_status != GSS_S_COMPLETE)
+        free(mc);
+    else
+        *output_cred_handle = mc;
     return major_status;
 }
 

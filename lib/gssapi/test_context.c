@@ -42,6 +42,7 @@
 
 static char *type_string;
 static char *mech_string;
+static char *mechs_string;
 static char *ret_mech_string;
 static char *client_name;
 static char *client_password;
@@ -90,17 +91,49 @@ init_o2n(void)
 static gss_OID
 string_to_oid(const char *name)
 {
-    int i;
+    size_t i;
     for (i = 0; i < sizeof(o2n)/sizeof(o2n[0]); i++)
 	if (strcasecmp(name, o2n[i].name) == 0)
 	    return o2n[i].oid;
     errx(1, "name '%s' not unknown", name);
 }
 
+static void
+string_to_oids(gss_OID_set *oidsetp, gss_OID_set oidset,
+               gss_OID_desc *oidarray, size_t oidarray_len,
+               char *names)
+{
+    char *name;
+    char *s;
+
+    if (names[0] == '\0') {
+        *oidsetp = GSS_C_NO_OID_SET;
+        return;
+    }
+
+    oidset->elements = &oidarray[0];
+    if (strcasecmp(names, "all") == 0) {
+        if (sizeof(o2n)/sizeof(o2n[0]) > oidarray_len)
+            errx(1, "internal error: oidarray must be enlarged");
+        for (oidset->count = 0; oidset->count < oidarray_len; oidset->count++)
+            oidset->elements[oidset->count] = *o2n[oidset->count].oid;
+    } else {
+        for (oidset->count = 0, name = strtok_r(names, ", ", &s);
+             name != NULL;
+             oidset->count++, name = strtok_r(NULL, ", ", &s)) {
+            if (oidset->count >= oidarray_len)
+                errx(1, "too many mech names given");
+            oidset->elements[oidset->count] = *string_to_oid(name);
+        }
+        oidset->count = oidset->count;
+    }
+    *oidsetp = oidset;
+}
+
 static const char *
 oid_to_string(const gss_OID oid)
 {
-    int i;
+    size_t i;
     for (i = 0; i < sizeof(o2n)/sizeof(o2n[0]); i++)
 	if (gss_oid_equal(oid, o2n[i].oid))
 	    return o2n[i].name;
@@ -461,7 +494,8 @@ empty_release(void)
 
 static struct getargs args[] = {
     {"name-type",0,	arg_string, &type_string,  "type of name", NULL },
-    {"mech-type",0,	arg_string, &mech_string,  "type of mech", NULL },
+    {"mech-type",0,	arg_string, &mech_string,  "mech type (name)", NULL },
+    {"mech-types",0,	arg_string, &mechs_string, "mech types (names)", NULL },
     {"ret-mech-type",0,	arg_string, &ret_mech_string,
      "type of return mech", NULL },
     {"dns-canonicalize",0,arg_negative_flag, &dns_canon_flag,
@@ -509,6 +543,9 @@ main(int argc, char **argv)
     gss_cred_id_t client_cred = GSS_C_NO_CREDENTIAL, deleg_cred = GSS_C_NO_CREDENTIAL;
     gss_name_t cname = GSS_C_NO_NAME;
     gss_buffer_desc credential_data = GSS_C_EMPTY_BUFFER;
+    gss_OID_desc oids[4];
+    gss_OID_set_desc mechoid_descs;
+    gss_OID_set mechoids = GSS_C_NO_OID_SET;
 
     setprogname(argv[0]);
 
@@ -553,6 +590,16 @@ main(int argc, char **argv)
     else
 	mechoid = string_to_oid(mech_string);
 
+    if (mechs_string == NULL) {
+        oids[0] = *mechoid;
+        mechoid_descs.elements = &oids[0];
+        mechoid_descs.count = 1;
+        mechoids = &mechoid_descs;
+    } else {
+        string_to_oids(&mechoids, &mechoid_descs,
+                       oids, sizeof(oids)/sizeof(oids[0]), mechs_string);
+    }
+
     if (gsskrb5_acceptor_identity) {
 	maj_stat = gsskrb5_register_acceptor_identity(gsskrb5_acceptor_identity);
 	if (maj_stat)
@@ -582,19 +629,24 @@ main(int argc, char **argv)
 						  cname,
 						  &credential_data,
 						  GSS_C_INDEFINITE,
-						  GSS_C_NO_OID_SET,
+						  mechoids,
 						  GSS_C_INITIATE,
 						  &client_cred,
 						  NULL,
 						  NULL);
-	if (GSS_ERROR(maj_stat))
+	if (GSS_ERROR(maj_stat)) {
+            if (mechoids != GSS_C_NO_OID_SET && mechoids->count == 1)
+                mechoid = &mechoids->elements[0];
+            else
+                mechoid = GSS_C_NO_OID;
 	    errx(1, "gss_acquire_cred_with_password: %s",
-		 gssapi_err(maj_stat, min_stat, GSS_C_NO_OID));
+		 gssapi_err(maj_stat, min_stat, mechoid));
+        }
     } else {
 	maj_stat = gss_acquire_cred(&min_stat,
 				    cname,
 				    GSS_C_INDEFINITE,
-				    GSS_C_NO_OID_SET,
+				    mechoids,
 				    GSS_C_INITIATE,
 				    &client_cred,
 				    NULL,

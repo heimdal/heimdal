@@ -401,11 +401,20 @@ store_ntlmkey(krb5_context context, krb5_ccache id,
     char *name;
     int aret;
 
-    aret = asprintf(&name, "ntlm-key-%s", domain);
-    if (aret == -1 || name == NULL) {
-	krb5_clear_error_message(context);
-	return ENOMEM;
+    ret = krb5_cc_get_config(context, id, NULL, "default-ntlm-domain", &data);
+    if (ret == 0) {
+        krb5_data_free(&data);
+    } else {
+        data.length = strlen(domain);
+        data.data = rk_UNCONST(domain);
+        ret = krb5_cc_set_config(context, id, NULL, "default-ntlm-domain", &data);
+        if (ret != 0)
+            return ret;
     }
+
+    aret = asprintf(&name, "ntlm-key-%s", domain);
+    if (aret == -1 || name == NULL)
+	return krb5_enomem(context);
 
     data.length = buf->length;
     data.data = buf->data;

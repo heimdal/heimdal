@@ -35,10 +35,12 @@
 
 static int
 from_file(const char *fn, const char *target_domain,
-	  char **username, struct ntlm_buf *key)
+          char **domainp, char **usernamep, struct ntlm_buf *key)
 {
     char *str, buf[1024];
     FILE *f;
+
+    *domainp = NULL;
 
     f = fopen(fn, "r");
     if (f == NULL)
@@ -52,14 +54,20 @@ from_file(const char *fn, const char *target_domain,
 	    continue;
 	str = NULL;
 	d = strtok_r(buf, ":", &str);
-	if (d && strcasecmp(target_domain, d) != 0)
+        free(*domainp);
+	if (d && target_domain != NULL && strcasecmp(target_domain, d) != 0)
 	    continue;
+        *domainp = strdup(d);
+        if (*domainp == NULL)
+            return ENOMEM;
 	u = strtok_r(NULL, ":", &str);
 	p = strtok_r(NULL, ":", &str);
 	if (u == NULL || p == NULL)
 	    continue;
 
-	*username = strdup(u);
+	*usernamep = strdup(u);
+        if (*usernamep == NULL)
+            return ENOMEM;
 
 	heim_ntlm_nt_key(p, key);
 
@@ -74,17 +82,22 @@ from_file(const char *fn, const char *target_domain,
 
 static int
 get_user_file(const ntlm_name target_name,
-	      char **username, struct ntlm_buf *key)
+	      char **domainp, char **usernamep, struct ntlm_buf *key)
 {
+    const char *domain;
     const char *fn;
+
+    *domainp = NULL;
 
     if (issuid())
 	return ENOENT;
 
+    domain = target_name != NULL ? target_name->domain : NULL;
+
     fn = getenv("NTLM_USER_FILE");
     if (fn == NULL)
 	return ENOENT;
-    if (from_file(fn, target_name->domain, username, key) == 0)
+    if (from_file(fn, domain, domainp, usernamep, key) == 0)
 	return 0;
 
     return ENOENT;
@@ -95,7 +108,7 @@ get_user_file(const ntlm_name target_name,
  */
 
 static int
-get_user_ccache(const ntlm_name name, char **username, struct ntlm_buf *key)
+get_user_ccache(const ntlm_name name, char **domainp, char **usernamep, struct ntlm_buf *key)
 {
     krb5_context context = NULL;
     krb5_principal client;
@@ -105,7 +118,8 @@ get_user_ccache(const ntlm_name name, char **username, struct ntlm_buf *key)
     krb5_data data;
     int aret;
 
-    *username = NULL;
+    *domainp = NULL;
+    *usernamep = NULL;
     krb5_data_zero(&data);
     key->length = 0;
     key->data = NULL;
@@ -124,22 +138,40 @@ get_user_ccache(const ntlm_name name, char **username, struct ntlm_buf *key)
 
     ret = krb5_unparse_name_flags(context, client,
 				  KRB5_PRINCIPAL_UNPARSE_NO_REALM,
-				  username);
+				  usernamep);
     krb5_free_principal(context, client);
     if (ret)
 	goto out;
 
-    aret = asprintf(&confname, "ntlm-key-%s", name->domain);
-    if (aret == -1) {
-	krb5_clear_error_message(context);
-	ret = ENOMEM;
+    if (name != NULL) {
+        *domainp = strdup(name->domain);
+    } else {
+        krb5_data data_domain;
+
+        krb5_data_zero(&data_domain);
+        ret = krb5_cc_get_config(context, id, NULL, "default-ntlm-domain",
+                                 &data_domain);
+        if (ret)
+            goto out;
+
+        *domainp = strndup(data_domain.data, data_domain.length);
+        krb5_data_free(&data_domain);
+    }
+
+    if (*domainp == NULL) {
+        ret = krb5_enomem(context);
 	goto out;
     }
 
-    ret = krb5_cc_get_config(context, id, NULL,
-			     confname, &data);
-    if (ret)
+    aret = asprintf(&confname, "ntlm-key-%s", *domainp);
+    if (aret == -1) {
+        ret = krb5_enomem(context);
 	goto out;
+    }
+
+    ret = krb5_cc_get_config(context, id, NULL, confname, &data);
+    if (ret)
+        goto out;
 
     key->data = malloc(data.length);
     if (key->data == NULL) {
@@ -170,15 +202,16 @@ _gss_ntlm_get_user_cred(const ntlm_name target_name,
     if (cred == NULL)
 	return ENOMEM;
 
-    ret = get_user_file(target_name, &cred->username, &cred->key);
+    ret = get_user_file(target_name,
+                        &cred->domain, &cred->username, &cred->key);
     if (ret)
-	ret = get_user_ccache(target_name, &cred->username, &cred->key);
+	ret = get_user_ccache(target_name,
+                              &cred->domain, &cred->username, &cred->key);
     if (ret) {
 	free(cred);
 	return ret;
     }
 
-    cred->domain = strdup(target_name->domain);
     *rcred = cred;
 
     return ret;

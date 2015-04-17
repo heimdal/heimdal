@@ -978,6 +978,13 @@ main(int argc, char **argv)
 
 	gss_release_cred(&min_stat, &cred2);
 
+#if 0
+        /*
+         * XXX We can't do this.  Delegated credentials only work with
+         * the actual_mech.  We could gss_store_cred the delegated
+         * credentials *then* gss_add/acquire_cred() with SPNEGO, then
+         * we could try loop() with those credentials.
+         */
 	/* try again using SPNEGO */
 	if (verbose_flag)
 	    printf("checking spnego on delegated cred\n");
@@ -988,6 +995,7 @@ main(int argc, char **argv)
 	gss_delete_sec_context(&min_stat, &sctx, NULL);
 
 	gss_release_cred(&min_stat, &cred2);
+#endif
 
 	/* check export/import */
 	if (ei_flag) {
@@ -1016,6 +1024,8 @@ main(int argc, char **argv)
 	    gss_delete_sec_context(&min_stat, &cctx, NULL);
 	    gss_delete_sec_context(&min_stat, &sctx, NULL);
 
+#if 0
+            /* XXX See above */
 	    /* try again using SPNEGO */
 	    if (verbose_flag)
 		printf("checking SPNEGO on export/imported cred\n");
@@ -1026,6 +1036,7 @@ main(int argc, char **argv)
 
 	    gss_delete_sec_context(&min_stat, &cctx, NULL);
 	    gss_delete_sec_context(&min_stat, &sctx, NULL);
+#endif
 
 	    gss_release_cred(&min_stat, &cred2);
 

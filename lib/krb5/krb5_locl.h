@@ -356,6 +356,10 @@ typedef struct krb5_context_data {
 #define KRB5_FALLBACK_DEFAULT TRUE
 #endif
 
+#ifndef KRB5_TKT_LIFETIME_DEFAULT
+# define KRB5_TKT_LIFETIME_DEFAULT	(10 * 60 * 60)	/* 10 hours */
+#endif
+
 #ifdef PKINIT
 
 struct krb5_pk_identity {

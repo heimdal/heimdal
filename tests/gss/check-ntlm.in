@@ -134,7 +134,7 @@ KRB5CCNAME="$cache"
 
 echo "no NTLM initiator creds"
 ${context} --mech-type=ntlm \
-	--mech-types= \
+	--client-name=user1@${R} \
 	--mutual \
         --name-type=hostbased-service \
         --ret-mech-type=ntlm \
@@ -146,7 +146,7 @@ ${kinit} --password-file=${objdir}/foopassword --ntlm-domain=TEST user1@${R} || 
 
 echo "NTLM initiator krb5 creds"
 ${context} --mech-type=ntlm \
-	--mech-types= \
+	--client-name=user1@${R} \
 	--mutual \
         --name-type=hostbased-service \
         --ret-mech-type=ntlm \
@@ -155,7 +155,7 @@ ${context} --mech-type=ntlm \
 
 echo "NTLM initiator krb5 creds (getverifymic, wrapunwrap)"
 ${context} --mech-type=ntlm \
-	--mech-types= \
+	--client-name=user1@${R} \
 	--mutual \
         --name-type=hostbased-service \
         --ret-mech-type=ntlm \

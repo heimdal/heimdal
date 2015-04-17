@@ -598,9 +598,6 @@ main(int argc, char **argv)
          *
          *  - the NTLM gss_acquire_cred() refuses to work with
          *    desired_name == GSS_C_NO_NAME
-         *  - the NTLM gss_import_name() also fails, so that merely
-         *    adding --client-name to this program's invocation doesn't
-         *    work around that
          *  - gss_acquire_cred() with desired_mechs == GSS_C_NO_OID_SET
          *    does work here because we happen to have Kerberos
          *    credentials in check-ntlm, and the subsequent
@@ -609,12 +606,11 @@ main(int argc, char **argv)
          *    NTLM gss_init_sec_context() just works.
          *
          * In summary, there's some breakage in gss_init_sec_context()
-         * and some breakage in NTLM (and SPNEGO) that conspires against
-         * us here.
+         * and some breakage in NTLM that conspires against us here.
          *
          * We work around this in check-ntlm and check-spnego by adding
-         * --mech-types='' to the invocations of this test program that
-         * require it.
+         * --client-name=user1@${R} to the invocations of this test
+         * program that require it.
          */
         oids[0] = *mechoid;
         mechoid_descs.elements = &oids[0];

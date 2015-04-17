@@ -124,7 +124,8 @@ echo "======context building for each mech"
 
 for mech in ntlm krb5 ; do 
     echo "${mech}"
-    ${context} --mech-type=${mech} --mech-types= --ret-mech-type=${mech} \
+    ${context} --mech-type=${mech} --client-name=user1@${R} \
+        --ret-mech-type=${mech} \
         --name-type=hostbased-service host@host.test.h5l.se || \
 	{ exitcode=1 ; echo test failed; }
 done
@@ -132,18 +133,18 @@ done
 echo "spnego"
 ${context} \
     --mech-type=spnego \
-    --mech-types= \
+    --client-name=user1@${R} \
     --ret-mech-type=krb5 \
     --name-type=hostbased-service \
     host@host.test.h5l.se || \
     { exitcode=1 ; echo test failed; }
 
 echo "test failure cases"
-${context} --mech-type=ntlm --mech-types= --ret-mech-type=krb5 \
+${context} --mech-type=ntlm --client-name=user1@${R} --ret-mech-type=krb5 \
     --name-type=hostbased-service host@host.test.h5l.se 2> /dev/null && \
     { exitcode=1 ; echo test failed; }
 
-${context} --mech-type=krb5 --mech-types= --ret-mech-type=ntlm \
+${context} --mech-type=krb5 --client-name=user1@${R} --ret-mech-type=ntlm \
     --name-type=hostbased-service host@host.test.h5l.se 2> /dev/null && \
     { exitcode=1 ; echo test failed; }
 
@@ -160,7 +161,7 @@ for arg in \
 
     echo "no NTLM acceptor cred ${arg}"
     NTLM_ACCEPTOR_CCACHE="${cacheds}-no"
-    ${context} --mech-type=spnego --mech-types= \
+    ${context} --mech-type=spnego --client-name=user1@${R} \
         $arg \
 	--client-name=user1@TEST.H5L.SE \
         --name-type=hostbased-service \
@@ -171,7 +172,7 @@ for arg in \
 
     echo "no NTLM initiator cred ${arg}"
     NTLM_USER_FILE="${srcdir}/ntlm-user-file.txt-no"
-    ${context} --mech-type=spnego --mech-types= \
+    ${context} --mech-type=spnego --client-name=user1@${R} \
         $arg \
 	--client-name=user1@TEST.H5L.SE \
         --name-type=hostbased-service \
@@ -182,7 +183,7 @@ for arg in \
 
     echo "no krb5 acceptor cred ${arg}"
     KRB5_KTNAME="${keytab}-no"
-    ${context} --mech-type=spnego --mech-types= \
+    ${context} --mech-type=spnego --client-name=user1@${R} \
         $arg \
 	--client-name=user1@TEST.H5L.SE \
 	--server-no-delegate \
@@ -194,7 +195,7 @@ for arg in \
 
     echo "no krb5 initiator cred ${arg}"
     KRB5CCNAME="${cache}-no"
-    ${context} --mech-type=spnego --mech-types= \
+    ${context} --mech-type=spnego --client-name=user1@${R} \
         $arg \
 	--client-name=user1@TEST.H5L.SE \
 	--server-no-delegate \

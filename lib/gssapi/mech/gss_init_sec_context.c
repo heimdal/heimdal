@@ -172,7 +172,7 @@ gss_init_sec_context(OM_uint32 * minor_status,
 	major_status = _gss_find_mn(minor_status, name, mech_type, &mn);
 	if (major_status != GSS_S_COMPLETE) {
 		if (allocated_ctx)
-			free(ctx);
+                    free(ctx);
 		return major_status;
 	}
 
@@ -183,6 +183,13 @@ gss_init_sec_context(OM_uint32 * minor_status,
 		cred_handle = initiator_cred_handle;
 	else
 		cred_handle = _gss_mech_cred_find(initiator_cred_handle, mech_type);
+
+        if (initiator_cred_handle != GSS_C_NO_CREDENTIAL &&
+            cred_handle == NULL) {
+            if (allocated_ctx)
+                free(ctx);
+            return GSS_S_NO_CRED;
+        }
 
 	major_status = m->gm_init_sec_context(minor_status,
 	    cred_handle,

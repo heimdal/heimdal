@@ -1,5 +1,9 @@
 language: c
 
+env:
+    global:
+        secure: "YKG77M7zMvJ+IeV2ziw//HcHqMqFoAzIZlE99Yw/aOn5pvMYKq6Ep7EFVhbfDu9yN0T7M5csCGQeH7/ylDlsZSRMUw72844ezMDM8e10T/lW/T/OYN7j1ZVHh3WSJgS+1D9VG6/Y0OY1Si3lb7PcOdAIU0fPJV5xQONN2+hpJeI="
+
 before_script:
     - mkdir ci-build
 
@@ -8,7 +12,7 @@ script:
   - cd ci-build
   - ../configure
   - make
-  - make check
+  - if [ ${COVERITY_SCAN_BRANCH} != 1 ]; then make check; fi
 
 compiler:
   - clang
@@ -22,3 +26,14 @@ notifications:
     email:
         on_success: change
         on_failure: always
+
+
+addons:
+  coverity_scan:
+    project:
+      name: "heimdal/heimdal"
+      description: "Build submitted via Travis CI"
+    notification_email: lha@h5l.org
+    build_command_prepend: "./configure"
+    build_command:   "make"
+    branch_pattern: coverity_scan

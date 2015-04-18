@@ -5,9 +5,11 @@ env:
         secure: "YKG77M7zMvJ+IeV2ziw//HcHqMqFoAzIZlE99Yw/aOn5pvMYKq6Ep7EFVhbfDu9yN0T7M5csCGQeH7/ylDlsZSRMUw72844ezMDM8e10T/lW/T/OYN7j1ZVHh3WSJgS+1D9VG6/Y0OY1Si3lb7PcOdAIU0fPJV5xQONN2+hpJeI="
 
 before_install:
-     - mkdir ci-build
-     - mkdir coverity-build
-     - ./autogen.sh
+    - sudo apt-get update -qq
+    - sudo apt-get install -qq bison comerr-dev flex libcap-ng-dev libdb-dev libedit-dev libhesiod-dev libjson-perl libldap2-dev libncurses5-dev libperl4-corelibs-perl libsqlite3-dev libx11-dev libxau-dev libxt-dev pkg-config python ss-dev texinfo x11proto-core-dev unzip netbase
+    - mkdir ci-build
+    - mkdir coverity-build
+    - ./autogen.sh
 
 install:
     - cd ci-build
@@ -26,30 +28,6 @@ notifications:
 
 
 addons:
-    apt:
-        packages:
-            - bison
-            - comerr-dev
-            - flex
-            - libcap-ng-dev
-            - libdb-dev
-            - libedit-dev
-            - libhesiod-dev
-            - libjson-perl
-            - libldap2-dev
-            - libncurses5-dev
-            - libperl4-corelibs-perl
-            - libsqlite3-dev
-            - libx11-dev
-            - libxau-dev
-            - libxt-dev
-            - pkg-config
-            - python
-            - ss-dev
-            - texinfo
-            - x11proto-core-dev
-            - unzip
-            - netbase
 
     coverity_scan:
         project:

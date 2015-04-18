@@ -16,7 +16,6 @@ install:
     - cd ci-build
     - ../configure
     - make
-    - sudo make install
 
 script:
     - if [ ${COVERITY_SCAN_BRANCH} != 1 ]; then make check; fi

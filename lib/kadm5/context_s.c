@@ -144,20 +144,32 @@ find_db_spec(kadm5_server_context *ctx)
 		continue;
 
 	    p = hdb_dbinfo_get_dbname(context, d);
-	    if (p)
+	    if (p) {
 		ctx->config.dbname = strdup(p);
+                if (ctx->config.dbname == NULL)
+                    return ENOMEM;
+            }
 
 	    p = hdb_dbinfo_get_acl_file(context, d);
-	    if (p)
+	    if (p) {
 		ctx->config.acl_file = strdup(p);
+                if (ctx->config.acl_file == NULL)
+                    return ENOMEM;
+            }
 
 	    p = hdb_dbinfo_get_mkey_file(context, d);
-	    if (p)
+	    if (p) {
 		ctx->config.stash_file = strdup(p);
+                if (ctx->config.stash_file == NULL)
+                    return ENOMEM;
+            }
 
 	    p = hdb_dbinfo_get_log_file(context, d);
-	    if (p)
+	    if (p) {
 		ctx->log_context.log_file = strdup(p);
+                if (ctx->log_context.log_file == NULL)
+                    return ENOMEM;
+            }
 	    break;
 	}
 	hdb_free_dbinfo(context, &info);
@@ -165,8 +177,11 @@ find_db_spec(kadm5_server_context *ctx)
 
     /* If any of the values was unset, pick up the default value */
 
-    if (ctx->config.dbname == NULL)
+    if (ctx->config.dbname == NULL) {
 	ctx->config.dbname = strdup(hdb_default_db(context));
+        if (ctx->config.dbname == NULL)
+            return ENOMEM;
+    }
     if (ctx->config.acl_file == NULL) {
 	aret = asprintf(&ctx->config.acl_file, "%s/kadmind.acl",
 			hdb_db_dir(context));
@@ -200,6 +215,7 @@ _kadm5_s_init_context(kadm5_server_context **ctx,
 		      kadm5_config_params *params,
 		      krb5_context context)
 {
+    kadm5_ret_t ret = 0;
     *ctx = malloc(sizeof(**ctx));
     if(*ctx == NULL)
 	return ENOMEM;
@@ -208,16 +224,30 @@ _kadm5_s_init_context(kadm5_server_context **ctx,
     (*ctx)->context = context;
     krb5_add_et_list (context, initialize_kadm5_error_table_r);
 #define is_set(M) (params && params->mask & KADM5_CONFIG_ ## M)
-    if(is_set(REALM))
+    if (is_set(REALM)) {
 	(*ctx)->config.realm = strdup(params->realm);
-    else
-	krb5_get_default_realm(context, &(*ctx)->config.realm);
-    if(is_set(DBNAME))
+        if ((*ctx)->config.realm == NULL)
+            return ENOMEM;
+    } else {
+	ret = krb5_get_default_realm(context, &(*ctx)->config.realm);
+        if (ret)
+            return ret;
+    }
+    if (is_set(DBNAME)) {
 	(*ctx)->config.dbname = strdup(params->dbname);
-    if(is_set(ACL_FILE))
+        if ((*ctx)->config.dbname == NULL)
+            return ENOMEM;
+    }
+    if (is_set(ACL_FILE)) {
 	(*ctx)->config.acl_file = strdup(params->acl_file);
-    if(is_set(STASH_FILE))
+        if ((*ctx)->config.acl_file == NULL)
+            return ENOMEM;
+    }
+    if (is_set(STASH_FILE)) {
 	(*ctx)->config.stash_file = strdup(params->stash_file);
+        if ((*ctx)->config.stash_file == NULL)
+            return ENOMEM;
+    }
 
     find_db_spec(*ctx);
 

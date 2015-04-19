@@ -122,8 +122,10 @@ krb5_generate_random(void *buf, size_t len)
 
     HEIMDAL_MUTEX_lock(&crypto_mutex);
     if (!rng_initialized) {
-	if (seed_something())
+	if (seed_something()) {
+            HEIMDAL_MUTEX_unlock(&crypto_mutex);
 	    return HEIM_ERR_RANDOM_OFFLINE;
+        }
 	rng_initialized = 1;
     }
     if (RAND_bytes(buf, len) <= 0)

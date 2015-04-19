@@ -311,7 +311,7 @@ krb5_process_last_request(krb5_context context,
     if (options && options->opt_private && options->opt_private->lr.func) {
 	krb5_last_req_entry **lre;
 
-	lre = calloc(lr->len + 1, sizeof(**lre));
+	lre = calloc(lr->len + 1, sizeof(*lre));
 	if (lre == NULL)
 	    return krb5_enomem(context);
 	for (i = 0; i < lr->len; i++) {

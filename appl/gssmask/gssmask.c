@@ -312,7 +312,8 @@ HandleOP(InitContext)
     gss_ctx_id_t ctx;
     gss_cred_id_t creds;
     gss_name_t gss_target_name;
-    gss_buffer_desc input_token, output_token;
+    gss_buffer_desc input_token;
+    gss_buffer_desc output_token = {0, 0};
     gss_OID oid = GSS_C_NO_OID;
     gss_buffer_t input_token_ptr = GSS_C_NO_BUFFER;
 

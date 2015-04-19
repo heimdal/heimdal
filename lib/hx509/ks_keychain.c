@@ -344,11 +344,13 @@ keychain_init(hx509_context context,
 	    if (ret != noErr) {
 		hx509_set_error_string(context, 0, ENOENT,
 				       "Failed to open %s", residue);
+		free(ctx);
 		return ENOENT;
 	    }
 	} else {
 	    hx509_set_error_string(context, 0, ENOENT,
 				   "Unknown subtype %s", residue);
+	    free(ctx);
 	    return ENOENT;
 	}
     }

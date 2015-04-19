@@ -1228,10 +1228,9 @@ krb5_sendto_context(krb5_context context,
 	}
     }
 
+out:
     gettimeofday(&stop_time, NULL);
     timevalsub(&stop_time, &ctx->stats.start_time);
-
- out:
     if (ret == 0 && ctx->response.length) {
 	*receive = ctx->response;
 	krb5_data_zero(&ctx->response);

@@ -1178,10 +1178,12 @@ getdata(char **p, unsigned char *buf, size_t len, const char *what)
     size_t i;
     int v;
     char *q = nexttoken(p, 0, what);
-    if (q == NULL)
+    if (q == NULL) {
         warnx("Failed to find hex-encoded binary data (%s) in dump", what);
+        return 0;
+    }
     i = 0;
-    while(*q && i < len) {
+    while (*q && i < len) {
 	if(sscanf(q, "%02x", &v) != 1)
 	    break;
 	buf[i++] = v;

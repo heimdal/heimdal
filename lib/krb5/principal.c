@@ -1366,7 +1366,7 @@ krb5_sname_to_principal(krb5_context context,
 				  realm, sname, remote_host,
 				  (char *)0);
 
-    if (type == KRB5_NT_SRV_HST) {
+    if (ret == 0 && type == KRB5_NT_SRV_HST) {
 	/*
 	 * Hostname canonicalization is done elsewhere (in
 	 * krb5_get_credentials() and krb5_kt_get_entry()).

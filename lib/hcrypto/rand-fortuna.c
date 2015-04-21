@@ -486,7 +486,7 @@ fortuna_reseed(void)
 	entropy_p = 1;
     }
 #endif
-#if !defined(NO_RAND_EGD_METHOD) && defined(HAVE_RAND_EGD)
+#if defined(HAVE_RAND_EGD)
     /*
      * Only to get egd entropy if /dev/random or arc4rand failed since
      * it can be horribly slow to generate new bits.

@@ -429,7 +429,7 @@ rtbl_format_pretty(rtbl_t table)
 		else
 		    w = -w;
 	    }
-	    rk_strpoolprintf(p, "%s", get_column_prefix (table, c));
+	    p = rk_strpoolprintf(p, "%s", get_column_prefix (table, c));
 	    if (c->num_rows <= j)
 		p = rk_strpoolprintf(p, "%*s", w, "");
 	    else

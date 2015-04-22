@@ -148,7 +148,7 @@ rk_tdelete(const void * vkey, void ** vrootp,
 	}
 	free(*rootp);				/* D4: Free node */
 	*rootp = q;				/* link parent to new node */
-	return p;
+	return *rootp;
 }
 
 /*

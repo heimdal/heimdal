@@ -55,6 +55,7 @@ from_file(const char *fn, const char *target_domain,
 	str = NULL;
 	d = strtok_r(buf, ":", &str);
         free(*domainp);
+	*domainp = NULL;
 	if (d && target_domain != NULL && strcasecmp(target_domain, d) != 0)
 	    continue;
         *domainp = strdup(d);

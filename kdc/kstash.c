@@ -64,7 +64,7 @@ int num_args = sizeof(args) / sizeof(args[0]);
 int
 main(int argc, char **argv)
 {
-    char buf[1024];
+    char buf[1024+1];
     krb5_error_code ret;
     int aret;
 
@@ -117,7 +117,7 @@ main(int argc, char **argv)
 	} else {
 	    if(master_key_fd != -1) {
 		ssize_t n;
-		n = read(master_key_fd, buf, sizeof(buf));
+		n = read(master_key_fd, buf, sizeof(buf)-1);
 		if(n <= 0)
 		    krb5_err(context, 1, errno, "failed to read passphrase");
 		buf[n] = '\0';

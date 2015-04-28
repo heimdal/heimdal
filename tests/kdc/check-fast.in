@@ -84,6 +84,7 @@ echo "Doing database check"
 ${kadmin} check ${R} || exit 1
 
 echo foo > ${objdir}/foopassword
+echo bar > ${objdir}/barpassword
 
 echo Starting kdc ; > messages.log
 env MallocStackLogging=1 MallocStackLoggingNoCompact=1 MallocErrorAbort=1 MallocLogFile=${objdir}/malloc-log \
@@ -127,6 +128,11 @@ ${aklist} --hidden | grep fast_avail > /dev/null || { exit 1; }
 echo "Getting client initial tickets with FAST armor ticket"; > messages.log
 ${kinit} --fast-armor-cache=${acache} \
    --password-file=${objdir}/foopassword foo@$R || \
+	{ ec=1 ; eval "${testfailed}"; }
+
+echo "Getting client initial tickets with FAST armor ticket [failure]"; > messages.log
+${kinit} --fast-armor-cache=${acache} \
+   --password-file=${objdir}/barpassword foo@$R 2>/dev/null && \
 	{ ec=1 ; eval "${testfailed}"; }
 
 echo "Checking for FAST avail (in the FAST acquired cache)"; > messages.log

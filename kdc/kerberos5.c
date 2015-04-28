@@ -423,6 +423,7 @@ pa_enc_chal_validate(kdc_request_t r, const PA_DATA *pa)
 {
     krb5_data pepper1, pepper2, ts_data;
     KDC_REQ_BODY *b = &r->req.req_body;
+    int invalidPassword = 0;
     EncryptedData enc_data;
     krb5_enctype aenctype;
     krb5_error_code ret;
@@ -483,8 +484,24 @@ pa_enc_chal_validate(kdc_request_t r, const PA_DATA *pa)
 					 KRB5_KU_ENC_CHALLENGE_CLIENT,
 					 &enc_data,
 					 &ts_data);
-	if (ret)
+	if (ret) {
+	    const char *msg = krb5_get_error_message(r->context, ret);
+	    krb5_error_code ret2;
+	    char *str = NULL;
+
+	    invalidPassword = 1;
+
+	    ret2 = krb5_enctype_to_string(r->context, k->key.keytype, &str);
+	    if (ret2)
+		str = NULL;
+	    _kdc_r_log(r, 5, "Failed to decrypt ENC-CHAL -- %s "
+		       "(enctype %s) error %s",
+		       r->client_name, str ? str : "unknown enctype", msg);
+	    krb5_free_error_message(r->context, msg);
+	    free(str);
+
 	    continue;
+	}
 	
 	ret = decode_PA_ENC_TS_ENC(ts_data.data,
 				   ts_data.length,
@@ -533,10 +550,20 @@ pa_enc_chal_validate(kdc_request_t r, const PA_DATA *pa)
 	if (ret)
 	    goto out;
 
-	break;
+	/*
+	 * Success
+	 */
+	if (r->clientdb->hdb_auth_status)
+	    r->clientdb->hdb_auth_status(r->context, r->clientdb, r->client,
+					 HDB_AUTH_SUCCESS);
+	goto out;
     }
-    if (i < r->client->entry.keys.len)
+
+    if (invalidPassword && r->clientdb->hdb_auth_status) {
+	r->clientdb->hdb_auth_status(r->context, r->clientdb, r->client,
+				     HDB_AUTH_WRONG_PASSWORD);
 	ret = KRB5KDC_ERR_PREAUTH_FAILED;
+    }
  out:
     free_EncryptedData(&enc_data);
 
@@ -1832,9 +1859,10 @@ _kdc_as_rep(kdc_request_t r,
 	    goto out;
     }
 
-    if (r->clientdb->hdb_auth_status)
+    if (r->clientdb->hdb_auth_status) {
 	r->clientdb->hdb_auth_status(context, r->clientdb, r->client, 
 				     HDB_AUTH_SUCCESS);
+    }
 
     /*
      * Verify flags after the user been required to prove its identity

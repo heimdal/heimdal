@@ -17,7 +17,7 @@ install:
     - make
 
 script:
-    - if [ ${COVERITY_SCAN_BRANCH} != 1 ]; then make check; fi
+    - if [ x${COVERITY_SCAN_BRANCH} != x1 ]; then make check; fi
 
 compiler: clang
 

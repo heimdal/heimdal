@@ -2109,61 +2109,6 @@ _kdc_as_rep(kdc_request_t r,
     if (ret)
 	goto out;
 
-    /*
-     * Add signing of alias referral
-     */
-
-    if (f.canonicalize) {
-	PA_ClientCanonicalized canon;
-	krb5_data data;
-	PA_DATA tmppa;
-	krb5_crypto cryptox;
-	size_t len = 0;
-
-	memset(&canon, 0, sizeof(canon));
-
-	canon.names.requested_name = *b->cname;
-	canon.names.mapped_name = r->client->entry.principal->name;
-
-	ASN1_MALLOC_ENCODE(PA_ClientCanonicalizedNames, data.data, data.length,
-			   &canon.names, &len, ret);
-	if (ret)
-	    goto out;
-	if (data.length != len)
-	    krb5_abortx(context, "internal asn.1 error");
-
-	/* sign using "returned session key" */
-	ret = krb5_crypto_init(context, &r->et.key, 0, &cryptox);
-	if (ret) {
-	    free(data.data);
-	    goto out;
-	}
-
-	ret = krb5_create_checksum(context, cryptox,
-				   KRB5_KU_CANONICALIZED_NAMES, 0,
-				   data.data, data.length,
-				   &canon.canon_checksum);
-	free(data.data);
-	krb5_crypto_destroy(context, cryptox);
-	if (ret)
-	    goto out;
-
-	ASN1_MALLOC_ENCODE(PA_ClientCanonicalized, data.data, data.length,
-			   &canon, &len, ret);
-	free_Checksum(&canon.canon_checksum);
-	if (ret)
-	    goto out;
-	if (data.length != len)
-	    krb5_abortx(context, "internal asn.1 error");
-
-	tmppa.padata_type = KRB5_PADATA_CLIENT_CANONICALIZED;
-	tmppa.padata_value = data;
-	ret = add_METHOD_DATA(&r->outpadata, &tmppa);
-	free(data.data);
-	if (ret)
-	    goto out;
-    }
-
     if (r->outpadata.len) {
 
 	ALLOC(rep.padata);

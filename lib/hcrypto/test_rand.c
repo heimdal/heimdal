@@ -125,7 +125,7 @@ main(int argc, char **argv)
 	else if (strcasecmp(rand_method, "unix") == 0)
 	    RAND_set_rand_method(RAND_unix_method());
 #endif
-#ifndef NO_RAND_EGD_METHOD
+#if defined(HAVE_RAND_EGD)
 	else if (strcasecmp(rand_method, "egd") == 0)
 	    RAND_set_rand_method(RAND_egd_method());
 #endif

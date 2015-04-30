@@ -51,7 +51,7 @@ typedef int (__stdcall *DLSYM_RET_TYPE)();
 #endif
 
 #ifdef __cplusplus
-extern "C" 
+extern "C" {
 #endif
 
 /* Implementation based on

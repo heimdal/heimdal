@@ -708,11 +708,10 @@ krb5_cc_store_cred(krb5_context context,
 
     /* Look for and mark the first root TGT's realm as the start realm */
     if (ret == 0 && id->initialized &&
-        !krb5_is_config_principal(context, creds->server) &&
         krb5_principal_is_root_krbtgt(context, creds->server)) {
 
         id->initialized = 0;
-        realm.length = strlen(creds->server->realm) + 1;
+        realm.length = strlen(creds->server->realm);
         realm.data = creds->server->realm;
         (void) krb5_cc_set_config(context, id, NULL, "start_realm", &realm);
     } else if (ret == 0 && id->initialized &&

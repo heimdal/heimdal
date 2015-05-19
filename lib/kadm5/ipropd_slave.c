@@ -155,24 +155,24 @@ get_creds(krb5_context context, const char *keytab_str,
 }
 
 static krb5_error_code
-ihave (krb5_context context, krb5_auth_context auth_context,
-       int fd, uint32_t version)
+ihave(krb5_context context, krb5_auth_context auth_context,
+      int fd, uint32_t version)
 {
     int ret;
     u_char buf[8];
     krb5_storage *sp;
     krb5_data data;
 
-    sp = krb5_storage_from_mem (buf, 8);
-    krb5_store_int32 (sp, I_HAVE);
-    krb5_store_int32 (sp, version);
-    krb5_storage_free (sp);
+    sp = krb5_storage_from_mem(buf, 8);
+    krb5_store_int32(sp, I_HAVE);
+    krb5_store_int32(sp, version);
+    krb5_storage_free(sp);
     data.length = 8;
     data.data   = buf;
 
     ret = krb5_write_priv_message(context, auth_context, &fd, &data);
     if (ret)
-	krb5_warn (context, ret, "krb5_write_message");
+	krb5_warn(context, ret, "krb5_write_message");
     return ret;
 }
 
@@ -345,24 +345,24 @@ reinit_log(krb5_context context,
 {
     krb5_error_code ret;
 
-    ret = kadm5_log_reinit (server_context);
+    ret = kadm5_log_reinit(server_context);
     if (ret)
 	krb5_err(context, 1, ret, "kadm5_log_reinit");
 
-    ret = kadm5_log_set_version (server_context, vno - 1);
+    ret = kadm5_log_set_version(server_context, vno - 1);
     if (ret)
-	krb5_err (context, 1, ret, "kadm5_log_set_version");
+	krb5_err(context, 1, ret, "kadm5_log_set_version");
 
-    ret = kadm5_log_nop (server_context);
+    ret = kadm5_log_nop(server_context);
     if (ret)
-	krb5_err (context, 1, ret, "kadm5_log_nop");
+	krb5_err(context, 1, ret, "kadm5_log_nop");
 }
 
 
 static krb5_error_code
-receive_everything (krb5_context context, int fd,
-		    kadm5_server_context *server_context,
-		    krb5_auth_context auth_context)
+receive_everything(krb5_context context, int fd,
+		   kadm5_server_context *server_context,
+		   krb5_auth_context auth_context)
 {
     int ret;
     krb5_data data;
@@ -383,8 +383,8 @@ receive_everything (krb5_context context, int fd,
 	krb5_err(context,1, ret, "hdb_create");
     free(dbname);
 
-    ret = hdb_set_master_keyfile (context,
-				  mydb, server_context->config.stash_file);
+    ret = hdb_set_master_keyfile(context,
+				 mydb, server_context->config.stash_file);
     if(ret)
 	krb5_err(context,1, ret, "hdb_set_master_keyfile");
 
@@ -392,7 +392,7 @@ receive_everything (krb5_context context, int fd,
        up on error, I won't */
     ret = mydb->hdb_open(context, mydb, O_RDWR | O_CREAT | O_TRUNC, 0600);
     if (ret)
-	krb5_err (context, 1, ret, "db->open");
+	krb5_err(context, 1, ret, "db->open");
 
     sp = NULL;
     krb5_data_zero(&data);
@@ -400,14 +400,14 @@ receive_everything (krb5_context context, int fd,
 	ret = krb5_read_priv_message(context, auth_context, &fd, &data);
 
 	if (ret) {
-	    krb5_warn (context, ret, "krb5_read_priv_message");
+	    krb5_warn(context, ret, "krb5_read_priv_message");
 	    goto cleanup;
 	}
 
-	sp = krb5_storage_from_data (&data);
+	sp = krb5_storage_from_data(&data);
 	if (sp == NULL)
-	    krb5_errx (context, 1, "krb5_storage_from_data");
-	krb5_ret_int32 (sp, &opcode);
+	    krb5_errx(context, 1, "krb5_storage_from_data");
+	krb5_ret_int32(sp, &opcode);
 	if (opcode == ONE_PRINC) {
 	    krb5_data fake_data;
 	    hdb_entry_ex entry;
@@ -419,45 +419,52 @@ receive_everything (krb5_context context, int fd,
 
 	    memset(&entry, 0, sizeof(entry));
 
-	    ret = hdb_value2entry (context, &fake_data, &entry.entry);
+	    ret = hdb_value2entry(context, &fake_data, &entry.entry);
 	    if (ret)
-		krb5_err (context, 1, ret, "hdb_value2entry");
+		krb5_err(context, 1, ret, "hdb_value2entry");
 	    ret = mydb->hdb_store(server_context->context,
 				  mydb,
 				  0, &entry);
 	    if (ret)
-		krb5_err (context, 1, ret, "hdb_store");
+		krb5_err(context, 1, ret, "hdb_store");
 
-	    hdb_free_entry (context, &entry);
-	    krb5_data_free (&data);
+	    hdb_free_entry(context, &entry);
+	    krb5_data_free(&data);
 	} else if (opcode == NOW_YOU_HAVE)
 	    ;
 	else
-	    krb5_errx (context, 1, "strange opcode %d", opcode);
+	    krb5_errx(context, 1, "strange opcode %d", opcode);
     } while (opcode == ONE_PRINC);
 
     if (opcode != NOW_YOU_HAVE)
-	krb5_errx (context, 1, "receive_everything: strange %d", opcode);
+	krb5_errx(context, 1, "receive_everything: strange %d", opcode);
 
-    krb5_ret_int32 (sp, &vno);
+    krb5_ret_int32(sp, &vno);
     krb5_storage_free(sp);
 
     reinit_log(context, server_context, vno);
 
-    ret = mydb->hdb_rename (context, mydb, server_context->db->hdb_name);
+    ret = mydb->hdb_close(context, mydb);
     if (ret)
-	krb5_err (context, 1, ret, "db->rename");
+	krb5_err(context, 1, ret, "db->close");
+
+    ret = mydb->hdb_rename(context, mydb, server_context->db->hdb_name);
+    if (ret)
+	krb5_err(context, 1, ret, "db->rename");
+
+    server_context->log_context.version = vno;
+
+    return 0;
 
  cleanup:
-    krb5_data_free (&data);
+    krb5_data_free(&data);
 
-    ret = mydb->hdb_close (context, mydb);
     if (ret)
-	krb5_err (context, 1, ret, "db->close");
+	krb5_err(context, 1, ret, "db->close");
 
-    ret = mydb->hdb_destroy (context, mydb);
+    ret = mydb->hdb_destroy(context, mydb);
     if (ret)
-	krb5_err (context, 1, ret, "db->destroy");
+	krb5_err(context, 1, ret, "db->destroy");
 
     krb5_warnx(context, "receive complete database, version %ld", (long)vno);
     return ret;

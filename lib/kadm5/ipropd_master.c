@@ -749,56 +749,56 @@ process_msg (krb5_context context, slave *s, int log_fd,
 
     ret = krb5_read_priv_message(context, s->ac, &s->fd, &out);
     if(ret) {
-	krb5_warn (context, ret, "error reading message from %s", s->name);
+	krb5_warn(context, ret, "error reading message from %s", s->name);
 	return 1;
     }
 
-    sp = krb5_storage_from_mem (out.data, out.length);
+    sp = krb5_storage_from_mem(out.data, out.length);
     if (sp == NULL) {
-	krb5_warnx (context, "process_msg: no memory");
-	krb5_data_free (&out);
+	krb5_warnx(context, "process_msg: no memory");
+	krb5_data_free(&out);
 	return 1;
     }
-    if (krb5_ret_int32 (sp, &tmp) != 0) {
-	krb5_warnx (context, "process_msg: client send too short command");
-	krb5_data_free (&out);
+    if (krb5_ret_int32(sp, &tmp) != 0) {
+	krb5_warnx(context, "process_msg: client send too short command");
+	krb5_data_free(&out);
 	return 1;
     }
     switch (tmp) {
     case I_HAVE :
-	ret = krb5_ret_int32 (sp, &tmp);
+	ret = krb5_ret_int32(sp, &tmp);
 	if (ret != 0) {
-	    krb5_warnx (context, "process_msg: client send too I_HAVE data");
+	    krb5_warnx(context, "process_msg: client send too I_HAVE data");
 	    break;
 	}
 	/* new started slave that have old log */
 	if (s->version == 0 && tmp != 0) {
 	    if (current_version < (uint32_t)tmp) {
-		krb5_warnx (context, "Slave %s (version %lu) have later version "
-			    "the master (version %lu) OUT OF SYNC",
-			    s->name, (unsigned long)tmp,
-			    (unsigned long)current_version);
+		krb5_warnx(context, "Slave %s (version %lu) have later version "
+			   "the master (version %lu) OUT OF SYNC",
+			   s->name, (unsigned long)tmp,
+			   (unsigned long)current_version);
 	    }
 	    s->version = tmp;
 	}
 	if ((uint32_t)tmp < s->version) {
-	    krb5_warnx (context, "Slave claims to not have "
-			"version we already sent to it");
-	} else {
-	    ret = send_diffs (context, s, log_fd, database, current_version);
+	    krb5_warnx(context, "Slave claims to not have "
+                       "version we already sent to it");
+            s->version = tmp;
 	}
+        ret = send_diffs(context, s, log_fd, database, current_version);
 	break;
     case I_AM_HERE :
 	break;
     case ARE_YOU_THERE:
     case FOR_YOU :
     default :
-	krb5_warnx (context, "Ignoring command %d", tmp);
+	krb5_warnx(context, "Ignoring command %d", tmp);
 	break;
     }
 
-    krb5_data_free (&out);
-    krb5_storage_free (sp);
+    krb5_data_free(&out);
+    krb5_storage_free(sp);
 
     slave_seen(s);
 

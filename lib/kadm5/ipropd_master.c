@@ -526,7 +526,7 @@ send_complete (krb5_context context, slave *s, const char *database,
 	 * our lock to a shared one.
 	 */
 
-	flock(fd, LOCK_EX);
+	ret = flock(fd, LOCK_EX);
 	if (ret == -1) {
 	    ret = errno;
 	    krb5_warn(context, ret, "flock(fd, LOCK_EX)");

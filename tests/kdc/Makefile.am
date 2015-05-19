@@ -12,6 +12,7 @@ noinst_DATA = \
 	krb5-weak.conf \
 	krb5-pkinit.conf \
 	krb5-pkinit-win.conf \
+	krb5-slave2.conf \
 	krb5-slave.conf
 
 check_SCRIPTS = $(SCRIPT_TESTS) 
@@ -138,7 +139,7 @@ check-pkinit: check-pkinit.in Makefile krb5-pkinit.conf
 	$(chmod) +x check-pkinit.tmp && \
 	mv check-pkinit.tmp check-pkinit
 
-check-iprop: check-iprop.in Makefile krb5.conf krb5-slave.conf
+check-iprop: check-iprop.in Makefile krb5.conf krb5-slave.conf krb5-slave2.conf
 	$(do_subst) < $(srcdir)/check-iprop.in > check-iprop.tmp && \
 	$(chmod) +x check-iprop.tmp && \
 	mv check-iprop.tmp check-iprop
@@ -212,6 +213,13 @@ krb5-slave.conf: krb5.conf.in Makefile
 	   -e 's,[@]kdc[@],.slave,g' < $(srcdir)/krb5.conf.in > krb5-slave.conf.tmp && \
 	mv krb5-slave.conf.tmp krb5-slave.conf
 
+krb5-slave2.conf: krb5.conf.in Makefile
+	$(do_subst) \
+	   -e 's,[@]WEAK[@],true,g' \
+	   -e 's,[@]dk[@],,g' \
+	   -e 's,[@]kdc[@],.slave2,g' < $(srcdir)/krb5.conf.in > krb5-slave2.conf.tmp && \
+	mv krb5-slave2.conf.tmp krb5-slave2.conf
+
 krb5-pkinit.conf: krb5-pkinit.conf.in Makefile
 	$(do_subst) -e 's,[@]w2k[@],no,g' < $(srcdir)/krb5-pkinit.conf.in > krb5-pkinit.conf.tmp && \
 	mv krb5-pkinit.conf.tmp krb5-pkinit.conf
@@ -247,6 +255,7 @@ CLEANFILES= \
 	krb5-hdb-mitdb.conf \
 	krb5-pkinit-win.conf \
 	krb5-pkinit.conf \
+	krb5-slave2.conf \
 	krb5-slave.conf \
 	krb5-weak.conf \
 	krb5.conf \

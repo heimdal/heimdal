@@ -727,8 +727,8 @@ main(int argc, char **argv)
 	krb5_warnx(context, "ipropd-slave started at version: %ld",
 		   (long)server_context->log_context.version);
 
-	ret = ihave (context, auth_context, master_fd,
-		     server_context->log_context.version);
+	ret = ihave(context, auth_context, master_fd,
+		    server_context->log_context.version);
 	if (ret)
 	    goto retry;
 
@@ -777,30 +777,33 @@ main(int argc, char **argv)
 	    }
 
 	    sp = krb5_storage_from_mem (out.data, out.length);
-	    krb5_ret_int32 (sp, &tmp);
+	    krb5_ret_int32(sp, &tmp);
 	    switch (tmp) {
 	    case FOR_YOU :
-		receive (context, sp, server_context);
-		ret = ihave (context, auth_context, master_fd,
-			     server_context->log_context.version);
-		if (ret) {
-		    connected = FALSE;
-		} else {
-		    is_up_to_date(context, status_file, server_context);
-		}		
-
-		break;
-	    case TELL_YOU_EVERYTHING :
-		ret = receive_everything (context, master_fd, server_context,
-					  auth_context);
+		receive(context, sp, server_context);
+		ret = ihave(context, auth_context, master_fd,
+			    server_context->log_context.version);
 		if (ret)
 		    connected = FALSE;
 		else
 		    is_up_to_date(context, status_file, server_context);
+
+		break;
+	    case TELL_YOU_EVERYTHING :
+		ret = receive_everything(context, master_fd, server_context,
+					 auth_context);
+                if (ret == 0) {
+                    ret = ihave(context, auth_context, master_fd,
+                                server_context->log_context.version);
+                }
+                if (ret)
+		    connected = FALSE;
+                else
+                    is_up_to_date(context, status_file, server_context);
 		break;
 	    case ARE_YOU_THERE :
 		is_up_to_date(context, status_file, server_context);
-		send_im_here (context, master_fd, auth_context);
+		send_im_here(context, master_fd, auth_context);
 		break;
 	    case YOU_HAVE_LAST_VERSION:
 		is_up_to_date(context, status_file, server_context);

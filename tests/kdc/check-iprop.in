@@ -172,7 +172,7 @@ sleep 2
 KRB5_CONFIG="${objdir}/krb5-slave.conf" \
 ${kadmin} -l get host/bar@${R} > /dev/null 2>/dev/null && exit 1
 
-echo "kill slave"
+echo "kill slave and remove log and database"
 > iprop-stats
 sh ${leaks_kill} ipropd-slave $ipds || exit 1
 rm -f iprop-slave-status
@@ -180,6 +180,8 @@ rm -f iprop-slave-status
 ${EGREP} 'iprop/slave.test.h5l.se@TEST.H5L.SE.*Down' iprop-stats >/dev/null || exit 1
 
 # ----------------- checking: slave is missing changes while down
+
+rm current.slave.log current-db.slave* || exit 1
 
 echo "doing changes while slave is down"
 ${kadmin} -l cpw --random-password user@${R} > /dev/null || exit 1

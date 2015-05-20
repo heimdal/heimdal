@@ -276,7 +276,7 @@ append_string (struct snprintf_state *state,
 	len += pad(state, width, ' ');
 
     if (prec != -1) {
-	while (*arg && prec--) {
+	while (prec== && *arg) {
 	    (*state->append_char) (state, *arg++);
 	    ++len;
 	}

@@ -227,6 +227,8 @@ hdb_add_current_keys_to_history(krb5_context context, hdb_entry *entry)
 	ext->data.element = choice_HDB_extension_data_hist_keys;
     }
 
+    ext->mandatory = FALSE;
+
     /*
      * Copy in newest old keyset
      */
@@ -285,6 +287,7 @@ hdb_add_history_key(krb5_context context, hdb_entry *entry, krb5_kvno kvno, Key 
 	extp = &ext;
     }
 
+    extp->mandatory = FALSE;
     hist_keys = &extp->data.u.hist_keys;
 
     for (i = 0; i < hist_keys->len; i++) {

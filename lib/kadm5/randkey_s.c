@@ -97,6 +97,7 @@ kadm5_s_randkey_principal(void *server_handle,
 	HDB_extension ext;
 
 	memset(&ext, 0, sizeof (ext));
+        ext.mandatory = FALSE;
 	ext.data.element = choice_HDB_extension_data_hist_keys;
 	ext.data.u.hist_keys.len = 0;
 	ext.data.u.hist_keys.val = NULL;

@@ -453,6 +453,7 @@ hdb_entry_set_kvno_diff_clnt(krb5_context context, hdb_entry *entry,
 
     if (diff > 16384)
 	return EINVAL;
+    ext.mandatory = FALSE;
     ext.data.element = choice_HDB_extension_data_hist_kvno_diff_clnt;
     ext.data.u.hist_kvno_diff_clnt = diff;
     return hdb_replace_extension(context, entry, &ext);
@@ -485,6 +486,7 @@ hdb_entry_set_kvno_diff_svc(krb5_context context, hdb_entry *entry,
 
     if (diff > 16384)
 	return EINVAL;
+    ext.mandatory = FALSE;
     ext.data.element = choice_HDB_extension_data_hist_kvno_diff_svc;
     ext.data.u.hist_kvno_diff_svc = diff;
     return hdb_replace_extension(context, entry, &ext);

@@ -89,6 +89,9 @@ modify_principal(void *server_handle,
     if ((mask & KADM5_POLICY)) {
 	HDB_extension ext;
 
+        memset(&ext, 0, sizeof(ext));
+        /* XXX should be TRUE, but we don't yet support policies */
+        ext.mandatory = FALSE;
 	ext.data.element = choice_HDB_extension_data_policy;
 	ext.data.u.policy = strdup(princ->policy);
 	if (ext.data.u.policy == NULL) {
@@ -97,6 +100,7 @@ modify_principal(void *server_handle,
 	}
 	/* This calls free_HDB_extension(), freeing ext.data.u.policy */
 	ret = hdb_replace_extension(context->context, &ent.entry, &ext);
+        free(ext.data.u.policy);
 	if (ret)
 	    goto out2;
     }

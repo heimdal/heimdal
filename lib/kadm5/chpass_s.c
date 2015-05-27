@@ -119,6 +119,7 @@ change(void *server_handle,
 	HDB_extension ext;
 
 	memset(&ext, 0, sizeof (ext));
+        ext.mandatory = FALSE;
 	ext.data.element = choice_HDB_extension_data_hist_keys;
 	ret = hdb_replace_extension(context->context, &ent.entry, &ext);
 	if (ret)
@@ -235,6 +236,7 @@ kadm5_s_chpass_principal_with_key(void *server_handle,
 	HDB_extension ext;
 
 	memset(&ext, 0, sizeof (ext));
+	ext.mandatory = FALSE;
 	ext.data.element = choice_HDB_extension_data_hist_keys;
 	ext.data.u.hist_keys.len = 0;
 	ext.data.u.hist_keys.val = NULL;

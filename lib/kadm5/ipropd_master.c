@@ -493,8 +493,7 @@ send_complete (krb5_context context, slave *s, const char *database,
 	    goto done;
 	}
 
-	krb5_storage_seek(dump, 0, SEEK_SET);
-	if (ret == -1) {
+	if (krb5_storage_seek(dump, 0, SEEK_SET) == (off_t)-1) {
 	    ret = errno;
 	    krb5_warn(context, ret, "krb5_storage_seek(dump, 0, SEEK_SET)");
 	    goto done;
@@ -512,7 +511,7 @@ send_complete (krb5_context context, slave *s, const char *database,
 	 * break out of the loop and send the file below.
 	 */
 
-	if (vno >= oldest_version)
+	if (ret == 0 && vno >= oldest_version && vno <= current_version)
 	    break;
 
 	/*

@@ -125,17 +125,37 @@ kadm5_s_get_principal(void *server_handle,
     kadm5_server_context *context = server_handle;
     kadm5_ret_t ret;
     hdb_entry_ex ent;
+    int hdb_is_rw = 1;
 
     memset(&ent, 0, sizeof(ent));
 
     if (!context->keep_open) {
-	ret = context->db->hdb_open(context->context, context->db, O_RDONLY, 0);
+	ret = context->db->hdb_open(context->context, context->db, O_RDWR, 0);
+        if (ret == EPERM || ret == EACCES) {
+            ret = context->db->hdb_open(context->context, context->db, O_RDONLY, 0);
+            hdb_is_rw = 0;
+        }
 	if(ret)
 	    return ret;
     }
+
+    /*
+     * Attempt to recover the log.  This will generally fail on slaves,
+     * and we can't tell if we're on a slave here.
+     *
+     * Perhaps we could set a flag in the kadm5_server_context to
+     * indicate whether a read has been done without recovering the log,
+     * in which case we could fail any subsequent writes.
+     */
+    if (hdb_is_rw)
+        (void) kadm5_log_init_nb(context);
+
     ret = context->db->hdb_fetch_kvno(context->context, context->db, princ,
 				      HDB_F_DECRYPT|HDB_F_ALL_KVNOS|
 				      HDB_F_GET_ANY|HDB_F_ADMIN_DATA, 0, &ent);
+    if (hdb_is_rw)
+        kadm5_log_end(context);
+
     if (!context->keep_open)
 	context->db->hdb_close(context->context, context->db);
     if(ret)

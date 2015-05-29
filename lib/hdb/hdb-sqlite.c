@@ -672,24 +672,24 @@ hdb_sqlite_store(krb5_context context, HDB *db, unsigned flags,
             goto rollback;
     }
 
-    ret = 0;
-
 commit:
-
     krb5_data_free(&value);
-
     sqlite3_clear_bindings(get_ids);
     sqlite3_reset(get_ids);
+
+    if ((flags & HDB_F_PRECHECK)) {
+        (void) hdb_sqlite_exec_stmt(context, hsdb, "ROLLBACK", ret);
+        return 0;
+    }
 
     ret = hdb_sqlite_exec_stmt(context, hsdb, "COMMIT", EINVAL);
     if(ret != SQLITE_OK)
 	krb5_warnx(context, "hdb-sqlite: COMMIT problem: %d: %s",
 		   ret, sqlite3_errmsg(hsdb->db));
 
-    return ret;
+    return ret == SQLITE_OK ? 0 : HDB_ERR_UK_SERROR;
 
 rollback:
-
     krb5_warnx(context, "hdb-sqlite: store rollback problem: %d: %s",
 	       ret, sqlite3_errmsg(hsdb->db));
 
@@ -865,27 +865,63 @@ hdb_sqlite_rename(krb5_context context, HDB *db, const char *new_name)
  */
 static krb5_error_code
 hdb_sqlite_remove(krb5_context context, HDB *db,
-                  krb5_const_principal principal)
+                  unsigned flags, krb5_const_principal principal)
 {
     krb5_error_code ret;
     hdb_sqlite_db *hsdb = (hdb_sqlite_db*)(db->hdb_db);
+    sqlite3_stmt *get_ids = hsdb->get_ids;
     sqlite3_stmt *rm = hsdb->remove;
 
     bind_principal(context, principal, rm, 1);
 
+    ret = hdb_sqlite_exec_stmt(context, hsdb,
+                               "BEGIN IMMEDIATE TRANSACTION", EINVAL);
+    if (ret != SQLITE_OK) {
+        (void) hdb_sqlite_exec_stmt(context, hsdb, "ROLLBACK", EINVAL);
+	ret = HDB_ERR_UK_SERROR;
+        krb5_set_error_message(context, ret,
+			       "SQLite BEGIN TRANSACTION failed: %s",
+			       sqlite3_errmsg(hsdb->db));
+        return ret;
+    }
+
+    if ((flags & HDB_F_PRECHECK)) {
+        ret = bind_principal(context, principal, get_ids, 1);
+        if (ret)
+            return ret;
+
+        ret = hdb_sqlite_step(context, hsdb->db, get_ids);
+        sqlite3_clear_bindings(get_ids);
+        sqlite3_reset(get_ids);
+        if (ret == SQLITE_DONE) {
+            (void) hdb_sqlite_exec_stmt(context, hsdb, "ROLLBACK", EINVAL);
+            return HDB_ERR_NOENTRY;
+        }
+    }
+
     ret = hdb_sqlite_step(context, hsdb->db, rm);
+    sqlite3_clear_bindings(rm);
+    sqlite3_reset(rm);
     if (ret != SQLITE_DONE) {
-	ret = EINVAL;
+        (void) hdb_sqlite_exec_stmt(context, hsdb, "ROLLBACK", ret);
+	ret = HDB_ERR_UK_SERROR;
         krb5_set_error_message(context, ret,
                               "sqlite remove failed: %d",
                               ret);
-    } else
-        ret = 0;
+        return ret;
+    }
 
-    sqlite3_clear_bindings(rm);
-    sqlite3_reset(rm);
+    if ((flags & HDB_F_PRECHECK)) {
+        (void) hdb_sqlite_exec_stmt(context, hsdb, "ROLLBACK", EINVAL);
+        return 0;
+    }
 
-    return ret;
+    ret = hdb_sqlite_exec_stmt(context, hsdb, "COMMIT", HDB_ERR_UK_SERROR);
+    if (ret != SQLITE_OK)
+	krb5_warnx(context, "hdb-sqlite: COMMIT problem: %ld: %s",
+		   (long)HDB_ERR_UK_SERROR, sqlite3_errmsg(hsdb->db));
+
+    return 0;
 }
 
 /**

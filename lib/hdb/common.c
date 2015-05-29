@@ -321,6 +321,22 @@ _hdb_store(krb5_context context, HDB *db, unsigned flags, hdb_entry_ex *entry)
     if (code)
 	return code;
 
+    if ((flags & HDB_F_PRECHECK) && (flags & HDB_F_REPLACE))
+        return 0;
+
+    if ((flags & HDB_F_PRECHECK)) {
+        code = hdb_principal2key(context, entry->entry.principal, &key);
+        if (code)
+            return code;
+        code = db->hdb__get(context, db, key, &value);
+        krb5_data_free(&key);
+        if (code == 0)
+            krb5_data_free(&value);
+        if (code == HDB_ERR_NOENTRY)
+            return 0;
+        return code ? code : HDB_ERR_EXISTS;
+    }
+
     if(entry->entry.generation == NULL) {
 	struct timeval t;
 	entry->entry.generation = malloc(sizeof(*entry->entry.generation));
@@ -360,12 +376,31 @@ _hdb_store(krb5_context context, HDB *db, unsigned flags, hdb_entry_ex *entry)
 }
 
 krb5_error_code
-_hdb_remove(krb5_context context, HDB *db, krb5_const_principal principal)
+_hdb_remove(krb5_context context, HDB *db,
+            unsigned flags, krb5_const_principal principal)
 {
-    krb5_data key;
+    krb5_data key, value;
     int code;
 
     hdb_principal2key(context, principal, &key);
+
+    if ((flags & HDB_F_PRECHECK)) {
+        /*
+         * We don't check that we can delete the aliases because we
+         * assume that the DB is consistent.  If we did check for alias
+         * consistency we'd also have to provide a way to fsck the DB,
+         * otherwise admins would have no way to recover -- papering
+         * over this here is less work, but we really ought to provide
+         * an HDB fsck.
+         */
+        code = db->hdb__get(context, db, key, &value);
+        krb5_data_free(&key);
+        if (code == 0) {
+            krb5_data_free(&value);
+            return 0;
+        }
+        return code;
+    }
 
     code = hdb_remove_aliases(context, db, &key);
     if (code) {

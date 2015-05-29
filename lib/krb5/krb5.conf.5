@@ -573,7 +573,25 @@ Use this file for the ACL list of this database.
 Use this file as the log of changes performed to the database.
 This file is used by
 .Nm ipropd-master
-for propagating changes to slaves.
+for propagating changes to slaves.  It is also used by
+.Nm kadmind
+and
+.Nm kadmin
+(when used with the
+.Li -l
+option), and by all applications using
+.Nm libkadm5
+with the local backend, for two-phase commit functionality.  Slaves also
+use this.  Setting this to
+.Nm /dev/null
+disables two-phase commit and incremental propagation.  Use
+.Nm iprop-log
+to show the contents of this log file.
+.It Li log-max-size = Pa number
+When the log reaches this size (in bytes), the log will be truncated,
+saving some entries, and keeping the latest version number so as to not
+disrupt incremental propagation.  If set to a negative value then
+automatic log truncation will be disabled.  Defaults to 52428800 (50MB).
 .El
 .It Li }
 .It Li max-request = Va SIZE

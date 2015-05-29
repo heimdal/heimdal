@@ -46,11 +46,11 @@ get_kadmin_context(const char *config_file, char *realm)
     kadm5_config_params conf;
     krb5_error_code ret;
     void *kadm_handle;
+    char *file = NULL;
     char **files;
     int aret;
 
     if (config_file == NULL) {
-	char *file;
 	aret = asprintf(&file, "%s/kdc.conf", hdb_db_dir(context));
 	if (aret == -1 || file == NULL)
 	    errx(1, "out of memory");
@@ -58,6 +58,7 @@ get_kadmin_context(const char *config_file, char *realm)
     }
 
     ret = krb5_prepend_config_files_default(config_file, &files);
+    free(file);
     if (ret)
 	krb5_err(context, 1, ret, "getting configuration files");
 
@@ -102,7 +103,7 @@ static const char *op_names[] = {
     "nop"
 };
 
-static void
+static kadm5_ret_t
 print_entry(kadm5_server_context *server_context,
 	    uint32_t ver,
 	    time_t timestamp,
@@ -112,29 +113,28 @@ print_entry(kadm5_server_context *server_context,
 	    void *ctx)
 {
     char t[256];
+    const char *entry_kind = ctx;
     int32_t mask;
+    int32_t nop_time;
+    uint32_t nop_ver;
     hdb_entry ent;
     krb5_principal source;
     char *name1, *name2;
     krb5_data data;
     krb5_context scontext = server_context->context;
+    krb5_error_code ret;
 
     krb5_data_zero(&data);
-
-    off_t end = krb5_storage_seek(sp, 0, SEEK_CUR) + len;
-
-    krb5_error_code ret;
 
     strftime(t, sizeof(t), "%Y-%m-%d %H:%M:%S", localtime(&timestamp));
 
     if((int)op < (int)kadm_get || (int)op > (int)kadm_nop) {
 	printf("unknown op: %d\n", op);
-	krb5_storage_seek(sp, end, SEEK_SET);
-	return;
+	return 0;
     }
 
-    printf ("%s: ver = %u, timestamp = %s, len = %u\n",
-	    op_names[op], ver, t, len);
+    printf ("%s%s: ver = %u, timestamp = %s, len = %u\n",
+	    entry_kind, op_names[op], ver, t, len);
     switch(op) {
     case kadm_delete:
 	krb5_ret_principal(sp, &source);
@@ -261,12 +261,29 @@ print_entry(kadm5_server_context *server_context,
 	free_hdb_entry(&ent);
 	break;
     case kadm_nop :
+        if (len == 16) {
+            uint64_t off;
+            krb5_ret_uint64(sp, &off);
+            printf("uberblock offset %llu ", (unsigned long long)off);
+        } else {
+            printf("nop");
+        }
+        if (len == 16 || len == 8) {
+            krb5_ret_int32(sp, &nop_time);
+            krb5_ret_uint32(sp, &nop_ver);
+
+            timestamp = nop_time;
+            strftime(t, sizeof(t), "%Y-%m-%d %H:%M:%S", localtime(&timestamp));
+            printf("timestamp %s version %u", t, nop_ver);
+        }
+        printf("\n");
 	break;
     default:
 	abort();
     }
     krb5_data_free(&data);
-    krb5_storage_seek(sp, end, SEEK_SET);
+
+    return 0;
 }
 
 int
@@ -274,21 +291,61 @@ iprop_dump(struct dump_options *opt, int argc, char **argv)
 {
     kadm5_server_context *server_context;
     krb5_error_code ret;
+    enum kadm_iter_opts iter_opts_1st = 0;
+    enum kadm_iter_opts iter_opts_2nd = 0;
+    char *desc_1st = "";
+    char *desc_2nd = "";
 
     server_context = get_kadmin_context(opt->config_file_string,
 					opt->realm_string);
 
-    ret = kadm5_log_init (server_context);
-    if (ret)
-	krb5_err (context, 1, ret, "kadm5_log_init");
+    if (argc > 0) {
+        free(server_context->log_context.log_file);
+        server_context->log_context.log_file = strdup(argv[0]);
+        if (server_context->log_context.log_file == NULL)
+            krb5_err(context, 1, errno, "strdup");
+    }
 
-    ret = kadm5_log_foreach (server_context, print_entry, NULL);
-    if(ret)
+    if (opt->reverse_flag) {
+        iter_opts_1st = kadm_backward | kadm_unconfirmed;
+        iter_opts_2nd = kadm_backward | kadm_confirmed;
+        desc_1st = "unconfirmed ";
+    } else {
+        iter_opts_1st = kadm_forward | kadm_confirmed;
+        iter_opts_2nd = kadm_forward | kadm_unconfirmed;
+        desc_2nd = "unconfirmed";
+    }
+
+    if (opt->no_lock_flag) {
+        ret = kadm5_log_init_sharedlock(server_context, LOCK_NB);
+        if (ret == EAGAIN || ret == EWOULDBLOCK) {
+            warnx("Not locking the iprop log");
+            ret = kadm5_log_init_nolock(server_context);
+            if (ret)
+                krb5_err(context, 1, ret, "kadm5_log_init_nolock");
+        }
+    } else {
+        warnx("If this command appears to block, try the --no-lock option");
+        ret = kadm5_log_init_sharedlock(server_context, 0);
+        if (ret)
+            krb5_err(context, 1, ret, "kadm5_log_init_sharedlock");
+    }
+
+    ret = kadm5_log_foreach(server_context, iter_opts_1st,
+                            NULL, print_entry, desc_1st);
+    if (ret)
+	krb5_warn(context, ret, "kadm5_log_foreach");
+
+    ret = kadm5_log_foreach(server_context, iter_opts_2nd,
+                            NULL, print_entry, desc_2nd);
+    if (ret)
 	krb5_warn(context, ret, "kadm5_log_foreach");
 
     ret = kadm5_log_end (server_context);
     if (ret)
 	krb5_warn(context, ret, "kadm5_log_end");
+
+    kadm5_destroy(server_context);
     return 0;
 }
 
@@ -301,10 +358,38 @@ iprop_truncate(struct truncate_options *opt, int argc, char **argv)
     server_context = get_kadmin_context(opt->config_file_string,
 					opt->realm_string);
 
-    ret = kadm5_log_truncate (server_context);
-    if (ret)
-	krb5_err (context, 1, ret, "kadm5_log_truncate");
+    if (argc > 0) {
+        free(server_context->log_context.log_file);
+        server_context->log_context.log_file = strdup(argv[0]);
+        if (server_context->log_context.log_file == NULL)
+            krb5_err(context, 1, errno, "strdup");
+    }
 
+    if (opt->keep_entries_integer < 0 &&
+        opt->max_bytes_integer < 0) {
+        opt->keep_entries_integer = 100;
+        opt->max_bytes_integer = 0;
+    }
+    if (opt->keep_entries_integer < 0)
+        opt->keep_entries_integer = 0;
+    if (opt->max_bytes_integer < 0)
+        opt->max_bytes_integer = 0;
+
+    if (opt->reset_flag) {
+        ret = kadm5_log_reinit(server_context);
+    } else {
+        ret = kadm5_log_init(server_context);
+        if (ret)
+            krb5_err(context, 1, ret, "kadm5_log_init");
+        ret = kadm5_log_truncate(server_context, opt->keep_entries_integer,
+                                 opt->max_bytes_integer);
+    }
+    if (ret)
+	krb5_err(context, 1, ret, "kadm5_log_truncate");
+
+    kadm5_log_signal_master(server_context);
+
+    kadm5_destroy(server_context);
     return 0;
 }
 
@@ -312,26 +397,72 @@ int
 last_version(struct last_version_options *opt, int argc, char **argv)
 {
     kadm5_server_context *server_context;
+    char *alt_argv[2];
     krb5_error_code ret;
     uint32_t version;
+    size_t i;
 
     server_context = get_kadmin_context(opt->config_file_string,
 					opt->realm_string);
 
-    ret = kadm5_log_init (server_context);
-    if (ret)
-	krb5_err (context, 1, ret, "kadm5_log_init");
+    if (argc == 0) {
+        alt_argv[0] = strdup(server_context->log_context.log_file);
+        alt_argv[1] = NULL;
+        if (alt_argv[0] == NULL)
+            krb5_err(context, 1, errno, "strdup");
+        argv = alt_argv;
+        argc = 1;
+    }
 
-    ret = kadm5_log_get_version (server_context, &version);
-    if (ret)
-	krb5_err (context, 1, ret, "kadm5_log_get_version");
+    for (i = 0; i < argc; i++) {
+        free(server_context->log_context.log_file);
+        server_context->log_context.log_file = strdup(argv[i]);
+        if (server_context->log_context.log_file == NULL)
+            krb5_err(context, 1, errno, "strdup");
 
-    ret = kadm5_log_end (server_context);
-    if (ret)
-	krb5_warn(context, ret, "kadm5_log_end");
+        if (opt->no_lock_flag) {
+            ret = kadm5_log_init_sharedlock(server_context, LOCK_NB);
+            if (ret == EAGAIN || ret == EWOULDBLOCK) {
+                warnx("Not locking the iprop log");
+                ret = kadm5_log_init_nolock(server_context);
+                if (ret)
+                    krb5_err(context, 1, ret, "kadm5_log_init_nolock");
+            }
+        } else {
+            if (argc == 0)
+                warnx("If this command appears to block, try the "
+                      "--no-lock option");
+            ret = kadm5_log_init_sharedlock(server_context, 0);
+            if (ret)
+                krb5_err(context, 1, ret, "kadm5_log_init_sharedlock");
+        }
 
-    printf("version: %lu\n", (unsigned long)version);
+        ret = kadm5_log_get_version (server_context, &version);
+        if (ret)
+            krb5_err (context, 1, ret, "kadm5_log_get_version");
 
+        ret = kadm5_log_end (server_context);
+        if (ret)
+            krb5_warn(context, ret, "kadm5_log_end");
+
+        printf("version: %lu\n", (unsigned long)version);
+    }
+
+    kadm5_destroy(server_context);
+    return 0;
+}
+
+int
+signal_master(struct signal_options *opt, int argc, char **argv)
+{
+    kadm5_server_context *server_context;
+
+    server_context = get_kadmin_context(opt->config_file_string,
+					opt->realm_string);
+
+    kadm5_log_signal_master(server_context);
+
+    kadm5_destroy(server_context);
     return 0;
 }
 
@@ -342,7 +473,7 @@ last_version(struct last_version_options *opt, int argc, char **argv)
 int start_version = -1;
 int end_version = -1;
 
-static void
+static kadm5_ret_t
 apply_entry(kadm5_server_context *server_context,
 	    uint32_t ver,
 	    time_t timestamp,
@@ -357,18 +488,18 @@ apply_entry(kadm5_server_context *server_context,
     if((opt->start_version_integer != -1 && ver < (uint32_t)opt->start_version_integer) ||
        (opt->end_version_integer != -1 && ver > (uint32_t)opt->end_version_integer)) {
 	/* XXX skip this entry */
-	krb5_storage_seek(sp, len, SEEK_CUR);
-	return;
+	return 0;
     }
     printf ("ver %u... ", ver);
     fflush (stdout);
 
-    ret = kadm5_log_replay (server_context,
-			    op, ver, len, sp);
+    ret = kadm5_log_replay(server_context, op, ver, len, sp);
     if (ret)
 	krb5_warn (server_context->context, ret, "kadm5_log_replay");
 
     printf ("done\n");
+
+    return 0;
 }
 
 int
@@ -380,6 +511,13 @@ iprop_replay(struct replay_options *opt, int argc, char **argv)
     server_context = get_kadmin_context(opt->config_file_string,
 					opt->realm_string);
 
+    if (argc > 0) {
+        free(server_context->log_context.log_file);
+        server_context->log_context.log_file = strdup(argv[0]);
+        if (server_context->log_context.log_file == NULL)
+            krb5_err(context, 1, errno, "strdup");
+    }
+
     ret = server_context->db->hdb_open(context,
 				       server_context->db,
 				       O_RDWR | O_CREAT, 0600);
@@ -390,7 +528,9 @@ iprop_replay(struct replay_options *opt, int argc, char **argv)
     if (ret)
 	krb5_err (context, 1, ret, "kadm5_log_init");
 
-    ret = kadm5_log_foreach (server_context, apply_entry, opt);
+    ret = kadm5_log_foreach(server_context,
+                            kadm_forward | kadm_confirmed | kadm_unconfirmed,
+                            NULL, apply_entry, opt);
     if(ret)
 	krb5_warn(context, ret, "kadm5_log_foreach");
     ret = kadm5_log_end (server_context);
@@ -400,6 +540,7 @@ iprop_replay(struct replay_options *opt, int argc, char **argv)
     if (ret)
 	krb5_err (context, 1, ret, "db->close");
 
+    kadm5_destroy(server_context);
     return 0;
 }
 

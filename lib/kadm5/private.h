@@ -82,7 +82,10 @@ typedef struct kadm5_log_peer {
 typedef struct kadm5_log_context {
     char *log_file;
     int log_fd;
+    int read_only;
+    int lock_mode;
     uint32_t version;
+    time_t last_time;
 #ifndef NO_UNIX_SOCKETS
     struct sockaddr_un socket_name;
 #else
@@ -136,6 +139,11 @@ typedef struct kadm5_ad_context {
     char *base_dn;
 } kadm5_ad_context;
 
+/*
+ * This enum is used in the iprop log file and on the wire in the iprop
+ * protocol.  DO NOT CHANGE, except to add new op types at the end, and
+ * look for places in lib/kadm5/log.c to update.
+ */
 enum kadm_ops {
     kadm_get,
     kadm_delete,
@@ -147,7 +155,28 @@ enum kadm_ops {
     kadm_get_privs,
     kadm_get_princs,
     kadm_chpass_with_key,
-    kadm_nop
+    kadm_nop,
+    kadm_first = kadm_get,
+    kadm_last = kadm_nop
+};
+
+/* FIXME nop types are currently not implemented */
+enum kadm_nop_type {
+    kadm_nop_plain, /* plain nop, not relevance except as uberblock */
+    kadm_nop_trunc, /* indicates that the master truncated the log  */
+    kadm_nop_close  /* indicates that the master closed this log    */
+};
+
+enum kadm_iter_opts {
+    kadm_forward        = 1,
+    kadm_backward       = 2,
+    kadm_confirmed      = 4,
+    kadm_unconfirmed    = 8
+};
+
+enum kadm_recover_mode {
+    kadm_recover_commit,
+    kadm_recover_replay
 };
 
 #define KADMIN_APPL_VERSION "KADM0.1"

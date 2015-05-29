@@ -53,15 +53,18 @@ kadm5_s_rename_principal(void *server_handle,
 	if(ret)
 	    return ret;
     }
+
+    ret = kadm5_log_init(context);
+    if (ret)
+        goto out;
+
     ret = context->db->hdb_fetch_kvno(context->context, context->db,
 				      source, HDB_F_GET_ANY|HDB_F_ADMIN_DATA, 0, &ent);
-    if(ret){
-	if (!context->keep_open)
-	    context->db->hdb_close(context->context, context->db);
+    if (ret)
 	goto out;
-    }
+    oldname = ent.entry.principal;
     ret = _kadm5_set_modifier(context, &ent.entry);
-    if(ret)
+    if (ret)
 	goto out2;
     {
 	/* fix salt */
@@ -85,31 +88,30 @@ kadm5_s_rename_principal(void *server_handle,
 	}
 	krb5_free_salt(context->context, salt2);
     }
-    if(ret)
+    if (ret)
 	goto out2;
-    oldname = ent.entry.principal;
+
+    /* Borrow target */
     ent.entry.principal = target;
-
     ret = hdb_seal_keys(context->context, context->db, &ent.entry);
-    if (ret) {
-	ent.entry.principal = oldname;
+    if (ret)
 	goto out2;
-    }
 
-    kadm5_log_rename (context, source, &ent.entry);
+    /* This logs the change for iprop and writes to the HDB */
+    ret = kadm5_log_rename(context, source, &ent.entry);
 
-    ret = context->db->hdb_store(context->context, context->db, 0, &ent);
-    if(ret){
-	ent.entry.principal = oldname;
-	goto out2;
-    }
-    ret = context->db->hdb_remove(context->context, context->db, oldname);
-    ent.entry.principal = oldname;
 out2:
-    if (!context->keep_open)
-	context->db->hdb_close(context->context, context->db);
+    ent.entry.principal = oldname; /* Unborrow target */
     hdb_free_entry(context->context, &ent);
+
 out:
+    (void) kadm5_log_end(context);
+    if (!context->keep_open) {
+        kadm5_ret_t ret2;
+        ret2 = context->db->hdb_close(context->context, context->db);
+        if (ret == 0 && ret2 != 0)
+            ret = ret2;
+    }
     return _kadm5_error_code(ret);
 }
 

@@ -48,6 +48,10 @@
 
 #define KADM5_STRUCT_VERSION 0
 
+/* For kadm5_log_get_version_fd() */
+#define LOG_VERSION_LAST -1
+#define LOG_VERSION_FIRST 1
+
 #include <krb5.h>
 
 #define KRB5_KDB_DISALLOW_POSTDATED	0x00000001

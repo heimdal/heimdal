@@ -57,6 +57,11 @@ modify_principal(void *server_handle,
 	if(ret)
 	    return ret;
     }
+
+    ret = kadm5_log_init(context);
+    if (ret)
+        goto out;
+
     ret = context->db->hdb_fetch_kvno(context->context, context->db,
 				      princ->principal, HDB_F_GET_ANY|HDB_F_ADMIN_DATA, 0, &ent);
     if(ret)
@@ -105,20 +110,20 @@ modify_principal(void *server_handle,
 	    goto out2;
     }
 
-    ret = context->db->hdb_store(context->context, context->db,
-			     HDB_F_REPLACE, &ent);
-    if (ret)
-	goto out2;
-
-    kadm5_log_modify (context,
-		      &ent.entry,
-		      mask | KADM5_MOD_NAME | KADM5_MOD_TIME);
+    /* This logs the change for iprop and writes to the HDB */
+    ret = kadm5_log_modify(context, &ent.entry,
+                           mask | KADM5_MOD_NAME | KADM5_MOD_TIME);
 
 out2:
     hdb_free_entry(context->context, &ent);
 out:
-    if (!context->keep_open)
-	context->db->hdb_close(context->context, context->db);
+    (void) kadm5_log_end(context);
+    if (!context->keep_open) {
+        kadm5_ret_t ret2;
+        ret2 = context->db->hdb_close(context->context, context->db);
+        if (ret == 0 && ret2 != 0)
+            ret = ret2;
+    }
     return _kadm5_error_code(ret);
 }
 

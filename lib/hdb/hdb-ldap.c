@@ -1735,6 +1735,9 @@ LDAP_store(krb5_context context, HDB * db, unsigned flags,
     LDAPMessage *msg = NULL, *e = NULL;
     char *dn = NULL, *name = NULL;
 
+    if ((flags & HDB_F_PRECHECK))
+        return 0; /* we can't guarantee whether we'll be able to perform it */
+
     ret = LDAP_principal2message(context, db, entry->entry.principal, &msg);
     if (ret == 0)
 	e = ldap_first_entry(HDB2LDAP(db), msg);
@@ -1806,12 +1809,16 @@ LDAP_store(krb5_context context, HDB * db, unsigned flags,
 }
 
 static krb5_error_code
-LDAP_remove(krb5_context context, HDB *db, krb5_const_principal principal)
+LDAP_remove(krb5_context context, HDB *db,
+            unsigned flags, krb5_const_principal principal)
 {
     krb5_error_code ret;
     LDAPMessage *msg, *e;
     char *dn = NULL;
     int rc, limit = LDAP_NO_LIMIT;
+
+    if ((flags & HDB_F_PRECHECK))
+        return 0; /* we can't guarantee whether we'll be able to perform it */
 
     ret = LDAP_principal2message(context, db, principal, &msg);
     if (ret)

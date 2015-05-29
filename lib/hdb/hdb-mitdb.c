@@ -950,7 +950,23 @@ mdb_store(krb5_context context, HDB *db, unsigned flags, hdb_entry_ex *entry)
     krb5_data line = { 0, 0 };
     krb5_data kdb_ent = { 0, 0 };
     krb5_data key = { 0, 0 };
+    krb5_data value = { 0, 0 };
     ssize_t sz;
+
+    if ((flags & HDB_F_PRECHECK) && (flags & HDB_F_REPLACE))
+        return 0;
+
+    if ((flags & HDB_F_PRECHECK)) {
+        ret = mdb_principal2key(context, entry->entry.principal, &key);
+        if (ret) return ret;
+        code = db->hdb__get(context, db, key, &value);
+        krb5_data_free(&key);
+        if (code == 0)
+            krb5_data_free(&value);
+        if (code == HDB_ERR_NOENTRY)
+            return 0;
+        return code ? code : HDB_ERR_EXISTS;
+    }
 
     sp = krb5_storage_emem();
     if (!sp) return ENOMEM;
@@ -989,10 +1005,21 @@ out:
 }
 
 static krb5_error_code
-mdb_remove(krb5_context context, HDB *db, krb5_const_principal principal)
+mdb_remove(krb5_context context, HDB *db,
+           unsigned flags, krb5_const_principal principal)
 {
     krb5_error_code code;
     krb5_data key;
+
+    if ((flags & HDB_F_PRECHECK)) {
+        code = db->hdb__get(context, db, key, &value);
+        krb5_data_free(&key);
+        if (code == 0) {
+            krb5_data_free(&value);
+            return 0;
+        }
+        return code;
+    }
 
     mdb_principal2key(context, principal, &key);
     code = db->hdb__del(context, db, key);

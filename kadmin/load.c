@@ -377,10 +377,17 @@ doit(const char *filename, int mergep)
 	krb5_warn(context, errno, "fopen(%s)", filename);
 	return 1;
     }
-    ret = kadm5_log_truncate (kadm_handle);
+    /*
+     * We don't have a version number in the dump, so we don't know
+     * which iprop log entries to keep, if any.  We throw the log away.
+     *
+     * We could merge the ipropd-master/slave dump/load here as an
+     * option, in which case we would first load the dump.
+     */
+    ret = kadm5_log_reinit(kadm_handle);
     if (ret) {
 	fclose (f);
-	krb5_warn(context, ret, "kadm5_log_truncate");
+	krb5_warn(context, ret, "kadm5_log_reinit");
 	return 1;
     }
 
@@ -535,6 +542,7 @@ doit(const char *filename, int mergep)
 	    break;
 	}
     }
+    (void) kadm5_log_end(kadm_handle);
     db->hdb_close(context, db);
     fclose(f);
     return ret != 0;

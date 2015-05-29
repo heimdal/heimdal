@@ -751,6 +751,7 @@ EXPORTS
 	_krb5_dh_group_ok
 	_krb5_get_host_realm_int
 	_krb5_get_int
+        _krb5_get_int64
 	_krb5_pac_sign
 	_krb5_parse_moduli
 	_krb5_pk_kdf

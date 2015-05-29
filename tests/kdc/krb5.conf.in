@@ -97,6 +97,7 @@
 	signal_socket = @objdir@/signal
 	iprop-stats = @objdir@/iprop-stats
 	iprop-acl = @srcdir@/iprop-acl
+        log-max-size = 40000
 
 [hdb]
 	db-dir = @objdir@

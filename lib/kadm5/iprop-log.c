@@ -119,6 +119,8 @@ print_entry(kadm5_server_context *server_context,
     krb5_data data;
     krb5_context scontext = server_context->context;
 
+    krb5_data_zero(&data);
+
     off_t end = krb5_storage_seek(sp, 0, SEEK_CUR) + len;
 
     krb5_error_code ret;
@@ -263,6 +265,7 @@ print_entry(kadm5_server_context *server_context,
     default:
 	abort();
     }
+    krb5_data_free(&data);
     krb5_storage_seek(sp, end, SEEK_SET);
 }
 

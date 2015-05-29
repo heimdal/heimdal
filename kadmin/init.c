@@ -158,6 +158,13 @@ init(struct init_options *opt, int argc, char **argv)
 	return 0;
     }
     db->hdb_close(context, db);
+    ret = kadm5_log_init(kadm_handle);
+    if (ret)
+        krb5_err(context, 1, ret, "Failed iprop log initialization");
+    ret = kadm5_log_nop(kadm_handle);
+    if (ret)
+        krb5_err(context, 1, ret, "Failed iprop log initialization");
+    kadm5_log_end(kadm_handle);
     for(i = 0; i < argc; i++){
 	krb5_principal princ;
 	const char *realm = argv[i];

@@ -201,10 +201,13 @@ _kadm5_set_keys2(kadm5_server_context *context,
 
 	    setup_Key(&key, &salt, key_data, k);
 	    ret = add_Keys(&hkset.keys, &key);
-	    if (ret)
+	    if (ret) {
+                free_hdb_keyset(&hkset);
 		goto out;
+            }
 	}
 	ret = add_HDB_Ext_KeySet(hist_keys, &hkset);
+        free_hdb_keyset(&hkset);
 	if (ret)
 	    goto out;
 	replace_hist_keys = 1;
@@ -249,6 +252,7 @@ _kadm5_set_keys2(kadm5_server_context *context,
      *
      * Of course, the above hdb_replace_extension() is not at all efficient...
      */
+    free_HDB_extension(&ext);
     free_Keys(&ent->keys);
     ent->keys = keys;
     hdb_entry_set_pw_change_time(context->context, ent, 0);
@@ -258,7 +262,6 @@ _kadm5_set_keys2(kadm5_server_context *context,
 
 out:
     free_Keys(&keys);
-    free_hdb_keyset(&hkset);
     free_HDB_extension(&ext);
     return ret;
 }

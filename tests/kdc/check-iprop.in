@@ -35,8 +35,7 @@ top_builddir="@top_builddir@"
 env_setup="@env_setup@"
 objdir="@objdir@"
 
-default_db_type=@default_db_type@
-db_type=${1:-${default_db_type}}
+db_type=@db_type@
 
 . ${env_setup}
 
@@ -174,6 +173,11 @@ ${kadmin} -l delete host/bar@${R} || exit 1
 sleep 2
 KRB5_CONFIG="${objdir}/krb5-slave.conf" \
 ${kadmin} -l get host/bar@${R} > /dev/null 2>/dev/null && exit 1
+
+# See note below in LMDB sanity checking
+echo "Re-add host"
+${kadmin} -l add --random-key --use-defaults host/foo@${R} || exit 1
+${kadmin} -l add --random-key --use-defaults host/bar@${R} || exit 1
 
 echo "kill slave and remove log and database"
 > iprop-stats
@@ -336,5 +340,15 @@ KRB5_CONFIG=${objdir}/krb5-slave.conf \
 ${iprop_log} last-version > slave-last.tmp
 ${iprop_log} last-version > master-last.tmp
 cmp master-last.tmp slave-last.tmp || exit 1
+
+if [ "$db_type" = lmdb ]; then
+    # Sanity check that we have the same number of principals at the HDB
+    # and LMDB levels.
+    #
+    echo "checking that principals in DB == entries in LMDB"
+    princs=`${kadmin} -l list '*' | wc -l`
+    entries=`mdb_stat -n current-db.mdb | grep 'Entries:' | awk '{print $2}'`
+    [ "`expr 1 + "$princs"`" -eq "$entries" ] || exit 1
+fi
 
 exit $ec

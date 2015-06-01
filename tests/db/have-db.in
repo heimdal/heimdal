@@ -38,6 +38,18 @@ top_builddir="@top_builddir@"
 
 . ${top_builddir}/tests/bin/setup-env
 
+if [ $# != 0 ]; then
+    for type in "$@"; do
+        for have_type in \
+            `${kdc} --builtin-hdb | sed 's/^builtin hdb backends: //'`; do
+            if [ "$type" = "$have_type" ]; then
+                exit 0
+            fi
+        done
+    done
+    exit 1
+fi
+
 list=`${kdc} --builtin-hdb | sed 's/^builtin hdb backends: //'`
 oldIFS="$IFS"
 IPS=,
@@ -52,6 +64,7 @@ while [ $# != 0 ] ; do
     db4:*) exit 0 ;;
     db3:*) exit 0 ;;
     lmdb:*) exit 0 ;;
+    sqlite:*) exit 0 ;;
     esac
     shift
 done

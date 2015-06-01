@@ -4,6 +4,11 @@ dnl tests for various db libraries
 dnl
 
 AC_DEFUN([rk_DB],[
+AC_ARG_WITH(db-type-preference,
+                       AS_HELP_STRING([--with-db-type-preference],
+                                      [specify HDB backend DB type preference as whitespace-separated list]),
+                       [db_type_preference="$withval"],
+                       [db_type_preference="db3 db1 lmdb sqlite"])
 AC_ARG_WITH(berkeley-db,
                        AS_HELP_STRING([--with-berkeley-db],
                                       [enable support for berkeley db @<:@default=check@:>@]),
@@ -136,9 +141,18 @@ AS_IF([test "x$enable_mdb_db" != xno],
 		AC_CHECK_LIB(lmdb, mdb_env_create, have_lmdb=yes; LMDBLIB="-llmdb"
 		AC_DEFINE(HAVE_LMDB, 1, [define if you have the LMDB library]))])])
 
-AS_IF([test "x$have_db3" = xyes -a "$db_type" = unknown], db_type=db3, db_type=unknown)
-AS_IF([test "x$have_db1" = xyes -a "$db_type" = unknown], db_type=db1, db_type=unknown)
-AS_IF([test "x$have_lmdb" = xyes -a "$db_type" = unknown], db_type=lmdb, db_type=unknown)
+for db_type in unknown $db_type_preference; do
+    if eval test \"x\$have_${db_type}\" = xyes; then
+        break
+    fi
+    db_type=unknown
+done
+
+AS_IF([test "x$have_db3" = xyes -a "$db_type" = unknown], db_type=db3, db_type="$db_type")
+AS_IF([test "x$have_db1" = xyes -a "$db_type" = unknown], db_type=db1, db_type="$db_type")
+AS_IF([test "x$have_lmdb" = xyes -a "$db_type" = unknown], db_type=lmdb, db_type="$db_type")
+
+echo "CHECK: db_type=$db_type" > /dev/tty
 
 if test "$enable_ndbm_db" != "no"; then
 
@@ -252,4 +266,5 @@ AC_SUBST(LMDBLIB)dnl
 AC_SUBST(NDBMLIB)dnl
 AC_SUBST(NDBMLIB)dnl
 AC_SUBST(db_type)dnl
+AC_SUBST(db_type_preference)dnl
 ])

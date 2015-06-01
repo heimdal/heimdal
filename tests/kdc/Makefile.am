@@ -58,6 +58,7 @@ do_subst = $(heim_verbose)sed $(do_dlopen) \
 	-e 's,[@]pwport[@],$(pwport),g' \
 	-e 's,[@]objdir[@],$(top_builddir)/tests/kdc,g' \
 	-e 's,[@]top_builddir[@],$(top_builddir),g' \
+	-e 's,[@]db_type[@],$(db_type),g' \
 	-e 's,[@]EGREP[@],$(EGREP),g' 
 
 chmod = chmod

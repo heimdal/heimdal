@@ -8,7 +8,7 @@ AC_ARG_WITH(db-type-preference,
                        AS_HELP_STRING([--with-db-type-preference],
                                       [specify HDB backend DB type preference as whitespace-separated list]),
                        [db_type_preference="$withval"],
-                       [db_type_preference="db3 db1 lmdb sqlite"])
+                       [db_type_preference="lmdb db3 db1 sqlite"])
 AC_ARG_WITH(berkeley-db,
                        AS_HELP_STRING([--with-berkeley-db],
                                       [enable support for berkeley db @<:@default=check@:>@]),

@@ -157,6 +157,10 @@ DB_rename(krb5_context context, HDB *db, const char *new_name)
     int ret;
     char *old, *new;
 
+    if (strncmp(new_name, "db:", sizeof("db:") - 1) == 0)
+        new_name += sizeof("db:") - 1;
+    else if (strncmp(new_name, "db1:", sizeof("db1:") - 1) == 0)
+        new_name += sizeof("db1:") - 1;
     asprintf(&old, "%s.db", db->hdb_name);
     asprintf(&new, "%s.db", new_name);
     ret = rename(old, new);

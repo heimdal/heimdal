@@ -168,6 +168,11 @@ DB_rename(krb5_context context, HDB *db, const char *new_name)
     int ret;
     char *old, *new;
 
+    if (strncmp(new_name, "db:", sizeof("db:") - 1) == 0)
+        new_name += sizeof("db:") - 1;
+    else if (strncmp(new_name, "db3:", sizeof("db3:") - 1) == 0)
+        new_name += sizeof("db3:") - 1;
+
     ret = asprintf(&old, "%s.db", db->hdb_name);
     if (ret == -1)
 	return ENOMEM;

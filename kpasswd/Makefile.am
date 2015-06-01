@@ -22,7 +22,7 @@ kpasswdd_LDADD = \
 	$(LDADD) \
 	$(LIB_pidfile) \
 	$(LIB_dlopen) \
-	$(DBLIB)
+	$(DB3LIB) $(DB1LIB) $(LMDBLIB) $(NDBMLIB)
 
 LDADD = $(top_builddir)/lib/krb5/libkrb5.la \
 	$(LIB_hcrypto) \

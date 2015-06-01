@@ -31,7 +31,7 @@ LDADD = $(LIB_otp) \
 	$(top_builddir)/lib/asn1/libasn1.la \
 	$(LIB_roken) \
 	$(LIB_security) \
-	$(DBLIB)
+	$(DB3LIB) $(DB1LIB) $(LMDBLIB) $(NDBMLIB)
 
 $(srcdir)/login-protos.h: $(login_SOURCES)
 	cd $(srcdir); perl ../../cf/make-proto.pl -o login-protos.h -q -P comment $(login_SOURCES) || rm -f login-protos.h

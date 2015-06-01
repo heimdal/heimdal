@@ -21,14 +21,14 @@ libotp_la_LIBADD  = $(LIB_hcrypto) $(LIB_roken)
 
 if HAVE_DB1
 ndbm_wrap = ndbm_wrap.c ndbm_wrap.h
-libotp_la_LIBADD += $(LIB_db_create)
+libotp_la_LIBADD += $(DB1LIB)
 else
 if HAVE_DB3
 ndbm_wrap = ndbm_wrap.c ndbm_wrap.h
-libotp_la_LIBADD += $(LIB_db_create)
+libotp_la_LIBADD += $(DB3LIB)
 else
 ndbm_wrap =
-libotp_la_LIBADD += $(LIB_NDBM)
+libotp_la_LIBADD += $(NDBMLIB)
 endif
 endif
 

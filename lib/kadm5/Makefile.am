@@ -133,7 +133,7 @@ LDADD = \
 	$(top_builddir)/lib/asn1/libasn1.la \
 	$(LIB_hcrypto) \
 	$(LIB_roken) \
-	$(DBLIB) \
+	$(DB3LIB) $(DB1LIB) $(LMDBLIB) $(NDBMLIB) \
 	$(LIB_dlopen) \
 	$(LIB_pidfile)
 
@@ -146,7 +146,7 @@ iprop_log_LDADD = \
 	$(top_builddir)/lib/sl/libsl.la \
 	$(LIB_readline) \
 	$(LIB_roken) \
-	$(DBLIB) \
+	$(DB3LIB) $(DB1LIB) $(LMDBLIB) $(NDBMLIB) \
 	$(LIB_dlopen) \
 	$(LIB_pidfile)
 

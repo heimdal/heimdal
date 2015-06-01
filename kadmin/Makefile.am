@@ -65,7 +65,7 @@ LDADD_common = \
 	$(LIB_hcrypto) \
 	$(top_builddir)/lib/asn1/libasn1.la \
 	$(LIB_roken) \
-	$(DBLIB)
+	$(DB3LIB) $(DB1LIB) $(LMDBLIB) $(NDBMLIB)
 
 kadmind_LDADD = $(top_builddir)/lib/kadm5/libkadm5srv.la \
 	../lib/gssapi/libgssapi.la \

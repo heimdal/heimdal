@@ -47,10 +47,11 @@ IFS="$oldIFS"
 while [ $# != 0 ] ; do
     case $1 in
     db:*) exit 0 ;;
+    db1:*) exit 0 ;;
     gdbm:*) exit 0 ;;
     db4:*) exit 0 ;;
     db3:*) exit 0 ;;
-    ldb:*) exit 0 ;;
+    lmdb:*) exit 0 ;;
     esac
     shift
 done

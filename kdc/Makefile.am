@@ -86,7 +86,7 @@ hprop_LDADD = \
 	$(LIB_hcrypto) \
 	$(top_builddir)/lib/asn1/libasn1.la \
 	$(LIB_roken) \
-	$(DBLIB) 
+	$(DB3LIB) $(DB1LIB) $(LMDBLIB) $(NDBMLIB)
 
 hpropd_LDADD = \
 	$(top_builddir)/lib/hdb/libhdb.la \
@@ -95,7 +95,7 @@ hpropd_LDADD = \
 	$(LIB_hcrypto) \
 	$(top_builddir)/lib/asn1/libasn1.la \
 	$(LIB_roken) \
-	$(DBLIB) 
+	$(DB3LIB) $(DB1LIB) $(LMDBLIB) $(NDBMLIB)
 
 if PKINIT
 LIB_pkinit = $(top_builddir)/lib/hx509/libhx509.la
@@ -110,14 +110,14 @@ libkdc_la_LIBADD = \
 	$(LIB_hcrypto) \
 	$(top_builddir)/lib/asn1/libasn1.la \
 	$(LIB_roken) \
-	$(DBLIB) 
+	$(DB3LIB) $(DB1LIB) $(LMDBLIB) $(NDBMLIB)
 
 LDADD = $(top_builddir)/lib/hdb/libhdb.la \
 	$(top_builddir)/lib/krb5/libkrb5.la \
 	$(LIB_hcrypto) \
 	$(top_builddir)/lib/asn1/libasn1.la \
 	$(LIB_roken) \
-	$(DBLIB)
+	$(DB3LIB) $(DB1LIB) $(LMDBLIB) $(NDBMLIB)
 
 kdc_LDADD = libkdc.la $(LDADD) $(LIB_pidfile) $(CAPNG_LIBS)
 

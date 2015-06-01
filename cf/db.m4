@@ -24,10 +24,12 @@ AC_ARG_ENABLE(ndbm-db,
 
 AC_ARG_ENABLE(mdb-db,
                        AS_HELP_STRING([--disable-mdb-db],
-                                      [if you don't want OpenLDAP libmdb db]),[
+                                      [if you don't want LMDB]),[
 ])
 
-have_ndbm=no
+have_db1=no
+have_db3=no
+have_lmdb=no
 db_type=unknown
 
 AS_IF([test "x$with_berkeley_db" != xno],
@@ -70,11 +72,11 @@ dnl db_create is used by db3 and db4 and db5
   ],[NULL, NULL, 0])
 
   if test "$ac_cv_func_db_create" = "yes"; then
-    db_type=db3
+    have_db3=yes
     if test "$ac_cv_funclib_db_create" != "yes"; then
-      DBLIB="$ac_cv_funclib_db_create"
+      DB3LIB="$ac_cv_funclib_db_create"
     else
-      DBLIB=""
+      DB3LIB=""
     fi
     AC_DEFINE(HAVE_DB3, 1, [define if you have a berkeley db3/4/5 library])
   fi
@@ -93,11 +95,11 @@ dnl dbopen is used by db1/db2
   ],[NULL, 0, 0, 0, NULL])
 
   if test "$ac_cv_func_dbopen" = "yes"; then
-    db_type=db1
+    have_db1=yes
     if test "$ac_cv_funclib_dbopen" != "yes"; then
-      DBLIB="$ac_cv_funclib_dbopen"
+      DB1LIB="$ac_cv_funclib_dbopen"
     else
-      DBLIB=""
+      DB1LIB=""
     fi
     AC_DEFINE(HAVE_DB1, 1, [define if you have a berkeley db1/2 library])
   fi
@@ -114,9 +116,9 @@ dnl test for ndbm compatability
   
     if test "$ac_cv_func_dbm_firstkey" = "yes"; then
       if test "$ac_cv_funclib_dbm_firstkey" != "yes"; then
-        LIB_NDBM="$ac_cv_funclib_dbm_firstkey"
+        NDBMLIB="$ac_cv_funclib_dbm_firstkey"
       else
-        LIB_NDBM=""
+        NDBMLIB=""
       fi
       AC_DEFINE(HAVE_DB_NDBM, 1, [define if you have ndbm compat in db])
       AC_DEFINE(HAVE_NEW_DB, 1, [Define if NDBM really is DB (creates files *.db)])
@@ -128,13 +130,15 @@ dnl test for ndbm compatability
 
 ]) # fi berkeley db
 
-if test "$enable_mdb_db" != "no"; then
-  if test "$db_type" = "unknown"; then
-    AC_CHECK_HEADER(mdb.h, [
-		AC_CHECK_LIB(mdb, mdb_env_create, db_type=mdb; DBLIB="-lmdb"
-		AC_DEFINE(HAVE_MDB, 1, [define if you have the OpenLDAP mdb library]))])
-  fi
-fi
+
+AS_IF([test "x$enable_mdb_db" != xno],
+    [AC_CHECK_HEADER(lmdb.h, [
+		AC_CHECK_LIB(lmdb, mdb_env_create, have_lmdb=yes; LMDBLIB="-llmdb"
+		AC_DEFINE(HAVE_LMDB, 1, [define if you have the LMDB library]))])])
+
+AS_IF([test "x$have_db3" = xyes -a "$db_type" = unknown], db_type=db3, db_type=unknown)
+AS_IF([test "x$have_db1" = xyes -a "$db_type" = unknown], db_type=db1, db_type=unknown)
+AS_IF([test "x$have_lmdb" = xyes -a "$db_type" = unknown], db_type=lmdb, db_type=unknown)
 
 if test "$enable_ndbm_db" != "no"; then
 
@@ -157,16 +161,12 @@ if test "$enable_ndbm_db" != "no"; then
   
     if test "$ac_cv_func_dbm_firstkey" = "yes"; then
       if test "$ac_cv_funclib_dbm_firstkey" != "yes"; then
-        LIB_NDBM="$ac_cv_funclib_dbm_firstkey"
+        NDBMLIB="$ac_cv_funclib_dbm_firstkey"
       else
-        LIB_NDBM=""
+        NDBMLIB=""
       fi
       AC_DEFINE(HAVE_NDBM, 1, [define if you have a ndbm library])dnl
       have_ndbm=yes
-      if test "$db_type" = "unknown"; then
-        db_type=ndbm
-        DBLIB="$LIB_NDBM"
-      fi
     else
   
       $as_unset ac_cv_func_dbm_firstkey
@@ -184,15 +184,14 @@ if test "$enable_ndbm_db" != "no"; then
   
       if test "$ac_cv_func_dbm_firstkey" = "yes"; then
         if test "$ac_cv_funclib_dbm_firstkey" != "yes"; then
-  	LIB_NDBM="$ac_cv_funclib_dbm_firstkey"
+	NDBMLIB="$ac_cv_funclib_dbm_firstkey"
         else
-  	LIB_NDBM=""
+	NDBMLIB=""
         fi
         AC_DEFINE(HAVE_NDBM, 1, [define if you have a ndbm library])dnl
         have_ndbm=yes
         if test "$db_type" = "unknown"; then
   	db_type=ndbm
-  	DBLIB="$LIB_NDBM"
         fi
       fi
     fi
@@ -229,10 +228,10 @@ int main(int argc, char **argv)
     fi],[AC_MSG_RESULT([no])],[AC_MSG_RESULT([no-cross])])
 fi
 
-AM_CONDITIONAL(HAVE_DB1, test "$db_type" = db1)dnl
-AM_CONDITIONAL(HAVE_DB3, test "$db_type" = db3)dnl
-AM_CONDITIONAL(HAVE_MDB, test "$db_type" = mdb)dnl
-AM_CONDITIONAL(HAVE_NDBM, test "$db_type" = ndbm)dnl
+AM_CONDITIONAL(HAVE_DB1, test "$have_db1" = yes)dnl
+AM_CONDITIONAL(HAVE_DB3, test "$have_db3" = yes)dnl
+AM_CONDITIONAL(HAVE_LMDB, test "$have_lmdb" = yes)dnl
+AM_CONDITIONAL(HAVE_NDBM, test "$have_ndbm" = yes)dnl
 AM_CONDITIONAL(HAVE_DBHEADER, test "$dbheader" != "")dnl
 
 ## it's probably not correct to include LDFLAGS here, but we might
@@ -243,7 +242,14 @@ for i in $LDFLAGS; do
 	-L*) z="$z $i";;
 	esac
 done
-DBLIB="$z $DBLIB"
-AC_SUBST(DBLIB)dnl
-AC_SUBST(LIB_NDBM)dnl
+DB3LIB="$z $DB3LIB"
+DB1LIB="$z $DB1LIB"
+LMDBLIB="$z $LMDBLIB"
+NDMBLIB="$z $NDBMLIB"
+AC_SUBST(DB3LIB)dnl
+AC_SUBST(DB1LIB)dnl
+AC_SUBST(LMDBLIB)dnl
+AC_SUBST(NDBMLIB)dnl
+AC_SUBST(NDBMLIB)dnl
+AC_SUBST(db_type)dnl
 ])

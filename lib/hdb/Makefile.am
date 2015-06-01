@@ -110,8 +110,7 @@ libhdb_la_LIBADD = \
 	$(LIBADD_roken) \
 	$(ldap_lib) \
 	$(LIB_dlopen) \
-	$(DBLIB) \
-	$(LIB_NDBM)
+	$(DB3LIB) $(DB1LIB) $(LMDBLIB) $(NDBMLIB)
 
 HDB_PROTOS = $(srcdir)/hdb-protos.h $(srcdir)/hdb-private.h
 

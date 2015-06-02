@@ -832,13 +832,13 @@ hdb_sqlite_remove(krb5_context context, HDB *db,
  *
  * @param context A Kerberos 5 context.
  * @param db a returned database handle.
- * @param argument filename
+ * @param filename filename
  *
  * @return        0 on success, an error code if not
  */
 
 krb5_error_code
-hdb_sqlite_create(krb5_context context, HDB **db, const char *argument)
+hdb_sqlite_create(krb5_context context, HDB **db, const char *filename)
 {
     krb5_error_code ret;
     hdb_sqlite_db *hsdb;
@@ -847,8 +847,16 @@ hdb_sqlite_create(krb5_context context, HDB **db, const char *argument)
     if (*db == NULL)
 	return krb5_enomem(context);
 
+    (*db)->hdb_name = strdup(filename);
+    if ((*db)->hdb_name == NULL) {
+        free(*db);
+        *db = NULL;
+        return krb5_enomem(context);
+    }
+
     hsdb = (hdb_sqlite_db*) calloc(1, sizeof (*hsdb));
     if (hsdb == NULL) {
+        free((*db)->hdb_name);
         free(*db);
         *db = NULL;
 	return krb5_enomem(context);
@@ -857,7 +865,7 @@ hdb_sqlite_create(krb5_context context, HDB **db, const char *argument)
     (*db)->hdb_db = hsdb;
 
     /* XXX make_database should make sure everything else is freed on error */
-    ret = hdb_sqlite_make_database(context, *db, argument);
+    ret = hdb_sqlite_make_database(context, *db, filename);
     if (ret) {
         free((*db)->hdb_db);
         free(*db);

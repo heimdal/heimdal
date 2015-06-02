@@ -55,6 +55,7 @@ wind.dxy: wind.din Makefile
 	mv wind.dxy.tmp wind.dxy
 
 texi_subst = sed -e 's,[@]dbdir[@],$(localstatedir),g' \
+	-e 's,[@]dbtype[@],$(db_type),g' \
 	-e 's,[@]PACKAGE_VERSION[@],$(PACKAGE_VERSION),g'
 
 vars.texi: vars.tin Makefile

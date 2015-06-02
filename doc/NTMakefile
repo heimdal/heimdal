@@ -57,6 +57,7 @@ hx509_TEXINFOS = \
 
 {}.tin{$(OBJ)}.texi:
 	$(SED) -e "s,[@]dbdir[@],x,g"	\
+	-e "s,[@]db_type[@],$(db_type),g" < $** > $@ \
 	-e "s,[@]PACKAGE_VERSION[@],$(VER_PACKAGE_VERSION),g" < $** > $@
 
 MAKEINFOFLAGS = --css-include=$(SRCDIR)/heimdal.css

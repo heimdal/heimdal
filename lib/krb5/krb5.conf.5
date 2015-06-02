@@ -551,8 +551,10 @@ manual page for a list of defined destinations.
 .Bl -tag -width "xxx" -offset indent
 .It Li database Li = {
 .Bl -tag -width "xxx" -offset indent
-.It Li dbname Li = Va DATABASENAME
-Use this database for this realm.
+.It Li dbname Li = Va [DATBASETYPE:]DATABASENAME
+Use this database for this realm.  The
+.Va DATABASETYPE
+should be one of 'lmdb', 'db3', 'db1', 'db', 'sqlite', or 'ldap'.
 See the info documetation how to configure different database backends.
 .It Li realm Li = Va REALM
 Specifies the realm that will be stored in this database.

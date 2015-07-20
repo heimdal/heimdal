@@ -931,10 +931,10 @@ p11_init(hx509_context context,
 
 	for (i = 0; i < p->num_slots; i++) {
 	    ret = p11_init_slot(context, p, lock, slot_ids[i], i, &p->slot[i]);
-	    if (ret)
-		break;
-	    if (p->slot[i].flags & P11_TOKEN_PRESENT)
-		num_tokens++;
+	    if (!ret) {
+	        if (p->slot[i].flags & P11_TOKEN_PRESENT)
+	            num_tokens++;
+	    }
 	}
 	free(slot_ids);
 	if (ret)

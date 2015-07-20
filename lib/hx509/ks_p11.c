@@ -459,7 +459,18 @@ p11_get_session(hx509_context context,
 				       "Failed to login on slot id %d "
 				       "with error: 0x%08x",
 				       (int)slot->id, ret);
-	    return HX509_PKCS11_LOGIN;
+	    switch(ret) {
+	        case CKR_PIN_LOCKED:
+	            return HX509_PKCS11_PIN_LOCKED;
+	        case CKR_PIN_EXPIRED:
+	            return HX509_PKCS11_PIN_EXPIRED;
+	        case CKR_PIN_INCORRECT:
+	            return HX509_PKCS11_PIN_INCORRECT;
+	        case CKR_USER_PIN_NOT_INITIALIZED:
+	            return HX509_PKCS11_USER_PIN_NOT_INITIALIZED;
+	        default:
+	            return HX509_PKCS11_LOGIN;
+	    }
 	} else
 	    slot->flags |= P11_LOGIN_DONE;
 

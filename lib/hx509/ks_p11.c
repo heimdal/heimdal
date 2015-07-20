@@ -343,7 +343,7 @@ p11_init_slot(hx509_context context,
     if (ret) {
 	hx509_set_error_string(context, 0, HX509_PKCS11_NO_TOKEN,
 			       "Failed to init PKCS11 slot %d "
-			       "with error 0x08x",
+			       "with error 0x%08x",
 			       num, ret);
 	return HX509_PKCS11_NO_TOKEN;
     }

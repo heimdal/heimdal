@@ -31,14 +31,14 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 
-require 'getopts.pl';
+use Getopt::Std;
 
 my $output;
 my $CFILE, $HFILE;
 my $onlybase;
 my $header = 0;
 
-Getopts('b:h') || die "foo";
+getopts('b:h') || die "USAGE: ./gen-oid [-b BASE] [-h HEADER]";
 
 if($opt_b) {
     $onlybase = $opt_b;

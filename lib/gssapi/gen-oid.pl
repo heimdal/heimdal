@@ -122,10 +122,10 @@ while(<>) {
 
 }
 
-foreach my $k (keys %types) {
+foreach my $k (sort keys %types) {
     if (!$header) {
 	print "struct _gss_oid_name_table _gss_ont_" . $k . "[] = {\n";
-	foreach my $m (values %tables) {
+	foreach my $m (sort {$$a->{oid} cmp $$b->{oid}} values %tables) {
 	    if ($$m->{type} eq $k) {
 		printf "  { %s, \"%s\", %s, %s },\n", $$m->{oid}, $$m->{oid}, $$m->{short}, $$m->{long};
 	    }

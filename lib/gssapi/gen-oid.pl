@@ -130,7 +130,7 @@ foreach my $k (sort keys %types) {
 		printf "  { %s, \"%s\", %s, %s },\n", $$m->{oid}, $$m->{oid}, $$m->{short}, $$m->{long};
 	    }
 	}
-	printf "  { NULL }\n";
+	printf "  { NULL, NULL, NULL, NULL }\n";
 	printf "};\n\n";
 	
     }

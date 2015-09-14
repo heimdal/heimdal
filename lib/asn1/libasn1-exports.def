@@ -348,8 +348,6 @@ EXPORTS
 	copy_OriginatorInfo
 	copy_OtherName
 	copy_PADATA_TYPE
-	copy_PA_ClientCanonicalized
-	copy_PA_ClientCanonicalizedNames
 	copy_PA_DATA
 	copy_PA_ENC_SAM_RESPONSE_ENC
 	copy_PA_ENC_TS_ENC
@@ -602,8 +600,6 @@ EXPORTS
 	decode_OriginatorInfo
 	decode_OtherName
 	decode_PADATA_TYPE
-	decode_PA_ClientCanonicalized
-	decode_PA_ClientCanonicalizedNames
 	decode_PA_DATA
 	decode_PA_ENC_SAM_RESPONSE_ENC
 	decode_PA_ENC_TS_ENC
@@ -974,8 +970,6 @@ EXPORTS
 	encode_OriginatorInfo
 	encode_OtherName
 	encode_PADATA_TYPE
-	encode_PA_ClientCanonicalized
-	encode_PA_ClientCanonicalizedNames
 	encode_PA_DATA
 	encode_PA_ENC_SAM_RESPONSE_ENC
 	encode_PA_ENC_TS_ENC
@@ -1228,8 +1222,6 @@ EXPORTS
 	free_OriginatorInfo
 	free_OtherName
 	free_PADATA_TYPE
-	free_PA_ClientCanonicalized
-	free_PA_ClientCanonicalizedNames
 	free_PA_DATA
 	free_PA_ENC_SAM_RESPONSE_ENC
 	free_PA_ENC_TS_ENC
@@ -1493,8 +1485,6 @@ EXPORTS
 	length_OriginatorInfo
 	length_OtherName
 	length_PADATA_TYPE
-	length_PA_ClientCanonicalized
-	length_PA_ClientCanonicalizedNames
 	length_PA_DATA
 	length_PA_ENC_SAM_RESPONSE_ENC
 	length_PA_ENC_TS_ENC

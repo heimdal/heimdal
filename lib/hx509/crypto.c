@@ -3015,6 +3015,8 @@ match_keys_ec(hx509_cert c, hx509_private_key private_key)
 int
 _hx509_match_keys(hx509_cert c, hx509_private_key key)
 {
+    if (!key->ops)
+	return 0;
     if (der_heim_oid_cmp(key->ops->key_oid, ASN1_OID_ID_PKCS1_RSAENCRYPTION) == 0)
 	return match_keys_rsa(c, key);
     if (der_heim_oid_cmp(key->ops->key_oid, ASN1_OID_ID_ECPUBLICKEY) == 0)

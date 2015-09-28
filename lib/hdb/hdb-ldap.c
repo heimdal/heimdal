@@ -2,6 +2,7 @@
  * Copyright (c) 1999-2001, 2003, PADL Software Pty Ltd.
  * Copyright (c) 2004, Andrew Bartlett.
  * Copyright (c) 2003 - 2008, Kungliga Tekniska Högskolan.
+ * Copyright (c) 2015, Timothy Pearson.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -91,6 +92,7 @@ static char * krb5kdcentry_attrs[] = {
     "krb5PasswordEnd",
     "krb5PrincipalName",
     "krb5PrincipalRealm",
+    "krb5ExtendedAttributes",
     "krb5ValidEnd",
     "krb5ValidStart",
     "modifiersName",
@@ -514,6 +516,33 @@ LDAP_entry2mods(krb5_context context, HDB * db, hdb_entry_ex * ent,
 			    ent->entry.kvno);
 	if (ret)
 	    goto out;
+    }
+
+    if (is_heimdal_entry && ent->entry.extensions) {
+	if (!is_new_entry) {
+	    vals = ldap_get_values_len(HDB2LDAP(db), msg, "krb5ExtendedAttributes");
+	    if (vals) {
+		ldap_value_free_len(vals);
+		ret = LDAP_addmod(&mods, LDAP_MOD_DELETE, "krb5ExtendedAttributes", NULL);
+		if (ret)
+		    goto out;
+	    }
+	}
+
+	for (i = 0; i < ent->entry.extensions->len; i++) {
+	    unsigned char *buf;
+	    size_t size, sz = 0;
+
+	    ASN1_MALLOC_ENCODE(HDB_extension, buf, size, &ent->entry.extensions->val[i], &sz, ret);
+	    if (ret)
+		goto out;
+	    if (size != sz)
+		krb5_abortx(context, "internal error in ASN.1 encoder");
+
+	    ret = LDAP_addmod_len(&mods, LDAP_MOD_ADD, "krb5ExtendedAttributes", buf, sz);
+	    if (ret)
+		goto out;
+	}
     }
 
     if (is_heimdal_entry && ent->entry.valid_start) {
@@ -981,6 +1010,7 @@ LDAP_message2entry(krb5_context context, HDB * db, LDAPMessage * msg,
     char *unparsed_name = NULL, *dn = NULL, *ntPasswordIN = NULL;
     char *samba_acct_flags = NULL;
     struct berval **keys;
+    struct berval **extensions;
     struct berval **vals;
     int tmp, tmp_time, i, ret, have_arcfour = 0;
 
@@ -1046,6 +1076,33 @@ LDAP_message2entry(krb5_context context, HDB * db, LDAPMessage * msg,
 	ret = HDB_ERR_NOENTRY;
 	goto out;
 #endif
+    }
+
+    extensions = ldap_get_values_len(HDB2LDAP(db), msg, "krb5ExtendedAttributes");
+    if (extensions != NULL) {
+	size_t l;
+
+	ent->entry.extensions = malloc(sizeof(*(ent->entry.extensions)));
+	if (ent->entry.etypes == NULL) {
+	    ret = krb5_enomem(context);
+	    goto out;
+	}
+	ent->entry.extensions->len = ldap_count_values_len(extensions);
+	ent->entry.extensions->val = (HDB_extension *) calloc(ent->entry.extensions->len, sizeof(HDB_extension));
+	if (ent->entry.extensions->val == NULL) {
+	    ent->entry.extensions->len = 0;
+	    ret = krb5_enomem(context);
+	    goto out;
+	}
+	for (i = 0; i < ent->entry.extensions->len; i++) {
+	    ret = decode_HDB_extension((unsigned char *) extensions[i]->bv_val,
+		       (size_t) extensions[i]->bv_len, &ent->entry.extensions->val[i], &l);
+	    if (ret)
+		krb5_set_error_message(context, ret, "decode_HDB_extension failed");
+	}
+	ber_bvecfree(extensions);
+    } else {
+	ent->entry.extensions = NULL;
     }
 
     vals = ldap_get_values_len(HDB2LDAP(db), msg, "krb5EncryptionType");

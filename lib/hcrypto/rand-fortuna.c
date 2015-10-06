@@ -486,20 +486,6 @@ fortuna_reseed(void)
 	entropy_p = 1;
     }
 #endif
-#if defined(HAVE_RAND_EGD)
-    /*
-     * Only to get egd entropy if /dev/random or arc4rand failed since
-     * it can be horribly slow to generate new bits.
-     */
-    if (!entropy_p) {
-	unsigned char buf[INIT_BYTES];
-	if ((*hc_rand_egd_method.bytes)(buf, sizeof(buf)) == 1) {
-	    add_entropy(&main_state, buf, sizeof(buf));
-	    entropy_p = 1;
-	    memset(buf, 0, sizeof(buf));
-	}
-    }
-#endif
     /*
      * Fall back to gattering data from timer and secret files, this
      * is really the last resort.

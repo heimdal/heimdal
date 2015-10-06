@@ -226,9 +226,6 @@ HEIMDAL_CRYPTO_1.0 {
 		hc_RAND_add;
 		hc_RAND_bytes;
 		hc_RAND_cleanup;
-		hc_RAND_egd;
-		hc_RAND_egd_bytes;
-		hc_RAND_egd_method;
 		hc_RAND_file_name;
 		hc_RAND_fortuna_method;
 		hc_RAND_get_rand_method;

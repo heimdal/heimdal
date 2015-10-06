@@ -125,10 +125,6 @@ main(int argc, char **argv)
 	else if (strcasecmp(rand_method, "unix") == 0)
 	    RAND_set_rand_method(RAND_unix_method());
 #endif
-#if defined(HAVE_RAND_EGD)
-	else if (strcasecmp(rand_method, "egd") == 0)
-	    RAND_set_rand_method(RAND_egd_method());
-#endif
 #ifdef WIN32
 	else if (strcasecmp(rand_method, "w32crypto") == 0)
 	    RAND_set_rand_method(RAND_w32crypto_method());

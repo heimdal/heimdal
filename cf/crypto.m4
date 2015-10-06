@@ -118,7 +118,7 @@ if test "$crypto_lib" = "unknown" -a "$with_openssl" != "no"; then
 			break;
 		fi
 	done
-	AC_CHECK_LIB(crypto, RAND_egd, AC_DEFINE(HAVE_RAND_EGD, 1, [Define if the libcrypto has RAND_egd]))
+	AC_CHECK_LIB(crypto, OPENSSL_init, [])
 	CFLAGS="$save_CFLAGS"
 	LIBS="$save_LIBS"
 fi

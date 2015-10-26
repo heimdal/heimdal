@@ -31,6 +31,7 @@
 
 #include <config.h>
 #include "roken.h"
+#undef rk_rename
 
 /* rename() for platforms where the native implementation doesn't
  * unlink newname. */

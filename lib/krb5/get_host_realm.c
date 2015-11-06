@@ -159,52 +159,78 @@ config_find_realm(krb5_context context,
  */
 
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
-_krb5_get_host_realm_int (krb5_context context,
-			  const char *host,
-			  krb5_boolean use_dns,
-			  krb5_realm **realms)
+_krb5_get_host_realm_int(krb5_context context,
+                         const char *host,
+                         krb5_boolean use_dns,
+                         krb5_realm **realms)
 {
     const char *p, *q;
+    const char *port;
     krb5_boolean dns_locate_enable;
+    krb5_error_code ret = 0;
+
+    /* Strip off any trailing ":port" suffix. */
+    port = strchr(host, ':');
+    if (port != NULL) {
+        host = strndup(host, port - host);
+        if (host == NULL)
+            return krb5_enomem(context);
+    }
 
     dns_locate_enable = krb5_config_get_bool_default(context, NULL, TRUE,
-	"libdefaults", "dns_lookup_realm", NULL);
+        "libdefaults", "dns_lookup_realm", NULL);
     for (p = host; p != NULL; p = strchr (p + 1, '.')) {
-	if(config_find_realm(context, p, realms) == 0) {
-	    if(strcasecmp(*realms[0], "dns_locate") == 0) {
-		if(use_dns)
-		    for (q = host; q != NULL; q = strchr(q + 1, '.'))
-			if(dns_find_realm(context, q, realms) == 0)
-			    return 0;
-		continue;
-	    } else
-	    	return 0;
-	}
-	else if(use_dns && dns_locate_enable) {
-	    if(dns_find_realm(context, p, realms) == 0)
-		return 0;
-	}
+        if (config_find_realm(context, p, realms) == 0) {
+            if (strcasecmp(*realms[0], "dns_locate") != 0)
+                break;
+	    krb5_free_host_realm(context, *realms);
+	    *realms = NULL;
+            if (!use_dns)
+                continue;
+            for (q = host; q != NULL; q = strchr(q + 1, '.'))
+                if (dns_find_realm(context, q, realms) == 0)
+                    break;
+            if (q)
+                break;
+        } else if (use_dns && dns_locate_enable) {
+            if (dns_find_realm(context, p, realms) == 0)
+                break;
+        }
     }
-    p = strchr(host, '.');
-    if(p != NULL) {
-	p++;
-	*realms = malloc(2 * sizeof(krb5_realm));
-	if (*realms == NULL)
-	    return krb5_enomem(context);
 
-	(*realms)[0] = strdup(p);
-	if((*realms)[0] == NULL) {
-	    free(*realms);
-	    return krb5_enomem(context);
-	}
-	strupr((*realms)[0]);
-	(*realms)[1] = NULL;
-	return 0;
+    /*
+     * If 'p' is NULL, we did not find an explicit realm mapping in either the
+     * configuration file or DNS.  Try the hostname suffix as a last resort.
+     *
+     * XXX: If we implement a KDC-specific variant of this function just for
+     * referrals, we could check whether we have a cross-realm TGT for the
+     * realm in question, and if not try the parent (loop again).
+     */
+    if (p == NULL) {
+        p = strchr(host, '.');
+        if (p != NULL) {
+            p++;
+            *realms = malloc(2 * sizeof(krb5_realm));
+            if (*realms != NULL &&
+                ((*realms)[0] = strdup(p)) != NULL) {
+                strupr((*realms)[0]);
+                (*realms)[1] = NULL;
+            } else {
+                free(*realms);
+                ret = krb5_enomem(context);
+            }
+        } else {
+            krb5_set_error_message(context, KRB5_ERR_HOST_REALM_UNKNOWN,
+                                   N_("unable to find realm of host %s", ""),
+                                   host);
+            ret = KRB5_ERR_HOST_REALM_UNKNOWN;
+        }
     }
-    krb5_set_error_message(context, KRB5_ERR_HOST_REALM_UNKNOWN,
-			   N_("unable to find realm of host %s", ""),
-			   host);
-    return KRB5_ERR_HOST_REALM_UNKNOWN;
+
+    /* If 'port' is not NULL, we have a copy of 'host' to free. */
+    if (port)
+        free((void *)host);
+    return ret;
 }
 
 /*

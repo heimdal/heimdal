@@ -1644,7 +1644,7 @@ server_lookup:
     ret = _kdc_db_fetch(context, config, sp, HDB_F_GET_SERVER | flags,
 			NULL, NULL, &server);
 
-    if(ret == HDB_ERR_NOT_FOUND_HERE) {
+    if (ret == HDB_ERR_NOT_FOUND_HERE) {
 	kdc_log(context, config, 5, "target %s does not have secrets at this KDC, need to proxy", sp);
 	goto out;
     } else if (ret == HDB_ERR_WRONG_REALM) {
@@ -1673,13 +1673,13 @@ server_lookup:
 	    goto out;
 
 	goto server_lookup;
-    } else if(ret){
+    } else if (ret) {
 	const char *new_rlm, *msg;
 	Realm req_rlm;
 	krb5_realm *realms;
 
 	if ((req_rlm = get_krbtgt_realm(&sp->name)) != NULL) {
-	    if(nloop++ < 2) {
+	    if (nloop++ < 2) {
 		new_rlm = find_rpath(context, tgt->crealm, req_rlm);
 		if(new_rlm) {
 		    kdc_log(context, config, 5, "krbtgt for realm %s "
@@ -1699,7 +1699,7 @@ server_lookup:
 		    goto server_lookup;
 		}
 	    }
-	} else if(need_referral(context, config, &b->kdc_options, sp, &realms)) {
+	} else if (need_referral(context, config, &b->kdc_options, sp, &realms)) {
 	    if (strcmp(realms[0], sp->realm) != 0) {
 		kdc_log(context, config, 5,
 			"Returning a referral to realm %s for "
@@ -1710,8 +1710,10 @@ server_lookup:
 		krb5_make_principal(context, &sp, r, KRB5_TGS_NAME,
 				    realms[0], NULL);
 		ret = krb5_unparse_name(context, sp, &spn);
-		if (ret)
+		if (ret) {
+		    krb5_free_host_realm(context, realms);
 		    goto out;
+		}
 
 		if (ref_realm)
 		    free(ref_realm);

@@ -53,7 +53,11 @@
 #include <roken.h>
 
 #ifndef HCRYPTO_DEF_PROVIDER
-#define HCRYPTO_DEF_PROVIDER hcrypto
+# ifdef __APPLE__
+#  define HCRYPTO_DEF_PROVIDER cc
+# else
+#  define HCRYPTO_DEF_PROVIDER hcrypto
+# endif
 #endif
 
 #define HC_CONCAT4(x,y,z,aa)	x ## y ## z ## aa

@@ -46,6 +46,7 @@
 #include <evp-hcrypto.h>
 #include <evp-cc.h>
 #include <evp-w32.h>
+#include <evp-pkcs11.h>
 #include <hex.h>
 #include <err.h>
 
@@ -87,6 +88,8 @@ static unsigned char *d;
 #define PROVIDER_USAGE "hcrypto|cc"
 #elif defined(WIN32)
 #define PROVIDER_USAGE "hcrypto|w32crypto"
+#elif __sun || defined(PKCS11_MODULE_PATH)
+#define PROVIDER_USAGE "hcrypto|pkcs11"
 #else
 #define PROVIDER_USAGE "hcrypto"
 #endif
@@ -121,6 +124,11 @@ test_bulk_cipher(const char *cname, const EVP_CIPHER *c)
     static unsigned char iv[16];
     int i;
     int64_t M = 0;
+
+    if (c == NULL) {
+        printf("%s not supported\n", cname);
+	return 0;
+    }
 
     for (i = 0; i < loops; i++) {
         EVP_CIPHER_CTX ectx;
@@ -170,6 +178,11 @@ test_bulk_digest(const char *cname, const EVP_MD *md)
     int i;
     unsigned int tmp = sizeof(digest);
     int64_t M = 0;
+
+    if (md == NULL) {
+        printf("%s not supported\n", cname);
+	return 0;
+    }
 
     for (i = 0; i < loops; i++) {
         STATS_START(M);
@@ -237,6 +250,20 @@ test_bulk_provider_w32crypto(void)
 }
 #endif /* WIN32 */
 
+#if __sun || defined(PKCS11_MODULE_PATH)
+static void
+test_bulk_provider_pkcs11(void)
+{
+    test_bulk_cipher("pkcs11_aes_256_cbc",	EVP_pkcs11_aes_256_cbc());
+    test_bulk_cipher("pkcs11_rc4",		EVP_pkcs11_rc4());
+    test_bulk_digest("pkcs11_md5",		EVP_pkcs11_md5());
+    test_bulk_digest("pkcs11_sha1",		EVP_pkcs11_sha1());
+    test_bulk_digest("pkcs11_sha256",		EVP_pkcs11_sha256());
+    test_bulk_digest("pkcs11_sha384",		EVP_pkcs11_sha384());
+    test_bulk_digest("pkcs11_sha512",		EVP_pkcs11_sha512());
+}
+#endif /* __sun || PKCS11_MODULE_PATH */
+
 int
 main(int argc, char **argv)
 {
@@ -275,6 +302,10 @@ main(int argc, char **argv)
 #ifdef WIN32
     else if (strcmp(provider, "w32crypto") == 0)
         test_bulk_provider_w32crypto();
+#endif
+#if __sun || defined(PKCS11_MODULE_PATH)
+    else if (strcmp(provider, "pkcs11") == 0)
+        test_bulk_provider_pkcs11();
 #endif
     else
         usage(1);

@@ -48,6 +48,7 @@
 #include <evp-hcrypto.h>
 #include <evp-cc.h>
 #include <evp-w32.h>
+#include <evp-pkcs11.h>
 
 #include <krb5-types.h>
 #include <roken.h>
@@ -55,6 +56,8 @@
 #ifndef HCRYPTO_DEF_PROVIDER
 # ifdef __APPLE__
 #  define HCRYPTO_DEF_PROVIDER cc
+# elif __sun
+#  define HCRYPTO_DEF_PROVIDER pkcs11_hcrypto
 # else
 #  define HCRYPTO_DEF_PROVIDER hcrypto
 # endif
@@ -1126,7 +1129,7 @@ EVP_des_cbc(void)
 }
 
 /**
- * The tripple DES cipher type
+ * The triple DES cipher type
  *
  * @return the DES-EDE3-CBC EVP_CIPHER pointer.
  *

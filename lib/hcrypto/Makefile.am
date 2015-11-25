@@ -2,7 +2,8 @@
 
 include $(top_srcdir)/Makefile.am.common
 
-AM_CPPFLAGS += -I$(srcdir)/libtommath -DUSE_HCRYPTO_LTM=1
+AM_CPPFLAGS += -I$(top_srcdir)/lib/hx509 \
+        -I$(srcdir)/libtommath -DUSE_HCRYPTO_LTM=1
 
 lib_LTLIBRARIES = libhcrypto.la
 check_LTLIBRARIES = libhctest.la
@@ -11,6 +12,7 @@ libhcrypto_la_LDFLAGS = -version-info 5:0:1
 libhcrypto_la_LIBADD = \
 	$(top_builddir)/lib/asn1/libasn1.la \
 	$(LIB_dlopen) \
+	$(LIB_heimbase) \
 	$(LIBADD_roken)
 
 hcryptoincludedir = $(includedir)/hcrypto
@@ -29,6 +31,7 @@ hcryptoinclude_HEADERS =	\
 	evp.h			\
 	evp-hcrypto.h		\
 	evp-cc.h		\
+	evp-pkcs11.h		\
 	hmac.h			\
 	md2.h			\
 	md4.h			\
@@ -114,6 +117,7 @@ libhcrypto_la_SOURCES =	\
 	evp.h		\
 	evp-hcrypto.c	\
 	evp-cc.c	\
+	evp-pkcs11.c	\
 	engine.c	\
 	engine.h	\
 	hash.h		\

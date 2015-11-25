@@ -135,6 +135,17 @@ if test "$crypto_lib" = "unknown"; then
 
 fi
 
+AC_ARG_WITH(pkcs11-module,
+                       AS_HELP_STRING([--with-pkcs11-module=path],
+                                      [use PKCS11 module in path]),
+                       [pkcs11_module="$withval"],
+                       [])
+
+if test "$pkcs11_module" != ""; then
+  AC_DEFINE_UNQUOTED(PKCS11_MODULE_PATH, "$pkcs11_module", [path to PKCS11 module])
+  openssl=no
+fi
+
 if test "$openssl" = "yes"; then
   AC_DEFINE([HAVE_OPENSSL], 1, [define to use openssl's libcrypto])
 fi

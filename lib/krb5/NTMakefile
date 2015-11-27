@@ -56,7 +56,8 @@ libkrb5_OBJS =			\
 	$(OBJ)\crc.obj			    \
 	$(OBJ)\creds.obj		    \
 	$(OBJ)\crypto.obj		    \
-	$(OBJ)\crypto-aes.obj		    \
+	$(OBJ)\crypto-aes-sha1.obj	    \
+	$(OBJ)\crypto-aes-sha2.obj	    \
 	$(OBJ)\crypto-algs.obj		    \
 	$(OBJ)\crypto-arcfour.obj	    \
 	$(OBJ)\crypto-des-common.obj	    \
@@ -133,7 +134,8 @@ libkrb5_OBJS =			\
 	$(OBJ)\read_message.obj		    \
 	$(OBJ)\recvauth.obj		    \
 	$(OBJ)\replay.obj		    \
-	$(OBJ)\salt-aes.obj		    \
+	$(OBJ)\salt-aes-sha1.obj	    \
+	$(OBJ)\salt-aes-sha2.obj	    \
 	$(OBJ)\salt-arcfour.obj		    \
 	$(OBJ)\salt-des.obj		    \
 	$(OBJ)\salt-des3.obj		    \
@@ -143,6 +145,7 @@ libkrb5_OBJS =			\
 	$(OBJ)\sendauth.obj		    \
 	$(OBJ)\set_default_realm.obj	    \
 	$(OBJ)\sock_principal.obj	    \
+	$(OBJ)\sp800-108-kdf.obj	    \
 	$(OBJ)\store.obj		    \
 	$(OBJ)\store-int.obj		    \
 	$(OBJ)\store_emem.obj		    \
@@ -206,7 +209,8 @@ dist_libkrb5_la_SOURCES =			\
 	creds.c					\
 	crypto.c				\
 	crypto.h				\
-	crypto-aes.c				\
+	crypto-aes-sha1.c			\
+	crypto-aes-sha2.c			\
 	crypto-algs.c				\
 	crypto-arcfour.c			\
 	crypto-des.c				\
@@ -285,7 +289,8 @@ dist_libkrb5_la_SOURCES =			\
 	recvauth.c				\
 	replay.c				\
 	salt.c					\
-	salt-aes.c				\
+	salt-aes-sha1.c				\
+	salt-aes-sha2.c				\
 	salt-arcfour.c				\
 	salt-des.c				\
 	salt-des3.c				\
@@ -294,6 +299,7 @@ dist_libkrb5_la_SOURCES =			\
 	sendauth.c				\
 	set_default_realm.c			\
 	sock_principal.c			\
+	sp800-108-kdf.c				\
 	store.c					\
 	store-int.c				\
 	store-int.h				\
@@ -368,7 +374,8 @@ clean::
 librfc3961_OBJS=\
 	$(OBJ)\crc.obj			\
 	$(OBJ)\crypto.obj		\
-	$(OBJ)\crypto-aes.obj		\
+	$(OBJ)\crypto-aes-sha1.obj	\
+	$(OBJ)\crypto-aes-sha2.obj	\
 	$(OBJ)\crypto-algs.obj		\
 	$(OBJ)\crypto-arcfour.obj	\
 	$(OBJ)\crypto-des.obj		\
@@ -384,10 +391,12 @@ librfc3961_OBJS=\
 	$(OBJ)\keyblock.obj		\
 	$(OBJ)\n-fold.obj		\
 	$(OBJ)\salt.obj			\
-	$(OBJ)\salt-aes.obj		\
+	$(OBJ)\salt-aes-sha1.obj	\
+	$(OBJ)\salt-aes-sha2.obj	\
 	$(OBJ)\salt-arcfour.obj		\
 	$(OBJ)\salt-des.obj		\
 	$(OBJ)\salt-des3.obj		\
+	$(OBJ)\sp800-108-kdf.obj	\
 	$(OBJ)\store-int.obj		\
 	$(OBJ)\warn.obj
 
@@ -428,6 +437,7 @@ test_binaries =				\
 	$(OBJ)\krbhst-test.exe		\
 	$(OBJ)\n-fold-test.exe		\
 	$(OBJ)\parse-name-test.exe	\
+	$(OBJ)\pseudo-random-test.exe	\
 	$(OBJ)\store-test.exe		\
 	$(OBJ)\string-to-key-test.exe	\
 	$(OBJ)\test_acl.exe		\
@@ -467,6 +477,7 @@ test-run:
 	-krbhst-test.exe
 	-n-fold-test.exe
 	-parse-name-test.exe
+	-pseudo-random-test.exe
 	-store-test.exe
 	-string-to-key-test.exe
 	-test_acl.exe

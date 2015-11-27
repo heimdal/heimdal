@@ -133,6 +133,7 @@
 #undef EVP_sha256
 #undef EVP_sha384
 #undef EVP_sha512
+#undef PKCS5_PBKDF2_HMAC
 #undef PKCS5_PBKDF2_HMAC_SHA1
 #undef EVP_BytesToKey
 #undef EVP_get_cipherbyname

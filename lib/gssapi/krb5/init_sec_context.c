@@ -423,16 +423,10 @@ init_auth
     /*
      * This is hideous glue for (NFS) clients that wants to limit the
      * available enctypes to what it can support (encryption in
-     * kernel). If there is no enctypes selected for this credential,
-     * reset it to the default set of enctypes.
+     * kernel).
      */
-    {
-	krb5_enctype *enctypes = NULL;
-
-	if (cred && cred->enctypes)
-	    enctypes = cred->enctypes;
-	krb5_set_default_in_tkt_etypes(context, enctypes);
-    }
+    if (cred && cred->enctypes)
+	krb5_set_default_in_tkt_etypes(context, cred->enctypes);
 
     ret = gsskrb5_get_creds(minor_status, context, ctx->ccache,
 			    ctx, name, time_req, time_rec);

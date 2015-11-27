@@ -33,69 +33,103 @@
 
 #include "krb5_locl.h"
 
-int _krb5_AES_string_to_default_iterator = 4096;
+int _krb5_AES_SHA2_string_to_default_iterator = 32768;
 
 static krb5_error_code
-AES_string_to_key(krb5_context context,
-		  krb5_enctype enctype,
-		  krb5_data password,
-		  krb5_salt salt,
-		  krb5_data opaque,
-		  krb5_keyblock *key)
+AES_SHA2_string_to_key(krb5_context context,
+		       krb5_enctype enctype,
+		       krb5_data password,
+		       krb5_salt salt,
+		       krb5_data opaque,
+		       krb5_keyblock *key)
 {
     krb5_error_code ret;
     uint32_t iter;
-    struct _krb5_encryption_type *et;
+    struct _krb5_encryption_type *et = NULL;
     struct _krb5_key_data kd;
+    krb5_data saltp;
+    size_t enctypesz;
+    const EVP_MD *md = NULL;
 
-    if (opaque.length == 0)
-	iter = _krb5_AES_string_to_default_iterator;
-    else if (opaque.length == 4) {
+    krb5_data_zero(&saltp);
+    kd.key = NULL;
+    kd.schedule = NULL;
+
+    if (opaque.length == 0) {
+	iter = _krb5_AES_SHA2_string_to_default_iterator;
+    } else if (opaque.length == 4) {
 	unsigned long v;
 	_krb5_get_int(opaque.data, &v, 4);
 	iter = ((uint32_t)v);
-    } else
-	return KRB5_PROG_KEYTYPE_NOSUPP; /* XXX */
+    } else {
+	ret = KRB5_PROG_KEYTYPE_NOSUPP; /* XXX */
+	goto cleanup;
+    }
 
     et = _krb5_find_enctype(enctype);
-    if (et == NULL)
-	return KRB5_PROG_KEYTYPE_NOSUPP;
+    if (et == NULL) {
+	ret = KRB5_PROG_KEYTYPE_NOSUPP;
+	goto cleanup;
+    }
 
     kd.schedule = NULL;
     ALLOC(kd.key, 1);
-    if (kd.key == NULL)
-	return krb5_enomem(context);
+    if (kd.key == NULL) {
+	ret = krb5_enomem(context);
+	goto cleanup;
+    }
     kd.key->keytype = enctype;
     ret = krb5_data_alloc(&kd.key->keyvalue, et->keytype->size);
     if (ret) {
-	krb5_set_error_message (context, ret, N_("malloc: out of memory", ""));
-	return ret;
+	ret = krb5_enomem(context);
+	goto cleanup;
     }
 
-    ret = PKCS5_PBKDF2_HMAC_SHA1(password.data, password.length,
-				 salt.saltvalue.data, salt.saltvalue.length,
-				 iter,
-				 et->keytype->size, kd.key->keyvalue.data);
+    enctypesz = strlen(et->name) + 1;
+    ret = krb5_data_alloc(&saltp, enctypesz + salt.saltvalue.length);
+    if (ret) {
+	ret = krb5_enomem(context);
+	goto cleanup;
+    }
+    memcpy(saltp.data, et->name, enctypesz);
+    memcpy((unsigned char *)saltp.data + enctypesz,
+	   salt.saltvalue.data, salt.saltvalue.length);
+
+    ret = _krb5_aes_sha2_md_for_enctype(context, enctype, &md);
+    if (ret)
+	goto cleanup;
+
+    ret = PKCS5_PBKDF2_HMAC(password.data, password.length,
+			    saltp.data, saltp.length,
+			    iter, md,
+			    et->keytype->size, kd.key->keyvalue.data);
     if (ret != 1) {
-	_krb5_free_key_data(context, &kd, et);
 	krb5_set_error_message(context, KRB5_PROG_KEYTYPE_NOSUPP,
 			       "Error calculating s2k");
-	return KRB5_PROG_KEYTYPE_NOSUPP;
+	ret = KRB5_PROG_KEYTYPE_NOSUPP;
+	goto cleanup;
     }
 
     ret = _krb5_derive_key(context, et, &kd, "kerberos", strlen("kerberos"));
-    if (ret == 0)
-	ret = krb5_copy_keyblock_contents(context, kd.key, key);
+    if (ret)
+	goto cleanup;
+
+    ret = krb5_copy_keyblock_contents(context, kd.key, key);
+    if (ret)
+	goto cleanup;
+
+cleanup:
+    krb5_data_free(&saltp);
     _krb5_free_key_data(context, &kd, et);
 
     return ret;
 }
 
-struct salt_type _krb5_AES_salt[] = {
+struct salt_type _krb5_AES_SHA2_salt[] = {
     {
 	KRB5_PW_SALT,
 	"pw-salt",
-	AES_string_to_key
+	AES_SHA2_string_to_key
     },
     { 0, NULL, NULL }
 };

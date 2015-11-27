@@ -37,7 +37,7 @@
  * AES
  */
 
-static struct _krb5_key_type keytype_aes128 = {
+static struct _krb5_key_type keytype_aes128_sha1 = {
     KRB5_ENCTYPE_AES128_CTS_HMAC_SHA1_96,
     "aes-128",
     128,
@@ -45,13 +45,13 @@ static struct _krb5_key_type keytype_aes128 = {
     sizeof(struct _krb5_evp_schedule),
     NULL,
     _krb5_evp_schedule,
-    _krb5_AES_salt,
+    _krb5_AES_SHA1_salt,
     NULL,
     _krb5_evp_cleanup,
     EVP_aes_128_cbc
 };
 
-static struct _krb5_key_type keytype_aes256 = {
+static struct _krb5_key_type keytype_aes256_sha1 = {
     KRB5_ENCTYPE_AES256_CTS_HMAC_SHA1_96,
     "aes-256",
     256,
@@ -59,7 +59,7 @@ static struct _krb5_key_type keytype_aes256 = {
     sizeof(struct _krb5_evp_schedule),
     NULL,
     _krb5_evp_schedule,
-    _krb5_AES_salt,
+    _krb5_AES_SHA1_salt,
     NULL,
     _krb5_evp_cleanup,
     EVP_aes_256_cbc
@@ -86,10 +86,10 @@ struct _krb5_checksum_type _krb5_checksum_hmac_sha1_aes256 = {
 };
 
 static krb5_error_code
-AES_PRF(krb5_context context,
-	krb5_crypto crypto,
-	const krb5_data *in,
-	krb5_data *out)
+AES_SHA1_PRF(krb5_context context,
+	     krb5_crypto crypto,
+	     const krb5_data *in,
+	     krb5_data *out)
 {
     struct _krb5_checksum_type *ct = crypto->et->checksum;
     krb5_error_code ret;
@@ -146,13 +146,13 @@ struct _krb5_encryption_type _krb5_enctype_aes128_cts_hmac_sha1 = {
     16,
     1,
     16,
-    &keytype_aes128,
+    &keytype_aes128_sha1,
     &_krb5_checksum_sha1,
     &_krb5_checksum_hmac_sha1_aes128,
     F_DERIVED,
     _krb5_evp_encrypt_cts,
     16,
-    AES_PRF
+    AES_SHA1_PRF
 };
 
 struct _krb5_encryption_type _krb5_enctype_aes256_cts_hmac_sha1 = {
@@ -162,11 +162,11 @@ struct _krb5_encryption_type _krb5_enctype_aes256_cts_hmac_sha1 = {
     16,
     1,
     16,
-    &keytype_aes256,
+    &keytype_aes256_sha1,
     &_krb5_checksum_sha1,
     &_krb5_checksum_hmac_sha1_aes256,
     F_DERIVED,
     _krb5_evp_encrypt_cts,
     16,
-    AES_PRF
+    AES_SHA1_PRF
 };

@@ -1,4 +1,3 @@
-
 /*
  * Copyright (c) 1997 - 2011 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
@@ -33,6 +32,19 @@
  */
 
 #include "hdb_locl.h"
+
+struct hx509_certs_data;
+struct krb5_pk_identity;
+struct krb5_pk_cert;
+struct ContentInfo;
+struct AlgorithmIdentifier;
+struct _krb5_krb_auth_data;
+struct krb5_dh_moduli;
+struct _krb5_key_data;
+struct _krb5_encryption_type;
+struct _krb5_key_type;
+#include <krb5-private.h>
+#include <base64.h>
 
 /*
  * free all the memory used by (len, keys)
@@ -168,9 +180,11 @@ parse_key_set(krb5_context context, const char *key,
 
     /* if no salt was specified make up default salt */
     if(salt->saltvalue.data == NULL) {
-	if(salt->salttype == KRB5_PW_SALT)
+	if(salt->salttype == KRB5_PW_SALT) {
 	    ret = krb5_get_pw_salt(context, principal, salt);
-	else if(salt->salttype == KRB5_AFS3_SALT) {
+	    if (ret)
+		return ret;
+	} else if(salt->salttype == KRB5_AFS3_SALT) {
 	    krb5_const_realm realm = krb5_principal_get_realm(context, principal);
 	    salt->saltvalue.data = strdup(realm);
 	    if(salt->saltvalue.data == NULL) {
@@ -572,6 +586,41 @@ glob_rules_keys(krb5_context context, krb5_const_principal principal)
 }
 
 /*
+ * NIST guidance in Section 5.1 of [SP800-132] requires that a portion
+ * of the salt of at least 128 bits shall be randomly generated.
+ */
+static krb5_error_code
+add_random_to_salt(krb5_context context, krb5_salt *in, krb5_salt *out)
+{
+    krb5_error_code ret;
+    char *p;
+    unsigned char random[16];
+    char *s;
+    int slen;
+
+    krb5_generate_random_block(random, sizeof(random));
+
+    slen = rk_base64_encode(random, sizeof(random), &s);
+    if (slen < 0)
+	return ENOMEM;
+
+    ret = krb5_data_alloc(&out->saltvalue, slen + in->saltvalue.length);
+    if (ret) {
+	free(s);
+	return ret;
+    }
+
+    p = out->saltvalue.data;
+    memcpy(p, s, slen);
+    memcpy(&p[slen], in->saltvalue.data, in->saltvalue.length);
+
+    out->salttype = in->salttype;
+    free(s);
+
+    return 0;
+}
+
+/*
  * Generate the `key_set' from the [kadmin]default_keys statement. If
  * `no_salt' is set, salt is not important (and will not be set) since
  * it's random keys that is going to be created.
@@ -642,6 +691,9 @@ hdb_generate_key_set(krb5_context context, krb5_principal principal,
 	}
 
 	for (i = 0; i < num_enctypes; i++) {
+	    krb5_salt *saltp = no_salt ? NULL : &salt;
+	    krb5_salt rsalt;
+
 	    /* find duplicates */
 	    for (j = 0; j < *nkeyset; j++) {
 
@@ -660,14 +712,27 @@ hdb_generate_key_set(krb5_context context, krb5_principal principal,
 		}
 	    }
 	    /* not a duplicate, lets add it */
-	    if (j == *nkeyset) {
+	    if (j < *nkeyset)
+		continue;
+
+	    memset(&rsalt, 0, sizeof(rsalt));
+
+	    /* prepend salt with randomness if required */
+	    if (!no_salt &&
+		_krb5_enctype_requires_random_salt(context, enctypes[i])) {
+		saltp = &rsalt;
+		ret = add_random_to_salt(context, &salt, &rsalt);
+	    }
+
+	    if (ret == 0)
 		ret = add_enctype_to_key_set(&key_set, nkeyset, enctypes[i],
-					     no_salt ? NULL : &salt);
-		if (ret) {
-		    free(enctypes);
-		    krb5_free_salt(context, salt);
-		    goto out;
-		}
+					     saltp);
+	    krb5_free_salt(context, rsalt);
+
+	    if (ret) {
+		free(enctypes);
+		krb5_free_salt(context, salt);
+		goto out;
 	    }
 	}
 	free(enctypes);
@@ -718,17 +783,17 @@ hdb_generate_key_set_password(krb5_context context,
 
     for (i = 0; i < (*num_keys); i++) {
 	krb5_salt salt;
+	Key *key = &(*keys)[i];
 
-	salt.salttype = (*keys)[i].salt->type;
-	salt.saltvalue.length = (*keys)[i].salt->salt.length;
-	salt.saltvalue.data = (*keys)[i].salt->salt.data;
+	salt.salttype = key->salt->type;
+	salt.saltvalue.length = key->salt->salt.length;
+	salt.saltvalue.data = key->salt->salt.data;
 
 	ret = krb5_string_to_key_salt (context,
-				       (*keys)[i].key.keytype,
+				       key->key.keytype,
 				       password,
 				       salt,
-				       &(*keys)[i].key);
-
+				       &key->key);
 	if(ret)
 	    break;
     }

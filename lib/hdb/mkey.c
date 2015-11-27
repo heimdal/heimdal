@@ -374,7 +374,7 @@ _hdb_set_master_key_usage(krb5_context context, HDB *db, unsigned int key_usage)
 }
 
 hdb_master_key
-_hdb_find_master_key(uint32_t *mkvno, hdb_master_key mkey)
+_hdb_find_master_key(int *mkvno, hdb_master_key mkey)
 {
     hdb_master_key ret = NULL;
     while(mkey) {

@@ -52,14 +52,16 @@ struct krb5_crypto_data {
 #define CRYPTO_ETYPE(C) ((C)->et->type)
 
 /* bits for `flags' below */
-#define F_KEYED		 1	/* checksum is keyed */
-#define F_CPROOF	 2	/* checksum is collision proof */
-#define F_DERIVED	 4	/* uses derived keys */
-#define F_VARIANT	 8	/* uses `variant' keys (6.4.3) */
-#define F_PSEUDO	16	/* not a real protocol type */
-#define F_SPECIAL	32	/* backwards */
-#define F_DISABLED	64	/* enctype/checksum disabled */
-#define F_WEAK	       128	/* enctype is considered weak */
+#define F_KEYED		    0x0001	/* checksum is keyed */
+#define F_CPROOF	    0x0002	/* checksum is collision proof */
+#define F_DERIVED	    0x0004	/* uses derived keys */
+#define F_VARIANT	    0x0008	/* uses `variant' keys (6.4.3) */
+#define F_PSEUDO	    0x0010	/* not a real protocol type */
+#define F_SPECIAL	    0x0020	/* backwards */
+#define F_DISABLED	    0x0040	/* enctype/checksum disabled */
+#define F_WEAK		    0x0080	/* enctype is considered weak */
+#define F_SP800_108_KDF	    0x0100	/* use SP800-108 KDF */
+#define F_ENC_THEN_CKSUM    0x0200      /* checksum is over encrypted data */
 
 struct salt_type {
     krb5_salttype type;
@@ -138,15 +140,19 @@ extern struct _krb5_checksum_type _krb5_checksum_rsa_md5;
 extern struct _krb5_checksum_type _krb5_checksum_hmac_sha1_des3;
 extern struct _krb5_checksum_type _krb5_checksum_hmac_sha1_aes128;
 extern struct _krb5_checksum_type _krb5_checksum_hmac_sha1_aes256;
+extern struct _krb5_checksum_type _krb5_checksum_hmac_sha256_128_aes128;
+extern struct _krb5_checksum_type _krb5_checksum_hmac_sha384_192_aes256;
 extern struct _krb5_checksum_type _krb5_checksum_hmac_md5;
 extern struct _krb5_checksum_type _krb5_checksum_sha1;
+extern struct _krb5_checksum_type _krb5_checksum_sha2;
 
 extern struct _krb5_checksum_type *_krb5_checksum_types[];
 extern int _krb5_num_checksums;
 
 /* Salts */
 
-extern struct salt_type _krb5_AES_salt[];
+extern struct salt_type _krb5_AES_SHA1_salt[];
+extern struct salt_type _krb5_AES_SHA2_salt[];
 extern struct salt_type _krb5_arcfour_salt[];
 extern struct salt_type _krb5_des_salt[];
 extern struct salt_type _krb5_des3_salt[];
@@ -156,6 +162,8 @@ extern struct salt_type _krb5_des3_salt_derived[];
 
 extern struct _krb5_encryption_type _krb5_enctype_aes256_cts_hmac_sha1;
 extern struct _krb5_encryption_type _krb5_enctype_aes128_cts_hmac_sha1;
+extern struct _krb5_encryption_type _krb5_enctype_aes128_cts_hmac_sha256_128;
+extern struct _krb5_encryption_type _krb5_enctype_aes256_cts_hmac_sha384_192;
 extern struct _krb5_encryption_type _krb5_enctype_des3_cbc_sha1;
 extern struct _krb5_encryption_type _krb5_enctype_des3_cbc_md5;
 extern struct _krb5_encryption_type _krb5_enctype_des3_cbc_none;

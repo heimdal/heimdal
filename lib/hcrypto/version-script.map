@@ -261,6 +261,7 @@ HEIMDAL_CRYPTO_1.0 {
 		hc_OpenSSL_add_all_algorithms_conf;
 		hc_OpenSSL_add_all_algorithms_noconf;
 		hc_PKCS12_key_gen;
+		hc_PKCS5_PBKDF2_HMAC;
 		hc_PKCS5_PBKDF2_HMAC_SHA1;
 		hc_RAND_add;
 		hc_RAND_bytes;

@@ -747,7 +747,8 @@ EXPORTS
 	_krb5_build_authenticator
 
 	; Shared with libkdc
-	_krb5_AES_string_to_default_iterator
+	_krb5_AES_SHA1_string_to_default_iterator
+	_krb5_AES_SHA2_string_to_default_iterator
 	_krb5_dh_group_ok
 	_krb5_get_host_realm_int
 	_krb5_get_int
@@ -759,6 +760,7 @@ EXPORTS
 	_krb5_pk_mk_ContentInfo
 	_krb5_pk_octetstring2key
 	_krb5_plugin_run_f
+	_krb5_enctype_requires_random_salt
 	_krb5_principal2principalname
 	_krb5_principalname2krb5_principal
 	_krb5_put_int

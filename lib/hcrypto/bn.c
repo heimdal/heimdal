@@ -68,10 +68,10 @@ BN_clear(BIGNUM *bn)
 {
     heim_integer *hi = (heim_integer *)bn;
     if (hi->data) {
-	memset(hi->data, 0, hi->length);
+	memset_s(hi->data, hi->length, 0, hi->length);
 	free(hi->data);
     }
-    memset(hi, 0, sizeof(*hi));
+    memset_s(hi, sizeof(*hi), 0, sizeof(*hi));
 }
 
 void

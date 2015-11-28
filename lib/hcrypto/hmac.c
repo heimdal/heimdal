@@ -47,17 +47,19 @@ void
 HMAC_CTX_cleanup(HMAC_CTX *ctx)
 {
     if (ctx->buf) {
-	memset(ctx->buf, 0, ctx->key_length);
+	memset_s(ctx->buf, ctx->key_length, 0, ctx->key_length);
 	free(ctx->buf);
 	ctx->buf = NULL;
     }
     if (ctx->opad) {
-	memset(ctx->opad, 0, EVP_MD_block_size(ctx->md));
+	memset_s(ctx->opad, EVP_MD_block_size(ctx->md), 0,
+		 EVP_MD_block_size(ctx->md));
 	free(ctx->opad);
 	ctx->opad = NULL;
     }
     if (ctx->ipad) {
-	memset(ctx->ipad, 0, EVP_MD_block_size(ctx->md));
+	memset_s(ctx->ipad, EVP_MD_block_size(ctx->md), 0,
+		 EVP_MD_block_size(ctx->md));
 	free(ctx->ipad);
 	ctx->ipad = NULL;
     }
@@ -86,7 +88,7 @@ HMAC_Init_ex(HMAC_CTX *ctx,
     if (ctx->md != md) {
 	ctx->md = md;
 	if (ctx->buf) {
-	    memset(ctx->buf, 0, ctx->key_length);
+	    memset_s(ctx->buf, ctx->key_length, 0, ctx->key_length);
 	    free (ctx->buf);
 	}
 	ctx->key_length = EVP_MD_size(ctx->md);
@@ -103,11 +105,11 @@ HMAC_Init_ex(HMAC_CTX *ctx,
     }
 
     if (ctx->opad) {
-	memset(ctx->opad, 0, ctx->key_length);
+	memset_s(ctx->opad, ctx->key_length, 0, ctx->key_length);
 	free(ctx->opad);
     }
     if (ctx->ipad) {
-	memset(ctx->ipad, 0, ctx->key_length);
+	memset_s(ctx->ipad, ctx->key_length, 0, ctx->key_length);
 	free(ctx->ipad);
     }
 

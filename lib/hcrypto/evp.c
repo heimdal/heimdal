@@ -185,7 +185,7 @@ EVP_MD_CTX_cleanup(EVP_MD_CTX *ctx) HC_DEPRECATED
 	if (!ret)
 	    return ret;
     } else if (ctx->md) {
-	memset(ctx->ptr, 0, ctx->md->ctx_size);
+	memset_s(ctx->ptr, ctx->md->ctx_size, 0, ctx->md->ctx_size);
     }
     ctx->md = NULL;
     ctx->engine = NULL;
@@ -595,7 +595,7 @@ EVP_CIPHER_CTX_cleanup(EVP_CIPHER_CTX *c)
 	    return ret;
     }
     if (c->cipher_data) {
-	memset(c->cipher_data, 0, c->cipher->ctx_size);
+	memset_s(c->cipher_data, c->cipher->ctx_size, 0, c->cipher->ctx_size);
 	free(c->cipher_data);
 	c->cipher_data = NULL;
     }
@@ -889,7 +889,7 @@ EVP_CipherUpdate(EVP_CIPHER_CTX *ctx, void *out, int *outlen,
 	/* fill in local buffer and encrypt */
 	memcpy(ctx->buf + ctx->buf_len, in, left);
 	ret = (*ctx->cipher->do_cipher)(ctx, out, ctx->buf, blocksize);
-	memset(ctx->buf, 0, blocksize);
+	memset_s(ctx->buf, blocksize, 0, blocksize);
 	if (ret != 1)
 	    return ret;
 

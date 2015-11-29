@@ -56,8 +56,16 @@ typedef void * heim_object_t;
 typedef unsigned int heim_tid_t;
 typedef heim_object_t heim_bool_t;
 typedef heim_object_t heim_null_t;
-#define HEIM_BASE_ONCE_INIT 0
+#if defined(WIN32)
+typedef struct {
+    LONG started;
+    LONG running;
+} heim_base_once_t;
+# define HEIM_BASE_ONCE_INIT {0L, 0L}
+#else
+# define HEIM_BASE_ONCE_INIT 0
 typedef long heim_base_once_t; /* XXX arch dependant */
+#endif
 
 #if !defined(__has_extension)
 #define __has_extension(x) 0

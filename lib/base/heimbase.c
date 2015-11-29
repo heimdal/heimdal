@@ -368,7 +368,16 @@ _heim_type_get_tid(heim_type_t type)
 void
 heim_base_once_f(heim_base_once_t *once, void *ctx, void (*func)(void *))
 {
-#ifdef HAVE_DISPATCH_DISPATCH_H
+#if defined(WIN32)
+    if (InterlockedCompareExchange(&once->started, 1L, 0L) == 0L) {
+	once->running = 1L;
+	(*func)(ctx);
+	once->running = 0L;
+    } else {
+	while (once->running)
+	    SwitchToThread();
+    }
+#elif defined(HAVE_DISPATCH_DISPATCH_H)
     dispatch_once_f(once, ctx, func);
 #else
     static HEIMDAL_MUTEX mutex = HEIMDAL_MUTEX_INITIALIZER;

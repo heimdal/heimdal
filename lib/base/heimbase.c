@@ -369,12 +369,23 @@ void
 heim_base_once_f(heim_base_once_t *once, void *ctx, void (*func)(void *))
 {
 #if defined(WIN32)
-    if (InterlockedCompareExchange(&once->started, 1L, 0L) == 0L) {
-	once->running = 1L;
+    /*
+     * State 0 means that func() has never executed.
+     * State 1 means that func() is executing.
+     * State 2 means that func() has completed execution.
+     */
+    if (InterlockedCompareExchange(&once->state, 1L, 0L) == 0L) {
+	/* State is now 1 */
 	(*func)(ctx);
-	once->running = 0L;
+	(void)InterlockedExchange(&once->state, 2L);
+	/* State is now 2 */
     } else {
-	while (once->running)
+	/*
+	 * The InterlockedCompareExchange is being used to fetch
+	 * the current state under a full memory barrier.  As long
+	 * as the current state is 1 continue to spin.
+	 */
+	while (InterlockedCompareExchange(&once->state, 2L, 0L) == 1L)
 	    SwitchToThread();
     }
 #elif defined(HAVE_DISPATCH_DISPATCH_H)

@@ -58,10 +58,9 @@ typedef heim_object_t heim_bool_t;
 typedef heim_object_t heim_null_t;
 #if defined(WIN32)
 typedef struct {
-    LONG started;
-    LONG running;
+    LONG state;
 } heim_base_once_t;
-# define HEIM_BASE_ONCE_INIT {0L, 0L}
+# define HEIM_BASE_ONCE_INIT {0L}
 #else
 # define HEIM_BASE_ONCE_INIT 0
 typedef long heim_base_once_t; /* XXX arch dependant */

@@ -409,14 +409,14 @@ heim_base_once_f(heim_base_once_t *once, void *ctx, void (*func)(void *))
      * wrapper we could make this the default implementation when we have
      * neither Grand Central nor POSX threads.
      *
-     * We could also adapt the double-checked lock pattern with condition
-     * variables to do the blocking to avoid a tight loop over yield when
-     * threads race to once-init something with a long-running callback
-     * function (we'd still need a loop over the CV wait, naturally, but
-     * hopefully that wouldn't be a tight loop).  But for now we have no
-     * cases where this is critical.
+     * We could also adapt the double-checked lock pattern with CAS
+     * providing the necessary memory barriers in the absence of
+     * portable explicit memory barrier APIs.
      */
     /*
+     * We use CAS operations in large part to provide implied memory
+     * barriers.
+     *
      * State 0 means that func() has never executed.
      * State 1 means that func() is executing.
      * State 2 means that func() has completed execution.

@@ -357,6 +357,41 @@ _heim_type_get_tid(heim_type_t type)
     return type->tid;
 }
 
+#if !defined(WIN32) && !defined(HAVE_DISPATCH_DISPATCH_H) && defined(ENABLE_PTHREAD_SUPPORT)
+static pthread_once_t once_arg_key_once = PTHREAD_ONCE_INIT;
+static pthread_key_t once_arg_key;
+
+static void
+once_arg_key_once_init(void)
+{
+    errno = pthread_key_create(&once_arg_key, NULL);
+    if (errno != 0) {
+        fprintf(stderr,
+                "Error: pthread_key_create() failed, cannot continue: %s\n",
+                strerror(errno));
+        abort();
+    }
+}
+
+struct once_callback {
+    void (*fn)(void *);
+    void *data;
+};
+
+static void
+once_callback_caller(void)
+{
+    struct once_callback *once_callback = pthread_getspecific(once_arg_key);
+
+    if (once_callback == NULL) {
+        fprintf(stderr, "Error: pthread_once() calls callback on "
+                "different thread?!  Cannot continue.\n");
+        abort();
+    }
+    once_callback->fn(once_callback->data);
+}
+#endif
+
 /**
  * Call func once and only once
  *
@@ -370,6 +405,18 @@ heim_base_once_f(heim_base_once_t *once, void *ctx, void (*func)(void *))
 {
 #if defined(WIN32)
     /*
+     * With a libroken wrapper for some CAS function and a libroken yield()
+     * wrapper we could make this the default implementation when we have
+     * neither Grand Central nor POSX threads.
+     *
+     * We could also adapt the double-checked lock pattern with CAS
+     * providing the necessary memory barriers in the absence of
+     * portable explicit memory barrier APIs.
+     */
+    /*
+     * We use CAS operations in large part to provide implied memory
+     * barriers.
+     *
      * State 0 means that func() has never executed.
      * State 1 means that func() is executing.
      * State 2 means that func() has completed execution.
@@ -390,6 +437,31 @@ heim_base_once_f(heim_base_once_t *once, void *ctx, void (*func)(void *))
     }
 #elif defined(HAVE_DISPATCH_DISPATCH_H)
     dispatch_once_f(once, ctx, func);
+#elif defined(ENABLE_PTHREAD_SUPPORT)
+    struct once_callback once_callback;
+
+    once_callback.fn = func;
+    once_callback.data = ctx;
+
+    errno = pthread_once(&once_arg_key_once, once_arg_key_once_init);
+    if (errno != 0) {
+        fprintf(stderr, "Error: pthread_once() failed, cannot continue: %s\n",
+                strerror(errno));
+        abort();
+    }
+    errno = pthread_setspecific(once_arg_key, &once_callback);
+    if (errno != 0) {
+        fprintf(stderr,
+                "Error: pthread_setspecific() failed, cannot continue: %s\n",
+                strerror(errno));
+        abort();
+    }
+    errno = pthread_once(once, once_callback_caller);
+    if (errno != 0) {
+        fprintf(stderr, "Error: pthread_once() failed, cannot continue: %s\n",
+                strerror(errno));
+        abort();
+    }
 #else
     static HEIMDAL_MUTEX mutex = HEIMDAL_MUTEX_INITIALIZER;
     HEIMDAL_MUTEX_lock(&mutex);

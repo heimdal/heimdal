@@ -350,6 +350,7 @@ EXPORTS
 	krb5_get_init_creds_opt_set_address_list
 	krb5_get_init_creds_opt_set_addressless
 	krb5_get_init_creds_opt_set_anonymous
+	krb5_get_init_creds_opt_set_change_password_prompt
 	krb5_get_init_creds_opt_set_canonicalize
 	krb5_get_init_creds_opt_set_default_flags
 	krb5_get_init_creds_opt_set_etype_list

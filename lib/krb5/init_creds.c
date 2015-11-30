@@ -195,6 +195,13 @@ krb5_get_init_creds_opt_set_default_flags(krb5_context context,
 #endif
 }
 
+KRB5_LIB_FUNCTION void KRB5_LIB_CALL
+krb5_get_init_creds_opt_set_change_password_prompt(krb5_get_init_creds_opt *opt,
+                                                   int change_password_prompt)
+{
+	opt->flags |= KRB5_GET_INIT_CREDS_OPT_CHANGE_PASSWORD_PROMPT;
+	opt->change_password_prompt = change_password_prompt;
+}
 
 KRB5_LIB_FUNCTION void KRB5_LIB_CALL
 krb5_get_init_creds_opt_set_tkt_life(krb5_get_init_creds_opt *opt,

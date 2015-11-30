@@ -748,6 +748,7 @@ struct _krb5_get_init_creds_opt {
     int forwardable;
     int proxiable;
     int anonymous;
+    int change_password_prompt;
     krb5_enctype *etype_list;
     int etype_list_length;
     krb5_addresses *address_list;
@@ -771,6 +772,7 @@ typedef struct _krb5_get_init_creds_opt krb5_get_init_creds_opt;
 #define KRB5_GET_INIT_CREDS_OPT_SALT		0x0080 /* no supported */
 #define KRB5_GET_INIT_CREDS_OPT_ANONYMOUS	0x0100
 #define KRB5_GET_INIT_CREDS_OPT_DISABLE_TRANSITED_CHECK	0x0200
+#define KRB5_GET_INIT_CREDS_OPT_CHANGE_PASSWORD_PROMPT	0x0400
 
 /* krb5_init_creds_step flags argument */
 #define KRB5_INIT_CREDS_STEP_FLAG_CONTINUE	0x0001

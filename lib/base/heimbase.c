@@ -374,10 +374,10 @@ heim_base_once_f(heim_base_once_t *once, void *ctx, void (*func)(void *))
      * State 1 means that func() is executing.
      * State 2 means that func() has completed execution.
      */
-    if (InterlockedCompareExchange(&once->state, 1L, 0L) == 0L) {
+    if (InterlockedCompareExchange(once, 1L, 0L) == 0L) {
 	/* State is now 1 */
 	(*func)(ctx);
-	(void)InterlockedExchange(&once->state, 2L);
+	(void)InterlockedExchange(once, 2L);
 	/* State is now 2 */
     } else {
 	/*
@@ -385,7 +385,7 @@ heim_base_once_f(heim_base_once_t *once, void *ctx, void (*func)(void *))
 	 * the current state under a full memory barrier.  As long
 	 * as the current state is 1 continue to spin.
 	 */
-	while (InterlockedCompareExchange(&once->state, 2L, 0L) == 1L)
+	while (InterlockedCompareExchange(once, 2L, 0L) == 1L)
 	    SwitchToThread();
     }
 #elif defined(HAVE_DISPATCH_DISPATCH_H)

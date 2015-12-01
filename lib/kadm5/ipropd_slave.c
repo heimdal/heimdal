@@ -53,9 +53,10 @@ connect_to_master (krb5_context context, const char *master,
     struct addrinfo *ai, *a;
     struct addrinfo hints;
     int error;
+    int one = 1;
     int s = -1;
 
-    memset (&hints, 0, sizeof(hints));
+    memset(&hints, 0, sizeof(hints));
     hints.ai_socktype = SOCK_STREAM;
 
     if (port_str == NULL) {
@@ -63,7 +64,7 @@ connect_to_master (krb5_context context, const char *master,
 	port_str = port;
     }
 
-    error = getaddrinfo (master, port_str, &hints, &ai);
+    error = getaddrinfo(master, port_str, &hints, &ai);
     if (error) {
 	krb5_warnx(context, "Failed to get address of to %s: %s",
 		   master, gai_strerror(error));
@@ -77,23 +78,26 @@ connect_to_master (krb5_context context, const char *master,
 	if (error)
 	    strlcpy(node, "[unknown-addr]", sizeof(node));
 
-	s = socket (a->ai_family, a->ai_socktype, a->ai_protocol);
+	s = socket(a->ai_family, a->ai_socktype, a->ai_protocol);
 	if (s < 0)
 	    continue;
-	if (connect (s, a->ai_addr, a->ai_addrlen) < 0) {
+	if (connect(s, a->ai_addr, a->ai_addrlen) < 0) {
 	    krb5_warn(context, errno, "connection failed to %s[%s]",
 		      master, node);
-	    close (s);
+	    close(s);
 	    continue;
 	}
 	krb5_warnx(context, "connection successful "
 		   "to master: %s[%s]", master, node);
 	break;
     }
-    freeaddrinfo (ai);
+    freeaddrinfo(ai);
 
     if (a == NULL)
 	return -1;
+
+    if (setsockopt(s, SOL_SOCKET, SO_KEEPALIVE, &one, sizeof(one)) < 0)
+        krb5_warn(context, errno, "setsockopt(SO_KEEPALIVE) failed");
 
     return s;
 }

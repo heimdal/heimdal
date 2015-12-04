@@ -711,6 +711,56 @@ EVP_cc_sha256(void)
 }
 
 /**
+ * The CommonCrypto sha384 provider
+ *
+ * @ingroup hcrypto_evp
+ */
+
+const EVP_MD *
+EVP_cc_sha384(void)
+{
+#ifdef HAVE_COMMONCRYPTO_COMMONDIGEST_H
+    static const struct hc_evp_md sha384 = {
+	CC_SHA384_DIGEST_LENGTH,
+	CC_SHA384_BLOCK_BYTES,
+	sizeof(CC_SHA512_CTX),
+	(hc_evp_md_init)CC_SHA384_Init,
+	(hc_evp_md_update)CC_SHA384_Update,
+	(hc_evp_md_final)CC_SHA384_Final,
+	(hc_evp_md_cleanup)NULL
+    };
+    return &sha384;
+#else
+    return NULL;
+#endif
+}
+
+/**
+ * The CommonCrypto sha512 provider
+ *
+ * @ingroup hcrypto_evp
+ */
+
+const EVP_MD *
+EVP_cc_sha512(void)
+{
+#ifdef HAVE_COMMONCRYPTO_COMMONDIGEST_H
+    static const struct hc_evp_md sha512 = {
+	CC_SHA512_DIGEST_LENGTH,
+	CC_SHA512_BLOCK_BYTES,
+	sizeof(CC_SHA512_CTX),
+	(hc_evp_md_init)CC_SHA512_Init,
+	(hc_evp_md_update)CC_SHA512_Update,
+	(hc_evp_md_final)CC_SHA512_Final,
+	(hc_evp_md_cleanup)NULL
+    };
+    return &sha512;
+#else
+    return NULL;
+#endif
+}
+
+/**
  * The Camellia-128 cipher type - CommonCrypto
  *
  * @return the Camellia-128 EVP_CIPHER pointer.

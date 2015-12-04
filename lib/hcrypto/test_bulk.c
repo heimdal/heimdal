@@ -213,6 +213,8 @@ test_bulk_provider_cc(void)
     test_bulk_digest("cc_md5",			EVP_cc_md5());
     test_bulk_digest("cc_sha1",			EVP_cc_sha1());
     test_bulk_digest("cc_sha256",		EVP_cc_sha256());
+    test_bulk_digest("cc_sha384",		EVP_cc_sha384());
+    test_bulk_digest("cc_sha512",		EVP_cc_sha512());
 }
 #endif /* __APPLE__ */
 

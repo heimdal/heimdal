@@ -965,7 +965,7 @@ loop(krb5_context context, krb5_kdc_configuration *config,
 
 #ifdef __APPLE__
 static void
-bonjour_kid(krb5_context, krb5_kdc_configuration *config, int islive)
+bonjour_kid(krb5_context context, krb5_kdc_configuration *config, int islive)
 {
     char buf[2];
 

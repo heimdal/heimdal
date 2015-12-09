@@ -444,6 +444,7 @@ wrapunwrap_iov(gss_ctx_id_t cctx, gss_ctx_id_t sctx, int flags, gss_OID mechoid)
     if (conf_state2 != conf_state)
 	errx(1, "conf state wrong for iov: %x", flags);
 
+    gss_release_iov_buffer(&min_stat, iov, iov_len);
 
     free(token.data);
 }

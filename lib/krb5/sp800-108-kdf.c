@@ -36,7 +36,7 @@
  */
 
 /**
- * As described in SP800-108 5.1
+ * As described in SP800-108 5.1 (for HMAC)
  *
  * @param context	Kerberos 5 context
  * @param kdc_K1	Base key material.
@@ -49,12 +49,12 @@
  * @ingroup krb5_crypto
  */
 krb5_error_code
-_krb5_SP800_108_KDF(krb5_context context,
-		    krb5_data *kdf_K1,
-		    krb5_data *kdf_label,
-		    krb5_data *kdf_context,
-		    const EVP_MD *md,
-		    krb5_data *kdf_K0)
+_krb5_SP800_108_HMAC_KDF(krb5_context context,
+			 krb5_data *kdf_K1,
+			 krb5_data *kdf_label,
+			 krb5_data *kdf_context,
+			 const EVP_MD *md,
+			 krb5_data *kdf_K0)
 {
     HMAC_CTX c;
     unsigned char *p = kdf_K0->data;

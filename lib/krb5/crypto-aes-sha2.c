@@ -158,8 +158,8 @@ AES_SHA2_PRF(krb5_context context,
 	return ret;
     }
 
-    ret = _krb5_SP800_108_KDF(context, &crypto->key.key->keyvalue,
-			      &label, NULL, md, out);
+    ret = _krb5_SP800_108_HMAC_KDF(context, &crypto->key.key->keyvalue,
+				   &label, NULL, md, out);
 
     if (ret)
 	krb5_data_free(out);
@@ -178,7 +178,7 @@ struct _krb5_encryption_type _krb5_enctype_aes128_cts_hmac_sha256_128 = {
     &keytype_aes128_sha2,
     NULL, /* should never be called */
     &_krb5_checksum_hmac_sha256_128_aes128,
-    F_DERIVED | F_SP800_108_KDF | F_ENC_THEN_CKSUM,
+    F_DERIVED | F_ENC_THEN_CKSUM | F_SP800_108_HMAC_KDF,
     _krb5_evp_encrypt_cts,
     16,
     AES_SHA2_PRF
@@ -194,7 +194,7 @@ struct _krb5_encryption_type _krb5_enctype_aes256_cts_hmac_sha384_192 = {
     &keytype_aes256_sha2,
     NULL, /* should never be called */
     &_krb5_checksum_hmac_sha384_192_aes256,
-    F_DERIVED | F_SP800_108_KDF | F_ENC_THEN_CKSUM,
+    F_DERIVED | F_ENC_THEN_CKSUM | F_SP800_108_HMAC_KDF,
     _krb5_evp_encrypt_cts,
     16,
     AES_SHA2_PRF

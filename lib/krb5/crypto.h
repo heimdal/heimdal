@@ -52,16 +52,16 @@ struct krb5_crypto_data {
 #define CRYPTO_ETYPE(C) ((C)->et->type)
 
 /* bits for `flags' below */
-#define F_KEYED		    0x0001	/* checksum is keyed */
-#define F_CPROOF	    0x0002	/* checksum is collision proof */
-#define F_DERIVED	    0x0004	/* uses derived keys */
-#define F_VARIANT	    0x0008	/* uses `variant' keys (6.4.3) */
-#define F_PSEUDO	    0x0010	/* not a real protocol type */
-#define F_SPECIAL	    0x0020	/* backwards */
-#define F_DISABLED	    0x0040	/* enctype/checksum disabled */
-#define F_WEAK		    0x0080	/* enctype is considered weak */
-#define F_SP800_108_KDF	    0x0100	/* use SP800-108 KDF */
-#define F_ENC_THEN_CKSUM    0x0200      /* checksum is over encrypted data */
+#define F_KEYED			0x0001	/* checksum is keyed */
+#define F_CPROOF		0x0002	/* checksum is collision proof */
+#define F_DERIVED		0x0004	/* uses derived keys */
+#define F_VARIANT		0x0008	/* uses `variant' keys (6.4.3) */
+#define F_PSEUDO		0x0010	/* not a real protocol type */
+#define F_SPECIAL		0x0020	/* backwards */
+#define F_DISABLED		0x0040	/* enctype/checksum disabled */
+#define F_WEAK			0x0080	/* enctype is considered weak */
+#define F_ENC_THEN_CKSUM	0x0100  /* checksum is over encrypted data */
+#define F_SP800_108_HMAC_KDF	0x0200	/* use SP800-108 HMAC KDF */
 
 struct salt_type {
     krb5_salttype type;

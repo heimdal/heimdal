@@ -2139,7 +2139,7 @@ _krb5_derive_key(krb5_context context,
     ret = _key_schedule(context, key);
     if(ret)
 	return ret;
-    if(et->flags & F_SP800_108_KDF) {
+    if(et->flags & F_SP800_108_HMAC_KDF) {
 	krb5_data label, K1;
 	const EVP_MD *md = NULL;
 	const unsigned char *c = constant;
@@ -2165,8 +2165,8 @@ _krb5_derive_key(krb5_context context,
 	label.data = (void *)constant;
 	label.length = len;
 
-	ret = _krb5_SP800_108_KDF(context, &key->key->keyvalue, &label,
-				  NULL, md, &K1);
+	ret = _krb5_SP800_108_HMAC_KDF(context, &key->key->keyvalue,
+				       &label, NULL, md, &K1);
 	if (ret)
 	    goto out;
 
@@ -2634,7 +2634,7 @@ _krb5_enctype_requires_random_salt(krb5_context context,
 
     et = _krb5_find_enctype (enctype);
 
-    return et && (et->flags & F_SP800_108_KDF);
+    return et && (et->flags & F_SP800_108_HMAC_KDF);
 }
 
 static size_t

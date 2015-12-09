@@ -35,21 +35,10 @@
 
 #include "config.h"
 
-#ifdef HAVE_SYS_TYPES_H
-#include <sys/types.h>
-#endif
+#include <roken.h>
+
 #ifdef HAVE_SYS_SELECT_H
 #include <sys/select.h>
-#endif
-
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <errno.h>
-#include <limits.h>
-
-#ifdef HAVE_UNISTD_H
-#include <unistd.h>
 #endif
 
 #define HEIMDAL_TEXTDOMAIN "heimdal_krb5"
@@ -61,8 +50,6 @@
 #define N_(x,y) (x)
 #define bindtextdomain(package, localedir)
 #endif
-
-#include <roken.h>
 
 #include "heimqueue.h"
 #include "heim_threads.h"
@@ -89,6 +76,37 @@
 #else
 #define heim_base_exchange_pointer(t,v) __sync_lock_test_and_set((t), (v))
 #endif
+
+#elif defined(__sun)
+
+#include <sys/atomic.h>
+
+#define heim_base_atomic_inc(x) atomic_inc_uint_nv((volatile uint_t *)(x))
+#define heim_base_atomic_dec(x) atomic_dec_uint_nv((volatile uint_t *)(x))
+#define heim_base_atomic_type	uint_t
+#define heim_base_atomic_max    UINT_MAX
+
+#define heim_base_exchange_pointer(t,v) atomic_swap_ptr((volatile void *)(t), (void *)(v))
+
+#elif defined(_AIX)
+
+#include <sys/atomic_op.h>
+
+#define heim_base_atomic_inc(x) (fetch_and_add((atomic_p)(x)) + 1)
+#define heim_base_atomic_dec(x) (fetch_and_add((atomic_p)(x)) - 1)
+#define heim_base_atomic_type   unsigned int
+#define heim_base_atomic_max    UINT_MAX
+
+static inline void *
+heim_base_exchange_pointer(void *p, void *newval)
+{
+    void *val = *(void **)p;
+
+    while (!compare_and_swaplp((atomic_l)p, (long *)&val, (long)newval))
+        ;
+
+    return val;
+}
 
 #elif defined(_WIN32)
 

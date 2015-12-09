@@ -136,7 +136,7 @@ crypto_des_ede3_cbc_init(EVP_CIPHER_CTX *ctx,
 }
 
 /**
- * The tripple DES cipher type (Micrsoft crypt provider)
+ * The triple DES cipher type (Micrsoft crypt provider)
  *
  * @return the DES-EDE3-CBC EVP_CIPHER pointer.
  *

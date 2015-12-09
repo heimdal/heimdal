@@ -151,7 +151,7 @@ cc_des_ede3_cbc_init(EVP_CIPHER_CTX *ctx,
 #endif /* HAVE_COMMONCRYPTO_COMMONCRYPTOR_H */
 
 /**
- * The tripple DES cipher type (Apple CommonCrypto provider)
+ * The triple DES cipher type (Apple CommonCrypto provider)
  *
  * @return the DES-EDE3-CBC EVP_CIPHER pointer.
  *

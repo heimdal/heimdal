@@ -531,7 +531,7 @@ des_ede3_cbc_do_cipher(EVP_CIPHER_CTX *ctx,
 }
 
 /**
- * The tripple DES cipher type - hcrypto
+ * The triple DES cipher type - hcrypto
  *
  * @return the DES-EDE3-CBC EVP_CIPHER pointer.
  *

@@ -255,7 +255,7 @@ wincng_key_init(EVP_CIPHER_CTX *ctx,
     }
 
 /**
- * The tripple DES cipher type (Windows CNG provider)
+ * The triple DES cipher type (Windows CNG provider)
  *
  * @return the DES-EDE3-CBC EVP_CIPHER pointer.
  *

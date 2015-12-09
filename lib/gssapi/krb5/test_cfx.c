@@ -46,6 +46,81 @@ struct range tests[] = {
     { 9980, 10010 }
 };
 
+static krb5_error_code
+wrap_length_cfx(krb5_context context,
+		krb5_crypto crypto,
+		int conf_req_flag,
+		int dce_style,
+		size_t input_length,
+		size_t *output_length,
+		size_t *cksumsize,
+		uint16_t *padlength)
+{
+    krb5_error_code ret;
+    krb5_cksumtype type;
+    krb5_enctype enctype;
+    int aead;
+
+    /* 16-byte header is always first */
+    *output_length = sizeof(gss_cfx_wrap_token_desc);
+    *padlength = 0;
+
+    ret = krb5_crypto_getenctype(context, crypto, &enctype);
+    if (ret)
+	return ret;
+
+    aead = _krb5_enctype_is_aead(context, enctype);
+    if (!aead) {
+	ret = krb5_crypto_get_checksum_type(context, crypto, &type);
+	if (ret)
+	    return ret;
+
+	ret = krb5_checksumsize(context, type, cksumsize);
+	if (ret)
+	    return ret;
+    } else {
+	ret = krb5_crypto_length(context, crypto,
+				 KRB5_CRYPTO_TYPE_TRAILER, cksumsize);
+	if (ret)
+	    return ret;
+    }
+
+    if (conf_req_flag) {
+	size_t padsize;
+
+	if (!aead)
+	    input_length += sizeof(gss_cfx_wrap_token_desc);
+
+	/* Don't propagate MS bug for AEAD modes, MS can fix it */
+	if (dce_style) {
+            ret = krb5_crypto_getblocksize(context, crypto, &padsize);
+	} else {
+            ret = krb5_crypto_getpadsize(context, crypto, &padsize);
+	}
+	if (ret) {
+	    return ret;
+	}
+	if (padsize > 1) {
+	    /* XXX check this */
+	    *padlength = padsize - (input_length % padsize);
+
+	    /* We add the pad ourselves (noted here for completeness only) */
+	    input_length += *padlength;
+	}
+
+	*output_length += krb5_get_wrapped_length(context,
+						  crypto, input_length);
+    } else {
+	/* Checksum is concatenated with data */
+	*output_length += input_length + *cksumsize;
+    }
+
+    assert(*output_length > input_length);
+
+    return 0;
+}
+
+
 static void
 test_range(const struct range *r, int integ,
 	   krb5_context context, krb5_crypto crypto)
@@ -70,18 +145,18 @@ test_range(const struct range *r, int integ,
 				    size,
 				    &max_wrap_size);
 	if (ret)
-	    krb5_errx(context, 1, "_gsskrb5cfx_max_wrap_length_cfx: %d", ret);
+	    krb5_errx(context, 1, "_gssapi_wrap_size_cfx: %d", ret);
 	if (max_wrap_size == 0)
 	    continue;
 
-	ret = _gsskrb5cfx_wrap_length_cfx(context,
-					  crypto,
-					  integ,
-					  0,
-					  max_wrap_size,
-					  &rsize, &cksumsize, &padsize);
+	ret = wrap_length_cfx(context,
+			      crypto,
+			      integ,
+			      0,
+			      max_wrap_size,
+			      &rsize, &cksumsize, &padsize);
 	if (ret)
-	    krb5_errx(context, 1, "_gsskrb5cfx_wrap_length_cfx: %d", ret);
+	    krb5_errx(context, 1, "wrap_length_cfx: %d", ret);
 
 	if (size < rsize)
 	    krb5_errx(context, 1,
@@ -102,6 +177,7 @@ test_special(krb5_context context, krb5_crypto crypto,
     struct gsskrb5_ctx ctx;
     OM_uint32 minor;
 
+    memset(&ctx, 0, sizeof(ctx));
     ctx.crypto = crypto;
 
     ret = _gssapi_wrap_size_cfx(&minor,
@@ -116,14 +192,14 @@ test_special(krb5_context context, krb5_crypto crypto,
     if (ret)
 	krb5_errx(context, 1, "_gsskrb5cfx_max_wrap_length_cfx: %d", ret);
 
-    ret = _gsskrb5cfx_wrap_length_cfx(context,
-				      crypto,
-				      integ,
-				      0,
-				      max_wrap_size,
-				      &rsize, &cksumsize, &padsize);
+    ret = wrap_length_cfx(context,
+			  crypto,
+			  integ,
+			  0,
+			  max_wrap_size,
+			  &rsize, &cksumsize, &padsize);
     if (ret)
-	krb5_errx(context, 1, "_gsskrb5cfx_wrap_length_cfx: %d", ret);
+	krb5_errx(context, 1, "wrap_length_cfx: %d", ret);
 
     if (testsize < rsize)
 	krb5_errx(context, 1,

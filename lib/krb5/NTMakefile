@@ -58,6 +58,8 @@ libkrb5_OBJS =			\
 	$(OBJ)\crc.obj			    \
 	$(OBJ)\creds.obj		    \
 	$(OBJ)\crypto.obj		    \
+	$(OBJ)\crypto-aead.obj		    \
+	$(OBJ)\crypto-aes-gcm.obj	    \
 	$(OBJ)\crypto-aes-sha1.obj	    \
 	$(OBJ)\crypto-aes-sha2.obj	    \
 	$(OBJ)\crypto-algs.obj		    \
@@ -220,6 +222,8 @@ dist_libkrb5_la_SOURCES =			\
 	creds.c					\
 	crypto.c				\
 	crypto.h				\
+	crypto-aead.c				\
+	crypto-aes-gcm.c			\
 	crypto-aes-sha1.c			\
 	crypto-aes-sha2.c			\
 	crypto-algs.c				\
@@ -392,6 +396,8 @@ clean::
 librfc3961_OBJS=\
 	$(OBJ)\crc.obj			\
 	$(OBJ)\crypto.obj		\
+	$(OBJ)\crypto-aead.obj		\
+	$(OBJ)\crypto-aes-gcm.obj	\
 	$(OBJ)\crypto-aes-sha1.obj	\
 	$(OBJ)\crypto-aes-sha2.obj	\
 	$(OBJ)\crypto-algs.obj		\

@@ -262,6 +262,30 @@ EVP_hcrypto_aes_256_cfb8(void)
     return &aes_256_cfb8;
 }
 
+const EVP_CIPHER *
+EVP_hcrypto_aes_128_ccm(void)
+{
+    return NULL;
+}
+
+const EVP_CIPHER *
+EVP_hcrypto_aes_256_ccm(void)
+{
+    return NULL;
+}
+
+const EVP_CIPHER *
+EVP_hcrypto_aes_128_gcm(void)
+{
+    return NULL;
+}
+
+const EVP_CIPHER *
+EVP_hcrypto_aes_256_gcm(void)
+{
+    return NULL;
+}
+
 /**
  * The message digest SHA256 - hcrypto
  *

@@ -130,9 +130,6 @@ HEIMDAL_GSS_2.0 {
 		gss_name_to_oid;
 		gss_oid_to_name;
 
-		# _gsskrb5cfx_ are really internal symbols, but export
-		# then now to make testing easier.
-		_gsskrb5cfx_wrap_length_cfx;
 		_gssapi_wrap_size_cfx;
 
 		__gss_krb5_copy_ccache_x_oid_desc;

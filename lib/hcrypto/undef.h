@@ -113,6 +113,10 @@
 #undef EVP_aes_128_cfb8
 #undef EVP_aes_192_cfb8
 #undef EVP_aes_256_cfb8
+#undef EVP_aes_128_ccm
+#undef EVP_aes_256_ccm
+#undef EVP_aes_128_gcm
+#undef EVP_aes_256_gcm
 #undef EVP_des_cbc
 #undef EVP_des_ede3_cbc
 #undef EVP_enc_null
@@ -150,6 +154,8 @@
 #undef EVP_CIPH_STREAM_CIPHER
 #undef EVP_CIPH_CBC_MODE
 #undef EVP_CIPH_CFB8_MODE
+#undef EVP_CIPH_CCM_MODE
+#undef EVP_CIPH_GCM_MODE
 #undef EVP_CIPH_MODE
 #undef EVP_CIPH_CTRL_INIT
 #undef EVP_CTRL_INIT

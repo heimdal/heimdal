@@ -823,6 +823,7 @@ iov_test(krb5_context context, krb5_enctype enctype)
     krb5_crypto_iov iov[6];
     size_t len, i;
     unsigned char *base, *p;
+    unsigned char ivec[EVP_MAX_IV_LENGTH];
 
     ret = krb5_generate_random_keyblock(context, enctype, &key);
     if (ret)
@@ -886,18 +887,18 @@ iov_test(krb5_context context, krb5_enctype enctype)
     /*
      * Encrypt
      */
-
-    ret = krb5_encrypt_iov_ivec(context, crypto, 7, iov,
-				sizeof(iov)/sizeof(iov[0]), NULL);
+    memset(ivec, 0, sizeof(ivec));
+    ret = krb5_encrypt_iov_ivec(context, crypto, 22, iov,
+				sizeof(iov)/sizeof(iov[0]), ivec);
     if (ret)
 	krb5_err(context, 1, ret, "krb5_encrypt_iov_ivec");
 
     /*
      * Decrypt
      */
-
-    ret = krb5_decrypt_iov_ivec(context, crypto, 7,
-				iov, sizeof(iov)/sizeof(iov[0]), NULL);
+    memset(ivec, 0, sizeof(ivec));
+    ret = krb5_decrypt_iov_ivec(context, crypto, 22,
+				iov, sizeof(iov)/sizeof(iov[0]), ivec);
     if (ret)
 	krb5_err(context, 1, ret, "krb5_decrypt_iov_ivec");
 
@@ -953,18 +954,18 @@ iov_test(krb5_context context, krb5_enctype enctype)
     /*
      * Encrypt
      */
-
-    ret = krb5_encrypt_iov_ivec(context, crypto, 7,
-				iov, sizeof(iov)/sizeof(iov[0]), NULL);
+    memset(ivec, 0, sizeof(ivec));
+    ret = krb5_encrypt_iov_ivec(context, crypto, 22,
+				iov, sizeof(iov)/sizeof(iov[0]), ivec);
     if (ret)
 	krb5_err(context, 1, ret, "krb5_encrypt_iov_ivec");
 
     /*
      * Decrypt
      */
-
-    ret = krb5_decrypt_iov_ivec(context, crypto, 7,
-				iov, sizeof(iov)/sizeof(iov[0]), NULL);
+    memset(ivec, 0, sizeof(ivec));
+    ret = krb5_decrypt_iov_ivec(context, crypto, 22,
+				iov, sizeof(iov)/sizeof(iov[0]), ivec);
     if (ret)
 	krb5_err(context, 1, ret, "krb5_decrypt_iov_ivec");
 
@@ -1046,6 +1047,8 @@ main(int argc, char **argv)
     val |= iov_test(context, KRB5_ENCTYPE_AES256_CTS_HMAC_SHA1_96);
     val |= iov_test(context, KRB5_ENCTYPE_AES128_CTS_HMAC_SHA256_128);
     val |= iov_test(context, KRB5_ENCTYPE_AES256_CTS_HMAC_SHA384_192);
+    val |= iov_test(context, KRB5_ENCTYPE_AES128_GCM_128);
+    val |= iov_test(context, KRB5_ENCTYPE_AES256_GCM_128);
 
     if (verbose && val == 0)
 	printf("all ok\n");

@@ -293,6 +293,7 @@ gsskrb5_initiator_ready(
     int32_t seq_number;
     int is_cfx = 0;
     OM_uint32 flags = ctx->flags;
+    krb5_error_code kret;
 
     krb5_free_creds(context, ctx->kcred);
     ctx->kcred = NULL;
@@ -303,7 +304,11 @@ gsskrb5_initiator_ready(
 
     krb5_auth_con_getremoteseqnumber (context, ctx->auth_context, &seq_number);
 
-    _gsskrb5i_is_cfx(context, ctx, 0);
+    kret = _gsskrb5i_is_cfx(context, ctx, 0);
+    if (kret) {
+        *minor_status = kret;
+        return GSS_S_FAILURE;
+    }
     is_cfx = (ctx->more_flags & IS_CFX);
 
     ret = _gssapi_msg_order_create(minor_status,

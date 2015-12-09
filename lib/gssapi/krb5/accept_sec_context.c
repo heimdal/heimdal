@@ -101,7 +101,7 @@ _gsskrb5_register_acceptor_identity(OM_uint32 *min_stat, const char *identity)
     return GSS_S_COMPLETE;
 }
 
-void
+krb5_error_code
 _gsskrb5i_is_cfx(krb5_context context, gsskrb5_ctx ctx, int acceptor)
 {
     krb5_keyblock *key;
@@ -121,7 +121,7 @@ _gsskrb5i_is_cfx(krb5_context context, gsskrb5_ctx ctx, int acceptor)
 	key = ctx->auth_context->keyblock;
 
     if (key == NULL)
-	return;
+	return KRB5KRB_AP_ERR_NOKEY;
 
     switch (key->keytype) {
     case ETYPE_DES_CBC_CRC:
@@ -139,12 +139,19 @@ _gsskrb5i_is_cfx(krb5_context context, gsskrb5_ctx ctx, int acceptor)
 	if ((acceptor && ctx->auth_context->local_subkey) ||
 	    (!acceptor && ctx->auth_context->remote_subkey))
 	    ctx->more_flags |= ACCEPTOR_SUBKEY;
+	if (_krb5_enctype_is_aead(context, key->keytype)) {
+            /* guard against ticket session key reuse with CCM/GCM */
+            if (key == ctx->auth_context->keyblock)
+                return GSS_KRB5_S_KG_NO_SUBKEY;
+	    ctx->more_flags |= AEAD;
+        }
 	break;
     }
-    if (ctx->crypto)
+    if (ctx->crypto) {
         krb5_crypto_destroy(context, ctx->crypto);
-    /* XXX We really shouldn't ignore this; will come back to this */
-    (void) krb5_crypto_init(context, key, 0, &ctx->crypto);
+        ctx->crypto = NULL;
+    }
+    return krb5_crypto_init(context, key, 0, &ctx->crypto);
 }
 
 
@@ -248,6 +255,7 @@ gsskrb5_acceptor_ready(OM_uint32 * minor_status,
 		       gss_cred_id_t *delegated_cred_handle)
 {
     OM_uint32 ret;
+    krb5_error_code kret;
     int32_t seq_number;
     int is_cfx = 0;
 
@@ -255,7 +263,11 @@ gsskrb5_acceptor_ready(OM_uint32 * minor_status,
 				      ctx->auth_context,
 				      &seq_number);
 
-    _gsskrb5i_is_cfx(context, ctx, 1);
+    kret = _gsskrb5i_is_cfx(context, ctx, 1);
+    if (kret) {
+        *minor_status = kret;
+        return GSS_S_FAILURE;
+    }
     is_cfx = (ctx->more_flags & IS_CFX);
 
     ret = _gssapi_msg_order_create(minor_status,
@@ -615,7 +627,12 @@ gsskrb5_acceptor_start(OM_uint32 * minor_status,
 	krb5_data outbuf;
 	int use_subkey = 0;
 
-	_gsskrb5i_is_cfx(context, ctx, 1);
+	kret = _gsskrb5i_is_cfx(context, ctx, 1);
+        if (kret) {
+            *minor_status = kret;
+            return GSS_S_FAILURE;
+        }
+
 	is_cfx = (ctx->more_flags & IS_CFX);
 
 	if (is_cfx || (ap_options & AP_OPTS_USE_SUBKEY)) {

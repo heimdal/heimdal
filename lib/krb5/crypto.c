@@ -1482,16 +1482,6 @@ decrypt_internal_special(krb5_context context,
     return 0;
 }
 
-static krb5_crypto_iov *
-iov_find(krb5_crypto_iov *data, size_t num_data, unsigned type)
-{
-    size_t i;
-    for (i = 0; i < num_data; i++)
-	if (data[i].flags == type)
-	    return &data[i];
-    return NULL;
-}
-
 static size_t
 iov_enc_data_len(krb5_crypto_iov *data, int num_data)
 {
@@ -1641,6 +1631,51 @@ iov_pad_validate(const struct _krb5_encryption_type *et,
     return 0;
 }
 
+static krb5_error_code
+iov_ivec_aead(krb5_context context,
+	      krb5_crypto crypto,
+	      unsigned usage,
+	      krb5_crypto_iov *data,
+	      int num_data,
+	      void *ivec,
+	      int encp)
+{
+    krb5_error_code ret;
+    struct _krb5_key_data *dkey;
+
+    /*
+     * Allow GSS-API CFX key usages as they have appropriately constructed
+     * initialization vectors.
+     *
+     * This is brittle but will stop AEAD being used with long-term keys.
+     * In the future, we may derive a key from a salt placed in the header
+     * for usages aside from GSS-API.
+     */
+    switch (usage) {
+    case KRB5_KU_USAGE_ACCEPTOR_SEAL:
+    case KRB5_KU_USAGE_ACCEPTOR_SIGN:
+    case KRB5_KU_USAGE_INITIATOR_SEAL:
+    case KRB5_KU_USAGE_INITIATOR_SIGN:
+	break;
+    default:
+	return KRB5_PROG_ETYPE_NOSUPP;
+    }
+
+    ret = _get_derived_key(context, crypto, ENCRYPTION_USAGE(usage), &dkey);
+    if (ret)
+	return ret;
+
+    ret = _key_schedule(context, dkey);
+    if (ret)
+	return ret;
+
+    ret = _krb5_evp_cipher_aead(context, dkey, data, num_data, ivec, encp);
+    if (ret)
+	return ret;
+
+    return 0;
+}
+
 /**
  * Inline encrypt a kerberos message
  *
@@ -1686,7 +1721,14 @@ krb5_encrypt_iov_ivec(krb5_context context,
 	return KRB5_CRYPTO_INTERNAL;
     }
 
-    if(!derived_crypto(context, crypto)) {
+    switch (crypto->et->flags & F_CRYPTO_MASK) {
+    case F_RFC3961_ENC:
+    case F_ENC_THEN_CKSUM:
+	break;
+    case F_AEAD:
+	return iov_ivec_aead(context, crypto, usage, data, num_data, ivec, 1);
+	break;
+    default:
 	krb5_clear_error_message(context);
 	return KRB5_CRYPTO_INTERNAL;
     }
@@ -1875,7 +1917,14 @@ krb5_decrypt_iov_ivec(krb5_context context,
     struct _krb5_encryption_type *et = crypto->et;
     krb5_crypto_iov *tiv, *hiv;
 
-    if(!derived_crypto(context, crypto)) {
+    switch (crypto->et->flags & F_CRYPTO_MASK) {
+    case F_RFC3961_ENC:
+    case F_ENC_THEN_CKSUM:
+	break;
+    case F_AEAD:
+	return iov_ivec_aead(context, crypto, usage, data, num_data, ivec, 0);
+	break;
+    default:
 	krb5_clear_error_message(context);
 	return KRB5_CRYPTO_INTERNAL;
     }
@@ -2129,7 +2178,12 @@ krb5_crypto_length(krb5_context context,
 		   int type,
 		   size_t *len)
 {
-    if (!derived_crypto(context, crypto)) {
+    switch (crypto->et->flags & F_CRYPTO_MASK) {
+    case F_RFC3961_ENC:
+    case F_ENC_THEN_CKSUM:
+    case F_AEAD:
+	break;
+    default:
 	krb5_set_error_message(context, EINVAL, "not a derived crypto");
 	return EINVAL;
     }
@@ -2139,7 +2193,7 @@ krb5_crypto_length(krb5_context context,
 	*len = 0;
 	return 0;
     case KRB5_CRYPTO_TYPE_HEADER:
-	*len = crypto->et->blocksize;
+	*len = crypto->et->confoundersize;
 	return 0;
     case KRB5_CRYPTO_TYPE_DATA:
     case KRB5_CRYPTO_TYPE_SIGN_ONLY:
@@ -2154,14 +2208,18 @@ krb5_crypto_length(krb5_context context,
     case KRB5_CRYPTO_TYPE_TRAILER:
         if (crypto->et->keyed_checksum)
             *len = CHECKSUMSIZE(crypto->et->keyed_checksum);
+	else if (crypto->et->flags & F_AEAD)
+	    *len = crypto->et->blocksize;
         else
             *len = 0;
 	return 0;
     case KRB5_CRYPTO_TYPE_CHECKSUM:
 	if (crypto->et->keyed_checksum)
 	    *len = CHECKSUMSIZE(crypto->et->keyed_checksum);
-	else
+	else if (crypto->et->checksum)
 	    *len = CHECKSUMSIZE(crypto->et->checksum);
+	else
+	    return KRB5_PROG_SUMTYPE_NOSUPP;
 	return 0;
     }
     krb5_set_error_message(context, EINVAL,
@@ -2209,6 +2267,9 @@ krb5_encrypt_ivec(krb5_context context,
     case F_SPECIAL:
 	ret = encrypt_internal_special (context, crypto, usage,
 					data, len, result, ivec);
+	break;
+    case F_AEAD:
+	ret = KRB5_PROG_ETYPE_NOSUPP;
 	break;
     case F_ENC_THEN_CKSUM:
 	ret = encrypt_internal_enc_then_cksum(context, crypto, usage,
@@ -2274,6 +2335,9 @@ krb5_decrypt_ivec(krb5_context context,
     case F_ENC_THEN_CKSUM:
 	ret = decrypt_internal_enc_then_cksum(context, crypto, usage,
 					      data, len, result, ivec);
+	break;
+    case F_AEAD:
+	ret = KRB5_PROG_ETYPE_NOSUPP;
 	break;
     default:
 	ret = decrypt_internal(context, crypto, data, len, result, ivec);
@@ -2441,6 +2505,36 @@ derive_key_sp800_hmac(krb5_context context,
     return ret;
 }
 
+static krb5_error_code
+derive_key_sp800_cmac(krb5_context context,
+		      struct _krb5_encryption_type *et,
+		      struct _krb5_key_data *key,
+		      const void *constant,
+		      size_t len)
+{
+    krb5_error_code ret;
+    struct _krb5_key_type *kt = et->keytype;
+    krb5_data label;
+    krb5_data K1;
+
+    ret = krb5_data_alloc(&K1, kt->size);
+    if (ret)
+	return ret;
+
+    label.data = (void *)constant;
+    label.length = len;
+
+    ret = _krb5_SP800_108_CMAC_KDF(context, &key->key->keyvalue,
+				   &label, NULL, &K1);
+    if (ret == 0)
+	memcpy(key->key->keyvalue.data, K1.data, K1.length);
+
+    memset_s(K1.data, K1.length, 0, K1.length);
+    krb5_data_free(&K1);
+
+    return ret;
+}
+
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 _krb5_derive_key(krb5_context context,
 		 struct _krb5_encryption_type *et,
@@ -2460,6 +2554,9 @@ _krb5_derive_key(krb5_context context,
 	break;
     case F_SP800_108_HMAC_KDF:
 	ret = derive_key_sp800_hmac(context, et, key, constant, len);
+	break;
+    case F_SP800_108_CMAC_KDF:
+	ret = derive_key_sp800_cmac(context, et, key, constant, len);
 	break;
     default:
 	ret = KRB5_CRYPTO_INTERNAL;
@@ -2889,6 +2986,26 @@ _krb5_enctype_requires_random_salt(krb5_context context,
     et = _krb5_find_enctype (enctype);
 
     return et && (et->flags & F_SP800_108_HMAC_KDF);
+}
+
+/**
+ * Returns whether the encryption type is native AEAD type
+ *
+ * @param context Kerberos 5 context
+ * @param enctype encryption type to probe
+ *
+ * @return Returns true if is native AEAD enctype
+ *
+ * @ingroup krb5_crypto
+ */
+KRB5_LIB_FUNCTION krb5_boolean KRB5_LIB_CALL
+_krb5_enctype_is_aead(krb5_context context, krb5_enctype enctype)
+{
+    struct _krb5_encryption_type *et;
+
+    et = _krb5_find_enctype (enctype);
+
+    return et && (et->flags & F_AEAD);
 }
 
 static size_t

@@ -1292,6 +1292,18 @@ main(int argc, char **argv)
 		errx(1, "key data mismatch");
 	}
 
+	if (keyblock && verbose_flag) {
+	    char *etype_name;
+
+	    ret = krb5_enctype_to_string(context, keyblock->keytype, &etype_name);
+	    if (ret)
+		printf("session enctype is %d\n", keyblock->keytype);
+	    else {
+		printf("session enctype is %s\n", etype_name);
+		free(etype_name);
+	    }
+	}
+
 	if (session_enctype_string) {
 	    krb5_enctype enctype;
 

@@ -205,7 +205,6 @@ cipher_ctrl(hc_EVP_CIPHER_CTX *ctx, int type, int arg, void *ptr)
     return EVP_CIPHER_CTX_ctrl(ossl_ctx->ossl_cipher_ctx, type, arg, ptr);
 }
 
-
 static void
 get_EVP_CIPHER_once_cb(void *d)
 {
@@ -513,6 +512,42 @@ OSSL_CIPHER_ALGORITHM(aes_192_cfb8, hc_EVP_CIPH_CFB8_MODE)
  * @ingroup hcrypto_evp
  */
 OSSL_CIPHER_ALGORITHM(aes_256_cfb8, hc_EVP_CIPH_CFB8_MODE)
+
+/**
+ * The AES-128 CCM type (OpenSSL provider)
+ *
+ * @return the AES-128-CCM EVP_CIPHER pointer.
+ *
+ * @ingroup hcrypto_evp
+ */
+OSSL_CIPHER_ALGORITHM(aes_128_ccm, hc_EVP_CIPH_CCM_MODE)
+
+/**
+ * The AES-256 CCM type (OpenSSL provider)
+ *
+ * @return the AES-256-CCM EVP_CIPHER pointer.
+ *
+ * @ingroup hcrypto_evp
+ */
+OSSL_CIPHER_ALGORITHM(aes_256_ccm, hc_EVP_CIPH_CCM_MODE)
+
+/**
+ * The AES-128 GCM type (OpenSSL provider)
+ *
+ * @return the AES-128-GCM EVP_CIPHER pointer.
+ *
+ * @ingroup hcrypto_evp
+ */
+OSSL_CIPHER_ALGORITHM(aes_128_gcm, hc_EVP_CIPH_GCM_MODE)
+
+/**
+ * The AES-256 GCM type (OpenSSL provider)
+ *
+ * @return the AES-256-GCM EVP_CIPHER pointer.
+ *
+ * @ingroup hcrypto_evp
+ */
+OSSL_CIPHER_ALGORITHM(aes_256_gcm, hc_EVP_CIPH_GCM_MODE)
 
 #ifndef HAVE_OPENSSL_30
 /*

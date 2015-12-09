@@ -57,10 +57,12 @@ struct _krb5_key_usage;
 #define F_RFC3961_ENC		0x0100	/* RFC3961 simplified profile */
 #define F_SPECIAL		0x0200	/* backwards */
 #define F_ENC_THEN_CKSUM	0x0400  /* checksum is over encrypted data */
+#define F_AEAD			0x0800	/* AEAD-only enctype */
 #define F_CRYPTO_MASK		0x0F00
 
 #define F_RFC3961_KDF		0x1000	/* RFC3961 KDF */
 #define F_SP800_108_HMAC_KDF	0x2000	/* SP800-108 HMAC KDF */
+#define F_SP800_108_CMAC_KDF	0x4000	/* SP800-108 CMAC KDF */
 #define F_KDF_MASK		0xF000
 
 struct salt_type {
@@ -115,6 +117,12 @@ struct _krb5_encryption_type {
     struct _krb5_checksum_type *checksum;
     struct _krb5_checksum_type *keyed_checksum;
     unsigned flags;
+    /*
+     * If F_AEAD is set, then this function is overloaded to schedule
+     * the AEAD cipher's initialization vector and MAC. See
+     * _krb5_evp_control_gcm() for an example.
+     */
+#define aead_control encrypt
     krb5_error_code (*encrypt)(krb5_context context,
 			       struct _krb5_key_data *key,
 			       void *data, size_t len,
@@ -174,6 +182,10 @@ extern struct _krb5_encryption_type _krb5_enctype_aes256_cts_hmac_sha1;
 extern struct _krb5_encryption_type _krb5_enctype_aes128_cts_hmac_sha1;
 extern struct _krb5_encryption_type _krb5_enctype_aes128_cts_hmac_sha256_128;
 extern struct _krb5_encryption_type _krb5_enctype_aes256_cts_hmac_sha384_192;
+#ifdef HAVE_HCRYPTO_W_OPENSSL
+extern struct _krb5_encryption_type _krb5_enctype_aes128_gcm_128;
+extern struct _krb5_encryption_type _krb5_enctype_aes256_gcm_128;
+#endif
 extern struct _krb5_encryption_type _krb5_enctype_des3_cbc_sha1;
 extern struct _krb5_encryption_type _krb5_enctype_des3_cbc_md5;
 extern struct _krb5_encryption_type _krb5_enctype_des3_cbc_none;
@@ -229,3 +241,14 @@ struct krb5_crypto_data {
 #define KRB5_CRYPTO_FLAG_ALLOW_UNKEYED_CHECKSUM		    0x01
 
 #endif
+
+/* helper function for IOV routines */
+static inline krb5_crypto_iov *
+iov_find(krb5_crypto_iov *data, size_t num_data, unsigned type)
+{
+    size_t i;
+    for (i = 0; i < num_data; i++)
+	if (data[i].flags == type)
+	    return &data[i];
+    return NULL;
+}

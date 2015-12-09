@@ -77,6 +77,10 @@
 #define EVP_aes_128_cfb8 hc_EVP_aes_128_cfb8
 #define EVP_aes_192_cfb8 hc_EVP_aes_192_cfb8
 #define EVP_aes_256_cfb8 hc_EVP_aes_256_cfb8
+#define EVP_aes_128_ccm hc_EVP_aes_128_ccm
+#define EVP_aes_256_ccm hc_EVP_aes_256_ccm
+#define EVP_aes_128_gcm hc_EVP_aes_128_gcm
+#define EVP_aes_256_gcm hc_EVP_aes_256_gcm
 
 #define EVP_des_cbc hc_EVP_des_cbc
 #define EVP_des_ede3_cbc hc_EVP_des_ede3_cbc
@@ -119,6 +123,8 @@
 #define EVP_CIPH_STREAM_CIPHER hc_EVP_CIPH_STREAM_CIPHER
 #define EVP_CIPH_CBC_MODE hc_EVP_CIPH_CBC_MODE
 #define EVP_CIPH_CFB8_MODE hc_EVP_CIPH_CFB8_MODE
+#define EVP_CIPH_CCM_MODE hc_EVP_CIPH_CCM_MODE
+#define EVP_CIPH_GCM_MODE hc_EVP_CIPH_GCM_MODE
 #define EVP_CIPH_MODE hc_EVP_CIPH_MODE
 #define EVP_CIPH_CTRL_INIT hc_EVP_CIPH_CTRL_INIT
 
@@ -157,6 +163,8 @@ struct hc_CIPHER {
 #define hc_EVP_CIPH_STREAM_CIPHER               0
 #define hc_EVP_CIPH_CBC_MODE                    2
 #define hc_EVP_CIPH_CFB8_MODE                   4
+#define hc_EVP_CIPH_GCM_MODE			6
+#define hc_EVP_CIPH_CCM_MODE			7
 #define hc_EVP_CIPH_MODE                        0x7
 #define hc_EVP_CIPH_CTRL_INIT                   0x40
 
@@ -175,7 +183,19 @@ struct hc_CIPHER {
     int (*get_asn1_parameters)(void);
     int (*ctrl)(EVP_CIPHER_CTX *, int type, int arg, void *ptr);
 #define EVP_CTRL_RAND_KEY		0x6
-
+#define EVP_CTRL_AEAD_SET_IVLEN		0x9
+#define EVP_CTRL_AEAD_GET_TAG		0x10
+#define EVP_CTRL_AEAD_SET_TAG		0x11
+#define EVP_CTRL_AEAD_SET_IV_FIXED	0x12
+#define EVP_CTRL_GCM_SET_IVLEN		EVP_CTRL_AEAD_SET_IVLEN
+#define EVP_CTRL_GCM_GET_TAG		EVP_CTRL_AEAD_GET_TAG
+#define EVP_CTRL_GCM_SET_TAG		EVP_CTRL_AEAD_SET_TAG
+#define EVP_CTRL_GCM_SET_IV_FIXED	EVP_CTRL_AEAD_SET_IV_FIXED
+#define EVP_CTRL_GCM_IV_GEN		0x13
+#define EVP_CTRL_CCM_SET_IVLEN		EVP_CTRL_AEAD_SET_IVLEN
+#define EVP_CTRL_CCM_GET_TAG		EVP_CTRL_AEAD_GET_TAG
+#define EVP_CTRL_CCM_SET_TAG		EVP_CTRL_AEAD_SET_TAG
+#define EVP_CTRL_CCM_SET_IV_FIXED	EVP_CTRL_AEAD_SET_IV_FIXED
     void *app_data;
 };
 
@@ -263,6 +283,10 @@ const EVP_CIPHER * EVP_aes_256_cbc(void);
 const EVP_CIPHER * EVP_aes_128_cfb8(void);
 const EVP_CIPHER * EVP_aes_192_cfb8(void);
 const EVP_CIPHER * EVP_aes_256_cfb8(void);
+const EVP_CIPHER * EVP_aes_128_ccm(void);
+const EVP_CIPHER * EVP_aes_256_ccm(void);
+const EVP_CIPHER * EVP_aes_128_gcm(void);
+const EVP_CIPHER * EVP_aes_256_gcm(void);
 HC_DEPRECATED_CRYPTO const EVP_CIPHER * EVP_des_cbc(void);
 const EVP_CIPHER * EVP_des_ede3_cbc(void);
 const EVP_CIPHER * EVP_enc_null(void);

@@ -65,7 +65,8 @@ typedef struct gsskrb5_ctx {
 	 ACCEPTOR_SUBKEY = 16,
 	 RETRIED = 32,
 	 CLOSE_CCACHE = 64,
-	 IS_CFX = 128
+	 IS_CFX = 128,
+	 AEAD = 256
   } more_flags;
   enum gss_ctx_id_t_state {
       /* initiator states */

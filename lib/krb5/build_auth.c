@@ -59,7 +59,7 @@ add_etypelist(krb5_context context,
     krb5_data e;
     size_t len = 0;
 
-    ret = _krb5_init_etype(context, KRB5_PDU_NONE,
+    ret = _krb5_init_etype(context, KRB5_PDU_ETYPE_NEGO,
 			   &etypes.len, &etypes.val,
 			   NULL);
     if (ret)

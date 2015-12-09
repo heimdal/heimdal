@@ -51,6 +51,10 @@
 #define EVP_hcrypto_aes_128_cfb8 hc_EVP_hcrypto_aes_128_cfb8
 #define EVP_hcrypto_aes_192_cfb8 hc_EVP_hcrypto_aes_192_cfb8
 #define EVP_hcrypto_aes_256_cfb8 hc_EVP_hcrypto_aes_256_cfb8
+#define EVP_hcrypto_aes_128_ccm hc_EVP_hcrypto_aes_128_ccm
+#define EVP_hcrypto_aes_256_ccm hc_EVP_hcrypto_aes_256_ccm
+#define EVP_hcrypto_aes_128_gcm hc_EVP_hcrypto_aes_128_gcm
+#define EVP_hcrypto_aes_256_gcm hc_EVP_hcrypto_aes_256_gcm
 #define EVP_hcrypto_rc4 hc_EVP_hcrypto_rc4
 #define EVP_hcrypto_rc4_40 hc_EVP_hcrypto_rc4_40
 #define EVP_hcrypto_rc2_40_cbc hc_EVP_hcrypto_rc2_40_cbc
@@ -90,6 +94,12 @@ const EVP_CIPHER * EVP_hcrypto_aes_256_cbc(void);
 const EVP_CIPHER * EVP_hcrypto_aes_128_cfb8(void);
 const EVP_CIPHER * EVP_hcrypto_aes_192_cfb8(void);
 const EVP_CIPHER * EVP_hcrypto_aes_256_cfb8(void);
+
+const EVP_CIPHER * EVP_hcrypto_aes_128_ccm(void);
+const EVP_CIPHER * EVP_hcrypto_aes_256_ccm(void);
+
+const EVP_CIPHER * EVP_hcrypto_aes_128_gcm(void);
+const EVP_CIPHER * EVP_hcrypto_aes_256_gcm(void);
 
 const EVP_CIPHER * EVP_hcrypto_camellia_128_cbc(void);
 const EVP_CIPHER * EVP_hcrypto_camellia_192_cbc(void);

@@ -829,6 +829,8 @@ EVP_CipherInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *c, ENGINE *engine,
     case EVP_CIPH_STREAM_CIPHER:
 	break;
     case EVP_CIPH_CFB8_MODE:
+    case EVP_CIPH_CCM_MODE:
+    case EVP_CIPH_GCM_MODE:
 	if (iv)
 	    memcpy(ctx->iv, iv, EVP_CIPHER_CTX_iv_length(ctx));
 	break;
@@ -867,8 +869,19 @@ EVP_CipherUpdate(EVP_CIPHER_CTX *ctx, void *out, int *outlen,
 		 void *in, size_t inlen)
 {
     int ret, left, blocksize;
+    int aead;
 
     *outlen = 0;
+
+    switch (EVP_CIPHER_CTX_mode(ctx)) {
+    case EVP_CIPH_CCM_MODE:
+    case EVP_CIPH_GCM_MODE:
+	aead = 1;
+	break;
+    default:
+	aead = 0;
+	break;
+    }
 
     /*
      * If there in no bytes left over from the last Update and the
@@ -876,7 +889,8 @@ EVP_CipherUpdate(EVP_CIPHER_CTX *ctx, void *out, int *outlen,
      * shortcut (and preformance gain) and directly encrypt the
      * data.
      */
-    if (ctx->buf_len == 0 && inlen && (inlen & ctx->block_mask) == 0) {
+    if (aead ||
+	(ctx->buf_len == 0 && inlen && (inlen & ctx->block_mask) == 0)) {
 	ret = (*ctx->cipher->do_cipher)(ctx, out, in, inlen);
 	if (ret == 1)
 	    *outlen = inlen;
@@ -1285,6 +1299,66 @@ EVP_aes_256_cfb8(void)
 {
     hcrypto_validate();
     return EVP_DEF_OP(HCRYPTO_DEF_PROVIDER, aes_256_cfb8);
+}
+
+/**
+ * The AES-128-CCM cipher type
+ *
+ * @return the AES-128-CCM EVP_CIPHER pointer.
+ *
+ * @ingroup hcrypto_evp
+ */
+
+const EVP_CIPHER *
+EVP_aes_128_ccm(void)
+{
+    hcrypto_validate();
+    return EVP_DEF_OP(HCRYPTO_DEF_PROVIDER, aes_128_ccm);
+}
+
+/**
+ * The AES-256-CCM cipher type
+ *
+ * @return the AES-256-CCM EVP_CIPHER pointer.
+ *
+ * @ingroup hcrypto_evp
+ */
+
+const EVP_CIPHER *
+EVP_aes_256_ccm(void)
+{
+    hcrypto_validate();
+    return EVP_DEF_OP(HCRYPTO_DEF_PROVIDER, aes_256_ccm);
+}
+
+/**
+ * The AES-128-GCM cipher type
+ *
+ * @return the AES-128-GCM EVP_CIPHER pointer.
+ *
+ * @ingroup hcrypto_evp
+ */
+
+const EVP_CIPHER *
+EVP_aes_128_gcm(void)
+{
+    hcrypto_validate();
+    return EVP_DEF_OP(HCRYPTO_DEF_PROVIDER, aes_128_gcm);
+}
+
+/**
+ * The AES-256-GCM cipher type
+ *
+ * @return the AES-256-GCM EVP_CIPHER pointer.
+ *
+ * @ingroup hcrypto_evp
+ */
+
+const EVP_CIPHER *
+EVP_aes_256_gcm(void)
+{
+    hcrypto_validate();
+    return EVP_DEF_OP(HCRYPTO_DEF_PROVIDER, aes_256_gcm);
 }
 
 /**

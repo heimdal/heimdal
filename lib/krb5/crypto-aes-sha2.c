@@ -171,7 +171,7 @@ AES_SHA2_PRF(krb5_context context,
 struct _krb5_encryption_type _krb5_enctype_aes128_cts_hmac_sha256_128 = {
     ETYPE_AES128_CTS_HMAC_SHA256_128,
     "aes128-cts-hmac-sha256-128",
-    "aes128-cts-sha2",
+    "aes128-cts-sha256",
     16,
     1,
     16,
@@ -187,7 +187,7 @@ struct _krb5_encryption_type _krb5_enctype_aes128_cts_hmac_sha256_128 = {
 struct _krb5_encryption_type _krb5_enctype_aes256_cts_hmac_sha384_192 = {
     ETYPE_AES256_CTS_HMAC_SHA384_192,
     "aes256-cts-hmac-sha384-192",
-    "aes256-cts-sha2",
+    "aes256-cts-sha384",
     16,
     1,
     16,

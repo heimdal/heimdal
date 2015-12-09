@@ -38,7 +38,7 @@
 
 #ifdef HAVE_DLOPEN
 
-#include "pkcs11.h"
+#include "ref/pkcs11.h"
 
 struct p11_slot {
     int flags;

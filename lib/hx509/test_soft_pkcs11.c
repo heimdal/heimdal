@@ -32,7 +32,7 @@
  */
 
 #include "hx_locl.h"
-#include "pkcs11.h"
+#include "ref/pkcs11.h"
 #include <err.h>
 
 static CK_FUNCTION_LIST_PTR func;

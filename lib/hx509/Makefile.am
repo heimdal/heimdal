@@ -107,7 +107,7 @@ libhx509_la_LDFLAGS += $(LDFLAGS_VERSION_SCRIPT)$(srcdir)/version-script.map
 endif
 $(libhx509_la_OBJECTS): $(srcdir)/version-script.map $(nodist_include_HEADERS) $(priv_headers)
 
-libhx509_la_CPPFLAGS = -I$(srcdir)/ref $(INCLUDE_hcrypto)
+libhx509_la_CPPFLAGS = $(INCLUDE_hcrypto)
 nodist_libhx509_la_SOURCES = $(BUILT_SOURCES)
 
 $(gen_files_ocsp) ocsp_asn1.hx ocsp_asn1-priv.hx: ocsp_asn1_files
@@ -207,7 +207,7 @@ check_PROGRAMS = $(PROGRAM_TESTS) test_soft_pkcs11
 LDADD = libhx509.la
 
 test_soft_pkcs11_LDADD = libhx509.la
-test_soft_pkcs11_CPPFLAGS = $(INCLUDE_hcrypto) -I$(srcdir)/ref
+test_soft_pkcs11_CPPFLAGS = $(INCLUDE_hcrypto)
 
 test_name_CPPFLAGS = $(INCLUDE_hcrypto)
 test_name_LDADD = libhx509.la $(LIB_roken)

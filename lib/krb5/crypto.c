@@ -2259,11 +2259,11 @@ _krb5_derive_key(krb5_context context,
 	return ret;
 
     switch (et->flags & F_KDF_MASK) {
-    case F_SP800_108_HMAC_KDF:
-	ret = derive_key_sp800_hmac(context, et, key, constant, len);
-	break;
     case F_RFC3961_KDF:
 	ret = derive_key_rfc3961(context, et, key, constant, len);
+	break;
+    case F_SP800_108_HMAC_KDF:
+	ret = derive_key_sp800_hmac(context, et, key, constant, len);
 	break;
     default:
 	ret = KRB5_CRYPTO_INTERNAL;

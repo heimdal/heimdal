@@ -61,7 +61,10 @@ struct krb5_crypto_data {
 #define F_DISABLED		0x0040	/* enctype/checksum disabled */
 #define F_WEAK			0x0080	/* enctype is considered weak */
 #define F_ENC_THEN_CKSUM	0x0100  /* checksum is over encrypted data */
-#define F_SP800_108_HMAC_KDF	0x0200	/* use SP800-108 HMAC KDF */
+
+#define F_RFC3961_KDF		0x1000	/* RFC3961 KDF */
+#define F_SP800_108_HMAC_KDF	0x2000	/* SP800-108 HMAC KDF */
+#define F_KDF_MASK		0xF000
 
 struct salt_type {
     krb5_salttype type;

@@ -2123,60 +2123,22 @@ krb5_decrypt_EncryptedData(krb5_context context,
  *                                                          *
  ************************************************************/
 
-KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
-_krb5_derive_key(krb5_context context,
-		 struct _krb5_encryption_type *et,
-		 struct _krb5_key_data *key,
-		 const void *constant,
-		 size_t len)
+static krb5_error_code
+derive_key_rfc3961(krb5_context context,
+		   struct _krb5_encryption_type *et,
+		   struct _krb5_key_data *key,
+		   const void *constant,
+		   size_t len)
 {
+
     unsigned char *k = NULL;
     unsigned int nblocks = 0, i;
     krb5_error_code ret = 0;
     struct _krb5_key_type *kt = et->keytype;
-    size_t key_len = 0;
 
-    ret = _key_schedule(context, key);
-    if(ret)
-	return ret;
-    if(et->flags & F_SP800_108_HMAC_KDF) {
-	krb5_data label, K1;
-	const EVP_MD *md = NULL;
-	const unsigned char *c = constant;
-
-	ret = _krb5_aes_sha2_md_for_enctype(context, kt->type, &md);
-	if (ret)
-	    goto out;
-
-	/*
-	 * PRF usage: not handled here (output cannot be longer)
-	 * Integrity usage: truncated hash (half length)
-	 * Encryption usage: base key length
-	 */
-	if (len == 5 && (c[4] == 0x99 || c[4] == 0x55))
-	    key_len = EVP_MD_size(md) / 2;
-	else
-	    key_len = kt->size;
-
-	ret = krb5_data_alloc(&K1, key_len);
-	if (ret)
-	    goto out;
-
-	label.data = (void *)constant;
-	label.length = len;
-
-	ret = _krb5_SP800_108_HMAC_KDF(context, &key->key->keyvalue,
-				       &label, NULL, md, &K1);
-	if (ret)
-	    goto out;
-
-	if (key->key->keyvalue.length > key_len)
-	    key->key->keyvalue.length = key_len;
-	k = K1.data;
-    } else if(et->blocksize * 8 < kt->bits || len != et->blocksize) {
+    if(et->blocksize * 8 < kt->bits || len != et->blocksize) {
 	nblocks = (kt->bits + et->blocksize * 8 - 1) / (et->blocksize * 8);
-	key_len = nblocks * et->blocksize;
-	k = malloc(key_len);
+	k = malloc(nblocks * et->blocksize);
 	if(k == NULL) {
 	    ret = krb5_enomem(context);
 	    goto out;
@@ -2198,7 +2160,7 @@ _krb5_derive_key(krb5_context context,
     } else {
 	/* this case is probably broken, but won't be run anyway */
 	void *c = malloc(len);
-	key_len = (kt->bits + 7) / 8;
+	size_t res_len = (kt->bits + 7) / 8;
 
 	if(len != 0 && c == NULL) {
 	    ret = krb5_enomem(context);
@@ -2206,13 +2168,13 @@ _krb5_derive_key(krb5_context context,
 	}
 	memcpy(c, constant, len);
 	(*et->encrypt)(context, key, c, len, 1, 0, NULL);
-	k = malloc(key_len);
-	if(key_len != 0 && k == NULL) {
+	k = malloc(res_len);
+	if(res_len != 0 && k == NULL) {
 	    free(c);
 	    ret = krb5_enomem(context);
 	    goto out;
 	}
-	ret = _krb5_n_fold(c, len, k, key_len);
+	ret = _krb5_n_fold(c, len, k, res_len);
 	free(c);
 	if (ret) {
 	    krb5_enomem(context);
@@ -2220,34 +2182,102 @@ _krb5_derive_key(krb5_context context,
 	}
     }
 
-    /* XXX keytype dependent post-processing */
-    switch(kt->type) {
-    case KRB5_ENCTYPE_OLD_DES3_CBC_SHA1:
-	_krb5_DES3_random_to_key(context, key->key, k, key_len);
+    if (kt->type == KRB5_ENCTYPE_OLD_DES3_CBC_SHA1)
+	_krb5_DES3_random_to_key(context, key->key, k, nblocks * et->blocksize);
+    else
+	memcpy(key->key->keyvalue.data, k, key->key->keyvalue.length);
+
+ out:
+    if (k) {
+	memset_s(k, nblocks * et->blocksize, 0, nblocks * et->blocksize);
+	free(k);
+    }
+    return ret;
+}
+
+static krb5_error_code
+derive_key_sp800_hmac(krb5_context context,
+		      struct _krb5_encryption_type *et,
+		      struct _krb5_key_data *key,
+		      const void *constant,
+		      size_t len)
+{
+    krb5_error_code ret;
+    struct _krb5_key_type *kt = et->keytype;
+    krb5_data label;
+    const EVP_MD *md = NULL;
+    const unsigned char *c = constant;
+    size_t key_len;
+    krb5_data K1;
+
+    ret = _krb5_aes_sha2_md_for_enctype(context, kt->type, &md);
+    if (ret)
+	return ret;
+
+    /*
+     * PRF usage: not handled here (output cannot be longer)
+     * Integrity usage: truncated hash (half length)
+     * Encryption usage: base key length
+     */
+    if (len == 5 && (c[4] == 0x99 || c[4] == 0x55))
+	key_len = EVP_MD_size(md) / 2;
+    else
+	key_len = kt->size;
+
+    ret = krb5_data_alloc(&K1, key_len);
+    if (ret)
+	return ret;
+
+    label.data = (void *)constant;
+    label.length = len;
+
+    ret = _krb5_SP800_108_HMAC_KDF(context, &key->key->keyvalue,
+				   &label, NULL, md, &K1);
+    if (ret == 0) {
+	if (key->key->keyvalue.length > key_len)
+	    key->key->keyvalue.length = key_len;
+	memcpy(key->key->keyvalue.data, K1.data, key_len);
+    }
+
+    memset_s(K1.data, K1.length, 0, K1.length);
+    krb5_data_free(&K1);
+
+    return ret;
+}
+
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
+_krb5_derive_key(krb5_context context,
+		 struct _krb5_encryption_type *et,
+		 struct _krb5_key_data *key,
+		 const void *constant,
+		 size_t len)
+{
+    krb5_error_code ret;
+
+    ret = _key_schedule(context, key);
+    if(ret)
+	return ret;
+
+    switch (et->flags & F_KDF_MASK) {
+    case F_SP800_108_HMAC_KDF:
+	ret = derive_key_sp800_hmac(context, et, key, constant, len);
 	break;
-    case ETYPE_DES3_CBC_SHA1:
-    case KRB5_ENCTYPE_AES128_CTS_HMAC_SHA1_96:
-    case KRB5_ENCTYPE_AES256_CTS_HMAC_SHA1_96:
-    case KRB5_ENCTYPE_AES128_CTS_HMAC_SHA256_128:
-    case KRB5_ENCTYPE_AES256_CTS_HMAC_SHA384_192:
-	memcpy(key->key->keyvalue.data, k, key_len);
+    case F_RFC3961_KDF:
+	ret = derive_key_rfc3961(context, et, key, constant, len);
 	break;
     default:
 	ret = KRB5_CRYPTO_INTERNAL;
 	krb5_set_error_message(context, ret,
 			       N_("derive_key() called with unknown keytype (%u)", ""),
-			       kt->type);
+			       et->keytype->type);
 	break;
     }
- out:
+
     if (key->schedule) {
 	free_key_schedule(context, key, et);
 	key->schedule = NULL;
     }
-    if (k) {
-	memset_s(k, key_len, 0, key_len);
-	free(k);
-    }
+
     return ret;
 }
 

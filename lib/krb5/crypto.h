@@ -57,10 +57,13 @@ struct krb5_crypto_data {
 #define F_DERIVED		0x0004	/* uses derived keys */
 #define F_VARIANT		0x0008	/* uses `variant' keys (6.4.3) */
 #define F_PSEUDO		0x0010	/* not a real protocol type */
-#define F_SPECIAL		0x0020	/* backwards */
-#define F_DISABLED		0x0040	/* enctype/checksum disabled */
-#define F_WEAK			0x0080	/* enctype is considered weak */
-#define F_ENC_THEN_CKSUM	0x0100  /* checksum is over encrypted data */
+#define F_DISABLED		0x0020	/* enctype/checksum disabled */
+#define F_WEAK			0x0040	/* enctype is considered weak */
+
+#define F_RFC3961_ENC		0x0100	/* RFC3961 simplified profile */
+#define F_SPECIAL		0x0200	/* backwards */
+#define F_ENC_THEN_CKSUM	0x0400  /* checksum is over encrypted data */
+#define F_CRYPTO_MASK		0x0F00
 
 #define F_RFC3961_KDF		0x1000	/* RFC3961 KDF */
 #define F_SP800_108_HMAC_KDF	0x2000	/* SP800-108 HMAC KDF */

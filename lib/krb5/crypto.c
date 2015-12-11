@@ -790,26 +790,11 @@ krb5_cksumtype_valid(krb5_context context,
     return 0;
 }
 
-
 static krb5_boolean
 derived_crypto(krb5_context context,
 	       krb5_crypto crypto)
 {
     return (crypto->et->flags & F_DERIVED) != 0;
-}
-
-static krb5_boolean
-special_crypto(krb5_context context,
-	       krb5_crypto crypto)
-{
-    return (crypto->et->flags & F_SPECIAL) != 0;
-}
-
-static krb5_boolean
-enc_then_cksum_crypto(krb5_context context,
-		      krb5_crypto crypto)
-{
-    return (crypto->et->flags & F_ENC_THEN_CKSUM) != 0;
 }
 
 #define CHECKSUMSIZE(C) ((C)->checksumsize)
@@ -2032,17 +2017,27 @@ krb5_encrypt_ivec(krb5_context context,
 		  krb5_data *result,
 		  void *ivec)
 {
-    if(enc_then_cksum_crypto(context, crypto))
-	return encrypt_internal_enc_then_cksum(context, crypto, usage,
-					       data, len, result, ivec);
-    else if(derived_crypto(context, crypto))
-	return encrypt_internal_derived(context, crypto, usage,
+    krb5_error_code ret;
+
+    switch (crypto->et->flags & F_CRYPTO_MASK) {
+    case F_ENC_THEN_CKSUM:
+	ret = encrypt_internal_enc_then_cksum(context, crypto, usage,
+					      data, len, result, ivec);
+	break;
+    case F_RFC3961_ENC:
+	ret = encrypt_internal_derived(context, crypto, usage,
+				       data, len, result, ivec);
+	break;
+    case F_SPECIAL:
+	ret = encrypt_internal_special (context, crypto, usage,
 					data, len, result, ivec);
-    else if (special_crypto(context, crypto))
-	return encrypt_internal_special (context, crypto, usage,
-					 data, len, result, ivec);
-    else
-	return encrypt_internal(context, crypto, data, len, result, ivec);
+	break;
+    default:
+	ret = encrypt_internal(context, crypto, data, len, result, ivec);
+	break;
+    }
+
+    return ret;
 }
 
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
@@ -2083,17 +2078,27 @@ krb5_decrypt_ivec(krb5_context context,
 		  krb5_data *result,
 		  void *ivec)
 {
-    if(enc_then_cksum_crypto(context,crypto))
-	return decrypt_internal_enc_then_cksum(context, crypto, usage,
-					       data, len, result, ivec);
-    else if(derived_crypto(context, crypto))
-	return decrypt_internal_derived(context, crypto, usage,
-					data, len, result, ivec);
-    else if (special_crypto (context, crypto))
-	return decrypt_internal_special(context, crypto, usage,
-					data, len, result, ivec);
-    else
-	return decrypt_internal(context, crypto, data, len, result, ivec);
+    krb5_error_code ret;
+
+    switch (crypto->et->flags & F_CRYPTO_MASK) {
+    case F_ENC_THEN_CKSUM:
+	ret = decrypt_internal_enc_then_cksum(context, crypto, usage,
+					      data, len, result, ivec);
+	break;
+    case F_RFC3961_ENC:
+	ret = decrypt_internal_derived(context, crypto, usage,
+				data, len, result, ivec);
+	break;
+    case F_SPECIAL:
+	ret = decrypt_internal_special(context, crypto, usage,
+				       data, len, result, ivec);
+	break;
+    default:
+	ret = decrypt_internal(context, crypto, data, len, result, ivec);
+	break;
+    }
+
+    return ret;
 }
 
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL

@@ -2020,10 +2020,6 @@ krb5_encrypt_ivec(krb5_context context,
     krb5_error_code ret;
 
     switch (crypto->et->flags & F_CRYPTO_MASK) {
-    case F_ENC_THEN_CKSUM:
-	ret = encrypt_internal_enc_then_cksum(context, crypto, usage,
-					      data, len, result, ivec);
-	break;
     case F_RFC3961_ENC:
 	ret = encrypt_internal_derived(context, crypto, usage,
 				       data, len, result, ivec);
@@ -2031,6 +2027,10 @@ krb5_encrypt_ivec(krb5_context context,
     case F_SPECIAL:
 	ret = encrypt_internal_special (context, crypto, usage,
 					data, len, result, ivec);
+	break;
+    case F_ENC_THEN_CKSUM:
+	ret = encrypt_internal_enc_then_cksum(context, crypto, usage,
+					      data, len, result, ivec);
 	break;
     default:
 	ret = encrypt_internal(context, crypto, data, len, result, ivec);
@@ -2081,10 +2081,6 @@ krb5_decrypt_ivec(krb5_context context,
     krb5_error_code ret;
 
     switch (crypto->et->flags & F_CRYPTO_MASK) {
-    case F_ENC_THEN_CKSUM:
-	ret = decrypt_internal_enc_then_cksum(context, crypto, usage,
-					      data, len, result, ivec);
-	break;
     case F_RFC3961_ENC:
 	ret = decrypt_internal_derived(context, crypto, usage,
 				data, len, result, ivec);
@@ -2092,6 +2088,10 @@ krb5_decrypt_ivec(krb5_context context,
     case F_SPECIAL:
 	ret = decrypt_internal_special(context, crypto, usage,
 				       data, len, result, ivec);
+	break;
+    case F_ENC_THEN_CKSUM:
+	ret = decrypt_internal_enc_then_cksum(context, crypto, usage,
+					      data, len, result, ivec);
 	break;
     default:
 	ret = decrypt_internal(context, crypto, data, len, result, ivec);

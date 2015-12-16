@@ -51,6 +51,7 @@ static int mutual_auth_flag = 0;
 static int dce_style_flag = 0;
 static int wrapunwrap_flag = 0;
 static int iov_flag = 0;
+static int aead_flag = 0;
 static int getverifymic_flag = 0;
 static int deleg_flag = 0;
 static int policy_deleg_flag = 0;
@@ -450,6 +451,60 @@ wrapunwrap_iov(gss_ctx_id_t cctx, gss_ctx_id_t sctx, int flags, gss_OID mechoid)
 }
 
 static void
+wrapunwrap_aead(gss_ctx_id_t cctx, gss_ctx_id_t sctx, int flags, gss_OID mechoid)
+{
+    gss_buffer_desc token, assoc, message = GSS_C_EMPTY_BUFFER;
+    gss_buffer_desc output;
+    OM_uint32 min_stat, maj_stat;
+    gss_qop_t qop_state;
+    int conf_state, conf_state2;
+    char assoc_data[9] = "ABCheader";
+    char token_data[16] = "0123456789abcdef";
+
+    if (flags & USE_SIGN_ONLY) {
+	assoc.value = assoc_data;
+	assoc.length = 9;
+    } else {
+	assoc.value = NULL;
+	assoc.length = 0;
+    }
+
+    token.value = token_data;
+    token.length = 16;
+
+    maj_stat = gss_wrap_aead(&min_stat, cctx, dce_style_flag || flags & USE_CONF,
+			     GSS_C_QOP_DEFAULT, &assoc, &token,
+			     &conf_state, &message);
+    if (maj_stat != GSS_S_COMPLETE)
+	errx(1, "gss_wrap_aead failed");
+
+    if ((flags & (USE_SIGN_ONLY|FORCE_IOV)) == 0) {
+	maj_stat = gss_unwrap(&min_stat, sctx, &message,
+			      &output, &conf_state2, &qop_state);
+
+	if (maj_stat != GSS_S_COMPLETE)
+	    errx(1, "gss_unwrap from gss_wrap_aead failed: %s",
+		 gssapi_err(maj_stat, min_stat, mechoid));
+    } else {
+	maj_stat = gss_unwrap_aead(&min_stat, sctx, &message, &assoc,
+				   &output, &conf_state2, &qop_state);
+	if (maj_stat != GSS_S_COMPLETE)
+	    errx(1, "gss_unwrap_aead failed: %x %s", flags,
+		 gssapi_err(maj_stat, min_stat, mechoid));
+    }
+
+    if (output.length != token.length)
+	errx(1, "plaintext length wrong for aead");
+    else if (memcmp(output.value, token.value, token.length) != 0)
+	errx(1, "plaintext wrong for aead");
+    if (conf_state2 != conf_state)
+	errx(1, "conf state wrong for aead: %x", flags);
+
+    gss_release_buffer(&min_stat, &message);
+    gss_release_buffer(&min_stat, &output);
+}
+
+static void
 getverifymic(gss_ctx_id_t cctx, gss_ctx_id_t sctx, gss_OID mechoid)
 {
     gss_buffer_desc input_token, output_token;
@@ -508,6 +563,7 @@ static struct getargs args[] = {
     {"dce-style",0,	arg_flag,	&dce_style_flag, "dce-style", NULL },
     {"wrapunwrap",0,	arg_flag,	&wrapunwrap_flag, "wrap/unwrap", NULL },
     {"iov", 0, 		arg_flag,	&iov_flag, "wrap/unwrap iov", NULL },
+    {"aead", 0, 	arg_flag,	&aead_flag, "wrap/unwrap aead", NULL },
     {"getverifymic",0,	arg_flag,	&getverifymic_flag,
      "get and verify mic", NULL },
     {"delegate",0,	arg_flag,	&deleg_flag, "delegate credential", NULL },
@@ -952,6 +1008,29 @@ main(int argc, char **argv)
 
 	wrapunwrap_iov(cctx, sctx, USE_CONF|USE_HEADER_ONLY, actual_mech);
 	wrapunwrap_iov(cctx, sctx, USE_CONF|USE_HEADER_ONLY|FORCE_IOV, actual_mech);
+    }
+
+    if (aead_flag) {
+	wrapunwrap_aead(cctx, sctx, 0, actual_mech);
+	wrapunwrap_aead(cctx, sctx, USE_CONF, actual_mech);
+
+	wrapunwrap_aead(cctx, sctx, FORCE_IOV, actual_mech);
+	wrapunwrap_aead(cctx, sctx, USE_CONF|FORCE_IOV, actual_mech);
+
+	wrapunwrap_aead(cctx, sctx, USE_SIGN_ONLY|FORCE_IOV, actual_mech);
+	wrapunwrap_aead(cctx, sctx, USE_CONF|USE_SIGN_ONLY|FORCE_IOV, actual_mech);
+
+	wrapunwrap_aead(cctx, sctx, 0, actual_mech);
+	wrapunwrap_aead(cctx, sctx, FORCE_IOV, actual_mech);
+
+	wrapunwrap_aead(cctx, sctx, USE_CONF, actual_mech);
+	wrapunwrap_aead(cctx, sctx, USE_CONF|FORCE_IOV, actual_mech);
+
+	wrapunwrap_aead(cctx, sctx, USE_SIGN_ONLY, actual_mech);
+	wrapunwrap_aead(cctx, sctx, USE_SIGN_ONLY|FORCE_IOV, actual_mech);
+
+	wrapunwrap_aead(cctx, sctx, USE_CONF|USE_SIGN_ONLY, actual_mech);
+	wrapunwrap_aead(cctx, sctx, USE_CONF|USE_SIGN_ONLY|FORCE_IOV, actual_mech);
     }
 
     if (getverifymic_flag) {

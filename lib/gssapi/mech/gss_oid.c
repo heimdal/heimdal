@@ -139,8 +139,8 @@ gss_OID_desc GSSAPI_LIB_VARIABLE __gss_ntlm_mechanism_oid_desc = { 10, rk_UNCONS
 /* GSS_SPNEGO_MECHANISM - 1.3.6.1.5.5.2 */
 gss_OID_desc GSSAPI_LIB_VARIABLE __gss_spnego_mechanism_oid_desc = { 6, rk_UNCONST("\x2b\x06\x01\x05\x05\x02") };
 
-/* GSS_C_PEER_HAS_UPDATED_SPNEGO - 1.3.6.1.4.1.9513.19.5 */
-gss_OID_desc GSSAPI_LIB_VARIABLE __gss_c_peer_has_updated_spnego_oid_desc = { 9, rk_UNCONST("\x2b\x06\x01\x04\x01\xca\x29\x13\x05") };
+/* GSS_C_PEER_HAS_UPDATED_SPNEGO - 1.3.6.1.4.1.5322.19.5 */
+gss_OID_desc GSSAPI_LIB_VARIABLE __gss_c_peer_has_updated_spnego_oid_desc = { 9, rk_UNCONST("\x2b\x06\x01\x04\x01\xa9\x4a\x13\x05") };
 
 /* GSS_C_MA_MECH_CONCRETE - 1.3.6.1.5.5.13.1 */
 gss_OID_desc GSSAPI_LIB_VARIABLE __gss_c_ma_mech_concrete_oid_desc = { 7, rk_UNCONST("\x2b\x06\x01\x05\x05\x0d\x01") };

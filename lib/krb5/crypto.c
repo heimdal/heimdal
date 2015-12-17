@@ -1548,7 +1548,7 @@ krb5_encrypt_iov_ivec(krb5_context context,
     }
 
     if (et->flags & F_ENC_THEN_CKSUM) {
-	unsigned char old_ivec[EVP_MAX_BLOCK_LENGTH];
+	unsigned char old_ivec[EVP_MAX_IV_LENGTH];
 	krb5_data ivec_data;
 
 	ret = iov_coalesce(context, NULL, data, num_data, FALSE, &enc_data);
@@ -1733,7 +1733,7 @@ krb5_decrypt_iov_ivec(krb5_context context,
 	    goto cleanup;
     } else {
 	krb5_data ivec_data;
-	static unsigned char zero_ivec[EVP_MAX_BLOCK_LENGTH];
+	static unsigned char zero_ivec[EVP_MAX_IV_LENGTH];
 
 	heim_assert(et->blocksize <= sizeof(zero_ivec),
 		    "blocksize too big for ivec buffer");

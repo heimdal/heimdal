@@ -1548,6 +1548,7 @@ krb5_encrypt_iov_ivec(krb5_context context,
     }
 
     if (et->flags & F_ENC_THEN_CKSUM) {
+	unsigned char old_ivec[EVP_MAX_BLOCK_LENGTH];
 	krb5_data ivec_data;
 
 	ret = iov_coalesce(context, NULL, data, num_data, FALSE, &enc_data);
@@ -1562,6 +1563,14 @@ krb5_encrypt_iov_ivec(krb5_context context,
 	if(ret)
 	    goto cleanup;
 
+	heim_assert(et->blocksize <= sizeof(old_ivec),
+		    "blocksize too big for ivec buffer");
+
+	if (ivec)
+	    memcpy(old_ivec, ivec, et->blocksize);
+	else
+	    memset(old_ivec, 0, et->blocksize);
+
 	ret = (*et->encrypt)(context, dkey, enc_data.data, enc_data.length,
 			     1, usage, ivec);
 	if(ret)
@@ -1571,17 +1580,10 @@ krb5_encrypt_iov_ivec(krb5_context context,
 	if(ret)
 	    goto cleanup;
 
-	ret = krb5_data_alloc(&ivec_data, et->blocksize);
-	if(ret)
-	    goto cleanup;
-
-	if (ivec)
-	    memcpy(ivec_data.data, ivec, ivec_data.length);
-	else
-	    memset(ivec_data.data, 0, ivec_data.length);
+	ivec_data.length = et->blocksize;
+	ivec_data.data = old_ivec;
 
 	ret = iov_coalesce(context, &ivec_data, data, num_data, TRUE, &sign_data);
-	krb5_data_free(&ivec_data);
 	if(ret)
 	    goto cleanup;
     } else {
@@ -1731,18 +1733,15 @@ krb5_decrypt_iov_ivec(krb5_context context,
 	    goto cleanup;
     } else {
 	krb5_data ivec_data;
+	static unsigned char zero_ivec[EVP_MAX_BLOCK_LENGTH];
 
-	ret = krb5_data_alloc(&ivec_data, et->blocksize);
-	if(ret)
-	    goto cleanup;
+	heim_assert(et->blocksize <= sizeof(zero_ivec),
+		    "blocksize too big for ivec buffer");
 
-	if (ivec)
-	    memcpy(ivec_data.data, ivec, ivec_data.length);
-	else
-	    memset(ivec_data.data, 0, ivec_data.length);
+	ivec_data.length = et->blocksize;
+	ivec_data.data = ivec ? ivec : zero_ivec;
 
 	ret = iov_coalesce(context, &ivec_data, data, num_data, TRUE, &sign_data);
-	krb5_data_free(&ivec_data);
 	if(ret)
 	    goto cleanup;
     }

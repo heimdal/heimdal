@@ -382,6 +382,7 @@ krb5_get_in_cred(krb5_context context,
     krb5_preauthdata *my_preauth = NULL;
     unsigned nonce;
     int done;
+		int check_directive;
 
     opts = int2KDCOptions(options);
 
@@ -436,12 +437,12 @@ krb5_get_in_cred(krb5_context context,
 		ret = krb5_error_from_rd_error(context, &error, creds);
 		/* if no preauth was set and KDC requires it, give it
                    one more try */
-		if (!ptypes && !preauth
-		    && ret == KRB5KDC_ERR_PREAUTH_REQUIRED
+		check_directive = (!ptypes && !preauth
+		    && ret == KRB5KDC_ERR_PREAUTH_REQUIRED);
 #if 0
-			|| ret == KRB5KDC_ERR_BADOPTION
+		check_directive = (check_directive || ret == KRB5KDC_ERR_BADOPTION);
 #endif
-		    && set_ptypes(context, &error, &ptypes, &my_preauth)) {
+		if(check_directive && set_ptypes(context, &error, &ptypes, &my_preauth)) {
 		    done = 0;
 		    preauth = my_preauth;
 		    krb5_free_error_contents(context, &error);

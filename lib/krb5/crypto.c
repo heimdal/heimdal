@@ -900,9 +900,6 @@ encrypt_internal_enc_then_cksum(krb5_context context,
     ret = _key_schedule(context, dkey);
     if(ret)
 	goto fail;
-    ret = (*et->encrypt)(context, dkey, p, block_sz, 1, usage, ivec);
-    if (ret)
-	goto fail;
 
     /* XXX EVP style update API would avoid needing to allocate here */
     ivc = malloc(et->blocksize + block_sz);
@@ -914,6 +911,10 @@ encrypt_internal_enc_then_cksum(krb5_context context,
 	memcpy(ivc, ivec, et->blocksize);
     else
 	memset(ivc, 0, et->blocksize);
+
+    ret = (*et->encrypt)(context, dkey, p, block_sz, 1, usage, ivec);
+    if (ret)
+	goto fail;
     memcpy(&ivc[et->blocksize], p, block_sz);
 
     ret = create_checksum(context,

@@ -1,7 +1,7 @@
 [
 	{
 	"op" : "repeat",
-	"num" : 333,
+	"num" : 1024,
 	"value" : {
 		"op" : "kinit",
 		"client" : "foo@TEST.H5L.SE",
@@ -16,7 +16,7 @@
 	},
 	{
 	"op" : "repeat",
-	"num" : 333,
+	"num" : 1024,
 	"value" : {
 		"op" : "kgetcred",
 		"server" : "host/datan.test.h5l.se@TEST.H5L.SE",

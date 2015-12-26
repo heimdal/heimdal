@@ -108,16 +108,32 @@ srv_find_realm(krb5_context context, krb5_krbhst_info ***res, int *count,
 
     for(num_srv = 0, rr = r->head; rr; rr = rr->next)
 	if(rr->type == rk_ns_t_srv) {
-	    krb5_krbhst_info *hi;
-	    size_t len = strlen(rr->u.srv->target);
+	    krb5_krbhst_info *hi = NULL;
+	    size_t len;
+	    int invalid_tld = 1;
 
-	    hi = calloc(1, sizeof(*hi) + len);
+	    /* Test for top-level domain controlled interruptions */
+	    if (strncmp("your-dns-needs-immediate-attention.",
+			rr->u.srv->target, 35) == 0
+		 && strchr(&rr->u.srv->target[35], '.') == NULL) {
+		invalid_tld = 0;
+		len = strlen(rr->u.srv->target);
+		hi = calloc(1, sizeof(*hi) + len);
+	    }
 	    if(hi == NULL) {
 		rk_dns_free_data(r);
 		while(--num_srv >= 0)
 		    free((*res)[num_srv]);
 		free(*res);
 		*res = NULL;
+		if (invalid_tld) {
+		    krb5_warnx(context,
+			       "Domain lookup failed: "
+			       "Realm %s needs immediate attention "
+			       "see https://icann.org/namecollision",
+			       realm);
+		    return KRB5_KDC_UNREACH;
+		}
 		return krb5_enomem(context);
 	    }
 	    (*res)[num_srv++] = hi;

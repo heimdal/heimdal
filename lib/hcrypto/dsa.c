@@ -32,12 +32,9 @@
  */
 
 #include <config.h>
-
-#include <stdio.h>
-#include <stdlib.h>
-#include <dsa.h>
-
 #include <roken.h>
+
+#include <dsa.h>
 
 /*
  *

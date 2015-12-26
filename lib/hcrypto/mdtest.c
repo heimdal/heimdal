@@ -32,14 +32,10 @@
  */
 
 #include <config.h>
+#include <roken.h>
 
 #define HC_DEPRECATED_CRYPTO
 
-#include <stdio.h>
-#ifdef HAVE_STDLIB_H
-#include <stdlib.h>
-#endif
-#include <string.h>
 #ifdef KRB5
 #include <krb5-types.h>
 #endif

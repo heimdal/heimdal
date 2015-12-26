@@ -32,9 +32,7 @@
  */
 
 #include <config.h>
-
-#include <stdio.h>
-#include <string.h>
+#include <roken.h>
 #include <rc4.h>
 
 static unsigned char plain1[8] =

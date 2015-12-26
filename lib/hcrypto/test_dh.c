@@ -38,11 +38,9 @@
  */
 
 #include <config.h>
-
-#include <stdio.h>
-#include <ctype.h>
-
 #include <roken.h>
+
+#include <ctype.h>
 #include <getarg.h>
 
 #include <dh.h>

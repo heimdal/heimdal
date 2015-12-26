@@ -32,12 +32,9 @@
  */
 
 #include <config.h>
-
-#include <stdio.h>
-#include <stdlib.h>
-#include <dh.h>
-
 #include <roken.h>
+
+#include <dh.h>
 
 #ifdef USE_HCRYPTO_TFM
 

@@ -34,14 +34,11 @@
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif
+#include <roken.h>
 
 #define HC_DEPRECATED
 #define HC_DEPRECATED_CRYPTO
 
-#include <sys/types.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 #include <assert.h>
 
 #include <evp.h>
@@ -51,7 +48,6 @@
 #include <evp-pkcs11.h>
 
 #include <krb5-types.h>
-#include <roken.h>
 
 #ifndef HCRYPTO_DEF_PROVIDER
 # ifdef __APPLE__

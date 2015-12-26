@@ -32,15 +32,11 @@
  */
 
 #include <config.h>
-
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+#include <roken.h>
 #include <signal.h>
 #ifdef HAVE_TERMIOS_H
 #include <termios.h>
 #endif
-#include <roken.h>
 
 #include <ui.h>
 #ifdef HAVE_CONIO_H

@@ -34,12 +34,9 @@
  */
 
 #include <config.h>
-
-#include <stdio.h>
-#include <stdlib.h>
+#include <roken.h>
 #include <math.h>
 
-#include <roken.h>
 #include <getarg.h>
 
 #include "rand.h"

@@ -32,12 +32,9 @@
  */
 
 #include <config.h>
-
-#include <stdio.h>
-#include <stdlib.h>
-#include <rand.h>
-
 #include <roken.h>
+
+#include <rand.h>
 
 #include "randi.h"
 

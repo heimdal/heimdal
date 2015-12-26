@@ -34,13 +34,10 @@
  */
 
 #include <config.h>
+#include <roken.h>
 
-#include <stdio.h>
-#include <stdlib.h>
 #include <rand.h>
 #include <randi.h>
-
-#include <roken.h>
 
 #ifndef O_BINARY
 #define O_BINARY 0

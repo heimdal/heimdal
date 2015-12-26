@@ -32,15 +32,9 @@
  */
 
 #include <config.h>
-
-#include <sys/types.h>
-#include <assert.h>
-#include <limits.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <getarg.h>
 #include <roken.h>
+#include <assert.h>
+#include <getarg.h>
 
 #include <evp.h>
 #include <evp-hcrypto.h>

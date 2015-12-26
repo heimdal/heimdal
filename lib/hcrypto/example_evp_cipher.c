@@ -31,16 +31,14 @@
  * SUCH DAMAGE.
  */
 
+#include <config.h>
+#include <roken.h>
+
 #include <krb5-types.h> /* should really be stdint.h */
 #include <hcrypto/evp.h>
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 #include <err.h>
 #include <assert.h>
-
-#include "roken.h"
 
 /* key and initial vector */
 static char key[16] =

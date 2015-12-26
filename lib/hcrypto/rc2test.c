@@ -32,11 +32,9 @@
  */
 
 #include <config.h>
+#include <roken.h>
 
 #include <rc2.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 
 struct {
     const void *key;

@@ -31,6 +31,9 @@
  * SUCH DAMAGE.
  */
 
+#include <config.h>
+#include <roken.h>
+
 #include "ec.h"
 
 struct EC_POINT {

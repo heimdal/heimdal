@@ -32,13 +32,10 @@
  */
 
 #include <config.h>
+#include <roken.h>
 
-#include <stdio.h>
-#include <stdlib.h>
 #include <rand.h>
 #include <heim_threads.h>
-
-#include <roken.h>
 
 #include "randi.h"
 

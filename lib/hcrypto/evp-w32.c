@@ -35,9 +35,9 @@
  * crypto APIs from Vista onwards).
  */
 
-#include "config.h"
+#include <config.h>
+#include <roken.h>
 
-#include <windows.h>
 #include <assert.h>
 
 #include <evp.h>

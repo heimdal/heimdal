@@ -30,16 +30,13 @@
  */
 
 #include <config.h>
-
-#include <stdio.h>
-#include <stdlib.h>
+#include <roken.h>
 #include <rand.h>
 #include <heim_threads.h>
 
 #ifdef KRB5
 #include <krb5-types.h>
 #endif
-#include <roken.h>
 
 #include "randi.h"
 #include "aes.h"

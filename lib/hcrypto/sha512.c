@@ -31,7 +31,8 @@
  * SUCH DAMAGE.
  */
 
-#include "config.h"
+#include <config.h>
+#include <roken.h>
 
 #include "hash.h"
 #include "sha.h"

@@ -32,13 +32,10 @@
  */
 
 #include <config.h>
+#include <roken.h>
 
 #define HC_DEPRECATED
 
-#include <sys/types.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 #include <assert.h>
 
 #include <evp.h>

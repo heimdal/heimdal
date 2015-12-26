@@ -30,9 +30,8 @@
 
 /* Windows CNG provider */
 
-#include "config.h"
-
-#include <windows.h>
+#include <config.h>
+#include <roken.h>
 #include <assert.h>
 
 #include <evp.h>

@@ -32,9 +32,7 @@
  */
 
 #include <config.h>
-
-#include <stdio.h>
-#include <string.h>
+#include <roken.h>
 #include <des.h>
 
 struct test {

@@ -83,16 +83,11 @@
  */
 
 #include <config.h>
+#include <roken.h>
 
 #define HC_DEPRECATED
-
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 #include <krb5-types.h>
 #include <assert.h>
-
-#include <roken.h>
 
 #include "des.h"
 #include "ui.h"

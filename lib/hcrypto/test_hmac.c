@@ -32,16 +32,10 @@
  */
 
 #include <config.h>
-
-#include <sys/types.h>
-#include <limits.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+#include <roken.h>
 
 #include <hmac.h>
 #include <evp.h>
-#include <roken.h>
 
 int
 main(int argc, char **argv)

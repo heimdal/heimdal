@@ -32,16 +32,11 @@
  */
 
 #include <config.h>
+#include <roken.h>
 
 #define HC_DEPRECATED_CRYPTO
 
-#include <sys/types.h>
-#include <limits.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 #include <getarg.h>
-#include <roken.h>
 
 #include <evp.h>
 #include <evp-hcrypto.h>

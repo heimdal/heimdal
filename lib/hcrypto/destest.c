@@ -31,15 +31,13 @@
  * SUCH DAMAGE.
  */
 
-#include "config.h"
+#include <config.h>
+#include <roken.h>
 
 #ifdef KRB5
 #include <krb5-types.h>
 #endif
 
-#include <string.h>
-#include <stdio.h>
-#include <stdlib.h>
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif

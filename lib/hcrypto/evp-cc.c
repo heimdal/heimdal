@@ -37,12 +37,9 @@
 
 #ifdef __APPLE__
 
-#include "config.h"
+#include <config.h>
+#include <roken.h>
 
-#include <sys/types.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 #include <assert.h>
 
 #ifdef HAVE_COMMONCRYPTO_COMMONDIGEST_H

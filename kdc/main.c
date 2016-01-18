@@ -145,8 +145,10 @@ main(int argc, char **argv)
 	sigaction(SIGXCPU, &sa, NULL);
 #endif
 
+#ifdef SIGCHLD
 	sa.sa_handler = sigchld;
 	sigaction(SIGCHLD, &sa, NULL);
+#endif
 
 	sa.sa_handler = SIG_IGN;
 #ifdef SIGPIPE
@@ -156,7 +158,9 @@ main(int argc, char **argv)
 #else
     signal(SIGINT, sigterm);
     signal(SIGTERM, sigterm);
+#ifdef SIGCHLD
     signal(SIGCHLD, sigchld);
+#endif
 #ifdef SIGXCPU
     signal(SIGXCPU, sigterm);
 #endif

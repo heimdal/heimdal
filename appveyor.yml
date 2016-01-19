@@ -1,10 +1,13 @@
+#
+# This file tells appveyor.com how to build Heimdal on Windows.
+# Appveyor is a continuous integration (CI) service for github and other
+# users, and is free for public repositories.
+#
+
 install:
-  # FIXME: Somehow this isn't enough to get texinfo installed
-  #        See https://github.com/appveyor/ci/issues/606
   - C:\msys64\usr\bin\bash -lc "pacman --needed --noconfirm -Sy pacman-mirrors"
   - C:\msys64\usr\bin\bash -lc "pacman --noconfirm -Sy"
-  - C:\msys64\usr\bin\bash -lc "pacman --noconfirm -S autoconf automake bison flex texinfo"
-  - C:\cygwin\setup-x86.exe -qnNdO -R C:\cygwin -s http://cygwin.mirror.constant.com -l C:\cygwin\var\cache\setup -P texinfo
+  - C:\msys64\usr\bin\bash -lc "pacman --noconfirm -S autoconf automake bison flex"
 
 build_script:
   - set PSDKDir=C:\Program Files\Microsoft SDKs\Windows\v7.1
@@ -18,7 +21,8 @@ build_script:
   - set dbg__type=Debug
   - title Heimdal Build %CPU% %dbg__type%
   - echo PATH=%PATH%
-  # Right now we can't make doc nor installers
+  # Newer texinfo has no .exe's, so we have to invoke it as
+  # "perl ...\makeinfo ...".  See doc/NTMakefile.
   - nmake /f NTMakefile APPVEYOR=1 MAKEINFO=makeinfo NO_INSTALLERS=1
   - 7z a heimdal-out.zip C:\projects\heimdal\out\
 

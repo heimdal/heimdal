@@ -190,6 +190,7 @@ EXPORTS
 	hc_EVP_pkcs11_aes_192_cfb8
 	hc_EVP_pkcs11_aes_256_cfb8
 	hc_EVP_pkcs11_rc2_40_cbc
+	hc_EVP_pkcs11_rc2_64_cbc
 	hc_EVP_pkcs11_rc2_cbc
 	hc_EVP_pkcs11_rc4
 	hc_EVP_pkcs11_rc4_40

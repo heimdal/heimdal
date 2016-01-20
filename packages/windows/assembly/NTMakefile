@@ -79,6 +79,7 @@ ARCH=64
 
 $(ASMKRBDIR)\$(ASMKRBMAN).nohash: Heimdal.Kerberos.manifest.in
 	$(SED)  -e "s,[@]name[@],$(ASMKRBNAME),g" \
+		-e "s,[@]krbname[@],$(ASMKRBNAME),g" \
 		-e "s,[@]cpu[@],$(MCPU),g" \
 		-e "s,[@]version[@],$(ASMKRBVER),g" \
 		-e "s,[@]pkt[@],$(CODESIGN_PKT),g" \
@@ -110,6 +111,7 @@ clean::
 
 !ifdef APPVEYOR
 test::
+	true
 !else
 test::
 	$(MT) -manifest $(ASMKRBDIR)\$(ASMKRBMAN) -validate_manifest
@@ -138,6 +140,7 @@ $(APPMANIFEST): Heimdal.Application.manifest.in
 
 !ifdef APPVEYOR
 test::
+	true
 !else
 test::
 	$(MT) -manifest $(APPMANIFEST) -validate_manifest

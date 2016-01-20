@@ -952,7 +952,7 @@ loop(krb5_context context, krb5_kdc_configuration *config,
     switch (exit_flag) {
     case -1:
 	kdc_log(context, config, 0,
-                "KDC worker process exiting because Master KDC exited.");
+                "KDC worker process exiting because KDC master exited.");
 	break;
 #ifdef SIGXCPU
     case SIGXCPU:
@@ -1019,7 +1019,7 @@ reap_kid(krb5_context context, krb5_kdc_configuration *config,
     }
 
     /* XXXrcd: should likely log exit code and the like */
-    kdc_log(context, config, 0, "sub-KDC reaped: %d", pid);
+    kdc_log(context, config, 0, "KDC worker process reaped: %d", pid);
     pids[i] = (pid_t)-1;
 
     return 1;
@@ -1103,8 +1103,7 @@ start_kdc(krb5_context context,
     bonjour_kid(context, config, islive[1]); /* fork()s */
 #endif
 
-
-    kdc_log(context, config, 0, "Master KDC started pid=%d", getpid());
+    kdc_log(context, config, 0, "KDC started master process pid=%d", getpid());
 #else
     kdc_log(context, config, 0, "KDC started pid=%d", getpid());
 #endif
@@ -1154,7 +1153,7 @@ start_kdc(krb5_context context,
 		if (pids[i] == 0)
 		    break;
 	    pids[i] = pid;
-	    kdc_log(context, config, 0, "sub-KDC started: %d", pid);
+	    kdc_log(context, config, 0, "KDC worker process started: %d", pid);
 	    num_kdcs++;
 	    gettimeofday(&tv1, NULL);
 	    break;
@@ -1194,7 +1193,7 @@ start_kdc(krb5_context context,
 	    break;
     }
 
-    kdc_log(context, config, 0, "master KDC exiting", pid);
+    kdc_log(context, config, 0, "KDC master process exiting", pid);
 #else
     loop(context, config, d, ndescr, -1);
     kdc_log(context, config, 0, "KDC exiting", pid);

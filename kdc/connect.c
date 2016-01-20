@@ -1008,13 +1008,15 @@ reap_kid(krb5_context context, krb5_kdc_configuration *config,
     if (pid < 1)
 	return 0;
 
-    for (i=0; i < max_kids; i++)
+    for (i=0; i < max_kids; i++) {
 	if (pids[i] == pid)
 	    break;
+    }
 
-    if (i == max_kids)
+    if (i == max_kids) {
 	/* XXXrcd: this should not happen, have to do something, though */
 	return 0;
+    }
 
     /* XXXrcd: should likely log exit code and the like */
     kdc_log(context, config, 0, "sub-KDC reaped: %d", pid);

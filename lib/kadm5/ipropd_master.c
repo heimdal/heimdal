@@ -532,7 +532,7 @@ send_complete (krb5_context context, slave *s, const char *database,
 	    goto done;
 	}
 
-	krb5_storage_seek(dump, 0, SEEK_SET);
+	ret = krb5_storage_seek(dump, 0, SEEK_SET);
 	if (ret == -1) {
 	    ret = errno;
 	    krb5_warn(context, ret, "krb5_storage_seek(dump, 0, SEEK_SET)");

@@ -81,7 +81,11 @@ socket_sync(krb5_storage * sp)
 static void
 socket_free(krb5_storage * sp)
 {
-    rk_closesocket(SOCK(sp));
+    int save_errno = errno;
+    if (rk_IS_SOCKET_ERROR(rk_closesocket(SOCK(sp))))
+        errno = rk_SOCK_ERRNO;
+    else
+        errno = save_errno;
 }
 
 /**

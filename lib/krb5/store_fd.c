@@ -111,7 +111,9 @@ fd_sync(krb5_storage * sp)
 static void
 fd_free(krb5_storage * sp)
 {
-    close(FD(sp));
+    int save_errno = errno;
+    if (close(FD(sp)) == 0)
+        errno = save_errno;
 }
 
 /**

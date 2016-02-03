@@ -37,6 +37,8 @@ RCSID("$Id$");
 
 static const char *config_name = "ipropd-slave";
 
+static int verbose;
+
 static krb5_log_facility *log_facility;
 static char five_min[] = "5 min";
 static char *server_time_lost = five_min;
@@ -164,16 +166,121 @@ ihave(krb5_context context, krb5_auth_context auth_context,
     krb5_data data;
 
     sp = krb5_storage_from_mem(buf, 8);
-    krb5_store_int32(sp, I_HAVE);
-    krb5_store_int32(sp, version);
+    krb5_store_uint32(sp, I_HAVE);
+    krb5_store_uint32(sp, version);
     krb5_storage_free(sp);
     data.length = 8;
     data.data   = buf;
+
+    if (verbose)
+        krb5_warnx(context, "telling master we are at %u", version);
 
     ret = krb5_write_priv_message(context, auth_context, &fd, &data);
     if (ret)
 	krb5_warn(context, ret, "krb5_write_message");
     return ret;
+}
+
+static int
+append_to_log_file(krb5_context context,
+                   kadm5_server_context *server_context,
+                   krb5_storage *sp, off_t start, ssize_t slen)
+{
+    size_t len;
+    ssize_t sret;
+    off_t log_off;
+    int ret, ret2;
+    void *buf;
+
+    if (verbose)
+        krb5_warnx(context, "appending diffs to log");
+
+    if (slen == 0)
+        return 0;
+    if (slen < 0)
+        return EINVAL;
+    len = slen;
+    if (len != slen)
+        return EOVERFLOW;
+
+    buf = malloc(len);
+    if (buf == NULL && len != 0) {
+        krb5_warn(context, errno, "malloc: no memory");
+        return ENOMEM;
+    }
+
+    if (krb5_storage_seek(sp, start, SEEK_SET) != start) {
+        krb5_errx(context, IPROPD_RESTART,
+                  "krb5_storage_seek() failed"); /* can't happen */
+    }
+    sret = krb5_storage_read(sp, buf, len);
+    if (sret < 0)
+        return errno;
+    if (len != (size_t)sret) {
+        /* Can't happen */
+        krb5_errx(context, IPROPD_RESTART,
+                  "short krb5_storage_read() from memory buffer");
+    }
+    log_off = lseek(server_context->log_context.log_fd, 0, SEEK_CUR);
+
+    /*
+     * Use net_write() so we get an errno if less that len bytes were
+     * written.
+     */
+    sret = net_write(server_context->log_context.log_fd, buf, len);
+    free(buf);
+    if (sret != slen)
+        ret = errno;
+    else
+        ret = fsync(server_context->log_context.log_fd);
+    if (ret == 0)
+        return 0;
+
+    /*
+     * Attempt to recover from this.  First, truncate the log file
+     * and reset the fd offset.  Failure to do this -> unlink the
+     * log file and re-create it.  Since we're the slave, we ought to be
+     * able to recover from the log being unlinked...
+     */
+    if (ftruncate(server_context->log_context.log_fd, log_off) == -1 ||
+        lseek(server_context->log_context.log_fd, log_off, SEEK_SET) == -1) {
+        (void) kadm5_log_end(server_context);
+        if (unlink(server_context->log_context.log_file) == -1) {
+            krb5_err(context, IPROPD_FATAL, errno,
+                     "Failed to recover from failure to write log "
+                     "entries from master to disk");
+        }
+        ret2 = kadm5_log_init(server_context);
+        if (ret2) {
+            krb5_err(context, IPROPD_RESTART_SLOW, ret2,
+                     "Failed to initialize log to recover from "
+                     "failure to write log entries from master to disk");
+        }
+    }
+    if (ret == ENOSPC || ret == EDQUOT || ret == EFBIG) {
+        /* Unlink the file in these cases. */
+        krb5_warn(context, IPROPD_RESTART_SLOW,
+                  "Failed to write log entries from master to disk");
+        (void) kadm5_log_end(server_context);
+        if (unlink(server_context->log_context.log_file) == -1) {
+            krb5_err(context, IPROPD_FATAL, errno,
+                     "Failed to recover from failure to write log "
+                     "entries from master to disk");
+        }
+        ret2 = kadm5_log_init(server_context);
+        if (ret2) {
+            krb5_err(context, IPROPD_RESTART_SLOW, ret2,
+                     "Failed to initialize log to recover from "
+                     "failure to write log entries from master to disk");
+        }
+        return ret;
+    }
+    /*
+     * All other errors we treat as fatal here.  This includes, for
+     * example, EIO and EPIPE (sorry, can't log to pipes nor sockets).
+     */
+    krb5_err(context, IPROPD_FATAL, ret,
+             "Failed to write log entries from master to disk");
 }
 
 static int
@@ -183,22 +290,31 @@ receive_loop (krb5_context context,
 {
     int ret;
     off_t left, right, off;
-    size_t mlen;
-    void *buf;
-    int32_t len, vers, vers2;
-    ssize_t sret, smlen;
+    uint32_t len, vers;
+
+    if (verbose)
+        krb5_warnx(context, "receiving diffs");
 
     /*
      * Seek to the first entry in the message from the master that is
      * past the current version of the local database.
      */
     do {
-	int32_t timestamp, tmp;
+	uint32_t timestamp;
+        uint32_t op;
 
-	if (krb5_ret_int32(sp, &vers) != 0 ||
-            krb5_ret_int32(sp, &timestamp) != 0 ||
-            krb5_ret_int32(sp, &tmp) != 0 ||
-            krb5_ret_int32(sp, &len) != 0) {
+        /*
+         * TODO We could do more to validate the entries from the master
+         * here.  And we could use/reuse more kadm5_log_*() code here.
+         *
+         * Alternatively we should trust that the master sent us exactly
+         * what we needed and just write this to the log file and let
+         * kadm5_log_recover() do the rest.
+         */
+	if (krb5_ret_uint32(sp, &vers) != 0 ||
+            krb5_ret_uint32(sp, &timestamp) != 0 ||
+            krb5_ret_uint32(sp, &op) != 0 ||
+            krb5_ret_uint32(sp, &len) != 0) {
 
             /*
              * This shouldn't happen.  Reconnecting probably won't help
@@ -208,19 +324,20 @@ receive_loop (krb5_context context,
             krb5_warnx(context, "iprop entries from master were truncated");
             return EINVAL;
         }
-        if (len < 0) {
-            krb5_warnx(context, "master sent entry with negative length for"
-                       "version %ld", (long)vers);
-            return EINVAL;
-        }
-	if ((uint32_t)vers > server_context->log_context.version)
+	if (vers > server_context->log_context.version) {
             break;
+        }
         off = krb5_storage_seek(sp, 0, SEEK_CUR);
         if (krb5_storage_seek(sp, len + 8, SEEK_CUR) != off + len + 8) {
             krb5_warnx(context, "iprop entries from master were truncated");
             return 0;
         }
-    } while((uint32_t)vers <= server_context->log_context.version);
+        if (verbose) {
+            krb5_warnx(context, "diff contains old log record version "
+                       "%u %lld %u length %u",
+                       vers, (long long)timestamp, op, len);
+        }
+    } while(vers <= server_context->log_context.version);
 
     /*
      * Read the remaining entries into memory...
@@ -233,161 +350,38 @@ receive_loop (krb5_context context,
         return EINVAL;
     }
 
-    mlen = (size_t)(right - left);
-    smlen = right - left;
-    buf = malloc (mlen);
-    if (buf == NULL && mlen != 0) {
-	krb5_warn(context, errno, "malloc: no memory");
-        return ENOMEM;
-    }
-
     /*
      * ...and then write them out to the on-disk log.
      */
-    /* NOTE: We haven't validated the entries yet */
-    if (krb5_storage_seek(sp, left, SEEK_SET) != left)
-        krb5_errx(context, 1, "krb5_storage_seek() failed");
-    sret = krb5_storage_read(sp, buf, mlen);
-    if (sret < 0)
-        return errno;
-    if (mlen != (size_t)sret)
-        krb5_errx(context, 1, "short krb5_storage_read() from memory buffer");
-    sret = write(server_context->log_context.log_fd, buf, mlen);
-    if (sret != smlen) {
-        /* This is probably ENOSPC.  We can't recover. */
-	krb5_err(context, 1, errno, "Failed to write log to disk");
-    }
-    ret = fsync(server_context->log_context.log_fd);
-    if (ret) {
-        /* This is also probably ENOSPC.  We can't recover. */
-	krb5_err(context, 1, errno, "Failed to sync log to disk");
-    }
-    free(buf);
+
+    ret = append_to_log_file(context, server_context, sp, left, right - left);
+    if (ret)
+        return ret;
 
     /*
-     * Go back to the startpoint and commit the entries to the HDB.
+     * Replay the new entries.
      */
-    krb5_storage_seek(sp, left, SEEK_SET);
+    if (verbose)
+        krb5_warnx(context, "replaying entries from master");
     ret = kadm5_log_recover(server_context, kadm_recover_replay);
     if (ret) {
-        krb5_warn(context, ret, "replay of entries from master failed");
+        krb5_warn(context, ret, "replay failed");
         return ret;
     }
 
-    for (;;) {
-	int32_t len2, timestamp, tmp;
-	off_t cur, cur2;
-	enum kadm_ops op;
+    ret = kadm5_log_get_version(server_context, &vers);
+    if (ret) {
+        krb5_warn(context, ret,
+                  "could not get log version after applying diffs!");
+        return ret;
+    }
+    if (verbose)
+        krb5_warnx(context, "slave at version %u", vers);
 
-	if (krb5_ret_int32(sp, &vers) != 0)
-            break;
-	ret = krb5_ret_int32(sp, &timestamp);
-	if (ret) {
-            krb5_warnx(context, "entry %ld: too short", (long)vers);
-            return EINVAL;
-        }
-	ret = krb5_ret_int32(sp, &tmp);
-	if (ret) {
-            krb5_warnx(context, "entry %ld: too short", (long)vers);
-            return EINVAL;
-        }
-	op = tmp;
-	ret = krb5_ret_int32(sp, &len);
-	if (ret) {
-            krb5_warnx(context, "entry %ld: too short", (long)vers);
-            return EINVAL;
-        }
-	if (len < 0) {
-	    krb5_warnx(context, "entry %ld: negative length (%ld); "
-                       "master is confused", (long)vers, (long)len);
-            return EINVAL;
-        }
-	cur = krb5_storage_seek(sp, 0, SEEK_CUR);
-
-	krb5_warnx(context, "replaying entry %d", (int)vers);
-
-        /*
-         * kadm5_log_replay() returns errors from among others, the HDB
-         * layer, which can return errors from the actual DBs, some of
-         * which return -1 and set errno, and some of which return
-         * system error codes.
-         */
-	ret = kadm5_log_replay(server_context,
-                               op, vers, len, sp);
-        if (ret == -1 && errno != 0)
-            ret = errno;
-	if (ret) {
-            const char *s = krb5_get_error_message(server_context->context, ret);
-
-            /*
-             * XXX We don't really know here whether the error is
-             * recoverable or not.  Some HDB errors might be safe to
-             * ignore, and others will not be (e.g., any resulting from
-             * ENOSPC), but we can't tell which is which, particularly
-             * as errors from the databases are not mapped to HDB_ERR_*.
-             *
-             * We do our best to die if the error is not recoverable.
-             */
-            switch (ret) {
-#ifdef EDQUOT
-            case EDQUOT:
-#endif
-            case ENOSPC:
-            case EPIPE:
-            case EINTR:
-            case EFBIG:
-            case EIO:
-                krb5_err(context, 1, ret, "kadm5_log_replay: %ld. Fatal write "
-                         "error: %s (%d)", (long)vers,
-                         s ? s : "unknown error", ret);
-            }
-
-            krb5_warnx(context,
-                       "kadm5_log_replay: %ld. Replay failed. "
-                       "Database out of sync?: %s (%d)",
-                       (long)vers, s ? s : "unknown error", ret);
-	    krb5_free_error_message(context, s);
-	}
-
-	{
-	    /*
-	     * Make sure that kadm5_log_replay() read the whole entry
-             * from sp and left the sp offset at the start of the
-             * trailer.
-	     */
-	    cur2 = krb5_storage_seek(sp, 0, SEEK_CUR);
-	    if (cur + len != cur2)
-		krb5_errx(context, 1,
-			  "kadm5_log_reply version: %ld didn't read the whole entry",
-			  (long)vers);
-	}
-
-	if (krb5_ret_int32(sp, &len2) != 0) {
-	    krb5_warnx(context, "entry %ld: postamble too short; "
-                       "master is confused", (long)vers);
-            return EINVAL;
-        }
-	if(krb5_ret_int32(sp, &vers2) != 0) {
-	    krb5_warnx(context, "entry %ld: postamble too short; "
-                       "master is confused", (long)vers);
-            return EINVAL;
-        }
-	if (len != len2) {
-	    krb5_warnx(context, "entry %ld: len != len2; master is "
-                       "confused", (long)vers);
-            return EINVAL;
-        }
-	if (vers != vers2) {
-	    krb5_warnx(context, "entry %ld: vers != vers2; master is "
-                       "confused", (long)vers);
-            return EINVAL;
-        }
-
-        /*
-         * Update version after each replay.
-         */
-        server_context->log_context.version = vers;
-        kadm5_log_update_uber(server_context);
+    if (vers != server_context->log_context.version) {
+        krb5_warnx(context, "slave's log_context version (%u) is "
+                   "inconsistent with log's version (%u)",
+                   server_context->log_context.version, vers);
     }
 
     return 0;
@@ -404,7 +398,7 @@ receive(krb5_context context,
 				       server_context->db,
 				       O_RDWR | O_CREAT, 0600);
     if (ret)
-	krb5_err(context, 1, ret, "db->open");
+        krb5_err(context, IPROPD_RESTART_SLOW, ret, "db->open");
 
     ret2 = receive_loop(context, sp, server_context);
     if (ret2)
@@ -412,7 +406,7 @@ receive(krb5_context context,
 
     ret = server_context->db->hdb_close(context, server_context->db);
     if (ret)
-	krb5_err(context, 1, ret, "db->close");
+        krb5_err(context, IPROPD_RESTART_SLOW, ret, "db->close");
 
     return ret2;
 }
@@ -427,19 +421,22 @@ send_im_here(krb5_context context, int fd,
 
     ret = krb5_data_alloc(&data, 4);
     if (ret)
-	krb5_err(context, 1, ret, "send_im_here");
+        krb5_err(context, IPROPD_RESTART, ret, "send_im_here");
 
     sp = krb5_storage_from_data (&data);
     if (sp == NULL)
-	krb5_errx(context, 1, "krb5_storage_from_data");
-    krb5_store_int32(sp, I_AM_HERE);
+        krb5_errx(context, IPROPD_RESTART, "krb5_storage_from_data");
+    krb5_store_uint32(sp, I_AM_HERE);
     krb5_storage_free(sp);
 
     ret = krb5_write_priv_message(context, auth_context, &fd, &data);
     krb5_data_free(&data);
 
     if (ret)
-	krb5_err(context, 1, ret, "krb5_write_priv_message");
+        krb5_err(context, IPROPD_RESTART, ret, "krb5_write_priv_message");
+
+    if (verbose)
+        krb5_warnx(context, "pinged master");
 
     return;
 }
@@ -447,13 +444,16 @@ send_im_here(krb5_context context, int fd,
 static void
 reinit_log(krb5_context context,
 	   kadm5_server_context *server_context,
-	   int32_t vno)
+	   uint32_t vno)
 {
     krb5_error_code ret;
 
+    if (verbose)
+        krb5_warnx(context, "truncating log on slave");
+
     ret = kadm5_log_reinit(server_context);
     if (ret)
-        krb5_err(context, 1, ret, "kadm5_log_reinit");
+        krb5_err(context, IPROPD_RESTART_SLOW, ret, "kadm5_log_reinit");
 }
 
 
@@ -464,8 +464,8 @@ receive_everything(krb5_context context, int fd,
 {
     int ret;
     krb5_data data;
-    int32_t vno = 0;
-    int32_t opcode;
+    uint32_t vno = 0;
+    uint32_t opcode;
     krb5_storage *sp;
 
     char *dbname;
@@ -475,22 +475,22 @@ receive_everything(krb5_context context, int fd,
 
     ret = asprintf(&dbname, "%s-NEW", server_context->db->hdb_name);
     if (ret == -1)
-	krb5_err(context, 1, ENOMEM, "asprintf");
+        krb5_err(context, IPROPD_RESTART, ENOMEM, "asprintf");
     ret = hdb_create(context, &mydb, dbname);
     if(ret)
-	krb5_err(context,1, ret, "hdb_create");
+        krb5_err(context, IPROPD_RESTART, ret, "hdb_create");
     free(dbname);
 
     ret = hdb_set_master_keyfile(context,
 				 mydb, server_context->config.stash_file);
     if(ret)
-	krb5_err(context,1, ret, "hdb_set_master_keyfile");
+        krb5_err(context, IPROPD_RESTART, ret, "hdb_set_master_keyfile");
 
     /* I really want to use O_EXCL here, but given that I can't easily clean
        up on error, I won't */
     ret = mydb->hdb_open(context, mydb, O_RDWR | O_CREAT | O_TRUNC, 0600);
     if (ret)
-	krb5_err(context, 1, ret, "db->open");
+        krb5_err(context, IPROPD_RESTART, ret, "db->open");
 
     sp = NULL;
     krb5_data_zero(&data);
@@ -504,8 +504,8 @@ receive_everything(krb5_context context, int fd,
 
 	sp = krb5_storage_from_data(&data);
 	if (sp == NULL)
-	    krb5_errx(context, 1, "krb5_storage_from_data");
-	krb5_ret_int32(sp, &opcode);
+	    krb5_errx(context, IPROPD_RESTART, "krb5_storage_from_data");
+	krb5_ret_uint32(sp, &opcode);
 	if (opcode == ONE_PRINC) {
 	    krb5_data fake_data;
 	    hdb_entry_ex entry;
@@ -519,12 +519,12 @@ receive_everything(krb5_context context, int fd,
 
 	    ret = hdb_value2entry(context, &fake_data, &entry.entry);
 	    if (ret)
-		krb5_err(context, 1, ret, "hdb_value2entry");
+		krb5_err(context, IPROPD_RESTART, ret, "hdb_value2entry");
 	    ret = mydb->hdb_store(server_context->context,
 				  mydb,
 				  0, &entry);
 	    if (ret)
-		krb5_err(context, 1, ret, "hdb_store");
+		krb5_err(context, IPROPD_RESTART_SLOW, ret, "hdb_store");
 
 	    hdb_free_entry(context, &entry);
 	    krb5_data_free(&data);
@@ -535,20 +535,21 @@ receive_everything(krb5_context context, int fd,
     } while (opcode == ONE_PRINC);
 
     if (opcode != NOW_YOU_HAVE)
-	krb5_errx(context, 1, "receive_everything: strange %d", opcode);
+        krb5_errx(context, IPROPD_RESTART_SLOW,
+                  "receive_everything: strange %d", opcode);
 
-    krb5_ret_int32(sp, &vno);
+    krb5_ret_uint32(sp, &vno);
     krb5_storage_free(sp);
 
     reinit_log(context, server_context, vno);
 
     ret = mydb->hdb_close(context, mydb);
     if (ret)
-	krb5_err(context, 1, ret, "db->close");
+        krb5_err(context, IPROPD_RESTART_SLOW, ret, "db->close");
 
     ret = mydb->hdb_rename(context, mydb, server_context->db->hdb_name);
     if (ret)
-	krb5_err(context, 1, ret, "db->rename");
+        krb5_err(context, IPROPD_RESTART_SLOW, ret, "db->rename");
 
     server_context->log_context.version = vno;
 
@@ -558,11 +559,11 @@ receive_everything(krb5_context context, int fd,
     krb5_data_free(&data);
 
     if (ret)
-	krb5_err(context, 1, ret, "db->close");
+        krb5_err(context, IPROPD_RESTART_SLOW, ret, "db->close");
 
     ret = mydb->hdb_destroy(context, mydb);
     if (ret)
-	krb5_err(context, 1, ret, "db->destroy");
+        krb5_err(context, IPROPD_RESTART, ret, "db->destroy");
 
     krb5_warnx(context, "receive complete database, version %ld", (long)vno);
     return ret;
@@ -639,6 +640,7 @@ static struct getargs args[] = {
       "private argument, do not use", NULL },
     { "hostname", 0, arg_string, rk_UNCONST(&slave_str),
       "hostname of slave (if not same as hostname)", "hostname" },
+    { "verbose", 0, arg_flag, &verbose, NULL, NULL },
     { "version", 0, arg_flag, &version_flag, NULL, NULL },
     { "help", 0, arg_flag, &help_flag, NULL, NULL }
 };
@@ -671,6 +673,7 @@ main(int argc, char **argv)
     time_t reconnect_max;
     time_t reconnect;
     time_t before = 0;
+    int restarter_fd = -1;
 
     const char *master;
 
@@ -783,10 +786,22 @@ main(int argc, char **argv)
     slave_status(context, status_file, "ipropd-slave started");
 
     roken_detach_finish(NULL, daemon_child);
+    restarter_fd = restarter(context, NULL);
 
     while (!exit_flag) {
+        struct timeval to;
 	time_t now, elapsed;
+        fd_set readset;
 	int connected = FALSE;
+
+#ifndef NO_LIMIT_FD_SETSIZE
+        if (restarter_fd >= FD_SETSIZE)
+            krb5_errx(context, IPROPD_RESTART, "fd too large");
+#endif
+
+        FD_ZERO(&readset);
+        if (restarter_fd > -1)
+            FD_SET(restarter_fd, &readset);
 
 	now = time(NULL);
 	elapsed = now - before;
@@ -795,7 +810,12 @@ main(int argc, char **argv)
 	    time_t left = reconnect - elapsed;
 	    krb5_warnx(context, "sleeping %d seconds before "
 		       "retrying to connect", (int)left);
-	    sleep(left);
+            to.tv_sec = left;
+            to.tv_usec = 0;
+            if (select(restarter_fd + 1, &readset, NULL, NULL, &to) == 1) {
+                exit_flag = SIGTERM;
+                continue;
+            }
 	}
 	before = now;
 
@@ -813,6 +833,8 @@ main(int argc, char **argv)
 	    krb5_cc_destroy(context, ccache);
 	    get_creds(context, keytab_str, &ccache, master);
 	}
+        if (verbose)
+            krb5_warnx(context, "authenticating to master");
 	ret = krb5_sendauth (context, &auth_context, &master_fd,
 			     IPROP_VERSION, NULL, server,
 			     AP_OPTS_MUTUAL_REQUIRED, NULL, NULL,
@@ -832,27 +854,34 @@ main(int argc, char **argv)
 
 	connected = TRUE;
 
+        if (verbose)
+            krb5_warnx(context, "connected to master");
+
 	slave_status(context, status_file, "connected to master, waiting instructions");
 
 	while (connected && !exit_flag) {
 	    krb5_data out;
 	    krb5_storage *sp;
-	    int32_t tmp;
-	    fd_set readset;
-	    struct timeval to;
+	    uint32_t tmp;
+            int max_fd;
 
 #ifndef NO_LIMIT_FD_SETSIZE
 	    if (master_fd >= FD_SETSIZE)
-		krb5_errx (context, 1, "fd too large");
+                krb5_errx(context, IPROPD_RESTART, "fd too large");
+            if (restarter_fd >= FD_SETSIZE)
+                krb5_errx(context, IPROPD_RESTART, "fd too large");
+            max_fd = max(restarter_fd, master_fd);
 #endif
 
 	    FD_ZERO(&readset);
 	    FD_SET(master_fd, &readset);
+            if (restarter_fd != -1)
+                FD_SET(restarter_fd, &readset);
 
 	    to.tv_sec = time_before_lost;
 	    to.tv_usec = 0;
 
-	    ret = select (master_fd + 1,
+	    ret = select (max_fd + 1,
 			  &readset, NULL, NULL, &to);
 	    if (ret < 0) {
 		if (errno == EINTR)
@@ -867,6 +896,18 @@ main(int argc, char **argv)
 		continue;
 	    }
 
+            if (FD_ISSET(restarter_fd, &readset)) {
+                if (verbose)
+                    krb5_warnx(context, "slave restarter exited");
+                exit_flag = SIGTERM;
+            }
+
+            if (!FD_ISSET(master_fd, &readset))
+                continue;
+
+            if (verbose)
+                krb5_warnx(context, "message from master");
+
 	    ret = krb5_read_priv_message(context, auth_context, &master_fd, &out);
 	    if (ret) {
 		krb5_warn(context, ret, "krb5_read_priv_message");
@@ -876,8 +917,8 @@ main(int argc, char **argv)
 
 	    sp = krb5_storage_from_mem (out.data, out.length);
             if (sp == NULL)
-                krb5_err(context, 1, errno, "krb5_storage_from_mem");
-	    ret = krb5_ret_int32(sp, &tmp);
+                krb5_err(context, IPROPD_RESTART, errno, "krb5_storage_from_mem");
+	    ret = krb5_ret_uint32(sp, &tmp);
             if (ret == HEIM_ERR_EOF) {
                 krb5_warn(context, ret, "master sent zero-length message");
                 connected = FALSE;
@@ -891,11 +932,13 @@ main(int argc, char **argv)
 
             ret = kadm5_log_init(server_context);
             if (ret) {
-                krb5_err(context, 1, ret, "kadm5_log_init while handling a "
-                         "message from the master");
+                krb5_err(context, IPROPD_RESTART, ret, "kadm5_log_init while "
+                         "handling a message from the master");
             }
 	    switch (tmp) {
 	    case FOR_YOU :
+                if (verbose)
+                    krb5_warnx(context, "master sent us diffs");
 		ret2 = receive(context, sp, server_context);
                 if (ret2)
                     krb5_warn(context, ret,
@@ -913,6 +956,8 @@ main(int argc, char **argv)
                 is_up_to_date(context, status_file, server_context);
 		break;
 	    case TELL_YOU_EVERYTHING :
+                if (verbose)
+                    krb5_warnx(context, "master sent us a full dump");
 		ret = receive_everything(context, master_fd, server_context,
 					 auth_context);
                 if (ret == 0) {
@@ -925,6 +970,8 @@ main(int argc, char **argv)
                     is_up_to_date(context, status_file, server_context);
 		break;
 	    case ARE_YOU_THERE :
+                if (verbose)
+                    krb5_warnx(context, "master sent us a ping");
 		is_up_to_date(context, status_file, server_context);
                 ret = ihave(context, auth_context, master_fd,
                             server_context->log_context.version);
@@ -934,6 +981,8 @@ main(int argc, char **argv)
 		send_im_here(context, master_fd, auth_context);
 		break;
 	    case YOU_HAVE_LAST_VERSION:
+                if (verbose)
+                    krb5_warnx(context, "master tells us we are up to date");
 		is_up_to_date(context, status_file, server_context);
 		break;
 	    case NOW_YOU_HAVE :

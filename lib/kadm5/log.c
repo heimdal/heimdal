@@ -186,12 +186,11 @@ RCSID("$Id$");
  * Preserves sp's offset on failure where possible.
  */
 static kadm5_ret_t
-get_header(krb5_storage *sp, int peek, uint32_t *verp, int32_t *tstampp,
+get_header(krb5_storage *sp, int peek, uint32_t *verp, uint32_t *tstampp,
            enum kadm_ops *opp, uint32_t *lenp)
 {
     krb5_error_code ret;
-    uint32_t op, len;
-    int32_t tstamp;
+    uint32_t tstamp, op, len;
     off_t off, new_off;
 
     if (tstampp == NULL)
@@ -212,7 +211,7 @@ get_header(krb5_storage *sp, int peek, uint32_t *verp, int32_t *tstampp,
     }
     if (ret)
         goto log_corrupt;
-    ret = krb5_ret_int32(sp, tstampp);
+    ret = krb5_ret_uint32(sp, tstampp);
     if (ret)
         goto log_corrupt;
 
@@ -330,7 +329,7 @@ seek_next(krb5_storage *sp)
     krb5_error_code ret;
     uint32_t ver, ver2, len, len2;
     enum kadm_ops op;
-    int32_t tstamp;
+    uint32_t tstamp;
     off_t off, off_len, new_off;
 
     off = krb5_storage_seek(sp, 0, SEEK_CUR);
@@ -457,11 +456,11 @@ static krb5_storage *log_goto_first(kadm5_server_context *, int);
  */
 kadm5_ret_t
 kadm5_log_get_version_fd(kadm5_server_context *server_context, int fd,
-                         int which, uint32_t *ver, int32_t *tstamp)
+                         int which, uint32_t *ver, uint32_t *tstamp)
 {
     kadm5_ret_t ret;
     krb5_storage *sp;
-    int32_t tmp;
+    uint32_t tmp;
 
     if (fd == -1)
         return 0; /* /dev/null */
@@ -1522,7 +1521,7 @@ log_update_uber(kadm5_server_context *context, off_t off)
     ret = krb5_store_uint64(mem_sp, off);
     if (ret)
         goto out;
-    ret = krb5_store_int32(mem_sp, log_context->last_time);
+    ret = krb5_store_uint32(mem_sp, log_context->last_time);
     if (ret)
         goto out;
     ret = krb5_store_uint32(mem_sp, log_context->version);
@@ -1809,7 +1808,7 @@ kadm5_log_foreach(kadm5_server_context *context,
 
     for (;;) {
 	uint32_t ver, ver2, len, len2;
-	int32_t tstamp;
+	uint32_t tstamp;
         time_t timestamp;
         enum kadm_ops op;
 
@@ -1977,7 +1976,7 @@ kadm5_log_goto_end(kadm5_server_context *server_context, int fd)
     krb5_storage *sp;
     enum kadm_ops op;
     uint32_t ver, len;
-    int32_t tstamp;
+    uint32_t tstamp;
     uint64_t off;
 
     if (fd == -1) {
@@ -2075,7 +2074,7 @@ kadm5_log_previous(krb5_context context,
     krb5_error_code ret;
     off_t oldoff;
     uint32_t ver2, len2;
-    int32_t tstamp;
+    uint32_t tstamp;
 
     oldoff = krb5_storage_seek(sp, 0, SEEK_CUR);
     if (oldoff == -1)

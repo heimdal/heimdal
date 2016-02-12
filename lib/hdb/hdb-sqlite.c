@@ -586,7 +586,7 @@ hdb_sqlite_store(krb5_context context, HDB *db, unsigned flags,
     ret = hdb_sqlite_exec_stmt(context, hsdb,
                                "BEGIN IMMEDIATE TRANSACTION", EINVAL);
     if(ret != SQLITE_OK) {
-	ret = EINVAL;
+	ret = HDB_ERR_UK_SERROR;
         krb5_set_error_message(context, ret,
 			       "SQLite BEGIN TRANSACTION failed: %s",
 			       sqlite3_errmsg(hsdb->db));
@@ -616,8 +616,15 @@ hdb_sqlite_store(krb5_context context, HDB *db, unsigned flags,
         ret = hdb_sqlite_step(context, hsdb->db, hsdb->add_entry);
         sqlite3_clear_bindings(hsdb->add_entry);
         sqlite3_reset(hsdb->add_entry);
-        if(ret != SQLITE_DONE)
+        if (ret != SQLITE_DONE && ret != SQLITE_CONSTRAINT) {
+            ret = HDB_ERR_UK_SERROR;
             goto rollback;
+        }
+        if (ret == SQLITE_CONSTRAINT) {
+            ret = HDB_ERR_EXISTS;
+            goto rollback;
+        }
+        ret = 0;
 
 	ret = bind_principal(context, entry->entry.principal, hsdb->add_principal, 1);
 	if (ret)
@@ -626,8 +633,15 @@ hdb_sqlite_store(krb5_context context, HDB *db, unsigned flags,
         ret = hdb_sqlite_step(context, hsdb->db, hsdb->add_principal);
         sqlite3_clear_bindings(hsdb->add_principal);
         sqlite3_reset(hsdb->add_principal);
-        if(ret != SQLITE_DONE)
+        if (ret != SQLITE_DONE && ret != SQLITE_CONSTRAINT) {
+            ret = HDB_ERR_UK_SERROR;
             goto rollback;
+        }
+        if (ret == SQLITE_CONSTRAINT) {
+            ret = HDB_ERR_EXISTS;
+            goto rollback;
+        }
+        ret = 0;
 
         entry_id = sqlite3_column_int64(get_ids, 1);
 
@@ -640,18 +654,23 @@ hdb_sqlite_store(krb5_context context, HDB *db, unsigned flags,
 
         sqlite3_bind_int64(hsdb->delete_aliases, 1, entry_id);
         ret = hdb_sqlite_step_once(context, db, hsdb->delete_aliases);
-        if(ret != SQLITE_DONE)
+        if (ret != SQLITE_DONE) {
+            ret = HDB_ERR_UK_SERROR;
             goto rollback;
+        }
 
         sqlite3_bind_blob(hsdb->update_entry, 1,
                           value.data, value.length, SQLITE_STATIC);
         sqlite3_bind_int64(hsdb->update_entry, 2, entry_id);
         ret = hdb_sqlite_step_once(context, db, hsdb->update_entry);
-        if(ret != SQLITE_DONE)
+        if (ret != SQLITE_DONE) {
+            ret = HDB_ERR_UK_SERROR;
             goto rollback;
+        }
 
     } else {
 	/* Error! */
+        ret = HDB_ERR_UK_SERROR;
         goto rollback;
     }
 
@@ -667,9 +686,14 @@ hdb_sqlite_store(krb5_context context, HDB *db, unsigned flags,
 
         sqlite3_bind_int64(hsdb->add_alias, 2, entry_id);
         ret = hdb_sqlite_step_once(context, db, hsdb->add_alias);
-
-        if(ret != SQLITE_DONE)
+        if (ret == SQLITE_CONSTRAINT) {
+            ret = HDB_ERR_EXISTS;
             goto rollback;
+        }
+        if (ret != SQLITE_DONE) {
+            ret = HDB_ERR_UK_SERROR;
+            goto rollback;
+        }
     }
 
 commit:
@@ -684,8 +708,8 @@ commit:
 
     ret = hdb_sqlite_exec_stmt(context, hsdb, "COMMIT", EINVAL);
     if(ret != SQLITE_OK)
-	krb5_warnx(context, "hdb-sqlite: COMMIT problem: %d: %s",
-		   ret, sqlite3_errmsg(hsdb->db));
+	krb5_warnx(context, "hdb-sqlite: COMMIT problem: %ld: %s",
+		   (long)HDB_ERR_UK_SERROR, sqlite3_errmsg(hsdb->db));
 
     return ret == SQLITE_OK ? 0 : HDB_ERR_UK_SERROR;
 
@@ -693,7 +717,7 @@ rollback:
     krb5_warnx(context, "hdb-sqlite: store rollback problem: %d: %s",
 	       ret, sqlite3_errmsg(hsdb->db));
 
-    ret = hdb_sqlite_exec_stmt(context, hsdb, "ROLLBACK", EINVAL);
+    (void) hdb_sqlite_exec_stmt(context, hsdb, "ROLLBACK", ret);
     return ret;
 }
 

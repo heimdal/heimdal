@@ -364,6 +364,7 @@ gsskrb5_acceptor_start(OM_uint32 * minor_status,
     krb5_flags ap_options;
     krb5_keytab keytab = NULL;
     int is_cfx = 0;
+    int close_kt = 0;
     const gsskrb5_cred acceptor_cred = (gsskrb5_cred)acceptor_cred_handle;
 
     /*
@@ -385,8 +386,20 @@ gsskrb5_acceptor_start(OM_uint32 * minor_status,
      * We need to get our keytab
      */
     if (acceptor_cred == NULL) {
-	if (_gsskrb5_keytab != NULL)
-	    keytab = _gsskrb5_keytab;
+	HEIMDAL_MUTEX_lock(&gssapi_keytab_mutex);
+	if (_gsskrb5_keytab != NULL) {
+	    char *name = NULL;
+	    kret = krb5_kt_get_full_name(context, _gsskrb5_keytab, &name);
+	    if (kret == 0) {
+		kret = krb5_kt_resolve(context, name, &keytab);
+		krb5_xfree(name);
+	    }
+	    if (kret == 0)
+		close_kt = 1;
+	    else
+		keytab = NULL;
+	}
+	HEIMDAL_MUTEX_unlock(&gssapi_keytab_mutex);
     } else if (acceptor_cred->keytab != NULL) {
 	keytab = acceptor_cred->keytab;
     }
@@ -409,6 +422,8 @@ gsskrb5_acceptor_start(OM_uint32 * minor_status,
 	if (kret) {
 	    if (in)
 		krb5_rd_req_in_ctx_free(context, in);
+	    if (close_kt)
+		krb5_kt_close(context, keytab);
 	    *minor_status = kret;
 	    return GSS_S_FAILURE;
 	}
@@ -419,6 +434,8 @@ gsskrb5_acceptor_start(OM_uint32 * minor_status,
 			       server,
 			       in, &out);
 	krb5_rd_req_in_ctx_free(context, in);
+	if (close_kt)
+	    krb5_kt_close(context, keytab);
 	if (kret == KRB5KRB_AP_ERR_SKEW || kret == KRB5KRB_AP_ERR_TKT_NYV) {
 	    /*
 	     * No reply in non-MUTUAL mode, but we don't know that its

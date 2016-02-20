@@ -516,7 +516,7 @@ pa_enc_chal_validate(kdc_request_t r, const PA_DATA *pa)
 	    continue;
 	}
 
-	if (abs(kdc_time - p.patimestamp) > r->context->max_skew) {
+	if (labs(kdc_time - p.patimestamp) > r->context->max_skew) {
 	    char client_time[100];
 
 	    krb5_crypto_destroy(r->context, challangecrypto);
@@ -528,7 +528,7 @@ pa_enc_chal_validate(kdc_request_t r, const PA_DATA *pa)
 	    _kdc_r_log(r, 0, "Too large time skew, "
 		       "client time %s is out by %u > %u seconds -- %s",
 		       client_time,
-		       (unsigned)abs(kdc_time - p.patimestamp),
+		       (unsigned)labs(kdc_time - p.patimestamp),
 		       r->context->max_skew,
 		       r->client_name);
 
@@ -680,7 +680,7 @@ pa_enc_ts_validate(kdc_request_t r, const PA_DATA *pa)
 		   r->client_name);
 	goto out;
     }
-    if (abs(kdc_time - p.patimestamp) > r->context->max_skew) {
+    if (labs(kdc_time - p.patimestamp) > r->context->max_skew) {
 	char client_time[100];
 		
 	krb5_format_time(r->context, p.patimestamp,
@@ -690,7 +690,7 @@ pa_enc_ts_validate(kdc_request_t r, const PA_DATA *pa)
 	_kdc_r_log(r, 0, "Too large time skew, "
 		   "client time %s is out by %u > %u seconds -- %s",
 		   client_time,
-		   (unsigned)abs(kdc_time - p.patimestamp),
+		   (unsigned)labs(kdc_time - p.patimestamp),
 		   r->context->max_skew,
 		   r->client_name);
 

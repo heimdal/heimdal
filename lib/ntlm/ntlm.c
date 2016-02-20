@@ -1777,7 +1777,7 @@ verify_ntlm2(const void *key, size_t len,
 
     authtime = heim_ntlm_ts2unixtime(t);
 
-    if (abs((int)(authtime - now)) > authtimediff) {
+    if (labs((int)(authtime - now)) > authtimediff) {
 	ret = HNTLM_ERR_TIME_SKEW;
 	goto out;
     }

@@ -768,12 +768,12 @@ _krb5_extract_ticket(krb5_context context,
 	tmp_time = rep->enc_part.authtime;
 
     if (creds->times.starttime == 0
-	&& abs(tmp_time - sec_now) > context->max_skew) {
+	&& labs(tmp_time - sec_now) > context->max_skew) {
 	ret = KRB5KRB_AP_ERR_SKEW;
 	krb5_set_error_message (context, ret,
-				N_("time skew (%d) larger than max (%d)", ""),
-			       abs(tmp_time - sec_now),
-			       (int)context->max_skew);
+				N_("time skew (%ld) larger than max (%ld)", ""),
+			       labs(tmp_time - sec_now),
+			       (long)context->max_skew);
 	goto out;
     }
 

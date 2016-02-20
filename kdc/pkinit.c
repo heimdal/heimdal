@@ -101,7 +101,7 @@ pk_check_pkauthenticator_win2k(krb5_context context,
     krb5_timeofday (context, &now);
 
     /* XXX cusec */
-    if (a->ctime == 0 || abs(a->ctime - now) > context->max_skew) {
+    if (a->ctime == 0 || labs(a->ctime - now) > context->max_skew) {
 	krb5_clear_error_message(context);
 	return KRB5KRB_AP_ERR_SKEW;
     }
@@ -123,7 +123,7 @@ pk_check_pkauthenticator(krb5_context context,
     krb5_timeofday (context, &now);
 
     /* XXX cusec */
-    if (a->ctime == 0 || abs(a->ctime - now) > context->max_skew) {
+    if (a->ctime == 0 || labs(a->ctime - now) > context->max_skew) {
 	krb5_clear_error_message(context);
 	return KRB5KRB_AP_ERR_SKEW;
     }

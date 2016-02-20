@@ -83,7 +83,7 @@ int main(void)
 
          // now test a random reduction
          for (ix = 0; ix < 100; ix++) {
-             mp_rand(&c, 1 + abs(rand()) % (2*i));
+             mp_rand(&c, 1 + labs(rand()) % (2*i));
              mp_copy(&c, &d);
              mp_copy(&c, &e);
 
@@ -286,7 +286,7 @@ printf("compare no compare!\n"); exit(EXIT_FAILURE); }
 
       if (!(++cnt & 127))
 	 printf("%9d\r", cnt);
-      mp_rand(&a, abs(rand()) % 128 + 1);
+      mp_rand(&a, labs(rand()) % 128 + 1);
       mp_div(&a, &d, &b, &e);
       mp_div_3(&a, &c, &r2);
 
@@ -394,7 +394,7 @@ printf("compare no compare!\n"); exit(EXIT_FAILURE); }
 
    for (;;) {
       /* randomly clear and re-init one variable, this has the affect of triming the alloc space */
-      switch (abs(rand()) % 7) {
+      switch (labs(rand()) % 7) {
       case 0:
 	 mp_clear(&a);
 	 mp_init(&a);

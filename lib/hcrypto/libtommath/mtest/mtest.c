@@ -281,7 +281,7 @@ int main(void)
       printf("%s\n", buf);
    } else if (n == 13) {
       rand_num2(&a);
-      tmp = abs(rand()) & THE_MASK;
+      tmp = labs(rand()) & THE_MASK;
       mp_add_d(&a, tmp, &b);
       printf("add_d\n");
       mp_to64(&a, buf);
@@ -290,7 +290,7 @@ int main(void)
       printf("%s\n", buf);
    } else if (n == 14) {
       rand_num2(&a);
-      tmp = abs(rand()) & THE_MASK;
+      tmp = labs(rand()) & THE_MASK;
       mp_sub_d(&a, tmp, &b);
       printf("sub_d\n");
       mp_to64(&a, buf);

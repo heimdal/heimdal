@@ -346,7 +346,7 @@ krb5_process_last_request(krb5_context context,
 
     for (i = 0; i < lr->len; ++i) {
 	if (lr->val[i].lr_value <= t) {
-	    switch (abs(lr->val[i].lr_type)) {
+	    switch (lr->val[i].lr_type) {
 	    case LR_PW_EXPTIME :
 		report_expiration(context, ctx->prompter,
 				  ctx->prompter_data,
@@ -361,6 +361,8 @@ krb5_process_last_request(krb5_context context,
 				  lr->val[i].lr_value);
 		reported = TRUE;
 		break;
+            default:
+                break;
 	    }
 	}
     }

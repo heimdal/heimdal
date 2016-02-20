@@ -19,6 +19,9 @@
 	    auth_to_local = DB:@srcdir@/an2ln-db.txt DEFAULT
 	}
 
+[hdb]
+	db-dir = @objdir@
+
 [logging]
 	default = 0-/FILE:@objdir@/messages.log
 

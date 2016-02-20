@@ -73,6 +73,9 @@
 	iprop-stats = @objdir@/iprop-stats
 	iprop-acl = @srcdir@/iprop-acl
 
+[hdb]
+	db-dir = @objdir@
+
 [logging]
 	kdc = 0-/FILE:@objdir@/messages.log
 	default = 0-/FILE:@objdir@/messages.log

@@ -181,6 +181,11 @@ ihave(krb5_context context, krb5_auth_context auth_context,
     return ret;
 }
 
+#ifndef EDQUOT
+/* There's no EDQUOT on WIN32, for example */
+#define EDQUOT ENOSPC
+#endif
+
 static int
 append_to_log_file(krb5_context context,
                    kadm5_server_context *server_context,

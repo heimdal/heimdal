@@ -56,6 +56,13 @@ kadm5_s_setkey_principal_3(void *server_handle,
     if (ret)
 	return ret;
 
+    ret = kadm5_log_init(context);
+    if (ret) {
+        if (!context->keep_open)
+            context->db->hdb_close(context->context, context->db);
+        return ret;
+    }
+
     ret = context->db->hdb_fetch_kvno(context->context, context->db, princ,
 				      HDB_F_GET_ANY|HDB_F_ADMIN_DATA, 0, &ent);
     if (keepold) {
@@ -108,17 +115,16 @@ kadm5_s_setkey_principal_3(void *server_handle,
 	if ((ret = hdb_seal_keys(context->context, context->db,
 				 &ent.entry)) == 0
 	    && (ret = _kadm5_set_modifier(context, &ent.entry)) == 0
-	    && (ret = _kadm5_bump_pw_expire(context, &ent.entry)) == 0
-	    && (ret = context->db->hdb_store(context->context, context->db,
-					     HDB_F_REPLACE, &ent)) == 0)
-	    kadm5_log_modify(context, &ent.entry,
-			     KADM5_ATTRIBUTES | KADM5_PRINCIPAL |
-			     KADM5_MOD_NAME | KADM5_MOD_TIME |
-			     KADM5_KEY_DATA | KADM5_KVNO |
-			     KADM5_PW_EXPIRATION | KADM5_TL_DATA);
+	    && (ret = _kadm5_bump_pw_expire(context, &ent.entry)) == 0)
+	    ret = kadm5_log_modify(context, &ent.entry,
+                                   KADM5_ATTRIBUTES | KADM5_PRINCIPAL |
+                                   KADM5_MOD_NAME | KADM5_MOD_TIME |
+                                   KADM5_KEY_DATA | KADM5_KVNO |
+                                   KADM5_PW_EXPIRATION | KADM5_TL_DATA);
     }
 
     hdb_free_entry(context->context, &ent);
+    (void) kadm5_log_end(context);
     if (!context->keep_open)
 	context->db->hdb_close(context->context, context->db);
     return _kadm5_error_code(ret);

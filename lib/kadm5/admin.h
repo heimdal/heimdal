@@ -51,6 +51,7 @@
 /* For kadm5_log_get_version_fd() */
 #define LOG_VERSION_LAST -1
 #define LOG_VERSION_FIRST 1
+#define LOG_VERSION_UBER  0
 
 #include <krb5.h>
 

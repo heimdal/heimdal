@@ -446,10 +446,11 @@ static krb5_storage *log_goto_first(kadm5_server_context *, int);
  * Get the version and timestamp metadata of either the first, or last
  * confirmed entry in the log.
  *
- * If `which' is LOG_VERSION_FIRST (1), then gets the metadata for the
- * logically first entry past the uberblock.  If `which' is
- * LOG_VERSION_LAST (-1), then gets metadata for the last confirmed
- * entry's version and timestpamp.
+ * If `which' is LOG_VERSION_UBER (0), then this gets the metadata for
+ * the uber record.  If `which' is LOG_VERSION_FIRST (1), then this gets
+ * the metadata for the logically first entry past the uberblock.  If
+ * `which' is LOG_VERSION_LAST (-1), then this gets metadata for the
+ * last confirmed entry's version and timestpamp.
  *
  * The `fd''s offset will be set to the start of the header of the entry
  * identified by `which'.
@@ -460,7 +461,8 @@ kadm5_log_get_version_fd(kadm5_server_context *server_context, int fd,
 {
     kadm5_ret_t ret;
     krb5_storage *sp;
-    uint32_t tmp;
+    enum kadm_ops op;
+    uint32_t len, tmp;
 
     if (fd == -1)
         return 0; /* /dev/null */
@@ -478,6 +480,9 @@ kadm5_log_get_version_fd(kadm5_server_context *server_context, int fd,
     case LOG_VERSION_FIRST:
         sp = log_goto_first(server_context, fd);
         break;
+    case LOG_VERSION_UBER:
+        sp = krb5_storage_from_fd(server_context->log_context.log_fd);
+        break;
     default:
         return ENOTSUP;
     }
@@ -491,6 +496,15 @@ kadm5_log_get_version_fd(kadm5_server_context *server_context, int fd,
         break;
     case LOG_VERSION_FIRST:
         ret = get_header(sp, LOG_DOPEEK, ver, tstamp, NULL, NULL);
+        break;
+    case LOG_VERSION_UBER:
+        ret = 0;
+        if (krb5_storage_seek(sp, 0, SEEK_SET) == 0)
+            ret = get_header(sp, LOG_DOPEEK, ver, tstamp, &op, &len);
+        else
+            ret = errno;
+        if (ret == 0 && (op != kadm_nop || len != LOG_UBER_SZ))
+            ret = KADM5_LOG_NEEDS_UPGRADE;
         break;
     }
     krb5_storage_free(sp);
@@ -529,6 +543,8 @@ log_init(kadm5_server_context *server_context, int lock_mode)
     int lock_nb = 0;
     int oflags = O_RDWR;
     struct stat st;
+    uint32_t uber_ver;
+    size_t maxbytes = get_max_log_size(server_context->context);
     kadm5_ret_t ret;
     kadm5_log_context *log_context = &server_context->log_context;
 
@@ -579,26 +595,42 @@ log_init(kadm5_server_context *server_context, int lock_mode)
     log_context->lock_mode = lock_mode;
     log_context->read_only = (lock_mode != LOCK_EX);
 
+    ret = 0;
     if (!log_context->read_only) {
         if (fstat(fd, &st) == -1)
-            return errno;
-        if (st.st_size == 0) {
+            ret = errno;
+        if (ret == 0 && st.st_size == 0) {
             /* Write first entry */
             log_context->version = 0;
             ret = kadm5_log_nop(server_context, kadm_nop_plain);
-            return ret; /* no need to truncate_if_needed(): it's not */
+            if (ret == 0)
+                return 0; /* no need to truncate_if_needed(): it's not */
         }
-        ret = kadm5_log_recover(server_context, kadm_recover_replay);
-        if (ret)
-            return ret;
+        if (ret == 0) {
+            ret = kadm5_log_get_version_fd(server_context, fd,
+                                           LOG_VERSION_UBER, &uber_ver, NULL);
+
+            /* Upgrade the log if it was an old-style log */
+            if (ret == KADM5_LOG_NEEDS_UPGRADE)
+                ret = kadm5_log_truncate(server_context, 0, maxbytes / 4);
+        }
+        if (ret == 0)
+            ret = kadm5_log_recover(server_context, kadm_recover_replay);
     }
 
-    ret = kadm5_log_get_version_fd(server_context, fd, LOG_VERSION_LAST,
-                                   &log_context->version, NULL);
-    if (ret && ret != HEIM_ERR_EOF)
-	return ret;
+    if (ret == 0) {
+        ret = kadm5_log_get_version_fd(server_context, fd, LOG_VERSION_LAST,
+                                       &log_context->version, NULL);
+        if (ret == HEIM_ERR_EOF)
+            ret = 0;
+    }
 
-    return truncate_if_needed(server_context);
+    if (ret == 0)
+        ret = truncate_if_needed(server_context);
+
+    if (ret != 0)
+        (void) kadm5_log_end(server_context);
+    return ret;
 }
 
 /* Open the log with an exclusive lock */

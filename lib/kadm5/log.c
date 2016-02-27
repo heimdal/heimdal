@@ -459,10 +459,11 @@ kadm5_ret_t
 kadm5_log_get_version_fd(kadm5_server_context *server_context, int fd,
                          int which, uint32_t *ver, uint32_t *tstamp)
 {
-    kadm5_ret_t ret;
+    kadm5_ret_t ret = 0;
     krb5_storage *sp;
-    enum kadm_ops op;
-    uint32_t len, tmp;
+    enum kadm_ops op = kadm_get;
+    uint32_t len = 0;
+    uint32_t tmp;
 
     if (fd == -1)
         return 0; /* /dev/null */
@@ -476,38 +477,34 @@ kadm5_log_get_version_fd(kadm5_server_context *server_context, int fd,
     switch (which) {
     case LOG_VERSION_LAST:
         sp = kadm5_log_goto_end(server_context, fd);
+        if (sp == NULL)
+            return errno;
+        ret = get_version_prev(sp, ver, tstamp);
+        krb5_storage_free(sp);
         break;
     case LOG_VERSION_FIRST:
         sp = log_goto_first(server_context, fd);
+        if (sp == NULL)
+            return errno;
+        ret = get_header(sp, LOG_DOPEEK, ver, tstamp, NULL, NULL);
+        krb5_storage_free(sp);
         break;
     case LOG_VERSION_UBER:
         sp = krb5_storage_from_fd(server_context->log_context.log_fd);
-        break;
-    default:
-        return ENOTSUP;
-    }
-
-    if (sp == NULL)
-	return errno;
-
-    switch (which) {
-    case LOG_VERSION_LAST:
-        ret = get_version_prev(sp, ver, tstamp);
-        break;
-    case LOG_VERSION_FIRST:
-        ret = get_header(sp, LOG_DOPEEK, ver, tstamp, NULL, NULL);
-        break;
-    case LOG_VERSION_UBER:
-        ret = 0;
+        if (sp == NULL)
+            return errno;
         if (krb5_storage_seek(sp, 0, SEEK_SET) == 0)
             ret = get_header(sp, LOG_DOPEEK, ver, tstamp, &op, &len);
         else
             ret = errno;
         if (ret == 0 && (op != kadm_nop || len != LOG_UBER_SZ))
             ret = KADM5_LOG_NEEDS_UPGRADE;
+        krb5_storage_free(sp);
         break;
+    default:
+        return ENOTSUP;
     }
-    krb5_storage_free(sp);
+
     return ret;
 }
 

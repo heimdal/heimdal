@@ -684,14 +684,17 @@ check_aliases(kadm5_server_context *contextp,
                 break;
             if (!krb5_principal_compare(contextp->context, new_name, old_name))
                 continue;
+            free_HDB_Ext_Aliases(&iter_del.aliases);
             match = 1;
             break;
         }
         if (match)
             continue;
         ret = _kadm5_acl_check_permission(contextp, KADM5_PRIV_ADD, new_name);
-        if (ret)
+        if (ret) {
+            free_HDB_Ext_Aliases(&iter.aliases);
             return ret;
+        }
     }
 
     return 0;

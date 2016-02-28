@@ -898,6 +898,13 @@ kadm5_log_create(kadm5_server_context *context, hdb_entry *entry)
     ent.entry = *entry;
 
     /*
+     * If we're not logging then we can't recover-to-perform, so just
+     * perform.
+     */
+    if (strcmp(log_context->log_file, "/dev/null") == 0)
+        return context->db->hdb_store(context->context, context->db, 0, &ent);
+
+    /*
      * Test for any conflicting entries before writing the log.  If we commit
      * to the log we'll end-up rolling forward on recovery, but that would be
      * wrong if the initial create is rejected.
@@ -982,6 +989,9 @@ kadm5_log_delete(kadm5_server_context *context,
     off_t end_off = 0;  /* Ditto; this allows de-indentation by two levels */
     off_t off;
 
+    if (strcmp(log_context->log_file, "/dev/null") == 0)
+        return context->db->hdb_remove(context->context, context->db, 0,
+                                       princ);
     ret = context->db->hdb_remove(context->context, context->db,
                                   HDB_F_PRECHECK, princ);
     if (ret)
@@ -1087,6 +1097,14 @@ kadm5_log_rename(kadm5_server_context *context,
     ent.ctx = 0;
     ent.free_entry = 0;
     ent.entry = *entry;
+
+    if (strcmp(log_context->log_file, "/dev/null") == 0) {
+        ret = context->db->hdb_store(context->context, context->db, 0, &ent);
+        if (ret == 0)
+            return context->db->hdb_remove(context->context, context->db, 0,
+                                           source);
+        return ret;
+    }
 
     /*
      * Pre-check that the transaction will succeed.
@@ -1242,6 +1260,10 @@ kadm5_log_modify(kadm5_server_context *context,
     ent.ctx = 0;
     ent.free_entry = 0;
     ent.entry = *entry;
+
+    if (strcmp(log_context->log_file, "/dev/null") == 0)
+        return context->db->hdb_store(context->context, context->db,
+                                      HDB_F_REPLACE, &ent);
 
     ret = context->db->hdb_store(context->context, context->db,
                                  HDB_F_PRECHECK | HDB_F_REPLACE, &ent);
@@ -1597,6 +1619,9 @@ kadm5_log_nop(kadm5_server_context *context, enum kadm_nop_type nop_type)
     kadm5_ret_t ret;
     kadm5_log_context *log_context = &context->log_context;
     off_t off;
+
+    if (strcmp(log_context->log_file, "/dev/null") == 0)
+        return 0;
 
     off = lseek(log_context->log_fd, 0, SEEK_CUR);
     if (off == -1)

@@ -71,6 +71,7 @@ enum hdb_lockop{ HDB_RLOCK, HDB_WLOCK };
 #define HDB_CAP_F_HANDLE_ENTERPRISE_PRINCIPAL 1
 #define HDB_CAP_F_HANDLE_PASSWORDS	2
 #define HDB_CAP_F_PASSWORD_UPDATE_KEYS	4
+#define HDB_CAP_F_SHARED_DIRECTORY      8
 
 /* auth status values */
 #define HDB_AUTH_SUCCESS		0

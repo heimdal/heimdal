@@ -2002,7 +2002,7 @@ hdb_ldap_common(krb5_context context,
 
     (*db)->hdb_master_key_set = 0;
     (*db)->hdb_openp = 0;
-    (*db)->hdb_capability_flags = 0;
+    (*db)->hdb_capability_flags = HDB_CAP_F_SHARED_DIRECTORY;
     (*db)->hdb_open = LDAP_open;
     (*db)->hdb_close = LDAP_close;
     (*db)->hdb_fetch_kvno = LDAP_fetch_kvno;

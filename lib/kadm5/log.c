@@ -1719,7 +1719,12 @@ recover_replay(kadm5_server_context *context,
     /* We're at the start of the payload; compute end of entry offset */
     off = krb5_storage_seek(sp, 0, SEEK_CUR) + len + LOG_TRAILER_SZ;
 
-    ret = kadm5_log_replay(context, op, ver, len, sp);
+    /* We cannot perform log recovery on LDAP and such backends */
+    if (data->mode == kadm_recover_replay &&
+        (context->db->hdb_capability_flags & HDB_CAP_F_SHARED_DIRECTORY))
+        ret = 0;
+    else
+        ret = kadm5_log_replay(context, op, ver, len, sp);
     switch (ret) {
     case HDB_ERR_NOENTRY:
     case HDB_ERR_EXISTS:

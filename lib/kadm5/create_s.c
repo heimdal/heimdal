@@ -137,13 +137,6 @@ kadm5_s_create_principal_with_key(void *server_handle,
     if (ret)
         goto out;
 
-    ret = context->db->hdb_fetch_kvno(context->context, context->db,
-                                      princ->principal, 0, 0, &ent);
-    if (ret == 0) {
-        ret = HDB_ERR_EXISTS;
-        goto out;
-    }
-
     ret = hdb_seal_keys(context->context, context->db, &ent.entry);
     if (ret)
 	goto out;
@@ -201,13 +194,6 @@ kadm5_s_create_principal(void *server_handle,
     ret = kadm5_log_init(context);
     if (ret)
         goto out;
-
-    ret = context->db->hdb_fetch_kvno(context->context, context->db,
-                                      princ->principal, 0, 0, &ent);
-    if (ret == 0) {
-        ret = HDB_ERR_EXISTS;
-        goto out;
-    }
 
     ent.entry.keys.len = 0;
     ent.entry.keys.val = NULL;

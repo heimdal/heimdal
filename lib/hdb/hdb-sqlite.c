@@ -449,12 +449,12 @@ hdb_sqlite_make_database(krb5_context context, HDB *db, const char *filename)
     return 0;
 
  out:
-    free(hsdb->db_file);
-    hsdb->db_file = NULL;
     if (hsdb->db)
         sqlite3_close(hsdb->db);
     if (created_file)
         unlink(hsdb->db_file);
+    free(hsdb->db_file);
+    hsdb->db_file = NULL;
 
     return ret;
 }

@@ -333,10 +333,11 @@ dump_one (krb5_context context, HDB *db, hdb_entry_ex *entry, void *v)
 	ret = ENOMEM;
 	goto done;
     }
-    krb5_store_uint32(sp, ONE_PRINC);
+    ret = krb5_store_uint32(sp, ONE_PRINC);
     krb5_storage_free(sp);
 
-    ret = krb5_store_data(dump, data);
+    if (ret == 0)
+        ret = krb5_store_data(dump, data);
 
 done:
     krb5_data_free (&data);

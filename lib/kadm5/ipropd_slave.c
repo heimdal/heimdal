@@ -231,6 +231,8 @@ append_to_log_file(krb5_context context,
                   "short krb5_storage_read() from memory buffer");
     }
     log_off = lseek(server_context->log_context.log_fd, 0, SEEK_CUR);
+    if (log_off == -1)
+        return errno;
 
     /*
      * Use net_write() so we get an errno if less that len bytes were

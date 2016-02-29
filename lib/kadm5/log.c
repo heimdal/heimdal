@@ -743,8 +743,7 @@ static kadm5_ret_t
 kadm5_log_postamble(kadm5_log_context *context,
 		    krb5_storage *sp)
 {
-    krb5_store_uint32(sp, context->version + 1);
-    return 0;
+    return krb5_store_uint32(sp, context->version + 1);
 }
 
 /*
@@ -1304,7 +1303,9 @@ kadm5_log_replay_modify(kadm5_server_context *context,
 
     memset(&log_ent, 0, sizeof(log_ent));
 
-    krb5_ret_uint32(sp, &mask);
+    ret = krb5_ret_uint32(sp, &mask);
+    if (ret)
+        return ret;
     len -= 4;
     ret = krb5_data_alloc (&value, len);
     if (ret) {

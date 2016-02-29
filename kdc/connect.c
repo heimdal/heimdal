@@ -1070,11 +1070,11 @@ start_kdc(krb5_context context,
 
 #ifdef HAVE_FORK
 #ifdef _SC_NPROCESSORS_ONLN
-    if (max_kdcs == -1)
+    if (max_kdcs < 1)
 	max_kdcs = sysconf(_SC_NPROCESSORS_ONLN);
 #endif
 
-    if (max_kdcs == -1)
+    if (max_kdcs < 1)
 	max_kdcs = 1;
 
     pids = malloc(max_kdcs * sizeof(*pids));
@@ -1194,6 +1194,7 @@ start_kdc(krb5_context context,
     }
 
     kdc_log(context, config, 0, "KDC master process exiting", pid);
+    free(pids);
 #else
     loop(context, config, d, ndescr, -1);
     kdc_log(context, config, 0, "KDC exiting", pid);

@@ -407,17 +407,15 @@ write_dump (krb5_context context, krb5_storage *dump,
     sp = krb5_storage_from_mem (buf, 8);
     if (sp == NULL)
 	krb5_errx (context, IPROPD_RESTART, "krb5_storage_from_mem");
-    krb5_store_uint32 (sp, NOW_YOU_HAVE);
-    krb5_store_uint32 (sp, current_version);
+    ret = krb5_store_uint32(sp, NOW_YOU_HAVE);
+    if (ret == 0)
+      krb5_store_uint32(sp, current_version);
     krb5_storage_free (sp);
 
     data.length = 8;
 
-    ret = krb5_store_data(dump, data);
-    if (ret) {
-	krb5_warn (context, ret, "write_dump");
-	return ret;
-    }
+    if (ret == 0)
+        ret = krb5_store_data(dump, data);
 
     /*
      * We must ensure that the entire valid dump is written to disk
@@ -426,27 +424,16 @@ write_dump (krb5_context context, krb5_storage *dump,
      * important upon reboot.
      */
 
-    ret = krb5_storage_fsync(dump);
-    if (ret == -1) {
-	ret = errno;
-	krb5_warn(context, ret, "syncing iprop dumpfile");
-	return ret;
-    }
+    if (ret == 0)
+        ret = krb5_storage_fsync(dump);
 
-    ret = krb5_storage_seek(dump, 0, SEEK_SET);
-    if (ret == -1) {
+    if (ret == 0 && krb5_storage_seek(dump, 0, SEEK_SET) == -1)
 	ret = errno;
-	krb5_warn(context, ret, "krb5_storage_seek(dump, 0, SEEK_SET)");
-	return ret;
-    }
 
     /* Write current version at the front making the dump valid */
 
-    ret = krb5_store_uint32(dump, current_version);
-    if (ret) {
-	krb5_warn(context, ret, "writing version to dumpfile");
-	return ret;
-    }
+    if (ret == 0)
+        ret = krb5_store_uint32(dump, current_version);
 
     /*
      * We don't need to fsync(2) after the real version is written as
@@ -454,9 +441,14 @@ write_dump (krb5_context context, krb5_storage *dump,
      * After all, we'll just create a new dumpfile.
      */
 
-    krb5_warnx(context, "wrote new dumpfile (version %u)", current_version);
+    if (ret == 0)
+        krb5_warnx(context, "wrote new dumpfile (version %u)",
+                   current_version);
+    else
+        krb5_warn(context, ret, "failed to write new dumpfile (version %u)",
+                  current_version);
 
-    return 0;
+    return ret;
 }
 
 static int
@@ -654,15 +646,17 @@ send_are_you_there (krb5_context context, slave *s)
 	slave_dead(context, s);
 	return 1;
     }
-    krb5_store_uint32 (sp, ARE_YOU_THERE);
+    ret = krb5_store_uint32(sp, ARE_YOU_THERE);
     krb5_storage_free (sp);
 
-    ret = krb5_write_priv_message(context, s->ac, &s->fd, &data);
+    if (ret == 0) {
+        ret = krb5_write_priv_message(context, s->ac, &s->fd, &data);
 
-    if (ret) {
-	krb5_warn (context, ret, "are_you_there: krb5_write_priv_message");
-	slave_dead(context, s);
-	return 1;
+        if (ret) {
+            krb5_warn(context, ret, "are_you_there: krb5_write_priv_message");
+            slave_dead(context, s);
+            return 1;
+        }
     }
 
     return 0;
@@ -695,17 +689,19 @@ send_diffs (kadm5_server_context *server_context, slave *s, int log_fd,
 	sp = krb5_storage_from_mem(buf, 4);
 	if (sp == NULL)
 	    krb5_errx(context, IPROPD_RESTART, "krb5_storage_from_mem");
-	krb5_store_uint32(sp, YOU_HAVE_LAST_VERSION);
+	ret = krb5_store_uint32(sp, YOU_HAVE_LAST_VERSION);
 	krb5_storage_free(sp);
 	data.data   = buf;
 	data.length = 4;
-	ret = krb5_write_priv_message(context, s->ac, &s->fd, &data);
-        if (ret) {
-            krb5_warn(context, ret, "send_diffs: failed to send to slave");
-            slave_dead(context, s);
+        if (ret == 0) {
+            ret = krb5_write_priv_message(context, s->ac, &s->fd, &data);
+            if (ret) {
+                krb5_warn(context, ret, "send_diffs: failed to send to slave");
+                slave_dead(context, s);
+            }
+            krb5_warnx(context, "slave %s in sync already at version %ld",
+                       s->name, (long)s->version);
         }
-	krb5_warnx(context, "slave %s in sync already at version %ld",
-		   s->name, (long)s->version);
 	return ret;
     }
 

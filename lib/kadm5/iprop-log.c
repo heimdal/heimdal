@@ -429,9 +429,8 @@ last_version(struct last_version_options *opt, int argc, char **argv)
                     krb5_err(context, 1, ret, "kadm5_log_init_nolock");
             }
         } else {
-            if (argc == 0)
-                warnx("If this command appears to block, try the "
-                      "--no-lock option");
+            warnx("If this command appears to block, try the "
+                  "--no-lock option");
             ret = kadm5_log_init_sharedlock(server_context, 0);
             if (ret)
                 krb5_err(context, 1, ret, "kadm5_log_init_sharedlock");

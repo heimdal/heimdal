@@ -960,11 +960,11 @@ ecdsa_private_key_import(hx509_context context,
 {
     const unsigned char *p = data;
     EC_KEY **pkey = NULL;
+    EC_KEY *key;
 
     if (keyai->parameters) {
 	EC_GROUP *group;
 	int groupnid;
-	EC_KEY *key;
 	int ret;
 
 	ret = parse_ECParameters(context, keyai->parameters, &groupnid);

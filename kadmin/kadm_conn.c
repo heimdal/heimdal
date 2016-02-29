@@ -264,6 +264,7 @@ start_server(krb5_context contextp, const char *port_str)
 	if(tmp == NULL) {
 	    krb5_warnx(contextp, "failed to reallocate %lu bytes",
 		       (unsigned long)(num_socks + i) * sizeof(*socks));
+            freeaddrinfo(ai);
 	    continue;
 	}
 	socks = tmp;

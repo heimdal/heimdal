@@ -170,18 +170,21 @@ ihave(krb5_context context, krb5_auth_context auth_context,
     krb5_data data;
 
     sp = krb5_storage_from_mem(buf, 8);
-    krb5_store_uint32(sp, I_HAVE);
-    krb5_store_uint32(sp, version);
+    ret = krb5_store_uint32(sp, I_HAVE);
+    if (ret == 0)
+        ret = krb5_store_uint32(sp, version);
     krb5_storage_free(sp);
     data.length = 8;
     data.data   = buf;
 
-    if (verbose)
-        krb5_warnx(context, "telling master we are at %u", version);
+    if (ret == 0) {
+        if (verbose)
+            krb5_warnx(context, "telling master we are at %u", version);
 
-    ret = krb5_write_priv_message(context, auth_context, &fd, &data);
-    if (ret)
-	krb5_warn(context, ret, "krb5_write_message");
+        ret = krb5_write_priv_message(context, auth_context, &fd, &data);
+        if (ret)
+            krb5_warn(context, ret, "krb5_write_message");
+    }
     return ret;
 }
 
@@ -437,17 +440,19 @@ send_im_here(krb5_context context, int fd,
     sp = krb5_storage_from_data (&data);
     if (sp == NULL)
         krb5_errx(context, IPROPD_RESTART, "krb5_storage_from_data");
-    krb5_store_uint32(sp, I_AM_HERE);
+    ret = krb5_store_uint32(sp, I_AM_HERE);
     krb5_storage_free(sp);
 
-    ret = krb5_write_priv_message(context, auth_context, &fd, &data);
-    krb5_data_free(&data);
+    if (ret == 0) {
+        ret = krb5_write_priv_message(context, auth_context, &fd, &data);
+        krb5_data_free(&data);
 
-    if (ret)
-        krb5_err(context, IPROPD_RESTART, ret, "krb5_write_priv_message");
+        if (ret)
+            krb5_err(context, IPROPD_RESTART, ret, "krb5_write_priv_message");
 
-    if (verbose)
-        krb5_warnx(context, "pinged master");
+        if (verbose)
+            krb5_warnx(context, "pinged master");
+    }
 
     return;
 }

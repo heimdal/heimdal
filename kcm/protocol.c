@@ -824,7 +824,7 @@ kcm_op_get_initial_ticket(krb5_context context,
 
     if (ret != 0) {
 	krb5_free_principal(context, server);
-	krb5_free_keyblock(context, &key);
+	krb5_free_keyblock_contents(context, &key);
     }
 
     kcm_release_ccache(context, ccache);

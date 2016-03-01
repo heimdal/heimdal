@@ -294,9 +294,10 @@ close_generate (void)
         fclose (privheaderfile);
     if (templatefile)
         fclose (templatefile);
-    if (logfile)
+    if (logfile) {
         fprintf (logfile, "\n");
         fclose (logfile);
+    }
 }
 
 void
@@ -356,7 +357,8 @@ generate_header_of_codefile(const char *name)
     codefile = fopen (filename, "w");
     if (codefile == NULL)
 	err (1, "fopen %s", filename);
-    fprintf(logfile, "%s ", filename);
+    if (logfile)
+        fprintf(logfile, "%s ", filename);
     free(filename);
     filename = NULL;
     fprintf (codefile,

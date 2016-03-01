@@ -405,6 +405,8 @@ out:
    if (n_keys && new_keys) {
        *new_keys     = kblock;
        *n_keys       = num_keys;
+   } else {
+        free(kblock);
    }
 
    hdb_entry_set_pw_change_time(context->context, ent, 0);

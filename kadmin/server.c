@@ -499,11 +499,13 @@ kadmind_dispatch(void *kadm_handlep, krb5_boolean initial,
 		ret = krb5_ret_int32(sp, &ks_tuple[i].ks_enctype);
 		if (ret != 0) {
 		    krb5_free_principal(contextp->context, princ);
+                    free(ks_tuple);
 		    goto fail;
 		}
 		ret = krb5_ret_int32(sp, &ks_tuple[i].ks_salttype);
 		if (ret != 0) {
 		    krb5_free_principal(contextp->context, princ);
+                    free(ks_tuple);
 		    goto fail;
 		}
 	    }
@@ -512,6 +514,7 @@ kadmind_dispatch(void *kadm_handlep, krb5_boolean initial,
 					n_ks_tuple, ks_tuple, &new_keys,
 					&n_keys);
 	krb5_free_principal(contextp->context, princ);
+        free(ks_tuple);
 
 	krb5_storage_free(sp);
 	sp = krb5_storage_emem();

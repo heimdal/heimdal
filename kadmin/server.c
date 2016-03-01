@@ -194,6 +194,8 @@ kadmind_dispatch(void *kadm_handlep, krb5_boolean initial,
             ret = check_aliases(contextp, &ent, NULL);
             if (ret) {
                 kadm5_free_principal_ent(kadm_handlep, &ent);
+                memset(password, 0, strlen(password));
+                free(password);
                 goto fail;
             }
         }

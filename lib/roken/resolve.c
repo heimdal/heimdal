@@ -674,7 +674,7 @@ rk_dns_srv_order(struct rk_dns_reply *r)
 	/* ss is now the first record of this priority and ee is the
            first of the next */
 	while(ss < ee) {
-	    rnd = rk_random() % (sum + 1);
+	    rnd = rk_random() % sum + 1;
 	    for(count = 0, tt = ss; ; tt++) {
 		if(*tt == NULL)
 		    continue;

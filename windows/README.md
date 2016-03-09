@@ -79,11 +79,13 @@ work, but have not been tested.
     options for `signtool`.
 
     E.g.:
+
         set SIGNTOOL_C=/f c:\mycerts\codesign.pfx
 
   - `SIGNTOOL_O`: Signing parameter options for `signtool`. Optional.
 
     E.g.:
+
         set SIGNTOOL_O=/du http://example.com/myheimdal
 
   - `SIGNTOOL_T`: Timestamp options for `signtool`.  If not specified,
@@ -95,6 +97,7 @@ work, but have not been tested.
     signed.
 
     E.g.:
+
         set CODESIGN=c:\scripts\mycodesigner.cmd
 
 * Define the code sign public key token.  This is contained in the
@@ -113,6 +116,7 @@ work, but have not been tested.
   `publicKeyToken` value (excluding quotes).
 
   E.g.:
+
       set CODESIGN_PKT=abcdef0123456789
 
 4. Running the build

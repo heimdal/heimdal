@@ -660,16 +660,20 @@ rk_dns_srv_order(struct rk_dns_reply *r)
     headp = &r->head;
 
     for(ss = srvs; ss < srvs + num_srv; ) {
-	int sum, rnd, count;
+	int sum, zeros, rnd, count;
 	struct rk_resource_record **ee, **tt;
 	/* find the last record with the same priority and count the
            sum of all weights */
-	for(sum = 0, tt = ss; tt < srvs + num_srv; tt++) {
+	for(sum = 0, zeros = 0, tt = ss; tt < srvs + num_srv; tt++) {
 	    assert(*tt != NULL);
 	    if((*tt)->u.srv->priority != (*ss)->u.srv->priority)
 		break;
 	    sum += (*tt)->u.srv->weight;
+	    if ((*tt)->u.srv->weight == 0)
+		zeros++;
 	}
+	sum *= zeros;
+	sum += zeros;
 	ee = tt;
 	/* ss is now the first record of this priority and ee is the
            first of the next */
@@ -678,7 +682,9 @@ rk_dns_srv_order(struct rk_dns_reply *r)
 	    for(count = 0, tt = ss; ; tt++) {
 		if(*tt == NULL)
 		    continue;
-		count += (*tt)->u.srv->weight;
+		count += (*tt)->u.srv->weight * zeros;
+		if ((*tt)->u.srv->weight == 0)
+		    count++;
 		if(count >= rnd)
 		    break;
 	    }
@@ -690,7 +696,9 @@ rk_dns_srv_order(struct rk_dns_reply *r)
 	    (*tt)->next = *headp;
 	    *headp = *tt;
 	    headp = &(*tt)->next;
-	    sum -= (*tt)->u.srv->weight;
+	    sum -= (*tt)->u.srv->weight * zeros;
+	    if ((*tt)->u.srv->weight == 0)
+		sum--;
 	    *tt = NULL;
 	    while(ss < ee && *ss == NULL)
 		ss++;

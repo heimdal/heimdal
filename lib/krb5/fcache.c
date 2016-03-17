@@ -805,7 +805,7 @@ fcc_get_principal(krb5_context context,
     int fd;
     krb5_storage *sp;
 
-    ret = init_fcc (context, id, "get-pricipal", &sp, &fd, NULL);
+    ret = init_fcc (context, id, "get-principal", &sp, &fd, NULL);
     if (ret)
 	return ret;
     ret = krb5_ret_principal(sp, principal);

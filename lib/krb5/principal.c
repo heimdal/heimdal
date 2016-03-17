@@ -1280,7 +1280,7 @@ struct krb5_name_canon_rule_data {
  * @param context A Kerberos context.
  * @param hostname hostname to use
  * @param sname Service name to use
- * @param type name type of pricipal, use KRB5_NT_SRV_HST or KRB5_NT_UNKNOWN.
+ * @param type name type of principal, use KRB5_NT_SRV_HST or KRB5_NT_UNKNOWN.
  * @param ret_princ return principal, free with krb5_free_principal().
  *
  * @return An krb5 error code, see krb5_get_error_message().

@@ -25,6 +25,7 @@ endif
 
 subst = sed	-e "s!@PACKAGE\@!$(PACKAGE)!g" \
 		-e "s!@VERSION\@!$(VERSION)!g" \
+		-e "s!@CANONICAL_HOST\@!$(CANONICAL_HOST)!g" \
 		-e "s!@prefix\@!$(prefix)!g" \
 		-e "s!@exec_prefix\@!$(exec_prefix)!g" \
 		-e "s!@libdir\@!$(libdir)!g" \

@@ -168,6 +168,36 @@ if test "$print_exec_prefix" = "yes"; then
     exit 0
 fi
 
+# The following rpath_flag setting code is distilled from MIT Kerberos'
+# src/config/shlib.conf.  Some of this seems ancient and likely to be
+# wrong in some cases, but right for all the cases we probably care
+# about.  Also, this will very likely be wrong depending on how the
+# caller will be doing link-edits (with what compiler-driver or
+# link-editor)!  There's no fixing this.
+#
+# In principle this doesn't belong here: application should instead use
+# krb5-config --libdir to get the directory to use for the rpath, then
+# workout the rpath flags on their own.  Of course, there's no --libdir
+# option...  And MIT's krb5-config does include rpath flags.
+#
+# Compatibility with MIT is the winning consideration for now.
+case "@CANONICAL_HOST@" in
+alpha*-dec-osf*)
+  rpath_flag='-Wl,-rpath -Wl,';;
+*-*-hpux*)
+  rpath_flag='-Wl,+b,';;
+*-*-irix* | mips-*-netbsd*)
+  rpath_flag='-Wl,-rpath -Wl,';;
+*-*-netbsd* | *-*-openbsd* | *-*-solaris*)
+  rpath_flag='-R';;
+*-*-linux* | *-*-gnu* | *-*-k*bsd*-gnu | *-*-freebsd*)
+  rpath_flag='-Wl,--enable-new-dtags -Wl,-rpath -Wl,';;
+*-*-aix*)
+  rpath_flag='-Wl,-blibpath:';;
+*)
+rpath_flag=;;
+esac
+
 if test "$do_libs" = "yes"; then
     deplibs=""
     if test "$lib_gssapi" = yes; then
@@ -208,6 +238,9 @@ if test "$do_libs" = "yes"; then
     fi
     if test X"$libdir" != X/usr/lib; then
 	lib_flags="-L${libdir} $lib_flags"
+	if test X"$rpath_flag" != X; then
+	    lib_flags="${rpath_flag}${libdir} $lib_flags"
+	fi
     fi
 
     echo ${lib_flags}

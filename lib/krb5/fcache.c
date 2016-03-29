@@ -479,6 +479,17 @@ again:
     }
 #endif
 
+    /*
+     * /tmp (or wherever default ccaches go) might not be on its own
+     * filesystem, or on a filesystem different /etc, say, and even if
+     * it were, suppose a user hard-links another's ccache to her
+     * default ccache, then runs a set-uid program that will user her
+     * default ccache (even if it ignores KRB5CCNAME)...
+     *
+     * Default ccache locations should really be on per-user non-tmp
+     * locations on tmpfs "run" directories.  But we don't know here
+     * that this is the case.  Thus: no hard-links, no symlinks.
+     */
     if (sb2.st_nlink != 1) {
 	krb5_set_error_message(context, EPERM, N_("Refuses to open hardlinks for caches FILE:%s", ""), filename);
 	close(fd);

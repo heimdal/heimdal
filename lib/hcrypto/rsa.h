@@ -67,6 +67,9 @@
 #define i2d_RSAPublicKey hc_i2d_RSAPublicKey
 #define d2i_RSAPublicKey hc_d2i_RSAPublicKey
 
+#define RSA hc_RSA
+#define RSA_METHOD hc_RSA_METHOD
+
 /*
  *
  */

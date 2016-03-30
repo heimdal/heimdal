@@ -68,6 +68,11 @@
 #define BN_CTX_start hc_BN_CTX_start
 #define BN_CTX_end hc_BN_CTX_end
 
+#define BIGNUM hc_BIGNUM
+#define BN_GENCB hc_BN_GENCB
+#define BN_CTX hc_BN_CTX
+#define BN_BLINDING hc_BN_BLINDING
+
 /*
  *
  */

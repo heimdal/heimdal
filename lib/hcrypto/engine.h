@@ -62,6 +62,8 @@
 #define ENGINE_set_default_DH hc_ENGINE_set_default_DH
 #define ENGINE_set_default_RSA hc_ENGINE_set_default_RSA
 
+#define ENGINE hc_ENGINE
+
 /*
  *
  */

@@ -108,6 +108,27 @@
 #define EVP_CIPHER_CTX_rand_key hc_EVP_CIPHER_CTX_rand_key
 #define hcrypto_validate hc_hcrypto_validate
 
+/* Type name renaming */
+#define EVP_MD_CTX hc_EVP_MD_CTX
+#define EVP_PKEY hc_EVP_PKEY
+#define EVP_MD hc_EVP_MD
+#define EVP_CIPHER hc_EVP_CIPHER
+#define EVP_CIPHER_CTX hc_EVP_CIPHER_CTX
+
+/* Constant renaming */
+#define EVP_CIPH_STREAM_CIPHER hc_EVP_CIPH_STREAM_CIPHER
+#define EVP_CIPH_CBC_MODE hc_EVP_CIPH_CBC_MODE
+#define EVP_CIPH_CFB8_MODE hc_EVP_CIPH_CFB8_MODE
+#define EVP_CIPH_MODE hc_EVP_CIPH_MODE
+#define EVP_CIPH_CTRL_INIT hc_EVP_CIPH_CTRL_INIT
+
+#define EVP_CIPH_VARIABLE_LENGTH hc_EVP_CIPH_VARIABLE_LENGTH
+#define EVP_CIPH_ALWAYS_CALL_INIT hc_EVP_CIPH_ALWAYS_CALL_INIT
+#define EVP_CIPH_RAND_KEY hc_EVP_CIPH_RAND_KEY
+
+#define EVP_CTRL_INIT hc_EVP_CTRL_INIT
+
+
 /*
  *
  */
@@ -133,14 +154,17 @@ struct hc_CIPHER {
      * cipher is used in (use EVP_CIPHER.._mode() to extract the
      * mode). The rest of the flag field is a bitfield.
      */
-#define EVP_CIPH_STREAM_CIPHER		0
-#define EVP_CIPH_CBC_MODE		2
-#define EVP_CIPH_CFB8_MODE              4
-#define EVP_CIPH_MODE			0x7
+#define hc_EVP_CIPH_STREAM_CIPHER               1
+#define hc_EVP_CIPH_CBC_MODE                    2
+#define hc_EVP_CIPH_CFB8_MODE                   4
+#define hc_EVP_CIPH_MODE                        0x7
+#define hc_EVP_CIPH_CTRL_INIT                   0x40
 
-#define EVP_CIPH_VARIABLE_LENGTH	0x008 /* variable key length */
-#define EVP_CIPH_ALWAYS_CALL_INIT	0x020
-#define EVP_CIPH_RAND_KEY		0x200
+#define hc_EVP_CTRL_INIT                        0x0
+
+#define hc_EVP_CIPH_VARIABLE_LENGTH     0x008 /* variable key length */
+#define hc_EVP_CIPH_ALWAYS_CALL_INIT    0x020
+#define hc_EVP_CIPH_RAND_KEY            0x200
 
     int (*init)(EVP_CIPHER_CTX*,const unsigned char*,const unsigned char*,int);
     int (*do_cipher)(EVP_CIPHER_CTX *, unsigned char *,

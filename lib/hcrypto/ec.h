@@ -34,6 +34,10 @@
 #ifndef HEIM_EC_H
 #define HEIM_EC_H 1
 
+#define EC_KEY hc_EC_KEY
+#define EC_GROUP hc_EC_GROUP
+#define EC_GROUP_ID hc_EC_GROUP_ID
+#define EC_GROUP_ID_s hc_EC_GROUP_ID_s
 #define EC_GROUP_get_degree hc_EC_GROUP_get_degree
 #define EC_KEY_get0_group hc_EC_KEY_get0_group
 #define EC_GROUP_get_order hc_EC_GROUP_get_order

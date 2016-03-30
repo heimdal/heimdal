@@ -14,9 +14,6 @@ endif
 if COM_ERR
 dir_com_err = com_err
 endif
-if !HAVE_OPENSSL
-dir_hcrypto = hcrypto
-endif
 if !SQLITE3
 dir_sqlite = sqlite
 endif
@@ -34,7 +31,7 @@ SUBDIRS = \
 	wind \
 	asn1 \
 	$(dir_sqlite) \
-	$(dir_hcrypto) \
+	hcrypto \
 	ipc \
 	hx509 \
 	krb5 \

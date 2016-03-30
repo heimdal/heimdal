@@ -36,9 +36,6 @@ dir_otp = otp
 !ifdef DCE
 dir_dce = kdfs
 !endif
-!ifndef HAVE_OPENSSL
-dir_hcrypto = hcrypto
-!endif
 
 # Third party plugins must be added to the assembly
 # Permit third party assembly scripts
@@ -54,7 +51,7 @@ assembly=..\packages\windows\assembly
 !endif
 
 SUBDIRS = roken base vers com_err sl wind asn1 sqlite \
-	$(dir_hcrypto) hx509 krb5 heimdal ntlm kafs gssapi hdb \
+	hcrypto hx509 krb5 heimdal ntlm kafs gssapi hdb \
 	kadm5 $(dir_45) $(dir_otp) $(dir_dce) $(plugin) $(assembly)
 
 !include ../windows/NTMakefile.w32

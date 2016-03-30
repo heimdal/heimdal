@@ -20,6 +20,9 @@ endif
 if !SQLITE3
 dir_sqlite = sqlite
 endif
+if MAINTAINER_MODE
+dir_sqlite = sqlite
+endif
 
 SUBDIRS = \
 	roken \

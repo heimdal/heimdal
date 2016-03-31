@@ -1815,18 +1815,17 @@ krb5_cc_get_kdc_offset(krb5_context context, krb5_ccache id, krb5_deltat *offset
     return (*id->ops->get_kdc_offset)(context, id, offset);
 }
 
-
 #ifdef _WIN32
-
 #define REGPATH_MIT_KRB5 "SOFTWARE\\MIT\\Kerberos5"
-KRB5_LIB_FUNCTION char * KRB5_LIB_CALL
-_krb5_get_default_cc_name_from_registry(krb5_context context)
+
+static char *
+_get_default_cc_name_from_registry(krb5_context context, HKEY hkBase)
 {
     HKEY hk_k5 = 0;
     LONG code;
-    char * ccname = NULL;
+    char *ccname = NULL;
 
-    code = RegOpenKeyEx(HKEY_CURRENT_USER,
+    code = RegOpenKeyEx(hkBase,
                         REGPATH_MIT_KRB5,
                         0, KEY_READ, &hk_k5);
 
@@ -1837,6 +1836,19 @@ _krb5_get_default_cc_name_from_registry(krb5_context context)
                                              REG_NONE, 0);
 
     RegCloseKey(hk_k5);
+
+    return ccname;
+}
+
+KRB5_LIB_FUNCTION char * KRB5_LIB_CALL
+_krb5_get_default_cc_name_from_registry(krb5_context context)
+{
+    char *ccname;
+
+    ccname = _get_default_cc_name_from_registry(context, HKEY_CURRENT_USER);
+    if (ccname == NULL)
+	ccname = _get_default_cc_name_from_registry(context,
+						    HKEY_LOCAL_MACHINE);
 
     return ccname;
 }
@@ -1872,5 +1884,4 @@ _krb5_set_default_cc_name_to_registry(krb5_context context, krb5_ccache id)
 
     return ret;
 }
-
 #endif

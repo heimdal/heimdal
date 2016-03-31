@@ -513,6 +513,7 @@ krb5_cc_set_default_name(krb5_context context, const char *name)
     krb5_error_code ret = 0;
     char *p = NULL, *exp_p = NULL;
     int filepath;
+    const krb5_cc_ops *ops = KRB5_DEFAULT_CCTYPE;
 
     if (name == NULL) {
 	const char *e = NULL;
@@ -542,7 +543,6 @@ krb5_cc_set_default_name(krb5_context context, const char *name)
 	    }
 	}
 	if (p == NULL) {
-	    const krb5_cc_ops *ops = KRB5_DEFAULT_CCTYPE;
 	    e = krb5_config_get_string(context, NULL, "libdefaults",
 				       "default_cc_type", NULL);
 	    if (e) {
@@ -555,6 +555,27 @@ krb5_cc_set_default_name(krb5_context context, const char *name)
 		    return KRB5_CC_UNKNOWN_TYPE;
 		}
 	    }
+	}
+#ifdef _WIN32
+	if (p == NULL) {
+	    /*
+	     * If the MSLSA ccache type has a principal name,
+	     * use it as the default.
+	     */
+	    krb5_ccache id;
+	    ret = krb5_cc_resolve(context, "MSLSA:", &id);
+	    if (ret == 0) {
+		krb5_principal princ;
+		ret = krb5_cc_get_principal(context, id, &princ);
+		if (ret == 0) {
+		    krb5_free_principal(context, princ);
+		    p = strdup("MSLSA:");
+		}
+		krb5_cc_close(context, id);
+	    }
+	}
+#endif
+	if (p == NULL) {
 	    ret = (*ops->get_default_name)(context, &p);
 	    if (ret)
 		return ret;
@@ -562,11 +583,10 @@ krb5_cc_set_default_name(krb5_context context, const char *name)
 	context->default_cc_name_set = 0;
     } else {
 	p = strdup(name);
+	if (p == NULL)
+	    return krb5_enomem(context);
 	context->default_cc_name_set = 1;
     }
-
-    if (p == NULL)
-	return krb5_enomem(context);
 
     filepath = (strncmp("FILE:", p, 5) == 0
 		 || strncmp("DIR:", p, 4) == 0

@@ -517,7 +517,7 @@ krb5_cc_set_default_name(krb5_context context, const char *name)
     if (name == NULL) {
 	const char *e = NULL;
 
-	if(!issuid()) {
+	if (!issuid()) {
 	    e = getenv("KRB5CCNAME");
 	    if (e) {
 		p = strdup(e);
@@ -528,11 +528,11 @@ krb5_cc_set_default_name(krb5_context context, const char *name)
 	}
 
 #ifdef _WIN32
-        if (e == NULL) {
-            e = p = _krb5_get_default_cc_name_from_registry(context);
+	if (p == NULL) {
+	    p = _krb5_get_default_cc_name_from_registry(context);
         }
 #endif
-	if (e == NULL) {
+	if (p == NULL) {
 	    e = krb5_config_get_string(context, NULL, "libdefaults",
 				       "default_cc_name", NULL);
 	    if (e) {
@@ -540,24 +540,24 @@ krb5_cc_set_default_name(krb5_context context, const char *name)
 		if (ret)
 		    return ret;
 	    }
-	    if (e == NULL) {
-		const krb5_cc_ops *ops = KRB5_DEFAULT_CCTYPE;
-		e = krb5_config_get_string(context, NULL, "libdefaults",
-					   "default_cc_type", NULL);
-		if (e) {
-		    ops = krb5_cc_get_prefix_ops(context, e);
-		    if (ops == NULL) {
-			krb5_set_error_message(context,
-					       KRB5_CC_UNKNOWN_TYPE,
-					       "Credential cache type %s "
-					      "is unknown", e);
-			return KRB5_CC_UNKNOWN_TYPE;
-		    }
+	}
+	if (p == NULL) {
+	    const krb5_cc_ops *ops = KRB5_DEFAULT_CCTYPE;
+	    e = krb5_config_get_string(context, NULL, "libdefaults",
+				       "default_cc_type", NULL);
+	    if (e) {
+		ops = krb5_cc_get_prefix_ops(context, e);
+		if (ops == NULL) {
+		    krb5_set_error_message(context,
+					   KRB5_CC_UNKNOWN_TYPE,
+					   "Credential cache type %s "
+					   "is unknown", e);
+		    return KRB5_CC_UNKNOWN_TYPE;
 		}
-		ret = (*ops->get_default_name)(context, &p);
-		if (ret)
-		    return ret;
 	    }
+	    ret = (*ops->get_default_name)(context, &p);
+	    if (ret)
+		return ret;
 	}
 	context->default_cc_name_set = 0;
     } else {

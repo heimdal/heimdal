@@ -108,6 +108,143 @@
 #define HEIMDAL_getspecific(k) pthread_getspecific(k)
 #define HEIMDAL_key_delete(k) pthread_key_delete(k)
 
+#elif defined(_WIN32)
+
+typedef struct heim_mutex {
+    HANDLE	h;
+} heim_mutex_t;
+
+static inline void
+heim_mutex_init(heim_mutex_t *m)
+{
+    m->h = CreateSemaphore(NULL, 1, 1, NULL);
+    if (m->h == INVALID_HANDLE_VALUE)
+	abort();
+}
+
+static inline void
+heim_mutex_lock(heim_mutex_t *m)
+{
+    HANDLE h, new_h;
+    int created = 0;
+
+    h = InterlockedCompareExchangePointer(&m->h, m->h, m->h);
+    if (h == INVALID_HANDLE_VALUE || h == NULL) {
+	created = 1;
+	new_h = CreateSemaphore(NULL, 0, 1, NULL);
+	if (new_h == INVALID_HANDLE_VALUE)
+	    abort();
+	if (InterlockedCompareExchangePointer(&m->h, new_h, h) != h) {
+	    created = 0;
+	    CloseHandle(new_h);
+	}
+    }
+    if (!created)
+	WaitForSingleObject(m->h, INFINITE);
+}
+
+static inline void
+heim_mutex_unlock(heim_mutex_t *m)
+{
+    if (ReleaseSemaphore(m->h, 1, NULL) == FALSE)
+	abort();
+}
+
+static inline void
+heim_mutex_destroy(heim_mutex_t *m)
+{
+    HANDLE h;
+
+    h = InterlockedCompareExchangePointer(&m->h, INVALID_HANDLE_VALUE, m->h);
+    if (h != INVALID_HANDLE_VALUE)
+	CloseHandle(h);
+}
+
+#define HEIMDAL_MUTEX heim_mutex_t
+#define HEIMDAL_MUTEX_INITIALIZER { INVALID_HANDLE_VALUE }
+#define HEIMDAL_MUTEX_init(m) heim_mutex_init((m))
+#define HEIMDAL_MUTEX_lock(m) heim_mutex_lock((m))
+#define HEIMDAL_MUTEX_unlock(m) heim_mutex_unlock((m))
+#define HEIMDAL_MUTEX_destroy(m) heim_mutex_destroy((m))
+
+typedef struct heim_rwlock {
+    SRWLOCK lock;
+    int     exclusive;
+} heim_rwlock_t;
+
+static inline void
+heim_rwlock_init(heim_rwlock_t *l)
+{
+    InitializeSRWLock(&l->lock);
+    l->exclusive = 0;
+}
+
+static inline void
+heim_rwlock_rdlock(heim_rwlock_t *l)
+{
+    AcquireSRWLockShared(&l->lock);
+}
+
+static inline void
+heim_rwlock_wrlock(heim_rwlock_t *l)
+{
+    AcquireSRWLockExclusive(&l->lock);
+    l->exclusive = 1;
+}
+
+static inline BOOLEAN
+heim_rwlock_tryrdlock(heim_rwlock_t *l)
+{
+    BOOLEAN bLocked;
+
+    bLocked = TryAcquireSRWLockShared(&l->lock);
+
+    return bLocked;
+}
+
+static inline BOOLEAN
+heim_rwlock_trywrlock(heim_rwlock_t *l)
+{
+    BOOLEAN bLocked;
+
+    bLocked = TryAcquireSRWLockExclusive(&l->lock);
+    if (bLocked)
+	l->exclusive = 1;
+
+    return bLocked;
+}
+
+static inline void
+heim_rwlock_unlock(heim_rwlock_t *l)
+{
+    if (l->exclusive) {
+	l->exclusive = 0;
+	ReleaseSRWLockExclusive(&(l)->lock);
+    } else {
+	ReleaseSRWLockShared(&(l)->lock);
+    }
+}
+
+static inline void
+heim_rwlock_destroy(heim_rwlock_t *l)
+{
+    /* SRW locks cannot be destroyed so re-initialize */
+    InitializeSRWLock(&l->lock);
+    l->exclusive = 0;
+}
+
+#define HEIMDAL_RWLOCK heim_rwlock_t
+#define HEIMDAL_RWLOCK_INITIALIZER {SRWLOCK_INIT, 0}
+#define	HEIMDAL_RWLOCK_init(l) heim_rwlock_init((l))
+#define	HEIMDAL_RWLOCK_rdlock(l) heim_rwlock_rdlock((l))
+#define	HEIMDAL_RWLOCK_wrlock(l) heim_rwlock_wrlock((l))
+#define	HEIMDAL_RWLOCK_tryrdlock(l) heim_rwlock_tryrdlock((l))
+#define	HEIMDAL_RWLOCK_trywrlock(l) heim_rwlock_trywrlock((l))
+#define	HEIMDAL_RWLOCK_unlock(l) heim_rwlock_unlock((l))
+#define	HEIMDAL_RWLOCK_destroy(l) heim_rwlock_destroy((l))
+
+#define HEIMDAL_internal_thread_key 1
+
 #elif defined(HEIMDAL_DEBUG_THREADS)
 
 /* no threads support, just do consistency checks */

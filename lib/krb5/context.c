@@ -422,12 +422,7 @@ krb5_init_context(krb5_context *context)
     if(!p)
 	return ENOMEM;
 
-    p->mutex = malloc(sizeof(HEIMDAL_MUTEX));
-    if (p->mutex == NULL) {
-	free(p);
-	return ENOMEM;
-    }
-    HEIMDAL_MUTEX_init(p->mutex);
+    HEIMDAL_MUTEX_init(&p->mutex);
 
     p->flags |= KRB5_CTX_F_HOMEDIR_ACCESS;
 
@@ -520,13 +515,7 @@ krb5_copy_context(krb5_context context, krb5_context *out)
     if (p == NULL)
 	return krb5_enomem(context);
 
-    p->mutex = malloc(sizeof(HEIMDAL_MUTEX));
-    if (p->mutex == NULL) {
-	free(p);
-	return krb5_enomem(context);
-    }
-    HEIMDAL_MUTEX_init(p->mutex);
-
+    HEIMDAL_MUTEX_init(&p->mutex);
 
     if (context->default_cc_name)
 	p->default_cc_name = strdup(context->default_cc_name);
@@ -627,8 +616,7 @@ krb5_free_context(krb5_context context)
 	hx509_context_free(&context->hx509ctx);
 #endif
 
-    HEIMDAL_MUTEX_destroy(context->mutex);
-    free(context->mutex);
+    HEIMDAL_MUTEX_destroy(&context->mutex);
     if (context->flags & KRB5_CTX_F_SOCKETS_INITIALIZED) {
  	rk_SOCK_EXIT();
     }

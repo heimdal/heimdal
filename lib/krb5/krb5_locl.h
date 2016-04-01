@@ -292,7 +292,7 @@ typedef struct krb5_context_data {
     char *default_cc_name;
     char *default_cc_name_env;
     int default_cc_name_set;
-    void *mutex;			/* protects error_string */
+    HEIMDAL_MUTEX mutex;		/* protects error_string */
     int large_msg_size;
     int max_msg_size;
     int tgs_negative_timeout;		/* timeout for TGS negative cache */

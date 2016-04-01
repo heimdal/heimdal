@@ -47,12 +47,12 @@
 KRB5_LIB_FUNCTION void KRB5_LIB_CALL
 krb5_clear_error_message(krb5_context context)
 {
-    HEIMDAL_MUTEX_lock(context->mutex);
+    HEIMDAL_MUTEX_lock(&context->mutex);
     if (context->error_string)
 	free(context->error_string);
     context->error_code = 0;
     context->error_string = NULL;
-    HEIMDAL_MUTEX_unlock(context->mutex);
+    HEIMDAL_MUTEX_unlock(&context->mutex);
 }
 
 /**
@@ -105,7 +105,7 @@ krb5_vset_error_message (krb5_context context, krb5_error_code ret,
     if (context == NULL)
 	return;
 
-    HEIMDAL_MUTEX_lock(context->mutex);
+    HEIMDAL_MUTEX_lock(&context->mutex);
     if (context->error_string) {
 	free(context->error_string);
 	context->error_string = NULL;
@@ -114,7 +114,7 @@ krb5_vset_error_message (krb5_context context, krb5_error_code ret,
     r = vasprintf(&context->error_string, fmt, args);
     if (r < 0)
 	context->error_string = NULL;
-    HEIMDAL_MUTEX_unlock(context->mutex);
+    HEIMDAL_MUTEX_unlock(&context->mutex);
     if (context->error_string)
 	_krb5_debug(context, 100, "error message: %s: %d", context->error_string, ret);
 }
@@ -168,13 +168,13 @@ krb5_vprepend_error_message(krb5_context context, krb5_error_code ret,
     if (context == NULL)
 	return;
 
-    HEIMDAL_MUTEX_lock(context->mutex);
+    HEIMDAL_MUTEX_lock(&context->mutex);
     if (context->error_code != ret) {
-	HEIMDAL_MUTEX_unlock(context->mutex);
+	HEIMDAL_MUTEX_unlock(&context->mutex);
 	return;
     }
     if (vasprintf(&str, fmt, args) < 0 || str == NULL) {
-	HEIMDAL_MUTEX_unlock(context->mutex);
+	HEIMDAL_MUTEX_unlock(&context->mutex);
 	return;
     }
     if (context->error_string) {
@@ -189,7 +189,7 @@ krb5_vprepend_error_message(krb5_context context, krb5_error_code ret,
 	free(str);
     } else
 	context->error_string = str;
-    HEIMDAL_MUTEX_unlock(context->mutex);
+    HEIMDAL_MUTEX_unlock(&context->mutex);
 }
 
 /**
@@ -226,13 +226,13 @@ krb5_get_error_message(krb5_context context, krb5_error_code code)
      */
     if (context)
     {
-        HEIMDAL_MUTEX_lock(context->mutex);
+	HEIMDAL_MUTEX_lock(&context->mutex);
         if (context->error_string &&
             (code == context->error_code || context->error_code == 0))
         {
             str = strdup(context->error_string);
         }
-        HEIMDAL_MUTEX_unlock(context->mutex);
+	HEIMDAL_MUTEX_unlock(&context->mutex);
 
         if (str)
             return str;

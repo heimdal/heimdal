@@ -623,10 +623,10 @@ krb5_get_error_string(krb5_context context)
 {
     char *ret = NULL;
 
-    HEIMDAL_MUTEX_lock(context->mutex);
+    HEIMDAL_MUTEX_lock(&context->mutex);
     if (context->error_string)
 	ret = strdup(context->error_string);
-    HEIMDAL_MUTEX_unlock(context->mutex);
+    HEIMDAL_MUTEX_unlock(&context->mutex);
     return ret;
 }
 
@@ -635,9 +635,9 @@ krb5_have_error_string(krb5_context context)
     KRB5_DEPRECATED_FUNCTION("Use krb5_get_error_message instead")
 {
     char *str;
-    HEIMDAL_MUTEX_lock(context->mutex);
+    HEIMDAL_MUTEX_lock(&context->mutex);
     str = context->error_string;
-    HEIMDAL_MUTEX_unlock(context->mutex);
+    HEIMDAL_MUTEX_unlock(&context->mutex);
     return str != NULL;
 }
 

@@ -42,7 +42,7 @@ struct krb5_dh_moduli;
 struct _krb5_key_data;
 struct _krb5_encryption_type;
 struct _krb5_key_type;
-#include "krb5-private.h"
+#include "krb5_locl.h"
 
 /*
  *

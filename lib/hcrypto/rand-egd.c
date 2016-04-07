@@ -33,6 +33,8 @@
 
 #include <config.h>
 
+#ifndef OPENSSL_NO_EGD
+
 #include <sys/types.h>
 #ifdef HAVE_SYS_UN_H
 #include <sys/un.h>
@@ -258,3 +260,5 @@ RAND_egd_bytes(const char *filename, int size)
 
     return 1;
 }
+
+#endif

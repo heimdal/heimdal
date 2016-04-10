@@ -574,6 +574,17 @@ krb5_cc_set_default_name(krb5_context context, const char *name)
 		krb5_cc_close(context, id);
 	    }
 	}
+	if (p == NULL) {
+	    /*
+	     * If the API:krb5cc ccache can be resolved,
+	     * use it as the default.
+	     */
+	    krb5_ccache api_id;
+	    ret = krb5_cc_resolve(context, "API:krb5cc", &api_id);
+	    if (ret == 0)
+		krb5_cc_close(context, api_id);
+	}
+	/* Otherwise, fallback to the FILE ccache */
 #endif
 	if (p == NULL) {
 	    ret = (*ops->get_default_name)(context, &p);

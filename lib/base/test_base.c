@@ -90,6 +90,64 @@ test_memory(void)
 }
 
 static int
+test_mutex(void)
+{
+    HEIMDAL_MUTEX m = HEIMDAL_MUTEX_INITIALIZER;
+
+    HEIMDAL_MUTEX_lock(&m);
+    HEIMDAL_MUTEX_unlock(&m);
+    HEIMDAL_MUTEX_destroy(&m);
+
+    HEIMDAL_MUTEX_init(&m);
+    HEIMDAL_MUTEX_lock(&m);
+    HEIMDAL_MUTEX_unlock(&m);
+    HEIMDAL_MUTEX_destroy(&m);
+
+    return 0;
+}
+
+static int
+test_rwlock(void)
+{
+    HEIMDAL_RWLOCK l = HEIMDAL_RWLOCK_INITIALIZER;
+
+    HEIMDAL_RWLOCK_rdlock(&l);
+    if (HEIMDAL_RWLOCK_trywrlock(&l))
+	abort();
+    HEIMDAL_RWLOCK_unlock(&l);
+    HEIMDAL_RWLOCK_wrlock(&l);
+    if (HEIMDAL_RWLOCK_tryrdlock(&l))
+	abort();
+    HEIMDAL_RWLOCK_unlock(&l);
+    if (!HEIMDAL_RWLOCK_trywrlock(&l))
+	abort();
+    HEIMDAL_RWLOCK_unlock(&l);
+    if (!HEIMDAL_RWLOCK_tryrdlock(&l))
+	abort();
+    HEIMDAL_RWLOCK_unlock(&l);
+    HEIMDAL_RWLOCK_destroy(&l);
+
+    HEIMDAL_RWLOCK_init(&l);
+    HEIMDAL_RWLOCK_rdlock(&l);
+    if (HEIMDAL_RWLOCK_trywrlock(&l))
+	abort();
+    HEIMDAL_RWLOCK_unlock(&l);
+    HEIMDAL_RWLOCK_wrlock(&l);
+    if (HEIMDAL_RWLOCK_tryrdlock(&l))
+	abort();
+    HEIMDAL_RWLOCK_unlock(&l);
+    if (!HEIMDAL_RWLOCK_trywrlock(&l))
+	abort();
+    HEIMDAL_RWLOCK_unlock(&l);
+    if (!HEIMDAL_RWLOCK_tryrdlock(&l))
+	abort();
+    HEIMDAL_RWLOCK_unlock(&l);
+    HEIMDAL_RWLOCK_destroy(&l);
+
+    return 0;
+}
+
+static int
 test_dict(void)
 {
     heim_dict_t dict;
@@ -894,6 +952,8 @@ main(int argc, char **argv)
     int res = 0;
 
     res |= test_memory();
+    res |= test_mutex();
+    res |= test_rwlock();
     res |= test_dict();
     res |= test_auto_release();
     res |= test_string();

@@ -31,7 +31,6 @@
  * SUCH DAMAGE.
  */
 
-#include <krb5_locl.h>
 #include "kadm5_locl.h"
 #include <assert.h>
 
@@ -62,6 +61,9 @@ add_tl_data(kadm5_principal_ent_t ent, int16_t type,
 
     return 0;
 }
+
+KRB5_LIB_FUNCTION krb5_ssize_t KRB5_LIB_CALL
+_krb5_put_int(void *buffer, unsigned long value, size_t size); /* XXX */
 
 static
 krb5_error_code

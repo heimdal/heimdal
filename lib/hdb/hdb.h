@@ -277,8 +277,8 @@ typedef struct HDB {
 
 struct hdb_method {
     int			version;
-    krb5_error_code	(KRB5_LIB_CALL *init)(krb5_context, void **);
-    void		(KRB5_LIB_CALL *fini)(void *);
+    krb5_error_code	(*init)(krb5_context, void **);
+    void		(*fini)(void *);
     const char *prefix;
     krb5_error_code (*create)(krb5_context, HDB **, const char *filename);
 };

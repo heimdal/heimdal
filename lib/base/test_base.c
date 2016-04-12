@@ -44,6 +44,7 @@
  * __heim_string_constant() or heim_db_register() in their stack trace.
  */
 
+#include <err.h>
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -112,35 +113,27 @@ test_rwlock(void)
     HEIMDAL_RWLOCK l = HEIMDAL_RWLOCK_INITIALIZER;
 
     HEIMDAL_RWLOCK_rdlock(&l);
-    if (HEIMDAL_RWLOCK_trywrlock(&l))
-	abort();
     HEIMDAL_RWLOCK_unlock(&l);
     HEIMDAL_RWLOCK_wrlock(&l);
+    HEIMDAL_RWLOCK_unlock(&l);
+    if (HEIMDAL_RWLOCK_trywrlock(&l) != 0)
+	err(1, "HEIMDAL_RWLOCK_trywrlock() failed with lock not held");
+    HEIMDAL_RWLOCK_unlock(&l);
     if (HEIMDAL_RWLOCK_tryrdlock(&l))
-	abort();
-    HEIMDAL_RWLOCK_unlock(&l);
-    if (!HEIMDAL_RWLOCK_trywrlock(&l))
-	abort();
-    HEIMDAL_RWLOCK_unlock(&l);
-    if (!HEIMDAL_RWLOCK_tryrdlock(&l))
-	abort();
+	err(1, "HEIMDAL_RWLOCK_tryrdlock() failed with lock not held");
     HEIMDAL_RWLOCK_unlock(&l);
     HEIMDAL_RWLOCK_destroy(&l);
 
     HEIMDAL_RWLOCK_init(&l);
     HEIMDAL_RWLOCK_rdlock(&l);
-    if (HEIMDAL_RWLOCK_trywrlock(&l))
-	abort();
     HEIMDAL_RWLOCK_unlock(&l);
     HEIMDAL_RWLOCK_wrlock(&l);
+    HEIMDAL_RWLOCK_unlock(&l);
+    if (HEIMDAL_RWLOCK_trywrlock(&l))
+	err(1, "HEIMDAL_RWLOCK_trywrlock() failed with lock not held");
+    HEIMDAL_RWLOCK_unlock(&l);
     if (HEIMDAL_RWLOCK_tryrdlock(&l))
-	abort();
-    HEIMDAL_RWLOCK_unlock(&l);
-    if (!HEIMDAL_RWLOCK_trywrlock(&l))
-	abort();
-    HEIMDAL_RWLOCK_unlock(&l);
-    if (!HEIMDAL_RWLOCK_tryrdlock(&l))
-	abort();
+	err(1, "HEIMDAL_RWLOCK_tryrdlock() failed with lock not held");
     HEIMDAL_RWLOCK_unlock(&l);
     HEIMDAL_RWLOCK_destroy(&l);
 

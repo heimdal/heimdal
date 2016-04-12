@@ -654,7 +654,7 @@ PKCS11_CIPHER_ALGORITHM(rc2_cbc,
                         8,
                         16,
                         8,
-                        EVP_CIPH_CBC_MODE)
+                        EVP_CIPH_CBC_MODE | EVP_CIPH_VARIABLE_LENGTH)
 
 /**
  * The RC2-40 cipher type - PKCS#11

@@ -2,8 +2,12 @@
 
 include $(top_srcdir)/Makefile.am.common
 
+if HAVE_HCRYPTO_W_OPENSSL
+AM_CPPFLAGS += -I$(INCLUDE_openssl_crypto)
+endif
+
 AM_CPPFLAGS += -I$(top_srcdir)/lib/hx509 \
-        -I$(srcdir)/libtommath -DUSE_HCRYPTO_LTM=1
+	       -I$(srcdir)/libtommath -DUSE_HCRYPTO_LTM=1
 
 lib_LTLIBRARIES = libhcrypto.la
 check_LTLIBRARIES = libhctest.la
@@ -14,6 +18,10 @@ libhcrypto_la_LIBADD = \
 	$(LIB_dlopen) \
 	$(LIB_heimbase) \
 	$(LIBADD_roken)
+
+if HAVE_HCRYPTO_W_OPENSSL
+libhcrypto_la_LIBADD += $(LIB_openssl_crypto)
+endif
 
 hcryptoincludedir = $(includedir)/hcrypto
 buildhcryptoinclude = $(buildinclude)/hcrypto
@@ -31,6 +39,7 @@ hcryptoinclude_HEADERS =	\
 	evp.h			\
 	evp-hcrypto.h		\
 	evp-cc.h		\
+	evp-openssl.h		\
 	evp-pkcs11.h		\
 	hmac.h			\
 	md2.h			\
@@ -42,7 +51,8 @@ hcryptoinclude_HEADERS =	\
 	rc4.h			\
 	rsa.h			\
 	sha.h			\
-	ui.h
+	ui.h			\
+	undef.h
 
 install-build-headers:: $(hcryptoinclude_HEADERS)
 	@foo='$(hcryptoinclude_HEADERS)'; \
@@ -117,6 +127,7 @@ libhcrypto_la_SOURCES =	\
 	evp.h		\
 	evp-hcrypto.c	\
 	evp-cc.c	\
+	evp-openssl.c	\
 	evp-pkcs11.c	\
 	engine.c	\
 	engine.h	\
@@ -154,7 +165,8 @@ libhcrypto_la_SOURCES =	\
 	sha512.c	\
 	validate.c	\
 	ui.c		\
-	ui.h
+	ui.h		\
+	undef.h
 
 ltmsources = \
 	libtommath/tommath.h \

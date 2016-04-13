@@ -2,8 +2,6 @@
 
 include $(top_srcdir)/Makefile.am.common
 
-AM_CPPFLAGS += $(INCLUDE_hcrypto)
-
 bin_PROGRAMS = su
 bin_SUIDS = su
 su_SOURCES = su.c supaths.h

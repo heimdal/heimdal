@@ -2,7 +2,7 @@
 
 include $(top_srcdir)/Makefile.am.common
 
-AM_CPPFLAGS += $(INCLUDE_libintl) $(INCLUDE_hcrypto) -I$(srcdir)/../lib/krb5
+AM_CPPFLAGS += $(INCLUDE_libintl) -I$(srcdir)/../lib/krb5
 
 lib_LTLIBRARIES = libkdc.la
 
@@ -44,6 +44,7 @@ libkdc_la_SOURCES = 		\
 	kerberos5.c		\
 	krb5tgs.c		\
 	pkinit.c		\
+	pkinit-ec.c		\
 	log.c			\
 	misc.c			\
 	kx509.c			\
@@ -108,6 +109,7 @@ libkdc_la_LIBADD = \
 	$(LIB_kdb)  \
 	$(top_builddir)/lib/ntlm/libheimntlm.la \
 	$(LIB_hcrypto) \
+	$(LIB_openssl_crypto) \
 	$(top_builddir)/lib/asn1/libasn1.la \
 	$(LIB_roken) \
 	$(DB3LIB) $(DB1LIB) $(LMDBLIB) $(NDBMLIB)

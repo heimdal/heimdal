@@ -1,6 +1,6 @@
 ########################################################################
 #
-# Copyright (c) 2009, Secure Endpoints Inc.
+# Copyright (c) 2009-2016, Secure Endpoints Inc.
 # All rights reserved.
 # 
 # Redistribution and use in source and binary forms, with or without
@@ -41,8 +41,12 @@ HEIMBASEDIR = $(SRC)\lib\base
 
 HX509DIR = $(SRC)\lib\hx509
 
+!if INCLUDE_openssl_crypto
+openssl_inc=-I$(INCLUDE_openssl_crypto)
+!endif
+
 intcflags=-DKRB5 -DASN1_LIB -I$(HCRYPTOINCLUDEDIR) -DUSE_HCRYPTO_LTM=1 \
-	-I$(HX509DIR)
+	-I$(HX509DIR) $(openssl_inc)
 
 # Do dependencies first
 
@@ -67,6 +71,7 @@ INCFILES=	\
 	$(HCRYPTOINCLUDEDIR)\evp.h	\
 	$(HCRYPTOINCLUDEDIR)\evp-hcrypto.h	\
 	$(HCRYPTOINCLUDEDIR)\evp-cc.h	\
+	$(HCRYPTOINCLUDEDIR)\evp-openssl.h	\
 	$(HCRYPTOINCLUDEDIR)\evp-pkcs11.h	\
 	$(HCRYPTOINCLUDEDIR)\evp-wincng.h	\
 	$(HCRYPTOINCLUDEDIR)\evp-w32.h	\
@@ -81,7 +86,8 @@ INCFILES=	\
 	$(HCRYPTOINCLUDEDIR)\rc4.h	\
 	$(HCRYPTOINCLUDEDIR)\rsa.h	\
 	$(HCRYPTOINCLUDEDIR)\sha.h	\
-	$(HCRYPTOINCLUDEDIR)\ui.h
+	$(HCRYPTOINCLUDEDIR)\ui.h	\
+	$(HCRYPTOINCLUDEDIR)\undef.h
 
 mkincdir:
 !if !exist($(HCRYPTOINCLUDEDIR))
@@ -111,6 +117,7 @@ libhcrypto_OBJs = 			\
 	$(OBJ)\evp.obj			\
 	$(OBJ)\evp-hcrypto.obj		\
 	$(OBJ)\evp-cc.obj		\
+	$(OBJ)\evp-openssl.obj		\
 	$(OBJ)\evp-pkcs11.obj		\
 	$(OBJ)\evp-wincng.obj		\
 	$(OBJ)\evp-w32.obj		\

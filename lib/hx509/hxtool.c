@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004 - 2007 Kungliga Tekniska Högskolan
+ * Copyright (c) 2004 - 2016 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  *
@@ -1433,7 +1433,7 @@ info(void *opt, int argc, char **argv)
 	if (m != NULL)
 	    printf("dh: %s\n", m->name);
     }
-#ifdef HAVE_OPENSSL
+#ifdef HAVE_HCRYPTO_W_OPENSSL
     {
 	printf("ecdsa: ECDSA_METHOD-not-export\n");
     }

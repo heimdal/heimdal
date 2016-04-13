@@ -39,6 +39,8 @@
 #ifndef _HEIM_RAND_H
 #define _HEIM_RAND_H 1
 
+#define RAND_METHOD hc_RAND_METHOD
+
 typedef struct RAND_METHOD RAND_METHOD;
 
 #include <hcrypto/engine.h>

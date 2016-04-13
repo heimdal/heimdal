@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997-2006 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997-2016 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  *
@@ -58,6 +58,9 @@
 #endif
 #ifdef HAVE_SYS_MMAN_H
 #include <sys/mman.h>
+#endif
+#ifdef HAVE_STDINT_H
+#include <stdint.h>
 #endif
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
@@ -154,11 +157,19 @@ struct sockaddr_dl;
 
 #include <wind.h>
 
+/*
+ * We use OpenSSL for EC, but to do this we need to disable cross-references
+ * between OpenSSL and hcrypto bn.h and such.  Source files that use OpenSSL EC
+ * must define HEIM_NO_CRYPTO_HDRS before including this file.
+ */
 #define HC_DEPRECATED_CRYPTO
+#ifndef HEIM_NO_CRYPTO_HDRS
 #include "crypto-headers.h"
+#endif
 
 
 #include <krb5_asn1.h>
+#include <pkinit_asn1.h>
 
 struct send_to_kdc;
 
@@ -376,6 +387,25 @@ struct krb5_pk_identity {
 enum krb5_pk_type {
     PKINIT_WIN2K = 1,
     PKINIT_27 = 2
+};
+
+struct krb5_pk_init_ctx_data {
+    struct krb5_pk_identity *id;
+    enum { USE_RSA, USE_DH, USE_ECDH } keyex;
+    union {
+	DH *dh;
+        void *eckey;
+    } u;
+    krb5_data *clientDHNonce;
+    struct krb5_dh_moduli **m;
+    hx509_peer_info peer;
+    enum krb5_pk_type type;
+    unsigned int require_binding:1;
+    unsigned int require_eku:1;
+    unsigned int require_krbtgt_otherName:1;
+    unsigned int require_hostname_match:1;
+    unsigned int trustedCertifiers:1;
+    unsigned int anonymous:1;
 };
 
 #endif /* PKINIT */

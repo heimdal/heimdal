@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005 - 2008 Kungliga Tekniska Högskolan
+ * Copyright (c) 2005 - 2016 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  *
@@ -154,7 +154,7 @@ struct hc_CIPHER {
      * cipher is used in (use EVP_CIPHER.._mode() to extract the
      * mode). The rest of the flag field is a bitfield.
      */
-#define hc_EVP_CIPH_STREAM_CIPHER               1
+#define hc_EVP_CIPH_STREAM_CIPHER               0
 #define hc_EVP_CIPH_CBC_MODE                    2
 #define hc_EVP_CIPH_CFB8_MODE                   4
 #define hc_EVP_CIPH_MODE                        0x7
@@ -171,8 +171,8 @@ struct hc_CIPHER {
 		     const unsigned char *, unsigned int);
     int (*cleanup)(EVP_CIPHER_CTX *);
     int ctx_size;
-    void *set_asn1_parameters;
-    void *get_asn1_parameters;
+    int (*set_asn1_parameters)(void);
+    int (*get_asn1_parameters)(void);
     int (*ctrl)(EVP_CIPHER_CTX *, int type, int arg, void *ptr);
 #define EVP_CTRL_RAND_KEY		0x6
 
@@ -197,6 +197,10 @@ struct hc_CIPHER_CTX {
     unsigned char final[EVP_MAX_BLOCK_LENGTH];
 };
 
+/*
+ * LIES.  It's not an EVP_MD_CTX that gets passed to these functions
+ * here in hcrypto, but an object of ctx_size.
+ */
 typedef int (*hc_evp_md_init)(EVP_MD_CTX *);
 typedef int (*hc_evp_md_update)(EVP_MD_CTX *,const void *, size_t);
 typedef int (*hc_evp_md_final)(void *, EVP_MD_CTX *);

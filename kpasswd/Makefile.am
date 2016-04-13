@@ -2,8 +2,6 @@
 
 include $(top_srcdir)/Makefile.am.common
 
-AM_CPPFLAGS += $(INCLUDE_hcrypto)
-
 man_MANS = kpasswd.1 kpasswdd.8
 
 bin_PROGRAMS = kpasswd

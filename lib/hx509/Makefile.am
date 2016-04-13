@@ -58,6 +58,7 @@ dist_libhx509_la_SOURCES = \
 	cms.c \
 	collector.c \
 	crypto.c \
+	crypto-ec.c \
 	doxygen.c \
 	error.c \
 	env.c \
@@ -92,6 +93,7 @@ libhx509_la_DEPENDENCIES = version-script.map
 libhx509_la_LIBADD = \
 	$(LIB_com_err) \
 	$(LIB_hcrypto) \
+	$(LIB_openssl_crypto) \
 	$(top_builddir)/lib/asn1/libasn1.la \
 	$(top_builddir)/lib/wind/libwind.la \
 	$(top_builddir)/lib/base/libheimbase.la \
@@ -107,7 +109,6 @@ libhx509_la_LDFLAGS += $(LDFLAGS_VERSION_SCRIPT)$(srcdir)/version-script.map
 endif
 $(libhx509_la_OBJECTS): $(srcdir)/version-script.map $(nodist_include_HEADERS) $(priv_headers)
 
-libhx509_la_CPPFLAGS = $(INCLUDE_hcrypto)
 nodist_libhx509_la_SOURCES = $(BUILT_SOURCES)
 
 $(gen_files_ocsp) ocsp_asn1.hx ocsp_asn1-priv.hx: ocsp_asn1_files
@@ -163,7 +164,6 @@ nodist_hxtool_SOURCES = hxtool-commands.c hxtool-commands.h
 
 $(hxtool_OBJECTS): hxtool-commands.h hx509_err.h
 
-hxtool_CPPFLAGS = $(INCLUDE_hcrypto)
 hxtool_LDADD = \
 	libhx509.la \
 	$(top_builddir)/lib/asn1/libasn1.la \
@@ -207,11 +207,8 @@ check_PROGRAMS = $(PROGRAM_TESTS) test_soft_pkcs11
 LDADD = libhx509.la
 
 test_soft_pkcs11_LDADD = libhx509.la
-test_soft_pkcs11_CPPFLAGS = $(INCLUDE_hcrypto)
 
-test_name_CPPFLAGS = $(INCLUDE_hcrypto)
 test_name_LDADD = libhx509.la $(LIB_roken)
-test_expr_CPPFLAGS = $(INCLUDE_hcrypto)
 test_expr_LDADD = libhx509.la $(LIB_roken)
 
 TESTS = $(SCRIPT_TESTS) $(PROGRAM_TESTS)

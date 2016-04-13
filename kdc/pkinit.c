@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003 - 2008 Kungliga Tekniska Högskolan
+ * Copyright (c) 2003 - 2016 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  *
@@ -53,12 +53,10 @@ struct pk_client_params {
 	    BIGNUM *public_key;
 	    DH *key;
 	} dh;
-#ifdef HAVE_OPENSSL
 	struct {
-	    EC_KEY *public_key;
-	    EC_KEY *key;
+	    void *public_key;
+	    void *key;
 	} ecdh;
-#endif
     } u;
     hx509_cert cert;
     unsigned nonce;
@@ -181,14 +179,9 @@ _kdc_pk_free_client_param(krb5_context context, pk_client_params *cp)
 	if (cp->u.dh.public_key)
 	    BN_free(cp->u.dh.public_key);
     }
-#ifdef HAVE_OPENSSL
-    if (cp->keyex == USE_ECDH) {
-	if (cp->u.ecdh.key)
-	    EC_KEY_free(cp->u.ecdh.key);
-	if (cp->u.ecdh.public_key)
-	    EC_KEY_free(cp->u.ecdh.public_key);
-    }
-#endif
+    if (cp->keyex == USE_ECDH)
+        _kdc_pk_free_client_ec_param(context, cp->u.ecdh.key,
+                                     cp->u.ecdh.public_key);
     krb5_free_keyblock_contents(context, &cp->reply_key);
     if (cp->dh_group_name)
 	free(cp->dh_group_name);
@@ -216,7 +209,7 @@ generate_dh_keyblock(krb5_context context,
 
 	if (client_params->u.dh.public_key == NULL) {
 	    ret = KRB5KRB_ERR_GENERIC;
-	    krb5_set_error_message(context, ret, "public_key");
+	    krb5_set_error_message(context, ret, "missing DH public_key");
 	    goto out;
 	}
 
@@ -250,42 +243,18 @@ generate_dh_keyblock(krb5_context context,
 	}
 
 	ret = 0;
-#ifdef HAVE_OPENSSL
     } else if (client_params->keyex == USE_ECDH) {
-
 	if (client_params->u.ecdh.public_key == NULL) {
 	    ret = KRB5KRB_ERR_GENERIC;
-	    krb5_set_error_message(context, ret, "public_key");
+	    krb5_set_error_message(context, ret, "missing ECDH public_key");
 	    goto out;
 	}
-
-	client_params->u.ecdh.key = EC_KEY_new();
-	if (client_params->u.ecdh.key == NULL) {
-	    ret = ENOMEM;
-	    goto out;
-	}
-	EC_KEY_set_group(client_params->u.ecdh.key,
-			 EC_KEY_get0_group(client_params->u.ecdh.public_key));
-
-	if (EC_KEY_generate_key(client_params->u.ecdh.key) != 1) {
-	    ret = ENOMEM;
-	    goto out;
-	}
-
-	size = (EC_GROUP_get_degree(EC_KEY_get0_group(client_params->u.ecdh.key)) + 7) / 8;
-	dh_gen_key = malloc(size);
-	if (dh_gen_key == NULL) {
-	    ret = ENOMEM;
-	    krb5_set_error_message(context, ret,
-				   N_("malloc: out of memory", ""));
-	    goto out;
-	}
-
-	dh_gen_keylen = ECDH_compute_key(dh_gen_key, size,
-					 EC_KEY_get0_public_key(client_params->u.ecdh.public_key),
-					 client_params->u.ecdh.key, NULL);
-
-#endif /* HAVE_OPENSSL */
+        ret = _kdc_generate_ecdh_keyblock(context,
+                                          client_params->u.ecdh.public_key,
+                                          &client_params->u.ecdh.key,
+                                          &dh_gen_key, &dh_gen_keylen);
+        if (ret)
+            goto out;
     } else {
 	ret = KRB5KRB_ERR_GENERIC;
 	krb5_set_error_message(context, ret,
@@ -421,71 +390,6 @@ get_dh_param(krb5_context context,
     free_DomainParameters(&dhparam);
     return ret;
 }
-
-#ifdef HAVE_OPENSSL
-
-static krb5_error_code
-get_ecdh_param(krb5_context context,
-	       krb5_kdc_configuration *config,
-	       SubjectPublicKeyInfo *dh_key_info,
-	       pk_client_params *client_params)
-{
-    ECParameters ecp;
-    EC_KEY *public = NULL;
-    krb5_error_code ret;
-    const unsigned char *p;
-    size_t len;
-    int nid;
-
-    if (dh_key_info->algorithm.parameters == NULL) {
-	krb5_set_error_message(context, KRB5_BADMSGTYPE,
-			       "PKINIT missing algorithm parameter "
-			       "in clientPublicValue");
-	return KRB5_BADMSGTYPE;
-    }
-
-    memset(&ecp, 0, sizeof(ecp));
-
-    ret = decode_ECParameters(dh_key_info->algorithm.parameters->data,
-			      dh_key_info->algorithm.parameters->length, &ecp, &len);
-    if (ret)
-	goto out;
-
-    if (ecp.element != choice_ECParameters_namedCurve) {
-	ret = KRB5_BADMSGTYPE;
-	goto out;
-    }
-
-    if (der_heim_oid_cmp(&ecp.u.namedCurve, &asn1_oid_id_ec_group_secp256r1) == 0)
-	nid = NID_X9_62_prime256v1;
-    else {
-	ret = KRB5_BADMSGTYPE;
-	goto out;
-    }
-
-    /* XXX verify group is ok */
-
-    public = EC_KEY_new_by_curve_name(nid);
-
-    p = dh_key_info->subjectPublicKey.data;
-    len = dh_key_info->subjectPublicKey.length / 8;
-    if (o2i_ECPublicKey(&public, &p, len) == NULL) {
-	ret = KRB5_BADMSGTYPE;
-	krb5_set_error_message(context, ret,
-			       "PKINIT failed to decode ECDH key");
-	goto out;
-    }
-    client_params->u.ecdh.public_key = public;
-    public = NULL;
-
- out:
-    if (public)
-	EC_KEY_free(public);
-    free_ECParameters(&ecp);
-    return ret;
-}
-
-#endif /* HAVE_OPENSSL */
 
 krb5_error_code
 _kdc_pk_rd_padata(krb5_context context,
@@ -829,12 +733,11 @@ _kdc_pk_rd_padata(krb5_context context,
 		cp->keyex = USE_DH;
 		ret = get_dh_param(context, config,
 				   ap.clientPublicValue, cp);
-#ifdef HAVE_OPENSSL
 	    } else if (der_heim_oid_cmp(&ap.clientPublicValue->algorithm.algorithm, &asn1_oid_id_ecPublicKey) == 0) {
 		cp->keyex = USE_ECDH;
-		ret = get_ecdh_param(context, config,
-				     ap.clientPublicValue, cp);
-#endif /* HAVE_OPENSSL */
+                ret = _kdc_get_ecdh_param(context, config,
+                                          ap.clientPublicValue,
+                                          &cp->u.ecdh.public_key);
 	    } else {
 		ret = KRB5_BADMSGTYPE;
 		krb5_set_error_message(context, ret, "PKINIT unknown DH mechanism");
@@ -1134,26 +1037,13 @@ pk_mk_pa_reply_dh(krb5_context context,
 	dh_info.subjectPublicKey.length = buf.length * 8;
 	dh_info.subjectPublicKey.data = buf.data;
 	krb5_data_zero(&buf);
-#ifdef HAVE_OPENSSL
     } else if (cp->keyex == USE_ECDH) {
-	unsigned char *p;
-	int len;
-
-	len = i2o_ECPublicKey(cp->u.ecdh.key, NULL);
-	if (len <= 0)
-	    abort();
-
-	p = malloc(len);
-	if (p == NULL)
-	    abort();
-
-	dh_info.subjectPublicKey.length = len * 8;
-	dh_info.subjectPublicKey.data = p;
-
-	len = i2o_ECPublicKey(cp->u.ecdh.key, &p);
-	if (len <= 0)
-	    abort();
-#endif
+        unsigned char *p;
+        ret = _kdc_serialize_ecdh_key(context, cp->u.ecdh.key, &p,
+                                      &dh_info.subjectPublicKey.length);
+        dh_info.subjectPublicKey.data = p;
+        if (ret)
+            goto out;
     } else
 	krb5_abortx(context, "no keyex selected ?");
 
@@ -1329,9 +1219,7 @@ _kdc_pk_mk_pa_reply(krb5_context context,
 
 	    switch (cp->keyex) {
 	    case USE_DH: type = "dh"; break;
-#ifdef HAVE_OPENSSL
 	    case USE_ECDH: type = "ecdh"; break;
-#endif
 	    default: krb5_abortx(context, "unknown keyex"); break;
 	    }
 

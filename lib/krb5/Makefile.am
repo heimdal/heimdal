@@ -2,7 +2,7 @@
 
 include $(top_srcdir)/Makefile.am.common
 
-AM_CPPFLAGS += $(INCLUDE_hcrypto) -I../com_err -I$(srcdir)/../com_err $(INCLUDE_sqlite3) $(INCLUDE_libintl)
+AM_CPPFLAGS += -I../com_err -I$(srcdir)/../com_err $(INCLUDE_sqlite3) $(INCLUDE_libintl)
 
 bin_PROGRAMS = verify_krb5_conf
 
@@ -71,6 +71,7 @@ libkrb5_la_LIBADD = \
 	$(top_builddir)/lib/wind/libwind.la \
 	$(top_builddir)/lib/base/libheimbase.la \
 	$(LIB_pkinit) \
+	$(LIB_openssl_crypto) \
 	$(use_sqlite) \
 	$(LIB_com_err) \
 	$(LIB_hcrypto) \
@@ -200,6 +201,7 @@ dist_libkrb5_la_SOURCES =			\
 	padata.c				\
 	pcache.c				\
 	pkinit.c				\
+	pkinit-ec.c				\
 	principal.c				\
 	prog_setup.c				\
 	prompter_posix.c			\

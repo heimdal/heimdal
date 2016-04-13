@@ -2,7 +2,7 @@
 
 include $(top_srcdir)/Makefile.am.common
 
-AM_CPPFLAGS += $(INCLUDE_hcrypto) $(ROKEN_RENAME)
+AM_CPPFLAGS += $(ROKEN_RENAME)
 if HAVE_DBHEADER
 AM_CPPFLAGS += -I$(DBHEADER)
 endif

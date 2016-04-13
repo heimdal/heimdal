@@ -6,7 +6,7 @@ dnl - own-built libhcrypto
 
 m4_define([test_headers], [
 		#undef KRB5 /* makes md4.h et al unhappy */
-		#ifdef HAVE_OPENSSL
+		#ifdef HAVE_HCRYPTO_W_OPENSSL
 		#ifdef HAVE_SYS_TYPES_H
 		#include <sys/types.h>
 		#endif
@@ -54,7 +54,7 @@ m4_define([test_body], [
 		EVP_CIPHER_iv_length(((EVP_CIPHER*)0));
 		UI_UTIL_read_pw_string(0,0,0,0);
 		RAND_status();
-		#ifdef HAVE_OPENSSL
+		#ifdef HAVE_HCRYPTO_W_OPENSSL
 		EC_KEY_new();
 		#endif
 
@@ -63,77 +63,53 @@ m4_define([test_body], [
 		DES_cbc_encrypt(0, 0, 0, schedule, 0, 0);
 		RC4(0, 0, 0, 0);])
 
-m4_define([bn_headers], [
-		#include <stdlib.h>
-		#include <openssl/bn.h>
-		])
-m4_define([bn_body], [
-		BIGNUM *bn = BN_new();
-		BN_set_word(bn, 1);
-		if (BN_is_negative(bn))
-			exit(EXIT_FAILURE);
-		BN_set_negative(bn, 1);
-		if (!BN_is_negative(bn))
-			exit(EXIT_FAILURE);
-		exit(EXIT_SUCCESS);
-		])
-
 AC_DEFUN([KRB_CRYPTO],[
-crypto_lib=unknown
 AC_WITH_ALL([openssl])
-
-DIR_hcrypto=
 
 AC_MSG_CHECKING([for crypto library])
 
 openssl=no
 
-if test "$crypto_lib" = "unknown" -a "$with_openssl" != "no"; then
-	save_CFLAGS="$CFLAGS"
-	save_LIBS="$LIBS"
-	INCLUDE_hcrypto=
-	LIB_hcrypto=
+if test "$with_openssl" = "yes"; then
+        with_openssl=/usr
+fi
+if test "$with_openssl" != "no"; then
+	INCLUDE_openssl_crypto=
+	LIB_openssl_crypto=
 	if test "$with_openssl_include" != ""; then
-		INCLUDE_hcrypto="-I${with_openssl_include}"
+		INCLUDE_openssl_crypto="${with_openssl_include}"
+        else
+                INCLUDE_openssl_crypto="${with_openssl}/include"
 	fi
 	if test "$with_openssl_lib" != ""; then
-		LIB_hcrypto="-L${with_openssl_lib}"
+		LIB_openssl_crypto="-L${with_openssl_lib}"
 	fi
-	CFLAGS="-DHAVE_OPENSSL ${INCLUDE_hcrypto} ${CFLAGS}"
-	saved_LIB_hcrypto="$LIB_hcrypto"
-	for lres in "" "-ldl" "-lnsl -lsocket" "-lnsl -lsocket -ldl"; do
-		LIB_hcrypto="${saved_LIB_hcrypto} -lcrypto $lres"
-		LIB_hcrypto_a="$LIB_hcrypto"
-		LIB_hcrypto_so="$LIB_hcrypto"
-		LIB_hcrypto_appl="$LIB_hcrypto"
-		LIBS="${LIBS} ${LIB_hcrypto}"
-		AC_LINK_IFELSE([AC_LANG_PROGRAM([test_headers],[test_body])], [
-			crypto_lib=libcrypto openssl=yes
-			AC_MSG_RESULT([libcrypto])
-			AC_RUN_IFELSE([AC_LANG_PROGRAM([bn_headers],[bn_body])], [
-			  AC_DEFINE([HAVE_BN_IS_NEGATIVE], 1, [define if OpenSSL provides BN_is_negative])
-			])
-		])
-		if test "$crypto_lib" = libcrypto ; then
-			break;
-		fi
-	done
-	AC_CHECK_LIB(crypto, OPENSSL_init, [])
-	CFLAGS="$save_CFLAGS"
-	LIBS="$save_LIBS"
+	CFLAGS="-DHAVE_HCRYPTO_W_OPENSSL -I${INCLUDE_openssl_crypto} ${CFLAGS}"
+        # XXX What about rpath?  Yeah...
+        AC_CHECK_LIB([crypto], [OPENSSL_init],
+                     [LIB_openssl_crypto="${LIB_openssl_crypto} -lcrypto"; openssl=yes], [openssl=no], [])
+        # These cases are just for static linking on older OSes,
+        # presumably.
+        if test "$openssl" = "no"; then
+                AC_CHECK_LIB([crypto], [OPENSSL_init],
+                             [LIB_openssl_crypto="${LIB_openssl_crypto} -lcrypto -ldl"; openssl=yes], [openssl=no], [-ldl])
+        fi
+        if test "$openssl" = "no"; then
+                AC_CHECK_LIB([crypto], [OPENSSL_init],
+                             [LIB_openssl_crypto="${LIB_openssl_crypto} -lcrypto -ldl -lnsl"; openssl=yes], [openssl=no], [-ldl -lnsl])
+        fi
+        if test "$openssl" = "no"; then
+                AC_CHECK_LIB([crypto], [OPENSSL_init],
+                             [LIB_openssl_crypto="${LIB_openssl_crypto} -lcrypto -ldl -lnsl -lsocket"; openssl=yes], [openssl=no], [-ldl -lnsl -lsocket])
+        fi
 fi
 
-if test "$crypto_lib" = "unknown"; then
+LIB_hcrypto='$(top_builddir)/lib/hcrypto/libhcrypto.la'
+LIB_hcrypto_a='$(top_builddir)/lib/hcrypto/.libs/libhcrypto.a'
+LIB_hcrypto_so='$(top_builddir)/lib/hcrypto/.libs/libhcrypto.so'
+LIB_hcrypto_appl="-lhcrypto"
 
-  DIR_hcrypto='hcrypto'
-  LIB_hcrypto='$(top_builddir)/lib/hcrypto/libhcrypto.la'
-  LIB_hcrypto_a='$(top_builddir)/lib/hcrypto/.libs/libhcrypto.a'
-  LIB_hcrypto_so='$(top_builddir)/lib/hcrypto/.libs/libhcrypto.so'
-  LIB_hcrypto_appl="-lhcrypto"
-
-  AC_MSG_RESULT([included libhcrypto])
-
-fi
+AC_MSG_RESULT([included libhcrypto])
 
 AC_ARG_WITH(pkcs11-module,
                        AS_HELP_STRING([--with-pkcs11-module=path],
@@ -147,12 +123,12 @@ if test "$pkcs11_module" != ""; then
 fi
 
 if test "$openssl" = "yes"; then
-  AC_DEFINE([HAVE_OPENSSL], 1, [define to use openssl's libcrypto])
+  AC_DEFINE([HAVE_HCRYPTO_W_OPENSSL], 1, [define to use openssl's libcrypto as the default backend for libhcrypto])
 fi
-AM_CONDITIONAL(HAVE_OPENSSL, test "$openssl" = yes)dnl
+AM_CONDITIONAL(HAVE_HCRYPTO_W_OPENSSL, test "$openssl" = yes)dnl
 
-AC_SUBST(DIR_hcrypto)
-AC_SUBST(INCLUDE_hcrypto)
+AC_SUBST(INCLUDE_openssl_crypto)
+AC_SUBST(LIB_openssl_crypto)
 AC_SUBST(LIB_hcrypto)
 AC_SUBST(LIB_hcrypto_a)
 AC_SUBST(LIB_hcrypto_so)

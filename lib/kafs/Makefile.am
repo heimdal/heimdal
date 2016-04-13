@@ -6,7 +6,7 @@ AM_CPPFLAGS += $(AFS_EXTRA_DEFS) $(ROKEN_RENAME)
 
 if KRB5
 DEPLIB_krb5 = ../krb5/libkrb5.la $(LIB_hcrypto)
-krb5_am_workaround = $(INCLUDE_hcrypto) -I$(top_srcdir)/lib/krb5
+krb5_am_workaround = -I$(top_srcdir)/lib/krb5
 else
 DEPLIB_krb5  =
 krb5_am_workaround = 

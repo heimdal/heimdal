@@ -246,7 +246,7 @@ if test "$do_libs" = "yes"; then
     echo ${lib_flags}
 fi
 if test "$do_cflags" = "yes"; then
-    cflags="@INCLUDE_hcrypto@"
+    cflags=""
     if test X"${includedir}" != X/usr/include; then
 	cflags="-I${includedir} $cflags"
     fi

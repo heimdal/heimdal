@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003 Kungliga Tekniska Högskolan
+ * Copyright (c) 2003-2016 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  *
@@ -34,10 +34,6 @@
 #include <hex.h>
 #include <err.h>
 #include <assert.h>
-
-#ifdef HAVE_OPENSSL
-#include <openssl/evp.h>
-#endif
 
 static int verbose = 0;
 

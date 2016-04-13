@@ -114,15 +114,16 @@ typedef struct heim_mutex {
     HANDLE	h;
 } heim_mutex_t;
 
-static inline void
+static inline int
 heim_mutex_init(heim_mutex_t *m)
 {
     m->h = CreateSemaphore(NULL, 1, 1, NULL);
     if (m->h == INVALID_HANDLE_VALUE)
-	abort();
+        return EAGAIN;
+    return 0;
 }
 
-static inline void
+static inline int
 heim_mutex_lock(heim_mutex_t *m)
 {
     HANDLE h, new_h;
@@ -133,7 +134,7 @@ heim_mutex_lock(heim_mutex_t *m)
 	created = 1;
 	new_h = CreateSemaphore(NULL, 0, 1, NULL);
 	if (new_h == INVALID_HANDLE_VALUE)
-	    abort();
+	    return EAGAIN;
 	if (InterlockedCompareExchangePointer(&m->h, new_h, h) != h) {
 	    created = 0;
 	    CloseHandle(new_h);
@@ -141,16 +142,18 @@ heim_mutex_lock(heim_mutex_t *m)
     }
     if (!created)
 	WaitForSingleObject(m->h, INFINITE);
+    return 0;
 }
 
-static inline void
+static inline int
 heim_mutex_unlock(heim_mutex_t *m)
 {
     if (ReleaseSemaphore(m->h, 1, NULL) == FALSE)
-	abort();
+        return EPERM;
+    return 0;
 }
 
-static inline void
+static inline int
 heim_mutex_destroy(heim_mutex_t *m)
 {
     HANDLE h;
@@ -158,6 +161,7 @@ heim_mutex_destroy(heim_mutex_t *m)
     h = InterlockedCompareExchangePointer(&m->h, INVALID_HANDLE_VALUE, m->h);
     if (h != INVALID_HANDLE_VALUE)
 	CloseHandle(h);
+    return 0;
 }
 
 #define HEIMDAL_MUTEX heim_mutex_t
@@ -172,49 +176,46 @@ typedef struct heim_rwlock {
     int     exclusive;
 } heim_rwlock_t;
 
-static inline void
+static inline int
 heim_rwlock_init(heim_rwlock_t *l)
 {
     InitializeSRWLock(&l->lock);
     l->exclusive = 0;
+    return 0;
 }
 
-static inline void
+static inline int
 heim_rwlock_rdlock(heim_rwlock_t *l)
 {
     AcquireSRWLockShared(&l->lock);
+    return 0;
 }
 
-static inline void
+static inline int
 heim_rwlock_wrlock(heim_rwlock_t *l)
 {
     AcquireSRWLockExclusive(&l->lock);
     l->exclusive = 1;
+    return 0;
 }
 
-static inline BOOLEAN
+static inline int
 heim_rwlock_tryrdlock(heim_rwlock_t *l)
 {
-    BOOLEAN bLocked;
-
-    bLocked = TryAcquireSRWLockShared(&l->lock);
-
-    return bLocked;
+    if (TryAcquireSRWLockShared(&l->lock))
+        return 0;
+    return EBUSY;
 }
 
-static inline BOOLEAN
+static inline int
 heim_rwlock_trywrlock(heim_rwlock_t *l)
 {
-    BOOLEAN bLocked;
-
-    bLocked = TryAcquireSRWLockExclusive(&l->lock);
-    if (bLocked)
-	l->exclusive = 1;
-
-    return bLocked;
+    if (TryAcquireSRWLockExclusive(&l->lock))
+        return 0;
+    return EBUSY;
 }
 
-static inline void
+static inline vint
 heim_rwlock_unlock(heim_rwlock_t *l)
 {
     if (l->exclusive) {
@@ -223,14 +224,16 @@ heim_rwlock_unlock(heim_rwlock_t *l)
     } else {
 	ReleaseSRWLockShared(&(l)->lock);
     }
+    return 0;
 }
 
-static inline void
+static inline int
 heim_rwlock_destroy(heim_rwlock_t *l)
 {
     /* SRW locks cannot be destroyed so re-initialize */
     InitializeSRWLock(&l->lock);
     l->exclusive = 0;
+    return 0;
 }
 
 #define HEIMDAL_RWLOCK heim_rwlock_t

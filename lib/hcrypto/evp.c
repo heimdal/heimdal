@@ -800,6 +800,10 @@ EVP_CipherInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *c, ENGINE *engine,
 	/* assume block size is a multiple of 2 */
 	ctx->block_mask = EVP_CIPHER_block_size(c) - 1;
 
+        if ((ctx->cipher->flags & EVP_CIPH_CTRL_INIT) &&
+            !EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_INIT, 0, NULL))
+            return 0;
+
     } else if (ctx->cipher == NULL) {
 	/* reuse of cipher, but not any cipher ever set! */
 	return 0;

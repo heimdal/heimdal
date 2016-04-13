@@ -152,8 +152,6 @@ AS_IF([test "x$have_db3" = xyes -a "$db_type" = unknown], db_type=db3, db_type="
 AS_IF([test "x$have_db1" = xyes -a "$db_type" = unknown], db_type=db1, db_type="$db_type")
 AS_IF([test "x$have_lmdb" = xyes -a "$db_type" = unknown], db_type=lmdb, db_type="$db_type")
 
-echo "CHECK: db_type=$db_type" > /dev/tty
-
 if test "$enable_ndbm_db" != "no"; then
 
   if test "$db_type" = "unknown" -o "$ac_cv_func_dbm_firstkey" = ""; then

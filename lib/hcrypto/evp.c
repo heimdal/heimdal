@@ -180,7 +180,7 @@ int
 EVP_MD_CTX_cleanup(EVP_MD_CTX *ctx) HC_DEPRECATED
 {
     if (ctx->md && ctx->md->cleanup) {
-	int ret = (ctx->md->cleanup)(ctx);
+	int ret = (ctx->md->cleanup)(ctx->ptr);
 	if (!ret)
 	    return ret;
     } else if (ctx->md) {

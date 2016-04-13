@@ -49,6 +49,14 @@ string_to_proto(const char *string)
     return -1;
 }
 
+static int
+is_invalid_tld_srv_target(const char *target)
+{
+    return (strncmp("your-dns-needs-immediate-attention.",
+		    target, 35) == 0
+	    && strchr(&target[35], '.') == NULL);
+}
+
 /*
  * set `res' and `count' to the result of looking up SRV RR in DNS for
  * `proto', `proto', `realm' using `dns_type'.
@@ -113,9 +121,7 @@ srv_find_realm(krb5_context context, krb5_krbhst_info ***res, int *count,
 	    int invalid_tld = 1;
 
 	    /* Test for top-level domain controlled interruptions */
-	    if (strncmp("your-dns-needs-immediate-attention.",
-			rr->u.srv->target, 35) == 0
-		 && strchr(&rr->u.srv->target[35], '.') == NULL) {
+	    if (!is_invalid_tld_srv_target(rr->u.srv->target)) {
 		invalid_tld = 0;
 		len = strlen(rr->u.srv->target);
 		hi = calloc(1, sizeof(*hi) + len);

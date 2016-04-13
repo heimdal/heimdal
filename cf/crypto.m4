@@ -64,6 +64,11 @@ m4_define([test_body], [
 		RC4(0, 0, 0, 0);])
 
 AC_DEFUN([KRB_CRYPTO],[
+AC_ARG_WITH([hcrypto-default-backend],
+            AS_HELP_STRING([--with-hcrypto-default-backend=cc|pkcs11_hcrypto|ossl|w32crypto|hcrypto],
+                           [specify the default hcrypto backend]),
+            [CFLAGS="${CFLAGS} -DHCRYPTO_DEF_PROVIDER=${withval}"],
+            [])
 AC_WITH_ALL([openssl])
 
 AC_MSG_CHECKING([for crypto library])

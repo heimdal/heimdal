@@ -260,11 +260,15 @@ EVP_DigestInit_ex(EVP_MD_CTX *ctx, const EVP_MD *md, ENGINE *engine)
 	EVP_MD_CTX_cleanup(ctx);
 	ctx->md = md;
 	ctx->engine = engine;
+        if (md == NULL)
+            return 0;
 
 	ctx->ptr = calloc(1, md->ctx_size);
 	if (ctx->ptr == NULL)
 	    return 0;
     }
+    if (ctx->md == 0)
+        return 0;
     return (ctx->md->init)(ctx->ptr);
 }
 

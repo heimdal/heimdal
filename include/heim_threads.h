@@ -46,6 +46,24 @@
 #ifndef HEIM_THREADS_H
 #define HEIM_THREADS_H 1
 
+#ifdef _MSC_VER
+
+#define HEIMDAL_THREAD_LOCAL __declspec(thread)
+
+#else
+
+#if defined(__clang__) || defined(__GNUC__) || defined(__SUNPRO_CC)
+#define HEIMDAL_THREAD_LOCAL __thread
+#else
+#error "thread-local attribute not defined for your compiler"
+#endif /* clang or gcc */
+
+#endif /* _MSC_VER */
+
+/* For testing the for-Windows implementation of thread keys on non-Windows */
+typedef unsigned long HEIM_PRIV_thread_key;
+
+
 /* assume headers already included */
 
 #if defined(__NetBSD__) && __NetBSD_Version__ >= 106120000 && __NetBSD_Version__< 299001200 && defined(ENABLE_PTHREAD_SUPPORT)
@@ -102,11 +120,20 @@
 #define	HEIMDAL_RWLOCK_unlock(l) pthread_rwlock_unlock(l)
 #define	HEIMDAL_RWLOCK_destroy(l) pthread_rwlock_destroy(l)
 
+#ifdef HEIM_BASE_MAINTAINER
+#define HEIMDAL_thread_key unsigned long
+#define HEIM_PRIV_thread_key HEIMDAL_thread_key
+#define HEIMDAL_key_create(k,d,r) do { r = heim_w32_key_create(k,d); } while(0)
+#define HEIMDAL_setspecific(k,s,r) do { r = heim_w32_setspecific(k,s); } while(0)
+#define HEIMDAL_getspecific(k) (heim_w32_getspecific(k))
+#define HEIMDAL_key_delete(k) (heim_w32_delete_key(k))
+#else
 #define HEIMDAL_thread_key pthread_key_t
 #define HEIMDAL_key_create(k,d,r) do { r = pthread_key_create(k,d); } while(0)
 #define HEIMDAL_setspecific(k,s,r) do { r = pthread_setspecific(k,s); } while(0)
 #define HEIMDAL_getspecific(k) pthread_getspecific(k)
 #define HEIMDAL_key_delete(k) pthread_key_delete(k)
+#endif
 
 #elif defined(_WIN32)
 
@@ -246,7 +273,12 @@ heim_rwlock_destroy(heim_rwlock_t *l)
 #define	HEIMDAL_RWLOCK_unlock(l) heim_rwlock_unlock((l))
 #define	HEIMDAL_RWLOCK_destroy(l) heim_rwlock_destroy((l))
 
-#define HEIMDAL_internal_thread_key 1
+#define HEIMDAL_thread_key unsigned long
+#define HEIM_PRIV_thread_key HEIMDAL_thread_key
+#define HEIMDAL_key_create(k,d,r) do { r = heim_w32_key_create(k,d); } while(0)
+#define HEIMDAL_setspecific(k,s,r) do { r = heim_w32_setspecific(k,s); } while(0)
+#define HEIMDAL_getspecific(k) (heim_w32_getspecific(k))
+#define HEIMDAL_key_delete(k) (heim_w32_delete_key(k))
 
 #elif defined(HEIMDAL_DEBUG_THREADS)
 
@@ -311,5 +343,10 @@ typedef struct heim_thread_key {
 
 #undef HEIMDAL_internal_thread_key
 #endif /* HEIMDAL_internal_thread_key */
+
+int heim_w32_key_create(HEIM_PRIV_thread_key *, void (*)(void *));
+int heim_w32_delete_key(HEIM_PRIV_thread_key);
+int heim_w32_setspecific(HEIM_PRIV_thread_key, void *);
+void *heim_w32_getspecific(HEIM_PRIV_thread_key);
 
 #endif /* HEIM_THREADS_H */

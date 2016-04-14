@@ -533,8 +533,14 @@ static void
 ar_tls_delete(void *ptr)
 {
     struct ar_tls *tls = ptr;
-    if (tls->head)
-	heim_release(tls->head);
+    heim_auto_release_t next = NULL;
+
+    if (tls == NULL)
+        return;
+    for (; tls->current != NULL; tls->current = next) {
+        next = tls->current->parent;
+        heim_release(tls->current);
+    }
     free(tls);
 }
 
@@ -593,8 +599,7 @@ autorel_dealloc(void *ptr)
     if (tls->current != ptr)
 	heim_abort("autorelease not releaseing top pool");
 
-    if (tls->current != tls->head)
-	tls->current = ar->parent;
+    tls->current = ar->parent;
     HEIMDAL_MUTEX_unlock(&tls->tls_mutex);
 }
 

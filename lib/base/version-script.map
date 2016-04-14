@@ -7,6 +7,7 @@ HEIMDAL_BASE_1.0 {
 		_bsearch_file_open;
 		_bsearch_text;
 		__heim_string_constant;
+                DllMain;
 		heim_abort;
 		heim_abortv;
 		heim_alloc;

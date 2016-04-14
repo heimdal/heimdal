@@ -46,6 +46,7 @@ libheimbase_OBJS =		\
 	$(OBJ)\data.obj		\
 	$(OBJ)\db.obj		\
 	$(OBJ)\dict.obj		\
+	$(OBJ)\dll.obj		\
 	$(OBJ)\error.obj	\
 	$(OBJ)\heimbase.obj	\
 	$(OBJ)\json.obj		\

@@ -5,6 +5,12 @@ if do_roken_rename
 ES = base64.c
 endif
 
+IMPLEMENT_TLS=
+if MAINTAINER_MODE
+IMPLEMENT_TLS += dll.c
+AM_CPPFLAGS += -DHEIM_BASE_MAINTAINER
+endif
+
 AM_CPPFLAGS += $(ROKEN_RENAME)
 
 lib_LTLIBRARIES = libheimbase.la
@@ -28,6 +34,7 @@ dist_libheimbase_la_SOURCES =	\
 	data.c			\
 	db.c			\
 	dict.c			\
+	$(IMPLEMENT_TLS)	\
 	error.c			\
 	heimbase.c		\
 	heimbasepriv.h		\

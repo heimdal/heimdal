@@ -438,7 +438,7 @@ ecdsa_create_signature(hx509_context context,
 	ret = set_digest_alg(signatureAlgorithm, sig_oid, "\x05\x00", 2);
 	if (ret) {
 	    hx509_clear_error_string(context);
-	    goto error;
+	    return ret;
 	}
     }
 
@@ -448,11 +448,8 @@ ecdsa_create_signature(hx509_context context,
 				  data,
 				  NULL,
 				  &indata);
-    if (ret) {
-	if (signatureAlgorithm)
-	    free_AlgorithmIdentifier(signatureAlgorithm);
+    if (ret)
 	goto error;
-    }
 
     sig->length = ECDSA_size(signer->private_key.ecdsa);
     sig->data = malloc(sig->length);

@@ -99,6 +99,9 @@ typedef unsigned long HEIM_PRIV_thread_key;
 #define HEIMDAL_getspecific(k) thr_getspecific(k)
 #define HEIMDAL_key_delete(k) thr_keydelete(k)
 
+#define HEIMDAL_THREAD_ID thr_t
+#define HEIMDAL_THREAD_create(t,f,a) thr_create((t), 0, (f), (a))
+
 #elif defined(ENABLE_PTHREAD_SUPPORT) && (!defined(__NetBSD__) || __NetBSD_Version__ >= 299001200)
 
 #include <pthread.h>
@@ -134,6 +137,9 @@ typedef unsigned long HEIM_PRIV_thread_key;
 #define HEIMDAL_getspecific(k) pthread_getspecific(k)
 #define HEIMDAL_key_delete(k) pthread_key_delete(k)
 #endif
+
+#define HEIMDAL_THREAD_ID pthread_t
+#define HEIMDAL_THREAD_create(t,f,a) pthread_create((t), 0, (f), (a))
 
 #elif defined(_WIN32)
 
@@ -280,6 +286,10 @@ heim_rwlock_destroy(heim_rwlock_t *l)
 #define HEIMDAL_getspecific(k) (heim_w32_getspecific(k))
 #define HEIMDAL_key_delete(k) (heim_w32_delete_key(k))
 
+#define HEIMDAL_THREAD_ID DWORD
+#define HEIMDAL_THREAD_create(t,f,a) \
+    ((CreateThread(0, 0, (f), (a), 0, (t)) == INVALID_HANDLE_VALUE) ? EINVAL : 0)
+
 #elif defined(HEIMDAL_DEBUG_THREADS)
 
 /* no threads support, just do consistency checks */
@@ -304,6 +314,9 @@ heim_rwlock_destroy(heim_rwlock_t *l)
 
 #define HEIMDAL_internal_thread_key 1
 
+#define HEIMDAL_THREAD_ID int
+#define HEIMDAL_THREAD_create(t,f,a) abort()
+
 #else /* no thread support, no debug case */
 
 #define HEIMDAL_MUTEX int
@@ -322,6 +335,9 @@ heim_rwlock_destroy(heim_rwlock_t *l)
 #define	HEIMDAL_RWLOCK_trywrlock(l) do { } while(0)
 #define	HEIMDAL_RWLOCK_unlock(l) do { } while(0)
 #define	HEIMDAL_RWLOCK_destroy(l) do { } while(0)
+
+#define HEIMDAL_THREAD_ID int
+#define HEIMDAL_THREAD_create(t,f,a) abort()
 
 #define HEIMDAL_internal_thread_key 1
 

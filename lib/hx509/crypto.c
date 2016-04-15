@@ -756,6 +756,8 @@ evp_md_verify_signature(hx509_context context,
 }
 
 #ifdef HAVE_HCRYPTO_W_OPENSSL
+extern const struct signature_alg ecdsa_with_sha512_alg;
+extern const struct signature_alg ecdsa_with_sha384_alg;
 extern const struct signature_alg ecdsa_with_sha256_alg;
 extern const struct signature_alg ecdsa_with_sha1_alg;
 #endif
@@ -963,6 +965,8 @@ static const struct signature_alg md5_alg = {
 
 static const struct signature_alg *sig_algs[] = {
 #ifdef HAVE_HCRYPTO_W_OPENSSL
+    &ecdsa_with_sha512_alg,
+    &ecdsa_with_sha384_alg,
     &ecdsa_with_sha256_alg,
     &ecdsa_with_sha1_alg,
 #endif

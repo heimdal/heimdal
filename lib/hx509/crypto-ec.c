@@ -44,6 +44,8 @@
 
 #include "hx_locl.h"
 
+extern const AlgorithmIdentifier _hx509_signature_sha512_data;
+extern const AlgorithmIdentifier _hx509_signature_sha384_data;
 extern const AlgorithmIdentifier _hx509_signature_sha256_data;
 extern const AlgorithmIdentifier _hx509_signature_sha1_data;
 
@@ -65,10 +67,22 @@ heim_oid2ecnid(heim_oid *oid)
 
     if (der_heim_oid_cmp(oid, ASN1_OID_ID_EC_GROUP_SECP256R1) == 0)
 	return NID_X9_62_prime256v1;
+#ifdef NID_secp521r1
+    else if (der_heim_oid_cmp(oid, ASN1_OID_ID_EC_GROUP_SECP521R1) == 0)
+        return NID_secp521r1;
+#endif
+#ifdef NID_secp384r1
+    else if (der_heim_oid_cmp(oid, ASN1_OID_ID_EC_GROUP_SECP384R1) == 0)
+        return NID_secp384r1;
+#endif
+#ifdef NID_secp160r1
     else if (der_heim_oid_cmp(oid, ASN1_OID_ID_EC_GROUP_SECP160R1) == 0)
 	return NID_secp160r1;
+#endif
+#ifdef NID_secp160r2
     else if (der_heim_oid_cmp(oid, ASN1_OID_ID_EC_GROUP_SECP160R2) == 0)
 	return NID_secp160r2;
+#endif
 
     return NID_undef;
 }
@@ -293,7 +307,10 @@ ecdsa_available(const hx509_private_key signer,
     if (EC_GROUP_get_order(group, order, bnctx) != 1)
 	goto err;
 
+#if 0
+    /* If anything, require a digest at least as wide as the EC key size */
     if (BN_num_bytes(order) > sig->digest_size)
+#endif
 	ret = 1;
  err:
     if (bnctx)
@@ -407,16 +424,20 @@ const AlgorithmIdentifier _hx509_signature_ecdsa_with_sha256_data = {
     { 7, rk_UNCONST(ecdsa_with_sha256_oid) }, NULL
 };
 
+static const unsigned ecdsa_with_sha384_oid[] ={ 1, 2, 840, 10045, 4, 3, 3 };
+const AlgorithmIdentifier _hx509_signature_ecdsa_with_sha384_data = {
+    { 7, rk_UNCONST(ecdsa_with_sha384_oid) }, NULL
+};
+
+static const unsigned ecdsa_with_sha512_oid[] ={ 1, 2, 840, 10045, 4, 3, 4 };
+const AlgorithmIdentifier _hx509_signature_ecdsa_with_sha512_data = {
+    { 7, rk_UNCONST(ecdsa_with_sha512_oid) }, NULL
+};
+
 static const unsigned ecdsa_with_sha1_oid[] ={ 1, 2, 840, 10045, 4, 1 };
 const AlgorithmIdentifier _hx509_signature_ecdsa_with_sha1_data = {
     { 6, rk_UNCONST(ecdsa_with_sha1_oid) }, NULL
 };
-
-
-const AlgorithmIdentifier *
-hx509_signature_ecdsa_with_sha1(void)
-{ return &_hx509_signature_ecdsa_with_sha1_data; }
-
 
 hx509_private_key_ops ecdsa_private_key_ops = {
     "EC PRIVATE KEY",
@@ -427,6 +448,36 @@ hx509_private_key_ops ecdsa_private_key_ops = {
     ecdsa_private_key_import,
     ecdsa_generate_private_key,
     ecdsa_get_internal
+};
+
+const struct signature_alg ecdsa_with_sha512_alg = {
+    "ecdsa-with-sha512",
+    ASN1_OID_ID_ECDSA_WITH_SHA512,
+    &_hx509_signature_ecdsa_with_sha512_data,
+    ASN1_OID_ID_ECPUBLICKEY,
+    &_hx509_signature_sha512_data,
+    PROVIDE_CONF|REQUIRE_SIGNER|RA_RSA_USES_DIGEST_INFO|
+        SIG_PUBLIC_SIG|SELF_SIGNED_OK,
+    0,
+    NULL,
+    ecdsa_verify_signature,
+    ecdsa_create_signature,
+    64
+};
+
+const struct signature_alg ecdsa_with_sha384_alg = {
+    "ecdsa-with-sha384",
+    ASN1_OID_ID_ECDSA_WITH_SHA384,
+    &_hx509_signature_ecdsa_with_sha384_data,
+    ASN1_OID_ID_ECPUBLICKEY,
+    &_hx509_signature_sha384_data,
+    PROVIDE_CONF|REQUIRE_SIGNER|RA_RSA_USES_DIGEST_INFO|
+        SIG_PUBLIC_SIG|SELF_SIGNED_OK,
+    0,
+    NULL,
+    ecdsa_verify_signature,
+    ecdsa_create_signature,
+    48
 };
 
 const struct signature_alg ecdsa_with_sha256_alg = {

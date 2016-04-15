@@ -271,6 +271,9 @@ $(libgssapi_la_OBJECTS): $(srcdir)/version-script.map
 
 BUILT_SOURCES = $(spnego_files:.x=.c) $(gssapi_files:.x=.c)
 
+$(libgssapi_la_OBJECTS): gkrb5_err.h
+gkrb5_err.h: $(srcdir)/krb5/gkrb5_err.et
+
 CLEANFILES = $(BUILT_SOURCES) \
 	gkrb5_err.h gkrb5_err.c \
 	$(spnego_files) spnego_asn1*.h* spnego_asn1_files spnego_asn1-template.[cx] \

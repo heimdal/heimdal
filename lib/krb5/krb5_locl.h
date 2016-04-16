@@ -389,9 +389,11 @@ enum krb5_pk_type {
     PKINIT_27 = 2
 };
 
+enum keyex_enum { USE_RSA, USE_DH, USE_ECDH };
+
 struct krb5_pk_init_ctx_data {
     struct krb5_pk_identity *id;
-    enum { USE_RSA, USE_DH, USE_ECDH } keyex;
+    enum keyex_enum keyex;
     union {
 	DH *dh;
         void *eckey;

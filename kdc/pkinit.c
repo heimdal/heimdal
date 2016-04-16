@@ -47,7 +47,7 @@
 
 struct pk_client_params {
     enum krb5_pk_type type;
-    enum { USE_RSA, USE_DH, USE_ECDH } keyex;
+    enum keyex_enum keyex;
     union {
 	struct {
 	    BIGNUM *public_key;

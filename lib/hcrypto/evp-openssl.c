@@ -36,6 +36,7 @@
 #include <heimbase.h>
 
 #include <assert.h>
+#include <evp.h>
 
 #ifdef HAVE_HCRYPTO_W_OPENSSL
 
@@ -48,7 +49,6 @@
  *       never use knowledge of opaque OpenSSL type internals.
  */
 
-#include <evp.h>
 #include <evp-openssl.h>
 
 /*
@@ -401,6 +401,16 @@ get_EVP_MD(heim_base_once_t *once, hc_EVP_MD *hc_memoize,
                           &initialized, NID_##name);                    \
     }
 
+#else /* HAVE_HCRYPTO_W_OPENSSL */
+
+#define OSSL_CIPHER_ALGORITHM(name, flags)                              \
+    const hc_EVP_CIPHER *hc_EVP_ossl_##name(void) { return NULL; }
+
+#define OSSL_MD_ALGORITHM(name)                                         \
+    const hc_EVP_MD *hc_EVP_ossl_##name(void) { return NULL; }
+
+#endif /* HAVE_HCRYPTO_W_OPENSSL */
+
 /**
  * The triple DES cipher type (OpenSSL provider)
  *
@@ -621,7 +631,3 @@ OSSL_MD_ALGORITHM(sha384)
  * @ingroup hcrypto_evp
  */
 OSSL_MD_ALGORITHM(sha512)
-
-#else /* HAVE_HCRYPTO_W_OPENSSL */
-static char dummy;
-#endif /* HAVE_HCRYPTO_W_OPENSSL */

@@ -41,7 +41,7 @@ HEIMBASEDIR = $(SRC)\lib\base
 
 HX509DIR = $(SRC)\lib\hx509
 
-!if INCLUDE_openssl_crypto
+!ifdef INCLUDE_openssl_crypto
 openssl_inc=-I$(INCLUDE_openssl_crypto)
 !endif
 

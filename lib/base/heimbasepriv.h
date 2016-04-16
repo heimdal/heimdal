@@ -33,7 +33,9 @@
  * SUCH DAMAGE.
  */
 
-#if defined(HEIM_BASE_MAINTAINER) && !defined(WIN33) && defined(ENABLE_PTHREAD_SUPPORT)
+#if defined(HEIM_BASE_MAINTAINER) && defined(ENABLE_PTHREAD_SUPPORT)
+#define HEIM_WIN32_TLS
+#elif defined(WIN32)
 #define HEIM_WIN32_TLS
 #endif
 

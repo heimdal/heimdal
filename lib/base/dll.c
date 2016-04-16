@@ -85,8 +85,8 @@ static HEIMDAL_THREAD_LOCAL struct tls_values values;
 
 #define DEAD_KEY ((void *)8)
 
-static void
-del_tls_for_thread(void *unused)
+void
+heim_w32_service_thread_detach(void *unused)
 {
     tls_keys *key_defs;
     void (*dtor)(void*);
@@ -124,7 +124,7 @@ pthread_once_t pt_once = PTHREAD_ONCE_INIT;
 static void
 atexit_del_tls_for_thread(void)
 {
-    del_tls_for_thread(NULL);
+    heim_w32_service_thread_detach(NULL);
 }
 
 static void
@@ -134,7 +134,7 @@ create_pt_key(void)
 
     /* The main thread may not execute TLS destructors */
     atexit(atexit_del_tls_for_thread);
-    ret = pthread_key_create(&pt_key, del_tls_for_thread);
+    ret = pthread_key_create(&pt_key, heim_w32_service_thread_detach);
     if (ret != 0)
         err(1, "pthread_key_create() failed");
 }
@@ -318,30 +318,6 @@ heim_w32_getspecific(HEIM_PRIV_thread_key key)
         return NULL;
     return values.values[key];
 }
-
-#ifdef WIN32
-BOOL WINAPI DllMain(HINSTANCE hinstDLL,
-		    DWORD fdwReason,
-		    LPVOID lpvReserved)
-{
-    switch (fdwReason) {
-    case DLL_PROCESS_ATTACH:
-	return TRUE;
-
-    case DLL_PROCESS_DETACH:
-	return FALSE;
-
-    case DLL_THREAD_ATTACH:
-	return FALSE;
-
-    case DLL_THREAD_DETACH:
-        del_tls_for_thread(NULL);
-	return FALSE;
-    }
-
-    return FALSE;
-}
-#endif /* WIN32 */
 
 #else
 static char dummy;

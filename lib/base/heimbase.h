@@ -418,4 +418,14 @@ void _bsearch_file_info(bsearch_file_handle bfh, size_t *page_sz,
 			 size_t *max_sz, int *blockwise);
 void _bsearch_file_close(bsearch_file_handle *bfh);
 
+/*
+ * Thread-specific keys
+ */
+
+int heim_w32_key_create(unsigned long *, void (*)(void *));
+int heim_w32_delete_key(unsigned long);
+int heim_w32_setspecific(unsigned long, void *);
+void *heim_w32_getspecific(unsigned long);
+void heim_w32_service_thread_detach(void *);
+
 #endif /* HEIM_BASE_H */

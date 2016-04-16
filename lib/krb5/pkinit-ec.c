@@ -34,6 +34,7 @@
  */
 
 #include <config.h>
+#include <roken.h>
 
 #ifdef PKINIT
 
@@ -73,9 +74,6 @@
  */
 #define NO_HCRYPTO_POLLUTION
 
-#ifdef HAVE_STDINT_H
-#include <stdint.h>
-#endif
 #include <hcrypto/des.h>
 #include "krb5_locl.h"
 

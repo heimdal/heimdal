@@ -530,8 +530,10 @@ verify (krb5_auth_context *auth_context,
     if (!same) {
 	char *sname;
 
-	krb5_unparse_name(context, (*ticket)->server, &sname);
-	krb5_warnx(context, "Invalid kpasswd service principal %s", sname);
+	if (krb5_unparse_name(context, (*ticket)->server, &sname) != 0)
+	    sname = NULL;
+	krb5_warnx(context, "Invalid kpasswd service principal %s",
+		   sname ? sname : "<enomem>");
 	free(sname);
 	reply_error(NULL, s, sa, sa_size, ret, 1, "Bad request");
 	goto out;

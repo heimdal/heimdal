@@ -34,6 +34,7 @@
  */
 
 #include <config.h>
+#include <roken.h>
 
 #ifdef PKINIT
 
@@ -58,16 +59,10 @@
 #define HEIM_NO_CRYPTO_HDRS
 #endif /* HAVE_HCRYPTO_W_OPENSSL */
 
-#ifdef HAVE_STDINT_H
-#include <stdint.h>
-#endif
-
 #define NO_HCRYPTO_POLLUTION
 
-#include <hcrypto/des.h>
-
 #include "kdc_locl.h"
-
+#include <hcrypto/des.h>
 #include <heim_asn1.h>
 #include <rfc2459_asn1.h>
 #include <cms_asn1.h>

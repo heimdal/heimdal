@@ -59,8 +59,6 @@
 #define HEIM_NO_CRYPTO_HDRS
 #endif
 
-#include <config.h>
-
 /*
  * NO_HCRYPTO_POLLUTION -> don't refer to hcrypto type/function names
  * that we don't need in this file and which would clash with OpenSSL's
@@ -74,9 +72,8 @@
  */
 #define NO_HCRYPTO_POLLUTION
 
-#include <hcrypto/des.h>
 #include "krb5_locl.h"
-
+#include <hcrypto/des.h>
 #include <cms_asn1.h>
 #include <pkcs8_asn1.h>
 #include <pkcs9_asn1.h>

@@ -1210,6 +1210,7 @@ int
 main(int argc, char **argv)
 {
     int optidx	= 0;
+    krb5_error_code ret;
 
     setprogname (argv[0]);
 
@@ -1235,7 +1236,9 @@ main(int argc, char **argv)
 	    errx (1, "Bad port `%s'", port_str);
     }
 
-    krb5_init_context(&context);
+    ret = krb5_init_context(&context);
+    if (ret)
+	errx(1, "Error initializing kerberos: %d", ret);
 
     {
 	const char *lf = logfile_str;

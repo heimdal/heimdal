@@ -39,13 +39,9 @@
 #define __KRB5_LOCL_H__
 
 #include <config.h>
+#include <roken.h>
 
-#include <errno.h>
 #include <ctype.h>
-#include <string.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <limits.h>
 
 #ifdef HAVE_POLL_H
 #include <sys/poll.h>
@@ -59,15 +55,6 @@
 #ifdef HAVE_SYS_MMAN_H
 #include <sys/mman.h>
 #endif
-#ifdef HAVE_STDINT_H
-#include <stdint.h>
-#endif
-#ifdef HAVE_UNISTD_H
-#include <unistd.h>
-#endif
-#ifdef HAVE_FCNTL_H
-#include <fcntl.h>
-#endif
 
 #if defined(HAVE_SYS_IOCTL_H) && SunOS != 40
 #include <sys/ioctl.h>
@@ -79,44 +66,11 @@
 #include <pwd.h>
 #endif
 
-#ifdef HAVE_SYS_PARAM_H
-#include <sys/param.h>
-#endif
-#include <time.h>
-#ifdef HAVE_SYS_TIME_H
-#include <sys/time.h>
-#endif
 #ifdef HAVE_SYS_SELECT_H
 #include <sys/select.h>
 #endif
-#ifdef HAVE_SYS_SOCKET_H
-#include <sys/socket.h>
-#endif
-#ifdef HAVE_NETINET_IN_H
-#include <netinet/in.h>
-#endif
-#ifdef HAVE_NETINET_IN6_H
-#include <netinet/in6.h>
-#endif
-#ifdef HAVE_NETINET6_IN6_H
-#include <netinet6/in6.h>
-#endif
-#ifdef HAVE_NETDB_H
-#include <netdb.h>
-#endif
 #ifdef _AIX
-struct ether_addr;
 struct mbuf;
-struct sockaddr_dl;
-#endif
-#ifdef HAVE_ARPA_INET_H
-#include <arpa/inet.h>
-#endif
-#ifdef HAVE_ARPA_NAMESER_H
-#include <arpa/nameser.h>
-#endif
-#ifdef HAVE_SYS_UIO_H
-#include <sys/uio.h>
 #endif
 #ifdef HAVE_SYS_FILIO_H
 #include <sys/filio.h>
@@ -151,7 +105,6 @@ struct sockaddr_dl;
 #include <door.h>
 #endif
 
-#include <roken.h>
 #include <parse_time.h>
 #include <base64.h>
 

@@ -81,38 +81,40 @@ struct pkcs11_md_ctx {
     CK_SESSION_HANDLE hSession;
 };
 
+static void *pkcs11_module_handle;
 static void
 p11_module_init_once(void *context)
 {
     CK_RV rv;
     CK_FUNCTION_LIST_PTR module;
     CK_RV (*C_GetFunctionList_fn)(CK_FUNCTION_LIST_PTR_PTR);
-    void *handle = NULL;
 
     if (!issuid()) {
         char *pkcs11ModulePath = getenv("PKCS11_MODULE_PATH");
         if (pkcs11ModulePath != NULL) {
-            handle = dlopen(pkcs11ModulePath, RTLD_LAZY | RTLD_LOCAL |
-                                              RTLD_GROUP | RTLD_NODELETE);
-            if (handle == NULL)
+	    pkcs11_module_handle =
+		dlopen(pkcs11ModulePath,
+		       RTLD_LAZY | RTLD_LOCAL | RTLD_GROUP | RTLD_NODELETE);
+	    if (pkcs11_module_handle == NULL)
                 fprintf(stderr, "p11_module_init(%s): %s\n", pkcs11ModulePath, dlerror());
         }
     }
 #ifdef PKCS11_MODULE_PATH
-    if (handle == NULL) {
-        handle = dlopen(PKCS11_MODULE_PATH, RTLD_LAZY | RTLD_LOCAL |
-                                            RTLD_GROUP | RTLD_NODELETE);
-        if (handle == NULL)
+    if (pkcs11_module_handle == NULL) {
+	pkcs11_module_handle =
+	    dlopen(PKCS11_MODULE_PATH,
+		   RTLD_LAZY | RTLD_LOCAL | RTLD_GROUP | RTLD_NODELETE);
+	if (pkcs11_module_handle == NULL)
             fprintf(stderr, "p11_module_init(%s): %s\n", PKCS11_MODULE_PATH, dlerror());
     }
 #endif
-    if (handle == NULL) {
+    if (pkcs11_module_handle == NULL) {
         rv = CKR_LIBRARY_LOAD_FAILED;
         goto cleanup;
     }
 
     C_GetFunctionList_fn = (CK_RV (*)(CK_FUNCTION_LIST_PTR_PTR))
-                           dlsym(handle, "C_GetFunctionList");
+	dlsym(pkcs11_module_handle, "C_GetFunctionList");
     if (C_GetFunctionList_fn == NULL) {
         rv = CKR_LIBRARY_LOAD_FAILED;
         goto cleanup;
@@ -129,9 +131,11 @@ p11_module_init_once(void *context)
         *((CK_FUNCTION_LIST_PTR_PTR)context) = module;
 
 cleanup:
-    if (handle != NULL && p11_module == NULL)
-        dlclose(handle);
-    /* else leak handle */
+    if (pkcs11_module_handle != NULL && p11_module == NULL) {
+	dlclose(pkcs11_module_handle);
+	pkcs11_module_handle = NULL;
+    }
+    /* else leak pkcs11_module_handle */
 }
 
 static CK_RV

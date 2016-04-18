@@ -205,7 +205,9 @@ get_EVP_CIPHER_once_cb(void *d)
     ossl_evp = EVP_get_cipherbynid(arg->nid);
     if (ossl_evp == NULL) {
         (void) memset(hc_evp, 0, sizeof(*hc_evp));
+#if HCRYPTO_FALLBACK
         *arg->hc_memoizep = arg->fallback;
+#endif
         return;
     }
 
@@ -347,7 +349,9 @@ get_EVP_MD_once_cb(void *d)
 
     if (ossl_evp == NULL) {
         (void) memset(hc_evp, 0, sizeof(*hc_evp));
+#if HCRYPTO_FALLBACK
         *arg->hc_memoizep = arg->fallback;
+#endif
         return;
     }
 

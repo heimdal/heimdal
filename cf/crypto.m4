@@ -79,6 +79,11 @@ AC_ARG_WITH([hcrypto-default-backend],
             esac
             ],
             [])
+AC_ARG_WITH([hcrypto-fallback],
+            AS_HELP_STRING([--without-hcrypto-fallback],
+                           [disable fallback on hcrypto for unavailable algorithms]),
+            [AC_DEFINE([HCRYPTO_FALLBACK],0,[Set to 1 to allow fallback to hcrypto for unavailable algorithms])],
+            [AC_DEFINE([HCRYPTO_FALLBACK],1,[Set to 1 to allow fallback to hcrypto for unavailable algorithms])])
 AC_WITH_ALL([openssl])
 
 AC_MSG_CHECKING([for crypto library])

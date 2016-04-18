@@ -86,7 +86,6 @@ struct once_init_cipher_ctx {
     hc_EVP_CIPHER *hc_memoize;
     const hc_EVP_CIPHER *fallback;
     unsigned long flags;
-    unsigned char *initialized;
     int nid;
 };
 
@@ -207,7 +206,6 @@ get_EVP_CIPHER_once_cb(void *d)
     if (ossl_evp == NULL) {
         (void) memset(hc_evp, 0, sizeof(*hc_evp));
         *arg->hc_memoizep = arg->fallback;
-        *arg->initialized = 1;
         return;
     }
 
@@ -240,14 +238,13 @@ get_EVP_CIPHER_once_cb(void *d)
 
     /* Finally, set the static hc_EVP_CIPHER * to the one we just built */
     *arg->hc_memoizep = hc_evp;
-    *arg->initialized = 1;
 }
 
 static const hc_EVP_CIPHER *
 get_EVP_CIPHER(heim_base_once_t *once, hc_EVP_CIPHER *hc_memoize,
                const hc_EVP_CIPHER **hc_memoizep,
                const hc_EVP_CIPHER *fallback,
-               unsigned long flags, unsigned char *initialized, int nid)
+               unsigned long flags, int nid)
 {
     struct once_init_cipher_ctx arg;
 
@@ -255,7 +252,6 @@ get_EVP_CIPHER(heim_base_once_t *once, hc_EVP_CIPHER *hc_memoize,
     arg.hc_memoizep = hc_memoizep;
     arg.hc_memoize = hc_memoize;
     arg.fallback = fallback;
-    arg.initialized = initialized;
     arg.nid = nid;
     heim_base_once_f(once, &arg, get_EVP_CIPHER_once_cb);
     return *hc_memoizep; /* May be NULL */
@@ -268,12 +264,9 @@ get_EVP_CIPHER(heim_base_once_t *once, hc_EVP_CIPHER *hc_memoize,
         static hc_EVP_CIPHER ossl_##name##_st;                          \
         static const hc_EVP_CIPHER *ossl_##name;                        \
         static heim_base_once_t once = HEIM_BASE_ONCE_INIT;             \
-        static unsigned char initialized;                               \
-        if (initialized)                                                \
-            return ossl_##name;                                         \
         return get_EVP_CIPHER(&once, &ossl_##name##_st, &ossl_##name,   \
                               hc_EVP_hcrypto_##name(),                  \
-                              flags, &initialized, NID_##name);         \
+                              flags, NID_##name);                       \
     }
 
 /* As above, but for EVP_MDs */
@@ -340,7 +333,6 @@ struct once_init_md_ctx {
     const hc_EVP_MD *fallback;
     hc_evp_md_init md_init;
     int nid;
-    unsigned char *initialized;
 };
 
 static void
@@ -356,7 +348,6 @@ get_EVP_MD_once_cb(void *d)
     if (ossl_evp == NULL) {
         (void) memset(hc_evp, 0, sizeof(*hc_evp));
         *arg->hc_memoizep = arg->fallback;
-        *arg->initialized = 1;
         return;
     }
 
@@ -368,14 +359,13 @@ get_EVP_MD_once_cb(void *d)
     hc_evp->cleanup = ossl_md_cleanup;
 
     *arg->hc_memoizep = hc_evp;
-    *arg->initialized = 1;
 }
 
 static const hc_EVP_MD *
 get_EVP_MD(heim_base_once_t *once, hc_EVP_MD *hc_memoize,
            const hc_EVP_MD **hc_memoizep, const EVP_MD **ossl_memoizep,
            const hc_EVP_MD *fallback,
-           hc_evp_md_init md_init, unsigned char *initialized, int nid)
+           hc_evp_md_init md_init, int nid)
 {
     struct once_init_md_ctx ctx;
 
@@ -384,7 +374,6 @@ get_EVP_MD(heim_base_once_t *once, hc_EVP_MD *hc_memoize,
     ctx.hc_memoize = hc_memoize;
     ctx.fallback = fallback;
     ctx.md_init = md_init;
-    ctx.initialized = initialized;
     ctx.nid = nid;
     heim_base_once_f(once, &ctx, get_EVP_MD_once_cb);
     return *hc_memoizep; /* May be NULL */
@@ -402,12 +391,9 @@ get_EVP_MD(heim_base_once_t *once, hc_EVP_MD *hc_memoize,
     {                                                                   \
         static hc_EVP_MD ossl_##name##_st;                              \
         static heim_base_once_t once = HEIM_BASE_ONCE_INIT;             \
-        static unsigned char initialized;                               \
-        if (initialized)                                                \
-            return ossl_##name;                                         \
         return get_EVP_MD(&once, &ossl_##name##_st, &ossl_##name,       \
                           &ossl_EVP_##name, hc_EVP_hcrypto_##name(),    \
-                          ossl_init_##name, &initialized, NID_##name);  \
+                          ossl_init_##name, NID_##name);                \
     }
 
 #else /* HAVE_HCRYPTO_W_OPENSSL */

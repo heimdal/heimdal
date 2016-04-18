@@ -67,7 +67,17 @@ AC_DEFUN([KRB_CRYPTO],[
 AC_ARG_WITH([hcrypto-default-backend],
             AS_HELP_STRING([--with-hcrypto-default-backend=cc|pkcs11_hcrypto|ossl|w32crypto|hcrypto],
                            [specify the default hcrypto backend]),
-            [CFLAGS="${CFLAGS} -DHCRYPTO_DEF_PROVIDER=${withval}"],
+            [
+            CFLAGS="${CFLAGS} -DHCRYPTO_DEF_PROVIDER=${withval}"
+            case "$withval" in
+            cc) AC_DEFINE(HCRYPTO_DEF_PROVIDER, [cc], [Define to one of cc, pkcs11, ossl, w32crypto, or hcrypto to set a default hcrypto provider]);;
+            pkcs11_hcrypto) AC_DEFINE(HCRYPTO_DEF_PROVIDER, [pkcs11_hcrypto], [Define to one of cc, pkcs11, ossl, w32crypto, or hcrypto to set a default hcrypto provider]);;
+            ossl) AC_DEFINE(HCRYPTO_DEF_PROVIDER, [ossl], [Define to one of cc, pkcs11, ossl, w32crypto, or hcrypto to set a default hcrypto provider]);;
+            w32crypto) AC_DEFINE(HCRYPTO_DEF_PROVIDER, [w32crypto], [Define to one of cc, pkcs11, ossl, w32crypto, or hcrypto to set a default hcrypto provider]);;
+            hcrypto) AC_DEFINE(HCRYPTO_DEF_PROVIDER, [hcrypto], [Define to one of cc, pkcs11, ossl, w32crypto, or hcrypto to set a default hcrypto provider]);;
+            *) echo "Invalid hcrypto provider name ($withval)"; exit 5;;
+            esac
+            ],
             [])
 AC_WITH_ALL([openssl])
 

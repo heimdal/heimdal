@@ -443,7 +443,7 @@ p11_md_cleanup(EVP_MD_CTX *ctx)
         const EVP_CIPHER *cipher;                                       \
                                                                         \
         cipher = hc_EVP_pkcs11_ ##name();                               \
-        if (cipher == NULL)                                             \
+        if (cipher == NULL && HCRYPTO_FALLBACK)                         \
             cipher = hc_EVP_hcrypto_ ##name();                          \
                                                                         \
         *((const EVP_CIPHER **)context) = cipher;                       \
@@ -493,7 +493,7 @@ p11_md_cleanup(EVP_MD_CTX *ctx)
         const EVP_MD *md;                                               \
                                                                         \
         md = hc_EVP_pkcs11_ ##name();                                   \
-        if (md == NULL)                                                 \
+        if (md == NULL && HCRYPTO_FALLBACK)                             \
             md = hc_EVP_hcrypto_ ##name();                              \
                                                                         \
         *((const EVP_MD **)context) = md;                               \

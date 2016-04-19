@@ -553,6 +553,7 @@ all-tools:: $(BINDIR)\gsstool.exe
 
 $(BINDIR)\gsstool.exe: $(OBJ)\gsstool.obj $(OBJ)\gss-commands.obj $(LIBGSSAPI) $(LIBROKEN) $(LIBSL) $(LIBVERS)
 	$(EXECONLINK)
+	$(EXEPREP)
 
 $(OBJ)\gss-commands.c $(OBJ)\gss-commands.h: gss-commands.in
 	cd $(OBJ)

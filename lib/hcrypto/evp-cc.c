@@ -175,6 +175,8 @@ EVP_cc_des_ede3_cbc(void)
 	NULL
     };
     return &des_ede3_cbc;
+#elif HCRYPTO_FALLBACK
+    return EVP_hcrypto_des_ede3_cbc();
 #else
     return NULL;
 #endif
@@ -225,6 +227,8 @@ EVP_cc_des_cbc(void)
 	NULL
     };
     return &des_ede3_cbc;
+#elif HCRYPTO_FALLBACK
+    return EVP_hcrypto_des_cbc();
 #else
     return NULL;
 #endif
@@ -275,6 +279,8 @@ EVP_cc_aes_128_cbc(void)
 	NULL
     };
     return &c;
+#elif HCRYPTO_FALLBACK
+    return EVP_hcrypto_aes_128_cbc();
 #else
     return NULL;
 #endif
@@ -308,6 +314,8 @@ EVP_cc_aes_192_cbc(void)
 	NULL
     };
     return &c;
+#elif HCRYPTO_FALLBACK
+    return EVP_hcrypto_aes_192_cbc();
 #else
     return NULL;
 #endif
@@ -341,6 +349,8 @@ EVP_cc_aes_256_cbc(void)
 	NULL
     };
     return &c;
+#elif HCRYPTO_FALLBACK
+    return EVP_hcrypto_aes_256_cbc();
 #else
     return NULL;
 #endif
@@ -391,6 +401,8 @@ EVP_cc_aes_128_cfb8(void)
 	NULL
     };
     return &c;
+#elif HCRYPTO_FALLBACK
+    return EVP_hcrypto_aes_128_cfb8();
 #else
     return NULL;
 #endif
@@ -424,6 +436,8 @@ EVP_cc_aes_192_cfb8(void)
 	NULL
     };
     return &c;
+#elif HCRYPTO_FALLBACK
+    return EVP_hcrypto_aes_192_cfb8();
 #else
     return NULL;
 #endif
@@ -457,6 +471,8 @@ EVP_cc_aes_256_cfb8(void)
 	NULL
     };
     return &c;
+#elif HCRYPTO_FALLBACK
+    return EVP_hcrypto_aes_256_cfb8();
 #else
     return NULL;
 #endif
@@ -508,6 +524,8 @@ EVP_cc_rc2_cbc(void)
 	NULL
     };
     return &rc2_cbc;
+#elif HCRYPTO_FALLBACK
+    return EVP_hcrypto_rc2_cbc();
 #else
     return NULL;
 #endif
@@ -542,6 +560,8 @@ EVP_cc_rc2_40_cbc(void)
 	NULL
     };
     return &rc2_40_cbc;
+#elif HCRYPTO_FALLBACK
+    return EVP_hcrypto_rc2_40_cbc();
 #else
     return NULL;
 #endif
@@ -577,6 +597,8 @@ EVP_cc_rc2_64_cbc(void)
 	NULL
     };
     return &rc2_64_cbc;
+#elif HCRYPTO_FALLBACK
+    return EVP_hcrypto_rc2_64_cbc();
 #else
     return NULL;
 #endif
@@ -602,6 +624,8 @@ EVP_cc_md2(void)
 	(hc_evp_md_cleanup)NULL
     };
     return &md2;
+#elif HCRYPTO_FALLBACK
+    return EVP_hcrypto_md2();
 #else
     return NULL;
 #endif
@@ -627,6 +651,8 @@ EVP_cc_md4(void)
 	(hc_evp_md_cleanup)NULL
     };
     return &md4;
+#elif HCRYPTO_FALLBACK
+    return EVP_hcrypto_md4();
 #else
     return NULL;
 #endif
@@ -652,6 +678,8 @@ EVP_cc_md5(void)
 	(hc_evp_md_cleanup)NULL
     };
     return &md5;
+#elif HCRYPTO_FALLBACK
+    return EVP_hcrypto_md5();
 #else
     return NULL;
 #endif
@@ -677,6 +705,8 @@ EVP_cc_sha1(void)
 	(hc_evp_md_cleanup)NULL
     };
     return &sha1;
+#elif HCRYPTO_FALLBACK
+    return EVP_hcrypto_sha1();
 #else
     return NULL;
 #endif
@@ -702,6 +732,8 @@ EVP_cc_sha256(void)
 	(hc_evp_md_cleanup)NULL
     };
     return &sha256;
+#elif HCRYPTO_FALLBACK
+    return EVP_hcrypto_sha256();
 #else
     return NULL;
 #endif
@@ -727,6 +759,8 @@ EVP_cc_sha384(void)
 	(hc_evp_md_cleanup)NULL
     };
     return &sha384;
+#elif HCRYPTO_FALLBACK
+    return EVP_hcrypto_sha384();
 #else
     return NULL;
 #endif
@@ -752,6 +786,8 @@ EVP_cc_sha512(void)
 	(hc_evp_md_cleanup)NULL
     };
     return &sha512;
+#elif HCRYPTO_FALLBACK
+    return EVP_hcrypto_sha512();
 #else
     return NULL;
 #endif
@@ -768,7 +804,11 @@ EVP_cc_sha512(void)
 const EVP_CIPHER *
 EVP_cc_camellia_128_cbc(void)
 {
+#if HCRYPTO_FALLBACK
+    return EVP_hcrypto_camellia_128_cbc();
+#else
     return NULL;
+#endif
 }
 
 /**
@@ -782,7 +822,11 @@ EVP_cc_camellia_128_cbc(void)
 const EVP_CIPHER *
 EVP_cc_camellia_192_cbc(void)
 {
+#if HCRYPTO_FALLBACK
+    return EVP_hcrypto_camellia_192_cbc();
+#else
     return NULL;
+#endif
 }
 
 /**
@@ -796,7 +840,11 @@ EVP_cc_camellia_192_cbc(void)
 const EVP_CIPHER *
 EVP_cc_camellia_256_cbc(void)
 {
+#if HCRYPTO_FALLBACK
+    return EVP_hcrypto_camellia_256_cbc();
+#else
     return NULL;
+#endif
 }
 
 #ifdef HAVE_COMMONCRYPTO_COMMONCRYPTOR_H
@@ -847,6 +895,8 @@ EVP_cc_rc4(void)
 	NULL
     };
     return &rc4;
+#elif HCRYPTO_FALLBACK
+    return EVP_hcrypto_rc4();
 #else
     return NULL;
 #endif
@@ -881,6 +931,8 @@ EVP_cc_rc4_40(void)
 	NULL
     };
     return &rc4_40;
+#elif HCRYPTO_FALLBACK
+    return EVP_hcrypto_rc4_40();
 #else
     return NULL;
 #endif

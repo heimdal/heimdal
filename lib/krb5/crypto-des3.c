@@ -278,6 +278,6 @@ _krb5_DES3_random_to_key(krb5_context context,
     for (i = 0; i < 3; i++) {
 	DES_set_odd_parity(&k[i]);
 	if(DES_is_weak_key(&k[i]))
-	    _krb5_xor(&k[i], (const unsigned char*)"\0\0\0\0\0\0\0\xf0");
+	    _krb5_xor8(k[i], (const unsigned char*)"\0\0\0\0\0\0\0\xf0");
     }
 }

@@ -65,7 +65,7 @@ krb5_DES_random_to_key(krb5_context context,
     memcpy(k, data, key->keyvalue.length);
     DES_set_odd_parity(k);
     if(DES_is_weak_key(k))
-	_krb5_xor(k, (const unsigned char*)"\0\0\0\0\0\0\0\xf0");
+	_krb5_xor8(*k, (const unsigned char*)"\0\0\0\0\0\0\0\xf0");
 }
 
 static struct _krb5_key_type keytype_des_old = {

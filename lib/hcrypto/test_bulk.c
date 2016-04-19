@@ -160,7 +160,8 @@ test_bulk_cipher(const char *cname, const EVP_CIPHER *c)
 	    errx(1, "encrypt/decrypt inconsistent");
     }
 
-    printf("%s: mean time %llu usec%s\n", cname, M, (M == 1) ? "" : "s");
+    printf("%s: mean time %llu usec%s\n", cname, (unsigned long long)M,
+           (M == 1) ? "" : "s");
 
     return 0;
 }
@@ -184,7 +185,8 @@ test_bulk_digest(const char *cname, const EVP_MD *md)
         STATS_END(M);
     }
 
-    printf("%s: mean time %llu usec%s\n", cname, M, (M == 1) ? "" : "s");
+    printf("%s: mean time %llu usec%s\n", cname, (unsigned long long)M,
+           (M == 1) ? "" : "s");
 
     return 0;
 }

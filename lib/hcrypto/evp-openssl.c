@@ -352,6 +352,8 @@ get_EVP_MD_once_cb(void *d)
     }
 
     /* Build the hc_EVP_MD */
+    hc_evp->block_size = EVP_MD_block_size(ossl_evp);
+    hc_evp->hash_size = EVP_MD_size(ossl_evp);
     hc_evp->ctx_size = sizeof(struct ossl_md_ctx);
     hc_evp->init = arg->md_init;
     hc_evp->update = ossl_md_update;

@@ -123,7 +123,6 @@ LEX_CMD=flex.exe
 PYTHON=python.exe
 PERL=perl.exe
 CMP=cmp.exe
-SIGNTOOL=signtool.exe
 MAKECAT=makecat.exe
 HHC=hhc.exe
 MAKEINFO=makeinfo.exe
@@ -247,7 +246,7 @@ RC2RES = $(RC2RES_C) -fo $@ $**
 
 REQUIRED_TOOLS= \
 	"$(AWK_CMD)" "$(YACC_CMD)" "$(LEX_CMD)" "$(PYTHON)" "$(PERL)" \
-	"$(CMP)" "$(SED)" "$(SIGNTOOL)" "$(MAKECAT)" "$(MAKEINFO)" "$(HHC)"
+	"$(CMP)" "$(SED)" "$(MAKECAT)" "$(MAKEINFO)" "$(HHC)"
 
 !ifdef BUILD_INSTALLERS
 REQUIRED_TOOLS=$(REQUIRED_TOOLS) "$(CANDLE_CMD)" "$(LIGHT_CMD)"
@@ -488,6 +487,10 @@ _VC_MANIFEST_CLEAN= \
 #----------------------------------------------------------------------
 # Code and assembly signing
 #
+#
+# SIGNTOOL is fullpath to signtool.exe from Windows v8.1 or later SDK
+# (earlier versions do not support SHA-2 signatures)
+#
 # SIGNTOOL_C is any set of options required for certificate/private
 # key selection for code signging.
 #
@@ -498,6 +501,10 @@ _VC_MANIFEST_CLEAN= \
 !ifdef CODESIGN
 _CODESIGN=( $(CODESIGN) $@ )
 !else
+
+!ifndef SIGNTOOL
+SIGNTOOL=signtool.exe
+!endif
 
 !ifdef SIGNTOOL_C
 

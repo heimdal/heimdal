@@ -35,13 +35,16 @@ work, but have not been tested.
   (Required for running tests).  These can be found in the Cygwin
   distribution.  MinGW or GnuWin32 may also be used instead of Cygwin.
   However, a recent build of `makeinfo` is required for building the
-  documentation.
+  documentation. Cygwin makeinfo 4.7 is known to work.
 
 * __Certificate for code-signing__: The Heimdal build produces a
   number of Assemblies that should be signed if they are to be
   installed via Windows Installer.  In addition, all executable
   binaries produced by the build including installers can be signed
   and timestamped if a code-signing certificate is available.
+  As of 1 January 2016 Windows 7 and above require the use of sha256
+  signatures.  The signtool.exe provided with Windows SDK 8.1 or
+  later must be used.
 
 [1]: http://wix.sourceforge.net/
 
@@ -82,23 +85,34 @@ work, but have not been tested.
 
         set SIGNTOOL_C=/f c:\mycerts\codesign.pfx
 
+	set SIGNTOOL_C=/n "Certificate Subject Name" /a
+
   - `SIGNTOOL_O`: Signing parameter options for `signtool`. Optional.
 
     E.g.:
 
         set SIGNTOOL_O=/du http://example.com/myheimdal
 
-  - `SIGNTOOL_T`: Timestamp options for `signtool`.  If not specified,
-    defaults to `/t http://timestamp.verisign.com/scripts/timstamp.dll`.
+  - `SIGNTOOL_T`: SHA1 Timestamp URL for `signtool`.  If not specified,
+    defaults to `http://timestamp.verisign.com/scripts/timstamp.dll`.
 
-  - `CODESIGN`: Code signer command.  This environment variable, if
+  - `SIGNTOOL_T_SHA256`: SHA256 Timestamp URL for `signtool`.  If not
+    specified, defaults to `http://timestamp.geotrust.com/tsa`.
+
+  - `CODESIGN`: SHA1 Code signer command.  This environment variable, if
     defined, overrides the `SIGNTOOL_*` variables.  It should be
+    defined to be a command that takes one parameter: the binary to be
+    signed.
+
+  - `CODESIGN_SHA256`: SHA256 Code signer command.  This environment variable, if
+    defined, applies a second SHA256 signature to the parameter.  It should be
     defined to be a command that takes one parameter: the binary to be
     signed.
 
     E.g.:
 
         set CODESIGN=c:\scripts\mycodesigner.cmd
+	set CODESIGN_SHA256=c:\scripts\mycodesigner256.cmd
 
 * Define the code sign public key token.  This is contained in the
   environment variable `CODESIGN_PKT` and is needed to build the
@@ -134,7 +148,7 @@ The build can also be invoked from any subdirectory that contains an
 inter-dependencies between directories and therefore it is recommended
 that a full build be invoked from the root of the source tree.
 
-Tests can be invoked as:
+Tests can be invoked, after a full build, by executing:
 
     nmake /f NTMakefile test
 

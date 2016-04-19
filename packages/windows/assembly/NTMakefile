@@ -96,6 +96,7 @@ $(ASMKRBDIR)\$(ASMKRBNAME).cat: $(ASMKRBDIR)\$(ASMKRBMAN).cdf
 	cd $(ASMKRBDIR)
 	$(MAKECAT) $**
 	$(_CODESIGN)
+	$(_CODESIGN_SHA256)
 	cd $(SRCDIR)
 
 asm-krb: \
@@ -170,6 +171,7 @@ $(POLKRBCAT): $(POLKRBFILE).cdf
 	cd $(POLKRBDIR)
 	$(MAKECAT) $**
 	$(_CODESIGN)
+	$(_CODESIGN_SHA256)
 	cd $(SRCDIR)
 
 all:: $(POLKRBFILE) $(POLKRBCAT)

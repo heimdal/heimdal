@@ -500,6 +500,7 @@ _VC_MANIFEST_CLEAN= \
 
 !ifdef CODESIGN
 _CODESIGN=( $(CODESIGN) $@ )
+_CODESIGN_SHA256=( $(CODESIGN_SHA256) $@ )
 !else
 
 !ifndef SIGNTOOL
@@ -509,10 +510,14 @@ SIGNTOOL=signtool.exe
 !ifdef SIGNTOOL_C
 
 !ifndef SIGNTOOL_T
-SIGNTOOL_T=/t http://timestamp.verisign.com/scripts/timstamp.dll
+SIGNTOOL_T=http://timestamp.verisign.com/scripts/timstamp.dll
+!endif
+!ifndef SIGNTOOL_T_SHA256
+SIGNTOOL_T_SHA256=http://timestamp.geotrust.com/tsa
 !endif
 
-_CODESIGN=( $(SIGNTOOL) sign $(SIGNTOOL_O) $(SIGNTOOL_T) $(SIGNTOOL_C) /v $@ )
+_CODESIGN=( $(SIGNTOOL) sign /fd sha1 $(SIGNTOOL_O) /t $(SIGNTOOL_T) $(SIGNTOOL_C) /v $@ )
+_CODESIGN_SHA256=( $(SIGNTOOL) sign /as /fd sha256 $(SIGNTOOL_O) /tr $(SIGNTOOL_T_SHA256) $(SIGNTOOL_C) /v $@ )
 !else
 _CODESIGN=( echo Skipping code sign )
 !endif
@@ -546,22 +551,22 @@ SYMSTORE_IMPORT=@echo No symbol store
 # prepare binaries.
 
 EXEPREP=\
-( $(_VC_MANIFEST_EMBED_EXE) && $(_VC_MANIFEST_CLEAN) && $(SYMSTORE_IMPORT) && $(_CODESIGN) ) || ( $(RM) $@ && exit /b 1 )
+( $(_VC_MANIFEST_EMBED_EXE) && $(_VC_MANIFEST_CLEAN) && $(SYMSTORE_IMPORT) && $(_CODESIGN) && $(_CODESIGN_SHA256) ) || ( $(RM) $@ && exit /b 1 )
 
 EXEPREP_NOHEIM=\
-( $(_VC_MANIFEST_EMBED_EXE_NOHEIM) && $(_VC_MANIFEST_CLEAN) && $(SYMSTORE_IMPORT) && $(_CODESIGN) ) || ( $(RM) $@ && exit /b 1 )
+( $(_VC_MANIFEST_EMBED_EXE_NOHEIM) && $(_VC_MANIFEST_CLEAN) && $(SYMSTORE_IMPORT) && $(_CODESIGN) && $(_CODESIGN_SHA256) ) || ( $(RM) $@ && exit /b 1 )
 
 EXEPREP_NODIST=\
 ( $(_VC_MANIFEST_EMBED_EXE_NOHEIM) && $(_VC_MANIFEST_CLEAN) && $(SYMSTORE_IMPORT) ) || ( $(RM) $@ && exit /b 1 )
 
 DLLPREP=\
-( $(_VC_MANIFEST_EMBED_DLL) && $(_VC_MANIFEST_CLEAN) && $(SYMSTORE_IMPORT) && $(_CODESIGN) ) || ( $(RM) $@ && exit /b 1 )
+( $(_VC_MANIFEST_EMBED_DLL) && $(_VC_MANIFEST_CLEAN) && $(SYMSTORE_IMPORT) && $(_CODESIGN) && $(_CODESIGN_SHA256) ) || ( $(RM) $@ && exit /b 1 )
 
 DLLPREP_NODIST=\
 ( $(_VC_MANIFEST_EMBED_DLL) && $(_VC_MANIFEST_CLEAN) && $(SYMSTORE_IMPORT) ) || ( $(RM) $@ && exit /b 1 )
 
 DLLPREP_MERGE=\
-( ( $(_MERGE_MANIFEST_DLL) || $(_INSERT_APPMANIFEST_DLL) && $(SYMSTORE_IMPORT) ) && $(_CODESIGN) ) || ( $(RM) $@ && exit /b 1 )
+( ( $(_MERGE_MANIFEST_DLL) || $(_INSERT_APPMANIFEST_DLL) && $(SYMSTORE_IMPORT) ) && $(_CODESIGN) && $(_CODESIGN_SHA256) ) || ( $(RM) $@ && exit /b 1 )
 
 #----------------------------------------------------------------------
 # Convenience macros for import libraries and assemblies

@@ -96,8 +96,10 @@ _hc_w32crypto_DllMain(HINSTANCE hinstDLL,
     {							    \
 	if (wincng_check_availability())		    \
 	    return hc_EVP_wincng_ ##name ();		    \
-	else						    \
+	else if (HCRYPTO_FALLBACK)			    \
 	    return hc_EVP_hcrypto_ ##name ();		    \
+	else						    \
+	    return NULL;				    \
     }
 
 #define EVP_W32CRYPTO_PROVIDER_CNG_UNAVAILABLE(type, name)  \

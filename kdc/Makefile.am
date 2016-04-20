@@ -19,9 +19,9 @@ man_MANS = kdc.8 kstash.8 hprop.8 hpropd.8 string2key.8
 hprop_SOURCES = hprop.c mit_dump.c hprop.h
 hpropd_SOURCES = hpropd.c hprop.h
 
-kstash_SOURCES = kstash.c headers.h $(srcdir)/kdc-protos.h
+kstash_SOURCES = kstash.c headers.h
 
-string2key_SOURCES = string2key.c headers.h $(srcdir)/kdc-protos.h
+string2key_SOURCES = string2key.c headers.h
 
 digest_service_SOURCES = \
 	digest-service.c
@@ -58,7 +58,7 @@ ALL_OBJECTS  = $(kdc_OBJECTS)
 ALL_OBJECTS += $(kdc_replay_OBJECTS)
 ALL_OBJECTS += $(kdc_tester_OBJECTS)
 ALL_OBJECTS += $(libkdc_la_OBJECTS)
-ALL_OBJECTS += $(string_to_key_OBJECTS)
+ALL_OBJECTS += $(string2key_OBJECTS)
 ALL_OBJECTS += $(kstash_OBJECTS)
 ALL_OBJECTS += $(hprop_OBJECTS)
 ALL_OBJECTS += $(hpropd_OBJECTS)

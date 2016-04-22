@@ -211,6 +211,10 @@ krb5_parse_name_flags(krb5_context context,
     int enterprise = flags & KRB5_PRINCIPAL_PARSE_ENTERPRISE;
     int ignore_realm = flags & KRB5_PRINCIPAL_PARSE_IGNORE_REALM;
     int no_def_realm = flags & KRB5_PRINCIPAL_PARSE_NO_DEF_REALM;
+    int srv_and_inst = 0;
+
+    if (!strncasecmp(name, KRB5_TGS_NAME, 6))
+        srv_and_inst = 1;
 
     *principal = NULL;
 
@@ -348,6 +352,8 @@ krb5_parse_name_flags(krb5_context context,
     }
     if (enterprise)
 	(*principal)->name.name_type = KRB5_NT_ENTERPRISE_PRINCIPAL;
+    else if (srv_and_inst)
+        (*principal)->name.name_type = KRB5_NT_SRV_INST;
     else
 	(*principal)->name.name_type = KRB5_NT_PRINCIPAL;
     (*principal)->name.name_string.val = comp;

@@ -404,6 +404,8 @@ get_EVP_MD(heim_base_once_t *once, hc_EVP_MD *hc_memoize,
 
 #else /* HAVE_HCRYPTO_W_OPENSSL */
 
+#include "evp-hcrypto.h"
+
 #define OSSL_CIPHER_ALGORITHM(name, flags)                              \
     const hc_EVP_CIPHER *hc_EVP_ossl_##name(void)                       \
     {                                                                   \

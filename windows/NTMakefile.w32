@@ -520,6 +520,7 @@ _CODESIGN=( $(SIGNTOOL) sign /fd sha1 $(SIGNTOOL_O) /t $(SIGNTOOL_T) $(SIGNTOOL_
 _CODESIGN_SHA256=( $(SIGNTOOL) sign /as /fd sha256 $(SIGNTOOL_O) /tr $(SIGNTOOL_T_SHA256) $(SIGNTOOL_C) /v $@ )
 !else
 _CODESIGN=( echo Skipping code sign )
+_CODESIGN_SHA256=( echo Skipping sha256 code sign )
 !endif
 
 !endif

@@ -3,7 +3,7 @@
 include $(top_srcdir)/Makefile.am.common
 
 if HAVE_HCRYPTO_W_OPENSSL
-AM_CPPFLAGS += -I$(INCLUDE_openssl_crypto)
+AM_CPPFLAGS += $(INCLUDE_openssl_crypto)
 endif
 
 AM_CPPFLAGS += -I$(top_srcdir)/lib/hx509 \

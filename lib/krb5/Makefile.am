@@ -2,7 +2,7 @@
 
 include $(top_srcdir)/Makefile.am.common
 
-AM_CPPFLAGS += -I../com_err -I$(srcdir)/../com_err $(INCLUDE_sqlite3) $(INCLUDE_libintl)
+AM_CPPFLAGS += -I../com_err -I$(srcdir)/../com_err $(INCLUDE_sqlite3) $(INCLUDE_libintl) $(INCLUDE_openssl_crypto)
 
 bin_PROGRAMS = verify_krb5_conf
 

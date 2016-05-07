@@ -1,5 +1,7 @@
 include $(top_srcdir)/Makefile.am.common
 
+AM_CPPFLAGS += $(INCLUDE_openssl_crypto)
+
 lib_LTLIBRARIES = libhx509.la
 libhx509_la_LDFLAGS = -version-info 5:0:0
 

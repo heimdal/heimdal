@@ -94,6 +94,8 @@ if test "$with_openssl" = "yes"; then
         with_openssl=/usr
 fi
 if test "$with_openssl" != "no"; then
+        saved_CFLAGS="${CFLAGS}"
+        saved_LDFLAGS="${LDFLAGS}"
 	INCLUDE_openssl_crypto=
 	LIB_openssl_crypto=
 	if test "$with_openssl_include" != ""; then
@@ -103,8 +105,11 @@ if test "$with_openssl" != "no"; then
 	fi
 	if test "$with_openssl_lib" != ""; then
 		LIB_openssl_crypto="-L${with_openssl_lib}"
+        elif test "${with_openssl}" != "/usr" -a -d "${with_openssl}/lib"; then
+                LIB_openssl_crypto="-L${with_openssl}/lib -Wl,-R,${with_openssl}/lib"
 	fi
 	CFLAGS="-DHAVE_HCRYPTO_W_OPENSSL -I${INCLUDE_openssl_crypto} ${CFLAGS}"
+        LDFLAGS="${LIB_openssl_crypto} ${LDFLAGS}"
         # XXX What about rpath?  Yeah...
         AC_CHECK_LIB([crypto], [OPENSSL_init],
                      [LIB_openssl_crypto="${LIB_openssl_crypto} -lcrypto"; openssl=yes], [openssl=no], [])
@@ -122,6 +127,8 @@ if test "$with_openssl" != "no"; then
                 AC_CHECK_LIB([crypto], [OPENSSL_init],
                              [LIB_openssl_crypto="${LIB_openssl_crypto} -lcrypto -ldl -lnsl -lsocket"; openssl=yes], [openssl=no], [-ldl -lnsl -lsocket])
         fi
+        CFLAGS="${saved_CFLAGS}"
+        LDFLAGS="${saved_LDFLAGS}"
 fi
 
 LIB_hcrypto='$(top_builddir)/lib/hcrypto/libhcrypto.la'

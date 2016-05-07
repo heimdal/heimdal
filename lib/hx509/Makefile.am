@@ -206,10 +206,10 @@ check_PROGRAMS = $(PROGRAM_TESTS) test_soft_pkcs11
 
 LDADD = libhx509.la
 
-test_soft_pkcs11_LDADD = libhx509.la
+test_soft_pkcs11_LDADD = libhx509.la $(top_builddir)/lib/asn1/libasn1.la
 
-test_name_LDADD = libhx509.la $(LIB_roken)
-test_expr_LDADD = libhx509.la $(LIB_roken)
+test_name_LDADD = libhx509.la $(LIB_roken) $(top_builddir)/lib/asn1/libasn1.la
+test_expr_LDADD = libhx509.la $(LIB_roken) $(top_builddir)/lib/asn1/libasn1.la
 
 TESTS = $(SCRIPT_TESTS) $(PROGRAM_TESTS)
 

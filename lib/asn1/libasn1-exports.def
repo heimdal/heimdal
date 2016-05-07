@@ -58,9 +58,15 @@ EXPORTS
 	asn1_oid_id_ecPublicKey	DATA
 	asn1_oid_id_ec_group_secp160r1	DATA
 	asn1_oid_id_ec_group_secp160r2	DATA
+	asn1_oid_id_ec_group_secp224r1	DATA
 	asn1_oid_id_ec_group_secp256r1	DATA
+	asn1_oid_id_ec_group_secp384r1	DATA
+	asn1_oid_id_ec_group_secp521r1	DATA
 	asn1_oid_id_ecdsa_with_SHA1	DATA
+	asn1_oid_id_ecdsa_with_SHA224   DATA
 	asn1_oid_id_ecdsa_with_SHA256	DATA
+	asn1_oid_id_ecdsa_with_SHA384   DATA
+	asn1_oid_id_ecdsa_with_SHA512   DATA
 	asn1_oid_id_heim_rsa_pkcs1_x509	DATA
 	asn1_oid_id_ms_cert_enroll_domaincontroller	DATA
 	asn1_oid_id_ms_client_authentication	DATA

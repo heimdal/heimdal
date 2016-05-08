@@ -1572,6 +1572,8 @@ tgs_build_reply(krb5_context context,
 	hdb_entry_ex *uu;
 	krb5_principal p;
 	Key *uukey;
+	krb5uint32 second_kvno = 0;
+	krb5uint32 *kvno_ptr = NULL;
 
 	if(b->additional_tickets == NULL ||
 	   b->additional_tickets->len == 0){
@@ -1588,8 +1590,12 @@ tgs_build_reply(krb5_context context,
 	    goto out;
 	}
 	_krb5_principalname2krb5_principal(context, &p, t->sname, t->realm);
+	if(t->enc_part.kvno){
+	    second_kvno = *t->enc_part.kvno;
+	    kvno_ptr = &second_kvno;
+	}
 	ret = _kdc_db_fetch(context, config, p,
-			    HDB_F_GET_KRBTGT, t->enc_part.kvno,
+			    HDB_F_GET_KRBTGT, kvno_ptr,
 			    NULL, &uu);
 	krb5_free_principal(context, p);
 	if(ret){

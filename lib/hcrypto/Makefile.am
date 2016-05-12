@@ -2,6 +2,8 @@
 
 include $(top_srcdir)/Makefile.am.common
 
+AUTOMAKE_OPTIONS = subdir-objects
+
 if HAVE_HCRYPTO_W_OPENSSL
 AM_CPPFLAGS += $(INCLUDE_openssl_crypto)
 endif

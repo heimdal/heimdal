@@ -959,13 +959,13 @@ mdb_store(krb5_context context, HDB *db, unsigned flags, hdb_entry_ex *entry)
     if ((flags & HDB_F_PRECHECK)) {
         ret = mdb_principal2key(context, entry->entry.principal, &key);
         if (ret) return ret;
-        code = db->hdb__get(context, db, key, &value);
+        ret = db->hdb__get(context, db, key, &value);
         krb5_data_free(&key);
-        if (code == 0)
+        if (ret == 0)
             krb5_data_free(&value);
-        if (code == HDB_ERR_NOENTRY)
+        if (ret == HDB_ERR_NOENTRY)
             return 0;
-        return code ? code : HDB_ERR_EXISTS;
+        return ret ? ret : HDB_ERR_EXISTS;
     }
 
     sp = krb5_storage_emem();
@@ -1010,6 +1010,7 @@ mdb_remove(krb5_context context, HDB *db,
 {
     krb5_error_code code;
     krb5_data key;
+    krb5_data value = { 0, 0 };
 
     if ((flags & HDB_F_PRECHECK)) {
         code = db->hdb__get(context, db, key, &value);

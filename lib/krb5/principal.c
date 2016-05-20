@@ -1563,7 +1563,7 @@ parse_name_canon_rules(krb5_context context, char **rulestrs,
 	/* Validate parsed rule */
 	if (r[k].type == KRB5_NCRT_BOGUS ||
 	    (r[k].type == KRB5_NCRT_QUALIFY && !r[k].domain) ||
-	    (r[k].type == KRB5_NCRT_NSS && (r[k].domain || r[k].realm))) {
+	    (r[k].type == KRB5_NCRT_NSS && r[k].domain)) {
 	    /* Invalid rule; mark it so and clean up */
 	    r[k].type = KRB5_NCRT_BOGUS;
 	    free(r[k].match_domain);

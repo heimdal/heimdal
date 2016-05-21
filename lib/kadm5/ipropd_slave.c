@@ -150,7 +150,7 @@ get_creds(krb5_context context, const char *keytab_str,
     ret = krb5_cc_new_unique(context, krb5_cc_type_memory, NULL, cache);
     if(ret) krb5_err(context, 1, ret, "krb5_cc_new_unique");
 
-    ret = krb5_cc_initialize(context, *cache, client);
+    ret = krb5_cc_initialize(context, *cache, creds.client);
     if(ret) krb5_err(context, 1, ret, "krb5_cc_initialize");
 
     ret = krb5_cc_store_cred(context, *cache, &creds);

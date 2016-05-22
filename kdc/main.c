@@ -46,6 +46,7 @@ sig_atomic_t exit_flag = 0;
 
 int detach_from_console = -1;
 int daemon_child = -1;
+int do_bonjour = -1;
 
 static RETSIGTYPE
 sigchld(int sig)
@@ -172,7 +173,7 @@ main(int argc, char **argv)
 
     switch_environment();
 
-    start_kdc(context, config);
+    start_kdc(context, config, argv[0]);
     krb5_free_context(context);
     return 0;
 }

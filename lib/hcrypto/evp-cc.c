@@ -50,6 +50,7 @@
 #endif
 
 #include <evp.h>
+#include <evp-hcrypto.h>
 #include <evp-cc.h>
 
 /*

@@ -47,6 +47,7 @@ struct port_desc{
 
 static struct port_desc *ports;
 static size_t num_ports;
+static pid_t bonjour_pid = -1;
 
 /*
  * add `family, port, protocol' to the list with duplicate suppresion.
@@ -258,6 +259,7 @@ init_socket(krb5_context context,
 	d->s = rk_INVALID_SOCKET;
 	return;
     }
+    rk_cloexec(d->s);
 #if defined(HAVE_SETSOCKOPT) && defined(SOL_SOCKET) && defined(SO_REUSEADDR)
     {
 	int one = 1;
@@ -833,11 +835,11 @@ handle_tcp(krb5_context context,
 static void
 handle_islive(int fd)
 {
-    char buf[2];
+    char buf;
     int ret;
 
-    ret = read(fd, buf, 2);
-    if (ret == 0)
+    ret = read(fd, &buf, 1);
+    if (ret != 1)
 	exit_flag = -1;
 }
 #endif
@@ -971,17 +973,28 @@ loop(krb5_context context, krb5_kdc_configuration *config,
 
 #ifdef __APPLE__
 static void
-bonjour_kid(krb5_context context, krb5_kdc_configuration *config, int islive)
+bonjour_kid(krb5_context context, krb5_kdc_configuration *config, const char *argv0, int *islive)
 {
-    char buf[2];
+    char buf;
 
-    if (fork())
+    if (do_bonjour > 0) {
+	bonjour_announce(context, config);
+
+	while (read(0, &buf, 1) == 1)
+	    continue;
+	_exit(0);
+    }
+
+    if ((bonjour_pid = fork()) != 0)
 	return;
-    bonjour_announce(context, config);
 
-    while (read(islive, buf, 1) != 0)
-	;
-    exit(0);
+    close(islive[0]);
+    if (dup2(islive[1], 0) == -1)
+	err(1, "failed to announce with bonjour (dup)");
+    if (islive[1] != 0)
+        close(islive[1]);
+    execlp(argv0, "kdc", "--bonjour", NULL);
+    err(1, "failed to announce with bonjour (exec)");
 }
 #endif
 
@@ -994,6 +1007,8 @@ kill_kids(pid_t *pids, int max_kids, int sig)
     for (i=0; i < max_kids; i++)
 	if (pids[i] > 0)
 	    kill(sig, pids[i]);
+    if (bonjour_pid > 0)
+        kill(sig, bonjour_pid);
 }
 
 static int
@@ -1001,6 +1016,7 @@ reap_kid(krb5_context context, krb5_kdc_configuration *config,
 	 pid_t *pids, int max_kids, int options)
 {
     pid_t pid;
+    char *what;
     int status;
     int i;
 
@@ -1008,21 +1024,39 @@ reap_kid(krb5_context context, krb5_kdc_configuration *config,
     if (pid < 1)
 	return 0;
 
-    for (i=0; i < max_kids; i++) {
-	if (pids[i] == pid)
-	    break;
+    if (pid != bonjour_pid) {
+        for (i=0; i < max_kids; i++) {
+            if (pids[i] == pid)
+                break;
+        }
+
+        if (i == max_kids) {
+            /* XXXrcd: this should not happen, have to do something, though */
+            return 0;
+        }
     }
 
-    if (i == max_kids) {
-	/* XXXrcd: this should not happen, have to do something, though */
-	return 0;
+    if (pid == bonjour_pid)
+        what = "bonjour";
+    else
+        what = "worker";
+    if (WIFEXITED(status))
+        kdc_log(context, config, 0, "KDC reaped %s process: %d, exit status: %d",
+                what, (int)pid, WEXITSTATUS(status));
+    else if (WIFSIGNALED(status))
+        kdc_log(context, config, 0, "KDC reaped %s process: %d, term signal %d%s",
+                what, (int)pid, WTERMSIG(status),
+                WCOREDUMP(status) ? " (core dumped)" : "");
+    else
+        kdc_log(context, config, 0, "KDC reaped %s process: %d",
+                what, (int)pid);
+    if (pid == bonjour_pid) {
+        bonjour_pid = (pid_t)-1;
+        return 0;
+    } else {
+        pids[i] = (pid_t)-1;
+        return 1;
     }
-
-    /* XXXrcd: should likely log exit code and the like */
-    kdc_log(context, config, 0, "KDC worker process reaped: %d", pid);
-    pids[i] = (pid_t)-1;
-
-    return 1;
 }
 
 static int
@@ -1053,7 +1087,7 @@ select_sleep(int microseconds)
 
 void
 start_kdc(krb5_context context,
-	  krb5_kdc_configuration *config)
+	  krb5_kdc_configuration *config, const char *argv0)
 {
     struct timeval tv1;
     struct timeval tv2;
@@ -1066,6 +1100,11 @@ start_kdc(krb5_context context,
     int num_kdcs = 0;
     int i;
     int islive[2];
+#endif
+
+#ifdef __APPLE__
+    if (do_bonjour > 0)
+        bonjour_kid(context, config, argv0, NULL);
 #endif
 
 #ifdef HAVE_FORK
@@ -1099,9 +1138,10 @@ start_kdc(krb5_context context,
 
 #ifdef HAVE_FORK
 
-#ifdef __APPLE__
-    bonjour_kid(context, config, islive[1]); /* fork()s */
-#endif
+# ifdef __APPLE__
+    if (do_bonjour < 0)
+        bonjour_kid(context, config, argv0, islive);
+# endif
 
     kdc_log(context, config, 0, "KDC started master process pid=%d", getpid());
 #else
@@ -1165,34 +1205,49 @@ start_kdc(krb5_context context,
     close(islive[0]);
     close(islive[1]);
 
-    gettimeofday(&tv1, NULL);
+    /* Close our listener sockets before terminating workers */
+    for (i = 0; i < ndescr; ++i)
+        clear_descr(&d[i]);
 
+    gettimeofday(&tv1, NULL);
+    tv2 = tv1;
+
+    /* Reap every 10ms, terminate stragglers once a second, give up after 10 */
     for (;;) {
+        struct timeval tv3;
 	num_kdcs -= reap_kids(context, config, pids, max_kdcs);
-	if (num_kdcs == 0)
-	    break;
+	if (num_kdcs == 0 && bonjour_pid <= 0)
+	    goto end;
 	/*
 	 * Using select to sleep will fail with EINTR if we receive a
 	 * SIGCHLD.  This is desirable.
 	 */
-	select_sleep(200000);
-	kill_kids(pids, max_kdcs, SIGTERM);
-	gettimeofday(&tv2, NULL);
-	if (tv2.tv_sec - tv1.tv_sec > 10)
+	select_sleep(10000);
+	gettimeofday(&tv3, NULL);
+        if (tv3.tv_sec - tv1.tv_sec > 10 ||
+            (tv3.tv_sec - tv1.tv_sec == 10 && tv3.tv_usec >= tv1.tv_usec))
 	    break;
+	if (tv3.tv_sec - tv2.tv_sec > 1 ||
+            (tv3.tv_sec - tv2.tv_sec == 1 && tv3.tv_usec >= tv2.tv_usec)) {
+            kill_kids(pids, max_kdcs, SIGTERM);
+            tv2 = tv3;
+        }
     }
 
+    /* Kill stragglers and reap every 200ms, give up after 15s */
     for (;;) {
 	kill_kids(pids, max_kdcs, SIGKILL);
 	num_kdcs -= reap_kids(context, config, pids, max_kdcs);
-	if (num_kdcs == 0)
+	if (num_kdcs == 0 && bonjour_pid <= 0)
 	    break;
 	select_sleep(200000);
 	gettimeofday(&tv2, NULL);
-	if (tv2.tv_sec - tv1.tv_sec > 15)
+        if (tv2.tv_sec - tv1.tv_sec > 15 ||
+            (tv2.tv_sec - tv1.tv_sec == 15 && tv2.tv_usec >= tv1.tv_usec))
 	    break;
     }
 
+ end:
     kdc_log(context, config, 0, "KDC master process exiting", pid);
     free(pids);
 #else

@@ -348,8 +348,10 @@ static const char *sysplugin_dirs[] =  {
 #endif
 #ifdef __APPLE__
     LIBDIR "/plugin/krb5",
+#ifdef HEIM_PLUGINS_SEARCH_SYSTEM
     "/Library/KerberosPlugins/KerberosFrameworkPlugins",
     "/System/Library/KerberosPlugins/KerberosFrameworkPlugins",
+#endif
 #endif
     NULL
 };

@@ -376,7 +376,10 @@ iprop_truncate(struct truncate_options *opt, int argc, char **argv)
         opt->max_bytes_integer = 0;
 
     if (opt->reset_flag) {
-        ret = kadm5_log_reinit(server_context);
+        /* First recover unconfirmed records */
+        ret = kadm5_log_init(server_context);
+        if (ret == 0)
+            ret = kadm5_log_reinit(server_context, 0);
     } else {
         ret = kadm5_log_init(server_context);
         if (ret)

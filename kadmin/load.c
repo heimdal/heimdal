@@ -362,7 +362,7 @@ parse_extensions(char *str, HDB_extensions **e)
 static int
 doit(const char *filename, int mergep)
 {
-    krb5_error_code ret;
+    krb5_error_code ret = 0;
     FILE *f;
     char s[8192]; /* XXX should fix this properly */
     char *p;
@@ -378,13 +378,18 @@ doit(const char *filename, int mergep)
 	return 1;
     }
     /*
-     * We don't have a version number in the dump, so we don't know
-     * which iprop log entries to keep, if any.  We throw the log away.
+     * We don't have a version number in the dump, so we don't know which iprop
+     * log entries to keep, if any.  We throw the log away.
      *
-     * We could merge the ipropd-master/slave dump/load here as an
-     * option, in which case we would first load the dump.
+     * We could merge the ipropd-master/slave dump/load here as an option, in
+     * which case we would first load the dump.
+     *
+     * If we're merging, first recover unconfirmed records in the existing log.
      */
-    ret = kadm5_log_reinit(kadm_handle);
+    if (mergep)
+        ret = kadm5_log_init(kadm_handle);
+    if (ret == 0)
+        ret = kadm5_log_reinit(kadm_handle, 0);
     if (ret) {
 	fclose (f);
 	krb5_warn(context, ret, "kadm5_log_reinit");

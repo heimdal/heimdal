@@ -157,7 +157,7 @@ init(struct init_options *opt, int argc, char **argv)
 	krb5_warn(context, ret, "hdb_open");
 	return 0;
     }
-    ret = kadm5_log_reinit(kadm_handle);
+    ret = kadm5_log_reinit(kadm_handle, 0);
     if (ret)
         krb5_err(context, 1, ret, "Failed iprop log initialization");
     kadm5_log_end(kadm_handle);

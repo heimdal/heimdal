@@ -2198,6 +2198,7 @@ kadm5_log_previous(krb5_context context,
     if (oldoff == -1)
         goto log_corrupt;
 
+    /* This reads the physical version of the uber record */
     if (seek_prev(sp, verp, lenp) == -1)
         goto log_corrupt;
 
@@ -2256,6 +2257,7 @@ struct load_entries_data {
     krb5_data *entries;
     unsigned char *p;
     uint32_t first;
+    uint32_t last;
     size_t bytes;
     size_t nentries;
     size_t maxbytes;
@@ -2303,14 +2305,16 @@ load_entries_cb(kadm5_server_context *server_context,
          * If the log was huge we'd have to perhaps open a temp file for this.
          * For now KISS.
          */
-        if (ver < 2 /*1=uber*/ || entry_len < len /*overflow?*/ ||
+        if ((op == kadm_nop && entry_len == LOG_UBER_SZ) ||
+            entry_len < len /*overflow?*/ ||
             (entries->maxbytes > 0 && total > entries->maxbytes) ||
             total < entries->bytes /*overflow?*/ ||
             (entries->maxentries > 0 && entries->nentries == entries->maxentries))
             return -1; /* stop iteration */
         entries->bytes = total;
         entries->first = ver;
-        ++entries->nentries;
+        if (entries->nentries++ == 0)
+            entries->last = ver;
         return 0;
     }
 
@@ -2359,7 +2363,8 @@ load_entries_cb(kadm5_server_context *server_context,
  */
 static kadm5_ret_t
 load_entries(kadm5_server_context *context, krb5_data *p,
-             size_t maxentries, size_t maxbytes, uint32_t *first)
+             size_t maxentries, size_t maxbytes,
+             uint32_t *first, uint32_t *last)
 {
     struct load_entries_data entries;
     kadm5_ret_t ret;
@@ -2393,6 +2398,7 @@ load_entries(kadm5_server_context *context, krb5_data *p,
         return ret;
 
     *first = entries.first;
+    *last = entries.last;
     entries.entries = p;
     base = (unsigned char *)entries.entries->data;
     entries.p = base + entries.bytes;
@@ -2415,7 +2421,7 @@ kadm5_ret_t
 kadm5_log_truncate(kadm5_server_context *context, size_t keep, size_t maxbytes)
 {
     kadm5_ret_t ret;
-    uint32_t first, last_tstamp;
+    uint32_t first, last, last_tstamp;
     time_t now = time(NULL);
     krb5_data entries;
     krb5_storage *sp;
@@ -2434,7 +2440,7 @@ kadm5_log_truncate(kadm5_server_context *context, size_t keep, size_t maxbytes)
 
     /* Get the desired records. */
     krb5_data_zero(&entries);
-    ret = load_entries(context, &entries, keep, maxbytes, &first);
+    ret = load_entries(context, &entries, keep, maxbytes, &first, &last);
     if (ret)
         return ret;
 
@@ -2442,7 +2448,7 @@ kadm5_log_truncate(kadm5_server_context *context, size_t keep, size_t maxbytes)
         /*
          * No records found/fit within resource limits.  The caller should call
          * kadm5_log_reinit(context) to truly truncate and reset the log to
-         * version 1, else call again with better limits.
+         * version 0, else call again with better limits.
          */
         krb5_data_free(&entries);
         return EINVAL;
@@ -2505,9 +2511,9 @@ kadm5_log_truncate(kadm5_server_context *context, size_t keep, size_t maxbytes)
     if (ret == 0)
         ret = krb5_store_uint64(sp, LOG_UBER_SZ);
     if (ret == 0)
-        ret = krb5_store_uint32(sp, 0);
+        ret = krb5_store_uint32(sp, now);
     if (ret == 0)
-        ret = krb5_store_uint32(sp, context->log_context.version);
+        ret = krb5_store_uint32(sp, last);
     if (ret == 0)
         ret = krb5_store_uint32(sp, LOG_UBER_LEN);
     if (ret == 0)

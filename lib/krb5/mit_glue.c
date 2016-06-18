@@ -378,7 +378,8 @@ krb5_c_prf(krb5_context context,
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_c_random_make_octets(krb5_context context, krb5_data * data)
 {
-    return krb5_generate_random_keyblock(context, data->length, data->data);
+    krb5_generate_random_block(data->data, data->length);
+    return 0;
 }
 
 /**

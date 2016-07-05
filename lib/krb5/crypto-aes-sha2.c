@@ -145,25 +145,18 @@ AES_SHA2_PRF(krb5_context context,
     if (ret)
 	return ret;
 
-    ret = krb5_data_alloc(&label, 3 + in->length);
+    label.data = "prf";
+    label.length = 3;
+
+    ret = krb5_data_alloc(out, EVP_MD_size(md));
     if (ret)
 	return ret;
 
-    memcpy(label.data, "prf", 3);
-    memcpy((unsigned char *)label.data + 3, in->data, in->length);
-
-    ret = krb5_data_alloc(out, EVP_MD_size(md));
-    if (ret) {
-	krb5_data_free(&label);
-	return ret;
-    }
-
     ret = _krb5_SP800_108_HMAC_KDF(context, &crypto->key.key->keyvalue,
-				   &label, NULL, md, out);
+				   &label, in, md, out);
 
     if (ret)
 	krb5_data_free(out);
-    krb5_data_free(&label);
 
     return ret;
 }

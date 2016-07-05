@@ -50,9 +50,9 @@
  */
 krb5_error_code
 _krb5_SP800_108_HMAC_KDF(krb5_context context,
-			 krb5_data *kdf_K1,
-			 krb5_data *kdf_label,
-			 krb5_data *kdf_context,
+			 const krb5_data *kdf_K1,
+			 const krb5_data *kdf_label,
+			 const krb5_data *kdf_context,
 			 const EVP_MD *md,
 			 krb5_data *kdf_K0)
 {

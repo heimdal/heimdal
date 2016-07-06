@@ -39,10 +39,12 @@ struct krb5_pk_cert;
 struct ContentInfo;
 struct AlgorithmIdentifier;
 struct _krb5_krb_auth_data;
+typedef struct krb5_pk_init_ctx_data *krb5_pk_init_ctx;
 struct krb5_dh_moduli;
 struct _krb5_key_data;
 struct _krb5_encryption_type;
 struct _krb5_key_type;
+#include <pkinit_asn1.h>
 #include <krb5-private.h>
 #include <base64.h>
 

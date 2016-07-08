@@ -761,7 +761,12 @@ send_diffs (kadm5_server_context *server_context, slave *s, int log_fd,
         }
 	if (ver == s->version + 1)
 	    break;
-	if (ver == s->version) {
+
+        /*
+         * We don't expect to reach the slave's version, except when it is
+         * starting empty with the uber record.
+         */
+	if (ver == s->version && !(ver == 0 && op == kadm_nop)) {
             /*
              * This shouldn't happen, but recall we're not holding a lock on
              * the log.
@@ -772,7 +777,9 @@ send_diffs (kadm5_server_context *server_context, slave *s, int log_fd,
             send_are_you_there(context, s);
             return 0;
         }
-	if (left == 0) {
+
+        /* If we've reached the uber record, send the complete database */
+	if (left == 0 || (ver == 0 && op == kadm_nop)) {
 	    krb5_storage_free(sp);
 	    krb5_warnx(context,
 		       "slave %s (version %lu) out of sync with master "

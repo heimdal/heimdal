@@ -12,8 +12,7 @@ AM_CPPFLAGS += \
 	-I$(srcdir)/ntlm \
 	-I$(srcdir)/krb5 \
 	-I$(srcdir)/spnego \
-	$(INCLUDE_libintl) \
-	$(INCLUDE_hcrypto)
+	$(INCLUDE_libintl)
 
 lib_LTLIBRARIES = libgssapi.la
 
@@ -271,6 +270,9 @@ $(test_context_OBJECTS): $(BUILTHEADERS)
 $(libgssapi_la_OBJECTS): $(srcdir)/version-script.map
 
 BUILT_SOURCES = $(spnego_files:.x=.c) $(gssapi_files:.x=.c)
+
+$(libgssapi_la_OBJECTS): gkrb5_err.h
+gkrb5_err.h: $(srcdir)/krb5/gkrb5_err.et
 
 CLEANFILES = $(BUILT_SOURCES) \
 	gkrb5_err.h gkrb5_err.c \

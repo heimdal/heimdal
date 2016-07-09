@@ -45,7 +45,8 @@ gss_store_cred(OM_uint32         *minor_status,
 {
     struct _gss_cred *cred = (struct _gss_cred *) input_cred_handle;
     struct _gss_mechanism_cred *mc;
-    OM_uint32 maj, junk;
+    OM_uint32 maj = GSS_S_FAILURE;
+    OM_uint32 junk;
     size_t successes = 0;
 
     if (minor_status == NULL)

@@ -2,6 +2,8 @@
 
 include $(top_srcdir)/Makefile.am.common
 
+libkadm5srv_la_CPPFLAGS = -I$(srcdir)/../krb5
+
 lib_LTLIBRARIES = libkadm5srv.la libkadm5clnt.la
 libkadm5srv_la_LDFLAGS = -version-info 8:1:0
 libkadm5clnt_la_LDFLAGS = -version-info 7:1:0
@@ -106,6 +108,7 @@ dist_libkadm5srv_la_SOURCES =			\
 	randkey_s.c				\
 	rename_s.c				\
 	server_glue.c				\
+	setkey3_s.c				\
 	set_keys.c				\
 	set_modifier.c				\
 	admin.h
@@ -133,7 +136,7 @@ LDADD = \
 	$(top_builddir)/lib/asn1/libasn1.la \
 	$(LIB_hcrypto) \
 	$(LIB_roken) \
-	$(DBLIB) \
+	$(DB3LIB) $(DB1LIB) $(LMDBLIB) $(NDBMLIB) \
 	$(LIB_dlopen) \
 	$(LIB_pidfile)
 
@@ -146,7 +149,7 @@ iprop_log_LDADD = \
 	$(top_builddir)/lib/sl/libsl.la \
 	$(LIB_readline) \
 	$(LIB_roken) \
-	$(DBLIB) \
+	$(DB3LIB) $(DB1LIB) $(LMDBLIB) $(NDBMLIB) \
 	$(LIB_dlopen) \
 	$(LIB_pidfile)
 

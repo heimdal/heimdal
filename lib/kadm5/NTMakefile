@@ -86,6 +86,7 @@ dist_libkadm5srv_la_SOURCES =	\
 	rename_s.c		\
 	server_glue.c		\
 	set_keys.c		\
+	setkey3_s.c		\
 	set_modifier.c		\
 	kadm5-pwcheck.h		\
 	admin.h
@@ -137,6 +138,7 @@ LIBKADM5SRV_OBJS=		    \
 	$(OBJ)\rename_s.obj	    \
 	$(OBJ)\server_glue.obj	    \
 	$(OBJ)\set_keys.obj	    \
+	$(OBJ)\setkey3_s.obj	    \
 	$(OBJ)\set_modifier.obj	    \
 	$(OBJ)\kadm5_err.obj
 

@@ -33,6 +33,12 @@
  * SUCH DAMAGE.
  */
 
+#if defined(HEIM_BASE_MAINTAINER) && defined(ENABLE_PTHREAD_SUPPORT)
+#define HEIM_WIN32_TLS
+#elif defined(WIN32)
+#define HEIM_WIN32_TLS
+#endif
+
 typedef void (*heim_type_init)(void *);
 typedef heim_object_t (*heim_type_copy)(void *);
 typedef int (*heim_type_cmp)(void *, void *);

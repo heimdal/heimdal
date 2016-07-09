@@ -41,7 +41,7 @@ extern int local_flag;
 int
 stash(struct stash_options *opt, int argc, char **argv)
 {
-    char buf[1024];
+    char buf[1024+1];
     krb5_error_code ret;
     krb5_enctype enctype;
     hdb_master_key mkey;
@@ -85,7 +85,7 @@ stash(struct stash_options *opt, int argc, char **argv)
 	salt.saltvalue.length = 0;
 	if(opt->master_key_fd_integer != -1) {
 	    ssize_t n;
-	    n = read(opt->master_key_fd_integer, buf, sizeof(buf));
+	    n = read(opt->master_key_fd_integer, buf, sizeof(buf)-1);
 	    if(n == 0)
 		krb5_warnx(context, "end of file reading passphrase");
 	    else if(n < 0) {

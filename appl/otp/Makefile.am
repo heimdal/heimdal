@@ -2,8 +2,6 @@
 
 include $(top_srcdir)/Makefile.am.common
 
-AM_CPPFLAGS += $(INCLUDE_hcrypto)
-
 bin_PROGRAMS = otp otpprint
 bin_SUIDS = otp
 otp_SOURCES = otp.c otp_locl.h

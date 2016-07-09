@@ -79,6 +79,7 @@ ARCH=64
 
 $(ASMKRBDIR)\$(ASMKRBMAN).nohash: Heimdal.Kerberos.manifest.in
 	$(SED)  -e "s,[@]name[@],$(ASMKRBNAME),g" \
+		-e "s,[@]krbname[@],$(ASMKRBNAME),g" \
 		-e "s,[@]cpu[@],$(MCPU),g" \
 		-e "s,[@]version[@],$(ASMKRBVER),g" \
 		-e "s,[@]pkt[@],$(CODESIGN_PKT),g" \
@@ -95,6 +96,7 @@ $(ASMKRBDIR)\$(ASMKRBNAME).cat: $(ASMKRBDIR)\$(ASMKRBMAN).cdf
 	cd $(ASMKRBDIR)
 	$(MAKECAT) $**
 	$(_CODESIGN)
+	$(_CODESIGN_SHA256)
 	cd $(SRCDIR)
 
 asm-krb: \
@@ -108,8 +110,13 @@ all:: asm-krb
 clean::
 	-$(RM) $(ASMKRBDIR)\*.*
 
+!ifdef APPVEYOR
+test::
+	true
+!else
 test::
 	$(MT) -manifest $(ASMKRBDIR)\$(ASMKRBMAN) -validate_manifest
+!endif
 
 {$(BINDIR)}.dll{$(ASMKRBDIR)}.dll:
 	$(CP) $< $@
@@ -132,8 +139,13 @@ $(APPMANIFEST): Heimdal.Application.manifest.in
 		-e "s,[@]cpu[@],$(MCPU),g" \
 		-e "s,[@]pkt[@],$(CODESIGN_PKT),g" < $** > $@
 
+!ifdef APPVEYOR
+test::
+	true
+!else
 test::
 	$(MT) -manifest $(APPMANIFEST) -validate_manifest
+!endif
 
 # ----------------------------------------------------------------------
 # Publisher configuration files
@@ -159,6 +171,7 @@ $(POLKRBCAT): $(POLKRBFILE).cdf
 	cd $(POLKRBDIR)
 	$(MAKECAT) $**
 	$(_CODESIGN)
+	$(_CODESIGN_SHA256)
 	cd $(SRCDIR)
 
 all:: $(POLKRBFILE) $(POLKRBCAT)

@@ -34,11 +34,11 @@
 
 #include "hdb_locl.h"
 
-#if HAVE_MDB
+#if HAVE_LMDB
 
-/* OpenLDAP MDB */
+/* LMDB */
 
-#include <mdb.h>
+#include <lmdb.h>
 
 #define	KILO	1024
 
@@ -172,12 +172,16 @@ DB_rename(krb5_context context, HDB *db, const char *new_name)
     int ret;
     char *old, *new;
 
+    if (strncmp(new_name, "mdb:", sizeof("mdb:") - 1) == 0)
+        new_name += sizeof("mdb:") - 1;
+    else if (strncmp(new_name, "lmdb:", sizeof("lmdb:") - 1) == 0)
+        new_name += sizeof("lmdb:") - 1;
     if (asprintf(&old, "%s.mdb", db->hdb_name) == -1)
 		return ENOMEM;
     if (asprintf(&new, "%s.mdb", new_name) == -1) {
 		free(old);
 		return ENOMEM;
-	}
+    }
     ret = rename(old, new);
     free(old);
     free(new);
@@ -394,4 +398,4 @@ hdb_mdb_create(krb5_context context, HDB **db,
     (*db)->hdb_destroy = DB_destroy;
     return 0;
 }
-#endif /* HAVE_MDB */
+#endif /* HAVE_LMDB */

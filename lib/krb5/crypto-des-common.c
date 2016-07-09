@@ -40,9 +40,8 @@
  */
 
 KRB5_LIB_FUNCTION void KRB5_LIB_CALL
-_krb5_xor (DES_cblock *key, const unsigned char *b)
+_krb5_xor8(unsigned char *a, const unsigned char *b)
 {
-    unsigned char *a = (unsigned char*)key;
     a[0] ^= b[0];
     a[1] ^= b[1];
     a[2] ^= b[2];

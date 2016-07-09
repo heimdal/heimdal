@@ -162,8 +162,8 @@ _krb5_cc_allocate(krb5_context context,
 {
     krb5_ccache p;
 
-    p = malloc (sizeof(*p));
-    if(p == NULL) {
+    p = calloc(1, sizeof(*p));
+    if (p == NULL) {
 	krb5_set_error_message(context, KRB5_CC_NOMEM,
 			       N_("malloc: out of memory", ""));
 	return KRB5_CC_NOMEM;
@@ -513,11 +513,12 @@ krb5_cc_set_default_name(krb5_context context, const char *name)
     krb5_error_code ret = 0;
     char *p = NULL, *exp_p = NULL;
     int filepath;
+    const krb5_cc_ops *ops = KRB5_DEFAULT_CCTYPE;
 
     if (name == NULL) {
 	const char *e = NULL;
 
-	if(!issuid()) {
+	if (!issuid()) {
 	    e = getenv("KRB5CCNAME");
 	    if (e) {
 		p = strdup(e);
@@ -528,11 +529,11 @@ krb5_cc_set_default_name(krb5_context context, const char *name)
 	}
 
 #ifdef _WIN32
-        if (e == NULL) {
-            e = p = _krb5_get_default_cc_name_from_registry(context);
+	if (p == NULL) {
+	    p = _krb5_get_default_cc_name_from_registry(context);
         }
 #endif
-	if (e == NULL) {
+	if (p == NULL) {
 	    e = krb5_config_get_string(context, NULL, "libdefaults",
 				       "default_cc_name", NULL);
 	    if (e) {
@@ -540,33 +541,63 @@ krb5_cc_set_default_name(krb5_context context, const char *name)
 		if (ret)
 		    return ret;
 	    }
-	    if (e == NULL) {
-		const krb5_cc_ops *ops = KRB5_DEFAULT_CCTYPE;
-		e = krb5_config_get_string(context, NULL, "libdefaults",
-					   "default_cc_type", NULL);
-		if (e) {
-		    ops = krb5_cc_get_prefix_ops(context, e);
-		    if (ops == NULL) {
-			krb5_set_error_message(context,
-					       KRB5_CC_UNKNOWN_TYPE,
-					       "Credential cache type %s "
-					      "is unknown", e);
-			return KRB5_CC_UNKNOWN_TYPE;
-		    }
+	}
+	if (p == NULL) {
+	    e = krb5_config_get_string(context, NULL, "libdefaults",
+				       "default_cc_type", NULL);
+	    if (e) {
+		ops = krb5_cc_get_prefix_ops(context, e);
+		if (ops == NULL) {
+		    krb5_set_error_message(context,
+					   KRB5_CC_UNKNOWN_TYPE,
+					   "Credential cache type %s "
+					   "is unknown", e);
+		    return KRB5_CC_UNKNOWN_TYPE;
 		}
-		ret = (*ops->get_default_name)(context, &p);
-		if (ret)
-		    return ret;
 	    }
+	}
+#ifdef _WIN32
+	if (p == NULL) {
+	    /*
+	     * If the MSLSA ccache type has a principal name,
+	     * use it as the default.
+	     */
+	    krb5_ccache id;
+	    ret = krb5_cc_resolve(context, "MSLSA:", &id);
+	    if (ret == 0) {
+		krb5_principal princ;
+		ret = krb5_cc_get_principal(context, id, &princ);
+		if (ret == 0) {
+		    krb5_free_principal(context, princ);
+		    p = strdup("MSLSA:");
+		}
+		krb5_cc_close(context, id);
+	    }
+	}
+	if (p == NULL) {
+	    /*
+	     * If the API:krb5cc ccache can be resolved,
+	     * use it as the default.
+	     */
+	    krb5_ccache api_id;
+	    ret = krb5_cc_resolve(context, "API:krb5cc", &api_id);
+	    if (ret == 0)
+		krb5_cc_close(context, api_id);
+	}
+	/* Otherwise, fallback to the FILE ccache */
+#endif
+	if (p == NULL) {
+	    ret = (*ops->get_default_name)(context, &p);
+	    if (ret)
+		return ret;
 	}
 	context->default_cc_name_set = 0;
     } else {
 	p = strdup(name);
+	if (p == NULL)
+	    return krb5_enomem(context);
 	context->default_cc_name_set = 1;
     }
-
-    if (p == NULL)
-	return krb5_enomem(context);
 
     filepath = (strncmp("FILE:", p, 5) == 0
 		 || strncmp("DIR:", p, 4) == 0
@@ -708,11 +739,10 @@ krb5_cc_store_cred(krb5_context context,
 
     /* Look for and mark the first root TGT's realm as the start realm */
     if (ret == 0 && id->initialized &&
-        !krb5_is_config_principal(context, creds->server) &&
         krb5_principal_is_root_krbtgt(context, creds->server)) {
 
         id->initialized = 0;
-        realm.length = strlen(creds->server->realm) + 1;
+        realm.length = strlen(creds->server->realm);
         realm.data = creds->server->realm;
         (void) krb5_cc_set_config(context, id, NULL, "start_realm", &realm);
     } else if (ret == 0 && id->initialized &&
@@ -1816,18 +1846,17 @@ krb5_cc_get_kdc_offset(krb5_context context, krb5_ccache id, krb5_deltat *offset
     return (*id->ops->get_kdc_offset)(context, id, offset);
 }
 
-
 #ifdef _WIN32
-
 #define REGPATH_MIT_KRB5 "SOFTWARE\\MIT\\Kerberos5"
-KRB5_LIB_FUNCTION char * KRB5_LIB_CALL
-_krb5_get_default_cc_name_from_registry(krb5_context context)
+
+static char *
+_get_default_cc_name_from_registry(krb5_context context, HKEY hkBase)
 {
     HKEY hk_k5 = 0;
     LONG code;
-    char * ccname = NULL;
+    char *ccname = NULL;
 
-    code = RegOpenKeyEx(HKEY_CURRENT_USER,
+    code = RegOpenKeyEx(hkBase,
                         REGPATH_MIT_KRB5,
                         0, KEY_READ, &hk_k5);
 
@@ -1838,6 +1867,19 @@ _krb5_get_default_cc_name_from_registry(krb5_context context)
                                              REG_NONE, 0);
 
     RegCloseKey(hk_k5);
+
+    return ccname;
+}
+
+KRB5_LIB_FUNCTION char * KRB5_LIB_CALL
+_krb5_get_default_cc_name_from_registry(krb5_context context)
+{
+    char *ccname;
+
+    ccname = _get_default_cc_name_from_registry(context, HKEY_CURRENT_USER);
+    if (ccname == NULL)
+	ccname = _get_default_cc_name_from_registry(context,
+						    HKEY_LOCAL_MACHINE);
 
     return ccname;
 }
@@ -1873,5 +1915,4 @@ _krb5_set_default_cc_name_to_registry(krb5_context context, krb5_ccache id)
 
     return ret;
 }
-
 #endif

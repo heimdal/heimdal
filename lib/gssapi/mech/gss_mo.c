@@ -203,6 +203,7 @@ make_sasl_name(OM_uint32 *minor, const gss_OID mech, char sasl_name[16])
     EVP_DigestUpdate(ctx, hdr, 2);
     EVP_DigestUpdate(ctx, mech->elements, mech->length);
     EVP_DigestFinal_ex(ctx, hash, NULL);
+    EVP_MD_CTX_destroy(ctx);
 
     memcpy(p, "GS2-", 4);
     p += 4;

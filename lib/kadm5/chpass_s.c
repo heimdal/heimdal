@@ -58,6 +58,10 @@ change(void *server_handle,
 	    return ret;
     }
 
+    ret = kadm5_log_init(context);
+    if (ret)
+        goto out;
+
     ret = context->db->hdb_fetch_kvno(context->context, context->db, princ,
 				      HDB_F_DECRYPT|HDB_F_GET_ANY|HDB_F_ADMIN_DATA, 0, &ent);
     if(ret)
@@ -119,6 +123,7 @@ change(void *server_handle,
 	HDB_extension ext;
 
 	memset(&ext, 0, sizeof (ext));
+        ext.mandatory = FALSE;
 	ext.data.element = choice_HDB_extension_data_hist_keys;
 	ret = hdb_replace_extension(context->context, &ent.entry, &ext);
 	if (ret)
@@ -137,21 +142,23 @@ change(void *server_handle,
     if (ret)
 	goto out2;
 
-    ret = context->db->hdb_store(context->context, context->db,
-				 HDB_F_REPLACE, &ent);
-    if (ret)
-	goto out2;
-
-    kadm5_log_modify(context, &ent.entry,
-		     KADM5_ATTRIBUTES | KADM5_PRINCIPAL | KADM5_MOD_NAME |
-		     KADM5_MOD_TIME | KADM5_KEY_DATA | KADM5_KVNO |
-		     KADM5_PW_EXPIRATION | KADM5_TL_DATA);
+    /* This logs the change for iprop and writes to the HDB */
+    ret = kadm5_log_modify(context, &ent.entry,
+                           KADM5_ATTRIBUTES | KADM5_PRINCIPAL |
+                           KADM5_MOD_NAME | KADM5_MOD_TIME |
+                           KADM5_KEY_DATA | KADM5_KVNO |
+                           KADM5_PW_EXPIRATION | KADM5_TL_DATA);
 
 out2:
     hdb_free_entry(context->context, &ent);
 out:
-    if (!context->keep_open)
-	context->db->hdb_close(context->context, context->db);
+    (void) kadm5_log_end(context);
+    if (!context->keep_open) {
+        kadm5_ret_t ret2;
+        ret2 = context->db->hdb_close(context->context, context->db);
+        if (ret == 0 && ret2 != 0)
+            ret = ret2;
+    }
     return _kadm5_error_code(ret);
 }
 
@@ -207,6 +214,11 @@ kadm5_s_chpass_principal_with_key(void *server_handle,
 	if(ret)
 	    return ret;
     }
+
+    ret = kadm5_log_init(context);
+    if (ret)
+        goto out;
+
     ret = context->db->hdb_fetch_kvno(context->context, context->db, princ, 0,
 				      HDB_F_GET_ANY|HDB_F_ADMIN_DATA, &ent);
     if(ret == HDB_ERR_NOENTRY)
@@ -235,28 +247,28 @@ kadm5_s_chpass_principal_with_key(void *server_handle,
 	HDB_extension ext;
 
 	memset(&ext, 0, sizeof (ext));
+	ext.mandatory = FALSE;
 	ext.data.element = choice_HDB_extension_data_hist_keys;
 	ext.data.u.hist_keys.len = 0;
 	ext.data.u.hist_keys.val = NULL;
 	hdb_replace_extension(context->context, &ent.entry, &ext);
     }
 
-
-    ret = context->db->hdb_store(context->context, context->db,
-				 HDB_F_REPLACE, &ent);
-    if (ret)
-	goto out2;
-
-    kadm5_log_modify (context,
-		      &ent.entry,
-		      KADM5_PRINCIPAL | KADM5_MOD_NAME | KADM5_MOD_TIME |
-		      KADM5_KEY_DATA | KADM5_KVNO | KADM5_PW_EXPIRATION |
-		      KADM5_TL_DATA);
+    /* This logs the change for iprop and writes to the HDB */
+    ret = kadm5_log_modify(context, &ent.entry,
+                           KADM5_PRINCIPAL | KADM5_MOD_NAME |
+                           KADM5_MOD_TIME | KADM5_KEY_DATA | KADM5_KVNO |
+                           KADM5_PW_EXPIRATION | KADM5_TL_DATA);
 
 out2:
     hdb_free_entry(context->context, &ent);
 out:
-    if (!context->keep_open)
-	context->db->hdb_close(context->context, context->db);
+    (void) kadm5_log_end(context);
+    if (!context->keep_open) {
+        kadm5_ret_t ret2;
+        ret2 = context->db->hdb_close(context->context, context->db);
+        if (ret == 0 && ret2 != 0)
+            ret = ret2;
+    }
     return _kadm5_error_code(ret);
 }

@@ -34,12 +34,9 @@
  */
 
 #include <config.h>
-
-#include <stdio.h>
-#include <stdlib.h>
+#include <roken.h>
 #include <math.h>
 
-#include <roken.h>
 #include <getarg.h>
 
 #include "rand.h"
@@ -124,10 +121,6 @@ main(int argc, char **argv)
 #ifndef NO_RAND_UNIX_METHOD
 	else if (strcasecmp(rand_method, "unix") == 0)
 	    RAND_set_rand_method(RAND_unix_method());
-#endif
-#ifndef NO_RAND_EGD_METHOD
-	else if (strcasecmp(rand_method, "egd") == 0)
-	    RAND_set_rand_method(RAND_egd_method());
 #endif
 #ifdef WIN32
 	else if (strcasecmp(rand_method, "w32crypto") == 0)

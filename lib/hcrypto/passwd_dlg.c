@@ -37,9 +37,9 @@
  */
 
 #include <config.h>
+#include <roken.h>
 
 #ifdef WIN32	/* Visual C++ 4.0 (Windows95/NT) */
-#include <Windows.h>
 #include "passwd_dlg.h"
 #include "Resource.h"
 #define passwdBufSZ 64

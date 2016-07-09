@@ -25,6 +25,7 @@ endif
 
 subst = sed	-e "s!@PACKAGE\@!$(PACKAGE)!g" \
 		-e "s!@VERSION\@!$(VERSION)!g" \
+		-e "s!@CANONICAL_HOST\@!$(CANONICAL_HOST)!g" \
 		-e "s!@prefix\@!$(prefix)!g" \
 		-e "s!@exec_prefix\@!$(exec_prefix)!g" \
 		-e "s!@libdir\@!$(libdir)!g" \
@@ -32,7 +33,6 @@ subst = sed	-e "s!@PACKAGE\@!$(PACKAGE)!g" \
 		-e "s!@PTHREAD_LIBADD\@!$(PTHREAD_LIBADD)!g" \
 		-e "s!@LIB_crypt\@!$(LIB_crypt)!g" \
 		-e "s!@LIB_dbopen\@!$(LIB_dbopen)!g" \
-		-e "s!@INCLUDE_hcrypto\@!$(INCLUDE_hcrypto)!g" \
 		-e "s!@LIB_hcrypto_appl\@!$(LIB_hcrypto_appl)!g" \
 		-e "s!@LIB_dlopen\@!$(LIB_dlopen)!g" \
 		-e "s!@LIB_door_create\@!$(LIB_door_create)!g" \

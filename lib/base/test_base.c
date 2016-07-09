@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010 Kungliga Tekniska Högskolan
+ * Copyright (c) 2010-2016 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  *
@@ -44,6 +44,7 @@
  * __heim_string_constant() or heim_db_register() in their stack trace.
  */
 
+#include <err.h>
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -85,6 +86,56 @@ test_memory(void)
 
     ptr = heim_alloc(10, "memory", NULL);
     heim_release(ptr);
+
+    return 0;
+}
+
+static int
+test_mutex(void)
+{
+    HEIMDAL_MUTEX m = HEIMDAL_MUTEX_INITIALIZER;
+
+    HEIMDAL_MUTEX_lock(&m);
+    HEIMDAL_MUTEX_unlock(&m);
+    HEIMDAL_MUTEX_destroy(&m);
+
+    HEIMDAL_MUTEX_init(&m);
+    HEIMDAL_MUTEX_lock(&m);
+    HEIMDAL_MUTEX_unlock(&m);
+    HEIMDAL_MUTEX_destroy(&m);
+
+    return 0;
+}
+
+static int
+test_rwlock(void)
+{
+    HEIMDAL_RWLOCK l = HEIMDAL_RWLOCK_INITIALIZER;
+
+    HEIMDAL_RWLOCK_rdlock(&l);
+    HEIMDAL_RWLOCK_unlock(&l);
+    HEIMDAL_RWLOCK_wrlock(&l);
+    HEIMDAL_RWLOCK_unlock(&l);
+    if (HEIMDAL_RWLOCK_trywrlock(&l) != 0)
+	err(1, "HEIMDAL_RWLOCK_trywrlock() failed with lock not held");
+    HEIMDAL_RWLOCK_unlock(&l);
+    if (HEIMDAL_RWLOCK_tryrdlock(&l))
+	err(1, "HEIMDAL_RWLOCK_tryrdlock() failed with lock not held");
+    HEIMDAL_RWLOCK_unlock(&l);
+    HEIMDAL_RWLOCK_destroy(&l);
+
+    HEIMDAL_RWLOCK_init(&l);
+    HEIMDAL_RWLOCK_rdlock(&l);
+    HEIMDAL_RWLOCK_unlock(&l);
+    HEIMDAL_RWLOCK_wrlock(&l);
+    HEIMDAL_RWLOCK_unlock(&l);
+    if (HEIMDAL_RWLOCK_trywrlock(&l))
+	err(1, "HEIMDAL_RWLOCK_trywrlock() failed with lock not held");
+    HEIMDAL_RWLOCK_unlock(&l);
+    if (HEIMDAL_RWLOCK_tryrdlock(&l))
+	err(1, "HEIMDAL_RWLOCK_tryrdlock() failed with lock not held");
+    HEIMDAL_RWLOCK_unlock(&l);
+    HEIMDAL_RWLOCK_destroy(&l);
 
     return 0;
 }
@@ -894,6 +945,8 @@ main(int argc, char **argv)
     int res = 0;
 
     res |= test_memory();
+    res |= test_mutex();
+    res |= test_rwlock();
     res |= test_dict();
     res |= test_auto_release();
     res |= test_string();

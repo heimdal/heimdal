@@ -217,6 +217,9 @@ SUCH DAMAGE.
 @verbatim
 
 Copyright (c) 2003-2011, PADL Software Pty Ltd.
+Copyright (c) 2004, Andrew Bartlett.
+Copyright (c) 2003 - 2008, Kungliga Tekniska Högskolan
+Copyright (c) 2015, Timothy Pearson.
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without

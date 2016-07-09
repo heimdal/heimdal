@@ -934,6 +934,13 @@ gss_wrap_iov_length(OM_uint32 *, gss_ctx_id_t, int, gss_qop_t, int *,
 GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL
 gss_release_iov_buffer(OM_uint32 *, gss_iov_buffer_desc *, int);
 
+GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL
+gss_wrap_aead(OM_uint32 *, gss_ctx_id_t, int, gss_qop_t,
+	      gss_buffer_t, gss_buffer_t, int *, gss_buffer_t);
+
+GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL
+gss_unwrap_aead(OM_uint32 *, gss_ctx_id_t, gss_buffer_t,
+		gss_buffer_t, gss_buffer_t, int *, gss_qop_t *);
 
 GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL
 gss_export_cred(OM_uint32 * /* minor_status */,

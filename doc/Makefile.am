@@ -55,6 +55,7 @@ wind.dxy: wind.din Makefile
 	mv wind.dxy.tmp wind.dxy
 
 texi_subst = sed -e 's,[@]dbdir[@],$(localstatedir),g' \
+	-e 's,[@]dbtype[@],$(db_type),g' \
 	-e 's,[@]PACKAGE_VERSION[@],$(PACKAGE_VERSION),g'
 
 vars.texi: vars.tin Makefile
@@ -64,9 +65,7 @@ vars.texi: vars.tin Makefile
 
 PROJECTS = base hdb hx509 gssapi krb5 ntlm wind 
 
-if !HAVE_OPENSSL
 PROJECTS += hcrypto
-endif
 
 doxyout doxygen: base.dxy hdb.dxy hx509.dxy hcrypto.dxy gssapi.dxy krb5.dxy ntlm.dxy wind.dxy
 	@find $(srcdir)/doxyout -type d ! -perm -200 -exec chmod u+w {} ';' ; \

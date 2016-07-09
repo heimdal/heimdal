@@ -3,9 +3,15 @@ Release Notes - Heimdal - Version Heimdal 1.6
  Security
  - ...
  - kx509 realm-chopping security bug
+ - non-authorization of alias additions/removals in kadmind
 
  Feature
 
+ - libhcrypto has new backends: CNG (Windows), PKCS#11 (mainly for
+   Solaris), and OpenSSL.  OpenSSL is now a first-class libhcrypto backend.
+   OpenSSL 1.0.x and 1.1 are both supported.
+ - HDB now supports LMDB
+ - Thread support on Windows
  - RFC 6113  Generalized Framework for Kerberos Pre-Authentication (FAST)
  - New GSS APIs:
    . gss_localname
@@ -48,6 +54,8 @@ Release Notes - Heimdal - Version Heimdal 1.6
  - Many more
 
  Bug fixes
+ - iprop has been revamped to fix a number of race conditions that could
+   lead to data loss
  - Include non-loopback addresses assigned to loopback interfaces
    when requesting tickets with addresses
  - KDC 1DES session key selection (for AFS rxkad-k5 compatibility)

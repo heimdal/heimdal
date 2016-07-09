@@ -32,9 +32,6 @@
  */
 
 #include <config.h>
-
-#include <stdio.h>
-
 #include <roken.h>
 #include <getarg.h>
 

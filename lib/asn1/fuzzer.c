@@ -669,7 +669,7 @@ _asn1_length_fuzzer(const struct asn1_template *t, const void *data)
 	    unsigned int type = A1_PARSE_TYPE(t->tt);
 	    const void *el = DPOC(data, t->offset);
 
-	    if (type > sizeof(asn1_template_prim)/sizeof(asn1_template_prim[0])) {
+	    if (type >= sizeof(asn1_template_prim)/sizeof(asn1_template_prim[0])) {
 		ABORT_ON_ERROR();
 		break;
 	    }

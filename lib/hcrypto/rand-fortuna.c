@@ -30,16 +30,13 @@
  */
 
 #include <config.h>
-
-#include <stdio.h>
-#include <stdlib.h>
+#include <roken.h>
 #include <rand.h>
 #include <heim_threads.h>
 
 #ifdef KRB5
 #include <krb5-types.h>
 #endif
-#include <roken.h>
 
 #include "randi.h"
 #include "aes.h"
@@ -484,20 +481,6 @@ fortuna_reseed(void)
 	    buf[i] = arc4random();
 	add_entropy(&main_state, (void *)buf, sizeof(buf));
 	entropy_p = 1;
-    }
-#endif
-#ifndef NO_RAND_EGD_METHOD
-    /*
-     * Only to get egd entropy if /dev/random or arc4rand failed since
-     * it can be horribly slow to generate new bits.
-     */
-    if (!entropy_p) {
-	unsigned char buf[INIT_BYTES];
-	if ((*hc_rand_egd_method.bytes)(buf, sizeof(buf)) == 1) {
-	    add_entropy(&main_state, buf, sizeof(buf));
-	    entropy_p = 1;
-	    memset(buf, 0, sizeof(buf));
-	}
     }
 #endif
     /*

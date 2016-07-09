@@ -2,7 +2,7 @@
 
 include $(top_srcdir)/Makefile.am.common
 
-AM_CPPFLAGS += -I../asn1 -I$(srcdir)/../asn1 $(INCLUDE_hcrypto)
+AM_CPPFLAGS += -I../asn1 -I$(srcdir)/../asn1
 AM_CPPFLAGS += $(INCLUDE_openldap) -DHDB_DB_DIR=\"$(DIR_hdbdir)\"
 AM_CPPFLAGS += -I$(srcdir)/../krb5
 AM_CPPFLAGS += $(INCLUDE_sqlite3)
@@ -110,8 +110,7 @@ libhdb_la_LIBADD = \
 	$(LIBADD_roken) \
 	$(ldap_lib) \
 	$(LIB_dlopen) \
-	$(DBLIB) \
-	$(LIB_NDBM)
+	$(DB3LIB) $(DB1LIB) $(LMDBLIB) $(NDBMLIB)
 
 HDB_PROTOS = $(srcdir)/hdb-protos.h $(srcdir)/hdb-private.h
 

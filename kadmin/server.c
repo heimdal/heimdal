@@ -34,6 +34,10 @@
 #include "kadmin_locl.h"
 #include <krb5-private.h>
 
+static kadm5_ret_t check_aliases(kadm5_server_context *,
+                                 kadm5_principal_ent_rec *,
+                                 kadm5_principal_ent_rec *);
+
 static kadm5_ret_t
 kadmind_dispatch(void *kadm_handlep, krb5_boolean initial,
 		 krb5_data *in, krb5_data *out)
@@ -44,7 +48,7 @@ kadmind_dispatch(void *kadm_handlep, krb5_boolean initial,
     char client[128], name[128], name2[128];
     const char *op = "";
     krb5_principal princ, princ2;
-    kadm5_principal_ent_rec ent;
+    kadm5_principal_ent_rec ent, ent_prev;
     char *password, *expression;
     krb5_keyblock *new_keys;
     krb5_key_salt_tuple *ks_tuple = NULL;
@@ -143,6 +147,12 @@ kadmind_dispatch(void *kadm_handlep, krb5_boolean initial,
 	    krb5_free_principal(contextp->context, princ);
 	    goto fail;
 	}
+
+        /*
+         * There's no need to check that the caller has permission to
+         * delete the victim principal's aliases.
+         */
+
 	ret = kadm5_delete_principal(kadm_handlep, princ);
 	krb5_free_principal(contextp->context, princ);
 	krb5_storage_free(sp);
@@ -157,12 +167,12 @@ kadmind_dispatch(void *kadm_handlep, krb5_boolean initial,
 	    goto fail;
 	ret = krb5_ret_int32(sp, &mask);
 	if(ret){
-	    kadm5_free_principal_ent(contextp->context, &ent);
+	    kadm5_free_principal_ent(kadm_handlep, &ent);
 	    goto fail;
 	}
 	ret = krb5_ret_string(sp, &password);
 	if(ret){
-	    kadm5_free_principal_ent(contextp->context, &ent);
+	    kadm5_free_principal_ent(kadm_handlep, &ent);
 	    goto fail;
 	}
 	krb5_unparse_name_fixed(contextp->context, ent.principal,
@@ -171,11 +181,24 @@ kadmind_dispatch(void *kadm_handlep, krb5_boolean initial,
 	ret = _kadm5_acl_check_permission(contextp, KADM5_PRIV_ADD,
 					  ent.principal);
 	if(ret){
-	    kadm5_free_principal_ent(contextp->context, &ent);
+	    kadm5_free_principal_ent(kadm_handlep, &ent);
 	    memset(password, 0, strlen(password));
 	    free(password);
 	    goto fail;
 	}
+        if ((mask & KADM5_TL_DATA)) {
+            /*
+             * Also check that the caller can create the aliases, if the
+             * new principal has any.
+             */
+            ret = check_aliases(contextp, &ent, NULL);
+            if (ret) {
+                kadm5_free_principal_ent(kadm_handlep, &ent);
+                memset(password, 0, strlen(password));
+                free(password);
+                goto fail;
+            }
+        }
 	ret = kadm5_create_principal(kadm_handlep, &ent,
 				     mask, password);
 	kadm5_free_principal_ent(kadm_handlep, &ent);
@@ -205,6 +228,25 @@ kadmind_dispatch(void *kadm_handlep, krb5_boolean initial,
 	    kadm5_free_principal_ent(contextp, &ent);
 	    goto fail;
 	}
+        if ((mask & KADM5_TL_DATA)) {
+            /*
+             * Also check that the caller can create aliases that are in
+             * the new entry but not the old one.  There's no need to
+             * check that the caller can delete aliases it wants to
+             * drop.  See also handling of rename.
+             */
+            ret = kadm5_get_principal(kadm_handlep, ent.principal, &ent_prev, mask);
+            if (ret) {
+                kadm5_free_principal_ent(contextp, &ent);
+                goto fail;
+            }
+            ret = check_aliases(contextp, &ent, &ent_prev);
+            kadm5_free_principal_ent(contextp, &ent_prev);
+            if (ret) {
+                kadm5_free_principal_ent(contextp, &ent);
+                goto fail;
+            }
+        }
 	ret = kadm5_modify_principal(kadm_handlep, &ent, mask);
 	kadm5_free_principal_ent(kadm_handlep, &ent);
 	krb5_storage_free(sp);
@@ -223,15 +265,28 @@ kadmind_dispatch(void *kadm_handlep, krb5_boolean initial,
 	    goto fail;
 	}
 	krb5_unparse_name_fixed(contextp->context, princ, name, sizeof(name));
-	krb5_unparse_name_fixed(contextp->context, princ2, name2, sizeof(name2));
+	krb5_unparse_name_fixed(contextp->context, princ2,
+                                name2, sizeof(name2));
 	krb5_warnx(contextp->context, "%s: %s %s -> %s",
 		   client, op, name, name2);
 	ret = _kadm5_acl_check_permission(contextp,
 					  KADM5_PRIV_ADD,
-					  princ2)
-	    || _kadm5_acl_check_permission(contextp,
-					   KADM5_PRIV_DELETE,
-					   princ);
+					  princ2);
+        if (ret == 0) {
+            /*
+             * Also require modify for the principal.  For backwards
+             * compatibility, allow delete permission on the old name to
+             * cure lack of modify permission on the old name.
+             */
+            ret = _kadm5_acl_check_permission(contextp,
+                                              KADM5_PRIV_MODIFY,
+                                              princ);
+            if (ret) {
+                ret = _kadm5_acl_check_permission(contextp,
+                                                  KADM5_PRIV_DELETE,
+                                                  princ);
+            }
+        }
 	if(ret){
 	    krb5_free_principal(contextp->context, princ);
 	    krb5_free_principal(contextp->context, princ2);
@@ -444,11 +499,13 @@ kadmind_dispatch(void *kadm_handlep, krb5_boolean initial,
 		ret = krb5_ret_int32(sp, &ks_tuple[i].ks_enctype);
 		if (ret != 0) {
 		    krb5_free_principal(contextp->context, princ);
+                    free(ks_tuple);
 		    goto fail;
 		}
 		ret = krb5_ret_int32(sp, &ks_tuple[i].ks_salttype);
 		if (ret != 0) {
 		    krb5_free_principal(contextp->context, princ);
+                    free(ks_tuple);
 		    goto fail;
 		}
 	    }
@@ -457,6 +514,7 @@ kadmind_dispatch(void *kadm_handlep, krb5_boolean initial,
 					n_ks_tuple, ks_tuple, &new_keys,
 					&n_keys);
 	krb5_free_principal(contextp->context, princ);
+        free(ks_tuple);
 
 	krb5_storage_free(sp);
 	sp = krb5_storage_emem();
@@ -530,6 +588,120 @@ fail:
     krb5_store_int32(sp, ret);
     krb5_storage_to_data(sp, out);
     krb5_storage_free(sp);
+    return 0;
+}
+
+struct iter_aliases_ctx {
+    HDB_Ext_Aliases aliases;
+    krb5_tl_data *tl;
+    int alias_idx;
+    int done;
+};
+
+static kadm5_ret_t
+iter_aliases(kadm5_principal_ent_rec *from,
+             struct iter_aliases_ctx *ctx,
+             krb5_principal *out)
+{
+    HDB_extension ext;
+    kadm5_ret_t ret;
+    size_t size;
+
+    *out = NULL;
+
+    if (ctx->done > 0)
+        return 0;
+
+    if (ctx->done == 0) {
+        if (ctx->alias_idx < ctx->aliases.aliases.len) {
+            *out = &ctx->aliases.aliases.val[ctx->alias_idx++];
+            return 0;
+        }
+        /* Out of aliases in this TL, step to next TL */
+        ctx->tl = ctx->tl->tl_data_next;
+    } else if (ctx->done < 0) {
+        /* Setup iteration context */
+        memset(ctx, 0, sizeof(*ctx));
+        ctx->done = 0;
+        ctx->aliases.aliases.val = NULL;
+        ctx->aliases.aliases.len = 0;
+        ctx->tl = from->tl_data;
+    }
+
+    free_HDB_Ext_Aliases(&ctx->aliases);
+    ctx->alias_idx = 0;
+
+    /* Find TL with aliases */
+    for (; ctx->tl != NULL; ctx->tl = ctx->tl->tl_data_next) {
+        if (ctx->tl->tl_data_type != KRB5_TL_EXTENSION)
+            continue;
+
+        ret = decode_HDB_extension(ctx->tl->tl_data_contents,
+                                   ctx->tl->tl_data_length,
+                                   &ext, &size);
+        if (ret)
+            return ret;
+        if (ext.data.element == choice_HDB_extension_data_aliases &&
+            ext.data.u.aliases.aliases.len > 0) {
+            ctx->aliases = ext.data.u.aliases;
+            break;
+        }
+        free_HDB_extension(&ext);
+    }
+
+    if (ctx->tl != NULL && ctx->aliases.aliases.len > 0) {
+        *out = &ctx->aliases.aliases.val[ctx->alias_idx++];
+        return 0;
+    }
+
+    ctx->done = 1;
+    return 0;
+}
+
+static kadm5_ret_t
+check_aliases(kadm5_server_context *contextp,
+              kadm5_principal_ent_rec *add_princ,
+              kadm5_principal_ent_rec *del_princ)
+{
+    kadm5_ret_t ret;
+    struct iter_aliases_ctx iter;
+    struct iter_aliases_ctx iter_del;
+    krb5_principal new_name, old_name;
+    int match;
+
+    /*
+     * Yeah, this is O(N^2).  Gathering and sorting all the aliases
+     * would be a bit of a pain; if we ever have principals with enough
+     * aliases for this to be a problem, we can fix it then.
+     */
+    for (iter.done = -1; iter.done != 1;) {
+        match = 0;
+        ret = iter_aliases(add_princ, &iter, &new_name);
+        if (ret)
+            return ret;
+        if (iter.done == 1)
+            break;
+        for (iter_del.done = -1; iter_del.done != 1;) {
+            ret = iter_aliases(del_princ, &iter_del, &old_name);
+            if (ret)
+                return ret;
+            if (iter_del.done == 1)
+                break;
+            if (!krb5_principal_compare(contextp->context, new_name, old_name))
+                continue;
+            free_HDB_Ext_Aliases(&iter_del.aliases);
+            match = 1;
+            break;
+        }
+        if (match)
+            continue;
+        ret = _kadm5_acl_check_permission(contextp, KADM5_PRIV_ADD, new_name);
+        if (ret) {
+            free_HDB_Ext_Aliases(&iter.aliases);
+            return ret;
+        }
+    }
+
     return 0;
 }
 

@@ -64,6 +64,9 @@ generate(krb5_context context, const void *plug, void *plugctx, void *userctx)
 {
     krb5plugin_windc_ftable *ft = (krb5plugin_windc_ftable *)plug;
     struct generate_uc *uc = (struct generate_uc *)userctx;    
+
+    if (ft->pac_generate == NULL)
+	return KRB5_PLUGIN_NO_HANDLE;
     return ft->pac_generate((void *)plug, context, uc->client, uc->pac);
 }
 
@@ -103,6 +106,8 @@ verify(krb5_context context, const void *plug, void *plugctx, void *userctx)
     struct verify_uc *uc = (struct verify_uc *)userctx;    
     krb5_error_code ret;
 
+    if (ft->pac_verify == NULL)
+	return KRB5_PLUGIN_NO_HANDLE;
     ret = ft->pac_verify((void *)plug, context,
 			 uc->client_principal,
 			 uc->delegated_proxy_principal,
@@ -156,7 +161,9 @@ check(krb5_context context, const void *plug, void *plugctx, void *userctx)
 {
     krb5plugin_windc_ftable *ft = (krb5plugin_windc_ftable *)plug;
     struct check_uc *uc = (struct check_uc *)userctx;    
-    
+
+    if (ft->client_access == NULL)
+	return KRB5_PLUGIN_NO_HANDLE;
     return ft->client_access((void *)plug, context, uc->config, 
 			     uc->client_ex, uc->client_name, 
 			     uc->server_ex, uc->server_name, 
@@ -172,23 +179,26 @@ _kdc_check_access(krb5_context context,
 		  KDC_REQ *req,
 		  METHOD_DATA *method_data)
 {
+    krb5_error_code ret = KRB5_PLUGIN_NO_HANDLE;
     struct check_uc uc;
 
-    if (!have_plugin)
+    if (have_plugin) {
+        uc.config = config;
+        uc.client_ex = client_ex;
+        uc.client_name = client_name;
+        uc.server_ex = server_ex;
+        uc.server_name = server_name;
+        uc.req = req;
+        uc.method_data = method_data;
+
+        ret = _krb5_plugin_run_f(context, "krb5", "windc",
+                                 KRB5_WINDC_PLUGIN_MINOR, 0, &uc, check);
+    }
+
+    if (ret == KRB5_PLUGIN_NO_HANDLE)
 	return kdc_check_flags(context, config,
 			       client_ex, client_name,
 			       server_ex, server_name,
 			       req->msg_type == krb_as_req);
-
-    uc.config = config;
-    uc.client_ex = client_ex;
-    uc.client_name = client_name;
-    uc.server_ex = server_ex;
-    uc.server_name = server_name;
-    uc.req = req;
-    uc.method_data = method_data;
-
-    return _krb5_plugin_run_f(context, "krb5", "windc",
-			      KRB5_WINDC_PLUGIN_MINOR, 0, &uc, check);
-
+    return ret;
 }

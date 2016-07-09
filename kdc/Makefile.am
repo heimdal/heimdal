@@ -2,7 +2,7 @@
 
 include $(top_srcdir)/Makefile.am.common
 
-AM_CPPFLAGS += $(INCLUDE_libintl) $(INCLUDE_hcrypto) -I$(srcdir)/../lib/krb5
+AM_CPPFLAGS += $(INCLUDE_libintl) $(INCLUDE_openssl_crypto) -I$(srcdir)/../lib/krb5
 
 lib_LTLIBRARIES = libkdc.la
 
@@ -44,6 +44,7 @@ libkdc_la_SOURCES = 		\
 	kerberos5.c		\
 	krb5tgs.c		\
 	pkinit.c		\
+	pkinit-ec.c		\
 	log.c			\
 	misc.c			\
 	kx509.c			\
@@ -57,7 +58,7 @@ ALL_OBJECTS  = $(kdc_OBJECTS)
 ALL_OBJECTS += $(kdc_replay_OBJECTS)
 ALL_OBJECTS += $(kdc_tester_OBJECTS)
 ALL_OBJECTS += $(libkdc_la_OBJECTS)
-ALL_OBJECTS += $(string_to_key_OBJECTS)
+ALL_OBJECTS += $(string2key_OBJECTS)
 ALL_OBJECTS += $(kstash_OBJECTS)
 ALL_OBJECTS += $(hprop_OBJECTS)
 ALL_OBJECTS += $(hpropd_OBJECTS)
@@ -86,7 +87,7 @@ hprop_LDADD = \
 	$(LIB_hcrypto) \
 	$(top_builddir)/lib/asn1/libasn1.la \
 	$(LIB_roken) \
-	$(DBLIB) 
+	$(DB3LIB) $(DB1LIB) $(LMDBLIB) $(NDBMLIB)
 
 hpropd_LDADD = \
 	$(top_builddir)/lib/hdb/libhdb.la \
@@ -95,7 +96,7 @@ hpropd_LDADD = \
 	$(LIB_hcrypto) \
 	$(top_builddir)/lib/asn1/libasn1.la \
 	$(LIB_roken) \
-	$(DBLIB) 
+	$(DB3LIB) $(DB1LIB) $(LMDBLIB) $(NDBMLIB)
 
 if PKINIT
 LIB_pkinit = $(top_builddir)/lib/hx509/libhx509.la
@@ -108,16 +109,17 @@ libkdc_la_LIBADD = \
 	$(LIB_kdb)  \
 	$(top_builddir)/lib/ntlm/libheimntlm.la \
 	$(LIB_hcrypto) \
+	$(LIB_openssl_crypto) \
 	$(top_builddir)/lib/asn1/libasn1.la \
 	$(LIB_roken) \
-	$(DBLIB) 
+	$(DB3LIB) $(DB1LIB) $(LMDBLIB) $(NDBMLIB)
 
 LDADD = $(top_builddir)/lib/hdb/libhdb.la \
 	$(top_builddir)/lib/krb5/libkrb5.la \
 	$(LIB_hcrypto) \
 	$(top_builddir)/lib/asn1/libasn1.la \
 	$(LIB_roken) \
-	$(DBLIB)
+	$(DB3LIB) $(DB1LIB) $(LMDBLIB) $(NDBMLIB)
 
 kdc_LDADD = libkdc.la $(LDADD) $(LIB_pidfile) $(CAPNG_LIBS)
 

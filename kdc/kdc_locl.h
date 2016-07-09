@@ -101,6 +101,7 @@ extern int enable_http;
 
 extern int detach_from_console;
 extern int daemon_child;
+extern int do_bonjour;
 
 extern const struct units _kdc_digestunits[];
 
@@ -113,7 +114,7 @@ extern char *runas_string;
 extern char *chroot_string;
 
 void
-loop(krb5_context context, krb5_kdc_configuration *config);
+start_kdc(krb5_context context, krb5_kdc_configuration *config, const char *argv0);
 
 krb5_kdc_configuration *
 configure(krb5_context context, int argc, char **argv, int *optidx);

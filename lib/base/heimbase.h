@@ -37,6 +37,9 @@
 #define HEIM_BASE_H 1
 
 #include <sys/types.h>
+#if !defined(WIN32) && !defined(HAVE_DISPATCH_DISPATCH_H) && defined(ENABLE_PTHREAD_SUPPORT)
+#include <pthread.h>
+#endif
 #include <krb5-types.h>
 #include <stdarg.h>
 #ifdef HAVE_STDBOOL_H
@@ -56,8 +59,19 @@ typedef void * heim_object_t;
 typedef unsigned int heim_tid_t;
 typedef heim_object_t heim_bool_t;
 typedef heim_object_t heim_null_t;
+#ifdef WIN32
+typedef LONG heim_base_once_t;
 #define HEIM_BASE_ONCE_INIT 0
+#elif defined(HAVE_DISPATCH_DISPATCH_H)
 typedef long heim_base_once_t; /* XXX arch dependant */
+#define HEIM_BASE_ONCE_INIT 0
+#elif defined(ENABLE_PTHREAD_SUPPORT)
+typedef pthread_once_t heim_base_once_t;
+#define HEIM_BASE_ONCE_INIT PTHREAD_ONCE_INIT
+#else
+typedef long heim_base_once_t; /* XXX arch dependant */
+#define HEIM_BASE_ONCE_INIT 0
+#endif
 
 #if !defined(__has_extension)
 #define __has_extension(x) 0
@@ -403,5 +417,15 @@ int _bsearch_file(bsearch_file_handle bfh, const char *key, char **value,
 void _bsearch_file_info(bsearch_file_handle bfh, size_t *page_sz,
 			 size_t *max_sz, int *blockwise);
 void _bsearch_file_close(bsearch_file_handle *bfh);
+
+/*
+ * Thread-specific keys
+ */
+
+int heim_w32_key_create(unsigned long *, void (*)(void *));
+int heim_w32_delete_key(unsigned long);
+int heim_w32_setspecific(unsigned long, void *);
+void *heim_w32_getspecific(unsigned long);
+void heim_w32_service_thread_detach(void *);
 
 #endif /* HEIM_BASE_H */

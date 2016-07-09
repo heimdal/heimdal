@@ -67,22 +67,8 @@ seed_something(void)
     /* Calling RAND_status() will try to use /dev/urandom if it exists so
        we do not have to deal with it. */
     if (RAND_status() != 1) {
-#ifndef NO_RAND_EGD_METHOD
-	krb5_context context;
-	const char *p;
-
-	/* Try using egd */
-	if (!krb5_init_context(&context)) {
-	    p = krb5_config_get_string(context, NULL, "libdefaults",
-				       "egd_socket", NULL);
-	    if (p != NULL)
-		RAND_egd_bytes(p, ENTROPY_NEEDED);
-	    krb5_free_context(context);
-	}
-#else
 	/* TODO: Once a Windows CryptoAPI RAND method is defined, we
 	   can use that and failover to another method. */
-#endif
     }
 
     if (RAND_status() == 1)	{
@@ -122,8 +108,10 @@ krb5_generate_random(void *buf, size_t len)
 
     HEIMDAL_MUTEX_lock(&crypto_mutex);
     if (!rng_initialized) {
-	if (seed_something())
+	if (seed_something()) {
+            HEIMDAL_MUTEX_unlock(&crypto_mutex);
 	    return HEIM_ERR_RANDOM_OFFLINE;
+        }
 	rng_initialized = 1;
     }
     if (RAND_bytes(buf, len) <= 0)

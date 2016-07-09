@@ -144,7 +144,7 @@ Default realm to use, this is also known as your
 The default is the result of
 .Fn krb5_get_host_realm "local hostname" .
 .It Li allow_weak_crypto = Va boolean
-is weaks crypto algorithms allowed to be used, among others, DES is
+are weak crypto algorithms allowed to be used, among others, DES is
 considered weak.
 .It Li clockskew = Va time
 Maximum time differential (in seconds) allowed when comparing
@@ -168,9 +168,9 @@ the default credentials cache name.
 If you want to change the type only use
 .Li default_cc_type .
 The string can contain variables that are expanded on runtime.
-Only support variable now is
+The Only supported variable currently is
 .Li %{uid}
-that expands to the current user id.
+which expands to the current user id.
 .It Li default_etypes = Va etypes ...
 A list of default encryption types to use. (Default: all enctypes if
 allow_weak_crypto = TRUE, else all enctypes except single DES enctypes.)
@@ -243,10 +243,10 @@ It's the field ticketflags that is stored in reverse bit order for
 older than Heimdal 0.7.
 Setting this flag to
 .Dv TRUE
-make it store the MIT way, this is default for Heimdal 0.7.
+makes it store the MIT way, this is default for Heimdal 0.7.
 .It Li check-rd-req-server
-If set to "ignore", the framework will ignore any the server input to
-.Xr krb5_rd_req 3,
+If set to "ignore", the framework will ignore any of the server input to
+.Xr krb5_rd_req 3 ,
 this is very useful when the GSS-API server input the
 wrong server name into the gss_accept_sec_context call.
 .It Li k5login_directory = Va directory
@@ -288,7 +288,7 @@ K5login files are text files, with each line containing just a principal
 name; principals apearing in a user's k5login file are permitted access
 to the user's account. Note: this rule performs no ownership nor
 permissions checks on k5login files; proper ownership and
-permissions/ACLs are expected due to the system k5login location being a
+permissions/ACLs are expected due to the k5login location being a
 system location.
 .It Li kuserok = Va USER-K5LOGIN
 If set and evaluated then
@@ -389,7 +389,7 @@ with explicit
 .Va order
 then all other rules in the order in which they appear.  If any two
 rules have the same explicit
-.Va order
+.Va order ,
 their order of appearance in krb5.conf breaks the tie.  Explicitly
 specifying order can be useful where tools read and write the
 configuration file without preserving parameter order.
@@ -551,8 +551,10 @@ manual page for a list of defined destinations.
 .Bl -tag -width "xxx" -offset indent
 .It Li database Li = {
 .Bl -tag -width "xxx" -offset indent
-.It Li dbname Li = Va DATABASENAME
-Use this database for this realm.
+.It Li dbname Li = Va [DATBASETYPE:]DATABASENAME
+Use this database for this realm.  The
+.Va DATABASETYPE
+should be one of 'lmdb', 'db3', 'db1', 'db', 'sqlite', or 'ldap'.
 See the info documetation how to configure different database backends.
 .It Li realm Li = Va REALM
 Specifies the realm that will be stored in this database.
@@ -571,7 +573,25 @@ Use this file for the ACL list of this database.
 Use this file as the log of changes performed to the database.
 This file is used by
 .Nm ipropd-master
-for propagating changes to slaves.
+for propagating changes to slaves.  It is also used by
+.Nm kadmind
+and
+.Nm kadmin
+(when used with the
+.Li -l
+option), and by all applications using
+.Nm libkadm5
+with the local backend, for two-phase commit functionality.  Slaves also
+use this.  Setting this to
+.Nm /dev/null
+disables two-phase commit and incremental propagation.  Use
+.Nm iprop-log
+to show the contents of this log file.
+.It Li log-max-size = Pa number
+When the log reaches this size (in bytes), the log will be truncated,
+saving some entries, and keeping the latest version number so as to not
+disrupt incremental propagation.  If set to a negative value then
+automatic log truncation will be disabled.  Defaults to 52428800 (50MB).
 .El
 .It Li }
 .It Li max-request = Va SIZE
@@ -701,7 +721,13 @@ a globbing rule to matching a principal, and when true, use the
 keytypes as specified the same format as [kadmin]default_keys .
 .El
 .It Li }
-.El
+.It Li prune-key-history = Va BOOL
+When adding keys to the key history, drop keys that are too old to match
+unexpired tickets (based on the principal's maximum ticket lifetime).
+If the KDC keystore is later compromised traffic protected with the
+discarded older keys may remain protected.  This also keeps the HDB
+records for principals with key history from growing without bound.
+The default (backwards compatible) value is "false".
 .It Li use_v4_salt = Va BOOL
 When true, this is the same as
 .Pp

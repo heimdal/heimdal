@@ -1619,7 +1619,7 @@ history_search_prefix(const char *str, int direction)
 
 /*
  * search for event in history containing str, starting at offset
- * abs(pos); continue backward, if pos<0, forward otherwise
+ * labs(pos); continue backward, if pos<0, forward otherwise
  */
 /* ARGSUSED */
 int

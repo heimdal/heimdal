@@ -244,8 +244,9 @@ _kdc_fast_mk_error(krb5_context context,
 		   const KDC_REQ_BODY *req_body,
 		   krb5_error_code outer_error,
 		   const char *e_text,
-		   krb5_principal error_client,
 		   krb5_principal error_server,
+		   const PrincipalName *error_client_name,
+		   const Realm *error_client_realm,
 		   time_t *csec, int *cusec,
 		   krb5_data *error_msg)
 {
@@ -264,15 +265,16 @@ _kdc_fast_mk_error(krb5_context context,
 	    
 	/* first add the KRB-ERROR to the fast errors */
 
-	ret = krb5_mk_error(context,
-			    outer_error,
-			    e_text,
-			    NULL,
-			    error_client,
-			    error_server,
-			    NULL,
-			    NULL,
-			    &e_data);
+	ret = krb5_mk_error_ext(context,
+				outer_error,
+				e_text,
+				NULL,
+				error_server,
+				error_client_name,
+				error_client_realm,
+				NULL,
+				NULL,
+				&e_data);
 	if (ret)
 	    return ret;
 
@@ -285,7 +287,8 @@ _kdc_fast_mk_error(krb5_context context,
 	}
 
 	if (/* hide_principal */ 0) {
-	    error_client = NULL;
+	    error_client_name = NULL;
+	    error_client_realm = NULL;
 	    error_server = NULL;
 	    e_text = NULL;
 	}
@@ -325,15 +328,16 @@ _kdc_fast_mk_error(krb5_context context,
 	    krb5_abortx(context, "internal asn.1 error");
     }
     
-    ret = krb5_mk_error(context,
-			outer_error,
-			e_text,
-			(e_data.length ? &e_data : NULL),
-			error_client,
-			error_server,
-			csec,
-			cusec,
-			error_msg);
+    ret = krb5_mk_error_ext(context,
+			    outer_error,
+			    e_text,
+			    (e_data.length ? &e_data : NULL),
+			    error_server,
+			    error_client_name,
+			    error_client_realm,
+			    csec,
+			    cusec,
+			    error_msg);
     krb5_data_free(&e_data);
 
     return ret;

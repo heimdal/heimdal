@@ -285,7 +285,6 @@ check_PAC(krb5_context context,
 	  hdb_entry_ex *server,
 	  hdb_entry_ex *krbtgt,
 	  const EncryptionKey *server_check_key,
-	  const EncryptionKey *krbtgt_check_key,
 	  const EncryptionKey *server_sign_key,
 	  const EncryptionKey *krbtgt_sign_key,
 	  EncTicketPart *tkt,
@@ -331,7 +330,7 @@ check_PAC(krb5_context context,
 
 		ret = krb5_pac_verify(context, pac, tkt->authtime,
 				      client_principal,
-				      server_check_key, krbtgt_check_key);
+				      server_check_key, NULL);
 		if (ret) {
 		    krb5_pac_free(context, pac);
 		    return ret;
@@ -1122,15 +1121,14 @@ need_referral(krb5_context context, krb5_kdc_configuration *config,
 
     if (server->name.name_string.len == 1)
 	name = server->name.name_string.val[0];
-    else if (server->name.name_string.len == 3 &&
-	     strcasecmp("E3514235-4B06-11D1-AB04-00C04FC2DCD2", server->name.name_string.val[0]) == 0) {
+    else if (server->name.name_string.len == 3) {
 	/*
 	  This is used to give referrals for the
 	  E3514235-4B06-11D1-AB04-00C04FC2DCD2/NTDSGUID/DNSDOMAIN
 	  SPN form, which is used for inter-domain communication in AD
 	 */
 	name = server->name.name_string.val[2];
-	kdc_log(context, config, 0, "Giving 3 part DRSUAPI referral for %s", name);
+	kdc_log(context, config, 0, "Giving 3 part referral for %s", name);
 	*realms = malloc(sizeof(char *)*2);
 	if (*realms == NULL) {
 	    krb5_set_error_message(context, ENOMEM, N_("malloc: out of memory", ""));
@@ -1554,7 +1552,6 @@ tgs_build_reply(krb5_context context,
 
     Key *tkey_check;
     Key *tkey_sign;
-    Key *tkey_krbtgt_check = NULL;
     int flags = HDB_F_FOR_TGS_REQ;
 
     memset(&sessionkey, 0, sizeof(sessionkey));
@@ -1575,6 +1572,8 @@ tgs_build_reply(krb5_context context,
 	hdb_entry_ex *uu;
 	krb5_principal p;
 	Key *uukey;
+	krb5uint32 second_kvno = 0;
+	krb5uint32 *kvno_ptr = NULL;
 
 	if(b->additional_tickets == NULL ||
 	   b->additional_tickets->len == 0){
@@ -1591,8 +1590,12 @@ tgs_build_reply(krb5_context context,
 	    goto out;
 	}
 	_krb5_principalname2krb5_principal(context, &p, t->sname, t->realm);
+	if(t->enc_part.kvno){
+	    second_kvno = *t->enc_part.kvno;
+	    kvno_ptr = &second_kvno;
+	}
 	ret = _kdc_db_fetch(context, config, p,
-			    HDB_F_GET_KRBTGT, t->enc_part.kvno,
+			    HDB_F_GET_KRBTGT, kvno_ptr,
 			    NULL, &uu);
 	krb5_free_principal(context, p);
 	if(ret){
@@ -1647,16 +1650,42 @@ server_lookup:
     ret = _kdc_db_fetch(context, config, sp, HDB_F_GET_SERVER | flags,
 			NULL, NULL, &server);
 
-    if(ret == HDB_ERR_NOT_FOUND_HERE) {
+    if (ret == HDB_ERR_NOT_FOUND_HERE) {
 	kdc_log(context, config, 5, "target %s does not have secrets at this KDC, need to proxy", sp);
 	goto out;
-    } else if(ret){
+    } else if (ret == HDB_ERR_WRONG_REALM) {
+	if (ref_realm)
+	    free(ref_realm);
+	ref_realm = strdup(server->entry.principal->realm);
+	if (ref_realm == NULL) {
+	    ret = ENOMEM;
+	    goto out;
+	}
+
+	kdc_log(context, config, 5,
+		"Returning a referral to realm %s for "
+		"server %s.",
+		ref_realm, spn);
+	krb5_free_principal(context, sp);
+	sp = NULL;
+	free(spn);
+	spn = NULL;
+	ret = krb5_make_principal(context, &sp, r, KRB5_TGS_NAME,
+				  ref_realm, NULL);
+	if (ret)
+	    goto out;
+	ret = krb5_unparse_name(context, sp, &spn);
+	if (ret)
+	    goto out;
+
+	goto server_lookup;
+    } else if (ret) {
 	const char *new_rlm, *msg;
 	Realm req_rlm;
 	krb5_realm *realms;
 
 	if ((req_rlm = get_krbtgt_realm(&sp->name)) != NULL) {
-	    if(nloop++ < 2) {
+	    if (nloop++ < 2) {
 		new_rlm = find_rpath(context, tgt->crealm, req_rlm);
 		if(new_rlm) {
 		    kdc_log(context, config, 5, "krbtgt for realm %s "
@@ -1676,7 +1705,7 @@ server_lookup:
 		    goto server_lookup;
 		}
 	    }
-	} else if(need_referral(context, config, &b->kdc_options, sp, &realms)) {
+	} else if (need_referral(context, config, &b->kdc_options, sp, &realms)) {
 	    if (strcmp(realms[0], sp->realm) != 0) {
 		kdc_log(context, config, 5,
 			"Returning a referral to realm %s for "
@@ -1687,8 +1716,10 @@ server_lookup:
 		krb5_make_principal(context, &sp, r, KRB5_TGS_NAME,
 				    realms[0], NULL);
 		ret = krb5_unparse_name(context, sp, &spn);
-		if (ret)
+		if (ret) {
+		    krb5_free_host_realm(context, realms);
 		    goto out;
+		}
 
 		if (ref_realm)
 		    free(ref_realm);
@@ -1870,16 +1901,6 @@ server_lookup:
 	goto out;
     }
 
-    /* 
-     * Check if we would know the krbtgt key for the PAC.  We would
-     * only know this if the krbtgt principal was the same (ie, in our
-     * realm, regardless of KVNO) 
-     */
-    
-    if (krb5_principal_compare(context, krbtgt_out->entry.principal, krbtgt->entry.principal))
-	tkey_krbtgt_check = tkey_check;
-
-
     ret = _kdc_db_fetch(context, config, cp, HDB_F_GET_CLIENT | flags,
 			NULL, &clientdb, &client);
     if(ret == HDB_ERR_NOT_FOUND_HERE) {
@@ -1913,7 +1934,6 @@ server_lookup:
     ret = check_PAC(context, config, cp, NULL,
 		    client, server, krbtgt,
 		    &tkey_check->key,
-		    tkey_krbtgt_check ? &tkey_krbtgt_check->key : NULL,
 		    ekey, &tkey_sign->key,
 		    tgt, &rspac, &signedpath);
     if (ret) {
@@ -2185,7 +2205,7 @@ server_lookup:
 	 */
 	ret = check_PAC(context, config, tp, dp,
 			client, server, krbtgt,
-			&clientkey->key, &tkey_check->key,
+			&clientkey->key,
 			ekey, &tkey_sign->key,
 			&adtkt, &rspac, &ad_signedpath);
 	if (ret) {
@@ -2470,6 +2490,7 @@ out:
 				 NULL,
 				 NULL,
 				 ret, NULL,
+				 NULL,
 				 NULL, NULL,
 				 csec, cusec,
 				 data);

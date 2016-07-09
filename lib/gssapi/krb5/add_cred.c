@@ -85,7 +85,7 @@ OM_uint32 GSSAPI_CALLCONV _gsskrb5_add_cred (
         if (major != GSS_S_COMPLETE)
             goto failure;
 
-    } else if (cred != NULL) {
+    } else {
         /*
          * Check that we're done or copy input to output if
          * output_cred_handle != NULL.

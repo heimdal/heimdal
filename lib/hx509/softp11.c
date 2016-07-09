@@ -34,7 +34,7 @@
 #define CRYPTOKI_EXPORTS 1
 
 #include "hx_locl.h"
-#include "pkcs11.h"
+#include "ref/pkcs11.h"
 
 #define OBJECT_ID_MASK		0xfff
 #define HANDLE_OBJECT_ID(h)	((h) & OBJECT_ID_MASK)

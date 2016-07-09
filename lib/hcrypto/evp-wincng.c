@@ -30,9 +30,8 @@
 
 /* Windows CNG provider */
 
-#include "config.h"
-
-#include <windows.h>
+#include <config.h>
+#include <roken.h>
 #include <assert.h>
 
 #include <evp.h>
@@ -255,7 +254,7 @@ wincng_key_init(EVP_CIPHER_CTX *ctx,
     }
 
 /**
- * The tripple DES cipher type (Windows CNG provider)
+ * The triple DES cipher type (Windows CNG provider)
  *
  * @return the DES-EDE3-CBC EVP_CIPHER pointer.
  *

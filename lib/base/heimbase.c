@@ -357,6 +357,41 @@ _heim_type_get_tid(heim_type_t type)
     return type->tid;
 }
 
+#if !defined(WIN32) && !defined(HAVE_DISPATCH_DISPATCH_H) && defined(ENABLE_PTHREAD_SUPPORT)
+static pthread_once_t once_arg_key_once = PTHREAD_ONCE_INIT;
+static pthread_key_t once_arg_key;
+
+static void
+once_arg_key_once_init(void)
+{
+    errno = pthread_key_create(&once_arg_key, NULL);
+    if (errno != 0) {
+        fprintf(stderr,
+                "Error: pthread_key_create() failed, cannot continue: %s\n",
+                strerror(errno));
+        abort();
+    }
+}
+
+struct once_callback {
+    void (*fn)(void *);
+    void *data;
+};
+
+static void
+once_callback_caller(void)
+{
+    struct once_callback *once_callback = pthread_getspecific(once_arg_key);
+
+    if (once_callback == NULL) {
+        fprintf(stderr, "Error: pthread_once() calls callback on "
+                "different thread?!  Cannot continue.\n");
+        abort();
+    }
+    once_callback->fn(once_callback->data);
+}
+#endif
+
 /**
  * Call func once and only once
  *
@@ -368,8 +403,65 @@ _heim_type_get_tid(heim_type_t type)
 void
 heim_base_once_f(heim_base_once_t *once, void *ctx, void (*func)(void *))
 {
-#ifdef HAVE_DISPATCH_DISPATCH_H
+#if defined(WIN32)
+    /*
+     * With a libroken wrapper for some CAS function and a libroken yield()
+     * wrapper we could make this the default implementation when we have
+     * neither Grand Central nor POSX threads.
+     *
+     * We could also adapt the double-checked lock pattern with CAS
+     * providing the necessary memory barriers in the absence of
+     * portable explicit memory barrier APIs.
+     */
+    /*
+     * We use CAS operations in large part to provide implied memory
+     * barriers.
+     *
+     * State 0 means that func() has never executed.
+     * State 1 means that func() is executing.
+     * State 2 means that func() has completed execution.
+     */
+    if (InterlockedCompareExchange(once, 1L, 0L) == 0L) {
+	/* State is now 1 */
+	(*func)(ctx);
+	(void)InterlockedExchange(once, 2L);
+	/* State is now 2 */
+    } else {
+	/*
+	 * The InterlockedCompareExchange is being used to fetch
+	 * the current state under a full memory barrier.  As long
+	 * as the current state is 1 continue to spin.
+	 */
+	while (InterlockedCompareExchange(once, 2L, 0L) == 1L)
+	    SwitchToThread();
+    }
+#elif defined(HAVE_DISPATCH_DISPATCH_H)
     dispatch_once_f(once, ctx, func);
+#elif defined(ENABLE_PTHREAD_SUPPORT)
+    struct once_callback once_callback;
+
+    once_callback.fn = func;
+    once_callback.data = ctx;
+
+    errno = pthread_once(&once_arg_key_once, once_arg_key_once_init);
+    if (errno != 0) {
+        fprintf(stderr, "Error: pthread_once() failed, cannot continue: %s\n",
+                strerror(errno));
+        abort();
+    }
+    errno = pthread_setspecific(once_arg_key, &once_callback);
+    if (errno != 0) {
+        fprintf(stderr,
+                "Error: pthread_setspecific() failed, cannot continue: %s\n",
+                strerror(errno));
+        abort();
+    }
+    errno = pthread_once(once, once_callback_caller);
+    if (errno != 0) {
+        fprintf(stderr, "Error: pthread_once() failed, cannot continue: %s\n",
+                strerror(errno));
+        abort();
+    }
 #else
     static HEIMDAL_MUTEX mutex = HEIMDAL_MUTEX_INITIALIZER;
     HEIMDAL_MUTEX_lock(&mutex);
@@ -441,8 +533,14 @@ static void
 ar_tls_delete(void *ptr)
 {
     struct ar_tls *tls = ptr;
-    if (tls->head)
-	heim_release(tls->head);
+    heim_auto_release_t next = NULL;
+
+    if (tls == NULL)
+        return;
+    for (; tls->current != NULL; tls->current = next) {
+        next = tls->current->parent;
+        heim_release(tls->current);
+    }
     free(tls);
 }
 
@@ -501,8 +599,7 @@ autorel_dealloc(void *ptr)
     if (tls->current != ptr)
 	heim_abort("autorelease not releaseing top pool");
 
-    if (tls->current != tls->head)
-	tls->current = ar->parent;
+    tls->current = ar->parent;
     HEIMDAL_MUTEX_unlock(&tls->tls_mutex);
 }
 

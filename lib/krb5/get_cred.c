@@ -1218,7 +1218,7 @@ static void
 store_cred(krb5_context context, krb5_ccache ccache,
 	   krb5_const_principal server_princ, krb5_creds *creds)
 {
-    if (strcmp(server_princ->realm, "") == 0) {
+    if (!krb5_principal_compare(context, creds->server, server_princ)) {
         krb5_principal tmp_princ = creds->server;
         /*
          * Store the cred with the pre-canon server princ first so it
@@ -1229,7 +1229,6 @@ store_cred(krb5_context context, krb5_ccache ccache,
         creds->server = tmp_princ;
         /* Then store again with the canonicalized server princ */
     }
-
     krb5_cc_store_cred(context, ccache, creds);
 }
 
@@ -1333,7 +1332,7 @@ next_rule:
     if(ret == 0 && (options & KRB5_GC_NO_STORE) == 0)
 	store_cred(context, ccache, in_creds->server, *out_creds);
 
-    if (_krb5_have_debug(context, 5)) {
+    if (ret == 0 && _krb5_have_debug(context, 5)) {
         char *unparsed;
 
         ret = krb5_unparse_name(context, (*out_creds)->server, &unparsed);
@@ -1595,7 +1594,7 @@ next_rule:
     if (ret == 0 && (options & KRB5_GC_NO_STORE) == 0)
 	store_cred(context, ccache, inprinc, *out_creds);
 
-    if (_krb5_have_debug(context, 5)) {
+    if (ret == 0 && _krb5_have_debug(context, 5)) {
         char *unparsed;
 
         ret = krb5_unparse_name(context, (*out_creds)->server, &unparsed);

@@ -311,7 +311,7 @@ krb5_process_last_request(krb5_context context,
     if (options && options->opt_private && options->opt_private->lr.func) {
 	krb5_last_req_entry **lre;
 
-	lre = calloc(lr->len + 1, sizeof(**lre));
+	lre = calloc(lr->len + 1, sizeof(*lre));
 	if (lre == NULL)
 	    return krb5_enomem(context);
 	for (i = 0; i < lr->len; i++) {
@@ -346,7 +346,7 @@ krb5_process_last_request(krb5_context context,
 
     for (i = 0; i < lr->len; ++i) {
 	if (lr->val[i].lr_value <= t) {
-	    switch (abs(lr->val[i].lr_type)) {
+	    switch (lr->val[i].lr_type) {
 	    case LR_PW_EXPTIME :
 		report_expiration(context, ctx->prompter,
 				  ctx->prompter_data,
@@ -361,6 +361,8 @@ krb5_process_last_request(krb5_context context,
 				  lr->val[i].lr_value);
 		reported = TRUE;
 		break;
+            default:
+                break;
 	    }
 	}
     }
@@ -2330,6 +2332,17 @@ krb5_init_creds_step(krb5_context context,
 		ret = krb5_principal_set_realm(context,
 					       ctx->cred.client,
 					       *ctx->error.crealm);
+		if (ret)
+		    goto out;
+
+		if (krb5_principal_is_krbtgt(context, ctx->cred.server)) {
+		    ret = krb5_init_creds_set_service(context, ctx, NULL);
+		    if (ret)
+			goto out;
+		}
+
+		free_AS_REQ(&ctx->as_req);
+		memset(&ctx->as_req, 0, sizeof(ctx->as_req));
 
 		ctx->used_pa_types = 0;
 	    } else if (ret == KRB5KDC_ERR_KEY_EXP && ctx->runflags.change_password == 0 && ctx->prompter) {
@@ -2376,6 +2389,15 @@ krb5_init_creds_step(krb5_context context,
 	    }
 	    if (ret)
 		goto out;
+	}
+    }
+
+    if (ctx->as_req.req_body.cname == NULL) {
+	ret = init_as_req(context, ctx->flags, &ctx->cred,
+			  ctx->addrs, ctx->etypes, &ctx->as_req);
+	if (ret) {
+	    free_init_creds_ctx(context, ctx);
+	    return ret;
 	}
     }
 

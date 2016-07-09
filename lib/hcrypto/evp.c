@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2006 - 2008 Kungliga Tekniska Högskolan
+ * Copyright (c) 2006 - 2016 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  *
@@ -34,26 +34,32 @@
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif
+#include <roken.h>
 
 #define HC_DEPRECATED
 #define HC_DEPRECATED_CRYPTO
 
-#include <sys/types.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 #include <assert.h>
 
 #include <evp.h>
 #include <evp-hcrypto.h>
 #include <evp-cc.h>
 #include <evp-w32.h>
+#include <evp-pkcs11.h>
+#include <evp-openssl.h>
 
 #include <krb5-types.h>
-#include <roken.h>
 
 #ifndef HCRYPTO_DEF_PROVIDER
-#define HCRYPTO_DEF_PROVIDER hcrypto
+# ifdef __APPLE__
+#  define HCRYPTO_DEF_PROVIDER cc
+# elif __sun
+#  define HCRYPTO_DEF_PROVIDER pkcs11_hcrypto
+# elif HAVE_HCRYPTO_W_OPENSSL
+#  define HCRYPTO_DEF_PROVIDER ossl
+# else
+#  define HCRYPTO_DEF_PROVIDER hcrypto
+# endif
 #endif
 
 #define HC_CONCAT4(x,y,z,aa)	x ## y ## z ## aa
@@ -177,7 +183,7 @@ int
 EVP_MD_CTX_cleanup(EVP_MD_CTX *ctx) HC_DEPRECATED
 {
     if (ctx->md && ctx->md->cleanup) {
-	int ret = (ctx->md->cleanup)(ctx);
+	int ret = (ctx->md->cleanup)(ctx->ptr);
 	if (!ret)
 	    return ret;
     } else if (ctx->md) {
@@ -257,11 +263,15 @@ EVP_DigestInit_ex(EVP_MD_CTX *ctx, const EVP_MD *md, ENGINE *engine)
 	EVP_MD_CTX_cleanup(ctx);
 	ctx->md = md;
 	ctx->engine = engine;
+        if (md == NULL)
+            return 0;
 
 	ctx->ptr = calloc(1, md->ctx_size);
 	if (ctx->ptr == NULL)
 	    return 0;
     }
+    if (ctx->md == 0)
+        return 0;
     return (ctx->md->init)(ctx->ptr);
 }
 
@@ -793,6 +803,10 @@ EVP_CipherInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *c, ENGINE *engine,
 	/* assume block size is a multiple of 2 */
 	ctx->block_mask = EVP_CIPHER_block_size(c) - 1;
 
+        if ((ctx->cipher->flags & EVP_CIPH_CTRL_INIT) &&
+            !EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_INIT, 0, NULL))
+            return 0;
+
     } else if (ctx->cipher == NULL) {
 	/* reuse of cipher, but not any cipher ever set! */
 	return 0;
@@ -1122,7 +1136,7 @@ EVP_des_cbc(void)
 }
 
 /**
- * The tripple DES cipher type
+ * The triple DES cipher type
  *
  * @return the DES-EDE3-CBC EVP_CIPHER pointer.
  *

@@ -319,7 +319,9 @@ struct pem_formats {
     { "CERTIFICATE", parse_certificate, NULL },
     { "PRIVATE KEY", parse_pkcs8_private_key, NULL },
     { "RSA PRIVATE KEY", parse_pem_private_key, hx509_signature_rsa },
+#ifdef HAVE_HCRYPTO_W_OPENSSL
     { "EC PRIVATE KEY", parse_pem_private_key, hx509_signature_ecPublicKey }
+#endif
 };
 
 

@@ -102,6 +102,12 @@ static struct getargs args[] = {
         "daemon-child",       0 ,      arg_flag, &daemon_child,
         "private argument, do not use", NULL
     },
+#ifdef __APPLE__
+    {
+        "bonjour",       0 ,      arg_flag, &do_bonjour,
+        "private argument, do not use", NULL
+    },
+#endif
     {	"addresses",	0,	arg_strings, &addresses_str,
 	"addresses to listen on", "list of addresses" },
     {	"disable-des",	0,	arg_flag, &disable_des,

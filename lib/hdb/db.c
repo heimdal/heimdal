@@ -157,6 +157,10 @@ DB_rename(krb5_context context, HDB *db, const char *new_name)
     int ret;
     char *old, *new;
 
+    if (strncmp(new_name, "db:", sizeof("db:") - 1) == 0)
+        new_name += sizeof("db:") - 1;
+    else if (strncmp(new_name, "db1:", sizeof("db1:") - 1) == 0)
+        new_name += sizeof("db1:") - 1;
     asprintf(&old, "%s.db", db->hdb_name);
     asprintf(&new, "%s.db", new_name);
     ret = rename(old, new);
@@ -207,6 +211,7 @@ DB__put(krb5_context context, HDB *db, int replace,
     k.size = key.length;
     v.data = value.data;
     v.size = value.length;
+    krb5_clear_error_message(context);
     code = (*d->put)(d, &k, &v, replace ? 0 : R_NOOVERWRITE);
     if(code < 0) {
 	code = errno;
@@ -215,8 +220,14 @@ DB__put(krb5_context context, HDB *db, int replace,
 	return code;
     }
     if(code == 1) {
-	krb5_clear_error_message(context);
 	return HDB_ERR_EXISTS;
+    }
+    code = (*d->sync)(d, 0);
+    if (code == -1) {
+	code = errno;
+	krb5_set_error_message(context, code, "Database %s put sync error: %s",
+			       db->hdb_name, strerror(code));
+	return code;
     }
     return 0;
 }
@@ -229,15 +240,23 @@ DB__del(krb5_context context, HDB *db, krb5_data key)
     krb5_error_code code;
     k.data = key.data;
     k.size = key.length;
+    krb5_clear_error_message(context);
     code = (*d->del)(d, &k, 0);
-    if(code == 1) {
+    if (code == 1)
+        return HDB_ERR_NOENTRY;
+    if (code < 0) {
 	code = errno;
-	krb5_set_error_message(context, code, "Database %s put error: %s",
+	krb5_set_error_message(context, code, "Database %s del error: %s",
 			       db->hdb_name, strerror(code));
 	return code;
     }
-    if(code < 0)
-	return errno;
+    code = (*d->sync)(d, 0);
+    if (code == -1) {
+	code = errno;
+	krb5_set_error_message(context, code, "Database %s del sync error: %s",
+			       db->hdb_name, strerror(code));
+	return code;
+    }
     return 0;
 }
 

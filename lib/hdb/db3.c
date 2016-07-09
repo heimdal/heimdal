@@ -168,6 +168,11 @@ DB_rename(krb5_context context, HDB *db, const char *new_name)
     int ret;
     char *old, *new;
 
+    if (strncmp(new_name, "db:", sizeof("db:") - 1) == 0)
+        new_name += sizeof("db:") - 1;
+    else if (strncmp(new_name, "db3:", sizeof("db3:") - 1) == 0)
+        new_name += sizeof("db3:") - 1;
+
     ret = asprintf(&old, "%s.db", db->hdb_name);
     if (ret == -1)
 	return ENOMEM;
@@ -230,8 +235,46 @@ DB__put(krb5_context context, HDB *db, int replace,
     code = (*d->put)(d, NULL, &k, &v, replace ? 0 : DB_NOOVERWRITE);
     if(code == DB_KEYEXIST)
 	return HDB_ERR_EXISTS;
-    if(code)
-	return errno;
+    if (code) {
+        /*
+         * Berkeley DB 3 and up have a terrible error reporting
+         * interface...
+         *
+         * DB->err() doesn't output a string.
+         * DB->set_errcall()'s callback function doesn't have a void *
+         * argument that can be used to place the error somewhere.
+         *
+         * The only thing we could do is fopen()/fdopen() a file, set it
+         * with DB->set_errfile(), then call DB->err(), then read the
+         * message from the file, unset it with DB->set_errfile(), close
+         * it and delete it.  That's a lot of work... so we don't do it.
+         */
+        if (code == EACCES || code == ENOSPC || code == EINVAL) {
+            krb5_set_error_message(context, code,
+                                   "Database %s put error: %s",
+                                   db->hdb_name, strerror(code));
+        } else {
+            code = HDB_ERR_UK_SERROR;
+            krb5_set_error_message(context, code,
+                                   "Database %s put error: unknown (%d)",
+                                   db->hdb_name, code);
+        }
+	return code;
+    }
+    code = (*d->sync)(d, 0);
+    if (code) {
+        if (code == EACCES || code == ENOSPC || code == EINVAL) {
+            krb5_set_error_message(context, code,
+                                   "Database %s put sync error: %s",
+                                   db->hdb_name, strerror(code));
+        } else {
+            code = HDB_ERR_UK_SERROR;
+            krb5_set_error_message(context, code,
+                                   "Database %s put sync error: unknown (%d)",
+                                   db->hdb_name, code);
+        }
+        return code;
+    }
     return 0;
 }
 
@@ -248,8 +291,33 @@ DB__del(krb5_context context, HDB *db, krb5_data key)
     code = (*d->del)(d, NULL, &k, 0);
     if(code == DB_NOTFOUND)
 	return HDB_ERR_NOENTRY;
-    if(code)
+    if (code) {
+        if (code == EACCES || code == ENOSPC || code == EINVAL) {
+            krb5_set_error_message(context, code,
+                                   "Database %s del error: %s",
+                                   db->hdb_name, strerror(code));
+        } else {
+            code = HDB_ERR_UK_SERROR;
+            krb5_set_error_message(context, code,
+                                   "Database %s del error: unknown (%d)",
+                                   db->hdb_name, code);
+        }
 	return code;
+    }
+    code = (*d->sync)(d, 0);
+    if (code) {
+        if (code == EACCES || code == ENOSPC || code == EINVAL) {
+            krb5_set_error_message(context, code,
+                                   "Database %s del sync error: %s",
+                                   db->hdb_name, strerror(code));
+        } else {
+            code = HDB_ERR_UK_SERROR;
+            krb5_set_error_message(context, code,
+                                   "Database %s del sync error: unknown (%d)",
+                                   db->hdb_name, code);
+        }
+        return code;
+    }
     return 0;
 }
 

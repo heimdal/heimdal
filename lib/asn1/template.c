@@ -513,7 +513,7 @@ _asn1_encode(const struct asn1_template *t, unsigned char *p, size_t len, const 
 	    size_t newsize;
 	    const void *el = DPOC(data, t->offset);
 
-	    if (type > sizeof(asn1_template_prim)/sizeof(asn1_template_prim[0])) {
+	    if (type >= sizeof(asn1_template_prim)/sizeof(asn1_template_prim[0])) {
 		ABORT_ON_ERROR();
 		return ASN1_PARSE_ERROR;
 	    }
@@ -752,7 +752,7 @@ _asn1_length(const struct asn1_template *t, const void *data)
 	    unsigned int type = A1_PARSE_TYPE(t->tt);
 	    const void *el = DPOC(data, t->offset);
 
-	    if (type > sizeof(asn1_template_prim)/sizeof(asn1_template_prim[0])) {
+	    if (type >= sizeof(asn1_template_prim)/sizeof(asn1_template_prim[0])) {
 		ABORT_ON_ERROR();
 		break;
 	    }
@@ -860,7 +860,7 @@ _asn1_free(const struct asn1_template *t, void *data)
 	    unsigned int type = A1_PARSE_TYPE(t->tt);
 	    void *el = DPO(data, t->offset);
 
-	    if (type > sizeof(asn1_template_prim)/sizeof(asn1_template_prim[0])) {
+	    if (type >= sizeof(asn1_template_prim)/sizeof(asn1_template_prim[0])) {
 		ABORT_ON_ERROR();
 		break;
 	    }
@@ -990,7 +990,7 @@ _asn1_copy(const struct asn1_template *t, const void *from, void *to)
 	    const void *fel = DPOC(from, t->offset);
 	    void *tel = DPO(to, t->offset);
 
-	    if (type > sizeof(asn1_template_prim)/sizeof(asn1_template_prim[0])) {
+	    if (type >= sizeof(asn1_template_prim)/sizeof(asn1_template_prim[0])) {
 		ABORT_ON_ERROR();
 		return ASN1_PARSE_ERROR;
 	    }

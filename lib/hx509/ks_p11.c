@@ -38,7 +38,7 @@
 
 #ifdef HAVE_DLOPEN
 
-#include "pkcs11.h"
+#include "ref/pkcs11.h"
 
 struct p11_slot {
     int flags;
@@ -65,6 +65,7 @@ struct p11_module {
     CK_FUNCTION_LIST_PTR funcs;
     CK_ULONG num_slots;
     unsigned int ref;
+    unsigned int selected_slot;
     struct p11_slot *slot;
 };
 
@@ -343,7 +344,7 @@ p11_init_slot(hx509_context context,
     if (ret) {
 	hx509_set_error_string(context, 0, HX509_PKCS11_NO_TOKEN,
 			       "Failed to init PKCS11 slot %d "
-			       "with error 0x08x",
+			       "with error 0x%08x",
 			       num, ret);
 	return HX509_PKCS11_NO_TOKEN;
     }
@@ -459,7 +460,18 @@ p11_get_session(hx509_context context,
 				       "Failed to login on slot id %d "
 				       "with error: 0x%08x",
 				       (int)slot->id, ret);
-	    return HX509_PKCS11_LOGIN;
+	    switch(ret) {
+	        case CKR_PIN_LOCKED:
+	            return HX509_PKCS11_PIN_LOCKED;
+	        case CKR_PIN_EXPIRED:
+	            return HX509_PKCS11_PIN_EXPIRED;
+	        case CKR_PIN_INCORRECT:
+	            return HX509_PKCS11_PIN_INCORRECT;
+	        case CKR_USER_PIN_NOT_INITIALIZED:
+	            return HX509_PKCS11_PIN_NOT_INITIALIZED;
+	        default:
+	            return HX509_PKCS11_LOGIN;
+	    }
 	} else
 	    slot->flags |= P11_LOGIN_DONE;
 
@@ -822,6 +834,7 @@ p11_init(hx509_context context,
     }
 
     p->ref = 1;
+    p->selected_slot = 0;
 
     str = strchr(list, ',');
     if (str)
@@ -831,10 +844,8 @@ p11_init(hx509_context context,
 	strnext = strchr(str, ',');
 	if (strnext)
 	    *strnext++ = '\0';
-#if 0
 	if (strncasecmp(str, "slot=", 5) == 0)
 	    p->selected_slot = atoi(str + 5);
-#endif
 	str = strnext;
     }
 
@@ -919,11 +930,13 @@ p11_init(hx509_context context,
 	}
 
 	for (i = 0; i < p->num_slots; i++) {
+	    if ((p->selected_slot != 0) && (slot_ids[i] != (p->selected_slot - 1)))
+		continue;
 	    ret = p11_init_slot(context, p, lock, slot_ids[i], i, &p->slot[i]);
-	    if (ret)
-		break;
-	    if (p->slot[i].flags & P11_TOKEN_PRESENT)
-		num_tokens++;
+	    if (!ret) {
+	        if (p->slot[i].flags & P11_TOKEN_PRESENT)
+	            num_tokens++;
+	    }
 	}
 	free(slot_ids);
 	if (ret)

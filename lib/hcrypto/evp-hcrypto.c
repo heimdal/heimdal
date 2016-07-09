@@ -32,13 +32,10 @@
  */
 
 #include <config.h>
+#include <roken.h>
 
 #define HC_DEPRECATED
 
-#include <sys/types.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 #include <assert.h>
 
 #include <evp.h>
@@ -531,7 +528,7 @@ des_ede3_cbc_do_cipher(EVP_CIPHER_CTX *ctx,
 }
 
 /**
- * The tripple DES cipher type - hcrypto
+ * The triple DES cipher type - hcrypto
  *
  * @return the DES-EDE3-CBC EVP_CIPHER pointer.
  *

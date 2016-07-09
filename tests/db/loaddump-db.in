@@ -47,15 +47,13 @@ kstash="../../kdc/kstash"
 hprop="../../kdc/hprop"
 hpropd="../../kdc/hpropd"
 
-type="${1}"
-typesep="${type:+:}"
-typeconf="${type:+-}"
+default_db_type=@default_db_type@
+db_type=${1:-${default_db_type}}
 
+propdb="${hprop} --database=${db_type}:./current-db -n"
+propddb="${hpropd} --database=${db_type}:./current-db -n"
 
-propdb="${hprop} --database=${type}${typesep}./current-db -n"
-propddb="${hpropd} --database=${type}${typesep}./current-db -n"
-
-KRB5_CONFIG="${objdir}/krb5.conf${typeconf}${type}"
+KRB5_CONFIG="${objdir}/krb5.conf-${db_type}"
 export KRB5_CONFIG
 
 rm -f current-db*

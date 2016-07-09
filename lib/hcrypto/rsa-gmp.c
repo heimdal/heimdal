@@ -32,15 +32,11 @@
  */
 
 #include <config.h>
-
-#include <stdio.h>
-#include <stdlib.h>
+#include <roken.h>
 #include <krb5-types.h>
 #include <assert.h>
 
 #include <rsa.h>
-
-#include <roken.h>
 
 #ifdef HAVE_GMP
 

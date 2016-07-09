@@ -49,6 +49,14 @@ string_to_proto(const char *string)
     return -1;
 }
 
+static int
+is_invalid_tld_srv_target(const char *target)
+{
+    return (strncmp("your-dns-needs-immediate-attention.",
+		    target, 35) == 0
+	    && strchr(&target[35], '.') == NULL);
+}
+
 /*
  * set `res' and `count' to the result of looking up SRV RR in DNS for
  * `proto', `proto', `realm' using `dns_type'.
@@ -108,16 +116,30 @@ srv_find_realm(krb5_context context, krb5_krbhst_info ***res, int *count,
 
     for(num_srv = 0, rr = r->head; rr; rr = rr->next)
 	if(rr->type == rk_ns_t_srv) {
-	    krb5_krbhst_info *hi;
-	    size_t len = strlen(rr->u.srv->target);
+	    krb5_krbhst_info *hi = NULL;
+	    size_t len;
+	    int invalid_tld = 1;
 
-	    hi = calloc(1, sizeof(*hi) + len);
+	    /* Test for top-level domain controlled interruptions */
+	    if (!is_invalid_tld_srv_target(rr->u.srv->target)) {
+		invalid_tld = 0;
+		len = strlen(rr->u.srv->target);
+		hi = calloc(1, sizeof(*hi) + len);
+	    }
 	    if(hi == NULL) {
 		rk_dns_free_data(r);
 		while(--num_srv >= 0)
 		    free((*res)[num_srv]);
 		free(*res);
 		*res = NULL;
+		if (invalid_tld) {
+		    krb5_warnx(context,
+			       "Domain lookup failed: "
+			       "Realm %s needs immediate attention "
+			       "see https://icann.org/namecollision",
+			       realm);
+		    return KRB5_KDC_UNREACH;
+		}
 		return krb5_enomem(context);
 	    }
 	    (*res)[num_srv++] = hi;
@@ -529,7 +551,7 @@ fallback_get_hosts(krb5_context context, struct krb5_krbhst_data *kd,
 		       serv_string, kd->fallback_count, kd->realm);
 
     if (ret < 0 || host == NULL)
-	return ENOMEM;
+	return krb5_enomem(context);
 
     make_hints(&hints, proto);
     snprintf(portstr, sizeof(portstr), "%d", port);
@@ -540,12 +562,26 @@ fallback_get_hosts(krb5_context context, struct krb5_krbhst_data *kd,
 	kd->flags |= KD_FALLBACK;
     } else {
 	struct krb5_krbhst_info *hi;
-	size_t hostlen = strlen(host);
+	size_t hostlen;
 
+	/* Check for ICANN gTLD Name Collision address (127.0.53.53) */
+	if (ai->ai_family == AF_INET) {
+	    struct sockaddr_in *sin = (struct sockaddr_in *)ai->ai_addr;
+	    if (sin->sin_addr.s_addr == htonl(0x7f003535)) {
+		krb5_warnx(context,
+			   "Fallback lookup failed: "
+			   "Realm %s needs immediate attention "
+			   "see https://icann.org/namecollision",
+			   kd->realm);
+		return KRB5_KDC_UNREACH;
+	    }
+	}
+
+	hostlen = strlen(host);
 	hi = calloc(1, sizeof(*hi) + hostlen);
 	if(hi == NULL) {
 	    free(host);
-	    return ENOMEM;
+	    return krb5_enomem(context);
 	}
 
 	hi->proto = proto;

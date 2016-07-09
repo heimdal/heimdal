@@ -31,6 +31,8 @@
 
 #include<windows.h>
 
+extern void heim_w32_service_thread_detach(void *);
+
 HINSTANCE _krb5_hInstance = NULL;
 
 #if NTDDI_VERSION >= NTDDI_VISTA
@@ -65,6 +67,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL,
 	return FALSE;
 
     case DLL_THREAD_DETACH:
+        heim_w32_service_thread_detach(NULL);
 	return FALSE;
     }
 

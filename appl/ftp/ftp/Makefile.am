@@ -4,7 +4,7 @@ include $(top_srcdir)/Makefile.am.common
 
 WFLAGS += $(WFLAGS_LITE)
 
-AM_CPPFLAGS += -I$(srcdir)/../common $(INCLUDE_readline) $(INCLUDE_hcrypto)
+AM_CPPFLAGS += -I$(srcdir)/../common $(INCLUDE_readline)
 
 bin_PROGRAMS = ftp
 

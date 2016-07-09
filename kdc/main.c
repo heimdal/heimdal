@@ -46,6 +46,12 @@ sig_atomic_t exit_flag = 0;
 
 int detach_from_console = -1;
 int daemon_child = -1;
+int do_bonjour = -1;
+
+static RETSIGTYPE
+sigchld(int sig)
+{
+}
 
 static RETSIGTYPE
 sigterm(int sig)
@@ -140,6 +146,11 @@ main(int argc, char **argv)
 	sigaction(SIGXCPU, &sa, NULL);
 #endif
 
+#ifdef SIGCHLD
+	sa.sa_handler = sigchld;
+	sigaction(SIGCHLD, &sa, NULL);
+#endif
+
 	sa.sa_handler = SIG_IGN;
 #ifdef SIGPIPE
 	sigaction(SIGPIPE, &sa, NULL);
@@ -148,6 +159,9 @@ main(int argc, char **argv)
 #else
     signal(SIGINT, sigterm);
     signal(SIGTERM, sigterm);
+#ifdef SIGCHLD
+    signal(SIGCHLD, sigchld);
+#endif
 #ifdef SIGXCPU
     signal(SIGXCPU, sigterm);
 #endif
@@ -155,14 +169,11 @@ main(int argc, char **argv)
     signal(SIGPIPE, SIG_IGN);
 #endif
 #endif
-#ifdef __APPLE__
-    bonjour_announce(context, config);
-#endif
     pidfile(NULL);
 
     switch_environment();
 
-    loop(context, config);
+    start_kdc(context, config, argv[0]);
     krb5_free_context(context);
     return 0;
 }

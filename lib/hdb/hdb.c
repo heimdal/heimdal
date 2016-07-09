@@ -68,10 +68,17 @@ static struct hdb_method methods[] = {
     { HDB_INTERFACE_VERSION, NULL, NULL, "db:",	hdb_db_create},
 #endif
 #if HAVE_DB1
+    { HDB_INTERFACE_VERSION, NULL, NULL, "db1:",	hdb_db_create},
+#endif
+#if HAVE_DB3
+    { HDB_INTERFACE_VERSION, NULL, NULL, "db3:",	hdb_db_create},
+#endif
+#if HAVE_DB1
     { HDB_INTERFACE_VERSION, NULL, NULL, "mit-db:",	hdb_mitdb_create},
 #endif
-#if HAVE_MDB
+#if HAVE_LMDB
     { HDB_INTERFACE_VERSION, NULL, NULL, "mdb:",	hdb_mdb_create},
+    { HDB_INTERFACE_VERSION, NULL, NULL, "lmdb:",	hdb_mdb_create},
 #endif
 #if HAVE_NDBM
     { HDB_INTERFACE_VERSION, NULL, NULL, "ndbm:",	hdb_ndbm_create},
@@ -87,7 +94,10 @@ static struct hdb_method methods[] = {
     { 0, NULL, NULL, NULL, NULL}
 };
 
-#if HAVE_DB1 || HAVE_DB3
+#if defined(HAVE_LMDB)
+static struct hdb_method dbmetod =
+    { HDB_INTERFACE_VERSION, NULL, NULL, "", hdb_mdb_create };
+#elif defined(HAVE_DB1) || defined(HAVE_DB3)
 static struct hdb_method dbmetod =
     { HDB_INTERFACE_VERSION, NULL, NULL, "", hdb_db_create };
 #elif defined(HAVE_NDBM)
@@ -310,7 +320,8 @@ find_method (const char *filename, const char **rest)
 	    return h;
 	}
     }
-#if defined(HAVE_DB1) || defined(HAVE_DB3) || defined(HAVE_NDBM)
+#if defined(HAVE_DB1) || defined(HAVE_DB3) || defined(HAVE_LMDB) || defined(HAVE_NDBM)
+    /* XXX This doesn't handle Windows */
     if (strncmp(filename, "/", 1) == 0
 	|| strncmp(filename, "./", 2) == 0
 	|| strncmp(filename, "../", 3) == 0)

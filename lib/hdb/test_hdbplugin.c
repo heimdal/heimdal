@@ -39,7 +39,7 @@ struct hdb_called {
 };
 struct hdb_called testresult;
 
-static krb5_error_code KRB5_LIB_CALL
+static krb5_error_code
 hdb_test_create(krb5_context context, struct HDB **db, const char *arg)
 {
 	testresult.create = 1;

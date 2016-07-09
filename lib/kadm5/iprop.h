@@ -68,4 +68,13 @@ enum iprop_cmd { I_HAVE = 1,
 extern sig_atomic_t exit_flag;
 void setup_signal(void);
 
+enum ipropd_exit_code {
+    IPROPD_DONE = 0,
+    IPROPD_RESTART = 1,
+    IPROPD_RESTART_SLOW = 2,
+    IPROPD_FATAL = 3,
+};
+
+int restarter(krb5_context, size_t *);
+
 #endif /* __IPROP_H__ */

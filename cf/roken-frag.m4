@@ -272,6 +272,14 @@ AC_FIND_FUNC_NO_LIBS(bswap32,,
 #include <sys/bswap.h>
 #endif],0)
 
+AC_FIND_FUNC_NO_LIBS(bswap64,,
+[#ifdef HAVE_SYS_TYPES_H
+#include <sys/types.h>
+#endif
+#ifdef HAVE_SYS_BSWAP_H
+#include <sys/bswap.h>
+#endif],0)
+
 AC_FIND_FUNC_NO_LIBS(pidfile,util,
 [#ifdef HAVE_UTIL_H
 #include <util.h>

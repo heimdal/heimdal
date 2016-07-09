@@ -123,7 +123,29 @@ Make sure the directory has restrictive permissions.
 
 @example
 # mkdir /var/heimdal
+# chmod og-rwx /var/heimdal
 @end example
+
+Heimdal supports various database backends: lmdb (LMDB), db3 (Berkeley
+DB 3.x, 4.x, or 5.x), db1 (Berkeley DB 2.x), sqlite (SQLite3), and ldap
+(LDAP).  The default is @value{dbtype}, and is selected at build time
+from one of lmdb, db3, or db1.
+
+These defaults can be overriden in the 'database' key in the @samp{kdc}
+section of the configuration.
+
+@example
+[kdc]
+        database = @{
+                dbname = lmdb:/path/to/db-file
+                realm = REALM
+                acl_file = /path/to/kadmind.acl
+                mkey_file = /path/to/mkey
+                log_file = /path/to/iprop-log-file
+        @}
+@end example
+
+To use LDAP, see @xref{Using LDAP to store the database}.
 
 The keys of all the principals are stored in the database.  If you
 choose to, these can be encrypted with a master key.  You do not have to

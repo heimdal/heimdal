@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997-2006 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997-2016 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  *
@@ -39,13 +39,9 @@
 #define __KRB5_LOCL_H__
 
 #include <config.h>
+#include <roken.h>
 
-#include <errno.h>
 #include <ctype.h>
-#include <string.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <limits.h>
 
 #ifdef HAVE_POLL_H
 #include <sys/poll.h>
@@ -59,12 +55,6 @@
 #ifdef HAVE_SYS_MMAN_H
 #include <sys/mman.h>
 #endif
-#ifdef HAVE_UNISTD_H
-#include <unistd.h>
-#endif
-#ifdef HAVE_FCNTL_H
-#include <fcntl.h>
-#endif
 
 #if defined(HAVE_SYS_IOCTL_H) && SunOS != 40
 #include <sys/ioctl.h>
@@ -76,44 +66,11 @@
 #include <pwd.h>
 #endif
 
-#ifdef HAVE_SYS_PARAM_H
-#include <sys/param.h>
-#endif
-#include <time.h>
-#ifdef HAVE_SYS_TIME_H
-#include <sys/time.h>
-#endif
 #ifdef HAVE_SYS_SELECT_H
 #include <sys/select.h>
 #endif
-#ifdef HAVE_SYS_SOCKET_H
-#include <sys/socket.h>
-#endif
-#ifdef HAVE_NETINET_IN_H
-#include <netinet/in.h>
-#endif
-#ifdef HAVE_NETINET_IN6_H
-#include <netinet/in6.h>
-#endif
-#ifdef HAVE_NETINET6_IN6_H
-#include <netinet6/in6.h>
-#endif
-#ifdef HAVE_NETDB_H
-#include <netdb.h>
-#endif
 #ifdef _AIX
-struct ether_addr;
 struct mbuf;
-struct sockaddr_dl;
-#endif
-#ifdef HAVE_ARPA_INET_H
-#include <arpa/inet.h>
-#endif
-#ifdef HAVE_ARPA_NAMESER_H
-#include <arpa/nameser.h>
-#endif
-#ifdef HAVE_SYS_UIO_H
-#include <sys/uio.h>
 #endif
 #ifdef HAVE_SYS_FILIO_H
 #include <sys/filio.h>
@@ -148,17 +105,24 @@ struct sockaddr_dl;
 #include <door.h>
 #endif
 
-#include <roken.h>
 #include <parse_time.h>
 #include <base64.h>
 
 #include <wind.h>
 
+/*
+ * We use OpenSSL for EC, but to do this we need to disable cross-references
+ * between OpenSSL and hcrypto bn.h and such.  Source files that use OpenSSL EC
+ * must define HEIM_NO_CRYPTO_HDRS before including this file.
+ */
 #define HC_DEPRECATED_CRYPTO
+#ifndef HEIM_NO_CRYPTO_HDRS
 #include "crypto-headers.h"
+#endif
 
 
 #include <krb5_asn1.h>
+#include <pkinit_asn1.h>
 
 struct send_to_kdc;
 
@@ -292,7 +256,7 @@ typedef struct krb5_context_data {
     char *default_cc_name;
     char *default_cc_name_env;
     int default_cc_name_set;
-    void *mutex;			/* protects error_string */
+    HEIMDAL_MUTEX mutex;		/* protects error_string */
     int large_msg_size;
     int max_msg_size;
     int tgs_negative_timeout;		/* timeout for TGS negative cache */
@@ -376,6 +340,27 @@ struct krb5_pk_identity {
 enum krb5_pk_type {
     PKINIT_WIN2K = 1,
     PKINIT_27 = 2
+};
+
+enum keyex_enum { USE_RSA, USE_DH, USE_ECDH };
+
+struct krb5_pk_init_ctx_data {
+    struct krb5_pk_identity *id;
+    enum keyex_enum keyex;
+    union {
+	DH *dh;
+        void *eckey;
+    } u;
+    krb5_data *clientDHNonce;
+    struct krb5_dh_moduli **m;
+    hx509_peer_info peer;
+    enum krb5_pk_type type;
+    unsigned int require_binding:1;
+    unsigned int require_eku:1;
+    unsigned int require_krbtgt_otherName:1;
+    unsigned int require_hostname_match:1;
+    unsigned int trustedCertifiers:1;
+    unsigned int anonymous:1;
 };
 
 #endif /* PKINIT */

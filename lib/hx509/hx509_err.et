@@ -100,4 +100,10 @@ error_code OPEN_SESSION,  "Failed to open session to slot"
 error_code LOGIN,  "Failed to login to slot"
 error_code LOAD,  "Failed to load PKCS module"
 
+# pkinit related errors
+error_code PIN_INCORRECT, "Incorrect User PIN"
+error_code PIN_LOCKED, "User PIN locked"
+error_code PIN_NOT_INITIALIZED, "User PIN not initialized"
+error_code PIN_EXPIRED, "User PIN expired"
+
 end

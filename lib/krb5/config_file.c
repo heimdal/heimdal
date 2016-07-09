@@ -370,11 +370,11 @@ krb5_config_parse_debug (struct fileptr *f,
 	    b = NULL;
 	} else if (*p == '}') {
 	    *err_message = "unmatched }";
-	    return EINVAL;	/* XXX */
+	    return KRB5_CONFIG_BADFORMAT;
 	} else if(*p != '\0') {
 	    if (s == NULL) {
 		*err_message = "binding before section";
-		return EINVAL;
+		return KRB5_CONFIG_BADFORMAT;
 	    }
 	    ret = parse_binding(f, lineno, p, &b, &s->u.list, err_message);
 	    if (ret)
@@ -934,13 +934,17 @@ krb5_config_vget_strings(krb5_context context,
 	s = next_component_string(tmp, " \t", &pos);
 	while(s){
 	    char **tmp2 = realloc(strings, (nstr + 1) * sizeof(*strings));
-	    if(tmp2 == NULL)
+	    if(tmp2 == NULL) {
+		free(tmp);
 		goto cleanup;
+	    }
 	    strings = tmp2;
 	    strings[nstr] = strdup(s);
 	    nstr++;
-	    if(strings[nstr-1] == NULL)
+	    if(strings[nstr-1] == NULL)	{
+		free(tmp);
 		goto cleanup;
+	    }
 	    s = next_component_string(NULL, " \t", &pos);
 	}
 	free(tmp);

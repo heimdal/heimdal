@@ -155,6 +155,7 @@ asn1_*.[cx]
 /include/bits
 /include/config.h.in
 /include/gssapi/*.h
+/include/hcrypto/*.h
 /include/kadm5/*.h
 /include/stamp-h1
 /include/version.h.in
@@ -222,6 +223,7 @@ asn1_*.[cx]
 /lib/gssapi/ntlm/ntlm-private.h
 /lib/gssapi/spnego/spnego-private.h
 /lib/gssapi/test_acquire_cred
+/lib/gssapi/test_add_store_cred
 /lib/gssapi/test_cfx
 /lib/gssapi/test_context
 /lib/gssapi/test_cred
@@ -229,6 +231,10 @@ asn1_*.[cx]
 /lib/gssapi/test_names
 /lib/gssapi/test_ntlm
 /lib/gssapi/test_oid
+/lib/hcrypto/hcrypto
+/lib/hcrypto/hcrypto-link
+/lib/hcrypto/test_rand
+/lib/roken/test-detach
 /lib/hdb/hdb-protos.h
 /lib/hdb/hdb-private.h
 /lib/hdb/test_dbinfo
@@ -413,6 +419,7 @@ asn1_*.[cx]
 /out
 /po/gen-po.sh
 /scripts
+/tests/bin/intr
 /tests/bin/setup-env
 /tests/can/check-can
 /tests/can/current-db.db
@@ -426,6 +433,9 @@ asn1_*.[cx]
 /tests/db/dbinfo.out
 /tests/db/have-db
 /tests/db/krb5.conf
+/tests/db/krb5.conf-db1
+/tests/db/krb5.conf-db3
+/tests/db/krb5.conf-lmdb
 /tests/db/krb5.conf-sqlite
 /tests/db/loaddump-db
 /tests/db/tempfile
@@ -490,6 +500,7 @@ asn1_*.[cx]
 /tests/kdc/krb5-pkinit-win.conf
 /tests/kdc/krb5-pkinit.conf
 /tests/kdc/krb5-slave.conf
+/tests/kdc/krb5-slave2.conf
 /tests/kdc/krb5-weak.conf
 /tests/kdc/krb5.conf
 /tests/kdc/krb5-cc.conf

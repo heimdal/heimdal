@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003 Kungliga Tekniska Högskolan
+ * Copyright (c) 2003-2016 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  *
@@ -34,10 +34,6 @@
 #include <hex.h>
 #include <err.h>
 #include <assert.h>
-
-#ifdef HAVE_OPENSSL
-#include <openssl/evp.h>
-#endif
 
 static int verbose = 0;
 
@@ -233,6 +229,7 @@ string_to_key_test(krb5_context context)
 	    if (memcmp(keyout, keys[i].pbkdf2, keys[i].keylen) != 0) {
 		krb5_warnx(context, "%d: pbkdf2", i);
 		val = 1;
+		hex_dump_data(keyout, keys[i].keylen);
 		continue;
 	    }
 
@@ -269,6 +266,8 @@ string_to_key_test(krb5_context context)
 	    if (memcmp(key.keyvalue.data, keys[i].key, keys[i].keylen) != 0) {
 		krb5_warnx(context, "%d: key wrong", i);
 		val = 1;
+		hex_dump_data(key.keyvalue.data, key.keyvalue.length);
+		hex_dump_data(keys[i].key, keys[i].keylen);
 		continue;
 	    }
 
@@ -856,6 +855,9 @@ main(int argc, char **argv)
     krb5_error_code ret;
     krb5_context context;
     int val = 0;
+
+    if (argc > 1 && strcmp(argv[1], "-v") == 0)
+        verbose = 1;
 
     ret = krb5_init_context (&context);
     if (ret)

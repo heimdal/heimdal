@@ -460,9 +460,11 @@ AC_CHECK_FUNCS([				\
 	arc4random				\
 	backtrace				\
 	fcntl					\
+	fork					\
 	getpeereid				\
 	getpeerucred				\
 	grantpt					\
+	kill					\
 	mktime					\
 	ptsname					\
 	rand					\
@@ -485,6 +487,7 @@ AC_CHECK_FUNCS([				\
 	umask					\
 	unlockpt				\
 	vhangup					\
+	waitpid					\
 	yp_get_default_domain			\
 ])
 

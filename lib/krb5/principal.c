@@ -360,7 +360,7 @@ exit:
 	free(comp[--n]);
     }
     free(comp);
-    free(realm);
+    krb5_free_default_realm(context, realm);
     free(s);
     return ret;
 }
@@ -449,7 +449,7 @@ unparse_name_fixed(krb5_context context,
 	    return ret;
 	if(strcmp(princ_realm(principal), r) != 0)
 	    short_form = 0;
-	free(r);
+	krb5_free_default_realm(context, r);
     }
     if(!short_form && !no_realm) {
 	add_char(name, idx, len, '@');
@@ -747,7 +747,7 @@ krb5_make_principal(krb5_context context,
     ret = krb5_build_principal_va(context, principal, strlen(realm), realm, ap);
     va_end(ap);
     if(r)
-	free(r);
+	krb5_free_default_realm(context, r);
     return ret;
 }
 
@@ -1280,7 +1280,7 @@ struct krb5_name_canon_rule_data {
  * @param context A Kerberos context.
  * @param hostname hostname to use
  * @param sname Service name to use
- * @param type name type of pricipal, use KRB5_NT_SRV_HST or KRB5_NT_UNKNOWN.
+ * @param type name type of principal, use KRB5_NT_SRV_HST or KRB5_NT_UNKNOWN.
  * @param ret_princ return principal, free with krb5_free_principal().
  *
  * @return An krb5 error code, see krb5_get_error_message().
@@ -1366,7 +1366,7 @@ krb5_sname_to_principal(krb5_context context,
 				  realm, sname, remote_host,
 				  (char *)0);
 
-    if (type == KRB5_NT_SRV_HST) {
+    if (ret == 0 && type == KRB5_NT_SRV_HST) {
 	/*
 	 * Hostname canonicalization is done elsewhere (in
 	 * krb5_get_credentials() and krb5_kt_get_entry()).
@@ -1563,7 +1563,7 @@ parse_name_canon_rules(krb5_context context, char **rulestrs,
 	/* Validate parsed rule */
 	if (r[k].type == KRB5_NCRT_BOGUS ||
 	    (r[k].type == KRB5_NCRT_QUALIFY && !r[k].domain) ||
-	    (r[k].type == KRB5_NCRT_NSS && (r[k].domain || r[k].realm))) {
+	    (r[k].type == KRB5_NCRT_NSS && r[k].domain)) {
 	    /* Invalid rule; mark it so and clean up */
 	    r[k].type = KRB5_NCRT_BOGUS;
 	    free(r[k].match_domain);

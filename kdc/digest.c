@@ -608,7 +608,7 @@ _kdc_do_digest(krb5_context context,
 	    }
 	    t = p[0] | (p[1] << 8) | (p[2] << 16) | (p[3] << 24);
 
-	    if (abs((kdc_time & 0xffffffff) - t) > context->max_skew) {
+	    if (labs((kdc_time & 0xffffffff) - t) > context->max_skew) {
 		ret = EINVAL;
 		krb5_set_error_message(context, ret, "time screw in server nonce ");
 		goto out;

@@ -141,9 +141,6 @@ int main(int argc, char **argv)
 	}
 	f = fopen(argv[1], "w");
     }
-    fprintf(f, "/* %s -- this file was generated for %s by\n", fn, HOST);
-    fprintf(f, "   %*s    %s */\n\n", (int)strlen(fn), "",
-	    "$Id$");
     fprintf(f, "#ifndef %s\n", hb);
     fprintf(f, "#define %s\n", hb);
     fprintf(f, "\n");

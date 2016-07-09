@@ -507,7 +507,9 @@ ROKEN_LIB_FUNCTION void ROKEN_LIB_CALL
 rk_cloexec_socket(rk_socket_t);
 
 ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
-ct_memcmp(const void *, const void *, size_t);
+ct_memcmp(const volatile void * volatile,
+          const volatile void * volatile,
+          size_t);
 
 void ROKEN_LIB_FUNCTION
 rk_random_init(void);

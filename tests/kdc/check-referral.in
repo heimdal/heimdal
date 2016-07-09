@@ -45,7 +45,7 @@ ${have_db} || exit 77
 R=TEST.H5L.SE
 R2=SUB.TEST.H5L.SE
 
-service=ldap/host.sub.test.h5l.se
+service=ldap/host.sub.test.h5l.se:389
 
 port=@port@
 

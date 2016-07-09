@@ -36,8 +36,6 @@
 
 #include <wincrypt.h>
 
-#include <stdio.h>
-#include <stdlib.h>
 #include <rand.h>
 #include <heim_threads.h>
 

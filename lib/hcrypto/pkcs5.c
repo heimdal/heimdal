@@ -32,18 +32,14 @@
  */
 
 #include <config.h>
+#include <roken.h>
 
 #ifdef KRB5
 #include <krb5-types.h>
 #endif
 
-#include <stdio.h>
-#include <stdlib.h>
-
 #include <evp.h>
 #include <hmac.h>
-
-#include <roken.h>
 
 /**
  * As descriped in PKCS5, convert a password, salt, and iteration counter into a crypto key.

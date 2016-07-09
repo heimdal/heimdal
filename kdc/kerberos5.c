@@ -423,6 +423,7 @@ pa_enc_chal_validate(kdc_request_t r, const PA_DATA *pa)
 {
     krb5_data pepper1, pepper2, ts_data;
     KDC_REQ_BODY *b = &r->req.req_body;
+    int invalidPassword = 0;
     EncryptedData enc_data;
     krb5_enctype aenctype;
     krb5_error_code ret;
@@ -483,8 +484,24 @@ pa_enc_chal_validate(kdc_request_t r, const PA_DATA *pa)
 					 KRB5_KU_ENC_CHALLENGE_CLIENT,
 					 &enc_data,
 					 &ts_data);
-	if (ret)
+	if (ret) {
+	    const char *msg = krb5_get_error_message(r->context, ret);
+	    krb5_error_code ret2;
+	    char *str = NULL;
+
+	    invalidPassword = 1;
+
+	    ret2 = krb5_enctype_to_string(r->context, k->key.keytype, &str);
+	    if (ret2)
+		str = NULL;
+	    _kdc_r_log(r, 5, "Failed to decrypt ENC-CHAL -- %s "
+		       "(enctype %s) error %s",
+		       r->client_name, str ? str : "unknown enctype", msg);
+	    krb5_free_error_message(r->context, msg);
+	    free(str);
+
 	    continue;
+	}
 	
 	ret = decode_PA_ENC_TS_ENC(ts_data.data,
 				   ts_data.length,
@@ -499,7 +516,7 @@ pa_enc_chal_validate(kdc_request_t r, const PA_DATA *pa)
 	    continue;
 	}
 
-	if (abs(kdc_time - p.patimestamp) > r->context->max_skew) {
+	if (labs(kdc_time - p.patimestamp) > r->context->max_skew) {
 	    char client_time[100];
 
 	    krb5_crypto_destroy(r->context, challangecrypto);
@@ -511,7 +528,7 @@ pa_enc_chal_validate(kdc_request_t r, const PA_DATA *pa)
 	    _kdc_r_log(r, 0, "Too large time skew, "
 		       "client time %s is out by %u > %u seconds -- %s",
 		       client_time,
-		       (unsigned)abs(kdc_time - p.patimestamp),
+		       (unsigned)labs(kdc_time - p.patimestamp),
 		       r->context->max_skew,
 		       r->client_name);
 
@@ -533,10 +550,20 @@ pa_enc_chal_validate(kdc_request_t r, const PA_DATA *pa)
 	if (ret)
 	    goto out;
 
-	break;
+	/*
+	 * Success
+	 */
+	if (r->clientdb->hdb_auth_status)
+	    r->clientdb->hdb_auth_status(r->context, r->clientdb, r->client,
+					 HDB_AUTH_SUCCESS);
+	goto out;
     }
-    if (i < r->client->entry.keys.len)
+
+    if (invalidPassword && r->clientdb->hdb_auth_status) {
+	r->clientdb->hdb_auth_status(r->context, r->clientdb, r->client,
+				     HDB_AUTH_WRONG_PASSWORD);
 	ret = KRB5KDC_ERR_PREAUTH_FAILED;
+    }
  out:
     free_EncryptedData(&enc_data);
 
@@ -653,7 +680,7 @@ pa_enc_ts_validate(kdc_request_t r, const PA_DATA *pa)
 		   r->client_name);
 	goto out;
     }
-    if (abs(kdc_time - p.patimestamp) > r->context->max_skew) {
+    if (labs(kdc_time - p.patimestamp) > r->context->max_skew) {
 	char client_time[100];
 		
 	krb5_format_time(r->context, p.patimestamp,
@@ -663,7 +690,7 @@ pa_enc_ts_validate(kdc_request_t r, const PA_DATA *pa)
 	_kdc_r_log(r, 0, "Too large time skew, "
 		   "client time %s is out by %u > %u seconds -- %s",
 		   client_time,
-		   (unsigned)abs(kdc_time - p.patimestamp),
+		   (unsigned)labs(kdc_time - p.patimestamp),
 		   r->context->max_skew,
 		   r->client_name);
 
@@ -1685,6 +1712,31 @@ _kdc_as_rep(kdc_request_t r,
 	kdc_log(context, config, 5, "client %s does not have secrets at this KDC, need to proxy",
 		r->client_name);
 	goto out;
+    } else if (ret == HDB_ERR_WRONG_REALM) {
+	char *fixed_client_name = NULL;
+
+	ret = krb5_unparse_name(context, r->client->entry.principal,
+				&fixed_client_name);
+	if (ret) {
+	    goto out;
+	}
+
+	kdc_log(context, config, 0, "WRONG_REALM - %s -> %s",
+		r->client_name, fixed_client_name);
+	free(fixed_client_name);
+
+	ret = _kdc_fast_mk_error(context, r,
+				 &error_method,
+				 r->armor_crypto,
+				 &req->req_body,
+				 KRB5_KDC_ERR_WRONG_REALM,
+				 NULL,
+				 r->server_princ,
+				 NULL,
+				 &r->client->entry.principal->realm,
+				 NULL, NULL,
+				 reply);
+	goto out;
     } else if(ret){
 	const char *msg = krb5_get_error_message(context, ret);
 	kdc_log(context, config, 0, "UNKNOWN -- %s: %s", r->client_name, msg);
@@ -1755,13 +1807,14 @@ _kdc_as_rep(kdc_request_t r,
 	    pa = _kdc_find_padata(req, &i, pat[n].type);
 	    if (pa) {
 		ret = pat[n].validate(r, pa);
-		if (ret == 0) {
-		    kdc_log(context, config, 0,
-			    "%s pre-authentication succeeded -- %s",
-			    pat[n].name, r->client_name);
-		    found_pa = 1;
-		    r->et.flags.pre_authent = 1;
+		if (ret != 0) {
+		    goto out;
 		}
+		kdc_log(context, config, 0,
+			"%s pre-authentication succeeded -- %s",
+			pat[n].name, r->client_name);
+		found_pa = 1;
+		r->et.flags.pre_authent = 1;
 	    }
 	}
     }
@@ -1832,9 +1885,10 @@ _kdc_as_rep(kdc_request_t r,
 	    goto out;
     }
 
-    if (r->clientdb->hdb_auth_status)
+    if (r->clientdb->hdb_auth_status) {
 	r->clientdb->hdb_auth_status(context, r->clientdb, r->client, 
 				     HDB_AUTH_SUCCESS);
+    }
 
     /*
      * Verify flags after the user been required to prove its identity
@@ -2080,61 +2134,6 @@ _kdc_as_rep(kdc_request_t r,
     if (ret)
 	goto out;
 
-    /*
-     * Add signing of alias referral
-     */
-
-    if (f.canonicalize) {
-	PA_ClientCanonicalized canon;
-	krb5_data data;
-	PA_DATA tmppa;
-	krb5_crypto cryptox;
-	size_t len = 0;
-
-	memset(&canon, 0, sizeof(canon));
-
-	canon.names.requested_name = *b->cname;
-	canon.names.mapped_name = r->client->entry.principal->name;
-
-	ASN1_MALLOC_ENCODE(PA_ClientCanonicalizedNames, data.data, data.length,
-			   &canon.names, &len, ret);
-	if (ret)
-	    goto out;
-	if (data.length != len)
-	    krb5_abortx(context, "internal asn.1 error");
-
-	/* sign using "returned session key" */
-	ret = krb5_crypto_init(context, &r->et.key, 0, &cryptox);
-	if (ret) {
-	    free(data.data);
-	    goto out;
-	}
-
-	ret = krb5_create_checksum(context, cryptox,
-				   KRB5_KU_CANONICALIZED_NAMES, 0,
-				   data.data, data.length,
-				   &canon.canon_checksum);
-	free(data.data);
-	krb5_crypto_destroy(context, cryptox);
-	if (ret)
-	    goto out;
-
-	ASN1_MALLOC_ENCODE(PA_ClientCanonicalized, data.data, data.length,
-			   &canon, &len, ret);
-	free_Checksum(&canon.canon_checksum);
-	if (ret)
-	    goto out;
-	if (data.length != len)
-	    krb5_abortx(context, "internal asn.1 error");
-
-	tmppa.padata_type = KRB5_PADATA_CLIENT_CANONICALIZED;
-	tmppa.padata_value = data;
-	ret = add_METHOD_DATA(&r->outpadata, &tmppa);
-	free(data.data);
-	if (ret)
-	    goto out;
-    }
-
     if (r->outpadata.len) {
 
 	ALLOC(rep.padata);
@@ -2219,13 +2218,15 @@ out:
     /*
      * In case of a non proxy error, build an error message.
      */
-    if(ret != 0 && ret != HDB_ERR_NOT_FOUND_HERE) {
+    if(ret != 0 && ret != HDB_ERR_NOT_FOUND_HERE && reply->length == 0) {
 	ret = _kdc_fast_mk_error(context, r,
 				 &error_method,
 				 r->armor_crypto,
 				 &req->req_body,
 				 ret, r->e_text,
-				 r->client_princ, r->server_princ,
+				 r->server_princ,
+				 &r->client_princ->name,
+				 &r->client_princ->realm,
 				 NULL, NULL,
 				 reply);
 	if (ret)

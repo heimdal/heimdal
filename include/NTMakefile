@@ -61,6 +61,7 @@ while(<>) {
     if ("$(KRB5)") { print "#define KRB5 1\n"; }
     if ("$(KRB4)") { print "#define KRB4 1\n"; }
     if ("$(WEAK_CRYPTO)") { print "#define HEIM_WEAK_CRYPTO 1\n"; }
+    if ("$(HCRYPTO_FALLBACK)") { print "#define HCRYPTO_FALLBACK 1\n"; } else { print "#define HCRYPTO_FALLBACK 0\n"; }
     if ("$(PKINIT)") { print "#define PKINIT 1\n"; }
     if ("$(NO_AFS)") { print "#define NO_AFS 1\n"; }
     if ("$(OPENLDAP)") { print "#define OPENLDAP 1\n"; }
@@ -79,7 +80,6 @@ while(<>) {
     if ("$(DIR_hdbdir)") { print "#define HDB_DB_DIR \"".'$(DIR_hdbdir)'."\"\n"; }
     if ("$(HAVE_MSLSA_CACHE)") { print "#define HAVE_MSLSA_CACHE 1\n"; }
     if ("$(NO_LOCALNAME)") { print "#define NO_LOCALNAME 1\n"; }
-    if ("$(NO_RAND_EGD_METHOD)") { print "#define NO_RAND_EGD_METHOD 1\n"; }
 
   } elsif (m/\@VERSION_OPTDEFS\@/) {
 

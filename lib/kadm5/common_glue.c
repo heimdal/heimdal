@@ -35,7 +35,8 @@
 
 RCSID("$Id$");
 
-#define __CALL(F, P) (*((kadm5_common_context*)server_handle)->funcs.F)P;
+#define __CALL(F, P) (*((kadm5_common_context*)server_handle)->funcs.F)P
+#define __CALLABLE(F) (((kadm5_common_context*)server_handle)->funcs.F != 0)
 
 kadm5_ret_t
 kadm5_chpass_principal(void *server_handle,
@@ -265,6 +266,17 @@ kadm5_setkey_principal_3(void *server_handle,
     if (n_ks_tuple > 0 && n_ks_tuple != n_keys)
 	return KADM5_SETKEY3_ETYPE_MISMATCH;
 
+    /*
+     * If setkey_principal_3 is defined in the server handle, use that.
+     */
+    if (__CALLABLE(setkey_principal_3))
+	return __CALL(setkey_principal_3,
+		      (server_handle, princ, keepold, n_ks_tuple, ks_tuple,
+		       keyblocks, n_keys));
+
+    /*
+     * Otherwise, simulate it via a get, update, modify sequence.
+     */
     ret = kadm5_get_principal(server_handle, princ, &princ_ent,
                               KADM5_KVNO | KADM5_PRINCIPAL | KADM5_KEY_DATA);
     if (ret)

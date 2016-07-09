@@ -1,5 +1,5 @@
 /***********************************************************************
- * Copyright (c) 2009, Secure Endpoints Inc.
+ * Copyright (c) 2009-2016, Secure Endpoints Inc.
  * All rights reserved.
  * 
  * Redistribution and use in source and binary forms, with or without
@@ -652,8 +652,8 @@ static const char *const rcsid[] = { (const char *)rcsid, "@(#)" msg }
 /* Define to 1 if you have the `openpty' function. */
 /* #define HAVE_OPENPTY 1 */
 
-/* define to use openssl's libcrypto */
-/* #undef HAVE_OPENSSL */
+/* define to 1 to use openssl's libcrypto as a (default) backend for libhcrypto */
+/* #undef HAVE_HCRYPTO_W_OPENSSL */
 
 /* Define to enable basic OSF C2 support. */
 /* #undef HAVE_OSFC2 */
@@ -1362,9 +1362,6 @@ static const char *const rcsid[] = { (const char *)rcsid, "@(#)" msg }
 
 /* Define if you don't want to use mmap. */
 #define NO_MMAP 1
-
-/* Define if EGD rand method is not defined */
-#define NO_RAND_EGD_METHOD 1
 
 /* Define if the Unix rand method is not defined */
 #define NO_RAND_UNIX_METHOD 1

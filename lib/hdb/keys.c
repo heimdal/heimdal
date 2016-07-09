@@ -196,6 +196,66 @@ parse_key_set(krb5_context context, const char *key,
     return 0;
 }
 
+/**
+ * This function prunes an HDB entry's keys that are too old to have been used
+ * to mint still valid tickets (based on the entry's maximum ticket lifetime).
+ * 
+ * @param context   Context
+ * @param entry	    HDB entry
+ */
+krb5_error_code
+hdb_prune_keys(krb5_context context, hdb_entry *entry)
+{
+    HDB_extension *ext;
+    HDB_Ext_KeySet *keys;
+    size_t nelem;
+
+    ext = hdb_find_extension(entry, choice_HDB_extension_data_hist_keys);
+    if (ext == NULL)
+	return 0;
+    keys = &ext->data.u.hist_keys;
+    nelem = keys->len;
+
+    /* Optionally drop key history for keys older than now - max_life */
+    if (entry->max_life != NULL && nelem > 0
+	&& krb5_config_get_bool_default(context, NULL, FALSE,
+					"kadmin", "prune-key-history", NULL)) {
+	hdb_keyset *elem;
+	time_t ceiling = time(NULL) - *entry->max_life;
+	time_t keep_time = 0;
+	size_t i;
+
+	/*
+	 * Compute most recent key timestamp that predates the current time
+	 * by at least the entry's maximum ticket lifetime.
+	 */
+	for (i = 0; i < nelem; ++i) {
+	    elem = &keys->val[i];
+	    if (elem->set_time && *elem->set_time < ceiling
+		&& (keep_time == 0 || *elem->set_time > keep_time))
+		keep_time = *elem->set_time;
+	}
+
+	/* Drop obsolete entries */
+	if (keep_time) {
+	    for (i = 0; i < nelem; /* see below */) {
+		elem = &keys->val[i];
+		if (elem->set_time && *elem->set_time < keep_time) {
+		    remove_HDB_Ext_KeySet(keys, i);
+		    /*
+		     * Removing the i'th element shifts the tail down, continue
+		     * at same index with reduced upper bound.
+		     */
+		    --nelem;
+		    continue;
+		}
+		++i;
+	    }
+	}
+    }
+
+    return 0;
+}
 
 /**
  * This function adds an HDB entry's current keyset to the entry's key
@@ -211,6 +271,7 @@ hdb_add_current_keys_to_history(krb5_context context, hdb_entry *entry)
     krb5_boolean replace = FALSE;
     krb5_error_code ret;
     HDB_extension *ext;
+    HDB_Ext_KeySet *keys;
     hdb_keyset newkeyset;
     time_t newtime;
 
@@ -226,6 +287,9 @@ hdb_add_current_keys_to_history(krb5_context context, hdb_entry *entry)
 
 	ext->data.element = choice_HDB_extension_data_hist_keys;
     }
+    keys = &ext->data.u.hist_keys;
+
+    ext->mandatory = FALSE;
 
     /*
      * Copy in newest old keyset
@@ -239,7 +303,7 @@ hdb_add_current_keys_to_history(krb5_context context, hdb_entry *entry)
     newkeyset.kvno = entry->kvno;
     newkeyset.set_time = &newtime;
 
-    ret = add_HDB_Ext_KeySet(&ext->data.u.hist_keys, &newkeyset);
+    ret = add_HDB_Ext_KeySet(keys, &newkeyset);
     if (ret)
 	goto out;
 
@@ -249,6 +313,10 @@ hdb_add_current_keys_to_history(krb5_context context, hdb_entry *entry)
 	if (ret)
 	    goto out;
     }
+
+    ret = hdb_prune_keys(context, entry);
+    if (ret)
+	goto out;
 
  out:
     if (replace && ext) {
@@ -285,6 +353,7 @@ hdb_add_history_key(krb5_context context, hdb_entry *entry, krb5_kvno kvno, Key 
 	extp = &ext;
     }
 
+    extp->mandatory = FALSE;
     hist_keys = &extp->data.u.hist_keys;
 
     for (i = 0; i < hist_keys->len; i++) {

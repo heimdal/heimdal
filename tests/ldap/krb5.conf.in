@@ -14,7 +14,11 @@
 		dbname = ldapi://ldap-socket:OU=KerberosPrincipals,o=test,DC=h5l,DC=se
 		realm = TEST.H5L.SE
 		mkey_file = @objdir@/mkey.file
+                log_file = @objdir@/log.current-db.log
 	}
+
+[hdb]
+	db-dir = @objdir@
 
 [logging]
 	kdc = 0-/FILE:@objdir@/messages.log

@@ -348,8 +348,10 @@ static const char *sysplugin_dirs[] =  {
 #endif
 #ifdef __APPLE__
     LIBDIR "/plugin/krb5",
+#ifdef HEIM_PLUGINS_SEARCH_SYSTEM
     "/Library/KerberosPlugins/KerberosFrameworkPlugins",
     "/System/Library/KerberosPlugins/KerberosFrameworkPlugins",
+#endif
 #endif
     NULL
 };
@@ -422,12 +424,7 @@ krb5_init_context(krb5_context *context)
     if(!p)
 	return ENOMEM;
 
-    p->mutex = malloc(sizeof(HEIMDAL_MUTEX));
-    if (p->mutex == NULL) {
-	free(p);
-	return ENOMEM;
-    }
-    HEIMDAL_MUTEX_init(p->mutex);
+    HEIMDAL_MUTEX_init(&p->mutex);
 
     p->flags |= KRB5_CTX_F_HOMEDIR_ACCESS;
 
@@ -520,13 +517,7 @@ krb5_copy_context(krb5_context context, krb5_context *out)
     if (p == NULL)
 	return krb5_enomem(context);
 
-    p->mutex = malloc(sizeof(HEIMDAL_MUTEX));
-    if (p->mutex == NULL) {
-	free(p);
-	return krb5_enomem(context);
-    }
-    HEIMDAL_MUTEX_init(p->mutex);
-
+    HEIMDAL_MUTEX_init(&p->mutex);
 
     if (context->default_cc_name)
 	p->default_cc_name = strdup(context->default_cc_name);
@@ -627,8 +618,7 @@ krb5_free_context(krb5_context context)
 	hx509_context_free(&context->hx509ctx);
 #endif
 
-    HEIMDAL_MUTEX_destroy(context->mutex);
-    free(context->mutex);
+    HEIMDAL_MUTEX_destroy(&context->mutex);
     if (context->flags & KRB5_CTX_F_SOCKETS_INITIALIZED) {
  	rk_SOCK_EXIT();
     }
@@ -656,7 +646,8 @@ krb5_set_config_files(krb5_context context, char **filenames)
     krb5_config_binding *tmp = NULL;
     while(filenames != NULL && *filenames != NULL && **filenames != '\0') {
 	ret = krb5_config_parse_file_multi(context, *filenames, &tmp);
-	if(ret != 0 && ret != ENOENT && ret != EACCES && ret != EPERM) {
+	if (ret != 0 && ret != ENOENT && ret != EACCES && ret != EPERM
+	    && ret != KRB5_CONFIG_BADFORMAT) {
 	    krb5_config_file_free(context, tmp);
 	    return ret;
 	}

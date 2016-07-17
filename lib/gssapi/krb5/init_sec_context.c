@@ -345,8 +345,7 @@ do_delegation (krb5_context context,
     fwd_flags.forwarded = 1;
     fwd_flags.forwardable = 1;
 
-    if ( /*target_name->name.name_type != KRB5_NT_SRV_HST ||*/
-	name->name.name_string.len < 2)
+    if (name->name.name_string.len < 2)
 	goto out;
 
     kret = krb5_get_forwarded_creds(context,

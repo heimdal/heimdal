@@ -88,14 +88,16 @@ _gsskrb5_canon_name(OM_uint32 *minor_status, krb5_context context,
     krb5_const_principal p = (krb5_const_principal)targetname;
     krb5_error_code ret;
     char *hostname = NULL, *service;
+    int type;
+    const char *comp;
 
     *minor_status = 0;
 
     /* If its not a hostname */
-    if (krb5_principal_get_type(context, p) != KRB5_NT_SRV_HST &&
-	krb5_principal_get_type(context, p) != KRB5_NT_SRV_HST_NEEDS_CANON) {
-	ret = krb5_copy_principal(context, p, out);
-    } else {
+    type = krb5_principal_get_type(context, p);
+    comp = krb5_principal_get_comp_string(context, p, 0);
+    if (type == KRB5_NT_SRV_HST || type == KRB5_NT_SRV_HST_NEEDS_CANON ||
+	(type == KRB5_NT_UNKNOWN && comp != NULL && strcmp(comp, "host") == 0)) {
 	if (p->name.name_string.len == 0)
 	    return GSS_S_BAD_NAME;
 	else if (p->name.name_string.len > 1)
@@ -108,6 +110,8 @@ _gsskrb5_canon_name(OM_uint32 *minor_status, krb5_context context,
 				      service,
 				      KRB5_NT_SRV_HST,
 				      out);
+    } else {
+	ret = krb5_copy_principal(context, p, out);
     }
 
     if (ret) {

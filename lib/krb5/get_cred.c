@@ -1478,6 +1478,8 @@ krb5_get_creds(krb5_context context,
     krb5_name_canon_iterator name_canon_iter = NULL;
     krb5_name_canon_rule_options rule_opts;
     int i;
+    int type;
+    const char *comp;
 
     memset(&in_creds, 0, sizeof(in_creds));
     in_creds.server = rk_UNCONST(inprinc);
@@ -1555,7 +1557,10 @@ next_rule:
     if (options & KRB5_GC_CACHED)
 	goto next_rule;
 
-    if (try_princ->name.name_type == KRB5_NT_SRV_HST)
+    type = krb5_principal_get_type(context, try_princ);
+    comp = krb5_principal_get_comp_string(context, try_princ, 0);
+    if ((type == KRB5_NT_SRV_HST || type == KRB5_NT_UNKNOWN) &&
+        comp != NULL && strcmp(comp, "host") == 0)
 	flags.b.canonicalize = 1;
     if (rule_opts & KRB5_NCRO_NO_REFERRALS)
 	flags.b.canonicalize = 0;

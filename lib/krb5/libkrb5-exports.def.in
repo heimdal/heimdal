@@ -797,4 +797,5 @@ EXPORTS
 	_krb5_plugin_find;
 	_krb5_plugin_free;
 	_krb5_expand_path_tokensv;
-
+        _krb5_find_capath;
+        _krb5_free_capath;

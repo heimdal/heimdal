@@ -38,8 +38,6 @@
 #include <assert.h>
 #include <evp.h>
 
-#ifdef HAVE_HCRYPTO_W_OPENSSL
-
 /*
  * This is the OpenSSL 1.x backend for hcrypto.  It has been tested with
  * OpenSSL 1.0.1f and OpenSSL 1.1.0-pre3-dev.
@@ -50,6 +48,8 @@
  */
 
 #include <evp-openssl.h>
+
+#ifdef HAVE_HCRYPTO_W_OPENSSL
 
 /*
  * This being an OpenSSL backend for hcrypto... we need to be able to

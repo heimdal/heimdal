@@ -407,7 +407,14 @@ heim_description(heim_object_t ptr);
  *
  * Note: these are private until integrated into the heimbase object system.
  */
-typedef struct bsearch_file_handle *bsearch_file_handle;
+typedef struct _bsearch_file_handle {
+    int fd;          /* file descriptor */
+    char *cache;     /* cache bytes */
+    char *page;      /* one double-size page worth of bytes */
+    size_t file_sz;  /* file size */
+    size_t cache_sz; /* cache size */
+    size_t page_sz;  /* page size */
+} *bsearch_file_handle;
 int _bsearch_text(const char *buf, size_t buf_sz, const char *key,
 		   char **value, size_t *location, size_t *loops);
 int _bsearch_file_open(const char *fname, size_t max_sz, size_t page_sz,

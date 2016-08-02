@@ -179,7 +179,7 @@ gss_display_status(OM_uint32 *minor_status,
 	switch (status_type) {
 	case GSS_C_GSS_CODE: {
 	    	char *buf = NULL;
-		int e;
+		int e = 0;
 
 		if (GSS_SUPPLEMENTARY_INFO(status_value))
 		    e = asprintf(&buf, "%s", supplementary_error(
@@ -201,7 +201,7 @@ gss_display_status(OM_uint32 *minor_status,
 		OM_uint32 maj_junk, min_junk;
 		gss_buffer_desc oid;
 		char *buf = NULL;
-		int e;
+		int e = 0;
 
 		maj_junk = gss_oid_to_str(&min_junk, mech_type, &oid);
 		if (maj_junk != GSS_S_COMPLETE) {

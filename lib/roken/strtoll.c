@@ -46,6 +46,18 @@
 #include <stdlib.h>
 #include <stdint.h>
 
+#ifndef LLONG_MAX
+
+/* HPUX defines this LONG_LONG_MAX, not LLONG_MAX */
+#ifdef LONG_LONG_MAX
+# define LLONG_MAX LONG_LONG_MAX
+#else
+#error NO LONG LONG MAX VALUE AVAILABLE - FIX THIS FOR YOUR PLATFORM SPECIFIC DEFINE!!
+#endif
+
+# define LLONG_MIN (-LLONG_MAX - 1LL)
+#endif
+
 /*
  * Convert a string to a long long integer.
  *

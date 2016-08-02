@@ -82,15 +82,6 @@
  * _bsearch_file() is the interface for block-wise searching files.
  */
 
-struct bsearch_file_handle {
-    int fd;          /* file descriptor */
-    char *cache;     /* cache bytes */
-    char *page;      /* one double-size page worth of bytes */
-    size_t file_sz;  /* file size */
-    size_t cache_sz; /* cache size */
-    size_t page_sz;  /* page size */
-};
-
 /* Find a new-line */
 static const char *
 find_line(const char *buf, size_t i, size_t right)

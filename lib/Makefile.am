@@ -20,6 +20,9 @@ endif
 if MAINTAINER_MODE
 dir_sqlite = sqlite
 endif
+if HAVE_AFS
+dir_afs = kafs
+endif
 
 SUBDIRS = \
 	roken \
@@ -36,7 +39,7 @@ SUBDIRS = \
 	hx509 \
 	krb5 \
 	ntlm \
-	kafs \
+	$(dir_afs) \
 	gssapi \
 	hdb \
 	kadm5 \

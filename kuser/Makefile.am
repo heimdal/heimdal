@@ -2,6 +2,10 @@
 
 include $(top_srcdir)/Makefile.am.common
 
+if HAVE_AFS
+afs_lib = $(LIB_kafs)
+endif
+
 AM_CPPFLAGS += -I$(srcdir)/../lib/krb5 \
 	$(INCLUDE_libintl) \
 	-DHEIMDAL_LOCALEDIR='"$(localedir)"'
@@ -21,7 +25,7 @@ libexec_PROGRAMS = kdigest kimpersonate
 noinst_PROGRAMS = kverify kdecode_ticket generate-requests
 
 kinit_LDADD = \
-	$(LIB_kafs) \
+	$(afs_lib) \
 	$(top_builddir)/lib/krb5/libkrb5.la \
 	$(top_builddir)/lib/ntlm/libheimntlm.la \
 	$(LIB_hcrypto) \

@@ -240,6 +240,7 @@ AC_ARG_ENABLE([afs-support],
 if test "$enable_afs_support" = no; then
 	AC_DEFINE(NO_AFS, 1, [Define if you don't wan't support for AFS.])
 	NO_AFS="1"
+	AM_CONDITIONAL(HAVE_AFS, 0)
 fi
 AC_SUBST(NO_AFS)dnl
 

@@ -247,8 +247,8 @@ test_cipher(struct tests *t)
     if (memcmp(d, t->indata, t->datasize) != 0)
 	errx(1, "%s: decrypt not the same", t->name);
 
-    if (t->outiv)
-	/* XXXX check  */;
+    if (t->outiv) { }
+	/* XXXX check  */
 
     EVP_CIPHER_CTX_cleanup(&ectx);
     EVP_CIPHER_CTX_cleanup(&dctx);

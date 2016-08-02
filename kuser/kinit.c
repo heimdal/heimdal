@@ -890,7 +890,7 @@ static time_t
 renew_func(void *ptr)
 {
     krb5_error_code ret;
-    struct renew_ctx *ctx = ptr;
+    struct renew_ctx *ctx = (struct renew_ctx *) ptr;
     time_t renew_expire;
     static time_t exp_delay = 1;
 

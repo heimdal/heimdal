@@ -46,6 +46,17 @@
 #include <stdlib.h>
 #include <stdint.h>
 
+#ifndef ULLONG_MAX
+
+/* HPUX defines this here */
+#ifdef ULONG_LONG_MAX
+# define ULLONG_MAX ULONG_LONG_MAX
+#else
+#error NO ULONG LONG MAX VALUE AVAILABLE - FIX THIS FOR YOUR PLATFORM SPECIFIC DEFINE!!
+#endif
+
+#endif
+
 /*
  * Convert a string to an unsigned long long integer.
  *

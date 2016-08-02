@@ -1230,6 +1230,7 @@ int ROKEN_LIB_FUNCTION rk_socket(int, int, int);
 #endif
 
 /* Microsoft VC 2010 POSIX definitions */
+#if _WIN32_
 #ifndef EAFNOSUPPORT
 #define EAFNOSUPPORT            102
 #endif
@@ -1254,7 +1255,7 @@ int ROKEN_LIB_FUNCTION rk_socket(int, int, int);
 #ifndef EWOULDBLOCK
 #define EWOULDBLOCK             140
 #endif
-
+#endif
 
 #ifdef SOCKET_WRAPPER_REPLACE
 #include <socket_wrapper.h>

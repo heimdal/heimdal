@@ -802,9 +802,11 @@ int rk_flock(int fd, int operation);
 #ifndef HAVE_DIRFD
 #ifdef HAVE_DIR_DD_FD
 #define dirfd(x) ((x)->dd_fd)
+#elif defined(HAVE_DIR_D_FD)
+#define dirfd(x) ((x)->d_fd)
 #else
 #ifndef _WIN32 /* Windows code never calls dirfd */
-#error Missing dirfd() and ->dd_fd
+#error Missing dirfd() and ->dd_fd and ->d_fd
 #endif
 #endif
 #endif

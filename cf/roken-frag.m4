@@ -435,6 +435,10 @@ AC_HAVE_STRUCT_FIELD(DIR, dd_fd, [#include <sys/types.h>
 #include <dirent.h>
 #endif])
 
+AC_HAVE_STRUCT_FIELD(DIR, d_fd, [#include <sys/types.h>
+#ifdef HAVE_DIRENT_H
+#include <dirent.h>
+#endif])
 
 AC_BROKEN2(inet_aton,
 [#ifdef HAVE_SYS_TYPES_H

@@ -2,7 +2,7 @@
 
 include $(top_srcdir)/Makefile.am.common
 
-if HAVE_AFS
+if !NO_AFS
 afs_lib = $(LIB_kafs)
 endif
 

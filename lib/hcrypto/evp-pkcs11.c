@@ -60,7 +60,7 @@
 #include <ref/pkcs11.h>
 
 #if __sun && !defined(PKCS11_MODULE_PATH)
-# if _LP64
+# ifdef _LP64
 # define PKCS11_MODULE_PATH "/usr/lib/64/libpkcs11.so"
 # else
 # define PKCS11_MODULE_PATH "/usr/lib/libpkcs11.so"

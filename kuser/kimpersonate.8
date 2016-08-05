@@ -58,8 +58,9 @@
 The
 .Nm
 program creates a "fake" ticket using the service-key of the service and
-stores it in the given (or default) ccache.  The service key can be read
-from a Kerberos 5 keytab or AFS KeyFile.  Supported options:
+stores it in the given (or default) ccache.  This is useful for testing.
+The service key can be read from a Kerberos 5 keytab or AFS KeyFile.
+Supported options:
 .Bl -tag -width Ds
 .It Fl Fl ccache= Ns Ar string
 ccache into which to store the ticket
@@ -112,6 +113,16 @@ or for debugging.
 will create a Kerberos 5 ticket for lha@E.KTH.SE for the host
 hummel.e.kth.se if there exists a keytab entry for it in
 .Pa /etc/krb5.keytab .
+.Pp
+In combination with the
+.Nm ktutil
+command, this is useful for testing.  For example, 
+.Pp
+.Nm ktutil
+-k tkt add -p host/foo.test@TEST -V2 -e aes256-cts-hmac-sha1-96 -r
+.Pp
+.Nm
+--cache=tcc -s host/foo.test@TEST -c jdoe@TEST -k tkt --referral
 .Sh SEE ALSO
 .Xr kinit 1 ,
 .Xr klist 1

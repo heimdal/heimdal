@@ -39,6 +39,7 @@
 .Nd impersonate a user when there exist a keyfile or KeyFile
 .Sh SYNOPSIS
 .Nm
+.Op Fl s Ar string \*(Ba Fl Fl ccache= Ns Ar string
 .Op Fl s Ar string \*(Ba Fl Fl server= Ns Ar string
 .Op Fl c Ar string \*(Ba Fl Fl client= Ns Ar string
 .Op Fl k Ar string \*(Ba Fl Fl keytab= Ns Ar string
@@ -58,6 +59,8 @@ program creates a "fake" ticket using the service-key of the service.
 The service key can be read from a Kerberos 5 keytab or AFS KeyFile.
 Supported options:
 .Bl -tag -width Ds
+.It Fl Fl ccache= Ns Ar string
+ccache into which to store the ticket
 .It Fl s Ar string Ns , Fl Fl server= Ns Ar string
 name of server principal
 .It Fl c Ar string Ns , Fl Fl client= Ns Ar string

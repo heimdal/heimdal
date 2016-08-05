@@ -51,6 +51,8 @@ static struct getarg_strings client_addresses;
 static int   version_flag = 0;
 static int   help_flag = 0;
 static int   use_krb5 = 1;
+static int   add_to_ccache = 0;
+static int   use_referral_realm = 0;
 
 static const char *enc_type = "aes256-cts-hmac-sha1-96";
 static const char *session_enc_type = NULL;
@@ -159,7 +161,7 @@ create_krb5_tickets(krb5_context context, krb5_keytab kt)
 	krb5_err (context, 1, ret, "krb5_string_to_enctype (session-enc-type)");
     ret = krb5_kt_get_entry(context, kt, server_principal, 0, etype, &entry);
     if (ret)
-	krb5_err(context, 1, ret, "krb5_kt_get_entry");
+	krb5_err(context, 1, ret, "krb5_kt_get_entry (perhaps use different --enc-type)");
 
     /*
      * setup cred
@@ -207,10 +209,46 @@ create_krb5_tickets(krb5_context context, krb5_keytab kt)
 	    krb5_err(context, 1, ret, "krb5_cc_default");
     }
 
-    ret = krb5_cc_initialize(context, ccache, cred.client);
-    if (ret)
-	krb5_err(context, 1, ret, "krb5_cc_initialize");
+    if (add_to_ccache) {
+        krb5_principal def_princ;
 
+        /*
+         * Force fcache to read the ccache header, otherwise the store
+         * will fail.
+         */
+        ret = krb5_cc_get_principal(context, ccache, &def_princ);
+        if (ret) {
+            krb5_warn(context, ret,
+                      "Given ccache appears not to exist; initializing it");
+            ret = krb5_cc_initialize(context, ccache, cred.client);
+            if (ret)
+                krb5_err(context, 1, ret, "krb5_cc_initialize");
+        }
+        krb5_free_principal(context, def_princ);
+    } else {
+        ret = krb5_cc_initialize(context, ccache, cred.client);
+        if (ret)
+            krb5_err(context, 1, ret, "krb5_cc_initialize");
+    }
+
+    if (use_referral_realm &&
+        strcmp(krb5_principal_get_realm(context, cred.server), "") != 0) {
+        krb5_free_principal(context, cred.server);
+        ret = krb5_copy_principal(context, server_principal, &cred.server);
+        if (ret)
+            krb5_err(context, 1, ret, "krb5_copy_principal");
+        ret = krb5_principal_set_realm(context, cred.server, "");
+        if (ret)
+            krb5_err(context, 1, ret, "krb5_principal_set_realm");
+        ret = krb5_cc_store_cred(context, ccache, &cred);
+        if (ret)
+            krb5_err(context, 1, ret, "krb5_cc_store_cred");
+
+        krb5_free_principal(context, cred.server);
+        ret = krb5_copy_principal(context, server_principal, &cred.server);
+        if (ret)
+            krb5_err(context, 1, ret, "krb5_copy_principal");
+    }
     ret = krb5_cc_store_cred(context, ccache, &cred);
     if (ret)
 	krb5_err(context, 1, ret, "krb5_cc_store_cred");
@@ -285,6 +323,10 @@ struct getargs args[] = {
       "name of keytab file", NULL },
     { "krb5", '5', arg_flag,	 &use_krb5,
       "create a kerberos 5 ticket", NULL },
+    { "add", 'A', arg_flag,	 &add_to_ccache,
+      "add to ccache without re-initializing it", NULL },
+    { "referral", 'R', arg_flag,	 &use_referral_realm,
+      "store an additional entry for the service with the empty realm", NULL },
     { "expire-time", 'e', arg_integer, &expiration_time,
       "lifetime of ticket in seconds", NULL },
     { "client-addresses", 'a', arg_strings, &client_addresses,

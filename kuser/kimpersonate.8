@@ -44,6 +44,8 @@
 .Op Fl c Ar string \*(Ba Fl Fl client= Ns Ar string
 .Op Fl k Ar string \*(Ba Fl Fl keytab= Ns Ar string
 .Op Fl 5 | Fl Fl krb5
+.Op Fl A | Fl Fl add
+.Op Fl R | Fl Fl referral
 .Op Fl e Ar integer \*(Ba Fl Fl expire-time= Ns Ar integer
 .Op Fl a Ar string \*(Ba Fl Fl client-address= Ns Ar string
 .Op Fl t Ar string \*(Ba Fl Fl enc-type= Ns Ar string
@@ -55,9 +57,9 @@
 .Sh DESCRIPTION
 The
 .Nm
-program creates a "fake" ticket using the service-key of the service.
-The service key can be read from a Kerberos 5 keytab or AFS KeyFile.
-Supported options:
+program creates a "fake" ticket using the service-key of the service and
+stores it in the given (or default) ccache.  The service key can be read
+from a Kerberos 5 keytab or AFS KeyFile.  Supported options:
 .Bl -tag -width Ds
 .It Fl Fl ccache= Ns Ar string
 ccache into which to store the ticket
@@ -69,6 +71,12 @@ name of client principal
 name of keytab file
 .It Fl 5 Ns , Fl Fl krb5
 create a Kerberos 5 ticket
+.It Fl A Ns , Fl Fl add
+don't re-initialize the ccache, instead add the ticket to an existing
+ccache.
+.It Fl R Ns , Fl Fl referral
+simulate a referrals-based KDC client by storing two entries, one with
+the empty realm for the service principal name.
 .It Fl e Ar integer Ns , Fl Fl expire-time= Ns Ar integer
 lifetime of ticket in seconds
 .It Fl a Ar string Ns , Fl Fl client-address= Ns Ar string

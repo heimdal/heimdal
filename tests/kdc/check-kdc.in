@@ -54,6 +54,17 @@ R5=SOME-REALM5.FR
 R6=SOME-REALM6.US
 R7=SOME-REALM7.UK
 
+H1=H1.$R
+H2=H2.$R
+H3=H3.$H2
+H4=H4.$H2
+
+r=`echo "$R" | tr '[A-Z]' '[a-z]'`
+h1=`echo "${H1}" | tr '[A-Z]' '[a-z]'`
+h2=`echo "${H2}" | tr '[A-Z]' '[a-z]'`
+h3=`echo "${H3}" | tr '[A-Z]' '[a-z]'`
+h4=`echo "${H4}" | tr '[A-Z]' '[a-z]'`
+
 port=@port@
 pwport=@pwport@
 
@@ -141,6 +152,30 @@ ${kadmin} \
     init \
     --realm-max-ticket-life=1day \
     --realm-max-renewable-life=1month \
+    ${H1} || exit 1
+
+${kadmin} \
+    init \
+    --realm-max-ticket-life=1day \
+    --realm-max-renewable-life=1month \
+    ${H2} || exit 1
+
+${kadmin} \
+    init \
+    --realm-max-ticket-life=1day \
+    --realm-max-renewable-life=1month \
+    ${H3} || exit 1
+
+${kadmin} \
+    init \
+    --realm-max-ticket-life=1day \
+    --realm-max-renewable-life=1month \
+    ${H4} || exit 1
+
+${kadmin} \
+    init \
+    --realm-max-ticket-life=1day \
+    --realm-max-renewable-life=1month \
     ${RH} || exit 1
 
 ${kadmin} cpw -r krbtgt/${R}@${R} || exit 1
@@ -149,12 +184,21 @@ ${kadmin} cpw -r krbtgt/${R}@${R} || exit 1
 ${kadmin} cpw -r krbtgt/${R}@${R} || exit 1
 
 ${kadmin} add -p foo --use-defaults foo@${R} || exit 1
+${kadmin} add -p foo --use-defaults foo/host.${r}@${R} || exit 1
 ${kadmin} add -p foo --use-defaults foo@${R2} || exit 1
 ${kadmin} add -p foo --use-defaults foo@${R3} || exit 1
 ${kadmin} add -p foo --use-defaults foo@${R4} || exit 1
 ${kadmin5} add -p foo --use-defaults foo@${R5} || exit 1
 ${kadmin} add -p foo --use-defaults foo@${R6} || exit 1
 ${kadmin} add -p foo --use-defaults foo@${R7} || exit 1
+${kadmin} add -p foo --use-defaults foo@${H1} || exit 1
+${kadmin} add -p foo --use-defaults foo/host.${h1}@${H1} || exit 1
+${kadmin} add -p foo --use-defaults foo@${H2} || exit 1
+${kadmin} add -p foo --use-defaults foo/host.${h2}@${H2} || exit 1
+${kadmin} add -p foo --use-defaults foo@${H3} || exit 1
+${kadmin} add -p foo --use-defaults foo/host.${h3}@${H3} || exit 1
+${kadmin} add -p foo --use-defaults foo@${H4} || exit 1
+${kadmin} add -p foo --use-defaults foo/host.${h4}@${H4} || exit 1
 ${kadmin} add -p bar --use-defaults bar@${R} || exit 1
 ${kadmin} add -p foo --use-defaults remove@${R} || exit 1
 ${kadmin} add -p nop --use-defaults ${server}@${R} || exit 1
@@ -205,6 +249,18 @@ ${kadmin} add -p cross2 --use-defaults krbtgt/${R5}@${R6} || exit 1
 ${kadmin} add -p cross1 --use-defaults krbtgt/${R7}@${R6} || exit 1
 ${kadmin} add -p cross2 --use-defaults krbtgt/${R6}@${R7} || exit 1
 
+${kadmin} add -p cross1 --use-defaults krbtgt/${H1}@${R} || exit 1
+${kadmin} add -p cross2 --use-defaults krbtgt/${R}@${H1} || exit 1
+
+${kadmin} add -p cross1 --use-defaults krbtgt/${H2}@${R} || exit 1
+${kadmin} add -p cross2 --use-defaults krbtgt/${R}@${H2} || exit 1
+
+${kadmin} add -p cross1 --use-defaults krbtgt/${H3}@${H2} || exit 1
+${kadmin} add -p cross2 --use-defaults krbtgt/${H2}@${H3} || exit 1
+
+${kadmin} add -p cross1 --use-defaults krbtgt/${H3}@${H4} || exit 1
+${kadmin} add -p cross2 --use-defaults krbtgt/${H4}@${H3} || exit 1
+
 ${kadmin} add -p foo --use-defaults pw-expire@${R} || exit 1
 ${kadmin} modify --pw-expiration-time=+1day  pw-expire@${R} || exit 1
 
@@ -228,6 +284,10 @@ ${kadmin} check ${R4} || exit 1
 ${kadmin5} check ${R5} || exit 1
 ${kadmin} check ${R6} || exit 1
 ${kadmin} check ${R7} || exit 1
+${kadmin} check ${H1} || exit 1
+${kadmin} check ${H2} || exit 1
+${kadmin} check ${H3} || exit 1
+${kadmin} check ${H4} || exit 1
 
 echo "Extracting enctypes"
 ${ktutil} -k ${keytab} list > tempfile || exit 1
@@ -352,6 +412,30 @@ echo "Getting x-realm tickets with capaths for $R -> $R6"
 ${kgetcred} foo@${R6} || { ec=1 ; eval "${testfailed}"; }
 echo "Getting x-realm tickets with capaths for $R -> $R5"
 ${kgetcred} foo@${R5} || { ec=1 ; eval "${testfailed}"; }
+${kdestroy}
+
+echo "Testing hierarchical referral logic"
+${kinit} --password-file=${objdir}/foopassword \
+    -e ${aesenctype} -e ${aesenctype} \
+    foo@${H3} || \
+	{ ec=1 ; eval "${testfailed}"; }
+
+echo "Getting x-realm tickets with hierarchical referrals for $H3 -> $H1"
+${kgetcred} --hostbased --canonicalize foo host.${h1} || { ec=1 ; eval "${testfailed}"; }
+echo "Getting x-realm tickets with hierarchical referrals for $H3 -> $R"
+${kgetcred} --hostbased --canonicalize foo host.${r} || { ec=1 ; eval "${testfailed}"; }
+echo "Getting x-realm tickets with hierarchical referrals for $H3 -> $H2"
+${kgetcred} --hostbased --canonicalize foo host.${h2} || { ec=1 ; eval "${testfailed}"; }
+${kdestroy}
+
+echo "Testing multi-hop [capaths] referral logic"
+${kinit} --password-file=${objdir}/foopassword \
+    -e ${aesenctype} -e ${aesenctype} \
+    foo@${H4} || \
+	{ ec=1 ; eval "${testfailed}"; }
+
+echo "Getting x-realm tickets with [capaths] referrals for $H4 -> $H1"
+${kgetcred} --hostbased --canonicalize foo/host.${h1}@${H4} || { ec=1 ; eval "${testfailed}"; }
 ${kdestroy}
 
 echo "Testing forwardable/renewable flag copying in TGS-REQ"

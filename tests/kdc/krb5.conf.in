@@ -43,10 +43,26 @@
 	TEST-HTTP.H5L.SE = {
 		kdc = http/localhost:@port@
 	}
+	H1.TEST.H5L.SE = {
+		kdc = localhost:@port@
+	}
+	H2.TEST.H5L.SE = {
+		kdc = localhost:@port@
+	}
+	H3.H2.TEST.H5L.SE = {
+		kdc = localhost:@port@
+	}
+	H4.H2.TEST.H5L.SE = {
+		kdc = localhost:@port@
+	}
 
 [domain_realm]
 	.test.h5l.se = TEST.H5L.SE
 	.sub.test.h5l.se = SUB.TEST.H5L.SE
+	.h1.test.h5l.se = H1.TEST.H5L.SE
+	.h2.test.h5l.se = H2.TEST.H5L.SE
+	.h3.h2.test.h5l.se = H3.H2.TEST.H5L.SE
+	.h4.h2.test.h5l.se = H4.H2.TEST.H5L.SE
 	.example.com = TEST2.H5L.SE
 	localhost = TEST.H5L.SE
 	.localdomain = TEST.H5L.SE
@@ -131,3 +147,13 @@
 		SOME-REALM7.UK = SOME-REALM6.US
 		SOME-REALM7.UK = SOME-REALM5.FR
 	}
+        H4.H2.TEST.H5L.SE = {
+                H1.TEST.H5L.SE = H3.H2.TEST.H5L.SE
+                H1.TEST.H5L.SE = H2.TEST.H5L.SE
+                H1.TEST.H5L.SE = TEST.H5L.SE
+
+                TEST.H5L.SE = H3.H2.TEST.H5L.SE
+                TEST.H5L.SE = H2.TEST.H5L.SE
+
+                H2.TEST.H5L.SE = H3.H2.TEST.H5L.SE
+        }

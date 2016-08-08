@@ -1092,23 +1092,6 @@ out:
     return ret;
 }
 
-/*
- *
- */
-
-static const char *
-find_rpath(krb5_context context, Realm crealm, Realm srealm)
-{
-    const char *new_realm = krb5_config_get_string(context,
-						   NULL,
-						   "capaths",
-						   crealm,
-						   srealm,
-						   NULL);
-    return new_realm;
-}
-
-
 static krb5_boolean
 need_referral(krb5_context context, krb5_kdc_configuration *config,
 	      const KDCOptions * const options, krb5_principal server,
@@ -1538,6 +1521,12 @@ tgs_build_reply(krb5_context context,
     krb5_keyblock sessionkey;
     krb5_kvno kvno;
     krb5_data rspac;
+    const char *tgt_realm = /* Realm of TGT issuer */
+        krb5_principal_get_realm(context, krbtgt->entry.principal);
+    const char *our_realm = /* Realm of this KDC */
+        krb5_principal_get_comp_string(context, krbtgt->entry.principal, 1);
+    char **capath = NULL;
+    size_t num_capath = 0;
 
     hdb_entry_ex *krbtgt_out = NULL;
 
@@ -1545,7 +1534,6 @@ tgs_build_reply(krb5_context context,
 
     PrincipalName *s;
     Realm r;
-    int nloop = 0;
     EncTicketPart adtkt;
     char opt_str[128];
     int signedpath = 0;
@@ -1654,11 +1642,10 @@ server_lookup:
 	kdc_log(context, config, 5, "target %s does not have secrets at this KDC, need to proxy", sp);
 	goto out;
     } else if (ret == HDB_ERR_WRONG_REALM) {
-	if (ref_realm)
-	    free(ref_realm);
+        free(ref_realm);
 	ref_realm = strdup(server->entry.principal->realm);
 	if (ref_realm == NULL) {
-	    ret = ENOMEM;
+            ret = krb5_enomem(context);
 	    goto out;
 	}
 
@@ -1668,12 +1655,12 @@ server_lookup:
 		ref_realm, spn);
 	krb5_free_principal(context, sp);
 	sp = NULL;
-	free(spn);
-	spn = NULL;
 	ret = krb5_make_principal(context, &sp, r, KRB5_TGS_NAME,
 				  ref_realm, NULL);
 	if (ret)
 	    goto out;
+	free(spn);
+        spn = NULL;
 	ret = krb5_unparse_name(context, sp, &spn);
 	if (ret)
 	    goto out;
@@ -1685,26 +1672,36 @@ server_lookup:
 	krb5_realm *realms;
 
 	if ((req_rlm = get_krbtgt_realm(&sp->name)) != NULL) {
-	    if (nloop++ < 2) {
-		new_rlm = find_rpath(context, tgt->crealm, req_rlm);
-		if(new_rlm) {
-		    kdc_log(context, config, 5, "krbtgt for realm %s "
-			    "not found, trying %s",
-			    req_rlm, new_rlm);
-		    krb5_free_principal(context, sp);
-		    free(spn);
-		    krb5_make_principal(context, &sp, r,
-					KRB5_TGS_NAME, new_rlm, NULL);
-		    ret = krb5_unparse_name(context, sp, &spn);
-		    if (ret)
-			goto out;
+            if (capath == NULL) {
+                ret = _krb5_find_capath(context, tgt->crealm, our_realm,
+                                        req_rlm, TRUE, &capath, &num_capath);
+                if (ret)
+                    goto out;
+            }
+            new_rlm = num_capath > 0 ? capath[--num_capath] : NULL;
+            if (new_rlm) {
+                kdc_log(context, config, 5, "krbtgt from %s via %s for "
+                        "realm %s not found, trying %s", tgt->crealm,
+                        our_realm, req_rlm, new_rlm);
 
-		    if (ref_realm)
-			free(ref_realm);
-		    ref_realm = strdup(new_rlm);
-		    goto server_lookup;
-		}
-	    }
+                free(ref_realm);
+                ref_realm = strdup(new_rlm);
+                if (ref_realm == NULL) {
+                    ret = krb5_enomem(context);
+                    goto out;
+                }
+
+                krb5_free_principal(context, sp);
+                sp = NULL;
+                krb5_make_principal(context, &sp, r,
+                                    KRB5_TGS_NAME, ref_realm, NULL);
+                free(spn);
+                spn = NULL;
+                ret = krb5_unparse_name(context, sp, &spn);
+                if (ret)
+                    goto out;
+                goto server_lookup;
+            }
 	} else if (need_referral(context, config, &b->kdc_options, sp, &realms)) {
 	    if (strcmp(realms[0], sp->realm) != 0) {
 		kdc_log(context, config, 5,
@@ -1712,17 +1709,18 @@ server_lookup:
 			"server %s that was not found",
 			realms[0], spn);
 		krb5_free_principal(context, sp);
-		free(spn);
+                sp = NULL;
 		krb5_make_principal(context, &sp, r, KRB5_TGS_NAME,
 				    realms[0], NULL);
+		free(spn);
+                spn = NULL;
 		ret = krb5_unparse_name(context, sp, &spn);
 		if (ret) {
 		    krb5_free_host_realm(context, realms);
 		    goto out;
 		}
 
-		if (ref_realm)
-		    free(ref_realm);
+                free(ref_realm);
 		ref_realm = strdup(realms[0]);
 
 		krb5_free_host_realm(context, realms);
@@ -1827,29 +1825,24 @@ server_lookup:
      * have been an incoming trust)
      */
     
-    {
-	const char *remote_realm = 
-	    krb5_principal_get_comp_string(context, krbtgt->entry.principal, 1);
-
-	ret = krb5_make_principal(context,
-				  &krbtgt_out_principal,
-				  remote_realm,
-				  KRB5_TGS_NAME,
-				  remote_realm,
-				  NULL);
-	if(ret) {
-	    kdc_log(context, config, 0,
-		    "Failed to make krbtgt principal name object for "
-		    "authz-data signatures");
-	    goto out;
-	}
-	ret = krb5_unparse_name(context, krbtgt_out_principal, &krbtgt_out_n);
-	if (ret) {
-	    kdc_log(context, config, 0,
-		    "Failed to make krbtgt principal name object for "
-		    "authz-data signatures");
-	    goto out;
-	}
+    ret = krb5_make_principal(context,
+                              &krbtgt_out_principal,
+                              our_realm,
+                              KRB5_TGS_NAME,
+                              our_realm,
+                              NULL);
+    if (ret) {
+        kdc_log(context, config, 0,
+                "Failed to make krbtgt principal name object for "
+                "authz-data signatures");
+        goto out;
+    }
+    ret = krb5_unparse_name(context, krbtgt_out_principal, &krbtgt_out_n);
+    if (ret) {
+        kdc_log(context, config, 0,
+                "Failed to make krbtgt principal name object for "
+                "authz-data signatures");
+        goto out;
     }
 
     ret = _kdc_db_fetch(context, config, krbtgt_out_principal,
@@ -2349,6 +2342,7 @@ out:
     free(cpn);
     free(dpn);
     free(krbtgt_out_n);
+    _krb5_free_capath(context, capath);
 
     krb5_data_free(&rspac);
     krb5_free_keyblock_contents(context, &sessionkey);
@@ -2367,8 +2361,7 @@ out:
     krb5_free_principal(context, dp);
     krb5_free_principal(context, sp);
     krb5_free_principal(context, krbtgt_out_principal);
-    if (ref_realm)
-	free(ref_realm);
+    free(ref_realm);
     free_METHOD_DATA(&enc_pa_data);
 
     free_EncTicketPart(&adtkt);

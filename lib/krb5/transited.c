@@ -447,7 +447,7 @@ hier_init(struct hier_iter *state, const char *local_realm, const char *server_r
 {
     size_t llen;
     size_t slen;
-    size_t len;
+    size_t len = 0;
     const char *lr;
     const char *sr;
 
@@ -604,13 +604,12 @@ krb5_check_transited(krb5_context context,
 		     unsigned int num_realms,
 		     int *bad_realm)
 {
-    krb5_error_code ret = 0;
     char **capath = NULL;
     size_t num_capath = 0;
     size_t i = 0;
     size_t j = 0;
 
-    ret = _krb5_find_capath(context, client_realm, client_realm, server_realm,
+    _krb5_find_capath(context, client_realm, client_realm, server_realm,
                             TRUE, &capath, &num_capath);
 
     for (i = 0; i < num_realms; i++) {

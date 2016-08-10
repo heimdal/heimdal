@@ -604,13 +604,12 @@ krb5_check_transited(krb5_context context,
 		     unsigned int num_realms,
 		     int *bad_realm)
 {
-    krb5_error_code ret = 0;
     char **capath = NULL;
     size_t num_capath = 0;
     size_t i = 0;
     size_t j = 0;
 
-    ret = _krb5_find_capath(context, client_realm, client_realm, server_realm,
+    _krb5_find_capath(context, client_realm, client_realm, server_realm,
                             TRUE, &capath, &num_capath);
     if (ret)
         return ret;

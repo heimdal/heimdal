@@ -1298,6 +1298,7 @@ main(int argc, char **argv)
 		    send_diffs (server_context, p, log_fd, database,
                                 current_version, current_tstamp);
 		}
+                old_version = current_version;
 	    }
 	}
 

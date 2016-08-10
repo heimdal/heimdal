@@ -447,7 +447,7 @@ hier_init(struct hier_iter *state, const char *local_realm, const char *server_r
 {
     size_t llen;
     size_t slen;
-    size_t len;
+    size_t len = 0;
     const char *lr;
     const char *sr;
 

@@ -612,6 +612,8 @@ krb5_check_transited(krb5_context context,
 
     ret = _krb5_find_capath(context, client_realm, client_realm, server_realm,
                             TRUE, &capath, &num_capath);
+    if (ret)
+        return ret;
 
     for (i = 0; i < num_realms; i++) {
 	for (j = 0; j < num_capath; ++j) {

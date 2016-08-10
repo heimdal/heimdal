@@ -1,3 +1,17 @@
+Release Notes - Heimdal - Version Heimdal 7.3
+
+ Security
+
+ - Fix transit path validation.  Commit f469fc6 (2010-10-02) inadvertently
+   caused the previous hop realm to not be added to the transit path
+   of issued tickets.  This may, in some cases, enable bypass of capath
+   policy in Heimdal versions 1.5 through 7.2.
+
+   Note, this may break sites that rely on the bug.  With the bug some
+   incomplete [capaths] worked, that should not have.  These may now break
+   authentication in some cross-realm configurations.
+   (CVE-2017-6594)
+
 Release Notes - Heimdal - Version Heimdal 7.2
 
  Bug fixes

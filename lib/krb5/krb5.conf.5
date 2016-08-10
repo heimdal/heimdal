@@ -395,6 +395,14 @@ specifying order can be useful where tools read and write the
 configuration file without preserving parameter order.
 .Pp
 Malformed rules are ignored.
+.It Li allow_hierarchical_capaths = Va boolean
+When validating cross-realm transit paths, absent any explicit capath from the
+client realm to the server realm, allow a hierarchical transit path via the
+common ancestor domain of the two realms.
+Defaults to true.
+Note, absent an explicit setting, hierarchical capaths are always used by
+the KDC when generating a referral to a destination with which is no direct
+trust.
 .El
 .It Li [domain_realm]
 This is a list of mappings from DNS domain to Kerberos realm.

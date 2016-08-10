@@ -1673,6 +1673,7 @@ server_lookup:
 
 	if ((req_rlm = get_krbtgt_realm(&sp->name)) != NULL) {
             if (capath == NULL) {
+                /* With referalls, hierarchical capaths are always enabled */
                 ret = _krb5_find_capath(context, tgt->crealm, our_realm,
                                         req_rlm, TRUE, &capath, &num_capath);
                 if (ret)

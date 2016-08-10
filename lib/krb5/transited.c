@@ -411,14 +411,17 @@ _krb5_free_capath(krb5_context context, char **capath)
 struct hier_iter {
     const char *local_realm;
     const char *server_realm;
-    const char *lr;
-    const char *sr;
-    size_t llen;
-    size_t slen;
-    size_t len;
-    size_t num;
+    const char *lr;     /* Pointer into tail of local realm */
+    const char *sr;     /* Pointer into tail of server realm */
+    size_t llen;        /* Length of local_realm */
+    size_t slen;        /* Length of server_realm */
+    size_t len;         /* Length of common suffix */
+    size_t num;         /* Path element count */
 };
 
+/*
+ * Step up from local_realm to common suffix, or else down to server_realm.
+ */
 static const char *
 hier_next(struct hier_iter *state)
 {
@@ -498,7 +501,7 @@ hier_init(struct hier_iter *state, const char *local_realm, const char *server_r
 }
 
 /*
- * Find a referral path from crealm to srealm via our_realm.
+ * Find a referral path from client_realm to server_realm via local_realm.
  * Either via [capaths] or hierarchicaly.
  */
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
@@ -506,12 +509,10 @@ _krb5_find_capath(krb5_context context,
                   const char *client_realm,
                   const char *local_realm,
                   const char *server_realm,
-                  krb5_boolean use_hierachical,
+                  krb5_boolean use_hierarchical,
                   char ***rpath,
                   size_t *npath)
 {
-    krb5_boolean maybe = (TRUE == 1) ? 2 : 1;   /* Neither TRUE nor FALSE */
-    krb5_boolean b;
     char **confpath;
     char **capath;
     struct hier_iter hier_state;
@@ -529,9 +530,9 @@ _krb5_find_capath(krb5_context context,
     /*
      * With a [capaths] setting from the client to the server we look for our
      * own realm in the list.  If our own realm is not present, we return the
-     * first element.  Otherwise, we return the next element, or possibly NULL.
-     * Ignoring a [capaths] settings risks loops plus would violate explicit
-     * policy and the principle of least surpise.
+     * full list.  Otherwise, we return our realm's successors, or possibly
+     * NULL.  Ignoring a [capaths] settings risks loops plus would violate
+     * explicit policy and the principle of least surpise.
      */
     if (confpath != NULL) {
         char **start = confpath;
@@ -543,12 +544,16 @@ _krb5_find_capath(krb5_context context,
                 start = rp+1;
         n = rp - start;
 
-        if (n == 0)
+        if (n == 0) {
+            krb5_config_free_strings(confpath);
             return 0;
+        }
 
         capath = calloc(n + 1, sizeof(*capath));
-        if (capath == NULL)
+        if (capath == NULL) {
+            krb5_config_free_strings(confpath);
             return krb5_enomem(context);
+        }
 
 	for (i = 0, rp = start; *rp; rp++) {
             if ((capath[i++] = strdup(*rp)) == NULL) {
@@ -564,18 +569,17 @@ _krb5_find_capath(krb5_context context,
         return 0;
     }
 
-    /*
-     * With hierarchical referrals, we ignore the client realm, and build a
-     * path forward from our own realm!
-     */
-    b = krb5_config_get_bool_default(context, NULL, maybe, "realms",
-                                     local_realm, "hier_capaths", NULL);
-    if (b == maybe)
-        b = krb5_config_get_bool_default(context, NULL, TRUE, "libdefaults",
-                                         "hier_capaths", NULL);
-    if (b == FALSE)
+    /* The use_hierarchical flag makes hierarchical path lookup unconditional */
+    if (! use_hierarchical &&
+        ! krb5_config_get_bool_default(context, NULL, TRUE, "libdefaults",
+                                       "allow_hierarchical_capaths", NULL))
         return 0;
 
+    /*
+     * When validating transit paths, local_realm == client_realm.  Otherwise,
+     * with hierarchical referrals, they may differ, and we may be building a
+     * path forward from our own realm!
+     */
     hier_init(&hier_state, local_realm, server_realm);
     if (hier_state.num == 0)
         return 0;
@@ -610,8 +614,9 @@ krb5_check_transited(krb5_context context,
     size_t i = 0;
     size_t j = 0;
 
+    /* In transit checks hierarchical capaths are optional */
     ret = _krb5_find_capath(context, client_realm, client_realm, server_realm,
-                            TRUE, &capath, &num_capath);
+                            FALSE, &capath, &num_capath);
     if (ret)
         return ret;
 

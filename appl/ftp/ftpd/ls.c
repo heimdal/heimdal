@@ -405,16 +405,11 @@ find_log10(int num)
  * have to fetch them.
  */
 
-#ifdef KRB5
-static int do_the_afs_dance = 1;
-#endif
-
 static int
 lstat_file (const char *file, struct stat *sb)
 {
-#ifdef KRB5
-    if (do_the_afs_dance &&
-	k_hasafs()
+#if defined(KRB5) && !defined(NO_AFS)
+    if (k_hasafs()
 	&& strcmp(file, ".")
 	&& strcmp(file, "..")
 	&& strcmp(file, "/"))

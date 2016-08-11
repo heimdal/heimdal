@@ -711,7 +711,7 @@ int do_login(int code, char *passwd)
 	return -1;
     }
     initgroups(pw->pw_name, pw->pw_gid);
-#if defined(KRB5)
+#if defined(KRB5) && !defined(NO_AFS)
     if(k_hasafs())
 	k_setpag();
 #endif
@@ -864,9 +864,11 @@ krb5_verify(struct passwd *pwd, char *passwd)
                          1,
                          NULL);
   krb5_free_principal(context, princ);
+#ifndef NO_AFS
   if (k_hasafs()) {
       krb5_afslog_uid_home(context, id,NULL, NULL,pwd->pw_uid, pwd->pw_dir);
   }
+#endif
   krb5_cc_destroy(context, id);
   krb5_free_context (context);
   if(ret)

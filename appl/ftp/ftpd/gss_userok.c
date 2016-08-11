@@ -67,7 +67,9 @@ gssapi_session(void *app_data, char *username)
                                1, 1, NULL, NULL);
         if (GSS_ERROR(major))
             ret = 1;
+#ifndef NO_AFS
 	afslog(NULL, 1);
+#endif
     }
 
     gss_release_cred(&minor, &data->delegated_cred_handle);

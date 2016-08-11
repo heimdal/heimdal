@@ -57,7 +57,9 @@ RCSID("$Id$");
 #ifdef KRB5
 #include <krb5.h>
 #endif
+#ifndef NO_AFS
 #include <kafs.h>
+#endif
 #include <err.h>
 #include <roken.h>
 #include <getarg.h>
@@ -252,11 +254,13 @@ krb5_start_session(void)
     }
     esetenv("KRB5CCNAME", cc_name, 1);
 
+#ifndef NO_AFS
     /* convert creds? */
     if(k_hasafs()) {
 	if (k_setpag() == 0)
 	    krb5_afslog(context, ccache2, NULL, NULL);
     }
+#endif
 
     krb5_cc_close(context, ccache2);
     krb5_cc_destroy(context, ccache);

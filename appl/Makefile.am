@@ -8,8 +8,11 @@ endif
 if DCE
 dir_dce = dceutils
 endif
+if !NO_AFS
+dir_afsutil = afsutil
+endif
 SUBDIRS = 					\
-	  afsutil				\
+	  $(dir_afsutil)			\
 	  dbutils				\
 	  ftp					\
 	  login					\

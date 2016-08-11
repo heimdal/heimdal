@@ -82,7 +82,9 @@ cond_kdestroy(void)
 #endif
 	do_destroy_tickets = 0;
     }
+#ifndef NO_AFS
     afsunlog();
+#endif
 }
 
 void
@@ -91,11 +93,13 @@ kdestroy(void)
 #if KRB5
     dest_cc();
 #endif
+#ifndef NO_AFS
     afsunlog();
+#endif
     reply(200, "Tickets destroyed");
 }
 
-
+#ifndef NO_AFS
 void
 afslog(const char *cell, int quiet)
 {
@@ -134,6 +138,7 @@ afsunlog(void)
     if(k_hasafs())
 	k_unlog();
 }
+#endif
 
 #else
 int ftpd_afslog_placeholder;

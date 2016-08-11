@@ -145,7 +145,7 @@
 #include <krb5.h>
 #endif /* KRB5 */
 
-#if defined(KRB5)
+#if defined(KRB5) && !defined(NO_AFS)
 #include <kafs.h>
 #endif
 

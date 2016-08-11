@@ -99,7 +99,9 @@
 #include <krb5-v4compat.h>
 typedef struct credentials CREDENTIALS;
 #endif /* KRB5 */
+#ifndef NO_AFS
 #include <kafs.h>
+#endif
 
 #include <resolve.h>
 

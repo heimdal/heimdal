@@ -87,7 +87,9 @@
 #ifdef KRB5
 #include <krb5.h>
 #endif
+#ifndef NO_AFS
 #include <kafs.h>
+#endif
 
 #ifdef OTP
 #include <otp.h>

@@ -253,7 +253,11 @@ uninstall-hook: uninstall-cat-mans
 .et.c:
 	$(COMPILE_ET) $<
 
+if NO_AFS
+LIB_kafs =
+else
 LIB_kafs = $(top_builddir)/lib/kafs/libkafs.la $(AIX_EXTRA_KAFS)
+endif
 
 if KRB5
 LIB_krb5 = $(top_builddir)/lib/krb5/libkrb5.la \

@@ -536,8 +536,11 @@ cmd
 #if defined(KRB5)
 		    if(guest)
 			reply(500, "Can't be done as guest.");
-		    else if($5)
+		    else if($5) {
+#ifndef NO_AFS
 			afslog(NULL, 0);
+#endif
+                    }
 #else
 		    reply(500, "Command not implemented.");
 #endif
@@ -547,8 +550,11 @@ cmd
 #if defined(KRB5)
 		    if(guest)
 			reply(500, "Can't be done as guest.");
-		    else if($7)
+		    else if($7) {
+#ifndef NO_AFS
 			afslog($5, 0);
+#endif
+                    }
 		    if($5)
 			free($5);
 #else

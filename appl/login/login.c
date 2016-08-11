@@ -145,9 +145,6 @@ otp_verify(struct passwd *pwd, const char *password)
 }
 #endif /* OTP */
 
-
-static int pag_set = 0;
-
 #ifdef KRB5
 static krb5_context context;
 static krb5_ccache  id, id2;
@@ -207,6 +204,8 @@ krb5_finish (void)
 static void
 krb5_get_afs_tokens (const struct passwd *pwd)
 {
+#ifndef NO_AFS
+    static int pag_set = 0;
     char cell[64];
     char *pw_dir;
     krb5_error_code ret;
@@ -231,6 +230,7 @@ krb5_get_afs_tokens (const struct passwd *pwd)
 			      pwd->pw_uid, pwd->pw_dir);
 	krb5_cc_close (context, id2);
     }
+#endif
 }
 
 #endif /* KRB5 */

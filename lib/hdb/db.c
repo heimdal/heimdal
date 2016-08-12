@@ -33,7 +33,7 @@
 
 #include "hdb_locl.h"
 
-#if HAVE_DB1
+#if defined(HAVE_DB1) && !defined(HAVE_DB3)
 
 #if defined(HAVE_DB_185_H)
 #include <db_185.h>
@@ -376,4 +376,4 @@ hdb_db_create(krb5_context context, HDB **db,
     return 0;
 }
 
-#endif /* HAVE_DB1 */
+#endif /* defined(HAVE_DB1) && !defined(HAVE_DB3) */

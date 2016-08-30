@@ -622,6 +622,16 @@ fortuna_status(void)
     return result ? 1 : 0;
 }
 
+#if defined(__GUNC__) || (defined(__STDC_VERSION__) && __STDC_VERSION__ >= 199901)
+const RAND_METHOD hc_rand_fortuna_method = {
+    .seed = fortuna_seed,
+    .bytes = fortuna_bytes,
+    .cleanup = fortuna_cleanup,
+    .add = fortuna_add,
+    .pseudorand = fortuna_pseudorand,
+    .status = fortuna_status
+};
+#else
 const RAND_METHOD hc_rand_fortuna_method = {
     fortuna_seed,
     fortuna_bytes,
@@ -630,6 +640,7 @@ const RAND_METHOD hc_rand_fortuna_method = {
     fortuna_pseudorand,
     fortuna_status
 };
+#endif
 
 const RAND_METHOD *
 RAND_fortuna_method(void)

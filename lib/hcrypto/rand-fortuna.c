@@ -622,7 +622,7 @@ fortuna_status(void)
     return result ? 1 : 0;
 }
 
-#if defined(__GUNC__) || (defined(__STDC_VERSION__) && __STDC_VERSION__ >= 199901)
+#if defined(__GNUC__) || (defined(__STDC_VERSION__) && __STDC_VERSION__ >= 199901)
 const RAND_METHOD hc_rand_fortuna_method = {
     .seed = fortuna_seed,
     .bytes = fortuna_bytes,

@@ -26,6 +26,7 @@ TESTS =						\
 	derived-key-test			\
 	n-fold-test				\
 	parse-name-test				\
+	pseudo-random-test			\
 	store-test				\
 	string-to-key-test			\
 	test_acl				\
@@ -133,7 +134,8 @@ dist_libkrb5_la_SOURCES =			\
 	creds.c					\
 	crypto.c				\
 	crypto.h				\
-	crypto-aes.c				\
+	crypto-aes-sha1.c			\
+	crypto-aes-sha2.c			\
 	crypto-algs.c				\
 	crypto-arcfour.c			\
 	crypto-des.c				\
@@ -215,10 +217,12 @@ dist_libkrb5_la_SOURCES =			\
 	recvauth.c				\
 	replay.c				\
 	salt.c					\
-	salt-aes.c				\
+	salt-aes-sha1.c				\
+	salt-aes-sha2.c				\
 	salt-arcfour.c				\
 	salt-des.c				\
 	salt-des3.c				\
+	sp800-108-kdf.c				\
 	scache.c				\
 	send_to_kdc.c				\
 	sendauth.c				\
@@ -274,7 +278,8 @@ librfc3961_la_SOURCES =				\
 	crc.c					\
 	crypto.c				\
 	crypto.h				\
-	crypto-aes.c				\
+	crypto-aes-sha1.c			\
+	crypto-aes-sha2.c			\
 	crypto-algs.c				\
 	crypto-arcfour.c			\
 	crypto-des.c				\
@@ -291,10 +296,12 @@ librfc3961_la_SOURCES =				\
 	keyblock.c				\
 	n-fold.c				\
 	salt.c					\
-	salt-aes.c				\
+	salt-aes-sha1.c				\
+	salt-aes-sha2.c				\
 	salt-arcfour.c				\
 	salt-des.c				\
 	salt-des3.c				\
+	sp800-108-kdf.c				\
 	store-int.c				\
 	warn.c
 

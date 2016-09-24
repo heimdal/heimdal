@@ -1106,11 +1106,33 @@ get_pa_etype_info(krb5_context context,
  *
  */
 
-extern int _krb5_AES_string_to_default_iterator;
+extern int _krb5_AES_SHA1_string_to_default_iterator;
+extern int _krb5_AES_SHA2_string_to_default_iterator;
+
+static krb5_error_code
+make_s2kparams(int value, size_t len, krb5_data **ps2kparams)
+{
+    krb5_data *s2kparams;
+    krb5_error_code ret;
+
+    ALLOC(s2kparams);
+    if (s2kparams == NULL)
+	return ENOMEM;
+    ret = krb5_data_alloc(s2kparams, len);
+    if (ret) {
+	free(s2kparams);
+	return ret;
+    }
+    _krb5_put_int(s2kparams->data, value, len);
+    *ps2kparams = s2kparams;
+    return 0;
+}
 
 static krb5_error_code
 make_etype_info2_entry(ETYPE_INFO2_ENTRY *ent, Key *key)
 {
+    krb5_error_code ret;
+
     ent->etype = key->key.keytype;
     if(key->salt) {
 	ALLOC(ent->salt);
@@ -1132,44 +1154,28 @@ make_etype_info2_entry(ETYPE_INFO2_ENTRY *ent, Key *key)
     switch (key->key.keytype) {
     case ETYPE_AES128_CTS_HMAC_SHA1_96:
     case ETYPE_AES256_CTS_HMAC_SHA1_96:
-	ALLOC(ent->s2kparams);
-	if (ent->s2kparams == NULL)
-	    return ENOMEM;
-	ent->s2kparams->length = 4;
-	ent->s2kparams->data = malloc(ent->s2kparams->length);
-	if (ent->s2kparams->data == NULL) {
-	    free(ent->s2kparams);
-	    ent->s2kparams = NULL;
-	    return ENOMEM;
-	}
-	_krb5_put_int(ent->s2kparams->data,
-		      _krb5_AES_string_to_default_iterator,
-		      ent->s2kparams->length);
+	ret = make_s2kparams(_krb5_AES_SHA1_string_to_default_iterator,
+			     4, &ent->s2kparams);
+	break;
+    case KRB5_ENCTYPE_AES128_CTS_HMAC_SHA256_128:
+    case KRB5_ENCTYPE_AES256_CTS_HMAC_SHA384_192:
+	ret = make_s2kparams(_krb5_AES_SHA2_string_to_default_iterator,
+			     4, &ent->s2kparams);
 	break;
     case ETYPE_DES_CBC_CRC:
     case ETYPE_DES_CBC_MD4:
     case ETYPE_DES_CBC_MD5:
 	/* Check if this was a AFS3 salted key */
-	if(key->salt && key->salt->type == hdb_afs3_salt){
-	    ALLOC(ent->s2kparams);
-	    if (ent->s2kparams == NULL)
-		return ENOMEM;
-	    ent->s2kparams->length = 1;
-	    ent->s2kparams->data = malloc(ent->s2kparams->length);
-	    if (ent->s2kparams->data == NULL) {
-		free(ent->s2kparams);
-		ent->s2kparams = NULL;
-		return ENOMEM;
-	    }
-	    _krb5_put_int(ent->s2kparams->data,
-			  1,
-			  ent->s2kparams->length);
-	}
+	if(key->salt && key->salt->type == hdb_afs3_salt)
+	    ret = make_s2kparams(1, 1, &ent->s2kparams);
+	else
+	    ret = 0;
 	break;
     default:
+	ret = 0;
 	break;
     }
-    return 0;
+    return ret;
 }
 
 /*

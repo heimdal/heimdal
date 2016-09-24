@@ -53,6 +53,8 @@ struct _krb5_checksum_type *_krb5_checksum_types[] = {
     &_krb5_checksum_hmac_sha1_des3,
     &_krb5_checksum_hmac_sha1_aes128,
     &_krb5_checksum_hmac_sha1_aes256,
+    &_krb5_checksum_hmac_sha256_128_aes128,
+    &_krb5_checksum_hmac_sha384_192_aes256,
     &_krb5_checksum_hmac_md5
 };
 
@@ -64,6 +66,8 @@ int _krb5_num_checksums
  * (only relevant for !F_PSEUDO) */
 
 struct _krb5_encryption_type *_krb5_etypes[] = {
+    &_krb5_enctype_aes256_cts_hmac_sha384_192,
+    &_krb5_enctype_aes128_cts_hmac_sha256_128,
     &_krb5_enctype_aes256_cts_hmac_sha1,
     &_krb5_enctype_aes128_cts_hmac_sha1,
     &_krb5_enctype_des3_cbc_sha1,

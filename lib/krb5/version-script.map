@@ -732,6 +732,7 @@ HEIMDAL_KRB5_2.0 {
 
 		# shared with HDB
 		_krb5_plugin_run_f;
+		_krb5_enctype_requires_random_salt;
 
 		# Shared with GSSAPI krb5
 		_krb5_crc_init_table;		
@@ -740,7 +741,8 @@ HEIMDAL_KRB5_2.0 {
 		_krb5_build_authenticator;
 
 		# Shared with libkdc
-		_krb5_AES_string_to_default_iterator;
+		_krb5_AES_SHA1_string_to_default_iterator;
+		_krb5_AES_SHA2_string_to_default_iterator;
 		_krb5_dh_group_ok;
 		_krb5_get_host_realm_int;
 		_krb5_get_int;

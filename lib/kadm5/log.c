@@ -174,11 +174,11 @@ RCSID("$Id$");
  * will deadlock with ipropd-slave -- don't do that.
  */
 
-#define LOG_HEADER_SZ   (sizeof(uint32_t) * 4)
-#define LOG_TRAILER_SZ  (sizeof(uint32_t) * 2)
-#define LOG_WRAPPER_SZ  (LOG_HEADER_SZ + LOG_TRAILER_SZ)
-#define LOG_UBER_LEN    (sizeof(uint64_t) + sizeof(uint32_t) * 2)
-#define LOG_UBER_SZ     (LOG_WRAPPER_SZ + LOG_UBER_LEN)
+#define LOG_HEADER_SZ   ((off_t)(sizeof(uint32_t) * 4))
+#define LOG_TRAILER_SZ  ((off_t)(sizeof(uint32_t) * 2))
+#define LOG_WRAPPER_SZ  ((off_t)(LOG_HEADER_SZ + LOG_TRAILER_SZ))
+#define LOG_UBER_LEN    ((off_t)(sizeof(uint64_t) + sizeof(uint32_t) * 2))
+#define LOG_UBER_SZ     ((off_t)(LOG_WRAPPER_SZ + LOG_UBER_LEN))
 
 #define LOG_NOPEEK 0
 #define LOG_DOPEEK 1

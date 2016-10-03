@@ -275,18 +275,20 @@ _krb5_erase_file(krb5_context context, const char *filename)
 	return ret;
     }
     if (unlink(filename) < 0) {
+	ret = errno;
 	_krb5_xunlock(context, fd);
         close (fd);
 	krb5_set_error_message(context, errno,
 	    N_("krb5_cc_destroy: unlinking \"%s\": %s", ""),
-	    filename, strerror(errno));
-        return errno;
+	    filename, strerror(ret));
+        return ret;
     }
     ret = fstat(fd, &sb2);
     if (ret < 0) {
+	ret = errno;
 	_krb5_xunlock(context, fd);
 	close (fd);
-	return errno;
+	return ret;
     }
 
     /* check if someone was playing with symlinks */

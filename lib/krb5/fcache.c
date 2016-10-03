@@ -277,6 +277,9 @@ _krb5_erase_file(krb5_context context, const char *filename)
     if (unlink(filename) < 0) {
 	_krb5_xunlock(context, fd);
         close (fd);
+	krb5_set_error_message(context, errno,
+	    N_("krb5_cc_destroy: unlinking \"%s\": %s", ""),
+	    filename, strerror(errno));
         return errno;
     }
     ret = fstat(fd, &sb2);
@@ -606,8 +609,7 @@ fcc_destroy(krb5_context context,
     if (FCACHE(id) == NULL)
         return krb5_einval(context, 2);
 
-    _krb5_erase_file(context, FILENAME(id));
-    return 0;
+    return _krb5_erase_file(context, FILENAME(id));
 }
 
 static krb5_error_code KRB5_CALLCONV

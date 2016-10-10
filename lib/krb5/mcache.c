@@ -159,6 +159,32 @@ mcc_gen_new(krb5_context context, krb5_ccache *id)
     return 0;
 }
 
+static void KRB5_CALLCONV
+mcc_destroy_internal(krb5_context context,
+		     krb5_mcache *m)
+{
+    struct link *l;
+
+    if (m->primary_principal != NULL) {
+	krb5_free_principal (context, m->primary_principal);
+	m->primary_principal = NULL;
+    }
+    m->dead = 1;
+
+    l = m->creds;
+    while (l != NULL) {
+	struct link *old;
+
+	krb5_free_cred_contents (context, &l->cred);
+	old = l;
+	l = l->next;
+	free (old);
+    }
+
+    m->creds = NULL;
+    return;
+}
+
 static krb5_error_code KRB5_CALLCONV
 mcc_initialize(krb5_context context,
 	       krb5_ccache id,
@@ -168,7 +194,15 @@ mcc_initialize(krb5_context context,
     krb5_error_code ret = 0;
     HEIMDAL_MUTEX_lock(&(m->mutex));
     heim_assert(m->refcnt != 0, "resurection released mcache");
+    /*
+     * It's important to destroy any existing
+     * creds here, that matches the baheviour
+     * of all other backends and also the
+     * MEMORY: backend in MIT.
+     */
+    mcc_destroy_internal(context, m);
     m->dead = 0;
+    m->kdc_offset = 0;
     m->mtime = time(NULL);
     ret = krb5_copy_principal (context,
 			       primary_principal,
@@ -213,7 +247,6 @@ mcc_destroy(krb5_context context,
 	    krb5_ccache id)
 {
     krb5_mcache **n, *m = MCACHE(id);
-    struct link *l;
 
     HEIMDAL_MUTEX_lock(&(m->mutex));
     if (m->refcnt == 0)
@@ -233,22 +266,7 @@ mcc_destroy(krb5_context context,
 	    }
 	}
 	HEIMDAL_MUTEX_unlock(&mcc_mutex);
-	if (m->primary_principal != NULL) {
-	    krb5_free_principal (context, m->primary_principal);
-	    m->primary_principal = NULL;
-	}
-	m->dead = 1;
-
-	l = m->creds;
-	while (l != NULL) {
-	    struct link *old;
-
-	    krb5_free_cred_contents (context, &l->cred);
-	    old = l;
-	    l = l->next;
-	    free (old);
-	}
-	m->creds = NULL;
+	mcc_destroy_internal(context, m);
     }
     HEIMDAL_MUTEX_unlock(&(m->mutex));
     return 0;

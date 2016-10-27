@@ -30,7 +30,9 @@ case "$host" in
 	dnl heim_threads.h knows this
 	PTHREAD_LIBADD="-lpthread"
 	;;
-*-*-freebsd[[56789]]*)
+*-*-freebsd[[1234]])
+    ;;
+*-*-freebsd*)
 	native_pthread_support=yes
 	PTHREAD_LIBADD="-pthread"
 	;;

@@ -640,8 +640,8 @@ fcc_store_cred(krb5_context context,
     if (close(fd) < 0) {
 	if (ret == 0) {
 	    char buf[128];
-	    rk_strerror_r(ret, buf, sizeof(buf));
 	    ret = errno;
+	    rk_strerror_r(ret, buf, sizeof(buf));
 	    krb5_set_error_message(context, ret, N_("close %s: %s", ""),
 				   FILENAME(id), buf);
 	}

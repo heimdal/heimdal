@@ -33,7 +33,7 @@
 
 #include "hdb_locl.h"
 
-#if defined(HAVE_DB1) && !defined(HAVE_DB3)
+#if defined(HAVE_DB1)
 
 #if defined(HAVE_DB_185_H)
 #include <db_185.h>
@@ -336,8 +336,8 @@ DB_open(krb5_context context, HDB *db, int flags, mode_t mode)
 }
 
 krb5_error_code
-hdb_db_create(krb5_context context, HDB **db,
-	      const char *filename)
+hdb_db1_create(krb5_context context, HDB **db,
+	       const char *filename)
 {
     DB1_HDB **db1 = (DB1_HDB **)db;
     *db = calloc(1, sizeof(**db1));	/* Allocate space for the larger db1 */
@@ -376,4 +376,4 @@ hdb_db_create(krb5_context context, HDB **db,
     return 0;
 }
 
-#endif /* defined(HAVE_DB1) && !defined(HAVE_DB3) */
+#endif /* defined(HAVE_DB1) */

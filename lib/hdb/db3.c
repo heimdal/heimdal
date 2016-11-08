@@ -450,8 +450,8 @@ DB_open(krb5_context context, HDB *db, int flags, mode_t mode)
 }
 
 krb5_error_code
-hdb_db_create(krb5_context context, HDB **db,
-	      const char *filename)
+hdb_db3_create(krb5_context context, HDB **db,
+	       const char *filename)
 {
     DB3_HDB **db3 = (DB3_HDB **)db;
     *db = calloc(1, sizeof(**db3));    /* Allocate space for the larger db3 */

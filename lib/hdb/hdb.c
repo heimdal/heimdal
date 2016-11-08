@@ -64,14 +64,17 @@
 const int hdb_interface_version = HDB_INTERFACE_VERSION;
 
 static struct hdb_method methods[] = {
-#if HAVE_DB1 || HAVE_DB3
-    { HDB_INTERFACE_VERSION, NULL, NULL, "db:",	hdb_db_create},
+    /* "db:" should be db3 if we have db3, or db1 if we have db1 */
+#if HAVE_DB3
+    { HDB_INTERFACE_VERSION, NULL, NULL, "db:",	hdb_db3_create},
+#elif HAVE_DB1
+    { HDB_INTERFACE_VERSION, NULL, NULL, "db:",	hdb_db1_create},
 #endif
 #if HAVE_DB1
-    { HDB_INTERFACE_VERSION, NULL, NULL, "db1:",	hdb_db_create},
+    { HDB_INTERFACE_VERSION, NULL, NULL, "db1:",	hdb_db1_create},
 #endif
 #if HAVE_DB3
-    { HDB_INTERFACE_VERSION, NULL, NULL, "db3:",	hdb_db_create},
+    { HDB_INTERFACE_VERSION, NULL, NULL, "db3:",	hdb_db3_create},
 #endif
 #if HAVE_DB1
     { HDB_INTERFACE_VERSION, NULL, NULL, "mit-db:",	hdb_mitdb_create},
@@ -94,14 +97,22 @@ static struct hdb_method methods[] = {
     { 0, NULL, NULL, NULL, NULL}
 };
 
+/*
+ * It'd be nice if we could try opening an HDB with each supported
+ * backend until one works or all fail.  It may not be possible for all
+ * flavors, but where it's possible we should.
+ */
 #if defined(HAVE_LMDB)
-static struct hdb_method dbmetod =
+static struct hdb_method default_dbmethod =
     { HDB_INTERFACE_VERSION, NULL, NULL, "", hdb_mdb_create };
-#elif defined(HAVE_DB1) || defined(HAVE_DB3)
-static struct hdb_method dbmetod =
-    { HDB_INTERFACE_VERSION, NULL, NULL, "", hdb_db_create };
+#elif defined(HAVE_DB3)
+static struct hdb_method default_dbmethod =
+    { HDB_INTERFACE_VERSION, NULL, NULL, "", hdb_db3_create };
+#elif defined(HAVE_DB1)
+static struct hdb_method default_dbmethod =
+    { HDB_INTERFACE_VERSION, NULL, NULL, "", hdb_db1_create };
 #elif defined(HAVE_NDBM)
-static struct hdb_method dbmetod =
+static struct hdb_method default_dbmethod =
     { HDB_INTERFACE_VERSION, NULL, NULL, "", hdb_ndbm_create };
 #endif
 
@@ -321,13 +332,17 @@ find_method (const char *filename, const char **rest)
 	}
     }
 #if defined(HAVE_DB1) || defined(HAVE_DB3) || defined(HAVE_LMDB) || defined(HAVE_NDBM)
-    /* XXX This doesn't handle Windows */
-    if (strncmp(filename, "/", 1) == 0
-	|| strncmp(filename, "./", 2) == 0
-	|| strncmp(filename, "../", 3) == 0)
+    if (strncmp(filename, "/", sizeof("/") - 1) == 0
+	|| strncmp(filename, "./", sizeof("./") - 1) == 0
+	|| strncmp(filename, "../", sizeof("../") - 1) == 0
+#ifdef WIN32
+        || strncmp(filename, "\\\\", sizeof("\\\\") - 1)
+        || (isalpha(filename[0]) && filename[1] == ':')
+#endif
+        )
     {
 	*rest = filename;
-	return &dbmetod;
+	return &default_dbmethod;
     }
 #endif
 

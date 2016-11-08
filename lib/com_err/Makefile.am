@@ -13,7 +13,7 @@ endif
 
 libcom_err_la_LIBADD = $(LIB_libintl)
 
-bin_PROGRAMS = compile_et
+noinst_PROGRAMS = compile_et
 
 include_HEADERS = com_err.h com_right.h
 

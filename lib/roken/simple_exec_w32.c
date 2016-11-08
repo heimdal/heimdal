@@ -184,6 +184,7 @@ collect_commandline(const char * fn, va_list * ap)
 		    free(cmd);
 		return NULL;
 	    }
+	    cmd = nc;
 	}
 
 	if (cmd == NULL)

@@ -55,24 +55,6 @@ static char *lharoot_princ[] = { "lha", "root" };
 static char *datan_princ[] = { "host", "nutcracker.e.kth.se" };
 static char *nada_tgt_principal[] = { "krbtgt", "NADA.KTH.SE" };
 
-
-#define IF_OPT_COMPARE(ac,bc,e) \
-	if (((ac)->e == NULL && (bc)->e != NULL) || (((ac)->e != NULL && (bc)->e == NULL))) return 1; if ((ac)->e)
-#define COMPARE_OPT_STRING(ac,bc,e) \
-	do { if (strcmp(*(ac)->e, *(bc)->e) != 0) return 1; } while(0)
-#define COMPARE_OPT_OCTECT_STRING(ac,bc,e) \
-	do { if ((ac)->e->length != (bc)->e->length || memcmp((ac)->e->data, (bc)->e->data, (ac)->e->length) != 0) return 1; } while(0)
-#define COMPARE_STRING(ac,bc,e) \
-	do { if (strcmp((ac)->e, (bc)->e) != 0) return 1; } while(0)
-#define COMPARE_INTEGER(ac,bc,e) \
-	do { if ((ac)->e != (bc)->e) return 1; } while(0)
-#define COMPARE_OPT_INTEGER(ac,bc,e) \
-	do { if (*(ac)->e != *(bc)->e) return 1; } while(0)
-#define COMPARE_MEM(ac,bc,e,len) \
-	do { if (memcmp((ac)->e, (bc)->e,len) != 0) return 1; } while(0)
-#define COMPARE_OCTECT_STRING(ac,bc,e) \
-	do { if ((ac)->e.length != (bc)->e.length || memcmp((ac)->e.data, (bc)->e.data, (ac)->e.length) != 0) return 1; } while(0)
-
 static int
 cmp_principal (void *a, void *b)
 {
@@ -255,7 +237,7 @@ cmp_KRB_ERROR (void *a, void *b)
 	COMPARE_OPT_STRING(aa,ab,e_text);
     }
     IF_OPT_COMPARE(aa,ab,e_data) {
-	/* COMPARE_OPT_OCTECT_STRING(aa,ab,e_data); */
+	/* COMPARE_OPT_OCTET_STRING(aa,ab,e_data); */
     }
 
     return 0;
@@ -1110,7 +1092,7 @@ cmp_TESTAlloc (void *a, void *b)
     COMPARE_INTEGER(aa,ab,three);
 
     IF_OPT_COMPARE(aa,ab,tagless2) {
-	COMPARE_OPT_OCTECT_STRING(aa, ab, tagless2);
+	COMPARE_OPT_OCTET_STRING(aa, ab, tagless2);
     }
 
     return 0;
@@ -1531,8 +1513,8 @@ cmp_TESTSeqOf4(void *a, void *b)
 	for (i = 0; i < aa->b1->len; ++i) {
 	    COMPARE_INTEGER(aa->b1->val+i, ab->b1->val+i, u1);
 	    COMPARE_INTEGER(aa->b1->val+i, ab->b1->val+i, u2);
-	    COMPARE_OCTECT_STRING(aa->b1->val+i, ab->b1->val+i, s1);
-	    COMPARE_OCTECT_STRING(aa->b1->val+i, ab->b1->val+i, s2);
+	    COMPARE_OCTET_STRING(aa->b1->val+i, ab->b1->val+i, s1);
+	    COMPARE_OCTET_STRING(aa->b1->val+i, ab->b1->val+i, s2);
 	}
     }
     IF_OPT_COMPARE(aa, ab, b2) {
@@ -1541,9 +1523,9 @@ cmp_TESTSeqOf4(void *a, void *b)
 	    COMPARE_INTEGER(aa->b2->val+i, ab->b2->val+i, u1);
 	    COMPARE_INTEGER(aa->b2->val+i, ab->b2->val+i, u2);
 	    COMPARE_INTEGER(aa->b2->val+i, ab->b2->val+i, u3);
-	    COMPARE_OCTECT_STRING(aa->b2->val+i, ab->b2->val+i, s1);
-	    COMPARE_OCTECT_STRING(aa->b2->val+i, ab->b2->val+i, s2);
-	    COMPARE_OCTECT_STRING(aa->b2->val+i, ab->b2->val+i, s3);
+	    COMPARE_OCTET_STRING(aa->b2->val+i, ab->b2->val+i, s1);
+	    COMPARE_OCTET_STRING(aa->b2->val+i, ab->b2->val+i, s2);
+	    COMPARE_OCTET_STRING(aa->b2->val+i, ab->b2->val+i, s3);
 	}
     }
     IF_OPT_COMPARE(aa, ab, b3) {
@@ -1553,10 +1535,10 @@ cmp_TESTSeqOf4(void *a, void *b)
 	    COMPARE_INTEGER(aa->b3->val+i, ab->b3->val+i, u2);
 	    COMPARE_INTEGER(aa->b3->val+i, ab->b3->val+i, u3);
 	    COMPARE_INTEGER(aa->b3->val+i, ab->b3->val+i, u4);
-	    COMPARE_OCTECT_STRING(aa->b3->val+i, ab->b3->val+i, s1);
-	    COMPARE_OCTECT_STRING(aa->b3->val+i, ab->b3->val+i, s2);
-	    COMPARE_OCTECT_STRING(aa->b3->val+i, ab->b3->val+i, s3);
-	    COMPARE_OCTECT_STRING(aa->b3->val+i, ab->b3->val+i, s4);
+	    COMPARE_OCTET_STRING(aa->b3->val+i, ab->b3->val+i, s1);
+	    COMPARE_OCTET_STRING(aa->b3->val+i, ab->b3->val+i, s2);
+	    COMPARE_OCTET_STRING(aa->b3->val+i, ab->b3->val+i, s3);
+	    COMPARE_OCTET_STRING(aa->b3->val+i, ab->b3->val+i, s4);
 	}
     }
     return 0;
@@ -1694,6 +1676,100 @@ test_seq4 (void)
     return ret;
 }
 
+static int
+cmp_test_seqof5 (void *a, void *b)
+{
+    TESTSeqOf5 *aval = a;
+    TESTSeqOf5 *bval = b;
+
+    IF_OPT_COMPARE(aval, bval, outer) {
+            COMPARE_INTEGER(&aval->outer->inner, &bval->outer->inner, u0);
+            COMPARE_OCTET_STRING(&aval->outer->inner, &bval->outer->inner, s0);
+            COMPARE_INTEGER(&aval->outer->inner, &bval->outer->inner, u1);
+            COMPARE_OCTET_STRING(&aval->outer->inner, &bval->outer->inner, s1);
+            COMPARE_INTEGER(&aval->outer->inner, &bval->outer->inner, u2);
+            COMPARE_OCTET_STRING(&aval->outer->inner, &bval->outer->inner, s2);
+            COMPARE_INTEGER(&aval->outer->inner, &bval->outer->inner, u3);
+            COMPARE_OCTET_STRING(&aval->outer->inner, &bval->outer->inner, s3);
+            COMPARE_INTEGER(&aval->outer->inner, &bval->outer->inner, u4);
+            COMPARE_OCTET_STRING(&aval->outer->inner, &bval->outer->inner, s4);
+            COMPARE_INTEGER(&aval->outer->inner, &bval->outer->inner, u5);
+            COMPARE_OCTET_STRING(&aval->outer->inner, &bval->outer->inner, s5);
+            COMPARE_INTEGER(&aval->outer->inner, &bval->outer->inner, u6);
+            COMPARE_OCTET_STRING(&aval->outer->inner, &bval->outer->inner, s6);
+            COMPARE_INTEGER(&aval->outer->inner, &bval->outer->inner, u7);
+            COMPARE_OCTET_STRING(&aval->outer->inner, &bval->outer->inner, s7);
+    }
+    return 0;
+}
+
+static int
+test_seqof5(void)
+{
+    struct test_case tests[] = {
+	{ NULL,  2, "\x30\x00", "seq5 0" },
+	{ NULL,  126,
+          "\x30\x7c"                                            /* SEQ */
+            "\x30\x7a"                                          /* SEQ */
+              "\x30\x78"                                        /* SEQ */
+                "\x02\x01\x01"                                  /* INT 1 */
+                "\x04\x06\x01\x01\x01\x01\x01\x01"              /* "\0x1"x6 */
+                "\x02\x09\x00\xff\xff\xff\xff\xff\xff\xff\xfe"  /* INT ~1 */
+                "\x04\x06\x02\x02\x02\x02\x02\x02"              /* "\x02"x6 */
+                "\x02\x01\x02"                                  /* INT 2 */
+                "\x04\x06\x03\x03\x03\x03\x03\x03"              /* "\x03"x6 */
+                "\x02\x09\x00\xff\xff\xff\xff\xff\xff\xff\xfd"  /* INT ~2 */
+                "\x04\x06\x04\x04\x04\x04\x04\x04"              /* ... */
+                "\x02\x01\x03"
+                "\x04\x06\x05\x05\x05\x05\x05\x05"
+                "\x02\x09\x00\xff\xff\xff\xff\xff\xff\xff\xfc"
+                "\x04\x06\x06\x06\x06\x06\x06\x06"
+                "\x02\x01\x04"
+                "\x04\x06\x07\x07\x07\x07\x07\x07"
+                "\x02\x09\x00\xff\xff\xff\xff\xff\xff\xff\xfb"
+                "\x04\x06\x08\x08\x08\x08\x08\x08",
+          "seq5 1" },
+    };
+
+    int ret = 0, ntests = sizeof(tests) / sizeof(*tests);
+    TESTSeqOf5 c[2];
+    struct TESTSeqOf5_outer outer;
+    struct TESTSeqOf5_outer_inner inner;
+    TESTuint64 u[8];
+    heim_octet_string s[8];
+    int i;
+
+    c[0].outer = NULL;
+    tests[0].val = &c[0];
+
+    for (i = 0; i < 8; ++i) {
+        u[i] = (i&1) == 0 ? i/2+1 : ~(i/2+1);
+        s[i].data = memset(malloc(s[i].length = 6), i+1, 6);
+    }
+
+    inner.u0 = u[0]; inner.u1 = u[1]; inner.u2 = u[2]; inner.u3 = u[3];
+    inner.u4 = u[4]; inner.u5 = u[5]; inner.u6 = u[6]; inner.u7 = u[7];
+    inner.s0 = s[0]; inner.s1 = s[1]; inner.s2 = s[2]; inner.s3 = s[3];
+    inner.s4 = s[4]; inner.s5 = s[5]; inner.s6 = s[6]; inner.s7 = s[7];
+
+    outer.inner = inner;
+    c[1].outer = &outer;
+    tests[1].val = &c[1];
+
+    ret += generic_test (tests, ntests, sizeof(TESTSeqOf5),
+			 (generic_encode)encode_TESTSeqOf5,
+			 (generic_length)length_TESTSeqOf5,
+			 (generic_decode)decode_TESTSeqOf5,
+			 (generic_free)free_TESTSeqOf5,
+			 cmp_test_seqof5,
+			 NULL);
+
+    for (i = 0; i < 8; ++i)
+        free(s[i].data);
+
+    return ret;
+}
+
 int
 main(int argc, char **argv)
 {
@@ -1730,6 +1806,7 @@ main(int argc, char **argv)
 
     ret += check_TESTMechTypeList();
     ret += test_seq4();
+    ret += test_seqof5();
 
     return ret;
 }

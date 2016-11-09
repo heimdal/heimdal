@@ -153,6 +153,30 @@ TESTSeqOf4 ::= SEQUENCE {
 	} OPTIONAL
 }
 
+TESTSeqOf5 ::= SEQUENCE {
+        outer SEQUENCE {
+          inner SEQUENCE {
+                        u0 TESTuint64,
+                        s0 OCTET STRING,
+                        u1 TESTuint64,
+                        s1 OCTET STRING,
+                        u2 TESTuint64,
+                        s2 OCTET STRING,
+                        u3 TESTuint64,
+                        s3 OCTET STRING,
+                        u4 TESTuint64,
+                        s4 OCTET STRING,
+                        u5 TESTuint64,
+                        s5 OCTET STRING,
+                        u6 TESTuint64,
+                        s6 OCTET STRING,
+                        u7 TESTuint64,
+                        s7 OCTET STRING
+                }
+            }
+        OPTIONAL
+}
+
 TESTPreserve ::= SEQUENCE {
 	zero [0] TESTInteger,
 	one [1] TESTInteger

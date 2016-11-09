@@ -46,6 +46,7 @@
 #include <test_asn1.h>
 
 #include "check-common.h"
+#include "der_locl.h"
 
 static int
 cmp_dummy (void *a, void *b)
@@ -407,6 +408,100 @@ test_seqof4(void)
     return ret;
 }
 
+static int
+cmp_test_seqof5 (void *a, void *b)
+{
+    TESTSeqOf5 *aval = a;
+    TESTSeqOf5 *bval = b;
+
+    IF_OPT_COMPARE(aval, bval, outer) {
+            COMPARE_INTEGER(&aval->outer->inner, &bval->outer->inner, u0);
+            COMPARE_OCTET_STRING(&aval->outer->inner, &bval->outer->inner, s0);
+            COMPARE_INTEGER(&aval->outer->inner, &bval->outer->inner, u1);
+            COMPARE_OCTET_STRING(&aval->outer->inner, &bval->outer->inner, s1);
+            COMPARE_INTEGER(&aval->outer->inner, &bval->outer->inner, u2);
+            COMPARE_OCTET_STRING(&aval->outer->inner, &bval->outer->inner, s2);
+            COMPARE_INTEGER(&aval->outer->inner, &bval->outer->inner, u3);
+            COMPARE_OCTET_STRING(&aval->outer->inner, &bval->outer->inner, s3);
+            COMPARE_INTEGER(&aval->outer->inner, &bval->outer->inner, u4);
+            COMPARE_OCTET_STRING(&aval->outer->inner, &bval->outer->inner, s4);
+            COMPARE_INTEGER(&aval->outer->inner, &bval->outer->inner, u5);
+            COMPARE_OCTET_STRING(&aval->outer->inner, &bval->outer->inner, s5);
+            COMPARE_INTEGER(&aval->outer->inner, &bval->outer->inner, u6);
+            COMPARE_OCTET_STRING(&aval->outer->inner, &bval->outer->inner, s6);
+            COMPARE_INTEGER(&aval->outer->inner, &bval->outer->inner, u7);
+            COMPARE_OCTET_STRING(&aval->outer->inner, &bval->outer->inner, s7);
+    }
+    return 0;
+}
+
+static int
+test_seqof5(void)
+{
+    struct test_case tests[] = {
+	{ NULL,  2, "\x30\x00", "seq5 0" },
+	{ NULL,  126,
+          "\x30\x7c"                                            /* SEQ */
+            "\x30\x7a"                                          /* SEQ */
+              "\x30\x78"                                        /* SEQ */
+                "\x02\x01\x01"                                  /* INT 1 */
+                "\x04\x06\x01\x01\x01\x01\x01\x01"              /* "\0x1"x6 */
+                "\x02\x09\x00\xff\xff\xff\xff\xff\xff\xff\xfe"  /* INT ~1 */
+                "\x04\x06\x02\x02\x02\x02\x02\x02"              /* "\x02"x6 */
+                "\x02\x01\x02"                                  /* INT 2 */
+                "\x04\x06\x03\x03\x03\x03\x03\x03"              /* "\x03"x6 */
+                "\x02\x09\x00\xff\xff\xff\xff\xff\xff\xff\xfd"  /* INT ~2 */
+                "\x04\x06\x04\x04\x04\x04\x04\x04"              /* ... */
+                "\x02\x01\x03"
+                "\x04\x06\x05\x05\x05\x05\x05\x05"
+                "\x02\x09\x00\xff\xff\xff\xff\xff\xff\xff\xfc"
+                "\x04\x06\x06\x06\x06\x06\x06\x06"
+                "\x02\x01\x04"
+                "\x04\x06\x07\x07\x07\x07\x07\x07"
+                "\x02\x09\x00\xff\xff\xff\xff\xff\xff\xff\xfb"
+                "\x04\x06\x08\x08\x08\x08\x08\x08",
+          "seq5 1" },
+    };
+
+    int ret = 0, ntests = sizeof(tests) / sizeof(*tests);
+    TESTSeqOf5 c[2];
+    struct TESTSeqOf5_outer outer;
+    struct TESTSeqOf5_outer_inner inner;
+    TESTuint64 u[8];
+    heim_octet_string s[8];
+    int i;
+
+    c[0].outer = NULL;
+    tests[0].val = &c[0];
+
+    for (i = 0; i < 8; ++i) {
+        u[i] = (i&1) == 0 ? i/2+1 : ~(i/2+1);
+        s[i].data = memset(malloc(s[i].length = 6), i+1, 6);
+    }
+
+    inner.u0 = u[0]; inner.u1 = u[1]; inner.u2 = u[2]; inner.u3 = u[3];
+    inner.u4 = u[4]; inner.u5 = u[5]; inner.u6 = u[6]; inner.u7 = u[7];
+    inner.s0 = s[0]; inner.s1 = s[1]; inner.s2 = s[2]; inner.s3 = s[3];
+    inner.s4 = s[4]; inner.s5 = s[5]; inner.s6 = s[6]; inner.s7 = s[7];
+
+    outer.inner = inner;
+    c[1].outer = &outer;
+    tests[1].val = &c[1];
+
+    ret += generic_test (tests, ntests, sizeof(TESTSeqOf5),
+			 (generic_encode)encode_TESTSeqOf5,
+			 (generic_length)length_TESTSeqOf5,
+			 (generic_decode)decode_TESTSeqOf5,
+			 (generic_free)free_TESTSeqOf5,
+			 cmp_test_seqof5,
+			 NULL);
+
+    for (i = 0; i < 8; ++i)
+        free(s[i].data);
+
+    return ret;
+}
+
 int
 main(int argc, char **argv)
 {
@@ -418,6 +513,7 @@ main(int argc, char **argv)
     ret += test_seqof2();
     ret += test_seqof3();
     ret += test_seqof4();
+    ret += test_seqof5();
 
     return ret;
 }

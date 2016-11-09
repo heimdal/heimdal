@@ -867,9 +867,11 @@ generate_template_type(const char *varname,
 		       int optional, int isstruct, int need_offset)
 {
     struct tlist *tl;
-    const char *dup;
+    const char *d;
+    char *szt = NULL;
     int have_ellipsis = 0;
     int implicit = 0;
+    int n;
 
     tl = tlist_new(varname);
 
@@ -889,23 +891,34 @@ generate_template_type(const char *varname,
 	}
     }
 
+    if (isstruct)
+	if (name)
+	    n = asprintf(&szt, "struct %s_%s", basetype, name);
+	else
+	    n = asprintf(&szt, "struct %s", basetype);
+    else
+	n = asprintf(&szt, "%s", basetype);
+    if (n < 0 || szt == NULL)
+	errx(1, "malloc");
+
     if (ASN1_TAILQ_EMPTY(&tl->template) && compact_tag(type)->type != TNull)
 	errx(1, "Tag %s...%s with no content ?", basetype, name ? name : "");
 
     fprintf(get_code_file(), "/* generate_template_type: %s */\n", tl->name);
 
-    tlist_header(tl, "{ 0%s%s, sizeof(%s%s), ((void *)%lu) }",
+    tlist_header(tl, "{ 0%s%s, sizeof(%s), ((void *)%lu) }",
 		 (symname && preserve_type(symname)) ? "|A1_HF_PRESERVE" : "",
-		 have_ellipsis ? "|A1_HF_ELLIPSIS" : "",
-		 isstruct ? "struct " : "", basetype, tlist_count(tl));
+		 have_ellipsis ? "|A1_HF_ELLIPSIS" : "", szt, tlist_count(tl));
 
-    dup = tlist_find_dup(tl);
-    if (dup) {
+    free(szt);
+
+    d = tlist_find_dup(tl);
+    if (d) {
 #if 0
-	if (strcmp(dup, tl->name) == 0)
-	    errx(1, "found dup of ourself: %s", dup);
+	if (strcmp(d, tl->name) == 0)
+	    errx(1, "found dup of ourself: %s", d);
 #endif
-	*dupname = dup;
+	*dupname = d;
     } else {
 	*dupname = tl->name;
 	tlist_print(tl);

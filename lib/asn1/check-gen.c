@@ -57,7 +57,7 @@ static char *nada_tgt_principal[] = { "krbtgt", "NADA.KTH.SE" };
 
 
 #define IF_OPT_COMPARE(ac,bc,e) \
-	if (((ac)->e == NULL && (bc)->e != NULL) || (((ac)->e != NULL && (bc)->e == NULL))) return 1; if ((ab)->e)
+	if (((ac)->e == NULL && (bc)->e != NULL) || (((ac)->e != NULL && (bc)->e == NULL))) return 1; if ((ac)->e)
 #define COMPARE_OPT_STRING(ac,bc,e) \
 	do { if (strcmp(*(ac)->e, *(bc)->e) != 0) return 1; } while(0)
 #define COMPARE_OPT_OCTECT_STRING(ac,bc,e) \

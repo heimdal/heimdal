@@ -39,7 +39,7 @@
 #include <evp.h>
 #include <evp-hcrypto.h>
 #include <evp-cc.h>
-#if _WIN32
+#if defined(_WIN32)
 #include <evp-w32.h>
 #endif
 #include <evp-pkcs11.h>

@@ -101,7 +101,7 @@ install-build-headers:: $(include_HEADERS) $(dist_include_HEADERS) $(nodist_incl
 		if cmp -s  $$file $(buildinclude)/$$f 2> /dev/null ; then \
 		: ; else \
 			echo " $(CP) $$file $(buildinclude)/$$f"; \
-			$(CP) $$file $(buildinclude)/$$f; \
+			$(CP) $$file $(buildinclude)/$$f || true; \
 		fi ; \
 	done ; \
 	foo='$(nobase_include_HEADERS)'; \

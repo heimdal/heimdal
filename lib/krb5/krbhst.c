@@ -423,6 +423,9 @@ krb5_krbhst_get_addrinfo(krb5_context context, krb5_krbhst_info *host,
 	 * If the hostname contains a dot, assumes it's a FQDN and
 	 * don't use search domains since that might be painfully slow
 	 * when machine is disconnected from that network.
+         *
+         * This does, however, inhibit /etc/hosts matches on some
+         * systems.  So we want to try it twice.
 	 */
 
 	hints.ai_flags &= ~(AI_NUMERICHOST);
@@ -434,6 +437,12 @@ krb5_krbhst_get_addrinfo(krb5_context context, krb5_krbhst_info *host,
 	}
 
 	ret = getaddrinfo(hostname, portstr, &hints, &host->ai);
+        /*
+         * Retry without the trailing '.' if the lookup failed for any
+         * reason other than a timeout.
+         */
+        if (ret != 0 && ret != EAI_AGAIN && ret != EAI_FAIL && hostname != host->hostname)
+            ret = getaddrinfo(host->hostname, portstr, &hints, &host->ai);
 	if (hostname != host->hostname)
 	    free(hostname);
 	if (ret) {

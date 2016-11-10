@@ -553,7 +553,7 @@ get_new_tickets(krb5_context context,
 						addrs_flag ? FALSE : TRUE);
 
     if (renew_life == NULL && renewable_flag)
-	renewstr = "1 month";
+	renewstr = "2147483647s";
     if (renew_life)
 	renewstr = renew_life;
     if (renewstr) {

@@ -249,9 +249,12 @@ init_cred (krb5_context context,
 	tmp = KRB5_TKT_LIFETIME_DEFAULT;
     cred->times.endtime = now + tmp;
 
-    if ((options->flags & KRB5_GET_INIT_CREDS_OPT_RENEW_LIFE) &&
-	options->renew_life > 0) {
-	cred->times.renew_till = now + options->renew_life;
+    if (options->flags & KRB5_GET_INIT_CREDS_OPT_RENEW_LIFE) {
+	if (options->renew_life > 0)
+	    tmp = options->renew_life;
+	else
+	    tmp = KRB5_TKT_RENEW_LIFETIME_DEFAULT;
+	cred->times.renew_till = now + tmp;
     }
 
     return 0;

@@ -428,7 +428,7 @@ krb5_krbhst_get_addrinfo(krb5_context context, krb5_krbhst_info *host,
          * systems.  So we want to try it twice.
 	 */
 
-	hints.ai_flags &= ~(AI_NUMERICHOST);
+	hints.ai_flags &= ~(AI_NUMERICHOST | AI_NUMERICSERV);
 
 	if (strchr(hostname, '.') && hostname[strlen(hostname) - 1] != '.') {
 	    ret = asprintf(&hostname, "%s.", host->hostname);

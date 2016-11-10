@@ -292,8 +292,10 @@ rk_TEST_PACKAGE(libedit,
 #include <readline/readline.h>
 #elif defined(HAVE_READLINE_H)
 #include <readline.h>
+#elif defined(HAVE_EDITLINE_READLINE_H)
+#include <editline/readline.h>
 #endif
-],-ledit,,, READLINE,, [readline.h readline/readline.h])
+],-ledit,,, READLINE,, [readline.h readline/readline.h editline/readline.h])
 
 AC_CONFIG_SUBDIRS([lib/libedit])
 

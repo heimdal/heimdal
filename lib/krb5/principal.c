@@ -73,6 +73,8 @@ set_default_princ_type(krb5_principal p, NAME_TYPE defnt)
     else if (princ_num_comp(p) == 2 &&
              strcmp(princ_ncomp(p, 0), KRB5_WELLKNOWN_NAME) == 0)
         princ_type(p) = KRB5_NT_WELLKNOWN;
+    else if (princ_num_comp(p) == 1 && strchr(princ_ncomp(p, 0), '@') != NULL)
+        princ_type(p) = KRB5_NT_SMTP_NAME;
     else
         princ_type(p) = defnt;
     return 0;

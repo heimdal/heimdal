@@ -36,6 +36,13 @@
 
 #include <krb5-types.h> /* should really be stdint.h */
 #include <hcrypto/evp.h>
+#include <hcrypto/evp-pkcs11.h>
+#ifdef __APPLE__
+#include <hcrypto/evp-cc.h>
+#endif
+#ifdef _WIN32
+#include <hcrypto/evp-w32.h>
+#endif
 
 #include <err.h>
 #include <assert.h>
@@ -54,7 +61,7 @@ usage(int exit_code) __attribute__((noreturn));
 static void
 usage(int exit_code)
 {
-    printf("usage: %s in out\n", getprogname());
+    printf("usage: %s in out [pkcs11 | cc | w32]\n", getprogname());
     exit(exit_code);
 }
 
@@ -82,12 +89,26 @@ main(int argc, char **argv)
 	if (strcmp(argv[1], "--help") == 0)
 	    usage(0);
 	usage(1);
-    } else if (argc == 4) {
+    } else if (argc == 4 || argc == 5) {
 	block_size = atoi(argv[1]);
 	if (block_size == 0)
 	    errx(1, "invalid blocksize %s", argv[1]);
 	ifn = argv[2];
 	ofn = argv[3];
+        if (argc == 5) {
+            if (strcmp(argv[4], "pkcs11") == 0)
+                c = hc_EVP_pkcs11_aes_128_cbc();
+#ifdef __APPLE__
+            else if (strcmp(argv[4], "cc") == 0)
+                c = hc_EVP_cc_aes_128_cbc();
+#endif
+#ifdef _WIN32
+            else if (strcmp(argv[4], "w32") == 0)
+                c = hc_EVP_w32crypto_aes_128_cbc();
+#endif
+            else
+                usage(1);
+        }
     } else
 	usage(1);
 

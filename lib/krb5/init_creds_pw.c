@@ -698,8 +698,12 @@ init_as_req (krb5_context context,
 	*a->req_body.from = creds->times.starttime;
     }
     if(creds->times.endtime){
-	ALLOC(a->req_body.till, 1);
-	*a->req_body.till = creds->times.endtime;
+	if ((ALLOC(a->req_body.till, 1)) != NULL)
+            *a->req_body.till = creds->times.endtime;
+        else {
+            ret = krb5_enomem(context);
+            goto fail;
+        }
     }
     if(creds->times.renew_till){
 	a->req_body.rtime = malloc(sizeof(*a->req_body.rtime));
@@ -1930,7 +1934,7 @@ make_fast_ap_fxarmor(krb5_context context,
 
     ALLOC(fxarmor, 1);
     if (fxarmor == NULL) {
-	ret = ENOMEM;
+	ret = krb5_enomem(context);
 	goto out;
     }
 
@@ -2045,22 +2049,35 @@ fast_wrap_req(krb5_context context, struct fast_state *state, KDC_REQ *req)
     free_KDC_REQ_BODY(&req->req_body);
 
     req->req_body.realm = strdup(KRB5_ANON_REALM);
-    ALLOC(req->req_body.cname, 1);
-    req->req_body.cname->name_type = KRB5_NT_PRINCIPAL;
-    ALLOC(req->req_body.cname->name_string.val, 2);
-    req->req_body.cname->name_string.len = 2;
-    req->req_body.cname->name_string.val[0] = strdup(KRB5_WELLKNOWN_NAME);
-    req->req_body.cname->name_string.val[1] = strdup(KRB5_ANON_NAME);
-    ALLOC(req->req_body.till, 1);
-    *req->req_body.till = 0;
+    if ((ALLOC(req->req_body.cname, 1)) != NULL) {
+        req->req_body.cname->name_type = KRB5_NT_WELLKNOWN;
+    if ((ALLOC(req->req_body.cname->name_string.val, 2)) != NULL) {
+        req->req_body.cname->name_string.len = 2;
+        req->req_body.cname->name_string.val[0] = strdup(KRB5_WELLKNOWN_NAME);
+        req->req_body.cname->name_string.val[1] = strdup(KRB5_ANON_NAME);
+        if (req->req_body.cname->name_string.val[0] == NULL ||
+            req->req_body.cname->name_string.val[1] == NULL)
+            ret = krb5_enomem(context);
+      } else
+          ret = krb5_enomem(context);
+    } else
+        ret = krb5_enomem(context);
+    if ((ALLOC(req->req_body.till, 1)) != NULL)
+        *req->req_body.till = 0;
+    else
+        ret = krb5_enomem(context);
+    if (ret)
+        goto out;
 
     if (req->padata) {
 	ret = copy_METHOD_DATA(req->padata, &fastreq.padata);
 	free_METHOD_DATA(req->padata);
     } else {
-	ALLOC(req->padata, 1);
+	if ((ALLOC(req->padata, 1)) == NULL)
+            ret = krb5_enomem(context);
     }
-
+    if (ret)
+        goto out;
 
     ASN1_MALLOC_ENCODE(KrbFastReq, data.data, data.length, &fastreq, &size, ret);
     if (ret)

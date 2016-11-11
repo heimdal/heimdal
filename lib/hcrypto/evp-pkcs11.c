@@ -87,6 +87,7 @@ p11_cleanup(EVP_CIPHER_CTX *ctx);
 struct pkcs11_cipher_ctx {
     CK_SESSION_HANDLE hSession;
     CK_OBJECT_HANDLE hSecret;
+    int cipher_init_done;
 };
 
 struct pkcs11_md_ctx {
@@ -285,6 +286,7 @@ p11_key_init(EVP_CIPHER_CTX *ctx,
         { op,                   &bTrue,         sizeof(bTrue)           }
     };
     struct pkcs11_cipher_ctx *p11ctx = (struct pkcs11_cipher_ctx *)ctx->cipher_data;
+    p11ctx->cipher_init_done = 0;
 
     rv = p11_session_init(mechanismType, &p11ctx->hSession);
     if (rv != CKR_OK)
@@ -312,7 +314,7 @@ p11_do_cipher(EVP_CIPHER_CTX *ctx,
               unsigned int size)
 {
     struct pkcs11_cipher_ctx *p11ctx = (struct pkcs11_cipher_ctx *)ctx->cipher_data;
-    CK_RV rv;
+    CK_RV rv = CKR_OK;
     CK_ULONG ulCipherTextLen = size;
     CK_MECHANISM_TYPE mechanismType = (CK_MECHANISM_TYPE)ctx->cipher->app_data;
     CK_MECHANISM mechanism = {
@@ -322,18 +324,26 @@ p11_do_cipher(EVP_CIPHER_CTX *ctx,
     };
 
     assert(p11_module != NULL);
+    /* The EVP layer only ever calls us with complete cipher blocks */
     assert(EVP_CIPHER_CTX_mode(ctx) == EVP_CIPH_STREAM_CIPHER ||
            (size % ctx->cipher->block_size) == 0);
 
-    /* We cannot use C_EncryptUpdate() as it may buffer the output. */
     if (ctx->encrypt) {
-        rv = p11_module->C_EncryptInit(p11ctx->hSession, &mechanism, p11ctx->hSecret);
+        if (!p11ctx->cipher_init_done) {
+            rv = p11_module->C_EncryptInit(p11ctx->hSession, &mechanism, p11ctx->hSecret);
+            if (rv == CKR_OK)
+                p11ctx->cipher_init_done = 1;
+        }
         if (rv == CKR_OK)
-            rv = p11_module->C_Encrypt(p11ctx->hSession, (unsigned char *)in, size, out, &ulCipherTextLen);
+            rv = p11_module->C_EncryptUpdate(p11ctx->hSession, (unsigned char *)in, size, out, &ulCipherTextLen);
     } else {
-        rv = p11_module->C_DecryptInit(p11ctx->hSession, &mechanism, p11ctx->hSecret);
+        if (!p11ctx->cipher_init_done) {
+            rv = p11_module->C_DecryptInit(p11ctx->hSession, &mechanism, p11ctx->hSecret);
+            if (rv == CKR_OK)
+                p11ctx->cipher_init_done = 1;
+        }
         if (rv == CKR_OK)
-            rv = p11_module->C_Decrypt(p11ctx->hSession, (unsigned char *)in, size, out, &ulCipherTextLen);
+            rv = p11_module->C_DecryptUpdate(p11ctx->hSession, (unsigned char *)in, size, out, &ulCipherTextLen);
     }
 
     return rv == CKR_OK;

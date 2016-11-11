@@ -348,6 +348,10 @@ krb5_parse_name_flags(krb5_context context,
     }
     if (enterprise)
 	(*principal)->name.name_type = KRB5_NT_ENTERPRISE_PRINCIPAL;
+    else if (ncomp > 1 && !strcmp(comp[0], KRB5_TGS_NAME))
+        (*principal)->name.name_type = KRB5_NT_SRV_INST;
+    else if (ncomp > 1 && !strcmp(comp[0], "host"))
+        (*principal)->name.name_type = KRB5_NT_SRV_HST;
     else
 	(*principal)->name.name_type = KRB5_NT_PRINCIPAL;
     (*principal)->name.name_string.val = comp;

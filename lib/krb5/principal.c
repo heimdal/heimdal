@@ -63,6 +63,20 @@ host/admin@H5L.ORG
 #define princ_ncomp(P, N) ((P)->name.name_string.val[(N)])
 #define princ_realm(P) ((P)->realm)
 
+static krb5_error_code
+set_default_princ_type(krb5_principal p, NAME_TYPE defnt)
+{
+    princ_type(p) = defnt;
+    if (princ_num_comp(p) > 1 && strcmp(princ_ncomp(p, 0), KRB5_TGS_NAME) == 0)
+        princ_type(p) = KRB5_NT_SRV_INST;
+    else if (princ_num_comp(p) > 1 && strcmp(princ_ncomp(p, 0), "host") == 0)
+        princ_type(p) = KRB5_NT_SRV_HST;
+    else if (princ_num_comp(p) == 2 &&
+             strcmp(princ_ncomp(p, 0), KRB5_WELLKNOWN_NAME) == 0)
+        princ_type(p) = KRB5_NT_WELLKNOWN;
+    return 0;
+}
+
 static krb5_error_code append_component(krb5_context, krb5_principal,
                                         const char *, size_t);
 
@@ -347,9 +361,9 @@ krb5_parse_name_flags(krb5_context context,
 	goto exit;
     }
     if (enterprise)
-	(*principal)->name.name_type = KRB5_NT_ENTERPRISE_PRINCIPAL;
+        princ_type(*principal) = KRB5_NT_ENTERPRISE_PRINCIPAL;
     else
-	(*principal)->name.name_type = KRB5_NT_PRINCIPAL;
+        set_default_princ_type(*principal, KRB5_NT_PRINCIPAL);
     (*principal)->name.name_string.val = comp;
     princ_num_comp(*principal) = n;
     (*principal)->realm = realm;
@@ -817,10 +831,10 @@ build_principal(krb5_context context,
     krb5_error_code ret;
     krb5_principal p;
 
+    *principal = NULL;
     p = calloc(1, sizeof(*p));
     if (p == NULL)
 	return krb5_enomem(context);
-    princ_type(p) = KRB5_NT_PRINCIPAL;
 
     princ_realm(p) = strdup(realm);
     if (p->realm == NULL) {
@@ -829,9 +843,10 @@ build_principal(krb5_context context,
     }
 
     ret = func(context, p, ap);
-    if (ret == 0)
+    if (ret == 0) {
 	*principal = p;
-    else
+        set_default_princ_type(p, KRB5_NT_PRINCIPAL);
+    } else
 	krb5_free_principal(context, p);
     return ret;
 }
@@ -1192,7 +1207,6 @@ krb5_principal_is_krbtgt(krb5_context context, krb5_const_principal p)
 {
     return p->name.name_string.len == 2 &&
 	strcmp(p->name.name_string.val[0], KRB5_TGS_NAME) == 0;
-
 }
 
 /**

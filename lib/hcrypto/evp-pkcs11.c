@@ -65,6 +65,18 @@
 # else
 # define PKCS11_MODULE_PATH "/usr/lib/libpkcs11.so"
 # endif
+#elif defined(__linux__)
+/*
+ * XXX We should have an autoconf check for OpenCryptoki and such
+ * things.  However, there's no AC_CHECK_OBJECT(), and we'd have to
+ * write one.  Today I'm feeling lazy.  Another possibility would be to
+ * have a symlink from the libdir we'll install into, and then we could
+ * dlopen() that on all platforms.
+ *
+ * XXX Also, we should pick an appropriate shared object based on 32- vs
+ * 64-bits.
+ */
+# define PKCS11_MODULE_PATH "/usr/lib/pkcs11/PKCS11_API.so"
 #endif
 
 static CK_FUNCTION_LIST_PTR p11_module;

@@ -64,14 +64,14 @@ modify_principal(void *server_handle,
 
     ret = context->db->hdb_fetch_kvno(context->context, context->db,
 				      princ->principal, HDB_F_GET_ANY|HDB_F_ADMIN_DATA, 0, &ent);
-    if(ret)
-	goto out;
+    if (ret)
+	goto out2;
     ret = _kadm5_setup_entry(context, &ent, mask, princ, mask, NULL, 0);
-    if(ret)
-	goto out2;
+    if (ret)
+	goto out3;
     ret = _kadm5_set_modifier(context, &ent.entry);
-    if(ret)
-	goto out2;
+    if (ret)
+	goto out3;
 
     /*
      * If any keys are bogus, disallow the modify.  If the keys were
@@ -84,12 +84,12 @@ modify_principal(void *server_handle,
     if ((mask & KADM5_KEY_DATA) &&
 	kadm5_some_keys_are_bogus(princ->n_key_data, princ->key_data)) {
 	ret = KADM5_AUTH_GET_KEYS; /* Not quite appropriate, but it'll do */
-	goto out2;
+	goto out3;
     }
 
     ret = hdb_seal_keys(context->context, context->db, &ent.entry);
     if (ret)
-	goto out2;
+	goto out3;
 
     if ((mask & KADM5_POLICY)) {
 	HDB_extension ext;
@@ -101,23 +101,24 @@ modify_principal(void *server_handle,
 	ext.data.u.policy = strdup(princ->policy);
 	if (ext.data.u.policy == NULL) {
 	    ret = ENOMEM;
-	    goto out2;
+	    goto out3;
 	}
 	/* This calls free_HDB_extension(), freeing ext.data.u.policy */
 	ret = hdb_replace_extension(context->context, &ent.entry, &ext);
         free(ext.data.u.policy);
 	if (ret)
-	    goto out2;
+	    goto out3;
     }
 
     /* This logs the change for iprop and writes to the HDB */
     ret = kadm5_log_modify(context, &ent.entry,
                            mask | KADM5_MOD_NAME | KADM5_MOD_TIME);
 
-out2:
+ out3:
     hdb_free_entry(context->context, &ent);
-out:
+ out2:
     (void) kadm5_log_end(context);
+ out:
     if (!context->keep_open) {
         kadm5_ret_t ret2;
         ret2 = context->db->hdb_close(context->context, context->db);

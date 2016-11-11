@@ -33,8 +33,6 @@
 
 #include "kadm5_locl.h"
 
-RCSID("$Id$");
-
 /**
  * Server-side function to set new keys for a principal.
  */
@@ -65,10 +63,16 @@ kadm5_s_setkey_principal_3(void *server_handle,
 
     ret = context->db->hdb_fetch_kvno(context->context, context->db, princ,
 				      HDB_F_GET_ANY|HDB_F_ADMIN_DATA, 0, &ent);
+    if (ret) {
+        (void) kadm5_log_end(context);
+        if (!context->keep_open)
+            context->db->hdb_close(context->context, context->db);
+        return ret;
+    }
+
     if (keepold) {
-	if (ret == 0)
-	    ret = hdb_add_current_keys_to_history(context->context, &ent.entry);
-    } else if (ret == 0)
+        ret = hdb_add_current_keys_to_history(context->context, &ent.entry);
+    } else
 	ret = hdb_clear_extension(context->context, &ent.entry,
 				  choice_HDB_extension_data_hist_keys);
 

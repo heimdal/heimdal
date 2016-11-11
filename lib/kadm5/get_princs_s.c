@@ -88,7 +88,7 @@ kadm5_s_get_principals(void *server_handle,
 
     if (!context->keep_open) {
 	ret = context->db->hdb_open(context->context, context->db, O_RDONLY, 0);
-	if(ret) {
+	if (ret) {
 	    krb5_warn(context->context, ret, "opening database");
 	    return ret;
 	}
@@ -102,21 +102,24 @@ kadm5_s_get_principals(void *server_handle,
 	aret = asprintf(&d.exp2, "%s@%s", expression, r);
 	free(r);
 	if (aret == -1 || d.exp2 == NULL) {
-	    return ENOMEM;
+	    ret = ENOMEM;
+            goto out;
 	}
     }
     d.princs = NULL;
     d.count = 0;
     ret = hdb_foreach(context->context, context->db, HDB_F_ADMIN_DATA, foreach, &d);
-    if (!context->keep_open)
-	context->db->hdb_close(context->context, context->db);
-    if(ret == 0)
+
+    if (ret == 0)
 	ret = add_princ(&d, NULL);
-    if(ret == 0){
+    if (ret == 0){
 	*princs = d.princs;
 	*count = d.count - 1;
-    }else
+    } else
 	kadm5_free_name_list(context, d.princs, &d.count);
     free(d.exp2);
+ out:
+    if (!context->keep_open)
+	context->db->hdb_close(context->context, context->db);
     return _kadm5_error_code(ret);
 }

@@ -58,23 +58,24 @@ kadm5_s_delete_principal(void *server_handle, krb5_principal princ)
     ret = context->db->hdb_fetch_kvno(context->context, context->db, princ,
 				      HDB_F_DECRYPT|HDB_F_GET_ANY|HDB_F_ADMIN_DATA, 0, &ent);
     if (ret == HDB_ERR_NOENTRY)
-	goto out;
+	goto out2;
     if (ent.entry.flags.immutable) {
 	ret = KADM5_PROTECT_PRINCIPAL;
-	goto out2;
+	goto out3;
     }
 
     ret = hdb_seal_keys(context->context, context->db, &ent.entry);
     if (ret)
-	goto out2;
+	goto out3;
 
     /* This logs the change for iprop and writes to the HDB */
     ret = kadm5_log_delete(context, princ);
 
-out2:
+ out3:
     hdb_free_entry(context->context, &ent);
-out:
+ out2:
     (void) kadm5_log_end(context);
+ out:
     if (!context->keep_open) {
         kadm5_ret_t ret2;
         ret2 = context->db->hdb_close(context->context, context->db);

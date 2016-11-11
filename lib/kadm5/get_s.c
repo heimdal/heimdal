@@ -126,6 +126,7 @@ kadm5_s_get_principal(void *server_handle,
     int hdb_is_rw = 1;
 
     memset(&ent, 0, sizeof(ent));
+    memset(out, 0, sizeof(*out));
 
     if (!context->keep_open) {
 	ret = context->db->hdb_open(context->context, context->db, O_RDWR, 0);
@@ -133,7 +134,7 @@ kadm5_s_get_principal(void *server_handle,
             ret = context->db->hdb_open(context->context, context->db, O_RDONLY, 0);
             hdb_is_rw = 0;
         }
-	if(ret)
+	if (ret)
 	    return ret;
     }
 
@@ -145,21 +146,18 @@ kadm5_s_get_principal(void *server_handle,
      * indicate whether a read has been done without recovering the log,
      * in which case we could fail any subsequent writes.
      */
-    if (hdb_is_rw)
-        (void) kadm5_log_init_nb(context);
+    if (hdb_is_rw && kadm5_log_init_nb(context) == 0)
+        (void) kadm5_log_end(context);
 
     ret = context->db->hdb_fetch_kvno(context->context, context->db, princ,
 				      HDB_F_DECRYPT|HDB_F_ALL_KVNOS|
 				      HDB_F_GET_ANY|HDB_F_ADMIN_DATA, 0, &ent);
-    if (hdb_is_rw)
-        kadm5_log_end(context);
 
     if (!context->keep_open)
 	context->db->hdb_close(context->context, context->db);
     if(ret)
 	return _kadm5_error_code(ret);
 
-    memset(out, 0, sizeof(*out));
     if(mask & KADM5_PRINCIPAL)
 	ret  = krb5_copy_principal(context->context, ent.entry.principal,
 				   &out->principal);
@@ -296,10 +294,8 @@ kadm5_s_get_principal(void *server_handle,
 	krb5_free_salt(context->context, salt);
 	assert( out->n_key_data == n_keys );
     }
-    if(ret){
-	kadm5_free_principal_ent(context, out);
+    if (ret)
 	goto out;
-    }
     if(mask & KADM5_TL_DATA) {
 	time_t last_pw_expire;
 	const HDB_Ext_PKINIT_acl *acl;
@@ -311,15 +307,13 @@ kadm5_s_get_principal(void *server_handle,
 	    _krb5_put_int(buf, last_pw_expire, sizeof(buf));
 	    ret = add_tl_data(out, KRB5_TL_LAST_PWD_CHANGE, buf, sizeof(buf));
 	}
-	if(ret){
-	    kadm5_free_principal_ent(context, out);
+	if (ret)
 	    goto out;
-	}
 	/*
 	 * If the client was allowed to get key data, let it have the
 	 * password too.
 	 */
-	if(mask & KADM5_KEY_DATA) {
+	if (mask & KADM5_KEY_DATA) {
 	    heim_utf8_string pw;
 
 	    ret = hdb_entry_get_password(context->context,
@@ -338,24 +332,18 @@ kadm5_s_get_principal(void *server_handle,
 
 	    ASN1_MALLOC_ENCODE(HDB_Ext_PKINIT_acl, buf.data, buf.length,
 				acl, &len, ret);
-	    if (ret) {
-		kadm5_free_principal_ent(context, out);
+	    if (ret)
 		goto out;
-	    }
 	    if (len != buf.length)
 		krb5_abortx(context->context,
 			    "internal ASN.1 encoder error");
 	    ret = add_tl_data(out, KRB5_TL_PKINIT_ACL, buf.data, buf.length);
 	    free(buf.data);
-	    if (ret) {
-		kadm5_free_principal_ent(context, out);
+	    if (ret)
 		goto out;
-	    }
 	}
-	if(ret){
-	    kadm5_free_principal_ent(context, out);
+	if (ret)
 	    goto out;
-	}
 
 	ret = hdb_entry_get_aliases(&ent.entry, &aliases);
 	if (ret == 0 && aliases) {
@@ -364,27 +352,23 @@ kadm5_s_get_principal(void *server_handle,
 
 	    ASN1_MALLOC_ENCODE(HDB_Ext_Aliases, buf.data, buf.length,
 			       aliases, &len, ret);
-	    if (ret) {
-		kadm5_free_principal_ent(context, out);
+	    if (ret)
 		goto out;
-	    }
 	    if (len != buf.length)
 		krb5_abortx(context->context,
 			    "internal ASN.1 encoder error");
 	    ret = add_tl_data(out, KRB5_TL_ALIASES, buf.data, buf.length);
 	    free(buf.data);
-	    if (ret) {
-		kadm5_free_principal_ent(context, out);
+	    if (ret)
 		goto out;
-	    }
 	}
-	if(ret){
-	    kadm5_free_principal_ent(context, out);
+	if (ret)
 	    goto out;
-	}
-
     }
-out:
+
+ out:
+    if (ret)
+        kadm5_free_principal_ent(context, out);
     hdb_free_entry(context->context, &ent);
 
     return _kadm5_error_code(ret);

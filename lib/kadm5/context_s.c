@@ -57,8 +57,21 @@ kadm5_s_lock(void *server_handle)
 	return ret;
 
     ret = context->db->hdb_lock(context->context, context->db, HDB_WLOCK);
-    if (ret)
+    if (ret) {
+        (void) context->db->hdb_close(context->context, context->db);
 	return ret;
+    }
+
+    /*
+     * Attempt to recover the log.  This will generally fail on slaves,
+     * and we can't tell if we're on a slave here.
+     *
+     * Perhaps we could set a flag in the kadm5_server_context to
+     * indicate whether a read has been done without recovering the log,
+     * in which case we could fail any subsequent writes.
+     */
+    if (kadm5_log_init(context) == 0)
+        (void) kadm5_log_end(context);
 
     context->keep_open = 1;
     return 0;

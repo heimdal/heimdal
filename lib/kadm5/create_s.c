@@ -124,13 +124,15 @@ kadm5_s_create_principal_with_key(void *server_handle,
 			   | KADM5_AUX_ATTRIBUTES
 			   | KADM5_POLICY_CLR | KADM5_LAST_SUCCESS
 			   | KADM5_LAST_FAILED | KADM5_FAIL_AUTH_COUNT);
-    if(ret)
-	goto out;
+    if (ret)
+        return ret;
 
     if (!context->keep_open) {
         ret = context->db->hdb_open(context->context, context->db, O_RDWR, 0);
-        if (ret)
-            goto out;
+        if (ret) {
+            hdb_free_entry(context->context, &ent);
+            return ret;
+        }
     }
 
     ret = kadm5_log_init(context);
@@ -139,13 +141,14 @@ kadm5_s_create_principal_with_key(void *server_handle,
 
     ret = hdb_seal_keys(context->context, context->db, &ent.entry);
     if (ret)
-	goto out;
+	goto out2;
 
     /* This logs the change for iprop and writes to the HDB */
     ret = kadm5_log_create(context, &ent.entry);
 
-out:
+ out2:
     (void) kadm5_log_end(context);
+ out:
     if (!context->keep_open) {
         kadm5_ret_t ret2;
         ret2 = context->db->hdb_close(context->context, context->db);
@@ -183,12 +186,14 @@ kadm5_s_create_principal(void *server_handle,
 			   | KADM5_POLICY_CLR | KADM5_LAST_SUCCESS
 			   | KADM5_LAST_FAILED | KADM5_FAIL_AUTH_COUNT);
     if (ret)
-	goto out;
+        return ret;
 
     if (!context->keep_open) {
         ret = context->db->hdb_open(context->context, context->db, O_RDWR, 0);
-        if (ret)
-            goto out;
+        if (ret) {
+            hdb_free_entry(context->context, &ent);
+            return ret;
+        }
     }
 
     ret = kadm5_log_init(context);
@@ -200,17 +205,18 @@ kadm5_s_create_principal(void *server_handle,
 
     ret = _kadm5_set_keys(context, &ent.entry, n_ks_tuple, ks_tuple, password);
     if (ret)
-	goto out;
+	goto out2;
 
     ret = hdb_seal_keys(context->context, context->db, &ent.entry);
     if (ret)
-	goto out;
+	goto out2;
 
     /* This logs the change for iprop and writes to the HDB */
     ret = kadm5_log_create(context, &ent.entry);
 
- out:
+ out2:
     (void) kadm5_log_end(context);
+ out:
     if (!context->keep_open) {
         kadm5_ret_t ret2;
         ret2 = context->db->hdb_close(context->context, context->db);

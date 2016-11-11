@@ -75,10 +75,8 @@ kadm5_free_principal_ent(void *server_handle,
 	free(tp->tl_data_contents);
 	free(tp);
     }
-    if (princ->key_data != NULL)
-	free(princ->key_data);
-    if (princ->policy)
-        free(princ->policy);
+    free(princ->key_data);
+    free(princ->policy);
 }
 
 void

@@ -67,33 +67,33 @@ kadm5_s_randkey_principal(void *server_handle,
     ret = context->db->hdb_fetch_kvno(context->context, context->db, princ,
 				      HDB_F_GET_ANY|HDB_F_ADMIN_DATA, 0, &ent);
     if(ret)
-	goto out;
+	goto out2;
 
     if (keepold) {
 	ret = hdb_add_current_keys_to_history(context->context, &ent.entry);
 	if (ret)
-	    goto out2;
+	    goto out3;
     }
 
     ret = _kadm5_set_keys_randomly(context, &ent.entry, n_ks_tuple, ks_tuple,
                                    new_keys, n_keys);
     if (ret)
-	goto out2;
+	goto out3;
     ent.entry.kvno++;
 
     ent.entry.flags.require_pwchange = 0;
 
     ret = _kadm5_set_modifier(context, &ent.entry);
     if(ret)
-	goto out3;
+	goto out4;
     ret = _kadm5_bump_pw_expire(context, &ent.entry);
     if (ret)
-	goto out2;
+	goto out4;
 
     if (keepold) {
 	ret = hdb_seal_keys(context->context, context->db, &ent.entry);
 	if (ret)
-	    goto out2;
+	    goto out4;
     } else {
 	HDB_extension ext;
 
@@ -112,7 +112,7 @@ kadm5_s_randkey_principal(void *server_handle,
                            KADM5_KEY_DATA | KADM5_KVNO |
                            KADM5_PW_EXPIRATION | KADM5_TL_DATA);
 
-out3:
+ out4:
     if (ret) {
 	int i;
 
@@ -122,10 +122,11 @@ out3:
 	*new_keys = NULL;
 	*n_keys = 0;
     }
-out2:
+ out3:
     hdb_free_entry(context->context, &ent);
-out:
+ out2:
     (void) kadm5_log_end(context);
+ out:
     if (!context->keep_open) {
         kadm5_ret_t ret2;
         ret2 = context->db->hdb_close(context->context, context->db);

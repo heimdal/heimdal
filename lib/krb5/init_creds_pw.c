@@ -544,6 +544,8 @@ change_password (krb5_context context,
 	krb5_get_init_creds_opt_set_preauth_list (options,
 						  old_options->preauth_list,
 						  old_options->preauth_list_length);
+    if (old_options && old_options->flags & KRB5_GET_INIT_CREDS_OPT_CHANGE_PASSWORD_PROMPT)
+        krb5_get_init_creds_opt_set_change_password_prompt(options, old_options->change_password_prompt);
 
     krb5_data_zero (&result_code_string);
     krb5_data_zero (&result_string);
@@ -2683,6 +2685,10 @@ krb5_get_init_creds_password(krb5_context context,
 	/* don't try to change password where then where none */
 	if (prompter == NULL)
 	    goto out;
+
+	if ((options->flags & KRB5_GET_INIT_CREDS_OPT_CHANGE_PASSWORD_PROMPT) == KRB5_GET_INIT_CREDS_OPT_CHANGE_PASSWORD_PROMPT && !options->change_password_prompt) {
+		goto out;
+	}
 
 	ret = change_password (context,
 			       client,

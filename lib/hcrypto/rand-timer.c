@@ -183,7 +183,7 @@ timer_status(void)
 #endif
 }
 
-#if defined(__GUNC__) || (defined(__STDC_VERSION__) && __STDC_VERSION__ >= 199901)
+#if defined(__GNUC__) || (defined(__STDC_VERSION__) && __STDC_VERSION__ >= 199901)
 const RAND_METHOD hc_rand_timer_method = {
     .seed = timer_seed,
     .bytes = timer_bytes,

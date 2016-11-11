@@ -178,8 +178,8 @@ ${context} --name-type=krb5-principal-name host/lucid.test.h5l.se@${R} || \
 echo "plain (krb5 realmless)" ; > messages.log
 ${context} --name-type=krb5-principal-name host/lucid.test.h5l.se || \
 	{ eval "$testfailed"; }
-echo "plain (krb5 realmless short-form should fail)" ; > messages.log
-${context} --name-type=krb5-principal-name host/lucid 2>/dev/null && \
+echo "plain (krb5 realmless short-form)" ; > messages.log
+${context} --name-type=krb5-principal-name host/lucid 2>/dev/null || \
 	{ eval "$testfailed"; }
 echo "creating short-form princ"
 ${kadmin} add -p p1 --use-defaults host/lucid@${R} || exit 1

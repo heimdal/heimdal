@@ -11,7 +11,7 @@
 
 AC_PREREQ(2.61)
 AC_INIT(libedit, [EL_RELEASE],, libedit-[EL_TIMESTAMP])
-AC_CONFIG_SRCDIR([src/strlcat.c])
+AC_CONFIG_SRCDIR([src/el.c])
 AC_CONFIG_HEADER([config.h])
 
 # features of Posix that are extensions to C (define _GNU_SOURCE)
@@ -38,15 +38,11 @@ AC_CHECK_LIB(curses, tgetent,,
       [AC_MSG_ERROR([libcurses or libncurses are required!])] )] )
 
 
-### use option --enable-widec to turn on use of wide-character support
-EL_ENABLE_WIDEC
-
 # Checks for header files.
-AC_FUNC_ALLOCA
 AC_HEADER_DIRENT
 AC_HEADER_STDC
 AC_HEADER_SYS_WAIT
-AC_CHECK_HEADERS([fcntl.h limits.h malloc.h stdlib.h string.h sys/ioctl.h sys/param.h unistd.h curses.h ncurses.h sys/cdefs.h])
+AC_CHECK_HEADERS([fcntl.h limits.h stdlib.h string.h sys/ioctl.h sys/param.h unistd.h curses.h ncurses.h sys/cdefs.h])
 
 AC_CHECK_HEADER([termios.h], [], [AC_MSG_ERROR([termios.h is required!])],[])
 
@@ -66,7 +62,6 @@ AC_TYPE_SIZE_T
 AC_CHECK_TYPES([u_int32_t])
 
 # Checks for library functions.
-AC_FUNC_CLOSEDIR_VOID
 AC_FUNC_FORK
 AC_PROG_GCC_TRADITIONAL
 ## _AIX is offended by rpl_malloc and rpl_realloc
@@ -74,10 +69,17 @@ AC_PROG_GCC_TRADITIONAL
 #AC_FUNC_REALLOC
 AC_TYPE_SIGNAL
 AC_FUNC_STAT
-AC_CHECK_FUNCS([endpwent isascii memchr memset re_comp regcomp strcasecmp strchr strcspn strdup strlcpy strlcat strerror strrchr strstr strtol issetugid wcsdup])
+AC_CHECK_FUNCS([getline isascii issetugid wcsdup])
 EL_GETPW_R_POSIX
 EL_GETPW_R_DRAFT
 
+AC_CHECK_MEMBER(struct dirent.d_namlen,
+AC_DEFINE([HAVE_STRUCT_DIRENT_D_NAMLEN],[1],
+[Define to 1 if struct dirent has member d_namlen]),,
+[#if HAVE_DIRENT_H
+#include <dirent.h>
+#endif
+])
 
 AH_BOTTOM([
 #include "sys.h"

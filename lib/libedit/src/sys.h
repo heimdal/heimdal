@@ -1,4 +1,4 @@
-/*	$NetBSD: sys.h,v 1.13 2009/12/30 22:37:40 christos Exp $	*/
+/*	$NetBSD: sys.h,v 1.27 2016/05/09 21:46:56 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -48,10 +48,6 @@
 # define __attribute__(A)
 #endif
 
-#ifndef _DIAGASSERT
-# define _DIAGASSERT(x)
-#endif
-
 #ifndef __BEGIN_DECLS
 # ifdef  __cplusplus
 #  define __BEGIN_DECLS  extern "C" {
@@ -62,35 +58,11 @@
 # endif
 #endif
 
-#ifndef public
-# define public		/* Externally visible functions/variables */
-#endif
-
-#ifndef private
-# define private	static	/* Always hidden internals */
-#endif
-
-#ifndef protected
-# define protected	/* Redefined from elsewhere to "static" */
-			/* When we want to hide everything	*/
-#endif
+/* If your compiler does not support this, define it to be empty. */
+#define libedit_private __attribute__((__visibility__("hidden")))
 
 #ifndef __arraycount
 # define __arraycount(a) (sizeof(a) / sizeof(*(a)))
-#endif
-
-#ifndef HAVE_U_INT32_T
-typedef unsigned int  u_int32_t;
-#endif
-
-#ifndef _PTR_T
-# define _PTR_T
-typedef void	*ptr_t;
-#endif
-
-#ifndef _IOCTL_T
-# define _IOCTL_T
-typedef void	*ioctl_t;
 #endif
 
 #include <stdio.h>
@@ -105,48 +77,37 @@ size_t	strlcat(char *dst, const char *src, size_t size);
 size_t	strlcpy(char *dst, const char *src, size_t size);
 #endif
 
-#ifndef HAVE_FGETLN
-#define	fgetln libedit_fgetln
-char	*fgetln(FILE *fp, size_t *len);
+#ifndef HAVE_GETLINE
+#define	getline libedit_getline
+ssize_t	getline(char **line, size_t *len, FILE *fp);
+#endif
+
+#ifndef _DIAGASSERT
+#define _DIAGASSERT(x)
+#endif
+
+#ifndef __RCSID
+#define __RCSID(x)
+#endif
+
+#ifndef HAVE_U_INT32_T
+typedef unsigned int	u_int32_t;
+#endif
+
+#ifndef HAVE_SIZE_MAX
+#define SIZE_MAX	((size_t)-1)
 #endif
 
 #define	REGEX		/* Use POSIX.2 regular expression functions */
 #undef	REGEXP		/* Use UNIX V8 regular expression functions */
 
-#ifdef notdef
-# undef REGEX
-# undef REGEXP
-# include <malloc.h>
-# ifdef __GNUC__
-/*
- * Broken hdrs.
- */
-extern int	tgetent(const char *bp, char *name);
-extern int	tgetflag(const char *id);
-extern int	tgetnum(const char *id);
-extern char    *tgetstr(const char *id, char **area);
-extern char    *tgoto(const char *cap, int col, int row);
-extern int	tputs(const char *str, int affcnt, int (*putc)(int));
-extern char    *getenv(const char *);
-extern int	fprintf(FILE *, const char *, ...);
-extern int	sigsetmask(int);
-extern int	sigblock(int);
-extern int	fputc(int, FILE *);
-extern int	fgetc(FILE *);
-extern int	fflush(FILE *);
-extern int	tolower(int);
-extern int	toupper(int);
-extern int	errno, sys_nerr;
-extern char	*sys_errlist[];
-extern void	perror(const char *);
-#  include <string.h>
-#  define strerror(e)	sys_errlist[e]
-# endif
-# ifdef SABER
-extern ptr_t    memcpy(ptr_t, const ptr_t, size_t);
-extern ptr_t    memset(ptr_t, int, size_t);
-# endif
-extern char    *fgetline(FILE *, int *);
+#if defined(__sun)
+extern int tgetent(char *, const char *);
+extern int tgetflag(char *);
+extern int tgetnum(char *);
+extern int tputs(const char *, int, int (*)(int));
+extern char* tgoto(const char*, int, int);
+extern char* tgetstr(char*, char**);
 #endif
 
 #endif /* _h_sys */

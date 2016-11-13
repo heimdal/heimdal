@@ -1,4 +1,4 @@
-/*	$NetBSD: tokenizer.c,v 1.18 2010/01/03 18:27:10 christos Exp $	*/
+/*	$NetBSD: tokenizer.c,v 1.28 2016/04/11 18:56:31 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -32,15 +32,12 @@
  * SUCH DAMAGE.
  */
 
-#ifndef NARROWCHAR
 #include "config.h"
-#endif
-
 #if !defined(lint) && !defined(SCCSID)
 #if 0
 static char sccsid[] = "@(#)tokenizer.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: tokenizer.c,v 1.18 2010/01/03 18:27:10 christos Exp $");
+__RCSID("$NetBSD: tokenizer.c,v 1.28 2016/04/11 18:56:31 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -48,10 +45,10 @@ __RCSID("$NetBSD: tokenizer.c,v 1.18 2010/01/03 18:27:10 christos Exp $");
 /*
  * tokenize.c: Bourne shell like tokenizer
  */
-#include <string.h>
 #include <stdlib.h>
+#include <string.h>
+
 #include "histedit.h"
-#include "chartype.h"
 
 typedef enum {
 	Q_none, Q_single, Q_double, Q_one, Q_doubleone
@@ -68,12 +65,26 @@ typedef enum {
 #define	tok_malloc(a)		malloc(a)
 #define	tok_free(a)		free(a)
 #define	tok_realloc(a, b)	realloc(a, b)
-#define	tok_strdup(a)		Strdup(a)
 
+#ifdef NARROWCHAR
+#define	Char			char
+#define	FUN(prefix, rest)	prefix ## _ ## rest
+#define	TYPE(type)		type
+#define	STR(x)			x
+#define	Strchr(s, c)		strchr(s, c)
+#define	tok_strdup(s)		strdup(s)
+#else
+#define	Char			wchar_t
+#define	FUN(prefix, rest)	prefix ## _w ## rest
+#define	TYPE(type)		type ## W
+#define	STR(x)			L ## x
+#define	Strchr(s, c)		wcschr(s, c)
+#define	tok_strdup(s)		wcsdup(s)
+#endif
 
 struct TYPE(tokenizer) {
 	Char	*ifs;		/* In field separator			 */
-	int	 argc, amax;	/* Current and maximum number of args	 */
+	size_t	 argc, amax;	/* Current and maximum number of args	 */
 	Char   **argv;		/* Argument list			 */
 	Char	*wptr, *wmax;	/* Space and limit on the word buffer	 */
 	Char	*wstart;	/* Beginning of next word		 */
@@ -83,13 +94,13 @@ struct TYPE(tokenizer) {
 };
 
 
-private void FUN(tok,finish)(TYPE(Tokenizer) *);
+static void FUN(tok,finish)(TYPE(Tokenizer) *);
 
 
 /* FUN(tok,finish)():
  *	Finish a word in the tokenizer.
  */
-private void
+static void
 FUN(tok,finish)(TYPE(Tokenizer) *tok)
 {
 
@@ -106,32 +117,32 @@ FUN(tok,finish)(TYPE(Tokenizer) *tok)
 /* FUN(tok,init)():
  *	Initialize the tokenizer
  */
-public TYPE(Tokenizer) *
+TYPE(Tokenizer) *
 FUN(tok,init)(const Char *ifs)
 {
-	TYPE(Tokenizer) *tok = tok_malloc(sizeof(TYPE(Tokenizer)));
+	TYPE(Tokenizer) *tok = tok_malloc(sizeof(*tok));
 
 	if (tok == NULL)
 		return NULL;
 	tok->ifs = tok_strdup(ifs ? ifs : IFS);
 	if (tok->ifs == NULL) {
-		tok_free((ptr_t)tok);
+		tok_free(tok);
 		return NULL;
 	}
 	tok->argc = 0;
 	tok->amax = AINCR;
 	tok->argv = tok_malloc(sizeof(*tok->argv) * tok->amax);
 	if (tok->argv == NULL) {
-		tok_free((ptr_t)tok->ifs);
-		tok_free((ptr_t)tok);
+		tok_free(tok->ifs);
+		tok_free(tok);
 		return NULL;
 	}
 	tok->argv[0] = NULL;
 	tok->wspace = tok_malloc(WINCR * sizeof(*tok->wspace));
 	if (tok->wspace == NULL) {
-		tok_free((ptr_t)tok->argv);
-		tok_free((ptr_t)tok->ifs);
-		tok_free((ptr_t)tok);
+		tok_free(tok->argv);
+		tok_free(tok->ifs);
+		tok_free(tok);
 		return NULL;
 	}
 	tok->wmax = tok->wspace + WINCR;
@@ -140,14 +151,14 @@ FUN(tok,init)(const Char *ifs)
 	tok->flags = 0;
 	tok->quote = Q_none;
 
-	return (tok);
+	return tok;
 }
 
 
 /* FUN(tok,reset)():
  *	Reset the tokenizer
  */
-public void
+void
 FUN(tok,reset)(TYPE(Tokenizer) *tok)
 {
 
@@ -162,14 +173,14 @@ FUN(tok,reset)(TYPE(Tokenizer) *tok)
 /* FUN(tok,end)():
  *	Clean up
  */
-public void
+void
 FUN(tok,end)(TYPE(Tokenizer) *tok)
 {
 
-	tok_free((ptr_t) tok->ifs);
-	tok_free((ptr_t) tok->wspace);
-	tok_free((ptr_t) tok->argv);
-	tok_free((ptr_t) tok);
+	tok_free(tok->ifs);
+	tok_free(tok->wspace);
+	tok_free(tok->argv);
+	tok_free(tok);
 }
 
 
@@ -191,7 +202,7 @@ FUN(tok,end)(TYPE(Tokenizer) *tok)
  *		cursorc	if !NULL, argv element containing cursor
  *		cursorv	if !NULL, offset in argv[cursorc] of cursor
  */
-public int
+int
 FUN(tok,line)(TYPE(Tokenizer) *tok, const TYPE(LineInfo) *line,
     int *argc, const Char ***argv, int *cursorc, int *cursoro)
 {
@@ -204,7 +215,7 @@ FUN(tok,line)(TYPE(Tokenizer) *tok, const TYPE(LineInfo) *line,
 		if (ptr >= line->lastchar)
 			ptr = STR("");
 		if (ptr == line->cursor) {
-			cc = tok->argc;
+			cc = (int)tok->argc;
 			co = (int)(tok->wptr - tok->wstart);
 		}
 		switch (*ptr) {
@@ -236,7 +247,7 @@ FUN(tok,line)(TYPE(Tokenizer) *tok, const TYPE(LineInfo) *line,
 				break;
 
 			default:
-				return (-1);
+				return -1;
 			}
 			break;
 
@@ -267,7 +278,7 @@ FUN(tok,line)(TYPE(Tokenizer) *tok, const TYPE(LineInfo) *line,
 				break;
 
 			default:
-				return (-1);
+				return -1;
 			}
 			break;
 
@@ -298,7 +309,7 @@ FUN(tok,line)(TYPE(Tokenizer) *tok, const TYPE(LineInfo) *line,
 				break;
 
 			default:
-				return (-1);
+				return -1;
 			}
 			break;
 
@@ -324,7 +335,7 @@ FUN(tok,line)(TYPE(Tokenizer) *tok, const TYPE(LineInfo) *line,
 				break;
 
 			default:
-				return (0);
+				return 0;
 			}
 			break;
 
@@ -334,15 +345,15 @@ FUN(tok,line)(TYPE(Tokenizer) *tok, const TYPE(LineInfo) *line,
 				/* Finish word and return */
 				if (tok->flags & TOK_EAT) {
 					tok->flags &= ~TOK_EAT;
-					return (3);
+					return 3;
 				}
 				goto tok_line_outok;
 
 			case Q_single:
-				return (1);
+				return 1;
 
 			case Q_double:
-				return (2);
+				return 2;
 
 			case Q_doubleone:
 				tok->quote = Q_double;
@@ -355,7 +366,7 @@ FUN(tok,line)(TYPE(Tokenizer) *tok, const TYPE(LineInfo) *line,
 				break;
 
 			default:
-				return (-1);
+				return -1;
 			}
 			break;
 
@@ -387,21 +398,21 @@ FUN(tok,line)(TYPE(Tokenizer) *tok, const TYPE(LineInfo) *line,
 				break;
 
 			default:
-				return (-1);
+				return -1;
 
 			}
 			break;
 		}
 
 		if (tok->wptr >= tok->wmax - 4) {
-			size_t size = tok->wmax - tok->wspace + WINCR;
+			size_t size = (size_t)(tok->wmax - tok->wspace + WINCR);
 			Char *s = tok_realloc(tok->wspace,
 			    size * sizeof(*s));
 			if (s == NULL)
-				return (-1);
+				return -1;
 
 			if (s != tok->wspace) {
-				int i;
+				size_t i;
 				for (i = 0; i < tok->argc; i++) {
 				    tok->argv[i] =
 					(tok->argv[i] - tok->wspace) + s;
@@ -416,14 +427,16 @@ FUN(tok,line)(TYPE(Tokenizer) *tok, const TYPE(LineInfo) *line,
 			Char **p;
 			tok->amax += AINCR;
 			p = tok_realloc(tok->argv, tok->amax * sizeof(*p));
-			if (p == NULL)
-				return (-1);
+			if (p == NULL) {
+				tok->amax -= AINCR;
+				return -1;
+			}
 			tok->argv = p;
 		}
 	}
  tok_line_outok:
 	if (cc == -1 && co == -1) {
-		cc = tok->argc;
+		cc = (int)tok->argc;
 		co = (int)(tok->wptr - tok->wstart);
 	}
 	if (cursorc != NULL)
@@ -432,15 +445,15 @@ FUN(tok,line)(TYPE(Tokenizer) *tok, const TYPE(LineInfo) *line,
 		*cursoro = co;
 	FUN(tok,finish)(tok);
 	*argv = (const Char **)tok->argv;
-	*argc = tok->argc;
-	return (0);
+	*argc = (int)tok->argc;
+	return 0;
 }
 
 /* FUN(tok,str)():
  *	Simpler version of tok_line, taking a NUL terminated line
  *	and splitting into words, ignoring cursor state.
  */
-public int
+int
 FUN(tok,str)(TYPE(Tokenizer) *tok, const Char *line, int *argc,
     const Char ***argv)
 {
@@ -449,5 +462,5 @@ FUN(tok,str)(TYPE(Tokenizer) *tok, const Char *line, int *argc,
 	memset(&li, 0, sizeof(li));
 	li.buffer = line;
 	li.cursor = li.lastchar = Strchr(line, '\0');
-	return (FUN(tok,line)(tok, &li, argc, argv, NULL, NULL));
+	return FUN(tok,line)(tok, &li, argc, argv, NULL, NULL);
 }

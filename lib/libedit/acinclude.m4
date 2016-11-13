@@ -64,22 +64,3 @@ AC_DEFUN([EL_GETPW_R_DRAFT],
        AC_MSG_RESULT(yes)],
       [AC_MSG_RESULT(no)])
 ])
-
-
-dnl
-dnl use option --enable-widec to turn on use of wide-character support
-dnl
-AC_DEFUN([EL_ENABLE_WIDEC],
-[
-   AC_MSG_CHECKING(if you want wide-character code)
-   AC_ARG_ENABLE(widec,
-      [  --enable-widec          compile with wide-char/UTF-8 code],
-      [with_widec=$enableval],
-      [with_widec=no])
-   AC_MSG_RESULT($with_widec)
-   if test "$with_widec" = yes ; then
-      AC_DEFINE(WIDECHAR, 1, [Define to 1 if you want wide-character code])
-   fi
-   AM_CONDITIONAL([WIDECHAR], [test "$with_widec" = yes])
-])
-

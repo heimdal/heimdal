@@ -1,4 +1,4 @@
-/*	$NetBSD: sig.c,v 1.15 2009/02/19 15:20:22 christos Exp $	*/
+/*	$NetBSD: sig.c,v 1.26 2016/05/09 21:46:56 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)sig.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: sig.c,v 1.15 2009/02/19 15:20:22 christos Exp $");
+__RCSID("$NetBSD: sig.c,v 1.26 2016/05/09 21:46:56 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -46,31 +46,35 @@ __RCSID("$NetBSD: sig.c,v 1.15 2009/02/19 15:20:22 christos Exp $");
  *	  our policy is to trap all signals, set a good state
  *	  and pass the ball to our caller.
  */
-#include "el.h"
+#include <errno.h>
 #include <stdlib.h>
 
-private EditLine *sel = NULL;
+#include "el.h"
+#include "common.h"
 
-private const int sighdl[] = {
+static EditLine *sel = NULL;
+
+static const int sighdl[] = {
 #define	_DO(a)	(a),
 	ALLSIGS
 #undef	_DO
 	- 1
 };
 
-private void sig_handler(int);
+static void sig_handler(int);
 
 /* sig_handler():
  *	This is the handler called for all signals
  *	XXX: we cannot pass any data so we just store the old editline
  *	state in a private variable
  */
-private void
+static void
 sig_handler(int signo)
 {
-	int i;
+	int i, save_errno;
 	sigset_t nset, oset;
 
+	save_errno = errno;
 	(void) sigemptyset(&nset);
 	(void) sigaddset(&nset, signo);
 	(void) sigprocmask(SIG_BLOCK, &nset, &oset);
@@ -82,7 +86,7 @@ sig_handler(int signo)
 		tty_rawmode(sel);
 		if (ed_redisplay(sel, 0) == CC_REFRESH)
 			re_refresh(sel);
-		term__flush(sel);
+		terminal__flush(sel);
 		break;
 
 	case SIGWINCH:
@@ -104,13 +108,14 @@ sig_handler(int signo)
 	sigemptyset(&sel->el_signal->sig_action[i].sa_mask);
 	(void) sigprocmask(SIG_SETMASK, &oset, NULL);
 	(void) kill(0, signo);
+	errno = save_errno;
 }
 
 
 /* sig_init():
  *	Initialize all signal stuff
  */
-protected int
+libedit_private int
 sig_init(EditLine *el)
 {
 	size_t i;
@@ -142,11 +147,11 @@ sig_init(EditLine *el)
 /* sig_end():
  *	Clear all signal stuff
  */
-protected void
+libedit_private void
 sig_end(EditLine *el)
 {
 
-	el_free((ptr_t) el->el_signal);
+	el_free(el->el_signal);
 	el->el_signal = NULL;
 }
 
@@ -154,7 +159,7 @@ sig_end(EditLine *el)
 /* sig_set():
  *	set all the signal handlers
  */
-protected void
+libedit_private void
 sig_set(EditLine *el)
 {
 	size_t i;
@@ -181,7 +186,7 @@ sig_set(EditLine *el)
 /* sig_clr():
  *	clear all the signal handlers
  */
-protected void
+libedit_private void
 sig_clr(EditLine *el)
 {
 	size_t i;

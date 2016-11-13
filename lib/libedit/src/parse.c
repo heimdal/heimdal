@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.23 2009/12/30 22:37:40 christos Exp $	*/
+/*	$NetBSD: parse.c,v 1.40 2016/05/09 21:46:56 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)parse.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: parse.c,v 1.23 2009/12/30 22:37:40 christos Exp $");
+__RCSID("$NetBSD: parse.c,v 1.40 2016/05/09 21:46:56 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -54,80 +54,83 @@ __RCSID("$NetBSD: parse.c,v 1.23 2009/12/30 22:37:40 christos Exp $");
  *	settc
  *	setty
  */
-#include "el.h"
 #include <stdlib.h>
+#include <string.h>
 
-private const struct {
-	const Char *name;
-	int (*func)(EditLine *, int, const Char **);
+#include "el.h"
+#include "parse.h"
+
+static const struct {
+	const wchar_t *name;
+	int (*func)(EditLine *, int, const wchar_t **);
 } cmds[] = {
-	{ STR("bind"),  	map_bind	},
-	{ STR("echotc"),	term_echotc	},
-	{ STR("edit"),  	el_editmode	},
-	{ STR("history"),	hist_command	},
-	{ STR("telltc"),	term_telltc	},
-	{ STR("settc"),	        term_settc	},
-	{ STR("setty"),	        tty_stty	},
-	{ NULL,		        NULL		}
+	{ L"bind",		map_bind	},
+	{ L"echotc",		terminal_echotc	},
+	{ L"edit",		el_editmode	},
+	{ L"history",		hist_command	},
+	{ L"telltc",		terminal_telltc	},
+	{ L"settc",		terminal_settc	},
+	{ L"setty",		tty_stty	},
+	{ NULL,			NULL		}
 };
 
 
 /* parse_line():
  *	Parse a line and dispatch it
  */
-protected int
-parse_line(EditLine *el, const Char *line)
+libedit_private int
+parse_line(EditLine *el, const wchar_t *line)
 {
-	const Char **argv;
+	const wchar_t **argv;
 	int argc;
-	TYPE(Tokenizer) *tok;
+	TokenizerW *tok;
 
-	tok = FUN(tok,init)(NULL);
-	FUN(tok,str)(tok, line, &argc, &argv);
-	argc = FUN(el,parse)(el, argc, argv);
-	FUN(tok,end)(tok);
-	return (argc);
+	tok = tok_winit(NULL);
+	tok_wstr(tok, line, &argc, &argv);
+	argc = el_wparse(el, argc, argv);
+	tok_wend(tok);
+	return argc;
 }
 
 
 /* el_parse():
  *	Command dispatcher
  */
-public int
-FUN(el,parse)(EditLine *el, int argc, const Char *argv[])
+int
+el_wparse(EditLine *el, int argc, const wchar_t *argv[])
 {
-	const Char *ptr;
+	const wchar_t *ptr;
 	int i;
 
 	if (argc < 1)
-		return (-1);
-	ptr = Strchr(argv[0], ':');
+		return -1;
+	ptr = wcschr(argv[0], L':');
 	if (ptr != NULL) {
-		Char *tprog;
+		wchar_t *tprog;
 		size_t l;
 
 		if (ptr == argv[0])
-			return (0);
-		l = ptr - argv[0] - 1;
+			return 0;
+		l = (size_t)(ptr - argv[0] - 1);
 		tprog = el_malloc((l + 1) * sizeof(*tprog));
 		if (tprog == NULL)
-			return (0);
-		(void) Strncpy(tprog, argv[0], l);
+			return 0;
+		(void) wcsncpy(tprog, argv[0], l);
 		tprog[l] = '\0';
 		ptr++;
-		l = el_match(el->el_prog, tprog);
+		l = (size_t)el_match(el->el_prog, tprog);
 		el_free(tprog);
 		if (!l)
-			return (0);
+			return 0;
 	} else
 		ptr = argv[0];
 
 	for (i = 0; cmds[i].name != NULL; i++)
-		if (Strcmp(cmds[i].name, ptr) == 0) {
+		if (wcscmp(cmds[i].name, ptr) == 0) {
 			i = (*cmds[i].func) (el, argc, argv);
-			return (-i);
+			return -i;
 		}
-	return (-1);
+	return -1;
 }
 
 
@@ -135,16 +138,16 @@ FUN(el,parse)(EditLine *el, int argc, const Char *argv[])
  *	Parse a string of the form ^<char> \<odigit> \<char> \U+xxxx and return
  *	the appropriate character or -1 if the escape is not valid
  */
-protected int
-parse__escape(const Char **ptr)
+libedit_private int
+parse__escape(const wchar_t **ptr)
 {
-	const Char *p;
-	Int c;
+	const wchar_t *p;
+	wint_t c;
 
 	p = *ptr;
 
 	if (p[1] == 0)
-		return (-1);
+		return -1;
 
 	if (*p == '\\') {
 		p++;
@@ -173,28 +176,28 @@ parse__escape(const Char **ptr)
 		case 'e':
 			c = '\033';	/* Escape */
 			break;
-                case 'U':               /* Unicode \U+xxxx or \U+xxxxx format */
-                {
-                        int i;
-                        const Char hex[] = STR("0123456789ABCDEF");
-                        const Char *h;
-                        ++p;
-                        if (*p++ != '+')
-                                return (-1);
+		case 'U':		/* Unicode \U+xxxx or \U+xxxxx format */
+		{
+			int i;
+			const wchar_t hex[] = L"0123456789ABCDEF";
+			const wchar_t *h;
+			++p;
+			if (*p++ != '+')
+				return -1;
 			c = 0;
-                        for (i = 0; i < 5; ++i) {
-                                h = Strchr(hex, *p++);
-                                if (!h && i < 4)
-                                        return (-1);
-                                else if (h)
-                                        c = (c << 4) | ((int)(h - hex));
-                                else
-                                        --p;
-                        }
-                        if (c > 0x10FFFF) /* outside valid character range */
-                                return -1;
-                        break;
-                }
+			for (i = 0; i < 5; ++i) {
+				h = wcschr(hex, *p++);
+				if (!h && i < 4)
+					return -1;
+				else if (h)
+					c = (c << 4) | ((int)(h - hex));
+				else
+					--p;
+			}
+			if (c > 0x10FFFF) /* outside valid character range */
+				return -1;
+			break;
+		}
 		case '0':
 		case '1':
 		case '2':
@@ -214,8 +217,8 @@ parse__escape(const Char **ptr)
 				}
 				c = (c << 3) | (ch - '0');
 			}
-			if ((c & 0xffffff00) != 0)
-				return (-1);
+			if ((c & (wint_t)0xffffff00) != (wint_t)0)
+				return -1;
 			--p;
 			break;
 		}
@@ -229,29 +232,29 @@ parse__escape(const Char **ptr)
 	} else
 		c = *p;
 	*ptr = ++p;
-	return (c);
+	return c;
 }
 
 /* parse__string():
  *	Parse the escapes from in and put the raw string out
  */
-protected Char *
-parse__string(Char *out, const Char *in)
+libedit_private wchar_t *
+parse__string(wchar_t *out, const wchar_t *in)
 {
-	Char *rv = out;
+	wchar_t *rv = out;
 	int n;
 
 	for (;;)
 		switch (*in) {
 		case '\0':
 			*out = '\0';
-			return (rv);
+			return rv;
 
 		case '\\':
 		case '^':
 			if ((n = parse__escape(&in)) == -1)
-				return (NULL);
-			*out++ = n;
+				return NULL;
+			*out++ = (wchar_t)n;
 			break;
 
 		case 'M':
@@ -273,13 +276,14 @@ parse__string(Char *out, const Char *in)
  *	Return the command number for the command string given
  *	or -1 if one is not found
  */
-protected int
-parse_cmd(EditLine *el, const Char *cmd)
+libedit_private int
+parse_cmd(EditLine *el, const wchar_t *cmd)
 {
-	el_bindings_t *b;
+	el_bindings_t *b = el->el_map.help;
+	size_t i;
 
-	for (b = el->el_map.help; b->name != NULL; b++)
-		if (Strcmp(b->name, cmd) == 0)
-			return (b->func);
-	return (-1);
+	for (i = 0; i < el->el_map.nfunc; i++)
+		if (wcscmp(b[i].name, cmd) == 0)
+			return b[i].func;
+	return -1;
 }

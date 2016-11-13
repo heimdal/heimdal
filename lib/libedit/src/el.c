@@ -1,4 +1,4 @@
-/*	$NetBSD: el.c,v 1.61 2011/01/27 23:11:40 christos Exp $	*/
+/*	$NetBSD: el.c,v 1.92 2016/05/22 19:44:26 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,37 +37,44 @@
 #if 0
 static char sccsid[] = "@(#)el.c	8.2 (Berkeley) 1/3/94";
 #else
-__RCSID("$NetBSD: el.c,v 1.61 2011/01/27 23:11:40 christos Exp $");
+__RCSID("$NetBSD: el.c,v 1.92 2016/05/22 19:44:26 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
-
-#ifndef MAXPATHLEN
-#define MAXPATHLEN 4096
-#endif
 
 /*
  * el.c: EditLine interface functions
  */
 #include <sys/types.h>
 #include <sys/param.h>
-#include <string.h>
-#include <stdlib.h>
-#include <stdarg.h>
 #include <ctype.h>
-#include <locale.h>
 #include <langinfo.h>
+#include <locale.h>
+#include <stdarg.h>
+#include <stdlib.h>
+#include <string.h>
+
 #include "el.h"
+#include "parse.h"
+#include "read.h"
 
 /* el_init():
  *	Initialize editline and set default parameters.
  */
-public EditLine *
+EditLine *
 el_init(const char *prog, FILE *fin, FILE *fout, FILE *ferr)
 {
-	EditLine *el = (EditLine *) el_malloc(sizeof(EditLine));
+    return el_init_fd(prog, fin, fout, ferr, fileno(fin), fileno(fout),
+	fileno(ferr));
+}
+
+EditLine *
+el_init_fd(const char *prog, FILE *fin, FILE *fout, FILE *ferr,
+    int fdin, int fdout, int fderr)
+{
+	EditLine *el = el_malloc(sizeof(*el));
 
 	if (el == NULL)
-		return (NULL);
+		return NULL;
 
 	memset(el, 0, sizeof(EditLine));
 
@@ -75,11 +82,11 @@ el_init(const char *prog, FILE *fin, FILE *fout, FILE *ferr)
 	el->el_outfile = fout;
 	el->el_errfile = ferr;
 
-	el->el_infd = fileno(fin);
-	el->el_outfd = fileno(fout);
-	el->el_errfd = fileno(ferr);
+	el->el_infd = fdin;
+	el->el_outfd = fdout;
+	el->el_errfd = fderr;
 
-	el->el_prog = Strdup(ct_decode_string(prog, &el->el_scratch));
+	el->el_prog = wcsdup(ct_decode_string(prog, &el->el_scratch));
 	if (el->el_prog == NULL) {
 		el_free(el);
 		return NULL;
@@ -89,19 +96,17 @@ el_init(const char *prog, FILE *fin, FILE *fout, FILE *ferr)
          * Initialize all the modules. Order is important!!!
          */
 	el->el_flags = 0;
-#ifdef WIDECHAR
 	if (setlocale(LC_CTYPE, NULL) != NULL){
 		if (strcmp(nl_langinfo(CODESET), "UTF-8") == 0)
 			el->el_flags |= CHARSET_IS_UTF8;
 	}
-#endif
 
-	if (term_init(el) == -1) {
+	if (terminal_init(el) == -1) {
 		el_free(el->el_prog);
 		el_free(el);
 		return NULL;
 	}
-	(void) key_init(el);
+	(void) keymacro_init(el);
 	(void) map_init(el);
 	if (tty_init(el) == -1)
 		el->el_flags |= NO_TTY;
@@ -110,16 +115,18 @@ el_init(const char *prog, FILE *fin, FILE *fout, FILE *ferr)
 	(void) hist_init(el);
 	(void) prompt_init(el);
 	(void) sig_init(el);
-	(void) read_init(el);
-
-	return (el);
+	if (read_init(el) == -1) {
+		el_end(el);
+		return NULL;
+	}
+	return el;
 }
 
 
 /* el_end():
  *	Clean up.
  */
-public void
+void
 el_end(EditLine *el)
 {
 
@@ -128,50 +135,52 @@ el_end(EditLine *el)
 
 	el_reset(el);
 
-	term_end(el);
-	key_end(el);
+	terminal_end(el);
+	keymacro_end(el);
 	map_end(el);
-	tty_end(el);
+	if (!(el->el_flags & NO_TTY))
+		tty_end(el);
 	ch_end(el);
+	read_end(el->el_read);
 	search_end(el);
 	hist_end(el);
 	prompt_end(el);
 	sig_end(el);
 
-	el_free((ptr_t) el->el_prog);
-	el_free((ptr_t) el);
-#ifdef WIDECHAR
-	el_free((ptr_t) el->el_scratch.cbuff);
-	el_free((ptr_t) el->el_scratch.wbuff);
-	el_free((ptr_t) el->el_lgcyconv.cbuff);
-	el_free((ptr_t) el->el_lgcyconv.wbuff);
-#endif
+	el_free(el->el_prog);
+	el_free(el->el_visual.cbuff);
+	el_free(el->el_visual.wbuff);
+	el_free(el->el_scratch.cbuff);
+	el_free(el->el_scratch.wbuff);
+	el_free(el->el_lgcyconv.cbuff);
+	el_free(el->el_lgcyconv.wbuff);
+	el_free(el);
 }
 
 
 /* el_reset():
  *	Reset the tty and the parser
  */
-public void
+void
 el_reset(EditLine *el)
 {
 
 	tty_cookedmode(el);
-	ch_reset(el, 0);		/* XXX: Do we want that? */
+	ch_reset(el);		/* XXX: Do we want that? */
 }
 
 
 /* el_set():
  *	set the editline parameters
  */
-public int
-FUN(el,set)(EditLine *el, int op, ...)
+int
+el_wset(EditLine *el, int op, ...)
 {
 	va_list ap;
 	int rv = 0;
 
 	if (el == NULL)
-		return (-1);
+		return -1;
 	va_start(ap, op);
 
 	switch (op) {
@@ -190,21 +199,28 @@ FUN(el,set)(EditLine *el, int op, ...)
 		break;
 	}
 
+	case EL_ALIAS_TEXT: {
+		el_afunc_t p = va_arg(ap, el_afunc_t);
+		void *arg = va_arg(ap, void *);
+		rv = ch_aliasfun(el, p, arg);
+		break;
+	}
+
 	case EL_PROMPT_ESC:
 	case EL_RPROMPT_ESC: {
 		el_pfunc_t p = va_arg(ap, el_pfunc_t);
 		int c = va_arg(ap, int);
 
-		rv = prompt_set(el, p, c, op, 1);
+		rv = prompt_set(el, p, (wchar_t)c, op, 1);
 		break;
 	}
 
 	case EL_TERMINAL:
-		rv = term_set(el, va_arg(ap, char *));
+		rv = terminal_set(el, va_arg(ap, char *));
 		break;
 
 	case EL_EDITOR:
-		rv = map_set_editor(el, va_arg(ap, Char *));
+		rv = map_set_editor(el, va_arg(ap, wchar_t *));
 		break;
 
 	case EL_SIGNAL:
@@ -220,36 +236,36 @@ FUN(el,set)(EditLine *el, int op, ...)
 	case EL_ECHOTC:
 	case EL_SETTY:
 	{
-		const Char *argv[20];
+		const wchar_t *argv[20];
 		int i;
 
-		for (i = 1; i < 20; i++)
-			if ((argv[i] = va_arg(ap, Char *)) == NULL)
+		for (i = 1; i < (int)__arraycount(argv); i++)
+			if ((argv[i] = va_arg(ap, wchar_t *)) == NULL)
 				break;
 
 		switch (op) {
 		case EL_BIND:
-			argv[0] = STR("bind");
+			argv[0] = L"bind";
 			rv = map_bind(el, i, argv);
 			break;
 
 		case EL_TELLTC:
-			argv[0] = STR("telltc");
-			rv = term_telltc(el, i, argv);
+			argv[0] = L"telltc";
+			rv = terminal_telltc(el, i, argv);
 			break;
 
 		case EL_SETTC:
-			argv[0] = STR("settc");
-			rv = term_settc(el, i, argv);
+			argv[0] = L"settc";
+			rv = terminal_settc(el, i, argv);
 			break;
 
 		case EL_ECHOTC:
-			argv[0] = STR("echotc");
-			rv = term_echotc(el, i, argv);
+			argv[0] = L"echotc";
+			rv = terminal_echotc(el, i, argv);
 			break;
 
 		case EL_SETTY:
-			argv[0] = STR("setty");
+			argv[0] = L"setty";
 			rv = tty_stty(el, i, argv);
 			break;
 
@@ -263,8 +279,8 @@ FUN(el,set)(EditLine *el, int op, ...)
 
 	case EL_ADDFN:
 	{
-		Char *name = va_arg(ap, Char *);
-		Char *help = va_arg(ap, Char *);
+		wchar_t *name = va_arg(ap, wchar_t *);
+		wchar_t *help = va_arg(ap, wchar_t *);
 		el_func_t func = va_arg(ap, el_func_t);
 
 		rv = map_addfunc(el, name, help, func);
@@ -274,7 +290,7 @@ FUN(el,set)(EditLine *el, int op, ...)
 	case EL_HIST:
 	{
 		hist_fun_t func = va_arg(ap, hist_fun_t);
-		ptr_t ptr = va_arg(ap, ptr_t);
+		void *ptr = va_arg(ap, void *);
 
 		rv = hist_set(el, func, ptr);
 		if (!(el->el_flags & CHARSET_IS_UTF8))
@@ -293,8 +309,7 @@ FUN(el,set)(EditLine *el, int op, ...)
 	case EL_GETCFN:
 	{
 		el_rfunc_t rc = va_arg(ap, el_rfunc_t);
-		rv = el_read_setfn(el, rc);
-		el->el_flags &= ~NARROW_READ;
+		rv = el_read_setfn(el->el_read, rc);
 		break;
 	}
 
@@ -355,7 +370,7 @@ FUN(el,set)(EditLine *el, int op, ...)
 	case EL_REFRESH:
 		re_clear_display(el);
 		re_refresh(el);
-		term__flush(el);
+		terminal__flush(el);
 		break;
 
 	default:
@@ -364,15 +379,15 @@ FUN(el,set)(EditLine *el, int op, ...)
 	}
 
 	va_end(ap);
-	return (rv);
+	return rv;
 }
 
 
 /* el_get():
  *	retrieve the editline parameters
  */
-public int
-FUN(el,get)(EditLine *el, int op, ...)
+int
+el_wget(EditLine *el, int op, ...)
 {
 	va_list ap;
 	int rv;
@@ -392,14 +407,14 @@ FUN(el,get)(EditLine *el, int op, ...)
 	case EL_PROMPT_ESC:
 	case EL_RPROMPT_ESC: {
 		el_pfunc_t *p = va_arg(ap, el_pfunc_t *);
-		Char *c = va_arg(ap, Char *);
+		wchar_t *c = va_arg(ap, wchar_t *);
 
 		rv = prompt_get(el, p, c, op);
 		break;
 	}
 
 	case EL_EDITOR:
-		rv = map_get_editor(el, va_arg(ap, const Char **));
+		rv = map_get_editor(el, va_arg(ap, const wchar_t **));
 		break;
 
 	case EL_SIGNAL:
@@ -413,7 +428,7 @@ FUN(el,get)(EditLine *el, int op, ...)
 		break;
 
 	case EL_TERMINAL:
-		term_get(el, va_arg(ap, const char **));
+		terminal_get(el, va_arg(ap, const char **));
 		rv = 0;
 		break;
 
@@ -423,26 +438,17 @@ FUN(el,get)(EditLine *el, int op, ...)
 		char *argv[20];
 		int i;
 
- 		for (i = 1; i < (int)(sizeof(argv) / sizeof(argv[0])); i++)
+		for (i = 1; i < (int)__arraycount(argv); i++)
 			if ((argv[i] = va_arg(ap, char *)) == NULL)
 				break;
 
-		switch (op) {
-		case EL_GETTC:
-			argv[0] = name;
-			rv = term_gettc(el, i, argv);
-			break;
-
-		default:
-			rv = -1;
-			EL_ABORT((el->el_errfile, "Bad op %d\n", op));
-			break;
-		}
+		argv[0] = name;
+		rv = terminal_gettc(el, i, argv);
 		break;
 	}
 
 	case EL_GETCFN:
-		*va_arg(ap, el_rfunc_t *) = el_read_getfn(el);
+		*va_arg(ap, el_rfunc_t *) = el_read_getfn(el->el_read);
 		rv = 0;
 		break;
 
@@ -452,7 +458,7 @@ FUN(el,get)(EditLine *el, int op, ...)
 		break;
 
 	case EL_UNBUFFERED:
-		*va_arg(ap, int *) = (!(el->el_flags & UNBUFFERED));
+		*va_arg(ap, int *) = (el->el_flags & UNBUFFERED) != 0;
 		rv = 0;
 		break;
 
@@ -486,81 +492,97 @@ FUN(el,get)(EditLine *el, int op, ...)
 	}
 	va_end(ap);
 
-	return (rv);
+	return rv;
 }
 
 
 /* el_line():
  *	Return editing info
  */
-public const TYPE(LineInfo) *
-FUN(el,line)(EditLine *el)
+const LineInfoW *
+el_wline(EditLine *el)
 {
 
-	return (const TYPE(LineInfo) *) (void *) &el->el_line;
+	return (const LineInfoW *)(void *)&el->el_line;
 }
 
 
 /* el_source():
  *	Source a file
  */
-public int
+int
 el_source(EditLine *el, const char *fname)
 {
 	FILE *fp;
 	size_t len;
+	ssize_t slen;
 	char *ptr;
-	char path[MAXPATHLEN];
-	const Char *dptr;
+	char *path = NULL;
+	const wchar_t *dptr;
+	int error = 0;
 
 	fp = NULL;
 	if (fname == NULL) {
-		static const char elpath[] = "/.editrc";
-
 #ifdef HAVE_ISSETUGID
+		static const char elpath[] = "/.editrc";
+		size_t plen = sizeof(elpath);
+
 		if (issetugid())
-			return (-1);
-#endif
+			return -1;
 		if ((ptr = getenv("HOME")) == NULL)
-			return (-1);
-		if (strlcpy(path, ptr, sizeof(path)) >= sizeof(path))
-			return (-1);
-		if (strlcat(path, elpath, sizeof(path)) >= sizeof(path))
-			return (-1);
+			return -1;
+		plen += strlen(ptr);
+		if ((path = el_malloc(plen * sizeof(*path))) == NULL)
+			return -1;
+		(void)snprintf(path, plen, "%s%s", ptr, elpath);
 		fname = path;
+#else
+		/*
+		 * If issetugid() is missing, always return an error, in order
+		 * to keep from inadvertently opening up the user to a security
+		 * hole.
+		 */
+		return -1;
+#endif
 	}
 	if (fp == NULL)
 		fp = fopen(fname, "r");
-	if (fp == NULL)
-		return (-1);
+	if (fp == NULL) {
+		el_free(path);
+		return -1;
+	}
 
-	while ((ptr = fgetln(fp, &len)) != NULL) {
+	ptr = NULL;
+	len = 0;
+	while ((slen = getline(&ptr, &len, fp)) != -1) {
+		if (*ptr == '\n')
+			continue;	/* Empty line. */
+		if (slen > 0 && ptr[--slen] == '\n')
+			ptr[slen] = '\0';
+
 		dptr = ct_decode_string(ptr, &el->el_scratch);
 		if (!dptr)
 			continue;
-		if (len > 0 && dptr[len - 1] == '\n')
-			--len;
-
 		/* loop until first non-space char or EOL */
-		while (*dptr != '\0' && Isspace(*dptr))
+		while (*dptr != '\0' && iswspace(*dptr))
 			dptr++;
 		if (*dptr == '#')
 			continue;   /* ignore, this is a comment line */
-		if (parse_line(el, dptr) == -1) {
-			(void) fclose(fp);
-			return (-1);
-		}
+		if ((error = parse_line(el, dptr)) == -1)
+			break;
 	}
+	free(ptr);
 
+	el_free(path);
 	(void) fclose(fp);
-	return (0);
+	return error;
 }
 
 
 /* el_resize():
  *	Called from program when terminal is resized
  */
-public void
+void
 el_resize(EditLine *el)
 {
 	int lins, cols;
@@ -571,8 +593,8 @@ el_resize(EditLine *el)
 	(void) sigprocmask(SIG_BLOCK, &nset, &oset);
 
 	/* get the correct window size */
-	if (term_get_size(el, &lins, &cols))
-		term_change_size(el, lins, cols);
+	if (terminal_get_size(el, &lins, &cols))
+		terminal_change_size(el, lins, cols);
 
 	(void) sigprocmask(SIG_SETMASK, &oset, NULL);
 }
@@ -581,38 +603,38 @@ el_resize(EditLine *el)
 /* el_beep():
  *	Called from the program to beep
  */
-public void
+void
 el_beep(EditLine *el)
 {
 
-	term_beep(el);
+	terminal_beep(el);
 }
 
 
 /* el_editmode()
  *	Set the state of EDIT_DISABLED from the `edit' command.
  */
-protected int
+libedit_private int
 /*ARGSUSED*/
-el_editmode(EditLine *el, int argc, const Char **argv)
+el_editmode(EditLine *el, int argc, const wchar_t **argv)
 {
-	const Char *how;
+	const wchar_t *how;
 
 	if (argv == NULL || argc != 2 || argv[1] == NULL)
-		return (-1);
+		return -1;
 
 	how = argv[1];
-	if (Strcmp(how, STR("on")) == 0) {
+	if (wcscmp(how, L"on") == 0) {
 		el->el_flags &= ~EDIT_DISABLED;
 		tty_rawmode(el);
-	} else if (Strcmp(how, STR("off")) == 0) {
+	} else if (wcscmp(how, L"off") == 0) {
 		tty_cookedmode(el);
 		el->el_flags |= EDIT_DISABLED;
 	}
 	else {
-		(void) fprintf(el->el_errfile, "edit: Bad value `" FSTR "'.\n",
+		(void) fprintf(el->el_errfile, "edit: Bad value `%ls'.\n",
 		    how);
-		return (-1);
+		return -1;
 	}
-	return (0);
+	return 0;
 }

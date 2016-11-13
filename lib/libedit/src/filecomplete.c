@@ -1,4 +1,4 @@
-/*	$NetBSD: filecomplete.c,v 1.23 2010/12/06 00:05:38 dholland Exp $	*/
+/*	$NetBSD: filecomplete.c,v 1.44 2016/10/31 17:46:32 abhinav Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -29,52 +29,27 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* AIX requires this to be the first thing in the file.  */
-#if defined (_AIX) && !defined (__GNUC__)
- #pragma alloca
-#endif
-
 #include "config.h"
-
-#ifdef __GNUC__
-# undef alloca
-# define alloca(n) __builtin_alloca (n)
-#else
-# ifdef HAVE_ALLOCA_H
-#  include <alloca.h>
-# else
-#  ifndef _AIX
-extern char *alloca ();
-#  endif
-# endif
-#endif
-
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: filecomplete.c,v 1.23 2010/12/06 00:05:38 dholland Exp $");
+__RCSID("$NetBSD: filecomplete.c,v 1.44 2016/10/31 17:46:32 abhinav Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <stdio.h>
 #include <dirent.h>
-#include <string.h>
-#include <pwd.h>
-#include <ctype.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <limits.h>
 #include <errno.h>
 #include <fcntl.h>
-#include <vis.h>
+#include <limits.h>
+#include <pwd.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
 
 #include "el.h"
-#include "fcns.h"		/* for EL_NUM_FCNS */
-#include "histedit.h"
 #include "filecomplete.h"
 
-static const Char break_chars[] = { ' ', '\t', '\n', '"', '\\', '\'', '`', '@',
-    '$', '>', '<', '=', ';', '|', '&', '{', '(', '\0' };
-
+static const wchar_t break_chars[] = L" \t\n\"\\'`@$><=;|&{(";
 
 /********************************/
 /* completion functions */
@@ -84,18 +59,21 @@ static const Char break_chars[] = { ' ', '\t', '\n', '"', '\\', '\'', '`', '@',
  * if ``user'' isn't valid user name or ``txt'' doesn't start
  * w/ '~', returns pointer to strdup()ed copy of ``txt''
  *
- * it's callers's responsibility to free() returned string
+ * it's the caller's responsibility to free() the returned string
  */
 char *
 fn_tilde_expand(const char *txt)
 {
-	struct passwd pwres, *pass;
+#if defined(HAVE_GETPW_R_POSIX) || defined(HAVE_GETPW_R_DRAFT)
+	struct passwd pwres;
+	char pwbuf[1024];
+#endif
+	struct passwd *pass;
 	char *temp;
 	size_t len = 0;
-	char pwbuf[1024];
 
 	if (txt[0] != '~')
-		return (strdup(txt));
+		return strdup(txt);
 
 	temp = strchr(txt + 1, '/');
 	if (temp == NULL) {
@@ -103,8 +81,9 @@ fn_tilde_expand(const char *txt)
 		if (temp == NULL)
 			return NULL;
 	} else {
-		len = temp - txt + 1;	/* text until string after slash */
-		temp = malloc(len);
+		/* text until string after slash */
+		len = (size_t)(temp - txt + 1);
+		temp = el_malloc(len * sizeof(*temp));
 		if (temp == NULL)
 			return NULL;
 		(void)strncpy(temp, txt + 1, len - 2);
@@ -112,12 +91,13 @@ fn_tilde_expand(const char *txt)
 	}
 	if (temp[0] == 0) {
 #ifdef HAVE_GETPW_R_POSIX
-		if (getpwuid_r(getuid(), &pwres, pwbuf, sizeof(pwbuf), &pass) != 0)
+		if (getpwuid_r(getuid(), &pwres, pwbuf, sizeof(pwbuf),
+		    &pass) != 0)
 			pass = NULL;
 #elif HAVE_GETPW_R_DRAFT
 		pass = getpwuid_r(getuid(), &pwres, pwbuf, sizeof(pwbuf));
 #else
-      pass = getpwuid(getuid());
+		pass = getpwuid(getuid());
 #endif
 	} else {
 #ifdef HAVE_GETPW_R_POSIX
@@ -129,20 +109,21 @@ fn_tilde_expand(const char *txt)
 		pass = getpwnam(temp);
 #endif
 	}
-	free(temp);		/* value no more needed */
+	el_free(temp);		/* value no more needed */
 	if (pass == NULL)
-		return (strdup(txt));
+		return strdup(txt);
 
 	/* update pointer txt to point at string immedially following */
 	/* first slash */
 	txt += len;
 
-	temp = malloc(strlen(pass->pw_dir) + 1 + strlen(txt) + 1);
+	len = strlen(pass->pw_dir) + 1 + strlen(txt) + 1;
+	temp = el_malloc(len * sizeof(*temp));
 	if (temp == NULL)
 		return NULL;
-	(void)sprintf(temp, "%s/%s", pass->pw_dir, txt);
+	(void)snprintf(temp, len, "%s/%s", pass->pw_dir, txt);
 
-	return (temp);
+	return temp;
 }
 
 
@@ -151,7 +132,7 @@ fn_tilde_expand(const char *txt)
  * such file can be found
  * value of ``state'' is ignored
  *
- * it's caller's responsibility to free returned string
+ * it's the caller's responsibility to free the returned string
  */
 char *
 fn_filename_completion_function(const char *text, int state)
@@ -168,19 +149,21 @@ fn_filename_completion_function(const char *text, int state)
 		if (temp) {
 			char *nptr;
 			temp++;
-			nptr = realloc(filename, strlen(temp) + 1);
+			nptr = el_realloc(filename, (strlen(temp) + 1) *
+			    sizeof(*nptr));
 			if (nptr == NULL) {
-				free(filename);
+				el_free(filename);
 				filename = NULL;
 				return NULL;
 			}
 			filename = nptr;
 			(void)strcpy(filename, temp);
-			len = temp - text;	/* including last slash */
+			len = (size_t)(temp - text);	/* including last slash */
 
-			nptr = realloc(dirname, len + 1);
+			nptr = el_realloc(dirname, (len + 1) *
+			    sizeof(*nptr));
 			if (nptr == NULL) {
-				free(dirname);
+				el_free(dirname);
 				dirname = NULL;
 				return NULL;
 			}
@@ -188,7 +171,7 @@ fn_filename_completion_function(const char *text, int state)
 			(void)strncpy(dirname, text, len);
 			dirname[len] = '\0';
 		} else {
-			free(filename);
+			el_free(filename);
 			if (*text == 0)
 				filename = NULL;
 			else {
@@ -196,7 +179,7 @@ fn_filename_completion_function(const char *text, int state)
 				if (filename == NULL)
 					return NULL;
 			}
-			free(dirname);
+			el_free(dirname);
 			dirname = NULL;
 		}
 
@@ -207,7 +190,7 @@ fn_filename_completion_function(const char *text, int state)
 
 		/* support for ``~user'' syntax */
 
-		free(dirpath);
+		el_free(dirpath);
 		dirpath = NULL;
 		if (dirname == NULL) {
 			if ((dirname = strdup("")) == NULL)
@@ -223,7 +206,7 @@ fn_filename_completion_function(const char *text, int state)
 
 		dir = opendir(dirpath);
 		if (!dir)
-			return (NULL);	/* cannot open the directory */
+			return NULL;	/* cannot open the directory */
 
 		/* will be used in cycle */
 		filename_len = filename ? strlen(filename) : 0;
@@ -240,8 +223,11 @@ fn_filename_completion_function(const char *text, int state)
 		/* otherwise, get first entry where first */
 		/* filename_len characters are equal	  */
 		if (entry->d_name[0] == filename[0]
-          /* Some dirents have d_namlen, but it is not portable. */
+#if HAVE_STRUCT_DIRENT_D_NAMLEN
+		    && entry->d_namlen >= filename_len
+#else
 		    && strlen(entry->d_name) >= filename_len
+#endif
 		    && strncmp(entry->d_name, filename,
 			filename_len) == 0)
 			break;
@@ -249,20 +235,24 @@ fn_filename_completion_function(const char *text, int state)
 
 	if (entry) {		/* match found */
 
-       /* Some dirents have d_namlen, but it is not portable. */
+#if HAVE_STRUCT_DIRENT_D_NAMLEN
+		len = entry->d_namlen;
+#else
 		len = strlen(entry->d_name);
+#endif
 
-		temp = malloc(strlen(dirname) + len + 1);
+		len = strlen(dirname) + len + 1;
+		temp = el_malloc(len * sizeof(*temp));
 		if (temp == NULL)
 			return NULL;
-		(void)sprintf(temp, "%s%s", dirname, entry->d_name);
+		(void)snprintf(temp, len, "%s%s", dirname, entry->d_name);
 	} else {
 		(void)closedir(dir);
 		dir = NULL;
 		temp = NULL;
 	}
 
-	return (temp);
+	return temp;
 }
 
 
@@ -279,7 +269,7 @@ append_char_function(const char *name)
 		rs = "/";
 out:
 	if (expname)
-		free(expname);
+		el_free(expname);
 	return rs;
 }
 /*
@@ -302,10 +292,10 @@ completion_matches(const char *text, char *(*genfunc)(const char *, int))
 			char **nmatch_list;
 			while (matches + 3 >= match_list_len)
 				match_list_len <<= 1;
-			nmatch_list = realloc(match_list,
-			    match_list_len * sizeof(char *));
+			nmatch_list = el_realloc(match_list,
+			    match_list_len * sizeof(*nmatch_list));
 			if (nmatch_list == NULL) {
-				free(match_list);
+				el_free(match_list);
 				return NULL;
 			}
 			match_list = nmatch_list;
@@ -328,9 +318,9 @@ completion_matches(const char *text, char *(*genfunc)(const char *, int))
 		max_equal = i;
 	}
 
-	retstr = malloc(max_equal + 1);
+	retstr = el_malloc((max_equal + 1) * sizeof(*retstr));
 	if (retstr == NULL) {
-		free(match_list);
+		el_free(match_list);
 		return NULL;
 	}
 	(void)strncpy(retstr, match_list[1], max_equal);
@@ -338,9 +328,9 @@ completion_matches(const char *text, char *(*genfunc)(const char *, int))
 	match_list[0] = retstr;
 
 	/* add NULL as last pointer to the array */
-	match_list[matches + 1] = (char *) NULL;
+	match_list[matches + 1] = NULL;
 
-	return (match_list);
+	return match_list;
 }
 
 /*
@@ -367,7 +357,7 @@ void
 fn_display_match_list (EditLine *el, char **matches, size_t num, size_t width)
 {
 	size_t line, lines, col, cols, thisguy;
-	int screenwidth = el->el_term.t_size.h;
+	int screenwidth = el->el_terminal.t_size.h;
 
 	/* Ignore matches[0]. Avoid 1-based array logic below. */
 	matches++;
@@ -377,7 +367,7 @@ fn_display_match_list (EditLine *el, char **matches, size_t num, size_t width)
 	 * Find out how many entries can be put on one line; count
 	 * with one space between strings the same way it's printed.
 	 */
-	cols = screenwidth / (width + 1);
+	cols = (size_t)screenwidth / (width + 1);
 	if (cols == 0)
 		cols = 1;
 
@@ -418,14 +408,14 @@ int
 fn_complete(EditLine *el,
 	char *(*complet_func)(const char *, int),
 	char **(*attempted_completion_function)(const char *, int, int),
-	const Char *word_break, const Char *special_prefixes,
+	const wchar_t *word_break, const wchar_t *special_prefixes,
 	const char *(*app_func)(const char *), size_t query_items,
 	int *completion_type, int *over, int *point, int *end)
 {
-	const TYPE(LineInfo) *li;
-	Char *temp;
+	const LineInfoW *li;
+	wchar_t *temp;
         char **matches;
-	const Char *ctemp;
+	const wchar_t *ctemp;
 	size_t len;
 	int what_to_do = '\t';
 	int retval = CC_NORM;
@@ -443,38 +433,36 @@ fn_complete(EditLine *el,
 		app_func = append_char_function;
 
 	/* We now look backwards for the start of a filename/variable word */
-	li = FUN(el,line)(el);
+	li = el_wline(el);
 	ctemp = li->cursor;
 	while (ctemp > li->buffer
-	    && !Strchr(word_break, ctemp[-1])
-	    && (!special_prefixes || !Strchr(special_prefixes, ctemp[-1]) ) )
+	    && !wcschr(word_break, ctemp[-1])
+	    && (!special_prefixes || !wcschr(special_prefixes, ctemp[-1]) ) )
 		ctemp--;
 
-	len = li->cursor - ctemp;
-#if defined(__SSP__) || defined(__SSP_ALL__)
-	temp = malloc(sizeof(*temp) * (len + 1));
-#else
-	temp = alloca(sizeof(*temp) * (len + 1));
-#endif
-	(void)Strncpy(temp, ctemp, len);
+	len = (size_t)(li->cursor - ctemp);
+	temp = el_malloc((len + 1) * sizeof(*temp));
+	(void)wcsncpy(temp, ctemp, len);
 	temp[len] = '\0';
 
 	/* these can be used by function called in completion_matches() */
 	/* or (*attempted_completion_function)() */
-	if (point != 0)
+	if (point != NULL)
 		*point = (int)(li->cursor - li->buffer);
 	if (end != NULL)
 		*end = (int)(li->lastchar - li->buffer);
 
 	if (attempted_completion_function) {
 		int cur_off = (int)(li->cursor - li->buffer);
-		matches = (*attempted_completion_function) (ct_encode_string(temp, &el->el_scratch),
-		    (int)(cur_off - len), cur_off);
+		matches = (*attempted_completion_function)(
+		    ct_encode_string(temp, &el->el_scratch),
+		    cur_off - (int)len, cur_off);
 	} else
-		matches = 0;
+		matches = NULL;
 	if (!attempted_completion_function ||
 	    (over != NULL && !*over && !matches))
-		matches = completion_matches(ct_encode_string(temp, &el->el_scratch), complet_func);
+		matches = completion_matches(
+		    ct_encode_string(temp, &el->el_scratch), complet_func);
 
 	if (over != NULL)
 		*over = 0;
@@ -490,24 +478,22 @@ fn_complete(EditLine *el,
 		 */
 		if (matches[0][0] != '\0') {
 			el_deletestr(el, (int) len);
-			FUN(el,insertstr)(el,
+			el_winsertstr(el,
 			    ct_decode_string(matches[0], &el->el_scratch));
 		}
 
-		if (what_to_do == '?')
-			goto display_matches;
 
-		if (matches[2] == NULL && strcmp(matches[0], matches[1]) == 0) {
+		if (matches[2] == NULL &&
+		    (matches[1] == NULL || strcmp(matches[0], matches[1]) == 0)) {
 			/*
 			 * We found exact match. Add a space after
 			 * it, unless we do filename completion and the
 			 * object is a directory.
 			 */
-			FUN(el,insertstr)(el,
+			el_winsertstr(el,
 			    ct_decode_string((*app_func)(matches[0]),
 			    &el->el_scratch));
-		} else if (what_to_do == '!') {
-    display_matches:
+		} else if (what_to_do == '!' || what_to_do == '?') {
 			/*
 			 * More than one match and requested to list possible
 			 * matches.
@@ -519,7 +505,7 @@ fn_complete(EditLine *el,
 					maxlen = match_len;
 			}
 			/* matches[1] through matches[i-1] are available */
-			matches_num = i - 1;
+			matches_num = (size_t)(i - 1);
 
 			/* newline to get on next line from command line */
 			(void)fprintf(el->el_outfile, "\n");
@@ -530,8 +516,8 @@ fn_complete(EditLine *el,
 			 */
 			if (matches_num > query_items) {
 				(void)fprintf(el->el_outfile,
-				    "Display all %llu possibilities? (y or n) ",
-				    (unsigned long long)matches_num);
+				    "Display all %zu possibilities? (y or n) ",
+				    matches_num);
 				(void)fflush(el->el_outfile);
 				if (getc(stdin) != 'y')
 					match_display = 0;
@@ -566,13 +552,11 @@ fn_complete(EditLine *el,
 
 		/* free elements of array and the array itself */
 		for (i = 0; matches[i]; i++)
-			free(matches[i]);
-		free(matches);
+			el_free(matches[i]);
+		el_free(matches);
 		matches = NULL;
 	}
-#if defined(__SSP__) || defined(__SSP_ALL__)
-	free(temp);
-#endif
+	el_free(temp);
 	return retval;
 }
 
@@ -584,6 +568,6 @@ unsigned char
 _el_fn_complete(EditLine *el, int ch __attribute__((__unused__)))
 {
 	return (unsigned char)fn_complete(el, NULL, NULL,
-	    break_chars, NULL, NULL, 100,
+	    break_chars, NULL, NULL, (size_t)100,
 	    NULL, NULL, NULL, NULL);
 }

@@ -66,7 +66,6 @@ host/admin@H5L.ORG
 static krb5_error_code
 set_default_princ_type(krb5_principal p, NAME_TYPE defnt)
 {
-    princ_type(p) = defnt;
     if (princ_num_comp(p) > 1 && strcmp(princ_ncomp(p, 0), KRB5_TGS_NAME) == 0)
         princ_type(p) = KRB5_NT_SRV_INST;
     else if (princ_num_comp(p) > 1 && strcmp(princ_ncomp(p, 0), "host") == 0)
@@ -76,6 +75,8 @@ set_default_princ_type(krb5_principal p, NAME_TYPE defnt)
         princ_type(p) = KRB5_NT_WELLKNOWN;
     else if (princ_num_comp(p) == 1 && strchr(princ_ncomp(p, 0), '@') != NULL)
         princ_type(p) = KRB5_NT_SMTP_NAME;
+    else
+	princ_type(p) = defnt;
     return 0;
 }
 

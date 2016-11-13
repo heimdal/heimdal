@@ -672,8 +672,9 @@ rk_dns_srv_order(struct rk_dns_reply *r)
 	    if ((*tt)->u.srv->weight == 0)
 		zeros++;
 	}
+	/* With no zeros, add 0 and scale * 1 */
+	sum += zeros ? zeros : zeros++;
 	sum *= zeros;
-	sum += zeros;
 	ee = tt;
 	/* ss is now the first record of this priority and ee is the
            first of the next */

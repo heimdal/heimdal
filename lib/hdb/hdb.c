@@ -90,6 +90,9 @@ static struct hdb_method methods[] = {
 #if defined(OPENLDAP) && !defined(OPENLDAP_MODULE)
     { HDB_INTERFACE_VERSION, NULL, NULL, "ldap:",	hdb_ldap_create},
     { HDB_INTERFACE_VERSION, NULL, NULL, "ldapi:",	hdb_ldapi_create},
+#elif defined(OPENLDAP)
+    { HDB_INTERFACE_VERSION, NULL, NULL, "ldap:",	NULL},
+    { HDB_INTERFACE_VERSION, NULL, NULL, "ldapi:",	NULL},
 #endif
 #ifdef HAVE_SQLITE3
     { HDB_INTERFACE_VERSION, NULL, NULL, "sqlite:", hdb_sqlite_create},
@@ -349,6 +352,44 @@ find_method (const char *filename, const char **rest)
     return NULL;
 }
 
+struct cb_s {
+    const char *residual;
+    const char *filename;
+    const struct hdb_method *h;
+};
+
+static krb5_error_code KRB5_LIB_CALL
+callback(krb5_context context, const void *plug, void *plugctx, void *userctx)
+{
+    const struct hdb_method *h = (const struct hdb_method *)plug;
+    struct cb_s *cb_ctx = (struct cb_s *)userctx;
+
+    if (strncmp(cb_ctx->filename, h->prefix, strlen(h->prefix)) == 0) {
+	cb_ctx->residual = cb_ctx->filename + strlen(h->prefix);
+	cb_ctx->h = h;
+	return 0;
+    }
+   return KRB5_PLUGIN_NO_HANDLE;
+}
+
+static char *
+make_sym(const char *prefix)
+{
+    char *s, *sym;
+
+    errno = 0;
+    if (prefix == NULL || prefix[0] == '\0')
+        return NULL;
+    if ((s = strdup(prefix)) == NULL)
+        return NULL;
+    if (strchr(s, ':') != NULL)
+        *strchr(s, ':') = '\0';
+    if (asprintf(&sym, "hdb_%s_interface", s) == -1)
+        sym = NULL;
+    free(s);
+    return sym;
+}
+
 krb5_error_code
 hdb_list_builtin(krb5_context context, char **list)
 {
@@ -365,12 +406,34 @@ hdb_list_builtin(krb5_context context, char **list)
     len += 1;
     buf = malloc(len);
     if (buf == NULL) {
-	krb5_set_error_message(context, ENOMEM, "malloc: out of memory");
-	return ENOMEM;
+	return krb5_enomem(context);
     }
     buf[0] = '\0';
 
     for (h = methods; h->prefix != NULL; ++h) {
+        if (h->create == NULL) {
+            struct cb_s cb_ctx;
+            char *f;
+            char *sym;
+
+            /* Try loading the plugin */
+            if (asprintf(&f, "%sfoo", h->prefix) == -1)
+                f = NULL;
+            if ((sym = make_sym(h->prefix)) == NULL) {
+                free(f);
+                return krb5_enomem(context);
+            }
+            cb_ctx.filename = f;
+            cb_ctx.residual = NULL;
+            cb_ctx.h = NULL;
+            (void)_krb5_plugin_run_f(context, "krb5", sym,
+                                     HDB_INTERFACE_VERSION, 0, &cb_ctx,
+                                     callback);
+            free(f);
+            free(sym);
+            if (cb_ctx.h == NULL || cb_ctx.h->create == NULL)
+                continue;
+        }
 	if (h != methods)
 	    strlcat(buf, ", ", len);
 	strlcat(buf, h->prefix, len);
@@ -408,26 +471,6 @@ _hdb_keytab2hdb_entry(krb5_context context,
  * use O_CREAT to tell the backend to create the file.
  */
 
-struct cb_s {
-    const char *residual;
-    const char *filename;
-    const struct hdb_method *h;
-};
-
-static krb5_error_code KRB5_LIB_CALL
-callback(krb5_context context, const void *plug, void *plugctx, void *userctx)
-{
-    const struct hdb_method *h = (const struct hdb_method *)plug;
-    struct cb_s *cb_ctx = (struct cb_s *)userctx;
-
-    if (strncmp(cb_ctx->filename, h->prefix, strlen(h->prefix)) == 0) {
-	cb_ctx->residual = cb_ctx->filename + strlen(h->prefix);
-	cb_ctx->h = h;
-	return 0;
-    }
-   return KRB5_PLUGIN_NO_HANDLE;
-}
-
 krb5_error_code
 hdb_create(krb5_context context, HDB **db, const char *filename)
 {
@@ -438,9 +481,16 @@ hdb_create(krb5_context context, HDB **db, const char *filename)
     cb_ctx.h = find_method (filename, &cb_ctx.residual);
     cb_ctx.filename = filename;
 
-    if (cb_ctx.h == NULL) {
-	    (void)_krb5_plugin_run_f(context, "krb5", "hdb",
-			     HDB_INTERFACE_VERSION, 0, &cb_ctx, callback);
+    if (cb_ctx.h == NULL || cb_ctx.h->create == NULL) {
+        char *sym;
+
+        if ((sym = make_sym(filename)) == NULL)
+            return krb5_enomem(context);
+
+        (void)_krb5_plugin_run_f(context, "krb5", sym, HDB_INTERFACE_VERSION,
+                                 0, &cb_ctx, callback);
+
+        free(sym);
     }
     if (cb_ctx.h == NULL)
 	krb5_errx(context, 1, "No database support for %s", cb_ctx.filename);

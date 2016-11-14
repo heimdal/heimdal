@@ -387,8 +387,6 @@ AC_CHECK_HEADERS([\
 	tmpdir.h				\
 	udb.h					\
 	util.h					\
-	utmp.h					\
-	utmpx.h					\
 ])
 
 dnl On Solaris 8 there's a compilation warning for term.h because
@@ -549,26 +547,6 @@ AC_CHECK_FUNCS(getudbnam setlim)
 
 dnl AC_KRB_FUNC_GETCWD_BROKEN
 
-dnl
-dnl Check for fields in struct utmp
-dnl
-
-AC_HAVE_STRUCT_FIELD(struct utmp, ut_addr, [#include <utmp.h>])
-AC_HAVE_STRUCT_FIELD(struct utmp, ut_host, [#include <utmp.h>])
-AC_HAVE_STRUCT_FIELD(struct utmp, ut_id, [#include <utmp.h>])
-AC_HAVE_STRUCT_FIELD(struct utmp, ut_pid, [#include <utmp.h>])
-AC_HAVE_STRUCT_FIELD(struct utmp, ut_type, [#include <utmp.h>])
-AC_HAVE_STRUCT_FIELD(struct utmp, ut_user, [#include <utmp.h>])
-AC_HAVE_STRUCT_FIELD(struct utmpx, ut_host, [#include <utmpx.h>])
-AC_HAVE_STRUCT_FIELD(struct utmpx, ut_id, [#include <utmpx.h>])
-AC_HAVE_STRUCT_FIELD(struct utmpx, ut_line, [#include <utmpx.h>])
-AC_HAVE_STRUCT_FIELD(struct utmpx, ut_pid, [#include <utmpx.h>])
-AC_HAVE_STRUCT_FIELD(struct utmpx, ut_tv, [#include <utmpx.h>])
-AC_HAVE_STRUCT_FIELD(struct utmpx, ut_type, [#include <utmpx.h>])
-AC_HAVE_STRUCT_FIELD(struct utmpx, ut_user, [#include <utmpx.h>])
-AC_HAVE_STRUCT_FIELD(struct utmpx, ut_exit, [#include <utmpx.h>])
-AC_HAVE_STRUCT_FIELD(struct utmpx, ut_syslen, [#include <utmpx.h>])
-
 AC_CHECK_TYPES([int8_t, int16_t, int32_t, int64_t, 
 	u_int8_t, u_int16_t, u_int32_t, u_int64_t,
 	uint8_t, uint16_t, uint32_t, uint64_t],,,[
@@ -655,7 +633,6 @@ AC_CONFIG_FILES(Makefile 		\
 	appl/afsutil/Makefile		\
 	appl/dbutils/Makefile		\
 	appl/gssmask/Makefile		\
-	appl/login/Makefile		\
 	appl/otp/Makefile		\
 	appl/push/Makefile		\
 	appl/su/Makefile		\

@@ -63,6 +63,17 @@ case "$host" in
 *-*-aix*)
 	dnl AIX is disabled since we don't handle the utmp/utmpx
         dnl problems that aix causes when compiling with pthread support
+        dnl (2016-11-14, we longer use utmp).  Original logic was:
+        dnl     if test "$GCC" = yes; then
+        dnl             native_pthread_support=yes
+        dnl             PTHREADS_LIBS="-pthread"
+        dnl     elif expr "$CC" : ".*_r" > /dev/null ; then
+        dnl             native_pthread_support=yes
+        dnl             PTHREADS_CFLAGS=""
+        dnl             PTHREADS_LIBS=""
+        dnl     else
+        dnl             native_pthread_support=no
+        dnl     fi
 	native_pthread_support=no
 	;;
 mips-sgi-irix6.[[5-9]])  # maybe works for earlier versions too

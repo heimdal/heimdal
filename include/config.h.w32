@@ -918,30 +918,6 @@ static const char *const rcsid[] = { (const char *)rcsid, "@(#)" msg }
 /* Define if struct tm has field tm_zone. */
 /* #undef HAVE_STRUCT_TM_TM_ZONE */
 
-/* Define if struct utmpx has field ut_exit. */
-/* #undef HAVE_STRUCT_UTMPX_UT_EXIT */
-
-/* Define if struct utmpx has field ut_syslen. */
-/* #undef HAVE_STRUCT_UTMPX_UT_SYSLEN */
-
-/* Define if struct utmp has field ut_addr. */
-/* #define HAVE_STRUCT_UTMP_UT_ADDR 1 */
-
-/* Define if struct utmp has field ut_host. */
-/* #define HAVE_STRUCT_UTMP_UT_HOST 1 */
-
-/* Define if struct utmp has field ut_id. */
-/* #define HAVE_STRUCT_UTMP_UT_ID 1 */
-
-/* Define if struct utmp has field ut_pid. */
-/* #define HAVE_STRUCT_UTMP_UT_PID 1 */
-
-/* Define if struct utmp has field ut_type. */
-/* #define HAVE_STRUCT_UTMP_UT_TYPE 1 */
-
-/* Define if struct utmp has field ut_user. */
-/* #define HAVE_STRUCT_UTMP_UT_USER 1 */
-
 /* define if struct winsize is declared in sys/termios.h */
 /* #define HAVE_STRUCT_WINSIZE 1 */
 
@@ -1162,12 +1138,6 @@ static const char *const rcsid[] = { (const char *)rcsid, "@(#)" msg }
 
 /* Define to 1 if you have the <util.h> header file. */
 /* #undef HAVE_UTIL_H */
-
-/* Define to 1 if you have the <utmpx.h> header file. */
-/* #define HAVE_UTMPX_H 1 */
-
-/* Define to 1 if you have the <utmp.h> header file. */
-/* #define HAVE_UTMP_H 1 */
 
 /* Define to 1 if the system has the type `u_int16_t'. */
 /* #define HAVE_U_INT16_T 1 */

@@ -101,8 +101,6 @@ asn1_*.[cx]
 /appl/kx/rxtelnet
 /appl/kx/rxterm
 /appl/kx/tenletxr
-/appl/login/login
-/appl/login/login-protos.h
 /appl/otp/otp
 /appl/otp/otpprint
 /appl/popper/pop_debug
@@ -110,13 +108,7 @@ asn1_*.[cx]
 /appl/push/pfrom
 /appl/push/push
 /appl/rcp/rcp
-/appl/rsh/limits_conf.c
-/appl/rsh/login_access.c
-/appl/rsh/rsh
-/appl/rsh/rshd
 /appl/su/su
-/appl/telnet/telnet/telnet
-/appl/telnet/telnetd/telnetd
 /appl/test/gssapi_client
 /appl/test/gssapi_server
 /appl/test/http_client

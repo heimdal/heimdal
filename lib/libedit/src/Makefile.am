@@ -30,13 +30,12 @@ libheimedit_la_SOURCES = \
     history.c historyn.c keymacro.c map.c parse.c prompt.c read.c readline.c \
     refresh.c search.c sig.c terminal.c tokenizer.c tokenizern.c tty.c \
     unvis.c vi.c vis.c wcsdup.c \
-    chared.h chartype.h editline/readline.h el.h filecomplete.h \
+    chared.h chartype.h readline/readline.h el.h filecomplete.h \
     histedit.h hist.h keymacro.h map.h parse.h prompt.h read.h \
     refresh.h search.h sig.h sys.h terminal.h tty.h vis.h
 
 EXTRA_DIST = makelist shlib_version
-#nobase_include_HEADERS = histedit.h editline/readline.h
-EXTRA_DIST += histedit.h editline/readline.h
+EXTRA_DIST += histedit.h readline/readline.h
 
 nodist_libheimedit_la_SOURCES = $(BUILT_SOURCES)
 

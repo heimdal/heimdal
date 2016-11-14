@@ -14,7 +14,6 @@ endif
 SUBDIRS = 					\
 	  $(dir_afsutil)			\
 	  dbutils				\
-	  ftp					\
 	  login					\
 	  $(dir_otp)				\
 	  gssmask				\

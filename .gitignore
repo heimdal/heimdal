@@ -92,12 +92,6 @@ asn1_*.[cx]
 /appl/afsutil/afslog
 /appl/afsutil/pagsh
 /appl/dbutils/bsearch
-/appl/ftp/ftp/ftp
-/appl/ftp/ftpd/ftpcmd.c
-/appl/ftp/ftpd/ftpd
-/appl/ftp/ftpd/gssapi.c
-/appl/ftp/ftpd/security.c
-/appl/ftp/ftpd/security.h
 /appl/gssmask/gssmaestro
 /appl/gssmask/gssmask
 /appl/kf/kf

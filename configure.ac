@@ -316,8 +316,6 @@ KRB_CHECK_X
 
 AM_CONDITIONAL(HAVE_X, test "$no_x" != yes)
 
-AC_CHECK_XAU
-
 dnl AM_C_PROTOTYPES
 
 dnl Checks for typedefs, structures, and compiler characteristics.

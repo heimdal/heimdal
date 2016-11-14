@@ -1082,8 +1082,8 @@ LDAP_message2entry(krb5_context context, HDB * db, LDAPMessage * msg,
     if (extensions != NULL) {
 	size_t l;
 
-	ent->entry.extensions = malloc(sizeof(*(ent->entry.extensions)));
-	if (ent->entry.etypes == NULL) {
+	ent->entry.extensions = calloc(1, sizeof(*(ent->entry.extensions)));
+	if (ent->entry.extensions == NULL) {
 	    ret = krb5_enomem(context);
 	    goto out;
 	}

@@ -566,7 +566,7 @@ log_function(void *ptr)
 {
     struct client *c = ptr;
     int32_t cmd, line;
-    char *file, *string;
+    char *file = NULL, *string = NULL;
 
     while (1) {
         if (krb5_ret_int32(c->logsock, &cmd))
@@ -576,7 +576,6 @@ log_function(void *ptr)
 	case eLogSetMoniker:
 	    if (krb5_ret_string(c->logsock, &file))
 		goto out;
-	    free(file);
 	    break;
 	case eLogInfo:
 	case eLogFailure:
@@ -591,8 +590,6 @@ log_function(void *ptr)
 	    fprintf(logfile, "%s:%lu: %s\n",
 		    file, (unsigned long)line, string);
 	    fflush(logfile);
-	    free(file);
-	    free(string);
 	    if (krb5_store_int32(c->logsock, 0))
 		goto out;
 	    break;
@@ -601,6 +598,8 @@ log_function(void *ptr)
 	}
     }
 out:
+    free(file);
+    free(string);
 
     return 0;
 }

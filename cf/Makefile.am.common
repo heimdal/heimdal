@@ -48,11 +48,6 @@ LIB_door_create		= @LIB_door_create@
 LIB_openssl_crypto      = @LIB_openssl_crypto@
 INCLUDE_openssl_crypto  = @INCLUDE_openssl_crypto@
 
-HESIODLIB = @HESIODLIB@
-HESIODINCLUDE = @HESIODINCLUDE@
-INCLUDE_hesiod = @INCLUDE_hesiod@
-LIB_hesiod = @LIB_hesiod@
-
 INCLUDE_krb4 = @INCLUDE_krb4@
 LIB_krb4 = @LIB_krb4@
 

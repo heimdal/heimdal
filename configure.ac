@@ -309,8 +309,6 @@ rk_TEST_PACKAGE(libedit,
 
 AC_CONFIG_SUBDIRS([lib/libedit])
 
-rk_TEST_PACKAGE(hesiod,[#include <hesiod.h>],-lhesiod,,, HESIOD)
-
 KRB_C_BIGENDIAN
 AC_C_INLINE
 
@@ -634,7 +632,6 @@ AC_CONFIG_FILES(Makefile 		\
 	appl/dbutils/Makefile		\
 	appl/gssmask/Makefile		\
 	appl/otp/Makefile		\
-	appl/push/Makefile		\
 	appl/su/Makefile		\
 	appl/test/Makefile		\
 	appl/kf/Makefile		\

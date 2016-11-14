@@ -1234,9 +1234,6 @@ static const char *const rcsid[] = { (const char *)rcsid, "@(#)" msg }
 /* Define if you have the `__progname' variable. */
 /* #define HAVE___PROGNAME 1 */
 
-/* Define if you have the hesiod package. */
-/* #undef HESIOD */
-
 /* Define if you are running IRIX 4. */
 /* #undef IRIX4 */
 

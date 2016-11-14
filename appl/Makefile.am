@@ -16,7 +16,6 @@ SUBDIRS = 					\
 	  dbutils				\
 	  $(dir_otp)				\
 	  gssmask				\
-	  push					\
 	  su					\
 	  test					\
 	  kf					\

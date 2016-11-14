@@ -96,18 +96,8 @@ asn1_*.[cx]
 /appl/gssmask/gssmask
 /appl/kf/kf
 /appl/kf/kfd
-/appl/kx/kx
-/appl/kx/kxd
-/appl/kx/rxtelnet
-/appl/kx/rxterm
-/appl/kx/tenletxr
 /appl/otp/otp
 /appl/otp/otpprint
-/appl/popper/pop_debug
-/appl/popper/popper
-/appl/push/pfrom
-/appl/push/push
-/appl/rcp/rcp
 /appl/su/su
 /appl/test/gssapi_client
 /appl/test/gssapi_server
@@ -118,7 +108,6 @@ asn1_*.[cx]
 /appl/test/tcp_server
 /appl/test/uu_client
 /appl/test/uu_server
-/appl/xnlock/xnlock
 /cf/libtool.m4
 /cf/ltoptions.m4
 /cf/ltsugar.m4

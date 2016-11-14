@@ -1155,7 +1155,6 @@ LDAP_message2entry(krb5_context context, HDB * db, LDAPMessage * msg,
 		     (ent->entry.keys.len + 1) *
                      sizeof(ent->entry.keys.val[0]));
 	if (ks == NULL) {
-	    free(ntPasswordIN);
 	    ret = ENOMEM;
 	    krb5_set_error_message(context, ret, "malloc: out of memory");
 	    goto out;
@@ -1166,7 +1165,6 @@ LDAP_message2entry(krb5_context context, HDB * db, LDAPMessage * msg,
 	ret = krb5_data_alloc (&ent->entry.keys.val[ent->entry.keys.len].key.keyvalue, 16);
 	if (ret) {
 	    krb5_set_error_message(context, ret, "malloc: out of memory");
-	    free(ntPasswordIN);
 	    ret = ENOMEM;
 	    goto out;
 	}
@@ -1459,8 +1457,8 @@ LDAP_message2entry(krb5_context context, HDB * db, LDAPMessage * msg,
     ret = 0;
 
 out:
-    if (unparsed_name)
-	free(unparsed_name);
+    free(unparsed_name);
+    free(ntPasswordIN);
 
     if (ret)
 	hdb_free_entry(context, ent);

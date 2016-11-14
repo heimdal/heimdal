@@ -646,7 +646,7 @@ connect_client(const char *slave)
     }
     if (sock == rk_INVALID_SOCKET)
 	err(1, "connect to host: %s", name);
-    freeaddrinfo(res);
+    freeaddrinfo(res0);
 
     c->sock = krb5_storage_from_socket(sock);
     rk_closesocket(sock);

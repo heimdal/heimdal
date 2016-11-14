@@ -12,16 +12,13 @@ fi
 AM_CONDITIONAL(DEVELOPER_MODE, test "X$enable_developer" = Xyes)
 
 WFLAGS_NOUNUSED=""
-WFLAGS_NOIMPLICITINT=""
 if test -z "$WFLAGS" -a "$GCC" = "yes"; then
-  # -Wno-implicit-int for broken X11 headers
   # leave these out for now:
   #   -Wcast-align doesn't work well on alpha osf/1
   #   -Wmissing-prototypes -Wpointer-arith -Wbad-function-cast
   #   -Wmissing-declarations -Wnested-externs
   #   -Wstrict-overflow=5
   WFLAGS="ifelse($#, 0,-Wall, $1) $dwflags"
-  WFLAGS_NOIMPLICITINT="-Wno-implicit-int"
 
   #
   # WFLAGS_LITE can be appended to WFLAGS to turn off a host of warnings
@@ -33,5 +30,4 @@ if test -z "$WFLAGS" -a "$GCC" = "yes"; then
 fi
 AC_SUBST(WFLAGS)dnl
 AC_SUBST(WFLAGS_LITE)dnl
-AC_SUBST(WFLAGS_NOIMPLICITINT)dnl
 ])

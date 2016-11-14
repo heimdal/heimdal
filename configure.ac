@@ -312,10 +312,6 @@ AC_CONFIG_SUBDIRS([lib/libedit])
 KRB_C_BIGENDIAN
 AC_C_INLINE
 
-KRB_CHECK_X
-
-AM_CONDITIONAL(HAVE_X, test "$no_x" != yes)
-
 dnl AM_C_PROTOTYPES
 
 dnl Checks for typedefs, structures, and compiler characteristics.

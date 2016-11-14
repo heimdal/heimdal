@@ -1784,11 +1784,7 @@ username_completion_function(const char *text, int state)
 		setpwent();
 
 	while (
-#if defined(HAVE_GETPW_R_POSIX) || defined(HAVE_GETPW_R_DRAFT)
-	    getpwent_r(&pwres, pwbuf, sizeof(pwbuf), &pass) == 0 && pass != NULL
-#else
 	    (pass = getpwent()) != NULL
-#endif
 	    && text[0] == pass->pw_name[0]
 	    && strcmp(text, pass->pw_name) == 0)
 		continue;

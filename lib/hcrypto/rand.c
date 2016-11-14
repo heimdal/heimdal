@@ -53,7 +53,7 @@
  * See the library functions here: @ref hcrypto_rand
  */
 
-const static RAND_METHOD *selected_meth = NULL;
+static const RAND_METHOD *selected_meth = NULL;
 static ENGINE *selected_engine = NULL;
 
 static void

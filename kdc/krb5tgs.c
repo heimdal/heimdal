@@ -1097,7 +1097,7 @@ need_referral(krb5_context context, krb5_kdc_configuration *config,
 {
     const char *name;
 
-    if(!options->canonicalize && server->name.name_type != KRB5_NT_SRV_INST)
+    if (!options->canonicalize && !krb5_principal_is_krbtgt(context, server))
 	return FALSE;
 
     if (server->name.name_string.len == 1)

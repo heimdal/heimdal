@@ -1905,7 +1905,7 @@ hdb_ldap_common(krb5_context context,
 	url = p;
     }
 
-    if (search_base == NULL && search_base[0] == '\0') {
+    if (search_base == NULL || search_base[0] == '\0') {
 	krb5_set_error_message(context, ENOMEM, "ldap search base not configured");
 	return ENOMEM; /* XXX */
     }

@@ -1149,16 +1149,18 @@ LDAP_message2entry(krb5_context context, HDB * db, LDAPMessage * msg,
     ret = LDAP_get_string_value(db, msg, "sambaNTPassword", &ntPasswordIN);
     if (ret == 0 && have_arcfour == 0) {
 	unsigned *etypes;
+        Key *ks;
 
-	keys = realloc(ent->entry.keys.val,
-		       (ent->entry.keys.len + 1) * sizeof(ent->entry.keys.val[0]));
-	if (keys == NULL) {
+	ks = realloc(ent->entry.keys.val,
+		     (ent->entry.keys.len + 1) *
+                     sizeof(ent->entry.keys.val[0]));
+	if (ks == NULL) {
 	    free(ntPasswordIN);
 	    ret = ENOMEM;
 	    krb5_set_error_message(context, ret, "malloc: out of memory");
 	    goto out;
 	}
-	ent->entry.keys.val = keys;
+	ent->entry.keys.val = ks;
 	memset(&ent->entry.keys.val[ent->entry.keys.len], 0, sizeof(Key));
 	ent->entry.keys.val[ent->entry.keys.len].key.keytype = ETYPE_ARCFOUR_HMAC_MD5;
 	ret = krb5_data_alloc (&ent->entry.keys.val[ent->entry.keys.len].key.keyvalue, 16);
@@ -1716,6 +1718,7 @@ LDAP_fetch_kvno(krb5_context context, HDB * db, krb5_const_principal principal,
     return ret;
 }
 
+#if 0
 static krb5_error_code
 LDAP_fetch(krb5_context context, HDB * db, krb5_const_principal principal,
 	   unsigned flags, hdb_entry_ex * entry)
@@ -1723,6 +1726,7 @@ LDAP_fetch(krb5_context context, HDB * db, krb5_const_principal principal,
     return LDAP_fetch_kvno(context, db, principal,
 			   flags & (~HDB_F_KVNO_SPECIFIED), 0, entry);
 }
+#endif
 
 static krb5_error_code
 LDAP_store(krb5_context context, HDB * db, unsigned flags,

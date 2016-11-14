@@ -33,6 +33,22 @@
 
 #include "kdc_locl.h"
 
+static int
+name_type_ok(krb5_context context,
+             krb5_kdc_configuration *config,
+             krb5_const_principal principal)
+{
+    int nt = krb5_principal_get_type(context, principal);
+
+    if (!krb5_principal_is_krbtgt(context, principal))
+        return 1;
+    if (nt == KRB5_NT_SRV_INST || nt == KRB5_NT_UNKNOWN)
+        return 1;
+    if (config->strict_nametypes == 0)
+        return 1;
+    return 0;
+}
+
 struct timeval _kdc_now;
 
 krb5_error_code
@@ -44,7 +60,7 @@ _kdc_db_fetch(krb5_context context,
 	      HDB **db,
 	      hdb_entry_ex **h)
 {
-    hdb_entry_ex *ent;
+    hdb_entry_ex *ent = NULL;
     krb5_error_code ret = HDB_ERR_NOENTRY;
     int i;
     unsigned kvno = 0;
@@ -52,6 +68,9 @@ _kdc_db_fetch(krb5_context context,
     krb5_const_principal princ;
 
     *h = NULL;
+
+    if (!name_type_ok(context, config, principal))
+        goto out2;
 
     if (kvno_ptr != NULL && *kvno_ptr != 0) {
 	kvno = *kvno_ptr;
@@ -131,6 +150,7 @@ _kdc_db_fetch(krb5_context context,
 	}
     }
 
+out2:
     if (ret == HDB_ERR_NOENTRY) {
 	krb5_set_error_message(context, ret, "no such entry found in hdb");
     }

@@ -91,7 +91,7 @@ main(int argc, char **argv)
 	errx(1, "krb5_init_contex");
 
     ret = krb5_plugin_register(context,
-		    PLUGIN_TYPE_DATA, "hdb",
+		    PLUGIN_TYPE_DATA, "hdb_test_interface",
 		    &hdb_test);
     if(ret) {
 	    krb5_err(context, 1, ret, "krb5_plugin_register");

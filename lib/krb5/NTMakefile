@@ -507,11 +507,11 @@ test-run:
 	-test_time.exe
 	cd $(SRCDIR)
 
-$(test_binaries): $$(@R).obj $(LIBHEIMDAL) $(LIBVERS) $(LIBROKEN)
+$(test_binaries): $$(@R).obj $(LIBHEIMDAL) $(LIBVERS) $(LIBROKEN) $(LIBHEIMBASE)
 	$(EXECONLINK)
 	$(EXEPREP_NODIST)
 
-$(OBJ)\test_rfc3961.exe: $(OBJ)\test_rfc3961.obj $(LIBRFC3961) $(LIBHEIMDAL) $(LIBVERS) $(LIBCOMERR) $(LIBROKEN)
+$(OBJ)\test_rfc3961.exe: $(OBJ)\test_rfc3961.obj $(LIBRFC3961) $(LIBHEIMDAL) $(LIBVERS) $(LIBCOMERR) $(LIBROKEN) $(LIBHEIMBASE)
 	$(EXECONLINK)
 	$(EXEPREP_NODIST)
 

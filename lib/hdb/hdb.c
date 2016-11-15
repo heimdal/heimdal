@@ -365,7 +365,7 @@ callback(krb5_context context, const void *plug, void *plugctx, void *userctx)
     struct cb_s *cb_ctx = (struct cb_s *)userctx;
 
     if (strncmp(cb_ctx->filename, h->prefix, strlen(h->prefix)) == 0) {
-	cb_ctx->residual = cb_ctx->filename + strlen(h->prefix);
+	cb_ctx->residual = cb_ctx->filename + strlen(h->prefix) + 1;
 	cb_ctx->h = h;
 	return 0;
     }

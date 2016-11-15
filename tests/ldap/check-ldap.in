@@ -52,6 +52,9 @@ kdc="${TESTS_ENVIRONMENT} ../../kdc/kdc --addresses=localhost -P $port"
 
 testfailed="echo test failed; exit 1"
 
+KRB5_CONFIG="${objdir}/krb5.conf"
+export KRB5_CONFIG
+
 # If there is no ldap support compile in, disable test
 if ${kdc} --builtin-hdb | grep ldap > /dev/null ; then
    :
@@ -83,9 +86,6 @@ done
 sh ${objdir}/slapd-init || exit 1
 
 trap "sh ${srcdir}/slapd-stop ; exit 1;" EXIT
-
-KRB5_CONFIG="${objdir}/krb5.conf"
-export KRB5_CONFIG
 
 rm -f current-db*
 

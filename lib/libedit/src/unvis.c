@@ -1,4 +1,4 @@
-/*	$NetBSD: unvis.c,v 1.32 2010/11/27 21:22:11 christos Exp $	*/
+/*	$NetBSD: unvis.c,v 1.44 2014/09/26 15:43:36 roy Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -29,30 +29,27 @@
  * SUCH DAMAGE.
  */
 
-#include "config.h"
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)unvis.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: unvis.c,v 1.32 2010/11/27 21:22:11 christos Exp $");
+__RCSID("$NetBSD: unvis.c,v 1.44 2014/09/26 15:43:36 roy Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
+#include "namespace.h"
 #include <sys/types.h>
-
-#ifdef HAVE_STDINT_H
-#include <stdint.h>
-#endif
 
 #include <assert.h>
 #include <ctype.h>
+#include <stdint.h>
 #include <stdio.h>
+#include <errno.h>
 #include <vis.h>
 
-#ifdef _LIBC
 #ifdef __weak_alias
-__weak_alias(strunvis,_strunvis)
-#endif
+__weak_alias(strnunvisx,_strnunvisx)
 #endif
 
 #if !HAVE_VIS
@@ -66,24 +63,25 @@ __weak_alias(strunvis,_strunvis)
 #define	S_CTRL		4	/* control char started (^) */
 #define	S_OCTAL2	5	/* octal digit 2 */
 #define	S_OCTAL3	6	/* octal digit 3 */
-#define	S_HEX1		7	/* http hex digit */
-#define	S_HEX2		8	/* http hex digit 2 */
-#define S_MIME1		9	/* mime hex digit 1 */
-#define S_MIME2		10	/* mime hex digit 2 */
-#define S_EATCRNL	11	/* mime eating CRNL */
-#define S_AMP		12	/* seen & */
-#define S_NUMBER	13	/* collecting number */
-#define S_STRING	14	/* collecting string */
+#define	S_HEX		7	/* mandatory hex digit */
+#define	S_HEX1		8	/* http hex digit */
+#define	S_HEX2		9	/* http hex digit 2 */
+#define	S_MIME1		10	/* mime hex digit 1 */
+#define	S_MIME2		11	/* mime hex digit 2 */
+#define	S_EATCRNL	12	/* mime eating CRNL */
+#define	S_AMP		13	/* seen & */
+#define	S_NUMBER	14	/* collecting number */
+#define	S_STRING	15	/* collecting string */
 
 #define	isoctal(c)	(((u_char)(c)) >= '0' && ((u_char)(c)) <= '7')
-#define xtod(c)		(isdigit(c) ? (c - '0') : ((tolower(c) - 'a') + 10))
-#define XTOD(c)		(isdigit(c) ? (c - '0') : ((c - 'A') + 10))
+#define	xtod(c)		(isdigit(c) ? (c - '0') : ((tolower(c) - 'a') + 10))
+#define	XTOD(c)		(isdigit(c) ? (c - '0') : ((c - 'A') + 10))
 
 /*
  * RFC 1866
  */
 static const struct nv {
-	const char *name;
+	char name[7];
 	uint8_t value;
 } nv[] = {
 	{ "AElig",	198 }, /* capital AE diphthong (ligature)  */
@@ -300,6 +298,9 @@ unvis(char *cp, int c, int *astate, int flag)
 			*cp = '\033';
 			*astate = SS(0, S_GROUND);
 			return UNVIS_VALID;
+		case 'x':
+			*astate = SS(0, S_HEX);
+			return UNVIS_NOCHAR;
 		case '\n':
 			/*
 			 * hidden newline
@@ -312,6 +313,12 @@ unvis(char *cp, int c, int *astate, int flag)
 			 */
 			*astate = SS(0, S_GROUND);
 			return UNVIS_NOCHAR;
+		default:
+			if (isgraph(c)) {
+				*cp = c;
+				*astate = SS(0, S_GROUND);
+				return UNVIS_VALID;
+			}
 		}
 		goto bad;
 
@@ -320,7 +327,7 @@ unvis(char *cp, int c, int *astate, int flag)
 			*astate = SS(0, S_META1);
 		else if (c == '^')
 			*astate = SS(0, S_CTRL);
-		else
+		else 
 			goto bad;
 		return UNVIS_NOCHAR;
 
@@ -363,6 +370,10 @@ unvis(char *cp, int c, int *astate, int flag)
 		 */
 		return UNVIS_VALIDPUSH;
 
+	case S_HEX:
+		if (!isxdigit(uc))
+			goto bad;
+		/*FALLTHROUGH*/
 	case S_HEX1:
 		if (isxdigit(uc)) {
 			*cp = xtod(uc);
@@ -441,7 +452,7 @@ unvis(char *cp, int c, int *astate, int flag)
 				break;
 		}
 
-		if (*cp == __arraycount(nv))
+		if (ia == __arraycount(nv))
 			goto bad;
 
 		if (uc != 0) {
@@ -473,47 +484,76 @@ unvis(char *cp, int c, int *astate, int flag)
 }
 
 /*
- * strunvis - decode src into dst
+ * strnunvisx - decode src into dst
  *
  *	Number of chars decoded into dst is returned, -1 on error.
  *	Dst is null terminated.
  */
 
 int
-strunvisx(char *dst, const char *src, int flag)
+strnunvisx(char *dst, size_t dlen, const char *src, int flag)
 {
 	char c;
-	char *start = dst;
+	char t = '\0', *start = dst;
 	int state = 0;
 
 	_DIAGASSERT(src != NULL);
 	_DIAGASSERT(dst != NULL);
+#define CHECKSPACE() \
+	do { \
+		if (dlen-- == 0) { \
+			errno = ENOSPC; \
+			return -1; \
+		} \
+	} while (/*CONSTCOND*/0)
 
 	while ((c = *src++) != '\0') {
  again:
-		switch (unvis(dst, c, &state, flag)) {
+		switch (unvis(&t, c, &state, flag)) {
 		case UNVIS_VALID:
-			dst++;
+			CHECKSPACE();
+			*dst++ = t;
 			break;
 		case UNVIS_VALIDPUSH:
-			dst++;
+			CHECKSPACE();
+			*dst++ = t;
 			goto again;
 		case 0:
 		case UNVIS_NOCHAR:
 			break;
+		case UNVIS_SYNBAD:
+			errno = EINVAL;
+			return -1;
 		default:
-			return (-1);
+			_DIAGASSERT(/*CONSTCOND*/0);
+			errno = EINVAL;
+			return -1;
 		}
 	}
-	if (unvis(dst, c, &state, UNVIS_END) == UNVIS_VALID)
-		dst++;
+	if (unvis(&t, c, &state, UNVIS_END) == UNVIS_VALID) {
+		CHECKSPACE();
+		*dst++ = t;
+	}
+	CHECKSPACE();
 	*dst = '\0';
 	return (int)(dst - start);
 }
 
 int
+strunvisx(char *dst, const char *src, int flag)
+{
+	return strnunvisx(dst, (size_t)~0, src, flag);
+}
+
+int
 strunvis(char *dst, const char *src)
 {
-	return strunvisx(dst, src, 0);
+	return strnunvisx(dst, (size_t)~0, src, 0);
+}
+
+int
+strnunvis(char *dst, size_t dlen, const char *src)
+{
+	return strnunvisx(dst, dlen, src, 0);
 }
 #endif

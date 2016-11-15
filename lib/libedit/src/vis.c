@@ -55,16 +55,11 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/cdefs.h>
+#include "config.h"
 #if defined(LIBC_SCCS) && !defined(lint)
 __RCSID("$NetBSD: vis.c,v 1.71 2016/01/14 20:41:23 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
-#ifdef __FBSDID
-__FBSDID("$FreeBSD$");
-#define	_DIAGASSERT(x)	assert(x)
-#endif
 
-#include "namespace.h"
 #include <sys/types.h>
 #include <sys/param.h>
 
@@ -74,10 +69,6 @@ __FBSDID("$FreeBSD$");
 #include <stdlib.h>
 #include <wchar.h>
 #include <wctype.h>
-
-#ifdef __weak_alias
-__weak_alias(strvisx,_strvisx)
-#endif
 
 #if !HAVE_VIS || !HAVE_SVIS
 #include <ctype.h>
@@ -97,7 +88,7 @@ static wchar_t *do_svis(wchar_t *, wint_t, int, wint_t, const wchar_t *);
 
 #undef BELL
 #define BELL L'\a'
- 
+
 #if defined(LC_C_LOCALE)
 #define iscgraph(c)      isgraph_l(c, LC_C_LOCALE)
 #else
@@ -132,30 +123,6 @@ iscgraph(int c) {
 
 static const wchar_t char_shell[] = L"'`\";&<>()|{}]\\$!^~";
 static const wchar_t char_glob[] = L"*?[#";
-
-#if !HAVE_NBTOOL_CONFIG_H
-#ifndef __NetBSD__
-/*
- * On NetBSD MB_LEN_MAX is currently 32 which does not fit on any integer
- * integral type and it is probably wrong, since currently the maximum
- * number of bytes and character needs is 6. Until this is fixed, the
- * loops below are using sizeof(uint64_t) - 1 instead of MB_LEN_MAX, and
- * the assertion is commented out.
- */
-#ifdef __FreeBSD__
-/*
- * On FreeBSD including <sys/systm.h> for CTASSERT only works in kernel
- * mode.
- */
-#ifndef CTASSERT
-#define CTASSERT(x)             _CTASSERT(x, __LINE__)
-#define _CTASSERT(x, y)         __CTASSERT(x, y)
-#define __CTASSERT(x, y)        typedef char __assert ## y[(x) ? 1 : -1]
-#endif
-#endif /* __FreeBSD__ */
-CTASSERT(MB_LEN_MAX <= sizeof(uint64_t));
-#endif /* !__NetBSD__ */
-#endif
 
 /*
  * This is do_hvis, for HTTP style (RFC 1808)

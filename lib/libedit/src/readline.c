@@ -34,6 +34,8 @@
 __RCSID("$NetBSD: readline.c,v 1.139 2016/10/28 18:32:26 christos Exp $");
 #endif /* not lint && not SCCSID */
 
+#include "config.h"
+
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <ctype.h>
@@ -43,7 +45,6 @@ __RCSID("$NetBSD: readline.c,v 1.139 2016/10/28 18:32:26 christos Exp $");
 #include <limits.h>
 #include <pwd.h>
 #include <setjmp.h>
-#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

@@ -42,7 +42,7 @@ AC_CHECK_LIB(curses, tgetent,,
 AC_HEADER_DIRENT
 AC_HEADER_STDC
 AC_HEADER_SYS_WAIT
-AC_CHECK_HEADERS([fcntl.h limits.h stdlib.h string.h sys/ioctl.h sys/param.h unistd.h curses.h ncurses.h sys/cdefs.h])
+AC_CHECK_HEADERS([fcntl.h limits.h stdint.h stdlib.h string.h sys/ioctl.h sys/param.h unistd.h curses.h ncurses.h sys/cdefs.h])
 
 AC_CHECK_HEADER([termios.h], [], [AC_MSG_ERROR([termios.h is required!])],[])
 
@@ -60,6 +60,21 @@ AC_C_CONST
 AC_TYPE_PID_T
 AC_TYPE_SIZE_T
 AC_CHECK_TYPES([u_int32_t])
+
+AC_TRY_COMPILE([
+#include <limits.h>
+#include <stddef.h>
+#if HAVE_STDINT_H
+# include <stdint.h>
+#endif
+],
+[size_t x = SIZE_MAX;],
+[have_size_max=yes],
+[have_size_max=no])
+if test "$have_size_max" = yes; then
+    AC_DEFINE([HAVE_SIZE_MAX], [1],
+              [Define to 1 if if your system has SIZE_MAX])
+fi
 
 # Checks for library functions.
 AC_FUNC_FORK

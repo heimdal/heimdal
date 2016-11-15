@@ -29,7 +29,7 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/cdefs.h>
+#include "config.h"
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)unvis.c	8.1 (Berkeley) 6/4/93";
@@ -38,19 +38,13 @@ __RCSID("$NetBSD: unvis.c,v 1.44 2014/09/26 15:43:36 roy Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
-#include "namespace.h"
 #include <sys/types.h>
 
 #include <assert.h>
 #include <ctype.h>
-#include <stdint.h>
 #include <stdio.h>
 #include <errno.h>
 #include <vis.h>
-
-#ifdef __weak_alias
-__weak_alias(strnunvisx,_strnunvisx)
-#endif
 
 #if !HAVE_VIS
 /*
@@ -327,7 +321,7 @@ unvis(char *cp, int c, int *astate, int flag)
 			*astate = SS(0, S_META1);
 		else if (c == '^')
 			*astate = SS(0, S_CTRL);
-		else 
+		else
 			goto bad;
 		return UNVIS_NOCHAR;
 

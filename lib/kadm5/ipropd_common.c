@@ -104,7 +104,7 @@ restarter(krb5_context context, size_t *countp)
 {
 #if defined(HAVE_FORK) && defined(HAVE_WAITPID)
     struct timeval tmout;
-    pid_t pid;
+    pid_t pid = -1;
     pid_t wpid = -1;
     int status;
     int fds[2];

@@ -1114,7 +1114,8 @@ LDAP_message2entry(krb5_context context, HDB * db, LDAPMessage * msg,
 	    goto out;
 	}
 	ent->entry.etypes->len = ldap_count_values_len(vals);
-	ent->entry.etypes->val = calloc(ent->entry.etypes->len, sizeof(int));
+	ent->entry.etypes->val = calloc(ent->entry.etypes->len,
+                                        sizeof(ent->entry.etypes->val[0]));
 	if (ent->entry.etypes->val == NULL) {
 	    ret = ENOMEM;
 	    krb5_set_error_message(context, ret, "malloc: out of memory");
@@ -1573,7 +1574,7 @@ LDAP_firstkey(krb5_context context, HDB *db, unsigned flags,
 			"(|(objectClass=krb5Principal)(objectClass=sambaSamAccount))",
 			krb5kdcentry_attrs, 0,
 			NULL, NULL, NULL, 0, &msgid);
-    if (msgid < 0)
+    if (ret != LDAP_SUCCESS || msgid < 0)
 	return HDB_ERR_NOENTRY;
 
     HDBSETMSGID(db, msgid);

@@ -232,13 +232,11 @@ init_cred (krb5_context context,
     memset (cred, 0, sizeof(*cred));
 
     if (client)
-	krb5_copy_principal(context, client, &cred->client);
-    else {
-	ret = krb5_get_default_principal (context,
-					  &cred->client);
-	if (ret)
-	    goto out;
-    }
+	ret = krb5_copy_principal(context, client, &cred->client);
+    else
+	ret = krb5_get_default_principal(context, &cred->client);
+    if (ret)
+        goto out;
 
     if (start_time)
 	cred->times.starttime  = now + start_time;
@@ -531,6 +529,8 @@ change_password (krb5_context context,
     krb5_data result_string;
     char *p;
     krb5_get_init_creds_opt *options;
+
+    heim_assert(prompter != NULL, "unexpected NULL prompter");
 
     memset (&cpw_cred, 0, sizeof(cpw_cred));
 
@@ -1933,15 +1933,14 @@ make_fast_ap_fxarmor(krb5_context context,
 
 
     ALLOC(fxarmor, 1);
-    if (fxarmor == NULL) {
-	ret = krb5_enomem(context);
-	goto out;
-    }
+    if (fxarmor == NULL)
+	return krb5_enomem(context);
 
     if (state->flags & KRB5_FAST_AP_ARMOR_SERVICE) {
 #ifdef WIN32
 	krb5_set_error_message(context, ENOTSUP, "Fast armor IPC service not supportted yet on Windows");
-	return ENOTSUP;
+	ret = ENOTSUP;
+        goto out;
 #else /* WIN32 */
 	KERB_ARMOR_SERVICE_REPLY msg;
 	krb5_data request, reply;
@@ -1949,7 +1948,8 @@ make_fast_ap_fxarmor(krb5_context context,
 	heim_base_once_f(&armor_service_once, &armor_service, fast_armor_init_ipc);
 	if (armor_service == NULL) {
 	    krb5_set_error_message(context, ENOENT, "Failed to open fast armor service");
-	    return ENOENT;
+            ret = ENOENT;
+	    goto out;
 	}
 
 	krb5_data_zero(&reply);
@@ -1961,7 +1961,7 @@ make_fast_ap_fxarmor(krb5_context context,
 	heim_release(send);
 	if (ret) {
 	    krb5_set_error_message(context, ret, "Failed to get armor service credential");
-	    return ret;
+	    goto out;
 	}
 
 	ret = decode_KERB_ARMOR_SERVICE_REPLY(reply.data, reply.length, &msg, NULL);
@@ -2116,6 +2116,8 @@ fast_wrap_req(krb5_context context, struct fast_state *state, KDC_REQ *req)
 					 0,
 					 &fxreq.u.armored_data.enc_fast_req);
 	krb5_data_free(&data);
+        if (ret)
+            goto out;
 
     } else {
 	krb5_data_free(&data);
@@ -2381,6 +2383,10 @@ krb5_init_creds_step(krb5_context context,
 		/* try to avoid recursion */
 		if (ctx->in_tkt_service != NULL && strcmp(ctx->in_tkt_service, "kadmin/changepw") == 0)
 		    goto out;
+
+                /* don't try to change password where then where none */
+                if (ctx->prompter == NULL)
+                    goto out;
 
 		ret = change_password(context,
 				      ctx->cred.client,

@@ -405,7 +405,7 @@ krb5_pac_get_types(krb5_context context,
 {
     size_t i;
 
-    *types = calloc(p->pac->numbuffers, sizeof(*types));
+    *types = calloc(p->pac->numbuffers, sizeof(**types));
     if (*types == NULL) {
 	*len = 0;
 	return krb5_enomem(context);
@@ -549,6 +549,8 @@ create_checksum(krb5_context context,
     if (cksumtype == (uint32_t)CKSUMTYPE_HMAC_MD5) {
 	ret = HMAC_MD5_any_checksum(context, key, data, datalen,
 				    KRB5_KU_OTHER_CKSUM, &cksum);
+        if (ret)
+            return ret;
     } else {
 	ret = krb5_crypto_init(context, key, 0, &crypto);
 	if (ret)

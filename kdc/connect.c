@@ -1018,7 +1018,7 @@ reap_kid(krb5_context context, krb5_kdc_configuration *config,
     pid_t pid;
     char *what;
     int status;
-    int i;
+    int i = 0; /* quiet warnings */
 
     pid = waitpid(-1, &status, options);
     if (pid < 1)
@@ -1093,7 +1093,7 @@ start_kdc(krb5_context context,
     struct timeval tv2;
     struct descr *d;
     unsigned int ndescr;
-    pid_t pid;
+    pid_t pid = -1;
 #ifdef HAVE_FORK
     pid_t *pids;
     int max_kdcs = config->num_kdc_processes;
@@ -1154,6 +1154,7 @@ start_kdc(krb5_context context,
     tv1.tv_usec = 0;
 
 #ifdef HAVE_FORK
+    /* Note that we might never execute the body of this loop */
     while (exit_flag == 0) {
 
 	/* Slow down the creation of KDCs... */

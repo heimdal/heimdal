@@ -205,6 +205,9 @@ get_header(krb5_storage *sp, int peek, uint32_t *verp, uint32_t *tstampp,
 
     *verp = 0;
     *tstampp = 0;
+    if (opp != NULL)
+        *opp = kadm_nop;
+    *lenp = 0;
 
     off = krb5_storage_seek(sp, 0, SEEK_CUR);
     if (off < 0)
@@ -728,8 +731,7 @@ kadm5_log_reinit(kadm5_server_context *server_context, uint32_t vno)
 
     /* Write uber entry and truncation nop with version `vno` */
     log_context->version = vno;
-    ret = kadm5_log_nop(server_context, kadm_nop_plain);
-    return 0;
+    return kadm5_log_nop(server_context, kadm_nop_plain);
 }
 
 /* Close the server_context->log_context. */
@@ -1537,7 +1539,8 @@ kadm5_log_replay_modify(kadm5_server_context *context,
 	ent.entry.keys.val = malloc(len * sizeof(*ent.entry.keys.val));
 	if (ent.entry.keys.val == NULL) {
 	    krb5_set_error_message(context->context, ENOMEM, "out of memory");
-	    return ENOMEM;
+            ret = ENOMEM;
+	    goto out;
 	}
 	for (i = 0; i < ent.entry.keys.len; ++i) {
 	    ret = copy_Key(&log_ent.entry.keys.val[i],

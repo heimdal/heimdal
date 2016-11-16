@@ -1194,7 +1194,6 @@ scc_get_cache_first(krb5_context context, krb5_cc_cursor *cursor)
     }
 
     ret = asprintf(&str, "SELECT name FROM %s", name);
-    free(name);
     if (ret < 0 || str == NULL) {
 	exec_stmt(context, ctx->db, ctx->drop, 0);
 	sqlite3_close(ctx->db);
@@ -1203,6 +1202,7 @@ scc_get_cache_first(krb5_context context, krb5_cc_cursor *cursor)
 	free(ctx);
 	return krb5_enomem(context);
     }
+    free(name);
 
     ret = prepare_stmt(context, ctx->db, &ctx->stmt, str);
     free(str);

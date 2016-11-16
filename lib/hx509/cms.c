@@ -863,7 +863,7 @@ hx509_cms_verify_signed(hx509_context context,
     }
 
     for (found_valid_sig = 0, i = 0; i < sd.signerInfos.len; i++) {
-	heim_octet_string signed_data;
+	heim_octet_string signed_data = { 0, 0 };
 	const heim_oid *match_oid;
 	heim_oid decode_oid;
 
@@ -1024,8 +1024,10 @@ hx509_cms_verify_signed(hx509_context context,
 				       "Failed to verify signature in "
 				       "CMS SignedData");
 	}
-        if (signer_info->signedAttrs)
-	    free(signed_data.data);
+        if (signed_data.data != NULL && content->data != signed_data.data) {
+            free(signed_data.data);
+            signed_data.data = NULL;
+        }
 	if (ret)
 	    goto next_sigature;
 

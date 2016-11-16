@@ -911,7 +911,7 @@ main(int argc, char **argv)
 		continue;
 	    }
 
-            if (FD_ISSET(restarter_fd, &readset)) {
+            if (restarter_fd > -1 && FD_ISSET(restarter_fd, &readset)) {
                 if (verbose)
                     krb5_warnx(context, "slave restarter exited");
                 exit_flag = SIGTERM;

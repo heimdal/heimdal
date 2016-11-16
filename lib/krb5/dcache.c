@@ -424,7 +424,6 @@ dcc_gen_new(krb5_context context, krb5_ccache *id)
 	dcc_close(context, *id);
 	return krb5_enomem(context);
     }
-    free(dc->name);
 
     fd = mkstemp(&name[1]);
     if (fd < 0) {
@@ -433,6 +432,7 @@ dcc_gen_new(krb5_context context, krb5_ccache *id)
     }
     close(fd);
 
+    free(dc->name);
     dc->name = name;
 
     return 0;
@@ -556,6 +556,7 @@ dcc_get_cache_first(krb5_context context, krb5_cc_cursor *cursor)
 
     name = copy_default_dcc_cache(context);
     if (name == NULL) {
+        free(iter);
 	krb5_set_error_message(context, KRB5_CC_FORMAT,
 			       N_("Can't generate DIR caches unless its the default type", ""));
 	return KRB5_CC_FORMAT;

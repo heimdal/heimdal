@@ -282,14 +282,11 @@ DB_open(krb5_context context, HDB *db, int flags, mode_t mode)
     if((flags & O_ACCMODE) == O_RDONLY)
       myflags |= MDB_RDONLY;
 
-    if (asprintf(&fn, "%s.mdb", db->hdb_name) == -1) {
-	krb5_set_error_message(context, ENOMEM, "malloc: out of memory");
-	return ENOMEM;
-    }
+    if (asprintf(&fn, "%s.mdb", db->hdb_name) == -1)
+	return krb5_enomem(context);
     if (mdb_env_create(&mi->e)) {
 	free(fn);
-	krb5_set_error_message(context, ENOMEM, "malloc: out of memory");
-	return ENOMEM;
+	return krb5_enomem(context);
     }
 
     tmp = krb5_config_get_int_default(context, NULL, 0, "kdc",
@@ -297,6 +294,7 @@ DB_open(krb5_context context, HDB *db, int flags, mode_t mode)
     if (tmp) {
 	ret = mdb_env_set_maxreaders(mi->e, tmp);
 	if (ret) {
+            free(fn);
 	    krb5_set_error_message(context, ret, "setting maxreaders on %s: %s",
 		db->hdb_name, mdb_strerror(ret));
 	    return ret;
@@ -310,6 +308,7 @@ DB_open(krb5_context context, HDB *db, int flags, mode_t mode)
 	maps *= KILO;
 	ret = mdb_env_set_mapsize(mi->e, maps);
 	if (ret) {
+            free(fn);
 	    krb5_set_error_message(context, ret, "setting mapsize on %s: %s",
 		db->hdb_name, mdb_strerror(ret));
 	    return ret;
@@ -317,16 +316,15 @@ DB_open(krb5_context context, HDB *db, int flags, mode_t mode)
     }
 
     ret = mdb_env_open(mi->e, fn, myflags, mode);
+    free(fn);
     if (ret) {
 fail:
 	mdb_env_close(mi->e);
 	mi->e = 0;
-	free(fn);
 	krb5_set_error_message(context, ret, "opening %s: %s",
 			      db->hdb_name, mdb_strerror(ret));
 	return ret;
     }
-    free(fn);
 
     ret = mdb_txn_begin(mi->e, NULL, MDB_RDONLY, &txn);
     if (ret)

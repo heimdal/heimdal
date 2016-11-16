@@ -169,7 +169,7 @@ rtbl_new_row(rtbl_t table)
 	if(table->columns[c]->num_rows == max_rows)
 	    continue;
 	tmp = realloc(table->columns[c]->rows,
-		      max_rows * sizeof(table->columns[c]->rows));
+		      max_rows * sizeof(table->columns[c]->rows[0]));
 	if(tmp == NULL)
 	    return ENOMEM;
 	table->columns[c]->rows = tmp;

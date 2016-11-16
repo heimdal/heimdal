@@ -486,6 +486,8 @@ loop:
     if(start) *start = pos;
     if(end) *end = pos + 4 + len;
  out:
+    if (ret)
+        krb5_kt_free_entry(context, entry);
     krb5_storage_seek(cursor->sp, pos + 4 + len, SEEK_SET);
     return ret;
 }

@@ -500,6 +500,8 @@ heim_db_begin(heim_db_t db, int read_only, heim_error_t *error)
 
     if (db->plug->beginf) {
 	ret = db->plug->beginf(db->db_data, read_only, error);
+        if (ret)
+            return ret;
     } else if (!db->in_transaction) {
 	/* Try to emulate transactions */
 

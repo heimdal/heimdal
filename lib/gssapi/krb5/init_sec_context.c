@@ -787,14 +787,11 @@ repl_mutual
 			       repl);
 
     *minor_status = 0;
-    if (time_rec) {
-	ret = _gsskrb5_lifetime_left(minor_status,
-				     context,
-				     ctx->endtime,
-				     time_rec);
-    } else {
-	ret = GSS_S_COMPLETE;
-    }
+    if (time_rec)
+        _gsskrb5_lifetime_left(minor_status,
+                               context,
+                               ctx->endtime,
+                               time_rec);
     if (ret_flags)
 	*ret_flags = ctx->flags;
 

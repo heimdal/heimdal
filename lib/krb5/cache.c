@@ -1754,8 +1754,10 @@ krb5_cc_get_lifetime(krb5_context context, krb5_ccache id, time_t *t)
 	return krb5_enomem(context);
 
     ret = krb5_cc_start_seq_get(context, id, &cursor);
-    if (ret)
+    if (ret) {
+        free(start_realm);
 	return ret;
+    }
 
     while ((ret = krb5_cc_next_cred(context, id, &cursor, &cred)) == 0) {
 	/**

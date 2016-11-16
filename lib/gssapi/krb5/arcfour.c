@@ -1114,6 +1114,7 @@ _gssapi_wrap_iov_arcfour(OM_uint32 *minor_status,
     if (kret) {
 	*minor_status = kret;
 	major_status = GSS_S_FAILURE;
+        return major_status;
     }
 
     {

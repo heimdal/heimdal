@@ -167,15 +167,14 @@ parse_key_set(krb5_context context, const char *key,
 	       salt with, this is mostly useful with null salt for
 	       v4 compat, and a cell name for afs compat */
 	    salt->saltvalue.data = strdup(buf[i]);
-	    if (salt->saltvalue.data == NULL) {
-		krb5_set_error_message(context, ENOMEM, "malloc: out of memory");
-		return ENOMEM;
-	    }
+	    if (salt->saltvalue.data == NULL)
+                return krb5_enomem(context);
 	    salt->saltvalue.length = strlen(buf[i]);
 	}
     }
 
     if(enctypes == NULL || salt->salttype == 0) {
+	krb5_free_salt(context, *salt);
 	krb5_set_error_message(context, EINVAL, "bad value for default_keys `%s'", key);
 	return EINVAL;
     }
@@ -689,6 +688,7 @@ hdb_generate_key_set(krb5_context context, krb5_principal principal,
 	if (ret) {
 	    krb5_warn(context, ret, "bad value for default_keys `%s'", *kp);
 	    ret = 0;
+            krb5_free_salt(context, salt);
 	    continue;
 	}
 

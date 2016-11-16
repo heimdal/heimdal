@@ -118,7 +118,8 @@ int main(int argc, char **argv)
 {
     FILE *f;
     int flag;
-    const char *fn, *hb;
+    char *p = NULL;
+    const char *hb;
 
     if (argc > 1 && strcmp(argv[1], "--version") == 0) {
 	printf("some version");
@@ -126,14 +127,11 @@ int main(int argc, char **argv)
     }
 
     if(argc < 2){
-	fn = "bits.h";
 	hb = "__BITS_H__";
 	f = stdout;
     } else {
-	char *p;
-	fn = argv[1];
-	p = malloc(strlen(fn) + 5);
-	sprintf(p, "__%s__", fn);
+	p = malloc(strlen(argv[1]) + 5);
+	sprintf(p, "__%s__", argv[1]);
 	hb = p;
 	for(; *p; p++){
 	    if(!isalnum((unsigned char)*p))

@@ -43,6 +43,7 @@ gss_indicate_mechs(OM_uint32 *minor_status,
 	if (major_status)
 		return (major_status);
 
+        /* XXX We ignore ENOMEM from gss_add_oid_set_member() */
 	HEIM_SLIST_FOREACH(m, &_gss_mechs, gm_link) {
 		if (m->gm_mech.gm_indicate_mechs) {
 			major_status = m->gm_mech.gm_indicate_mechs(
@@ -50,11 +51,11 @@ gss_indicate_mechs(OM_uint32 *minor_status,
 			if (major_status)
 				continue;
 			for (i = 0; i < set->count; i++)
-				major_status = gss_add_oid_set_member(
+				gss_add_oid_set_member(
 				    minor_status, &set->elements[i], mech_set);
 			gss_release_oid_set(minor_status, &set);
 		} else {
-			major_status = gss_add_oid_set_member(
+			gss_add_oid_set_member(
 			    minor_status, &m->gm_mech_oid, mech_set);
 		}
 	}

@@ -238,14 +238,17 @@ _hx509_Name_to_string(const Name *n, char **str)
 		size_t k;
 
 		ret = wind_ucs2utf8_length(bmp, bmplen, &k);
-		if (ret)
+		if (ret) {
+                    free(oidname);
 		    return ret;
+                }
 
 		ss = malloc(k + 1);
 		if (ss == NULL)
 		    _hx509_abort("allocation failure"); /* XXX */
 		ret = wind_ucs2utf8(bmp, bmplen, ss, NULL);
 		if (ret) {
+                    free(oidname);
 		    free(ss);
 		    return ret;
 		}
@@ -263,8 +266,10 @@ _hx509_Name_to_string(const Name *n, char **str)
 		size_t k;
 
 		ret = wind_ucs4utf8_length(uni, unilen, &k);
-		if (ret)
+		if (ret) {
+                    free(oidname);
 		    return ret;
+                }
 
 		ss = malloc(k + 1);
 		if (ss == NULL)
@@ -272,6 +277,7 @@ _hx509_Name_to_string(const Name *n, char **str)
 		ret = wind_ucs4utf8(uni, unilen, ss, NULL);
 		if (ret) {
 		    free(ss);
+                    free(oidname);
 		    return ret;
 		}
 		ss[k] = '\0';

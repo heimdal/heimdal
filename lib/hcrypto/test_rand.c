@@ -103,10 +103,7 @@ main(int argc, char **argv)
 	exit(0);
     }
 
-    argc -= idx;
-    argv += idx;
-
-    if (argc != 0)
+    if (argc != idx)
 	usage(1);
 
     buffer = emalloc(len);

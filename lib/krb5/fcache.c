@@ -964,12 +964,12 @@ cred_delete(krb5_context context,
     if (srealm && strcmp(srealm, "X-CACHECONF:") == 0) {
 	ret = krb5_principal_set_realm(context, cred->server, "X-RMED-CONF:");
 	if (ret)
-	    return;
+	    goto out;
     }
 
     sp = krb5_storage_emem();
     if (sp == NULL)
-	return;
+	goto out;
     krb5_storage_set_eof_code(sp, KRB5_CC_END);
     storage_set_flags(context, sp, FCACHE(id)->version);
 

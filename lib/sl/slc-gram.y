@@ -328,6 +328,7 @@ gen_command(struct assignment *as)
     cprint(1, "    { ");
     fprintf(cfile, "\"%s\", ", a->u.value);
     fprintf(cfile, "%s_wrap, ", f);
+    free(f);
     b = find(as, "argument");
     if(b)
 	fprintf(cfile, "\"%s %s\", ", a->u.value, b->u.value);

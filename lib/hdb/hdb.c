@@ -420,6 +420,7 @@ hdb_list_builtin(krb5_context context, char **list)
             if (asprintf(&f, "%sfoo", h->prefix) == -1)
                 f = NULL;
             if ((sym = make_sym(h->prefix)) == NULL) {
+                free(buf);
                 free(f);
                 return krb5_enomem(context);
             }

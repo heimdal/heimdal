@@ -465,7 +465,6 @@ _krb5_expand_path_tokensv(krb5_context context,
     char *tok_begin, *tok_end, *append;
     char **extra_tokens = NULL;
     const char *path_left;
-    const char *s;
     size_t nargs = 0;
     size_t len = 0;
     va_list ap;
@@ -478,9 +477,9 @@ _krb5_expand_path_tokensv(krb5_context context,
     *ppath_out = NULL;
 
     va_start(ap, ppath_out);
-    while ((s = va_arg(ap, const char *))) {
+    while (va_arg(ap, const char *)) {
 	nargs++;
-        s = va_arg(ap, const char *);
+        va_arg(ap, const char *);
     }
     va_end(ap);
     nargs *= 2;
@@ -494,7 +493,7 @@ _krb5_expand_path_tokensv(krb5_context context,
 	    return krb5_enomem(context);
 	va_start(ap, ppath_out);
 	for (i = 0; i < nargs; i++) {
-	    s = va_arg(ap, const char *); /* token key */
+	    char *s = va_arg(ap, const char *); /* token key */
 	    if (s == NULL)
 		break;
 	    extra_tokens[i] = strdup(s);

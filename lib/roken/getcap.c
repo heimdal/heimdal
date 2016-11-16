@@ -280,6 +280,7 @@ getent(char **cap, size_t *len, char **db_array, int fd,
 		!= NULL) {
 		free(record);
 		retval = cdbget(capdbp, &record, name);
+                /* record is no longer for us to free here */
 		if (retval < 0) {
 		    /* no record available */
 		    (void)capdbp->close(capdbp);
@@ -400,17 +401,20 @@ getent(char **cap, size_t *len, char **db_array, int fd,
 				 */
 		    if (rp >= r_end) {
 			u_int pos;
+                        char *tmp;
 			size_t newsize;
 
 			pos = rp - record;
 			newsize = r_end - record + BFRAG;
-			record = realloc(record, newsize);
-			if (record == NULL) {
+			tmp = realloc(record, newsize);
+			if (tmp == NULL) {
 			    errno = ENOMEM;
 			    if (myfd)
 				(void)close(fd);
+                            free(record);
 			    return (-2);
 			}
+                        record = tmp;
 			r_end = record + newsize;
 			rp = record + pos;
 		    }
@@ -448,8 +452,10 @@ getent(char **cap, size_t *len, char **db_array, int fd,
 	    break;
     }
 
-    if (!foundit)
+    if (!foundit) {
+        free(record);
 	return (-1);
+    }
 
     /*
      * Got the capability record, but now we have to expand all tc=name
@@ -541,19 +547,22 @@ getent(char **cap, size_t *len, char **db_array, int fd,
 	    if (diff >= r_end - rp) {
 		u_int pos, tcpos, tcposend;
 		size_t newsize;
+                char *tmp;
 
 		pos = rp - record;
 		newsize = r_end - record + diff + BFRAG;
 		tcpos = tcstart - record;
 		tcposend = tcend - record;
-		record = realloc(record, newsize);
-		if (record == NULL) {
+		tmp = realloc(record, newsize);
+		if (tmp == NULL) {
 		    errno = ENOMEM;
 		    if (myfd)
 			(void)close(fd);
 		    free(icap);
+                    free(record);
 		    return (-2);
 		}
+                record = tmp;
 		r_end = record + newsize;
 		rp = record + pos;
 		tcstart = record + tcpos;
@@ -584,12 +593,15 @@ getent(char **cap, size_t *len, char **db_array, int fd,
     if (myfd)
 	(void)close(fd);
     *len = rp - record - 1;	/* don't count NUL */
-    if (r_end > rp)
-	if ((record =
-	     realloc(record, (size_t)(rp - record))) == NULL) {
+    if (r_end > rp) {
+        char *tmp = realloc(record, (size_t)(rp - record));
+	if (tmp == NULL) {
 	    errno = ENOMEM;
+            free(record);
 	    return (-2);
 	}
+        record = tmp;
+    }
 
     *cap = record;
     if (tc_not_resolved)
@@ -886,9 +898,14 @@ cgetustr(char *buf, const char *cap, char **str)
     /*
      * Give back any extra memory and return value and success.
      */
-    if (m_room != 0)
-	if ((mem = realloc(mem, (size_t)(mp - mem))) == NULL)
+    if (m_room != 0) {
+        char *tmp = realloc(mem, (size_t)(mp - mem));
+	if (tmp == NULL) {
+            free(mem);
 	    return (-2);
+        }
+        mem = tmp;
+    }
     *str = mem;
     return (len);
 }

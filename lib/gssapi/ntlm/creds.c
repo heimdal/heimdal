@@ -62,6 +62,7 @@ _gss_ntlm_inquire_cred
 	if (n == NULL || n->user == NULL || n->domain == NULL) {
 	    if (n)
 		free(n->user);
+            free(n);
 	    *minor_status = ENOMEM;
 	    return GSS_S_FAILURE;
 	}

@@ -157,7 +157,7 @@ _gsskrb5_create_8003_checksum (
 	*p++ = (fwd_data->length >> 8) & 0xFF;    /* Dlgth  */
 	memcpy(p, (unsigned char *) fwd_data->data, fwd_data->length);
 
-	p += fwd_data->length;
+	/* p += fwd_data->length; */ /* commented out to quiet warning */
     }
 
     return GSS_S_COMPLETE;

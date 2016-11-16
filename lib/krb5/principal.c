@@ -1357,6 +1357,7 @@ krb5_sname_to_principal(krb5_context context,
 	if (ret) {
 	    _krb5_debug(context, 5, "Failed to get name canon rules: ret = %d",
 			ret);
+	    free(remote_host);
 	    return ret;
 	}
 	if (rules[0].type == KRB5_NCRT_NSS &&
@@ -1783,8 +1784,6 @@ apply_name_canon_rule(krb5_context context, krb5_name_canon_rule rules,
             return 0;
     if (ndots > rule->maxdots)
             return 0;
-
-    ret = 0;
 
     if (rule->match_domain != NULL &&
         !is_domain_suffix(orig_hostname, rule->match_domain))

@@ -121,17 +121,13 @@ p11_module_init_once(void *context)
             fprintf(stderr, "p11_module_init(%s): %s\n", PKCS11_MODULE_PATH, dlerror());
     }
 #endif
-    if (pkcs11_module_handle == NULL) {
-        rv = CKR_LIBRARY_LOAD_FAILED;
+    if (pkcs11_module_handle == NULL)
         goto cleanup;
-    }
 
     C_GetFunctionList_fn = (CK_RV (*)(CK_FUNCTION_LIST_PTR_PTR))
 	dlsym(pkcs11_module_handle, "C_GetFunctionList");
-    if (C_GetFunctionList_fn == NULL) {
-        rv = CKR_LIBRARY_LOAD_FAILED;
+    if (C_GetFunctionList_fn == NULL)
         goto cleanup;
-    }
 
     rv = C_GetFunctionList_fn(&module);
     if (rv != CKR_OK)

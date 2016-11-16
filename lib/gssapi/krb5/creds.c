@@ -229,6 +229,10 @@ _gsskrb5_import_cred(OM_uint32 * minor_status,
 
 	ret = krb5_cc_store_cred(context, id, &creds);
 	krb5_free_cred_contents(context, &creds);
+	if (ret) {
+	    *minor_status = ret;
+	    return GSS_S_FAILURE;
+	}
 
 	flags |= GSS_CF_DESTROY_CRED_ON_RELEASE;
 

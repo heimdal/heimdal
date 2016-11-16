@@ -603,7 +603,8 @@ EVP_CIPHER_CTX_cleanup(EVP_CIPHER_CTX *c)
 	    return ret;
     }
     if (c->cipher_data) {
-	memset(c->cipher_data, 0, c->cipher->ctx_size);
+        if (c->cipher)
+            memset(c->cipher_data, 0, c->cipher->ctx_size);
 	free(c->cipher_data);
 	c->cipher_data = NULL;
     }

@@ -547,8 +547,10 @@ static krb5_error_code KRB5_CALLCONV
 dcc_get_cache_first(krb5_context context, krb5_cc_cursor *cursor)
 {
     struct dcache_iter *iter;
+    krb5_error_code ret;
     char *name;
 
+    *cursor = NULL;
     iter = calloc(1, sizeof(*iter));
     if (iter == NULL)
 	return krb5_enomem(context);
@@ -562,18 +564,17 @@ dcc_get_cache_first(krb5_context context, krb5_cc_cursor *cursor)
 	return KRB5_CC_FORMAT;
     }
 
-#if 1
-    free(name);
-    return KRB5_CC_FORMAT;
-#else
-
-    /* XXX */
     ret = dcc_resolve(context, NULL, name);
     free(name);
+    if (ret) {
+        free(iter);
+        return ret;
+    }
+
+    /* XXX We need to opendir() here */
 
     *cursor = iter;
     return 0;
-#endif
 }
 
 static krb5_error_code KRB5_CALLCONV
@@ -588,6 +589,8 @@ dcc_get_cache_next(krb5_context context, krb5_cc_cursor cursor, krb5_ccache *id)
 	krb5_clear_error_message(context);
 	return KRB5_CC_END;
     }
+
+    /* XXX We need to readdir() here */
     iter->first = 0;
 
     return KRB5_CC_END;
@@ -601,6 +604,7 @@ dcc_end_cache_get(krb5_context context, krb5_cc_cursor cursor)
     if (iter == NULL)
         return krb5_einval(context, 2);
 
+    /* XXX We need to closedir() here */
     if (iter->dc)
 	dcc_release(context, iter->dc);
     free(iter);

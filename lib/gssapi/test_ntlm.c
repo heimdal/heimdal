@@ -333,5 +333,5 @@ main(int argc, char **argv)
     ret += test_libntlm_v2(0);
     ret += test_libntlm_v2(NTLM_NEG_KEYEX);
 
-    return 0;
+    return ret;
 }

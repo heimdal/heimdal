@@ -400,7 +400,7 @@ int
 last_version(struct last_version_options *opt, int argc, char **argv)
 {
     kadm5_server_context *server_context;
-    char *alt_argv[2];
+    char *alt_argv[2] = { NULL, NULL };
     krb5_error_code ret;
     uint32_t version;
     size_t i;
@@ -410,7 +410,6 @@ last_version(struct last_version_options *opt, int argc, char **argv)
 
     if (argc == 0) {
         alt_argv[0] = strdup(server_context->log_context.log_file);
-        alt_argv[1] = NULL;
         if (alt_argv[0] == NULL)
             krb5_err(context, 1, errno, "strdup");
         argv = alt_argv;
@@ -451,6 +450,7 @@ last_version(struct last_version_options *opt, int argc, char **argv)
     }
 
     kadm5_destroy(server_context);
+    free(alt_argv[0]);
     return 0;
 }
 

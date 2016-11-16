@@ -117,14 +117,13 @@ rk_tdelete(const void * vkey, void ** vrootp,
 	int (*compar)(const void *, const void *))
 {
 	node_t **rootp = (node_t **)vrootp;
-	node_t *p, *q, *r;
+	node_t *q, *r;
 	int cmp;
 
-	if (rootp == NULL || (p = *rootp) == NULL)
+	if (rootp == NULL || *rootp == NULL)
 		return NULL;
 
 	while ((cmp = (*compar)(vkey, (*rootp)->key)) != 0) {
-		p = *rootp;
 		rootp = (cmp < 0) ?
 		    &(*rootp)->llink :		/* follow llink branch */
 		    &(*rootp)->rlink;		/* follow rlink branch */

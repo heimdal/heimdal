@@ -49,6 +49,7 @@ _gsskrb5_lifetime_left(OM_uint32 *minor_status,
 
     kret = krb5_timeofday(context, &now);
     if (kret) {
+        *lifetime_rec = 0;
 	*minor_status = kret;
 	return GSS_S_FAILURE;
     }

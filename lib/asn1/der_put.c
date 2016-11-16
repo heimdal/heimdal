@@ -502,12 +502,14 @@ _heim_time2generalizedtime (time_t t, heim_octet_string *s, int gtimep)
      struct tm tm;
      const size_t len = gtimep ? 15 : 13;
 
+     s->data = NULL;
+     s->length = 0;
+     if (_der_gmtime(t, &tm) == NULL)
+	 return ASN1_BAD_TIMEFORMAT;
      s->data = malloc(len + 1);
      if (s->data == NULL)
 	 return ENOMEM;
      s->length = len;
-     if (_der_gmtime(t, &tm) == NULL)
-	 return ASN1_BAD_TIMEFORMAT;
      if (gtimep)
 	 snprintf (s->data, len + 1, "%04d%02d%02d%02d%02d%02dZ",
 		   tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday,

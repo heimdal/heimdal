@@ -635,7 +635,6 @@ hdb_sqlite_store(krb5_context context, HDB *db, unsigned flags,
             ret = HDB_ERR_EXISTS;
             goto rollback;
         }
-        ret = 0;
 
 	ret = bind_principal(context, entry->entry.principal, hsdb->add_principal, 1);
 	if (ret)
@@ -662,8 +661,6 @@ hdb_sqlite_store(krb5_context context, HDB *db, unsigned flags,
         }
 
         entry_id = sqlite3_column_int64(get_ids, 1);
-
-        ret = 0;
 
     } else if(ret == SQLITE_ROW) { /* Found a principal */
 

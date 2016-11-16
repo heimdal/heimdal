@@ -154,8 +154,6 @@ OM_uint32 GSSAPI_CALLCONV _gsskrb5_add_cred (
 	if (cred->keytab) {
 	    char *name = NULL;
 
-	    major = GSS_S_FAILURE;
-
             *minor_status = krb5_kt_get_full_name(context, cred->keytab,
                                                   &name);
 	    if (*minor_status)
@@ -170,8 +168,6 @@ OM_uint32 GSSAPI_CALLCONV _gsskrb5_add_cred (
 	if (cred->ccache) {
 	    const char *type, *name;
 	    char *type_name = NULL;
-
-	    major = GSS_S_FAILURE;
 
 	    type = krb5_cc_get_type(context, cred->ccache);
 	    if (type == NULL){

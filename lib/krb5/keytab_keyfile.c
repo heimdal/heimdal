@@ -127,7 +127,7 @@ static krb5_error_code KRB5_CALLCONV
 akf_resolve(krb5_context context, const char *name, krb5_keytab id)
 {
     int ret;
-    struct akf_data *d = malloc(sizeof (struct akf_data));
+    struct akf_data *d = calloc(1, sizeof (struct akf_data));
 
     if (d == NULL)
 	return krb5_enomem(context);

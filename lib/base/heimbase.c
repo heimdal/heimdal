@@ -986,7 +986,7 @@ heim_path_vcreate(heim_object_t ptr, size_t size, heim_object_t leaf,
 					  heim_number_get_int(path_element),
 					  leaf);
     }
-    return 0;
+    return ret;
 
 err:
     if (error && !*error) {

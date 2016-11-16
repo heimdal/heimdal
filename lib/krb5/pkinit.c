@@ -307,8 +307,10 @@ cert2epi(hx509_context context, void *ctx, hx509_cert c)
 			   id.issuerAndSerialNumber->length,
 			   &iasn, &size, ret);
 	free_IssuerAndSerialNumber(&iasn);
-	if (ret)
+	if (ret) {
+            free_ExternalPrincipalIdentifier(&id);
 	    return ret;
+        }
 	if (id.issuerAndSerialNumber->length != size)
 	    abort();
     }

@@ -482,6 +482,7 @@ gsskrb5_acceptor_start(OM_uint32 * minor_status,
     if (kret) {
 	ret = GSS_S_FAILURE;
 	*minor_status = kret;
+	return ret;
     }
 
     kret = krb5_copy_principal(context,

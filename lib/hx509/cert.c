@@ -1846,7 +1846,7 @@ match_alt_name(const GeneralName *n, const Certificate *c,
 	       int *same, int *match)
 {
     GeneralNames sa;
-    int ret;
+    int ret = 0;
     size_t i, j;
 
     i = 0;
@@ -1861,7 +1861,7 @@ match_alt_name(const GeneralName *n, const Certificate *c,
 	for (j = 0; j < sa.len; j++) {
 	    if (n->element == sa.val[j].element) {
 		*same = 1;
-		ret = match_general_name(n, &sa.val[j], match);
+		match_general_name(n, &sa.val[j], match);
 	    }
 	}
 	free_GeneralNames(&sa);
@@ -1900,7 +1900,7 @@ match_tree(const GeneralSubtrees *t, const Certificate *c, int *match)
 	    certname.u.directoryName.u.rdnSequence =
 		c->tbsCertificate.subject.u.rdnSequence;
 
-	    ret = match_general_name(&t->val[i].base, &certname, &name);
+	    match_general_name(&t->val[i].base, &certname, &name);
 	}
 
 	/* Handle subjectAltNames, this is icky since they
@@ -1908,7 +1908,7 @@ match_tree(const GeneralSubtrees *t, const Certificate *c, int *match)
 	 * same type. So if there have been a match of type, require
 	 * altname to be set.
 	 */
-	ret = match_alt_name(&t->val[i].base, c, &same, &alt_name);
+	match_alt_name(&t->val[i].base, c, &same, &alt_name);
     }
     if (name && (!same || alt_name))
 	*match = 1;

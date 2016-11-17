@@ -126,7 +126,8 @@ kadm5_c_randkey_principal(void *server_handle,
 	if (n_keys && new_keys) {
 	    *n_keys = tmp;
 	    *new_keys = k;
-	}
+	} else
+            free(k);
     }
 out:
     krb5_storage_free(sp);

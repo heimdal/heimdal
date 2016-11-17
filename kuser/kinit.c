@@ -798,6 +798,9 @@ ticket_lifetime(krb5_context context, krb5_ccache cache, krb5_principal client,
 
     memset(&in_cred, 0, sizeof(in_cred));
 
+    if (renew != NULL)
+        *renew = 0;
+
     ret = krb5_cc_get_principal(context, cache, &in_cred.client);
     if (ret) {
 	krb5_warn(context, ret, "krb5_cc_get_principal");

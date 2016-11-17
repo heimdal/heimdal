@@ -656,6 +656,7 @@ encode_creds(krb5_context context, krb5_creds *creds, krb5_data *data)
     krb5_error_code ret;
     krb5_storage *sp;
 
+    krb5_data_zero(data);
     sp = krb5_storage_emem();
     if (sp == NULL)
 	return krb5_enomem(context);

@@ -662,6 +662,8 @@ init_fcc(krb5_context context,
     krb5_storage *sp;
     krb5_error_code ret;
 
+    *ret_fd = -1;
+    *ret_sp = NULL;
     if (kdc_offset)
 	*kdc_offset = 0;
 

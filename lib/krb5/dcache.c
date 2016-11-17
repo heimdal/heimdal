@@ -146,6 +146,7 @@ get_default_cache(krb5_context context, krb5_dcache *dc, char **residual)
     char *primary;
     FILE *f;
 
+    *residual = NULL;
     primary = primary_create(dc);
     if (primary == NULL)
 	return krb5_enomem(context);

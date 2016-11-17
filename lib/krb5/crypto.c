@@ -2347,8 +2347,10 @@ _get_derived_key(krb5_context context,
 	    return 0;
 	}
     d = _new_derived_key(crypto, usage);
-    if (d == NULL)
+    if (d == NULL) {
+        *key = NULL; /* quiet warning */
 	return krb5_enomem(context);
+    }
     krb5_copy_keyblock(context, crypto->key.key, &d->key);
     _krb5_put_int(constant, usage, 5);
     _krb5_derive_key(context, crypto->et, d, constant, sizeof(constant));

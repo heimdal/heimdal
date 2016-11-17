@@ -283,7 +283,8 @@ kadm5_setkey_principal_3(void *server_handle,
 	return ret;
 
     if (keepold) {
-	new_key_data = malloc((n_keys + princ_ent.n_key_data) * sizeof(*new_key_data));
+        new_key_data = calloc((n_keys + princ_ent.n_key_data),
+                              sizeof(*new_key_data));
 	if (new_key_data == NULL) {
 	    ret = ENOMEM;
 	    goto out;
@@ -292,7 +293,7 @@ kadm5_setkey_principal_3(void *server_handle,
 	memcpy(&new_key_data[n_keys], &princ_ent.key_data[0],
 		princ_ent.n_key_data * sizeof (princ_ent.key_data[0]));
     } else {
-	new_key_data = malloc(n_keys * sizeof(*new_key_data));
+	new_key_data = calloc(n_keys, sizeof(*new_key_data));
 	if (new_key_data == NULL) {
 	    ret = ENOMEM;
 	    goto out;
@@ -324,8 +325,10 @@ kadm5_setkey_principal_3(void *server_handle,
 	 */
 	new_key_data[i].key_data_type[1] = 0;
 	if (n_ks_tuple > 0) {
-	    if (ks_tuple[i].ks_enctype != keyblocks[i].keytype)
-		return KADM5_SETKEY3_ETYPE_MISMATCH;
+	    if (ks_tuple[i].ks_enctype != keyblocks[i].keytype) {
+		ret = KADM5_SETKEY3_ETYPE_MISMATCH;
+                goto out;
+            }
 	    new_key_data[i].key_data_type[1] = ks_tuple[i].ks_salttype;
 	}
 	new_key_data[i].key_data_length[1] = 0;

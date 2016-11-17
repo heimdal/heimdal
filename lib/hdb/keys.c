@@ -162,15 +162,15 @@ parse_key_set(krb5_context context, const char *key,
 	    continue;
 	}
 
-	{
-	    /* if there is a final string, use it as the string to
-	       salt with, this is mostly useful with null salt for
-	       v4 compat, and a cell name for afs compat */
-	    salt->saltvalue.data = strdup(buf[i]);
-	    if (salt->saltvalue.data == NULL)
-                return krb5_enomem(context);
-	    salt->saltvalue.length = strlen(buf[i]);
-	}
+        if (salt->saltvalue.data != NULL)
+            free(salt->saltvalue.data);
+        /* if there is a final string, use it as the string to
+           salt with, this is mostly useful with null salt for
+           v4 compat, and a cell name for afs compat */
+        salt->saltvalue.data = strdup(buf[i]);
+        if (salt->saltvalue.data == NULL)
+            return krb5_enomem(context);
+        salt->saltvalue.length = strlen(buf[i]);
     }
 
     if(enctypes == NULL || salt->salttype == 0) {

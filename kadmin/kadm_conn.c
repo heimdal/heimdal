@@ -298,4 +298,5 @@ start_server(krb5_context contextp, const char *port_str)
     roken_detach_finish(NULL, daemon_child);
 
     wait_for_connection(contextp, socks, num_socks);
+    free(socks);
 }

@@ -503,8 +503,10 @@ list_caches(krb5_context context, struct klist_options *opt)
     def_name = strdup(cdef_name);
 
     ret = krb5_cccol_cursor_new(context, &cursor);
-    if (ret == KRB5_CC_NOSUPP)
+    if (ret == KRB5_CC_NOSUPP) {
+        free(def_name);
 	return 0;
+    }
     else if (ret)
 	krb5_err (context, 1, ret, "krb5_cc_cache_get_first");
 

@@ -147,12 +147,8 @@ read_master_keytab(krb5_context context, const char *filename,
   out:
     krb5_kt_close(context, id);
     if (ret) {
-	/* do not return allocated memory on failure */
-	do {
-	    p = (*mkey)->next;
-	    free(*mkey);
-	    *mkey = p;
-	} while (p != NULL);
+	hdb_free_master_key(context, *mkey);
+	*mkey = NULL;
     }
     return ret;
 }

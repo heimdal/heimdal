@@ -132,6 +132,7 @@ add_users (const char *filename, unsigned n)
 	add_user (ctx, hndl, nwords, words);
     kadm5_destroy(hndl);
     krb5_free_context(ctx);
+    free(words);
 }
 
 static int version_flag	= 0;

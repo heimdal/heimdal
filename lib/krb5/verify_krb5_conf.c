@@ -336,7 +336,7 @@ check_log(krb5_context context, const char *path, char *data)
 	    strlcpy(severity, "ERR", sizeof(severity));
  	if(*facility == '\0')
 	    strlcpy(facility, "AUTH", sizeof(facility));
-	if(find_value(severity, syslogvals) == -1) {
+	if(find_value(facility, syslogvals) == -1) {
 	    krb5_warnx(context, "%s: unknown syslog facility \"%s\"",
 		       path, facility);
 	    ret++;

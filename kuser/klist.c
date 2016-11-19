@@ -262,7 +262,6 @@ print_tickets (krb5_context context,
 		printf ("%17s: %s\n", N_("Friendly name", ""), name);
 	    free(name);
 	}
-	free (str);
 	
 	if(do_verbose) {
 	    printf ("%17s: %d\n", N_("Cache version", ""),
@@ -294,6 +293,7 @@ print_tickets (krb5_context context,
     } else {
 	printf ("{ \"cache\" : \"%s\", \"principal\" : \"%s\", ", fullname, str);
     }
+    free(str);
 
     ret = krb5_cc_start_seq_get (context, ccache, &cursor);
     if (ret)

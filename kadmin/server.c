@@ -49,7 +49,7 @@ kadmind_dispatch(void *kadm_handlep, krb5_boolean initial,
     const char *op = "";
     krb5_principal princ, princ2;
     kadm5_principal_ent_rec ent, ent_prev;
-    char *password, *expression;
+    char *password = NULL, *expression;
     krb5_keyblock *new_keys;
     krb5_key_salt_tuple *ks_tuple = NULL;
     krb5_boolean keepold = FALSE;
@@ -59,6 +59,7 @@ kadmind_dispatch(void *kadm_handlep, krb5_boolean initial,
     int n_princs;
     int keys_ok = 0;
     krb5_storage *sp;
+    int len;
 
     krb5_unparse_name_fixed(contextp->context, contextp->caller,
 			    client, sizeof(client));
@@ -182,8 +183,6 @@ kadmind_dispatch(void *kadm_handlep, krb5_boolean initial,
 					  ent.principal);
 	if(ret){
 	    kadm5_free_principal_ent(kadm_handlep, &ent);
-	    memset(password, 0, strlen(password));
-	    free(password);
 	    goto fail;
 	}
         if ((mask & KADM5_TL_DATA)) {
@@ -194,16 +193,12 @@ kadmind_dispatch(void *kadm_handlep, krb5_boolean initial,
             ret = check_aliases(contextp, &ent, NULL);
             if (ret) {
                 kadm5_free_principal_ent(kadm_handlep, &ent);
-                memset(password, 0, strlen(password));
-                free(password);
                 goto fail;
             }
         }
 	ret = kadm5_create_principal(kadm_handlep, &ent,
 				     mask, password);
 	kadm5_free_principal_ent(kadm_handlep, &ent);
-	memset(password, 0, strlen(password));
-	free(password);
 	krb5_storage_free(sp);
 	sp = krb5_storage_emem();
 	krb5_store_int32(sp, ret);
@@ -351,15 +346,11 @@ kadmind_dispatch(void *kadm_handlep, krb5_boolean initial,
 
 	if(ret) {
 	    krb5_free_principal(contextp->context, princ);
-	    memset(password, 0, strlen(password));
-	    free(password);
 	    goto fail;
 	}
 	ret = kadm5_chpass_principal_3(kadm_handlep, princ, keepold, 0, NULL,
 				       password);
 	krb5_free_principal(contextp->context, princ);
-	memset(password, 0, strlen(password));
-	free(password);
 	krb5_storage_free(sp);
 	sp = krb5_storage_emem();
 	krb5_store_int32(sp, ret);
@@ -579,10 +570,20 @@ kadmind_dispatch(void *kadm_handlep, krb5_boolean initial,
 	krb5_store_int32(sp, KADM5_FAILURE);
 	break;
     }
+    if (password != NULL) {
+	len = strlen(password);
+	memset_s(password, len, 0, len);
+	free(password);
+    }
     krb5_storage_to_data(sp, out);
     krb5_storage_free(sp);
     return 0;
 fail:
+    if (password != NULL) {
+	len = strlen(password);
+	memset_s(password, len, 0, len);
+	free(password);
+    }
     krb5_warn(contextp->context, ret, "%s", op);
     krb5_storage_seek(sp, 0, SEEK_SET);
     krb5_store_int32(sp, ret);

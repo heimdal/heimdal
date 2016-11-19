@@ -584,6 +584,7 @@ gsskrb5_acceptor_start(OM_uint32 * minor_status,
 	    if (ap_options & AP_OPTS_MUTUAL_REQUIRED)
 		ctx->flags |= GSS_C_MUTUAL_FLAG;
 	}
+	krb5_free_authenticator(context, &authenticator);
     }
 
     if(ctx->flags & GSS_C_MUTUAL_FLAG) {

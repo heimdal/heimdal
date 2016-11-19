@@ -498,6 +498,7 @@ _krb5_expand_path_tokensv(krb5_context context,
 		break;
 	    extra_tokens[i] = strdup(s);
 	    if (extra_tokens[i++] == NULL) {
+		va_end(ap);
 		free_extra_tokens(extra_tokens);
 		return krb5_enomem(context);
 	    }
@@ -506,6 +507,7 @@ _krb5_expand_path_tokensv(krb5_context context,
 		s = "";
 	    extra_tokens[i] = strdup(s);
 	    if (extra_tokens[i] == NULL) {
+		va_end(ap);
 		free_extra_tokens(extra_tokens);
 		return krb5_enomem(context);
 	    }

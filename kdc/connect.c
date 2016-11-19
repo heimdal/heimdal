@@ -1116,10 +1116,9 @@ start_kdc(krb5_context context,
     if (max_kdcs < 1)
 	max_kdcs = 1;
 
-    pids = malloc(max_kdcs * sizeof(*pids));
+    pids = calloc(max_kdcs, sizeof(*pids));
     if (!pids)
 	krb5_err(context, 1, errno, "malloc");
-    memset(pids, 0x0, max_kdcs * sizeof(*pids));
 
     /*
      * We open a socketpair of which we hand one end to each of our kids.
@@ -1190,10 +1189,12 @@ start_kdc(krb5_context context,
 	    sleep(10);
 	    break;
 	default:
-	    for (i=0; i < max_kdcs; i++)
-		if (pids[i] == 0)
+	    for (i=0; i < max_kdcs; i++) {
+		if (pids[i] == 0) {
+		    pids[i] = pid;
 		    break;
-	    pids[i] = pid;
+		}
+	    }
 	    kdc_log(context, config, 0, "KDC worker process started: %d", pid);
 	    num_kdcs++;
 	    gettimeofday(&tv1, NULL);

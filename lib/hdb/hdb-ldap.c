@@ -2024,12 +2024,18 @@ hdb_ldap_common(krb5_context context,
     return 0;
 }
 
+#ifdef OPENLDAP_MODULE
+static
+#endif
 krb5_error_code
 hdb_ldap_create(krb5_context context, HDB ** db, const char *arg)
 {
     return hdb_ldap_common(context, db, arg, NULL);
 }
 
+#ifdef OPENLDAP_MODULE
+static
+#endif
 krb5_error_code
 hdb_ldapi_create(krb5_context context, HDB ** db, const char *arg)
 {
@@ -2058,8 +2064,6 @@ hdb_ldapi_create(krb5_context context, HDB ** db, const char *arg)
 }
 
 #ifdef OPENLDAP_MODULE
-
-
 static krb5_error_code
 init(krb5_context context, void **ctx)
 {
@@ -2087,7 +2091,6 @@ struct hdb_method hdb_ldapi_interface = {
     "ldapi",
     hdb_ldapi_create
 };
-
 #endif
 
 #endif				/* OPENLDAP */

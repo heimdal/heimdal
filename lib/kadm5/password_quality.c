@@ -378,7 +378,7 @@ kadm5_add_passwd_quality_verifier(krb5_context context,
 #ifdef HAVE_DLOPEN
 
     if(check_library == NULL) {
-	krb5_error_code ret;
+	krb5_error_code ret = 0;
         char **strs;
 	char **tmp;
 
@@ -386,7 +386,7 @@ kadm5_add_passwd_quality_verifier(krb5_context context,
 				       "password_quality",
 				       "policy_libraries",
 				       NULL);
-	if(strs == NULL || *strs == NULL)
+	if (strs == NULL)
 	    return 0;
 
 	for (tmp = strs; *tmp; tmp++) {

@@ -1519,8 +1519,6 @@ tgs_build_reply(krb5_context context,
     krb5_keyblock sessionkey;
     krb5_kvno kvno;
     krb5_data rspac;
-    const char *tgt_realm = /* Realm of TGT issuer */
-        krb5_principal_get_realm(context, krbtgt->entry.principal);
     const char *our_realm = /* Realm of this KDC */
         krb5_principal_get_comp_string(context, krbtgt->entry.principal, 1);
     char **capath = NULL;

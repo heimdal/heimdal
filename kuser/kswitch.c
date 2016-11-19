@@ -123,12 +123,13 @@ kswitch(struct kswitch_options *opt, int argc, char **argv)
 
 	    id = ids[i - 1];
 	    ids[i - 1] = NULL;
+	    free(name);
 	} else
 	    krb5_errx(heimtools_context, 1, "No cache selected");
 	for (i = 0; i < len; i++)
 	    if (ids[i])
 		krb5_cc_close(heimtools_context, ids[i]);
-
+	free(ids);
     } else if (opt->principal_string) {
 	krb5_principal p;
 

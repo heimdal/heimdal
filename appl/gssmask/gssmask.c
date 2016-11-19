@@ -860,7 +860,6 @@ HandleOP(AcquirePKInitCreds)
     int32_t flags;
     krb5_data pfxdata;
     char fn[] = "FILE:/tmp/pkcs12-creds-XXXXXXX";
-    krb5_principal principal = NULL;
     int fd;
 
     ret32(c, flags);
@@ -873,9 +872,6 @@ HandleOP(AcquirePKInitCreds)
     net_write(fd, pfxdata.data, pfxdata.length);
     krb5_data_free(&pfxdata);
     close(fd);
-
-    if (principal)
-	krb5_free_principal(context, principal);
 
     put32(c, -1); /* hResource */
     put32(c, GSMERR_NOT_SUPPORTED);

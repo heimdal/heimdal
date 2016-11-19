@@ -993,8 +993,6 @@ db_replay_log_table_del_keys_iter(heim_object_t key, heim_object_t value,
     if (k == NULL)
 	return;
 
-    k = (heim_data_t)key;
-
     db->ret = db->plug->delf(db->db_data, db->current_table, k, &db->error);
     heim_release(k);
 }
@@ -1409,6 +1407,7 @@ json_db_open(void *plug, const char *dbtype, const char *dbname,
     if (jsondb == NULL) {
 	heim_release(contents);
 	heim_release(dbname_s);
+	heim_release(bkpname_s);
 	return ENOMEM;
     }
 

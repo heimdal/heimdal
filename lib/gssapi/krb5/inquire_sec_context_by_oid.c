@@ -149,7 +149,6 @@ static OM_uint32 inquire_sec_context_get_subkey
     }
 
     ret = krb5_store_keyblock(sp, *key);
-    krb5_free_keyblock (context, key);
     if (ret)
 	goto out;
 
@@ -169,6 +168,7 @@ static OM_uint32 inquire_sec_context_get_subkey
     }
 
 out:
+    krb5_free_keyblock(context, key);
     krb5_data_free(&data);
     if (sp)
 	krb5_storage_free(sp);

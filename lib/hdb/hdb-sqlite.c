@@ -499,10 +499,9 @@ hdb_sqlite_fetch_kvno(krb5_context context, HDB *db, krb5_const_principal princi
     }
 
     ret = bind_principal(context, principal, fetch, 1);
+    krb5_free_principal(context, enterprise_principal);
     if (ret)
 	return ret;
-
-    krb5_free_principal(context, enterprise_principal);
 
     sqlite_error = hdb_sqlite_step(context, hsdb->db, fetch);
     if (sqlite_error != SQLITE_ROW) {

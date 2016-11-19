@@ -475,10 +475,10 @@ test_wrap_ext(struct client *c1, int32_t hc1, struct client *c2, int32_t hc2,
     int32_t val;
 
     header.data = "header";
-    header.length = 6;
+    header.length = sizeof("header") - 1;
 
     msg.data = "0123456789abcdef"; /* padded for most enctypes */
-    msg.length = 32;
+    msg.length = sizeof("0123456789abcdef") - 1;
 
     trailer.data = "trailer";
     trailer.length = 7;

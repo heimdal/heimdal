@@ -379,21 +379,22 @@ kadm5_add_passwd_quality_verifier(krb5_context context,
 
     if(check_library == NULL) {
 	krb5_error_code ret;
+        char **strs;
 	char **tmp;
 
-	tmp = krb5_config_get_strings(context, NULL,
-				      "password_quality",
-				      "policy_libraries",
-				      NULL);
-	if(tmp == NULL || *tmp == NULL)
+	strs = krb5_config_get_strings(context, NULL,
+				       "password_quality",
+				       "policy_libraries",
+				       NULL);
+	if(strs == NULL || *strs == NULL)
 	    return 0;
 
-	while (*tmp) {
+	for (tmp = strs; *tmp; tmp++) {
 	    ret = add_verifier(context, *tmp);
 	    if (ret)
 		return ret;
-	    tmp++;
 	}
+        krb5_config_free_strings(strs);
 	return 0;
     } else {
 	return add_verifier(context, check_library);

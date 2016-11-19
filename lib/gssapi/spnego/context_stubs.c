@@ -531,6 +531,7 @@ OM_uint32 GSSAPI_CALLCONV _gss_spnego_import_sec_context (
     gss_ctx_id_t context;
     gssspnego_ctx ctx;
 
+    *context_handle = GSS_C_NO_CONTEXT;
     ret = _gss_spnego_alloc_sec_context(minor_status, &context);
     if (ret != GSS_S_COMPLETE) {
 	return ret;
@@ -543,7 +544,7 @@ OM_uint32 GSSAPI_CALLCONV _gss_spnego_import_sec_context (
 				 interprocess_token,
 				 &ctx->negotiated_ctx_id);
     if (ret != GSS_S_COMPLETE) {
-	_gss_spnego_internal_delete_sec_context(&minor, context_handle, GSS_C_NO_BUFFER);
+	_gss_spnego_internal_delete_sec_context(&minor, &context, GSS_C_NO_BUFFER);
 	return ret;
     }
 

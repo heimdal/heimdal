@@ -1902,6 +1902,7 @@ _krb5_make_fast_ap_fxarmor(krb5_context context,
 	goto out;
 
  out:
+    krb5_auth_con_free(context, auth_context);
     return ret;
 }
 

@@ -337,8 +337,10 @@ load_ocsp(hx509_context context, struct revoke_ocsp *ocsp)
 	return ret;
 
     ret = stat(ocsp->path, &sb);
-    if (ret)
+    if (ret) {
+        rk_xfree(data);
 	return errno;
+    }
 
     ret = parse_ocsp_basic(data, length, &basic);
     rk_xfree(data);

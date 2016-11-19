@@ -611,8 +611,8 @@ gsskrb5_acceptor_start(OM_uint32 * minor_status,
 						    rkey);
 		if (kret == 0)
 		    use_subkey = 1;
-		krb5_free_keyblock(context, rkey);
 	    }
+            krb5_free_keyblock(context, rkey);
 	}
 	if (use_subkey) {
 	    ctx->more_flags |= ACCEPTOR_SUBKEY;

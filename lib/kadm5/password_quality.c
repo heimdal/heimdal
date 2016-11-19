@@ -392,10 +392,10 @@ kadm5_add_passwd_quality_verifier(krb5_context context,
 	for (tmp = strs; *tmp; tmp++) {
 	    ret = add_verifier(context, *tmp);
 	    if (ret)
-		return ret;
+		break;
 	}
         krb5_config_free_strings(strs);
-	return 0;
+	return ret;
     } else {
 	return add_verifier(context, check_library);
     }

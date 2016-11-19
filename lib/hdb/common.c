@@ -254,10 +254,9 @@ hdb_add_aliases(krb5_context context, HDB *db,
 	entryalias.principal = entry->entry.principal;
 
 	code = hdb_entry_alias2value(context, &entryalias, &value);
-	if (code) {
-	    krb5_data_free(&key);
+	if (code)
 	    return code;
-	}
+
 	code = hdb_principal2key(context, &aliases->aliases.val[i], &key);
         if (code == 0) {
             code = db->hdb__put(context, db, flags, key, value);

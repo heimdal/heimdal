@@ -119,6 +119,7 @@ read_master_keytab(krb5_context context, const char *filename,
     krb5_keytab_entry entry;
     hdb_master_key p;
 
+    *mkey = NULL;
     ret = krb5_kt_resolve(context, filename, &id);
     if(ret)
 	return ret;
@@ -126,7 +127,6 @@ read_master_keytab(krb5_context context, const char *filename,
     ret = krb5_kt_start_seq_get(context, id, &cursor);
     if(ret)
 	goto out;
-    *mkey = NULL;
     while(krb5_kt_next_entry(context, id, &entry, &cursor) == 0) {
 	p = calloc(1, sizeof(*p));
 	if(p == NULL) {
@@ -136,12 +136,24 @@ read_master_keytab(krb5_context context, const char *filename,
 	}
 	p->keytab = entry;
 	ret = krb5_crypto_init(context, &p->keytab.keyblock, 0, &p->crypto);
+	if (ret) {
+	    krb5_kt_end_seq_get(context, id, &cursor);
+	    goto out;
+	}
 	p->next = *mkey;
 	*mkey = p;
     }
     krb5_kt_end_seq_get(context, id, &cursor);
   out:
     krb5_kt_close(context, id);
+    if (ret) {
+	/* do not return allocated memory on failure */
+	do {
+	    p = *mkey->next;
+	    free(*mkey);
+	    *mkey = p;
+	} while (p != NULL);
+    }
     return ret;
 }
 

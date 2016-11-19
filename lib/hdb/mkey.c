@@ -149,7 +149,7 @@ read_master_keytab(krb5_context context, const char *filename,
     if (ret) {
 	/* do not return allocated memory on failure */
 	do {
-	    p = *mkey->next;
+	    p = (*mkey)->next;
 	    free(*mkey);
 	    *mkey = p;
 	} while (p != NULL);

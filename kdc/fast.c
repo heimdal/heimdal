@@ -356,7 +356,7 @@ _kdc_fast_unwrap_request(kdc_request_t r)
     krb5_keyblock armorkey;
     krb5_error_code ret;
     krb5_ap_req ap_req;
-    unsigned char *buf;
+    unsigned char *buf = NULL;
     KrbFastReq fastreq;
     size_t len, size;
     krb5_data data;
@@ -496,7 +496,6 @@ _kdc_fast_unwrap_request(kdc_request_t r)
 			       KRB5_KU_FAST_REQ_CHKSUM,
 			       buf, len, 
 			       &fxreq.u.armored_data.req_checksum);
-    free(buf);
     if (ret) {
 	kdc_log(r->context, r->config, 0,
 		"FAST request have a bad checksum");

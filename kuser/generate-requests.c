@@ -92,6 +92,7 @@ generate_requests (const char *filename, unsigned nreq)
 	    krb5_free_cred_contents (context, &cred);
 	krb5_free_principal(context, client);
     }
+    free(words);
 }
 
 static int version_flag	= 0;

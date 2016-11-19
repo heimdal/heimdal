@@ -75,6 +75,7 @@ stash(struct stash_options *opt, int argc, char **argv)
 	if (ret)
 	    krb5_warn(context, ret, "reading master key from %s",
 		      opt->key_file_string);
+	hdb_free_master_key(context, mkey);
 	return 0;
     } else {
 	krb5_keyblock key;

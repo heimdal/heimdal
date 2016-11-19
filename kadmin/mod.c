@@ -274,7 +274,7 @@ do_mod_entry(krb5_principal principal, void *data)
 	    mask |= KADM5_TL_DATA;
 	}
 	if (e->hist_kvno_diff_svc_integer != -1) {
-	    add_kvno_diff(context, &princ, 1, e->hist_kvno_diff_clnt_integer);
+	    add_kvno_diff(context, &princ, 1, e->hist_kvno_diff_svc_integer);
 	    mask |= KADM5_TL_DATA;
 	}
     } else

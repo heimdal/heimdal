@@ -537,8 +537,8 @@ gsskrb5_acceptor_start(OM_uint32 * minor_status,
 						&ctx->flags,
 						&ctx->fwd_data);
 
-	    krb5_free_authenticator(context, &authenticator);
 	    if (ret) {
+		krb5_free_authenticator(context, &authenticator);
 		return ret;
 	    }
         } else {
@@ -548,9 +548,8 @@ gsskrb5_acceptor_start(OM_uint32 * minor_status,
 		kret = krb5_crypto_init(context,
 					ctx->auth_context->keyblock,
 					0, &crypto);
-		if(kret) {
+		if (kret) {
 		    krb5_free_authenticator(context, &authenticator);
-
 		    ret = GSS_S_FAILURE;
 		    *minor_status = kret;
 		    return ret;
@@ -564,10 +563,10 @@ gsskrb5_acceptor_start(OM_uint32 * minor_status,
 		kret = krb5_verify_checksum(context,
 					    crypto, KRB5_KU_AP_REQ_AUTH_CKSUM, NULL, 0,
 					    authenticator->cksum);
-		krb5_free_authenticator(context, &authenticator);
 		krb5_crypto_destroy(context, crypto);
 
-		if(kret) {
+		if (kret) {
+		    krb5_free_authenticator(context, &authenticator);
 		    ret = GSS_S_BAD_SIG;
 		    *minor_status = kret;
 		    return ret;

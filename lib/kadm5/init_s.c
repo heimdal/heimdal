@@ -49,6 +49,7 @@ kadm5_s_init_with_context(krb5_context context,
     char *dbname;
     char *stash_file;
 
+    *server_handle = NULL;
     ret = _kadm5_s_init_context(&ctx, realm_params, context);
     if(ret)
 	return ret;
@@ -74,12 +75,13 @@ kadm5_s_init_with_context(krb5_context context,
 #endif
 
     ret = hdb_create(ctx->context, &ctx->db, dbname);
-    if(ret)
+    if (ret == 0)
+        ret = hdb_set_master_keyfile(ctx->context,
+                                     ctx->db, stash_file);
+    if (ret) {
+        kadm5_s_destroy(ctx);
 	return ret;
-    ret = hdb_set_master_keyfile (ctx->context,
-				  ctx->db, stash_file);
-    if(ret)
-	return ret;
+    }
 
     ctx->log_context.log_fd   = -1;
 
@@ -94,14 +96,12 @@ kadm5_s_init_with_context(krb5_context context,
     socket_set_nonblocking(ctx->log_context.socket_fd, 1);
 
     ret = krb5_parse_name(ctx->context, client_name, &ctx->caller);
-    if(ret)
-	return ret;
-
-    ret = _kadm5_acl_init(ctx);
-    if(ret)
-	return ret;
-
-    *server_handle = ctx;
+    if (ret == 0)
+        ret = _kadm5_acl_init(ctx);
+    if (ret)
+        kadm5_s_destroy(ctx);
+    else
+        *server_handle = ctx;
     return 0;
 }
 

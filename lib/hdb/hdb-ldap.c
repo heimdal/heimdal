@@ -2044,8 +2044,7 @@ hdb_ldapi_create(krb5_context context, HDB ** db, const char *arg)
     krb5_error_code ret;
     char *search_base, *p;
 
-    asprintf(&p, "ldapi:%s", arg);
-    if (p == NULL) {
+    if (asprintf(&p, "ldapi:%s", arg) == -1 || p == NULL) {
 	*db = NULL;
 	krb5_set_error_message(context, ENOMEM, "out of memory");
 	return ENOMEM;

@@ -1394,13 +1394,19 @@ json_db_open(void *plug, const char *dbtype, const char *dbname,
 	}
 
 	ret = read_json(dbname, (heim_object_t *)&contents, error);
-	if (ret)
+	if (ret) {
+	    heim_release(bkpname_s);
+	    heim_release(dbname_s);
 	    return ret;
+        }
 
-	if (contents != NULL && heim_get_tid(contents) != HEIM_TID_DICT)
+	if (contents != NULL && heim_get_tid(contents) != HEIM_TID_DICT) {
+	    heim_release(bkpname_s);
+	    heim_release(dbname_s);
 	    return HEIM_ERROR(error, EINVAL,
 			      (EINVAL, N_("JSON DB contents not valid JSON",
 					  "")));
+        }
     }
 
     jsondb = heim_alloc(sizeof (*jsondb), "json_db", NULL);

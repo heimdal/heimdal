@@ -132,8 +132,8 @@ do_list(struct list_options *opt, const char *keytab_str)
 
 	    for (i = 0; i< entry.aliases->len; i++) {
 		krb5_unparse_name_fixed(context, entry.principal, buf, sizeof(buf));
-		rk_strpoolprintf(p, "%s%s", buf,
-				 i + 1 < entry.aliases->len ? ", " : "");
+		p = rk_strpoolprintf(p, "%s%s", buf,
+                                     i + 1 < entry.aliases->len ? ", " : "");
 
 	    }
 	    rtbl_add_column_entry_by_id(table, 5, (s = rk_strpoolcollect(p)));

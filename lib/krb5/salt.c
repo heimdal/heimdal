@@ -43,6 +43,7 @@ krb5_salttype_to_string (krb5_context context,
     struct _krb5_encryption_type *e;
     struct salt_type *st;
 
+    *string = NULL;
     e = _krb5_find_enctype (etype);
     if (e == NULL) {
 	krb5_set_error_message(context, KRB5_PROG_ETYPE_NOSUPP,

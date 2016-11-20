@@ -515,7 +515,6 @@ ks_tuple2str(krb5_context context, int n_ks_tuple,
 {
 	size_t i;
 	char **ksnames;
-	char *ename, *sname;
 	krb5_error_code rc = KRB5_PROG_ETYPE_NOSUPP;
 
 	*ks_tuple_strs = NULL;
@@ -526,11 +525,15 @@ ks_tuple2str(krb5_context context, int n_ks_tuple,
 		return (errno);
 
 	for (i = 0; i < n_ks_tuple; i++) {
+            char *ename, *sname;
+
 	    if (krb5_enctype_to_string(context, ks_tuple[i].ks_enctype, &ename))
 		goto out;
 	    if (krb5_salttype_to_string(context, ks_tuple[i].ks_enctype,
-					ks_tuple[i].ks_salttype, &sname))
+					ks_tuple[i].ks_salttype, &sname)) {
+                free(ename);
 		goto out;
+            }
 
 	    if (asprintf(&ksnames[i], "%s:%s", ename, sname) == -1) {
 		    rc = errno;

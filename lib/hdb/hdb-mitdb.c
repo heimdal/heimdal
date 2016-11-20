@@ -1212,7 +1212,7 @@ getdata(char **p, unsigned char *buf, size_t len, const char *what)
     }
     i = 0;
     while (*q && i < len) {
-	if(sscanf(q, "%02x", &v) != 1)
+	if (sscanf(q, "%02x", &v) != 1)
 	    break;
 	buf[i++] = v;
 	q += 2;
@@ -1229,7 +1229,8 @@ getint(char **p, const char *what)
         warnx("Failed to find a signed integer (%s) in dump", what);
         return -1;
     }
-    sscanf(q, "%d", &val);
+    if (sscanf(q, "%d", &val) != 1)
+        return -1;
     return val;
 }
 
@@ -1242,7 +1243,8 @@ getuint(char **p, const char *what)
         warnx("Failed to find an unsigned integer (%s) in dump", what);
         return 0;
     }
-    sscanf(q, "%u", &val);
+    if (sscanf(q, "%u", &val) != 1)
+        return 0;
     return val;
 }
 

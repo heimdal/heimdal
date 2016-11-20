@@ -493,7 +493,7 @@ _krb5_expand_path_tokensv(krb5_context context,
 	    return krb5_enomem(context);
 	va_start(ap, ppath_out);
 	for (i = 0; i < nargs; i++) {
-	    char *s = va_arg(ap, const char *); /* token key */
+	    const char *s = va_arg(ap, const char *); /* token key */
 	    if (s == NULL)
 		break;
 	    extra_tokens[i] = strdup(s);

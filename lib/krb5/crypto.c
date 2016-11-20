@@ -2341,21 +2341,19 @@ _get_derived_key(krb5_context context,
     struct _krb5_key_data *d;
     unsigned char constant[5];
 
+    *key = NULL;
     for(i = 0; i < crypto->num_key_usage; i++)
 	if(crypto->key_usage[i].usage == usage) {
 	    *key = &crypto->key_usage[i].key;
 	    return 0;
 	}
     d = _new_derived_key(crypto, usage);
-    if (d == NULL) {
-        *key = NULL; /* quiet warning */
+    if (d == NULL)
 	return krb5_enomem(context);
-    }
-    krb5_copy_keyblock(context, crypto->key.key, &d->key);
-    _krb5_put_int(constant, usage, 5);
-    _krb5_derive_key(context, crypto->et, d, constant, sizeof(constant));
     *key = d;
-    return 0;
+    krb5_copy_keyblock(context, crypto->key.key, &d->key);
+    _krb5_put_int(constant, usage, sizeof(constant));
+    return _krb5_derive_key(context, crypto->et, d, constant, sizeof(constant));
 }
 
 /**

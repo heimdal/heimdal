@@ -463,7 +463,7 @@ ret_principal_ent(krb5_context contextp,
     ent->max_life = flag;
     CHECK(krb5_ret_uint32(sp, &flag));
     if (flag == 0)
-	ret_principal_xdr(contextp, sp, &ent->mod_name);
+	CHECK(ret_principal_xdr(contextp, sp, &ent->mod_name));
     CHECK(krb5_ret_uint32(sp, &flag));
     ent->mod_date = flag;
     CHECK(krb5_ret_uint32(sp, &flag));

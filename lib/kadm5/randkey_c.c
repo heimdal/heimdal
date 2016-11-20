@@ -79,17 +79,21 @@ kadm5_c_randkey_principal(void *server_handle,
      *
      *  - opaque string2key parameters (salt, rounds, ...)
      */
-    krb5_store_int32(sp, kadm_randkey);
-    krb5_store_principal(sp, princ);
+    ret = krb5_store_int32(sp, kadm_randkey);
+    if (ret == 0)
+        ret = krb5_store_principal(sp, princ);
 
-    if (keepold == TRUE || n_ks_tuple > 0)
-	krb5_store_uint32(sp, keepold);
-    if (n_ks_tuple > 0)
-	krb5_store_uint32(sp, n_ks_tuple);
-    for (i = 0; i < n_ks_tuple; i++) {
-	krb5_store_int32(sp, ks_tuple[i].ks_enctype);
-	krb5_store_int32(sp, ks_tuple[i].ks_salttype);
+    if (ret == 0 && (keepold == TRUE || n_ks_tuple > 0))
+	ret = krb5_store_uint32(sp, keepold);
+    if (ret == 0 && n_ks_tuple > 0)
+	ret = krb5_store_uint32(sp, n_ks_tuple);
+    for (i = 0; ret == 0 && i < n_ks_tuple; i++) {
+	ret = krb5_store_int32(sp, ks_tuple[i].ks_enctype);
+        if (ret == 0)
+            krb5_store_int32(sp, ks_tuple[i].ks_salttype);
     }
+    if (ret)
+        return ret;
     /* Future extensions go here */
 
     ret = _kadm5_client_send(context, sp);
@@ -106,28 +110,35 @@ kadm5_c_randkey_principal(void *server_handle,
 	return ENOMEM;
     }
     krb5_clear_error_message(context->context);
-    krb5_ret_int32(sp, &tmp);
-    ret = tmp;
-    if(ret == 0){
+    ret = krb5_ret_int32(sp, &tmp);
+    if (ret == 0)
+        ret = tmp;
+    if (ret == 0){
 	krb5_keyblock *k;
 
-	krb5_ret_int32(sp, &tmp);
+	ret = krb5_ret_int32(sp, &tmp);
+        if (ret)
+            goto out;
 	if (tmp < 0) {
 	    ret = EOVERFLOW;
 	    goto out;
 	}
-	k = malloc(tmp * sizeof(*k));
+	k = calloc(tmp, sizeof(*k));
 	if (k == NULL) {
 	    ret = ENOMEM;
 	    goto out;
 	}
-	for(i = 0; i < tmp; i++)
-	    krb5_ret_keyblock(sp, &k[i]);
-	if (n_keys && new_keys) {
+	for(i = 0; ret == 0 && i < tmp; i++)
+	    ret = krb5_ret_keyblock(sp, &k[i]);
+	if (ret == 0 && n_keys && new_keys) {
 	    *n_keys = tmp;
 	    *new_keys = k;
-	} else
+	} else {
+            krb5_free_keyblock_contents(context->context, &k[i]);
+            for (; i > 0; i--)
+                krb5_free_keyblock_contents(context->context, &k[i - 1]);
             free(k);
+        }
     }
 out:
     krb5_storage_free(sp);

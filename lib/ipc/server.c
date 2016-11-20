@@ -35,6 +35,7 @@
 
 #include "hi_locl.h"
 #include <assert.h>
+#include <err.h>
 
 #define MAX_PACKET_SIZE (128 * 1024)
 
@@ -980,7 +981,7 @@ process_loop(void)
     unsigned n;
     unsigned num_fds;
 
-    while(num_clients > 0) {
+    while (num_clients > 0) {
 
 	fds = malloc(num_clients * sizeof(fds[0]));
 	if(fds == NULL)
@@ -999,7 +1000,11 @@ process_loop(void)
 	    fds[n].revents = 0;
 	}
 
-	poll(fds, num_fds, -1);
+	while (poll(fds, num_fds, -1) == -1) {
+            if (errno == EINTR || errno == EAGAIN)
+                continue;
+            err(1, "poll(2) failed");
+        }
 
 	for (n = 0 ; n < num_fds; n++) {
 	    if (clients[n] == NULL)

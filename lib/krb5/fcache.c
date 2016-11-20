@@ -450,6 +450,7 @@ again:
     ret = fstat(fd, &sb2);
     if (ret < 0) {
 	krb5_clear_error_message(context);
+	close(fd);
 	return errno;
     }
 

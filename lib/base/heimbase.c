@@ -962,7 +962,6 @@ heim_path_vcreate(heim_object_t ptr, size_t size, heim_object_t leaf,
 		if (error)
 		    *error = heim_error_create(ret, "Node in path not a "
 					       "container");
-		goto err;
 	    }
 	    heim_release(next_node);
 	    if (ret)

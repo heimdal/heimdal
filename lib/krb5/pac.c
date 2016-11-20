@@ -868,14 +868,13 @@ krb5_pac_verify(krb5_context context,
     {
 	krb5_data *copy;
 
+	if (pac->server_checksum->buffersize < 4 ||
+            pac->privsvr_checksum->buffersize < 4)
+	    return EINVAL;
+
 	ret = krb5_copy_data(context, &pac->data, &copy);
 	if (ret)
 	    return ret;
-
-	if (pac->server_checksum->buffersize < 4)
-	    return EINVAL;
-	if (pac->privsvr_checksum->buffersize < 4)
-	    return EINVAL;
 
 	memset((char *)copy->data + pac->server_checksum->offset_lo + 4,
 	       0,

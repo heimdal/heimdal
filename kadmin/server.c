@@ -514,7 +514,8 @@ kadmind_dispatch(void *kadm_handlep, krb5_boolean initial,
 	    int i;
 	    krb5_store_int32(sp, n_keys);
 	    for(i = 0; i < n_keys; i++){
-		krb5_store_keyblock(sp, new_keys[i]);
+                if (ret == 0)
+                    ret = krb5_store_keyblock(sp, new_keys[i]);
 		krb5_free_keyblock_contents(contextp->context, &new_keys[i]);
 	    }
 	    free(new_keys);

@@ -56,13 +56,11 @@
 static int
 init_port(const char *s, int fallback)
 {
-    if (s) {
-	int tmp;
+    int tmp;
 
-	sscanf (s, "%d", &tmp);
-	return htons(tmp);
-    } else
-	return fallback;
+    if (s && sscanf(s, "%d", &tmp) == 1)
+        return htons(tmp);
+    return fallback;
 }
 
 struct send_via_plugin_s {

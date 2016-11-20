@@ -920,12 +920,12 @@ tgs_make_reply(krb5_context context,
 
     ek.key = et.key;
     /* MIT must have at least one last_req */
-    ek.last_req.len = 1;
     ek.last_req.val = calloc(1, sizeof(*ek.last_req.val));
     if (ek.last_req.val == NULL) {
 	ret = ENOMEM;
 	goto out;
     }
+    ek.last_req.len = 1; /* set after alloc to avoid null deref on cleanup */
     ek.nonce = b->nonce;
     ek.flags = et.flags;
     ek.authtime = et.authtime;

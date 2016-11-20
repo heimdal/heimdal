@@ -240,6 +240,8 @@ _hx509_Name_to_string(const Name *n, char **str)
 		ret = wind_ucs2utf8_length(bmp, bmplen, &k);
 		if (ret) {
                     free(oidname);
+                    free(*str);
+                    *str = NULL;
 		    return ret;
                 }
 
@@ -250,6 +252,8 @@ _hx509_Name_to_string(const Name *n, char **str)
 		if (ret) {
                     free(oidname);
 		    free(ss);
+                    free(*str);
+                    *str = NULL;
 		    return ret;
 		}
 		ss[k] = '\0';
@@ -268,6 +272,8 @@ _hx509_Name_to_string(const Name *n, char **str)
 		ret = wind_ucs4utf8_length(uni, unilen, &k);
 		if (ret) {
                     free(oidname);
+                    free(*str);
+                    *str = NULL;
 		    return ret;
                 }
 
@@ -278,6 +284,8 @@ _hx509_Name_to_string(const Name *n, char **str)
 		if (ret) {
 		    free(ss);
                     free(oidname);
+                    free(*str);
+                    *str = NULL;
 		    return ret;
 		}
 		ss[k] = '\0';

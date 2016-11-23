@@ -33,6 +33,7 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/un.h>
 #include "hi_locl.h"
 #include <assert.h>
 #include <err.h>

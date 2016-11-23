@@ -94,7 +94,9 @@ _heim_ipc_create_cred(uid_t uid, gid_t gid, pid_t pid, pid_t session, heim_icred
 #ifndef HAVE_GCD
 struct heim_isemaphore {
     HEIMDAL_MUTEX mutex;
+#ifdef NOTFORAND
     pthread_cond_t cond;
+#endif
     long counter;
 };
 #endif

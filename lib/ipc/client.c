@@ -33,6 +33,8 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/socket.h>
+#include <sys/un.h>
 #include "hi_locl.h"
 
 #if defined(__APPLE__) && defined(HAVE_GCD)

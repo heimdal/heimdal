@@ -36,6 +36,7 @@
 #include <signal.h>
 #include "roken.h"
 
+#ifdef NOTFORAND
 /*
  * We would like to always use this signal but there is a link error
  * on NEXTSTEP
@@ -75,3 +76,4 @@ signal(int iSig, SigAction pAction)
     return(saOld.sa_handler);
 }
 #endif
+#endif /*NOTFORAND*/

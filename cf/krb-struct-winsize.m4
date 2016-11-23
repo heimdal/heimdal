@@ -8,7 +8,7 @@ AC_DEFUN([AC_KRB_STRUCT_WINSIZE], [
 AC_MSG_CHECKING(for struct winsize)
 AC_CACHE_VAL(ac_cv_struct_winsize, [
 ac_cv_struct_winsize=no
-for i in sys/termios.h sys/ioctl.h; do
+for i in asm/termios.h sys/termios.h sys/ioctl.h; do
 AC_EGREP_HEADER(
 struct[[ 	]]*winsize,dnl
 $i, ac_cv_struct_winsize=yes; break)dnl

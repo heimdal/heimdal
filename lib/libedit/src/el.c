@@ -47,7 +47,9 @@ __RCSID("$NetBSD: el.c,v 1.92 2016/05/22 19:44:26 christos Exp $");
 #include <sys/types.h>
 #include <sys/param.h>
 #include <ctype.h>
+#ifdef NOTFORAND
 #include <langinfo.h>
+#endif
 #include <locale.h>
 #include <stdarg.h>
 #include <stdlib.h>
@@ -56,6 +58,39 @@ __RCSID("$NetBSD: el.c,v 1.92 2016/05/22 19:44:26 christos Exp $");
 #include "el.h"
 #include "parse.h"
 #include "read.h"
+#include "sys.h"
+
+ssize_t getline(char **lineptr, size_t *n, FILE *stream)
+{
+    char *ptr;
+
+    ptr = fgetln(stream, n);
+
+    if (ptr == NULL) {
+        return -1;
+    }
+
+    /* Free the original ptr */
+    if (*lineptr != NULL) free(*lineptr);
+
+    /* Add one more space for '\0' */
+    size_t len = n[0] + 1;
+
+    /* Update the length */
+    n[0] = len;
+
+    /* Allocate a new buffer */
+    *lineptr = malloc(len);
+
+    /* Copy over the string */
+    memcpy(*lineptr, ptr, len-1);
+
+    /* Write the NULL character */
+    (*lineptr)[len-1] = '\0';
+
+    /* Return the length of the new buffer */
+    return len;
+}
 
 /* el_init():
  *	Initialize editline and set default parameters.
@@ -97,7 +132,9 @@ el_init_fd(const char *prog, FILE *fin, FILE *fout, FILE *ferr,
          */
 	el->el_flags = 0;
 	if (setlocale(LC_CTYPE, NULL) != NULL){
+#ifdef NOTFORAND
 		if (strcmp(nl_langinfo(CODESET), "UTF-8") == 0)
+#endif
 			el->el_flags |= CHARSET_IS_UTF8;
 	}
 

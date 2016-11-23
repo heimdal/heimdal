@@ -203,10 +203,12 @@ ifa_make_sockaddr(sa_family_t family,
     break;
   case AF_INET6:
     memcpy(&((struct sockaddr_in6*)sa)->sin6_addr, (char *)p, len);
+#ifdef NOTFORAND
     if (IN6_IS_ADDR_LINKLOCAL(p) ||
 	IN6_IS_ADDR_MC_LINKLOCAL(p)){
       ((struct sockaddr_in6*)sa)->sin6_scope_id = scopeid;
     }
+#endif
     break;
   case AF_PACKET:
     memcpy(((struct sockaddr_ll*)sa)->sll_addr, (char *)p, len);

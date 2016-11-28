@@ -592,8 +592,10 @@ add_plugin_host(struct krb5_krbhst_data *kd,
     hostlen = strlen(host);
 
     hi = calloc(1, sizeof(*hi) + hostlen);
-    if(hi == NULL)
+    if (hi == NULL) {
+        freeaddrinfo(ai);
 	return ENOMEM;
+    }
 
     hi->proto = proto;
     hi->port  = hi->def_port = portnum;

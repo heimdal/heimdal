@@ -96,9 +96,10 @@ try_decrypt(hx509_context context,
 			 password, passwordlen,
 			 1, key, NULL);
     if (ret <= 0) {
-	hx509_set_error_string(context, 0, HX509_CRYPTO_INTERNAL_ERROR,
+	ret = HX509_CRYPTO_INTERNAL_ERROR;
+	hx509_set_error_string(context, 0, ret,
 			       "Failed to do string2key for private key");
-	return HX509_CRYPTO_INTERNAL_ERROR;
+        goto out;
     }
 
     clear.data = malloc(len);

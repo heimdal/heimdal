@@ -851,6 +851,8 @@ submit_request(krb5_context context, krb5_sendto_ctx ctx, krb5_krbhst_info *hi)
 
 	host = heim_alloc(sizeof(*host), "sendto-host", deallocate_host);
 	if (host == NULL) {
+            if (freeai)
+                freeaddrinfo(ai);
 	    rk_closesocket(fd);
 	    return ENOMEM;
 	}

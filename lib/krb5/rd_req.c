@@ -243,33 +243,26 @@ krb5_verify_authenticator_checksum(krb5_context context,
 				   size_t len)
 {
     krb5_error_code ret;
-    krb5_keyblock *key;
+    krb5_keyblock *key = NULL;
     krb5_authenticator authenticator;
     krb5_crypto crypto;
 
-    ret = krb5_auth_con_getauthenticator (context,
-				      ac,
-				      &authenticator);
-    if(ret)
+    ret = krb5_auth_con_getauthenticator(context, ac, &authenticator);
+    if (ret)
 	return ret;
-    if(authenticator->cksum == NULL) {
-	krb5_free_authenticator(context, &authenticator);
-	return -17;
+    if (authenticator->cksum == NULL) {
+	ret = -17;
+        goto out;
     }
     ret = krb5_auth_con_getkey(context, ac, &key);
-    if(ret) {
-	krb5_free_authenticator(context, &authenticator);
-	return ret;
-    }
+    if (ret)
+        goto out;
     ret = krb5_crypto_init(context, key, 0, &crypto);
-    if(ret)
+    if (ret)
 	goto out;
-    ret = krb5_verify_checksum (context,
-				crypto,
-				KRB5_KU_AP_REQ_AUTH_CKSUM,
-				data,
-				len,
-				authenticator->cksum);
+    ret = krb5_verify_checksum(context, crypto,
+                               KRB5_KU_AP_REQ_AUTH_CKSUM,
+                               data, len, authenticator->cksum);
     krb5_crypto_destroy(context, crypto);
 out:
     krb5_free_authenticator(context, &authenticator);

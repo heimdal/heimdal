@@ -1137,17 +1137,19 @@ kcm_op_set_default_cache(krb5_context context,
     }
     if (c == NULL) {
 	c = malloc(sizeof(*c));
-	if (c == NULL)
+	if (c == NULL) {
+            free(name);
 	    return ENOMEM;
+        }
 	c->session = client->session;
 	c->uid = client->uid;
-	c->name = strdup(name);
+	c->name = name;
 
 	c->next = default_caches;
 	default_caches = c;
     } else {
 	free(c->name);
-	c->name = strdup(name);
+	c->name = name;
     }
 
     return 0;

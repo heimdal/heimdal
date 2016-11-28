@@ -163,22 +163,22 @@ check_host(krb5_context context, const char *path, char *data)
 
     /* XXX data could be a list of hosts that this code can't handle */
     /* XXX copied from krbhst.c */
-    if(strncmp(p, "http://", 7) == 0){
+    if (strncmp(p, "http://", 7) == 0){
         p += 7;
 	hints.ai_socktype = SOCK_STREAM;
 	strlcpy(service, "http", sizeof(service));
 	defport = 80;
-    } else if(strncmp(p, "http/", 5) == 0) {
+    } else if (strncmp(p, "http/", 5) == 0) {
         p += 5;
 	hints.ai_socktype = SOCK_STREAM;
 	strlcpy(service, "http", sizeof(service));
 	defport = 80;
-    }else if(strncmp(p, "tcp/", 4) == 0){
+    } else if (strncmp(p, "tcp/", 4) == 0){
         p += 4;
 	hints.ai_socktype = SOCK_STREAM;
 	strlcpy(service, "kerberos", sizeof(service));
 	defport = 88;
-    } else if(strncmp(p, "udp/", 4) == 0) {
+    } else if (strncmp(p, "udp/", 4) == 0) {
         p += 4;
 	hints.ai_socktype = SOCK_DGRAM;
 	strlcpy(service, "kerberos", sizeof(service));
@@ -188,14 +188,14 @@ check_host(krb5_context context, const char *path, char *data)
 	strlcpy(service, "kerberos", sizeof(service));
 	defport = 88;
     }
-    if(strsep_copy(&p, ":", hostname, sizeof(hostname)) < 0) {
+    if (strsep_copy(&p, ":", hostname, sizeof(hostname)) < 0) {
 	return 1;
     }
     hostname[strcspn(hostname, "/")] = '\0';
-    if(p != NULL) {
+    if (p != NULL) {
 	char *end;
 	int tmp = strtol(p, &end, 0);
-	if(end == p) {
+	if (end == p) {
 	    krb5_warnx(context, "%s: failed to parse port number in %s",
 		       path, data);
 	    return 1;
@@ -204,14 +204,15 @@ check_host(krb5_context context, const char *path, char *data)
 	snprintf(service, sizeof(service), "%u", defport);
     }
     ret = getaddrinfo(hostname, service, &hints, &ai);
-    if(ret == EAI_SERVICE && !isdigit((unsigned char)service[0])) {
+    if (ret == EAI_SERVICE && !isdigit((unsigned char)service[0])) {
 	snprintf(service, sizeof(service), "%u", defport);
 	ret = getaddrinfo(hostname, service, &hints, &ai);
     }
-    if(ret != 0) {
+    if (ret != 0) {
 	krb5_warnx(context, "%s: %s (%s)", path, gai_strerror(ret), hostname);
 	return 1;
     }
+    freeaddrinfo(ai);
     return 0;
 }
 

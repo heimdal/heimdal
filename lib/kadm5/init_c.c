@@ -588,16 +588,18 @@ kadm5_c_init_with_context(krb5_context context,
     krb5_ccache cc;
 
     ret = _kadm5_c_init_context(&ctx, realm_params, context);
-    if(ret)
+    if (ret)
 	return ret;
 
-    if(password != NULL && *password != '\0') {
+    if (password != NULL && *password != '\0') {
 	ret = _kadm5_c_get_cred_cache(context,
 				      client_name,
 				      service_name,
 				      password, prompter, keytab, ccache, &cc);
-	if(ret)
-	    return ret; /* XXX */
+	if (ret) {
+            kadm5_c_destroy(ctx);
+	    return ret;
+        }
 	ccache = cc;
     }
 

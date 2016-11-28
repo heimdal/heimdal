@@ -292,9 +292,9 @@ copy_key(krb5_context context,
 	 krb5_keyblock *in,
 	 krb5_keyblock **out)
 {
-    if(in)
+    *out = NULL;
+    if (in)
 	return krb5_copy_keyblock(context, in, out);
-    *out = NULL; /* is this right? */
     return 0;
 }
 

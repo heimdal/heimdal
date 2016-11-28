@@ -1133,8 +1133,10 @@ pk_rd_pa_reply_enckey(krb5_context context,
 
 	    ret = der_put_length_and_tag (ptr + ph - 1, ph, content.length,
 					  ASN1_C_UNIV, CONS, UT_Sequence, &l);
-	    if (ret)
+	    if (ret) {
+                free(ptr);
 		return ret;
+            }
 	    free(content.data);
 	    content.data = ptr;
 	    content.length += ph;

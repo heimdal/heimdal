@@ -36,24 +36,24 @@
 RCSID("$Id$");
 
 static unsigned
-read_words (const char *filename, char ***ret_w)
+read_words(const char *filename, char ***ret_w)
 {
     unsigned n, alloc;
     FILE *f;
     char buf[256];
     char **w = NULL;
 
-    f = fopen (filename, "r");
+    f = fopen(filename, "r");
     if (f == NULL)
-	err (1, "cannot open %s", filename);
+	err(1, "cannot open %s", filename);
     alloc = n = 0;
-    while (fgets (buf, sizeof(buf), f) != NULL) {
+    while (fgets(buf, sizeof(buf), f) != NULL) {
 	buf[strcspn(buf, "\r\n")] = '\0';
 	if (n >= alloc) {
 	    alloc += 16;
-	    w = erealloc (w, alloc * sizeof(char *));
+	    w = erealloc(w, alloc * sizeof(char *));
 	}
-	w[n++] = estrdup (buf);
+	w[n++] = estrdup(buf);
     }
     *ret_w = w;
     if (n == 0)
@@ -63,30 +63,30 @@ read_words (const char *filename, char ***ret_w)
 }
 
 static int
-nop_prompter (krb5_context context,
-	      void *data,
-	      const char *name,
-	      const char *banner,
-	      int num_prompts,
-	      krb5_prompt prompts[])
+nop_prompter(krb5_context context,
+	     void *data,
+	     const char *name,
+	     const char *banner,
+	     int num_prompts,
+	     krb5_prompt prompts[])
 {
     return 0;
 }
 
 static void
-generate_requests (const char *filename, unsigned nreq)
+generate_requests(const char *filename, unsigned nreq)
 {
     krb5_context context;
     krb5_error_code ret;
     int i;
     char **words;
-    unsigned nwords;
+    unsigned nwords, k;
 
-    ret = krb5_init_context (&context);
+    ret = krb5_init_context(&context);
     if (ret)
 	errx (1, "krb5_init_context failed: %d", ret);
 
-    nwords = read_words (filename, &words);
+    nwords = read_words(filename, &words);
 
     for (i = 0; i < nreq; ++i) {
 	char *name = words[rand() % nwords];
@@ -98,32 +98,32 @@ generate_requests (const char *filename, unsigned nreq)
 	char *old_pwd, *new_pwd;
 	int aret;
 
-	krb5_get_init_creds_opt_alloc (context, &opt);
+	krb5_get_init_creds_opt_alloc(context, &opt);
 	krb5_get_init_creds_opt_set_tkt_life (opt, 300);
 	krb5_get_init_creds_opt_set_forwardable (opt, FALSE);
 	krb5_get_init_creds_opt_set_proxiable (opt, FALSE);
 
-	ret = krb5_parse_name (context, name, &principal);
+	ret = krb5_parse_name(context, name, &principal);
 	if (ret)
-	    krb5_err (context, 1, ret, "krb5_parse_name %s", name);
+	    krb5_err(context, 1, ret, "krb5_parse_name %s", name);
 
-	aret = asprintf (&old_pwd, "%s", name);
+	aret = asprintf(&old_pwd, "%s", name);
 	if (aret == -1)
 	    krb5_errx(context, 1, "out of memory");
-	aret = asprintf (&new_pwd, "%s2", name);
+	aret = asprintf(&new_pwd, "%s2", name);
 	if (aret == -1)
 	    krb5_errx(context, 1, "out of memory");
 
-	ret = krb5_get_init_creds_password (context,
-					    &cred,
-					    principal,
-					    old_pwd,
-					    nop_prompter,
-					    NULL,
-					    0,
-					    "kadmin/changepw",
-					    opt);
-	if( ret == KRB5KRB_AP_ERR_BAD_INTEGRITY
+	ret = krb5_get_init_creds_password(context,
+					   &cred,
+					   principal,
+					   old_pwd,
+					   nop_prompter,
+					   NULL,
+					   0,
+					   "kadmin/changepw",
+					   opt);
+	if (ret == KRB5KRB_AP_ERR_BAD_INTEGRITY
 	    || ret == KRB5KRB_AP_ERR_MODIFIED) {
 	    char *tmp;
 
@@ -131,37 +131,41 @@ generate_requests (const char *filename, unsigned nreq)
 	    new_pwd = old_pwd;
 	    old_pwd = tmp;
 
-	    ret = krb5_get_init_creds_password (context,
-						&cred,
-						principal,
-						old_pwd,
-						nop_prompter,
-						NULL,
-						0,
-						"kadmin/changepw",
-						opt);
+            ret = krb5_get_init_creds_password(context,
+                                               &cred,
+                                               principal,
+                                               old_pwd,
+                                               nop_prompter,
+                                               NULL,
+                                               0,
+                                               "kadmin/changepw",
+                                               opt);
 	}
 	if (ret)
-	    krb5_err (context, 1, ret, "krb5_get_init_creds_password");
+	    krb5_err(context, 1, ret, "krb5_get_init_creds_password");
 
-	krb5_free_principal (context, principal);
+	krb5_free_principal(context, principal);
 
 
-	ret = krb5_set_password (context,
-				 &cred,
-				 new_pwd,
-				 NULL,
-				 &result_code,
-				 &result_code_string,
-				 &result_string);
+        ret = krb5_set_password(context,
+                                &cred,
+                                new_pwd,
+                                NULL,
+                                &result_code,
+                                &result_code_string,
+                                &result_string);
 	if (ret)
-	    krb5_err (context, 1, ret, "krb5_change_password");
+	    krb5_err(context, 1, ret, "krb5_change_password");
 
-	free (old_pwd);
-	free (new_pwd);
-	krb5_free_cred_contents (context, &cred);
+	free(old_pwd);
+	free(new_pwd);
+	krb5_free_cred_contents(context, &cred);
 	krb5_get_init_creds_opt_free(context, opt);
     }
+
+    for (k = 0; k < nwords; k++)
+        free(words[k]);
+    free(words);
 }
 
 static int version_flag	= 0;
@@ -173,12 +177,12 @@ static struct getargs args[] = {
 };
 
 static void
-usage (int ret)
+usage(int ret)
 {
-    arg_printusage (args,
-		    sizeof(args)/sizeof(*args),
-		    NULL,
-		    "file [number]");
+    arg_printusage(args,
+		   sizeof(args)/sizeof(*args),
+		   NULL,
+		   "file [number]");
     exit (ret);
 }
 
@@ -204,9 +208,9 @@ main(int argc, char **argv)
     if (argc != 2)
 	usage (1);
     srand (0);
-    nreq = strtol (argv[1], &end, 0);
+    nreq = strtol(argv[1], &end, 0);
     if (argv[1] == end || *end != '\0')
 	usage (1);
-    generate_requests (argv[0], nreq);
+    generate_requests(argv[0], nreq);
     return 0;
 }

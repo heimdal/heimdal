@@ -543,6 +543,8 @@ add_cert(hx509_context hxctx, void *ctx, hx509_cert cert)
 	CK_FLAGS flags;
 
 	type = CKO_PRIVATE_KEY;
+
+        /* Note to static analyzers: `o' is still referred to via globals */
 	o = add_st_object();
 	if (o == NULL) {
 	    ret = CKR_DEVICE_MEMORY;
@@ -593,6 +595,7 @@ add_cert(hx509_context hxctx, void *ctx, hx509_cert cert)
     hx509_xfree(issuer_data.data);
     hx509_xfree(subject_data.data);
 
+    /* Note to static analyzers: `o' is still referred to via globals */
     return 0;
 }
 

@@ -126,7 +126,7 @@ krb5_recvauth_match_version(krb5_context context,
     if(!(flags & KRB5_RECVAUTH_IGNORE_VERSION)) {
 	n = krb5_net_read (context, p_fd, &len, 4);
 	if (n < 0) {
-	    ret = errno;
+	    ret = errno ? errno : EINVAL;
 	    krb5_set_error_message(context, ret, "read: %s", strerror(ret));
 	    return ret;
 	}
@@ -151,7 +151,7 @@ krb5_recvauth_match_version(krb5_context context,
      */
     n = krb5_net_read (context, p_fd, &len, 4);
     if (n < 0) {
-	ret = errno;
+	ret = errno ? errno : EINVAL;
 	krb5_set_error_message(context, ret, "read: %s", strerror(ret));
 	return ret;
     }
@@ -183,7 +183,7 @@ krb5_recvauth_match_version(krb5_context context,
      */
     repl = 0;
     if (krb5_net_write (context, p_fd, &repl, 1) != 1) {
-	ret = errno;
+	ret = errno ? errno : EINVAL;
 	krb5_set_error_message(context, ret, "write: %s", strerror(ret));
 	return ret;
     }
@@ -234,7 +234,7 @@ krb5_recvauth_match_version(krb5_context context,
      */
     len = 0;
     if (krb5_net_write (context, p_fd, &len, 4) != 4) {
-	ret = errno;
+	ret = errno ? errno : EINVAL;
 	krb5_set_error_message(context, ret, "write: %s", strerror(ret));
 	krb5_free_ticket(context, *ticket);
 	*ticket = NULL;

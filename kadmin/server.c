@@ -759,7 +759,7 @@ handle_v5(krb5_context contextp,
     krb5_boolean initial;
     krb5_auth_context ac = NULL;
 
-    unsigned kadm_version;
+    unsigned kadm_version = 1;
     kadm5_config_params realm_params;
 
     ret = krb5_recvauth_match_version(contextp, &ac, &fd,

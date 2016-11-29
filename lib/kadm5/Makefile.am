@@ -179,6 +179,7 @@ ALL_OBJECTS += $(sample_passwd_check_la_OBJECTS)
 ALL_OBJECTS += $(default_keys_OBJECTS)
 
 $(ALL_OBJECTS): $(srcdir)/kadm5-protos.h $(srcdir)/kadm5-private.h
+$(ALL_OBJECTS): kadm5_err.h heim_err.h krb5_err.h
 
 KADM5_PROTOS_SRCS  = $(dist_libkadm5clnt_la_SOURCES)
 KADM5_PROTOS_SRCS += $(dist_libkadm5srv_la_SOURCES)

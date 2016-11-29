@@ -4,7 +4,7 @@ noinst_SCRIPTS = setup-env
 
 noinst_PROGRAMS = intr
 
-nodist_intr_SOURCES = intr.c
+intr_SOURCES = intr.c
 
 CHECK_LOCAL = no-check-local
 

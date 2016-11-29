@@ -296,8 +296,10 @@ EXTRA_DIST = \
 	check-delegation.in \
 	check-des.in \
 	check-digest.in \
+	check-fast.in \
 	check-iprop.in \
 	check-kadmin.in \
+	check-kinit.in \
 	check-hdb-mitdb.in \
 	check-kdc.in \
 	check-kdc-weak.in \

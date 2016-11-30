@@ -80,10 +80,11 @@ size_t	strlcat(char *dst, const char *src, size_t size);
 #define	strlcpy libedit_strlcpy
 size_t	strlcpy(char *dst, const char *src, size_t size);
 #endif
-
+#ifdef NOTFORAND
 #ifndef HAVE_GETLINE
 #define	getline libedit_getline
 ssize_t	getline(char **line, size_t *len, FILE *fp);
+#endif
 #endif
 
 #ifndef _DIAGASSERT

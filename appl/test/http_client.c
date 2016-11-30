@@ -78,7 +78,7 @@ do_connect (const char *hostname, const char *port)
 
     return s;
 }
-
+/*
 static void
 fdprintf(int s, const char *fmt, ...)
 {
@@ -107,7 +107,7 @@ fdprintf(int s, const char *fmt, ...)
     }
     free(str);
 }
-
+*/
 static int help_flag;
 static int version_flag;
 static int verbose_flag;

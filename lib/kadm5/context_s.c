@@ -230,13 +230,16 @@ _kadm5_s_init_context(kadm5_server_context **ctx,
 		      krb5_context context)
 {
     kadm5_ret_t ret = 0;
-    *ctx = malloc(sizeof(**ctx));
-    if(*ctx == NULL)
+
+    *ctx = calloc(1, sizeof(**ctx));
+    if (*ctx == NULL)
 	return ENOMEM;
-    memset(*ctx, 0, sizeof(**ctx));
+    (*ctx)->log_context.socket_fd = rk_INVALID_SOCKET;
+
     set_funcs(*ctx);
     (*ctx)->context = context;
     krb5_add_et_list (context, initialize_kadm5_error_table_r);
+
 #define is_set(M) (params && params->mask & KADM5_CONFIG_ ## M)
     if (is_set(REALM)) {
 	(*ctx)->config.realm = strdup(params->realm);

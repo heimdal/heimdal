@@ -51,7 +51,7 @@ kadm5_s_init_with_context(krb5_context context,
 
     *server_handle = NULL;
     ret = _kadm5_s_init_context(&ctx, realm_params, context);
-    if(ret)
+    if (ret)
 	return ret;
 
     if (realm_params->mask & KADM5_CONFIG_DBNAME)
@@ -83,17 +83,18 @@ kadm5_s_init_with_context(krb5_context context,
 	return ret;
     }
 
-    ctx->log_context.log_fd   = -1;
+    ctx->log_context.log_fd = -1;
 
 #ifndef NO_UNIX_SOCKETS
-    ctx->log_context.socket_fd = socket (AF_UNIX, SOCK_DGRAM, 0);
+    ctx->log_context.socket_fd = socket(AF_UNIX, SOCK_DGRAM, 0);
 #else
-    ctx->log_context.socket_fd = socket (ctx->log_context.socket_info->ai_family,
-					 ctx->log_context.socket_info->ai_socktype,
-					 ctx->log_context.socket_info->ai_protocol);
+    ctx->log_context.socket_fd = socket(ctx->log_context.socket_info->ai_family,
+					ctx->log_context.socket_info->ai_socktype,
+					ctx->log_context.socket_info->ai_protocol);
 #endif
 
-    socket_set_nonblocking(ctx->log_context.socket_fd, 1);
+    if (ctx->log_context.socket_fd != rk_INVALID_SOCKET)
+        socket_set_nonblocking(ctx->log_context.socket_fd, 1);
 
     ret = krb5_parse_name(ctx->context, client_name, &ctx->caller);
     if (ret == 0)

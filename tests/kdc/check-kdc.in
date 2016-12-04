@@ -332,18 +332,14 @@ echo notfoo > ${objdir}/notfoopassword
 
 echo Starting kdc ; > messages.log
 env MallocStackLogging=1 MallocStackLoggingNoCompact=1 MallocErrorAbort=1 MallocLogFile=${objdir}/malloc-log \
-${kdc} &
-kdcpid=$!
-
-sh ${wait_kdc}
-if [ "$?" != 0 ] ; then
-    kill -9 ${kdcpid}
-    exit 1
-fi
+${kdc} --detach --testing ||
+    { echo "kdc failed to start"; exit 1; }
+kdcpid=`getpid kdc`
 
 echo Starting kpasswdd; > messages.log
-env ${HEIM_MALLOC_DEBUG} ${kpasswdd} &
-kpasswddpid=$!
+env ${HEIM_MALLOC_DEBUG} ${kpasswdd} --detach ||
+    { echo "kpasswdd failed to start"; exit 1; }
+kpasswddpid=`getpid kpasswdd`
 
 
 trap "kill -9 ${kdcpid} ${kpasswddpid}; echo signal killing kdc kpasswdd; exit 1;" EXIT

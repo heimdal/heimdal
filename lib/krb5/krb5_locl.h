@@ -322,11 +322,11 @@ typedef struct krb5_context_data {
 #endif
 
 #ifndef KRB5_TKT_LIFETIME_DEFAULT
-# define KRB5_TKT_LIFETIME_DEFAULT	2147483647	/* seconds */
+# define KRB5_TKT_LIFETIME_DEFAULT        15778800  /* seconds */
 #endif
 
 #ifndef KRB5_TKT_RENEW_LIFETIME_DEFAULT
-# define KRB5_TKT_RENEW_LIFETIME_DEFAULT 2147483647	/* seconds */
+# define KRB5_TKT_RENEW_LIFETIME_DEFAULT  15778800  /* seconds */
 #endif
 
 #ifdef PKINIT

@@ -163,6 +163,7 @@ roken_detach_finish(const char *dir, int daemon_child_fd)
     ssize_t bytes;
     int fd;
 
+    pidfile(NULL);
     if (pipefds[1] == -1 && daemon_child_fd != -1)
         pipefds[1] = daemon_child_fd;
     if (pipefds[0] != -1)

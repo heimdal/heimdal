@@ -270,7 +270,7 @@ ccache_init_system(void)
 	renew_life = kcm_system_config_get_string("renew_life");
 
     if (renew_life == NULL)
-	renew_life = "2147483647s";
+	renew_life = "6 months";
 
     if (renew_life != NULL) {
 	ccache->renew_life = parse_time(renew_life, "s");

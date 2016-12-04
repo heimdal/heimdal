@@ -128,23 +128,22 @@ ipropd_slave="${ipropd_slave} --status-file=iprop-slave-status"
 trap "echo 'killing ipropd s + m + kdc'; kill -9 \${ipdm} \${ipds} \${kdcpid} >/dev/null 2>/dev/null; tail messages.log ; tail iprop-stats; exit 1;" EXIT
 
 echo Starting kdc ; > messages.log
-${kdc} &
-kdcpid=$!
-
-sh ${wait_kdc} || exit 1
+${kdc} --detach --testing || { echo "kdc failed to start"; exit 1; }
+kdcpid=`getpid kdc`
 
 echo "starting master" ; > messages.log
 env ${HEIM_MALLOC_DEBUG} \
 ${ipropd_master} --hostname=localhost -k ${keytab} \
-    --database=${objdir}/current-db &
-ipdm=$!
-sh ${wait_kdc} ipropd-master || exit 1
+    --database=${objdir}/current-db --detach ||
+    { echo "ipropd-master failed to start"; exit 1; }
+ipdm=`getpid ipropd-master`
 
 echo "starting slave" ; > messages.log
 env ${HEIM_MALLOC_DEBUG} \
 KRB5_CONFIG="${objdir}/krb5-slave.conf" \
-${ipropd_slave} --hostname=slave.test.h5l.se -k ${keytab} localhost &
-ipds=$!
+${ipropd_slave} --hostname=slave.test.h5l.se -k ${keytab} --detach localhost ||
+    { echo "ipropd-slave failed to start"; exit 1; }
+ipds=`getpid ipropd-slave`
 sh ${wait_kdc} ipropd-slave messages.log 'slave status change: up-to-date' || exit 1
 sleep 1
 
@@ -213,6 +212,7 @@ echo "kill slave and remove log and database"
 sh ${leaks_kill} ipropd-slave $ipds || exit 1
 rm -f iprop-slave-status
 
+sleep 2
 ${EGREP} 'iprop/slave.test.h5l.se@TEST.H5L.SE.*Down' iprop-stats >/dev/null || exit 1
 
 # ----------------- checking: slave is missing changes while down
@@ -232,8 +232,9 @@ echo "starting slave again" ; > messages.log
 > iprop-stats
 env ${HEIM_MALLOC_DEBUG} \
 KRB5_CONFIG="${objdir}/krb5-slave.conf" \
-${ipropd_slave} --hostname=slave.test.h5l.se -k ${keytab} localhost &
-ipds=$!
+${ipropd_slave} --hostname=slave.test.h5l.se -k ${keytab} --detach localhost ||
+    { echo "ipropd-slave failed to start"; exit 1; }
+ipds=`getpid ipropd-slave`
 sh ${wait_kdc} ipropd-slave messages.log 'slave status change: up-to-date' || exit 1
 sleep 1
 
@@ -259,8 +260,9 @@ rm -f iprop-slave-status
 echo "starting slave" ; > messages.log
 env ${HEIM_MALLOC_DEBUG} \
 KRB5_CONFIG="${objdir}/krb5-slave.conf" \
-${ipropd_slave} --hostname=slave.test.h5l.se -k ${keytab} localhost &
-ipds=$!
+${ipropd_slave} --hostname=slave.test.h5l.se -k ${keytab} --detach localhost ||
+    { echo "ipropd-slave failed to start"; exit 1; }
+ipds=`getpid ipropd-slave`
 sh ${wait_kdc} ipropd-slave messages.log 'slave status change: up-to-date' || exit 1
 sleep 1
 
@@ -304,15 +306,16 @@ cp ${objdir}/current.log.tmp ${objdir}/current.log
 echo "starting master"  ; > messages.log
 env ${HEIM_MALLOC_DEBUG} \
 ${ipropd_master} --hostname=localhost -k ${keytab} \
-    --database=${objdir}/current-db &
-ipdm=$!
-sh ${wait_kdc} ipropd-master || exit 1
+    --database=${objdir}/current-db --detach ||
+    { echo "ipropd-master failed to start"; exit 1; }
+ipdm=`getpid ipropd-master`
 
 echo "starting slave" ; > messages.log
 env ${HEIM_MALLOC_DEBUG} \
 KRB5_CONFIG="${objdir}/krb5-slave.conf" \
-${ipropd_slave} --hostname=slave.test.h5l.se -k ${keytab} localhost &
-ipds=$!
+${ipropd_slave} --hostname=slave.test.h5l.se -k ${keytab} --detach localhost ||
+    { echo "ipropd-slave failed to start"; exit 1; }
+ipds=`getpid ipropd-slave`
 sh ${wait_kdc} ipropd-slave messages.log 'slave status change: up-to-date' || exit 1
 sleep 1
 
@@ -346,9 +349,9 @@ kill -0 ${ipds}  || { echo "slave no longer there"; exit 1; }
 echo "Staring master again" ; > messages.log
 env ${HEIM_MALLOC_DEBUG} \
 ${ipropd_master} --hostname=localhost -k ${keytab} \
-    --database=${objdir}/current-db &
-ipdm=$!
-sh ${wait_kdc} ipropd-master || exit 1
+    --database=${objdir}/current-db --detach ||
+    { echo "ipropd-master failed to start"; exit 1; }
+ipdm=`getpid ipropd-master`
 
 echo "probing for slave pid"
 kill -0 ${ipds}  || { echo "slave no longer there"; exit 1; }

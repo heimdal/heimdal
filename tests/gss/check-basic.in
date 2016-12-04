@@ -94,14 +94,8 @@ echo "Doing database check"
 ${kadmin} check ${R} || exit 1
 
 echo Starting kdc
-${kdc} &
-kdcpid=$!
-
-sh ${srcdir}/../kdc/wait-kdc.sh
-if [ "$?" != 0 ] ; then
-    kill ${kdcpid}
-    exit 1
-fi
+${kdc} --testing --detach || { echo "kdc failed to start"; exit 1; }
+kdcpid=`getpid kdc`
 
 trap "kill ${kdcpid}; echo signal killing kdc; exit 1;" EXIT
 

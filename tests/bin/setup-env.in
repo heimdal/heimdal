@@ -1,5 +1,8 @@
 #!/bin/sh
 
+HEIM_PIDFILE_DIR="${objdir}/"
+export HEIM_PIDFILE_DIR
+
 unset KRB5_CONFIG
 unset KRB5CCNAME
 
@@ -48,6 +51,13 @@ test_kuserok="${TESTS_ENVIRONMENT} ${top_builddir}/lib/krb5/test_kuserok"
 have_db="${top_builddir}/tests/db/have-db"
 leaks_kill="${top_srcdir}/tests/kdc/leaks-kill.sh"
 wait_kdc="${top_srcdir}/tests/kdc/wait-kdc.sh"
+getpid () {
+    if [ -f "$HEIM_PIDFILE_DIR/lt-${1}.pid" ]; then
+        cat "$HEIM_PIDFILE_DIR/lt-${1}.pid"
+    else
+        cat "$HEIM_PIDFILE_DIR/${1}.pid"
+    fi
+}
 
 if [ ! "${NO_AFS}" ] ; then
     afs_no_unlog="--no-unlog"

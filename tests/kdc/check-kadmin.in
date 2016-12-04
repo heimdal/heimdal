@@ -89,15 +89,8 @@ ${kadmin} -l modify --pkinit-acl="CN=baz,DC=test,DC=h5l,DC=se" pkinit@${R} || ex
 echo foo > ${objdir}/foopassword
 
 echo Starting kdc ; > messages.log
-${kdc} &
-kdcpid=$!
-
-sh ${wait_kdc}
-if [ "$?" != 0 ] ; then
-    kill -9 ${kdcpid}
-    kill -9 ${kadmpid}
-    exit 1
-fi
+${kdc} --detach --testing || { echo "kdc failed to start"; exit 1; }
+kdcpid=`getpid kdc`
 
 trap "kill -9 ${kdcpid} ${kadmpid}" EXIT
 

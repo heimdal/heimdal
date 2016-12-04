@@ -114,15 +114,8 @@ ${kadmin} list '*' > /dev/null || exit 1
 echo foo > ${objdir}/foopassword
 
 echo Starting kdc
-${kdc} &
-kdcpid=$!
-
-sh ${srcdir}/../kdc/wait-kdc.sh
-if [ "$?" != 0 ] ; then
-    kill ${kdcpid}
-    sh ${srcdir}/slapd-stop
-    exit 1
-fi
+${kdc} --detach --testing || { echo "kdc failed to start"; exit 1; }
+kdcpid=`getpid kdc`
 
 trap "kill ${kdcpid}; echo signal killing kdc; sh ${srcdir}/slapd-stop ; exit 1;" EXIT
 

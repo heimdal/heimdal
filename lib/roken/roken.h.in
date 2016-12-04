@@ -756,13 +756,11 @@ ROKEN_LIB_FUNCTION ssize_t ROKEN_LIB_CALL
 readv(int, const struct iovec *, int);
 #endif
 
-#ifndef HAVE_PIDFILE
 #ifdef NO_PIDFILES
 #define pidfile(x) ((void) 0)
 #else
 #define pidfile rk_pidfile
 ROKEN_LIB_FUNCTION void ROKEN_LIB_CALL pidfile (const char*);
-#endif
 #endif
 
 #ifndef HAVE_BSWAP64

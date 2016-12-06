@@ -103,6 +103,8 @@ extern int detach_from_console;
 extern int daemon_child;
 extern int do_bonjour;
 
+extern int testing_flag;
+
 extern const struct units _kdc_digestunits[];
 
 #define KDC_LOG_FILE		"kdc.log"

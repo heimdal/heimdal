@@ -52,6 +52,7 @@ static char *max_request_str;	/* `max_request' as a string */
 static int disable_des = -1;
 
 static int builtin_hdb_flag;
+int testing_flag;
 static int help_flag;
 static int version_flag;
 
@@ -120,6 +121,7 @@ static struct getargs args[] = {
     {   "chroot",	0,	arg_string, &chroot_string,
 	"chroot directory to run in", NULL
     },
+    {	"testing",	0,	arg_flag,   &testing_flag, NULL, NULL },
     {	"help",		'h',	arg_flag,   &help_flag, NULL, NULL },
     {	"version",	'v',	arg_flag,   &version_flag, NULL, NULL }
 };

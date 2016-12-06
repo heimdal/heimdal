@@ -1153,109 +1153,115 @@ start_kdc(krb5_context context,
     tv1.tv_usec = 0;
 
 #ifdef HAVE_FORK
-    /* Note that we might never execute the body of this loop */
-    while (exit_flag == 0) {
+    if (!testing_flag) {
+        /* Note that we might never execute the body of this loop */
+        while (exit_flag == 0) {
 
-	/* Slow down the creation of KDCs... */
+            /* Slow down the creation of KDCs... */
 
-	gettimeofday(&tv2, NULL);
-	if (tv1.tv_sec == tv2.tv_sec && tv2.tv_usec - tv1.tv_usec < 25000) {
+            gettimeofday(&tv2, NULL);
+            if (tv1.tv_sec == tv2.tv_sec && tv2.tv_usec - tv1.tv_usec < 25000) {
 #if 0	/* XXXrcd: should print a message... */
-	    kdc_log(context, config, 0, "Spawning KDCs too quickly, "
-		"pausing for 50ms");
+                kdc_log(context, config, 0, "Spawning KDCs too quickly, "
+                    "pausing for 50ms");
 #endif
-	    select_sleep(12500);
-	    continue;
-	}
+                select_sleep(12500);
+                continue;
+            }
 
-	if (num_kdcs >= max_kdcs) {
-	    num_kdcs -= reap_kid(context, config, pids, max_kdcs, 0);
-	    continue;
-	}
+            if (num_kdcs >= max_kdcs) {
+                num_kdcs -= reap_kid(context, config, pids, max_kdcs, 0);
+                continue;
+            }
 
-	if (num_kdcs > 0)
-	    num_kdcs -= reap_kids(context, config, pids, max_kdcs);
+            if (num_kdcs > 0)
+                num_kdcs -= reap_kids(context, config, pids, max_kdcs);
 
-	pid = fork();
-	switch (pid) {
-	case 0:
-	    close(islive[0]);
-	    loop(context, config, d, ndescr, islive[1]);
-	    exit(0);
-	case -1:
-	    /* XXXrcd: hmmm, do something useful?? */
-            kdc_log(context, config, 0,
-                    "KDC master process could not fork worker process");
-	    sleep(10);
-	    break;
-	default:
-	    for (i=0; i < max_kdcs; i++) {
-		if (pids[i] == 0) {
-		    pids[i] = pid;
-		    break;
-		}
-	    }
-	    kdc_log(context, config, 0, "KDC worker process started: %d", pid);
-	    num_kdcs++;
-	    gettimeofday(&tv1, NULL);
-	    break;
-	}
-    }
-
-    /* Closing these sockets should cause the kids to die... */
-
-    close(islive[0]);
-    close(islive[1]);
-
-    /* Close our listener sockets before terminating workers */
-    for (i = 0; i < ndescr; ++i)
-        clear_descr(&d[i]);
-
-    gettimeofday(&tv1, NULL);
-    tv2 = tv1;
-
-    /* Reap every 10ms, terminate stragglers once a second, give up after 10 */
-    for (;;) {
-        struct timeval tv3;
-	num_kdcs -= reap_kids(context, config, pids, max_kdcs);
-	if (num_kdcs == 0 && bonjour_pid <= 0)
-	    goto end;
-	/*
-	 * Using select to sleep will fail with EINTR if we receive a
-	 * SIGCHLD.  This is desirable.
-	 */
-	select_sleep(10000);
-	gettimeofday(&tv3, NULL);
-        if (tv3.tv_sec - tv1.tv_sec > 10 ||
-            (tv3.tv_sec - tv1.tv_sec == 10 && tv3.tv_usec >= tv1.tv_usec))
-	    break;
-	if (tv3.tv_sec - tv2.tv_sec > 1 ||
-            (tv3.tv_sec - tv2.tv_sec == 1 && tv3.tv_usec >= tv2.tv_usec)) {
-            kill_kids(pids, max_kdcs, SIGTERM);
-            tv2 = tv3;
+            pid = fork();
+            switch (pid) {
+            case 0:
+                close(islive[0]);
+                loop(context, config, d, ndescr, islive[1]);
+                exit(0);
+            case -1:
+                /* XXXrcd: hmmm, do something useful?? */
+                kdc_log(context, config, 0,
+                        "KDC master process could not fork worker process");
+                sleep(10);
+                break;
+            default:
+                for (i=0; i < max_kdcs; i++) {
+                    if (pids[i] == 0) {
+                        pids[i] = pid;
+                        break;
+                    }
+                }
+                kdc_log(context, config, 0, "KDC worker process started: %d",
+                        pid);
+                num_kdcs++;
+                gettimeofday(&tv1, NULL);
+                break;
+            }
         }
-    }
 
-    /* Kill stragglers and reap every 200ms, give up after 15s */
-    for (;;) {
-	kill_kids(pids, max_kdcs, SIGKILL);
-	num_kdcs -= reap_kids(context, config, pids, max_kdcs);
-	if (num_kdcs == 0 && bonjour_pid <= 0)
-	    break;
-	select_sleep(200000);
-	gettimeofday(&tv2, NULL);
-        if (tv2.tv_sec - tv1.tv_sec > 15 ||
-            (tv2.tv_sec - tv1.tv_sec == 15 && tv2.tv_usec >= tv1.tv_usec))
-	    break;
-    }
+        /* Closing these sockets should cause the kids to die... */
 
- end:
-    kdc_log(context, config, 0, "KDC master process exiting", pid);
-    free(pids);
+        close(islive[0]);
+        close(islive[1]);
+
+        /* Close our listener sockets before terminating workers */
+        for (i = 0; i < ndescr; ++i)
+            clear_descr(&d[i]);
+
+        gettimeofday(&tv1, NULL);
+        tv2 = tv1;
+
+        /* Reap every 10ms, terminate stragglers once a second, give up after 10 */
+        for (;;) {
+            struct timeval tv3;
+            num_kdcs -= reap_kids(context, config, pids, max_kdcs);
+            if (num_kdcs == 0 && bonjour_pid <= 0)
+                goto end;
+            /*
+             * Using select to sleep will fail with EINTR if we receive a
+             * SIGCHLD.  This is desirable.
+             */
+            select_sleep(10000);
+            gettimeofday(&tv3, NULL);
+            if (tv3.tv_sec - tv1.tv_sec > 10 ||
+                (tv3.tv_sec - tv1.tv_sec == 10 && tv3.tv_usec >= tv1.tv_usec))
+                break;
+            if (tv3.tv_sec - tv2.tv_sec > 1 ||
+                (tv3.tv_sec - tv2.tv_sec == 1 && tv3.tv_usec >= tv2.tv_usec)) {
+                kill_kids(pids, max_kdcs, SIGTERM);
+                tv2 = tv3;
+            }
+        }
+
+        /* Kill stragglers and reap every 200ms, give up after 15s */
+        for (;;) {
+            kill_kids(pids, max_kdcs, SIGKILL);
+            num_kdcs -= reap_kids(context, config, pids, max_kdcs);
+            if (num_kdcs == 0 && bonjour_pid <= 0)
+                break;
+            select_sleep(200000);
+            gettimeofday(&tv2, NULL);
+            if (tv2.tv_sec - tv1.tv_sec > 15 ||
+                (tv2.tv_sec - tv1.tv_sec == 15 && tv2.tv_usec >= tv1.tv_usec))
+                break;
+        }
+
+     end:
+        kdc_log(context, config, 0, "KDC master process exiting", pid);
+        free(pids);
+    } else {
+        loop(context, config, d, ndescr, -1);
+        kdc_log(context, config, 0, "KDC exiting", pid);
+    }
 #else
     loop(context, config, d, ndescr, -1);
     kdc_log(context, config, 0, "KDC exiting", pid);
 #endif
 
-    free (d);
+    free(d);
 }

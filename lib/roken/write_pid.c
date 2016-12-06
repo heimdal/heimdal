@@ -77,11 +77,12 @@ pid_file_delete(char **filename)
 }
 
 static char *pidfile_path;
+static pid_t pidfile_pid;
 
 static void
 pidfile_cleanup(void)
 {
-    if (pidfile_path != NULL)
+    if (pidfile_path != NULL && pidfile_pid == getpid())
 	pid_file_delete(&pidfile_path);
 }
 
@@ -103,6 +104,7 @@ pidfile(const char *bname)
     if (bname == NULL)
 	bname = getprogname();
     pidfile_path = pid_file_write(bname);
+    pidfile_pid = getpid();
 #if defined(HAVE_ATEXIT)
     if (pidfile_path != NULL)
         atexit(pidfile_cleanup);

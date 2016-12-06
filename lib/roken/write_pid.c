@@ -61,7 +61,7 @@ pid_file_write(const char *progname)
 	free(ret);
 	return NULL;
     }
-    fprintf(fp, "%u", (unsigned)getpid());
+    fprintf(fp, "%lu\n", (unsigned long)getpid());
     fclose(fp);
     return ret;
 }

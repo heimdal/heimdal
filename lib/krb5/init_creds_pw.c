@@ -2138,6 +2138,7 @@ fast_wrap_req(krb5_context context, struct fast_state *state, KDC_REQ *req)
 
  out:
     free_PA_FX_FAST_REQUEST(&fxreq);
+    free_KrbFastReq(&fastreq);
     if (fxarmor) {
 	free_KrbFastArmor(fxarmor);
 	free(fxarmor);

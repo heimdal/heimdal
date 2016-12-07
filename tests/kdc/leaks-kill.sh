@@ -5,8 +5,8 @@ checkonly=no
 if [ "X$1" = "X--check" ] ; then
     checkonly=yes
 
-    pid=$2
-    name=$3
+    name=$2
+    pid=$3
 else
     name=$1
     pid=$2

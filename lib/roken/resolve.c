@@ -659,12 +659,15 @@ rk_dns_srv_order(struct rk_dns_reply *r)
 
     headp = &r->head;
 
-    for(ss = srvs; ss < srvs + num_srv; ) {
-	int sum, zeros, rnd, count;
+    for (ss = srvs; ss < srvs + num_srv; ) {
+	int sum, zeros, rnd, count; /* zeros -> weight scaling */
 	struct rk_resource_record **ee, **tt;
-	/* find the last record with the same priority and count the
-           sum of all weights */
-	for(sum = 0, zeros = 0, tt = ss; tt < srvs + num_srv; tt++) {
+
+	/*
+	 * find the last record with the same priority and count the sum of all
+	 * weights
+	 */
+	for (sum = 0, zeros = 0, tt = ss; tt < srvs + num_srv; tt++) {
 	    assert(*tt != NULL);
 	    if((*tt)->u.srv->priority != (*ss)->u.srv->priority)
 		break;
@@ -672,36 +675,43 @@ rk_dns_srv_order(struct rk_dns_reply *r)
 	    if ((*tt)->u.srv->weight == 0)
 		zeros++;
 	}
-	/* With no zeros, add 0 and scale * 1 */
-	sum += zeros ? zeros : zeros++;
+	/* make sure scale (`zeros') is > 0 then scale out */
+	sum += zeros ? 1 : zeros++;
 	sum *= zeros;
 	ee = tt;
-	/* ss is now the first record of this priority and ee is the
-           first of the next */
-	while(ss < ee) {
+
+	/*
+	 * ss is now the first record of this priority and ee is the first of
+	 * the next or the first past the end of srvs
+	 */
+	while (ss < ee) {
 	    rnd = rk_random() % sum + 1;
-	    for(count = 0, tt = ss; ; tt++) {
-		if(*tt == NULL)
-		    continue;
-		count += (*tt)->u.srv->weight * zeros;
+	    for (count = 0, tt = ss; tt < ee; tt++) {
+		if (*tt == NULL)
+		    continue;   /* this one's already been picked */
 		if ((*tt)->u.srv->weight == 0)
 		    count++;
-		if(count >= rnd)
+		else
+		    count += (*tt)->u.srv->weight * zeros;
+		if (count >= rnd)
 		    break;
 	    }
-
 	    assert(tt < ee);
 
-	    /* insert the selected record at the tail (of the head) of
-               the list */
+	    /* push the selected record */
 	    (*tt)->next = *headp;
 	    *headp = *tt;
 	    headp = &(*tt)->next;
-	    sum -= (*tt)->u.srv->weight * zeros;
+	    /*
+	     * reduce the sum so the next iteration is sure to reach the random
+	     * total after examining all the remaining records.
+	     */
 	    if ((*tt)->u.srv->weight == 0)
 		sum--;
+	    else
+		sum -= (*tt)->u.srv->weight * zeros;
 	    *tt = NULL;
-	    while(ss < ee && *ss == NULL)
+	    while (ss < ee && *ss == NULL)
 		ss++;
 	}
     }

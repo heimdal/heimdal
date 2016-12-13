@@ -31,6 +31,7 @@ check_PROGRAMS = 				\
 		getxxyyy-test			\
 		hex-test			\
 		test-readenv			\
+		resolve-test			\
 		parse_bytes-test		\
 		parse_reply-test		\
 		parse_time-test			\

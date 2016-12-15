@@ -343,6 +343,7 @@ EXTRA_DIST = \
 	evp-w32.c \
 	evp-w32.h \
 	evp-wincng.c \
+	evp-wincng.h \
 	gen-des.pl \
 	md5crypt_test.c \
 	passwd_dialog.aps \

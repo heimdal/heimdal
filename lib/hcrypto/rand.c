@@ -206,6 +206,8 @@ RAND_set_rand_method(const RAND_METHOD *meth)
 /**
  * Get the default random method.
  *
+ * @return Returns a RAND_METHOD
+ *
  * @ingroup hcrypto_rand
  */
 
@@ -261,6 +263,8 @@ RAND_set_rand_engine(ENGINE *engine)
  *
  * @param filename name of file to read.
  * @param size minimum size to read.
+ *
+ * @return Returns the number of seed bytes loaded (0 indicates failure)
  *
  * @ingroup hcrypto_rand
  */

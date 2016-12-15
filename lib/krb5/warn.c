@@ -307,8 +307,8 @@ krb5_vabortx(krb5_context context, const char *fmt, va_list ap)
  * Log a warning to the log, default stderr, and then abort.
  *
  * @param context A Kerberos 5 context
- * @param code error code of the last error
- * @param fmt message to print
+ * @param fmt printf format string of message to print
+ * @param ... arguments for format string
  *
  * @ingroup krb5_error
  */

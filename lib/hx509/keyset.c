@@ -107,6 +107,8 @@ _hx509_ks_register(hx509_context context, struct hx509_keyset_ops *ops)
  * select no password/certifictes/prompt lock (see @ref page_lock).
  * @param certs return pointer, free with hx509_certs_free().
  *
+ * @return Returns an hx509 error code.
+ *
  * @ingroup hx509_keyset
  */
 

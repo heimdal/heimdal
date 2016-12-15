@@ -39,7 +39,7 @@
  * As described in SP800-108 5.1 (for HMAC)
  *
  * @param context	Kerberos 5 context
- * @param kdc_K1	Base key material.
+ * @param kdf_K1	Base key material.
  * @param kdf_label	A string that identifies the purpose for the derived key.
  * @param kdf_context   A binary string containing parties, nonce, etc.
  * @param md		Message digest function to use for PRF.

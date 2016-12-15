@@ -1,9 +1,9 @@
 # Doxyfile 1.5.3
 
-PROJECT_NAME           = Heimdal x509 library
+PROJECT_NAME           = Heimdal base library
 PROJECT_NUMBER         = @PACKAGE_VERSION@
-OUTPUT_DIRECTORY       = @srcdir@/doxyout/heimbase
-INPUT                  = @srcdir@/../base
+OUTPUT_DIRECTORY       = @srcdir@/doxyout/base
+INPUT                  = @srcdir@/../lib/base
 
 WARN_IF_UNDOCUMENTED   = YES
 

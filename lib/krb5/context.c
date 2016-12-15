@@ -1053,6 +1053,7 @@ krb5_set_default_in_tkt_etypes(krb5_context context,
  * with the KDC, clients and servers.
  *
  * @param context Kerberos 5 context.
+ * @param pdu_type request type (AS, TGS or none)
  * @param etypes Encryption types, array terminated with
  * ETYPE_NULL(0), caller should free array with krb5_xfree():
  *
@@ -1073,7 +1074,7 @@ krb5_get_default_in_tkt_etypes(krb5_context context,
 
     heim_assert(pdu_type == KRB5_PDU_AS_REQUEST || 
 		pdu_type == KRB5_PDU_TGS_REQUEST ||
-		pdu_type == KRB5_PDU_NONE, "pdu contant not as expected");
+		pdu_type == KRB5_PDU_NONE, "unexpected pdu type");
 
     if (pdu_type == KRB5_PDU_AS_REQUEST && context->as_etypes != NULL)
 	enctypes = context->as_etypes;

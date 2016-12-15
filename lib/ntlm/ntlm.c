@@ -1054,6 +1054,7 @@ out:
  *
  * @param type3 the ntlm_type3 message to encode.
  * @param data is the return buffer with the encoded message, should be
+ * @param[out] mic_offset offset of message integrity code
  * freed with heim_ntlm_free_buf().
  *
  * @return In case of success 0 is return, an errors, a errno in what
@@ -1580,7 +1581,6 @@ heim_ntlm_ts2unixtime(uint64_t t)
  * @param username name of the user, as sent in the message, assumed to be in UTF8.
  * @param target the name of the target, assumed to be in UTF8.
  * @param serverchallenge challenge as sent by the server in the type2 message.
- * @param infotarget infotarget as sent by the server in the type2 message.
  * @param ntlmv2 calculated session key
  * @param answer ntlm response answer, should be freed with heim_ntlm_free_buf().
  *

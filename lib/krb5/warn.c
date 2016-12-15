@@ -281,6 +281,7 @@ krb5_vabort(krb5_context context, krb5_error_code code,
  * @param context A Kerberos 5 context
  * @param code error code of the last error
  * @param fmt message to print
+ * @param ... arguments for format string
  *
  * @ingroup krb5_error
  */

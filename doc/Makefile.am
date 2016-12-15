@@ -74,7 +74,8 @@ doxyout doxygen: base.dxy hdb.dxy hx509.dxy hcrypto.dxy gssapi.dxy krb5.dxy ntlm
 	for a in $(PROJECTS) ; do \
 		echo $$a ; \
 		doxygen $$a.dxy; \
-		(cd $(srcdir)/doxyout && find $$a/man -type f > $$a/manpages ) ; \
+		(cd $(srcdir)/doxyout && find $$a/man -type f -name _\* | perl -lne unlink && \
+		 find $$a/man -type f > $$a/manpages ) ; \
 	done
 
 install-data-hook: install-doxygen-manpage

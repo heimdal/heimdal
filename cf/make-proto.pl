@@ -253,6 +253,7 @@ $private_h = "";
 $public_h_header .= "/* This is a generated file */
 #ifndef $block
 #define $block
+#ifndef DOXY
 
 ";
 if ($oproto) {
@@ -450,7 +451,7 @@ $private_h_trailer .= $undepstr;
 
 if ($public_h ne "" && $flags{"header"}) {
     $public_h = $public_h_header . $public_h . 
-	$public_h_trailer . "#endif /* $block */\n";
+	$public_h_trailer . "#endif /* DOXY */\n#endif /* $block */\n";
 }
 if ($private_h ne "" && $flags{"header"}) {
     $private_h = $private_h_header . $private_h .

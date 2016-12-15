@@ -401,6 +401,9 @@ test_config_strings.out: test_config_strings.cfg
 
 EXTRA_DIST = \
 	NTMakefile \
+	config_reg.c \
+	dll.c \
+	libkrb5-exports.def.in \
 	verify_krb5_conf-version.rc \
 	krb5_err.et \
 	krb_err.et \

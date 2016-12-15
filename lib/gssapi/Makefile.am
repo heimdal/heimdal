@@ -341,6 +341,13 @@ EXTRA_DIST = \
 	libgssapi-version.rc \
 	libgssapi-exports.def \
 	$(man_MANS) \
+	gen-oid.pl \
+	gssapi/gssapi_netlogon.h \
+	krb5/test_acquire_cred.c \
+	krb5/test_cred.c \
+	krb5/test_kcred.c \
+	krb5/test_oid.c \
+	oid.txt \
 	krb5/gkrb5_err.et \
 	mech/gssapi.asn1 \
 	spnego/spnego.asn1 \

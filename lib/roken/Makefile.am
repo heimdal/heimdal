@@ -245,7 +245,23 @@ EXTRA_DIST = \
 	NTMakefile \
 	roken.awk roken.h.in \
 	$(man_MANS) \
-	test-mem.h \
+	dirent.c \
+	dirent.hin \
+	dirent-test.c \
+	dlfcn.hin \
+	dlfcn_w32.c \
+	getifaddrs_w32.c \
 	ndbm_wrap.c \
 	ndbm_wrap.h \
+	rename.c \
+	simple_exec_w32.c \
+	sleep.c \
+	sockstartup_w32.c \
+	stdbool.hin \
+	stdint.hin \
+	syslogc.c \
+	syslog.hin \
+	test-mem.h \
+	test-mini_inetd.c \
+	win32_alloc.c \
 	version-script.map

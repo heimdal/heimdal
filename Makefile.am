@@ -53,6 +53,13 @@ EXTRA_DIST = \
 	cf/krb-version.m4 \
 	cf/roken.m4 \
 	cf/valgrind-suppressions \
+	cf/maybe-valgrind.sh \
+	cf/symbol-version.py \
+	cf/w32-check-exported-symbols.pl \
+	cf/w32-def-from-dll.pl \
+	cf/w32-detect-vc-version.pl \
+	cf/w32-hh-toc-from-info.pl \
+	cf/w32-list-externs-from-objs.pl \
 	cf/vararray.m4
 
 print-distdir:

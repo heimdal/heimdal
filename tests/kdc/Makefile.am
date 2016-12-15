@@ -310,6 +310,9 @@ EXTRA_DIST = \
 	check-tester.in \
 	check-uu.in \
 	donotexists.txt \
+	hdb-mitdb \
+	hdb-mitdb.kadm5 \
+	hdb-mitdb.mkey \
 	heimdal.acl \
 	iprop-acl \
 	kdc-tester1.json \

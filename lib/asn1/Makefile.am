@@ -242,6 +242,7 @@ test_asn1_files: asn1_compile$(EXEEXT) $(srcdir)/test.asn1
 
 EXTRA_DIST =		\
 	NTMakefile	\
+	README.template \
 	asn1_compile-version.rc \
 	libasn1-exports.def \
 	cms.asn1	\

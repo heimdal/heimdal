@@ -488,7 +488,8 @@ krb5_set_error_string(krb5_context context, const char *fmt, ...)
  * Deprecated: use krb5_vset_error_message()
  *
  * @param context Kerberos context
- * @param msg error message to free
+ * @param fmt error message to free
+ * @param args variable argument list vector
  *
  * @return Return an error code or 0.
  *

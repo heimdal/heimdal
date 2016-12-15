@@ -344,6 +344,8 @@ find_CMSIdentifier(hx509_context context,
  * @param contentType output type oid, should be freed with der_free_oid().
  * @param content the data, free with der_free_octet_string().
  *
+ * @return an hx509 error code.
+ *
  * @ingroup hx509_cms
  */
 
@@ -547,6 +549,8 @@ out:
  * @param contentType type of the data that is encrypted
  * @param content the output of the function,
  * free with der_free_octet_string().
+ *
+ * @return an hx509 error code.
  *
  * @ingroup hx509_cms
  */
@@ -779,6 +783,8 @@ find_attribute(const CMSAttributes *attr, const heim_oid *oid)
  * der_free_octet_string().
  * @param signer_certs list of the cerficates used to sign this
  * request, free with hx509_certs_free().
+ *
+ * @return an hx509 error code.
  *
  * @ingroup hx509_cms
  */
@@ -1146,6 +1152,8 @@ add_one_attribute(Attribute **attr,
  * trust anchors.
  * @param signed_data the output of the function, free with
  * der_free_octet_string().
+ *
+ * @return Returns an hx509 error code.
  *
  * @ingroup hx509_cms
  */

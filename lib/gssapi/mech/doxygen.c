@@ -124,8 +124,10 @@
  *   one mechanism.  In GSS-API some function return MN and some
  *   require MN as input. Each of these function is marked up as such.
  *
- * @TODO Describe relationship between import_name, canonicalize_name,
- * export_name and friends.
+ * @FIXME Describe relationship between import_name, canonicalize_name,
+ * export_name and friends.  Also, update for RFC2743 language
+ * ("contiguous" and "flat" are gone, leaving just "exported name
+ * token", "internal", and "MN").
  */
 
 /** @defgroup gssapi Heimdal GSS-API functions */

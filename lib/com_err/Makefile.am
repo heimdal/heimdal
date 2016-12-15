@@ -42,6 +42,7 @@ strlcpy.c:
 
 EXTRA_DIST = \
 	NTMakefile \
+	com_err.3 \
 	compile_et-version.rc \
 	libcom_err-version.rc \
 	libcom_err-exports.def \

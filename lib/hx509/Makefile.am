@@ -347,6 +347,12 @@ EXTRA_DIST = \
 	tst-crypto-select5 \
 	tst-crypto-select6 \
 	tst-crypto-select7 \
+	data/PKITS_data.zip \
+	data/eccurve.pem \
+	data/https.crt \
+	data/https.key \
+	data/mkcert.sh \
+	data/nist-result2 \
 	data/n0ll.pem \
 	data/secp256r1TestCA.cert.pem \
 	data/secp256r1TestCA.key.pem \

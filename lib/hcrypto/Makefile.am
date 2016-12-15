@@ -335,9 +335,14 @@ EXTRA_DIST = \
 	DESperate.txt \
 	passwd_dialog.rc \
 	libhcrypto-exports.def \
+	dh-tfm.c \
 	ec.h \
 	ecdh.h \
 	ecdsa.h \
+	evp-crypt.c \
+	evp-w32.c \
+	evp-w32.h \
+	evp-wincng.c \
 	gen-des.pl \
 	md5crypt_test.c \
 	passwd_dialog.aps \
@@ -346,7 +351,9 @@ EXTRA_DIST = \
 	passwd_dialog.res \
 	passwd_dlg.c \
 	passwd_dlg.h \
+	rand-w32.c \
 	resource.h \
+	rsa-tfm.c \
 	rsakey.der \
 	rsakey2048.der \
 	rsakey4096.der \

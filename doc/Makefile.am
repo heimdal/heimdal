@@ -145,6 +145,9 @@ EXTRA_DIST = \
 	layman.asc \
 	doxytmpl.dxy \
 	wind.din \
+	base.hhp \
+	heimdal.hhp \
+	hx509.hhp \
 	vars.tin
 
 CLEANFILES = \

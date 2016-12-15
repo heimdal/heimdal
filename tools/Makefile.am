@@ -50,6 +50,7 @@ krb5-config: krb5-config.in
 
 EXTRA_DIST = \
 	NTMakefile \
+	cov.sh \
 	$(man_MANS) \
 	krb5-config.in \
 	heimdal-gssapi.pc.in \

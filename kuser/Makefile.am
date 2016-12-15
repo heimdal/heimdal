@@ -78,6 +78,9 @@ LDADD = \
 
 EXTRA_DIST = NTMakefile $(man_MANS) \
 	heimtools-version.rc \
+	kcpytkt.c \
+	kdeltkt.c \
+	kvno.c \
 	kdestroy-version.rc \
 	kdigest-version.rc \
 	kgetcred-version.rc \

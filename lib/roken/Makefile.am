@@ -140,7 +140,7 @@ EXTRA_libroken_la_SOURCES =	\
 	search.hin		\
 	vis.hin	
 
-libroken_la_LIBADD = @LTLIBOBJS@ $(LIB_crypt)
+libroken_la_LIBADD = @LTLIBOBJS@ $(LIB_crypt) $(LIB_pidfile)
 
 $(LTLIBOBJS) $(libroken_la_OBJECTS): roken.h $(XHEADERS)
 

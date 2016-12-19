@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (c) 2006 - 2007 Kungliga Tekniska Högskolan
+# Copyright (c) 2006 - 2016 Kungliga Tekniska Högskolan
 # (Royal Institute of Technology, Stockholm, Sweden). 
 # All rights reserved. 
 #
@@ -34,8 +34,12 @@
 # $Id$
 #
 
+env_setup="@env_setup@"
 srcdir="@srcdir@"
 objdir="@objdir@"
+
+. ${env_setup}
+
 EGREP="@EGREP@"
 
 R=TEST.H5L.SE

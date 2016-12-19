@@ -33,6 +33,27 @@
 
 #include "kafs_locl.h"
 
+ASN1EXP int    ASN1CALL decode_Ticket(const unsigned char * s, size_t sz, Ticket * tkt, size_t * tsz)
+{
+	return 0;
+}
+
+size_t ASN1CALL
+length_EncryptedData(const EncryptedData *data)
+{
+	return 0;
+}
+
+int ASN1CALL
+encode_EncryptedData(unsigned char *p, size_t len, const EncryptedData *data, size_t *size)
+{
+	return 0;
+}
+
+ASN1EXP void   ASN1CALL free_Ticket  (Ticket *tkt)
+{
+}
+
 struct krb5_kafs_data {
     krb5_context context;
     krb5_ccache id;
@@ -48,6 +69,7 @@ static int
 v5_to_kt(krb5_creds *cred, uid_t uid, struct kafs_token *kt, int local524)
 {
     int kvno, ret;
+    int tmp_len_encpdata;
 
     kt->ticket = NULL;
 
@@ -67,6 +89,10 @@ v5_to_kt(krb5_creds *cred, uid_t uid, struct kafs_token *kt, int local524)
 
 	ASN1_MALLOC_ENCODE(EncryptedData, buf, buf_len, &t.enc_part,
 			   &len, ret);
+	/*TODO: Remove this line and related when the loading issue is resolved*/
+	EncryptedData encdata;
+	tmp_len_encpdata = length_EncryptedData(&encdata);
+	tmp_len_encpdata = encode_EncryptedData(buf, buf_len, &encdata, len);
 	free_Ticket(&t);
 	if (ret)
 	    return ret;

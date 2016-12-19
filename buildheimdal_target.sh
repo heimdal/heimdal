@@ -25,7 +25,7 @@ ifeq "$(wildcard $(BUILD_DIRECTORY) )" ""
   mkdir build
 endif
 cd build
-../configure --prefix=/home/buildUser/work/output/target --enable-pthread-support=no --enable-littleendian --disable-privsep --enable-hardening=no --host=arm-linux-androideabi --build=x86_64-unknown-linux-gnu --with-xml=no --with-sysroot=$ANDROID_SYSROOT --with-cross-tools=/home/buildUser/work/output/host/bin --with-lib-subdir=/opt/omap_jb/src/out/target/product/panda5/system/lib
+../configure --prefix=/home/buildUser/mygit/output/target --enable-pthread-support=no --enable-littleendian --disable-privsep --enable-hardening=no --host=arm-linux-androideabi --build=x86_64-unknown-linux-gnu --with-xml=no --with-sysroot=$ANDROID_SYSROOT --with-cross-tools=/home/buildUser/mygit/output/host/bin --with-lib-subdir=/opt/omap_jb/src/out/target/product/panda5/system/lib
 
 #Compile
 #make

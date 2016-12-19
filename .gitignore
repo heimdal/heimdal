@@ -60,6 +60,7 @@ asn1_*.[cx]
 /test-driver
 /ylwrap
 /build
+/native
 
 /lib/libedit/aclocal.m4
 /lib/libedit/autom4te.cache

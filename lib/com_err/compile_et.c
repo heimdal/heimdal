@@ -109,16 +109,16 @@ generate_c(void)
 	    "void initialize_%s_error_table_r(struct et_list **list)\n",
 	    name);
     fprintf(c_file, "{\n");
-    fprintf(c_file,
+    /*fprintf(c_file,
 	    "    initialize_error_table_r(list, %s_error_strings, "
-	    "num_errors, ERROR_TABLE_BASE_%s);\n", name, name);
+	    "num_errors, ERROR_TABLE_BASE_%s);\n", name, name);*/
     fprintf(c_file, "}\n");
     fprintf(c_file, "\n");
     fprintf(c_file, "void initialize_%s_error_table(void)\n", name);
     fprintf(c_file, "{\n");
-    fprintf(c_file,
+    /*fprintf(c_file,
 	    "    init_error_table(%s_error_strings, ERROR_TABLE_BASE_%s, "
-	    "num_errors);\n", name, name);
+	    "num_errors);\n", name, name);*/
     fprintf(c_file, "}\n");
 
     fclose(c_file);

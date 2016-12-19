@@ -1256,10 +1256,10 @@ int ROKEN_LIB_FUNCTION rk_socket(int, int, int);
 #define EWOULDBLOCK             140
 #endif
 
+#endif
 
 #ifdef SOCKET_WRAPPER_REPLACE
 #include <socket_wrapper.h>
-#endif
 #endif
 
 ROKEN_CPP_END

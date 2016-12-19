@@ -95,6 +95,46 @@ reg_def_plugins_once(void *ctx)
 	plugin_reg_ret = ret;
 }
 
+rk_getpwnam_r(const char *name, struct passwd *pwd, char *buffer,
+              size_t bufsize, struct passwd **result)
+{
+     struct passwd *p;
+//     size_t slen, n = 0;
+     size_t slen;
+
+     *result = NULL;
+
+     //p = getpwnam(name);
+     //if(p == NULL)
+      //   return (errno = ENOENT);
+
+     memset(pwd, 0, sizeof(*pwd));
+
+#define APPEND(el)                                      \
+do {                                                    \
+     slen = strlen(p->el) + 1;                          \
+     if (slen > bufsize) return (errno = ENOMEM);       \
+     memcpy(buffer, p->el, slen);                       \
+     pwd->el = buffer;                                  \
+     buffer += slen;                                    \
+     bufsize -= slen;                                   \
+} while(0)
+
+     APPEND(pw_name);
+     if (p->pw_passwd)
+         APPEND(pw_name);
+     pwd->pw_uid = p->pw_uid;
+     pwd->pw_gid = p->pw_gid;
+#ifdef WHCHG
+     APPEND(pw_gecos);
+#endif
+     APPEND(pw_dir);
+     APPEND(pw_shell);
+
+     *result = pwd;
+
+     return 0;
+}
 /**
  * This function is designed to be portable for Win32 and POSIX.  The
  * design does lead to multiple getpwnam_r() calls, but this is probably

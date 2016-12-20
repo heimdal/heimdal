@@ -35,6 +35,10 @@
 
 #include "roken.h"
 
+#ifdef HAVE_UTIL_H
+#include <util.h>
+#endif
+
 ROKEN_LIB_FUNCTION char * ROKEN_LIB_CALL
 pid_file_write(const char *progname)
 {

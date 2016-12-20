@@ -41,12 +41,12 @@ CLEANFILES = $(BUILT_SOURCES) $(gen_files_hdb) \
 	hdb_asn1{,-priv}.h* hdb_asn1_files hdb_asn1-template.[cx]
 
 LDADD = libhdb.la \
-	$(LIB_openldap) \
-	$(LIB_libintl) \
 	../krb5/libkrb5.la \
 	../asn1/libasn1.la \
 	$(LIB_hcrypto) \
 	$(LIB_roken) \
+	$(LIB_openldap) \
+	$(LIB_libintl) \
 	$(LIB_ldopen)
 
 

@@ -87,7 +87,7 @@ pidfile_cleanup(void)
 }
 
 ROKEN_LIB_FUNCTION void ROKEN_LIB_CALL
-pidfile(const char *bname)
+rk_pidfile(const char *bname)
 {
     /*
      * If the OS has a pidfile(), call that, but still call
@@ -95,7 +95,6 @@ pidfile(const char *bname)
      * writing it twice will still work.
      */
 #ifdef HAVE_PIDFILE
-#undef pidfile
     pidfile(bname);
 #endif
 

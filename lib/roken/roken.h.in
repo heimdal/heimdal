@@ -759,8 +759,7 @@ readv(int, const struct iovec *, int);
 #ifdef NO_PIDFILES
 #define pidfile(x) ((void) 0)
 #else
-#define pidfile rk_pidfile
-ROKEN_LIB_FUNCTION void ROKEN_LIB_CALL pidfile (const char*);
+ROKEN_LIB_FUNCTION void ROKEN_LIB_CALL rk_pidfile (const char*);
 #endif
 
 #ifndef HAVE_BSWAP64

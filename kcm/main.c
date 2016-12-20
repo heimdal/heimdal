@@ -88,7 +88,7 @@ main(int argc, char **argv)
 #endif
     if (detach_from_console && !launchd_flag && daemon_child == -1)
         roken_detach_prep(argc, argv, "--daemon-child");
-    pidfile(NULL);
+    rk_pidfile(NULL);
 
     if (launchd_flag) {
 	heim_sipc mach;

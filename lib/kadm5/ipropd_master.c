@@ -1128,7 +1128,7 @@ main(int argc, char **argv)
 
     if (detach_from_console && daemon_child == -1)
         roken_detach_prep(argc, argv, "--daemon-child");
-    pidfile(NULL);
+    rk_pidfile(NULL);
 
     ret = krb5_init_context(&context);
     if (ret)

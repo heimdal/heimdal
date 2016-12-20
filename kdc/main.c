@@ -169,7 +169,7 @@ main(int argc, char **argv)
     signal(SIGPIPE, SIG_IGN);
 #endif
 #endif
-    pidfile(NULL);
+    rk_pidfile(NULL);
 
     switch_environment();
 

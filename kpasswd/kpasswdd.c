@@ -901,7 +901,7 @@ main(int argc, char **argv)
     signal(SIGTERM, sigterm);
 #endif
 
-    pidfile(NULL);
+    rk_pidfile(NULL);
 
     return doit(keytab, port);
 }

@@ -58,6 +58,74 @@ kdc="${kdc} --addresses=localhost -P $port"
 kadmin="${kadmin} -r $R"
 kinit="${kinit} -c $cache ${afs_no_afslog}"
 
+slave_ver_from_master_old=
+slave_ver_from_master_new=
+slave_ver_old=
+slave_ver_new=
+get_iprop_ver () {
+    min_change=${1:-1}
+    slave_ver_from_master_new=`grep '^iprop/' iprop-stats | head -1 | awk '{print $3}'`
+    slave_ver_new=`grep 'up-to-date with version:' iprop-slave-status | awk '{print $4}'`
+    if [ -z "$slave_ver_from_master_new" -o -z "$slave_ver_new" ]; then
+        return 1
+    fi
+    if [ x"$slave_ver_from_master_new" != x"$slave_ver_new" ]; then
+        return 1
+    fi
+    if [ x"$slave_ver_from_master_old" != x ]; then
+        change=`expr "$slave_ver_from_master_new" - "$slave_ver_from_master_old"`
+        if [ "$change" -lt "$min_change" ]; then
+            return 1
+        fi
+    fi
+    slave_ver_from_master_old=$slave_ver_from_master_new
+    slave_ver_old=$slave_ver_new
+    return 0
+}
+
+waitsec=65
+sleeptime=2
+wait_for () {
+    msg=$1
+    shift
+    t=0
+    while ! "$@"; do
+        sleep $sleeptime;
+        t=`expr $t + $sleeptime`
+        if [ $t -gt $waitsec ]; then
+            echo "Waited too long for $msg"
+            exit 1
+        fi
+    done
+    return 0
+}
+
+check_pidfile_is_dead () {
+    if test ! -f lt-${1}.pid -a ! -f ${1}.pid; then
+        return 0
+    fi
+    _pid=`cat lt-${1}.pid ${1}.pid 2>/dev/null`
+    if [ -z "$_pid" ]; then
+        return 0
+    fi
+    if kill -0 $_pid 2>/dev/null; then
+        return 1
+    fi
+    return 0
+}
+
+wait_for_slave () {
+    wait_for "iprop versions to change and/or slave to catch up" get_iprop_ver "$@"
+}
+
+wait_for_master_down () {
+    wait_for "master to exit" check_pidfile_is_dead ipropd-master
+}
+
+wait_for_slave_down () {
+    wait_for "slave to exit" check_pidfile_is_dead ipropd-slave
+}
+
 KRB5_CONFIG="${objdir}/krb5.conf"
 export KRB5_CONFIG
 
@@ -145,7 +213,7 @@ ${ipropd_slave} --hostname=slave.test.h5l.se -k ${keytab} --detach localhost ||
     { echo "ipropd-slave failed to start"; exit 1; }
 ipds=`getpid ipropd-slave`
 sh ${wait_kdc} ipropd-slave messages.log 'slave status change: up-to-date' || exit 1
-sleep 1
+get_iprop_ver || exit 1
 
 echo "checking slave is up"
 ${EGREP} 'iprop/slave.test.h5l.se@TEST.H5L.SE.*Up' iprop-stats >/dev/null || exit 1
@@ -155,7 +223,7 @@ ${EGREP} 'up-to-date with version' iprop-slave-status >/dev/null || { echo "slav
 
 echo "Add host"
 ${kadmin} -l add --random-key --use-defaults host/foo@${R} || exit 1
-sleep 2
+wait_for_slave
 KRB5_CONFIG="${objdir}/krb5-slave.conf" \
 ${kadmin} -l get host/foo@${R} > /dev/null || exit 1
 
@@ -163,7 +231,7 @@ echo "Rollover host keys"
 ${kadmin} -l cpw -r --keepold host/foo@${R} || exit 1
 ${kadmin} -l cpw -r --keepold host/foo@${R} || exit 1
 ${kadmin} -l cpw -r --keepold host/foo@${R} || exit 1
-sleep 2
+wait_for_slave 3
 KRB5_CONFIG="${objdir}/krb5-slave.conf" \
 ${kadmin} -l get host/foo@${R} | \
     ${EGREP} Keytypes: | cut -d: -f2 | tr ' ' '
@@ -172,7 +240,7 @@ ${kadmin} -l get host/foo@${R} | \
 
 echo "Delete 3DES keys"
 ${kadmin} -l del_enctype host/foo@${R} des3-cbc-sha1
-sleep 2
+wait_for_slave
 KRB5_CONFIG="${objdir}/krb5-slave.conf" \
 ${kadmin} -l get host/foo@${R} | \
     ${EGREP} Keytypes: | cut -d: -f2 | tr ' ' '
@@ -184,13 +252,13 @@ ${kadmin} -l get host/foo@${R} | \
 
 echo "Change policy host"
 ${kadmin} -l modify --policy=default host/foo@${R} || exit 1
-sleep 2
+wait_for_slave
 KRB5_CONFIG="${objdir}/krb5-slave.conf" \
 ${kadmin} -l get host/foo@${R} > /dev/null 2>/dev/null || exit 1
 
 echo "Rename host"
 ${kadmin} -l rename host/foo@${R} host/bar@${R} || exit 1
-sleep 2
+wait_for_slave
 KRB5_CONFIG="${objdir}/krb5-slave.conf" \
 ${kadmin} -l get host/foo@${R} > /dev/null 2>/dev/null && exit 1
 KRB5_CONFIG="${objdir}/krb5-slave.conf" \
@@ -198,7 +266,7 @@ ${kadmin} -l get host/bar@${R} > /dev/null || exit 1
 
 echo "Delete host"
 ${kadmin} -l delete host/bar@${R} || exit 1
-sleep 2
+wait_for_slave
 KRB5_CONFIG="${objdir}/krb5-slave.conf" \
 ${kadmin} -l get host/bar@${R} > /dev/null 2>/dev/null && exit 1
 
@@ -212,7 +280,7 @@ echo "kill slave and remove log and database"
 sh ${leaks_kill} ipropd-slave $ipds || exit 1
 rm -f iprop-slave-status
 
-sleep 2
+wait_for_slave_down
 ${EGREP} 'iprop/slave.test.h5l.se@TEST.H5L.SE.*Down' iprop-stats >/dev/null || exit 1
 
 # ----------------- checking: slave is missing changes while down
@@ -235,11 +303,11 @@ KRB5_CONFIG="${objdir}/krb5-slave.conf" \
 ${ipropd_slave} --hostname=slave.test.h5l.se -k ${keytab} --detach localhost ||
     { echo "ipropd-slave failed to start"; exit 1; }
 ipds=`getpid ipropd-slave`
-sh ${wait_kdc} ipropd-slave messages.log 'slave status change: up-to-date' || exit 1
-sleep 1
 
 echo "checking slave is up again"
-${EGREP} 'iprop/slave.test.h5l.se@TEST.H5L.SE.*Up' iprop-stats >/dev/null || exit 1
+wait_for "slave to start and connect to master" \
+    ${EGREP} 'iprop/slave.test.h5l.se@TEST.H5L.SE.*Up' iprop-stats >/dev/null
+wait_for_slave 2
 ${EGREP} 'up-to-date with version' iprop-slave-status >/dev/null || { echo "slave not up to date" ; cat iprop-slave-status ; exit 1; }
 echo "checking for replay problems"
 ${EGREP} 'Entry already exists in database' messages.log && exit 1
@@ -252,7 +320,7 @@ cmp master-last.tmp slave-last.tmp || exit 1
 
 echo "kill slave and remove log and database"
 sh ${leaks_kill} ipropd-slave $ipds || exit 1
-sleep 2
+wait_for_slave_down
 
 rm current.slave.log current-db.slave* || exit 1
 > iprop-stats
@@ -263,11 +331,11 @@ KRB5_CONFIG="${objdir}/krb5-slave.conf" \
 ${ipropd_slave} --hostname=slave.test.h5l.se -k ${keytab} --detach localhost ||
     { echo "ipropd-slave failed to start"; exit 1; }
 ipds=`getpid ipropd-slave`
-sh ${wait_kdc} ipropd-slave messages.log 'slave status change: up-to-date' || exit 1
-sleep 1
+wait_for_slave 0
 
 echo "checking slave is up again"
-${EGREP} 'iprop/slave.test.h5l.se@TEST.H5L.SE.*Up' iprop-stats >/dev/null || exit 1
+wait_for "slave to start and connect to master" \
+    ${EGREP} 'iprop/slave.test.h5l.se@TEST.H5L.SE.*Up' iprop-stats >/dev/null
 ${EGREP} 'up-to-date with version' iprop-slave-status >/dev/null || { echo "slave not up to date" ; cat iprop-slave-status ; exit 1; }
 echo "checking for replay problems"
 ${EGREP} 'Entry already exists in database' messages.log && exit 1
@@ -275,11 +343,11 @@ ${EGREP} 'Entry already exists in database' messages.log && exit 1
 # ----------------- checking: checking live truncation of master log
 
 ${kadmin} -l cpw --random-password user@${R} > /dev/null || exit 1
-sleep 2
+wait_for_slave
 
 echo "live truncate on master log"
 ${iprop_log} truncate -K 5 || exit 1
-sleep 2
+wait_for_slave 0
 
 echo "Killing master and slave"
 sh ${leaks_kill} ipropd-master $ipdm || exit 1
@@ -287,8 +355,8 @@ sh ${leaks_kill} ipropd-slave $ipds || exit 1
 
 rm -f iprop-slave-status
 
-#sleep 2
-#${EGREP} "^master down at " iprop-stats > /dev/null || exit 1
+wait_for_slave_down
+wait_for_master_down
 
 echo "compare versions on master and slave logs"
 KRB5_CONFIG=${objdir}/krb5-slave.conf \
@@ -316,25 +384,26 @@ KRB5_CONFIG="${objdir}/krb5-slave.conf" \
 ${ipropd_slave} --hostname=slave.test.h5l.se -k ${keytab} --detach localhost ||
     { echo "ipropd-slave failed to start"; exit 1; }
 ipds=`getpid ipropd-slave`
-sh ${wait_kdc} ipropd-slave messages.log 'slave status change: up-to-date' || exit 1
-sleep 1
+wait_for_slave -1
 
 echo "checking slave is up again"
-${EGREP} 'iprop/slave.test.h5l.se@TEST.H5L.SE.*Up' iprop-stats >/dev/null || exit 1
+wait_for "slave to start and connect to master" \
+    ${EGREP} 'iprop/slave.test.h5l.se@TEST.H5L.SE.*Up' iprop-stats >/dev/null
 ${EGREP} 'up-to-date with version' iprop-slave-status >/dev/null || { echo "slave to up to date" ; cat iprop-slave-status ; exit 1; }
 echo "checking for replay problems"
 ${EGREP} 'Entry already exists in database' messages.log && exit 1
 
 echo "pushing one change"
 ${kadmin} -l cpw --random-password user@${R} > /dev/null || exit 1
-sleep 2
+wait_for_slave
 
 echo "Killing master"
 sh ${leaks_kill} ipropd-master $ipdm || exit 1
 
-sleep 4
+wait_for_master_down
 
-${EGREP} 'disconnected' iprop-slave-status >/dev/null && { echo "slave still think its connected" ; cat iprop-slave-status ; exit 1; }
+wait_for "slave to disconnect" \
+  ${EGREP} 'disconnected' iprop-slave-status >/dev/null
 
 if ! tail -30 messages.log | grep 'disconnected for server' > /dev/null; then
     echo "client didnt disconnect"
@@ -356,13 +425,10 @@ ipdm=`getpid ipropd-master`
 echo "probing for slave pid"
 kill -0 ${ipds}  || { echo "slave no longer there"; exit 1; }
 
-sh ${wait_kdc} ipropd-slave messages.log "connection successful to master" || exit 1
-
-sh ${wait_kdc} ipropd-slave messages.log "ipropd-slave started at version" || exit 1
 
 echo "pushing one change"
 ${kadmin} -l cpw --random-password user@${R} > /dev/null || exit 1
-sleep 2
+wait_for_slave
 
 echo "shutting down all services"
 

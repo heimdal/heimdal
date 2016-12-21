@@ -596,15 +596,21 @@ slave_status(krb5_context context,
 	     const char *file,
 	     const char *fmt, ...)
 {
-    char *status = NULL;
+    char *status;
+    char *fmt2;
     va_list args;
     int len;
     
+    if (asprintf(&fmt2, "%s\n", fmt) == -1 || fmt2 == NULL) {
+        (void) unlink(file);
+        return;
+    }
     va_start(args, fmt);
-    len = vasprintf(&status, fmt, args);
+    len = vasprintf(&status, fmt2, args);
+    free(fmt2);
     va_end(args);
     if (len < 0 || status == NULL) {
-	unlink(file);
+	(void) unlink(file);
 	return;
     }
     krb5_warnx(context, "slave status change: %s", status);

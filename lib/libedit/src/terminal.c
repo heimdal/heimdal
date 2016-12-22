@@ -211,6 +211,14 @@ static void	terminal_reset_arrow(EditLine *);
 static int	terminal_putc(int);
 static void	terminal_tputs(EditLine *, const char *, int);
 
+#if defined(__ANDROID__)
+char *tgoto(const char *cap, int col, int row) { return NULL; }
+int tgetent(char *bp, const char *name) { return 0; }
+int tgetflag(char *id) { return 0; }
+int tgetnum(char *id) { return 0; }
+char *tgetstr(char *id, char **area) { return NULL; }
+int tputs(const char *str, int offcnt, int (*putc)(int)) { return 0; }
+#endif
 #ifdef _REENTRANT
 static pthread_mutex_t terminal_mutex = PTHREAD_MUTEX_INITIALIZER;
 #endif

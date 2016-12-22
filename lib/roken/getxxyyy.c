@@ -53,7 +53,7 @@ rk_getpwnam_r(const char *name, struct passwd *pwd, char *buffer,
 	      size_t bufsize, struct passwd **result)
 {
      struct passwd *p;
-     size_t slen, n = 0;
+     size_t slen;
      
      *result = NULL;
 
@@ -78,7 +78,9 @@ do {							\
 	 APPEND(pw_name);
      pwd->pw_uid = p->pw_uid;
      pwd->pw_gid = p->pw_gid;
+#ifdef NOTFORAND
      APPEND(pw_gecos);
+#endif
      APPEND(pw_dir);
      APPEND(pw_shell);
 

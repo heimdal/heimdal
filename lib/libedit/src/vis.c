@@ -121,6 +121,16 @@ iscgraph(int c) {
 
 #define MAXEXTRAS	30
 
+#ifndef	NBBY
+#define	NBBY	8
+#endif
+
+#if defined(__ANDROID__)
+int wctomb(char *s, wchar_t wc) { return wcrtomb(s,wc,NULL); }
+int mbtowc(wchar_t *pwc, const char *s, size_t n) { return mbrtowc(pwc, s, n, NULL); }
+#endif
+
+
 static const wchar_t char_shell[] = L"'`\";&<>()|{}]\\$!^~";
 static const wchar_t char_glob[] = L"*?[#";
 

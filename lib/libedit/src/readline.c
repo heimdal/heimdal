@@ -56,6 +56,18 @@ __RCSID("$NetBSD: readline.c,v 1.139 2016/10/28 18:32:26 christos Exp $");
 #include "fcns.h"
 #include "filecomplete.h"
 
+#ifndef NOTFORAND
+void setpwent() {
+printf("Hit set Password entry in read line\n");
+}
+
+struct passwd *getpwent() {
+	printf("Hit getPassword entry in read line\n");
+    static struct passwd pwd;
+    return &pwd;
+}
+#endif
+
 void rl_prep_terminal(int);
 void rl_deprep_terminal(void);
 
@@ -1784,8 +1796,7 @@ username_completion_function(const char *text, int state)
 	if (state == 0)
 		setpwent();
 
-	while (
-	    (pass = getpwent()) != NULL
+	while ((pass = getpwent()) != NULL
 	    && text[0] == pass->pw_name[0]
 	    && strcmp(text, pass->pw_name) == 0)
 		continue;

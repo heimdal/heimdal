@@ -74,7 +74,7 @@ typedef KEYMAP_ENTRY *Keymap;
 
 #ifndef CTRL
 #include <sys/ioctl.h>
-#if !defined(__sun) && !defined(__hpux) && !defined(_AIX)
+#if !defined(__sun) && !defined(__hpux) && !defined(_AIX) && !defined(_CYGWIN_)
 #include <sys/ttydefaults.h>
 #endif
 #ifndef CTRL

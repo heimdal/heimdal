@@ -34,6 +34,7 @@ subst = sed	-e "s!@PACKAGE\@!$(PACKAGE)!g" \
 		-e "s!@LIB_crypt\@!$(LIB_crypt)!g" \
 		-e "s!@LIB_dbopen\@!$(LIB_dbopen)!g" \
 		-e "s!@LIB_hcrypto_appl\@!$(LIB_hcrypto_appl)!g" \
+		-e "s!@LIB_sqlite3\@!$(LIB_sqlite3)!g" \
 		-e "s!@LIB_dlopen\@!$(LIB_dlopen)!g" \
 		-e "s!@LIB_door_create\@!$(LIB_door_create)!g" \
 		-e "s!@LIB_pkinit\@!$(LIB_pkinit)!g" \

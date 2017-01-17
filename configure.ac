@@ -73,6 +73,24 @@ AM_CONDITIONAL(ENABLE_SHARED, test "$enable_shared" = "yes")
 rk_VERSIONSCRIPT
 
 dnl
+dnl Verify that Perl and Perl's JSON are available
+dnl
+
+AC_ARG_VAR([PERL], [Path to perl])
+AC_PATH_PROG([PERL], [perl])
+AS_IF([test x"$PERL" = x],
+  [AC_MSG_ERROR([cannot build Heimdal without perl])])
+
+AC_MSG_CHECKING([for Perl module JSON])
+$PERL -e "use JSON; exit"
+AS_IF([test $? -eq 0],
+  [PERL_JSON=yes; AC_MSG_RESULT(yes)],
+  [AC_MSG_RESULT(no)])
+AS_IF([test x"$PERL_JSON" = x],
+  [AC_MSG_ERROR([cannot build Heimdal without JSON Perl module])])
+
+
+dnl
 dnl Helper bits for cross compiling
 dnl
 

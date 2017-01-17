@@ -48,6 +48,9 @@ TESTS =						\
 	test_expand_toks			\
 	test_x500
 
+XFAIL_TESTS =				\
+	test_fx
+
 check_DATA = test_config_strings.out
 
 check_PROGRAMS = $(TESTS) test_hostname test_ap-req test_canon test_set_kvno0

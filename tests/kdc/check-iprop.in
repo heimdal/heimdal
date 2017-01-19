@@ -432,12 +432,13 @@ wait_for_slave
 
 echo "shutting down all services"
 
-trap "" EXIT
-sh ${leaks_kill} kdc $kdcpid || exit 1
-sh ${leaks_kill} ipropd-master $ipdm || exit 1
-sh ${leaks_kill} ipropd-slave $ipds || exit 1
-
+leaked=false
+sh ${leaks_kill} kdc $kdcpid || leaked=true
+sh ${leaks_kill} ipropd-master $ipdm || leaked=true
+sh ${leaks_kill} ipropd-slave $ipds || leaked=true
 rm -f iprop-slave-status
+trap "" EXIT
+$leaked && exit 1
 
 echo "compare versions on master and slave logs"
 KRB5_CONFIG=${objdir}/krb5-slave.conf \
@@ -449,6 +450,9 @@ if [ "$db_type" = lmdb ]; then
     # Sanity check that we have the same number of principals at the HDB
     # and LMDB levels.
     #
+    # We should also do this for the sqlite backend, but that would
+    # require a sqlite3(1) shell that is capable of opening our HDB
+    # files.  W
     echo "checking that principals in DB == entries in LMDB"
     princs=`${kadmin} -l list '*' | wc -l`
     entries=`mdb_stat -n current-db.mdb | grep 'Entries:' | awk '{print $2}'`

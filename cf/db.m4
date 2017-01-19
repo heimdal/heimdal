@@ -5,8 +5,8 @@ dnl
 
 AC_DEFUN([rk_DB],[
 AC_ARG_WITH(db-type-preference,
-                       AS_HELP_STRING([--with-db-type-preference],
-                                      [specify HDB backend DB type preference as whitespace-separated list]),
+                       AS_HELP_STRING([--with-db-type-preference=list],
+                                      [specify HDB backend DB type preference as whitespace-separated list of db1, db3, lmdb, and/or sqlite]),
                        [db_type_preference="$withval"],
                        [db_type_preference="lmdb db3 db1 sqlite"])
 AC_ARG_WITH(berkeley-db,
@@ -142,7 +142,7 @@ AS_IF([test "x$enable_mdb_db" != xno],
 		AC_DEFINE(HAVE_LMDB, 1, [define if you have the LMDB library]))])])
 
 for db_type in unknown $db_type_preference; do
-    if eval test \"x\$have_${db_type}\" = xyes; then
+    if eval test \"x\$have_${db_type}\" = xyes -o ${db_type} = sqlite; then
         break
     fi
     db_type=unknown

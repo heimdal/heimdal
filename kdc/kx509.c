@@ -322,6 +322,53 @@ out:
     return ret;
 }
 
+krb5_error_code
+kdc_kx509_verify_service_principal(krb5_context context,
+				   const char *cname,
+				   krb5_principal sprincipal)
+{
+    krb5_error_code ret, aret;
+    krb5_boolean bret;
+    krb5_principal principal = NULL;
+    char *expected = NULL;
+    char localhost[MAXHOSTNAMELEN];
+
+    ret = gethostname(localhost, sizeof(localhost) - 1);
+    if (ret != 0) {
+	ret = errno;
+	krb5_set_error_message(context, ret,
+			       N_("Failed to get local hostname", ""));
+	return ret;
+    }
+    localhost[sizeof(localhost) - 1] = '\0';
+
+    ret = krb5_make_principal(context, &principal, "", "kca_service",
+			      localhost, NULL);
+    if (ret)
+	goto out;
+
+    bret = krb5_principal_compare_any_realm(context, sprincipal, principal);
+    if (bret == TRUE)
+	goto out;	/* found a match */
+
+    ret = KRB5KDC_ERR_SERVER_NOMATCH;
+
+    aret = krb5_unparse_name(context, sprincipal, &expected);
+    if (aret)
+	goto out;
+
+    krb5_set_error_message(context, ret,
+			   "User %s used wrong Kx509 service "
+			   "principal, expected: %s",
+			   cname, expected);
+
+  out:
+    krb5_xfree(expected);
+    krb5_free_principal(context, principal);
+
+    return ret;
+}
+
 /*
  *
  */
@@ -338,7 +385,6 @@ _kdc_do_kx509(krb5_context context,
     krb5_auth_context ac = NULL;
     krb5_keytab id = NULL;
     krb5_principal sprincipal = NULL, cprincipal = NULL;
-    krb5_principal principal = NULL;
     char *cname = NULL;
     Kx509Response rep;
     size_t size;
@@ -392,39 +438,13 @@ _kdc_do_kx509(krb5_context context,
     if (ret)
 	goto out;
 
-    /* verify server principal */
-
-    ret = krb5_sname_to_principal(context, NULL, "kca_service",
-				  KRB5_NT_UNKNOWN, &sprincipal);
+    ret = krb5_ticket_get_server(context, ticket, &sprincipal);
     if (ret)
 	goto out;
 
-    ret = krb5_ticket_get_server(context, ticket, &principal);
+    ret = kdc_kx509_verify_service_principal(context, cname, sprincipal);
     if (ret)
 	goto out;
-
-    ret = krb5_principal_compare(context, sprincipal, principal);
-    if (ret != TRUE) {
-	char *expected, *used;
-
-	ret = krb5_unparse_name(context, sprincipal, &expected);
-	if (ret)
-	    goto out;
-	ret = krb5_unparse_name(context, principal, &used);
-	if (ret) {
-	    krb5_xfree(expected);
-	    goto out;
-	}
-
-	ret = KRB5KDC_ERR_SERVER_NOMATCH;
-	krb5_set_error_message(context, ret,
-			       "User %s used wrong Kx509 service "
-			       "principal, expected: %s, used %s",
-			       cname, expected, used);
-	krb5_xfree(expected);
-	krb5_xfree(used);
-	goto out;
-    }
 
     ret = krb5_auth_con_getkey(context, ac, &key);
     if (ret == 0 && key == NULL)
@@ -515,8 +535,6 @@ out:
 	krb5_free_principal(context, sprincipal);
     if (cprincipal)
 	krb5_free_principal(context, cprincipal);
-    if (principal)
-	krb5_free_principal(context, principal);
     if (key)
 	krb5_free_keyblock (context, key);
     if (cname)

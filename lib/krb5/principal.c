@@ -70,6 +70,8 @@ set_default_princ_type(krb5_principal p, NAME_TYPE defnt)
         princ_type(p) = KRB5_NT_SRV_INST;
     else if (princ_num_comp(p) > 1 && strcmp(princ_ncomp(p, 0), "host") == 0)
         princ_type(p) = KRB5_NT_SRV_HST;
+    else if (princ_num_comp(p) > 1 && strcmp(princ_ncomp(p, 0), "kca_service") == 0)
+	princ_type(p) = KRB5_NT_SRV_HST;
     else if (princ_num_comp(p) == 2 &&
              strcmp(princ_ncomp(p, 0), KRB5_WELLKNOWN_NAME) == 0)
         princ_type(p) = KRB5_NT_WELLKNOWN;

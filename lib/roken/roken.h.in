@@ -757,7 +757,7 @@ readv(int, const struct iovec *, int);
 #endif
 
 #ifdef NO_PIDFILES
-#define pidfile(x) ((void) 0)
+#define rk_pidfile(x) ((void) 0)
 #else
 ROKEN_LIB_FUNCTION void ROKEN_LIB_CALL rk_pidfile (const char*);
 #endif

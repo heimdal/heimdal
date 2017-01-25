@@ -344,7 +344,7 @@ receive_loop (krb5_context context,
         off = krb5_storage_seek(sp, 0, SEEK_CUR);
         if (krb5_storage_seek(sp, len + 8, SEEK_CUR) != off + len + 8) {
             krb5_warnx(context, "iprop entries from master were truncated");
-            return 0;
+            return EINVAL;
         }
         if (verbose) {
             krb5_warnx(context, "diff contains old log record version "
@@ -416,7 +416,7 @@ receive(krb5_context context,
 
     ret2 = receive_loop(context, sp, server_context);
     if (ret2)
-	krb5_warn(context, ret, "receive from ipropd-master had errors");
+	krb5_warn(context, ret2, "receive from ipropd-master had errors");
 
     ret = server_context->db->hdb_close(context, server_context->db);
     if (ret)
@@ -962,7 +962,7 @@ main(int argc, char **argv)
                     krb5_warnx(context, "master sent us diffs");
 		ret2 = receive(context, sp, server_context);
                 if (ret2)
-                    krb5_warn(context, ret,
+                    krb5_warn(context, ret2,
                               "receive from ipropd-master had errors");
 		ret = ihave(context, auth_context, master_fd,
 			    server_context->log_context.version);

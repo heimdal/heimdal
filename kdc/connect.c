@@ -515,15 +515,21 @@ static int
 de_http(char *buf)
 {
     unsigned char *p, *q;
-    for(p = q = (unsigned char *)buf; *p; p++, q++) {
-	if(*p == '%' && isxdigit(p[1]) && isxdigit(p[2])) {
-	    unsigned int x;
-	    if(sscanf((char *)p + 1, "%2x", &x) != 1)
+    unsigned int x;
+
+    for (p = q = (unsigned char *)buf; *p; p++, q++) {
+	if (*p == '%') {
+	    if (!(isxdigit(p[1]) && isxdigit(p[2])))
 		return -1;
+
+	    if (sscanf((char *)p + 1, "%2x", &x) != 1)
+		return -1;
+
 	    *q = x;
 	    p += 2;
-	} else
+	} else {
 	    *q = *p;
+	}
     }
     *q = '\0';
     return 0;

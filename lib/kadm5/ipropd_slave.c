@@ -317,6 +317,11 @@ receive_loop (krb5_context context,
 	uint32_t timestamp;
         uint32_t op;
 
+        if ((ret = krb5_ret_uint32(sp, &vers)) == HEIM_ERR_EOF) {
+            krb5_warnx(context, "master sent no new iprop entries");
+            return 0;
+        }
+
         /*
          * TODO We could do more to validate the entries from the master
          * here.  And we could use/reuse more kadm5_log_*() code here.
@@ -325,8 +330,7 @@ receive_loop (krb5_context context,
          * what we needed and just write this to the log file and let
          * kadm5_log_recover() do the rest.
          */
-	if (krb5_ret_uint32(sp, &vers) != 0 ||
-            krb5_ret_uint32(sp, &timestamp) != 0 ||
+	if (ret || krb5_ret_uint32(sp, &timestamp) != 0 ||
             krb5_ret_uint32(sp, &op) != 0 ||
             krb5_ret_uint32(sp, &len) != 0) {
 

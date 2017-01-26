@@ -50,11 +50,11 @@ _kadm5_set_keys(kadm5_server_context *context,
     size_t num_keys;
     kadm5_ret_t ret;
 
-    ret = hdb_generate_key_set_password(context->context,
-					ent->principal,
-					password,
-					ks_tuple, n_ks_tuple,
-					&keys, &num_keys);
+    ret = hdb_generate_key_set_password_with_ks_tuple(context->context,
+						      ent->principal,
+						      password,
+						      ks_tuple, n_ks_tuple,
+						      &keys, &num_keys);
     if (ret)
 	return ret;
 

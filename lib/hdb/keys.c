@@ -772,11 +772,12 @@ hdb_generate_key_set(krb5_context context, krb5_principal principal,
 
 
 krb5_error_code
-hdb_generate_key_set_password(krb5_context context,
-			      krb5_principal principal,
-			      const char *password,
-			      krb5_key_salt_tuple *ks_tuple, int n_ks_tuple,
-			      Key **keys, size_t *num_keys)
+hdb_generate_key_set_password_with_ks_tuple(krb5_context context,
+					    krb5_principal principal,
+					    const char *password,
+					    krb5_key_salt_tuple *ks_tuple,
+					    int n_ks_tuple,
+					    Key **keys, size_t *num_keys)
 {
     krb5_error_code ret;
     size_t i;
@@ -808,4 +809,17 @@ hdb_generate_key_set_password(krb5_context context,
 	return ret;
     }
     return ret;
+}
+
+
+krb5_error_code
+hdb_generate_key_set_password(krb5_context context,
+			      krb5_principal principal,
+			      const char *password,
+			      Key **keys, size_t *num_keys)
+{
+
+    return hdb_generate_key_set_password_with_ks_tuple(context, principal,
+						       password, NULL, 0,
+						       keys, num_keys);
 }

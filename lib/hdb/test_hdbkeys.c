@@ -94,7 +94,7 @@ main(int argc, char **argv)
     *keyset.set_time = time(NULL);
 
     ret = hdb_generate_key_set_password(context, principal, password_str,
-					NULL, 0, &keyset.keys.val, &len);
+					&keyset.keys.val, &len);
     if (ret)
 	krb5_err(context, 1, ret, "hdb_generate_key_set_password");
     keyset.keys.len = len;

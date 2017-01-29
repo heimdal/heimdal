@@ -62,6 +62,12 @@ typedef struct krb5_kdc_configuration {
 
     krb5_boolean encode_as_rep_as_tgs_rep; /* bug compatibility */
 
+    /*
+     * For Samba's AD DC, which will set to FALSE
+     * to turn off principal base referral auto-detection
+     */
+    krb5_boolean autodetect_referrals;
+
     krb5_boolean tgt_use_strongest_session_key;
     krb5_boolean preauth_use_strongest_session_key;
     krb5_boolean svc_use_strongest_session_key;

@@ -1244,12 +1244,16 @@ out:
     }
 
     _krb5_debug(context, 1,
-		"krb5_sendto_context %s done: %d hosts %lu packets %lu wc: %ld.%06ld nr: %ld.%06ld kh: %ld.%06ld tid: %08x",
-		realm, ret,
+		"%s %s done: %d hosts: %lu packets: %lu"
+		" wc: %lld.%06lu nr: %lld.%06lu kh: %lld.%06lu tid: %08x",
+		__func__, realm, ret,
 		ctx->stats.num_hosts, ctx->stats.sent_packets,
-		stop_time.tv_sec, (long)stop_time.tv_usec,
-		ctx->stats.name_resolution.tv_sec, (long)ctx->stats.name_resolution.tv_usec,
-		ctx->stats.krbhst.tv_sec, (long)ctx->stats.krbhst.tv_usec, ctx->stid);
+		(long long)stop_time.tv_sec,
+		(unsigned long)stop_time.tv_usec,
+		(long long)ctx->stats.name_resolution.tv_sec,
+		(unsigned long)ctx->stats.name_resolution.tv_usec,
+		(long long)ctx->stats.krbhst.tv_sec,
+		(unsigned long)ctx->stats.krbhst.tv_usec, ctx->stid);
 
 
     if (freectx)

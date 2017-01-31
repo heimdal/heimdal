@@ -72,7 +72,7 @@ krb5_clear_error_message(krb5_context context)
 KRB5_LIB_FUNCTION void KRB5_LIB_CALL
 krb5_set_error_message(krb5_context context, krb5_error_code ret,
 		       const char *fmt, ...)
-    __attribute__ ((format (printf, 3, 4)))
+    __attribute__ ((__format__ (__printf__, 3, 4)))
 {
     va_list ap;
 
@@ -98,7 +98,7 @@ krb5_set_error_message(krb5_context context, krb5_error_code ret,
 KRB5_LIB_FUNCTION void KRB5_LIB_CALL
 krb5_vset_error_message (krb5_context context, krb5_error_code ret,
 			 const char *fmt, va_list args)
-    __attribute__ ((format (printf, 3, 0)))
+    __attribute__ ((__format__ (__printf__, 3, 0)))
 {
     int r;
 
@@ -136,7 +136,7 @@ krb5_vset_error_message (krb5_context context, krb5_error_code ret,
 KRB5_LIB_FUNCTION void KRB5_LIB_CALL
 krb5_prepend_error_message(krb5_context context, krb5_error_code ret,
 			   const char *fmt, ...)
-    __attribute__ ((format (printf, 3, 4)))
+    __attribute__ ((__format__ (__printf__, 3, 4)))
 {
     va_list ap;
 
@@ -161,7 +161,7 @@ krb5_prepend_error_message(krb5_context context, krb5_error_code ret,
 KRB5_LIB_FUNCTION void KRB5_LIB_CALL
 krb5_vprepend_error_message(krb5_context context, krb5_error_code ret,
 			    const char *fmt, va_list args)
-    __attribute__ ((format (printf, 3, 0)))
+    __attribute__ ((__format__ (__printf__, 3, 0)))
 {
     char *str = NULL, *str2 = NULL;
 

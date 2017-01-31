@@ -3404,7 +3404,7 @@ hx509_cert_binary(hx509_context context, hx509_cert c, heim_octet_string *os)
 
 void
 _hx509_abort(const char *fmt, ...)
-     __attribute__ ((noreturn, format (printf, 1, 2)))
+     __attribute__ ((__noreturn__, __format__ (__printf__, 1, 2)))
 {
     va_list ap;
     va_start(ap, fmt);

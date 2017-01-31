@@ -70,7 +70,7 @@ init_error_table(const char **msgs, long base, int count)
 
 static void KRB5_CALLCONV
 default_proc (const char *whoami, long code, const char *fmt, va_list args)
-    __attribute__((__format__(__printf__, 3, 0)));
+    __attribute__ ((__format__ (__printf__, 3, 0)));
 
 static void KRB5_CALLCONV
 default_proc (const char *whoami, long code, const char *fmt, va_list args)

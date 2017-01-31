@@ -468,7 +468,7 @@ free_environment(char **);
 #define warnerr rk_warnerr
 ROKEN_LIB_FUNCTION void ROKEN_LIB_CALL
 rk_warnerr(int doerrno, const char *fmt, va_list ap)
-    __attribute__ ((format (printf, 2, 0)));
+    __attribute__ ((__format__ (__printf__, 2, 0)));
 
 ROKEN_LIB_FUNCTION void * ROKEN_LIB_CALL
 rk_realloc(void *, size_t);
@@ -480,7 +480,7 @@ rk_strpoolcollect(struct rk_strpool *);
 
 ROKEN_LIB_FUNCTION struct rk_strpool * ROKEN_LIB_CALL
 rk_strpoolprintf(struct rk_strpool *, const char *, ...)
-    __attribute__ ((format (printf, 2, 3)));
+    __attribute__ ((__format__ (__printf__, 2, 3)));
 
 ROKEN_LIB_FUNCTION void ROKEN_LIB_CALL
 rk_strpoolfree(struct rk_strpool *);

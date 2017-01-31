@@ -60,9 +60,11 @@ _gss_ntlm_inquire_cred
 	    n->domain = strdup(c->domain);
 	}
 	if (n == NULL || n->user == NULL || n->domain == NULL) {
-	    if (n)
+	    if (n) {
 		free(n->user);
-            free(n);
+		free(n->domain);
+		free(n);
+	    }
 	    *minor_status = ENOMEM;
 	    return GSS_S_FAILURE;
 	}

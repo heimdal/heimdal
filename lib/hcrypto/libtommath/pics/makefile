@@ -32,4 +32,4 @@ pdfes: sliding_window.pdf expt_state.pdf primality.pdf design_process.pdf
 
 clean:
 	rm -rf *.ps *.pdf .xvpics
-   
+

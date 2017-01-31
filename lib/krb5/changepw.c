@@ -40,7 +40,7 @@
 static void
 str2data (krb5_data *d,
 	  const char *fmt,
-	  ...) __attribute__ ((format (printf, 2, 3)));
+	  ...) __attribute__ ((__format__ (__printf__, 2, 3)));
 
 static void
 str2data (krb5_data *d,

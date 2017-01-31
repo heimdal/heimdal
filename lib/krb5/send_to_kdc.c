@@ -308,7 +308,7 @@ struct host {
 
 static void
 debug_host(krb5_context context, int level, struct host *host, const char *fmt, ...)
-	__attribute__((__format__(__printf__, 4, 5)));
+	__attribute__ ((__format__ (__printf__, 4, 5)));
 
 static void
 debug_host(krb5_context context, int level, struct host *host, const char *fmt, ...)

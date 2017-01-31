@@ -64,7 +64,7 @@ pk_copy_error(krb5_context context,
 	      int hxret,
 	      const char *fmt,
 	      ...)
-    __attribute__ ((format (printf, 4, 5)));
+    __attribute__ ((__format__ (__printf__, 4, 5)));
 
 /*
  *

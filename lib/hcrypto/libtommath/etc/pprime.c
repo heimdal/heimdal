@@ -163,7 +163,7 @@ mp_digit prime_digit(void)
    int n;
    mp_digit d;
 
-   n = labs(rand()) % n_prime;
+   n = abs(rand()) % n_prime;
    fseek(primes, n * sizeof(mp_digit), SEEK_SET);
    fread(&d, 1, sizeof(mp_digit), primes);
    return d;

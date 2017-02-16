@@ -52,7 +52,14 @@ separated from the equal sign with some whitespace). Subsections have a
 other bindings are treated as variable assignments. The value of a
 variable extends to the end of the line.
 
+Configuration files can also include other files, or all files in a
+directory.  Use absolute paths in include directives.  When including a
+directoty, only files whose names consist of alphanumeric, hyphen, or
+underscore characters are allowed, though they may end in '.conf'.
+
 @example
+include /some/config/file
+includedir /some/config/directory
 [section1]
         a-subsection = @{
                 var = value1

@@ -54,6 +54,7 @@ The grammar looks like:
 file:
 	/* empty */
 	sections
+        includes
 
 sections:
 	section sections
@@ -76,9 +77,21 @@ binding:
 name:
 	STRING
 
+includes:
+	'include' path
+	'includedir' path
+
+path: STRING
+
 .Ed
 .Li STRINGs
 consists of one or more non-whitespace characters.
+.Pp
+Files and directories may be included by absolute path.  Including a
+directory causes all files in the directory to be included as if each
+file had been included separately, but only files whose names consist of
+alphanumeric, hyphen, and underscore are included, though they may also
+end in '.conf'.
 .Pp
 STRINGs that are specified later in this man-page uses the following
 notation.

@@ -38,6 +38,39 @@
 #undef __attribute__
 #define __attribute__(X)
 
+struct kdc_pa_auth_status {
+    int auth_status;
+    const char *auth_details;
+    void *free_ptr;
+};
+
+static krb5_error_code
+_kdc_audit_auth_status(astgs_request_t r,
+		       struct kdc_pa_auth_status *status,
+		       const char *pa_type)
+{
+    struct HDB *hdb;
+    krb5_error_code ret = 0;
+
+    if (r->clientdb)
+	hdb = r->clientdb;
+    else
+	hdb = r->config->db[0];
+
+    if (hdb && hdb->hdb_auth_status)
+	ret = hdb->hdb_auth_status(r->context,
+				   hdb,
+				   r->client,
+				   &r->tv_start,
+				   r->addr,
+				   r->cname,
+				   status->auth_status,
+				   status->auth_details,
+				   pa_type);
+
+    return ret;
+}
+
 void
 _kdc_fix_time(time_t **t)
 {
@@ -461,7 +494,9 @@ _kdc_log_timestamp(astgs_request_t r, const char *type,
 #ifdef PKINIT
 
 static krb5_error_code
-pa_pkinit_validate(astgs_request_t r, const PA_DATA *pa)
+pa_pkinit_validate(astgs_request_t r,
+		   const PA_DATA *pa,
+		   struct kdc_pa_auth_status *auth_status)
 {
     pk_client_params *pkp = NULL;
     char *client_cert = NULL;
@@ -472,15 +507,19 @@ pa_pkinit_validate(astgs_request_t r, const PA_DATA *pa)
 	ret = KRB5KRB_AP_ERR_BAD_INTEGRITY;
 	_kdc_r_log(r, 4, "Failed to decode PKINIT PA-DATA -- %s",
 		   r->cname);
+	auth_status->auth_status = HDB_AUTH_PKINIT_FAILURE;
 	goto out;
     }
-    
+
     ret = _kdc_pk_check_client(r, pkp, &client_cert);
     if (ret) {
 	_kdc_set_e_text(r, "PKINIT certificate not allowed to "
 			"impersonate principal");
+	auth_status->auth_status = HDB_AUTH_PKINIT_FAILURE;
 	goto out;
     }
+    auth_status->auth_details = client_cert;
+    auth_status->free_ptr = client_cert;
 
     r->pa_endtime = _kdc_pk_endtime(pkp);
     if (!r->client->entry.flags.synthetic)
@@ -488,7 +527,6 @@ pa_pkinit_validate(astgs_request_t r, const PA_DATA *pa)
 
     _kdc_r_log(r, 4, "PKINIT pre-authentication succeeded -- %s using %s",
 	       r->cname, client_cert);
-    free(client_cert);
 
     ret = _kdc_pk_mk_pa_reply(r, pkp);
     if (ret) {
@@ -497,6 +535,8 @@ pa_pkinit_validate(astgs_request_t r, const PA_DATA *pa)
     }
     ret = _kdc_add_initial_verified_cas(r->context, r->config,
 					pkp, &r->et);
+
+    auth_status->auth_status = HDB_AUTH_PKINIT_SUCCESS;
  out:
     if (pkp)
 	_kdc_pk_free_client_param(r->context, pkp);
@@ -507,7 +547,9 @@ pa_pkinit_validate(astgs_request_t r, const PA_DATA *pa)
 #endif /* PKINIT */
 
 static krb5_error_code
-pa_gss_validate(astgs_request_t r, const PA_DATA *pa)
+pa_gss_validate(astgs_request_t r,
+		const PA_DATA *pa,
+		struct kdc_pa_auth_status *auth_status)
 {
     gss_client_params *gcp = NULL;
     char *client_name = NULL;
@@ -523,14 +565,16 @@ pa_gss_validate(astgs_request_t r, const PA_DATA *pa)
 	if (ret) {
 	    _kdc_set_e_text(r, "GSS-API client not allowed to "
 			    "impersonate principal");
+	    auth_status->auth_status = HDB_AUTH_GSS_FAILURE;
 	    goto out;
 	}
+	auth_status->auth_details = client_name;
+	auth_status->free_ptr = client_name;
 
 	r->pa_endtime = _kdc_gss_endtime(r, gcp);
 
 	_kdc_r_log(r, 4, "GSS pre-authentication succeeded -- %s using %s",
 		   r->cname, client_name);
-	free(client_name);
 
 	ret = _kdc_gss_mk_composite_name_ad(r, gcp);
 	if (ret) {
@@ -546,6 +590,7 @@ pa_gss_validate(astgs_request_t r, const PA_DATA *pa)
 	goto out;
     }
 
+    auth_status->auth_status = HDB_AUTH_GSS_SUCCESS;
  out:
     if (gcp)
 	_kdc_gss_free_client_param(r, gcp);
@@ -554,7 +599,9 @@ pa_gss_validate(astgs_request_t r, const PA_DATA *pa)
 }
 
 static krb5_error_code
-pa_enc_chal_validate(astgs_request_t r, const PA_DATA *pa)
+pa_enc_chal_validate(astgs_request_t r,
+		     const PA_DATA *pa,
+		     struct kdc_pa_auth_status *auth_status)
 {
     krb5_data pepper1, pepper2;
     int invalidPassword = 0;
@@ -577,6 +624,7 @@ pa_enc_chal_validate(astgs_request_t r, const PA_DATA *pa)
        ret = KRB5KDC_ERR_CLIENT_REVOKED;
        kdc_log(r->context, r->config, 0,
                "Client (%s) is locked out", r->cname);
+       auth_status->auth_status = HDB_AUTH_CLIENT_LOCKED_OUT;
        return ret;
     }
 
@@ -698,21 +746,17 @@ pa_enc_chal_validate(astgs_request_t r, const PA_DATA *pa)
 					    
 	set_salt_padata(&r->outpadata, k->salt);
 
-       /*
-	* Success
-	*/
-	if (r->clientdb->hdb_auth_status)
-	    r->clientdb->hdb_auth_status(r->context, r->clientdb, r->client,
-					 HDB_AUTH_SUCCESS);
+	/*
+	 * Success
+	 */
+	auth_status->auth_status = HDB_AUTH_CORRECT_PASSWORD;
 	goto out;
     }
 
     ret = KRB5KDC_ERR_PREAUTH_FAILED;
 
-    if (invalidPassword && r->clientdb->hdb_auth_status) {
-	r->clientdb->hdb_auth_status(r->context, r->clientdb, r->client,
-				     HDB_AUTH_WRONG_PASSWORD);
-    }
+    if (invalidPassword)
+	auth_status->auth_status = HDB_AUTH_WRONG_PASSWORD;
  out:
     free_EncryptedData(&enc_data);
 
@@ -720,7 +764,9 @@ pa_enc_chal_validate(astgs_request_t r, const PA_DATA *pa)
 }
 
 static krb5_error_code
-pa_enc_ts_validate(astgs_request_t r, const PA_DATA *pa)
+pa_enc_ts_validate(astgs_request_t r,
+		   const PA_DATA *pa,
+		   struct kdc_pa_auth_status *auth_status)
 {
     EncryptedData enc_data;
     krb5_error_code ret;
@@ -747,6 +793,7 @@ pa_enc_ts_validate(astgs_request_t r, const PA_DATA *pa)
        ret = KRB5KDC_ERR_CLIENT_REVOKED;
        kdc_log(r->context, r->config, 0,
                "Client (%s) is locked out", r->cname);
+       auth_status->auth_status = HDB_AUTH_CLIENT_LOCKED_OUT;
        return ret;
     }
 
@@ -815,7 +862,11 @@ pa_enc_ts_validate(astgs_request_t r, const PA_DATA *pa)
 		   "(enctype %s) error %s",
 		   r->cname, str ? str : "unknown enctype", msg);
 	krb5_free_error_message(r->context, msg);
-	free(str);
+
+	free(auth_status->free_ptr);
+	auth_status->auth_status = HDB_AUTH_WRONG_PASSWORD;
+	auth_status->auth_details = str ? str : "unknown enctype";
+	auth_status->free_ptr = str;
 
 	if(hdb_next_enctype2key(r->context, &r->client->entry, NULL,
 				enc_data.etype, &pa_key) == 0)
@@ -823,14 +874,14 @@ pa_enc_ts_validate(astgs_request_t r, const PA_DATA *pa)
 
 	free_EncryptedData(&enc_data);
 
-	if (r->clientdb->hdb_auth_status)
-	    r->clientdb->hdb_auth_status(r->context, r->clientdb, r->client,
-					 HDB_AUTH_WRONG_PASSWORD);
-
 	ret = KRB5KDC_ERR_PREAUTH_FAILED;
 	goto out;
     }
     free_EncryptedData(&enc_data);
+    free(auth_status->free_ptr);
+    auth_status->auth_status = -1;
+    auth_status->auth_details = NULL;
+    auth_status->free_ptr = NULL;
     ret = decode_PA_ENC_TS_ENC(ts_data.data,
 			       ts_data.length,
 			       &p,
@@ -855,6 +906,7 @@ pa_enc_ts_validate(astgs_request_t r, const PA_DATA *pa)
 		   (unsigned)labs(kdc_time - p.patimestamp),
 		   r->context->max_skew,
 		   r->cname);
+	auth_status->auth_details = "AP_ERR_SKEW";
 
 	/*
 	 * The following is needed to make windows clients to
@@ -880,7 +932,9 @@ pa_enc_ts_validate(astgs_request_t r, const PA_DATA *pa)
 	       r->cname, str ? str : "unknown enctype");
     _kdc_audit_addkv((kdc_request_t)r, 0, "pa-etype", "%d",
 		     (int)pa_key->key.keytype);
-    free(str);
+    auth_status->auth_status = HDB_AUTH_CORRECT_PASSWORD;
+    auth_status->auth_details = str ? str : "unknown enctype";
+    auth_status->free_ptr = str;
 
     ret = 0;
 
@@ -897,7 +951,9 @@ struct kdc_patypes {
 #define PA_REQ_FAST	2 /* only use inside fast */
 #define PA_SYNTHETIC_OK	4
 #define PA_REPLACE_REPLY_KEY	8
-    krb5_error_code (*validate)(astgs_request_t, const PA_DATA *pa);
+    krb5_error_code (*validate)(astgs_request_t,
+				const PA_DATA *pa,
+				struct kdc_pa_auth_status *auth_status);
 };
 
 static const struct kdc_patypes pat[] = {
@@ -2042,11 +2098,15 @@ _kdc_as_rep(astgs_request_t r)
 	goto out;
     }
     default:
+    {
+	struct kdc_pa_auth_status auth_status = {HDB_AUTH_CLIENT_UNKNOWN, NULL, NULL};
 	msg = krb5_get_error_message(r->context, ret);
 	kdc_log(r->context, config, 4, "UNKNOWN -- %s: %s", r->cname, msg);
 	krb5_free_error_message(r->context, msg);
 	ret = KRB5KDC_ERR_C_PRINCIPAL_UNKNOWN;
+	_kdc_audit_auth_status(r, &auth_status, NULL);
 	goto out;
+    }
     }
     ret = _kdc_db_fetch(r->context, config, r->server_princ,
 			HDB_F_GET_SERVER | HDB_F_DELAY_NEW_KEYS |
@@ -2105,6 +2165,8 @@ _kdc_as_rep(astgs_request_t r)
 	    i = 0;
 	    pa = _kdc_find_padata(req, &i, pat[n].type);
 	    if (pa) {
+		struct kdc_pa_auth_status auth_status = {-1, NULL, NULL};
+
                 if (r->client->entry.flags.synthetic &&
                     !(pat[n].flags & PA_SYNTHETIC_OK)) {
                     kdc_log(r->context, config, 4, "UNKNOWN -- %s", r->cname);
@@ -2113,11 +2175,18 @@ _kdc_as_rep(astgs_request_t r)
                 }
                 _kdc_audit_addkv((kdc_request_t)r, KDC_AUDIT_VIS, "pa", "%s",
                                  pat[n].name);
-		ret = pat[n].validate(r, pa);
+		ret = pat[n].validate(r, pa, &auth_status);
 		if (ret != 0) {
 		    krb5_error_code  ret2;
 		    Key *ckey = NULL;
 		    krb5_boolean default_salt;
+
+		    if (auth_status.auth_status == -1)
+			auth_status.auth_status = HDB_AUTH_GENERIC_FAILURE;
+		    _kdc_audit_auth_status(r,
+					   &auth_status,
+					   pat[n].name);
+		    free(auth_status.free_ptr);
 
 		    /*
 		     * If there is a client key, send ETYPE_INFO{,2}
@@ -2137,7 +2206,16 @@ _kdc_as_rep(astgs_request_t r)
 			"%s pre-authentication succeeded -- %s",
 			pat[n].name, r->cname);
 		found_pa = 1;
+
 		r->replaced_reply_key = (pat[n].flags & PA_REPLACE_REPLY_KEY) != 0;
+
+		if (auth_status.auth_status == -1)
+			auth_status.auth_status = HDB_AUTH_GENERIC_SUCCESS;
+
+		_kdc_audit_auth_status(r,
+				       &auth_status,
+				       pat[n].name);
+		free(auth_status.free_ptr);
 		r->et.flags.pre_authent = 1;
 	    }
 	}
@@ -2207,11 +2285,6 @@ _kdc_as_rep(astgs_request_t r)
 	    goto out;
     }
 
-    if (r->clientdb->hdb_auth_status) {
-	r->clientdb->hdb_auth_status(r->context, r->clientdb, r->client,
-				     HDB_AUTH_SUCCESS);
-    }
-
     /*
      * Verify flags after the user been required to prove its identity
      * with in a preauth mech.
@@ -2229,6 +2302,15 @@ _kdc_as_rep(astgs_request_t r)
 	}
 
 	r->et.flags.anonymous = 1;
+    }
+
+    {
+	struct kdc_pa_auth_status auth_status
+		= {HDB_AUTHZ_SUCCESS,
+		   NULL,
+		   NULL};
+
+	_kdc_audit_auth_status(r, &auth_status, NULL);
     }
 
     /*

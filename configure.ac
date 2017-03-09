@@ -282,7 +282,9 @@ AC_ARG_ENABLE(afs-string-to-key,
 
 if test "$enable_afs_string_to_key" = "yes"; then
 	AC_DEFINE(ENABLE_AFS_STRING_TO_KEY, 1, [Define if want to use the weak AFS string to key functions.])
+	ENABLE_AFS_STRING_TO_KEY=1
 fi
+AC_SUBST(ENABLE_AFS_STRING_TO_KEY)dnl
 
 
 rk_CHECK_MAN

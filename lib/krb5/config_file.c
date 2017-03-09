@@ -337,6 +337,41 @@ parse_plist_config(krb5_context context, const char *path, krb5_config_section *
 
 #endif
 
+static int
+is_absolute_path(const char *path)
+{
+    /*
+     * An absolute path is one that refers to an explicit object
+     * without ambiguity.
+     */
+#ifdef WIN32
+    size_t len = strlen(path);
+
+    /* UNC path is by definition absolute */
+    if (len > 2
+         && ISPATHSEP(path[0])
+         && ISPATHSEP(path[1]))
+        return 1;
+
+    /* A drive letter path might be absolute */
+    if (len > 3
+         && isalpha(path[0])
+         && path[1] == ':'
+         && ISPATHSEP(path[2]))
+        return 1;
+
+    /*
+     * if no drive letter but first char is a path
+     * separator then the drive letter must be obtained
+     * from the including file.
+     */
+#else
+    /* UNIX is easy, first char '/' is absolute */
+    if (ISPATHSEP(path[0]))
+        return 1;
+#endif
+    return 0;
+}
 
 /*
  * Parse the config file `fname', generating the structures into `res'
@@ -377,6 +412,12 @@ krb5_config_parse_debug (struct fileptr *f,
             p += sizeof("include");
             while (isspace(*p))
                 p++;
+            if (!is_absolute_path(p)) {
+                krb5_set_error_message(f->context, EINVAL,
+                                       "Configuration include path must be "
+                                       "absolute");
+                return EINVAL;
+            }
             ret = krb5_config_parse_file_multi(f->context, p, res);
 	    if (ret)
 		return ret;
@@ -385,6 +426,12 @@ krb5_config_parse_debug (struct fileptr *f,
             p += sizeof("includedir");
             while (isspace(*p))
                 p++;
+            if (!is_absolute_path(p)) {
+                krb5_set_error_message(f->context, EINVAL,
+                                       "Configuration includedir path must be "
+                                       "absolute");
+                return EINVAL;
+            }
             ret = krb5_config_parse_dir_multi(f->context, p, res);
 	    if (ret)
 		return ret;
@@ -448,7 +495,14 @@ krb5_config_parse_dir_multi(krb5_context context,
         int is_valid = 1;
 
         while (*p) {
-            if (!isalpha(*p) && *p != '_' && *p != '-' &&
+            /*
+             * Here be dragons.  The call to krb5_config_parse_file_multi()
+             * below expands path tokens.  Because of the limitations here
+             * on file naming, we can't have path tokens in the file name,
+             * so we're safe.  Anyone changing this if condition here should
+             * be aware.
+             */
+            if (!isalnum(*p) && *p != '_' && *p != '-' &&
                 strcmp(p, ".conf") != 0) {
                 is_valid = 0;
                 break;
@@ -459,13 +513,17 @@ krb5_config_parse_dir_multi(krb5_context context,
             continue;
 
         if (asprintf(&path, "%s/%s", dname, entry->d_name) == -1 ||
-            path == NULL)
+            path == NULL) {
+            (void) closedir(d);
             return krb5_enomem(context);
+        }
         ret = krb5_config_parse_file_multi(context, path, res);
         free(path);
-        if (ret == ENOMEM)
+        if (ret == ENOMEM) {
+            (void) closedir(d);
             return krb5_enomem(context);;
-        /* Ignore malformed config files */
+        }
+        /* Ignore malformed config files so we don't lock out admins, etc... */
     }
     (void) closedir(d);
     return 0;
@@ -494,6 +552,7 @@ krb5_config_parse_file_multi (krb5_context context,
     unsigned lineno = 0;
     krb5_error_code ret;
     struct fileptr f;
+    struct stat st;
 
     if (context->config_include_depth > 5) {
         krb5_warnx(context, "Maximum config file include depth reached; "
@@ -547,14 +606,13 @@ krb5_config_parse_file_multi (krb5_context context,
     }
 
     if (is_plist_file(fname)) {
+        context->config_include_depth--;
 #ifdef __APPLE__
 	ret = parse_plist_config(context, fname, res);
-        context->config_include_depth--;
 	if (ret) {
 	    krb5_set_error_message(context, ret,
 				   "Failed to parse plist %s", fname);
-	    if (newfname)
-		free(newfname);
+            free(newfname);
 	    return ret;
 	}
 #else
@@ -566,31 +624,45 @@ krb5_config_parse_file_multi (krb5_context context,
 #ifdef KRB5_USE_PATH_TOKENS
 	char * exp_fname = NULL;
 
+        /*
+         * Note that krb5_config_parse_dir_multi() doesn't want tokens
+         * expanded here, but it happens to limit the names of files to
+         * include such that there can be no tokens to expand.  Don't
+         * add token expansion for tokens using _, say.
+         */
 	ret = _krb5_expand_path_tokens(context, fname, 1, &exp_fname);
 	if (ret) {
             context->config_include_depth--;
-	    if (newfname)
-		free(newfname);
+            free(newfname);
 	    return ret;
 	}
 
-	if (newfname)
-	    free(newfname);
+        free(newfname);
 	fname = newfname = exp_fname;
 #endif
 
         f.context = context;
 	f.f = fopen(fname, "r");
 	f.s = NULL;
-	if(f.f == NULL) {
+	if (f.f == NULL || fstat(fileno(f.f), &st) == -1) {
+            if (f.f != NULL)
+                (void) fclose(f.f);
             context->config_include_depth--;
 	    ret = errno;
-	    krb5_set_error_message (context, ret, "open %s: %s",
-				    fname, strerror(ret));
-	    if (newfname)
-		free(newfname);
+	    krb5_set_error_message(context, ret, "open or stat %s: %s",
+				   fname, strerror(ret));
+           free(newfname);
 	    return ret;
 	}
+
+        if (!S_ISREG(st.st_mode)) {
+            (void) fclose(f.f);
+            context->config_include_depth--;
+            free(newfname);
+	    krb5_set_error_message(context, EISDIR, "not a regular file %s: %s",
+				   fname, strerror(EISDIR));
+	    return EISDIR;
+        }
 
 	ret = krb5_config_parse_debug (&f, res, &lineno, &str);
         context->config_include_depth--;
@@ -598,8 +670,7 @@ krb5_config_parse_file_multi (krb5_context context,
 	if (ret) {
 	    krb5_set_error_message (context, ret, "%s:%u: %s",
 				    fname, lineno, str);
-	    if (newfname)
-		free(newfname);
+            free(newfname);
 	    return ret;
 	}
     }

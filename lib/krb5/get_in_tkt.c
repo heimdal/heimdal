@@ -438,9 +438,6 @@ krb5_get_in_cred(krb5_context context,
                    one more try */
 		if (!ptypes && !preauth
 		    && ret == KRB5KDC_ERR_PREAUTH_REQUIRED
-#if 0
-			|| ret == KRB5KDC_ERR_BADOPTION
-#endif
 		    && set_ptypes(context, &error, &ptypes, &my_preauth)) {
 		    done = 0;
 		    preauth = my_preauth;

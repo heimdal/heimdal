@@ -39,11 +39,11 @@ db_type=@db_type@
 
 . ${env_setup}
 
-# If there is no useful db support compile in, disable test
+# If there is no useful db support compiled in, disable test
 ${have_db} || exit 77
 
 
-# Dont run this test in AFS, since it lacks support for AF_UNIX
+# Don't run this test in AFS, since it lacks support for AF_UNIX
 expr "X`/bin/pwd || pwd`" : "X/afs/.*" > /dev/null 2>/dev/null && exit 77
 
 R=TEST.H5L.SE
@@ -301,7 +301,7 @@ echo "doing changes while slave is down"
 ${kadmin} -l cpw --random-password user@${R} > /dev/null || exit 1
 ${kadmin} -l cpw --random-password user@${R} > /dev/null || exit 1
 
-echo "Makeing a copy of the master log file"
+echo "Making a copy of the master log file"
 cp ${objdir}/current.log ${objdir}/current.log.tmp
 
 # ----------------- checking: checking that master and slaves resyncs

@@ -7,6 +7,8 @@ AC_CONFIG_SRCDIR([kuser/kinit.c])
 AC_CONFIG_HEADERS(include/config.h)
 AC_CONFIG_MACRO_DIR([cf])
 
+srcdir=`cd "$srcdir" && pwd || echo "$srcdir"`
+
 AM_INIT_AUTOMAKE([foreign 1.11])
 AM_MAINTAINER_MODE
 

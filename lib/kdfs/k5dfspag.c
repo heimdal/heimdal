@@ -274,7 +274,7 @@ int krb5_dfs_pag(context, flag, principal, luser)
 
    /* test if DFS is running or installed */
    if (krb5_dfs_getpag() == -2)
-     return(0); /* DFS not running, dont try */
+     return(0); /* DFS not running, don't try */
 
   if (pipe(fd) == -1)
      return(0);
@@ -305,7 +305,7 @@ int krb5_dfs_pag(context, flag, principal, luser)
 
   /* parent, wait for child to finish */
 
-  close(fd[1]);  /* dont need this end of pipe */
+  close(fd[1]);  /* don't need this end of pipe */
 
 /* #if defined(sgi) || defined(_sgi) */
   /* wait_status.w_status = 0; */

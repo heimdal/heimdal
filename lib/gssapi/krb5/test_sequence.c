@@ -68,7 +68,7 @@ OM_uint32 pattern6[] = {
     50, 51, 52, 53, 54, 55, 56, 57, 58, 59
 };
 
-/* dont start at 0 */
+/* don't start at 0 */
 OM_uint32 pattern7[] = {
     11, 12, 13
 };

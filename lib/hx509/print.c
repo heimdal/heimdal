@@ -234,7 +234,7 @@ validate_print(hx509_validate_ctx ctx, int flags, const char *fmt, ...)
 }
 
 /*
- * Dont Care, SHOULD critical, SHOULD NOT critical, MUST critical,
+ * Don't Care, SHOULD critical, SHOULD NOT critical, MUST critical,
  * MUST NOT critical
  */
 enum critical_flag { D_C = 0, S_C, S_N_C, M_C, M_N_C };

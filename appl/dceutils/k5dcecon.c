@@ -473,7 +473,7 @@ int k5dcecon(luid, luser, pname)
 
   /*
    * Destroy the Kerberos5 cred cache file.
-   * but dont care aout the return code.
+   * but don't care about the return code.
    */
 
   DEEDEBUG("Destroying the old cache\n");

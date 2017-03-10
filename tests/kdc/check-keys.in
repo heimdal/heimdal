@@ -39,7 +39,7 @@ objdir="."
 
 srcdir="${top_srcdir}/tests/kdc"
 
-# If there is no useful db support compile in, disable test
+# If there is no useful db support compiled in, disable test
 ${have_db} || exit 77
 
 R=TEST.H5L.SE

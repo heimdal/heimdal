@@ -1,3 +1,28 @@
+Release Notes - Heimdal - Version Heimdal 7.2
+
+ Bug fixes
+ - Portability improvements
+ - More strict parsing of encoded URI components in HTTP KDC
+ - Fixed memory leak in malloc error recovery in NTLM GSSAPI mechanism
+ - Avoid overly specific CPU info in krb5-config in aid of reproducible builds
+ - Don't do AFS string-to-key tests when feature is disabled
+ - Skip mdb_stat test when the command is not available
+ - Windows: update SHA2 timestamp server
+ - hdb: add missing export hdb_generate_key_set_password_with_ks_tuple
+ - Fix signature of hdb_generate_key_set_password()
+ - Windows: enable KX509 support in the KDC
+ - kdc: fix kx509 service principal match
+ - iprop: handle case where master sends nothing new
+ - ipropd-slave: fix incorrect error codes
+ - Allow choice of sqlite for HDB pref
+ - check-iprop: don't fail to kill daemons
+ - roken: pidfile -> rk_pidfile
+ - kdc: _kdc_do_kx509 fix use after free error
+ - Do not detect x32 as 64-bit platform.
+ - No sys/ttydefaults.h on CYGWIN
+ - Fix check-iprop races
+ - roken_detach_prep() close pipe
+
 Release Notes - Heimdal - Version Heimdal 7.1
 
  Security

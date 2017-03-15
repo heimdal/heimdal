@@ -1,4 +1,4 @@
-include @srcdir@/include-krb5.conf
+include @srcdirabs@/include-krb5.conf
 
 [libdefaults]
 	default_keytab_name = @objdir@/server.keytab

@@ -12,7 +12,9 @@ check_SCRIPTS = $(SCRIPT_TESTS)
 
 port = 49188
 
-do_subst = $(heim_verbose)sed -e 's,[@]srcdir[@],$(srcdir),g' \
+do_subst = srcdirabs=`cd "$(srcdir)"; pwd`; $(heim_verbose)sed \
+	-e 's,[@]srcdir[@],$(srcdir),g' \
+	-e "s,[@]srcdirabs[@],$${srcdirabs},g" \
 	-e 's,[@]env_setup[@],$(top_builddir)/tests/bin/setup-env,g' \
 	-e 's,[@]port[@],$(port),g' \
 	-e 's,[@]objdir[@],$(top_builddir)/tests/gss,g'

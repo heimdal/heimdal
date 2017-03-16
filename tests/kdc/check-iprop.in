@@ -454,9 +454,10 @@ if [ "$db_type" = lmdb ] && type mdb_stat > /dev/null 2>&1; then
     # require a sqlite3(1) shell that is capable of opening our HDB
     # files.
     echo "checking that principals in DB == entries in LMDB"
-    princs=`${kadmin} -l list '*' | wc -l`
+    # Add one to match lmdb overhead
+    princs=`(echo; ${kadmin} -l list '*') | wc -l`
     entries=`mdb_stat -n current-db.mdb | grep 'Entries:' | awk '{print $2}'`
-    [ "`expr 1 + "$princs"`" -eq "$entries" ] || exit 1
+    [ "$princs" -eq "$entries" ] || exit 1
 fi
 
 exit 0

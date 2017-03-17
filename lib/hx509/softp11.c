@@ -1087,7 +1087,7 @@ C_GetMechanismList(CK_SLOT_ID slotID,
     *pulCount = 1;
     if (pMechanismList == NULL_PTR)
 	return CKR_OK;
-    pMechanismList[1] = CKM_RSA_PKCS;
+    pMechanismList[0] = CKM_RSA_PKCS;
 
     return CKR_OK;
 }

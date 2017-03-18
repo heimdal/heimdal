@@ -658,9 +658,9 @@ krb5_config_parse_file_multi (krb5_context context,
         if (!S_ISREG(st.st_mode)) {
             (void) fclose(f.f);
             context->config_include_depth--;
-            free(newfname);
 	    krb5_set_error_message(context, EISDIR, "not a regular file %s: %s",
 				   fname, strerror(EISDIR));
+	    free(newfname);
 	    return EISDIR;
         }
 

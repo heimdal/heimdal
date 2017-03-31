@@ -20,7 +20,7 @@ if HAVE_DBHEADER
 AM_CPPFLAGS += -I$(DBHEADER)
 endif
 
-noinst_PROGRAMS = snprintf-test resolve-test rkpty test-detach
+noinst_PROGRAMS = snprintf-test resolve-test rkpty test-detach test-auxval
 
 CHECK_LOCAL = snprintf-test resolve-test rkpty make-roken
 
@@ -30,6 +30,7 @@ check_PROGRAMS = 				\
 		getifaddrs-test			\
 		getxxyyy-test			\
 		hex-test			\
+		test-auxval			\
 		test-readenv			\
 		resolve-test			\
 		parse_bytes-test		\
@@ -52,6 +53,7 @@ parse_reply_test_SOURCES = parse_reply-test.c resolve.c
 parse_reply_test_CFLAGS  = -DTEST_RESOLVE
 
 test_readenv_SOURCES = test-readenv.c test-mem.c
+test_auxval_SOURCES = test-auxval.c
 
 test_detach_SOURCES = test-detach.c
 
@@ -261,6 +263,7 @@ EXTRA_DIST = \
 	stdint.hin \
 	syslogc.c \
 	syslog.hin \
+	test-auxval.c \
 	test-mem.h \
 	test-mini_inetd.c \
 	win32_alloc.c \

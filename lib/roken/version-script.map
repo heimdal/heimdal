@@ -68,10 +68,12 @@ HEIMDAL_ROKEN_1.0 {
 		rk_freeifaddrs;
 		rk_gai_strerror;
 		rk_getaddrinfo;
+		rk_getauxval;
 		rk_getifaddrs;
 		rk_getipnodebyaddr;
 		rk_getipnodebyname;
 		rk_getnameinfo;
+		rk_getprocauxval;
 		rk_getprogname;
 		rk_glob;
 		rk_globfree;

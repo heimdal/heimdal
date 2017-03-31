@@ -467,6 +467,8 @@ AC_CHECK_FUNCS([				\
 	fork					\
 	getpeereid				\
 	getpeerucred				\
+	getresgid				\
+	getresuid				\
 	grantpt					\
 	kill					\
 	mktime					\

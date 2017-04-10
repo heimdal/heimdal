@@ -1051,9 +1051,7 @@ get_cred_kdc_referral(krb5_context context,
 	}
 
 	/* Did we get the right ticket ? */
-	if (krb5_principal_compare_any_realm(context,
-					     referral.server,
-					     ticket.server))
+	if (krb5_principal_compare(context, referral.server, ticket.server))
 	    break;
 
 	if (!krb5_principal_is_krbtgt(context, ticket.server)) {

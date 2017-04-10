@@ -1218,7 +1218,8 @@ static void
 store_cred(krb5_context context, krb5_ccache ccache,
 	   krb5_const_principal server_princ, krb5_creds *creds)
 {
-    if (!krb5_principal_compare(context, creds->server, server_princ)) {
+    if (!krb5_principal_compare(context, creds->server, server_princ) &&
+        !krb5_principal_is_krbtgt(context, server_princ)) {
         krb5_principal tmp_princ = creds->server;
         /*
          * Store the cred with the pre-canon server princ first so it

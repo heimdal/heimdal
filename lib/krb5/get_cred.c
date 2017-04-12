@@ -963,6 +963,7 @@ get_cred_kdc_referral(krb5_context context,
     krb5_creds **referral_tgts = NULL;  /* used for loop detection */
     int loop = 0;
     int ok_as_delegate = 1;
+    int want_tgt;
     size_t i;
 
     if (in_creds->server->name.name_string.len < 2 && !flags.b.canonicalize) {
@@ -1011,14 +1012,34 @@ get_cred_kdc_referral(krb5_context context,
         }
     }
 
+    /*
+     * If the desired service principal service/host@REALM is not a TGT, start
+     * by asking for a ticket for service/host@START_REALM and process referrals
+     * from there.
+     *
+     * However, when we ask for a TGT, krbtgt/A@B, we're actually looking for a
+     * path to realm B, so that we can explicitly obtain a ticket for krbtgt/A
+     * from B, and not some other realm.  Therefore, in this case our starting
+     * point will be krbtgt/B@START_REALM.  Only once we obtain a ticket for
+     * krbtgt/B@some-transit, do we switch to requesting krbtgt/A@B on our
+     * final request.
+     */
     referral = *in_creds;
-    ret = krb5_copy_principal(context, in_creds->server, &referral.server);
+    want_tgt = *in_creds->realm &&
+               krb5_principal_is_krbtgt(context, in_creds->server);
+    if (!want_tgt)
+        ret = krb5_copy_principal(context, in_creds->server, &referral.server);
+    else
+	ret = krb5_make_principal(context, &referral.server, start_realm,
+                                  KRB5_TGS_NAME, in_creds->server->realm, NULL);
+
     if (ret) {
 	krb5_free_cred_contents(context, &tgt);
         free(start_realm);
 	return ret;
     }
-    ret = krb5_principal_set_realm(context, referral.server, start_realm);
+    if (!want_tgt)
+        ret = krb5_principal_set_realm(context, referral.server, start_realm);
     free(start_realm);
     start_realm = NULL;
     if (ret) {
@@ -1050,8 +1071,25 @@ get_cred_kdc_referral(krb5_context context,
 		goto out;
 	}
 
-	/* Did we get the right ticket ? */
-	if (krb5_principal_compare(context, referral.server, ticket.server))
+        /*
+         * Did we get the right ticket?
+         *
+         * If we weren't asking for a TGT, then we don't mind if we took a realm
+         * change (referral.server has a referral realm, not necessarily the
+         * original).
+         *
+         * However, if we were looking for a TGT (which wouldn't be the start
+         * TGT, since that one must be in the ccache) then we actually want the
+         * one from the realm we wanted, since otherwise a _referral_ will
+         * confuse us and we will store that referral.  In Heimdal we mostly
+         * never ask krb5_get_cred*() for TGTs, but some sites have code to ask
+         * for a ktbgt/REMOTE.REALM@REMOTE.REALM, and one could always use
+         * kgetcred(1) to get here asking for a krbtgt/C@D and we need to handle
+         * the case where last hop we get is krbtgt/C@B (in which case we must
+         * stop so we don't beat up on B for the remaining tries).
+         */
+        if (!want_tgt &&
+            krb5_principal_compare(context, referral.server, ticket.server))
 	    break;
 
 	if (!krb5_principal_is_krbtgt(context, ticket.server)) {
@@ -1103,9 +1141,21 @@ get_cred_kdc_referral(krb5_context context,
 	    goto out;
 
 	/* try realm in the referral */
-	ret = krb5_principal_set_realm(context,
-				       referral.server,
-				       referral_realm);
+        if (!want_tgt || strcmp(referral_realm, in_creds->server->realm) != 0)
+            ret = krb5_principal_set_realm(context,
+                                           referral.server,
+                                           referral_realm);
+        else {
+            /*
+             * Now that we have a ticket for the desired realm, we reset
+             * want_tgt and reinstate the desired principal so that the we can
+             * match it and break out of the loop.
+             */
+            want_tgt = 0;
+            krb5_free_principal(context, referral.server);
+            referral.server = NULL;
+            ret = krb5_copy_principal(context, in_creds->server, &referral.server);
+        }
 	krb5_free_cred_contents(context, &tgt);
 	tgt = ticket;
 	memset(&ticket, 0, sizeof(ticket));

@@ -1025,7 +1025,7 @@ get_cred_kdc_referral(krb5_context context,
      * final request.
      */
     referral = *in_creds;
-    want_tgt = *in_creds->realm &&
+    want_tgt = in_creds->server->realm[0] != '\0' &&
                krb5_principal_is_krbtgt(context, in_creds->server);
     if (!want_tgt)
         ret = krb5_copy_principal(context, in_creds->server, &referral.server);

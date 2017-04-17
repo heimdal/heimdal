@@ -195,6 +195,7 @@ AC_CHECK_FUNCS([				\
 	on_exit					\
 	poll					\
 	random					\
+	secure_getenv				\
 	setprogname				\
 	strsvis					\
 	strsvisx				\

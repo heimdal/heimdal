@@ -833,6 +833,14 @@ ROKEN_LIB_FUNCTION unsigned long ROKEN_LIB_CALL
 ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
     issuid(void);
 
+ROKEN_LIB_FUNCTION char * ROKEN_LIB_CALL
+    rk_secure_getenv(const char *);
+
+#ifndef HAVE_SECURE_GETENV
+#undef secure_getenv
+#define secure_getenv(e) rk_secure_getenv(e)
+#endif
+
 #ifndef HAVE_STRUCT_WINSIZE
 struct winsize {
 	unsigned short ws_row, ws_col;

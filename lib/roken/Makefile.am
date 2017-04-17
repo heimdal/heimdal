@@ -118,6 +118,8 @@ libroken_la_SOURCES =		\
 	roken_gethostby.c	\
 	rtbl.c			\
 	rtbl.h			\
+	secure_getenv.c		\
+	secure_getenv.h		\
 	setprogname.c		\
 	signal.c		\
 	simple_exec.c		\

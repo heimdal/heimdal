@@ -86,6 +86,7 @@ libroken_la_OBJS =			\
 	$(OBJ)\rand.obj			\
 	$(OBJ)\roken_gethostby.obj	\
 	$(OBJ)\rtbl.obj			\
+	$(OBJ)\secure_getenv.obj	\
 	$(OBJ)\sendmsg.obj		\
 	$(OBJ)\setenv.obj		\
 	$(OBJ)\setprogname.obj		\

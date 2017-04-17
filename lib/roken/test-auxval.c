@@ -44,6 +44,27 @@
 #include "getauxval.h"
 
 static void
+check_secure_getenv(char **env)
+{
+    size_t i;
+    char *v;
+
+    for (i = 0; environ[i] != NULL; i++) {
+        if (strchr(environ[i], '=') == NULL)
+            continue;
+        if ((v = strdup(env[i])) == NULL)
+            err(1, "could not allocate copy of %s", env[i]);
+        *strchr(v, '=') = '\0';
+        if (issuid() && rk_secure_getenv(v) != NULL)
+            err(1, "rk_secure_getenv() returned non-NULL when issuid()!");
+        if (!issuid() && rk_secure_getenv(v) == NULL)
+            err(1, "rk_secure_getenv() returned NULL when !issuid()");
+        free(v);
+        return;
+    }
+}
+
+static void
 inject_suid(int suid)
 {
 #if defined(AT_SECURE) || (defined(AT_EUID) && defined(AT_RUID) && defined(AT_EGID) && defined(AT_RGID))
@@ -188,9 +209,11 @@ main(int argc, char **argv, char **env)
         errx(1, "rk_getauxv((max_type_seen = %lu) + 1) did not set "
              "errno = ENOENT!", max_t);
 
+    check_secure_getenv(env);
     inject_suid(!am_suid);
     if ((am_suid && issuid()) || (!am_suid && !issuid()))
         errx(1, "rk_injectprocauxv() failed");
+    check_secure_getenv(env);
 
     return 0;
 }

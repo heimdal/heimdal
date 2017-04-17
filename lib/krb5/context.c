@@ -254,8 +254,8 @@ init_context_from_config_file(krb5_context context)
 
     tmp = krb5_config_get_string(context, NULL, "libdefaults",
 				 "check-rd-req-server", NULL);
-    if (tmp == NULL && !issuid())
-	tmp = getenv("KRB5_CHECK_RD_REQ_SERVER");
+    if (tmp == NULL)
+	tmp = secure_getenv("KRB5_CHECK_RD_REQ_SERVER");
     if(tmp) {
 	if (strcasecmp(tmp, "ignore") == 0)
 	    context->flags |= KRB5_CTX_F_RD_REQ_IGNORE;
@@ -864,8 +864,7 @@ krb5_get_default_config_files(char ***pfilenames)
 
     if (pfilenames == NULL)
         return EINVAL;
-    if(!issuid())
-	files = getenv("KRB5_CONFIG");
+    files = secure_getenv("KRB5_CONFIG");
 
 #ifdef _WIN32
     if (files == NULL) {

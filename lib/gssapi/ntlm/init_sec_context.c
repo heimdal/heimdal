@@ -90,12 +90,9 @@ get_user_file(const ntlm_name target_name,
 
     *domainp = NULL;
 
-    if (issuid())
-	return ENOENT;
-
     domain = target_name != NULL ? target_name->domain : NULL;
 
-    fn = getenv("NTLM_USER_FILE");
+    fn = secure_getenv("NTLM_USER_FILE");
     if (fn == NULL)
 	return ENOENT;
     if (from_file(fn, domain, domainp, usernamep, key) == 0)

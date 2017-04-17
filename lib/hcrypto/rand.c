@@ -350,13 +350,11 @@ RAND_file_name(char *filename, size_t size)
     const char *e = NULL;
     int pathp = 0, ret;
 
-    if (!issuid()) {
-	e = getenv("RANDFILE");
-	if (e == NULL)
-	    e = getenv("HOME");
-	if (e)
-	    pathp = 1;
-    }
+    e = secure_getenv("RANDFILE");
+    if (e == NULL)
+        e = secure_getenv("HOME");
+    if (e)
+        pathp = 1;
 
 #ifndef _WIN32
     /*

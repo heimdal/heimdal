@@ -577,9 +577,7 @@ krb5_config_parse_file_multi (krb5_context context,
 	    return EPERM;
 	}
 
-	if(!issuid())
-	    home = getenv("HOME");
-
+        home = secure_getenv("HOME");
 	if (home == NULL) {
 	    struct passwd *pw = getpwuid(getuid());
 	    if(pw != NULL)

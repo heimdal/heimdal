@@ -443,10 +443,7 @@ environment_changed(krb5_context context)
 	 strncmp(context->default_cc_name, "API:", 4) == 0))
 	return 1;
 
-    if(issuid())
-	return 0;
-
-    e = getenv("KRB5CCNAME");
+    e = secure_getenv("KRB5CCNAME");
     if (e == NULL) {
 	if (context->default_cc_name_env) {
 	    free(context->default_cc_name_env);
@@ -518,15 +515,13 @@ krb5_cc_set_default_name(krb5_context context, const char *name)
     if (name == NULL) {
 	const char *e = NULL;
 
-	if (!issuid()) {
-	    e = getenv("KRB5CCNAME");
-	    if (e) {
-		p = strdup(e);
-		if (context->default_cc_name_env)
-		    free(context->default_cc_name_env);
-		context->default_cc_name_env = strdup(e);
-	    }
-	}
+        e = secure_getenv("KRB5CCNAME");
+        if (e) {
+            p = strdup(e);
+            if (context->default_cc_name_env)
+                free(context->default_cc_name_env);
+            context->default_cc_name_env = strdup(e);
+        }
 
 #ifdef _WIN32
 	if (p == NULL) {

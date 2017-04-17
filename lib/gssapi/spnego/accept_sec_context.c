@@ -368,8 +368,8 @@ select_mech(OM_uint32 *minor_status, MechType *mechType, int verify_p,
 	gss_buffer_desc namebuf;
 	char *str = NULL, *host, hostname[MAXHOSTNAMELEN];
 
-	host = getenv("GSSAPI_SPNEGO_NAME");
-	if (host == NULL || issuid()) {
+	host = secure_getenv("GSSAPI_SPNEGO_NAME");
+	if (host == NULL) {
 	    int rv;
 	    if (gethostname(hostname, sizeof(hostname)) != 0) {
 		*minor_status = errno;

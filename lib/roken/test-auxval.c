@@ -43,6 +43,49 @@
 #include "roken.h"
 #include "getauxval.h"
 
+static void
+inject_suid(int suid)
+{
+#if defined(AT_SECURE) || (defined(AT_EUID) && defined(AT_RUID) && defined(AT_EGID) && defined(AT_RGID))
+    auxv_t e;
+#ifdef AT_SECURE
+    unsigned long secure = suid ? 1 : 0;
+#endif
+#if defined(AT_EUID) && defined(AT_RUID) && defined(AT_EGID) && defined(AT_RGID)
+    unsigned long eid = suid ? 0 : 1000;
+
+    /* Inject real UID and GID */
+    e.a_un.a_val = 1000;
+    e.a_type = AT_UID;
+    if ((errno = rk_injectauxv(&e)) != 0)
+        err(1, "rk_injectauxv(AT_RUID) failed");
+    e.a_type = AT_GID;
+    if ((errno = rk_injectauxv(&e)) != 0)
+        err(1, "rk_injectauxv(AT_RGID) failed");
+
+    /* Inject effective UID and GID */
+    e.a_un.a_val = eid;
+    e.a_type = AT_EUID;
+    if ((errno = rk_injectauxv(&e)) != 0)
+        err(1, "rk_injectauxv(AT_EUID) failed");
+    e.a_type = AT_EGID;
+    if ((errno = rk_injectauxv(&e)) != 0)
+        err(1, "rk_injectauxv(AT_RGID) failed");
+#endif
+
+#ifdef AT_SECURE
+    e.a_un.a_val = secure;
+    e.a_type = AT_SECURE;
+    if ((errno = rk_injectauxv(&e)) != 0)
+        err(1, "rk_injectauxv(AT_SECURE) failed");
+#endif
+
+    return;
+#else
+    warnx(1, "No ELF auxv types to inject");
+#endif
+}
+
 static
 unsigned long
 getprocauxval(unsigned long type)
@@ -144,5 +187,10 @@ main(int argc, char **argv, char **env)
     if (errno != ENOENT)
         errx(1, "rk_getauxv((max_type_seen = %lu) + 1) did not set "
              "errno = ENOENT!", max_t);
+
+    inject_suid(!am_suid);
+    if ((am_suid && issuid()) || (!am_suid && !issuid()))
+        errx(1, "rk_injectprocauxv() failed");
+
     return 0;
 }

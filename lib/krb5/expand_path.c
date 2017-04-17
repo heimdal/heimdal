@@ -279,8 +279,7 @@ _expand_temp_folder(krb5_context context, PTYPE param, const char *postfix, char
 {
     const char *p = NULL;
 
-    if (!issuid())
-	p = getenv("TEMP");
+    p = secure_getenv("TEMP");
 
     if (p)
 	*ret = strdup(p);

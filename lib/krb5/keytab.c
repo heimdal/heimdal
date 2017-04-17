@@ -250,8 +250,7 @@ static const char *default_ktname(krb5_context context)
 {
     const char *tmp = NULL;
 
-    if(!issuid())
-	tmp = getenv("KRB5_KTNAME");
+    tmp = secure_getenv("KRB5_KTNAME");
     if(tmp != NULL)
 	return tmp;
     return context->default_keytab;

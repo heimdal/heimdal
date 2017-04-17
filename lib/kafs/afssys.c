@@ -134,7 +134,7 @@ try_aix(void)
     /*
      * If we are root or running setuid don't trust AFSLIBPATH!
      */
-    if (getuid() != 0 && !issuid() && (p = getenv("AFSLIBPATH")) != NULL)
+    if (getuid() != 0 && (p = secure_getenv("AFSLIBPATH")) != NULL)
 	strlcpy(path, p, sizeof(path));
     else
 	snprintf(path, sizeof(path), "%s/afslib.so", LIBDIR);
@@ -464,8 +464,7 @@ k_hasafs(void)
     int saved_errno, ret;
     char *env = NULL;
 
-    if (!issuid())
-	env = getenv ("AFS_SYSCALL");
+    env = secure_getenv("AFS_SYSCALL");
 
     /*
      * Already checked presence of AFS syscalls?

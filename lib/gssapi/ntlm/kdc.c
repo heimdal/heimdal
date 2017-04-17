@@ -64,19 +64,15 @@ get_ccache(krb5_context context, int *destroy, krb5_ccache *id)
     krb5_principal principal = NULL;
     krb5_error_code ret;
     krb5_keytab kt = NULL;
+    const char *cache = secure_getenv("NTLM_ACCEPTOR_CCACHE");
 
     *id = NULL;
 
-    if (!issuid()) {
-	const char *cache;
-
-	cache = getenv("NTLM_ACCEPTOR_CCACHE");
-	if (cache) {
-	    ret = krb5_cc_resolve(context, cache, id);
-	    if (ret)
-		goto out;
-	    return 0;
-	}
+    if (cache) {
+        ret = krb5_cc_resolve(context, cache, id);
+        if (ret)
+            goto out;
+        return 0;
     }
 
     ret = krb5_sname_to_principal(context, NULL, "host",

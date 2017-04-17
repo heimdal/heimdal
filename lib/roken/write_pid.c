@@ -53,8 +53,7 @@ pid_file_write(const char *progname)
      *
      * For now we use an environment variable.
      */
-    if (!issuid())
-        pidfile_dir = getenv("HEIM_PIDFILE_DIR");
+    pidfile_dir = secure_getenv("HEIM_PIDFILE_DIR");
     if (pidfile_dir == NULL)
         pidfile_dir = _PATH_VARRUN;
 

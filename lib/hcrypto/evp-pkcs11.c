@@ -101,16 +101,14 @@ p11_module_init_once(void *context)
     CK_RV rv;
     CK_FUNCTION_LIST_PTR module;
     CK_RV (*C_GetFunctionList_fn)(CK_FUNCTION_LIST_PTR_PTR);
+    char *pkcs11ModulePath = secure_getenv("PKCS11_MODULE_PATH");
 
-    if (!issuid()) {
-        char *pkcs11ModulePath = getenv("PKCS11_MODULE_PATH");
-        if (pkcs11ModulePath != NULL) {
-	    pkcs11_module_handle =
-		dlopen(pkcs11ModulePath,
-		       RTLD_LAZY | RTLD_LOCAL | RTLD_GROUP | RTLD_NODELETE);
-	    if (pkcs11_module_handle == NULL)
-                fprintf(stderr, "p11_module_init(%s): %s\n", pkcs11ModulePath, dlerror());
-        }
+    if (pkcs11ModulePath != NULL) {
+        pkcs11_module_handle =
+            dlopen(pkcs11ModulePath,
+                   RTLD_LAZY | RTLD_LOCAL | RTLD_GROUP | RTLD_NODELETE);
+        if (pkcs11_module_handle == NULL)
+            fprintf(stderr, "p11_module_init(%s): %s\n", pkcs11ModulePath, dlerror());
     }
 #ifdef PKCS11_MODULE_PATH
     if (pkcs11_module_handle == NULL) {

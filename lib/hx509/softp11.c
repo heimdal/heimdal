@@ -818,18 +818,16 @@ func_not_supported(void)
 static char *
 get_config_file_for_user(void)
 {
-    char *fn = NULL;
+    char *fn;
 
 #ifndef _WIN32
-    char *home = NULL;
+    char *home;
     int ret;
 
-    if (!issuid()) {
-        fn = getenv("SOFTPKCS11RC");
-        if (fn)
-            fn = strdup(fn);
-        home = getenv("HOME");
-    }
+    fn = secure_getenv("SOFTPKCS11RC");
+    if (fn)
+        fn = strdup(fn);
+    home = secure_getenv("HOME");
     if (fn == NULL && home == NULL) {
         struct passwd *pw = getpwuid(getuid());
         if(pw != NULL)

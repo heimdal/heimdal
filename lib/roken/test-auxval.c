@@ -41,19 +41,49 @@
 #include <string.h>
 #include <unistd.h>
 #include "roken.h"
+#include "getauxval.h"
+
+static
+unsigned long
+getprocauxval(unsigned long type)
+{
+    const auxv_t *e;
+
+    if ((e = rk_getauxv(type)) == NULL) {
+        errno = ENOENT;
+        return 0;
+    }
+    return e->a_un.a_val;
+}
 
 int
-main()
+main(int argc, char **argv, char **env)
 {
     unsigned long max_t = 0;
     unsigned long a[2];
     unsigned long v;
     ssize_t bytes;
+    int am_suid = issuid();
     int fd;
+
+    (void) argc;
+    (void) argv;
+
+    if (getuid() == geteuid() && getgid() == getegid()) {
+        if (issuid())
+            errx(1, "issuid() false positive?  Check AT_SECURE?");
+    } else {
+        if (!issuid())
+            errx(1, "issuid() did not detect set-uid-ness!");
+    }
 
     if ((fd = open("/proc/self/auxv", O_RDONLY)) == -1)
         return 0;
 
+    /*
+     * Check that for every ELF auxv entry in /proc/self/auxv we
+     * find the correct answer from the rk_get*auxval() functions.
+     */
     do {
         bytes = read(fd, a, sizeof(a));
         if (bytes != sizeof(a)) {
@@ -82,11 +112,11 @@ main()
         if (errno != EACCES)
             errx(1, "rk_getauxval(%lu) did not preserve errno", a[0]);
 
-        if ((v = rk_getprocauxval(a[0])) != a[1])
+        if ((v = getprocauxval(a[0])) != a[1])
             errx(1, "rk_getauxval(%lu) should have been %lu, was %lu",
                  a[0], a[1], v);
         if (errno != EACCES)
-            errx(1, "rk_getprocauxval(%lu) did not preserve errno", a[0]);
+            errx(1, "rk_getauxv(%lu) did not preserve errno", a[0]);
 
         printf("auxv type %lu -> %lu\n", a[0], a[1]);
     } while (a[0] != 0 || a[1] != 0);
@@ -108,11 +138,11 @@ main()
              "errno = ENOENT!", max_t);
 
     errno = EACCES;
-    if ((v = rk_getprocauxval(max_t + 1)) != 0)
-        errx(1, "rk_getprocauxval((max_type_seen = %lu) + 1) should have been "
+    if ((v = getprocauxval(max_t + 1)) != 0)
+        errx(1, "rk_getauxv((max_type_seen = %lu) + 1) should have been "
              "0, was %lu", max_t, v);
     if (errno != ENOENT)
-        errx(1, "rk_getprocauxval((max_type_seen = %lu) + 1) did not set "
+        errx(1, "rk_getauxv((max_type_seen = %lu) + 1) did not set "
              "errno = ENOENT!", max_t);
     return 0;
 }

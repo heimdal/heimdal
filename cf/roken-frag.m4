@@ -42,6 +42,7 @@ AC_HAVE_TYPE([ssize_t],[#include <unistd.h>])
 AC_REQUIRE([AC_TYPE_PID_T])
 AC_REQUIRE([AC_TYPE_UID_T])
 AC_HAVE_TYPE([long long])
+AC_HAVE_TYPE([auxv_t],[#include <auxv.h>])
 
 AC_REQUIRE([rk_RETSIGTYPE])
 

@@ -68,12 +68,12 @@ HEIMDAL_ROKEN_1.0 {
 		rk_freeifaddrs;
 		rk_gai_strerror;
 		rk_getaddrinfo;
+		rk_getauxv;
 		rk_getauxval;
 		rk_getifaddrs;
 		rk_getipnodebyaddr;
 		rk_getipnodebyname;
 		rk_getnameinfo;
-		rk_getprocauxval;
 		rk_getprogname;
 		rk_glob;
 		rk_globfree;
@@ -82,6 +82,7 @@ HEIMDAL_ROKEN_1.0 {
 		rk_hostent_find_fqdn;
 		rk_inet_ntop;
 		rk_inet_pton;
+		rk_injectauxv;
 		rk_localtime_r;
 		rk_memset_s;
 		rk_mkdir;

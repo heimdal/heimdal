@@ -828,9 +828,6 @@ ROKEN_LIB_FUNCTION ssize_t ROKEN_LIB_CALL
     net_read (rk_socket_t, void *, size_t);
 
 ROKEN_LIB_FUNCTION unsigned long ROKEN_LIB_CALL
-    rk_getprocauxval(unsigned long);
-
-ROKEN_LIB_FUNCTION unsigned long ROKEN_LIB_CALL
     rk_getauxval(unsigned long);
 
 ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL

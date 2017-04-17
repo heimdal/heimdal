@@ -93,6 +93,8 @@ libroken_la_SOURCES =		\
 	get_default_username.c	\
 	get_window_size.c	\
 	getarg.c		\
+	getauxval.c		\
+	getauxval.h		\
 	getnameinfo_verified.c	\
 	getprogname.c		\
 	getxxyyy.c		\

@@ -55,6 +55,7 @@ libroken_la_OBJS =			\
 	$(OBJ)\ewrite.obj		\
 	$(OBJ)\flock.obj		\
 	$(OBJ)\fnmatch.obj		\
+	$(OBJ)\getauxval.obj		\
 	$(OBJ)\getaddrinfo_hostspec.obj	\
 	$(OBJ)\get_default_username.obj	\
 	$(OBJ)\get_window_size.obj	\

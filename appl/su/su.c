@@ -364,7 +364,7 @@ main(int argc, char **argv)
     else
 	su_user = argv[optidx++];
 
-    if (!issuid() && getuid() != 0)
+    if (geteuid() != 0)
 	warnx("Not setuid and you are not root, expect this to fail");
 
     pwd = k_getpwnam(su_user);

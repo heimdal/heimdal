@@ -283,6 +283,7 @@ ${kadmin} -l get host/bar@${R} > /dev/null 2>/dev/null && exit 1
 echo "Re-add host"
 ${kadmin} -l add --random-key --use-defaults host/foo@${R} || exit 1
 ${kadmin} -l add --random-key --use-defaults host/bar@${R} || exit 1
+slave_check_exists  host/bar@${R}
 
 echo "kill slave and remove log and database"
 > iprop-stats

@@ -823,6 +823,7 @@ krb5_kt_next_entry(krb5_context context,
 			       id->prefix);
 	return HEIM_ERR_OPNOTSUPP;
     }
+    memset(entry, 0x0, sizeof(*entry));
     return (*id->next_entry)(context, id, entry, cursor);
 }
 

@@ -460,7 +460,7 @@ get_new_tickets(krb5_context context,
 	else
 	    f = fopen(password_file, "r");
 	if (f == NULL) {
-	    krb5_warnx(context, "Failed to open the password file %s",
+	    krb5_warnx(context, N_("Failed to open the password file %s", ""),
 		       password_file);
 	    return errno;
 	}
@@ -468,7 +468,8 @@ get_new_tickets(krb5_context context,
 	if (fgets(passwd, sizeof(passwd), f) == NULL) {
 	    krb5_warnx(context, N_("Failed to read password from file %s", ""),
 		       password_file);
-	    fclose(f);
+	    if (f != stdin)
+		fclose(f);
 	    return EINVAL; /* XXX Need a better error */
 	}
 	if (f != stdin)

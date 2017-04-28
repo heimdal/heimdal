@@ -126,7 +126,6 @@ string_to_oids(gss_OID_set *oidsetp, gss_OID_set oidset,
                 errx(1, "too many mech names given");
             oidset->elements[oidset->count] = *string_to_oid(name);
         }
-        oidset->count = oidset->count;
     }
     *oidsetp = oidset;
 }

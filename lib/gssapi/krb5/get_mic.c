@@ -121,8 +121,8 @@ mic_des
 			       ++seq_number);
   HEIMDAL_MUTEX_unlock(&ctx->ctx_id_mutex);
 
-  memset (deskey, 0, sizeof(deskey));
-  memset (&schedule, 0, sizeof(schedule));
+  memset_s(deskey, sizeof(deskey), 0, sizeof(deskey));
+  memset_s(&schedule, sizeof(schedule), 0, sizeof(schedule));
 
   *minor_status = 0;
   return GSS_S_COMPLETE;

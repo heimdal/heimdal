@@ -303,7 +303,7 @@ verify_unix(struct passwd *login, struct passwd *su)
 	if(r != 0)
 	    exit(0);
 	pw = crypt(pw_buf, su->pw_passwd);
-	memset(pw_buf, 0, sizeof(pw_buf));
+	memset_s(pw_buf, sizeof(pw_buf), 0, sizeof(pw_buf));
 	if(strcmp(pw, su->pw_passwd) != 0) {
 	    syslog (LOG_ERR | LOG_AUTH, "%s to %s: incorrect password",
 		    login->pw_name, su->pw_name);

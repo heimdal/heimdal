@@ -715,7 +715,7 @@ get_new_tickets(krb5_context context,
     if (ntlm_domain && passwd[0])
 	heim_ntlm_nt_key(passwd, &ntlmkey);
 #endif
-    memset(passwd, 0, sizeof(passwd));
+    memset_s(passwd, sizeof(passwd), 0, sizeof(passwd));
 
     switch(ret){
     case 0:

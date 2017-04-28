@@ -1192,7 +1192,7 @@ splitandenc(unsigned char *hash,
     EVP_CipherInit_ex(&ctx, EVP_des_cbc(), NULL, key, NULL, 1);
     EVP_Cipher(&ctx, answer, challenge, 8);
     EVP_CIPHER_CTX_cleanup(&ctx);
-    memset(key, 0, sizeof(key));
+    memset_s(key, sizeof(key), 0, sizeof(key));
 }
 
 /**

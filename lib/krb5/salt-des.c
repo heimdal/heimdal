@@ -109,7 +109,7 @@ krb5_DES_AFS3_Transarc_string_to_key (krb5_data pw,
     memset(&schedule, 0, sizeof(schedule));
     memset(&temp_key, 0, sizeof(temp_key));
     memset(&ivec, 0, sizeof(ivec));
-    memset(password, 0, sizeof(password));
+    memset_s(password, sizeof(password), 0, sizeof(password));
 
     DES_set_odd_parity (key);
 }

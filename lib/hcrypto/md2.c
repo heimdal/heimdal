@@ -90,7 +90,7 @@ calc(struct md2 *m, const void *v)
     }
 
     memcpy(m->state, x, 16);
-    memset(x, 0, sizeof(x));
+    memset_s(x, sizeof(x), 0, sizeof(x));
 }
 
 int

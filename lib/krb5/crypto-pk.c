@@ -92,12 +92,12 @@ _krb5_pk_octetstring2key(krb5_context context,
 	offset += sizeof(shaoutput);
 	counter++;
     } while(offset < keylen);
-    memset(shaoutput, 0, sizeof(shaoutput));
+    memset_s(shaoutput, sizeof(shaoutput), 0, sizeof(shaoutput));
 
     EVP_MD_CTX_destroy(m);
 
     ret = krb5_random_to_key(context, type, keydata, keylen, key);
-    memset(keydata, 0, sizeof(keylen));
+    memset_s(keydata, sizeof(keylen), 0, sizeof(keylen));
     free(keydata);
     return ret;
 }
@@ -282,13 +282,13 @@ _krb5_pk_kdf(krb5_context context,
 	offset += EVP_MD_CTX_size(m);
 	counter++;
     } while(offset < keylen);
-    memset(shaoutput, 0, sizeof(shaoutput));
+    memset_s(shaoutput, sizeof(shaoutput), 0, sizeof(shaoutput));
 
     EVP_MD_CTX_destroy(m);
     free(other.data);
 
     ret = krb5_random_to_key(context, enctype, keydata, keylen, key);
-    memset(keydata, 0, sizeof(keylen));
+    memset_s(keydata, sizeof(keylen), 0, sizeof(keylen));
     free(keydata);
 
     return ret;

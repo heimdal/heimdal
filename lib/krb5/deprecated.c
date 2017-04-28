@@ -207,7 +207,7 @@ krb5_password_key_proc (krb5_context context,
 	password = buf;
     }
     ret = krb5_string_to_key_salt (context, type, password, salt, *key);
-    memset (buf, 0, sizeof(buf));
+    memset_s(buf, sizeof(buf), 0, sizeof(buf));
     return ret;
 }
 

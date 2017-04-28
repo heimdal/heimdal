@@ -176,7 +176,7 @@ main(int argc, char **argv)
 	ret = krb5_unparse_name(context, ticket->server, &server);
 	if (ret)
 	    krb5_err(context, 1, ret, "krb5_unparse_name");
-	if (strncmp(server, "hprop/", 5) != 0)
+	if (strncmp(server, "hprop/", 6) != 0)
 	    krb5_errx(context, 1, "ticket not for hprop (%s)", server);
 
 	free(server);

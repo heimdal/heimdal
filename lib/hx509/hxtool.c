@@ -944,7 +944,7 @@ pcert_verify(struct verify_options *opt, int argc, char **argv)
 	    if (ret)
 		errx(1, "hx509_revoke_add_crl: %s: %d", s, ret);
 
-	} else if (strncmp(s, "ocsp:", 4) == 0) {
+	} else if (strncmp(s, "ocsp:", 5) == 0) {
 	    s += 5;
 
 	    ret = hx509_revoke_add_ocsp(context, revoke_ctx, s);
@@ -1155,7 +1155,7 @@ revoke_print(struct revoke_print_options *opt, int argc, char **argv)
 	    if (ret)
 		errx(1, "hx509_revoke_add_crl: %s: %d", s, ret);
 
-	} else if (strncmp(s, "ocsp:", 4) == 0) {
+	} else if (strncmp(s, "ocsp:", 5) == 0) {
 	    s += 5;
 
 	    ret = hx509_revoke_add_ocsp(context, revoke_ctx, s);

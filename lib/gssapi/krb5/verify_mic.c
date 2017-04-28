@@ -89,8 +89,8 @@ verify_mic_des
   DES_cbc_cksum ((void *)hash, (void *)hash, sizeof(hash),
 		 &schedule, &zero);
   if (ct_memcmp (p - 8, hash, 8) != 0) {
-    memset (deskey, 0, sizeof(deskey));
-    memset (&schedule, 0, sizeof(schedule));
+    memset_s(deskey, sizeof(deskey), 0, sizeof(deskey));
+    memset_s(&schedule, sizeof(schedule), 0, sizeof(schedule));
     return GSS_S_BAD_MIC;
   }
 
@@ -105,8 +105,8 @@ verify_mic_des
   EVP_Cipher(&des_ctx, p, p, 8);
   EVP_CIPHER_CTX_cleanup(&des_ctx);
 
-  memset (deskey, 0, sizeof(deskey));
-  memset (&schedule, 0, sizeof(schedule));
+  memset_s(deskey, sizeof(deskey), 0, sizeof(deskey));
+  memset_s(&schedule, sizeof(schedule), 0, sizeof(schedule));
 
   seq = p;
   _gsskrb5_decode_om_uint32(seq, &seq_number);

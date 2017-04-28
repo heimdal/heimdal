@@ -224,7 +224,7 @@ kcm_free(krb5_context context, krb5_ccache *id)
     if (k != NULL) {
 	if (k->name != NULL)
 	    free(k->name);
-	memset(k, 0, sizeof(*k));
+	memset_s(k, sizeof(*k), 0, sizeof(*k));
 	krb5_data_free(&(*id)->data);
     }
 }

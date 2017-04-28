@@ -68,7 +68,7 @@ random_password(char *pw, size_t len)
 		      "ABCDEFGHIJKLMNOPQRSTUVWXYZ", 2,
 		      "@$%&*()-+=:,/<>1234567890", 1);
     strlcpy(pw, pass, len);
-    memset(pass, 0, strlen(pass));
+    memset_s(pass, sizeof(pass), 0, strlen(pass));
     free(pass);
 #endif
 }
@@ -155,7 +155,7 @@ generate_password(char **pw, int num_classes, ...)
 	}
     }
     (*pw)[len] = '\0';
-    memset(rbuf, 0, sizeof(rbuf));
+    memset_s(rbuf, sizeof(rbuf), 0, sizeof(rbuf));
     free(classes);
 }
 #endif

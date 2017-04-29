@@ -91,7 +91,7 @@ DES3_string_to_key(krb5_context context,
     key->keytype = enctype;
     krb5_data_copy(&key->keyvalue, keys, sizeof(keys));
     memset_s(keys, sizeof(keys), 0, sizeof(keys));
-    memset_s(str, sizeof(str), 0, len);
+    memset_s(str, len, 0, len);
     free(str);
     return 0;
 }

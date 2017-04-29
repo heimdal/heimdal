@@ -182,8 +182,11 @@ rk_getauxval(unsigned long type)
     }
 
     if (getauxval_sets_errno == 0) {
+	const auxv_t *a;
+
         errno = save_errno;
-        if ((a = rk_getauxv(type)) == NULL) {
+	a = rk_getauxv(type);
+	if (a == NULL) {
             errno = ENOENT;
             return 0;
         }

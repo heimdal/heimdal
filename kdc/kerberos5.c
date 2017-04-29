@@ -1946,7 +1946,9 @@ _kdc_as_rep(kdc_request_t r,
 	goto out;
 
     rep.ticket.tkt_vno = 5;
-    copy_Realm(&r->server->entry.principal->realm, &rep.ticket.realm);
+    ret = copy_Realm(&r->server->entry.principal->realm, &rep.ticket.realm);
+    if (ret)
+	goto out;
     _krb5_principal2principalname(&rep.ticket.sname,
 				  r->server->entry.principal);
     /* java 1.6 expects the name to be the same type, lets allow that
@@ -2111,8 +2113,12 @@ _kdc_as_rep(kdc_request_t r,
 	ALLOC(r->ek.renew_till);
 	*r->ek.renew_till = *r->et.renew_till;
     }
-    copy_Realm(&rep.ticket.realm, &r->ek.srealm);
-    copy_PrincipalName(&rep.ticket.sname, &r->ek.sname);
+    ret = copy_Realm(&rep.ticket.realm, &r->ek.srealm);
+    if (ret)
+	goto out;
+    ret = copy_PrincipalName(&rep.ticket.sname, &r->ek.sname);
+    if (ret)
+	goto out;
     if(r->et.caddr){
 	ALLOC(r->ek.caddr);
 	copy_HostAddresses(r->et.caddr, r->ek.caddr);

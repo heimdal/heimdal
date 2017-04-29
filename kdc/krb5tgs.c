@@ -807,15 +807,21 @@ tgs_make_reply(krb5_context context,
     if(ret)
 	goto out;
 
-    copy_Realm(&server_principal->realm, &rep.ticket.realm);
+    ret = copy_Realm(&server_principal->realm, &rep.ticket.realm);
+    if (ret)
+	goto out;
     _krb5_principal2principalname(&rep.ticket.sname, server_principal);
-    copy_Realm(&tgt_name->realm, &rep.crealm);
+    ret = copy_Realm(&tgt_name->realm, &rep.crealm);
+    if (ret)
+	goto out;
 /*
     if (f.request_anonymous)
 	_kdc_make_anonymous_principalname (&rep.cname);
     else */
 
-    copy_PrincipalName(&tgt_name->name, &rep.cname);
+    ret = copy_PrincipalName(&tgt_name->name, &rep.cname);
+    if (ret)
+	goto out;
     rep.ticket.tkt_vno = 5;
 
     ek.caddr = et.caddr;

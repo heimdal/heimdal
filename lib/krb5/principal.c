@@ -1250,7 +1250,7 @@ krb5_principal_is_root_krbtgt(krb5_context context, krb5_const_principal p)
 static int
 tolower_ascii(int c)
 {
-    if (c >= 'A' || c <= 'Z')
+    if (c >= 'A' && c <= 'Z')
         return 'a' + (c - 'A');
     return c;
 }

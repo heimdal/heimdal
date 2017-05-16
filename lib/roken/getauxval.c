@@ -157,12 +157,12 @@ rk_getprocauxval(unsigned long type)
 ROKEN_LIB_FUNCTION unsigned long ROKEN_LIB_CALL
 rk_getauxval(unsigned long type)
 {
-#if defined(HAVE_GETAUXVAL) && defined(GETAUXVAL_SETS_ERRNO)
+#ifdef HAVE_GETAUXVAL
+#ifdef GETAUXVAL_SETS_ERRNO
     if (rk_injected_auxv)
         return rk_getprocauxval(type);
     return getauxval(type);
 #else
-    const auxv_t *a;
     unsigned long ret;
     unsigned long ret2;
     static int getauxval_sets_errno = -1;
@@ -181,8 +181,17 @@ rk_getauxval(unsigned long type)
         return ret;
     }
 
-    if (getauxval_sets_errno == 0) 
-	goto out;
+    if (getauxval_sets_errno == 0) {
+	const auxv_t *a;
+
+        errno = save_errno;
+	a = rk_getauxv(type);
+	if (a == NULL) {
+            errno = ENOENT;
+            return 0;
+        }
+        return a->a_un.a_val;
+    }
 
     /*
      * We've called getauxval() and it returned 0, but we don't know if
@@ -191,6 +200,7 @@ rk_getauxval(unsigned long type)
      * Attempt to detect whether getauxval() sets errno = ENOENT by
      * calling it with what should be a bogus type.
      */
+
     errno = 0;
     ret2 = getauxval(~type);
     if (ret2 == 0 && errno == ENOENT) {
@@ -198,14 +208,16 @@ rk_getauxval(unsigned long type)
         errno = save_errno;
         return ret;
     }
-    getauxval_sets_errno = 0;
 
-  out:
+    getauxval_sets_errno = 0;
     errno = save_errno;
-    a = rk_getauxv(type);
-    if (a == NULL) {
-	errno = ENOENT;
-	return 0;
+#endif
+#else
+    const auxv_t *a;
+
+    if ((a = rk_getauxv(type)) == NULL) {
+        errno = ENOENT;
+        return 0;
     }
     return a->a_un.a_val;
 #endif

@@ -13,7 +13,7 @@ before_install:
 
 install:
     - cd ci-build
-    - ../configure
+    - ../configure --enable-maintainer-mode
     - make
 
 script:
@@ -34,6 +34,6 @@ addons:
             name: "heimdal/heimdal"
             description: "Build submitted via Travis CI"
         notification_email: lha@h5l.org
-        build_command_prepend: ../configure
+        build_command_prepend: ../configure --enable-maintainer-mode
         build_command: make
         branch_pattern: coverity_scan

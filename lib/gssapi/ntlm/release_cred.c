@@ -58,6 +58,9 @@ OM_uint32 GSSAPI_CALLCONV _gss_ntlm_release_cred
 	free(cred->key.data);
     }
 
+    memset(cred, 0, sizeof(*cred));
+    free(cred);
+
     return GSS_S_COMPLETE;
 }
 

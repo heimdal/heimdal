@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997 - 2008 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997 - 2017 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  *
@@ -52,8 +52,10 @@ krb5_kt_ret_data(krb5_context context,
 		 krb5_storage *sp,
 		 krb5_data *data)
 {
-    int ret;
+    krb5_error_code ret;
+    krb5_ssize_t bytes;
     int16_t size;
+
     ret = krb5_ret_int16(sp, &size);
     if(ret)
 	return ret;
@@ -61,9 +63,9 @@ krb5_kt_ret_data(krb5_context context,
     data->data = malloc(size);
     if (data->data == NULL)
 	return krb5_enomem(context);
-    ret = krb5_storage_read(sp, data->data, size);
-    if(ret != size)
-	return (ret < 0)? errno : KRB5_KT_END;
+    bytes = krb5_storage_read(sp, data->data, size);
+    if (bytes != size)
+	return (bytes == -1) ? errno : KRB5_KT_END;
     return 0;
 }
 
@@ -72,18 +74,20 @@ krb5_kt_ret_string(krb5_context context,
 		   krb5_storage *sp,
 		   heim_general_string *data)
 {
-    int ret;
+    krb5_error_code ret;
+    krb5_ssize_t bytes;
     int16_t size;
+
     ret = krb5_ret_int16(sp, &size);
     if(ret)
 	return ret;
     *data = malloc(size + 1);
     if (*data == NULL)
 	return krb5_enomem(context);
-    ret = krb5_storage_read(sp, *data, size);
+    bytes = krb5_storage_read(sp, *data, size);
     (*data)[size] = '\0';
-    if(ret != size)
-	return (ret < 0)? errno : KRB5_KT_END;
+    if (bytes != size)
+	return (bytes == -1) ? errno : KRB5_KT_END;
     return 0;
 }
 
@@ -92,16 +96,15 @@ krb5_kt_store_data(krb5_context context,
 		   krb5_storage *sp,
 		   krb5_data data)
 {
-    int ret;
+    krb5_error_code ret;
+    krb5_ssize_t bytes;
+
     ret = krb5_store_int16(sp, data.length);
-    if(ret < 0)
-	return ret;
-    ret = krb5_storage_write(sp, data.data, data.length);
-    if(ret != (int)data.length){
-	if(ret < 0)
-	    return errno;
-	return KRB5_KT_END;
-    }
+    if (ret != 0)
+        return ret;
+    bytes = krb5_storage_write(sp, data.data, data.length);
+    if (bytes != (int)data.length)
+        return bytes == -1 ? errno : KRB5_KT_END;
     return 0;
 }
 
@@ -109,17 +112,16 @@ static krb5_error_code
 krb5_kt_store_string(krb5_storage *sp,
 		     heim_general_string data)
 {
-    int ret;
+    krb5_error_code ret;
+    krb5_ssize_t bytes;
     size_t len = strlen(data);
+
     ret = krb5_store_int16(sp, len);
-    if(ret < 0)
+    if (ret != 0)
 	return ret;
-    ret = krb5_storage_write(sp, data, len);
-    if(ret != (int)len){
-	if(ret < 0)
-	    return errno;
-	return KRB5_KT_END;
-    }
+    bytes = krb5_storage_write(sp, data, len);
+    if (bytes != (int)len)
+        return bytes == -1 ? errno : KRB5_KT_END;
     return 0;
 }
 
@@ -388,7 +390,7 @@ fkt_start_seq_get_int(krb5_context context,
     else if ((flags & O_ACCMODE) == O_RDWR)
         stdio_mode = "rb+";
     else if ((flags & O_ACCMODE) == O_WRONLY)
-        stdio_mode = "wb+";
+        stdio_mode = "wb";
     c->sp = krb5_storage_stdio_from_fd(c->fd, stdio_mode);
     if (c->sp == NULL) {
 	close(c->fd);
@@ -536,6 +538,7 @@ fkt_add_entry(krb5_context context,
     int ret;
     int fd;
     krb5_storage *sp;
+    krb5_ssize_t bytes;
     struct fkt_data *d = id->data;
     krb5_data keytab;
     int32_t len;
@@ -696,8 +699,11 @@ fkt_add_entry(krb5_context context,
 	krb5_storage_seek(sp, len, SEEK_CUR);
     }
     ret = krb5_store_int32(sp, len);
-    if(krb5_storage_write(sp, keytab.data, keytab.length) < 0) {
-	ret = errno;
+    if (ret != 0)
+        goto out;
+    bytes = krb5_storage_write(sp, keytab.data, keytab.length);
+    if (bytes != keytab.length) {
+	ret = bytes == -1 ? errno : KRB5_KT_END;
 	krb5_set_error_message(context, ret,
 			       N_("Failed writing keytab block "
 				  "in keytab %s: %s", ""),
@@ -706,7 +712,8 @@ fkt_add_entry(krb5_context context,
     memset(keytab.data, 0, keytab.length);
     krb5_data_free(&keytab);
   out:
-    krb5_storage_fsync(sp);
+    if (ret == 0)
+        ret = krb5_storage_fsync(sp);
     krb5_storage_free(sp);
     close(fd);
     return ret;
@@ -717,6 +724,7 @@ fkt_remove_entry(krb5_context context,
 		 krb5_keytab id,
 		 krb5_keytab_entry *entry)
 {
+    krb5_ssize_t bytes;
     krb5_keytab_entry e;
     krb5_kt_cursor cursor;
     off_t pos_start, pos_end;
@@ -735,11 +743,17 @@ fkt_remove_entry(krb5_context context,
 	    found = 1;
 	    krb5_storage_seek(cursor.sp, pos_start, SEEK_SET);
 	    len = pos_end - pos_start - 4;
-	    krb5_store_int32(cursor.sp, -len);
+	    ret = krb5_store_int32(cursor.sp, -len);
+            if (ret)
+                goto out;
 	    memset(buf, 0, sizeof(buf));
 	    while(len > 0) {
-		krb5_storage_write(cursor.sp, buf,
+		bytes = krb5_storage_write(cursor.sp, buf,
 		    min((size_t)len, sizeof(buf)));
+                if (bytes != min((size_t)len, sizeof(buf))) {
+                    ret = bytes == -1 ? errno : KRB5_KT_END;
+                    goto out;
+                }
 		len -= min((size_t)len, sizeof(buf));
 	    }
 	}
@@ -751,7 +765,7 @@ fkt_remove_entry(krb5_context context,
 	krb5_clear_error_message (context);
 	return KRB5_KT_NOTFOUND;
     }
-    return 0;
+    return ret;
 }
 
 const krb5_kt_ops krb5_fkt_ops = {

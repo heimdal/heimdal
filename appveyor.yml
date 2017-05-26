@@ -35,6 +35,7 @@ artifacts:
     name: heimdal-out
 
 on_failure:
+  - 7z a heimdal-out.zip C:\projects\heimdal\out\
   - appveyor PushArtifact heimdal-out.zip
 
 # To get RDP access to an appveyor worker for debugging a build, just

@@ -89,6 +89,8 @@ libroken_la_SOURCES =		\
 	eread.c			\
 	esetenv.c		\
 	ewrite.c		\
+	fseeko.c		\
+	ftello.c		\
 	getaddrinfo_hostspec.c	\
 	get_default_username.c	\
 	get_window_size.c	\

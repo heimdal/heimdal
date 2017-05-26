@@ -1,5 +1,5 @@
 /***********************************************************************
- * Copyright (c) 2009-2016, Secure Endpoints Inc.
+ * Copyright (c) 2009-2017, Secure Endpoints Inc.
  * All rights reserved.
  * 
  * Redistribution and use in source and binary forms, with or without
@@ -354,6 +354,18 @@ static const char *const rcsid[] = { (const char *)rcsid, "@(#)" msg }
 
 /* Define to 1 if you have the <fnmatch.h> header file. */
 /* #undef HAVE_FNMATCH_H */
+
+/* Define if you have the function `fseeko'. */
+/* #undef HAVE_FSEEKO */
+
+/* Define if you have the function `ftello'. */
+/* #undef HAVE_FTELLO */
+
+/* Define if you have the function `_fseeki64'. */
+#define HAVE__FSEEKI64 1
+
+/* Define if you have the function `_ftelli64'. */
+#define HAVE__FTELLI64 1
 
 /* Define if el_init takes four arguments. */
 /* #undef HAVE_FOUR_VALUED_EL_INIT */

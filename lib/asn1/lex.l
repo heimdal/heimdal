@@ -1,6 +1,6 @@
 %{
 /*
- * Copyright (c) 1997 - 2005 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997 - 2017 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  *
@@ -274,13 +274,11 @@ WITH			{ return kw_WITH; }
 .			{ lex_error_message("Ignoring char(%c)\n", *yytext); }
 %%
 
-#ifndef yywrap /* XXX */
 int
 yywrap ()
 {
      return 1;
 }
-#endif
 
 void
 lex_error_message (const char *format, ...)

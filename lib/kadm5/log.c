@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997 - 2007 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997 - 2017 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  *
@@ -911,9 +911,11 @@ kadm5_log_flush(kadm5_server_context *context, krb5_storage *sp)
     len = data.length;
     bytes = krb5_storage_write(sp, data.data, len);
     krb5_data_free(&data);
-    if (bytes < 0) {
+    if (bytes != len) {
         krb5_storage_free(sp);
-	return errno;
+        ret = bytes == -1 ? errno : KADM5_LOG_CORRUPT;
+        krb5_warn(context->context, ret, "short write to iprop log file");
+	return ret;
     }
     if (bytes != (krb5_ssize_t)len) {
         krb5_storage_free(sp);
@@ -938,6 +940,7 @@ kadm5_ret_t
 kadm5_log_create(kadm5_server_context *context, hdb_entry *entry)
 {
     krb5_storage *sp;
+    krb5_ssize_t bytes;
     kadm5_ret_t ret;
     krb5_data value;
     hdb_entry_ex ent;
@@ -975,9 +978,9 @@ kadm5_log_create(kadm5_server_context *context, hdb_entry *entry)
     if (ret == 0)
         ret = krb5_store_uint32(sp, value.length);
     if (ret == 0) {
-        if (krb5_storage_write(sp, value.data, value.length) !=
-            (krb5_ssize_t)value.length)
-            ret = errno;
+        bytes = krb5_storage_write(sp, value.data, value.length);
+        if (bytes != (krb5_ssize_t)value.length)
+            ret = bytes == -1 ? errno : ENOMEM;
     }
     if (ret == 0)
         ret = krb5_store_uint32(sp, value.length);
@@ -1140,6 +1143,7 @@ kadm5_log_rename(kadm5_server_context *context,
 		 hdb_entry *entry)
 {
     krb5_storage *sp;
+    krb5_ssize_t bytes;
     kadm5_ret_t ret;
     uint32_t len = 0;   /* So dumb compilers don't warn */
     off_t end_off = 0;  /* Ditto; this allows de-indentation by two levels */
@@ -1206,9 +1210,9 @@ kadm5_log_rename(kadm5_server_context *context,
         ret = krb5_store_principal(sp, source);
     if (ret == 0) {
         errno = 0;
-        if (krb5_storage_write(sp, value.data, value.length) !=
-            (krb5_ssize_t)value.length)
-            ret = errno ? errno : EIO;
+        bytes = krb5_storage_write(sp, value.data, value.length);
+        if (bytes != (krb5_ssize_t)value.length)
+            ret = bytes == -1 ? errno : ENOMEM;
     }
     if (ret == 0) {
         end_off = krb5_storage_seek(sp, 0, SEEK_CUR);
@@ -1307,6 +1311,7 @@ kadm5_log_modify(kadm5_server_context *context,
 		 uint32_t mask)
 {
     krb5_storage *sp;
+    krb5_ssize_t bytes;
     kadm5_ret_t ret;
     krb5_data value;
     uint32_t len;
@@ -1350,9 +1355,9 @@ kadm5_log_modify(kadm5_server_context *context,
     if (ret == 0)
         ret = krb5_store_uint32(sp, mask);
     if (ret == 0) {
-        if (krb5_storage_write(sp, value.data, value.length) !=
-            (krb5_ssize_t)value.length)
-            ret = errno;
+        bytes = krb5_storage_write(sp, value.data, value.length);
+        if (bytes != (krb5_ssize_t)value.length)
+            ret = bytes == -1 ? errno : ENOMEM;
     }
     if (ret == 0)
         ret = krb5_store_uint32(sp, len);
@@ -2523,8 +2528,8 @@ kadm5_log_truncate(kadm5_server_context *context, size_t keep, size_t maxbytes)
         ret = krb5_store_uint32(sp, 0);             /* end of trailer */
     if (ret == 0) {
         bytes = krb5_storage_write(sp, entries.data, entries.length);
-        if (bytes == -1)
-            ret = errno;
+        if (bytes != entries.length)
+            ret = bytes == -1 ? errno : EIO;
     }
     if (ret == 0)
         ret = krb5_storage_fsync(sp);

@@ -546,24 +546,34 @@ fcc_initialize(krb5_context context,
 	    f->version = context->fcache_vno;
 	else
 	    f->version = KRB5_FCC_FVNO_4;
-	ret |= krb5_store_int8(sp, 5);
-	ret |= krb5_store_int8(sp, f->version);
+        if (ret == 0)
+            ret = krb5_store_int8(sp, 5);
+        if (ret == 0)
+            ret = krb5_store_int8(sp, f->version);
 	storage_set_flags(context, sp, f->version);
 	if(f->version == KRB5_FCC_FVNO_4 && ret == 0) {
 	    /* V4 stuff */
 	    if (context->kdc_sec_offset) {
-		ret |= krb5_store_int16 (sp, 12); /* length */
-		ret |= krb5_store_int16 (sp, FCC_TAG_DELTATIME); /* Tag */
-		ret |= krb5_store_int16 (sp, 8); /* length of data */
-		ret |= krb5_store_int32 (sp, context->kdc_sec_offset);
-		ret |= krb5_store_int32 (sp, context->kdc_usec_offset);
+                if (ret == 0)
+                    ret = krb5_store_int16 (sp, 12); /* length */
+                if (ret == 0)
+                    ret = krb5_store_int16 (sp, FCC_TAG_DELTATIME); /* Tag */
+                if (ret == 0)
+                    ret = krb5_store_int16 (sp, 8); /* length of data */
+                if (ret == 0)
+                    ret = krb5_store_int32 (sp, context->kdc_sec_offset);
+                if (ret == 0)
+                    ret = krb5_store_int32 (sp, context->kdc_usec_offset);
 	    } else {
-		ret |= krb5_store_int16 (sp, 0);
+                if (ret == 0)
+                    ret = krb5_store_int16 (sp, 0);
 	    }
 	}
-	ret |= krb5_store_principal(sp, primary_principal);
+        if (ret == 0)
+            ret = krb5_store_principal(sp, primary_principal);
 
-	ret |= write_storage(context, sp, fd);
+        if (ret == 0)
+            ret = write_storage(context, sp, fd);
 
 	krb5_storage_free(sp);
     }

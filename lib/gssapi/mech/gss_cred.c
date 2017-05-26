@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009 Kungliga Tekniska Högskolan
+ * Copyright (c) 2017 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  *
@@ -51,6 +51,7 @@ gss_export_cred(OM_uint32 * minor_status,
     struct _gss_mechanism_cred *mc;
     gss_buffer_desc buffer;
     krb5_error_code ret;
+    krb5_ssize_t bytes;
     krb5_storage *sp;
     OM_uint32 major;
     krb5_data data;
@@ -84,8 +85,8 @@ gss_export_cred(OM_uint32 * minor_status,
 	    return major;
 	}
 
-	ret = krb5_storage_write(sp, buffer.value, buffer.length);
-	if (ret < 0 || (size_t)ret != buffer.length) {
+	bytes = krb5_storage_write(sp, buffer.value, buffer.length);
+	if (bytes < 0 || (size_t)bytes != buffer.length) {
 	    gss_release_buffer(minor_status, &buffer);
 	    krb5_storage_free(sp);
 	    *minor_status = EINVAL;

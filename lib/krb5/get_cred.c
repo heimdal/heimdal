@@ -1266,6 +1266,8 @@ static void
 store_cred(krb5_context context, krb5_ccache ccache,
 	   krb5_const_principal server_princ, krb5_creds *creds)
 {
+    if (context->no_ticket_store)
+        return;
     if (!krb5_principal_compare(context, creds->server, server_princ) &&
         !krb5_principal_is_krbtgt(context, server_princ)) {
         krb5_principal tmp_princ = creds->server;

@@ -247,6 +247,7 @@ typedef struct krb5_context_data {
     krb5_boolean scan_interfaces;	/* `ifconfig -a' */
     krb5_boolean srv_lookup;		/* do SRV lookups */
     krb5_boolean srv_try_txt;		/* try TXT records also */
+    krb5_boolean no_ticket_store;       /* Don't store service tickets */
     int32_t fcache_vno;			/* create cache files w/ this
                                            version */
     int num_kt_types;			/* # of registered keytab types */

@@ -465,6 +465,8 @@ AC_CHECK_FUNCS([				\
 	backtrace				\
 	fcntl					\
 	fork					\
+	fseeko					\
+	ftello					\
 	getpeereid				\
 	getpeerucred				\
 	getresgid				\

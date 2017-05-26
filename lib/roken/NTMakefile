@@ -1,6 +1,6 @@
 ########################################################################
 #
-# Copyright (c) 2009, Secure Endpoints Inc.
+# Copyright (c) 2009 - 2017, Secure Endpoints Inc.
 # All rights reserved.
 # 
 # Redistribution and use in source and binary forms, with or without
@@ -55,6 +55,8 @@ libroken_la_OBJS =			\
 	$(OBJ)\ewrite.obj		\
 	$(OBJ)\flock.obj		\
 	$(OBJ)\fnmatch.obj		\
+	$(OBJ)\fseeko.obj		\
+	$(OBJ)\ftello.obj		\
 	$(OBJ)\getauxval.obj		\
 	$(OBJ)\getaddrinfo_hostspec.obj	\
 	$(OBJ)\get_default_username.obj	\

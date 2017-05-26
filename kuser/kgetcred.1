@@ -164,6 +164,20 @@ same behavior as using the
 .Fl Fl canonicalize
 .Fl Fl hostbased
 options here.
+.Sh ENVIRONMENT
+.Bl -tag -width Ds
+.It Ev KRB5CCNAME
+Specifies the default credentials cache.
+.It Ev KRB5_CONFIG
+The file name of
+.Pa krb5.conf ,
+the default being
+.Pa /etc/krb5.conf .
+.It Ev KRB5_NO_TICKET_STORE
+If this variable is present in the environment, any service tickets obtained
+are not added to the credential cache.  This affects all heimdal applications
+and library clients, not just kgetcred.
+.El
 .Sh SEE ALSO
 .Xr kinit 1 ,
 .Xr klist 1 ,

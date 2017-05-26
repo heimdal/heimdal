@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997 - 2017 Kungliga Tekniska Högskolan
+ * Copyright (c) 2017 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  *
@@ -34,14 +34,14 @@
 #include "krb5_locl.h"
 #include "store-int.h"
 
-typedef struct fd_storage {
-    int fd;
-} fd_storage;
+typedef struct stdio_storage {
+    FILE *f;
+} stdio_storage;
 
-#define FD(S) (((fd_storage*)(S)->data)->fd)
+#define F(S) (((stdio_storage*)(S)->data)->f)
 
 static ssize_t
-fd_fetch(krb5_storage * sp, void *data, size_t size)
+stdio_fetch(krb5_storage * sp, void *data, size_t size)
 {
     char *cbuf = (char *)data;
     ssize_t count;
@@ -49,16 +49,14 @@ fd_fetch(krb5_storage * sp, void *data, size_t size)
 
     /* similar pattern to net_read() to support pipes */
     while (rem > 0) {
-	count = read (FD(sp), cbuf, rem);
+	count = fread(cbuf, 1, rem, F(sp));
 	if (count < 0) {
 	    if (errno == EINTR)
 		continue;
-	    else if (rem == size)
+	    else
 		return count;
-            else
-                return size - rem;
 	} else if (count == 0) {
-	    return count;
+	    return size - rem;
 	}
 	cbuf += count;
 	rem -= count;
@@ -67,7 +65,7 @@ fd_fetch(krb5_storage * sp, void *data, size_t size)
 }
 
 static ssize_t
-fd_store(krb5_storage * sp, const void *data, size_t size)
+stdio_store(krb5_storage * sp, const void *data, size_t size)
 {
     const char *cbuf = (const char *)data;
     ssize_t count;
@@ -75,13 +73,21 @@ fd_store(krb5_storage * sp, const void *data, size_t size)
 
     /* similar pattern to net_write() to support pipes */
     while (rem > 0) {
-	count = write(FD(sp), cbuf, rem);
+	count = fwrite(cbuf, 1, rem, F(sp));
 	if (count < 0) {
 	    if (errno == EINTR)
 		continue;
-	    else
-		return size - rem;
+            /*
+             * What does it mean to have a short write when using stdio?
+             *
+             * It can't mean much.  After all stdio is buffering, so
+             * earlier writes that appeared complete may have failed,
+             * and so we don't know how much we really failed to write.
+             */
+            return -1;
 	}
+        if (count == 0)
+            return -1;
 	cbuf += count;
 	rem -= count;
     }
@@ -89,43 +95,60 @@ fd_store(krb5_storage * sp, const void *data, size_t size)
 }
 
 static off_t
-fd_seek(krb5_storage * sp, off_t offset, int whence)
+stdio_seek(krb5_storage * sp, off_t offset, int whence)
 {
-    return lseek(FD(sp), offset, whence);
+    int save_errno = errno;
+
+    if (fseeko(F(sp), offset, whence) != 0)
+        return -1;
+    errno = save_errno;
+    return ftello(F(sp));
 }
 
 static int
-fd_trunc(krb5_storage * sp, off_t offset)
+stdio_trunc(krb5_storage * sp, off_t offset)
 {
-    if (ftruncate(FD(sp), offset) == -1)
+    int save_errno = errno;
+
+    if (fflush(F(sp)) == EOF)
+        return errno;
+    if (ftruncate(fileno(F(sp)), offset) == -1)
 	return errno;
+    if (fseeko(F(sp), offset, SEEK_SET) == -1)
+        return errno;
+    errno = save_errno;
     return 0;
 }
 
 static int
-fd_sync(krb5_storage * sp)
+stdio_sync(krb5_storage * sp)
 {
-    if (fsync(FD(sp)) == -1)
+    if (fflush(F(sp)) == EOF)
+	return errno;
+    if (fsync(fileno(F(sp))) == -1)
 	return errno;
     return 0;
 }
 
 static void
-fd_free(krb5_storage * sp)
+stdio_free(krb5_storage * sp)
 {
     int save_errno = errno;
-    if (close(FD(sp)) == 0)
+
+    if (F(sp) != NULL && fclose(F(sp)) == 0)
         errno = save_errno;
+    F(sp) = NULL;
 }
 
 /**
- *
+ * Open a krb5_storage using stdio for buffering.
  *
  * @return A krb5_storage on success, or NULL on out of memory error.
  *
  * @ingroup krb5_storage
  *
  * @sa krb5_storage_emem()
+ * @sa krb5_storage_from_fd()
  * @sa krb5_storage_from_mem()
  * @sa krb5_storage_from_readonly_mem()
  * @sa krb5_storage_from_data()
@@ -133,11 +156,17 @@ fd_free(krb5_storage * sp)
  */
 
 KRB5_LIB_FUNCTION krb5_storage * KRB5_LIB_CALL
-krb5_storage_from_fd(int fd_in)
+krb5_storage_stdio_from_fd(int fd_in, const char *mode)
 {
     krb5_storage *sp;
-    int saved_errno;
+    off_t off;
+    FILE *f;
+    int saved_errno = errno;
     int fd;
+
+    off = lseek(fd_in, 0, SEEK_CUR);
+    if (off == -1)
+        return NULL;
 
 #ifdef _MSC_VER
     /*
@@ -153,35 +182,48 @@ krb5_storage_from_fd(int fd_in)
 #endif
 
     if (fd < 0)
+        return NULL;
+
+    f = fdopen(fd, mode);
+    if (f == NULL)
+        return NULL;
+
+    errno = saved_errno;
+
+    if (fseeko(f, off, SEEK_SET) == -1) {
+        saved_errno = errno;
+        (void) fclose(f);
+        errno = saved_errno;
 	return NULL;
+    }
 
     errno = ENOMEM;
     sp = malloc(sizeof(krb5_storage));
     if (sp == NULL) {
 	saved_errno = errno;
-	close(fd);
+	(void) fclose(f);
 	errno = saved_errno;
 	return NULL;
     }
 
     errno = ENOMEM;
-    sp->data = malloc(sizeof(fd_storage));
+    sp->data = malloc(sizeof(stdio_storage));
     if (sp->data == NULL) {
 	saved_errno = errno;
-	close(fd);
+	(void) fclose(f);
 	free(sp);
 	errno = saved_errno;
 	return NULL;
     }
     sp->flags = 0;
     sp->eof_code = HEIM_ERR_EOF;
-    FD(sp) = fd;
-    sp->fetch = fd_fetch;
-    sp->store = fd_store;
-    sp->seek = fd_seek;
-    sp->trunc = fd_trunc;
-    sp->fsync = fd_sync;
-    sp->free = fd_free;
+    F(sp) = f;
+    sp->fetch = stdio_fetch;
+    sp->store = stdio_store;
+    sp->seek = stdio_seek;
+    sp->trunc = stdio_trunc;
+    sp->fsync = stdio_sync;
+    sp->free = stdio_free;
     sp->max_alloc = UINT_MAX/8;
     return sp;
 }

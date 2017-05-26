@@ -1,6 +1,6 @@
 /* -*- C -*- */
 /*
- * Copyright (c) 1995-2005 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995-2017 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  *
@@ -641,13 +641,13 @@ ROKEN_LIB_FUNCTION char* ROKEN_LIB_CALL getcwd(char *, size_t);
 #include <pwd.h>
 ROKEN_LIB_FUNCTION struct passwd * ROKEN_LIB_CALL k_getpwnam (const char *);
 ROKEN_LIB_FUNCTION struct passwd * ROKEN_LIB_CALL k_getpwuid (uid_t);
-#endif
 
 #ifdef POSIX_GETPWNAM_R
 #define rk_getpwnam_r(_n, _pw, _b, _sz, _pwd) getpwnam_r(_n, _pw, _b, _sz, _pwd)
 #else
 ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
 rk_getpwnam_r(const char *, struct passwd *, char *, size_t, struct passwd **);
+#endif
 #endif
 
 ROKEN_LIB_FUNCTION const char * ROKEN_LIB_CALL get_default_username (void);

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997 - 2008 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997 - 2017 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  *
@@ -176,13 +176,9 @@ static krb5_error_code KRB5_CALLCONV
 fcc_lock(krb5_context context, krb5_ccache id,
 	 int fd, krb5_boolean exclusive)
 {
+    if (exclusive == FALSE)
+        return 0;
     return _krb5_xlock(context, fd, exclusive, fcc_get_name(context, id));
-}
-
-static krb5_error_code KRB5_CALLCONV
-fcc_unlock(krb5_context context, int fd)
-{
-    return _krb5_xunlock(context, fd);
 }
 
 static krb5_error_code KRB5_CALLCONV
@@ -276,7 +272,6 @@ _krb5_erase_file(krb5_context context, const char *filename)
     }
     if (unlink(filename) < 0) {
 	ret = errno;
-	_krb5_xunlock(context, fd);
         close (fd);
 	krb5_set_error_message(context, errno,
 	    N_("krb5_cc_destroy: unlinking \"%s\": %s", ""),
@@ -286,7 +281,6 @@ _krb5_erase_file(krb5_context context, const char *filename)
     ret = fstat(fd, &sb2);
     if (ret < 0) {
 	ret = errno;
-	_krb5_xunlock(context, fd);
 	close (fd);
 	return ret;
     }
@@ -294,7 +288,6 @@ _krb5_erase_file(krb5_context context, const char *filename)
     /* check if someone was playing with symlinks */
 
     if (sb1.st_dev != sb2.st_dev || sb1.st_ino != sb2.st_ino) {
-	_krb5_xunlock(context, fd);
 	close(fd);
 	return EPERM;
     }
@@ -302,18 +295,11 @@ _krb5_erase_file(krb5_context context, const char *filename)
     /* there are still hard links to this file */
 
     if (sb2.st_nlink != 0) {
-	_krb5_xunlock(context, fd);
         close(fd);
         return 0;
     }
 
     ret = scrub_file(fd);
-    if (ret) {
-	_krb5_xunlock(context, fd);
-	close(fd);
-	return ret;
-    }
-    ret = _krb5_xunlock(context, fd);
     close(fd);
     return ret;
 }
@@ -581,7 +567,6 @@ fcc_initialize(krb5_context context,
 
 	krb5_storage_free(sp);
     }
-    fcc_unlock(context, fd);
     if (close(fd) < 0)
 	if (ret == 0) {
 	    char buf[128];
@@ -637,7 +622,6 @@ fcc_store_cred(krb5_context context,
 	    ret = write_storage(context, sp, fd);
 	krb5_storage_free(sp);
     }
-    fcc_unlock(context, fd);
     if (close(fd) < 0) {
 	if (ret == 0) {
 	    char buf[128];
@@ -672,7 +656,7 @@ init_fcc(krb5_context context,
     if(ret)
 	return ret;
 
-    sp = krb5_storage_from_fd(fd);
+    sp = krb5_storage_stdio_from_fd(fd, "r");
     if(sp == NULL) {
 	krb5_clear_error_message(context);
 	ret = ENOMEM;
@@ -798,7 +782,6 @@ init_fcc(krb5_context context,
   out:
     if(sp != NULL)
 	krb5_storage_free(sp);
-    fcc_unlock(context, fd);
     close(fd);
     return ret;
 }
@@ -819,7 +802,6 @@ fcc_get_principal(krb5_context context,
     if (ret)
 	krb5_clear_error_message(context);
     krb5_storage_free(sp);
-    fcc_unlock(context, fd);
     close(fd);
     return ret;
 }
@@ -847,7 +829,7 @@ fcc_get_first (krb5_context context,
     }
     memset(*cursor, 0, sizeof(struct fcc_cursor));
 
-    ret = init_fcc(context, id, "get-frist", &FCC_CURSOR(*cursor)->sp,
+    ret = init_fcc(context, id, "get-first", &FCC_CURSOR(*cursor)->sp,
 		   &FCC_CURSOR(*cursor)->fd, NULL);
     if (ret) {
 	free(*cursor);
@@ -861,7 +843,6 @@ fcc_get_first (krb5_context context,
 	return ret;
     }
     krb5_free_principal (context, principal);
-    fcc_unlock(context, FCC_CURSOR(*cursor)->fd);
     return 0;
 }
 
@@ -879,19 +860,16 @@ fcc_get_next (krb5_context context,
     if (FCC_CURSOR(*cursor) == NULL)
         return krb5_einval(context, 3);
 
-    if((ret = fcc_lock(context, id, FCC_CURSOR(*cursor)->fd, FALSE)) != 0)
-	return ret;
-    FCC_CURSOR(*cursor)->cred_start = lseek(FCC_CURSOR(*cursor)->fd,
-					   0, SEEK_CUR);
+    FCC_CURSOR(*cursor)->cred_start =
+        krb5_storage_seek(FCC_CURSOR(*cursor)->sp, 0, SEEK_CUR);
 
     ret = krb5_ret_creds(FCC_CURSOR(*cursor)->sp, creds);
     if (ret)
 	krb5_clear_error_message(context);
 
-    FCC_CURSOR(*cursor)->cred_end = lseek(FCC_CURSOR(*cursor)->fd,
-					 0, SEEK_CUR);
+    FCC_CURSOR(*cursor)->cred_end =
+        krb5_storage_seek(FCC_CURSOR(*cursor)->sp, 0, SEEK_CUR);
 
-    fcc_unlock(context, FCC_CURSOR(*cursor)->fd);
     return ret;
 }
 
@@ -1025,7 +1003,6 @@ cred_delete(krb5_context context,
     ret = write_storage(context, sp, fd);
 out:
     if (fd > -1) {
-	fcc_unlock(context, fd);
 	if (close(fd) < 0 && ret == 0) {
 	    krb5_set_error_message(context, errno, N_("close %s", ""),
 				   FILENAME(id));
@@ -1211,11 +1188,9 @@ fcc_move(krb5_context context, krb5_ccache from, krb5_ccache to)
 	    goto out2;
 	}
     out2:
-	fcc_unlock(context, fd2);
 	close(fd2);
 
     out1:
-	fcc_unlock(context, fd1);
 	close(fd1);
 
 	_krb5_erase_file(context, FILENAME(from));
@@ -1233,7 +1208,6 @@ fcc_move(krb5_context context, krb5_ccache from, krb5_ccache to)
 	if ((ret = init_fcc (context, to, "move", &sp, &fd, NULL)) == 0) {
 	    if (sp)
 		krb5_storage_free(sp);
-	    fcc_unlock(context, fd);
 	    close(fd);
 	}
     }
@@ -1287,7 +1261,6 @@ fcc_get_kdc_offset(krb5_context context, krb5_ccache id, krb5_deltat *kdc_offset
     ret = init_fcc(context, id, "get-kdc-offset", &sp, &fd, kdc_offset);
     if (sp)
 	krb5_storage_free(sp);
-    fcc_unlock(context, fd);
     close(fd);
 
     return ret;

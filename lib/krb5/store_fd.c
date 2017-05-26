@@ -53,8 +53,10 @@ fd_fetch(krb5_storage * sp, void *data, size_t size)
 	if (count < 0) {
 	    if (errno == EINTR)
 		continue;
-	    else
+	    else if (rem == size)
 		return count;
+            else
+                return size - rem;
 	} else if (count == 0) {
 	    return count;
 	}

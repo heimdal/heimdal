@@ -80,7 +80,7 @@ fd_store(krb5_storage * sp, const void *data, size_t size)
 	    if (errno == EINTR)
 		continue;
 	    else
-		return count;
+		return size - rem;
 	}
 	cbuf += count;
 	rem -= count;

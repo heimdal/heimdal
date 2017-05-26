@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997 - 2001 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997 - 2017 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  *
@@ -951,7 +951,7 @@ mdb_store(krb5_context context, HDB *db, unsigned flags, hdb_entry_ex *entry)
     krb5_data kdb_ent = { 0, 0 };
     krb5_data key = { 0, 0 };
     krb5_data value = { 0, 0 };
-    ssize_t sz;
+    krb5_ssize_t sz;
 
     if ((flags & HDB_F_PRECHECK) && (flags & HDB_F_REPLACE))
         return 0;
@@ -977,7 +977,7 @@ mdb_store(krb5_context context, HDB *db, unsigned flags, hdb_entry_ex *entry)
     if (ret) goto out;
     sz = krb5_storage_write(sp, "\n", 2); /* NUL-terminate */
     ret = ENOMEM;
-    if (sz == -1) goto out;
+    if (sz != 2) goto out;
     ret = krb5_storage_to_data(sp, &line);
     if (ret) goto out;
 
@@ -1278,7 +1278,7 @@ _hdb_mit_dump2mitdb_entry(krb5_context context, char *line, krb5_storage *sp)
     krb5_error_code ret = EINVAL;
     char *p = line, *q;
     char *princ;
-    ssize_t sz;
+    krb5_ssize_t sz;
     size_t i;
     size_t princ_len;
     unsigned int num_tl_data;
@@ -1374,7 +1374,7 @@ _hdb_mit_dump2mitdb_entry(krb5_context context, char *line, krb5_storage *sp)
     ret = krb5_store_uint16(sp, princ_len);
     if (ret) return ret;
     sz = krb5_storage_write(sp, princ, princ_len);
-    if (sz == -1) return ENOMEM;
+    if (sz != princ_len) return ENOMEM;
 
     /* scan and write TL data */
     for (i = 0; i < num_tl_data; i++) {
@@ -1407,7 +1407,7 @@ _hdb_mit_dump2mitdb_entry(krb5_context context, char *line, krb5_storage *sp)
                 return EINVAL;
             sz = krb5_storage_write(sp, buf, tl_length);
             free(buf);
-            if (sz == -1) return ENOMEM;
+            if (sz != tl_length) return ENOMEM;
         } else {
             if (strcmp(nexttoken(&p, 0, "'-1' field"), "-1") != 0) return EINVAL;
         }
@@ -1450,7 +1450,7 @@ _hdb_mit_dump2mitdb_entry(krb5_context context, char *line, krb5_storage *sp)
                     return EINVAL;
                 sz = krb5_storage_write(sp, buf, keylen);
                 free(buf);
-                if (sz == -1) return ENOMEM;
+                if (sz != keylen) return ENOMEM;
             } else {
                 if (strcmp(nexttoken(&p, 0,
                                      "'-1' zero-length key/salt field"),

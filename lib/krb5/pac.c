@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2006 - 2007 Kungliga Tekniska Högskolan
+ * Copyright (c) 2006 - 2017 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  *
@@ -925,7 +925,7 @@ fill_zeros(krb5_context context, krb5_storage *sp, size_t len)
 	if (l > sizeof(zeros))
 	    l = sizeof(zeros);
 	sret = krb5_storage_write(sp, zeros, l);
-	if (sret <= 0)
+	if (sret != l)
 	    return krb5_enomem(context);
 
 	len -= sret;

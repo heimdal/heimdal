@@ -1,6 +1,6 @@
 ########################################################################
 #
-# Copyright (c) 2009 - 2016, Secure Endpoints Inc.
+# Copyright (c) 2009 - 2017, Secure Endpoints Inc.
 # All rights reserved.
 # 
 # Redistribution and use in source and binary forms, with or without
@@ -152,6 +152,7 @@ libkrb5_OBJS =			\
 	$(OBJ)\store_fd.obj		    \
 	$(OBJ)\store_mem.obj		    \
 	$(OBJ)\store_sock.obj		    \
+	$(OBJ)\store_stdio.obj		    \
 	$(OBJ)\ticket.obj		    \
 	$(OBJ)\time.obj			    \
 	$(OBJ)\transited.obj		    \
@@ -307,6 +308,7 @@ dist_libkrb5_la_SOURCES =			\
 	store_fd.c				\
 	store_mem.c				\
 	store_sock.c				\
+	store_stdio.c		    		\
 	pcache.c				\
 	plugin.c				\
 	ticket.c				\

@@ -684,8 +684,21 @@ fkt_add_entry(krb5_context context,
     }
 
     while(1) {
+        off_t here;
+
+        here = krb5_storage_seek(sp, 0, SEEK_CUR);
+        if (here == -1) {
+            ret = errno;
+            krb5_set_error_message(context, ret,
+                                   N_("Failed writing keytab block "
+                                      "in keytab %s: %s", ""),
+                                   d->filename, strerror(ret));
+            goto out;
+        }
 	ret = krb5_ret_int32(sp, &len);
-	if(ret == KRB5_KT_END) {
+	if (ret) {
+            /* There could have been a partial length.  Recover! */
+            (void) krb5_storage_truncate(sp, here);
 	    len = keytab.length;
 	    break;
 	}

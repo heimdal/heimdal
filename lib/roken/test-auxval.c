@@ -49,8 +49,8 @@ check_secure_getenv(char **env)
     size_t i;
     char *v;
 
-    for (i = 0; environ[i] != NULL; i++) {
-        if (strchr(environ[i], '=') == NULL)
+    for (i = 0; env[i] != NULL; i++) {
+        if (strchr(env[i], '=') == NULL)
             continue;
         if ((v = strdup(env[i])) == NULL)
             err(1, "could not allocate copy of %s", env[i]);
@@ -103,7 +103,7 @@ inject_suid(int suid)
 
     return;
 #else
-    warnx(1, "No ELF auxv types to inject");
+    warnx("No ELF auxv types to inject");
 #endif
 }
 

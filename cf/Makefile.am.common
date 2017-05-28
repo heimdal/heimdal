@@ -293,3 +293,7 @@ distdir-in-tree: $(DISTFILES) $(INFO_DEPS)
 heim_verbose = $(heim_verbose_$(V))
 heim_verbose_ = $(heim_verbose_$(AM_DEFAULT_VERBOSITY))
 heim_verbose_0 = @echo "  GEN    "$@;
+
+if ENABLE_GCOV
+AM_CFLAGS += --coverage --no-inline
+endif

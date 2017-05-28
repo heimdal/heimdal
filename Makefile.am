@@ -64,3 +64,9 @@ EXTRA_DIST = \
 
 print-distdir:
 	@echo $(distdir)
+
+clean-local-gcov:
+	find . '(' -name '*.gcno' -o -name '*.gcda' -o -name '*.gcov' ')' -a -print|xargs rm -f
+
+.PHONY: clean-local-gcov
+

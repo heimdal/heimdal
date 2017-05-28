@@ -72,6 +72,12 @@ AC_C___ATTRIBUTE__
 AM_CONDITIONAL(ENABLE_SHARED, test "$enable_shared" = "yes")
 rk_VERSIONSCRIPT
 
+dnl Code coverage
+AC_ARG_ENABLE([gcov],
+        AC_HELP_STRING([--enable-gcov], [enable gcov code coverage tool]))
+AM_CONDITIONAL([ENABLE_GCOV], [test "x$enable_gcov" = xyes])
+
+
 dnl
 dnl Helper bits for cross compiling
 dnl

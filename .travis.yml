@@ -13,13 +13,28 @@ before_install:
 
 install:
     - cd ci-build
-    - ../configure --enable-maintainer-mode
+    - if [ -n "$COVERAGE" ]; then pip install --user cpp-coveralls; fi
+    - ../configure --enable-maintainer-mode $COVERAGE
     - make -j3
 
 script:
     - if [ x${COVERITY_SCAN_BRANCH} != x1 ]; then make check; fi
 
 compiler: clang
+after_script:
+    - if [ -n "$COVERAGE" ]; then coveralls --gcov-options; fi
+
+matrix:
+    # Add a gcov build
+    include:
+        - compiler: gcc
+          env: COVERAGE="--enable-gcov"
+          os: linux
+    # The gcov build is not working quite yet
+    allow_failures:
+        compiler: gcc
+        env: COVERAGE="--enable-gcov"
+        os: linux
 
 notifications:
     email:

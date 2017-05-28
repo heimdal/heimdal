@@ -42,7 +42,15 @@ install:
 script:
     - if [ x${COVERITY_SCAN_BRANCH} != x1 ]; then make check; fi
 
-compiler: clang
+compiler:
+    - clang
+    - gcc
+
+matrix:
+    # Don't build on OS X with gcc
+    exclude:
+      - os: osx
+        compiler: gcc
 
 notifications:
     email:

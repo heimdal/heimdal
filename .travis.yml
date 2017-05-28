@@ -14,7 +14,7 @@ before_install:
 install:
     - cd ci-build
     - ../configure --enable-maintainer-mode
-    - make
+    - make -j3
 
 script:
     - if [ x${COVERITY_SCAN_BRANCH} != x1 ]; then make check; fi

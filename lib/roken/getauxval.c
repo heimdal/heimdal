@@ -134,6 +134,7 @@ rk_getauxv(unsigned long type)
     return NULL;
 }
 
+#ifndef HAVE_GETAUXVAL
 static unsigned long
 rk_getprocauxval(unsigned long type)
 {
@@ -145,6 +146,7 @@ rk_getprocauxval(unsigned long type)
     }
     return a->a_un.a_val;
 }
+#endif
 
 /**
  * Like the nearly-standard getauxval().  If the auxval is not found

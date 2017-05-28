@@ -26,14 +26,13 @@ notifications:
         on_success: change
         on_failure: always
 
-
 addons:
 
     coverity_scan:
         project:
             name: "heimdal/heimdal"
             description: "Build submitted via Travis CI"
-        notification_email: lha@h5l.org
+        notification_email: heimdal-builders@secure-endpoints.com
         build_command_prepend: ../configure --enable-maintainer-mode
         build_command: make
         branch_pattern: coverity_scan

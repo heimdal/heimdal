@@ -55,16 +55,17 @@ matrix:
     exclude:
       - os: osx
         compiler: gcc
-    # Add a gcov build
-    include:
-        - compiler: gcc
-          env: COVERAGE="--enable-gcov"
-          os: linux
+    # Add a gcov build (XXX not yet; allows_failures doesn't match
+    # explicitly included rows)
+    #include:
+    #    - compiler: gcc
+    #      env: COVERAGE="--enable-gcov"
+    #      os: linux
     # The gcov build is not working quite yet
-    allow_failures:
-        compiler: gcc
-        env: COVERAGE="--enable-gcov"
-        os: linux
+    #allow_failures:
+    #    compiler: gcc
+    #    env: COVERAGE="--enable-gcov"
+    #    os: linux
 
 notifications:
     email:

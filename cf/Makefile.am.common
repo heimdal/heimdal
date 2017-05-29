@@ -296,4 +296,5 @@ heim_verbose_0 = @echo "  GEN    "$@;
 
 if ENABLE_GCOV
 AM_CFLAGS += --coverage --no-inline
+AM_LDFLAGS = -lgcov
 endif

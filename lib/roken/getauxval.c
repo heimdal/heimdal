@@ -134,7 +134,7 @@ rk_getauxv(unsigned long type)
     return NULL;
 }
 
-#ifndef HAVE_GETAUXVAL
+#ifdef HAVE_GETAUXVAL
 static unsigned long
 rk_getprocauxval(unsigned long type)
 {

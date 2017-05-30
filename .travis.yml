@@ -44,7 +44,7 @@ script:
     - if [ x${COVERITY_SCAN_BRANCH} != x1 ]; then make check; fi
 
 after_script:
-    - if [ -n "$COVERAGE" ]; then coveralls --gcov-options; fi
+    - if [ -n "$COVERAGE" ]; then coveralls --gcov-options '\-lp'; fi
 
 compiler:
     - clang

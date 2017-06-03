@@ -161,30 +161,6 @@ srv_find_realm(krb5_context context, krb5_krbhst_info ***res, int *count,
     return 0;
 }
 
-
-struct krb5_krbhst_data {
-    char *realm;
-    unsigned int flags;
-    int def_port;
-    int port;			/* hardwired port number if != 0 */
-#define KD_CONFIG		 1
-#define KD_SRV_UDP		 2
-#define KD_SRV_TCP		 4
-#define KD_SRV_HTTP		 8
-#define KD_FALLBACK		16
-#define KD_CONFIG_EXISTS	32
-#define KD_LARGE_MSG		64
-#define KD_PLUGIN	       128
-#define KD_HOSTNAMES	       256
-    krb5_error_code (*get_next)(krb5_context, struct krb5_krbhst_data *,
-				krb5_krbhst_info**);
-
-    char *hostname;
-    unsigned int fallback_count;
-
-    struct krb5_krbhst_info *hosts, **index, **end;
-};
-
 static krb5_boolean
 krbhst_empty(const struct krb5_krbhst_data *kd)
 {

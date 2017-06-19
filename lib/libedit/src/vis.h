@@ -81,7 +81,9 @@
  */
 #define	UNVIS_END	_VIS_END	/* no more characters */
 
+#ifdef HAVE_SYS_CDEFS_H
 #include <sys/cdefs.h>
+#endif
 
 __BEGIN_DECLS
 char	*vis(char *, int, int, int);

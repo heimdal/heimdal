@@ -1,3 +1,21 @@
+
+Release Notes - Heimdal - Version Heimdal 7.4
+
+ Security
+
+ - Fix CVE-2017-11103: Orpheus' Lyre KDC-REP service name validation
+
+   This is a critical vulnerability.
+
+   In _krb5_extract_ticket() the KDC-REP service name must be obtained from
+   encrypted version stored in 'enc_part' instead of the unencrypted version
+   stored in 'ticket'.  Use of the unecrypted version provides an
+   opportunity for successful server impersonation and other attacks.
+
+   Identified by Jeffrey Altman, Viktor Duchovni and Nico Williams.
+
+   See https://www.orpheus-lyre.info/ for more details.
+
 Release Notes - Heimdal - Version Heimdal 7.3
 
  Security

@@ -1517,7 +1517,7 @@ tgs_build_reply(krb5_context context,
 		AuthorizationData **auth_data,
 		const struct sockaddr *from_addr)
 {
-    krb5_error_code ret;
+    krb5_error_code ret, ret2;
     krb5_principal cp = NULL, sp = NULL, rsp = NULL, tp = NULL, dp = NULL;
     krb5_principal krbtgt_out_principal = NULL;
     char *spn = NULL, *cpn = NULL, *tpn = NULL, *dpn = NULL, *krbtgt_out_n = NULL;
@@ -1683,10 +1683,12 @@ server_lookup:
 	if ((req_rlm = get_krbtgt_realm(&sp->name)) != NULL) {
             if (capath == NULL) {
                 /* With referalls, hierarchical capaths are always enabled */
-                ret = _krb5_find_capath(context, tgt->crealm, our_realm,
-                                        req_rlm, TRUE, &capath, &num_capath);
-                if (ret)
+                ret2 = _krb5_find_capath(context, tgt->crealm, our_realm,
+                                         req_rlm, TRUE, &capath, &num_capath);
+                if (ret2) {
+                    ret = ret2;
                     goto out;
+                }
             }
             new_rlm = num_capath > 0 ? capath[--num_capath] : NULL;
             if (new_rlm) {

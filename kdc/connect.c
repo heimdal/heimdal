@@ -1132,7 +1132,7 @@ start_kdc(krb5_context context,
      * on their end and be able to cleanly exit.
      */
 
-    if (socketpair(PF_LOCAL, SOCK_STREAM, 0, islive) == -1)
+    if (socketpair(PF_UNIX, SOCK_STREAM, 0, islive) == -1)
 	krb5_errx(context, 1, "socketpair");
     socket_set_nonblocking(islive[1], 1);
 #endif

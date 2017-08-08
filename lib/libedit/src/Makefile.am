@@ -26,7 +26,7 @@ CLEANFILES = $(BUILT_SOURCES)
 
 lib_LTLIBRARIES    = libheimedit.la
 libheimedit_la_SOURCES = \
-    chared.c chartype.c common.c el.c eln.c emacs.c filecomplete.c hist.c \
+    chared.c chartype.c common.c el.c eln.c emacs.c filecomplete.c getline.c hist.c \
     history.c historyn.c keymacro.c map.c parse.c prompt.c read.c readline.c \
     refresh.c search.c sig.c terminal.c tokenizer.c tokenizern.c tty.c \
     unvis.c vi.c vis.c wcsdup.c \

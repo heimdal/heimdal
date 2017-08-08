@@ -36,8 +36,8 @@
 #include <limits.h>
 #include <stdlib.h>
 
-#if !HAVE_DECL_GETLINE
-ssize_t getline(char **lineptr, size_t *n, FILE *stream);
+#ifndef HAVE_GETLINE
+ssize_t libedit_getline(char **lineptr, size_t *n, FILE *stream);
 #endif
 
 #ifndef SSIZE_MAX

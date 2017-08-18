@@ -98,6 +98,12 @@ oid	base	GSS_NEGOEX_MECHANISM			1.3.6.1.4.1.311.2.2.30
 oid	base	GSS_SANON_X25519_MECHANISM		1.3.6.1.4.1.5322.26.1.110
 
 #/*
+# * From Samba
+# */
+
+oid	base	GSS_KRB5_CRED_SKIP_TRANSIT_CHECK_X	1.3.6.1.4.1.7165.4.7.1
+
+#/*
 # * OID mappings with name and short description and and slightly longer description
 # */
 

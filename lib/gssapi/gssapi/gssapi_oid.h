@@ -195,6 +195,12 @@ extern GSSAPI_LIB_VARIABLE gss_OID_desc __gss_sanon_x25519_mechanism_oid_desc;
 #define GSS_SANON_X25519_MECHANISM (&__gss_sanon_x25519_mechanism_oid_desc)
 
 /*
+ * From Samba
+ */
+extern GSSAPI_LIB_VARIABLE gss_OID_desc __gss_krb5_cred_skip_transit_check_x_oid_desc;
+#define GSS_KRB5_CRED_SKIP_TRANSIT_CHECK_X (&__gss_krb5_cred_skip_transit_check_x_oid_desc)
+
+/*
  * OID mappings with name and short description and and slightly longer description
  */
 /*

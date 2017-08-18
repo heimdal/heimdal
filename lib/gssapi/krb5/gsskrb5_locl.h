@@ -101,6 +101,7 @@ typedef struct {
   int cred_flags;
 #define GSS_CF_DESTROY_CRED_ON_RELEASE	1
 #define GSS_CF_NO_CI_FLAGS		2
+#define GSS_CF_SKIP_TRANSIT_CHECK	4
   struct krb5_keytab_data *keytab;
   time_t endtime;
   gss_cred_usage_t usage;

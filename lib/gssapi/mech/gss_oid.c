@@ -157,6 +157,9 @@ gss_OID_desc GSSAPI_LIB_VARIABLE __gss_negoex_mechanism_oid_desc = { 10, rk_UNCO
 /* GSS_SANON_X25519_MECHANISM - 1.3.6.1.4.1.5322.26.1.110 */
 gss_OID_desc GSSAPI_LIB_VARIABLE __gss_sanon_x25519_mechanism_oid_desc = { 10, rk_UNCONST("\x2b\x06\x01\x04\x01\xa9\x4a\x1a\x01\x6e") };
 
+/* GSS_KRB5_CRED_SKIP_TRANSIT_CHECK_X - 1.3.6.1.4.1.7165.4.7.1 */
+gss_OID_desc GSSAPI_LIB_VARIABLE __gss_krb5_cred_skip_transit_check_x_oid_desc = { 10, rk_UNCONST("\x2b\x06\x01\x04\x01\xb7\x7d\x04\x07\x01") };
+
 /* GSS_C_MA_MECH_CONCRETE - 1.3.6.1.5.5.13.1 */
 gss_OID_desc GSSAPI_LIB_VARIABLE __gss_c_ma_mech_concrete_oid_desc = { 7, rk_UNCONST("\x2b\x06\x01\x05\x05\x0d\x01") };
 
@@ -337,6 +340,7 @@ gss_OID _gss_ot_internal[] = {
   &__gss_c_ntlm_reset_crypto_oid_desc,
   &__gss_negoex_mechanism_oid_desc,
   &__gss_sanon_x25519_mechanism_oid_desc,
+  &__gss_krb5_cred_skip_transit_check_x_oid_desc,
   &__gss_c_ma_mech_concrete_oid_desc,
   &__gss_c_ma_mech_pseudo_oid_desc,
   &__gss_c_ma_mech_composite_oid_desc,

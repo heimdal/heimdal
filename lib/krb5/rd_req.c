@@ -203,6 +203,7 @@ krb5_decrypt_ticket(krb5_context context,
     {
 	krb5_timestamp now;
 	time_t start = t.authtime;
+	krb5_boolean skip_transit_check = FALSE;
 
 	krb5_timeofday (context, &now);
 	if(t.starttime)
@@ -220,7 +221,20 @@ krb5_decrypt_ticket(krb5_context context,
 	    return KRB5KRB_AP_ERR_TKT_EXPIRED;
 	}
 
-	if(!t.flags.transited_policy_checked) {
+	if(t.flags.transited_policy_checked) {
+	    skip_transit_check = TRUE;
+	} else if(flags & KRB5_VERIFY_AP_REQ_SKIP_TRANSITED_CHECK) {
+	    skip_transit_check = TRUE;
+	} else {
+	    skip_transit_check = krb5_config_get_bool_default(context,
+							      NULL,
+							      FALSE,
+							      "libdefaults",
+							      "acceptor_skip_transit_check",
+							       NULL);
+	}
+
+	if (!skip_transit_check) {
 	    ret = check_transited(context, ticket, &t);
 	    if(ret) {
 		free_EncTicketPart(&t);

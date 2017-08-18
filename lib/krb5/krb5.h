@@ -440,6 +440,7 @@ typedef union {
 
 #define KRB5_VERIFY_AP_REQ_IGNORE_INVALID	(1 << 0)
 #define KRB5_VERIFY_AP_REQ_IGNORE_ADDRS		(1 << 1)
+#define KRB5_VERIFY_AP_REQ_SKIP_TRANSITED_CHECK	(1 << 2)
 
 #define KRB5_GC_CACHED			(1U << 0)
 #define KRB5_GC_USER_USER		(1U << 1)

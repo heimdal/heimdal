@@ -499,6 +499,7 @@ struct krb5_rd_req_in_ctx_data {
     krb5_keytab keytab;
     krb5_keyblock *keyblock;
     krb5_boolean check_pac;
+    krb5_flags verify_ap_req_flags;
 };
 
 struct krb5_rd_req_out_ctx_data {
@@ -551,6 +552,15 @@ krb5_rd_req_in_set_keytab(krb5_context context,
 			  krb5_keytab keytab)
 {
     in->keytab = keytab;
+    return 0;
+}
+
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
+krb5_rd_req_in_set_verify_ap_req_flags(krb5_context context,
+			     krb5_rd_req_in_ctx in,
+			     krb5_flags flags)
+{
+    in->verify_ap_req_flags = flags;
     return 0;
 }
 
@@ -839,6 +849,7 @@ krb5_rd_req_ctx(krb5_context context,
     krb5_rd_req_out_ctx o = NULL;
     krb5_keytab id = NULL, keytab = NULL;
     krb5_principal service = NULL;
+    krb5_flags verify_ap_req_flags = 0;
 
     *outctx = NULL;
 
@@ -875,6 +886,9 @@ krb5_rd_req_ctx(krb5_context context,
 
     if (inctx && inctx->keytab)
 	id = inctx->keytab;
+
+    if (inctx)
+        verify_ap_req_flags = inctx->verify_ap_req_flags;
 
     if((*auth_context)->keyblock){
 	ret = krb5_copy_keyblock(context,
@@ -933,7 +947,7 @@ krb5_rd_req_ctx(krb5_context context,
 				  &ap_req,
 				  server,
 				  o->keyblock,
-				  0,
+				  verify_ap_req_flags,
 				  &o->ap_req_options,
 				  &o->ticket,
 				  KRB5_KU_AP_REQ_AUTH);
@@ -981,7 +995,7 @@ krb5_rd_req_ctx(krb5_context context,
 				      &ap_req,
 				      server,
 				      &entry.keyblock,
-				      0,
+				      verify_ap_req_flags,
 				      &o->ap_req_options,
 				      &o->ticket,
 				      KRB5_KU_AP_REQ_AUTH);

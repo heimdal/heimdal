@@ -228,13 +228,19 @@ krb5_sendto_set_hostname(krb5_context context,
 			 krb5_sendto_ctx ctx,
 			 const char *hostname)
 {
-    if (ctx->hostname == NULL)
-	free(ctx->hostname);
-    ctx->hostname = strdup(hostname);
-    if (ctx->hostname == NULL) {
+    char *newname;
+
+    /*
+     * Handle the case where hostname == ctx->hostname by copying it first, and
+     * disposing of any previous value after.
+     */
+    newname = strdup(hostname);
+    if (newname == NULL) {
 	krb5_set_error_message(context, ENOMEM, N_("malloc: out of memory", ""));
 	return ENOMEM;
     }
+    free(ctx->hostname);
+    ctx->hostname = newname;
     return 0;
 }
 

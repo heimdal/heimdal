@@ -73,3 +73,32 @@ print_time_table (FILE *f)
 {
     print_units_table (time_units, f);
 }
+
+#undef parse_time
+#undef unparse_time
+#undef unparse_time_approx
+#undef print_time_table
+
+ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
+parse_time(const char *s, const char *def_unit)
+{
+    return rk_parse_units(s, time_units, def_unit);
+}
+
+ROKEN_LIB_FUNCTION size_t ROKEN_LIB_CALL
+unparse_time(int t, char *s, size_t len)
+{
+    return rk_unparse_units(t, time_units, s, len);
+}
+
+ROKEN_LIB_FUNCTION size_t ROKEN_LIB_CALL
+unparse_time_approx(int t, char *s, size_t len)
+{
+    return rk_unparse_units_approx(t, time_units, s, len);
+}
+
+ROKEN_LIB_FUNCTION void ROKEN_LIB_CALL
+print_time_table(FILE *f)
+{
+    rk_print_units_table(time_units, f);
+}

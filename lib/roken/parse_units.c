@@ -325,3 +325,54 @@ print_flags_table (const struct units *units, FILE *f)
     for(u = units; u->name; ++u)
 	fprintf(f, "%s%s", u->name, (u+1)->name ? ", " : "\n");
 }
+
+#undef parse_units
+#undef unparse_units
+#undef unparse_units_approx
+#undef print_units_table
+#undef parse_flags
+#undef unparse_flags
+#undef print_flags_table
+
+ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
+parse_units(const char *s, const struct units *units,
+	     const char *def_unit)
+{
+    return rk_parse_units(s, units, def_unit);
+}
+
+ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
+unparse_units(int num, const struct units *units, char *s, size_t len)
+{
+    return rk_unparse_units(num, units, s, len);
+}
+
+ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
+unparse_units_approx(int num, const struct units *units, char *s, size_t len)
+{
+    return rk_unparse_units_approx(num, units, s, len);
+}
+
+ROKEN_LIB_FUNCTION void ROKEN_LIB_CALL
+print_units_table(const struct units *units, FILE *f)
+{
+    print_units_table(units, f);
+}
+
+ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
+parse_flags(const char *s, const struct units *units, int orig)
+{
+    return rk_parse_flags(s, units, orig);
+}
+
+ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
+unparse_flags(int num, const struct units *units, char *s, size_t len)
+{
+    return rk_unparse_flags(num, units, s, len);
+}
+
+ROKEN_LIB_FUNCTION void ROKEN_LIB_CALL
+print_flags_table (const struct units *units, FILE *f)
+{
+    return rk_print_flags_table (units, f);
+}

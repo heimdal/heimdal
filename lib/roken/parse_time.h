@@ -46,6 +46,11 @@
 #endif
 #endif
 
+#define parse_time rk_parse_time
+#define unparse_time rk_unparse_time
+#define unparse_time_approx rk_unparse_time_approx
+#define print_time_table rk_print_time_table
+
 ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
 parse_time (const char *s, const char *def_unit);
 

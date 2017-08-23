@@ -54,6 +54,14 @@ struct units {
     unsigned mult;
 };
 
+#define parse_units rk_parse_units
+#define unparse_units rk_unparse_units
+#define unparse_units_approx rk_unparse_units_approx
+#define print_units_table rk_print_units_table
+#define parse_flags rk_parse_flags
+#define unparse_flags rk_unparse_flags
+#define print_flags_table rk_print_flags_table
+
 ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
 parse_units (const char *s, const struct units *units,
 	     const char *def_unit);

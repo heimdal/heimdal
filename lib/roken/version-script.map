@@ -44,9 +44,9 @@ HEIMDAL_ROKEN_1.0 {
 		rk_cgetent;
 		rk_cgetstr;
 		rk_cloexec;
+		rk_cloexec_dir;
 		rk_cloexec_file;
-                rk_cloexec_dir;
-                rk_cloexec_socket;
+		rk_cloexec_socket;
 		rk_closefrom;
 		rk_copyhostent;
 		rk_dns_free_data;
@@ -89,17 +89,21 @@ HEIMDAL_ROKEN_1.0 {
 		rk_memset_s;
 		rk_mkdir;
 		rk_mkstemp;
+		rk_parse_flags
+		rk_parse_time
+		rk_parse_units;
 		rk_pid_file_delete;
 		rk_pid_file_write;
 		rk_pidfile;
 		rk_pipe_execv;
+		rk_print_flags_table
+		rk_print_time_table
+		rk_print_units_table;
 		rk_random_init;
 		rk_read_environment;
 		rk_readv;
 		rk_realloc;
 		rk_secure_getenv;
-		rk_strerror;
-		rk_strerror_r;
 		rk_setprogname;
 		rk_simple_execle;
 		rk_simple_execlp;
@@ -122,6 +126,8 @@ HEIMDAL_ROKEN_1.0 {
 		rk_socket_set_tos;
 		rk_socket_sockaddr_size;
 		rk_strcollect;
+		rk_strerror;
+		rk_strerror_r;
 		rk_strftime;
 		rk_strlcat;
 		rk_strlcpy;
@@ -143,15 +149,20 @@ HEIMDAL_ROKEN_1.0 {
 		rk_strvis;
 		rk_strvisx;
 		rk_svis;
+		rk_tdelete;
+		rk_tfind;
 		rk_timegm;
 		rk_timevaladd;
 		rk_timevalfix;
 		rk_timevalsub;
-		rk_tdelete;
-		rk_tfind;
 		rk_tsearch;
 		rk_twalk;
 		rk_undumpdata;
+		rk_unparse_flags
+		rk_unparse_time
+		rk_unparse_time_approx
+		rk_unparse_units;
+		rk_unparse_units_approx;
 		rk_unvis;
 		rk_vasnprintf;
 		rk_vasprintf;
@@ -163,8 +174,8 @@ HEIMDAL_ROKEN_1.0 {
 		rk_warnerr;
 		rk_xfree;
 		roken_concat;
-		roken_detach_prep;
 		roken_detach_finish;
+		roken_detach_prep;
 		roken_getaddrinfo_hostspec2;
 		roken_getaddrinfo_hostspec;
 		roken_gethostby_setup;

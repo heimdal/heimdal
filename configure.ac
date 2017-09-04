@@ -667,7 +667,7 @@ cat > include/newversion.h.in <<EOF
 #ifndef VERSION_HIDDEN
 #define VERSION_HIDDEN
 #endif
-VERSION_HIDDEN const char *heimdal_long_version = "@([#])\$Version: $PACKAGE_STRING by @USER@ on @HOST@ ($host) @DATE@ \$";
+VERSION_HIDDEN const char *heimdal_long_version = "@([#])\$Version: $PACKAGE_STRING \$";
 VERSION_HIDDEN const char *heimdal_version = "AC_PACKAGE_STRING";
 EOF
 
@@ -676,9 +676,6 @@ if test -f include/version.h && cmp -s include/newversion.h.in include/version.h
 	rm -f include/newversion.h.in
 else
  	echo "creating include/version.h"
- 	User=${USER-${LOGNAME}}
- 	Host=`(hostname || uname -n || echo unknown) 2>/dev/null | sed 1q`
- 	Date=`date`
 	mv -f include/newversion.h.in include/version.h.in
-	sed -e "s/@USER@/$User/" -e "s/@HOST@/$Host/" -e "s/@DATE@/$Date/" include/version.h.in > include/version.h
+	sed -e "" include/version.h.in > include/version.h
 fi

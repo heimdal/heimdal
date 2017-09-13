@@ -48,6 +48,10 @@
 #include <limits.h>
 #include <signal.h>
 
+#ifdef HAVE_UTIL_H
+#include <util.h>
+#endif
+
 #ifndef ROKEN_LIB_FUNCTION
 #ifdef _WIN32
 #  define ROKEN_LIB_CALL     __cdecl

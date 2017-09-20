@@ -931,8 +931,7 @@ tgs_parse_request(astgs_request_t r,
 		  const char *from,
 		  const struct sockaddr *from_addr,
 		  time_t **csec,
-		  int **cusec,
-		  AuthorizationData **auth_data)
+		  int **cusec)
 {
     krb5_kdc_configuration *config = r->config;
     KDC_REQ_BODY *b = &r->req.req_body;
@@ -943,16 +942,13 @@ tgs_parse_request(astgs_request_t r,
     krb5_auth_context ac = NULL;
     krb5_flags ap_req_options;
     krb5_flags verify_ap_req_flags = 0;
-    krb5_crypto crypto;
     krb5uint32 krbtgt_kvno;     /* kvno used for the PA-TGS-REQ AP-REQ Ticket */
     krb5uint32 krbtgt_kvno_try;
     int kvno_search_tries = 4;  /* number of kvnos to try when tkt_vno == 0 */
     const Keys *krbtgt_keys;/* keyset for TGT tkt_vno */
     Key *tkey;
     krb5_keyblock *subkey = NULL;
-    unsigned usage;
 
-    *auth_data = NULL;
     *csec  = NULL;
     *cusec = NULL;
 
@@ -1135,7 +1131,6 @@ next_kvno:
 	goto out;
     }
 
-    usage = KRB5_KU_TGS_REQ_AUTH_DAT_SUBKEY;
     r->rk_is_subkey = 1;
 
     ret = krb5_auth_con_getremotesubkey(r->context, ac, &subkey);
@@ -1147,7 +1142,6 @@ next_kvno:
 	goto out;
     }
     if(subkey == NULL){
-	usage = KRB5_KU_TGS_REQ_AUTH_DAT_SESSION;
 	r->rk_is_subkey = 0;
 
 	ret = krb5_auth_con_getkey(r->context, ac, &subkey);
@@ -1173,47 +1167,13 @@ next_kvno:
     if (ret)
 	goto out;
 
+    krb5_free_keyblock_contents(r->context,  &r->enc_ad_key);
     if (b->enc_authorization_data) {
-	krb5_data ad;
-
-	ret = krb5_crypto_init(r->context, &r->reply_key, 0, &crypto);
-	if (ret) {
-	    const char *msg = krb5_get_error_message(r->context, ret);
-	    krb5_auth_con_free(r->context, ac);
-	    kdc_log(r->context, config, 4, "krb5_crypto_init failed: %s", msg);
-	    krb5_free_error_message(r->context, msg);
+	ret = krb5_copy_keyblock_contents(r->context,
+					  &r->reply_key,
+					  &r->enc_ad_key);
+	if (ret)
 	    goto out;
-	}
-	ret = krb5_decrypt_EncryptedData (r->context,
-					  crypto,
-					  usage,
-					  b->enc_authorization_data,
-					  &ad);
-	krb5_crypto_destroy(r->context, crypto);
-	if(ret){
-	    krb5_auth_con_free(r->context, ac);
-	    kdc_log(r->context, config, 4,
-		    "Failed to decrypt enc-authorization-data");
-	    ret = KRB5KRB_AP_ERR_BAD_INTEGRITY; /* ? */
-	    goto out;
-	}
-	ALLOC(*auth_data);
-	if (*auth_data == NULL) {
-	    krb5_data_free(&ad);
-	    krb5_auth_con_free(r->context, ac);
-	    ret = KRB5KRB_AP_ERR_BAD_INTEGRITY; /* ? */
-	    goto out;
-	}
-	ret = decode_AuthorizationData(ad.data, ad.length, *auth_data, NULL);
-	krb5_data_free(&ad);
-	if(ret){
-	    krb5_auth_con_free(r->context, ac);
-	    free(*auth_data);
-	    *auth_data = NULL;
-	    kdc_log(r->context, config, 4, "Failed to decode authorization data");
-	    ret = KRB5KRB_AP_ERR_BAD_INTEGRITY; /* ? */
-	    goto out;
-	}
     }
 
     ret = validate_fast_ad(r, r->ticket->ticket.authorization_data);
@@ -1372,7 +1332,6 @@ _kdc_db_fetch_client(krb5_context context,
 static krb5_error_code
 tgs_build_reply(astgs_request_t priv,
 		krb5_enctype krbtgt_etype,
-		AuthorizationData **auth_data,
 		const struct sockaddr *from_addr)
 {
     krb5_context context = priv->context;
@@ -1402,6 +1361,7 @@ tgs_build_reply(astgs_request_t priv,
         krb5_principal_get_comp_string(context, priv->krbtgt->principal, 1);
     char **capath = NULL;
     size_t num_capath = 0;
+    AuthorizationData *auth_data = NULL;
 
     HDB *krbtgt_outdb;
     hdb_entry *krbtgt_out = NULL;
@@ -1933,6 +1893,60 @@ server_lookup:
     if (ret)
 	goto out;
 
+    if (b->enc_authorization_data) {
+	unsigned auth_data_usage;
+	krb5_crypto crypto;
+	krb5_data ad;
+
+	if (priv->rk_is_subkey != 0) {
+	    auth_data_usage = KRB5_KU_TGS_REQ_AUTH_DAT_SUBKEY;
+	} else {
+	    auth_data_usage = KRB5_KU_TGS_REQ_AUTH_DAT_SESSION;
+	}
+
+	ret = krb5_crypto_init(context, &priv->enc_ad_key, 0, &crypto);
+	if (ret) {
+	    const char *msg = krb5_get_error_message(context, ret);
+	    kdc_audit_addreason((kdc_request_t)priv,
+				"krb5_crypto_init() failed for "
+				"enc_authorization_data");
+	    kdc_log(context, config, 4, "krb5_crypto_init failed: %s", msg);
+	    krb5_free_error_message(context, msg);
+	    goto out;
+	}
+	ret = krb5_decrypt_EncryptedData(context,
+					 crypto,
+					 auth_data_usage,
+					 b->enc_authorization_data,
+					 &ad);
+	krb5_crypto_destroy(context, crypto);
+	if(ret){
+	    kdc_audit_addreason((kdc_request_t)priv,
+				"Failed to decrypt enc-authorization-data");
+	    kdc_log(context, config, 4,
+		    "Failed to decrypt enc-authorization-data");
+	    ret = KRB5KRB_AP_ERR_BAD_INTEGRITY; /* ? */
+	    goto out;
+	}
+	ALLOC(auth_data);
+	if (auth_data == NULL) {
+	    krb5_data_free(&ad);
+	    ret = KRB5KRB_AP_ERR_BAD_INTEGRITY; /* ? */
+	    goto out;
+	}
+	ret = decode_AuthorizationData(ad.data, ad.length, auth_data, NULL);
+	krb5_data_free(&ad);
+	if(ret){
+	    free(auth_data);
+	    auth_data = NULL;
+	    kdc_audit_addreason((kdc_request_t)priv,
+				"Failed to decode authorization data");
+	    kdc_log(context, config, 4, "Failed to decode authorization data");
+	    ret = KRB5KRB_AP_ERR_BAD_INTEGRITY; /* ? */
+	    goto out;
+	}
+    }
+
     /*
      * Check flags
      */
@@ -2044,7 +2058,7 @@ server_lookup:
 			 &tkey_sign->key,
 			 &sessionkey,
 			 kvno,
-			 *auth_data,
+			 auth_data,
                          tgt_realm,
 			 rodc_id,
 			 add_ticket_sig);
@@ -2063,6 +2077,11 @@ out:
     krb5_free_principal(context, user2user_princ);
     krb5_free_principal(context, krbtgt_out_principal);
     free(ref_realm);
+
+    if (auth_data) {
+       free_AuthorizationData(auth_data);
+       free(auth_data);
+    }
 
     free_EncTicketPart(&adtkt);
 
@@ -2084,7 +2103,6 @@ _kdc_tgs_rep(astgs_request_t r)
     const char *from = r->from;
     struct sockaddr *from_addr = r->addr;
     int datagram_reply = r->datagram_reply;
-    AuthorizationData *auth_data = NULL;
     krb5_error_code ret;
     int i = 0;
     const PA_DATA *tgs_req, *pa;
@@ -2122,8 +2140,7 @@ _kdc_tgs_rep(astgs_request_t r)
     ret = tgs_parse_request(r, tgs_req,
 			    &krbtgt_etype,
 			    from, from_addr,
-			    &csec, &cusec,
-			    &auth_data);
+			    &csec, &cusec);
     if (ret == HDB_ERR_NOT_FOUND_HERE) {
 	/* kdc_log() is called in tgs_parse_request() */
 	goto out;
@@ -2147,7 +2164,6 @@ _kdc_tgs_rep(astgs_request_t r)
 
     ret = tgs_build_reply(r,
 			  krbtgt_etype,
-			  &auth_data,
 			  from_addr);
     if (ret) {
 	kdc_log(r->context, config, 4,
@@ -2227,6 +2243,7 @@ out:
     if (r->explicit_armor_pac)
 	krb5_pac_free(r->context, r->explicit_armor_pac);
     krb5_free_keyblock_contents(r->context, &r->reply_key);
+    krb5_free_keyblock_contents(r->context, &r->enc_ad_key);
     krb5_free_keyblock_contents(r->context, &r->strengthen_key);
 
     if (r->ticket)
@@ -2242,11 +2259,6 @@ out:
     krb5_free_principal(r->context, r->server_princ);
     _kdc_free_fast_state(&r->fast);
     krb5_pac_free(r->context, r->pac);
-
-    if (auth_data) {
-	free_AuthorizationData(auth_data);
-	free(auth_data);
-    }
 
     return ret;
 }

@@ -513,6 +513,15 @@ validate_constrained_delegation(astgs_request_t r)
 	    goto out;
     }
 
+    if (b->enc_authorization_data && r->rk_is_subkey == 0) {
+	krb5_free_keyblock_contents(r->context, &r->enc_ad_key);
+	ret = krb5_copy_keyblock_contents(r->context,
+					  &evidence_tkt.key,
+					  &r->enc_ad_key);
+	if (ret)
+	    goto out;
+    }
+
     kdc_log(r->context, r->config, 4, "constrained delegation for %s "
 	    "from %s (%s) to %s", s4ucname, r->cname, s4usname, r->sname);
 

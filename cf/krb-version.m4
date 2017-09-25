@@ -15,9 +15,15 @@ if test -f include/version.h && cmp -s include/newversion.h.in include/version.h
 	rm -f include/newversion.h.in
 else
  	echo "creating include/version.h"
- 	User=${USER-${LOGNAME}}
- 	Host=`(hostname || uname -n) 2>/dev/null | sed 1q`
- 	Date=`date`
+	if [ -n "$SOURCE_DATE_EPOCH" ] ; then
+		User=reproducible
+		Host=reproducible
+		Date=`date -u -d "@$SOURCE_DATE_EPOCH" 2>/dev/null || date -u -r "$SOURCE_DATE_EPOCH" 2>/dev/null || date -u`
+	else
+		User=${USER-${LOGNAME}}
+		Host=`(hostname || uname -n) 2>/dev/null | sed 1q`
+		Date=`date`
+	fi
 	mv -f include/newversion.h.in include/version.h.in
 	sed -e "s/@USER@/$User/" -e "s/@HOST@/$Host/" -e "s/@DATE@/$Date/" include/version.h.in > include/version.h
 fi

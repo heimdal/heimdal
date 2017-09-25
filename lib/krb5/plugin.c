@@ -209,6 +209,8 @@ struct plugin2 {
     heim_dict_t names;
 };
 
+#ifdef HAVE_DLOPEN
+
 static void
 plug_dealloc(void *ptr)
 {
@@ -258,6 +260,7 @@ resolve_origin(const char *di)
 #endif /* !HAVE_DLADDR */
 }
 
+#endif /* HAVE_DLOPEN */
 
 /**
  * Load plugins (new system) for the given module @name (typically

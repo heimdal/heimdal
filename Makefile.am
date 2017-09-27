@@ -50,7 +50,6 @@ EXTRA_DIST = \
 	cf/krb-prog-yacc.m4 \
 	cf/krb-sys-aix.m4 \
 	cf/krb-sys-nextstep.m4 \
-	cf/krb-version.m4 \
 	cf/roken.m4 \
 	cf/valgrind-suppressions \
 	cf/maybe-valgrind.sh \

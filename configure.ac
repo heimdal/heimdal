@@ -663,22 +663,63 @@ dnl
 dnl This is the release version name-number[beta]
 dnl
 
-cat > include/newversion.h.in <<EOF
+if test -d "$srcdir/.git"; then
+    cat > include/newversion.h.in <<EOF
+#ifndef VERSION_HIDDEN
+#define VERSION_HIDDEN
+#endif
+VERSION_HIDDEN const char *heimdal_long_version = "@([#])\$Version: $PACKAGE_STRING by @USER@ on @HOST@ @BRANCH@ @TAG@ ($host) @COMMIT@ @DATE@ \$";
+VERSION_HIDDEN const char *heimdal_version = "AC_PACKAGE_STRING";
+EOF
+else
+    cat > include/newversion.h.in <<EOF
 #ifndef VERSION_HIDDEN
 #define VERSION_HIDDEN
 #endif
 VERSION_HIDDEN const char *heimdal_long_version = "@([#])\$Version: $PACKAGE_STRING by @USER@ on @HOST@ ($host) @DATE@ \$";
 VERSION_HIDDEN const char *heimdal_version = "AC_PACKAGE_STRING";
 EOF
+fi
 
 if test -f include/version.h && cmp -s include/newversion.h.in include/version.h.in; then
 	echo "include/version.h is unchanged"
 	rm -f include/newversion.h.in
 else
  	echo "creating include/version.h"
- 	User=${USER-${LOGNAME}}
- 	Host=`(hostname || uname -n || echo unknown) 2>/dev/null | sed 1q`
- 	Date=`date`
+        if test -n "$SOURCE_DATE_EPOCH"; then
+            Date=`date -u -d "@$SOURCE_DATE_EPOCH" "+%Y-%m-%dT%H:%M:%SZ"`
+        else
+            Date=`date -u "+%Y-%m-%dT%H:%M:%SZ"`
+        fi
+        if test -n "$SOURCE_HOST"; then
+            Host=$SOURCE_HOST
+        else
+            Host=`uname -n`
+        fi
+        if test -n "$SOURCE_USER"; then
+            User=$SOURCE_USER
+        else
+            User=${USER:-${LOGNAME:-`id -nu`}}
+        fi
+        if test -d "$srcdir/.git"; then
+            GitCommit=`git rev-parse HEAD`
+            GitBranch=`git rev-parse --abbrev-ref HEAD`
+            if test "x$GitBranch" = master; then
+                GitDesc=`git describe --all --dirty`
+            else
+                GitDesc=`git describe --tags --match 'heimdal-*' --dirty`
+            fi
+        else
+            GitCommit='<commit-unknown>'
+            GitBranch='<branch-unknown>'
+            GitDesc='<tag-unknown>'
+        fi
 	mv -f include/newversion.h.in include/version.h.in
-	sed -e "s/@USER@/$User/" -e "s/@HOST@/$Host/" -e "s/@DATE@/$Date/" include/version.h.in > include/version.h
+	sed -e "s/@HOST@/$Host/" \
+            -e "s;@USER@;$User;" \
+            -e "s;@DATE@;$Date;" \
+            -e "s;@BRANCH@;$GitBranch;" \
+            -e "s;@TAG@;$GitDesc;" \
+            -e "s;@COMMIT@;$GitCommit;" \
+            include/version.h.in > include/version.h
 fi

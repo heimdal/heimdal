@@ -687,7 +687,14 @@ if test -f include/version.h && cmp -s include/newversion.h.in include/version.h
 else
  	echo "creating include/version.h"
         if test -n "$SOURCE_DATE_EPOCH"; then
-            Date=`date -u -d "@$SOURCE_DATE_EPOCH" "+%Y-%m-%dT%H:%M:%SZ"`
+            Date=`
+                  # BSD, OS X
+                  date -u -r "$SOURCE_DATE_EPOCH" "+%Y-%m-%dT%H:%M:%SZ" 2>/dev/null ||
+                  # Linux
+                  date -u -d "@${SOURCE_DATE_EPOCH}" 2>/dev/null ||
+                  # Illumos -- sorry, no -r/-d here
+                  date -u ||
+                  date`
         else
             Date=`date -u "+%Y-%m-%dT%H:%M:%SZ"`
         fi

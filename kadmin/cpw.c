@@ -101,7 +101,7 @@ set_password (krb5_principal principal, char *password, int keepold)
 	ret = UI_UTIL_read_pw_string(pwbuf, sizeof(pwbuf), prompt, 1);
 	free (prompt);
 	if(ret){
-	    return 0; /* XXX error code? */
+            return KRB5_LIBOS_BADPWDMATCH;
 	}
 	password = pwbuf;
     }

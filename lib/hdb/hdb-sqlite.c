@@ -418,6 +418,10 @@ hdb_sqlite_make_database(krb5_context context, HDB *db, const char *filename)
 
         created_file = 1;
 
+        hdb_sqlite_exec_stmt(context, hsdb,
+                             "PRAGMA main.page_size = 8192",
+                             HDB_ERR_UK_SERROR);
+
         ret = hdb_sqlite_exec_stmt(context, hsdb,
                                    HDBSQLITE_CREATE_TABLES,
                                    HDB_ERR_UK_SERROR);

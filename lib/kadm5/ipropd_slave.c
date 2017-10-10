@@ -512,6 +512,8 @@ receive_everything(krb5_context context, int fd,
     if (ret)
         krb5_err(context, IPROPD_RESTART, ret, "db->open");
 
+    (void) mydb->hdb_set_sync(context, mydb, 0);
+
     sp = NULL;
     krb5_data_zero(&data);
     do {
@@ -563,6 +565,9 @@ receive_everything(krb5_context context, int fd,
 
     reinit_log(context, server_context, vno);
 
+    ret = mydb->hdb_set_sync(context, mydb, 1);
+    if (ret)
+        krb5_err(context, IPROPD_RESTART_SLOW, ret, "failed to sync the received HDB");
     ret = mydb->hdb_close(context, mydb);
     if (ret)
         krb5_err(context, IPROPD_RESTART_SLOW, ret, "db->close");

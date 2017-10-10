@@ -404,6 +404,7 @@ doit(const char *filename, int mergep)
 	fclose(f);
 	return 1;
     }
+    (void) db->hdb_set_sync(context, db, 0);
     line = 0;
     ret = 0;
     while(fgets(s, sizeof(s), f) != NULL) {
@@ -547,8 +548,11 @@ doit(const char *filename, int mergep)
 	    break;
 	}
     }
+    ret = db->hdb_set_sync(context, db, 1);
+    if (ret)
+        krb5_err(context, 1, ret, "failed to sync the HDB");
     (void) kadm5_log_end(kadm_handle);
-    db->hdb_close(context, db);
+    ret = db->hdb_close(context, db);
     fclose(f);
     return ret != 0;
 }

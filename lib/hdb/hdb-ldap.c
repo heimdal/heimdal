@@ -1887,6 +1887,13 @@ LDAP_destroy(krb5_context context, HDB * db)
 }
 
 static krb5_error_code
+LDAP_set_sync(krb5_context context, HDB * db, int on)
+{
+    (void)on;
+    return 0;
+}
+
+static krb5_error_code
 hdb_ldap_common(krb5_context context,
 		HDB ** db,
 		const char *search_base,
@@ -2020,6 +2027,7 @@ hdb_ldap_common(krb5_context context,
     (*db)->hdb__put = NULL;
     (*db)->hdb__del = NULL;
     (*db)->hdb_destroy = LDAP_destroy;
+    (*db)->hdb_set_sync = LDAP_set_sync;
 
     return 0;
 }

@@ -97,37 +97,43 @@ nexttoken(char **p)
 
 #include <kadm5/admin.h>
 
-/* XXX This is broken: what if the princ name has a \n?! */
+/* XXX: Principal names with '\n' cannot be dumped or loaded */
 static int
-my_fgetln(FILE *f, char **buf, size_t *sz, size_t *len)
+my_fgetln(FILE *f, char **bufp, size_t *szp, size_t *lenp)
 {
+    size_t len;
+    size_t sz = *szp;
+    char *buf = *bufp;
     char *p, *n;
 
-    if (!*buf) {
-        *buf = malloc(*sz ? *sz : 2048);
-        if (!*buf)
+    if (!buf) {
+        buf = malloc(sz ? sz : 8192);
+        if (!buf)
             return ENOMEM;
-        if (!*sz)
-            *sz = 2048;
+        if (!sz)
+            sz = 8192;
     }
-    *len = 0;
-    while ((p = fgets(&(*buf)[*len], *sz - *len, f))) {
-        *len = strlen(*buf);
+
+    len = 0;
+    while ((p = fgets(&buf[len], sz-len, f)) != NULL) {
+        len += strlen(&buf[len]);
+        if (buf[len-1] == '\n')
+            break;
         if (feof(f))
-            return 0;
-        if (strchr(*buf, '\n'))
-            return 0;
-        n = realloc(*buf, *sz + (*sz >> 1));
-        if (!n) {
-            free(*buf);
-            *buf = NULL;
-            *sz = 0;
-            *len = 0;
+            break;
+        if (sz > SIZE_MAX/2 ||
+            (n = realloc(buf, sz += 1 + (sz >> 1))) == NULL) {
+            free(buf);
+            *bufp = NULL;
+            *szp = 0;
+            *lenp = 0;
             return ENOMEM;
         }
-        *buf = n;
-        *sz += *sz >> 1;
+        buf = n;
     }
+    *bufp = buf;
+    *szp = sz;
+    *lenp = len;
     return 0; /* *len == 0 || no EOL -> EOF */
 }
 
@@ -155,11 +161,11 @@ mit_prop_dump(void *arg, const char *file)
     if (!sp)
         goto out;
     while ((ret = my_fgetln(f, &line, &line_bufsz, &line_len)) == 0 &&
-           !feof(f)) {
+           line_len > 0) {
         char *p = line;
         char *q;
-        lineno++;
 
+        lineno++;
 	if(strncmp(line, "kdb5_util", strlen("kdb5_util")) == 0) {
 	    int major;
             q = nexttoken(&p);

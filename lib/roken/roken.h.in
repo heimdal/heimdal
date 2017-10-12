@@ -1010,6 +1010,15 @@ roken_getaddrinfo_hostspec(const char *, int, struct addrinfo **);
 ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
 roken_getaddrinfo_hostspec2(const char *, int, int, struct addrinfo **);
 
+ROKEN_LIB_FUNCTION char * ROKEN_LIB_CALL
+roken_get_homedir(char *, size_t);
+ROKEN_LIB_FUNCTION char * ROKEN_LIB_CALL
+roken_get_appdatadir(char *, size_t);
+ROKEN_LIB_FUNCTION char * ROKEN_LIB_CALL
+roken_get_username(char *, size_t);
+ROKEN_LIB_FUNCTION char * ROKEN_LIB_CALL
+roken_get_shell(char *, size_t);
+
 #ifndef HAVE_STRFTIME
 #define strftime rk_strftime
 ROKEN_LIB_FUNCTION size_t ROKEN_LIB_CALL

@@ -99,6 +99,7 @@ main(int argc, char **argv)
 {
     int f;
     char tf[1024];
+    char shellbuf[MAX_PATH];
     char *p;
 
     char *path;
@@ -166,13 +167,10 @@ main(int argc, char **argv)
 	      (unsigned long)((argc + 10)*sizeof(char *)));
 
     if(*argv == NULL) {
-	path = getenv("SHELL");
-	if(path == NULL){
-	    struct passwd *pw = k_getpwuid(geteuid());
-	    if (pw == NULL)
-		errx(1, "no such user: %d", (int)geteuid());
-	    path = strdup(pw->pw_shell);
-	}
+        if (roken_get_shell(shellbuf, sizeof(shellbuf)) != NULL)
+            path = strdup(shellbuf);
+        else
+            path = strdup("/bin/sh");
     } else {
 	path = strdup(*argv++);
     }

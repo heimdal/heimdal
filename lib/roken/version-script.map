@@ -179,6 +179,10 @@ HEIMDAL_ROKEN_1.0 {
 		roken_gethostby_setup;
 		roken_gethostbyaddr;
 		roken_gethostbyname;
+		roken_get_appdatadir;
+		roken_get_homedir;
+		roken_get_shell;
+		roken_get_username;
 		roken_mconcat;
 		roken_vconcat;
 		roken_vmconcat;

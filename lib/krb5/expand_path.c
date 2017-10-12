@@ -311,17 +311,17 @@ _expand_euid(krb5_context context, PTYPE param, const char *postfix, char **str)
 static krb5_error_code
 _expand_username(krb5_context context, PTYPE param, const char *postfix, char **str)
 {
-    uid_t uid = geteuid();
-    struct passwd *pwd, pw;
-    char pwbuf[2048];
+    char user[128];
+    const char *username = roken_get_username(user, sizeof(user));
 
-    if (rk_getpwuid_r(uid, &pw, pwbuf, sizeof(pwbuf), &pwd) != 0) {
-	krb5_set_error_message(context, ENOENT,
-			       "Could not find username for UID '%ld'", (long)uid);
-	return ENOENT;
+    if (username == NULL) {
+	krb5_set_error_message(context, ENOTTY,
+			       N_("unable to figure out current principal",
+			       ""));
+	return ENOTTY; /* XXX */
     }
 
-    *str = strdup(pwd->pw_name);
+    *str = strdup(username);
     if (*str == NULL)
 	return krb5_enomem(context);
 

@@ -273,7 +273,7 @@ struct sockaddr_dl;
 #include <dirent.h>
 #endif
 
-#ifdef HAVE_DIRECT_H
+#ifdef WIN32
 #include <direct.h>
 #endif
 
@@ -704,7 +704,7 @@ ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL rk_rename(const char *, const char *);
 #define rk_rename(__rk_rn_from,__rk_rn_to) rename(__rk_rn_from,__rk_rn_to)
 #endif
 
-#ifdef MKDIR_DOES_NOT_HAVE_MODE
+#ifdef WIN32
 #define mkdir rk_mkdir
 #else
 #define rk_mkdir(__rk_rn_name, __rk_rn_mode) mkdir(__rk_rn_name,__rk_rn_mode)

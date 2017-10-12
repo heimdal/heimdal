@@ -569,6 +569,7 @@ krb5_config_parse_file_multi (krb5_context context,
     if (ISTILDE(fname[0]) && ISPATHSEP(fname[1])) {
 #ifndef KRB5_USE_PATH_TOKENS
 	const char *home = NULL;
+        char homebuf[MAX_PATH];
 
 	if (!_krb5_homedir_access(context)) {
             context->config_include_depth--;
@@ -577,12 +578,7 @@ krb5_config_parse_file_multi (krb5_context context,
 	    return EPERM;
 	}
 
-        home = secure_getenv("HOME");
-	if (home == NULL) {
-	    struct passwd *pw = getpwuid(getuid());
-	    if(pw != NULL)
-		home = pw->pw_dir;
-	}
+        home = roken_get_appdatadir(homebuf, sizeof(homebuf));
 	if (home) {
 	    int aret;
 

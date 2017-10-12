@@ -84,7 +84,7 @@ $(OBJ)\kadmin-commands.c $(OBJ)\kadmin-commands.h: kadmin-commands.in
 	cd $(SRCDIR)
 
 $(SBINDIR)\kadmin.exe: $(KADMIN_OBJS) $(KADMIN_LIBS)
-	$(EXECONLINK)
+	$(EXECONLINK) Secur32.lib Shell32.lib
 	$(EXEPREP)
 
 KADMIND_OBJS=		    \
@@ -100,7 +100,7 @@ KADMIND_LIBS=\
 	$(COMMON_LIBS)
 
 $(LIBEXECDIR)\kadmind.exe: $(KADMIND_OBJS) $(KADMIND_LIBS)
-	$(EXECONLINK)
+	$(EXECONLINK) Secur32.lib Shell32.lib
 	$(EXEPREP)
 
 all:: $(INCFILES) $(SBIN_PROGRAMS) $(LIBEXEC_PROGRAMS)
@@ -115,13 +115,13 @@ clean::
 NOINST_PROGRAMS=$(OBJ)\add_random_users.exe
 
 $(OBJ)\add_random_users.exe: $(OBJ)\add_random_users.obj $(LIBKADM5SRV) $(LIBKADM5CLNT) $(COMMON_LIBS)
-	$(EXECONLINK)
+	$(EXECONLINK) Secur32.lib Shell32.lib
 	$(EXEPREP_NODIST)
 
 TEST_BINARIES=$(OBJ)\test_util.exe
 
 $(OBJ)\test_util.exe: $(OBJ)\test_util.obj $(OBJ)\util.obj $(KADMIN_LIBS)
-	$(EXECONLINK)
+	$(EXECONLINK) Secur32.lib Shell32.lib
 	$(EXEPREP_NODIST)
 
 test-binaries: $(TEST_BINARIES)

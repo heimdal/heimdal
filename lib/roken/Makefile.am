@@ -31,6 +31,7 @@ check_PROGRAMS = 				\
 		getxxyyy-test			\
 		hex-test			\
 		test-auxval			\
+		test-getuserinfo		\
 		test-readenv			\
 		resolve-test			\
 		parse_bytes-test		\
@@ -54,6 +55,8 @@ parse_reply_test_CFLAGS  = -DTEST_RESOLVE
 
 test_readenv_SOURCES = test-readenv.c test-mem.c
 test_auxval_SOURCES = test-auxval.c
+test_getuserinfo_SOURCES = test-getuserinfo.c
+test_getuserinfo_LDADD = libtest.la $(LDADD)
 
 test_detach_SOURCES = test-detach.c
 
@@ -99,6 +102,7 @@ libroken_la_SOURCES =		\
 	getauxval.h		\
 	getnameinfo_verified.c	\
 	getprogname.c		\
+	getuserinfo.c		\
 	getxxyyy.c		\
 	h_errno.c		\
 	hex.c			\

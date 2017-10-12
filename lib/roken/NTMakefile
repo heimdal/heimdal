@@ -67,6 +67,7 @@ libroken_la_OBJS =			\
 	$(OBJ)\getopt.obj		\
 	$(OBJ)\getprogname.obj		\
 	$(OBJ)\gettimeofday.obj		\
+	$(OBJ)\getuserinfo.obj		\
 	$(OBJ)\hex.obj			\
 	$(OBJ)\hostent_find_fqdn.obj	\
 	$(OBJ)\inet_aton.obj		\
@@ -184,7 +185,7 @@ all:: $(INCFILES) $(LIBROKEN)
 clean::
 	-$(RM) $(LIBROKEN)
 
-TMP_PROGS = $(OBJ)\snprintf-test.exe $(OBJ)\resolve-test.exe
+TMP_PROGS = $(OBJ)\snprintf-test.exe $(OBJ)\resolve-test.exe $(OBJ)\test-getuserinfo.exe
 
 # Tests
 
@@ -194,6 +195,7 @@ TEST_PROGS =			    \
 	$(OBJ)\getifaddrs-test.exe  \
 	$(OBJ)\hex-test.exe	    \
 	$(OBJ)\test-detach.exe	    \
+	$(OBJ)\test-getuserinfo.exe \
 	$(OBJ)\test-readenv.exe	    \
 	$(OBJ)\parse_bytes-test.exe \
 	$(OBJ)\parse_reply-test.exe \
@@ -259,6 +261,9 @@ $(OBJ)\parse_bytes-test.exe: $(OBJ)\parse_bytes-test.obj $(LIBROKEN)
 
 $(OBJ)\test-detach.exe: $(OBJ)\test-detach.obj $(OBJ)\detach.obj $(LIBROKEN)
 	$(EXECONLINK)
+
+$(OBJ)\test-getuserinfo.exe: $(OBJ)\test-getuserinfo.obj $(OBJ)\getuserinfo.obj $(LIBROKEN)
+	$(EXECONLINK) Secur32.lib Shell32.lib
 
 $(OBJ)\dirent-test.exe: $(OBJ)\dirent-test.obj $(LIBROKEN)
 	$(EXECONLINK)

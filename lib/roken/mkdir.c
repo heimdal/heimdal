@@ -33,24 +33,21 @@
 
 #include <config.h>
 
-#ifdef HAVE_DIRECT_H
+#ifdef WIN32
 #include <direct.h>
 #endif
 
 #include "roken.h"
-#ifdef MKDIR_DOES_NOT_HAVE_MODE
- #undef mkdir
-#else
+#ifndef WIN32
  #undef rk_mkdir
 #endif
 
 int ROKEN_LIB_FUNCTION
 rk_mkdir(const char *pathname, mode_t mode)
 {
-#ifndef MKDIR_DOES_NOT_HAVE_MODE
-    return mkdir(pathname, mode);
-#else
-    /* Windows does not provide the ability to set access permissions */
+#ifdef WIN32
     return _mkdir(pathname);
+#else
+    return mkdir(pathname, mode);
 #endif
 }

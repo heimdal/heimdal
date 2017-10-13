@@ -166,6 +166,10 @@
 #endif
 #endif
 
+#ifndef MAX_PATH
+#define MAX_PATH PATH_MAX
+#endif
+
 #ifndef RETSIGTYPE
 #define RETSIGTYPE void
 #endif

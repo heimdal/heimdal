@@ -203,7 +203,6 @@ HEIMDAL_ROKEN_1.0 {
 		signal;
 		simple_execl;
 		tm2time;
-		unix_verify_user;
 		unparse_bytes;
 		unparse_bytes_short;
 		unparse_flags;

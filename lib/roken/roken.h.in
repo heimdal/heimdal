@@ -810,8 +810,6 @@ int rk_flock(int fd, int operation);
 
 ROKEN_LIB_FUNCTION time_t ROKEN_LIB_CALL tm2time (struct tm, int);
 
-ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL unix_verify_user(char *, char *);
-
 ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL roken_concat (char *, size_t, ...);
 
 ROKEN_LIB_FUNCTION size_t ROKEN_LIB_CALL roken_mconcat (char **, size_t, ...);

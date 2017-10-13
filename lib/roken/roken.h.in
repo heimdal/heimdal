@@ -738,12 +738,6 @@ ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL innetgr(const char*, const char*,
     const char*, const char*);
 #endif
 
-#ifndef HAVE_IRUSEROK
-#define iruserok rk_iruserok
-ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL iruserok(unsigned, int,
-    const char *, const char *);
-#endif
-
 #if !defined(HAVE_GETHOSTNAME) || defined(NEED_GETHOSTNAME_PROTO)
 #ifndef HAVE_GETHOSTNAME
 #define gethostname rk_gethostname

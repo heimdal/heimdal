@@ -59,7 +59,6 @@ libroken_la_OBJS =			\
 	$(OBJ)\ftello.obj		\
 	$(OBJ)\getauxval.obj		\
 	$(OBJ)\getaddrinfo_hostspec.obj	\
-	$(OBJ)\get_default_username.obj	\
 	$(OBJ)\get_window_size.obj	\
 	$(OBJ)\getarg.obj		\
 	$(OBJ)\getifaddrs_w32.obj	\

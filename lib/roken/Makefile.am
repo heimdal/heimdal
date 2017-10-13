@@ -95,7 +95,6 @@ libroken_la_SOURCES =		\
 	fseeko.c		\
 	ftello.c		\
 	getaddrinfo_hostspec.c	\
-	get_default_username.c	\
 	get_window_size.c	\
 	getarg.c		\
 	getauxval.c		\

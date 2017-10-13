@@ -322,6 +322,7 @@ doit (const char *hostname, int port, const char *svc,
 int
 main(int argc, char **argv)
 {
+    char userbuf[128];
     int argcc,port,i;
     int ret=0;
 
@@ -329,7 +330,7 @@ main(int argc, char **argv)
     port = client_setup(&context, &argcc, argv);
 
     if (remote_name == NULL) {
-	remote_name = get_default_username ();
+	remote_name = roken_get_username(userbuf, sizeof(userbuf));
 	if (remote_name == NULL)
 	    errx (1, "who are you?");
     }

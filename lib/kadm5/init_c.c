@@ -368,10 +368,10 @@ _kadm5_c_get_cred_cache(krb5_context context,
 	     * No client was specified by the caller and we cannot
 	     * determine the client from a credentials cache.
 	     */
+            char userbuf[128];
 	    const char *user;
 
-	    user = get_default_username ();
-
+	    user = roken_get_username(userbuf, sizeof(userbuf));
 	    if(user == NULL) {
 		krb5_set_error_message(context, KADM5_FAILURE, "Unable to find local user name");
 		return KADM5_FAILURE;

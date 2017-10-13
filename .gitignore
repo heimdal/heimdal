@@ -98,7 +98,6 @@ asn1_*.[cx]
 /appl/kf/kfd
 /appl/otp/otp
 /appl/otp/otpprint
-/appl/su/su
 /appl/test/gssapi_client
 /appl/test/gssapi_server
 /appl/test/http_client

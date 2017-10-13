@@ -427,6 +427,9 @@ static const char *const rcsid[] = { (const char *)rcsid, "@(#)" msg }
 /* Define to 1 if you have the `getlogin' function. */
 /* #define HAVE_GETLOGIN 1 */
 
+/* Define to 1 if you have the `getlogin_r' function. */
+/* #define HAVE_GETLOGIN_R 1 */
+
 /* Define if you have a working getmsg. */
 /* #undef HAVE_GETMSG */
 
@@ -1356,6 +1359,9 @@ static const char *const rcsid[] = { (const char *)rcsid, "@(#)" msg }
 
 /* Define if getlogin has POSIX flavour (and not BSD). */
 /* #define POSIX_GETLOGIN 1 */
+
+/* Define if getlogin_r has POSIX flavour (and not BSD). */
+/* #define POSIX_GETLOGIN_R 1 */
 
 /* Define if getpwnam_r has POSIX flavour. */
 /* #define POSIX_GETPWNAM_R 1 */

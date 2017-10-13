@@ -182,13 +182,6 @@ rk_RESOLV
 AC_BROKEN_SNPRINTF
 AC_BROKEN_VSNPRINTF
 
-AC_BROKEN_GLOB
-if test "$ac_cv_func_glob_working" != yes; then
-	AC_LIBOBJ(glob)
-fi
-AM_CONDITIONAL(have_glob_h, test "$ac_cv_func_glob_working" = yes)
-
-
 AC_CHECK_FUNCS([				\
 	asnprintf				\
 	asprintf				\

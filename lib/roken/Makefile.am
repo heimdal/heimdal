@@ -142,7 +142,6 @@ libroken_la_SOURCES =		\
 
 EXTRA_libroken_la_SOURCES =	\
 	err.hin			\
-	glob.hin		\
 	fnmatch.hin		\
 	ifaddrs.hin		\
 	search.hin		\
@@ -166,12 +165,6 @@ else
 fnmatch_h = fnmatch.h
 endif
 
-if have_glob_h
-glob_h =
-else
-glob_h = glob.h
-endif
-
 if have_ifaddrs_h
 ifaddrs_h =
 else
@@ -191,8 +184,8 @@ vis_h = vis.h
 endif
 
 ## these are controlled by configure
-XHEADERS = $(err_h) $(fnmatch_h) $(glob_h) $(ifaddrs_h) $(search_h) $(vis_h)
-CLEANFILES += err.h fnmatch.h glob.h ifaddrs.h search.h vis.h
+XHEADERS = $(err_h) $(fnmatch_h) $(ifaddrs_h) $(search_h) $(vis_h)
+CLEANFILES += err.h fnmatch.h ifaddrs.h search.h vis.h
 
 dist_include_HEADERS = 				\
 	base64.h				\

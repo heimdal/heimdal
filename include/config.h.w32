@@ -472,10 +472,6 @@ static const char *const rcsid[] = { (const char *)rcsid, "@(#)" msg }
 /* Define if you have the function `getusershell'. */
 /* #define HAVE_GETUSERSHELL 1 */
 
-/* define if you have a glob() that groks GLOB_BRACE, GLOB_NOCHECK,
-   GLOB_QUOTE, GLOB_TILDE, and GLOB_LIMIT */
-/* #define HAVE_GLOB 1 */
-
 /* Define to 1 if you have the `grantpt' function. */
 /* #define HAVE_GRANTPT 1 */
 

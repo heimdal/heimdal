@@ -664,7 +664,6 @@ AC_CONFIG_FILES(Makefile 		\
 	appl/dbutils/Makefile		\
 	appl/gssmask/Makefile		\
 	appl/otp/Makefile		\
-	appl/su/Makefile		\
 	appl/test/Makefile		\
 	appl/kf/Makefile		\
 	appl/dceutils/Makefile		\

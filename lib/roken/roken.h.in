@@ -643,8 +643,6 @@ ROKEN_LIB_FUNCTION char* ROKEN_LIB_CALL getcwd(char *, size_t);
 
 #ifdef HAVE_PWD_H
 #include <pwd.h>
-ROKEN_LIB_FUNCTION struct passwd * ROKEN_LIB_CALL k_getpwnam (const char *);
-ROKEN_LIB_FUNCTION struct passwd * ROKEN_LIB_CALL k_getpwuid (uid_t);
 
 #ifdef POSIX_GETPWNAM_R
 #define rk_getpwnam_r(_n, _pw, _b, _sz, _pwd) getpwnam_r(_n, _pw, _b, _sz, _pwd)

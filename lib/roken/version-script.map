@@ -21,8 +21,6 @@ HEIMDAL_ROKEN_1.0 {
 		hex_decode;
 		hex_encode;
 		issuid;
-		k_getpwnam;
-		k_getpwuid;
 		mini_inetd;
 		mini_inetd_addrinfo;
 		net_read;

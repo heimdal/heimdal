@@ -158,7 +158,6 @@ INCFILES = 			\
 	$(INCDIR)\err.h		\
 	$(INCDIR)\fnmatch.h	\
 	$(INCDIR)\getarg.h	\
-	$(INCDIR)\glob.h	\
 	$(INCDIR)\hex.h		\
 	$(INCDIR)\ifaddrs.h	\
 	$(INCDIR)\parse_bytes.h	\

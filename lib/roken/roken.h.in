@@ -652,8 +652,6 @@ rk_getpwnam_r(const char *, struct passwd *, char *, size_t, struct passwd **);
 #endif
 #endif
 
-ROKEN_LIB_FUNCTION const char * ROKEN_LIB_CALL get_default_username (void);
-
 #ifndef HAVE_SETEUID
 #define seteuid rk_seteuid
 ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL seteuid(uid_t);

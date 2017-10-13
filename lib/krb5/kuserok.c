@@ -144,7 +144,7 @@ check_owner_dir(krb5_context context,
 
     heim_assert(owner != NULL, "no directory owner ?");
 
-    if (rk_getpwnam_r(owner, &pw, pwbuf, sizeof(pwbuf), &pwd) != 0) {
+    if (getpwnam_r(owner, &pw, pwbuf, sizeof(pwbuf), &pwd) != 0) {
 	krb5_set_error_message(context, errno,
 			       "User unknown %s (getpwnam_r())", owner);
 	return EACCES;
@@ -219,7 +219,7 @@ check_owner_file(krb5_context context,
     if (owner == NULL)
 	return 0;
 
-    if (rk_getpwnam_r(owner, &pw, pwbuf, sizeof(pwbuf), &pwd) != 0) {
+    if (getpwnam_r(owner, &pw, pwbuf, sizeof(pwbuf), &pwd) != 0) {
 	krb5_set_error_message(context, errno,
 			       "User unknown %s (getpwnam_r())", owner);
 	return EACCES;

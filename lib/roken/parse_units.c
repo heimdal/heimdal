@@ -356,7 +356,7 @@ unparse_units_approx(int num, const struct units *units, char *s, size_t len)
 ROKEN_LIB_FUNCTION void ROKEN_LIB_CALL
 print_units_table(const struct units *units, FILE *f)
 {
-    print_units_table(units, f);
+    rk_print_units_table(units, f);
 }
 
 ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL

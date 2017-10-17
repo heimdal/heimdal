@@ -1025,44 +1025,49 @@ reap_kid(krb5_context context, krb5_kdc_configuration *config,
     char *what;
     int status;
     int i = 0; /* quiet warnings */
+    int ret = 0;
+    int level = 0;
+    const char *sev = "";
 
     pid = waitpid(-1, &status, options);
-    if (pid < 1)
+    if (pid <= 0)
 	return 0;
 
-    if (pid != bonjour_pid) {
+    if (pid == bonjour_pid) {
+        bonjour_pid = (pid_t)-1;
+        what = "bonjour";
+    } else {
         for (i=0; i < max_kids; i++) {
-            if (pids[i] == pid)
+            if (pids[i] == pid) {
+                pids[i] = (pid_t)-1;
+                what = "worker";
+                ret = 1;
                 break;
+            }
         }
 
         if (i == max_kids) {
-            /* XXXrcd: this should not happen, have to do something, though */
-            return 0;
+            /* should not happen */
+            what = "untracked";
+            sev = "warning: ";
+            level = 1;
         }
     }
 
-    if (pid == bonjour_pid)
-        what = "bonjour";
-    else
-        what = "worker";
     if (WIFEXITED(status))
-        kdc_log(context, config, 0, "KDC reaped %s process: %d, exit status: %d",
-                what, (int)pid, WEXITSTATUS(status));
+        kdc_log(context, config, level,
+                "%sKDC reaped %s process: %d, exit status: %d",
+                sev, what, (int)pid, WEXITSTATUS(status));
     else if (WIFSIGNALED(status))
-        kdc_log(context, config, 0, "KDC reaped %s process: %d, term signal %d%s",
-                what, (int)pid, WTERMSIG(status),
+        kdc_log(context, config, level,
+                "%sKDC reaped %s process: %d, term signal %d%s",
+                sev, what, (int)pid, WTERMSIG(status),
                 WCOREDUMP(status) ? " (core dumped)" : "");
     else
-        kdc_log(context, config, 0, "KDC reaped %s process: %d",
-                what, (int)pid);
-    if (pid == bonjour_pid) {
-        bonjour_pid = (pid_t)-1;
-        return 0;
-    } else {
-        pids[i] = (pid_t)-1;
-        return 1;
-    }
+        kdc_log(context, config, level, "%sKDC reaped %s process: %d",
+                sev, what, (int)pid);
+
+    return ret;
 }
 
 static int
@@ -1122,11 +1127,9 @@ start_kdc(krb5_context context,
     if (max_kdcs < 1)
 	max_kdcs = 1;
 
-    pids = malloc(max_kdcs * sizeof(*pids));
-    if (!pids)
+    pids = calloc(max_kdcs, sizeof(*pids));
+    if (pids == NULL)
 	krb5_err(context, 1, errno, "malloc");
-    for (i = 0; i < max_kdcs; i++)
-	pids[i] = (pid_t)-1;
 
     /*
      * We open a socketpair of which we hand one end to each of our kids.
@@ -1157,25 +1160,10 @@ start_kdc(krb5_context context,
 
     roken_detach_finish(NULL, daemon_child);
 
-    tv1.tv_sec  = 0;
-    tv1.tv_usec = 0;
-
 #ifdef HAVE_FORK
     if (!testing_flag) {
         /* Note that we might never execute the body of this loop */
         while (exit_flag == 0) {
-
-            /* Slow down the creation of KDCs... */
-
-            gettimeofday(&tv2, NULL);
-            if (tv1.tv_sec == tv2.tv_sec && tv2.tv_usec - tv1.tv_usec < 25000) {
-#if 0	/* XXXrcd: should print a message... */
-                kdc_log(context, config, 0, "Spawning KDCs too quickly, "
-                    "pausing for 50ms");
-#endif
-                select_sleep(12500);
-                continue;
-            }
 
             if (num_kdcs >= max_kdcs) {
                 num_kdcs -= reap_kid(context, config, pids, max_kdcs, 0);
@@ -1199,15 +1187,22 @@ start_kdc(krb5_context context,
                 break;
             default:
 		for (i = 0; i < max_kdcs; i++) {
-		    if (pids[i] == (pid_t)-1) {
+		    if (pids[i] <= 0) {
 			pids[i] = pid;
 			break;
 		    }
 		}
+                if (i >= max_kdcs) {
+                    /* This should not happen */
+                    kdc_log(context, config, 1,
+                            "warning: forked untracked child process: %d",
+                            (int)pid);
+                }
                 kdc_log(context, config, 0, "KDC worker process started: %d",
                         pid);
                 num_kdcs++;
-                gettimeofday(&tv1, NULL);
+                /* Slow down the creation of KDCs... */
+                select_sleep(12500);
                 break;
             }
         }

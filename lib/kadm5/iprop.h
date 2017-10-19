@@ -62,7 +62,9 @@ enum iprop_cmd { I_HAVE = 1,
 		 NOW_YOU_HAVE = 5,
 		 ARE_YOU_THERE = 6,
 		 I_AM_HERE = 7,
-		 YOU_HAVE_LAST_VERSION = 8
+		 YOU_HAVE_LAST_VERSION = 8,
+		 TELL_ME_EVERYTHING = 9,
+                 WHAT_DO_YOU_MEAN = 10, /* Resp. to unexpected/unknown msgs */
 };
 
 extern sig_atomic_t exit_flag;
@@ -74,6 +76,26 @@ enum ipropd_exit_code {
     IPROPD_RESTART_SLOW = 2,
     IPROPD_FATAL = 3,
 };
+
+/*
+ * Version 0 -> 7.5 and earlier.
+ * Version 1 -> after 7.5.
+ */
+#define IPROP_PROTOCOL_VERSION 1
+
+/*
+ * Notes on iprop protocol extensibility:
+ *
+ *  - As of Heimdal 7.4 and earlier, the master and the slave both ignore
+ *    messages with unexpected or unknown iprop_cmd values.  In particular, no
+ *    message is sent back.
+ *
+ *  - As of Heimdal 7.4 and earlier, the master and the slave generally ignore
+ *    unexpected additional payload fields at the end of messages.  But the
+ *    payloads of FOR_YOU, and ONE_PRINC cannot be extended without first
+ *    negotiated via the protocol version number, as they are read to
+ *    HEIM_ERR_EOF, unlike the others.
+ */
 
 int restarter(krb5_context, size_t *);
 

@@ -37,13 +37,15 @@ RCSID("$Id$");
 
 static const char *config_name = "ipropd-slave";
 
-static int verbose;
+static int verbose = 1;
 
 static krb5_log_facility *log_facility;
 static char five_min[] = "5 min";
 static char *server_time_lost = five_min;
 static int time_before_lost;
 const char *slave_str = NULL;
+
+uint32_t protocol_version = 0;
 
 static int
 connect_to_master (krb5_context context, const char *master,
@@ -161,8 +163,8 @@ get_creds(krb5_context context, const char *keytab_str,
 }
 
 static krb5_error_code
-ihave(krb5_context context, krb5_auth_context auth_context,
-      int fd, uint32_t version)
+tell_me_everything(krb5_context context, krb5_auth_context auth_context,
+                   int fd)
 {
     int ret;
     u_char buf[8];
@@ -170,20 +172,58 @@ ihave(krb5_context context, krb5_auth_context auth_context,
     krb5_data data;
 
     sp = krb5_storage_from_mem(buf, 8);
-    ret = krb5_store_uint32(sp, I_HAVE);
-    if (ret == 0)
-        ret = krb5_store_uint32(sp, version);
+    ret = krb5_store_uint32(sp, TELL_ME_EVERYTHING);
     krb5_storage_free(sp);
     data.length = 8;
     data.data   = buf;
-
     if (ret == 0) {
         if (verbose)
-            krb5_warnx(context, "telling master we are at %u", version);
+            krb5_warnx(context, "asking master for everything");
 
         ret = krb5_write_priv_message(context, auth_context, &fd, &data);
         if (ret)
             krb5_warn(context, ret, "krb5_write_message");
+    }
+    return ret;
+}
+
+static krb5_error_code
+ihave(kadm5_server_context *context, krb5_auth_context auth_context, int fd)
+{
+    krb5_error_code ret;
+    u_char buf[sizeof(uint32_t) * 4];
+    krb5_storage *sp;
+    krb5_data data;
+    uint32_t current_version;
+    uint32_t current_tstamp;
+
+    ret = kadm5_log_get_version_fd(context, context->log_context.log_fd,
+                                   LOG_VERSION_LAST, &current_version,
+                                   &current_tstamp);
+
+    sp = krb5_storage_from_mem(buf, sizeof(buf));
+    ret = krb5_store_uint32(sp, I_HAVE);
+    if (ret == 0)
+        ret = krb5_store_uint32(sp, current_version);
+    /* Extension since 7.5: send time of last entry */
+    if (ret == 0)
+        ret = krb5_store_uint32(sp, current_tstamp);
+    /* Extension since 7.5: send iprop protocol version */
+    if (ret == 0)
+        ret = krb5_store_uint32(sp, IPROP_PROTOCOL_VERSION);
+    krb5_storage_free(sp);
+    data.length = sizeof(buf);
+    data.data   = buf;
+
+    if (ret == 0) {
+        if (verbose)
+            krb5_warnx(context->context, "telling master we are at %u:%u",
+                       current_version, current_tstamp);
+
+        ret = krb5_write_priv_message(context->context, auth_context,
+                                      &fd, &data);
+        if (ret)
+            krb5_warn(context->context, ret, "krb5_write_message");
     }
     return ret;
 }
@@ -464,14 +504,14 @@ send_im_here(krb5_context context, int fd,
 static void
 reinit_log(krb5_context context,
 	   kadm5_server_context *server_context,
-	   uint32_t vno)
+	   uint32_t current_version, uint32_t current_tstamp)
 {
     krb5_error_code ret;
 
     if (verbose)
         krb5_warnx(context, "truncating log on slave");
 
-    ret = kadm5_log_reinit(server_context, current_version, 0);
+    ret = kadm5_log_reinit(server_context, current_version, current_tstamp);
     if (ret)
         krb5_err(context, IPROPD_RESTART_SLOW, ret, "kadm5_log_reinit");
 }
@@ -480,18 +520,19 @@ reinit_log(krb5_context context,
 static krb5_error_code
 receive_everything(krb5_context context, int fd,
 		   kadm5_server_context *server_context,
-		   krb5_auth_context auth_context)
+		   krb5_auth_context auth_context,
+                   uint32_t current_version, uint32_t current_tstamp)
 {
     int ret;
     krb5_data data;
-    uint32_t vno = 0;
+    uint32_t tmp = 0;
     uint32_t opcode;
     krb5_storage *sp;
 
     char *dbname;
     HDB *mydb;
 
-    krb5_warnx(context, "receive complete database");
+    krb5_warnx(context, "receive complete database (%u, %u)", current_version, current_tstamp);
 
     ret = asprintf(&dbname, "%s-NEW", server_context->db->hdb_name);
     if (ret == -1)
@@ -551,19 +592,34 @@ receive_everything(krb5_context context, int fd,
 	    hdb_free_entry(context, &entry);
 	    krb5_data_free(&data);
 	} else if (opcode == NOW_YOU_HAVE)
-	    ;
-	else
+            ;
+        else
 	    krb5_errx(context, 1, "strange opcode %d", opcode);
     } while (opcode == ONE_PRINC);
 
     if (opcode != NOW_YOU_HAVE)
         krb5_errx(context, IPROPD_RESTART_SLOW,
-                  "receive_everything: strange %d", opcode);
+                  "receive_everything: expected NOW_YOU_HAVE, got %d", opcode);
 
-    krb5_ret_uint32(sp, &vno);
+    ret = krb5_ret_uint32(sp, &tmp);
+    if (ret == 0) {
+        if (tmp != current_version)
+            krb5_warnx(context,
+                       "master's TELL_YOU_EVERYTHING version (%u) does not match NOW_YOU_HAVE version (%u)",
+                       current_version, tmp);
+        current_version = tmp;
+        ret = krb5_ret_uint32(sp, &tmp);
+        if (ret == 0) {
+            if (tmp != current_tstamp)
+                krb5_warnx(context,
+                           "master's TELL_YOU_EVERYTHING time (%u) does not match NOW_YOU_HAVE time (%u)",
+                           current_tstamp, tmp);
+            current_tstamp = tmp;
+        }
+    }
     krb5_storage_free(sp);
 
-    reinit_log(context, server_context, vno);
+    reinit_log(context, server_context, current_version, current_tstamp);
 
     ret = mydb->hdb_set_sync(context, mydb, 1);
     if (ret)
@@ -589,7 +645,9 @@ receive_everything(krb5_context context, int fd,
     if (ret)
         krb5_err(context, IPROPD_RESTART, ret, "db->destroy");
 
-    krb5_warnx(context, "receive complete database, version %ld", (long)vno);
+    krb5_warnx(context,
+               "receive complete database, version %lu (timestamp %lu)",
+               (unsigned long)current_version, (unsigned long)current_tstamp);
     return ret;
 }
 
@@ -652,6 +710,7 @@ static char *keytab_str;
 static char *port_str;
 static int detach_from_console;
 static int daemon_child = -1;
+static int force_1complete = 0;
 
 static struct getargs args[] = {
     { "config-file", 'c', arg_string, &config_file, NULL, NULL },
@@ -668,6 +727,8 @@ static struct getargs args[] = {
       "detach from console", NULL },
     { "daemon-child",       0 ,      arg_integer, &daemon_child,
       "private argument, do not use", NULL },
+    { "force-one-complete", 0, arg_flag, &force_1complete,
+      "force a complete HDB transfer on startup", NULL },
     { "hostname", 0, arg_string, rk_UNCONST(&slave_str),
       "hostname of slave (if not same as hostname)", "hostname" },
     { "verbose", 0, arg_flag, &verbose, NULL, NULL },
@@ -698,6 +759,7 @@ main(int argc, char **argv)
     krb5_principal server;
     char **files;
     int optidx = 0;
+    uint32_t tmp_protocol_version = 0;
     time_t reconnect_min;
     time_t backoff;
     time_t reconnect_max;
@@ -877,8 +939,10 @@ main(int argc, char **argv)
 	krb5_warnx(context, "ipropd-slave started at version: %ld",
 		   (long)server_context->log_context.version);
 
-	ret = ihave(context, auth_context, master_fd,
-		    server_context->log_context.version);
+        if (force_1complete)
+            ret = tell_me_everything(context, auth_context, master_fd);
+        else
+            ret = ihave(server_context, auth_context, master_fd);
 	if (ret)
 	    goto retry;
 
@@ -892,7 +956,7 @@ main(int argc, char **argv)
 	while (connected && !exit_flag) {
 	    krb5_data out;
 	    krb5_storage *sp;
-	    uint32_t tmp;
+	    uint32_t tmp, current_version, current_tstamp;
             int max_fd;
 
 #ifndef NO_LIMIT_FD_SETSIZE
@@ -908,7 +972,10 @@ main(int argc, char **argv)
             if (restarter_fd != -1)
                 FD_SET(restarter_fd, &readset);
 
-	    to.tv_sec = time_before_lost;
+            if (force_1complete)
+                to.tv_sec = 15;
+            else
+                to.tv_sec = time_before_lost;
 	    to.tv_usec = 0;
 
 	    ret = select (max_fd + 1,
@@ -919,6 +986,15 @@ main(int argc, char **argv)
 		else
 		    krb5_err (context, 1, errno, "select");
 	    }
+	    if (ret == 0 && force_1complete) {
+		krb5_warnx(context,
+                           "downrev server? cannot force a complete transfer");
+                force_1complete = 0;
+                ret = ihave(server_context, auth_context, master_fd);
+                if (ret)
+                    goto retry;
+                continue;
+            }
 	    if (ret == 0) {
 		krb5_warnx(context, "server didn't send a message "
                            "in %d seconds", time_before_lost);
@@ -966,6 +1042,17 @@ main(int argc, char **argv)
                          "handling a message from the master");
             }
 	    switch (tmp) {
+            case WHAT_DO_YOU_MEAN:
+                krb5_warnx(context, "master did not understand a message");
+                ret2 = krb5_ret_uint32(sp, &tmp_protocol_version);
+                if (ret2 == 0) {
+                    protocol_version = tmp_protocol_version;
+                    krb5_warnx(context, "master indicates protocol version %u",
+                               protocol_version);
+                } else
+                    krb5_warn(context, ret2, "protocol version negotiation");
+                ret2 = ret = 0;
+                break;
 	    case FOR_YOU :
                 if (verbose)
                     krb5_warnx(context, "master sent us diffs");
@@ -973,8 +1060,7 @@ main(int argc, char **argv)
                 if (ret2)
                     krb5_warn(context, ret2,
                               "receive from ipropd-master had errors");
-		ret = ihave(context, auth_context, master_fd,
-			    server_context->log_context.version);
+		ret = ihave(server_context, auth_context, master_fd);
 		if (ret || ret2)
 		    connected = FALSE;
 
@@ -988,11 +1074,32 @@ main(int argc, char **argv)
 	    case TELL_YOU_EVERYTHING :
                 if (verbose)
                     krb5_warnx(context, "master sent us a full dump");
-		ret = receive_everything(context, master_fd, server_context,
-					 auth_context);
+                ret = krb5_ret_uint32(sp, &current_version);
                 if (ret == 0) {
-                    ret = ihave(context, auth_context, master_fd,
-                                server_context->log_context.version);
+                    krb5_warnx(context, "master sent us a full dump version %u", current_version);
+                    ret = krb5_ret_uint32(sp, &current_tstamp);
+                    if (ret == 0) {
+                        krb5_warnx(context, "master sent us a full dump version %u, time %u", current_version, current_tstamp);
+                    } else if (ret == HEIM_ERR_EOF) {
+                        krb5_warnx(context, "master sent us a full dump time N/A");
+                        current_tstamp = 0;
+                        ret = 0;
+                    } else
+                        krb5_warn(context, ret, "TELL_YOU_EVERYTHING time");
+                } else if (ret == HEIM_ERR_EOF) {
+                    krb5_warnx(context, "master sent us a full dump version N/A");
+                    current_version = 0;
+                    current_tstamp = 0;
+                    ret = 0;
+                } else
+                    krb5_warn(context, ret, "TELL_YOU_EVERYTHING version");
+                krb5_warnx(context, "master says it's at %u, %u", current_version, current_tstamp);
+                if (ret == 0)
+                    ret = receive_everything(context, master_fd, server_context,
+                                             auth_context, current_version,
+                                             current_tstamp);
+                if (ret == 0) {
+                    ret = ihave(server_context, auth_context, master_fd);
                 }
                 if (ret)
 		    connected = FALSE;
@@ -1003,8 +1110,7 @@ main(int argc, char **argv)
                 if (verbose)
                     krb5_warnx(context, "master sent us a ping");
 		is_up_to_date(context, status_file, server_context);
-                ret = ihave(context, auth_context, master_fd,
-                            server_context->log_context.version);
+                ret = ihave(server_context, auth_context, master_fd);
                 if (ret)
                     connected = FALSE;
 

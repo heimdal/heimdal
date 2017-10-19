@@ -438,7 +438,7 @@ doit(const char *filename, int mergep)
     if (mergep)
         ret = kadm5_log_init(kadm_handle);
     if (ret == 0)
-        ret = kadm5_log_reinit(kadm_handle, 0);
+        ret = kadm5_log_reinit(kadm_handle, 0, 0);
     if (ret) {
 	fclose (f);
 	krb5_warn(context, ret, "kadm5_log_reinit");

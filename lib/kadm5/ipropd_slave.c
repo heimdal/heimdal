@@ -471,7 +471,7 @@ reinit_log(krb5_context context,
     if (verbose)
         krb5_warnx(context, "truncating log on slave");
 
-    ret = kadm5_log_reinit(server_context, vno);
+    ret = kadm5_log_reinit(server_context, current_version, 0);
     if (ret)
         krb5_err(context, IPROPD_RESTART_SLOW, ret, "kadm5_log_reinit");
 }

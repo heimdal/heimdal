@@ -51,13 +51,24 @@ RCSID("$Id$");
  * of an record's start or end one can traverse the log forwards and
  * backwards.
  *
- * The log always starts with a nop record (uber record) that contains the
- * offset (8 bytes) of the first unconfirmed record (typically EOF), and the
- * version number and timestamp of the preceding last confirmed record:
+ * The log always starts with a nop record (uber record) at version 0 that
+ * contains the offset (8 bytes) of the first unconfirmed record (typically
+ * EOF), and the version number and timestamp of the preceding last confirmed
+ * record:
  *
  * offset of next new record    8 bytes
  * last record time             4 bytes
  * last record version number   4 bytes
+ *
+ * The next record is the true first record in the log; its version need not be
+ * 1.  The version numbers of all records other than the uber record should be
+ * monotonically increasing.  On version wraparound the log should be
+ * truncated, necessitating full propagation to all slaves.
+ *
+ * A new log should start with a nop (uber record) at version 0, and a nop at
+ * version 1.  This is necessary so that we can distinguish slaves needing an
+ * initial complete transfer (version 0) from those that have received one
+ * (version 1 or higher).
  *
  * When an iprop slave receives a complete database, it saves that version as
  * the last confirmed version, without writing any other records to the log.  We
@@ -645,9 +656,11 @@ log_init(kadm5_server_context *server_context, int lock_mode)
         if (fstat(fd, &st) == -1)
             ret = errno;
         if (ret == 0 && st.st_size == 0) {
-            /* Write first entry */
+            /* Write first two entries */
             log_context->version = 0;
-            ret = kadm5_log_nop(server_context, kadm_nop_plain);
+            ret = kadm5_log_nop(server_context, kadm_nop_plain); /* uber */
+            if (ret == 0)
+                ret = kadm5_log_nop(server_context, kadm_nop_plain);
             if (ret == 0)
                 return 0; /* no need to truncate_if_needed(): it's not */
         }
@@ -710,7 +723,8 @@ kadm5_log_init_sharedlock(kadm5_server_context *server_context, int lock_flags)
  * Reinitialize the log and open it
  */
 kadm5_ret_t
-kadm5_log_reinit(kadm5_server_context *server_context, uint32_t vno)
+kadm5_log_reinit(kadm5_server_context *server_context,
+                 uint32_t vno, uint32_t tstamp)
 {
     int ret;
     kadm5_log_context *log_context = &server_context->log_context;
@@ -729,9 +743,27 @@ kadm5_log_reinit(kadm5_server_context *server_context, uint32_t vno)
         }
     }
 
-    /* Write uber entry and truncation nop with version `vno` */
-    log_context->version = vno;
-    return kadm5_log_nop(server_context, kadm_nop_plain);
+    /*
+     * Write uber entry and truncation nop with version 0 (we force that
+     * anyways in kadm5_log_preamble()).
+     */
+    log_context->version = 0;
+    log_context->set_time = 0;
+    ret = kadm5_log_nop(server_context, kadm_nop_plain);
+
+    /*
+     * Write a nop with the given vno and tstamp, which in the case of
+     * ipropd-slave would be from a complete dump sent by the master.  We'll
+     * need this for ihave() in ipropd-slave and send_diffs() in ipropd-master.
+     */
+    if (ret == 0) {
+        if (vno != 0) {
+            log_context->version = vno - 1;
+            log_context->set_time = tstamp;
+        } /* else write a nop (which will get version 1) anyways */
+        return kadm5_log_nop(server_context, kadm_nop_plain);
+    }
+    return ret;
 }
 
 /* Close the server_context->log_context. */
@@ -786,6 +818,9 @@ kadm5_log_preamble(kadm5_server_context *context,
     uint32_t now = now_u32();
     kadm5_ret_t ret;
 
+    if (log_context->set_time != 0)
+        now = log_context->set_time;
+    log_context->set_time = 0;
     ret = krb5_store_uint32(sp, vno);
     if (ret)
         return ret;
@@ -2176,7 +2211,7 @@ kadm5_log_goto_end(kadm5_server_context *server_context, int fd)
 truncate:
     /* If we can, truncate */
     if (server_context->log_context.lock_mode == LOCK_EX) {
-        ret = kadm5_log_reinit(server_context, 0);
+        ret = kadm5_log_reinit(server_context, 0, 0);
         if (ret == 0) {
             krb5_warn(server_context->context, ret,
                       "Invalid log; truncating to recover");

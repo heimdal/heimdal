@@ -89,6 +89,7 @@ typedef struct kadm5_log_context {
     int lock_mode;
     uint32_t version;
     time_t last_time;
+    time_t set_time;
 #ifndef NO_UNIX_SOCKETS
     struct sockaddr_un socket_name;
 #else

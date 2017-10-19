@@ -394,7 +394,7 @@ iprop_truncate(struct truncate_options *opt, int argc, char **argv)
         /* First recover unconfirmed records */
         ret = kadm5_log_init(server_context);
         if (ret == 0)
-            ret = kadm5_log_reinit(server_context, 0);
+            ret = kadm5_log_reinit(server_context, 0, 0);
     } else {
         ret = kadm5_log_init(server_context);
         if (ret)

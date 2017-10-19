@@ -755,6 +755,19 @@ kadm5_log_end(kadm5_server_context *server_context)
     return ret;
 }
 
+static uint32_t
+now_u32(void)
+{
+    uint32_t now = time(NULL);
+
+    assert(now > 0 && now < UINT32_MAX);
+    if (now > 0 && now < UINT32_MAX)
+        return now;
+    if (now < 1)
+        return 0;
+    return UINT32_MAX;
+}
+
 /*
  * Write the version, timestamp, and op for a new entry.
  *
@@ -770,7 +783,7 @@ kadm5_log_preamble(kadm5_server_context *context,
 		   uint32_t vno)
 {
     kadm5_log_context *log_context = &context->log_context;
-    time_t now = time(NULL);
+    uint32_t now = now_u32();
     kadm5_ret_t ret;
 
     ret = krb5_store_uint32(sp, vno);
@@ -1771,7 +1784,7 @@ struct replay_cb_data {
  */
 static kadm5_ret_t
 recover_replay(kadm5_server_context *context,
-               uint32_t ver, time_t timestamp, enum kadm_ops op,
+               uint32_t ver, uint32_t timestamp, enum kadm_ops op,
                uint32_t len, krb5_storage *sp, void *ctx)
 {
     struct replay_cb_data *data = ctx;
@@ -1858,7 +1871,7 @@ kadm5_log_foreach(kadm5_server_context *context,
                   enum kadm_iter_opts iter_opts,
                   off_t *off_lastp,
 		  kadm5_ret_t (*func)(kadm5_server_context *server_context,
-                                      uint32_t ver, time_t timestamp,
+                                      uint32_t ver, uint32_t timestamp,
                                       enum kadm_ops op, uint32_t len,
                                       krb5_storage *sp, void *ctx),
 		  void *ctx)
@@ -1935,7 +1948,7 @@ kadm5_log_foreach(kadm5_server_context *context,
     for (;;) {
 	uint32_t ver, ver2, len, len2;
 	uint32_t tstamp;
-        time_t timestamp;
+        uint32_t timestamp;
         enum kadm_ops op;
 
         if ((iter_opts & kadm_backward)) {
@@ -2193,7 +2206,7 @@ kadm5_ret_t
 kadm5_log_previous(krb5_context context,
 		   krb5_storage *sp,
 		   uint32_t *verp,
-		   time_t *tstampp,
+		   uint32_t *tstampp,
 		   enum kadm_ops *opp,
 		   uint32_t *lenp)
 {
@@ -2292,7 +2305,7 @@ struct load_entries_data {
 static kadm5_ret_t
 load_entries_cb(kadm5_server_context *server_context,
             uint32_t ver,
-            time_t timestamp,
+            uint32_t timestamp,
             enum kadm_ops op,
             uint32_t len,
             krb5_storage *sp,
@@ -2430,7 +2443,7 @@ kadm5_log_truncate(kadm5_server_context *context, size_t keep, size_t maxbytes)
 {
     kadm5_ret_t ret;
     uint32_t first, last, last_tstamp;
-    time_t now = time(NULL);
+    uint32_t now = now_u32();
     krb5_data entries;
     krb5_storage *sp;
     ssize_t bytes;

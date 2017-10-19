@@ -103,10 +103,23 @@ static const char *op_names[] = {
     "nop"
 };
 
+static time_t
+utime2time(uint32_t t)
+{
+    time_t tt = t;
+
+    if (sizeof(tt) > sizeof(t))
+        return tt;
+    if (tt != t)
+        /* Max time_t value, assuming time_t is signed */
+        return ~(1UL << ((sizeof(time_t) * CHAR_BIT) - 1));
+    return tt;
+}
+
 static kadm5_ret_t
 print_entry(kadm5_server_context *server_context,
 	    uint32_t ver,
-	    time_t timestamp,
+	    uint32_t timestamp,
 	    enum kadm_ops op,
 	    uint32_t len,
 	    krb5_storage *sp,
@@ -123,18 +136,19 @@ print_entry(kadm5_server_context *server_context,
     krb5_data data;
     krb5_context scontext = server_context->context;
     krb5_error_code ret;
+    time_t tm = utime2time(timestamp);
 
     krb5_data_zero(&data);
 
-    strftime(t, sizeof(t), "%Y-%m-%d %H:%M:%S", localtime(&timestamp));
+    strftime(t, sizeof(t), "%Y-%m-%d %H:%M:%S", localtime(&tm));
 
     if((int)op < (int)kadm_get || (int)op > (int)kadm_nop) {
 	printf("unknown op: %d\n", op);
 	return 0;
     }
 
-    printf ("%s%s: ver = %u, timestamp = %s, len = %u\n",
-	    entry_kind, op_names[op], ver, t, len);
+    printf ("%s%s: ver = %u, timestamp = %s (%u tm is %ld), len = %u\n",
+	    entry_kind, op_names[op], ver, t, timestamp, tm, len);
     switch(op) {
     case kadm_delete:
 	krb5_ret_principal(sp, &source);
@@ -273,7 +287,8 @@ print_entry(kadm5_server_context *server_context,
             krb5_ret_uint32(sp, &nop_ver);
 
             timestamp = nop_time;
-            strftime(t, sizeof(t), "%Y-%m-%d %H:%M:%S", localtime(&timestamp));
+            tm = utime2time(timestamp);
+            strftime(t, sizeof(t), "%Y-%m-%d %H:%M:%S", localtime(&tm));
             printf("timestamp %s version %u", t, nop_ver);
         }
         printf("\n");
@@ -478,7 +493,7 @@ int end_version = -1;
 static kadm5_ret_t
 apply_entry(kadm5_server_context *server_context,
 	    uint32_t ver,
-	    time_t timestamp,
+	    uint32_t timestamp,
 	    enum kadm_ops op,
 	    uint32_t len,
 	    krb5_storage *sp,

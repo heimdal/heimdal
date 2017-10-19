@@ -45,6 +45,8 @@ const char *slave_time_gone = "5 min";
 static int time_before_missing;
 static int time_before_gone;
 
+static int protocol_version = IPROP_PROTOCOL_VERSION;
+
 const char *master_hostname;
 
 static krb5_socket_t
@@ -539,40 +541,50 @@ write_dump(krb5_context context, krb5_storage *dump,
     if (ret)
 	krb5_err (context, IPROPD_RESTART, ret, "db->open");
 
-    sp = krb5_storage_from_mem (buf, sizeof(uint32_t) * 3);
+    if (verbose)
+        krb5_warnx(context, "TELL_YOU_EVERYTHING %u, %u", current_version, current_tstamp);
+    assert(sizeof(buf) >= sizeof(uint32_t) * 3);
+    switch (protocol_version) {
+    case 0: sp = krb5_storage_from_mem(buf, sizeof(uint32_t));
+    case IPROP_PROTOCOL_VERSION: sp = krb5_storage_from_mem(buf, sizeof(uint32_t) * 3);
+    }
     if (sp == NULL)
-	krb5_errx (context, IPROPD_RESTART, "krb5_storage_from_mem");
-    krb5_store_uint32(sp, TELL_YOU_EVERYTHING);
-    krb5_store_uint32(sp, current_version);
-    krb5_store_uint32(sp, current_tstamp);
-    krb5_warnx(context, "TELL_YOU_EVERYTHING %u, %u", current_version, current_tstamp);
+	krb5_errx(context, IPROPD_RESTART, "krb5_storage_from_mem");
+    ret = krb5_store_uint32(sp, TELL_YOU_EVERYTHING);
+    if (ret == 0 && protocol_version > 0)
+        ret = krb5_store_uint32(sp, current_version);
+    if (ret == 0 && protocol_version > 0)
+        krb5_store_uint32(sp, current_tstamp);
     krb5_storage_free(sp);
+    if (ret)
+	krb5_err(context, IPROPD_RESTART, ret, "writing dump");
 
     data.data   = buf;
     data.length = sizeof(uint32_t) * 3;
 
     ret = krb5_store_data(dump, data);
-    if (ret) {
-	krb5_warn (context, ret, "write_dump");
-	return ret;
-    }
 
-    ret = hdb_foreach (context, db, HDB_F_ADMIN_DATA, dump_one, dump);
-    if (ret) {
-	krb5_warn (context, ret, "write_dump: hdb_foreach");
-	return ret;
+    if (ret == 0) {
+        ret = hdb_foreach (context, db, HDB_F_ADMIN_DATA, dump_one, dump);
+        if (ret)
+            krb5_warn(context, ret, "write_dump: hdb_foreach");
     }
 
     (*db->hdb_close)(context, db);
     (*db->hdb_destroy)(context, db);
 
-    sp = krb5_storage_from_mem (buf, sizeof(uint32_t) * 3);
+    assert(sizeof(buf) >= sizeof(uint32_t) * 3);
+    switch (protocol_version) {
+    case 0: sp = krb5_storage_from_mem(buf, sizeof(uint32_t));
+    case IPROP_PROTOCOL_VERSION: sp = krb5_storage_from_mem(buf, sizeof(uint32_t) * 3);
+    }
     if (sp == NULL)
-	krb5_errx (context, IPROPD_RESTART, "krb5_storage_from_mem");
-    ret = krb5_store_uint32(sp, NOW_YOU_HAVE);
+	krb5_errx(context, IPROPD_RESTART, "krb5_storage_from_mem");
     if (ret == 0)
+        ret = krb5_store_uint32(sp, NOW_YOU_HAVE);
+    if (ret == 0 && protocol_version > 0)
         krb5_store_uint32(sp, current_version);
-    if (ret == 0)
+    if (ret == 0 && protocol_version > 0)
         krb5_store_uint32(sp, current_tstamp);
     krb5_storage_free (sp);
 
@@ -643,17 +655,22 @@ get_dump_metadata(krb5_storage *dump, uint32_t *v, uint32_t *t)
     if (ret == 0)
         ret = krb5_ret_uint32(sp, &tmp);
     if (ret == 0) {
+        if (protocol_version == 0)
+            /* Rewrite dump in protocol version 0 format */
+            ret = -1;
         if (vno != tmp)
             ret = EINVAL; /* XXX */
         if (v != NULL)
             *v = tmp;
-    }
+    } else if (protocol_version > 0)
+        /* Rewrite dump in protocol version 1 format */
+        ret = -1;
     if (ret == 0) {
         ret = krb5_ret_uint32(sp, &tmp);
         if (ret == 0 && t != NULL)
             *t = tmp;
         if (ret == HEIM_ERR_EOF)
-            /* Rewrite dump to use new TELL_YOU_EVERYTHING / NOW_YOU HAVE */
+            /* Rewrite dump to use version 1 format */
             ret = -1;
     }
     krb5_storage_free(sp);
@@ -1198,10 +1215,12 @@ process_msg (kadm5_server_context *server_context, slave *s, int log_fd,
     }
     switch (op) {
     case TELL_ME_EVERYTHING:
-        s->version = 0;
-        s->version_tstamp = 0;
-        ret = send_diffs(server_context, s, log_fd, database, current_version,
-                         current_tstamp, 1);
+        if (protocol_version > 0) {
+            s->version = 0;
+            s->version_tstamp = 0;
+            ret = send_diffs(server_context, s, log_fd, database, current_version,
+                             current_tstamp, 1);
+        } /* else silence */
         break;
     case I_HAVE :
 	ret = krb5_ret_uint32(sp, &slave_last_version);
@@ -1209,13 +1228,25 @@ process_msg (kadm5_server_context *server_context, slave *s, int log_fd,
 	    krb5_warnx(context, "process_msg: client send too little I_HAVE data");
 	    break;
 	}
-        ret = krb5_ret_uint32(sp, &slave_last_time);
-	if (ret == 0) {
-            ret = krb5_ret_uint32(sp, &slave_protocol_version);
-            if (ret)
+        slave_last_time = 0;
+        slave_protocol_version = 0;
+        if (protocol_version > 0) {
+            if (ret == 0)
+                ret = krb5_ret_uint32(sp, &slave_last_time);
+            if (ret == 0) {
+                ret = krb5_ret_uint32(sp, &slave_protocol_version);
+                if (ret == 0)
+                    s->protocol_version = min(protocol_version, slave_protocol_version);
+                if (ret)
+                    slave_protocol_version = 0;
+            } else
+                slave_last_time = 0;
+            if (ret == HEIM_ERR_EOF) {
                 slave_protocol_version = 0;
-        } else
-            slave_last_time = 0;
+                ret = 0;
+            }
+        }
+        s->protocol_version = slave_protocol_version;
 	if (s->version == 0 && slave_last_version != 0) {
             /* Slave just connected, and has an HDB and iprop log */
 	    if (slave_last_version > current_version) {
@@ -1255,11 +1286,13 @@ process_msg (kadm5_server_context *server_context, slave *s, int log_fd,
     case ARE_YOU_THERE:
     case FOR_YOU :
 	krb5_warnx(context, "Ignoring unexpected command %d", op);
-        ret = send_what_do_you_mean(server_context, s);
+        if (protocol_version > 0)
+            ret = send_what_do_you_mean(server_context, s);
 	break;
     default :
 	krb5_warnx(context, "Ignoring unknown command %d", op);
-        ret = send_what_do_you_mean(server_context, s);
+        if (protocol_version > 0)
+            ret = send_what_do_you_mean(server_context, s);
 	break;
     }
 
@@ -1412,7 +1445,9 @@ static struct getargs args[] = {
     { "time-gone", 0, arg_string, rk_UNCONST(&slave_time_gone),
       "time of inactivity after which a slave is considered gone", "time"},
     { "timeout", 0, arg_integer, &timeout,
-       "event loop timeout (seconds) (default: 30)", NULL},
+       "event loop timeout (seconds) (default: 30)", NULL },
+    { "protocol-version", 0, arg_integer, &protocol_version,
+      "highest iprop protocol version served (default: 1)", NULL },
     { "port", 0, arg_string, &port_str,
       "port ipropd will listen to", "port"},
     { "detach", 0, arg_flag, &detach_from_console,
@@ -1459,6 +1494,10 @@ main(int argc, char **argv)
 	print_version(NULL);
 	exit(0);
     }
+
+    if (protocol_version < 0 || protocol_version > IPROP_PROTOCOL_VERSION)
+        errx(1, "invalid iprop protocol version number (min 0, max %d)",
+             IPROP_PROTOCOL_VERSION);
 
     if (detach_from_console && daemon_child == -1)
         roken_detach_prep(argc, argv, "--daemon-child");

@@ -45,7 +45,7 @@ static char *server_time_lost = five_min;
 static int time_before_lost;
 const char *slave_str = NULL;
 
-uint32_t protocol_version = 0;
+static int protocol_version = 0;
 
 static int
 connect_to_master (krb5_context context, const char *master,
@@ -201,16 +201,21 @@ ihave(kadm5_server_context *context, krb5_auth_context auth_context, int fd)
                                    LOG_VERSION_LAST, &current_version,
                                    &current_tstamp);
 
-    sp = krb5_storage_from_mem(buf, sizeof(buf));
+    switch (protocol_version) {
+    case 0: sp = krb5_storage_from_mem(buf, sizeof(uint32_t) * 2);
+    case IPROP_PROTOCOL_VERSION: sp = krb5_storage_from_mem(buf, sizeof(buf));
+    }
+    if (sp == NULL)
+        krb5_errx(context->context, IPROPD_RESTART, "krb5_storage_from_mem");
     ret = krb5_store_uint32(sp, I_HAVE);
     if (ret == 0)
         ret = krb5_store_uint32(sp, current_version);
-    /* Extension since 7.5: send time of last entry */
-    if (ret == 0)
-        ret = krb5_store_uint32(sp, current_tstamp);
-    /* Extension since 7.5: send iprop protocol version */
-    if (ret == 0)
-        ret = krb5_store_uint32(sp, IPROP_PROTOCOL_VERSION);
+    if (protocol_version > 0) {
+        if (ret == 0)
+            ret = krb5_store_uint32(sp, current_tstamp);
+        if (ret == 0)
+            ret = krb5_store_uint32(sp, IPROP_PROTOCOL_VERSION);
+    }
     krb5_storage_free(sp);
     data.length = sizeof(buf);
     data.data   = buf;
@@ -602,7 +607,10 @@ receive_everything(krb5_context context, int fd,
                   "receive_everything: expected NOW_YOU_HAVE, got %d", opcode);
 
     ret = krb5_ret_uint32(sp, &tmp);
-    if (ret == 0) {
+    if (ret == HEIM_ERR_EOF) {
+        protocol_version = 0;
+        ret = 0;
+    } else if (ret == 0) {
         if (tmp != current_version)
             krb5_warnx(context,
                        "master's TELL_YOU_EVERYTHING version (%u) does not match NOW_YOU_HAVE version (%u)",
@@ -731,6 +739,8 @@ static struct getargs args[] = {
       "force a complete HDB transfer on startup", NULL },
     { "hostname", 0, arg_string, rk_UNCONST(&slave_str),
       "hostname of slave (if not same as hostname)", "hostname" },
+    { "protocol-version", 0, arg_integer, &protocol_version,
+      "highest iprop protocol version used (default: 1)", NULL },
     { "verbose", 0, arg_flag, &verbose, NULL, NULL },
     { "version", 0, arg_flag, &version_flag, NULL, NULL },
     { "help", 0, arg_flag, &help_flag, NULL, NULL }
@@ -781,6 +791,10 @@ main(int argc, char **argv)
 	print_version(NULL);
 	exit(0);
     }
+
+    if (protocol_version < 0 || protocol_version > IPROP_PROTOCOL_VERSION)
+        errx(1, "invalid iprop protocol version number (min 0, max %d)",
+             IPROP_PROTOCOL_VERSION);
 
     if (detach_from_console && daemon_child == -1)
         roken_detach_prep(argc, argv, "--daemon-child");
@@ -1081,7 +1095,8 @@ main(int argc, char **argv)
                     if (ret == 0) {
                         krb5_warnx(context, "master sent us a full dump version %u, time %u", current_version, current_tstamp);
                     } else if (ret == HEIM_ERR_EOF) {
-                        krb5_warnx(context, "master sent us a full dump time N/A");
+                        krb5_warnx(context, "master is downversion (0)");
+                        protocol_version = 0;
                         current_tstamp = 0;
                         ret = 0;
                     } else

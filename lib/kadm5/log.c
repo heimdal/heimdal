@@ -469,6 +469,19 @@ get_max_log_size(krb5_context context)
                                     "kdc",
                                     "log-max-size",
                                     NULL);
+    /*
+     * ipropd-master's send_diffs() uses a single krb5_data to send all the
+     * diffs, so we can't have a log larger than 4GB...
+     *
+     * Also, we need to limit the number of entries to avoid the distance
+     * between the first and the last being more than half the range of
+     * uint32_t (i.e., 2^31 max entries).  But we don't want to slow the kadm5
+     * log code any more, so we don't bother checking the first entry, and
+     * instead we check that st_size is less than some value.  Let's say 1GB,
+     * though in practice the really max would be 24 * 2^31.
+     */
+    if (n > (1<<30))
+        n = 1<<30;
     if (n >= 4 * (LOG_UBER_LEN + LOG_WRAPPER_SZ) && n == (size_t)n)
         return (size_t)n;
     return 0;

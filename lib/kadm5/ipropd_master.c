@@ -255,8 +255,7 @@ struct slave {
     char *name;
     krb5_auth_context ac;
     uint32_t protocol_version;
-    uint32_t version;
-    uint32_t version_tstamp;
+    iprop_version version;
     time_t seen;
     unsigned long flags;
 #define SLAVE_F_DEAD            0x1
@@ -266,8 +265,7 @@ struct slave {
     /* state machine for async/interleaved send_complete() */
     iprop_state state;
     krb5_storage *dump;
-    uint32_t dump_vno;
-    uint32_t dump_tstamp;
+    iprop_version dump_vno;
     /*
      * XXX We need to use non-blocking sockets for the slaves, and we need to
      * buffer the last message in case of incomplete write.  The message and
@@ -456,8 +454,8 @@ add_slave (krb5_context context, krb5_keytab keytab, slave **root,
 
     krb5_warnx (context, "connection from %s", s->name);
 
-    s->version = 0;
-    s->version_tstamp = 0;
+    s->version.vno = 0;
+    s->version.tstamp = 0;
     s->flags = 0;
     slave_seen(s);
     s->next = *root;
@@ -465,6 +463,58 @@ add_slave (krb5_context context, krb5_keytab keytab, slave **root,
     return;
 error:
     remove_slave(context, s, root);
+}
+
+static int
+version_in_range(iprop_version first, iprop_version last, iprop_version v)
+{
+    return (last.vno - first.vno) < (UINT32_MAX >> 1) &&
+        (v.vno - first.vno) < (last.vno - first.vno);
+}
+
+static int
+version_cmp(iprop_version left, iprop_version right)
+{
+    if (left.vno == right.vno) {
+        if (left.tstamp == 0 || right.tstamp == 0)
+            return 0;
+        return left.tstamp - right.tstamp;
+    }
+    return left.vno - right.vno;
+}
+
+static int
+version_eq(iprop_version left, iprop_version right)
+{
+    if (left.vno != right.vno)
+        return 0;
+    if (left.tstamp == 0 || right.tstamp == 0)
+        return 1;
+    return left.tstamp == right.tstamp;
+}
+
+static int
+version_lt(iprop_version left, iprop_version right)
+{
+    return (left.vno < right.vno);
+}
+
+static int
+version_le(iprop_version left, iprop_version right)
+{
+    return version_lt(left, right) || version_eq(left, right);
+}
+
+static int
+version_gt(iprop_version left, iprop_version right)
+{
+    return (left.vno > right.vno);
+}
+
+static int
+version_ge(iprop_version left, iprop_version right)
+{
+    return version_gt(left, right) || version_eq(left, right);
 }
 
 static int
@@ -506,8 +556,7 @@ done:
 
 static int
 write_dump(krb5_context context, krb5_storage *dump,
-	   const char *database, uint32_t current_version,
-           uint32_t current_tstamp)
+	   const char *database, iprop_version current_version)
 {
     krb5_error_code ret;
     krb5_storage *sp;
@@ -542,7 +591,7 @@ write_dump(krb5_context context, krb5_storage *dump,
 	krb5_err (context, IPROPD_RESTART, ret, "db->open");
 
     if (verbose)
-        krb5_warnx(context, "TELL_YOU_EVERYTHING %u, %u", current_version, current_tstamp);
+        krb5_warnx(context, "TELL_YOU_EVERYTHING %u, %u", current_version.vno, current_version.tstamp);
     assert(sizeof(buf) >= sizeof(uint32_t) * 3);
     switch (protocol_version) {
     case 0: sp = krb5_storage_from_mem(buf, sizeof(uint32_t));
@@ -552,9 +601,9 @@ write_dump(krb5_context context, krb5_storage *dump,
 	krb5_errx(context, IPROPD_RESTART, "krb5_storage_from_mem");
     ret = krb5_store_uint32(sp, TELL_YOU_EVERYTHING);
     if (ret == 0 && protocol_version > 0)
-        ret = krb5_store_uint32(sp, current_version);
+        ret = krb5_store_uint32(sp, current_version.vno);
     if (ret == 0 && protocol_version > 0)
-        krb5_store_uint32(sp, current_tstamp);
+        krb5_store_uint32(sp, current_version.tstamp);
     krb5_storage_free(sp);
     if (ret)
 	krb5_err(context, IPROPD_RESTART, ret, "writing dump");
@@ -583,9 +632,9 @@ write_dump(krb5_context context, krb5_storage *dump,
     if (ret == 0)
         ret = krb5_store_uint32(sp, NOW_YOU_HAVE);
     if (ret == 0 && protocol_version > 0)
-        krb5_store_uint32(sp, current_version);
+        krb5_store_uint32(sp, current_version.vno);
     if (ret == 0 && protocol_version > 0)
-        krb5_store_uint32(sp, current_tstamp);
+        krb5_store_uint32(sp, current_version.tstamp);
     krb5_storage_free (sp);
 
     data.length = sizeof(uint32_t) * 3;
@@ -608,7 +657,7 @@ write_dump(krb5_context context, krb5_storage *dump,
     /* Write current version at the front making the dump valid */
 
     if (ret == 0)
-        ret = krb5_store_uint32(dump, current_version);
+        ret = krb5_store_uint32(dump, current_version.vno);
 
     /*
      * We don't need to fsync(2) after the real version is written as
@@ -618,20 +667,16 @@ write_dump(krb5_context context, krb5_storage *dump,
 
     if (ret == 0)
         krb5_warnx(context, "wrote new dumpfile (version %u)",
-                   current_version);
+                   current_version.vno);
     else
         krb5_warn(context, ret, "failed to write new dumpfile (version %u)",
-                  current_version);
+                  current_version.vno);
 
     return ret;
 }
 
-/*
- * We don't use the `v' output parameter, but this makes it more generic and
- * reusable.
- */
 static int
-get_dump_metadata(krb5_storage *dump, uint32_t *v, uint32_t *t)
+get_dump_metadata(krb5_storage *dump, iprop_version *v)
 {
     krb5_error_code ret;
     krb5_storage *sp;
@@ -661,14 +706,14 @@ get_dump_metadata(krb5_storage *dump, uint32_t *v, uint32_t *t)
         if (vno != tmp)
             ret = EINVAL; /* XXX */
         if (v != NULL)
-            *v = tmp;
+            v->vno = tmp;
     } else if (protocol_version > 0)
         /* Rewrite dump in protocol version 1 format */
         ret = -1;
     if (ret == 0) {
         ret = krb5_ret_uint32(sp, &tmp);
-        if (ret == 0 && t != NULL)
-            *t = tmp;
+        if (ret == 0 && v != NULL)
+            v->tstamp = tmp;
         if (ret == HEIM_ERR_EOF)
             /* Rewrite dump to use version 1 format */
             ret = -1;
@@ -696,7 +741,6 @@ send_complete1(krb5_context context, slave *s)
         s->state = IPROP_SLAVE_STATE_IDLE;
         s->dump = NULL;
         s->version = s->dump_vno;
-        s->version_tstamp = s->dump_tstamp;
 	slave_seen(s);
         ret = 0;	/* EOF is not an error, it's success */
         goto done;
@@ -721,13 +765,12 @@ done:
 
 static int
 send_complete(krb5_context context, slave *s, const char *database,
-	      uint32_t current_version, uint32_t current_tstamp,
-              uint32_t initial_version, uint32_t initial_tstamp)
+	      iprop_version current_version, iprop_version initial_version)
 {
     krb5_error_code ret;
     krb5_storage *dump = NULL;
+    iprop_version version;
     uint32_t vno = 0;
-    uint32_t tstamp = 0;
     int fd = -1;
     struct stat st;
     char *dfn;
@@ -773,7 +816,7 @@ send_complete(krb5_context context, slave *s, const char *database,
 	vno = 0;
 	ret = krb5_ret_uint32(dump, &vno);
 	if (ret && ret != HEIM_ERR_EOF) {
-	    krb5_warn(context, ret, "krb5_ret_uint32(dump, &vno)");
+	    krb5_warn(context, ret, "krb5_ret_uint32");
 	    goto done;
 	}
 
@@ -788,10 +831,16 @@ send_complete(krb5_context context, slave *s, const char *database,
 	 * break out of the loop and send the file below.
 	 */
 
-	if (ret == 0 && vno != 0 && st.st_mtime > initial_tstamp &&
-            vno >= initial_version && vno <= current_version &&
-            get_dump_metadata(dump, NULL, &tstamp) == 0)
+        if (ret == 0)
+            ret = get_dump_metadata(dump, &version);
+	if (ret == 0 && vno != 0 && vno == version.vno &&
+            st.st_mtime > initial_version.tstamp &&
+            vno >= initial_version.vno) {
+
+            if (version_lt(version, current_version) ||
+                version_eq(version, current_version))
 	    break;
+        }
 
         if (verbose)
             krb5_warnx(context, "send_complete: dumping HDB");
@@ -824,7 +873,7 @@ send_complete(krb5_context context, slave *s, const char *database,
 	vno = 0;
 	ret = krb5_ret_uint32(dump, &vno);
 	if (ret && ret != HEIM_ERR_EOF) {
-	    krb5_warn(context, ret, "krb5_ret_uint32(dump, &vno)");
+	    krb5_warn(context, ret, "krb5_ret_uint32");
 	    goto done;
 	}
 
@@ -835,14 +884,17 @@ send_complete(krb5_context context, slave *s, const char *database,
         }
 
 	/* check if someone wrote a better version for us */
-        if (ret == 0 && vno != 0 && st.st_mtime > initial_tstamp &&
-            vno >= initial_version && vno <= current_version &&
-            get_dump_metadata(dump, NULL, &tstamp) == 0)
+        if (ret == 0)
+            ret = get_dump_metadata(dump, &version);
+        if (ret == 0 && vno != 0 && vno == version.vno &&
+            st.st_mtime > initial_version.tstamp &&
+            version_ge(version, initial_version) &&
+            version_le(version, current_version))
 	    continue;
 
 	/* Now, we know that we must write a new dump file.  */
 
-        ret = write_dump(context, dump, database, current_version, current_tstamp);
+        ret = write_dump(context, dump, database, current_version);
 	if (ret)
 	    goto done;
 
@@ -861,8 +913,7 @@ send_complete(krb5_context context, slave *s, const char *database,
 
     krb5_storage_free(s->dump);
     s->dump = dump;
-    s->dump_vno = vno;
-    s->dump_tstamp = tstamp;
+    s->dump_vno = version;
     dump = NULL;
 
     if (ret == 0) {
@@ -919,13 +970,13 @@ send_are_you_there (krb5_context context, slave *s)
 
 static int
 send_diffs(kadm5_server_context *server_context, slave *s, int log_fd,
-	   const char *database, uint32_t current_version,
-	   uint32_t current_tstamp, int do_send_complete)
+	   const char *database, iprop_version current_version,
+	   int do_send_complete)
 {
     krb5_context context = server_context->context;
     krb5_storage *sp;
-    uint32_t ver, tstamp, initial_version, initial_version2;
-    uint32_t initial_tstamp, initial_tstamp2;
+    iprop_version initial_version, initial_version2;
+    iprop_version ver;
     enum kadm_ops op;
     uint32_t len;
     off_t right, left, off;
@@ -938,7 +989,7 @@ send_diffs(kadm5_server_context *server_context, slave *s, int log_fd,
         return 0;
     }
 
-    if (s->version == current_version) {
+    if (version_eq(s->version, current_version)) {
 	char buf[4];
 
 	sp = krb5_storage_from_mem(buf, 4);
@@ -955,7 +1006,7 @@ send_diffs(kadm5_server_context *server_context, slave *s, int log_fd,
                 slave_dead(context, s);
             }
             krb5_warnx(context, "slave %s in sync already at version %ld",
-                       s->name, (long)s->version);
+                       s->name, (long)s->version.vno);
         }
 	return ret;
     }
@@ -975,7 +1026,8 @@ send_diffs(kadm5_server_context *server_context, slave *s, int log_fd,
         return errno;
     }
     ret = kadm5_log_get_version_fd(server_context, log_fd, LOG_VERSION_FIRST,
-                                   &initial_version, &initial_tstamp);
+                                   &initial_version.vno,
+                                   &initial_version.tstamp);
     sp = kadm5_log_goto_end(server_context, log_fd);
     flock(log_fd, LOCK_UN);
     if (ret) {
@@ -987,14 +1039,14 @@ send_diffs(kadm5_server_context *server_context, slave *s, int log_fd,
     }
 
     if (do_send_complete ||
-        s->version > current_version ||
-        (s->version == 0 && !(s->flags & SLAVE_F_SENT_COMPLETE)) ||
-        s->version < initial_version) {
-        krb5_storage_free(sp);
+        version_gt(s->version, current_version) ||
+        (s->version.vno == 0 && !(s->flags & SLAVE_F_SENT_COMPLETE)) ||
+        version_lt(s->version, current_version)) {
 
+        krb5_storage_free(sp);
+        ret = send_complete(context, s, database, current_version,
+                            initial_version);
         s->flags |= SLAVE_F_SENT_COMPLETE;
-        return send_complete(context, s, database, current_version,
-                             current_tstamp, initial_version, initial_tstamp);
     }
     if (sp == NULL) {
         send_are_you_there(context, s);
@@ -1017,7 +1069,8 @@ send_diffs(kadm5_server_context *server_context, slave *s, int log_fd,
         return errno;
     }
     while (off > 0) {
-	ret = kadm5_log_previous(context, sp, &ver, &tstamp, &op, &len);
+        ret = kadm5_log_previous(context, sp, &ver.vno, &ver.tstamp, &op,
+                                 &len);
 	if (ret)
 	    krb5_err(context, IPROPD_RESTART, ret,
 		     "send_diffs: failed to find previous entry");
@@ -1029,25 +1082,20 @@ send_diffs(kadm5_server_context *server_context, slave *s, int log_fd,
         }
 
         /* We want to leave left == offset of first entry after s->version */
+        if (version_gt(ver, s->version)) {
+            left = off;
+            continue;
+        }
 
-        if (ver == s->version + 1) {
-	    left = off;
-        } else if (ver <= s->version) {
-            /*
-             * We expect monotonic version numbers in the log, but just in
-             * case, we check for ver < s->version, and force a complete dump
-             * in that case since the slave would reject non-monotonic updates
-             * from us.
-             */
-            if (ver < s->version ||
-                (s->version_tstamp != 0 && tstamp != s->version_tstamp))
-                do_send_complete = 1;
-            break;
-        } /* else if (ver > s->version + 1) continue; */
+        /* ver <= s->version -- done */
+
+        if (!version_eq(ver, s->version))
+            do_send_complete = 1;
+        break;
     }
 
     /* If we've reached the uber record, send the complete database */
-    if ((off == 0 && op == kadm_nop) || (ver == 0 && op == kadm_nop) ||
+    if ((off == 0 && op == kadm_nop) || (ver.vno == 0 && op == kadm_nop) ||
         do_send_complete ||
         /* left == right shouldn't happen; see YOU_HAVE_LAST_VERSION above */
         left >= right) {
@@ -1056,18 +1104,19 @@ send_diffs(kadm5_server_context *server_context, slave *s, int log_fd,
                    "slave %s (version %lu, time %lu) out of sync with master "
                    "(first version in log %lu, time %lu), sending complete "
                    "database", s->name,
-                   (unsigned long)s->version, (unsigned long)s->version_tstamp,
-                   (unsigned long)ver, (unsigned long)tstamp);
+                   (unsigned long)s->version.vno,
+                   (unsigned long)s->version.tstamp,
+                   (unsigned long)ver.vno, (unsigned long)ver.tstamp);
         return send_complete(context, s, database, current_version,
-                             current_tstamp, initial_version, initial_tstamp);
+                             initial_version);
     }
 
-    assert(ver == s->version);
+    assert(version_eq(ver, s->version));
 
     krb5_warnx(context,
 	       "syncing slave %s from version %lu to version %lu",
-	       s->name, (unsigned long)s->version,
-	       (unsigned long)current_version);
+	       s->name, (unsigned long)s->version.vno,
+	       (unsigned long)current_version.vno);
 
     ret = krb5_data_alloc (&data, right - left + 4);
     if (ret) {
@@ -1082,7 +1131,7 @@ send_diffs(kadm5_server_context *server_context, slave *s, int log_fd,
     krb5_storage_free(sp);
     if (bytes != data.length - 4) {
         krb5_warnx(context, "iprop log truncated while sending diffs to "
-                   "slave??  ver = %lu", (unsigned long)ver);
+                   "slave??  ver = %lu", (unsigned long)ver.vno);
         send_are_you_there(context, s);
         return 1;
     }
@@ -1098,7 +1147,8 @@ send_diffs(kadm5_server_context *server_context, slave *s, int log_fd,
         return 1;
     }
     ret = kadm5_log_get_version_fd(server_context, log_fd, LOG_VERSION_FIRST,
-                                   &initial_version2, &initial_tstamp2);
+                                   &initial_version2.vno,
+                                   &initial_version2.tstamp);
     flock(log_fd, LOCK_UN);
     if (ret) {
         krb5_warn(context, ret,
@@ -1106,8 +1156,7 @@ send_diffs(kadm5_server_context *server_context, slave *s, int log_fd,
         send_are_you_there(context, s);
         return 1;
     }
-    if (initial_version != initial_version2 ||
-        initial_tstamp != initial_tstamp2) {
+    if (!version_eq(initial_version, initial_version2)) {
         krb5_warn(context, ret,
                    "send_diffs: log truncated while producing diffs");
         send_are_you_there(context, s);
@@ -1134,9 +1183,9 @@ send_diffs(kadm5_server_context *server_context, slave *s, int log_fd,
     slave_seen(s);
 
     s->version = current_version;
-    s->version_tstamp = current_tstamp;
 
-    krb5_warnx(context, "slave %s is now up to date (%u)", s->name, s->version);
+    krb5_warnx(context, "slave %s is now up to date (%u)", s->name,
+               s->version.vno);
 
     return 0;
 }
@@ -1175,16 +1224,16 @@ send_what_do_you_mean(kadm5_server_context *server_context, slave *s)
 }
 
 static int
-process_msg (kadm5_server_context *server_context, slave *s, int log_fd,
-	     const char *database, uint32_t current_version,
-             uint32_t current_tstamp)
+process_msg(kadm5_server_context *server_context, slave *s, int log_fd,
+	    const char *database, iprop_version current_version)
 {
     krb5_context context = server_context->context;
     int ret = 0;
     int do_send_complete = 0;
     krb5_data out;
     krb5_storage *sp;
-    uint32_t op, slave_last_version, slave_last_time, slave_protocol_version;
+    iprop_version slave_last_version = { 0, 0 };
+    uint32_t op, slave_protocol_version;
 
     /*
      * Slave is not allowed to send messages while we're sending it diffs or
@@ -1216,69 +1265,66 @@ process_msg (kadm5_server_context *server_context, slave *s, int log_fd,
     switch (op) {
     case TELL_ME_EVERYTHING:
         if (protocol_version > 0) {
-            s->version = 0;
-            s->version_tstamp = 0;
-            ret = send_diffs(server_context, s, log_fd, database, current_version,
-                             current_tstamp, 1);
+            s->version.vno = 0;
+            s->version.tstamp = 0;
+            ret = send_diffs(server_context, s, log_fd, database,
+                             current_version, 1);
         } /* else silence */
         break;
     case I_HAVE :
-	ret = krb5_ret_uint32(sp, &slave_last_version);
+	ret = krb5_ret_uint32(sp, &slave_last_version.vno);
 	if (ret != 0) {
 	    krb5_warnx(context, "process_msg: client send too little I_HAVE data");
 	    break;
 	}
-        slave_last_time = 0;
         slave_protocol_version = 0;
         if (protocol_version > 0) {
             if (ret == 0)
-                ret = krb5_ret_uint32(sp, &slave_last_time);
+                ret = krb5_ret_uint32(sp, &slave_last_version.tstamp);
             if (ret == 0) {
                 ret = krb5_ret_uint32(sp, &slave_protocol_version);
                 if (ret == 0)
                     s->protocol_version = min(protocol_version, slave_protocol_version);
                 if (ret)
                     slave_protocol_version = 0;
-            } else
-                slave_last_time = 0;
+            }
             if (ret == HEIM_ERR_EOF) {
                 slave_protocol_version = 0;
                 ret = 0;
             }
         }
         s->protocol_version = slave_protocol_version;
-	if (s->version == 0 && slave_last_version != 0) {
+	if (s->version.vno == 0 && slave_last_version.vno != 0) {
             /* Slave just connected, and has an HDB and iprop log */
-	    if (slave_last_version > current_version) {
+	    if (version_gt(slave_last_version, current_version)) {
 		krb5_warnx(context, "Slave %s (version %u, time %u) has later version "
 			   "than the master (version %u, time %u) OUT OF SYNC",
-                           s->name, slave_last_version, slave_last_time,
-                           current_version, current_tstamp);
+                           s->name, slave_last_version.vno,
+                           slave_last_version.tstamp, current_version.vno,
+                           current_version.tstamp);
                 do_send_complete = 1;
 	    }
             if (verbose)
                 krb5_warnx(context, "slave state %s updated from %u to %u",
-                           s->name, s->version, slave_last_version);
+                           s->name, s->version.vno, slave_last_version.vno);
 	    s->version = slave_last_version;
-	    s->version_tstamp = slave_last_time;
 	}
-	if (slave_last_version < s->version) {
+	if (version_lt(slave_last_version, s->version)) {
 	    krb5_warnx(context, "Slave %s claims to be at version %u "
                        "but we had sent it version %u", s->name,
-                       slave_last_version, s->version);
+                       slave_last_version.vno, s->version.vno);
             s->version = slave_last_version;
-	    s->version_tstamp = slave_last_time;
             do_send_complete = 1;
 	}
 
-        if (s->version != slave_last_version || s->version_tstamp != slave_last_time) {
+        if (!version_eq(s->version, slave_last_version)) {
 	    krb5_warnx(context, "Slave %s claims to be at version %u:%u "
                        "but we had sent it version %u:%u", s->name,
-                       slave_last_version, slave_last_time, s->version,
-                       s->version_tstamp);
+                       slave_last_version.vno, slave_last_version.tstamp,
+                       s->version.vno, s->version.tstamp);
         }
         ret = send_diffs(server_context, s, log_fd, database, current_version,
-                         current_tstamp, do_send_complete);
+                         do_send_complete);
         break;
     case WHAT_DO_YOU_MEAN:
 	krb5_warnx(context, "Slave %s did not understand our last message", s->name);
@@ -1355,7 +1401,7 @@ write_master_down(krb5_context context)
 }
 
 static void
-write_stats(krb5_context context, slave *slaves, uint32_t current_version)
+write_stats(krb5_context context, slave *slaves, iprop_version current_version)
 {
     char str[100];
     rtbl_t tbl;
@@ -1369,7 +1415,9 @@ write_stats(krb5_context context, slave *slaves, uint32_t current_version)
     krb5_format_time(context, t, str, sizeof(str), TRUE);
     fprintf(fp, "Status for slaves, last updated: %s\n\n", str);
 
-    fprintf(fp, "Master version: %lu\n\n", (unsigned long)current_version);
+    fprintf(fp, "Master version: %lu.%lu\n\n",
+            (unsigned long)current_version.vno,
+            (unsigned long)current_version.tstamp);
 
     tbl = rtbl_create();
     if (tbl == NULL) {
@@ -1399,7 +1447,9 @@ write_stats(krb5_context context, slave *slaves, uint32_t current_version)
 	} else
 	    rtbl_add_column_entry(tbl, SLAVE_ADDRESS, "<unknown>");
 
-	snprintf(str, sizeof(str), "%u", (unsigned)slaves->version);
+	snprintf(str, sizeof(str), "%lu.%lu",
+                 (unsigned long)slaves->version.vno,
+                 (unsigned long)slaves->version.tstamp);
 	rtbl_add_column_entry(tbl, SLAVE_VERSION, str);
 
 	if (slaves->flags & SLAVE_F_DEAD)
@@ -1473,8 +1523,8 @@ main(int argc, char **argv)
     krb5_socket_t signal_fd, listen_fd;
     int log_fd;
     slave *slaves = NULL;
-    uint32_t current_version = 0, old_version = 0;
-    uint32_t current_tstamp = 0;
+    iprop_version current_version = { 0, 0 };
+    iprop_version old_version = { 0, 0 };
     krb5_keytab keytab;
     char **files;
     int aret;
@@ -1571,14 +1621,16 @@ main(int argc, char **argv)
         krb5_err(context, 1, errno, "shared flock %s",
                  server_context->log_context.log_file);
     kadm5_log_get_version_fd(server_context, log_fd, LOG_VERSION_LAST,
-                             &current_version, &current_tstamp);
+                             &current_version.vno, &current_version.tstamp);
     flock(log_fd, LOCK_UN);
+    old_version = current_version;
 
     signal_fd = make_signal_socket (context);
     listen_fd = make_listen_socket (context, port_str);
 
-    krb5_warnx(context, "ipropd-master started at version: %lu",
-	       (unsigned long)current_version);
+    krb5_warnx(context, "ipropd-master started at version: %lu.%lu",
+	       (unsigned long)current_version.vno,
+               (unsigned long)current_version.tstamp);
 
     roken_detach_finish(NULL, daemon_child);
     restarter_fd = restarter(context, NULL);
@@ -1656,7 +1708,7 @@ main(int argc, char **argv)
                 krb5_err(context, IPROPD_RESTART, errno, "shared flock %s",
                          server_context->log_context.log_file);
             kadm5_log_get_version_fd(server_context, log_fd, LOG_VERSION_LAST,
-                                     &current_version, &current_tstamp);
+                                     &current_version.vno, &current_version.tstamp);
             flock(log_fd, LOCK_UN);
         } else if (st2.st_mtime > last_recovery_check &&
                    time(NULL) - last_recovery_check > timeout)
@@ -1680,19 +1732,19 @@ main(int argc, char **argv)
                 krb5_err(context, IPROPD_RESTART, errno,
                          "could not lock log file");
 	    kadm5_log_get_version_fd(server_context, log_fd, LOG_VERSION_LAST,
-                                     &current_version, &current_tstamp);
+                                     &current_version.vno, &current_version.tstamp);
 	    flock(log_fd, LOCK_UN);
 
-	    if (current_version > old_version) {
+	    if (current_version.vno > old_version.vno) {
 		krb5_warnx(context,
 			   "Missed a signal, updating slaves %lu to %lu",
-			   (unsigned long)old_version,
-			   (unsigned long)current_version);
+			   (unsigned long)old_version.vno,
+			   (unsigned long)current_version.vno);
 		for (p = slaves; p != NULL; p = p->next) {
 		    if (p->flags & SLAVE_F_DEAD)
 			continue;
-		    send_diffs (server_context, p, log_fd, database,
-                                current_version, current_tstamp, 0);
+		    send_diffs(server_context, p, log_fd, database,
+                               current_version, 0);
 		}
                 old_version = current_version;
 	    }
@@ -1718,36 +1770,33 @@ main(int argc, char **argv)
 	    if (flock(log_fd, LOCK_SH) == -1)
                 krb5_err(context, IPROPD_RESTART, errno, "shared flock %s",
                          server_context->log_context.log_file);
-	    kadm5_log_get_version_fd(server_context, log_fd, LOG_VERSION_LAST,
-                                     &current_version, &current_tstamp);
+            kadm5_log_get_version_fd(server_context, log_fd, LOG_VERSION_LAST,
+                                     &current_version.vno,
+                                     &current_version.tstamp);
 	    flock(log_fd, LOCK_UN);
-	    if (current_version != old_version) {
+	    if (!version_eq(current_version, old_version)) {
                 /*
                  * If current_version < old_version then the log got
                  * truncated and we'll end up doing full propagations.
                  *
                  * Truncating the log when the current version is
-                 * numerically small can lead to race conditions.
-                 * Ideally we should identify log versions as
-                 * {init_or_trunc_time, vno}, then we could not have any
-                 * such race conditions, but this would either require
-                 * breaking backwards compatibility for the protocol or
-                 * adding new messages to it.
+                 * numerically small can lead to race conditions when talking
+                 * to downrev peers.
                  */
 		krb5_warnx(context,
 			   "Got a signal, updating slaves %lu to %lu",
-			   (unsigned long)old_version,
-			   (unsigned long)current_version);
+			   (unsigned long)old_version.vno,
+			   (unsigned long)current_version.vno);
 		for (p = slaves; p != NULL; p = p->next) {
 		    if (p->flags & SLAVE_F_DEAD)
 			continue;
-		    send_diffs (server_context, p, log_fd, database,
-                                current_version, current_tstamp, 0);
+		    send_diffs(server_context, p, log_fd, database,
+                               current_version, 0);
 		}
 	    } else {
 		krb5_warnx(context,
 			   "Got a signal, but no update in log version %lu",
-			   (unsigned long)current_version);
+			   (unsigned long)current_version.vno);
 	    }
         }
 
@@ -1756,10 +1805,9 @@ main(int argc, char **argv)
 	    if (p->flags & SLAVE_F_DEAD)
 	        continue;
 
-            if (FD_ISSET(p->fd, &readset) && process_msg(server_context, p,
-                                                         log_fd, database,
-                                                         current_version,
-                                                         current_tstamp)) {
+            if (FD_ISSET(p->fd, &readset) &&
+                process_msg(server_context, p, log_fd, database,
+                            current_version)) {
                 /* Protocol or I/O error?  Disconnect the slave */
                 slave_dead(context, p);
                 continue;

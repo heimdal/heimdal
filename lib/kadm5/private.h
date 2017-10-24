@@ -186,6 +186,20 @@ enum kadm_recover_mode {
 #define KADMIN_APPL_VERSION "KADM0.1"
 #define KADMIN_OLD_APPL_VERSION "KADM0.0"
 
+/*
+ * We identify iprop log records by their version and timestamp.
+ *
+ * Timestamps are only ever compared for equality.  We do not assume monotonic
+ * time.
+ */
+
+typedef struct iprop_version {
+    uint32_t vno;
+    uint32_t tstamp;
+} iprop_version;
+
+int version_range_too_big(iprop_version, iprop_version);
+
 #include "kadm5-private.h"
 
 #endif /* __kadm5_privatex_h__ */

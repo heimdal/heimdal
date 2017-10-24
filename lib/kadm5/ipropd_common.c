@@ -38,6 +38,13 @@
 #include <sys/wait.h>
 #endif
 
+int
+version_range_too_big(iprop_version first, iprop_version last)
+{
+    return last.vno - first.vno >= (UINT32_MAX >> 1);
+}
+
+
 sig_atomic_t exit_flag;
 
 static RETSIGTYPE

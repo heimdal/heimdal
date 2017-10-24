@@ -253,6 +253,9 @@ libkrb5_la_DEPENDENCIES =			\
 	version-script.map
 
 libkrb5_la_LDFLAGS = -version-info 26:0:0
+if FRAMEWORK_COREFOUNDATION
+libkrb5_la_LDFLAGS += -framework CoreFoundation
+endif
 
 if versionscript
 libkrb5_la_LDFLAGS += $(LDFLAGS_VERSION_SCRIPT)$(srcdir)/version-script.map

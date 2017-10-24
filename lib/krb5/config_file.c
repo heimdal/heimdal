@@ -35,7 +35,7 @@
 
 #include "krb5_locl.h"
 
-#ifdef __APPLE__
+#if defined(HAVE_FRAMEWORK_COREFOUNDATION)
 #include <CoreFoundation/CoreFoundation.h>
 #endif
 
@@ -238,7 +238,7 @@ parse_binding(struct fileptr *f, unsigned *lineno, char *p,
     return ret;
 }
 
-#if defined(__APPLE__)
+#if defined(HAVE_FRAMEWORK_COREFOUNDATION)
 
 #if MAC_OS_X_VERSION_MIN_REQUIRED >= 1060
 #define HAVE_CFPROPERTYLISTCREATEWITHSTREAM 1
@@ -605,7 +605,7 @@ krb5_config_parse_file_multi (krb5_context context,
 
     if (is_plist_file(fname)) {
         context->config_include_depth--;
-#ifdef __APPLE__
+#if defined(HAVE_FRAMEWORK_COREFOUNDATION)
 	ret = parse_plist_config(context, fname, res);
 	if (ret) {
 	    krb5_set_error_message(context, ret,

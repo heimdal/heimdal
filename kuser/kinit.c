@@ -35,7 +35,7 @@
 
 #include "kuser_locl.h"
 
-#ifdef __APPLE__
+#ifdef HAVE_FRAMEWORK_SECURITY
 #include <Security/Security.h>
 #endif
 
@@ -477,7 +477,7 @@ get_new_tickets(krb5_context context,
 	passwd[strcspn(passwd, "\n")] = '\0';
     }
 
-#ifdef __APPLE__
+#ifdef HAVE_FRAMEWORK_SECURITY
     if (passwd[0] == '\0') {
 	const char *realm;
 	OSStatus osret;

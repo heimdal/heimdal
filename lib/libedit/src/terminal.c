@@ -216,6 +216,15 @@ static pthread_mutex_t terminal_mutex = PTHREAD_MUTEX_INITIALIZER;
 #endif
 static FILE *terminal_outfile = NULL;
 
+#ifndef HAVE_TGETENT
+/* provide a stub curses which fails all calls if we have no tgetent et al */
+#define tgoto(x, y, z) (char *)0
+#define tgetstr(x, y) (char *)0
+#define tgetent(x, y) -1;
+#define tputs(x, y, z) -1
+#define tgetflag(x) -1
+#define tgetnum(x) -1
+#endif
 
 /* terminal_setflags():
  *	Set the terminal capability flags

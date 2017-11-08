@@ -544,6 +544,8 @@ validate_constrained_delegation(astgs_request_t r)
 
     r->pac_attributes = s4u_pac_attributes;
 
+    r->et.authtime = evidence_tkt.authtime;
+
 out:
     if (s4u_client)
 	_kdc_free_ent(r->context, s4u_clientdb, s4u_client);

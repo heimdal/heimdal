@@ -556,7 +556,8 @@ tgs_make_reply(astgs_request_t r,
     rep->pvno = 5;
     rep->msg_type = krb_tgs_rep;
 
-    et->authtime = tgt->authtime;
+    if (et->authtime == 0)
+        et->authtime = tgt->authtime;
     _kdc_fix_time(&b->till);
     et->endtime = min(tgt->endtime, *b->till);
     ALLOC(et->starttime);

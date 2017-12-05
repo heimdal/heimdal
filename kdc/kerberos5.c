@@ -2226,15 +2226,17 @@ out:
     /*
      * In case of a non proxy error, build an error message.
      */
-    if(ret != 0 && ret != HDB_ERR_NOT_FOUND_HERE && reply->length == 0) {
+    if (ret != 0 && ret != HDB_ERR_NOT_FOUND_HERE && reply->length == 0) {
 	ret = _kdc_fast_mk_error(context, r,
 				 &error_method,
 				 r->armor_crypto,
 				 &req->req_body,
 				 ret, r->e_text,
 				 r->server_princ,
-				 &r->client_princ->name,
-				 &r->client_princ->realm,
+				 r->client_princ ?
+                                     &r->client_princ->name : NULL,
+				 r->client_princ ?
+                                     &r->client_princ->realm : NULL,
 				 NULL, NULL,
 				 reply);
 	if (ret)

@@ -286,12 +286,10 @@ _kdc_fast_mk_error(krb5_context context,
 	    return ret;
 	}
 
-	if (/* hide_principal */ 0) {
-	    error_client_name = NULL;
-	    error_client_realm = NULL;
-	    error_server = NULL;
-	    e_text = NULL;
-	}
+        error_client_name = NULL;
+        error_client_realm = NULL;
+        error_server = NULL;
+        e_text = NULL;
 
 	if (r)
 	    ret = fast_add_cookie(r, error_method);

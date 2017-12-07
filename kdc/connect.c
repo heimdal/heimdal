@@ -1060,7 +1060,7 @@ reap_kid(krb5_context context, krb5_kdc_configuration *config,
         bonjour_pid = (pid_t)-1;
         return 0;
     } else {
-        pids[i] = (pid_t)-1;
+        pids[i] = (pid_t)0;
         return 1;
     }
 }

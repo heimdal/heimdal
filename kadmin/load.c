@@ -603,7 +603,7 @@ doit(const char *filename, int mergep)
 	ret2 = db->hdb_store(context, db, HDB_F_REPLACE, &ent);
 	hdb_free_entry (context, &ent);
 	if (ret2) {
-	    krb5_warn(context, ret, "db_store");
+	    krb5_warn(context, ret2, "db_store");
 	    break;
 	}
     }
@@ -612,12 +612,12 @@ doit(const char *filename, int mergep)
         ret = ret2;
     ret2 = db->hdb_set_sync(context, db, 1);
     if (ret2) {
-        krb5_err(context, 1, ret, "failed to sync the HDB");
+        krb5_err(context, 1, ret2, "failed to sync the HDB");
         ret = ret2;
     }
     (void) kadm5_log_end(kadm_handle);
     ret2 = db->hdb_close(context, db);
-    if (ret2 != 0)
+    if (ret2)
         ret = ret2;
     fclose(f);
     return ret != 0;

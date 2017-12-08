@@ -1,3 +1,25 @@
+Release Notes - Heimdal - Version Heimdal 7.5
+
+ Security
+
+ - Fix CVE-2017-17439, which is a remote denial of service
+   vulnerability:
+
+     In Heimdal 7.1 through 7.4, remote unauthenticated attackers
+     are able to crash the KDC by sending a crafted UDP packet
+     containing empty data fields for client name or realm.
+
+ Bug fixes
+
+ - Handle long input lines when reloading database dumps.
+
+ - In pre-forked mode (default on Unix), correctly clear
+   the process ids of exited children, allowing new child processes
+   to replace the old.
+
+ - Fixed incorrect KDC response when no-cross realm TGT exists,
+   allowing client requests to fail quickly rather than time
+   out after trying to get a correct answer from each KDC.
 
 Release Notes - Heimdal - Version Heimdal 7.4
 

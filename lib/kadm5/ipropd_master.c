@@ -38,9 +38,10 @@ static krb5_log_facility *log_facility;
 
 static int verbose;
 
-const char *slave_stats_file;
-const char *slave_time_missing = "2 min";
-const char *slave_time_gone = "5 min";
+static const char *slave_stats_file;
+static const char *slave_stats_temp_file;
+static const char *slave_time_missing = "2 min";
+static const char *slave_time_gone = "5 min";
 
 static int time_before_missing;
 static int time_before_gone;
@@ -946,32 +947,26 @@ process_msg (kadm5_server_context *server_context, slave *s, int log_fd,
 #define SLAVE_STATUS	"Status"
 #define SLAVE_SEEN	"Last Seen"
 
-static FILE *
-open_stats(krb5_context context)
+static void
+init_stats_names(krb5_context context)
 {
-    char *statfile = NULL;
     const char *fn = NULL;
-    FILE *out = NULL;
+    char *buf = NULL;
 
-    /*
-     * krb5_config_get_string_default() returs default value as-is,
-     * delay free() of "statfile" until we're done with "fn".
-     */
     if (slave_stats_file)
 	fn = slave_stats_file;
-    else if (asprintf(&statfile,  "%s/slaves-stats", hdb_db_dir(context)) != -1
-	     && statfile != NULL)
-	fn = krb5_config_get_string_default(context,
-					    NULL,
-					    statfile,
-					    "kdc",
-					    "iprop-stats",
-					    NULL);
-    if (fn != NULL)
-	out = fopen(fn, "w");
-    if (statfile != NULL)
-	free(statfile);
-    return out;
+    else if ((fn = krb5_config_get_string(context, NULL, "kdc",
+                                          "iprop-stats", NULL)) == NULL) {
+        if (asprintf(&buf, "%s/slaves-stats", hdb_db_dir(context)) != -1
+	    && buf != NULL)
+            fn = buf;
+        buf = NULL;
+    }
+    if (fn != NULL) {
+        slave_stats_file = fn;
+        if (asprintf(&buf, "%s.tmp", fn) != -1 && buf != NULL)
+            slave_stats_temp_file = buf;
+    }
 }
 
 static void
@@ -979,15 +974,17 @@ write_master_down(krb5_context context)
 {
     char str[100];
     time_t t = time(NULL);
-    FILE *fp;
+    FILE *fp = NULL;
 
-    fp = open_stats(context);
+    if (slave_stats_temp_file != NULL)
+        fp = fopen(slave_stats_temp_file, "w");
     if (fp == NULL)
 	return;
     krb5_format_time(context, t, str, sizeof(str), TRUE);
     fprintf(fp, "master down at %s\n", str);
 
-    fclose(fp);
+    if (fclose(fp) != EOF)
+        rk_rename(slave_stats_temp_file, slave_stats_file);
 }
 
 static void
@@ -996,9 +993,10 @@ write_stats(krb5_context context, slave *slaves, uint32_t current_version)
     char str[100];
     rtbl_t tbl;
     time_t t = time(NULL);
-    FILE *fp;
+    FILE *fp = NULL;
 
-    fp = open_stats(context);
+    if (slave_stats_temp_file != NULL)
+        fp = fopen(slave_stats_temp_file, "w");
     if (fp == NULL)
 	return;
 
@@ -1052,7 +1050,8 @@ write_stats(krb5_context context, slave *slaves, uint32_t current_version)
     rtbl_format(tbl, fp);
     rtbl_destroy(tbl);
 
-    fclose(fp);
+    if (fclose(fp) != EOF)
+        rk_rename(slave_stats_temp_file, slave_stats_file);
 }
 
 
@@ -1150,6 +1149,8 @@ main(int argc, char **argv)
     krb5_free_config_files(files);
     if (ret)
 	krb5_err(context, 1, ret, "reading configuration files");
+
+    init_stats_names(context);
 
     time_before_gone = parse_time (slave_time_gone,  "s");
     if (time_before_gone < 0)

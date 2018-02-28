@@ -1664,12 +1664,12 @@ msgid "Authorization data contains unknown type (%d) "
 msgstr ""
 
 #: lib/krb5/ticket.c:270
-msgid "Ticket have not authorization data"
+msgid "Ticket has no authorization data"
 msgstr ""
 
 #: lib/krb5/ticket.c:280
 #, c-format
-msgid "Ticket have not authorization data of type %d"
+msgid "Ticket has no authorization data of type %d"
 msgstr ""
 
 #: lib/krb5/transited.c:457

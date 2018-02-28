@@ -1522,14 +1522,12 @@ msgid "Authorization data contains unknown type (%d) "
 msgstr "Autorisierungsdaten enthalten unbekannten Typ (%d). "
 
 #: lib/krb5/ticket.c:287
-# FIXME s/ticket/tickets/ or s/have/has/
-msgid "Ticket have not authorization data"
+msgid "Ticket has no authorization data"
 msgstr "Ticket hat keine Autorisierungsdaten."
 
 #: lib/krb5/ticket.c:297
 #, c-format
-# FIXME s/ticket/tickets/ or s/have/has/
-msgid "Ticket have not authorization data of type %d"
+msgid "Ticket has no authorization data of type %d"
 msgstr "Ticket hat keine Autorisierungsdaten des Typs %d."
 
 #: lib/krb5/transited.c:457 lib/krb5/transited.c:490

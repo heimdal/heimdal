@@ -381,7 +381,7 @@ krb5_ticket_get_authorization_data_type(krb5_context context,
     ad = ticket->ticket.authorization_data;
     if (ticket->ticket.authorization_data == NULL) {
 	krb5_set_error_message(context, ENOENT,
-			       N_("Ticket have not authorization data", ""));
+			       N_("Ticket has no authorization data", ""));
 	return ENOENT; /* XXX */
     }
 
@@ -391,7 +391,7 @@ krb5_ticket_get_authorization_data_type(krb5_context context,
 	return ret;
     if (!found) {
 	krb5_set_error_message(context, ENOENT,
-			       N_("Ticket have not "
+			       N_("Ticket has no "
 				  "authorization data of type %d", ""),
 			       type);
 	return ENOENT; /* XXX */

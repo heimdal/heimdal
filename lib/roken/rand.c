@@ -36,6 +36,33 @@
 
 #ifdef HAVE_WIN32_RAND_S
 static int hasRand_s = 1;
+
+// The Following is BackPorted from VersionHelpers.h in the 10.0.15063.0 SDK
+static FORCEINLINE BOOL
+IsWindowsVersionOrGreater(WORD wMajorVersion, WORD wMinorVersion, WORD wServicePackMajor)
+{
+	OSVERSIONINFOEXW osvi ={ sizeof(osvi), 0, 0, 0, 0,{ 0 }, 0, 0 };
+	DWORDLONG        const dwlConditionMask = VerSetConditionMask(
+		VerSetConditionMask(
+			VerSetConditionMask(
+				0, VER_MAJORVERSION, VER_GREATER_EQUAL),
+			VER_MINORVERSION, VER_GREATER_EQUAL),
+		VER_SERVICEPACKMAJOR, VER_GREATER_EQUAL);
+
+	osvi.dwMajorVersion = wMajorVersion;
+	osvi.dwMinorVersion = wMinorVersion;
+	osvi.wServicePackMajor = wServicePackMajor;
+
+	return VerifyVersionInfoW(&osvi, VER_MAJORVERSION | VER_MINORVERSION | VER_SERVICEPACKMAJOR, dwlConditionMask) != FALSE;
+}
+
+static FORCEINLINE BOOL
+IsWindowsXPOrGreater()
+{
+	// Assume that _WIN32_WINNT_WINXP (0x0501) not available so use contants.
+	return IsWindowsVersionOrGreater(5, 1, 0);
+}
+
 #endif
 
 void ROKEN_LIB_FUNCTION
@@ -49,13 +76,7 @@ rk_random_init(void)
     srandom(time(NULL));
 #else
 # ifdef HAVE_WIN32_RAND_S
-    OSVERSIONINFO osInfo;
-
-    osInfo.dwOSVersionInfoSize = sizeof(osInfo);
-    hasRand_s =
-	(GetVersionEx(&osInfo)
-	  && ((osInfo.dwMajorVersion > 5) ||
-	       (osInfo.dwMajorVersion == 5) && (osInfo.dwMinorVersion >= 1)));
+	hasRand_s = IsWindowsXPOrGreater();
 # endif
     srand (time(NULL));
 #endif

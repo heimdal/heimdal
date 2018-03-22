@@ -159,6 +159,7 @@ rk_getprocauxval(unsigned long type)
 ROKEN_LIB_FUNCTION unsigned long ROKEN_LIB_CALL
 rk_getauxval(unsigned long type)
 {
+    const auxv_t *a;
 #ifdef HAVE_GETAUXVAL
 #ifdef GETAUXVAL_SETS_ERRNO
     if (rk_injected_auxv)
@@ -184,8 +185,6 @@ rk_getauxval(unsigned long type)
     }
 
     if (getauxval_sets_errno == 0) {
-	const auxv_t *a;
-
         errno = save_errno;
 	a = rk_getauxv(type);
 	if (a == NULL) {
@@ -214,15 +213,12 @@ rk_getauxval(unsigned long type)
     getauxval_sets_errno = 0;
     errno = save_errno;
 #endif
-#else
-    const auxv_t *a;
-
+#endif
     if ((a = rk_getauxv(type)) == NULL) {
         errno = ENOENT;
         return 0;
     }
     return a->a_un.a_val;
-#endif
 }
 
 /**

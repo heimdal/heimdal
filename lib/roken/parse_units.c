@@ -135,6 +135,8 @@ parse_something (const char *s, const struct units *units,
 	}
 	if (*p == 's')
 	    ++p;
+	while(isspace((unsigned char)*p))
+	    ++p;
     }
     return res;
 }

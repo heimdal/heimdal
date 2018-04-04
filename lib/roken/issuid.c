@@ -188,7 +188,7 @@ issuid(void)
      * race.
      */
     {
-        unsigned long p = getauxval(AT_EXECPATH);
+        unsigned long p = rk_getauxval(AT_EXECPATH);
         struct stat st;
         
         if (p != 0 && *(const char *)p == '/' &&

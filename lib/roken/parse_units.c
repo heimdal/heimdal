@@ -77,7 +77,7 @@ parse_something (const char *s, const struct units *units,
 	unsigned partial;
 	int no_val_p = 0;
 
-	while(isspace((unsigned char)*p) || *p == ',')
+	while (isspace((unsigned char)*p) || *p == ',')
 	    ++p;
 
 	val = strtol(p, &next, 0);
@@ -135,7 +135,7 @@ parse_something (const char *s, const struct units *units,
 	}
 	if (*p == 's')
 	    ++p;
-	while(isspace((unsigned char)*p))
+	while (isspace((unsigned char)*p))
 	    ++p;
     }
     return res;

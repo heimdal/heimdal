@@ -213,6 +213,7 @@ rk_getauxval(unsigned long type)
 
     getauxval_sets_errno = 0;
     errno = save_errno;
+    return 0;
 #endif
 #else
     const auxv_t *a;

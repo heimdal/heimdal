@@ -42,7 +42,6 @@ AC_HAVE_TYPE([ssize_t],[#include <unistd.h>])
 AC_REQUIRE([AC_TYPE_PID_T])
 AC_REQUIRE([AC_TYPE_UID_T])
 AC_HAVE_TYPE([long long])
-AC_HAVE_TYPE([auxv_t],[#include <auxv.h>])
 
 AC_REQUIRE([rk_RETSIGTYPE])
 
@@ -51,6 +50,7 @@ AC_REQUIRE([AC_HEADER_STDC])
 AC_REQUIRE([AC_HEADER_TIME])
 
 AC_CHECK_HEADERS([\
+	auxv.h					\
 	arpa/inet.h				\
 	config.h				\
 	crypt.h					\
@@ -95,6 +95,14 @@ AC_CHECK_HEADERS([\
 	userconf.h				\
 	usersec.h				\
 	util.h					\
+])
+
+AC_HAVE_TYPE([auxv_t],[#ifdef HAVE_AUXV_H
+#include <auxv.h>
+#endif
+#ifdef HAVE_SYS_AUXV_H
+#include <sys/auxv.h>
+#endif
 ])
 
 AC_HAVE_TYPE([uintptr_t],[#ifdef HAVE_STDINT_H

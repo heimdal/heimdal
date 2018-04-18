@@ -52,7 +52,7 @@
 
 #else
 
-#if defined(__clang__) || defined(__GNUC__) || defined(__SUNPRO_CC)
+#if defined(__clang__) || defined(__GNUC__) || defined(__SUNPRO_C)
 #define HEIMDAL_THREAD_LOCAL __thread
 #else
 #error "thread-local attribute not defined for your compiler"

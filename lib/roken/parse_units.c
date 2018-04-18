@@ -376,5 +376,5 @@ unparse_flags(int num, const struct units *units, char *s, size_t len)
 ROKEN_LIB_FUNCTION void ROKEN_LIB_CALL
 print_flags_table (const struct units *units, FILE *f)
 {
-    return rk_print_flags_table (units, f);
+    rk_print_flags_table (units, f);
 }

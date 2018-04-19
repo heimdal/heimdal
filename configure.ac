@@ -59,6 +59,9 @@ fi
 dnl AC_KRB_PROG_YACC
 AC_PROG_YACC
 AM_PROG_LEX
+AS_IF([$LEX --nounput -V > /dev/null 2>&1 && test $? -eq 0],
+      [AC_SUBST([FLEXNOUNPUTARGS], ["--nounput"])],
+      [AC_SUBST([FLEXNOUNPUTARGS], [""])])
 dnl AC_PROG_RANLIB
 AC_PROG_AWK
 AC_KRB_PROG_LN_S

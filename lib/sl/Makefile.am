@@ -9,6 +9,7 @@ endif
 AM_CPPFLAGS += $(ROKEN_RENAME)
 
 YFLAGS = -d
+LFLAGS = @FLEXNOUNPUTARGS@
 
 include_HEADERS = sl.h
 

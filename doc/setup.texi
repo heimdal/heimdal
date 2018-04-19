@@ -1754,7 +1754,7 @@ Certificates in Windows''.
 @section Debugging Kerberos problems
 
 To debug Kerberos client and server problems you can enable debug
-traceing by adding the following to @file{/etc/krb5,conf}. Note that the
+tracing by adding the following to @file{/etc/krb5.conf}. Note that the
 trace logging is sparse at the moment, but will continue to improve.
 
 @example

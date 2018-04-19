@@ -53,8 +53,6 @@ static char * handle_string(void);
 
 %}
 
-%option nounput
-
 %%
 [A-Za-z][-A-Za-z0-9_]*	{
 			  yylval.string = strdup ((const char *)yytext);

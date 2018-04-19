@@ -53,8 +53,6 @@ static int getstring(void);
 
 %}
 
-%option nounput
-
 %%
 et			{ return ET; }
 error_table		{ return ET; }

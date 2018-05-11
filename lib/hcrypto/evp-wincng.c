@@ -570,6 +570,11 @@ wincng_md_hash_init(BCRYPT_ALG_HANDLE hAlgorithm,
     NTSTATUS status;
     ULONG cbData;
 
+    if (cng->hHash) {
+	BCryptDestroyHash(cng->hHash); /* allow reinitialization */
+	cng->hHash = (BCRYPT_HASH_HANDLE)0;
+    }
+
     status = BCryptGetProperty(hAlgorithm,
 			       BCRYPT_OBJECT_LENGTH,
 			       (PUCHAR)&cng->cbHashObject,

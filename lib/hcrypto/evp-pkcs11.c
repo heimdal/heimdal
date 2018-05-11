@@ -87,7 +87,6 @@ p11_cleanup(EVP_CIPHER_CTX *ctx);
 struct pkcs11_cipher_ctx {
     CK_SESSION_HANDLE hSession;
     CK_OBJECT_HANDLE hSecret;
-    int cipher_init_done;
 };
 
 struct pkcs11_md_ctx {
@@ -281,20 +280,43 @@ p11_key_init(EVP_CIPHER_CTX *ctx,
         { CKA_VALUE,            (void *)key,    ctx->key_len            },
         { op,                   &bTrue,         sizeof(bTrue)           }
     };
+    CK_MECHANISM mechanism = {
+        mechanismType,
+        ctx->cipher->iv_len ? ctx->iv : NULL,
+        ctx->cipher->iv_len
+    };
     struct pkcs11_cipher_ctx *p11ctx = (struct pkcs11_cipher_ctx *)ctx->cipher_data;
-    p11ctx->cipher_init_done = 0;
 
-    rv = p11_session_init(mechanismType, &p11ctx->hSession);
-    if (rv != CKR_OK)
-        goto cleanup;
+    rv = CKR_OK;
 
-    assert(p11_module != NULL);
+    if (p11ctx->hSession != CK_INVALID_HANDLE && key != NULL)
+        p11_cleanup(ctx); /* refresh session with new key */
 
-    rv = p11_module->C_CreateObject(p11ctx->hSession, attributes,
-                                    sizeof(attributes) / sizeof(attributes[0]),
-                                    &p11ctx->hSecret);
-    if (rv != CKR_OK)
-        goto cleanup;
+    if (p11ctx->hSession == CK_INVALID_HANDLE) {
+        rv = p11_session_init(mechanismType, &p11ctx->hSession);
+        if (rv != CKR_OK)
+            goto cleanup;
+    }
+
+    if (key != NULL) {
+        assert(p11_module != NULL);
+        assert(p11ctx->hSecret == CK_INVALID_HANDLE);
+
+        rv = p11_module->C_CreateObject(p11ctx->hSession, attributes,
+                                        sizeof(attributes) / sizeof(attributes[0]),
+                                        &p11ctx->hSecret);
+        if (rv != CKR_OK)
+            goto cleanup;
+    }
+
+    if (p11ctx->hSecret != CK_INVALID_HANDLE) {
+        if (op == CKA_ENCRYPT)
+            rv = p11_module->C_EncryptInit(p11ctx->hSession, &mechanism, p11ctx->hSecret);
+        else
+            rv = p11_module->C_DecryptInit(p11ctx->hSession, &mechanism, p11ctx->hSecret);
+        if (rv != CKR_OK)
+            goto cleanup;
+    }
 
 cleanup:
     if (rv != CKR_OK)
@@ -310,37 +332,17 @@ p11_do_cipher(EVP_CIPHER_CTX *ctx,
               unsigned int size)
 {
     struct pkcs11_cipher_ctx *p11ctx = (struct pkcs11_cipher_ctx *)ctx->cipher_data;
-    CK_RV rv = CKR_OK;
+    CK_RV rv;
     CK_ULONG ulCipherTextLen = size;
-    CK_MECHANISM_TYPE mechanismType = (CK_MECHANISM_TYPE)ctx->cipher->app_data;
-    CK_MECHANISM mechanism = {
-        mechanismType,
-        ctx->cipher->iv_len ? ctx->iv : NULL,
-        ctx->cipher->iv_len
-    };
 
     assert(p11_module != NULL);
-    /* The EVP layer only ever calls us with complete cipher blocks */
     assert(EVP_CIPHER_CTX_mode(ctx) == EVP_CIPH_STREAM_CIPHER ||
            (size % ctx->cipher->block_size) == 0);
 
-    if (ctx->encrypt) {
-        if (!p11ctx->cipher_init_done) {
-            rv = p11_module->C_EncryptInit(p11ctx->hSession, &mechanism, p11ctx->hSecret);
-            if (rv == CKR_OK)
-                p11ctx->cipher_init_done = 1;
-        }
-        if (rv == CKR_OK)
-            rv = p11_module->C_EncryptUpdate(p11ctx->hSession, (unsigned char *)in, size, out, &ulCipherTextLen);
-    } else {
-        if (!p11ctx->cipher_init_done) {
-            rv = p11_module->C_DecryptInit(p11ctx->hSession, &mechanism, p11ctx->hSecret);
-            if (rv == CKR_OK)
-                p11ctx->cipher_init_done = 1;
-        }
-        if (rv == CKR_OK)
-            rv = p11_module->C_DecryptUpdate(p11ctx->hSession, (unsigned char *)in, size, out, &ulCipherTextLen);
-    }
+    if (ctx->encrypt)
+        rv = p11_module->C_EncryptUpdate(p11ctx->hSession, (unsigned char *)in, size, out, &ulCipherTextLen);
+    else
+        rv = p11_module->C_DecryptUpdate(p11ctx->hSession, (unsigned char *)in, size, out, &ulCipherTextLen);
 
     return rv == CKR_OK;
 }
@@ -349,8 +351,6 @@ static int
 p11_cleanup(EVP_CIPHER_CTX *ctx)
 {
     struct pkcs11_cipher_ctx *p11ctx = (struct pkcs11_cipher_ctx *)ctx->cipher_data;
-
-    assert(p11_module != NULL);
 
     if (p11ctx->hSecret != CK_INVALID_HANDLE)  {
         p11_module->C_DestroyObject(p11ctx->hSession, p11ctx->hSecret);
@@ -435,7 +435,7 @@ p11_md_cleanup(EVP_MD_CTX *ctx)
         block_size,                                                     \
         key_len,                                                        \
         iv_len,                                                         \
-        flags,                                                          \
+        (flags) | EVP_CIPH_ALWAYS_CALL_INIT,                            \
         p11_key_init,                                                   \
         p11_do_cipher,                                                  \
         p11_cleanup,                                                    \

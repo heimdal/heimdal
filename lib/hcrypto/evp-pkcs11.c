@@ -390,7 +390,9 @@ p11_md_update(EVP_MD_CTX *ctx, const void *data, size_t length)
 
     assert(p11_module != NULL);
 
-    rv = p11_module->C_DigestUpdate(p11ctx->hSession, (unsigned char *)data, length);
+    rv = p11_module->C_DigestUpdate(p11ctx->hSession,
+                                    data ? (CK_BYTE_PTR)data : (CK_BYTE_PTR)"",
+                                    length);
 
     return rv == CKR_OK;
 }

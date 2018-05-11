@@ -33,6 +33,7 @@
  * SUCH DAMAGE.
  */
 
+#include "config.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <krb5-types.h>
@@ -64,9 +65,12 @@ test_service(void *ctx, const heim_idata *req,
 	     heim_sipc_call cctx)
 {
     heim_idata rep;
-    printf("got request\n");
-    rep.length = 0;
-    rep.data = NULL;
+    char buf[128];
+
+    printf("got request via %s\n", (const char *)ctx);
+    snprintf(buf, sizeof(buf), "Hello back via %s\n", (const char *)ctx);
+    rep.data = buf;
+    rep.length = strlen(buf);
     (*complete)(cctx, 0, &rep);
 }
 
@@ -94,11 +98,18 @@ main(int argc, char **argv)
     {
 	heim_sipc mach;
 	heim_sipc_launchd_mach_init("org.h5l.test-ipc",
-				    test_service, NULL, &mach);
+				    test_service, "MACH", &mach);
     }
 #endif
     heim_sipc_service_unix("org.h5l.test-ipc",
-			   test_service, NULL, &u);
+			   test_service, "UNIX", &u);
+#ifdef HAVE_DOOR_CREATE
+    {
+        heim_sipc door;
+        heim_sipc_service_door("org.h5l.test-ipc",
+			       test_service, "DOOR", &door);
+    }
+#endif
     heim_ipc_main();
 
     return 0;

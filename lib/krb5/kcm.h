@@ -78,9 +78,6 @@ typedef enum kcm_operation {
     KCM_OP_MAX
 } kcm_operation;
 
-#define _PATH_KCM_SOCKET      "/var/run/.kcm_socket"
-#define _PATH_KCM_DOOR      "/var/run/.kcm_door"
-
 #define KCM_NTLM_FLAG_SESSIONKEY 1
 #define KCM_NTLM_FLAG_NTLM2_SESSION 2
 #define KCM_NTLM_FLAG_KEYEX 4

@@ -274,6 +274,12 @@ main(int argc, char **argv)
 	heim_sipc_timeout(60);
     }
 #endif
+#ifdef HAVE_DOOR_CREATE
+    {
+	heim_sipc door;
+	heim_sipc_service_door("org.h5l.ntlm-service", ntlm_service, NULL, &door);
+    }
+#endif
     {
 	heim_sipc un;
 	heim_sipc_service_unix("org.h5l.ntlm-service", ntlm_service, NULL, &un);

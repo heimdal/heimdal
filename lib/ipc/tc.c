@@ -33,6 +33,7 @@
  * SUCH DAMAGE.
  */
 
+#include "config.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <krb5-types.h>
@@ -62,7 +63,7 @@ usage(int ret)
 static void
 reply(void *ctx, int errorcode, heim_idata *rep, heim_icred cred)
 {
-    printf("got reply\n");
+    printf("got reply errorcode %d, rep %.*s\n", errorcode, rep->length, rep->data);
     heim_ipc_semaphore_signal((heim_isemaphore)ctx); /* tell caller we are done */
 }
 
@@ -73,13 +74,18 @@ test_ipc(const char *service)
     heim_idata req, rep;
     heim_ipc ipc;
     int ret;
+    char buf[128];
+
+    snprintf(buf, sizeof(buf), "testing heim IPC via %s", service);
+
+    printf("%s\n", buf);
 
     ret = heim_ipc_init_context(service, &ipc);
     if (ret)
 	errx(1, "heim_ipc_init_context: %d", ret);
 
-    req.length = 0;
-    req.data = NULL;
+    req.length = strlen(buf);
+    req.data = buf;
 
     ret = heim_ipc_call(ipc, &req, &rep, NULL);
     if (ret)
@@ -122,6 +128,9 @@ main(int argc, char **argv)
 #endif
     test_ipc("ANY:org.h5l.test-ipc");
     test_ipc("UNIX:org.h5l.test-ipc");
+#ifdef HAVE_DOOR_CREATE
+    test_ipc("DOOR:org.h5l.test-ipc");
+#endif
 
     return 0;
 }

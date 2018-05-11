@@ -365,10 +365,16 @@ p11_cleanup(EVP_CIPHER_CTX *ctx)
 }
 
 static int
+p11_md_cleanup(EVP_MD_CTX *ctx);
+
+static int
 p11_md_hash_init(CK_MECHANISM_TYPE mechanismType, EVP_MD_CTX *ctx)
 {
     struct pkcs11_md_ctx *p11ctx = (struct pkcs11_md_ctx *)ctx;
     CK_RV rv;
+
+    if (p11ctx->hSession != CK_INVALID_HANDLE)
+        p11_md_cleanup(ctx);
 
     rv = p11_session_init(mechanismType, &p11ctx->hSession);
     if (rv == CKR_OK) {

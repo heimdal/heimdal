@@ -164,7 +164,7 @@ struct hc_CIPHER {
 #define hc_EVP_CTRL_INIT                        0x0
 
 #define hc_EVP_CIPH_VARIABLE_LENGTH     0x008 /* variable key length */
-#define hc_EVP_CIPH_ALWAYS_CALL_INIT    0x020
+#define hc_EVP_CIPH_ALWAYS_CALL_INIT    0x020 /* backend maintains own cipherstate */
 #define hc_EVP_CIPH_RAND_KEY            0x200
 
     int (*init)(EVP_CIPHER_CTX*,const unsigned char*,const unsigned char*,int);

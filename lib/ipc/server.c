@@ -501,9 +501,9 @@ update_client_creds(struct client *c)
 #ifdef HAVE_GETPEERUCRED
     /* Solaris 10 */
     {
-	ucred_t *peercred;
+	ucred_t *peercred = NULL;
 
-	if (getpeerucred(c->fd, &peercred) != 0) {
+	if (getpeerucred(c->fd, &peercred) == 0) {
 	    c->unixrights.uid = ucred_geteuid(peercred);
 	    c->unixrights.gid = ucred_getegid(peercred);
 	    c->unixrights.pid = 0;

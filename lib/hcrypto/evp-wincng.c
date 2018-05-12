@@ -96,8 +96,10 @@ wincng_cleanup(EVP_CIPHER_CTX *ctx)
 {
     struct wincng_key *cng = ctx->cipher_data;
 
-    if (cng->hKey)
+    if (cng->hKey) {
 	BCryptDestroyKey(cng->hKey);
+	cng->hKey = (BCRYPT_KEY_HANDLE)0;
+    }
     SecureZeroMemory(cng->rgbKeyObject, WINCNG_KEY_OBJECT_SIZE(ctx));
 
     return 1;
@@ -196,10 +198,7 @@ wincng_key_init(EVP_CIPHER_CTX *ctx,
     if (ctx->cipher->app_data == NULL)
 	return 0;
 
-    if (cng->hKey) {
-	BCryptDestroyKey(cng->hKey); /* allow reinitialization */
-	cng->hKey = (BCRYPT_KEY_HANDLE)0;
-    }
+    wincng_cleanup(ctx);
 
     /*
      * Note: ctx->key_len not EVP_CIPHER_CTX_key_length() for
@@ -568,6 +567,9 @@ wincng_md_algorithm_init(EVP_MD *md,
 }
 
 static int
+wincng_md_cleanup(EVP_MD_CTX *ctx);
+
+static int
 wincng_md_hash_init(BCRYPT_ALG_HANDLE hAlgorithm,
 		    EVP_MD_CTX *ctx)
 {
@@ -575,10 +577,7 @@ wincng_md_hash_init(BCRYPT_ALG_HANDLE hAlgorithm,
     NTSTATUS status;
     ULONG cbData;
 
-    if (cng->hHash) {
-	BCryptDestroyHash(cng->hHash); /* allow reinitialization */
-	cng->hHash = (BCRYPT_HASH_HANDLE)0;
-    }
+    wincng_md_cleanup(ctx);
 
     status = BCryptGetProperty(hAlgorithm,
 			       BCRYPT_OBJECT_LENGTH,
@@ -643,8 +642,10 @@ wincng_md_cleanup(EVP_MD_CTX *ctx)
 {
     struct wincng_md_ctx *cng = (struct wincng_md_ctx *)ctx;
 
-    if (cng->hHash)
+    if (cng->hHash) {
 	BCryptDestroyHash(cng->hHash);
+	cng->hHash = (BCRYPT_HASH_HANDLE)0;
+    }
     SecureZeroMemory(cng->rgbHashObject, cng->cbHashObject);
 
     return 1;

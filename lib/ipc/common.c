@@ -56,25 +56,25 @@ heim_ipc_free_cred(heim_icred cred)
 uid_t
 heim_ipc_cred_get_uid(heim_icred cred)
 {
-    return cred->uid;
+    return cred ? cred->uid : (uid_t)-1;
 }
 
 gid_t
 heim_ipc_cred_get_gid(heim_icred cred)
 {
-    return cred->gid;
+    return cred ? cred->gid : (gid_t)-1;
 }
 
 pid_t
 heim_ipc_cred_get_pid(heim_icred cred)
 {
-    return cred->pid;
+    return cred ? cred->pid : (pid_t)0;
 }
 
 pid_t
 heim_ipc_cred_get_session(heim_icred cred)
 {
-    return cred->session;
+    return cred ? cred->session : (pid_t)-1;
 }
 
 

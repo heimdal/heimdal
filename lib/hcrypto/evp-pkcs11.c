@@ -94,11 +94,11 @@ struct pkcs11_md_ctx {
 };
 
 static void *pkcs11_module_handle;
-static void
-p11_module_init_once(void *context)
+
+static CK_RV
+p11_module_load(CK_FUNCTION_LIST_PTR_PTR ppFunctionList)
 {
     CK_RV rv;
-    CK_FUNCTION_LIST_PTR module;
     CK_RV (*C_GetFunctionList_fn)(CK_FUNCTION_LIST_PTR_PTR);
 
     if (!issuid()) {
@@ -108,7 +108,7 @@ p11_module_init_once(void *context)
 		dlopen(pkcs11ModulePath,
 		       RTLD_LAZY | RTLD_LOCAL | RTLD_GROUP | RTLD_NODELETE);
 	    if (pkcs11_module_handle == NULL)
-                fprintf(stderr, "p11_module_init(%s): %s\n", pkcs11ModulePath, dlerror());
+                fprintf(stderr, "p11_module_load(%s): %s\n", pkcs11ModulePath, dlerror());
         }
     }
 #ifdef PKCS11_MODULE_PATH
@@ -117,43 +117,57 @@ p11_module_init_once(void *context)
 	    dlopen(PKCS11_MODULE_PATH,
 		   RTLD_LAZY | RTLD_LOCAL | RTLD_GROUP | RTLD_NODELETE);
 	if (pkcs11_module_handle == NULL)
-            fprintf(stderr, "p11_module_init(%s): %s\n", PKCS11_MODULE_PATH, dlerror());
+            fprintf(stderr, "p11_module_load(%s): %s\n", PKCS11_MODULE_PATH, dlerror());
     }
 #endif
     if (pkcs11_module_handle == NULL)
-        goto cleanup;
+        return CKR_LIBRARY_LOAD_FAILED;
 
     C_GetFunctionList_fn = (CK_RV (*)(CK_FUNCTION_LIST_PTR_PTR))
 	dlsym(pkcs11_module_handle, "C_GetFunctionList");
-    if (C_GetFunctionList_fn == NULL)
-        goto cleanup;
-
-    rv = C_GetFunctionList_fn(&module);
-    if (rv != CKR_OK)
-        goto cleanup;
-
-    rv = module->C_Initialize(NULL);
-    if (rv == CKR_CRYPTOKI_ALREADY_INITIALIZED)
-        rv = CKR_OK;
-    if (rv == CKR_OK)
-        *((CK_FUNCTION_LIST_PTR_PTR)context) = module;
-
-cleanup:
-    if (pkcs11_module_handle != NULL && p11_module == NULL) {
-	dlclose(pkcs11_module_handle);
-	pkcs11_module_handle = NULL;
+    if (C_GetFunctionList_fn == NULL) {
+        dlclose(pkcs11_module_handle);
+        return CKR_LIBRARY_LOAD_FAILED;
     }
-    /* else leak pkcs11_module_handle */
+
+    rv = C_GetFunctionList_fn(ppFunctionList);
+    if (rv != CKR_OK) {
+        dlclose(pkcs11_module_handle);
+        return rv;
+    }
+
+    return CKR_OK;
+}
+
+static void
+p11_module_load_once(void *context)
+{
+    p11_module_load((CK_FUNCTION_LIST_PTR_PTR)context);
 }
 
 static CK_RV
 p11_module_init(void)
 {
-    static heim_base_once_t init_module = HEIM_BASE_ONCE_INIT;
+    static heim_base_once_t once = HEIM_BASE_ONCE_INIT;
+    CK_RV rv;
 
-    heim_base_once_f(&init_module, &p11_module, p11_module_init_once);
+    heim_base_once_f(&once, &p11_module, p11_module_load_once);
 
-    return p11_module != NULL ? CKR_OK : CKR_LIBRARY_LOAD_FAILED;
+    if (p11_module == NULL)
+        return CKR_LIBRARY_LOAD_FAILED;
+
+    /*
+     * Call C_Initialize() on every call, because it will be invalid after fork().
+     * Caching the initialization status using a once control and invalidating it
+     * on fork provided no measurable performance benefit on Solaris 11. Other
+     * approaches would not be thread-safe or would involve more intrusive code
+     * changes, such as exposing heimbase's atomics.
+     */
+    rv = p11_module->C_Initialize(NULL);
+    if (rv == CKR_CRYPTOKI_ALREADY_INITIALIZED)
+        rv = CKR_OK;
+
+    return rv;
 }
 
 static CK_RV

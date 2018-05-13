@@ -428,28 +428,51 @@ common_release(void *ctx)
     return 0;
 }
 
-#ifdef HAVE_DOOR
+#ifdef HAVE_DOOR_CREATE
+
+#include <door.h>
+
+#ifdef HAVE_SYS_MMAN_H
+#include <sys/mman.h>
+#endif
 
 static int
 door_init(const char *service,
 	  void **ctx)
 {
-    ret = common_path_init(context, service, "door", ctx);
+    int ret;
+    struct path_ctx *d;
+
+    ret = common_path_init(service, "door", ctx);
     if (ret)
 	return ret;
-    ret = connect_door(*ctx);
-    if (ret)
+
+    d = (struct path_ctx *)*ctx;
+    d->fd = open(d->path, O_RDWR);
+    if (d->fd < 0) {
+        ret = errno;
 	common_release(*ctx);
-    return ret;
+        return ret;
+    }
+
+    return 0;
 }
+
+struct door_reply {
+    int returnvalue;
+    size_t length;
+    unsigned char data[1];
+};
 
 static int
 door_ipc(void *ctx,
 	 const heim_idata *request, heim_idata *response,
 	 heim_icred *cred)
 {
+    struct path_ctx *d = (struct path_ctx *)ctx;
     door_arg_t arg;
     int ret;
+    struct door_reply *r;
 
     arg.data_ptr = request->data;
     arg.data_size = request->length;
@@ -458,24 +481,34 @@ door_ipc(void *ctx,
     arg.rbuf = NULL;
     arg.rsize = 0;
 
-    ret = door_call(fd, &arg);
-    close(fd);
+    ret = door_call(d->fd, &arg);
     if (ret != 0)
 	return errno;
 
-    response->data = malloc(arg.rsize);
+    if (arg.rsize < offsetof(struct door_reply, data))
+        return EINVAL;
+
+    r = (struct door_reply *)arg.rbuf;
+    if (r->returnvalue != 0)
+        return r->returnvalue;
+
+    if (arg.rsize < offsetof(struct door_reply, data) + r->length)
+        return ERANGE;
+
+    response->data = malloc(r->length);
     if (response->data == NULL) {
 	munmap(arg.rbuf, arg.rsize);
 	return ENOMEM;
     }
-    memcpy(response->data, arg.rbuf, arg.rsize);
-    response->length = arg.rsize;
+
+    memcpy(response->data, r->data, r->length);
+    response->length = r->length;
     munmap(arg.rbuf, arg.rsize);
 
-    return ret;
+    return 0;
 }
 
-#endif
+#endif /* HAVE_DOOR_CREATE */
 
 struct hipc_ops {
     const char *prefix;
@@ -490,8 +523,8 @@ struct hipc_ops ipcs[] = {
 #if defined(__APPLE__) && defined(HAVE_GCD)
     { "MACH", mach_init, mach_release, mach_ipc, mach_async },
 #endif
-#ifdef HAVE_DOOR
-    { "DOOR", door_init, common_release, door_ipc, NULL }
+#ifdef HAVE_DOOR_CREATE
+    { "DOOR", door_init, common_release, door_ipc, NULL },
 #endif
     { "UNIX", unix_socket_init, common_release, unix_socket_ipc, NULL }
 };

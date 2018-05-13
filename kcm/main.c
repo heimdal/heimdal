@@ -97,6 +97,12 @@ main(int argc, char **argv)
 	heim_sipc un;
 	heim_sipc_service_unix(service_name, kcm_service, NULL, &un);
     }
+#ifdef HAVE_DOOR_CREATE
+    {
+	heim_sipc door;
+	heim_sipc_service_door(service_name, kcm_service, NULL, &door);
+    }
+#endif
 
     roken_detach_finish(NULL, daemon_child);
 

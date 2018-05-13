@@ -457,6 +457,7 @@ struct client {
 #define WAITING_CLOSE	8
 
 #define HTTP_REPLY	16
+#define DOOR_FD         32
 
 #define INHERIT_MASK	0xffff0000
 #define INCLUDE_ERROR_CODE (1 << 16)
@@ -612,7 +613,6 @@ update_client_creds(struct client *c)
     return 0;
 }
 
-
 static struct client *
 add_new_socket(int fd,
 	       int flags,
@@ -628,6 +628,8 @@ add_new_socket(int fd,
 
     if (flags & LISTEN_SOCKET) {
 	c->fd = fd;
+    } else if (flags & DOOR_FD) {
+        c->fd = -1; /* cannot poll a door descriptor */
     } else {
 	c->fd = accept(fd, NULL, NULL);
 	if(c->fd < 0) {
@@ -870,6 +872,8 @@ handle_read(struct client *c)
     ssize_t len;
     uint32_t dlen;
 
+    assert((c->flags & DOOR_FD) == 0);
+
     if (c->flags & LISTEN_SOCKET) {
 	add_new_socket(c->fd,
 		       WAITING_READ | (c->flags & INHERIT_MASK),
@@ -930,6 +934,7 @@ handle_read(struct client *c)
 	    cs->in.data = emalloc(dlen);
 	    memcpy(cs->in.data, c->inmsg + sizeof(dlen), dlen);
 	    cs->in.length = dlen;
+	    cs->cred = NULL;
 
 	    c->ptr -= sizeof(dlen) + dlen;
 	    memmove(c->inmsg,
@@ -1130,6 +1135,144 @@ heim_sipc_service_unix(const char *service,
 
     return ret;
 }
+
+#ifdef HAVE_DOOR_CREATE
+#include <door.h>
+#include <alloca.h>
+
+#ifdef HAVE_SYS_MMAN_H
+#include <sys/mman.h>
+#endif
+
+struct door_call {
+    heim_idata in;
+    door_desc_t *dp;
+    heim_icred cred;
+};
+
+struct door_reply {
+    int returnvalue;
+    size_t length;
+    unsigned char data[1];
+};
+
+static int
+door_release(heim_sipc ctx)
+{
+    struct client *c = ctx->mech;
+    return 0;
+}
+
+static void
+door_complete(heim_sipc_call ctx, int returnvalue, heim_idata *reply)
+{
+    struct door_call *cs = (struct door_call *)ctx;
+    size_t rlen = offsetof(struct door_reply, data);
+    struct door_reply *r;
+
+    if (returnvalue == 0)
+        rlen += reply->length;
+
+    r = alloca(rlen);
+    r->returnvalue = returnvalue;
+
+    if (returnvalue == 0) {
+        r->length = reply->length;
+        memcpy(r->data, reply->data, reply->length);
+    }
+
+    /* door_return() doesn't return; don't leak cred */
+    heim_ipc_free_cred(cs->cred);
+
+    door_return((char *)r, rlen, NULL, 0);
+}
+
+static void
+door_callback(void *cookie,
+              char *argp,
+              size_t arg_size,
+              door_desc_t *dp,
+              uint_t n_desc)
+{
+    heim_sipc c = (heim_sipc)cookie;
+    struct door_call cs = { 0 };
+    ucred_t *peercred = NULL;
+
+    if (door_ucred(&peercred) < 0)
+        return;
+
+    _heim_ipc_create_cred(ucred_geteuid(peercred),
+                          ucred_getegid(peercred),
+                          ucred_getpid(peercred),
+                          -1,
+                          &cs.cred);
+    ucred_free(peercred);
+
+    cs.dp = dp;
+    cs.in.data = argp;
+    cs.in.length = arg_size;
+
+    c->callback(c->userctx, &cs.in, cs.cred, door_complete, (heim_sipc_call)&cs);
+}
+
+int
+heim_sipc_service_door(const char *service,
+		       heim_ipc_callback callback,
+		       void *user, heim_sipc *ctx)
+{
+    char path[PATH_MAX];
+    int fd = -1, dfd = -1, ret;
+    heim_sipc ct = NULL;
+    struct client *c = NULL;
+
+    ct = calloc(1, sizeof(*ct));
+    if (ct == NULL) {
+        ret = ENOMEM;
+        goto cleanup;
+    }
+    ct->release = door_release;
+    ct->userctx = user;
+    ct->callback = callback;
+
+    snprintf(path, sizeof(path), "/var/run/.heim_%s-door", service);
+    fd = door_create(door_callback, ct, DOOR_REFUSE_DESC | DOOR_NO_CANCEL);
+    if (fd < 0) {
+        ret = errno;
+        goto cleanup;
+    }
+
+    fdetach(path);
+    dfd = open(path, O_RDWR | O_CREAT, 0666);
+    if (dfd < 0) {
+        ret = errno;
+        goto cleanup;
+    }
+    fchmod(dfd, 0666); /* XXX */
+
+    if (fattach(fd, path) < 0) {
+        ret = errno;
+        goto cleanup;
+    }
+
+    c = add_new_socket(fd, DOOR_FD, callback, user);
+    ct->mech = c;
+
+    *ctx = ct;
+    ret = 0;
+
+cleanup:
+    if (ret != 0) {
+        free(ct);
+        free(c);
+        if (fd != -1)
+            close(fd);
+    }
+    if (dfd != -1)
+        close(dfd);
+
+    return ret;
+}
+#endif /* HAVE_DOOR_CREATE */
 
 /**
  * Set the idle timeout value

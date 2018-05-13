@@ -119,6 +119,9 @@ int
 heim_sipc_service_unix(const char *, heim_ipc_callback,
 		       void *, heim_sipc *);
 
+int
+heim_sipc_service_door(const char *, heim_ipc_callback,
+		       void *, heim_sipc *);
 
 void
 heim_sipc_timeout(time_t);

@@ -1138,11 +1138,14 @@ heim_sipc_service_unix(const char *service,
 
 #ifdef HAVE_DOOR_CREATE
 #include <door.h>
-#include <alloca.h>
 
 #ifdef HAVE_SYS_MMAN_H
 #include <sys/mman.h>
 #endif
+
+#include "heim_threads.h"
+
+static HEIMDAL_thread_key door_key;
 
 struct door_call {
     heim_idata in;
@@ -1164,25 +1167,60 @@ door_release(heim_sipc ctx)
 }
 
 static void
+door_reply_destroy(void *data)
+{
+    free(data);
+}
+
+static void
+door_key_create(void *key)
+{
+    int ret;
+
+    HEIMDAL_key_create((HEIMDAL_thread_key *)key, door_reply_destroy, ret);
+}
+
+static void
 door_complete(heim_sipc_call ctx, int returnvalue, heim_idata *reply)
 {
+    static heim_base_once_t once = HEIM_BASE_ONCE_INIT;
     struct door_call *cs = (struct door_call *)ctx;
-    size_t rlen = offsetof(struct door_reply, data);
-    struct door_reply *r;
+    size_t rlen;
+    struct door_reply *r = NULL;
+    union {
+        struct door_reply reply;
+        char buffer[offsetof(struct door_reply, data) + BUFSIZ];
+    } replyBuf;
+    int ret;
 
+    heim_base_once_f(&once, &door_key, door_key_create);
+
+    /* free previously saved reply, if any */
+    free(HEIMDAL_getspecific(door_key));
+
+    rlen = offsetof(struct door_reply, data);
     if (returnvalue == 0)
         rlen += reply->length;
 
-    r = alloca(rlen);
-    r->returnvalue = returnvalue;
+    /* long replies (> BUFSIZ) are allocated from the heap */
+    if (rlen > BUFSIZ) {
+        r = malloc(rlen);
+        if (r == NULL)
+            returnvalue = EAGAIN;
+    }
 
-    if (returnvalue == 0) {
+    if (r == NULL)
+        r = &replyBuf.reply;
+
+    r->returnvalue = returnvalue;
+    if (r->returnvalue == 0) {
         r->length = reply->length;
         memcpy(r->data, reply->data, reply->length);
     }
 
     /* door_return() doesn't return; don't leak cred */
     heim_ipc_free_cred(cs->cred);
+    HEIMDAL_setspecific(door_key, r == &replyBuf.reply ? NULL : r, ret);
 
     door_return((char *)r, rlen, NULL, 0);
 }

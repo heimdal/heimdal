@@ -149,12 +149,12 @@ RSA_MD4_DES_checksum(krb5_context context,
 static krb5_error_code
 RSA_MD4_DES_verify(krb5_context context,
 		   struct _krb5_key_data *key,
-		   const void *data,
-		   size_t len,
 		   unsigned usage,
+                   const struct krb5_crypto_iov *iov,
+                   int niov,
 		   Checksum *C)
 {
-    return _krb5_des_verify(context, EVP_md4(), key, data, len, C);
+    return _krb5_des_verify(context, EVP_md4(), key, iov, niov, C);
 }
 
 static krb5_error_code
@@ -171,12 +171,12 @@ RSA_MD5_DES_checksum(krb5_context context,
 static krb5_error_code
 RSA_MD5_DES_verify(krb5_context context,
 		   struct _krb5_key_data *key,
-		   const void *data,
-		   size_t len,
 		   unsigned usage,
+                   const struct krb5_crypto_iov *iov,
+                   int niov,
 		   Checksum *C)
 {
-    return _krb5_des_verify(context, EVP_md5(), key, data, len, C);
+    return _krb5_des_verify(context, EVP_md5(), key, iov, niov, C);
 }
 
 struct _krb5_checksum_type _krb5_checksum_crc32 = {

@@ -286,6 +286,7 @@ krb5_hmac(krb5_context context,
 {
     struct _krb5_checksum_type *c = _krb5_find_checksum(cktype);
     struct _krb5_key_data kd;
+
     krb5_error_code ret;
 
     if (c == NULL) {
@@ -524,7 +525,7 @@ verify_checksum(krb5_context context,
     iov[0].flags = KRB5_CRYPTO_TYPE_DATA;
 
     if(ct->verify) {
-	ret = (*ct->verify)(context, dkey, data, len, usage, cksum);
+	ret = (*ct->verify)(context, dkey, usage, iov, 1, cksum);
 	if (ret)
 	    krb5_set_error_message(context, ret,
 				   N_("Decrypt integrity check failed for checksum "

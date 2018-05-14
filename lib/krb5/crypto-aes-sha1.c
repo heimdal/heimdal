@@ -154,7 +154,7 @@ struct _krb5_encryption_type _krb5_enctype_aes128_cts_hmac_sha1 = {
     &_krb5_checksum_hmac_sha1_aes128,
     F_DERIVED | F_RFC3961_ENC | F_RFC3961_KDF,
     _krb5_evp_encrypt_cts,
-    NULL,
+    _krb5_evp_encrypt_iov_cts,
     16,
     AES_SHA1_PRF
 };
@@ -171,7 +171,7 @@ struct _krb5_encryption_type _krb5_enctype_aes256_cts_hmac_sha1 = {
     &_krb5_checksum_hmac_sha1_aes256,
     F_DERIVED | F_RFC3961_ENC | F_RFC3961_KDF,
     _krb5_evp_encrypt_cts,
-    NULL,
+    _krb5_evp_encrypt_iov_cts,
     16,
     AES_SHA1_PRF
 };

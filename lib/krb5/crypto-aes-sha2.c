@@ -74,7 +74,8 @@ SP_HMAC_SHA2_checksum(krb5_context context,
     if (ret)
 	return ret;
 
-    ret = _krb5_evp_hmac_iov(context, key, iov, niov, hmac, &hmaclen, md, NULL);
+    ret = _krb5_evp_hmac_iov(context, crypto, key, iov, niov, hmac,
+                             &hmaclen, md, NULL);
     if (ret)
         return ret;
 

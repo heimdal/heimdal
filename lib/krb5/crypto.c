@@ -1667,32 +1667,39 @@ krb5_encrypt_iov_ivec(krb5_context context,
 	ret = iov_coalesce(context, &ivec_data, data, num_data, TRUE, &sign_data);
 	if(ret)
 	    goto cleanup;
+
+        ret = create_checksum(context,
+                              et->keyed_checksum,
+                              crypto,
+                              INTEGRITY_USAGE(usage),
+                              sign_data.data,
+                              sign_data.length,
+                              &cksum);
+
+        if(ret == 0 && cksum.checksum.length != trailersz) {
+            free_Checksum (&cksum);
+            krb5_clear_error_message (context);
+            ret = KRB5_CRYPTO_INTERNAL;
+        }
+        if (ret)
+            goto cleanup;
+
+        /* save cksum at end */
+        memcpy(tiv->data.data, cksum.checksum.data, cksum.checksum.length);
+        free_Checksum (&cksum);
+
     } else {
-	ret = iov_coalesce(context, NULL, data, num_data, TRUE, &sign_data);
-	if(ret)
-	    goto cleanup;
-    }
+        cksum.checksum = tiv->data;
+        ret = create_checksum_iov(context,
+                              et->keyed_checksum,
+                              crypto,
+                              INTEGRITY_USAGE(usage),
+                              data,
+                              num_data,
+                              &cksum);
+        if (ret)
+            goto cleanup;
 
-    ret = create_checksum(context,
-			  et->keyed_checksum,
-			  crypto,
-			  INTEGRITY_USAGE(usage),
-			  sign_data.data,
-			  sign_data.length,
-			  &cksum);
-    if(ret == 0 && cksum.checksum.length != trailersz) {
-	free_Checksum (&cksum);
-	krb5_clear_error_message (context);
-	ret = KRB5_CRYPTO_INTERNAL;
-    }
-    if(ret)
-	goto cleanup;
-
-    /* save cksum at end */
-    memcpy(tiv->data.data, cksum.checksum.data, cksum.checksum.length);
-    free_Checksum (&cksum);
-
-    if (!(et->flags & F_ENC_THEN_CKSUM)) {
 	ret = iov_coalesce(context, NULL, data, num_data, FALSE, &enc_data);
 	if(ret)
 	    goto cleanup;

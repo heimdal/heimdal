@@ -1839,10 +1839,6 @@ krb5_decrypt_iov_ivec(krb5_context context,
     krb5_data_zero(&sign_data);
 
     if (!(et->flags & F_ENC_THEN_CKSUM)) {
-	ret = iov_coalesce(context, NULL, data, num_data, FALSE, &enc_data);
-	if(ret)
-	    goto cleanup;
-
 	ret = _get_derived_key(context, crypto, ENCRYPTION_USAGE(usage), &dkey);
 	if(ret)
 	    goto cleanup;
@@ -1851,16 +1847,32 @@ krb5_decrypt_iov_ivec(krb5_context context,
 	if(ret)
 	    goto cleanup;
 
-	ret = (*et->encrypt)(context, dkey, enc_data.data, enc_data.length,
-			     0, usage, ivec);
-	if(ret)
-	    goto cleanup;
+	if (et->encrypt_iov != NULL) {
+	    ret = (*et->encrypt_iov)(context, dkey, data, num_data,
+				     0, usage, ivec);
+	    if(ret)
+		goto cleanup;
+	} else {
+	    ret = iov_coalesce(context, NULL, data, num_data, FALSE, &enc_data);
+	    if(ret)
+		goto cleanup;
 
-	ret = iov_uncoalesce(context, &enc_data, data, num_data);
-	if(ret)
-	    goto cleanup;
+	    ret = (*et->encrypt)(context, dkey, enc_data.data, enc_data.length,
+			         0, usage, ivec);
+	    if(ret)
+	        goto cleanup;
 
-	ret = iov_coalesce(context, NULL, data, num_data, TRUE, &sign_data);
+	    ret = iov_uncoalesce(context, &enc_data, data, num_data);
+	    if(ret)
+		goto cleanup;
+	}
+
+	cksum.checksum.data   = tiv->data.data;
+	cksum.checksum.length = tiv->data.length;
+	cksum.cksumtype       = CHECKSUMTYPE(et->keyed_checksum);
+
+	ret = verify_checksum_iov(context, crypto, INTEGRITY_USAGE(usage),
+	                          data, num_data, &cksum);
 	if(ret)
 	    goto cleanup;
     } else {
@@ -1876,22 +1888,20 @@ krb5_decrypt_iov_ivec(krb5_context context,
 	ret = iov_coalesce(context, &ivec_data, data, num_data, TRUE, &sign_data);
 	if(ret)
 	    goto cleanup;
-    }
 
-    cksum.checksum.data   = tiv->data.data;
-    cksum.checksum.length = tiv->data.length;
-    cksum.cksumtype       = CHECKSUMTYPE(et->keyed_checksum);
+	cksum.checksum.data   = tiv->data.data;
+	cksum.checksum.length = tiv->data.length;
+	cksum.cksumtype       = CHECKSUMTYPE(et->keyed_checksum);
 
-    ret = verify_checksum(context,
-			  crypto,
-			  INTEGRITY_USAGE(usage),
-			  sign_data.data,
-			  sign_data.length,
-			  &cksum);
-    if(ret)
-	goto cleanup;
+	ret = verify_checksum(context,
+			      crypto,
+			      INTEGRITY_USAGE(usage),
+			      sign_data.data,
+			      sign_data.length,
+			      &cksum);
+	if(ret)
+	    goto cleanup;
 
-    if (et->flags & F_ENC_THEN_CKSUM) {
 	ret = iov_coalesce(context, NULL, data, num_data, FALSE, &enc_data);
 	if(ret)
 	    goto cleanup;

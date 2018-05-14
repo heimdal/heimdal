@@ -1191,12 +1191,11 @@ door_complete(heim_sipc_call ctx, int returnvalue, heim_idata *reply)
         struct door_reply reply;
         char buffer[offsetof(struct door_reply, data) + BUFSIZ];
     } replyBuf;
-    int ret;
 
     heim_base_once_f(&once, &door_key, door_key_create);
 
-    /* free previously saved reply, if any */
-    free(HEIMDAL_getspecific(door_key));
+    /* door_return() doesn't return; don't leak cred */
+    heim_ipc_free_cred(cs->cred);
 
 error_reply:
     rlen = offsetof(struct door_reply, data);
@@ -1205,11 +1204,16 @@ error_reply:
 
     /* long replies (> BUFSIZ) are allocated from the heap */
     if (rlen > BUFSIZ) {
-        r = malloc(rlen);
+        int ret;
+
+        /* door_return() doesn't return, so stash reply buffer in TLS */
+        r = realloc(HEIMDAL_getspecific(door_key), rlen);
         if (r == NULL) {
             returnvalue = EAGAIN; /* don't leak ENOMEM to caller */
             goto error_reply;
         }
+
+        HEIMDAL_setspecific(door_key, r, ret);
     } else {
         r = &replyBuf.reply;
     }
@@ -1221,10 +1225,6 @@ error_reply:
     } else {
         r->length = 0;
     }
-
-    /* door_return() doesn't return; don't leak cred */
-    heim_ipc_free_cred(cs->cred);
-    HEIMDAL_setspecific(door_key, r == &replyBuf.reply ? NULL : r, ret);
 
     door_return((char *)r, rlen, NULL, 0);
 }

@@ -38,7 +38,7 @@ waitfor="${3:-${name} started}"
 t=0
 waitsec=65
 
-echo "Waiting for ${name} to start, looking logfile ${log}"
+echo "Waiting for ${name} to start, see logfile ${log}"
 
 while true ; do
     if grep "${waitfor}" ${log} > /dev/null; then
@@ -53,7 +53,7 @@ while true ; do
        exit 1
     fi
     if [ "$t" -gt $waitsec ]; then
-       echo "Waited for $waitsec for the ${name} to start, and it didnt happen"
+       echo "Error: ${name} failed to start after $waitsec seconds"
        exit 2
     fi
 

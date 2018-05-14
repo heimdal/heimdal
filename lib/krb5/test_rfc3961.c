@@ -376,10 +376,12 @@ test_rfc2202(krb5_context context)
 
     num_tests = sizeof(rfc2202_vectors) / sizeof(struct rfc2202);
 
-    printf("Running %d RFC2202 HMAC-MD5 tests\n", num_tests);
+    printf("Running %d RFC2202 HMAC-SHA1 tests\n", num_tests);
     for (i = 0; i < num_tests; i++) {
 	krb5_keyblock keyblock;
 	Checksum result;
+	struct krb5_crypto_iov iov;
+	struct _krb5_key_data kd;
 	char sha1_data[20];
 	int code;
 
@@ -402,7 +404,25 @@ test_rfc2202(krb5_context context)
 	if (memcmp(&sha1_data, rfc2202_vectors[i].digest, sizeof(sha1_data)) !=0)
 	    errx(1, "Digests don't match on test %d", i);
 
-	printf("Test %d okay\n", i + 1);
+	printf("Test %d okay\n", (i * 2) + 1);
+
+	/* Now check the same using the internal HMAC function */
+
+	iov.data.data = rfc2202_vectors[i].data;
+	iov.data.length = rfc2202_vectors[i].datalen;
+	iov.flags = KRB5_CRYPTO_TYPE_DATA;
+	kd.key = &keyblock;
+	kd.schedule = NULL;
+	code = _krb5_SP_HMAC_SHA1_checksum(context, &kd, 0,
+					   &iov, 1, &result);
+
+	if (code != 0)
+	    errx(1, "HMAC-SHA1 failed with %d on test %d", code, i + 1);
+
+	if (memcmp(&sha1_data, rfc2202_vectors[i].digest, sizeof(sha1_data)) !=0)
+	    errx(1, "Digests don't match on test %d", i);
+
+	printf("Test %d okay\n", (i * 2) + 2);
     }
 }
 

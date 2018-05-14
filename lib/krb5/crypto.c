@@ -1335,10 +1335,8 @@ iov_sign_data_len(krb5_crypto_iov *data, int num_data)
     size_t i, len;
 
     for (len = 0, i = 0; i < num_data; i++) {
-	if (data[i].flags != KRB5_CRYPTO_TYPE_DATA &&
-	    data[i].flags != KRB5_CRYPTO_TYPE_SIGN_ONLY)
-	    continue;
-	len += data[i].data.length;
+        if (_krb5_crypto_iov_should_sign(&data[i]))
+	    len += data[i].data.length;
     }
 
     return len;
@@ -1824,20 +1822,17 @@ krb5_create_checksum_iov(krb5_context context,
 
     len = 0;
     for (i = 0; i < num_data; i++) {
-	if (data[i].flags != KRB5_CRYPTO_TYPE_DATA &&
-	    data[i].flags != KRB5_CRYPTO_TYPE_SIGN_ONLY)
-	    continue;
-	len += data[i].data.length;
+        if (_krb5_crypto_iov_should_sign(&data[i]))
+	    len += data[i].data.length;
     }
 
     p = q = malloc(len);
 
     for (i = 0; i < num_data; i++) {
-	if (data[i].flags != KRB5_CRYPTO_TYPE_DATA &&
-	    data[i].flags != KRB5_CRYPTO_TYPE_SIGN_ONLY)
-	    continue;
-	memcpy(q, data[i].data.data, data[i].data.length);
-	q += data[i].data.length;
+        if (_krb5_crypto_iov_should_sign(&data[i])) {
+	    memcpy(q, data[i].data.data, data[i].data.length);
+	    q += data[i].data.length;
+        }
     }
 
     ret = krb5_create_checksum(context, crypto, usage, 0, p, len, &cksum);
@@ -1903,20 +1898,17 @@ krb5_verify_checksum_iov(krb5_context context,
 
     len = 0;
     for (i = 0; i < num_data; i++) {
-	if (data[i].flags != KRB5_CRYPTO_TYPE_DATA &&
-	    data[i].flags != KRB5_CRYPTO_TYPE_SIGN_ONLY)
-	    continue;
-	len += data[i].data.length;
+        if (_krb5_crypto_iov_should_sign(&data[i]))
+	    len += data[i].data.length;
     }
 
     p = q = malloc(len);
 
     for (i = 0; i < num_data; i++) {
-	if (data[i].flags != KRB5_CRYPTO_TYPE_DATA &&
-	    data[i].flags != KRB5_CRYPTO_TYPE_SIGN_ONLY)
-	    continue;
-	memcpy(q, data[i].data.data, data[i].data.length);
-	q += data[i].data.length;
+        if (_krb5_crypto_iov_should_sign(&data[i])) {
+	    memcpy(q, data[i].data.data, data[i].data.length);
+	    q += data[i].data.length;
+        }
     }
 
     cksum.cksumtype = CHECKSUMTYPE(et->keyed_checksum);

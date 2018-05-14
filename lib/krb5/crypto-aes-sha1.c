@@ -72,7 +72,7 @@ struct _krb5_checksum_type _krb5_checksum_hmac_sha1_aes128 = {
     12,
     F_KEYED | F_CPROOF | F_DERIVED,
     _krb5_SP_HMAC_SHA1_checksum,
-    NULL
+    _krb5_SP_HMAC_SHA1_verify
 };
 
 struct _krb5_checksum_type _krb5_checksum_hmac_sha1_aes256 = {
@@ -82,7 +82,7 @@ struct _krb5_checksum_type _krb5_checksum_hmac_sha1_aes256 = {
     12,
     F_KEYED | F_CPROOF | F_DERIVED,
     _krb5_SP_HMAC_SHA1_checksum,
-    NULL
+    _krb5_SP_HMAC_SHA1_verify
 };
 
 static krb5_error_code

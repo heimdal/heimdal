@@ -339,6 +339,34 @@ _krb5_SP_HMAC_SHA1_checksum(krb5_context context,
     return 0;
 }
 
+krb5_error_code
+_krb5_SP_HMAC_SHA1_verify(krb5_context context,
+                          krb5_crypto crypto,
+                          struct _krb5_key_data *key,
+                          unsigned usage,
+                          const struct krb5_crypto_iov *iov,
+                          int niov,
+                          Checksum *verify)
+{
+    krb5_error_code ret;
+    unsigned char hmac[EVP_MAX_MD_SIZE];
+    unsigned int hmaclen = sizeof(hmac);
+    krb5_data data;
+
+    ret = _krb5_evp_hmac_iov(context, crypto, key, iov, niov, hmac, &hmaclen,
+                             EVP_sha1(), NULL);
+    if (ret)
+        return ret;
+
+    data.data = hmac;
+    data.length = min(hmaclen, verify->checksum.length);
+
+    if(krb5_data_ct_cmp(&data, &verify->checksum) != 0)
+        return KRB5KRB_AP_ERR_BAD_INTEGRITY;
+
+    return 0;
+}
+
 struct _krb5_checksum_type _krb5_checksum_sha1 = {
     CKSUMTYPE_SHA1,
     "sha1",

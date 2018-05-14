@@ -66,6 +66,19 @@ HMAC_CTX_cleanup(HMAC_CTX *ctx)
     }
 }
 
+HMAC_CTX *
+HMAC_CTX_new(void)
+{
+    return calloc(1, sizeof(HMAC_CTX));
+}
+
+void
+HMAC_CTX_free(HMAC_CTX *ctx)
+{
+    HMAC_CTX_cleanup(ctx);
+    free(ctx);
+}
+
 size_t
 HMAC_size(const HMAC_CTX *ctx)
 {

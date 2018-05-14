@@ -243,7 +243,9 @@ HEIMDAL_CRYPTO_1.0 {
 		hc_EVP_hcrypto_aes_256_cts;
 		hc_HMAC;
 		hc_HMAC_CTX_cleanup;
+		hc_HMAC_CTX_free;
 		hc_HMAC_CTX_init;
+		hc_HMAC_CTX_new;
 		hc_HMAC_Final;
 		hc_HMAC_Init_ex;
 		hc_HMAC_Update;

@@ -58,6 +58,7 @@ _krb5_aes_sha2_md_for_enctype(krb5_context context,
 
 static krb5_error_code
 SP_HMAC_SHA2_checksum(krb5_context context,
+                      krb5_crypto crypto,
 		      struct _krb5_key_data *key,
                       unsigned usage,
                       const struct krb5_crypto_iov *iov,

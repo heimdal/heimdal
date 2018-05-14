@@ -85,6 +85,7 @@ time_hmac_evp(krb5_context context, size_t size, int iterations)
     struct _krb5_key_data kd;
     krb5_error_code ret;
     krb5_keyblock key;
+    krb5_crypto crypto;
     char sha1_data[20];
     Checksum result;
     char *buf;
@@ -110,9 +111,14 @@ time_hmac_evp(krb5_context context, size_t size, int iterations)
     kd.key = &key;
     kd.schedule = NULL;
 
+    ret = krb5_crypto_init(context, &key, ETYPE_AES128_CTS_HMAC_SHA1_96,
+                           &crypto);
+    if (ret)
+	krb5_err(context, 1, ret, "krb5_crypto_init");
+
     for (i = 0; i < iterations; i++) {
-        ret = _krb5_SP_HMAC_SHA1_checksum(context, &kd, 0,
-                                           &iov, 1, &result);
+        ret = _krb5_SP_HMAC_SHA1_checksum(context, crypto, &kd, 0,
+                                          &iov, 1, &result);
 	if (ret)
 	    krb5_err(context, 1, ret, "hmac: %d", i);
     }
@@ -413,7 +419,7 @@ test_rfc2202(krb5_context context)
 	iov.flags = KRB5_CRYPTO_TYPE_DATA;
 	kd.key = &keyblock;
 	kd.schedule = NULL;
-	code = _krb5_SP_HMAC_SHA1_checksum(context, &kd, 0,
+	code = _krb5_SP_HMAC_SHA1_checksum(context, NULL, &kd, 0,
 					   &iov, 1, &result);
 
 	if (code != 0)

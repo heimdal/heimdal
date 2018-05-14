@@ -133,13 +133,15 @@ _krb5_des_verify(krb5_context context,
 
 static krb5_error_code
 RSA_MD5_checksum(krb5_context context,
+		 krb5_crypto crypto,
 		 struct _krb5_key_data *key,
 		 unsigned usage,
 		 const struct krb5_crypto_iov *iov,
 		 int niov,
 		 Checksum *C)
 {
-    if (_krb5_evp_digest_iov(iov, niov, C->checksum.data, NULL, EVP_md5(), NULL) != 1)
+    if (_krb5_evp_digest_iov(crypto, iov, niov, C->checksum.data,
+			     NULL, EVP_md5(), NULL) != 1)
 	krb5_abortx(context, "md5 checksum failed");
 
     return 0;

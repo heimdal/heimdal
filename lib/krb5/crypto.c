@@ -168,14 +168,17 @@ _key_schedule(krb5_context context,
 
 static krb5_error_code
 SHA1_checksum(krb5_context context,
+	      krb5_crypto crypto,
 	      struct _krb5_key_data *key,
 	      unsigned usage,
 	      const struct krb5_crypto_iov *iov,
 	      int niov,
 	      Checksum *C)
 {
-    if (_krb5_evp_digest_iov(iov, niov, C->checksum.data,
-                             NULL, EVP_sha1(), NULL) != 1)
+    if (_krb5_evp_digest_iov(crypto,
+			     iov, niov,
+			     C->checksum.data, NULL,
+			     EVP_sha1(), NULL) != 1)
 	krb5_abortx(context, "sha1 checksum failed");
 
     return 0;
@@ -184,6 +187,7 @@ SHA1_checksum(krb5_context context,
 /* HMAC according to RFC2104 */
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 _krb5_internal_hmac_iov(krb5_context context,
+			krb5_crypto crypto,
 			struct _krb5_checksum_type *cm,
 			unsigned usage,
 			const struct krb5_crypto_iov *iov,
@@ -221,6 +225,7 @@ _krb5_internal_hmac_iov(krb5_context context,
 	working[0].data = keyblock->key->keyvalue;
 	working[0].flags = KRB5_CRYPTO_TYPE_DATA;
 	(*cm->checksum)(context,
+			crypto,
 			keyblock,
 			usage,
 			working,
@@ -243,14 +248,14 @@ _krb5_internal_hmac_iov(krb5_context context,
     for (i = 0; i < niov; i++)
 	working[i + 1] = iov[i];
 
-    (*cm->checksum)(context, keyblock, usage, working, niov + 1, result);
+    (*cm->checksum)(context, crypto, keyblock, usage, working, niov + 1, result);
     memcpy(opad + cm->blocksize, result->checksum.data,
 	   result->checksum.length);
 
     working[0].data.data = opad;
     working[0].data.length = cm->blocksize + cm->checksumsize;
     working[0].flags = KRB5_CRYPTO_TYPE_DATA;
-    (*cm->checksum)(context, keyblock, usage, working, 1, result);
+    (*cm->checksum)(context, crypto, keyblock, usage, working, 1, result);
     memset(ipad, 0, cm->blocksize);
     free(ipad);
     memset(opad, 0, cm->blocksize + cm->checksumsize);
@@ -262,6 +267,7 @@ _krb5_internal_hmac_iov(krb5_context context,
 
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 _krb5_internal_hmac(krb5_context context,
+		    krb5_crypto crypto,
 		    struct _krb5_checksum_type *cm,
 		    const void *data,
 		    size_t len,
@@ -274,7 +280,7 @@ _krb5_internal_hmac(krb5_context context,
     iov[0].data.data = (void *) data;
     iov[0].data.length = len;
     iov[0].flags = KRB5_CRYPTO_TYPE_DATA;
-    return _krb5_internal_hmac_iov(context, cm, usage, iov, 1,
+    return _krb5_internal_hmac_iov(context, crypto, cm, usage, iov, 1,
 				   keyblock, result);
 }
 
@@ -302,7 +308,7 @@ krb5_hmac(krb5_context context,
     kd.key = key;
     kd.schedule = NULL;
 
-    ret = _krb5_internal_hmac(context, c, data, len, usage, &kd, result);
+    ret = _krb5_internal_hmac(context, NULL, c, data, len, usage, &kd, result);
 
     if (kd.schedule)
 	krb5_free_data(context, kd.schedule);
@@ -312,6 +318,7 @@ krb5_hmac(krb5_context context,
 
 krb5_error_code
 _krb5_SP_HMAC_SHA1_checksum(krb5_context context,
+			    krb5_crypto crypto,
 			    struct _krb5_key_data *key,
 			    unsigned usage,
 			    const struct krb5_crypto_iov *iov,
@@ -425,7 +432,7 @@ create_checksum_iov(krb5_context context,
 
     result->cksumtype = ct->type;
 
-    return (*ct->checksum)(context, dkey, usage, iov, niov, result);
+    return (*ct->checksum)(context, crypto, dkey, usage, iov, niov, result);
 }
 
 static krb5_error_code
@@ -539,7 +546,7 @@ verify_checksum_iov(krb5_context context,
      */
 
     if(ct->verify) {
-	ret = (*ct->verify)(context, dkey, usage, iov, niov, cksum);
+	ret = (*ct->verify)(context, crypto, dkey, usage, iov, niov, cksum);
 	if (ret)
 	    krb5_set_error_message(context, ret,
 				   N_("Decrypt integrity check failed for checksum "
@@ -552,7 +559,7 @@ verify_checksum_iov(krb5_context context,
     if (ret)
 	return ret;
 
-    ret = (*ct->checksum)(context, dkey, usage, iov, niov, &c);
+    ret = (*ct->checksum)(context, crypto, dkey, usage, iov, niov, &c);
     if (ret) {
 	krb5_data_free(&c.checksum);
 	return ret;
@@ -2515,6 +2522,10 @@ krb5_crypto_destroy(krb5_context context,
 	free_key_usage(context, &crypto->key_usage[i], crypto->et);
     free(crypto->key_usage);
     _krb5_free_key_data(context, &crypto->key, crypto->et);
+
+    if (crypto->mdctx)
+	EVP_MD_CTX_destroy(crypto->mdctx);
+
     free (crypto);
     return 0;
 }

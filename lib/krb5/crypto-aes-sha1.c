@@ -106,7 +106,7 @@ AES_SHA1_PRF(krb5_context context,
 
     iov[0].data = *in;
     iov[0].flags = KRB5_CRYPTO_TYPE_DATA;
-    ret = (*ct->checksum)(context, NULL, 0, iov, 1, &result);
+    ret = (*ct->checksum)(context, crypto, NULL, 0, iov, 1, &result);
     if (ret) {
 	krb5_data_free(&result.checksum);
 	return ret;

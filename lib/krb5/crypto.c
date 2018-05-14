@@ -315,18 +315,17 @@ _krb5_SP_HMAC_SHA1_checksum(krb5_context context,
 			    int niov,
 			    Checksum *result)
 {
-    struct _krb5_checksum_type *c = _krb5_find_checksum(CKSUMTYPE_SHA1);
-    Checksum res;
-    char sha1_data[20];
     krb5_error_code ret;
+    unsigned char hmac[EVP_MAX_MD_SIZE];
+    unsigned int hmaclen = sizeof(hmac);
 
-    res.checksum.data = sha1_data;
-    res.checksum.length = sizeof(sha1_data);
+    ret = _krb5_evp_hmac_iov(context, key, iov, niov, hmac, &hmaclen,
+                             EVP_sha1(), NULL);
 
-    ret = _krb5_internal_hmac_iov(context, c, usage, iov, niov, key, &res);
-    if (ret)
-	krb5_abortx(context, "hmac failed");
-    memcpy(result->checksum.data, res.checksum.data, result->checksum.length);
+    heim_assert(result->checksum.length <= hmaclen,
+                "SHA1 checksum too short");
+    memcpy(result->checksum.data, hmac, result->checksum.length);
+
     return 0;
 }
 

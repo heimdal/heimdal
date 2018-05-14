@@ -35,6 +35,101 @@
 #include <getarg.h>
 
 static void
+time_hmac(krb5_context context, size_t size, int iterations)
+{
+    struct timeval tv1, tv2;
+    krb5_error_code ret;
+    krb5_keyblock key;
+    char sha1_data[20];
+    Checksum result;
+    char *buf;
+    int i;
+
+    ret = krb5_generate_random_keyblock(context,
+					ETYPE_AES128_CTS_HMAC_SHA1_96,
+					&key);
+    if (ret)
+	krb5_err(context, 1, ret, "krb5_generate_random_keyblock");
+
+    buf = calloc(1, size);
+    if (buf == NULL)
+	krb5_errx(context, 1, "out of memory");
+
+    gettimeofday(&tv1, NULL);
+
+    result.checksum.data = &sha1_data;
+    result.checksum.length = sizeof(sha1_data);
+    for (i = 0; i < iterations; i++) {
+	ret = krb5_hmac(context, CKSUMTYPE_SHA1, buf, size, 0, &key, &result);
+	if (ret)
+	    krb5_err(context, 1, ret, "hmac: %d", i);
+    }
+
+    gettimeofday(&tv2, NULL);
+
+    timevalsub(&tv2, &tv1);
+
+    printf("HMAC-SHA1 size: %7lu iterations: %d time: %3ld.%06ld\n",
+	   (unsigned long)size, iterations,
+	   (long)tv2.tv_sec, (long)tv2.tv_usec);
+
+    free(buf);
+    krb5_free_keyblock_contents(context, &key);
+}
+
+static void
+time_hmac_evp(krb5_context context, size_t size, int iterations)
+{
+    struct timeval tv1, tv2;
+    struct krb5_crypto_iov iov;
+    struct _krb5_key_data kd;
+    krb5_error_code ret;
+    krb5_keyblock key;
+    char sha1_data[20];
+    Checksum result;
+    char *buf;
+    int i;
+
+    ret = krb5_generate_random_keyblock(context,
+					ETYPE_AES128_CTS_HMAC_SHA1_96,
+					&key);
+    if (ret)
+	krb5_err(context, 1, ret, "krb5_generate_random_keyblock");
+
+    buf = calloc(1, size);
+    if (buf == NULL)
+	krb5_errx(context, 1, "out of memory");
+
+    gettimeofday(&tv1, NULL);
+
+    result.checksum.data = &sha1_data;
+    result.checksum.length = sizeof(sha1_data);
+    iov.data.data = buf;
+    iov.data.length = size;
+    iov.flags = KRB5_CRYPTO_TYPE_DATA;
+    kd.key = &key;
+    kd.schedule = NULL;
+
+    for (i = 0; i < iterations; i++) {
+        ret = _krb5_SP_HMAC_SHA1_checksum(context, &kd, 0,
+                                           &iov, 1, &result);
+	if (ret)
+	    krb5_err(context, 1, ret, "hmac: %d", i);
+    }
+
+    gettimeofday(&tv2, NULL);
+
+    timevalsub(&tv2, &tv1);
+
+    printf("HMAC-SHA1 (evp) size: %7lu iterations: %d time: %3ld.%06ld\n",
+	   (unsigned long)size, iterations,
+	   (long)tv2.tv_sec, (long)tv2.tv_usec);
+
+    free(buf);
+    krb5_free_keyblock_contents(context, &key);
+}
+
+static void
 time_encryption(krb5_context context, size_t size,
 		krb5_enctype etype, int iterations)
 {
@@ -316,7 +411,7 @@ main(int argc, char **argv)
 {
     krb5_context context;
     krb5_error_code ret;
-    int i, enciter, s2kiter;
+    int i, enciter, s2kiter, hmaciter;
     int optidx = 0;
     krb5_salt salt;
 
@@ -354,7 +449,28 @@ main(int argc, char **argv)
     test_rfc2202(context);
 
     enciter = 1000;
+    hmaciter = 10000;
     s2kiter = 100;
+
+    time_hmac(context, 16, hmaciter);
+    time_hmac(context, 32, hmaciter);
+    time_hmac(context, 512, hmaciter);
+    time_hmac(context, 1024, hmaciter);
+    time_hmac(context, 2048, hmaciter);
+    time_hmac(context, 4096, hmaciter);
+    time_hmac(context, 8192, hmaciter);
+    time_hmac(context, 16384, hmaciter);
+    time_hmac(context, 32768, hmaciter);
+
+    time_hmac_evp(context, 16, hmaciter);
+    time_hmac_evp(context, 32, hmaciter);
+    time_hmac_evp(context, 512, hmaciter);
+    time_hmac_evp(context, 1024, hmaciter);
+    time_hmac_evp(context, 2048, hmaciter);
+    time_hmac_evp(context, 4096, hmaciter);
+    time_hmac_evp(context, 8192, hmaciter);
+    time_hmac_evp(context, 16384, hmaciter);
+    time_hmac_evp(context, 32768, hmaciter);
 
     for (i = 0; i < sizeof(enctypes)/sizeof(enctypes[0]); i++) {
 

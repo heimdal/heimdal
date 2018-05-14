@@ -114,6 +114,7 @@ out:
 
 krb5_error_code
 _krb5_evp_hmac_iov(krb5_context context,
+                   krb5_crypto crypto,
                    struct _krb5_key_data *key,
                    const struct krb5_crypto_iov *iov,
                    int niov,
@@ -126,7 +127,13 @@ _krb5_evp_hmac_iov(krb5_context context,
     krb5_data current = {0, 0};
     int i;
 
-    ctx = HMAC_CTX_new();
+    if (crypto != NULL) {
+	if (crypto->hmacctx == NULL)
+	    crypto->hmacctx = HMAC_CTX_new();
+	ctx = crypto->hmacctx;
+    } else {
+	ctx = HMAC_CTX_new();
+    }
     if (ctx == NULL)
         return krb5_enomem(context);
 
@@ -150,7 +157,8 @@ _krb5_evp_hmac_iov(krb5_context context,
 
     HMAC_Final(ctx, hmac, hmaclen);
 
-    HMAC_CTX_free(ctx);
+    if (crypto == NULL)
+        HMAC_CTX_free(ctx);
 
     return 0;
 }

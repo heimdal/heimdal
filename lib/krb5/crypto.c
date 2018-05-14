@@ -329,7 +329,7 @@ _krb5_SP_HMAC_SHA1_checksum(krb5_context context,
     unsigned char hmac[EVP_MAX_MD_SIZE];
     unsigned int hmaclen = sizeof(hmac);
 
-    ret = _krb5_evp_hmac_iov(context, key, iov, niov, hmac, &hmaclen,
+    ret = _krb5_evp_hmac_iov(context, crypto, key, iov, niov, hmac, &hmaclen,
                              EVP_sha1(), NULL);
 
     heim_assert(result->checksum.length <= hmaclen,
@@ -2525,6 +2525,9 @@ krb5_crypto_destroy(krb5_context context,
 
     if (crypto->mdctx)
 	EVP_MD_CTX_destroy(crypto->mdctx);
+
+    if (crypto->hmacctx)
+	HMAC_CTX_free(crypto->hmacctx);
 
     free (crypto);
     return 0;

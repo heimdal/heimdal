@@ -205,6 +205,7 @@ struct krb5_crypto_data {
     struct _krb5_encryption_type *et;
     struct _krb5_key_data key;
     EVP_MD_CTX *mdctx;
+    HMAC_CTX *hmacctx;
     int num_key_usage;
     struct _krb5_key_usage *key_usage;
 };

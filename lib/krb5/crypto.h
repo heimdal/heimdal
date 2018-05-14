@@ -186,7 +186,9 @@ static inline int
 _krb5_crypto_iov_should_sign(const struct krb5_crypto_iov *iov)
 {
     return (iov->flags == KRB5_CRYPTO_TYPE_DATA
-            || iov->flags == KRB5_CRYPTO_TYPE_SIGN_ONLY);
+            || iov->flags == KRB5_CRYPTO_TYPE_SIGN_ONLY
+            || iov->flags == KRB5_CRYPTO_TYPE_HEADER
+            || iov->flags == KRB5_CRYPTO_TYPE_PADDING);
 }
 
 /* NO_HCRYPTO_POLLUTION is defined in pkinit-ec.c.  See commentary there. */

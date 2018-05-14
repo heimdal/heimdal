@@ -497,18 +497,17 @@ krb5_create_checksum(krb5_context context,
 }
 
 static krb5_error_code
-verify_checksum(krb5_context context,
-		krb5_crypto crypto,
-		unsigned usage, /* not krb5_key_usage */
-		void *data,
-		size_t len,
-		Checksum *cksum)
+verify_checksum_iov(krb5_context context,
+		    krb5_crypto crypto,
+		    unsigned usage, /* not krb5_key_usage */
+		    struct krb5_crypto_iov *iov,
+		    int niov,
+		    Checksum *cksum)
 {
     krb5_error_code ret;
     struct _krb5_key_data *dkey;
     Checksum c;
     struct _krb5_checksum_type *ct;
-    struct krb5_crypto_iov iov[1];
 
     ct = _krb5_find_checksum(cksum->cksumtype);
     if (ct == NULL || (ct->flags & F_DISABLED)) {
@@ -539,12 +538,8 @@ verify_checksum(krb5_context context,
      * calling ->checksum and then compare result.
      */
 
-    iov[0].data.data = data;
-    iov[0].data.length = len;
-    iov[0].flags = KRB5_CRYPTO_TYPE_DATA;
-
     if(ct->verify) {
-	ret = (*ct->verify)(context, dkey, usage, iov, 1, cksum);
+	ret = (*ct->verify)(context, dkey, usage, iov, niov, cksum);
 	if (ret)
 	    krb5_set_error_message(context, ret,
 				   N_("Decrypt integrity check failed for checksum "
@@ -557,7 +552,7 @@ verify_checksum(krb5_context context,
     if (ret)
 	return ret;
 
-    ret = (*ct->checksum)(context, dkey, usage, iov, 1, &c);
+    ret = (*ct->checksum)(context, dkey, usage, iov, niov, &c);
     if (ret) {
 	krb5_data_free(&c.checksum);
 	return ret;
@@ -574,6 +569,23 @@ verify_checksum(krb5_context context,
     }
     krb5_data_free (&c.checksum);
     return ret;
+}
+
+static krb5_error_code
+verify_checksum(krb5_context context,
+		krb5_crypto crypto,
+		unsigned usage, /* not krb5_key_usage */
+		void *data,
+		size_t len,
+		Checksum *cksum)
+{
+    struct krb5_crypto_iov iov[1];
+
+    iov[0].data.data = data;
+    iov[0].data.length = len;
+    iov[0].flags = KRB5_CRYPTO_TYPE_DATA;
+
+    return verify_checksum_iov(context, crypto, usage, iov, 1, cksum);
 }
 
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
@@ -1940,43 +1952,35 @@ krb5_verify_checksum_iov(krb5_context context,
 			 krb5_cksumtype *type)
 {
     struct _krb5_encryption_type *et = crypto->et;
+    struct _krb5_checksum_type *ct;
     Checksum cksum;
     krb5_crypto_iov *civ;
     krb5_error_code ret;
-    size_t i;
-    size_t len;
-    char *p, *q;
-
-    if(!derived_crypto(context, crypto)) {
-	krb5_clear_error_message(context);
-	return KRB5_CRYPTO_INTERNAL;
-    }
+    unsigned keyusage;
 
     civ = iov_find(data, num_data, KRB5_CRYPTO_TYPE_CHECKSUM);
     if (civ == NULL)
 	return KRB5_BAD_MSIZE;
 
-    len = 0;
-    for (i = 0; i < num_data; i++) {
-        if (_krb5_crypto_iov_should_sign(&data[i]))
-	    len += data[i].data.length;
-    }
-
-    p = q = malloc(len);
-
-    for (i = 0; i < num_data; i++) {
-        if (_krb5_crypto_iov_should_sign(&data[i])) {
-	    memcpy(q, data[i].data.data, data[i].data.length);
-	    q += data[i].data.length;
-        }
-    }
-
     cksum.cksumtype = CHECKSUMTYPE(et->keyed_checksum);
     cksum.checksum.length = civ->data.length;
     cksum.checksum.data = civ->data.data;
 
-    ret = krb5_verify_checksum(context, crypto, usage, p, len, &cksum);
-    free(p);
+    ct = _krb5_find_checksum(cksum.cksumtype);
+    if(ct == NULL) {
+	krb5_set_error_message (context, KRB5_PROG_SUMTYPE_NOSUPP,
+				N_("checksum type %d not supported", ""),
+				cksum.cksumtype);
+	return KRB5_PROG_SUMTYPE_NOSUPP;
+    }
+
+    if (arcfour_checksum_p(ct, crypto)) {
+	keyusage = usage;
+	_krb5_usage2arcfour(context, &keyusage);
+    } else
+	keyusage = CHECKSUM_USAGE(usage);
+
+    ret = verify_checksum_iov(context, crypto, keyusage, data, num_data, &cksum);
 
     if (ret == 0 && type)
 	*type = cksum.cksumtype;

@@ -1425,7 +1425,10 @@ iov_sign_data_len(krb5_crypto_iov *data, int num_data)
     size_t i, len;
 
     for (len = 0, i = 0; i < num_data; i++) {
-        if (_krb5_crypto_iov_should_sign(&data[i]))
+	/* Can't use should_sign, because we must only count data, not
+	 * header/trailer */
+	if (data[i].flags == KRB5_CRYPTO_TYPE_DATA ||
+	    data[i].flags == KRB5_CRYPTO_TYPE_SIGN_ONLY)
 	    len += data[i].data.length;
     }
 

@@ -56,6 +56,54 @@ _krb5_evp_cleanup(krb5_context context, struct _krb5_key_data *kd)
     EVP_CIPHER_CTX_cleanup(&key->dctx);
 }
 
+int
+_krb5_evp_digest_iov(const struct krb5_crypto_iov *iov,
+		     int niov,
+		     void *hash,
+		     unsigned int *hsize,
+		     const EVP_MD *md,
+		     ENGINE *engine)
+{
+    EVP_MD_CTX *ctx;
+    int ret, i;
+    krb5_data current = {0,0};
+
+    ctx = EVP_MD_CTX_create();
+    if (ctx == NULL)
+	return 0;
+
+    ret = EVP_DigestInit_ex(ctx, md, engine);
+    if (ret != 1)
+	goto out;
+
+    for (i = 0; i < niov; i++) {
+        if (_krb5_crypto_iov_should_sign(&iov[i])) {
+	    if ((char *)current.data + current.length == iov[i].data.data) {
+		current.length += iov[i].data.length;
+	    } else {
+		if (current.data) {
+		    ret = EVP_DigestUpdate(ctx, current.data, current.length);
+		    if (ret != 1)
+		        goto out;
+		}
+		current = iov[i].data;
+	    }
+	}
+    }
+
+    if (current.data) {
+	ret = EVP_DigestUpdate(ctx, current.data, current.length);
+	if (ret != 1)
+	    goto out;
+    }
+
+    ret = EVP_DigestFinal_ex(ctx, hash, hsize);
+
+out:
+    EVP_MD_CTX_destroy(ctx);
+    return ret;
+}
+
 krb5_error_code
 _krb5_evp_encrypt(krb5_context context,
 		struct _krb5_key_data *key,

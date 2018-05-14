@@ -57,7 +57,8 @@ _krb5_evp_cleanup(krb5_context context, struct _krb5_key_data *kd)
 }
 
 int
-_krb5_evp_digest_iov(const struct krb5_crypto_iov *iov,
+_krb5_evp_digest_iov(krb5_crypto crypto,
+		     const struct krb5_crypto_iov *iov,
 		     int niov,
 		     void *hash,
 		     unsigned int *hsize,
@@ -68,9 +69,14 @@ _krb5_evp_digest_iov(const struct krb5_crypto_iov *iov,
     int ret, i;
     krb5_data current = {0,0};
 
-    ctx = EVP_MD_CTX_create();
-    if (ctx == NULL)
-	return 0;
+    if (crypto != NULL) {
+	if (crypto->mdctx == NULL)
+	    crypto->mdctx = EVP_MD_CTX_create();
+	if (crypto->mdctx == NULL)
+	    return 0;
+	ctx = crypto->mdctx;
+    } else
+        ctx = EVP_MD_CTX_create();
 
     ret = EVP_DigestInit_ex(ctx, md, engine);
     if (ret != 1)
@@ -100,7 +106,9 @@ _krb5_evp_digest_iov(const struct krb5_crypto_iov *iov,
     ret = EVP_DigestFinal_ex(ctx, hash, hsize);
 
 out:
-    EVP_MD_CTX_destroy(ctx);
+    if (crypto == NULL)
+        EVP_MD_CTX_destroy(ctx);
+
     return ret;
 }
 

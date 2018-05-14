@@ -57,6 +57,7 @@ static struct _krb5_key_type keytype_arcfour = {
 
 krb5_error_code
 _krb5_HMAC_MD5_checksum(krb5_context context,
+			krb5_crypto crypto,
 			struct _krb5_key_data *key,
 			unsigned usage,
 			const struct krb5_crypto_iov *iov,
@@ -75,17 +76,22 @@ _krb5_HMAC_MD5_checksum(krb5_context context,
     krb5_error_code ret;
     int i;
 
-    m = EVP_MD_CTX_create();
-    if (m == NULL)
-	return krb5_enomem(context);
+    if (crypto != NULL) {
+        if (crypto->mdctx == NULL)
+	    crypto->mdctx = EVP_MD_CTX_create();
+        if (crypto->mdctx == NULL)
+	    return krb5_enomem(context);
+	m = crypto->mdctx;
+    } else
+        m = EVP_MD_CTX_create();
+
     ksign_c.checksum.length = sizeof(ksign_c_data);
     ksign_c.checksum.data   = ksign_c_data;
-    ret = _krb5_internal_hmac(context, c, signature, sizeof(signature),
+    ret = _krb5_internal_hmac(context, crypto, c, signature, sizeof(signature),
 			      0, key, &ksign_c);
-    if (ret) {
-	EVP_MD_CTX_destroy(m);
-	return ret;
-    }
+    if (ret)
+	goto out;
+
     ksign.key = &kb;
     kb.keyvalue = ksign_c.checksum;
     EVP_DigestInit_ex(m, EVP_md5(), NULL);
@@ -99,12 +105,13 @@ _krb5_HMAC_MD5_checksum(krb5_context context,
 	    EVP_DigestUpdate(m, iov[i].data.data, iov[i].data.length);
     }
     EVP_DigestFinal_ex (m, tmp, NULL);
-    EVP_MD_CTX_destroy(m);
 
-    ret = _krb5_internal_hmac(context, c, tmp, sizeof(tmp), 0, &ksign, result);
-    if (ret)
-	return ret;
-    return 0;
+    ret = _krb5_internal_hmac(context, crypto, c, tmp, sizeof(tmp), 0, &ksign, result);
+out:
+    if (crypto == NULL)
+        EVP_MD_CTX_destroy(m);
+
+    return ret;
 }
 
 struct _krb5_checksum_type _krb5_checksum_hmac_md5 = {
@@ -153,7 +160,7 @@ ARCFOUR_subencrypt(krb5_context context,
     k1_c.checksum.length = sizeof(k1_c_data);
     k1_c.checksum.data   = k1_c_data;
 
-    ret = _krb5_internal_hmac(context, c, t, sizeof(t), 0, key, &k1_c);
+    ret = _krb5_internal_hmac(context, NULL, c, t, sizeof(t), 0, key, &k1_c);
     if (ret)
 	krb5_abortx(context, "hmac failed");
 
@@ -168,7 +175,7 @@ ARCFOUR_subencrypt(krb5_context context,
     cksum.checksum.length = 16;
     cksum.checksum.data   = data;
 
-    ret = _krb5_internal_hmac(context, c, cdata + 16, len - 16, 0, &ke, &cksum);
+    ret = _krb5_internal_hmac(context, NULL, c, cdata + 16, len - 16, 0, &ke, &cksum);
     if (ret)
 	krb5_abortx(context, "hmac failed");
 
@@ -178,7 +185,7 @@ ARCFOUR_subencrypt(krb5_context context,
     k3_c.checksum.length = sizeof(k3_c_data);
     k3_c.checksum.data   = k3_c_data;
 
-    ret = _krb5_internal_hmac(context, c, data, 16, 0, &ke, &k3_c);
+    ret = _krb5_internal_hmac(context, NULL, c, data, 16, 0, &ke, &k3_c);
     if (ret)
 	krb5_abortx(context, "hmac failed");
 
@@ -225,7 +232,7 @@ ARCFOUR_subdecrypt(krb5_context context,
     k1_c.checksum.length = sizeof(k1_c_data);
     k1_c.checksum.data   = k1_c_data;
 
-    ret = _krb5_internal_hmac(context, c, t, sizeof(t), 0, key, &k1_c);
+    ret = _krb5_internal_hmac(context, NULL, c, t, sizeof(t), 0, key, &k1_c);
     if (ret)
 	krb5_abortx(context, "hmac failed");
 
@@ -240,7 +247,7 @@ ARCFOUR_subdecrypt(krb5_context context,
     k3_c.checksum.length = sizeof(k3_c_data);
     k3_c.checksum.data   = k3_c_data;
 
-    ret = _krb5_internal_hmac(context, c, cdata, 16, 0, &ke, &k3_c);
+    ret = _krb5_internal_hmac(context, NULL, c, cdata, 16, 0, &ke, &k3_c);
     if (ret)
 	krb5_abortx(context, "hmac failed");
 
@@ -255,7 +262,7 @@ ARCFOUR_subdecrypt(krb5_context context,
     cksum.checksum.length = 16;
     cksum.checksum.data   = cksum_data;
 
-    ret = _krb5_internal_hmac(context, c, cdata + 16, len - 16, 0, &ke, &cksum);
+    ret = _krb5_internal_hmac(context, NULL, c, cdata + 16, len - 16, 0, &ke, &cksum);
     if (ret)
 	krb5_abortx(context, "hmac failed");
 
@@ -336,7 +343,7 @@ ARCFOUR_prf(krb5_context context,
     res.checksum.data = out->data;
     res.checksum.length = out->length;
 
-    ret = _krb5_internal_hmac(context, c, in->data, in->length, 0, &crypto->key, &res);
+    ret = _krb5_internal_hmac(context, crypto, c, in->data, in->length, 0, &crypto->key, &res);
     if (ret)
 	krb5_data_free(out);
     return 0;

@@ -42,13 +42,6 @@ struct _krb5_key_data {
 
 struct _krb5_key_usage;
 
-struct krb5_crypto_data {
-    struct _krb5_encryption_type *et;
-    struct _krb5_key_data key;
-    int num_key_usage;
-    struct _krb5_key_usage *key_usage;
-};
-
 #define CRYPTO_ETYPE(C) ((C)->et->type)
 
 /* bits for `flags' below */
@@ -97,11 +90,13 @@ struct _krb5_checksum_type {
     size_t checksumsize;
     unsigned flags;
     krb5_error_code (*checksum)(krb5_context context,
+				krb5_crypto crypto,
 				struct _krb5_key_data *key,
 				unsigned usage,
 				const struct krb5_crypto_iov *iov, int niov,
 				Checksum *csum);
     krb5_error_code (*verify)(krb5_context context,
+			      krb5_crypto crypto,
 			      struct _krb5_key_data *key,
 			      unsigned usage,
 			      const struct krb5_crypto_iov *iov, int niov,
@@ -200,9 +195,18 @@ _krb5_crypto_iov_should_sign(const struct krb5_crypto_iov *iov)
 struct _krb5_evp_schedule {
     /*
      * Normally we'd say EVP_CIPHER_CTX here, but!  this header gets
-     * included in lib/krb5/pkinit-ec.ck
+     * included in lib/krb5/pkinit-ec.c
      */
     EVP_CIPHER_CTX ectx;
     EVP_CIPHER_CTX dctx;
 };
+
+struct krb5_crypto_data {
+    struct _krb5_encryption_type *et;
+    struct _krb5_key_data key;
+    EVP_MD_CTX *mdctx;
+    int num_key_usage;
+    struct _krb5_key_usage *key_usage;
+};
+
 #endif

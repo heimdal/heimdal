@@ -73,7 +73,7 @@ DES3_prf(krb5_context context,
 
     iov[0].data = *in;
     iov[0].flags = KRB5_CRYPTO_TYPE_DATA;
-    ret = (*ct->checksum)(context, NULL, 0, iov, 1, &result);
+    ret = (*ct->checksum)(context, crypto, NULL, 0, iov, 1, &result);
     if (ret) {
 	krb5_data_free(&result.checksum);
 	return ret;
@@ -142,6 +142,7 @@ static struct _krb5_key_type keytype_des3_derived = {
 #ifdef DES3_OLD_ENCTYPE
 static krb5_error_code
 RSA_MD5_DES3_checksum(krb5_context context,
+		      krb5_crypto crypto,
 		      struct _krb5_key_data *key,
 		      unsigned usage,
 		      const struct krb5_crypto_iov *iov,
@@ -153,6 +154,7 @@ RSA_MD5_DES3_checksum(krb5_context context,
 
 static krb5_error_code
 RSA_MD5_DES3_verify(krb5_context context,
+		    krb5_crypto crypto,
 		    struct _krb5_key_data *key,
 		    unsigned usage,
                     const struct krb5_crypto_iov *iov,

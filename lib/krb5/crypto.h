@@ -187,6 +187,13 @@ extern struct _krb5_encryption_type _krb5_enctype_null;
 extern struct _krb5_encryption_type *_krb5_etypes[];
 extern int _krb5_num_etypes;
 
+static inline int
+_krb5_crypto_iov_should_sign(const struct krb5_crypto_iov *iov)
+{
+    return (iov->flags == KRB5_CRYPTO_TYPE_DATA
+            || iov->flags == KRB5_CRYPTO_TYPE_SIGN_ONLY);
+}
+
 /* NO_HCRYPTO_POLLUTION is defined in pkinit-ec.c.  See commentary there. */
 #ifndef NO_HCRYPTO_POLLUTION
 /* Interface to the EVP crypto layer provided by hcrypto */

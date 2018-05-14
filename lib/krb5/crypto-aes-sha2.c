@@ -176,6 +176,7 @@ struct _krb5_encryption_type _krb5_enctype_aes128_cts_hmac_sha256_128 = {
     &_krb5_checksum_hmac_sha256_128_aes128,
     F_DERIVED | F_ENC_THEN_CKSUM | F_SP800_108_HMAC_KDF,
     _krb5_evp_encrypt_cts,
+    NULL,
     16,
     AES_SHA2_PRF
 };
@@ -192,6 +193,7 @@ struct _krb5_encryption_type _krb5_enctype_aes256_cts_hmac_sha384_192 = {
     &_krb5_checksum_hmac_sha384_192_aes256,
     F_DERIVED | F_ENC_THEN_CKSUM | F_SP800_108_HMAC_KDF,
     _krb5_evp_encrypt_cts,
+    NULL,
     16,
     AES_SHA2_PRF
 };

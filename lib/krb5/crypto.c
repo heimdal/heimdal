@@ -1632,9 +1632,8 @@ krb5_encrypt_iov_ivec(krb5_context context,
 	unsigned char old_ivec[EVP_MAX_IV_LENGTH];
 	krb5_data ivec_data;
 
-	ret = iov_coalesce(context, NULL, data, num_data, FALSE, &enc_data);
-	if(ret)
-	    goto cleanup;
+	heim_assert(et->blocksize <= sizeof(old_ivec),
+		    "blocksize too big for ivec buffer");
 
 	ret = _get_derived_key(context, crypto, ENCRYPTION_USAGE(usage), &dkey);
 	if(ret)
@@ -1644,22 +1643,30 @@ krb5_encrypt_iov_ivec(krb5_context context,
 	if(ret)
 	    goto cleanup;
 
-	heim_assert(et->blocksize <= sizeof(old_ivec),
-		    "blocksize too big for ivec buffer");
-
 	if (ivec)
 	    memcpy(old_ivec, ivec, et->blocksize);
 	else
 	    memset(old_ivec, 0, et->blocksize);
 
-	ret = (*et->encrypt)(context, dkey, enc_data.data, enc_data.length,
-			     1, usage, ivec);
-	if(ret)
-	    goto cleanup;
+	if (et->encrypt_iov != NULL) {
+	    ret = (*et->encrypt_iov)(context, dkey, data, num_data, 1, usage,
+				     ivec);
+	    if (ret)
+		goto cleanup;
+	} else {
+	    ret = iov_coalesce(context, NULL, data, num_data, FALSE, &enc_data);
+	    if (ret)
+		goto cleanup;
 
-	ret = iov_uncoalesce(context, &enc_data, data, num_data);
-	if(ret)
-	    goto cleanup;
+	    ret = (*et->encrypt)(context, dkey, enc_data.data, enc_data.length,
+				 1, usage, ivec);
+	    if (ret)
+		goto cleanup;
+
+	    ret = iov_uncoalesce(context, &enc_data, data, num_data);
+	    if (ret)
+		goto cleanup;
+        }
 
 	ivec_data.length = et->blocksize;
 	ivec_data.data = old_ivec;
@@ -1700,10 +1707,8 @@ krb5_encrypt_iov_ivec(krb5_context context,
         if (ret)
             goto cleanup;
 
-	ret = iov_coalesce(context, NULL, data, num_data, FALSE, &enc_data);
-	if(ret)
-	    goto cleanup;
-
+        /* create_checksum may realloc the derived key space, so any keys
+         * obtained before it was called may no longer be valid */
 	ret = _get_derived_key(context, crypto, ENCRYPTION_USAGE(usage), &dkey);
 	if(ret)
 	    goto cleanup;
@@ -1712,14 +1717,25 @@ krb5_encrypt_iov_ivec(krb5_context context,
 	if(ret)
 	    goto cleanup;
 
-	ret = (*et->encrypt)(context, dkey, enc_data.data, enc_data.length,
-			     1, usage, ivec);
-	if(ret)
-	    goto cleanup;
+        if (et->encrypt_iov != NULL) {
+            ret = (*et->encrypt_iov)(context, dkey, data, num_data, 1, usage,
+                                     ivec);
+            if (ret)
+                goto cleanup;
+        } else {
+            ret = iov_coalesce(context, NULL, data, num_data, FALSE, &enc_data);
+            if (ret)
+                goto cleanup;
 
-	ret = iov_uncoalesce(context, &enc_data, data, num_data);
-	if(ret)
-	    goto cleanup;
+            ret = (*et->encrypt)(context, dkey, enc_data.data, enc_data.length,
+                                 1, usage, ivec);
+            if (ret)
+                goto cleanup;
+
+            ret = iov_uncoalesce(context, &enc_data, data, num_data);
+            if (ret)
+                goto cleanup;
+        }
     }
 
 cleanup:

@@ -120,6 +120,12 @@ struct _krb5_encryption_type {
 			       krb5_boolean encryptp,
 			       int usage,
 			       void *ivec);
+    krb5_error_code (*encrypt_iov)(krb5_context context,
+			       struct _krb5_key_data *key,
+			       krb5_crypto_iov *iov, int niov,
+			       krb5_boolean encryptp,
+			       int usage,
+			       void *ivec);
     size_t prf_length;
     krb5_error_code (*prf)(krb5_context,
 			   krb5_crypto, const krb5_data *, krb5_data *);

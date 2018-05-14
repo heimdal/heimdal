@@ -105,6 +105,49 @@ out:
 }
 
 krb5_error_code
+_krb5_evp_hmac_iov(krb5_context context,
+                   struct _krb5_key_data *key,
+                   const struct krb5_crypto_iov *iov,
+                   int niov,
+                   void *hmac,
+                   unsigned int *hmaclen,
+                   const EVP_MD *md,
+                   ENGINE *engine)
+{
+    HMAC_CTX *ctx;
+    krb5_data current = {0, 0};
+    int i;
+
+    ctx = HMAC_CTX_new();
+    if (ctx == NULL)
+        return krb5_enomem(context);
+
+    HMAC_Init_ex(ctx, key->key->keyvalue.data, key->key->keyvalue.length,
+                 md, engine);
+
+    for (i = 0; i < niov; i++) {
+        if (_krb5_crypto_iov_should_sign(&iov[i])) {
+	    if ((char *)current.data + current.length == iov[i].data.data) {
+		current.length += iov[i].data.length;
+	    } else {
+		if (current.data)
+		    HMAC_Update(ctx, current.data, current.length);
+		current = iov[i].data;
+	    }
+	}
+    }
+
+    if (current.data)
+	HMAC_Update(ctx, current.data, current.length);
+
+    HMAC_Final(ctx, hmac, hmaclen);
+
+    HMAC_CTX_free(ctx);
+
+    return 0;
+}
+
+krb5_error_code
 _krb5_evp_encrypt(krb5_context context,
 		struct _krb5_key_data *key,
 		void *data,

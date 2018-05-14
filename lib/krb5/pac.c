@@ -88,6 +88,7 @@ HMAC_MD5_any_checksum(krb5_context context,
 		      Checksum *result)
 {
     struct _krb5_key_data local_key;
+    struct krb5_crypto_iov iov;
     krb5_error_code ret;
 
     memset(&local_key, 0, sizeof(local_key));
@@ -103,7 +104,11 @@ HMAC_MD5_any_checksum(krb5_context context,
     }
 
     result->cksumtype = CKSUMTYPE_HMAC_MD5;
-    ret = _krb5_HMAC_MD5_checksum(context, &local_key, data, len, usage, result);
+    iov.data.data = (void *)data;
+    iov.data.length = len;
+    iov.flags = KRB5_CRYPTO_TYPE_DATA;
+
+    ret = _krb5_HMAC_MD5_checksum(context, &local_key, usage, &iov, 1, result);
     if (ret)
 	krb5_data_free(&result->checksum);
 

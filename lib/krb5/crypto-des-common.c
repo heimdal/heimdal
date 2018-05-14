@@ -57,13 +57,14 @@ KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 _krb5_des_checksum(krb5_context context,
 		   const EVP_MD *evp_md,
 		   struct _krb5_key_data *key,
-		   const void *data,
-		   size_t len,
+		   const struct krb5_crypto_iov *iov,
+		   int niov,
 		   Checksum *cksum)
 {
     struct _krb5_evp_schedule *ctx = key->schedule->data;
     EVP_MD_CTX *m;
     DES_cblock ivec;
+    int i;
     unsigned char *p = cksum->checksum.data;
 
     krb5_generate_random_block(p, 8);
@@ -74,7 +75,10 @@ _krb5_des_checksum(krb5_context context,
 
     EVP_DigestInit_ex(m, evp_md, NULL);
     EVP_DigestUpdate(m, p, 8);
-    EVP_DigestUpdate(m, data, len);
+    for (i = 0; i < niov; i++) {
+	if (_krb5_crypto_iov_should_sign(&iov[i]))
+	    EVP_DigestUpdate(m, iov[i].data.data, iov[i].data.length);
+    }
     EVP_DigestFinal_ex (m, p + 8, NULL);
     EVP_MD_CTX_destroy(m);
     memset_s(&ivec, sizeof(ivec), 0, sizeof(ivec));
@@ -126,13 +130,14 @@ _krb5_des_verify(krb5_context context,
 static krb5_error_code
 RSA_MD5_checksum(krb5_context context,
 		 struct _krb5_key_data *key,
-		 const void *data,
-		 size_t len,
 		 unsigned usage,
+		 const struct krb5_crypto_iov *iov,
+		 int niov,
 		 Checksum *C)
 {
-    if (EVP_Digest(data, len, C->checksum.data, NULL, EVP_md5(), NULL) != 1)
+    if (_krb5_evp_digest_iov(iov, niov, C->checksum.data, NULL, EVP_md5(), NULL) != 1)
 	krb5_abortx(context, "md5 checksum failed");
+
     return 0;
 }
 

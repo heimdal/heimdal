@@ -166,48 +166,62 @@ _key_schedule(krb5_context context,
 static krb5_error_code
 SHA1_checksum(krb5_context context,
 	      struct _krb5_key_data *key,
-	      const void *data,
-	      size_t len,
 	      unsigned usage,
+	      const struct krb5_crypto_iov *iov,
+	      int niov,
 	      Checksum *C)
 {
-    if (EVP_Digest(data, len, C->checksum.data, NULL, EVP_sha1(), NULL) != 1)
+    if (_krb5_evp_digest_iov(iov, niov, C->checksum.data,
+                             NULL, EVP_sha1(), NULL) != 1)
 	krb5_abortx(context, "sha1 checksum failed");
+
     return 0;
 }
 
 /* HMAC according to RFC2104 */
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
-_krb5_internal_hmac(krb5_context context,
-		    struct _krb5_checksum_type *cm,
-		    const void *data,
-		    size_t len,
-		    unsigned usage,
-		    struct _krb5_key_data *keyblock,
-		    Checksum *result)
+_krb5_internal_hmac_iov(krb5_context context,
+			struct _krb5_checksum_type *cm,
+			unsigned usage,
+			const struct krb5_crypto_iov *iov,
+			int niov,
+			struct _krb5_key_data *keyblock,
+			Checksum *result)
 {
     unsigned char *ipad, *opad;
     unsigned char *key;
+    struct krb5_crypto_iov *working;
     size_t key_len;
     size_t i;
 
-    ipad = malloc(cm->blocksize + len);
+    ipad = malloc(cm->blocksize);
     if (ipad == NULL)
 	return ENOMEM;
+
     opad = malloc(cm->blocksize + cm->checksumsize);
     if (opad == NULL) {
 	free(ipad);
 	return ENOMEM;
     }
+
+    working = calloc(niov + 1, sizeof(struct krb5_crypto_iov));
+    if (working == NULL) {
+	free(ipad);
+	free(opad);
+	return ENOMEM;
+    }
+
     memset(ipad, 0x36, cm->blocksize);
     memset(opad, 0x5c, cm->blocksize);
 
     if(keyblock->key->keyvalue.length > cm->blocksize){
+	working[0].data = keyblock->key->keyvalue;
+	working[0].flags = KRB5_CRYPTO_TYPE_DATA;
 	(*cm->checksum)(context,
 			keyblock,
-			keyblock->key->keyvalue.data,
-			keyblock->key->keyvalue.length,
 			usage,
+			working,
+			1,
 			result);
 	key = result->checksum.data;
 	key_len = result->checksum.length;
@@ -219,19 +233,46 @@ _krb5_internal_hmac(krb5_context context,
 	ipad[i] ^= key[i];
 	opad[i] ^= key[i];
     }
-    memcpy(ipad + cm->blocksize, data, len);
-    (*cm->checksum)(context, keyblock, ipad, cm->blocksize + len,
-		    usage, result);
+
+    working[0].data.data = ipad;
+    working[0].data.length = cm->blocksize;
+    working[0].flags = KRB5_CRYPTO_TYPE_DATA;
+    for (i = 0; i < niov; i++)
+	working[i + 1] = iov[i];
+
+    (*cm->checksum)(context, keyblock, usage, working, niov + 1, result);
     memcpy(opad + cm->blocksize, result->checksum.data,
 	   result->checksum.length);
-    (*cm->checksum)(context, keyblock, opad,
-		    cm->blocksize + cm->checksumsize, usage, result);
-    memset(ipad, 0, cm->blocksize + len);
+
+    working[0].data.data = opad;
+    working[0].data.length = cm->blocksize + cm->checksumsize;
+    working[0].flags = KRB5_CRYPTO_TYPE_DATA;
+    (*cm->checksum)(context, keyblock, usage, working, 1, result);
+    memset(ipad, 0, cm->blocksize);
     free(ipad);
     memset(opad, 0, cm->blocksize + cm->checksumsize);
     free(opad);
+    free(working);
 
     return 0;
+}
+
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
+_krb5_internal_hmac(krb5_context context,
+		    struct _krb5_checksum_type *cm,
+		    const void *data,
+		    size_t len,
+		    unsigned usage,
+		    struct _krb5_key_data *keyblock,
+		    Checksum *result)
+{
+    struct krb5_crypto_iov iov[1];
+
+    iov[0].data.data = (void *) data;
+    iov[0].data.length = len;
+    iov[0].flags = KRB5_CRYPTO_TYPE_DATA;
+    return _krb5_internal_hmac_iov(context, cm, usage, iov, 1,
+				   keyblock, result);
 }
 
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
@@ -268,9 +309,9 @@ krb5_hmac(krb5_context context,
 krb5_error_code
 _krb5_SP_HMAC_SHA1_checksum(krb5_context context,
 			    struct _krb5_key_data *key,
-			    const void *data,
-			    size_t len,
 			    unsigned usage,
+			    const struct krb5_crypto_iov *iov,
+			    int niov,
 			    Checksum *result)
 {
     struct _krb5_checksum_type *c = _krb5_find_checksum(CKSUMTYPE_SHA1);
@@ -281,7 +322,7 @@ _krb5_SP_HMAC_SHA1_checksum(krb5_context context,
     res.checksum.data = sha1_data;
     res.checksum.length = sizeof(sha1_data);
 
-    ret = _krb5_internal_hmac(context, c, data, len, usage, key, &res);
+    ret = _krb5_internal_hmac_iov(context, c, usage, iov, niov, key, &res);
     if (ret)
 	krb5_abortx(context, "hmac failed");
     memcpy(result->checksum.data, res.checksum.data, result->checksum.length);
@@ -367,6 +408,7 @@ create_checksum (krb5_context context,
 {
     krb5_error_code ret;
     struct _krb5_key_data *dkey;
+    struct krb5_crypto_iov iov[1];
 
     if (ct->flags & F_DISABLED) {
 	krb5_clear_error_message (context);
@@ -382,7 +424,11 @@ create_checksum (krb5_context context,
     ret = krb5_data_alloc(&result->checksum, ct->checksumsize);
     if (ret)
 	return (ret);
-    return (*ct->checksum)(context, dkey, data, len, usage, result);
+
+    iov[0].data.data = data;
+    iov[0].data.length = len;
+    iov[0].flags = KRB5_CRYPTO_TYPE_DATA;
+    return (*ct->checksum)(context, dkey, usage, iov, 1, result);
 }
 
 static int
@@ -442,6 +488,7 @@ verify_checksum(krb5_context context,
     struct _krb5_key_data *dkey;
     Checksum c;
     struct _krb5_checksum_type *ct;
+    struct krb5_crypto_iov iov[1];
 
     ct = _krb5_find_checksum(cksum->cksumtype);
     if (ct == NULL || (ct->flags & F_DISABLED)) {
@@ -472,6 +519,10 @@ verify_checksum(krb5_context context,
      * calling ->checksum and then compare result.
      */
 
+    iov[0].data.data = data;
+    iov[0].data.length = len;
+    iov[0].flags = KRB5_CRYPTO_TYPE_DATA;
+
     if(ct->verify) {
 	ret = (*ct->verify)(context, dkey, data, len, usage, cksum);
 	if (ret)
@@ -486,7 +537,7 @@ verify_checksum(krb5_context context,
     if (ret)
 	return ret;
 
-    ret = (*ct->checksum)(context, dkey, data, len, usage, &c);
+    ret = (*ct->checksum)(context, dkey, usage, iov, 1, &c);
     if (ret) {
 	krb5_data_free(&c.checksum);
 	return ret;

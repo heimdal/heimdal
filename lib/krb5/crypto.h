@@ -98,8 +98,8 @@ struct _krb5_checksum_type {
     unsigned flags;
     krb5_error_code (*checksum)(krb5_context context,
 				struct _krb5_key_data *key,
-				const void *buf, size_t len,
 				unsigned usage,
+				const struct krb5_crypto_iov *iov, int niov,
 				Checksum *csum);
     krb5_error_code (*verify)(krb5_context context,
 			      struct _krb5_key_data *key,

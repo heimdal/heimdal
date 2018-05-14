@@ -92,6 +92,7 @@ AES_SHA1_PRF(krb5_context context,
 	     krb5_data *out)
 {
     struct _krb5_checksum_type *ct = crypto->et->checksum;
+    struct krb5_crypto_iov iov[1];
     krb5_error_code ret;
     Checksum result;
     krb5_keyblock *derived;
@@ -103,7 +104,9 @@ AES_SHA1_PRF(krb5_context context,
 	return ret;
     }
 
-    ret = (*ct->checksum)(context, NULL, in->data, in->length, 0, &result);
+    iov[0].data = *in;
+    iov[0].flags = KRB5_CRYPTO_TYPE_DATA;
+    ret = (*ct->checksum)(context, NULL, 0, iov, 1, &result);
     if (ret) {
 	krb5_data_free(&result.checksum);
 	return ret;

@@ -48,6 +48,9 @@ mksdkdirs:
 ! if !exist($(SDKINCDIR)\krb5)
 	$(MKDIR) $(SDKINCDIR)\krb5
 ! endif
+! if !exist($(SDKINCDIR)\hcrypto)
+	$(MKDIR) $(SDKINCDIR)\hcrypto
+! endif
 ! if !exist($(SDKINCDIR)\heimdal)
 	$(MKDIR) $(SDKINCDIR)\heimdal
 ! endif
@@ -80,6 +83,25 @@ INCFILES=\
 	$(SDKINCDIR)\krb5\krb5_locl.h	\
 	$(SDKINCDIR)\kadm5\kadm5_err.h	\
 	$(SDKINCDIR)\kadm5\kadm5-protos.h	\
+	$(SDKINCDIR)\hcrypto\aes.h \
+	$(SDKINCDIR)\hcrypto\bn.h \
+	$(SDKINCDIR)\hcrypto\des.h \
+	$(SDKINCDIR)\hcrypto\dh.h \
+	$(SDKINCDIR)\hcrypto\dsa.h \
+	$(SDKINCDIR)\hcrypto\engine.h \
+	$(SDKINCDIR)\hcrypto\evp-cc.h \
+	$(SDKINCDIR)\hcrypto\evp-hcrypto.h \
+	$(SDKINCDIR)\hcrypto\evp.h \
+	$(SDKINCDIR)\hcrypto\hmac.h \
+	$(SDKINCDIR)\hcrypto\md2.h \
+	$(SDKINCDIR)\hcrypto\md4.h \
+	$(SDKINCDIR)\hcrypto\md5.h \
+	$(SDKINCDIR)\hcrypto\rand.h \
+	$(SDKINCDIR)\hcrypto\rc2.h \
+	$(SDKINCDIR)\hcrypto\rc4.h \
+	$(SDKINCDIR)\hcrypto\rsa.h \
+	$(SDKINCDIR)\hcrypto\sha.h \
+	$(SDKINCDIR)\hcrypto\ui.h \
 	$(SDKINCDIR)\heimdal\asn1_err.h	\
 	$(SDKINCDIR)\heimdal\heim_err.h	\
 	$(SDKINCDIR)\heimdal\k524_err.h	\
@@ -127,6 +149,9 @@ all:: $(INCFILES) $(LIBFILES)
 {$(INCDIR)}.h{$(SDKINCDIR)\krb5}.h:
 	$(CP) $** $@
 
+{$(INCDIR)\hcrypto}.h{$(SDKINCDIR)\hcrypto}.h:
+	$(CP) $** $@
+
 {$(INCDIR)}.h{$(SDKINCDIR)\heimdal}.h:
 	$(CP) $** $@
 
@@ -145,6 +170,7 @@ $(SDKINCDIR)\Heimdal.Application.$(MCPU).manifest: $(APPMANIFEST)
 clean::
 	-$(RM) $(SDKINCDIR)\*.*
 	-$(RM) $(SDKINCDIR)\krb5\*.*
+	-$(RM) $(SDKINCDIR)\hcrypto\*.*
 	-$(RM) $(SDKINCDIR)\heimdal\*.*
 	-$(RM) $(SDKINCDIR)\kadm5\*.*
 	-$(RM) $(SDKINCDIR)\gssapi\*.*

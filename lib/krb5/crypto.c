@@ -331,6 +331,8 @@ _krb5_SP_HMAC_SHA1_checksum(krb5_context context,
 
     ret = _krb5_evp_hmac_iov(context, crypto, key, iov, niov, hmac, &hmaclen,
                              EVP_sha1(), NULL);
+    if (ret)
+        return ret;
 
     heim_assert(result->checksum.length <= hmaclen,
                 "SHA1 checksum too short");
@@ -1994,10 +1996,10 @@ krb5_create_checksum_iov(krb5_context context,
     ret = create_checksum_iov(context, ct, crypto, keyusage,
 			      data, num_data, &cksum);
 
-    if (type)
+    if (ret == 0 && type)
 	*type = cksum.cksumtype;
 
-    return 0;
+    return ret;
 }
 
 /**

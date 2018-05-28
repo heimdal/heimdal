@@ -450,6 +450,8 @@ _krb5_evp_encrypt_iov_cts(krb5_context context,
 	 * final partial block */
 	remaining = ((length - 1) & blockmask);
 	partiallen = length - remaining;
+
+	memset(&lastpos, 0, sizeof(lastpos)); /* Keep the compiler happy */
     } else {
 	/* Decryption needs to leave 2 whole blocks and a partial for
 	 * further processing */

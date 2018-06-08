@@ -216,6 +216,16 @@ struct _krb5_get_init_creds_opt_private {
 
 typedef uint32_t krb5_enctype_set;
 
+/*
+ * Do not remove or reorder the fields of this structure.
+ * Fields that are no longer used should be marked "deprecated".
+ * New fields should always be appended to the end of the
+ * structure.
+ *
+ * Although this structure is internal it is shared with
+ * plugins and such changes will result in data corruption
+ * if plugins are not built with a matching version.
+ */
 typedef struct krb5_context_data {
     krb5_enctype *etypes;
     krb5_enctype *cfg_etypes;
@@ -231,7 +241,6 @@ typedef struct krb5_context_data {
     int32_t kdc_sec_offset;
     int32_t kdc_usec_offset;
     krb5_config_section *cf;
-    size_t config_include_depth;
     struct et_list *et_list;
     struct krb5_log_facility *warn_dest;
     struct krb5_log_facility *debug_dest;
@@ -247,7 +256,6 @@ typedef struct krb5_context_data {
     krb5_boolean scan_interfaces;	/* `ifconfig -a' */
     krb5_boolean srv_lookup;		/* do SRV lookups */
     krb5_boolean srv_try_txt;		/* try TXT records also */
-    krb5_boolean no_ticket_store;       /* Don't store service tickets */
     int32_t fcache_vno;			/* create cache files w/ this
                                            version */
     int num_kt_types;			/* # of registered keytab types */
@@ -276,6 +284,8 @@ typedef struct krb5_context_data {
 #endif
     unsigned int num_kdc_requests;
     krb5_name_canon_rule name_canon_rules;
+    size_t config_include_depth;
+    krb5_boolean no_ticket_store;       /* Don't store service tickets */
 } krb5_context_data;
 
 #ifndef KRB5_USE_PATH_TOKENS

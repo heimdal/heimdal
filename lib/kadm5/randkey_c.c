@@ -51,15 +51,18 @@ kadm5_c_randkey_principal(void *server_handle,
     int32_t tmp;
     size_t i;
     krb5_data reply;
+    krb5_keyblock *k;
 
     ret = _kadm5_connect(server_handle);
-    if(ret)
+    if (ret)
 	return ret;
+
+    krb5_data_zero(&reply);
 
     sp = krb5_storage_from_mem(buf, sizeof(buf));
     if (sp == NULL) {
-	krb5_clear_error_message(context->context);
-	return ENOMEM;
+	ret = ENOMEM;
+	goto out;
     }
 
     /*
@@ -92,56 +95,60 @@ kadm5_c_randkey_principal(void *server_handle,
         if (ret == 0)
             krb5_store_int32(sp, ks_tuple[i].ks_salttype);
     }
-    if (ret)
-        return ret;
     /* Future extensions go here */
+    if (ret)
+	goto out;
 
     ret = _kadm5_client_send(context, sp);
-    krb5_storage_free(sp);
     if (ret)
-	return ret;
+	goto out_keep_error;
     ret = _kadm5_client_recv(context, &reply);
-    if(ret)
-	return ret;
+    if (ret)
+	goto out_keep_error;
+    krb5_storage_free(sp);
     sp = krb5_storage_from_data(&reply);
     if (sp == NULL) {
-	krb5_clear_error_message(context->context);
-	krb5_data_free (&reply);
-	return ENOMEM;
+	ret = ENOMEM;
+	goto out;
     }
-    krb5_clear_error_message(context->context);
     ret = krb5_ret_int32(sp, &tmp);
     if (ret == 0)
         ret = tmp;
-    if (ret == 0){
-	krb5_keyblock *k;
+    if (ret)
+	goto out;
 
-	ret = krb5_ret_int32(sp, &tmp);
-        if (ret)
-            goto out;
-	if (tmp < 0) {
-	    ret = EOVERFLOW;
-	    goto out;
-	}
-	k = calloc(tmp, sizeof(*k));
-	if (k == NULL) {
-	    ret = ENOMEM;
-	    goto out;
-	}
-	for(i = 0; ret == 0 && i < tmp; i++)
-	    ret = krb5_ret_keyblock(sp, &k[i]);
-	if (ret == 0 && n_keys && new_keys) {
-	    *n_keys = tmp;
-	    *new_keys = k;
-	} else {
-            krb5_free_keyblock_contents(context->context, &k[i]);
-            for (; i > 0; i--)
-                krb5_free_keyblock_contents(context->context, &k[i - 1]);
-            free(k);
-        }
+    ret = krb5_ret_int32(sp, &tmp);
+    if (ret)
+	goto out;
+    if (tmp < 0) {
+	ret = EOVERFLOW;
+	goto out;
     }
-out:
+    k = calloc(tmp, sizeof(*k));
+    if (k == NULL) {
+	ret = ENOMEM;
+	goto out;
+    }
+    for (i = 0; ret == 0 && i < tmp; i++) {
+	ret = krb5_ret_keyblock(sp, &k[i]);
+	if (ret)
+	    goto out;
+    }
+    if (ret == 0 && n_keys && new_keys) {
+	*n_keys = tmp;
+	*new_keys = k;
+    } else {
+	krb5_free_keyblock_contents(context->context, &k[i]);
+	for (; i > 0; i--)
+	    krb5_free_keyblock_contents(context->context, &k[i - 1]);
+	free(k);
+    }
+
+  out:
+    krb5_clear_error_message(context->context);
+
+  out_keep_error:
     krb5_storage_free(sp);
-    krb5_data_free (&reply);
+    krb5_data_free(&reply);
     return ret;
 }

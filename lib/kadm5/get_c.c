@@ -38,7 +38,7 @@ RCSID("$Id$");
 kadm5_ret_t
 kadm5_c_get_principal(void *server_handle,
 		      krb5_principal princ,
-		      kadm5_principal_ent_t out,
+		      kadm5_principal_ent_t ent,
 		      uint32_t mask)
 {
     kadm5_client_context *context = server_handle;
@@ -49,36 +49,48 @@ kadm5_c_get_principal(void *server_handle,
     krb5_data reply;
 
     ret = _kadm5_connect(server_handle);
-    if(ret)
+    if (ret)
 	return ret;
+
+    krb5_data_zero(&reply);
 
     sp = krb5_storage_from_mem(buf, sizeof(buf));
     if (sp == NULL) {
-	krb5_clear_error_message(context->context);
-	return ENOMEM;
+	ret = ENOMEM;
+	goto out;
     }
-    krb5_store_int32(sp, kadm_get);
-    krb5_store_principal(sp, princ);
-    krb5_store_int32(sp, mask);
+    ret = krb5_store_int32(sp, kadm_get);
+    if (ret)
+	goto out;
+    ret = krb5_store_principal(sp, princ);
+    if (ret)
+	goto out;
+    ret = krb5_store_int32(sp, mask);
+    if (ret)
+	goto out;
     ret = _kadm5_client_send(context, sp);
-    krb5_storage_free(sp);
-    if(ret)
-	return ret;
+    if (ret)
+	goto out_keep_error;
     ret = _kadm5_client_recv(context, &reply);
     if (ret)
-	return ret;
-    sp = krb5_storage_from_data (&reply);
-    if (sp == NULL) {
-	krb5_clear_error_message(context->context);
-	krb5_data_free (&reply);
-	return ENOMEM;
-    }
-    krb5_ret_int32(sp, &tmp);
-    ret = tmp;
-    krb5_clear_error_message(context->context);
-    if(ret == 0)
-	kadm5_ret_principal_ent(sp, out);
+	goto out_keep_error;
     krb5_storage_free(sp);
-    krb5_data_free (&reply);
+    sp = krb5_storage_from_data(&reply);
+    if (sp == NULL) {
+	ret = ENOMEM;
+	goto out;
+    }
+    ret = krb5_ret_int32(sp, &tmp);
+    if (ret == 0)
+	ret = tmp;
+
+  out:
+    krb5_clear_error_message(context->context);
+
+  out_keep_error:
+    if (ret == 0)
+	kadm5_ret_principal_ent(sp, ent);
+    krb5_storage_free(sp);
+    krb5_data_free(&reply);
     return ret;
 }

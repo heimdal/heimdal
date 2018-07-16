@@ -69,8 +69,8 @@ h4=`echo "${H4}" | tr '[A-Z]' '[a-z]'`
 port=@port@
 pwport=@pwport@
 
-kadmin="${kadmin} -l -r $R"
 kadmin5="${kadmin} -l -r $R5"
+kadmin="${kadmin} -l -r $R"
 kdc="${kdc} --addresses=localhost -P $port"
 kpasswdd="${kpasswdd} --addresses=localhost -p $pwport"
 

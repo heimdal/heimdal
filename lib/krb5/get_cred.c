@@ -137,7 +137,6 @@ set_auth_data (krb5_context context,
 
 static krb5_error_code
 init_tgs_req (krb5_context context,
-	      krb5_ccache ccache,
 	      krb5_addresses *addresses,
 	      krb5_kdc_flags flags,
 	      Ticket *second_ticket,
@@ -408,7 +407,6 @@ decrypt_tkt_with_subkey (krb5_context context,
 
 static krb5_error_code
 get_cred_kdc(krb5_context context,
-	     krb5_ccache id,
 	     krb5_kdc_flags flags,
 	     krb5_addresses *addresses,
 	     krb5_creds *in_creds,
@@ -499,7 +497,6 @@ get_cred_kdc(krb5_context context,
     }
 
     ret = init_tgs_req (context,
-			id,
 			addresses,
 			flags,
 			second_ticket,
@@ -605,7 +602,6 @@ out:
 
 static krb5_error_code
 get_cred_kdc_address(krb5_context context,
-		     krb5_ccache id,
 		     krb5_kdc_flags flags,
 		     krb5_addresses *addrs,
 		     krb5_creds *in_creds,
@@ -636,7 +632,7 @@ get_cred_kdc_address(krb5_context context,
 		addrs = NULL;
 	}
     }
-    ret = get_cred_kdc(context, id, flags, addrs, in_creds,
+    ret = get_cred_kdc(context, flags, addrs, in_creds,
 		       krbtgt, impersonate_principal,
 		       second_ticket, out_creds);
     krb5_free_addresses(context, &addresses);
@@ -668,7 +664,7 @@ krb5_get_kdc_cred(krb5_context context,
 	*out_creds = NULL;
 	return ret;
     }
-    ret = get_cred_kdc(context, id, flags, addresses,
+    ret = get_cred_kdc(context, flags, addresses,
 		       in_creds, krbtgt, NULL, NULL, *out_creds);
     krb5_free_creds (context, krbtgt);
     if(ret) {
@@ -796,7 +792,7 @@ get_cred_kdc_capath_worker(krb5_context context,
 		ok_as_delegate = tgts.flags.b.ok_as_delegate;
 	    }
 
-	    ret = get_cred_kdc_address(context, ccache, flags, NULL,
+	    ret = get_cred_kdc_address(context, flags, NULL,
 				   in_creds, &tgts,
 				   impersonate_principal,
 				   second_ticket,
@@ -864,7 +860,7 @@ get_cred_kdc_capath_worker(krb5_context context,
 	    goto out;
     }
 
-    ret = get_cred_kdc_address(context, ccache, flags, NULL,
+    ret = get_cred_kdc_address(context, flags, NULL,
 			       in_creds, tgt, impersonate_principal,
 			       second_ticket, *out_creds);
     if (ret == 0 &&
@@ -1064,7 +1060,7 @@ get_cred_kdc_referral(krb5_context context,
 	    ret = EINVAL;
 
 	if (ret) {
-	    ret = get_cred_kdc_address(context, ccache, flags, NULL,
+	    ret = get_cred_kdc_address(context, flags, NULL,
 				       &referral, &tgt, impersonate_principal,
 				       second_ticket, &ticket);
 	    if (ret)

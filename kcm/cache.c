@@ -217,6 +217,7 @@ kcm_free_ccache_data_internal(krb5_context context,
 
     cache->tkt_life = 0;
     cache->renew_life = 0;
+    cache->kdc_offset = 0;
 
     cache->next = NULL;
     cache->refcnt = 0;
@@ -322,6 +323,7 @@ kcm_ccache_alloc(krb5_context context,
     slot->key.keytab = NULL;
     slot->tkt_life = 0;
     slot->renew_life = 0;
+    slot->kdc_offset = 0;
 
     if (new_slot)
 	ccache_head = slot;

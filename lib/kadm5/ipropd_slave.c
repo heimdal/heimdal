@@ -974,7 +974,8 @@ main(int argc, char **argv)
 					       server_context->db,
 					       O_RDWR | O_CREAT, 0600);
 	    if (ret)
-		krb5_err (context, 1, ret, "db->open");
+		krb5_err (context, 1, ret, "db->open while handling a "
+			  "message from the master");
 
             ret = kadm5_log_init(server_context);
             if (ret) {
@@ -983,7 +984,8 @@ main(int argc, char **argv)
             }
 	    ret = server_context->db->hdb_close (context, server_context->db);
 	    if (ret)
-		krb5_err (context, 1, ret, "db->close");
+		krb5_err (context, 1, ret, "db->close while handling a "
+			  "message from the master");
 
 	    switch (tmp) {
 	    case FOR_YOU :

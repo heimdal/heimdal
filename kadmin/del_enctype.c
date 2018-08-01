@@ -39,7 +39,7 @@
  */
 
 int
-del_enctype(void *opt, int argc, char **argv)
+del_enctype(struct del_enctype_options *opt, int argc, char **argv)
 {
     kadm5_principal_ent_rec princ;
     krb5_principal princ_ent = NULL;
@@ -98,7 +98,7 @@ del_enctype(void *opt, int argc, char **argv)
 	key = &princ.key_data[i];
 
 	for (k = 0; k < n_etypes; ++k) {
-	    if (etypes[k] == key->key_data_type[0]) {
+	    if (etypes[k] == key->key_data_type[0] && (opt->kvno_integer == -1 || opt->kvno_integer == key->key_data_kvno)) {
 		docopy = 0;
 		break;
 	    }

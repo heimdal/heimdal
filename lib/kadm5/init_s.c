@@ -103,7 +103,7 @@ kadm5_s_init_with_context(krb5_context context,
         kadm5_s_destroy(ctx);
     else
         *server_handle = ctx;
-    return 0;
+    return ret;
 }
 
 kadm5_ret_t

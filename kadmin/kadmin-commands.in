@@ -256,9 +256,15 @@ command = {
 }
 command = {
 	name = "del_enctype"
+	option = {
+		long = "kvno"
+		type = "integer"
+		help = "key version number"
+		default = "-1"
+	}
 	argument = "principal enctype..."
 	min_args = "2"
-	help = "Delete all the mentioned enctypes for principal."
+	help = "Delete the mentioned enctypes for principal."
 }
 command = {
 	name = "add_enctype"

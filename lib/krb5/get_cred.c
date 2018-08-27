@@ -990,7 +990,41 @@ get_cred_kdc_referral(krb5_context context,
     if (start_realm == NULL)
         return krb5_enomem(context);
 
-    /* find tgt for the clients base realm */
+    /*
+     * find tgt for the clients base realm, if we are impersonating a user
+     * from another realm, then we actually need a referral tgt to that realm.
+     */
+    if (impersonate_principal != NULL &&
+        !krb5_realm_compare(context, impersonate_principal, in_creds->client))
+    {
+        krb5_creds *impersonate_tgt;
+        referral = *in_creds;
+
+        ret = krb5_make_principal(context, &referral.server,
+                                  start_realm, KRB5_TGS_NAME,
+                                  impersonate_principal->realm, NULL);
+        free(start_realm);
+        if (ret) {
+            return ret;
+        }
+
+        ret = get_cred_kdc_referral(context, flags, ccache, &referral,
+                                        NULL, NULL, &impersonate_tgt);
+        krb5_free_principal(context, referral.server);
+        if (ret) {
+            return ret;
+        }
+
+        tgt = *impersonate_tgt;
+        free(impersonate_tgt);
+
+        start_realm = strdup(impersonate_principal->realm);
+        if (start_realm == NULL) {
+            krb5_free_cred_contents(context, &tgt);
+            return krb5_enomem(context);
+	}
+    }
+    else
     {
 	krb5_principal tgtname;
 

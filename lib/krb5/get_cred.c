@@ -1036,6 +1036,7 @@ get_cred_kdc_referral(krb5_context context,
     krb5_creds tgt, referral, ticket;
     krb5_creds **referral_tgts = NULL;  /* used for loop detection */
     int loop = 0;
+    krb5_boolean got_tgt = false;
     int ok_as_delegate = 1;
     int want_tgt;
     size_t i;
@@ -1073,7 +1074,52 @@ get_cred_kdc_referral(krb5_context context,
 	}
     }
 
-    /* find tgt for the clients base realm */
+    /*
+     * find tgt for the clients base realm, if we are impersonating a user
+     * from another realm, then we actually need a referral tgt to that realm.
+     */
+    if (impersonate_principal != NULL &&
+	!krb5_realm_compare(context, impersonate_principal, in_creds->client))
+    {
+	krb5_creds impersonate_ref;
+	krb5_creds *impersonate_tgt = NULL;
+
+	impersonate_ref = *in_creds;
+
+	ret = krb5_make_principal(context, &impersonate_ref.server,
+				  start_realm, KRB5_TGS_NAME,
+				  impersonate_principal->realm, NULL);
+	if (ret) {
+	    free(start_realm);
+	    return ret;
+	}
+
+	krb5_principal_set_type(context, impersonate_ref.server, KRB5_NT_SRV_INST);
+
+	ret = get_cred_kdc_referral(context, flags, ccache, &impersonate_ref, NULL,
+				    NULL, &impersonate_tgt);
+	krb5_free_principal(context, impersonate_ref.server);
+	if (ret == 0) {
+	    tgt = *impersonate_tgt;
+	    free(impersonate_tgt);
+	    free(start_realm);
+
+	    start_realm = strdup(impersonate_principal->realm);
+	    if (start_realm == NULL) {
+		krb5_free_cred_contents(context, &tgt);
+		return krb5_enomem(context);
+	    }
+
+	    got_tgt = true;
+	}
+
+	/*
+	 * The user might be in local realm but using an alternative realm name type.
+	 * Fall back to our krbtgt realm in case of failure.
+	 */
+    }
+
+    if (!got_tgt)
     {
 	krb5_principal tgtname;
 

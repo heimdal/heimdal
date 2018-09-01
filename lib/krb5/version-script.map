@@ -776,6 +776,7 @@ HEIMDAL_KRB5_2.0 {
 		krb5_init_creds_get;
 		krb5_init_creds_get_creds;
 		krb5_init_creds_get_error;
+		krb5_init_creds_get_retry;
 		krb5_init_creds_set_password;
 		krb5_init_creds_store;
 		krb5_init_creds_free;

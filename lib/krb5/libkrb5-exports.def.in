@@ -778,6 +778,7 @@ EXPORTS
 	krb5_auth_con_getsendsubkey
 	krb5_init_creds_free
 	krb5_init_creds_get
+	krb5_init_creds_get_retry
 	krb5_init_creds_get_creds
 	krb5_init_creds_get_error
 	krb5_init_creds_init

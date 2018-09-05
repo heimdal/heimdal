@@ -1240,7 +1240,7 @@ fcc_lastchange(krb5_context context, krb5_ccache id, krb5_timestamp *mtime)
 {
     krb5_error_code ret;
     struct stat sb;
-    int fd;
+    int fd = 0;
 
     ret = fcc_open(context, id, "lastchange", &fd, O_RDONLY, 0);
     if(ret)

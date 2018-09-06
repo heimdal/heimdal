@@ -636,10 +636,10 @@ encode_os_version(krb5_storage *out)
     CHECK(krb5_store_uint8(out, 0x06), 0);
     CHECK(krb5_store_uint8(out, 0x01), 0);
     CHECK(krb5_store_uint16(out, 0x1db0), 0);
+    CHECK(krb5_store_uint8(out, 0x00), 0);
+    CHECK(krb5_store_uint8(out, 0x00), 0);
+    CHECK(krb5_store_uint8(out, 0x00), 0);
     CHECK(krb5_store_uint8(out, 0x0f), 0); /* ntlm version 15 */
-    CHECK(krb5_store_uint8(out, 0x00), 0);
-    CHECK(krb5_store_uint8(out, 0x00), 0);
-    CHECK(krb5_store_uint8(out, 0x00), 0);
  out:
     return ret;
 }

@@ -249,7 +249,7 @@ scrub_file (int fd)
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 _krb5_erase_file(krb5_context context, const char *filename)
 {
-    int fd;
+    int fd = -1;
     struct stat sb1, sb2;
     int ret;
 
@@ -310,7 +310,7 @@ fcc_gen_new(krb5_context context, krb5_ccache *id)
     char *file = NULL, *exp_file = NULL;
     krb5_error_code ret;
     krb5_fcache *f;
-    int fd;
+    int fd = -1;
 
     f = malloc(sizeof(*f));
     if(f == NULL) {
@@ -393,7 +393,7 @@ fcc_open(krb5_context context,
     size_t tries = 3;
 #endif
     int strict_checking;
-    int fd;
+    int fd = -1;
 
     flags |= O_BINARY | O_CLOEXEC | O_NOFOLLOW;
 
@@ -528,7 +528,7 @@ fcc_initialize(krb5_context context,
 {
     krb5_fcache *f = FCACHE(id);
     int ret = 0;
-    int fd;
+    int fd = -1;
 
     if (f == NULL)
         return krb5_einval(context, 2);
@@ -616,7 +616,7 @@ fcc_store_cred(krb5_context context,
 	       krb5_creds *creds)
 {
     int ret;
-    int fd;
+    int fd = -1;
 
     ret = fcc_open(context, id, "store", &fd, O_WRONLY | O_APPEND, 0);
     if(ret)
@@ -652,7 +652,7 @@ init_fcc(krb5_context context,
 	 int *ret_fd,
 	 krb5_deltat *kdc_offset)
 {
-    int fd;
+    int fd = -1;
     int8_t pvno, tag;
     krb5_storage *sp;
     krb5_error_code ret;
@@ -802,7 +802,7 @@ fcc_get_principal(krb5_context context,
 		  krb5_principal *principal)
 {
     krb5_error_code ret;
-    int fd = 0;
+    int fd = -1;
     krb5_storage *sp = NULL;
 
     ret = init_fcc (context, id, "get-principal", &sp, &fd, NULL);
@@ -1214,7 +1214,7 @@ fcc_move(krb5_context context, krb5_ccache from, krb5_ccache to)
     /* make sure ->version is uptodate */
     {
 	krb5_storage *sp;
-	int fd;
+	int fd = -1;
 	if ((ret = init_fcc (context, to, "move", &sp, &fd, NULL)) == 0) {
 	    if (sp)
 		krb5_storage_free(sp);
@@ -1240,7 +1240,7 @@ fcc_lastchange(krb5_context context, krb5_ccache id, krb5_timestamp *mtime)
 {
     krb5_error_code ret;
     struct stat sb;
-    int fd = 0;
+    int fd = -1;
 
     ret = fcc_open(context, id, "lastchange", &fd, O_RDONLY, 0);
     if(ret)
@@ -1267,7 +1267,7 @@ fcc_get_kdc_offset(krb5_context context, krb5_ccache id, krb5_deltat *kdc_offset
 {
     krb5_error_code ret;
     krb5_storage *sp = NULL;
-    int fd;
+    int fd = -1;
     ret = init_fcc(context, id, "get-kdc-offset", &sp, &fd, kdc_offset);
     if (sp)
 	krb5_storage_free(sp);

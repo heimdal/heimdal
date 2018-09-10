@@ -491,9 +491,12 @@ _krb5_evp_encrypt_iov_cts(krb5_context context,
 		remaining -= wholeblocks;
 	    }
 
-	    /* Then, if we have partial data left, steal enough from subsequent
-	     * iovecs to make a whole block */
-	    if (cursor.current.length > 0 && cursor.current.length < blocksize) {
+	    /* Then steal enough from subsequent iovecs to make a
+	     * whole block.  We need to do this regardless of if there
+	     * is zero data left, for correctness and to avoid a spin
+	     * on remaining > 0
+	     */
+	    if (cursor.current.length < blocksize) {
 		if (encryptp && remaining == blocksize)
 		    lastpos = cursor;
 

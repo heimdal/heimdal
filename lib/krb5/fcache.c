@@ -1213,7 +1213,7 @@ fcc_move(krb5_context context, krb5_ccache from, krb5_ccache to)
 
     /* make sure ->version is uptodate */
     {
-	krb5_storage *sp;
+	krb5_storage *sp = NULL;
 	int fd = -1;
 	if ((ret = init_fcc (context, to, "move", &sp, &fd, NULL)) == 0) {
 	    if (sp)

@@ -1628,7 +1628,7 @@ _kdc_as_rep(kdc_request_t r,
     KDCOptions f;
     krb5_enctype setype;
     krb5_error_code ret = 0;
-    Key *skey;
+    Key *skey = NULL;
     int found_pa = 0;
     int i, flags = HDB_F_FOR_AS_REQ;
     METHOD_DATA error_method;

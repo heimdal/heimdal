@@ -43,7 +43,7 @@ kadmind_dispatch(void *kadm_handlep, krb5_boolean initial,
 		 krb5_data *in, krb5_data *out)
 {
     kadm5_ret_t ret;
-    int32_t cmd, mask, tmp;
+    int32_t cmd, mask, kvno, tmp;
     kadm5_server_context *contextp = kadm_handlep;
     char client[128], name[128], name2[128];
     const char *op = "";
@@ -248,6 +248,36 @@ kadmind_dispatch(void *kadm_handlep, krb5_boolean initial,
 	sp = krb5_storage_emem();
 	krb5_store_int32(sp, ret);
 	break;
+    }
+    case kadm_prune:{
+        op = "PRUNE";
+        ret = krb5_ret_principal(sp, &princ);
+        if (ret)
+            goto fail;
+        ret = krb5_ret_int32(sp, &kvno);
+        if (ret == HEIM_ERR_EOF) {
+            kvno = 0;
+        } else if (ret) {
+            krb5_free_principal(contextp->context, princ);
+            goto fail;
+        }
+        krb5_unparse_name_fixed(contextp->context, princ, name, sizeof(name));
+        krb5_warnx(contextp->context, "%s: %s %s", client, op, name);
+        ret = _kadm5_acl_check_permission(contextp, KADM5_PRIV_CPW, princ);
+        if (ret) {
+            krb5_free_principal(contextp->context, princ);
+            goto fail;
+        }
+        ret = kadm5_prune_principal(kadm_handlep, princ, kvno);
+        krb5_free_principal(contextp->context, princ);
+        krb5_storage_free(sp);
+        sp = krb5_storage_emem();
+        if (sp == NULL) {
+            ret = ENOMEM;
+            goto fail;
+        }
+        krb5_store_int32(sp, ret);
+        break;
     }
     case kadm_rename:{
 	op = "RENAME";

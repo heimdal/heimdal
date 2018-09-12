@@ -34,6 +34,7 @@ EXPORTS
         kadm5_lock
         kadm5_modify_policy
 	kadm5_modify_principal
+	kadm5_prune_principal
 	kadm5_randkey_principal
 	kadm5_randkey_principal_3
 	kadm5_rename_principal

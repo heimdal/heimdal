@@ -26,6 +26,7 @@ dist_kadmin_SOURCES =				\
 	kadmin.c				\
 	load.c					\
 	mod.c					\
+	prune.c					\
 	rename.c				\
 	stash.c					\
 	util.c					\

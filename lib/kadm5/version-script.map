@@ -37,6 +37,7 @@ HEIMDAL_KAMD5_SERVER_1.0 {
 		kadm5_lock;
 		kadm5_modify_principal;
 		kadm5_modify_policy;
+		kadm5_prune_principal;
 		kadm5_randkey_principal;
 		kadm5_randkey_principal_3;
 		kadm5_rename_principal;

@@ -74,6 +74,7 @@ dist_libkadm5clnt_la_SOURCES =			\
 	modify_c.c				\
 	private.h				\
 	privs_c.c				\
+	prune_c.c				\
 	randkey_c.c				\
 	rename_c.c				\
 	send_recv.c				\
@@ -108,6 +109,7 @@ dist_libkadm5srv_la_SOURCES =			\
 	password_quality.c			\
 	private.h				\
 	privs_s.c				\
+	prune_s.c				\
 	randkey_s.c				\
 	rename_s.c				\
 	server_glue.c				\

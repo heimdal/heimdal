@@ -22,6 +22,7 @@ HEIMDAL_KADM5_CLIENT_1.0 {
 		kadm5_c_init_with_skey;
 		kadm5_c_init_with_skey_ctx;
 		kadm5_c_modify_principal;
+		kadm5_c_prune_principal;
 		kadm5_c_randkey_principal;
 		kadm5_c_rename_principal;
 		kadm5_chpass_principal;

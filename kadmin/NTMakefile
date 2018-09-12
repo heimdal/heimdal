@@ -59,6 +59,7 @@ KADMIN_OBJS=			    \
 	$(OBJ)\kadmin.obj	    \
 	$(OBJ)\load.obj		    \
 	$(OBJ)\mod.obj		    \
+	$(OBJ)\prune.obj	    \
 	$(OBJ)\rename.obj	    \
 	$(OBJ)\stash.obj	    \
 	$(OBJ)\util.obj		    \

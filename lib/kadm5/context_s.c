@@ -106,6 +106,7 @@ set_funcs(kadm5_server_context *c)
     SET(c, get_principals);
     SET(c, get_privs);
     SET(c, modify_principal);
+    SET(c, prune_principal);
     SET(c, randkey_principal);
     SET(c, rename_principal);
     SET(c, lock);

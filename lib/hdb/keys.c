@@ -212,18 +212,21 @@ parse_key_set(krb5_context context, const char *key,
 }
 
 /**
- * This function prunes an HDB entry's keys that are too old to have been used
- * to mint still valid tickets (based on the entry's maximum ticket lifetime).
- * 
+ * This function prunes an HDB entry's historic keys by kvno.
+ *
  * @param context   Context
  * @param entry	    HDB entry
+ * @param kvno      Keyset kvno to prune, or zero to prune all too-old keys
  */
 krb5_error_code
-hdb_prune_keys(krb5_context context, hdb_entry *entry)
+hdb_prune_keys_kvno(krb5_context context, hdb_entry *entry, int kvno)
 {
     HDB_extension *ext;
     HDB_Ext_KeySet *keys;
+    hdb_keyset *elem;
+    time_t keep_time = 0;
     size_t nelem;
+    size_t i;
 
     ext = hdb_find_extension(entry, choice_HDB_extension_data_hist_keys);
     if (ext == NULL)
@@ -231,14 +234,12 @@ hdb_prune_keys(krb5_context context, hdb_entry *entry)
     keys = &ext->data.u.hist_keys;
     nelem = keys->len;
 
-    /* Optionally drop key history for keys older than now - max_life */
-    if (entry->max_life != NULL && nelem > 0
-	&& krb5_config_get_bool_default(context, NULL, FALSE,
-					"kadmin", "prune-key-history", NULL)) {
-	hdb_keyset *elem;
+    /*
+     * Optionally drop key history for keys older than now - max_life, which is
+     * all the keys no longer needed to decrypt extant tickets.
+     */
+    if (kvno == 0 && entry->max_life != NULL && nelem > 0) {
 	time_t ceiling = time(NULL) - *entry->max_life;
-	time_t keep_time = 0;
-	size_t i;
 
 	/*
 	 * Compute most recent key timestamp that predates the current time
@@ -250,26 +251,43 @@ hdb_prune_keys(krb5_context context, hdb_entry *entry)
 		&& (keep_time == 0 || *elem->set_time > keep_time))
 		keep_time = *elem->set_time;
 	}
+    }
 
-	/* Drop obsolete entries */
-	if (keep_time) {
-	    for (i = 0; i < nelem; /* see below */) {
-		elem = &keys->val[i];
-		if (elem->set_time && *elem->set_time < keep_time) {
-		    remove_HDB_Ext_KeySet(keys, i);
-		    /*
-		     * Removing the i'th element shifts the tail down, continue
-		     * at same index with reduced upper bound.
-		     */
-		    --nelem;
-		    continue;
-		}
-		++i;
-	    }
-	}
+    if (kvno == 0 && keep_time == 0)
+        return 0;
+
+    for (i = 0; i < nelem; /* see below */) {
+        elem = &keys->val[i];
+        if ((kvno && kvno == elem->kvno) ||
+            (keep_time && elem->set_time && *elem->set_time < keep_time)) {
+            remove_HDB_Ext_KeySet(keys, i);
+            /*
+             * Removing the i'th element shifts the tail down, continue
+             * at same index with reduced upper bound.
+             */
+            --nelem;
+            continue;
+        }
+        ++i;
     }
 
     return 0;
+}
+
+/**
+ * This function prunes an HDB entry's keys that are too old to have been used
+ * to mint still valid tickets (based on the entry's maximum ticket lifetime).
+ * 
+ * @param context   Context
+ * @param entry	    HDB entry
+ */
+krb5_error_code
+hdb_prune_keys(krb5_context context, hdb_entry *entry)
+{
+    if (!krb5_config_get_bool_default(context, NULL, FALSE,
+                                      "kadmin", "prune-key-history", NULL))
+        return 0;
+    return hdb_prune_keys_kvno(context, entry, 0);
 }
 
 /**

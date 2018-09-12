@@ -416,6 +416,19 @@ command = {
 	help = "Modifies some attributes of the specified principal."
 }
 command = {
+	name = "prune"
+	argument = "principal"
+	option = {
+		long = "kvno"
+		type = "integer"
+		help = "key version number"
+		default = "0"
+	}
+	min_args = "1"
+	max_args = "1"
+	help = "Delete keys from history by max-ticket-life or kvno."
+}
+command = {
 	name = "privileges"
 	name = "privs"
 	function = "get_privs"

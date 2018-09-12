@@ -51,6 +51,7 @@ dist_libkadm5clnt_la_SOURCES =	\
 	modify_c.c		\
 	private.h		\
 	privs_c.c		\
+	prune_c.c		\
 	randkey_c.c		\
 	rename_c.c		\
 	send_recv.c		\
@@ -83,6 +84,7 @@ dist_libkadm5srv_la_SOURCES =	\
 	password_quality.c	\
 	private.h		\
 	privs_s.c		\
+	prune_s.c		\
 	randkey_s.c		\
 	rename_s.c		\
 	server_glue.c		\
@@ -110,6 +112,7 @@ LIBKADM5CLNT_OBJS=		    \
 	$(OBJ)\marshall.obj	    \
 	$(OBJ)\modify_c.obj	    \
 	$(OBJ)\privs_c.obj	    \
+	$(OBJ)\prune_c.obj	    \
 	$(OBJ)\randkey_c.obj	    \
 	$(OBJ)\rename_c.obj	    \
 	$(OBJ)\send_recv.obj	    \
@@ -137,6 +140,7 @@ LIBKADM5SRV_OBJS=		    \
 	$(OBJ)\modify_s.obj	    \
 	$(OBJ)\password_quality.obj \
 	$(OBJ)\privs_s.obj	    \
+	$(OBJ)\prune_s.obj	    \
 	$(OBJ)\randkey_s.obj	    \
 	$(OBJ)\rename_s.obj	    \
 	$(OBJ)\server_glue.obj	    \

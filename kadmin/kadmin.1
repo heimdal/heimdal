@@ -142,6 +142,19 @@ service belonging to the principal is known to not handle certain
 enctypes.
 .Ed
 .Pp
+.Nm prune
+.Ar principal [kvno]
+.Bd -ragged -offset indent
+Deletes the named principal's keys of the given kvno.  If a kvno is
+not given then this deletes all the named principals keys that are
+too old to be needed for decrypting tickets issued using those keys
+(i.e., any such tickets are necessarily expired).  The determination
+of "too old" is made using the max-ticket-life attribute of the
+principal; though in practice that max ticket life is also constrained
+by the max-ticket-life of the client principals and the krbtgt
+principals, those are not consulted here.
+.Ed
+.Pp
 .Nm ext_keytab
 .Oo Fl k Ar string \*(Ba Xo
 .Fl Fl keytab= Ns Ar string

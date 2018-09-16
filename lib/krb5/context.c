@@ -623,6 +623,9 @@ krb5_free_context(krb5_context context)
     free(context->etypes);
     free(context->cfg_etypes);
     free(context->etypes_des);
+    free(context->permitted_enctypes);
+    free(context->tgs_etypes);
+    free(context->as_etypes);
     krb5_free_host_realm (context, context->default_realms);
     krb5_config_file_free (context, context->cf);
     free_error_table (context->et_list);

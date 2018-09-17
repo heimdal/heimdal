@@ -59,7 +59,7 @@ _gss_ntlm_allocate_ctx(OM_uint32 *minor_status, ntlm_ctx *ctx)
 
     if (*ctx) 
 	free(*ctx);
-    (*ctx) = NULL;
+    (*ctx) = GSS_C_NO_CONTEXT;
 
     return maj_stat;
 }

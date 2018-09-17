@@ -54,13 +54,10 @@ _gss_ntlm_allocate_ctx(OM_uint32 *minor_status, ntlm_ctx *ctx)
     (*ctx)->server = ns_interface;
 
     maj_stat = (*(*ctx)->server->nsi_init)(minor_status, &(*ctx)->ictx);
-    if (maj_stat == GSS_S_COMPLETE)
-    	return GSS_S_COMPLETE;
+    if (maj_stat != GSS_S_COMPLETE)
+	return maj_stat;
 
-    if (*ctx) 
-	free(*ctx);
-
-    return maj_stat;
+    return GSS_S_COMPLETE;
 }
 
 /*

@@ -222,11 +222,11 @@ any_remove_entry(krb5_context context,
 {
     struct any_data *a = id->data;
     krb5_error_code ret;
-    int found = 0;
+    krb5_boolean found = FALSE;
     while(a != NULL) {
 	ret = krb5_kt_remove_entry(context, a->kt, entry);
 	if(ret == 0)
-	    found++;
+	    found = TRUE;
 	else {
 	    if(ret != KRB5_KT_NOWRITE && ret != KRB5_KT_NOTFOUND) {
 		krb5_set_error_message(context, ret,

@@ -311,6 +311,7 @@ wrapunwrap(gss_ctx_id_t cctx, gss_ctx_id_t sctx, int flags, gss_OID mechoid)
 #define USE_HEADER_ONLY		2
 #define USE_SIGN_ONLY		4
 #define FORCE_IOV		8
+#define NO_DATA			16
 
 static void
 wrapunwrap_iov(gss_ctx_id_t cctx, gss_ctx_id_t sctx, int flags, gss_OID mechoid)
@@ -360,7 +361,11 @@ wrapunwrap_iov(gss_ctx_id_t cctx, gss_ctx_id_t sctx, int flags, gss_OID mechoid)
 	iov[1].buffer.value = NULL;
     }
     iov[2].type = GSS_IOV_BUFFER_TYPE_DATA;
-    iov[2].buffer.length = token.length;
+    if (flags & NO_DATA) {
+	iov[2].buffer.length = 0;
+    } else {
+	iov[2].buffer.length = token.length;
+    }
     iov[2].buffer.value = token.data;
     if (trailer.length != 0) {
 	iov[3].type = GSS_IOV_BUFFER_TYPE_SIGN_ONLY;
@@ -1007,6 +1012,40 @@ main(int argc, char **argv)
 
 	wrapunwrap_iov(cctx, sctx, USE_CONF|USE_HEADER_ONLY, actual_mech);
 	wrapunwrap_iov(cctx, sctx, USE_CONF|USE_HEADER_ONLY|FORCE_IOV, actual_mech);
+
+	wrapunwrap_iov(cctx, sctx, NO_DATA, actual_mech);
+	wrapunwrap_iov(cctx, sctx, NO_DATA|USE_HEADER_ONLY|FORCE_IOV, actual_mech);
+	wrapunwrap_iov(cctx, sctx, NO_DATA|USE_HEADER_ONLY, actual_mech);
+	wrapunwrap_iov(cctx, sctx, NO_DATA|USE_CONF, actual_mech);
+	wrapunwrap_iov(cctx, sctx, NO_DATA|USE_CONF|USE_HEADER_ONLY, actual_mech);
+
+	wrapunwrap_iov(cctx, sctx, NO_DATA|FORCE_IOV, actual_mech);
+	wrapunwrap_iov(cctx, sctx, NO_DATA|USE_CONF|FORCE_IOV, actual_mech);
+	wrapunwrap_iov(cctx, sctx, NO_DATA|USE_HEADER_ONLY|FORCE_IOV, actual_mech);
+	wrapunwrap_iov(cctx, sctx, NO_DATA|USE_CONF|USE_HEADER_ONLY|FORCE_IOV, actual_mech);
+
+	wrapunwrap_iov(cctx, sctx, NO_DATA|USE_SIGN_ONLY|FORCE_IOV, actual_mech);
+	wrapunwrap_iov(cctx, sctx, NO_DATA|USE_CONF|USE_SIGN_ONLY|FORCE_IOV, actual_mech);
+	wrapunwrap_iov(cctx, sctx, NO_DATA|USE_CONF|USE_HEADER_ONLY|USE_SIGN_ONLY|FORCE_IOV, actual_mech);
+
+ /* works */
+	wrapunwrap_iov(cctx, sctx, NO_DATA, actual_mech);
+	wrapunwrap_iov(cctx, sctx, NO_DATA|FORCE_IOV, actual_mech);
+
+	wrapunwrap_iov(cctx, sctx, NO_DATA|USE_CONF, actual_mech);
+	wrapunwrap_iov(cctx, sctx, NO_DATA|USE_CONF|FORCE_IOV, actual_mech);
+
+	wrapunwrap_iov(cctx, sctx, NO_DATA|USE_SIGN_ONLY, actual_mech);
+	wrapunwrap_iov(cctx, sctx, NO_DATA|USE_SIGN_ONLY|FORCE_IOV, actual_mech);
+
+	wrapunwrap_iov(cctx, sctx, NO_DATA|USE_CONF|USE_SIGN_ONLY, actual_mech);
+	wrapunwrap_iov(cctx, sctx, NO_DATA|USE_CONF|USE_SIGN_ONLY|FORCE_IOV, actual_mech);
+
+	wrapunwrap_iov(cctx, sctx, NO_DATA|USE_HEADER_ONLY, actual_mech);
+	wrapunwrap_iov(cctx, sctx, NO_DATA|USE_HEADER_ONLY|FORCE_IOV, actual_mech);
+
+	wrapunwrap_iov(cctx, sctx, NO_DATA|USE_CONF|USE_HEADER_ONLY, actual_mech);
+	wrapunwrap_iov(cctx, sctx, NO_DATA|USE_CONF|USE_HEADER_ONLY|FORCE_IOV, actual_mech);
     }
 
     if (aead_flag) {

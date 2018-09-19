@@ -37,6 +37,10 @@
 
 #ifdef _WIN32
 
+typedef BOOL (WINAPI *LPFN_GETSYSTEMTIME) (LPFILETIME);
+
+static LPFN_GETSYSTEMTIME lpGetSystemTime = NULL;
+
 ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
 gettimeofday (struct timeval *tp, void *ignore)
 {
@@ -44,7 +48,20 @@ gettimeofday (struct timeval *tp, void *ignore)
     ULARGE_INTEGER li;
     ULONGLONG ull;
 
-    GetSystemTimeAsFileTime(&ft);
+    if (lpGetSystemTime == NULL) {
+	HANDLE h1;
+	LPFN_GETSYSTEMTIME fn;
+
+	h1 = GetModuleHandle(TEXT("kernel32.dll"));	/* no refcount increase */
+	fn = (LPFN_GETSYSTEMTIME)GetProcAddress(h1,
+						"GetSystemTimePreciseAsFileTime");
+	if (fn == NULL)
+	    fn = (LPFN_GETSYSTEMTIME)GetProcAddress(h1,
+						    "GetSystemTimeAsFileTime");
+	lpGetSystemTime = fn;
+    }
+
+    lpGetSystemTime(&ft);
     li.LowPart = ft.dwLowDateTime;
     li.HighPart = ft.dwHighDateTime;
     ull = li.QuadPart;
@@ -57,7 +74,6 @@ gettimeofday (struct timeval *tp, void *ignore)
 
     return 0;
 }
-
 #else
 
 /*

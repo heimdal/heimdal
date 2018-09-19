@@ -2414,6 +2414,9 @@ krb5_init_creds_step(krb5_context context,
  
  		if (ctx->fast_state.flags & KRB5_FAST_DISABLED)
  		    goto out;
+		if (!(ctx->fast_state.flags & KRB5_FAST_EXPECTED)) {
+		    goto out;
+		}
  		if (ctx->fast_state.flags & (KRB5_FAST_REQUIRED | KRB5_FAST_EXPECTED))
  		    goto out;
  

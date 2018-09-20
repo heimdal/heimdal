@@ -53,7 +53,7 @@ get_fastuser_crypto(astgs_request_t r, krb5_enctype enctype,
 	goto out;
 
     ret = _kdc_db_fetch(r->context, r->config, fast_princ,
-			HDB_F_GET_CLIENT, NULL, NULL, &fast_user);
+			HDB_F_GET_FAST_COOKIE, NULL, NULL, &fast_user);
     krb5_free_principal(r->context, fast_princ);
     if (ret)
 	goto out;

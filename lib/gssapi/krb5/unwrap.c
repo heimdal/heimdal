@@ -109,7 +109,7 @@ unwrap_des
       EVP_Cipher(&des_ctx, p, p, input_message_buffer->length - len);
       EVP_CIPHER_CTX_cleanup(&des_ctx);
 
-      memset (&schedule, 0, sizeof(schedule));
+      memset (&deskey, 0, sizeof(deskey));
   }
 
   if (IS_DCE_STYLE(context_handle)) {

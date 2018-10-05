@@ -608,6 +608,9 @@ acceptor_start
     if (!first_ok && ni->mechToken != NULL) {
 	size_t j;
 
+	if (preferred_mech_type != GSS_C_NO_OID)
+		gss_release_oid(&junk, &preferred_mech_type);
+
 	preferred_mech_type = GSS_C_NO_OID;
 
 	/* Call glue layer to find first mech we support */

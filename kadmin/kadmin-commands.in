@@ -229,7 +229,7 @@ command = {
 		long = "password"
 		short = "p"
 		type = "string"
-		help = "princial's password"
+		help = "principal's password"
 	}
 	option = {
 		long = "key"

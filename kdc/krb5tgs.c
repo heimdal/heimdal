@@ -611,7 +611,11 @@ tgs_make_reply(astgs_request_t r,
     if(ret)
 	goto out;
 
-    ret = copy_Realm(&server_principal->realm, &rep.ticket.realm);
+    if (server->entry.flags.force_canonicalize)
+	ret = copy_Realm(&server->entry.principal->realm, &rep.ticket.realm);
+    else
+	ret = copy_Realm(&server_principal->realm, &rep.ticket.realm);
+
     if (ret)
 	goto out;
     _krb5_principal2principalname(&rep.ticket.sname, server_principal);

@@ -1221,6 +1221,30 @@ get_pa_etype_info2(krb5_context context,
     return 0;
 }
 
+static krb5_error_code
+get_pa_etype_info_both(krb5_context context,
+		       krb5_kdc_configuration *config,
+		       METHOD_DATA *md, Key *ckey)
+{
+    krb5_error_code ret;
+
+    /*
+     * RFC4120 requires:
+     * - If the client only knows about old enctypes, then send
+     *   both info replies (we send 'info' first in the list).
+     * - If the client is 'modern', because it knows about 'new'
+     *   enctype types, then only send the 'info2' reply.
+     */
+
+    if (older_enctype(ckey->key.keytype)) {
+	ret = get_pa_etype_info(context, config, md, ckey);
+	if (ret)
+	    return ret;
+    }
+
+    return get_pa_etype_info2(context, config, md, ckey);
+}
+
 /*
  *
  */
@@ -1816,6 +1840,21 @@ _kdc_as_rep(kdc_request_t r,
 	    if (pa) {
 		ret = pat[n].validate(r, pa);
 		if (ret != 0) {
+		    krb5_error_code  ret2;
+		    Key *ckey = NULL;
+		    /*
+		     * If there is a client key, send ETYPE_INFO{,2}
+		     */
+		    ret2 = _kdc_find_etype(context,
+					   config->preauth_use_strongest_session_key,
+					   TRUE, r->client, b->etype.val,
+					   b->etype.len, NULL, &ckey);
+		    if (ret2 == 0) {
+			ret2 = get_pa_etype_info_both(context, config,
+						      &error_method, ckey);
+			if (ret2 != 0)
+			    ret = ret2;
+		    }
 		    goto out;
 		}
 		kdc_log(context, config, 0,
@@ -1847,27 +1886,7 @@ _kdc_as_rep(kdc_request_t r,
 			      config->preauth_use_strongest_session_key, TRUE,
 			      r->client, b->etype.val, b->etype.len, NULL, &ckey);
 	if (ret == 0) {
-
-	    /*
-	     * RFC4120 requires:
-	     * - If the client only knows about old enctypes, then send
-	     *   both info replies (we send 'info' first in the list).
-	     * - If the client is 'modern', because it knows about 'new'
-	     *   enctype types, then only send the 'info2' reply.
-	     *
-	     * Before we send the full list of etype-info data, we pick
-	     * the client key we would have used anyway below, just pick
-	     * that instead.
-	     */
-
-	    if (older_enctype(ckey->key.keytype)) {
-		ret = get_pa_etype_info(context, config,
-					&error_method, ckey);
-		if (ret)
-		    goto out;
-	    }
-	    ret = get_pa_etype_info2(context, config,
-				     &error_method, ckey);
+	    ret = get_pa_etype_info_both(context, config, &error_method, ckey);
 	    if (ret)
 		goto out;
 	}

@@ -785,6 +785,14 @@ else
 	echo "no pkinit (pkinit: $pkinit, rsa: $rsa)"; > messages.log
 fi
 
+echo "test impersonate using rc4 based tgt"; > messages.log
+${kinit} -e arcfour-hmac-md5 --forwardable --password-file=${objdir}/foopassword ${ps} || \
+        { ec=1 ; eval "${testfailed}"; }
+${kgetcred_imp} --impersonate=bar@${R} ${ps} || \
+        { ec=1 ; eval "${testfailed}"; }
+${test_ap_req} ${ps} ${keytab} ${ocache} || \
+        { ec=1 ; eval "${testfailed}"; }
+
 echo "tickets for impersonate test case"; > messages.log
 ${kinit} --forwardable --password-file=${objdir}/foopassword ${ps} || \
 	{ ec=1 ; eval "${testfailed}"; }

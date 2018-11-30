@@ -133,7 +133,7 @@ echo "Getting ${server} ticket"
 ${kgetcred} ${server}@${R} || { ec=1 ; eval "${testfailed}"; }
 
 
-echo "Getting *@$R inital ticket (fail)";
+echo "Getting *@$R initial ticket (fail)";
 ${kinit} --password-file=${objdir}/foopassword '*'@$R 2>/dev/null && \
 	{ ec=1 ; eval "${testfailed}"; }
 

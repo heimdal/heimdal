@@ -1530,7 +1530,7 @@ _krb5_init_etype(krb5_context context,
 }
 
 /*
- * Allow homedir accces
+ * Allow homedir access
  */
 
 static HEIMDAL_MUTEX homedir_mutex = HEIMDAL_MUTEX_INITIALIZER;

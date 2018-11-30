@@ -34,7 +34,7 @@
 #include "krb5_locl.h"
 
 /**
- * Reset the (potentially uninitalized) krb5_data structure.
+ * Reset the (potentially uninitialized) krb5_data structure.
  *
  * @param p krb5_data to reset.
  *

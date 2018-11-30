@@ -355,8 +355,8 @@ pa_pkinit_validate(kdc_request_t r, const PA_DATA *pa)
 	goto out;
     }
 #if 0
-    ret = _kdc_add_inital_verified_cas(r->context, r->config,
-				       pkp, &r->et);
+    ret = _kdc_add_initial_verified_cas(r->context, r->config,
+					pkp, &r->et);
 #endif
  out:
     if (pkp)

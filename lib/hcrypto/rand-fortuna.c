@@ -446,7 +446,7 @@ static unsigned	resend_bytes;
 static HEIMDAL_MUTEX fortuna_mutex = HEIMDAL_MUTEX_INITIALIZER;
 
 /*
- * Try our best to do an inital seed
+ * Try our best to do an initial seed
  */
 #define INIT_BYTES	128
 

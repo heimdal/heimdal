@@ -1827,10 +1827,10 @@ add_principal_mapping(krb5_context context,
 }
 
 krb5_error_code
-_kdc_add_inital_verified_cas(krb5_context context,
-			     krb5_kdc_configuration *config,
-			     pk_client_params *cp,
-			     EncTicketPart *tkt)
+_kdc_add_initial_verified_cas(krb5_context context,
+			      krb5_kdc_configuration *config,
+			      pk_client_params *cp,
+			      EncTicketPart *tkt)
 {
     AD_INITIAL_VERIFIED_CAS cas;
     krb5_error_code ret;

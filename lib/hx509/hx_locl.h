@@ -63,8 +63,8 @@
 #include <pkcs8_asn1.h>
 #include <pkcs9_asn1.h>
 #include <pkcs12_asn1.h>
-#include <ocsp_asn1.h>
-#include <pkcs10_asn1.h>
+#include <ocsp_asn1.hx>
+#include <pkcs10_asn1.hx>
 #include <asn1_err.h>
 #include <pkinit_asn1.h>
 

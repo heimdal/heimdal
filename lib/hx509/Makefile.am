@@ -9,6 +9,8 @@ BUILT_SOURCES =				\
 	sel-gram.h			\
 	$(gen_files_ocsp:.x=.c)		\
 	$(gen_files_pkcs10:.x=.c)	\
+	ocsp_asn1.h			\
+	pkcs10_asn1.h			\
 	hx509_err.c			\
 	hx509_err.h
 

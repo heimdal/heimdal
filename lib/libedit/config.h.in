@@ -42,6 +42,9 @@
 /* Define to 1 if you have the `ncurses' library (-lncurses). */
 #undef HAVE_LIBNCURSES
 
+/* Define to 1 if you have the `tinfo' library (-ltinfo). */
+#undef HAVE_LIBTINFO
+
 /* Define to 1 if you have the <limits.h> header file. */
 #undef HAVE_LIMITS_H
 

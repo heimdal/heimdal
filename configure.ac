@@ -456,7 +456,7 @@ AC_FIND_FUNC_NO_LIBS(openpty, util,[
 #endif
 ],[0,0,0,0,0])
 
-AC_FIND_FUNC_NO_LIBS(tgetent, termcap ncurses curses,[
+AC_FIND_FUNC_NO_LIBS(tgetent, termcap ncurses curses tinfo,[
 #ifdef HAVE_TERMCAP_H
 #include <termcap.h>
 #endif

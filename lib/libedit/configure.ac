@@ -35,7 +35,8 @@ EL_MANTYPE
 
 AC_CHECK_LIB(curses, tgetent,,
    [AC_CHECK_LIB(ncurses, tgetent,,
-      [AC_MSG_ERROR([libcurses or libncurses are required!])] )] )
+      [AC_CHECK_LIB(tinfo, tgetent,,
+         [AC_MSG_ERROR([libcurses or libncurses are required!])] )] )] )
 
 
 # Checks for header files.

@@ -9,7 +9,8 @@ AM_CPPFLAGS += $(INCLUDE_openssl_crypto)
 endif
 
 AM_CPPFLAGS += -I$(top_srcdir)/lib/hx509 \
-	       -I$(srcdir)/libtommath -DUSE_HCRYPTO_LTM=1
+	       -I$(srcdir)/libtommath -DUSE_HCRYPTO_LTM=1 \
+	       -I$(srcdir)/..
 
 lib_LTLIBRARIES = libhcrypto.la
 check_LTLIBRARIES = libhctest.la

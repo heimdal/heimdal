@@ -906,6 +906,80 @@ get_cred(server)
 	*/
 
 static krb5_error_code
+lookup_realm_kdc_retry(krb5_context context, krb5_sendto_ctx ctx, void *data,
+		       const krb5_data *reply, int *action)
+{
+	krb5_error_code code, ret = 0;
+	KRB_ERROR error;
+	krb5_principal principal = (krb5_principal) data;
+
+	if(krb5_rd_error(context, reply, &error))
+		return 0;
+
+	code = krb5_error_from_rd_error(context, &error, NULL);
+
+	switch(code) {
+	case KRB5_KDC_ERR_WRONG_REALM: {
+		if (principal && error.crealm && error.crealm[0] && error.crealm[0][0])
+			ret = krb5_principal_set_realm(context, principal, error.crealm[0]);
+		break;
+	}
+	case KRB5KDC_ERR_PREAUTH_REQUIRED:
+		ret = code;
+		break;
+	}
+
+	krb5_free_error_contents(context, &error);
+
+	if (ret)
+		return ret;
+
+	return _krb5_kdc_retry(context, ctx, NULL, reply, action);
+}
+
+static krb5_error_code
+lookup_principal_realm(krb5_context context, krb5_principal principal,
+		       krb5_const_realm start_realm)
+{
+	krb5_error_code ret;
+	krb5_get_init_creds_opt *opt = NULL;
+	krb5_init_creds_context ctx = NULL;
+
+	if (KRB5_NT_ENTERPRISE_PRINCIPAL !=
+		krb5_principal_get_type(context, principal))
+		return 0;
+
+	ret = krb5_principal_set_realm(context, principal, start_realm);
+	if (ret)
+		return ret;
+
+	ret = krb5_get_init_creds_opt_alloc(context, &opt);
+	if (ret)
+		return ret;
+
+	ret = krb5_get_init_creds_opt_set_canonicalize(context, opt, TRUE);
+	if (ret)
+		goto out;
+
+	ret = krb5_init_creds_init(context, principal, NULL, NULL, 0, opt, &ctx);
+	if (ret)
+		goto out;
+
+	ret = krb5_init_creds_get_retry(context, ctx, lookup_realm_kdc_retry, principal);
+
+	/* Overwrite ret */
+	if (ret == KRB5KDC_ERR_PREAUTH_REQUIRED)
+		ret = 0;
+out:
+	if (opt)
+		krb5_get_init_creds_opt_free(context, opt);
+	if (ctx)
+		krb5_init_creds_free(context, ctx);
+
+	return ret;
+}
+
+static krb5_error_code
 get_cred_kdc_capath(krb5_context context,
 		    krb5_kdc_flags flags,
 		    krb5_ccache ccache,
@@ -962,6 +1036,7 @@ get_cred_kdc_referral(krb5_context context,
     krb5_creds tgt, referral, ticket;
     krb5_creds **referral_tgts = NULL;  /* used for loop detection */
     int loop = 0;
+    krb5_boolean got_tgt = false;
     int ok_as_delegate = 1;
     int want_tgt;
     size_t i;
@@ -990,7 +1065,61 @@ get_cred_kdc_referral(krb5_context context,
     if (start_realm == NULL)
         return krb5_enomem(context);
 
-    /* find tgt for the clients base realm */
+    /* If the impersonate principal is an enterprise name, try lookup its realm */
+    if (impersonate_principal != NULL) {
+	ret = lookup_principal_realm(context, impersonate_principal,
+				     in_creds->client->realm);
+	if (ret) {
+	    return ret;
+	}
+    }
+
+    /*
+     * find tgt for the clients base realm, if we are impersonating a user
+     * from another realm, then we actually need a referral tgt to that realm.
+     */
+    if (impersonate_principal != NULL &&
+	!krb5_realm_compare(context, impersonate_principal, in_creds->client))
+    {
+	krb5_creds impersonate_ref;
+	krb5_creds *impersonate_tgt = NULL;
+
+	impersonate_ref = *in_creds;
+
+	ret = krb5_make_principal(context, &impersonate_ref.server,
+				  start_realm, KRB5_TGS_NAME,
+				  impersonate_principal->realm, NULL);
+	if (ret) {
+	    free(start_realm);
+	    return ret;
+	}
+
+	krb5_principal_set_type(context, impersonate_ref.server, KRB5_NT_SRV_INST);
+
+	ret = get_cred_kdc_referral(context, flags, ccache, &impersonate_ref, NULL,
+				    NULL, &impersonate_tgt);
+	krb5_free_principal(context, impersonate_ref.server);
+	if (ret == 0) {
+	    tgt = *impersonate_tgt;
+	    free(impersonate_tgt);
+	    free(start_realm);
+
+	    start_realm = strdup(impersonate_principal->realm);
+	    if (start_realm == NULL) {
+		krb5_free_cred_contents(context, &tgt);
+		return krb5_enomem(context);
+	    }
+
+	    got_tgt = true;
+	}
+
+	/*
+	 * The user might be in local realm but using an alternative realm name type.
+	 * Fall back to our krbtgt realm in case of failure.
+	 */
+    }
+
+    if (!got_tgt)
     {
 	krb5_principal tgtname;
 

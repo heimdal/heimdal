@@ -277,19 +277,9 @@ check_KRB5SignedPath(krb5_context context,
  */
 
 static krb5_error_code
-check_PAC(krb5_context context,
-	  krb5_kdc_configuration *config,
-	  const krb5_principal client_principal,
-	  const krb5_principal delegated_proxy_principal,
-	  hdb_entry_ex *client,
-	  hdb_entry_ex *server,
-	  hdb_entry_ex *krbtgt,
-	  const EncryptionKey *server_check_key,
-	  const EncryptionKey *server_sign_key,
-	  const EncryptionKey *krbtgt_sign_key,
-	  EncTicketPart *tkt,
-	  krb5_data *rspac,
-	  int *signedpath)
+get_PAC(krb5_context context,
+	EncTicketPart *tkt,
+	krb5_pac *pac)
 {
     AuthorizationData *ad = tkt->authorization_data;
     unsigned i, j;
@@ -316,47 +306,13 @@ check_PAC(krb5_context context,
 	for (j = 0; j < child.len; j++) {
 
 	    if (child.val[j].ad_type == KRB5_AUTHDATA_WIN2K_PAC) {
-		int signed_pac = 0;
-		krb5_pac pac;
 
 		/* Found PAC */
 		ret = krb5_pac_parse(context,
 				     child.val[j].ad_data.data,
 				     child.val[j].ad_data.length,
-				     &pac);
+				     pac);
 		free_AuthorizationData(&child);
-		if (ret)
-		    return ret;
-
-		ret = krb5_pac_verify(context, pac, tkt->authtime,
-				      client_principal,
-				      server_check_key, NULL);
-		if (ret) {
-		    krb5_pac_free(context, pac);
-		    return ret;
-		}
-
-		ret = _kdc_pac_verify(context, client_principal,
-				      delegated_proxy_principal,
-				      client, server, krbtgt, &pac, &signed_pac);
-		if (ret) {
-		    krb5_pac_free(context, pac);
-		    return ret;
-		}
-
-		/*
-		 * Only re-sign PAC if we could verify it with the PAC
-		 * function. The no-verify case happens when we get in
-		 * a PAC from cross realm from a Windows domain and
-		 * that there is no PAC verification function.
-		 */
-		if (signed_pac) {
-		    *signedpath = 1;
-		    ret = _krb5_pac_sign(context, pac, tkt->authtime,
-					 client_principal,
-					 server_sign_key, krbtgt_sign_key, rspac);
-		}
-		krb5_pac_free(context, pac);
 
 		return ret;
 	    }
@@ -364,6 +320,157 @@ check_PAC(krb5_context context,
 	free_AuthorizationData(&child);
     }
     return 0;
+}
+
+
+static krb5_error_code
+check_s4u2self_PAC(krb5_context context,
+		   const krb5_principal client_principal,
+		   const krb5_principal impersonate_principal,
+		   hdb_entry_ex *client,
+		   hdb_entry_ex *server,
+		   hdb_entry_ex *krbtgt,
+		   hdb_entry_ex *s4u2self_impersonated_client,
+		   const EncryptionKey *server_check_key,
+		   const EncryptionKey *server_sign_key,
+		   const EncryptionKey *krbtgt_sign_key,
+		   EncTicketPart *tkt,
+		   krb5_data *rspac,
+		   int *signedpath)
+{
+    krb5_pac pac = NULL;
+    krb5_error_code ret;
+
+    ret = get_PAC(context, tkt, &pac);
+    if (ret) {
+	return ret;
+    }
+
+    if (pac != NULL) {
+	int signed_pac = 0;
+	krb5_principal pac_principal;
+	hdb_entry_ex *db_client;
+	krb5_boolean with_realm;
+
+	/* In case the impersonated principal belongs to our krbtgt realm,
+	 * then we expect the PAC of the impersonating service */
+	if (s4u2self_impersonated_client != NULL) {
+	    pac_principal = client_principal;
+	    db_client = client;
+	    with_realm = false;
+	}
+	else {
+	    /* Otherwise, the PAC is of the impersonated principal and
+	     * the PAC_CLIENT_INFO field includes the realm */
+	    pac_principal = impersonate_principal;
+	    db_client = NULL;
+	    with_realm = true;
+	}
+
+	ret = krb5_pac_verify_ex(context, pac, tkt->authtime,
+			         pac_principal, server_check_key,
+				 NULL, with_realm);
+	if (ret) {
+	    krb5_pac_free(context, pac);
+	    return ret;
+	}
+
+	ret = _kdc_pac_verify(context, pac_principal, NULL, db_client,
+			      server, krbtgt, &pac, &signed_pac);
+	if (ret) {
+	    krb5_pac_free(context, pac);
+	    return ret;
+	}
+
+	/* If the principal being impersonated is in our db, then we
+	 * need a new PAC */
+	if (s4u2self_impersonated_client != NULL) {
+	    krb5_pac_free(context, pac);
+	    pac = NULL;
+
+	    ret = _kdc_pac_generate(context, s4u2self_impersonated_client,
+				    &pac);
+	    if (ret || pac == NULL) {
+		return ret;
+	    }
+	}
+
+	/* Only re-sign PAC if we could verify it with the PAC function. */
+	if (signed_pac) {
+	    *signedpath = 1;
+
+	     /* If the impersonating service does not belong to our realm,
+	      * then we need to sign including the realm component */
+	    with_realm = client ? false : true;
+
+	    ret = _krb5_pac_sign_ex(context, pac, tkt->authtime,
+				    impersonate_principal, server_sign_key,
+				    krbtgt_sign_key, rspac, with_realm);
+	}
+
+	krb5_pac_free(context, pac);
+    }
+
+    return ret;
+}
+
+static krb5_error_code
+check_PAC(krb5_context context,
+	  krb5_kdc_configuration *config,
+	  const krb5_principal client_principal,
+	  const krb5_principal delegated_proxy_principal,
+	  hdb_entry_ex *client,
+	  hdb_entry_ex *server,
+	  hdb_entry_ex *krbtgt,
+	  const EncryptionKey *server_check_key,
+	  const EncryptionKey *server_sign_key,
+	  const EncryptionKey *krbtgt_sign_key,
+	  EncTicketPart *tkt,
+	  krb5_data *rspac,
+	  int *signedpath)
+{
+    int signed_pac = 0;
+    krb5_pac pac = NULL;
+    krb5_error_code ret;
+
+    ret = get_PAC(context, tkt, &pac);
+    if (ret) {
+	return ret;
+    }
+
+    if (pac != NULL) {
+	ret = krb5_pac_verify(context, pac, tkt->authtime,
+			      client_principal, server_check_key, NULL);
+	if (ret) {
+	    krb5_pac_free(context, pac);
+	    return ret;
+	}
+
+	ret = _kdc_pac_verify(context, client_principal,
+			      delegated_proxy_principal,
+			      client, server, krbtgt, &pac, &signed_pac);
+	if (ret) {
+	    krb5_pac_free(context, pac);
+	    return ret;
+	}
+
+	/*
+	 * Only re-sign PAC if we could verify it with the PAC
+	 * function. The no-verify case happens when we get in
+	 * a PAC from cross realm from a Windows domain and
+	 * that there is no PAC verification function.
+	 */
+	if (signed_pac) {
+	    *signedpath = 1;
+	    ret = _krb5_pac_sign(context, pac, tkt->authtime,
+				 client_principal,
+				 server_sign_key, krbtgt_sign_key, rspac);
+	}
+
+	krb5_pac_free(context, pac);
+    }
+
+    return ret;
 }
 
 /*
@@ -1502,6 +1609,74 @@ eout:
 }
 
 static krb5_error_code
+check_padata_for_user(krb5_context context,
+		      krb5_kdc_configuration *config,
+		      KDC_REQ *req,
+		      const krb5_keyblock *key,
+		      krb5_principal *impersonated)
+{
+    krb5_error_code ret = 0;
+    const PA_DATA *sdata;
+    int i = 0;
+
+    sdata = _kdc_find_padata(req, &i, KRB5_PADATA_FOR_USER);
+    if (sdata) {
+	krb5_crypto crypto;
+	krb5_data datack;
+	PA_S4U2Self self;
+
+	ret = decode_PA_S4U2Self(sdata->padata_value.data,
+				 sdata->padata_value.length,
+				 &self, NULL);
+	if (ret) {
+	    kdc_log(context, config, 0, "Failed to decode PA-S4U2Self");
+	    return ret;
+	}
+
+	ret = _krb5_s4u2self_to_checksumdata(context, &self, &datack);
+	if (ret) {
+	    free_PA_S4U2Self(&self);
+	    return ret;
+	}
+
+	ret = krb5_crypto_init(context, key, 0, &crypto);
+	if (ret) {
+	    const char *msg = krb5_get_error_message(context, ret);
+	    free_PA_S4U2Self(&self);
+	    krb5_data_free(&datack);
+	    kdc_log(context, config, 0, "krb5_crypto_init failed: %s", msg);
+	    krb5_free_error_message(context, msg);
+	    return ret;
+	}
+
+	ret = krb5_verify_checksum(context,
+				   crypto,
+				   KRB5_KU_OTHER_CKSUM,
+				   datack.data,
+				   datack.length,
+				   &self.cksum);
+	krb5_data_free(&datack);
+	krb5_crypto_destroy(context, crypto);
+	if (ret) {
+	    const char *msg = krb5_get_error_message(context, ret);
+	    free_PA_S4U2Self(&self);
+	    kdc_log(context, config, 0,
+		    "krb5_verify_checksum failed for S4U2Self: %s", msg);
+	    krb5_free_error_message(context, msg);
+	    return ret;
+	}
+
+	ret = _krb5_principalname2krb5_principal(context,
+						 impersonated,
+						 self.name,
+						 self.realm);
+	free_PA_S4U2Self(&self);
+    }
+
+    return ret;
+}
+
+static krb5_error_code
 tgs_build_reply(krb5_context context,
 		krb5_kdc_configuration *config,
 		KDC_REQ *req,
@@ -1550,6 +1725,8 @@ tgs_build_reply(krb5_context context,
     Key *tkey_check;
     Key *tkey_sign;
     int flags = HDB_F_FOR_TGS_REQ;
+    krb5_principal for_user_principal = NULL;
+    char *for_user_str = NULL;
 
     memset(&sessionkey, 0, sizeof(sessionkey));
     memset(&adtkt, 0, sizeof(adtkt));
@@ -1936,37 +2113,6 @@ server_lookup:
 	krb5_free_error_message(context, msg);
     }
 
-    ret = check_PAC(context, config, cp, NULL,
-		    client, server, krbtgt,
-		    &tkey_check->key,
-		    ekey, &tkey_sign->key,
-		    tgt, &rspac, &signedpath);
-    if (ret) {
-	const char *msg = krb5_get_error_message(context, ret);
-	kdc_log(context, config, 0,
-		"Verify PAC failed for %s (%s) from %s with %s",
-		spn, cpn, from, msg);
-	krb5_free_error_message(context, msg);
-	goto out;
-    }
-
-    /* also check the krbtgt for signature */
-    ret = check_KRB5SignedPath(context,
-			       config,
-			       krbtgt,
-			       cp,
-			       tgt,
-			       &spp,
-			       &signedpath);
-    if (ret) {
-	const char *msg = krb5_get_error_message(context, ret);
-	kdc_log(context, config, 0,
-		"KRB5SignedPath check failed for %s (%s) from %s with %s",
-		spn, cpn, from, msg);
-	krb5_free_error_message(context, msg);
-	goto out;
-    }
-
     /*
      * Process request
      */
@@ -1975,111 +2121,49 @@ server_lookup:
     tp = cp;
     tpn = cpn;
 
-    if (client) {
-	const PA_DATA *sdata;
-	int i = 0;
+    /* Check for PADATA_FOR_USER */
+    ret = check_padata_for_user(context, config, req, &tgt->key,
+				&for_user_principal);
+    if (ret)
+	goto out;
 
-	sdata = _kdc_find_padata(req, &i, KRB5_PADATA_FOR_USER);
-	if (sdata) {
-	    krb5_crypto crypto;
-	    krb5_data datack;
-	    PA_S4U2Self self;
+    if (for_user_principal != NULL) {
+	ret = krb5_unparse_name(context, for_user_principal, &for_user_str);
+	if (ret)
+	    goto out;
+
+	/* Check if the principal being impersonated belongs to our krbtgt realm */
+	ret = _kdc_db_fetch(context, config, for_user_principal, HDB_F_GET_CLIENT | flags,
+			    NULL, &s4u2self_impersonated_clientdb, &s4u2self_impersonated_client);
+	if (ret && krb5_realm_compare(context, for_user_principal, krbtgt_out_principal)) {
+	    const char *msg;
+
+	    /*
+	     * If the impersonated client belongs to the same realm as
+	     * our krbtgt, it should exist in the local database.
+	     */
+
+            if (ret == HDB_ERR_NOENTRY)
+	        ret = KRB5KDC_ERR_C_PRINCIPAL_UNKNOWN;
+	    msg = krb5_get_error_message(context, ret);
+	    kdc_log(context, config, 1,
+		    "S4U2Self principal to impersonate %s not found in database: %s",
+		    for_user_str, msg);
+	    krb5_free_error_message(context, msg);
+	    goto out;
+	}
+
+	/*
+	 * If the impersonating service belongs to our krbtgt realm, then we
+	 * are going to reply with a service ticket (that is, not a referral),
+	 * so we need to adjust cname and crealm to the impersonated user,
+	 * and also to verify that it is actually asking a ticket for self.
+	 */
+	if (client != NULL) {
 	    const char *str;
 
-	    ret = decode_PA_S4U2Self(sdata->padata_value.data,
-				     sdata->padata_value.length,
-				     &self, NULL);
-	    if (ret) {
-		kdc_log(context, config, 0, "Failed to decode PA-S4U2Self");
-		goto out;
-	    }
-
-	    ret = _krb5_s4u2self_to_checksumdata(context, &self, &datack);
-	    if (ret)
-		goto out;
-
-	    ret = krb5_crypto_init(context, &tgt->key, 0, &crypto);
-	    if (ret) {
-		const char *msg = krb5_get_error_message(context, ret);
-		free_PA_S4U2Self(&self);
-		krb5_data_free(&datack);
-		kdc_log(context, config, 0, "krb5_crypto_init failed: %s", msg);
-		krb5_free_error_message(context, msg);
-		goto out;
-	    }
-
-	    ret = krb5_verify_checksum(context,
-				       crypto,
-				       KRB5_KU_OTHER_CKSUM,
-				       datack.data,
-				       datack.length,
-				       &self.cksum);
-	    krb5_data_free(&datack);
-	    krb5_crypto_destroy(context, crypto);
-	    if (ret) {
-		const char *msg = krb5_get_error_message(context, ret);
-		free_PA_S4U2Self(&self);
-		kdc_log(context, config, 0,
-			"krb5_verify_checksum failed for S4U2Self: %s", msg);
-		krb5_free_error_message(context, msg);
-		goto out;
-	    }
-
-	    ret = _krb5_principalname2krb5_principal(context,
-						     &tp,
-						     self.name,
-						     self.realm);
-	    free_PA_S4U2Self(&self);
-	    if (ret)
-		goto out;
-
-	    ret = krb5_unparse_name(context, tp, &tpn);
-	    if (ret)
-		goto out;
-
-	    /* If we were about to put a PAC into the ticket, we better fix it to be the right PAC */
-	    if(rspac.data) {
-		krb5_pac p = NULL;
-		krb5_data_free(&rspac);
-		ret = _kdc_db_fetch(context, config, tp, HDB_F_GET_CLIENT | flags,
-				    NULL, &s4u2self_impersonated_clientdb, &s4u2self_impersonated_client);
-		if (ret) {
-		    const char *msg;
-
-		    /*
-		     * If the client belongs to the same realm as our krbtgt, it
-		     * should exist in the local database.
-		     *
-		     */
-
-		    if (ret == HDB_ERR_NOENTRY)
-			ret = KRB5KDC_ERR_C_PRINCIPAL_UNKNOWN;
-		    msg = krb5_get_error_message(context, ret);
-		    kdc_log(context, config, 1,
-			    "S2U4Self principal to impersonate %s not found in database: %s",
-			    tpn, msg);
-		    krb5_free_error_message(context, msg);
-		    goto out;
-		}
-		ret = _kdc_pac_generate(context, s4u2self_impersonated_client, &p);
-		if (ret) {
-		    kdc_log(context, config, 0, "PAC generation failed for -- %s",
-			    tpn);
-		    goto out;
-		}
-		if (p != NULL) {
-		    ret = _krb5_pac_sign(context, p, ticket->ticket.authtime,
-					 s4u2self_impersonated_client->entry.principal,
-					 ekey, &tkey_sign->key,
-					 &rspac);
-		    krb5_pac_free(context, p);
-		    if (ret) {
-			kdc_log(context, config, 0, "PAC signing failed for -- %s",
-				tpn);
-			goto out;
-		    }
-		}
-	    }
+	    tp = for_user_principal;
+	    tpn = for_user_str;
 
 	    /*
 	     * Check that service doing the impersonating is
@@ -2108,6 +2192,52 @@ server_lookup:
 	    kdc_log(context, config, 0, "s4u2self %s impersonating %s to "
 		    "service %s %s", cpn, tpn, spn, str);
 	}
+
+	ret = check_s4u2self_PAC(context, cp, for_user_principal,
+				 client, server, krbtgt,
+				 s4u2self_impersonated_client,
+				 &tkey_check->key, ekey, &tkey_sign->key,
+				 tgt, &rspac, &signedpath);
+	if (ret) {
+	    const char *msg = krb5_get_error_message(context, ret);
+	    kdc_log(context, config, 0,
+		    "Verify PAC failed for %s (%s, for-user: %s) from %s with %s",
+		    spn, cpn, for_user_str, from, msg);
+	    krb5_free_error_message(context, msg);
+	    goto out;
+        }
+    }
+    else {
+	ret = check_PAC(context, config, cp, NULL,
+			client, server, krbtgt,
+			&tkey_check->key,
+			ekey, &tkey_sign->key,
+			tgt, &rspac, &signedpath);
+	if (ret) {
+	    const char *msg = krb5_get_error_message(context, ret);
+	    kdc_log(context, config, 0,
+		    "Verify PAC failed for %s (%s) from %s with %s",
+		    spn, cpn, from, msg);
+	    krb5_free_error_message(context, msg);
+	    goto out;
+        }
+    }
+
+    /* also check the krbtgt for signature */
+    ret = check_KRB5SignedPath(context,
+			       config,
+			       krbtgt,
+			       cp,
+			       tgt,
+			       &spp,
+			       &signedpath);
+    if (ret) {
+	const char *msg = krb5_get_error_message(context, ret);
+	kdc_log(context, config, 0,
+		"KRB5SignedPath check failed for %s (%s) from %s with %s",
+		spn, cpn, from, msg);
+	krb5_free_error_message(context, msg);
+	goto out;
     }
 
     /*
@@ -2349,8 +2479,7 @@ server_lookup:
 			 reply);
 
 out:
-    if (tpn != cpn)
-	    free(tpn);
+    free(for_user_str);
     free(spn);
     free(cpn);
     free(dpn);
@@ -2368,8 +2497,7 @@ out:
     if(s4u2self_impersonated_client)
 	_kdc_free_ent(context, s4u2self_impersonated_client);
 
-    if (tp && tp != cp)
-	krb5_free_principal(context, tp);
+    krb5_free_principal(context, for_user_principal);
     krb5_free_principal(context, cp);
     krb5_free_principal(context, dp);
     krb5_free_principal(context, sp);

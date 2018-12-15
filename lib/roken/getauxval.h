@@ -85,6 +85,21 @@ typedef struct rk_auxv {
 #endif
 #endif
 
+#if __sun
+#if !defined(AT_UID) && defined(AT_SUN_RUID)
+#define AT_UID AT_SUN_RUID
+#endif
+#if !defined(AT_EUID) && defined(AT_SUN_UID)
+#define AT_EUID AT_SUN_UID
+#endif
+#if !defined(AT_GID) && defined(AT_SUN_RGID)
+#define AT_GID AT_SUN_RGID
+#endif
+#if !defined(AT_EGID) && defined(AT_SUN_GID)
+#define AT_EGID AT_SUN_GID
+#endif
+#endif /* __sun */
+
 /* NetBSD calls AT_UID AT_RUID.  Everyone else calls it AT_UID. */
 #if defined(AT_EUID) && defined(AT_RUID) && !defined(AT_UID)
 #define AT_UID AT_RUID

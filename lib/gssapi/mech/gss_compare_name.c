@@ -44,7 +44,7 @@ gss_compare_name(OM_uint32 *minor_status,
 	 */
 	if (name1->gn_value.value && name2->gn_value.value) {
 		*name_equal = 1;
-		if (!gss_oid_equal(&name1->gn_type, &name2->gn_type)) {
+		if (!gss_oid_equal(name1->gn_type, name2->gn_type)) {
 			*name_equal = 0;
 		} else if (name1->gn_value.length != name2->gn_value.length ||
 		    memcmp(name1->gn_value.value, name2->gn_value.value,

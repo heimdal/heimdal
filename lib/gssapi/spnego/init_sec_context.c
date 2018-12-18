@@ -223,7 +223,7 @@ spnego_initial
 
     ctx->local = 1;
 
-    sub = gss_import_name(&minor, &name->value, &name->type, &ctx->target_name);
+    sub = gss_import_name(&minor, &name->value, name->type, &ctx->target_name);
     if (GSS_ERROR(sub)) {
 	*minor_status = minor;
 	_gss_spnego_internal_delete_sec_context(&minor, &context, GSS_C_NO_BUFFER);

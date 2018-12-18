@@ -56,7 +56,7 @@ gss_indicate_mechs(OM_uint32 *minor_status,
 			gss_release_oid_set(minor_status, &set);
 		} else {
 			gss_add_oid_set_member(
-			    minor_status, &m->gm_mech_oid, mech_set);
+			    minor_status, m->gm_mech_oid, mech_set);
 		}
 	}
 

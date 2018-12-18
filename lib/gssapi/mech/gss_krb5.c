@@ -607,7 +607,7 @@ gsskrb5_extract_authz_data_from_sec_context(OM_uint32 *minor_status,
 					    gss_buffer_t ad_data)
 {
     gss_buffer_set_t data_set = GSS_C_NO_BUFFER_SET;
-    OM_uint32 maj_stat;
+    OM_uint32 maj_stat, tmp;
     gss_OID_desc oid_flat;
     heim_oid baseoid, oid;
     size_t size;
@@ -653,7 +653,7 @@ gsskrb5_extract_authz_data_from_sec_context(OM_uint32 *minor_status,
     if (der_put_oid((unsigned char *)oid_flat.elements + oid_flat.length - 1,
 		    oid_flat.length, &oid, &size) != 0) {
 	free(oid.components);
-	free(oid_flat.elements);
+	_gss_free_oid(&tmp, &oid_flat);
 	*minor_status = EINVAL;
 	return GSS_S_FAILURE;
     }
@@ -669,7 +669,7 @@ gsskrb5_extract_authz_data_from_sec_context(OM_uint32 *minor_status,
 					       &oid_flat,
 					       &data_set);
 
-    free(oid_flat.elements);
+    _gss_free_oid(&tmp, &oid_flat);
 
     if (maj_stat)
 	return maj_stat;

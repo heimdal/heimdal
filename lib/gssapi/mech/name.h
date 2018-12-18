@@ -36,7 +36,7 @@ struct _gss_mechanism_name {
 HEIM_SLIST_HEAD(_gss_mechanism_name_list, _gss_mechanism_name);
 
 struct _gss_name {
-	gss_OID_desc		gn_type;	/* type of name */
+	gss_OID			gn_type;	/* type of name */
 	gss_buffer_desc		gn_value;	/* value (as imported) */
 	struct _gss_mechanism_name_list gn_mn;	/* list of MNs */
 };

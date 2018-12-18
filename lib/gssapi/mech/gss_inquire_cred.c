@@ -151,7 +151,7 @@ gss_inquire_cred(OM_uint32 *minor_status,
 					continue;
 				}
 				mn->gmn_mech = &m->gm_mech;
-				mn->gmn_mech_oid = &m->gm_mech_oid;
+				mn->gmn_mech_oid = m->gm_mech_oid;
 				mn->gmn_name = mc_name;
 				HEIM_SLIST_INSERT_HEAD(&name->gn_mn, mn, gmn_link);
 			} else if (mc_name) {
@@ -164,7 +164,7 @@ gss_inquire_cred(OM_uint32 *minor_status,
 
 			if (mechanisms)
 				gss_add_oid_set_member(minor_status,
-				    &m->gm_mech_oid, mechanisms);
+				    m->gm_mech_oid, mechanisms);
 			found++;
 		}
 	}

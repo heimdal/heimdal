@@ -46,6 +46,8 @@
 #include <dlfcn.h>
 #include <errno.h>
 
+#include <heimbase.h>
+
 #include <gssapi_asn1.h>
 #include <der.h>
 

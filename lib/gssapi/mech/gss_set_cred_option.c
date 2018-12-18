@@ -70,7 +70,7 @@ gss_set_cred_option (OM_uint32 *minor_status,
 			}
 
 			mc->gmc_mech = &m->gm_mech;
-			mc->gmc_mech_oid = &m->gm_mech_oid;
+			mc->gmc_mech_oid = m->gm_mech_oid;
 			mc->gmc_cred = GSS_C_NO_CREDENTIAL;
 
 			major_status = m->gm_mech.gm_set_cred_option(

@@ -75,7 +75,7 @@ OM_uint32 GSSAPI_CALLCONV _gss_spnego_acquire_cred
     *output_cred_handle = GSS_C_NO_CREDENTIAL;
 
     if (dname) {
-	ret = gss_import_name(minor_status, &dname->value, &dname->type, &name);
+	ret = gss_import_name(minor_status, &dname->value, dname->type, &name);
 	if (ret) {
 	    return ret;
 	}

@@ -357,12 +357,12 @@ gss_inquire_mech_for_saslname(OM_uint32 *minor_status,
         struct gss_mech_compat_desc_struct *gmc;
 
         /* Native SPI */
-        major = mo_value(&m->gm_mech_oid, GSS_C_MA_SASL_MECH_NAME, &name);
+        major = mo_value(m->gm_mech_oid, GSS_C_MA_SASL_MECH_NAME, &name);
         if (major == GSS_S_COMPLETE &&
             name.length == sasl_mech_name->length &&
             memcmp(name.value, sasl_mech_name->value, name.length) == 0) {
                 gss_release_buffer(&junk, &name);
-                *mech_type = &m->gm_mech_oid;
+                *mech_type = m->gm_mech_oid;
                 return GSS_S_COMPLETE;
 	}
 	gss_release_buffer(&junk, &name);
@@ -382,9 +382,9 @@ gss_inquire_mech_for_saslname(OM_uint32 *minor_status,
         if (GSS_ERROR(major)) {
             /* Algorithmically dervied SASL mechanism name */
             if (sasl_mech_name->length == 16 &&
-                make_sasl_name(minor_status, &m->gm_mech_oid, buf) == GSS_S_COMPLETE &&
+                make_sasl_name(minor_status, m->gm_mech_oid, buf) == GSS_S_COMPLETE &&
                 memcmp(buf, sasl_mech_name->value, 16) == 0) {
-                    *mech_type = &m->gm_mech_oid;
+                    *mech_type = m->gm_mech_oid;
                     return GSS_S_COMPLETE;
             }
         }

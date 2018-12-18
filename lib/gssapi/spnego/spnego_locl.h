@@ -98,7 +98,7 @@ typedef struct {
 } *gssspnego_ctx;
 
 typedef struct {
-	gss_OID_desc		type;
+	gss_OID			type;
 	gss_buffer_desc		value;
 	gss_name_t		mech;
 } *spnego_name;

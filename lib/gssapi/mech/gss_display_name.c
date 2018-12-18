@@ -62,7 +62,7 @@ gss_display_name(OM_uint32 *minor_status,
 		memcpy(output_name_buffer->value, name->gn_value.value,
 		    output_name_buffer->length);
 		if (output_name_type)
-			*output_name_type = &name->gn_type;
+			*output_name_type = name->gn_type;
 
 		*minor_status = 0;
 		return (GSS_S_COMPLETE);

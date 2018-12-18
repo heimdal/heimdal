@@ -28,9 +28,9 @@
 
 #include "mech_locl.h"
 
-OM_uint32
+static OM_uint32
 _gss_copy_oid(OM_uint32 *minor_status,
-    const gss_OID from_oid, gss_OID to_oid)
+    gss_const_OID from_oid, gss_OID to_oid)
 {
 	size_t len = from_oid->length;
 
@@ -56,6 +56,76 @@ _gss_free_oid(OM_uint32 *minor_status, gss_OID oid)
 	    oid->length = 0;
 	}
 	return (GSS_S_COMPLETE);
+}
+
+struct _gss_interned_oid {
+    HEIM_SLIST_ENTRY(_gss_interned_oid) gio_link;
+    gss_OID_desc gio_oid;
+};
+
+static HEIM_SLIST_HEAD(_gss_interned_oid_list, _gss_interned_oid) interned_oids =
+HEIM_SLIST_HEAD_INITIALIZER(interned_oids);
+
+extern gss_OID _gss_ot_internal[];
+extern size_t _gss_ot_internal_count;
+
+static OM_uint32
+intern_oid_static(OM_uint32 *minor_status,
+		  gss_const_OID from_oid,
+		  gss_OID *to_oid)
+{
+    size_t i;
+
+    /* statically allocated OIDs */
+    for (i = 0; i < _gss_ot_internal_count; i++) {
+	if (gss_oid_equal(_gss_ot_internal[i], from_oid)) {
+	    *minor_status = 0;
+	    *to_oid = _gss_ot_internal[i];
+	    return GSS_S_COMPLETE;
+	}
+    }
+
+    return GSS_S_CONTINUE_NEEDED;
+}
+
+OM_uint32
+_gss_intern_oid(OM_uint32 *minor_status,
+		gss_const_OID from_oid,
+		gss_OID *to_oid)
+{
+    OM_uint32 major_status;
+    struct _gss_interned_oid *iop;
+
+    major_status = intern_oid_static(minor_status, from_oid, to_oid);
+    if (major_status != GSS_S_CONTINUE_NEEDED)
+	return major_status;
+
+    HEIM_SLIST_ATOMIC_FOREACH(iop, &interned_oids, gio_link) {
+	if (gss_oid_equal(&iop->gio_oid, from_oid)) {
+	    *minor_status = 0;
+	    *to_oid = &iop->gio_oid;
+	    return GSS_S_COMPLETE;
+	}
+    }
+
+    iop = malloc(sizeof(*iop));
+    if (iop == NULL) {
+	*minor_status = ENOMEM;
+	return GSS_S_FAILURE;
+    }
+
+    major_status = _gss_copy_oid(minor_status, from_oid, &iop->gio_oid);
+    if (GSS_ERROR(major_status)) {
+	free(iop);
+	return major_status;
+    }
+
+    HEIM_SLIST_ATOMIC_INSERT_HEAD(&interned_oids, iop, gio_link);
+
+    *minor_status = 0;
+    *to_oid = &iop->gio_oid;
+
+    return GSS_S_COMPLETE;
 }
 
 OM_uint32

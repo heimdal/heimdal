@@ -54,17 +54,17 @@ gss_inquire_mechs_for_name(OM_uint32 *minor_status,
 	 */
 	HEIM_SLIST_FOREACH(m, &_gss_mechs, gm_link) {
 		major_status = gss_inquire_names_for_mech(minor_status,
-		    &m->gm_mech_oid, &name_types);
+		    m->gm_mech_oid, &name_types);
 		if (major_status) {
 			gss_release_oid_set(minor_status, mech_types);
 			return (major_status);
 		}
 		gss_test_oid_set_member(minor_status,
-		    &name->gn_type, name_types, &present);
+		    name->gn_type, name_types, &present);
 		gss_release_oid_set(minor_status, &name_types);
 		if (present) {
 			major_status = gss_add_oid_set_member(minor_status,
-			    &m->gm_mech_oid, mech_types);
+			    m->gm_mech_oid, mech_types);
 			if (major_status) {
 				gss_release_oid_set(minor_status, mech_types);
 				return (major_status);

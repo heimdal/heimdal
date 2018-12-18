@@ -94,4 +94,19 @@ struct {								\
 #define	HEIM_SLIST_FIRST(head)	((head)->slh_first)
 #define	HEIM_SLIST_NEXT(elm, field)	((elm)->field.sle_next)
 
+/*
+ * Singly-linked List atomic functions.
+ */
+#include "heimbase.h"
+
+#define HEIM_SLIST_ATOMIC_INSERT_HEAD(head, elm, field) do {		\
+	(elm)->field.sle_next =						\
+	    heim_base_exchange_pointer(&(head)->slh_first, (elm));	\
+} while (/*CONSTCOND*/0)
+
+#define HEIM_SLIST_ATOMIC_FOREACH(var, head, field)			\
+	for (heim_base_exchange_pointer(&(var), (head)->slh_first);	\
+	     (var) != NULL;						\
+	     heim_base_exchange_pointer(&(var), (var)->field.sle_next))
+
 #endif	/* !_MECHQUEUE_H_ */

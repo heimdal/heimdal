@@ -43,15 +43,15 @@ static HEIMDAL_MUTEX _gss_mech_mutex = HEIMDAL_MUTEX_INITIALIZER;
  * (e.g. 1.2.840.113554.1.2.2) to a gss_OID.
  */
 static int
-_gss_string_to_oid(const char* s, gss_OID oid)
+_gss_string_to_oid(const char* s, gss_OID *oidp)
 {
 	int			number_count, i, j;
 	size_t			byte_count;
 	const char		*p, *q;
 	char			*res;
+	gss_OID_desc		oid;
 
-	oid->length = 0;
-	oid->elements = NULL;
+	*oidp = GSS_C_NO_OID;
 
 	/*
 	 * First figure out how many numbers in the oid, then
@@ -142,9 +142,20 @@ _gss_string_to_oid(const char* s, gss_OID oid)
 			res = malloc(byte_count);
 			if (!res)
 				return (ENOMEM);
-			oid->length = byte_count;
-			oid->elements = res;
+			oid.length = byte_count;
+			oid.elements = res;
 		}
+	}
+
+	{
+		OM_uint32 minor_status, tmp;
+
+		if (GSS_ERROR(_gss_intern_oid(&minor_status, &oid, oidp))) {
+			_gss_free_oid(&tmp, &oid);
+			return (minor_status);
+		}
+
+		_gss_free_oid(&tmp, &oid);
 	}
 
 	return (0);
@@ -205,7 +216,9 @@ add_builtin(gssapi_mech_interface mech)
 	return ENOMEM;
     m->gm_so = NULL;
     m->gm_mech = *mech;
-    m->gm_mech_oid = mech->gm_mech_oid; /* XXX */
+    _gss_intern_oid(&minor_status, &mech->gm_mech_oid, &m->gm_mech_oid);
+    if (minor_status)
+	return minor_status;
     gss_add_oid_set_member(&minor_status,
 			   &m->gm_mech.gm_mech_oid, &_gss_mech_oids);
 
@@ -236,7 +249,7 @@ _gss_load_mech(void)
 	char		*name, *oid, *lib, *kobj;
 	struct _gss_mech_switch *m;
 	void		*so;
-	gss_OID_desc	mech_oid;
+	gss_OID 	mech_oid;
 	int		found;
 #endif
 
@@ -291,9 +304,8 @@ _gss_load_mech(void)
 		 */
 		found = 0;
 		HEIM_SLIST_FOREACH(m, &_gss_mechs, gm_link) {
-			if (gss_oid_equal(&m->gm_mech.gm_mech_oid, &mech_oid)) {
+			if (gss_oid_equal(&m->gm_mech.gm_mech_oid, mech_oid)) {
 				found = 1;
-				free(mech_oid.elements);
 				break;
 			}
 		}
@@ -321,7 +333,7 @@ _gss_load_mech(void)
 		m->gm_so = so;
 		m->gm_mech_oid = mech_oid;
 		m->gm_mech.gm_name = strdup(name);
-		m->gm_mech.gm_mech_oid = mech_oid;
+		m->gm_mech.gm_mech_oid = *mech_oid;
 		m->gm_mech.gm_flags = 0;
 		m->gm_mech.gm_compat = calloc(1, sizeof(struct gss_mech_compat_desc_struct));
 		if (m->gm_mech.gm_compat == NULL)
@@ -392,7 +404,7 @@ _gss_load_mech(void)
 
 		mi = dlsym(so, "gss_mo_init");
 		if (mi != NULL) {
-			major_status = mi(&minor_status, &mech_oid,
+			major_status = mi(&minor_status, mech_oid,
 					  &m->gm_mech.gm_mo, &m->gm_mech.gm_mo_num);
 			if (GSS_ERROR(major_status))
 				goto bad;
@@ -419,7 +431,7 @@ _gss_load_mech(void)
 	bad:
 		if (m != NULL) {
 			free(m->gm_mech.gm_compat);
-			free(m->gm_mech.gm_mech_oid.elements);
+			/* do not free OID, it has been interned */
 			free((char *)m->gm_mech.gm_name);
 			free(m);
 		}

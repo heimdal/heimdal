@@ -61,8 +61,7 @@ _gss_find_mn(OM_uint32 *minor_status, struct _gss_name *name, gss_OID mech,
 
 		major_status = m->gm_import_name(minor_status,
 		    &name->gn_value,
-		    (name->gn_type.elements
-			? &name->gn_type : GSS_C_NO_OID),
+		    name->gn_type,
 		    &mn->gmn_name);
 		if (major_status != GSS_S_COMPLETE) {
 			_gss_mg_error(m, major_status, *minor_status);

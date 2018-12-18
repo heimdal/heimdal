@@ -221,7 +221,7 @@ gss_import_name(OM_uint32 *minor_status,
 
 	HEIM_SLIST_INIT(&name->gn_mn);
 
-	major_status = _gss_copy_oid(minor_status,
+	major_status = _gss_intern_oid(minor_status,
 	    name_type, &name->gn_type);
 	if (major_status) {
 		free(name);
@@ -256,8 +256,7 @@ gss_import_name(OM_uint32 *minor_status,
 
 		major_status = (*m->gm_mech.gm_import_name)(minor_status,
 		    &name->gn_value,
-		    (name->gn_type.elements
-			? &name->gn_type : GSS_C_NO_OID),
+		    name->gn_type,
 		    &mn->gmn_name);
 		if (major_status != GSS_S_COMPLETE) {
 			_gss_mg_error(&m->gm_mech, major_status, *minor_status);
@@ -266,7 +265,7 @@ gss_import_name(OM_uint32 *minor_status,
 		}
 
 		mn->gmn_mech = &m->gm_mech;
-		mn->gmn_mech_oid = &m->gm_mech_oid;
+		mn->gmn_mech_oid = m->gm_mech_oid;
 		HEIM_SLIST_INSERT_HEAD(&name->gn_mn, mn, gmn_link);
 	}
 

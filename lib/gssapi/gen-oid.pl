@@ -112,6 +112,7 @@ while(<>) {
 	    printf "/* $name - $oid */\n";
 	    printf "gss_OID_desc GSSAPI_LIB_VARIABLE $store = { $length, rk_UNCONST(\"$data\") };\n\n";
 	}
+	push(@oidstorage, $store);
     } elsif (/^desc\s+([\w]+)\s+(\w+)\s+(\"[^\"]*\")\s+(\"[^\"]*\")/) {
         my ($type, $oid, $short, $long) = ($1, $2, $3, $4);
 	my $object = { type=> $type, oid => $oid, short => $short, long => $long };
@@ -138,4 +139,11 @@ foreach my $k (sort keys %types) {
 
 if ($header) {
     printf "#endif /* GSSAPI_GSSAPI_OID */\n";
+} else {
+    printf "gss_OID _gss_ot_internal[] = {\n";
+    foreach my $k (@oidstorage) {
+	print "  &$k,\n";
+    }
+    printf "};\n\n";
+    printf "size_t _gss_ot_internal_count = sizeof(_gss_ot_internal) / sizeof(_gss_ot_internal[0]);\n";
 }

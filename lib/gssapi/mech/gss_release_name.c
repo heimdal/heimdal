@@ -56,8 +56,7 @@ gss_release_name(OM_uint32 *minor_status,
 
 	name = (struct _gss_name *) *input_name;
 
-	if (name->gn_type.elements)
-		free(name->gn_type.elements);
+	gss_release_oid(minor_status, &name->gn_type);
 	while (HEIM_SLIST_FIRST(&name->gn_mn)) {
 		struct _gss_mechanism_name *mn;
 		mn = HEIM_SLIST_FIRST(&name->gn_mn);

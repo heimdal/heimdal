@@ -274,7 +274,7 @@ OM_uint32 GSSAPI_CALLCONV _gss_spnego_compare_name
 
     *name_equal = 0;
 
-    if (!gss_oid_equal(&n1->type, &n2->type))
+    if (!gss_oid_equal(n1->type, n2->type))
 	return GSS_S_COMPLETE;
     if (n1->value.length != n2->value.length)
 	return GSS_S_COMPLETE;
@@ -322,7 +322,7 @@ OM_uint32 GSSAPI_CALLCONV _gss_spnego_import_name
 	return GSS_S_FAILURE;
     }
 
-    maj_stat = _gss_copy_oid(minor_status, name_type, &name->type);
+    maj_stat = _gss_intern_oid(minor_status, name_type, &name->type);
     if (maj_stat) {
 	free(name);
 	return GSS_S_FAILURE;
@@ -369,7 +369,6 @@ OM_uint32 GSSAPI_CALLCONV _gss_spnego_release_name
     if (*input_name != GSS_C_NO_NAME) {
 	OM_uint32 junk;
 	spnego_name name = (spnego_name)*input_name;
-	_gss_free_oid(&junk, &name->type);
 	gss_release_buffer(&junk, &name->value);
 	if (name->mech != GSS_C_NO_NAME)
 	    gss_release_name(&junk, &name->mech);

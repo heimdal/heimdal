@@ -56,7 +56,7 @@ mech_authorize_localname(OM_uint32 *minor_status,
         major_status = m->gm_authorize_localname(minor_status,
                                                  mn->gmn_name,
                                                  &user->gn_value,
-                                                 &user->gn_type);
+                                                 user->gn_type);
         if (major_status != GSS_S_UNAUTHORIZED)
             break;
     }
@@ -75,7 +75,7 @@ attr_authorize_localname(OM_uint32 *minor_status,
     OM_uint32 major_status = GSS_S_UNAVAILABLE;
     int more = -1;
 
-    if (!gss_oid_equal(&user->gn_type, GSS_C_NT_USER_NAME))
+    if (!gss_oid_equal(user->gn_type, GSS_C_NT_USER_NAME))
         return GSS_S_BAD_NAMETYPE;
 
     while (more != 0 && major_status != GSS_S_COMPLETE) {

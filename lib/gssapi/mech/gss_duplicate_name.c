@@ -48,7 +48,7 @@ gss_duplicate_name(OM_uint32 *minor_status,
 	 */
 	if (name->gn_value.value) {
 		major_status = gss_import_name(minor_status,
-		    &name->gn_value, &name->gn_type, dest_name);
+		    &name->gn_value, name->gn_type, dest_name);
 		if (major_status != GSS_S_COMPLETE)
 			return (major_status);
 		new_name = (struct _gss_name *) *dest_name;

@@ -104,9 +104,9 @@ struct {								\
 	    heim_base_exchange_pointer(&(head)->slh_first, (elm));	\
 } while (/*CONSTCOND*/0)
 
-#define HEIM_SLIST_ATOMIC_FOREACH(var, head, field)			\
-	for (heim_base_exchange_pointer(&(var), (head)->slh_first);	\
-	     (var) != NULL;						\
-	     heim_base_exchange_pointer(&(var), (var)->field.sle_next))
+#define HEIM_SLIST_ATOMIC_FOREACH(var, head, field)			        \
+	for ((void)heim_base_exchange_pointer(&(var), (head)->slh_first);	\
+	     (var) != NULL;						        \
+	     (void)heim_base_exchange_pointer(&(var), (var)->field.sle_next))
 
 #endif	/* !_MECHQUEUE_H_ */

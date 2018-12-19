@@ -36,6 +36,8 @@
 #ifndef HEIM_BASE_H
 #define HEIM_BASE_H 1
 
+#include "config.h"
+
 #include <sys/types.h>
 #if !defined(WIN32) && !defined(HAVE_DISPATCH_DISPATCH_H) && defined(ENABLE_PTHREAD_SUPPORT)
 #include <pthread.h>
@@ -427,5 +429,110 @@ int heim_w32_delete_key(unsigned long);
 int heim_w32_setspecific(unsigned long, void *);
 void *heim_w32_getspecific(unsigned long);
 void heim_w32_service_thread_detach(void *);
+
+/*
+ * Atomic operations
+ */
+
+#if defined(__GNUC__) && defined(HAVE___SYNC_ADD_AND_FETCH)
+
+#define heim_base_atomic_inc(x) __sync_add_and_fetch((x), 1)
+#define heim_base_atomic_dec(x) __sync_sub_and_fetch((x), 1)
+#define heim_base_atomic_type	unsigned int
+#define heim_base_atomic_max    UINT_MAX
+
+#ifndef __has_builtin
+#define __has_builtin(x) 0
+#endif
+
+#if __has_builtin(__sync_swap)
+#define heim_base_exchange_pointer(t,v) __sync_swap((t), (v))
+#else
+#define heim_base_exchange_pointer(t,v) __sync_lock_test_and_set((t), (v))
+#endif
+
+#elif defined(__sun)
+
+#include <sys/atomic.h>
+
+#define heim_base_atomic_inc(x) atomic_inc_uint_nv((volatile uint_t *)(x))
+#define heim_base_atomic_dec(x) atomic_dec_uint_nv((volatile uint_t *)(x))
+#define heim_base_atomic_type	uint_t
+#define heim_base_atomic_max    UINT_MAX
+
+#define heim_base_exchange_pointer(t,v) atomic_swap_ptr((volatile void *)(t), (void *)(v))
+
+#elif defined(_AIX)
+
+#include <sys/atomic_op.h>
+
+#define heim_base_atomic_inc(x) (fetch_and_add((atomic_p)(x)) + 1)
+#define heim_base_atomic_dec(x) (fetch_and_add((atomic_p)(x)) - 1)
+#define heim_base_atomic_type   unsigned int
+#define heim_base_atomic_max    UINT_MAX
+
+static inline void *
+heim_base_exchange_pointer(void *p, void *newval)
+{
+    void *val = *(void **)p;
+
+    while (!compare_and_swaplp((atomic_l)p, (long *)&val, (long)newval))
+        ;
+
+    return val;
+}
+
+#elif defined(_WIN32)
+
+#define heim_base_atomic_inc(x) InterlockedIncrement(x)
+#define heim_base_atomic_dec(x) InterlockedDecrement(x)
+#define heim_base_atomic_type	LONG
+#define heim_base_atomic_max    MAXLONG
+
+#define heim_base_exchange_pointer(t,v) InterlockedExchangePointer((PVOID volatile *)(t), (PVOID)(v))
+
+#else
+
+#include "heim_threads.h"
+
+#define HEIM_BASE_NEED_ATOMIC_MUTEX 1
+extern HEIMDAL_MUTEX _heim_base_mutex;
+
+#define heim_base_atomic_type	unsigned int
+
+static inline heim_base_atomic_type
+heim_base_atomic_inc(heim_base_atomic_type *x)
+{
+    heim_base_atomic_type t;
+    HEIMDAL_MUTEX_lock(&_heim_base_mutex);
+    t = ++(*x);
+    HEIMDAL_MUTEX_unlock(&_heim_base_mutex);
+    return t;
+}
+
+static inline heim_base_atomic_type
+heim_base_atomic_dec(heim_base_atomic_type *x)
+{
+    heim_base_atomic_type t;
+    HEIMDAL_MUTEX_lock(&_heim_base_mutex);
+    t = --(*x);
+    HEIMDAL_MUTEX_unlock(&_heim_base_mutex);
+    return t;
+}
+
+#define heim_base_atomic_max    UINT_MAX
+
+static inline void *
+heim_base_exchange_pointer(void *target, void *value)
+{
+    void *old;
+    HEIMDAL_MUTEX_lock(&_heim_base_mutex);
+    old = *(void **)target;
+    *(void **)target = value;
+    HEIMDAL_MUTEX_unlock(&_heim_base_mutex);
+    return old;
+}
+
+#endif /* defined(__GNUC__) && defined(HAVE___SYNC_ADD_AND_FETCH) */
 
 #endif /* HEIM_BASE_H */

@@ -451,6 +451,9 @@ void heim_w32_service_thread_detach(void *);
 #define heim_base_exchange_pointer(t,v) __sync_lock_test_and_set((t), (v))
 #endif
 
+#define heim_base_exchange_32(t,v)	heim_base_exchange_pointer((t), (v))
+#define heim_base_exchange_64(t,v)	heim_base_exchange_pointer((t), (v))
+
 #elif defined(__sun)
 
 #include <sys/atomic.h>
@@ -461,6 +464,8 @@ void heim_w32_service_thread_detach(void *);
 #define heim_base_atomic_max    UINT_MAX
 
 #define heim_base_exchange_pointer(t,v) atomic_swap_ptr((volatile void *)(t), (void *)(v))
+#define heim_base_exchange_32(t,v)	atomic_swap_32((volatile uint32_t *)(t), (v))
+#define heim_base_exchange_64(t,v)	atomic_swap_64((volatile uint64_t *)(t), (v))
 
 #elif defined(_AIX)
 
@@ -482,6 +487,28 @@ heim_base_exchange_pointer(void *p, void *newval)
     return val;
 }
 
+static inline uint32_t
+heim_base_exchange_32(uint32_t *p, uint32_t newval)
+{
+    uint32_t val = *p;
+
+    while (!compare_and_swap((atomic_p)p, (int *)&val, (int)newval))
+        ;
+
+    return val;
+}
+
+static inline uint64_t
+heim_base_exchange_64(uint64_t *p, uint64_t newval)
+{
+    uint64_t val = *p;
+
+    while (!compare_and_swaplp((atomic_l)p, (long *)&val, (long)newval))
+        ;
+
+    return val;
+}
+
 #elif defined(_WIN32)
 
 #define heim_base_atomic_inc(x) InterlockedIncrement(x)
@@ -490,6 +517,8 @@ heim_base_exchange_pointer(void *p, void *newval)
 #define heim_base_atomic_max    MAXLONG
 
 #define heim_base_exchange_pointer(t,v) InterlockedExchangePointer((PVOID volatile *)(t), (PVOID)(v))
+#define heim_base_exchange_32(t,v)	((ULONG)InterlockedExchange((LONG volatile *)(t), (LONG)(v)))
+#define heim_base_exchange_64(t,v)	((ULONG64)InterlockedExchange64((LONG64 violatile *)(t), (LONG64)(v)))
 
 #else
 
@@ -534,5 +563,13 @@ heim_base_exchange_pointer(void *target, void *value)
 }
 
 #endif /* defined(__GNUC__) && defined(HAVE___SYNC_ADD_AND_FETCH) */
+
+#if SIZEOF_TIME_T == 8
+#define heim_base_exchange_time_t(t,v)	heim_base_exchange_64((t), (v))
+#elif SIZEOF_TIME_T == 4
+#define heim_base_exchange_time_t(t,v)	heim_base_exchange_32((t), (v))
+#else
+#error set SIZEOF_TIME_T for your platform
+#endif
 
 #endif /* HEIM_BASE_H */

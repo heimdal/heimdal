@@ -349,6 +349,7 @@ AC_CHECK_HEADERS([\
 	fnmatch.h				\
 	inttypes.h				\
 	io.h					\
+	keyutils.h				\
 	libutil.h				\
 	limits.h				\
 	maillock.h				\
@@ -547,7 +548,28 @@ if test "$enable_kcm" = yes; then
 fi
 AM_CONDITIONAL(KCM, test "$enable_kcm" = yes)
 
+dnl detect keyring on Linux
+if test "$ac_cv_header_keyutils_h" = yes; then
+    AC_CHECK_SIZEOF([key_serial_t],,[
+	#ifdef HAVE_INTTYPES_H
+	#include <inttypes.h>
+	#endif
+	#ifdef HAVE_SYS_TYPES_H
+	#include <sys/types.h>
+	#endif
+	#include <keyutils.h>
+    ])
+fi
 
+AC_FIND_FUNC_NO_LIBS(add_key, keyutils)
+if test -n "$LIB_add_key"; then
+    saved_LIBS="$LIBS"
+    LIBS="$LIBS $LIB_add_key"
+    AC_CHECK_FUNCS(keyctl_get_persistent)
+    LIBS="$saved_LIBS"
+fi
+
+AC_CHECK_SIZEOF([time_t])
 
 dnl Cray stuff
 AC_CHECK_FUNCS(getudbnam setlim)

@@ -291,6 +291,9 @@ cc_ops_register(krb5_context context)
 #endif
     krb5_cc_register(context, &krb5_kcm_ops, TRUE);
 #endif
+#if defined(HAVE_KEYUTILS_H)
+    krb5_cc_register(context, &krb5_krcc_ops, TRUE);
+#endif
     _krb5_load_ccache_plugins(context);
     return 0;
 }
@@ -1116,6 +1119,7 @@ krb5_init_ets(krb5_context context)
 	krb5_add_et_list(context, initialize_heim_error_table_r);
 
 	krb5_add_et_list(context, initialize_k524_error_table_r);
+	krb5_add_et_list(context, initialize_k5e1_error_table_r);
 
 #ifdef COM_ERR_BINDDOMAIN_krb5
 	bindtextdomain(COM_ERR_BINDDOMAIN_krb5, HEIMDAL_LOCALEDIR);

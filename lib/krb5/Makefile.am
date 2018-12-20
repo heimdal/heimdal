@@ -79,6 +79,7 @@ libkrb5_la_LIBADD = \
 	$(LIB_libintl) \
 	$(LIBADD_roken) \
 	$(PTHREAD_LIBADD) \
+	$(LIB_add_key) \
 	$(LIB_door_create) \
 	$(LIB_dlopen)
 
@@ -93,12 +94,13 @@ librfc3961_la_LIBADD = \
 	$(LIB_libintl) \
 	$(LIBADD_roken) \
 	$(PTHREAD_LIBADD) \
+	$(LIB_add_key) \
 	$(LIB_door_create) \
 	$(LIB_dlopen)
 
 lib_LTLIBRARIES = libkrb5.la
 
-ERR_FILES = krb5_err.c krb_err.c heim_err.c k524_err.c
+ERR_FILES = krb5_err.c krb_err.c heim_err.c k524_err.c k5e1_err.c
 
 libkrb5_la_CPPFLAGS = \
 	-DBUILD_KRB5_LIB \
@@ -183,6 +185,7 @@ dist_libkrb5_la_SOURCES =			\
 	keytab_memory.c				\
 	krb5_locl.h				\
 	krb5-v4compat.h				\
+	krcache.c				\
 	krbhst.c				\
 	kuserok.c				\
 	kuserok_plugin.h			\
@@ -276,7 +279,7 @@ ALL_OBJECTS += $(test_renew_OBJECTS)
 ALL_OBJECTS += $(test_rfc3961_OBJECTS)
 
 $(ALL_OBJECTS): $(srcdir)/krb5-protos.h $(srcdir)/krb5-private.h
-$(ALL_OBJECTS): krb5_err.h heim_err.h k524_err.h krb5_err.h krb_err.h k524_err.h
+$(ALL_OBJECTS): krb5_err.h heim_err.h k524_err.h k5e1_err.h krb_err.h k524_err.h
 
 librfc3961_la_SOURCES =				\
 	crc.c					\
@@ -380,7 +383,7 @@ dist_include_HEADERS = \
 noinst_HEADERS = $(srcdir)/krb5-private.h
 
 
-nodist_include_HEADERS = krb5_err.h heim_err.h k524_err.h
+nodist_include_HEADERS = krb5_err.h heim_err.h k524_err.h k5e1_err.h
 
 # XXX use nobase_include_HEADERS = krb5/locate_plugin.h
 krb5dir = $(includedir)/krb5
@@ -396,9 +399,10 @@ CLEANFILES = \
 	krb5_err.c krb5_err.h \
 	krb_err.c krb_err.h \
 	heim_err.c heim_err.h \
-	k524_err.c k524_err.h
+	k524_err.c k524_err.h \
+	k5e1_err.c k5e1_err.h
 
-$(libkrb5_la_OBJECTS): krb5_err.h krb_err.h heim_err.h k524_err.h
+$(libkrb5_la_OBJECTS): krb5_err.h krb_err.h heim_err.h k524_err.h k5e1_err.h
 
 test_config_strings.out: test_config_strings.cfg
 	$(CP) $(srcdir)/test_config_strings.cfg test_config_strings.out
@@ -413,6 +417,7 @@ EXTRA_DIST = \
 	krb_err.et \
 	heim_err.et \
 	k524_err.et \
+	k5e1_err.et \
 	$(man_MANS) \
 	version-script.map \
 	test_config_strings.cfg \
@@ -429,3 +434,5 @@ krb_err.h: krb_err.et
 heim_err.h: heim_err.et
 
 k524_err.h: k524_err.et
+
+k5e1_err.h: k5e1_err.et

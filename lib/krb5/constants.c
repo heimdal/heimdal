@@ -64,3 +64,4 @@ KRB5_LIB_VARIABLE const char *krb5_cc_type_memory = "MEMORY";
 KRB5_LIB_VARIABLE const char *krb5_cc_type_kcm = "KCM";
 KRB5_LIB_VARIABLE const char *krb5_cc_type_scc = "SCC";
 KRB5_LIB_VARIABLE const char *krb5_cc_type_dcc = "DIR";
+KRB5_LIB_VARIABLE const char *krb5_cc_type_keyring = "KEYRING";

@@ -717,6 +717,8 @@ EXPORTS
 	initialize_heim_error_table
 	initialize_k524_error_table_r
 	initialize_k524_error_table
+	initialize_k5e1_error_table_r
+	initialize_k5e1_error_table
 
         ; variables
 	krb5_mcc_ops            DATA
@@ -727,6 +729,9 @@ EXPORTS
 #endif
 #ifdef HAVE_KCM
 	krb5_kcm_ops            DATA
+#endif
+#ifdef HAVE_KEYUTILS
+	krb5_krcc_ops           DATA
 #endif
 	krb5_wrfkt_ops          DATA
 	krb5_mkt_ops            DATA
@@ -740,6 +745,7 @@ EXPORTS
 	krb5_cc_type_file       DATA
 	krb5_cc_type_memory     DATA
 	krb5_cc_type_kcm        DATA
+	krb5_cc_type_keyring    DATA
 	krb5_cc_type_scc        DATA
 
         ; Shared with GSSAPI krb5

@@ -45,6 +45,7 @@
 #include <krb5_err.h>
 #include <heim_err.h>
 #include <k524_err.h>
+#include <k5e1_err.h>
 
 #include <krb5_asn1.h>
 
@@ -961,6 +962,7 @@ extern KRB5_LIB_VARIABLE const krb5_cc_ops krb5_mcc_ops;
 extern KRB5_LIB_VARIABLE const krb5_cc_ops krb5_kcm_ops;
 extern KRB5_LIB_VARIABLE const krb5_cc_ops krb5_akcm_ops;
 extern KRB5_LIB_VARIABLE const krb5_cc_ops krb5_scc_ops;
+extern KRB5_LIB_VARIABLE const krb5_cc_ops krb5_krcc_ops;
 
 extern KRB5_LIB_VARIABLE const krb5_kt_ops krb5_fkt_ops;
 extern KRB5_LIB_VARIABLE const krb5_kt_ops krb5_wrfkt_ops;
@@ -975,6 +977,7 @@ extern KRB5_LIB_VARIABLE const char *krb5_cc_type_memory;
 extern KRB5_LIB_VARIABLE const char *krb5_cc_type_kcm;
 extern KRB5_LIB_VARIABLE const char *krb5_cc_type_scc;
 extern KRB5_LIB_VARIABLE const char *krb5_cc_type_dcc;
+extern KRB5_LIB_VARIABLE const char *krb5_cc_type_keyring;
 
 #endif /* __KRB5_H__ */
 

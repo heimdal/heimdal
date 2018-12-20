@@ -391,6 +391,7 @@ test_cache_iter(krb5_context context, const char *type, int destroy)
 	krb5_principal principal;
 	char *name;
 
+	heim_assert(id != NULL, "credentials cache is non-NULL");
 	if (debug_flag)
 	    printf("name: %s\n", krb5_cc_get_name(context, id));
 	ret = krb5_cc_get_principal(context, id, &principal);
@@ -683,6 +684,9 @@ main(int argc, char **argv)
 #ifdef USE_SQLITE
     test_cache_remove(context, krb5_cc_type_scc);
 #endif
+#ifdef HAVE_KEYUTILS_H
+    test_cache_remove(context, krb5_cc_type_keyring);
+#endif
 
     test_default_name(context);
     test_mcache(context);
@@ -693,6 +697,9 @@ main(int argc, char **argv)
 #endif
     test_init_vs_destroy(context, krb5_cc_type_scc);
     test_init_vs_destroy(context, krb5_cc_type_dcc);
+#ifdef HAVE_KEYUTILS_H
+    test_init_vs_destroy(context, krb5_cc_type_keyring);
+#endif
     test_mcc_default();
     test_def_cc_name(context);
 
@@ -722,6 +729,10 @@ main(int argc, char **argv)
     test_cache_iter(context, krb5_cc_type_dcc, 0);
     test_cache_iter(context, krb5_cc_type_dcc, 1);
 #endif
+#ifdef HAVE_KEYUTILS_H
+    test_cache_iter(context, krb5_cc_type_keyring, 0);
+    test_cache_iter(context, krb5_cc_type_keyring, 1);
+#endif
 
     test_copy(context, krb5_cc_type_file, krb5_cc_type_file);
     test_copy(context, krb5_cc_type_memory, krb5_cc_type_memory);
@@ -736,6 +747,34 @@ main(int argc, char **argv)
     test_copy(context, krb5_cc_type_dcc, krb5_cc_type_file);
     test_copy(context, krb5_cc_type_dcc, krb5_cc_type_scc);
 #endif
+#ifdef HAVE_KEYUTILS_H
+    test_copy(context, krb5_cc_type_keyring, krb5_cc_type_file);
+    test_copy(context, krb5_cc_type_file, krb5_cc_type_file);
+    test_copy(context, "KEYRING:", "KEYRING:bar");
+    test_copy(context, "KEYRING:bar", "KEYRING:baz");
+# ifdef HAVE_KEYCTL_GET_PERSISTENT
+    test_copy(context, krb5_cc_type_file, "KEYRING:persistent");
+    test_copy(context, "KEYRING:persistent:", krb5_cc_type_file);
+    test_copy(context, krb5_cc_type_file, "KEYRING:persistent:foo");
+    test_copy(context, "KEYRING:persistent:foo", krb5_cc_type_file);
+# endif
+    test_copy(context, krb5_cc_type_memory, "KEYRING:process:");
+    test_copy(context, "KEYRING:process:", krb5_cc_type_memory);
+    test_copy(context, krb5_cc_type_memory, "KEYRING:process:foo");
+    test_copy(context, "KEYRING:process:foo", krb5_cc_type_memory);
+    test_copy(context, krb5_cc_type_memory, "KEYRING:thread:");
+    test_copy(context, "KEYRING:thread:", krb5_cc_type_memory);
+    test_copy(context, krb5_cc_type_memory, "KEYRING:thread:foo");
+    test_copy(context, "KEYRING:thread:foo", krb5_cc_type_memory);
+    test_copy(context, krb5_cc_type_memory, "KEYRING:session:");
+    test_copy(context, "KEYRING:session:", krb5_cc_type_memory);
+    test_copy(context, krb5_cc_type_memory, "KEYRING:session:foo");
+    test_copy(context, "KEYRING:session:foo", krb5_cc_type_memory);
+    test_copy(context, krb5_cc_type_file, "KEYRING:user:");
+    test_copy(context, "KEYRING:user:", krb5_cc_type_file);
+    test_copy(context, krb5_cc_type_file, "KEYRING:user:foo");
+    test_copy(context, "KEYRING:user:foo", krb5_cc_type_memory);
+#endif /* HAVE_KEYUTILS_H */
 
     test_move(context, krb5_cc_type_file);
     test_move(context, krb5_cc_type_memory);
@@ -746,6 +785,21 @@ main(int argc, char **argv)
 #if 0
     test_move(context, krb5_cc_type_dcc);
 #endif
+#ifdef HAVE_KEYUTILS_H
+    test_move(context, krb5_cc_type_keyring);
+# ifdef HAVE_KEYCTL_GET_PERSISTENT
+    test_move(context, "KEYRING:persistent:");
+    test_move(context, "KEYRING:persistent:foo");
+# endif
+    test_move(context, "KEYRING:process:");
+    test_move(context, "KEYRING:process:foo");
+    test_move(context, "KEYRING:thread:");
+    test_move(context, "KEYRING:thread:foo");
+    test_move(context, "KEYRING:session:");
+    test_move(context, "KEYRING:session:foo");
+    test_move(context, "KEYRING:user:");
+    test_move(context, "KEYRING:user:foo");
+#endif /* HAVE_KEYUTILS_H */
 
     test_prefix_ops(context, "FILE:/tmp/foo", &krb5_fcc_ops);
     test_prefix_ops(context, "FILE", &krb5_fcc_ops);
@@ -760,6 +814,10 @@ main(int argc, char **argv)
     test_prefix_ops(context, "DIR:", &krb5_dcc_ops);
     test_prefix_ops(context, "DIR:tkt1", &krb5_dcc_ops);
 #endif
+#ifdef HAVE_KEYUTILS_H
+    test_prefix_ops(context, "KEYRING:", &krb5_krcc_ops);
+    test_prefix_ops(context, "KEYRING:foo", &krb5_krcc_ops);
+#endif /* HAVE_KEYUTILS_H */
 
     krb5_cc_destroy(context, id1);
     krb5_cc_destroy(context, id2);

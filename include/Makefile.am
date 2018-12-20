@@ -67,6 +67,7 @@ CLEANFILES =			\
 	hx509.h			\
 	hx509_err.h		\
 	k524_err.h		\
+	k5e1_err.h		\
 	kafs.h			\
 	kcm-protos.h		\
 	kdc-private.h		\

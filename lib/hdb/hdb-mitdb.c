@@ -1039,6 +1039,8 @@ mdb_remove(krb5_context context, HDB *db,
     krb5_data key;
     krb5_data value = { 0, 0 };
 
+    mdb_principal2key(context, principal, &key);
+
     if ((flags & HDB_F_PRECHECK)) {
         code = db->hdb__get(context, db, key, &value);
         krb5_data_free(&key);
@@ -1049,7 +1051,6 @@ mdb_remove(krb5_context context, HDB *db,
         return code;
     }
 
-    mdb_principal2key(context, principal, &key);
     code = db->hdb__del(context, db, key);
     krb5_data_free(&key);
     return code;

@@ -119,6 +119,7 @@ _hdb_fetch_kvno(krb5_context context, HDB *db, krb5_const_principal principal,
 	if (ret)
 	    return ret;
 	principal = enterprise_principal;
+	flags |= HDB_F_CANON; /* enterprise implies canonicalization */
     }
 
     hdb_principal2key(context, principal, &key);
@@ -129,7 +130,7 @@ _hdb_fetch_kvno(krb5_context context, HDB *db, krb5_const_principal principal,
     if(ret)
 	return ret;
     ret = hdb_value2entry(context, &value, &entry->entry);
-    if (ret == ASN1_BAD_ID && (flags & HDB_F_CANON) == 0) {
+    if (ret == ASN1_BAD_ID && (flags & (HDB_F_CANON|HDB_F_FOR_AS_REQ)) == 0) {
 	krb5_data_free(&value);
 	return HDB_ERR_NOENTRY;
     } else if (ret == ASN1_BAD_ID) {
@@ -152,6 +153,19 @@ _hdb_fetch_kvno(krb5_context context, HDB *db, krb5_const_principal principal,
 	if (ret) {
 	    krb5_data_free(&value);
 	    return ret;
+	}
+
+	if ((flags & HDB_F_FOR_AS_REQ) && (flags & HDB_F_CANON) == 0) {
+	    krb5_principal tmp;
+
+	    /* "hard" alias: return the principal the client asked for */
+	    ret = krb5_copy_principal(context, principal, &tmp);
+	    if (ret) {
+		krb5_data_free(&value);
+		return ret;
+	    }
+	    krb5_free_principal(context, entry->entry.principal);
+	    entry->entry.principal = tmp;
 	}
     }
     krb5_data_free(&value);

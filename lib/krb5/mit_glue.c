@@ -76,7 +76,7 @@ krb5_c_verify_checksum(krb5_context context, const krb5_keyblock *key,
 	return ret;
 
     ret = krb5_verify_checksum(context, crypto, usage,
-			       data->data, data->length, cksum);
+			       data->data, data->length, rk_UNCONST(cksum));
     krb5_crypto_destroy(context, crypto);
 
     if (ret == 0) {

@@ -538,6 +538,16 @@ krb5_cc_set_default_name(krb5_context context, const char *name)
 	    }
 	}
 	if (p == NULL) {
+	    /* MIT compatibility */
+	    e = krb5_config_get_string(context, NULL, "libdefaults",
+				       "default_ccache_name", NULL);
+	    if (e) {
+		ret = _krb5_expand_default_cc_name(context, e, &p);
+		if (ret)
+		    return ret;
+	    }
+	}
+	if (p == NULL) {
 	    e = krb5_config_get_string(context, NULL, "libdefaults",
 				       "default_cc_type", NULL);
 	    if (e) {

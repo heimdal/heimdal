@@ -66,6 +66,7 @@ typedef struct krb5_get_init_creds_ctx {
 
     struct {
 	unsigned change_password:1;
+	unsigned change_password_prompt:1;
     } runflags;
 
     int used_pa_types;
@@ -386,6 +387,8 @@ static krb5_addresses no_addrs = { 0, NULL };
 static krb5_error_code
 get_init_creds_common(krb5_context context,
 		      krb5_principal client,
+		      krb5_prompter_fct prompter,
+		      void *prompter_data,
 		      krb5_deltat start_time,
 		      krb5_get_init_creds_opt *options,
 		      krb5_init_creds_context ctx)
@@ -502,6 +505,16 @@ get_init_creds_common(krb5_context context,
     }
     if (options->flags & KRB5_GET_INIT_CREDS_OPT_ANONYMOUS)
 	ctx->flags.request_anonymous = options->anonymous;
+
+    ctx->prompter = prompter;
+    ctx->prompter_data = prompter_data;
+
+    if ((options->flags & KRB5_GET_INIT_CREDS_OPT_CHANGE_PASSWORD_PROMPT) &&
+	!options->change_password_prompt)
+	ctx->runflags.change_password_prompt = 0;
+    else
+	ctx->runflags.change_password_prompt = ctx->prompter != NULL;
+
     if (default_opt)
         krb5_get_init_creds_opt_free(context, default_opt);
     return 0;
@@ -1412,7 +1425,8 @@ krb5_init_creds_init(krb5_context context,
     if (ctx == NULL)
 	return krb5_enomem(context);
 
-    ret = get_init_creds_common(context, client, start_time, options, ctx);
+    ret = get_init_creds_common(context, client, prompter, prompter_data,
+				start_time, options, ctx);
     if (ret) {
 	free(ctx);
 	return ret;
@@ -1423,9 +1437,6 @@ krb5_init_creds_init(krb5_context context,
     ctx->nonce &= 0x7fffffff;
     /* XXX these just needs to be the same when using Windows PK-INIT */
     ctx->pk_nonce = ctx->nonce;
-
-    ctx->prompter = prompter;
-    ctx->prompter_data = prompter_data;
 
     *rctx = ctx;
 
@@ -2378,11 +2389,13 @@ krb5_init_creds_step(krb5_context context,
 		memset_s(&ctx->as_req, sizeof(ctx->as_req), 0, sizeof(ctx->as_req));
 
 		ctx->used_pa_types = 0;
-	    } else if (ret == KRB5KDC_ERR_KEY_EXP && ctx->runflags.change_password == 0 && ctx->prompter) {
+	    } else if (ret == KRB5KDC_ERR_KEY_EXP && ctx->runflags.change_password == 0 &&
+		       ctx->runflags.change_password_prompt) {
 		char buf2[1024];
 
 		ctx->runflags.change_password = 1;
 
+		heim_assert(ctx->prompter != NULL, "unexpected NULL prompter");
 		ctx->prompter(context, ctx->prompter_data, NULL, N_("Password has expired", ""), 0, NULL);
 
 
@@ -2717,13 +2730,9 @@ krb5_get_init_creds_password(krb5_context context,
 	if (in_tkt_service != NULL && strcmp(in_tkt_service, "kadmin/changepw") == 0)
 	   goto out;
 
-	/* don't try to change password where then where none */
-	if (prompter == NULL)
+	/* don't try to change password if no prompter or prompting disabled */
+	if (!ctx->runflags.change_password_prompt)
 	    goto out;
-
-	if ((options->flags & KRB5_GET_INIT_CREDS_OPT_CHANGE_PASSWORD_PROMPT) &&
-            !options->change_password_prompt)
-		goto out;
 
 	ret = change_password (context,
 			       client,

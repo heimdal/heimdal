@@ -308,6 +308,25 @@ _expand_euid(krb5_context context, PTYPE param, const char *postfix, char **str)
     return 0;
 }
 
+static krb5_error_code
+_expand_username(krb5_context context, PTYPE param, const char *postfix, char **str)
+{
+    uid_t uid = geteuid();
+    struct passwd *pwd, pw;
+    char pwbuf[2048];
+
+    if (rk_getpwuid_r(uid, &pw, pwbuf, sizeof(pwbuf), &pwd) != 0) {
+	krb5_set_error_message(context, ENOENT,
+			       "Could not find username for UID '%ld'", (long)uid);
+	return ENOENT;
+    }
+
+    *str = strdup(pwd->pw_name);
+    if (*str == NULL)
+	return krb5_enomem(context);
+
+    return 0;
+}
 #endif /* _WIN32 */
 
 /**
@@ -375,6 +394,7 @@ static const struct {
     {"LIBEXEC", FTYPE_SPECIAL, 0, LIBEXECDIR, _expand_path},
     {"SBINDIR", FTYPE_SPECIAL, 0, SBINDIR, _expand_path},
     {"euid", SPECIAL(_expand_euid)},
+    {"username", SPECIAL(_expand_username)},
 #endif
     {"TEMP", SPECIAL(_expand_temp_folder)},
     {"USERID", SPECIAL(_expand_userid)},

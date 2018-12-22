@@ -40,6 +40,9 @@
 
 ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
 rk_getpwnam_r(const char *, struct passwd *, char *, size_t, struct passwd **);
+
+ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
+rk_getpwuid_r(uid_t, struct passwd *, char *, size_t, struct passwd **);
 #endif
 
 #if !defined(POSIX_GETPWNAM_R) || defined(TEST_GETXXYYY)
@@ -73,6 +76,35 @@ do {							\
      bufsize -= slen;					\
 } while(0)
      
+     APPEND(pw_name);
+     if (p->pw_passwd)
+	 APPEND(pw_name);
+     pwd->pw_uid = p->pw_uid;
+     pwd->pw_gid = p->pw_gid;
+     APPEND(pw_gecos);
+     APPEND(pw_dir);
+     APPEND(pw_shell);
+
+     *result = pwd;
+
+     return 0;
+}
+
+ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
+rk_getpwuid_r(uid_t uid, struct passwd *pwd, char *buffer,
+	      size_t bufsize, struct passwd **result)
+{
+     struct passwd *p;
+     size_t slen, n = 0;
+
+     *result = NULL;
+
+     p = getpwuid(uid);
+     if(p == NULL)
+	 return (errno = ENOENT);
+
+     memset(pwd, 0, sizeof(*pwd));
+
      APPEND(pw_name);
      if (p->pw_passwd)
 	 APPEND(pw_name);

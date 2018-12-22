@@ -294,6 +294,7 @@ struct {
     { "foo", 0, "foo" },
     { "foo%}", 0, "foo%}" },
     { "%{uid}", 0, NULL },
+    { "%{euid}", 0, NULL },
     { "foo%{null}", 0, "foo" },
     { "foo%{null}bar", 0, "foobar" },
     { "%{", 1, NULL },

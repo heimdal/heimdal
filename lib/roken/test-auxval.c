@@ -166,7 +166,8 @@ main(int argc, char **argv, char **env)
             if (a[1] != 0)
                 warnx("AT_NULL with non-zero value %lu?!", a[1]);
             continue;
-        }
+        } else if (a[0] == AT_HWCAP || a[0] == AT_HWCAP2)
+	    continue; /* these are handled specially by libc */
 
         errno = EACCES;
 

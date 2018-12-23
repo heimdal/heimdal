@@ -80,6 +80,7 @@ add_one_principal (const char *name,
     kadm5_principal_ent_rec princ, defrec;
     kadm5_principal_ent_rec *default_ent = NULL;
     krb5_principal princ_ent = NULL;
+    krb5_timestamp pw_expire;
     int mask = 0;
     int default_mask = 0;
     char pwbuf[1024];
@@ -152,6 +153,8 @@ add_one_principal (const char *name,
 	krb5_warn(context, ret, "kadm5_create_principal");
 	goto out;
     }
+    /* Save requested password expiry before it's clobbered */
+    pw_expire = princ.pw_expiration;
     if(rand_key) {
 	krb5_keyblock *new_keys;
 	int n_keys, i;
@@ -170,6 +173,7 @@ add_one_principal (const char *name,
         krb5_free_principal(context, princ_ent);
         princ_ent = princ.principal;
 	princ.attributes &= (~KRB5_KDB_DISALLOW_ALL_TIX);
+	princ.pw_expiration = pw_expire;
 	/*
 	 * Updating kvno w/o key data and vice-versa gives _kadm5_setup_entry()
 	 * and _kadm5_set_keys2() headaches.  But we used to, so we handle
@@ -178,7 +182,7 @@ add_one_principal (const char *name,
 	 */
 	princ.kvno = 1;
 	kadm5_modify_principal(kadm_handle, &princ,
-			       KADM5_ATTRIBUTES | KADM5_KVNO);
+			       KADM5_PW_EXPIRATION | KADM5_ATTRIBUTES | KADM5_KVNO);
     } else if (key_data) {
 	ret = kadm5_chpass_principal_with_key (kadm_handle, princ_ent,
 					       3, key_data);
@@ -190,7 +194,9 @@ add_one_principal (const char *name,
         krb5_free_principal(context, princ_ent);
         princ_ent = princ.principal;
 	princ.attributes &= (~KRB5_KDB_DISALLOW_ALL_TIX);
-	kadm5_modify_principal(kadm_handle, &princ, KADM5_ATTRIBUTES);
+	princ.pw_expiration = pw_expire;
+	kadm5_modify_principal(kadm_handle, &princ,
+			       KADM5_PW_EXPIRATION | KADM5_ATTRIBUTES);
     } else if (rand_password) {
 	char *princ_name;
 

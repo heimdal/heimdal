@@ -217,8 +217,10 @@ add_builtin(gssapi_mech_interface mech)
     m->gm_so = NULL;
     m->gm_mech = *mech;
     _gss_intern_oid(&minor_status, &mech->gm_mech_oid, &m->gm_mech_oid);
-    if (minor_status)
+    if (minor_status) {
+	free(m);
 	return minor_status;
+    }
     gss_add_oid_set_member(&minor_status,
 			   &m->gm_mech.gm_mech_oid, &_gss_mech_oids);
 

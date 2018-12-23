@@ -233,7 +233,6 @@ asn1_*.[cx]
 /lib/hcrypto/test_rand
 /lib/hcrypto/test_rsa
 /lib/hcrypto/unix
-/lib/roken/test-detach
 /lib/hdb/hdb-protos.h
 /lib/hdb/hdb-private.h
 /lib/hdb/test_dbinfo
@@ -381,6 +380,8 @@ asn1_*.[cx]
 /lib/roken/snprintf-test
 /lib/roken/snprintf-test.trs
 /lib/roken/strpftime-test
+/lib/roken/test-auxval
+/lib/roken/test-detach
 /lib/roken/test-readenv
 /lib/roken/tsearch-test
 /lib/roken/vis.h

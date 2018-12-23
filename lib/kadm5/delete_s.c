@@ -35,6 +35,36 @@
 
 RCSID("$Id$");
 
+static kadm5_ret_t
+delete_principal_hook(kadm5_server_context *context,
+		      enum kadm5_hook_stage stage,
+		      krb5_error_code code,
+		      krb5_const_principal princ)
+{
+    krb5_error_code ret = 0;
+    size_t i;
+
+    for (i = 0; i < context->num_hooks; i++) {
+	kadm5_hook_context *hook = context->hooks[i];
+
+	if (hook->hook->delete != NULL) {
+	    ret = hook->hook->delete(context->context, hook->data,
+				     stage, code, princ);
+	    if (ret != 0) {
+		krb5_prepend_error_message(context->context, ret,
+					   "delete hook `%s' failed %scommit",
+					   hook->hook->name,
+					   stage == KADM5_HOOK_STAGE_PRECOMMIT
+						? "pre" : "post");
+		if (stage == KADM5_HOOK_STAGE_PRECOMMIT)
+		    break;
+	    }
+	}
+    }
+
+    return ret;
+}
+
 kadm5_ret_t
 kadm5_s_delete_principal(void *server_handle, krb5_principal princ)
 {
@@ -64,12 +94,18 @@ kadm5_s_delete_principal(void *server_handle, krb5_principal princ)
 	goto out3;
     }
 
+    ret = delete_principal_hook(context, KADM5_HOOK_STAGE_PRECOMMIT, 0, princ);
+    if (ret)
+	goto out3;
+
     ret = hdb_seal_keys(context->context, context->db, &ent.entry);
     if (ret)
 	goto out3;
 
     /* This logs the change for iprop and writes to the HDB */
     ret = kadm5_log_delete(context, princ);
+
+    (void) delete_principal_hook(context, KADM5_HOOK_STAGE_POSTCOMMIT, ret, princ);
 
  out3:
     hdb_free_entry(context->context, &ent);

@@ -36,6 +36,37 @@
 RCSID("$Id$");
 
 static kadm5_ret_t
+modify_principal_hook(kadm5_server_context *context,
+		      enum kadm5_hook_stage stage,
+		      krb5_error_code code,
+		      kadm5_principal_ent_t princ,
+		      uint32_t mask)
+{
+    krb5_error_code ret = 0;
+    size_t i;
+
+    for (i = 0; i < context->num_hooks; i++) {
+	kadm5_hook_context *hook = context->hooks[i];
+
+	if (hook->hook->modify != NULL) {
+	    ret = hook->hook->modify(context->context, hook->data,
+				     stage, code, princ, mask);
+	    if (ret != 0) {
+		krb5_prepend_error_message(context->context, ret,
+					   "modify hook `%s' failed %scommit",
+					   hook->hook->name,
+					   stage == KADM5_HOOK_STAGE_PRECOMMIT
+						? "pre" : "post");
+		if (stage == KADM5_HOOK_STAGE_PRECOMMIT)
+		    break;
+	    }
+	}
+    }
+
+    return ret;
+}
+
+static kadm5_ret_t
 modify_principal(void *server_handle,
 		 kadm5_principal_ent_t princ,
 		 uint32_t mask,
@@ -66,6 +97,11 @@ modify_principal(void *server_handle,
 				      princ->principal, HDB_F_GET_ANY|HDB_F_ADMIN_DATA, 0, &ent);
     if (ret)
 	goto out2;
+
+    ret = modify_principal_hook(context, KADM5_HOOK_STAGE_PRECOMMIT,
+				0, princ, mask);
+    if (ret)
+	goto out3;
     ret = _kadm5_setup_entry(context, &ent, mask, princ, mask, NULL, 0);
     if (ret)
 	goto out3;
@@ -113,6 +149,9 @@ modify_principal(void *server_handle,
     /* This logs the change for iprop and writes to the HDB */
     ret = kadm5_log_modify(context, &ent.entry,
                            mask | KADM5_MOD_NAME | KADM5_MOD_TIME);
+
+    (void) modify_principal_hook(context, KADM5_HOOK_STAGE_POSTCOMMIT,
+				 ret, princ, mask);
 
  out3:
     hdb_free_entry(context->context, &ent);

@@ -77,6 +77,7 @@ kadm5_s_destroy(void *server_handle)
     kadm5_server_context *context = server_handle;
     krb5_context kcontext = context->context;
 
+    _kadm5_s_free_hooks(context);
     if (context->db != NULL)
         ret = context->db->hdb_destroy(kcontext, context->db);
     destroy_kadm5_log_context(&context->log_context);

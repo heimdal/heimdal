@@ -268,6 +268,13 @@ _kadm5_s_init_context(kadm5_server_context **ctx,
 
     find_db_spec(*ctx);
 
+    ret = _kadm5_s_init_hooks(*ctx);
+    if (ret != 0) {
+	kadm5_s_destroy(*ctx);
+	*ctx = NULL;
+	return ret;
+    }
+
     /* PROFILE can't be specified for now */
     /* KADMIND_PORT is supposed to be used on the server also,
        but this doesn't make sense */

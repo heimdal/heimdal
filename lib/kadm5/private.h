@@ -36,6 +36,8 @@
 #ifndef __kadm5_privatex_h__
 #define __kadm5_privatex_h__
 
+#include "kadm5-hook.h"
+
 #ifdef HAVE_SYS_UN_H
 #include <sys/un.h>
 #endif
@@ -66,6 +68,12 @@ struct kadm_func {
 				       int, krb5_key_salt_tuple *,
 				       krb5_keyblock *, int);
 };
+
+typedef struct kadm5_hook_context {
+    void *handle;
+    const kadm5_hook *hook;
+    void *data;
+} kadm5_hook_context;
 
 /* XXX should be integrated */
 typedef struct kadm5_common_context {
@@ -108,6 +116,8 @@ typedef struct kadm5_server_context {
     krb5_principal caller;
     unsigned acl_flags;
     kadm5_log_context log_context;
+    size_t num_hooks;
+    kadm5_hook_context **hooks;
 } kadm5_server_context;
 
 typedef struct kadm5_client_context {

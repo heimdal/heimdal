@@ -102,6 +102,38 @@ create_principal(kadm5_server_context *context,
 			       &ent->entry.created_by.principal);
 }
 
+static kadm5_ret_t
+create_principal_hook(kadm5_server_context *context,
+		      enum kadm5_hook_stage stage,
+		      krb5_error_code code,
+		      kadm5_principal_ent_t princ,
+		      uint32_t mask,
+		      const char *password)
+{
+    krb5_error_code ret = 0;
+    size_t i;
+
+    for (i = 0; i < context->num_hooks; i++) {
+	kadm5_hook_context *hook = context->hooks[i];
+
+	if (hook->hook->create != NULL) {
+	    ret = hook->hook->create(context->context, hook->data,
+				     stage, code, princ, mask, password);
+	    if (ret != 0) {
+		krb5_prepend_error_message(context->context, ret,
+					   "create hook `%s' failed %scommit",
+					   hook->hook->name,
+					   stage == KADM5_HOOK_STAGE_PRECOMMIT
+						? "pre" : "post");
+		if (stage == KADM5_HOOK_STAGE_PRECOMMIT)
+		    break;
+	    }
+	}
+    }
+
+    return ret;
+}
+
 kadm5_ret_t
 kadm5_s_create_principal_with_key(void *server_handle,
 				  kadm5_principal_ent_t princ,
@@ -116,6 +148,11 @@ kadm5_s_create_principal_with_key(void *server_handle,
 	princ->kvno = 1;
 	mask |= KADM5_KVNO;
     }
+
+    ret = create_principal_hook(context, KADM5_HOOK_STAGE_PRECOMMIT,
+				0, princ, mask, NULL);
+    if (ret)
+	return ret;
 
     ret = create_principal(context, princ, mask, &ent,
 			   KADM5_PRINCIPAL | KADM5_KEY_DATA,
@@ -145,6 +182,9 @@ kadm5_s_create_principal_with_key(void *server_handle,
 
     /* This logs the change for iprop and writes to the HDB */
     ret = kadm5_log_create(context, &ent.entry);
+
+    (void) create_principal_hook(context, KADM5_HOOK_STAGE_POSTCOMMIT,
+				 ret, princ, mask, NULL);
 
  out2:
     (void) kadm5_log_end(context);
@@ -177,6 +217,11 @@ kadm5_s_create_principal(void *server_handle,
 	princ->kvno = 1;
 	mask |= KADM5_KVNO;
     }
+
+    ret = create_principal_hook(context, KADM5_HOOK_STAGE_PRECOMMIT,
+				0, princ, mask, password);
+    if (ret)
+	return ret;
 
     ret = create_principal(context, princ, mask, &ent,
 			   KADM5_PRINCIPAL,
@@ -213,6 +258,9 @@ kadm5_s_create_principal(void *server_handle,
 
     /* This logs the change for iprop and writes to the HDB */
     ret = kadm5_log_create(context, &ent.entry);
+
+    (void) create_principal_hook(context, KADM5_HOOK_STAGE_POSTCOMMIT,
+				 ret, princ, mask, password);
 
  out2:
     (void) kadm5_log_end(context);

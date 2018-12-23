@@ -33,6 +33,43 @@
 
 #include "kadm5_locl.h"
 
+static kadm5_ret_t
+setkey_principal_hook(kadm5_server_context *context,
+		      enum kadm5_hook_stage stage,
+		      krb5_error_code code,
+		      krb5_const_principal princ,
+		      uint32_t flags,
+		      size_t n_ks_tuple,
+		      krb5_key_salt_tuple *ks_tuple,
+		      size_t n_keys,
+		      krb5_keyblock *keyblocks)
+{
+    krb5_error_code ret = 0;
+    size_t i;
+
+    for (i = 0; i < context->num_hooks; i++) {
+	kadm5_hook_context *hook = context->hooks[i];
+
+	if (hook->hook->set_keys != NULL) {
+	    ret = hook->hook->set_keys(context->context, hook->data,
+				       stage, code, princ,
+				       flags, n_ks_tuple, ks_tuple,
+				       n_keys, keyblocks);
+	    if (ret != 0) {
+		krb5_prepend_error_message(context->context, ret,
+					   "setkey hook `%s' failed %scommit",
+					   hook->hook->name,
+					   stage == KADM5_HOOK_STAGE_PRECOMMIT
+						? "pre" : "post");
+		if (stage == KADM5_HOOK_STAGE_PRECOMMIT)
+		    break;
+	    }
+	}
+    }
+
+    return ret;
+}
+
 /**
  * Server-side function to set new keys for a principal.
  */
@@ -47,6 +84,7 @@ kadm5_s_setkey_principal_3(void *server_handle,
     kadm5_server_context *context = server_handle;
     hdb_entry_ex ent;
     kadm5_ret_t ret = 0;
+    size_t i;
 
     memset(&ent, 0, sizeof(ent));
     if (!context->keep_open)
@@ -70,6 +108,16 @@ kadm5_s_setkey_principal_3(void *server_handle,
         return ret;
     }
 
+    ret = setkey_principal_hook(context, KADM5_HOOK_STAGE_PRECOMMIT, 0,
+				princ, keepold ? KADM5_HOOK_FLAG_KEEPOLD : 0,
+				n_ks_tuple, ks_tuple, n_keys, keyblocks);
+    if (ret) {
+        (void) kadm5_log_end(context);
+        if (!context->keep_open)
+            context->db->hdb_close(context->context, context->db);
+        return ret;
+    }
+
     if (keepold) {
         ret = hdb_add_current_keys_to_history(context->context, &ent.entry);
     } else
@@ -84,8 +132,6 @@ kadm5_s_setkey_principal_3(void *server_handle,
      * each ks_tuple's enctype matches the corresponding key enctype.
      */
     if (ret == 0) {
-	int i;
-
 	free_Keys(&ent.entry.keys);
 	for (i = 0; i < n_keys; ++i) {
 	    Key k;
@@ -126,6 +172,10 @@ kadm5_s_setkey_principal_3(void *server_handle,
                                    KADM5_KEY_DATA | KADM5_KVNO |
                                    KADM5_PW_EXPIRATION | KADM5_TL_DATA);
     }
+
+    (void) setkey_principal_hook(context, KADM5_HOOK_STAGE_POSTCOMMIT, ret,
+				 princ, keepold, n_ks_tuple, ks_tuple,
+				 n_keys, keyblocks);
 
     hdb_free_entry(context->context, &ent);
     (void) kadm5_log_end(context);

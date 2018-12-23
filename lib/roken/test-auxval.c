@@ -120,6 +120,22 @@ getprocauxval(unsigned long type)
     return e->a_un.a_val;
 }
 
+/* returns 1 if auxval type is handled specially by libc */
+static int
+is_special_auxv_p(long type)
+{
+#ifdef AT_HWCAP
+    if (type == AT_HWCAP)
+	return 1;
+#endif
+#ifdef AT_HWCAP2
+    if (type == AT_HWCAP)
+	return 1;
+#endif
+
+    return 0;
+}
+
 int
 main(int argc, char **argv, char **env)
 {
@@ -166,8 +182,8 @@ main(int argc, char **argv, char **env)
             if (a[1] != 0)
                 warnx("AT_NULL with non-zero value %lu?!", a[1]);
             continue;
-        } else if (a[0] == AT_HWCAP || a[0] == AT_HWCAP2)
-	    continue; /* these are handled specially by libc */
+	} else if (is_special_auxv_p(a[0]))
+	    continue;
 
         errno = EACCES;
 

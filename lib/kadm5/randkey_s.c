@@ -35,6 +35,36 @@
 
 RCSID("$Id$");
 
+static kadm5_ret_t
+randkey_principal_hook(kadm5_server_context *context,
+		       enum kadm5_hook_stage stage,
+		       krb5_error_code code,
+		       krb5_const_principal princ)
+{
+    krb5_error_code ret = 0;
+    size_t i;
+
+    for (i = 0; i < context->num_hooks; i++) {
+	kadm5_hook_context *hook = context->hooks[i];
+
+	if (hook->hook->randkey != NULL) {
+	    ret = hook->hook->randkey(context->context, hook->data,
+				      stage, code, princ);
+	    if (ret != 0) {
+		krb5_prepend_error_message(context->context, ret,
+					   "randkey hook `%s' failed %scommit",
+					   hook->hook->name,
+					   stage == KADM5_HOOK_STAGE_PRECOMMIT
+						? "pre" : "post");
+		if (stage == KADM5_HOOK_STAGE_PRECOMMIT)
+		    break;
+	    }
+	}
+    }
+
+    return ret;
+}
+
 /*
  * Set the keys of `princ' to random values, returning the random keys
  * in `new_keys', `n_keys'.
@@ -52,6 +82,7 @@ kadm5_s_randkey_principal(void *server_handle,
     kadm5_server_context *context = server_handle;
     hdb_entry_ex ent;
     kadm5_ret_t ret;
+    size_t i;
 
     memset(&ent, 0, sizeof(ent));
     if (!context->keep_open) {
@@ -68,6 +99,10 @@ kadm5_s_randkey_principal(void *server_handle,
 				      HDB_F_GET_ANY|HDB_F_ADMIN_DATA, 0, &ent);
     if(ret)
 	goto out2;
+
+    ret = randkey_principal_hook(context, KADM5_HOOK_STAGE_PRECOMMIT, 0, princ);
+    if (ret)
+	goto out3;
 
     if (keepold) {
 	ret = hdb_add_current_keys_to_history(context->context, &ent.entry);
@@ -112,10 +147,10 @@ kadm5_s_randkey_principal(void *server_handle,
                            KADM5_KEY_DATA | KADM5_KVNO |
                            KADM5_PW_EXPIRATION | KADM5_TL_DATA);
 
+    (void) randkey_principal_hook(context, KADM5_HOOK_STAGE_POSTCOMMIT, ret, princ);
+
  out4:
     if (ret) {
-	int i;
-
 	for (i = 0; i < *n_keys; ++i)
 	    krb5_free_keyblock_contents(context->context, &(*new_keys)[i]);
 	free (*new_keys);

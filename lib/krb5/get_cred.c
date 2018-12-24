@@ -940,6 +940,12 @@ get_cred_kdc_capath(krb5_context context,
     return ret;
 }
 
+static krb5_boolean skip_referrals(krb5_principal server,
+				   krb5_kdc_flags *flags)
+{
+    return server->name.name_string.len < 2 && !flags->b.canonicalize;
+}
+
 /*
  * Get a service ticket from a KDC by chasing referrals from a start realm.
  *
@@ -966,7 +972,7 @@ get_cred_kdc_referral(krb5_context context,
     int want_tgt;
     size_t i;
 
-    if (in_creds->server->name.name_string.len < 2 && !flags.b.canonicalize) {
+    if (skip_referrals(in_creds->server, &flags)) {
 	krb5_set_error_message(context, KRB5KDC_ERR_PATH_NOT_ACCEPTED,
 			       N_("Name too short to do referals, skipping", ""));
 	return KRB5KDC_ERR_PATH_NOT_ACCEPTED;
@@ -1213,7 +1219,7 @@ _krb5_get_cred_kdc_any(krb5_context context,
                                   second_ticket,
                                   out_creds,
                                   ret_tgts);
-        if (ret == 0)
+        if (ret == 0 || skip_referrals(in_creds->server, &flags))
             return ret;
     }
 

@@ -1419,10 +1419,8 @@ krcc_remove_cred(krb5_context context, krb5_ccache id,
     }
 
     ret2 = krcc_end_get(context, id, &cursor);
-    if (ret == 0)
+    if (ret == KRB5_CC_END)
 	ret = ret2;
-    else if (ret == KRB5_CC_END)
-	ret = 0;
 
     return ret;
 }

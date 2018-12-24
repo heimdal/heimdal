@@ -59,7 +59,7 @@ kinit="${kinit} -c $cache ${afs_no_afslog}"
 kgetcred="${kgetcred} -c $cache"
 kdestroy="${kdestroy} -c $cache ${afs_no_unlog}"
 
-foopassword="foo"
+foopassword="fooLongPasswordYo123;"
 
 KRB5_CONFIG="${objdir}/krb5.conf"
 export KRB5_CONFIG
@@ -255,6 +255,11 @@ echo "kadmin"
 env KRB5CCNAME=${cache} \
 ${kadmin} -p foo/admin@${R} add -p "$foopassword" --use-defaults kaka@${R} || 
 	{ echo "kadmin failed $?"; cat messages.log ; exit 1; }
+
+echo "kadmin"
+env KRB5CCNAME=${cache} \
+${kadmin} -p foo/admin@${R} add -p abc --use-defaults kaka@${R} &&
+	{ echo "kadmin succeeded $?"; cat messages.log ; exit 1; }
 
 #----------------------------------
 ${kadmind} -d &

@@ -253,6 +253,7 @@ change (krb5_auth_context auth_context,
     krb5_data *pwd_data = NULL;
     char *tmp;
     ChangePasswdDataMS chpw;
+    krb5_boolean enforce_pwqual_on_admin_set;
 
     memset (&conf, 0, sizeof(conf));
     memset(&chpw, 0, sizeof(chpw));
@@ -366,12 +367,31 @@ change (krb5_auth_context auth_context,
 	goto out;
     }
 
+    if (krb5_principal_compare(context, admin_principal, principal) == FALSE) {
+ 	ret = _kadm5_acl_check_permission(kadm5_handle, KADM5_PRIV_CPW,
+					  principal);
+	if (ret) {
+	    krb5_warn (context, ret,
+		       "Check ACL failed for %s for changing %s password",
+		       admin, client);
+	    reply_priv (auth_context, s, sa, sa_size,
+			KRB5_KPASSWD_HARDERROR, "permission denied");
+	    goto out;
+	}
+	krb5_warnx (context, "%s is changing password for %s", admin, client);
+    }
+
     /*
-     * Check password quality if not changing as administrator
+     * Change password requests are subject to password quality checks if
+     * the principal is changing their own password, or the enforce_on_admin_set
+     * configuration option is TRUE (the default).
      */
-
-    if (krb5_principal_compare(context, admin_principal, principal) == TRUE) {
-
+    enforce_pwqual_on_admin_set =
+	krb5_config_get_bool_default(context, NULL, TRUE,
+				     "password_quality",
+				     "enforce_on_admin_set", NULL);
+    if (krb5_principal_compare(context, admin_principal, principal) == TRUE ||
+	enforce_pwqual_on_admin_set == TRUE) {
 	pwd_reason = kadm5_check_password_quality (context, principal,
 						   pwd_data);
 	if (pwd_reason != NULL ) {
@@ -383,18 +403,6 @@ change (krb5_auth_context auth_context,
 	    goto out;
 	}
 	krb5_warnx (context, "Changing password for %s", client);
-    } else {
-	ret = _kadm5_acl_check_permission(kadm5_handle, KADM5_PRIV_CPW,
-					  principal);
-	if (ret) {
-	    krb5_warn (context, ret,
-		       "Check ACL failed for %s for changing %s password",
-		       admin, client);
-	    reply_priv (auth_context, s, sa, sa_size,
-			KRB5_KPASSWD_HARDERROR, "permission denied");
-	    goto out;
-	}
-	krb5_warnx (context, "%s is changing password for %s", admin, client);
     }
 
     ret = krb5_data_realloc(pwd_data, pwd_data->length + 1);

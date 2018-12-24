@@ -470,6 +470,15 @@ classes. Default value if not given is 3.
 The four different characters classes are, uppercase, lowercase,
 number, special characters.
 
+@item enforce_on_admin_set
+
+The enforce_on_admin_set check validates that administrative password changes
+via kpasswdd or kadmind are also subject to the password policy. Note that
+@command{kadmin} in local mode can still bypass these. An administrative
+password change is one where the identity of the authenticating principal
+differs from the subject of the password change. Default value if not given is
+true.
+
 @end itemize
 
 If you want to write your own shared object to check password

@@ -633,6 +633,7 @@ struct entry kcm_entries[] = {
 };
 
 struct entry password_quality_entries[] = {
+    { "enforce_on_admin_set", krb5_config_string, check_boolean, 0 },
     { "check_function", krb5_config_string, NULL, 0 },
     { "check_library", krb5_config_string, NULL, 0 },
     { "external_program", krb5_config_string, NULL, 0 },

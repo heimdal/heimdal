@@ -766,9 +766,6 @@ add_unique_keyring(krb5_context context,
 	}
     }
 
-    if (key == -1)
-	return KRB5_CC_BADNAME;
-
     *psubsidiary = strdup(uniquename);
     if (*psubsidiary == NULL)
 	return krb5_enomem(context);

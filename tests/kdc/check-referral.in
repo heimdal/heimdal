@@ -137,7 +137,7 @@ ${klist} | grep "Principal: foo@${R}" > /dev/null || \
 ${kdestroy}
 
 echo "Getting client client tickets (default realm, enterprisename)"; > messages.log
-${kinit} --canonicalize \
+${kinit} --canonicalize --enterprise \
 	--password-file=${objdir}/foopassword foo@${R} || \
 	{ ec=1 ; eval "${testfailed}"; }
 echo "checking that we got back right principal"
@@ -146,7 +146,7 @@ ${klist} | grep "Principal: foo@${R}" > /dev/null || \
 ${kdestroy}
 
 echo "Getting client alias1 tickets"; > messages.log
-${kinit} --canonicalize \
+${kinit} --canonicalize --enterprise \
 	--password-file=${objdir}/foopassword foo@${R} || \
 	{ ec=1 ; eval "${testfailed}"; }
 echo "checking that we got back right principal"
@@ -156,7 +156,7 @@ ${kdestroy}
 
 
 echo "Getting client alias2 tickets"; > messages.log
-${kinit} --canonicalize \
+${kinit} --canonicalize --enterprise \
 	--password-file=${objdir}/foopassword alias2@${R}@${R} || \
 	{ ec=1 ; eval "${testfailed}"; }
 echo "checking that we got back right principal"
@@ -171,7 +171,7 @@ ${kinit} --password-file=${objdir}/foopassword \
 
 echo "Getting client alias2 tickets (removed)"; > messages.log
 ${kadmin} modify --alias=alias1 foo@${R} || { ec=1 ; eval "${testfailed}"; }
-${kinit} --canonicalize \
+${kinit} --canonicalize --enterprise \
 	--password-file=${objdir}/foopassword \
 	alias2@${R}@${R} > /dev/null 2>/dev/null && \
 	{ ec=1 ; eval "${testfailed}"; }

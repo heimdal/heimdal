@@ -161,28 +161,28 @@ find_db_spec(kadm5_server_context *ctx)
 	    if (p) {
 		ctx->config.dbname = strdup(p);
                 if (ctx->config.dbname == NULL)
-                    return ENOMEM;
+		    return krb5_enomem(context);
             }
 
 	    p = hdb_dbinfo_get_acl_file(context, d);
 	    if (p) {
 		ctx->config.acl_file = strdup(p);
                 if (ctx->config.acl_file == NULL)
-                    return ENOMEM;
+		    return krb5_enomem(context);
             }
 
 	    p = hdb_dbinfo_get_mkey_file(context, d);
 	    if (p) {
 		ctx->config.stash_file = strdup(p);
                 if (ctx->config.stash_file == NULL)
-                    return ENOMEM;
+		    return krb5_enomem(context);
             }
 
 	    p = hdb_dbinfo_get_log_file(context, d);
 	    if (p) {
 		ctx->log_context.log_file = strdup(p);
                 if (ctx->log_context.log_file == NULL)
-                    return ENOMEM;
+		    return krb5_enomem(context);
             }
 	    break;
 	}
@@ -194,25 +194,25 @@ find_db_spec(kadm5_server_context *ctx)
     if (ctx->config.dbname == NULL) {
 	ctx->config.dbname = strdup(hdb_default_db(context));
         if (ctx->config.dbname == NULL)
-            return ENOMEM;
+	    return krb5_enomem(context);
     }
     if (ctx->config.acl_file == NULL) {
 	aret = asprintf(&ctx->config.acl_file, "%s/kadmind.acl",
 			hdb_db_dir(context));
 	if (aret == -1)
-	    return ENOMEM;
+	    return krb5_enomem(context);
     }
     if (ctx->config.stash_file == NULL) {
 	aret = asprintf(&ctx->config.stash_file, "%s/m-key",
 			hdb_db_dir(context));
 	if (aret == -1)
-	    return ENOMEM;
+	    return krb5_enomem(context);
     }
     if (ctx->log_context.log_file == NULL) {
 	aret = asprintf(&ctx->log_context.log_file, "%s/log",
 			hdb_db_dir(context));
 	if (aret == -1)
-	    return ENOMEM;
+	    return krb5_enomem(context);
     }
 
 #ifndef NO_UNIX_SOCKETS
@@ -233,7 +233,7 @@ _kadm5_s_init_context(kadm5_server_context **ctx,
 
     *ctx = calloc(1, sizeof(**ctx));
     if (*ctx == NULL)
-	return ENOMEM;
+	return krb5_enomem(context);
     (*ctx)->log_context.socket_fd = rk_INVALID_SOCKET;
 
     set_funcs(*ctx);
@@ -244,7 +244,7 @@ _kadm5_s_init_context(kadm5_server_context **ctx,
     if (is_set(REALM)) {
 	(*ctx)->config.realm = strdup(params->realm);
         if ((*ctx)->config.realm == NULL)
-            return ENOMEM;
+	    return krb5_enomem(context);
     } else {
 	ret = krb5_get_default_realm(context, &(*ctx)->config.realm);
         if (ret)
@@ -253,17 +253,17 @@ _kadm5_s_init_context(kadm5_server_context **ctx,
     if (is_set(DBNAME)) {
 	(*ctx)->config.dbname = strdup(params->dbname);
         if ((*ctx)->config.dbname == NULL)
-            return ENOMEM;
+	    return krb5_enomem(context);
     }
     if (is_set(ACL_FILE)) {
 	(*ctx)->config.acl_file = strdup(params->acl_file);
         if ((*ctx)->config.acl_file == NULL)
-            return ENOMEM;
+	    return krb5_enomem(context);
     }
     if (is_set(STASH_FILE)) {
 	(*ctx)->config.stash_file = strdup(params->stash_file);
         if ((*ctx)->config.stash_file == NULL)
-            return ENOMEM;
+	    return krb5_enomem(context);
     }
 
     find_db_spec(*ctx);

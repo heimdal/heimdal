@@ -55,8 +55,8 @@ kadm5_c_get_privs(void *server_handle, uint32_t *privs)
 
     sp = krb5_storage_from_mem(buf, sizeof(buf));
     if (sp == NULL) {
-	ret = ENOMEM;
-	goto out;
+	ret = krb5_enomem(context->context);
+	goto out_keep_error;
     }
     ret = krb5_store_int32(sp, kadm_get_privs);
     if (ret)
@@ -70,8 +70,8 @@ kadm5_c_get_privs(void *server_handle, uint32_t *privs)
     krb5_storage_free(sp);
     sp = krb5_storage_from_data(&reply);
     if (sp == NULL) {
-	ret = ENOMEM;
-	goto out;
+	ret = krb5_enomem(context->context);
+	goto out_keep_error;
     }
     ret = krb5_ret_int32(sp, &tmp);
     if (ret == 0)

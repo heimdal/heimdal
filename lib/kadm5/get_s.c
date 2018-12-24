@@ -89,7 +89,7 @@ copy_keyset_to_kadm5(kadm5_server_context *context, krb5_kvno kvno,
 	kd->key_data_length[0] = key->key.keyvalue.length;
 	kd->key_data_contents[0] = malloc(kd->key_data_length[0]);
 	if(kd->key_data_contents[0] == NULL && kd->key_data_length[0] != 0){
-	    ret = ENOMEM;
+	    ret = krb5_enomem(context->context);
 	    break;
 	}
 	memcpy(kd->key_data_contents[0], key->key.keyvalue.data,
@@ -104,7 +104,7 @@ copy_keyset_to_kadm5(kadm5_server_context *context, krb5_kvno kvno,
 	if(kd->key_data_length[1] != 0
 	   && kd->key_data_contents[1] == NULL) {
 	    memset(kd->key_data_contents[0], 0, kd->key_data_length[0]);
-	    ret = ENOMEM;
+	    ret = krb5_enomem(context->context);
 	    break;
 	}
 	memcpy(kd->key_data_contents[1], sp->data, kd->key_data_length[1]);
@@ -244,7 +244,7 @@ kadm5_s_get_principal(void *server_handle,
 	} else {
 	    out->policy = strdup(ext->data.u.policy);
 	    if (out->policy == NULL) {
-		ret = ENOMEM;
+		ret = krb5_enomem(context->context);
 		goto out;
 	    }
 	}
@@ -275,7 +275,7 @@ kadm5_s_get_principal(void *server_handle,
 	    n_keys += hist_keys->val[i].keys.len;
 	out->key_data = malloc(n_keys * sizeof(*out->key_data));
 	if (out->key_data == NULL && n_keys != 0) {
-	    ret = ENOMEM;
+	    ret = krb5_enomem(context->context);
 	    goto out;
 	}
 	out->n_key_data = 0;

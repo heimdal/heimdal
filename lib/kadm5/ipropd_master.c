@@ -331,7 +331,7 @@ dump_one (krb5_context context, HDB *db, hdb_entry_ex *entry, void *v)
     memmove ((char *)data.data + 4, data.data, data.length - 4);
     sp = krb5_storage_from_data(&data);
     if (sp == NULL) {
-	ret = ENOMEM;
+	ret = krb5_enomem(context);
 	goto done;
     }
     ret = krb5_store_uint32(sp, ONE_PRINC);
@@ -466,10 +466,8 @@ send_complete (krb5_context context, slave *s, const char *database,
     char *dfn;
 
     ret = asprintf(&dfn, "%s/ipropd.dumpfile", hdb_db_dir(context));
-    if (ret == -1 || !dfn) {
-	krb5_warn(context, ENOMEM, "Cannot allocate memory");
-	return ENOMEM;
-    }
+    if (ret == -1 || !dfn)
+	return krb5_enomem(context);
 
     fd = open(dfn, O_CREAT|O_RDWR, 0600);
     if (fd == -1) {

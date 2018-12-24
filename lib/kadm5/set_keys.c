@@ -286,7 +286,7 @@ _kadm5_set_keys3(kadm5_server_context *context,
     len  = n_keys;
     keys = malloc (len * sizeof(*keys));
     if (keys == NULL && len != 0)
-	return ENOMEM;
+	return krb5_enomem(context->context);
 
     _kadm5_init_keys (keys, len);
 
@@ -351,7 +351,7 @@ _kadm5_set_keys_randomly (kadm5_server_context *context,
 
    kblock = malloc(num_keys * sizeof(kblock[0]));
    if (kblock == NULL) {
-	ret = ENOMEM;
+	ret = krb5_enomem(context->context);
 	_kadm5_free_keys (context->context, num_keys, keys);
 	return ret;
    }

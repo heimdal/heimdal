@@ -216,10 +216,8 @@ append_to_log_file(krb5_context context,
         return EOVERFLOW;
 
     buf = malloc(len);
-    if (buf == NULL && len != 0) {
-        krb5_warn(context, errno, "malloc: no memory");
-        return ENOMEM;
-    }
+    if (buf == NULL && len != 0)
+	return krb5_enomem(context);
 
     if (krb5_storage_seek(sp, start, SEEK_SET) != start) {
         krb5_errx(context, IPROPD_RESTART,

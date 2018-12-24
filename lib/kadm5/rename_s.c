@@ -80,7 +80,7 @@ kadm5_s_rename_principal(void *server_handle,
 		ent.entry.keys.val[i].salt =
 		    malloc(sizeof(*ent.entry.keys.val[i].salt));
 		if (ent.entry.keys.val[i].salt == NULL)
-		    ret = ENOMEM;
+		    ret = krb5_enomem(context->context);
                 else
                     ret = copy_Salt(&salt, ent.entry.keys.val[i].salt);
 		if (ret)

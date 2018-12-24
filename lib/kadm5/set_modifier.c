@@ -43,7 +43,7 @@ _kadm5_set_modifier(kadm5_server_context *context,
     if(ent->modified_by == NULL){
 	ent->modified_by = malloc(sizeof(*ent->modified_by));
 	if(ent->modified_by == NULL)
-	    return ENOMEM;
+	    return krb5_enomem(context->context);
     } else
 	free_Event(ent->modified_by);
     ent->modified_by->time = time(NULL);

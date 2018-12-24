@@ -492,7 +492,7 @@ ad_get_cred(kadm5_ad_context *context, const char *password)
     aret = asprintf(&service, "%s/%s@%s", KRB5_TGS_NAME,
 		    context->realm, context->realm);
     if (aret == -1 || service == NULL)
-	return ENOMEM;
+	return krb5_enomem(context->context);
 
     ret = _kadm5_c_get_cred_cache(context->context,
 				  context->client_name,
@@ -641,7 +641,7 @@ kadm5_ad_create_principal(void *server_handle,
 
     realmless_p = strdup(p);
     if (realmless_p == NULL) {
-	ret = ENOMEM;
+	ret = krb5_enomem(context->context);
 	goto out;
     }
     s = strrchr(realmless_p, '@');
@@ -652,7 +652,7 @@ kadm5_ad_create_principal(void *server_handle,
 	/* create computer account */
 	asprintf(&samname, "%s$", fqdn);
 	if (samname == NULL) {
-	    ret = ENOMEM;
+	    ret = krb5_enomem(context->context);
 	    goto out;
 	}
 	s = strchr(samname, '.');
@@ -663,7 +663,7 @@ kadm5_ad_create_principal(void *server_handle,
 
 	short_spn = strdup(p);
 	if (short_spn == NULL) {
-	    errno = ENOMEM;
+	    ret = krb5_enomem(context->context);
 	    goto out;
 	}
 	s = strchr(short_spn, '.');
@@ -676,7 +676,7 @@ kadm5_ad_create_principal(void *server_handle,
 
 	p_msrealm = strdup(p);
 	if (p_msrealm == NULL) {
-	    errno = ENOMEM;
+	    ret = krb5_enomem(context->context);
 	    goto out;
 	}
 	s = strrchr(p_msrealm, '@');
@@ -689,7 +689,7 @@ kadm5_ad_create_principal(void *server_handle,
 
 	asprintf(&dn, "cn=%s, cn=Computers, %s", fqdn, CTX2BASE(context));
 	if (dn == NULL) {
-	    ret = ENOMEM;
+	    ret = krb5_enomem(context->context);
 	    goto out;
 	}
 
@@ -1277,7 +1277,7 @@ kadm5_ad_randkey_principal(void *server_handle,
 	krb5_generate_random_block(p, sizeof(p));
 	plen = rk_base64_encode(p, sizeof(p), &password);
 	if (plen < 0)
-	    return ENOMEM;
+	    return krb5_enomem(context->context);
     }
 
     ret = ad_get_cred(context, NULL);
@@ -1304,7 +1304,7 @@ kadm5_ad_randkey_principal(void *server_handle,
 
     *keys = malloc(sizeof(**keys) * 1);
     if (*keys == NULL) {
-        ret = ENOMEM;
+	ret = krb5_enomem(context->context);
         goto out;
     }
     *n_keys = 1;
@@ -1404,8 +1404,8 @@ kadm5_ad_init_with_password_ctx(krb5_context context,
     kadm5_ad_context *ctx;
 
     ctx = malloc(sizeof(*ctx));
-    if(ctx == NULL)
-	return ENOMEM;
+    if (ctx == NULL)
+	return krb5_enomem(context);
     memset(ctx, 0, sizeof(*ctx));
     set_funcs(ctx);
 
@@ -1422,7 +1422,7 @@ kadm5_ad_init_with_password_ctx(krb5_context context,
 	ret = 0;
 	ctx->realm = strdup(realm_params->realm);
 	if (ctx->realm == NULL)
-	    ret = ENOMEM;
+	    ret = krb5_enomem(context);
     } else
 	ret = krb5_get_default_realm(ctx->context, &ctx->realm);
     if (ret) {

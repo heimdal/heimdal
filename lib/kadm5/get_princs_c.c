@@ -60,8 +60,8 @@ kadm5_c_get_principals(void *server_handle,
 
     sp = krb5_storage_from_mem(buf, sizeof(buf));
     if (sp == NULL) {
-	ret = ENOMEM;
-	goto out;
+	ret = krb5_enomem(context->context);
+	goto out_keep_error;
     }
     ret = krb5_store_int32(sp, kadm_get_princs);
     if (ret)
@@ -83,8 +83,8 @@ kadm5_c_get_principals(void *server_handle,
     krb5_storage_free(sp);
     sp = krb5_storage_from_data (&reply);
     if (sp == NULL) {
-	ret = ENOMEM;
-	goto out;
+	ret = krb5_enomem(context->context);
+	goto out_keep_error;
     }
     ret = krb5_ret_int32(sp, &tmp);
     if (ret == 0)
@@ -99,8 +99,8 @@ kadm5_c_get_principals(void *server_handle,
 
     *princs = calloc(tmp + 1, sizeof(**princs));
     if (*princs == NULL) {
-	ret = ENOMEM;
-	goto out;
+	ret = krb5_enomem(context->context);
+	goto out_keep_error;
     }
     for (i = 0; i < tmp; i++) {
 	ret = krb5_ret_string(sp, &(*princs)[i]);

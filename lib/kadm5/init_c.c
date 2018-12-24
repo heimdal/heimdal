@@ -89,7 +89,7 @@ _kadm5_c_init_context(kadm5_client_context **ctx,
 
     *ctx = malloc(sizeof(**ctx));
     if(*ctx == NULL)
-	return ENOMEM;
+	return krb5_enomem(context);
     memset(*ctx, 0, sizeof(**ctx));
     krb5_add_et_list (context, initialize_kadm5_error_table_r);
     set_funcs(*ctx);
@@ -98,7 +98,7 @@ _kadm5_c_init_context(kadm5_client_context **ctx,
 	ret = 0;
 	(*ctx)->realm = strdup(params->realm);
 	if ((*ctx)->realm == NULL)
-	    ret = ENOMEM;
+	    ret = krb5_enomem(context);
     } else
 	ret = krb5_get_default_realm((*ctx)->context, &(*ctx)->realm);
     if (ret) {
@@ -123,7 +123,7 @@ _kadm5_c_init_context(kadm5_client_context **ctx,
     if ((*ctx)->admin_server == NULL) {
 	free((*ctx)->realm);
 	free(*ctx);
-	return ENOMEM;
+	return krb5_enomem(context);
     }
     colon = strchr ((*ctx)->admin_server, ':');
     if (colon != NULL)
@@ -489,8 +489,7 @@ kadm_connect(kadm5_client_context *ctx)
     if (error == -1 || service_name == NULL) {
 	freeaddrinfo (ai);
 	rk_closesocket(s);
-	krb5_clear_error_message(context);
-	return ENOMEM;
+	return krb5_enomem(context);
     }
 
     ret = krb5_parse_name(context, service_name, &server);

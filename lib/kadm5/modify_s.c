@@ -100,7 +100,7 @@ modify_principal(void *server_handle,
 	ext.data.element = choice_HDB_extension_data_policy;
 	ext.data.u.policy = strdup(princ->policy);
 	if (ext.data.u.policy == NULL) {
-	    ret = ENOMEM;
+	    ret = krb5_enomem(context->context);
 	    goto out3;
 	}
 	/* This calls free_HDB_extension(), freeing ext.data.u.policy */

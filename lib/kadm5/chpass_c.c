@@ -66,8 +66,8 @@ kadm5_c_chpass_principal(void *server_handle,
 
     sp = krb5_storage_from_mem(buf, sizeof(buf));
     if (sp == NULL) {
-	ret = ENOMEM;
-	goto out;
+	ret = krb5_enomem(context->context);
+	goto out_keep_error;
     }
     ret = krb5_store_int32(sp, kadm_chpass);
     if (ret)
@@ -90,8 +90,8 @@ kadm5_c_chpass_principal(void *server_handle,
     krb5_storage_free(sp);
     sp = krb5_storage_from_data(&reply);
     if (sp == NULL) {
-	ret = ENOMEM;
-	goto out;
+	ret = krb5_enomem(context->context);
+	goto out_keep_error;
     }
     ret = krb5_ret_int32(sp, &tmp);
     if (ret == 0)
@@ -99,6 +99,8 @@ kadm5_c_chpass_principal(void *server_handle,
 
   out:
     krb5_clear_error_message(context->context);
+
+  out_keep_error:
     krb5_storage_free(sp);
     krb5_data_free(&reply);
     return ret;
@@ -127,8 +129,8 @@ kadm5_c_chpass_principal_with_key(void *server_handle,
 
     sp = krb5_storage_from_mem(buf, sizeof(buf));
     if (sp == NULL) {
-	ret = ENOMEM;
-	goto out;
+	ret = krb5_enomem(context->context);
+	goto out_keep_error;
     }
     ret = krb5_store_int32(sp, kadm_chpass_with_key);
     if (ret)
@@ -156,8 +158,8 @@ kadm5_c_chpass_principal_with_key(void *server_handle,
     krb5_storage_free(sp);
     sp = krb5_storage_from_data (&reply);
     if (sp == NULL) {
-	ret = ENOMEM;
-	goto out;
+	ret = krb5_enomem(context->context);
+	goto out_keep_error;
     }
     ret = krb5_ret_int32(sp, &tmp);
     if (ret == 0)

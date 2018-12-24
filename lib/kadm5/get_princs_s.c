@@ -43,12 +43,12 @@ struct foreach_data {
 };
 
 static krb5_error_code
-add_princ(struct foreach_data *d, char *princ)
+add_princ(krb5_context context, struct foreach_data *d, char *princ)
 {
     char **tmp;
     tmp = realloc(d->princs, (d->count + 1) * sizeof(*tmp));
-    if(tmp == NULL)
-	return ENOMEM;
+    if (tmp == NULL)
+	return krb5_enomem(context);
     d->princs = tmp;
     d->princs[d->count++] = princ;
     return 0;
@@ -65,11 +65,11 @@ foreach(krb5_context context, HDB *db, hdb_entry_ex *ent, void *data)
 	return ret;
     if(d->exp){
 	if(fnmatch(d->exp, princ, 0) == 0 || fnmatch(d->exp2, princ, 0) == 0)
-	    ret = add_princ(d, princ);
+	    ret = add_princ(context, d, princ);
 	else
 	    free(princ);
     }else{
-	ret = add_princ(d, princ);
+	ret = add_princ(context, d, princ);
     }
     if(ret)
 	free(princ);
@@ -102,7 +102,7 @@ kadm5_s_get_principals(void *server_handle,
 	aret = asprintf(&d.exp2, "%s@%s", expression, r);
 	free(r);
 	if (aret == -1 || d.exp2 == NULL) {
-	    ret = ENOMEM;
+	    ret = krb5_enomem(context->context);
             goto out;
 	}
     }
@@ -111,7 +111,7 @@ kadm5_s_get_principals(void *server_handle,
     ret = hdb_foreach(context->context, context->db, HDB_F_ADMIN_DATA, foreach, &d);
 
     if (ret == 0)
-	ret = add_princ(&d, NULL);
+	ret = add_princ(context->context, &d, NULL);
     if (ret == 0){
 	*princs = d.princs;
 	*count = d.count - 1;

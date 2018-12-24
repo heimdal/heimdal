@@ -383,7 +383,7 @@ renew_validate(krb5_context context,
 
 out:
     if (tempccache)
-	krb5_cc_close(context, tempccache);
+	krb5_cc_destroy(context, tempccache);
     if (out)
 	krb5_free_creds(context, out);
     krb5_free_cred_contents(context, &in);
@@ -780,7 +780,7 @@ out:
     if (ctx)
 	krb5_init_creds_free(context, ctx);
     if (tempccache)
-	krb5_cc_close(context, tempccache);
+	krb5_cc_destroy(context, tempccache);
 
     if (enctype)
 	free(enctype);
@@ -1223,6 +1223,7 @@ main(int argc, char **argv)
 #ifdef HAVE_SIGACTION
     struct sigaction sa;
 #endif
+    krb5_boolean unique_ccache = FALSE;
 
     setprogname(argv[0]);
 
@@ -1312,6 +1313,7 @@ main(int argc, char **argv)
 		     krb5_cc_get_type(context, ccache),
 		     krb5_cc_get_name(context, ccache));
 	    setenv("KRB5CCNAME", s, 1);
+	    unique_ccache = TRUE;
 	} else {
 	    ret = krb5_cc_cache_match(context, principal, &ccache);
 	    if (ret) {
@@ -1331,6 +1333,8 @@ main(int argc, char **argv)
 		    krb5_cc_close(context, ccache);
 		    ret = get_switched_ccache(context, type, principal,
 					      &ccache);
+		    if (ret == 0)
+			unique_ccache = TRUE;
 		}
 	    }
 	}
@@ -1379,12 +1383,17 @@ main(int argc, char **argv)
 	    krb5_afslog(context, ccache, NULL, NULL);
 #endif
 
+	if (unique_ccache)
+	    krb5_cc_destroy(context, ccache);
 	exit(ret != 0);
     }
 
     ret = get_new_tickets(context, principal, ccache, ticket_life, 1);
-    if (ret)
+    if (ret) {
+	if (unique_ccache)
+	    krb5_cc_destroy(context, ccache);
 	exit(1);
+    }
 
 #ifndef NO_AFS
     if (ret == 0 && server_str == NULL && do_afslog && k_hasafs())

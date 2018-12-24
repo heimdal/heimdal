@@ -202,7 +202,7 @@ ${kgetcred} ${server}@${R} || { ec=1 ; eval "${testfailed}"; }
 ${kdestroy}
 
 echo "Trying pk-init (ms upn, enterprise)"; > messages.log
-${kinit}  --canonicalize \
+${kinit}  --canonicalize --enterprise \
 	-C FILE:${base}/pkinit4.crt,${keyfile2} baz2@test.h5l.se@${R} || \
 	{ ec=1 ; eval "${testfailed}"; }
 ${kgetcred} ${server}@${R} || { ec=1 ; eval "${testfailed}"; }

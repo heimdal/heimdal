@@ -426,9 +426,7 @@ get_init_creds_common(krb5_context context,
     if (ctx->keyproc == NULL)
 	ctx->keyproc = default_s2k_func;
 
-    /* Enterprise name implicitly turns on canonicalize */
-    if ((ctx->ic_flags & KRB5_INIT_CREDS_CANONICALIZE) ||
-	krb5_principal_get_type(context, client) == KRB5_NT_ENTERPRISE_PRINCIPAL)
+    if (ctx->ic_flags & KRB5_INIT_CREDS_CANONICALIZE)
 	ctx->flags.canonicalize = 1;
 
     ctx->pre_auth_types = NULL;

@@ -1058,7 +1058,7 @@ get_princ(krb5_context context, krb5_principal *principal, const char *name)
     user_realm = get_user_realm(context);
 
     if (name) {
-	if (canonicalize_flag || enterprise_flag)
+	if (enterprise_flag)
 	    parseflags |= KRB5_PRINCIPAL_PARSE_ENTERPRISE;
 
 	parse_name_realm(context, name, parseflags, user_realm, &tmp);

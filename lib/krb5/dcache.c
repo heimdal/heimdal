@@ -343,6 +343,7 @@ dcc_resolve(krb5_context context, krb5_ccache *id, const char *res)
 	asprintf_ret = asprintf(&dc->name, ":%s/%s", dc->dir, residual);
 	free(residual);
 	if (asprintf_ret == -1 || dc->name == NULL) {
+	    dcc->name = NULL;
 	    dcc_release(context, dc);
 	    return krb5_enomem(context);
 	}

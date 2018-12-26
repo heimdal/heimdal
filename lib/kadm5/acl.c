@@ -141,6 +141,21 @@ fetch_acl (kadm5_server_context *context,
     return ret;
 }
 
+krb5_boolean
+_kadm5_is_kadmin_service_p(kadm5_server_context *context)
+{
+    krb5_boolean ret;
+    krb5_principal princ;
+
+    if (krb5_parse_name(context->context, KADM5_ADMIN_SERVICE, &princ) != 0)
+	return FALSE;
+
+    ret = krb5_principal_compare(context->context, context->caller, princ);
+    krb5_free_principal(context->context, princ);
+
+    return ret;
+}
+
 /*
  * set global acl flags in `context' for the current caller.
  * return 0 on success or an error
@@ -149,15 +164,7 @@ fetch_acl (kadm5_server_context *context,
 kadm5_ret_t
 _kadm5_acl_init(kadm5_server_context *context)
 {
-    krb5_principal princ;
-    krb5_error_code ret;
-
-    ret = krb5_parse_name(context->context, KADM5_ADMIN_SERVICE, &princ);
-    if (ret)
-	return ret;
-    ret = krb5_principal_compare(context->context, context->caller, princ);
-    krb5_free_principal(context->context, princ);
-    if(ret != 0) {
+    if (_kadm5_is_kadmin_service_p(context)) {
 	context->acl_flags = KADM5_PRIV_ALL;
 	return 0;
     }

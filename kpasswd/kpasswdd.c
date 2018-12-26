@@ -379,6 +379,8 @@ change (krb5_auth_context auth_context,
 	    goto out;
 	}
 	krb5_warnx (context, "%s is changing password for %s", admin, client);
+    } else {
+	krb5_warnx (context, "Changing password for %s", client);
     }
 
     /*
@@ -402,7 +404,6 @@ change (krb5_auth_context auth_context,
 			KRB5_KPASSWD_SOFTERROR, pwd_reason);
 	    goto out;
 	}
-	krb5_warnx (context, "Changing password for %s", client);
     }
 
     ret = krb5_data_realloc(pwd_data, pwd_data->length + 1);

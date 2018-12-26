@@ -365,7 +365,6 @@ asn1_*.[cx]
 /lib/roken/base64-test
 /lib/roken/getaddrinfo-test
 /lib/roken/getifaddrs-test
-/lib/roken/getxxyyy-test
 /lib/roken/glob.h
 /lib/roken/hex-test
 /lib/roken/make-roken

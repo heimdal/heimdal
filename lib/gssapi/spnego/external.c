@@ -1,5 +1,7 @@
 /*
  * Copyright (c) 2004, PADL Software Pty Ltd.
+ * Copyright (c) 2018 Kungliga Tekniska Högskolan
+ * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -136,15 +138,16 @@ static gssapi_mech_interface_desc spnego_mech = {
     NULL,
     spnego_mo,
     sizeof(spnego_mo) / sizeof(spnego_mo[0]),
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
+    NULL, /* gm_localname */
+    NULL, /* gm_authorize_localname */
+    NULL, /* gm_display_name_ext */
+    NULL, /* gm_inquire_name */
+    NULL, /* gm_get_name_attribute */
+    NULL, /* gm_set_name_attribute */
+    NULL, /* gm_delete_name_attribute */
+    NULL, /* gm_export_name_composite */
+    NULL, /* gm_duplicate_cred */
+    NULL  /* gm_compat */
 };
 
 gssapi_mech_interface

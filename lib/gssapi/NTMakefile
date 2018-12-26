@@ -1,6 +1,8 @@
 ########################################################################
 #
-# Copyright (c) 2009-2011, Secure Endpoints Inc.
+# Copyright (c) 2009-2011 Secure Endpoints Inc.
+# Copyright (c) 2018 Kungliga Tekniska Högskolan
+# (Royal Institute of Technology, Stockholm, Sweden).
 # All rights reserved.
 # 
 # Redistribution and use in source and binary forms, with or without
@@ -56,6 +58,7 @@ krb5src = \
 	krb5/display_name.c \
 	krb5/display_status.c \
 	krb5/duplicate_name.c \
+	krb5/duplicate_cred.c \
 	krb5/encapsulate.c \
 	krb5/export_name.c \
 	krb5/export_sec_context.c \
@@ -115,6 +118,7 @@ mechsrc = \
 	mech/gss_display_name_ext.c \
 	mech/gss_display_status.c \
 	mech/gss_duplicate_name.c \
+	mech/gss_duplicate_cred.c \
 	mech/gss_duplicate_oid.c \
 	mech/gss_encapsulate_token.c \
 	mech/gss_export_name.c \
@@ -191,6 +195,7 @@ ntlmsrc = \
 	ntlm/display_name.c \
 	ntlm/display_status.c \
 	ntlm/duplicate_name.c \
+	ntlm/duplicate_cred.c \
 	ntlm/export_name.c \
 	ntlm/export_sec_context.c \
 	ntlm/external.c \
@@ -287,6 +292,7 @@ libgssapi_OBJs = \
 	$(OBJ)\krb5/delete_sec_context.obj \
 	$(OBJ)\krb5/display_name.obj \
 	$(OBJ)\krb5/display_status.obj \
+	$(OBJ)\krb5/duplicate_cred.obj \
 	$(OBJ)\krb5/duplicate_name.obj \
 	$(OBJ)\krb5/encapsulate.obj \
 	$(OBJ)\krb5/export_name.obj \
@@ -341,6 +347,7 @@ libgssapi_OBJs = \
 	$(OBJ)\mech/gss_display_name.obj \
 	$(OBJ)\mech/gss_display_name_ext.obj \
 	$(OBJ)\mech/gss_display_status.obj \
+	$(OBJ)\mech/gss_duplicate_cred.obj \
 	$(OBJ)\mech/gss_duplicate_name.obj \
 	$(OBJ)\mech/gss_duplicate_oid.obj \
 	$(OBJ)\mech/gss_encapsulate_token.obj \
@@ -407,6 +414,7 @@ libgssapi_OBJs = \
 	$(OBJ)\ntlm/delete_sec_context.obj \
 	$(OBJ)\ntlm/display_name.obj \
 	$(OBJ)\ntlm/display_status.obj \
+	$(OBJ)\ntlm/duplicate_cred.obj \
 	$(OBJ)\ntlm/duplicate_name.obj \
 	$(OBJ)\ntlm/export_name.obj \
 	$(OBJ)\ntlm/export_sec_context.obj \

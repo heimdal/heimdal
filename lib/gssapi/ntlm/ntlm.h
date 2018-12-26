@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2006 - 2007 Kungliga Tekniska Högskolan
+ * Copyright (c) 2006-2018 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  *
@@ -105,6 +105,7 @@ typedef struct ntlm_cred {
     char *domain;
     struct ntlm_buf key;
 } *ntlm_cred;
+typedef const struct ntlm_cred *ntlm_const_cred;
 
 typedef struct {
     struct ntlm_server_interface *server;

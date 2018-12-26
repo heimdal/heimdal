@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2004 Kungliga Tekniska Högskolan
+ * Copyright (c) 2003-2018 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  *
@@ -151,6 +151,62 @@ acquire_add_release_add(gss_name_t name, gss_cred_usage_t usage)
 	gss_err(1, min_stat, "release 2 %d != GSS_S_COMPLETE", (int)maj_stat);
 }
 
+static void
+add_add_release_add(gss_name_t name, gss_cred_usage_t usage)
+{
+    OM_uint32 maj_stat, min_stat;
+    gss_cred_id_t cred, cred2;
+
+    maj_stat = gss_add_cred(&min_stat,
+			    GSS_C_NO_CREDENTIAL,
+			    name,
+			    GSS_KRB5_MECHANISM,
+			    usage,
+			    GSS_C_INDEFINITE,
+			    GSS_C_INDEFINITE,
+			    &cred,
+			    NULL,
+			    NULL,
+			    NULL);
+    if (maj_stat != GSS_S_COMPLETE)
+	gss_err(1, min_stat, "add_cred %d != GSS_S_COMPLETE", (int)maj_stat);
+
+    maj_stat = gss_add_cred(&min_stat,
+			    cred,
+			    GSS_C_NO_NAME,
+			    GSS_KRB5_MECHANISM,
+			    usage,
+			    GSS_C_INDEFINITE,
+			    GSS_C_INDEFINITE,
+			    &cred2,
+			    NULL,
+			    NULL,
+			    NULL);
+
+    if (maj_stat != GSS_S_COMPLETE)
+	gss_err(1, min_stat, "add_cred %d != GSS_S_COMPLETE", (int)maj_stat);
+
+    maj_stat = gss_release_cred(&min_stat, &cred);
+    if (maj_stat != GSS_S_COMPLETE)
+	gss_err(1, min_stat, "release %d != GSS_S_COMPLETE", (int)maj_stat);
+
+    maj_stat = gss_add_cred(&min_stat,
+			    cred2,
+			    GSS_C_NO_NAME,
+			    GSS_KRB5_MECHANISM,
+			    GSS_C_BOTH,
+			    GSS_C_INDEFINITE,
+			    GSS_C_INDEFINITE,
+			    NULL,
+			    NULL,
+			    NULL,
+			    NULL);
+
+    maj_stat = gss_release_cred(&min_stat, &cred2);
+    if (maj_stat != GSS_S_COMPLETE)
+	gss_err(1, min_stat, "release 2 %d != GSS_S_COMPLETE", (int)maj_stat);
+}
+
 static int version_flag = 0;
 static int help_flag	= 0;
 
@@ -210,6 +266,10 @@ main(int argc, char **argv)
     acquire_add_release_add(name, GSS_C_ACCEPT);
     acquire_add_release_add(name, GSS_C_INITIATE);
     acquire_add_release_add(name, GSS_C_BOTH);
+
+    add_add_release_add(name, GSS_C_ACCEPT);
+    add_add_release_add(name, GSS_C_INITIATE);
+    add_add_release_add(name, GSS_C_BOTH);
 
     gss_release_name(&min_stat, &name);
 

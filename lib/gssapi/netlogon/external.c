@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010 Kungliga Tekniska Högskolan
+ * Copyright (c) 2010-2018 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  *
@@ -77,11 +77,28 @@ static gssapi_mech_interface_desc netlogon_mech = {
     _netlogon_wrap_iov,
     _netlogon_unwrap_iov,
     _netlogon_wrap_iov_length,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    NULL
+    NULL, /* gm_store_cred */
+    NULL, /* gm_export_cred */
+    NULL, /* gm_import_cred */
+    NULL, /* gm_acquire_cred_ext */
+    NULL, /* gm_iter_creds */
+    NULL, /* gm_destroy_cred */
+    NULL, /* gm_cred_hold */
+    NULL, /* gm_cred_unhold */
+    NULL, /* gm_cred_label_get */
+    NULL, /* gm_cred_label_set */
+    NULL, /* gm_mo */
+    0,    /* gm_mo_num */
+    NULL, /* gm_localname */
+    NULL, /* gm_authorize_localname */
+    NULL, /* gm_display_name_ext */
+    NULL, /* gm_inquire_name */
+    NULL, /* gm_get_name_attribute */
+    NULL, /* gm_set_name_attribute */
+    NULL, /* gm_delete_name_attribute */
+    NULL, /* gm_export_name_composite */
+    NULL, /* gm_duplicate_cred */
+    NULL  /* gm_compat */
 };
 
 gssapi_mech_interface

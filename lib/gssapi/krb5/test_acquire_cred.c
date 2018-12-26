@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2005 Kungliga Tekniska Högskolan
+ * Copyright (c) 2003-2018 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  *
@@ -76,6 +76,30 @@ test_add(gss_cred_id_t cred_handle)
 }
 
 static void
+test_add_mutate(gss_cred_id_t cred_handle)
+{
+    OM_uint32 major_status, minor_status;
+    OM_uint32 time_rec;
+
+    major_status = gss_add_cred (&minor_status,
+				 cred_handle,
+				 GSS_C_NO_NAME,
+				 GSS_KRB5_MECHANISM,
+				 GSS_C_INITIATE,
+				 0,
+				 0,
+				 NULL,
+				 NULL,
+				 &time_rec,
+				 NULL);
+
+    if (GSS_ERROR(major_status))
+	errx(1, "add_cred failed");
+
+    print_time(time_rec);
+}
+
+static void
 copy_cred(void)
 {
     OM_uint32 major_status, minor_status;
@@ -98,6 +122,7 @@ copy_cred(void)
     test_add(cred_handle);
     test_add(cred_handle);
     test_add(cred_handle);
+    test_add_mutate(cred_handle);
 
     major_status = gss_release_cred(&minor_status,
 				    &cred_handle);

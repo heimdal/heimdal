@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997 - 2007 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997 - 2018 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  *
@@ -1113,6 +1113,16 @@ GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL gss_export_name_composite (
     gss_buffer_t	/* exp_composite_name */
     );
 
+/*
+ * Other extensions
+ */
+
+
+GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL gss_duplicate_cred (
+            OM_uint32 * /*minor_status*/,
+            gss_const_cred_id_t /*input_cred_handle*/,
+            gss_cred_id_t * /*output_cred_handle*/
+           );
 /*
  *
  */

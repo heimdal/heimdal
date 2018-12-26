@@ -37,6 +37,7 @@ krb5src = \
 	krb5/delete_sec_context.c \
 	krb5/display_name.c \
 	krb5/display_status.c \
+	krb5/duplicate_cred.c \
 	krb5/duplicate_name.c \
 	krb5/encapsulate.c \
 	krb5/export_name.c \
@@ -99,6 +100,7 @@ mechsrc = \
 	mech/gss_display_name.c \
 	mech/gss_display_name_ext.c \
 	mech/gss_display_status.c \
+	mech/gss_duplicate_cred.c \
 	mech/gss_duplicate_name.c \
 	mech/gss_duplicate_oid.c \
 	mech/gss_encapsulate_token.c \

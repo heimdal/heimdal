@@ -281,7 +281,7 @@ _krb5_kdc_retry(krb5_context context, krb5_sendto_ctx ctx, void *data,
 	break;
     }
     case KRB5KDC_ERR_SVC_UNAVAILABLE:
-	*action = KRB5_SENDTO_CONTINUE;
+	*action = KRB5_SENDTO_RESET;
 	break;
     }
     return 0;

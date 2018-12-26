@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2006 Kungliga Tekniska Högskolan
+ * Copyright (c) 2006-2018 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  *
@@ -114,15 +114,16 @@ static gssapi_mech_interface_desc ntlm_mech = {
     NULL,
     ntlm_mo,
     sizeof(ntlm_mo) / sizeof(ntlm_mo[0]),
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
+    NULL, /* gm_localname */
+    NULL, /* gm_authorize_localname */
+    NULL, /* gm_display_name_ext */
+    NULL, /* gm_inquire_name */
+    NULL, /* gm_get_name_attribute */
+    NULL, /* gm_set_name_attribute */
+    NULL, /* gm_delete_name_attribute */
+    NULL, /* gm_export_name_composite */
+    NULL, /* gm_duplicate_cred */
+    NULL, /* gm_compat */
 };
 
 gssapi_mech_interface

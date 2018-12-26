@@ -1,5 +1,7 @@
 /*-
  * Copyright (c) 2005 Doug Rabson
+ * Copyright (c) 2018 Kungliga Tekniska Högskolan
+ * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -220,6 +222,12 @@ typedef OM_uint32 GSSAPI_CALLCONV _gss_add_cred_t (
 	       gss_OID_set *,          /* actual_mechs */
 	       OM_uint32 *,            /* initiator_time_rec */
 	       OM_uint32 *             /* acceptor_time_rec */
+	      );
+
+typedef OM_uint32 GSSAPI_CALLCONV _gss_duplicate_cred_t (
+	       OM_uint32 *,            /* minor_status */
+	       gss_const_cred_id_t,    /* input_cred_handle */
+	       gss_cred_id_t *         /* output_cred_handle */
 	      );
 
 typedef OM_uint32 GSSAPI_CALLCONV _gss_inquire_cred_by_mech_t (
@@ -544,6 +552,7 @@ typedef struct gssapi_mech_interface_desc {
         _gss_set_name_attribute_t       *gm_set_name_attribute;
         _gss_delete_name_attribute_t    *gm_delete_name_attribute;
         _gss_export_name_composite_t    *gm_export_name_composite;
+        _gss_duplicate_cred_t           *gm_duplicate_cred;
         struct gss_mech_compat_desc_struct  *gm_compat;
 } gssapi_mech_interface_desc, *gssapi_mech_interface;
 

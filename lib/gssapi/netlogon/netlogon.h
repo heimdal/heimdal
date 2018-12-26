@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010 Kungliga Tekniska Högskolan
+ * Copyright (c) 2010-2018 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  *
@@ -121,6 +121,7 @@ typedef struct gssnetlogon_name {
     gss_buffer_desc NetbiosName;
     gss_buffer_desc DnsName;
 } *gssnetlogon_name;
+typedef const struct gssnetlogon_name *gssnetlogon_const_name;
 
 typedef struct gssnetlogon_cred {
     gssnetlogon_name *Name;
@@ -128,6 +129,7 @@ typedef struct gssnetlogon_cred {
     uint16_t SealAlgorithm;
     uint8_t SessionKey[16];
 } *gssnetlogon_cred;
+typedef const struct gssnetlogon_cred *gssnetlogon_const_cred;
 
 typedef struct gssnetlogon_ctx {
     HEIMDAL_MUTEX Mutex;

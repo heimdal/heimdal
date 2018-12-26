@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997 - 2000 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997 - 2018 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  *
@@ -390,13 +390,14 @@ static gssapi_mech_interface_desc krb5_mech = {
     sizeof(krb5_mo) / sizeof(krb5_mo[0]),
     _gsskrb5_localname,
     _gsskrb5_authorize_localname,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    NULL
+    NULL, /* gm_display_name_ext */
+    NULL, /* gm_inquire_name */
+    NULL, /* gm_get_name_attribute */
+    NULL, /* gm_set_name_attribute */
+    NULL, /* gm_delete_name_attribute */
+    NULL, /* gm_export_name_composite */
+    _gsskrb5_duplicate_cred,
+    NULL  /* gm_compat */
 };
 
 gssapi_mech_interface

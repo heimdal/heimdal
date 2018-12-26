@@ -38,9 +38,6 @@ static kadm5_ret_t check_aliases(kadm5_server_context *,
                                  kadm5_principal_ent_rec *,
                                  kadm5_principal_ent_rec *);
 
-static krb5_boolean
-enforce_pwqual_on_admin_set_p(kadm5_server_context *contextp);
-
 static kadm5_ret_t
 kadmind_dispatch(void *kadm_handlep, krb5_boolean initial,
 		 krb5_data *in, krb5_data *out)
@@ -181,24 +178,6 @@ kadmind_dispatch(void *kadm_handlep, krb5_boolean initial,
 	}
 	krb5_unparse_name_fixed(contextp->context, ent.principal,
 				name, sizeof(name));
-	if (enforce_pwqual_on_admin_set_p(contextp)) {
-	    krb5_data pwd_data;
-	    const char *pwd_reason;
-
-	    pwd_data.data = password;
-	    pwd_data.length = strlen(password);
-
-	    pwd_reason = kadm5_check_password_quality (contextp->context,
-						       ent.principal, &pwd_data);
-	    if (pwd_reason != NULL)
-		ret = KADM5_PASS_Q_DICT;
-	    else
-		ret = 0;
-	    if (ret) {
-		kadm5_free_principal_ent(kadm_handlep, &ent);
-		goto fail;
-	    }
-	}
 	krb5_warnx(contextp->context, "%s: %s %s", client, op, name);
 	ret = _kadm5_acl_check_permission(contextp, KADM5_PRIV_ADD,
 					  ent.principal);
@@ -348,30 +327,6 @@ kadmind_dispatch(void *kadm_handlep, krb5_boolean initial,
 					 "kadmin", "allow_self_change_password", NULL);
 	if (!(is_self_cpw && initial && allow_self_cpw)) {
 	    ret = _kadm5_acl_check_permission(contextp, KADM5_PRIV_CPW, princ);
-	    if (ret) {
-		krb5_free_principal(contextp->context, princ);
-		goto fail;
-	    }
-	}
-
-	/*
-	 * Change password requests are subject to password quality checks if
-	 * the principal is changing their own password, or the enforce_on_admin_set
-	 * configuration option is TRUE (the default).
-	 */
-	if (is_self_cpw || enforce_pwqual_on_admin_set_p(contextp)) {
-	    krb5_data pwd_data;
-	    const char *pwd_reason;
-
-	    pwd_data.data = password;
-	    pwd_data.length = strlen(password);
-
-	    pwd_reason = kadm5_check_password_quality (contextp->context,
-						       princ, &pwd_data);
-	    if (pwd_reason != NULL)
-		ret = KADM5_PASS_Q_DICT;
-	    else
-		ret = 0;
 	    if (ret) {
 		krb5_free_principal(contextp->context, princ);
 		goto fail;
@@ -874,10 +829,3 @@ kadmind_loop(krb5_context contextp,
     return 0;
 }
 
-static krb5_boolean
-enforce_pwqual_on_admin_set_p(kadm5_server_context *contextp)
-{
-    return krb5_config_get_bool_default(contextp->context, NULL, TRUE,
-					"password_quality",
-					"enforce_on_admin_set", NULL);
-}

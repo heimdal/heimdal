@@ -40,6 +40,7 @@ RCSID("$Id$");
 #endif
 #include <hdb.h>
 #include <kadm5/private.h>
+#include <kadm5/kadm5_err.h>
 
 static krb5_context context;
 static krb5_log_facility *log_facility;
@@ -246,14 +247,12 @@ change (krb5_auth_context auth_context,
 {
     krb5_error_code ret;
     char *client = NULL, *admin = NULL;
-    const char *pwd_reason;
     kadm5_config_params conf;
     void *kadm5_handle = NULL;
     krb5_principal principal = NULL;
     krb5_data *pwd_data = NULL;
     char *tmp;
     ChangePasswdDataMS chpw;
-    krb5_boolean enforce_pwqual_on_admin_set;
 
     memset (&conf, 0, sizeof(conf));
     memset(&chpw, 0, sizeof(chpw));
@@ -383,29 +382,6 @@ change (krb5_auth_context auth_context,
 	krb5_warnx (context, "Changing password for %s", client);
     }
 
-    /*
-     * Change password requests are subject to password quality checks if
-     * the principal is changing their own password, or the enforce_on_admin_set
-     * configuration option is TRUE (the default).
-     */
-    enforce_pwqual_on_admin_set =
-	krb5_config_get_bool_default(context, NULL, TRUE,
-				     "password_quality",
-				     "enforce_on_admin_set", NULL);
-    if (krb5_principal_compare(context, admin_principal, principal) == TRUE ||
-	enforce_pwqual_on_admin_set == TRUE) {
-	pwd_reason = kadm5_check_password_quality (context, principal,
-						   pwd_data);
-	if (pwd_reason != NULL ) {
-	    krb5_warnx (context,
-			"%s didn't pass password quality check with error: %s",
-			client, pwd_reason);
-	    reply_priv (auth_context, s, sa, sa_size,
-			KRB5_KPASSWD_SOFTERROR, pwd_reason);
-	    goto out;
-	}
-    }
-
     ret = krb5_data_realloc(pwd_data, pwd_data->length + 1);
     if (ret) {
 	krb5_warn (context, ret, "malloc: out of memory");
@@ -421,7 +397,14 @@ change (krb5_auth_context auth_context,
     pwd_data = NULL;
     if (ret) {
 	const char *str = krb5_get_error_message(context, ret);
-	krb5_warnx(context, "kadm5_s_chpass_principal_cond: %s", str);
+
+	if (ret == KADM5_PASS_Q_DICT) {
+	    krb5_warnx(context,
+		       "%s didn't pass password quality check with error: %s",
+		       client, str);
+	} else {
+	    krb5_warnx(context, "kadm5_s_chpass_principal_cond: %s", str);
+	}
 	reply_priv (auth_context, s, sa, sa_size, KRB5_KPASSWD_SOFTERROR,
 		    str ? str : "Internal error");
 	krb5_free_error_message(context, str);

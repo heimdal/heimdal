@@ -88,6 +88,23 @@ change(void *server_handle,
     uint32_t hook_flags = 0;
 
     memset(&ent, 0, sizeof(ent));
+
+    if (krb5_principal_compare(context->context, princ, context->caller) ||
+	_kadm5_enforce_pwqual_on_admin_set_p(context)) {
+	krb5_data pwd_data;
+	const char *pwd_reason;
+
+	pwd_data.data = rk_UNCONST(password);
+	pwd_data.length = strlen(password);
+
+	pwd_reason = kadm5_check_password_quality(context->context,
+						  princ, &pwd_data);
+	if (pwd_reason != NULL) {
+	    krb5_set_error_message(context->context, KADM5_PASS_Q_DICT, "%s", pwd_reason);
+	    return KADM5_PASS_Q_DICT;
+	}
+    }
+
     if (!context->keep_open) {
 	ret = context->db->hdb_open(context->context, context->db, O_RDWR, 0);
 	if(ret)
@@ -323,4 +340,19 @@ kadm5_s_chpass_principal_with_key(void *server_handle,
             ret = ret2;
     }
     return _kadm5_error_code(ret);
+}
+
+/*
+ * Returns TRUE if password quality should be checked when passwords are
+ * being set or changed by administrators. This includes principal creation.
+ */
+krb5_boolean
+_kadm5_enforce_pwqual_on_admin_set_p(kadm5_server_context *contextp)
+{
+    if (_kadm5_is_kadmin_service_p(contextp))
+	return FALSE;
+
+    return krb5_config_get_bool_default(contextp->context, NULL, TRUE,
+                                        "password_quality",
+                                        "enforce_on_admin_set", NULL);
 }

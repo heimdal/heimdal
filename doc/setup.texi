@@ -472,12 +472,14 @@ number, special characters.
 
 @item enforce_on_admin_set
 
-The enforce_on_admin_set check validates that administrative password changes
-via kpasswdd or kadmind are also subject to the password policy. Note that
-@command{kadmin} in local mode can still bypass these. An administrative
-password change is one where the identity of the authenticating principal
-differs from the subject of the password change. Default value if not given is
-true.
+The enforce_on_admin_set check subjects administrative password updates to the
+password policy. An administrative password update is a create principal or
+change password request via @command{kadmind}, or a set password request via
+@command{kpasswdd}. (A set password request is one where the authenticating
+principal differs from the principal whose password is being changed.) Password
+policies are always ignored if the authenticating principal is the kadmin
+service itself, for example when running @command{kadmin} in local mode. The
+default value for enforce_on_admin_set if not given is true.
 
 @end itemize
 

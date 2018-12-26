@@ -212,6 +212,21 @@ kadm5_s_create_principal(void *server_handle,
     hdb_entry_ex ent;
     kadm5_server_context *context = server_handle;
 
+    if (_kadm5_enforce_pwqual_on_admin_set_p(context)) {
+	krb5_data pwd_data;
+	const char *pwd_reason;
+
+	pwd_data.data = rk_UNCONST(password);
+	pwd_data.length = strlen(password);
+
+	pwd_reason = kadm5_check_password_quality(context->context,
+						  princ->principal, &pwd_data);
+	if (pwd_reason != NULL) {
+	    krb5_set_error_message(context->context, KADM5_PASS_Q_DICT, "%s", pwd_reason);
+	    return KADM5_PASS_Q_DICT;
+	}
+    }
+
     if ((mask & KADM5_KVNO) == 0) {
 	/* create_principal() through _kadm5_setup_entry(), will need this */
 	princ->kvno = 1;

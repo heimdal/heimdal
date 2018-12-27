@@ -31,6 +31,8 @@
  */
 
 #include "kadm5_locl.h"
+
+#ifdef HAVE_DLFCN_H
 #include <dlfcn.h>
 
 #ifndef RTLD_NOW
@@ -44,21 +46,37 @@
 #ifndef RTLD_GROUP
  #define RTLD_GROUP 0
 #endif
+#endif /* HAVE_DLFCN_H */
+
+void
+_kadm5_s_set_hook_error_message(kadm5_server_context *context,
+				krb5_error_code ret,
+				const char *op,
+				const struct kadm5_hook *hook,
+				enum kadm5_hook_stage stage)
+{
+    assert(ret != 0);
+
+    krb5_set_error_message(context->context, ret,
+			       "%s hook `%s' failed %s-commit",
+			       op, hook->name,
+			       stage == KADM5_HOOK_STAGE_PRECOMMIT ? "pre" : "post");
+}
 
 /*
  * Load kadmin server hooks.
  */
-#ifdef HAVE_DLOPEN
-
 kadm5_ret_t
 _kadm5_s_init_hooks(kadm5_server_context *ctx)
 {
     krb5_context context = ctx->context;
     char **hooks;
-    size_t i;
     void *handle = NULL;
     struct kadm5_hook_context *hook_context = NULL;
+#ifdef HAVE_DLOPEN
     struct kadm5_hook_context **tmp;
+    size_t i;
+#endif
     kadm5_ret_t ret = KADM5_BAD_SERVER_HOOK;
 
     hooks = krb5_config_get_strings(context, NULL,
@@ -66,6 +84,7 @@ _kadm5_s_init_hooks(kadm5_server_context *ctx)
     if (hooks == NULL)
 	return 0;
 
+#ifdef HAVE_DLOPEN
     for (i = 0; hooks[i] != NULL; i++) {
 	const char *hookpath = hooks[i];
 	kadm5_hook_init_t hook_init;
@@ -81,8 +100,8 @@ _kadm5_s_init_hooks(kadm5_server_context *ctx)
 
 	hook_init = dlsym(handle, "kadm5_hook_init");
 	if (hook_init == NULL) {
-	    krb5_warnx(context, "didn't find `kadm5_hook_init' symbol in `%s':"
-		       " %s", hookpath, dlerror());
+	    krb5_warnx(context, "didn't find kadm5_hook_init symbol in `%s': %s",
+		       hookpath, dlerror());
 	    ret = KADM5_BAD_SERVER_HOOK;
 	    goto fail;
 	}
@@ -91,7 +110,7 @@ _kadm5_s_init_hooks(kadm5_server_context *ctx)
 	if (ret == 0 && hook == NULL)
 	    ret = KADM5_BAD_SERVER_HOOK;
 	if (ret) {
-	    krb5_warn(context, ret, "initialize of hook `%s' failed", hookpath);
+	    krb5_warn(context, ret, "initialization of hook `%s' failed", hookpath);
 	    goto fail;
 	}
 
@@ -100,16 +119,18 @@ _kadm5_s_init_hooks(kadm5_server_context *ctx)
 	else if (hook->version > KADM5_HOOK_VERSION_V1)
 	    ret = KADM5_NEW_SERVER_HOOK_VERSION;
 	if (ret) {
-	    krb5_warnx(context, "version of loaded hook `%s' is %u"
-		       " (supported versions %u to %u)", hookpath, hook->version,
+	    krb5_warnx(context, "%s: version of loaded hook `%s' by vendor `%s' is %u"
+		       " (supported versions are %u to %u)",
+		       hookpath, hook->name, hook->vendor, hook->version,
 		       KADM5_HOOK_VERSION_V1, KADM5_HOOK_VERSION_V1);
 	    hook->fini(context, data);
 	    goto fail;
 	}
 
 	if (hook->init_context != krb5_init_context) {
-	    krb5_warnx(context, "loaded hook `%s' is not linked against "
-		       "this version of Heimdal", hookpath);
+	    krb5_warnx(context, "%s: loaded hook `%s' by vendor `%s' (API version %u)"
+		       "is not linked against this version of Heimdal",
+		       hookpath, hook->name, hook->vendor, hook->version);
 	    hook->fini(context, data);
 	    goto fail;
 	}
@@ -135,9 +156,17 @@ _kadm5_s_init_hooks(kadm5_server_context *ctx)
 	ctx->hooks[ctx->num_hooks] = hook_context;
 	hook_context = NULL;
 	ctx->num_hooks++;
-    }
 
+	krb5_warnx(context, "Loaded kadm5 hook `%s' by vendor `%s' (API version %u)",
+		   hook->name, hook->vendor, hook->version);
+    }
     return 0;
+#else
+    krb5_warnx(context, "kadm5 hooks configured, but platform "
+	       "does not support dynamic loading");
+    ret = KADM5_BAD_SERVER_HOOK;
+    goto fail;
+#endif /* HAVE_DLOPEN */
 
 fail:
     _kadm5_s_free_hooks(ctx);
@@ -153,7 +182,8 @@ fail:
 void
 _kadm5_s_free_hooks(kadm5_server_context *ctx)
 {
-    int i;
+#ifdef HAVE_DLOPEN
+    size_t i;
 
     for (i = 0; i < ctx->num_hooks; i++) {
 	if (ctx->hooks[i]->hook->fini != NULL)
@@ -164,20 +194,5 @@ _kadm5_s_free_hooks(kadm5_server_context *ctx)
     free(ctx->hooks);
     ctx->hooks = NULL;
     ctx->num_hooks = 0;
+#endif /* HAVE_DLOPEN */
 }
-
-# else /* !HAVE_DLOPEN */
-
-kadm5_ret_t
-_kadm5_s_init_hooks(kadm5_server_context *ctx)
-{
-    return 0;
-}
-
-void
-_kadm5_s_free_hooks(kadm5_server_context *ctx)
-{
-    return 0;
-}
-
-#endif /* !HAVE_DLOPEN */

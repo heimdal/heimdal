@@ -56,11 +56,8 @@ chpass_principal_hook(kadm5_server_context *context,
 				     stage, code, princ, flags,
 				     n_ks_tuple, ks_tuple, password);
 	    if (ret != 0) {
-		krb5_prepend_error_message(context->context, ret,
-					   "chpass hook `%s' failed %scommit",
-					   hook->hook->name,
-					   stage == KADM5_HOOK_STAGE_PRECOMMIT
-						? "pre" : "post");
+		_kadm5_s_set_hook_error_message(context, ret, "chpass",
+						hook->hook, stage);
 		if (stage == KADM5_HOOK_STAGE_PRECOMMIT)
 		    break;
 	    }

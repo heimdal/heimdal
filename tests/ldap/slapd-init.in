@@ -44,5 +44,15 @@ cp "`which slapd`" . || true # fails if running
 
 echo "starting slapd"
 ./slapd -d0 -f "${srcdir}/slapd.conf" -h ldapi://.%2Fldap-socket &
+slapd_pid=$!
 
-sleep 4
+tries=0
+while kill -0 $slapd_pid && [ ! -S ldap-socket ] && 
+      ! ldapsearch -l 2 -w '' -D '' -b "o=TEST,dc=H5L,dc=SE" -s base -H ldapi://.%2Fldap-socket >/dev/null &&
+      [ $tries -lt 30 ]; do
+    sleep 1
+    tries=`expr 1 + $tries`
+done
+
+kill -0 $slapd_pid || exit 1
+[ -S ldap-socket ] || exit 1

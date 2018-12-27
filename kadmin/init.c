@@ -52,11 +52,6 @@ create_random_entry(krb5_principal princ,
     krb5_keyblock *keys;
     int n_keys, i;
     char *name;
-    const char *password;
-    char pwbuf[512];
-
-    random_password(pwbuf, sizeof(pwbuf));
-    password = pwbuf;
 
     ret = krb5_unparse_name(context, princ, &name);
     if (ret) {
@@ -76,14 +71,14 @@ create_random_entry(krb5_principal princ,
 	mask |= KADM5_MAX_RLIFE;
     }
     ent.attributes |= attributes | KRB5_KDB_DISALLOW_ALL_TIX;
-    mask |= KADM5_ATTRIBUTES;
+    mask |= KADM5_ATTRIBUTES | KADM5_KEY_DATA;
 
-    /* Create the entry with a random password */
-    ret = kadm5_create_principal(kadm_handle, &ent, mask, password);
+    /* Create the entry with no keys or password */
+    ret = kadm5_s_create_principal_with_key(kadm_handle, &ent, mask);
     if(ret) {
 	if (ret == KADM5_DUP && (flags & CRE_DUP_OK))
 	    goto out;
-	krb5_warn(context, ret, "create_random_entry(%s): randkey failed",
+	krb5_warn(context, ret, "create_random_entry(%s): create failed",
 		  name);
 	goto out;
     }

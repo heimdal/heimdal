@@ -126,7 +126,7 @@ static gss_cred_id_t
 acquire_cred_service(const char *service,
 		     gss_OID nametype,
 		     gss_OID_set oidset,
-		     int flags)
+		     gss_cred_usage_t usage)
 {
     OM_uint32 major_status, minor_status;
     gss_cred_id_t cred_handle;
@@ -150,7 +150,7 @@ acquire_cred_service(const char *service,
 				    name,
 				    0,
 				    oidset,
-				    flags,
+				    usage,
 				    &cred_handle,
 				    NULL,
 				    &time_rec);
@@ -211,8 +211,8 @@ main(int argc, char **argv)
     gss_cred_id_t cred;
     gss_name_t target = GSS_C_NO_NAME;
     int i, optidx = 0;
-    OM_uint32 flag;
-    gss_OID type;
+    gss_cred_usage_t cred_usage = GSS_C_BOTH;
+    gss_OID type = GSS_C_NT_HOSTBASED_SERVICE;
 
     setprogname(argv[0]);
     if(getarg(args, sizeof(args) / sizeof(args[0]), argc, argv, &optidx))
@@ -234,15 +234,14 @@ main(int argc, char **argv)
 
     if (acquire_type) {
 	if (strcasecmp(acquire_type, "both") == 0)
-	    flag = GSS_C_BOTH;
+	    cred_usage = GSS_C_BOTH;
 	else if (strcasecmp(acquire_type, "accept") == 0)
-	    flag = GSS_C_ACCEPT;
+	    cred_usage = GSS_C_ACCEPT;
 	else if (strcasecmp(acquire_type, "initiate") == 0)
-	    flag = GSS_C_INITIATE;
+	    cred_usage = GSS_C_INITIATE;
 	else
 	    errx(1, "unknown type %s", acquire_type);
-    } else
-	flag = GSS_C_ACCEPT;
+    }
 
     if (name_type) {
 	if (strcasecmp("hostbased-service", name_type) == 0)
@@ -251,8 +250,7 @@ main(int argc, char **argv)
 	    type = GSS_C_NT_USER_NAME;
 	else
 	    errx(1, "unknown name type %s", name_type);
-    } else
-	type = GSS_C_NT_HOSTBASED_SERVICE;
+    }
 
     if (ccache) {
 	maj_stat = gss_krb5_ccache_name(&min_stat, ccache, NULL);
@@ -289,7 +287,7 @@ main(int argc, char **argv)
 
     for (i = 0; i < num_loops; i++) {
 
-	cred = acquire_cred_service(acquire_name, type, oidset, flag);
+	cred = acquire_cred_service(acquire_name, type, oidset, cred_usage);
 
 	if (enctype) {
 	    int32_t enctypelist = enctype;

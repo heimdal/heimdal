@@ -86,6 +86,7 @@ roken_get_shell(char *shell, size_t shellsz)
         }
     }
 #endif
+    errno = 0;
     return "/bin/sh";
 #else
     /* Windows */
@@ -96,9 +97,9 @@ roken_get_shell(char *shell, size_t shellsz)
         errno = ERANGE;
         return NULL;
     }
-#endif
     errno = 0;
     return NULL;
+#endif
 }
 
 /**

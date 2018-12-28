@@ -311,6 +311,10 @@ wrapunwrap(gss_ctx_id_t cctx, gss_ctx_id_t sctx, int flags, gss_OID mechoid)
 #define USE_HEADER_ONLY		2
 #define USE_SIGN_ONLY		4
 #define FORCE_IOV		8
+/* NO_DATA comes from <netdb.h>; we don't use it here; we appropriate it */
+#ifdef NO_DATA
+#undef NO_DATA
+#endif
 #define NO_DATA			16
 
 static void

@@ -466,8 +466,6 @@ main(int argc, char **argv)
 		printf("%s: shared secret OK\n", p->name);
 	    else
 		printf("%s: shared secret FAILURE\n", p->name);
-
-	return 0;
     }
 
     return 0;

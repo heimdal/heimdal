@@ -63,7 +63,7 @@ _krb5_get_default_principal_local (krb5_context context,
 #ifndef WIN32
     if (!issuid() && getuid() == 0 && strcmp(user, "root") != 0)
         second_component = "root"; /* We'll use <user>/root */
-#endif;
+#endif
     return krb5_make_principal(context, princ, NULL, user,
                                second_component, NULL);
 }

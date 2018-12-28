@@ -398,7 +398,7 @@ static void defval_neg_flag(const char *name, struct assignment *defval)
 static void defval_string(const char *name, struct assignment *defval)
 {
     if(defval != NULL)
-	cprint(1, "opt.%s = (char *)(unsigned long)\"%s\";\n", name, defval->u.value);
+	cprint(1, "opt.%s = (char *)(uintptr_t)\"%s\";\n", name, defval->u.value);
     else
 	cprint(1, "opt.%s = NULL;\n", name);
 }
@@ -699,6 +699,7 @@ gen(struct assignment *as)
 {
     struct assignment *a;
     cprint(0, "#include <stdio.h>\n");
+    cprint(0, "#include <stdint.h>\n");
     cprint(0, "#include <getarg.h>\n");
     cprint(0, "#include <sl.h>\n");
     cprint(0, "#include \"%s\"\n\n", hname);

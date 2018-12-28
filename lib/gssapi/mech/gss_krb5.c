@@ -432,7 +432,7 @@ GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL
 gss_krb5_set_allowable_enctypes(OM_uint32 *minor_status,
 				gss_cred_id_t cred,
 				OM_uint32 num_enctypes,
-				int32_t *enctypes)
+				krb5_enctype *enctypes)
 {
     krb5_error_code ret;
     OM_uint32 maj_status;

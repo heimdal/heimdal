@@ -1638,7 +1638,7 @@ krcc_set_kdc_offset(krb5_context context, krb5_ccache id, krb5_deltat offset)
     key_serial_t cache_id;
     krb5_error_code ret;
 
-    heim_base_exchange_32(&cache_id, &data->krc_cache_id);
+    heim_base_exchange_32(&cache_id, data->krc_cache_id);
  
     ret = save_time_offsets(context, cache_id, (int32_t)offset, 0);
     if (ret == 0)

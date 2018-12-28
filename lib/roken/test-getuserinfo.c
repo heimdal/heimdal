@@ -40,8 +40,8 @@ int
 main(void)
 {
     char buf[MAX_PATH * 2];
-    char buf2[MAX_PATH * 2];
 #ifndef WIN32
+    char buf2[MAX_PATH * 2];
     int ret = 0;
     if (!issuid() && getuid() != 0) {
         if (getenv("USER") != NULL && strlen(getenv("USER")) != 0 &&

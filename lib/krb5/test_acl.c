@@ -37,7 +37,7 @@
 	do { if (r != e) krb5_errx(c, 1, "%s", s); } while (0)
 #define STRINGMATCH(c, s, _s1, _s2) \
 	do {							\
-		if (_s1 == NULL || _s2 == NULL) 		\
+		if (_s1 == NULL)				\
 			krb5_errx(c, 1, "s1 or s2 is NULL");	\
 		if (strcmp(_s1,_s2) != 0) 			\
 			krb5_errx(c, 1, "%s", s);		\

@@ -42,7 +42,13 @@
  * these evil hacks
  */
 
+#ifdef strftime
+#undef strftime
+#endif
 #define strftime test_strftime
+#ifdef strptime
+#undef strptime
+#endif
 #define strptime test_strptime
 
 ROKEN_LIB_FUNCTION size_t ROKEN_LIB_CALL

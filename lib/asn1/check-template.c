@@ -362,27 +362,27 @@ test_seqof4(void)
     b1val[3].u1 = 1LL;
     b1val[3].s2.data = "\x01\x02";
     b1val[3].s2.length = 2;
-    b1val[3].u2 = -1LL;
+    b1val[3].u2 = (TESTuint64)-1LL;
 
     b2val[3].s1.data = "";
     b2val[3].s1.length = 0;
     b2val[3].u1 = 1LL;
     b2val[3].s2.data = "\x01\x02";
     b2val[3].s2.length = 2;
-    b2val[3].u2 = -1LL;
+    b2val[3].u2 = (TESTuint64)-1LL;
     b2val[3].s3.data = "\x00\x01\x02\x03";
     b2val[3].s3.length = 4;
-    b2val[3].u3 = 1LL<<63;
+    b2val[3].u3 = 1ULL<<63;
 
     b3val[3].s1.data = "";
     b3val[3].s1.length = 0;
     b3val[3].u1 = 1LL;
     b3val[3].s2.data = "\x01\x02";
     b3val[3].s2.length = 2;
-    b3val[3].u2 = -1LL;
+    b3val[3].u2 = (TESTuint64)-1LL;
     b3val[3].s3.data = "\x00\x01\x02\x03";
     b3val[3].s3.length = 4;
-    b3val[3].u3 = 1LL<<63;
+    b3val[3].u3 = 1ULL<<63;
     b3val[3].s4.data = "\x00";
     b3val[3].s4.length = 1;
     b3val[3].u4 = 1LL<<32;

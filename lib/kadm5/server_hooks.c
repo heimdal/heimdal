@@ -160,6 +160,7 @@ _kadm5_s_init_hooks(kadm5_server_context *ctx)
 	krb5_warnx(context, "Loaded kadm5 hook `%s' by vendor `%s' (API version %u)",
 		   hook->name, hook->vendor, hook->version);
     }
+    krb5_config_free_strings(hooks);
     return 0;
 #else
     krb5_warnx(context, "kadm5 hooks configured, but platform "

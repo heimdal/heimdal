@@ -415,18 +415,10 @@ spnego_reply
     if (ret)
       return ret;
 
+    /* The SPNEGO token must be a negTokenResp */
     if (resp.element != choice_NegotiationToken_negTokenResp) {
 	free_NegotiationToken(&resp);
 	*minor_status = 0;
-	return GSS_S_BAD_MECH;
-    }
-
-    if (resp.u.negTokenResp.negResult == NULL
-	|| *(resp.u.negTokenResp.negResult) == reject
-	/* || resp.u.negTokenResp.supportedMech == NULL */
-	)
-    {
-	free_NegotiationToken(&resp);
 	return GSS_S_BAD_MECH;
     }
 
@@ -475,7 +467,7 @@ spnego_reply
 	return GSS_S_BAD_MECH;
     }
 
-    /* if a token (of non zero length), or no context, pass to underlaying mech */
+    /* if a token (of non zero length) pass to underlaying mech */
     if ((resp.u.negTokenResp.responseToken != NULL && resp.u.negTokenResp.responseToken->length) ||
 	ctx->negotiated_ctx_id == GSS_C_NO_CONTEXT) {
 	gss_buffer_desc mech_input_token;
@@ -510,14 +502,37 @@ spnego_reply
 	if (GSS_ERROR(ret)) {
 	    HEIMDAL_MUTEX_unlock(&ctx->ctx_id_mutex);
 	    free_NegotiationToken(&resp);
+            /*
+             * If the acceptor rejected, preserve the minor status information
+             * from the mechanism, but indicate GSS_S_BAD_MECH.
+             */
+            if (resp.u.negTokenResp.negResult != NULL &&
+                *resp.u.negTokenResp.negResult == reject)
+                ret = GSS_S_BAD_MECH;
 	    gss_mg_collect_error(&mech, ret, minor);
 	    *minor_status = minor;
 	    return ret;
 	}
+        /*
+         * If the acceptor rejected, we're out even if the inner context is
+         * now complete.  Note that the rejection is not integrity-protected.
+         */
+        if (resp.u.negTokenResp.negResult != NULL &&
+            *resp.u.negTokenResp.negResult == reject) {
+            HEIMDAL_MUTEX_unlock(&ctx->ctx_id_mutex);
+            free_NegotiationToken(&resp);
+            return GSS_S_BAD_MECH;
+        }
+
 	if (ret == GSS_S_COMPLETE) {
 	    ctx->open = 1;
 	}
     } else if (*(resp.u.negTokenResp.negResult) == accept_completed) {
+        /*
+         * Note that the accept_completed isn't integrity-protected, but
+         * ctx->maybe_open can only be true if the inner context is fully
+         * established.
+         */
 	if (ctx->maybe_open)
 	    ctx->open = 1;
     }

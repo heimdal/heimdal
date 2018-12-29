@@ -501,7 +501,6 @@ spnego_reply
 				   &ctx->mech_time_rec);
 	if (GSS_ERROR(ret)) {
 	    HEIMDAL_MUTEX_unlock(&ctx->ctx_id_mutex);
-	    free_NegotiationToken(&resp);
             /*
              * If the acceptor rejected, preserve the minor status information
              * from the mechanism, but indicate GSS_S_BAD_MECH.
@@ -509,6 +508,7 @@ spnego_reply
             if (resp.u.negTokenResp.negResult != NULL &&
                 *resp.u.negTokenResp.negResult == reject)
                 ret = GSS_S_BAD_MECH;
+	    free_NegotiationToken(&resp);
 	    gss_mg_collect_error(&mech, ret, minor);
 	    *minor_status = minor;
 	    return ret;
@@ -517,8 +517,12 @@ spnego_reply
          * If the acceptor rejected, we're out even if the inner context is
          * now complete.  Note that the rejection is not integrity-protected.
          */
-        if (resp.u.negTokenResp.negResult != NULL &&
-            *resp.u.negTokenResp.negResult == reject) {
+        if (resp.u.negTokenResp.negResult == NULL) {
+            HEIMDAL_MUTEX_unlock(&ctx->ctx_id_mutex);
+            free_NegotiationToken(&resp);
+            return GSS_S_DEFECTIVE_TOKEN;
+        }
+        if (*resp.u.negTokenResp.negResult == reject) {
             HEIMDAL_MUTEX_unlock(&ctx->ctx_id_mutex);
             free_NegotiationToken(&resp);
             return GSS_S_BAD_MECH;

@@ -35,10 +35,12 @@
 
 static OM_uint32
 send_reject (OM_uint32 *minor_status,
+	     gss_buffer_t mech_token,
 	     gss_buffer_t output_token)
 {
     NegotiationToken nt;
     size_t size;
+    heim_octet_string responseToken;
 
     nt.element = choice_NegotiationToken_negTokenResp;
 
@@ -49,7 +51,13 @@ send_reject (OM_uint32 *minor_status,
     }
     *(nt.u.negTokenResp.negResult)  = reject;
     nt.u.negTokenResp.supportedMech = NULL;
-    nt.u.negTokenResp.responseToken = NULL;
+
+    if (mech_token != GSS_C_NO_BUFFER) {
+	responseToken.length = mech_token->length;
+	responseToken.data   = mech_token->value;
+	nt.u.negTokenResp.responseToken = &responseToken;
+    } else
+	nt.u.negTokenResp.responseToken = NULL;
     nt.u.negTokenResp.mechListMIC   = NULL;
 
     ASN1_MALLOC_ENCODE(NegotiationToken,
@@ -454,7 +462,7 @@ acceptor_complete(OM_uint32 * minor_status,
 	    ret = verify_mechlist_mic(minor_status, ctx, mech_buf, mic);
 	    if (ret) {
 		if (*get_mic)
-		    send_reject (minor_status, output_token);
+		    send_reject (minor_status, GSS_C_NO_BUFFER, output_token);
 		return ret;
 	    }
 	    ctx->verified_mic = 1;
@@ -774,7 +782,7 @@ acceptor_continue
 	    if (ret != GSS_S_COMPLETE && ret != GSS_S_CONTINUE_NEEDED) {
 		free_NegotiationToken(&nt);
 		gss_mg_collect_error(ctx->negotiated_mech_type, ret, minor);
-		send_reject (minor_status, output_token);
+		send_reject (minor_status, mech_output_token, output_token);
 		HEIMDAL_MUTEX_unlock(&ctx->ctx_id_mutex);
 		return ret;
 	    }

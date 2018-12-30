@@ -396,6 +396,7 @@ spnego_reply
     gss_buffer_desc mic_buf, mech_buf;
     gss_buffer_desc mech_output_token;
     gssspnego_ctx ctx;
+    int negState;
 
     *minor_status = 0;
 
@@ -429,8 +430,16 @@ spnego_reply
 
     HEIMDAL_MUTEX_lock(&ctx->ctx_id_mutex);
 
-    if (resp.u.negTokenResp.supportedMech) {
+    /*
+     * When negState is absent, the actual state should be inferred from
+     * the state of the negotiated mechanism context. (RFC 4178 4.2.2.)
+     */
+    if (resp.u.negTokenResp.negResult != NULL)
+	negState = *resp.u.negTokenResp.negResult;
+    else
+	negState = accept_incomplete;
 
+    if (resp.u.negTokenResp.supportedMech) {
 	if (ctx->oidlen) {
 	    free_NegotiationToken(&resp);
 	    HEIMDAL_MUTEX_unlock(&ctx->ctx_id_mutex);
@@ -467,7 +476,7 @@ spnego_reply
 	return GSS_S_BAD_MECH;
     }
 
-    /* if a token (of non zero length) pass to underlaying mech */
+    /* if a token (of non zero length), or no context, pass to underlaying mech */
     if ((resp.u.negTokenResp.responseToken != NULL && resp.u.negTokenResp.responseToken->length) ||
 	ctx->negotiated_ctx_id == GSS_C_NO_CONTEXT) {
 	gss_buffer_desc mech_input_token;
@@ -501,13 +510,6 @@ spnego_reply
 				   &ctx->mech_time_rec);
 	if (GSS_ERROR(ret)) {
 	    HEIMDAL_MUTEX_unlock(&ctx->ctx_id_mutex);
-            /*
-             * If the acceptor rejected, preserve the minor status information
-             * from the mechanism, but indicate GSS_S_BAD_MECH.
-             */
-            if (resp.u.negTokenResp.negResult != NULL &&
-                *resp.u.negTokenResp.negResult == reject)
-                ret = GSS_S_BAD_MECH;
 	    free_NegotiationToken(&resp);
 	    gss_mg_collect_error(&mech, ret, minor);
 	    *minor_status = minor;
@@ -515,14 +517,9 @@ spnego_reply
 	}
         /*
          * If the acceptor rejected, we're out even if the inner context is
-         * now complete.  Note that the rejection is not integrity-protected.
+         * now complete. Note that the rejection is not integrity-protected.
          */
-        if (resp.u.negTokenResp.negResult == NULL) {
-            HEIMDAL_MUTEX_unlock(&ctx->ctx_id_mutex);
-            free_NegotiationToken(&resp);
-            return GSS_S_DEFECTIVE_TOKEN;
-        }
-        if (*resp.u.negTokenResp.negResult == reject) {
+	if (negState == reject) {
             HEIMDAL_MUTEX_unlock(&ctx->ctx_id_mutex);
             free_NegotiationToken(&resp);
             return GSS_S_BAD_MECH;
@@ -531,7 +528,7 @@ spnego_reply
 	if (ret == GSS_S_COMPLETE) {
 	    ctx->open = 1;
 	}
-    } else if (*(resp.u.negTokenResp.negResult) == accept_completed) {
+    } else if (negState == accept_completed) {
         /*
          * Note that the accept_completed isn't integrity-protected, but
          * ctx->maybe_open can only be true if the inner context is fully
@@ -541,7 +538,7 @@ spnego_reply
 	    ctx->open = 1;
     }
 
-    if (*(resp.u.negTokenResp.negResult) == request_mic) {
+    if (negState == request_mic) {
 	ctx->require_mic = 1;
     }
 

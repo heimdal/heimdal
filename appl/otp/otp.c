@@ -153,7 +153,8 @@ set (int argc, char **argv, OtpAlgorithm *alg, char *inuser)
     strlcpy (ctx.seed, argv[1], sizeof(ctx.seed));
     strlwr(ctx.seed);
     do {
-	if (UI_UTIL_read_pw_string (pw, sizeof(pw), "Pass-phrase: ", 1))
+	if (UI_UTIL_read_pw_string (pw, sizeof(pw), "Pass-phrase: ",
+	    UI_UTIL_FLAG_VERIFY))
 	    return 1;
 	if (strlen (pw) < OTP_MIN_PASSPHRASE)
 	    printf ("Too short pass-phrase.  Use at least %d characters\n",

@@ -194,7 +194,7 @@ UI_UTIL_read_pw_string(char *buf, int length, const char *prompt, int verify)
     if (ret)
 	return ret;
 
-    if (verify) {
+    if (verify & UI_UTIL_FLAG_VERIFY) {
 	char *buf2;
 	buf2 = malloc(length);
 	if (buf2 == NULL)
@@ -206,8 +206,10 @@ UI_UTIL_read_pw_string(char *buf, int length, const char *prompt, int verify)
 	    return ret;
 	}
 	if (strcmp(buf2, buf) != 0) {
-	    fprintf(stderr, "Verify failure\n");
-	    fflush(stderr);
+	    if (!(verify & UI_UTIL_FLAG_VERIFY_SILENT)) {
+		fprintf(stderr, "Verify failure\n");
+		fflush(stderr);
+	    }
 	    ret = 1;
 	}
 	free(buf2);

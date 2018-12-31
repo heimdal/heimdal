@@ -292,6 +292,33 @@
 #define __attribute__(x)
 #endif
 
+/*
+ * for dlopen(3)
+ */
+#ifndef RTLD_LAZY
+#define RTLD_LAZY 0
+#endif
+
+#ifndef RTLD_NOW
+#define RTLD_NOW 0
+#endif
+
+#ifndef RTLD_GLOBAL
+#define RTLD_GLOBAL 0
+#endif
+
+#ifndef RTLD_LOCAL
+#define RTLD_LOCAL 0
+#endif
+
+#ifndef RTLD_GROUP
+#define RTLD_GROUP 0
+#endif
+
+#ifndef RTLD_NODELETE
+#define RTLD_NODELETE 0
+#endif
+
 ROKEN_CPP_START
 
 #ifndef IRIX4 /* fix for compiler bug */

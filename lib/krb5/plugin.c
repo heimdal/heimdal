@@ -35,11 +35,6 @@
 
 #include "krb5_locl.h"
 
-#ifdef HAVE_DLFCN_H
-#include <dlfcn.h>
-#endif
-#include <dirent.h>
-
 /*
  * Definitions:
  *

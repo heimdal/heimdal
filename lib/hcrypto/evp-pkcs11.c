@@ -33,21 +33,8 @@
 #include <config.h>
 #include <roken.h>
 #include <assert.h>
-#ifdef HAVE_DLFCN_H
-#include <dlfcn.h>
-#ifndef RTLD_LAZY
-#define RTLD_LAZY 0
-#endif
-#ifndef RTLD_LOCAL
-#define RTLD_LOCAL 0
-#endif
-#ifndef RTLD_GROUP
-#define RTLD_GROUP 0
-#endif
-#ifndef RTLD_NODELETE
-#define RTLD_NODELETE 0
-#endif
-#else
+
+#ifndef HAVE_DLFCN_H
 #error PKCS11 support requires dlfcn.h
 #endif
 

@@ -35,9 +35,6 @@
 
 #include "krb5_locl.h"
 #include <krb5_ccapi.h>
-#ifdef HAVE_DLFCN_H
-#include <dlfcn.h>
-#endif
 
 #ifndef KCM_IS_API_CACHE
 
@@ -115,23 +112,16 @@ init_ccapi(krb5_context context)
 
 #ifdef HAVE_DLOPEN
 
-#ifndef RTLD_LAZY
-#define RTLD_LAZY 0
-#endif
-#ifndef RTLD_LOCAL
-#define RTLD_LOCAL 0
-#endif
-
 #ifdef KRB5_USE_PATH_TOKENS
     {
       char * explib = NULL;
       if (_krb5_expand_path_tokens(context, lib, 0, &explib) == 0) {
-	cc_handle = dlopen(explib, RTLD_LAZY|RTLD_LOCAL);
+	cc_handle = dlopen(explib, RTLD_LAZY|RTLD_LOCAL|RTLD_GROUP);
 	free(explib);
       }
     }
 #else
-    cc_handle = dlopen(lib, RTLD_LAZY|RTLD_LOCAL);
+    cc_handle = dlopen(lib, RTLD_LAZY|RTLD_LOCAL|RTLD_GROUP);
 #endif
 
     if (cc_handle == NULL) {

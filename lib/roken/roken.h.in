@@ -296,6 +296,10 @@ struct sockaddr_dl;
 #include <paths.h>
 #endif
 
+#ifdef HAVE_DLFCN_H
+#include <dlfcn.h>
+#endif
+
 #ifdef HAVE_DIRENT_H
 #include <dirent.h>
 #endif

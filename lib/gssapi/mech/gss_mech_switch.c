@@ -314,14 +314,6 @@ _gss_load_mech(void)
 		if (found)
 			continue;
 
-#ifndef RTLD_LOCAL
-#define RTLD_LOCAL 0
-#endif
-
-#ifndef RTLD_GROUP
-#define RTLD_GROUP 0
-#endif
-
 		so = dlopen(lib, RTLD_LAZY | RTLD_LOCAL | RTLD_GROUP);
 		if (so == NULL) {
 /*			fprintf(stderr, "dlopen: %s\n", dlerror()); */

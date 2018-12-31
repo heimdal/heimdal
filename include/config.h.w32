@@ -1450,6 +1450,9 @@ static const char *const rcsid[] = { (const char *)rcsid, "@(#)" msg }
 
 #define LIBDIR "%{LIBDIR}"
 
+/* For compatibility with MIT, {USERCONFIG} would be better */
+#define CLIENT_KEYTAB_DEFAULT   "FILE:%{WINDOWS}\\krb5clientkt"
+
 #endif	/* RC_INVOKED */
 
 

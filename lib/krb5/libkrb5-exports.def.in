@@ -753,6 +753,7 @@ EXPORTS
 	_krb5_crc_update
 	_krb5_get_krbtgt
 	_krb5_build_authenticator
+	_krb5_kt_client_default_name
 
 	; Shared with libkdc
 	_krb5_AES_SHA1_string_to_default_iterator

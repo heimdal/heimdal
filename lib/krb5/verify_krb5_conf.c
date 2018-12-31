@@ -390,6 +390,7 @@ struct entry libdefaults_entries[] = {
     { "date_format", krb5_config_string, NULL, 0 },
     { "default_as_etypes", krb5_config_string, NULL, 0 },
     { "default_ccache_name", krb5_config_string, NULL, 0 },
+    { "default_client_keytab_name", krb5_config_string, NULL, 0 },
     { "default_cc_name", krb5_config_string, NULL, 0 },
     { "default_cc_type", krb5_config_string, NULL, 0 },
     { "default_etypes", krb5_config_string, NULL, 0 },

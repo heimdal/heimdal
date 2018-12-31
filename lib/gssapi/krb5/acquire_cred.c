@@ -58,7 +58,7 @@ __gsskrb5_ccache_lifetime(OM_uint32 *minor_status,
 
 
 static krb5_error_code
-get_keytab(krb5_context context, krb5_keytab *keytab)
+get_system_keytab(krb5_context context, krb5_keytab *keytab)
 {
     krb5_error_code kret;
 
@@ -78,6 +78,33 @@ get_keytab(krb5_context context, krb5_keytab *keytab)
     HEIMDAL_MUTEX_unlock(&gssapi_keytab_mutex);
 
     return (kret);
+}
+
+static krb5_error_code
+get_client_keytab(krb5_context context,
+		  krb5_const_principal principal,
+		  krb5_keytab *keytab)
+{
+    krb5_error_code ret;
+    char *name = NULL;
+
+    ret = _krb5_kt_client_default_name(context, &name);
+    if (ret == 0)
+	ret = krb5_kt_resolve(context, name, keytab);
+    if (ret == 0 && principal) {
+	krb5_keytab_entry entry;
+
+	ret = krb5_kt_get_entry(context, *keytab, principal,
+				 0, 0, &entry);
+	if (ret == 0)
+	    krb5_kt_free_entry(context, &entry);
+    }
+    krb5_xfree(name);
+
+    if (ret)
+	ret = get_system_keytab(context, keytab);
+
+    return ret;
 }
 
 /*
@@ -292,7 +319,7 @@ try_keytab:
         if (kret)
             goto end;
     }
-    kret = get_keytab(context, &keytab);
+    kret = get_client_keytab(context, handle->principal, &keytab);
     if (kret)
         goto end;
 
@@ -380,7 +407,7 @@ acquire_acceptor_cred(OM_uint32 * minor_status,
 
     ret = GSS_S_FAILURE;
 
-    kret = get_keytab(context, &handle->keytab);
+    kret = get_system_keytab(context, &handle->keytab);
     if (kret)
 	goto end;
 

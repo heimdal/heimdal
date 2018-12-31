@@ -949,3 +949,19 @@ krb5_kt_have_content(krb5_context context,
     }
     return KRB5_KT_NOTFOUND;
 }
+
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
+_krb5_kt_client_default_name(krb5_context context, char **name)
+{
+    const char *tmp;
+
+    tmp = secure_getenv("KRB5_CLIENT_KTNAME");
+    if (tmp == NULL)
+	tmp =  krb5_config_get_string(context, NULL,
+                                      "libdefaults",
+                                      "default_client_keytab_name", NULL);
+    if (tmp == NULL)
+	tmp = CLIENT_KEYTAB_DEFAULT;
+
+    return _krb5_expand_path_tokens(context, tmp, 1, name);
+}

@@ -74,6 +74,7 @@
 #include <netdb.h>
 #endif
 #include <fnmatch.h>
+#include <krb5_locl.h>
 #include "admin.h"
 #include "kadm5_err.h"
 #include <hdb.h>

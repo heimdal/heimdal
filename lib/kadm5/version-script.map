@@ -23,6 +23,7 @@ HEIMDAL_KAMD5_SERVER_1.0 {
 		kadm5_free_name_list;
 		kadm5_free_policy_ent;
 		kadm5_free_principal_ent;
+		kadm5_get_instance;
 		kadm5_get_policy;
 		kadm5_get_policies;
 		kadm5_get_principal;

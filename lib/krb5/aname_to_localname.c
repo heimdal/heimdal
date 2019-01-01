@@ -80,6 +80,17 @@ plcallback(krb5_context context,
     return locate->an2ln(plugctx, context, plctx->rule, plctx->aname, set_res, plctx);
 }
 
+static const char *an2ln_plugin_deps[] = { "krb5", NULL };
+
+static struct krb5_plugin_data
+an2ln_plugin_data = {
+    "krb5",
+    KRB5_PLUGIN_AN2LN,
+    KRB5_PLUGIN_AN2LN_VERSION_0,
+    an2ln_plugin_deps,
+    krb5_get_instance
+};
+
 static krb5_error_code
 an2ln_plugin(krb5_context context, const char *rule, krb5_const_principal aname,
 	     size_t lnsize, char *lname)
@@ -96,8 +107,8 @@ an2ln_plugin(krb5_context context, const char *rule, krb5_const_principal aname,
      * really be no more than one plugin that can handle any given kind
      * rule, so the effect should be deterministic anyways.
      */
-    ret = _krb5_plugin_run_f(context, "krb5", KRB5_PLUGIN_AN2LN,
-			     KRB5_PLUGIN_AN2LN_VERSION_0, 0, &ctx, plcallback);
+    ret = _krb5_plugin_run_f(context, &an2ln_plugin_data,
+			     0, &ctx, plcallback);
     if (ret != 0) {
 	heim_release(ctx.luser);
 	return ret;

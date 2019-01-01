@@ -66,10 +66,12 @@ resolve_lookup(void *ctx,
     s.sin_port = htons(88);
     s.sin_addr.s_addr = htonl(0x7f000002);
 
-    if (strcmp(realm, "NOTHERE.H5L.SE") == 0)
+    if (strcmp(realm, "NOTHERE.H5L.SE") == 0) {
 	(*add)(addctx, type, (struct sockaddr *)&s);
+	return 0;
+    }
 
-    return 0;
+    return KRB5_PLUGIN_NO_HANDLE;
 }
 
 

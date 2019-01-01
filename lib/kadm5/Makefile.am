@@ -3,6 +3,7 @@
 include $(top_srcdir)/Makefile.am.common
 
 libkadm5srv_la_CPPFLAGS = -I$(srcdir)/../krb5
+libkadm5clnt_la_CPPFLAGS = -I$(srcdir)/../krb5
 
 lib_LTLIBRARIES = libkadm5srv.la libkadm5clnt.la
 libkadm5srv_la_LDFLAGS = -version-info 8:1:0
@@ -34,6 +35,7 @@ libkadm5clnt_la_LIBADD = \
 libexec_PROGRAMS = ipropd-master ipropd-slave
 
 default_keys_SOURCES = default_keys.c
+default_keys_CPPFLAGS = -I$(srcdir)/../krb5
 
 kadm5includedir = $(includedir)/kadm5
 buildkadm5include = $(buildinclude)/kadm5
@@ -130,8 +132,10 @@ dist_iprop_log_SOURCES = iprop-log.c
 nodist_iprop_log_SOURCES = iprop-commands.c
 
 ipropd_master_SOURCES = ipropd_master.c ipropd_common.c iprop.h kadm5_locl.h
+ipropd_master_CPPFLAGS = -I$(srcdir)/../krb5
 
 ipropd_slave_SOURCES = ipropd_slave.c ipropd_common.c iprop.h kadm5_locl.h
+ipropd_slave_CPPFLAGS = -I$(srcdir)/../krb5
 
 man_MANS = kadm5_pwcheck.3 iprop.8 iprop-log.8
 
@@ -146,6 +150,7 @@ LDADD = \
 	$(LIB_dlopen) \
 	$(LIB_pidfile)
 
+
 iprop_log_LDADD = \
 	libkadm5srv.la \
 	$(top_builddir)/lib/hdb/libhdb.la \
@@ -159,6 +164,7 @@ iprop_log_LDADD = \
 	$(LIB_dlopen) \
 	$(LIB_pidfile)
 
+iprop_log_CPPFLAGS = -I$(srcdir)/../krb5
 
 iprop-commands.c iprop-commands.h: iprop-commands.in
 	$(SLC) $(srcdir)/iprop-commands.in
@@ -182,6 +188,7 @@ ALL_OBJECTS += $(ipropd_slave_OBJECTS)
 ALL_OBJECTS += $(iprop_log_OBJECTS)
 ALL_OBJECTS += $(test_pw_quality_OBJECTS)
 ALL_OBJECTS += $(sample_passwd_check_la_OBJECTS)
+ALL_OBJECTS += $(sample_hook_la_OBJECTS)
 ALL_OBJECTS += $(default_keys_OBJECTS)
 
 $(ALL_OBJECTS): $(srcdir)/kadm5-protos.h $(srcdir)/kadm5-private.h

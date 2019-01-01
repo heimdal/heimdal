@@ -39,6 +39,21 @@ static int have_plugin = 0;
  * Pick the first WINDC module that we find.
  */
 
+static const char *windc_plugin_deps[] = {
+    "kdc",
+    "krb5",
+    "hdb",
+    NULL
+};
+
+static struct krb5_plugin_data windc_plugin_data = {
+    "krb5",
+    "windc",
+    KRB5_WINDC_PLUGIN_MINOR,
+    windc_plugin_deps,
+    kdc_get_instance
+};
+
 static krb5_error_code KRB5_LIB_CALL
 load(krb5_context context, const void *plug, void *plugctx, void *userctx)
 {
@@ -49,8 +64,8 @@ load(krb5_context context, const void *plug, void *plugctx, void *userctx)
 krb5_error_code
 krb5_kdc_windc_init(krb5_context context)
 {
-    (void)_krb5_plugin_run_f(context, "krb5", "windc",
-			     KRB5_WINDC_PLUGIN_MINOR, 0, NULL, load);
+    (void)_krb5_plugin_run_f(context, &windc_plugin_data, 0, NULL, load);
+
     return 0;
 }
 
@@ -84,8 +99,8 @@ _kdc_pac_generate(krb5_context context,
     uc.client = client;
     uc.pac = pac;
 
-    (void)_krb5_plugin_run_f(context, "krb5", "windc",
-			     KRB5_WINDC_PLUGIN_MINOR, 0, &uc, generate);
+    (void)_krb5_plugin_run_f(context, &windc_plugin_data,
+			     0, &uc, generate);
     return 0;
 }
 
@@ -141,8 +156,8 @@ _kdc_pac_verify(krb5_context context,
     uc.pac = pac;
     uc.verified = verified;
 
-    (void)_krb5_plugin_run_f(context, "krb5", "windc",
-			     KRB5_WINDC_PLUGIN_MINOR, 0, &uc, verify);
+    (void)_krb5_plugin_run_f(context, &windc_plugin_data,
+			     0, &uc, verify);
     return 0;
 }
 
@@ -191,8 +206,8 @@ _kdc_check_access(krb5_context context,
         uc.req = req;
         uc.method_data = method_data;
 
-        ret = _krb5_plugin_run_f(context, "krb5", "windc",
-                                 KRB5_WINDC_PLUGIN_MINOR, 0, &uc, check);
+        ret = _krb5_plugin_run_f(context, &windc_plugin_data,
+                                 0, &uc, check);
     }
 
     if (ret == KRB5_PLUGIN_NO_HANDLE)
@@ -201,4 +216,19 @@ _kdc_check_access(krb5_context context,
 			       server_ex, server_name,
 			       req->msg_type == krb_as_req);
     return ret;
+}
+
+uintptr_t
+kdc_get_instance(const char *libname)
+{
+    static const char *instance = "libkdc";
+
+    if (strcmp(libname, "kdc") == 0)
+        return (uintptr_t)instance;
+    else if (strcmp(libname, "hdb") == 0)
+	return hdb_get_instance(libname);
+    else if (strcmp(libname, "krb5") == 0)
+        return krb5_get_instance(libname);
+
+    return 0;
 }

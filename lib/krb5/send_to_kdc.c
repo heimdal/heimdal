@@ -96,6 +96,17 @@ realmcallback(krb5_context context, const void *plug, void *plugctx, void *userc
 				  ctx->send_data, ctx->receive);
 }
 
+static const char *send_to_kdc_plugin_deps[] = { "krb5", NULL };
+
+static struct krb5_plugin_data
+send_to_kdc_plugin_data = {
+    "krb5",
+    KRB5_PLUGIN_SEND_TO_KDC,
+    KRB5_PLUGIN_SEND_TO_KDC_VERSION_0,
+    send_to_kdc_plugin_deps,
+    krb5_get_instance
+};
+
 static krb5_error_code
 kdc_via_plugin(krb5_context context,
 	       krb5_krbhst_info *hi,
@@ -111,8 +122,7 @@ kdc_via_plugin(krb5_context context,
     userctx.send_data = send_data;
     userctx.receive = receive;
 
-    return _krb5_plugin_run_f(context, "krb5", KRB5_PLUGIN_SEND_TO_KDC,
-			      KRB5_PLUGIN_SEND_TO_KDC_VERSION_0, 0,
+    return _krb5_plugin_run_f(context, &send_to_kdc_plugin_data, 0,
 			      &userctx, kdccallback);
 }
 
@@ -131,8 +141,7 @@ realm_via_plugin(krb5_context context,
     userctx.send_data = send_data;
     userctx.receive = receive;
 
-    return _krb5_plugin_run_f(context, "krb5", KRB5_PLUGIN_SEND_TO_KDC,
-			      KRB5_PLUGIN_SEND_TO_KDC_VERSION_2, 0,
+    return _krb5_plugin_run_f(context, &send_to_kdc_plugin_data, 0,
 			      &userctx, realmcallback);
 }
 

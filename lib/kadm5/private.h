@@ -71,8 +71,8 @@ struct kadm_func {
 };
 
 typedef struct kadm5_hook_context {
-    void *handle;
-    const kadm5_hook *hook;
+    void *dsohandle;
+    const kadm5_hook_ftable *hook;
     void *data;
 } kadm5_hook_context;
 
@@ -196,6 +196,8 @@ enum kadm_recover_mode {
 
 #define KADMIN_APPL_VERSION "KADM0.1"
 #define KADMIN_OLD_APPL_VERSION "KADM0.0"
+
+extern struct krb5_plugin_data kadm5_hook_plugin_data;
 
 #include "kadm5-private.h"
 

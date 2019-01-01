@@ -46,6 +46,7 @@ HEIMDAL_HDB_1.0 {
 		hdb_generate_key_set_password;
 		hdb_generate_key_set_password_with_ks_tuple;
 		hdb_get_dbinfo;
+		hdb_get_instance;
 		hdb_init_db;
 		hdb_key2principal;
 		hdb_kvno2keys;

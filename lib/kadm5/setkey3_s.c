@@ -33,6 +33,44 @@
 
 #include "kadm5_locl.h"
 
+struct setkey_principal_hook_ctx {
+    kadm5_server_context *context;
+    enum kadm5_hook_stage stage;
+    krb5_error_code code;
+    krb5_const_principal princ;
+    uint32_t flags;
+    size_t n_ks_tuple;
+    krb5_key_salt_tuple *ks_tuple;
+    size_t n_keys;
+    krb5_keyblock *keys;
+};
+
+static krb5_error_code
+setkey_principal_hook_cb(krb5_context context,
+			 const void *hook,
+			 void *hookctx,
+			 void *userctx)
+{
+    krb5_error_code ret;
+    const struct kadm5_hook_ftable *ftable = hook;
+    struct setkey_principal_hook_ctx *ctx = userctx;
+
+    ret = ftable->set_keys(context, hookctx,
+			   ctx->stage, ctx->code,
+			   ctx->princ, ctx->flags,
+			   ctx->n_ks_tuple, ctx->ks_tuple,
+			   ctx->n_keys, ctx->keys);
+    if (ret != 0 && ret != KRB5_PLUGIN_NO_HANDLE)
+	_kadm5_s_set_hook_error_message(ctx->context, ret, "setkey",
+					hook, ctx->stage);
+
+    /* only pre-commit plugins can abort */
+    if (ret == 0 || ctx->stage == KADM5_HOOK_STAGE_POSTCOMMIT)
+	ret = KRB5_PLUGIN_NO_HANDLE;
+
+    return ret;
+}
+
 static kadm5_ret_t
 setkey_principal_hook(kadm5_server_context *context,
 		      enum kadm5_hook_stage stage,
@@ -44,25 +82,23 @@ setkey_principal_hook(kadm5_server_context *context,
 		      size_t n_keys,
 		      krb5_keyblock *keyblocks)
 {
-    krb5_error_code ret = 0;
-    size_t i;
+    krb5_error_code ret;
+    struct setkey_principal_hook_ctx ctx;
 
-    for (i = 0; i < context->num_hooks; i++) {
-	kadm5_hook_context *hook = context->hooks[i];
+    ctx.context = context;
+    ctx.stage = stage;
+    ctx.code = code;
+    ctx.princ = princ;
+    ctx.flags = flags;
+    ctx.n_ks_tuple = n_ks_tuple;
+    ctx.ks_tuple = ks_tuple;
+    ctx.n_keys = n_keys;
+    ctx.keys = keyblocks;
 
-	if (hook->hook->set_keys != NULL) {
-	    ret = hook->hook->set_keys(context->context, hook->data,
-				       stage, code, princ,
-				       flags, n_ks_tuple, ks_tuple,
-				       n_keys, keyblocks);
-	    if (ret != 0) {
-		_kadm5_s_set_hook_error_message(context, ret, "setkey",
-						hook->hook, stage);
-		if (stage == KADM5_HOOK_STAGE_PRECOMMIT)
-		    break;
-	    }
-	}
-    }
+    ret = _krb5_plugin_run_f(context->context, &kadm5_hook_plugin_data,
+			     0, &ctx, setkey_principal_hook_cb);
+    if (ret == KRB5_PLUGIN_NO_HANDLE)
+	ret = 0;
 
     return ret;
 }

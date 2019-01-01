@@ -268,10 +268,10 @@ EXPORTS
 <<
 	$(DLLPREP_NODIST)
 
-$(OBJ)\sample_hook.dll: $(OBJ)\sample_hook.obj $(LIBHEIMDAL)
+$(OBJ)\sample_hook.dll: $(OBJ)\sample_hook.obj $(LIBKADM5SRV) $(LIBHEIMDAL)
 	$(DLLGUILINK) /DEF:<<
 EXPORTS
-	kadm5_hook_init
+	kadm5_hook_plugin_load
 <<
 	$(DLLPREP_NODIST)
 

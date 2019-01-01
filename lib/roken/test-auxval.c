@@ -129,7 +129,7 @@ is_special_auxv_p(long type)
 	return 1;
 #endif
 #ifdef AT_HWCAP2
-    if (type == AT_HWCAP)
+    if (type == AT_HWCAP2)
 	return 1;
 #endif
 

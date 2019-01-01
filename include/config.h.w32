@@ -639,12 +639,6 @@ static const char *const rcsid[] = { (const char *)rcsid, "@(#)" msg }
 /* Define to 1 if you have the <netinet/tcp.h> header file. */
 /* #define HAVE_NETINET_TCP_H 1 */
 
-/* Define if you want to use Netinfo instead of krb5.conf. */
-/* #undef HAVE_NETINFO */
-
-/* Define to 1 if you have the <netinfo/ni.h> header file. */
-/* #undef HAVE_NETINFO_NI_H */
-
 /* Define to 1 if you have the <net/if.h> header file. */
 /* #define HAVE_NET_IF_H 1 */
 

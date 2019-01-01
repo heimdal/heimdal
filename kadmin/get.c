@@ -534,9 +534,15 @@ get_entry(struct get_options *opt, int argc, char **argv)
 int
 list_princs(struct list_options *opt, int argc, char **argv)
 {
+    struct get_options get_opt;
+
     if(sizeof(struct get_options) != sizeof(struct list_options)) {
 	krb5_warnx(context, "programmer error: sizeof(struct get_options) != sizeof(struct list_options)");
 	return 0;
     }
-    return getit((struct get_options*)opt, "list", argc, argv);
+    get_opt.long_flag = opt->long_flag;
+    get_opt.short_flag = opt->short_flag;
+    get_opt.terse_flag = opt->terse_flag;
+    get_opt.column_info_string = opt->column_info_string;
+    return getit(&get_opt, "list", argc, argv);
 }

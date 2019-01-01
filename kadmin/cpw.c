@@ -148,11 +148,33 @@ cpw_entry(struct passwd_options *opt, int argc, char **argv)
     int num;
     krb5_key_data key_data[3];
 
-    data.keepold = opt->keepold_flag;
     data.random_key = opt->random_key_flag;
     data.random_password = opt->random_password_flag;
     data.password = opt->password_string;
     data.key_data	 = NULL;
+
+    /*
+     * --keepold is the the default, and it should mean "prune all old keys not
+     * needed to decrypt extant tickets".
+     */
+    num = 0;
+    data.keepold = 0;
+    if (opt->keepold_flag) {
+        data.keepold = 1;
+        num++;
+    }
+    if (opt->keepallold_flag) {
+        data.keepold = 2;
+        num++;
+    }
+    if (opt->pruneall_flag) {
+        data.keepold = 0;
+        num++;
+    }
+    if (num > 1) {
+        fprintf(stderr, "use only one of --keepold, --keepallold, and --pruneall\n");
+        return 1;
+    }
 
     num = 0;
     if (data.random_key)

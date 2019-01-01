@@ -36,17 +36,23 @@
 RCSID("$Id$");
 
 static krb5_error_code
-change_entry (krb5_keytab keytab,
-	      krb5_principal principal, krb5_kvno kvno,
-	      const char *realm, const char *admin_server, int server_port)
+change_entry(krb5_keytab keytab,
+	     krb5_principal principal,
+             krb5_kvno kvno,
+             int keep,
+             size_t nkstuple,
+             krb5_key_salt_tuple *kstuple,
+	     const char *realm,
+             const char *admin_server,
+             int server_port)
 {
     krb5_error_code ret;
     kadm5_config_params conf;
     void *kadm_handle;
     char *client_name;
     krb5_keyblock *keys;
+    size_t i;
     int num_keys;
-    int i;
 
     ret = krb5_unparse_name (context, principal, &client_name);
     if (ret) {
@@ -96,14 +102,15 @@ change_entry (krb5_keytab keytab,
 	free (client_name);
 	return ret;
     }
-    ret = kadm5_randkey_principal (kadm_handle, principal, &keys, &num_keys);
-    kadm5_destroy (kadm_handle);
+    ret = kadm5_randkey_principal_3(kadm_handle, principal, keep, nkstuple,
+                                    kstuple, &keys, &num_keys);
+    kadm5_destroy(kadm_handle);
     if (ret) {
-	krb5_warn(context, ret, "kadm5_randkey_principal: %s:", client_name);
+	krb5_warn(context, ret, "kadm5_randkey_principal_3: %s:", client_name);
 	free (client_name);
 	return ret;
     }
-    free (client_name);
+    free(client_name);
     for (i = 0; i < num_keys; ++i) {
 	krb5_keytab_entry new_entry;
 
@@ -131,16 +138,51 @@ struct change_set {
 };
 
 int
-kt_change (struct change_options *opt, int argc, char **argv)
+kt_change(struct change_options *opt, int argc, char **argv)
 {
     krb5_error_code ret;
     krb5_keytab keytab;
     krb5_kt_cursor cursor;
     krb5_keytab_entry entry;
-    int i, j, max;
+    krb5_key_salt_tuple *kstuple = NULL;
+    const char *enctype;
+    size_t i, j, max, nkstuple;
+    int keep = 0;
     struct change_set *changeset;
     int errors = 0;
 
+    i = 0;
+
+    if (opt->keepold_flag) {
+        keep = 1;
+        i++;
+    }
+    if (opt->keepallold_flag) {
+        keep = 2;
+        i++;
+    }
+    if (opt->pruneall_flag) {
+        keep = 0;
+        i++;
+    }
+    if (i > 1) {
+        fprintf(stderr, "use only one of --keepold, --keepallold, or --pruneall\n");
+        return EINVAL;
+    }
+
+    enctype = opt->enctype_string;
+    if (enctype == NULL || enctype[0] == '\0')
+        enctype = krb5_config_get_string(context, NULL, "libdefaults",
+                                         "supported_enctypes", NULL);
+    if (enctype == NULL || enctype[0] == '\0')
+        enctype = "aes128-cts-hmac-sha1-96";
+    ret = krb5_string_to_keysalts2(context, enctype, &nkstuple, &kstuple);
+    if (ret) {
+        fprintf(stderr, "enctype(s) unknown\n");
+        return ret;
+    }
+
+    /* XXX Parameterize keytab name */
     if((keytab = ktutil_open_keytab()) == NULL)
 	return 1;
 
@@ -232,11 +274,12 @@ kt_change (struct change_options *opt, int argc, char **argv)
 		    free(client_name);
 		}
 	    }
-	    ret = change_entry (keytab,
-				changeset[i].principal, changeset[i].kvno,
-				opt->realm_string,
-				opt->admin_server_string,
-				opt->server_port_integer);
+            ret = change_entry(keytab,
+                               changeset[i].principal, changeset[i].kvno,
+                               keep, nkstuple, kstuple,
+                               opt->realm_string,
+                               opt->admin_server_string,
+                               opt->server_port_integer);
 	    if (ret != 0)
 		errors = 1;
 	}
@@ -247,6 +290,7 @@ kt_change (struct change_options *opt, int argc, char **argv)
     free (changeset);
 
  out:
+    free(kstuple);
     krb5_kt_close(context, keytab);
     return errors;
 }

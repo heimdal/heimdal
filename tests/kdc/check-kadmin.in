@@ -87,9 +87,12 @@ ${kadmin} -l add -p "$foopassword" --use-defaults fez@${R} || exit 1
 ${kadmin} -l add -p "$foopassword" --use-defaults hasalias@${R} || exit 1
 ${kadmin} -l add -p "$foopassword" --use-defaults pkinit@${R} || exit 1
 ${kadmin} -l modify --pkinit-acl="CN=baz,DC=test,DC=h5l,DC=se" pkinit@${R} || exit 1
-${kadmin} -l add -p foo --use-defaults prune@${R} || exit 1
+${kadmin} -l add -p "$foopassword" --use-defaults prune@${R} || exit 1
 ${kadmin} -l cpw --keepold --random-key prune@${R} || exit 1
 ${kadmin} -l cpw --keepold --random-key prune@${R} || exit 1
+${kadmin} -l add -p "$foopassword" --use-defaults pruneall@${R} || exit 1
+${kadmin} -l cpw --pruneall --random-key pruneall@${R} || exit 1
+${kadmin} -l cpw --pruneall --random-key pruneall@${R} || exit 1
 
 echo "$foopassword" > ${objdir}/foopassword
 
@@ -381,6 +384,23 @@ cat kadmin.tmp | ${EGREP} Keytypes: | cut -d: -f2 | tr ' ' '
 ' | sed 's/^.*[[]\(.*\)[]].*$/\1/' | grep '[0-9]' | sort -nu | tr -d '
 ' | ${EGREP} '^13$' > /dev/null || \
         { echo "kadmin prune failed $?"; cat messages.log ; exit 1; }
+
+#----------------------------------
+${kadmind} -d &
+kadmpid=$!
+sleep 1
+
+echo "kadmin pruneall"
+env KRB5CCNAME=${cache} \
+${kadmin} get pruneall@${R} \
+        > kadmin.tmp 2>&1 || \
+        { echo "kadmin failed $?"; cat messages.log ; exit 1; }
+wait $kadmpid || { echo "kadmind failed $?"; cat messages.log ; exit 1; }
+
+cat kadmin.tmp | ${EGREP} Keytypes: | cut -d: -f2 | tr ' ' '
+' | sed 's/^.*[[]\(.*\)[]].*$/\1/' | grep '[0-9]' | sort -nu | tr -d '
+' | ${EGREP} '^3$' > /dev/null || \
+        { echo "kadmin pruneall failed $?"; cat messages.log ; exit 1; }
 
 #----------------------------------
 

@@ -63,18 +63,20 @@ get_default (kadm5_server_context *contextp,
  */
 
 static krb5_error_code
-add_one_principal (const char *name,
-		   int rand_key,
-		   int rand_password,
-		   int use_defaults,
-		   char *password,
-		   char *policy,
-		   krb5_key_data *key_data,
-		   const char *max_ticket_life,
-		   const char *max_renewable_life,
-		   const char *attributes,
-		   const char *expiration,
-		   const char *pw_expiration)
+add_one_principal(const char *name,
+                  int rand_key,
+                  int rand_password,
+                  int use_defaults,
+                  char *password,
+                  char *policy,
+                  size_t nkstuple,
+                  krb5_key_salt_tuple *kstuple,
+                  krb5_key_data *key_data,
+                  const char *max_ticket_life,
+                  const char *max_renewable_life,
+                  const char *attributes,
+                  const char *expiration,
+                  const char *pw_expiration)
 {
     krb5_error_code ret;
     kadm5_principal_ent_rec princ, defrec;
@@ -157,11 +159,11 @@ add_one_principal (const char *name,
     }
     /* Save requested password expiry before it's clobbered */
     pw_expire = princ.pw_expiration;
-    if(rand_key) {
+    if (rand_key) {
 	krb5_keyblock *new_keys;
 	int n_keys, i;
-	ret = kadm5_randkey_principal(kadm_handle, princ_ent,
-				      &new_keys, &n_keys);
+	ret = kadm5_randkey_principal_3(kadm_handle, princ_ent, 0,
+                                        nkstuple, kstuple, &new_keys, &n_keys);
 	if(ret){
 	    krb5_warn(context, ret, "kadm5_randkey_principal");
 	    n_keys = 0;
@@ -231,10 +233,12 @@ int
 add_new_key(struct add_options *opt, int argc, char **argv)
 {
     krb5_error_code ret = 0;
-    int i;
-    int num;
+    krb5_key_salt_tuple *kstuple = NULL;
     krb5_key_data key_data[3];
     krb5_key_data *kdp = NULL;
+    const char *enctypes;
+    size_t i, nkstuple;
+    int num;
 
     num = 0;
     if (opt->random_key_flag)
@@ -252,30 +256,46 @@ add_new_key(struct add_options *opt, int argc, char **argv)
 	return 1;
     }
 
+    enctypes = opt->enctypes_string;
+    if (enctypes == NULL || enctypes[0] == '\0')
+        enctypes = krb5_config_get_string(context, NULL, "libdefaults",
+                                          "supported_enctypes", NULL);
+    if (enctypes == NULL || enctypes[0] == '\0')
+        enctypes = "aes128-cts-hmac-sha1-96";
+    ret = krb5_string_to_keysalts2(context, enctypes, &nkstuple, &kstuple);
+    if (ret) {
+        fprintf(stderr, "enctype(s) unknown\n");
+        return ret;
+    }
+
+
     if (opt->key_string) {
 	const char *error;
 
 	if (parse_des_key (opt->key_string, key_data, &error)) {
-	    fprintf (stderr, "failed parsing key \"%s\": %s\n",
-		     opt->key_string, error);
+	    fprintf(stderr, "failed parsing key \"%s\": %s\n",
+		    opt->key_string, error);
+            free(kstuple);
 	    return 1;
 	}
 	kdp = key_data;
     }
 
     for(i = 0; i < argc; i++) {
-	ret = add_one_principal (argv[i],
-				 opt->random_key_flag,
-				 opt->random_password_flag,
-				 opt->use_defaults_flag,
-				 opt->password_string,
-				 opt->policy_string,
-				 kdp,
-				 opt->max_ticket_life_string,
-				 opt->max_renewable_life_string,
-				 opt->attributes_string,
-				 opt->expiration_time_string,
-				 opt->pw_expiration_time_string);
+        ret = add_one_principal(argv[i],
+                                opt->random_key_flag,
+                                opt->random_password_flag,
+                                opt->use_defaults_flag,
+                                opt->password_string,
+                                opt->policy_string,
+                                nkstuple,
+                                kstuple,
+                                kdp,
+                                opt->max_ticket_life_string,
+                                opt->max_renewable_life_string,
+                                opt->attributes_string,
+                                opt->expiration_time_string,
+                                opt->pw_expiration_time_string);
 	if (ret) {
 	    krb5_warn (context, ret, "adding %s", argv[i]);
 	    break;

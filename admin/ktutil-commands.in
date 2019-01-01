@@ -54,7 +54,7 @@ command = {
 		short = "e"
 		type = "string"
 		argument = "enctype"
-		help = "encryption type"
+		help = "encryption type(s)"
 	}
 	option = {
 		long = "password"
@@ -76,6 +76,21 @@ command = {
 		help = "generate random key"
 	}
 	option = {
+		long = "keepold"
+		type = "flag"
+		help = "keep old keys/password needed to decrypt extant tickets (default)"
+	}
+	option = {
+		long = "keepallold"
+		type = "flag"
+		help = "keep all old keys/password"
+	}
+	option = {
+		long = "pruneall"
+		type = "flag"
+		help = "delete all old keys"
+	}
+	option = {
 		long = "hex"
 		short = "H"
 		type = "flag"
@@ -93,6 +108,28 @@ command = {
 		type = "string"
 		argument = "realm"
 		help = "realm to use"
+	}
+	option = {
+		long = "enctype"
+		short = "e"
+		type = "string"
+		argument = "enctype"
+		help = "encryption type(s)"
+	}
+	option = {
+		long = "keepold"
+		type = "flag"
+		help = "keep old keys/password needed to decrypt extant tickets (default)"
+	}
+	option = {
+		long = "keepallold"
+		type = "flag"
+		help = "keep all old keys/password"
+	}
+	option = {
+		long = "pruneall"
+		type = "flag"
+		help = "delete all old keys"
 	}
 	option = {
 		long = "admin-server"
@@ -135,6 +172,21 @@ command = {
 		type = "strings"
 		help = "encryption types to use"
 		argument = "enctype"
+	}
+	option = {
+		long = "keepold"
+		type = "flag"
+		help = "keep old keys/password needed to decrypt extant tickets (default)"
+	}
+	option = {
+		long = "keepallold"
+		type = "flag"
+		help = "keep all old keys/password"
+	}
+	option = {
+		long = "pruneall"
+		type = "flag"
+		help = "delete all old keys"
 	}
 	option = {
 		long = "realm"

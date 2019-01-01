@@ -140,6 +140,12 @@ command = {
 		help = "set random password"
 	}
 	option = {
+		long = "enctypes"
+		short = "e"
+		type = "string"
+		help = "encryption type(s)"
+	}
+	option = {
 		long = "password"
 		short = "p"
 		type = "string"
@@ -226,6 +232,12 @@ command = {
 		help = "set random password"
 	}
 	option = {
+		long = "enctypes"
+		short = "e"
+		type = "string"
+		help = "encryption type(s)"
+	}
+	option = {
 		long = "password"
 		short = "p"
 		type = "string"
@@ -239,7 +251,17 @@ command = {
 	option = {
 		long = "keepold"
 		type = "flag"
-		help = "keep old keys/password"
+		help = "keep old keys/password needed to decrypt extant tickets (default)"
+	}
+	option = {
+		long = "keepallold"
+		type = "flag"
+		help = "keep all old keys/password"
+	}
+	option = {
+		long = "pruneall"
+		type = "flag"
+		help = "delete all old keys"
 	}
 	argument = "principal..."
 	min_args = "1"
@@ -286,6 +308,27 @@ command = {
 		type = "flag"
 		help = "set random key"
 	}
+	option = {
+		long = "enctypes"
+		short = "e"
+		type = "string"
+		help = "encryption type(s)"
+	}
+	option = {
+		long = "keepold"
+		type = "flag"
+		help = "keep old keys/password needed to decrypt extant tickets (default)"
+	}
+	option = {
+		long = "keepallold"
+		type = "flag"
+		help = "keep all old keys/password"
+	}
+	option = {
+		long = "pruneall"
+		type = "flag"
+		help = "delete all old keys"
+	}
 	argument = "principal..."
 	min_args = "1"
 	help = "Extracts the keys of all principals matching the expressions, and stores them in a keytab." 
@@ -294,7 +337,7 @@ command = {
 	name = "get"
 	name = "get_entry"
 	function = "get_entry"
-	/* XXX sync options with "list" */
+        /* Options added to list should be added here; not the reverse */
 	option = {
 		long = "long"
 		short = "l"

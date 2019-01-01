@@ -50,6 +50,10 @@ _gss_ntlm_allocate_ctx(OM_uint32 *minor_status, ntlm_ctx *ctx)
 	return GSS_S_FAILURE;
 
     *ctx = calloc(1, sizeof(**ctx));
+    if (*ctx == NULL) {
+	*minor_status = ENOMEM;
+	return GSS_S_FAILURE;
+    }
 
     (*ctx)->server = ns_interface;
 

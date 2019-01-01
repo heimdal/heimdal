@@ -277,28 +277,28 @@ typedef OM_uint32 GSSAPI_CALLCONV _gss_duplicate_name_t (
 	       gss_name_t *            /* dest_name */
 	      );
 
-typedef OM_uint32 GSSAPI_CALLCONV _gss_inquire_sec_context_by_oid (
+typedef OM_uint32 GSSAPI_CALLCONV _gss_inquire_sec_context_by_oid_t (
 	       OM_uint32 *minor_status,
 	       gss_const_ctx_id_t context_handle,
 	       const gss_OID desired_object,
 	       gss_buffer_set_t *data_set
 	      );
 
-typedef OM_uint32 GSSAPI_CALLCONV _gss_inquire_cred_by_oid (
+typedef OM_uint32 GSSAPI_CALLCONV _gss_inquire_cred_by_oid_t (
 	       OM_uint32 *minor_status,
 	       gss_const_cred_id_t cred,
 	       const gss_OID desired_object,
 	       gss_buffer_set_t *data_set
 	      );
 
-typedef OM_uint32 GSSAPI_CALLCONV _gss_set_sec_context_option (
+typedef OM_uint32 GSSAPI_CALLCONV _gss_set_sec_context_option_t (
 	       OM_uint32 *minor_status,
 	       gss_ctx_id_t *cred_handle,
 	       const gss_OID desired_object,
 	       const gss_buffer_t value
  	      );
 
-typedef OM_uint32 GSSAPI_CALLCONV _gss_set_cred_option (
+typedef OM_uint32 GSSAPI_CALLCONV _gss_set_cred_option_t (
 	       OM_uint32 *minor_status,
 	       gss_cred_id_t *cred_handle,
 	       const gss_OID desired_object,
@@ -306,7 +306,7 @@ typedef OM_uint32 GSSAPI_CALLCONV _gss_set_cred_option (
  	      );
 
 
-typedef OM_uint32 GSSAPI_CALLCONV _gss_pseudo_random(
+typedef OM_uint32 GSSAPI_CALLCONV _gss_pseudo_random_t (
     	       OM_uint32 *minor_status,
 	       gss_ctx_id_t context,
 	       int prf_key,
@@ -524,11 +524,11 @@ typedef struct gssapi_mech_interface_desc {
 	_gss_inquire_mechs_for_name_t	*gm_inquire_mechs_for_name;
 	_gss_canonicalize_name_t	*gm_canonicalize_name;
 	_gss_duplicate_name_t		*gm_duplicate_name;
-	_gss_inquire_sec_context_by_oid	*gm_inquire_sec_context_by_oid;
-	_gss_inquire_cred_by_oid	*gm_inquire_cred_by_oid;
-	_gss_set_sec_context_option	*gm_set_sec_context_option;
-	_gss_set_cred_option		*gm_set_cred_option;
-	_gss_pseudo_random		*gm_pseudo_random;
+	_gss_inquire_sec_context_by_oid_t	*gm_inquire_sec_context_by_oid;
+	_gss_inquire_cred_by_oid_t	*gm_inquire_cred_by_oid;
+	_gss_set_sec_context_option_t	*gm_set_sec_context_option;
+	_gss_set_cred_option_t		*gm_set_cred_option;
+	_gss_pseudo_random_t		*gm_pseudo_random;
 	_gss_wrap_iov_t			*gm_wrap_iov;
 	_gss_unwrap_iov_t		*gm_unwrap_iov;
 	_gss_wrap_iov_length_t		*gm_wrap_iov_length;

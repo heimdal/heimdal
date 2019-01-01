@@ -164,7 +164,7 @@ _gss_string_to_oid(const char* s, gss_OID *oidp)
 
 #define SYM(name)							\
 do {									\
-	m->gm_mech.gm_ ## name = dlsym(so, "gss_" #name);		\
+	m->gm_mech.gm_ ## name = (_gss_##name##_t *)dlsym(so, "gss_" #name); \
 	if (!m->gm_mech.gm_ ## name ||					\
 	    m->gm_mech.gm_ ##name == gss_ ## name) {			\
 		fprintf(stderr, "can't find symbol gss_" #name "\n");	\
@@ -174,26 +174,26 @@ do {									\
 
 #define OPTSYM(name)							\
 do {									\
-	m->gm_mech.gm_ ## name = dlsym(so, "gss_" #name);		\
+	m->gm_mech.gm_ ## name =  (_gss_##name##_t *)dlsym(so, "gss_" #name); \
 	if (m->gm_mech.gm_ ## name == gss_ ## name)			\
 		m->gm_mech.gm_ ## name = NULL;				\
 } while (0)
 
 #define OPTSPISYM(name)							\
 do {									\
-	m->gm_mech.gm_ ## name = dlsym(so, "gssspi_" #name);		\
+	m->gm_mech.gm_ ## name =  (_gss_##name##_t *)dlsym(so, "gssspi_" #name); \
 } while (0)
 
 #define COMPATSYM(name)							\
 do {									\
-	m->gm_mech.gm_compat->gmc_ ## name = dlsym(so, "gss_" #name);	\
+	m->gm_mech.gm_compat->gmc_ ## name =  (_gss_##name##_t *)dlsym(so, "gss_" #name); \
 	if (m->gm_mech.gm_compat->gmc_ ## name == gss_ ## name)		\
 		m->gm_mech.gm_compat->gmc_ ## name = NULL;		\
 } while (0)
 
 #define COMPATSPISYM(name)						\
 do {									\
-	m->gm_mech.gm_compat->gmc_ ## name = dlsym(so, "gssspi_" #name);\
+	m->gm_mech.gm_compat->gmc_ ## name =  (_gss_##name##_t *)dlsym(so, "gssspi_" #name); \
 	if (m->gm_mech.gm_compat->gmc_ ## name == gss_ ## name)		\
 		m->gm_mech.gm_compat->gmc_ ## name = NULL;		\
 } while (0)
@@ -405,7 +405,7 @@ _gss_load_mech(void)
 		OPTSYM(duplicate_cred);
 		OPTSPISYM(authorize_localname);
 
-		mi = dlsym(so, "gss_mo_init");
+		mi = (_gss_mo_init *)dlsym(so, "gss_mo_init");
 		if (mi != NULL) {
 			major_status = mi(&minor_status, mech_oid,
 					  &m->gm_mech.gm_mo, &m->gm_mech.gm_mo_num);

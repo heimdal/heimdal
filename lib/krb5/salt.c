@@ -91,6 +91,69 @@ krb5_string_to_salttype (krb5_context context,
     return HEIM_ERR_SALTTYPE_NOSUPP;
 }
 
+/*
+ * Like MIT's krb5_string_to_keysalts(), but simpler and with a context
+ * argument.
+ */
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
+krb5_string_to_keysalts2(krb5_context context, const char *string,
+                         size_t *nksaltp, krb5_key_salt_tuple **ksaltp)
+{
+    /* deleted: tupleseps, ksaltseps, dups */
+    krb5_key_salt_tuple *tmp = NULL;
+    krb5_error_code ret = 0;
+    char *copy, *token, *stype_str;
+    char *lasts = NULL;
+    krb5_enctype etype;
+    krb5_salttype stype;
+    size_t i;
+
+    *ksaltp = NULL;
+    *nksaltp = 0;
+    if ((copy = strdup(string)) == NULL)
+        return krb5_enomem(context);
+    for (token = strtok_r(copy, ", \t", &lasts), ret = 0;
+         token != NULL;
+         token = strtok_r(NULL, ", \t", &lasts)) {
+        if ((stype_str = strchr(token, ':')) != NULL)
+            *(stype_str++) = '\0';
+        if ((ret = krb5_string_to_enctype(context, token, &etype)))
+            continue;
+        if (stype_str == NULL)
+            stype = KRB5_PW_SALT;
+        else if ((ret = krb5_string_to_salttype(context, etype, stype_str, &stype)))
+            continue;
+        for (i = 0; i < *nksaltp; i++) {
+            if ((*ksaltp)[i].ks_enctype == etype &&
+                (*ksaltp)[i].ks_salttype == stype)
+                goto skip;
+        }
+        tmp = realloc(*ksaltp, ((*nksaltp) + 1) * sizeof(**ksaltp));
+        if (tmp == NULL) {
+            ret = krb5_enomem(context);
+            break;
+        }
+        *ksaltp = tmp;
+        (*ksaltp)[*nksaltp].ks_enctype = etype;
+        (*ksaltp)[*nksaltp].ks_salttype = stype;
+        (*nksaltp)++;
+skip:
+        (void)1;
+    }
+    free(copy);
+    if (ret == ENOMEM) {
+        free(*ksaltp);
+        *nksaltp = 0;
+        *ksaltp = NULL;
+    } else if (*nksaltp) {
+        return 0;
+    } else if (ret == 0) {
+        return KRB5_PROG_ETYPE_NOSUPP;
+    }
+    return ret;
+}
+
+
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_get_pw_salt(krb5_context context,
 		 krb5_const_principal principal,

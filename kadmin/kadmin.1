@@ -102,6 +102,7 @@ Commands include:
 .Pp
 .Nm add
 .Op Fl r | Fl Fl random-key
+.Op Fl Fl enctypes= Ns Ar string
 .Op Fl Fl random-password
 .Op Fl p Ar string \*(Ba Fl Fl password= Ns Ar string
 .Op Fl Fl key= Ns Ar string
@@ -115,6 +116,24 @@ Commands include:
 .Bd -ragged -offset indent
 Adds a new principal to the database. The options not passed on the
 command line will be promped for.
+If enctypes to use are not given, then the
+.Ar [libdefaults] supported_enctypes
+configuration parameter will be used on the client side to select
+enctypes, defaulting to
+.Ar aes128-cts-hmac-sha1-96.
+For compatibility with MIT, the enctypes string is a space- or
+comma-separated list of enctype:salttype.
+If
+.Fl Fl keepold
+is given, then old keys needed to decrypt extant tickets are
+kept, and all other old keys are deleted.
+If
+.Fl Fl keepallold
+is given then all old keys are kept.  If
+.Fl Fl pruneall is given then all old keys are removed.
+The
+.Fl Fl keepold
+behavior is the default if none of these are given.
 The only policy supported by Heimdal servers is
 .Ql default .
 .Ed
@@ -157,6 +176,8 @@ principals, those are not consulted here.
 .Pp
 .Nm ext_keytab
 .Oo Fl k Ar string \*(Ba Xo
+.Op Fl Fl keepold | Fl Fl keepallold | Fl Fl pruneall
+.Op Fl Fl enctypes= Ns Ar string
 .Fl Fl keytab= Ns Ar string
 .Xc
 .Oc
@@ -165,6 +186,24 @@ principals, those are not consulted here.
 Creates a keytab with the keys of the specified principals.  Requires
 get-keys rights, otherwise the principal's keys are changed and saved in
 the keytab.
+If enctypes to use are not given, then the
+.Ar [libdefaults] supported_enctypes
+configuration parameter will be used on the client side to select
+enctypes, defaulting to
+.Ar aes128-cts-hmac-sha1-96.
+For compatibility with MIT, the enctypes string is a space- or
+comma-separated list of enctype:salttype.
+If
+.Fl Fl keepold
+is given, then old keys needed to decrypt extant tickets are
+kept, and all other old keys are deleted.
+If
+.Fl Fl keepallold
+is given then all old keys are kept.  If
+.Fl Fl pruneall is given then all old keys are removed.
+The
+.Fl Fl keepold
+behavior is the default if none of these are given.
 .Ed
 .Pp
 .Nm get
@@ -250,7 +289,8 @@ kadmin -l modify -a -disallow-proxiable user
 .Ed
 .Pp
 .Nm passwd
-.Op Fl Fl keepold
+.Op Fl Fl keepold | Fl Fl keepallold | Fl Fl pruneall
+.Op Fl Fl enctypes= Ns Ar string
 .Op Fl r | Fl Fl random-key
 .Op Fl Fl random-password
 .Oo Fl p Ar string \*(Ba Xo
@@ -261,6 +301,24 @@ kadmin -l modify -a -disallow-proxiable user
 .Ar principal...
 .Bd -ragged -offset indent
 Changes the password of an existing principal.
+If enctypes to use are not given, then the
+.Ar [libdefaults] supported_enctypes
+configuration parameter will be used on the client side to select
+enctypes, defaulting to
+.Ar aes128-cts-hmac-sha1-96.
+For compatibility with MIT, the enctypes string is a space- or
+comma-separated list of enctype:salttype.
+If
+.Fl Fl keepold
+is given, then old keys needed to decrypt extant tickets are
+kept, and all other old keys are deleted.
+If
+.Fl Fl keepallold
+is given then all old keys are kept.  If
+.Fl Fl pruneall is given then all old keys are removed.
+The
+.Fl Fl keepold
+behavior is the default if none of these are given.
 .Ed
 .Pp
 .Nm password-quality

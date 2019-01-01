@@ -62,6 +62,7 @@ can be one of the following:
 .Bl -tag -width srvconvert
 .It add Oo Fl p Ar principal Oc Oo Fl Fl principal= Ns Ar principal Oc \
 Oo Fl V Ar kvno Oc Oo Fl Fl kvno= Ns Ar kvno Oc Oo Fl e Ar enctype Oc \
+Oo Fl Fl keepold | Fl Fl keepallold | Fl Fl pruneall Oc \
 Oo Fl Fl enctype= Ns Ar enctype Oc Oo Fl w Ar password Oc \
 Oo Fl Fl password= Ns Ar password Oc Oo Fl r Oc Oo Fl Fl random Oc \
 Oo Fl s Oc Oo Fl Fl no-salt Oc Oo Fl H Oc Op Fl Fl hex
@@ -72,6 +73,8 @@ the keytab, you should consider the
 .Ar get
 command, which talks to the kadmin server.
 .It change Oo Fl r Ar realm Oc Oo Fl Fl realm= Ns Ar realm Oc \
+Oo Fl Fl keepold | Fl Fl keepallold | Fl Fl pruneall Oc \
+Oo Fl Fl enctype= Ns Ar enctype Oc \
 Oo Fl Fl a Ar host Oc Oo Fl Fl admin-server= Ns Ar host Oc \
 Oo Fl Fl s Ar port Oc Op Fl Fl server-port= Ns Ar port
 Update one or several keys to new versions.  By default, use the admin
@@ -86,6 +89,7 @@ to
 .Ar keytab-dest .
 .It get Oo Fl p Ar admin principal Oc \
 Oo Fl Fl principal= Ns Ar admin principal Oc Oo Fl e Ar enctype Oc \
+Oo Fl Fl keepold | Fl Fl keepallold | Fl Fl pruneall Oc \
 Oo Fl Fl enctypes= Ns Ar enctype Oc Oo Fl r Ar realm Oc \
 Oo Fl Fl realm= Ns Ar realm Oc Oo Fl a Ar admin server Oc \
 Oo Fl Fl admin-server= Ns Ar admin server Oc Oo Fl s Ar server port Oc \

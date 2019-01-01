@@ -674,6 +674,17 @@ plcallback(krb5_context context,
     return KRB5_PLUGIN_NO_HANDLE;
 }
 
+static const char *locate_plugin_deps[] = { "krb5", NULL };
+
+static struct krb5_plugin_data
+locate_plugin_data = {
+    "krb5",
+    KRB5_PLUGIN_LOCATE,
+    KRB5_PLUGIN_LOCATE_VERSION_0,
+    locate_plugin_deps,
+    krb5_get_instance
+};
+
 static void
 plugin_get_hosts(krb5_context context,
 		 struct krb5_krbhst_data *kd,
@@ -684,8 +695,7 @@ plugin_get_hosts(krb5_context context,
     if (_krb5_homedir_access(context))
 	ctx.flags |= KRB5_PLF_ALLOW_HOMEDIR;
 
-    _krb5_plugin_run_f(context, "krb5", KRB5_PLUGIN_LOCATE,
-		       KRB5_PLUGIN_LOCATE_VERSION_0,
+    _krb5_plugin_run_f(context, &locate_plugin_data,
 		       0, &ctx, plcallback);
 }
 

@@ -37,9 +37,12 @@
 
 /*
  * Each hook is called before the operation using KADM5_STAGE_PRECOMMIT and
- * then after the operation using KADM5_STAGE_POSTCOMMIT.  If the hook returns
+ * then after the operation using KADM5_STAGE_POSTCOMMIT. If the hook returns
  * failure during precommit, the operation is aborted without changes to the
- * database.
+ * database. All post-commit hook are invoked if the operation was attempted.
+ *
+ * Note that unlike libkrb5 plugins, returning success does not prevent other
+ * plugins being called (i.e. it is equivalent to KRB5_PLUGIN_NO_HANDLE).
  */
 enum kadm5_hook_stage {
     KADM5_HOOK_STAGE_PRECOMMIT,
@@ -49,24 +52,13 @@ enum kadm5_hook_stage {
 #define KADM5_HOOK_FLAG_KEEPOLD	    0x1 /* keep old password */
 #define KADM5_HOOK_FLAG_CONDITIONAL 0x2 /* only change password if different */
 
-/*
- * libkadm5srv expects a symbol named kadm5_hook_init that must be a function
- * of type kadm5_hook_init_t. The function will be called with the maximum
- * version of the hook API supported by libkadm5; the plugin may return an
- * earlier version.
- */
-typedef struct kadm5_hook {
+typedef struct kadm5_hook_ftable {
+    int version;
+    krb5_error_code (KRB5_CALLCONV *init)(krb5_context, void **data);
+    void (KRB5_CALLCONV *fini)(void *data);
+
     const char *name;
-    uint32_t version;
     const char *vendor;
-
-    /*
-     * Set this to krb5_init_context(): kadmin will use this to verify
-     * that we are linked against the same libkrb5.
-     */
-    krb5_error_code (KRB5_CALLCONV *init_context)(krb5_context *);
-
-    void (KRB5_CALLCONV *fini)(krb5_context, void *data);
 
     /*
      * Hook functions; NULL functions are ignored. code is only valid on
@@ -128,12 +120,23 @@ typedef struct kadm5_hook {
 					      size_t n_keys,
 					      krb5_keyblock *keyblocks);
 
-} kadm5_hook;
+    krb5_error_code (KRB5_CALLCONV *prune)(krb5_context context,
+					   void *data,
+					   enum kadm5_hook_stage stage,
+					   krb5_error_code code,
+					   krb5_const_principal princ,
+					   int kvno);
 
+} kadm5_hook_ftable;
+
+/*
+ * libkadm5srv expects a symbol named kadm5_hook_plugin_load that must be a
+ * function of type kadm5_hook_plugin_load_t.
+ */
 typedef krb5_error_code
-(KRB5_CALLCONV *kadm5_hook_init_t)(krb5_context context,
-				   uint32_t kadm5_version_max,
-				   const kadm5_hook **hook,
-				   void **data);
+(KRB5_CALLCONV *kadm5_hook_plugin_load_t)(krb5_context context,
+					  krb5_get_instance_func_t *func,
+					  size_t *n_hooks,
+					  const kadm5_hook_ftable *const **hooks);
 
 #endif /* !KADM5_HOOK_H */

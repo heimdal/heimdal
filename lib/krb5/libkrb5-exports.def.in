@@ -366,6 +366,7 @@ EXPORTS
 	krb5_get_init_creds_opt_set_tkt_life
 	krb5_get_init_creds_opt_set_win2k
 	krb5_get_init_creds_password
+	krb5_get_instance
 	krb5_get_kdc_cred
 	krb5_get_kdc_sec_offset
 	krb5_get_krb524hst
@@ -756,6 +757,10 @@ EXPORTS
 	_krb5_build_authenticator
 	_krb5_kt_client_default_name
 
+	; Shared with libkadm5
+	_krb5_load_plugins
+	_krb5_unload_plugins
+
 	; Shared with libkdc
 	_krb5_AES_SHA1_string_to_default_iterator
 	_krb5_AES_SHA2_string_to_default_iterator
@@ -806,8 +811,6 @@ EXPORTS
 	; Recent additions
 	krb5_cc_type_dcc;
 	krb5_dcc_ops;
-	_krb5_plugin_find;
-	_krb5_plugin_free;
 	_krb5_expand_path_tokensv;
         _krb5_find_capath;
         _krb5_free_capath;

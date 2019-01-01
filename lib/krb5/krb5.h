@@ -873,13 +873,15 @@ typedef krb5_error_code
 (KRB5_CALLCONV * krb5_sendto_ctx_func)(krb5_context, krb5_sendto_ctx, void *,
 				       const krb5_data *, int *);
 
-struct krb5_plugin;
 enum krb5_plugin_type {
     PLUGIN_TYPE_DATA = 1,
-    PLUGIN_TYPE_FUNC
+    PLUGIN_TYPE_FUNC /* no longer supported */
 };
 
 #define KRB5_PLUGIN_INVOKE_ALL  1
+
+typedef uintptr_t
+(KRB5_CALLCONV *krb5_get_instance_func_t)(const char *);
 
 struct credentials; /* this is to keep the compiler happy */
 struct getargs;

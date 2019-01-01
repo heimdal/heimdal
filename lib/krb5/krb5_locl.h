@@ -134,6 +134,7 @@ struct ContentInfo;
 struct AlgorithmIdentifier;
 typedef struct krb5_pk_init_ctx_data *krb5_pk_init_ctx;
 struct krb5_dh_moduli;
+struct krb5_plugin_data;
 
 /* v4 glue */
 struct _krb5_krb_auth_data;
@@ -392,5 +393,13 @@ struct krb5_pk_init_ctx_data {
 #else
 # define ISPATHSEP(x) (x == '/')
 #endif
+
+struct krb5_plugin_data {
+    const char *module;
+    const char *name;
+    int min_version;
+    const char **deps;
+    krb5_get_instance_func_t get_instance;
+};
 
 #endif /* __KRB5_LOCL_H__ */

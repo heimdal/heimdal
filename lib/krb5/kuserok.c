@@ -455,6 +455,17 @@ krb5_kuserok(krb5_context context,
 }
 
 
+static const char *kuserok_plugin_deps[] = { "krb5", NULL };
+
+static struct krb5_plugin_data
+kuserok_plugin_data = {
+    "krb5",
+    KRB5_PLUGIN_KUSEROK,
+    KRB5_PLUGIN_KUSEROK_VERSION_0,
+    kuserok_plugin_deps,
+    krb5_get_instance
+};
+
 KRB5_LIB_FUNCTION krb5_boolean KRB5_LIB_CALL
 _krb5_kuserok(krb5_context context,
 	      krb5_principal principal,
@@ -515,9 +526,8 @@ _krb5_kuserok(krb5_context context,
 	for (n = 0; rules[n]; n++) {
 	    ctx.rule = rules[n];
 
-	    ret = _krb5_plugin_run_f(context, "krb5", KRB5_PLUGIN_KUSEROK,
-				     KRB5_PLUGIN_KUSEROK_VERSION_0, 0,
-				     &ctx, plcallback);
+	    ret = _krb5_plugin_run_f(context, &kuserok_plugin_data,
+				     0, &ctx, plcallback);
 	    if (ret != KRB5_PLUGIN_NO_HANDLE) 
 		goto out;
 	}

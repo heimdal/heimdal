@@ -14,12 +14,22 @@ db_plugins_plcallback(krb5_context context, const void *plug, void *plugctx,
     return 0;
 }
 
+static const char *db_plugin_deps[] = { "krb5", NULL };
+
+static struct krb5_plugin_data
+db_plugin_data = {
+    "krb5",
+    KRB5_PLUGIN_DB,
+    KRB5_PLUGIN_DB_VERSION_0,
+    db_plugin_deps,
+    krb5_get_instance
+};
+
 static void
 db_plugins_init(void *arg)
 {
     krb5_context context = arg;
-    (void)_krb5_plugin_run_f(context, "krb5", KRB5_PLUGIN_DB,
-			     KRB5_PLUGIN_DB_VERSION_0, 0, NULL,
+    (void)_krb5_plugin_run_f(context, &db_plugin_data, 0, NULL,
 			     db_plugins_plcallback);
 }
 

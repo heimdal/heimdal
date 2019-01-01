@@ -390,6 +390,8 @@ make_sym(const char *prefix)
     return sym;
 }
 
+static const char *hdb_plugin_deps[] = { "hdb", "krb5", NULL };
+
 krb5_error_code
 hdb_list_builtin(krb5_context context, char **list)
 {
@@ -414,12 +416,17 @@ hdb_list_builtin(krb5_context context, char **list)
         if (h->create == NULL) {
             struct cb_s cb_ctx;
             char *f;
-            char *sym;
+	    struct krb5_plugin_data hdb_plugin_data;
+
+	    hdb_plugin_data.module = "krb5";
+	    hdb_plugin_data.min_version = HDB_INTERFACE_VERSION;
+	    hdb_plugin_data.deps = hdb_plugin_deps;
+	    hdb_plugin_data.get_instance = hdb_get_instance;
 
             /* Try loading the plugin */
             if (asprintf(&f, "%sfoo", h->prefix) == -1)
                 f = NULL;
-            if ((sym = make_sym(h->prefix)) == NULL) {
+            if ((hdb_plugin_data.name = make_sym(h->prefix)) == NULL) {
                 free(buf);
                 free(f);
                 return krb5_enomem(context);
@@ -427,11 +434,10 @@ hdb_list_builtin(krb5_context context, char **list)
             cb_ctx.filename = f;
             cb_ctx.residual = NULL;
             cb_ctx.h = NULL;
-            (void)_krb5_plugin_run_f(context, "krb5", sym,
-                                     HDB_INTERFACE_VERSION, 0, &cb_ctx,
-                                     callback);
+            (void)_krb5_plugin_run_f(context, &hdb_plugin_data, 0,
+                                     &cb_ctx, callback);
             free(f);
-            free(sym);
+            free(rk_UNCONST(hdb_plugin_data.name));
             if (cb_ctx.h == NULL || cb_ctx.h->create == NULL)
                 continue;
         }
@@ -483,17 +489,35 @@ hdb_create(krb5_context context, HDB **db, const char *filename)
     cb_ctx.filename = filename;
 
     if (cb_ctx.h == NULL || cb_ctx.h->create == NULL) {
-        char *sym;
+	struct krb5_plugin_data hdb_plugin_data;
 
-        if ((sym = make_sym(filename)) == NULL)
+	hdb_plugin_data.module = "krb5";
+	hdb_plugin_data.min_version = HDB_INTERFACE_VERSION;
+	hdb_plugin_data.deps = hdb_plugin_deps;
+	hdb_plugin_data.get_instance = hdb_get_instance;
+
+        if ((hdb_plugin_data.name = make_sym(filename)) == NULL)
             return krb5_enomem(context);
 
-        (void)_krb5_plugin_run_f(context, "krb5", sym, HDB_INTERFACE_VERSION,
+        (void)_krb5_plugin_run_f(context, &hdb_plugin_data,
                                  0, &cb_ctx, callback);
 
-        free(sym);
+        free(rk_UNCONST(hdb_plugin_data.name));
     }
     if (cb_ctx.h == NULL)
 	krb5_errx(context, 1, "No database support for %s", cb_ctx.filename);
     return (*cb_ctx.h->create)(context, db, cb_ctx.residual);
+}
+
+uintptr_t
+hdb_get_instance(const char *libname)
+{
+    static const char *instance = "libhdb";
+
+    if (strcmp(libname, "hdb") == 0)
+	return (uintptr_t)instance;
+    else if (strcmp(libname, "krb5") == 0)
+	return krb5_get_instance(libname);
+
+    return 0;
 }

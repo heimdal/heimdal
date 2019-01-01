@@ -102,6 +102,39 @@ create_principal(kadm5_server_context *context,
 			       &ent->entry.created_by.principal);
 }
 
+struct create_principal_hook_ctx {
+    kadm5_server_context *context;
+    enum kadm5_hook_stage stage;
+    krb5_error_code code;
+    kadm5_principal_ent_t princ;
+    uint32_t mask;
+    const char *password;
+};
+
+static krb5_error_code
+create_principal_hook_cb(krb5_context context,
+			 const void *hook,
+			 void *hookctx,
+			 void *userctx)
+{
+    krb5_error_code ret;
+    const struct kadm5_hook_ftable *ftable = hook;
+    struct create_principal_hook_ctx *ctx = userctx;
+
+    ret = ftable->create(context, hookctx,
+			 ctx->stage, ctx->code, ctx->princ,
+			 ctx->mask, ctx->password);
+    if (ret != 0 && ret != KRB5_PLUGIN_NO_HANDLE)
+	_kadm5_s_set_hook_error_message(ctx->context, ret, "create",
+					hook, ctx->stage);
+
+    /* only pre-commit plugins can abort */
+    if (ret == 0 || ctx->stage == KADM5_HOOK_STAGE_POSTCOMMIT)
+	ret = KRB5_PLUGIN_NO_HANDLE;
+
+    return ret;
+}
+
 static kadm5_ret_t
 create_principal_hook(kadm5_server_context *context,
 		      enum kadm5_hook_stage stage,
@@ -110,23 +143,20 @@ create_principal_hook(kadm5_server_context *context,
 		      uint32_t mask,
 		      const char *password)
 {
-    krb5_error_code ret = 0;
-    size_t i;
+    krb5_error_code ret;
+    struct create_principal_hook_ctx ctx;
 
-    for (i = 0; i < context->num_hooks; i++) {
-	kadm5_hook_context *hook = context->hooks[i];
+    ctx.context = context;
+    ctx.stage = stage;
+    ctx.code = code;
+    ctx.princ = princ;
+    ctx.mask = mask;
+    ctx.password = password;
 
-	if (hook->hook->create != NULL) {
-	    ret = hook->hook->create(context->context, hook->data,
-				     stage, code, princ, mask, password);
-	    if (ret != 0) {
-		_kadm5_s_set_hook_error_message(context, ret, "create",
-						hook->hook, stage);
-		if (stage == KADM5_HOOK_STAGE_PRECOMMIT)
-		    break;
-	    }
-	}
-    }
+    ret = _krb5_plugin_run_f(context->context, &kadm5_hook_plugin_data,
+			     0, &ctx, create_principal_hook_cb);
+    if (ret == KRB5_PLUGIN_NO_HANDLE)
+	ret = 0;
 
     return ret;
 }

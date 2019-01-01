@@ -362,6 +362,7 @@ HEIMDAL_KRB5_2.0 {
 		krb5_get_init_creds_opt_set_tkt_life;
 		krb5_get_init_creds_opt_set_win2k;
 		krb5_get_init_creds_password;
+		krb5_get_instance;
 		krb5_get_kdc_cred;
 		krb5_get_kdc_sec_offset;
 		krb5_get_krb524hst;
@@ -748,6 +749,10 @@ HEIMDAL_KRB5_2.0 {
 		_krb5_build_authenticator;
 		_krb5_kt_client_default_name;
 
+		# Shared with libkadm5
+		_krb5_load_plugins;
+		_krb5_unload_plugins;
+
 		# Shared with libkdc
 		_krb5_AES_SHA1_string_to_default_iterator;
 		_krb5_AES_SHA2_string_to_default_iterator;
@@ -761,8 +766,6 @@ HEIMDAL_KRB5_2.0 {
 		_krb5_pk_load_id;
 		_krb5_pk_mk_ContentInfo;
 		_krb5_pk_octetstring2key;
-		_krb5_plugin_find;
-		_krb5_plugin_free;
 		_krb5_plugin_run_f;
 		_krb5_principal2principalname;
 		_krb5_principalname2krb5_principal;

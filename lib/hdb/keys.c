@@ -31,6 +31,7 @@
  * SUCH DAMAGE.
  */
 
+#include "krb5_locl.h"
 #include "hdb_locl.h"
 
 struct hx509_certs_data;
@@ -45,7 +46,6 @@ struct _krb5_key_data;
 struct _krb5_encryption_type;
 struct _krb5_key_type;
 #include <pkinit_asn1.h>
-#include <krb5-private.h>
 #include <base64.h>
 
 /*

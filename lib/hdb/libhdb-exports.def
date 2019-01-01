@@ -43,6 +43,7 @@ EXPORTS
 	hdb_generate_key_set_password
 	hdb_generate_key_set_password_with_ks_tuple
 	hdb_get_dbinfo
+	hdb_get_instance
 	hdb_init_db
         hdb_interface_version   DATA
 	hdb_key2principal

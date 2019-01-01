@@ -57,11 +57,26 @@ associated header file, such as, for example,
 .Va krb5plugin_kuserok_ftable
 and a pointer to which is either registered via
 .Xr krb5_plugin_register 3
-or found in a shared object via a symbol lookup for the symbol name
-defined in the associated header file (e.g., "kuserok" for the
+or via a plugin load function exported by a shared object. Plugin load
+functions should be named by concatenating the name defined in the associated
+header file with the string "plugin_load" (e.g. "kuserok_plugin_load" for the
 plugin for
 .Xr krb5_kuserok 3
 ).
+The plugin load function has the following signature:
+.Bd -literal -offset indent
+krb5_error_code
+kuserok_plugin_load(krb5_context context,
+                    krb5_get_instance_func_t *get_instance,
+                    size_t *n_plugins,
+                    const common_plugin_ftable *const **plugins);
+.Ed
+.Pp
+The plugin should set the get_instance output parameter to the a function
+that will return the instances of its library dependencies. The output
+parameters n_plugins and plugins specify the number of plugins, and an array of
+pointers to function tables, respectively.
+.Ed
 .Pp
 The plugin structs for all plugin types always begin with the same three
 common fields:
@@ -200,6 +215,31 @@ krb5plugin_an2ln_ftable an2ln = {
     nouser_plug_fini,
     nouser_plug_an2ln,
 };
+
+static const krb5plugin_an2ln_ftable *const plugins[] = {
+    &an2ln
+};
+
+static uintptr_t
+an2ln_get_instance(const char *libname)
+{
+    if (strcmp(libname, "krb5") == 0)
+	return krb5_get_instance(libname);
+
+    return 0;
+}
+
+krb5_error_code
+an2ln_plugin_load(krb5_context context,
+                 krb5_get_instance_func_t *get_instance,
+                 size_t *num_plugins,
+                 const krb5plugin_an2ln_ftable * const **pplugins)
+{
+    *get_instance = an2ln_get_instance;
+    *num_plugins = sizeof(plugins) / sizeof(plugins[0]);
+    *pplugins = plugins;
+    return 0;
+}
 .Ed
 .Pp
 An example kuserok plugin that rejects all requests follows.  (Note that
@@ -232,12 +272,38 @@ reject_plug_kuserok(void *plug_ctx, krb5_context context, const char *rule,
     return 0;
 }
 
-krb5plugin_kuserok_ftable kuserok = {
+static krb5plugin_kuserok_ftable kuserok = {
     KRB5_PLUGIN_KUSEROK_VERSION_0,
     reject_plug_init,
     reject_plug_fini,
     reject_plug_kuserok,
 };
+
+static const krb5plugin_kuserok_ftable *const plugins[] = {
+    &kuserok
+};
+
+static uintptr_t
+kuserok_get_instance(const char *libname)
+{
+    if (strcmp(libname, "krb5") == 0)
+	return krb5_get_instance(libname);
+
+    return 0;
+}
+
+krb5_error_code
+kuserok_plugin_load(krb5_context context,
+                    krb5_get_instance_func_t *get_instance,
+                    size_t *num_plugins,
+                    const krb5plugin_kuserok_ftable * const **pplugins)
+{
+    *krb5_instance = kuserok_get_instance;
+    *num_plugins = sizeof(plugins) / sizeof(plugins[0]);
+    *pplugins = plugins;
+    return 0;
+}
+
 .Ed
 .Sh SEE ALSO
 .Xr krb5_plugin_register 3

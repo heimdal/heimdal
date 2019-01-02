@@ -610,7 +610,7 @@ struct hx509_keyset_ops keyset_keychain = {
  *
  */
 
-void
+HX509_LIB_FUNCTION void HX509_LIB_CALL
 _hx509_ks_keychain_register(hx509_context context)
 {
 #ifdef HAVE_FRAMEWORK_SECURITY

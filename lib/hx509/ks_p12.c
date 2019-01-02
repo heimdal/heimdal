@@ -707,7 +707,7 @@ static struct hx509_keyset_ops keyset_pkcs12 = {
     NULL
 };
 
-void
+HX509_LIB_FUNCTION void HX509_LIB_CALL
 _hx509_ks_pkcs12_register(hx509_context context)
 {
     _hx509_ks_register(context, &keyset_pkcs12);

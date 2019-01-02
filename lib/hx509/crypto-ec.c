@@ -49,7 +49,7 @@ extern const AlgorithmIdentifier _hx509_signature_sha384_data;
 extern const AlgorithmIdentifier _hx509_signature_sha256_data;
 extern const AlgorithmIdentifier _hx509_signature_sha1_data;
 
-void
+HX509_LIB_FUNCTION void HX509_LIB_CALL
 _hx509_private_eckey_free(void *eckey)
 {
 #ifdef HAVE_HCRYPTO_W_OPENSSL
@@ -512,7 +512,7 @@ const struct signature_alg ecdsa_with_sha1_alg = {
 
 #endif /* HAVE_HCRYPTO_W_OPENSSL */
 
-const AlgorithmIdentifier *
+HX509_LIB_FUNCTION const AlgorithmIdentifier * HX509_LIB_CALL
 hx509_signature_ecPublicKey(void)
 {
 #ifdef HAVE_HCRYPTO_W_OPENSSL
@@ -522,7 +522,7 @@ hx509_signature_ecPublicKey(void)
 #endif /* HAVE_HCRYPTO_W_OPENSSL */
 }
 
-const AlgorithmIdentifier *
+HX509_LIB_FUNCTION const AlgorithmIdentifier * HX509_LIB_CALL
 hx509_signature_ecdsa_with_sha256(void)
 {
 #ifdef HAVE_HCRYPTO_W_OPENSSL

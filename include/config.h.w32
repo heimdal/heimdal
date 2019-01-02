@@ -68,6 +68,23 @@ static const char *const rcsid[] = { (const char *)rcsid, "@(#)" msg }
 #endif
 
 
+#ifdef BUILD_HX509_LIB
+#ifndef HX509_LIB
+#ifdef _WIN32
+#define HX509_LIB_FUNCTION
+#define HX509_LIB_NORETURN_FUNCTION __declspec(noreturn)
+#define HX509_LIB_CALL     __stdcall
+#define HX509_LIB_VARIABLE
+#else
+#define HX509_LIB_FUNCTION
+#define HX509_LIB_NORETURN_FUNCTION
+#define HX509_LIB_CALL
+#define HX509_LIB_VARIABLE
+#endif
+#endif
+#endif
+
+
 #ifdef BUILD_ROKEN_LIB
 #ifndef ROKEN_LIB
 #ifdef _WIN32

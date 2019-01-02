@@ -1211,7 +1211,7 @@ static struct hx509_keyset_ops keyset_pkcs11 = {
 
 #endif /* HAVE_DLOPEN */
 
-void
+HX509_LIB_FUNCTION void HX509_LIB_CALL
 _hx509_ks_pkcs11_register(hx509_context context)
 {
 #ifdef HAVE_DLOPEN

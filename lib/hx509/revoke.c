@@ -91,7 +91,7 @@ struct hx509_revoke_ctx_data {
  * @ingroup hx509_revoke
  */
 
-int
+HX509_LIB_FUNCTION int HX509_LIB_CALL
 hx509_revoke_init(hx509_context context, hx509_revoke_ctx *ctx)
 {
     *ctx = calloc(1, sizeof(**ctx));
@@ -107,7 +107,7 @@ hx509_revoke_init(hx509_context context, hx509_revoke_ctx *ctx)
     return 0;
 }
 
-hx509_revoke_ctx
+HX509_LIB_FUNCTION hx509_revoke_ctx HX509_LIB_CALL
 _hx509_revoke_ref(hx509_revoke_ctx ctx)
 {
     if (ctx == NULL)
@@ -137,7 +137,7 @@ free_ocsp(struct revoke_ocsp *ocsp)
  * @ingroup hx509_revoke
  */
 
-void
+HX509_LIB_FUNCTION void HX509_LIB_CALL
 hx509_revoke_free(hx509_revoke_ctx *ctx)
 {
     size_t i ;
@@ -399,7 +399,7 @@ load_ocsp(hx509_context context, struct revoke_ocsp *ocsp)
  * @ingroup hx509_revoke
  */
 
-int
+HX509_LIB_FUNCTION int HX509_LIB_CALL
 hx509_revoke_add_ocsp(hx509_context context,
 		      hx509_revoke_ctx ctx,
 		      const char *path)
@@ -636,7 +636,7 @@ load_crl(hx509_context context, const char *path, time_t *t, CRLCertificateList 
  * @ingroup hx509_revoke
  */
 
-int
+HX509_LIB_FUNCTION int HX509_LIB_CALL
 hx509_revoke_add_crl(hx509_context context,
 		     hx509_revoke_ctx ctx,
 		     const char *path)
@@ -706,7 +706,7 @@ hx509_revoke_add_crl(hx509_context context,
  * @ingroup hx509_revoke
  */
 
-int
+HX509_LIB_FUNCTION int HX509_LIB_CALL
 hx509_revoke_verify(hx509_context context,
 		    hx509_revoke_ctx ctx,
 		    hx509_certs certs,
@@ -994,7 +994,7 @@ out:
  * @ingroup hx509_revoke
  */
 
-int
+HX509_LIB_FUNCTION int HX509_LIB_CALL
 hx509_ocsp_request(hx509_context context,
 		   hx509_certs reqcerts,
 		   hx509_certs pool,
@@ -1194,7 +1194,7 @@ print_crl(hx509_context context, struct revoke_crl *crl, FILE *out)
  *
  */
 
-int
+HX509_LIB_FUNCTION int HX509_LIB_CALL
 hx509_revoke_print(hx509_context context,
 		   hx509_revoke_ctx ctx,
 		   FILE *out)
@@ -1241,7 +1241,7 @@ hx509_revoke_print(hx509_context context,
  * @ingroup hx509_revoke
  */
 
-int
+HX509_LIB_FUNCTION int HX509_LIB_CALL
 hx509_revoke_ocsp_print(hx509_context context, const char *path, FILE *out)
 {
     struct revoke_ocsp ocsp;
@@ -1287,7 +1287,7 @@ hx509_revoke_ocsp_print(hx509_context context, const char *path, FILE *out)
  * @ingroup hx509_verify
  */
 
-int
+HX509_LIB_FUNCTION int HX509_LIB_CALL
 hx509_ocsp_verify(hx509_context context,
 		  time_t now,
 		  hx509_cert cert,
@@ -1396,7 +1396,7 @@ struct hx509_crl {
  * @ingroup hx509_verify
  */
 
-int
+HX509_LIB_FUNCTION int HX509_LIB_CALL
 hx509_crl_alloc(hx509_context context, hx509_crl *crl)
 {
     int ret;
@@ -1429,7 +1429,7 @@ hx509_crl_alloc(hx509_context context, hx509_crl *crl)
  * @ingroup hx509_verify
  */
 
-int
+HX509_LIB_FUNCTION int HX509_LIB_CALL
 hx509_crl_add_revoked_certs(hx509_context context,
 			    hx509_crl crl,
 			    hx509_certs certs)
@@ -1450,7 +1450,7 @@ hx509_crl_add_revoked_certs(hx509_context context,
  * @ingroup hx509_verify
  */
 
-int
+HX509_LIB_FUNCTION int HX509_LIB_CALL
 hx509_crl_lifetime(hx509_context context, hx509_crl crl, int delta)
 {
     crl->expire = time(NULL) + delta;
@@ -1466,7 +1466,7 @@ hx509_crl_lifetime(hx509_context context, hx509_crl crl, int delta)
  * @ingroup hx509_verify
  */
 
-void
+HX509_LIB_FUNCTION void HX509_LIB_CALL
 hx509_crl_free(hx509_context context, hx509_crl *crl)
 {
     if (*crl == NULL)
@@ -1525,7 +1525,7 @@ add_revoked(hx509_context context, void *ctx, hx509_cert cert)
  * @ingroup hx509_verify
  */
 
-int
+HX509_LIB_FUNCTION int HX509_LIB_CALL
 hx509_crl_sign(hx509_context context,
 	       hx509_cert signer,
 	       hx509_crl crl,

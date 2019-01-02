@@ -93,7 +93,7 @@ Time2string(const Time *T, char **str)
  * @ingroup hx509_print
  */
 
-void
+HX509_LIB_FUNCTION void HX509_LIB_CALL
 hx509_print_stdout(void *ctx, const char *fmt, va_list va)
 {
     FILE *f = ctx;
@@ -122,7 +122,7 @@ print_func(hx509_vprint_func func, void *ctx, const char *fmt, ...)
  * @ingroup hx509_print
  */
 
-int
+HX509_LIB_FUNCTION int HX509_LIB_CALL
 hx509_oid_sprint(const heim_oid *oid, char **str)
 {
     return der_print_heim_oid(oid, '.', str);
@@ -139,7 +139,7 @@ hx509_oid_sprint(const heim_oid *oid, char **str)
  * @ingroup hx509_print
  */
 
-void
+HX509_LIB_FUNCTION void HX509_LIB_CALL
 hx509_oid_print(const heim_oid *oid, hx509_vprint_func func, void *ctx)
 {
     char *str;
@@ -159,7 +159,7 @@ hx509_oid_print(const heim_oid *oid, hx509_vprint_func func, void *ctx)
  * @ingroup hx509_print
  */
 
-void
+HX509_LIB_FUNCTION void HX509_LIB_CALL
 hx509_bitstring_print(const heim_bit_string *b,
 		      hx509_vprint_func func, void *ctx)
 {
@@ -187,7 +187,7 @@ hx509_bitstring_print(const heim_bit_string *b,
  * @ingroup hx509_print
  */
 
-int
+HX509_LIB_FUNCTION int HX509_LIB_CALL
 hx509_cert_keyusage_print(hx509_context context, hx509_cert c, char **s)
 {
     KeyUsage ku;
@@ -807,7 +807,7 @@ struct {
  * @ingroup hx509_print
  */
 
-int
+HX509_LIB_FUNCTION int HX509_LIB_CALL
 hx509_validate_ctx_init(hx509_context context, hx509_validate_ctx *ctx)
 {
     *ctx = malloc(sizeof(**ctx));
@@ -829,7 +829,7 @@ hx509_validate_ctx_init(hx509_context context, hx509_validate_ctx *ctx)
  * @ingroup hx509_print
  */
 
-void
+HX509_LIB_FUNCTION void HX509_LIB_CALL
 hx509_validate_ctx_set_print(hx509_validate_ctx ctx,
 			     hx509_vprint_func func,
 			     void *c)
@@ -850,7 +850,7 @@ hx509_validate_ctx_set_print(hx509_validate_ctx ctx,
  * @ingroup hx509_print
  */
 
-void
+HX509_LIB_FUNCTION void HX509_LIB_CALL
 hx509_validate_ctx_add_flags(hx509_validate_ctx ctx, int flags)
 {
     ctx->flags |= flags;
@@ -864,7 +864,7 @@ hx509_validate_ctx_add_flags(hx509_validate_ctx ctx, int flags)
  * @ingroup hx509_print
  */
 
-void
+HX509_LIB_FUNCTION void HX509_LIB_CALL
 hx509_validate_ctx_free(hx509_validate_ctx ctx)
 {
     free(ctx);
@@ -882,7 +882,7 @@ hx509_validate_ctx_free(hx509_validate_ctx ctx)
  * @ingroup hx509_print
  */
 
-int
+HX509_LIB_FUNCTION int HX509_LIB_CALL
 hx509_validate_cert(hx509_context context,
 		    hx509_validate_ctx ctx,
 		    hx509_cert cert)

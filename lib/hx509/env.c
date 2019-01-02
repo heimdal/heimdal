@@ -52,7 +52,7 @@
  * @ingroup hx509_env
  */
 
-int
+HX509_LIB_FUNCTION int HX509_LIB_CALL
 hx509_env_add(hx509_context context, hx509_env *env,
 	      const char *key, const char *value)
 {
@@ -103,7 +103,7 @@ hx509_env_add(hx509_context context, hx509_env *env,
  * @ingroup hx509_env
  */
 
-int
+HX509_LIB_FUNCTION int HX509_LIB_CALL
 hx509_env_add_binding(hx509_context context, hx509_env *env,
 		      const char *key, hx509_env list)
 {
@@ -150,7 +150,7 @@ hx509_env_add_binding(hx509_context context, hx509_env *env,
  * @ingroup hx509_env
  */
 
-const char *
+HX509_LIB_FUNCTION const char * HX509_LIB_CALL
 hx509_env_lfind(hx509_context context, hx509_env env,
 		const char *key, size_t len)
 {
@@ -175,7 +175,7 @@ hx509_env_lfind(hx509_context context, hx509_env env,
  * @ingroup hx509_env
  */
 
-const char *
+HX509_LIB_FUNCTION const char * HX509_LIB_CALL
 hx509_env_find(hx509_context context, hx509_env env, const char *key)
 {
     while(env) {
@@ -236,7 +236,7 @@ env_free(hx509_env b)
  * @ingroup hx509_env
  */
 
-void
+HX509_LIB_FUNCTION void HX509_LIB_CALL
 hx509_env_free(hx509_env *env)
 {
     if (*env)

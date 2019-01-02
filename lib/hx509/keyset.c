@@ -77,7 +77,7 @@ _hx509_ks_type(hx509_context context, const char *type)
     return NULL;
 }
 
-void
+HX509_LIB_FUNCTION void HX509_LIB_CALL
 _hx509_ks_register(hx509_context context, struct hx509_keyset_ops *ops)
 {
     struct hx509_keyset_ops **val;
@@ -112,7 +112,7 @@ _hx509_ks_register(hx509_context context, struct hx509_keyset_ops *ops)
  * @ingroup hx509_keyset
  */
 
-int
+HX509_LIB_FUNCTION int HX509_LIB_CALL
 hx509_certs_init(hx509_context context,
 		 const char *name, int flags,
 		 hx509_lock lock, hx509_certs *certs)
@@ -183,7 +183,7 @@ hx509_certs_init(hx509_context context,
  * @ingroup hx509_keyset
  */
 
-int
+HX509_LIB_FUNCTION int HX509_LIB_CALL
 hx509_certs_store(hx509_context context,
 		  hx509_certs certs,
 		  int flags,
@@ -201,7 +201,7 @@ hx509_certs_store(hx509_context context,
 }
 
 
-hx509_certs
+HX509_LIB_FUNCTION hx509_certs HX509_LIB_CALL
 hx509_certs_ref(hx509_certs certs)
 {
     if (certs == NULL)
@@ -222,7 +222,7 @@ hx509_certs_ref(hx509_certs certs)
  * @ingroup hx509_keyset
  */
 
-void
+HX509_LIB_FUNCTION void HX509_LIB_CALL
 hx509_certs_free(hx509_certs *certs)
 {
     if (*certs) {
@@ -252,7 +252,7 @@ hx509_certs_free(hx509_certs *certs)
  * @ingroup hx509_keyset
  */
 
-int
+HX509_LIB_FUNCTION int HX509_LIB_CALL
 hx509_certs_start_seq(hx509_context context,
 		      hx509_certs certs,
 		      hx509_cursor *cursor)
@@ -288,7 +288,7 @@ hx509_certs_start_seq(hx509_context context,
  * @ingroup hx509_keyset
  */
 
-int
+HX509_LIB_FUNCTION int HX509_LIB_CALL
 hx509_certs_next_cert(hx509_context context,
 		      hx509_certs certs,
 		      hx509_cursor cursor,
@@ -310,7 +310,7 @@ hx509_certs_next_cert(hx509_context context,
  * @ingroup hx509_keyset
  */
 
-int
+HX509_LIB_FUNCTION int HX509_LIB_CALL
 hx509_certs_end_seq(hx509_context context,
 		    hx509_certs certs,
 		    hx509_cursor cursor)
@@ -335,7 +335,7 @@ hx509_certs_end_seq(hx509_context context,
  * @ingroup hx509_keyset
  */
 
-int
+HX509_LIB_FUNCTION int HX509_LIB_CALL
 hx509_certs_iter_f(hx509_context context,
 		   hx509_certs certs,
 		   int (*func)(hx509_context, void *, hx509_cert),
@@ -392,7 +392,7 @@ certs_iter(hx509_context context, void *ctx, hx509_cert cert)
  * @ingroup hx509_keyset
  */
 
-int
+HX509_LIB_FUNCTION int HX509_LIB_CALL
 hx509_certs_iter(hx509_context context,
 		 hx509_certs certs,
 		 int (^func)(hx509_cert))
@@ -415,7 +415,7 @@ hx509_certs_iter(hx509_context context,
  * @ingroup hx509_keyset
  */
 
-int
+HX509_LIB_FUNCTION int HX509_LIB_CALL
 hx509_ci_print_names(hx509_context context, void *ctx, hx509_cert c)
 {
     Certificate *cert;
@@ -452,7 +452,7 @@ hx509_ci_print_names(hx509_context context, void *ctx, hx509_cert c)
  * @ingroup hx509_keyset
  */
 
-int
+HX509_LIB_FUNCTION int HX509_LIB_CALL
 hx509_certs_add(hx509_context context, hx509_certs certs, hx509_cert cert)
 {
     if (certs->ops->add == NULL) {
@@ -479,7 +479,7 @@ hx509_certs_add(hx509_context context, hx509_certs certs, hx509_cert cert)
  * @ingroup hx509_keyset
  */
 
-int
+HX509_LIB_FUNCTION int HX509_LIB_CALL
 hx509_certs_find(hx509_context context,
 		 hx509_certs certs,
 		 const hx509_query *q,
@@ -543,7 +543,7 @@ hx509_certs_find(hx509_context context,
  * @ingroup hx509_keyset
  */
 
-int
+HX509_LIB_FUNCTION int HX509_LIB_CALL
 hx509_certs_filter(hx509_context context,
 		   hx509_certs certs,
 		   const hx509_query *q,
@@ -619,7 +619,7 @@ certs_merge_func(hx509_context context, void *ctx, hx509_cert c)
  * @ingroup hx509_keyset
  */
 
-int
+HX509_LIB_FUNCTION int HX509_LIB_CALL
 hx509_certs_merge(hx509_context context, hx509_certs to, hx509_certs from)
 {
     if (from == NULL)
@@ -642,7 +642,7 @@ hx509_certs_merge(hx509_context context, hx509_certs to, hx509_certs from)
  * @ingroup hx509_keyset
  */
 
-int
+HX509_LIB_FUNCTION int HX509_LIB_CALL
 hx509_certs_append(hx509_context context,
 		   hx509_certs to,
 		   hx509_lock lock,
@@ -671,7 +671,7 @@ hx509_certs_append(hx509_context context,
  * @ingroup hx509_keyset
  */
 
-int
+HX509_LIB_FUNCTION int HX509_LIB_CALL
 hx509_get_one_cert(hx509_context context, hx509_certs certs, hx509_cert *c)
 {
     hx509_cursor cursor;
@@ -714,7 +714,7 @@ certs_info_stdio(void *ctx, const char *str)
  * @ingroup hx509_keyset
  */
 
-int
+HX509_LIB_FUNCTION int HX509_LIB_CALL
 hx509_certs_info(hx509_context context,
 		 hx509_certs certs,
 		 int (*func)(void *, const char *),
@@ -733,7 +733,7 @@ hx509_certs_info(hx509_context context,
 				    func, ctx);
 }
 
-void
+HX509_LIB_FUNCTION void HX509_LIB_CALL
 _hx509_pi_printf(int (*func)(void *, const char *), void *ctx,
 		 const char *fmt, ...)
 {
@@ -750,7 +750,7 @@ _hx509_pi_printf(int (*func)(void *, const char *), void *ctx,
     free(str);
 }
 
-int
+HX509_LIB_FUNCTION int HX509_LIB_CALL
 _hx509_certs_keys_get(hx509_context context,
 		      hx509_certs certs,
 		      hx509_private_key **keys)
@@ -762,7 +762,7 @@ _hx509_certs_keys_get(hx509_context context,
     return (*certs->ops->getkeys)(context, certs, certs->ops_data, keys);
 }
 
-int
+HX509_LIB_FUNCTION int HX509_LIB_CALL
 _hx509_certs_keys_add(hx509_context context,
 		      hx509_certs certs,
 		      hx509_private_key key)
@@ -778,7 +778,7 @@ _hx509_certs_keys_add(hx509_context context,
 }
 
 
-void
+HX509_LIB_FUNCTION void HX509_LIB_CALL
 _hx509_certs_keys_free(hx509_context context,
 		       hx509_private_key *keys)
 {

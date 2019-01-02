@@ -136,7 +136,7 @@ heim_int2BN(const heim_integer *i)
  *
  */
 
-int
+HX509_LIB_FUNCTION int HX509_LIB_CALL
 _hx509_set_digest_alg(DigestAlgorithmIdentifier *id,
                       const heim_oid *oid,
                       const void *param, size_t length)
@@ -1041,7 +1041,7 @@ static struct hx509_private_key_ops *private_algs[] = {
     NULL
 };
 
-hx509_private_key_ops *
+HX509_LIB_FUNCTION hx509_private_key_ops * HX509_LIB_CALL
 hx509_find_private_alg(const heim_oid *oid)
 {
     int i;
@@ -1059,7 +1059,7 @@ hx509_find_private_alg(const heim_oid *oid)
  * des, make sure the its before the time `t'.
  */
 
-int
+HX509_LIB_FUNCTION int HX509_LIB_CALL
 _hx509_signature_is_weak(hx509_context context, const AlgorithmIdentifier *alg)
 {
     const struct signature_alg *md;
@@ -1077,7 +1077,7 @@ _hx509_signature_is_weak(hx509_context context, const AlgorithmIdentifier *alg)
     return 0;
 }
 
-int
+HX509_LIB_FUNCTION int HX509_LIB_CALL
 _hx509_self_signed_valid(hx509_context context,
 			 const AlgorithmIdentifier *alg)
 {
@@ -1098,7 +1098,7 @@ _hx509_self_signed_valid(hx509_context context,
 }
 
 
-int
+HX509_LIB_FUNCTION int HX509_LIB_CALL
 _hx509_verify_signature(hx509_context context,
 			const hx509_cert cert,
 			const AlgorithmIdentifier *alg,
@@ -1136,7 +1136,7 @@ _hx509_verify_signature(hx509_context context,
     return (*md->verify_signature)(context, md, signer, alg, data, sig);
 }
 
-int
+HX509_LIB_FUNCTION int HX509_LIB_CALL
 _hx509_create_signature(hx509_context context,
 			const hx509_private_key signer,
 			const AlgorithmIdentifier *alg,
@@ -1163,7 +1163,7 @@ _hx509_create_signature(hx509_context context,
 				   signatureAlgorithm, sig);
 }
 
-int
+HX509_LIB_FUNCTION int HX509_LIB_CALL
 _hx509_create_signature_bitstring(hx509_context context,
 				  const hx509_private_key signer,
 				  const AlgorithmIdentifier *alg,
@@ -1183,7 +1183,7 @@ _hx509_create_signature_bitstring(hx509_context context,
     return 0;
 }
 
-int
+HX509_LIB_FUNCTION int HX509_LIB_CALL
 _hx509_public_encrypt(hx509_context context,
 		      const heim_octet_string *cleartext,
 		      const Certificate *cert,
@@ -1246,7 +1246,7 @@ _hx509_public_encrypt(hx509_context context,
     return 0;
 }
 
-int
+HX509_LIB_FUNCTION int HX509_LIB_CALL
 hx509_private_key_private_decrypt(hx509_context context,
 				   const heim_octet_string *ciphertext,
 				   const heim_oid *encryption_oid,
@@ -1289,7 +1289,7 @@ hx509_private_key_private_decrypt(hx509_context context,
 }
 
 
-int
+HX509_LIB_FUNCTION int HX509_LIB_CALL
 hx509_parse_private_key(hx509_context context,
 			 const AlgorithmIdentifier *keyai,
 			 const void *data,
@@ -1325,7 +1325,7 @@ hx509_parse_private_key(hx509_context context,
  *
  */
 
-int
+HX509_LIB_FUNCTION int HX509_LIB_CALL
 hx509_private_key2SPKI(hx509_context context,
 			hx509_private_key private_key,
 			SubjectPublicKeyInfo *spki)
@@ -1339,7 +1339,7 @@ hx509_private_key2SPKI(hx509_context context,
     return (*ops->get_spki)(context, private_key, spki);
 }
 
-int
+HX509_LIB_FUNCTION int HX509_LIB_CALL
 _hx509_generate_private_key_init(hx509_context context,
 				 const heim_oid *oid,
 				 struct hx509_generate_private_context **ctx)
@@ -1362,7 +1362,7 @@ _hx509_generate_private_key_init(hx509_context context,
     return 0;
 }
 
-int
+HX509_LIB_FUNCTION int HX509_LIB_CALL
 _hx509_generate_private_key_is_ca(hx509_context context,
 				  struct hx509_generate_private_context *ctx)
 {
@@ -1370,7 +1370,7 @@ _hx509_generate_private_key_is_ca(hx509_context context,
     return 0;
 }
 
-int
+HX509_LIB_FUNCTION int HX509_LIB_CALL
 _hx509_generate_private_key_bits(hx509_context context,
 				 struct hx509_generate_private_context *ctx,
 				 unsigned long bits)
@@ -1380,14 +1380,14 @@ _hx509_generate_private_key_bits(hx509_context context,
 }
 
 
-void
+HX509_LIB_FUNCTION void HX509_LIB_CALL
 _hx509_generate_private_key_free(struct hx509_generate_private_context **ctx)
 {
     free(*ctx);
     *ctx = NULL;
 }
 
-int
+HX509_LIB_FUNCTION int HX509_LIB_CALL
 _hx509_generate_private_key(hx509_context context,
 			    struct hx509_generate_private_context *ctx,
 			    hx509_private_key *private_key)
@@ -1495,7 +1495,7 @@ const AlgorithmIdentifier * _hx509_crypto_default_secret_alg =
  *
  */
 
-int
+HX509_LIB_FUNCTION int HX509_LIB_CALL
 hx509_private_key_init(hx509_private_key *key,
 			hx509_private_key_ops *ops,
 			void *keydata)
@@ -1509,7 +1509,7 @@ hx509_private_key_init(hx509_private_key *key,
     return 0;
 }
 
-hx509_private_key
+HX509_LIB_FUNCTION hx509_private_key HX509_LIB_CALL
 _hx509_private_key_ref(hx509_private_key key)
 {
     if (key->ref == 0)
@@ -1520,13 +1520,13 @@ _hx509_private_key_ref(hx509_private_key key)
     return key;
 }
 
-const char *
+HX509_LIB_FUNCTION const char * HX509_LIB_CALL
 _hx509_private_pem_name(hx509_private_key key)
 {
     return key->ops->pemtype;
 }
 
-int
+HX509_LIB_FUNCTION int HX509_LIB_CALL
 hx509_private_key_free(hx509_private_key *key)
 {
     if (key == NULL || *key == NULL)
@@ -1551,7 +1551,7 @@ hx509_private_key_free(hx509_private_key *key)
     return 0;
 }
 
-void
+HX509_LIB_FUNCTION void HX509_LIB_CALL
 hx509_private_key_assign_rsa(hx509_private_key key, void *ptr)
 {
     if (key->private_key.rsa)
@@ -1561,7 +1561,7 @@ hx509_private_key_assign_rsa(hx509_private_key key, void *ptr)
     key->md = &pkcs1_rsa_sha1_alg;
 }
 
-int
+HX509_LIB_FUNCTION int HX509_LIB_CALL
 _hx509_private_key_oid(hx509_context context,
 		       const hx509_private_key key,
 		       heim_oid *data)
@@ -1573,7 +1573,7 @@ _hx509_private_key_oid(hx509_context context,
     return ret;
 }
 
-int
+HX509_LIB_FUNCTION int HX509_LIB_CALL
 _hx509_private_key_exportable(hx509_private_key key)
 {
     if (key->ops->export == NULL)
@@ -1581,7 +1581,7 @@ _hx509_private_key_exportable(hx509_private_key key)
     return 1;
 }
 
-BIGNUM *
+HX509_LIB_FUNCTION BIGNUM * HX509_LIB_CALL
 _hx509_private_key_get_internal(hx509_context context,
 				hx509_private_key key,
 				const char *type)
@@ -1591,7 +1591,7 @@ _hx509_private_key_get_internal(hx509_context context,
     return (*key->ops->get_internal)(context, key, type);
 }
 
-int
+HX509_LIB_FUNCTION int HX509_LIB_CALL
 _hx509_private_key_export(hx509_context context,
 			  const hx509_private_key key,
 			  hx509_key_format_t format,
@@ -1880,7 +1880,7 @@ find_cipher_by_name(const char *name)
 }
 
 
-const heim_oid *
+HX509_LIB_FUNCTION const heim_oid * HX509_LIB_CALL
 hx509_crypto_enctype_by_name(const char *name)
 {
     const struct hx509cipher *cipher;
@@ -1891,7 +1891,7 @@ hx509_crypto_enctype_by_name(const char *name)
     return cipher->oid;
 }
 
-int
+HX509_LIB_FUNCTION int HX509_LIB_CALL
 hx509_crypto_init(hx509_context context,
 		  const char *provider,
 		  const heim_oid *enctype,
@@ -1928,13 +1928,13 @@ hx509_crypto_init(hx509_context context,
     return 0;
 }
 
-const char *
+HX509_LIB_FUNCTION const char * HX509_LIB_CALL
 hx509_crypto_provider(hx509_crypto crypto)
 {
     return "unknown";
 }
 
-void
+HX509_LIB_FUNCTION void HX509_LIB_CALL
 hx509_crypto_destroy(hx509_crypto crypto)
 {
     if (crypto->name)
@@ -1948,19 +1948,19 @@ hx509_crypto_destroy(hx509_crypto crypto)
     free(crypto);
 }
 
-int
+HX509_LIB_FUNCTION int HX509_LIB_CALL
 hx509_crypto_set_key_name(hx509_crypto crypto, const char *name)
 {
     return 0;
 }
 
-void
+HX509_LIB_FUNCTION void HX509_LIB_CALL
 hx509_crypto_allow_weak(hx509_crypto crypto)
 {
     crypto->flags |= ALLOW_WEAK;
 }
 
-void
+HX509_LIB_FUNCTION void HX509_LIB_CALL
 hx509_crypto_set_padding(hx509_crypto crypto, int padding_type)
 {
     switch (padding_type) {
@@ -1977,7 +1977,7 @@ hx509_crypto_set_padding(hx509_crypto crypto, int padding_type)
     }
 }
 
-int
+HX509_LIB_FUNCTION int HX509_LIB_CALL
 hx509_crypto_set_key_data(hx509_crypto crypto, const void *data, size_t length)
 {
     if (EVP_CIPHER_key_length(crypto->c) > (int)length)
@@ -1997,7 +1997,7 @@ hx509_crypto_set_key_data(hx509_crypto crypto, const void *data, size_t length)
     return 0;
 }
 
-int
+HX509_LIB_FUNCTION int HX509_LIB_CALL
 hx509_crypto_set_random_key(hx509_crypto crypto, heim_octet_string *key)
 {
     if (crypto->key.data) {
@@ -2023,7 +2023,7 @@ hx509_crypto_set_random_key(hx509_crypto crypto, heim_octet_string *key)
 	return 0;
 }
 
-int
+HX509_LIB_FUNCTION int HX509_LIB_CALL
 hx509_crypto_set_params(hx509_context context,
 			hx509_crypto crypto,
 			const heim_octet_string *param,
@@ -2032,7 +2032,7 @@ hx509_crypto_set_params(hx509_context context,
     return (*crypto->cipher->set_params)(context, param, crypto, ivec);
 }
 
-int
+HX509_LIB_FUNCTION int HX509_LIB_CALL
 hx509_crypto_get_params(hx509_context context,
 			hx509_crypto crypto,
 			const heim_octet_string *ivec,
@@ -2041,7 +2041,7 @@ hx509_crypto_get_params(hx509_context context,
     return (*crypto->cipher->get_params)(context, crypto, ivec, param);
 }
 
-int
+HX509_LIB_FUNCTION int HX509_LIB_CALL
 hx509_crypto_random_iv(hx509_crypto crypto, heim_octet_string *ivec)
 {
     ivec->length = EVP_CIPHER_iv_length(crypto->c);
@@ -2060,7 +2060,7 @@ hx509_crypto_random_iv(hx509_crypto crypto, heim_octet_string *ivec)
     return 0;
 }
 
-int
+HX509_LIB_FUNCTION int HX509_LIB_CALL
 hx509_crypto_encrypt(hx509_crypto crypto,
 		     const void *data,
 		     const size_t length,
@@ -2148,7 +2148,7 @@ hx509_crypto_encrypt(hx509_crypto crypto,
     return ret;
 }
 
-int
+HX509_LIB_FUNCTION int HX509_LIB_CALL
 hx509_crypto_decrypt(hx509_crypto crypto,
 		     const void *data,
 		     const size_t length,
@@ -2365,7 +2365,7 @@ find_string2key(const heim_oid *oid,
  *
  */
 
-int
+HX509_LIB_FUNCTION int HX509_LIB_CALL
 _hx509_pbe_encrypt(hx509_context context,
 		   hx509_lock lock,
 		   const AlgorithmIdentifier *ai,
@@ -2380,7 +2380,7 @@ _hx509_pbe_encrypt(hx509_context context,
  *
  */
 
-int
+HX509_LIB_FUNCTION int HX509_LIB_CALL
 _hx509_pbe_decrypt(hx509_context context,
 		   hx509_lock lock,
 		   const AlgorithmIdentifier *ai,
@@ -2530,7 +2530,7 @@ match_keys_ec(hx509_cert c, hx509_private_key private_key)
 }
 
 
-int
+HX509_LIB_FUNCTION int HX509_LIB_CALL
 _hx509_match_keys(hx509_cert c, hx509_private_key key)
 {
     if (!key->ops)
@@ -2558,7 +2558,7 @@ find_keytype(const hx509_private_key key)
     return md->key_oid;
 }
 
-int
+HX509_LIB_FUNCTION int HX509_LIB_CALL
 hx509_crypto_select(const hx509_context context,
 		    int type,
 		    const hx509_private_key source,
@@ -2638,7 +2638,7 @@ hx509_crypto_select(const hx509_context context,
     return ret;
 }
 
-int
+HX509_LIB_FUNCTION int HX509_LIB_CALL
 hx509_crypto_available(hx509_context context,
 		       int type,
 		       hx509_cert source,
@@ -2723,7 +2723,7 @@ out:
     return ENOMEM;
 }
 
-void
+HX509_LIB_FUNCTION void HX509_LIB_CALL
 hx509_crypto_free_algs(AlgorithmIdentifier *val,
 		       unsigned int len)
 {

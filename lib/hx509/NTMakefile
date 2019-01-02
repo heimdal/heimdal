@@ -110,6 +110,12 @@ dist_libhx509_la_SOURCES =	\
 	$(SRCDIR)\req.c		\
 	$(SRCDIR)\revoke.c
 
+{}.c{$(OBJ)}.obj::
+	$(C2OBJ_P) -DBUILD_HX509_LIB -DASN1_LIB
+
+{$(OBJ)}.c{$(OBJ)}.obj::
+	$(C2OBJ_P) -DBUILD_HX509_LIB -DASN1_LIB
+
 asn1_compile=$(BINDIR)\asn1_compile.exe
 
 $(gen_files_ocsp:.x=.c): $$(@R).x

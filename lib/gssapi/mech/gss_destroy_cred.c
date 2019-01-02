@@ -43,6 +43,7 @@ gss_destroy_cred(void *status,
 	return GSS_S_COMPLETE;
 
     cred = (struct _gss_cred *)*cred_handle;
+    *cred_handle = GSS_C_NO_CREDENTIAL;
 
     while (HEIM_SLIST_FIRST(&cred->gc_mc)) {
 	mc = HEIM_SLIST_FIRST(&cred->gc_mc);

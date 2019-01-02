@@ -158,7 +158,7 @@ gss_import_cred(OM_uint32 * minor_status,
 	    goto out;
 	}
 	oid.elements = data.data;
-	oid.length = data.length;
+	oid.length = (OM_uint32)data.length;
 
 	m = __gss_get_mechanism(&oid);
 	krb5_data_free(&data);

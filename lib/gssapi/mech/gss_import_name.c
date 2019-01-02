@@ -186,12 +186,14 @@ gss_import_name(OM_uint32 *minor_status,
         struct _gss_mech_switch	*m;
 	gss_name_t		rname;
 
+	if (input_name_buffer == GSS_C_NO_BUFFER)
+		return GSS_S_CALL_INACCESSIBLE_READ;
+	if (output_name == NULL)
+		return GSS_S_CALL_INACCESSIBLE_WRITE;
+
 	*output_name = GSS_C_NO_NAME;
 
-	if (input_name_buffer->length == 0) {
-		*minor_status = 0;
-		return (GSS_S_BAD_NAME);
-	}
+	/* Allow empty names since that's valid (ANONYMOUS for example) */
 
 	_gss_load_mech();
 
@@ -261,7 +263,14 @@ gss_import_name(OM_uint32 *minor_status,
 		if (major_status != GSS_S_COMPLETE) {
 			_gss_mg_error(&m->gm_mech, major_status, *minor_status);
 			free(mn);
-			goto out;
+			/**
+			 * If we failed to import the name in a mechanism, it
+			 * will be ignored as long as its possible to import
+			 * name in some other mechanism. We will catch the
+			 * failure later though in gss_init_sec_context() or
+			 * another function.
+			 */
+			continue;
 		}
 
 		mn->gmn_mech = &m->gm_mech;

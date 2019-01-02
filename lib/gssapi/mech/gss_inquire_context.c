@@ -41,7 +41,7 @@ gss_inquire_context(OM_uint32 *minor_status,
 {
 	OM_uint32 major_status;
 	struct _gss_context *ctx = (struct _gss_context *) context_handle;
-	gssapi_mech_interface m = ctx->gc_mech;
+	gssapi_mech_interface m;
 	struct _gss_name *name;
 	gss_name_t src_mn, targ_mn;
 
@@ -59,6 +59,13 @@ gss_inquire_context(OM_uint32 *minor_status,
 	if (mech_type)
 	    *mech_type = GSS_C_NO_OID;
 	src_mn = targ_mn = GSS_C_NO_NAME;
+
+	if (ctx == NULL || ctx->gc_ctx == NULL) {
+	    *minor_status = 0;
+	    return GSS_S_NO_CONTEXT;
+	}
+
+	m = ctx->gc_mech;
 
 	major_status = m->gm_inquire_context(minor_status,
 	    ctx->gc_ctx,

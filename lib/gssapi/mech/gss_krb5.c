@@ -390,8 +390,9 @@ out:
 	krb5_free_context(context);
 
     if (ret) {
+	OM_uint32 junk;
 	if (ctx)
-	    gss_krb5_free_lucid_sec_context(NULL, ctx);
+	    gss_krb5_free_lucid_sec_context(&junk, ctx);
 
 	*minor_status = ret;
 	return GSS_S_FAILURE;
@@ -527,8 +528,12 @@ gss_krb5_ccache_name(OM_uint32 *minor_status,
     if (out_name)
 	*out_name = NULL;
 
-    buffer.value = rk_UNCONST(name);
-    buffer.length = strlen(name);
+    if (name) {
+	buffer.value = rk_UNCONST(name);
+	buffer.length = strlen(name);
+    } else {
+	_mg_buffer_zero(&buffer);
+    }
 
     HEIM_SLIST_FOREACH(m, &_gss_mechs, gm_link) {
 	if (m->gm_mech.gm_set_sec_context_option == NULL)
@@ -642,7 +647,7 @@ gsskrb5_extract_authz_data_from_sec_context(OM_uint32 *minor_status,
 
     oid.components[oid.length - 1] = ad_type;
 
-    oid_flat.length = der_length_oid(&oid);
+    oid_flat.length = (OM_uint32)der_length_oid(&oid);
     oid_flat.elements = malloc(oid_flat.length);
     if (oid_flat.elements == NULL) {
 	free(oid.components);

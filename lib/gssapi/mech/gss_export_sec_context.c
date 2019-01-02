@@ -38,7 +38,23 @@ gss_export_sec_context(OM_uint32 *minor_status,
 	gssapi_mech_interface m = ctx->gc_mech;
 	gss_buffer_desc buf;
 
-	_mg_buffer_zero(interprocess_token);
+	*minor_status = 0;
+
+	if (interprocess_token)
+	    _mg_buffer_zero(interprocess_token);
+	else
+	    return GSS_S_CALL_INACCESSIBLE_READ;
+
+	if (context_handle == NULL)
+	    return GSS_S_NO_CONTEXT;
+
+	ctx = (struct _gss_context *) *context_handle;
+	if (ctx == NULL || ctx->gc_ctx == NULL) {
+	    *minor_status = 0;
+	    return GSS_S_NO_CONTEXT;
+	}
+
+	m = ctx->gc_mech;
 
 	major_status = m->gm_export_sec_context(minor_status,
 	    &ctx->gc_ctx, &buf);

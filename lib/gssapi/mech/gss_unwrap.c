@@ -37,7 +37,18 @@ gss_unwrap(OM_uint32 *minor_status,
     gss_qop_t *qop_state)
 {
 	struct _gss_context *ctx = (struct _gss_context *) context_handle;
-	gssapi_mech_interface m = ctx->gc_mech;
+	gssapi_mech_interface m;
+
+	if (conf_state)
+	    *conf_state = 0;
+	if (qop_state)
+	    *qop_state = 0;
+
+	if (ctx == NULL) {
+	    *minor_status = 0;
+	    return GSS_S_NO_CONTEXT;
+	}
+	m = ctx->gc_mech;
 
 	return (m->gm_unwrap(minor_status, ctx->gc_ctx,
 		    input_message_buffer, output_message_buffer,

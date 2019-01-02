@@ -60,7 +60,7 @@ gss_compare_name(OM_uint32 *minor_status,
 
 			major_status = _gss_find_mn(minor_status, name2,
 						    mn1->gmn_mech_oid, &mn2);
-			if (major_status == GSS_S_COMPLETE) {
+			if (major_status == GSS_S_COMPLETE && mn2) {
 				return (mn1->gmn_mech->gm_compare_name(
 						minor_status,
 						mn1->gmn_name,

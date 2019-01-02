@@ -55,7 +55,7 @@ gss_inquire_cred_by_mech(OM_uint32 *minor_status,
 	    *cred_usage = 0;
 
 	m = __gss_get_mechanism(mech_type);
-	if (!m)
+	if (m == NULL || m->gm_inquire_cred_by_mech == NULL)
 		return (GSS_S_NO_CRED);
 
 	if (cred_handle != GSS_C_NO_CREDENTIAL) {

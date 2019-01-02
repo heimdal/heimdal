@@ -71,7 +71,7 @@
  * @ingroup hx509_cms
  */
 
-int
+HX509_LIB_FUNCTION int HX509_LIB_CALL
 hx509_cms_wrap_ContentInfo(const heim_oid *oid,
 			   const heim_octet_string *buf,
 			   heim_octet_string *res)
@@ -125,7 +125,7 @@ hx509_cms_wrap_ContentInfo(const heim_oid *oid,
  * @ingroup hx509_cms
  */
 
-int
+HX509_LIB_FUNCTION int HX509_LIB_CALL
 hx509_cms_unwrap_ContentInfo(const heim_octet_string *in,
 			     heim_oid *oid,
 			     heim_octet_string *out,
@@ -349,7 +349,7 @@ find_CMSIdentifier(hx509_context context,
  * @ingroup hx509_cms
  */
 
-int
+HX509_LIB_FUNCTION int HX509_LIB_CALL
 hx509_cms_unenvelope(hx509_context context,
 		     hx509_certs certs,
 		     int flags,
@@ -555,7 +555,7 @@ out:
  * @ingroup hx509_cms
  */
 
-int
+HX509_LIB_FUNCTION int HX509_LIB_CALL
 hx509_cms_envelope_1(hx509_context context,
 		     int flags,
 		     hx509_cert cert,
@@ -789,7 +789,7 @@ find_attribute(const CMSAttributes *attr, const heim_oid *oid)
  * @ingroup hx509_cms
  */
 
-int
+HX509_LIB_FUNCTION int HX509_LIB_CALL
 hx509_cms_verify_signed(hx509_context context,
 			hx509_verify_ctx ctx,
 			unsigned int flags,
@@ -1158,7 +1158,7 @@ add_one_attribute(Attribute **attr,
  * @ingroup hx509_cms
  */
 
-int
+HX509_LIB_FUNCTION int HX509_LIB_CALL
 hx509_cms_create_signed_1(hx509_context context,
 			  int flags,
 			  const heim_oid *eContentType,
@@ -1451,7 +1451,7 @@ cmp_AlgorithmIdentifier(const AlgorithmIdentifier *p, const AlgorithmIdentifier 
     return der_heim_oid_cmp(&p->algorithm, &q->algorithm);
 }
 
-int
+HX509_LIB_FUNCTION int HX509_LIB_CALL
 hx509_cms_create_signed(hx509_context context,
 			int flags,
 			const heim_oid *eContentType,
@@ -1600,7 +1600,7 @@ out:
     return ret;
 }
 
-int
+HX509_LIB_FUNCTION int HX509_LIB_CALL
 hx509_cms_decrypt_encrypted(hx509_context context,
 			    hx509_lock lock,
 			    const void *data,

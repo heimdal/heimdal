@@ -45,7 +45,7 @@ struct hx509_request_data {
  *
  */
 
-int
+HX509_LIB_FUNCTION int HX509_LIB_CALL
 hx509_request_init(hx509_context context, hx509_request *req)
 {
     *req = calloc(1, sizeof(**req));
@@ -55,7 +55,7 @@ hx509_request_init(hx509_context context, hx509_request *req)
     return 0;
 }
 
-void
+HX509_LIB_FUNCTION void HX509_LIB_CALL
 hx509_request_free(hx509_request *req)
 {
     if ((*req)->name)
@@ -68,7 +68,7 @@ hx509_request_free(hx509_request *req)
     *req = NULL;
 }
 
-int
+HX509_LIB_FUNCTION int HX509_LIB_CALL
 hx509_request_set_name(hx509_context context,
 			hx509_request req,
 			hx509_name name)
@@ -83,7 +83,7 @@ hx509_request_set_name(hx509_context context,
     return 0;
 }
 
-int
+HX509_LIB_FUNCTION int HX509_LIB_CALL
 hx509_request_get_name(hx509_context context,
 			hx509_request req,
 			hx509_name *name)
@@ -95,7 +95,7 @@ hx509_request_get_name(hx509_context context,
     return hx509_name_copy(context, req->name, name);
 }
 
-int
+HX509_LIB_FUNCTION int HX509_LIB_CALL
 hx509_request_set_SubjectPublicKeyInfo(hx509_context context,
 					hx509_request req,
 					const SubjectPublicKeyInfo *key)
@@ -104,7 +104,7 @@ hx509_request_set_SubjectPublicKeyInfo(hx509_context context,
     return copy_SubjectPublicKeyInfo(key, &req->key);
 }
 
-int
+HX509_LIB_FUNCTION int HX509_LIB_CALL
 hx509_request_get_SubjectPublicKeyInfo(hx509_context context,
 					hx509_request req,
 					SubjectPublicKeyInfo *key)
@@ -112,7 +112,7 @@ hx509_request_get_SubjectPublicKeyInfo(hx509_context context,
     return copy_SubjectPublicKeyInfo(&req->key, key);
 }
 
-int
+HX509_LIB_FUNCTION int HX509_LIB_CALL
 _hx509_request_add_eku(hx509_context context,
 		       hx509_request req,
 		       const heim_oid *oid)
@@ -134,7 +134,7 @@ _hx509_request_add_eku(hx509_context context,
     return 0;
 }
 
-int
+HX509_LIB_FUNCTION int HX509_LIB_CALL
 _hx509_request_add_dns_name(hx509_context context,
 			    hx509_request req,
 			    const char *hostname)
@@ -149,7 +149,7 @@ _hx509_request_add_dns_name(hx509_context context,
     return add_GeneralNames(&req->san, &name);
 }
 
-int
+HX509_LIB_FUNCTION int HX509_LIB_CALL
 _hx509_request_add_email(hx509_context context,
 			 hx509_request req,
 			 const char *email)
@@ -166,7 +166,7 @@ _hx509_request_add_email(hx509_context context,
 
 
 
-int
+HX509_LIB_FUNCTION int HX509_LIB_CALL
 _hx509_request_to_pkcs10(hx509_context context,
 			 const hx509_request req,
 			 const hx509_private_key signer,
@@ -237,7 +237,7 @@ out:
     return ret;
 }
 
-int
+HX509_LIB_FUNCTION int HX509_LIB_CALL
 _hx509_request_parse(hx509_context context,
 		     const char *path,
 		     hx509_request *req)
@@ -305,7 +305,7 @@ _hx509_request_parse(hx509_context context,
 }
 
 
-int
+HX509_LIB_FUNCTION int HX509_LIB_CALL
 _hx509_request_print(hx509_context context, hx509_request req, FILE *f)
 {
     int ret;

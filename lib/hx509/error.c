@@ -53,7 +53,7 @@ struct hx509_error_data {
  * @ingroup hx509_error
  */
 
-void
+HX509_LIB_FUNCTION void HX509_LIB_CALL
 hx509_clear_error_string(hx509_context context)
 {
     if (context) {
@@ -76,7 +76,7 @@ hx509_clear_error_string(hx509_context context)
  * @ingroup hx509_error
  */
 
-void
+HX509_LIB_FUNCTION void HX509_LIB_CALL
 hx509_set_error_stringv(hx509_context context, int flags, int code,
 			const char *fmt, va_list ap)
 {
@@ -108,7 +108,7 @@ hx509_set_error_stringv(hx509_context context, int flags, int code,
  * @ingroup hx509_error
  */
 
-void
+HX509_LIB_FUNCTION void HX509_LIB_CALL
 hx509_set_error_string(hx509_context context, int flags, int code,
 		       const char *fmt, ...)
 {
@@ -130,7 +130,7 @@ hx509_set_error_string(hx509_context context, int flags, int code,
  * @ingroup hx509_error
  */
 
-char *
+HX509_LIB_FUNCTION char * HX509_LIB_CALL
 hx509_get_error_string(hx509_context context, int error_code)
 {
     heim_error_t msg = context->error;
@@ -169,7 +169,7 @@ hx509_get_error_string(hx509_context context, int error_code)
  * @ingroup hx509_error
  */
 
-void
+HX509_LIB_FUNCTION void HX509_LIB_CALL
 hx509_free_error_string(char *str)
 {
     free(str);
@@ -187,7 +187,7 @@ hx509_free_error_string(char *str)
  * @ingroup hx509_error
  */
 
-void
+HX509_LIB_FUNCTION void HX509_LIB_CALL
 hx509_err(hx509_context context, int exit_code,
 	  int error_code, const char *fmt, ...)
 {

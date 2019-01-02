@@ -217,7 +217,7 @@ static struct hx509_keyset_ops keyset_dir = {
     NULL
 };
 
-void
+HX509_LIB_FUNCTION void HX509_LIB_CALL
 _hx509_ks_dir_register(hx509_context context)
 {
     _hx509_ks_register(context, &keyset_dir);

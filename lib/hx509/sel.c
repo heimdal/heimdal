@@ -33,7 +33,7 @@
 
 #include "hx_locl.h"
 
-struct hx_expr *
+HX509_LIB_FUNCTION struct hx_expr * HX509_LIB_CALL
 _hx509_make_expr(enum hx_expr_op op, void *arg1, void *arg2)
 {
     struct hx_expr *expr;
@@ -155,7 +155,7 @@ eval_comp(hx509_context context, hx509_env env, struct hx_expr *expr)
     return FALSE;
 }
 
-int
+HX509_LIB_FUNCTION int HX509_LIB_CALL
 _hx509_expr_eval(hx509_context context, hx509_env env, struct hx_expr *expr)
 {
     switch (expr->op) {
@@ -179,7 +179,7 @@ _hx509_expr_eval(hx509_context context, hx509_env env, struct hx_expr *expr)
     }
 }
 
-void
+HX509_LIB_FUNCTION void HX509_LIB_CALL
 _hx509_expr_free(struct hx_expr *expr)
 {
     switch (expr->op) {
@@ -204,7 +204,7 @@ _hx509_expr_free(struct hx_expr *expr)
     free(expr);
 }
 
-struct hx_expr *
+HX509_LIB_FUNCTION struct hx_expr * HX509_LIB_CALL
 _hx509_expr_parse(const char *buf)
 {
     _hx509_expr_input.buf = buf;

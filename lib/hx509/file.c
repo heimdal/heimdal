@@ -33,7 +33,7 @@
 
 #include "hx_locl.h"
 
-int
+HX509_LIB_FUNCTION int HX509_LIB_CALL
 _hx509_map_file_os(const char *fn, heim_octet_string *os)
 {
     size_t length;
@@ -48,13 +48,13 @@ _hx509_map_file_os(const char *fn, heim_octet_string *os)
     return ret;
 }
 
-void
+HX509_LIB_FUNCTION void HX509_LIB_CALL
 _hx509_unmap_file_os(heim_octet_string *os)
 {
     rk_xfree(os->data);
 }
 
-int
+HX509_LIB_FUNCTION int HX509_LIB_CALL
 _hx509_write_file(const char *fn, const void *data, size_t length)
 {
     rk_dumpdata(fn, data, length);
@@ -71,7 +71,7 @@ print_pem_stamp(FILE *f, const char *type, const char *str)
     fprintf(f, "-----%s %s-----\n", type, str);
 }
 
-int
+HX509_LIB_FUNCTION int HX509_LIB_CALL
 hx509_pem_write(hx509_context context, const char *type,
 		hx509_pem_header *headers, FILE *f,
 		const void *data, size_t size)
@@ -119,7 +119,7 @@ hx509_pem_write(hx509_context context, const char *type,
  *
  */
 
-int
+HX509_LIB_FUNCTION int HX509_LIB_CALL
 hx509_pem_add_header(hx509_pem_header **headers,
 		     const char *header, const char *value)
 {
@@ -146,7 +146,7 @@ hx509_pem_add_header(hx509_pem_header **headers,
     return 0;
 }
 
-void
+HX509_LIB_FUNCTION void HX509_LIB_CALL
 hx509_pem_free_header(hx509_pem_header *headers)
 {
     hx509_pem_header *h;
@@ -163,7 +163,7 @@ hx509_pem_free_header(hx509_pem_header *headers)
  *
  */
 
-const char *
+HX509_LIB_FUNCTION const char * HX509_LIB_CALL
 hx509_pem_find_header(const hx509_pem_header *h, const char *header)
 {
     while(h) {
@@ -179,7 +179,7 @@ hx509_pem_find_header(const hx509_pem_header *h, const char *header)
  *
  */
 
-int
+HX509_LIB_FUNCTION int HX509_LIB_CALL
 hx509_pem_read(hx509_context context,
 	       FILE *f,
 	       hx509_pem_read_func func,

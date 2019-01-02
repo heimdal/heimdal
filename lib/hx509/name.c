@@ -191,13 +191,13 @@ stringtooid(const char *name, size_t len, heim_oid *oid)
  * @ingroup hx509_name
  */
 
-int
+HX509_LIB_FUNCTION int HX509_LIB_CALL
 hx509_name_to_string(const hx509_name name, char **str)
 {
     return _hx509_Name_to_string(&name->der_name, str);
 }
 
-int
+HX509_LIB_FUNCTION int HX509_LIB_CALL
 _hx509_Name_to_string(const Name *n, char **str)
 {
     size_t total_len = 0;
@@ -419,7 +419,7 @@ dsstringprep(const DirectoryString *ds, uint32_t **rname, size_t *rlen)
     return 0;
 }
 
-int
+HX509_LIB_FUNCTION int HX509_LIB_CALL
 _hx509_name_ds_cmp(const DirectoryString *ds1,
 		   const DirectoryString *ds2,
 		   int *diff)
@@ -452,7 +452,7 @@ _hx509_name_ds_cmp(const DirectoryString *ds1,
     return 0;
 }
 
-int
+HX509_LIB_FUNCTION int HX509_LIB_CALL
 _hx509_name_cmp(const Name *n1, const Name *n2, int *c)
 {
     int ret;
@@ -498,7 +498,7 @@ _hx509_name_cmp(const Name *n1, const Name *n2, int *c)
  * @ingroup hx509_name
  */
 
-int
+HX509_LIB_FUNCTION int HX509_LIB_CALL
 hx509_name_cmp(hx509_name n1, hx509_name n2)
 {
     int ret, diff;
@@ -509,7 +509,7 @@ hx509_name_cmp(hx509_name n1, hx509_name n2)
 }
 
 
-int
+HX509_LIB_FUNCTION int HX509_LIB_CALL
 _hx509_name_from_Name(const Name *n, hx509_name *name)
 {
     int ret;
@@ -524,7 +524,7 @@ _hx509_name_from_Name(const Name *n, hx509_name *name)
     return ret;
 }
 
-int
+HX509_LIB_FUNCTION int HX509_LIB_CALL
 _hx509_name_modify(hx509_context context,
 		   Name *name,
 		   int append,
@@ -582,7 +582,7 @@ _hx509_name_modify(hx509_context context,
  * @ingroup hx509_name
  */
 
-int
+HX509_LIB_FUNCTION int HX509_LIB_CALL
 hx509_parse_name(hx509_context context, const char *str, hx509_name *name)
 {
     const char *p, *q;
@@ -686,7 +686,7 @@ out:
  * @ingroup hx509_name
  */
 
-int
+HX509_LIB_FUNCTION int HX509_LIB_CALL
 hx509_name_copy(hx509_context context, const hx509_name from, hx509_name *to)
 {
     int ret;
@@ -714,13 +714,13 @@ hx509_name_copy(hx509_context context, const hx509_name from, hx509_name *to)
  * @ingroup hx509_name
  */
 
-int
+HX509_LIB_FUNCTION int HX509_LIB_CALL
 hx509_name_to_Name(const hx509_name from, Name *to)
 {
     return copy_Name(&from->der_name, to);
 }
 
-int
+HX509_LIB_FUNCTION int HX509_LIB_CALL
 hx509_name_normalize(hx509_context context, hx509_name name)
 {
     return 0;
@@ -739,7 +739,7 @@ hx509_name_normalize(hx509_context context, hx509_name name)
  * @ingroup hx509_name
  */
 
-int
+HX509_LIB_FUNCTION int HX509_LIB_CALL
 hx509_name_expand(hx509_context context,
 		  hx509_name name,
 		  hx509_env env)
@@ -842,7 +842,7 @@ hx509_name_expand(hx509_context context,
  * @ingroup hx509_name
  */
 
-void
+HX509_LIB_FUNCTION void HX509_LIB_CALL
 hx509_name_free(hx509_name *name)
 {
     free_Name(&(*name)->der_name);
@@ -863,7 +863,7 @@ hx509_name_free(hx509_name *name)
  * @ingroup hx509_name
  */
 
-int
+HX509_LIB_FUNCTION int HX509_LIB_CALL
 hx509_unparse_der_name(const void *data, size_t length, char **str)
 {
     Name name;
@@ -891,7 +891,7 @@ hx509_unparse_der_name(const void *data, size_t length, char **str)
  * @ingroup hx509_name
  */
 
-int
+HX509_LIB_FUNCTION int HX509_LIB_CALL
 hx509_name_binary(const hx509_name name, heim_octet_string *os)
 {
     size_t size;
@@ -906,7 +906,7 @@ hx509_name_binary(const hx509_name name, heim_octet_string *os)
     return 0;
 }
 
-int
+HX509_LIB_FUNCTION int HX509_LIB_CALL
 _hx509_unparse_Name(const Name *aname, char **str)
 {
     hx509_name name;
@@ -931,7 +931,7 @@ _hx509_unparse_Name(const Name *aname, char **str)
  * @ingroup hx509_name
  */
 
-int
+HX509_LIB_FUNCTION int HX509_LIB_CALL
 hx509_name_is_null_p(const hx509_name name)
 {
     return name->der_name.u.rdnSequence.len == 0;
@@ -948,7 +948,7 @@ hx509_name_is_null_p(const hx509_name name)
  * @ingroup hx509_name
  */
 
-int
+HX509_LIB_FUNCTION int HX509_LIB_CALL
 hx509_general_name_unparse(GeneralName *name, char **str)
 {
     struct rk_strpool *strpool = NULL;

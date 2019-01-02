@@ -77,7 +77,7 @@ struct hx509_ca_tbs {
  * @ingroup hx509_ca
  */
 
-int
+HX509_LIB_FUNCTION int HX509_LIB_CALL
 hx509_ca_tbs_init(hx509_context context, hx509_ca_tbs *tbs)
 {
     *tbs = calloc(1, sizeof(**tbs));
@@ -95,7 +95,7 @@ hx509_ca_tbs_init(hx509_context context, hx509_ca_tbs *tbs)
  * @ingroup hx509_ca
  */
 
-void
+HX509_LIB_FUNCTION void HX509_LIB_CALL
 hx509_ca_tbs_free(hx509_ca_tbs *tbs)
 {
     if (tbs == NULL || *tbs == NULL)
@@ -132,7 +132,7 @@ hx509_ca_tbs_free(hx509_ca_tbs *tbs)
  * @ingroup hx509_ca
  */
 
-int
+HX509_LIB_FUNCTION int HX509_LIB_CALL
 hx509_ca_tbs_set_notBefore(hx509_context context,
 			   hx509_ca_tbs tbs,
 			   time_t t)
@@ -153,7 +153,7 @@ hx509_ca_tbs_set_notBefore(hx509_context context,
  * @ingroup hx509_ca
  */
 
-int
+HX509_LIB_FUNCTION int HX509_LIB_CALL
 hx509_ca_tbs_set_notAfter(hx509_context context,
 			   hx509_ca_tbs tbs,
 			   time_t t)
@@ -174,7 +174,7 @@ hx509_ca_tbs_set_notAfter(hx509_context context,
  * @ingroup hx509_ca
  */
 
-int
+HX509_LIB_FUNCTION int HX509_LIB_CALL
 hx509_ca_tbs_set_notAfter_lifetime(hx509_context context,
 				   hx509_ca_tbs tbs,
 				   time_t delta)
@@ -202,7 +202,7 @@ static const struct units templatebits[] = {
  * @ingroup hx509_ca
  */
 
-const struct units *
+HX509_LIB_FUNCTION const struct units * HX509_LIB_CALL
 hx509_ca_tbs_template_units(void)
 {
     return templatebits;
@@ -222,7 +222,7 @@ hx509_ca_tbs_template_units(void)
  * @ingroup hx509_ca
  */
 
-int
+HX509_LIB_FUNCTION int HX509_LIB_CALL
 hx509_ca_tbs_set_template(hx509_context context,
 			  hx509_ca_tbs tbs,
 			  int flags,
@@ -300,7 +300,7 @@ hx509_ca_tbs_set_template(hx509_context context,
  * @ingroup hx509_ca
  */
 
-int
+HX509_LIB_FUNCTION int HX509_LIB_CALL
 hx509_ca_tbs_set_ca(hx509_context context,
 		    hx509_ca_tbs tbs,
 		    int pathLenConstraint)
@@ -324,7 +324,7 @@ hx509_ca_tbs_set_ca(hx509_context context,
  * @ingroup hx509_ca
  */
 
-int
+HX509_LIB_FUNCTION int HX509_LIB_CALL
 hx509_ca_tbs_set_proxy(hx509_context context,
 		       hx509_ca_tbs tbs,
 		       int pathLenConstraint)
@@ -346,7 +346,7 @@ hx509_ca_tbs_set_proxy(hx509_context context,
  * @ingroup hx509_ca
  */
 
-int
+HX509_LIB_FUNCTION int HX509_LIB_CALL
 hx509_ca_tbs_set_domaincontroller(hx509_context context,
 				  hx509_ca_tbs tbs)
 {
@@ -368,7 +368,7 @@ hx509_ca_tbs_set_domaincontroller(hx509_context context,
  * @ingroup hx509_ca
  */
 
-int
+HX509_LIB_FUNCTION int HX509_LIB_CALL
 hx509_ca_tbs_set_spki(hx509_context context,
 		      hx509_ca_tbs tbs,
 		      const SubjectPublicKeyInfo *spki)
@@ -393,7 +393,7 @@ hx509_ca_tbs_set_spki(hx509_context context,
  * @ingroup hx509_ca
  */
 
-int
+HX509_LIB_FUNCTION int HX509_LIB_CALL
 hx509_ca_tbs_set_serialnumber(hx509_context context,
 			      hx509_ca_tbs tbs,
 			      const heim_integer *serialNumber)
@@ -418,7 +418,7 @@ hx509_ca_tbs_set_serialnumber(hx509_context context,
  * @ingroup hx509_ca
  */
 
-int
+HX509_LIB_FUNCTION int HX509_LIB_CALL
 hx509_ca_tbs_add_eku(hx509_context context,
 		     hx509_ca_tbs tbs,
 		     const heim_oid *oid)
@@ -462,7 +462,7 @@ hx509_ca_tbs_add_eku(hx509_context context,
  * @ingroup hx509_ca
  */
 
-int
+HX509_LIB_FUNCTION int HX509_LIB_CALL
 hx509_ca_tbs_add_crl_dp_uri(hx509_context context,
 			    hx509_ca_tbs tbs,
 			    const char *uri,
@@ -567,7 +567,7 @@ out:
  * @ingroup hx509_ca
  */
 
-int
+HX509_LIB_FUNCTION int HX509_LIB_CALL
 hx509_ca_tbs_add_san_otherName(hx509_context context,
 			       hx509_ca_tbs tbs,
 			       const heim_oid *oid,
@@ -596,7 +596,7 @@ hx509_ca_tbs_add_san_otherName(hx509_context context,
  * @ingroup hx509_ca
  */
 
-int
+HX509_LIB_FUNCTION int HX509_LIB_CALL
 hx509_ca_tbs_add_san_pkinit(hx509_context context,
 			    hx509_ca_tbs tbs,
 			    const char *principal)
@@ -731,7 +731,7 @@ out:
  * @ingroup hx509_ca
  */
 
-int
+HX509_LIB_FUNCTION int HX509_LIB_CALL
 hx509_ca_tbs_add_san_ms_upn(hx509_context context,
 			    hx509_ca_tbs tbs,
 			    const char *principal)
@@ -752,7 +752,7 @@ hx509_ca_tbs_add_san_ms_upn(hx509_context context,
  * @ingroup hx509_ca
  */
 
-int
+HX509_LIB_FUNCTION int HX509_LIB_CALL
 hx509_ca_tbs_add_san_jid(hx509_context context,
 			 hx509_ca_tbs tbs,
 			 const char *jid)
@@ -777,7 +777,7 @@ hx509_ca_tbs_add_san_jid(hx509_context context,
  * @ingroup hx509_ca
  */
 
-int
+HX509_LIB_FUNCTION int HX509_LIB_CALL
 hx509_ca_tbs_add_san_hostname(hx509_context context,
 			      hx509_ca_tbs tbs,
 			      const char *dnsname)
@@ -805,7 +805,7 @@ hx509_ca_tbs_add_san_hostname(hx509_context context,
  * @ingroup hx509_ca
  */
 
-int
+HX509_LIB_FUNCTION int HX509_LIB_CALL
 hx509_ca_tbs_add_san_rfc822name(hx509_context context,
 				hx509_ca_tbs tbs,
 				const char *rfc822Name)
@@ -832,7 +832,7 @@ hx509_ca_tbs_add_san_rfc822name(hx509_context context,
  * @ingroup hx509_ca
  */
 
-int
+HX509_LIB_FUNCTION int HX509_LIB_CALL
 hx509_ca_tbs_set_subject(hx509_context context,
 			 hx509_ca_tbs tbs,
 			 hx509_name subject)
@@ -860,7 +860,7 @@ hx509_ca_tbs_set_subject(hx509_context context,
  * @ingroup hx509_ca
  */
 
-int
+HX509_LIB_FUNCTION int HX509_LIB_CALL
 hx509_ca_tbs_set_unique(hx509_context context,
 			hx509_ca_tbs tbs,
 			const heim_bit_string *subjectUniqueID,
@@ -900,7 +900,7 @@ hx509_ca_tbs_set_unique(hx509_context context,
  * @ingroup hx509_ca
  */
 
-int
+HX509_LIB_FUNCTION int HX509_LIB_CALL
 hx509_ca_tbs_subject_expand(hx509_context context,
 			    hx509_ca_tbs tbs,
 			    hx509_env env)
@@ -920,7 +920,7 @@ hx509_ca_tbs_subject_expand(hx509_context context,
  * @ingroup hx509_ca
  */
 
-int
+HX509_LIB_FUNCTION int HX509_LIB_CALL
 hx509_ca_tbs_set_signature_algorithm(hx509_context context,
 				     hx509_ca_tbs tbs,
 				     const AlgorithmIdentifier *sigalg)
@@ -1583,7 +1583,7 @@ out:
  * @ingroup hx509_ca
  */
 
-int
+HX509_LIB_FUNCTION int HX509_LIB_CALL
 hx509_ca_sign(hx509_context context,
 	      hx509_ca_tbs tbs,
 	      hx509_cert signer,
@@ -1627,7 +1627,7 @@ out:
  * @ingroup hx509_ca
  */
 
-int
+HX509_LIB_FUNCTION int HX509_LIB_CALL
 hx509_ca_sign_self(hx509_context context,
 		   hx509_ca_tbs tbs,
 		   hx509_private_key signer,

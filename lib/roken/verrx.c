@@ -36,7 +36,7 @@
 #include "roken.h"
 #include <err.h>
 
-ROKEN_LIB_FUNCTION void ROKEN_LIB_CALL
+ROKEN_LIB_NORETURN_FUNCTION void ROKEN_LIB_CALL
 verrx(int eval, const char *fmt, va_list ap)
 {
     rk_warnerr(0, fmt, ap);

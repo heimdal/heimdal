@@ -181,7 +181,7 @@ krb5_warnx(krb5_context context, const char *fmt, ...)
  * @ingroup krb5_error
  */
 
-KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
+KRB5_LIB_NORETURN_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_verr(krb5_context context, int eval, krb5_error_code code,
 	  const char *fmt, va_list ap)
      __attribute__ ((__noreturn__, __format__ (__printf__, 4, 0)))
@@ -203,7 +203,7 @@ krb5_verr(krb5_context context, int eval, krb5_error_code code,
  * @ingroup krb5_error
  */
 
-KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
+KRB5_LIB_NORETURN_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_err(krb5_context context, int eval, krb5_error_code code,
 	 const char *fmt, ...)
      __attribute__ ((__noreturn__, __format__ (__printf__, 4, 5)))
@@ -224,7 +224,7 @@ krb5_err(krb5_context context, int eval, krb5_error_code code,
  * @ingroup krb5_error
  */
 
-KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
+KRB5_LIB_NORETURN_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_verrx(krb5_context context, int eval, const char *fmt, va_list ap)
      __attribute__ ((__noreturn__, __format__ (__printf__, 3, 0)))
 {
@@ -243,7 +243,7 @@ krb5_verrx(krb5_context context, int eval, const char *fmt, va_list ap)
  * @ingroup krb5_error
  */
 
-KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
+KRB5_LIB_NORETURN_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_errx(krb5_context context, int eval, const char *fmt, ...)
      __attribute__ ((__noreturn__, __format__ (__printf__, 3, 4)))
 {
@@ -264,7 +264,7 @@ krb5_errx(krb5_context context, int eval, const char *fmt, ...)
  * @ingroup krb5_error
  */
 
-KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
+KRB5_LIB_NORETURN_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_vabort(krb5_context context, krb5_error_code code,
 	    const char *fmt, va_list ap)
      __attribute__ ((__noreturn__, __format__ (__printf__, 3, 0)))
@@ -286,7 +286,7 @@ krb5_vabort(krb5_context context, krb5_error_code code,
  * @ingroup krb5_error
  */
 
-KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
+KRB5_LIB_NORETURN_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_abort(krb5_context context, krb5_error_code code, const char *fmt, ...)
      __attribute__ ((__noreturn__, __format__ (__printf__, 3, 4)))
 {
@@ -295,7 +295,7 @@ krb5_abort(krb5_context context, krb5_error_code code, const char *fmt, ...)
     UNREACHABLE(return 0);
 }
 
-KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
+KRB5_LIB_NORETURN_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_vabortx(krb5_context context, const char *fmt, va_list ap)
      __attribute__ ((__noreturn__, __format__ (__printf__, 2, 0)))
 {
@@ -314,7 +314,7 @@ krb5_vabortx(krb5_context context, const char *fmt, va_list ap)
  * @ingroup krb5_error
  */
 
-KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
+KRB5_LIB_NORETURN_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_abortx(krb5_context context, const char *fmt, ...)
      __attribute__ ((__noreturn__, __format__ (__printf__, 2, 3)))
 {

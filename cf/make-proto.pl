@@ -415,34 +415,67 @@ extern \"C\" {
 }
 if ($opt_E) {
     $public_h_header .= "#ifndef $opt_E
-#ifndef ${opt_E}_FUNCTION
-#if defined(_WIN32)
-#define ${opt_E}_FUNCTION __declspec(dllimport)
-#define ${opt_E}_CALL __stdcall
-#define ${opt_E}_VARIABLE __declspec(dllimport)
-#else
-#define ${opt_E}_FUNCTION
-#define ${opt_E}_CALL
-#define ${opt_E}_VARIABLE
-#endif
-#endif
+ #ifndef ${opt_E}_FUNCTION
+  #if defined(_WIN32)
+   #define ${opt_E}_FUNCTION __declspec(dllimport)
+  #else
+   #define ${opt_E}_FUNCTION
+  #endif
+ #endif
+ #ifndef ${opt_E}_NORETURN_FUNCTION
+  #if defined(_WIN32)
+   #define ${opt_E}_NORETURN_FUNCTION __declspec(dllimport noreturn)
+  #else
+   #define ${opt_E}_NORETURN_FUNCTION
+  #endif
+ #endif
+ #ifndef ${opt_E}_CALL
+  #if defined(_WIN32)
+   #define ${opt_E}_CALL __stdcall
+  #else
+   #define ${opt_E}_CALL
+  #endif
+ #endif
+ #ifndef ${opt_E}_VARIABLE
+  #if defined(_WIN32)
+   #define ${opt_E}_VARIABLE __declspec(dllimport)
+  #else
+   #define ${opt_E}_VARIABLE
+  #endif
+ #endif
 #endif
 ";
     
     $private_h_header .= "#ifndef $opt_E
-#ifndef ${opt_E}_FUNCTION
-#if defined(_WIN32)
-#define ${opt_E}_FUNCTION __declspec(dllimport)
-#define ${opt_E}_CALL __stdcall
-#define ${opt_E}_VARIABLE __declspec(dllimport)
-#else
-#define ${opt_E}_FUNCTION
-#define ${opt_E}_CALL
-#define ${opt_E}_VARIABLE
+ #ifndef ${opt_E}_FUNCTION
+  #if defined(_WIN32)
+   #define ${opt_E}_FUNCTION __declspec(dllimport)
+  #else
+   #define ${opt_E}_FUNCTION
+  #endif
+ #endif
+ #ifndef ${opt_E}_NORETURN_FUNCTION
+  #if defined(_WIN32)
+   #define ${opt_E}_NORETURN_FUNCTION __declspec(dllimport noreturn)
+  #else
+   #define ${opt_E}_NORETURN_FUNCTION
+  #endif
+ #endif
+ #ifndef ${opt_E}_CALL
+  #if defined(_WIN32)
+   #define ${opt_E}_CALL __stdcall
+  #else
+   #define ${opt_E}_CALL
+  #endif
+ #endif
+ #ifndef ${opt_E}_VARIABLE
+  #if defined(_WIN32)
+   #define ${opt_E}_VARIABLE __declspec(dllimport)
+  #else
+   #define ${opt_E}_VARIABLE
+  #endif
+ #endif
 #endif
-#endif
-#endif
-
 ";
 }
     

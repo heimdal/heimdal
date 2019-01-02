@@ -54,12 +54,13 @@ _gss_spnego_release_cred(OM_uint32 *minor_status, gss_cred_id_t *cred_handle)
  * we support gss_{get,set}_neg_mechs() we will need to expose
  * more functionality.
  */
-OM_uint32 GSSAPI_CALLCONV _gss_spnego_acquire_cred
+OM_uint32 GSSAPI_CALLCONV _gss_spnego_acquire_cred_from
 (OM_uint32 *minor_status,
  gss_const_name_t desired_name,
  OM_uint32 time_req,
  const gss_OID_set desired_mechs,
  gss_cred_usage_t cred_usage,
+ gss_const_key_value_set_t cred_store,
  gss_cred_id_t * output_cred_handle,
  gss_OID_set * actual_mechs,
  OM_uint32 * time_rec
@@ -106,16 +107,16 @@ OM_uint32 GSSAPI_CALLCONV _gss_spnego_acquire_cred
     }
     actual_desired_mechs.count = j;
 
-    ret = gss_acquire_cred(minor_status, name,
-			   time_req, &actual_desired_mechs,
-			   cred_usage,
-			   output_cred_handle,
-			   actual_mechs, time_rec);
+    ret = gss_acquire_cred_from(minor_status, name,
+				time_req, &actual_desired_mechs,
+				cred_usage, cred_store,
+				output_cred_handle,
+				actual_mechs, time_rec);
     if (ret != GSS_S_COMPLETE)
 	goto out;
 
 out:
-    gss_release_name(minor_status, &name);
+    gss_release_name(&tmp, &name);
     gss_release_oid_set(&tmp, &mechs);
     if (actual_desired_mechs.elements != NULL) {
 	free(actual_desired_mechs.elements);

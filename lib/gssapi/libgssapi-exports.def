@@ -9,13 +9,13 @@ EXPORTS
 	__gss_krb5_nt_principal_name_oid_desc	DATA
 	__gss_c_attr_stream_sizes_oid_desc	DATA
         __gss_c_attr_local_login_user           DATA
-        __gss_c_cred_certificate_oid_desc       DATA
-        __gss_c_cred_password_oid_desc          DATA
 	gss_accept_sec_context
 	gss_acquire_cred
+	gss_acquire_cred_from
 	gss_acquire_cred_with_password
 	gss_add_buffer_set_member
 	gss_add_cred
+	gss_add_cred_from
 	gss_add_cred_with_password
 	gss_add_oid_set_member
         gss_authorize_localname
@@ -91,6 +91,7 @@ EXPORTS
 	gss_set_sec_context_option
 	gss_sign
 	gss_store_cred
+	gss_store_cred_into
 	gss_test_oid_set_member
 	gss_unseal
 	gss_unwrap

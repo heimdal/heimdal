@@ -386,8 +386,8 @@ _gss_load_mech(void)
 		OPTSYM(store_cred);
 		OPTSYM(export_cred);
 		OPTSYM(import_cred);
+		OPTSYM(acquire_cred_from);
 #if 0
-		OPTSYM(acquire_cred_ext);
 		OPTSYM(iter_creds);
 		OPTSYM(destroy_cred);
 		OPTSYM(cred_hold);
@@ -403,6 +403,8 @@ _gss_load_mech(void)
 		OPTSYM(export_name_composite);
 		OPTSYM(localname);
 		OPTSYM(duplicate_cred);
+		OPTSYM(add_cred_from);
+		OPTSYM(store_cred_into);
 		OPTSPISYM(authorize_localname);
 
 		mi = (_gss_mo_init *)dlsym(so, "gss_mo_init");

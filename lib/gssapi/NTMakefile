@@ -98,9 +98,10 @@ mechsrc = \
 	mech/cred.h \
 	mech/gss_accept_sec_context.c \
 	mech/gss_acquire_cred.c \
-	mech/gss_acquire_cred_ext.c \
+	mech/gss_acquire_cred_from.c \
 	mech/gss_acquire_cred_with_password.c \
 	mech/gss_add_cred.c \
+	mech/gss_add_cred_from.c \
 	mech/gss_add_cred_with_password.c \
 	mech/gss_add_oid_set_member.c \
 	mech/gss_aeap.c \
@@ -158,6 +159,7 @@ mechsrc = \
 	mech/gss_set_sec_context_option.c \
 	mech/gss_sign.c \
 	mech/gss_store_cred.c \
+	mech/gss_store_cred_into.c \
 	mech/gss_test_oid_set_member.c \
 	mech/gss_unseal.c \
 	mech/gss_unwrap.c \
@@ -328,9 +330,10 @@ libgssapi_OBJs = \
 	$(OBJ)\mech/context.obj \
 	$(OBJ)\mech/gss_accept_sec_context.obj \
 	$(OBJ)\mech/gss_acquire_cred.obj \
-	$(OBJ)\mech/gss_acquire_cred_ext.obj \
+	$(OBJ)\mech/gss_acquire_cred_from.obj \
 	$(OBJ)\mech/gss_acquire_cred_with_password.obj \
 	$(OBJ)\mech/gss_add_cred.obj \
+	$(OBJ)\mech/gss_add_cred_from.obj \
 	$(OBJ)\mech/gss_add_cred_with_password.obj \
 	$(OBJ)\mech/gss_add_oid_set_member.obj \
 	$(OBJ)\mech/gss_aeap.obj \
@@ -388,6 +391,7 @@ libgssapi_OBJs = \
 	$(OBJ)\mech/gss_set_sec_context_option.obj \
 	$(OBJ)\mech/gss_sign.obj \
 	$(OBJ)\mech/gss_store_cred.obj \
+	$(OBJ)\mech/gss_store_cred_into.obj \
 	$(OBJ)\mech/gss_test_oid_set_member.obj \
 	$(OBJ)\mech/gss_unseal.obj \
 	$(OBJ)\mech/gss_unwrap.obj \

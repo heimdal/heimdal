@@ -339,7 +339,7 @@ static gssapi_mech_interface_desc krb5_mech = {
     "kerberos 5",
     {9, rk_UNCONST("\x2a\x86\x48\x86\xf7\x12\x01\x02\x02") },
     0,
-    _gsskrb5_acquire_cred,
+    NULL, /* gm_acquire_cred */
     _gsskrb5_release_cred,
     _gsskrb5_init_sec_context,
     _gsskrb5_accept_sec_context,
@@ -360,7 +360,7 @@ static gssapi_mech_interface_desc krb5_mech = {
     _gsskrb5_inquire_cred,
     _gsskrb5_inquire_context,
     _gsskrb5_wrap_size_limit,
-    _gsskrb5_add_cred,
+    NULL, /* gm_add_cred */
     _gsskrb5_inquire_cred_by_mech,
     _gsskrb5_export_sec_context,
     _gsskrb5_import_sec_context,
@@ -376,10 +376,10 @@ static gssapi_mech_interface_desc krb5_mech = {
     _gk_wrap_iov,
     _gk_unwrap_iov,
     _gk_wrap_iov_length,
-    _gsskrb5_store_cred,
+    NULL, /* gm_store_cred */
     _gsskrb5_export_cred,
     _gsskrb5_import_cred,
-    _gsskrb5_acquire_cred_ext,
+    _gsskrb5_acquire_cred_from,
     NULL,
     NULL,
     NULL,
@@ -397,6 +397,8 @@ static gssapi_mech_interface_desc krb5_mech = {
     NULL, /* gm_delete_name_attribute */
     NULL, /* gm_export_name_composite */
     _gsskrb5_duplicate_cred,
+    _gsskrb5_add_cred_from,
+    _gsskrb5_store_cred_into,
     NULL  /* gm_compat */
 };
 

@@ -80,7 +80,7 @@ static gssapi_mech_interface_desc netlogon_mech = {
     NULL, /* gm_store_cred */
     NULL, /* gm_export_cred */
     NULL, /* gm_import_cred */
-    NULL, /* gm_acquire_cred_ext */
+    NULL, /* gm_acquire_cred_from */
     NULL, /* gm_iter_creds */
     NULL, /* gm_destroy_cred */
     NULL, /* gm_cred_hold */
@@ -98,6 +98,8 @@ static gssapi_mech_interface_desc netlogon_mech = {
     NULL, /* gm_delete_name_attribute */
     NULL, /* gm_export_name_composite */
     NULL, /* gm_duplicate_cred */
+    NULL, /* gm_add_cred_from */
+    NULL, /* gm_store_cred_into */
     NULL  /* gm_compat */
 };
 

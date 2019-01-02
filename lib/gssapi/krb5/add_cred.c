@@ -33,14 +33,15 @@
 
 #include "gsskrb5_locl.h"
 
-OM_uint32 GSSAPI_CALLCONV _gsskrb5_add_cred (
+OM_uint32 GSSAPI_CALLCONV _gsskrb5_add_cred_from (
      OM_uint32           *minor_status,
-     gss_const_cred_id_t input_cred_handle,
+     gss_cred_id_t	 input_cred_handle,
      gss_const_name_t    desired_name,
      const gss_OID       desired_mech,
      gss_cred_usage_t    cred_usage,
      OM_uint32           initiator_time_req,
      OM_uint32           acceptor_time_req,
+     gss_const_key_value_set_t cred_store,
      gss_cred_id_t       *output_cred_handle,
      gss_OID_set         *actual_mechs,
      OM_uint32           *initiator_time_rec,
@@ -75,13 +76,14 @@ OM_uint32 GSSAPI_CALLCONV _gsskrb5_add_cred (
         heim_assert(output_cred_handle != NULL,
                     "internal error in _gsskrb5_add_cred()");
 
-        major = _gsskrb5_acquire_cred(minor_status, desired_name,
-                                      min(initiator_time_req,
-                                          acceptor_time_req),
-                                      GSS_C_NO_OID_SET,
-                                      cred_usage,
-                                      output_cred_handle,
-                                      actual_mechs, &lifetime);
+        major = _gsskrb5_acquire_cred_from(minor_status, desired_name,
+					   min(initiator_time_req,
+					       acceptor_time_req),
+					   GSS_C_NO_OID_SET,
+					   cred_usage,
+					   cred_store,
+					   output_cred_handle,
+					   actual_mechs, &lifetime);
         if (major != GSS_S_COMPLETE)
             goto failure;
 

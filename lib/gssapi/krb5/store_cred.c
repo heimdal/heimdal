@@ -34,23 +34,25 @@
 #include "gsskrb5_locl.h"
 
 OM_uint32 GSSAPI_CALLCONV
-_gsskrb5_store_cred(OM_uint32         *minor_status,
-		    gss_cred_id_t     input_cred_handle,
-		    gss_cred_usage_t  cred_usage,
-		    const gss_OID     desired_mech,
-		    OM_uint32         overwrite_cred,
-		    OM_uint32         default_cred,
-		    gss_OID_set       *elements_stored,
-		    gss_cred_usage_t  *cred_usage_stored)
+_gsskrb5_store_cred_into(OM_uint32         *minor_status,
+			 gss_const_cred_id_t input_cred_handle,
+			 gss_cred_usage_t  cred_usage,
+			 const gss_OID     desired_mech,
+			 OM_uint32         overwrite_cred,
+			 OM_uint32         default_cred,
+			 gss_const_key_value_set_t cred_store,
+			 gss_OID_set       *elements_stored,
+			 gss_cred_usage_t  *cred_usage_stored)
 {
     krb5_context context;
     krb5_error_code ret;
     gsskrb5_cred cred;
     krb5_ccache id = NULL;
-    krb5_ccache def_ccache = NULL;
     const char *def_type = NULL;
     time_t exp_current;
     time_t exp_new;
+    const char *cs_ccache_name = NULL;
+    OM_uint32 major_status;
 
     *minor_status = 0;
 
@@ -89,38 +91,47 @@ _gsskrb5_store_cred(OM_uint32         *minor_status,
 	return GSS_S_FAILURE;
     }
 
-    ret = krb5_cc_default(context, &def_ccache);
-    if (ret == 0) {
-        def_type = krb5_cc_get_type(context, def_ccache);
-        krb5_cc_close(context, def_ccache);
+    if (cred_store != GSS_C_NO_CRED_STORE) {
+	major_status = __gsskrb5_cred_store_find(minor_status, cred_store,
+						 "ccache", &cs_ccache_name);
+	if (major_status == GSS_S_COMPLETE && cs_ccache_name == NULL) {
+	    *minor_status = GSS_KRB5_S_G_UNKNOWN_CRED_STORE_ELEMENT;
+	    major_status = GSS_S_NO_CRED;
+	}
+	if (GSS_ERROR(major_status)) {
+	    HEIMDAL_MUTEX_unlock(&cred->cred_id_mutex);
+	    return major_status;
+	}
     }
-    def_ccache = NULL;
 
-    /* write out cred to credential cache */
-    ret = krb5_cc_cache_match(context, cred->principal, &id);
-    if (ret) {
-        if (default_cred) {
-            ret = krb5_cc_default(context, &id);
-            if (ret) {
-                HEIMDAL_MUTEX_unlock(&cred->cred_id_mutex);
-                *minor_status = ret;
-                return GSS_S_FAILURE;
-            }
-        } else {
-            if (def_type == NULL ||
-                !krb5_cc_support_switch(context, def_type)) {
-                HEIMDAL_MUTEX_unlock(&cred->cred_id_mutex);
-                *minor_status = 0;      /* XXX */
-                return GSS_S_NO_CRED;   /* XXX */
-            }
-            ret = krb5_cc_new_unique(context, def_type, NULL, &id);
-            if (ret) {
-                HEIMDAL_MUTEX_unlock(&cred->cred_id_mutex);
-                *minor_status = ret;
-                return GSS_S_FAILURE;
-            }
-            overwrite_cred = 1;
-        }
+    if (cs_ccache_name)
+	ret = krb5_cc_resolve(context, cs_ccache_name, &id);
+    else {
+	krb5_ccache def_ccache = NULL;
+
+	if (krb5_cc_default(context, &def_ccache) == 0) {
+	    def_type = krb5_cc_get_type(context, def_ccache);
+	    krb5_cc_close(context, def_ccache);
+	}
+
+	/* write out cred to credential cache */
+	ret = krb5_cc_cache_match(context, cred->principal, &id);
+	if (ret) {
+	    if (default_cred)
+		ret = krb5_cc_default(context, &id);
+	    else if (def_type &&
+		     krb5_cc_support_switch(context, def_type)) {
+		ret = krb5_cc_new_unique(context, def_type, NULL, &id);
+		overwrite_cred = 1;
+	    } else
+		ret = 0; /* == GSS_C_NO_CRED */
+	}
+    }
+
+    if (ret || id == NULL) {
+	HEIMDAL_MUTEX_unlock(&cred->cred_id_mutex);
+	*minor_status = ret;
+	return ret == 0 ? GSS_S_NO_CRED : GSS_S_FAILURE;
     }
 
     if (!overwrite_cred) {

@@ -53,12 +53,13 @@ OM_uint32 GSSAPI_CALLCONV _gsskrb5_duplicate_cred (
 
     if (input_cred_handle == GSS_C_NO_CREDENTIAL) {
         /* Duplicate the default credential */
-        return _gsskrb5_acquire_cred(minor_status, GSS_C_NO_NAME,
-                                     GSS_C_INDEFINITE,
-                                     GSS_C_NO_OID_SET,
-                                     GSS_C_BOTH,
-                                     output_cred_handle,
-                                     NULL, NULL);
+        return _gsskrb5_acquire_cred_from(minor_status, GSS_C_NO_NAME,
+					  GSS_C_INDEFINITE,
+					  GSS_C_NO_OID_SET,
+					  GSS_C_BOTH,
+					  GSS_C_NO_CRED_STORE,
+					  output_cred_handle,
+					  NULL, NULL);
     }
 
     /* Duplicate the input credential */

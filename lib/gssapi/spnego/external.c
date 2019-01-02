@@ -89,7 +89,7 @@ static gssapi_mech_interface_desc spnego_mech = {
     "spnego",
     {6, rk_UNCONST("\x2b\x06\x01\x05\x05\x02") },
     0,
-    _gss_spnego_acquire_cred,
+    NULL, /* gm_acquire_cred */
     _gss_spnego_release_cred,
     _gss_spnego_init_sec_context,
     _gss_spnego_accept_sec_context,
@@ -129,7 +129,7 @@ static gssapi_mech_interface_desc spnego_mech = {
     NULL,
     _gss_spnego_export_cred,
     _gss_spnego_import_cred,
-    NULL,
+    _gss_spnego_acquire_cred_from,
     NULL,
     NULL,
     NULL,
@@ -147,6 +147,8 @@ static gssapi_mech_interface_desc spnego_mech = {
     NULL, /* gm_delete_name_attribute */
     NULL, /* gm_export_name_composite */
     NULL, /* gm_duplicate_cred */
+    gss_add_cred_from,
+    NULL, /* gm_store_cred_into */
     NULL  /* gm_compat */
 };
 

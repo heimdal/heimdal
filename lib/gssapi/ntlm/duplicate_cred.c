@@ -43,10 +43,10 @@ _gss_ntlm_duplicate_cred(OM_uint32 *minor_status,
     OM_uint32 junk;
 
     if (input_cred_handle == GSS_C_NO_CREDENTIAL)
-        return _gss_ntlm_acquire_cred(minor_status, GSS_C_NO_NAME,
-                                      GSS_C_INDEFINITE, GSS_C_NO_OID_SET,
-                                      GSS_C_BOTH, output_cred_handle, NULL,
-                                      NULL);
+        return _gss_ntlm_acquire_cred_from(minor_status, GSS_C_NO_NAME,
+					   GSS_C_INDEFINITE, GSS_C_NO_OID_SET,
+					   GSS_C_BOTH, GSS_C_NO_CRED_STORE,
+					   output_cred_handle, NULL, NULL);
 
     *output_cred_handle = GSS_C_NO_CREDENTIAL;
 

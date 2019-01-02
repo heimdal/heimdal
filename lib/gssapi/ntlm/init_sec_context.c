@@ -215,12 +215,13 @@ _gss_ntlm_get_user_cred(const ntlm_name target_name,
     return ret;
 }
 
-static int
-_gss_copy_cred(ntlm_cred from, ntlm_cred *to)
+int
+_gss_ntlm_copy_cred(ntlm_cred from, ntlm_cred *to)
 {
     *to = calloc(1, sizeof(**to));
     if (*to == NULL)
 	return ENOMEM;
+    (*to)->usage = from->usage;
     (*to)->username = strdup(from->username);
     if ((*to)->username == NULL) {
 	free(*to);
@@ -289,7 +290,7 @@ _gss_ntlm_init_sec_context
 
 	if (initiator_cred_handle != GSS_C_NO_CREDENTIAL) {
 	    ntlm_cred cred = (ntlm_cred)initiator_cred_handle;
-	    ret = _gss_copy_cred(cred, &ctx->client);
+	    ret = _gss_ntlm_copy_cred(cred, &ctx->client);
 	} else
 	    ret = _gss_ntlm_get_user_cred(name, &ctx->client);
 

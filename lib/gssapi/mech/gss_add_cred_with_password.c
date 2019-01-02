@@ -42,109 +42,47 @@ gss_add_cred_with_password(OM_uint32 *minor_status,
     OM_uint32 *initiator_time_rec,
     OM_uint32 *acceptor_time_rec)
 {
-	OM_uint32 major_status;
-	gssapi_mech_interface m;
-	struct _gss_cred *cred = (struct _gss_cred *) input_cred_handle;
-	struct _gss_cred *new_cred;
-	struct _gss_mechanism_cred *mc;
-	struct _gss_mechanism_name *mn = NULL;
-	OM_uint32 junk, time_req;
+    OM_uint32 major_status;
+    gss_key_value_element_desc kv;
+    gss_key_value_set_desc store;
+    char *spassword = NULL;
 
-	*minor_status = 0;
-	*output_cred_handle = GSS_C_NO_CREDENTIAL;
-	if (initiator_time_rec)
-	    *initiator_time_rec = 0;
-	if (acceptor_time_rec)
-	    *acceptor_time_rec = 0;
-	if (actual_mechs)
-	    *actual_mechs = GSS_C_NO_OID_SET;
+    *output_cred_handle = GSS_C_NO_CREDENTIAL;
 
-	m = __gss_get_mechanism(desired_mech);
-	if (m == NULL) {
-		*minor_status = 0;
-		return (GSS_S_BAD_MECH);
-	}
+    if (password == GSS_C_NO_BUFFER || password->value == NULL)
+	return GSS_S_CALL_INACCESSIBLE_READ;
 
-	new_cred = calloc(1, sizeof(struct _gss_cred));
-	if (new_cred == NULL) {
-		*minor_status = ENOMEM;
-		return (GSS_S_FAILURE);
-	}
-	HEIM_SLIST_INIT(&new_cred->gc_mc);
+    spassword = malloc(password->length + 1);
+    if (spassword == NULL) {
+	*minor_status = ENOMEM;
+	return GSS_S_FAILURE;
+    }
+    memcpy(spassword, password->value, password->length);
+    spassword[password->length] = '\0';
 
-	/*
-	 * Copy credentials from un-desired mechanisms to the new credential.
-	 */
-	if (cred) {
-		HEIM_SLIST_FOREACH(mc, &cred->gc_mc, gmc_link) {
-			struct _gss_mechanism_cred *copy_mc;
+    kv.key = "password";
+    kv.value = spassword;
 
-			if (gss_oid_equal(mc->gmc_mech_oid, desired_mech)) {
-				continue;
-			}
-			copy_mc = _gss_copy_cred(mc);
-			if (copy_mc == NULL) {
-				gss_release_cred(&junk, (gss_cred_id_t *)&new_cred);
-				*minor_status = ENOMEM;
-				return (GSS_S_FAILURE);
-			}
-			HEIM_SLIST_INSERT_HEAD(&new_cred->gc_mc, copy_mc, gmc_link);
-		}
-	}
+    store.count = 1;
+    store.elements = &kv;
 
-	/*
-	 * Figure out a suitable mn, if any.
-	 */
-	if (desired_name != GSS_C_NO_NAME) {
-		major_status = _gss_find_mn(minor_status,
-					    (struct _gss_name *) desired_name,
-					    desired_mech,
-					    &mn);
-		if (major_status != GSS_S_COMPLETE) {
-			gss_release_cred(&junk, (gss_cred_id_t *)&new_cred);
-			return (major_status);
-		}
-	}
+    major_status = gss_add_cred_from(minor_status,
+				     rk_UNCONST(input_cred_handle),
+				     desired_name,
+				     desired_mech,
+				     cred_usage,
+				     initiator_time_req,
+				     acceptor_time_req,
+				     &store,
+				     output_cred_handle,
+				     actual_mechs,
+				     initiator_time_rec,
+				     acceptor_time_rec);
 
-	if (cred_usage == GSS_C_BOTH)
-		time_req = initiator_time_req > acceptor_time_req ? acceptor_time_req : initiator_time_req;
-	else if (cred_usage == GSS_C_INITIATE)
-		time_req = initiator_time_req;
-	else
-		time_req = acceptor_time_req;
+    if (spassword) {
+	memset_s(spassword, password->length, 0, password->length);
+	free(spassword);
+    }
 
-	major_status = _gss_acquire_mech_cred(minor_status, m, mn,
-					      GSS_C_CRED_PASSWORD, password,
-					      time_req, desired_mech,
-					      cred_usage, &mc);
-	if (major_status != GSS_S_COMPLETE) {
-		gss_release_cred(&junk, (gss_cred_id_t *)&new_cred);
-		return (major_status);
-	}
-
-	HEIM_SLIST_INSERT_HEAD(&new_cred->gc_mc, mc, gmc_link);
-
-	if (actual_mechs || initiator_time_rec || acceptor_time_rec) {
-		OM_uint32 time_rec;
-
-		major_status = gss_inquire_cred(minor_status,
-						(gss_cred_id_t)new_cred,
-						NULL,
-						&time_rec,
-						NULL,
-						actual_mechs);
-		if (GSS_ERROR(major_status)) {
-			gss_release_cred(&junk, (gss_cred_id_t *)&new_cred);
-			return (major_status);
-		}
-		if (initiator_time_rec &&
-		    (cred_usage == GSS_C_INITIATE || cred_usage == GSS_C_BOTH))
-			*initiator_time_rec = time_rec;
-		if (acceptor_time_rec &&
-		    (cred_usage == GSS_C_ACCEPT || cred_usage == GSS_C_BOTH))
-			*acceptor_time_rec = time_rec;
-	}
-
-	*output_cred_handle = (gss_cred_id_t) new_cred;
-	return (GSS_S_COMPLETE);
+    return major_status;
 }

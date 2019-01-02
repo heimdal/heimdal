@@ -117,8 +117,8 @@ main(int argc, char **argv)
     gss_cred_id_t from_cred = GSS_C_NO_CREDENTIAL;
     gss_cred_id_t to_cred = GSS_C_NO_CREDENTIAL;
     gss_cred_id_t cred = GSS_C_NO_CREDENTIAL;
-    char *from_env;
-    char *to_env;
+    gss_key_value_element_desc from_elements, to_elements;
+    gss_key_value_set_desc from, to;
     int optidx = 0;
 
     setprogname(argv[0]);
@@ -141,22 +141,26 @@ main(int argc, char **argv)
     if (argc > 2)
         errx(1, "too many arguments");
 
-    if (asprintf(&from_env, "KRB5CCNAME=%s", argv[0]) == -1 || from_env == NULL)
-        err(1, "out of memory");
-    if (asprintf(&to_env, "KRB5CCNAME=%s", argv[1]) == -1 || to_env == NULL)
-        err(1, "out of memory");
+    from_elements.key = "ccache";
+    from_elements.value = argv[0];
+    from.count = 1;
+    from.elements = &from_elements;
 
-    putenv(from_env);
-    major = gss_add_cred(&minor, GSS_C_NO_CREDENTIAL, GSS_C_NO_NAME,
-                         GSS_KRB5_MECHANISM, GSS_C_INITIATE, GSS_C_INDEFINITE,
-                         GSS_C_INDEFINITE, &from_cred, NULL, NULL, NULL);
+    to_elements.key = "ccache";
+    to_elements.value = argv[1];
+    to.count = 1;
+    to.elements = &to_elements;
+
+    major = gss_add_cred_from(&minor, GSS_C_NO_CREDENTIAL, GSS_C_NO_NAME,
+			      GSS_KRB5_MECHANISM, GSS_C_INITIATE,
+			      GSS_C_INDEFINITE, GSS_C_INDEFINITE,
+			      &from, &from_cred, NULL, NULL, NULL);
     if (major != GSS_S_COMPLETE)
         gss_err(1, major, minor, GSS_KRB5_MECHANISM,
                 "failed to acquire creds from %s", argv[0]);
 
-    putenv(to_env);
-    major = gss_store_cred(&minor, from_cred, GSS_C_INITIATE,
-                           GSS_KRB5_MECHANISM, 1, 1, NULL, NULL);
+    major = gss_store_cred_into(&minor, from_cred, GSS_C_INITIATE,
+				GSS_KRB5_MECHANISM, 1, 1, &to, NULL, NULL);
     if (major != GSS_S_COMPLETE)
         gss_err(1, major, minor, GSS_KRB5_MECHANISM,
                 "failed to store creds into %s", argv[1]);
@@ -171,9 +175,6 @@ main(int argc, char **argv)
         gss_err(1, major, minor, GSS_KRB5_MECHANISM,
                 "failed to acquire creds from %s", argv[1]);
     (void) gss_release_cred(&minor, &cred);
-    putenv("KRB5CCNAME");
-    free(from_env);
-    free(to_env);
 
     return 0;
 }

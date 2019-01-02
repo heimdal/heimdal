@@ -122,12 +122,15 @@ echo "======context building for each mech"
 for mech in ntlm krb5 ; do 
     echo "${mech}"
     ${context} --mech-type=${mech} --ret-mech-type=${mech} \
+        --client-ccache="${cache}" \
+        --gsskrb5-acceptor-identity="${keytab}" \
         --name-type=hostbased-service host@host.test.h5l.se || \
 	{ exitcode=1 ; echo test failed; }
 done
 
 echo "spnego"
 ${context} \
+    --client-ccache="${cache}" \
     --mech-type=spnego \
     --ret-mech-type=krb5 \
     --name-type=hostbased-service \
@@ -136,10 +139,12 @@ ${context} \
 
 echo "test failure cases"
 ${context} --mech-type=ntlm --ret-mech-type=krb5 \
+    --client-ccache="${cache}" \
     --name-type=hostbased-service host@host.test.h5l.se 2> /dev/null && \
     { exitcode=1 ; echo test failed; }
 
 ${context} --mech-type=krb5 --ret-mech-type=ntlm \
+    --client-ccache="${cache}" \
     --name-type=hostbased-service host@host.test.h5l.se 2> /dev/null && \
     { exitcode=1 ; echo test failed; }
 
@@ -185,6 +190,16 @@ for arg in \
         { exitcode=1 ; echo test failed; }
     KRB5_KTNAME="${keytab}"
 
+    echo "no explicit krb5 acceptor cred ${arg}"
+    ${context} --mech-type=spnego \
+        $arg \
+        --gsskrb5-acceptor-identity="${keytab}-no" \
+        --server-no-delegate \
+        --name-type=hostbased-service \
+        --ret-mech-type=krb5 \
+        host@host.test.h5l.se 2>/dev/null && \
+        { exitcode=1 ; echo test failed; }
+
     echo "no krb5 initiator cred ${arg}"
     KRB5CCNAME="${cache}-no"
     ${context} --mech-type=spnego \
@@ -195,6 +210,16 @@ for arg in \
         host@host.test.h5l.se || \
         { exitcode=1 ; echo test failed; }
     KRB5CCNAME="${cache}"
+
+    echo "no explicit krb5 initiator cred ${arg}"
+    ${context} --mech-type=spnego \
+        $arg \
+        --client-ccache="${cache}-no" \
+        --server-no-delegate \
+        --name-type=hostbased-service \
+        --ret-mech-type=krb5 \
+        host@host.test.h5l.se 2>/dev/null && \
+        { exitcode=1 ; echo test failed; }
 
 done
 

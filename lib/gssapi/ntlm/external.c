@@ -65,7 +65,7 @@ static gssapi_mech_interface_desc ntlm_mech = {
     "ntlm",
     {10, rk_UNCONST("\x2b\x06\x01\x04\x01\x82\x37\x02\x02\x0a") },
     0,
-    _gss_ntlm_acquire_cred,
+    NULL,
     _gss_ntlm_release_cred,
     _gss_ntlm_init_sec_context,
     _gss_ntlm_accept_sec_context,
@@ -105,7 +105,7 @@ static gssapi_mech_interface_desc ntlm_mech = {
     NULL,
     NULL,
     NULL,
-    NULL,
+    _gss_ntlm_acquire_cred_from,
     _gss_ntlm_iter_creds_f,
     _gss_ntlm_destroy_cred,
     NULL,
@@ -123,6 +123,8 @@ static gssapi_mech_interface_desc ntlm_mech = {
     NULL, /* gm_delete_name_attribute */
     NULL, /* gm_export_name_composite */
     NULL, /* gm_duplicate_cred */
+    NULL, /* gm_add_cred_from */
+    NULL, /* gm_store_cred_into */
     NULL, /* gm_compat */
 };
 

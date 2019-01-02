@@ -57,6 +57,8 @@ static int deleg_flag = 0;
 static int policy_deleg_flag = 0;
 static int server_no_deleg_flag = 0;
 static int ei_flag = 0;
+static char *client_ccache = NULL;
+static char *client_keytab = NULL;
 static char *gsskrb5_acceptor_identity = NULL;
 static char *session_enctype_string = NULL;
 static int client_time_offset = 0;
@@ -565,6 +567,8 @@ static struct getargs args[] = {
     {"dns-canonicalize",0,arg_negative_flag, &dns_canon_flag,
      "use dns to canonicalize", NULL },
     {"mutual-auth",0,	arg_flag,	&mutual_auth_flag,"mutual auth", NULL },
+    {"client-ccache",0, arg_string,	&client_ccache, "client credentials cache", NULL },
+    {"client-keytab",0, arg_string,	&client_keytab, "client keytab", NULL },
     {"client-name", 0,  arg_string,     &client_name, "client name", NULL },
     {"client-password", 0,  arg_string, &client_password, "client password", NULL },
     {"limit-enctype",0,	arg_string,	&limit_enctype_string, "enctype", NULL },
@@ -611,6 +615,8 @@ main(int argc, char **argv)
     gss_OID_desc oids[4];
     gss_OID_set_desc mechoid_descs;
     gss_OID_set mechoids = GSS_C_NO_OID_SET;
+    gss_key_value_element_desc client_cred_elements[2];
+    gss_key_value_set_desc client_cred_store;
 
     setprogname(argv[0]);
 
@@ -687,15 +693,37 @@ main(int argc, char **argv)
     }
 
     if (gsskrb5_acceptor_identity) {
+	/* XXX replace this with cred store, but test suites will need work */
 	maj_stat = gsskrb5_register_acceptor_identity(gsskrb5_acceptor_identity);
 	if (maj_stat)
 	    errx(1, "gsskrb5_acceptor_identity: %s",
 		 gssapi_err(maj_stat, 0, GSS_C_NO_OID));
     }
 
+    if (client_password && (client_ccache || client_keytab)) {
+	errx(1, "password option mutually exclusive with ccache or keytab option");
+    }
+
     if (client_password) {
 	credential_data.value = client_password;
 	credential_data.length = strlen(client_password);
+    }
+
+    client_cred_store.count = 0;
+    client_cred_store.elements = client_cred_elements;
+
+    if (client_ccache) {
+	client_cred_store.elements[client_cred_store.count].key = "ccache";
+	client_cred_store.elements[client_cred_store.count].value = client_ccache;
+
+	client_cred_store.count++;
+    }
+
+    if (client_keytab) {
+	client_cred_store.elements[client_cred_store.count].key = "client_keytab";
+	client_cred_store.elements[client_cred_store.count].value = client_keytab;
+
+	client_cred_store.count++;
     }
 
     if (client_name) {
@@ -729,14 +757,16 @@ main(int argc, char **argv)
 		 gssapi_err(maj_stat, min_stat, mechoid));
         }
     } else {
-	maj_stat = gss_acquire_cred(&min_stat,
-				    cname,
-				    GSS_C_INDEFINITE,
-				    mechoids,
-				    GSS_C_INITIATE,
-				    &client_cred,
-				    NULL,
-				    NULL);
+	maj_stat = gss_acquire_cred_from(&min_stat,
+					 cname,
+					 GSS_C_INDEFINITE,
+					 mechoids,
+					 GSS_C_INITIATE,
+					 client_cred_store.count ? &client_cred_store
+								 : GSS_C_NO_CRED_STORE,
+					 &client_cred,
+					 NULL,
+					 NULL);
 	if (GSS_ERROR(maj_stat))
 	    errx(1, "gss_acquire_cred: %s",
 		 gssapi_err(maj_stat, min_stat, GSS_C_NO_OID));

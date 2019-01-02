@@ -43,77 +43,43 @@ gss_acquire_cred_with_password(OM_uint32 *minor_status,
 			       gss_OID_set *actual_mechs,
 			       OM_uint32 *time_rec)
 {
-    OM_uint32 major_status, tmp_minor;
+    OM_uint32 major_status;
+    gss_key_value_element_desc kv;
+    gss_key_value_set_desc store;
+    char *spassword = NULL;
 
-    if (desired_mechs == GSS_C_NO_OID_SET) {
-	major_status = _gss_acquire_cred_ext(minor_status,
-					     desired_name,
-					     GSS_C_CRED_PASSWORD,
-					     password,
-					     time_req,
-					     GSS_C_NO_OID,
-					     cred_usage,
-					     output_cred_handle);
-	if (GSS_ERROR(major_status))
-	    return major_status;
-    } else {
-	size_t i;
-	struct _gss_cred *new_cred;
+    *output_cred_handle = GSS_C_NO_CREDENTIAL;
 
-	new_cred = calloc(1, sizeof(*new_cred));
-	if (new_cred == NULL) {
-	    *minor_status = ENOMEM;
-	    return GSS_S_FAILURE;
-	}
-	HEIM_SLIST_INIT(&new_cred->gc_mc);
+    if (password == GSS_C_NO_BUFFER || password->value == NULL)
+	return GSS_S_CALL_INACCESSIBLE_READ;
 
-	for (i = 0; i < desired_mechs->count; i++) {
-	    struct _gss_cred *tmp_cred = NULL;
-	    struct _gss_mechanism_cred *mc;
+    spassword = malloc(password->length + 1);
+    if (spassword == NULL) {
+	*minor_status = ENOMEM;
+	return GSS_S_FAILURE;
+    }
+    memcpy(spassword, password->value, password->length);
+    spassword[password->length] = '\0';
 
-	    major_status = _gss_acquire_cred_ext(minor_status,
-						 desired_name,
-						 GSS_C_CRED_PASSWORD,
-						 password,
-						 time_req,
-						 &desired_mechs->elements[i],
-						 cred_usage,
-						 (gss_cred_id_t *)&tmp_cred);
-	    if (GSS_ERROR(major_status))
-		continue;
+    kv.key = "password";
+    kv.value = spassword;
 
-	    mc = HEIM_SLIST_FIRST(&tmp_cred->gc_mc);
-	    if (mc) {
-		HEIM_SLIST_REMOVE_HEAD(&tmp_cred->gc_mc, gmc_link);
-		HEIM_SLIST_INSERT_HEAD(&new_cred->gc_mc, mc, gmc_link);
-	    }
+    store.count = 1;
+    store.elements = &kv;
 
-	    gss_release_cred(&tmp_minor, (gss_cred_id_t *)&tmp_cred);
-	}
-
-	if (!HEIM_SLIST_FIRST(&new_cred->gc_mc)) {
-	    free(new_cred);
-            if (desired_mechs->count > 1)
-                *minor_status = 0;
-	    return GSS_S_NO_CRED;
-	}
-
-	*output_cred_handle = (gss_cred_id_t)new_cred;
+    major_status = gss_acquire_cred_from(minor_status,
+					 desired_name,
+					 time_req,
+					 desired_mechs,
+					 cred_usage,
+					 &store,
+					 output_cred_handle,
+					 actual_mechs,
+					 time_rec);
+    if (spassword) {
+	memset_s(spassword, password->length, 0, password->length);
+	free(spassword);
     }
 
-    if (actual_mechs != NULL || time_rec != NULL) {
-	major_status = gss_inquire_cred(minor_status,
-					*output_cred_handle,
-					NULL,
-					time_rec,
-					NULL,
-					actual_mechs);
-	if (GSS_ERROR(major_status)) {
-	    gss_release_cred(&tmp_minor, output_cred_handle);
-	    return major_status;
-	}
-    }
-
-    *minor_status = 0;
-    return GSS_S_COMPLETE;
+    return major_status;
 }

@@ -34,14 +34,15 @@
 #include "ntlm.h"
 
 OM_uint32 GSSAPI_CALLCONV
-_gss_ntlm_acquire_cred(OM_uint32            *min_stat,
-                       gss_const_name_t     desired_name,
-                       OM_uint32            time_req,
-                       const gss_OID_set    desired_mechs,
-                       gss_cred_usage_t     cred_usage,
-                       gss_cred_id_t        *output_cred_handle,
-                       gss_OID_set          *actual_mechs,
-                       OM_uint32            *time_rec)
+_gss_ntlm_acquire_cred_from(OM_uint32            *min_stat,
+			    gss_const_name_t     desired_name,
+			    OM_uint32            time_req,
+			    const gss_OID_set    desired_mechs,
+			    gss_cred_usage_t     cred_usage,
+			    gss_const_key_value_set_t cred_store,
+			    gss_cred_id_t        *output_cred_handle,
+			    gss_OID_set          *actual_mechs,
+			    OM_uint32            *time_rec)
 {
     ntlm_name name = (ntlm_name) desired_name;
     const char *domain = NULL;

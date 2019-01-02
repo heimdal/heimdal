@@ -82,9 +82,10 @@ mechsrc = \
 	mech/doxygen.c \
 	mech/gss_accept_sec_context.c \
 	mech/gss_acquire_cred.c \
-	mech/gss_acquire_cred_ext.c \
+	mech/gss_acquire_cred_from.c \
 	mech/gss_acquire_cred_with_password.c \
 	mech/gss_add_cred.c \
+	mech/gss_add_cred_from.c \
 	mech/gss_add_cred_with_password.c \
 	mech/gss_add_oid_set_member.c \
 	mech/gss_aeap.c \
@@ -141,6 +142,7 @@ mechsrc = \
 	mech/gss_set_sec_context_option.c \
 	mech/gss_sign.c \
 	mech/gss_store_cred.c \
+	mech/gss_store_cred_into.c \
 	mech/gss_test_oid_set_member.c \
 	mech/gss_unseal.c \
 	mech/gss_unwrap.c \

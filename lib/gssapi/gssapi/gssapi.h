@@ -141,11 +141,23 @@ typedef struct gss_iov_buffer_desc_struct {
     gss_buffer_desc buffer;
 } gss_iov_buffer_desc, *gss_iov_buffer_t;
 
+/* Credential store extensions */
+typedef struct gss_key_value_element_struct {
+    const char *key;
+    const char *value;
+} gss_key_value_element_desc;
+
+typedef struct gss_key_value_set_struct {
+    OM_uint32 count; /* should be size_t, but for MIT compat */
+    gss_key_value_element_desc *elements;
+} gss_key_value_set_desc, *gss_key_value_set_t;
+
+typedef const gss_key_value_set_desc *gss_const_key_value_set_t;
+
 /*
  * For now, define a QOP-type as an OM_uint32
  */
 typedef OM_uint32 gss_qop_t;
-
 
 
 /*
@@ -220,6 +232,7 @@ typedef OM_uint32 gss_qop_t;
 #define GSS_C_NO_CHANNEL_BINDINGS ((gss_channel_bindings_t) 0)
 #define GSS_C_EMPTY_BUFFER {0, NULL}
 #define GSS_C_NO_IOV_BUFFER ((gss_iov_buffer_t)0)
+#define GSS_C_NO_CRED_STORE ((gss_key_value_set_t)0)
 
 /*
  * Some alternate names for a couple of the above
@@ -1123,15 +1136,56 @@ GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL gss_duplicate_cred (
             gss_const_cred_id_t /*input_cred_handle*/,
             gss_cred_id_t * /*output_cred_handle*/
            );
-/*
- *
- */
-
 GSSAPI_LIB_FUNCTION const char * GSSAPI_LIB_CALL
 gss_oid_to_name(gss_const_OID oid);
 
 GSSAPI_LIB_FUNCTION gss_OID GSSAPI_LIB_CALL
 gss_name_to_oid(const char *name);
+
+/*
+ * Credential store extensions
+ */
+GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL
+gss_acquire_cred_from(
+    OM_uint32 * /* minor_status */,
+    gss_const_name_t /* desired_name */,
+    OM_uint32 /* time_req */,
+    const gss_OID_set /* desired_mechs */,
+    gss_cred_usage_t /* cred_usage */,
+    gss_const_key_value_set_t /* cred_store */,
+    gss_cred_id_t * /* output_cred_handle */,
+    gss_OID_set * /* actual_mechs */,
+    OM_uint32 * /* time_rec */
+    );
+
+GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL
+gss_add_cred_from(
+    OM_uint32 * /* minor_status */,
+    gss_cred_id_t /* input_cred_handle */,
+    gss_const_name_t /* desired_name */,
+    const gss_OID /* desired_mech */,
+    gss_cred_usage_t /* cred_usage */,
+    OM_uint32 /* initiator_time_req */,
+    OM_uint32 /* acceptor_time_req */,
+    gss_const_key_value_set_t /* cred_store */,
+    gss_cred_id_t * /* output_cred_handle */,
+    gss_OID_set * /* actual_mechs */,
+    OM_uint32 * /* initiator_time_rec */,
+    OM_uint32 * /*acceptor_time_rec */
+    );
+
+GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL
+gss_store_cred_into(
+    OM_uint32 * /* minor_status */,
+    gss_const_cred_id_t /* input_cred_handle */,
+    gss_cred_usage_t /* input_usage */,
+    const gss_OID /* desired_mech */,
+    OM_uint32 /* overwrite_cred */,
+    OM_uint32 /* default_cred */,
+    gss_const_key_value_set_t /* cred_store */,
+    gss_OID_set * /* elements_stored */,
+    gss_cred_usage_t * /* cred_usage_stored */
+    );
 
 GSSAPI_CPP_END
 

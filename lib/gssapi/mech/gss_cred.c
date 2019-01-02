@@ -223,3 +223,4 @@ gss_import_cred(OM_uint32 * minor_status,
     return major;
 
 }
+

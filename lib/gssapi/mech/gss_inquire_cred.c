@@ -73,12 +73,11 @@ gss_inquire_cred(OM_uint32 *minor_status,
 		*mechanisms = GSS_C_NO_OID_SET;
 
 	if (name_ret) {
-		name = calloc(1, sizeof(*name));
+		name = _gss_create_name(NULL, NULL);
 		if (name == NULL) {
 			*minor_status = ENOMEM;
 			return (GSS_S_FAILURE);
 		}
-		HEIM_SLIST_INIT(&name->gn_mn);
 	} else {
 		name = NULL;
 	}

@@ -249,7 +249,7 @@ gss_accept_sec_context(OM_uint32 *minor_status,
 		/*
 		 * Make a new name and mark it as an MN.
 		 */
-		struct _gss_name *name = _gss_make_name(m, src_mn);
+		struct _gss_name *name = _gss_create_name(src_mn, m);
 
 		if (!name) {
 			m->gm_release_name(minor_status, &src_mn);
@@ -279,13 +279,12 @@ gss_accept_sec_context(OM_uint32 *minor_status,
 			struct _gss_cred *dcred;
 			struct _gss_mechanism_cred *dmc;
 
-			dcred = malloc(sizeof(struct _gss_cred));
+			dcred = _gss_mg_alloc_cred();
 			if (!dcred) {
 				*minor_status = ENOMEM;
 				gss_delete_sec_context(&junk, context_handle, NULL);
 				return (GSS_S_FAILURE);
 			}
-			HEIM_SLIST_INIT(&dcred->gc_mc);
 			dmc = malloc(sizeof(struct _gss_mechanism_cred));
 			if (!dmc) {
 				free(dcred);

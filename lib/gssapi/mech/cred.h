@@ -39,6 +39,18 @@ struct _gss_cred {
 	struct _gss_mechanism_cred_list gc_mc;
 };
 
+struct _gss_cred *
+_gss_mg_alloc_cred(void);
+
+void
+_gss_mg_release_cred(struct _gss_cred *cred);
+
+struct _gss_mechanism_cred *
+_gss_copy_cred(struct _gss_mechanism_cred *mc);
+
+void
+_gss_mg_check_credential(gss_const_cred_id_t credential);
+
 struct _gss_mechanism_name;
 
 OM_uint32
@@ -53,4 +65,3 @@ _gss_mg_add_mech_cred(OM_uint32 *minor_status,
 		      struct _gss_mechanism_cred **output_cred_handle,
 		      OM_uint32 *initiator_time_rec,
 		      OM_uint32 *acceptor_time_rec);
-

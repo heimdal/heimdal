@@ -132,12 +132,11 @@ gss_duplicate_cred(OM_uint32 *minor_status,
     }
 
     *output_cred_handle = GSS_C_NO_CREDENTIAL;
-    new_cred = malloc(sizeof(struct _gss_cred));
+    new_cred = _gss_mg_alloc_cred();
     if (!new_cred) {
         *minor_status = ENOMEM;
         return GSS_S_FAILURE;
     }
-    HEIM_SLIST_INIT(&new_cred->gc_mc);
 
     *minor_status = 0;
     major_status = GSS_S_NO_CRED;

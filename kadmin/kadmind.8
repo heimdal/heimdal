@@ -172,6 +172,21 @@ section of
 .Bl -tag -width Ds -offset indent
 .It supported_enctypes
 .El
+.Pp
+kadmind uses the following configuration parameters from the
+.Ar [password_quality]
+section of
+.Ar krb5.conf:
+.Bl -tag -width Ds -offset indent
+.It enforce_on_admin_set
+.It min_length
+.It min_classes
+.It external_program
+.It check_library
+.It check_function
+.It policy_libraries
+.It policies
+.El
 .Sh SEE ALSO
 .Xr kpasswd 1 ,
 .Xr kadmin 1 ,

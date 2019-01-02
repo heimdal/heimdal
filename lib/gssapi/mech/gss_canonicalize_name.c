@@ -70,6 +70,8 @@ gss_canonicalize_name(OM_uint32 *minor_status,
 	major_status = _gss_find_mn(minor_status, name, mech_type, &mn);
 	if (major_status)
 		return major_status;
+	if (mn == NULL)
+		return GSS_S_BAD_NAME;
 
 	m = mn->gmn_mech;
 	major_status = m->gm_canonicalize_name(minor_status,
@@ -83,27 +85,12 @@ gss_canonicalize_name(OM_uint32 *minor_status,
 	 * Now we make a new name and mark it as an MN.
 	 */
 	*minor_status = 0;
-	name = malloc(sizeof(struct _gss_name));
+	name = _gss_create_name(new_canonical_name, m);
 	if (!name) {
 		m->gm_release_name(minor_status, &new_canonical_name);
 		*minor_status = ENOMEM;
 		return (GSS_S_FAILURE);
 	}
-	memset(name, 0, sizeof(struct _gss_name));
-
-	mn = malloc(sizeof(struct _gss_mechanism_name));
-	if (!mn) {
-		m->gm_release_name(minor_status, &new_canonical_name);
-		free(name);
-		*minor_status = ENOMEM;
-		return (GSS_S_FAILURE);
-	}
-
-	HEIM_SLIST_INIT(&name->gn_mn);
-	mn->gmn_mech = m;
-	mn->gmn_mech_oid = &m->gm_mech_oid;
-	mn->gmn_name = new_canonical_name;
-	HEIM_SLIST_INSERT_HEAD(&name->gn_mn, mn, gmn_link);
 
 	*output_name = (gss_name_t) name;
 

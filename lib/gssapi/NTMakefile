@@ -96,6 +96,7 @@ mechsrc = \
 	mech/context.h \
 	mech/context.c \
 	mech/cred.h \
+	mech/cred.c \
 	mech/gss_accept_sec_context.c \
 	mech/gss_acquire_cred.c \
 	mech/gss_acquire_cred_from.c \
@@ -328,6 +329,7 @@ libgssapi_OBJs = \
 	$(OBJ)\krb5/verify_mic.obj \
 	$(OBJ)\krb5/wrap.obj \
 	$(OBJ)\mech/context.obj \
+	$(OBJ)\mech/cred.obj \
 	$(OBJ)\mech/gss_accept_sec_context.obj \
 	$(OBJ)\mech/gss_acquire_cred.obj \
 	$(OBJ)\mech/gss_acquire_cred_from.obj \

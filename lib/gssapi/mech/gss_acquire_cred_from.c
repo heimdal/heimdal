@@ -179,13 +179,11 @@ gss_acquire_cred_from(OM_uint32 *minor_status,
     } else
 	mechs = _gss_mech_oids;
 
-    cred = calloc(1, sizeof(*cred));
+    cred = _gss_mg_alloc_cred();
     if (cred == NULL) {
 	*minor_status = ENOMEM;
 	return GSS_S_FAILURE;
     }
-
-    HEIM_SLIST_INIT(&cred->gc_mc);
 
     if (actual_mechs) {
 	major_status = gss_create_empty_oid_set(minor_status, actual_mechs);

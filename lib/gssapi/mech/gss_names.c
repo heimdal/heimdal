@@ -2,6 +2,8 @@
  * Copyright (c) 2005 Doug Rabson
  * All rights reserved.
  *
+ * Portions Copyright (c) 2009 Apple Inc. All rights reserved.
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -29,14 +31,20 @@
 #include "mech_locl.h"
 
 OM_uint32
-_gss_find_mn(OM_uint32 *minor_status, struct _gss_name *name, gss_OID mech,
-	     struct _gss_mechanism_name **output_mn)
+_gss_find_mn(OM_uint32 *minor_status,
+	     struct _gss_name *name,
+	     gss_const_OID mech,
+	     struct _gss_mechanism_name ** output_mn)
 {
 	OM_uint32 major_status;
 	gssapi_mech_interface m;
 	struct _gss_mechanism_name *mn;
 
 	*output_mn = NULL;
+
+	/* null names are ok, some mechs might not have names */
+	if (name == NULL)
+	    return GSS_S_COMPLETE;
 
 	HEIM_SLIST_FOREACH(mn, &name->gn_mn, gmn_link) {
 		if (gss_oid_equal(mech, mn->gmn_mech_oid))
@@ -82,28 +90,52 @@ _gss_find_mn(OM_uint32 *minor_status, struct _gss_name *name, gss_OID mech,
  * Make a name from an MN.
  */
 struct _gss_name *
-_gss_make_name(gssapi_mech_interface m, gss_name_t new_mn)
+_gss_create_name(gss_name_t new_mn,
+		 struct gssapi_mech_interface_desc *m)
 {
 	struct _gss_name *name;
 	struct _gss_mechanism_name *mn;
 
-	name = malloc(sizeof(struct _gss_name));
+	name = calloc(1, sizeof(struct _gss_name));
 	if (!name)
 		return (0);
-	memset(name, 0, sizeof(struct _gss_name));
-
-	mn = malloc(sizeof(struct _gss_mechanism_name));
-	if (!mn) {
-		free(name);
-		return (0);
-	}
 
 	HEIM_SLIST_INIT(&name->gn_mn);
-	mn->gmn_mech = m;
-	mn->gmn_mech_oid = &m->gm_mech_oid;
-	mn->gmn_name = new_mn;
-	HEIM_SLIST_INSERT_HEAD(&name->gn_mn, mn, gmn_link);
+
+	if (new_mn) {
+		mn = malloc(sizeof(struct _gss_mechanism_name));
+		if (!mn) {
+			free(name);
+			return (0);
+		}
+
+		mn->gmn_mech = m;
+		mn->gmn_mech_oid = &m->gm_mech_oid;
+		mn->gmn_name = new_mn;
+		HEIM_SLIST_INSERT_HEAD(&name->gn_mn, mn, gmn_link);
+	}
 
 	return (name);
 }
 
+/*
+ *
+ */
+
+void
+_gss_mg_release_name(struct _gss_name *name)
+{
+	OM_uint32 junk;
+
+	gss_release_oid(&junk, &name->gn_type);
+
+	while (HEIM_SLIST_FIRST(&name->gn_mn)) {
+		struct _gss_mechanism_name *mn;
+		mn = HEIM_SLIST_FIRST(&name->gn_mn);
+		HEIM_SLIST_REMOVE_HEAD(&name->gn_mn, gmn_link);
+		mn->gmn_mech->gm_release_name(&junk, &mn->gmn_name);
+		free(mn);
+	}
+	gss_release_buffer(&junk, &name->gn_value);
+	free(name);
+}

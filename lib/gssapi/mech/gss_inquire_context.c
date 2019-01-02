@@ -83,7 +83,7 @@ gss_inquire_context(OM_uint32 *minor_status,
 	}
 
 	if (src_name) {
-		name = _gss_make_name(m, src_mn);
+		name = _gss_create_name(src_mn, m);
 		if (!name) {
 			if (mech_type)
 				*mech_type = GSS_C_NO_OID;
@@ -95,7 +95,7 @@ gss_inquire_context(OM_uint32 *minor_status,
 	}
 
 	if (targ_name) {
-		name = _gss_make_name(m, targ_mn);
+		name = _gss_create_name(targ_mn, m);
 		if (!name) {
 			if (mech_type)
 				*mech_type = GSS_C_NO_OID;

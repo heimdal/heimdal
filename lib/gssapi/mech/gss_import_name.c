@@ -136,7 +136,7 @@ _gss_import_export_name(OM_uint32 *minor_status,
 	/*
 	 * Now we make a new name and mark it as an MN.
 	 */
-	name = _gss_make_name(m, new_canonical_name);
+	name = _gss_create_name(new_canonical_name, m);
 	if (!name) {
 		m->gm_release_name(minor_status, &new_canonical_name);
 		return (GSS_S_FAILURE);
@@ -215,7 +215,7 @@ gss_import_name(OM_uint32 *minor_status,
 
 
 	*minor_status = 0;
-	name = calloc(1, sizeof(struct _gss_name));
+	name = _gss_create_name(NULL, NULL);
 	if (!name) {
 		*minor_status = ENOMEM;
 		return (GSS_S_FAILURE);
@@ -226,7 +226,8 @@ gss_import_name(OM_uint32 *minor_status,
 	major_status = _gss_intern_oid(minor_status,
 	    name_type, &name->gn_type);
 	if (major_status) {
-		free(name);
+		rname = (gss_name_t)name;
+		gss_release_name(&ms, (gss_name_t *)&rname);
 		return (GSS_S_FAILURE);
 	}
 

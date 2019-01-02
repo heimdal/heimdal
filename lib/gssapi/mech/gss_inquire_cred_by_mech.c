@@ -78,7 +78,7 @@ gss_inquire_cred_by_mech(OM_uint32 *minor_status,
 	}
 
 	if (cred_name) {
-	    name = _gss_make_name(m, mn);
+	    name = _gss_create_name(mn, m);
 	    if (!name) {
 		m->gm_release_name(minor_status, &mn);
 		return (GSS_S_NO_CRED);

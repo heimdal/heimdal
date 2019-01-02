@@ -59,13 +59,11 @@ gss_duplicate_name(OM_uint32 *minor_status,
 				 mn->gmn_mech_oid, &mn2);
 		}
 	} else {
-		new_name = malloc(sizeof(struct _gss_name));
+		new_name = _gss_create_name(NULL, NULL);
 		if (!new_name) {
 			*minor_status = ENOMEM;
 			return (GSS_S_FAILURE);
 		}
-		memset(new_name, 0, sizeof(struct _gss_name));
-		HEIM_SLIST_INIT(&new_name->gn_mn);
 		*dest_name = (gss_name_t) new_name;
 
 		HEIM_SLIST_FOREACH(mn, &name->gn_mn, gmn_link) {

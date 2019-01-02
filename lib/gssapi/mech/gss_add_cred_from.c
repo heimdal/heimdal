@@ -153,11 +153,11 @@ gss_add_cred_from(OM_uint32 *minor_status,
         /* Mutate the input credentials */
         mut_cred = rk_UNCONST(input_cred_handle);
     } else {
-        if ((mut_cred = calloc(1, sizeof(*mut_cred))) == NULL) {
+        mut_cred = _gss_mg_alloc_cred();
+	if (mut_cred == NULL) {
             *minor_status = ENOMEM;
             return GSS_S_UNAVAILABLE;
         }
-        HEIM_SLIST_INIT(&mut_cred->gc_mc);
         release_cred = (gss_cred_id_t)mut_cred;
     }
 
@@ -214,8 +214,6 @@ done:
         major_status = gss_inquire_cred(minor_status,
                                         (gss_const_cred_id_t)mut_cred, NULL,
                                         NULL, NULL, actual_mechs);
-        if (major_status != GSS_S_COMPLETE)
-            _gss_mg_error(m, major_status, *minor_status);
     }
     if (major_status == GSS_S_COMPLETE) {
         if (output_cred_handle != NULL)

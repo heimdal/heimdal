@@ -71,7 +71,7 @@ while True:
             else:
                 m = re.search('^ *([uU]+.*) *$', l)
                 if m:
-		    codes.extend(m.group(1).split(' '))
+                    codes.extend(m.group(1).split(' '))
                 else:
                     m = re.search('^ *Punycode: (.*) *$', l)
                     if m:
@@ -80,7 +80,7 @@ while True:
         if re.match('^7\.1', l):
             start = True
             cases = []
-            
+
 f.close()
 
 examples_h.file.write(
@@ -114,7 +114,7 @@ for x in cases:
     examples_c.file.write(
         "  {%u, {%s}, \"%s\", \"%s\"},\n" %
         (len(cp),
-	 ",".join([re.sub('[uU]\+', '0x', x) for x in cp]),
+         ",".join([re.sub('[uU]\+', '0x', x) for x in cp]),
          pc,
          desc))
 

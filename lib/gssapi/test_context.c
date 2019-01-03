@@ -33,6 +33,7 @@
 
 #include "krb5/gsskrb5_locl.h"
 #include <err.h>
+#include <stdlib.h>
 #include <getarg.h>
 #include <gssapi.h>
 #include <gssapi_krb5.h>
@@ -550,6 +551,7 @@ empty_release(void)
     gss_release_cred(&junk, &cred);
     gss_release_name(&junk, &name);
     gss_release_oid_set(&junk, &oidset);
+    abort();
 }
 
 /*

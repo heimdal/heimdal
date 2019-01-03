@@ -127,6 +127,7 @@ mechsrc = \
 	mech/gss_export_name_composite.c \
 	mech/gss_export_sec_context.c \
 	mech/gss_get_mic.c \
+	mech/gss_get_neg_mechs.c \
 	mech/gss_get_name_attribute.c \
 	mech/gss_import_name.c \
 	mech/gss_import_sec_context.c \
@@ -157,6 +158,7 @@ mechsrc = \
 	mech/gss_seal.c \
 	mech/gss_set_cred_option.c \
 	mech/gss_set_name_attribute.c \
+	mech/gss_set_neg_mechs.c \
 	mech/gss_set_sec_context_option.c \
 	mech/gss_sign.c \
 	mech/gss_store_cred.c \
@@ -360,6 +362,7 @@ libgssapi_OBJs = \
 	$(OBJ)\mech/gss_export_name_composite.obj \
 	$(OBJ)\mech/gss_export_sec_context.obj \
 	$(OBJ)\mech/gss_get_mic.obj \
+	$(OBJ)\mech/gss_get_neg_mechs.obj \
 	$(OBJ)\mech/gss_get_name_attribute.obj \
 	$(OBJ)\mech/gss_import_name.obj \
 	$(OBJ)\mech/gss_import_sec_context.obj \
@@ -390,6 +393,7 @@ libgssapi_OBJs = \
 	$(OBJ)\mech/gss_seal.obj \
 	$(OBJ)\mech/gss_set_cred_option.obj \
 	$(OBJ)\mech/gss_set_name_attribute.obj \
+	$(OBJ)\mech/gss_set_neg_mechs.obj \
 	$(OBJ)\mech/gss_set_sec_context_option.obj \
 	$(OBJ)\mech/gss_sign.obj \
 	$(OBJ)\mech/gss_store_cred.obj \

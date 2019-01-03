@@ -37,6 +37,17 @@
 #include "heim_threads.h"
 #include "heimbase.h"
 
+static OM_uint32
+release_mech_cred(OM_uint32 *minor, struct _gss_mechanism_cred *mc)
+{
+	OM_uint32 major;
+
+	major = mc->gmc_mech->gm_release_cred(minor, &mc->gmc_cred);
+	free(mc);
+
+	return major;
+}
+
 
 void
 _gss_mg_release_cred(struct _gss_cred *cred)
@@ -47,8 +58,7 @@ _gss_mg_release_cred(struct _gss_cred *cred)
 	while (HEIM_SLIST_FIRST(&cred->gc_mc)) {
 		mc = HEIM_SLIST_FIRST(&cred->gc_mc);
 		HEIM_SLIST_REMOVE_HEAD(&cred->gc_mc, gmc_link);
-		mc->gmc_mech->gm_release_cred(&junk, &mc->gmc_cred);
-		free(mc);
+		release_mech_cred(&junk, mc);
 	}
 	free(cred);
 }
@@ -65,3 +75,27 @@ _gss_mg_alloc_cred(void)
 	return cred;
 }
 
+GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL
+gss_release_cred_by_mech(OM_uint32 *minor_status,
+			 gss_cred_id_t cred_handle,
+			 gss_const_OID mech_oid)
+{
+	struct _gss_cred *cred = (struct _gss_cred *)cred_handle;
+	struct _gss_mechanism_cred *mc;
+	OM_uint32 major_status;
+
+	HEIM_SLIST_FOREACH(mc, &cred->gc_mc, gmc_link) {
+		if (gss_oid_equal(mech_oid, mc->gmc_mech_oid))
+		    break;
+	}
+
+	if (mc) {
+		HEIM_SLIST_REMOVE(&cred->gc_mc, mc, _gss_mechanism_cred, gmc_link);
+		major_status = release_mech_cred(minor_status, mc);
+	} else {
+		*minor_status = 0;
+		major_status = GSS_S_NO_CRED;
+	}
+
+	return major_status;
+}

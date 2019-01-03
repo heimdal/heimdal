@@ -1187,6 +1187,24 @@ gss_store_cred_into(
     gss_cred_usage_t * /* cred_usage_stored */
     );
 
+GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_CALLCONV
+gss_set_neg_mechs(
+    OM_uint32 * /* minor_status */,
+    gss_cred_id_t /* cred_handle */,
+    const gss_OID_set /* mech_list */);
+
+GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_CALLCONV
+gss_get_neg_mechs(
+    OM_uint32 * /* minor_status */,
+    gss_const_cred_id_t /* cred_handle */,
+    gss_OID_set * /* mech_list */);
+
+GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL
+gss_release_cred_by_mech(
+    OM_uint32 * /* minor_status */,
+    gss_cred_id_t /* cred_handle */,
+    gss_const_OID /* mech */);
+
 GSSAPI_CPP_END
 
 #if defined(__APPLE__) && (defined(__ppc__) || defined(__ppc64__) || defined(__i386__) || defined(__x86_64__))

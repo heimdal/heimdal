@@ -110,6 +110,7 @@ mechsrc = \
 	mech/gss_export_name_composite.c \
 	mech/gss_export_sec_context.c \
 	mech/gss_get_mic.c \
+	mech/gss_get_neg_mechs.c \
 	mech/gss_get_name_attribute.c \
 	mech/gss_import_name.c \
 	mech/gss_import_sec_context.c \
@@ -140,6 +141,7 @@ mechsrc = \
 	mech/gss_seal.c \
 	mech/gss_set_cred_option.c \
 	mech/gss_set_name_attribute.c \
+	mech/gss_set_neg_mechs.c \
 	mech/gss_set_sec_context_option.c \
 	mech/gss_sign.c \
 	mech/gss_store_cred.c \

@@ -51,7 +51,7 @@ after_failure:
     - cat config.log
     - find . -name "*.trs" -print0| xargs -0 grep -l '^:test-result: FAIL' | while read trs ; do echo FAILURE detected at $trs; cat ${trs%%.trs}.log ; done
     - if [ $TRAVIS_OS_NAME = linux ]; then echo "thread apply all bt" > x; find . -name core -print0 | xargs -0 gdb -batch -x x `file core|sed -e "s/^[^']*'//" -e "s/[ '].*$//"` core; fi
-    - if [ $TRAVIS_OS_NAME = linux ]; then echo "thread apply all bt" > x; find . -name core.\* -print0 | xargs -0 gdb -batch -x x `file core|sed -e "s/^[^']*'//" -e "s/[ '].*$//"` core; fi
+    - if [ $TRAVIS_OS_NAME = linux ]; then echo "thread apply all bt" > x; find . -name core.\* -print | while read gdb; do gdb -batch -x x `file "$core"|sed -e "s/^[^']*'//" -e "s/[ '].*$//"` "$core"; fi
 
 compiler:
     - clang

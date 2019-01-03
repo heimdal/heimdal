@@ -63,7 +63,9 @@ send_reject (OM_uint32 *minor_status,
 }
 
 static OM_uint32
-acceptor_approved(gss_name_t target_name, gss_OID mech)
+acceptor_approved(gss_const_cred_id_t cred_unused,
+		  gss_name_t target_name,
+		  gss_OID mech)
 {
     gss_cred_id_t cred = GSS_C_NO_CREDENTIAL;
     gss_OID_set oidset;
@@ -393,7 +395,7 @@ select_mech(OM_uint32 *minor_status, MechType *mechType, int verify_p,
 	if (ret != GSS_S_COMPLETE)
 	    return ret;
 
-	ret = acceptor_approved(name, *mech_p);
+	ret = acceptor_approved(GSS_C_NO_CREDENTIAL, name, *mech_p);
 	gss_release_name(&junk, &name);
     }
 

@@ -38,14 +38,16 @@
  */
 
 static OM_uint32
-initiator_approved(gss_name_t target_name, gss_OID mech)
+initiator_approved(gss_const_cred_id_t cred,
+		   gss_name_t target_name,
+		   gss_OID mech)
 {
     OM_uint32 min_stat, maj_stat;
     gss_ctx_id_t ctx = GSS_C_NO_CONTEXT;
     gss_buffer_desc out;
 
     maj_stat = gss_init_sec_context(&min_stat,
-				    GSS_C_NO_CREDENTIAL,
+				    cred,
 				    &ctx,
 				    target_name,
 				    mech,

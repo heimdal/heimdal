@@ -559,6 +559,9 @@ typedef struct gssapi_mech_interface_desc {
 gssapi_mech_interface
 __gss_get_mechanism(gss_const_OID /* oid */);
 
+gss_OID
+_gss_mg_support_mechanism(gss_const_OID mech);
+
 gssapi_mech_interface __gss_spnego_initialize(void);
 gssapi_mech_interface __gss_krb5_initialize(void);
 gssapi_mech_interface __gss_ntlm_initialize(void);

@@ -29,8 +29,9 @@
 #include "mech_locl.h"
 
 static OM_uint32
-parse_header(const gss_buffer_t input_token, gss_OID mech_oid)
+parse_header(const gss_buffer_t input_token, gss_OID *mech_oid)
 {
+	gss_OID_desc mech;
 	unsigned char *p = input_token->value;
 	size_t len = input_token->length;
 	size_t a, b;
@@ -80,23 +81,20 @@ parse_header(const gss_buffer_t input_token, gss_OID mech_oid)
 		return (GSS_S_DEFECTIVE_TOKEN);
 	if ((p[1] & 0x80) || p[1] > (len - 2))
 		return (GSS_S_DEFECTIVE_TOKEN);
-	mech_oid->length = p[1];
+	mech.length = p[1];
 	p += 2;
 	len -= 2;
-	mech_oid->elements = p;
+	mech.elements = p;
+
+	*mech_oid = _gss_mg_support_mechanism(&mech);
+	if (*mech_oid == GSS_C_NO_OID)
+		return GSS_S_BAD_MECH;
 
 	return GSS_S_COMPLETE;
 }
 
-static gss_OID_desc krb5_mechanism =
-    {9, rk_UNCONST("\x2a\x86\x48\x86\xf7\x12\x01\x02\x02")};
-static gss_OID_desc ntlm_mechanism =
-    {10, rk_UNCONST("\x2b\x06\x01\x04\x01\x82\x37\x02\x02\x0a")};
-static gss_OID_desc spnego_mechanism =
-    {6, rk_UNCONST("\x2b\x06\x01\x05\x05\x02")};
-
 static OM_uint32
-choose_mech(const gss_buffer_t input, gss_OID mech_oid)
+choose_mech(const gss_buffer_t input, gss_OID *mech_oid)
 {
 	OM_uint32 status;
 
@@ -116,13 +114,13 @@ choose_mech(const gss_buffer_t input, gss_OID mech_oid)
 	if (input->length > 8 &&
 	    memcmp((const char *)input->value, "NTLMSSP\x00", 8) == 0)
 	{
-		*mech_oid = ntlm_mechanism;
+		*mech_oid = &__gss_ntlm_mechanism_oid_desc;
 		return GSS_S_COMPLETE;
 	} else if (input->length != 0 &&
 		   ((const char *)input->value)[0] == 0x6E)
 	{
 		/* Could be a raw AP-REQ (check for APPLICATION tag) */
-		*mech_oid = krb5_mechanism;
+		*mech_oid = &__gss_krb5_mechanism_oid_desc;
 		return GSS_S_COMPLETE;
 	} else if (input->length == 0) {
 		/*
@@ -134,9 +132,10 @@ choose_mech(const gss_buffer_t input, gss_OID mech_oid)
 		 * http://msdn.microsoft.com/en-us/library/cc213114.aspx
 		 * "NegTokenInit2 Variation for Server-Initiation"
 		 */
-		*mech_oid = spnego_mechanism;
+		*mech_oid = &__gss_spnego_mechanism_oid_desc;
 		return GSS_S_COMPLETE;
 	}
+
 	return status;
 }
 
@@ -159,7 +158,8 @@ gss_accept_sec_context(OM_uint32 *minor_status,
 	struct _gss_context *ctx = (struct _gss_context *) *context_handle;
 	struct _gss_cred *cred = (struct _gss_cred *) acceptor_cred_handle;
 	struct _gss_mechanism_cred *mc;
-	gss_cred_id_t acceptor_mc, delegated_mc;
+	gss_const_cred_id_t acceptor_mc;
+	gss_cred_id_t delegated_mc;
 	gss_name_t src_mn;
 	gss_OID mech_ret_type = NULL;
 
@@ -182,7 +182,7 @@ gss_accept_sec_context(OM_uint32 *minor_status,
 	 * parse the input token to figure out the mechanism to use.
 	 */
 	if (*context_handle == GSS_C_NO_CONTEXT) {
-		gss_OID_desc mech_oid;
+		gss_OID mech_oid;
 
 		major_status = choose_mech(input_token, &mech_oid);
 		if (major_status != GSS_S_COMPLETE)
@@ -198,7 +198,7 @@ gss_accept_sec_context(OM_uint32 *minor_status,
 			return (GSS_S_DEFECTIVE_TOKEN);
 		}
 		memset(ctx, 0, sizeof(struct _gss_context));
-		m = ctx->gc_mech = __gss_get_mechanism(&mech_oid);
+		m = ctx->gc_mech = __gss_get_mechanism(mech_oid);
 		if (!m) {
 			free(ctx);
 			return (GSS_S_BAD_MECH);

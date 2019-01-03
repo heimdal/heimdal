@@ -458,3 +458,16 @@ __gss_get_mechanism(gss_const_OID mech)
 	}
 	return NULL;
 }
+
+gss_OID
+_gss_mg_support_mechanism(gss_const_OID mech)
+{
+	struct _gss_mech_switch *m;
+
+	_gss_load_mech();
+	HEIM_SLIST_FOREACH(m, &_gss_mechs, gm_link) {
+		if (gss_oid_equal(&m->gm_mech.gm_mech_oid, mech))
+			return m->gm_mech_oid;
+	}
+	return NULL;
+}

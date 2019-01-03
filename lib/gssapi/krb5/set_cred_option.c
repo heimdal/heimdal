@@ -149,8 +149,9 @@ allowed_enctypes(OM_uint32 *minor_status,
 	goto out;
     }
 
+    /* serialized as int32_t[], but stored as krb5_enctype[] */
     len = value->length / 4;
-    enctypes = malloc((len + 1) * 4);
+    enctypes = malloc((len + 1) * sizeof(krb5_enctype));
     if (enctypes == NULL) {
 	*minor_status = ENOMEM;
 	major_stat = GSS_S_FAILURE;
@@ -165,9 +166,9 @@ allowed_enctypes(OM_uint32 *minor_status,
     }
 
     for (i = 0; i < len; i++) {
-	uint32_t e;
+	int32_t e;
 
-	ret = krb5_ret_uint32(sp, &e);
+	ret = krb5_ret_int32(sp, &e);
 	if (ret) {
 	    *minor_status = ret;
 	    major_stat =  GSS_S_FAILURE;
@@ -175,7 +176,7 @@ allowed_enctypes(OM_uint32 *minor_status,
 	}
 	enctypes[i] = e;
     }
-    enctypes[i] = 0;
+    enctypes[i] = KRB5_ENCTYPE_NULL;
 
     if (cred->enctypes)
 	free(cred->enctypes);

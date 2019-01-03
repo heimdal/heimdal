@@ -72,7 +72,7 @@ gss_inquire_name(OM_uint32 *minor_status,
                 *MN_mech = &m->gm_mech_oid;
             break;
         }
-        _gss_mg_error(m, major_status, *minor_status);
+        _gss_mg_error(m, *minor_status);
     }
 
     return major_status;

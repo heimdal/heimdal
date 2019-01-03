@@ -129,7 +129,7 @@ _gss_import_export_name(OM_uint32 *minor_status,
 	major_status = m->gm_import_name(minor_status,
 	    input_name_buffer, GSS_C_NT_EXPORT_NAME, &new_canonical_name);
 	if (major_status != GSS_S_COMPLETE) {
-		_gss_mg_error(m, major_status, *minor_status);
+		_gss_mg_error(m, *minor_status);
 		return major_status;
 	}
 
@@ -262,7 +262,7 @@ gss_import_name(OM_uint32 *minor_status,
 		    name->gn_type,
 		    &mn->gmn_name);
 		if (major_status != GSS_S_COMPLETE) {
-			_gss_mg_error(&m->gm_mech, major_status, *minor_status);
+			_gss_mg_error(&m->gm_mech, *minor_status);
 			free(mn);
 			/**
 			 * If we failed to import the name in a mechanism, it

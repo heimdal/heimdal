@@ -214,7 +214,7 @@ gss_acquire_cred_from(OM_uint32 *minor_status,
 					 cred_store, &mc, &cred_time);
 	if (major_status != GSS_S_COMPLETE) {
             if (mechs->count == 1)
-                _gss_mg_error(m, major_status, *minor_status);
+                _gss_mg_error(m, *minor_status);
 	    continue;
         }
 

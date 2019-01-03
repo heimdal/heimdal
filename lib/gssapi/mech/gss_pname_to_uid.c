@@ -49,7 +49,7 @@ mech_localname(OM_uint32 *minor_status,
                                               mn->gmn_mech_oid,
                                               localname);
     if (GSS_ERROR(major_status))
-        _gss_mg_error(mn->gmn_mech, major_status, *minor_status);
+        _gss_mg_error(mn->gmn_mech, *minor_status);
 
     return major_status;
 }
@@ -83,7 +83,7 @@ attr_localname(OM_uint32 *minor_status,
                                                        &display_value,
                                                        &more);
     if (GSS_ERROR(major_status)) {
-        _gss_mg_error(mn->gmn_mech, major_status, *minor_status);
+        _gss_mg_error(mn->gmn_mech, *minor_status);
         return major_status;
     }
 
@@ -130,7 +130,7 @@ gss_localname(OM_uint32 *minor_status,
     }
 
     if (major_status != GSS_S_COMPLETE && mn != NULL)
-        _gss_mg_error(mn->gmn_mech, major_status, *minor_status);
+        _gss_mg_error(mn->gmn_mech, *minor_status);
 
     return major_status;
 }

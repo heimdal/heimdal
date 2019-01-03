@@ -105,7 +105,7 @@ gss_set_cred_option (OM_uint32 *minor_status,
 			if (major_status == GSS_S_COMPLETE)
 				one_ok = 1;
 			else
-				_gss_mg_error(m, major_status, *minor_status);
+				_gss_mg_error(m, *minor_status);
 
 		}
 	}

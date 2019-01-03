@@ -72,7 +72,7 @@ gss_get_name_attribute(OM_uint32 *minor_status,
                                                 display_value,
                                                 more);
         if (GSS_ERROR(major_status))
-            _gss_mg_error(m, major_status, *minor_status);
+            _gss_mg_error(m, *minor_status);
         else
             break;
     }

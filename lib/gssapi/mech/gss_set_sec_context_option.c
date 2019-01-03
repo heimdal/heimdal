@@ -61,7 +61,7 @@ gss_set_sec_context_option (OM_uint32 *minor_status,
 		major_status = m->gm_set_sec_context_option(minor_status,
 		    &ctx->gc_ctx, object, value);
 		if (major_status != GSS_S_COMPLETE)
-			_gss_mg_error(m, major_status, *minor_status);
+			_gss_mg_error(m, *minor_status);
 	} else
 		major_status = GSS_S_BAD_MECH;
 

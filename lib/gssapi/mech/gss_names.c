@@ -72,7 +72,7 @@ _gss_find_mn(OM_uint32 *minor_status,
 		    name->gn_type,
 		    &mn->gmn_name);
 		if (major_status != GSS_S_COMPLETE) {
-			_gss_mg_error(m, major_status, *minor_status);
+			_gss_mg_error(m, *minor_status);
 			free(mn);
 			return major_status;
 		}

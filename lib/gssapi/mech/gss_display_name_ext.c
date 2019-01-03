@@ -59,7 +59,7 @@ gss_display_name_ext(OM_uint32 *minor_status,
                                               display_as_name_type,
                                               display_name);
         if (GSS_ERROR(major_status))
-            _gss_mg_error(m, major_status, *minor_status);
+            _gss_mg_error(m, *minor_status);
         else
             break;
     }

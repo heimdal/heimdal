@@ -69,7 +69,7 @@ gss_inquire_cred_by_oid (OM_uint32 *minor_status,
 		status = m->gm_inquire_cred_by_oid(minor_status,
 		    mc->gmc_cred, desired_object, &rset);
 		if (status != GSS_S_COMPLETE) {
-			_gss_mg_error(m, status, *minor_status);
+			_gss_mg_error(m, *minor_status);
 			continue;
 		}
 

@@ -86,7 +86,7 @@ copy_cred_element(OM_uint32 *minor_status,
                                               &initiator_lifetime,
                                               &acceptor_lifetime, &cred_usage);
     if (major_status) {
-        _gss_mg_error(m, major_status, *minor_status);
+        _gss_mg_error(m, *minor_status);
         return major_status;
     }
 
@@ -102,7 +102,7 @@ copy_cred_element(OM_uint32 *minor_status,
 					NULL,
 					NULL);
     if (major_status)
-        _gss_mg_error(m, major_status, *minor_status);
+        _gss_mg_error(m, *minor_status);
 
     m->gm_release_name(&tmp, &mn.gmn_name);
 
@@ -144,7 +144,7 @@ gss_duplicate_cred(OM_uint32 *minor_status,
     HEIM_SLIST_FOREACH(mc, &cred->gc_mc, gmc_link) {
         major_status = copy_cred_element(minor_status, mc, &copy_mc);
         if (major_status != GSS_S_COMPLETE) {
-            _gss_mg_error(mc->gmc_mech, major_status, *minor_status);
+            _gss_mg_error(mc->gmc_mech, *minor_status);
             break;
         }
         HEIM_SLIST_INSERT_HEAD(&new_cred->gc_mc, copy_mc, gmc_link);

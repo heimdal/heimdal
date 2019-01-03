@@ -166,15 +166,6 @@ gss_display_status(OM_uint32 *minor_status,
 	_mg_buffer_zero(status_string);
 	*message_context = 0;
 
-	major_status = _gss_mg_get_error(mech_type, status_type,
-					 status_value, status_string);
-	if (major_status == GSS_S_COMPLETE) {
-
-	    *message_context = 0;
-	    *minor_status = 0;
-	    return GSS_S_COMPLETE;
-	}
-
 	*minor_status = 0;
 	switch (status_type) {
 	case GSS_C_GSS_CODE: {
@@ -202,6 +193,14 @@ gss_display_status(OM_uint32 *minor_status,
 		gss_buffer_desc oid;
 		char *buf = NULL;
 		int e;
+
+		major_status = _gss_mg_get_error(mech_type, status_value,
+						 status_string);
+		if (major_status == GSS_S_COMPLETE) {
+		    *message_context = 0;
+		    *minor_status = 0;
+		    return GSS_S_COMPLETE;
+		}
 
 		maj_junk = gss_oid_to_str(&min_junk, mech_type, &oid);
 		if (maj_junk != GSS_S_COMPLETE) {

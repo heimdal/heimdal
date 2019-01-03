@@ -57,7 +57,7 @@ gss_export_name_composite(OM_uint32 *minor_status,
                                                    mn->gmn_name,
                                                    exp_composite_name);
         if (GSS_ERROR(major_status))
-            _gss_mg_error(m, major_status, *minor_status);
+            _gss_mg_error(m, *minor_status);
         else
             break;
     }

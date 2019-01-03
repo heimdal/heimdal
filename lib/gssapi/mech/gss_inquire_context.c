@@ -78,7 +78,7 @@ gss_inquire_context(OM_uint32 *minor_status,
 	    xopen);
 
 	if (major_status != GSS_S_COMPLETE) {
-		_gss_mg_error(m, major_status, *minor_status);
+		_gss_mg_error(m, *minor_status);
 		return (major_status);
 	}
 

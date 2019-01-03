@@ -399,6 +399,8 @@ static gssapi_mech_interface_desc krb5_mech = {
     _gsskrb5_duplicate_cred,
     _gsskrb5_add_cred_from,
     _gsskrb5_store_cred_into,
+    NULL, /* gm_set_neg_mechs */
+    NULL, /* gm_get_neg_mechs */
     NULL  /* gm_compat */
 };
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004, PADL Software Pty Ltd.
+ * Copyright (c) 2004, 2018, PADL Software Pty Ltd.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -31,6 +31,7 @@
  */
 
 #include "spnego_locl.h"
+#include <gssapi_mech.h>
 
 OM_uint32 GSSAPI_CALLCONV
 _gss_spnego_release_cred(OM_uint32 *minor_status, gss_cred_id_t *cred_handle)
@@ -270,3 +271,61 @@ _gss_spnego_import_cred (OM_uint32 *minor_status,
     return gss_import_cred(minor_status, value, cred_handle);
 }
 
+
+OM_uint32 GSSAPI_CALLCONV
+_gss_spnego_set_neg_mechs (OM_uint32 *minor_status,
+			   gss_cred_id_t cred_handle,
+			   const gss_OID_set mech_list)
+{
+    OM_uint32 major, minor;
+    gss_OID_set mechs = GSS_C_NO_OID_SET;
+    size_t i;
+
+    if (cred_handle != GSS_C_NO_CREDENTIAL) {
+	major = gss_inquire_cred(minor_status, cred_handle,
+				 NULL, NULL, NULL, &mechs);
+	if (GSS_ERROR(major))
+	    return major;
+
+	for (i = 0; i < mechs->count; i++) {
+	    int present;
+
+	    major = gss_test_oid_set_member(minor_status,
+					    &mechs->elements[i],
+					    mech_list, &present);
+	    if (GSS_ERROR(major))
+		break;
+
+	    if (!present) {
+		major = gss_release_cred_by_mech(minor_status,
+						 cred_handle,
+						 &mechs->elements[i]);
+		if (GSS_ERROR(major))
+		    break;
+	    }
+	}
+
+	/* for inner negotiation mechs, such as NegoEx */
+	(void) gss_set_neg_mechs(&minor, cred_handle, mech_list);
+    } else {
+	/*
+	 * RFC 4178 says that GSS_Set_neg_mechs() on NULL credential sets
+	 * the negotiable mechs for the default credential, but neither
+	 * MIT nor Heimdal support this presently.
+	 */
+	major = GSS_S_NO_CRED;
+    }
+
+    gss_release_oid_set(&minor, &mechs);
+
+    return major;
+}
+
+OM_uint32 GSSAPI_CALLCONV
+_gss_spnego_get_neg_mechs (OM_uint32 *minor_status,
+			   gss_const_cred_id_t cred_handle,
+			   gss_OID_set *mech_list)
+{
+    return gss_inquire_cred(minor_status, cred_handle,
+			    NULL, NULL, NULL, mech_list);
+}

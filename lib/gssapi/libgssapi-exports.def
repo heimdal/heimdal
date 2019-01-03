@@ -40,6 +40,7 @@ EXPORTS
 	gss_export_name_composite
 	gss_export_sec_context
 	gss_get_mic
+	gss_get_neg_mechs
 	gss_get_name_attribute
         gss_import_cred
 	gss_import_name
@@ -81,6 +82,7 @@ EXPORTS
 	gss_release_buffer
 	gss_release_buffer_set
 	gss_release_cred
+	gss_release_cred_by_mech
 	gss_release_iov_buffer
 	gss_release_name
 	gss_release_oid
@@ -88,6 +90,7 @@ EXPORTS
 	gss_seal
 	gss_set_cred_option
 	gss_set_name_attribute
+	gss_set_neg_mechs
 	gss_set_sec_context_option
 	gss_sign
 	gss_store_cred

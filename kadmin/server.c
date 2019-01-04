@@ -485,6 +485,7 @@ kadmind_dispatch(void *kadm_handlep, krb5_boolean initial,
 	ret = krb5_ret_int32(sp, &n_ks_tuple);
 	if (ret == HEIM_ERR_EOF) {
             const char *enctypes;
+	    size_t n;
 
             enctypes = krb5_config_get_string(contextp->context, NULL,
                                               "realms",
@@ -494,7 +495,8 @@ kadmind_dispatch(void *kadm_handlep, krb5_boolean initial,
             if (enctypes == NULL || enctypes[0] == '\0')
                 enctypes = "aes128-cts-hmac-sha1-96";
             ret = krb5_string_to_keysalts2(contextp->context, enctypes,
-                                           &n_ks_tuple, &ks_tuple);
+                                           &n, &ks_tuple);
+	    n_ks_tuple = n;
         }
         if (ret != 0)
 	    goto fail;

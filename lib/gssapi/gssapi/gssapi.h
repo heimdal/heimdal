@@ -97,6 +97,10 @@ struct gss_ctx_id_t_desc_struct;
 typedef struct gss_ctx_id_t_desc_struct *gss_ctx_id_t;
 typedef const struct gss_ctx_id_t_desc_struct *gss_const_ctx_id_t;
 
+/* XXX glue for old code */
+typedef OM_uint32 *gss_status_id_t;
+typedef struct gss_auth_identity *gss_auth_identity_t;
+
 typedef struct gss_OID_desc_struct {
       OM_uint32 length;
       void      *elements;
@@ -1205,10 +1209,25 @@ gss_release_cred_by_mech(
     gss_cred_id_t /* cred_handle */,
     gss_const_OID /* mech */);
 
-GSSAPI_CPP_END
+#define gss_iter_OID gss_const_OID
+
+OM_uint32 GSSAPI_LIB_FUNCTION
+gss_iter_creds_f(OM_uint32 *min_stat,
+		 OM_uint32 flags,
+		 gss_const_OID mech,
+		 void *userctx,
+		 void (*useriter)(void *, gss_iter_OID, gss_cred_id_t));
 
 #if defined(__APPLE__) && (defined(__ppc__) || defined(__ppc64__) || defined(__i386__) || defined(__x86_64__))
 #pragma pack(pop)
+#endif
+
+#ifdef __BLOCKS__
+OM_uint32 GSSAPI_LIB_FUNCTION
+gss_iter_creds(OM_uint32 *min_stat,
+               OM_uint32 flags,
+               gss_const_OID mech,
+               void (^useriter)(gss_iter_OID, gss_cred_id_t));
 #endif
 
 #undef GSSAPI_DEPRECATED_FUNCTION

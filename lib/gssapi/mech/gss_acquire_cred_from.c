@@ -200,7 +200,7 @@ gss_acquire_cred_from(OM_uint32 *minor_status,
 	OM_uint32 cred_time;
 
 	m = __gss_get_mechanism(&mechs->elements[i]);
-	if (m == NULL)
+	if (m == NULL || (m->gm_flags & GM_USE_MG_CRED) != 0)
 	    continue;
 
 	if (desired_name != GSS_C_NO_NAME) {
@@ -218,6 +218,11 @@ gss_acquire_cred_from(OM_uint32 *minor_status,
                 _gss_mg_error(m, *minor_status);
 	    continue;
         }
+
+	_gss_mg_log_name(10, name, &mechs->elements[i],
+			 "gss_acquire_cred %s name: %ld/%ld",
+			 m->gm_name,
+			 (long)major_status, (long)*minor_status);
 
 	HEIM_SLIST_INSERT_HEAD(&cred->gc_mc, mc, gmc_link);
 
@@ -252,6 +257,8 @@ gss_acquire_cred_from(OM_uint32 *minor_status,
     *output_cred_handle = (gss_cred_id_t)cred;
     if (time_rec)
         *time_rec = min_time;
+
+    _gss_mg_log_cred(10, cred, "gss_acquire_cred_from");
 
 cleanup:
     if (major_status != GSS_S_COMPLETE) {

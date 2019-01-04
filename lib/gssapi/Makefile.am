@@ -91,11 +91,13 @@ mechsrc = \
 	mech/gss_add_oid_set_member.c \
 	mech/gss_aeap.c \
 	mech/gss_buffer_set.c \
+	mech/gss_cb.c \
 	mech/gss_canonicalize_name.c \
 	mech/gss_compare_name.c \
 	mech/gss_context_time.c \
 	mech/gss_create_empty_oid_set.c \
 	mech/gss_cred.c \
+	mech/gss_cred_hold.c \
 	mech/gss_decapsulate_token.c \
 	mech/gss_delete_name_attribute.c \
 	mech/gss_delete_sec_context.c \
@@ -123,6 +125,7 @@ mechsrc = \
 	mech/gss_inquire_mechs_for_name.c \
 	mech/gss_inquire_name.c \
 	mech/gss_inquire_names_for_mech.c \
+	mech/gss_iter_cred.c \
 	mech/gss_krb5.c \
 	mech/gss_mech_switch.c \
 	mech/gss_mo.c \
@@ -365,6 +368,8 @@ EXTRA_DIST = \
 $(libgssapi_la_OBJECTS): gkrb5_err.h gssapi_asn1.h gssapi_asn1-priv.h
 $(libgssapi_la_OBJECTS): spnego_asn1.h spnego_asn1-priv.h
 $(libgssapi_la_OBJECTS): $(srcdir)/gssapi/gssapi_oid.h
+#$(libgssapi_la_OBJECTS): $(srcdir)/gssapi/gssapi_protos.h
+#$(libgssapi_la_OBJECTS): $(srcdir)/gssapi/gssapi_private.h
 
 gkrb5_err.h gkrb5_err.c: $(srcdir)/krb5/gkrb5_err.et
 	$(COMPILE_ET) $(srcdir)/krb5/gkrb5_err.et
@@ -372,3 +377,10 @@ gkrb5_err.h gkrb5_err.c: $(srcdir)/krb5/gkrb5_err.et
 $(srcdir)/gssapi/gssapi_oid.h $(srcdir)/mech/gss_oid.c:
 	perl $(srcdir)/gen-oid.pl -b base -h $(srcdir)/oid.txt > $(srcdir)/gssapi/gssapi_oid.h
 	perl $(srcdir)/gen-oid.pl -b base $(srcdir)/oid.txt > $(srcdir)/mech/gss_oid.c
+
+#$(srcdir)/gssapi/gssapi_protos.h:
+#	cd $(srcdir) && perl ../../cf/make-proto.pl -E GSS_LIB -q -P comment -o gssapi/gssapi_protos.h $(dist_libgssapi_la_SOURCES) || rm -f gssapi_protos.h
+
+#$(srcdir)/gssapi/gssapi_private.h:
+#	cd $(srcdir) && perl ../../cf/make-proto.pl -q -P comment -p gssapi_private.h $(mechsrc) || rm -f gssapi_private.h
+

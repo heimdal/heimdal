@@ -1,7 +1,9 @@
 /*
- * Copyright (c) 2006 Kungliga Tekniska Högskolan
+ * Copyright (c) 2010 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
+ *
+ * Portions Copyright (c) 2010 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -31,54 +33,49 @@
  * SUCH DAMAGE.
  */
 
-/* $Id$ */
+#include "mech_locl.h"
 
-#include <config.h>
+OM_uint32
+gss_cred_hold(OM_uint32 *min_stat, gss_cred_id_t cred_handle)
+{
+    struct _gss_cred *cred = (struct _gss_cred *)cred_handle;
+    struct _gss_mechanism_cred *mc;
 
-#include <krb5-types.h>
+    *min_stat = 0;
 
-#include <sys/types.h>
+    if (cred == NULL)
+	return GSS_S_NO_CRED;
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <ctype.h>
-#include <dlfcn.h>
-#include <errno.h>
+    HEIM_SLIST_FOREACH(mc, &cred->gc_mc, gmc_link) {
 
-#include <heimbase.h>
+	if (mc->gmc_mech->gm_cred_hold == NULL)
+	    continue;
 
-#include <gssapi_asn1.h>
-#include <der.h>
+	(void)mc->gmc_mech->gm_cred_hold(min_stat, mc->gmc_cred);
+    }
 
-#include <roken.h>
+    return GSS_S_COMPLETE;
+}
 
-#include <gssapi.h>
-#include <gssapi_mech.h>
-#include <gssapi_spi.h>
-#include <gssapi_krb5.h>
 
-#include "mechqueue.h"
+OM_uint32
+gss_cred_unhold(OM_uint32 *min_stat, gss_cred_id_t cred_handle)
+{
+    struct _gss_cred *cred = (struct _gss_cred *)cred_handle;
+    struct _gss_mechanism_cred *mc;
 
-#include "context.h"
-#include "cred.h"
-#include "mech_switch.h"
-#include "name.h"
-#include "utils.h"
-#include "compat.h"
+    *min_stat = 0;
 
-#define _mg_buffer_zero(buffer) \
-	do {					\
-		if (buffer) {			\
-			(buffer)->value = NULL;	\
-			(buffer)->length = 0;	\
-		 }				\
-	} while(0)
+    if (cred == NULL)
+	return GSS_S_NO_CRED;
 
-#define _mg_oid_set_zero(oid_set) \
-	do {						\
-		if (oid_set) {				\
-			(oid_set)->elements = NULL;	\
-			(oid_set)->count = 0;		\
-		 }					\
-	} while(0)
+    HEIM_SLIST_FOREACH(mc, &cred->gc_mc, gmc_link) {
+
+	if (mc->gmc_mech->gm_cred_unhold == NULL)
+	    continue;
+
+	(void)mc->gmc_mech->gm_cred_unhold(min_stat, mc->gmc_cred);
+    }
+
+    return GSS_S_COMPLETE;
+}

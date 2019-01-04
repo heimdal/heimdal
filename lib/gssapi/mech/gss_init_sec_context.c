@@ -29,6 +29,8 @@
  */
 
 #include "mech_locl.h"
+#include <krb5_locl.h>
+#include <gssapi_plugin.h>
 
 static gss_cred_id_t
 _gss_mech_cred_find(gss_const_cred_id_t cred_handle, gss_OID mech_type)
@@ -44,6 +46,140 @@ _gss_mech_cred_find(gss_const_cred_id_t cred_handle, gss_OID mech_type)
 			return mc->gmc_cred;
 	}
 	return GSS_C_NO_CREDENTIAL;
+}
+
+/*
+ * Plugin support to select credentials
+ */
+
+struct iscrc {
+    gss_cred_id_t found;
+    unsigned long pluginflags;
+    OM_uint32 flags;
+    gss_const_name_t target;
+    gss_OID mech_type;
+    gss_const_cred_id_t initiator_cred_handle;
+};
+
+static krb5_error_code
+replace_cred_fun(krb5_context context,
+		 const void *plug, void *plugctx, void *userctx)
+{
+    const gssapi_plugin_ftable *plugin = plug;
+    struct iscrc *ctx = userctx;
+    gss_name_t dupname = GSS_C_NO_NAME;
+    OM_uint32 maj_stat, junk;
+
+    if (ctx->found || plugin->isc_replace_cred == NULL)
+	return KRB5_PLUGIN_NO_HANDLE;
+    
+    /* check if the plugin support required flags */
+    if ((plugin->flags & ctx->pluginflags) != ctx->pluginflags)
+	return KRB5_PLUGIN_NO_HANDLE;
+
+    /*
+     * Duplicate name since the replace handler might ruin the name
+     * with canonicalization (gss_canonicalize_name). The name might
+     * be canonicalization differently when mech mech have access to
+     * theaccess to the peer/network.
+     */
+    maj_stat = gss_duplicate_name(&junk, ctx->target, &dupname);
+    if (maj_stat != GSS_S_COMPLETE)
+	return KRB5_PLUGIN_NO_HANDLE;
+
+    _gss_mg_log(1, "gss_isc running plugin %s", plugin->name);
+    ctx->found = plugin->isc_replace_cred(dupname, ctx->mech_type, ctx->initiator_cred_handle, ctx->flags);
+    _gss_mg_log(1, "gss_isc plugin %s done (%s replacement)", 
+		plugin->name, ctx->found ? "found" : "no");
+
+    gss_release_name(&junk, &dupname);
+
+    if (ctx->found == NULL)
+	return KRB5_PLUGIN_NO_HANDLE;
+
+    _gss_mg_log_cred(1, (struct _gss_cred *)ctx->found, "gss_isc %s replace the credential to", plugin->name);
+
+    return 0;
+}
+
+static const char *
+gss_plugin_deps[] = { "gssapi", "krb5", NULL };
+
+static struct krb5_plugin_data
+gss_plugin_data = {
+    "gss",
+    GSSAPI_PLUGIN,
+    GSSAPI_PLUGIN_VERSION_1,
+    gss_plugin_deps,
+    gss_get_instance
+};
+
+static gss_cred_id_t
+check_replace_cred(OM_uint32 *minor_status,
+		   gss_const_name_t target,
+		   gss_OID mech_type,
+		   gss_const_cred_id_t initiator_cred_handle)
+{
+    krb5_context context;
+    krb5_error_code ret;
+    struct iscrc ctx;
+
+    _gss_mg_log(1, "gss_isc running replace plugins");
+
+    _gss_load_plugins();
+
+    ctx.found = GSS_C_NO_CREDENTIAL;
+    ctx.pluginflags = 0;
+    ctx.flags = 0;
+    ctx.target = target;
+    ctx.mech_type = mech_type;
+    ctx.initiator_cred_handle = initiator_cred_handle;
+
+    if (!_krb5_homedir_access(NULL)) {
+	ctx.pluginflags |= GPT_SYSTEM_ONLY;
+	ctx.flags = GPT_IRC_F_SYSTEM_ONLY;
+    }
+
+    ret = krb5_init_context(&context);
+    if (ret)
+	return NULL;
+
+    _krb5_plugin_run_f(context, &gss_plugin_data,
+		       0, &ctx, replace_cred_fun);
+    krb5_free_context(context);
+    return ctx.found;
+}
+
+static void
+log_init_sec_context(struct _gss_context *ctx,
+		     struct _gss_name *target,
+		     OM_uint32 req_flags,
+		     struct _gss_cred *cred,
+		     gss_OID mech_type,
+		     gss_buffer_t input_token)
+{
+    gssapi_mech_interface m;
+
+    if (ctx)
+	m = ctx->gc_mech;
+    else
+	m = __gss_get_mechanism(mech_type);
+    if (m == NULL)
+	return;
+
+    mech_type = &m->gm_mech_oid;
+
+    _gss_mg_log(1, "gss_isc: %s %sfirst flags %08x, %s cred, %stoken",
+		m->gm_name,
+		(ctx == NULL) ? "" : "not ",
+		req_flags,
+		(cred != NULL) ? "specific" : "default",
+		(input_token != NULL && input_token->length) ? "" : "no ");
+
+    _gss_mg_log_cred(1, cred, "gss_isc cred");
+
+    /* print target name */
+    _gss_mg_log_name(1, target, mech_type, "gss_isc: target");
 }
 
 /**
@@ -141,15 +277,26 @@ gss_init_sec_context(OM_uint32 * minor_status,
 	if (time_rec)
 	    *time_rec = 0;
 
+	if (mech_type == GSS_C_NO_OID)
+		mech_type = GSS_KRB5_MECHANISM;
+    
+	_gss_mg_check_name(target_name);
+	_gss_mg_check_credential(initiator_cred_handle);
+	
+	if (_gss_mg_log_level(1))
+	    log_init_sec_context(ctx, name, req_flags,
+				 (struct _gss_cred *)initiator_cred_handle,
+				 input_mech_type, input_token);
+    
+    
+	cred_handle = initiator_cred_handle;
+
 	/*
 	 * If we haven't allocated a context yet, do so now and lookup
 	 * the mechanism switch table. If we have one already, make
 	 * sure we use the same mechanism switch as before.
 	 */
 	if (!ctx) {
-		if (mech_type == NULL)
-			mech_type = GSS_KRB5_MECHANISM;
-
 		ctx = malloc(sizeof(struct _gss_context));
 		if (!ctx) {
 			*minor_status = ENOMEM;
@@ -159,14 +306,33 @@ gss_init_sec_context(OM_uint32 * minor_status,
 		m = ctx->gc_mech = __gss_get_mechanism(mech_type);
 		if (!m) {
 			free(ctx);
-			return (GSS_S_BAD_MECH);
+			*minor_status = 0;
+			gss_mg_set_error_string(mech_type, GSS_S_BAD_MECH,
+						*minor_status,
+						"Asked for mechanism isn'ted supported");
+			return GSS_S_BAD_MECH;
 		}
 		allocated_ctx = 1;
+
+		/*
+		 * Check if a plugin wants to replace the initiator_cred_handle with something else
+		 */
+
+		ctx->gc_replaced_cred = 
+		    check_replace_cred(minor_status, target_name,
+				       mech_type, cred_handle);
+
+		if (ctx->gc_replaced_cred)	
+		    _gss_mg_log_cred(1, (struct _gss_cred *)ctx->gc_replaced_cred,
+				     "gss_isc replacement cred");
 	} else {
 		m = ctx->gc_mech;
 		mech_type = &ctx->gc_mech->gm_mech_oid;
 		allocated_ctx = 0;
 	}
+
+	if (ctx->gc_replaced_cred)
+		cred_handle = ctx->gc_replaced_cred;
 
 	/*
 	 * Find the MN for this mechanism.
@@ -174,24 +340,27 @@ gss_init_sec_context(OM_uint32 * minor_status,
 	major_status = _gss_find_mn(minor_status, name, mech_type, &mn);
 	if (major_status != GSS_S_COMPLETE) {
 		if (allocated_ctx)
-                    free(ctx);
+			free(ctx);
 		return major_status;
 	}
 
 	/*
 	 * If we have a cred, find the cred for this mechanism.
 	 */
-	if (m->gm_flags & GM_USE_MG_CRED)
-		cred_handle = initiator_cred_handle;
-	else
-		cred_handle = _gss_mech_cred_find(initiator_cred_handle, mech_type);
-
-        if (initiator_cred_handle != GSS_C_NO_CREDENTIAL &&
-            cred_handle == NULL) {
-            if (allocated_ctx)
-                free(ctx);
-            return GSS_S_NO_CRED;
-        }
+	if ((m->gm_flags & GM_USE_MG_CRED) == 0 && cred_handle) {
+		cred_handle = _gss_mech_cred_find(cred_handle, mech_type);
+		if (cred_handle == GSS_C_NO_CREDENTIAL) {
+			*minor_status = 0;
+			if (allocated_ctx)
+				free(ctx);
+			gss_mg_set_error_string(mech_type, GSS_S_UNAVAILABLE,
+						*minor_status,
+						"Credential for asked mech-type "
+						"mech not found in the "
+						"credential handle");
+			return GSS_S_UNAVAILABLE;
+		}
+	}
 
 	major_status = m->gm_init_sec_context(minor_status,
 	    cred_handle,
@@ -216,6 +385,9 @@ gss_init_sec_context(OM_uint32 * minor_status,
 	} else {
 		*context_handle = (gss_ctx_id_t) ctx;
 	}
+
+	_gss_mg_log(1, "gss_isc: %s maj_stat: %d/%d",
+		    m->gm_name, (int)major_status, (int)*minor_status);
 
 	return (major_status);
 }

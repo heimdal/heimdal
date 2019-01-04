@@ -1,7 +1,9 @@
 /*
- * Copyright (c) 2006 Kungliga Tekniska Högskolan
+ * Copyright (c) 2011 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
+ *
+ * Portions Copyright (c) 2011 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -31,54 +33,42 @@
  * SUCH DAMAGE.
  */
 
-/* $Id$ */
+#ifndef __GSSAPI_PLUGIN_H
+#define __GSSAPI_PLUGIN_H 1
 
-#include <config.h>
+#define GSSAPI_PLUGIN "gssapi_plugin"
 
-#include <krb5-types.h>
+typedef gss_cred_id_t
+(*gssapi_plugin_isc_replace_cred)(gss_const_name_t target, gss_OID mech, gss_const_cred_id_t original_cred, OM_uint32 flags);
 
-#include <sys/types.h>
+/*
+ * Flags passed in the flags argument to ->isc_replace_cred()
+ */
+#define GPT_IRC_F_SYSTEM_ONLY	1 /* system resource only, home directory access is no allowed */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <ctype.h>
-#include <dlfcn.h>
-#include <errno.h>
+/*
+ * Flags defined by the plugin in gssapi_plugin_ftable
+ */
+#define GPT_SYSTEM_ONLY		1	/* plugin support GPT_IRC_F_SYSTEM_ONLY and friends */
 
-#include <heimbase.h>
+/*
+ * Plugin for GSSAPI 
+ */
 
-#include <gssapi_asn1.h>
-#include <der.h>
+typedef struct gssapi_plugin_ftable {
+    int			minor_version; /* support protocol: GSSAPI_PLUGIN_VERSION_N */
+    krb5_error_code	(*init)(krb5_context, void **);
+    void		(*fini)(void *);
+    const char		*name;
+    unsigned long	flags;
+    gssapi_plugin_isc_replace_cred isc_replace_cred;
+} gssapi_plugin_ftable;
 
-#include <roken.h>
+#define GSSAPI_PLUGIN_VERSION_1 1
 
-#include <gssapi.h>
-#include <gssapi_mech.h>
-#include <gssapi_spi.h>
-#include <gssapi_krb5.h>
+/* history of version changes:
+ * version 0 (no supported) was missing flags argument to ->isc_replace_cred()
+ */
 
-#include "mechqueue.h"
+#endif
 
-#include "context.h"
-#include "cred.h"
-#include "mech_switch.h"
-#include "name.h"
-#include "utils.h"
-#include "compat.h"
-
-#define _mg_buffer_zero(buffer) \
-	do {					\
-		if (buffer) {			\
-			(buffer)->value = NULL;	\
-			(buffer)->length = 0;	\
-		 }				\
-	} while(0)
-
-#define _mg_oid_set_zero(oid_set) \
-	do {						\
-		if (oid_set) {				\
-			(oid_set)->elements = NULL;	\
-			(oid_set)->count = 0;		\
-		 }					\
-	} while(0)

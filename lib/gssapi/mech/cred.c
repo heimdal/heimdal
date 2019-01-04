@@ -99,3 +99,54 @@ gss_release_cred_by_mech(OM_uint32 *minor_status,
 
 	return major_status;
 }
+
+void
+_gss_mg_check_credential(gss_const_cred_id_t credential)
+{
+	if (credential == NULL)
+		return;
+}
+
+gss_name_t
+_gss_cred_copy_name(OM_uint32 *minor_status,
+		    gss_cred_id_t credential,
+		    gss_const_OID mech)
+{
+	struct _gss_cred *cred = (struct _gss_cred *)credential;
+	struct _gss_mechanism_cred *mc;
+	struct _gss_name *name;
+	OM_uint32 major_status;
+
+	name = _gss_create_name(NULL, NULL);
+	if (name == NULL)
+		return NULL;
+
+	HEIM_SLIST_FOREACH(mc, &cred->gc_mc, gmc_link) {
+		struct _gss_mechanism_name *mn;
+		gss_name_t mc_name;
+		
+		if (mech && !gss_oid_equal(mech, mc->gmc_mech_oid))
+			continue;
+
+		major_status = mc->gmc_mech->gm_inquire_cred(minor_status,
+			mc->gmc_cred, &mc_name, NULL, NULL, NULL);
+		if (major_status)
+			continue;
+
+		mn = malloc(sizeof(struct _gss_mechanism_name));
+		if (!mn) {
+			mc->gmc_mech->gm_release_name(minor_status, &mc_name);
+			continue;
+		}
+		mn->gmn_mech = mc->gmc_mech;
+		mn->gmn_mech_oid = mc->gmc_mech_oid;
+		mn->gmn_name = mc_name;
+		HEIM_SLIST_INSERT_HEAD(&name->gn_mn, mn, gmn_link);
+	}
+	if (HEIM_SLIST_EMPTY(&name->gn_mn)) {
+		_gss_mg_release_name(name);
+		return NULL;
+	}
+
+	return (gss_name_t)name;
+}

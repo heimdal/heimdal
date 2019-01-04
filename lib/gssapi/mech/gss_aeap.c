@@ -184,6 +184,42 @@ gss_release_iov_buffer(OM_uint32 *minor_status,
     return GSS_S_COMPLETE;
 }
 
+gss_iov_buffer_desc *
+_gss_mg_find_buffer(gss_iov_buffer_desc *iov,
+		    int iov_count,
+		    OM_uint32 type)
+{
+    int i;
+
+    for (i = 0; i < iov_count; i++)
+        if (GSS_IOV_BUFFER_TYPE(iov[i].type) == type)
+            return &iov[i];
+
+    return NULL;
+}
+
+OM_uint32
+_gss_mg_allocate_buffer(OM_uint32 *minor_status,
+			gss_iov_buffer_desc *buffer,
+			size_t size)
+{
+    if (buffer->type & GSS_IOV_BUFFER_TYPE_FLAG_ALLOCATED) {
+	if (buffer->buffer.length == size)
+	    return GSS_S_COMPLETE;
+	free(buffer->buffer.value);
+    }
+
+    buffer->buffer.value = malloc(size);
+    buffer->buffer.length = size;
+    if (buffer->buffer.value == NULL) {
+	*minor_status = ENOMEM;
+	return GSS_S_FAILURE;
+    }
+    buffer->type |= GSS_IOV_BUFFER_TYPE_FLAG_ALLOCATED;
+
+    return GSS_S_COMPLETE;
+}
+
 /**
  * Query the context for parameters.
  *

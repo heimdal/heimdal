@@ -42,6 +42,7 @@
 #include <gkrb5_err.h>
 #include <gssapi.h>
 #include <gssapi_mech.h>
+#include <gssapi_spi.h>
 #include <gssapi_krb5.h>
 #include <assert.h>
 

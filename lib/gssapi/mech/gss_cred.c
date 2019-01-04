@@ -51,7 +51,6 @@ gss_export_cred(OM_uint32 * minor_status,
     struct _gss_mechanism_cred *mc;
     gss_buffer_desc buffer;
     krb5_error_code ret;
-    krb5_ssize_t bytes;
     krb5_storage *sp;
     OM_uint32 major;
     krb5_data data;
@@ -66,6 +65,9 @@ gss_export_cred(OM_uint32 * minor_status,
     HEIM_SLIST_FOREACH(mc, &cred->gc_mc, gmc_link) {
 	if (mc->gmc_mech->gm_export_cred == NULL) {
 	    *minor_status = 0;
+	    gss_mg_set_error_string(&mc->gmc_mech->gm_mech_oid,
+				    GSS_S_NO_CRED, *minor_status,
+				    "Credential doesn't support exporting");
 	    return GSS_S_NO_CRED;
 	}
     }
@@ -77,6 +79,7 @@ gss_export_cred(OM_uint32 * minor_status,
     }
 
     HEIM_SLIST_FOREACH(mc, &cred->gc_mc, gmc_link) {
+	krb5_ssize_t sret;
 
 	major = mc->gmc_mech->gm_export_cred(minor_status,
 					     mc->gmc_cred, &buffer);
@@ -85,12 +88,14 @@ gss_export_cred(OM_uint32 * minor_status,
 	    return major;
 	}
 
-	bytes = krb5_storage_write(sp, buffer.value, buffer.length);
-	if (bytes < 0 || (size_t)bytes != buffer.length) {
-	    gss_release_buffer(minor_status, &buffer);
-	    krb5_storage_free(sp);
-	    *minor_status = EINVAL;
-	    return GSS_S_FAILURE;
+	if (buffer.length) {
+	    sret = krb5_storage_write(sp, buffer.value, buffer.length);
+	    if (sret < 0 || (size_t)sret != buffer.length) {
+		gss_release_buffer(minor_status, &buffer);
+		krb5_storage_free(sp);
+		*minor_status = EINVAL;
+		return GSS_S_FAILURE;
+	    }
 	}
 	gss_release_buffer(minor_status, &buffer);
     }
@@ -100,6 +105,14 @@ gss_export_cred(OM_uint32 * minor_status,
     if (ret) {
 	*minor_status = ret;
 	return GSS_S_FAILURE;
+    }
+
+    if (data.length == 0)  {
+	*minor_status = 0;
+	gss_mg_set_error_string(GSS_C_NO_OID,
+				GSS_S_NO_CRED, *minor_status,
+				"Credential was not exportable");
+	return GSS_S_NO_CRED;
     }
 
     token->value = data.data;
@@ -223,3 +236,52 @@ gss_import_cred(OM_uint32 * minor_status,
 
 }
 
+OM_uint32
+gss_cred_label_get(OM_uint32 *min_stat,
+		   gss_cred_id_t cred_handle,
+		   const char *label,
+		   gss_buffer_t value)
+{
+    struct _gss_cred *cred = (struct _gss_cred *)cred_handle;
+    struct _gss_mechanism_cred *mc;
+    OM_uint32 maj_stat;
+
+    *min_stat = 0;
+    _mg_buffer_zero(value);
+
+    HEIM_SLIST_FOREACH(mc, &cred->gc_mc, gmc_link) {
+
+	if (mc->gmc_mech->gm_cred_label_get == NULL)
+	    continue;
+
+	maj_stat = mc->gmc_mech->gm_cred_label_get(min_stat, mc->gmc_cred,
+						   label, value);
+	if (maj_stat == GSS_S_COMPLETE)
+	    return GSS_S_COMPLETE;
+    }
+
+    return GSS_S_UNAVAILABLE;
+}
+
+OM_uint32
+gss_cred_label_set(OM_uint32 *min_stat,
+		   gss_cred_id_t cred_handle,
+		   const char *label,
+		   gss_buffer_t value)
+{
+    struct _gss_cred *cred = (struct _gss_cred *)cred_handle;
+    struct _gss_mechanism_cred *mc;
+
+    *min_stat = 0;
+
+    HEIM_SLIST_FOREACH(mc, &cred->gc_mc, gmc_link) {
+
+	if (mc->gmc_mech->gm_cred_label_set == NULL)
+	    continue;
+
+	(void)mc->gmc_mech->gm_cred_label_set(min_stat, mc->gmc_cred,
+					      label, value);
+    }
+
+    return GSS_S_COMPLETE;
+}

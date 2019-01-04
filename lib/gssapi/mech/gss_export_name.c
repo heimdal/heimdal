@@ -2,6 +2,8 @@
  * Copyright (c) 2005 Doug Rabson
  * All rights reserved.
  *
+ * Portions Copyright (c) 2010 Apple Inc. All rights reserved.
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -65,4 +67,47 @@ gss_export_name(OM_uint32 *minor_status,
 
 	return mn->gmn_mech->gm_export_name(minor_status,
 	    mn->gmn_name, exported_name);
+}
+
+OM_uint32
+gss_mg_export_name(OM_uint32 *minor_status,
+		   const gss_const_OID mech,
+		   const void *name,
+		   size_t length, 
+		   gss_buffer_t exported_name)
+{
+    uint8_t *buf;
+
+    exported_name->length = 10 + length + mech->length;
+    exported_name->value  = malloc(exported_name->length);
+    if (exported_name->value == NULL) {
+	*minor_status = ENOMEM;
+	return GSS_S_FAILURE;
+    }
+
+    /* TOK, MECH_OID_LEN, DER(MECH_OID), NAME_LEN, NAME */
+
+    buf = exported_name->value;
+    memcpy(buf, "\x04\x01", 2);
+    buf += 2;
+    buf[0] = ((mech->length + 2) >> 8) & 0xff;
+    buf[1] = (mech->length + 2) & 0xff;
+    buf+= 2;
+    buf[0] = 0x06;
+    buf[1] = (mech->length) & 0xFF;
+    buf+= 2;
+
+    memcpy(buf, mech->elements, mech->length);
+    buf += mech->length;
+
+    buf[0] = (length >> 24) & 0xff;
+    buf[1] = (length >> 16) & 0xff;
+    buf[2] = (length >> 8) & 0xff;
+    buf[3] = (length) & 0xff;
+    buf += 4;
+
+    memcpy (buf, name, length);
+
+    *minor_status = 0;
+    return GSS_S_COMPLETE;
 }

@@ -65,3 +65,8 @@ _gss_mg_add_mech_cred(OM_uint32 *minor_status,
 		      struct _gss_mechanism_cred **output_cred_handle,
 		      OM_uint32 *initiator_time_rec,
 		      OM_uint32 *acceptor_time_rec);
+
+gss_name_t
+_gss_cred_copy_name(OM_uint32 *minor_status,
+		    gss_cred_id_t credential,
+		    gss_const_OID mech);

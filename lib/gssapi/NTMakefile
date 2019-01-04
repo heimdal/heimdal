@@ -109,10 +109,12 @@ mechsrc = \
         mech/gss_authorize_localname.c \
 	mech/gss_buffer_set.c \
 	mech/gss_canonicalize_name.c \
+	mech/gss_cb.c \
 	mech/gss_compare_name.c \
 	mech/gss_context_time.c \
 	mech/gss_create_empty_oid_set.c \
 	mech/gss_cred.c \
+	mech/gss_cred_hold.c \
 	mech/gss_decapsulate_token.c \
 	mech/gss_delete_name_attribute.c \
 	mech/gss_delete_sec_context.c \
@@ -140,6 +142,7 @@ mechsrc = \
 	mech/gss_inquire_mechs_for_name.c \
 	mech/gss_inquire_name.c \
 	mech/gss_inquire_names_for_mech.c \
+	mech/gss_iter_cred.c \
 	mech/gss_krb5.c \
 	mech/gss_mech_switch.c \
 	mech/gss_mo.c \
@@ -344,10 +347,12 @@ libgssapi_OBJs = \
 	$(OBJ)\mech/gss_authorize_localname.obj \
 	$(OBJ)\mech/gss_buffer_set.obj \
 	$(OBJ)\mech/gss_canonicalize_name.obj \
+	$(OBJ)\mech/gss_cb.obj \
 	$(OBJ)\mech/gss_compare_name.obj \
 	$(OBJ)\mech/gss_context_time.obj \
 	$(OBJ)\mech/gss_create_empty_oid_set.obj \
 	$(OBJ)\mech/gss_cred.obj \
+	$(OBJ)\mech/gss_cred_hold.obj \
 	$(OBJ)\mech/gss_decapsulate_token.obj \
 	$(OBJ)\mech/gss_delete_name_attribute.obj \
 	$(OBJ)\mech/gss_delete_sec_context.obj \
@@ -375,6 +380,7 @@ libgssapi_OBJs = \
 	$(OBJ)\mech/gss_inquire_mechs_for_name.obj \
 	$(OBJ)\mech/gss_inquire_name.obj \
 	$(OBJ)\mech/gss_inquire_names_for_mech.obj \
+	$(OBJ)\mech/gss_iter_cred.obj \
 	$(OBJ)\mech/gss_krb5.obj \
 	$(OBJ)\mech/gss_mech_switch.obj \
 	$(OBJ)\mech/gss_mo.obj \

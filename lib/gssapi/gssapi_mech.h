@@ -519,6 +519,9 @@ typedef OM_uint32 GSSAPI_CALLCONV _gss_authorize_localname_t (
 	       gss_const_OID		/* user_name_type */
 	      );
 
+struct _gss_name;
+struct _gss_cred;
+
 /* mechglue internal */
 struct gss_mech_compat_desc_struct;
 
@@ -613,6 +616,12 @@ int _gss_mo_get_option_1(gss_const_OID, gss_mo_desc *, gss_buffer_t);
 int _gss_mo_get_option_0(gss_const_OID, gss_mo_desc *, gss_buffer_t);
 int _gss_mo_get_ctx_as_string(gss_const_OID, gss_mo_desc *, gss_buffer_t);
 
+struct _gss_name_type {
+    gss_OID    gnt_name_type;
+    OM_uint32  (*gnt_parse)(OM_uint32 *, gss_const_OID, const gss_buffer_t,
+			    gss_const_OID, gss_name_t *);
+};
+
 struct _gss_oid_name_table {
     gss_OID oid;
     const char *name;
@@ -622,5 +631,50 @@ struct _gss_oid_name_table {
 
 extern struct _gss_oid_name_table _gss_ont_mech[];
 extern struct _gss_oid_name_table _gss_ont_ma[];
+
+int
+_gss_mg_log_level(int level);
+
+void
+_gss_mg_log(int level, const char *fmt, ...)
+    HEIMDAL_PRINTF_ATTRIBUTE((printf, 2, 3));
+
+void
+_gss_mg_log_name(int level,
+		 struct _gss_name *name,
+		 gss_OID mech_type,
+		 const char *fmt, ...);
+
+void
+_gss_mg_log_cred(int level,
+		 struct _gss_cred *cred,
+		 const char *fmt, ...);
+
+void
+_gss_load_plugins(void);
+
+#ifdef __APPLE__
+#include <CoreFoundation/CoreFoundation.h>
+
+CFTypeRef
+_gss_mg_copy_key(CFStringRef domain, CFStringRef key);
+
+CFErrorRef
+_gss_mg_create_cferror(OM_uint32 major_status,
+		       OM_uint32 minor_status,
+		       gss_const_OID mech);
+
+#endif /* __APPLE__ */
+
+
+gss_iov_buffer_desc *
+_gss_mg_find_buffer(gss_iov_buffer_desc *iov,
+		    int iov_count,
+		    OM_uint32 type);
+
+OM_uint32
+_gss_mg_allocate_buffer(OM_uint32 *minor_status,
+			gss_iov_buffer_desc *buffer,
+			size_t size);
 
 #endif /* GSSAPI_MECH_H */

@@ -8,7 +8,7 @@ CLEANFILES = roken.h make-roken.c $(XHEADERS)
 
 lib_LTLIBRARIES = libroken.la
 
-libroken_la_LDFLAGS = -version-info 19:0:1
+libroken_la_LDFLAGS = -version-info 20:0:1
 libroken_la_CPPFLAGS = -DBUILD_ROKEN_LIB
 
 if versionscript

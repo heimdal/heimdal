@@ -760,7 +760,7 @@ process_stream(krb5_context contextp,
 
     if (msg == NULL || reply == NULL || dreply == NULL) {
 	if (msg != NULL)
-	    krb5_storage_free(mem);
+	    krb5_storage_free(msg);
 	if (reply != NULL)
 	    krb5_storage_free(reply);
 	if (dreply != NULL)

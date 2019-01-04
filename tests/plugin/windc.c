@@ -1,3 +1,4 @@
+#include <string.h>
 #include <krb5.h>
 #include <hdb.h>
 #include <kdc.h>
@@ -75,7 +76,7 @@ client_access(void *ctx,
     return 0;
 }
 
-krb5plugin_windc_ftable windc = {
+static krb5plugin_windc_ftable windc = {
     KRB5_WINDC_PLUGING_MINOR,
     windc_init,
     windc_fini,
@@ -83,3 +84,39 @@ krb5plugin_windc_ftable windc = {
     pac_verify,
     client_access
 };
+
+static const krb5plugin_windc_ftable *const windc_plugins[] = {
+    &windc
+};
+
+krb5_error_code
+windc_plugin_load(krb5_context context,
+		       krb5_get_instance_func_t *get_instance,
+		       size_t *num_plugins,
+		       const krb5plugin_windc_ftable *const **plugins);
+
+static uintptr_t
+windc_get_instance(const char *libname)
+{
+    if (strcmp(libname, "kdc") == 0)
+	return kdc_get_instance(libname);
+    else if (strcmp(libname, "hdb") == 0)
+	return hdb_get_instance(libname);
+    else if (strcmp(libname, "krb5") == 0)
+	return krb5_get_instance(libname);
+
+    return 0;
+}
+
+krb5_error_code
+windc_plugin_load(krb5_context context,
+		  krb5_get_instance_func_t *get_instance,
+		  size_t *num_plugins,
+		  const krb5plugin_windc_ftable *const **plugins)
+{
+    *get_instance = windc_get_instance;
+    *num_plugins = sizeof(windc_plugins) / sizeof(windc_plugins[0]);
+    *plugins = windc_plugins;
+
+    return 0;
+}

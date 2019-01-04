@@ -63,7 +63,7 @@ send_reject (OM_uint32 *minor_status,
 }
 
 static OM_uint32
-acceptor_approved(gss_const_cred_id_t cred_unused,
+acceptor_approved(gss_const_cred_id_t input_cred,
 		  gss_name_t target_name,
 		  gss_OID mech)
 {
@@ -73,6 +73,11 @@ acceptor_approved(gss_const_cred_id_t cred_unused,
 
     if (target_name == GSS_C_NO_NAME)
 	return GSS_S_COMPLETE;
+
+    if (input_cred != GSS_C_NO_CREDENTIAL) {
+	return gss_inquire_cred_by_mech(&junk, input_cred, mech,
+					NULL, NULL, NULL, NULL);
+    }
 
     gss_create_empty_oid_set(&junk, &oidset);
     gss_add_oid_set_member(&junk, mech, &oidset);
@@ -89,6 +94,7 @@ acceptor_approved(gss_const_cred_id_t cred_unused,
 
 static OM_uint32
 send_supported_mechs (OM_uint32 *minor_status,
+		      gss_const_cred_id_t acceptor_cred,
 		      gss_buffer_t output_token)
 {
     NegotiationTokenWin nt;
@@ -104,7 +110,7 @@ send_supported_mechs (OM_uint32 *minor_status,
     nt.u.negTokenInit.negHints = NULL;
 
     ret = _gss_spnego_indicate_mechtypelist(minor_status, GSS_C_NO_NAME,
-					    acceptor_approved, 1, NULL,
+					    acceptor_approved, 1, acceptor_cred,
 					    &nt.u.negTokenInit.mechTypes, NULL);
     if (ret != GSS_S_COMPLETE) {
 	return ret;
@@ -501,7 +507,8 @@ acceptor_start
     mech_buf.value = NULL;
 
     if (input_token_buffer->length == 0)
-	return send_supported_mechs (minor_status, output_token);
+	return send_supported_mechs (minor_status,
+				     acceptor_cred_handle, output_token);
 
     ret = _gss_spnego_alloc_sec_context(minor_status, context_handle);
     if (ret != GSS_S_COMPLETE)

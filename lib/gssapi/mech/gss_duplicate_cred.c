@@ -42,6 +42,8 @@ copy_cred_element(OM_uint32 *minor_status,
     gss_cred_usage_t cred_usage;
     gss_cred_id_t dup_cred = GSS_C_NO_CREDENTIAL;
 
+    *out = NULL;
+
     if (m->gm_duplicate_cred) {
         major_status = m->gm_duplicate_cred(minor_status,
 					    mc->gmc_cred, &dup_cred);
@@ -105,7 +107,7 @@ gss_duplicate_cred(OM_uint32 *minor_status,
                    gss_const_cred_id_t input_cred_handle,
                    gss_cred_id_t *output_cred_handle)
 {
-    struct _gss_mechanism_cred *mc, *copy_mc;
+    struct _gss_mechanism_cred *mc;
     struct _gss_cred *new_cred;
     struct _gss_cred *cred = (struct _gss_cred *)input_cred_handle;
     OM_uint32 major_status, junk;
@@ -131,6 +133,8 @@ gss_duplicate_cred(OM_uint32 *minor_status,
     major_status = GSS_S_NO_CRED;
 
     HEIM_SLIST_FOREACH(mc, &cred->gc_mc, gmc_link) {
+	struct _gss_mechanism_cred *copy_mc;
+
         major_status = copy_cred_element(minor_status, mc, &copy_mc);
         if (major_status != GSS_S_COMPLETE)
             break;

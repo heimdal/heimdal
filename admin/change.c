@@ -183,8 +183,10 @@ kt_change(struct change_options *opt, int argc, char **argv)
     }
 
     /* XXX Parameterize keytab name */
-    if((keytab = ktutil_open_keytab()) == NULL)
+    if ((keytab = ktutil_open_keytab()) == NULL) {
+	free(kstuple);
 	return 1;
+    }
 
     j = 0;
     max = 0;

@@ -305,5 +305,6 @@ add_new_key(struct add_options *opt, int argc, char **argv)
 	int16_t dummy = 3;
 	kadm5_free_key_data (kadm_handle, &dummy, key_data);
     }
+    free(kstuple);
     return ret != 0;
 }

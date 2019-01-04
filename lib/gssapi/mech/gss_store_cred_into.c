@@ -74,25 +74,31 @@ gss_store_cred_into(OM_uint32 *minor_status,
 {
     struct _gss_cred *cred = (struct _gss_cred *) input_cred_handle;
     struct _gss_mechanism_cred *mc;
-    OM_uint32 maj = GSS_S_FAILURE;
-    OM_uint32 junk;
-    size_t successes = 0;
+    OM_uint32 major_status;
+    OM_uint32 minor;
+    size_t successes;
+
+    if (input_cred_handle == NULL)
+	return GSS_S_CALL_INACCESSIBLE_READ;
 
     if (minor_status == NULL)
-	return GSS_S_FAILURE;
-    if (elements_stored)
-	*elements_stored = NULL;
+	return GSS_S_CALL_INACCESSIBLE_WRITE;
+    *minor_status = 0;
+
     if (cred_usage_stored)
 	*cred_usage_stored = 0;
 
-    if (cred == NULL)
-	return GSS_S_NO_CONTEXT;
-
     if (elements_stored) {
-	maj = gss_create_empty_oid_set(minor_status, elements_stored);
-	if (maj != GSS_S_COMPLETE)
-	    return maj;
+	*elements_stored = GSS_C_NO_OID_SET;
+
+	major_status = gss_create_empty_oid_set(minor_status,
+						elements_stored);
+	if (major_status != GSS_S_COMPLETE)
+	    return major_status;
     }
+
+    major_status = GSS_S_NO_CRED;
+    successes = 0;
 
     HEIM_SLIST_FOREACH(mc, &cred->gc_mc, gmc_link) {
 	gssapi_mech_interface m = mc->gmc_mech;
@@ -104,27 +110,28 @@ gss_store_cred_into(OM_uint32 *minor_status,
             !gss_oid_equal(&m->gm_mech_oid, desired_mech))
             continue;
 
-	maj = store_mech_cred(minor_status, m, mc,
-			      input_usage, overwrite_cred,
-			      default_cred, cred_store,
-			      cred_usage_stored);
-        if (maj == GSS_S_COMPLETE) {
-            if (elements_stored)
-                gss_add_oid_set_member(&junk, desired_mech, elements_stored);
+	major_status = store_mech_cred(minor_status, m, mc,
+				       input_usage, overwrite_cred,
+				       default_cred, cred_store,
+				       cred_usage_stored);
+	if (major_status == GSS_S_COMPLETE) {
+            if (elements_stored && desired_mech != GSS_C_NO_OID)
+                gss_add_oid_set_member(&minor, desired_mech, elements_stored);
             successes++;
-        } else if (desired_mech != GSS_C_NO_OID) {
-            gss_release_oid_set(&junk, elements_stored);
-            return maj;
+	} else if (desired_mech != GSS_C_NO_OID) {
+	    _gss_mg_error(m, *minor_status);
+	    gss_release_oid_set(&minor, elements_stored);
+	    return major_status;
         }
     }
 
-    if (successes == 0) {
-        if (maj != GSS_S_COMPLETE)
-            return maj; /* last failure */
-        return GSS_S_FAILURE;
+    if (successes > 0) {
+	*minor_status = 0;
+	major_status = GSS_S_COMPLETE;
     }
 
-    *minor_status = 0;
-    return GSS_S_COMPLETE;
-}
+    heim_assert(successes || major_status != GSS_S_COMPLETE,
+		"cred storage failed, but no error raised");
 
+    return major_status;
+}

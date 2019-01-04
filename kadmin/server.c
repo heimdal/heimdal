@@ -486,14 +486,15 @@ kadmind_dispatch(void *kadm_handlep, krb5_boolean initial,
 	if (ret == HEIM_ERR_EOF) {
             const char *enctypes;
 
-            enctypes = krb5_config_get_string(context, NULL, "realms",
-                                              krb5_principal_get_realm(context,
+            enctypes = krb5_config_get_string(contextp->context, NULL,
+                                              "realms",
+                                              krb5_principal_get_realm(contextp->context,
                                                                        princ),
                                               "supported_enctypes", NULL);
             if (enctypes == NULL || enctypes[0] == '\0')
                 enctypes = "aes128-cts-hmac-sha1-96";
-            ret = krb5_string_to_keysalts2(context, enctypes, &n_ks_tuple,
-                                           &ks_tuple);
+            ret = krb5_string_to_keysalts2(contextp->context, enctypes,
+                                           &n_ks_tuple, &ks_tuple);
         }
         if (ret != 0)
 	    goto fail;

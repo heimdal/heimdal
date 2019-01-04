@@ -129,12 +129,12 @@ kadm5_s_randkey_principal(void *server_handle,
     if (keepold) {
 	ret = hdb_add_current_keys_to_history(context->context, &ent.entry);
         if (ret == 0 && keepold == 1)
-            ret = hdb_prune_keys_kvno(context, &ent.entry, 0);
+            ret = hdb_prune_keys_kvno(context->context, &ent.entry, 0);
 	if (ret)
 	    goto out3;
     } else {
         /* Remove all key history */
-        ret = hdb_clear_extension(context, &ent.entry,
+        ret = hdb_clear_extension(context->context, &ent.entry,
                                   choice_HDB_extension_data_hist_keys);
 	if (ret)
 	    goto out3;

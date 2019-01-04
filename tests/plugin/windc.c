@@ -98,9 +98,7 @@ windc_plugin_load(krb5_context context,
 static uintptr_t
 windc_get_instance(const char *libname)
 {
-    if (strcmp(libname, "kdc") == 0)
-	return kdc_get_instance(libname);
-    else if (strcmp(libname, "hdb") == 0)
+    if (strcmp(libname, "hdb") == 0)
 	return hdb_get_instance(libname);
     else if (strcmp(libname, "krb5") == 0)
 	return krb5_get_instance(libname);

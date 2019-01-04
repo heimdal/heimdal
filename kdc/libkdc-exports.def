@@ -1,4 +1,5 @@
 EXPORTS
+	kdc_get_instance
 	kdc_log
 	kdc_log_msg
 	kdc_log_msg_va

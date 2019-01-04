@@ -2,6 +2,7 @@
  * Copyright (c) 2005 Doug Rabson
  * All rights reserved.
  *
+ * Portions Copyright (c) 2009 Apple Inc. All rights reserved.
  * Portions Copyright (c) 2011, 2018 PADL Software Pty Ltd.
  *
  * Redistribution and use in source and binary forms, with or without

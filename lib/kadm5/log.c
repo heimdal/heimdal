@@ -1688,6 +1688,9 @@ kadm5_log_nop(kadm5_server_context *context, enum kadm_nop_type nop_type)
         return errno;
 
     sp = krb5_storage_emem();
+    if (sp == NULL)
+	return krb5_enomem(context->context);
+
     ret = kadm5_log_preamble(context, sp, kadm_nop, off == 0 ? 0 : vno + 1);
     if (ret)
         goto out;

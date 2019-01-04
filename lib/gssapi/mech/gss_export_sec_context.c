@@ -34,8 +34,8 @@ gss_export_sec_context(OM_uint32 *minor_status,
     gss_buffer_t interprocess_token)
 {
 	OM_uint32 major_status;
-	struct _gss_context *ctx = (struct _gss_context *) *context_handle;
-	gssapi_mech_interface m = ctx->gc_mech;
+	struct _gss_context *ctx;
+	gssapi_mech_interface m;
 	gss_buffer_desc buf;
 
 	*minor_status = 0;

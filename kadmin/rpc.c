@@ -758,6 +758,16 @@ process_stream(krb5_context contextp,
     reply = krb5_storage_emem();
     dreply = krb5_storage_emem();
 
+    if (msg == NULL || reply == NULL || dreply == NULL) {
+	if (msg != NULL)
+	    krb5_storage_free(mem);
+	if (reply != NULL)
+	    krb5_storage_free(reply);
+	if (dreply != NULL)
+	    krb5_storage_free(dreply);
+	return krb5_enomem(contextp);
+    }
+
     /*
      * First packet comes partly from the caller
      */

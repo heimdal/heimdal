@@ -380,6 +380,8 @@ _kadm5_marshal_params(krb5_context context,
 		      krb5_data *out)
 {
     krb5_storage *sp = krb5_storage_emem();
+    if (sp == NULL)
+	return krb5_enomem(context);
 
     krb5_store_int32(sp, params->mask & (KADM5_CONFIG_REALM));
 

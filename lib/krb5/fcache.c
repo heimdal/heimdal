@@ -541,6 +541,8 @@ fcc_initialize(krb5_context context,
     {
 	krb5_storage *sp;
 	sp = krb5_storage_emem();
+	if (sp == NULL)
+	    return krb5_enomem(context);
 	krb5_storage_set_eof_code(sp, KRB5_CC_END);
 	if(context->fcache_vno != 0)
 	    f->version = context->fcache_vno;
@@ -625,6 +627,8 @@ fcc_store_cred(krb5_context context,
 	krb5_storage *sp;
 
 	sp = krb5_storage_emem();
+	if (sp == NULL)
+	    return krb5_enomem(context);
 	krb5_storage_set_eof_code(sp, KRB5_CC_END);
 	storage_set_flags(context, sp, FCACHE(id)->version);
 	ret = krb5_store_creds(sp, creds);

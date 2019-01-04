@@ -1,4 +1,4 @@
-HEIMDAL_ROKEN_1.0 {
+HEIMDAL_ROKEN_2.0 {
 	global:
 		arg_printusage;
 		arg_printusage_i18n;

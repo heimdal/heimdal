@@ -1559,10 +1559,14 @@ tgs_build_reply(krb5_context context,
     s = b->sname;
     r = b->realm;
 
-    /* 
-     * Always to do CANON, see comment below about returned server principal (rsp).
+    /*
+     * The canonicalize KDC option is passed as a hint to the backend, but
+     * can typically be ignored. Per RFC 6806, names are not canonicalized
+     * in response to a TGS request (although we make an exception, see
+     * force-canonicalize below).
      */
-    flags |= HDB_F_CANON;
+    if (b->kdc_options.canonicalize)
+	flags |= HDB_F_CANON;
 
     if(b->kdc_options.enc_tkt_in_skey){
 	Ticket *t;
@@ -1749,17 +1753,17 @@ server_lookup:
 	goto out;
     }
 
-    /* the name returned to the client depend on what was asked for,
-     * return canonical name if kdc_options.canonicalize was set, the
-     * client wants the true name of the principal, if not it just
-     * wants the name its asked for.
+    /*
+     * RFC 6806 notes that names MUST NOT be changed in the response to
+     * a TGS request. Hence we ignore the setting of the canonicalize
+     * KDC option. However, for legacy interoperability we do allow the
+     * backend to override this by setting the force-canonicalize HDB
+     * flag in the server entry.
      */
-
-    if (b->kdc_options.canonicalize)
+    if (server->entry.flags.force_canonicalize)
 	rsp = server->entry.principal;
     else
 	rsp = sp;
-
 
     /*
      * Select enctype, return key and kvno.

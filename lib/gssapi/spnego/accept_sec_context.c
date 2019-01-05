@@ -236,6 +236,10 @@ send_accept (OM_uint32 *minor_status,
 			  0,
 			  mech_buf,
 			  &mech_mic_buf);
+	if (ret == GSS_S_COMPLETE &&
+	    gss_oid_equal(context_handle->negotiated_mech_type,
+			  GSS_NTLM_MECHANISM))
+	    _gss_spnego_ntlm_reset_crypto(minor_status, context_handle, 0);
 	if (ret == GSS_S_COMPLETE) {
 	    ALLOC(nt.u.negTokenResp.mechListMIC, 1);
 	    if (nt.u.negTokenResp.mechListMIC == NULL) {

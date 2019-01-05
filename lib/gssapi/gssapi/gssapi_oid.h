@@ -148,6 +148,9 @@ extern GSSAPI_LIB_VARIABLE gss_OID_desc __gss_spnego_mechanism_oid_desc;
 extern GSSAPI_LIB_VARIABLE gss_OID_desc __gss_c_peer_has_updated_spnego_oid_desc;
 #define GSS_C_PEER_HAS_UPDATED_SPNEGO (&__gss_c_peer_has_updated_spnego_oid_desc)
 
+extern GSSAPI_LIB_VARIABLE gss_OID_desc __gss_c_ntlm_reset_crypto_oid_desc;
+#define GSS_C_NTLM_RESET_CRYPTO (&__gss_c_ntlm_reset_crypto_oid_desc)
+
 /*
  * OID mappings with name and short description and and slightly longer description
  */

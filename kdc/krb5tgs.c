@@ -807,7 +807,7 @@ tgs_make_reply(krb5_context context,
     if(ret)
 	goto out;
 
-    ret = copy_Realm(&server->entry.principal->realm, &rep.ticket.realm);
+    ret = copy_Realm(&server_principal->realm, &rep.ticket.realm);
     if (ret)
 	goto out;
     _krb5_principal2principalname(&rep.ticket.sname, server_principal);

@@ -1956,20 +1956,32 @@ _kdc_as_rep(kdc_request_t r,
     if (_kdc_is_anonymous(context, r->client_princ)) {
 	Realm anon_realm=KRB5_ANON_REALM;
 	ret = copy_Realm(&anon_realm, &rep.crealm);
-    } else
+    } else if (f.canonicalize || r->client->entry.flags.force_canonicalize)
 	ret = copy_Realm(&r->client->entry.principal->realm, &rep.crealm);
+    else
+	ret = copy_Realm(&r->client_princ->realm, &rep.crealm);
     if (ret)
 	goto out;
-    ret = _krb5_principal2principalname(&rep.cname, r->client->entry.principal);
+    if (f.canonicalize || r->client->entry.flags.force_canonicalize)
+	ret = _krb5_principal2principalname(&rep.cname, r->client->entry.principal);
+    else
+	ret = _krb5_principal2principalname(&rep.cname, r->client_princ);
     if (ret)
 	goto out;
 
     rep.ticket.tkt_vno = 5;
-    ret = copy_Realm(&r->server->entry.principal->realm, &rep.ticket.realm);
+    if (f.canonicalize || r->server->entry.flags.force_canonicalize)
+	ret = copy_Realm(&r->server->entry.principal->realm, &rep.ticket.realm);
+    else
+	ret = copy_Realm(&r->server_princ->realm, &rep.ticket.realm);
     if (ret)
 	goto out;
-    _krb5_principal2principalname(&rep.ticket.sname,
-				  r->server->entry.principal);
+    if (f.canonicalize || r->server->entry.flags.force_canonicalize)
+	_krb5_principal2principalname(&rep.ticket.sname,
+				      r->server->entry.principal);
+    else
+	_krb5_principal2principalname(&rep.ticket.sname,
+				      r->server_princ);
     /* java 1.6 expects the name to be the same type, lets allow that
      * uncomplicated name-types. */
 #define CNT(sp,t) (((sp)->sname->name_type) == KRB5_NT_##t)

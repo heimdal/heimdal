@@ -237,28 +237,7 @@ _gss_ntlm_accept_sec_context
 	    return GSS_S_FAILURE;
 	}
 
-	if (session.length != 0) {
-
-	    ctx->status |= STATUS_SESSIONKEY;
-
-	    if (ctx->flags & NTLM_NEG_NTLM2_SESSION) {
-		_gss_ntlm_set_key(&ctx->u.v2.send, 1,
-				  (ctx->flags & NTLM_NEG_KEYEX),
-				  ctx->sessionkey.data,
-				  ctx->sessionkey.length);
-		_gss_ntlm_set_key(&ctx->u.v2.recv, 0,
-				  (ctx->flags & NTLM_NEG_KEYEX),
-				  ctx->sessionkey.data,
-				  ctx->sessionkey.length);
-	    } else {
-		RC4_set_key(&ctx->u.v1.crypto_send.key,
-			    ctx->sessionkey.length,
-			    ctx->sessionkey.data);
-		RC4_set_key(&ctx->u.v1.crypto_recv.key,
-			    ctx->sessionkey.length,
-			    ctx->sessionkey.data);
-	    }
-	}
+	_gss_ntlm_set_keys(ctx);
 
 	if (mech_type)
 	    *mech_type = GSS_NTLM_MECHANISM;

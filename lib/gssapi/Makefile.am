@@ -202,6 +202,7 @@ ntlmsrc = \
 	ntlm/process_context_token.c \
 	ntlm/release_cred.c \
 	ntlm/release_name.c \
+	ntlm/set_sec_context_option.c \
 	ntlm/kdc.c
 
 $(srcdir)/ntlm/ntlm-private.h: $(ntlmsrc)

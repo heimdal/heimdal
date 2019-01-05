@@ -136,6 +136,9 @@ spnego_reply_internal(OM_uint32 *minor_status,
 			  0,
 			  mech_buf,
 			  &mic_buf);
+	if (ret == GSS_S_COMPLETE &&
+	    gss_oid_equal(context_handle->negotiated_mech_type, GSS_NTLM_MECHANISM))
+	    _gss_spnego_ntlm_reset_crypto(minor_status, context_handle, 0);
 	if (ret == GSS_S_COMPLETE) {
 	    ALLOC(nt.u.negTokenResp.mechListMIC, 1);
 	    if (nt.u.negTokenResp.mechListMIC == NULL) {
@@ -580,6 +583,9 @@ spnego_reply
 				 &mech_buf,
 				 &mic_buf,
 				 NULL);
+	   if (ret == GSS_S_COMPLETE &&
+	       gss_oid_equal(ctx->negotiated_mech_type, GSS_NTLM_MECHANISM))
+		_gss_spnego_ntlm_reset_crypto(minor_status, ctx, 1);
 	   if (ret) {
 		HEIMDAL_MUTEX_unlock(&ctx->ctx_id_mutex);
 		free(mech_buf.value);

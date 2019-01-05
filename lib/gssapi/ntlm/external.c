@@ -96,7 +96,7 @@ static gssapi_mech_interface_desc ntlm_mech = {
     _gss_ntlm_duplicate_name,
     _gss_ntlm_inquire_sec_context_by_oid,
     NULL,
-    NULL,
+    _gss_ntlm_set_sec_context_option,
     NULL,
     NULL,
     NULL,

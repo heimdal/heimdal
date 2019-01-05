@@ -218,6 +218,7 @@ ntlmsrc = \
 	ntlm/process_context_token.c \
 	ntlm/release_cred.c \
 	ntlm/release_name.c \
+	ntlm/set_sec_context_option.c \
 	ntlm/kdc.c
 
 $(OBJ)\ntlm\ntlm-private.h: $(ntlmsrc)
@@ -442,6 +443,7 @@ libgssapi_OBJs = \
 	$(OBJ)\ntlm/process_context_token.obj \
 	$(OBJ)\ntlm/release_cred.obj \
 	$(OBJ)\ntlm/release_name.obj \
+	$(OBJ)\ntlm/set_sec_context_option.obj \
 	$(OBJ)\ntlm/kdc.obj \
 	$(OBJ)\gkrb5_err.obj \
 	$(spnego_files:.x=.obj) \

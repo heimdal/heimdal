@@ -315,3 +315,19 @@ _gss_spnego_indicate_mechtypelist (OM_uint32 *minor_status,
 
     return ret;
 }
+
+OM_uint32
+_gss_spnego_ntlm_reset_crypto(OM_uint32 *minor_status,
+			      gssspnego_ctx ctx,
+			      OM_uint32 verify)
+{
+    gss_buffer_desc value;
+
+    value.length = sizeof(verify);
+    value.value = &verify;
+
+    return gss_set_sec_context_option(minor_status,
+				      &ctx->negotiated_ctx_id,
+				      GSS_C_NTLM_RESET_CRYPTO,
+				      &value);
+}

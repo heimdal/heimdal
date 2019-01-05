@@ -119,7 +119,6 @@ _hdb_fetch_kvno(krb5_context context, HDB *db, krb5_const_principal principal,
 	if (ret)
 	    return ret;
 	principal = enterprise_principal;
-	flags |= HDB_F_CANON; /* enterprise implies canonicalization */
     }
 
     hdb_principal2key(context, principal, &key);

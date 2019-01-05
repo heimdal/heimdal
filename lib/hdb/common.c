@@ -130,7 +130,8 @@ _hdb_fetch_kvno(krb5_context context, HDB *db, krb5_const_principal principal,
     if(ret)
 	return ret;
     ret = hdb_value2entry(context, &value, &entry->entry);
-    if (ret == ASN1_BAD_ID && (flags & (HDB_F_CANON|HDB_F_FOR_AS_REQ)) == 0) {
+    /* HDB_F_GET_ANY indicates request originated from KDC (not kadmin) */
+    if (ret == ASN1_BAD_ID && (flags & (HDB_F_CANON|HDB_F_GET_ANY)) == 0) {
 	krb5_data_free(&value);
 	return HDB_ERR_NOENTRY;
     } else if (ret == ASN1_BAD_ID) {
@@ -155,7 +156,7 @@ _hdb_fetch_kvno(krb5_context context, HDB *db, krb5_const_principal principal,
 	    return ret;
 	}
 
-	if ((flags & HDB_F_FOR_AS_REQ) && (flags & HDB_F_CANON) == 0) {
+	if ((flags & HDB_F_GET_ANY) && (flags & HDB_F_CANON) == 0) {
 	    krb5_principal tmp;
 
 	    /* "hard" alias: return the principal the client asked for */
@@ -333,7 +334,8 @@ _hdb_store(krb5_context context, HDB *db, unsigned flags, hdb_entry_ex *entry)
     krb5_data key, value;
     int code;
 
-    if (entry->entry.flags.do_not_store)
+    if (entry->entry.flags.do_not_store ||
+	entry->entry.flags.force_canonicalize)
 	return HDB_ERR_MISUSE;
     /* check if new aliases already is used */
     code = hdb_check_aliases(context, db, entry);

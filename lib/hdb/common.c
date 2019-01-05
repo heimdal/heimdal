@@ -155,19 +155,6 @@ _hdb_fetch_kvno(krb5_context context, HDB *db, krb5_const_principal principal,
 	    krb5_data_free(&value);
 	    return ret;
 	}
-
-	if ((flags & HDB_F_GET_ANY) && (flags & HDB_F_CANON) == 0) {
-	    krb5_principal tmp;
-
-	    /* "hard" alias: return the principal the client asked for */
-	    ret = krb5_copy_principal(context, principal, &tmp);
-	    if (ret) {
-		krb5_data_free(&value);
-		return ret;
-	    }
-	    krb5_free_principal(context, entry->entry.principal);
-	    entry->entry.principal = tmp;
-	}
     }
     krb5_data_free(&value);
     if ((flags & HDB_F_DECRYPT) && (flags & HDB_F_ALL_KVNOS)) {

@@ -119,7 +119,6 @@ _hdb_fetch_kvno(krb5_context context, HDB *db, krb5_const_principal principal,
 	if (ret)
 	    return ret;
 	principal = enterprise_principal;
-	flags |= HDB_F_CANON; /* enterprise implies canonicalization */
     }
 
     hdb_principal2key(context, principal, &key);
@@ -191,6 +190,14 @@ _hdb_fetch_kvno(krb5_context context, HDB *db, krb5_const_principal principal,
 		return ret;
 	    }
 	}
+    }
+    if (enterprise_principal) {
+	/*
+	 * Whilst Windows does not canonicalize enterprise principal names if
+	 * the canonicalize flag is unset, the original specification in
+	 * draft-ietf-krb-wg-kerberos-referrals-03.txt says we should.
+	 */
+	entry->entry.flags.force_canonicalize = 1;
     }
 
     return 0;

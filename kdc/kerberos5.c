@@ -1657,6 +1657,7 @@ _kdc_as_rep(kdc_request_t r,
     int i, flags = HDB_F_FOR_AS_REQ;
     METHOD_DATA error_method;
     const PA_DATA *pa;
+    krb5_boolean is_tgs;
 
     memset(&rep, 0, sizeof(rep));
     error_method.len = 0;
@@ -1714,6 +1715,8 @@ _kdc_as_rep(kdc_request_t r,
 
     kdc_log(context, config, 0, "AS-REQ %s from %s for %s",
 	    r->client_name, from, r->server_name);
+
+    is_tgs = krb5_principal_is_krbtgt(context, r->server_princ);
 
     /*
      *
@@ -1777,7 +1780,7 @@ _kdc_as_rep(kdc_request_t r,
 	goto out;
     }
     ret = _kdc_db_fetch(context, config, r->server_princ,
-			HDB_F_GET_SERVER|HDB_F_GET_KRBTGT | flags,
+			HDB_F_GET_SERVER | flags | (is_tgs ? HDB_F_GET_KRBTGT : 0),
 			NULL, NULL, &r->server);
     if(ret == HDB_ERR_NOT_FOUND_HERE) {
 	kdc_log(context, config, 5, "target %s does not have secrets at this KDC, need to proxy",
@@ -1803,11 +1806,10 @@ _kdc_as_rep(kdc_request_t r,
      */
 
     ret = _kdc_find_etype(context,
-			  krb5_principal_is_krbtgt(context, r->server_princ) ?
-			  config->tgt_use_strongest_session_key :
-			  config->svc_use_strongest_session_key, FALSE,
-			  r->client, b->etype.val, b->etype.len, &r->sessionetype,
-			  NULL);
+			  is_tgs ? config->tgt_use_strongest_session_key
+				 : config->svc_use_strongest_session_key,
+			  FALSE, r->client, b->etype.val, b->etype.len,
+			  &r->sessionetype, NULL);
     if (ret) {
 	kdc_log(context, config, 0,
 		"Client (%s) from %s has no common enctypes with KDC "

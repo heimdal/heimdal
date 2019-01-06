@@ -1654,7 +1654,7 @@ _kdc_as_rep(kdc_request_t r,
     krb5_error_code ret = 0;
     Key *skey;
     int found_pa = 0;
-    int i, cflags, sflags;
+    int i, flags = HDB_F_FOR_AS_REQ;
     METHOD_DATA error_method;
     const PA_DATA *pa;
 
@@ -1673,6 +1673,9 @@ _kdc_as_rep(kdc_request_t r,
 
     b = &req->req_body;
     f = b->kdc_options;
+
+    if (f.canonicalize)
+	flags |= HDB_F_CANON;
 
     if(b->sname == NULL){
 	ret = KRB5KRB_ERR_GENERIC;
@@ -1712,19 +1715,6 @@ _kdc_as_rep(kdc_request_t r,
     kdc_log(context, config, 0, "AS-REQ %s from %s for %s",
 	    r->client_name, from, r->server_name);
 
-    /* Client enterprise principal names are always canonicalized */
-    cflags = HDB_F_FOR_AS_REQ | HDB_F_GET_CLIENT;
-    if (f.canonicalize ||
-	r->client_princ->name.name_type == KRB5_NT_ENTERPRISE_PRINCIPAL)
-	cflags |= HDB_F_CANON;
-
-    sflags = HDB_F_FOR_AS_REQ | HDB_F_GET_SERVER;
-    if (f.canonicalize)
-	sflags |= HDB_F_CANON;
-    /* Only set HDB_F_GET_KRBTGT if we are resolving a TGS */
-    if (krb5_principal_is_krbtgt(context, r->server_princ))
-	sflags |= HDB_F_GET_KRBTGT;
-
     /*
      *
      */
@@ -1747,8 +1737,9 @@ _kdc_as_rep(kdc_request_t r,
      *
      */
 
-    ret = _kdc_db_fetch(context, config, r->client_princ, cflags,
-			NULL, &r->clientdb, &r->client);
+    ret = _kdc_db_fetch(context, config, r->client_princ,
+			HDB_F_GET_CLIENT | flags, NULL,
+			&r->clientdb, &r->client);
     if(ret == HDB_ERR_NOT_FOUND_HERE) {
 	kdc_log(context, config, 5, "client %s does not have secrets at this KDC, need to proxy",
 		r->client_name);
@@ -1785,7 +1776,8 @@ _kdc_as_rep(kdc_request_t r,
 	ret = KRB5KDC_ERR_C_PRINCIPAL_UNKNOWN;
 	goto out;
     }
-    ret = _kdc_db_fetch(context, config, r->server_princ, sflags,
+    ret = _kdc_db_fetch(context, config, r->server_princ,
+			HDB_F_GET_SERVER|HDB_F_GET_KRBTGT | flags,
 			NULL, NULL, &r->server);
     if(ret == HDB_ERR_NOT_FOUND_HERE) {
 	kdc_log(context, config, 5, "target %s does not have secrets at this KDC, need to proxy",
@@ -1961,18 +1953,16 @@ _kdc_as_rep(kdc_request_t r,
     rep.pvno = 5;
     rep.msg_type = krb_as_rep;
 
-    if (r->client->entry.flags.force_canonicalize)
-	cflags |= HDB_F_CANON;
     if (_kdc_is_anonymous(context, r->client_princ)) {
 	Realm anon_realm=KRB5_ANON_REALM;
 	ret = copy_Realm(&anon_realm, &rep.crealm);
-    } else if (cflags & HDB_F_CANON)
+    } else if (f.canonicalize || r->client->entry.flags.force_canonicalize)
 	ret = copy_Realm(&r->client->entry.principal->realm, &rep.crealm);
     else
 	ret = copy_Realm(&r->client_princ->realm, &rep.crealm);
     if (ret)
 	goto out;
-    if (cflags & HDB_F_CANON)
+    if (f.canonicalize || r->client->entry.flags.force_canonicalize)
 	ret = _krb5_principal2principalname(&rep.cname, r->client->entry.principal);
     else
 	ret = _krb5_principal2principalname(&rep.cname, r->client_princ);
@@ -1980,15 +1970,13 @@ _kdc_as_rep(kdc_request_t r,
 	goto out;
 
     rep.ticket.tkt_vno = 5;
-    if (r->server->entry.flags.force_canonicalize)
-	sflags |= HDB_F_CANON;
-    if (sflags & HDB_F_CANON)
+    if (f.canonicalize || r->server->entry.flags.force_canonicalize)
 	ret = copy_Realm(&r->server->entry.principal->realm, &rep.ticket.realm);
     else
 	ret = copy_Realm(&r->server_princ->realm, &rep.ticket.realm);
     if (ret)
 	goto out;
-    if (sflags & HDB_F_CANON)
+    if (f.canonicalize || r->server->entry.flags.force_canonicalize)
 	_krb5_principal2principalname(&rep.ticket.sname,
 				      r->server->entry.principal);
     else

@@ -201,7 +201,7 @@ test_unsigned (void)
 
     for (i = 0; i < ntests; ++i) {
 	tests[i].val = &values[i];
-	if (asprintf (&tests[i].name, "unsigned %u", values[i]) < 0)
+	if (asprintf (&tests[i].name, "unsigned long long %u", values[i]) < 0)
 	    errx(1, "malloc");
 	if (tests[i].name == NULL)
 	    errx(1, "malloc");

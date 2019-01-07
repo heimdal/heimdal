@@ -188,6 +188,21 @@ TESTBitString ::= BIT STRING {
 	      thirtyone(31)
 }
 
+TESTBitString64 ::= BIT STRING {
+	      zero(0),
+	      eight(8),
+	      thirtyone(31),
+	      thirtytwo(32),
+	      sixtythree(63)
+}
+
+TESTLargeBitString ::= BIT STRING {
+	      zero(0),
+	      eight(8),
+	      thirtyone(31),
+	      onehundredtwenty(120)
+}
+
 TESTMechType::= OBJECT IDENTIFIER
 TESTMechTypeList ::= SEQUENCE OF TESTMechType
 

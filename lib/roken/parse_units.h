@@ -51,7 +51,7 @@
 
 struct units {
     const char *name;
-    unsigned mult;
+    unsigned long long mult;
 };
 
 ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL

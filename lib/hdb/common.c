@@ -31,6 +31,7 @@
  * SUCH DAMAGE.
  */
 
+#include "krb5_locl.h"
 #include "hdb_locl.h"
 
 int
@@ -96,6 +97,50 @@ hdb_value2entry_alias(krb5_context context, krb5_data *value,
 		      hdb_entry_alias *ent)
 {
     return decode_hdb_entry_alias(value->data, value->length, ent, NULL);
+}
+
+/*
+ * Some old databases may not have stored the salt with each key, which will
+ * break clients when aliases or canonicalization are used. Generate a
+ * default salt based on the real principal name in the entry to handle
+ * this case.
+ */
+static krb5_error_code
+add_default_salts(krb5_context context, HDB *db, hdb_entry *entry)
+{
+    krb5_error_code ret;
+    size_t i;
+    krb5_salt pwsalt;
+
+    ret = krb5_get_pw_salt(context, entry->principal, &pwsalt);
+    if (ret)
+	return ret;
+
+    for (i = 0; i < entry->keys.len; i++) {
+	Key *key = &entry->keys.val[i];
+
+	if (key->salt != NULL ||
+	    _krb5_enctype_requires_random_salt(context, key->key.keytype))
+	    continue;
+
+	key->salt = malloc(sizeof(*key->salt));
+	if (key->salt == NULL) {
+	    ret = krb5_enomem(context);
+	    break;
+	}
+
+	key->salt->type = KRB5_PADATA_PW_SALT;
+
+	ret = krb5_data_copy(&key->salt->salt,
+			     pwsalt.saltvalue.data,
+			     pwsalt.saltvalue.length);
+	if (ret)
+	    break;
+    }
+
+    krb5_free_salt(context, pwsalt);
+
+    return ret;
 }
 
 krb5_error_code
@@ -189,6 +234,19 @@ _hdb_fetch_kvno(krb5_context context, HDB *db, krb5_const_principal principal,
 		hdb_free_entry(context, entry);
 		return ret;
 	    }
+	}
+    }
+    if ((flags & HDB_F_FOR_AS_REQ) && (flags & HDB_F_GET_CLIENT)) {
+	/*
+	 * Generate default salt for any principals missing one; note such
+	 * principals could include those for which a random (non-password)
+	 * key was generated, but given the salt will be ignored by a keytab
+	 * client it doesn't hurt to include the default salt.
+	 */
+	ret = add_default_salts(context, db, &entry->entry);
+	if (ret) {
+	    hdb_free_entry(context, entry);
+	    return ret;
 	}
     }
     if (enterprise_principal) {

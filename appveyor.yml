@@ -11,7 +11,7 @@ install:
 
 build_script:
   - set PSDKDir=C:\Program Files\Microsoft SDKs\Windows\v7.1
-  - call "C:\Program Files\Microsoft SDKs\Windows\v7.1\Bin\SetEnv.Cmd" %1 %2 /xp
+  - call "C:\Program Files\Microsoft SDKs\Windows\v7.1\Bin\SetEnv.Cmd" /xp /x64 /Release
   - set WIXDIR="c:\Program Files (x86)\Windows Installer XML v3.5"
   # We're not doing any codesigning in the Appveyor build yet.
   - SET CODESIGN_PKT=0000000000000000

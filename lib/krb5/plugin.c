@@ -553,7 +553,7 @@ validate_plugin_deps(krb5_context context,
 
 	if (heim_instance != plugin_instance) {
 	    krb5_warnx(context, "plugin %s library %s linked against different "
-		       "version of Heimdal (got %zu, us %zu)",
+		       "instance of Heimdal (got %zu, us %zu)",
 		       dsopath, caller->deps[i],
 		       plugin_instance, heim_instance);
 	    return FALSE;

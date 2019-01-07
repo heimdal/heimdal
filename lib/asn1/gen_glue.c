@@ -43,17 +43,17 @@ generate_2int (const Type *t, const char *gen_name)
     Member *m;
 
     fprintf (headerfile,
-	     "unsigned %s2int(%s);\n",
+	     "uint64_t %s2int(%s);\n",
 	     gen_name, gen_name);
 
     fprintf (codefile,
-	     "unsigned %s2int(%s f)\n"
+	     "uint64_t %s2int(%s f)\n"
 	     "{\n"
-	     "unsigned r = 0;\n",
+	     "uint64_t r = 0;\n",
 	     gen_name, gen_name);
 
     ASN1_TAILQ_FOREACH(m, t->members, members) {
-	fprintf (codefile, "if(f.%s) r |= (1U << %d);\n",
+	fprintf (codefile, "if(f.%s) r |= (1LU << %d);\n",
 		 m->gen_name, m->val);
     }
     fprintf (codefile, "return r;\n"
@@ -66,11 +66,11 @@ generate_int2 (const Type *t, const char *gen_name)
     Member *m;
 
     fprintf (headerfile,
-	     "%s int2%s(unsigned);\n",
+	     "%s int2%s(uint64_t);\n",
 	     gen_name, gen_name);
 
     fprintf (codefile,
-	     "%s int2%s(unsigned n)\n"
+	     "%s int2%s(uint64_t n)\n"
 	     "{\n"
 	     "\t%s flags;\n\n"
 	     "\tmemset(&flags, 0, sizeof(flags));\n\n",
@@ -114,7 +114,7 @@ generate_units (const Type *t, const char *gen_name)
     if(t->members) {
 	ASN1_TAILQ_FOREACH_REVERSE(m, t->members, memhead, members) {
 	    fprintf (codefile,
-		     "\t{\"%s\",\t1U << %d},\n", m->name, m->val);
+		     "\t{\"%s\",\t1LU << %d},\n", m->name, m->val);
 	}
     }
 
@@ -143,14 +143,21 @@ generate_glue (const Type *t, const char *gen_name)
     case TTag:
 	generate_glue(t->subtype, gen_name);
 	break;
-    case TBitString :
-	if (!ASN1_TAILQ_EMPTY(t->members)) {
-	    generate_2int (t, gen_name);
-	    generate_int2 (t, gen_name);
-	    if (parse_units_flag)
-		generate_units (t, gen_name);
-	}
+    case TBitString : {
+        Member *m;
+
+        if (ASN1_TAILQ_EMPTY(t->members))
+            break;
+        ASN1_TAILQ_FOREACH(m, t->members, members) {
+            if (m->val > 63)
+                return;
+        }
+        generate_2int (t, gen_name);
+        generate_int2 (t, gen_name);
+        if (parse_units_flag)
+            generate_units (t, gen_name);
 	break;
+    }
     default :
 	break;
     }

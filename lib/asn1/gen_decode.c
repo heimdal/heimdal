@@ -354,7 +354,7 @@ decode_type (const char *name, const Type *t, int optional,
 	    break;
 
 	fprintf(codefile, "{\n");
-	fprintf(codefile, "unsigned int members = 0;\n");
+	fprintf(codefile, "uint64_t members = 0;\n");
 	fprintf(codefile, "while(len > 0) {\n");
 	fprintf(codefile,
 		"Der_class class;\n"
@@ -384,7 +384,7 @@ decode_type (const char *name, const Type *t, int optional,
 	    decode_type (s, m->type, 0, forwstr, m->gen_name, NULL, depth + 1);
 	    free (s);
 
-	    fprintf(codefile, "members |= (1 << %d);\n", memno);
+	    fprintf(codefile, "members |= (1LU << %u);\n", memno);
 	    memno++;
 	    fprintf(codefile, "break;\n");
 	}
@@ -400,7 +400,7 @@ decode_type (const char *name, const Type *t, int optional,
 
 	    if (asprintf (&s, "%s->%s", name, m->gen_name) < 0 || s == NULL)
 		errx(1, "malloc");
-	    fprintf(codefile, "if((members & (1 << %d)) == 0)\n", memno);
+	    fprintf(codefile, "if((members & (1LU << %u)) == 0)\n", memno);
 	    if(m->optional)
 		fprintf(codefile, "%s = NULL;\n", s);
 	    else if(m->defval)

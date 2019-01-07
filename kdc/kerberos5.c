@@ -1221,28 +1221,55 @@ get_pa_etype_info2(krb5_context context,
     return 0;
 }
 
+static int
+newer_enctype_present(struct KDC_REQ_BODY_etype *etype_list)
+{
+    size_t i;
+
+    for (i = 0; i < etype_list->len; i++) {
+	if (!older_enctype(etype_list->val[i]))
+	    return 1;
+    }
+    return 0;
+}
+
 static krb5_error_code
 get_pa_etype_info_both(krb5_context context,
 		       krb5_kdc_configuration *config,
+		       struct KDC_REQ_BODY_etype *etype_list,
 		       METHOD_DATA *md, Key *ckey)
 {
     krb5_error_code ret;
 
     /*
      * RFC4120 requires:
-     * - If the client only knows about old enctypes, then send
-     *   both info replies (we send 'info' first in the list).
-     * - If the client is 'modern', because it knows about 'new'
-     *   enctype types, then only send the 'info2' reply.
+     *   When the AS server is to include pre-authentication data in a
+     *   KRB-ERROR or in an AS-REP, it MUST use PA-ETYPE-INFO2, not
+     *   PA-ETYPE-INFO, if the etype field of the client's AS-REQ lists
+     *   at least one "newer" encryption type.  Otherwise (when the etype
+     *   field of the client's AS-REQ does not list any "newer" encryption
+     *   types), it MUST send both PA-ETYPE-INFO2 and PA-ETYPE-INFO (both
+     *   with an entry for each enctype).  A "newer" enctype is any enctype
+     *   first officially specified concurrently with or subsequent to the
+     *   issue of this RFC.  The enctypes DES, 3DES, or RC4 and any defined
+     *   in [RFC1510] are not "newer" enctypes.
+     *
+     * It goes on to state:
+     *   The preferred ordering of the "hint" pre-authentication data that
+     *   affect client key selection is: ETYPE-INFO2, followed by ETYPE-INFO,
+     *   followed by PW-SALT.  As noted in Section 3.1.3, a KDC MUST NOT send
+     *   ETYPE-INFO or PW-SALT when the client's AS-REQ includes at least one
+     *   "newer" etype.
      */
 
-    if (older_enctype(ckey->key.keytype)) {
-	ret = get_pa_etype_info(context, config, md, ckey);
-	if (ret)
-	    return ret;
-    }
+    ret = get_pa_etype_info2(context, config, md, ckey);
+    if (ret)
+	return ret;
 
-    return get_pa_etype_info2(context, config, md, ckey);
+    if (!newer_enctype_present(etype_list))
+	ret = get_pa_etype_info(context, config, md, ckey);
+
+    return ret;
 }
 
 /*
@@ -1852,7 +1879,7 @@ _kdc_as_rep(kdc_request_t r,
 					   TRUE, r->client, b->etype.val,
 					   b->etype.len, NULL, &ckey);
 		    if (ret2 == 0) {
-			ret2 = get_pa_etype_info_both(context, config,
+			ret2 = get_pa_etype_info_both(context, config, &b->etype,
 						      &error_method, ckey);
 			if (ret2 != 0)
 			    ret = ret2;
@@ -1888,7 +1915,8 @@ _kdc_as_rep(kdc_request_t r,
 			      config->preauth_use_strongest_session_key, TRUE,
 			      r->client, b->etype.val, b->etype.len, NULL, &ckey);
 	if (ret == 0) {
-	    ret = get_pa_etype_info_both(context, config, &error_method, ckey);
+	    ret = get_pa_etype_info_both(context, config, &b->etype,
+					 &error_method, ckey);
 	    if (ret)
 		goto out;
 	}

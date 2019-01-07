@@ -125,8 +125,9 @@ is_default_salt_p(const krb5_salt *default_salt, const Key *key)
 krb5_error_code
 _kdc_find_etype(krb5_context context, krb5_boolean use_strongest_session_key,
 		krb5_boolean is_preauth, hdb_entry_ex *princ,
-		krb5_enctype *etypes, unsigned len,
-		krb5_enctype *ret_enctype, Key **ret_key)
+		krb5_principal request_princ, krb5_enctype *etypes, unsigned len,
+		krb5_enctype *ret_enctype, Key **ret_key,
+		krb5_boolean *ret_default_salt)
 {
     krb5_error_code ret;
     krb5_salt def_salt;
@@ -136,7 +137,7 @@ _kdc_find_etype(krb5_context context, krb5_boolean use_strongest_session_key,
     int i, k;
 
     /* We'll want to avoid keys with v4 salted keys in the pre-auth case... */
-    ret = krb5_get_pw_salt(context, princ->entry.principal, &def_salt);
+    ret = krb5_get_pw_salt(context, request_princ, &def_salt);
     if (ret)
 	return ret;
 
@@ -239,6 +240,8 @@ _kdc_find_etype(krb5_context context, krb5_boolean use_strongest_session_key,
 	    *ret_enctype = enctype;
 	if (ret_key != NULL)
 	    *ret_key = key;
+	if (ret_default_salt != NULL)
+	    *ret_default_salt = is_default_salt_p(&def_salt, key);
     }
 
     krb5_free_salt (context, def_salt);
@@ -1019,10 +1022,13 @@ older_enctype(krb5_enctype enctype)
  */
 
 static krb5_error_code
-make_etype_info_entry(krb5_context context, ETYPE_INFO_ENTRY *ent, Key *key)
+make_etype_info_entry(krb5_context context,
+		      ETYPE_INFO_ENTRY *ent,
+		      Key *key,
+		      krb5_boolean include_salt)
 {
     ent->etype = key->key.keytype;
-    if(key->salt){
+    if (key->salt && include_salt){
 #if 0
 	ALLOC(ent->salttype);
 
@@ -1069,7 +1075,8 @@ make_etype_info_entry(krb5_context context, ETYPE_INFO_ENTRY *ent, Key *key)
 static krb5_error_code
 get_pa_etype_info(krb5_context context,
 		  krb5_kdc_configuration *config,
-		  METHOD_DATA *md, Key *ckey)
+		  METHOD_DATA *md, Key *ckey,
+		  krb5_boolean include_salt)
 {
     krb5_error_code ret = 0;
     ETYPE_INFO pa;
@@ -1082,7 +1089,7 @@ get_pa_etype_info(krb5_context context,
     if(pa.val == NULL)
 	return ENOMEM;
 
-    ret = make_etype_info_entry(context, &pa.val[0], ckey);
+    ret = make_etype_info_entry(context, &pa.val[0], ckey, include_salt);
     if (ret) {
 	free_ETYPE_INFO(&pa);
 	return ret;
@@ -1130,12 +1137,14 @@ make_s2kparams(int value, size_t len, krb5_data **ps2kparams)
 }
 
 static krb5_error_code
-make_etype_info2_entry(ETYPE_INFO2_ENTRY *ent, Key *key)
+make_etype_info2_entry(ETYPE_INFO2_ENTRY *ent,
+		       Key *key,
+		       krb5_boolean include_salt)
 {
     krb5_error_code ret;
 
     ent->etype = key->key.keytype;
-    if(key->salt) {
+    if (key->salt && include_salt) {
 	ALLOC(ent->salt);
 	if (ent->salt == NULL)
 	    return ENOMEM;
@@ -1188,7 +1197,8 @@ make_etype_info2_entry(ETYPE_INFO2_ENTRY *ent, Key *key)
 static krb5_error_code
 get_pa_etype_info2(krb5_context context,
 		   krb5_kdc_configuration *config,
-		   METHOD_DATA *md, Key *ckey)
+		   METHOD_DATA *md, Key *ckey,
+		   krb5_boolean include_salt)
 {
     krb5_error_code ret = 0;
     ETYPE_INFO2 pa;
@@ -1200,7 +1210,7 @@ get_pa_etype_info2(krb5_context context,
     if(pa.val == NULL)
 	return ENOMEM;
 
-    ret = make_etype_info2_entry(&pa.val[0], ckey);
+    ret = make_etype_info2_entry(&pa.val[0], ckey, include_salt);
     if (ret) {
 	free_ETYPE_INFO2(&pa);
 	return ret;
@@ -1237,7 +1247,8 @@ static krb5_error_code
 get_pa_etype_info_both(krb5_context context,
 		       krb5_kdc_configuration *config,
 		       struct KDC_REQ_BODY_etype *etype_list,
-		       METHOD_DATA *md, Key *ckey)
+		       METHOD_DATA *md, Key *ckey,
+		       krb5_boolean include_salt)
 {
     krb5_error_code ret;
 
@@ -1262,12 +1273,12 @@ get_pa_etype_info_both(krb5_context context,
      *   "newer" etype.
      */
 
-    ret = get_pa_etype_info2(context, config, md, ckey);
+    ret = get_pa_etype_info2(context, config, md, ckey, include_salt);
     if (ret)
 	return ret;
 
     if (!newer_enctype_present(etype_list))
-	ret = get_pa_etype_info(context, config, md, ckey);
+	ret = get_pa_etype_info(context, config, md, ckey, include_salt);
 
     return ret;
 }
@@ -1835,8 +1846,9 @@ _kdc_as_rep(kdc_request_t r,
     ret = _kdc_find_etype(context,
 			  is_tgs ? config->tgt_use_strongest_session_key
 				 : config->svc_use_strongest_session_key,
-			  FALSE, r->client, b->etype.val, b->etype.len,
-			  &r->sessionetype, NULL);
+			  FALSE, r->client, r->client_princ,
+			  b->etype.val, b->etype.len,
+			  &r->sessionetype, NULL, NULL);
     if (ret) {
 	kdc_log(context, config, 0,
 		"Client (%s) from %s has no common enctypes with KDC "
@@ -1871,16 +1883,18 @@ _kdc_as_rep(kdc_request_t r,
 		if (ret != 0) {
 		    krb5_error_code  ret2;
 		    Key *ckey = NULL;
+		    krb5_boolean default_salt;
+
 		    /*
 		     * If there is a client key, send ETYPE_INFO{,2}
 		     */
 		    ret2 = _kdc_find_etype(context,
 					   config->preauth_use_strongest_session_key,
-					   TRUE, r->client, b->etype.val,
-					   b->etype.len, NULL, &ckey);
+					   TRUE, r->client, r->client_princ, b->etype.val,
+					   b->etype.len, NULL, &ckey, &default_salt);
 		    if (ret2 == 0) {
 			ret2 = get_pa_etype_info_both(context, config, &b->etype,
-						      &error_method, ckey);
+						      &error_method, ckey, !default_salt);
 			if (ret2 != 0)
 			    ret = ret2;
 		    }
@@ -1898,6 +1912,7 @@ _kdc_as_rep(kdc_request_t r,
     if (found_pa == 0) {
 	Key *ckey = NULL;
 	size_t n;
+	krb5_boolean default_salt;
 
 	for (n = 0; n < sizeof(pat) / sizeof(pat[0]); n++) {
 	    if ((pat[n].flags & PA_ANNOUNCE) == 0)
@@ -1913,10 +1928,12 @@ _kdc_as_rep(kdc_request_t r,
 	 */
 	ret = _kdc_find_etype(context,
 			      config->preauth_use_strongest_session_key, TRUE,
-			      r->client, b->etype.val, b->etype.len, NULL, &ckey);
+			      r->client, r->client_princ,
+			      b->etype.val, b->etype.len, NULL,
+			      &ckey, &default_salt);
 	if (ret == 0) {
 	    ret = get_pa_etype_info_both(context, config, &b->etype,
-					 &error_method, ckey);
+					 &error_method, ckey, !default_salt);
 	    if (ret)
 		goto out;
 	}

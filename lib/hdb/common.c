@@ -123,7 +123,7 @@ add_default_salts(krb5_context context, HDB *db, hdb_entry *entry)
 	    _krb5_enctype_requires_random_salt(context, key->key.keytype))
 	    continue;
 
-	key->salt = malloc(sizeof(*key->salt));
+	key->salt = calloc(1, sizeof(*key->salt));
 	if (key->salt == NULL) {
 	    ret = krb5_enomem(context);
 	    break;

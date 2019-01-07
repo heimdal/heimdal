@@ -91,7 +91,6 @@ randkey_principal_hook(kadm5_server_context *context,
  * Set the keys of `princ' to random values, returning the random keys
  * in `new_keys', `n_keys'.
  */
-
 kadm5_ret_t
 kadm5_s_randkey_principal(void *server_handle,
 			  krb5_principal princ,
@@ -122,6 +121,12 @@ kadm5_s_randkey_principal(void *server_handle,
     if(ret)
 	goto out2;
 
+    if (ent.entry.flags.explicit_kvno_changes_only &&
+        hdb_entry_max_kvno(context->context, &ent.entry) > ent.entry.kvno) {
+        ret = KADM5_KEYS_ALREADY_CHANGED;
+        goto out2;
+    }
+
     ret = randkey_principal_hook(context, KADM5_HOOK_STAGE_PRECOMMIT, 0, princ);
     if (ret)
 	goto out3;
@@ -145,6 +150,15 @@ kadm5_s_randkey_principal(void *server_handle,
     if (ret)
 	goto out3;
     ent.entry.kvno++;
+
+    if (ent.entry.flags.explicit_kvno_changes_only) {
+        /* Swap the previous keyset back into place */
+        ret = hdb_change_kvno(context->context, ent.entry.kvno - 1,
+                              &ent.entry);
+        if (ret && ret != HDB_ERR_KVNO_NOT_FOUND)
+            goto out3;
+        ret = 0;
+    }
 
     ent.entry.flags.require_pwchange = 0;
 

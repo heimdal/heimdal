@@ -282,10 +282,19 @@ Possible attributes are:
 .Li disallow-tgt-based ,
 .Li disallow-forwardable ,
 .Li disallow-postdated
+.Li explicit-kvno-changes-only
 .Pp
 Attributes may be negated with a "-", e.g.,
 .Pp
 kadmin -l modify -a -disallow-proxiable user
+.Pp
+Note that setting
+.Ar explicit-kvno-changes-only 
+means that key (but not password) changes will not bring the new
+keys into effect, but instead you must modify the principal's
+.Ar kvno
+after changing its keys.  This may be useful when coordinating a
+service principal's key rotations across multiple cluster members.
 .Ed
 .Pp
 .Nm passwd

@@ -184,6 +184,7 @@ kadm5_s_get_principal(void *server_handle,
 	out->attributes |= ent.entry.flags.trusted_for_delegation ? KRB5_KDB_TRUSTED_FOR_DELEGATION : 0;
 	out->attributes |= ent.entry.flags.allow_kerberos4 ? KRB5_KDB_ALLOW_KERBEROS4 : 0;
 	out->attributes |= ent.entry.flags.allow_digest ? KRB5_KDB_ALLOW_DIGEST : 0;
+        out->attributes |= ent.entry.flags.explicit_kvno_changes_only ? KRB5_KDB_EXPLICIT_KVNO_CHANGE : 0;
     }
     if(mask & KADM5_MAX_LIFE) {
 	if(ent.entry.max_life)

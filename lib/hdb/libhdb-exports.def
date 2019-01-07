@@ -30,6 +30,7 @@ EXPORTS
 	hdb_entry_get_pkinit_cert
 	hdb_entry_get_pkinit_hash
 	hdb_entry_get_pw_change_time
+	hdb_entry_max_kvno
 	hdb_entry_set_password
 	hdb_entry_set_pw_change_time
 	hdb_find_extension

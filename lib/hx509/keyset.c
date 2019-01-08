@@ -338,7 +338,7 @@ hx509_certs_end_seq(hx509_context context,
 HX509_LIB_FUNCTION int HX509_LIB_CALL
 hx509_certs_iter_f(hx509_context context,
 		   hx509_certs certs,
-		   int (*func)(hx509_context, void *, hx509_cert),
+		   int (HX509_LIB_CALL *func)(hx509_context, void *, hx509_cert),
 		   void *ctx)
 {
     hx509_cursor cursor;
@@ -600,7 +600,7 @@ hx509_certs_filter(hx509_context context,
 }
 
 
-static int
+static int HX509_LIB_CALL
 certs_merge_func(hx509_context context, void *ctx, hx509_cert c)
 {
     return hx509_certs_add(context, (hx509_certs)ctx, c);

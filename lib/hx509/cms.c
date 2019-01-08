@@ -1205,7 +1205,7 @@ struct sigctx {
     hx509_certs pool;
 };
 
-static int
+static int HX509_LIB_CALL
 sig_process(hx509_context context, void *ctx, hx509_cert cert)
 {
     struct sigctx *sigctx = ctx;
@@ -1423,7 +1423,7 @@ sig_process(hx509_context context, void *ctx, hx509_cert cert)
     return ret;
 }
 
-static int
+static int HX509_LIB_CALL
 cert_process(hx509_context context, void *ctx, hx509_cert cert)
 {
     struct sigctx *sigctx = ctx;

@@ -93,7 +93,7 @@ Time2string(const Time *T, char **str)
  * @ingroup hx509_print
  */
 
-HX509_LIB_FUNCTION void HX509_LIB_CALL
+HX509_LIB_FUNCTION void
 hx509_print_stdout(void *ctx, const char *fmt, va_list va)
 {
     FILE *f = ctx;

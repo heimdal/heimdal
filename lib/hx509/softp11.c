@@ -418,7 +418,7 @@ struct foo {
     char *id;
 };
 
-static int
+static int HX509_LIB_CALL
 add_cert(hx509_context hxctx, void *ctx, hx509_cert cert)
 {
     static char empty[] = "";

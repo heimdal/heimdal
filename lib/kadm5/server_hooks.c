@@ -83,7 +83,7 @@ _kadm5_s_free_hooks(kadm5_server_context *ctx)
     _krb5_unload_plugins(ctx->context, "kadm5");
 }
 
-uintptr_t
+uintptr_t KRB5_LIB_CALL
 kadm5_get_instance(const char *libname)
 {
     static const char *instance = "libkadm5";

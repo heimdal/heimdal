@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, AuriStor, Inc.
+ * Copyright (c) 2018-2019, AuriStor, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -261,7 +261,7 @@ kadm5_hook_plugin_load(krb5_context context,
 		       size_t *num_hooks,
 		       const kadm5_hook_ftable *const **hooks);
 
-static uintptr_t
+static uintptr_t KRB5_LIB_CALL
 sample_hook_get_instance(const char *libname)
 {
     if (strcmp(libname, "kadm5") == 0)

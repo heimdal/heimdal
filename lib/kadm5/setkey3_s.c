@@ -45,7 +45,7 @@ struct setkey_principal_hook_ctx {
     krb5_keyblock *keys;
 };
 
-static krb5_error_code
+static krb5_error_code KRB5_LIB_CALL
 setkey_principal_hook_cb(krb5_context context,
 			 const void *hook,
 			 void *hookctx,

@@ -891,7 +891,7 @@ struct ocsp_add_ctx {
     hx509_cert parent;
 };
 
-static int
+static int HX509_LIB_CALL
 add_to_req(hx509_context context, void *ptr, hx509_cert cert)
 {
     struct ocsp_add_ctx *ctx = ptr;
@@ -1477,7 +1477,7 @@ hx509_crl_free(hx509_context context, hx509_crl *crl)
     *crl = NULL;
 }
 
-static int
+static int HX509_LIB_CALL
 add_revoked(hx509_context context, void *ctx, hx509_cert cert)
 {
     TBSCRLCertList *c = ctx;

@@ -330,7 +330,7 @@ cms_verify_sd(struct cms_verify_sd_options *opt, int argc, char **argv)
     return 0;
 }
 
-static int
+static int HX509_LIB_CALL
 print_signer(hx509_context contextp, void *ctx, hx509_cert cert)
 {
     hx509_pem_header **header = ctx;
@@ -693,7 +693,7 @@ struct print_s {
     int verbose;
 };
 
-static int
+static int HX509_LIB_CALL
 print_f(hx509_context hxcontext, void *ctx, hx509_cert cert)
 {
     struct print_s *s = ctx;
@@ -740,7 +740,7 @@ pcert_print(struct print_options *opt, int argc, char **argv)
 }
 
 
-static int
+static int HX509_LIB_CALL
 validate_f(hx509_context hxcontext, void *ctx, hx509_cert c)
 {
     hx509_validate_cert(hxcontext, ctx, c);
@@ -827,7 +827,7 @@ struct verify {
     int count;
 };
 
-static int
+static int HX509_LIB_CALL
 verify_f(hx509_context hxcontext, void *ctx, hx509_cert c)
 {
     struct verify *v = ctx;
@@ -1178,7 +1178,7 @@ revoke_print(struct revoke_print_options *opt, int argc, char **argv)
  *
  */
 
-static int
+static int HX509_LIB_CALL
 verify_o(hx509_context hxcontext, void *ctx, hx509_cert c)
 {
     heim_octet_string *os = ctx;
@@ -2073,7 +2073,7 @@ hxtool_ca(struct certificate_sign_options *opt, int argc, char **argv)
     return 0;
 }
 
-static int
+static int HX509_LIB_CALL
 test_one_cert(hx509_context hxcontext, void *ctx, hx509_cert cert)
 {
     heim_octet_string sd, c;

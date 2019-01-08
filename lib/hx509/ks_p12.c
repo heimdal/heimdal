@@ -486,7 +486,7 @@ addBag(hx509_context context,
     return 0;
 }
 
-static int
+static int HX509_LIB_CALL
 store_func(hx509_context context, void *ctx, hx509_cert c)
 {
     PKCS12_AuthenticatedSafe *as = ctx;

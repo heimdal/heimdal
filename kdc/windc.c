@@ -218,7 +218,7 @@ _kdc_check_access(krb5_context context,
     return ret;
 }
 
-uintptr_t
+uintptr_t KRB5_CALLCONV
 kdc_get_instance(const char *libname)
 {
     static const char *instance = "libkdc";

@@ -42,7 +42,7 @@ struct rename_principal_hook_ctx {
     krb5_const_principal source, target;
 };
 
-static krb5_error_code
+static krb5_error_code KRB5_LIB_CALL
 rename_principal_hook_cb(krb5_context context,
 			 const void *hook,
 			 void *hookctx,

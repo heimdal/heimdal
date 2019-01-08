@@ -232,7 +232,7 @@ create_signature(krb5_context context,
     return 0;
 }
 
-static int
+static int KRB5_LIB_CALL
 cert2epi(hx509_context context, void *ctx, hx509_cert c)
 {
     ExternalPrincipalIdentifiers *ids = ctx;

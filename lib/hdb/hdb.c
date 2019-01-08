@@ -509,7 +509,7 @@ hdb_create(krb5_context context, HDB **db, const char *filename)
     return (*cb_ctx.h->create)(context, db, cb_ctx.residual);
 }
 
-uintptr_t
+uintptr_t KRB5_CALLCONV
 hdb_get_instance(const char *libname)
 {
     static const char *instance = "libhdb";

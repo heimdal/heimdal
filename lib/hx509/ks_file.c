@@ -528,7 +528,7 @@ struct store_ctx {
     outformat format;
 };
 
-static int
+static int HX509_LIB_CALL
 store_func(hx509_context context, void *ctx, hx509_cert c)
 {
     struct store_ctx *sc = ctx;

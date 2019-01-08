@@ -132,7 +132,7 @@ acquire_mech_cred(OM_uint32 *minor_status,
     return major_status;
 }
 
-OM_uint32
+GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL
 gss_acquire_cred_from(OM_uint32 *minor_status,
 		      gss_const_name_t desired_name,
 		      OM_uint32 time_req,

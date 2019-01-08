@@ -104,6 +104,7 @@ INCFILES=\
 	$(SDKINCDIR)\hcrypto\sha.h \
 	$(SDKINCDIR)\hcrypto\ui.h \
 	$(SDKINCDIR)\heimdal\asn1_err.h	\
+	$(SDKINCDIR)\heimdal\dlfcn.h		\
 	$(SDKINCDIR)\heimdal\heim_err.h	\
 	$(SDKINCDIR)\heimdal\k524_err.h	\
 	$(SDKINCDIR)\heimdal\k5e1_err.h	\

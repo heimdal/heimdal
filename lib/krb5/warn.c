@@ -31,6 +31,11 @@
  * SUCH DAMAGE.
  */
 
+#if defined(_MSC_VER)
+# pragma warning(disable: 4646)
+# pragma warning(disable: 4716)
+#endif
+
 #include "krb5_locl.h"
 #include <err.h>
 

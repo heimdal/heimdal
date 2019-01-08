@@ -388,6 +388,9 @@ generate_header_of_codefile(const char *name)
 	fprintf (codefile,
 		 "#include <parse_units.h>\n\n");
 
+#ifdef _WIN32
+    fprintf(codefile, "#pragma warning(disable: 4101)\n\n");
+#endif
 }
 
 void

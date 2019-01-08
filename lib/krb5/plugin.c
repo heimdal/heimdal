@@ -331,7 +331,7 @@ _krb5_load_plugins(krb5_context context, const char *name, const char **paths)
     char *dirname = NULL;
     DIR *d;
 #ifdef _WIN32
-    const char * plugin_prefix;
+    char *plugin_prefix;
     size_t plugin_prefix_len;
 
     if (asprintf(&plugin_prefix, "plugin_%s_", name) == -1)

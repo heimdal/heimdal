@@ -197,7 +197,7 @@ kt_get(struct get_options *opt, int argc, char **argv)
 		break;
 	}
 
-	ret = kadm5_create_principal(kadm_handle, &princ, mask, "x");
+	ret = kadm5_create_principal(kadm_handle, &princ, mask, "thisIs_aUseless.password123");
 	if(ret == 0)
 	    created = 1;
 	else if(ret != KADM5_DUP) {

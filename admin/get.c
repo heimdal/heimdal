@@ -129,7 +129,7 @@ kt_get(struct get_options *opt, int argc, char **argv)
     unsigned int failed = 0;
 
     i = 0;
-    keep = 0;
+    keep = 1;
     if (opt->keepallold_flag) {
         keep = 2;
         i++;

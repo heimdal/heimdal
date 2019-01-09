@@ -147,7 +147,7 @@ kt_change(struct change_options *opt, int argc, char **argv)
     krb5_key_salt_tuple *kstuple = NULL;
     const char *enctype;
     size_t i, j, max, nkstuple;
-    int keep = 0;
+    int keep = 1;
     struct change_set *changeset;
     int errors = 0;
 

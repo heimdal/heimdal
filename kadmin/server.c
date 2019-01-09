@@ -52,7 +52,7 @@ kadmind_dispatch(void *kadm_handlep, krb5_boolean initial,
     char *password = NULL, *expression;
     krb5_keyblock *new_keys;
     krb5_key_salt_tuple *ks_tuple = NULL;
-    krb5_boolean keepold = FALSE;
+    int keepold = FALSE;
     int n_ks_tuple = 0;
     int n_keys;
     char **princs;

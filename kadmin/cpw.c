@@ -158,7 +158,7 @@ cpw_entry(struct passwd_options *opt, int argc, char **argv)
      * needed to decrypt extant tickets".
      */
     num = 0;
-    data.keepold = 0;
+    data.keepold = 1;
     if (opt->keepold_flag) {
         data.keepold = 1;
         num++;

@@ -160,7 +160,7 @@ ext_keytab(struct ext_keytab_options *opt, int argc, char **argv)
     size_t i;
 
     data.random_key_flag = opt->random_key_flag;
-    data.keep = 0;
+    data.keep = 1;
     i = 0;
     if (opt->keepallold_flag) {
         data.keep = 2;
@@ -171,7 +171,7 @@ ext_keytab(struct ext_keytab_options *opt, int argc, char **argv)
         i++;
     }
     if (opt->pruneall_flag) {
-        data.keep = 1;
+        data.keep = 0;
         i++;
     }
     if (i > 1) {

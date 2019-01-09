@@ -254,8 +254,12 @@ _krb5_erase_file(krb5_context context, const char *filename)
     int ret;
 
     ret = lstat (filename, &sb1);
-    if (ret < 0)
-	return errno;
+    if (ret < 0) {
+	if(errno == ENOENT)
+	    return 0;
+	else
+	    return errno;
+    }
 
     fd = open(filename, O_RDWR | O_BINARY | O_CLOEXEC | O_NOFOLLOW);
     if(fd < 0) {

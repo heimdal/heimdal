@@ -59,7 +59,6 @@ sample_log(krb5_context context,
 	   krb5_const_principal princ)
 {
     char *p = NULL;
-    krb5_error_code ret;
     int which = 0;
 
     /* verify we get called with the right contex tpointer */
@@ -74,7 +73,7 @@ sample_log(krb5_context context,
     assert(code == 0 || stage == KADM5_HOOK_STAGE_POSTCOMMIT);
 
     if (princ)
-	ret = krb5_unparse_name(context, princ, &p);
+	(void) krb5_unparse_name(context, princ, &p);
 
     krb5_warn(context, code, "sample_hook_%d: %s %s hook princ '%s'", which, tag,
 	      stage == KADM5_HOOK_STAGE_PRECOMMIT ? "pre-commit" : "post-commit",

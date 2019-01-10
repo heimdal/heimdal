@@ -75,6 +75,15 @@ typedef struct kadm5_hook_ftable {
 					    krb5_key_salt_tuple *ks_tuple,
 					    const char *password);
 
+    krb5_error_code (KRB5_CALLCONV *chpass_with_key)(krb5_context context,
+						     void *data,
+						     enum kadm5_hook_stage stage,
+						     krb5_error_code code,
+						     krb5_const_principal princ,
+						     uint32_t flags,
+						     size_t n_key_data,
+						     krb5_key_data *key_data);
+
     krb5_error_code (KRB5_CALLCONV *create)(krb5_context context,
 					    void *data,
 					    enum kadm5_hook_stage stage,

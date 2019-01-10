@@ -122,6 +122,19 @@ sample_chpass_hook(krb5_context context,
 }
 
 static krb5_error_code KRB5_CALLCONV
+sample_chpass_with_key_hook(krb5_context context,
+			    void *data,
+			    enum kadm5_hook_stage stage,
+			    krb5_error_code code,
+			    krb5_const_principal princ,
+			    uint32_t flags,
+			    size_t n_key_data,
+			    krb5_key_data *key_data)
+{
+    return sample_log(context, data, stage, "chpass_with_key", code, princ);
+}
+
+static krb5_error_code KRB5_CALLCONV
 sample_create_hook(krb5_context context,
 		   void *data,
 		   enum kadm5_hook_stage stage,
@@ -209,6 +222,7 @@ static const kadm5_hook_ftable sample_hook_1 = {
     "sample_hook_1",
     "Heimdal",
     sample_chpass_hook,
+    sample_chpass_with_key_hook,
     sample_create_hook,
     sample_modify_hook,
     sample_delete_hook,
@@ -225,6 +239,7 @@ static const kadm5_hook_ftable sample_hook_2 = {
     "sample_hook_2",
     "Heimdal",
     sample_chpass_hook,
+    sample_chpass_with_key_hook,
     sample_create_hook,
     sample_modify_hook,
     sample_delete_hook,

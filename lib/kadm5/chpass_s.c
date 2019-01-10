@@ -292,6 +292,68 @@ kadm5_s_chpass_principal(void *server_handle,
 	n_ks_tuple, ks_tuple, password, 0);
 }
 
+struct chpass_principal_with_key_hook_ctx {
+    kadm5_server_context *context;
+    enum kadm5_hook_stage stage;
+    krb5_error_code code;
+    krb5_const_principal princ;
+    uint32_t flags;
+    size_t n_key_data;
+    krb5_key_data *key_data;
+};
+
+static krb5_error_code
+chpass_principal_with_key_hook_cb(krb5_context context,
+				  const void *hook,
+				  void *hookctx,
+				  void *userctx)
+{
+    krb5_error_code ret;
+    const struct kadm5_hook_ftable *ftable = hook;
+    struct chpass_principal_with_key_hook_ctx *ctx = userctx;
+
+    ret = ftable->chpass_with_key(context, hookctx,
+				  ctx->stage, ctx->code, ctx->princ,
+				  ctx->flags, ctx->n_key_data, ctx->key_data);
+    if (ret != 0 && ret != KRB5_PLUGIN_NO_HANDLE)
+	_kadm5_s_set_hook_error_message(ctx->context, ret, "chpass_with_key",
+					hook, ctx->stage);
+
+    /* only pre-commit plugins can abort */
+    if (ret == 0 || ctx->stage == KADM5_HOOK_STAGE_POSTCOMMIT)
+	ret = KRB5_PLUGIN_NO_HANDLE;
+
+    return ret;
+}
+
+static kadm5_ret_t
+chpass_principal_with_key_hook(kadm5_server_context *context,
+			       enum kadm5_hook_stage stage,
+			       krb5_error_code code,
+			       krb5_const_principal princ,
+			       uint32_t flags,
+			       size_t n_key_data,
+			       krb5_key_data *key_data)
+{
+    krb5_error_code ret;
+    struct chpass_principal_with_key_hook_ctx ctx;
+
+    ctx.context = context;
+    ctx.stage = stage;
+    ctx.code = code;
+    ctx.princ = princ;
+    ctx.flags = flags;
+    ctx.n_key_data = n_key_data;
+    ctx.key_data = key_data;
+
+    ret = _krb5_plugin_run_f(context->context, &kadm5_hook_plugin_data,
+			     0, &ctx, chpass_principal_with_key_hook_cb);
+    if (ret == KRB5_PLUGIN_NO_HANDLE)
+	ret = 0;
+
+    return ret;
+}
+
 /*
  * change keys for `princ' to `keys'
  */
@@ -306,6 +368,7 @@ kadm5_s_chpass_principal_with_key(void *server_handle,
     kadm5_server_context *context = server_handle;
     hdb_entry_ex ent;
     kadm5_ret_t ret;
+    uint32_t hook_flags = 0;
 
     memset(&ent, 0, sizeof(ent));
     if (!context->keep_open) {
@@ -322,6 +385,15 @@ kadm5_s_chpass_principal_with_key(void *server_handle,
 				      HDB_F_GET_ANY|HDB_F_ADMIN_DATA, &ent);
     if (ret == HDB_ERR_NOENTRY)
 	goto out2;
+
+    if (keepold)
+	hook_flags |= KADM5_HOOK_FLAG_KEEPOLD;
+    ret = chpass_principal_with_key_hook(context, KADM5_HOOK_STAGE_PRECOMMIT,
+					 0, princ, hook_flags,
+					 n_key_data, key_data);
+    if (ret)
+	goto out3;
+
     if (keepold) {
 	ret = hdb_add_current_keys_to_history(context->context, &ent.entry);
 	if (ret)
@@ -358,6 +430,10 @@ kadm5_s_chpass_principal_with_key(void *server_handle,
                            KADM5_PRINCIPAL | KADM5_MOD_NAME |
                            KADM5_MOD_TIME | KADM5_KEY_DATA | KADM5_KVNO |
                            KADM5_PW_EXPIRATION | KADM5_TL_DATA);
+
+    (void) chpass_principal_with_key_hook(context, KADM5_HOOK_STAGE_POSTCOMMIT,
+					  ret, princ, hook_flags,
+					  n_key_data, key_data);
 
  out3:
     hdb_free_entry(context->context, &ent);

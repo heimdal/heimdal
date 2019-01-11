@@ -760,6 +760,16 @@ define_type (int level, const char *name, const char *basename, Type *t, int typ
 	Member *m;
 	Type i;
 	struct range range = { 0, UINT_MAX };
+        size_t max_memno = 0;
+
+        ASN1_TAILQ_FOREACH(m, t->members, members) {
+            if (m->val > max_memno)
+                max_memno = m->val;
+        }
+        if (max_memno > 63)
+            range.max = INT64_MAX;
+        else
+            range.max = 1LU << max_memno;
 
 	i.type = TInteger;
 	i.range = &range;
@@ -780,7 +790,7 @@ define_type (int level, const char *name, const char *basename, Type *t, int typ
 		/* pad unused */
 		while (pos < m->val) {
 		    if (asprintf (&n, "_unused%d:1", pos) < 0 || n == NULL)
-			errx(1, "malloc");
+			err(1, "malloc");
 		    define_type (level + 1, n, newbasename, &i, FALSE, FALSE);
 		    free(n);
 		    pos++;
@@ -794,8 +804,12 @@ define_type (int level, const char *name, const char *basename, Type *t, int typ
 		n = NULL;
 		pos++;
 	    }
-	    /* pad to 32 elements */
-	    while (pos < 32) {
+	    /* pad unused tail */
+            if (max_memno > 31)
+                max_memno += 64 - (max_memno % 64);
+            else
+                max_memno = 32;
+	    while (pos < max_memno) {
 		char *n = NULL;
 		if (asprintf (&n, "_unused%d:1", pos) < 0 || n == NULL)
 		    errx(1, "malloc");

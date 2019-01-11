@@ -191,6 +191,15 @@ kadm5_s_setkey_principal_3(void *server_handle,
 
     if (ret == 0) {
 	ent.entry.kvno++;
+        if (ent.entry.flags.explicit_kvno_changes_only) {
+            /* Swap previous keyset back into place */
+            ret = hdb_change_kvno(context->context, ent.entry.kvno - 1,
+                                  &ent.entry);
+            if (ret == HDB_ERR_KVNO_NOT_FOUND)
+                ret = 0;
+        }
+    }
+    if (ret == 0) {
 	ent.entry.flags.require_pwchange = 0;
 	hdb_entry_set_pw_change_time(context->context, &ent.entry, 0);
 	hdb_entry_clear_password(context->context, &ent.entry);

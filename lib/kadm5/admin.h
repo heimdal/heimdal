@@ -55,6 +55,8 @@
 
 #include <krb5.h>
 
+/* N.B.: These constants differ from those of MIT Kerberos of the same name */
+/* N.B.: Keep in sync with lib/hdb/print.c */
 #define KRB5_KDB_DISALLOW_POSTDATED	0x00000001
 #define KRB5_KDB_DISALLOW_FORWARDABLE	0x00000002
 #define KRB5_KDB_DISALLOW_TGT_BASED	0x00000004
@@ -73,6 +75,7 @@
 #define KRB5_KDB_TRUSTED_FOR_DELEGATION	0x00020000
 #define KRB5_KDB_ALLOW_KERBEROS4	0x00040000
 #define KRB5_KDB_ALLOW_DIGEST		0x00080000
+#define KRB5_KDB_EXPLICIT_KVNO_CHANGE	0x00100000
 
 #define KADM5_PRINCIPAL		0x000001U
 #define KADM5_PRINC_EXPIRE_TIME	0x000002U

@@ -341,6 +341,11 @@ entry2string_int (krb5_context context, krb5_storage *sp, hdb_entry *ent)
 #define KRB5_KDB_PWCHANGE_SERVICE       0x00002000
 #define KRB5_KDB_SUPPORT_DESMD5         0x00004000
 #define KRB5_KDB_NEW_PRINC              0x00008000
+#define KRB5_KDB_OK_AS_DELEGATE         0x00010000
+#define KRB5_KDB_TRUSTED_FOR_DELEGATION 0x00020000
+#define KRB5_KDB_ALLOW_KERBEROS4        0x00040000
+#define KRB5_KDB_ALLOW_DIGEST           0x00080000
+#define KRB5_KDB_EXPLICIT_KVNO_CHANGE   0x00100000
 
 static int
 flags_to_attr(HDBFlags flags)
@@ -367,6 +372,14 @@ flags_to_attr(HDBFlags flags)
         a |= KRB5_KDB_DISALLOW_SVR;
     if (flags.change_pw)
         a |= KRB5_KDB_PWCHANGE_SERVICE;
+    if (flags.ok_as_delegate)
+        a |= KRB5_KDB_OK_AS_DELEGATE;
+    if (flags.trusted_for_delegation)
+        a |= KRB5_KDB_TRUSTED_FOR_DELEGATION;
+    if (flags.allow_digest)
+        a |= KRB5_KDB_ALLOW_DIGEST;
+    if (flags.explicit_kvno_changes_only)
+        a |= KRB5_KDB_EXPLICIT_KVNO_CHANGE;
     return a;
 }
 

@@ -60,6 +60,8 @@ attr_to_flags(unsigned attr, HDBFlags *flags)
     flags->trusted_for_delegation = !!(attr & KRB5_KDB_TRUSTED_FOR_DELEGATION);
     flags->allow_kerberos4 =   !!(attr & KRB5_KDB_ALLOW_KERBEROS4);
     flags->allow_digest =      !!(attr & KRB5_KDB_ALLOW_DIGEST);
+    flags->explicit_kvno_changes_only =
+                               !!(attr & KRB5_KDB_EXPLICIT_KVNO_CHANGE);
 }
 
 /*

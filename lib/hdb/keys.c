@@ -349,6 +349,36 @@ hdb_add_current_keys_to_history(krb5_context context, hdb_entry *entry)
 }
 
 /**
+ * This function returns the max kvno of an HDB entry's keys.
+ *
+ * @param context   Context
+ * @param entry	    HDB entry
+ * @return The largest kvno.
+ */
+krb5_kvno
+hdb_entry_max_kvno(krb5_context context, hdb_entry *entry)
+{
+    HDB_Ext_KeySet *keys;
+    HDB_extension *extp;
+    hdb_keyset *elem;
+    krb5_kvno max_kvno = entry->kvno;
+    size_t nelem, i;
+
+
+    extp = hdb_find_extension(entry, choice_HDB_extension_data_hist_keys);
+    if (extp == NULL)
+        return max_kvno;
+    keys = &extp->data.u.hist_keys;
+    nelem = keys->len;
+    for (i = 0; i < nelem; ++i) {
+        elem = &keys->val[i];
+        if (elem->kvno > max_kvno)
+            max_kvno = elem->kvno;
+    }
+    return max_kvno;
+}
+
+/**
  * This function adds a key to an HDB entry's key history.
  *
  * @param context   Context

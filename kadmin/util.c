@@ -47,6 +47,7 @@ get_response(const char *prompt, const char *def, char *buf, size_t len);
  */
 
 struct units kdb_attrs[] = {
+    { "explicit-kvno-changes-only",	KRB5_KDB_EXPLICIT_KVNO_CHANGE },
     { "allow-digest",		KRB5_KDB_ALLOW_DIGEST },
     { "allow-kerberos4",	KRB5_KDB_ALLOW_KERBEROS4 },
     { "trusted-for-delegation",	KRB5_KDB_TRUSTED_FOR_DELEGATION },

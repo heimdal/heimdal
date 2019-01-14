@@ -64,6 +64,7 @@ ASSEMBLYMODULE=$(INSTDIR)\Heimdal.msm
 
 $(ASSEMBLYMODULE): $(OBJ)\heimdal-assemblies.wixobj
 	$(LIGHT) -out $@ $**
+	$(_CODESIGN)
 
 $(OBJ)\heimdal-assemblies.wixobj: $(ASM_WXS)
 	$(CANDLE) -arch $(PLATFORM) -o $@ $**	\
@@ -85,6 +86,7 @@ POLICYMODULE=$(INSTDIR)\Heimdal.Policy.msm
 
 $(POLICYMODULE): $(OBJ)\heimdal-policy.wixobj
 	$(LIGHT) -out $@ $**
+	$(_CODESIGN)
 
 $(OBJ)\heimdal-policy.wixobj: $(POLICY_WXS)
 	$(CANDLE) -arch $(PLATFORM) -o $@ $**	\
@@ -98,6 +100,7 @@ COMMANDMODULE=$(INSTDIR)\Heimdal.Command.msm
 
 $(COMMANDMODULE): $(OBJ)\heimdal-command.wixobj
 	$(LIGHT) -out $@ $**
+	$(_CODESIGN)
 
 # OBJECT COMPILED BELOW
 
@@ -108,6 +111,7 @@ GSSMODULE=$(INSTDIR)\Heimdal.GSS.msm
 
 $(GSSMODULE): $(OBJ)\heimdal-gss.wixobj
 	$(LIGHT) -out $@ $**
+	$(_CODESIGN)
 
 # OBJECT COMPILED BELOW
 

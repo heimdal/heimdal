@@ -141,7 +141,8 @@ doit(const char *fn)
     }
     printf("line: eof offset: %lu\n", (unsigned long)offset);
 
-    fclose(fout);
+    if (fclose(fout) == EOF)
+        err(1, "writes to file %s failed", fnout);
     fclose(f);
     return 0;
 }

@@ -288,15 +288,16 @@ close_generate (void)
 {
     fprintf (headerfile, "#endif /* __%s_h__ */\n", headerbase);
 
-    if (headerfile)
-        fclose (headerfile);
-    if (privheaderfile)
-        fclose (privheaderfile);
-    if (templatefile)
-        fclose (templatefile);
+    if (headerfile && fclose(headerfile) == EOF)
+        err(1, "writes to public header file failed");
+    if (privheaderfile && fclose(privheaderfile) == EOF)
+        err(1, "writes to private header file failed");
+    if (templatefile && fclose(templatefile) == EOF)
+        err(1, "writes to template file failed");
     if (logfile) {
-        fprintf (logfile, "\n");
-        fclose (logfile);
+        fprintf(logfile, "\n");
+        if (fclose(logfile) == EOF)
+            err(1, "writes to log file failed");
     }
 }
 
@@ -399,7 +400,8 @@ close_codefile(void)
     if (codefile == NULL)
 	abort();
 
-    fclose(codefile);
+    if (fclose(codefile) == EOF)
+        err(1, "writes to source code file failed");
     codefile = NULL;
 }
 

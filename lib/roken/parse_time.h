@@ -36,6 +36,8 @@
 #ifndef __PARSE_TIME_H__
 #define __PARSE_TIME_H__
 
+#include <limits.h>
+
 #ifndef ROKEN_LIB_FUNCTION
 #ifdef _WIN32
 #define ROKEN_LIB_FUNCTION

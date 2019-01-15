@@ -1942,7 +1942,7 @@ hxtool_ca(struct certificate_sign_options *opt, int argc, char **argv)
     if (opt->template_certificate_string) {
 	hx509_cert template;
 	hx509_certs tcerts;
-	int flags;
+	uint64_t flags;
 
 	ret = hx509_certs_init(context, opt->template_certificate_string, 0,
 			       NULL, &tcerts);
@@ -1956,8 +1956,8 @@ hxtool_ca(struct certificate_sign_options *opt, int argc, char **argv)
 	if (ret)
 	    hx509_err(context, 1, ret, "no template certificate found");
 
-	flags = parse_units(opt->template_fields_string,
-			    hx509_ca_tbs_template_units(), "");
+	flags = parse_flags(opt->template_fields_string,
+		            hx509_ca_tbs_template_units(), 0);
 
 	ret = hx509_ca_tbs_set_template(context, tbs, flags, template);
 	if (ret)

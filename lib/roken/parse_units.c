@@ -35,6 +35,7 @@
 
 #include <stdio.h>
 #include <ctype.h>
+#include <limits.h>
 #include <string.h>
 #include "roken.h"
 #include "parse_units.h"
@@ -42,19 +43,22 @@
 /*
  * Parse string in `s' according to `units' and return value.
  * def_unit defines the default unit.
+ *
+ * Sets errno on error.  Leaves errno alone on success.  Callers that care
+ * about errors should clear errno prior to calling these functions.
  */
 
-static int
-parse_something (const char *s, const struct units *units,
-		 const char *def_unit,
-		 int (*func)(int res, int val, unsigned mult),
-		 int init,
-		 int accept_no_val_p)
+static int64_t
+parse_signed(const char *s, const struct units *units,
+             const char *def_unit,
+             int64_t (*func)(int64_t res, int64_t val, int64_t mult))
 {
     const char *p;
-    int res = init;
+    int64_t res = 0;
     unsigned def_mult = 1;
+    int save_errno = errno;
 
+    errno = 0;
     if (def_unit != NULL) {
 	const struct units *u;
 
@@ -64,29 +68,30 @@ parse_something (const char *s, const struct units *units,
 		break;
 	    }
 	}
-	if (u->name == NULL)
+	if (u->name == NULL) {
+            errno = EINVAL;
 	    return -1;
+        }
     }
 
     p = s;
     while (*p) {
-	int val;
+	int64_t val;
 	char *next;
 	const struct units *u, *partial_unit;
 	size_t u_len;
 	unsigned partial;
-	int no_val_p = 0;
 
 	while (isspace((unsigned char)*p) || *p == ',')
 	    ++p;
 
-	val = strtol(p, &next, 0);
+        errno = 0;
+	val = strtoll(p, &next, 0);
 	if (p == next) {
-	    val = 0;
-	    if(!accept_no_val_p)
-		return -1;
-	    no_val_p = 1;
-	}
+            if (errno == 0)
+                errno = ERANGE;
+            return -1;
+        }
 	p = next;
 	while (isspace((unsigned char)*p))
 	    ++p;
@@ -102,8 +107,6 @@ parse_something (const char *s, const struct units *units,
 	    ++p;
 	    val = -1;
 	}
-	if (no_val_p && val == 0)
-	    val = 1;
 	u_len = strcspn (p, ", \t");
 	partial = 0;
 	partial_unit = NULL;
@@ -138,6 +141,115 @@ parse_something (const char *s, const struct units *units,
 	while (isspace((unsigned char)*p))
 	    ++p;
     }
+    if (errno == 0)
+        errno = save_errno;
+    return res;
+}
+
+/*
+ * Like parse_signed(), but unsigned (typically for flags).
+ */
+
+static uint64_t
+parse_unsigned(const char *s, const struct units *units,
+               const char *def_unit,
+               uint64_t (*func)(uint64_t res, uint64_t val, uint64_t mult, int clear),
+               uint64_t init)
+{
+    const char *p;
+    uint64_t res = init;
+    unsigned def_mult = 1;
+    int save_errno = errno;
+
+    errno = 0;
+    if (def_unit != NULL) {
+	const struct units *u;
+
+	for (u = units; u->name; ++u) {
+	    if (strcasecmp(u->name, def_unit) == 0) {
+		def_mult = u->mult;
+		break;
+	    }
+	}
+	if (u->name == NULL) {
+            errno = EINVAL;
+	    return UINT64_MAX;
+        }
+    }
+
+    p = s;
+    while (*p) {
+	uint64_t val;
+	char *next;
+	const struct units *u, *partial_unit;
+	size_t u_len;
+	unsigned partial;
+	int no_val_p = 0;
+        int clear = 0;
+
+	while (isspace((unsigned char)*p) || *p == ',')
+	    ++p;
+
+        errno = 0;
+	val = strtoull(p, &next, 0);
+	if (p == next) {
+	    val = 0;
+	    no_val_p = 1;
+	}
+	p = next;
+	while (isspace((unsigned char)*p))
+	    ++p;
+	if (*p == '\0') {
+	    res = (*func)(res, val, def_mult, 0);
+	    if (res == UINT64_MAX)
+		return res;
+	    break;
+	} else if (*p == '+') {
+	    ++p;
+	    val = 1;
+	} else if (*p == '-') {
+	    ++p;
+	    val = 1;
+            clear = 1;
+        }
+	if (no_val_p && val == 0)
+	    val = 1;
+	u_len = strcspn (p, ", \t");
+	partial = 0;
+	partial_unit = NULL;
+	if (u_len > 1 && p[u_len - 1] == 's')
+	    --u_len;
+	for (u = units; u->name; ++u) {
+	    if (strncasecmp (p, u->name, u_len) == 0) {
+		if (u_len == strlen (u->name)) {
+		    p += u_len;
+		    res = (*func)(res, val, u->mult, clear);
+		    if (res == UINT64_MAX)
+			return res;
+		    break;
+		} else {
+		    ++partial;
+		    partial_unit = u;
+		}
+	    }
+	}
+	if (u->name == NULL) {
+	    if (partial == 1) {
+		p += u_len;
+		res = (*func)(res, val, partial_unit->mult, clear);
+		if (res == UINT64_MAX)
+		    return res;
+	    } else {
+		return UINT64_MAX;
+	    }
+	}
+	if (*p == 's')
+	    ++p;
+	while (isspace((unsigned char)*p))
+	    ++p;
+    }
+    if (errno == 0)
+        errno = save_errno;
     return res;
 }
 
@@ -145,17 +257,17 @@ parse_something (const char *s, const struct units *units,
  * The string consists of a sequence of `n unit'
  */
 
-static int
-acc_units(int res, int val, unsigned mult)
+static int64_t
+acc_units(int64_t res, int64_t val, int64_t mult)
 {
     return res + val * mult;
 }
 
-ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
-parse_units (const char *s, const struct units *units,
-	     const char *def_unit)
+ROKEN_LIB_FUNCTION int64_t ROKEN_LIB_CALL
+parse_units(const char *s, const struct units *units,
+	    const char *def_unit)
 {
-    return parse_something (s, units, def_unit, acc_units, 0, 0);
+    return parse_signed(s, units, def_unit, acc_units);
 }
 
 /*
@@ -164,24 +276,22 @@ parse_units (const char *s, const struct units *units,
  * the function value.
  */
 
-static int
-acc_flags(int res, int val, unsigned mult)
+static uint64_t
+acc_flags(uint64_t res, uint64_t val, uint64_t mult, int clear)
 {
-    if(val == 1)
+    if (clear)
+        return res & ~mult;
+    if (val == 1)
 	return res | mult;
-    else if(val == -1)
-	return res & ~mult;
-    else if (val == 0)
+    if (val == 0)
 	return mult;
-    else
-	return -1;
+    return -1;
 }
 
-ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
-parse_flags (const char *s, const struct units *units,
-	     int orig)
+ROKEN_LIB_FUNCTION uint64_t ROKEN_LIB_CALL
+parse_flags(const char *s, const struct units *units, uint64_t orig)
 {
-    return parse_something (s, units, NULL, acc_flags, orig, 1);
+    return parse_unsigned(s, units, NULL, acc_flags, orig);
 }
 
 /*
@@ -190,24 +300,24 @@ parse_flags (const char *s, const struct units *units,
  */
 
 static int
-unparse_something (int num, const struct units *units, char *s, size_t len,
-		   int (*print) (char *, size_t, int, const char *, int),
-		   int (*update) (int, unsigned),
-		   const char *zero_string)
+unparse_something(uint64_t num, const struct units *units, char *s, size_t len,
+		  int (*print) (char *, size_t, uint64_t, const char *, uint64_t),
+		  int (*update) (uint64_t, uint64_t),
+		  const char *zero_string)
 {
     const struct units *u;
     int ret = 0, tmp;
 
     if (num == 0)
-	return snprintf (s, len, "%s", zero_string);
+	return snprintf(s, len, "%s", zero_string);
 
     for (u = units; num > 0 && u->name; ++u) {
-	int divisor;
+	uint64_t divisor;
 
 	divisor = num / u->mult;
 	if (divisor) {
-	    num = (*update) (num, u->mult);
-	    tmp = (*print) (s, len, divisor, u->name, num);
+	    num = (*update)(num, u->mult);
+	    tmp = (*print)(s, len, divisor, u->name, num);
 	    if (tmp < 0)
 		return tmp;
 	    if (tmp > (int) len) {
@@ -224,45 +334,46 @@ unparse_something (int num, const struct units *units, char *s, size_t len,
 }
 
 static int
-print_unit (char *s, size_t len, int divisor, const char *name, int rem)
+print_unit(char *s, size_t len, uint64_t divisor, const char *name,
+           uint64_t rem)
 {
-    return snprintf (s, len, "%u %s%s%s",
-		     divisor, name,
-		     divisor == 1 ? "" : "s",
-		     rem > 0 ? " " : "");
+    return snprintf(s, len, "%llu %s%s%s",
+		    (unsigned long long)divisor, name,
+		    divisor == 1 ? "" : "s",
+		    rem > 0 ? " " : "");
 }
 
 static int
-update_unit (int in, unsigned mult)
+update_unit(uint64_t in, uint64_t mult)
 {
     return in % mult;
 }
 
 static int
-update_unit_approx (int in, unsigned mult)
+update_unit_approx(uint64_t in, uint64_t mult)
 {
     if (in / mult > 0)
 	return 0;
     else
-	return update_unit (in, mult);
+	return update_unit(in, mult);
 }
 
 ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
-unparse_units (int num, const struct units *units, char *s, size_t len)
+unparse_units(int64_t num, const struct units *units, char *s, size_t len)
 {
-    return unparse_something (num, units, s, len,
-			      print_unit,
-			      update_unit,
-			      "0");
+    return unparse_something(num, units, s, len,
+			     print_unit,
+			     update_unit,
+			     "0");
 }
 
 ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
-unparse_units_approx (int num, const struct units *units, char *s, size_t len)
+unparse_units_approx(int64_t num, const struct units *units, char *s, size_t len)
 {
-    return unparse_something (num, units, s, len,
-			      print_unit,
-			      update_unit_approx,
-			      "0");
+    return unparse_something(num, units, s, len,
+			     print_unit,
+			     update_unit_approx,
+			     "0");
 }
 
 ROKEN_LIB_FUNCTION void ROKEN_LIB_CALL
@@ -289,42 +400,43 @@ print_units_table (const struct units *units, FILE *f)
 		;
 	    if (u2->name == NULL)
 		--u2;
-	    unparse_units (u->mult, u2, buf, sizeof(buf));
-	    fprintf (f, "1 %*s = %s\n", (int)max_sz, u->name, buf);
+	    unparse_units(u->mult, u2, buf, sizeof(buf));
+	    fprintf(f, "1 %*s = %s\n", (int)max_sz, u->name, buf);
 	} else {
-	    fprintf (f, "1 %s\n", u->name);
+	    fprintf(f, "1 %s\n", u->name);
 	}
 	u = next;
     }
 }
 
 static int
-print_flag (char *s, size_t len, int divisor, const char *name, int rem)
+print_flag (char *s, size_t len, uint64_t divisor, const char *name,
+            uint64_t rem)
 {
-    return snprintf (s, len, "%s%s", name, rem > 0 ? ", " : "");
+    return snprintf(s, len, "%s%s", name, rem > 0 ? ", " : "");
 }
 
 static int
-update_flag (int in, unsigned mult)
+update_flag(uint64_t in, uint64_t mult)
 {
     return in - mult;
 }
 
 ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
-unparse_flags (int num, const struct units *units, char *s, size_t len)
+unparse_flags(uint64_t num, const struct units *units, char *s, size_t len)
 {
-    return unparse_something (num, units, s, len,
-			      print_flag,
-			      update_flag,
-			      "");
+    return unparse_something(num, units, s, len,
+			     print_flag,
+			     update_flag,
+			     "");
 }
 
 ROKEN_LIB_FUNCTION void ROKEN_LIB_CALL
-print_flags_table (const struct units *units, FILE *f)
+print_flags_table(const struct units *units, FILE *f)
 {
     const struct units *u;
 
-    for(u = units; u->name; ++u)
+    for (u = units; u->name; ++u)
 	fprintf(f, "%s%s", u->name, (u+1)->name ? ", " : "\n");
 }
 
@@ -336,7 +448,7 @@ print_flags_table (const struct units *units, FILE *f)
 #undef unparse_flags
 #undef print_flags_table
 
-ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
+ROKEN_LIB_FUNCTION int64_t ROKEN_LIB_CALL
 parse_units(const char *s, const struct units *units,
 	     const char *def_unit)
 {
@@ -344,13 +456,13 @@ parse_units(const char *s, const struct units *units,
 }
 
 ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
-unparse_units(int num, const struct units *units, char *s, size_t len)
+unparse_units(int64_t num, const struct units *units, char *s, size_t len)
 {
     return rk_unparse_units(num, units, s, len);
 }
 
 ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
-unparse_units_approx(int num, const struct units *units, char *s, size_t len)
+unparse_units_approx(int64_t num, const struct units *units, char *s, size_t len)
 {
     return rk_unparse_units_approx(num, units, s, len);
 }
@@ -361,20 +473,20 @@ print_units_table(const struct units *units, FILE *f)
     rk_print_units_table(units, f);
 }
 
-ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
-parse_flags(const char *s, const struct units *units, int orig)
+ROKEN_LIB_FUNCTION uint64_t ROKEN_LIB_CALL
+parse_flags(const char *s, const struct units *units, uint64_t orig)
 {
     return rk_parse_flags(s, units, orig);
 }
 
 ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
-unparse_flags(int num, const struct units *units, char *s, size_t len)
+unparse_flags(uint64_t num, const struct units *units, char *s, size_t len)
 {
     return rk_unparse_flags(num, units, s, len);
 }
 
 ROKEN_LIB_FUNCTION void ROKEN_LIB_CALL
-print_flags_table (const struct units *units, FILE *f)
+print_flags_table(const struct units *units, FILE *f)
 {
     rk_print_flags_table(units, f);
 }

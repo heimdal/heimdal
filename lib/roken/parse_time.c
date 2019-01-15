@@ -51,21 +51,26 @@ static struct units time_units[] = {
 };
 
 ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
-parse_time (const char *s, const char *def_unit)
+parse_time(const char *s, const char *def_unit)
 {
-    return parse_units (s, time_units, def_unit);
+    int64_t res;
+
+    if ((res = parse_units(s, time_units, def_unit)) < 0 ||
+        res > INT_MAX)
+        return -1;
+    return res;
 }
 
 ROKEN_LIB_FUNCTION size_t ROKEN_LIB_CALL
-unparse_time (int t, char *s, size_t len)
+unparse_time(int t, char *s, size_t len)
 {
-    return unparse_units (t, time_units, s, len);
+    return unparse_units(t, time_units, s, len);
 }
 
 ROKEN_LIB_FUNCTION size_t ROKEN_LIB_CALL
-unparse_time_approx (int t, char *s, size_t len)
+unparse_time_approx(int t, char *s, size_t len)
 {
-    return unparse_units_approx (t, time_units, s, len);
+    return unparse_units_approx(t, time_units, s, len);
 }
 
 ROKEN_LIB_FUNCTION void ROKEN_LIB_CALL

@@ -48,8 +48,7 @@ after_script:
     - if [ -n "$COVERAGE" ]; then coveralls --gcov-options '\-lp'; fi
 
 after_failure:
-    - find . -name "*.trs" -print0 | xargs -0 grep -l '^:test-result: FAIL' | while read trs; do echo FAILURE detected at $trs; cat ${trs%.trs}.log ; done
-    - if [ $TRAVIS_OS_NAME = linux ]; then echo "thread apply all bt" > x; find . -name core.\* -print | while read gdb; do gdb -batch -x x `file "$core"|sed -e "s/^[^']*'//" -e "s/[ '].*$//"` "$core"; done; fi
+    - bash $TRAVIS_BUILD_DIR/tools/travis-failure.sh
 
 compiler:
     - clang

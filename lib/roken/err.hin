@@ -51,7 +51,7 @@
 #endif
 #ifndef ROKEN_LIB_NORETURN_FUNCTION
  #ifdef _WIN32
-  #define ROKEN_LIB_NORETURN_FUNCTION _declspec(noreturn)
+  #define ROKEN_LIB_NORETURN_FUNCTION __declspec(noreturn)
  #else
   #define ROKEN_LIB_NORETURN_FUNCTION
  #endif

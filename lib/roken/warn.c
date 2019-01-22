@@ -33,6 +33,7 @@
 
 #include <config.h>
 
+#include "roken.h"
 #include "err.h"
 
 void

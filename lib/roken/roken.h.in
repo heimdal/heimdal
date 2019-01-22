@@ -32,11 +32,11 @@
  * SUCH DAMAGE.
  */
 
-#if defined(_WIN32) && _MSC_VER >= 1400
+# if defined(_WIN32) && _MSC_VER >= 1400
 /* _CRT_RAND_S must be defined before including stdlib.h */
-# define _CRT_RAND_S
-# define HAVE_WIN32_RAND_S 1
-#endif
+#  define _CRT_RAND_S
+#  define HAVE_WIN32_RAND_S 1
+# endif
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -69,7 +69,7 @@
 #   ifdef ROKEN_LIB_DYNAMIC
 #    define ROKEN_LIB_NORETURN_FUNCTION __declspec(dllimport noreturn)
 #   else
-#    define ROKEN_LIB_NORETURN_FUNCTION _declspec(noreturn)
+#    define ROKEN_LIB_NORETURN_FUNCTION __declspec(noreturn)
 #   endif
 #  else
 #   define ROKEN_LIB_NORETURN_FUNCTION

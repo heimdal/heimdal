@@ -119,9 +119,8 @@ strtoull(const char * nptr, char ** endptr, int base)
 noconv:
 	errno = EINVAL;
     } else if (neg)
-	acc = -acc;
+	acc = -(long long)acc;
     if (endptr != NULL)
 	*endptr = (char *)(any ? s - 1 : nptr);
     return (acc);
 }
-

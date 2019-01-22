@@ -141,8 +141,11 @@ strtoll(const char * nptr, char ** endptr, int base)
     } else if (!any) {
 noconv:
 	errno = EINVAL;
-    } else if (neg)
+    } else if (neg) {
 	ret = -(long long)acc;
+    } else {
+	ret = acc;
+    }
     if (endptr != NULL)
 	*endptr = (char *)(any ? s - 1 : nptr);
     return ret;

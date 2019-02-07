@@ -154,8 +154,8 @@ copy_internal_dso(const char *name)
  */
 typedef struct common_plugin_ftable_desc {
     int			version;
-    krb5_error_code	(*init)(krb5_context, void **);
-    void		(*fini)(void *);
+    krb5_error_code	(KRB5_LIB_CALL *init)(krb5_context, void **);
+    void		(KRB5_LIB_CALL *fini)(void *);
 } common_plugin_ftable;
 
 struct krb5_plugin {

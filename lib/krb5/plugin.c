@@ -34,6 +34,7 @@
  */
 
 #include "krb5_locl.h"
+#include "common_plugin.h"
 
 /*
  * Definitions:
@@ -149,17 +150,8 @@ copy_internal_dso(const char *name)
     return dso;
 }
 
-/*
- * All plugin function tables extend the following structure.
- */
-typedef struct common_plugin_ftable_desc {
-    int			version;
-    krb5_error_code	(KRB5_LIB_CALL *init)(krb5_context, void **);
-    void		(KRB5_LIB_CALL *fini)(void *);
-} common_plugin_ftable;
-
 struct krb5_plugin {
-    common_plugin_ftable *ftable;
+    krb5_plugin_common_ftable *ftable;
     void *ctx;
 };
 
@@ -490,7 +482,7 @@ add_dso_plugin_struct(krb5_context context,
 		      const char *name)
 {
     krb5_error_code ret;
-    common_plugin_ftable *cpm;
+    krb5_plugin_common_ftable *cpm;
     struct krb5_plugin *pl;
     heim_array_t plugins;
 
@@ -526,7 +518,7 @@ typedef krb5_error_code
 (KRB5_CALLCONV *krb5_plugin_load_t)(krb5_context context,
 				    krb5_get_instance_func_t *func,
 				    size_t *n_ftables,
-				    const common_plugin_ftable *const **ftables);
+				    const krb5_plugin_common_ftable *const **ftables);
 
 static krb5_boolean
 validate_plugin_deps(krb5_context context,
@@ -583,7 +575,7 @@ add_dso_plugins_load_fn(krb5_context context,
     size_t i;
     krb5_get_instance_func_t get_instance;
     size_t n_ftables;
-    const common_plugin_ftable *const *ftables;
+    const krb5_plugin_common_ftable *const *ftables;
 
     if (asprintf(&sym, "%s_plugin_load", caller->name) == -1)
 	return NULL;
@@ -609,7 +601,7 @@ add_dso_plugins_load_fn(krb5_context context,
     plugins = heim_array_create();
 
     for (i = 0; i < n_ftables; i++) {
-	const common_plugin_ftable *const cpm = ftables[i];
+	const krb5_plugin_common_ftable *const cpm = ftables[i];
 	struct krb5_plugin *pl;
 
 	pl = heim_alloc(sizeof(*pl), "krb5-plugin", plugin_free);

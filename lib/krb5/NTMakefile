@@ -182,7 +182,14 @@ INCFILES=			\
 	$(INCDIR)\krb5-protos.h	\
 	$(INCDIR)\krb5-private.h	\
 	$(INCDIR)\krb5-v4compat.h	\
-	$(INCDIR)\crypto.h
+	$(INCDIR)\crypto.h \
+	$(INCDIR)\an2ln_plugin.h \
+	$(INCDIR)\ccache_plugin.h \
+	$(INCDIR)\common_plugin.h \
+	$(INCDIR)\db_plugin.h \
+	$(INCDIR)\kuserok_plugin.h \
+	$(INCDIR)\locate_plugin.h \
+	$(INCDIR)\send_to_kdc_plugin.h
 
 all:: $(INCFILES)
 

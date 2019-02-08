@@ -597,7 +597,10 @@ add_dso_plugins_load_fn(krb5_context context,
     ret = load_fn(context, &get_instance, &n_ftables, &ftables);
     if (ret) {
 	krb5_warn(context, ret, "plugin %s failed to load", dsopath);
-	return NULL;
+
+	/* fallback to loading structure directly */
+	return add_dso_plugin_struct(context, dsopath,
+				     dsohandle, caller->name);
     }
 
     if (!validate_plugin_deps(context, caller, dsopath, get_instance))
@@ -651,11 +654,6 @@ search_modules(heim_object_t key, heim_object_t value, void *ctx)
 					  s->caller,
 					  path,
 					  p->dsohandle);
-	if (plugins == NULL) {
-	    /* fallback to loading structure directly */
-	    plugins = add_dso_plugin_struct(s->context, path,
-					    p->dsohandle, s->caller->name);
-	}
 	if (plugins) {
 	    heim_dict_set_value(p->plugins_by_name, s->n, plugins);
 	    _krb5_debug(s->context, 5, "Loaded %zu %s %s plugin%s from %s",

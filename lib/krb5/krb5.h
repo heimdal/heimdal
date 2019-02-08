@@ -883,7 +883,7 @@ enum krb5_plugin_type {
 #define KRB5_PLUGIN_INVOKE_ALL  1
 
 typedef uintptr_t
-(KRB5_CALLCONV *krb5_get_instance_func_t)(const char *);
+(KRB5_LIB_CALL *krb5_get_instance_func_t)(const char *);
 
 struct credentials; /* this is to keep the compiler happy */
 struct getargs;

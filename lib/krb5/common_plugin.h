@@ -39,11 +39,14 @@
 /*
  * All plugin function tables extend the following structure.
  */
-typedef struct krb5_plugin_common_ftable_desc {
+struct krb5_plugin_common_ftable_desc {
     int			version;
     krb5_error_code	(KRB5_LIB_CALL *init)(krb5_context, void **);
     void		(KRB5_LIB_CALL *fini)(void *);
-} krb5_plugin_common_ftable;
+};
+typedef struct krb5_plugin_common_ftable_desc krb5_plugin_common_ftable;
+typedef struct krb5_plugin_common_ftable_desc *krb5_plugin_common_ftable_p;
+typedef struct krb5_plugin_common_ftable_desc * const krb5_plugin_common_ftable_cp;
 
 /*
  * All plugins must export a function named "<type>_plugin_load" with

@@ -151,7 +151,7 @@ copy_internal_dso(const char *name)
 }
 
 struct krb5_plugin {
-    krb5_plugin_common_ftable *ftable;
+    krb5_plugin_common_ftable_p ftable;
     void *ctx;
 };
 
@@ -482,7 +482,7 @@ add_dso_plugin_struct(krb5_context context,
 		      const char *name)
 {
     krb5_error_code ret;
-    krb5_plugin_common_ftable *cpm;
+    krb5_plugin_common_ftable_p cpm;
     struct krb5_plugin *pl;
     heim_array_t plugins;
 
@@ -490,7 +490,7 @@ add_dso_plugin_struct(krb5_context context,
 	return NULL;
 
     /* suppress error here because we may be looking for a different plugin type */
-    cpm = dlsym(dsohandle, name);
+    cpm = (krb5_plugin_common_ftable_p)dlsym(dsohandle, name);
     if (cpm == NULL)
 	return NULL;
 
@@ -518,7 +518,7 @@ typedef krb5_error_code
 (KRB5_CALLCONV *krb5_plugin_load_t)(krb5_context context,
 				    krb5_get_instance_func_t *func,
 				    size_t *n_ftables,
-				    const krb5_plugin_common_ftable *const **ftables);
+				    krb5_plugin_common_ftable_cp **ftables);
 
 static krb5_boolean
 validate_plugin_deps(krb5_context context,
@@ -575,13 +575,13 @@ add_dso_plugins_load_fn(krb5_context context,
     size_t i;
     krb5_get_instance_func_t get_instance;
     size_t n_ftables;
-    const krb5_plugin_common_ftable *const *ftables;
+    krb5_plugin_common_ftable_cp *ftables;
 
     if (asprintf(&sym, "%s_plugin_load", caller->name) == -1)
 	return NULL;
 
     /* suppress error here because we may be looking for a different plugin type */
-    load_fn = dlsym(dsohandle, sym);
+    load_fn = (krb5_plugin_load_t)dlsym(dsohandle, sym);
     free(sym);
     if (load_fn == NULL)
 	return NULL;
@@ -601,7 +601,7 @@ add_dso_plugins_load_fn(krb5_context context,
     plugins = heim_array_create();
 
     for (i = 0; i < n_ftables; i++) {
-	const krb5_plugin_common_ftable *const cpm = ftables[i];
+	krb5_plugin_common_ftable_cp cpm = ftables[i];
 	struct krb5_plugin *pl;
 
 	pl = heim_alloc(sizeof(*pl), "krb5-plugin", plugin_free);

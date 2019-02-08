@@ -56,8 +56,10 @@
 
 #ifdef _WIN32
 #define KRB5_CALLCONV __stdcall
+#define KRB5_LIB_CALL __stdcall
 #else
 #define KRB5_CALLCONV
+#define KRB5_LIB_CALL
 #endif
 
 /* simple constants */

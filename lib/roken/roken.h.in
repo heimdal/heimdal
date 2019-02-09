@@ -1321,6 +1321,10 @@ int ROKEN_LIB_FUNCTION rk_socket(int, int, int);
 #define EWOULDBLOCK             140
 #endif
 
+#ifdef WIN32
+ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
+win32_getLibraryVersion(const char *libname, char **outname, char **outversion);
+#endif
 
 #ifdef SOCKET_WRAPPER_REPLACE
 #include <socket_wrapper.h>

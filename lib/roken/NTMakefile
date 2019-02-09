@@ -130,6 +130,7 @@ libroken_la_OBJS =			\
 	$(OBJ)\warnerr.obj		\
 	$(OBJ)\warnx.obj		\
         $(OBJ)\win32_alloc.obj          \
+	$(OBJ)\win32_version.obj        \
 	$(OBJ)\writev.obj               \
 	$(OBJ)\xfree.obj
 

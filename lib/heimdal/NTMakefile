@@ -53,7 +53,9 @@ DLLSDKDEPS= \
 	secur32.lib	\
 	shell32.lib	\
 	dnsapi.lib      \
-        shlwapi.lib
+	shlwapi.lib 	\
+	version.lib
+
 
 dlllflags=$(dlllflags) /DELAYLOAD:bcrypt.dll
 DLLSDKDEPS=$(DLLSDKDEPS)\

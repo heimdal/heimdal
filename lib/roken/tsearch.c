@@ -24,10 +24,6 @@ typedef struct node {
   struct node  *llink, *rlink;
 } node_t;
 
-#ifndef __DECONST
-#define __DECONST(type, var)    ((type)(uintptr_t)(const void *)(var))
-#endif
-
 /*
  * find or insert datum into search tree
  *
@@ -61,7 +57,7 @@ rk_tsearch(const void *vkey, void **vrootp,
 	if (q != 0) {				/* make new node */
 		*rootp = q;			/* link new node to old */
 		/* LINTED const castaway ok */
-		q->key = __DECONST(void *, vkey); /* initialize new node */
+		q->key = rk_UNCONST(vkey); /* initialize new node */
 		q->llink = q->rlink = NULL;
 	}
 	return q;

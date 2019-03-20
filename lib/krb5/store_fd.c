@@ -97,8 +97,21 @@ fd_seek(krb5_storage * sp, off_t offset, int whence)
 static int
 fd_trunc(krb5_storage * sp, off_t offset)
 {
+    off_t tmpoff;
+
     if (ftruncate(FD(sp), offset) == -1)
 	return errno;
+
+    tmpoff = lseek(FD(sp), 0, SEEK_CUR);
+    if (tmpoff == -1)
+	return errno;
+
+    if (tmpoff > offset) {
+	tmpoff = lseek(FD(sp), offset, SEEK_SET);
+	if (tmpoff == -1)
+	    return errno;
+    }
+
     return 0;
 }
 

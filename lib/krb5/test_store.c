@@ -201,6 +201,7 @@ test_truncate(krb5_context context, krb5_storage *sp, int fd)
 {
     struct stat sb;
 
+    krb5_storage_truncate(sp, 0);
     krb5_store_string(sp, "hej");
     krb5_storage_truncate(sp, 2);
 
@@ -214,7 +215,33 @@ test_truncate(krb5_context context, krb5_storage *sp, int fd)
     if (fstat(fd, &sb) != 0)
 	krb5_err(context, 1, errno, "fstat");
     if (sb.st_size != 1024)
-	krb5_errx(context, 1, "length not 2");
+	krb5_errx(context, 1, "length not 1024");
+}
+
+static void
+test_buffer_issues(krb5_context context, krb5_storage *sp)
+{
+    krb5_error_code ret;
+    size_t i;
+    uint32_t v;
+
+    krb5_storage_set_eof_code(sp, -1);
+    krb5_storage_truncate(sp, 0);
+    for (i=0; i < 4096; i++) {
+	krb5_store_uint32(sp, i);
+    }
+
+    krb5_storage_truncate(sp, 1024);
+    ret = krb5_ret_uint32(sp, &v);
+    if (ret != -1)
+	krb5_errx(context, 1, "Should have received EOF");
+
+    krb5_storage_seek(sp, 8, SEEK_SET);
+    ret = krb5_ret_uint32(sp, &v);
+    if (ret == -1)
+	krb5_errx(context, 1, "Should not have received EOF");
+    if (v != 2)
+	krb5_errx(context, 1, "uint32 should have been 2");
 }
 
 static void
@@ -306,27 +333,27 @@ main(int argc, char **argv)
 	krb5_err(context, 1, errno, "open(%s)", fn);
 
     sp = krb5_storage_from_fd(fd);
-    close(fd);
     if (sp == NULL)
 	krb5_errx(context, 1, "krb5_storage_from_fd: %s no mem", fn);
 
     test_storage(context, sp);
+    test_truncate(context, sp, fd);
+    test_buffer_issues(context, sp);
     krb5_storage_free(sp);
+    close(fd);
     unlink(fn);
-
-    /*
-     * test truncate behavior
-     */
 
     fd = open(fn, O_RDWR|O_CREAT|O_TRUNC, 0600);
     if (fd < 0)
 	krb5_err(context, 1, errno, "open(%s)", fn);
 
-    sp = krb5_storage_from_fd(fd);
+    sp = krb5_storage_stdio_from_fd(fd, "r+");
     if (sp == NULL)
-	krb5_errx(context, 1, "krb5_storage_from_fd: %s no mem", fn);
+	krb5_errx(context, 1, "krb5_storage_stdio_from_fd: %s no mem", fn);
 
+    test_storage(context, sp);
     test_truncate(context, sp, fd);
+    test_buffer_issues(context, sp);
     krb5_storage_free(sp);
     close(fd);
     unlink(fn);

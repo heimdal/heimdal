@@ -36,9 +36,11 @@
 
 typedef struct stdio_storage {
     FILE *f;
+    off_t pos;
 } stdio_storage;
 
 #define F(S) (((stdio_storage*)(S)->data)->f)
+#define POS(S) (((stdio_storage*)(S)->data)->pos)
 
 static ssize_t
 stdio_fetch(krb5_storage * sp, void *data, size_t size)
@@ -51,16 +53,21 @@ stdio_fetch(krb5_storage * sp, void *data, size_t size)
     while (rem > 0) {
 	count = fread(cbuf, 1, rem, F(sp));
 	if (count < 0) {
+	    POS(sp) = -1;
 	    if (errno == EINTR)
 		continue;
 	    else
 		return count;
 	} else if (count == 0) {
+	    if (POS(sp) >= 0)
+		POS(sp) += size - rem;
 	    return size - rem;
 	}
 	cbuf += count;
 	rem -= count;
     }
+    if (POS(sp) >= 0)
+	POS(sp) += size;
     return size;
 }
 
@@ -84,13 +91,18 @@ stdio_store(krb5_storage * sp, const void *data, size_t size)
              * earlier writes that appeared complete may have failed,
              * and so we don't know how much we really failed to write.
              */
+	    POS(sp) = -1;
             return -1;
 	}
-        if (count == 0)
+        if (count == 0) {
+	    POS(sp) = -1;
             return -1;
+	}
 	cbuf += count;
 	rem -= count;
     }
+    if (POS(sp) >= 0)
+	POS(sp) += size;
     return size;
 }
 
@@ -99,10 +111,16 @@ stdio_seek(krb5_storage * sp, off_t offset, int whence)
 {
     int save_errno = errno;
 
+    if (whence == SEEK_SET && POS(sp) == offset)
+	return POS(sp);
+
+    if (whence == SEEK_CUR && POS(sp) >= 0 && offset == 0)
+	return POS(sp);
+
     if (fseeko(F(sp), offset, whence) != 0)
         return -1;
     errno = save_errno;
-    return ftello(F(sp));
+    return POS(sp) = ftello(F(sp));
 }
 
 static int
@@ -123,6 +141,7 @@ stdio_trunc(krb5_storage * sp, off_t offset)
     if (fseeko(F(sp), tmpoff, SEEK_SET) == -1)
 	return errno;
     errno = save_errno;
+    POS(sp) = tmpoff;
     return 0;
 }
 
@@ -224,6 +243,7 @@ krb5_storage_stdio_from_fd(int fd_in, const char *mode)
     sp->flags = 0;
     sp->eof_code = HEIM_ERR_EOF;
     F(sp) = f;
+    POS(sp) = off;
     sp->fetch = stdio_fetch;
     sp->store = stdio_store;
     sp->seek = stdio_seek;

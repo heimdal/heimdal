@@ -130,7 +130,7 @@ subjectKeyIdentifier	= hash
 [pkinit_kdc_cert]
 basicConstraints=CA:FALSE
 keyUsage = nonRepudiation, digitalSignature, keyEncipherment
-extendedKeyUsage = pkkdcekuoid
+extendedKeyUsage = 1.3.6.1.5.2.3.5
 subjectKeyIdentifier	= hash
 subjectAltName=otherName:1.3.6.1.5.2.2;SEQUENCE:pkinitkdc_princ_name 
 

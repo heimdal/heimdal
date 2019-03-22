@@ -16,7 +16,7 @@ fi
 
 gen_cert()
 {
-	keytype=${6:-rsa:1024}
+	keytype=${6:-rsa:4096}
 	${openssl} req \
 		-new \
 		-subj "$1" \
@@ -30,7 +30,7 @@ gen_cert()
         if [ "$3" = "ca" ] ; then
 	    ${openssl} x509 \
 		-req \
-		-days 3650 \
+		-days 182500 \
 		-in cert.req \
 		-extfile ${config} \
 		-extensions $4 \
@@ -46,7 +46,7 @@ gen_cert()
 	    ${openssl} x509 \
 		-req \
 		-in cert.req \
-		-days 3650 \
+		-days 182500 \
 		-out cert.crt \
 		-CA $2.crt \
 		-CAkey $2.key \
@@ -59,7 +59,7 @@ gen_cert()
 
 	    ${openssl} ca \
 		-name $4 \
-		-days 3650 \
+		-days 182500 \
 		-cert $2.crt \
 		-keyfile $2.key \
 		-in cert.req \

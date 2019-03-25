@@ -99,6 +99,7 @@ libroken_la_OBJS =			\
 	$(OBJ)\sockstartup_w32.obj	\
 	$(OBJ)\strcollect.obj		\
 	$(OBJ)\strerror_r.obj		\
+	$(OBJ)\strftime.obj		\
 	$(OBJ)\strlcat.obj		\
 	$(OBJ)\strlcpy.obj		\
 	$(OBJ)\strndup.obj		\

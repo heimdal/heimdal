@@ -868,7 +868,7 @@ static const char *const rcsid[] = { (const char *)rcsid, "@(#)" msg }
 #define HAVE_STRERROR 1
 
 /* Define if you have the function `strftime'. */
-#define HAVE_STRFTIME 1
+/* #define HAVE_STRFTIME 1 */
 
 /* Define to 1 if you have the <strings.h> header file. */
 /* #define HAVE_STRINGS_H 1 */

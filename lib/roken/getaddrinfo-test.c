@@ -129,6 +129,8 @@ main(int argc, char **argv)
 	return 0;
     }
 
+    rk_SOCK_INIT();
+
     argc -= optidx;
     argv += optidx;
 
@@ -143,5 +145,6 @@ main(int argc, char **argv)
 
 	doit (nodename, argv[i+1]);
     }
+    rk_SOCK_EXIT();
     return 0;
 }

@@ -280,7 +280,7 @@ test-run:
 	-test-mini_inetd.exe
 	-dirent-test.exe
 	-base64-test.exe
-	-getaddrinfo-test.exe
+	-getaddrinfo-test.exe www.h5l.org http
 	-getifaddrs-test.exe
 	-hex-test.exe
 	-test-readenv.exe

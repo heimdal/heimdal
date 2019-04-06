@@ -56,7 +56,7 @@ _gsskrb5_delete_sec_context(OM_uint32 * minor_status,
     ctx = (gsskrb5_ctx) *context_handle;
     *context_handle = GSS_C_NO_CONTEXT;
 
-    HEIMDAL_MUTEX_lock(&ctx->ctx_id_mutex);
+    HEIMDAL_MUTEX_lock(ctx->ctx_id_mutexp);
 
     krb5_auth_con_free (context, ctx->auth_context);
     krb5_auth_con_free (context, ctx->deleg_auth_context);
@@ -76,8 +76,8 @@ _gsskrb5_delete_sec_context(OM_uint32 * minor_status,
     if (ctx->crypto)
     	krb5_crypto_destroy(context, ctx->crypto);
 
-    HEIMDAL_MUTEX_unlock(&ctx->ctx_id_mutex);
-    HEIMDAL_MUTEX_destroy(&ctx->ctx_id_mutex);
+    HEIMDAL_MUTEX_unlock(ctx->ctx_id_mutexp);
+    HEIMDAL_MUTEX_destroy(ctx->ctx_id_mutexp);
     memset(ctx, 0, sizeof(*ctx));
     free (ctx);
     return GSS_S_COMPLETE;

@@ -78,17 +78,17 @@ static OM_uint32 inquire_sec_context_tkt_flags
     unsigned char buf[4];
     gss_buffer_desc value;
 
-    HEIMDAL_MUTEX_lock(&context_handle->ctx_id_mutex);
+    HEIMDAL_MUTEX_lock(context_handle->ctx_id_mutexp);
 
     if (context_handle->ticket == NULL) {
-	HEIMDAL_MUTEX_unlock(&context_handle->ctx_id_mutex);
+	HEIMDAL_MUTEX_unlock(context_handle->ctx_id_mutexp);
 	_gsskrb5_set_status(EINVAL, "No ticket from which to obtain flags");
 	*minor_status = EINVAL;
 	return GSS_S_BAD_MECH;
     }
 
     tkt_flags = TicketFlags2int(context_handle->ticket->ticket.flags);
-    HEIMDAL_MUTEX_unlock(&context_handle->ctx_id_mutex);
+    HEIMDAL_MUTEX_unlock(context_handle->ctx_id_mutexp);
 
     _gsskrb5_encode_om_uint32(tkt_flags, buf);
     value.length = sizeof(buf);
@@ -123,7 +123,7 @@ static OM_uint32 inquire_sec_context_get_subkey
 	goto out;
     }
 
-    HEIMDAL_MUTEX_lock(&context_handle->ctx_id_mutex);
+    HEIMDAL_MUTEX_lock(context_handle->ctx_id_mutexp);
     switch(keytype) {
     case ACCEPTOR_KEY:
 	ret = _gsskrb5i_get_acceptor_subkey(context_handle, context, &key);
@@ -139,7 +139,7 @@ static OM_uint32 inquire_sec_context_get_subkey
 	ret = EINVAL;
 	break;
    }
-    HEIMDAL_MUTEX_unlock(&context_handle->ctx_id_mutex);
+    HEIMDAL_MUTEX_unlock(context_handle->ctx_id_mutexp);
     if (ret)
 	goto out;
     if (key == NULL) {
@@ -190,9 +190,9 @@ static OM_uint32 inquire_sec_context_get_sspi_session_key
     krb5_error_code ret;
     gss_buffer_desc value;
 
-    HEIMDAL_MUTEX_lock(&context_handle->ctx_id_mutex);
+    HEIMDAL_MUTEX_lock(context_handle->ctx_id_mutexp);
     ret = _gsskrb5i_get_token_key(context_handle, context, &key);
-    HEIMDAL_MUTEX_unlock(&context_handle->ctx_id_mutex);
+    HEIMDAL_MUTEX_unlock(context_handle->ctx_id_mutexp);
 
     if (ret)
         goto out;
@@ -233,9 +233,9 @@ static OM_uint32 inquire_sec_context_authz_data
     *minor_status = 0;
     *data_set = GSS_C_NO_BUFFER_SET;
 
-    HEIMDAL_MUTEX_lock(&context_handle->ctx_id_mutex);
+    HEIMDAL_MUTEX_lock(context_handle->ctx_id_mutexp);
     if (context_handle->ticket == NULL) {
-	HEIMDAL_MUTEX_unlock(&context_handle->ctx_id_mutex);
+	HEIMDAL_MUTEX_unlock(context_handle->ctx_id_mutexp);
 	*minor_status = EINVAL;
 	_gsskrb5_set_status(EINVAL, "No ticket to obtain authz data from");
 	return GSS_S_NO_CONTEXT;
@@ -245,7 +245,7 @@ static OM_uint32 inquire_sec_context_authz_data
 						  context_handle->ticket,
 						  ad_type,
 						  &data);
-    HEIMDAL_MUTEX_unlock(&context_handle->ctx_id_mutex);
+    HEIMDAL_MUTEX_unlock(context_handle->ctx_id_mutexp);
     if (ret) {
 	*minor_status = ret;
 	return GSS_S_FAILURE;
@@ -279,7 +279,7 @@ static OM_uint32 inquire_sec_context_has_updated_spnego
      * different enctype is negotiated for use by the Kerberos GSS-API
      * mechanism.
      */
-    HEIMDAL_MUTEX_lock(&context_handle->ctx_id_mutex);
+    HEIMDAL_MUTEX_lock(context_handle->ctx_id_mutexp);
     is_updated = (context_handle->more_flags & IS_CFX);
     if (is_updated == 0) {
 	krb5_keyblock *acceptor_subkey;
@@ -293,7 +293,7 @@ static OM_uint32 inquire_sec_context_has_updated_spnego
 	    is_updated = (acceptor_subkey->keytype !=
 			  context_handle->auth_context->keyblock->keytype);
     }
-    HEIMDAL_MUTEX_unlock(&context_handle->ctx_id_mutex);
+    HEIMDAL_MUTEX_unlock(context_handle->ctx_id_mutexp);
 
     return is_updated ? GSS_S_COMPLETE : GSS_S_FAILURE;
 }
@@ -318,7 +318,7 @@ export_lucid_sec_context_v1(OM_uint32 *minor_status,
 
     *minor_status = 0;
 
-    HEIMDAL_MUTEX_lock(&context_handle->ctx_id_mutex);
+    HEIMDAL_MUTEX_lock(context_handle->ctx_id_mutexp);
 
     is_cfx = (context_handle->more_flags & IS_CFX);
 
@@ -427,7 +427,7 @@ out:
 	*minor_status = ret;
 	major_status = GSS_S_FAILURE;
     }
-    HEIMDAL_MUTEX_unlock(&context_handle->ctx_id_mutex);
+    HEIMDAL_MUTEX_unlock(context_handle->ctx_id_mutexp);
     return major_status;
 }
 
@@ -441,9 +441,9 @@ get_authtime(OM_uint32 *minor_status,
     unsigned char buf[4];
     OM_uint32 authtime;
 
-    HEIMDAL_MUTEX_lock(&ctx->ctx_id_mutex);
+    HEIMDAL_MUTEX_lock(ctx->ctx_id_mutexp);
     if (ctx->ticket == NULL) {
-	HEIMDAL_MUTEX_unlock(&ctx->ctx_id_mutex);
+	HEIMDAL_MUTEX_unlock(ctx->ctx_id_mutexp);
 	_gsskrb5_set_status(EINVAL, "No ticket to obtain auth time from");
 	*minor_status = EINVAL;
 	return GSS_S_FAILURE;
@@ -451,7 +451,7 @@ get_authtime(OM_uint32 *minor_status,
 
     authtime = ctx->ticket->ticket.authtime;
 
-    HEIMDAL_MUTEX_unlock(&ctx->ctx_id_mutex);
+    HEIMDAL_MUTEX_unlock(ctx->ctx_id_mutexp);
 
     _gsskrb5_encode_om_uint32(authtime, buf);
     value.length = sizeof(buf);
@@ -481,9 +481,9 @@ get_service_keyblock
 	return GSS_S_FAILURE;
     }
 
-    HEIMDAL_MUTEX_lock(&ctx->ctx_id_mutex);
+    HEIMDAL_MUTEX_lock(ctx->ctx_id_mutexp);
     if (ctx->service_keyblock == NULL) {
-	HEIMDAL_MUTEX_unlock(&ctx->ctx_id_mutex);
+	HEIMDAL_MUTEX_unlock(ctx->ctx_id_mutexp);
 	krb5_storage_free(sp);
 	_gsskrb5_set_status(EINVAL, "No service keyblock on gssapi context");
 	*minor_status = EINVAL;
@@ -494,7 +494,7 @@ get_service_keyblock
 
     ret = krb5_store_keyblock(sp, *ctx->service_keyblock);
 
-    HEIMDAL_MUTEX_unlock(&ctx->ctx_id_mutex);
+    HEIMDAL_MUTEX_unlock(ctx->ctx_id_mutexp);
 
     if (ret)
 	goto out;

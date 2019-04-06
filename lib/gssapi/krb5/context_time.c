@@ -76,9 +76,9 @@ OM_uint32 GSSAPI_CALLCONV _gsskrb5_context_time
 
     GSSAPI_KRB5_INIT (&context);
 
-    HEIMDAL_MUTEX_lock(&ctx->ctx_id_mutex);
+    HEIMDAL_MUTEX_lock(ctx->ctx_id_mutexp);
     endtime = ctx->endtime;
-    HEIMDAL_MUTEX_unlock(&ctx->ctx_id_mutex);
+    HEIMDAL_MUTEX_unlock(ctx->ctx_id_mutexp);
 
     major_status = _gsskrb5_lifetime_left(minor_status, context,
 					  endtime, time_rec);

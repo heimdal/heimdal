@@ -81,7 +81,8 @@ _gss_spnego_alloc_sec_context (OM_uint32 * minor_status,
     ctx->require_mic = 0;
     ctx->verified_mic = 0;
 
-    HEIMDAL_MUTEX_init(&ctx->ctx_id_mutex);
+    ctx->ctx_id_mutexp = &ctx->ctx_id_mutex;
+    HEIMDAL_MUTEX_init(ctx->ctx_id_mutexp);
 
     *context_handle = (gss_ctx_id_t)ctx;
 
@@ -137,8 +138,8 @@ OM_uint32 GSSAPI_CALLCONV _gss_spnego_internal_delete_sec_context
 	ret = GSS_S_COMPLETE;
     }
 
-    HEIMDAL_MUTEX_unlock(&ctx->ctx_id_mutex);
-    HEIMDAL_MUTEX_destroy(&ctx->ctx_id_mutex);
+    HEIMDAL_MUTEX_unlock(ctx->ctx_id_mutexp);
+    HEIMDAL_MUTEX_destroy(ctx->ctx_id_mutexp);
 
     free(ctx);
 

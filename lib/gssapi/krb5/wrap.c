@@ -156,9 +156,9 @@ _gsskrb5_wrap_size_limit (
 				   conf_req_flag, qop_req,
 				   req_output_size, max_input_size);
 
-  HEIMDAL_MUTEX_lock(&ctx->ctx_id_mutex);
+  HEIMDAL_MUTEX_lock(ctx->ctx_id_mutexp);
   ret = _gsskrb5i_get_token_key(ctx, context, &key);
-  HEIMDAL_MUTEX_unlock(&ctx->ctx_id_mutex);
+  HEIMDAL_MUTEX_unlock(ctx->ctx_id_mutexp);
   if (ret) {
       *minor_status = ret;
       return GSS_S_FAILURE;
@@ -285,7 +285,7 @@ wrap_des
   memcpy (p - 8, hash, 8);
 
   /* sequence number */
-  HEIMDAL_MUTEX_lock(&ctx->ctx_id_mutex);
+  HEIMDAL_MUTEX_lock(ctx->ctx_id_mutexp);
   krb5_auth_con_getlocalseqnumber (context,
 				   ctx->auth_context,
 				   &seq_number);
@@ -307,7 +307,7 @@ wrap_des
   krb5_auth_con_setlocalseqnumber (context,
 			       ctx->auth_context,
 			       ++seq_number);
-  HEIMDAL_MUTEX_unlock(&ctx->ctx_id_mutex);
+  HEIMDAL_MUTEX_unlock(ctx->ctx_id_mutexp);
 
   /* encrypt the data */
   p += 16;
@@ -435,7 +435,7 @@ wrap_des3
   memcpy (p + 8, cksum.checksum.data, cksum.checksum.length);
   free_Checksum (&cksum);
 
-  HEIMDAL_MUTEX_lock(&ctx->ctx_id_mutex);
+  HEIMDAL_MUTEX_lock(ctx->ctx_id_mutexp);
   /* sequence number */
   krb5_auth_con_getlocalseqnumber (context,
 			       ctx->auth_context,
@@ -487,7 +487,7 @@ wrap_des3
   krb5_auth_con_setlocalseqnumber (context,
 			       ctx->auth_context,
 			       ++seq_number);
-  HEIMDAL_MUTEX_unlock(&ctx->ctx_id_mutex);
+  HEIMDAL_MUTEX_unlock(ctx->ctx_id_mutexp);
 
   /* encrypt the data */
   p += 28;
@@ -551,9 +551,9 @@ _gsskrb5_wrap
 			       input_message_buffer, conf_state,
 			       output_message_buffer);
 
-  HEIMDAL_MUTEX_lock(&ctx->ctx_id_mutex);
+  HEIMDAL_MUTEX_lock(ctx->ctx_id_mutexp);
   ret = _gsskrb5i_get_token_key(ctx, context, &key);
-  HEIMDAL_MUTEX_unlock(&ctx->ctx_id_mutex);
+  HEIMDAL_MUTEX_unlock(ctx->ctx_id_mutexp);
   if (ret) {
       *minor_status = ret;
       return GSS_S_FAILURE;

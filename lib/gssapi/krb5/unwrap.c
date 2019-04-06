@@ -143,7 +143,7 @@ unwrap_des
 
   /* verify sequence number */
 
-  HEIMDAL_MUTEX_lock(&context_handle->ctx_id_mutex);
+  HEIMDAL_MUTEX_lock(context_handle->ctx_id_mutexp);
 
   p -= 16;
 
@@ -164,17 +164,17 @@ unwrap_des
       cmp = ct_memcmp(&seq[4], "\x00\x00\x00\x00", 4);
 
   if (cmp != 0) {
-    HEIMDAL_MUTEX_unlock(&context_handle->ctx_id_mutex);
+    HEIMDAL_MUTEX_unlock(context_handle->ctx_id_mutexp);
     return GSS_S_BAD_MIC;
   }
 
   ret = _gssapi_msg_order_check(context_handle->order, seq_number);
   if (ret) {
-    HEIMDAL_MUTEX_unlock(&context_handle->ctx_id_mutex);
+    HEIMDAL_MUTEX_unlock(context_handle->ctx_id_mutexp);
     return ret;
   }
 
-  HEIMDAL_MUTEX_unlock(&context_handle->ctx_id_mutex);
+  HEIMDAL_MUTEX_unlock(context_handle->ctx_id_mutexp);
 
   /* copy out data */
 
@@ -285,7 +285,7 @@ unwrap_des3
 
   /* verify sequence number */
 
-  HEIMDAL_MUTEX_lock(&context_handle->ctx_id_mutex);
+  HEIMDAL_MUTEX_lock(context_handle->ctx_id_mutexp);
 
   p -= 28;
 
@@ -293,7 +293,7 @@ unwrap_des3
 			 ETYPE_DES3_CBC_NONE, &crypto);
   if (ret) {
       *minor_status = ret;
-      HEIMDAL_MUTEX_unlock(&context_handle->ctx_id_mutex);
+      HEIMDAL_MUTEX_unlock(context_handle->ctx_id_mutexp);
       return GSS_S_FAILURE;
   }
   {
@@ -309,13 +309,13 @@ unwrap_des3
   krb5_crypto_destroy (context, crypto);
   if (ret) {
       *minor_status = ret;
-      HEIMDAL_MUTEX_unlock(&context_handle->ctx_id_mutex);
+      HEIMDAL_MUTEX_unlock(context_handle->ctx_id_mutexp);
       return GSS_S_FAILURE;
   }
   if (seq_data.length != 8) {
       krb5_data_free (&seq_data);
       *minor_status = 0;
-      HEIMDAL_MUTEX_unlock(&context_handle->ctx_id_mutex);
+      HEIMDAL_MUTEX_unlock(context_handle->ctx_id_mutexp);
       return GSS_S_BAD_MIC;
   }
 
@@ -330,18 +330,18 @@ unwrap_des3
   krb5_data_free (&seq_data);
   if (cmp != 0) {
       *minor_status = 0;
-      HEIMDAL_MUTEX_unlock(&context_handle->ctx_id_mutex);
+      HEIMDAL_MUTEX_unlock(context_handle->ctx_id_mutexp);
       return GSS_S_BAD_MIC;
   }
 
   ret = _gssapi_msg_order_check(context_handle->order, seq_number);
   if (ret) {
       *minor_status = 0;
-      HEIMDAL_MUTEX_unlock(&context_handle->ctx_id_mutex);
+      HEIMDAL_MUTEX_unlock(context_handle->ctx_id_mutexp);
       return ret;
   }
 
-  HEIMDAL_MUTEX_unlock(&context_handle->ctx_id_mutex);
+  HEIMDAL_MUTEX_unlock(context_handle->ctx_id_mutexp);
 
   /* verify checksum */
 

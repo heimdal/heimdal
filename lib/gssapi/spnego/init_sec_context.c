@@ -224,7 +224,7 @@ spnego_initial
     }
     ctx = (gssspnego_ctx)context;
 
-    HEIMDAL_MUTEX_lock(&ctx->ctx_id_mutex);
+    HEIMDAL_MUTEX_lock(ctx->ctx_id_mutexp);
 
     ctx->local = 1;
 
@@ -369,7 +369,7 @@ spnego_initial
     if (time_rec)
 	*time_rec = ctx->mech_time_rec;
 
-    HEIMDAL_MUTEX_unlock(&ctx->ctx_id_mutex);
+    HEIMDAL_MUTEX_unlock(ctx->ctx_id_mutexp);
 
     *context_handle = context;
 
@@ -440,13 +440,13 @@ spnego_reply
      * to be sent in packet.
      */
 
-    HEIMDAL_MUTEX_lock(&ctx->ctx_id_mutex);
+    HEIMDAL_MUTEX_lock(ctx->ctx_id_mutexp);
 
     if (resp.u.negTokenResp.supportedMech) {
 
 	if (ctx->oidlen) {
 	    free_NegotiationToken(&resp);
-	    HEIMDAL_MUTEX_unlock(&ctx->ctx_id_mutex);
+	    HEIMDAL_MUTEX_unlock(ctx->ctx_id_mutexp);
 	    return GSS_S_BAD_MECH;
 	}
 	ret = der_put_oid(ctx->oidbuf + sizeof(ctx->oidbuf) - 1,
@@ -460,7 +460,7 @@ spnego_reply
 			   ctx->oidlen) == 0))
 	{
 	    free_NegotiationToken(&resp);
-	    HEIMDAL_MUTEX_unlock(&ctx->ctx_id_mutex);
+	    HEIMDAL_MUTEX_unlock(ctx->ctx_id_mutexp);
 	    return GSS_S_BAD_MECH;
 	}
 
@@ -476,7 +476,7 @@ spnego_reply
 	}
     } else if (ctx->oidlen == 0) {
 	free_NegotiationToken(&resp);
-	HEIMDAL_MUTEX_unlock(&ctx->ctx_id_mutex);
+	HEIMDAL_MUTEX_unlock(ctx->ctx_id_mutexp);
 	return GSS_S_BAD_MECH;
     }
 
@@ -513,7 +513,7 @@ spnego_reply
 				   &ctx->mech_flags,
 				   &ctx->mech_time_rec);
 	if (GSS_ERROR(ret)) {
-	    HEIMDAL_MUTEX_unlock(&ctx->ctx_id_mutex);
+	    HEIMDAL_MUTEX_unlock(ctx->ctx_id_mutexp);
 	    free_NegotiationToken(&resp);
 	    gss_mg_collect_error(&mech, ret, minor);
 	    *minor_status = minor;
@@ -542,7 +542,7 @@ spnego_reply
 	    ret = _gss_spnego_require_mechlist_mic(minor_status, ctx,
 						   &require_mic);
 	    if (ret) {
-		HEIMDAL_MUTEX_unlock(&ctx->ctx_id_mutex);
+		HEIMDAL_MUTEX_unlock(ctx->ctx_id_mutexp);
 		free_NegotiationToken(&resp);
 		gss_release_buffer(&minor, &mech_output_token);
 		return ret;
@@ -556,7 +556,7 @@ spnego_reply
 	ASN1_MALLOC_ENCODE(MechTypeList, mech_buf.value, mech_buf.length,
 			   &ctx->initiator_mech_types, &buf_len, ret);
 	if (ret) {
-	    HEIMDAL_MUTEX_unlock(&ctx->ctx_id_mutex);
+	    HEIMDAL_MUTEX_unlock(ctx->ctx_id_mutexp);
 	    free_NegotiationToken(&resp);
 	    gss_release_buffer(&minor, &mech_output_token);
 	    *minor_status = ret;
@@ -568,7 +568,7 @@ spnego_reply
         }
 
 	if (resp.u.negTokenResp.mechListMIC == NULL) {
-	    HEIMDAL_MUTEX_unlock(&ctx->ctx_id_mutex);
+	    HEIMDAL_MUTEX_unlock(ctx->ctx_id_mutexp);
 	    free(mech_buf.value);
 	    free_NegotiationToken(&resp);
 	    *minor_status = 0;
@@ -587,7 +587,7 @@ spnego_reply
 	       gss_oid_equal(ctx->negotiated_mech_type, GSS_NTLM_MECHANISM))
 		_gss_spnego_ntlm_reset_crypto(minor_status, ctx, 1);
 	   if (ret) {
-		HEIMDAL_MUTEX_unlock(&ctx->ctx_id_mutex);
+		HEIMDAL_MUTEX_unlock(ctx->ctx_id_mutexp);
 		free(mech_buf.value);
 		gss_release_buffer(&minor, &mech_output_token);
 		free_NegotiationToken(&resp);
@@ -615,7 +615,7 @@ spnego_reply
     if (time_rec)
 	*time_rec = ctx->mech_time_rec;
 
-    HEIMDAL_MUTEX_unlock(&ctx->ctx_id_mutex);
+    HEIMDAL_MUTEX_unlock(ctx->ctx_id_mutexp);
     return ret;
 }
 

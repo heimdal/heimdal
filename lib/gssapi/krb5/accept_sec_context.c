@@ -898,7 +898,7 @@ _gsskrb5_accept_sec_context(OM_uint32 * minor_status,
      * (above just sets them to krb5 layer)
      */
 
-    HEIMDAL_MUTEX_lock(&ctx->ctx_id_mutex);
+    HEIMDAL_MUTEX_lock(ctx->ctx_id_mutexp);
 
     switch (ctx->state) {
     case ACCEPTOR_START:
@@ -942,7 +942,7 @@ _gsskrb5_accept_sec_context(OM_uint32 * minor_status,
 	break;
     }
 
-    HEIMDAL_MUTEX_unlock(&ctx->ctx_id_mutex);
+    HEIMDAL_MUTEX_unlock(ctx->ctx_id_mutexp);
 
     if (GSS_ERROR(ret)) {
 	OM_uint32 min2;

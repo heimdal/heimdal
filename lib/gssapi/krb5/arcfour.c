@@ -285,7 +285,7 @@ _gssapi_get_mic_arcfour(OM_uint32 * minor_status,
 	return GSS_S_FAILURE;
     }
 
-    HEIMDAL_MUTEX_lock(&((gsskrb5_ctx)rk_UNCONST(context_handle))->ctx_id_mutex);
+    HEIMDAL_MUTEX_lock(context_handle->ctx_id_mutexp);
     krb5_auth_con_getlocalseqnumber (context,
 				     context_handle->auth_context,
 				     &seq_number);
@@ -295,7 +295,7 @@ _gssapi_get_mic_arcfour(OM_uint32 * minor_status,
     krb5_auth_con_setlocalseqnumber (context,
 				     context_handle->auth_context,
 				     ++seq_number);
-    HEIMDAL_MUTEX_unlock(&((gsskrb5_ctx)rk_UNCONST(context_handle))->ctx_id_mutex);
+    HEIMDAL_MUTEX_unlock(context_handle->ctx_id_mutexp);
 
     memset (p + 4, (context_handle->more_flags & LOCAL) ? 0 : 0xff, 4);
 
@@ -395,9 +395,9 @@ _gssapi_verify_mic_arcfour(OM_uint32 * minor_status,
 	return GSS_S_BAD_MIC;
     }
 
-    HEIMDAL_MUTEX_lock(&context_handle->ctx_id_mutex);
+    HEIMDAL_MUTEX_lock(context_handle->ctx_id_mutexp);
     omret = _gssapi_msg_order_check(context_handle->order, seq_number);
-    HEIMDAL_MUTEX_unlock(&context_handle->ctx_id_mutex);
+    HEIMDAL_MUTEX_unlock(context_handle->ctx_id_mutexp);
     if (omret)
 	return omret;
 
@@ -465,7 +465,7 @@ _gssapi_wrap_arcfour(OM_uint32 * minor_status,
 
     p = NULL;
 
-    HEIMDAL_MUTEX_lock(&context_handle->ctx_id_mutex);
+    HEIMDAL_MUTEX_lock(context_handle->ctx_id_mutexp);
     krb5_auth_con_getlocalseqnumber (context,
 				     context_handle->auth_context,
 				     &seq_number);
@@ -475,7 +475,7 @@ _gssapi_wrap_arcfour(OM_uint32 * minor_status,
     krb5_auth_con_setlocalseqnumber (context,
 				     context_handle->auth_context,
 				     ++seq_number);
-    HEIMDAL_MUTEX_unlock(&context_handle->ctx_id_mutex);
+    HEIMDAL_MUTEX_unlock(context_handle->ctx_id_mutexp);
 
     memset (p0 + 8 + 4,
 	    (context_handle->more_flags & LOCAL) ? 0 : 0xff,
@@ -737,9 +737,9 @@ OM_uint32 _gssapi_unwrap_arcfour(OM_uint32 *minor_status,
 	return GSS_S_BAD_MIC;
     }
 
-    HEIMDAL_MUTEX_lock(&context_handle->ctx_id_mutex);
+    HEIMDAL_MUTEX_lock(context_handle->ctx_id_mutexp);
     omret = _gssapi_msg_order_check(context_handle->order, seq_number);
-    HEIMDAL_MUTEX_unlock(&context_handle->ctx_id_mutex);
+    HEIMDAL_MUTEX_unlock(context_handle->ctx_id_mutexp);
     if (omret)
 	return omret;
 
@@ -1028,7 +1028,7 @@ _gssapi_wrap_iov_arcfour(OM_uint32 *minor_status,
 
     p = NULL;
 
-    HEIMDAL_MUTEX_lock(&ctx->ctx_id_mutex);
+    HEIMDAL_MUTEX_lock(ctx->ctx_id_mutexp);
     krb5_auth_con_getlocalseqnumber(context,
 				    ctx->auth_context,
 				    &seq_number);
@@ -1037,7 +1037,7 @@ _gssapi_wrap_iov_arcfour(OM_uint32 *minor_status,
     krb5_auth_con_setlocalseqnumber(context,
 				    ctx->auth_context,
 				    ++seq_number);
-    HEIMDAL_MUTEX_unlock(&ctx->ctx_id_mutex);
+    HEIMDAL_MUTEX_unlock(ctx->ctx_id_mutexp);
 
     memset(p0 + 8 + 4,
            (ctx->more_flags & LOCAL) ? 0 : 0xff,
@@ -1370,9 +1370,9 @@ _gssapi_unwrap_iov_arcfour(OM_uint32 *minor_status,
 	}
     }
 
-    HEIMDAL_MUTEX_lock(&ctx->ctx_id_mutex);
+    HEIMDAL_MUTEX_lock(ctx->ctx_id_mutexp);
     ret = _gssapi_msg_order_check(ctx->order, seq_number);
-    HEIMDAL_MUTEX_unlock(&ctx->ctx_id_mutex);
+    HEIMDAL_MUTEX_unlock(ctx->ctx_id_mutexp);
     if (ret != 0) {
 	return ret;
     }

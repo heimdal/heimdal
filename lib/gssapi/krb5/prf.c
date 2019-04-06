@@ -100,7 +100,7 @@ _gsskrb5_pseudo_random(OM_uint32 *minor_status,
     }
     prf_out->length = dol;
 
-    HEIMDAL_MUTEX_lock(&ctx->ctx_id_mutex);
+    HEIMDAL_MUTEX_lock(ctx->ctx_id_mutexp);
 
     input.length = prf_in->length + 4;
     input.data = malloc(prf_in->length + 4);
@@ -109,7 +109,7 @@ _gsskrb5_pseudo_random(OM_uint32 *minor_status,
 	*minor_status = GSS_KRB5_S_KG_INPUT_TOO_LONG;
 	gss_release_buffer(&junk, prf_out);
 	krb5_crypto_destroy(context, crypto);
-	HEIMDAL_MUTEX_unlock(&ctx->ctx_id_mutex);
+	HEIMDAL_MUTEX_unlock(ctx->ctx_id_mutexp);
 	return GSS_S_FAILURE;
     }
     memcpy(((uint8_t *)input.data) + 4, prf_in->value, prf_in->length);
@@ -127,7 +127,7 @@ _gsskrb5_pseudo_random(OM_uint32 *minor_status,
 	    free(input.data);
 	    gss_release_buffer(&junk, prf_out);
 	    krb5_crypto_destroy(context, crypto);
-	    HEIMDAL_MUTEX_unlock(&ctx->ctx_id_mutex);
+	    HEIMDAL_MUTEX_unlock(ctx->ctx_id_mutexp);
 	    return GSS_S_FAILURE;
 	}
 
@@ -142,7 +142,7 @@ _gsskrb5_pseudo_random(OM_uint32 *minor_status,
 
     krb5_crypto_destroy(context, crypto);
 
-    HEIMDAL_MUTEX_unlock(&ctx->ctx_id_mutex);
+    HEIMDAL_MUTEX_unlock(ctx->ctx_id_mutexp);
 
     return GSS_S_COMPLETE;
 }

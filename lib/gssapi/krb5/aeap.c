@@ -57,9 +57,9 @@ _gk_wrap_iov(OM_uint32 * minor_status,
 				    conf_req_flag, conf_state,
 				    iov, iov_count);
 
-    HEIMDAL_MUTEX_lock(&ctx->ctx_id_mutex);
+    HEIMDAL_MUTEX_lock(ctx->ctx_id_mutexp);
     ret = _gsskrb5i_get_token_key(ctx, context, &key);
-    HEIMDAL_MUTEX_unlock(&ctx->ctx_id_mutex);
+    HEIMDAL_MUTEX_unlock(ctx->ctx_id_mutexp);
     if (ret) {
 	*minor_status = ret;
 	return GSS_S_FAILURE;
@@ -103,9 +103,9 @@ _gk_unwrap_iov(OM_uint32 *minor_status,
 	return _gssapi_unwrap_cfx_iov(minor_status, ctx, context,
 				      conf_state, qop_state, iov, iov_count);
 
-    HEIMDAL_MUTEX_lock(&ctx->ctx_id_mutex);
+    HEIMDAL_MUTEX_lock(ctx->ctx_id_mutexp);
     ret = _gsskrb5i_get_token_key(ctx, context, &key);
-    HEIMDAL_MUTEX_unlock(&ctx->ctx_id_mutex);
+    HEIMDAL_MUTEX_unlock(ctx->ctx_id_mutexp);
     if (ret) {
 	*minor_status = ret;
 	return GSS_S_FAILURE;
@@ -151,9 +151,9 @@ _gk_wrap_iov_length(OM_uint32 * minor_status,
 					   conf_req_flag, qop_req, conf_state,
 					   iov, iov_count);
 
-    HEIMDAL_MUTEX_lock(&ctx->ctx_id_mutex);
+    HEIMDAL_MUTEX_lock(ctx->ctx_id_mutexp);
     ret = _gsskrb5i_get_token_key(ctx, context, &key);
-    HEIMDAL_MUTEX_unlock(&ctx->ctx_id_mutex);
+    HEIMDAL_MUTEX_unlock(ctx->ctx_id_mutexp);
     if (ret) {
 	*minor_status = ret;
 	return GSS_S_FAILURE;

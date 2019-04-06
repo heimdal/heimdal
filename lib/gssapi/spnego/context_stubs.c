@@ -82,13 +82,13 @@ OM_uint32 GSSAPI_CALLCONV _gss_spnego_process_context_token
     context = (gss_ctx_id_t)context_handle;
     ctx = (gssspnego_ctx)context_handle;
 
-    HEIMDAL_MUTEX_lock(&ctx->ctx_id_mutex);
+    HEIMDAL_MUTEX_lock(ctx->ctx_id_mutexp);
 
     ret = gss_process_context_token(minor_status,
 				    ctx->negotiated_ctx_id,
 				    token_buffer);
     if (ret != GSS_S_COMPLETE) {
-	HEIMDAL_MUTEX_unlock(&ctx->ctx_id_mutex);
+	HEIMDAL_MUTEX_unlock(ctx->ctx_id_mutexp);
 	return ret;
     }
 
@@ -112,7 +112,7 @@ OM_uint32 GSSAPI_CALLCONV _gss_spnego_delete_sec_context
 
     ctx = (gssspnego_ctx)*context_handle;
 
-    HEIMDAL_MUTEX_lock(&ctx->ctx_id_mutex);
+    HEIMDAL_MUTEX_lock(ctx->ctx_id_mutexp);
 
     return _gss_spnego_internal_delete_sec_context(minor_status,
 						   context_handle,
@@ -497,10 +497,10 @@ OM_uint32 GSSAPI_CALLCONV _gss_spnego_export_sec_context (
     if (ctx == NULL)
 	return GSS_S_NO_CONTEXT;
 
-    HEIMDAL_MUTEX_lock(&ctx->ctx_id_mutex);
+    HEIMDAL_MUTEX_lock(ctx->ctx_id_mutexp);
 
     if (ctx->negotiated_ctx_id == GSS_C_NO_CONTEXT) {
-	HEIMDAL_MUTEX_unlock(&ctx->ctx_id_mutex);
+	HEIMDAL_MUTEX_unlock(ctx->ctx_id_mutexp);
 	return GSS_S_NO_CONTEXT;
     }
 
@@ -515,7 +515,7 @@ OM_uint32 GSSAPI_CALLCONV _gss_spnego_export_sec_context (
 	    return GSS_S_COMPLETE;
     }
 
-    HEIMDAL_MUTEX_unlock(&ctx->ctx_id_mutex);
+    HEIMDAL_MUTEX_unlock(ctx->ctx_id_mutexp);
 
     return ret;
 }
@@ -537,7 +537,7 @@ OM_uint32 GSSAPI_CALLCONV _gss_spnego_import_sec_context (
     }
     ctx = (gssspnego_ctx)context;
 
-    HEIMDAL_MUTEX_lock(&ctx->ctx_id_mutex);
+    HEIMDAL_MUTEX_lock(ctx->ctx_id_mutexp);
 
     ret = gss_import_sec_context(minor_status,
 				 interprocess_token,
@@ -550,7 +550,7 @@ OM_uint32 GSSAPI_CALLCONV _gss_spnego_import_sec_context (
     ctx->open = 1;
     /* don't bother filling in the rest of the fields */
 
-    HEIMDAL_MUTEX_unlock(&ctx->ctx_id_mutex);
+    HEIMDAL_MUTEX_unlock(ctx->ctx_id_mutexp);
 
     *context_handle = (gss_ctx_id_t)ctx;
 

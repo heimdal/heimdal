@@ -471,7 +471,7 @@ _gssapi_wrap_cfx_iov(OM_uint32 *minor_status,
     token->RRC[0] = 0;
     token->RRC[1] = 0;
 
-    HEIMDAL_MUTEX_lock(&ctx->ctx_id_mutex);
+    HEIMDAL_MUTEX_lock(ctx->ctx_id_mutexp);
     krb5_auth_con_getlocalseqnumber(context,
 				    ctx->auth_context,
 				    &seq_number);
@@ -480,7 +480,7 @@ _gssapi_wrap_cfx_iov(OM_uint32 *minor_status,
     krb5_auth_con_setlocalseqnumber(context,
 				    ctx->auth_context,
 				    ++seq_number);
-    HEIMDAL_MUTEX_unlock(&ctx->ctx_id_mutex);
+    HEIMDAL_MUTEX_unlock(ctx->ctx_id_mutexp);
 
     data = calloc(iov_count + 3, sizeof(data[0]));
     if (data == NULL) {
@@ -794,14 +794,14 @@ _gssapi_unwrap_cfx_iov(OM_uint32 *minor_status,
 	return GSS_S_UNSEQ_TOKEN;
     }
 
-    HEIMDAL_MUTEX_lock(&ctx->ctx_id_mutex);
+    HEIMDAL_MUTEX_lock(ctx->ctx_id_mutexp);
     ret = _gssapi_msg_order_check(ctx->order, seq_number_lo);
     if (ret != 0) {
 	*minor_status = 0;
-	HEIMDAL_MUTEX_unlock(&ctx->ctx_id_mutex);
+	HEIMDAL_MUTEX_unlock(ctx->ctx_id_mutexp);
 	return ret;
     }
-    HEIMDAL_MUTEX_unlock(&ctx->ctx_id_mutex);
+    HEIMDAL_MUTEX_unlock(ctx->ctx_id_mutexp);
 
     /*
      * Decrypt and/or verify checksum
@@ -1235,7 +1235,7 @@ OM_uint32 _gssapi_wrap_cfx(OM_uint32 *minor_status,
     token->RRC[0] = 0;
     token->RRC[1] = 0;
 
-    HEIMDAL_MUTEX_lock(&ctx->ctx_id_mutex);
+    HEIMDAL_MUTEX_lock(ctx->ctx_id_mutexp);
     krb5_auth_con_getlocalseqnumber(context,
 				    ctx->auth_context,
 				    &seq_number);
@@ -1244,7 +1244,7 @@ OM_uint32 _gssapi_wrap_cfx(OM_uint32 *minor_status,
     krb5_auth_con_setlocalseqnumber(context,
 				    ctx->auth_context,
 				    ++seq_number);
-    HEIMDAL_MUTEX_unlock(&ctx->ctx_id_mutex);
+    HEIMDAL_MUTEX_unlock(ctx->ctx_id_mutexp);
 
     /*
      * If confidentiality is requested, the token header is
@@ -1434,15 +1434,15 @@ OM_uint32 _gssapi_unwrap_cfx(OM_uint32 *minor_status,
 	return GSS_S_UNSEQ_TOKEN;
     }
 
-    HEIMDAL_MUTEX_lock(&ctx->ctx_id_mutex);
+    HEIMDAL_MUTEX_lock(ctx->ctx_id_mutexp);
     ret = _gssapi_msg_order_check(ctx->order, seq_number_lo);
     if (ret != 0) {
 	*minor_status = 0;
-	HEIMDAL_MUTEX_unlock(&ctx->ctx_id_mutex);
+	HEIMDAL_MUTEX_unlock(ctx->ctx_id_mutexp);
 	_gsskrb5_release_buffer(minor_status, output_message_buffer);
 	return ret;
     }
-    HEIMDAL_MUTEX_unlock(&ctx->ctx_id_mutex);
+    HEIMDAL_MUTEX_unlock(ctx->ctx_id_mutexp);
 
     /*
      * Decrypt and/or verify checksum
@@ -1603,7 +1603,7 @@ OM_uint32 _gssapi_mic_cfx(OM_uint32 *minor_status,
 	token->Flags |= CFXAcceptorSubkey;
     memset(token->Filler, 0xFF, 5);
 
-    HEIMDAL_MUTEX_lock(&ctx->ctx_id_mutex);
+    HEIMDAL_MUTEX_lock(ctx->ctx_id_mutexp);
     krb5_auth_con_getlocalseqnumber(context,
 				    ctx->auth_context,
 				    &seq_number);
@@ -1612,7 +1612,7 @@ OM_uint32 _gssapi_mic_cfx(OM_uint32 *minor_status,
     krb5_auth_con_setlocalseqnumber(context,
 				    ctx->auth_context,
 				    ++seq_number);
-    HEIMDAL_MUTEX_unlock(&ctx->ctx_id_mutex);
+    HEIMDAL_MUTEX_unlock(ctx->ctx_id_mutexp);
 
     if (ctx->more_flags & LOCAL) {
 	usage = KRB5_KU_USAGE_INITIATOR_SIGN;
@@ -1708,14 +1708,14 @@ OM_uint32 _gssapi_verify_mic_cfx(OM_uint32 *minor_status,
 	return GSS_S_UNSEQ_TOKEN;
     }
 
-    HEIMDAL_MUTEX_lock(&ctx->ctx_id_mutex);
+    HEIMDAL_MUTEX_lock(ctx->ctx_id_mutexp);
     ret = _gssapi_msg_order_check(ctx->order, seq_number_lo);
     if (ret != 0) {
 	*minor_status = 0;
-	HEIMDAL_MUTEX_unlock(&ctx->ctx_id_mutex);
+	HEIMDAL_MUTEX_unlock(ctx->ctx_id_mutexp);
 	return ret;
     }
-    HEIMDAL_MUTEX_unlock(&ctx->ctx_id_mutex);
+    HEIMDAL_MUTEX_unlock(ctx->ctx_id_mutexp);
 
     /*
      * Verify checksum

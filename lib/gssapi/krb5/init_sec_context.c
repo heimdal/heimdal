@@ -131,12 +131,13 @@ _gsskrb5_create_ctx(
     ctx->endtime		= 0;
     ctx->order			= NULL;
     ctx->crypto			= NULL;
-    HEIMDAL_MUTEX_init(&ctx->ctx_id_mutex);
+    ctx->ctx_id_mutexp          = &ctx->ctx_id_mutex;
+    HEIMDAL_MUTEX_init(ctx->ctx_id_mutexp);
 
     kret = krb5_auth_con_init (context, &ctx->auth_context);
     if (kret) {
 	*minor_status = kret;
-	HEIMDAL_MUTEX_destroy(&ctx->ctx_id_mutex);
+	HEIMDAL_MUTEX_destroy(ctx->ctx_id_mutexp);
 	free(ctx);
 	return GSS_S_FAILURE;
     }
@@ -145,7 +146,7 @@ _gsskrb5_create_ctx(
     if (kret) {
 	*minor_status = kret;
 	krb5_auth_con_free(context, ctx->auth_context);
-	HEIMDAL_MUTEX_destroy(&ctx->ctx_id_mutex);
+	HEIMDAL_MUTEX_destroy(ctx->ctx_id_mutexp);
 	free(ctx);
 	return GSS_S_FAILURE;
     }
@@ -157,7 +158,7 @@ _gsskrb5_create_ctx(
 	krb5_auth_con_free(context, ctx->auth_context);
 	krb5_auth_con_free(context, ctx->deleg_auth_context);
 
-	HEIMDAL_MUTEX_destroy(&ctx->ctx_id_mutex);
+	HEIMDAL_MUTEX_destroy(ctx->ctx_id_mutexp);
 	free(ctx);
 	return GSS_S_BAD_BINDINGS;
     }
@@ -169,7 +170,7 @@ _gsskrb5_create_ctx(
 	krb5_auth_con_free(context, ctx->auth_context);
 	krb5_auth_con_free(context, ctx->deleg_auth_context);
 
-	HEIMDAL_MUTEX_destroy(&ctx->ctx_id_mutex);
+	HEIMDAL_MUTEX_destroy(ctx->ctx_id_mutexp);
 	free(ctx);
 	return GSS_S_BAD_BINDINGS;
     }
@@ -901,7 +902,7 @@ OM_uint32 GSSAPI_CALLCONV _gsskrb5_init_sec_context
 
     ctx = (gsskrb5_ctx) *context_handle;
 
-    HEIMDAL_MUTEX_lock(&ctx->ctx_id_mutex);
+    HEIMDAL_MUTEX_lock(ctx->ctx_id_mutexp);
 
  again:
     switch (ctx->state) {
@@ -969,7 +970,7 @@ OM_uint32 GSSAPI_CALLCONV _gsskrb5_init_sec_context
 	ret = GSS_S_BAD_STATUS;
 	break;
     }
-    HEIMDAL_MUTEX_unlock(&ctx->ctx_id_mutex);
+    HEIMDAL_MUTEX_unlock(ctx->ctx_id_mutexp);
 
     /* destroy context in case of error */
     if (GSS_ERROR(ret)) {

@@ -129,13 +129,13 @@ _gsskrb5_set_sec_context_option
 	    return maj_stat;
 
 	ctx = (gsskrb5_ctx)*context_handle;
-	HEIMDAL_MUTEX_lock(&ctx->ctx_id_mutex);
+	HEIMDAL_MUTEX_lock(ctx->ctx_id_mutexp);
 	if (flag)
 	    ctx->more_flags |= COMPAT_OLD_DES3;
 	else
 	    ctx->more_flags &= ~COMPAT_OLD_DES3;
 	ctx->more_flags |= COMPAT_OLD_DES3_SELECTED;
-	HEIMDAL_MUTEX_unlock(&ctx->ctx_id_mutex);
+	HEIMDAL_MUTEX_unlock(ctx->ctx_id_mutexp);
 	return GSS_S_COMPLETE;
     } else if (gss_oid_equal(desired_object, GSS_KRB5_SET_DNS_CANONICALIZE_X)) {
 	int flag;

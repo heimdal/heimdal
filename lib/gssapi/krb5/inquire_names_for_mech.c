@@ -43,7 +43,7 @@ static gss_OID name_list[] = {
 
 OM_uint32 GSSAPI_CALLCONV _gsskrb5_inquire_names_for_mech (
             OM_uint32 * minor_status,
-            const gss_OID mechanism,
+            gss_const_OID mechanism,
             gss_OID_set * name_types
            )
 {

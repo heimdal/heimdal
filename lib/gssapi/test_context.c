@@ -133,7 +133,7 @@ string_to_oids(gss_OID_set *oidsetp, gss_OID_set oidset,
 }
 
 static const char *
-oid_to_string(const gss_OID oid)
+oid_to_string(gss_const_OID oid)
 {
     size_t i;
     for (i = 0; i < sizeof(o2n)/sizeof(o2n[0]); i++)

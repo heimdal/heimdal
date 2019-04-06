@@ -31,8 +31,8 @@
 GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL
 gss_verify_mic(OM_uint32 *minor_status,
     gss_const_ctx_id_t context_handle,
-    const gss_buffer_t message_buffer,
-    const gss_buffer_t token_buffer,
+    gss_const_buffer_t message_buffer,
+    gss_const_buffer_t token_buffer,
     gss_qop_t *qop_state)
 {
 	struct _gss_context *ctx = (struct _gss_context *) context_handle;

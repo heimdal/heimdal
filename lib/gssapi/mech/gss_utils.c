@@ -131,7 +131,7 @@ _gss_intern_oid(OM_uint32 *minor_status,
 
 OM_uint32
 _gss_copy_buffer(OM_uint32 *minor_status,
-    const gss_buffer_t from_buf, gss_buffer_t to_buf)
+    gss_const_buffer_t from_buf, gss_buffer_t to_buf)
 {
 	size_t len = from_buf->length;
 

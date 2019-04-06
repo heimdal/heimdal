@@ -40,7 +40,7 @@ OM_uint32
 _netlogon_acquire_cred(OM_uint32 * min_stat,
                        gss_const_name_t desired_name,
                        OM_uint32 time_req,
-                       const gss_OID_set desired_mechs,
+                       gss_const_OID_set desired_mechs,
                        gss_cred_usage_t cred_usage,
                        gss_cred_id_t * output_cred_handle,
                        gss_OID_set * actual_mechs,
@@ -99,7 +99,7 @@ _netlogon_acquire_cred_ex(gss_status_id_t status,
 static OM_uint32
 _netlogon_set_session_key(OM_uint32 *minor_status,
                           gss_cred_id_t *cred_handle,
-                          const gss_buffer_t value)
+                          gss_const_buffer_t value)
 {
     gssnetlogon_cred cred;
 
@@ -127,7 +127,7 @@ _netlogon_set_session_key(OM_uint32 *minor_status,
 static OM_uint32
 _netlogon_set_sign_algorithm(OM_uint32 *minor_status,
                              gss_cred_id_t *cred_handle,
-                             const gss_buffer_t value)
+                             gss_const_buffer_t value)
 {
     gssnetlogon_cred cred;
     uint16_t alg;
@@ -167,8 +167,8 @@ OM_uint32
 _netlogon_set_cred_option
            (OM_uint32 *minor_status,
             gss_cred_id_t *cred_handle,
-            const gss_OID desired_object,
-            const gss_buffer_t value)
+            gss_const_OID desired_object,
+            gss_const_buffer_t value)
 {
     if (value == GSS_C_NO_BUFFER) {
         *minor_status = EINVAL;

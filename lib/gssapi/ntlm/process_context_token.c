@@ -36,7 +36,7 @@
 OM_uint32 GSSAPI_CALLCONV _gss_ntlm_process_context_token (
 	OM_uint32          *minor_status,
 	gss_const_ctx_id_t context_handle,
-	const gss_buffer_t token_buffer
+	gss_const_buffer_t token_buffer
     )
 {
     *minor_status = 0;

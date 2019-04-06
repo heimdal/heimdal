@@ -38,8 +38,8 @@
 
 OM_uint32 _netlogon_import_name
            (OM_uint32 * minor_status,
-            const gss_buffer_t input_name_buffer,
-            const gss_OID input_name_type,
+            gss_const_buffer_t input_name_buffer,
+            gss_const_OID input_name_type,
             gss_name_t * output_name
            )
 {

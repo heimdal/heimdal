@@ -35,9 +35,9 @@
 GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL
 gss_acquire_cred_with_password(OM_uint32 *minor_status,
 			       gss_const_name_t desired_name,
-			       const gss_buffer_t password,
+			       gss_const_buffer_t password,
 			       OM_uint32 time_req,
-			       const gss_OID_set desired_mechs,
+			       gss_const_OID_set desired_mechs,
 			       gss_cred_usage_t cred_usage,
 			       gss_cred_id_t *output_cred_handle,
 			       gss_OID_set *actual_mechs,

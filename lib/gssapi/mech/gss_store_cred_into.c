@@ -65,7 +65,7 @@ GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL
 gss_store_cred_into(OM_uint32 *minor_status,
 		    gss_const_cred_id_t input_cred_handle,
 		    gss_cred_usage_t input_usage,
-		    const gss_OID desired_mech,
+		    gss_const_OID desired_mech,
 		    OM_uint32 overwrite_cred,
 		    OM_uint32 default_cred,
 		    gss_const_key_value_set_t cred_store,

@@ -162,11 +162,13 @@ _gss_string_to_oid(const char* s, gss_OID *oidp)
 }
 #endif
 
+typedef void (*f_ptr)();
+
 #define SYM(name)							\
 do {									\
 	m->gm_mech.gm_ ## name = (_gss_##name##_t *)dlsym(so, "gss_" #name); \
 	if (!m->gm_mech.gm_ ## name ||					\
-	    m->gm_mech.gm_ ##name == gss_ ## name) {			\
+	    (f_ptr)m->gm_mech.gm_ ##name == (f_ptr)gss_ ## name) {	\
 		fprintf(stderr, "can't find symbol gss_" #name "\n");	\
 		goto bad;						\
 	}								\
@@ -175,7 +177,7 @@ do {									\
 #define OPTSYM(name)							\
 do {									\
 	m->gm_mech.gm_ ## name =  (_gss_##name##_t *)dlsym(so, "gss_" #name); \
-	if (m->gm_mech.gm_ ## name == gss_ ## name)			\
+	if ((f_ptr)m->gm_mech.gm_ ## name == (f_ptr)gss_ ## name)	\
 		m->gm_mech.gm_ ## name = NULL;				\
 } while (0)
 
@@ -187,14 +189,14 @@ do {									\
 #define COMPATSYM(name)							\
 do {									\
 	m->gm_mech.gm_compat->gmc_ ## name =  (_gss_##name##_t *)dlsym(so, "gss_" #name); \
-	if (m->gm_mech.gm_compat->gmc_ ## name == gss_ ## name)		\
+	if ((f_ptr)m->gm_mech.gm_compat->gmc_ ## name == (f_ptr)gss_ ## name)	\
 		m->gm_mech.gm_compat->gmc_ ## name = NULL;		\
 } while (0)
 
 #define COMPATSPISYM(name)						\
 do {									\
 	m->gm_mech.gm_compat->gmc_ ## name =  (_gss_##name##_t *)dlsym(so, "gssspi_" #name); \
-	if (m->gm_mech.gm_compat->gmc_ ## name == gss_ ## name)		\
+	if ((f_ptr)m->gm_mech.gm_compat->gmc_ ## name == (f_ptr)gss_ ## name)	\
 		m->gm_mech.gm_compat->gmc_ ## name = NULL;		\
 } while (0)
 

@@ -38,8 +38,8 @@
 static OM_uint32
 unwrap_des
            (OM_uint32 * minor_status,
-            const gsskrb5_ctx context_handle,
-            const gss_buffer_t input_message_buffer,
+            gsskrb5_const_ctx context_handle,
+            gss_const_buffer_t input_message_buffer,
             gss_buffer_t output_message_buffer,
             int * conf_state,
             gss_qop_t * qop_state,
@@ -193,9 +193,9 @@ unwrap_des
 static OM_uint32
 unwrap_des3
            (OM_uint32 * minor_status,
-            const gsskrb5_ctx context_handle,
+            gsskrb5_const_ctx context_handle,
 	    krb5_context context,
-            const gss_buffer_t input_message_buffer,
+            gss_const_buffer_t input_message_buffer,
             gss_buffer_t output_message_buffer,
             int * conf_state,
             gss_qop_t * qop_state,
@@ -386,7 +386,7 @@ unwrap_des3
 OM_uint32 GSSAPI_CALLCONV _gsskrb5_unwrap
            (OM_uint32 * minor_status,
             gss_const_ctx_id_t context_handle,
-            const gss_buffer_t input_message_buffer,
+            gss_const_buffer_t input_message_buffer,
             gss_buffer_t output_message_buffer,
             int * conf_state,
             gss_qop_t * qop_state

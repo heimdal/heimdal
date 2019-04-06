@@ -35,7 +35,7 @@
 OM_uint32 GSSAPI_CALLCONV
 _gsskrb5_localname(OM_uint32 *minor_status,
                    gss_const_name_t pname,
-                   const gss_OID mech_type,
+                   gss_const_OID mech_type,
                    gss_buffer_t localname)
 {
     krb5_error_code ret;

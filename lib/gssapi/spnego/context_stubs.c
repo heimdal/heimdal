@@ -69,7 +69,7 @@ spnego_supported_mechs(OM_uint32 *minor_status, gss_OID_set *mechs)
 OM_uint32 GSSAPI_CALLCONV _gss_spnego_process_context_token
            (OM_uint32 *minor_status,
             gss_const_ctx_id_t context_handle,
-            const gss_buffer_t token_buffer
+            gss_const_buffer_t token_buffer
            )
 {
     gss_ctx_id_t context;
@@ -147,7 +147,7 @@ OM_uint32 GSSAPI_CALLCONV _gss_spnego_get_mic
            (OM_uint32 *minor_status,
             gss_const_ctx_id_t context_handle,
             gss_qop_t qop_req,
-            const gss_buffer_t message_buffer,
+            gss_const_buffer_t message_buffer,
             gss_buffer_t message_token
            )
 {
@@ -172,8 +172,8 @@ OM_uint32 GSSAPI_CALLCONV _gss_spnego_get_mic
 OM_uint32 GSSAPI_CALLCONV _gss_spnego_verify_mic
            (OM_uint32 * minor_status,
             gss_const_ctx_id_t context_handle,
-            const gss_buffer_t message_buffer,
-            const gss_buffer_t token_buffer,
+            gss_const_buffer_t message_buffer,
+            gss_const_buffer_t token_buffer,
             gss_qop_t * qop_state
            )
 {
@@ -203,7 +203,7 @@ OM_uint32 GSSAPI_CALLCONV _gss_spnego_wrap
             gss_const_ctx_id_t context_handle,
             int conf_req_flag,
             gss_qop_t qop_req,
-            const gss_buffer_t input_message_buffer,
+            gss_const_buffer_t input_message_buffer,
             int * conf_state,
             gss_buffer_t output_message_buffer
            )
@@ -234,7 +234,7 @@ OM_uint32 GSSAPI_CALLCONV _gss_spnego_wrap
 OM_uint32 GSSAPI_CALLCONV _gss_spnego_unwrap
            (OM_uint32 * minor_status,
             gss_const_ctx_id_t context_handle,
-            const gss_buffer_t input_message_buffer,
+            gss_const_buffer_t input_message_buffer,
             gss_buffer_t output_message_buffer,
             int * conf_state,
             gss_qop_t * qop_state
@@ -306,8 +306,8 @@ OM_uint32 GSSAPI_CALLCONV _gss_spnego_display_name
 
 OM_uint32 GSSAPI_CALLCONV _gss_spnego_import_name
            (OM_uint32 * minor_status,
-            const gss_buffer_t name_buffer,
-            const gss_OID name_type,
+            gss_const_buffer_t name_buffer,
+            gss_const_OID name_type,
             gss_name_t * output_name
            )
 {
@@ -522,7 +522,7 @@ OM_uint32 GSSAPI_CALLCONV _gss_spnego_export_sec_context (
 
 OM_uint32 GSSAPI_CALLCONV _gss_spnego_import_sec_context (
             OM_uint32 * minor_status,
-            const gss_buffer_t interprocess_token,
+            gss_const_buffer_t interprocess_token,
             gss_ctx_id_t *context_handle
            )
 {
@@ -559,7 +559,7 @@ OM_uint32 GSSAPI_CALLCONV _gss_spnego_import_sec_context (
 
 OM_uint32 GSSAPI_CALLCONV _gss_spnego_inquire_names_for_mech (
             OM_uint32 * minor_status,
-            const gss_OID mechanism,
+            gss_const_OID mechanism,
             gss_OID_set * name_types
            )
 {
@@ -624,7 +624,7 @@ OM_uint32 GSSAPI_CALLCONV _gss_spnego_inquire_mechs_for_name (
 OM_uint32 GSSAPI_CALLCONV _gss_spnego_canonicalize_name (
             OM_uint32 * minor_status,
             gss_const_name_t input_name,
-            const gss_OID mech_type,
+            gss_const_OID mech_type,
             gss_name_t * output_name
            )
 {
@@ -733,7 +733,7 @@ OM_uint32 GSSAPI_CALLCONV _gss_spnego_complete_auth_token
 OM_uint32 GSSAPI_CALLCONV _gss_spnego_inquire_sec_context_by_oid
            (OM_uint32 * minor_status,
             gss_const_ctx_id_t context_handle,
-            const gss_OID desired_object,
+            gss_const_OID desired_object,
             gss_buffer_set_t *data_set)
 {
     gssspnego_ctx ctx;
@@ -759,8 +759,8 @@ OM_uint32 GSSAPI_CALLCONV _gss_spnego_inquire_sec_context_by_oid
 OM_uint32 GSSAPI_CALLCONV _gss_spnego_set_sec_context_option
            (OM_uint32 * minor_status,
             gss_ctx_id_t * context_handle,
-            const gss_OID desired_object,
-            const gss_buffer_t value)
+            gss_const_OID desired_object,
+            gss_const_buffer_t value)
 {
     gssspnego_ctx ctx;
 
@@ -787,7 +787,7 @@ OM_uint32 GSSAPI_CALLCONV
 _gss_spnego_pseudo_random(OM_uint32 *minor_status,
 			  gss_ctx_id_t context_handle,
 			  int prf_key,
-			  const gss_buffer_t prf_in,
+			  gss_const_buffer_t prf_in,
 			  ssize_t desired_output_len,
 			  gss_buffer_t prf_out)
 {

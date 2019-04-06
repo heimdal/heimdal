@@ -35,7 +35,7 @@
 GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL
 gss_set_neg_mechs (OM_uint32 *minor_status,
 		   gss_cred_id_t cred_handle,
-		   const gss_OID_set mechs)
+		   gss_const_OID_set mechs)
 {
     struct _gss_cred *cred = (struct _gss_cred *)cred_handle;
     OM_uint32 major;

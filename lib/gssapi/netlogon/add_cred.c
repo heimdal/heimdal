@@ -39,7 +39,7 @@ OM_uint32 _netlogon_add_cred (
      OM_uint32           *minor_status,
      gss_const_cred_id_t input_cred_handle,
      gss_const_name_t    desired_name,
-     const gss_OID       desired_mech,
+     gss_const_OID       desired_mech,
      gss_cred_usage_t    cred_usage,
      OM_uint32           initiator_time_req,
      OM_uint32           acceptor_time_req,
@@ -50,7 +50,7 @@ OM_uint32 _netlogon_add_cred (
 {
     OM_uint32 ret;
     int equal;
-    const gssnetlogon_cred src = (const gssnetlogon_cred)input_cred_handle;
+    gssnetlogon_const_cred src = (gssnetlogon_const_cred)input_cred_handle;
     gssnetlogon_cred dst;
 
     if (desired_name != GSS_C_NO_NAME) {

@@ -36,7 +36,7 @@
 OM_uint32 GSSAPI_CALLCONV
 _gss_ntlm_import_sec_context (
     OM_uint32 * minor_status,
-    const gss_buffer_t interprocess_token,
+    gss_const_buffer_t interprocess_token,
     gss_ctx_id_t * context_handle
     )
 {

@@ -100,7 +100,7 @@ GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL
 gss_add_cred_from(OM_uint32 *minor_status,
     gss_cred_id_t input_cred_handle,
     gss_const_name_t desired_name,
-    const gss_OID desired_mech,
+    gss_const_OID desired_mech,
     gss_cred_usage_t cred_usage,
     OM_uint32 initiator_time_req,
     OM_uint32 acceptor_time_req,

@@ -30,7 +30,7 @@
 
 static OM_uint32
 _gss_import_export_name(OM_uint32 *minor_status,
-    const gss_buffer_t input_name_buffer,
+    gss_const_buffer_t input_name_buffer,
     gss_name_t *output_name)
 {
 	OM_uint32 major_status;
@@ -175,12 +175,12 @@ _gss_import_export_name(OM_uint32 *minor_status,
 
 GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL
 gss_import_name(OM_uint32 *minor_status,
-    const gss_buffer_t input_name_buffer,
-    const gss_OID input_name_type,
+    gss_const_buffer_t input_name_buffer,
+    gss_const_OID input_name_type,
     gss_name_t *output_name)
 {
         struct _gss_mechanism_name *mn;
-	gss_OID			name_type = input_name_type;
+	gss_const_OID		name_type = input_name_type;
 	OM_uint32		major_status, ms;
 	struct _gss_name	*name;
         struct _gss_mech_switch	*m;

@@ -70,7 +70,7 @@ _gsskrb5_decode_be_om_uint32(const void *ptr, OM_uint32 *n)
 }
 
 static krb5_error_code
-hash_input_chan_bindings (const gss_channel_bindings_t b,
+hash_input_chan_bindings (gss_const_channel_bindings_t b,
 			  u_char *p)
 {
   u_char num[4];
@@ -116,7 +116,7 @@ hash_input_chan_bindings (const gss_channel_bindings_t b,
 OM_uint32
 _gsskrb5_create_8003_checksum (
 		      OM_uint32 *minor_status,
-		      const gss_channel_bindings_t input_chan_bindings,
+		      gss_const_channel_bindings_t input_chan_bindings,
 		      OM_uint32 flags,
 		      const krb5_data *fwd_data,
 		      Checksum *result)
@@ -171,7 +171,7 @@ _gsskrb5_create_8003_checksum (
 OM_uint32
 _gsskrb5_verify_8003_checksum(
 		      OM_uint32 *minor_status,
-		      const gss_channel_bindings_t input_chan_bindings,
+		      gss_const_channel_bindings_t input_chan_bindings,
 		      const Checksum *cksum,
 		      OM_uint32 *flags,
 		      krb5_data *fwd_data)

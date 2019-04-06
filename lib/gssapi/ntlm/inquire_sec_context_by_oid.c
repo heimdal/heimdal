@@ -38,7 +38,7 @@
 OM_uint32 GSSAPI_CALLCONV
 _gss_ntlm_inquire_sec_context_by_oid(OM_uint32 *minor_status,
 				     gss_const_ctx_id_t context_handle,
-				     const gss_OID desired_object,
+				     gss_const_OID desired_object,
 				     gss_buffer_set_t *data_set)
 {
     ntlm_ctx ctx = (ntlm_ctx)context_handle;

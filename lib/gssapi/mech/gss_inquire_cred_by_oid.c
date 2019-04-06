@@ -35,7 +35,7 @@
 GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL
 gss_inquire_cred_by_oid (OM_uint32 *minor_status,
 			 gss_const_cred_id_t cred_handle,
-			 const gss_OID desired_object,
+			 gss_const_OID desired_object,
 			 gss_buffer_set_t *data_set)
 {
 	struct _gss_cred *cred = (struct _gss_cred *) cred_handle;

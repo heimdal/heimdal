@@ -37,7 +37,7 @@ void
 _gssapi_encap_length (size_t data_len,
 		      size_t *len,
 		      size_t *total_len,
-		      const gss_OID mech)
+		      gss_const_OID mech)
 {
     size_t len_len;
 
@@ -52,7 +52,7 @@ void
 _gsskrb5_encap_length (size_t data_len,
 			  size_t *len,
 			  size_t *total_len,
-			  const gss_OID mech)
+			  gss_const_OID mech)
 {
     _gssapi_encap_length(data_len + 2, len, total_len, mech);
 }
@@ -60,7 +60,7 @@ _gsskrb5_encap_length (size_t data_len,
 void *
 _gssapi_make_mech_header(void *ptr,
 			 size_t len,
-			 const gss_OID mech)
+			 gss_const_OID mech)
 {
     u_char *p = ptr;
     int e;
@@ -83,7 +83,7 @@ void *
 _gsskrb5_make_header (void *ptr,
 			 size_t len,
 			 const void *type,
-			 const gss_OID mech)
+			 gss_const_OID mech)
 {
     u_char *p = ptr;
     p = _gssapi_make_mech_header(p, len, mech);
@@ -101,7 +101,7 @@ _gssapi_encapsulate(
     OM_uint32 *minor_status,
     const krb5_data *in_data,
     gss_buffer_t output_token,
-    const gss_OID mech
+    gss_const_OID mech
 )
 {
     size_t len, outer_len;
@@ -132,7 +132,7 @@ _gsskrb5_encapsulate(
 			const krb5_data *in_data,
 			gss_buffer_t output_token,
 			const void *type,
-			const gss_OID mech
+			gss_const_OID mech
 )
 {
     size_t len, outer_len;

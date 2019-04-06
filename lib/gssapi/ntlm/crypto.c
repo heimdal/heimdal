@@ -151,7 +151,7 @@ _gss_ntlm_set_keys(ntlm_ctx ctx)
  */
 
 static OM_uint32
-v1_sign_message(gss_buffer_t in,
+v1_sign_message(gss_const_buffer_t in,
 		RC4_KEY *signkey,
 		uint32_t seq,
 		unsigned char out[16])
@@ -177,7 +177,7 @@ v1_sign_message(gss_buffer_t in,
 
 
 static OM_uint32
-v2_sign_message(gss_buffer_t in,
+v2_sign_message(gss_const_buffer_t in,
 		unsigned char signkey[16],
 		RC4_KEY *sealkey,
 		uint32_t seq,
@@ -208,7 +208,7 @@ v2_sign_message(gss_buffer_t in,
 }
 
 static OM_uint32
-v2_verify_message(gss_buffer_t in,
+v2_verify_message(gss_const_buffer_t in,
 		  unsigned char signkey[16],
 		  RC4_KEY *sealkey,
 		  uint32_t seq,
@@ -228,7 +228,7 @@ v2_verify_message(gss_buffer_t in,
 }
 
 static OM_uint32
-v2_seal_message(const gss_buffer_t in,
+v2_seal_message(gss_const_buffer_t in,
 		unsigned char signkey[16],
 		uint32_t seq,
 		RC4_KEY *sealkey,
@@ -259,7 +259,7 @@ v2_seal_message(const gss_buffer_t in,
 }
 
 static OM_uint32
-v2_unseal_message(gss_buffer_t in,
+v2_unseal_message(gss_const_buffer_t in,
 		  unsigned char signkey[16],
 		  uint32_t seq,
 		  RC4_KEY *sealkey,
@@ -302,7 +302,7 @@ _gss_ntlm_get_mic
            (OM_uint32 * minor_status,
             gss_const_ctx_id_t context_handle,
             gss_qop_t qop_req,
-            const gss_buffer_t message_buffer,
+            gss_const_buffer_t message_buffer,
             gss_buffer_t message_token
            )
 {
@@ -376,8 +376,8 @@ OM_uint32 GSSAPI_CALLCONV
 _gss_ntlm_verify_mic
            (OM_uint32 * minor_status,
             gss_const_ctx_id_t context_handle,
-            const gss_buffer_t message_buffer,
-            const gss_buffer_t token_buffer,
+            gss_const_buffer_t message_buffer,
+            gss_const_buffer_t token_buffer,
             gss_qop_t * qop_state
 	    )
 {
@@ -495,7 +495,7 @@ _gss_ntlm_wrap
  gss_const_ctx_id_t context_handle,
  int conf_req_flag,
  gss_qop_t qop_req,
- const gss_buffer_t input_message_buffer,
+ gss_const_buffer_t input_message_buffer,
  int * conf_state,
  gss_buffer_t output_message_buffer
     )
@@ -564,7 +564,7 @@ OM_uint32 GSSAPI_CALLCONV
 _gss_ntlm_unwrap
            (OM_uint32 * minor_status,
             gss_const_ctx_id_t context_handle,
-            const gss_buffer_t input_message_buffer,
+            gss_const_buffer_t input_message_buffer,
             gss_buffer_t output_message_buffer,
             int * conf_state,
             gss_qop_t * qop_state

@@ -200,7 +200,7 @@ gss_OID_desc GSSAPI_LIB_FUNCTION __gss_c_attr_stream_sizes_oid_desc =
 GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL
 gss_context_query_attributes(OM_uint32 *minor_status,
 			     gss_const_ctx_id_t context_handle,
-			     const gss_OID attribute,
+			     gss_const_OID attribute,
 			     void *data,
 			     size_t len)
 {

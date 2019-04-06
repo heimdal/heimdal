@@ -660,7 +660,7 @@ OM_uint32 _netlogon_get_mic
            (OM_uint32 * minor_status,
             gss_const_ctx_id_t context_handle,
             gss_qop_t qop_req,
-            const gss_buffer_t message_buffer,
+            gss_const_buffer_t message_buffer,
             gss_buffer_t message_token
            )
 {
@@ -685,8 +685,8 @@ OM_uint32
 _netlogon_verify_mic
            (OM_uint32 * minor_status,
             gss_const_ctx_id_t context_handle,
-            const gss_buffer_t message_buffer,
-            const gss_buffer_t token_buffer,
+            gss_const_buffer_t message_buffer,
+            gss_const_buffer_t token_buffer,
             gss_qop_t * qop_state
             )
 {

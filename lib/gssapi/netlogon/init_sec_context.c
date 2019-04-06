@@ -38,7 +38,7 @@
 
 static OM_uint32
 _netlogon_encode_dns_string(OM_uint32 *minor_status,
-                            const gss_buffer_t str,
+                            gss_const_buffer_t str,
                             gss_buffer_t buffer)
 {
     int ret;
@@ -150,7 +150,7 @@ _netlogon_make_initial_auth_message(OM_uint32 *minor_status,
 static OM_uint32
 _netlogon_read_initial_auth_message(OM_uint32 *minor_status,
                                     gssnetlogon_ctx ctx,
-                                    const gss_buffer_t input_token)
+                                    gss_const_buffer_t input_token)
 {
     NL_AUTH_MESSAGE msg;
     const uint8_t *p = (const uint8_t *)input_token->value;
@@ -204,19 +204,19 @@ _netlogon_init_sec_context(OM_uint32 * minor_status,
 			   gss_const_cred_id_t initiator_cred_handle,
 			   gss_ctx_id_t * context_handle,
 			   gss_const_name_t target_name,
-			   const gss_OID mech_type,
+			   gss_const_OID mech_type,
 			   OM_uint32 req_flags,
 			   OM_uint32 time_req,
-			   const gss_channel_bindings_t input_chan_bindings,
-			   const gss_buffer_t input_token,
+			   gss_const_channel_bindings_t input_chan_bindings,
+			   gss_const_buffer_t input_token,
 			   gss_OID * actual_mech_type,
 			   gss_buffer_t output_token,
 			   OM_uint32 * ret_flags,
 			   OM_uint32 * time_rec)
 {
-    const gssnetlogon_cred cred = (const gssnetlogon_cred)initiator_cred_handle;
+    gssnetlogon_const_cred cred = (gssnetlogon_const_cred)initiator_cred_handle;
     gssnetlogon_ctx ctx = (gssnetlogon_ctx)*context_handle;
-    const gssnetlogon_name target = (const gssnetlogon_name)target_name;
+    gssnetlogon_const_name target = (gssnetlogon_const_name)target_name;
     OM_uint32 ret;
 
     *minor_status = 0;

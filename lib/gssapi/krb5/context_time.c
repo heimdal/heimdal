@@ -65,7 +65,7 @@ _gsskrb5_lifetime_left(OM_uint32 *minor_status,
 
 OM_uint32 GSSAPI_CALLCONV _gsskrb5_context_time
            (OM_uint32 * minor_status,
-            gss_const_ctx_id_t context_handle,
+            gss_ctx_id_t context_handle,
             OM_uint32 * time_rec
            )
 {

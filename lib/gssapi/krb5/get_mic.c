@@ -38,7 +38,7 @@
 static OM_uint32
 mic_des
            (OM_uint32 * minor_status,
-            gsskrb5_const_ctx ctx,
+            gsskrb5_ctx ctx,
 	    krb5_context context,
             gss_qop_t qop_req,
             gss_const_buffer_t message_buffer,
@@ -132,7 +132,7 @@ mic_des
 static OM_uint32
 mic_des3
            (OM_uint32 * minor_status,
-            gsskrb5_const_ctx ctx,
+            gsskrb5_ctx ctx,
 	    krb5_context context,
             gss_qop_t qop_req,
             gss_const_buffer_t message_buffer,
@@ -275,14 +275,14 @@ mic_des3
 
 OM_uint32 GSSAPI_CALLCONV _gsskrb5_get_mic
            (OM_uint32 * minor_status,
-            gss_const_ctx_id_t context_handle,
+            gss_ctx_id_t context_handle,
             gss_qop_t qop_req,
             gss_const_buffer_t message_buffer,
             gss_buffer_t message_token
            )
 {
   krb5_context context;
-  gsskrb5_const_ctx ctx = (gsskrb5_const_ctx) context_handle;
+  gsskrb5_ctx ctx = (gsskrb5_ctx) context_handle;
   krb5_keyblock *key;
   OM_uint32 ret;
 

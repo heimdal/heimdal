@@ -37,7 +37,7 @@
 
 OM_uint32 _netlogon_context_time
            (OM_uint32 * minor_status,
-            gss_const_ctx_id_t context_handle,
+            gss_ctx_id_t context_handle,
             OM_uint32 * time_rec
            )
 {

@@ -300,7 +300,7 @@ v2_unseal_message(gss_const_buffer_t in,
 OM_uint32 GSSAPI_CALLCONV
 _gss_ntlm_get_mic
            (OM_uint32 * minor_status,
-            gss_const_ctx_id_t context_handle,
+            gss_ctx_id_t context_handle,
             gss_qop_t qop_req,
             gss_const_buffer_t message_buffer,
             gss_buffer_t message_token
@@ -375,7 +375,7 @@ _gss_ntlm_get_mic
 OM_uint32 GSSAPI_CALLCONV
 _gss_ntlm_verify_mic
            (OM_uint32 * minor_status,
-            gss_const_ctx_id_t context_handle,
+            gss_ctx_id_t context_handle,
             gss_const_buffer_t message_buffer,
             gss_const_buffer_t token_buffer,
             gss_qop_t * qop_state
@@ -461,7 +461,7 @@ _gss_ntlm_verify_mic
 OM_uint32 GSSAPI_CALLCONV
 _gss_ntlm_wrap_size_limit (
             OM_uint32 * minor_status,
-            gss_const_ctx_id_t context_handle,
+            gss_ctx_id_t context_handle,
             int conf_req_flag,
             gss_qop_t qop_req,
             OM_uint32 req_output_size,
@@ -492,7 +492,7 @@ _gss_ntlm_wrap_size_limit (
 OM_uint32 GSSAPI_CALLCONV
 _gss_ntlm_wrap
 (OM_uint32 * minor_status,
- gss_const_ctx_id_t context_handle,
+ gss_ctx_id_t context_handle,
  int conf_req_flag,
  gss_qop_t qop_req,
  gss_const_buffer_t input_message_buffer,
@@ -563,7 +563,7 @@ _gss_ntlm_wrap
 OM_uint32 GSSAPI_CALLCONV
 _gss_ntlm_unwrap
            (OM_uint32 * minor_status,
-            gss_const_ctx_id_t context_handle,
+            gss_ctx_id_t context_handle,
             gss_const_buffer_t input_message_buffer,
             gss_buffer_t output_message_buffer,
             int * conf_state,

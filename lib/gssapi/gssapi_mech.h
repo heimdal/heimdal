@@ -85,7 +85,7 @@ typedef OM_uint32 GSSAPI_CALLCONV _gss_accept_sec_context_t
 
 typedef OM_uint32 GSSAPI_CALLCONV _gss_process_context_token_t
 	      (OM_uint32 *,            /* minor_status */
-	       gss_const_ctx_id_t,     /* context_handle */
+	       gss_ctx_id_t,     /* context_handle */
 	       gss_const_buffer_t      /* token_buffer */
 	      );
 
@@ -97,13 +97,13 @@ typedef OM_uint32 GSSAPI_CALLCONV _gss_delete_sec_context_t
 
 typedef OM_uint32 GSSAPI_CALLCONV _gss_context_time_t
 	      (OM_uint32 *,            /* minor_status */
-	       gss_const_ctx_id_t,     /* context_handle */
+	       gss_ctx_id_t,     /* context_handle */
 	       OM_uint32 *             /* time_rec */
 	      );
 
 typedef OM_uint32 GSSAPI_CALLCONV _gss_get_mic_t
 	      (OM_uint32 *,            /* minor_status */
-	       gss_const_ctx_id_t,     /* context_handle */
+	       gss_ctx_id_t,     /* context_handle */
 	       gss_qop_t,              /* qop_req */
 	       gss_const_buffer_t,     /* message_buffer */
 	       gss_buffer_t            /* message_token */
@@ -111,7 +111,7 @@ typedef OM_uint32 GSSAPI_CALLCONV _gss_get_mic_t
 
 typedef OM_uint32 GSSAPI_CALLCONV _gss_verify_mic_t
 	      (OM_uint32 *,            /* minor_status */
-	       gss_const_ctx_id_t,     /* context_handle */
+	       gss_ctx_id_t,     /* context_handle */
 	       gss_const_buffer_t,     /* message_buffer */
 	       gss_const_buffer_t,     /* token_buffer */
 	       gss_qop_t *             /* qop_state */
@@ -119,7 +119,7 @@ typedef OM_uint32 GSSAPI_CALLCONV _gss_verify_mic_t
 
 typedef OM_uint32 GSSAPI_CALLCONV _gss_wrap_t
 	      (OM_uint32 *,            /* minor_status */
-	       gss_const_ctx_id_t,     /* context_handle */
+	       gss_ctx_id_t,     /* context_handle */
 	       int,                    /* conf_req_flag */
 	       gss_qop_t,              /* qop_req */
 	       gss_const_buffer_t,     /* input_message_buffer */
@@ -129,7 +129,7 @@ typedef OM_uint32 GSSAPI_CALLCONV _gss_wrap_t
 
 typedef OM_uint32 GSSAPI_CALLCONV _gss_unwrap_t
 	      (OM_uint32 *,            /* minor_status */
-	       gss_const_ctx_id_t,     /* context_handle */
+	       gss_ctx_id_t,     /* context_handle */
 	       gss_const_buffer_t,     /* input_message_buffer */
 	       gss_buffer_t,           /* output_message_buffer */
 	       int *,                  /* conf_state */
@@ -193,7 +193,7 @@ typedef OM_uint32 GSSAPI_CALLCONV _gss_inquire_cred_t
 
 typedef OM_uint32 GSSAPI_CALLCONV _gss_inquire_context_t
 	      (OM_uint32 *,            /* minor_status */
-	       gss_const_ctx_id_t,     /* context_handle */
+	       gss_ctx_id_t,     /* context_handle */
 	       gss_name_t *,           /* src_name */
 	       gss_name_t *,           /* targ_name */
 	       OM_uint32 *,            /* lifetime_rec */
@@ -205,7 +205,7 @@ typedef OM_uint32 GSSAPI_CALLCONV _gss_inquire_context_t
 
 typedef OM_uint32 GSSAPI_CALLCONV _gss_wrap_size_limit_t
 	      (OM_uint32 *,            /* minor_status */
-	       gss_const_ctx_id_t,     /* context_handle */
+	       gss_ctx_id_t,     /* context_handle */
 	       int,                    /* conf_req_flag */
 	       gss_qop_t,              /* qop_req */
 	       OM_uint32,              /* req_output_size */
@@ -281,7 +281,7 @@ typedef OM_uint32 GSSAPI_CALLCONV _gss_duplicate_name_t (
 
 typedef OM_uint32 GSSAPI_CALLCONV _gss_inquire_sec_context_by_oid_t (
 	       OM_uint32 *minor_status,
-	       gss_const_ctx_id_t context_handle,
+	       gss_ctx_id_t context_handle,
 	       gss_const_OID desired_object,
 	       gss_buffer_set_t *data_set
 	      );

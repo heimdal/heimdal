@@ -226,7 +226,7 @@ arcfour_mic_cksum(krb5_context context,
 
 OM_uint32
 _gssapi_get_mic_arcfour(OM_uint32 * minor_status,
-			gsskrb5_const_ctx context_handle,
+			gsskrb5_ctx context_handle,
 			krb5_context context,
 			gss_qop_t qop_req,
 			gss_const_buffer_t message_buffer,
@@ -313,7 +313,7 @@ _gssapi_get_mic_arcfour(OM_uint32 * minor_status,
 
 OM_uint32
 _gssapi_verify_mic_arcfour(OM_uint32 * minor_status,
-			   gsskrb5_const_ctx context_handle,
+			   gsskrb5_ctx context_handle,
 			   krb5_context context,
 			   gss_const_buffer_t message_buffer,
 			   gss_const_buffer_t token_buffer,
@@ -407,7 +407,7 @@ _gssapi_verify_mic_arcfour(OM_uint32 * minor_status,
 
 OM_uint32
 _gssapi_wrap_arcfour(OM_uint32 * minor_status,
-		     gsskrb5_const_ctx context_handle,
+		     gsskrb5_ctx context_handle,
 		     krb5_context context,
 		     int conf_req_flag,
 		     gss_qop_t qop_req,
@@ -561,7 +561,7 @@ _gssapi_wrap_arcfour(OM_uint32 * minor_status,
 }
 
 OM_uint32 _gssapi_unwrap_arcfour(OM_uint32 *minor_status,
-				 gsskrb5_const_ctx context_handle,
+				 gsskrb5_ctx context_handle,
 				 krb5_context context,
 				 gss_const_buffer_t input_message_buffer,
 				 gss_buffer_t output_message_buffer,
@@ -751,7 +751,7 @@ OM_uint32 _gssapi_unwrap_arcfour(OM_uint32 *minor_status,
 }
 
 static OM_uint32
-max_wrap_length_arcfour(gsskrb5_const_ctx ctx,
+max_wrap_length_arcfour(gsskrb5_ctx ctx,
 			krb5_crypto crypto,
 			size_t input_length,
 			OM_uint32 *max_input_size)
@@ -795,7 +795,7 @@ max_wrap_length_arcfour(gsskrb5_const_ctx ctx,
 
 OM_uint32
 _gssapi_wrap_size_arcfour(OM_uint32 *minor_status,
-			  gsskrb5_const_ctx ctx,
+			  gsskrb5_ctx ctx,
 			  krb5_context context,
 			  int conf_req_flag,
 			  gss_qop_t qop_req,

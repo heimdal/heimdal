@@ -95,7 +95,6 @@ typedef const struct gss_name_t_desc_struct *gss_const_name_t;
 
 struct gss_ctx_id_t_desc_struct;
 typedef struct gss_ctx_id_t_desc_struct *gss_ctx_id_t;
-typedef const struct gss_ctx_id_t_desc_struct *gss_const_ctx_id_t;
 
 typedef struct gss_OID_desc_struct {
       OM_uint32 length;
@@ -530,7 +529,7 @@ GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL gss_accept_sec_context
 
 GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL gss_process_context_token
            (OM_uint32 * /*minor_status*/,
-            gss_const_ctx_id_t /*context_handle*/,
+            gss_ctx_id_t /*context_handle*/,
             gss_const_buffer_t /*token_buffer*/
            );
 
@@ -542,13 +541,13 @@ GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL gss_delete_sec_context
 
 GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL gss_context_time
            (OM_uint32 * /*minor_status*/,
-            gss_const_ctx_id_t /*context_handle*/,
+            gss_ctx_id_t /*context_handle*/,
             OM_uint32 * /*time_rec*/
            );
 
 GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL gss_get_mic
            (OM_uint32 * /*minor_status*/,
-            gss_const_ctx_id_t /*context_handle*/,
+            gss_ctx_id_t /*context_handle*/,
             gss_qop_t /*qop_req*/,
             gss_const_buffer_t /*message_buffer*/,
             gss_buffer_t /*message_token*/
@@ -556,7 +555,7 @@ GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL gss_get_mic
 
 GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL gss_verify_mic
            (OM_uint32 * /*minor_status*/,
-            gss_const_ctx_id_t /*context_handle*/,
+            gss_ctx_id_t /*context_handle*/,
             gss_const_buffer_t /*message_buffer*/,
             gss_const_buffer_t /*token_buffer*/,
             gss_qop_t * /*qop_state*/
@@ -564,7 +563,7 @@ GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL gss_verify_mic
 
 GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL gss_wrap
            (OM_uint32 * /*minor_status*/,
-            gss_const_ctx_id_t /*context_handle*/,
+            gss_ctx_id_t /*context_handle*/,
             int /*conf_req_flag*/,
             gss_qop_t /*qop_req*/,
             gss_const_buffer_t /*input_message_buffer*/,
@@ -574,7 +573,7 @@ GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL gss_wrap
 
 GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL gss_unwrap
            (OM_uint32 * /*minor_status*/,
-            gss_const_ctx_id_t /*context_handle*/,
+            gss_ctx_id_t /*context_handle*/,
             gss_const_buffer_t /*input_message_buffer*/,
             gss_buffer_t /*output_message_buffer*/,
             int * /*conf_state*/,
@@ -648,7 +647,7 @@ GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL gss_inquire_cred
 
 GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL gss_inquire_context (
             OM_uint32 * /*minor_status*/,
-            gss_const_ctx_id_t /*context_handle*/,
+            gss_ctx_id_t /*context_handle*/,
             gss_name_t * /*src_name*/,
             gss_name_t * /*targ_name*/,
             OM_uint32 * /*lifetime_rec*/,
@@ -660,7 +659,7 @@ GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL gss_inquire_context (
 
 GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL gss_wrap_size_limit (
             OM_uint32 * /*minor_status*/,
-            gss_const_ctx_id_t /*context_handle*/,
+            gss_ctx_id_t /*context_handle*/,
             int /*conf_req_flag*/,
             gss_qop_t /*qop_req*/,
             OM_uint32 /*req_output_size*/,
@@ -768,7 +767,7 @@ gss_oid_to_str(
 GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL
 gss_inquire_sec_context_by_oid(
 	    OM_uint32 * minor_status,
-            gss_const_ctx_id_t context_handle,
+            gss_ctx_id_t context_handle,
             gss_const_OID desired_object,
             gss_buffer_set_t *data_set
            );
@@ -858,7 +857,7 @@ extern gss_OID_desc GSSAPI_LIB_VARIABLE __gss_c_attr_stream_sizes_oid_desc;
 
 GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL
 gss_context_query_attributes(OM_uint32 * /* minor_status */,
-			     gss_const_ctx_id_t /* context_handle */,
+			     gss_ctx_id_t /* context_handle */,
 			     gss_const_OID /* attribute */,
 			     void * /*data*/,
 			     size_t /* len */);

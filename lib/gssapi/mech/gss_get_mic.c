@@ -30,7 +30,7 @@
 
 GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL
 gss_get_mic(OM_uint32 *minor_status,
-    gss_const_ctx_id_t context_handle,
+    gss_ctx_id_t context_handle,
     gss_qop_t qop_req,
     gss_const_buffer_t message_buffer,
     gss_buffer_t message_token)

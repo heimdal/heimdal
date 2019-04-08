@@ -101,7 +101,7 @@ _gsskrb5cfx_wrap_length_cfx(krb5_context context,
 
 OM_uint32
 _gssapi_wrap_size_cfx(OM_uint32 *minor_status,
-		      gsskrb5_const_ctx ctx,
+		      gsskrb5_ctx ctx,
 		      krb5_context context,
 		      int conf_req_flag,
 		      gss_qop_t qop_req,
@@ -236,7 +236,7 @@ _gk_allocate_buffer(OM_uint32 *minor_status, gss_iov_buffer_desc *buffer, size_t
 
 OM_uint32
 _gk_verify_buffers(OM_uint32 *minor_status,
-		   gsskrb5_const_ctx ctx,
+		   gsskrb5_ctx ctx,
 		   gss_const_iov_buffer_t header,
 		   gss_const_iov_buffer_t padding,
 		   gss_const_iov_buffer_t trailer)
@@ -1154,7 +1154,7 @@ _gssapi_wrap_iov_length_cfx(OM_uint32 *minor_status,
 
 
 OM_uint32 _gssapi_wrap_cfx(OM_uint32 *minor_status,
-			   gsskrb5_const_ctx ctx,
+			   gsskrb5_ctx ctx,
 			   krb5_context context,
 			   int conf_req_flag,
 			   gss_const_buffer_t input_message_buffer,
@@ -1364,7 +1364,7 @@ OM_uint32 _gssapi_wrap_cfx(OM_uint32 *minor_status,
 }
 
 OM_uint32 _gssapi_unwrap_cfx(OM_uint32 *minor_status,
-			     gsskrb5_const_ctx ctx,
+			     gsskrb5_ctx ctx,
 			     krb5_context context,
 			     gss_const_buffer_t input_message_buffer,
 			     gss_buffer_t output_message_buffer,
@@ -1570,7 +1570,7 @@ OM_uint32 _gssapi_unwrap_cfx(OM_uint32 *minor_status,
 }
 
 OM_uint32 _gssapi_mic_cfx(OM_uint32 *minor_status,
-			  gsskrb5_const_ctx ctx,
+			  gsskrb5_ctx ctx,
 			  krb5_context context,
 			  gss_qop_t qop_req,
 			  gss_const_buffer_t message_buffer,
@@ -1651,7 +1651,7 @@ OM_uint32 _gssapi_mic_cfx(OM_uint32 *minor_status,
 }
 
 OM_uint32 _gssapi_verify_mic_cfx(OM_uint32 *minor_status,
-				 gsskrb5_const_ctx ctx,
+				 gsskrb5_ctx ctx,
 				 krb5_context context,
 				 gss_const_buffer_t message_buffer,
 				 gss_const_buffer_t token_buffer,

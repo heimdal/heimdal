@@ -89,7 +89,6 @@ typedef struct gsskrb5_ctx {
   krb5_data fwd_data;
   krb5_crypto crypto;
 } *gsskrb5_ctx;
-typedef const struct gsskrb5_ctx *gsskrb5_const_ctx;
 
 typedef struct gsskrb5_cred {
   krb5_principal principal;

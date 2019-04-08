@@ -38,7 +38,7 @@
 static OM_uint32
 verify_mic_des
            (OM_uint32 * minor_status,
-            gsskrb5_const_ctx context_handle,
+            gsskrb5_ctx context_handle,
 	    krb5_context context,
             gss_const_buffer_t message_buffer,
             gss_const_buffer_t token_buffer,
@@ -136,7 +136,7 @@ verify_mic_des
 static OM_uint32
 verify_mic_des3
            (OM_uint32 * minor_status,
-            gsskrb5_const_ctx context_handle,
+            gsskrb5_ctx context_handle,
 	    krb5_context context,
             gss_const_buffer_t message_buffer,
             gss_const_buffer_t token_buffer,
@@ -275,7 +275,7 @@ retry:
 OM_uint32
 _gsskrb5_verify_mic_internal
            (OM_uint32 * minor_status,
-            gsskrb5_const_ctx ctx,
+            gsskrb5_ctx ctx,
 	    krb5_context context,
             gss_const_buffer_t message_buffer,
             gss_const_buffer_t token_buffer,
@@ -336,7 +336,7 @@ _gsskrb5_verify_mic_internal
 OM_uint32 GSSAPI_CALLCONV
 _gsskrb5_verify_mic
            (OM_uint32 * minor_status,
-            gss_const_ctx_id_t context_handle,
+            gss_ctx_id_t context_handle,
             gss_const_buffer_t message_buffer,
             gss_const_buffer_t token_buffer,
             gss_qop_t * qop_state

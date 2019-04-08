@@ -38,7 +38,7 @@
  */
 
 krb5_error_code
-_gsskrb5i_get_initiator_subkey(gsskrb5_const_ctx ctx,
+_gsskrb5i_get_initiator_subkey(gsskrb5_ctx ctx,
 			       krb5_context context,
 			       krb5_keyblock **key)
 {
@@ -66,7 +66,7 @@ _gsskrb5i_get_initiator_subkey(gsskrb5_const_ctx ctx,
 }
 
 krb5_error_code
-_gsskrb5i_get_acceptor_subkey(gsskrb5_const_ctx ctx,
+_gsskrb5i_get_acceptor_subkey(gsskrb5_ctx ctx,
 			      krb5_context context,
 			      krb5_keyblock **key)
 {
@@ -90,7 +90,7 @@ _gsskrb5i_get_acceptor_subkey(gsskrb5_const_ctx ctx,
 }
 
 OM_uint32
-_gsskrb5i_get_token_key(gsskrb5_const_ctx ctx,
+_gsskrb5i_get_token_key(gsskrb5_ctx ctx,
 			krb5_context context,
 			krb5_keyblock **key)
 {
@@ -137,7 +137,7 @@ sub_wrap_size (
 OM_uint32 GSSAPI_CALLCONV
 _gsskrb5_wrap_size_limit (
             OM_uint32 * minor_status,
-            gss_const_ctx_id_t context_handle,
+            gss_ctx_id_t context_handle,
             int conf_req_flag,
             gss_qop_t qop_req,
             OM_uint32 req_output_size,
@@ -147,7 +147,7 @@ _gsskrb5_wrap_size_limit (
   krb5_context context;
   krb5_keyblock *key;
   OM_uint32 ret;
-  gsskrb5_const_ctx ctx = (gsskrb5_const_ctx) context_handle;
+  gsskrb5_ctx ctx = (gsskrb5_ctx) context_handle;
 
   GSSAPI_KRB5_INIT (&context);
 
@@ -198,7 +198,7 @@ _gsskrb5_wrap_size_limit (
 static OM_uint32
 wrap_des
            (OM_uint32 * minor_status,
-            gsskrb5_const_ctx ctx,
+            gsskrb5_ctx ctx,
 	    krb5_context context,
             int conf_req_flag,
             gss_qop_t qop_req,
@@ -337,7 +337,7 @@ wrap_des
 static OM_uint32
 wrap_des3
            (OM_uint32 * minor_status,
-            gsskrb5_const_ctx ctx,
+            gsskrb5_ctx ctx,
 	    krb5_context context,
             int conf_req_flag,
             gss_qop_t qop_req,
@@ -528,7 +528,7 @@ wrap_des3
 OM_uint32 GSSAPI_CALLCONV
 _gsskrb5_wrap
            (OM_uint32 * minor_status,
-            gss_const_ctx_id_t context_handle,
+            gss_ctx_id_t context_handle,
             int conf_req_flag,
             gss_qop_t qop_req,
             gss_const_buffer_t input_message_buffer,
@@ -539,7 +539,7 @@ _gsskrb5_wrap
   krb5_context context;
   krb5_keyblock *key;
   OM_uint32 ret;
-  gsskrb5_const_ctx ctx = (gsskrb5_const_ctx) context_handle;
+  gsskrb5_ctx ctx = (gsskrb5_ctx) context_handle;
 
   output_message_buffer->value = NULL;
   output_message_buffer->length = 0;

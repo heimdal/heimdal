@@ -71,7 +71,7 @@ oid_prefix_equal(gss_const_OID oid_enc, gss_const_OID prefix_enc, unsigned *suff
 
 static OM_uint32 inquire_sec_context_tkt_flags
            (OM_uint32 *minor_status,
-            gsskrb5_const_ctx context_handle,
+            gsskrb5_ctx context_handle,
             gss_buffer_set_t *data_set)
 {
     OM_uint32 tkt_flags;
@@ -103,7 +103,7 @@ enum keytype { ACCEPTOR_KEY, INITIATOR_KEY, TOKEN_KEY };
 
 static OM_uint32 inquire_sec_context_get_subkey
            (OM_uint32 *minor_status,
-            gsskrb5_const_ctx context_handle,
+            gsskrb5_ctx context_handle,
 	    krb5_context context,
 	    enum keytype keytype,
             gss_buffer_set_t *data_set)
@@ -181,7 +181,7 @@ out:
 
 static OM_uint32 inquire_sec_context_get_sspi_session_key
             (OM_uint32 *minor_status,
-             gsskrb5_const_ctx context_handle,
+             gsskrb5_ctx context_handle,
              krb5_context context,
              gss_buffer_set_t *data_set)
 {
@@ -221,7 +221,7 @@ out:
 
 static OM_uint32 inquire_sec_context_authz_data
            (OM_uint32 *minor_status,
-            gsskrb5_const_ctx context_handle,
+            gsskrb5_ctx context_handle,
 	    krb5_context context,
             unsigned ad_type,
             gss_buffer_set_t *data_set)
@@ -265,7 +265,7 @@ static OM_uint32 inquire_sec_context_authz_data
 
 static OM_uint32 inquire_sec_context_has_updated_spnego
            (OM_uint32 *minor_status,
-            gsskrb5_const_ctx context_handle,
+            gsskrb5_ctx context_handle,
             gss_buffer_set_t *data_set)
 {
     int is_updated = 0;
@@ -304,7 +304,7 @@ static OM_uint32 inquire_sec_context_has_updated_spnego
 
 static OM_uint32
 export_lucid_sec_context_v1(OM_uint32 *minor_status,
-			    gsskrb5_const_ctx context_handle,
+			    gsskrb5_ctx context_handle,
 			    krb5_context context,
 			    gss_buffer_set_t *data_set)
 {
@@ -433,7 +433,7 @@ out:
 
 static OM_uint32
 get_authtime(OM_uint32 *minor_status,
-	     gsskrb5_const_ctx ctx,
+	     gsskrb5_ctx ctx,
 	     gss_buffer_set_t *data_set)
 
 {
@@ -466,7 +466,7 @@ get_authtime(OM_uint32 *minor_status,
 static OM_uint32
 get_service_keyblock
         (OM_uint32 *minor_status,
-	 gsskrb5_const_ctx ctx,
+	 gsskrb5_ctx ctx,
 	 gss_buffer_set_t *data_set)
 {
     krb5_storage *sp = NULL;
@@ -530,12 +530,12 @@ out:
 
 OM_uint32 GSSAPI_CALLCONV _gsskrb5_inquire_sec_context_by_oid
            (OM_uint32 *minor_status,
-            gss_const_ctx_id_t context_handle,
+            gss_ctx_id_t context_handle,
             gss_const_OID desired_object,
             gss_buffer_set_t *data_set)
 {
     krb5_context context;
-    gsskrb5_const_ctx ctx = (gsskrb5_const_ctx) context_handle;
+    gsskrb5_ctx ctx = (gsskrb5_ctx) context_handle;
     unsigned suffix;
 
     if (ctx == NULL) {

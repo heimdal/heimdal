@@ -96,7 +96,7 @@ mic_des
 		 &schedule, &zero);
   memcpy (p - 8, hash, 8);	/* SGN_CKSUM */
 
-  HEIMDAL_MUTEX_lock(ctx->ctx_id_mutexp);
+  HEIMDAL_MUTEX_lock(&ctx->ctx_id_mutex);
   /* sequence number */
   krb5_auth_con_getlocalseqnumber (context,
 				   ctx->auth_context,
@@ -119,7 +119,7 @@ mic_des
   krb5_auth_con_setlocalseqnumber (context,
 			       ctx->auth_context,
 			       ++seq_number);
-  HEIMDAL_MUTEX_unlock(ctx->ctx_id_mutexp);
+  HEIMDAL_MUTEX_unlock(&ctx->ctx_id_mutex);
 
   memset_s(deskey, sizeof(deskey), 0, sizeof(deskey));
   memset_s(&schedule, sizeof(schedule), 0, sizeof(schedule));
@@ -216,7 +216,7 @@ mic_des3
 
   memcpy (p + 8, cksum.checksum.data, cksum.checksum.length);
 
-  HEIMDAL_MUTEX_lock(ctx->ctx_id_mutexp);
+  HEIMDAL_MUTEX_lock(&ctx->ctx_id_mutex);
   /* sequence number */
   krb5_auth_con_getlocalseqnumber (context,
 			       ctx->auth_context,
@@ -266,7 +266,7 @@ mic_des3
   krb5_auth_con_setlocalseqnumber (context,
 			       ctx->auth_context,
 			       ++seq_number);
-  HEIMDAL_MUTEX_unlock(ctx->ctx_id_mutexp);
+  HEIMDAL_MUTEX_unlock(&ctx->ctx_id_mutex);
 
   free_Checksum (&cksum);
   *minor_status = 0;
@@ -292,9 +292,9 @@ OM_uint32 GSSAPI_CALLCONV _gsskrb5_get_mic
       return _gssapi_mic_cfx (minor_status, ctx, context, qop_req,
 			      message_buffer, message_token);
 
-  HEIMDAL_MUTEX_lock(ctx->ctx_id_mutexp);
+  HEIMDAL_MUTEX_lock(&ctx->ctx_id_mutex);
   ret = _gsskrb5i_get_token_key(ctx, context, &key);
-  HEIMDAL_MUTEX_unlock(ctx->ctx_id_mutexp);
+  HEIMDAL_MUTEX_unlock(&ctx->ctx_id_mutex);
   if (ret) {
       *minor_status = ret;
       return GSS_S_FAILURE;

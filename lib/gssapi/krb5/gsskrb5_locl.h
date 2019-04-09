@@ -83,7 +83,6 @@ typedef struct gsskrb5_ctx {
   struct krb5_ticket *ticket;
   time_t endtime;
   HEIMDAL_MUTEX ctx_id_mutex;
-  HEIMDAL_MUTEX *ctx_id_mutexp;
   struct gss_msg_order *order;
   krb5_keyblock *service_keyblock;
   krb5_data fwd_data;

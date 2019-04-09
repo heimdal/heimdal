@@ -57,7 +57,7 @@ OM_uint32 GSSAPI_CALLCONV _gsskrb5_inquire_context (
 
     GSSAPI_KRB5_INIT (&context);
 
-    HEIMDAL_MUTEX_lock(ctx->ctx_id_mutexp);
+    HEIMDAL_MUTEX_lock(&ctx->ctx_id_mutex);
 
     if (src_name) {
 	name = (gss_name_t)ctx->source;
@@ -96,7 +96,7 @@ OM_uint32 GSSAPI_CALLCONV _gsskrb5_inquire_context (
 
     *minor_status = 0;
 
-    HEIMDAL_MUTEX_unlock(ctx->ctx_id_mutexp);
+    HEIMDAL_MUTEX_unlock(&ctx->ctx_id_mutex);
     return GSS_S_COMPLETE;
 
 failed:
@@ -105,6 +105,6 @@ failed:
     if (targ_name)
 	_gsskrb5_release_name(NULL, targ_name);
 
-    HEIMDAL_MUTEX_unlock(ctx->ctx_id_mutexp);
+    HEIMDAL_MUTEX_unlock(&ctx->ctx_id_mutex);
     return ret;
 }

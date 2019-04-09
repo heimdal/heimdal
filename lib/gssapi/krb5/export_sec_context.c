@@ -53,17 +53,17 @@ _gsskrb5_export_sec_context(
 
     GSSAPI_KRB5_INIT (&context);
 
-    HEIMDAL_MUTEX_lock(ctx->ctx_id_mutexp);
+    HEIMDAL_MUTEX_lock(&ctx->ctx_id_mutex);
 
     if (!(ctx->flags & GSS_C_TRANS_FLAG)) {
-	HEIMDAL_MUTEX_unlock(ctx->ctx_id_mutexp);
+	HEIMDAL_MUTEX_unlock(&ctx->ctx_id_mutex);
 	*minor_status = 0;
 	return GSS_S_UNAVAILABLE;
     }
 
     sp = krb5_storage_emem ();
     if (sp == NULL) {
-	HEIMDAL_MUTEX_unlock(ctx->ctx_id_mutexp);
+	HEIMDAL_MUTEX_unlock(&ctx->ctx_id_mutex);
 	*minor_status = ENOMEM;
 	return GSS_S_FAILURE;
     }
@@ -222,13 +222,13 @@ _gsskrb5_export_sec_context(
     kret = krb5_storage_to_data (sp, &data);
     krb5_storage_free (sp);
     if (kret) {
-	HEIMDAL_MUTEX_unlock(ctx->ctx_id_mutexp);
+	HEIMDAL_MUTEX_unlock(&ctx->ctx_id_mutex);
 	*minor_status = kret;
 	return GSS_S_FAILURE;
     }
     interprocess_token->length = data.length;
     interprocess_token->value  = data.data;
-    HEIMDAL_MUTEX_unlock(ctx->ctx_id_mutexp);
+    HEIMDAL_MUTEX_unlock(&ctx->ctx_id_mutex);
     ret = _gsskrb5_delete_sec_context (minor_status, context_handle,
 				       GSS_C_NO_BUFFER);
     if (ret != GSS_S_COMPLETE)
@@ -236,7 +236,7 @@ _gsskrb5_export_sec_context(
     *minor_status = 0;
     return ret;
  failure:
-    HEIMDAL_MUTEX_unlock(ctx->ctx_id_mutexp);
+    HEIMDAL_MUTEX_unlock(&ctx->ctx_id_mutex);
     krb5_storage_free (sp);
     return ret;
 }

@@ -89,7 +89,6 @@ typedef struct {
 	unsigned int		verified_mic : 1;
 	unsigned int		maybe_open : 1;
 	HEIMDAL_MUTEX		ctx_id_mutex;
-	HEIMDAL_MUTEX		*ctx_id_mutexp;
 
 	gss_name_t		target_name;
 

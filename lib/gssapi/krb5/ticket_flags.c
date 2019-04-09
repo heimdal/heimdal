@@ -42,16 +42,16 @@ _gsskrb5_get_tkt_flags(OM_uint32 *minor_status,
 	*minor_status = EINVAL;
 	return GSS_S_NO_CONTEXT;
     }
-    HEIMDAL_MUTEX_lock(ctx->ctx_id_mutexp);
+    HEIMDAL_MUTEX_lock(&ctx->ctx_id_mutex);
 
     if (ctx->ticket == NULL) {
-	HEIMDAL_MUTEX_unlock(ctx->ctx_id_mutexp);
+	HEIMDAL_MUTEX_unlock(&ctx->ctx_id_mutex);
 	*minor_status = EINVAL;
 	return GSS_S_BAD_MECH;
     }
 
     *tkt_flags = TicketFlags2int(ctx->ticket->ticket.flags);
-    HEIMDAL_MUTEX_unlock(ctx->ctx_id_mutexp);
+    HEIMDAL_MUTEX_unlock(&ctx->ctx_id_mutex);
 
     *minor_status = 0;
     return GSS_S_COMPLETE;

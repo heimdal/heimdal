@@ -96,7 +96,7 @@ verify_mic_des
 
   /* verify sequence number */
 
-  HEIMDAL_MUTEX_lock(context_handle->ctx_id_mutexp);
+  HEIMDAL_MUTEX_lock(&context_handle->ctx_id_mutex);
 
   p -= 16;
 
@@ -117,17 +117,17 @@ verify_mic_des
       cmp = ct_memcmp(&seq[4], "\x00\x00\x00\x00", 4);
 
   if (cmp != 0) {
-    HEIMDAL_MUTEX_unlock(context_handle->ctx_id_mutexp);
+    HEIMDAL_MUTEX_unlock(&context_handle->ctx_id_mutex);
     return GSS_S_BAD_MIC;
   }
 
   ret = _gssapi_msg_order_check(context_handle->order, seq_number);
   if (ret) {
-      HEIMDAL_MUTEX_unlock(context_handle->ctx_id_mutexp);
+      HEIMDAL_MUTEX_unlock(&context_handle->ctx_id_mutex);
       return ret;
   }
 
-  HEIMDAL_MUTEX_unlock(context_handle->ctx_id_mutexp);
+  HEIMDAL_MUTEX_unlock(&context_handle->ctx_id_mutex);
 
   return GSS_S_COMPLETE;
 }
@@ -208,7 +208,7 @@ retry:
 	  goto retry;
   }
 
-  HEIMDAL_MUTEX_lock(context_handle->ctx_id_mutexp);
+  HEIMDAL_MUTEX_lock(&context_handle->ctx_id_mutex);
 
   seq = seq_data.data;
   _gsskrb5_decode_om_uint32(seq, &seq_number);
@@ -222,7 +222,7 @@ retry:
   if (cmp != 0) {
       krb5_crypto_destroy (context, crypto);
       *minor_status = 0;
-      HEIMDAL_MUTEX_unlock(context_handle->ctx_id_mutexp);
+      HEIMDAL_MUTEX_unlock(&context_handle->ctx_id_mutex);
       return GSS_S_BAD_MIC;
   }
 
@@ -230,7 +230,7 @@ retry:
   if (ret) {
       krb5_crypto_destroy (context, crypto);
       *minor_status = 0;
-      HEIMDAL_MUTEX_unlock(context_handle->ctx_id_mutexp);
+      HEIMDAL_MUTEX_unlock(&context_handle->ctx_id_mutex);
       return ret;
   }
 
@@ -239,7 +239,7 @@ retry:
   tmp = malloc (message_buffer->length + 8);
   if (tmp == NULL) {
       krb5_crypto_destroy (context, crypto);
-      HEIMDAL_MUTEX_unlock(context_handle->ctx_id_mutexp);
+      HEIMDAL_MUTEX_unlock(&context_handle->ctx_id_mutex);
       *minor_status = ENOMEM;
       return GSS_S_FAILURE;
   }
@@ -263,10 +263,10 @@ retry:
   if (ret) {
       krb5_crypto_destroy (context, crypto);
       *minor_status = ret;
-      HEIMDAL_MUTEX_unlock(context_handle->ctx_id_mutexp);
+      HEIMDAL_MUTEX_unlock(&context_handle->ctx_id_mutex);
       return GSS_S_BAD_MIC;
   }
-  HEIMDAL_MUTEX_unlock(context_handle->ctx_id_mutexp);
+  HEIMDAL_MUTEX_unlock(&context_handle->ctx_id_mutex);
 
   krb5_crypto_destroy (context, crypto);
   return GSS_S_COMPLETE;
@@ -291,9 +291,9 @@ _gsskrb5_verify_mic_internal
 				       context, message_buffer, token_buffer,
 				       qop_state);
 
-    HEIMDAL_MUTEX_lock(ctx->ctx_id_mutexp);
+    HEIMDAL_MUTEX_lock(&ctx->ctx_id_mutex);
     ret = _gsskrb5i_get_token_key(ctx, context, &key);
-    HEIMDAL_MUTEX_unlock(ctx->ctx_id_mutexp);
+    HEIMDAL_MUTEX_unlock(&ctx->ctx_id_mutex);
     if (ret) {
 	*minor_status = ret;
 	return GSS_S_FAILURE;

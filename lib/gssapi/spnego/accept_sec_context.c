@@ -548,11 +548,11 @@ acceptor_start
 	return GSS_S_DEFECTIVE_TOKEN;
     }
 
-    HEIMDAL_MUTEX_lock(ctx->ctx_id_mutexp);
+    HEIMDAL_MUTEX_lock(&ctx->ctx_id_mutex);
 
     ret = copy_MechTypeList(&ni->mechTypes, &ctx->initiator_mech_types);
     if (ret) {
-	HEIMDAL_MUTEX_unlock(ctx->ctx_id_mutexp);
+	HEIMDAL_MUTEX_unlock(&ctx->ctx_id_mutex);
 	free_NegotiationToken(&nt);
 	*minor_status = ret;
 	return GSS_S_FAILURE;
@@ -633,7 +633,7 @@ acceptor_start
 		break;
 	}
 	if (preferred_mech_type == GSS_C_NO_OID) {
-	    HEIMDAL_MUTEX_unlock(ctx->ctx_id_mutexp);
+	    HEIMDAL_MUTEX_unlock(&ctx->ctx_id_mutex);
 	    free_NegotiationToken(&nt);
 	    return ret;
 	}
@@ -685,7 +685,7 @@ out:
 	*time_rec = ctx->mech_time_rec;
 
     if (ret == GSS_S_COMPLETE || ret == GSS_S_CONTINUE_NEEDED) {
-	HEIMDAL_MUTEX_unlock(ctx->ctx_id_mutexp);
+	HEIMDAL_MUTEX_unlock(&ctx->ctx_id_mutex);
  	return ret;
     }
 
@@ -747,7 +747,7 @@ acceptor_continue
 	negResult = *(na->negResult);
     }
 
-    HEIMDAL_MUTEX_lock(ctx->ctx_id_mutexp);
+    HEIMDAL_MUTEX_lock(&ctx->ctx_id_mutex);
 
     {
 	gss_buffer_desc ibuf, obuf;
@@ -788,7 +788,7 @@ acceptor_continue
 		free_NegotiationToken(&nt);
 		gss_mg_collect_error(ctx->negotiated_mech_type, ret, minor);
 		send_reject (minor_status, output_token);
-		HEIMDAL_MUTEX_unlock(ctx->ctx_id_mutexp);
+		HEIMDAL_MUTEX_unlock(&ctx->ctx_id_mutex);
 		return ret;
 	    }
 	    if (ret == GSS_S_COMPLETE)
@@ -873,7 +873,7 @@ acceptor_continue
 	*time_rec = ctx->mech_time_rec;
 
     if (ret == GSS_S_COMPLETE || ret == GSS_S_CONTINUE_NEEDED) {
-	HEIMDAL_MUTEX_unlock(ctx->ctx_id_mutexp);
+	HEIMDAL_MUTEX_unlock(&ctx->ctx_id_mutex);
  	return ret;
     }
 

@@ -1763,7 +1763,7 @@ _kdc_as_rep(kdc_request_t r,
     if (_kdc_is_anonymous(context, r->client_princ)) {
 	if (!_kdc_is_anon_request(b)) {
 	    kdc_log(context, config, 0, "Anonymous ticket w/o anonymous flag");
-	    ret = KRB5KDC_ERR_C_PRINCIPAL_UNKNOWN;
+	    ret = KRB5KDC_ERR_BADOPTION;
 	    goto out;
 	}
     } else if (_kdc_is_anon_request(b)) {

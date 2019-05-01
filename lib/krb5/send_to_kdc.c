@@ -1173,7 +1173,7 @@ krb5_sendto_context(krb5_context context,
 
 	    action = KRB5_SENDTO_CONTINUE;
 	    if (ret == 0) {
-		_krb5_debug(context, 5, "submissing new requests to new host");
+		_krb5_debug(context, 5, "submitting new requests to new host");
 		if (submit_request(context, ctx, hi) != 0)
 		    action = KRB5_SENDTO_TIMEOUT;
 	    } else {

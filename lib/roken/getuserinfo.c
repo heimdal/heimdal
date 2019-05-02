@@ -230,7 +230,7 @@ roken_get_username(char *user, size_t usersz)
         p = strchr(user, '\\');
         if (p != NULL) {
             p++;
-            memmove(user, p, strlen(p));
+            memmove(user, p, strlen(p) + 1);
         }
         return user;
     } else {

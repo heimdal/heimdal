@@ -248,18 +248,30 @@ _kdc_find_etype(krb5_context context, krb5_boolean use_strongest_session_key,
 krb5_error_code
 _kdc_make_anonymous_principalname (PrincipalName *pn)
 {
-    pn->name_type = KRB5_NT_PRINCIPAL;
-    pn->name_string.len = 1;
-    pn->name_string.val = malloc(sizeof(*pn->name_string.val));
+    pn->name_type = KRB5_NT_WELLKNOWN;
+    pn->name_string.len = 2;
+    pn->name_string.val = calloc(2, sizeof(*pn->name_string.val));
     if (pn->name_string.val == NULL)
-	return ENOMEM;
-    pn->name_string.val[0] = strdup("anonymous");
-    if (pn->name_string.val[0] == NULL) {
-	free(pn->name_string.val);
-	pn->name_string.val = NULL;
-	return ENOMEM;
-    }
+	goto failed;
+
+    pn->name_string.val[0] = strdup(KRB5_WELLKNOWN_NAME);
+    if (pn->name_string.val[0] == NULL)
+	goto failed;
+
+    pn->name_string.val[1] = strdup(KRB5_ANON_NAME);
+    if (pn->name_string.val[1] == NULL)
+	goto failed;
+
     return 0;
+
+failed:
+    free_PrincipalName(pn);
+
+    pn->name_type = KRB5_NT_UNKNOWN;
+    pn->name_string.len = 0;
+    pn->name_string.val = NULL;
+
+    return ENOMEM;
 }
 
 static void

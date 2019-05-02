@@ -594,12 +594,6 @@ pa_enc_ts_validate(kdc_request_t r, const PA_DATA *pa)
     Key *pa_key;
     char *str;
 	
-    if (_kdc_is_anon_request(&r->req.req_body)) {
-	ret = KRB5KRB_AP_ERR_BAD_INTEGRITY;
-	_kdc_set_e_text(r, "ENC-TS doesn't support anon");
-	goto out;
-    }
-
     ret = decode_EncryptedData(pa->padata_value.data,
 			       pa->padata_value.length,
 			       &enc_data,
@@ -1709,16 +1703,10 @@ _kdc_as_rep(kdc_request_t r,
 
     if (_kdc_is_anonymous(context, r->client_princ)) {
 	if (!_kdc_is_anon_request(b)) {
-	    kdc_log(context, config, 0, "Anonymous ticket w/o anonymous flag");
+	    kdc_log(context, config, 0, "Anonymous client w/o anonymous flag");
 	    ret = KRB5KDC_ERR_BADOPTION;
 	    goto out;
 	}
-    } else if (_kdc_is_anon_request(b)) {
-	kdc_log(context, config, 0,
-		"Request for a anonymous ticket with non "
-		"anonymous client name: %s", r->client_name);
-	ret = KRB5KDC_ERR_C_PRINCIPAL_UNKNOWN;
-	goto out;
     }
 
     /*
@@ -1947,13 +1935,16 @@ _kdc_as_rep(kdc_request_t r,
     rep.msg_type = krb_as_rep;
 
     if (_kdc_is_anonymous(context, r->client_princ)) {
-	Realm anon_realm=KRB5_ANON_REALM;
+	Realm anon_realm = KRB5_ANON_REALM;
 	ret = copy_Realm(&anon_realm, &rep.crealm);
     } else
 	ret = copy_Realm(&r->client->entry.principal->realm, &rep.crealm);
     if (ret)
 	goto out;
-    ret = _krb5_principal2principalname(&rep.cname, r->client->entry.principal);
+    if (_kdc_is_anon_request(b))
+	ret = _kdc_make_anonymous_principalname(&rep.cname);
+    else
+        ret = _krb5_principal2principalname(&rep.cname, r->client->entry.principal);
     if (ret)
 	goto out;
 

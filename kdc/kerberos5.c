@@ -2161,7 +2161,7 @@ _kdc_as_rep(kdc_request_t r,
     }
 
     /* Add the PAC */
-    if (send_pac_p(context, req)) {
+    if (send_pac_p(context, req) && !_kdc_is_anon_request(b)) {
 	generate_pac(r, skey);
     }
 

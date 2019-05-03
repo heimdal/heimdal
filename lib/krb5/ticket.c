@@ -527,26 +527,46 @@ noreferral:
 }
 
 
+static krb5_boolean
+is_anonymous_principal(krb5_context context, krb5_const_principal principal)
+{
+    if ((principal->name.name_type != KRB5_NT_WELLKNOWN &&
+         principal->name.name_type != KRB5_NT_UNKNOWN) ||
+        principal->name.name_string.len != 2 ||
+        strcmp(principal->name.name_string.val[0], KRB5_WELLKNOWN_NAME) != 0 ||
+        strcmp(principal->name.name_string.val[1], KRB5_ANON_NAME) != 0)
+        return 0;
+    return 1;
+}
+
 /*
- * Verify referral data
+ * Verify returned client principal name in anonymous/referral case
  */
 
-
 static krb5_error_code
-check_client_referral(krb5_context context,
+check_client_mismatch(krb5_context context,
 		      krb5_kdc_rep *rep,
 		      krb5_const_principal requested,
 		      krb5_const_principal mapped,
 		      krb5_keyblock const * key)
 {
-    if (krb5_principal_compare(context, requested, mapped) == FALSE &&
-	!rep->enc_part.flags.enc_pa_rep)
-    {
-	krb5_set_error_message(context, KRB5KRB_AP_ERR_MODIFIED,
-			       N_("Not same client principal returned "
-				  "as requested", ""));
-	return KRB5KRB_AP_ERR_MODIFIED;
+    if (rep->enc_part.flags.anonymous) {
+	if (!is_anonymous_principal(context, mapped)) {
+	    krb5_set_error_message(context, KRB5KRB_AP_ERR_MODIFIED,
+				   N_("Anonymous ticket does not contain anonymous "
+				      "principal", ""));
+	    return KRB5KRB_AP_ERR_MODIFIED;
+	}
+    } else {
+	if (krb5_principal_compare(context, requested, mapped) == FALSE &&
+	    !rep->enc_part.flags.enc_pa_rep) {
+	    krb5_set_error_message(context, KRB5KRB_AP_ERR_MODIFIED,
+				   N_("Not same client principal returned "
+				   "as requested", ""));
+	    return KRB5KRB_AP_ERR_MODIFIED;
+	}
     }
+
     return 0;
 }
 
@@ -690,7 +710,7 @@ _krb5_extract_ticket(krb5_context context,
     /* check client referral and save principal */
     /* anonymous here ? */
     if((flags & EXTRACT_TICKET_ALLOW_CNAME_MISMATCH) == 0) {
-	ret = check_client_referral(context, rep,
+	ret = check_client_mismatch(context, rep,
 				    creds->client,
 				    tmp_principal,
 				    &creds->session);

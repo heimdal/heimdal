@@ -155,7 +155,7 @@ static struct getargs args[] = {
     { "extra-addresses",'a', arg_strings,	&extra_addresses,
       NP_("include these extra addresses", ""), "addresses" },
 
-    { "anonymous",	0,   arg_flag,	&anonymous_flag,
+    { "anonymous",	'n',   arg_flag,	&anonymous_flag,
       NP_("request an anonymous ticket", ""), NULL },
 
     { "request-pac",	0,   arg_flag,	&pac_flag,
@@ -425,12 +425,25 @@ store_ntlmkey(krb5_context context, krb5_ccache id,
 }
 #endif
 
+static krb5_boolean
+is_anonymous_princ_p(krb5_const_principal principal)
+{
+    if ((principal->name.name_type != KRB5_NT_WELLKNOWN &&
+	principal->name.name_type != KRB5_NT_UNKNOWN) ||
+	principal->name.name_string.len != 2 ||
+	strcmp(principal->name.name_string.val[0], KRB5_WELLKNOWN_NAME) != 0 ||
+	strcmp(principal->name.name_string.val[1], KRB5_ANON_NAME) != 0)
+	return 0;
+    return 1;
+}
+
 static krb5_error_code
 get_new_tickets(krb5_context context,
 		krb5_principal principal,
 		krb5_ccache ccache,
 		krb5_deltat ticket_life,
-		int interactive)
+		int interactive,
+		int anonymous_pkinit)
 {
     krb5_error_code ret;
     krb5_creds cred;
@@ -529,7 +542,7 @@ get_new_tickets(krb5_context context,
 	krb5_get_init_creds_opt_set_canonicalize(context, opt, TRUE);
     if (pk_enterprise_flag || enterprise_flag || canonicalize_flag || windows_flag)
 	krb5_get_init_creds_opt_set_win2k(context, opt, TRUE);
-    if (pk_user_id || ent_user_id || anonymous_flag) {
+    if (pk_user_id || ent_user_id || anonymous_pkinit) {
 	ret = krb5_get_init_creds_opt_set_pkinit(context, opt,
 						 principal,
 						 pk_user_id,
@@ -537,7 +550,7 @@ get_new_tickets(krb5_context context,
 						 NULL,
 						 NULL,
 						 pk_use_enckey ? 2 : 0 |
-						 anonymous_flag ? 4 : 0,
+						 anonymous_pkinit ? 4 : 0,
 						 prompter,
 						 NULL,
 						 passwd);
@@ -629,7 +642,7 @@ get_new_tickets(krb5_context context,
 	    krb5_warn(context, ret, "krb5_init_creds_set_keytab");
 	    goto out;
 	}
-    } else if (pk_user_id || ent_user_id || anonymous_flag) {
+    } else if (pk_user_id || ent_user_id || is_anonymous_princ_p(principal)) {
 
     } else if (!interactive && passwd[0] == '\0') {
 	static int already_warned = 0;
@@ -924,7 +937,7 @@ renew_func(void *ptr)
 		       server_str, ctx->ticket_life);
     } else {
 	ret = get_new_tickets(ctx->context, ctx->principal, ctx->ccache,
-			      ctx->ticket_life, 0);
+			      ctx->ticket_life, 0, 0);
     }
     expire = ticket_lifetime(ctx->context, ctx->ccache, ctx->principal,
 			     server_str, &renew_expire);
@@ -1224,6 +1237,7 @@ main(int argc, char **argv)
     struct sigaction sa;
 #endif
     krb5_boolean unique_ccache = FALSE;
+    int anonymous_pkinit = FALSE;
 
     setprogname(argv[0]);
 
@@ -1273,15 +1287,16 @@ main(int argc, char **argv)
 
 	pk_user_id = NULL;
 
-    } else if (anonymous_flag) {
+    } else if (anonymous_flag && argc && argv[0][0] == '@') {
+	/* If principal argument as @REALM, try anonymous PKINIT */
 
-	ret = krb5_make_principal(context, &principal, argv[0],
+	ret = krb5_make_principal(context, &principal, &argv[0][1],
 				  KRB5_WELLKNOWN_NAME, KRB5_ANON_NAME,
 				  NULL);
 	if (ret)
 	    krb5_err(context, 1, ret, "krb5_make_principal");
 	krb5_principal_set_type(context, principal, KRB5_NT_WELLKNOWN);
-
+	anonymous_pkinit = TRUE;
     } else if (use_keytab || keytab_str) {
 	get_princ_kt(context, &principal, argv[0]);
     } else {
@@ -1388,7 +1403,8 @@ main(int argc, char **argv)
 	exit(ret != 0);
     }
 
-    ret = get_new_tickets(context, principal, ccache, ticket_life, 1);
+    ret = get_new_tickets(context, principal, ccache, ticket_life,
+			  1, anonymous_pkinit);
     if (ret) {
 	if (unique_ccache)
 	    krb5_cc_destroy(context, ccache);

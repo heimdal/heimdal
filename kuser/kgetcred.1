@@ -58,6 +58,7 @@
 .Op Fl Fl no-transit-check
 .Op Fl Fl no-store
 .Op Fl Fl cached-only
+.Op Fl n \*(Ba Fl Fl anonymous
 .Op Fl Fl version
 .Op Fl Fl help
 .Ar principal
@@ -135,6 +136,8 @@ requests that the KDC doesn't do transit checking.
 do not store tickets in the ccache.
 .It Fl Fl cached-only
 do not talk the TGS, search only the ccache.
+.It Fl Fl anonymous
+obtain an anonymous service ticket.
 .It Fl Fl forwardable
 .It Fl Fl debug
 enables debug output to stderr.

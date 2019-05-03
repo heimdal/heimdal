@@ -1549,7 +1549,7 @@ generate_pac(kdc_request_t r, Key *skey)
  */
 
 krb5_boolean
-_kdc_is_anonymous(krb5_context context, krb5_principal principal)
+_kdc_is_anonymous(krb5_context context, krb5_const_principal principal)
 {
     if ((principal->name.name_type != KRB5_NT_WELLKNOWN &&
 	 principal->name.name_type != KRB5_NT_UNKNOWN) ||

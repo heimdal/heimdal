@@ -487,6 +487,30 @@ for a in $enctypes; do
 done
 ${kdestroy}
 
+echo "Getting client authenticated anonymous initial tickets"; > messages.log
+${kinit} -n --password-file=${objdir}/foopassword foo@$R || \
+	{ ec=1 ; eval "${testfailed}"; }
+for a in $enctypes; do
+	echo "Getting tickets ($a)"; > messages.log
+	${kgetcred} -e $a ${server}@${R} || { ec=1 ; eval "${testfailed}"; }
+	${test_ap_req} ${server}@${R} ${keytab} ${cache} || \
+		{ ec=1 ; eval "${testfailed}"; }
+	${kdestroy} --credential=${server}@${R}
+done
+${kdestroy}
+
+echo "Getting client anonymous service tickets"; > messages.log
+${kinit} --password-file=${objdir}/foopassword foo@$R || \
+	{ ec=1 ; eval "${testfailed}"; }
+for a in $enctypes; do
+	echo "Getting tickets ($a)"; > messages.log
+	${kgetcred} -n -e $a ${server}@${R} || { ec=1 ; eval "${testfailed}"; }
+	${test_ap_req} ${server}@${R} ${keytab} ${cache} || \
+		{ ec=1 ; eval "${testfailed}"; }
+	${kdestroy} --credential=${server}@${R}
+done
+${kdestroy}
+
 echo "Getting client initial tickets for cross realm case"; > messages.log
 ${kinit} --password-file=${objdir}/foopassword foo@$R || { ec=1 ; eval "${testfailed}"; }
 for a in $enctypes; do
@@ -713,7 +737,7 @@ fi
 if test "$pkinit" = yes -a "$rsa" = yes ; then
 
     echo "try anonymous pkinit"; > messages.log
-    ${kinit} --anonymous ${R} || \
+    ${kinit} -n @${R} || \
 	{ ec=1 ; eval "${testfailed}"; }
     ${kgetcred} ${server}@${R} || { ec=1 ; eval "${testfailed}"; }
     ${kdestroy}

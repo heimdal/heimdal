@@ -373,7 +373,10 @@ check_PAC(krb5_context context,
 static krb5_error_code
 check_tgs_flags(krb5_context context,
 		krb5_kdc_configuration *config,
-		KDC_REQ_BODY *b, const EncTicketPart *tgt, EncTicketPart *et)
+		KDC_REQ_BODY *b,
+		krb5_const_principal tgt_name,
+		const EncTicketPart *tgt,
+		EncTicketPart *et)
 {
     KDCOptions f = b->kdc_options;
 
@@ -487,14 +490,32 @@ check_tgs_flags(krb5_context context,
 	    et->endtime = min(*et->renew_till, et->endtime);
     }
 
-#if 0
-    /* checks for excess flags */
-    if(f.request_anonymous && !config->allow_anonymous){
+    /*
+     * RFC 8062 section 3 defines an anonymous ticket as one containing
+     * the anonymous principal and the anonymous ticket flag.
+     */
+    if (tgt->flags.anonymous &&
+	!_kdc_is_anonymous(context, tgt_name)) {
 	kdc_log(context, config, 0,
-		"Request for anonymous ticket");
+		"Anonymous ticket flag set without anonymous principal");
 	return KRB5KDC_ERR_BADOPTION;
     }
-#endif
+
+    /*
+     * RFC 8062 section 4.2 states that if the TGT is anonymous, the
+     * anonymous KDC option SHOULD be set, but it is not required.
+     * Treat an anonymous TGT as if the anonymous flag was set.
+     */
+    if (tgt->flags.anonymous || f.request_anonymous) {
+	if (!config->allow_anonymous){
+	    kdc_log(context, config, 0,
+		    "Request for anonymous ticket");
+	    return KRB5KDC_ERR_BADOPTION;
+	}
+
+	et->flags.anonymous = 1;
+    }
+
     return 0;
 }
 
@@ -770,7 +791,7 @@ tgs_make_reply(krb5_context context,
     ALLOC(et.starttime);
     *et.starttime = kdc_time;
 
-    ret = check_tgs_flags(context, config, b, tgt, &et);
+    ret = check_tgs_flags(context, config, b, tgt_name, tgt, &et);
     if(ret)
 	goto out;
 
@@ -814,12 +835,17 @@ tgs_make_reply(krb5_context context,
     ret = copy_Realm(&tgt_name->realm, &rep.crealm);
     if (ret)
 	goto out;
-/*
-    if (f.request_anonymous)
-	_kdc_make_anonymous_principalname (&rep.cname);
-    else */
 
-    ret = copy_PrincipalName(&tgt_name->name, &rep.cname);
+    /*
+     * RFC 8062 states "if the ticket in the TGS request is an anonymous
+     * one, the client and client realm are copied from that ticket". So
+     * whilst the TGT flag check below is superfluous, it is included in
+     * order to follow the specification to its letter.
+     */
+    if (et.flags.anonymous && !tgt->flags.anonymous)
+	_kdc_make_anonymous_principalname(&rep.cname);
+    else
+	ret = copy_PrincipalName(&tgt_name->name, &rep.cname);
     if (ret)
 	goto out;
     rep.ticket.tkt_vno = 5;
@@ -873,10 +899,15 @@ tgs_make_reply(krb5_context context,
 
     et.flags.pre_authent = tgt->flags.pre_authent;
     et.flags.hw_authent  = tgt->flags.hw_authent;
-    et.flags.anonymous   = tgt->flags.anonymous;
     et.flags.ok_as_delegate = server->entry.flags.ok_as_delegate;
 
-    if(rspac->length) {
+    /*
+     * For anonymous tickets, we should filter out positive authorization data
+     * that could reveal the client's identity, and return a policy error for
+     * restrictive authorization data. Policy for unknown authorization types
+     * is implementation dependent.
+     */
+    if (rspac->length && !et.flags.anonymous) {
 	/*
 	 * No not need to filter out the any PAC from the
 	 * auth_data since it's signed by the KDC.
@@ -926,8 +957,8 @@ tgs_make_reply(krb5_context context,
     ret = krb5_copy_keyblock_contents(context, sessionkey, &et.key);
     if (ret)
 	goto out;
-    et.crealm = tgt_name->realm;
-    et.cname = tgt_name->name;
+    et.crealm = rep.crealm;
+    et.cname = rep.cname;
 
     ek.key = et.key;
     /* MIT must have at least one last_req */

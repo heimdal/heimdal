@@ -425,18 +425,6 @@ store_ntlmkey(krb5_context context, krb5_ccache id,
 }
 #endif
 
-static krb5_boolean
-is_anonymous_princ_p(krb5_const_principal principal)
-{
-    if ((principal->name.name_type != KRB5_NT_WELLKNOWN &&
-	principal->name.name_type != KRB5_NT_UNKNOWN) ||
-	principal->name.name_string.len != 2 ||
-	strcmp(principal->name.name_string.val[0], KRB5_WELLKNOWN_NAME) != 0 ||
-	strcmp(principal->name.name_string.val[1], KRB5_ANON_NAME) != 0)
-	return 0;
-    return 1;
-}
-
 static krb5_error_code
 get_new_tickets(krb5_context context,
 		krb5_principal principal,
@@ -641,7 +629,8 @@ get_new_tickets(krb5_context context,
 	    krb5_warn(context, ret, "krb5_init_creds_set_keytab");
 	    goto out;
 	}
-    } else if (pk_user_id || ent_user_id || is_anonymous_princ_p(principal)) {
+    } else if (pk_user_id || ent_user_id ||
+	       _krb5_principal_is_anonymous(context, principal, KRB5_ANON_MATCH_ANY)) {
 
     } else if (!interactive && passwd[0] == '\0') {
 	static int already_warned = 0;

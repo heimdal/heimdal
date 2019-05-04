@@ -527,18 +527,6 @@ noreferral:
 }
 
 
-static krb5_boolean
-is_anonymous_principal(krb5_context context, krb5_const_principal principal)
-{
-    if ((principal->name.name_type != KRB5_NT_WELLKNOWN &&
-         principal->name.name_type != KRB5_NT_UNKNOWN) ||
-        principal->name.name_string.len != 2 ||
-        strcmp(principal->name.name_string.val[0], KRB5_WELLKNOWN_NAME) != 0 ||
-        strcmp(principal->name.name_string.val[1], KRB5_ANON_NAME) != 0)
-        return 0;
-    return 1;
-}
-
 /*
  * Verify returned client principal name in anonymous/referral case
  */
@@ -551,7 +539,7 @@ check_client_mismatch(krb5_context context,
 		      krb5_keyblock const * key)
 {
     if (rep->enc_part.flags.anonymous) {
-	if (!is_anonymous_principal(context, mapped)) {
+	if (!_krb5_principal_is_anonymous(context, mapped, KRB5_ANON_MATCH_ANY)) {
 	    krb5_set_error_message(context, KRB5KRB_AP_ERR_MODIFIED,
 				   N_("Anonymous ticket does not contain anonymous "
 				      "principal", ""));

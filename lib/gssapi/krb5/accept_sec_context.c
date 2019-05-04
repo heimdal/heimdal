@@ -640,6 +640,16 @@ gsskrb5_acceptor_start(OM_uint32 * minor_status,
 	}
     }
 
+    /*
+     * RFC8062 divergence: GSS_C_ANON_FLAG is accepted for any anonymous
+     * identity, not just the unauthenticated one.
+     */
+    if ((ctx->flags & GSS_C_ANON_FLAG) &&
+        !krb5_principal_is_anonymous(context, ctx->ticket->client,
+				      KRB5_ANON_MATCH_ANY)) {
+	ctx->flags &= ~(GSS_C_ANON_FLAG);
+    }
+
     ctx->flags |= GSS_C_TRANS_FLAG;
 
     /* Remember the flags */

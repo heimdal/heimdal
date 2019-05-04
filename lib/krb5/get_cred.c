@@ -1383,6 +1383,8 @@ next_rule:
 	flags.b.enc_tkt_in_skey = 1;
     if (flags.b.enc_tkt_in_skey)
 	options |= KRB5_GC_NO_STORE;
+    if (flags.b.request_anonymous)
+	options |= KRB5_GC_ANONYMOUS;
 
     tgts = NULL;
     ret = _krb5_get_cred_kdc_any(context, flags, ccache,

@@ -199,21 +199,188 @@ _gsskrb5_create_ctx(
     return GSS_S_COMPLETE;
 }
 
+static OM_uint32
+get_anon_creds(OM_uint32 *minor_status,
+	       krb5_context context,
+	       gsskrb5_ctx ctx,
+	       OM_uint32 req_flags,
+	       krb5_timestamp endtime,
+	       const char *pkinit_anchors)
+{
+    krb5_error_code ret;
+    char *server_str = NULL;
+    krb5_init_creds_context icc = NULL;
+    krb5_get_init_creds_opt *opt = NULL;
+    krb5_principal anon_princ = NULL;
+    krb5_ccache ccache = NULL;
+
+    assert(ctx->target != NULL);
+    assert(ctx->target->realm != NULL);
+    assert(ctx->kcred == NULL);
+
+    /* use default realm if the target did not have one */
+    ret = krb5_make_principal(context, &anon_princ,
+			      ctx->target->realm[0] ? ctx->target->realm : NULL,
+			      KRB5_WELLKNOWN_NAME, KRB5_ANON_NAME, NULL);
+    if (ret)
+	goto out;
+
+    ret = krb5_get_init_creds_opt_alloc(context, &opt);
+    if (ret)
+	goto out;
+
+    krb5_get_init_creds_opt_set_anonymous(opt, TRUE);
+    if (req_flags & GSS_C_DELEG_FLAG)
+	krb5_get_init_creds_opt_set_forwardable(opt, TRUE);
+    if (endtime)
+	krb5_get_init_creds_opt_set_tkt_life(opt, endtime);
+    ret = krb5_get_init_creds_opt_set_pkinit(context,
+					     opt,
+					     anon_princ,
+					     NULL, /* pk_user_id */
+					     pkinit_anchors,
+					     NULL,
+					     NULL,
+					     KRB5_GIC_OPT_PKINIT_ANONYMOUS,
+					     NULL, /* prompter */
+					     NULL,
+					     NULL); /* passwd */
+    if (ret)
+	goto out;
+
+    ret = krb5_init_creds_init(context, anon_princ, NULL, NULL, 0, opt, &icc);
+    if (ret)
+	goto out;
+
+    ret = krb5_unparse_name(context, ctx->target, &server_str);
+    if (ret)
+	goto out;
+
+    ret = krb5_init_creds_set_service(context, icc, server_str);
+    if (ret)
+	goto out;
+
+    ret = krb5_init_creds_get(context, icc);
+    if (ret)
+	goto out;
+
+    krb5_process_last_request(context, opt, icc);
+
+    ctx->kcred = calloc(1, sizeof(*ctx->kcred));
+    if (ctx->kcred == NULL) {
+	ret = krb5_enomem(context);
+	goto out;
+    }
+
+    ret = krb5_init_creds_get_creds(context, icc, ctx->kcred);
+    if (ret)
+	goto out;
+
+    ret = krb5_copy_principal(context, ctx->kcred->client, &ctx->source);
+    if (ret)
+	goto out;
+
+    ret = krb5_cc_new_unique(context, "MEMORY", NULL, &ccache);
+    if (ret)
+	goto out;
+
+    ret = krb5_cc_initialize(context, ccache, ctx->kcred->client);
+    if (ret)
+	goto out;
+
+    ret = krb5_cc_store_cred(context, ccache, ctx->kcred);
+    if (ret)
+	goto out;
+
+    assert(ctx->ccache == NULL);
+    ctx->ccache = ccache;
+    ccache = NULL;
+
+    ctx->more_flags |= CLOSE_CCACHE;
+
+out:
+    if (anon_princ)
+	krb5_free_principal(context, anon_princ);
+    if (opt)
+	krb5_get_init_creds_opt_free(context, opt);
+    if (icc)
+        krb5_init_creds_free(context, icc);
+    if (server_str)
+	krb5_xfree(server_str);
+    if (ccache)
+	krb5_cc_close(context, ccache);
+
+    *minor_status = ret;
+
+    return ret ? GSS_S_FAILURE : GSS_S_COMPLETE;
+}
+
+static OM_uint32
+get_auth_creds(OM_uint32 *minor_status,
+	       krb5_context context,
+	       gsskrb5_ctx ctx,
+	       OM_uint32 req_flags,
+	       krb5_timestamp endtime)
+{
+    krb5_error_code ret;
+    krb5_creds this_cred;
+    krb5_flags options;
+    krb5_kdc_flags flags;
+
+    assert(ctx->ccache != NULL);
+
+    memset(&this_cred, 0, sizeof(this_cred));
+
+    ret = krb5_cc_get_principal(context, ctx->ccache, &this_cred.client);
+    if (ret) {
+	*minor_status = ret;
+	return GSS_S_FAILURE;
+    }
+
+    options = 0;
+    flags.i = 0;
+    if (req_flags & GSS_C_ANON_FLAG) {
+	options |= KRB5_GC_ANONYMOUS;
+	flags.b.request_anonymous = 1;
+    }
+
+    this_cred.server = ctx->target;
+    this_cred.times.endtime = endtime;
+    this_cred.session.keytype = KEYTYPE_NULL;
+
+    ret = krb5_get_credentials_with_flags(context,
+					  options,
+					  flags,
+					  ctx->ccache,
+					  &this_cred,
+					  &ctx->kcred);
+    if (ret == 0) {
+	/* allow client name change to support anonymous service tickets */
+	ret = krb5_copy_principal(context, ctx->kcred->client, &ctx->source);
+    }
+
+    *minor_status = ret;
+
+    krb5_free_principal(context, this_cred.client);
+
+    return ret ? GSS_S_FAILURE : GSS_S_COMPLETE;
+}
 
 static OM_uint32
 gsskrb5_get_creds(
         OM_uint32 * minor_status,
 	krb5_context context,
-	krb5_ccache ccache,
 	gsskrb5_ctx ctx,
+	gsskrb5_cred cred,
 	gss_const_name_t target_name,
+	OM_uint32 req_flags,
 	OM_uint32 time_req,
 	OM_uint32 * time_rec)
 {
     OM_uint32 ret;
-    krb5_error_code kret;
-    krb5_creds this_cred;
+    krb5_timestamp endtime = 0;
     OM_uint32 lifetime_rec;
+    const char *pkinit_anchors = NULL;
 
     if (ctx->target) {
 	krb5_free_principal(context, ctx->target);
@@ -229,36 +396,54 @@ gsskrb5_get_creds(
     if (ret)
 	return ret;
 
-    memset(&this_cred, 0, sizeof(this_cred));
-    this_cred.client = ctx->source;
-    this_cred.server = ctx->target;
-
     if (time_req && time_req != GSS_C_INDEFINITE) {
 	krb5_timestamp ts;
 
 	krb5_timeofday (context, &ts);
-	this_cred.times.endtime = ts + time_req;
-    } else {
-	this_cred.times.endtime   = 0;
+	endtime = ts + time_req;
     }
 
-    this_cred.session.keytype = KEYTYPE_NULL;
+    /*
+     * RFC8062 divergence: GSS_C_ANON_FLAG is only meaningful when no
+     * credential is supplied.
+     */
+    if (cred != NULL) {
+	if (krb5_principal_is_anonymous(context, cred->principal,
+					KRB5_ANON_MATCH_UNAUTHENTICATED))
+	    req_flags |= GSS_C_ANON_FLAG; /* cred implies anonymous */
+	else
+	    req_flags &= ~(GSS_C_ANON_FLAG); /* non-anon cred overrides flag */
 
-    kret = krb5_get_credentials(context,
-				0,
-				ccache,
-				&this_cred,
-				&ctx->kcred);
-    if (kret) {
-	*minor_status = kret;
-	return GSS_S_FAILURE;
+	ctx->ccache = cred->ccache;
+	pkinit_anchors = cred->pkinit_anchors;
+    } else {
+	krb5_error_code kret;
+
+	kret = krb5_cc_default(context, &ctx->ccache);
+	if (kret == 0)
+	    ctx->more_flags |= CLOSE_CCACHE;
+	else if ((req_flags & GSS_C_ANON_FLAG) == 0) {
+	    *minor_status = kret;
+	    return GSS_S_FAILURE;
+	} /* else we will try anonymous PKINIT in the absence of default creds */
+    }
+
+    if (ctx->ccache != NULL)
+	ret = get_auth_creds(minor_status, context, ctx, req_flags, endtime);
+    else if (req_flags & GSS_C_ANON_FLAG)
+	ret = get_anon_creds(minor_status, context, ctx, req_flags, endtime,
+			     pkinit_anchors);
+    else {
+	ret = GSS_S_FAILURE;
+	*minor_status = KRB5_CC_NOTFOUND;
     }
 
     ctx->endtime = ctx->kcred->times.endtime;
 
     ret = _gsskrb5_lifetime_left(minor_status, context,
 				 ctx->endtime, &lifetime_rec);
-    if (ret) return ret;
+    if (ret)
+	return ret;
 
     if (lifetime_rec == 0) {
 	*minor_status = 0;
@@ -381,24 +566,6 @@ init_auth
     if (actual_mech_type)
 	*actual_mech_type = GSS_KRB5_MECHANISM;
 
-    if (cred == NULL) {
-	kret = krb5_cc_default (context, &ctx->ccache);
-	if (kret) {
-	    *minor_status = kret;
-	    ret = GSS_S_FAILURE;
-	    goto failure;
-	}
-	ctx->more_flags |= CLOSE_CCACHE;
-    } else
-	ctx->ccache = cred->ccache;
-
-    kret = krb5_cc_get_principal (context, ctx->ccache, &ctx->source);
-    if (kret) {
-	*minor_status = kret;
-	ret = GSS_S_FAILURE;
-	goto failure;
-    }
-
     /*
      * This is hideous glue for (NFS) clients that wants to limit the
      * available enctypes to what it can support (encryption in
@@ -407,8 +574,8 @@ init_auth
     if (cred && cred->enctypes)
 	krb5_set_default_in_tkt_etypes(context, cred->enctypes);
 
-    ret = gsskrb5_get_creds(minor_status, context, ctx->ccache,
-			    ctx, name, time_req, time_rec);
+    ret = gsskrb5_get_creds(minor_status, context, ctx, cred, name,
+			    req_flags, time_req, time_rec);
     if (ret)
 	goto failure;
 
@@ -544,10 +711,13 @@ init_auth_restart
 	flags |= GSS_C_REPLAY_FLAG;
     if (req_flags & GSS_C_SEQUENCE_FLAG)
 	flags |= GSS_C_SEQUENCE_FLAG;
-#if 0
-    if (req_flags & GSS_C_ANON_FLAG)
-	;                               /* XXX */
-#endif
+    /*
+     * RFC8062 divergence: GSS_C_ANON_FLAG is set for any anonymous
+     * identity, not just the unauthenticated one.
+     */
+    if (krb5_principal_is_anonymous(context, ctx->source,
+				    KRB5_ANON_MATCH_ANY))
+	flags |= GSS_C_ANON_FLAG;
     if (req_flags & GSS_C_DCE_STYLE) {
 	/* GSS_C_DCE_STYLE implies GSS_C_MUTUAL_FLAG */
 	flags |= GSS_C_DCE_STYLE | GSS_C_MUTUAL_FLAG;

@@ -102,6 +102,7 @@ typedef struct {
   struct krb5_ccache_data *ccache;
   HEIMDAL_MUTEX cred_id_mutex;
   krb5_enctype *enctypes;
+  char *pkinit_anchors;
 } *gsskrb5_cred;
 
 typedef struct Principal *gsskrb5_name;

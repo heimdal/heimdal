@@ -492,6 +492,14 @@ ${context} \
     host/long.test.h5l.se || \
 	{ eval "$testfailed"; }
 
+echo "======anonymous PKINIT"
+
+${context} --anonymous --mech-type=krb5 \
+        host@lucid.test.h5l.se || { eval "$testfailed"; }
+
+${context} --anonymous --mutual --mech-type=krb5 \
+        host@lucid.test.h5l.se || { eval "$testfailed"; }
+
 trap "" EXIT
 
 echo "killing kdc (${kdcpid})"

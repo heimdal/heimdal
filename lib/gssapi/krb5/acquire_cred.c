@@ -92,8 +92,13 @@ __gsskrb5_ccache_lifetime(OM_uint32 *minor_status,
     return GSS_S_COMPLETE;
 }
 
-
-
+static krb5_boolean
+is_anonymous_name_p(krb5_context context, krb5_const_principal principal)
+{
+    return principal != NULL &&
+	krb5_principal_is_anonymous(context, principal,
+				    KRB5_ANON_MATCH_UNAUTHENTICATED);
+}
 
 static krb5_error_code
 get_system_keytab(krb5_context context,
@@ -135,11 +140,14 @@ get_client_keytab(krb5_context context,
     krb5_error_code ret;
     const char *cs_ktname;
     OM_uint32 tmp;
+    int is_anon = is_anonymous_name_p(context, principal);
 
     __gsskrb5_cred_store_find(&tmp, cred_store, "client_keytab", &cs_ktname);
 
     if (cs_ktname)
 	ret = krb5_kt_resolve(context, cs_ktname, keytab);
+    else if (is_anon)
+	ret = KRB5_KT_NOTFOUND; /* auth anon requires explicit keytab */
     else {
 	char *name = NULL;
 	ret = _krb5_kt_client_default_name(context, &name);
@@ -148,16 +156,18 @@ get_client_keytab(krb5_context context,
 	krb5_xfree(name);
     }
 
-    if (ret == 0 && principal) {
+    if (ret == 0 && (principal || is_anon)) {
 	krb5_keytab_entry entry;
 
-	ret = krb5_kt_get_entry(context, *keytab, principal,
-				 0, 0, &entry);
+	/* for auth anon, just get the first entry from the keytab */
+	ret = krb5_kt_get_entry(context, *keytab,
+				is_anon ? NULL : principal,
+				0, 0, &entry);
 	if (ret == 0)
 	    krb5_kt_free_entry(context, &entry);
     }
 
-    if (ret)
+    if (ret && !is_anon)
 	ret = get_system_keytab(context, GSS_C_NO_CRED_STORE, keytab);
 
     return ret;
@@ -309,6 +319,7 @@ acquire_initiator_cred(OM_uint32 *minor_status,
     const char *cs_ccache_name;
     time_t lifetime = 0;
     time_t now;
+    int is_anon;
 
     memset(&cred, 0, sizeof(cred));
 
@@ -327,6 +338,16 @@ acquire_initiator_cred(OM_uint32 *minor_status,
     krb5_timeofday(context, &now);
 
     /*
+     * RFC8062 divergence:
+     * Credential handles acquired with the GSS_C_NT_ANONYMOUS name will
+     * perform anonymous PKINIT unless a credentials cache or client keytab
+     * was explicitly specified, in which case they will be used to perform
+     * authenticated anonymous (initiator realm is exposed). Hence the checks
+     * for is_anon to avoid using default credentials caches or keytabs.
+     */
+    is_anon = is_anonymous_name_p(context, handle->principal);
+
+    /*
      * First look for a ccache that has the desired_name (which may be
      * the default credential name), unless a specific credential cache
      * was included in cred_store.
@@ -340,7 +361,7 @@ acquire_initiator_cred(OM_uint32 *minor_status,
      * If we don't have any such ccache, then use a MEMORY ccache.
      */
 
-    if (handle->principal != NULL && cs_ccache_name == NULL) {
+    if (handle->principal != NULL && cs_ccache_name == NULL && !is_anon) {
         /*
          * Not default credential case.  See if we can find a ccache in
          * the cccol for the desired_name.
@@ -369,6 +390,8 @@ acquire_initiator_cred(OM_uint32 *minor_status,
      */
     if (cs_ccache_name)
 	kret = krb5_cc_resolve(context, cs_ccache_name, &def_ccache);
+    else if (is_anon)
+	kret = KRB5_CC_NOTFOUND;
     else
 	kret = krb5_cc_default(context, &def_ccache);
     if (kret != 0)
@@ -383,6 +406,7 @@ acquire_initiator_cred(OM_uint32 *minor_status,
      * Have a default ccache; see if it matches desired_name.
      */
     if (handle->principal == NULL ||
+	is_anon ||
         krb5_principal_compare(context, handle->principal,
                                def_princ) == TRUE) {
         /*
@@ -403,6 +427,8 @@ acquire_initiator_cred(OM_uint32 *minor_status,
         if (lifetime > 0)
             goto found;
         /* else we fall through and try using a keytab */
+	krb5_free_principal(context, def_princ);
+	def_princ = NULL;
     }
 
 try_keytab:
@@ -416,11 +442,27 @@ try_keytab:
     if (kret)
         goto end;
 
+    if (is_anon) {
+	krb5_keytab_entry entry;
+
+	kret = krb5_kt_get_entry(context, keytab, NULL, 0, 0, &entry);
+	if (kret)
+	    goto end;
+
+	kret = krb5_copy_principal(context, entry.principal, &def_princ);
+	if (kret)
+	    goto end;
+    } else {
+	kret = krb5_copy_principal(context, handle->principal, &def_princ);
+	if (kret)
+	    goto end;
+    }
+
     kret = krb5_get_init_creds_opt_alloc(context, &opt);
     if (kret)
         goto end;
     krb5_timeofday(context, &now);
-    kret = krb5_get_init_creds_keytab(context, &cred, handle->principal,
+    kret = krb5_get_init_creds_keytab(context, &cred, def_princ,
                                       keytab, 0, NULL, opt);
     krb5_get_init_creds_opt_free(context, opt);
     if (kret)
@@ -468,6 +510,11 @@ found:
     kret = 0;
 
 end:
+    if (ret != GSS_S_COMPLETE && is_anon) {
+	ret = GSS_S_COMPLETE;
+	kret = 0;
+    }
+
     if (ccache != NULL) {
         if ((handle->cred_flags & GSS_CF_DESTROY_CRED_ON_RELEASE) != 0)
             krb5_cc_destroy(context, ccache);
@@ -560,6 +607,7 @@ OM_uint32 GSSAPI_CALLCONV _gsskrb5_acquire_cred_from
     gsskrb5_cred handle;
     OM_uint32 ret;
     const char *password = NULL;
+    const char *anchors = NULL;
 
     if (desired_mechs) {
 	int present = 0;
@@ -651,6 +699,17 @@ OM_uint32 GSSAPI_CALLCONV _gsskrb5_acquire_cred_from
     	ret = gss_add_oid_set_member(minor_status, GSS_KRB5_MECHANISM,
 				     &handle->mechanisms);
     handle->usage = cred_usage;
+
+    ret = __gsskrb5_cred_store_find(minor_status, cred_store,
+				    "pkinit_anchors", &anchors);
+    if (ret == GSS_S_COMPLETE && anchors) {
+	handle->pkinit_anchors = strdup(anchors);
+	if (handle->pkinit_anchors == NULL) {
+	    ret = GSS_S_FAILURE;
+	    *minor_status = krb5_enomem(context);
+	}
+    }
+
     if (ret == GSS_S_COMPLETE)
 	ret = _gsskrb5_inquire_cred(minor_status, (gss_cred_id_t)handle,
 				    NULL, time_rec, NULL, actual_mechs);

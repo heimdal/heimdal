@@ -164,6 +164,30 @@ import_hostbased_name(OM_uint32 *minor_status,
 }
 
 static OM_uint32
+import_anonymous_name(OM_uint32 *minor_status,
+		      krb5_context context,
+		      const gss_buffer_t input_name_buffer, /* unused */
+		      gss_name_t *output_name)
+{
+    krb5_principal princ;
+    krb5_error_code ret;
+
+    ret = krb5_make_principal(context,
+			      &princ,
+			      KRB5_ANON_REALM,
+			      KRB5_WELLKNOWN_NAME,
+			      KRB5_ANON_NAME,
+			      NULL);
+    *minor_status = ret;
+    if (ret)
+	return GSS_S_FAILURE;
+
+    *output_name = (gss_name_t)princ;
+
+    return GSS_S_COMPLETE;
+}
+
+static OM_uint32
 import_export_name (OM_uint32 *minor_status,
 		    krb5_context context,
 		    const gss_buffer_t input_name_buffer,
@@ -239,6 +263,12 @@ OM_uint32 GSSAPI_CALLCONV _gsskrb5_import_name
 				 context,
 				 input_name_buffer,
 				 output_name);
+    else if (gss_oid_equal(input_name_type, GSS_C_NT_ANONYMOUS)) {
+	return import_anonymous_name(minor_status,
+				     context,
+				     input_name_buffer,
+				     output_name);
+    }
     else if (gss_oid_equal(input_name_type, GSS_C_NT_EXPORT_NAME)) {
 	return import_export_name(minor_status,
 				  context,

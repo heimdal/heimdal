@@ -5,12 +5,24 @@ include @srcdirabs@/include-krb5.conf
         enable-kx509 = yes
         kx509_store = PEM-FILE:/tmp/cert_%{euid}.pem
 
+[appdefaults]
+	pkinit_anchors = FILE:@srcdir@/../../lib/hx509/data/ca.crt
+
 [realms]
 	TEST.H5L.SE = {
 		kdc = localhost:@port@
 	}
 
 [kdc]
+	allow-anonymous = true
+	enable-pkinit = true
+
+	pkinit_identity = FILE:@srcdir@/../../lib/hx509/data/kdc.crt,@srcdir@/../../lib/hx509/data/kdc.key
+	pkinit_anchors = FILE:@srcdir@/../../lib/hx509/data/ca.crt
+	pkinit_pool = FILE:@srcdir@/../../lib/hx509/data/sub-ca.crt
+	pkinit_mappings_file = @srcdir@/pki-mapping
+	pkinit_allow_proxy_certificate = true
+
 	database = {
 		dbname = @objdir@/current-db
 		realm = TEST.H5L.SE

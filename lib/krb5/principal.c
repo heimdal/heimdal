@@ -1247,6 +1247,32 @@ krb5_principal_is_root_krbtgt(krb5_context context, krb5_const_principal p)
 	strcmp(p->name.name_string.val[1], p->realm) == 0;
 }
 
+/**
+ * Returns true iff name is WELLKNOWN/ANONYMOUS
+ *
+ * @ingroup krb5_principal
+ */
+
+krb5_boolean KRB5_LIB_FUNCTION
+_krb5_principal_is_anonymous(krb5_context context,
+			     krb5_const_principal p,
+			     unsigned int flags)
+{
+    int anon_realm;
+
+    if ((p->name.name_type != KRB5_NT_WELLKNOWN &&
+         p->name.name_type != KRB5_NT_UNKNOWN) ||
+        p->name.name_string.len != 2 ||
+        strcmp(p->name.name_string.val[0], KRB5_WELLKNOWN_NAME) != 0 ||
+        strcmp(p->name.name_string.val[1], KRB5_ANON_NAME) != 0)
+        return FALSE;
+
+    anon_realm = strcmp(p->realm, KRB5_ANON_REALM) == 0;
+
+    return ((flags & KRB5_ANON_MATCH_AUTHENTICATED) && !anon_realm) ||
+	   ((flags & KRB5_ANON_MATCH_UNAUTHENTICATED) && anon_realm);
+}
+
 static int
 tolower_ascii(int c)
 {

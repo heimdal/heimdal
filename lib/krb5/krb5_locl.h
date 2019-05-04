@@ -377,4 +377,9 @@ struct krb5_pk_init_ctx_data {
 # define ISPATHSEP(x) (x == '/')
 #endif
 
+/* _krb5_principal_is_anonymous() */
+#define KRB5_ANON_MATCH_AUTHENTICATED	1 /* authenticated with anon flag */
+#define KRB5_ANON_MATCH_UNAUTHENTICATED	2 /* anonymous PKINIT */
+#define KRB5_ANON_MATCH_ANY		( KRB5_ANON_MATCH_AUTHENTICATED | KRB5_ANON_MATCH_UNAUTHENTICATED )
+
 #endif /* __KRB5_LOCL_H__ */

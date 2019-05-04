@@ -757,6 +757,7 @@ HEIMDAL_KRB5_2.0 {
 		_krb5_plugin_find;
 		_krb5_plugin_free;
 		_krb5_plugin_run_f;
+		_krb5_principal_is_anonymous;
 		_krb5_principal2principalname;
 		_krb5_principalname2krb5_principal;
 		_krb5_put_int;

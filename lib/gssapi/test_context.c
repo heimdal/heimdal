@@ -167,6 +167,7 @@ loop(gss_OID mechoid,
     OM_uint32 flags = 0, ret_cflags, ret_sflags;
     gss_OID actual_mech_client;
     gss_OID actual_mech_server;
+    gss_name_t initiator_name = GSS_C_NO_NAME;
 
     *actual_mech = GSS_C_NO_OID;
 
@@ -231,6 +232,8 @@ loop(gss_OID mechoid,
 
 	if (input_token.length != 0)
 	    gss_release_buffer(&min_stat, &input_token);
+	if (initiator_name != GSS_C_NO_NAME)
+	    gss_release_name(&min_stat, &initiator_name);
 
 	gsskrb5_set_time_offset(server_time_offset);
 
@@ -239,7 +242,7 @@ loop(gss_OID mechoid,
 					  GSS_C_NO_CREDENTIAL,
 					  &output_token,
 					  GSS_C_NO_CHANNEL_BINDINGS,
-					  NULL,
+					  &initiator_name,
 					  &actual_mech_server,
 					  &input_token,
 					  &ret_sflags,
@@ -283,6 +286,14 @@ loop(gss_OID mechoid,
 	     num_loops, max_loops);
 
     if (verbose_flag) {
+	gss_buffer_desc output = GSS_C_EMPTY_BUFFER;
+
+	if (gss_display_name(&min_stat, initiator_name,
+			     &output, NULL) == GSS_S_COMPLETE) {
+	    printf("client name: %.*s\n", (int)output.length, output.value);
+	    gss_release_buffer(&min_stat, &output);
+	}
+
 	printf("server time offset: %d\n", server_time_offset);
 	printf("client time offset: %d\n", client_time_offset);
 	printf("num loops %d\n", num_loops);

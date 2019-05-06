@@ -537,8 +537,8 @@ get_new_tickets(krb5_context context,
 						 pk_x509_anchors,
 						 NULL,
 						 NULL,
-						 pk_use_enckey ? 2 : 0 |
-						 anonymous_pkinit ? 4 : 0,
+						 pk_use_enckey ? KRB5_GIC_OPT_PKINIT_USE_ENCKEY : 0 |
+						 anonymous_pkinit ? KRB5_GIC_OPT_PKINIT_ANONYMOUS : 0,
 						 prompter,
 						 NULL,
 						 passwd);

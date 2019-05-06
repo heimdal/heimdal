@@ -942,6 +942,15 @@ typedef const struct krb5_name_canon_rule_data *krb5_const_name_canon_rule;
 typedef struct krb5_name_canon_iterator_data *krb5_name_canon_iterator;
 
 /*
+ * krb5_get_init_creds_opt_set_pkinit flags
+ */
+
+#define KRB5_GIC_OPT_PKINIT_USE_ENCKEY	    2 /* use RSA, not DH */
+#define KRB5_GIC_OPT_PKINIT_ANONYMOUS	    4 /* anonymous PKINIT */
+#define KRB5_GIC_OPT_PKINIT_BTMM	    8 /* reserved by Apple */
+#define KRB5_GIC_OPT_PKINIT_NO_KDC_ANCHOR   16 /* do not authenticate KDC */
+
+/*
  *
  */
 

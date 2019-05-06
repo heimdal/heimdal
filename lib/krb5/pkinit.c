@@ -2269,7 +2269,7 @@ krb5_get_init_creds_opt_set_pkinit(krb5_context context,
 	x509_anchors = anchors;
     }
 
-    if (flags & 4)
+    if (flags & KRB5_GIC_OPT_PKINIT_ANONYMOUS)
 	opt->opt_private->pk_init_ctx->anonymous = 1;
 
     ret = _krb5_pk_load_id(context,
@@ -2295,7 +2295,7 @@ krb5_get_init_creds_opt_set_pkinit(krb5_context context,
     } else
 	opt->opt_private->pk_init_ctx->id->cert = NULL;
 
-    if ((flags & 2) == 0) {
+    if ((flags & KRB5_GIC_OPT_PKINIT_USE_ENCKEY) == 0) {
 	hx509_context hx509ctx = context->hx509ctx;
 	hx509_cert cert = opt->opt_private->pk_init_ctx->id->cert;
 

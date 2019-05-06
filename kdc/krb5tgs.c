@@ -104,7 +104,7 @@ _kdc_add_KRB5SignedPath(krb5_context context,
 			krb5_kdc_configuration *config,
 			hdb_entry_ex *krbtgt,
 			krb5_enctype enctype,
-			krb5_principal client,
+			krb5_const_principal client,
 			krb5_const_principal server,
 			krb5_principals principals,
 			EncTicketPart *tkt)
@@ -124,7 +124,7 @@ _kdc_add_KRB5SignedPath(krb5_context context,
     {
 	KRB5SignedPathData spd;
 
-	spd.client = client;
+	spd.client = rk_UNCONST(client);
 	spd.authtime = tkt->authtime;
 	spd.delegated = principals;
 	spd.method_data = NULL;

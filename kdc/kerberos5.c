@@ -2165,17 +2165,27 @@ _kdc_as_rep(kdc_request_t r,
     _kdc_log_timestamp(context, config, "AS-REQ", r->et.authtime, r->et.starttime,
 		       r->et.endtime, r->et.renew_till);
 
-    /* do this as the last thing since this signs the EncTicketPart */
-    ret = _kdc_add_KRB5SignedPath(context,
-				  config,
-				  r->server,
-				  setype,
-				  r->client->entry.principal,
-				  NULL,
-				  NULL,
-				  &r->et);
-    if (ret)
-	goto out;
+    {
+	krb5_principal client_principal;
+
+	ret = _krb5_principalname2krb5_principal(context, &client_principal,
+						 rep.cname, rep.crealm);
+	if (ret)
+	    goto out;
+
+	/* do this as the last thing since this signs the EncTicketPart */
+	ret = _kdc_add_KRB5SignedPath(context,
+				      config,
+				      r->server,
+				      setype,
+				      client_principal,
+				      NULL,
+				      NULL,
+				      &r->et);
+	krb5_free_principal(context, client_principal);
+	if (ret)
+	    goto out;
+    }
 
     log_as_req(context, config, r->reply_key.keytype, setype, b);
 

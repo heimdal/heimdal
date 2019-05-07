@@ -2267,6 +2267,26 @@ krb5_init_creds_step(krb5_context context,
 				       &ctx->req_buffer,
 				       NULL,
 				       NULL);
+	    if (ret == 0 && ctx->pk_init_ctx) {
+		PA_DATA *pa_pkinit_kx;
+		int idx = 0;
+
+		pa_pkinit_kx =
+		    krb5_find_padata(rep.kdc_rep.padata->val,
+				     rep.kdc_rep.padata->len,
+				     KRB5_PADATA_PKINIT_KX,
+				     &idx);
+
+		ret = _krb5_pk_kx_confirm(context, ctx->pk_init_ctx,
+					  ctx->fast_state.reply_key,
+					  &ctx->cred.session,
+					  pa_pkinit_kx);
+		if (ret)
+		    krb5_set_error_message(context, ret,
+					   N_("Failed to confirm PA-PKINIT-KX", ""));
+		else if (pa_pkinit_kx != NULL)
+		    ctx->ic_flags |= KRB5_INIT_CREDS_PKINIT_KX_VALID;
+	    }
 	    if (ret == 0)
 		ret = copy_EncKDCRepPart(&rep.enc_part, &ctx->enc_part);
 

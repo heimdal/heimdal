@@ -2380,6 +2380,11 @@ krb5_get_init_creds_opt_set_pkinit(krb5_context context,
 	opt->opt_private->pk_init_ctx = NULL;
 	return ret;
     }
+    if (flags & KRB5_GIC_OPT_PKINIT_BTMM)
+	opt->opt_private->pk_init_ctx->id->flags |= PKINIT_BTMM;
+
+    if (principal && krb5_principal_is_lkdc(context, principal))
+	opt->opt_private->pk_init_ctx->id->flags |= PKINIT_BTMM;
 
     if (opt->opt_private->pk_init_ctx->id->certs) {
 	_krb5_pk_set_user_id(context,

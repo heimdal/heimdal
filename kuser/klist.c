@@ -122,6 +122,12 @@ print_cred(krb5_context context, krb5_creds *cred, rtbl_t ct, int do_flags)
 	    *sp++ = 'A';
 	if(cred->flags.b.hw_authent)
 	    *sp++ = 'H';
+	if(cred->flags.b.transited_policy_checked)
+	    *sp++ = 'T';
+	if(cred->flags.b.ok_as_delegate)
+	    *sp++ = 'O';
+	if(cred->flags.b.anonymous)
+	    *sp++ = 'a';
 	*sp = '\0';
 	rtbl_add_column_entry(ct, COL_FLAGS, s);
     }

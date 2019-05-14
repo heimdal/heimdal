@@ -1,3 +1,47 @@
+Release Notes - Heimdal - Version Heimdal 7.6
+
+ Security
+
+ - CVE-2018-16860 Heimdal KDC: Reject PA-S4U2Self with unkeyed checksum
+
+    When the Heimdal KDC checks the checksum that is placed on the
+    S4U2Self packet by the server to protect the requested principal
+    against modification, it does not confirm that the checksum
+    algorithm that protects the user name (principal) in the request
+    is keyed.  This allows a man-in-the-middle attacker who can
+    intercept the request to the KDC to modify the packet by replacing
+    the user name (principal) in the request with any desired user
+    name (principal) that exists in the KDC and replace the checksum
+    protecting that name with a CRC32 checksum (which requires no
+    prior knowledge to compute).
+
+    This would allow a S4U2Self ticket requested on behalf of user
+    name (principal) user@EXAMPLE.COM to any service to be changed
+    to a S4U2Self ticket with a user name (principal) of
+    Administrator@EXAMPLE.COM. This ticket would then contain the
+    PAC of the modified user name (principal).
+
+ - CVE-2019-12098, client-only:
+
+    RFC8062 Section 7 requires verification of the PA-PKINIT-KX key excahnge
+    when anonymous PKINIT is used.  Failure to do so can permit an active
+    attacker to become a man-in-the-middle.
+
+ Bug fixes
+     
+ - Happy eyeballs: Don't wait for responses from known-unreachable KDCs.
+ - kdc: check return copy_Realm, copy_PrincipalName, copy_EncryptionKey
+ - kinit: don't leave dangling temporary ccaches
+ - kdc: Make anonymous AS-requests more RFC8062-compliant.
+ - Updated expired test certificates
+
+ Features
+
+ - kuser: support authenticated anonymous AS-REQs in kinit
+ - kdc: support for anonymous TGS-REQs
+ - kgetcred support for anonymous service tickets
+ - Support builds with OpenSSL 1.1.1
+
 Release Notes - Heimdal - Version Heimdal 7.5
 
  Security

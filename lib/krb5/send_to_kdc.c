@@ -928,7 +928,7 @@ struct wait_ctx {
     krb5_sendto_ctx ctx;
     fd_set rfds;
     fd_set wfds;
-    int max_fd;
+    rk_socket_t max_fd;
     int got_reply;
     time_t timenow;
 };
@@ -1032,7 +1032,7 @@ wait_response(krb5_context context, int *action, krb5_sendto_ctx ctx)
     wait_ctx.ctx = ctx;
     FD_ZERO(&wait_ctx.rfds);
     FD_ZERO(&wait_ctx.wfds);
-    wait_ctx.max_fd = -1;
+    wait_ctx.max_fd = rk_INVALID_SOCKET;
 
     /* oh, we have a reply, it must be a plugin that got it for us */
     if (ctx->response.length) {
@@ -1058,7 +1058,7 @@ wait_response(krb5_context context, int *action, krb5_sendto_ctx ctx)
 	return 0;
     }
 
-    if (wait_ctx.max_fd == -1) {
+    if (wait_ctx.max_fd == rk_INVALID_SOCKET) {
 	/*
 	 * If we don't find a host which can make progress, then
 	 * we accelerate the process by moving all of the contestants

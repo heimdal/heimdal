@@ -539,7 +539,7 @@ check_client_mismatch(krb5_context context,
 		      krb5_keyblock const * key)
 {
     if (rep->enc_part.flags.anonymous) {
-	if (!_krb5_principal_is_anonymous(context, mapped, KRB5_ANON_MATCH_ANY)) {
+	if (!krb5_principal_is_anonymous(context, mapped, KRB5_ANON_MATCH_ANY)) {
 	    krb5_set_error_message(context, KRB5KRB_AP_ERR_MODIFIED,
 				   N_("Anonymous ticket does not contain anonymous "
 				      "principal", ""));

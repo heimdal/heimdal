@@ -954,6 +954,14 @@ typedef struct krb5_name_canon_iterator_data *krb5_name_canon_iterator;
 #define KRB5_GIC_OPT_PKINIT_NO_KDC_ANCHOR   16 /* do not authenticate KDC */
 
 /*
+ * _krb5_principal_is_anonymous() flags 
+ */
+#define KRB5_ANON_MATCH_AUTHENTICATED	1 /* authenticated with anon flag */
+#define KRB5_ANON_MATCH_UNAUTHENTICATED	2 /* anonymous PKINIT */
+#define KRB5_ANON_MATCH_ANY		( KRB5_ANON_MATCH_AUTHENTICATED | KRB5_ANON_MATCH_UNAUTHENTICATED )
+
+
+/*
  *
  */
 

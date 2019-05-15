@@ -631,7 +631,7 @@ get_new_tickets(krb5_context context,
 	    goto out;
 	}
     } else if (pk_user_id || ent_user_id ||
-	       _krb5_principal_is_anonymous(context, principal, KRB5_ANON_MATCH_ANY)) {
+	       krb5_principal_is_anonymous(context, principal, KRB5_ANON_MATCH_ANY)) {
 
     } else if (!interactive && passwd[0] == '\0') {
 	static int already_warned = 0;

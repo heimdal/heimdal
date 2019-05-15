@@ -1613,7 +1613,7 @@ generate_pac(kdc_request_t r, Key *skey)
 krb5_boolean
 _kdc_is_anonymous(krb5_context context, krb5_const_principal principal)
 {
-    return _krb5_principal_is_anonymous(context, principal, KRB5_ANON_MATCH_ANY);
+    return krb5_principal_is_anonymous(context, principal, KRB5_ANON_MATCH_ANY);
 }
 
 static int

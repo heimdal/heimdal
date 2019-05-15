@@ -784,6 +784,8 @@ _krb5_pk_mk_padata(krb5_context context,
 				     req_body->realm,
 				     "pkinit_require_krbtgt_otherName",
 				     NULL);
+    if (ic_flags & KRB5_INIT_CREDS_PKINIT_NO_KRBTGT_OTHERNAME_CHECK)
+	ctx->require_krbtgt_otherName = FALSE;
 
     ctx->require_hostname_match =
 	krb5_config_get_bool_default(context, NULL,

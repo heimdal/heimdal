@@ -209,6 +209,7 @@ struct _krb5_get_init_creds_opt_private {
 #define KRB5_INIT_CREDS_NO_C_CANON_CHECK	2
 #define KRB5_INIT_CREDS_NO_C_NO_EKU_CHECK	4
 #define KRB5_INIT_CREDS_PKINIT_KX_VALID		32
+#define KRB5_INIT_CREDS_PKINIT_NO_KRBTGT_OTHERNAME_CHECK    64
     struct {
         krb5_gic_process_last_req func;
         void *ctx;

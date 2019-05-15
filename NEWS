@@ -34,6 +34,9 @@ Release Notes - Heimdal - Version Heimdal 7.6
  - kinit: don't leave dangling temporary ccaches
  - kdc: Make anonymous AS-requests more RFC8062-compliant.
  - Updated expired test certificates
+ - Solaris
+   . PKCS#11 hcrypto backend broken since 7.0.1
+   . Building with Sun Pro C
 
  Features
 

@@ -72,7 +72,6 @@
 #include <parse_time.h>
 #include <err.h>
 #include <krb5.h>
-#include "krb5_locl.h"
 
 #if defined(HAVE_SYS_IOCTL_H) && SunOS != 40
 #include <sys/ioctl.h>

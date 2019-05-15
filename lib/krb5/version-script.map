@@ -495,6 +495,7 @@ HEIMDAL_KRB5_2.0 {
 		krb5_principal_set_comp_string;
 		krb5_principal_set_realm;
 		krb5_principal_set_type;
+		krb5_principal_is_anonymous;
 		krb5_principal_is_krbtgt;
 		krb5_print_address;
 		krb5_program_setup;
@@ -767,7 +768,6 @@ HEIMDAL_KRB5_2.0 {
 		_krb5_pk_mk_ContentInfo;
 		_krb5_pk_octetstring2key;
 		_krb5_plugin_run_f;
-		_krb5_principal_is_anonymous;
 		_krb5_principal2principalname;
 		_krb5_principalname2krb5_principal;
 		_krb5_put_int;

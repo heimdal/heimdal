@@ -31,9 +31,14 @@ Release Notes - Heimdal - Version Heimdal 7.6
      
  - Happy eyeballs: Don't wait for responses from known-unreachable KDCs.
  - kdc: check return copy_Realm, copy_PrincipalName, copy_EncryptionKey
- - kinit: don't leave dangling temporary ccaches
+ - kinit:
+   . cleanup temporary ccaches
+   . see man page for "kinit --anonymous" command line syntax change
  - kdc: Make anonymous AS-requests more RFC8062-compliant.
  - Updated expired test certificates
+ - Solaris:
+   . PKCS#11 hcrypto backend broken since 7.0.1
+   . Building with Sun Pro C
 
  Features
 

@@ -56,7 +56,7 @@ asn1_print_SOURCES = asn1_print.c
 check_der_SOURCES = check-der.c check-common.c check-common.h
 
 check_template_SOURCES = check-template.c check-common.c check-common.h
-nodist_check_template_SOURCES = $(gen_files_test_template)
+nodist_check_template_SOURCES = $(gen_files_test_template:.x=.c)
 
 dist_check_gen_SOURCES = check-gen.c check-common.c check-common.h
 nodist_check_gen_SOURCES = $(gen_files_test:.x=.c)

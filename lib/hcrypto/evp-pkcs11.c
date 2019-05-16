@@ -100,6 +100,8 @@ p11_module_load(CK_FUNCTION_LIST_PTR_PTR ppFunctionList)
 {
     CK_RV rv;
     CK_RV (*C_GetFunctionList_fn)(CK_FUNCTION_LIST_PTR_PTR);
+	
+	*ppFunctionList = NULL;
 
     if (!issuid()) {
         char *pkcs11ModulePath = getenv("PKCS11_MODULE_PATH");

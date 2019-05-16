@@ -297,10 +297,10 @@ hcrypto_validate(void)
     /* its ok to run this twice, do don't check for races */
     if (validated)
 	return;
-    validated++;
 
     for (i = 0; i < sizeof(hc_tests) / sizeof(hc_tests[0]); i++)
 	test_cipher(&hc_tests[i]);
 
     check_hmac();
+    validated++;
 }

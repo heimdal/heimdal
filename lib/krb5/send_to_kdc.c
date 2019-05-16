@@ -994,7 +994,7 @@ wait_setup(heim_object_t obj, void *iter_ctx, int *stop)
 	debug_host(wait_ctx->context, 5, h, "invalid sendto host state");
 	heim_abort("invalid sendto host state");
     }
-    if (h->fd > wait_ctx->max_fd)
+    if (h->fd > wait_ctx->max_fd || wait_ctx->max_fd == rk_INVALID_SOCKET)
 	wait_ctx->max_fd = h->fd;
 }
 

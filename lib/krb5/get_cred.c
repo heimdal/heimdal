@@ -560,6 +560,8 @@ get_cred_kdc(krb5_context context,
 	/* XXX should do better testing */
 	if (flags.b.constrained_delegation || impersonate_principal)
 	    eflags |= EXTRACT_TICKET_ALLOW_CNAME_MISMATCH;
+	if (flags.b.request_anonymous)
+	    eflags |= EXTRACT_TICKET_MATCH_ANON;
 
 	ret = _krb5_extract_ticket(context,
 				   &rep,

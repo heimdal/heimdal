@@ -310,6 +310,7 @@ typedef struct krb5_context_data {
 #define EXTRACT_TICKET_MATCH_REALM			4
 #define EXTRACT_TICKET_AS_REQ				8
 #define EXTRACT_TICKET_TIMESYNC				16
+#define EXTRACT_TICKET_MATCH_ANON			32
 
 /*
  * Configurable options

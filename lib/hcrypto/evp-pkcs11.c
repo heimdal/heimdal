@@ -173,7 +173,9 @@ p11_module_init(void)
 }
 
 static CK_RV
-p11_session_init(CK_MECHANISM_TYPE mechanismType, CK_SESSION_HANDLE_PTR phSession)
+p11_session_init(CK_MECHANISM_TYPE mechanismType,
+                 CK_SESSION_HANDLE_PTR phSession,
+                 CK_FLAGS *pFlags)
 {
     CK_RV rv;
     CK_ULONG i, ulSlotCount = 0;
@@ -182,6 +184,8 @@ p11_session_init(CK_MECHANISM_TYPE mechanismType, CK_SESSION_HANDLE_PTR phSessio
 
     if (phSession != NULL)
         *phSession = CK_INVALID_HANDLE;
+
+    *pFlags = 0;
 
     rv = p11_module_init();
     if (rv != CKR_OK)
@@ -213,8 +217,10 @@ p11_session_init(CK_MECHANISM_TYPE mechanismType, CK_SESSION_HANDLE_PTR phSessio
      */
     for (i = 0; i < ulSlotCount; i++) {
         rv = p11_module->C_GetMechanismInfo(pSlotList[i], mechanismType, &info);
-        if (rv == CKR_OK)
-            break;
+        if (rv == CKR_OK) {
+	    *pFlags = info.flags;
+	    break;
+	}
     }
 
     if (i == ulSlotCount) {
@@ -235,9 +241,16 @@ cleanup:
 }
 
 static int
-p11_mech_available_p(CK_MECHANISM_TYPE mechanismType)
+p11_mech_available_p(CK_MECHANISM_TYPE mechanismType, CK_FLAGS reqFlags)
 {
-    return p11_session_init(mechanismType, NULL) == CKR_OK;
+    CK_RV rv;
+    CK_FLAGS flags;
+
+    rv = p11_session_init(mechanismType, NULL, &flags);
+    if (rv != CKR_OK)
+	return 0;
+
+    return (flags & reqFlags) == reqFlags;
 }
 
 static CK_KEY_TYPE
@@ -302,6 +315,7 @@ p11_key_init(EVP_CIPHER_CTX *ctx,
         ctx->cipher->iv_len
     };
     struct pkcs11_cipher_ctx *p11ctx = (struct pkcs11_cipher_ctx *)ctx->cipher_data;
+    CK_FLAGS flags;
 
     rv = CKR_OK;
 
@@ -309,9 +323,14 @@ p11_key_init(EVP_CIPHER_CTX *ctx,
         p11_cleanup(ctx); /* refresh session with new key */
 
     if (p11ctx->hSession == CK_INVALID_HANDLE) {
-        rv = p11_session_init(mechanismType, &p11ctx->hSession);
+        rv = p11_session_init(mechanismType, &p11ctx->hSession, &flags);
         if (rv != CKR_OK)
             goto cleanup;
+
+	if ((flags & (CKF_ENCRYPT|CKF_DECRYPT)) != (CKF_ENCRYPT|CKF_DECRYPT)) {
+	    rv = CKR_MECHANISM_INVALID;
+	    goto cleanup;
+	}
     }
 
     if (key != NULL) {
@@ -388,19 +407,26 @@ p11_md_hash_init(CK_MECHANISM_TYPE mechanismType, EVP_MD_CTX *ctx)
 {
     struct pkcs11_md_ctx *p11ctx = (struct pkcs11_md_ctx *)ctx;
     CK_RV rv;
+    CK_FLAGS flags;
+    CK_MECHANISM mechanism = { mechanismType, NULL, 0 };
 
     if (p11ctx->hSession != CK_INVALID_HANDLE)
         p11_md_cleanup(ctx);
 
-    rv = p11_session_init(mechanismType, &p11ctx->hSession);
-    if (rv == CKR_OK) {
-        CK_MECHANISM mechanism = { mechanismType, NULL, 0 };
+    rv = p11_session_init(mechanismType, &p11ctx->hSession, &flags);
+    if (rv != CKR_OK)
+	goto cleanup;
 
-        assert(p11_module != NULL);
-
-        rv = p11_module->C_DigestInit(p11ctx->hSession, &mechanism);
+    if ((flags & CKF_DIGEST) != CKF_DIGEST) {
+	rv = CKR_MECHANISM_INVALID;
+	goto cleanup;
     }
 
+    assert(p11_module != NULL);
+
+    rv = p11_module->C_DigestInit(p11ctx->hSession, &mechanism);
+
+  cleanup:
     return rv == CKR_OK;
 }
 
@@ -474,7 +500,7 @@ p11_md_cleanup(EVP_MD_CTX *ctx)
     const EVP_CIPHER *                                                  \
     hc_EVP_pkcs11_##name(void)                                          \
     {                                                                   \
-        if (p11_mech_available_p(mechanismType))                        \
+        if (p11_mech_available_p(mechanismType, CKF_ENCRYPT|CKF_DECRYPT)) \
             return &pkcs11_##name;                                      \
         else                                                            \
             return NULL;                                                \
@@ -524,7 +550,7 @@ p11_md_cleanup(EVP_MD_CTX *ctx)
             p11_md_cleanup                                              \
         };                                                              \
                                                                         \
-        if (p11_mech_available_p(mechanismType))                        \
+        if (p11_mech_available_p(mechanismType, CKF_DIGEST))            \
             return &name;                                               \
         else                                                            \
             return NULL;                                                \

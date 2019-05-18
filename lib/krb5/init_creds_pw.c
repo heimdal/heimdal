@@ -2244,6 +2244,8 @@ krb5_init_creds_step(krb5_context context,
 	    }
 	    if (ctx->ic_flags & KRB5_INIT_CREDS_NO_C_CANON_CHECK)
 		eflags |= EXTRACT_TICKET_ALLOW_CNAME_MISMATCH;
+	    if (ctx->flags.request_anonymous)
+		eflags |= EXTRACT_TICKET_MATCH_ANON;
 
 	    ret = process_pa_data_to_key(context, ctx, &ctx->cred,
 					 &ctx->as_req, &rep.kdc_rep,

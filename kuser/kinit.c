@@ -206,6 +206,9 @@ static struct getargs args[] = {
     { "help",		0,   arg_flag, &help_flag, NULL, NULL }
 };
 
+static char *
+get_default_realm(krb5_context context);
+
 static void
 usage(int ret)
 {
@@ -236,7 +239,7 @@ copy_configs(krb5_context context,
 	     krb5_principal start_ticket_server)
 {
     krb5_error_code ret;
-    const char *cfg_names[] = {"realm-config", "FriendlyName", NULL};
+    const char *cfg_names[] = {"realm-config", "FriendlyName", "anon-pkinit-realm", NULL};
     const char *cfg_names_w_pname[] = {"fast_avail", NULL};
     krb5_data cfg_data;
     size_t i;
@@ -277,6 +280,30 @@ copy_configs(krb5_context context,
 }
 
 static krb5_error_code
+get_anon_pkinit_tgs_name(krb5_context context,
+			 krb5_ccache ccache,
+			 krb5_principal *tgs_name)
+{
+    krb5_error_code ret;
+    krb5_data data;
+    char *realm;
+
+    ret = krb5_cc_get_config(context, ccache, NULL, "anon-pkinit-realm", &data);
+    if (ret == 0) {
+	realm = malloc(data.length + 1);
+	memcpy(realm, data.data, data.length);
+	realm[data.length] = '\0';
+    } else
+	realm = get_default_realm(context);
+
+    ret = krb5_make_principal(context, tgs_name, realm,
+			      KRB5_TGS_NAME, realm, NULL);
+    free(realm);
+
+    return ret;
+}
+
+static krb5_error_code
 renew_validate(krb5_context context,
 	       int renew,
 	       int validate,
@@ -296,7 +323,13 @@ renew_validate(krb5_context context,
 	krb5_warn(context, ret, "krb5_cc_get_principal");
 	return ret;
     }
-    ret = get_server(context, in.client, server, &in.server);
+
+    if (server == NULL &&
+	krb5_principal_is_anonymous(context, in.client,
+				    KRB5_ANON_MATCH_UNAUTHENTICATED))
+	ret = get_anon_pkinit_tgs_name(context, cache, &in.server);
+    else
+	ret = get_server(context, in.client, server, &in.server);
     if (ret) {
 	krb5_warn(context, ret, "get_server");
 	goto out;
@@ -774,6 +807,15 @@ get_new_tickets(krb5_context context,
 	data.data = &d;
 
 	krb5_cc_set_config(context, ccache, NULL, "realm-config", &data);
+    }
+
+    if (anonymous_pkinit) {
+	krb5_data data;
+
+	data.length = strlen(principal->realm);
+	data.data = principal->realm;
+
+	krb5_cc_set_config(context, ccache, NULL, "anon-pkinit-realm", &data);
     }
 
 out:

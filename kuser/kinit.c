@@ -239,7 +239,7 @@ copy_configs(krb5_context context,
 	     krb5_principal start_ticket_server)
 {
     krb5_error_code ret;
-    const char *cfg_names[] = {"realm-config", "FriendlyName", "anon-pkinit-realm", NULL};
+    const char *cfg_names[] = {"realm-config", "FriendlyName", "anon_pkinit_realm", NULL};
     const char *cfg_names_w_pname[] = {"fast_avail", NULL};
     krb5_data cfg_data;
     size_t i;
@@ -288,7 +288,7 @@ get_anon_pkinit_tgs_name(krb5_context context,
     krb5_data data;
     char *realm;
 
-    ret = krb5_cc_get_config(context, ccache, NULL, "anon-pkinit-realm", &data);
+    ret = krb5_cc_get_config(context, ccache, NULL, "anon_pkinit_realm", &data);
     if (ret == 0)
 	realm = strndup(data.data, data.length);
     else
@@ -820,7 +820,7 @@ get_new_tickets(krb5_context context,
 	data.length = strlen(principal->realm);
 	data.data = principal->realm;
 
-	krb5_cc_set_config(context, ccache, NULL, "anon-pkinit-realm", &data);
+	krb5_cc_set_config(context, ccache, NULL, "anon_pkinit_realm", &data);
     }
 
 out:

@@ -59,7 +59,7 @@ struct hx509_verify_ctx_data {
 #define HX509_VERIFY_CTX_F_CHECK_TRUST_ANCHORS		8
 #define HX509_VERIFY_CTX_F_NO_DEFAULT_ANCHORS		16
 #define HX509_VERIFY_CTX_F_NO_BEST_BEFORE_CHECK		32
-    time_t time_now;
+    int64_t time_now;
     unsigned int max_depth;
 #define HX509_VERIFY_MAX_DEPTH 30
     hx509_revoke_ctx revoke_ctx;
@@ -500,13 +500,13 @@ hx509_verify_attach_revoke(hx509_verify_ctx ctx, hx509_revoke_ctx revoke_ctx)
  */
 
 HX509_LIB_FUNCTION void HX509_LIB_CALL
-hx509_verify_set_time(hx509_verify_ctx ctx, time_t t)
+hx509_verify_set_time(hx509_verify_ctx ctx, int64_t t)
 {
     ctx->flags |= HX509_VERIFY_CTX_F_TIME_SET;
     ctx->time_now = t;
 }
 
-HX509_LIB_FUNCTION time_t HX509_LIB_CALL
+HX509_LIB_FUNCTION int64_t HX509_LIB_CALL
 _hx509_verify_get_time(hx509_verify_ctx ctx)
 {
     return ctx->time_now;
@@ -1066,7 +1066,7 @@ subject_null_p(const Certificate *c)
 
 static int
 find_parent(hx509_context context,
-	    time_t time_now,
+	    int64_t time_now,
 	    hx509_certs trust_anchors,
 	    hx509_path *path,
 	    hx509_certs pool,
@@ -1252,7 +1252,7 @@ _hx509_path_free(hx509_path *path)
 HX509_LIB_FUNCTION int HX509_LIB_CALL
 _hx509_calculate_path(hx509_context context,
 		      int flags,
-		      time_t time_now,
+		      int64_t time_now,
 		      hx509_certs anchors,
 		      unsigned int max_depth,
 		      hx509_cert cert,
@@ -1457,10 +1457,10 @@ hx509_cert_get_serialnumber(hx509_cert p, heim_integer *i)
  * @ingroup hx509_cert
  */
 
-HX509_LIB_FUNCTION time_t HX509_LIB_CALL
+HX509_LIB_FUNCTION int64_t HX509_LIB_CALL
 hx509_cert_get_notBefore(hx509_cert p)
 {
-    return _hx509_Time2time_t(&p->data->tbsCertificate.validity.notBefore);
+    return _hx509_Time2int64_t(&p->data->tbsCertificate.validity.notBefore);
 }
 
 /**
@@ -1473,10 +1473,10 @@ hx509_cert_get_notBefore(hx509_cert p)
  * @ingroup hx509_cert
  */
 
-HX509_LIB_FUNCTION time_t HX509_LIB_CALL
+HX509_LIB_FUNCTION int64_t HX509_LIB_CALL
 hx509_cert_get_notAfter(hx509_cert p)
 {
-    return _hx509_Time2time_t(&p->data->tbsCertificate.validity.notAfter);
+    return _hx509_Time2int64_t(&p->data->tbsCertificate.validity.notAfter);
 }
 
 /**
@@ -1652,8 +1652,8 @@ hx509_cert_public_encrypt(hx509_context context,
  *
  */
 
-HX509_LIB_FUNCTION time_t HX509_LIB_CALL
-_hx509_Time2time_t(const Time *t)
+HX509_LIB_FUNCTION int64_t HX509_LIB_CALL
+_hx509_Time2int64_t(const Time *t)
 {
     switch(t->element) {
     case choice_Time_utcTime:
@@ -2063,7 +2063,7 @@ hx509_verify_path(hx509_context context,
 
     for (i = 0; i < path.len; i++) {
 	Certificate *c;
-	time_t t;
+	int64_t t;
 
 	c = _hx509_get_cert(path.val[i]);
 
@@ -2246,13 +2246,13 @@ hx509_verify_path(hx509_context context,
 	 */
 	if (i + 1 != path.len || CHECK_TA(ctx)) {
 
-	    t = _hx509_Time2time_t(&c->tbsCertificate.validity.notBefore);
+	    t = _hx509_Time2int64_t(&c->tbsCertificate.validity.notBefore);
 	    if (t > ctx->time_now) {
 		ret = HX509_CERT_USED_BEFORE_TIME;
 		hx509_clear_error_string(context);
 		goto out;
 	    }
-	    t = _hx509_Time2time_t(&c->tbsCertificate.validity.notAfter);
+	    t = _hx509_Time2int64_t(&c->tbsCertificate.validity.notAfter);
 	    if (t < ctx->time_now) {
 		ret = HX509_CERT_USED_AFTER_TIME;
 		hx509_clear_error_string(context);
@@ -3080,11 +3080,11 @@ _hx509_query_match_cert(hx509_context context, const hx509_query *q, hx509_cert 
     }
 
     if (q->match & HX509_QUERY_MATCH_TIME) {
-	time_t t;
-	t = _hx509_Time2time_t(&c->tbsCertificate.validity.notBefore);
+	int64_t t;
+	t = _hx509_Time2int64_t(&c->tbsCertificate.validity.notBefore);
 	if (t > q->timenow)
 	    return 0;
-	t = _hx509_Time2time_t(&c->tbsCertificate.validity.notAfter);
+	t = _hx509_Time2int64_t(&c->tbsCertificate.validity.notAfter);
 	if (t < q->timenow)
 	    return 0;
     }

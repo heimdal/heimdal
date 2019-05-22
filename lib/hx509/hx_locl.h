@@ -158,7 +158,7 @@ struct hx509_query_data {
     int (*cmp_func)(hx509_context, hx509_cert, void *);
     void *cmp_func_ctx;
     heim_octet_string *keyhash_sha1;
-    time_t timenow;
+    int64_t timenow;
     heim_oid *eku;
     struct hx_expr *expr;
 };
@@ -292,7 +292,7 @@ struct signature_alg {
 
 #define RA_RSA_USES_DIGEST_INFO 0x1000000
 
-    time_t best_before; /* refuse signature made after best before date */
+    int64_t best_before; /* refuse signature made after best before date */
     const EVP_MD *(*evp_md)(void);
     int (*verify_signature)(hx509_context context,
 			    const struct signature_alg *,

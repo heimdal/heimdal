@@ -64,12 +64,12 @@ struct cert_status {
 static int
 Time2string(const Time *T, char **str)
 {
-    time_t t;
+    int64_t t;
     char *s;
     struct tm *tm;
 
     *str = NULL;
-    t = _hx509_Time2time_t(T);
+    t = _hx509_Time2int64_t(T);
     tm = gmtime (&t);
     s = malloc(30);
     if (s == NULL)

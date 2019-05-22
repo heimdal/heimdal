@@ -263,7 +263,7 @@ static int
 find_CMSIdentifier(hx509_context context,
 		   CMSIdentifier *client,
 		   hx509_certs certs,
-		   time_t time_now,
+		   int64_t time_now,
 		   hx509_cert *signer_cert,
 		   int match)
 {
@@ -356,7 +356,7 @@ hx509_cms_unenvelope(hx509_context context,
 		     const void *data,
 		     size_t length,
 		     const heim_octet_string *encryptedContent,
-		     time_t time_now,
+		     int64_t time_now,
 		     heim_oid *contentType,
 		     heim_octet_string *content)
 {

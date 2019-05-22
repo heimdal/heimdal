@@ -55,8 +55,8 @@ struct hx509_ca_tbs {
 	unsigned int domaincontroller:1;
 	unsigned int xUniqueID:1;
     } flags;
-    time_t notBefore;
-    time_t notAfter;
+    int64_t notBefore;
+    int64_t notAfter;
     int pathLenConstraint; /* both for CA and Proxy */
     CRLDistributionPoints crldp;
     heim_bit_string subjectUniqueID;
@@ -135,7 +135,7 @@ hx509_ca_tbs_free(hx509_ca_tbs *tbs)
 HX509_LIB_FUNCTION int HX509_LIB_CALL
 hx509_ca_tbs_set_notBefore(hx509_context context,
 			   hx509_ca_tbs tbs,
-			   time_t t)
+			   int64_t t)
 {
     tbs->notBefore = t;
     return 0;
@@ -156,7 +156,7 @@ hx509_ca_tbs_set_notBefore(hx509_context context,
 HX509_LIB_FUNCTION int HX509_LIB_CALL
 hx509_ca_tbs_set_notAfter(hx509_context context,
 			   hx509_ca_tbs tbs,
-			   time_t t)
+			   int64_t t)
 {
     tbs->notAfter = t;
     return 0;
@@ -177,7 +177,7 @@ hx509_ca_tbs_set_notAfter(hx509_context context,
 HX509_LIB_FUNCTION int HX509_LIB_CALL
 hx509_ca_tbs_set_notAfter_lifetime(hx509_context context,
 				   hx509_ca_tbs tbs,
-				   time_t delta)
+				   int64_t delta)
 {
     return hx509_ca_tbs_set_notAfter(context, tbs, time(NULL) + delta);
 }
@@ -991,7 +991,7 @@ static int
 build_proxy_prefix(hx509_context context, const Name *issuer, Name *subject)
 {
     char *tstr;
-    time_t t;
+    int64_t t;
     int ret;
 
     ret = copy_Name(issuer, subject);
@@ -1031,8 +1031,8 @@ ca_sign(hx509_context context,
     size_t size;
     int ret;
     const AlgorithmIdentifier *sigalg;
-    time_t notBefore;
-    time_t notAfter;
+    int64_t notBefore;
+    int64_t notAfter;
     unsigned key_usage;
 
     sigalg = tbs->sigalg;

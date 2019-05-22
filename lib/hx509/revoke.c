@@ -53,7 +53,7 @@
 
 struct revoke_crl {
     char *path;
-    time_t last_modfied;
+    int64_t last_modfied;
     CRLCertificateList crl;
     int verified;
     int failed_verify;
@@ -61,7 +61,7 @@ struct revoke_crl {
 
 struct revoke_ocsp {
     char *path;
-    time_t last_modfied;
+    int64_t last_modfied;
     OCSPBasicOCSPResponse ocsp;
     hx509_certs certs;
     hx509_cert signer;
@@ -169,7 +169,7 @@ hx509_revoke_free(hx509_revoke_ctx *ctx)
 static int
 verify_ocsp(hx509_context context,
 	    struct revoke_ocsp *ocsp,
-	    time_t time_now,
+	    int64_t time_now,
 	    hx509_certs certs,
 	    hx509_cert parent)
 {
@@ -457,16 +457,16 @@ static int
 verify_crl(hx509_context context,
 	   hx509_revoke_ctx ctx,
 	   CRLCertificateList *crl,
-	   time_t time_now,
+	   int64_t time_now,
 	   hx509_certs certs,
 	   hx509_cert parent)
 {
     hx509_cert signer;
     hx509_query q;
-    time_t t;
+    int64_t t;
     int ret;
 
-    t = _hx509_Time2time_t(&crl->tbsCertList.thisUpdate);
+    t = _hx509_Time2int64_t(&crl->tbsCertList.thisUpdate);
     if (t > time_now) {
 	hx509_set_error_string(context, 0, HX509_CRL_USED_BEFORE_TIME,
 			       "CRL used before time");
@@ -479,7 +479,7 @@ verify_crl(hx509_context context,
 	return HX509_CRL_INVALID_FORMAT;
     }
 
-    t = _hx509_Time2time_t(crl->tbsCertList.nextUpdate);
+    t = _hx509_Time2int64_t(crl->tbsCertList.nextUpdate);
     if (t < time_now) {
 	hx509_set_error_string(context, 0, HX509_CRL_USED_AFTER_TIME,
 			       "CRL used after time");
@@ -588,7 +588,7 @@ crl_parser(hx509_context context, const char *type,
 }
 
 static int
-load_crl(hx509_context context, const char *path, time_t *t, CRLCertificateList *crl)
+load_crl(hx509_context context, const char *path, int64_t *t, CRLCertificateList *crl)
 {
     struct stat sb;
     size_t length;
@@ -710,7 +710,7 @@ HX509_LIB_FUNCTION int HX509_LIB_CALL
 hx509_revoke_verify(hx509_context context,
 		    hx509_revoke_ctx ctx,
 		    hx509_certs certs,
-		    time_t now,
+		    int64_t now,
 		    hx509_cert cert,
 		    hx509_cert parent_cert)
 {
@@ -849,14 +849,14 @@ hx509_revoke_verify(hx509_context context,
 
 	/* check if cert is in crl */
 	for (j = 0; j < crl->crl.tbsCertList.revokedCertificates->len; j++) {
-	    time_t t;
+	    int64_t t;
 
 	    ret = der_heim_integer_cmp(&crl->crl.tbsCertList.revokedCertificates->val[j].userCertificate,
 				       &c->tbsCertificate.serialNumber);
 	    if (ret != 0)
 		continue;
 
-	    t = _hx509_Time2time_t(&crl->crl.tbsCertList.revokedCertificates->val[j].revocationDate);
+	    t = _hx509_Time2int64_t(&crl->crl.tbsCertList.revokedCertificates->val[j].revocationDate);
 	    if (t > now)
 		continue;
 
@@ -1082,7 +1082,7 @@ out:
 }
 
 static char *
-printable_time(time_t t)
+printable_time(int64_t t)
 {
     static char s[128];
     char *p;
@@ -1184,7 +1184,7 @@ print_crl(hx509_context context, struct revoke_crl *crl, FILE *out)
     }
 
     fprintf(out, " thisUpdate: %s\n", 
-	    printable_time(_hx509_Time2time_t(&crl->crl.tbsCertList.thisUpdate)));
+	    printable_time(_hx509_Time2int64_t(&crl->crl.tbsCertList.thisUpdate)));
 
     return 0;
 }
@@ -1289,11 +1289,11 @@ hx509_revoke_ocsp_print(hx509_context context, const char *path, FILE *out)
 
 HX509_LIB_FUNCTION int HX509_LIB_CALL
 hx509_ocsp_verify(hx509_context context,
-		  time_t now,
+		  int64_t now,
 		  hx509_cert cert,
 		  int flags,
 		  const void *data, size_t length,
-		  time_t *expiration)
+		  int64_t *expiration)
 {
     const Certificate *c = _hx509_get_cert(cert);
     OCSPBasicOCSPResponse basic;
@@ -1382,7 +1382,7 @@ out:
 
 struct hx509_crl {
     hx509_certs revoked;
-    time_t expire;
+    int64_t expire;
 };
 
 /**
@@ -1579,7 +1579,7 @@ hx509_crl_sign(hx509_context context,
     }
 
     {
-	time_t next = crl->expire;
+	int64_t next = crl->expire;
 	if (next == 0)
 	    next = time(NULL) + 24 * 3600 * 365;
 

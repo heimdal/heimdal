@@ -889,7 +889,7 @@ pcert_verify(struct verify_options *opt, int argc, char **argv)
     if (opt->time_string) {
 	const char *p;
 	struct tm tm;
-	time_t t;
+	int64_t t;
 
 	memset(&tm, 0, sizeof(tm));
 
@@ -1182,7 +1182,7 @@ static int HX509_LIB_CALL
 verify_o(hx509_context hxcontext, void *ctx, hx509_cert c)
 {
     heim_octet_string *os = ctx;
-    time_t expiration;
+    int64_t expiration;
     int ret;
 
     ret = hx509_ocsp_verify(context, 0, c, 0,

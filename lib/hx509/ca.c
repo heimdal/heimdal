@@ -225,7 +225,7 @@ hx509_ca_tbs_template_units(void)
 HX509_LIB_FUNCTION int HX509_LIB_CALL
 hx509_ca_tbs_set_template(hx509_context context,
 			  hx509_ca_tbs tbs,
-			  int flags,
+			  unsigned int flags,
 			  hx509_cert cert)
 {
     int ret;

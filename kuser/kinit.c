@@ -289,15 +289,19 @@ get_anon_pkinit_tgs_name(krb5_context context,
     char *realm;
 
     ret = krb5_cc_get_config(context, ccache, NULL, "anon-pkinit-realm", &data);
-    if (ret == 0) {
-	realm = malloc(data.length + 1);
-	memcpy(realm, data.data, data.length);
-	realm[data.length] = '\0';
-    } else
+    if (ret == 0)
+	realm = strndup(data.data, data.length);
+    else
 	realm = get_default_realm(context);
+
+    krb5_data_free(&data);
+
+    if (realm == NULL)
+	return krb5_enomem(context);
 
     ret = krb5_make_principal(context, tgs_name, realm,
 			      KRB5_TGS_NAME, realm, NULL);
+
     free(realm);
 
     return ret;

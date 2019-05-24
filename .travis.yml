@@ -10,7 +10,8 @@ env:
 
 before_install:
     - if [ $TRAVIS_OS_NAME = linux ]; then sudo apt-get update -qq; fi
-    - if [ $TRAVIS_OS_NAME = linux ]; then sudo apt-get install -qq bison comerr-dev flex libcap-ng-dev libdb-dev libedit-dev libjson-perl libldap2-dev libncurses5-dev libperl4-corelibs-perl libsqlite3-dev pkg-config python ss-dev texinfo unzip netbase; fi
+    - if [ $TRAVIS_OS_NAME = linux ]; then sudo apt-get install -qq bison comerr-dev flex libcap-ng-dev libdb-dev libedit-dev libjson-perl libldap2-dev libncurses5-dev libperl4-corelibs-perl libsqlite3-dev libkeyutils-dev pkg-config python ss-dev texinfo unzip netbase keyutils; fi
+    - if [ $TRAVIS_OS_NAME = linux ]; then sudo apt-get install -qq ldap-utils gdb; fi
     - if [ $TRAVIS_OS_NAME = osx ]; then brew update; fi
     - if [ $TRAVIS_OS_NAME = osx ]; then brew install cpanm bison flex berkeley-db lmdb openldap openssl; fi
     - if [ $TRAVIS_OS_NAME = osx ]; then sudo cpanm install JSON; fi
@@ -20,6 +21,7 @@ before_install:
 
 install:
     - cd ci-build
+    - if [ -n "$COVERAGE" ]; then pip install --user cpp-coveralls; fi
     - |
       if [ $TRAVIS_OS_NAME = osx ]; then
           LDFLAGS="-L/usr/local/opt/berkeley-db/lib -L/usr/local/opt/lmdb/lib" \
@@ -35,19 +37,29 @@ install:
                   --with-berkeley-db \
                   --with-berkeley-db-include=/usr/local/opt/berkeley-db/include
       else
-          ../configure --enable-maintainer-mode
+          ../configure --enable-maintainer-mode $COVERAGE
       fi
-    - make -j3
+    - ulimit -c unlimited; make -j3
 
 script:
-    - if [ x${COVERITY_SCAN_BRANCH} != x1 ]; then make check; fi
+    - if [ x${COVERITY_SCAN_BRANCH} != x1 ]; then ulimit -c unlimited; make check; fi
+
+after_script:
+    - if [ -n "$COVERAGE" ]; then coveralls --gcov-options '\-lp'; fi
+
+after_failure:
+    - find . -name "*.trs" -print0 | xargs -0 grep -l '^:test-result: FAIL' | while read trs; do echo FAILURE detected at $trs; cat ${trs%.trs}.log ; done
+    - if [ $TRAVIS_OS_NAME = linux ]; then echo "thread apply all bt" > x; find . -name core.\* -print | while read gdb; do gdb -batch -x x `file "$core"|sed -e "s/^[^']*'//" -e "s/[ '].*$//"` "$core"; done; fi
 
 compiler:
     - clang
     - gcc
 
 matrix:
-    # Don't build on OS X with gcc
+    include:
+      - os: linux
+        compiler: gcc
+        env: COVERAGE=--enable-gcov
     exclude:
       - os: osx
         compiler: gcc

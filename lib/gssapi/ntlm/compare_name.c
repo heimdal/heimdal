@@ -40,6 +40,13 @@ OM_uint32 GSSAPI_CALLCONV _gss_ntlm_compare_name
             int * name_equal
            )
 {
+    ntlm_name n1 = (ntlm_name)name1;
+    ntlm_name n2 = (ntlm_name)name2;
+
     *minor_status = 0;
+    *name_equal =
+	strcasecmp(n1->user, n2->user) == 0 &&
+	strcasecmp(n1->domain, n2->domain) == 0;
+
     return GSS_S_COMPLETE;
 }

@@ -1,3 +1,84 @@
+Release Notes - Heimdal - Version Heimdal 7.7
+
+ Bug fixes
+
+ - PKCS#11 hcrypto back-end
+   . initialize the p11_module_load function list
+   . verify that not only is a mechanism present but that its mechanism
+     info states that it offers the required encryption, decryption or
+     digest services
+ - krb5:
+   . Starting with 7.6, Heimdal permitted requesting authenticated
+     anonymous tickets.  However, it did not verify that a KDC in fact
+     returned an anonymous ticket when one was requested.
+   - Cease setting the KDCOption reaquest_anonymous flag when issuing
+     S4UProxy (constrained delegation) TGS requests.
+   . when the Win2K PKINIT compatibility option is set, do
+     not require krbtgt otherName to match when validating KDC
+     certificate.
+   . set PKINIT_BTMM flag per Apple implementation
+   . use memset_s() instead of memset()
+ - kdc:
+   . When generating KRB5SignedPath in the AS, use the reply client name
+     rather than the one from the request, so validation will work
+     correctly in the TGS.
+   . allow checksum of PA-FOR-USER to be HMAC_MD5.  Even if tgt used
+     an enctype with a different checksum.  Per [MS-SFU] 2.2.1
+     PA-FOR-USER the checksum is always HMAC_MD5, and that's what
+     Windows and MIT clients send.
+
+     In heimdal both the client and kdc use instead the
+     checksum of the tgt, and therefore work with each other
+     but Windows and MIT clients fail against heimdal KDC.
+
+     Both Windows and MIT KDCs would allow any keyed checksum
+     to be used so Heimdal client interoperates with them.
+
+     Change Heimdal KDC to allow HMAC_MD5 even for non RC4
+     based tgt in order to support per-spec clients.
+   . use memset_s() instead of memset().
+   - Detect Heimdal 1.0 through 7.6 clients that issue S4UProxy
+     (constrained delegation) TGS Requests with the request
+     anonymous flag set.  These requests will be treated as
+     S4UProxy requests and not anonymous requests.
+ - HDB:
+   . Set SQLite3 backend default page size to 8KB.
+   . Add hdb_set_sync() method
+ - kadmind:
+   . disable HDB sync during database load avoiding unnecessary disk i/o.
+ - ipropd:
+   . disable HDB sync during receive_everything.  Doing an fsync
+     per-record when receiving the complete HDB is a performance
+     disaster.  Among other things, if the HDB is very large, then
+     one slave receving a full HDB can cause other slaves to timeout
+     and, if HDB write activity is high enough to cause iprop log
+     truncation, then also need full syncs, which leads to a cycle of
+     full syncs for all slaves until HDB write activity drops.
+     Allowing the iprop log to be larger helps, but improving
+     receive_everything() performance helps even more.
+ - kinit:
+   . Anonymous PKINIT tickets discard the realm information used
+     to locate the issuing AS. Store the issuing realm in the
+     credentials cache in order to locate a KDC which can renew them.
+   . Do not leak the result of krb5_cc_get_config() when determining
+     anonymous PKINIT start realm.
+  - klist:
+    . Show transited-policy-checked, ok-as-delegate and anonymous
+      flags when listing credentials.
+ - tests:
+   . Regenerate certs so that they expire before the 2038 armageddon
+     so the test suite will pass on 32-bit operating systems until the
+     underlying issues can be resolved.
+ - Solaris:
+   . Define _STDC_C11_BCI for memset_s prototype
+ - build tooling:
+   . Convert from python 2 to python 3
+ - documentation
+   . rename verify-password to verify-password-quality
+   . hprop default mode is encrypt
+   . kadmind "all" permission does not include "get-keys"
+   . verify-password-quality might not be stateless
+
 Release Notes - Heimdal - Version Heimdal 7.6
 
  Security

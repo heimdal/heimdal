@@ -1644,10 +1644,8 @@ next_rule:
 	flags.b.forwardable = 1;
     if (options & KRB5_GC_NO_TRANSIT_CHECK)
 	flags.b.disable_transited_check = 1;
-    if (options & KRB5_GC_CONSTRAINED_DELEGATION) {
-	flags.b.request_anonymous = 1; /* XXX ARGH confusion */
+    if (options & KRB5_GC_CONSTRAINED_DELEGATION)
 	flags.b.constrained_delegation = 1;
-    }
     if (options & KRB5_GC_ANONYMOUS)
 	flags.b.request_anonymous = 1;
 

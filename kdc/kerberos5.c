@@ -2362,5 +2362,5 @@ _kdc_is_anon_request(const KDC_REQ_BODY *b)
 	   version 11. Bit 14 is assigned to S4U2Proxy, but all S4U2Proxy
 	   requests will have a second ticket; don't consider those anonymous */
 	return (b->kdc_options.request_anonymous ||
-		(b->kdc_options.constrained_delegation && !b->additional_tickets));
+		(b->kdc_options.cname_in_addl_tkt && !b->additional_tickets));
 }

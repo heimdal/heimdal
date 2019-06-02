@@ -558,7 +558,7 @@ get_cred_kdc(krb5_context context,
 	out_creds->times.endtime = in_creds->times.endtime;
 
 	/* XXX should do better testing */
-	if (flags.b.constrained_delegation || impersonate_principal)
+	if (flags.b.cname_in_addl_tkt || impersonate_principal)
 	    eflags |= EXTRACT_TICKET_ALLOW_CNAME_MISMATCH;
 	if (flags.b.request_anonymous)
 	    eflags |= EXTRACT_TICKET_MATCH_ANON;
@@ -1035,7 +1035,7 @@ get_cred_kdc_referral(krb5_context context,
 	char *referral_realm;
 
 	/* Use cache if we are not doing impersonation or contrained deleg */
-	if (impersonate_principal == NULL || flags.b.constrained_delegation) {
+	if (impersonate_principal == NULL || flags.b.cname_in_addl_tkt) {
 	    krb5_cc_clear_mcred(&mcreds);
 	    mcreds.server = referral.server;
 	    krb5_timeofday(context, &mcreds.times.endtime);
@@ -1588,7 +1588,7 @@ next_rule:
     if (options & KRB5_GC_NO_TRANSIT_CHECK)
 	flags.b.disable_transited_check = 1;
     if (options & KRB5_GC_CONSTRAINED_DELEGATION)
-	flags.b.constrained_delegation = 1;
+	flags.b.cname_in_addl_tkt = 1;
     if (options & KRB5_GC_ANONYMOUS)
 	flags.b.request_anonymous = 1;
 

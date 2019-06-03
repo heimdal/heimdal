@@ -123,11 +123,11 @@ is_anon_as_request_p(kdc_request_t r)
     KDC_REQ_BODY *b = &r->req.req_body;
 
     /*
-     * Some versions of heimdal use bit 14 instead of 16 for
-     * request_anonymous, as indicated in the anonymous draft prior to
-     * version 11. Bit 14 is assigned to S4U2Proxy, but S4U2Proxy requests
-     * are only sent to the TGS and, in any case, would have an additional
-     * ticket present.
+     * Versions of Heimdal from 0.9rc1 through 1.50 use bit 14 instead
+     * of 16 for request_anonymous, as indicated in the anonymous draft
+     * prior to version 11. Bit 14 is assigned to S4U2Proxy, but S4U2Proxy
+     * requests are only sent to the TGS and, in any case, would have an
+     * additional ticket present.
      */
     return b->kdc_options.request_anonymous ||
 	   (b->kdc_options.cname_in_addl_tkt && !b->additional_tickets);

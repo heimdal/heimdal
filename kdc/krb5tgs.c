@@ -2183,6 +2183,7 @@ server_lookup:
     if (client != NULL
 	&& b->additional_tickets != NULL
 	&& b->additional_tickets->len != 0
+	&& b->kdc_options.cname_in_addl_tkt
 	&& b->kdc_options.enc_tkt_in_skey == 0)
     {
 	int ad_signedpath = 0;

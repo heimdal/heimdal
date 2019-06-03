@@ -116,6 +116,22 @@ is_default_salt_p(const krb5_salt *default_salt, const Key *key)
     return TRUE;
 }
 
+
+static krb5_boolean
+is_anon_request_p(kdc_request_t r)
+{
+    KDC_REQ_BODY *b = &r->req.req_body;
+
+    /*
+     * Some versions of heimdal use bit 14 instead of 16 for
+     * request_anonymous, as indicated in the anonymous draft prior to
+     * version 11. Bit 14 is assigned to S4U2Proxy, but all S4U2Proxy
+     * requests will have a second ticket; don't consider those anonymous
+     */
+    return b->kdc_options.request_anonymous ||
+	   (b->kdc_options.cname_in_addl_tkt && !b->additional_tickets);
+}
+
 /*
  * return the first appropriate key of `princ' in `ret_key'.  Look for
  * all the etypes in (`etypes', `len'), stopping as soon as we find
@@ -434,7 +450,6 @@ static krb5_error_code
 pa_enc_chal_validate(kdc_request_t r, const PA_DATA *pa)
 {
     krb5_data pepper1, pepper2, ts_data;
-    KDC_REQ_BODY *b = &r->req.req_body;
     int invalidPassword = 0;
     EncryptedData enc_data;
     krb5_enctype aenctype;
@@ -445,7 +460,7 @@ pa_enc_chal_validate(kdc_request_t r, const PA_DATA *pa)
 
     heim_assert(r->armor_crypto != NULL, "ENC-CHAL called for non FAST");
     
-    if (_kdc_is_anon_request(b)) {
+    if (is_anon_request_p(r)) {
 	ret = KRB5KRB_AP_ERR_BAD_INTEGRITY;
 	kdc_log(r->context, r->config, 0, "ENC-CHALL doesn't support anon");
 	return ret;
@@ -1478,6 +1493,24 @@ _kdc_check_addresses(krb5_context context,
 /*
  *
  */
+krb5_error_code
+_kdc_check_anon_policy (krb5_context context,
+			krb5_kdc_configuration *config,
+			hdb_entry_ex *client,
+			hdb_entry_ex *server)
+{
+    if (!config->allow_anonymous){
+	kdc_log(context, config, 0,
+		"Request for anonymous ticket denied by local policy");
+	return KRB5KDC_ERR_POLICY;
+    }
+
+    return 0;
+}
+
+/*
+ *
+ */
 
 static krb5_boolean
 send_pac_p(krb5_context context, KDC_REQ *req)
@@ -1695,12 +1728,11 @@ _kdc_as_rep(kdc_request_t r,
      *
      */
 
-    if (_kdc_is_anonymous(context, r->client_princ)) {
-	if (!_kdc_is_anon_request(b)) {
-	    kdc_log(context, config, 0, "Anonymous client w/o anonymous flag");
-	    ret = KRB5KDC_ERR_BADOPTION;
-	    goto out;
-	}
+    if (_kdc_is_anonymous(context, r->client_princ) &&
+	!is_anon_request_p(r)) {
+	kdc_log(context, config, 0, "Anonymous client w/o anonymous flag");
+	ret = KRB5KDC_ERR_BADOPTION;
+	goto out;
     }
 
     /*
@@ -1870,7 +1902,7 @@ _kdc_as_rep(kdc_request_t r,
 	 * send requre preauth is its required or anon is requested,
 	 * anon is today only allowed via preauth mechanisms.
 	 */
-	if (require_preauth_p(r) || _kdc_is_anon_request(b)) {
+	if (require_preauth_p(r) || is_anon_request_p(r)) {
 	    ret = KRB5KDC_ERR_PREAUTH_REQUIRED;
 	    _kdc_set_e_text(r, "Need to use PA-ENC-TIMESTAMP/PA-PK-AS-REQ");
 	    goto out;
@@ -1903,6 +1935,16 @@ _kdc_as_rep(kdc_request_t r,
     if(ret)
 	goto out;
 
+    if (is_anon_request_p(r)) {
+	ret = _kdc_check_anon_policy(context, config, r->client, r->server);
+	if (ret) {
+	    _kdc_set_e_text(r, "Anonymous ticket requests are disabled");
+	    goto out;
+	}
+
+	r->et.flags.anonymous = 1;
+    }
+
     /*
      * Select the best encryption type for the KDC with out regard to
      * the client since the client never needs to read that data.
@@ -1914,8 +1956,7 @@ _kdc_as_rep(kdc_request_t r,
     if(ret)
 	goto out;
 
-    if(f.renew || f.validate || f.proxy || f.forwarded || f.enc_tkt_in_skey
-       || (_kdc_is_anon_request(b) && !config->allow_anonymous)) {
+    if(f.renew || f.validate || f.proxy || f.forwarded || f.enc_tkt_in_skey) {
 	ret = KRB5KDC_ERR_BADOPTION;
 	_kdc_set_e_text(r, "Bad KDC options");
 	goto out;
@@ -1935,7 +1976,7 @@ _kdc_as_rep(kdc_request_t r,
 	ret = copy_Realm(&r->client->entry.principal->realm, &rep.crealm);
     if (ret)
 	goto out;
-    if (_kdc_is_anon_request(b))
+    if (r->et.flags.anonymous)
 	ret = _kdc_make_anonymous_principalname(&rep.cname);
     else
         ret = _krb5_principal2principalname(&rep.cname, r->client->entry.principal);
@@ -2042,9 +2083,6 @@ _kdc_as_rep(kdc_request_t r,
 	    r->et.flags.renewable = 1;
 	}
     }
-
-    if (_kdc_is_anon_request(b))
-	r->et.flags.anonymous = 1;
 
     if(b->addresses){
 	ALLOC(r->et.caddr);
@@ -2158,7 +2196,7 @@ _kdc_as_rep(kdc_request_t r,
     }
 
     /* Add the PAC */
-    if (send_pac_p(context, req) && !_kdc_is_anon_request(b)) {
+    if (send_pac_p(context, req) && !r->et.flags.anonymous) {
 	generate_pac(r, skey);
     }
 
@@ -2352,15 +2390,4 @@ _kdc_tkt_add_if_relevant_ad(krb5_context context,
     }
 
     return 0;
-}
-
-krb5_boolean
-_kdc_is_anon_request(const KDC_REQ_BODY *b)
-{
-	/* some versions of heimdal use bit 14 instead of 16 for
-	   request_anonymous, as indicated in the anonymous draft prior to
-	   version 11. Bit 14 is assigned to S4U2Proxy, but all S4U2Proxy
-	   requests will have a second ticket; don't consider those anonymous */
-	return (b->kdc_options.request_anonymous ||
-		(b->kdc_options.cname_in_addl_tkt && !b->additional_tickets));
 }

@@ -506,15 +506,8 @@ check_tgs_flags(krb5_context context,
      * anonymous KDC option SHOULD be set, but it is not required.
      * Treat an anonymous TGT as if the anonymous flag was set.
      */
-    if (tgt->flags.anonymous || f.request_anonymous) {
-	if (!config->allow_anonymous){
-	    kdc_log(context, config, 0,
-		    "Request for anonymous ticket");
-	    return KRB5KDC_ERR_BADOPTION;
-	}
-
+    if (tgt->flags.anonymous || f.request_anonymous)
 	et->flags.anonymous = 1;
-    }
 
     return 0;
 }
@@ -2350,6 +2343,13 @@ server_lookup:
 	ret = KRB5KRB_AP_ERR_BADADDR;
 	kdc_log(context, config, 0, "Request from wrong address");
 	goto out;
+    }
+
+    /* check local and per-principal anonymous ticket issuance policy */
+    if (tgt->flags.anonymous || b->kdc_options.request_anonymous) {
+	ret = _kdc_check_anon_policy(context, config, client, server);
+	if (ret)
+	    goto out;
     }
 
     /*

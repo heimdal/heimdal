@@ -366,6 +366,24 @@ check_PAC(krb5_context context,
     return 0;
 }
 
+static krb5_boolean
+is_anon_tgs_request_p(const KDC_REQ_BODY *b,
+		      const EncTicketPart *tgt)
+{
+    KDCOptions f = b->kdc_options;
+
+    /*
+     * Earlier (pre-7.6) versions of Heimdal would send both the
+     * request-anonymous and cname-in-addl-tkt flags for constrained
+     * delegation requests. A true anonymous TGS request will only
+     * have the request-anonymous flag set. (A corollary of this is
+     * that it is not possible to support anonymous constrained
+     * delegation requests, although they would be of limited utility.)
+     */
+    return tgt->flags.anonymous ||
+	(f.request_anonymous && !f.cname_in_addl_tkt && !b->additional_tickets);
+}
+
 /*
  *
  */
@@ -506,7 +524,7 @@ check_tgs_flags(krb5_context context,
      * anonymous KDC option SHOULD be set, but it is not required.
      * Treat an anonymous TGT as if the anonymous flag was set.
      */
-    if (tgt->flags.anonymous || f.request_anonymous)
+    if (is_anon_tgs_request_p(b, tgt))
 	et->flags.anonymous = 1;
 
     return 0;
@@ -2346,7 +2364,7 @@ server_lookup:
     }
 
     /* check local and per-principal anonymous ticket issuance policy */
-    if (tgt->flags.anonymous || b->kdc_options.request_anonymous) {
+    if (is_anon_tgs_request_p(b, tgt)) {
 	ret = _kdc_check_anon_policy(context, config, client, server);
 	if (ret)
 	    goto out;

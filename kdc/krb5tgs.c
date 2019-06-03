@@ -373,7 +373,7 @@ is_anon_tgs_request_p(const KDC_REQ_BODY *b,
     KDCOptions f = b->kdc_options;
 
     /*
-     * Earlier (pre-7.6) versions of Heimdal would send both the
+     * Versions of Heimdal from 1.0 to 7.6, inclusive, send both the
      * request-anonymous and cname-in-addl-tkt flags for constrained
      * delegation requests. A true anonymous TGS request will only
      * have the request-anonymous flag set. (A corollary of this is

@@ -118,15 +118,16 @@ is_default_salt_p(const krb5_salt *default_salt, const Key *key)
 
 
 static krb5_boolean
-is_anon_request_p(kdc_request_t r)
+is_anon_as_request_p(kdc_request_t r)
 {
     KDC_REQ_BODY *b = &r->req.req_body;
 
     /*
      * Some versions of heimdal use bit 14 instead of 16 for
      * request_anonymous, as indicated in the anonymous draft prior to
-     * version 11. Bit 14 is assigned to S4U2Proxy, but all S4U2Proxy
-     * requests will have a second ticket; don't consider those anonymous
+     * version 11. Bit 14 is assigned to S4U2Proxy, but S4U2Proxy requests
+     * are only sent to the TGS and, in any case, would have an additional
+     * ticket present.
      */
     return b->kdc_options.request_anonymous ||
 	   (b->kdc_options.cname_in_addl_tkt && !b->additional_tickets);
@@ -460,7 +461,7 @@ pa_enc_chal_validate(kdc_request_t r, const PA_DATA *pa)
 
     heim_assert(r->armor_crypto != NULL, "ENC-CHAL called for non FAST");
     
-    if (is_anon_request_p(r)) {
+    if (is_anon_as_request_p(r)) {
 	ret = KRB5KRB_AP_ERR_BAD_INTEGRITY;
 	kdc_log(r->context, r->config, 0, "ENC-CHALL doesn't support anon");
 	return ret;
@@ -1729,7 +1730,7 @@ _kdc_as_rep(kdc_request_t r,
      */
 
     if (_kdc_is_anonymous(context, r->client_princ) &&
-	!is_anon_request_p(r)) {
+	!is_anon_as_request_p(r)) {
 	kdc_log(context, config, 0, "Anonymous client w/o anonymous flag");
 	ret = KRB5KDC_ERR_BADOPTION;
 	goto out;
@@ -1902,7 +1903,7 @@ _kdc_as_rep(kdc_request_t r,
 	 * send requre preauth is its required or anon is requested,
 	 * anon is today only allowed via preauth mechanisms.
 	 */
-	if (require_preauth_p(r) || is_anon_request_p(r)) {
+	if (require_preauth_p(r) || is_anon_as_request_p(r)) {
 	    ret = KRB5KDC_ERR_PREAUTH_REQUIRED;
 	    _kdc_set_e_text(r, "Need to use PA-ENC-TIMESTAMP/PA-PK-AS-REQ");
 	    goto out;
@@ -1935,7 +1936,7 @@ _kdc_as_rep(kdc_request_t r,
     if(ret)
 	goto out;
 
-    if (is_anon_request_p(r)) {
+    if (is_anon_as_request_p(r)) {
 	ret = _kdc_check_anon_policy(context, config, r->client, r->server);
 	if (ret) {
 	    _kdc_set_e_text(r, "Anonymous ticket requests are disabled");

@@ -36,7 +36,7 @@ VER_DEBUG=1
 !endif
 
 # Define to 1 if this is a pre-release build.  Undefine otherwise
-VER_PRERELEASE=1
+# VER_PRERELEASE=1
 
 # Define to a valid string if this build DOES NOT follow normal
 # release procedures.  I.e. this is a private build whose version

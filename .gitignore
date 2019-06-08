@@ -14,6 +14,7 @@
 .libs/
 Makefile
 Makefile.in
+rs_state.ini
 asn1_*.[cx]
 !/lib/asn1/asn1_gen.c
 !/lib/asn1/asn1_print.c

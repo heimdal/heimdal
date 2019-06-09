@@ -645,7 +645,7 @@ _krb5_extract_ticket(krb5_context context,
 		     krb5_const_pointer decryptarg)
 {
     krb5_error_code ret;
-    krb5_principal tmp_principal;
+    krb5_principal client = NULL, server = NULL;
     size_t len = 0;
     time_t tmp_time;
     krb5_timestamp sec_now;
@@ -714,11 +714,18 @@ _krb5_extract_ticket(krb5_context context,
 	goto out;
     }
 
-    /* compare client and save */
+    /* Parse client and server */
     ret = _krb5_principalname2krb5_principal(context,
-					     &tmp_principal,
+					     &client,
 					     rep->kdc_rep.cname,
 					     rep->kdc_rep.crealm);
+    if (ret)
+	goto out;
+
+    ret = _krb5_principalname2krb5_principal(context,
+					     &server,
+					     rep->enc_part.sname,
+					     rep->enc_part.srealm);
     if (ret)
 	goto out;
 
@@ -726,49 +733,44 @@ _krb5_extract_ticket(krb5_context context,
     if (flags & EXTRACT_TICKET_MATCH_ANON) {
 	ret = check_client_anonymous(context,rep,
 				     creds->client,
-				     tmp_principal,
+				     client,
 				     request == NULL); /* is TGS */
 	if (ret) {
-	    krb5_free_principal(context, tmp_principal);
 	    goto out;
 	}
     }
 
-    /* check client referral and save principal */
+    /* check client referral */
     if((flags & EXTRACT_TICKET_ALLOW_CNAME_MISMATCH) == 0) {
 	ret = check_client_mismatch(context, rep,
 				    creds->client,
-				    tmp_principal,
+				    client,
 				    &creds->session);
 	if (ret) {
-	    krb5_free_principal (context, tmp_principal);
 	    goto out;
 	}
     }
-    krb5_free_principal (context, creds->client);
-    creds->client = tmp_principal;
 
-    /* check server referral and save principal */
-    ret = _krb5_principalname2krb5_principal (context,
-					      &tmp_principal,
-					      rep->enc_part.sname,
-					      rep->enc_part.srealm);
-    if (ret)
-	goto out;
+    /* check server referral */
     if((flags & EXTRACT_TICKET_ALLOW_SERVER_MISMATCH) == 0){
 	ret = check_server_referral(context,
 				    rep,
 				    flags,
 				    creds->server,
-				    tmp_principal,
+				    server,
 				    &creds->session);
 	if (ret) {
-	    krb5_free_principal (context, tmp_principal);
 	    goto out;
 	}
     }
+
+    /* Save client and server principals */
+    krb5_free_principal (context, creds->client);
+    creds->client = client;
+    client = NULL;
     krb5_free_principal(context, creds->server);
-    creds->server = tmp_principal;
+    creds->server = server;
+    server = NULL;
 
     /* verify names */
     if(flags & EXTRACT_TICKET_MATCH_REALM){
@@ -882,6 +884,8 @@ _krb5_extract_ticket(krb5_context context,
 
 
 out:
+    krb5_free_principal(context, client);
+    krb5_free_principal(context, server);
     memset (rep->enc_part.key.keyvalue.data, 0,
 	    rep->enc_part.key.keyvalue.length);
     return ret;

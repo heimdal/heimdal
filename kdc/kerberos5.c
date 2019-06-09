@@ -1605,7 +1605,7 @@ send_pac_p(krb5_context context, KDC_REQ *req)
  */
 
 static krb5_error_code
-generate_pac(kdc_request_t r, Key *skey)
+generate_pac(kdc_request_t r, Key *skey, Key *tkey)
 {
     krb5_error_code ret;
     krb5_pac p = NULL;
@@ -1623,7 +1623,7 @@ generate_pac(kdc_request_t r, Key *skey)
     ret = _krb5_pac_sign(r->context, p, r->et.authtime,
 			 r->client->entry.principal,
 			 &skey->key, /* Server key */
-			 &skey->key, /* FIXME: should be krbtgt key */
+			 &tkey->key, /* krbtgt key */
 			 &data);
     krb5_pac_free(r->context, p);
     if (ret) {
@@ -1705,6 +1705,31 @@ add_enc_pa_rep(kdc_request_t r)
 			   KRB5_PADATA_FX_FAST, NULL, 0);
 }
 
+static krb5_error_code
+get_local_tgs(krb5_context context,
+	      krb5_kdc_configuration *config,
+	      const char *realm,
+	      hdb_entry_ex **entry)
+{
+    krb5_error_code ret;
+    krb5_principal krbtgt_princ;
+
+    ret = krb5_make_principal(context,
+                              &krbtgt_princ,
+                              realm,
+                              KRB5_TGS_NAME,
+                              realm,
+                              NULL);
+    if (ret)
+	return ret;
+
+    ret = _kdc_db_fetch(context, config, krbtgt_princ,
+			HDB_F_GET_KRBTGT, NULL, NULL, entry);
+    krb5_free_principal(context, krbtgt_princ);
+
+    return ret;
+}
+
 /*
  *
  */
@@ -1730,6 +1755,9 @@ _kdc_as_rep(kdc_request_t r,
     METHOD_DATA error_method;
     const PA_DATA *pa;
     krb5_boolean is_tgs;
+    hdb_entry_ex *tgs_server, *local_tgs = NULL;
+    krb5_enctype tgs_etype;
+    Key *tgs_key;
 
     memset(&rep, 0, sizeof(rep));
     error_method.len = 0;
@@ -2023,6 +2051,25 @@ _kdc_as_rep(kdc_request_t r,
     if(ret)
 	goto out;
 
+    /* If server is not krbtgt, fetch local krbtgt key for signing authdata */
+    if (is_tgs) {
+	tgs_server = r->server;
+	tgs_key = skey;
+	tgs_etype = setype;
+    } else {
+        ret = get_local_tgs(context, config, r->server_princ->realm,
+			    &local_tgs);
+	if(ret)
+	    goto out;
+
+	tgs_server = local_tgs;
+	ret = _kdc_get_preferred_key(context, config, tgs_server,
+				     r->server_princ->realm,
+				     &tgs_etype, &tgs_key);
+	if(ret)
+	    goto out;
+    }
+
     if(f.renew || f.validate || f.proxy || f.forwarded || f.enc_tkt_in_skey) {
 	ret = KRB5KDC_ERR_BADOPTION;
 	_kdc_set_e_text(r, "Bad KDC options");
@@ -2275,7 +2322,7 @@ _kdc_as_rep(kdc_request_t r,
 
     /* Add the PAC */
     if (send_pac_p(context, req) && !r->et.flags.anonymous) {
-	generate_pac(r, skey);
+	generate_pac(r, skey, tgs_key);
     }
 
     _kdc_log_timestamp(context, config, "AS-REQ", r->et.authtime, r->et.starttime,
@@ -2292,8 +2339,8 @@ _kdc_as_rep(kdc_request_t r,
 	/* do this as the last thing since this signs the EncTicketPart */
 	ret = _kdc_add_KRB5SignedPath(context,
 				      config,
-				      r->server,
-				      setype,
+				      tgs_server,
+				      tgs_etype,
 				      client_principal,
 				      NULL,
 				      NULL,
@@ -2404,6 +2451,8 @@ out2:
 	krb5_crypto_destroy(r->context, r->armor_crypto);
 	r->armor_crypto = NULL;
     }
+    if (local_tgs)
+	_kdc_free_ent(context, local_tgs);
     krb5_free_keyblock_contents(r->context, &r->reply_key);
     krb5_free_keyblock_contents(r->context, &r->session_key);
     return ret;

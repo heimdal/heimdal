@@ -844,6 +844,24 @@ ${kgetcred} \
 	bar@${R} 2>/dev/null && \
 	{ ec=1 ; eval "${testfailed}"; }
 
+echo "test constrained delegation evidence (evidence from AS)"; > messages.log
+${kinit} --cache=${ocache} --forwardable --password-file=${objdir}/barpassword --server=${ps} bar@${R} || \
+        { ec=1 ; eval "${testfailed}"; }
+${kgetcred} \
+	--out-cache=${o2cache} \
+	--delegation-credential-cache=${ocache} \
+	${server}@${R} || \
+	{ ec=1 ; eval "${testfailed}"; }
+echo "  try using the credential"
+${test_ap_req} ${server}@${R} ${keytab} ${o2cache} || \
+	{ ec=1 ; eval "${testfailed}"; }
+echo "  negative check"
+${kgetcred} \
+	--out-cache=${o2cache} \
+	--delegation-credential-cache=${ocache} \
+	bar@${R} 2>/dev/null && \
+	{ ec=1 ; eval "${testfailed}"; }
+
 echo "test constrained delegation impersonation (non forward)"; > messages.log
 rm -f ocache.krb5
 ${kimpersonate} -s ${ps} -c bar@${R} -t ${aesenctype} || \

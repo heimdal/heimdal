@@ -740,6 +740,16 @@ _krb5_extract_ticket(krb5_context context,
 	}
     }
 
+    /* check KDC supported S4U extensions (MS-SFU) */
+    if ((flags & EXTRACT_TICKET_MATCH_S4U_CLIENT) &&
+	!krb5_principal_is_krbtgt(context, server)) {
+	if (krb5_principal_compare(context, creds->client, client)) {
+	    ret = KRB5KDC_ERR_PADATA_TYPE_NOSUPP;
+	    goto out;
+	}
+	flags |= EXTRACT_TICKET_ALLOW_CNAME_MISMATCH;
+    }
+
     /* check client referral */
     if((flags & EXTRACT_TICKET_ALLOW_CNAME_MISMATCH) == 0) {
 	ret = check_client_mismatch(context, rep,

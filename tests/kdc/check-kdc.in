@@ -805,8 +805,29 @@ echo "  negative check"
 ${kgetcred_imp} --impersonate=bar@${R} foo@${R} 2>/dev/null && \
 	{ ec=1 ; eval "${testfailed}"; }
 
-echo "test constrained delegation"; > messages.log
+echo "test constrained delegation (evidence from impersonation)"; > messages.log
 ${kgetcred_imp} --forward --impersonate=bar@${R} ${ps} || \
+	{ ec=1 ; eval "${testfailed}"; }
+${kgetcred} \
+	--out-cache=${o2cache} \
+	--delegation-credential-cache=${ocache} \
+	${server}@${R} || \
+	{ ec=1 ; eval "${testfailed}"; }
+echo "  try using the credential"
+${test_ap_req} ${server}@${R} ${keytab} ${o2cache} || \
+	{ ec=1 ; eval "${testfailed}"; }
+echo "  negative check"
+${kgetcred} \
+	--out-cache=${o2cache} \
+	--delegation-credential-cache=${ocache} \
+	bar@${R} 2>/dev/null && \
+	{ ec=1 ; eval "${testfailed}"; }
+
+echo "test constrained delegation evidence (evidence from TGS)"; > messages.log
+echo bar > ${objdir}/barpassword
+${kinit} --cache=${icache} --forwardable --password-file=${objdir}/barpassword bar@${R} || \
+        { ec=1 ; eval "${testfailed}"; }
+${kgetcred} --cache=${icache} --out-cache=${ocache} ${ps} || \
 	{ ec=1 ; eval "${testfailed}"; }
 ${kgetcred} \
 	--out-cache=${o2cache} \

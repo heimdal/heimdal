@@ -240,17 +240,24 @@ init_context_from_config_file(krb5_context context)
     context->default_cc_name = NULL;
     context->default_cc_name_set = 0;
 
+    tmp = secure_getenv("KRB5_TRACE");
     s = krb5_config_get_strings(context, NULL, "logging", "krb5", NULL);
-    if(s) {
+    if (tmp || s) {
 	char **p;
 
 	if (context->debug_dest)
 	    krb5_closelog(context, context->debug_dest);
 
 	krb5_initlog(context, "libkrb5", &context->debug_dest);
-	for(p = s; *p; p++)
-	    krb5_addlog_dest(context, context->debug_dest, *p);
-	krb5_config_free_strings(s);
+
+	if (s) {
+	    for(p = s; *p; p++)
+		krb5_addlog_dest(context, context->debug_dest, *p);
+	    krb5_config_free_strings(s);
+	}
+
+	if (tmp)
+	    krb5_addlog_dest(context, context->debug_dest, tmp);
     }
 
     tmp = krb5_config_get_string(context, NULL, "libdefaults",

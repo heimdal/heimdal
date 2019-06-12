@@ -183,6 +183,7 @@ HEIMDAL_KRB5_2.0 {
 		krb5_crypto_init;
 		krb5_crypto_overhead;
 		krb5_crypto_prf;
+		krb5_crypto_prfplus;
 		krb5_crypto_prf_length;
 		krb5_crypto_length;
 		krb5_crypto_length_iov;

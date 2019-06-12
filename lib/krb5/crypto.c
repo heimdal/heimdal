@@ -2990,7 +2990,7 @@ krb5_crypto_prf(krb5_context context,
     return (*et->prf)(context, crypto, input, output);
 }
 
-static krb5_error_code
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_crypto_prfplus(krb5_context context,
 		    const krb5_crypto crypto,
 		    const krb5_data *input,

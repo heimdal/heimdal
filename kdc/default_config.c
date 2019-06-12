@@ -67,6 +67,8 @@ krb5_kdc_get_config(krb5_context context, krb5_kdc_configuration **config)
     c->db = NULL;
     c->num_db = 0;
     c->logf = NULL;
+    c->enable_derived_keys = FALSE;
+    c->derived_keys_ndots = 2;
 
     c->num_kdc_processes =
         krb5_config_get_int_default(context, NULL, c->num_kdc_processes,
@@ -255,6 +257,14 @@ krb5_kdc_get_config(krb5_context context, krb5_kdc_configuration **config)
 	krb5_config_get_int_default(context, NULL,
 				    0,
 				    "kdc", "pkinit_dh_min_bits", NULL);
+
+    c->enable_derived_keys =
+	krb5_config_get_bool_default(context, NULL, c->enable_derived_keys,
+				     "kdc", "enable_derived_keys", NULL);
+
+    c->derived_keys_ndots =
+	krb5_config_get_int_default(context, NULL, c->derived_keys_ndots,
+				    "kdc", "derived_keys_ndots", NULL);
 
     *config = c;
 

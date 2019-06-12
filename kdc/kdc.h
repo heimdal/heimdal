@@ -95,6 +95,9 @@ typedef struct krb5_kdc_configuration {
     const char *kx509_template;
     const char *kx509_ca;
 
+    krb5_boolean enable_derived_keys;
+    int derived_keys_ndots;
+
 } krb5_kdc_configuration;
 
 struct krb5_kdc_service {

@@ -716,8 +716,12 @@ krb5_cc_initialize(krb5_context context,
     krb5_error_code ret;
 
     ret = (*id->ops->init)(context, id, primary_principal);
-    if (ret == 0)
-        id->initialized = 1;
+    if (ret == 0) {
+        id->cc_kx509_done = 0;
+        id->cc_initialized = 1;
+        id->cc_need_start_realm = 1;
+        id->cc_start_tgt_stored = 0;
+    }
     return ret;
 }
 
@@ -735,11 +739,32 @@ KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_cc_destroy(krb5_context context,
 		krb5_ccache id)
 {
+    krb5_error_code ret2 = 0;
     krb5_error_code ret;
+    krb5_data d;
+
+    /*
+     * Destroy associated hx509 PKIX credential store created by krb5_kx509*().
+     */
+    if ((ret = krb5_cc_get_config(context, id, NULL, "kx509store", &d)) == 0) {
+        char *name;
+
+        if ((name = strndup(d.data, d.length)) == NULL) {
+            ret2 = krb5_enomem(context);
+        } else {
+            hx509_certs certs;
+            ret = hx509_certs_init(context->hx509ctx, name, 0, NULL, &certs);
+            if (ret == 0)
+                ret2 = hx509_certs_destroy(context->hx509ctx, &certs);
+            else
+                hx509_certs_free(&certs);
+            free(name);
+        }
+    }
 
     ret = (*id->ops->destroy)(context, id);
-    krb5_cc_close (context, id);
-    return ret;
+    (void) krb5_cc_close(context, id);
+    return ret ? ret : ret2;
 }
 
 /**
@@ -756,6 +781,44 @@ krb5_cc_close(krb5_context context,
 	      krb5_ccache id)
 {
     krb5_error_code ret;
+
+    /*
+     * We want to automatically acquire a PKIX credential using kx509.
+     *
+     * This can be slow if we're generating an RSA key.  Plus it means talking
+     * to the KDC.
+     *
+     * We only want to do this when:
+     *
+     *  - krb5_cc_initialize() was called on this ccache handle,
+     *  - a start TGT was stored (actually, a cross-realm TGT would do),
+     *
+     * and
+     *
+     *  - we aren't creating a gss_cred_id_t for a delegated credential.
+     *
+     * We only have a heuristic for the last condition: that `id' is not a
+     * MEMORY ccache, which is what's used for delegated credentials.
+     *
+     * We really only want to do this when storing a credential in a user's
+     * default ccache, but we leave it to krb5_kx509() to do that check.
+     *
+     * XXX Perhaps we should do what krb5_kx509() does here, and just call
+     *     krb5_kx509_ext() (renamed to krb5_kx509()).  Then we wouldn't need
+     *     the delegated cred handle heuristic.
+     */
+    if (id->cc_initialized && id->cc_start_tgt_stored && !id->cc_kx509_done &&
+        strcmp("MEMORY", krb5_cc_get_type(context, id)) != 0) {
+        _krb5_debug(context, 2, "attempting to fetch a certificate using "
+                    "kx509");
+        ret = krb5_kx509(context, id, NULL);
+        if (ret)
+            _krb5_debug(context, 2, "failed to fetch a certificate");
+        else
+            _krb5_debug(context, 2, "fetched a certificate");
+        ret = 0;
+    }
+
     ret = (*id->ops->close)(context, id);
     free(id);
     return ret;
@@ -777,31 +840,49 @@ krb5_cc_store_cred(krb5_context context,
 {
     krb5_error_code ret;
     krb5_data realm;
+    const char *cfg = "";
 
     ret = (*id->ops->store)(context, id, creds);
+    if (ret)
+        return ret;
 
-    /* Look for and mark the first root TGT's realm as the start realm */
-    if (ret == 0 && id->initialized &&
+    /* Automatic cc_config-setting and other actions */
+    if (krb5_principal_get_num_comp(context, creds->server) > 1 &&
+        krb5_is_config_principal(context, creds->server))
+        cfg = krb5_principal_get_comp_string(context, creds->server, 1);
+
+    if (id->cc_initialized && !id->cc_start_tgt_stored &&
         krb5_principal_is_root_krbtgt(context, creds->server)) {
-
-        id->initialized = 0;
+        /* Mark the first root TGT's realm as the start realm */
+        id->cc_start_tgt_stored = 1;
+        id->cc_need_start_realm = 0;
         realm.length = strlen(creds->server->realm);
         realm.data = creds->server->realm;
         (void) krb5_cc_set_config(context, id, NULL, "start_realm", &realm);
-    } else if (ret == 0 && id->initialized &&
-        krb5_is_config_principal(context, creds->server) &&
-        strcmp(creds->server->name.name_string.val[1], "start_realm") == 0) {
-
+    } else if (id->cc_initialized && id->cc_start_tgt_stored &&
+               !id->cc_kx509_done && strcmp(cfg, "kx509cert") == 0) {
         /*
-         * But if the caller is storing a start_realm ccconfig, then
-         * stop looking for root TGTs to mark as the start_realm.
-         *
-         * By honoring any start_realm cc config stored, we interop
-         * both, with ccache implementations that don't preserve
-         * insertion order, and Kerberos implementations that store this
-         * cc config before the TGT.
+         * Do not attempt kx509 at cc close time -- we're copying a ccache and
+         * we've already got a cert (and private key).
          */
-        id->initialized = 0;
+        id->cc_kx509_done = 1;
+    } else if (id->cc_initialized && id->cc_start_tgt_stored &&
+               !id->cc_kx509_done && strcmp(cfg, "kx509_service_status") == 0) {
+        /*
+         * Do not attempt kx509 at cc close time -- we're copying a ccache and
+         * we know the kx509 service is not available.
+         */
+        id->cc_kx509_done = 1;
+    } else if (id->cc_initialized && strcmp(cfg, "start_realm") == 0) {
+        /*
+         * If the caller is storing a start_realm ccconfig, then stop looking
+         * for root TGTs to mark as the start_realm.
+         *
+         * By honoring any start_realm cc config stored, we interop both, with
+         * ccache implementations that don't preserve insertion order, and
+         * Kerberos implementations that store this cc config before the TGT.
+         */
+        id->cc_need_start_realm = 0;
     }
     return ret;
 }

@@ -113,17 +113,13 @@ krb5_kdc_get_config(krb5_context context, krb5_kdc_configuration **config)
 				     "kdc", "enable-kx509", NULL);
 
     if (c->enable_kx509) {
+        /* These are global defaults.  There are also per-realm defaults. */
 	c->kx509_template =
 	    krb5_config_get_string(context, NULL,
 				   "kdc", "kx509_template", NULL);
 	c->kx509_ca =
 	    krb5_config_get_string(context, NULL,
 				   "kdc", "kx509_ca", NULL);
-	if (c->kx509_ca == NULL || c->kx509_template == NULL) {
-	    kdc_log(context, c, 0,
-		    "missing kx509 configuration, turning off");
-	    c->enable_kx509 = FALSE;
-	}
     }
 #endif
 

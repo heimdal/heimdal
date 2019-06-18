@@ -19,6 +19,14 @@
 	pkinit_anchors = FILE:@objdir@/ca.crt
 	pkinit_mappings_file = @srcdir@/pki-mapping
 
+        enable-kx509 = true
+        kx509_include_email_san = true
+        kx509_include_pkinit_san = true
+        kx509_include_dnsname_san = true
+        require_initial_kca_tickets = false
+        kx509_template = FILE:@objdir@/kx509-template.crt
+        kx509_ca = FILE:@objdir@/ca.crt,@srcdir@/../../lib/hx509/data/key.der
+
 	database = {
 		dbname = @objdir@/current-db
 		realm = TEST.H5L.SE

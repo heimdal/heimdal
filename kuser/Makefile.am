@@ -37,10 +37,13 @@ kdestroy_LDADD	= $(kinit_LDADD)
 
 kimpersonate_LDADD = $(kinit_LDADD)
 
+LIB_hx509 = ../lib/hx509/libhx509.la
+
 heimtools_LDADD = \
 	$(top_builddir)/lib/sl/libsl.la \
 	$(kinit_LDADD) \
-	$(LIB_readline)
+	$(LIB_readline) \
+	$(LIB_hx509)
 
 dist_heimtools_SOURCES = heimtools.c klist.c kswitch.c copy_cred_cache.c
 nodist_heimtools_SOURCES = heimtools-commands.c

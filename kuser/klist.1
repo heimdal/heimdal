@@ -44,6 +44,8 @@
 .Fl Fl cache= Ns Ar cache
 .Xc
 .Oc
+.Oo Fl Fl extract-kx509-cert= Ns Ar hx509-store
+.Oc
 .Op Fl s | Fl t | Fl Fl test
 .Op Fl T | Fl Fl tokens
 .Op Fl 5 | Fl Fl v5
@@ -65,6 +67,17 @@ credential cache to list
 .It Fl s , Fl t , Fl Fl test
 Test for there being an active and valid TGT for the local realm of
 the user in the credential cache.
+.It Fl Fl extract-kx509-cert= Ns Ar hx509-store
+An hx509 store specification, such as
+.Va DER-FILE:/path/to/der/file ,
+.Va PEM-FILE:/path/to/PEM/file ,
+.Va FILE:/path/to/PEM/file ,
+or
+.Va PKCS12:/path/to/PKCS#12/file
+into which to store any PKIX certificate and private key
+(unencrypted) that may have been acquired with the kx509 protocol
+and stored in the
+.Ns Ar ccache.
 .It Fl T , Fl Fl tokens
 display AFS tokens
 .It Fl 5 , Fl Fl v5

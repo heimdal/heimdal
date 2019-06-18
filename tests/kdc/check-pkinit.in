@@ -55,8 +55,13 @@ keyfile="${hx509_data}/key.der"
 keyfile2="${hx509_data}/key2.der"
 
 kinit="${kinit} -c $cache ${afs_no_afslog}"
+klist="${klist} --hidden -v -c $cache"
 kgetcred="${kgetcred} -c $cache"
 kdestroy="${kdestroy} -c $cache ${afs_no_unlog}"
+
+kextract() {
+    ${klist} --extract-kx509-cert="$1"
+}
 
 KRB5_CONFIG="${objdir}/krb5-pkinit.conf"
 export KRB5_CONFIG
@@ -103,6 +108,13 @@ ${kadmin} add -p kaka --use-defaults ${server}@${R} || exit 1
 
 echo "Doing database check"
 ${kadmin} check ${R} || exit 1
+
+# XXX Do not use committed, in-tree private keys or certificates!
+# XXX Add hxtool command to generate a private key w/o generating a CSR
+# XXX Use hxtool to generate a fresh private key
+# XXX Use hxtool to generate self-signed CA certs
+# XXX Use PEM-FILE and store private key and certificate in same file
+# XXX Update krb5.conf.in to use ${objdir}-relative keys and certificates
 
 echo "Setting up certificates"
 ${hxtool} request-create \
@@ -165,6 +177,12 @@ ${hxtool} issue-certificate \
 	  --req="PKCS10:req-pkinit2.der" \
 	  --certificate="FILE:pkinit4.crt" || exit 1
 
+echo "issue self-signed kx509 template cert"
+${hxtool} issue-certificate \
+	  --self-signed \
+	  --ca-private-key=FILE:${keyfile} \
+          --subject='CN=${principal-component0},DC=test,DC=h5l,DC=se' \
+	  --certificate="FILE:kx509-template.crt" || exit 1
 
 echo foo > ${objdir}/foopassword
 
@@ -181,7 +199,15 @@ base="${objdir}"
 ${kinit} -C FILE:${base}/pkinit.crt,${keyfile2} bar@${R} || \
 	{ ec=1 ; eval "${testfailed}"; }
 ${kgetcred} ${server}@${R} || { ec=1 ; eval "${testfailed}"; }
+${klist}
+
+echo "Check kx509 certificate acquisition"
+kextract PEM-FILE:${objdir}/kx509.pem || { ec=1 ; eval "${testfailed}"; }
 ${kdestroy}
+
+echo "Check PKINIT w/ kx509 certificate"
+${kinit} -C PEM-FILE:${objdir}/kx509.pem bar@${R} || \
+	{ ec=1 ; eval "${testfailed}"; }
 
 echo "Trying pk-init (principal in pki-mapping file) "; > messages.log
 ${kinit} -C FILE:${base}/pkinit.crt,${keyfile2} foo@${R} || \

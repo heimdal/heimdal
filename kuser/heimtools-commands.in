@@ -114,6 +114,11 @@ command = {
 		type = "flag"
 		help = "Verbose output"
 	}
+	option = {
+		long = "extract-kx509-cert"
+		type = "string"
+		help = "hx509 store for kx509 certificate and private key"
+	}
 }
 command = {
 	name = "kgetcred"

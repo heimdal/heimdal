@@ -431,6 +431,8 @@ HEIMDAL_KRB5_2.0 {
 		krb5_kt_resolve;
 		krb5_kt_start_seq_get;
 		krb5_kuserok;
+		krb5_kx509;
+		krb5_kx509_ext;
 		krb5_log;
 		krb5_log_msg;
 		krb5_make_addrport;

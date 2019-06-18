@@ -2,6 +2,8 @@ include @srcdirabs@/include-krb5.conf
 
 [libdefaults]
 	default_keytab_name = @objdir@/server.keytab
+        enable-kx509 = yes
+        kx509_store = PEM-FILE:/tmp/cert_%{euid}.pem
 
 [realms]
 	TEST.H5L.SE = {

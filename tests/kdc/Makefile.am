@@ -232,6 +232,11 @@ krb5-pkinit-win.conf: krb5-pkinit.conf.in Makefile
 
 CLEANFILES= \
 	$(TESTS) \
+	*.crt \
+	*.der \
+	*.log \
+	*.pem \
+	*.pid \
 	*.tmp \
 	acache.krb5 \
 	barpassword \
@@ -239,7 +244,6 @@ CLEANFILES= \
 	cache.krb5 \
 	cdigest-reply \
 	client-cache \
-	current*.log \
 	current-db* \
 	digest-reply \
 	foopassword \
@@ -248,7 +252,6 @@ CLEANFILES= \
 	iprop.keytab \
 	ipropd.dumpfile \
 	kdc-tester4.json \
-	kdc.crt \
 	krb5-authz.conf \
 	krb5-authz2.conf \
 	krb5-canon.conf \
@@ -267,18 +270,11 @@ CLEANFILES= \
 	malloc-log \
 	malloc-log-master \
 	malloc-log-slave \
-	messages.log \
+	notfoopassword \
 	o2cache.krb5 \
 	o2digest-reply \
 	ocache.krb5 \
 	out-log \
-	pkinit.crt \
-	pkinit2.crt \
-	pkinit3.crt \
-	pkinit4.crt \
-	req-kdc.der \
-	req-pkinit.der \
-	req-pkinit2.der \
 	s2digest-reply \
 	sdigest-init \
 	sdigest-reply \

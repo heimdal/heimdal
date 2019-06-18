@@ -150,10 +150,9 @@ kdc_kx509(krb5_context context,
 {
     Kx509Request kx509req;
     krb5_error_code ret;
-    size_t len;
 
     ret = _kdc_try_kx509_request(req_buffer->data, req_buffer->length,
-				 &kx509req, &len);
+                                 &kx509req);
     if (ret)
 	return ret;
 

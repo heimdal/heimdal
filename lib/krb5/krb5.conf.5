@@ -342,6 +342,28 @@ be allowed to run.
 .It Li fcache_strict_checking
 strict checking in FILE credential caches that owner, no symlink and
 permissions is correct.
+.It Li enable-kx509 = Va boolean
+Enable use of kx509 so that every TGT that can has a corresponding
+PKIX certificate.  Default: false.
+.It Li kx509_gen_key_type = Va public-key-type
+Type of public key for kx509 private key generation.  Defaults to
+.Va rsa
+and currently only
+.Va rsa
+is supported.
+.It Li kx509_gen_rsa_key_size = Va number-of-bits
+RSA key size for kx509.  Defaults to 2048.
+.It Li kx509_store = path
+A file path into which to write a certificate obtained with
+kx509, and its private key, when attempting kx509 optimistically
+using credentials from a default ccache.  Tokens will be
+expanded.
+.It Li kx509_hostname = Va hostname
+If set, then the kx509 client will use this hostname for the
+kx509 service.  This can also be set in the
+.Li [realm]
+section on a per-realm basis.  If not set then a TGS name will be
+used.
 .It Li name_canon_rules = Va rules
 One or more service principal name canonicalization rules.  Each rule
 consists of one or more tokens separated by colon (':').  Currently
@@ -706,6 +728,8 @@ Should the kdc answer digest requests. The default is FALSE.
 .It Li digests_allowed = Va list of digests
 Specifies the digests the kdc will reply to. The default is
 .Li ntlm-v2 .
+.It Li enable-kx509 = Va boolean
+Enables kx509 service.
 .It Li kx509_ca = Va file
 Specifies the PEM credentials for the kx509 certification authority.
 .It Li require_initial_kca_tickets = Va boolean
@@ -718,13 +742,31 @@ Defaults to true for the global setting.
 If true then the kx509 client principal's name and realm will be
 included in an
 .Li id-pkinit-san
-certificate extension.
+subject alternative name certificate extension.
 This can be set on a per-realm basis as well as globally.
 Defaults to true for the global setting.
+.It Li kx509_include_email_san = Va boolean
+If true then the kx509 client user principal's name and realm will be
+included in an
+.Li rfc822Name
+subject alternative name certificate extension, with the downcased
+realm as the domainname.
+This can be set on a per-realm basis as well as globally.
+Defaults to false for the global setting.
+.It Li kx509_include_dnsname_san = Va boolean
+If true then the kx509 host-based or domain-based client principal's
+hostname will be included in an
+.Li dNSName
+subject alternative name certificate extension, with the
+downcased realm as the domainname.  This can be set on a
+per-realm basis as well as
+globally.  Defaults to false for the global setting.
 .It Li kx509_template = Va file
 Specifies the PEM file with a template for the certificates to be
-issued.
-The following variables can be interpolated in the subject name using
+issued to kx509 clients whose principal names have one component
+(i.e., are user principals).  A template is a certificate with
+variables to be interpolated in the subjectName.  The following
+variables can be interpolated in the subject name using
 ${variable} syntax:
 .Bl -tag -width "xxx" -offset indent
 .It principal-name
@@ -733,6 +775,53 @@ The full name of the kx509 client principal.
 The full name of the kx509 client principal, excluding the realm name.
 .It principal-name-realm
 The name of the client principal's realm.
+.El
+.It Li kx509_templates = {
+.Bl -tag -width "xxx" -offset indent
+.It Li two_component_user = {
+.Bl -tag -width "xxx" -offset indent
+.It Va first-component-of-principal-name = Va file
+.It ...
+.It Li }
+.El
+.It Li hostbased = {
+.Bl -tag -width "xxx" -offset indent
+.It Va service = Va file
+.It ...
+.It Li }
+.El
+.It Li domainbased = {
+.Bl -tag -width "xxx" -offset indent
+.It Va service = Va file
+.It ...
+.It Li }
+.El
+.It Li }
+.El
+Specifies the PEM files with templates for the certificates to be
+issued to clients with principal names with two or three name
+components.  This is useful for issuing server certificates to
+host-based principals.  The following variables can be
+interpolated in the subject name using
+.Va ${variable}
+syntax:
+.Bl -tag -width "xxx" -offset indent
+.It principal-name
+The full name of the kx509 client principal.
+.It principal-name-without-realm
+The full name of the kx509 client principal, excluding the realm name.
+.It principal-name-realm
+The name of the client principal's realm.
+.It principal-component0
+The first component of the client principal.
+.It principal-component1
+The second component of the client principal.
+.It principal-component2
+The third component of the client principal.
+.It principal-service-name
+The name of the service.
+.It principal-host-name
+The name of the host.
 .El
 .El
 The 

@@ -16,6 +16,10 @@ HEIMDAL_X509_1.2 {
 		_hx509_generate_private_key_is_ca;
 		_hx509_map_file_os;
 		_hx509_name_from_Name;
+		_hx509_private_key_export;
+		_hx509_private_key_exportable;
+		_hx509_private_key_get_internal;
+		_hx509_private_key_oid;
 		_hx509_private_key_ref;
 		_hx509_request_add_dns_name;
 		_hx509_request_add_email;

@@ -19,6 +19,11 @@ EXPORTS
 	_hx509_private_key_ref
 	_hx509_request_add_dns_name
 	_hx509_request_add_email
+	_hx509_private_key_export
+	_hx509_private_key_exportable
+	_hx509_private_key_get_internal
+	_hx509_private_key_oid
+	_hx509_private_key_ref
 	hx509_request_free
 	hx509_request_get_SubjectPublicKeyInfo
 	hx509_request_get_name

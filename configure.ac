@@ -735,12 +735,13 @@ else
             User=${USER:-${LOGNAME:-`id -nu`}}
         fi
         if test -d "$srcdir/.git"; then
-            GitCommit=`git rev-parse HEAD`
-            GitBranch=`git rev-parse --abbrev-ref HEAD`
+            GitCommit=`cd $srcdir && git rev-parse HEAD`
+            GitBranch=`cd $srcdir && git rev-parse --abbrev-ref HEAD`
             if test "x$GitBranch" = master; then
-                GitDesc=`git describe --all --dirty`
+                GitDesc=`cd $srcdir && git describe --all --dirty`
             else
-                GitDesc=`git describe --tags --match 'heimdal-*' --dirty`
+                GitDesc=`cd $srcdir && \
+			 git describe --tags --match 'heimdal-*' --dirty`
             fi
         else
             GitCommit='<commit-unknown>'

@@ -2077,11 +2077,6 @@ _kdc_as_rep(kdc_request_t r,
     r->et.flags.initial = 1;
     if(r->client->entry.flags.forwardable && r->server->entry.flags.forwardable)
 	r->et.flags.forwardable = f.forwardable;
-    else if (f.forwardable) {
-	_kdc_set_e_text(r, "Ticket may not be forwardable");
-	ret = KRB5KDC_ERR_POLICY;
-	goto out;
-    }
     if(r->client->entry.flags.proxiable && r->server->entry.flags.proxiable)
 	r->et.flags.proxiable = f.proxiable;
     else if (f.proxiable) {

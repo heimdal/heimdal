@@ -6,11 +6,13 @@ AC_DEFUN([rk_OTP],[
 AC_REQUIRE([rk_DB])dnl
 AC_ARG_ENABLE(otp,
 	AS_HELP_STRING([--disable-otp],[if you don't want OTP support]))
-if test "$enable_otp" = yes -a "$db_type" = unknown; then
+AS_IF([test "$db_type" = unknown -o "$db_type" = sqlite -o "$db_type" = lmdb],
+	[dbm_compat=no], [dbm_compat=yes])
+if test "$enable_otp" = yes -a "$dbm_compat" = no; then
 	AC_MSG_ERROR([OTP requires a NDBM/DB compatible library])
 fi
 if test "$enable_otp" != no; then
-	if test "$db_type" != unknown; then
+	if test "$dbm_compat" != no; then
 		enable_otp=yes
 	else
 		enable_otp=no

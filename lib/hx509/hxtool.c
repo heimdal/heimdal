@@ -1263,57 +1263,57 @@ static void
 get_key(const char *fn, const char *type, int optbits,
 	hx509_private_key *signer)
 {
-    int ret;
+    int ret = 0;
 
     if (type) {
-	BIGNUM *e;
-	RSA *rsa;
-	unsigned char *p0, *p;
-	size_t len;
-	int bits = 1024;
-
-	if (fn == NULL)
-	    errx(1, "no key argument, don't know here to store key");
+        struct hx509_generate_private_context *gen_ctx;
 
 	if (strcasecmp(type, "rsa") != 0)
 	    errx(1, "can only handle rsa keys for now");
 
-	e = BN_new();
-	BN_set_word(e, 0x10001);
+        ret = _hx509_generate_private_key_init(context,
+                                               ASN1_OID_ID_PKCS1_RSAENCRYPTION,
+                                               &gen_ctx);
+        if (ret == 0)
+            ret = _hx509_generate_private_key_bits(context, gen_ctx, optbits);
+        if (ret == 0)
+            ret = _hx509_generate_private_key(context, gen_ctx, signer);
+        if (ret)
+            hx509_err(context, 1, ret, "failed to generate private key of type %s", type);
 
-	if (optbits)
-	    bits = optbits;
+        if (fn) {
+            hx509_certs certs = NULL;
+            hx509_cert cert = NULL;
 
-	rsa = RSA_new();
-	if(rsa == NULL)
-	    errx(1, "RSA_new failed");
+            cert = hx509_cert_init_private_key(context,
+                                               _hx509_private_key_ref(*signer),
+                                               NULL);
+            if (cert)
+                ret = hx509_certs_init(context, fn,
+                                       HX509_CERTS_CREATE |
+                                       HX509_CERTS_UNPROTECT_ALL,
+                                       NULL, &certs);
+            if (ret == 0)
+                ret = hx509_certs_add(context, certs, cert);
+            if (ret == 0)
+                ret = hx509_certs_store(context, certs, 0, NULL);
+            if (ret)
+                hx509_err(context, 1, ret, "failed to store generated private "
+                          "key in %s", fn);
 
-	ret = RSA_generate_key_ex(rsa, bits, e, NULL);
-	if(ret != 1)
-	    errx(1, "RSA_new failed");
-
-	BN_free(e);
-
-	len = i2d_RSAPrivateKey(rsa, NULL);
-
-	p0 = p = malloc(len);
-	if (p == NULL)
-	    errx(1, "out of memory");
-
-	i2d_RSAPrivateKey(rsa, &p);
-
-	rk_dumpdata(fn, p0, len);
-	memset(p0, 0, len);
-	free(p0);
-
-	RSA_free(rsa);
-
-    } else if (fn == NULL)
-	err(1, "no private key");
-
-    ret = read_private_key(fn, signer);
-    if (ret)
-	err(1, "read_private_key");
+            if (certs)
+                hx509_certs_free(&certs);
+            if (cert)
+                hx509_cert_free(cert);
+        }
+    } else {
+        if (fn == NULL)
+            err(1, "no private key");
+        ret = read_private_key(fn, signer);
+        if (ret)
+            hx509_err(context, 1, ret, "failed to read private key from %s",
+                      fn);
+    }
 }
 
 int

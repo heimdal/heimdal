@@ -307,6 +307,7 @@ _expand_euid(krb5_context context, PTYPE param, const char *postfix, char **str)
 	return krb5_enomem(context);
     return 0;
 }
+#endif /* _WIN32 */
 
 static krb5_error_code
 _expand_username(krb5_context context, PTYPE param, const char *postfix, char **str)
@@ -327,7 +328,6 @@ _expand_username(krb5_context context, PTYPE param, const char *postfix, char **
 
     return 0;
 }
-#endif /* _WIN32 */
 
 /**
  * Expand an extra token
@@ -394,8 +394,8 @@ static const struct {
     {"LIBEXEC", FTYPE_SPECIAL, 0, LIBEXECDIR, _expand_path},
     {"SBINDIR", FTYPE_SPECIAL, 0, SBINDIR, _expand_path},
     {"euid", SPECIAL(_expand_euid)},
-    {"username", SPECIAL(_expand_username)},
 #endif
+    {"username", SPECIAL(_expand_username)},
     {"TEMP", SPECIAL(_expand_temp_folder)},
     {"USERID", SPECIAL(_expand_userid)},
     {"uid", SPECIAL(_expand_userid)},

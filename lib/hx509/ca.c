@@ -43,9 +43,9 @@
 struct hx509_ca_tbs {
     hx509_name subject;
     SubjectPublicKeyInfo spki;
+    KeyUsage ku;
     ExtKeyUsage eku;
     GeneralNames san;
-    unsigned key_usage;
     heim_integer serial;
     struct {
 	unsigned int proxy:1;
@@ -262,11 +262,9 @@ hx509_ca_tbs_set_template(hx509_context context,
 	    return ret;
     }
     if (flags & HX509_CA_TEMPLATE_KU) {
-	KeyUsage ku;
-	ret = _hx509_cert_get_keyusage(context, cert, &ku);
+	ret = _hx509_cert_get_keyusage(context, cert, &tbs->ku);
 	if (ret)
 	    return ret;
-	tbs->key_usage = KeyUsage2int(ku);
     }
     if (flags & HX509_CA_TEMPLATE_EKU) {
 	ExtKeyUsage eku;
@@ -403,6 +401,28 @@ hx509_ca_tbs_set_serialnumber(hx509_context context,
     ret = der_copy_heim_integer(serialNumber, &tbs->serial);
     tbs->flags.serial = !ret;
     return ret;
+}
+
+/**
+ * An an extended key usage to the to-be-signed certificate object.
+ * Duplicates will detected and not added.
+ *
+ * @param context A hx509 context.
+ * @param tbs object to be signed.
+ * @param oid extended key usage to add.
+ *
+ * @return An hx509 error code, see hx509_get_error_string().
+ *
+ * @ingroup hx509_ca
+ */
+
+HX509_LIB_FUNCTION int HX509_LIB_CALL
+hx509_ca_tbs_add_ku(hx509_context context,
+		    hx509_ca_tbs tbs,
+		    KeyUsage ku)
+{
+    tbs->ku = ku;
+    return 0;
 }
 
 /**
@@ -1033,7 +1053,6 @@ ca_sign(hx509_context context,
     const AlgorithmIdentifier *sigalg;
     time_t notBefore;
     time_t notAfter;
-    unsigned key_usage;
 
     sigalg = tbs->sigalg;
     if (sigalg == NULL)
@@ -1053,21 +1072,12 @@ ca_sign(hx509_context context,
     if (notAfter == 0)
 	notAfter = time(NULL) + 3600 * 24 * 365;
 
-    key_usage = tbs->key_usage;
-    if (key_usage == 0) {
-	KeyUsage ku;
-	memset(&ku, 0, sizeof(ku));
-	ku.digitalSignature = 1;
-	ku.keyEncipherment = 1;
-	key_usage = KeyUsage2int(ku);
-    }
-
     if (tbs->flags.ca) {
-	KeyUsage ku;
-	memset(&ku, 0, sizeof(ku));
-	ku.keyCertSign = 1;
-	ku.cRLSign = 1;
-	key_usage |= KeyUsage2int(ku);
+	tbs->ku.keyCertSign = 1;
+	tbs->ku.cRLSign = 1;
+    } else if (KeyUsage2int(tbs->ku) == 0) {
+	tbs->ku.digitalSignature = 1;
+	tbs->ku.keyEncipherment = 1;
     }
 
     /*
@@ -1237,11 +1247,9 @@ ca_sign(hx509_context context,
     }
 
     /* add KeyUsage */
-    {
-	KeyUsage ku;
-
-	ku = int2KeyUsage(key_usage);
-	ASN1_MALLOC_ENCODE(KeyUsage, data.data, data.length, &ku, &size, ret);
+    if (KeyUsage2int(tbs->ku) > 0) {
+        ASN1_MALLOC_ENCODE(KeyUsage, data.data, data.length,
+                           &tbs->ku, &size, ret);
 	if (ret) {
 	    hx509_set_error_string(context, 0, ret, "Out of memory");
 	    goto out;
@@ -1265,7 +1273,7 @@ ca_sign(hx509_context context,
 	}
 	if (size != data.length)
 	    _hx509_abort("internal ASN.1 encoder error");
-	ret = add_extension(context, tbsc, 0,
+	ret = add_extension(context, tbsc, 1,
 			    &asn1_oid_id_x509_ce_extKeyUsage, &data);
 	free(data.data);
 	if (ret)

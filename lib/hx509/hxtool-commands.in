@@ -427,6 +427,12 @@ command = {
 		help = "Subject DN"
 	}
 	option = {
+		long = "eku"
+		type = "strings"
+		argument = "oid-string"
+		help = "Add Extended Key Usage OID"
+	}
+	option = {
 		long = "email"
 		type = "strings"
 		help = "Email address in SubjectAltName"
@@ -649,6 +655,17 @@ command = {
 		default = "-1"
 		type = "integer"
 		help = "Maximum path length (CA and proxy certificates), -1 no limit"
+	}
+	option = {
+		long = "eku"
+		type = "strings"
+		argument = "oid-string"
+		help = "Add Extended Key Usage OID"
+	}
+	option = {
+		long = "ku"
+		type = "strings"
+		help = "Key Usage (digitalSignature, keyEncipherment, dataEncipherment, keyAgreement, keyCertSign, cRLSign, encipherOnly, decipherOnly)"
 	}
 	option = {
 		long = "hostname"

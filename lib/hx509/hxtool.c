@@ -1365,6 +1365,15 @@ request_create(struct request_create_options *opt, int argc, char **argv)
 	    hx509_err(context, 1, ret, "hx509_request_add_dns_name");
     }
 
+    for (i = 0; i < opt->eku_strings.num_strings; i++) {
+	heim_oid oid;
+
+	parse_oid(opt->eku_strings.strings[i], NULL, &oid);
+	ret = _hx509_request_add_eku(context, req, &oid);
+	if (ret)
+	    hx509_err(context, 1, ret, "hx509_request_add_eku");
+    }
+
 
     ret = hx509_private_key2SPKI(context, signer, &key);
     if (ret)
@@ -1792,6 +1801,7 @@ hxtool_ca(struct certificate_sign_options *opt, int argc, char **argv)
     hx509_private_key cert_key = NULL;
     hx509_name subject = NULL;
     SubjectPublicKeyInfo spki;
+    size_t i;
     int delta = 0;
 
     memset(&spki, 0, sizeof(spki));
@@ -1803,10 +1813,8 @@ hxtool_ca(struct certificate_sign_options *opt, int argc, char **argv)
     if (opt->certificate_string == NULL)
 	errx(1, "--certificate argument missing");
 
-    if (opt->template_certificate_string) {
-	if (opt->template_fields_string == NULL)
-	    errx(1, "--template-certificate not no --template-fields");
-    }
+    if (opt->template_certificate_string && opt->template_fields_string == NULL)
+        errx(1, "--template-certificate used but no --template-fields given");
 
     if (opt->lifetime_string) {
 	delta = parse_time(opt->lifetime_string, "day");
@@ -1928,6 +1936,31 @@ hxtool_ca(struct certificate_sign_options *opt, int argc, char **argv)
     if (ret)
 	hx509_err(context, 1, ret, "hx509_ca_tbs_init");
 
+    for (i = 0; i < opt->eku_strings.num_strings; i++) {
+        heim_oid oid;
+
+	parse_oid(opt->eku_strings.strings[i], NULL, &oid);
+	ret = hx509_ca_tbs_add_eku(context, tbs, &oid);
+	if (ret)
+	    hx509_err(context, 1, ret, "hx509_request_add_eku");
+    }
+    if (opt->ku_strings.num_strings) {
+        const struct units *kus = asn1_KeyUsage_units();
+        const struct units *kup;
+        uint64_t n = 0;
+
+        for (i = 0; i < opt->ku_strings.num_strings; i++) {
+            for (kup = kus; kup->name; kup++) {
+                if (strcmp(kup->name, opt->ku_strings.strings[i]))
+                    continue;
+                n |= kup->mult;
+                break;
+            }
+        }
+        ret = hx509_ca_tbs_add_ku(context, tbs, int2KeyUsage(n));
+        if (ret)
+            hx509_err(context, 1, ret, "hx509_request_add_ku");
+    }
     if (opt->signature_algorithm_string) {
 	const AlgorithmIdentifier *sigalg;
 	if (strcasecmp(opt->signature_algorithm_string, "rsa-with-sha1") == 0)

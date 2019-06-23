@@ -18,6 +18,7 @@ EXPORTS
 	hx509_private_key_free
 	_hx509_private_key_ref
 	_hx509_request_add_dns_name
+	_hx509_request_add_eku
 	_hx509_request_add_email
 	_hx509_private_key_export
 	_hx509_private_key_exportable
@@ -42,6 +43,7 @@ EXPORTS
 	hx509_ca_sign_self
 	hx509_ca_tbs_add_crl_dp_uri
 	hx509_ca_tbs_add_eku
+	hx509_ca_tbs_add_ku
 	hx509_ca_tbs_add_san_hostname
 	hx509_ca_tbs_add_san_jid
 	hx509_ca_tbs_add_san_ms_upn

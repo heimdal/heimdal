@@ -30,6 +30,16 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
+/*
+ * If KEYRING tests fail with:
+ *
+ *      test_cc: krb5_cc_gen_new: KEYRING: Key has been revoked
+ *
+ * then run:
+ *
+ *      $ keyctl new_session
+ */
+
 #include "krb5_locl.h"
 #include <getarg.h>
 #include <err.h>

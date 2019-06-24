@@ -1255,15 +1255,15 @@ start_kdc(krb5_context context,
         }
 
      end:
-        kdc_log(context, config, 0, "KDC master process exiting", pid);
+        kdc_log(context, config, 0, "KDC master process exiting");
         free(pids);
     } else {
         loop(context, config, d, ndescr, -1);
-        kdc_log(context, config, 0, "KDC exiting", pid);
+        kdc_log(context, config, 0, "KDC exiting");
     }
 #else
     loop(context, config, d, ndescr, -1);
-    kdc_log(context, config, 0, "KDC exiting", pid);
+    kdc_log(context, config, 0, "KDC exiting");
 #endif
 
     free(d);

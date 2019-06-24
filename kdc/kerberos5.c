@@ -1452,7 +1452,7 @@ kdc_check_flags(krb5_context context,
 
 	if (server->flags.locked_out) {
 	    kdc_log(context, config, 0,
-		    "Client server locked out -- %s", server_name);
+		    "Server locked out -- %s", server_name);
 	    return KRB5KDC_ERR_POLICY;
 	}
 	if (server->flags.invalid) {
@@ -1498,7 +1498,7 @@ kdc_check_flags(krb5_context context,
 	    krb5_format_time(context, *server->pw_end,
 			     pwend_str, sizeof(pwend_str), TRUE);
 	    kdc_log(context, config, 0,
-		    "Server's key has expired at -- %s",
+		    "Server's key has expired at %s -- %s",
 		    pwend_str, server_name);
 	    return KRB5KDC_ERR_KEY_EXPIRED;
 	}

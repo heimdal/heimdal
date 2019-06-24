@@ -97,9 +97,7 @@ krb5_kdc_get_config(krb5_context context, krb5_kdc_configuration **config)
 		    digests);
 	    c->enable_digest = 0;
 	} else if (c->digests_allowed == 0) {
-	    kdc_log(context, c, 0,
-		    "no digest enable, turning digest off",
-		    digests);
+	    kdc_log(context, c, 0, "no digest enable, turning digest off");
 	    c->enable_digest = 0;
 	}
     }

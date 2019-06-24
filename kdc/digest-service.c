@@ -127,7 +127,7 @@ ntlm_service(void *ctx, const heim_idata *req,
     }
 
     kdc_log(context, config, 2,
-	    "digest-request: found user, processing ntlm request", ret);
+	    "digest-request: found user, processing ntlm request");
 
     if (ntq.ntChallengeResponce.length != 24) {
 	struct ntlm_buf infotarget, answer;

@@ -90,7 +90,8 @@ copy_import(void)
     if (!equal)
 	errx(1, "names not equal");
 
-    if (lifetime1 != lifetime1)
+    /* FIXME: This check is racy! */
+    if (lifetime1 != lifetime2)
 	errx(1, "lifetime not equal");
 
     if (usage1 != usage1)

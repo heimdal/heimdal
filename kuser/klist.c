@@ -161,7 +161,27 @@ print_cred_verbose(krb5_context context, krb5_creds *cred, int do_json)
     printf(N_("Client: %s\n", ""), str);
     free (str);
     
-    if (!krb5_is_config_principal(context, cred->client)) {
+    if (krb5_is_config_principal(context, cred->server)) {
+        if (krb5_principal_get_num_comp(context, cred->server) > 1) {
+            const char *s;
+
+            /* If the payload is text and not secret/sensitive, print it */
+            s = krb5_principal_get_comp_string(context, cred->server, 1);
+            if (strcmp(s, "start_realm") == 0 ||
+                strcmp(s, "anon_pkinit_realm") == 0 ||
+                strcmp(s, "default-ntlm-domain") == 0 ||
+                strcmp(s, "FriendlyName") == 0 ||
+                strcmp(s, "fast_avail") == 0 ||
+                strcmp(s, "kx509store") == 0 ||
+                strcmp(s, "kx509_service_status") == 0)
+                printf(N_("Configuration item payload: %.*s\n", ""),
+                       (int)cred->ticket.length,
+                       (const char *)cred->ticket.data);
+            else
+                printf(N_("Configuration item payload length: %lu\n", ""),
+                       (unsigned long)cred->ticket.length);
+        } /* else... this is a meaningless entry; nothing would create it */
+    } else {
 	Ticket t;
 	size_t len;
 	char *s;
@@ -190,41 +210,40 @@ print_cred_verbose(krb5_context context, krb5_creds *cred, int do_json)
 	free_Ticket(&t);
 	printf(N_("Ticket length: %lu\n", ""),
 	       (unsigned long)cred->ticket.length);
-    }
-    printf(N_("Auth time:  %s\n", ""),
-	   printable_time_long(cred->times.authtime));
-    if(cred->times.authtime != cred->times.starttime)
-	printf(N_("Start time: %s\n", ""),
-	       printable_time_long(cred->times.starttime));
-    printf(N_("End time:   %s", ""),
-	   printable_time_long(cred->times.endtime));
-    if(sec > cred->times.endtime)
-	printf(N_(" (expired)", ""));
-    printf("\n");
-    if(cred->flags.b.renewable)
-	printf(N_("Renew till: %s\n", ""),
-	       printable_time_long(cred->times.renew_till));
-    {
-	char flags[1024];
-	unparse_flags(TicketFlags2int(cred->flags.b),
-		      asn1_TicketFlags_units(),
-		      flags, sizeof(flags));
-	printf(N_("Ticket flags: %s\n", ""), flags);
-    }
-    printf(N_("Addresses: ", ""));
-    if (cred->addresses.len != 0) {
-	for(j = 0; j < cred->addresses.len; j++){
-	    char buf[128];
-	    size_t len;
-	    if(j) printf(", ");
-	    ret = krb5_print_address(&cred->addresses.val[j],
-				     buf, sizeof(buf), &len);
+        printf(N_("Auth time:  %s\n", ""),
+               printable_time_long(cred->times.authtime));
+        if(cred->times.authtime != cred->times.starttime)
+            printf(N_("Start time: %s\n", ""),
+                   printable_time_long(cred->times.starttime));
+        printf(N_("End time:   %s", ""),
+               printable_time_long(cred->times.endtime));
+        if(sec > cred->times.endtime)
+            printf(N_(" (expired)", ""));
+        printf("\n");
+        if(cred->flags.b.renewable)
+            printf(N_("Renew till: %s\n", ""),
+                   printable_time_long(cred->times.renew_till));
+        {
+            char flags[1024];
+            unparse_flags(TicketFlags2int(cred->flags.b),
+                          asn1_TicketFlags_units(),
+                          flags, sizeof(flags));
+            printf(N_("Ticket flags: %s\n", ""), flags);
+        }
+        printf(N_("Addresses: ", ""));
+        if (cred->addresses.len != 0) {
+            for(j = 0; j < cred->addresses.len; j++){
+                char buf[128];
+                if(j) printf(", ");
+                ret = krb5_print_address(&cred->addresses.val[j],
+                                         buf, sizeof(buf), &len);
 
-	    if(ret == 0)
-		printf("%s", buf);
-	}
-    } else {
-	printf(N_("addressless", ""));
+                if(ret == 0)
+                    printf("%s", buf);
+            }
+        } else {
+            printf(N_("addressless", ""));
+        }
     }
     printf("\n\n");
 }

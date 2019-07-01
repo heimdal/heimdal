@@ -266,6 +266,7 @@ print_tickets (krb5_context context,
     krb5_cc_cursor cursor;
     krb5_creds creds;
     krb5_deltat sec;
+    int print_comma = 0;
 
     rtbl_t ct = NULL;
 
@@ -339,19 +340,20 @@ print_tickets (krb5_context context,
     }
     if (do_verbose && do_json)
 	printf("\"tickets\" : [");
-    while ((ret = krb5_cc_next_cred (context,
-				     ccache,
-				     &cursor,
-				     &creds)) == 0) {
+    while ((ret = krb5_cc_next_cred(context, ccache, &cursor, &creds)) == 0) {
 	if (!do_hidden && krb5_is_config_principal(context, creds.server)) {
 	    ;
-	}else if(do_verbose){
+	} else if (do_verbose) {
+            if (do_json && print_comma)
+                printf(",");
 	    print_cred_verbose(context, &creds, do_json);
-	}else{
+            print_comma = 1;
+	} else {
 	    print_cred(context, &creds, ct, do_flags);
 	}
-	krb5_free_cred_contents (context, &creds);
+	krb5_free_cred_contents(context, &creds);
     }
+    print_comma = 0;
     if(ret != KRB5_CC_END)
 	krb5_err(context, 1, ret, "krb5_cc_get_next");
     ret = krb5_cc_end_seq_get (context, ccache, &cursor);

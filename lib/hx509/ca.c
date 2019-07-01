@@ -108,7 +108,8 @@ hx509_ca_tbs_free(hx509_ca_tbs *tbs)
     free_CRLDistributionPoints(&(*tbs)->crldp);
     der_free_bit_string(&(*tbs)->subjectUniqueID);
     der_free_bit_string(&(*tbs)->issuerUniqueID);
-    hx509_name_free(&(*tbs)->subject);
+    if ((*tbs)->subject)
+        hx509_name_free(&(*tbs)->subject);
     if ((*tbs)->sigalg) {
 	free_AlgorithmIdentifier((*tbs)->sigalg);
 	free((*tbs)->sigalg);

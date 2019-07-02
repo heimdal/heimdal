@@ -74,8 +74,11 @@ HEIMDAL_X509_1.2 {
 		hx509_cert_get_subject;
 		hx509_cert_get_issuer_unique_id;
 		hx509_cert_get_subject_unique_id;
+		hx509_cert_have_private_key;
+		hx509_cert_have_private_key_only;
 		hx509_cert_init;
 		hx509_cert_init_data;
+		hx509_cert_init_private_key;
 		hx509_cert_keyusage_print;
 		hx509_cert_public_encrypt;
 		hx509_cert_ref;

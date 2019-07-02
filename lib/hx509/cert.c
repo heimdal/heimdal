@@ -212,6 +212,29 @@ _hx509_cert_get_version(const Certificate *t)
     return t->tbsCertificate.version ? *t->tbsCertificate.version + 1 : 1;
 }
 
+static hx509_cert
+cert_init(hx509_context context, heim_error_t *error)
+{
+    hx509_cert cert;
+
+    cert = malloc(sizeof(*cert));
+    if (cert == NULL) {
+	if (error)
+	    *error = heim_error_create_enomem();
+	return NULL;
+    }
+    cert->ref = 1;
+    cert->friendlyname = NULL;
+    cert->attrs.len = 0;
+    cert->attrs.val = NULL;
+    cert->private_key = NULL;
+    cert->basename = NULL;
+    cert->release = NULL;
+    cert->ctx = NULL;
+    cert->data= NULL;
+    return cert;
+}
+
 /**
  * Allocate and init an hx509 certificate object from the decoded
  * certificate `c´.
@@ -231,20 +254,8 @@ hx509_cert_init(hx509_context context, const Certificate *c, heim_error_t *error
     hx509_cert cert;
     int ret;
 
-    cert = malloc(sizeof(*cert));
-    if (cert == NULL) {
-	if (error)
-	    *error = heim_error_create_enomem();
-	return NULL;
-    }
-    cert->ref = 1;
-    cert->friendlyname = NULL;
-    cert->attrs.len = 0;
-    cert->attrs.val = NULL;
-    cert->private_key = NULL;
-    cert->basename = NULL;
-    cert->release = NULL;
-    cert->ctx = NULL;
+    if ((cert = cert_init(context, error)) == NULL)
+        return NULL;
 
     cert->data = calloc(1, sizeof(*(cert->data)));
     if (cert->data == NULL) {
@@ -259,6 +270,31 @@ hx509_cert_init(hx509_context context, const Certificate *c, heim_error_t *error
 	free(cert);
 	cert = NULL;
     }
+    return cert;
+}
+
+/**
+ * Allocate and init an hx509 certificate object containing only a private key
+ * (but no Certificate).
+ *
+ * @param context A hx509 context.
+ * @param key
+ * @param error
+ *
+ * @return Returns an hx509 certificate
+ *
+ * @ingroup hx509_cert
+ */
+
+HX509_LIB_FUNCTION hx509_cert HX509_LIB_CALL
+hx509_cert_init_private_key(hx509_context context,
+                            hx509_private_key key,
+                            heim_error_t *error)
+{
+    hx509_cert cert;
+
+    if ((cert = cert_init(context, error)))
+        (void) _hx509_cert_assign_key(cert, key);
     return cert;
 }
 
@@ -360,7 +396,8 @@ hx509_cert_free(hx509_cert cert)
     if (cert->private_key)
 	hx509_private_key_free(&cert->private_key);
 
-    free_Certificate(cert->data);
+    if (cert->data)
+        free_Certificate(cert->data);
     free(cert->data);
 
     for (i = 0; i < cert->attrs.len; i++) {
@@ -1598,10 +1635,34 @@ _hx509_cert_private_key(hx509_cert p)
     return p->private_key;
 }
 
+/**
+ * Indicate whether a hx509_cert has a private key.
+ *
+ * @param p a hx509 certificate
+ *
+ * @return 1 if p has a private key, 0 otherwise.
+ *
+ * @ingroup hx509_cert
+ */
 HX509_LIB_FUNCTION int HX509_LIB_CALL
 hx509_cert_have_private_key(hx509_cert p)
 {
     return p->private_key ? 1 : 0;
+}
+
+/**
+ * Indicate whether a hx509_cert has a private key only (no certificate).
+ *
+ * @param p a hx509 certificate
+ *
+ * @return 1 if p has a private key only (no certificate), 0 otherwise.
+ *
+ * @ingroup hx509_cert
+ */
+HX509_LIB_FUNCTION int HX509_LIB_CALL
+hx509_cert_have_private_key_only(hx509_cert p)
+{
+    return p->private_key && !p->data ? 1 : 0;
 }
 
 

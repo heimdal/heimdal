@@ -80,8 +80,11 @@ EXPORTS
 	hx509_cert_get_notBefore
 	hx509_cert_get_serialnumber
 	hx509_cert_get_subject
+	hx509_cert_have_private_key
+	hx509_cert_have_private_key_only
 	hx509_cert_init
 	hx509_cert_init_data
+	hx509_cert_init_private_key
 	hx509_cert_keyusage_print
 	hx509_cert_ref
 	hx509_cert_set_friendly_name

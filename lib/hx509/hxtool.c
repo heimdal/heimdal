@@ -1317,6 +1317,18 @@ get_key(const char *fn, const char *type, int optbits,
 }
 
 int
+generate_key(struct generate_key_options *opt, int argc, char **argv)
+{
+    hx509_private_key signer;
+    const char *type = opt->type_string ? opt->type_string : "rsa";
+    int bits = opt->key_bits_integer ? opt->key_bits_integer : 2048;
+
+    get_key(argv[0], type, bits, &signer);
+    hx509_private_key_free(&signer);
+    return 0;
+}
+
+int
 request_create(struct request_create_options *opt, int argc, char **argv)
 {
     heim_octet_string request;

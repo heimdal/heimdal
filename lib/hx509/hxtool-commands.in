@@ -420,6 +420,28 @@ command = {
 	help = "Print the OCSP/CRL files"
 }
 command = {
+	name = "generate-key"
+	option = {
+		long = "type"
+		type = "string"
+		help = "keytype"
+	}
+	option = {
+	        long = "key-bits"
+		type = "integer"
+		help = "number of bits in the generated key";
+	}
+	option = {
+		long = "verbose"
+		type = "flag"
+		help = "verbose status"
+	}
+	min_args="1"
+	max_args="1"
+	argument="output-file"
+	help = "Generate a private key"
+}
+command = {
 	name = "request-create"
 	option = {
 		long = "subject"

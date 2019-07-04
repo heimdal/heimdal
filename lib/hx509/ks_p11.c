@@ -820,6 +820,11 @@ p11_init(hx509_context context,
 
     *data = NULL;
 
+    if (residue == NULL || residue[0] == '\0') {
+	hx509_set_error_string(context, 0, EINVAL,
+			       "PKCS#11 store not specified");
+        return EINVAL;
+    }
     list = strdup(residue);
     if (list == NULL)
 	return ENOMEM;

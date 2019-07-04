@@ -338,6 +338,12 @@ p12_init(hx509_context context,
 
     *data = NULL;
 
+    if (residue == NULL || residue[0] == '\0') {
+	hx509_set_error_string(context, 0, EINVAL,
+                               "PKCS#12 file not specified");
+        return EINVAL;
+    }
+
     if (lock == NULL)
 	lock = _hx509_empty_lock;
 

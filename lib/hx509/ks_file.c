@@ -384,6 +384,12 @@ file_init_common(hx509_context context,
     pem_ctx.flags = flags;
     pem_ctx.c = NULL;
 
+    if (residue == NULL || residue[0] == '\0') {
+        hx509_set_error_string(context, 0, EINVAL,
+                               "PEM file name not specified");
+        return EINVAL;
+    }
+
     *data = NULL;
 
     if (lock == NULL)

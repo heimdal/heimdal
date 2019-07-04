@@ -59,6 +59,12 @@ dir_init(hx509_context context,
 {
     *data = NULL;
 
+    if (residue == NULL || residue[0] == '\0') {
+        hx509_set_error_string(context, 0, EINVAL,
+                               "DIR file name not specified");
+        return EINVAL;
+    }
+
     {
 	struct stat sb;
 	int ret;

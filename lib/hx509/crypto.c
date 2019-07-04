@@ -1302,6 +1302,34 @@ hx509_parse_private_key(hx509_context context,
 
     *private_key = NULL;
 
+    if (format == HX509_KEY_FORMAT_PKCS8) {
+        PKCS8PrivateKeyInfo ki;
+        hx509_private_key key;
+
+        ret = decode_PKCS8PrivateKeyInfo(data, len, &ki, NULL);
+        if (ret) {
+	    hx509_set_error_string(context, 0, HX509_PARSING_KEY_FAILED,
+				   "Failed to parse PKCS#8-encoded private "
+                                   "key");
+	    return HX509_PARSING_KEY_FAILED;
+        }
+
+        /* Re-enter to parse DER-encoded key from PKCS#8 envelope */
+        ret = hx509_parse_private_key(context, &ki.privateKeyAlgorithm,
+                                      ki.privateKey.data, ki.privateKey.length,
+                                      HX509_KEY_FORMAT_DER, &key);
+        free_PKCS8PrivateKeyInfo(&ki);
+        if (ret) {
+	    hx509_set_error_string(context, 0, HX509_PARSING_KEY_FAILED,
+				   "Failed to parse RSA key from PKCS#8 "
+                                   "envelope");
+	    return HX509_PARSING_KEY_FAILED;
+        }
+
+        *private_key = key;
+        return ret;
+    }
+
     ops = hx509_find_private_alg(&keyai->algorithm);
     if (ops == NULL) {
 	hx509_clear_error_string(context);
@@ -1600,6 +1628,44 @@ _hx509_private_key_export(hx509_context context,
     if (key->ops->export == NULL) {
 	hx509_clear_error_string(context);
 	return HX509_UNIMPLEMENTED_OPERATION;
+    }
+    if (format == HX509_KEY_FORMAT_PKCS8) {
+        PKCS8PrivateKeyInfo ki;
+        size_t size;
+        int ret;
+
+        memset(&ki, 0, sizeof(ki));
+        ki.attributes = NULL; /* No localKeyId needed */
+        ki.privateKey.data = NULL;
+        ki.privateKeyAlgorithm.algorithm.components = NULL;
+        ret = der_parse_hex_heim_integer("00", &ki.version);
+        if (ret == 0)
+            ret = _hx509_private_key_oid(context, key,
+                                         &ki.privateKeyAlgorithm.algorithm);
+        if (ret == 0)
+            /* Re-enter */
+            ret = _hx509_private_key_export(context, key, HX509_KEY_FORMAT_DER,
+                                            &ki.privateKey);
+
+        /*
+         * XXX To set ki.privateKeyAlgorithm.parameters we'll need to either
+         * move this code into the *key->ops->export() functions, or expand
+         * their signature to allow them to set it for us, or add a method to
+         * hx509_private_key_ops that allows us to get the parameters from the
+         * backend.
+         */
+        ki.privateKeyAlgorithm.parameters = NULL;
+
+        if (ret == 0)
+            ASN1_MALLOC_ENCODE(PKCS8PrivateKeyInfo, data->data, data->length,
+                               &ki, &size, ret);
+        free_PKCS8PrivateKeyInfo(&ki);
+        if (ret == 0 && size != data->length)
+            ret = EINVAL;
+        if (ret)
+            hx509_set_error_string(context, 0, ret,
+                                   "Private key PKCS#8 encoding failed");
+        return ret;
     }
     return (*key->ops->export)(context, key, format, data);
 }

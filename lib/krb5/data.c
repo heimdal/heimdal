@@ -148,7 +148,7 @@ krb5_data_copy(krb5_data *p, const void *data, size_t len)
     if (len) {
 	if(krb5_data_alloc(p, len))
 	    return ENOMEM;
-	memmove(p->data, data, len);
+	memcpy(p->data,	data, len);
     } else
 	p->data = NULL;
     p->length = len;

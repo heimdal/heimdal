@@ -305,7 +305,7 @@ DH_check_pubkey(const DH *dh, const BIGNUM *pub_key, int *codes)
 	unsigned i, n = BN_num_bits(pub_key);
 	unsigned bits = 0;
 
-	for (i = 0; i <= n; i++)
+	for (i = 0; i < n; i++)
 	    if (BN_is_bit_set(pub_key, i))
 		bits++;
 

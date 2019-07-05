@@ -719,7 +719,7 @@ pk_mk_padata(krb5_context context,
 	free(buf.data);
 
     if (ret == 0)
-    	krb5_padata_add(context, md, KRB5_PADATA_PK_AS_09_BINDING, NULL, 0);
+    	ret = krb5_padata_add(context, md, KRB5_PADATA_PK_AS_09_BINDING, NULL, 0);
 
  out:
     free_ContentInfo(&content_info);
@@ -2387,10 +2387,15 @@ krb5_get_init_creds_opt_set_pkinit(krb5_context context,
 	opt->opt_private->pk_init_ctx->id->flags |= PKINIT_BTMM;
 
     if (opt->opt_private->pk_init_ctx->id->certs) {
-	_krb5_pk_set_user_id(context,
-			     principal,
-			     opt->opt_private->pk_init_ctx,
-			     opt->opt_private->pk_init_ctx->id->certs);
+        ret = _krb5_pk_set_user_id(context,
+                                   principal,
+                                   opt->opt_private->pk_init_ctx,
+                                   opt->opt_private->pk_init_ctx->id->certs);
+        if (ret) {
+            free(opt->opt_private->pk_init_ctx);
+            opt->opt_private->pk_init_ctx = NULL;
+            return ret;
+        }
     } else
 	opt->opt_private->pk_init_ctx->id->cert = NULL;
 
@@ -2449,9 +2454,7 @@ krb5_get_init_creds_opt_set_pkinit_user_certs(krb5_context context,
 	return EINVAL;
     }
 
-    _krb5_pk_set_user_id(context, NULL, opt->opt_private->pk_init_ctx, certs);
-
-    return 0;
+    return _krb5_pk_set_user_id(context, NULL, opt->opt_private->pk_init_ctx, certs);
 #else
     krb5_set_error_message(context, EINVAL,
 			   N_("no support for PKINIT compiled in", ""));

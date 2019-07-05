@@ -237,7 +237,7 @@ BN_is_bit_set(const BIGNUM *bn, int bit)
     heim_integer *hi = (heim_integer *)bn;
     unsigned char *p = hi->data;
 
-    if ((bit / 8) > hi->length || hi->length == 0)
+    if ((bit / 8) >= hi->length || hi->length == 0)
 	return 0;
 
     return p[hi->length - 1 - (bit / 8)] & is_set[bit % 8];

@@ -894,8 +894,10 @@ next_min_free(krb5_context context, struct descr **d, unsigned int *ndescr)
 
 static void
 loop(krb5_context context, krb5_kdc_configuration *config,
-     struct descr *d, unsigned int ndescr, int islive)
+     struct descr **dp, unsigned int *ndescrp, int islive)
 {
+    struct descr *d = *dp;
+    unsigned int ndescr = *ndescrp;
 
     while (exit_flag == 0) {
 	struct timeval tmout;
@@ -947,7 +949,9 @@ loop(krb5_context context, krb5_kdc_configuration *config,
 #endif
 	    for (i = 0; i < ndescr; i++)
 		if (!rk_IS_BAD_SOCKET(d[i].s) && FD_ISSET(d[i].s, &fds)) {
-		    min_free = next_min_free(context, &d, &ndescr);
+		    min_free = next_min_free(context, dp, ndescrp);
+                    ndescr = *ndescrp;
+                    d = *dp;
 
 		    if (d[i].type == SOCK_DGRAM)
 			handle_udp(context, config, &d[i]);
@@ -1177,7 +1181,7 @@ start_kdc(krb5_context context,
             switch (pid) {
             case 0:
                 close(islive[0]);
-                loop(context, config, d, ndescr, islive[1]);
+                loop(context, config, &d, &ndescr, islive[1]);
                 exit(0);
             case -1:
                 /* XXXrcd: hmmm, do something useful?? */
@@ -1258,11 +1262,11 @@ start_kdc(krb5_context context,
         kdc_log(context, config, 0, "KDC master process exiting");
         free(pids);
     } else {
-        loop(context, config, d, ndescr, -1);
+        loop(context, config, &d, &ndescr, -1);
         kdc_log(context, config, 0, "KDC exiting");
     }
 #else
-    loop(context, config, d, ndescr, -1);
+    loop(context, config, &d, &ndescr, -1);
     kdc_log(context, config, 0, "KDC exiting");
 #endif
 

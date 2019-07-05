@@ -850,7 +850,7 @@ handle_islive(int fd)
 }
 #endif
 
-krb5_boolean
+static krb5_boolean
 realloc_descrs(struct descr **d, unsigned int *ndescr)
 {
     struct descr *tmp;
@@ -871,7 +871,7 @@ realloc_descrs(struct descr **d, unsigned int *ndescr)
     return TRUE;
 }
 
-int
+static int
 next_min_free(krb5_context context, struct descr **d, unsigned int *ndescr)
 {
     size_t i;
@@ -1260,11 +1260,11 @@ start_kdc(krb5_context context,
 
      end:
         kdc_log(context, config, 0, "KDC master process exiting");
-        free(pids);
     } else {
         loop(context, config, &d, &ndescr, -1);
         kdc_log(context, config, 0, "KDC exiting");
     }
+    free(pids);
 #else
     loop(context, config, &d, &ndescr, -1);
     kdc_log(context, config, 0, "KDC exiting");

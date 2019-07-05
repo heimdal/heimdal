@@ -175,5 +175,6 @@ main(int argc, char **argv)
 
     start_kdc(context, config, argv[0]);
     krb5_free_context(context);
+    free(config);
     return 0;
 }

@@ -415,6 +415,10 @@ file_init_common(hx509_context context,
      */
 
     if (flags & HX509_CERTS_CREATE) {
+        /*
+         * Note that the file creation is deferred until file_store() is
+         * called.
+         */
 	ret = hx509_certs_init(context, "MEMORY:ks-file-create",
 			       0, lock, &ksf->certs);
 	if (ret)
@@ -586,12 +590,18 @@ file_store(hx509_context context,
     struct ks_file *ksf = data;
     struct store_ctx sc;
     int ret;
+    int fd;
 
-    sc.f = fopen(ksf->fn, "w");
+    sc.f = NULL;
+    fd = open(ksf->fn, O_CREAT | O_WRONLY, 0600);
+    if (fd > -1)
+        sc.f = fdopen(fd, "w");
     if (sc.f == NULL) {
-	hx509_set_error_string(context, 0, ENOENT,
-			       "Failed to open file %s for writing");
-	return ENOENT;
+	hx509_set_error_string(context, 0, ret = errno,
+			       "Failed to open file %s for writing", ksf->fn);
+        if (fd > -1)
+            (void) close(fd);
+	return ret;
     }
     rk_cloexec_file(sc.f);
     sc.format = ksf->format;

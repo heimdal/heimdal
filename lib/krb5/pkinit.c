@@ -2375,6 +2375,7 @@ krb5_get_init_creds_opt_set_pkinit(krb5_context context,
 			   prompter,
 			   prompter_data,
 			   password);
+    free(anchors);
     if (ret) {
 	free(opt->opt_private->pk_init_ctx);
 	opt->opt_private->pk_init_ctx = NULL;

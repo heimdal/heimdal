@@ -47,10 +47,6 @@
 .Op Fl p | Fl Fl no-require-preauth
 .Op Fl Fl max-request= Ns Ar size
 .Op Fl H | Fl Fl enable-http
-.Oo Fl r Ar string \*(Ba Xo
-.Fl Fl v4-realm= Ns Ar string
-.Xc
-.Oc
 .Oo Fl P Ar portspec \*(Ba Xo
 .Fl Fl ports= Ns Ar portspec
 .Xc
@@ -90,16 +86,6 @@ Gives an upper limit on the size of the requests that the kdc is
 willing to handle.
 .It Fl H , Fl Fl enable-http
 Makes the kdc listen on port 80 and handle requests encapsulated in HTTP.
-.It Fl r Ar string , Fl Fl v4-realm= Ns Ar string
-What realm this server should act as when dealing with version 4
-requests.
-The database can contain any number of realms, but since the version 4
-protocol doesn't contain a realm for the server, it must be explicitly
-specified.
-The default is whatever is returned by
-.Fn krb_get_lrealm .
-This option is only available if the KDC has been compiled with version
-4 support.
 .It Fl P Ar portspec , Fl Fl ports= Ns Ar portspec
 Specifies the set of ports the KDC should listen on.
 It is given as a
@@ -195,7 +181,6 @@ An example of a config file:
 .Bd -literal -offset indent
 [kdc]
 	require-preauth = no
-	v4-realm = FOO.SE
 .Ed
 .Sh BUGS
 If the machine running the KDC has new addresses added to it, the KDC

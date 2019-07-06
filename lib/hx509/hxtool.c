@@ -669,7 +669,7 @@ print_certificate(hx509_context hxcontext, hx509_cert cert, int verbose)
     printf("    private key: %s\n",
 	   _hx509_cert_private_key(cert) ? "yes" : "no");
 
-    ret = hx509_print_cert(hxcontext, cert, NULL);
+    ret = hx509_print_cert(hxcontext, cert, stdout);
     if (ret)
 	errx(1, "failed to print cert");
 

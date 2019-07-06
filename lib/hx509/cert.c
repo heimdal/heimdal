@@ -3685,7 +3685,7 @@ hx509_print_cert(hx509_context context, hx509_cert cert, FILE *out)
 	free(str);
     }
 
-    printf("    keyusage: ");
+    fprintf(out, "    keyusage: ");
     ret = hx509_cert_keyusage_print(context, cert, &str);
     if (ret == 0) {
 	fprintf(out, "%s\n", str);

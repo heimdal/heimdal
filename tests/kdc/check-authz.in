@@ -72,6 +72,20 @@ R4=TEST4.H5L.SE
 KRB5_CONFIG="${objdir}/krb5-authz.conf"
 export KRB5_CONFIG
 
+HOME=${objdir}
+export HOME
+
+(
+    umask 077
+    rm -f "${objdir}/.k5login"
+    cat > "${objdir}/.k5login" << EOF
+fooprinc1@WHEREVER.EXAMPLE
+fooprinc1/admin@WHEREVER.EXAMPLE
+fooprinc1/admin@wherever.example
+xyz/foo.bar.wherever.example@wherever.example
+EOF
+)
+
 echo "Checking 1-component principal names in default realms"
 check_localname mapped1@${R} 0 foo || exit 1
 check_localname mapped2@${R} 0 bar || exit 1
@@ -121,21 +135,11 @@ ${test_kuserok} this-better-not-exist@NOR-THIS foo > /dev/null && exit 1
 
 # If the user running this test has a ~/.k5login or .k5logind, test
 # based on their content
-if test -n "${HOME}" -a -n "${USER:-${LOGNAME}}" -a -s "${HOME}/.k5login"; then
-    echo "Checking ~/.k5login"
+if test -n "${USER:-${LOGNAME}}"; then
+    echo "Checking .k5login"
     while read princ; do
 	${test_kuserok} "${princ}" "${USER:-${LOGNAME}}" > /dev/null || exit 1
     done < "${HOME}/.k5login" || exit 1
-fi
-if test -n "${HOME}" -a -n "${USER:-${LOGNAME}}" -a -d "${HOME}/.k5login.d"; then
-    echo "Checking ~/.k5login.d"
-    ls -f "${HOME}/.k5login.d" | egrep -v '^(\.|\.\.|#.*|.*~|\.*.sw.)$' | while read f; do
-	f="${HOME}/.k5login.d/$f"
-	test -d "${f}" && continue
-	while read princ; do
-	    ${test_kuserok} "${princ}" "${USER:-${LOGNAME}}" > /dev/null || exit 1
-	done < "${f}" || exit 1
-    done || exit 1
 fi
 
 KRB5_CONFIG="${objdir}/krb5-authz2.conf"

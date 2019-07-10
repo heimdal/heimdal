@@ -239,6 +239,7 @@ init_context_from_config_file(krb5_context context)
 	free(context->default_cc_name);
     context->default_cc_name = NULL;
     context->default_cc_name_set = 0;
+    context->configured_default_cc_name = NULL;
 
     tmp = secure_getenv("KRB5_TRACE");
     s = krb5_config_get_strings(context, NULL, "logging", "krb5", NULL);
@@ -551,6 +552,8 @@ krb5_copy_context(krb5_context context, krb5_context *out)
 	p->default_cc_name = strdup(context->default_cc_name);
     if (context->default_cc_name_env)
 	p->default_cc_name_env = strdup(context->default_cc_name_env);
+    if (context->configured_default_cc_name)
+	p->configured_default_cc_name = strdup(context->configured_default_cc_name);
 
     if (context->etypes) {
 	ret = copy_etypes(context, context->etypes, &p->etypes);
@@ -630,6 +633,8 @@ krb5_free_context(krb5_context context)
 	free(context->default_cc_name);
     if (context->default_cc_name_env)
 	free(context->default_cc_name_env);
+    if (context->configured_default_cc_name)
+	free(context->configured_default_cc_name);
     free(context->etypes);
     free(context->cfg_etypes);
     free(context->etypes_des);

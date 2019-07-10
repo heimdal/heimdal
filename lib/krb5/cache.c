@@ -508,117 +508,61 @@ KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_cc_set_default_name(krb5_context context, const char *name)
 {
     krb5_error_code ret = 0;
-    char *p = NULL, *exp_p = NULL;
-    int filepath;
-    const krb5_cc_ops *ops = KRB5_DEFAULT_CCTYPE;
+    char *p = NULL;
 
     if (name == NULL) {
-	const char *e = NULL;
+	const char *e;
 
-        e = secure_getenv("KRB5CCNAME");
-        if (e) {
-            p = strdup(e);
-            if (context->default_cc_name_env)
-                free(context->default_cc_name_env);
-            context->default_cc_name_env = strdup(e);
-        }
+        if ((e = secure_getenv("KRB5CCNAME"))) {
+            if ((p = strdup(e)) == NULL)
+                return krb5_enomem(context);
 
-#ifdef _WIN32
-	if (p == NULL) {
-	    p = _krb5_get_default_cc_name_from_registry(context);
+            free(context->default_cc_name_env);
+            context->default_cc_name_env = p;
+
+            if ((p = strdup(e)) == NULL)
+                return krb5_enomem(context);
+
+            /*
+             * We're resetting the default ccache name.  Recall that we got
+             * this from the environment, which might change.
+             */
+            context->default_cc_name_set = 0;
+        } else if ((e = krb5_cc_configured_default_name(context))) {
+            if ((p = strdup(e)) == NULL)
+                return krb5_enomem(context);
+
+            /*
+             * Since $KRB5CCNAME was not set, and since we got the default
+             * ccache name from configuration, we'll not want
+             * environment_changed() to return true to avoid re-doing the
+             * krb5_cc_configured_default_name() call unnecessarily.
+             *
+             * XXX Perhaps if we got the ccache name from the registry then
+             *     we'd want to recheck it?  If so we might need an indication
+             *     from krb5_cc_configured_default_name() about that!
+             */
+            context->default_cc_name_set = 1;
         }
-#endif
-	if (p == NULL) {
-	    e = krb5_config_get_string(context, NULL, "libdefaults",
-				       "default_cc_name", NULL);
-	    if (e) {
-		ret = _krb5_expand_default_cc_name(context, e, &p);
-		if (ret)
-		    return ret;
-	    }
-	}
-	if (p == NULL) {
-	    /* MIT compatibility */
-	    e = krb5_config_get_string(context, NULL, "libdefaults",
-				       "default_ccache_name", NULL);
-	    if (e) {
-		ret = _krb5_expand_default_cc_name(context, e, &p);
-		if (ret)
-		    return ret;
-	    }
-	}
-	if (p == NULL) {
-	    e = krb5_config_get_string(context, NULL, "libdefaults",
-				       "default_cc_type", NULL);
-	    if (e) {
-		ops = krb5_cc_get_prefix_ops(context, e);
-		if (ops == NULL) {
-		    krb5_set_error_message(context,
-					   KRB5_CC_UNKNOWN_TYPE,
-					   "Credential cache type %s "
-					   "is unknown", e);
-		    return KRB5_CC_UNKNOWN_TYPE;
-		}
-	    }
-	}
-#ifdef _WIN32
-	if (p == NULL) {
-	    /*
-	     * If the MSLSA ccache type has a principal name,
-	     * use it as the default.
-	     */
-	    krb5_ccache id;
-	    ret = krb5_cc_resolve(context, "MSLSA:", &id);
-	    if (ret == 0) {
-		krb5_principal princ;
-		ret = krb5_cc_get_principal(context, id, &princ);
-		if (ret == 0) {
-		    krb5_free_principal(context, princ);
-		    p = strdup("MSLSA:");
-		}
-		krb5_cc_close(context, id);
-	    }
-	}
-	if (p == NULL) {
-	    /*
-	     * If the API:krb5cc ccache can be resolved,
-	     * use it as the default.
-	     */
-	    krb5_ccache api_id;
-	    ret = krb5_cc_resolve(context, "API:krb5cc", &api_id);
-	    if (ret == 0)
-		krb5_cc_close(context, api_id);
-	}
-	/* Otherwise, fallback to the FILE ccache */
-#endif
-	if (p == NULL) {
-	    ret = (*ops->get_default_name)(context, &p);
-	    if (ret)
-		return ret;
-	}
-	context->default_cc_name_set = 0;
     } else {
-	p = strdup(name);
-	if (p == NULL)
-	    return krb5_enomem(context);
+        int filepath = (strncmp("FILE:", name, 5) == 0 ||
+                        strncmp("DIR:",  name, 4) == 0 ||
+                        strncmp("SCC:",  name, 4) == 0);
+
+        ret = _krb5_expand_path_tokens(context, name, filepath, &p);
+        if (ret)
+            return ret;
+
+        /*
+         * Since the default ccache name was set explicitly, we won't want
+         * environment_changed() to return true until the default ccache name
+         * is reset.
+         */
 	context->default_cc_name_set = 1;
     }
 
-    filepath = (strncmp("FILE:", p, 5) == 0
-		 || strncmp("DIR:", p, 4) == 0
-		 || strncmp("SCC:", p, 4) == 0);
-
-    ret = _krb5_expand_path_tokens(context, p, filepath, &exp_p);
-    free(p);
-    p = exp_p;
-    if (ret)
-	return ret;
-
-    if (context->default_cc_name)
-	free(context->default_cc_name);
-
+    free(context->default_cc_name);
     context->default_cc_name = p;
-
     return 0;
 }
 
@@ -639,6 +583,100 @@ krb5_cc_default_name(krb5_context context)
 	krb5_cc_set_default_name(context, NULL);
 
     return context->default_cc_name;
+}
+
+KRB5_LIB_FUNCTION const char * KRB5_LIB_CALL
+krb5_cc_configured_default_name(krb5_context context)
+{
+    krb5_error_code ret = 0;
+#ifdef _WIN32
+    krb5_ccache id;
+#endif
+    const char *cfg;
+    char *expanded;
+
+    if (context->configured_default_cc_name)
+        return context->configured_default_cc_name;
+
+#ifdef _WIN32
+    if ((expanded = _krb5_get_default_cc_name_from_registry(context)))
+        return context->configured_default_cc_name = expanded;
+#endif
+
+    /* If there's a configured default, expand the tokens and use it */
+    cfg = krb5_config_get_string(context, NULL, "libdefaults",
+                                 "default_cc_name", NULL);
+    if (cfg == NULL)
+        cfg = krb5_config_get_string(context, NULL, "libdefaults",
+                                     "default_ccache_name", NULL);
+    if (cfg) {
+        ret = _krb5_expand_default_cc_name(context, cfg, &expanded);
+        if (ret) {
+            krb5_set_error_message(context, ret,
+                                   "token expansion failed for %s", cfg);
+            return NULL;
+        }
+        return context->configured_default_cc_name = expanded;
+    }
+
+    /* Else try a configured default ccache type's default */
+    cfg = krb5_config_get_string(context, NULL, "libdefaults",
+                                 "default_cc_type", NULL);
+    if (cfg) {
+        const krb5_cc_ops *ops;
+
+        if ((ops = krb5_cc_get_prefix_ops(context, cfg)) == NULL) {
+            krb5_set_error_message(context, KRB5_CC_UNKNOWN_TYPE,
+                                   "unknown configured credential cache "
+                                   "type %s", cfg);
+            return NULL;
+        }
+
+        /* The get_default_name() method expands any tokens */
+        ret = (*ops->get_default_name)(context, &expanded);
+        if (ret) {
+            krb5_set_error_message(context, ret, "failed to find a default "
+                                   "ccache for default ccache type %s", cfg);
+            return NULL;
+        }
+        return context->configured_default_cc_name = expanded;
+    }
+#ifdef _WIN32
+    /*
+     * If the MSLSA ccache type has a principal name,
+     * use it as the default.
+     */
+    ret = krb5_cc_resolve(context, "MSLSA:", &id);
+    if (ret == 0) {
+        krb5_principal princ;
+        ret = krb5_cc_get_principal(context, id, &princ);
+        krb5_cc_close(context, id);
+        if (ret == 0) {
+            krb5_free_principal(context, princ);
+            if ((expanded = strdup("MSLSA:")))
+                return context->configured_default_cc_name = expanded;
+            krb5_enomem(context);
+            return NULL;
+        }
+    }
+    /*
+     * If the API:krb5cc ccache can be resolved,
+     * use it as the default.
+     */
+    ret = krb5_cc_resolve(context, "API:krb5cc", &id);
+    krb5_cc_close(context, id);
+    if (ret == 0) {
+        if ((expanded = strdup("MSLSA:")))
+            return context->configured_default_cc_name = expanded;
+        krb5_enomem(context);
+        return NULL;
+    }
+    /* Otherwise, fallback to the FILE ccache */
+#endif
+    ret = (*(KRB5_DEFAULT_CCTYPE)->get_default_name)(context, &expanded);
+    if (ret == 0)
+        return context->configured_default_cc_name = expanded;
+    return NULL;
 }
 
 /**

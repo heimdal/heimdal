@@ -664,6 +664,15 @@ file_addkey(hx509_context context,
     return _hx509_certs_keys_add(context, ksf->certs, key);
 }
 
+static int
+file_destroy(hx509_context context,
+             hx509_certs certs,
+             void *data)
+{
+    struct ks_file *ksf = data;
+    return _hx509_erase_file(context, ksf->fn);
+}
+
 static struct hx509_keyset_ops keyset_file = {
     "FILE",
     0,
@@ -677,7 +686,8 @@ static struct hx509_keyset_ops keyset_file = {
     file_iter_end,
     NULL,
     file_getkeys,
-    file_addkey
+    file_addkey,
+    file_destroy
 };
 
 static struct hx509_keyset_ops keyset_pemfile = {
@@ -693,7 +703,8 @@ static struct hx509_keyset_ops keyset_pemfile = {
     file_iter_end,
     NULL,
     file_getkeys,
-    file_addkey
+    file_addkey,
+    file_destroy
 };
 
 static struct hx509_keyset_ops keyset_derfile = {
@@ -709,7 +720,8 @@ static struct hx509_keyset_ops keyset_derfile = {
     file_iter_end,
     NULL,
     file_getkeys,
-    file_addkey
+    file_addkey,
+    file_destroy
 };
 
 

@@ -220,6 +220,7 @@ static struct hx509_keyset_ops keyset_dir = {
     dir_iter_end,
     NULL,
     NULL,
+    NULL,
     NULL
 };
 

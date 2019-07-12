@@ -697,6 +697,13 @@ p12_iter_end(hx509_context context,
     return hx509_certs_end_seq(context, p12->certs, cursor);
 }
 
+static int
+p12_destroy(hx509_context context, hx509_certs certs, void *data)
+{
+    struct ks_pkcs12 *p12 = data;
+    return _hx509_erase_file(context, p12->fn);
+}
+
 static struct hx509_keyset_ops keyset_pkcs12 = {
     "PKCS12",
     0,
@@ -710,7 +717,8 @@ static struct hx509_keyset_ops keyset_pkcs12 = {
     p12_iter_end,
     NULL,
     NULL,
-    NULL
+    NULL,
+    p12_destroy
 };
 
 HX509_LIB_FUNCTION void HX509_LIB_CALL

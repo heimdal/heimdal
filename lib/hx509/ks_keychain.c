@@ -599,6 +599,7 @@ struct hx509_keyset_ops keyset_keychain = {
     keychain_iter_end,
     NULL,
     NULL,
+    NULL,
     NULL
 };
 

@@ -1208,6 +1208,7 @@ static struct hx509_keyset_ops keyset_pkcs11 = {
     p11_iter_end,
     p11_printinfo,
     NULL,
+    NULL,
     NULL
 };
 

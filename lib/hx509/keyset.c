@@ -169,6 +169,33 @@ hx509_certs_init(hx509_context context,
 }
 
 /**
+ * Destroys and frees a hx509 certificate store.
+ *
+ * @param context A hx509 context
+ * @param certs A store to destroy
+ *
+ * @return Returns an hx509 error code.
+ *
+ * @ingroup hx509_keyset
+ */
+
+HX509_LIB_FUNCTION int HX509_LIB_CALL
+hx509_certs_destroy(hx509_context context,
+                    hx509_certs *certs)
+{
+    int ret = 0;
+
+    if (*certs) {
+        if ((*certs)->ops->destroy)
+            ret = ((*certs)->ops->destroy)(context, *certs, (*certs)->ops_data);
+        else
+            ret = ENOTSUP;
+    }
+    hx509_certs_free(certs);
+    return ret;
+}
+
+/**
  * Write the certificate store to stable storage.
  *
  * @param context A hx509 context.

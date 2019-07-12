@@ -300,3 +300,90 @@ hx509_pem_read(hx509_context context,
 
     return ret;
 }
+
+/*
+ * On modern systems there's no such thing as scrubbing a file.  Not this way
+ * anyways.  However, for now we'll cargo-cult this along just as in lib/krb5.
+ */
+static int
+scrub_file(int fd, ssize_t sz)
+{
+    char buf[128];
+
+    memset(buf, 0, sizeof(buf));
+    while (sz > 0) {
+        ssize_t tmp;
+        size_t wr = sizeof(buf) > sz ? (size_t)sz : sizeof(buf);
+
+        tmp = write(fd, buf, wr);
+        if (tmp == -1)
+            return errno;
+        sz -= tmp;
+    }
+#ifdef _MSC_VER
+    return _commit(fd);
+#else
+    return fsync(fd);
+#endif
+}
+
+int
+_hx509_erase_file(hx509_context context, const char *fn)
+{
+    struct stat sb1, sb2;
+    int ret;
+    int fd;
+
+    if (fn == NULL)
+        return 0;
+
+    /* This is based on _krb5_erase_file(), minus file locking */
+    ret = lstat(fn, &sb1);
+    if (ret == -1 && errno == ENOENT)
+        return 0;
+    if (ret == -1) {
+        hx509_set_error_string(context, 0, ret, "hx509_certs_destroy: "
+                               "stat of \"%s\": %s", fn, strerror(ret));
+        return errno;
+    }
+
+    fd = open(fn, O_RDWR | O_BINARY | O_CLOEXEC | O_NOFOLLOW);
+    rk_cloexec(fd);
+    if (ret == -1 && errno == ENOENT)
+        return 0;
+    if (ret == -1)
+        return errno;
+
+    if (unlink(fn) < 0) {
+	ret = errno;
+        (void) close(fd);
+        hx509_set_error_string(context, 0, ret, "hx509_certs_destroy: "
+                               "unlinking \"%s\": %s", fn, strerror(ret));
+        return ret;
+    }
+
+    /* check TOCTOU, symlinks */
+    ret = fstat(fd, &sb2);
+    if (ret < 0) {
+	ret = errno;
+        hx509_set_error_string(context, 0, ret, "hx509_certs_destroy: "
+                               "fstat of %d, \"%s\": %s", fd, fn,
+                               strerror(ret));
+	(void) close(fd);
+	return ret;
+    }
+    if (sb1.st_dev != sb2.st_dev || sb1.st_ino != sb2.st_ino) {
+	(void) close(fd);
+	return EPERM;
+    }
+
+    /* there are still hard links to this file */
+    if (sb2.st_nlink != 0) {
+        close(fd);
+        return 0;
+    }
+
+    ret = scrub_file(fd, sb2.st_size);
+    (void) close(fd);
+    return ret;
+}

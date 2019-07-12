@@ -70,6 +70,13 @@
 
 #include <der.h>
 
+#ifndef O_CLOEXEC
+#define O_CLOEXEC 0
+#endif
+#ifndef O_BINARY
+#define O_BINARY 0
+#endif
+
 /*
  * We use OpenSSL for EC, but to do this we need to disable cross-references
  * between OpenSSL and hcrypto bn.h and such.  Source files that use OpenSSL EC
@@ -180,6 +187,7 @@ struct hx509_keyset_ops {
 		     void *, int (*)(void *, const char *), void *);
     int (*getkeys)(hx509_context, hx509_certs, void *, hx509_private_key **);
     int (*addkey)(hx509_context, hx509_certs, void *, hx509_private_key);
+    int (*destroy)(hx509_context, hx509_certs, void *);
 };
 
 struct _hx509_password {

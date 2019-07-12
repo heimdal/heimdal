@@ -90,6 +90,7 @@ struct hx509_keyset_ops keyset_null = {
     null_iter_end,
     NULL,
     NULL,
+    NULL,
     NULL
 };
 

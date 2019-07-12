@@ -178,6 +178,9 @@ hx509_context_set_missing_revoke(hx509_context context, int flag)
 HX509_LIB_FUNCTION void HX509_LIB_CALL
 hx509_context_free(hx509_context *context)
 {
+    if (!*context)
+        return;
+
     hx509_clear_error_string(*context);
     if ((*context)->ks_ops) {
 	free((*context)->ks_ops);

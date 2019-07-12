@@ -133,10 +133,27 @@ hx509_set_error_string(hx509_context context, int flags, int code,
 HX509_LIB_FUNCTION char * HX509_LIB_CALL
 hx509_get_error_string(hx509_context context, int error_code)
 {
-    heim_error_t msg = context->error;
+    heim_error_t msg;
     heim_string_t s;
     char *str = NULL;
 
+    if (context == NULL) {
+        const char *sys_err_msg;
+
+        /* This case should only happen on hx509_context_init() failure */
+        if ((sys_err_msg = strerror(error_code))) {
+            if (asprintf(&str, "hx509_context_init system error: %s (%d)",
+                         sys_err_msg, error_code) == -1)
+                return NULL;
+            return str;
+        }
+        if (asprintf(&str, "hx509_context_init unknown error: %d",
+                     error_code) == -1)
+            return NULL;
+        return str;
+    }
+
+    msg = context->error;
     if (msg == NULL || heim_error_get_code(msg) != error_code) {
 	const char *cstr;
 

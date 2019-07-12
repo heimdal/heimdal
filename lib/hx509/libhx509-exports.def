@@ -175,6 +175,7 @@ EXPORTS
 	hx509_oid_print
 	hx509_oid_sprint
 	hx509_parse_name
+	hx509_parse_private_key
 	hx509_peer_info_add_cms_alg
 	hx509_peer_info_alloc
 	hx509_peer_info_free

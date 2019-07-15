@@ -952,8 +952,11 @@ typedef struct krb5_name_canon_iterator_data *krb5_name_canon_iterator;
  */
 #define KRB5_ANON_MATCH_AUTHENTICATED	1 /* authenticated with anon flag */
 #define KRB5_ANON_MATCH_UNAUTHENTICATED	2 /* anonymous PKINIT */
-#define KRB5_ANON_MATCH_ANY		( KRB5_ANON_MATCH_AUTHENTICATED | KRB5_ANON_MATCH_UNAUTHENTICATED )
-
+#define KRB5_ANON_IGNORE_NAME_TYPE	4 /* don't check the name type */
+#define KRB5_ANON_MATCH_ANY	        ( KRB5_ANON_MATCH_AUTHENTICATED | \
+                                          KRB5_ANON_MATCH_UNAUTHENTICATED )
+#define KRB5_ANON_MATCH_ANY_NONT	( KRB5_ANON_MATCH_ANY | \
+                                          KRB5_ANON_IGNORE_NAME_TYPE )
 
 /*
  *

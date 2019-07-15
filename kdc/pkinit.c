@@ -623,7 +623,8 @@ _kdc_pk_rd_padata(krb5_context context,
 	hx509_certs signer_certs;
 	int flags = HX509_CMS_VS_ALLOW_DATA_OID_MISMATCH; /* BTMM */
 
-	if (_kdc_is_anonymous(context, client->entry.principal))
+	if (_kdc_is_anonymous(context, client->entry.principal)
+	    || (config->historical_anon_realm && _kdc_is_anon_request(req)))
 	    flags |= HX509_CMS_VS_ALLOW_ZERO_SIGNER;
 
 	ret = hx509_cms_verify_signed(context->hx509ctx,
@@ -1676,7 +1677,8 @@ _kdc_pk_check_client(krb5_context context,
     size_t i;
 
     if (cp->cert == NULL) {
-	if (!_kdc_is_anonymous(context, client->entry.principal))
+	if (!_kdc_is_anonymous(context, client->entry.principal)
+	    && !config->historical_anon_realm)
 	    return KRB5KDC_ERR_BADOPTION;
 
 	*subject_name = strdup("<unauthenticated anonymous client>");

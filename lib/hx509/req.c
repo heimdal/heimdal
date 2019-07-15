@@ -238,70 +238,108 @@ out:
 }
 
 HX509_LIB_FUNCTION int HX509_LIB_CALL
-_hx509_request_parse(hx509_context context,
-		     const char *path,
-		     hx509_request *req)
+_hx509_request_parse_der(hx509_context context,
+                         heim_octet_string *der,
+                         hx509_request *req)
 {
+    CertificationRequestInfo *rinfo = NULL;
     CertificationRequest r;
-    CertificationRequestInfo *rinfo;
-    hx509_name subject;
-    size_t len, size;
-    void *p;
+    Certificate c;
+    hx509_name subject = NULL;
+    hx509_cert signer = NULL;
+    size_t size;
     int ret;
 
-    if (strncmp(path, "PKCS10:", 7) != 0) {
+    ret = decode_CertificationRequest(der->data, der->length, &r, &size);
+    if (ret) {
+        hx509_set_error_string(context, 0, ret, "Failed to decode CSR");
+        return ret;
+    }
+    rinfo = &r.certificationRequestInfo;
+    if (ret == 0) {
+        /*
+         * Sadly we need an hx509_cert here because _hx509_verify_signature_*()
+         * functions want one as a signer even though all the verification
+         * functions that use the signer argument always only use the spki of
+         * the signer certificate.
+         *
+         * XXX Change struct signature_alg's verify_signature's prototype to
+         *     use an spki instead of an hx509_cert as the signer!  The we
+         *     won't have to do this.
+         */
+        memset(&c, 0, sizeof(c));
+        c.tbsCertificate.subjectPublicKeyInfo = rinfo->subjectPKInfo;
+        if ((signer = hx509_cert_init(context, &c, NULL)) == NULL)
+            ret = ENOMEM;
+
+    }
+
+    /* Verify the signature */
+    if (ret == 0) {
+        heim_octet_string *d = &r.certificationRequestInfo._save;
+
+        ret = _hx509_verify_signature_bitstring(context, signer,
+                                                &r.signatureAlgorithm, d,
+                                                &r.signature);
+        if (ret)
+            hx509_set_error_string(context, 0, ret,
+                                   "CSR signature verification failed");
+    }
+
+    /* Build and populate the hx509_request */
+    if (ret == 0)
+        ret = hx509_request_init(context, req);
+    if (ret == 0)
+        ret = hx509_request_set_SubjectPublicKeyInfo(context, *req,
+                                                     &rinfo->subjectPKInfo);
+    if (ret == 0)
+        ret = _hx509_name_from_Name(&rinfo->subject, &subject);
+    if (ret == 0)
+        ret = hx509_request_set_name(context, *req, subject);
+
+    /*
+     * XXX Extract EKUs and SANs from the CSR's attributes.  That means looking
+     * for an attr of OID asn1_oid_id_x509_ce_subjectAltName
+     * (id-ce-subjectAltName) and decoding their values.  See RFC5912.
+     */
+
+    if (subject)
+        hx509_name_free(&subject);
+    if (signer)
+        hx509_cert_free(signer);
+    if (ret)
+        hx509_request_free(req);
+    free_CertificationRequest(&r);
+    return ret;
+}
+
+HX509_LIB_FUNCTION int HX509_LIB_CALL
+_hx509_request_parse(hx509_context context,
+		     const char *csr,
+		     hx509_request *req)
+{
+    heim_octet_string d;
+    int ret;
+
+    /* XXX Add support for PEM */
+    if (strncmp(csr, "PKCS10:", 7) != 0) {
 	hx509_set_error_string(context, 0, HX509_UNSUPPORTED_OPERATION,
-			       "unsupport type in %s", path);
+			       "unsupport type in %s", csr);
 	return HX509_UNSUPPORTED_OPERATION;
     }
-    path += 7;
 
-    /* XXX PEM request */
-
-    ret = rk_undumpdata(path, &p, &len);
+    ret = rk_undumpdata(csr + 7, &d.data, &d.length);
     if (ret) {
-	hx509_set_error_string(context, 0, ret, "Failed to map file %s", path);
+	hx509_set_error_string(context, 0, ret, "Could not read %s", csr);
 	return ret;
     }
 
-    ret = decode_CertificationRequest(p, len, &r, &size);
-    rk_xfree(p);
-    if (ret) {
-	hx509_set_error_string(context, 0, ret, "Failed to decode %s", path);
-	return ret;
-    }
-
-    ret = hx509_request_init(context, req);
-    if (ret) {
-	free_CertificationRequest(&r);
-	return ret;
-    }
-
-    rinfo = &r.certificationRequestInfo;
-
-    ret = hx509_request_set_SubjectPublicKeyInfo(context, *req,
-						  &rinfo->subjectPKInfo);
-    if (ret) {
-	free_CertificationRequest(&r);
-	hx509_request_free(req);
-	return ret;
-    }
-
-    ret = _hx509_name_from_Name(&rinfo->subject, &subject);
-    if (ret) {
-	free_CertificationRequest(&r);
-	hx509_request_free(req);
-	return ret;
-    }
-    ret = hx509_request_set_name(context, *req, subject);
-    hx509_name_free(&subject);
-    free_CertificationRequest(&r);
-    if (ret) {
-	hx509_request_free(req);
-	return ret;
-    }
-
-    return 0;
+    ret = _hx509_request_parse_der(context, &d, req);
+    free(d.data);
+    if (ret)
+        hx509_set_error_string(context, HX509_ERROR_APPEND, ret,
+                               " (while parsing CSR from %s)", csr);
+    return ret;
 }
 
 

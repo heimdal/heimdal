@@ -604,6 +604,145 @@ hx509_ca_tbs_add_san_otherName(hx509_context context,
     return add_GeneralNames(&tbs->san, &gn);
 }
 
+static
+int
+dequote_strndup(hx509_context context, const char *in, size_t len, char **out)
+{
+    size_t i, k;
+    char *s;
+
+    *out = NULL;
+    if ((s = malloc(len + 1)) == NULL) {
+        hx509_set_error_string(context, 0, ENOMEM, "malloc: out of memory");
+        return ENOMEM;
+    }
+
+    for (k = i = 0; i < len; i++) {
+        if (in[i] == '\\') {
+            switch (in[++i]) {
+            case 't': s[k++] = '\t'; break;
+            case 'b': s[k++] = '\b'; break;
+            case 'n': s[k++] = '\n'; break;
+            case '0':
+                for (i++; i < len; i++) {
+                    if (in[i] == '\0')
+                        break;
+                    if (in[i++] == '\\' && in[i] == '0')
+                        continue;
+                    hx509_set_error_string(context, 0,
+                                           HX509_PARSING_NAME_FAILED,
+                                           "embedded NULs not supported in "
+                                           "PKINIT SANs");
+                    free(s);
+                    return HX509_PARSING_NAME_FAILED;
+                }
+                break;
+            case '\0':
+                hx509_set_error_string(context, 0,
+                                       HX509_PARSING_NAME_FAILED,
+                                       "trailing unquoted backslashes not "
+                                       "allowed in PKINIT SANs");
+                free(s);
+                return HX509_PARSING_NAME_FAILED;
+            default:  s[k++] = in[i]; break;
+            }
+        } else {
+            s[k++] = in[i];
+        }
+    }
+    s[k] = '\0';
+
+    *out = s;
+    return 0;
+}
+
+int
+_hx509_make_pkinit_san(hx509_context context,
+                       const char *principal,
+                       heim_octet_string *os)
+{
+    KRB5PrincipalName p;
+    size_t size;
+    int ret;
+
+    os->data = NULL;
+    os->length = 0;
+    memset(&p, 0, sizeof(p));
+
+    /* Parse principal */
+    {
+	const char *str, *str_start;
+        size_t n, i;
+
+	/* Count number of components */
+	n = 1;
+	for (str = principal; *str != '\0' && *str != '@'; str++) {
+	    if (*str == '\\') {
+		if (str[1] == '\0') {
+		    ret = HX509_PARSING_NAME_FAILED;
+		    hx509_set_error_string(context, 0, ret,
+					   "trailing \\ in principal name");
+		    goto out;
+		}
+		str++;
+	    } else if(*str == '/') {
+		n++;
+	    } else if(*str == '@') {
+		break;
+            }
+	}
+	if (*str != '@') {
+            /* Note that we allow the realm to be empty */
+	    ret = HX509_PARSING_NAME_FAILED;
+	    hx509_set_error_string(context, 0, ret, "Missing @ in principal");
+	    goto out;
+	};
+
+	p.principalName.name_string.val =
+	    calloc(n, sizeof(*p.principalName.name_string.val));
+	if (p.principalName.name_string.val == NULL) {
+	    ret = ENOMEM;
+	    hx509_set_error_string(context, 0, ret, "malloc: out of memory");
+	    goto out;
+	}
+	p.principalName.name_string.len = n;
+	p.principalName.name_type = KRB5_NT_PRINCIPAL;
+
+	for (i = 0, str_start = str = principal; *str != '\0'; str++) {
+	    if (*str=='\\') {
+		str++;
+	    } else if(*str == '/') {
+                /* Note that we allow components to be empty */
+                ret = dequote_strndup(context, str_start, str - str_start,
+                                      &p.principalName.name_string.val[i++]);
+                if (ret)
+                    goto out;
+                str_start = str + 1;
+	    } else if(*str == '@') {
+                ret = dequote_strndup(context, str_start, str - str_start,
+                                      &p.principalName.name_string.val[i++]);
+                if (ret == 0)
+                    ret = dequote_strndup(context, str + 1, strlen(str + 1), &p.realm);
+                if (ret)
+                    goto out;
+                break;
+            }
+	}
+    }
+
+    ASN1_MALLOC_ENCODE(KRB5PrincipalName, os->data, os->length, &p, &size, ret);
+    if (ret) {
+	hx509_set_error_string(context, 0, ret, "Out of memory");
+	goto out;
+    }
+    if (size != os->length)
+	_hx509_abort("internal ASN.1 encoder error");
+
+out:
+    free_KRB5PrincipalName(&p);
+    return ret;
+}
+
 /**
  * Add Kerberos Subject Alternative Name to the to-be-signed
  * certificate object. The principal string is a UTF8 string.
@@ -623,84 +762,13 @@ hx509_ca_tbs_add_san_pkinit(hx509_context context,
 			    const char *principal)
 {
     heim_octet_string os;
-    KRB5PrincipalName p;
-    size_t size;
     int ret;
-    char *s = NULL;
 
-    memset(&p, 0, sizeof(p));
-
-    /* parse principal */
-    {
-	const char *str;
-	char *q;
-	int n;
-
-	/* count number of component */
-	n = 1;
-	for(str = principal; *str != '\0' && *str != '@'; str++){
-	    if(*str=='\\'){
-		if(str[1] == '\0' || str[1] == '@') {
-		    ret = HX509_PARSING_NAME_FAILED;
-		    hx509_set_error_string(context, 0, ret,
-					   "trailing \\ in principal name");
-		    goto out;
-		}
-		str++;
-	    } else if(*str == '/')
-		n++;
-	}
-	p.principalName.name_string.val =
-	    calloc(n, sizeof(*p.principalName.name_string.val));
-	if (p.principalName.name_string.val == NULL) {
-	    ret = ENOMEM;
-	    hx509_set_error_string(context, 0, ret, "malloc: out of memory");
-	    goto out;
-	}
-	p.principalName.name_string.len = n;
-
-	p.principalName.name_type = KRB5_NT_PRINCIPAL;
-	q = s = strdup(principal);
-	if (q == NULL) {
-	    ret = ENOMEM;
-	    hx509_set_error_string(context, 0, ret, "malloc: out of memory");
-	    goto out;
-	}
-	p.realm = strrchr(q, '@');
-	if (p.realm == NULL) {
-	    ret = HX509_PARSING_NAME_FAILED;
-	    hx509_set_error_string(context, 0, ret, "Missing @ in principal");
-	    goto out;
-	};
-	*p.realm++ = '\0';
-
-	n = 0;
-	while (q) {
-	    p.principalName.name_string.val[n++] = q;
-	    q = strchr(q, '/');
-	    if (q)
-		*q++ = '\0';
-	}
-    }
-
-    ASN1_MALLOC_ENCODE(KRB5PrincipalName, os.data, os.length, &p, &size, ret);
-    if (ret) {
-	hx509_set_error_string(context, 0, ret, "Out of memory");
-	goto out;
-    }
-    if (size != os.length)
-	_hx509_abort("internal ASN.1 encoder error");
-
-    ret = hx509_ca_tbs_add_san_otherName(context,
-					 tbs,
-					 &asn1_oid_id_pkinit_san,
-					 &os);
+    ret = _hx509_make_pkinit_san(context, principal, &os);
+    if (ret == 0)
+        ret = hx509_ca_tbs_add_san_otherName(context, tbs,
+                                             &asn1_oid_id_pkinit_san, &os);
     free(os.data);
-out:
-    if (p.principalName.name_string.val)
-	free (p.principalName.name_string.val);
-    if (s)
-	free(s);
     return ret;
 }
 

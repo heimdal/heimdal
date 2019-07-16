@@ -472,9 +472,34 @@ command = {
 		help = "Email address in SubjectAltName"
 	}
 	option = {
+		long = "jid"
+		type = "strings"
+		help = "XMPP (Jabber) address in SubjectAltName"
+	}
+	option = {
 		long = "dnsname"
 		type = "strings"
 		help = "Hostname or domainname in SubjectAltName"
+	}
+	option = {
+		long = "kerberos"
+		type = "strings"
+		help = "Kerberos principal name as SubjectAltName"
+	}
+	option = {
+		long = "ms-kerberos"
+		type = "strings"
+		help = "Kerberos principal name as SubjectAltName (Microsoft variant)"
+	}
+	option = {
+		long = "registered"
+		type = "strings"
+		help = "Registered object ID as SubjectAltName"
+	}
+	option = {
+		long = "dn"
+		type = "strings"
+		help = "Directory name as SubjectAltName"
 	}
 	option = {
 		long = "type"

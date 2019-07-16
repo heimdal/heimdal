@@ -185,9 +185,11 @@ DirectoryString ::= CHOICE {
 	bmpString	BMPString
 }
 
+AttributeValues ::= SET OF AttributeValue
+
 Attribute ::= SEQUENCE {
         type    AttributeType,
-        value   SET OF -- AttributeValue -- heim_any
+        value   AttributeValues
 }
 
 AttributeTypeAndValue ::= SEQUENCE {

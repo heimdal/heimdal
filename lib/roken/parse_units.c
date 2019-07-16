@@ -210,7 +210,7 @@ unparse_something (int num, const struct units *units, char *s, size_t len,
 	    tmp = (*print) (s, len, divisor, u->name, num);
 	    if (tmp < 0)
 		return tmp;
-	    if (tmp > (int) len) {
+	    if ((size_t)tmp > len) {
 		len = 0;
 		s = NULL;
 	    } else {

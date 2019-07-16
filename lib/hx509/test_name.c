@@ -349,6 +349,74 @@ test_compare(hx509_context context)
     return 0;
 }
 
+static int
+test_pkinit_san(hx509_context context, const char *p, const char *realm, ...)
+{
+    KRB5PrincipalName kn;
+    GeneralName gn;
+    va_list ap;
+    size_t i, sz;
+    char *round_trip;
+    int ret;
+
+    memset(&kn, 0, sizeof(kn));
+    memset(&gn, 0, sizeof(gn));
+
+    ret = _hx509_make_pkinit_san(context, p, &gn.u.otherName.value);
+    if (ret == 0)
+        ret = decode_KRB5PrincipalName(gn.u.otherName.value.data,
+                                       gn.u.otherName.value.length, &kn, &sz);
+    if (ret)
+        return ret;
+    if (strcmp(realm, kn.realm))
+        return ret;
+
+    va_start(ap, realm);
+    for (i = 0; i < kn.principalName.name_string.len; i++) {
+        const char *s = va_arg(ap, const char *);
+
+        if (s == NULL || strcmp(kn.principalName.name_string.val[i], s))
+            return 1;
+    }
+    if (va_arg(ap, const char *) != NULL)
+        return 1;
+    va_end(ap);
+
+    gn.element = choice_GeneralName_otherName;
+    gn.u.otherName.type_id.length = 0;
+    gn.u.otherName.type_id.components = 0;
+    ret = der_copy_oid(&asn1_oid_id_pkinit_san, &gn.u.otherName.type_id);
+    if (ret == 0)
+        ret = hx509_general_name_unparse(&gn, &round_trip);
+    if (ret)
+        return 1;
+    if (strncmp(round_trip, "otherName: 1.3.6.1.5.2.2 ",
+                sizeof("otherName: 1.3.6.1.5.2.2 ") - 1))
+        return 1;
+    if (ret || strcmp(round_trip + sizeof("otherName: 1.3.6.1.5.2.2 ") - 1, p))
+        return 1;
+    free_KRB5PrincipalName(&kn);
+    free_GeneralName(&gn);
+    free(round_trip);
+    return 0;
+}
+
+static int
+test_pkinit_san_fail(hx509_context context, const char *p)
+{
+    heim_octet_string os;
+    KRB5PrincipalName kn;
+    int ret;
+
+    memset(&kn, 0, sizeof(kn));
+    ret = _hx509_make_pkinit_san(context, p, &os);
+    if (ret == 0) {
+        free(os.data);
+        return 1;
+    }
+    return 0;
+}
+
 
 int
 main(int argc, char **argv)
@@ -376,7 +444,25 @@ main(int argc, char **argv)
 
     ret += test_compare(context);
 
+    ret += test_pkinit_san(context, "foo@BAR.H5L.SE",
+                           "BAR.H5L.SE", "foo", NULL);
+    ret += test_pkinit_san(context, "foo\\ bar@BAR.H5L.SE",
+                           "BAR.H5L.SE", "foo bar", NULL);
+    ret += test_pkinit_san(context, "foo\\/bar@BAR.H5L.SE",
+                           "BAR.H5L.SE", "foo/bar", NULL);
+    ret += test_pkinit_san(context, "foo/bar@BAR.H5L.SE",
+                           "BAR.H5L.SE", "foo", "bar", NULL);
+    ret += test_pkinit_san(context, "foo\\tbar@BAR.H5L.SE",
+                           "BAR.H5L.SE", "foo\tbar", NULL);
+    ret += test_pkinit_san(context, "foo\\nbar@BAR.H5L.SE",
+                           "BAR.H5L.SE", "foo\nbar", NULL);
+    ret += test_pkinit_san(context, "foo@\\ BAR.H5L.SE",
+                           " BAR.H5L.SE", "foo", NULL);
+    ret += test_pkinit_san(context, "foo@\\nBAR.H5L.SE",
+                           "\nBAR.H5L.SE", "foo", NULL);
+    ret += test_pkinit_san_fail(context, "foo\\0bar@BAR.H5L.SE");
+
     hx509_context_free(&context);
 
-    return ret;
+    return !!ret;
 }

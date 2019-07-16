@@ -12,31 +12,46 @@ EXPORTS
 	_hx509_generate_private_key_free
 	_hx509_generate_private_key_init
 	_hx509_generate_private_key_is_ca
+	_hx509_make_pkinit_san
 	_hx509_map_file_os
 	_hx509_name_from_Name
 	hx509_private_key2SPKI
 	hx509_private_key_free
 	_hx509_private_key_ref
-	_hx509_request_add_dns_name
-	_hx509_request_add_eku
-	_hx509_request_add_email
+	hx509_request_add_GeneralName
+	hx509_request_add_dns_name
+	hx509_request_add_eku
+	hx509_request_add_email
+	hx509_request_add_ms_upn_name
+	hx509_request_add_pkinit
+	hx509_request_add_registered
+	hx509_request_add_xmpp_name
 	_hx509_private_key_export
 	_hx509_private_key_exportable
 	_hx509_private_key_get_internal
 	_hx509_private_key_oid
 	_hx509_private_key_ref
 	hx509_request_free
+	hx509_request_get_dns_name_san
+	hx509_request_get_eku
+	hx509_request_get_email_san
+	hx509_request_get_exts
+	hx509_request_get_ku
+	hx509_request_get_ms_upn_san
+	hx509_request_get_name
+	hx509_request_get_pkinit_san
 	hx509_request_get_SubjectPublicKeyInfo
+	hx509_request_get_xmpp_san
 	hx509_request_get_name
 	hx509_request_init
 	hx509_request_parse
 	hx509_request_parse_der
-	_hx509_request_print
+	hx509_request_print
 	hx509_request_set_SubjectPublicKeyInfo
-;	_hx509_request_set_email
+	hx509_request_add_email
 	hx509_request_set_name
-	_hx509_request_to_pkcs10
-	_hx509_request_to_pkcs10
+	hx509_request_set_ku
+	hx509_request_to_pkcs10
 	_hx509_unmap_file_os
 	_hx509_write_file
 	hx509_bitstring_print

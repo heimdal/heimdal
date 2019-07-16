@@ -1370,29 +1370,65 @@ request_create(struct request_create_options *opt, int argc, char **argv)
 	    char *s;
 	    hx509_name_to_string(name, &s);
 	    printf("%s\n", s);
+            free(s);
 	}
 	hx509_name_free(&name);
     }
 
     for (i = 0; i < opt->email_strings.num_strings; i++) {
-	ret = _hx509_request_add_email(context, req,
-				       opt->email_strings.strings[i]);
+        ret = hx509_request_add_email(context, req,
+                                      opt->email_strings.strings[i]);
 	if (ret)
 	    hx509_err(context, 1, ret, "hx509_request_add_email");
     }
 
+    for (i = 0; i < opt->jid_strings.num_strings; i++) {
+        ret = hx509_request_add_xmpp_name(context, req,
+                                          opt->jid_strings.strings[i]);
+	if (ret)
+	    hx509_err(context, 1, ret, "hx509_request_add_xmpp_name");
+    }
+
     for (i = 0; i < opt->dnsname_strings.num_strings; i++) {
-	ret = _hx509_request_add_dns_name(context, req,
-					  opt->dnsname_strings.strings[i]);
+        ret = hx509_request_add_dns_name(context, req,
+                                         opt->dnsname_strings.strings[i]);
 	if (ret)
 	    hx509_err(context, 1, ret, "hx509_request_add_dns_name");
+    }
+
+    for (i = 0; i < opt->kerberos_strings.num_strings; i++) {
+        ret = hx509_request_add_pkinit(context, req,
+                                       opt->kerberos_strings.strings[i]);
+	if (ret)
+	    hx509_err(context, 1, ret, "hx509_request_add_pkinit");
+    }
+
+    for (i = 0; i < opt->ms_kerberos_strings.num_strings; i++) {
+        ret = hx509_request_add_ms_upn_name(context, req,
+                                            opt->ms_kerberos_strings.strings[i]);
+	if (ret)
+	    hx509_err(context, 1, ret, "hx509_request_add_ms_upn_name");
+    }
+
+    for (i = 0; i < opt->registered_strings.num_strings; i++) {
+        heim_oid oid;
+
+        ret = der_parse_heim_oid(opt->registered_strings.strings[i], NULL,
+                                 &oid);
+        if (ret)
+            hx509_err(context, 1, ret, "OID parse error");
+        ret = hx509_request_add_registered(context, req, &oid);
+        der_free_oid(&oid);
+	if (ret)
+	    hx509_err(context, 1, ret, "hx509_request_add_registered");
     }
 
     for (i = 0; i < opt->eku_strings.num_strings; i++) {
 	heim_oid oid;
 
 	parse_oid(opt->eku_strings.strings[i], NULL, &oid);
-	ret = _hx509_request_add_eku(context, req, &oid);
+	ret = hx509_request_add_eku(context, req, &oid);
+        der_free_oid(&oid);
 	if (ret)
 	    hx509_err(context, 1, ret, "hx509_request_add_eku");
     }
@@ -1409,12 +1445,12 @@ request_create(struct request_create_options *opt, int argc, char **argv)
     if (ret)
 	hx509_err(context, 1, ret, "hx509_request_set_SubjectPublicKeyInfo");
 
-    ret = _hx509_request_to_pkcs10(context,
-				   req,
-				   signer,
-				   &request);
+    ret = hx509_request_to_pkcs10(context,
+                                  req,
+                                  signer,
+                                  &request);
     if (ret)
-	hx509_err(context, 1, ret, "_hx509_request_to_pkcs10");
+	hx509_err(context, 1, ret, "hx509_request_to_pkcs10");
 
     hx509_private_key_free(&signer);
     hx509_request_free(&req);
@@ -1440,7 +1476,7 @@ request_print(struct request_print_options *opt, int argc, char **argv)
 	if (ret)
 	    hx509_err(context, 1, ret, "parse_request: %s", argv[i]);
 
-	ret = _hx509_request_print(context, req, stdout);
+	ret = hx509_request_print(context, req, stdout);
 	hx509_request_free(&req);
 	if (ret)
 	    hx509_err(context, 1, ret, "Failed to print file %s", argv[i]);
@@ -1901,6 +1937,11 @@ hxtool_ca(struct certificate_sign_options *opt, int argc, char **argv)
     if (opt->req_string) {
 	hx509_request req;
 
+        /*
+         * XXX Extract the CN and other attributes we want to preserve from the
+         * requested subjectName and then set them in the hx509_env for the
+         * template.
+         */
 	ret = hx509_request_parse(context, opt->req_string, &req);
 	if (ret)
 	    hx509_err(context, 1, ret, "parse_request: %s", opt->req_string);
@@ -1910,6 +1951,7 @@ hxtool_ca(struct certificate_sign_options *opt, int argc, char **argv)
 	ret = hx509_request_get_SubjectPublicKeyInfo(context, req, &spki);
 	if (ret)
 	    hx509_err(context, 1, ret, "get spki");
+        /* XXX Add option to extract */
 	hx509_request_free(&req);
     }
 

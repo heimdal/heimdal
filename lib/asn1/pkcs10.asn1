@@ -7,7 +7,6 @@ IMPORTS
 	Name, SubjectPublicKeyInfo, Attribute, AlgorithmIdentifier
 	FROM rfc2459;
 
-
 CertificationRequestInfo ::= SEQUENCE {
     version       INTEGER { pkcs10-v1(0) },
     subject       Name,

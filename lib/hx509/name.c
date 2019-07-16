@@ -1001,6 +1001,102 @@ hx509_name_is_null_p(const hx509_name name)
         name->der_name.u.rdnSequence.len == 0;
 }
 
+/*
+ * This necessarily duplicates code from libkrb5, and has to unless we move
+ * common code here or to lib/roken for it.  We do have slightly different
+ * needs (e.g., we want space quoted, and we want to indicate whether we saw
+ * trailing garbage, we have no need for flags, no special realm treatment,
+ * etc) than the corresponding code in libkrb5, so for now we duplicate this
+ * code.
+ *
+ * The relevant RFCs here are RFC1964 for the string representation of Kerberos
+ * principal names, and RFC4556 for the KRB5PrincipalName ASN.1 type (Kerberos
+ * lacks such a type because on the wire the name and realm are sent
+ * separately as a form of cheap compression).
+ *
+ * Note that we cannot handle embedded NULs because of Heimdal's representation
+ * of ASN.1 strings as C strings.
+ */
+struct rk_strpool *
+_hx509_unparse_kerberos_name(struct rk_strpool *strpool, heim_any *value)
+{
+    static const char comp_quotable_chars[] = " \n\t\b\\/@";
+    static const char realm_quotable_chars[] = " \n\t\b\\@";
+    KRB5PrincipalName kn;
+    const char *s;
+    size_t i, k, len, plen;
+    int extra_bits;
+    int need_slash = 0;
+    int ret;
+
+    ret = decode_KRB5PrincipalName(value->data, value->length, &kn, &len);
+    if (ret)
+        return rk_strpoolprintf(strpool, "<error-decoding-PrincipalName");
+    extra_bits = (value->length != len);
+
+    for (i = 0; i < kn.principalName.name_string.len; i++) {
+        s = kn.principalName.name_string.val[i];
+        len = strlen(s);
+
+        if (need_slash)
+            strpool = rk_strpoolprintf(strpool, "/");
+        need_slash = 1;
+
+        for (k = 0; k < len; s += plen, k += plen) {
+            char c;
+
+            plen = strcspn(s, comp_quotable_chars);
+            if (plen)
+                strpool = rk_strpoolprintf(strpool, "%.*s", (int)plen, s);
+            if (k + plen >= len)
+                continue;
+            switch ((c = s[plen++])) {
+            case '\n':  strpool = rk_strpoolprintf(strpool, "\\n");     break;
+            case '\t':  strpool = rk_strpoolprintf(strpool, "\\t");     break;
+            case '\b':  strpool = rk_strpoolprintf(strpool, "\\b");     break;
+                        /* default -> '@', ' ', '\\', or '/' */
+            default:    strpool = rk_strpoolprintf(strpool, "\\%c", c); break;
+            }
+        }
+    }
+    strpool = rk_strpoolprintf(strpool, "@");
+    s = kn.realm;
+    len = strlen(kn.realm);
+    for (k = 0; k < len; s += plen, k += plen) {
+        char c;
+
+        plen = strcspn(s, realm_quotable_chars);
+        if (plen)
+            strpool = rk_strpoolprintf(strpool, "%.*s", (int)plen, s);
+        if (k + plen >= len)
+            continue;
+        switch ((c = s[plen++])) {
+        case '\n':  strpool = rk_strpoolprintf(strpool, "\\n");     break;
+        case '\t':  strpool = rk_strpoolprintf(strpool, "\\t");     break;
+        case '\b':  strpool = rk_strpoolprintf(strpool, "\\b");     break;
+                    /* default -> '@', ' ', or '\\' */
+        default:    strpool = rk_strpoolprintf(strpool, "\\%c", c); break;
+        }
+    }
+    if (extra_bits)
+        strpool = rk_strpoolprintf(strpool, " <garbage>");
+    free_KRB5PrincipalName(&kn);
+    return strpool;
+}
+
+struct rk_strpool *
+hx509_unparse_utf8_string_name(struct rk_strpool *strpool, heim_any *value)
+{
+    PKIXXmppAddr us;
+    size_t size;
+
+    if (decode_PKIXXmppAddr(value->data, value->length, &us, &size))
+        return rk_strpoolprintf(strpool, "<decode-error>");
+    strpool = rk_strpoolprintf(strpool, "%s", us);
+    free_PKIXXmppAddr(&us);
+    return strpool;
+}
+
 /**
  * Unparse the hx509 name in name into a string.
  *
@@ -1025,17 +1121,34 @@ hx509_general_name_unparse(GeneralName *name, char **str)
 	hx509_oid_sprint(&name->u.otherName.type_id, &oid);
 	if (oid == NULL)
 	    return ENOMEM;
-	strpool = rk_strpoolprintf(strpool, "otherName: %s", oid);
+	strpool = rk_strpoolprintf(strpool, "otherName: %s ", oid);
+        if (der_heim_oid_cmp(&name->u.otherName.type_id,
+                             &asn1_oid_id_pkinit_san) == 0) {
+            strpool = _hx509_unparse_kerberos_name(strpool,
+                                                   &name->u.otherName.value);
+        } else if (der_heim_oid_cmp(&name->u.otherName.type_id,
+                                    &asn1_oid_id_pkix_on_xmppAddr) == 0) {
+            strpool = rk_strpoolprintf(strpool, "xmppAddr ");
+            strpool = hx509_unparse_utf8_string_name(strpool,
+                                                     &name->u.otherName.value);
+        } else if (der_heim_oid_cmp(&name->u.otherName.type_id,
+                                    &asn1_oid_id_pkinit_ms_san) == 0) {
+            strpool = rk_strpoolprintf(strpool, "pkinitMsSan ");
+            strpool = hx509_unparse_utf8_string_name(strpool,
+                                                     &name->u.otherName.value);
+        } else {
+            strpool = rk_strpoolprintf(strpool, "<unknown-other-name-type");
+        }
 	free(oid);
 	break;
     }
     case choice_GeneralName_rfc822Name:
-	strpool = rk_strpoolprintf(strpool, "rfc822Name: %.*s\n",
+	strpool = rk_strpoolprintf(strpool, "rfc822Name: %.*s",
 				   (int)name->u.rfc822Name.length,
 				   (char *)name->u.rfc822Name.data);
 	break;
     case choice_GeneralName_dNSName:
-	strpool = rk_strpoolprintf(strpool, "dNSName: %.*s\n",
+	strpool = rk_strpoolprintf(strpool, "dNSName: %.*s",
 				   (int)name->u.dNSName.length,
 				   (char *)name->u.dNSName.data);
 	break;
@@ -1095,10 +1208,8 @@ hx509_general_name_unparse(GeneralName *name, char **str)
     default:
 	return EINVAL;
     }
-    if (strpool == NULL)
+    if (strpool == NULL ||
+        (*str = rk_strpoolcollect(strpool)) == NULL)
 	return ENOMEM;
-
-    *str = rk_strpoolcollect(strpool);
-
     return 0;
 }

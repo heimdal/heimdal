@@ -1,9 +1,13 @@
 -- $Id$
 
--- The kx509 protocol is documented in RFC6717.
+-- Version 2 of the kx509 protocol is documented in RFC6717.
+--
+-- Our version here has extensions without changing the version number on the
+-- wire.
 
-KX509 DEFINITIONS ::=
-BEGIN
+KX509 DEFINITIONS ::= BEGIN
+IMPORTS Extensions FROM rfc2459
+        AUTHDATA-TYPE FROM krb5;
 
 KX509-ERROR-CODE ::= INTEGER {
 	KX509-STATUS-GOOD(0),
@@ -13,15 +17,68 @@ KX509-ERROR-CODE ::= INTEGER {
 	KX509-STATUS-SERVER-BAD(4),
 	KX509-STATUS-SERVER-TEMP(5),
         -- 6 is used internally in the umich client, avoid that
-	KX509-STATUS-SERVER-KEY(7)
+	KX509-STATUS-SERVER-KEY(7),
+        -- CSR use negotiation:
+	KX509-STATUS-CLIENT-USE-CSR(8)
         -- Let us reserve 1000+ for Kebreros protocol wire error codes  -Nico
 }
 
--- Version 2, which has no proof of possession
+-- Originally kx509 requests carried only a public key.  We'd like to have
+-- proof of possession, and the ability to carry additional options, both, in
+-- cleartext and otherwise.
+--
+-- We'll use a CSR for proof of posession and desired certificate extensions.
+--
+-- We'll also provide a non-CSR-based method of conveying desired certificate
+-- extensions.  The reason for this is simply that we may want to have a [e.g.,
+-- RESTful HTTP] proxy for the kx509 service, and we want clients to be able to
+-- be as simple as possible -cargo-culted even- with support for attributes
+-- (desired certificate extensions) as parameters outside the CSR that the
+-- proxy can encode without having the private key for the CSR (naturally).
+--
+-- I.e., ultimately we'll have a REST endpoint, /kx509, say, with query
+-- parameters like:
+--
+--  - csr=<base64-encoding-of-DER-encoded-CSR>
+--  - eku=<OID>
+--  - ku=<key-usage-flag-name>
+--  - rfc822Name=<URL-escaped-email-address>
+--  - xMPPName=<URL-escaped-jabber-address>
+--  - dNSName=<URL-escaped-FQDN>
+--  - dNSSrv=<URL-escaped-_service.FQDN>
+--  - registeredID=<OID>
+--  - principalName=<URL-escaped-RFC1964-format-Kerberos-Principal-Name>
+--
+-- with exactly one CSR and zero, one, or more of the other parameters.
+--
+-- We'll even have a way to convey a bearer token from the REST proxy so that
+-- we may have a way to get PKIX credentials using bearer tokens.  And then,
+-- using PKINIT, we may have a way to get Kerberos credentials using bearer
+-- tokens.
+--
+-- To do this we define a Kx509CSRPlus that we can use in the `pk-key' field of
+-- Kx509Request (see below):
+Kx509CSRPlus ::= [APPLICATION 35] SEQUENCE {
+        -- PKCS#10, DER-encoded CSR, with or without meaningful attributes
+        csr             OCTET STRING,
+        -- The AP-REQ's Authenticator may contain authz-data of interest here
+        -- for carrying confidential payloads.  E.g., a bearer token for a user
+        -- to impersonate.  This sequence tells the server what authz-data
+        -- elements there might be, effectively making them critical even if
+        -- they are in AD-IF-RELEVANT containers.
+        authz-datas     SEQUENCE OF AUTHDATA-TYPE,
+        -- Desired certificate Extensions such as KeyUsage, ExtKeyUsage, or
+        -- subjectAlternativeName (SAN)
+        exts            Extensions OPTIONAL
+}
+
+-- Version 2
 Kx509Request ::= SEQUENCE {
 	authenticator OCTET STRING,
 	pk-hash OCTET STRING, -- HMAC(ticket_session_key, pk-key)
-	pk-key OCTET STRING   -- the public key, DER-encoded (RSA, basically)
+	pk-key OCTET STRING   -- one of:
+                              --  - the public key, DER-encoded (RSA, basically)
+                              --  - a Kx509CSRPlus
 }
 
 -- Kx509ErrorCode is a Heimdal-specific enhancement with no change on the wire,
@@ -31,7 +88,10 @@ Kx509ErrorCode ::= INTEGER (-2147483648..2147483647)
 Kx509Response ::= SEQUENCE {
 	error-code[0]	Kx509ErrorCode DEFAULT 0,
 	hash[1]		OCTET STRING OPTIONAL,   -- HMAC(session_key, ...)
-	certificate[2]	OCTET STRING OPTIONAL,   -- Certificates (plural)
+	certificate[2]	OCTET STRING OPTIONAL,   -- DER-encoded Certificate
+                                                 -- if client sent raw RSA SPK
+                                                 -- or DER-encoded Certificates
+                                                 -- (i.e., SEQ. OF Certificate)
                                                  -- if client used a
                                                  -- Kx509CSRPlus
 	e-text[3]	VisibleString OPTIONAL

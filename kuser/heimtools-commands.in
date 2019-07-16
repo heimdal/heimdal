@@ -114,11 +114,6 @@ command = {
 		type = "flag"
 		help = "Verbose output"
 	}
-	option = {
-		long = "extract-kx509-cert"
-		type = "string"
-		help = "hx509 store for kx509 certificate and private key"
-	}
 }
 command = {
 	name = "kgetcred"
@@ -244,6 +239,60 @@ command = {
 	max_args = "2"
 	help = "Copies credential caches"
         argument = "[source] destination"
+}
+command = {
+	name = "kx509"
+	help = "Acquire or extract certificates"
+	option = {
+		long = "cache"
+		short = "c"
+		type = "string"
+		help = "Kerberos credential cache"
+	}
+        option = {
+                long = "save"
+                short = "s"
+                type = "flag"
+                help = "save the certificate and private key in the Kerberos credential cache"
+        }
+	option = {
+		long = "out"
+		short = "o"
+		type = "string"
+		help = "hx509 store for kx509 certificate and private key"
+	}
+	option = {
+		long = "extract"
+		short = "x"
+		type = "flag"
+		help = "extract certificate and private key from credential cache"
+	}
+	option = {
+		long = "test"
+		short = "t"
+		type = "flag"
+		help = "exit successfully if certificate and private key are in credential cache"
+	}
+	option = {
+		name = "private-key"
+		short = "K"
+		type = "string"
+		help = "hx509 store containing private key"
+	}
+	option = {
+		name = "csr"
+		short = "C"
+		type = "string"
+		help = "file containing DER-encoded PKCS#10 certificate request"
+	}
+	option = {
+		name = "realm"
+		short = "r"
+		type = "string"
+		help = "realm from which to acquire certificate"
+	}
+	min_args = "0"
+	max_args = "0"
 }
 command = {
 	name = "help"

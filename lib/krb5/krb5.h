@@ -989,6 +989,7 @@ typedef struct krb5_name_canon_iterator_data *krb5_name_canon_iterator;
  */
 
 struct hx509_certs_data;
+typedef struct krb5_kx509_req_ctx_data *krb5_kx509_req_ctx;
 
 #include <krb5-protos.h>
 

@@ -58,10 +58,7 @@ kinit="${kinit} -c $cache ${afs_no_afslog}"
 klist="${klist} --hidden -v -c $cache"
 kgetcred="${kgetcred} -c $cache"
 kdestroy="${kdestroy} -c $cache ${afs_no_unlog}"
-
-kextract() {
-    ${klist} --extract-kx509-cert="$1"
-}
+kx509="${kx509} -c $cache"
 
 KRB5_CONFIG="${objdir}/krb5-pkinit.conf"
 export KRB5_CONFIG
@@ -202,7 +199,8 @@ ${kgetcred} ${server}@${R} || { ec=1 ; eval "${testfailed}"; }
 ${klist}
 
 echo "Check kx509 certificate acquisition"
-kextract PEM-FILE:${objdir}/kx509.pem || { ec=1 ; eval "${testfailed}"; }
+${kx509} -s || { ec=1 ; eval "${testfailed}"; }
+${kx509} -o PEM-FILE:${objdir}/kx509.pem || { ec=1 ; eval "${testfailed}"; }
 ${kdestroy}
 
 echo "Check PKINIT w/ kx509 certificate"

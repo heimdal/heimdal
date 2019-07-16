@@ -96,16 +96,302 @@
 
 static const unsigned char version_2_0[4] = {0 , 0, 2, 0};
 
-struct kx509_ctx_data {
-    char                *send_to_realm; /* realm to which to send request */
-    krb5_keyblock       *hmac_key;      /* For HMAC validation */
-    hx509_private_key   *keys;          
+struct krb5_kx509_req_ctx_data {
+    krb5_auth_context   ac;
+    krb5_data           given_csr;
+    hx509_request       csr;
+    Kx509CSRPlus        csr_plus;
+    char                *realm;     /* Realm to which to send request */
+    krb5_keyblock       *hmac_key;  /* For HMAC validation */
+    hx509_private_key   *keys;
     hx509_private_key   priv_key;
+    unsigned int        expect_chain;
 };
+
+/**
+ * Create a kx509 request context.
+ *
+ * @param context The Kerberos library context
+ * @param out Where to place the kx509 request context
+ *
+ * @return A krb5 error code.
+ */
+krb5_error_code
+krb5_kx509_ctx_init(krb5_context context, krb5_kx509_req_ctx *out)
+{
+    krb5_kx509_req_ctx ctx;
+    krb5_error_code ret;
+    hx509_name name = NULL;
+
+    ALLOC(ctx, 1);
+    if (ctx == NULL)
+        return krb5_enomem(context);
+    ctx->given_csr.data = NULL;
+    ctx->priv_key = NULL;
+    ctx->hmac_key = NULL;
+    ctx->realm = NULL;
+    ctx->keys = NULL;
+    ctx->csr = NULL;
+    ret = hx509_request_init(context->hx509ctx, &ctx->csr);
+    if (ret == 0)
+        ret = hx509_parse_name(context->hx509ctx, "", &name);
+    if (ret == 0)
+        ret = hx509_request_set_name(context->hx509ctx, ctx->csr, name);
+    if (ret == 0)
+        ret = krb5_auth_con_init(context, &ctx->ac);
+    if (name)
+        hx509_name_free(&name);
+    if (ret == 0)
+        *out = ctx;
+    else
+        krb5_kx509_ctx_free(context, &ctx);
+    return ret;
+}
+
+/**
+ * Free a kx509 request context.
+ *
+ * @param context The Kerberos library context
+ * @param ctxp Pointer to krb5 request context to free
+ *
+ * @return A krb5 error code.
+ */
+void
+krb5_kx509_ctx_free(krb5_context context, krb5_kx509_req_ctx *ctxp)
+{
+    krb5_kx509_req_ctx ctx = *ctxp;
+
+    *ctxp = NULL;
+    if (ctx == NULL)
+        return;
+    krb5_free_keyblock(context, ctx->hmac_key);
+    krb5_auth_con_free(context, ctx->ac);
+    free_Kx509CSRPlus(&ctx->csr_plus);
+    free(ctx->realm);
+    hx509_request_free(&ctx->csr);
+    krb5_data_free(&ctx->given_csr);
+    hx509_private_key_free(&ctx->priv_key);
+    _hx509_certs_keys_free(context->hx509ctx, ctx->keys);
+    free(ctx);
+}
+
+/**
+ * Set a realm to send kx509 request to, if different from the client's.
+ *
+ * @param context The Kerberos library context
+ * @param ctx The kx509 request context
+ * @param realm Realm name
+ *
+ * @return A krb5 error code.
+ */
+krb5_error_code
+krb5_kx509_ctx_set_realm(krb5_context context,
+                         krb5_kx509_req_ctx kx509_ctx,
+                         const char *realm)
+{
+    return ((kx509_ctx->realm = strdup(realm)) == NULL) ?
+        krb5_enomem(context) : 0;
+}
+
+/**
+ * Sets a CSR for a kx509 request.
+ *
+ * Normally kx509 will generate a CSR (and even a private key for it)
+ * automatically.  If a CSR is given then kx509 will use it instead of
+ * generating one.
+ *
+ * @param context The Kerberos library context
+ * @param ctx The kx509 request context
+ * @param csr_der A DER-encoded PKCS#10 CSR
+ *
+ * @return A krb5 error code.
+ */
+krb5_error_code
+krb5_kx509_ctx_set_csr_der(krb5_context context,
+                           krb5_kx509_req_ctx ctx,
+                           krb5_data *csr_der)
+{
+    krb5_data_free(&ctx->given_csr);
+    return krb5_data_copy(&ctx->given_csr, csr_der->data, csr_der->length);
+}
+
+/**
+ * Adds an EKU as an additional desired Certificate Extension or in the CSR if
+ * the caller does not set a CSR.
+ *
+ * @param context The Kerberos library context
+ * @param ctx The kx509 request context
+ * @param oids A string representation of an OID
+ *
+ * @return A krb5 error code.
+ */
+krb5_error_code
+krb5_kx509_ctx_add_eku(krb5_context context,
+                       krb5_kx509_req_ctx kx509_ctx,
+                       const char *oids)
+{
+    krb5_error_code ret;
+    heim_oid oid;
+
+    ret = der_parse_heim_oid(oids, NULL, &oid);
+    if (ret == 0)
+        hx509_request_add_eku(context->hx509ctx, kx509_ctx->csr, &oid);
+    der_free_oid(&oid);
+    return ret;
+}
+
+/**
+ * Adds a dNSName SAN (domainname, hostname) as an additional desired
+ * Certificate Extension or in the CSR if the caller does not set a CSR.
+ *
+ * @param context The Kerberos library context
+ * @param ctx The kx509 request context
+ * @param dname A string containing a DNS domainname
+ *
+ * @return A krb5 error code.
+ */
+krb5_error_code
+krb5_kx509_ctx_add_san_dns_name(krb5_context context,
+                                krb5_kx509_req_ctx kx509_ctx,
+                                const char *dname)
+{
+    return hx509_request_add_dns_name(context->hx509ctx, kx509_ctx->csr,
+                                      dname);
+}
+
+/**
+ * Adds an xmppAddr SAN (jabber address) as an additional desired Certificate
+ * Extension or in the CSR if the caller does not set a CSR.
+ *
+ * @param context The Kerberos library context
+ * @param ctx The kx509 request context
+ * @param jid A string containing a Jabber address
+ *
+ * @return A krb5 error code.
+ */
+krb5_error_code
+krb5_kx509_ctx_add_san_xmpp(krb5_context context,
+                            krb5_kx509_req_ctx kx509_ctx,
+                            const char *jid)
+{
+    return hx509_request_add_xmpp_name(context->hx509ctx, kx509_ctx->csr, jid);
+}
+
+/**
+ * Adds an rfc822Name SAN (e-mail address) as an additional desired Certificate
+ * Extension or in the CSR if the caller does not set a CSR.
+ *
+ * @param context The Kerberos library context
+ * @param ctx The kx509 request context
+ * @param email A string containing an e-mail address
+ *
+ * @return A krb5 error code.
+ */
+krb5_error_code
+krb5_kx509_ctx_add_san_rfc822Name(krb5_context context,
+                                  krb5_kx509_req_ctx kx509_ctx,
+                                  const char *email)
+{
+    return hx509_request_add_email(context->hx509ctx, kx509_ctx->csr, email);
+}
+
+/**
+ * Adds an pkinit SAN (Kerberos principal name) as an additional desired
+ * Certificate Extension or in the CSR if the caller does not set a CSR.
+ *
+ * @param context The Kerberos library context
+ * @param ctx The kx509 request context
+ * @param pname A string containing a representation of a Kerberos principal
+ *              name
+ *
+ * @return A krb5 error code.
+ */
+krb5_error_code
+krb5_kx509_ctx_add_san_pkinit(krb5_context context,
+                              krb5_kx509_req_ctx kx509_ctx,
+                              const char *pname)
+{
+    return hx509_request_add_pkinit(context->hx509ctx, kx509_ctx->csr, pname);
+}
+
+/**
+ * Adds a Microsoft-style UPN (user principal name) as an additional desired
+ * Certificate Extension or in the CSR if the caller does not set a CSR.
+ *
+ * @param context The Kerberos library context
+ * @param ctx The kx509 request context
+ * @param upn A string containing a representation of a UPN
+ *
+ * @return A krb5 error code.
+ */
+krb5_error_code
+krb5_kx509_ctx_add_san_ms_upn(krb5_context context,
+                              krb5_kx509_req_ctx kx509_ctx,
+                              const char *upn)
+{
+    return hx509_request_add_ms_upn_name(context->hx509ctx, kx509_ctx->csr,
+                                         upn);
+}
+
+/**
+ * Adds an registeredID SAN (OID) as an additional desired Certificate
+ * Extension or in the CSR if the caller does not set a CSR.
+ *
+ * @param context The Kerberos library context
+ * @param ctx The kx509 request context
+ * @param oids A string representation of an OID
+ *
+ * @return A krb5 error code.
+ */
+krb5_error_code
+krb5_kx509_ctx_add_san_registeredID(krb5_context context,
+                                    krb5_kx509_req_ctx kx509_ctx,
+                                    const char *oids)
+{
+    krb5_error_code ret;
+    heim_oid oid;
+
+    ret = der_parse_heim_oid(oids, NULL, &oid);
+    if (ret == 0)
+        hx509_request_add_registered(context->hx509ctx, kx509_ctx->csr, &oid);
+    der_free_oid(&oid);
+    return ret;
+}
+
+/**
+ * Adds authorization data to a kx509 request context.
+ *
+ * @param context The Kerberos library context
+ * @param ctx The kx509 request context
+ * @param ad_type The authorization data type
+ * @param ad_data The authorization data
+ *
+ * @return A krb5 error code.
+ */
+krb5_error_code
+krb5_kx509_ctx_add_auth_data(krb5_context context,
+                             krb5_kx509_req_ctx kx509_ctx,
+                             krb5int32 ad_type,
+                             krb5_data *ad_data)
+{
+    AUTHDATA_TYPE *tmp;
+    Kx509CSRPlus *p = &kx509_ctx->csr_plus;
+
+    tmp = realloc(p->authz_datas.val,
+                  sizeof(p->authz_datas.val[0]) * (p->authz_datas.len + 1));
+    if (tmp == NULL)
+        return krb5_enomem(context);
+    p->authz_datas.val = tmp;
+    p->authz_datas.val[p->authz_datas.len++] = ad_type;
+
+    return krb5_auth_con_add_AuthorizationDataIfRelevant(context,
+                                                         kx509_ctx->ac,
+                                                         ad_type, ad_data);
+}
 
 static krb5_error_code
 load_priv_key(krb5_context context,
-              struct kx509_ctx_data *kx509_ctx,
+              krb5_kx509_req_ctx kx509_ctx,
               const char *fn)
 {
     hx509_private_key *keys = NULL;
@@ -126,6 +412,38 @@ load_priv_key(krb5_context context,
                                "from %s for kx509: %s", fn,
                                hx509_get_error_string(context->hx509ctx, ret));
     hx509_certs_free(&certs);
+    return ret;
+}
+
+/**
+ * Set a private key.
+ *
+ * @param context The Kerberos library context
+ * @param ctx The kx509 request context
+ * @param store The name of a PKIX credential store
+ *
+ * @return A krb5 error code.
+ */
+krb5_error_code
+krb5_kx509_ctx_set_key(krb5_context context,
+                       krb5_kx509_req_ctx kx509_ctx,
+                       const char *store)
+{
+    SubjectPublicKeyInfo key;
+    krb5_error_code ret;
+
+    memset(&key, 0, sizeof(key));
+    hx509_private_key_free(&kx509_ctx->priv_key);
+    _hx509_certs_keys_free(context->hx509ctx, kx509_ctx->keys);
+    kx509_ctx->keys = NULL;
+    ret = load_priv_key(context, kx509_ctx, store);
+    if (ret == 0)
+        ret = hx509_private_key2SPKI(context->hx509ctx, kx509_ctx->priv_key,
+                                     &key);
+    if (ret == 0)
+        ret = hx509_request_set_SubjectPublicKeyInfo(context->hx509ctx,
+                                                     kx509_ctx->csr, &key);
+    free_SubjectPublicKeyInfo(&key);
     return ret;
 }
 
@@ -163,6 +481,58 @@ gen_priv_key(krb5_context context,
     return ret;
 }
 
+/**
+ * Generate a private key.
+ *
+ * @param context The Kerberos library context
+ * @param ctx The kx509 request context
+ * @param gen_type The type of key (default: rsa)
+ * @param gen_bits The size of the key (for non-ECC, really, for RSA)
+ *
+ * @return A krb5 error code.
+ */
+krb5_error_code
+krb5_kx509_ctx_gen_key(krb5_context context,
+                       krb5_kx509_req_ctx kx509_ctx,
+                       const char *gen_type,
+                       int gen_bits)
+{
+    SubjectPublicKeyInfo key;
+    krb5_error_code ret;
+
+    memset(&key, 0, sizeof(key));
+
+    if (gen_type == NULL) {
+        gen_type = krb5_config_get_string_default(context, NULL, "rsa",
+                                                  "libdefaults",
+                                                  "kx509_gen_key_type", NULL);
+    }
+    if (gen_bits == 0) {
+        /*
+         * The key size is really only for non-ECC, of which we'll only support
+         * RSA.  For ECC key sizes will either be implied by the `key_type' or
+         * will have to be a magic value that allows us to pick from some small
+         * set of curves (e.g., 255 == Curve25519).
+         */
+        gen_bits = krb5_config_get_int_default(context, NULL, 2048,
+                                               "libdefaults",
+                                               "kx509_gen_rsa_key_size", NULL);
+    }
+    hx509_private_key_free(&kx509_ctx->priv_key);
+    _hx509_certs_keys_free(context->hx509ctx, kx509_ctx->keys);
+    kx509_ctx->keys = NULL;
+
+    ret = gen_priv_key(context, gen_type, gen_bits, &kx509_ctx->priv_key);
+    if (ret == 0)
+        ret = hx509_private_key2SPKI(context->hx509ctx, kx509_ctx->priv_key,
+                                     &key);
+    if (ret == 0)
+        ret = hx509_request_set_SubjectPublicKeyInfo(context->hx509ctx,
+                                                     kx509_ctx->csr, &key);
+    free_SubjectPublicKeyInfo(&key);
+    return ret;
+}
+
 /* Set a cc config entry indicating that the kx509 service is not available */
 static void
 store_kx509_disabled(krb5_context context, const char *realm, krb5_ccache cc)
@@ -180,6 +550,42 @@ store_kx509_disabled(krb5_context context, const char *realm, krb5_ccache cc)
     krb5_cc_set_config(context, cc, NULL, "kx509_service_status", &data);
 }
 
+static int
+certs_export_func(hx509_context context, void *d, hx509_cert c)
+{
+    heim_octet_string os;
+    Certificates *cs = d;
+    Certificate c2;
+    int ret;
+
+    ret = hx509_cert_binary(context, c, &os);
+    if (ret)
+        return ret;
+    ret = decode_Certificate(os.data, os.length, &c2, NULL);
+    if (ret)
+        return ret;
+    der_free_octet_string(&os);
+    ret = add_Certificates(cs, &c2);
+    free_Certificate(&c2);
+    return ret;
+}
+
+static krb5_error_code
+certs_export(hx509_context context, hx509_certs certs, heim_octet_string *out)
+{
+    Certificates cs;
+    size_t len;
+    int ret;
+
+    cs.len = 0;
+    cs.val = 0;
+    ret = hx509_certs_iter_f(context, certs, certs_export_func, &cs);
+    if (ret == 0)
+        ASN1_MALLOC_ENCODE(Certificates, out->data, out->length, &cs, &len, ret);
+    free_Certificates(&cs);
+    return ret;
+}
+
 /* Store the private key and certificate where requested */
 static krb5_error_code
 store(krb5_context context,
@@ -187,7 +593,8 @@ store(krb5_context context,
       const char *realm,
       krb5_ccache cc,
       hx509_private_key key,
-      hx509_cert cert)
+      hx509_cert cert,
+      hx509_certs chain)
 {
     heim_octet_string hdata;
     krb5_error_code ret = 0;
@@ -203,42 +610,50 @@ store(krb5_context context,
 
         /* Serialize and store the certificate in the ccache */
         ret = hx509_cert_binary(context->hx509ctx, cert, &hdata);
-        data.data = hdata.data;
-        data.length = hdata.length;
         if (ret == 0)
-            ret = krb5_cc_set_config(context, cc, NULL, "kx509cert", &data);
-        free(hdata.data);
+            ret = krb5_cc_set_config(context, cc, NULL, "kx509cert", &hdata);
+        der_free_octet_string(&hdata);
 
-        /*
-         * Serialized and store the key in the ccache.  Use PKCS#8 so that we
-         * store the algorithm OID too, which is needed in order to be able to
-         * read the private key back.
-         */
-        if (ret == 0)
-            ret = _hx509_private_key_export(context->hx509ctx, key,
-                                            HX509_KEY_FORMAT_PKCS8, &hdata);
-        data.data = hdata.data;
-        data.length = hdata.length;
-        if (ret == 0)
-            ret = krb5_cc_set_config(context, cc, NULL, "kx509key", &data);
-        free(hdata.data);
-        if (ret)
-            krb5_set_error_message(context, ret, "Could not store kx509 "
-                                   "private key and certificate in ccache %s",
-                                   krb5_cc_get_name(context, cc));
+        if (ret == 0 && key) {
+            /*
+             * Serialized and store the key in the ccache.  Use PKCS#8 so that we
+             * store the algorithm OID too, which is needed in order to be able to
+             * read the private key back.
+             */
+            if (ret == 0)
+                ret = _hx509_private_key_export(context->hx509ctx, key,
+                                                HX509_KEY_FORMAT_PKCS8, &hdata);
+            if (ret == 0)
+                ret = krb5_cc_set_config(context, cc, NULL, "kx509key", &hdata);
+            der_free_octet_string(&hdata);
+            if (ret)
+                krb5_set_error_message(context, ret, "Could not store kx509 "
+                                       "private key and certificate in ccache %s",
+                                       krb5_cc_get_name(context, cc));
+        }
+
+        if (ret == 0 && chain) {
+            ret = certs_export(context->hx509ctx, chain, &hdata);
+            if (ret == 0)
+                ret = krb5_cc_set_config(context, cc, NULL, "kx509cert-chain",
+                                         &hdata);
+            der_free_octet_string(&hdata);
+        }
     }
-
 
     /* Store the private key and cert in an hx509 store */
     if (hx509_store != NULL) {
         hx509_certs certs;
 
-        _hx509_cert_assign_key(cert, key); /* store both in the same store */
+        if (key)
+            _hx509_cert_assign_key(cert, key); /* store both in the same store */
 
         ret = hx509_certs_init(context->hx509ctx, hx509_store,
                                HX509_CERTS_CREATE, NULL, &certs);
         if (ret == 0)
             ret = hx509_certs_add(context->hx509ctx, certs, cert);
+        if (ret == 0 && chain != NULL)
+            ret = hx509_certs_merge(context->hx509ctx, certs, chain);
         if (ret == 0)
             ret = hx509_certs_store(context->hx509ctx, certs, 0, NULL);
         hx509_certs_free(&certs);
@@ -257,25 +672,100 @@ store(krb5_context context,
     return ret;
 }
 
-static void
-init_kx509_ctx(struct kx509_ctx_data *ctx)
+/* Make a Kx509CSRPlus or a raw SPKI */
+static krb5_error_code
+mk_kx509_req_body(krb5_context context,
+                  krb5_kx509_req_ctx kx509_ctx,
+                  krb5_data *out)
 {
-    memset(ctx, 0, sizeof(*ctx));
-    ctx->send_to_realm = NULL;
-    ctx->hmac_key = NULL;
-    ctx->keys = NULL;
-    ctx->priv_key = NULL;
+    krb5_error_code ret;
+    size_t len;
+
+    if (krb5_config_get_bool_default(context, NULL, FALSE,
+                                     "realms", kx509_ctx->realm,
+                                     "kx509_req_use_raw_spki", NULL)) {
+        SubjectPublicKeyInfo spki;
+
+        /* Interop with old kx509 servers, send a raw SPKI, not a CSR */
+        out->data = NULL;
+        out->length = 0;
+        memset(&spki, 0, sizeof(spki));
+        ret = hx509_private_key2SPKI(context->hx509ctx,
+                                     kx509_ctx->priv_key, &spki);
+        if (ret == 0) {
+            out->length = spki.subjectPublicKey.length >> 3;
+            out->data = spki.subjectPublicKey.data;
+        }
+        kx509_ctx->expect_chain = 0;
+        return ret;
+    }
+
+    /*
+     * New kx509 servers use a CSR for proof of possession, and send back a
+     * chain of certificates, with the issued certificate first.
+     */
+    kx509_ctx->expect_chain = 1;
+
+    if (kx509_ctx->given_csr.length) {
+        krb5_data exts_der;
+
+        exts_der.data = NULL;
+        exts_der.length = 0;
+
+        /* Use the given CSR */
+        ret = der_copy_octet_string(&kx509_ctx->given_csr,
+                                    &kx509_ctx->csr_plus.csr);
+
+        /*
+         * Extract the desired Certificate Extensions from our internal
+         * as-yet-unsigned CSR, then decode them into place in the
+         * Kx509CSRPlus.
+         */
+        if (ret == 0)
+            ret = hx509_request_get_exts(context->hx509ctx,
+                                         kx509_ctx->csr,
+                                         &exts_der);
+        if (ret == 0 && exts_der.data && exts_der.length &&
+            (kx509_ctx->csr_plus.exts =
+             calloc(1, sizeof (kx509_ctx->csr_plus.exts[0]))) == NULL)
+            ret = krb5_enomem(context);
+        if (ret == 0 && exts_der.data && exts_der.length)
+            ret = decode_Extensions(exts_der.data, exts_der.length,
+                                    kx509_ctx->csr_plus.exts, NULL);
+        krb5_data_free(&exts_der);
+    } else {
+        /*
+         * Sign and use our internal CSR, which will carry all our desired
+         * Certificate Extensions as an extReq CSR Attribute.
+         */
+        ret = hx509_request_to_pkcs10(context->hx509ctx,
+                                      kx509_ctx->csr,
+                                      kx509_ctx->priv_key,
+                                      &kx509_ctx->csr_plus.csr);
+    }
+    if (ret == 0)
+        ASN1_MALLOC_ENCODE(Kx509CSRPlus, out->data, out->length,
+                           &kx509_ctx->csr_plus, &len, ret);
+    return ret;
 }
 
-static void
-free_kx509_ctx(krb5_context context, struct kx509_ctx_data *ctx)
+static krb5_error_code
+get_start_realm(krb5_context context,
+                krb5_ccache cc,
+                krb5_principal princ,
+                char **out)
 {
-    krb5_free_keyblock(context, ctx->hmac_key);
-    free(ctx->send_to_realm);
-    hx509_private_key_free(&ctx->priv_key);
-    if (ctx->keys)
-        _hx509_certs_keys_free(context->hx509ctx, ctx->keys);
-    init_kx509_ctx(ctx);
+    krb5_error_code ret;
+    krb5_data d;
+
+    ret = krb5_cc_get_config(context, cc, NULL, "start_realm", &d);
+    if (ret == 0) {
+        *out = strndup(d.data, d.length);
+        krb5_data_free(&d);
+    } else {
+        *out = strdup(krb5_principal_get_realm(context, princ));
+    }
+    return (*out) ? 0 : krb5_enomem(context);
 }
 
 /*
@@ -286,9 +776,8 @@ free_kx509_ctx(krb5_context context, struct kx509_ctx_data *ctx)
  */
 static krb5_error_code
 mk_kx509_req(krb5_context context,
-             struct kx509_ctx_data *kx509_ctx,
+             krb5_kx509_req_ctx kx509_ctx,
              krb5_ccache incc,
-             const char *realm,
              hx509_private_key private_key,
              krb5_data *req)
 {
@@ -296,12 +785,12 @@ mk_kx509_req(krb5_context context,
     SubjectPublicKeyInfo spki;
     struct Kx509Request kx509_req;
     krb5_data pre_req;
-    krb5_auth_context ac = NULL;
     krb5_error_code ret = 0;
     krb5_creds this_cred;
     krb5_creds *cred = NULL;
     HMAC_CTX ctx;
     const char *hostname;
+    char *start_realm = NULL;
     size_t len;
 
     krb5_data_zero(&pre_req);
@@ -311,11 +800,9 @@ mk_kx509_req(krb5_context context,
     kx509_req.pk_hash.data = digest;
     kx509_req.pk_hash.length = SHA_DIGEST_LENGTH;
 
-    if (private_key) {
-        /* Encode the public key for use in the request */
-        ret = hx509_private_key2SPKI(context->hx509ctx, private_key, &spki);
-        kx509_req.pk_key.data = spki.subjectPublicKey.data;
-        kx509_req.pk_key.length = spki.subjectPublicKey.length >> 3;
+    if (private_key || kx509_ctx->given_csr.data) {
+        /* Encode the CSR or public key for use in the request */
+        ret = mk_kx509_req_body(context, kx509_ctx, &kx509_req.pk_key);
     } else {
         /* Probe */
         kx509_req.pk_key.data = NULL;
@@ -323,9 +810,11 @@ mk_kx509_req(krb5_context context,
     }
 
     if (ret == 0)
-        ret = krb5_auth_con_init(context, &ac);
-    if (ret == 0)
         ret = krb5_cc_get_principal(context, incc, &this_cred.client);
+    if (ret == 0)
+        ret = get_start_realm(context, incc, this_cred.client, &start_realm);
+    if (ret == 0 && kx509_ctx->realm == NULL)
+        ret = krb5_kx509_ctx_set_realm(context, kx509_ctx, start_realm);
     if (ret == 0) {
         /*
          * The kx509 protocol as deployed uses kca_service/kdc_hostname, but
@@ -344,9 +833,9 @@ mk_kx509_req(krb5_context context,
          * that already unless there's no start_realm cc config, in which case
          * we'll use the ccache's default client principal's realm.
          */
-        realm = realm ? realm : this_cred.client->realm;
-        hostname = krb5_config_get_string(context, NULL, "realm", realm,
-                                          "kx509_hostname", NULL);
+        hostname = krb5_config_get_string(context, NULL, "realm",
+                                          kx509_ctx->realm, "kx509_hostname",
+                                          NULL);
         if (hostname == NULL)
             hostname = krb5_config_get_string(context, NULL, "libdefaults",
                                               "kx509_hostname", NULL);
@@ -355,10 +844,12 @@ mk_kx509_req(krb5_context context,
                                           KRB5_NT_SRV_HST, &this_cred.server);
             if (ret == 0)
                 ret = krb5_principal_set_realm(context, this_cred.server,
-                                               realm);
+                                               kx509_ctx->realm);
         } else {
-            ret = krb5_make_principal(context, &this_cred.server, realm,
-                                      KRB5_TGS_NAME, this_cred.client->realm,
+            ret = krb5_make_principal(context, &this_cred.server,
+                                      start_realm,
+                                      KRB5_TGS_NAME,
+                                      kx509_ctx->realm,
                                       NULL);
         }
     }
@@ -367,20 +858,13 @@ mk_kx509_req(krb5_context context,
     if (ret == 0)
         ret = krb5_get_credentials(context, 0, incc, &this_cred, &cred);
     if (ret == 0)
-        ret = krb5_mk_req_extended(context, &ac, AP_OPTS_USE_SUBKEY, NULL, cred,
-                                   &kx509_req.authenticator);
+        ret = krb5_mk_req_extended(context, &kx509_ctx->ac, AP_OPTS_USE_SUBKEY,
+                                   NULL, cred, &kx509_req.authenticator);
     krb5_free_keyblock(context, kx509_ctx->hmac_key);
     kx509_ctx->hmac_key = NULL;
     if (ret == 0)
-        ret = krb5_auth_con_getkey(context, ac, &kx509_ctx->hmac_key);
-
-    /* Save the realm to send to */
-    free(kx509_ctx->send_to_realm);
-    kx509_ctx->send_to_realm = NULL;
-    if (ret == 0 &&
-        (kx509_ctx->send_to_realm =
-            strdup(krb5_principal_get_realm(context, cred->server))) == NULL)
-        ret = krb5_enomem(context);
+        ret = krb5_auth_con_getkey(context, kx509_ctx->ac,
+                                   &kx509_ctx->hmac_key);
 
     if (ret)
         goto out;
@@ -390,7 +874,7 @@ mk_kx509_req(krb5_context context,
     HMAC_Init_ex(&ctx, kx509_ctx->hmac_key->keyvalue.data,
                  kx509_ctx->hmac_key->keyvalue.length, EVP_sha1(), NULL);
     HMAC_Update(&ctx, version_2_0, sizeof(version_2_0));
-    if (private_key) {
+    if (private_key || kx509_ctx->given_csr.data) {
         HMAC_Update(&ctx, kx509_req.pk_key.data, kx509_req.pk_key.length);
     } else {
         /* Probe */
@@ -409,12 +893,14 @@ mk_kx509_req(krb5_context context,
     }
 
 out:
+    free(start_realm);
     free(pre_req.data);
     krb5_free_creds(context, cred);
-    krb5_xfree(kx509_req.authenticator.data);
+    kx509_req.pk_hash.data = NULL;
+    kx509_req.pk_hash.length = 0;
+    free_Kx509Request(&kx509_req);
     free_SubjectPublicKeyInfo(&spki);
     krb5_free_cred_contents(context, &this_cred);
-    krb5_auth_con_free(context, ac);
     if (ret == 0 && req->length != len + sizeof(version_2_0)) {
         krb5_data_free(req);
         krb5_set_error_message(context, ret = ERANGE,
@@ -423,12 +909,71 @@ out:
     return ret;
 }
 
+static krb5_error_code
+rd_chain(krb5_context context,
+         heim_octet_string *d,
+         hx509_cert *cert,
+         hx509_certs *chain,
+         heim_error_t *herr)
+{
+    krb5_error_code ret;
+    Certificates certs;
+    size_t i, len;
+
+    *cert = NULL;
+    *chain = NULL;
+
+    if ((ret = decode_Certificates(d->data, d->length, &certs, &len)))
+        return ret;
+    if (certs.len == 0) {
+        *herr = heim_error_create(EINVAL, "Server sent empty Certificate list");
+        return EINVAL;
+    }
+    *cert = hx509_cert_init(context->hx509ctx, &certs.val[0], herr);
+    if (*cert == NULL) {
+        free_Certificates(&certs);
+        return errno;
+    }
+    if (certs.len == 1)
+        _krb5_debug(context, 1, "kx509 server sent certificate but no chain");
+    else
+        _krb5_debug(context, 1, "kx509 server sent %llu certificates",
+                    (unsigned long long)certs.len);
+
+    ret = hx509_certs_init(context->hx509ctx, "MEMORY:anonymous",
+                           HX509_CERTS_CREATE, NULL, chain);
+    if (ret) {
+        hx509_cert_free(*cert);
+        *cert = NULL;
+        free_Certificates(&certs);
+        return ret;
+    }
+
+    for (i = 1; ret == 0 && i < certs.len; i++) {
+        hx509_cert c = hx509_cert_init(context->hx509ctx, &certs.val[i], herr);
+
+        if (c == NULL)
+            ret = errno;
+        else
+            ret = hx509_certs_add(context->hx509ctx, *chain, c);
+        hx509_cert_free(c);
+    }
+    free_Certificates(&certs);
+    if (ret) {
+        hx509_certs_free(chain);
+        hx509_cert_free(*cert);
+        *cert = NULL;
+    }
+    return ret;
+}
+
 /* Parse and validate a kx509 reply */
 static krb5_error_code
 rd_kx509_resp(krb5_context context,
-              struct kx509_ctx_data *kx509_ctx,
+              krb5_kx509_req_ctx kx509_ctx,
               krb5_data *rep,
-              hx509_cert *cert)
+              hx509_cert *cert,
+              hx509_certs *chain)
 {
     unsigned char digest[SHA_DIGEST_LENGTH];
     Kx509Response r;
@@ -442,6 +987,7 @@ rd_kx509_resp(krb5_context context,
     size_t len;
 
     *cert = NULL;
+    *chain = NULL;
 
     /* Strip `version_2_0' prefix */
     if (rep->length < hdr_len || memcmp(rep->data, version_2_0, hdr_len)) {
@@ -554,12 +1100,18 @@ rd_kx509_resp(krb5_context context,
         free_Kx509Response(&r);
         if (code != KRB5KDC_ERR_POLICY && kx509_ctx->priv_key == NULL)
             return 0; /* Probe success */
-        return code;
+        return code ? code : KRB5KDC_ERR_POLICY; /* Not a probe -> must fail */
     }
 
     /* Import the certificate payload */
-    *cert = hx509_cert_init_data(context->hx509ctx, r.certificate->data,
-                                 r.certificate->length, &herr);
+    if (kx509_ctx->expect_chain) {
+        ret = rd_chain(context, r.certificate, cert, chain, &herr);
+    } else {
+        *cert = hx509_cert_init_data(context->hx509ctx, r.certificate->data,
+                                     r.certificate->length, &herr);
+        if (!*cert)
+            ret = errno;
+    }
     free_Kx509Response(&r);
     if (cert) {
         heim_release(herr);
@@ -584,13 +1136,13 @@ rd_kx509_resp(krb5_context context,
  */
 static krb5_error_code
 kx509_core(krb5_context context,
-           struct kx509_ctx_data *kx509_ctx,
+           krb5_kx509_req_ctx kx509_ctx,
            krb5_ccache incc,
-           const char *realm,
            const char *hx509_store,
            krb5_ccache outcc)
 {
     krb5_error_code ret;
+    hx509_certs chain = NULL;
     hx509_cert cert = NULL;
     krb5_data req, resp;
 
@@ -598,24 +1150,24 @@ kx509_core(krb5_context context,
     krb5_data_zero(&resp);
 
     /* Make the kx509 request */
-    ret = mk_kx509_req(context, kx509_ctx, incc, realm, kx509_ctx->priv_key,
-                       &req);
+    ret = mk_kx509_req(context, kx509_ctx, incc, kx509_ctx->priv_key, &req);
 
     /* Send the kx509 request and get the response */
     if (ret == 0)
         ret = krb5_sendto_context(context, NULL, &req,
-                                  kx509_ctx->send_to_realm, &resp);
+                                  kx509_ctx->realm, &resp);
     if (ret == 0)
-        ret = rd_kx509_resp(context, kx509_ctx, &resp, &cert);
+        ret = rd_kx509_resp(context, kx509_ctx, &resp, &cert, &chain);
 
     /* Store the key and cert! */
-    if (ret == 0 && kx509_ctx->priv_key)
-        ret = store(context, hx509_store, kx509_ctx->send_to_realm, outcc,
-                    kx509_ctx->priv_key, cert);
-    else if (ret == KRB5KDC_ERR_POLICY || ret == KRB5_KDC_UNREACH)
-        /* Probe failed -> Record that the realm does not support kx509 */
-        store_kx509_disabled(context, kx509_ctx->send_to_realm, outcc);
+    if (ret == 0 && cert && (kx509_ctx->priv_key || kx509_ctx->given_csr.data))
+        ret = store(context, hx509_store, kx509_ctx->realm, outcc,
+                    kx509_ctx->priv_key, cert, chain);
+    else if (ret == KRB5KDC_ERR_POLICY)
+        /* Probe failed -> record that the realm does not support kx509 */
+        store_kx509_disabled(context, kx509_ctx->realm, outcc);
 
+    hx509_certs_free(&chain);
     hx509_cert_free(cert);
     krb5_data_free(&resp);
     krb5_data_free(&req);
@@ -628,88 +1180,60 @@ kx509_core(krb5_context context,
  * Given a private key this function will get a certificate.  If no private key
  * is given, one will be generated.
  *
- * The private key and certificate will be stored in the given hx509 store
- * (e.g, "PEM-FILE:/path/to/file.pem") and/or given output ccache.  When stored
- * in a ccache, the DER-encoded Certificate will be stored as the data payload
- * of a "cc config" named "kx509cert", while the key will be stored as a
- * DER-encoded PKCS#8 PrivateKeyInfo in a cc config named "kx509key".
+ * The private key and certificate will be stored in the given PKIX credential
+ * store (e.g, "PEM-FILE:/path/to/file.pem") and/or given output ccache.  When
+ * stored in a ccache, the DER-encoded Certificate will be stored as the data
+ * payload of a "cc config" named "kx509cert", while the key will be stored as
+ * a DER-encoded PKCS#8 PrivateKeyInfo in a cc config named "kx509key".
  *
  * @param context The Kerberos library context
- * @param incc A credential cache
- * @param realm A realm from which to get the certificate (uses the client
- *              principal's realm if NULL)
- * @param use_priv_key_store An hx509 store containing a private key to certify
- *                           (if NULL, a key will be generated)
- * @param gen_type The public key algorithm for which to generate a private key
- * @param gen_bits The size of the public key to generate, in bits
- * @param hx509_store An hx509 store into which to store the private key and
- *                    certificate (e.g, "PEM-FILE:/path/to/file.pem")
+ * @param kx509_ctx A kx509 request context
+ * @param incc A credential cache (if NULL use default ccache)
+ * @param hx509_store An PKIX credential store into which to store the private
+ *                    key and certificate (e.g, "PEM-FILE:/path/to/file.pem")
  * @param outcc A ccache into which to store the private key and certificate
+ *              (mandatory)
  *
  * @return A krb5 error code.
  */
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_kx509_ext(krb5_context context,
+               krb5_kx509_req_ctx kx509_ctx,
                krb5_ccache incc,
-               const char *realm,
-               const char *use_priv_key_store,
-               const char *gen_type,
-               int gen_bits,
                const char *hx509_store,
                krb5_ccache outcc)
 {
-    struct kx509_ctx_data kx509_ctx;
+    krb5_ccache def_cc = NULL;
     krb5_error_code ret;
-    char *freeme = NULL;
 
-    /* TODO: Eventually switch to ECDSA, and eventually to ed25519 or ed448 */
-    if (gen_type == NULL) {
-        gen_type = krb5_config_get_string_default(context, NULL, "rsa",
-                                                  "libdefaults",
-                                                  "kx509_gen_key_type", NULL);
+    if (incc == NULL) {
+        if ((ret = krb5_cc_default(context, &def_cc)))
+            return ret;
+        incc = def_cc;
     }
 
-    if (gen_bits == 0) {
-        /*
-         * The key size is really only for non-ECC, of which we'll only support
-         * RSA.  For ECC key sizes will either be implied by the `key_type' or
-         * will have to be a magic value that allows us to pick from some small
-         * set of curves (e.g., 255 == Curve25519).
-         */
-        gen_bits = krb5_config_get_int_default(context, NULL, 2048,
-                                               "libdefaults",
-                                               "kx509_gen_rsa_key_size", NULL);
-    }
-
-    init_kx509_ctx(&kx509_ctx);
-
-    if (realm == NULL) {
+    if (kx509_ctx->realm == NULL) {
         krb5_data data;
 
         ret = krb5_cc_get_config(context, incc, NULL, "start_realm", &data);
         if (ret == 0) {
-            if ((freeme = strndup(data.data, data.length)) == NULL)
-                return krb5_enomem(context);
-            realm = freeme;
+            if ((kx509_ctx->realm = strndup(data.data, data.length)) == NULL)
+                ret = krb5_enomem(context);
+            krb5_data_free(&data);
+        }
+        if (ret) {
+            if (def_cc)
+                krb5_cc_close(context, def_cc);
+            return ret;
         }
     }
 
-    if (use_priv_key_store) {
-        /* Get the given private key if it exists, and use it */
-        ret = load_priv_key(context, &kx509_ctx, use_priv_key_store);
-        if (ret == 0) {
-            ret = kx509_core(context, &kx509_ctx, incc, realm, hx509_store,
-                             outcc);
-            free_kx509_ctx(context, &kx509_ctx);
-            free(freeme);
-            return ret;
-        }
-        if (ret != ENOENT) {
-            free_kx509_ctx(context, &kx509_ctx);
-            free(freeme);
-            return ret;
-        }
-        /* Key store doesn't exist or has no keys, fall through */
+    if (kx509_ctx->priv_key || kx509_ctx->given_csr.data) {
+        /* If given a private key, use it */
+        ret = kx509_core(context, kx509_ctx, incc, hx509_store, outcc);
+        if (def_cc)
+            krb5_cc_close(context, def_cc);
+        return ret;
     }
 
     /*
@@ -720,13 +1244,14 @@ krb5_kx509_ext(krb5_context context,
      */
 
     /* Probe == call kx509_core() w/o a private key */
-    ret = kx509_core(context, &kx509_ctx, incc, realm, NULL, outcc);
+    ret = kx509_core(context, kx509_ctx, incc, NULL, outcc);
+    if (ret == 0 && kx509_ctx->given_csr.data == NULL)
+        ret = krb5_kx509_ctx_gen_key(context, kx509_ctx, NULL, 0);
     if (ret == 0)
-        ret = gen_priv_key(context, gen_type, gen_bits, &kx509_ctx.priv_key);
-    if (ret == 0)
-        ret = kx509_core(context, &kx509_ctx, incc, realm, hx509_store, outcc);
-    free_kx509_ctx(context, &kx509_ctx);
-    free(freeme);
+        ret = kx509_core(context, kx509_ctx, incc, hx509_store, outcc);
+
+    if (def_cc)
+        krb5_cc_close(context, def_cc);
     return ret;
 }
 
@@ -735,8 +1260,8 @@ krb5_kx509_ext(krb5_context context,
  * for that key and the client principal's subject name.
  *
  * The private key and certificate will be stored in the given ccache, and also
- * in a corresponding hx509 store if one is configured via [libdefaults]
- * kx509_store.
+ * in a corresponding PKIX credential store if one is configured via
+ * [libdefaults] kx509_store.
  *
  * XXX NOTE: Dicey feature here...  Review carefully!
  *
@@ -750,10 +1275,15 @@ krb5_kx509_ext(krb5_context context,
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_kx509(krb5_context context, krb5_ccache cc, const char *realm)
 {
-    krb5_error_code ret = 0;
+    krb5_kx509_req_ctx kx509_ctx;
+    krb5_error_code ret;
     const char *defcc;
     char *ccache_full_name = NULL;
     char *store_exp = NULL;
+
+    ret = krb5_kx509_ctx_init(context, &kx509_ctx);
+    if (ret == 0 && realm)
+        ret = krb5_kx509_ctx_set_realm(context, kx509_ctx, realm);
 
     /*
      * The idea is that IF we are asked to do kx509 w/ creds from a default
@@ -771,7 +1301,8 @@ krb5_kx509(krb5_context context, krb5_ccache cc, const char *realm)
      * ccache name, and if so we get the [libdefaults] kx509_store string and
      * expand it, then use it.
      */
-    if ((defcc = krb5_cc_configured_default_name(context)) &&
+    if (ret == 0 &&
+        (defcc = krb5_cc_configured_default_name(context)) &&
         krb5_cc_get_full_name(context, cc, &ccache_full_name) == 0 &&
         strcmp(defcc, ccache_full_name) == 0) {
 
@@ -781,6 +1312,13 @@ krb5_kx509(krb5_context context, krb5_ccache cc, const char *realm)
                                                    "kx509_store", NULL);
         if (store)
             ret = _krb5_expand_path_tokens(context, store, 1, &store_exp);
+
+        /*
+         * If there's a private key in the store already, we'll use it, else
+         * we'll let krb5_kx509_ext() generate one, so we ignore this return
+         * value:
+         */
+        (void) krb5_kx509_ctx_set_key(context, kx509_ctx, store);
     }
 
     /*
@@ -788,8 +1326,9 @@ krb5_kx509(krb5_context context, krb5_ccache cc, const char *realm)
      * private key from (if it exists) as well as for storing the certificate
      * (and private key) into, which may save us some key generation cycles.
      */
-    ret = krb5_kx509_ext(context, cc, realm, store_exp, NULL, 0,
-                         store_exp, cc);
+    if (ret == 0)
+        ret = krb5_kx509_ext(context, kx509_ctx, cc, store_exp, cc);
+    krb5_kx509_ctx_free(context, &kx509_ctx);
     free(ccache_full_name);
     free(store_exp);
     return ret;

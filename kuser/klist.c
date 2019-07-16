@@ -36,10 +36,7 @@
 #include "kuser_locl.h"
 #include "parse_units.h"
 #include "heimtools-commands.h"
-#include <kx509_asn1.h>
 #undef HC_DEPRECATED_CRYPTO
-#include "../lib/hx509/hx_locl.h"
-#include "hx509-private.h"
 
 static char*
 printable_time_internal(time_t t, int x)
@@ -264,28 +261,15 @@ print_tickets(krb5_context context,
 	      int do_verbose,
 	      int do_flags,
 	      int do_hidden,
-	      int do_json,
-              const char *hx509_store)
+	      int do_json)
 {
     char *str, *name, *fullname;
-    char *kx509_realm = NULL;
-    hx509_private_key key = NULL;
-    hx509_context hx509ctx = NULL;
-    hx509_certs certs = NULL;
-    hx509_cert cert = NULL;
-    krb5_error_code kx509_ret = 0;
     krb5_error_code ret;
     krb5_cc_cursor cursor;
     krb5_creds creds;
     krb5_deltat sec;
     rtbl_t ct = NULL;
     int print_comma = 0;
-    int kx509_disabled = 0;
-    int cert_stored = 0;
-    int cert_seen = 0;
-
-    if (hx509_store)
-        kx509_ret = hx509_context_init(&hx509ctx);
 
     ret = krb5_unparse_name (context, principal, &str);
     if (ret)
@@ -358,45 +342,6 @@ print_tickets(krb5_context context,
     if (do_verbose && do_json)
 	printf("\"tickets\" : [");
     while ((ret = krb5_cc_next_cred(context, ccache, &cursor, &creds)) == 0) {
-        if (krb5_is_config_principal(context, creds.server) &&
-            krb5_principal_get_num_comp(context, creds.server) == 2 &&
-            hx509_store) {
-            const char *s;
-
-            s = krb5_principal_get_comp_string(context, creds.server, 1);
-            if (strcmp(s, "kx509_service_status") == 0) {
-                kx509_disabled = 1;
-            } else if (strcmp(s, "kx509_service_realm") == 0) {
-                kx509_realm = strndup(creds.ticket.data, creds.ticket.length);
-            } else if (strcmp(s, "kx509cert") == 0) {
-                cert = hx509_cert_init_data(hx509ctx, creds.ticket.data,
-                                            creds.ticket.length, NULL);
-            } else if (strcmp(s, "kx509key") == 0) {
-                (void) hx509_parse_private_key(hx509ctx, NULL,
-                                               creds.ticket.data,
-                                               creds.ticket.length,
-                                               HX509_KEY_FORMAT_PKCS8, &key);
-            }
-            if (hx509ctx && cert && key && !cert_seen) {
-                /* Now store the cert and key into the given hx509 store */
-                (void) _hx509_cert_assign_key(cert, key);
-                kx509_ret = hx509_certs_init(hx509ctx, hx509_store,
-                                             HX509_CERTS_CREATE, NULL, &certs);
-                if (kx509_ret == 0)
-                    kx509_ret = hx509_certs_add(hx509ctx, certs, cert);
-                if (kx509_ret == 0)
-                    kx509_ret = hx509_certs_store(hx509ctx, certs, 0, NULL);
-
-                /*
-                 * Wait till we're done listing the ccache to complain about
-                 * failing to extract the cert and priv key.
-                 */
-                cert_seen = 1;
-                if (kx509_ret == 0)
-                    cert_stored = 1;
-            }
-        }
-
 	if (!do_hidden && krb5_is_config_principal(context, creds.server)) {
 	    ;
 	} else if (do_verbose) {
@@ -414,40 +359,6 @@ print_tickets(krb5_context context,
     ret = krb5_cc_end_seq_get (context, ccache, &cursor);
     if (ret)
 	krb5_err(context, 1, ret, "krb5_cc_end_seq_get");
-
-    /* Finish kx509 extraction error checking */
-    if (hx509_store && cert_seen && !cert_stored) {
-        if (!hx509ctx)
-            krb5_err(context, 1, kx509_ret,
-                     N_("Failed to store certificate and private key "
-                        "in %s due to failure to initialize context: %s", ""),
-                     hx509_store, hx509_get_error_string(hx509ctx, kx509_ret));
-        if (!cert || !key)
-            krb5_err(context, 1, kx509_ret,
-                     N_("Failed to store certificate and private key "
-                        "in %s due to failure to parse them: %s", ""),
-                     hx509_store, hx509_get_error_string(hx509ctx, kx509_ret));
-        krb5_err(context, 1, kx509_ret, N_("Failed to store certificate and "
-                                           "private key in %s", ""),
-                 hx509_store);
-    }
-    if (hx509_store && !cert_seen) {
-        /* No PKIX creds in ccache, but maybe we can run kx509 now */
-        if (kx509_disabled)
-            krb5_errx(context, 1, N_("The kx509 protocol is disabled at the "
-                                     "KDC for realm %s", ""),
-                      kx509_realm ? kx509_realm : "<out of memory>");
-        ret = krb5_kx509_ext(context, ccache, NULL, NULL, NULL, 0, hx509_store,
-                             NULL);
-        if (ret)
-            krb5_err(context, 1, ret, N_("Failed to acquire certificate and "
-                                         "store it and private key in %s", ""),
-                     hx509_store);
-    }
-    hx509_private_key_free(&key);
-    hx509_certs_free(&certs);
-    hx509_cert_free(cert);
-    hx509_context_free(&hx509ctx);
 
     print_comma = 0;
     if(!do_verbose) {
@@ -566,7 +477,7 @@ static int
 display_v5_ccache (krb5_context context, krb5_ccache ccache,
 		   int do_test, int do_verbose,
 		   int do_flags, int do_hidden,
-		   int do_json, const char *hx509_store)
+		   int do_json)
 {
     krb5_error_code ret;
     krb5_principal principal;
@@ -591,7 +502,7 @@ display_v5_ccache (krb5_context context, krb5_ccache ccache,
 	exit_status = check_expiration(context, ccache, NULL);
     else
 	print_tickets (context, ccache, principal, do_verbose,
-		       do_flags, do_hidden, do_json, hx509_store);
+		       do_flags, do_hidden, do_json);
 
     ret = krb5_cc_close (context, ccache);
     if (ret)
@@ -738,8 +649,8 @@ klist(struct klist_options *opt, int argc, char **argv)
 
 		exit_status |= display_v5_ccache(heimtools_context, id, do_test,
 						 do_verbose, opt->flags_flag,
-						 opt->hidden_flag, opt->json_flag,
-                                                 opt->extract_kx509_cert_string);
+                                                 opt->hidden_flag,
+                                                 opt->json_flag);
 		if (!opt->json_flag)
 		    printf("\n\n");
 
@@ -760,8 +671,7 @@ klist(struct klist_options *opt, int argc, char **argv)
 	    }
 	    exit_status = display_v5_ccache(heimtools_context, id, do_test,
 					    do_verbose, opt->flags_flag,
-					    opt->hidden_flag, opt->json_flag,
-                                            opt->extract_kx509_cert_string);
+                                            opt->hidden_flag, opt->json_flag);
 	}
     }
 

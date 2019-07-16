@@ -32,6 +32,7 @@ klist="${TESTS_ENVIRONMENT} ${top_builddir}/kuser/heimtools klist"
 kpasswd="${TESTS_ENVIRONMENT} ${top_builddir}/kpasswd/kpasswd"
 kpasswdd="${TESTS_ENVIRONMENT} ${top_builddir}/kpasswd/kpasswdd"
 kswitch="${TESTS_ENVIRONMENT} ${top_builddir}/kuser/heimtools kswitch"
+kx509="${TESTS_ENVIRONMENT} ${top_builddir}/kuser/heimtools kx509"
 ktutil="${TESTS_ENVIRONMENT} ${top_builddir}/admin/ktutil"
 gsstool="${TESTS_ENVIRONMENT} ${top_builddir}/lib/gssapi/gsstool"
 

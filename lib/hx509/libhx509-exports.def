@@ -29,7 +29,8 @@ EXPORTS
 	hx509_request_get_SubjectPublicKeyInfo
 	hx509_request_get_name
 	hx509_request_init
-	_hx509_request_parse
+	hx509_request_parse
+	hx509_request_parse_der
 	_hx509_request_print
 	hx509_request_set_SubjectPublicKeyInfo
 ;	_hx509_request_set_email

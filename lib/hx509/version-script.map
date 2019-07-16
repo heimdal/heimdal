@@ -24,7 +24,6 @@ HEIMDAL_X509_1.2 {
 		_hx509_request_add_dns_name;
 		_hx509_request_add_eku;
 		_hx509_request_add_email;
-		_hx509_request_parse;
 		_hx509_request_print;
 		_hx509_request_set_email;
 		_hx509_request_to_pkcs10;
@@ -210,6 +209,8 @@ HEIMDAL_X509_1.2 {
 		hx509_request_get_SubjectPublicKeyInfo;
 		hx509_request_free;
 		hx509_request_init;
+		hx509_request_parse;
+		hx509_request_parse_der;
 		hx509_request_set_name;
 		hx509_request_set_SubjectPublicKeyInfo;
 		hx509_revoke_add_crl;

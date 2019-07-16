@@ -1425,7 +1425,7 @@ request_print(struct request_print_options *opt, int argc, char **argv)
     for (i = 0; i < argc; i++) {
 	hx509_request req;
 
-	ret = _hx509_request_parse(context, argv[i], &req);
+	ret = hx509_request_parse(context, argv[i], &req);
 	if (ret)
 	    hx509_err(context, 1, ret, "parse_request: %s", argv[i]);
 
@@ -1884,7 +1884,7 @@ hxtool_ca(struct certificate_sign_options *opt, int argc, char **argv)
     if (opt->req_string) {
 	hx509_request req;
 
-	ret = _hx509_request_parse(context, opt->req_string, &req);
+	ret = hx509_request_parse(context, opt->req_string, &req);
 	if (ret)
 	    hx509_err(context, 1, ret, "parse_request: %s", opt->req_string);
 	ret = hx509_request_get_name(context, req, &subject);

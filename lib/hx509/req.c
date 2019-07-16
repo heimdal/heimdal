@@ -238,9 +238,9 @@ out:
 }
 
 HX509_LIB_FUNCTION int HX509_LIB_CALL
-_hx509_request_parse_der(hx509_context context,
-                         heim_octet_string *der,
-                         hx509_request *req)
+hx509_request_parse_der(hx509_context context,
+                        heim_octet_string *der,
+                        hx509_request *req)
 {
     CertificationRequestInfo *rinfo = NULL;
     CertificationRequest r;
@@ -314,9 +314,9 @@ _hx509_request_parse_der(hx509_context context,
 }
 
 HX509_LIB_FUNCTION int HX509_LIB_CALL
-_hx509_request_parse(hx509_context context,
-		     const char *csr,
-		     hx509_request *req)
+hx509_request_parse(hx509_context context,
+                    const char *csr,
+                    hx509_request *req)
 {
     heim_octet_string d;
     int ret;
@@ -334,7 +334,7 @@ _hx509_request_parse(hx509_context context,
 	return ret;
     }
 
-    ret = _hx509_request_parse_der(context, &d, req);
+    ret = hx509_request_parse_der(context, &d, req);
     free(d.data);
     if (ret)
         hx509_set_error_string(context, HX509_ERROR_APPEND, ret,

@@ -328,12 +328,6 @@ ${context} --gsskrb5-acceptor-identity=${keytabfile}.sr4-kvno-old \
 		eval "$testfailed";
 	}
 	cat test_context.log
-	# The "Failed to find host/..." check should be removed
-	# once the related bug is fixed
-	grep -q "Failed to find host/srv.test4.h5l.se@TEST4.H5L.SE.kvno 54" test_context.log || {
-		echo "ERROR: Missing 'Failed to find host/...' error";
-		eval "$testfailed";
-	}; true || \
 	grep -q "${NO_TRANSIT_ALLOWED_ERROR}" test_context.log || {
 		echo "ERROR: Missing 'no transit allowed' error";
 		eval "$testfailed";

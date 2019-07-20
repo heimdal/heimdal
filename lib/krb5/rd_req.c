@@ -1013,9 +1013,14 @@ krb5_rd_req_ctx(krb5_context context,
 				      &o->ap_req_options,
 				      &o->ticket,
 				      KRB5_KU_AP_REQ_AUTH);
-	    if (ret) {
+	    if (ret == KRB5KRB_AP_ERR_BAD_INTEGRITY) {
+		/* failed to decrypt, try the next key */
 		krb5_kt_free_entry (context, &entry);
 		continue;
+	    }
+	    if (ret) {
+		krb5_kt_free_entry (context, &entry);
+		break;
 	    }
 
 	    /*

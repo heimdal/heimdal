@@ -511,6 +511,7 @@ krb5_verify_ap_req2(krb5_context context,
 
 struct krb5_rd_req_in_ctx_data {
     krb5_keytab keytab;
+    krb5_boolean iterate_keytab;
     krb5_keyblock *keyblock;
     krb5_boolean check_pac;
     krb5_flags verify_ap_req_flags;
@@ -575,6 +576,27 @@ krb5_rd_req_in_set_verify_ap_req_flags(krb5_context context,
 			     krb5_flags flags)
 {
     in->verify_ap_req_flags = flags;
+    return 0;
+}
+
+/**
+ * Set if krb5_rq_req() is going to iterate the keytab to find a key
+ *
+ * @param context Kerberos 5 context.
+ * @param in krb5_rd_req_in_ctx to check the option on.
+ * @param flag flag to select if the keytab should be iterated (TRUE) or not (FALSE).
+ *
+ * @return Kerberos 5 error code, see krb5_get_error_message().
+ *
+ * @ingroup krb5_auth
+ */
+
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
+krb5_rd_req_in_set_iterate_keytab(krb5_context context,
+				  krb5_rd_req_in_ctx in,
+				  krb5_boolean flag)
+{
+    in->iterate_keytab = flag;
     return 0;
 }
 
@@ -916,6 +938,11 @@ krb5_rd_req_ctx(krb5_context context,
 				 &o->keyblock);
 	if (ret)
 	    goto out;
+    } else if (id && inctx && inctx->iterate_keytab) {
+	    /*
+	     * Force iterating over the keytab.
+	     */
+	    o->keyblock = NULL;
     } else {
 
 	if(id == NULL) {

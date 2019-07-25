@@ -362,9 +362,12 @@ dcc_resolve(krb5_context context, krb5_ccache *id, const char *res)
 	return ret;
     }
 
-
-    (*id)->data.data = dc;
-    (*id)->data.length = sizeof(*dc);
+    if (id != NULL) {
+        (*id)->data.data = dc;
+        (*id)->data.length = sizeof(*dc);
+    } else {
+	dcc_release(context, dc);
+    }
     return 0;
 }
 
@@ -555,6 +558,7 @@ dcc_get_cache_first(krb5_context context, krb5_cc_cursor *cursor)
     struct dcache_iter *iter;
     krb5_error_code ret;
     char *name;
+    size_t len;
 
     *cursor = NULL;
     iter = calloc(1, sizeof(*iter));
@@ -570,7 +574,13 @@ dcc_get_cache_first(krb5_context context, krb5_cc_cursor *cursor)
 	return KRB5_CC_FORMAT;
     }
 
-    ret = dcc_resolve(context, NULL, name);
+    len = strlen(krb5_dcc_ops.prefix);
+    if (strncmp(name, krb5_dcc_ops.prefix, len) == 0 && name[len] == ':')
+	++len;
+    else
+	len = 0;
+
+    ret = dcc_resolve(context, NULL, name + len);
     free(name);
     if (ret) {
         free(iter);

@@ -33,6 +33,7 @@
 
 #include "mech_locl.h"
 
+/* See RFC5588 */
 GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL
 gss_store_cred(OM_uint32         *minor_status,
 	       gss_cred_id_t     input_cred_handle,

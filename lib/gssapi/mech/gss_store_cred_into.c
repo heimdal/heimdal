@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009 Kungliga Tekniska Högskolan
+ * Copyright (c) 2009 Kungliga Tekniska HÃ¶gskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  *
@@ -61,6 +61,13 @@ store_mech_cred(OM_uint32 *minor_status,
     return major_status;
 }
 
+/*
+ * See RFC5588 for gss_store_cred().  This function is a variant that takes a
+ * const key/value hashmap-like thing that specifies a credential store in a
+ * mechanism- and implementation-specific way, though Heimdal and MIT agree on
+ * at least the following keys for the Kerberos mechanism: ccache, keytab, and
+ * client_keytab.
+ */
 GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL
 gss_store_cred_into(OM_uint32 *minor_status,
 		    gss_const_cred_id_t input_cred_handle,

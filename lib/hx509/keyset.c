@@ -809,7 +809,10 @@ HX509_LIB_FUNCTION void HX509_LIB_CALL
 _hx509_certs_keys_free(hx509_context context,
 		       hx509_private_key *keys)
 {
-    int i;
+    size_t i;
+
+    if (keys == NULL)
+        return;
     for (i = 0; keys[i]; i++)
 	hx509_private_key_free(&keys[i]);
     free(keys);

@@ -34,15 +34,29 @@
 #include "krb5_locl.h"
 
 static krb5_error_code
+add_auth_data(krb5_context context,
+              AuthorizationData *src,
+              AuthorizationData **dst)
+{
+    krb5_error_code ret = 0;
+    size_t i;
+
+    if (*dst == NULL &&
+        (*dst = calloc(1, sizeof(**dst))) == NULL)
+        return krb5_enomem(context);
+    for (i = 0; ret == 0 && i < src->len; i++)
+        ret = add_AuthorizationData(*dst, &src->val[i]);
+    return ret;
+}
+
+static krb5_error_code
 make_etypelist(krb5_context context,
 	       krb5_authdata **auth_data)
 {
     EtypeList etypes;
     krb5_error_code ret;
-    krb5_authdata ad;
-    u_char *buf;
+    krb5_data e;
     size_t len = 0;
-    size_t buf_size;
 
     ret = _krb5_init_etype(context, KRB5_PDU_NONE,
 			   &etypes.len, &etypes.val,
@@ -50,52 +64,20 @@ make_etypelist(krb5_context context,
     if (ret)
 	return ret;
 
-    ASN1_MALLOC_ENCODE(EtypeList, buf, buf_size, &etypes, &len, ret);
+    ASN1_MALLOC_ENCODE(EtypeList, e.data, e.length, &etypes, &len, ret);
     if (ret) {
 	free_EtypeList(&etypes);
 	return ret;
     }
-    if(buf_size != len)
+    if(e.length != len)
 	krb5_abortx(context, "internal error in ASN.1 encoder");
     free_EtypeList(&etypes);
 
-    ALLOC_SEQ(&ad, 1);
-    if (ad.val == NULL) {
-	free(buf);
-	return krb5_enomem(context);
-    }
-
-    ad.val[0].ad_type = KRB5_AUTHDATA_GSS_API_ETYPE_NEGOTIATION;
-    ad.val[0].ad_data.length = len;
-    ad.val[0].ad_data.data = buf;
-
-    ASN1_MALLOC_ENCODE(AD_IF_RELEVANT, buf, buf_size, &ad, &len, ret);
-    if (ret) {
-	free_AuthorizationData(&ad);
-	return ret;
-    }
-    if(buf_size != len)
-	krb5_abortx(context, "internal error in ASN.1 encoder");
-    free_AuthorizationData(&ad);
-
-    ALLOC(*auth_data, 1);
-    if (*auth_data == NULL) {
-        free(buf);
-	return krb5_enomem(context);
-    }
-
-    ALLOC_SEQ(*auth_data, 1);
-    if ((*auth_data)->val == NULL) {
-        free(*auth_data);
-	free(buf);
-	return krb5_enomem(context);
-    }
-
-    (*auth_data)->val[0].ad_type = KRB5_AUTHDATA_IF_RELEVANT;
-    (*auth_data)->val[0].ad_data.length = len;
-    (*auth_data)->val[0].ad_data.data = buf;
-
-    return 0;
+    ret = _krb5_add_1auth_data(context,
+                               KRB5_AUTHDATA_GSS_API_ETYPE_NEGOTIATION, &e, 0,
+                               auth_data);
+    krb5_data_free(&e);
+    return ret;
 }
 
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
@@ -164,6 +146,13 @@ _krb5_build_authenticator (krb5_context context,
 	    if (ret)
 		goto fail;
 	}
+    }
+
+    /* Copy other authz data from auth_context */
+    if (auth_context->auth_data) {
+        ret = add_auth_data(context, auth_context->auth_data, &auth.authorization_data);
+        if (ret)
+            goto fail;
     }
 
     /* XXX - Copy more to auth_context? */

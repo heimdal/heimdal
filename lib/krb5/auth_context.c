@@ -409,24 +409,79 @@ krb5_auth_con_getkeytype (krb5_context context,
     return 0;
 }
 
+krb5_error_code
+_krb5_add_1auth_data(krb5_context context,
+                     krb5int32 ad_type, krb5_data *ad_data, int critical,
+                     krb5_authdata **dst)
+{
+    AuthorizationDataElement e;
+
+    e.ad_type = ad_type;
+    e.ad_data = *ad_data;
+
+    if (!critical) {
+        AuthorizationData ad;
+        krb5_error_code ret;
+        krb5_data ir;
+        size_t len;
+
+        /* Build an AD-IF-RELEVANT with the new element inside it */
+        ad.len = 0;
+        ad.val = NULL;
+        ret = add_AuthorizationData(&ad, &e);
+
+        /* Encode the AD-IF-RELEVANT */
+        if (ret == 0)
+            ASN1_MALLOC_ENCODE(AuthorizationData, ir.data, ir.length, &ad,
+                               &len, ret);
+        if (ret == 0 && ir.length != len)
+            krb5_abortx(context, "internal error in ASN.1 encoder");
+
+        /* Re-enter to add the encoded AD-IF-RELEVANT */
+        ret = _krb5_add_1auth_data(context, KRB5_AUTHDATA_IF_RELEVANT, &ir, 1,
+                                   dst);
+
+        free_AuthorizationData(&ad);
+        krb5_data_free(&ir);
+        return ret;
+    }
+
+    if (*dst == NULL) {
+        ALLOC(*dst, 1);
+        if (*dst == NULL)
+            return krb5_enomem(context);
+    }
+    return add_AuthorizationData(*dst, &e);
+}
+
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_auth_con_add_AuthorizationData(krb5_context context,
 				    krb5_auth_context auth_context,
 				    int type,
 				    krb5_data *data)
 {
-    AuthorizationDataElement el;
-
     if (auth_context->auth_data == NULL) {
 	auth_context->auth_data = calloc(1, sizeof(*auth_context->auth_data));
 	if (auth_context->auth_data == NULL)
 	    return krb5_enomem(context);
     }
-    el.ad_type = type;
-    el.ad_data.data = data->data;
-    el.ad_data.length = data->length;
+    return _krb5_add_1auth_data(context, type, data, 1,
+                                &auth_context->auth_data);
+}
 
-    return add_AuthorizationData(auth_context->auth_data, &el);
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
+krb5_auth_con_add_AuthorizationDataIfRelevant(krb5_context context,
+                                              krb5_auth_context auth_context,
+                                              krb5int32 type,
+                                              krb5_data *data)
+{
+    if (auth_context->auth_data == NULL) {
+	auth_context->auth_data = calloc(1, sizeof(*auth_context->auth_data));
+	if (auth_context->auth_data == NULL)
+	    return krb5_enomem(context);
+    }
+    return _krb5_add_1auth_data(context, type, data, 0,
+                                &auth_context->auth_data);
 }
 
 

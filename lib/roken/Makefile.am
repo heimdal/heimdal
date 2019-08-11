@@ -102,6 +102,7 @@ libroken_la_SOURCES =		\
 	hex.c			\
 	hostent_find_fqdn.c	\
 	issuid.c		\
+	memmem.c		\
 	mini_inetd.c		\
 	mkdir.c                 \
 	net_read.c		\

@@ -446,6 +446,11 @@ rk_wcsdup(const unsigned short *);
 
 #endif  /* _MSC_VER */
 
+#ifndef HAVE_MEMMEM
+#define memmem rk_smemmem
+ROKEN_LIB_FUNCTION char * ROKEN_LIB_CALL memmem(const char *);
+#endif
+
 #ifdef HAVE_WINSOCK
 
 /* While we are at it, define WinSock specific scatter gather socket

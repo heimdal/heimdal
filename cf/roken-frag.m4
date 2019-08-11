@@ -193,6 +193,7 @@ AC_CHECK_FUNCS([				\
 	getrlimit				\
 	getspnam				\
 	issetugid				\
+	memmem					\
 	on_exit					\
 	poll					\
 	random					\

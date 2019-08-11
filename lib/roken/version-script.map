@@ -83,6 +83,7 @@ HEIMDAL_ROKEN_2.0 {
 		rk_inet_pton;
 		rk_injectauxv;
 		rk_localtime_r;
+		rk_memmem;
 		rk_memset_s;
 		rk_mkdir;
 		rk_mkstemp;

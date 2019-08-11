@@ -751,6 +751,38 @@ handle_http_tcp (krb5_context context,
     return 1;
 }
 
+static int
+http1_request_taste(const unsigned char *req, size_t len)
+{
+    return !!((len >= sizeof("GET ") - 1 &&
+               memcmp(req, "GET ", sizeof("GET ") - 1) == 0) ||
+              (len >= sizeof("HEAD ") - 1 &&
+               memcmp(req, "HEAD ", sizeof("HEAD ") - 1) == 0));
+}
+
+static int
+http1_request_is_complete(const unsigned char *req, size_t len)
+{
+
+    return http1_request_taste(req, len) &&
+        memmem(req, len, "\r\n\r\n", sizeof("\r\n\r\n") - 4) != NULL;
+
+    /*
+     * For POST (the MSFT variant of this protocol) we'll need something like
+     * this (plus check for Content-Length/Transfer-Encoding):
+     *
+     *  const unsigned char *body;
+     *  if ((body = memmem(req, len, "\r\n\r\n", sizeof("\r\n\r\n") - 4)) == NULL)
+     *      return 0;
+     *  body += sizeof("\r\n\r\n") - 4;
+     *  len -= (body - req);
+     *  return memmem(body, len, "\r\n\r\n", sizeof("\r\n\r\n") - 4) != NULL;
+     *
+     * Since the POST-based variant runs over HTTPS, we'll probably implement
+     * that in a proxy instead of here.
+     */
+}
+
 /*
  * Handle incoming data to the TCP socket in `d[index]'
  */
@@ -789,18 +821,14 @@ handle_tcp(krb5_context context,
     d[idx].len += n;
     if(d[idx].len > 4 && d[idx].buf[0] == 0) {
 	ret = handle_vanilla_tcp (context, config, &d[idx]);
-    } else if(enable_http &&
-	      d[idx].len >= 4 &&
-	      strncmp((char *)d[idx].buf, "GET ", 4) == 0 &&
-	      strncmp((char *)d[idx].buf + d[idx].len - 4,
-		      "\r\n\r\n", 4) == 0) {
+    } else if (enable_http &&
+               http1_request_taste(d[idx].buf, d[idx].len)) {
 
-        /* remove the trailing \r\n\r\n so the string is NUL terminated */
-        d[idx].buf[d[idx].len - 4] = '\0';
-
-	ret = handle_http_tcp (context, config, &d[idx]);
-	if (ret < 0)
-	    clear_descr (d + idx);
+        if (http1_request_is_complete(d[idx].buf, d[idx].len)) {
+            /* NUL-terminate at the request header ending \r\n\r\n */
+            d[idx].buf[d[idx].len - 4] = '\0';
+            ret = handle_http_tcp (context, config, &d[idx]);
+        }
     } else if (d[idx].len > 4) {
 	kdc_log (context, config,
 		 0, "TCP data of strange type from %s to %s/%d",
@@ -828,13 +856,22 @@ handle_tcp(krb5_context context,
 	clear_descr(d + idx);
 	return;
     }
-    if (ret < 0)
-	return;
-    else if (ret == 1) {
+
+    /*
+     * ret == 0 -> not enough of request buffered -> wait for more
+     * ret == 1 -> go ahead and perform the request
+     * ret != 0 (really, < 0) -> error, probably ENOMEM, close connection
+     */
+    if (ret == 1)
 	do_request(context, config,
 		   d[idx].buf, d[idx].len, TRUE, &d[idx]);
+
+    /*
+     * Note: this means we don't keep the connection open even where we
+     * the protocol permits it.
+     */
+    if (ret != 0)
 	clear_descr(d + idx);
-    }
 }
 
 #ifdef HAVE_FORK

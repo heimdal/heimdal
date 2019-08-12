@@ -33,6 +33,7 @@
 
 #include <config.h>
 
+#include <errno.h>
 #include <stdlib.h>
 #include <string.h>
 #include <limits.h>
@@ -61,6 +62,7 @@ rk_base64_encode(const void *data, int size, char **str)
 
     if (size > INT_MAX/4 || size < 0) {
 	*str = NULL;
+        errno = ERANGE;
 	return -1;
     }
 

@@ -87,7 +87,7 @@ main(int argc, char **argv)
     signal(SIGPIPE, SIG_IGN);
 #endif
     if (detach_from_console && !launchd_flag && daemon_child == -1)
-        roken_detach_prep(argc, argv, "--daemon-child");
+        daemon_child = roken_detach_prep(argc, argv, "--daemon-child");
     rk_pidfile(NULL);
 
     if (launchd_flag) {

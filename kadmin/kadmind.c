@@ -123,7 +123,7 @@ main(int argc, char **argv)
     }
 
     if (detach_from_console > 0 && daemon_child == -1)
-        roken_detach_prep(argc, argv, "--daemon-child");
+        daemon_child = roken_detach_prep(argc, argv, "--daemon-child");
 
     ret = krb5_init_context(&context);
     if (ret)

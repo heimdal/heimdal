@@ -189,7 +189,7 @@ configure(krb5_context context, int argc, char **argv, int *optidx)
 							   "detach", NULL);
 
     if (detach_from_console && daemon_child == -1)
-        roken_detach_prep(argc, argv, "--daemon-child");
+        daemon_child = roken_detach_prep(argc, argv, "--daemon-child");
 
     {
 	char **files;

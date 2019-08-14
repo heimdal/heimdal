@@ -44,24 +44,50 @@
 
 static int pipefds[2] = {-1, -1};
 
-ROKEN_LIB_FUNCTION void ROKEN_LIB_CALL
+ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
 roken_detach_prep(int argc, char **argv, char *special_arg)
 {
-    pid_t child;
-    char buf[1];
     ssize_t bytes;
+    size_t i;
+    pid_t child;
+    char **new_argv;
+    char buf[1];
+    char *fildes;
     int status;
 
     pipefds[0] = -1;
     pipefds[1] = -1;
 
 #ifdef WIN32
-    if (_pipe(pipefds, 4, O_BINARY) == -1)
+    if (_pipe(pipefds, 4, _O_NOINHERIT | O_BINARY) == -1)
         err(1, "failed to setup to detach daemon (_pipe failed)");
 #else
     if (pipe(pipefds) == -1)
         err(1, "failed to setup to detach daemon (pipe failed)");
 #endif
+
+    new_argv = calloc(argc + 3, sizeof(*new_argv));
+    if (new_argv == NULL)
+        err(1, "Out of memory");
+
+#ifdef WIN32
+    pipefds[1] = _dup(pipefds[1]); /* The new fd will be inherited */
+    if (pipefds[1] == -1)
+        err(1, "Out of memory");
+#else
+    fcntl(pipefds[1], F_SETFD, fcntl(pipefds[1], F_GETFD & ~(O_CLOEXEC)));
+#endif
+
+    if (asprintf(&fildes, "%d", pipefds[1]) == -1 ||
+        fildes == NULL)
+        err(1, "failed to setup to detach daemon (_dup failed)");
+
+    new_argv[0] = argv[0];
+    new_argv[1] = special_arg;
+    new_argv[2] = fildes;
+    for (i = 1; argv[i] != NULL; i++)
+        new_argv[i + 2] = argv[i];
+    new_argv[argc + 2] = NULL;
 
 #ifndef WIN32
     fflush(stdout);
@@ -69,29 +95,6 @@ roken_detach_prep(int argc, char **argv, char *special_arg)
 #else
     {
         intptr_t child_handle;
-	int write_side;
-        size_t i;
-	char *fildes;
-        char **new_argv;
-
-        new_argv = calloc(argc + 2, sizeof(*new_argv));
-        if (new_argv == NULL)
-            err(1, "Out of memory");
-
-	write_side = _dup(pipefds[1]); /* The new fd will be inherited */
-	if (write_side == -1)
-            err(1, "Out of memory");
-
-	if (asprintf(&fildes, "%d", write_side) == -1 ||
-	    fildes == NULL)
-            err(1, "failed to setup to detach daemon (_dup failed)");
-
-        new_argv[0] = argv[0];
-        new_argv[1] = special_arg;
-        new_argv[2] = fildes;
-        for (i = 1; argv[i] != NULL; i++)
-            new_argv[i + 1] = argv[i];
-	new_argv[argc + 2] = NULL;
 
 	_flushall();
 	child_handle = spawnvp(_P_NOWAIT, argv[0], new_argv);
@@ -120,10 +123,15 @@ roken_detach_prep(int argc, char **argv, char *special_arg)
         (void) dup2(fd, STDIN_FILENO);
         if (fd > STDERR_FILENO)
             (void) close(fd);
-        return;
+        if (getenv("ROKEN_DETACH_USE_EXEC")) {
+            (void) execvp(argv[0], new_argv);
+            err(1, "failed to self-re-exec");
+        }
+        return pipefds[1];
     }
 #endif
 
+    /* Parent */
     (void) close(pipefds[1]);
     pipefds[1] = -1;
     do {
@@ -149,6 +157,8 @@ roken_detach_prep(int argc, char **argv, char *special_arg)
                  "daemon child preparation failed (child exited)");
     }
     _exit(0);
+    /* NOTREACHED */
+    return -1;
 }
 
 #ifdef WIN32

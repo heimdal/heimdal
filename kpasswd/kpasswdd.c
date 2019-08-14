@@ -798,7 +798,7 @@ main(int argc, char **argv)
     }
 
     if (detach_from_console > 0 && daemon_child == -1)
-        roken_detach_prep(argc, argv, "--daemon-child");
+        daemon_child = roken_detach_prep(argc, argv, "--daemon-child");
 
     if (config_file == NULL) {
 	aret = asprintf(&config_file, "%s/kdc.conf", hdb_db_dir(context));

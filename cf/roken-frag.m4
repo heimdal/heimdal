@@ -210,6 +210,7 @@ AC_CHECK_FUNCS([				\
 	tfind					\
 	twalk					\
 	uname					\
+	unlinkat				\
 	unvis					\
 	vasnprintf				\
 	vasprintf				\

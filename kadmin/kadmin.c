@@ -41,6 +41,7 @@ int local_flag;
 static int ad_flag;
 static int help_flag;
 static int version_flag;
+static char *hdb;
 static char *realm;
 static char *admin_server;
 static int server_port = 0;
@@ -62,6 +63,10 @@ static struct getargs args[] = {
     {
 	"key-file",	'k',	arg_string, &keyfile,
 	"location of master key file", "file"
+    },
+    {
+	"hdb",	'H',	arg_string,   &hdb,
+	"HDB to use", "hdb"
     },
     {
 	"realm",	'r',	arg_string,   &realm,
@@ -202,6 +207,11 @@ main(int argc, char **argv)
 						   some other way */
 	conf.realm = realm;
 	conf.mask |= KADM5_CONFIG_REALM;
+    }
+
+    if (hdb) {
+	conf.dbname = hdb;
+	conf.mask |= KADM5_CONFIG_DBNAME;
     }
 
     if (admin_server) {

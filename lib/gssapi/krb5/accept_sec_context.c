@@ -447,10 +447,15 @@ gsskrb5_acceptor_start(OM_uint32 * minor_status,
 	krb5_rd_req_in_ctx in = NULL;
 	krb5_rd_req_out_ctx out = NULL;
 	krb5_principal server = NULL;
+	krb5_boolean iterate_keytab = FALSE;
 	krb5_flags verify_ap_req_flags = 0;
 
 	if (acceptor_cred) {
 	    server = acceptor_cred->principal;
+
+	    if (acceptor_cred->cred_flags & GSS_CF_ITERATE_ACCEPTOR_KEYTAB) {
+		iterate_keytab = TRUE;
+	    }
 
 	    if (acceptor_cred->cred_flags & GSS_CF_SKIP_TRANSIT_CHECK) {
 		verify_ap_req_flags |= KRB5_VERIFY_AP_REQ_SKIP_TRANSITED_CHECK;
@@ -460,6 +465,8 @@ gsskrb5_acceptor_start(OM_uint32 * minor_status,
 	kret = krb5_rd_req_in_ctx_alloc(context, &in);
 	if (kret == 0)
 	    kret = krb5_rd_req_in_set_keytab(context, in, keytab);
+	if (kret == 0 && iterate_keytab)
+	    kret = krb5_rd_req_in_set_iterate_keytab(context, in, TRUE);
 	if (kret == 0)
 	    kret = krb5_rd_req_in_set_verify_ap_req_flags(context, in,
 							  verify_ap_req_flags);

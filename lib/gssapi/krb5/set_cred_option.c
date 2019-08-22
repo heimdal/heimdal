@@ -216,6 +216,25 @@ no_ci_flags(OM_uint32 *minor_status,
 
 }
 
+static OM_uint32
+iterate_acceptor_keytab(OM_uint32 *minor_status,
+			krb5_context context,
+			gss_cred_id_t *cred_handle,
+			const gss_buffer_t value)
+{
+    gsskrb5_cred cred;
+
+    if (cred_handle == NULL || *cred_handle == GSS_C_NO_CREDENTIAL) {
+	*minor_status = 0;
+	return GSS_S_FAILURE;
+    }
+
+    cred = (gsskrb5_cred)*cred_handle;
+    cred->cred_flags |= GSS_CF_ITERATE_ACCEPTOR_KEYTAB;
+
+    *minor_status = 0;
+    return GSS_S_COMPLETE;
+}
 
 static OM_uint32
 skip_transit_check(OM_uint32 *minor_status,
@@ -265,6 +284,10 @@ _gsskrb5_set_cred_option
 
     if (gss_oid_equal(desired_object, GSS_KRB5_CRED_SKIP_TRANSIT_CHECK_X)) {
 	return skip_transit_check(minor_status, context, cred_handle, value);
+    }
+
+    if (gss_oid_equal(desired_object, GSS_KRB5_CRED_ITERATE_ACCEPTOR_KEYTAB_X)) {
+	return iterate_acceptor_keytab(minor_status, context, cred_handle, value);
     }
 
     *minor_status = EINVAL;

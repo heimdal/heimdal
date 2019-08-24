@@ -25,17 +25,22 @@ BUILT_SOURCES =				\
 	$(gen_files_rfc2459:.x=.c)	\
 	$(gen_files_cms:.x=.c)		\
 	$(gen_files_krb5:.x=.c)		\
+	$(gen_files_ocsp:.x=.c)	\
 	$(gen_files_pkinit:.x=.c)	\
 	$(gen_files_pkcs8:.x=.c)	\
 	$(gen_files_pkcs9:.x=.c)	\
+	$(gen_files_pkcs10:.x=.c)	\
 	$(gen_files_pkcs12:.x=.c)	\
 	$(gen_files_digest:.x=.c)	\
 	$(gen_files_kx509:.x=.c)
 
 gen_files_krb5 = asn1_krb5_asn1.x
 gen_files_cms = asn1_cms_asn1.x
+gen_files_crmf = asn1_crmf_asn1.x
 gen_files_rfc2459 = asn1_rfc2459_asn1.x
+gen_files_ocsp = asn1_ocsp_asn1.x
 gen_files_pkinit = asn1_pkinit_asn1.x
+gen_files_pkcs10 = asn1_pkcs10_asn1.x
 gen_files_pkcs12 = asn1_pkcs12_asn1.x
 gen_files_pkcs8 = asn1_pkcs8_asn1.x
 gen_files_pkcs9 = asn1_pkcs9_asn1.x
@@ -133,9 +138,11 @@ CLEANFILES = \
 	$(gen_files_rfc2459) \
 	$(gen_files_cms) \
 	$(gen_files_krb5) \
+	$(gen_files_ocsp) \
 	$(gen_files_pkinit) \
 	$(gen_files_pkcs8) \
 	$(gen_files_pkcs9) \
+	$(gen_files_pkcs10) \
 	$(gen_files_pkcs12) \
 	$(gen_files_digest) \
 	$(gen_files_kx509) \
@@ -145,10 +152,13 @@ CLEANFILES = \
 	asn1_err.c asn1_err.h \
 	rfc2459_asn1_files rfc2459_asn1*.h* \
 	cms_asn1_files cms_asn1*.h* \
+	crmf_asn1_files crmf_asn1*.h* \
 	krb5_asn1_files krb5_asn1*.h* \
+	ocsp_asn1_files ocsp_asn1*.h* \
 	pkinit_asn1_files pkinit_asn1*.h* \
 	pkcs8_asn1_files pkcs8_asn1*.h* \
 	pkcs9_asn1_files pkcs9_asn1*.h* \
+	pkcs10_asn1_files pkcs10_asn1*.h* \
 	pkcs12_asn1_files pkcs12_asn1*.h* \
 	digest_asn1_files digest_asn1*.h* \
 	kx509_asn1_files kx509_asn1*.h* \
@@ -164,9 +174,12 @@ nodist_include_HEADERS = asn1_err.h
 nodist_include_HEADERS += krb5_asn1.h
 nodist_include_HEADERS += pkinit_asn1.h
 nodist_include_HEADERS += cms_asn1.h
+nodist_include_HEADERS += crmf_asn1.h
 nodist_include_HEADERS += rfc2459_asn1.h
+nodist_include_HEADERS += ocsp_asn1.h
 nodist_include_HEADERS += pkcs8_asn1.h
 nodist_include_HEADERS += pkcs9_asn1.h
+nodist_include_HEADERS += pkcs10_asn1.h
 nodist_include_HEADERS += pkcs12_asn1.h
 nodist_include_HEADERS += digest_asn1.h
 nodist_include_HEADERS += kx509_asn1.h
@@ -174,9 +187,12 @@ nodist_include_HEADERS += kx509_asn1.h
 priv_headers  = krb5_asn1-priv.h
 priv_headers += pkinit_asn1-priv.h
 priv_headers += cms_asn1-priv.h
+priv_headers += crmf_asn1-priv.h
 priv_headers += rfc2459_asn1-priv.h
+priv_headers += ocsp_asn1-priv.h
 priv_headers += pkcs8_asn1-priv.h
 priv_headers += pkcs9_asn1-priv.h
+priv_headers += pkcs10_asn1-priv.h
 priv_headers += pkcs12_asn1-priv.h
 priv_headers += digest_asn1-priv.h
 priv_headers += kx509_asn1-priv.h
@@ -195,14 +211,17 @@ $(asn1_print_OBJECTS): krb5_asn1.h
 asn1parse.h: asn1parse.c
 
 $(gen_files_krb5) krb5_asn1.hx krb5_asn1-priv.hx: krb5_asn1_files
+$(gen_files_ocsp) ocsp_asn1.hx ocsp_asn1-priv.hx: ocsp_asn1_files
 $(gen_files_pkinit) pkinit_asn1.hx pkinit_asn1-priv.hx: pkinit_asn1_files
 $(gen_files_pkcs8) pkcs8_asn1.hx pkcs8_asn1-priv.hx: pkcs8_asn1_files
 $(gen_files_pkcs9) pkcs9_asn1.hx pkcs9_asn1-priv.hx: pkcs9_asn1_files
+$(gen_files_pkcs10) pkcs10_asn1.hx pkcs10_asn1-priv.hx: pkcs10_asn1_files
 $(gen_files_pkcs12) pkcs12_asn1.hx pkcs12_asn1-priv.hx: pkcs12_asn1_files
 $(gen_files_digest) digest_asn1.hx digest_asn1-priv.hx: digest_asn1_files
 $(gen_files_kx509) kx509_asn1.hx kx509_asn1-priv.hx: kx509_asn1_files
 $(gen_files_rfc2459) rfc2459_asn1.hx rfc2459_asn1-priv.hx: rfc2459_asn1_files
 $(gen_files_cms) cms_asn1.hx cms_asn1-priv.hx: cms_asn1_files
+$(gen_files_crmf) crmf_asn1.hx crmf_asn1-priv.hx: crmf_asn1_files
 $(gen_files_test) test_asn1.hx test_asn1-priv.hx: test_asn1_files
 $(gen_files_test_template) test_template_asn1.hx test_template_asn1-priv.hx: test_template_asn1_files
 
@@ -212,8 +231,14 @@ rfc2459_asn1_files: asn1_compile$(EXEEXT) $(srcdir)/rfc2459.asn1
 cms_asn1_files: asn1_compile$(EXEEXT) $(srcdir)/cms.asn1 $(srcdir)/cms.opt
 	$(ASN1_COMPILE) --one-code-file --option-file=$(srcdir)/cms.opt $(srcdir)/cms.asn1 cms_asn1 || (rm -f cms_asn1_files ; exit 1)
 
+crmf_asn1_files: asn1_compile$(EXEEXT) $(srcdir)/crmf.asn1 $(srcdir)/crmf.opt
+	$(ASN1_COMPILE) --one-code-file --option-file=$(srcdir)/crmf.opt $(srcdir)/crmf.asn1 crmf_asn1 || (rm -f crmf_asn1_files ; exit 1)
+
 krb5_asn1_files: asn1_compile$(EXEEXT) $(srcdir)/krb5.asn1 $(srcdir)/krb5.opt
 	$(ASN1_COMPILE) --one-code-file --option-file=$(srcdir)/krb5.opt $(srcdir)/krb5.asn1 krb5_asn1 || (rm -f krb5_asn1_files ; exit 1)
+
+ocsp_asn1_files: asn1_compile$(EXEEXT) $(srcdir)/ocsp.asn1
+	$(ASN1_COMPILE) --one-code-file --option-file=$(srcdir)/ocsp.opt $(srcdir)/ocsp.asn1 ocsp_asn1 || (rm -f ocsp_asn1_files ; exit 1)
 
 pkinit_asn1_files: asn1_compile$(EXEEXT) $(srcdir)/pkinit.asn1
 	$(ASN1_COMPILE) --one-code-file $(srcdir)/pkinit.asn1 pkinit_asn1 || (rm -f pkinit_asn1_files ; exit 1)
@@ -223,6 +248,9 @@ pkcs8_asn1_files: asn1_compile$(EXEEXT) $(srcdir)/pkcs8.asn1
 
 pkcs9_asn1_files: asn1_compile$(EXEEXT) $(srcdir)/pkcs9.asn1
 	$(ASN1_COMPILE) --one-code-file $(srcdir)/pkcs9.asn1 pkcs9_asn1 || (rm -f pkcs9_asn1_files ; exit 1)
+
+pkcs10_asn1_files: asn1_compile$(EXEEXT) $(srcdir)/pkcs10.asn1
+	$(ASN1_COMPILE) --one-code-file --option-file=$(srcdir)/pkcs10.opt $(srcdir)/pkcs10.asn1 pkcs10_asn1 || (rm -f pkcs10_asn1_files ; exit 1)
 
 pkcs12_asn1_files: asn1_compile$(EXEEXT) $(srcdir)/pkcs12.asn1
 	$(ASN1_COMPILE) --one-code-file $(srcdir)/pkcs12.asn1 pkcs12_asn1 || (rm -f pkcs12_asn1_files ; exit 1)
@@ -247,15 +275,19 @@ EXTRA_DIST =		\
 	libasn1-exports.def \
 	cms.asn1	\
 	cms.opt		\
+	crmf.asn1	\
+	crmf.opt	\
 	asn1_err.et	\
 	canthandle.asn1	\
 	digest.asn1	\
 	krb5.asn1	\
 	krb5.opt	\
 	kx509.asn1	\
+	ocsp.asn1	\
 	pkcs12.asn1	\
 	pkcs8.asn1	\
 	pkcs9.asn1	\
+	pkcs10.asn1	\
 	pkinit.asn1	\
 	rfc2459.asn1	\
 	setchgpw2.asn1	\

@@ -39,7 +39,11 @@ gen_files_krb5		= $(OBJ)\asn1_krb5_asn1.x
 
 gen_files_cms		= $(OBJ)\asn1_cms_asn1.x
 
+gen_files_crmf		= $(OBJ)\asn1_crmf_asn1.x
+
 gen_files_rfc2459	= $(OBJ)\asn1_rfc2459_asn1.x
+
+gen_files_ocsp		= $(OBJ)\asn1_ocsp_asn1.x
 
 gen_files_pkinit	= $(OBJ)\asn1_pkinit_asn1.x
 
@@ -48,6 +52,8 @@ gen_files_pkcs12	= $(OBJ)\asn1_pkcs12_asn1.x
 gen_files_pkcs8		= $(OBJ)\asn1_pkcs8_asn1.x
 
 gen_files_pkcs9		= $(OBJ)\asn1_pkcs9_asn1.x
+
+gen_files_pkcs10	= $(OBJ)\asn1_pkcs10_asn1.x
 
 gen_files_test		= $(OBJ)\asn1_test_asn1.x
 
@@ -112,10 +118,13 @@ LIBASN1_OBJS=	\
 	$(OBJ)\timegm.obj		\
 	$(gen_files_rfc2459:.x=.obj)	\
 	$(gen_files_cms:.x=.obj)	\
+	$(gen_files_crmf:.x=.obj)	\
 	$(gen_files_krb5:.x=.obj)		\
+	$(gen_files_ocsp:.x=.obj)	\
 	$(gen_files_pkinit:.x=.obj)	\
 	$(gen_files_pkcs8:.x=.obj)	\
 	$(gen_files_pkcs9:.x=.obj)	\
+	$(gen_files_pkcs10:.x=.obj)	\
 	$(gen_files_pkcs12:.x=.obj)	\
 	$(gen_files_digest:.x=.obj)	\
 	$(gen_files_kx509:.x=.obj)	\
@@ -144,11 +153,15 @@ $(**: =
 
 $(gen_files_krb5:.x=.c)	    : $$(@R).x
 
+$(gen_files_ocsp:.x=.c)   : $$(@R).x
+
 $(gen_files_pkinit:.x=.c)   : $$(@R).x
 
 $(gen_files_pkcs8:.x=.c)    : $$(@R).x
 
 $(gen_files_pkcs9:.x=.c)    : $$(@R).x
+
+$(gen_files_pkcs10:.x=.c)   : $$(@R).x
 
 $(gen_files_pkcs12:.x=.c)   : $$(@R).x
 
@@ -160,6 +173,8 @@ $(gen_files_rfc2459:.x=.c)  : $$(@R).x
 
 $(gen_files_cms:.x=.c)	    : $$(@R).x
 
+$(gen_files_crmf:.x=.c)	    : $$(@R).x
+
 $(gen_files_test:.x=.c)	    : $$(@R).x
 
 $(gen_files_krb5) $(OBJ)\krb5_asn1.hx: $(BINDIR)\asn1_compile.exe krb5.asn1 krb5.opt
@@ -169,6 +184,16 @@ $(gen_files_krb5) $(OBJ)\krb5_asn1.hx: $(BINDIR)\asn1_compile.exe krb5.asn1 krb5
 		--option-file=$(SRCDIR)\krb5.opt \
 		$(SRCDIR)\krb5.asn1 krb5_asn1 \
 	|| ($(RM) $(OBJ)\krb5_asn1.h ; exit /b 1)
+	cd $(SRCDIR)
+
+$(gen_files_ocsp) $(OBJ)\ocsp_asn1.hx: $(BINDIR)\asn1_compile.exe ocsp.asn1
+	cd $(OBJ)
+	$(BINDIR)\asn1_compile.exe \
+		--one-code-file \
+		--option-file=$(SRCDIR)\ocsp.opt \
+		$(SRCDIR)\ocsp.asn1 \
+		ocsp_asn1 \
+	|| ($(RM) $(OBJ)\ocsp_asn1.h ; exit /b 1)
 	cd $(SRCDIR)
 
 $(gen_files_pkinit) $(OBJ)\pkinit_asn1.hx: $(BINDIR)\asn1_compile.exe pkinit.asn1
@@ -187,6 +212,16 @@ $(gen_files_pkcs9) $(OBJ)\pkcs9_asn1.hx: $(BINDIR)\asn1_compile.exe pkcs9.asn1
 	cd $(OBJ)
 	$(BINDIR)\asn1_compile.exe --one-code-file $(SRCDIR)\pkcs9.asn1 pkcs9_asn1 \
 	|| ($(RM) $(OBJ)\pkcs9_asn1.h ; exit /b 1)
+	cd $(SRCDIR)
+
+$(gen_files_pkcs10) $(OBJ)\pkcs10_asn1.hx: $(BINDIR)\asn1_compile.exe pkcs10.asn1
+	cd $(OBJ)
+	$(BINDIR)\asn1_compile.exe \
+		--one-code-file \
+		--option-file=$(SRCDIR)\pkcs10.opt \
+		$(SRCDIR)\pkcs10.asn1 \
+		pkcs10_asn1 \
+	|| ($(RM) $(OBJ)\pkcs10_asn1.h ; exit /b 1)
 	cd $(SRCDIR)
 
 $(gen_files_pkcs12) $(OBJ)\pkcs12_asn1.hx: $(BINDIR)\asn1_compile.exe pkcs12.asn1
@@ -211,7 +246,7 @@ $(gen_files_rfc2459) $(OBJ)\rfc2459_asn1.hx: $(BINDIR)\asn1_compile.exe rfc2459.
 	cd $(OBJ)
 	$(BINDIR)\asn1_compile.exe \
 		--one-code-file \
-		--option-file=$(SRCDIR)\_rfc2459.opt \
+		--option-file=$(SRCDIR)\rfc2459.opt \
 		$(SRCDIR)\rfc2459.asn1 rfc2459_asn1 \
 	|| ($(RM) $(OBJ)\rfc2459_asn1.h ; exit /b 1)
 	cd $(SRCDIR)
@@ -222,6 +257,14 @@ $(gen_files_cms) $(OBJ)\cms_asn1.hx: $(BINDIR)\asn1_compile.exe cms.asn1 cms.opt
 		--one-code-file --option-file=$(SRCDIR)\cms.opt \
 		$(SRCDIR)\cms.asn1 cms_asn1 \
 	|| ($(RM) $(OBJ)\cms_asn1.h ; exit /b 1)
+	cd $(SRCDIR)
+
+$(gen_files_crmf) $(OBJ)\crmf_asn1.hx: $(BINDIR)\asn1_compile.exe crmf.asn1 crmf.opt
+	cd $(OBJ)
+	$(BINDIR)\asn1_compile.exe \
+		--one-code-file --option-file=$(SRCDIR)\crmf.opt \
+		$(SRCDIR)\crmf.asn1 crmf_asn1 \
+	|| ($(RM) $(OBJ)\crmf_asn1.h ; exit /b 1)
 	cd $(SRCDIR)
 
 $(gen_files_test) $(OBJ)\test_asn1.hx: $(BINDIR)\asn1_compile.exe test.asn1
@@ -246,20 +289,26 @@ $(INCDIR)\der-protos.h: $(OBJ)\der-protos.h
 GENINCFILES=			    \
 	$(INCDIR)\asn1_err.h	    \
 	$(INCDIR)\cms_asn1.h	    \
+	$(INCDIR)\crmf_asn1.h	    \
 	$(INCDIR)\digest_asn1.h	    \
 	$(INCDIR)\krb5_asn1.h	    \
 	$(INCDIR)\kx509_asn1.h	    \
+	$(INCDIR)\ocsp_asn1.h	    \
 	$(INCDIR)\pkcs12_asn1.h	    \
 	$(INCDIR)\pkcs8_asn1.h	    \
 	$(INCDIR)\pkcs9_asn1.h	    \
+	$(INCDIR)\pkcs10_asn1.h	    \
 	$(INCDIR)\pkinit_asn1.h	    \
 	$(INCDIR)\rfc2459_asn1.h    \
 	$(OBJ)\krb5_asn1-priv.h	    \
+	$(OBJ)\ocsp_asn1-priv.h     \
 	$(OBJ)\pkinit_asn1-priv.h   \
 	$(OBJ)\cms_asn1-priv.h	    \
+	$(OBJ)\crmf_asn1-priv.h	    \
 	$(OBJ)\rfc2459_asn1-priv.h  \
 	$(OBJ)\pkcs8_asn1-priv.h    \
 	$(OBJ)\pkcs9_asn1-priv.h    \
+	$(OBJ)\pkcs10_asn1-priv.h   \
 	$(OBJ)\pkcs12_asn1-priv.h   \
 	$(OBJ)\digest_asn1-priv.h   \
 	$(OBJ)\kx509_asn1-priv.h    \

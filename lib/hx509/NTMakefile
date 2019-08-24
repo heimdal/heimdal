@@ -35,12 +35,6 @@ localcflags=-DASN1_LIB
 
 !include ../../windows/NTMakefile.w32
 
-gen_files_ocsp = $(OBJ)\asn1_ocsp_asn1.x
-
-gen_files_pkcs10 = $(OBJ)\asn1_pkcs10_asn1.x
-
-gen_files_crmf = $(OBJ)\asn1_crmf_asn1.x
-
 libhx509_la_OBJS =			\
 	$(OBJ)\ca.obj			\
 	$(OBJ)\cert.obj			\
@@ -69,9 +63,7 @@ libhx509_la_OBJS =			\
 	$(OBJ)\print.obj		\
 	$(OBJ)\softp11.obj		\
 	$(OBJ)\req.obj			\
-	$(OBJ)\revoke.obj		\
-	$(gen_files_ocsp:.x=.obj)	\
-	$(gen_files_pkcs10:.x=.obj)
+	$(OBJ)\revoke.obj
 
 $(LIBHX509): $(libhx509_la_OBJS)
 	$(LIBCON)
@@ -118,46 +110,11 @@ dist_libhx509_la_SOURCES =	\
 
 asn1_compile=$(BINDIR)\asn1_compile.exe
 
-$(gen_files_ocsp:.x=.c): $$(@R).x
-
-$(gen_files_pkcs10:.x=.c): $$(@R).x
-
-$(gen_files_crmf:.x=.c): $$(@R).x
-
-$(gen_files_ocsp) $(OBJ)\ocsp_asn1.hx: $(asn1_compile) ocsp.asn1
-	cd $(OBJ)
-	$(asn1_compile) --one-code-file \
-		--preserve-binary=OCSPTBSRequest \
-		--preserve-binary=OCSPResponseData \
-		$(SRCDIR)\ocsp.asn1 ocsp_asn1 \
-	|| ( $(RM) -f $(gen_files_ocsp) $(OBJ)\ocsp_asn1.h ; exit /b 1 )
-	cd $(SRCDIR)
-
-$(gen_files_pkcs10) $(OBJ)\pkcs10_asn1.hx: $(asn1_compile) pkcs10.asn1
-	cd $(OBJ)
-	$(asn1_compile) --one-code-file \
-		--preserve-binary=CertificationRequestInfo \
-		$(SRCDIR)\pkcs10.asn1 pkcs10_asn1 \
-	|| ( $(RM) -f $(gen_files_pkcs10) $(OBJ)\pkcs10_asn1.h ; exit /b 1 )
-	cd $(SRCDIR)
-
-$(gen_files_crmf) $(OBJ)\crmf_asn1.hx: $(asn1_compile) crmf.asn1
-	cd $(OBJ)
-	$(asn1_compile) --one-code-file $(SRCDIR)\crmf.asn1 crmf_asn1 \
-	|| ( $(RM) -f $(gen_files_crmf) $(OBJ)\crmf_asn1.h ; exit /b 1 )
-	cd $(SRCDIR)
-
 INCFILES=			    \
 	$(INCDIR)\hx509.h	    \
 	$(INCDIR)\hx509-protos.h    \
 	$(INCDIR)\hx509-private.h   \
-	$(INCDIR)\hx509_err.h	    \
-	$(INCDIR)\ocsp_asn1.h	    \
-	$(INCDIR)\pkcs10_asn1.h	    \
-	$(INCDIR)\crmf_asn1.h	    \
-	$(OBJ)\ocsp_asn1-priv.h	    \
-	$(OBJ)\pkcs10_asn1-priv.h   \
-	$(OBJ)\crmf_asn1-priv.h
+	$(INCDIR)\hx509_err.h
 
 hxtool.c: $(OBJ)\hxtool-commands.h
 

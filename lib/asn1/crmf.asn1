@@ -19,12 +19,6 @@ CRMFRDNSequence ::= SEQUENCE OF RelativeDistinguishedName
 
 Controls  ::= SEQUENCE -- SIZE(1..MAX) -- OF AttributeTypeAndValue
 
--- XXX IMPLICIT brokenness
-POPOSigningKey ::= SEQUENCE {
-	poposkInput           [0] IMPLICIT POPOSigningKeyInput OPTIONAL,
-	algorithmIdentifier   AlgorithmIdentifier,
-	signature             BIT STRING }
-
 PKMACValue ::= SEQUENCE {
 	algId  AlgorithmIdentifier,
 	value  BIT STRING
@@ -39,6 +33,11 @@ POPOSigningKeyInput ::= SEQUENCE {
 	publicKey           SubjectPublicKeyInfo
 }  -- from CertTemplate
 
+-- XXX IMPLICIT brokenness
+POPOSigningKey ::= SEQUENCE {
+	poposkInput           [0] IMPLICIT POPOSigningKeyInput OPTIONAL,
+	algorithmIdentifier   AlgorithmIdentifier,
+	signature             BIT STRING }
 
 PBMParameter ::= SEQUENCE {
    salt                OCTET STRING,

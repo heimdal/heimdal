@@ -49,6 +49,8 @@ gen_files_test = asn1_test_asn1.x
 gen_files_digest = asn1_digest_asn1.x
 gen_files_kx509 = asn1_kx509_asn1.x
 
+oid_resolution.lo: $(BUILT_SOURCES)
+
 noinst_PROGRAMS = asn1_gen
 
 libexec_heimdal_PROGRAMS = asn1_compile asn1_print
@@ -109,6 +111,8 @@ dist_libasn1base_la_SOURCES =			\
 	template.c				\
 	timegm.c
 
+dist_libasn1_la_SOURCES = oid_resolution.c
+
 nodist_libasn1base_la_SOURCES = 	\
 	asn1_err.h			\
 	asn1_err.c
@@ -123,7 +127,7 @@ check_der_LDADD = \
 	$(LIB_roken)
 
 check_template_LDADD = $(check_der_LDADD)
-asn1_print_LDADD = $(check_der_LDADD) $(LIB_com_err)
+asn1_print_LDADD = libasn1.la $(LIB_roken) $(LIB_com_err)
 asn1_gen_LDADD = $(check_der_LDADD)
 check_timegm_LDADD = $(check_der_LDADD)
 
@@ -306,8 +310,8 @@ ALL_OBJECTS += $(check_template_OBJECTS)
 
 $(ALL_OBJECTS): $(DER_PROTOS) asn1_err.h
 
-$(srcdir)/der-protos.h: $(dist_libasn1base_la_SOURCES)
-	cd $(srcdir) && perl ../../cf/make-proto.pl -q -P comment -o der-protos.h $(dist_libasn1base_la_SOURCES) || rm -f der-protos.h
+$(srcdir)/der-protos.h: $(dist_libasn1base_la_SOURCES) $(dist_libasn1_la_SOURCES)
+	cd $(srcdir) && perl ../../cf/make-proto.pl -q -P comment -o der-protos.h $(dist_libasn1base_la_SOURCES) $(dist_libasn1_la_SOURCES) || rm -f der-protos.h
 
-$(srcdir)/der-private.h: $(dist_libasn1base_la_SOURCES)
-	cd $(srcdir) && perl ../../cf/make-proto.pl -q -P comment -p der-private.h $(dist_libasn1base_la_SOURCES) || rm -f der-private.h
+$(srcdir)/der-private.h: $(dist_libasn1base_la_SOURCES) $(dist_libasn1_la_SOURCES)
+	cd $(srcdir) && perl ../../cf/make-proto.pl -q -P comment -p der-private.h $(dist_libasn1base_la_SOURCES) $(dist_libasn1_la_SOURCES) || rm -f der-private.h

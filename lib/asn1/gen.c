@@ -37,7 +37,7 @@
 
 RCSID("$Id$");
 
-FILE *privheaderfile, *headerfile, *codefile, *logfile, *templatefile;
+FILE *privheaderfile, *headerfile, *oidsfile, *codefile, *logfile, *templatefile;
 
 #define STEM "asn1"
 
@@ -251,6 +251,16 @@ init_generate (const char *filename, const char *base)
     logfile = fopen(fn, "w");
     if (logfile == NULL)
 	err (1, "open %s", fn);
+    free(fn);
+    fn = NULL;
+
+    if (asprintf(&fn, "%s_oids.x", base) < 0 || fn == NULL)
+	errx(1, "malloc");
+    oidsfile = fopen(fn, "w");
+    if (oidsfile == NULL)
+	err (1, "open %s", fn);
+    free(fn);
+    fn = NULL;
 
     /* if one code file, write into the one codefile */
     if (one_code_file)
@@ -460,6 +470,8 @@ generate_constant (const Symbol *s)
 	fprintf (codefile, "const heim_oid asn1_oid_%s = "
 		 "{ %lu, oid_%s_variable_num };\n\n",
 		 s->gen_name, (unsigned long)len, s->gen_name);
+
+        fprintf(oidsfile, "DEFINE_OID_WITH_NAME(%s)\n", s->gen_name);
 
 	free(list);
 

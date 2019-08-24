@@ -101,11 +101,19 @@ static void
 parse_oid(const char *str, const heim_oid *def, heim_oid *oid)
 {
     int ret;
-    if (str)
-	ret = der_parse_heim_oid (str, " .", oid);
-    else
+
+    if (str) {
+        const heim_oid *found = NULL;
+
+        ret = der_find_heim_oid_by_name(str, &found);
+        if (ret == 0)
+            ret = der_copy_oid(found, oid);
+        else
+            ret = der_parse_heim_oid (str, " .", oid);
+    } else {
 	ret = der_copy_oid(def, oid);
-    if  (ret)
+    }
+    if (ret)
 	errx(1, "parse_oid failed for: %s", str ? str : "default oid");
 }
 
@@ -296,7 +304,10 @@ cms_verify_sd(struct cms_verify_sd_options *opt, int argc, char **argv)
 
     {
 	char *str;
-	der_print_heim_oid(&type, '.', &str);
+        if (opt->oid_sym_flag)
+            der_print_heim_oid_sym(&type, '.', &str);
+        else
+            der_print_heim_oid(&type, '.', &str);
 	printf("type: %s\n", str);
 	free(str);
 	der_free_oid(&type);
@@ -1530,7 +1541,10 @@ crypto_available(struct crypto_available_options *opt, int argc, char **argv)
 
     for (i = 0; i < len; i++) {
 	char *s;
-	der_print_heim_oid (&val[i].algorithm, '.', &s);
+        if (opt->oid_syms_flag)
+            der_print_heim_oid_sym(&val[i].algorithm, '.', &s);
+        else
+            der_print_heim_oid(&val[i].algorithm, '.', &s);
 	printf("%s\n", s);
 	free(s);
     }
@@ -1566,7 +1580,10 @@ crypto_select(struct crypto_select_options *opt, int argc, char **argv)
     if (ret)
 	errx(1, "hx509_crypto_available");
 
-    der_print_heim_oid (&selected.algorithm, '.', &s);
+    if (opt->oid_sym_flag)
+        der_print_heim_oid_sym(&selected.algorithm, '.', &s);
+    else
+        der_print_heim_oid(&selected.algorithm, '.', &s);
     printf("%s\n", s);
     free(s);
     free_AlgorithmIdentifier(&selected);
@@ -2285,6 +2302,23 @@ crl_sign(struct crl_sign_options *opt, int argc, char **argv)
     hx509_cert_free(signer);
     hx509_lock_free(lock);
 
+    return 0;
+}
+
+int
+hxtool_list_oids(void *opt, int argc, char **argv)
+{
+    const heim_oid *oid;
+    int cursor = -1;
+
+    while (der_match_heim_oid_by_name("", &cursor, &oid) == 0) {
+        char *s = NULL;
+
+        if ((errno = der_print_heim_oid_sym(oid, '.', &s)) > 0)
+            err(1, "der_print_heim_oid_sym");
+        printf("%s\n", s);
+        free(s);
+    }
     return 0;
 }
 

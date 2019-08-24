@@ -33,6 +33,13 @@
 /* $Id$ */
 
 command = {
+	name = "list-oids"
+	help = "List known OIDs"
+	function = "hxtool_list_oids"
+	min_args="0"
+	max_args="0"
+}
+command = {
 	name = "cms-create-sd"
 	name = "cms-sign"
 	option = {
@@ -170,6 +177,11 @@ command = {
 		long = "signed-content"
 		type = "string"
 		help = "file containing content"
+	}
+	option = {
+		long = "oid-sym"
+		type = "flag"
+		help = "show symbolic name for OID"
 	}
 	min_args="1"
 	max_args="2"
@@ -575,6 +587,11 @@ command = {
 		type = "string"
 		help = "type of CMS algorithm"
 	}
+	option = {
+		long = "oid-syms"
+		type = "flag"
+		help = "show symbolic names for OIDs"
+	}
 	name = "crypto-available"
 	min_args="0"
 	help = "Print available CMS crypto types"
@@ -594,6 +611,11 @@ command = {
 		long = "peer-cmstype"
 		type = "strings"
 		help = "peer limiting cmstypes"
+	}
+	option = {
+		long = "oid-sym"
+		type = "flag"
+		help = "show symbolic name for OID"
 	}
 	name = "crypto-select"
 	min_args="0"

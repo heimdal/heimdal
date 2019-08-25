@@ -125,7 +125,7 @@ read_string(const char *preprompt, const char *prompt,
     sigemptyset(&sa.sa_mask);
     sa.sa_flags = 0;
     for(i = 1; i < sizeof(sigs) / sizeof(sigs[0]); i++)
-	if (i != SIGALRM)
+	if (i != SIGALRM && i != SIGWINCH)
 	    if (sigaction(i, &sa, &sigs[i]) == 0)
 		oksigs[i] = 1;
 

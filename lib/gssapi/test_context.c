@@ -861,11 +861,27 @@ main(int argc, char **argv)
     }
 
     if (gsskrb5_acceptor_identity) {
-	/* XXX replace this with cred store, but test suites will need work */
-	maj_stat = gsskrb5_register_acceptor_identity(gsskrb5_acceptor_identity);
-	if (maj_stat)
-	    errx(1, "gsskrb5_acceptor_identity: %s",
-		 gssapi_err(maj_stat, 0, GSS_C_NO_OID));
+	gss_key_value_element_desc acceptor_cred_elements[1];
+	gss_key_value_set_desc acceptor_cred_store;
+
+	acceptor_cred_store.count = 1;
+	acceptor_cred_store.elements = acceptor_cred_elements;
+
+	acceptor_cred_store.elements[0].key = "keytab";
+	acceptor_cred_store.elements[0].value = gsskrb5_acceptor_identity;
+
+	maj_stat = gss_acquire_cred_from(&min_stat,
+					 NULL,
+					 GSS_C_INDEFINITE,
+					 mechoids,
+					 GSS_C_ACCEPT,
+					 &acceptor_cred_store,
+					 &acceptor_cred,
+					 NULL,
+					 NULL);
+	if (GSS_ERROR(maj_stat))
+	    errx(1, "gss_acquire_cred_from(acceptor): %s",
+	         gssapi_err(maj_stat, min_stat, GSS_C_NO_OID));
     }
 
     if (client_password && (client_ccache || client_keytab)) {

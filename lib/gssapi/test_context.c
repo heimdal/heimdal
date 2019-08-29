@@ -134,6 +134,8 @@ string_to_oids(gss_OID_set *oidsetp, char *names)
     }
 }
 
+static gss_cred_id_t acceptor_cred = GSS_C_NO_CREDENTIAL;
+
 static void
 loop(gss_OID mechoid,
      gss_OID nameoid, const char *target,
@@ -301,7 +303,7 @@ loop(gss_OID mechoid,
             }
 
             maj_stat = gss_accept_sec_context(&min_stat, sctx,
-                                              GSS_C_NO_CREDENTIAL, &tmp,
+                                              acceptor_cred, &tmp,
                                               a_channel_bindings_p, &src_name,
                                               &actual_mech_server,
                                               &input_token, &ret_sflags,

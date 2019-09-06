@@ -105,6 +105,7 @@ libroken_la_SOURCES =		\
 	memmem.c		\
 	mini_inetd.c		\
 	mkdir.c                 \
+	mkostemp.c              \
 	net_read.c		\
 	net_write.c		\
 	parse_bytes.c		\

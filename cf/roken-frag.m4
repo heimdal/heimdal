@@ -194,6 +194,7 @@ AC_CHECK_FUNCS([				\
 	getspnam				\
 	issetugid				\
 	memmem					\
+	mkostemp				\
 	on_exit					\
 	poll					\
 	random					\

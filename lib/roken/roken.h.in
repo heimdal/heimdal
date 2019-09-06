@@ -703,6 +703,11 @@ ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL lstat(const char *, struct stat *);
 ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL mkstemp(char *);
 #endif
 
+#ifndef HAVE_MKOSTEMP
+#define mkostemp rk_mkostemp
+ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL mkostemp(char *, int);
+#endif
+
 #ifndef HAVE_CGETENT
 #define cgetent rk_cgetent
 #define cgetstr rk_cgetstr

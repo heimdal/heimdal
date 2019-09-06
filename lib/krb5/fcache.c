@@ -37,6 +37,7 @@
 
 typedef struct krb5_fcache{
     char *filename;
+    char *tmpfn;
     int version;
 }krb5_fcache;
 
@@ -57,6 +58,7 @@ struct fcc_cursor {
 #define FCACHE(X) ((krb5_fcache*)(X)->data.data)
 
 #define FILENAME(X) (FCACHE(X)->filename)
+#define TMPFILENAME(X) (FCACHE(X)->tmpfn)
 
 #define FCC_CURSOR(C) ((struct fcc_cursor*)(C))
 
@@ -185,12 +187,13 @@ static krb5_error_code KRB5_CALLCONV
 fcc_resolve(krb5_context context, krb5_ccache *id, const char *res)
 {
     krb5_fcache *f;
-    f = malloc(sizeof(*f));
+    f = calloc(1, sizeof(*f));
     if(f == NULL) {
 	krb5_set_error_message(context, KRB5_CC_NOMEM,
 			       N_("malloc: out of memory", ""));
 	return KRB5_CC_NOMEM;
     }
+    f->tmpfn = NULL;
     f->filename = strdup(res);
     if(f->filename == NULL){
 	free(f);
@@ -316,12 +319,13 @@ fcc_gen_new(krb5_context context, krb5_ccache *id)
     krb5_fcache *f;
     int fd;
 
-    f = malloc(sizeof(*f));
+    f = calloc(1, sizeof(*f));
     if(f == NULL) {
 	krb5_set_error_message(context, KRB5_CC_NOMEM,
 			       N_("malloc: out of memory", ""));
 	return KRB5_CC_NOMEM;
     }
+    f->tmpfn = NULL;
     ret = asprintf(&file, "%sXXXXXX", KRB5_DEFAULT_CCFILE_ROOT);
     if(ret < 0 || file == NULL) {
 	free(f);
@@ -338,7 +342,7 @@ fcc_gen_new(krb5_context context, krb5_ccache *id)
 
     file = exp_file;
 
-    fd = mkstemp(exp_file);
+    fd = mkostemp(exp_file, O_CLOEXEC);
     if(fd < 0) {
 	ret = (krb5_error_code)errno;
 	krb5_set_error_message(context, ret, N_("mkstemp %s failed", ""), exp_file);
@@ -406,8 +410,22 @@ fcc_open(krb5_context context,
     if (FCACHE(id) == NULL)
         return krb5_einval(context, 2);
 
-    filename = FILENAME(id);
+    if ((flags & O_EXCL)) {
+        flags &= ~O_EXCL;
+        if (asprintf(&TMPFILENAME(id), "%s-XXXXXX", FILENAME(id)) < 0 ||
+            TMPFILENAME(id) == NULL)
+            return krb5_enomem(context);
+        if ((*fd_ret = mkostemp(TMPFILENAME(id), O_CLOEXEC)) == -1) {
+            free(TMPFILENAME(id));
+            TMPFILENAME(id) = NULL;
+            krb5_set_error_message(context, ret = errno,
+                                   N_("Refuses to open symlinks for caches FILE:%s", ""),
+                                   FILENAME(id));
+            return ret;
+        }
+    }
 
+    filename = TMPFILENAME(id) ? TMPFILENAME(id) : FILENAME(id);
     strict_checking = (flags & O_CREAT) == 0 &&
 	(context->flags & KRB5_CTX_F_FCACHE_STRICT_CHECKING) != 0;
 
@@ -537,8 +555,10 @@ fcc_initialize(krb5_context context,
     if (f == NULL)
         return krb5_einval(context, 2);
 
-    unlink (f->filename);
-
+    /*
+     * fcc_open() will notice the O_EXCL and will make a temporary file that
+     * will later be renamed into place.
+     */
     ret = fcc_open(context, id, "initialize", &fd, O_RDWR | O_CREAT | O_EXCL, 0600);
     if(ret)
 	return ret;
@@ -601,7 +621,10 @@ fcc_close(krb5_context context,
     if (FCACHE(id) == NULL)
         return krb5_einval(context, 2);
 
-    free (FILENAME(id));
+    if (TMPFILENAME(id))
+        (void) unlink(TMPFILENAME(id));
+    free(TMPFILENAME(id));
+    free(FILENAME(id));
     krb5_data_free(&id->data);
     return 0;
 }
@@ -613,6 +636,11 @@ fcc_destroy(krb5_context context,
     if (FCACHE(id) == NULL)
         return krb5_einval(context, 2);
 
+    if (TMPFILENAME(id)) {
+        (void) _krb5_erase_file(context, TMPFILENAME(id));
+        free(TMPFILENAME(id));
+        TMPFILENAME(id) = NULL;
+    }
     return _krb5_erase_file(context, FILENAME(id));
 }
 
@@ -648,6 +676,21 @@ fcc_store_cred(krb5_context context,
 	    krb5_set_error_message(context, ret, N_("close %s: %s", ""),
 				   FILENAME(id), buf);
 	}
+    }
+    if (ret == 0 && TMPFILENAME(id) &&
+        !krb5_is_config_principal(context, creds->server)) {
+
+        /*
+         * Portability note: there's no need to have WIN32 or other code here
+         * for odd rename cases because rk_rename() is meant to handle that.
+         */
+        ret = rk_rename(TMPFILENAME(id), FILENAME(id));
+        if (ret == 0) {
+            free(TMPFILENAME(id));
+            TMPFILENAME(id) = NULL;
+        } else {
+            ret = errno;
+        }
     }
     return ret;
 }
@@ -840,12 +883,11 @@ fcc_get_first (krb5_context context,
     if (FCACHE(id) == NULL)
         return krb5_einval(context, 2);
 
-    *cursor = malloc(sizeof(struct fcc_cursor));
+    *cursor = calloc(1, sizeof(struct fcc_cursor));
     if (*cursor == NULL) {
         krb5_set_error_message(context, ENOMEM, N_("malloc: out of memory", ""));
 	return ENOMEM;
     }
-    memset(*cursor, 0, sizeof(struct fcc_cursor));
 
     ret = init_fcc(context, id, "get-first", &FCC_CURSOR(*cursor)->sp,
 		   &FCC_CURSOR(*cursor)->fd, NULL);

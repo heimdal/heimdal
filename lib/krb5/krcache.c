@@ -863,6 +863,7 @@ initialize_internal(krb5_context context,
     if (data == NULL)
 	return krb5_einval(context, 2);
 
+    memset(&ids, 0, sizeof(ids));
     heim_base_exchange_64(&ids.krcu_cache_and_princ_id, data->krc_cache_and_principal_id);
 
     ret = clear_cache_keyring(context, &ids.krcu_cache_id);
@@ -1344,6 +1345,7 @@ krcc_get_principal(krb5_context context,
     if (data == NULL)
 	return krb5_einval(context, 2);
 
+    memset(&ids, 0, sizeof(ids));
     heim_base_exchange_64(&ids.krcu_cache_and_princ_id, data->krc_cache_and_principal_id);
 
     if (ids.krcu_cache_id == 0 || ids.krcu_princ_id == 0) {
@@ -1396,6 +1398,7 @@ krcc_remove_cred(krb5_context context, krb5_ccache id,
     if (ret)
 	return ret;
 
+    memset(&ids, 0, sizeof(ids));
     heim_base_exchange_64(&ids.krcu_cache_and_princ_id, data->krc_cache_and_principal_id);
 
     while ((ret = krcc_get_next(context, id, &cursor, &found_cred)) == 0) {
@@ -1407,11 +1410,11 @@ krcc_remove_cred(krb5_context context, krb5_ccache id,
 	}
 
 	_krb5_debug(context, 10, "Removing cred %d from cache_id %d, princ_id %d\n",
-		    krcursor->keys[krcursor->currkey],
+		    krcursor->keys[krcursor->currkey - 1],
 		    ids.krcu_cache_id, ids.krcu_princ_id);
 
-	keyctl_invalidate(krcursor->keys[krcursor->currkey]);
-	krcursor->keys[krcursor->currkey] = 0;
+	keyctl_invalidate(krcursor->keys[krcursor->currkey - 1]);
+	krcursor->keys[krcursor->currkey - 1] = 0;
 	krb5_free_cred_contents(context, &found_cred);
     }
 

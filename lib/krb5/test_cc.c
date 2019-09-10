@@ -218,7 +218,7 @@ test_cache_remove(krb5_context context, const char *type)
     krb5_error_code ret;
     krb5_ccache id;
     krb5_principal p;
-    krb5_creds cred;
+    krb5_creds cred, found;
 
     ret = krb5_parse_name(context, "lha@SU.SE", &p);
     if (ret)
@@ -240,6 +240,7 @@ test_cache_remove(krb5_context context, const char *type)
     ret = krb5_parse_name(context, "lha@SU.SE", &cred.client);
     if (ret)
 	krb5_err(context, 1, ret, "krb5_parse_name");
+    cred.times.endtime = time(NULL) + 300;
 
     ret = krb5_cc_store_cred(context, id, &cred);
     if (ret)
@@ -249,7 +250,11 @@ test_cache_remove(krb5_context context, const char *type)
     if (ret)
 	krb5_err(context, 1, ret, "krb5_cc_remove_cred");
 
-    /* XXX Search for it */
+    memset(&found, 0, sizeof(found));
+    ret = krb5_cc_retrieve_cred(context, id, KRB5_TC_MATCH_TIMES,
+                                &cred, &found);
+    if (ret == 0)
+	krb5_err(context, 1, ret, "krb5_cc_remove_cred didn't");
 
     ret = krb5_cc_destroy(context, id);
     if (ret)

@@ -1160,78 +1160,14 @@ fcc_move(krb5_context context, krb5_ccache from, krb5_ccache to)
 {
     krb5_error_code ret = 0;
 
-    ret = rk_rename(FILENAME(from), FILENAME(to));
-
-    if (ret && errno != EXDEV) {
-	char buf[128];
-	ret = errno;
-	rk_strerror_r(ret, buf, sizeof(buf));
-	krb5_set_error_message(context, ret,
-			       N_("Rename of file from %s "
-				  "to %s failed: %s", ""),
-			       FILENAME(from), FILENAME(to), buf);
-	return ret;
-    } else if (ret && errno == EXDEV) {
-	/* make a copy and delete the orignal */
-	krb5_ssize_t sz1, sz2;
-	int fd1, fd2;
-	char buf[BUFSIZ];
-
-	ret = fcc_open(context, from, "move/from", &fd1, O_RDONLY, 0);
-	if(ret)
-	    return ret;
-
-	unlink(FILENAME(to));
-
-	ret = fcc_open(context, to, "move/to", &fd2,
-		       O_WRONLY | O_CREAT | O_EXCL, 0600);
-	if(ret)
-	    goto out1;
-
-	while((sz1 = read(fd1, buf, sizeof(buf))) > 0) {
-	    sz2 = write(fd2, buf, sz1);
-	    if (sz1 != sz2) {
-		ret = EIO;
-		krb5_set_error_message(context, ret,
-				       N_("Failed to write data from one file "
-					  "credential cache to the other", ""));
-		goto out2;
-	    }
-	}
-	if (sz1 < 0) {
-	    ret = EIO;
-	    krb5_set_error_message(context, ret,
-				   N_("Failed to read data from one file "
-				      "credential cache to the other", ""));
-	    goto out2;
-	}
-    out2:
-	close(fd2);
-
-    out1:
-	close(fd1);
-
-	_krb5_erase_file(context, FILENAME(from));
-
-	if (ret) {
-	    _krb5_erase_file(context, FILENAME(to));
-	    return ret;
-	}
-    }
-
-    /* make sure ->version is uptodate */
-    {
-	krb5_storage *sp;
-	int fd;
-	if ((ret = init_fcc (context, to, "move", &sp, &fd, NULL)) == 0) {
-	    if (sp)
-		krb5_storage_free(sp);
-	    close(fd);
-	}
-    }
-
-    fcc_close(context, from);
-
+    if ((ret = rk_rename(FILENAME(from), FILENAME(to))))
+        ret = errno;
+    /*
+     * We need only close from -- we can't destroy it since the rename
+     * succeeded, which "destroyed" it at its old name.
+     */
+    if (ret == 0)
+        krb5_cc_close(context, from);
     return ret;
 }
 

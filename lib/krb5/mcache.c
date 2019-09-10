@@ -519,8 +519,8 @@ mcc_move(krb5_context context, krb5_ccache from, krb5_ccache to)
     HEIMDAL_MUTEX_unlock(&(mfrom->mutex));
     HEIMDAL_MUTEX_unlock(&(mto->mutex));
     HEIMDAL_MUTEX_unlock(&mcc_mutex);
-    mcc_destroy(context, from);
 
+    krb5_cc_destroy(context, from);
     return 0;
 }
 

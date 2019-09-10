@@ -1295,8 +1295,9 @@ krb5_cc_cache_match (krb5_context context,
  * @param from the credential cache to move the content from
  * @param to the credential cache to move the content to
 
- * @return On sucess, from is freed. On failure, error code is
- * returned and from and to are both still allocated, see krb5_get_error_message().
+ * @return On sucess, from is destroyed and closed. On failure, error code is
+ *         returned and from and to are both still allocated; see
+ *         krb5_get_error_message().
  *
  * @ingroup krb5_ccache
  */
@@ -1304,20 +1305,38 @@ krb5_cc_cache_match (krb5_context context,
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_cc_move(krb5_context context, krb5_ccache from, krb5_ccache to)
 {
-    krb5_error_code ret;
+    krb5_error_code ret = ENOTSUP;
+    krb5_principal princ = NULL;
 
-    if (strcmp(from->ops->prefix, to->ops->prefix) != 0) {
-	krb5_set_error_message(context, KRB5_CC_NOSUPP,
-			       N_("Moving credentials between diffrent "
-				 "types not yet supported", ""));
-	return KRB5_CC_NOSUPP;
-    }
+    if (to->ops->move &&
+        strcmp(from->ops->prefix, to->ops->prefix) == 0) {
+        /*
+         * NOTE: to->ops->move() is expected to call
+         *       krb5_cc_destroy(context, from) on success.
+         */
+        ret = (*to->ops->move)(context, from, to);
+        if (ret == 0)
+            return 0;
+        if (ret != EXDEV && ret != ENOTSUP)
+            return ret;
+        /* Fallback to high-level copy */
+    }   /* Else        high-level copy */
 
-    ret = (*to->ops->move)(context, from, to);
-    if (ret == 0) {
-	memset(from, 0, sizeof(*from));
-	free(from);
-    }
+    /*
+     * Initialize destination, copy the source's contents to the destination,
+     * then destroy the source on success.
+     *
+     * It'd be nice if we could destroy any half-built destination if the copy
+     * fails, but the interface is not documented as doing so.
+     */
+    ret = krb5_cc_get_principal(context, from, &princ);
+    if (ret == 0)
+        ret = krb5_cc_initialize(context, to, princ);
+    krb5_free_principal(context, princ);
+    if (ret == 0)
+        ret = krb5_cc_copy_cache(context, from, to);
+    if (ret == 0)
+        krb5_cc_destroy(context, from);
     return ret;
 }
 

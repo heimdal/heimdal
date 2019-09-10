@@ -1977,10 +1977,7 @@ krcc_move(krb5_context context, krb5_ccache from, krb5_ccache to)
     }
 
     update_change_time(context, now, krto);
-
-    krcc_destroy(context, from);
-    krcc_close(context, from);
-
+    krb5_cc_destroy(context, from);
     return 0;
 }
 

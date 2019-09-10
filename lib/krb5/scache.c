@@ -1276,11 +1276,8 @@ scc_move(krb5_context context, krb5_ccache from, krb5_ccache to)
     krb5_error_code ret;
 
     if (strcmp(sfrom->file, sto->file) != 0) {
-	krb5_set_error_message(context, KRB5_CC_BADNAME,
-			       N_("Can't handle cross database "
-				  "credential move: %s -> %s", ""),
-			       sfrom->file, sto->file);
-	return KRB5_CC_BADNAME;
+        /* Let upstairs handle the move */
+	return EXDEV;
     }
 
     ret = make_database(context, sfrom);
@@ -1326,14 +1323,11 @@ scc_move(krb5_context context, krb5_ccache from, krb5_ccache to)
     ret = exec_stmt(context, sfrom->db, "COMMIT", KRB5_CC_IO);
     if (ret) return ret;
 
-    scc_free(sfrom);
-
+    krb5_cc_close(context, from);
     return 0;
 
 rollback:
     exec_stmt(context, sfrom->db, "ROLLBACK", 0);
-    scc_free(sfrom);
-
     return KRB5_CC_IO;
 }
 

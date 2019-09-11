@@ -279,9 +279,24 @@ krb5_parse_name_flags(krb5_context context,
 		c = '\t';
 	    else if (c == 'b')
 		c = '\b';
-	    else if (c == '0')
-		c = '\0';
-	    else if (c == '\0') {
+	    else if (c == '0') {
+                /*
+                 * We'll ignore trailing embedded NULs in components and
+                 * realms, but can't support any other embedded NULs.
+                 */
+                while (*p) {
+                    if ((*p == '/' || *p == '@') && !got_realm)
+                        break;
+                    if (*(p++) != '\\' || *(p++) != '0') {
+                        ret = KRB5_PARSE_MALFORMED;
+                        krb5_set_error_message(context, ret,
+                                               N_("embedded NULs in principal "
+                                                  "name not supported", ""));
+                        goto exit;
+                    }
+                }
+                continue;
+            } else if (c == '\0') {
 		ret = KRB5_PARSE_MALFORMED;
 		krb5_set_error_message(context, ret,
 				       N_("trailing \\ in principal name", ""));

@@ -134,6 +134,7 @@ struct slave {
     unsigned long flags;
 #define SLAVE_F_DEAD	0x1
 #define SLAVE_F_AYT	0x2
+#define SLAVE_F_READY   0x4
     struct slave *next;
 };
 
@@ -679,6 +680,13 @@ send_diffs (kadm5_server_context *server_context, slave *s, int log_fd,
     krb5_data data;
     int ret = 0;
 
+    /*
+     * Don't send any diffs until slave has sent an I_HAVE telling us the
+     * initial version number!
+     */
+    if ((s->flags & SLAVE_F_READY) == 0)
+        return 0;
+
     if (s->flags & SLAVE_F_DEAD) {
         krb5_warnx(context, "not sending diffs to dead slave %s", s->name);
         return 0;
@@ -902,17 +910,38 @@ process_msg (kadm5_server_context *server_context, slave *s, int log_fd,
 	    krb5_warnx(context, "process_msg: client send too little I_HAVE data");
 	    break;
 	}
-	/* new started slave that have old log */
-	if (s->version == 0 && tmp != 0) {
+        /*
+         * New slave whose version number we've not yet seen.  If the version
+         * number is zero, the slave has no data, and we'll send a complete
+         * database.  Otherwise, we'll record a non-zero initial version and
+         * attempt an incremental update.
+         *
+         * NOTE!: Once the slave is "ready" (its first I_HAVE has conveyed its
+         * initial version), we MUST NOT update s->version to the slave's
+         * I_HAVE version, since we may already have sent later updates, and
+         * MUST NOT send them again, otherwise we can get further and further
+         * out of sync resending larger and larger diffs.  The "not yet ready"
+         * is an essential precondition for setting s->version to the value
+         * in the I_HAVE message.  This happens only once when the slave
+         * first connects.
+         */
+	if (!(s->flags & SLAVE_F_READY)) {
 	    if (current_version < tmp) {
 		krb5_warnx(context, "Slave %s (version %u) has later version "
 			   "than the master (version %u) OUT OF SYNC",
 			   s->name, tmp, current_version);
 	    }
-            if (verbose)
-                krb5_warnx(context, "slave %s updated from %u to %u",
-                           s->name, s->version, tmp);
+            /*
+             * Mark the slave as ready for updates based on incoming signals.
+             * Prior to the initial I_HAVE, we don't know the slave's version
+             * number, and MUST not send it anything, since we'll needlessly
+             * attempt to send the whole database!
+             */
 	    s->version = tmp;
+            s->flags |= SLAVE_F_READY;
+            if (verbose)
+                krb5_warnx(context, "slave %s ready for updates from version %u",
+                           s->name, tmp);
 	}
         if ((s->version_ack = tmp) < s->version)
             break;

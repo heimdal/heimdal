@@ -1003,11 +1003,14 @@ main(int argc, char **argv)
                 if (verbose)
                     krb5_warnx(context, "master sent us a ping");
 		is_up_to_date(context, status_file, server_context);
-                ret = ihave(context, auth_context, master_fd,
-                            server_context->log_context.version);
-                if (ret)
-                    connected = FALSE;
-
+                /*
+                 * We used to send an I_HAVE here.  But the master may send
+                 * ARE_YOU_THERE messages in response to local, possibly-
+                 * transient errors, and if that happens and we respond with an
+                 * I_HAVE then we'll loop hard if the error was not transient.
+                 *
+                 * So we don't ihave() here.
+                 */
 		send_im_here(context, master_fd, auth_context);
 		break;
 	    case YOU_HAVE_LAST_VERSION:

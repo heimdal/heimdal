@@ -345,6 +345,7 @@ AC_CHECK_HEADERS([\
 	maillock.h				\
 	netgroup.h				\
 	netinet/in6_machtypes.h			\
+	netinet/tcp.h				\
 	pthread.h				\
 	pty.h					\
 	sac.h					\

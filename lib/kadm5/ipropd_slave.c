@@ -99,6 +99,15 @@ connect_to_master (krb5_context context, const char *master,
     if (setsockopt(s, SOL_SOCKET, SO_KEEPALIVE, &one, sizeof(one)) < 0)
         krb5_warn(context, errno, "setsockopt(SO_KEEPALIVE) failed");
 
+    /*
+     * We write message lengths separately from the payload, avoid Nagle
+     * delays.
+     */
+#if defined(IPPROTO_TCP) && defined(TCP_NODELAY)
+    (void) setsockopt(s, IPPROTO_TCP, TCP_NODELAY,
+                      (void *)&one, sizeof(one));
+#endif
+
     return s;
 }
 

@@ -319,6 +319,20 @@ add_slave (krb5_context context, krb5_keytab keytab, slave **root,
      * own krb5_recvauth().
      */
     socket_set_nonblocking(s->fd, 1);
+
+    /*
+     * We write message lengths separately from the payload, and may do
+     * back-to-back small writes when flushing pending input and then a new
+     * update.  Avoid Nagle delays.
+     */
+#if defined(IPPROTO_TCP) && defined(TCP_NODELAY)
+    {
+        int nodelay = 1;
+        (void) setsockopt(s->fd, IPPROTO_TCP, TCP_NODELAY,
+                          (void *)&nodelay, sizeof(nodelay));
+    }
+#endif
+
     krb5_free_principal (context, server);
     if (ret) {
 	krb5_warn (context, ret, "krb5_recvauth");

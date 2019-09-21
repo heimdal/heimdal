@@ -653,6 +653,9 @@ static const char *const rcsid[] = { (const char *)rcsid, "@(#)" msg }
 /* Define to 1 if you have the <netinet/in.h> header file. */
 /* #define HAVE_NETINET_IN_H 1 */
 
+/* Define to 1 if you have the <netinet/tcp.h> header file. */
+/* #define HAVE_NETINET_TCP_H 1 */
+
 /* Define to 1 if you have the <netinet/in_systm.h> header file. */
 /* #define HAVE_NETINET_IN_SYSTM_H 1 */
 

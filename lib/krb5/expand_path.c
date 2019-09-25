@@ -329,6 +329,26 @@ _expand_username(krb5_context context, PTYPE param, const char *postfix, char **
     return 0;
 }
 
+static krb5_error_code
+_expand_loginname(krb5_context context, PTYPE param, const char *postfix, char **str)
+{
+    char user[128];
+    const char *username = roken_get_loginname(user, sizeof(user));
+
+    if (username == NULL) {
+	krb5_set_error_message(context, ENOTTY,
+			       N_("unable to figure out current principal",
+			       ""));
+	return ENOTTY; /* XXX */
+    }
+
+    *str = strdup(username);
+    if (*str == NULL)
+	return krb5_enomem(context);
+
+    return 0;
+}
+
 /**
  * Expand an extra token
  */
@@ -389,11 +409,14 @@ static const struct {
     {"LIBEXEC", SPECIAL(_expand_bin_dir)},
     {"SBINDIR", SPECIAL(_expand_bin_dir)},
 #else
+    {"LOCALSTATEDIR", FTYPE_SPECIAL, 0, LOCALSTATEDIR, _expand_path},
     {"LIBDIR", FTYPE_SPECIAL, 0, LIBDIR, _expand_path},
     {"BINDIR", FTYPE_SPECIAL, 0, BINDIR, _expand_path},
     {"LIBEXEC", FTYPE_SPECIAL, 0, LIBEXECDIR, _expand_path},
     {"SBINDIR", FTYPE_SPECIAL, 0, SBINDIR, _expand_path},
     {"euid", SPECIAL(_expand_euid)},
+    {"ruid", SPECIAL(_expand_userid)},
+    {"loginname", SPECIAL(_expand_loginname)},
 #endif
     {"username", SPECIAL(_expand_username)},
     {"TEMP", SPECIAL(_expand_temp_folder)},

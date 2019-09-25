@@ -87,7 +87,8 @@ path: STRING
 .Li STRINGs
 consists of one or more non-whitespace characters.
 .Pp
-Files and directories may be included by absolute path.  Including a
+Files and directories may be included by absolute path, with percent
+token expansion (see the TOKEN EXPANSION section).  Including a
 directory causes all files in the directory to be included as if each
 file had been included separately, but only files whose names consist of
 alphanumeric, hyphen, and underscore are included, though they may also
@@ -193,10 +194,8 @@ sets the default credentials type.
 the default credentials cache name.
 If you want to change the type only use
 .Li default_cc_type .
-The string can contain variables that are expanded on runtime.
-The Only supported variable currently is
-.Li %{uid}
-which expands to the current user id.
+The string can contain variables that are expanded at runtime. See the TOKEN
+EXPANSION section.
 .It Li default_etypes = Va etypes ...
 A list of default encryption types to use. (Default: all enctypes if
 allow_weak_crypto = TRUE, else all enctypes except single DES enctypes.)
@@ -211,6 +210,11 @@ A list of default encryption types to use when requesting a DES credential.
 .It Li default_keytab_name = Va keytab
 The keytab to use if no other is specified, default is
 .Dq FILE:/etc/krb5.keytab .
+.It Li default_client_keytab_name = Va keytab
+The keytab to use for client credential acquisition if no other is
+specified, default is
+.Dq FILE:%{LOCALSTATEDIR}/user/%{euid}/client.keytab .
+See the TOKEN EXPANSION section.
 .It Li dns_lookup_kdc = Va boolean
 Use DNS SRV records to lookup KDC services location.
 .It Li dns_lookup_realm = Va boolean
@@ -277,7 +281,8 @@ this is very useful when the GSS-API server input the
 wrong server name into the gss_accept_sec_context call.
 .It Li k5login_directory = Va directory
 Alternative location for user .k5login files. This option is provided
-for compatibility with MIT krb5 configuration files.
+for compatibility with MIT krb5 configuration files. This path is
+subject to percent token expansion (see TOKEN EXPANSION).
 .It Li k5login_authoritative = Va boolean
 If true then if a principal is not found in k5login files then
 .Xr krb5_userok 3
@@ -796,6 +801,60 @@ List of policy names to apply to the password. Builtin policies are
 among other minimum-length, character-class, external-check.
 .El
 .El
+.El
+.Sh TOKEN EXPANSION
+The values of some parameters are subject to percent token expansion.
+Expansions supported on all platforms:
+.Bl -tag -width "xxx" -offset indent
+.It %{LIBDIR}
+The install location of Heimdal libraries.
+.It %{BINDIR}
+The install location of Heimdal user programs.
+.It %{LIBEXEC}
+The install location of Heimdal services.
+.It %{SBINDIR}
+The install location of Heimdal admin programs.
+.It %{username}
+The current username.
+.It %{TEMP}
+A temporary directory.
+.It %{USERID}
+The current user's SID (Windows) or effective user ID (POSIX).
+.It %{uid}
+The current user's SID (Windows) or real user ID (POSIX).  On POSIX it is best
+to use the
+.Va %{euid}
+token instead (see below).
+.It %{null}
+The empty string.
+.El
+.Pp
+Expansions supported on POSIX-like platforms:
+.Bl -tag -width "xxx" -offset indent
+.It %{euid}
+The current effective user ID.
+.It %{loginname}
+The username of the logged-in user for this terminal.
+.It %{LOCALSTATEDIR}
+The install location of Heimdal databases.
+.El
+.Pp
+On Windows, several additional tokens can also be expanded:
+.Bl -tag -width "xxx" -offset indent
+.It %{APPDATA}
+Roaming application data (for current user).
+.It %{COMMON_APPDATA}
+Application data (all users).
+.It %{LOCAL_APPDATA}
+Local application data (for current user).
+.It %{SYSTEM}
+Windows System folder.
+.It %{WINDOWS}
+Windows folder.
+.It %{USERCONFIG}
+Per user Heimdal configuration file path.
+.It %{COMMONCONFIG}
+Common Heimdal configuration file path.
 .El
 .Sh ENVIRONMENT
 .Ev KRB5_CONFIG

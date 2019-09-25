@@ -41,18 +41,22 @@ KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 _krb5_get_default_principal_local (krb5_context context,
 				   krb5_principal *princ)
 {
-    const char *user;
+    const char *user = NULL;
     const char *second_component = NULL;
     char userbuf[128];
 
     *princ = NULL;
 
     /*
-     * NOTE: We depend on roken_get_username() preferentially using
-     *       getlogin_r() first when !issuid() && getuid() == 0, otherwise we
-     *       won't figure out to output <username>/root@DEFAULT_REALM.
+     * NOTE: We prefer getlogin_r() (via roken_get_loginname()) to using $USER,
+     *       $LOGNAME, or getpwuid_r() (via roken_get_username()), in that
+     *       order, otherwise we won't figure out to output
+     *       <username>/root@DEFAULT_REALM.
      */
-    user = roken_get_username(userbuf, sizeof(userbuf));
+    if (geteuid() == 0)
+        user = roken_get_loginname(userbuf, sizeof(userbuf));
+    if (user == NULL)
+        user = roken_get_username(userbuf, sizeof(userbuf));
     if (user == NULL) {
         krb5_set_error_message(context, ENOTTY,
                                N_("unable to figure out current principal",

@@ -69,6 +69,7 @@ main(void)
     }
 #endif
     printf("Username:\t%s\n", roken_get_username(buf, sizeof(buf)));
+    printf("Loginname:\t%s\n", roken_get_loginname(buf, sizeof(buf)));
     printf("Home:\t\t%s\n", roken_get_homedir(buf, sizeof(buf)));
     printf("Appdatadir:\t%s\n", roken_get_appdatadir(buf, sizeof(buf)));
     printf("Shell:\t\t%s\n", roken_get_shell(buf, sizeof(buf)));

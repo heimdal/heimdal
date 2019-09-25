@@ -213,6 +213,10 @@ roken_get_appdatadir(char *appdata, size_t appdatasz)
 /**
  * Return a bare username.  This is used for, e.g., constructing default
  * principal names.
+ *
+ * On POSIX systems, if the caller is not set-uid-like, then this will return
+ * the value of the USER or LOGNAME environment variables (in that order of
+ * preference), else the username found by looking up the effective UID.
  */
 ROKEN_LIB_FUNCTION char * ROKEN_LIB_CALL
 roken_get_username(char *user, size_t usersz)
@@ -253,37 +257,6 @@ roken_get_username(char *user, size_t usersz)
 #else
     size_t buflen = 2048;
 
-    if (issuid())
-        return NULL;
-
-    if (getuid() == 0) {
-        /*
-         * NOTE: When the running process was not the result of executing a
-         * set-uid or set-gid executable, and it is running as root, then the
-         * username will preferentially be taken from the wtmp if at all
-         * possible.  This is depended on by _krb5_get_default_principal_local()
-         * in order to produce <username>/root@DEFAULT_REALM as the default
-         * principal.
-         */
-#ifdef HAVE_GETLOGIN_R
-        if ((errno = getlogin_r(user, usersz)) == 0)
-            return user;
-        if (errno != ENOENT)
-            return NULL;
-#else
-#ifdef HAVE_GETLOGIN
-        if ((p = getlogin()) != NULL && p[0] != '\0') {
-            if strlcpy(user, p, usersz) < usersz)
-                return user;
-            errno = ERANGE;
-            return NULL;
-        }
-        if (errno != ENOENT)
-            return NULL;
-#endif
-#endif
-    }
-
     p = secure_getenv("USER");
     if (p == NULL || p[0] == '\0')
         p = secure_getenv("LOGNAME");
@@ -312,6 +285,24 @@ roken_get_username(char *user, size_t usersz)
         }
     }
 #endif
+#endif
+    errno = 0;
+    return NULL;
+}
+
+/**
+ * Return a bare username.  This is used for, e.g., constructing default
+ * principal names.
+ *
+ * On POSIX systems this returns the name recorded in the system as currently
+ * logged in on the current terminal.
+ */
+ROKEN_LIB_FUNCTION char * ROKEN_LIB_CALL
+roken_get_loginname(char *user, size_t usersz)
+{
+#ifdef WIN32
+    return roken_get_username(user, usersz);
+#else
 #ifdef HAVE_GETLOGIN_R
     if ((errno = getlogin_r(user, usersz)) == 0)
         return user;

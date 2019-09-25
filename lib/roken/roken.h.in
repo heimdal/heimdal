@@ -1036,6 +1036,8 @@ roken_get_appdatadir(char *, size_t);
 ROKEN_LIB_FUNCTION char * ROKEN_LIB_CALL
 roken_get_username(char *, size_t);
 ROKEN_LIB_FUNCTION char * ROKEN_LIB_CALL
+roken_get_loginname(char *, size_t);
+ROKEN_LIB_FUNCTION char * ROKEN_LIB_CALL
 roken_get_shell(char *, size_t);
 
 #ifndef HAVE_STRFTIME

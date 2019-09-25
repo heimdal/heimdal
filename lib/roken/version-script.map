@@ -182,6 +182,7 @@ HEIMDAL_ROKEN_2.0 {
 		roken_get_homedir;
 		roken_get_shell;
 		roken_get_username;
+		roken_get_loginname;
 		roken_mconcat;
 		roken_vconcat;
 		roken_vmconcat;

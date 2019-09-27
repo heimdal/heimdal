@@ -57,19 +57,20 @@ associated header file, such as, for example,
 .Va krb5plugin_kuserok_ftable
 and a pointer to which is either registered via
 .Xr krb5_plugin_register 3
-or via a plugin load function exported by a shared object. Plugin load
-functions should be named by concatenating the name defined in the associated
-header file with the string "plugin_load" (e.g. "kuserok_plugin_load" for the
-plugin for
+or via a plugin load function exported by a shared object.
+Plugin load functions should be named by concatenating the name defined in the
+associated header file with the string "plugin_load" (e.g.
+"krb5_plugin_kuserok_plugin_load" for the plugin for
 .Xr krb5_kuserok 3
 ).
 The plugin load function has the following signature:
 .Bd -literal -offset indent
 krb5_error_code
-kuserok_plugin_load(krb5_context context,
-                    krb5_get_instance_func_t *get_instance,
-                    size_t *n_plugins,
-                    const common_plugin_ftable *const **plugins);
+krb5_plugin_kuserok_plugin_load(
+    krb5_context context,
+    krb5_get_instance_func_t *get_instance,
+    size_t *n_plugins,
+    const common_plugin_ftable *const **plugins);
 .Ed
 .Pp
 The plugin should set the get_instance output parameter to the a function
@@ -293,10 +294,11 @@ kuserok_get_instance(const char *libname)
 }
 
 krb5_error_code
-kuserok_plugin_load(krb5_context context,
-                    krb5_get_instance_func_t *get_instance,
-                    size_t *num_plugins,
-                    const krb5plugin_kuserok_ftable * const **pplugins)
+krb5_plugin_kuserok_plugin_load(
+    krb5_context context,
+    krb5_get_instance_func_t *get_instance,
+    size_t *num_plugins,
+    const krb5plugin_kuserok_ftable * const **pplugins)
 {
     *krb5_instance = kuserok_get_instance;
     *num_plugins = sizeof(plugins) / sizeof(plugins[0]);

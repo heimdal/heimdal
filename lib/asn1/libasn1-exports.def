@@ -23,6 +23,7 @@ EXPORTS
 	add_GeneralNames
 	add_METHOD_DATA
 	add_Principals
+	add_RDNSequence
 	asn1_APOptions_units
 	asn1_DigestTypes_units
 	asn1_DistributionPointReasonFlags_units

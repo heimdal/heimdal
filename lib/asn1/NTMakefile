@@ -211,12 +211,7 @@ $(gen_files_rfc2459) $(OBJ)\rfc2459_asn1.hx: $(BINDIR)\asn1_compile.exe rfc2459.
 	cd $(OBJ)
 	$(BINDIR)\asn1_compile.exe \
 		--one-code-file \
-		--preserve-binary=TBSCertificate \
-		--preserve-binary=TBSCRLCertList \
-		--preserve-binary=Name \
-		--sequence=GeneralNames \
-		--sequence=Extensions \
-		--sequence=CRLDistributionPoints \
+		--option-file=$(SRCDIR)\_rfc2459.opt \
 		$(SRCDIR)\rfc2459.asn1 rfc2459_asn1 \
 	|| ($(RM) $(OBJ)\rfc2459_asn1.h ; exit /b 1)
 	cd $(SRCDIR)

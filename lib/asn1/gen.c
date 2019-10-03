@@ -423,9 +423,18 @@ generate_constant (const Symbol *s)
     case booleanvalue:
 	break;
     case integervalue:
-	fprintf (headerfile, "enum { %s = %lld };\n\n",
-		 s->gen_name,
-		 (long long)s->value->u.integervalue);
+        /*
+         * Work around the fact that OpenSSL defines macros for PKIX constants
+         * that we want to generate as enums, which causes conflicts for things
+         * like ub-name (ub_name).
+         */
+        fprintf(headerfile,
+                "#ifdef %s\n"
+                "#undef %s\n"
+                "#endif\n"
+                "enum { %s = %lld };\n\n",
+                s->gen_name, s->gen_name, s->gen_name,
+                (long long)s->value->u.integervalue);
 	break;
     case nullvalue:
 	break;

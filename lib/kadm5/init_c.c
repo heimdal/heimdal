@@ -372,8 +372,10 @@ _kadm5_c_get_cred_cache(krb5_context context,
             char userbuf[128];
 	    const char *user = NULL;
 
+#ifndef WIN32
             if (geteuid() == 0)
                 user = roken_get_loginname(userbuf, sizeof(userbuf));
+#endif
             if (user == NULL)
                 user = roken_get_username(userbuf, sizeof(userbuf));
 	    if (user == NULL) {

@@ -53,8 +53,10 @@ _krb5_get_default_principal_local (krb5_context context,
      *       order, otherwise we won't figure out to output
      *       <username>/root@DEFAULT_REALM.
      */
+#ifndef WIN32
     if (geteuid() == 0)
         user = roken_get_loginname(userbuf, sizeof(userbuf));
+#endif
     if (user == NULL)
         user = roken_get_username(userbuf, sizeof(userbuf));
     if (user == NULL) {

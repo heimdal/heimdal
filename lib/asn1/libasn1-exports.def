@@ -1,5 +1,6 @@
 EXPORTS
 	add_AuthorizationData
+	add_Certificates
 	add_CRLDistributionPoints
 	add_DigestAlgorithmIdentifiers
 	add_ETYPE_INFO
@@ -1716,6 +1717,7 @@ EXPORTS
 	length_Validity
 	length_Version
 	remove_AuthorizationData
+	remove_Certificates
 	remove_CRLDistributionPoints
 	remove_DigestAlgorithmIdentifiers
 	remove_ETYPE_INFO

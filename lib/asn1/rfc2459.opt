@@ -6,3 +6,4 @@
 --sequence=Extensions
 --sequence=GeneralNames
 --sequence=RDNSequence
+--sequence=Certificates

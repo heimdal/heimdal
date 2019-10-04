@@ -125,6 +125,9 @@ hx509_certs_init(hx509_context context,
 
     *certs = NULL;
 
+    if (name == NULL)
+        name = "";
+
     residue = strchr(name, ':');
     if (residue) {
 	type = malloc(residue - name + 1);

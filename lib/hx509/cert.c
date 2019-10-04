@@ -335,6 +335,7 @@ hx509_cert_init_data(hx509_context context,
     if (ret) {
 	if (error)
 	    *error = heim_error_create(ret, "Failed to decode certificate");
+        errno = ret;
 	return NULL;
     }
     if (size != len) {
@@ -342,6 +343,7 @@ hx509_cert_init_data(hx509_context context,
 	if (error)
 	    *error = heim_error_create(HX509_EXTRA_DATA_AFTER_STRUCTURE,
 				       "Extra data after certificate");
+        errno = HX509_EXTRA_DATA_AFTER_STRUCTURE;
 	return NULL;
     }
 

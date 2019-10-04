@@ -605,6 +605,19 @@ _hx509_name_modify(hx509_context context,
     return 0;
 }
 
+HX509_LIB_FUNCTION int HX509_LIB_CALL
+hx509_empty_name(hx509_context context, hx509_name *name)
+{
+    if ((*name = calloc(1, sizeof(**name))) == NULL) {
+	hx509_set_error_string(context, 0, ENOMEM, "out of memory");
+	return ENOMEM;
+    }
+    (*name)->der_name.element = choice_Name_rdnSequence;
+    (*name)->der_name.u.rdnSequence.val = 0;
+    (*name)->der_name.u.rdnSequence.len = 0;
+    return 0;
+}
+
 /**
  * Parse a string into a hx509 name object.
  *
@@ -972,7 +985,7 @@ _hx509_unparse_Name(const Name *aname, char **str)
 }
 
 /**
- * Unparse the hx509 name in name into a string.
+ * Check if a name is empty.
  *
  * @param name the name to check if its empty/null.
  *
@@ -984,7 +997,8 @@ _hx509_unparse_Name(const Name *aname, char **str)
 HX509_LIB_FUNCTION int HX509_LIB_CALL
 hx509_name_is_null_p(const hx509_name name)
 {
-    return name->der_name.u.rdnSequence.len == 0;
+    return name->der_name.element == choice_Name_rdnSequence &&
+        name->der_name.u.rdnSequence.len == 0;
 }
 
 /**

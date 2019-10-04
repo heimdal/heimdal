@@ -1087,6 +1087,12 @@ ca_sign(hx509_context context,
 
     tbsc = &c.tbsCertificate;
 
+    /* Default subject Name to empty */
+    if (tbs->subject == NULL &&
+        (ret = hx509_empty_name(context, &tbs->subject)))
+        return ret;
+
+    /* Sanity checks */
     if (tbs->flags.key == 0) {
 	ret = EINVAL;
 	hx509_set_error_string(context, 0, ret, "No public key set");
@@ -1097,13 +1103,9 @@ ca_sign(hx509_context context,
      * will be generated below.
      */
     if (!tbs->flags.proxy) {
-	if (tbs->subject == NULL) {
-	    hx509_set_error_string(context, 0, EINVAL, "No subject name set");
-	    return EINVAL;
-	}
 	if (hx509_name_is_null_p(tbs->subject) && tbs->san.len == 0) {
 	    hx509_set_error_string(context, 0, EINVAL,
-				   "NULL subject and no SubjectAltNames");
+				   "Empty subject and no SubjectAltNames");
 	    return EINVAL;
 	}
     }
@@ -1291,9 +1293,10 @@ ca_sign(hx509_context context,
 	}
 	if (size != data.length)
 	    _hx509_abort("internal ASN.1 encoder error");
-	ret = add_extension(context, tbsc, 0,
-			    &asn1_oid_id_x509_ce_subjectAltName,
-			    &data);
+
+        /* The SAN extension is critical if the subject Name is empty */
+        ret = add_extension(context, tbsc, hx509_name_is_null_p(tbs->subject),
+                            &asn1_oid_id_x509_ce_subjectAltName, &data);
 	free(data.data);
 	if (ret)
 	    goto out;

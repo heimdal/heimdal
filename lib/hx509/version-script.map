@@ -137,6 +137,7 @@ HEIMDAL_X509_1.2 {
 		hx509_crypto_set_padding;
 		hx509_crypto_set_params;
 		hx509_crypto_set_random_key;
+		hx509_empty_name;
 		hx509_env_add;
 		hx509_env_add_binding;
 		hx509_env_find;

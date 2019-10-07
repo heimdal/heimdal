@@ -271,6 +271,60 @@ ${context} --gsskrb5-acceptor-identity=${keytabfile} \
 		echo "ERROR: Missing 'no transit allowed' error";
 		eval "$testfailed";
 	}
+> messages.log
+echo "======test cross realm without transit check (--acceptor-skip-transit-check; $keytabfile)"
+${context} --gsskrb5-acceptor-identity=$keytabfile --acceptor-skip-transit-check \
+	host@srv.test4.h5l.se > test_context.log 2>&1 || {
+		cat test_context.log;
+		eval "$testfailed";
+	}
+	cat test_context.log
+	grep -q "${NO_TRANSIT_ALLOWED_ERROR}" test_context.log && {
+		echo "ERROR: Found 'no transit allowed' error";
+		eval "$testfailed";
+	}
+> messages.log
+echo "======test cross realm without transit check ([libdefaults] acceptor_skip_transit_check = false; $keytabfile)"
+TMP_KRB5_CONFIG="${KRB5_CONFIG}.tmp"
+cat > ${TMP_KRB5_CONFIG} <<_EOF
+include $(realpath ${KRB5_CONFIG})
+
+[libdefaults]
+	acceptor_skip_transit_check = false
+}
+_EOF
+KRB5_CONFIG=${TMP_KRB5_CONFIG} \
+${context} --gsskrb5-acceptor-identity=$keytabfile \
+	host@srv.test4.h5l.se > test_context.log 2>&1 && {
+		cat test_context.log;
+		eval "$testfailed";
+	}
+	cat test_context.log
+	grep -q "${NO_TRANSIT_ALLOWED_ERROR}" test_context.log || {
+		echo "ERROR: Found 'no transit allowed' error";
+		eval "$testfailed";
+	}
+> messages.log
+echo "======test cross realm without transit check ([libdefaults] acceptor_skip_transit_check = true; $keytabfile)"
+TMP_KRB5_CONFIG="${KRB5_CONFIG}.tmp"
+cat > ${TMP_KRB5_CONFIG} <<_EOF
+include $(realpath ${KRB5_CONFIG})
+
+[libdefaults]
+	acceptor_skip_transit_check = true
+}
+_EOF
+KRB5_CONFIG=${TMP_KRB5_CONFIG} \
+${context} --gsskrb5-acceptor-identity=$keytabfile \
+	host@srv.test4.h5l.se > test_context.log 2>&1 || {
+		cat test_context.log;
+		eval "$testfailed";
+	}
+	cat test_context.log
+	grep -q "${NO_TRANSIT_ALLOWED_ERROR}" test_context.log && {
+		echo "ERROR: Found 'no transit allowed' error";
+		eval "$testfailed";
+	}
 
 echo "======test context building"
 for mech in krb5 krb5iov spnego spnegoiov; do

@@ -44,6 +44,9 @@ objdir="@objdir@"
 ../db/have-db || exit 77
 
 R=TEST.H5L.SE
+R2=TEST2.H5L.SE
+R3=TEST3.H5L.SE
+R4=TEST4.H5L.SE
 
 port=@port@
 
@@ -65,6 +68,8 @@ context="${TESTS_ENVIRONMENT} ../../lib/gssapi/test_context"
 KRB5_CONFIG="${objdir}/krb5.conf"
 export KRB5_CONFIG
 
+KDC_KRB5_CONFIG="${KRB5_CONFIG}.kdc"
+
 KRB5CCNAME=${cache}
 export KRB5CCNAME
 
@@ -82,6 +87,37 @@ ${kadmin} \
     --realm-max-ticket-life=1day \
     --realm-max-renewable-life=1month \
     ${R} || exit 1
+
+${kadmin} \
+    init \
+    --realm-max-ticket-life=1day \
+    --realm-max-renewable-life=1month \
+    ${R2} || exit 1
+
+${kadmin} \
+    init \
+    --realm-max-ticket-life=1day \
+    --realm-max-renewable-life=1month \
+    ${R3} || exit 1
+
+${kadmin} \
+    init \
+    --realm-max-ticket-life=1day \
+    --realm-max-renewable-life=1month \
+    ${R4} || exit 1
+
+# add cross realm entries
+${kadmin} add -p cross12 --use-defaults krbtgt/${R}@${R2} || exit 1
+${kadmin} add -p cross21 --use-defaults krbtgt/${R2}@${R} || exit 1
+
+${kadmin} add -p cross23 --use-defaults krbtgt/${R2}@${R3} || exit 1
+${kadmin} add -p cross32 --use-defaults krbtgt/${R3}@${R2} || exit 1
+
+${kadmin} add -p cross34 --use-defaults krbtgt/${R3}@${R4} || exit 1
+${kadmin} add -p cross43 --use-defaults krbtgt/${R4}@${R3} || exit 1
+
+${kadmin} add -p psr4 --use-defaults host/srv.test4.h5l.se@${R4} || exit 1
+${kadmin} ext -k ${keytab} host/srv.test4.h5l.se@${R4} || exit 1
 
 # add both lucid and lucid.test.h5l.se to simulate aliases
 ${kadmin} add -p p1 --use-defaults host/lucid.test.h5l.se@${R} || exit 1
@@ -111,11 +147,15 @@ ${kadmin} ext -k ${keytab} host/no-aes.test.h5l.se@${R} || exit 1
 
 echo "Doing database check"
 ${kadmin} check ${R} || exit 1
+${kadmin} check ${R2} || exit 1
+${kadmin} check ${R3} || exit 1
+${kadmin} check ${R4} || exit 1
 
 echo u1 > ${objdir}/foopassword
 
 echo Starting kdc
-${kdc} --detach --testing || { echo "kdc failed to start"; exit 1; }
+KRB5_CONFIG=${KDC_KRB5_CONFIG} ${kdc} --detach --testing \
+	|| { echo "kdc failed to start"; exit 1; }
 kdcpid=`getpid kdc`
 
 trap "kill ${kdcpid}; echo signal killing kdc; exit 1;" EXIT
@@ -204,6 +244,33 @@ ${context}  --no-dns-canon --name-type=krb5-principal-name host/lucid@${R} || \
 echo "dns canon off (short name, krb5)" ; > messages.log
 ${context}  --no-dns-canon --name-type=krb5-principal-name host/lucid || \
 	{ eval "$testfailed"; }
+
+NO_TRANSIT_ALLOWED_ERROR="no transit allowed through realm TEST2.H5L.SE from TEST.H5L.SE to TEST4.H5L.SE"
+
+> messages.log
+echo "======test cross realm failing transit check (no argument)";
+${context} \
+	host@srv.test4.h5l.se > test_context.log 2>&1 && {
+		cat test_context.log;
+		eval "$testfailed";
+	}
+	cat test_context.log
+	grep -q "${NO_TRANSIT_ALLOWED_ERROR}" test_context.log || {
+		echo "ERROR: Missing 'no transit allowed' error";
+		eval "$testfailed";
+	}
+> messages.log
+echo "======test cross realm failing transit check (--gsskrb5-acceptor-identity; ${keytabfile})"
+${context} --gsskrb5-acceptor-identity=${keytabfile} \
+	host@srv.test4.h5l.se > test_context.log 2>&1 && {
+		cat test_context.log;
+		eval "$testfailed";
+	}
+	cat test_context.log
+	grep -q "${NO_TRANSIT_ALLOWED_ERROR}" test_context.log || {
+		echo "ERROR: Missing 'no transit allowed' error";
+		eval "$testfailed";
+	}
 
 echo "======test context building"
 for mech in krb5 krb5iov spnego spnegoiov; do

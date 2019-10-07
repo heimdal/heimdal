@@ -2,7 +2,7 @@
 
 include $(top_srcdir)/Makefile.am.common
 
-noinst_DATA = krb5.conf new_clients_k5.conf mech
+noinst_DATA = krb5.conf new_clients_k5.conf krb5.conf.kdc mech
 
 SCRIPT_TESTS = check-basic check-gss check-gssmask check-context check-spnego check-ntlm check-negoex
 
@@ -63,6 +63,10 @@ new_clients_k5.conf: new_clients_k5.conf.in Makefile
 	$(do_subst) < $(srcdir)/new_clients_k5.conf.in > new_clients_k5.conf.tmp && \
 	mv new_clients_k5.conf.tmp new_clients_k5.conf
 
+krb5.conf.kdc: krb5.conf.kdc.in Makefile
+	$(do_subst) < $(srcdir)/krb5.conf.kdc.in > krb5.conf.kdc.tmp && \
+	mv krb5.conf.kdc.tmp krb5.conf.kdc
+
 mech: mech.in Makefile
 	$(do_subst) < $(srcdir)/mech.in > mech.tmp && \
 	mv mech.tmp mech
@@ -76,6 +80,7 @@ CLEANFILES= \
 	server.keytab \
 	krb5.conf \
 	new_clients_k5.conf \
+	krb5.conf.kdc \
 	mech \
 	current-db* \
 	*.log \
@@ -98,4 +103,5 @@ EXTRA_DIST = \
 	ntlm-user-file.txt \
 	krb5.conf.in \
 	new_clients_k5.conf.in \
+	krb5.conf.kdc.in \
 	mech.in

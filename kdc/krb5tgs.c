@@ -574,18 +574,21 @@ tgs_make_reply(astgs_request_t r,
     (config->trpolicy == TRPOLICY_ALLOW_PER_PRINCIPAL)
 #define GLOBAL_ALLOW_DISABLE_TRANSITED_CHECK			\
     (config->trpolicy == TRPOLICY_ALWAYS_HONOUR_REQUEST)
+#define GLOBAL_FORCE_NO_TRANSIT_CHECK			\
+    (config->trpolicy == TRPOLICY_ALWAYS_DISABLED)
 
 /* these will consult the database in future release */
 #define PRINCIPAL_FORCE_TRANSITED_CHECK(P)		0
 #define PRINCIPAL_ALLOW_DISABLE_TRANSITED_CHECK(P)	0
 
     ret = fix_transited_encoding(context, config,
-				 !f.disable_transited_check ||
-				 GLOBAL_FORCE_TRANSITED_CHECK ||
-				 PRINCIPAL_FORCE_TRANSITED_CHECK(server) ||
-				 !((GLOBAL_ALLOW_PER_PRINCIPAL &&
-				    PRINCIPAL_ALLOW_DISABLE_TRANSITED_CHECK(server)) ||
-				   GLOBAL_ALLOW_DISABLE_TRANSITED_CHECK),
+				 !(GLOBAL_FORCE_NO_TRANSIT_CHECK) &&
+				 (!f.disable_transited_check ||
+				  GLOBAL_FORCE_TRANSITED_CHECK ||
+				  PRINCIPAL_FORCE_TRANSITED_CHECK(server) ||
+				  !((GLOBAL_ALLOW_PER_PRINCIPAL &&
+				     PRINCIPAL_ALLOW_DISABLE_TRANSITED_CHECK(server)) ||
+				    GLOBAL_ALLOW_DISABLE_TRANSITED_CHECK)),
 				 &tgt->transited, &et,
 				 krb5_principal_get_realm(context, client_principal),
 				 krb5_principal_get_realm(context, server->entry.principal),

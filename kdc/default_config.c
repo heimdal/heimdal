@@ -230,6 +230,8 @@ krb5_kdc_get_config(krb5_context context, krb5_kdc_configuration **config)
 	    c->trpolicy = TRPOLICY_ALLOW_PER_PRINCIPAL;
 	} else if(strcasecmp(trpolicy_str, "always-honour-request") == 0) {
 	    c->trpolicy = TRPOLICY_ALWAYS_HONOUR_REQUEST;
+	} else if(strcasecmp(trpolicy_str, "always-disabled") == 0) {
+	    c->trpolicy = TRPOLICY_ALWAYS_DISABLED;
 	} else if(strcasecmp(trpolicy_str, "DEFAULT") == 0) {
 	    /* default */
 	} else {

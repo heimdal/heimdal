@@ -32,6 +32,9 @@
  */
 
 #include "hx_locl.h"
+#ifndef WIN32
+#include <libgen.h>
+#endif
 
 typedef enum { USE_PEM, USE_DER } outformat;
 
@@ -584,16 +587,55 @@ store_func(hx509_context context, void *ctx, hx509_cert c)
 }
 
 static int
+mk_temp(const char *fn, char **tfn)
+{
+    char *ds;
+    int ret = -1;
+
+#ifdef WIN32
+    char buf[PATH_MAX];
+    char *p;
+
+    *tfn = NULL;
+
+    if ((ds = _fullpath(buf, fn, sizeof(buf))) == NULL) {
+        errno = errno ? errno : ENAMETOOLONG;
+        return -1;
+    }
+
+    if (p = strrchr(ds, '\\') == NULL) {
+        ret = asprintf(tfn, ".%s-XXXXXX", ds); /* XXX can't happen */
+    } else {
+        *(p++) = '\0';
+        ret = asprintf(tfn, "%s/.%s-XXXXXX", ds, p);
+    }
+#else
+    *tfn = NULL;
+    if ((ds = strdup(fn)))
+        ret = asprintf(tfn, "%s/.%s-XXXXXX", dirname(ds), basename(ds));
+    free(ds);
+#endif
+
+    /*
+     * Using mkostemp() risks leaving garbage files lying around.  To do better
+     * without resorting to file locks (which have their own problems) we need
+     * O_TMPFILE and linkat(2), which only Linux has.
+     */
+    return  (ret == -1 || *tfn == NULL) ? -1 : mkostemp(*tfn, O_CLOEXEC);
+}
+
+static int
 file_store(hx509_context context,
 	   hx509_certs certs, void *data, int flags, hx509_lock lock)
 {
     struct ks_file *ksf = data;
     struct store_ctx sc;
+    char *tfn;
     int ret;
     int fd;
 
     sc.f = NULL;
-    fd = open(ksf->fn, O_CREAT | O_WRONLY, 0600);
+    fd = mk_temp(ksf->fn, &tfn);
     if (fd > -1)
         sc.f = fdopen(fd, "w");
     if (sc.f == NULL) {
@@ -607,7 +649,15 @@ file_store(hx509_context context,
     sc.format = ksf->format;
 
     ret = hx509_certs_iter_f(context, ksf->certs, store_func, &sc);
-    fclose(sc.f);
+    if (ret == 0)
+        ret = fclose(sc.f);
+    else
+        (void) fclose(sc.f);
+    if (ret)
+        (void) unlink(tfn);
+    else
+        (void) rename(tfn, ksf->fn);
+    free(tfn);
     return ret;
 }
 

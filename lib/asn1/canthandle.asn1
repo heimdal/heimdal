@@ -19,13 +19,6 @@ Foo ::= SEQUENCE {
         kaka3 [2] IMPLICIT Kaka3 OPTIONAL
 }
 
--- Don't code kaka if it's 1
--- Workaround is to use OPTIONAL and check for in the encoder stubs
-
-Bar ::= SEQUENCE {
-        kaka [0] INTEGER DEFAULT 1
-}
-
 --  Can't handle primitives in SET OF
 --  Workaround is to define a type that is only an integer and use that
 

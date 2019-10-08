@@ -208,9 +208,9 @@ range_check(const char *name,
 }
 
 static int
-decode_type (const char *name, const Type *t, int optional,
-	     const char *forwstr, const char *tmpstr, const char *dertype,
-	     unsigned int depth)
+decode_type(const char *name, const Type *t, int optional, struct value *defval,
+	    const char *forwstr, const char *tmpstr, const char *dertype,
+	    unsigned int depth)
 {
     switch (t->type) {
     case TType: {
@@ -339,8 +339,8 @@ decode_type (const char *name, const Type *t, int optional,
 	    if (asprintf (&s, "%s(%s)->%s", m->optional ? "" : "&",
 			  name, m->gen_name) < 0 || s == NULL)
 		errx(1, "malloc");
-	    decode_type (s, m->type, m->optional, forwstr, m->gen_name, NULL,
-		depth + 1);
+            decode_type(s, m->type, m->optional, m->defval, forwstr,
+                        m->gen_name, NULL, depth + 1);
 	    free (s);
 	}
 
@@ -381,7 +381,7 @@ decode_type (const char *name, const Type *t, int optional,
 			"%s = calloc(1, sizeof(*%s));\n"
 			"if (%s == NULL) { e = ENOMEM; %s; }\n",
 			s, s, s, forwstr);
-	    decode_type (s, m->type, 0, forwstr, m->gen_name, NULL, depth + 1);
+	    decode_type (s, m->type, 0, NULL, forwstr, m->gen_name, NULL, depth + 1);
 	    free (s);
 
 	    fprintf(codefile, "members |= (1LU << %u);\n", memno);
@@ -454,7 +454,7 @@ decode_type (const char *name, const Type *t, int optional,
 	    errx(1, "malloc");
 	if (asprintf (&sname, "%s_s_of", tmpstr) < 0 || sname == NULL)
 	    errx(1, "malloc");
-	decode_type (n, t->subtype, 0, forwstr, sname, NULL, depth + 1);
+	decode_type(n, t->subtype, 0, NULL, forwstr, sname, NULL, depth + 1);
 	fprintf (codefile,
 		 "(%s)->len++;\n"
 		 "len = %s_origlen - ret;\n"
@@ -520,7 +520,19 @@ decode_type (const char *name, const Type *t, int optional,
 		     "if (%s == NULL) { e = ENOMEM; %s; }\n",
 		     name, name, name, name, forwstr);
 	} else {
-	    fprintf(codefile, "if(e) %s;\n", forwstr);
+            if (defval) {
+                char *s;
+
+                if (asprintf(&s, "*(%s)", name) == -1 || s == NULL)
+                    return ENOMEM;
+                fprintf(codefile, "if (e && e != ASN1_MISSING_FIELD) %s;\n", forwstr);
+                fprintf(codefile, "if (e == ASN1_MISSING_FIELD) {\n");
+                gen_assign_defval(s, defval);
+                free(s);
+                fprintf(codefile, "e = 0; l= 0;\n} else {\n");
+            } else {
+                fprintf(codefile, "if (e) %s;\n", forwstr);
+            }
 	}
 	fprintf (codefile,
 		 "p += l; len -= l; ret += l;\n"
@@ -538,7 +550,7 @@ decode_type (const char *name, const Type *t, int optional,
 		    "len = %s_datalen;\n", tmpstr, forwstr, tmpstr);
 	if (asprintf (&tname, "%s_Tag", tmpstr) < 0 || tname == NULL)
 	    errx(1, "malloc");
-	decode_type (name, t->subtype, 0, forwstr, tname, ide, depth + 1);
+	decode_type(name, t->subtype, 0, NULL, forwstr, tname, ide, depth + 1);
 	if(support_ber)
 	    fprintf(codefile,
 		    "if(is_indefinite%u){\n"
@@ -558,11 +570,11 @@ decode_type (const char *name, const Type *t, int optional,
 	fprintf(codefile,
 		"len = %s_oldlen - %s_datalen;\n",
 		tmpstr, tmpstr);
-	if(optional)
-	    fprintf(codefile,
-		    "}\n");
-	fprintf(codefile,
-		"}\n");
+	if (optional)
+	    fprintf(codefile, "}\n");
+        else if (defval)
+	    fprintf(codefile, "}\n");
+	fprintf(codefile, "}\n");
 	free(tname);
 	free(typestring);
 	break;
@@ -597,8 +609,8 @@ decode_type (const char *name, const Type *t, int optional,
 	    if (asprintf (&s, "%s(%s)->u.%s", m->optional ? "" : "&",
 			  name, m->gen_name) < 0 || s == NULL)
 		errx(1, "malloc");
-	    decode_type (s, m->type, m->optional, forwstr, m->gen_name, NULL,
-		depth + 1);
+            decode_type(s, m->type, m->optional, NULL, forwstr, m->gen_name,
+                        NULL, depth + 1);
 	    fprintf(codefile,
 		    "(%s)->element = %s;\n",
 		    name, m->label);
@@ -716,7 +728,7 @@ generate_type_decode (const Symbol *s)
 	fprintf (codefile, "\n");
 	fprintf (codefile, "memset(data, 0, sizeof(*data));\n"); /* hack to avoid `unused variable' */
 
-	decode_type ("data", s->type, 0, "goto fail", "Top", NULL, 1);
+	decode_type("data", s->type, 0, NULL, "goto fail", "Top", NULL, 1);
 	if (preserve)
 	    fprintf (codefile,
 		     "data->_save.data = calloc(1, ret);\n"

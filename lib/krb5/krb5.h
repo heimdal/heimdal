@@ -881,6 +881,21 @@ enum krb5_plugin_type {
     PLUGIN_TYPE_FUNC /* no longer supported */
 };
 
+/*
+ * Since <krb5/common_plugin.h> is new with Heimdal 8, users looking to write
+ * portable plugins across Heimdal 7 and 8 need a conditional compilation
+ * predicate from a header file that does exist in both major releases.  This
+ * is as good a place as any to define a plugin source-compatibility version
+ * number.
+ *
+ * When this macro is defined and is equal to 1, the Heimdal 8 plugin source
+ * API, and <krb5/common_plugin.h> header are available and should be used.
+ *
+ * In Heimdal 7, this macro is not defined, and <krb5/common_plugin.h> may not
+ * be available.
+ */
+#define KRB5_PLUGIN_COMMON_SPI_VERSION 1
+
 #define KRB5_PLUGIN_INVOKE_ALL  1
 
 typedef uintptr_t

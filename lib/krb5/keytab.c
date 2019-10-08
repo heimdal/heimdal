@@ -703,7 +703,7 @@ krb5_kt_get_entry(krb5_context context,
 					enctype, entry);
     } while (ret == KRB5_KT_NOTFOUND && name_canon_iter);
 
-    if (ret != KRB5_KT_NOTFOUND)
+    if (ret && ret != KRB5_KT_NOTFOUND)
 	krb5_set_error_message(context, ret,
 			       N_("Name canon failed while searching keytab",
 				  ""));

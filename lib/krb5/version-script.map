@@ -796,6 +796,7 @@ HEIMDAL_KRB5_2.0 {
 		_krb5_n_fold;
 		_krb5_expand_default_cc_name;
 		_krb5_expand_path_tokensv;
+		_krb5_expand_path_tokens;
 		
 		# FAST
 		_krb5_fast_cf2;

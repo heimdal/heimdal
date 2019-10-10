@@ -559,27 +559,39 @@ store_func(hx509_context context, void *ctx, hx509_cert c)
 
     switch (sc->format) {
     case USE_DER:
+        /* Can't store both.  Well, we could, but nothing will support it */
         if (data.data) {
             fwrite(data.data, data.length, 1, sc->f);
             free(data.data);
-        } /* XXX else write private key instead */
+        } else if (_hx509_cert_private_key_exportable(c)) {
+            hx509_private_key key = _hx509_cert_private_key(c);
+
+            ret = _hx509_private_key_export(context, key,
+                                            HX509_KEY_FORMAT_DER, &data);
+            fwrite(data.data, data.length, 1, sc->f);
+            free(data.data);
+        }
 	break;
     case USE_PEM:
+	if (_hx509_cert_private_key_exportable(c)) {
+            heim_octet_string priv_key;
+	    hx509_private_key key = _hx509_cert_private_key(c);
+
+	    ret = _hx509_private_key_export(context, key,
+					    HX509_KEY_FORMAT_DER, &priv_key);
+	    if (ret) {
+                free(data.data);
+		break;
+            }
+	    hx509_pem_write(context, _hx509_private_pem_name(key), NULL, sc->f,
+			    priv_key.data, priv_key.length);
+	    free(priv_key.data);
+	}
         if (data.data) {
             hx509_pem_write(context, "CERTIFICATE", NULL, sc->f,
                             data.data, data.length);
             free(data.data);
         }
-	if (_hx509_cert_private_key_exportable(c)) {
-	    hx509_private_key key = _hx509_cert_private_key(c);
-	    ret = _hx509_private_key_export(context, key,
-					    HX509_KEY_FORMAT_DER, &data);
-	    if (ret)
-		break;
-	    hx509_pem_write(context, _hx509_private_pem_name(key), NULL, sc->f,
-			    data.data, data.length);
-	    free(data.data);
-	}
 	break;
     }
 

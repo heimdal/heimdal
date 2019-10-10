@@ -270,8 +270,8 @@ command = {
 	option = {
 		long = "test"
 		short = "t"
-		type = "flag"
-		help = "exit successfully if certificate and private key are in credential cache"
+		type = "integer"
+		help = "check for certificate with at least given time left"
 	}
 	option = {
 		name = "private-key"

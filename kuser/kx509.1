@@ -56,8 +56,8 @@
 .Fl Fl extract
 .Xc
 .Oc
-.Oo Fl t \*(Ba Xo
-.Fl Fl test
+.Oo Fl t Ar time-left \*(Ba Xo
+.Fl Fl test= Ns Ar time-left
 .Xc
 .Oc
 .Oo Fl C Ar PKCS10:filename \*(Ba Xo
@@ -89,9 +89,14 @@ Options supported:
 .It Fl c Ar cache , Fl Fl cache= Ns Ar cache
 credential cache to use (if not given, then the default will be
 used).
-.It Fl t , Fl Fl test
+.It Fl t Ar time-left , Fl Fl test= Ns Ar time-left
 Test for there being an active and valid certificate in the
-credential cache.
+credential cache, with at least
+.Ar time-left
+seconds left of valid life.  If given with the
+.Fl o
+then the certificates in the hx509 store are tested along with
+those in the credentials cache (if any).
 .It Fl x , Fl Fl extract
 Extract, rather than acquire credentials.
 .It Fl s , Fl Fl save

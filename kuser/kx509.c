@@ -39,14 +39,30 @@
 #include "../lib/krb5/krb5_locl.h"
 #include "hx509-private.h"
 
+struct validate_store {
+    size_t ncerts;
+    int grace;
+};
+
+static int
+validate1(hx509_context hx509ctx, void *d, hx509_cert cert)
+{
+    struct validate_store *v = d;
+
+    if (hx509_cert_get_notAfter(cert) < time(NULL) + v->grace)
+        return HX509_CERT_USED_AFTER_TIME;
+    v->ncerts++;
+    return 0;
+}
+
 static void
 validate(krb5_context context,
+         int grace,
          const char *hx509_store,
          krb5_data *der_cert,
          krb5_data *pkcs8_priv_key)
 {
     hx509_context hx509ctx = NULL;
-    hx509_private_key key = NULL;
     hx509_cert cert;
     krb5_error_code ret;
 
@@ -54,19 +70,44 @@ validate(krb5_context context,
     if (ret)
         krb5_err(context, 1, ret, "hx509 context init");
 
-    cert = hx509_cert_init_data(hx509ctx, der_cert->data,
-                                der_cert->length, NULL);
-    if (cert == NULL)
-        krb5_err(context, 1, errno, "certificate could not be loaded");
-    ret = hx509_parse_private_key(hx509ctx, NULL, pkcs8_priv_key->data,
-                                  pkcs8_priv_key->length,
-                                  HX509_KEY_FORMAT_PKCS8, &key);
-    if (ret)
-        krb5_err(context, 1, ret, "certificate could not be loaded");
-    if (hx509_cert_get_notAfter(cert) < time(NULL))
-        krb5_errx(context, 1, "certificate is expired");
-    hx509_private_key_free(&key);
-    hx509_cert_free(cert);
+    if (der_cert->data && pkcs8_priv_key->data) {
+        hx509_private_key key = NULL;
+
+        cert = hx509_cert_init_data(hx509ctx, der_cert->data,
+                                    der_cert->length, NULL);
+        if (cert == NULL)
+            krb5_err(context, 1, errno, "certificate could not be loaded");
+        ret = hx509_parse_private_key(hx509ctx, NULL, pkcs8_priv_key->data,
+                                      pkcs8_priv_key->length,
+                                      HX509_KEY_FORMAT_PKCS8, &key);
+        if (ret)
+            krb5_err(context, 1, ret, "certificate could not be loaded");
+        if (hx509_cert_get_notAfter(cert) < time(NULL) + grace)
+            krb5_errx(context, 1, "certificate is expired");
+        hx509_private_key_free(&key);
+        hx509_cert_free(cert);
+    }
+    if (hx509_store) {
+        struct validate_store v;
+        hx509_certs certs;
+
+        v.ncerts = 0;
+        v.grace = grace;
+
+        ret = hx509_certs_init(hx509ctx, hx509_store, 0, NULL, &certs);
+        if (ret)
+            krb5_err(context, 1, ret, "could not read hx509 store %s",
+                     hx509_store);
+        ret = hx509_certs_iter_f(hx509ctx, certs, validate1, &v);
+        if (ret)
+            krb5_err(context, 1, ret, "at least one certificate in %s expired",
+                     hx509_store);
+        if (!v.ncerts)
+            krb5_errx(context, 1, "no certificates in %s", hx509_store);
+
+        hx509_certs_free(&certs);
+    }
+
     hx509_context_free(&hx509ctx);
 }
 
@@ -124,7 +165,8 @@ store(krb5_context context,
         hx509_store = krb5_config_get_string(context, NULL, "libdefaults",
                                              "kx509_store", NULL);
         if (hx509_store) {
-            ret = _krb5_expand_path_tokens(context, hx509_store, 1, &store_exp);
+            ret = _krb5_expand_path_tokens(context, hx509_store, 1,
+                                           &store_exp);
             if (ret)
                 krb5_err(context, 1, ret, "expanding tokens in default "
                          "hx509 store");
@@ -202,28 +244,32 @@ kx509(struct kx509_options *opt, int argc, char **argv)
     if (opt->save_flag)
         ccout = cc;
 
-    if (opt->test_flag &&
+    if (opt->test_integer &&
         (opt->extract_flag || opt->csr_string || opt->private_key_string))
         krb5_errx(context, 1, "--test is exclusive of --extract, --csr, and "
                   "--private-key");
 
     if (opt->extract_flag && (opt->csr_string || opt->private_key_string))
-        krb5_errx(context, 1, "--extract is exclusive of --csr and --private-key");
+        krb5_errx(context, 1, "--extract is exclusive of --csr and "
+                  "--private-key");
 
-    if (opt->test_flag || opt->extract_flag) {
+    if (opt->test_integer || opt->extract_flag) {
         krb5_data der_cert, pkcs8_key, chain;
 
         der_cert.data = pkcs8_key.data = chain.data = NULL;
         der_cert.length = pkcs8_key.length = chain.length = 0;
         ret = krb5_cc_get_config(context, cc, NULL, "kx509cert", &der_cert);
         if (ret == 0)
-            ret = krb5_cc_get_config(context, cc, NULL, "kx509key", &pkcs8_key);
+            ret = krb5_cc_get_config(context, cc, NULL, "kx509key",
+                                     &pkcs8_key);
         if (ret == 0)
-            ret = krb5_cc_get_config(context, cc, NULL, "kx509cert-chain", &chain);
+            ret = krb5_cc_get_config(context, cc, NULL, "kx509cert-chain",
+                                     &chain);
         if (ret)
             krb5_err(context, 1, ret, "no certificate in credential cache");
-        if (opt->test_flag)
-            validate(context, opt->out_string, &der_cert, &pkcs8_key);
+        if (opt->test_integer)
+            validate(context, opt->test_integer, opt->out_string, &der_cert,
+                     &pkcs8_key);
         else
             store(context, opt->out_string, &der_cert, &pkcs8_key, &chain);
         krb5_data_free(&pkcs8_key);
@@ -240,13 +286,15 @@ kx509(struct kx509_options *opt, int argc, char **argv)
         if (ret == 0 && opt->csr_string)
             set_csr(context, req, opt->csr_string);
         if (ret == 0 && opt->private_key_string)
-            ret = krb5_kx509_ctx_set_key(context, req, opt->private_key_string);
+            ret = krb5_kx509_ctx_set_key(context, req,
+                                         opt->private_key_string);
         if (ret)
             krb5_err(context, 1, ret, "could not setup kx509 request options");
 
         ret = krb5_kx509_ext(context, req, cc, opt->out_string, ccout);
         if (ret)
-            krb5_err(context, 1, ret, "could not acquire certificate with kx509");
+            krb5_err(context, 1, ret,
+                     "could not acquire certificate with kx509");
         krb5_kx509_ctx_free(context, &req);
     }
 

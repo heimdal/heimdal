@@ -64,7 +64,8 @@ static void
 reply(void *ctx, int errorcode, heim_idata *rep, heim_icred cred)
 {
     printf("got reply errorcode %d, rep %.*s\n", errorcode,
-           rep->length < INT_MAX ? rep->length : INT_MAX, rep->data);
+           rep->length < INT_MAX ? (int)rep->length : INT_MAX,
+           (char *)rep->data);
     heim_ipc_semaphore_signal((heim_isemaphore)ctx); /* tell caller we are done */
 }
 

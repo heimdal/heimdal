@@ -358,37 +358,6 @@ krb5_kx509_ctx_add_san_registeredID(krb5_context context,
     return ret;
 }
 
-/**
- * Adds authorization data to a kx509 request context.
- *
- * @param context The Kerberos library context
- * @param ctx The kx509 request context
- * @param ad_type The authorization data type
- * @param ad_data The authorization data
- *
- * @return A krb5 error code.
- */
-krb5_error_code
-krb5_kx509_ctx_add_auth_data(krb5_context context,
-                             krb5_kx509_req_ctx kx509_ctx,
-                             krb5int32 ad_type,
-                             krb5_data *ad_data)
-{
-    AUTHDATA_TYPE *tmp;
-    Kx509CSRPlus *p = &kx509_ctx->csr_plus;
-
-    tmp = realloc(p->authz_datas.val,
-                  sizeof(p->authz_datas.val[0]) * (p->authz_datas.len + 1));
-    if (tmp == NULL)
-        return krb5_enomem(context);
-    p->authz_datas.val = tmp;
-    p->authz_datas.val[p->authz_datas.len++] = ad_type;
-
-    return krb5_auth_con_add_AuthorizationDataIfRelevant(context,
-                                                         kx509_ctx->ac,
-                                                         ad_type, ad_data);
-}
-
 static krb5_error_code
 load_priv_key(krb5_context context,
               krb5_kx509_req_ctx kx509_ctx,
@@ -833,7 +802,7 @@ mk_kx509_req(krb5_context context,
          * that already unless there's no start_realm cc config, in which case
          * we'll use the ccache's default client principal's realm.
          */
-        hostname = krb5_config_get_string(context, NULL, "realm",
+        hostname = krb5_config_get_string(context, NULL, "realms",
                                           kx509_ctx->realm, "kx509_hostname",
                                           NULL);
         if (hostname == NULL)

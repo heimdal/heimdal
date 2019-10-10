@@ -11,6 +11,7 @@ noinst_DATA = \
 	krb5-hdb-mitdb.conf \
 	krb5-weak.conf \
 	krb5-pkinit.conf \
+	krb5-bx509.conf \
 	krb5-pkinit-win.conf \
 	krb5-slave2.conf \
 	krb5-slave.conf
@@ -32,6 +33,7 @@ SCRIPT_TESTS = \
 	check-keys \
 	check-kpasswdd \
 	check-pkinit \
+	check-bx509 \
 	check-iprop \
 	check-referral \
 	check-tester \
@@ -141,6 +143,11 @@ check-pkinit: check-pkinit.in Makefile krb5-pkinit.conf
 	$(chmod) +x check-pkinit.tmp && \
 	mv check-pkinit.tmp check-pkinit
 
+check-bx509: check-bx509.in Makefile krb5-bx509.conf
+	$(do_subst) < $(srcdir)/check-bx509.in > check-bx509.tmp && \
+	$(chmod) +x check-bx509.tmp && \
+	mv check-bx509.tmp check-bx509
+
 check-iprop: check-iprop.in Makefile krb5.conf krb5-slave.conf krb5-slave2.conf
 	$(do_subst) < $(srcdir)/check-iprop.in > check-iprop.tmp && \
 	$(chmod) +x check-iprop.tmp && \
@@ -226,6 +233,10 @@ krb5-pkinit.conf: krb5-pkinit.conf.in Makefile
 	$(do_subst) -e 's,[@]w2k[@],no,g' < $(srcdir)/krb5-pkinit.conf.in > krb5-pkinit.conf.tmp && \
 	mv krb5-pkinit.conf.tmp krb5-pkinit.conf
 
+krb5-bx509.conf: krb5-bx509.conf.in Makefile
+	$(do_subst) -e 's,[@]w2k[@],no,g' < $(srcdir)/krb5-bx509.conf.in > krb5-bx509.conf.tmp && \
+	mv krb5-bx509.conf.tmp krb5-bx509.conf
+
 krb5-pkinit-win.conf: krb5-pkinit.conf.in Makefile
 	$(do_subst) -e 's,[@]w2k[@],yes,g' < $(srcdir)/krb5-pkinit.conf.in > krb5-pkinit-win.conf.tmp && \
 	mv krb5-pkinit-win.conf.tmp krb5-pkinit-win.conf
@@ -260,6 +271,7 @@ CLEANFILES= \
 	krb5-hdb-mitdb.conf \
 	krb5-pkinit-win.conf \
 	krb5-pkinit.conf \
+	krb5-bx509.conf \
 	krb5-slave2.conf \
 	krb5-slave.conf \
 	krb5-weak.conf \
@@ -303,6 +315,7 @@ EXTRA_DIST = \
 	check-keys.in \
 	check-kpasswdd.in \
 	check-pkinit.in \
+	check-bx509.in \
 	check-referral.in \
 	check-tester.in \
 	check-uu.in \
@@ -317,6 +330,7 @@ EXTRA_DIST = \
 	kdc-tester3.json \
 	kdc-tester4.json.in \
 	krb5-pkinit.conf.in \
+	krb5-bx509.conf.in \
 	krb5.conf.in \
 	krb5-authz.conf.in \
 	krb5-authz2.conf.in \

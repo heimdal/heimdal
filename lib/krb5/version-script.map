@@ -432,7 +432,6 @@ HEIMDAL_KRB5_2.0 {
 		krb5_kt_start_seq_get;
 		krb5_kuserok;
 		krb5_kx509;
-		krb5_kx509_ctx_add_auth_data;
 		krb5_kx509_ctx_add_eku;
 		krb5_kx509_ctx_add_san_dns_name;
 		krb5_kx509_ctx_add_san_ms_upn;

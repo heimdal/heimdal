@@ -1,6 +1,6 @@
 @c $Id$
 
-@node What is Kerberos?, Building and Installing, Introduction, Top
+@node What is Kerberos?, What is PKIX?, Introduction, Top
 @chapter What is Kerberos?
 
 @quotation
@@ -162,3 +162,32 @@ from 1988.
 
 These documents can be found on our web-page at
 @url{http://www.pdc.kth.se/kth-krb/}.
+
+@node What is PKIX?, What is a Certification Authority (CA)?, Introduction, Top
+@chapter What is PKIX?
+
+PKIX is the set of Internet standards for Public Key Infrastructure (PKI),
+based on the ITU-T's x.509 standads.  PKI is an authentication mechanism based
+on public keys (the 'PK' in 'PKI').
+
+In PKIX we have public keys "certified" by certification authorities (CAs).  A
+"relying party" is software that validates an entity's certificate and, if
+valid, trusts the certified public key to "speak for" the entity identified by
+the certificate.
+
+In a PKI every entity has one (or more) certified public/private key pairs.
+
+@node What is a Certification Authority (CA)?, Building and Installing, Introduction, Top
+
+A Certification Authority (CA) is an entity in a PKI that issues certificates
+to other entities -- a CA certifies that a public key speaks for a particular,
+named entity.
+
+There are two types of CAs: off-line and online.  Typically PKI hierarchies are
+organized such that the most security-critical private keys are only used by
+off-line CAs to certify the less security-critical public keys of online CAs.
+
+Heimdal has support for off-line CAs using its Hx509 library and hxtool
+command.
+
+Heimdal also has an online CA with a RESTful, HTTPS-based protocol.

@@ -20,13 +20,12 @@
 	pkinit_anchors = FILE:@objdir@/ca.crt
 	pkinit_mappings_file = @srcdir@/pki-mapping
 
-        enable-kx509 = true
-        kx509_include_email_san = true
-        kx509_include_pkinit_san = true
-        kx509_include_dnsname_san = true
+        plugin_dir =  @objdir@/../../kdc/.libs
+
+        simple_csr_authorizer_directory = @objdir@/simple_csr_authz
+
+        enable_kx509 = true
         require_initial_kca_tickets = false
-        kx509_template = FILE:@objdir@/kx509-template.crt
-        kx509_ca = FILE:@objdir@/ca.crt,@srcdir@/../../lib/hx509/data/key.der
 
 	database = {
 		dbname = @objdir@/current-db
@@ -34,6 +33,38 @@
 		mkey_file = @objdir@/mkey.file
                 log_file = @objdir@/log.current-db.log
 	}
+
+
+        realms = {
+                TEST.H5L.SE = {
+                        negotiate_token_validator = {
+                                keytab = HDBGET:@objdir@/current-db
+                        }
+                        kx509 = {
+                                user = {
+                                        include_pkinit_san = true
+                                        subject_name = CN=${principal-name-without-realm},DC=TEST,DC=H5L,DC=SE
+                                        ekus = 1.3.6.1.5.5.7.3.2
+                                        ca = FILE:@objdir@/ca.crt,@srcdir@/../../lib/hx509/data/key.der
+                                        template_cert = FILE:@objdir@/kx509-template.crt
+                                }
+                                hostbased_service = {
+                                        HTTP = {
+                                                include_dnsname_san = true
+                                                ekus = 1.3.6.1.5.5.7.3.1
+                                                ca = FILE:@objdir@/ca.crt,@srcdir@/../../lib/hx509/data/key.der
+                                        }
+                                }
+                                client = {
+                                        ca = FILE:@objdir@/ca.crt,@srcdir@/../../lib/hx509/data/key.der
+                                }
+                                server = {
+                                        ekus = 1.3.6.1.5.5.7.3.1
+                                        ca = FILE:@objdir@/ca.crt,@srcdir@/../../lib/hx509/data/key.der
+                                }
+                        }
+                }
+        }
 
 [hdb]
 	db-dir = @objdir@

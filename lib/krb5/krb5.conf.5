@@ -753,79 +753,106 @@ Specifies the digests the kdc will reply to. The default is
 .Li ntlm-v2 .
 .It Li enable-kx509 = Va boolean
 Enables kx509 service.
-.It Li kx509_ca = Va file
-Specifies the PEM credentials for the kx509 certification authority.
+.Pp
+The kx509 service is configurable for a number of cases:
+.Bl -tag -width "" -offset indent
+.It Li default certificates for user or service principals,
+.It Li non-default certificate requests including subject alternative names (SAN) and extended key usage (EKU) certificate extensions, for either client, server, or mixed usage.
+.El
+.Pp
+Distinct configurations are supported for all of these cases as
+shown below:
+.Bd -literal -offset indent
+[kdc]
+    enable-kx509 = yes | no
+    require_csr  = yes | no
+    require_initial_kca_tickets = yes | no
+    realm = {
+        <REALM> = {
+            kx509 = {
+                <label> = {
+                    <param> = <value>
+                }
+                hostbased_service = {
+                    <service> = {
+                        <param> = <value>
+                    }
+                }
+            }
+        }
+    }
+.Ed
+where
+.Va label
+is one of:
+.Bl -tag -width "xxx" -offset indent
+.It Li user
+for default certificates for user principals,
+.It Li root_user
+for default certificates for root user principals,
+.It Li admin_user
+for default certificates for admin user principals,
+.It Li hostbased_service
+for default certificates for host-based service principals, in which case the
+service name is used as shown above,
+.It Li client
+for non-default client certificates,
+.It Li server
+for non-default server certificates,
+.It Li mixed
+for non-default client and server certificates.
+.El
+and where the parameters are as follows:
+.Bl -tag -width "xxx" -offset indent
+.It Li ca = Va file
+Specifies the PEM credentials for the kx509 certification
+authority.  If not specified for any specific use-case, then that
+use-case will be disabled.
 .It Li require_initial_kca_tickets = Va boolean
 Specified whether to require that tickets for the
 .Li kca_service
 service principal be INITIAL.
 This may be set on a per-realm basis as well as globally.
 Defaults to true for the global setting.
-.It Li kx509_include_pkinit_san = Va boolean
+.It Li include_pkinit_san = Va boolean
 If true then the kx509 client principal's name and realm will be
 included in an
 .Li id-pkinit-san
 subject alternative name certificate extension.
 This can be set on a per-realm basis as well as globally.
 Defaults to true for the global setting.
-.It Li kx509_include_email_san = Va boolean
-If true then the kx509 client user principal's name and realm will be
-included in an
+.It Li email_domain = Va domain
+If set then the kx509 client user principal's name at the given
+domain will be included in an
 .Li rfc822Name
-subject alternative name certificate extension, with the downcased
-realm as the domainname.
+subject alternative name certificate extension.
 This can be set on a per-realm basis as well as globally.
 Defaults to false for the global setting.
-.It Li kx509_include_dnsname_san = Va boolean
-If true then the kx509 host-based or domain-based client principal's
-hostname will be included in an
+.It Li include_dnsname_san = Va boolean
+If true then a kx509 host-based or domain-based client
+principal's hostname will be included in an
 .Li dNSName
 subject alternative name certificate extension, with the
 downcased realm as the domainname.  This can be set on a
 per-realm basis as well as
 globally.  Defaults to false for the global setting.
-.It Li kx509_template = Va file
-Specifies the PEM file with a template for the certificates to be
-issued to kx509 clients whose principal names have one component
-(i.e., are user principals).  A template is a certificate with
-variables to be interpolated in the subjectName.  The following
-variables can be interpolated in the subject name using
-${variable} syntax:
-.Bl -tag -width "xxx" -offset indent
-.It principal-name
-The full name of the kx509 client principal.
-.It principal-name-without-realm
-The full name of the kx509 client principal, excluding the realm name.
-.It principal-name-realm
-The name of the client principal's realm.
-.El
-.It Li kx509_templates = {
-.Bl -tag -width "xxx" -offset indent
-.It Li two_component_user = {
-.Bl -tag -width "xxx" -offset indent
-.It Va first-component-of-principal-name = Va file
-.It ...
-.It Li }
-.El
-.It Li hostbased = {
-.Bl -tag -width "xxx" -offset indent
-.It Va service = Va file
-.It ...
-.It Li }
-.El
-.It Li domainbased = {
-.Bl -tag -width "xxx" -offset indent
-.It Va service = Va file
-.It ...
-.It Li }
-.El
-.It Li }
-.El
-Specifies the PEM files with templates for the certificates to be
-issued to clients with principal names with two or three name
-components.  This is useful for issuing server certificates to
-host-based principals.  The following variables can be
-interpolated in the subject name using
+.It Li ekus = Va OID
+List of OIDs to include as EKUs.
+.It Li subject_name = Va DN
+Specifies a subject name that should either be empty or contain
+variable interpolation as described below for
+.Va template_cert .
+The subject may be the empty string, causing the issued
+certificates' subject names to be empty.
+.It Li template_cert = Va store
+Specifies the hx509 store (e.g.,
+.Va PEM-FILE:path )
+with a template
+for the certificates to be issued to kx509 clients whose
+principal names have one component (i.e., are user principals).
+A template is a certificate with variables to be interpolated in
+the subjectName.  The following variables can be interpolated in
+the subject name using
 .Va ${variable}
 syntax:
 .Bl -tag -width "xxx" -offset indent
@@ -845,6 +872,12 @@ The third component of the client principal.
 The name of the service.
 .It principal-host-name
 The name of the host.
+.El
+.Pp
+If a template and subject name are not specified and no default
+SANs are configured, then no certificate will be issued.
+Otherwise if a template and subject name are not specified, then
+subject of the certificate will be empty.
 .El
 .It Li enable_derived_keys = Va boolean
 Enable the use of derived key namespaces.
@@ -870,13 +903,6 @@ The maximim number of dots in a name matched via
 derived key namespaces.
 .El
 .Pp
-The 
-.Li kx509 ,
-.Li kx509_template ,
-.Li kx509_include_pkinit_san ,
-and
-.Li require_initial_kca_tickets
-parameters may be set on a per-realm basis as well.
 .It Li [kadmin]
 .Bl -tag -width "xxx" -offset indent
 .It Li password_lifetime = Va time

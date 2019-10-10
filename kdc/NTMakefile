@@ -92,17 +92,21 @@ $(LIBEXECDIR)\kdc.exe: \
 
 LIBKDC_OBJS=\
 	$(OBJ)\default_config.obj	\
-	$(OBJ)\set_dbinfo.obj 	\
-	$(OBJ)\digest.obj	\
-	$(OBJ)\fast.obj	\
-	$(OBJ)\kerberos5.obj	\
-	$(OBJ)\krb5tgs.obj	\
-	$(OBJ)\pkinit.obj	\
-	$(OBJ)\pkinit-ec.obj	\
-	$(OBJ)\log.obj		\
-	$(OBJ)\misc.obj		\
-	$(OBJ)\kx509.obj	\
-	$(OBJ)\process.obj	\
+	$(OBJ)\ca.obj			\
+	$(OBJ)\kx509.obj		\
+	$(OBJ)\set_dbinfo.obj		\
+	$(OBJ)\digest.obj		\
+	$(OBJ)\fast.obj			\
+	$(OBJ)\kerberos5.obj		\
+	$(OBJ)\krb5tgs.obj		\
+	$(OBJ)\pkinit.obj		\
+	$(OBJ)\pkinit-ec.obj		\
+	$(OBJ)\log.obj			\
+	$(OBJ)\misc.obj			\
+	$(OBJ)\kx509.obj		\
+	$(OBJ)\token_validator.obj	\
+	$(OBJ)\csr_authorizer.obj	\
+	$(OBJ)\process.obj		\
 	$(OBJ)\windc.obj
 
 LIBKDC_LIBS=\
@@ -126,9 +130,10 @@ clean::
 
 libkdc_la_SOURCES = 		\
 	default_config.c 	\
+	ca.c			\
 	set_dbinfo.c	 	\
 	digest.c		\
-	fast.c		\
+	fast.c			\
 	kdc_locl.h		\
 	kerberos5.c		\
 	krb5tgs.c		\
@@ -137,6 +142,8 @@ libkdc_la_SOURCES = 		\
 	log.c			\
 	misc.c			\
 	kx509.c			\
+	token_validator.c	\
+	csr_authorizer.c	\
 	process.c		\
 	windc.c			\
 	rx.h

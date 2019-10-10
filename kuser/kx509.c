@@ -287,7 +287,8 @@ kx509(struct kx509_options *opt, int argc, char **argv)
             ret = krb5_kx509_ctx_set_key(context, req,
                                          opt->private_key_string);
         if (ret)
-            krb5_err(context, 1, ret, "could not setup kx509 request options");
+            krb5_err(context, 1, ret,
+                     "could not set up kx509 request options");
 
         ret = krb5_kx509_ext(context, req, cc, opt->out_string, ccout);
         if (ret)

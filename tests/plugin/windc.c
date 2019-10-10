@@ -1,6 +1,7 @@
 #include <string.h>
 #include <krb5.h>
 #include <hdb.h>
+#include <hx509.h>
 #include <kdc.h>
 #include <windc_plugin.h>
 

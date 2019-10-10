@@ -7,7 +7,8 @@
 
 KX509 DEFINITIONS ::= BEGIN
 IMPORTS Extensions FROM rfc2459
-        KerberosTime, AUTHDATA-TYPE FROM krb5;
+        KerberosTime FROM krb5
+        KRB5PrincipalName FROM pkinit;
 
 KX509-ERROR-CODE ::= INTEGER {
 	KX509-STATUS-GOOD(0),
@@ -61,12 +62,6 @@ KX509-ERROR-CODE ::= INTEGER {
 Kx509CSRPlus ::= [APPLICATION 35] SEQUENCE {
         -- PKCS#10, DER-encoded CSR, with or without meaningful attributes
         csr             OCTET STRING,
-        -- The AP-REQ's Authenticator may contain authz-data of interest here
-        -- for carrying confidential payloads.  E.g., a bearer token for a user
-        -- to impersonate.  This sequence tells the server what authz-data
-        -- elements there might be, effectively making them critical even if
-        -- they are in AD-IF-RELEVANT containers.
-        authz-datas     SEQUENCE OF AUTHDATA-TYPE,
         -- Desired certificate Extensions such as KeyUsage, ExtKeyUsage, or
         -- subjectAlternativeName (SAN)
         exts            Extensions OPTIONAL,

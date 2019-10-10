@@ -1,0 +1,407 @@
+#!/bin/sh
+#
+# Copyright (c) 2019 Kungliga Tekniska Högskolan
+# (Royal Institute of Technology, Stockholm, Sweden). 
+# All rights reserved. 
+#
+# Redistribution and use in source and binary forms, with or without 
+# modification, are permitted provided that the following conditions 
+# are met: 
+#
+# 1. Redistributions of source code must retain the above copyright 
+#    notice, this list of conditions and the following disclaimer. 
+#
+# 2. Redistributions in binary form must reproduce the above copyright 
+#    notice, this list of conditions and the following disclaimer in the 
+#    documentation and/or other materials provided with the distribution. 
+#
+# 3. Neither the name of the Institute nor the names of its contributors 
+#    may be used to endorse or promote products derived from this software 
+#    without specific prior written permission. 
+#
+# THIS SOFTWARE IS PROVIDED BY THE INSTITUTE AND CONTRIBUTORS ``AS IS'' AND 
+# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE 
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
+# ARE DISCLAIMED.  IN NO EVENT SHALL THE INSTITUTE OR CONTRIBUTORS BE LIABLE 
+# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL 
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS 
+# OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) 
+# HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT 
+# LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY 
+# OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF 
+# SUCH DAMAGE. 
+
+top_builddir="@top_builddir@"
+env_setup="@env_setup@"
+objdir="@objdir@"
+
+testfailed="echo test failed; cat messages.log; exit 1"
+
+. ${env_setup}
+
+# If there is no useful db support compiled in, disable test
+${have_db} || exit 77
+
+R=TEST.H5L.SE
+DCs="DC=test,DC=h5l,DC=se"
+H=datan.test.h5l.se
+
+port=@port@
+
+#kadmin="${kadmin} -l -r $R"
+bx509="${bx509} --reverse-proxied -p $port"
+
+server=datan.test.h5l.se
+cache="FILE:${objdir}/cache.krb5"
+keyfile="${hx509_data}/key.der"
+keyfile2="${hx509_data}/key2.der"
+keytab=FILE:${objdir}/kt
+kt=${objdir}/kt
+
+kinit="${kinit} -c $cache ${afs_no_afslog}"
+klist="${klist} --hidden -v -c $cache"
+kgetcred="${kgetcred} -c $cache"
+kdestroy="${kdestroy} -c $cache ${afs_no_unlog}"
+kx509="${kx509} -c $cache"
+
+KRB5_CONFIG="${objdir}/krb5-bx509.conf"
+export KRB5_CONFIG
+
+rsa=yes
+pkinit=no
+if ${hxtool} info | grep 'rsa: hx509 null RSA' > /dev/null ; then
+    rsa=no
+fi
+if ${hxtool} info | grep 'rand: not available' > /dev/null ; then
+    rsa=no
+fi
+
+if ${kinit} --help 2>&1 | grep "CA certificates" > /dev/null; then
+    pkinit=yes
+fi
+
+# If we doesn't support pkinit and have RSA, give up
+if test "$pkinit" != yes -o "$rsa" != yes ; then
+    exit 77
+fi
+
+
+rm -f current-db*
+rm -f out-*
+rm -f mkey.file*
+rm -f *.pem *.crt *.der
+rm -rf simple_csr_authz
+
+mkdir -p simple_csr_authz
+
+> messages.log
+
+# We'll avoid using a KDC.  We only need one for Negotiate tokens, and we'll
+# use ktutil and kimpersonate to make it possible to create and accept those
+# without a KDC.
+
+# csr_grant ext-type value princ
+csr_grant() {
+    mkdir -p "${objdir}/simple_csr_authz/${3}"
+    touch "${objdir}/simple_csr_authz/${3}/${1}-${2}"
+}
+
+csr_revoke() {
+    rm -rf "${objdir}/simple_csr_authz"
+    mkdir -p "${objdir}/simple_csr_authz"
+}
+
+# get_cert ""         curl-opts
+# get_cert "&qparams" curl-opts
+get_cert() {
+    url="http://${server}:${port}/bx509?csr=$csr${1}"
+    shift
+    curl -g --connect-to ${server}:${port}:localhost:${port}            \
+         -H "Authorization: Negotiate $token"                           \
+         "$@" "$url"
+}
+
+rm -f $kt
+$ktutil -k $keytab add -r -V 1 -e aes128-cts-hmac-sha1-96               \
+    -p HTTP/datan.test.h5l.se@TEST.H5L.SE ||
+    { echo "failed to setup kimpersonate credentials"; exit 2; }
+$ktutil -k $keytab list ||
+    { echo "failed to setup kimpersonate credentials"; exit 2; }
+$kimpersonate --ccache=$cache -k $keytab -R -t aes128-cts-hmac-sha1-96  \
+   -c foo@TEST.H5L.SE -s HTTP/datan.test.h5l.se@TEST.H5L.SE ||
+    { echo "failed to setup kimpersonate credentials"; exit 2; }
+$klist ||
+    { echo "failed to setup kimpersonate credentials"; exit 2; }
+
+echo "Setting up certificates"
+# We need:
+#
+#  - a CA certificate for issuing client certificates
+#  - a CA certificate for issuing server certificates
+#  - a CA certificate for issuing mixed  certificates
+#  - a certificate for bx509 itself (well, not in reverse proxy mode, but we'll
+#    make one anyways)
+
+# Make the realm's user cert issuer CA certificate.
+#
+# NOTE WELL: We need all three KeyUsage values listed below!
+#            We also need this to be of type "pkinit-kdc",
+#            which means we'll get an appropriate EKU OID as
+#            well.
+$hxtool ca  --issue-ca --self-signed --type=pkinit-kdc          \
+            --ku=digitalSignature --ku=keyCertSign --ku=cRLSign \
+            --pk-init-principal=krbtgt/${R}@${R}                \
+            --generate-key=rsa --key-bits=1024                  \
+            --subject="OU=Users,CN=KDC,${DCs}"                  \
+            --certificate=PEM-FILE:"${objdir}/user-issuer.pem" ||
+    { echo "failed to setup CA certificate"; exit 2; }
+
+# We'll use the user cert issuer as the PKINIT anchor, allowing bx509-issued
+# certificates to be used for PKINIT.  Though we won't be testing PKINIT here
+# -- we test kx509->PKINIT in check-pkinit.
+cp ${objdir}/user-issuer.pem ${objdir}/pkinit-anchor.pem
+
+# Put the cert alone in the trust anchors file
+#ex "${objdir}/pkinit-anchor.pem" <<"EOF"
+#/-----BEGIN CERTIFICATE-----
+#1,.-1 d
+#wq
+#EOF
+
+$hxtool ca  --issue-ca --self-signed                                \
+            --ku=digitalSignature --ku=keyCertSign --ku=cRLSign     \
+            --generate-key=rsa --key-bits=1024                      \
+            --subject="OU=Servers,CN=KDC,${DCs}"                    \
+            --certificate=PEM-FILE:"${objdir}/server-issuer.pem" ||
+    { echo "failed to setup CA certificate"; exit 2; }
+
+$hxtool ca  --issue-ca --self-signed                                \
+            --ku=digitalSignature --ku=keyCertSign --ku=cRLSign     \
+            --generate-key=rsa --key-bits=1024                      \
+            --subject="OU=Users,CN=KDC,${DCs}"                      \
+            --certificate=PEM-FILE:"${objdir}/mixed-issuer.pem" ||
+    { echo "failed to setup CA certificate"; exit 2; }
+
+$hxtool ca  --issue-ca --type=https-negotiate-server                \
+            --ca-certificate=PEM-FILE:"${objdir}/server-issuer.pem" \
+            --ku=digitalSignature --pk-init-principal=HTTP/${H}@${R}\
+            --generate-key=rsa --key-bits=1024 --subject=""         \
+            --certificate=PEM-FILE:"${objdir}/bx509.pem" ||
+    { echo "failed to setup CA certificate"; exit 2; }
+
+# XXX Before starting bx509d let us use kdc test programs to check that:
+#
+#  - the negotiate token validator plugin works
+#  - the simple CSR authorizer plugin works
+#  - the KDC CA tester program works
+
+echo "Check gss-token and Negotiate token validator plugin"
+token=$(KRB5CCNAME=$cache $gsstoken HTTP@$H | tr A B)
+$test_token_validator -a datan.test.h5l.se Negotiate "$token" &&
+    { echo "Negotiate token validator accepted invalid token"; exit 2; }
+token=$(KRB5CCNAME=$cache $gsstoken HTTP@$H)
+$test_token_validator -a datan.test.h5l.se Negotiate "$token" ||
+    { echo "Negotiate token validator failed to validate valid token"; exit 2; }
+
+echo "Making a plain CSR"
+$hxtool request-create  --subject='' --generate-key=rsa --key-bits=1024 \
+                        --key=FILE:"${objdir}/k.der" "${objdir}/req" ||
+    { echo "Failed to make a CSR"; exit 2; }
+
+rm -f trivial.pem server.pem email.pem
+
+echo "Testing plain user cert issuance KDC CA"
+$test_kdc_ca -a bx509 -A foo@TEST.H5L.SE PKCS10:${objdir}/req       \
+             PEM-FILE:${objdir}/trivial.pem ||
+    { echo "Trivial offline CA test failed"; exit 2; }
+$hxtool print --content PEM-FILE:${objdir}/trivial.pem ||
+    { echo "Trivial offline CA test failed"; exit 2; }
+
+echo "Testing other cert issuance KDC CA"
+csr_revoke
+# https server cert
+$hxtool request-create  --subject='' --generate-key=rsa --key-bits=1024 \
+                        --key=FILE:"${objdir}/k.der"                    \
+                        --eku=id_pkix_kp_serverAuth                     \
+                        --dnsname=foo.test.h5l.se "${objdir}/req" ||
+    { echo "Failed to make a CSR with a dNSName SAN request"; exit 2; }
+$test_kdc_ca -a bx509 foo@TEST.H5L.SE PKCS10:${objdir}/req              \
+             PEM-FILE:${objdir}/server.pem &&
+    { echo "Trivial offline CA test failed: unauthorized issuance (dNSName)"; exit 2; }
+csr_grant dnsname foo.test.h5l.se foo@TEST.H5L.SE
+csr_grant eku 1.3.6.1.5.5.7.3.1 foo@TEST.H5L.SE
+$test_kdc_ca -a bx509 foo@TEST.H5L.SE PKCS10:${objdir}/req              \
+             PEM-FILE:${objdir}/server.pem ||
+    { echo "Offline CA test failed for explicitly authorized dNSName"; exit 2; }
+$hxtool print --content PEM-FILE:${objdir}/server.pem ||
+    { echo "Offline CA test failed for explicitly authorized dNSName"; exit 2; }
+# email cert
+$hxtool request-create  --subject='' --generate-key=rsa --key-bits=1024 \
+                        --key=FILE:"${objdir}/k.der"                    \
+                        --eku=id_pkix_kp_clientAuth                     \
+                        --email=foo@test.h5l.se "${objdir}/req" ||
+    { echo "Failed to make a CSR with an rfc822Name SAN request"; exit 2; }
+$test_kdc_ca -a bx509 foo@TEST.H5L.SE PKCS10:${objdir}/req              \
+             PEM-FILE:${objdir}/email.pem &&
+    { echo "Trivial offline CA test failed: unauthorized issuance (dNSName)"; exit 2; }
+csr_grant email foo@test.h5l.se foo@TEST.H5L.SE
+csr_grant eku 1.3.6.1.5.5.7.3.2 foo@TEST.H5L.SE
+$test_kdc_ca -a bx509 foo@TEST.H5L.SE PKCS10:${objdir}/req              \
+             PEM-FILE:${objdir}/email.pem ||
+    { echo "Offline CA test failed for explicitly authorized dNSName"; exit 2; }
+$hxtool print --content PEM-FILE:${objdir}/email.pem ||
+    { echo "Offline CA test failed for explicitly authorized dNSName"; exit 2; }
+
+if ! which curl; then
+    echo "curl is not available -- not testing bx509d"
+    exit 0
+fi
+
+echo "Starting bx509d"
+${bx509d} --reverse-proxied -H $H --cert=${objdir}/bx509.pem -t -p $port --daemon ||
+    { echo "bx509 failed to start"; exit 2; }
+bx509pid=`getpid bx509d`
+
+trap "kill -9 ${bx509pid}; echo signal killing bx509d; cat ca.crt kdc.crt pkinit.crt ;exit 1;" EXIT
+ec=0
+
+rm -f trivial.pem server.pem email.pem
+
+echo "Making a plain CSR"
+csr_revoke
+$hxtool request-create  --subject='' --generate-key=rsa --key-bits=1024 \
+                        --key=FILE:"${objdir}/k.der" "${objdir}/req" ||
+    { echo "Failed to make a CSR"; exit 2; }
+csr=$($rkbase64 -- ${objdir}/req | $rkvis -h --stdin)
+
+# XXX Add autoconf check for curl?
+#     Create a barebones bx509 HTTP/1.1 client test program?
+
+echo "Fetching a trivial user certificate"
+token=$(KRB5CCNAME=$cache $gsstoken HTTP@$H)
+if (set -vx; get_cert '' -sf -o "${objdir}/trivial.pem"); then
+    $hxtool print --content "FILE:${objdir}/trivial.pem"
+    if $hxtool acert --end-entity                                            \
+                    --expr="%{certificate.subject} == \"CN=foo,$DCs\""  \
+                    -P "foo@TEST.H5L.SE" "FILE:${objdir}/trivial.pem"; then
+        echo 'Successfully obtained a trivial client certificate!'
+    else
+        echo 'FAIL: Obtained a trivial client certificate w/o expected PKINIT SAN)'
+        exit 1
+    fi
+else
+    echo 'Failed to get a certificate!'
+    exit 1
+fi
+
+echo "Checking that authorization is enforced"
+csr_revoke
+get_cert '&rfc822Name=foo@bar.example' -vvv -o "${objdir}/bad1.pem"
+if (set -vx; get_cert '&rfc822Name=foo@bar.example' -sf -o "${objdir}/trivial.pem"); then
+    $hxtool print --content "FILE:${objdir}/bad1.pem"
+    echo 'Obtained a client certificate for a non-granted name!'
+    exit 1
+else
+    echo 'Correctly failed to get a client certificate for a non-granted name'
+fi
+
+if (set -vx; get_cert "&dNSName=$server" -sf -o "${objdir}/bad2.pem"); then
+    $hxtool print --content "FILE:${objdir}/bad2.pem"
+    echo 'Obtained a server certificate for a non-granted name!'
+    exit 1
+else
+    echo 'Correctly failed to get a server certificate for a non-granted name'
+fi
+
+echo "Fetching a server certificate with one dNSName SAN"
+csr_grant dnsname $server foo@TEST.H5L.SE
+if (set -vx; get_cert "&dNSName=$server" -sf -o "${objdir}/server.pem"); then
+    $hxtool print --content "FILE:${objdir}/server.pem"
+    if (set -vx; $hxtool acert --expr="%{certificate.subject} == \"\""             \
+                    --end-entity -P foo@TEST.H5L.SE               \
+                    "FILE:${objdir}/server.pem"); then
+        echo 'Got a broken server certificate (has PKINIT SAN)'
+        exit 1
+    elif $hxtool acert --end-entity -D $server "FILE:${objdir}/server.pem"; then
+        echo 'Successfully obtained a server certificate!'
+    else
+        echo 'Got a broken server certificate'
+        exit 1
+    fi
+else
+    echo 'Failed to get a server certificate!'
+    exit 1
+fi
+
+echo "Fetching a server certificate with two dNSName SANs"
+csr_grant dnsname "second-$server" foo@TEST.H5L.SE
+if (set -vx;
+    get_cert "&dNSName=${server}&dNSName=second-$server" -sf \
+        -o "${objdir}/server2.pem"); then
+    $hxtool print --content "FILE:${objdir}/server2.pem"
+    if $hxtool acert --expr="%{certificate.subject} == \"\""             \
+                    --end-entity -P foo@TEST.H5L.SE               \
+                    "FILE:${objdir}/server2.pem"; then
+        echo 'Got a broken server certificate (has PKINIT SAN)'
+        exit 1
+    elif $hxtool acert --end-entity -D "$server"                      \
+                                   -D "second-$server"               \
+                                   "FILE:${objdir}/server2.pem"; then
+        echo 'Successfully obtained a server certificate with two dNSName SANs!'
+    else
+        echo 'Got a broken server certificate (wanted two dNSName SANs)'
+        exit 1
+    fi
+else
+    echo 'Failed to get a server certificate with two dNSName SANs!'
+    exit 1
+fi
+
+echo "Fetching an email certificate"
+csr_grant email foo@bar.example foo@TEST.H5L.SE
+if (set -vx; get_cert "&rfc822Name=foo@bar.example" -sf -o "${objdir}/email.pem"); then
+    $hxtool print --content "FILE:${objdir}/email.pem"
+    if $hxtool acert --end-entity -P "foo@TEST.H5L.SE" "FILE:${objdir}/email.pem"; then
+        echo 'Got a broken email certificate (has PKINIT SAN)'
+        exit 1
+    elif $hxtool acert --expr="%{certificate.subject} == \"\""           \
+                      --end-entity -M foo@bar.example                   \
+                      "FILE:${objdir}/email.pem"; then
+        echo 'Successfully obtained a email certificate!'
+    else
+        echo 'Got a broken email certificate'
+        exit 1
+    fi
+else
+    echo 'Failed to get an email certificate!'
+    exit 1
+fi
+
+if false not yet; then
+    # XXX Need to start a KDC to test this.
+    echo "Fetching a Negotiate token"
+    if (set -vx;
+        curl -o negotiate-token -Lgsf --connect-to ${server}:${port}:localhost:${port} \
+            -H "Authorization: Negotiate $token" \
+            "http://${server}:${port}/bnegotiate?target=HTTP%40${server}"); then
+        # bx509 sends us a token w/o a newline for now; we add one because
+        # gss-token expects it.
+        [[ -s negotiate-token ]] && echo >> negotiate-token
+        if [[ -s negotiate-token ]] && KRB5_KTNAME="${etc}/keytab.user" $gsstoken -Nr < negotiate-token; then
+            echo 'Successfully obtained a Negotiate token!'
+        else
+            echo 'Failed to get a Negotiate token!'
+            exit 1
+        fi
+    else
+        echo 'Failed to get a Negotiate token!'
+        exit 1
+    fi
+fi
+
+echo "killing bx509d (${bx509pid})"
+sh ${leaks_kill} bx509 $bx509pid || ec=1
+
+trap "" EXIT
+
+exit $ec

@@ -37,10 +37,45 @@
 #include <getarg.h>
 #include <parse_bytes.h>
 
+static const char *sysplugin_dirs[] =  {
+#ifdef _WIN32
+    "$ORIGIN",
+#else
+    "$ORIGIN/../lib/plugin/kdc",
+#endif
+#ifdef __APPLE__
+    LIBDIR "/plugin/kdc",
+#endif
+    NULL
+};
+
+static void
+load_kdc_plugins_once(void *ctx)
+{
+    krb5_context context = ctx;
+    const char * const *dirs = sysplugin_dirs;
+#ifndef _WIN32
+    char **cfdirs;
+
+    cfdirs = krb5_config_get_strings(context, NULL, "kdc", "plugin_dir", NULL);
+    if (cfdirs)
+        dirs = (const char * const *)cfdirs;
+#endif
+
+    _krb5_load_plugins(context, "kdc", (const char **)dirs);
+
+#ifndef _WIN32
+    krb5_config_free_strings(cfdirs);
+#endif
+}
+
 krb5_error_code
 krb5_kdc_get_config(krb5_context context, krb5_kdc_configuration **config)
 {
+    static heim_base_once_t load_kdc_plugins = HEIM_BASE_ONCE_INIT;
     krb5_kdc_configuration *c;
+
+    heim_base_once_f(&load_kdc_plugins, context, load_kdc_plugins_once);
 
     c = calloc(1, sizeof(*c));
     if (c == NULL) {
@@ -48,6 +83,7 @@ krb5_kdc_get_config(krb5_context context, krb5_kdc_configuration **config)
 	return ENOMEM;
     }
 
+    c->app = "kdc";
     c->num_kdc_processes = -1;
     c->require_preauth = TRUE;
     c->kdc_warn_pwexpire = 0;
@@ -111,17 +147,7 @@ krb5_kdc_get_config(krb5_context context, krb5_kdc_configuration **config)
     c->enable_kx509 =
 	krb5_config_get_bool_default(context, NULL,
 				     FALSE,
-				     "kdc", "enable-kx509", NULL);
-
-    if (c->enable_kx509) {
-        /* These are global defaults.  There are also per-realm defaults. */
-	c->kx509_template =
-	    krb5_config_get_string(context, NULL,
-				   "kdc", "kx509_template", NULL);
-	c->kx509_ca =
-	    krb5_config_get_string(context, NULL,
-				   "kdc", "kx509_ca", NULL);
-    }
+				     "kdc", "enable_kx509", NULL);
 #endif
 
     c->tgt_use_strongest_session_key =

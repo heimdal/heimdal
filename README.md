@@ -4,7 +4,11 @@
 Heimdal
 =======
 
-Heimdal is a Kerberos 5 implementation.
+Heimdal is an implementation of:
+
+ - ASN.1/DER,
+ - PKIX, and
+ - Kerberos.
 
 For information how to install see [here](http://www.h5l.org/compile.html).
 

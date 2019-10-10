@@ -98,6 +98,7 @@ ${kadmin} \
 ${kadmin} add -p foo --use-defaults foo@${R} || exit 1
 ${kadmin} add -p bar --use-defaults bar@${R} || exit 1
 ${kadmin} add -p baz --use-defaults baz@${R} || exit 1
+${kadmin} add -p foo --use-defaults host/server.test.h5l.se@${R} || exit 1
 ${kadmin} modify --alias=baz2@test.h5l.se baz@${R} || exit 1
 ${kadmin} modify --pkinit-acl="CN=baz,DC=test,DC=h5l,DC=se" baz@${R} || exit 1
 
@@ -306,7 +307,7 @@ fi
 
 
 echo "killing kdc (${kdcpid})"
-sh ${leaks_kill} kdc $kdcpid || exit 1
+sh ${leaks_kill} kdc $kdcpid || ec=1
 
 trap "" EXIT
 

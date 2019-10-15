@@ -413,13 +413,13 @@ get_template(krb5_context context,
                                                     "kx509_templates",
                                                     config_label, comp0, NULL);
         if (kx509_template == NULL) {
-            kdc_log(context, reqctx->config, 0, "kx509 template not found for %s",
+            kdc_log(context, reqctx->config, 2, "kx509 template not found for %s",
                     princ);
             ret = KRB5KDC_ERR_POLICY;
             goto out;
         }
     } else {
-        kdc_log(context, reqctx->config, 0, "kx509 client %s has too many components!",
+        kdc_log(context, reqctx->config, 2, "kx509 client %s has too many components!",
                 princ);
         ret = KRB5KDC_ERR_POLICY;
     }
@@ -538,7 +538,7 @@ build_certificate(krb5_context context,
         goto out;
     }
 
-    kdc_log(context, reqctx->config, 0, "Issuing kx509 certificate to %s "
+    kdc_log(context, reqctx->config, 3, "Issuing kx509 certificate to %s "
             "using template %s", princ, kx509_template);
 
     /*
@@ -747,7 +747,7 @@ kdc_kx509_verify_service_principal(krb5_context context,
                KRB5_TGS_NAME) == 0) {
         const char *r = krb5_principal_get_comp_string(context, sprincipal, 1);
         if ((ret = is_local_realm(context, reqctx, r)))
-            kx509_log(context, reqctx, 0, "client used wrong krbtgt for kx509");
+            kx509_log(context, reqctx, 2, "client used wrong krbtgt for kx509");
         goto out;
     }
 
@@ -775,7 +775,7 @@ err:
 	goto out;
 
     ret = KRB5KDC_ERR_SERVER_NOMATCH;
-    kx509_log(context, reqctx, 0, "client used wrong kx509 service principal "
+    kx509_log(context, reqctx, 2, "client used wrong kx509 service principal "
               "(expected %s)", expected);
 
 out:
@@ -798,7 +798,7 @@ encode_reply(krb5_context context,
     reqctx->reply->length = 0;
     ASN1_MALLOC_ENCODE(Kx509Response, data.data, data.length, r, &size, ret);
     if (ret) {
-        kdc_log(context, reqctx->config, 0, "Failed to encode kx509 reply");
+        kdc_log(context, reqctx->config, 1, "Failed to encode kx509 reply");
         return ret;
     }
     if (size != data.length)
@@ -860,7 +860,7 @@ mk_error_response(krb5_context context,
         msg = freeme1;
     }
 
-    kdc_log(context, reqctx->config, 0, "%s", msg);
+    kdc_log(context, reqctx->config, 1, "%s", msg);
 
     rep.hash = NULL;
     rep.certificate = NULL;
@@ -969,7 +969,7 @@ update_csr(krb5_context context, kx509_req_context reqctx, Extensions *exts)
         }
     }
     if (ret)
-        kx509_log(context, reqctx, 0,
+        kx509_log(context, reqctx, 2,
                   "request has bad desired certificate extensions");
     return ret;
 }
@@ -998,7 +998,7 @@ get_csr(krb5_context context, kx509_req_context reqctx)
         ret = hx509_request_parse_der(context->hx509ctx, &reqctx->csr_plus.csr,
                                       &reqctx->csr);
         if (ret)
-            kx509_log(context, reqctx, 0, "invalid CSR");
+            kx509_log(context, reqctx, 2, "invalid CSR");
 
         /*
          * Handle any additional Certificate Extensions requested out of band
@@ -1025,7 +1025,7 @@ get_csr(krb5_context context, kx509_req_context reqctx)
 
     /* Not an RSAPublicKey or garbage follows it */
     if (ret == 0)
-        kx509_log(context, reqctx, 0, "request has garbage after key");
+        kx509_log(context, reqctx, 2, "request has garbage after key");
     return mk_error_response(context, reqctx, KRB5KDC_ERR_NULL_KEY,
                              "Could not decode CSR or RSA subject public key");
 }
@@ -1094,7 +1094,7 @@ _kdc_do_kx509(krb5_context context,
          * possibly change the error code and message.
          */
         is_probe = 1;
-        kx509_log(context, &reqctx, 0, "unauthenticated probe request");
+        kx509_log(context, &reqctx, 4, "unauthenticated probe request");
         ret = mk_error_response(context, &reqctx, KRB5KDC_ERR_NULL_KEY,
                                 "kx509 service is available");
         goto out;
@@ -1229,13 +1229,13 @@ _kdc_do_kx509(krb5_context context,
     ret = encode_reply(context, &reqctx, &rep);
     if (ret)
         /* Can't send an error message either in this case, surely */
-        kx509_log(context, &reqctx, 0, "Could not encode response");
+        kx509_log(context, &reqctx, 1, "Could not encode response");
 
 out:
     if (ret == 0 && !is_probe)
-        kx509_log(context, &reqctx, 0, "Issued certificate");
+        kx509_log(context, &reqctx, 3, "Issued certificate");
     else
-        kx509_log(context, &reqctx, 0, "Did not issue certificate");
+        kx509_log(context, &reqctx, 2, "Did not issue certificate");
     if (reqctx.ac)
 	krb5_auth_con_free(context, reqctx.ac);
     if (ticket)

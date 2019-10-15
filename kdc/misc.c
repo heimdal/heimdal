@@ -58,7 +58,7 @@ log_princ(krb5_context context, krb5_kdc_configuration *config, int lvl,
 
     ret = krb5_unparse_name(context, princ, &princstr);
     if (ret) {
-	kdc_log(context, config, 0, "log_princ: ENOMEM");
+	kdc_log(context, config, 1, "log_princ: ENOMEM");
 	return;
     }
     kdc_log(context, config, lvl, fmt, princstr);
@@ -121,7 +121,7 @@ _derive_the_keys(krb5_context context, krb5_kdc_configuration *config,
 bail:
     if (ret) {
 	const char *msg = krb5_get_error_message(context, ret);
-	kdc_log(context, config, 0, "%s: %s", errmsg, msg);
+	kdc_log(context, config, 1, "%s: %s", errmsg, msg);
 	krb5_free_error_message(context, msg);
     }
     if (crypto)

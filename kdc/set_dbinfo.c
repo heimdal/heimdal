@@ -85,13 +85,13 @@ krb5_kdc_set_dbinfo(krb5_context context, struct krb5_kdc_configuration *c)
 	if (ret)
 	    goto out;
 
-	kdc_log(context, c, 0, "label: %s",
+	kdc_log(context, c, 3, "label: %s",
 		hdb_dbinfo_get_label(context, d));
-	kdc_log(context, c, 0, "\tdbname: %s",
+	kdc_log(context, c, 3, "\tdbname: %s",
 		hdb_dbinfo_get_dbname(context, d));
-	kdc_log(context, c, 0, "\tmkey_file: %s",
+	kdc_log(context, c, 3, "\tmkey_file: %s",
 		hdb_dbinfo_get_mkey_file(context, d));
-	kdc_log(context, c, 0, "\tacl_file: %s",
+	kdc_log(context, c, 3, "\tacl_file: %s",
 		hdb_dbinfo_get_acl_file(context, d));
     }
     hdb_free_dbinfo(context, &info);

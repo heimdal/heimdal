@@ -333,7 +333,7 @@ init_sockets(krb5_context context,
 		krb5_print_address (&addresses.val[j], a_str,
 				    sizeof(a_str), &len);
 
-		kdc_log(context, config, 5, "listening on %s port %u/%s",
+		kdc_log(context, config, 3, "listening on %s port %u/%s",
 			a_str,
 			ntohs(ports[i].port),
 			(ports[i].type == SOCK_STREAM) ? "tcp" : "udp");
@@ -392,7 +392,7 @@ send_reply(krb5_context context,
 	   struct descr *d,
 	   krb5_data *reply)
 {
-    kdc_log(context, config, 5,
+    kdc_log(context, config, 4,
 	    "sending %lu bytes to %s", (unsigned long)reply->length,
 	    d->addr_string);
     if(prependlength){
@@ -403,13 +403,13 @@ send_reply(krb5_context context,
 	l[3] = reply->length & 0xff;
 	if(rk_IS_SOCKET_ERROR(sendto(d->s, l, sizeof(l), 0, d->sa, d->sock_len))) {
 	    kdc_log (context, config,
-		     0, "sendto(%s): %s", d->addr_string,
+		     1, "sendto(%s): %s", d->addr_string,
 		     strerror(rk_SOCK_ERRNO));
 	    return;
 	}
     }
     if(rk_IS_SOCKET_ERROR(sendto(d->s, reply->data, reply->length, 0, d->sa, d->sock_len))) {
-	kdc_log (context, config, 0, "sendto(%s): %s", d->addr_string,
+	kdc_log (context, config, 1, "sendto(%s): %s", d->addr_string,
 		 strerror(rk_SOCK_ERRNO));
 	return;
     }
@@ -443,7 +443,7 @@ do_request(krb5_context context,
 	krb5_data_free(&reply);
     }
     if(ret)
-	kdc_log(context, config, 0,
+	kdc_log(context, config, 1,
 		"Failed processing %lu byte request from %s",
 		(unsigned long)len, d->addr_string);
 }
@@ -462,7 +462,7 @@ handle_udp(krb5_context context,
 
     buf = malloc(max_request_udp);
     if (buf == NULL){
-	kdc_log(context, config, 0, "Failed to allocate %lu bytes",
+	kdc_log(context, config, 1, "Failed to allocate %lu bytes",
 	        (unsigned long)max_request_udp);
 	return;
     }
@@ -591,14 +591,14 @@ grow_descr (krb5_context context,
 
 	grow = max(1024, d->len + n);
 	if (d->size + grow > max_request_tcp) {
-	    kdc_log(context, config, 0, "Request exceeds max request size (%lu bytes).",
+	    kdc_log(context, config, 2, "Request exceeds max request size (%lu bytes).",
 		    (unsigned long)d->size + grow);
 	    clear_descr(d);
 	    return -1;
 	}
 	tmp = realloc (d->buf, d->size + grow);
 	if (tmp == NULL) {
-	    kdc_log(context, config, 0, "Failed to re-allocate %lu bytes.",
+	    kdc_log(context, config, 1, "Failed to re-allocate %lu bytes.",
 		    (unsigned long)d->size + grow);
 	    clear_descr(d);
 	    return -1;
@@ -624,7 +624,7 @@ handle_vanilla_tcp (krb5_context context,
 
     sp = krb5_storage_from_mem(d->buf, d->len);
     if (sp == NULL) {
-	kdc_log (context, config, 0, "krb5_storage_from_mem failed");
+	kdc_log (context, config, 1, "krb5_storage_from_mem failed");
 	return -1;
     }
     krb5_ret_uint32(sp, &len);
@@ -662,35 +662,35 @@ handle_http_tcp (krb5_context context,
     p = NULL;
     t = strtok_r(s, " \t", &p);
     if (t == NULL) {
-	kdc_log(context, config, 0,
+	kdc_log(context, config, 2,
 		"Missing HTTP operand (GET) request from %s", d->addr_string);
 	return -1;
     }
 
     t = strtok_r(NULL, " \t", &p);
     if(t == NULL) {
-	kdc_log(context, config, 0,
+	kdc_log(context, config, 2,
 		"Missing HTTP GET data in request from %s", d->addr_string);
 	return -1;
     }
 
     data = malloc(strlen(t));
     if (data == NULL) {
-	kdc_log(context, config, 0, "Failed to allocate %lu bytes",
+	kdc_log(context, config, 1, "Failed to allocate %lu bytes",
 		(unsigned long)strlen(t));
 	return -1;
     }
     if(*t == '/')
 	t++;
     if(de_http(t) != 0) {
-	kdc_log(context, config, 0, "Malformed HTTP request from %s", d->addr_string);
-	kdc_log(context, config, 5, "HTTP request: %s", t);
+	kdc_log(context, config, 2, "Malformed HTTP request from %s", d->addr_string);
+	kdc_log(context, config, 4, "HTTP request: %s", t);
 	free(data);
 	return -1;
     }
     proto = strtok_r(NULL, " \t", &p);
     if (proto == NULL) {
-	kdc_log(context, config, 0, "Malformed HTTP request from %s", d->addr_string);
+	kdc_log(context, config, 2, "Malformed HTTP request from %s", d->addr_string);
 	free(data);
 	return -1;
     }
@@ -707,16 +707,16 @@ handle_http_tcp (krb5_context context,
 	    "<H1>404 Not found</H1>\r\n"
 	    "That page doesn't exist, maybe you are looking for "
 	    "<A HREF=\"http://www.h5l.org/\">Heimdal</A>?\r\n";
-	kdc_log(context, config, 0, "HTTP request from %s is non KDC request", d->addr_string);
-	kdc_log(context, config, 5, "HTTP request: %s", t);
+	kdc_log(context, config, 2, "HTTP request from %s is non KDC request", d->addr_string);
+	kdc_log(context, config, 4, "HTTP request: %s", t);
 	free(data);
 	if (rk_IS_SOCKET_ERROR(send(d->s, proto, strlen(proto), 0))) {
-	    kdc_log(context, config, 0, "HTTP write failed: %s: %s",
+	    kdc_log(context, config, 1, "HTTP write failed: %s: %s",
 		    d->addr_string, strerror(rk_SOCK_ERRNO));
 	    return -1;
 	}
 	if (rk_IS_SOCKET_ERROR(send(d->s, msg, strlen(msg), 0))) {
-	    kdc_log(context, config, 0, "HTTP write failed: %s: %s",
+	    kdc_log(context, config, 1, "HTTP write failed: %s: %s",
 		    d->addr_string, strerror(rk_SOCK_ERRNO));
 	    return -1;
 	}
@@ -732,13 +732,13 @@ handle_http_tcp (krb5_context context,
 	    "Content-transfer-encoding: binary\r\n\r\n";
 	if (rk_IS_SOCKET_ERROR(send(d->s, proto, strlen(proto), 0))) {
 	    free(data);
-	    kdc_log(context, config, 0, "HTTP write failed: %s: %s",
+	    kdc_log(context, config, 1, "HTTP write failed: %s: %s",
 		    d->addr_string, strerror(rk_SOCK_ERRNO));
 	    return -1;
 	}
 	if (rk_IS_SOCKET_ERROR(send(d->s, msg, strlen(msg), 0))) {
 	    free(data);
-	    kdc_log(context, config, 0, "HTTP write failed: %s: %s",
+	    kdc_log(context, config, 1, "HTTP write failed: %s: %s",
 		    d->addr_string, strerror(rk_SOCK_ERRNO));
 	    return -1;
 	}
@@ -831,13 +831,13 @@ handle_tcp(krb5_context context,
         }
     } else if (d[idx].len > 4) {
 	kdc_log (context, config,
-		 0, "TCP data of strange type from %s to %s/%d",
+		 2, "TCP data of strange type from %s to %s/%d",
 		 d[idx].addr_string, descr_type(d + idx),
 		 ntohs(d[idx].port));
 	if (d[idx].buf[0] & 0x80) {
 	    krb5_data reply;
 
-	    kdc_log (context, config, 0, "TCP extension not supported");
+	    kdc_log (context, config, 2, "TCP extension not supported");
 
 	    ret = krb5_mk_error(context,
 				KRB5KRB_ERR_FIELD_TOOLONG,
@@ -952,7 +952,7 @@ loop(krb5_context context, krb5_kdc_configuration *config,
 	    if (!rk_IS_BAD_SOCKET(d[i].s)) {
 		if (d[i].type == SOCK_STREAM &&
 		   d[i].timeout && d[i].timeout < time(NULL)) {
-		    kdc_log(context, config, 1,
+		    kdc_log(context, config, 2,
 			    "TCP-connection from %s expired after %lu bytes",
 			    d[i].addr_string, (unsigned long)d[i].len);
 		    clear_descr(&d[i]);
@@ -1067,8 +1067,8 @@ reap_kid(krb5_context context, krb5_kdc_configuration *config,
     int status;
     int i = 0; /* quiet warnings */
     int ret = 0;
-    int level = 0;
-    const char *sev = "";
+    int level = 3;
+    const char *sev = "info: ";
 
     pid = waitpid(-1, &status, options);
     if (pid <= 0)
@@ -1091,7 +1091,7 @@ reap_kid(krb5_context context, krb5_kdc_configuration *config,
             /* should not happen */
             what = "untracked";
             sev = "warning: ";
-            level = 1;
+            level = 2;
         }
     }
 
@@ -1194,9 +1194,9 @@ start_kdc(krb5_context context,
         bonjour_kid(context, config, argv0, islive);
 # endif
 
-    kdc_log(context, config, 0, "KDC started master process pid=%d", getpid());
+    kdc_log(context, config, 3, "KDC started master process pid=%d", getpid());
 #else
-    kdc_log(context, config, 0, "KDC started pid=%d", getpid());
+    kdc_log(context, config, 3, "KDC started pid=%d", getpid());
 #endif
 
     roken_detach_finish(NULL, daemon_child);
@@ -1222,7 +1222,7 @@ start_kdc(krb5_context context,
                 exit(0);
             case -1:
                 /* XXXrcd: hmmm, do something useful?? */
-                kdc_log(context, config, 0,
+                kdc_log(context, config, 1,
                         "KDC master process could not fork worker process");
                 sleep(10);
                 break;
@@ -1239,7 +1239,7 @@ start_kdc(krb5_context context,
                             "warning: forked untracked child process: %d",
                             (int)pid);
                 }
-                kdc_log(context, config, 0, "KDC worker process started: %d",
+                kdc_log(context, config, 3, "KDC worker process started: %d",
                         pid);
                 num_kdcs++;
                 /* Slow down the creation of KDCs... */
@@ -1296,15 +1296,15 @@ start_kdc(krb5_context context,
         }
 
      end:
-        kdc_log(context, config, 0, "KDC master process exiting");
+        kdc_log(context, config, 3, "KDC master process exiting");
     } else {
         loop(context, config, &d, &ndescr, -1);
-        kdc_log(context, config, 0, "KDC exiting");
+        kdc_log(context, config, 3, "KDC exiting");
     }
     free(pids);
 #else
     loop(context, config, &d, &ndescr, -1);
-    kdc_log(context, config, 0, "KDC exiting");
+    kdc_log(context, config, 3, "KDC exiting");
 #endif
 
     free(d);

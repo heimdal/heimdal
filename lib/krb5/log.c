@@ -268,7 +268,7 @@ KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_addlog_dest(krb5_context context, krb5_log_facility *f, const char *orig)
 {
     krb5_error_code ret = 0;
-    int min = 0, max = -1, n;
+    int min = 0, max = 3, n;
     char c;
     const char *p = orig;
 #ifdef _WIN32
@@ -285,6 +285,8 @@ krb5_addlog_dest(krb5_context context, krb5_log_facility *f, const char *orig)
 		max = min;
 	    }
 	}
+	if (c == '-')
+	    max = -1;
     }
     if(n){
 #ifdef _WIN32

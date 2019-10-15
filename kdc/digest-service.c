@@ -67,7 +67,7 @@ ntlm_service(void *ctx, const heim_idata *req,
     int ret;
     const char *domain;
 
-    kdc_log(context, config, 1, "digest-request: uid=%d",
+    kdc_log(context, config, 4, "digest-request: uid=%d",
 	    (int)heim_ipc_cred_get_uid(cred));
 
     if (heim_ipc_cred_get_uid(cred) != 0) {
@@ -93,7 +93,7 @@ ntlm_service(void *ctx, const heim_idata *req,
 	goto failed;
     }
 
-    kdc_log(context, config, 1, "digest-request: user=%s/%s",
+    kdc_log(context, config, 4, "digest-request: user=%s/%s",
 	    ntq.loginUserName, domain);
 
     if (ntq.lmchallenge.length != 8)
@@ -126,7 +126,7 @@ ntlm_service(void *ctx, const heim_idata *req,
 	}
     }
 
-    kdc_log(context, config, 2,
+    kdc_log(context, config, 5,
 	    "digest-request: found user, processing ntlm request");
 
     if (ntq.ntChallengeResponce.length != 24) {
@@ -205,7 +205,7 @@ ntlm_service(void *ctx, const heim_idata *req,
 	abort();
 
   failed:
-    kdc_log(context, config, 1, "digest-request: %d", ret);
+    kdc_log(context, config, 4, "digest-request: %d", ret);
 
     (*complete)(cctx, ret, &rep);
 

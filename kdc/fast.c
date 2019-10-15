@@ -115,7 +115,7 @@ fast_parse_cookie(kdc_request_t r, const PA_DATA *pa)
 	goto out;
 
     if (r->fast.expiration < kdc_time) {
-	kdc_log(r->context, r->config, 0, "fast cookie expired");
+	kdc_log(r->context, r->config, 2, "fast cookie expired");
 	ret = KRB5KDC_ERR_POLICY;
 	goto out;
     }
@@ -298,7 +298,7 @@ _kdc_fast_mk_error(krb5_context context,
 				  KRB5_PADATA_FX_COOKIE,
 				  NULL, 0);
 	if (ret) {
-	    kdc_log(r->context, r->config, 0, "failed to add fast cookie with: %d", ret);
+	    kdc_log(r->context, r->config, 1, "failed to add fast cookie with: %d", ret);
 	    free_METHOD_DATA(error_method);
 	    return ret;
 	}
@@ -388,7 +388,7 @@ _kdc_fast_unwrap_request(kdc_request_t r)
     }
 
     if (fxreq.element != choice_PA_FX_FAST_REQUEST_armored_data) {
-	kdc_log(r->context, r->config, 0,
+	kdc_log(r->context, r->config, 2,
 		"AS-REQ FAST contain unknown type: %d", (int)fxreq.element);
 	ret = KRB5KDC_ERR_PREAUTH_FAILED;
 	goto out;
@@ -396,14 +396,14 @@ _kdc_fast_unwrap_request(kdc_request_t r)
 
     /* pull out armor key */
     if (fxreq.u.armored_data.armor == NULL) {
-	kdc_log(r->context, r->config, 0,
+	kdc_log(r->context, r->config, 2,
 		"AS-REQ armor missing");
 	ret = KRB5KDC_ERR_PREAUTH_FAILED;
 	goto out;
     }
 
     if (fxreq.u.armored_data.armor->armor_type != 1) {
-	kdc_log(r->context, r->config, 0,
+	kdc_log(r->context, r->config, 2,
 		"AS-REQ armor type not ap-req");
 	ret = KRB5KDC_ERR_PREAUTH_FAILED;
 	goto out;
@@ -413,7 +413,7 @@ _kdc_fast_unwrap_request(kdc_request_t r)
 			     &fxreq.u.armored_data.armor->armor_value,
 			     &ap_req);
     if(ret) {
-	kdc_log(r->context, r->config, 0, "AP-REQ decode failed");
+	kdc_log(r->context, r->config, 2, "AP-REQ decode failed");
 	goto out;
     }
 
@@ -462,7 +462,7 @@ _kdc_fast_unwrap_request(kdc_request_t r)
 
     if (ac->remote_subkey == NULL) {
 	krb5_auth_con_free(r->context, ac);
-	kdc_log(r->context, r->config, 0,
+	kdc_log(r->context, r->config, 2,
 		"FAST AP-REQ remote subkey missing");
 	ret = KRB5KDC_ERR_PREAUTH_FAILED;
 	goto out;
@@ -495,7 +495,7 @@ _kdc_fast_unwrap_request(kdc_request_t r)
 			       buf, len, 
 			       &fxreq.u.armored_data.req_checksum);
     if (ret) {
-	kdc_log(r->context, r->config, 0,
+	kdc_log(r->context, r->config, 2,
 		"FAST request have a bad checksum");
 	goto out;
     }
@@ -505,7 +505,7 @@ _kdc_fast_unwrap_request(kdc_request_t r)
 				     &fxreq.u.armored_data.enc_fast_req,
 				     &data);
     if (ret) {
-	kdc_log(r->context, r->config, 0,
+	kdc_log(r->context, r->config, 2,
 		"Failed to decrypt FAST request");
 	goto out;
     }
@@ -529,7 +529,7 @@ _kdc_fast_unwrap_request(kdc_request_t r)
 	    
     /* check for unsupported mandatory options */
     if (FastOptions2int(fastreq.fast_options) & 0xfffc) {
-	kdc_log(r->context, r->config, 0,
+	kdc_log(r->context, r->config, 2,
 		"FAST unsupported mandatory option set");
 	ret = KRB5KDC_ERR_PREAUTH_FAILED;
 	goto out;

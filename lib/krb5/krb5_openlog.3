@@ -203,9 +203,29 @@ parameter to
 .Fn krb5_log
 is within this range (inclusive) the message gets logged to this
 destination, otherwise not. Either of the min and max valued may be
-omitted, in this case min is assumed to be zero, and max is assumed to be
-infinity.  If you don't include a dash, both min and max gets set to the
-specified value. If no range is specified, all messages gets logged.
+omitted, in this case min is assumed to be 0, and max is assumed to
+be 3.
+If you don't include a dash, both min and max get set to the
+specified value.
+.Ss Levels
+Each log message has a level as follows:
+.Bl -tag -width "xxx" -offset indent
+.It 0
+Critical conditions.
+This is a condition that should be corrected immediately, such as a
+corrupted Kerberos database.
+.It 1
+Errors.
+These are errors that occur in the normal processing of requests.
+.It 2
+Warning messages.
+On the KDC, this includes malformed requests and requests that
+are out of policy.
+.It 3
+Informational messages.
+.It 4-9
+Debugging messages with increasing obscurity as the level rises.
+.El
 .Sh EXAMPLES
 .Bd -literal -offset indent
 [logging]

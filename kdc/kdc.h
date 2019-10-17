@@ -98,6 +98,7 @@ typedef struct krb5_kdc_configuration {
 
     krb5_boolean enable_derived_keys;
     int derived_keys_ndots;
+    int derived_keys_maxdots;
 
 } krb5_kdc_configuration;
 

@@ -142,8 +142,9 @@ _fetch_it(krb5_context context, krb5_kdc_configuration *config, HDB *db,
     char *tmp;
     const char *realm = NULL;
     int is_derived_key = 0;
-    size_t ndots = 0;
     size_t hdots;
+    size_t ndots = 0;
+    size_t maxdots = -1;
 
     flags |= HDB_F_DECRYPT;
 
@@ -167,6 +168,7 @@ _fetch_it(krb5_context context, krb5_kdc_configuration *config, HDB *db,
 	    }
 
 	    ndots = config->derived_keys_ndots;
+	    maxdots = config->derived_keys_maxdots;
 
 	    for (hdots = 0, tmp = host; tmp && *tmp; tmp++)
 		if (*tmp == '.')
@@ -191,6 +193,13 @@ _fetch_it(krb5_context context, krb5_kdc_configuration *config, HDB *db,
 
 	if (!tmp || !*tmp || hdots < ndots)
 	    break;
+
+	while (maxdots > 0 && hdots > maxdots) {
+		tmp = strchr(tmp, '.');
+		/* tmp != NULL because maxdots > 0 */
+		tmp++;
+		hdots--;
+	}
 
 	is_derived_key = 1;
 	krb5_free_principal(context, tmpprinc);

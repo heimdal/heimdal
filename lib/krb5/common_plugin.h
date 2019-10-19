@@ -48,6 +48,14 @@ typedef struct krb5_plugin_common_ftable_desc krb5_plugin_common_ftable;
 typedef struct krb5_plugin_common_ftable_desc *krb5_plugin_common_ftable_p;
 typedef struct krb5_plugin_common_ftable_desc * const krb5_plugin_common_ftable_cp;
 
+typedef krb5_error_code
+(KRB5_CALLCONV krb5_plugin_load_ft)(krb5_context context,
+                                    krb5_get_instance_func_t *func,
+                                    size_t *n_ftables,
+                                    krb5_plugin_common_ftable_cp **ftables);
+
+typedef krb5_plugin_load_ft *krb5_plugin_load_t;
+
 /*
  * All plugins must export a function named "<type>_plugin_load" with
  * a signature of:

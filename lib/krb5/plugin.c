@@ -514,12 +514,6 @@ add_dso_plugin_struct(krb5_context context,
     return plugins;
 }
 
-typedef krb5_error_code
-(KRB5_CALLCONV *krb5_plugin_load_t)(krb5_context context,
-				    krb5_get_instance_func_t *func,
-				    size_t *n_ftables,
-				    krb5_plugin_common_ftable_cp **ftables);
-
 static krb5_boolean
 validate_plugin_deps(krb5_context context,
 		     struct krb5_plugin_data *caller,

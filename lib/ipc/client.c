@@ -339,7 +339,8 @@ connect_unix(struct path_ctx *s)
 }
 
 static int
-common_path_init(const char *service,
+common_path_init(const char *base,
+                 const char *service,
 		 const char *file,
 		 void **ctx)
 {
@@ -350,7 +351,7 @@ common_path_init(const char *service,
 	return ENOMEM;
     s->fd = -1;
 
-    if (asprintf(&s->path, "/var/run/.heim_%s-%s", service, file) == -1) {
+    if (asprintf(&s->path, "%s/.heim_%s-%s", base, service, file) == -1) {
 	free(s);
 	return ENOMEM;
     }
@@ -363,9 +364,10 @@ static int
 unix_socket_init(const char *service,
 		 void **ctx)
 {
+    const char *base = secure_getenv("HEIM_IPC_DIR");
     int ret;
 
-    ret = common_path_init(service, "socket", ctx);
+    ret = common_path_init(base ? base : _PATH_VARRUN, service, "socket", ctx);
     if (ret)
 	return ret;
     ret = connect_unix(*ctx);
@@ -438,10 +440,11 @@ static int
 door_init(const char *service,
 	  void **ctx)
 {
+    const char *base = secure_getenv("HEIM_IPC_DIR");
     int ret;
     struct path_ctx *d;
 
-    ret = common_path_init(service, "door", ctx);
+    ret = common_path_init(base ? base : _PATH_VARRUN, service, "door", ctx);
     if (ret)
 	return ret;
 

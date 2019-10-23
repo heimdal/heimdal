@@ -1094,12 +1094,15 @@ heim_sipc_service_unix(const char *service,
 		       void *user, heim_sipc *ctx)
 {
     struct sockaddr_un un;
+    const char *d = secure_getenv("HEIM_IPC_DIR");
     int fd, ret;
 
     un.sun_family = AF_UNIX;
 
-    snprintf(un.sun_path, sizeof(un.sun_path),
-	     "/var/run/.heim_%s-socket", service);
+    if (snprintf(un.sun_path, sizeof(un.sun_path),
+                 "%s/.heim_%s-socket", d ? d : _PATH_VARRUN,
+                 service) > sizeof(un.sun_path) + sizeof("-s") - 1)
+        return ENAMETOOLONG;
     fd = socket(AF_UNIX, SOCK_STREAM, 0);
     if (fd < 0)
 	return errno;
@@ -1276,7 +1279,11 @@ heim_sipc_service_door(const char *service,
     ct->userctx = user;
     ct->callback = callback;
 
-    snprintf(path, sizeof(path), "/var/run/.heim_%s-door", service);
+    if (snprintf(path, sizeof(path), "/var/run/.heim_%s-door",
+                 service) >= sizeof(path) + sizeof("-d") - 1) {
+        ret = ENAMETOOLONG;
+        goto cleanup;
+    }
     fd = door_create(door_callback, ct, DOOR_REFUSE_DESC | DOOR_NO_CANCEL);
     if (fd < 0) {
         ret = errno;

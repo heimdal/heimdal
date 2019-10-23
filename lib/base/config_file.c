@@ -86,6 +86,26 @@ static heim_error_code parse_list(struct fileptr *f, unsigned *lineno,
                                   heim_config_binding **parent,
                                   const char **err_message);
 
+static int
+todash(int c)
+{
+    if (c == '_')
+        return '-';
+    return c;
+}
+
+static int
+strcmp_du(const char *s1, const char *s2)
+{
+    while (todash((unsigned char)*s1) == todash((unsigned char)*s2)) {
+        if (*s1 == '\0')
+            return 0;
+        s1++;
+        s2++;
+    }
+    return todash((unsigned char)*s1) - todash((unsigned char)*s2);
+}
+
 heim_config_section *
 heim_config_get_entry(heim_config_section **parent, const char *name, int type)
 {
@@ -94,7 +114,7 @@ heim_config_get_entry(heim_config_section **parent, const char *name, int type)
     for (q = parent; *q != NULL; q = &(*q)->next)
         if (type == heim_config_list &&
             (unsigned)type == (*q)->type &&
-            strcmp(name, (*q)->name) == 0)
+            strcmp_du(name, (*q)->name) == 0)
             return *q;
     *q = calloc(1, sizeof(**q));
     if (*q == NULL)
@@ -788,7 +808,7 @@ vget_next(heim_context context,
     const char *p = va_arg(args, const char *);
 
     while (b != NULL) {
-        if (strcmp(b->name, name) == 0) {
+        if (strcmp_du(b->name, name) == 0) {
             if (b->type == (unsigned)type && p == NULL) {
                 *pointer = b;
                 return b->u.generic;
@@ -826,7 +846,7 @@ heim_config_vget_next(heim_context context,
     /* we were called again, so just look for more entries with the
        same name and type */
     for (b = (*pointer)->next; b != NULL; b = b->next) {
-        if(strcmp(b->name, (*pointer)->name) == 0 && b->type == (unsigned)type) {
+        if(strcmp_du(b->name, (*pointer)->name) == 0 && b->type == (unsigned)type) {
             *pointer = b;
             return b->u.generic;
         }

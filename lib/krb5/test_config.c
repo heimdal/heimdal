@@ -239,10 +239,47 @@ check_escaped_strings(void)
     krb5_free_context(context);
 }
 
+static void
+check_dash_underscore(void)
+{
+    krb5_context context;
+    krb5_config_section *c = NULL;
+    krb5_error_code ret;
+    const char *s;
+    char **ps;
+
+    ret = krb5_init_context(&context);
+    if (ret)
+        errx(1, "krb5_init_context %d", ret);
+
+    ret = krb5_config_parse_file(context, "test_config_strings.out", &c);
+    if (ret)
+        krb5_errx(context, 1, "krb5_config_parse_file()");
+
+    s = krb5_config_get_string(context, c, "dash-test", "final-value", NULL);
+    if (s == NULL || strcmp(s, "through-section") != 0)
+        errx(1, "dash/underscore lookup failed");
+
+    ps = krb5_config_get_strings(context, c, "dash-test", "same-name", NULL);
+    if (ps == NULL ||
+        ps[0] == NULL || strcmp(ps[0], "first") != 0 ||
+        ps[1] == NULL || strcmp(ps[1], "second") != 0 ||
+        ps[2] != NULL)
+        errx(1, "dash/underscore iteration failed");
+    krb5_config_free_strings(ps);
+
+    ret = krb5_config_file_free(context, c);
+    if (ret)
+        krb5_errx(context, 1, "krb5_config_file_free()");
+
+    krb5_free_context(context);
+}
+
 int
 main(int argc, char **argv)
 {
     check_config_files();
     check_escaped_strings();
+    check_dash_underscore();
     return 0;
 }

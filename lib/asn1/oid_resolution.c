@@ -181,7 +181,7 @@ sort_sym_oids(int (*cmp)(const void *, const void *))
 int
 der_find_heim_oid_by_name(const char *str, const heim_oid **oid)
 {
-    size_t right = num_sym_oids;
+    size_t right = num_sym_oids - 1;
     size_t left = 0;
 
     *oid = NULL;
@@ -198,14 +198,12 @@ der_find_heim_oid_by_name(const char *str, const heim_oid **oid)
             *oid = sym_oids_sorted_by_name[mid].oid;
             return 0;
         }
-        if (cmp < 0 && right)
+        if (cmp < 0 && mid > 0) /* avoid underflow */
             right = mid - 1;
         else if (cmp < 0)
             return -1;
-        else if (mid < num_sym_oids - 1)
-            left = mid + 1;
         else
-            return -1;
+            left = mid + 1;
     }
     return -1;
 }

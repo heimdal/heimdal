@@ -155,6 +155,7 @@ id-at-name			OBJECT IDENTIFIER ::= { id-x520-at 41 }
 id-at-givenName			OBJECT IDENTIFIER ::= { id-x520-at 42 }
 id-at-initials			OBJECT IDENTIFIER ::= { id-x520-at 43 }
 id-at-generationQualifier	OBJECT IDENTIFIER ::= { id-x520-at 44 }
+id-at-dnQualifier               OBJECT IDENTIFIER ::= { id-x520-at 46 }
 id-at-pseudonym			OBJECT IDENTIFIER ::= { id-x520-at 65 }
 -- RFC 2247
 id-Userid		      	OBJECT IDENTIFIER ::=
@@ -364,9 +365,11 @@ id-x509-ce-subjectDirectoryAttributes OBJECT IDENTIFIER ::=  { id-x509-ce 9 }
 id-x509-ce-policyConstraints OBJECT IDENTIFIER ::=  { id-x509-ce 36 }
 
 id-x509-ce-extKeyUsage OBJECT IDENTIFIER ::= { id-x509-ce 37}
+id-x509-ce-anyExtendedKeyUsage OBJECT IDENTIFIER ::= { id-x509-ce-extKeyUsage 0 }
 
 ExtKeyUsage ::= SEQUENCE OF OBJECT IDENTIFIER
 
+id-x509-ce-cRLReasons OBJECT IDENTIFIER ::= { id-x509-ce 21 }
 id-x509-ce-cRLDistributionPoints OBJECT IDENTIFIER ::=  { id-x509-ce 31 }
 id-x509-ce-deltaCRLIndicator OBJECT IDENTIFIER ::= { id-x509-ce 27 }
 id-x509-ce-issuingDistributionPoint OBJECT IDENTIFIER ::= { id-x509-ce 28 }
@@ -525,9 +528,11 @@ id-pkix-on OBJECT IDENTIFIER ::= { id-pkix 8 }
 id-pkix-on-xmppAddr OBJECT IDENTIFIER ::= { id-pkix-on 5 }
 id-pkix-on-dnsSRV OBJECT IDENTIFIER ::= { id-pkix-on 7 }
 
+-- EKUs
 id-pkix-kp OBJECT IDENTIFIER ::= { id-pkix 3 }
 id-pkix-kp-serverAuth OBJECT IDENTIFIER ::= { id-pkix-kp 1 }
 id-pkix-kp-clientAuth OBJECT IDENTIFIER ::= { id-pkix-kp 2 }
+id-pkix-kp-codeSigning OBJECT IDENTIFIER ::= { id-pkix-kp 3 }
 id-pkix-kp-emailProtection OBJECT IDENTIFIER ::= { id-pkix-kp 4 }
 id-pkix-kp-timeStamping OBJECT IDENTIFIER ::= { id-pkix-kp 8 }
 id-pkix-kp-OCSPSigning OBJECT IDENTIFIER ::= { id-pkix-kp 9 }
@@ -546,6 +551,11 @@ AuthorityInfoAccessSyntax ::= SEQUENCE SIZE (1..MAX) OF AccessDescription
 -- RFC 3820 Proxy Certificate Profile
 
 id-pkix-pe-proxyCertInfo OBJECT IDENTIFIER ::= { id-pkix-pe 14 }
+
+id-pkix-pe-subjectInfoAccess OBJECT IDENTIFIER ::= { id-pkix-pe 11 }
+
+SubjectInfoAccessSyntax  ::=
+       SEQUENCE SIZE (1..MAX) OF AccessDescription
 
 id-pkix-ppl  OBJECT IDENTIFIER ::= { id-pkix 21 }
 
@@ -623,5 +633,19 @@ ub-surname-length INTEGER ::= 40
 ub-terminal-id-length INTEGER ::= 24
 ub-unformatted-address-length INTEGER ::= 180
 ub-x121-address-length INTEGER ::= 16
+
+-- Misc OIDs from RFC5280.  We should add related types as well.
+
+-- Policy qualifiers
+id-pkix-qt OBJECT IDENTIFIER ::= { id-pkix 2 }
+id-pkix-qt-cps      OBJECT IDENTIFIER ::=  { id-pkix-qt 1 }
+id-pkix-qt-unotice  OBJECT IDENTIFIER ::=  { id-pkix-qt 2 }
+
+-- Access description
+id-pkix-ad OBJECT IDENTIFIER ::= { id-pkix 48 }
+id-pkix-ad-ocsp         OBJECT IDENTIFIER ::= { id-pkix-ad 1 }
+id-pkix-ad-caIssuers    OBJECT IDENTIFIER ::= { id-pkix-ad 2 }
+id-pkix-ad-timeStamping OBJECT IDENTIFIER ::= { id-pkix-ad 3 }
+id-pkix-ad-caRepository OBJECT IDENTIFIER ::= { id-pkix-ad 5 }
 
 END

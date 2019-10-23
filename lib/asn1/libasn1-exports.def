@@ -25,6 +25,7 @@ EXPORTS
 	asn1_oid_id_at_commonName	DATA
 	asn1_oid_id_at_countryName	DATA
 	asn1_oid_id_at_description	DATA
+	asn1_oid_id_at_dnQualifier	DATA
 	asn1_oid_id_at_generationQualifier	DATA
 	asn1_oid_id_at_givenName	DATA
 	asn1_oid_id_at_initials	DATA
@@ -44,12 +45,9 @@ EXPORTS
 	asn1_oid_id_dsa_with_sha1	DATA
 	asn1_oid_id_ecDH	DATA
 	asn1_oid_id_ecdsa_with_SHA1	DATA
-	asn1_oid_id_ecdsa_with_SHA224   DATA
 	asn1_oid_id_ecdsa_with_SHA224	DATA
 	asn1_oid_id_ecdsa_with_SHA256	DATA
-	asn1_oid_id_ecdsa_with_SHA384   DATA
 	asn1_oid_id_ecdsa_with_SHA384	DATA
-	asn1_oid_id_ecdsa_with_SHA512   DATA
 	asn1_oid_id_ecdsa_with_SHA512	DATA
 	asn1_oid_id_ec_group_secp160r1	DATA
 	asn1_oid_id_ec_group_secp160r2	DATA
@@ -62,8 +60,8 @@ EXPORTS
 	asn1_oid_id_heim_rsa_pkcs1_x509	DATA
 	asn1_oid_id_ms_cert_enroll_domaincontroller	DATA
 	asn1_oid_id_ms_client_authentication	DATA
-	asn1_oid_id_netscape_cert_comment	DATA
 	asn1_oid_id_netscape	DATA
+	asn1_oid_id_netscape_cert_comment	DATA
 	asn1_oid_id_nist_aes_algs	DATA
 	asn1_oid_id_nistAlgorithm	DATA
 	asn1_oid_id_nist_sha_algs	DATA
@@ -74,16 +72,16 @@ EXPORTS
 	asn1_oid_id_pbewithSHAAnd40BitRC2_CBC	DATA
 	asn1_oid_id_pbeWithSHAAnd40BitRC4	DATA
 	asn1_oid_id_pkauthdata	DATA
+	asn1_oid_id_pkcs_1	DATA
+	asn1_oid_id_pkcs_12	DATA
 	asn1_oid_id_pkcs12_bagtypes	DATA
 	asn1_oid_id_pkcs12_certBag	DATA
 	asn1_oid_id_pkcs12_crlBag	DATA
-	asn1_oid_id_pkcs_12	DATA
 	asn1_oid_id_pkcs12_keyBag	DATA
 	asn1_oid_id_pkcs_12PbeIds	DATA
 	asn1_oid_id_pkcs12_pkcs8ShroudedKeyBag	DATA
 	asn1_oid_id_pkcs12_safeContentsBag	DATA
 	asn1_oid_id_pkcs12_secretBag	DATA
-	asn1_oid_id_pkcs_1	DATA
 	asn1_oid_id_pkcs1_md2WithRSAEncryption	DATA
 	asn1_oid_id_pkcs1_md5WithRSAEncryption	DATA
 	asn1_oid_id_pkcs1_rsaEncryption	DATA
@@ -106,46 +104,57 @@ EXPORTS
 	asn1_oid_id_pkcs7_envelopedData	DATA
 	asn1_oid_id_pkcs7_signedAndEnvelopedData	DATA
 	asn1_oid_id_pkcs7_signedData	DATA
+	asn1_oid_id_pkcs_9	DATA
 	asn1_oid_id_pkcs_9_at_certTypes	DATA
 	asn1_oid_id_pkcs_9_at_certTypes_x509	DATA
 	asn1_oid_id_pkcs_9_at_friendlyName	DATA
 	asn1_oid_id_pkcs_9_at_localKeyId	DATA
 	asn1_oid_id_pkcs9_contentType	DATA
 	asn1_oid_id_pkcs9_countersignature	DATA
-	asn1_oid_id_pkcs_9	DATA
 	asn1_oid_id_pkcs9_emailAddress	DATA
+	asn1_oid_id_pkcs9_extReq	DATA
 	asn1_oid_id_pkcs9_messageDigest	DATA
 	asn1_oid_id_pkcs9_signingTime	DATA
 	asn1_oid_id_pkdhkeydata	DATA
 	asn1_oid_id_pkekuoid	DATA
 	asn1_oid_id_pkinit	DATA
+	asn1_oid_id_pkinit_kdf	DATA
 	asn1_oid_id_pkinit_kdf_ah_sha1	DATA
 	asn1_oid_id_pkinit_kdf_ah_sha256	DATA
 	asn1_oid_id_pkinit_kdf_ah_sha512	DATA
-	asn1_oid_id_pkinit_kdf	DATA
 	asn1_oid_id_pkinit_ms_eku	DATA
 	asn1_oid_id_pkinit_ms_san	DATA
 	asn1_oid_id_pkinit_san	DATA
 	asn1_oid_id_pkix	DATA
-	asn1_oid_id_pkix_kp_clientAuth	DATA
+	asn1_oid_id_pkix_ad	DATA
+	asn1_oid_id_pkix_ad_caIssuers	DATA
+	asn1_oid_id_pkix_ad_caRepository	DATA
+	asn1_oid_id_pkix_ad_ocsp	DATA
+	asn1_oid_id_pkix_ad_timeStamping	DATA
 	asn1_oid_id_pkix_kp	DATA
+	asn1_oid_id_pkix_kp_clientAuth	DATA
+	asn1_oid_id_pkix_kp_codeSigning	DATA
 	asn1_oid_id_pkix_kp_emailProtection	DATA
 	asn1_oid_id_pkix_kp_OCSPSigning	DATA
 	asn1_oid_id_pkix_kp_serverAuth	DATA
 	asn1_oid_id_pkix_kp_timeStamping	DATA
-	asn1_oid_id_pkix_ocsp_basic	DATA
 	asn1_oid_id_pkix_ocsp	DATA
+	asn1_oid_id_pkix_ocsp_basic	DATA
 	asn1_oid_id_pkix_ocsp_nonce	DATA
 	asn1_oid_id_pkix_on	DATA
 	asn1_oid_id_pkix_on_dnsSRV	DATA
 	asn1_oid_id_pkix_on_xmppAddr	DATA
-	asn1_oid_id_pkix_pe_authorityInfoAccess	DATA
 	asn1_oid_id_pkix_pe	DATA
+	asn1_oid_id_pkix_pe_authorityInfoAccess	DATA
 	asn1_oid_id_pkix_pe_proxyCertInfo	DATA
-	asn1_oid_id_pkix_ppl_anyLanguage	DATA
+	asn1_oid_id_pkix_pe_subjectInfoAccess	DATA
 	asn1_oid_id_pkix_ppl	DATA
+	asn1_oid_id_pkix_ppl_anyLanguage	DATA
 	asn1_oid_id_pkix_ppl_independent	DATA
 	asn1_oid_id_pkix_ppl_inheritAll	DATA
+	asn1_oid_id_pkix_qt	DATA
+	asn1_oid_id_pkix_qt_cps	DATA
+	asn1_oid_id_pkix_qt_unotice	DATA
 	asn1_oid_id_pkkdcekuoid	DATA
 	asn1_oid_id_pkrkeydata	DATA
 	asn1_oid_id_rsa_digestAlgorithm	DATA
@@ -164,6 +173,7 @@ EXPORTS
 	asn1_oid_id_Userid	DATA
 	asn1_oid_id_uspkicommon_card_id	DATA
 	asn1_oid_id_uspkicommon_piv_interim	DATA
+	asn1_oid_id_x509_ce	DATA
 	asn1_oid_id_x509_ce_authorityKeyIdentifier	DATA
 	asn1_oid_id_x509_ce_basicConstraints	DATA
 	asn1_oid_id_x509_ce_certificateIssuer	DATA
@@ -171,7 +181,7 @@ EXPORTS
 	asn1_oid_id_x509_ce_cRLDistributionPoints	DATA
 	asn1_oid_id_x509_ce_cRLNumber	DATA
 	asn1_oid_id_x509_ce_cRLReason	DATA
-	asn1_oid_id_x509_ce	DATA
+	asn1_oid_id_x509_ce_cRLReasons	DATA
 	asn1_oid_id_x509_ce_deltaCRLIndicator	DATA
 	asn1_oid_id_x509_ce_extKeyUsage	DATA
 	asn1_oid_id_x509_ce_freshestCRL	DATA

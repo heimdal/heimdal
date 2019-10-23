@@ -823,7 +823,30 @@ The name of the service.
 .It principal-host-name
 The name of the host.
 .El
+.It Li enable_derived_keys = Va boolean
+Enable the use of derived key namespaces.
+When enabled, principals of the form
+.Pp
+.Ar WELLKNOWN/DERIVED-KEY/<alg>/<namespace>@REALM
+.Pp
+match any request of the form:
+.Ar */*.<namespace>@REALM .
+The keys are derived from the keys in the database and
+the name of the requested principal via the algorithm
+specified by
+.Ar <alg> .
+Currently, only
+.Ar KRB5-CRYPTO-PRFPLUS
+which is implemented by the function
+.Fn krb5_crypto_prfplus .
+.It Li derived_keys_ndots = Va Integer
+The minimum number of dots in a name matched via
+derived key namespaces.
+.It Li derived_keys_maxdots = Va Integer
+The maximim number of dots in a name matched via
+derived key namespaces.
 .El
+.Pp
 The 
 .Li kx509 ,
 .Li kx509_template ,

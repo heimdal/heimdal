@@ -175,6 +175,7 @@ EXPORTS
 	hx509_free_octet_string_list
 	hx509_general_name_unparse
 	hx509_get_error_string
+	hx509_get_instance
 	hx509_get_one_cert
 	hx509_lock_add_cert
 	hx509_lock_add_certs

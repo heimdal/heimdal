@@ -102,6 +102,30 @@ init_context_once(void *ignored)
 }
 
 /**
+ * Return a cookie identifying this instance of a library.
+ *
+ * Inputs:
+ *
+ * @context     A krb5_context
+ * @module      Our library name or a library we depend on
+ *
+ * Outputs:     The instance cookie
+ *
+ * @ingroup     krb5_support
+ */
+
+HX509_LIB_FUNCTION uintptr_t HX509_LIB_CALL
+hx509_get_instance(const char *libname)
+{
+    static const char *instance = "libhx509";
+
+    if (strcmp(libname, "hx509") == 0)
+        return (uintptr_t)instance;
+
+    return 0;
+}
+
+/**
  * Creates a hx509 context that most functions in the library
  * uses. The context is only allowed to be used by one thread at each
  * moment. Free the context with hx509_context_free().

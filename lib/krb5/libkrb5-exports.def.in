@@ -684,6 +684,7 @@ EXPORTS
 	krb5_ticket_get_authorization_data_type
 	krb5_ticket_get_client
 	krb5_ticket_get_endtime
+	krb5_ticket_get_times
 	krb5_ticket_get_server
 	krb5_timeofday
 	krb5_unparse_name

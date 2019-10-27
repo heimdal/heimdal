@@ -147,7 +147,7 @@ krb5_ticket_get_server(krb5_context context,
 }
 
 /**
- * Return end time of ticket
+ * Return end time of a ticket
  *
  * @param context a Kerberos 5 context
  * @param ticket ticket to copy
@@ -162,6 +162,29 @@ krb5_ticket_get_endtime(krb5_context context,
 			const krb5_ticket *ticket)
 {
     return ticket->ticket.endtime;
+}
+
+/**
+ * Return authentication, start, end, and renew limit times of a ticket
+ *
+ * @param context a Kerberos 5 context
+ * @param ticket ticket to copy
+ * @param t pointer to krb5_times structure
+ *
+ * @ingroup krb5
+ */
+
+KRB5_LIB_FUNCTION void KRB5_LIB_CALL
+krb5_ticket_get_times(krb5_context context,
+                      const krb5_ticket *ticket,
+                      krb5_times *t)
+{
+    t->authtime   = ticket->ticket.authtime;
+    t->starttime  = ticket->ticket.starttime  ? *ticket->ticket.starttime  :
+                                                t->authtime;
+    t->endtime    = ticket->ticket.endtime;
+    t->renew_till = ticket->ticket.renew_till ? *ticket->ticket.renew_till :
+                                                t->endtime;
 }
 
 /**

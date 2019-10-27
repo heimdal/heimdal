@@ -7,7 +7,7 @@
 
 KX509 DEFINITIONS ::= BEGIN
 IMPORTS Extensions FROM rfc2459
-        AUTHDATA-TYPE FROM krb5;
+        KerberosTime, AUTHDATA-TYPE FROM krb5;
 
 KX509-ERROR-CODE ::= INTEGER {
 	KX509-STATUS-GOOD(0),
@@ -69,7 +69,10 @@ Kx509CSRPlus ::= [APPLICATION 35] SEQUENCE {
         authz-datas     SEQUENCE OF AUTHDATA-TYPE,
         -- Desired certificate Extensions such as KeyUsage, ExtKeyUsage, or
         -- subjectAlternativeName (SAN)
-        exts            Extensions OPTIONAL
+        exts            Extensions OPTIONAL,
+        -- Desired certificate lifetime
+        req-life        KerberosTime OPTIONAL,
+        ...
 }
 
 -- Version 2

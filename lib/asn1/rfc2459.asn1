@@ -534,8 +534,36 @@ id-pkix-kp-serverAuth OBJECT IDENTIFIER ::= { id-pkix-kp 1 }
 id-pkix-kp-clientAuth OBJECT IDENTIFIER ::= { id-pkix-kp 2 }
 id-pkix-kp-codeSigning OBJECT IDENTIFIER ::= { id-pkix-kp 3 }
 id-pkix-kp-emailProtection OBJECT IDENTIFIER ::= { id-pkix-kp 4 }
+id-pkix-kp-ipsecEndSystem OBJECT IDENTIFIER ::= { id-pkix-kp 5 }
+id-pkix-kp-ipsecTunnel OBJECT IDENTIFIER ::= { id-pkix-kp 6 }
+id-pkix-kp-ipsecUser OBJECT IDENTIFIER ::= { id-pkix-kp 7 }
 id-pkix-kp-timeStamping OBJECT IDENTIFIER ::= { id-pkix-kp 8 }
 id-pkix-kp-OCSPSigning OBJECT IDENTIFIER ::= { id-pkix-kp 9 }
+-- The following are taken from RFC7299 and others
+id-pkix-kp-DVCS OBJECT IDENTIFIER ::= { id-pkix-kp 10 }
+id-pkix-kp-ipsecIKE OBJECT IDENTIFIER ::= { id-pkix-kp 17 }
+id-pkix-kp-capwapAC OBJECT IDENTIFIER ::= { id-pkix-kp 18 }
+id-pkix-kp-capwapWTP OBJECT IDENTIFIER ::= { id-pkix-kp 19 }
+id-pkix-kp-sipDomain OBJECT IDENTIFIER ::= { id-pkix-kp 20 }        -- RFC5924
+id-pkix-kp-secureShellClient OBJECT IDENTIFIER ::= { id-pkix-kp 21 }
+id-pkix-kp-secureShellServer OBJECT IDENTIFIER ::= { id-pkix-kp 22 }
+id-pkix-kp-sendRouter OBJECT IDENTIFIER ::= { id-pkix-kp 23 }
+id-pkix-kp-sendProxiedRouter OBJECT IDENTIFIER ::= { id-pkix-kp 24 }
+id-pkix-kp-sendOwner OBJECT IDENTIFIER ::= { id-pkix-kp 25 }
+id-pkix-kp-sendProxiedOwner OBJECT IDENTIFIER ::= { id-pkix-kp 26 }
+id-pkix-kp-cmcCA OBJECT IDENTIFIER ::= { id-pkix-kp 27 }            -- RFC6402
+id-pkix-kp-cmcRA OBJECT IDENTIFIER ::= { id-pkix-kp 28 }            -- RFC6402
+id-pkix-kp-cmcArchive OBJECT IDENTIFIER ::= { id-pkix-kp 29 }       -- RFC6402
+id-pkix-kp-bgpsec-router OBJECT IDENTIFIER ::= { id-pkix-kp 30 }    -- RFC8209
+-- The following are MSFT EKUs taken from OpenSSL
+id-msft OBJECT IDENTIFIER ::= { 1 3 6 1 4 1 311 }
+id-msft-kp-msCodeInd OBJECT IDENTIFIER ::= { id-msft 2 1 21 }
+id-msft-kp-msCodeCom OBJECT IDENTIFIER ::= { id-msft 2 1 22 }
+id-msft-kp-msCTLSign OBJECT IDENTIFIER ::= { id-msft 10 3 1 }
+id-msft-kp-msSGC OBJECT IDENTIFIER ::= { id-msft 10 3 3 }
+id-msft-kp-msEFS OBJECT IDENTIFIER ::= { id-msft 10 3 4 }
+id-msft-kp-msSmartcardLogin OBJECT IDENTIFIER ::= { id-msft 20 2 2 }
+id-msft-kp-msUPN OBJECT IDENTIFIER ::= { id-msft 20 2 3 }
 
 id-pkix-pe OBJECT IDENTIFIER ::= { id-pkix 1 }
 

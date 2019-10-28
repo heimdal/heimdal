@@ -3,6 +3,8 @@
 HEIMDAL_X509_1.2 {
 	global:
 		_hx509_cert_assign_key;
+		_hx509_cert_get_keyusage;
+		_hx509_cert_get_version;
 		_hx509_cert_private_key;
 		_hx509_certs_keys_free;
 		_hx509_certs_keys_get;
@@ -14,6 +16,7 @@ HEIMDAL_X509_1.2 {
 		_hx509_generate_private_key_free;
 		_hx509_generate_private_key_init;
 		_hx509_generate_private_key_is_ca;
+		_hx509_get_cert;
 		_hx509_make_pkinit_san;
 		_hx509_map_file_os;
 		_hx509_name_from_Name;

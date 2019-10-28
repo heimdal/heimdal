@@ -2364,6 +2364,547 @@ hxtool_list_oids(void *opt, int argc, char **argv)
     return 0;
 }
 
+static int
+acert1_sans_utf8_other(struct acert_options *opt,
+                       struct getarg_strings *wanted,
+                       const char *type,
+                       heim_any *san,
+                       size_t *count)
+{
+    size_t k, len;
+
+    if (!wanted->num_strings)
+        return 0;
+    for (k = 0; k < wanted->num_strings; k++) {
+        len = strlen(wanted->strings[k]);
+        if (len == san->length &&
+            strncmp(san->data, wanted->strings[k], len) == 0) {
+            if (opt->verbose_flag)
+                fprintf(stderr, "Matched OtherName SAN %s (%s)\n",
+                        wanted->strings[k], type);
+            (*count)++;
+            return 0;
+        }
+    }
+    if (opt->verbose_flag)
+        fprintf(stderr, "Did not match OtherName SAN %s (%s)\n",
+                wanted->strings[k], type);
+    return -1;
+}
+
+static int
+acert1_sans_other(struct acert_options *opt,
+                  heim_oid *type_id,
+                  heim_any *value,
+                  size_t *count)
+{
+    heim_any pkinit;
+    size_t k, match;
+    const char *type_str = NULL;
+    char *s = NULL;
+    int ret;
+
+    (void) der_print_heim_oid_sym(type_id, '.', &s);
+    type_str = s ? s : "<unknown>";
+    if (der_heim_oid_cmp(type_id, &asn1_oid_id_pkix_on_xmppAddr) == 0) {
+        ret = acert1_sans_utf8_other(opt, &opt->has_xmpp_san_strings,
+                                     s ? s : "xmpp", value, count);
+        free(s);
+        return ret;
+    }
+    if (der_heim_oid_cmp(type_id, &asn1_oid_id_pkinit_san) != 0) {
+        if (opt->verbose_flag)
+            fprintf(stderr, "Ignoring OtherName SAN of type %s\n", type_str);
+        free(s);
+        return -1;
+    }
+
+    free(s);
+    type_str = s = NULL;
+
+    if (opt->has_pkinit_san_strings.num_strings == 0)
+        return 0;
+
+    for (k = 0; k < opt->has_pkinit_san_strings.num_strings; k++) {
+        const char *s2 = opt->has_pkinit_san_strings.strings[k];
+
+        if ((ret = _hx509_make_pkinit_san(context, s2, &pkinit)))
+            return ret;
+        match = (pkinit.length == value->length &&
+            memcmp(pkinit.data, value->data, pkinit.length) == 0);
+        free(pkinit.data);
+        if (match) {
+            if (opt->verbose_flag)
+                fprintf(stderr, "Matched PKINIT SAN %s\n", s2);
+            (*count)++;
+            return 0;
+        }
+    }
+    if (opt->verbose_flag)
+        fprintf(stderr, "Unexpected PKINIT SAN\n");
+    return -1;
+}
+
+static int
+acert1_sans(struct acert_options *opt,
+            Extension *e,
+            size_t *count,
+            size_t *found)
+{
+    heim_printable_string hps;
+    GeneralNames gns;
+    size_t i, k, sz;
+    size_t unwanted = 0;
+    int ret = 0;
+
+    memset(&gns, 0, sizeof(gns));
+    decode_GeneralNames(e->extnValue.data, e->extnValue.length, &gns, &sz);
+    for (i = 0; (ret == -1 || ret == 0) && i < gns.len; i++) {
+        GeneralName *gn = &gns.val[i];
+        const char *s;
+
+        (*found)++;
+        if (gn->element == choice_GeneralName_rfc822Name) {
+            for (k = 0; k < opt->has_email_san_strings.num_strings; k++) {
+                s = opt->has_email_san_strings.strings[k];
+                hps.data = rk_UNCONST(s);
+                hps.length = strlen(s);
+                if (der_printable_string_cmp(&gn->u.rfc822Name, &hps) == 0) {
+                    if (opt->verbose_flag)
+                        fprintf(stderr, "Matched e-mail address SAN %s\n", s);
+                    (*count)++;
+                    break;
+                }
+            }
+            if (k && k == opt->has_email_san_strings.num_strings) {
+                if (opt->verbose_flag)
+                    fprintf(stderr, "Unexpected e-mail address SAN %.*s\n",
+                            (int)gn->u.rfc822Name.length,
+                            (const char *)gn->u.rfc822Name.data);
+                unwanted++;
+            }
+        } else if (gn->element == choice_GeneralName_dNSName) {
+            for (k = 0; k < opt->has_dnsname_san_strings.num_strings; k++) {
+                s = opt->has_dnsname_san_strings.strings[k];
+                hps.data = rk_UNCONST(s);
+                hps.length = strlen(s);
+                if (der_printable_string_cmp(&gn->u.dNSName, &hps) == 0) {
+                    if (opt->verbose_flag)
+                        fprintf(stderr, "Matched dNSName SAN %s\n", s);
+                    (*count)++;
+                    break;
+                }
+            }
+            if (k && k == opt->has_dnsname_san_strings.num_strings) {
+                if (opt->verbose_flag)
+                    fprintf(stderr, "Unexpected e-mail address SAN %.*s\n",
+                            (int)gn->u.dNSName.length,
+                            (const char *)gn->u.dNSName.data);
+                unwanted++;
+            }
+        } else if (gn->element == choice_GeneralName_registeredID) {
+            for (k = 0; k < opt->has_registeredID_san_strings.num_strings; k++) {
+                s = opt->has_registeredID_san_strings.strings[k];
+                heim_oid oid;
+
+                memset(&oid, 0, sizeof(oid));
+                if ((ret = der_parse_heim_oid(s, NULL, &oid)))
+                    break;
+                if (der_heim_oid_cmp(&gn->u.registeredID, &oid) == 0) {
+                    der_free_oid(&oid);
+                    if (opt->verbose_flag)
+                        fprintf(stderr, "Matched registeredID SAN %s\n", s);
+                    (*count)++;
+                    break;
+                }
+                der_free_oid(&oid);
+            }
+            if (k && k == opt->has_dnsname_san_strings.num_strings) {
+                if (opt->verbose_flag)
+                    fprintf(stderr, "Unexpected registeredID SAN\n");
+                unwanted++;
+            }
+        } else if (gn->element == choice_GeneralName_otherName) {
+            ret = acert1_sans_other(opt, &gn->u.otherName.type_id,
+                                    &gn->u.otherName.value, count);
+        } else if (opt->verbose_flag) {
+            fprintf(stderr, "Unexpected unsupported SAN\n");
+            unwanted++;
+        }
+    }
+    free_GeneralNames(&gns);
+    if (ret == 0 && unwanted && opt->exact_flag)
+        return -1;
+    return ret;
+}
+
+static int
+acert1_ekus(struct acert_options *opt,
+            Extension *e,
+            size_t *count,
+            size_t *found)
+{
+    ExtKeyUsage eku;
+    size_t i, k, sz;
+    size_t unwanted = 0;
+    int ret = 0;
+
+    memset(&eku, 0, sizeof(eku));
+    decode_ExtKeyUsage(e->extnValue.data, e->extnValue.length, &eku, &sz);
+    for (i = 0; (ret == -1 || ret == 0) && i < eku.len; i++) {
+        (*found)++;
+        for (k = 0; k < opt->has_eku_strings.num_strings; k++) {
+            const char *s = opt->has_eku_strings.strings[k];
+            heim_oid oid;
+
+            memset(&oid, 0, sizeof(oid));
+            if ((ret = der_parse_heim_oid(s, NULL, &oid)))
+                break;
+            if (der_heim_oid_cmp(&eku.val[i], &oid) == 0) {
+                der_free_oid(&oid);
+                if (opt->verbose_flag)
+                    fprintf(stderr, "Matched EKU OID %s\n", s);
+                (*count)++;
+                break;
+            }
+            der_free_oid(&oid);
+        }
+        if (k && k == opt->has_eku_strings.num_strings) {
+            char *oids = NULL;
+
+            (void) der_print_heim_oid_sym(&eku.val[i], '.', &oids);
+            if (opt->verbose_flag)
+                fprintf(stderr, "Unexpected EKU OID %s\n",
+                        oids ? oids : "<could-not-format-OID>");
+            unwanted++;
+        }
+    }
+    free_ExtKeyUsage(&eku);
+    if (ret == 0 && unwanted && opt->exact_flag)
+        return -1;
+    return ret;
+}
+
+static int
+acert1_kus(struct acert_options *opt,
+           Extension *e,
+           size_t *count,
+           size_t *found)
+{
+    const struct units *u = asn1_KeyUsage_units();
+    uint64_t ku_num;
+    KeyUsage ku;
+    size_t unwanted = 0;
+    size_t wanted = opt->has_ku_strings.num_strings;
+    size_t i, k, sz;
+
+    memset(&ku, 0, sizeof(ku));
+    decode_KeyUsage(e->extnValue.data, e->extnValue.length, &ku, &sz);
+    ku_num = KeyUsage2int(ku);
+
+    /* Validate requested key usage values */
+    for (k = 0; k < wanted; k++) {
+        const char *s = opt->has_ku_strings.strings[k];
+
+        for (i = 0; u[i].name; i++)
+            if (strcmp(s, u[i].name) == 0)
+                break;
+
+        if (u[i].name == NULL)
+            warnx("Warning: requested key usage %s unknown", s);
+    }
+
+    for (i = 0; u[i].name; i++) {
+        if ((u[i].mult & ku_num))
+            (*found)++;
+        for (k = 0; k < wanted; k++) {
+            const char *s = opt->has_ku_strings.strings[k];
+
+            if (!(u[i].mult & ku_num) || strcmp(s, u[i].name) != 0)
+                continue;
+
+            if (opt->verbose_flag)
+                fprintf(stderr, "Matched key usage %s\n", s);
+            (*count)++;
+            break;
+        }
+        if ((u[i].mult & ku_num) && k == wanted) {
+            if (opt->verbose_flag)
+                fprintf(stderr, "Unexpected key usage %s\n", u[i].name);
+            unwanted++;
+        }
+    }
+
+    return (unwanted && opt->exact_flag) ? -1 : 0;
+}
+
+static time_t
+ptime(const char *s)
+{
+    struct tm at_tm;
+    char *rest;
+    int at_s;
+
+    if ((rest = strptime(s, "%Y-%m-%dT%H:%M:%S", &at_tm)) != NULL &&
+        rest[0] == '\0')
+        return mktime(&at_tm);
+    if ((rest = strptime(s, "%Y%m%d%H%M%S", &at_tm)) != NULL && rest[0] == '\0')
+        return mktime(&at_tm);
+    if ((at_s = parse_time(s, "s")) != -1)
+        return time(NULL) + at_s;
+    errx(1, "Could not parse time spec %s", s);
+}
+
+static int
+acert1_validity(struct acert_options *opt, hx509_cert cert)
+{
+    time_t not_before_eq = 0;
+    time_t not_before_lt = 0;
+    time_t not_before_gt = 0;
+    time_t not_after_eq = 0;
+    time_t not_after_lt = 0;
+    time_t not_after_gt = 0;
+
+    if (opt->valid_now_flag) {
+        time_t now = time(NULL);
+
+        if (hx509_cert_get_notBefore(cert) > now) {
+            if (opt->verbose_flag)
+                fprintf(stderr, "Certificate not valid yet\n");
+            return -1;
+        }
+        if (hx509_cert_get_notAfter(cert) < now) {
+            if (opt->verbose_flag)
+                fprintf(stderr, "Certificate currently expired\n");
+            return -1;
+        }
+    }
+    if (opt->valid_at_string) {
+        time_t at = ptime(opt->valid_at_string);
+
+        if (hx509_cert_get_notBefore(cert) > at) {
+            if (opt->verbose_flag)
+                fprintf(stderr, "Certificate not valid yet at %s\n",
+                        opt->valid_at_string);
+            return -1;
+        }
+        if (hx509_cert_get_notAfter(cert) < at) {
+            if (opt->verbose_flag)
+                fprintf(stderr, "Certificate expired before %s\n",
+                        opt->valid_at_string);
+            return -1;
+        }
+    }
+
+    if (opt->not_before_eq_string)
+        not_before_eq = ptime(opt->not_before_eq_string);
+    if (opt->not_before_lt_string)
+        not_before_lt = ptime(opt->not_before_lt_string);
+    if (opt->not_before_gt_string)
+        not_before_gt = ptime(opt->not_before_gt_string);
+    if (opt->not_after_eq_string)
+        not_after_eq = ptime(opt->not_after_eq_string);
+    if (opt->not_after_lt_string)
+        not_after_lt = ptime(opt->not_after_lt_string);
+    if (opt->not_after_gt_string)
+        not_after_gt = ptime(opt->not_after_gt_string);
+
+    if ((not_before_eq && hx509_cert_get_notBefore(cert) != not_before_eq) ||
+        (not_before_lt && hx509_cert_get_notBefore(cert) >= not_before_lt) ||
+        (not_before_gt && hx509_cert_get_notBefore(cert) <= not_before_gt)) {
+        if (opt->verbose_flag)
+            fprintf(stderr, "Certificate notBefore not as requested\n");
+        return -1;
+    }
+    if ((not_after_eq && hx509_cert_get_notAfter(cert) != not_after_eq) ||
+        (not_after_lt && hx509_cert_get_notAfter(cert) >= not_after_lt) ||
+        (not_after_gt && hx509_cert_get_notAfter(cert) <= not_after_gt)) {
+        if (opt->verbose_flag)
+            fprintf(stderr, "Certificate notAfter not as requested\n");
+        return -1;
+    }
+
+    return 0;
+}
+
+static int
+acert1(struct acert_options *opt, size_t cert_num, hx509_cert cert, int *matched)
+{
+    const heim_oid *misc_exts [] = {
+        &asn1_oid_id_x509_ce_authorityKeyIdentifier,
+        &asn1_oid_id_x509_ce_subjectKeyIdentifier,
+        &asn1_oid_id_x509_ce_basicConstraints,
+        &asn1_oid_id_x509_ce_nameConstraints,
+        &asn1_oid_id_x509_ce_certificatePolicies,
+        &asn1_oid_id_x509_ce_policyMappings,
+        &asn1_oid_id_x509_ce_issuerAltName,
+        &asn1_oid_id_x509_ce_subjectDirectoryAttributes,
+        &asn1_oid_id_x509_ce_policyConstraints,
+        &asn1_oid_id_x509_ce_cRLDistributionPoints,
+        &asn1_oid_id_x509_ce_deltaCRLIndicator,
+        &asn1_oid_id_x509_ce_issuingDistributionPoint,
+        &asn1_oid_id_x509_ce_inhibitAnyPolicy,
+        &asn1_oid_id_x509_ce_cRLNumber,
+        &asn1_oid_id_x509_ce_freshestCRL,
+        NULL
+    };
+    const Certificate *c;
+    const Extensions *e;
+    KeyUsage ku;
+    size_t matched_elements = 0;
+    size_t wanted, sans_wanted, ekus_wanted, kus_wanted;
+    size_t found, sans_found, ekus_found, kus_found;
+    size_t i, k;
+    int ret;
+
+    if ((c = _hx509_get_cert(cert)) == NULL)
+        errx(1, "Could not get Certificate");
+    e = c->tbsCertificate.extensions;
+
+    ret = _hx509_cert_get_keyusage(context, cert, &ku);
+    if (ret && ret != HX509_KU_CERT_MISSING)
+        hx509_err(context, 1, ret, "Could not get key usage of certificate");
+    if (ret == HX509_KU_CERT_MISSING && opt->ca_flag)
+        return 0; /* want CA cert; this isn't it */
+    if (ret == 0 && opt->ca_flag && !ku.keyCertSign)
+        return 0; /* want CA cert; this isn't it */
+    if (ret == 0 && opt->end_entity_flag && ku.keyCertSign)
+        return 0; /* want EE cert; this isn't it */
+
+    if (opt->cert_num_integer != -1 && cert_num <= INT_MAX &&
+        opt->cert_num_integer != (int)cert_num)
+        return 0;
+    if (opt->cert_num_integer == -1 || opt->cert_num_integer == (int)cert_num)
+        *matched = 1;
+
+    if (_hx509_cert_get_version(c) < 3) {
+        warnx("Certificate with version %d < 3 ignored",
+              _hx509_cert_get_version(c));
+        return 0;
+    }
+
+    sans_wanted = opt->has_email_san_strings.num_strings
+        + opt->has_xmpp_san_strings.num_strings
+        + opt->has_ms_upn_san_strings.num_strings
+        + opt->has_dnsname_san_strings.num_strings
+        + opt->has_pkinit_san_strings.num_strings
+        + opt->has_registeredID_san_strings.num_strings;
+    ekus_wanted = opt->has_eku_strings.num_strings;
+    kus_wanted = opt->has_ku_strings.num_strings;
+    wanted = sans_wanted + ekus_wanted + kus_wanted;
+    found = sans_found = ekus_found = kus_found = 0;
+
+    if (e == NULL) {
+        if (wanted)
+            return -1;
+        return acert1_validity(opt, cert);;
+    }
+
+    for (i = 0; i < e->len; i++) {
+        if (der_heim_oid_cmp(&e->val[i].extnID,
+                             &asn1_oid_id_x509_ce_subjectAltName) == 0) {
+            ret = acert1_sans(opt, &e->val[i], &matched_elements, &sans_found);
+            if (ret == -1 && sans_wanted == 0 &&
+                (!opt->exact_flag || sans_found == 0))
+                ret = 0;
+        } else if (der_heim_oid_cmp(&e->val[i].extnID,
+                                  &asn1_oid_id_x509_ce_extKeyUsage) == 0) {
+            ret = acert1_ekus(opt, &e->val[i], &matched_elements, &ekus_found);
+            if (ret == -1 && ekus_wanted == 0 &&
+                (!opt->exact_flag || ekus_found == 0))
+                ret = 0;
+        } else if (der_heim_oid_cmp(&e->val[i].extnID,
+                                  &asn1_oid_id_x509_ce_keyUsage) == 0) {
+            ret = acert1_kus(opt, &e->val[i], &matched_elements, &kus_found);
+            if (ret == -1 && kus_wanted == 0 &&
+                (!opt->exact_flag || kus_found == 0))
+                ret = 0;
+        } else {
+            char *oids = NULL;
+
+            for (k = 0; misc_exts[k]; k++) {
+                if (der_heim_oid_cmp(&e->val[i].extnID, misc_exts[k]) == 0)
+                    break;
+            }
+            if (misc_exts[k])
+                continue;
+
+            (void) der_print_heim_oid(&e->val[i].extnID, '.', &oids);
+            warnx("Matching certificate has unexpected certificate "
+                  "extension %s", oids ? oids : "<could not display OID>");
+            free(oids);
+            ret = -1;
+        }
+        if (ret && ret != -1)
+            hx509_err(context, 1, ret, "Error checking matching certificate");
+        if (ret == -1)
+            break;
+    }
+    if (matched_elements != wanted)
+        return -1;
+    found = sans_found + ekus_found + kus_found;
+    if (matched_elements != found && opt->exact_flag)
+        return -1;
+    if (ret)
+        return ret;
+    return acert1_validity(opt, cert);
+}
+
+int
+acert(struct acert_options *opt, int argc, char **argv)
+{
+    hx509_cursor cursor = NULL;
+    hx509_certs certs = NULL;
+    hx509_cert cert = NULL;
+    size_t n = 0;
+    int matched = 0;
+    int ret;
+
+    if (opt->not_after_eq_string &&
+        (opt->not_after_lt_string || opt->not_after_gt_string))
+        errx(1, "--not-after-eq should not be given with --not-after-lt/gt");
+    if (opt->not_before_eq_string &&
+        (opt->not_before_lt_string || opt->not_before_gt_string))
+        errx(1, "--not-before-eq should not be given with --not-before-lt/gt");
+
+    if ((ret = hx509_certs_init(context, argv[0], 0, NULL, &certs)))
+        hx509_err(context, 1, ret, "Could not load certificates from %s",
+                  argv[0]);
+
+    hx509_query *q = NULL;
+    if (opt->expr_string) {
+        if ((ret = hx509_query_alloc(context, &q)))
+            hx509_err(context, 1, ret, "Could not initialize query");
+	hx509_query_match_expr(context, q, opt->expr_string);
+        if ((ret = hx509_certs_find(context, certs, q, &cert)) || !cert)
+            hx509_err(context, 1, ret, "No matching certificate");
+        ret = acert1(opt, -1, cert, &matched);
+        matched = 1;
+    } else {
+        ret = hx509_certs_start_seq(context, certs, &cursor);
+        while (ret == 0 &&
+               (ret = hx509_certs_next_cert(context, certs,
+                                            cursor, &cert)) == 0 &&
+               cert) {
+            ret = acert1(opt, n++, cert, &matched);
+            if (matched)
+                break;
+        }
+        if (cursor)
+            (void) hx509_certs_end_seq(context, certs, cursor);
+    }
+    if (!matched && ret)
+        hx509_err(context, 1, ret, "Could not find certificate");
+    if (!matched)
+        errx(1, "Could not find certificate");
+    if (ret == -1)
+        errx(1, "Matching certificate did not meet requirements");
+    if (ret)
+        hx509_err(context, 1, ret, "Matching certificate did not meet "
+                  "requirements");
+    return 0;
+}
+
 /*
  *
  */

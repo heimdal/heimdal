@@ -859,6 +859,150 @@ command = {
 	help = "Create a CRL"
 }
 command = {
+        option = {
+	        long = "verbose"
+                short = "v"
+		type = "flag"
+                help = "verbose"
+        }
+        option = {
+	        long = "end-entity"
+		type = "flag"
+                help = "check the first EE certificate in the store"
+        }
+        option = {
+	        long = "ca"
+		type = "flag"
+                help = "check the first CA certificate in the store"
+        }
+        option = {
+	        long = "cert-num"
+		type = "integer"
+                default = "-1"
+                help = "check the nth certificate in the store"
+        }
+        option = {
+		long = "expr"
+		type = "string"
+		argument = "expression"
+		help = "test the first certificate matching expression"
+        }
+        option = {
+                long = "has-email-san"
+		short = "M"
+                type = "strings"
+                argument = "email-address"
+                help = "check that cert has email SAN"
+        }
+        option = {
+                long = "has-xmpp-san"
+                type = "strings"
+		short = "X"
+                argument = "jabber address"
+                help = "check that cert has XMPP SAN"
+        }
+        option = {
+                long = "has-ms-upn-san"
+		short = "U"
+                type = "strings"
+                argument = "UPN"
+                help = "check that cert has UPN SAN"
+        }
+        option = {
+                long = "has-dnsname-san"
+		short = "D"
+                type = "strings"
+                argument = "domainname"
+                help = "check that cert has domainname SAN"
+        }
+        option = {
+                long = "has-pkinit-san"
+		short = "P"
+                type = "strings"
+                argument = "Kerberos principal name"
+                help = "check that cert has PKINIT SAN"
+        }
+        option = {
+                long = "has-registeredID-san"
+		short = "R"
+                type = "strings"
+                argument = "OID"
+                help = "check that cert has registeredID SAN"
+        }
+        option = {
+                long = "has-eku"
+		short = "E"
+                type = "strings"
+                argument = "OID"
+                help = "check that cert has EKU"
+        }
+        option = {
+                long = "has-ku"
+                short = "K"
+                type = "strings"
+                argument = "key usage element"
+                help = "check that cert has key usage"
+        }
+        option = {
+                long = "exact"
+                type = "flag"
+                help = "check that cert has only given SANs/EKUs/KUs"
+        }
+        option = {
+                long = "valid-now"
+                short = "n"
+                type = "flag"
+                help = "check that current time is in certicate's validity period"
+        }
+        option = {
+                long = "valid-at"
+                type = "string"
+                argument = "datetime"
+                help = "check that the certificate is valid at given time"
+        }
+        option = {
+                long = "not-after-eq"
+                type = "string"
+                argument = "datetime"
+                help = "check that the certificate's notAfter is as given"
+        }
+        option = {
+                long = "not-after-lt"
+                type = "string"
+                argument = "datetime"
+                help = "check that the certificate's notAfter is before the given time"
+        }
+        option = {
+                long = "not-after-gt"
+                type = "string"
+                argument = "datetime"
+                help = "check that the certificate's notAfter is after the given time"
+        }
+        option = {
+                long = "not-before-eq"
+                type = "string"
+                argument = "datetime"
+                help = "check that the certificate's notBefore is as given"
+        }
+        option = {
+                long = "not-before-lt"
+                type = "string"
+                argument = "datetime"
+                help = "check that the certificate's notBefore is before the given time"
+        }
+        option = {
+                long = "not-before-gt"
+                type = "string"
+                argument = "datetime"
+                help = "check that the certificate's notBefore is after the given time"
+        }
+        name = "acert"
+        min_args = "1"
+        max_args = "1"
+        argument = "certificate-store"
+        help = "Assert certificate content"
+}
+command = {
 	name = "help"
 	name = "?"
 	argument = "[command]"

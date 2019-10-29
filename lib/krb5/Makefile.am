@@ -195,6 +195,7 @@ dist_libkrb5_la_SOURCES =			\
 	log.c					\
 	mcache.c				\
 	misc.c					\
+	mk_cred.c				\
 	mk_error.c				\
 	mk_priv.c				\
 	mk_rep.c				\

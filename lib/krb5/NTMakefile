@@ -108,6 +108,7 @@ libkrb5_OBJS =			\
 	$(OBJ)\mcache.obj		    \
 	$(OBJ)\misc.obj			    \
 	$(OBJ)\mit_glue.obj		    \
+	$(OBJ)\mk_cred.obj		    \
 	$(OBJ)\mk_error.obj		    \
 	$(OBJ)\mk_priv.obj		    \
 	$(OBJ)\mk_rep.obj		    \
@@ -274,6 +275,7 @@ dist_libkrb5_la_SOURCES =			\
 	log.c					\
 	mcache.c				\
 	misc.c					\
+	mk_cred.c				\
 	mk_error.c				\
 	mk_priv.c				\
 	mk_rep.c				\

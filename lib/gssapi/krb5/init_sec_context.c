@@ -314,47 +314,29 @@ do_delegation (krb5_context context,
 	       krb5_auth_context ac,
 	       krb5_ccache ccache,
 	       krb5_creds *cred,
-	       krb5_const_principal name,
+	       krb5_const_principal server,
 	       krb5_data *fwd_data,
 	       uint32_t flagmask,
 	       uint32_t *flags)
 {
-    krb5_creds creds;
-    KDCOptions fwd_flags;
     krb5_error_code kret;
+    krb5_principal client;
+    const char *host;
 
-    memset (&creds, 0, sizeof(creds));
     krb5_data_zero (fwd_data);
 
-    kret = krb5_cc_get_principal(context, ccache, &creds.client);
+    kret = krb5_cc_get_principal(context, ccache, &client);
     if (kret)
 	goto out;
 
-    kret = krb5_make_principal(context,
-			       &creds.server,
-			       creds.client->realm,
-			       KRB5_TGS_NAME,
-			       creds.client->realm,
-			       NULL);
-    if (kret)
+    /* We can't generally enforce server.name_type == KRB5_NT_SRV_HST */
+    if (server->name.name_string.len < 2)
 	goto out;
+    host = krb5_principal_get_comp_string(context, server, 1);
 
-    creds.times.endtime = 0;
-
-    memset(&fwd_flags, 0, sizeof(fwd_flags));
-    fwd_flags.forwarded = 1;
-    fwd_flags.forwardable = 1;
-
-    if (name->name.name_string.len < 2)
-	goto out;
-
-    kret = krb5_get_forwarded_creds(context,
-				    ac,
-				    ccache,
-				    KDCOptions2int(fwd_flags),
-				    name->name.name_string.val[1],
-				    &creds,
-				    fwd_data);
+#define FWDABLE 1
+    kret = krb5_fwd_tgt_creds(context, ac, host, client, server, ccache,
+			      FWDABLE, fwd_data);
 
  out:
     if (kret)
@@ -362,10 +344,8 @@ do_delegation (krb5_context context,
     else
 	*flags |= flagmask;
 
-    if (creds.client)
-	krb5_free_principal(context, creds.client);
-    if (creds.server)
-	krb5_free_principal(context, creds.server);
+    if (client)
+	krb5_free_principal(context, client);
 }
 
 /*

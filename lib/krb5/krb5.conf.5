@@ -162,6 +162,19 @@ If a principal argument is specified, it is used as an explicit realm name for
 anonymous pkinit even without an
 .Li @
 prefix.
+.It Li delegate-destination-tgt = Va boolean
+When forwarding credentials to a remote host, forward a TGT for the
+realm of the destination host rather than a TGT for the user's realm.
+This is useful when hosts in the remote realm should not or cannot
+(e.g. firewalled from user realm's KDC) obtain tickets for services
+in the user's realm. When the user's realm and the host's realm are
+the same, this parameter has no effect.  The setting can be applied
+to a single realm as follows:
+.Bd -literal -offset indent
+EXAMPLE.COM = {
+	delegate-destination-tgt = true
+}
+.Ed
 .El
 .It Li [libdefaults]
 .Bl -tag -width "xxx" -offset indent

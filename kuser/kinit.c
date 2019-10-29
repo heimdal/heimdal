@@ -61,6 +61,7 @@ int anonymous_flag	= 0;
 char *lifetime 		= NULL;
 char *renew_life	= NULL;
 char *server_str	= NULL;
+static krb5_principal tgs_service;
 char *cred_cache	= NULL;
 char *start_str		= NULL;
 static int switch_cache_flags = 1;
@@ -218,18 +219,124 @@ usage(int ret)
 }
 
 static krb5_error_code
+tgs_principal(krb5_context context,
+          krb5_ccache cache,
+          krb5_principal client,
+	  krb5_const_realm tgs_realm,
+	  krb5_principal *out_princ)
+{
+    krb5_error_code ret;
+    krb5_principal tgs_princ;
+    krb5_creds creds;
+    krb5_creds *tick;
+    krb5_flags options;
+
+    ret = krb5_make_principal(context, &tgs_princ, tgs_realm,
+			      KRB5_TGS_NAME, tgs_realm, NULL);
+    if (ret)
+	return ret;
+
+    /*
+     * Don't fail-over to a different realm just because a TGT expired
+     */
+    options = KRB5_GC_CACHED | KRB5_GC_EXPIRED_OK;
+
+    memset(&creds, 0, sizeof(creds));
+    creds.client = client;
+    creds.server = tgs_princ;
+    ret = krb5_get_credentials(context, options, cache, &creds, &tick);
+    if (ret == 0) {
+        krb5_free_creds(context, tick);
+	*out_princ = tgs_princ;
+    } else {
+	krb5_free_principal(context, tgs_princ);
+    }
+
+    return ret;
+}
+
+
+/*
+ * Try TGS specified with '-S',
+ * then TGS of client realm,
+ * then if fallback is FALSE: fail,
+ * otherwise try TGS of default realm,
+ * and finally first TGT in ccache.
+ */
+static krb5_error_code
 get_server(krb5_context context,
+	   krb5_ccache cache,
 	   krb5_principal client,
 	   const char *server,
+	   krb5_boolean fallback,
 	   krb5_principal *princ)
 {
+    krb5_error_code ret = 0;
     krb5_const_realm realm;
-    if (server)
-	return krb5_parse_name(context, server, princ);
+    krb5_realm def_realm;
+    krb5_cc_cursor cursor;
+    krb5_creds creds;
+    const char *pcomp;
 
+    if (tgs_service)
+	goto done;
+
+    if (server) {
+	ret = krb5_parse_name(context, server, &tgs_service);
+	goto done;
+    }
+
+    /* Try the client realm first */
     realm = krb5_principal_get_realm(context, client);
-    return krb5_make_principal(context, princ, realm,
-			       KRB5_TGS_NAME, realm, NULL);
+    ret = tgs_principal(context, cache, client, realm, &tgs_service);
+    if (ret == 0 || ret != KRB5_CC_NOTFOUND)
+	goto done;
+
+    if (!fallback)
+	return ret;
+
+    /* Next try the default realm */
+    ret = krb5_get_default_realm(context, &def_realm);
+    if (ret)
+	return ret;
+    ret = tgs_principal(context, cache, client, def_realm, &tgs_service);
+    free(def_realm);
+    if (ret == 0 || ret != KRB5_CC_NOTFOUND)
+	goto done;
+
+    /* Finally try the first TGT with instance == realm in the cache */
+    ret = krb5_cc_start_seq_get(context, cache, &cursor);
+    if (ret)
+	return ret;
+
+    for (/**/; ret == 0; krb5_free_cred_contents (context, &creds)) {
+
+	ret = krb5_cc_next_cred(context, cache, &cursor, &creds);
+	if (ret)
+	    break;
+        if (creds.server->name.name_string.len != 2)
+	    continue;
+	pcomp = krb5_principal_get_comp_string(context, creds.server, 0);
+	if (strcmp(pcomp, KRB5_TGS_NAME) != 0)
+	    continue;
+	realm = krb5_principal_get_realm(context, creds.server);
+        pcomp = krb5_principal_get_comp_string(context, creds.server, 1);
+	if (strcmp(realm, pcomp) != 0)
+	    continue;
+	ret = krb5_copy_principal(context, creds.server, &tgs_service);
+	break;
+    }
+    if (ret == KRB5_CC_END) {
+	ret = KRB5_CC_NOTFOUND;
+	krb5_set_error_message(context, ret,
+			       N_("Credential cache contains no TGTs", ""));
+    }
+    krb5_cc_end_seq_get(context, cache, &cursor);
+
+done:
+    if (!ret)
+	ret = krb5_copy_principal(context, tgs_service, princ);
+    return ret;
 }
 
 static krb5_error_code
@@ -333,7 +440,7 @@ renew_validate(krb5_context context,
 				    KRB5_ANON_MATCH_UNAUTHENTICATED))
 	ret = get_anon_pkinit_tgs_name(context, cache, &in.server);
     else
-	ret = get_server(context, in.client, server, &in.server);
+	ret = get_server(context, cache, in.client, server, TRUE, &in.server);
     if (ret) {
 	krb5_warn(context, ret, "get_server");
 	goto out;
@@ -855,7 +962,10 @@ ticket_lifetime(krb5_context context, krb5_ccache cache, krb5_principal client,
 	krb5_warn(context, ret, "krb5_cc_get_principal");
 	return 0;
     }
-    ret = get_server(context, in_cred.client, server, &in_cred.server);
+
+    /* Determine TGS principal without fallback */
+    ret = get_server(context, cache, in_cred.client, server, FALSE,
+		     &in_cred.server);
     if (ret) {
 	krb5_free_principal(context, in_cred.client);
 	krb5_warn(context, ret, "get_server");

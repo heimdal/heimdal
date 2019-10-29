@@ -115,10 +115,18 @@ like
 .It Fl p , Fl Fl proxiable
 Request tickets with the proxiable flag set.
 .It Fl R , Fl Fl renew
-Try to renew ticket.
+Try to renew a ticket.
 The ticket must have the
 .Sq renewable
-flag set, and must not be expired.
+flag set, and must not be expired. If the
+.Oo Fl S Ar principal Oc
+option is specified, the ticket for the indicated service is renewed.
+If no service is explicitly specified, an attempt is made to renew the
+TGT for the client realm.  If no TGT for the client realm is found in the
+credential cache, an attempt is made to renew the TGT for the defaualt
+realm (if that is found in the credential cache), or else the first
+TGT found.  This makes it easier for users to renew forwarded tickets
+that are not issued by the origin realm.
 .It Fl Fl renewable
 The same as
 .Fl Fl renewable-life ,

@@ -1481,6 +1481,8 @@ krb5_make_addrport (krb5_context context,
     size_t len = addr->address.length + 2 + 4 * 4;
     u_char *p;
 
+    /* XXX Make this assume port == 0 -> port is absent */
+
     *res = malloc (sizeof(**res));
     if (*res == NULL)
 	return krb5_enomem(context);

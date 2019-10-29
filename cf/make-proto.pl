@@ -95,6 +95,13 @@ while(<>) {
     } elsif ($doxygen) { $funcdoc .= $_; next;
     } elsif ($comment) { next; }
 
+    # Handle CPP #define's
+    $define = 1		if /^\s*\#\s*define/;
+    if ($define) {
+	$define = 0	if ! /\\$/;
+	next;
+    }
+
     if(/^\#if 0/) {
 	$if_0 = 1;
     }

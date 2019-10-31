@@ -594,7 +594,6 @@ OM_uint32 GSSAPI_CALLCONV _gsskrb5_acquire_cred_from
     handle = calloc(1, sizeof(*handle));
     if (handle == NULL) {
 	*minor_status = ENOMEM;
-	krb5_free_context(context);
         return GSS_S_FAILURE;
     }
 
@@ -606,7 +605,6 @@ OM_uint32 GSSAPI_CALLCONV _gsskrb5_acquire_cred_from
 	if (ret) {
 	    HEIMDAL_MUTEX_destroy(&handle->cred_id_mutex);
 	    free(handle);
-	    krb5_free_context(context);
 	    return ret;
 	}
     }
@@ -617,7 +615,6 @@ OM_uint32 GSSAPI_CALLCONV _gsskrb5_acquire_cred_from
         if (ret != GSS_S_COMPLETE) {
             HEIMDAL_MUTEX_destroy(&handle->cred_id_mutex);
             krb5_free_principal(context, handle->principal);
-            krb5_free_context(context);
             free(handle);
             return (ret);
         }
@@ -633,7 +630,6 @@ OM_uint32 GSSAPI_CALLCONV _gsskrb5_acquire_cred_from
             if (ret != GSS_S_COMPLETE) {
                 HEIMDAL_MUTEX_destroy(&handle->cred_id_mutex);
                 krb5_free_principal(context, handle->principal);
-                krb5_free_context(context);
                 free(handle);
                 return (ret);
             }
@@ -645,7 +641,6 @@ OM_uint32 GSSAPI_CALLCONV _gsskrb5_acquire_cred_from
             if (ret != GSS_S_COMPLETE) {
                 HEIMDAL_MUTEX_destroy(&handle->cred_id_mutex);
                 krb5_free_principal(context, handle->principal);
-                krb5_free_context(context);
                 free(handle);
                 return (ret);
             }
@@ -664,7 +659,6 @@ OM_uint32 GSSAPI_CALLCONV _gsskrb5_acquire_cred_from
 	    gss_release_oid_set(NULL, &handle->mechanisms);
 	HEIMDAL_MUTEX_destroy(&handle->cred_id_mutex);
 	krb5_free_principal(context, handle->principal);
-	krb5_free_context(context);
 	free(handle);
 	return (ret);
     }

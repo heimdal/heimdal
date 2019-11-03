@@ -94,10 +94,10 @@ work, but have not been tested.
         set SIGNTOOL_O=/du http://example.com/myheimdal
 
   - `SIGNTOOL_T`: SHA1 Timestamp URL for `signtool`.  If not specified,
-    defaults to `http://timestamp.verisign.com/scripts/timstamp.dll`.
+    defaults to `http://timestamp.digicert.com`.
 
   - `SIGNTOOL_T_SHA256`: SHA256 Timestamp URL for `signtool`.  If not
-    specified, defaults to `http://timestamp.geotrust.com/tsa`.
+    specified, defaults to `http://timestamp.digicert.com`.
 
   - `CODESIGN`: SHA1 Code signer command.  This environment variable, if
     defined, overrides the `SIGNTOOL_*` variables.  It should be

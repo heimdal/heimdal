@@ -904,7 +904,7 @@ hx509_request_get_eku(hx509_context context,
     *out = NULL;
     if (*cursor < 0)
         return 0;
-    i = (size_t)cursor;
+    i = (size_t)*cursor;
     if (i >= req->eku.len)
         return 0; /* XXX */
     if (i + 1 < req->eku.len)

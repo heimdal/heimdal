@@ -218,6 +218,8 @@ _fetch_it(krb5_context context, krb5_kdc_configuration *config, HDB *db,
 	log_princ(context, config, 7, "    for %s", princ);
 	log_princ(context, config, 7, "    from %s", tmpprinc);
 	_derive_the_keys(context, config, princ, kvno, ent);
+	/* the next function frees the target */
+	copy_Principal(princ, ent->entry.principal);
     }
 
     free(host);

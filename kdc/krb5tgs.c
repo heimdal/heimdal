@@ -2103,30 +2103,32 @@ server_lookup:
 	    if (ret)
 		goto out;
 
+	    ret = _kdc_db_fetch(context, config, tp, HDB_F_GET_CLIENT | flags,
+				NULL, &s4u2self_impersonated_clientdb,
+				&s4u2self_impersonated_client);
+	    if (ret) {
+		const char *msg;
+
+		/*
+		 * If the client belongs to the same realm as our krbtgt, it
+		 * should exist in the local database.
+		 *
+		 */
+
+		if (ret == HDB_ERR_NOENTRY)
+		    ret = KRB5KDC_ERR_C_PRINCIPAL_UNKNOWN;
+		msg = krb5_get_error_message(context, ret);
+		kdc_log(context, config, 2,
+			"S4U2Self principal to impersonate %s not found in database: %s",
+			tpn, msg);
+		krb5_free_error_message(context, msg);
+		goto out;
+	    }
+
 	    /* If we were about to put a PAC into the ticket, we better fix it to be the right PAC */
 	    if(rspac.data) {
 		krb5_pac p = NULL;
 		krb5_data_free(&rspac);
-		ret = _kdc_db_fetch(context, config, tp, HDB_F_GET_CLIENT | flags,
-				    NULL, &s4u2self_impersonated_clientdb, &s4u2self_impersonated_client);
-		if (ret) {
-		    const char *msg;
-
-		    /*
-		     * If the client belongs to the same realm as our krbtgt, it
-		     * should exist in the local database.
-		     *
-		     */
-
-		    if (ret == HDB_ERR_NOENTRY)
-			ret = KRB5KDC_ERR_C_PRINCIPAL_UNKNOWN;
-		    msg = krb5_get_error_message(context, ret);
-		    kdc_log(context, config, 1,
-			    "S2U4Self principal to impersonate %s not found in database: %s",
-			    tpn, msg);
-		    krb5_free_error_message(context, msg);
-		    goto out;
-		}
 		ret = _kdc_pac_generate(context, s4u2self_impersonated_client, &p);
 		if (ret) {
 		    kdc_log(context, config, 0, "PAC generation failed for -- %s",

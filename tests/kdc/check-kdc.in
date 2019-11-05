@@ -805,6 +805,10 @@ echo "  negative check"
 ${kgetcred_imp} --impersonate=bar@${R} foo@${R} 2>/dev/null && \
 	{ ec=1 ; eval "${testfailed}"; }
 
+echo "test impersonate unknown client"; > messages.log
+${kgetcred_imp} --forward --impersonate=unknown@${R} ${ps} && \
+	{ ec=1 ; eval "${testfailed}"; }
+
 echo "test constrained delegation"; > messages.log
 ${kgetcred_imp} --forward --impersonate=bar@${R} ${ps} || \
 	{ ec=1 ; eval "${testfailed}"; }

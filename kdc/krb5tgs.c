@@ -2164,10 +2164,12 @@ server_lookup:
 
 	    /*
 	     * If the service isn't trusted for authentication to
-	     * delegation, remove the forward flag.
+	     * delegation or if the impersonate client is disallowed
+	     * forwardable, remove the forwardable flag.
 	     */
 
-	    if (client->entry.flags.trusted_for_delegation) {
+	    if (client->entry.flags.trusted_for_delegation &&
+		s4u2self_impersonated_client->entry.flags.forwardable) {
 		str = "[forwardable]";
 	    } else {
 		b->kdc_options.forwardable = 0;

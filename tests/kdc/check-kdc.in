@@ -811,6 +811,14 @@ echo "test impersonate unknown client"; > messages.log
 ${kgetcred_imp} --forward --impersonate=unknown@${R} ${ps} && \
 	{ ec=1 ; eval "${testfailed}"; }
 
+echo "test impersonate account-expired client"; > messages.log
+${kgetcred_imp} --forward --impersonate=account-expired@${R} ${ps} && \
+	{ ec=1 ; eval "${testfailed}"; }
+
+echo "test impersonate pw-expired client"; > messages.log
+${kgetcred_imp} --forward --impersonate=pw-expired@${R} ${ps} || \
+	{ ec=1 ; eval "${testfailed}"; }
+
 echo "test delegate sensitive client"; > messages.log
 ${kgetcred_imp} --forward --impersonate=sensitive@${R} ${ps} || \
 	{ ec=1 ; eval "${testfailed}"; }

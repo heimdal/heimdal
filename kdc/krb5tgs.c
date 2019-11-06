@@ -2125,6 +2125,17 @@ server_lookup:
 		goto out;
 	    }
 
+	    /* Ignore require_pwchange and pw_end attributes (as Windows does),
+	     * since S4U2Self is not password authentication. */
+	    s4u2self_impersonated_client->entry.flags.require_pwchange = FALSE;
+	    free(s4u2self_impersonated_client->entry.pw_end);
+	    s4u2self_impersonated_client->entry.pw_end = NULL;
+
+	    ret = kdc_check_flags(context, config, s4u2self_impersonated_client, tpn,
+				  NULL, NULL, FALSE);
+	    if (ret)
+		goto out;
+
 	    /* If we were about to put a PAC into the ticket, we better fix it to be the right PAC */
 	    if(rspac.data) {
 		krb5_pac p = NULL;

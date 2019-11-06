@@ -2035,6 +2035,7 @@ server_lookup:
 
 	sdata = _kdc_find_padata(req, &i, KRB5_PADATA_FOR_USER);
 	if (sdata) {
+	    struct astgs_request_desc imp_req;
 	    krb5_crypto crypto;
 	    krb5_data datack;
 	    PA_S4U2Self self;
@@ -2141,6 +2142,20 @@ server_lookup:
 		krb5_free_error_message(context, msg);
 		goto out;
 	    }
+
+	    /* Ignore require_pwchange and pw_end attributes (as Windows does),
+	     * since S4U2Self is not password authentication. */
+	    s4u2self_impersonated_client->entry.flags.require_pwchange = FALSE;
+	    free(s4u2self_impersonated_client->entry.pw_end);
+	    s4u2self_impersonated_client->entry.pw_end = NULL;
+
+	    imp_req = *priv;
+	    imp_req.client = s4u2self_impersonated_client;
+	    imp_req.client_princ = tp;
+
+	    ret = kdc_check_flags(&imp_req, FALSE);
+	    if (ret)
+		goto out;
 
 	    /* If we were about to put a PAC into the ticket, we better fix it to be the right PAC */
 	    if(rspac.data) {

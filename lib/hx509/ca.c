@@ -998,6 +998,23 @@ hx509_ca_tbs_subject_expand(hx509_context context,
 }
 
 /**
+ * Get the name of a to-be-signed certificate object.
+ *
+ * @param context A hx509 context.
+ * @param tbs object to be signed.
+ *
+ * @return An hx509 name.
+ *
+ * @ingroup hx509_ca
+ */
+
+HX509_LIB_FUNCTION hx509_name HX509_LIB_CALL
+hx509_ca_tbs_get_name(hx509_ca_tbs tbs)
+{
+    return tbs->subject;
+}
+
+/**
  * Set signature algorithm on the to be signed certificate
  *
  * @param context A hx509 context.

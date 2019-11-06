@@ -70,6 +70,7 @@ EXPORTS
 	hx509_ca_tbs_add_san_pkinit
 	hx509_ca_tbs_add_san_rfc822name
 	hx509_ca_tbs_free
+	hx509_ca_tbs_get_name
 	hx509_ca_tbs_init
 	hx509_ca_tbs_set_ca
 	hx509_ca_tbs_set_domaincontroller

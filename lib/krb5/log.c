@@ -34,6 +34,7 @@
  */
 
 #include "krb5_locl.h"
+#include <assert.h>
 #include <vis.h>
 
 struct facility {
@@ -195,27 +196,55 @@ open_syslog(krb5_context context,
 			    log_syslog, close_syslog, sd);
 }
 
-struct file_data{
+struct file_data {
     const char *filename;
     const char *mode;
+    struct timeval tv;
     FILE *fd;
-    int keep_open;
+    int disp;
+#define FILEDISP_KEEPOPEN	0x1
+#define FILEDISP_REOPEN		0x2
+#define FILEDISP_IFEXISTS	0x3
     int freefilename;
 };
 
 static void KRB5_CALLCONV
 log_file(krb5_context context, const char *timestr, const char *msg, void *data)
 {
+    struct timeval tv;
     struct file_data *f = data;
     char *msgclean;
     size_t len = strlen(msg);
 
-    if (f->keep_open == 0) {
+    if (f->disp != FILEDISP_KEEPOPEN) {
 	char *filename;
+	int flags = -1;
+	int fd;
+
+	if (f->mode[0] == 'w' && f->mode[1] == 0)
+	    flags = O_WRONLY|O_TRUNC;
+	if (f->mode[0] == 'a' && f->mode[1] == 0)
+	    flags = O_WRONLY|O_APPEND;
+	assert(flags != -1);
+
+	if (f->disp == FILEDISP_IFEXISTS) {
+	    /* Cache failure for 1s */
+	    gettimeofday(&tv, NULL);
+	    if (tv.tv_sec == f->tv.tv_sec)
+		return;
+	} else {
+	    flags |= O_CREAT;
+	}
 
 	if (_krb5_expand_path_tokens(context, f->filename, 1, &filename))
 	    return;
-	f->fd = fopen(filename, f->mode);
+	fd = open(filename, flags, 0666);
+	if (fd == -1) {
+	    if (f->disp == FILEDISP_IFEXISTS)
+		gettimeofday(&f->tv, NULL);
+	    return;
+	}
+	f->fd = fdopen(fd, f->mode);
 	free(filename);
     }
     if(f->fd == NULL)
@@ -228,7 +257,7 @@ log_file(krb5_context context, const char *timestr, const char *msg, void *data)
     fprintf(f->fd, "%s %s\n", timestr, msgclean);
     free(msgclean);
  out:
-    if(f->keep_open == 0) {
+    if(f->disp != FILEDISP_KEEPOPEN) {
 	fclose(f->fd);
 	f->fd = NULL;
     }
@@ -238,7 +267,7 @@ static void KRB5_CALLCONV
 close_file(void *data)
 {
     struct file_data *f = data;
-    if(f->keep_open && f->filename)
+    if(f->disp == FILEDISP_KEEPOPEN && f->filename)
 	fclose(f->fd);
     if (f->filename && f->freefilename)
 	free((char *)f->filename);
@@ -247,7 +276,7 @@ close_file(void *data)
 
 static krb5_error_code
 open_file(krb5_context context, krb5_log_facility *fac, int min, int max,
-	  const char *filename, const char *mode, FILE *f, int keep_open,
+	  const char *filename, const char *mode, FILE *f, int disp,
 	  int freefilename)
 {
     struct file_data *fd = malloc(sizeof(*fd));
@@ -259,7 +288,7 @@ open_file(krb5_context context, krb5_log_facility *fac, int min, int max,
     fd->filename = filename;
     fd->mode = mode;
     fd->fd = f;
-    fd->keep_open = keep_open;
+    fd->disp = disp;
     fd->freefilename = freefilename;
 
     return krb5_addlog_func(context, fac, min, max, log_file, close_file, fd);
@@ -309,11 +338,15 @@ krb5_addlog_dest(krb5_context context, krb5_log_facility *f, const char *orig)
     if(strcmp(p, "STDERR") == 0){
 	ret = open_file(context, f, min, max, NULL, NULL, stderr, 1, 0);
     }else if(strcmp(p, "CONSOLE") == 0){
-	ret = open_file(context, f, min, max, "/dev/console", "w", NULL, 0, 0);
+	ret = open_file(context, f, min, max, "/dev/console", "w", NULL,
+			FILEDISP_REOPEN, 0);
+    }else if (strncmp(p, "EFILE", 5) == 0 && p[5] == ':') {
+	ret = open_file(context, f, min, max, strdup(p+6), "a", NULL,
+			FILEDISP_IFEXISTS, 1);
     }else if(strncmp(p, "FILE", 4) == 0 && (p[4] == ':' || p[4] == '=')){
 	char *fn;
 	FILE *file = NULL;
-	int keep_open = 0;
+	int disp = FILEDISP_REOPEN;
 	fn = strdup(p + 5);
 	if (fn == NULL)
 	    return krb5_enomem(context);
@@ -339,11 +372,12 @@ krb5_addlog_dest(krb5_context context, krb5_log_facility *f, const char *orig)
 		free(fn);
 		return ret;
 	    }
-	    keep_open = 1;
+	    disp = FILEDISP_KEEPOPEN;
 	}
-	ret = open_file(context, f, min, max, fn, "a", file, keep_open, 1);
+	ret = open_file(context, f, min, max, fn, "a", file, disp, 1);
     }else if(strncmp(p, "DEVICE", 6) == 0 && (p[6] == ':' || p[6] == '=')){
-	ret = open_file(context, f, min, max, strdup(p + 7), "w", NULL, 0, 1);
+	ret = open_file(context, f, min, max, strdup(p + 7), "w", NULL,
+			FILEDISP_REOPEN, 1);
     }else if(strncmp(p, "SYSLOG", 6) == 0 && (p[6] == '\0' || p[6] == ':')){
 	char severity[128] = "";
 	char facility[128] = "";

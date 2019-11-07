@@ -52,7 +52,8 @@ typedef int PTYPE;
  * the returned path may or may not exist.
  */
 static krb5_error_code
-_expand_temp_folder(krb5_context context, PTYPE param, const char *postfix, char **ret)
+_expand_temp_folder(krb5_context context, PTYPE param, const char *postfix,
+		    const char *arg, char **ret)
 {
     TCHAR tpath[MAX_PATH];
     size_t len;
@@ -89,7 +90,8 @@ extern HINSTANCE _krb5_hInstance;
  * krb5.dll is located.
  */
 static krb5_error_code
-_expand_bin_dir(krb5_context context, PTYPE param, const char *postfix, char **ret)
+_expand_bin_dir(krb5_context context, PTYPE param, const char *postfix,
+		const char *arg, char **ret)
 {
     TCHAR path[MAX_PATH];
     TCHAR *lastSlash;
@@ -139,7 +141,8 @@ _expand_bin_dir(krb5_context context, PTYPE param, const char *postfix, char **r
  *
  */
 static krb5_error_code
-_expand_userid(krb5_context context, PTYPE param, const char *postfix, char **ret)
+_expand_userid(krb5_context context, PTYPE param, const char *postfix,
+	       const char *arg, char **ret)
 {
     int rv = EINVAL;
     HANDLE hThread = NULL;
@@ -237,7 +240,8 @@ _expand_userid(krb5_context context, PTYPE param, const char *postfix, char **re
  */
 
 static krb5_error_code
-_expand_csidl(krb5_context context, PTYPE folder, const char *postfix, char **ret)
+_expand_csidl(krb5_context context, PTYPE folder, const char *postfix,
+	      const char *arg, char **ret)
 {
     TCHAR path[MAX_PATH];
     size_t len;
@@ -266,7 +270,8 @@ _expand_csidl(krb5_context context, PTYPE folder, const char *postfix, char **re
 #else
 
 static krb5_error_code
-_expand_path(krb5_context context, PTYPE param, const char *postfix, char **ret)
+_expand_path(krb5_context context, PTYPE param, const char *postfix,
+	     const char *arg, char **ret)
 {
     *ret = strdup(postfix);
     if (*ret == NULL)
@@ -275,7 +280,8 @@ _expand_path(krb5_context context, PTYPE param, const char *postfix, char **ret)
 }
 
 static krb5_error_code
-_expand_temp_folder(krb5_context context, PTYPE param, const char *postfix, char **ret)
+_expand_temp_folder(krb5_context context, PTYPE param, const char *postfix,
+		    const char *arg, char **ret)
 {
     const char *p = NULL;
 
@@ -291,7 +297,8 @@ _expand_temp_folder(krb5_context context, PTYPE param, const char *postfix, char
 }
 
 static krb5_error_code
-_expand_userid(krb5_context context, PTYPE param, const char *postfix, char **str)
+_expand_userid(krb5_context context, PTYPE param, const char *postfix,
+	       const char *arg, char **str)
 {
     int ret = asprintf(str, "%ld", (unsigned long)getuid());
     if (ret < 0 || *str == NULL)
@@ -300,7 +307,8 @@ _expand_userid(krb5_context context, PTYPE param, const char *postfix, char **st
 }
 
 static krb5_error_code
-_expand_euid(krb5_context context, PTYPE param, const char *postfix, char **str)
+_expand_euid(krb5_context context, PTYPE param, const char *postfix,
+	     const char *arg, char **str)
 {
     int ret = asprintf(str, "%ld", (unsigned long)geteuid());
     if (ret < 0 || *str == NULL)
@@ -310,7 +318,8 @@ _expand_euid(krb5_context context, PTYPE param, const char *postfix, char **str)
 #endif /* _WIN32 */
 
 static krb5_error_code
-_expand_username(krb5_context context, PTYPE param, const char *postfix, char **str)
+_expand_username(krb5_context context, PTYPE param, const char *postfix,
+		 const char *arg, char **str)
 {
     char user[128];
     const char *username = roken_get_username(user, sizeof(user));
@@ -330,7 +339,8 @@ _expand_username(krb5_context context, PTYPE param, const char *postfix, char **
 }
 
 static krb5_error_code
-_expand_loginname(krb5_context context, PTYPE param, const char *postfix, char **str)
+_expand_loginname(krb5_context context, PTYPE param, const char *postfix,
+		  const char *arg, char **str)
 {
     char user[128];
     const char *username = roken_get_loginname(user, sizeof(user));
@@ -346,6 +356,22 @@ _expand_loginname(krb5_context context, PTYPE param, const char *postfix, char *
     if (*str == NULL)
 	return krb5_enomem(context);
 
+    return 0;
+}
+
+static krb5_error_code
+_expand_strftime(krb5_context context, PTYPE param, const char *postfix,
+		 const char *arg, char **ret)
+{
+    size_t len;
+    time_t t;
+    char buf[1024];
+
+    t = time(NULL);
+    len = strftime(buf, sizeof(buf), arg, localtime(&t));
+    if (len == 0 || len >= sizeof(buf))
+	return ENOMEM;
+    *ret = strdup(buf);
     return 0;
 }
 
@@ -369,7 +395,8 @@ _expand_extra_token(krb5_context context, const char *value, char **ret)
  */
 
 static krb5_error_code
-_expand_null(krb5_context context, PTYPE param, const char *postfix, char **ret)
+_expand_null(krb5_context context, PTYPE param, const char *postfix,
+	     const char *arg, char **ret)
 {
     *ret = strdup("");
     if (*ret == NULL)
@@ -387,7 +414,7 @@ static const struct {
     PTYPE param;
     const char * postfix;
 
-    int (*exp_func)(krb5_context, PTYPE, const char *, char **);
+    int (*exp_func)(krb5_context, PTYPE, const char *, const char *, char **);
 
 #define SPECIALP(f, P) FTYPE_SPECIAL, 0, P, f
 #define SPECIAL(f) SPECIALP(f, NULL)
@@ -422,7 +449,8 @@ static const struct {
     {"TEMP", SPECIAL(_expand_temp_folder)},
     {"USERID", SPECIAL(_expand_userid)},
     {"uid", SPECIAL(_expand_userid)},
-    {"null", SPECIAL(_expand_null)}
+    {"null", SPECIAL(_expand_null)},
+    {"strftime", SPECIAL(_expand_strftime)}
 };
 
 static krb5_error_code
@@ -432,8 +460,10 @@ _expand_token(krb5_context context,
 	      char **extra_tokens,
 	      char **ret)
 {
+    krb5_error_code errcode;
     size_t i;
     char **p;
+    const char *colon;
 
     *ret = NULL;
 
@@ -449,11 +479,26 @@ _expand_token(krb5_context context,
 	    return _expand_extra_token(context, p[1], ret);
     }
 
-    for (i = 0; i < sizeof(tokens)/sizeof(tokens[0]); i++) {
-	if (!strncmp(token+2, tokens[i].tok, (token_end - token) - 2))
-	    return tokens[i].exp_func(context, tokens[i].param,
-				      tokens[i].postfix, ret);
-    }
+    for (colon=token+2; colon < token_end; colon++)
+	if (*colon == ':')
+	    break;
+
+    for (i = 0; i < sizeof(tokens)/sizeof(tokens[0]); i++)
+	if (!strncmp(token+2, tokens[i].tok, (colon - token) - 2)) {
+	    char *arg = NULL;
+
+	    errcode = 0;
+	    if (*colon == ':') {
+		asprintf(&arg, "%.*s", (int)(token_end - colon - 1), colon + 1);
+		if (!arg)
+		    errcode = ENOMEM;
+	    }
+	    if (!errcode)
+		errcode = tokens[i].exp_func(context, tokens[i].param,
+					     tokens[i].postfix, arg, ret);
+	    free(arg);
+	    return errcode;
+	}
 
     if (context)
 	krb5_set_error_message(context, EINVAL, "Invalid token.");

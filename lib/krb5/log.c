@@ -158,10 +158,8 @@ struct _heimdal_syslog_data{
 };
 
 static void KRB5_CALLCONV
-log_syslog(const char *timestr,
-	   const char *msg,
-	   void *data)
-
+log_syslog(krb5_context context, const char *timestr,
+	   const char *msg, void *data)
 {
     struct _heimdal_syslog_data *s = data;
     syslog(s->priority, "%s", msg);
@@ -206,15 +204,20 @@ struct file_data{
 };
 
 static void KRB5_CALLCONV
-log_file(const char *timestr,
-	 const char *msg,
-	 void *data)
+log_file(krb5_context context, const char *timestr, const char *msg, void *data)
 {
     struct file_data *f = data;
     char *msgclean;
     size_t len = strlen(msg);
-    if(f->keep_open == 0)
-	f->fd = fopen(f->filename, f->mode);
+
+    if (f->keep_open == 0) {
+	char *filename;
+
+	if (_krb5_expand_path_tokens(context, f->filename, 1, &filename))
+	    return;
+	f->fd = fopen(filename, f->mode);
+	free(filename);
+    }
     if(f->fd == NULL)
 	return;
     /* make sure the log doesn't contain special chars */
@@ -436,7 +439,7 @@ krb5_vlog_msg(krb5_context context,
 		else
 		    actual = msg;
 	    }
-	    (*fac->val[i].log_func)(buf, actual, fac->val[i].data);
+	    (*fac->val[i].log_func)(context, buf, actual, fac->val[i].data);
 	}
     if(reply == NULL)
 	free(msg);

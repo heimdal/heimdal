@@ -207,6 +207,16 @@ omitted, in this case min is assumed to be 0, and max is assumed to
 be 3.
 If you don't include a dash, both min and max get set to the
 specified value.
+.Pp
+The paths specified are subject to token expansion.
+For the purposes of logging, the most interesting token
+expansion is
+.ar %{strftime:<string>}
+which calls
+.Xr strftime 3
+on
+.Ar <string>
+with the localised current time of day.
 .Ss Levels
 Each log message has a level as follows:
 .Bl -tag -width "xxx" -offset indent
@@ -242,7 +252,20 @@ other messages will be logged to syslog with priority
 .Li LOG_INFO ,
 and facility
 .Li LOG_USER .
-All other programs will log all messages to their stderr.
+.Bd -literal -offset indent
+[logging]
+	kdc = FILE:/var/log/kdc-%{strftime:%Y%m%d%H}
+.Ed
+.Pp
+This will log all messages from the
+.Nm kdc
+program with level 0 to 3 (inclusively) to a file whose
+name is generated using
+.Xr strftime 3 .
+As the file is
+.Xr open 2 ed
+each time a log message is written, this can be used to write
+automatically rotating log files.
 .Sh SEE ALSO
 .Xr syslog 3 ,
 .Xr krb5.conf 5

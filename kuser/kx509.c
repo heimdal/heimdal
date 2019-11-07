@@ -231,7 +231,7 @@ kx509(struct kx509_options *opt, int argc, char **argv)
 {
     krb5_kx509_req_ctx req = NULL;
     krb5_context context = heimtools_context;
-    krb5_error_code ret;
+    krb5_error_code ret = 0;
     krb5_ccache ccout = NULL;
     krb5_ccache cc = NULL;
 

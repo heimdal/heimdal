@@ -1704,7 +1704,7 @@ pkinit_client(hx509_context contextp, hx509_ca_tbs tbs, struct cert_type_opt *op
     if (ret)
 	return ret;
 
-    ret = hx509_ca_tbs_add_eku(context, tbs, &asn1_oid_id_ms_client_authentication);
+    ret = hx509_ca_tbs_add_eku(context, tbs, &asn1_oid_id_pkix_kp_clientAuth);
     if (ret)
 	return ret;
 

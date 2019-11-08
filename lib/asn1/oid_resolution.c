@@ -209,6 +209,18 @@ der_find_heim_oid_by_name(const char *str, const heim_oid **oid)
 }
 
 int
+der_find_or_parse_heim_oid(const char *str, const char *sep, heim_oid *oid)
+{
+    const heim_oid *found = NULL;
+
+    switch (der_find_heim_oid_by_name(str, &found)) {
+    case 0: return der_copy_oid(found, oid);
+    case -1: return der_parse_heim_oid (str, sep, oid);
+    default: return ENOMEM;
+    }
+}
+
+int
 der_find_heim_oid_by_oid(const heim_oid *oid, const char **name)
 {
     size_t right = num_sym_oids;

@@ -204,6 +204,7 @@ _hx509_expr_free(struct hx_expr *expr)
     free(expr);
 }
 
+/* XXX Horrible, no good cause not thread-safe */
 HX509_LIB_FUNCTION struct hx_expr * HX509_LIB_CALL
 _hx509_expr_parse(const char *buf)
 {
@@ -220,6 +221,12 @@ _hx509_expr_parse(const char *buf)
     yyparse();
 
     return _hx509_expr_input.expr;
+}
+
+const char *
+_hx509_expr_parse_error(void)
+{
+    return _hx509_expr_input.error;
 }
 
 void

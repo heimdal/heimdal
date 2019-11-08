@@ -2873,9 +2873,9 @@ acert(struct acert_options *opt, int argc, char **argv)
 
     hx509_query *q = NULL;
     if (opt->expr_string) {
-        if ((ret = hx509_query_alloc(context, &q)))
+        if ((ret = hx509_query_alloc(context, &q)) ||
+	    (ret = hx509_query_match_expr(context, q, opt->expr_string)))
             hx509_err(context, 1, ret, "Could not initialize query");
-	hx509_query_match_expr(context, q, opt->expr_string);
         if ((ret = hx509_certs_find(context, certs, q, &cert)) || !cert)
             hx509_err(context, 1, ret, "No matching certificate");
         ret = acert1(opt, -1, cert, &matched);

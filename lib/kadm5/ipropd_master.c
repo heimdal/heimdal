@@ -31,7 +31,6 @@
  * SUCH DAMAGE.
  */
 
-#include <krb5_locl.h>
 #include "iprop.h"
 #include <rtbl.h>
 

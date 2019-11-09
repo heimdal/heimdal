@@ -31,10 +31,14 @@
  * SUCH DAMAGE.
  */
 
-#include "kadm5_locl.h"
+#include <string.h>
+#include <stdlib.h>
 #include <getarg.h>
 
-RCSID("$Id$");
+#include <roken.h>
+#include <krb5.h>
+
+#include "admin.h"
 
 static int version_flag;
 static int help_flag;

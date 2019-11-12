@@ -304,18 +304,12 @@ ${context} --gsskrb5-acceptor-identity=${keytabfile}.sr4-kvno-new \
 	}
 > messages.log
 echo "======test cross realm failing transit check (--gsskrb5-acceptor-identity; mixed-kvno)"
-${context} --gsskrb5-acceptor-identity=${keytabfile}.sr4-kvno-mixed \
+${context} --gsskrb5-acceptor-identity=${keytabfile}.sr4-kvno-mixed --iterate-acceptor-keytab \
 	host@srv.test4.h5l.se > test_context.log 2>&1 && {
 		cat test_context.log;
 		eval "$testfailed";
 	}
 	cat test_context.log
-	# The "Decrypt integrity check" check should be removed
-	# once we can force an iteration over all keytab entries
-	grep -q "Decrypt integrity check failed for checksum type" test_context.log || {
-		echo "ERROR: Missing 'Decrypt integrity check' error";
-		eval "$testfailed";
-	}; true || \
 	grep -q "${NO_TRANSIT_ALLOWED_ERROR}" test_context.log || {
 		echo "ERROR: Missing 'no transit allowed' error";
 		eval "$testfailed";
@@ -400,18 +394,12 @@ ${context} --gsskrb5-acceptor-identity=${keytabfile}.sr4-kvno-new --acceptor-ski
 	}
 > messages.log
 echo "======test cross realm failing transit check (--acceptor-skip-transit-check; mixed-kvno)"
-${context} --gsskrb5-acceptor-identity=${keytabfile}.sr4-kvno-mixed --acceptor-skip-transit-check \
-	host@srv.test4.h5l.se > test_context.log 2>&1 && {
+${context} --gsskrb5-acceptor-identity=${keytabfile}.sr4-kvno-mixed --acceptor-skip-transit-check --iterate-acceptor-keytab \
+	host@srv.test4.h5l.se > test_context.log 2>&1 || {
 		cat test_context.log;
 		eval "$testfailed";
 	}
 	cat test_context.log
-	# The "Decrypt integrity check" check should be removed
-	# once we can force an iteration over all keytab entries
-	grep -q "Decrypt integrity check failed for checksum type" test_context.log || {
-		echo "ERROR: Missing 'Decrypt integrity check' error";
-		eval "$testfailed";
-	}; true && \
 	grep -q "${NO_TRANSIT_ALLOWED_ERROR}" test_context.log && {
 		echo "ERROR: Found 'no transit allowed' error";
 		eval "$testfailed";

@@ -68,6 +68,7 @@ export KRB5_CONFIG
 KRB5CCNAME=${cache}
 export KRB5CCNAME
 
+rm -f krb5ccfile*
 rm -f ${keytabfile}
 rm -f current-db*
 rm -f out-*

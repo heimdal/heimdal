@@ -75,6 +75,7 @@ export KRB5CCNAME
 
 rm -f krb5ccfile*
 rm -f ${keytabfile}
+rm -f ${keytabfile}.sr4-kvno-*
 rm -f current-db*
 rm -f out-*
 rm -f mkey.file*
@@ -116,7 +117,25 @@ ${kadmin} add -p cross32 --use-defaults krbtgt/${R3}@${R2} || exit 1
 ${kadmin} add -p cross34 --use-defaults krbtgt/${R3}@${R4} || exit 1
 ${kadmin} add -p cross43 --use-defaults krbtgt/${R4}@${R3} || exit 1
 
+#
+# Here we create special keytabs in order to test the kvno checking
+# in the acceptor code. The KDC only has the correct key with kvno=54.
+#
+# ${keytab}.sr4-kvno-old:   contains only the correct key with the old kvno=45
+# ${keytab}.sr4-kvno-mixed: contains a wrong key with kvno=54, but
+#                           contains the correct key with the old kvno=45
+# ${keytab}.sr4-kvno-new:   contains only the correct key with the new kvno=54
+#
 ${kadmin} add -p psr4 --use-defaults host/srv.test4.h5l.se@${R4} || exit 1
+${kadmin} mod --kvno=45 host/srv.test4.h5l.se@${R4} || exit 1
+${kadmin} ext -k ${keytab}.sr4-kvno-old host/srv.test4.h5l.se@${R4} || exit 1
+${kadmin} ext -k ${keytab}.sr4-kvno-mixed host/srv.test4.h5l.se@${R4} || exit 1
+${kadmin} passwd -p Psr4 host/srv.test4.h5l.se@${R4} || exit 1
+${kadmin} mod --kvno=54 host/srv.test4.h5l.se@${R4} || exit 1
+${kadmin} ext -k ${keytab}.sr4-kvno-mixed host/srv.test4.h5l.se@${R4} || exit 1
+${kadmin} passwd -p psr4 host/srv.test4.h5l.se@${R4} || exit 1
+${kadmin} mod --kvno=54 host/srv.test4.h5l.se@${R4} || exit 1
+${kadmin} ext -k ${keytab}.sr4-kvno-new host/srv.test4.h5l.se@${R4} || exit 1
 ${kadmin} ext -k ${keytab} host/srv.test4.h5l.se@${R4} || exit 1
 
 # add both lucid and lucid.test.h5l.se to simulate aliases
@@ -272,6 +291,54 @@ ${context} --gsskrb5-acceptor-identity=${keytabfile} \
 		eval "$testfailed";
 	}
 > messages.log
+echo "======test cross realm failing transit check (--gsskrb5-acceptor-identity; new-kvno)"
+${context} --gsskrb5-acceptor-identity=${keytabfile}.sr4-kvno-new \
+	host@srv.test4.h5l.se > test_context.log 2>&1 && {
+		cat test_context.log;
+		eval "$testfailed";
+	}
+	cat test_context.log
+	grep -q "${NO_TRANSIT_ALLOWED_ERROR}" test_context.log || {
+		echo "ERROR: Missing 'no transit allowed' error";
+		eval "$testfailed";
+	}
+> messages.log
+echo "======test cross realm failing transit check (--gsskrb5-acceptor-identity; mixed-kvno)"
+${context} --gsskrb5-acceptor-identity=${keytabfile}.sr4-kvno-mixed \
+	host@srv.test4.h5l.se > test_context.log 2>&1 && {
+		cat test_context.log;
+		eval "$testfailed";
+	}
+	cat test_context.log
+	# The "Decrypt integrity check" check should be removed
+	# once we can force an iteration over all keytab entries
+	grep -q "Decrypt integrity check failed for checksum type" test_context.log || {
+		echo "ERROR: Missing 'Decrypt integrity check' error";
+		eval "$testfailed";
+	}; true || \
+	grep -q "${NO_TRANSIT_ALLOWED_ERROR}" test_context.log || {
+		echo "ERROR: Missing 'no transit allowed' error";
+		eval "$testfailed";
+	}
+> messages.log
+echo "======test cross realm failing transit check (--gsskrb5-acceptor-identity; old-kvno)"
+${context} --gsskrb5-acceptor-identity=${keytabfile}.sr4-kvno-old \
+	host@srv.test4.h5l.se > test_context.log 2>&1 && {
+		cat test_context.log;
+		eval "$testfailed";
+	}
+	cat test_context.log
+	# The "Failed to find host/..." check should be removed
+	# once the related bug is fixed
+	grep -q "Failed to find host/srv.test4.h5l.se@TEST4.H5L.SE.kvno 54" test_context.log || {
+		echo "ERROR: Missing 'Failed to find host/...' error";
+		eval "$testfailed";
+	}; true || \
+	grep -q "${NO_TRANSIT_ALLOWED_ERROR}" test_context.log || {
+		echo "ERROR: Missing 'no transit allowed' error";
+		eval "$testfailed";
+	}
+> messages.log
 echo "======test cross realm without transit check (--acceptor-skip-transit-check; $keytabfile)"
 ${context} --gsskrb5-acceptor-identity=$keytabfile --acceptor-skip-transit-check \
 	host@srv.test4.h5l.se > test_context.log 2>&1 || {
@@ -316,6 +383,48 @@ include $(realpath ${KRB5_CONFIG})
 _EOF
 KRB5_CONFIG=${TMP_KRB5_CONFIG} \
 ${context} --gsskrb5-acceptor-identity=$keytabfile \
+	host@srv.test4.h5l.se > test_context.log 2>&1 || {
+		cat test_context.log;
+		eval "$testfailed";
+	}
+	cat test_context.log
+	grep -q "${NO_TRANSIT_ALLOWED_ERROR}" test_context.log && {
+		echo "ERROR: Found 'no transit allowed' error";
+		eval "$testfailed";
+	}
+> messages.log
+echo "======test cross realm failing transit check (--acceptor-skip-transit-check; new-kvno)"
+${context} --gsskrb5-acceptor-identity=${keytabfile}.sr4-kvno-new --acceptor-skip-transit-check\
+	host@srv.test4.h5l.se > test_context.log 2>&1 || {
+		cat test_context.log;
+		eval "$testfailed";
+	}
+	cat test_context.log
+	grep -q "${NO_TRANSIT_ALLOWED_ERROR}" test_context.log && {
+		echo "ERROR: Found 'no transit allowed' error";
+		eval "$testfailed";
+	}
+> messages.log
+echo "======test cross realm failing transit check (--acceptor-skip-transit-check; mixed-kvno)"
+${context} --gsskrb5-acceptor-identity=${keytabfile}.sr4-kvno-mixed --acceptor-skip-transit-check \
+	host@srv.test4.h5l.se > test_context.log 2>&1 && {
+		cat test_context.log;
+		eval "$testfailed";
+	}
+	cat test_context.log
+	# The "Decrypt integrity check" check should be removed
+	# once we can force an iteration over all keytab entries
+	grep -q "Decrypt integrity check failed for checksum type" test_context.log || {
+		echo "ERROR: Missing 'Decrypt integrity check' error";
+		eval "$testfailed";
+	}; true && \
+	grep -q "${NO_TRANSIT_ALLOWED_ERROR}" test_context.log && {
+		echo "ERROR: Found 'no transit allowed' error";
+		eval "$testfailed";
+	}
+> messages.log
+echo "======test cross realm failing transit check (--acceptor-skip-transit-check; old-kvno)"
+${context} --gsskrb5-acceptor-identity=${keytabfile}.sr4-kvno-old --acceptor-skip-transit-check \
 	host@srv.test4.h5l.se > test_context.log 2>&1 || {
 		cat test_context.log;
 		eval "$testfailed";

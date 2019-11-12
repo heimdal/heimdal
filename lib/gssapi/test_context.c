@@ -73,6 +73,7 @@ static char *client_ccache = NULL;
 static char *client_keytab = NULL;
 static char *gsskrb5_acceptor_identity = NULL;
 static int acceptor_skip_transit_check = 0;
+static int iterate_acceptor_keytab = 0;
 static char *session_enctype_string = NULL;
 static int client_time_offset = 0;
 static int server_time_offset = 0;
@@ -756,6 +757,8 @@ static struct getargs args[] = {
     {"gsskrb5-acceptor-identity", 0, arg_string, &gsskrb5_acceptor_identity, "keytab", NULL },
     {"acceptor-skip-transit-check", 0, arg_flag, &acceptor_skip_transit_check,
      "skip transited checks", NULL },
+    {"iterate-acceptor-keytab", 0, arg_flag, &iterate_acceptor_keytab,
+     "iterate over all keytab entries", NULL },
     {"session-enctype",	0, arg_string,	&session_enctype_string, "enctype", NULL },
     {"client-time-offset",	0, arg_integer,	&client_time_offset, "time", NULL },
     {"server-time-offset",	0, arg_integer,	&server_time_offset, "time", NULL },
@@ -897,9 +900,22 @@ main(int argc, char **argv)
 		errx(1, "gss_set_cred_option(GSS_KRB5_CRED_SKIP_TRANSIT_CHECK_X): %s",
 		     gssapi_err(maj_stat, min_stat, GSS_C_NO_OID));
 	}
+	if (iterate_acceptor_keytab) {
+	    gss_buffer_desc empty_buffer = GSS_C_EMPTY_BUFFER;
+
+	    maj_stat = gss_set_cred_option(&min_stat,
+					   &acceptor_cred,
+					   (gss_OID)GSS_KRB5_CRED_ITERATE_ACCEPTOR_KEYTAB_X,
+					   &empty_buffer);
+	    if (GSS_ERROR(maj_stat))
+		errx(1, "gss_set_cred_option(GSS_KRB5_CRED_ITERATE_ACCEPTOR_KEYTAB_X): %s",
+		     gssapi_err(maj_stat, min_stat, GSS_C_NO_OID));
+	}
     } else {
 	if (acceptor_skip_transit_check)
 	    errx(1, "--acceptor-skip-transit-check requires --gsskrb5-acceptor-identity option");
+	if (iterate_acceptor_keytab)
+	    errx(1, "--iterate-acceptor-keytab requires --gsskrb5-acceptor-identity option");
     }
 
     if (client_password && (client_ccache || client_keytab)) {

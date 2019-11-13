@@ -177,6 +177,7 @@ INCFILES = 			\
 !ifndef HAVE_STDINT_H
 	$(INCDIR)\stdint.h	\
 !endif
+	$(INCDIR)\versionsupport.h	\
 	$(INCDIR)\xdbm.h
 
 clean::

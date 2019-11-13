@@ -33,11 +33,16 @@
 #include <config.h>
 #include <roken.h>
 #include <assert.h>
+#include <versionsupport.h>
 
 #include <evp.h>
 #include <evp-wincng.h>
 
 #include <bcrypt.h>
+
+#ifndef BCRYPT_HASH_REUSABLE_FLAG
+#define BCRYPT_HASH_REUSABLE_FLAG 0x00000020
+#endif
 
 /*
  * CNG cipher provider
@@ -575,9 +580,15 @@ wincng_md_hash_init(BCRYPT_ALG_HANDLE hAlgorithm,
 {
     struct wincng_md_ctx *cng = (struct wincng_md_ctx *)ctx;
     NTSTATUS status;
-    ULONG cbData;
+    ULONG cbData, dwFlags = 0;
 
-    wincng_md_cleanup(ctx);
+    if (IsWindows8OrGreaterCached()) {
+	if (cng->hHash)
+	    return 1;
+	else
+	    dwFlags |= BCRYPT_HASH_REUSABLE_FLAG;
+    } else
+	wincng_md_cleanup(ctx);
 
     status = BCryptGetProperty(hAlgorithm,
 			       BCRYPT_OBJECT_LENGTH,
@@ -594,7 +605,7 @@ wincng_md_hash_init(BCRYPT_ALG_HANDLE hAlgorithm,
 			      cng->cbHashObject,
 			      NULL,
 			      0,
-			      0);
+			      dwFlags);
 
     return BCRYPT_SUCCESS(status);
 }

@@ -809,14 +809,20 @@ krb5_cc_close(krb5_context context,
      */
     if (id->cc_initialized && id->cc_start_tgt_stored && !id->cc_kx509_done &&
         strcmp("MEMORY", krb5_cc_get_type(context, id)) != 0) {
-        _krb5_debug(context, 2, "attempting to fetch a certificate using "
-                    "kx509");
-        ret = krb5_kx509(context, id, NULL);
-        if (ret)
-            _krb5_debug(context, 2, "failed to fetch a certificate");
-        else
-            _krb5_debug(context, 2, "fetched a certificate");
-        ret = 0;
+        krb5_boolean enabled;
+
+        krb5_appdefault_boolean(context, NULL, NULL, "enable_kx509", FALSE,
+                                &enabled);
+        if (enabled) {
+            _krb5_debug(context, 2, "attempting to fetch a certificate using "
+                        "kx509");
+            ret = krb5_kx509(context, id, NULL);
+            if (ret)
+                _krb5_debug(context, 2, "failed to fetch a certificate");
+            else
+                _krb5_debug(context, 2, "fetched a certificate");
+            ret = 0;
+        }
     }
 
     ret = (*id->ops->close)(context, id);

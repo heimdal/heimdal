@@ -235,7 +235,7 @@ libgssapi_la_LIBADD = \
 	$(LIB_hcrypto) \
 	$(LIBADD_roken)
 
-man_MANS = gssapi.3 gss_acquire_cred.3 mech/mech.5
+man_MANS = gssapi.3 gss_acquire_cred.3 mech/mech.5 gss-token.1
 
 include_HEADERS = gssapi.h
 noinst_HEADERS = \
@@ -311,7 +311,7 @@ test_cfx_SOURCES = krb5/test_cfx.c
 
 check_PROGRAMS = test_acquire_cred $(TESTS)
 
-bin_PROGRAMS = gsstool
+bin_PROGRAMS = gsstool gss-token
 noinst_PROGRAMS = test_cred test_kcred test_context test_ntlm test_add_store_cred
 
 test_context_SOURCES = test_context.c test_common.c test_common.h
@@ -332,11 +332,16 @@ LDADD = libgssapi.la \
 
 dist_gsstool_SOURCES = gsstool.c
 nodist_gsstool_SOURCES = gss-commands.c gss-commands.h
+dist_gss_token_SOURCES = gss-token.c
 
 gsstool_LDADD = libgssapi.la \
 	$(top_builddir)/lib/sl/libsl.la \
 	$(top_builddir)/lib/krb5/libkrb5.la \
 	$(LIB_readline) \
+	$(LIB_roken)
+
+gss_token_LDADD = libgssapi.la \
+	$(top_builddir)/lib/krb5/libkrb5.la \
 	$(LIB_roken)
 
 gss-commands.c gss-commands.h: gss-commands.in

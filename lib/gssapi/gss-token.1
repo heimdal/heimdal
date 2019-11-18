@@ -1,0 +1,75 @@
+.\"
+.\"
+.Dd May 12, 2014
+.Os
+.Dt GSS-TOKEN 1
+.Sh NAME
+.Nm gss-token
+.Nd generate and consume base64 GSS tokens
+.Sh SYNOPSIS
+.Nm
+.Op Fl DNn
+.Op Fl c count
+.Ar service@host
+.Nm
+.Fl r
+.Op Fl MNln
+.Op Fl C Ar ccache
+.Op Fl c count
+.Op Ar service@host
+.Sh DESCRIPTION
+.Nm
+generates and consumes base64 encoded GSS tokens.
+It is mostly useful for testing.
+.Pp
+.Nm
+supports the following options:
+.Bl -tag -width indentxxxx
+.It Fl C Ar ccache
+write an accepted delegated credential into
+.Ar ccache .
+This only makes sense if
+.Fl r
+is specified.
+.It Fl D
+delegate credentials.
+This only makes sense as a client, that is when
+.Fl r
+is not specified.
+.It Fl M
+copy the default ccache to a MEMORY: ccache before each
+separate write operation.
+The default ccache will not pick up any obtained service
+tickets.
+If specified with
+.Fl c ,
+the cache will revert to its original state before each
+new token is written.
+This can be used to load test the KDC.
+.It Fl N
+prepend
+.Dq Negotiate\ 
+to generated tokens and expect it on consumed tokens.
+.It Fl c Ar count
+repeat the operation
+.Ar count
+times.
+This is good for very basic benchmarking.
+.It Fl l
+loop infinitely in read mode.
+This is to support a multiple round trip GSS mechanism.
+.It Fl n
+do not output the generated token.
+.It Fl r
+read a token rather than generate a token.
+.El
+.Pp
+.Nm
+takes one argument, a
+.Ar host@service
+specifier.
+The argument is required when generating a token but is optional if
+consuming (reading) a token.
+.Sh SEE ALSO
+.Xr gssapi 3 ,
+.Xr kerberos 8 .

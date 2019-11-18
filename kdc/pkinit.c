@@ -392,13 +392,15 @@ get_dh_param(krb5_context context,
 }
 
 krb5_error_code
-_kdc_pk_rd_padata(krb5_context context,
-		  krb5_kdc_configuration *config,
-		  const KDC_REQ *req,
+_kdc_pk_rd_padata(astgs_request_t priv,
 		  const PA_DATA *pa,
-		  hdb_entry_ex *client,
 		  pk_client_params **ret_params)
 {
+    /* XXXrcd: we use priv vs r due to a conflict */
+    krb5_context context = priv->context;
+    krb5_kdc_configuration *config = priv->config;
+    const KDC_REQ *req = &priv->req;
+    hdb_entry_ex *client = priv->client;
     pk_client_params *cp;
     krb5_error_code ret;
     heim_oid eContentType = { 0, NULL }, contentInfoOid = { 0, NULL };
@@ -1124,17 +1126,16 @@ pk_mk_pa_reply_dh(krb5_context context,
  */
 
 krb5_error_code
-_kdc_pk_mk_pa_reply(krb5_context context,
-		    krb5_kdc_configuration *config,
-		    pk_client_params *cp,
-		    const hdb_entry_ex *client,
-		    krb5_enctype sessionetype,
-		    const KDC_REQ *req,
-		    const krb5_data *req_buffer,
-		    krb5_keyblock *reply_key,
-		    krb5_keyblock *sessionkey,
-		    METHOD_DATA *md)
+_kdc_pk_mk_pa_reply(astgs_request_t r, pk_client_params *cp)
 {
+    krb5_context context = r->context;
+    krb5_kdc_configuration *config = r->config;
+    krb5_enctype sessionetype = r->sessionetype;
+    const KDC_REQ *req = &r->req;
+    const krb5_data *req_buffer = &r->request;
+    krb5_keyblock *reply_key = &r->reply_key;
+    krb5_keyblock *sessionkey = &r->session_key;
+    METHOD_DATA *md = &r->outpadata;
     krb5_error_code ret;
     void *buf = NULL;
     size_t len = 0, size = 0;
@@ -1663,13 +1664,14 @@ out:
 }
 
 krb5_error_code
-_kdc_pk_check_client(krb5_context context,
-		     krb5_kdc_configuration *config,
-		     HDB *clientdb,
-		     hdb_entry_ex *client,
+_kdc_pk_check_client(astgs_request_t r,
 		     pk_client_params *cp,
 		     char **subject_name)
 {
+    krb5_context context = r->context;
+    krb5_kdc_configuration *config = r->config;
+    HDB *clientdb = r->clientdb;
+    hdb_entry_ex *client = r->client;
     const HDB_Ext_PKINIT_acl *acl;
     const HDB_Ext_PKINIT_cert *pc;
     krb5_error_code ret;

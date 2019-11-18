@@ -187,13 +187,14 @@ check(krb5_context context, const void *plug, void *plugctx, void *userctx)
 
 
 krb5_error_code
-_kdc_check_access(krb5_context context,
-		  krb5_kdc_configuration *config,
-		  hdb_entry_ex *client_ex, const char *client_name,
-		  hdb_entry_ex *server_ex, const char *server_name,
-		  KDC_REQ *req,
-		  METHOD_DATA *method_data)
+_kdc_check_access(astgs_request_t r, KDC_REQ *req, METHOD_DATA *method_data)
 {
+    krb5_context context = r->context;
+    krb5_kdc_configuration *config = r->config;
+    hdb_entry_ex *client_ex = r->client;
+    const char *client_name = r->cname;
+    hdb_entry_ex *server_ex = r->server;
+    const char *server_name = r->sname;
     krb5_error_code ret = KRB5_PLUGIN_NO_HANDLE;
     struct check_uc uc;
 

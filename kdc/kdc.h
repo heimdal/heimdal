@@ -102,18 +102,14 @@ typedef struct krb5_kdc_configuration {
 
 } krb5_kdc_configuration;
 
+typedef struct kdc_request_desc *kdc_request_t;
+typedef struct astgs_request_desc *astgs_request_t;
+
 struct krb5_kdc_service {
     unsigned int flags;
 #define KS_KRB5		1
 #define KS_NO_LENGTH	2
-    krb5_error_code (*process)(krb5_context context,
-			       krb5_kdc_configuration *config,
-			       krb5_data *req_buffer,
-			       krb5_data *reply,
-			       const char *from,
-			       struct sockaddr *addr,
-			       int datagram_reply,
-			       int *claim);
+    krb5_error_code (*process)(kdc_request_t *, int *claim);
 };
 
 #include <kdc-protos.h>

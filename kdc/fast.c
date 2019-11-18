@@ -36,7 +36,8 @@
 #include "kdc_locl.h"
 
 static krb5_error_code
-get_fastuser_crypto(kdc_request_t r, krb5_enctype enctype, krb5_crypto *crypto)
+get_fastuser_crypto(astgs_request_t r, krb5_enctype enctype,
+		    krb5_crypto *crypto)
 {
     krb5_principal fast_princ;
     hdb_entry_ex *fast_user = NULL;
@@ -79,7 +80,7 @@ get_fastuser_crypto(kdc_request_t r, krb5_enctype enctype, krb5_crypto *crypto)
 
 
 static krb5_error_code
-fast_parse_cookie(kdc_request_t r, const PA_DATA *pa)
+fast_parse_cookie(astgs_request_t r, const PA_DATA *pa)
 {
     krb5_crypto crypto = NULL;
     krb5_error_code ret;
@@ -127,7 +128,7 @@ fast_parse_cookie(kdc_request_t r, const PA_DATA *pa)
 }
 
 static krb5_error_code
-fast_add_cookie(kdc_request_t r, METHOD_DATA *method_data)
+fast_add_cookie(astgs_request_t r, METHOD_DATA *method_data)
 {
     krb5_crypto crypto = NULL;
     KDCFastCookie shell;
@@ -237,8 +238,7 @@ _kdc_fast_mk_response(krb5_context context,
 
 
 krb5_error_code
-_kdc_fast_mk_error(krb5_context context,
-		   kdc_request_t r,
+_kdc_fast_mk_error(astgs_request_t r,
 		   METHOD_DATA *error_method,
 		   krb5_crypto armor_crypto,
 		   const KDC_REQ_BODY *req_body,
@@ -250,6 +250,7 @@ _kdc_fast_mk_error(krb5_context context,
 		   time_t *csec, int *cusec,
 		   krb5_data *error_msg)
 {
+    krb5_context context = r->context;
     krb5_error_code ret;
     krb5_data e_data;
     size_t size;
@@ -342,7 +343,7 @@ _kdc_fast_mk_error(krb5_context context,
 }
 
 krb5_error_code
-_kdc_fast_unwrap_request(kdc_request_t r)
+_kdc_fast_unwrap_request(astgs_request_t r)
 {
     krb5_principal armor_server = NULL;
     hdb_entry_ex *armor_user = NULL;

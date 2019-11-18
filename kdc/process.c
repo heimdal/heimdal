@@ -33,10 +33,173 @@
  */
 
 #include "kdc_locl.h"
+#include <vis.h>
 
 /*
  *
  */
+
+#undef  __attribute__
+#define __attribute__(x)
+
+/*
+ * append_token adds a token which is optionally a kv-pair and it
+ * also optionally eats the whitespace.  If k == NULL, then it's
+ * not a kv-pair.
+ */
+
+void
+_kdc_audit_addkv(kdc_request_t r, int flags, const char *k,
+		 const char *fmt, ...)
+	__attribute__ ((__format__ (__printf__, 4, 5)))
+{
+    va_list ap;
+    heim_string_t str;
+    size_t i,j;
+    char *buf1;
+    char *buf2;
+    char *buf3;
+
+    va_start(ap, fmt);
+    vasprintf(&buf1, fmt, ap);
+    va_end(ap);
+    if (!buf1)
+	return;
+
+    j = asprintf(&buf2, "%s=%s", k, buf1);
+    free(buf1);
+    if (!buf2)
+	return;
+
+    /* We optionally eat the whitespace. */
+
+    if (flags | KDC_AUDIT_EATWHITE) {
+	for (i=0, j=0; buf2[i]; i++)
+	    if (buf2[i] != ' ' && buf2[i] != '\t')
+		buf2[j++] = buf2[i];
+	buf2[j] = '\0';
+    }
+
+    if (flags | KDC_AUDIT_VIS) {
+	buf3 = malloc((j + 1) * 4 + 1);
+	strvisx(buf3, buf2, j, VIS_OCTAL);
+	free(buf2);
+    } else
+	buf3 = buf2;
+
+    str = heim_string_create(buf3);
+    free(buf3);
+    if (!str)
+	return;
+
+    heim_array_append_value(r->kv, str);
+}
+
+void
+_kdc_audit_addkv_timediff(kdc_request_t r, const char *k,
+			  const struct timeval *start,
+			  const struct timeval *end)
+{
+    time_t sec;
+    int usec;
+    const char *sign = "";
+
+    if (end->tv_sec > start->tv_sec ||
+	(end->tv_sec == start->tv_sec && end->tv_usec >= start->tv_usec)) {
+	sec  = end->tv_sec  - start->tv_sec;
+	usec = end->tv_usec - start->tv_usec;
+    } else {
+	sec  = start->tv_sec  - end->tv_sec;
+	usec = start->tv_usec - end->tv_usec;
+	sign = "-";
+    }
+
+    if (usec < 0) {
+	usec += 1000000;
+	sec  -= 1;
+    }
+
+    _kdc_audit_addkv(r, 0, k, "%s%ld.%06d", sign, sec, usec);
+}
+
+void
+_kdc_audit_trail(kdc_request_t r, krb5_error_code ret)
+{
+    const char *retval;
+    char kvbuf[1024];
+    size_t nelem;
+    size_t i, j;
+
+#define CASE(x)	case x : retval = #x; break
+    switch (ret) {
+    CASE(ENOMEM);
+    CASE(HDB_ERR_NOT_FOUND_HERE);
+    CASE(HDB_ERR_WRONG_REALM);
+    CASE(HDB_ERR_EXISTS);
+    CASE(HDB_ERR_KVNO_NOT_FOUND);
+    CASE(HDB_ERR_NOENTRY);
+    CASE(HDB_ERR_NO_MKEY);
+    CASE(KRB5KDC_ERR_BADOPTION);
+    CASE(KRB5KDC_ERR_CANNOT_POSTDATE);
+    CASE(KRB5KDC_ERR_CLIENT_NOTYET);
+    CASE(KRB5KDC_ERR_C_PRINCIPAL_UNKNOWN);
+    CASE(KRB5KDC_ERR_ETYPE_NOSUPP);
+    CASE(KRB5KDC_ERR_KEY_EXPIRED);
+    CASE(KRB5KDC_ERR_NAME_EXP);
+    CASE(KRB5KDC_ERR_NEVER_VALID);
+    CASE(KRB5KDC_ERR_NONE);
+    CASE(KRB5KDC_ERR_NULL_KEY);
+    CASE(KRB5KDC_ERR_PADATA_TYPE_NOSUPP);
+    CASE(KRB5KDC_ERR_POLICY);
+    CASE(KRB5KDC_ERR_PREAUTH_FAILED);
+    CASE(KRB5KDC_ERR_PREAUTH_REQUIRED);
+    CASE(KRB5KDC_ERR_SERVER_NOMATCH);
+    CASE(KRB5KDC_ERR_SERVICE_EXP);
+    CASE(KRB5KDC_ERR_SERVICE_NOTYET);
+    CASE(KRB5KDC_ERR_S_PRINCIPAL_UNKNOWN);
+    CASE(KRB5KDC_ERR_TRTYPE_NOSUPP);
+    CASE(KRB5KRB_ERR_RESPONSE_TOO_BIG);
+    case 0:
+	retval = "SUCCESS";
+	break;
+    default:
+	retval = "UNKNOWN";
+	break;
+    }
+
+    /* Let's save a few bytes */
+#define PREFIX "KRB5KDC_"
+    if (!strncmp(PREFIX, retval, strlen(PREFIX)))
+	retval += strlen(PREFIX);
+#undef PREFIX
+
+    /* Calculate metrics and add them */
+
+    _kdc_audit_addkv_timediff(r, "elapsed", &r->tv_start, &r->tv_end);
+
+    if (r->e_text)
+	_kdc_audit_addkv(r, KDC_AUDIT_VIS, "e-text", r->e_text);
+
+    nelem = heim_array_get_length(r->kv);
+    for (i=0, j=0; i < nelem; i++) {
+	heim_string_t s;
+	const char *kvpair;
+
+	s = heim_array_get_value(r->kv, i);
+	/* XXXrcd: in string.c the check? */
+	kvpair = heim_string_get_utf8(s);
+
+	if (j < sizeof(kvbuf) - 1)
+	    kvbuf[j++] = ' ';
+	for (; *kvpair && j < sizeof(kvbuf) - 1; j++)
+	    kvbuf[j] = *kvpair++;
+    }
+    kvbuf[j] = '\0';
+
+    kdc_log(r->context, r->config, 3, "%s %s %s %s %s%s",
+	    r->reqtype, retval, r->from, r->cname,
+	    r->sname, kvbuf);
+}
 
 void
 krb5_kdc_update_time(struct timeval *tv)
@@ -47,89 +210,86 @@ krb5_kdc_update_time(struct timeval *tv)
 	_kdc_now = *tv;
 }
 
+
+#define EXTEND_REQUEST_T(LHS, RHS) do {			\
+	RHS = realloc(LHS, sizeof(*RHS));		\
+	if (!RHS)					\
+	    return krb5_enomem((LHS)->context);		\
+	LHS = (void *)RHS;				\
+	memset(((char *)LHS) + sizeof(*LHS),		\
+	       0x0,					\
+	       sizeof(*RHS) - sizeof(*LHS));		\
+    } while (0)
+
 static krb5_error_code
-kdc_as_req(krb5_context context,
-	   krb5_kdc_configuration *config,
-	   krb5_data *req_buffer,
-	   krb5_data *reply,
-	   const char *from,
-	   struct sockaddr *addr,
-	   int datagram_reply,
-	   int *claim)
+kdc_as_req(kdc_request_t *rptr, int *claim)
 {
-    struct kdc_request_desc r;
+    astgs_request_t r;
     krb5_error_code ret;
     size_t len;
 
-    memset(&r, 0, sizeof(r));
+    /* We must free things in the extensions */
+    EXTEND_REQUEST_T(*rptr, r);
 
-    ret = decode_AS_REQ(req_buffer->data, req_buffer->length, &r.req, &len);
+    ret = decode_AS_REQ(r->request.data, r->request.length, &r->req, &len);
     if (ret)
 	return ret;
 
-    r.context = context;
-    r.config = config;
-    r.request.data = req_buffer->data;
-    r.request.length = req_buffer->length;
-
+    r->reqtype = "AS-REQ";
+    r->use_request_t = 1;
     *claim = 1;
 
-    ret = _kdc_as_rep(&r, reply, from, addr, datagram_reply);
-    free_AS_REQ(&r.req);
+    ret = _kdc_as_rep(r);
+    free_AS_REQ(&r->req);
     return ret;
 }
 
 
 static krb5_error_code
-kdc_tgs_req(krb5_context context,
-	    krb5_kdc_configuration *config,
-	    krb5_data *req_buffer,
-	    krb5_data *reply,
-	    const char *from,
-	    struct sockaddr *addr,
-	    int datagram_reply,
-	    int *claim)
+kdc_tgs_req(kdc_request_t *rptr, int *claim)
 {
+    astgs_request_t r;
     krb5_error_code ret;
-    KDC_REQ req;
     size_t len;
 
-    ret = decode_TGS_REQ(req_buffer->data, req_buffer->length, &req, &len);
+    /* We must free things in the extensions */
+    EXTEND_REQUEST_T(*rptr, r);
+
+    ret = decode_TGS_REQ(r->request.data, r->request.length, &r->req, &len);
     if (ret)
 	return ret;
 
+    r->reqtype = "TGS-REQ";
+    r->use_request_t = 1;
     *claim = 1;
 
-    ret = _kdc_tgs_rep(context, config, &req, reply,
-		       from, addr, datagram_reply);
-    free_TGS_REQ(&req);
+    ret = _kdc_tgs_rep(r);
+    free_TGS_REQ(&r->req);
     return ret;
 }
 
 #ifdef DIGEST
 
 static krb5_error_code
-kdc_digest(krb5_context context,
-	   krb5_kdc_configuration *config,
-	   krb5_data *req_buffer,
-	   krb5_data *reply,
-	   const char *from,
-	   struct sockaddr *addr,
-	   int datagram_reply,
-	   int *claim)
+kdc_digest(kdc_request_t *rptr, int *claim)
 {
+    kdc_request_t r;
     DigestREQ digestreq;
     krb5_error_code ret;
     size_t len;
 
-    ret = decode_DigestREQ(req_buffer->data, req_buffer->length,
+    r = *rptr;
+
+    ret = decode_DigestREQ(r->request.data, r->request.length,
 			   &digestreq, &len);
     if (ret)
 	return ret;
 
+    r->use_request_t = 0;
     *claim = 1;
 
-    ret = _kdc_do_digest(context, config, &digestreq, reply, from, addr);
+    ret = _kdc_do_digest(r->context, r->config, &digestreq,
+			 r->reply, r->from, r->addr);
     free_DigestREQ(&digestreq);
     return ret;
 }
@@ -139,15 +299,15 @@ kdc_digest(krb5_context context,
 #ifdef KX509
 
 static krb5_error_code
-kdc_kx509(krb5_context context,
-	  krb5_kdc_configuration *config,
-	  krb5_data *req_buffer,
-	  krb5_data *reply,
-	  const char *from,
-	  struct sockaddr *addr,
-	  int datagram_reply,
-	  int *claim)
+kdc_kx509(kdc_request_t *rptr, int *claim)
 {
+    kdc_request_t r = *rptr;
+    krb5_context context = r->context;
+    krb5_kdc_configuration *config = r->config;
+    krb5_data *req_buffer = &r->request;
+    krb5_data *reply = r->reply;
+    const char *from = r->from;
+    struct sockaddr *addr = r->addr;
     Kx509Request kx509req;
     krb5_error_code ret;
 
@@ -156,6 +316,7 @@ kdc_kx509(krb5_context context,
     if (ret)
 	return ret;
 
+    r->use_request_t = 0;
     *claim = 1;
 
     ret = _kdc_do_kx509(context, config, &kx509req, reply, from, addr);
@@ -178,6 +339,70 @@ static struct krb5_kdc_service services[] =  {
     { 0, NULL }
 };
 
+static int
+process_request(krb5_context context,
+		krb5_kdc_configuration *config,
+		unsigned int krb5_only,
+		unsigned char *buf,
+		size_t len,
+		krb5_data *reply,
+		krb5_boolean *prependlength,
+		const char *from,
+		struct sockaddr *addr,
+		int datagram_reply)
+{
+    kdc_request_t r;
+    krb5_error_code ret;
+    unsigned int i;
+    int claim = 0;
+    heim_auto_release_t pool = heim_auto_release_create();
+
+    r = calloc(sizeof(*r), 1);
+    if (!r)
+	return krb5_enomem(context);
+
+    r->context = context;
+    r->config = config;
+    r->from = from;
+    r->request.data = buf;
+    r->request.length = len;
+    r->datagram_reply = datagram_reply;
+    r->reply = reply;
+    r->kv = heim_array_create();
+    if (!r->kv) {
+	free(r);
+	return krb5_enomem(context);
+    }
+
+    gettimeofday(&r->tv_start, NULL);
+
+    for (i = 0; services[i].process != NULL; i++) {
+	if (krb5_only && (services[i].flags & KS_KRB5) == 0)
+	    continue;
+	ret = (*services[i].process)(&r, &claim);
+	if (claim) {
+	    if (prependlength && services[i].flags & KS_NO_LENGTH)
+		*prependlength = 0;
+
+	    if (r->use_request_t) {
+		gettimeofday(&r->tv_end, NULL);
+		_kdc_audit_trail(r, ret);
+		free(r->cname);
+		free(r->sname);
+		free(r->e_text_buf);
+		heim_release(r->kv);
+	    }
+
+	    heim_release(pool);
+	    return ret;
+	}
+    }
+
+    heim_release(pool);
+
+    return -1;
+}
+
 /*
  * handle the request in `buf, len', from `addr' (or `from' as a string),
  * sending a reply in `reply'.
@@ -194,33 +419,10 @@ krb5_kdc_process_request(krb5_context context,
 			 struct sockaddr *addr,
 			 int datagram_reply)
 {
-    krb5_error_code ret;
-    unsigned int i;
-    krb5_data req_buffer;
-    int claim = 0;
-    heim_auto_release_t pool = heim_auto_release_create();
-
-    req_buffer.data = buf;
-    req_buffer.length = len;
-
-    for (i = 0; services[i].process != NULL; i++) {
-	ret = (*services[i].process)(context, config, &req_buffer,
-				     reply, from, addr, datagram_reply,
-				     &claim);
-	if (claim) {
-	    if (services[i].flags & KS_NO_LENGTH)
-		*prependlength = 0;
-
-	    heim_release(pool);
-	    return ret;
-	}
-    }
-
-    heim_release(pool);
-
-    return -1;
+    return process_request(context, config, 0, buf, len, reply, prependlength,
+			   from, addr, datagram_reply);
 }
-
+ 
 /*
  * handle the request in `buf, len', from `addr' (or `from' as a string),
  * sending a reply in `reply'.
@@ -238,26 +440,10 @@ krb5_kdc_process_krb5_request(krb5_context context,
 			      struct sockaddr *addr,
 			      int datagram_reply)
 {
-    krb5_error_code ret;
-    unsigned int i;
-    krb5_data req_buffer;
-    int claim = 0;
-
-    req_buffer.data = buf;
-    req_buffer.length = len;
-
-    for (i = 0; services[i].process != NULL; i++) {
-	if ((services[i].flags & KS_KRB5) == 0)
-	    continue;
-	ret = (*services[i].process)(context, config, &req_buffer,
-				     reply, from, addr, datagram_reply,
-				     &claim);
-	if (claim)
-	    return ret;
-    }
-
-    return -1;
+    return process_request(context, config, 1, buf, len, reply, NULL,
+			   from, addr, datagram_reply);
 }
+
 
 /*
  *

@@ -212,10 +212,7 @@ _kdc_check_access(astgs_request_t r, KDC_REQ *req, METHOD_DATA *method_data)
     }
 
     if (ret == KRB5_PLUGIN_NO_HANDLE)
-	return kdc_check_flags(context, config,
-			       client_ex, client_name,
-			       server_ex, server_name,
-			       req->msg_type == krb_as_req);
+	return kdc_check_flags(r, req->msg_type == krb_as_req);
     return ret;
 }
 

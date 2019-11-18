@@ -864,7 +864,8 @@ enum {
 enum {
     KRB5_PRINCIPAL_UNPARSE_SHORT = 1, /**< No realm if it is the default realm */
     KRB5_PRINCIPAL_UNPARSE_NO_REALM = 2, /**< No realm */
-    KRB5_PRINCIPAL_UNPARSE_DISPLAY = 4 /**< No quoting */
+    KRB5_PRINCIPAL_UNPARSE_DISPLAY = 4, /**< No quoting */
+    KRB5_PRINCIPAL_UNPARSE_EXPORT_NAME = 8 /**< RFC1964 Export Name quoting */
 };
 
 typedef struct krb5_sendto_ctx_data *krb5_sendto_ctx;

@@ -40,6 +40,10 @@
 #include <sys/auxv.h>
 #endif
 
+#ifdef HAVE_SYS_EXEC_ELF_H
+#include <sys/exec_elf.h>
+#endif
+
 #ifndef HAVE_AUXV_T
 /*
  * Illumos defines auxv_t per the ABI standards, but all other OSes seem

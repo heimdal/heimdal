@@ -75,6 +75,7 @@ AC_CHECK_HEADERS([\
 	sys/auxv.h				\
 	sys/bswap.h				\
 	sys/errno.h				\
+	sys/exec_elf.h				\
 	sys/ioctl.h				\
 	sys/mman.h				\
 	sys/param.h				\

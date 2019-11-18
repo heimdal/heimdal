@@ -132,13 +132,19 @@ rk_base64_decode(const char *str, void *data)
     for (p = str; *p && (*p == '=' || strchr(base64_chars, *p)); p += 4) {
 	unsigned int val = token_decode(p);
 	unsigned int marker = (val >> 24) & 0xff;
-	if (val == DECODE_ERROR)
+	if (val == DECODE_ERROR) {
+            errno = EINVAL;
 	    return -1;
+        }
 	*q++ = (val >> 16) & 0xff;
 	if (marker < 2)
 	    *q++ = (val >> 8) & 0xff;
 	if (marker < 1)
 	    *q++ = val & 0xff;
+    }
+    if (q - (unsigned char *) data > INT_MAX) {
+        errno = EOVERFLOW;
+        return -1;
     }
     return q - (unsigned char *) data;
 }

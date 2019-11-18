@@ -214,7 +214,8 @@ log_file(krb5_context context, const char *timestr, const char *msg, void *data)
     struct timeval tv;
     struct file_data *f = data;
     char *msgclean;
-    size_t len = strlen(msg);
+    size_t i;
+    size_t j;
 
     if (f->disp != FILEDISP_KEEPOPEN) {
 	char *filename;
@@ -249,11 +250,20 @@ log_file(krb5_context context, const char *timestr, const char *msg, void *data)
     }
     if(f->fd == NULL)
 	return;
-    /* make sure the log doesn't contain special chars */
-    msgclean = malloc((len + 1) * 4);
+    /*
+     * make sure the log doesn't contain special chars:
+     * we used to use strvisx(3) to encode the log, but this is
+     * inconsistent with our syslog(3) code which does not do this.
+     * It also makes it inelegant to write data which has already
+     * been quoted such as what krb5_unparse_principal() gives us.
+     * So, we change here to eat the special characters, instead.
+     */
+    msgclean = strdup(msg);
     if (msgclean == NULL)
 	goto out;
-    strvisx(msgclean, rk_UNCONST(msg), len, VIS_OCTAL);
+    for (i=0, j=0; msg[i]; i++)
+	if (msg[i] >= 32 || msg[i] == '\t')
+	    msgclean[j++] = msg[i];
     fprintf(f->fd, "%s %s\n", timestr, msgclean);
     free(msgclean);
  out:

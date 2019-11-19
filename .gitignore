@@ -383,6 +383,7 @@ tags
 /lib/roken/strpftime-test
 /lib/roken/test-auxval
 /lib/roken/test-detach
+/lib/roken/test-getuserinfo
 /lib/roken/test-readenv
 /lib/roken/tsearch-test
 /lib/roken/vis.h
@@ -453,9 +454,9 @@ tags
 /tests/gss/current-db.db
 /tests/gss/foopassword
 /tests/gss/krb5.conf
-/tests/gss/krb5ccfile
-/tests/gss/krb5ccfile2
-/tests/gss/krb5ccfile-ds
+/tests/gss/krb5ccfile*
+/tests/gss/krb5ccfile2*
+/tests/gss/krb5ccfile-ds*
 /tests/gss/server.keytab
 /tests/gss/tempfile
 /tests/java/KerberosInit$1.class
@@ -467,10 +468,12 @@ tags
 /tests/java/jgssapi_server.class
 /tests/java/server.keytab
 /tests/java/krb5.conf
-/tests/kdc/acache.krb5
+/tests/kdc/acache.krb5*
 /tests/kdc/barpassword
 /tests/kdc/ca.crt
-/tests/kdc/cache.krb5
+/tests/kdc/cache.krb5*
+/tests/kdc/cache1.krb5*
+/tests/kdc/cache2.krb5*
 /tests/kdc/cdigest-reply
 /tests/kdc/check-authz
 /tests/kdc/check-canon
@@ -513,6 +516,8 @@ tags
 /tests/kdc/krb5.conf
 /tests/kdc/krb5-cc.conf
 /tests/kdc/krb5.conf.keys
+/tests/kdc/kx509-template.crt
+/tests/kdc/kx509.pem
 /tests/kdc/localname
 /tests/kdc/notfoopassword
 /tests/kdc/o2cache.krb5
@@ -533,6 +538,7 @@ tags
 /tests/ldap/check-ldap
 /tests/ldap/krb5.conf
 /tests/ldap/slapd-init
+/tests/plugin/cache.krb5*
 /tests/plugin/check-pac
 /tests/plugin/current-db.db
 /tests/plugin/foopassword

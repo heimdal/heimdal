@@ -60,7 +60,7 @@ while(<$vs>)
 {
     next unless m/^([^#]+)/;
 
-    @a = split(/\s+|({|})/,$1);
+    @a = split(/\s+|(\{|})/,$1);
 
     for $f (@a) {
 	given ($f) {

@@ -33,6 +33,11 @@ HEIMDAL_X509_1.2 {
 		hx509_request_add_pkinit;
 		hx509_request_add_registered;
 		hx509_request_add_xmpp_name;
+		hx509_request_authorize_ku;
+		hx509_request_authorize_eku;
+		hx509_request_authorize_san;
+		hx509_request_count_unsupported;
+		hx509_request_count_unauthorized;
 		hx509_request_print;
 		hx509_request_to_pkcs10;
 		_hx509_unmap_file_os;
@@ -43,6 +48,7 @@ HEIMDAL_X509_1.2 {
 		hx509_ca_tbs_add_crl_dp_uri;
 		hx509_ca_tbs_add_eku;
 		hx509_ca_tbs_add_ku;
+		hx509_ca_tbs_add_san;
 		hx509_ca_tbs_add_san_hostname;
 		hx509_ca_tbs_add_san_jid;
 		hx509_ca_tbs_add_san_ms_upn;
@@ -54,6 +60,7 @@ HEIMDAL_X509_1.2 {
 		hx509_ca_tbs_init;
 		hx509_ca_tbs_set_ca;
 		hx509_ca_tbs_set_domaincontroller;
+		hx509_ca_tbs_set_from_csr;
 		hx509_ca_tbs_set_notAfter;
 		hx509_ca_tbs_set_notAfter_lifetime;
 		hx509_ca_tbs_set_notBefore;
@@ -216,16 +223,12 @@ HEIMDAL_X509_1.2 {
 		hx509_query_match_option;
 		hx509_query_statistic_file;
 		hx509_query_unparse_stats;
-		hx509_request_get_dns_name_san;
 		hx509_request_get_eku;
-		hx509_request_get_email_san;
 		hx509_request_get_exts;
 		hx509_request_get_ku;
-		hx509_request_get_ms_upn_san;
 		hx509_request_get_name;
-		hx509_request_get_pkinit_san;
+		hx509_request_get_san;
 		hx509_request_get_SubjectPublicKeyInfo;
-		hx509_request_get_xmpp_san;
 		hx509_request_free;
 		hx509_request_init;
 		hx509_request_parse;

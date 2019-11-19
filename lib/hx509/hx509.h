@@ -64,6 +64,26 @@ typedef struct hx509_crl *hx509_crl;
 
 typedef void (*hx509_vprint_func)(void *, const char *, va_list);
 
+typedef enum {
+    HX509_SAN_TYPE_UNSUPPORTED = 0,
+    /* The following correspond to the enum GeneralName_enum values: */
+    HX509_SAN_TYPE_EMAIL = 2,
+    HX509_SAN_TYPE_DNSNAME = 3,
+    HX509_SAN_TYPE_DN = 4,
+    HX509_SAN_TYPE_REGISTERED_ID = 7,
+    /*
+     * Missing support for:
+     *  - URI SANs
+     *  - IP address SANs
+     *  - various otherName SANs we know about (e.g., DNSSRV)
+     *
+     * The following are otherName SAN types, and assigned manually here:
+     */
+    HX509_SAN_TYPE_XMPP = 32,
+    HX509_SAN_TYPE_PKINIT = 33,
+    HX509_SAN_TYPE_MS_UPN = 34,
+} hx509_san_type;
+
 enum {
     HX509_VHN_F_ALLOW_NO_MATCH = 1
 };

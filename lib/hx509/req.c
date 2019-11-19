@@ -34,12 +34,23 @@
 #include "hx_locl.h"
 #include <pkcs10_asn1.h>
 
+typedef struct abitstring_s {
+    unsigned char *feats;
+    size_t feat_bytes;
+} *abitstring;
+
 struct hx509_request_data {
     hx509_name name;
     SubjectPublicKeyInfo key;
     KeyUsage ku;
     ExtKeyUsage eku;
     GeneralNames san;
+    struct abitstring_s authorized_EKUs;
+    struct abitstring_s authorized_SANs;
+    uint32_t nunsupported;  /* Count of unsupported features requested */
+    uint32_t nrequested;    /* Count of supported   features requested */
+    uint32_t nauthorized;   /* Count of supported   features authorized */
+    uint32_t ku_are_authorized:1;
 };
 
 /**
@@ -80,6 +91,8 @@ hx509_request_free(hx509_request *reqp)
         return;
     if (req->name)
 	hx509_name_free(&req->name);
+    free(req->authorized_EKUs.feats);
+    free(req->authorized_SANs.feats);
     free_SubjectPublicKeyInfo(&req->key);
     free_ExtKeyUsage(&req->eku);
     free_GeneralNames(&req->san);
@@ -189,7 +202,18 @@ hx509_request_get_SubjectPublicKeyInfo(hx509_context context,
 HX509_LIB_FUNCTION int HX509_LIB_CALL
 hx509_request_set_ku(hx509_context context, hx509_request req, KeyUsage ku)
 {
+    KeyUsage oldku = req->ku;
+    uint64_t n = KeyUsage2int(ku);
+
+    if ((KeyUsage2int(req->ku) & n) != n) {
+        req->ku_are_authorized = 0;
+    }
     req->ku = ku;
+
+    if (KeyUsage2int(oldku) == 0 && n != 0)
+        req->nrequested++;
+    if (KeyUsage2int(oldku) && KeyUsage2int(req->ku) == 0)
+        req->nrequested--;
     return 0;
 }
 
@@ -262,7 +286,12 @@ hx509_request_add_GeneralName(hx509_context context,
                               hx509_request req,
                               const GeneralName *gn)
 {
-    return add_GeneralNames(&req->san, gn);
+    int ret;
+
+    ret = add_GeneralNames(&req->san, gn);
+    if (ret == 0)
+        req->nrequested++;
+    return ret;
 }
 
 static int
@@ -311,8 +340,13 @@ hx509_request_add_xmpp_name(hx509_context context,
                             hx509_request req,
                             const char *jid)
 {
-    return add_utf8_other_san(context, &req->san, &asn1_oid_id_pkix_on_xmppAddr,
-                              jid);
+    int ret;
+
+    ret = add_utf8_other_san(context, &req->san, &asn1_oid_id_pkix_on_xmppAddr,
+                             jid);
+    if (ret == 0)
+        req->nrequested++;
+    return ret;
 }
 
 /**
@@ -331,8 +365,13 @@ hx509_request_add_ms_upn_name(hx509_context context,
                               hx509_request req,
                               const char *upn)
 {
-    return add_utf8_other_san(context, &req->san, &asn1_oid_id_pkinit_ms_san,
-                              upn);
+    int ret;
+
+    ret = add_utf8_other_san(context, &req->san, &asn1_oid_id_pkinit_ms_san,
+                             upn);
+    if (ret == 0)
+        req->nrequested++;
+    return ret;
 }
 
 /**
@@ -352,13 +391,17 @@ hx509_request_add_dns_name(hx509_context context,
                            const char *hostname)
 {
     GeneralName name;
+    int ret;
 
     memset(&name, 0, sizeof(name));
     name.element = choice_GeneralName_dNSName;
     name.u.dNSName.data = rk_UNCONST(hostname);
     name.u.dNSName.length = strlen(hostname);
 
-    return add_GeneralNames(&req->san, &name);
+    ret = add_GeneralNames(&req->san, &name);
+    if (ret == 0)
+        req->nrequested++;
+    return ret;
 }
 
 /**
@@ -378,13 +421,17 @@ hx509_request_add_email(hx509_context context,
                         const char *email)
 {
     GeneralName name;
+    int ret;
 
     memset(&name, 0, sizeof(name));
     name.element = choice_GeneralName_rfc822Name;
     name.u.rfc822Name.data = rk_UNCONST(email);
     name.u.rfc822Name.length = strlen(email);
 
-    return add_GeneralNames(&req->san, &name);
+    ret = add_GeneralNames(&req->san, &name);
+    if (ret == 0)
+        req->nrequested++;
+    return ret;
 }
 
 /**
@@ -413,6 +460,8 @@ hx509_request_add_registered(hx509_context context,
         return ret;
     ret = add_GeneralNames(&req->san, &name);
     free_GeneralName(&name);
+    if (ret == 0)
+        req->nrequested++;
     return ret;
 }
 
@@ -449,6 +498,8 @@ hx509_request_add_pkinit(hx509_context context,
     if (ret == 0)
         ret = add_GeneralNames(&req->san, &gn);
     free_GeneralName(&gn);
+    if (ret == 0)
+        req->nrequested++;
     return ret;
 }
 
@@ -797,18 +848,39 @@ hx509_request_parse_der(hx509_context context,
             ret = decode_KeyUsage(e->extnValue.data, e->extnValue.length,
                                   &(*req)->ku, NULL);
             what = "keyUsage";
+            /*
+             * Count all KUs as one requested extension to be authorized,
+             * though the caller will have to check the KU values individually.
+             */
+            if (KeyUsage2int((*req)->ku) & ~KeyUsage2int(int2KeyUsage(~0)))
+                (*req)->nunsupported++;
+            (*req)->nrequested++;
         } else if (der_heim_oid_cmp(&e->extnID,
                                     &asn1_oid_id_x509_ce_extKeyUsage) == 0) {
             ret = decode_ExtKeyUsage(e->extnValue.data, e->extnValue.length,
                                      &(*req)->eku, NULL);
             what = "extKeyUsage";
+
+            /*
+             * Count each EKU as a separate requested extension to be
+             * authorized.
+             */
+            (*req)->nrequested += (*req)->eku.len;
         } else if (der_heim_oid_cmp(&e->extnID,
                                     &asn1_oid_id_x509_ce_subjectAltName) == 0) {
             ret = decode_GeneralNames(e->extnValue.data, e->extnValue.length,
                                       &(*req)->san, NULL);
             what = "subjectAlternativeName";
+
+            /*
+             * Count each SAN as a separate requested extension to be
+             * authorized.
+             */
+            (*req)->nrequested += (*req)->san.len;
         } else {
             char *oidstr = NULL;
+
+            (*req)->nunsupported++;
 
             /*
              * We need an HX509_TRACE facility for this sort of warning.
@@ -880,278 +952,372 @@ hx509_request_parse(hx509_context context,
 }
 
 /**
- * Iterate EKUs in a CSR.
+ * Get some EKU from a CSR.  Usable as an iterator.
  *
  * @param context An hx509 context.
  * @param req The hx509_request object.
+ * @param idx The index of the EKU (0 for the first) to return
  * @param out A pointer to a char * variable where the OID will be placed
  *            (caller must free with free())
- * @param cursor An index of EKU (0 for the first); on return it's incremented
- *               or set to -1 when no EKUs remain.
  *
- * @return An hx509 error code, see hx509_get_error_string().
+ * @return Zero on success, HX509_NO_ITEM if no such item exists (denoting
+ *         iteration end), or an error.
  *
  * @ingroup hx509_request
  */
 HX509_LIB_FUNCTION int HX509_LIB_CALL
-hx509_request_get_eku(hx509_context context,
-                      hx509_request req,
-                      char **out,
-                      int *cursor)
+hx509_request_get_eku(hx509_request req,
+                      size_t idx,
+                      char **out)
 {
-    size_t i;
-
     *out = NULL;
-    if (*cursor < 0)
-        return 0;
-    i = (size_t)*cursor;
-    if (i >= req->eku.len)
-        return 0; /* XXX */
-    if (i + 1 < req->eku.len)
-        (*cursor)++;
-    else
-        *cursor = -1;
-    return der_print_heim_oid(&req->eku.val[i], '.', out);
-}
-
-ssize_t
-find_san1(hx509_context context,
-          hx509_request req,
-          size_t i,
-          int kind,
-          const heim_oid *other_name_oid)
-{
-    if (i >= req->san.len)
-        return -1;
-    do {
-        GeneralName *san = &req->san.val[i];
-
-        if (i == INT_MAX)
-            return -1;
-        if (san->element == kind && kind != choice_GeneralName_otherName)
-            return i;
-        if (san->element == kind && kind == choice_GeneralName_otherName &&
-            der_heim_oid_cmp(&san->u.otherName.type_id, other_name_oid) == 0)
-            return i;
-    } while (i++ < req->san.len);
-    return -1;
-}
-
-ssize_t
-find_san(hx509_context context,
-         hx509_request req,
-         int *cursor,
-         int kind,
-         const heim_oid *other_name_oid)
-{
-    ssize_t ret;
-
-    if (*cursor < 0)
-        return -1;
-    ret = find_san1(context, req, (size_t)*cursor, kind, other_name_oid);
-    if (ret < 0 || ret >= INT_MAX)
-        *cursor = -1;
-    else
-        *cursor = find_san1(context, req, (size_t)*cursor + 1, kind,
-                            other_name_oid);
-    return ret;
+    if (idx >= req->eku.len)
+        return HX509_NO_ITEM;
+    return der_print_heim_oid(&req->eku.val[idx], '.', out);
 }
 
 static int
-get_utf8_otherName_san(hx509_context context,
-                       hx509_request req,
-                       const heim_oid *oid,
-                       char **out,
-                       int *cursor)
+abitstring_check(abitstring a, size_t n, int idx)
+{
+    size_t bytes;
+
+    if (idx >= n)
+        return EINVAL;
+
+    bytes = (idx + 1) / CHAR_BIT + (((idx + 1) % CHAR_BIT) ? 1 : 0);
+    if (a->feat_bytes < bytes)
+        return 0;
+
+    return !!(a->feats[idx / CHAR_BIT] & (1UL<<(idx % CHAR_BIT)));
+}
+
+/*
+ * Sets and returns 0 if not already set, -1 if already set.  Positive return
+ * values are system errors.
+ */
+static int
+abitstring_set(abitstring a, size_t n, int idx)
+{
+    size_t bytes;
+
+    if (idx >= n)
+        return EINVAL;
+
+    bytes = n / CHAR_BIT + ((n % CHAR_BIT) ? 1 : 0);
+    if (a->feat_bytes < bytes) {
+        unsigned char *tmp;
+
+        if ((tmp = realloc(a->feats, bytes)) == NULL)
+            return ENOMEM;
+        memset(tmp + a->feat_bytes, 0, bytes - a->feat_bytes);
+        a->feats = tmp;
+        a->feat_bytes = bytes;
+    }
+
+    if (!(a->feats[idx / CHAR_BIT] & (1UL<<(idx % CHAR_BIT)))) {
+        a->feats[idx / CHAR_BIT] |= 1UL<<(idx % CHAR_BIT);
+        return 0;
+    }
+    return -1;
+}
+
+/*
+ * Resets and returns 0 if not already reset, -1 if already reset.  Positive
+ * return values are system errors.
+ */
+static int
+abitstring_reset(abitstring a, size_t n, int idx)
+{
+    size_t bytes;
+
+    if (idx >= n)
+        return EINVAL;
+
+    bytes = (idx + 1) / CHAR_BIT + (((idx + 1) % CHAR_BIT) ? 1 : 0);
+    if (a->feat_bytes >= bytes &&
+        (a->feats[idx / CHAR_BIT] & (1UL<<(idx % CHAR_BIT)))) {
+        a->feats[idx / CHAR_BIT] &= ~(1UL<<(idx % CHAR_BIT));
+        return 0;
+    }
+    return -1;
+}
+
+static int
+authorize_feat(hx509_request req, abitstring a, size_t n, int idx)
+{
+    int ret;
+
+    ret = abitstring_set(a, n, idx);
+    switch (ret) {
+    case 0:
+        req->nauthorized++;
+        /*fallthrough*/
+    case -1:
+        return 0;
+    default:
+        return ret;
+    }
+}
+
+static int
+reject_feat(hx509_request req, abitstring a, size_t n, int idx)
+{
+    int ret;
+
+    ret = abitstring_reset(a, n, idx);
+    switch (ret) {
+    case 0:
+        req->nauthorized--;
+        /*fallthrough*/
+    case -1:
+        return 0;
+    default:
+        return ret;
+    }
+}
+
+/**
+ * Filter the requested KeyUsage and mark it authorized.
+ *
+ * @param req The hx509_request object.
+ * @param ku Permitted KeyUsage
+ *
+ * @ingroup hx509_request
+ */
+HX509_LIB_FUNCTION void HX509_LIB_CALL
+hx509_request_authorize_ku(hx509_request req, KeyUsage ku)
+{
+    (void) hx509_request_set_ku(NULL, req, ku);
+    req->ku = int2KeyUsage(KeyUsage2int(req->ku) & KeyUsage2int(ku));
+    if (KeyUsage2int(ku))
+        req->ku_are_authorized = 1;
+}
+
+/**
+ * Mark a requested EKU as authorized.
+ *
+ * @param req The hx509_request object.
+ * @param idx The index of an EKU that can be fetched with
+ *            hx509_request_get_eku()
+ *
+ * @return Zero on success, an error otherwise.
+ *
+ * @ingroup hx509_request
+ */
+HX509_LIB_FUNCTION int HX509_LIB_CALL
+hx509_request_authorize_eku(hx509_request req, size_t idx)
+{
+    return authorize_feat(req, &req->authorized_EKUs, req->eku.len, idx);
+}
+
+/**
+ * Mark a requested EKU as not authorized.
+ *
+ * @param req The hx509_request object.
+ * @param idx The index of an EKU that can be fetched with
+ *            hx509_request_get_eku()
+ *
+ * @return Zero on success, an error otherwise.
+ *
+ * @ingroup hx509_request
+ */
+HX509_LIB_FUNCTION int HX509_LIB_CALL
+hx509_request_reject_eku(hx509_request req, size_t idx)
+{
+    return reject_feat(req, &req->authorized_EKUs, req->eku.len, idx);
+}
+
+/**
+ * Check if an EKU has been marked authorized.
+ *
+ * @param req The hx509_request object.
+ * @param idx The index of an EKU that can be fetched with
+ *            hx509_request_get_eku()
+ *
+ * @return Non-zero if authorized, zero if not.
+ *
+ * @ingroup hx509_request
+ */
+HX509_LIB_FUNCTION int HX509_LIB_CALL
+hx509_request_eku_authorized_p(hx509_request req, size_t idx)
+{
+    return abitstring_check(&req->authorized_EKUs, req->eku.len, idx);
+}
+
+/**
+ * Mark a requested SAN as authorized.
+ *
+ * @param req The hx509_request object.
+ * @param idx The cursor as modified by a SAN iterator.
+ *
+ * @return Zero on success, an error otherwise.
+ *
+ * @ingroup hx509_request
+ */
+HX509_LIB_FUNCTION int HX509_LIB_CALL
+hx509_request_authorize_san(hx509_request req, size_t idx)
+{
+    return authorize_feat(req, &req->authorized_SANs, req->san.len, idx);
+}
+
+/**
+ * Mark a requested SAN as not authorized.
+ *
+ * @param req The hx509_request object.
+ * @param idx The cursor as modified by a SAN iterator.
+ *
+ * @return Zero on success, an error otherwise.
+ *
+ * @ingroup hx509_request
+ */
+HX509_LIB_FUNCTION int HX509_LIB_CALL
+hx509_request_reject_san(hx509_request req, size_t idx)
+{
+    return reject_feat(req, &req->authorized_SANs, req->san.len, idx);
+}
+
+/**
+ * Check if a SAN has been marked authorized.
+ *
+ * @param req The hx509_request object.
+ * @param idx The index of a SAN that can be fetched with
+ *            hx509_request_get_san()
+ *
+ * @return Non-zero if authorized, zero if not.
+ *
+ * @ingroup hx509_request
+ */
+HX509_LIB_FUNCTION int HX509_LIB_CALL
+hx509_request_san_authorized_p(hx509_request req, size_t idx)
+{
+    return abitstring_check(&req->authorized_SANs, req->san.len, idx);
+}
+
+/**
+ * Return the count of unsupported requested certificate extensions.
+ *
+ * @param req The hx509_request object.
+ * @return The number of unsupported certificate extensions requested.
+ *
+ * @ingroup hx509_request
+ */
+HX509_LIB_FUNCTION size_t HX509_LIB_CALL
+hx509_request_count_unsupported(hx509_request req)
+{
+    return req->nunsupported;
+}
+
+/**
+ * Return the count of as-yet unauthorized certificate extensions requested.
+ *
+ * @param req The hx509_request object.
+ * @return The number of as-yet unauthorized certificate extensions requested.
+ *
+ * @ingroup hx509_request
+ */
+HX509_LIB_FUNCTION size_t HX509_LIB_CALL
+hx509_request_count_unauthorized(hx509_request req)
+{
+    return req->nrequested - (req->nauthorized + req->ku_are_authorized);
+}
+
+static hx509_san_type
+san_map_type(GeneralName *san)
+{
+    static const struct {
+        const heim_oid *oid;
+        hx509_san_type type;
+    } map[] = {
+        { &asn1_oid_id_pkinit_san, HX509_SAN_TYPE_PKINIT },
+        { &asn1_oid_id_pkix_on_xmppAddr, HX509_SAN_TYPE_XMPP },
+        { &asn1_oid_id_pkinit_ms_san, HX509_SAN_TYPE_MS_UPN }
+    };
+    size_t i;
+
+    switch (san->element) {
+    case choice_GeneralName_rfc822Name:    return HX509_SAN_TYPE_EMAIL;
+    case choice_GeneralName_dNSName:       return HX509_SAN_TYPE_DNSNAME;
+    case choice_GeneralName_directoryName: return HX509_SAN_TYPE_DN;
+    case choice_GeneralName_registeredID:  return HX509_SAN_TYPE_REGISTERED_ID;
+    case choice_GeneralName_otherName: {
+        for (i = 0; i < sizeof(map)/sizeof(map[0]); i++)
+            if (der_heim_oid_cmp(&san->u.otherName.type_id, map[i].oid) == 0)
+                return map[i].type;
+    }
+        /*fallthrough*/
+    default:                               return HX509_SAN_TYPE_UNSUPPORTED;
+    }
+}
+
+/**
+ * Return the count of as-yet unauthorized certificate extensions requested.
+ *
+ * @param req The hx509_request object.
+ *
+ * @ingroup hx509_request
+ */
+HX509_LIB_FUNCTION size_t HX509_LIB_CALL
+hx509_request_get_san(hx509_request req,
+                      size_t idx,
+                      hx509_san_type *type,
+                      char **out)
 {
     struct rk_strpool *pool;
-    ssize_t idx;
-    size_t i;
+    GeneralName *san;
 
     *out = NULL;
-    if (*cursor < 0)
+    if (idx >= req->san.len)
+        return HX509_NO_ITEM;
+
+    san = &req->san.val[idx];
+    switch ((*type = san_map_type(san))) {
+    case HX509_SAN_TYPE_UNSUPPORTED: return 0;
+    case HX509_SAN_TYPE_EMAIL:
+        *out = strndup(san->u.rfc822Name.data,
+                       san->u.rfc822Name.length);
+        break;
+    case HX509_SAN_TYPE_DNSNAME:
+        *out = strndup(san->u.dNSName.data,
+                       san->u.dNSName.length);
+        break;
+    case HX509_SAN_TYPE_DN: {
+        Name name;
+
+        if (san->u.directoryName.element ==
+            choice_GeneralName_directoryName_rdnSequence) {
+            name.element = choice_Name_rdnSequence;
+            name.u.rdnSequence = san->u.directoryName.u.rdnSequence;
+            return _hx509_Name_to_string(&name, out);
+        }
+        *type = HX509_SAN_TYPE_UNSUPPORTED;
         return 0;
-    idx = find_san(context, req, cursor, choice_GeneralName_otherName, oid);
-    if (idx < 0)
-        return -1;
-    i = (size_t)idx;
-
-    pool = hx509_unparse_utf8_string_name(NULL,
-                                          &req->san.val[i].u.otherName.value);
-    if (pool == NULL ||
-        (*out = rk_strpoolcollect(pool)) == NULL)
-        return ENOMEM;
-    return 0;
-}
-
-/* XXX Add hx509_request_get_san() that also outputs the SAN type */
-
-/**
- * Iterate XMPP SANs in a CSR.
- *
- * @param context An hx509 context.
- * @param req The hx509_request object.
- * @param out A pointer to a char * variable where the Jabber address will be
- *            placed (caller must free with free())
- * @param cursor An index of SAN (0 for the first); on return it's incremented
- *               or set to -1 when no SANs remain.
- *
- * @return An hx509 error code, see hx509_get_error_string().
- *
- * @ingroup hx509_request
- */
-HX509_LIB_FUNCTION int HX509_LIB_CALL
-hx509_request_get_xmpp_san(hx509_context context,
-                           hx509_request req,
-                           char **out,
-                           int *cursor)
-{
-    return get_utf8_otherName_san(context, req, &asn1_oid_id_pkix_on_xmppAddr,
-                                  out, cursor);
-}
-
-/**
- * Iterate MS UPN SANs in a CSR.
- *
- * @param context An hx509 context.
- * @param req The hx509_request object.
- * @param out A pointer to a char * variable where the UPN will be placed
- *            (caller must free with free())
- * @param cursor An index of SAN (0 for the first); on return it's incremented
- *               or set to -1 when no SANs remain.
- *
- * @return An hx509 error code, see hx509_get_error_string().
- *
- * @ingroup hx509_request
- */
-HX509_LIB_FUNCTION int HX509_LIB_CALL
-hx509_request_get_ms_upn_san(hx509_context context,
-                             hx509_request req,
-                             char **out,
-                             int *cursor)
-{
-    return get_utf8_otherName_san(context, req, &asn1_oid_id_pkinit_ms_san,
-                                  out, cursor);
-}
-
-/**
- * Iterate e-mail SANs in a CSR.
- *
- * @param context An hx509 context.
- * @param req The hx509_request object.
- * @param out A pointer to a char * variable where the e-mail address will be
- *            placed (caller must free with free())
- * @param cursor An index of SAN (0 for the first); on return it's incremented
- *               or set to -1 when no SANs remain.
- *
- * @return An hx509 error code, see hx509_get_error_string().
- *
- * @ingroup hx509_request
- */
-HX509_LIB_FUNCTION int HX509_LIB_CALL
-hx509_request_get_email_san(hx509_context context,
-                            hx509_request req,
-                            char **out,
-                            int *cursor)
-{
-    ssize_t idx;
-    size_t i;
-
-    *out = NULL;
-    if (*cursor < 0)
+    }
+    case HX509_SAN_TYPE_REGISTERED_ID:
+        return der_print_heim_oid(&san->u.registeredID, '.', out);
+    case HX509_SAN_TYPE_XMPP:
+        /*fallthrough*/
+    case HX509_SAN_TYPE_MS_UPN:
+        pool = hx509_unparse_utf8_string_name(NULL,
+                                              &san->u.otherName.value);
+        if (pool == NULL ||
+            (*out = rk_strpoolcollect(pool)) == NULL)
+            return ENOMEM;
         return 0;
-    idx = find_san(context, req, cursor, choice_GeneralName_rfc822Name, NULL);
-    if (idx < 0)
-        return -1;
-    i = (size_t)idx;
-
-    *out = strndup(req->san.val[i].u.rfc822Name.data,
-                   req->san.val[i].u.rfc822Name.length);
+    case HX509_SAN_TYPE_PKINIT:
+        pool = _hx509_unparse_kerberos_name(NULL,
+                                            &san->u.otherName.value);
+        if (pool == NULL ||
+            (*out = rk_strpoolcollect(pool)) == NULL)
+            return ENOMEM;
+        return 0;
+    default:
+        *type = HX509_SAN_TYPE_UNSUPPORTED;
+        return 0;
+    }
     if (*out == NULL)
         return ENOMEM;
     return 0;
 }
-
-/**
- * Iterate dNSName (DNS domainname/hostname) SANs in a CSR.
- *
- * @param context An hx509 context.
- * @param req The hx509_request object.
- * @param out A pointer to a char * variable where the domainname will be
- *            placed (caller must free with free())
- * @param cursor An index of SAN (0 for the first); on return it's incremented
- *               or set to -1 when no SANs remain.
- *
- * @return An hx509 error code, see hx509_get_error_string().
- *
- * @ingroup hx509_request
- */
-HX509_LIB_FUNCTION int HX509_LIB_CALL
-hx509_request_get_dns_name_san(hx509_context context,
-                               hx509_request req,
-                               char **out,
-                               int *cursor)
-{
-    ssize_t idx;
-    size_t i;
-
-    *out = NULL;
-    if (*cursor < 0)
-        return 0;
-    idx = find_san(context, req, cursor, choice_GeneralName_dNSName, NULL);
-    if (idx < 0)
-        return -1;
-    i = (size_t)idx;
-
-    *out = strndup(req->san.val[i].u.dNSName.data,
-                   req->san.val[i].u.dNSName.length);
-    if (*out == NULL)
-        return ENOMEM;
-    return 0;
-}
-
-/**
- * Iterate Kerberos principal name (PKINIT) SANs in a CSR.
- *
- * @param context An hx509 context.
- * @param req The hx509_request object.
- * @param out A pointer to a char * variable where the principal name will be
- *            placed (caller must free with free())
- * @param cursor An index of SAN (0 for the first); on return it's incremented
- *               or set to -1 when no SANs remain.
- *
- * @return An hx509 error code, see hx509_get_error_string().
- *
- * @ingroup hx509_request
- */
-HX509_LIB_FUNCTION int HX509_LIB_CALL
-hx509_request_get_pkinit_san(hx509_context context,
-                             hx509_request req,
-                             char **out,
-                             int *cursor)
-{
-    struct rk_strpool *pool;
-    ssize_t idx;
-    size_t i;
-
-    *out = NULL;
-    if (*cursor < 0)
-        return 0;
-    idx = find_san(context, req, cursor, choice_GeneralName_otherName,
-                   &asn1_oid_id_pkinit_san);
-    if (idx < 0)
-        return -1;
-    i = (size_t)idx;
-
-    pool = _hx509_unparse_kerberos_name(NULL,
-                                        &req->san.val[i].u.otherName.value);
-    if (pool == NULL ||
-        (*out = rk_strpoolcollect(pool)) == NULL)
-        return ENOMEM;
-    return 0;
-}
-
-/* XXX More SAN types */
 
 /**
  * Display a CSR.
@@ -1168,7 +1334,9 @@ HX509_LIB_FUNCTION int HX509_LIB_CALL
 hx509_request_print(hx509_context context, hx509_request req, FILE *f)
 {
     uint64_t ku_num;
-    int ret;
+    size_t i;
+    char *s = NULL;
+    int ret = 0;
 
     /*
      * It's really unformatunate that we can't reuse more of the
@@ -1225,35 +1393,59 @@ hx509_request_print(hx509_context context, hx509_request req, FILE *f)
             fprintf(f, "%s<unknown-KeyUsage-value(s)>", first);
         fprintf(f, "\n");
     }
-    /* XXX Use new hx509_request_get_eku() accessor! */
     if (req->eku.len) {
         const char *first = " ";
-        size_t i;
 
         fprintf(f, "  eku:");
-        for (i = 0; i< req->eku.len; i++) {
-            char *oidstr = NULL;
-
-            der_print_heim_oid(&req->eku.val[i], '.', &oidstr);
-            fprintf(f, "%s{%s}", first, oidstr);
-            free(oidstr);
+        for (i = 0; ret == 0; i++) {
+            free(s); s = NULL;
+            ret = hx509_request_get_eku(req, i, &s);
+            if (ret)
+                break;
+            fprintf(f, "%s{%s}", first, s);
             first = ", ";
         }
         fprintf(f, "\n");
     }
-    /* XXX Use new hx509_request_get_*_san() accessors! */
-    if (req->san.len) {
-        size_t i;
+    free(s); s = NULL;
+    if (ret == HX509_NO_ITEM)
+        ret = 0;
+    for (i = 0; ret == 0; i++) {
+        hx509_san_type san_type;
 
-        for (i = 0; i < req->san.len; i++) {
-            GeneralName *san = &req->san.val[i];
-            char *s = NULL;
-
-            hx509_general_name_unparse(san, &s);
-            fprintf(f, "  san: %s\n", s ? s : "<parse-error>");
-            free(s);
+        free(s); s = NULL;
+        ret = hx509_request_get_san(req, i, &san_type, &s);
+        if (ret)
+            break;
+        switch (san_type) {
+        case HX509_SAN_TYPE_EMAIL:
+            fprintf(f, "  san: rfc822Name: %s\n", s);
+            break;
+        case HX509_SAN_TYPE_DNSNAME:
+            fprintf(f, "  san: dNSName: %s\n", s);
+            break;
+        case HX509_SAN_TYPE_DN:
+            fprintf(f, "  san: dn: %s\n", s);
+            break;
+        case HX509_SAN_TYPE_REGISTERED_ID:
+            fprintf(f, "  san: registeredID: %s\n", s);
+            break;
+        case HX509_SAN_TYPE_XMPP:
+            fprintf(f, "  san: xmpp: %s\n", s);
+            break;
+        case HX509_SAN_TYPE_PKINIT:
+            fprintf(f, "  san: pkinit: %s\n", s);
+            break;
+        case HX509_SAN_TYPE_MS_UPN:
+            fprintf(f, "  san: ms-upn: %s\n", s);
+            break;
+        default:
+            fprintf(f, "  san: <SAN type not supported>\n");
+            break;
         }
     }
-
+    free(s); s = NULL;
+    if (ret == HX509_NO_ITEM)
+        ret = 0;
     return ret;
 }

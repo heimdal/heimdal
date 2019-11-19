@@ -36,6 +36,7 @@ error_code NAME_MALFORMED, "Name is malformed"
 error_code CERTIFICATE_MALFORMED, "Certificate is malformed"
 error_code CERTIFICATE_MISSING_EKU, "Certificate is missing a required EKU"
 error_code PROXY_CERTIFICATE_NOT_CANONICALIZED, "Proxy certificate not canonicalized"
+error_code NO_ITEM, "No such item / iteration end"
 
 # cms related errors
 index 32

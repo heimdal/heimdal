@@ -405,6 +405,65 @@ hx509_ca_tbs_set_serialnumber(hx509_context context,
 }
 
 /**
+ * Copy elements of a CSR into a TBS, but only if all of them are authorized.
+ *
+ * @param context A hx509 context.
+ * @param tbs object to be signed.
+ * @param req CSR
+ *
+ * @return An hx509 error code, see hx509_get_error_string().
+ *
+ * @ingroup hx509_ca
+ */
+
+HX509_LIB_FUNCTION int HX509_LIB_CALL
+hx509_ca_tbs_set_from_csr(hx509_context context,
+	                  hx509_ca_tbs tbs,
+	                  hx509_request req)
+{
+    hx509_san_type san_type;
+    heim_oid oid = { 0, 0 };
+    KeyUsage ku;
+    size_t i;
+    char *s = NULL;
+    int ret;
+
+    if (hx509_request_count_unauthorized(req)) {
+        hx509_set_error_string(context, 0, ENOMEM, "out of memory");
+        return EACCES;
+    }
+
+    ret = hx509_request_get_ku(context, req, &ku);
+    if (ret == 0 && KeyUsage2int(ku))
+        ret = hx509_ca_tbs_add_ku(context, tbs, ku);
+
+    for (i = 0; ret == 0; i++) {
+        free(s); s = NULL;
+        der_free_oid(&oid);
+        ret = hx509_request_get_eku(req, i, &s);
+        if (ret == 0)
+            ret = der_parse_heim_oid(s, ".", &oid);
+        if (ret == 0)
+            ret = hx509_ca_tbs_add_eku(context, tbs, &oid);
+    }
+    if (ret == HX509_NO_ITEM)
+        ret = 0;
+
+    for (i = 0; ret == 0; i++) {
+        free(s); s = NULL;
+        ret = hx509_request_get_san(req, i, &san_type, &s);
+        if (ret == 0)
+            ret = hx509_ca_tbs_add_san(context, tbs, san_type, s);
+    }
+    if (ret == HX509_NO_ITEM)
+        ret = 0;
+
+    der_free_oid(&oid);
+    free(s);
+    return ret;
+}
+
+/**
  * An an extended key usage to the to-be-signed certificate object.
  * Duplicates will detected and not added.
  *
@@ -907,6 +966,45 @@ hx509_ca_tbs_add_san_rfc822name(hx509_context context,
     gn.u.rfc822Name.length = strlen(rfc822Name);
 
     return add_GeneralNames(&tbs->san, &gn);
+}
+
+/**
+ * Add a Subject Alternative Name of the given type to the
+ * to-be-signed certificate object.
+ *
+ * @param context A hx509 context.
+ * @param tbs object to be signed.
+ * @param rfc822Name a string to a email address.
+ *
+ * @return An hx509 error code, see hx509_get_error_string().
+ *
+ * @ingroup hx509_ca
+ */
+
+HX509_LIB_FUNCTION int HX509_LIB_CALL
+hx509_ca_tbs_add_san(hx509_context context,
+                     hx509_ca_tbs tbs,
+                     hx509_san_type type,
+                     const char *s)
+{
+    switch (type) {
+    case HX509_SAN_TYPE_EMAIL:
+        return hx509_ca_tbs_add_san_rfc822name(context, tbs, s);
+    case HX509_SAN_TYPE_DNSNAME:
+        return hx509_ca_tbs_add_san_hostname(context, tbs, s);
+    case HX509_SAN_TYPE_DN:
+        return ENOTSUP;
+    case HX509_SAN_TYPE_REGISTERED_ID:
+        return ENOTSUP;
+    case HX509_SAN_TYPE_XMPP:
+        return hx509_ca_tbs_add_san_jid(context, tbs, s);
+    case HX509_SAN_TYPE_PKINIT:
+        return hx509_ca_tbs_add_san_pkinit(context, tbs, s);
+    case HX509_SAN_TYPE_MS_UPN:
+        return hx509_ca_tbs_add_san_ms_upn(context, tbs, s);
+    default:
+        return ENOTSUP;
+    }
 }
 
 /**

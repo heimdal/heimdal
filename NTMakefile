@@ -34,7 +34,7 @@ thirdparty=thirdparty
 !endif
 
 !ifdef APPVEYOR
-SUBDIRS = include lib kuser kdc admin kadmin kpasswd appl doc \
+SUBDIRS = include lib kuser kdc admin kadmin kpasswd appl \
 	tools tests packages etc
 !else
 SUBDIRS = include lib kuser kdc admin kadmin kpasswd appl doc \

@@ -2504,9 +2504,9 @@ acert1_sans(struct acert_options *opt,
             }
         } else if (gn->element == choice_GeneralName_registeredID) {
             for (k = 0; k < opt->has_registeredID_san_strings.num_strings; k++) {
-                s = opt->has_registeredID_san_strings.strings[k];
                 heim_oid oid;
 
+                s = opt->has_registeredID_san_strings.strings[k];
                 memset(&oid, 0, sizeof(oid));
                 if ((ret = der_parse_heim_oid(s, NULL, &oid)))
                     break;
@@ -2854,6 +2854,7 @@ int
 acert(struct acert_options *opt, int argc, char **argv)
 {
     hx509_cursor cursor = NULL;
+    hx509_query *q = NULL;
     hx509_certs certs = NULL;
     hx509_cert cert = NULL;
     size_t n = 0;
@@ -2871,7 +2872,6 @@ acert(struct acert_options *opt, int argc, char **argv)
         hx509_err(context, 1, ret, "Could not load certificates from %s",
                   argv[0]);
 
-    hx509_query *q = NULL;
     if (opt->expr_string) {
         if ((ret = hx509_query_alloc(context, &q)))
             hx509_err(context, 1, ret, "Could not initialize query");

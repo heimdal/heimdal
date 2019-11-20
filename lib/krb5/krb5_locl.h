@@ -286,6 +286,7 @@ typedef struct krb5_context_data {
 #define KRB5_CTX_F_SOCKETS_INITIALIZED          8
 #define KRB5_CTX_F_RD_REQ_IGNORE		16
 #define KRB5_CTX_F_FCACHE_STRICT_CHECKING	32
+#define KRB5_CTX_F_ENFORCE_OK_AS_DELEGATE	64
     struct send_to_kdc *send_to_kdc;
 #ifdef PKINIT
     hx509_context hx509ctx;

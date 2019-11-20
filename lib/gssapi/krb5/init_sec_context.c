@@ -488,6 +488,17 @@ init_auth_restart
     *minor_status = 0;
 
     /*
+     * Check if our configuration requires us to follow the KDC's
+     * guidance.  If so, we transmogrify the GSS_C_DELEG_FLAG into
+     * the GSS_C_DELEG_POLICY_FLAG.
+     */
+    if ((context->flags & KRB5_CTX_F_ENFORCE_OK_AS_DELEGATE)
+	&& (req_flags & GSS_C_DELEG_FLAG)) {
+        req_flags &= ~GSS_C_DELEG_FLAG;
+        req_flags |= GSS_C_DELEG_POLICY_FLAG;
+    }
+
+    /*
      * If the credential doesn't have ok-as-delegate, check if there
      * is a realm setting and use that.
      */

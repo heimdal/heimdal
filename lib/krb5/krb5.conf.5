@@ -232,6 +232,16 @@ See the TOKEN EXPANSION section.
 Use DNS SRV records to lookup KDC services location.
 .It Li dns_lookup_realm = Va boolean
 Use DNS TXT records to lookup domain to realm mappings.
+.It Li enforce_ok_as_delegate = Va boolean
+If this flag to true, GSSAPI credential delegation will be
+disabled when the 
+.Ar ok-as-delegate
+flag is not set in the service ticket.
+If this flag is false, the 
+.Ar ok-as-delegate
+ticket flag is only enforced when an application specifically
+requests enforcement.
+The default value is false.
 .It Li kdc_timesync = Va boolean
 Try to keep track of the time differential between the local machine
 and the KDC, and then compensate for that when issuing requests.

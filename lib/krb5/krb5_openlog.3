@@ -244,8 +244,13 @@ On the KDC, this includes malformed requests and requests that
 are out of policy.
 .It 3
 Informational messages.
-.It 4-9
+.It 4-6
 Debugging messages with increasing obscurity as the level rises.
+.It 7
+Tracing messages.
+These messages may be high volume and are likely to impact
+performance significantly.
+Notably, tracing messages may be emitted whilst locks are held.
 .El
 .Sh EXAMPLES
 .Bd -literal -offset indent

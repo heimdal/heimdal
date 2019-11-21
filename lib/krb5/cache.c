@@ -782,6 +782,9 @@ krb5_cc_close(krb5_context context,
 {
     krb5_error_code ret;
 
+    if (!id)
+	return 0;
+
     /*
      * We want to automatically acquire a PKIX credential using kx509.
      *

@@ -1000,7 +1000,7 @@ tgs_make_reply(krb5_context context,
 					  config,
 					  krbtgt,
 					  krbtgt_etype,
-					  client_principal,
+					  tgt_name,
 					  NULL,
 					  spp,
 					  &et);
@@ -2307,7 +2307,7 @@ server_lookup:
 	ret = check_KRB5SignedPath(context,
 				   config,
 				   krbtgt,
-				   cp,
+				   tp,
 				   &adtkt,
 				   NULL,
 				   &ad_signedpath);

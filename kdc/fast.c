@@ -434,6 +434,7 @@ _kdc_fast_unwrap_request(astgs_request_t r)
 	kdc_log(r->context, r->config, 5,
 		"armor key does not have secrets at this KDC, "
 		"need to proxy");
+	free_AP_REQ(&ap_req);
 	goto out;
     } else if (ret) {
 	free_AP_REQ(&ap_req);

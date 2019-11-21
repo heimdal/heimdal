@@ -87,10 +87,15 @@ _kdc_audit_addkv(kdc_request_t r, int flags, const char *k,
     } else
 	buf3 = buf2;
 
+    kdc_log(r->context, r->config, 7, "_kdc_audit_addkv(): adding "
+	    "kv pair %s", buf3);
+
     str = heim_string_create(buf3);
     free(buf3);
-    if (!str)
+    if (!str) {
+	kdc_log(r->context, r->config, 7, "failed to add kv pair");
 	return;
+    }
 
     heim_array_append_value(r->kv, str);
 }
@@ -328,15 +333,15 @@ kdc_kx509(kdc_request_t *rptr, int *claim)
 
 
 static struct krb5_kdc_service services[] =  {
-    { KS_KRB5,		kdc_as_req },
-    { KS_KRB5,		kdc_tgs_req },
+    { KS_KRB5, "AS-REQ",	kdc_as_req },
+    { KS_KRB5, "TGS-REQ",	kdc_tgs_req },
 #ifdef DIGEST
-    { 0,		kdc_digest },
+    { 0,	"DIGEST",	kdc_digest },
 #endif
 #ifdef KX509
-    { 0,		kdc_kx509 },
+    { 0,	"KX509",	kdc_kx509 },
 #endif
-    { 0, NULL }
+    { 0, NULL, NULL }
 };
 
 static int
@@ -379,6 +384,7 @@ process_request(krb5_context context,
     for (i = 0; services[i].process != NULL; i++) {
 	if (krb5_only && (services[i].flags & KS_KRB5) == 0)
 	    continue;
+	kdc_log(context, config, 7, "Probing for %s", services[i].name);
 	ret = (*services[i].process)(&r, &claim);
 	if (claim) {
 	    if (prependlength && services[i].flags & KS_NO_LENGTH)

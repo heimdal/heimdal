@@ -109,6 +109,7 @@ struct krb5_kdc_service {
     unsigned int flags;
 #define KS_KRB5		1
 #define KS_NO_LENGTH	2
+    const char *name;
     krb5_error_code (*process)(kdc_request_t *, int *claim);
 };
 

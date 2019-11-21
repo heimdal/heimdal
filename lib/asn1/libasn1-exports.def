@@ -59,7 +59,6 @@ EXPORTS
 	asn1_oid_id_ecPublicKey	DATA
 	asn1_oid_id_heim_rsa_pkcs1_x509	DATA
 	asn1_oid_id_ms_cert_enroll_domaincontroller	DATA
-	asn1_oid_id_ms_client_authentication	DATA
 	asn1_oid_id_netscape	DATA
 	asn1_oid_id_netscape_cert_comment	DATA
 	asn1_oid_id_nist_aes_algs	DATA

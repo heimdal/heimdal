@@ -562,9 +562,9 @@ certs_export_func(hx509_context context, void *d, hx509_cert c)
     if (ret)
         return ret;
     ret = decode_Certificate(os.data, os.length, &c2, NULL);
+    der_free_octet_string(&os);
     if (ret)
         return ret;
-    der_free_octet_string(&os);
     ret = add_Certificates(cs, &c2);
     free_Certificate(&c2);
     return ret;

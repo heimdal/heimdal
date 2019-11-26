@@ -118,12 +118,10 @@ add1_2chain(hx509_context hx509ctx, void *d, hx509_cert cert)
     krb5_error_code ret;
     Certificates *cs = d;
     Certificate c;
-    size_t len;
-
 
     ret = hx509_cert_binary(hx509ctx, cert, &os);
     if (ret == 0)
-        ASN1_MALLOC_ENCODE(Certificate, os.data, os.length, &c, &len, ret);
+	ret = decode_Certificate(os.data, os.length, &c, NULL); 
     der_free_octet_string(&os);
     if (ret == 0) {
         add_Certificates(cs, &c);

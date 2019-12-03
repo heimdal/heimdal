@@ -1675,6 +1675,16 @@ https_server(hx509_context contextp, hx509_ca_tbs tbs, struct cert_type_opt *opt
 }
 
 static int
+https_negotiate_server(hx509_context contextp, hx509_ca_tbs tbs, struct cert_type_opt *opt)
+{
+    int ret = hx509_ca_tbs_add_eku(contextp, tbs, &asn1_oid_id_pkekuoid);
+    if (ret == 0)
+        ret = hx509_ca_tbs_add_eku(contextp, tbs, &asn1_oid_id_pkix_kp_serverAuth);
+    opt->pkinit++;
+    return ret;
+}
+
+static int
 https_client(hx509_context contextp, hx509_ca_tbs tbs, struct cert_type_opt *opt)
 {
     return hx509_ca_tbs_add_eku(contextp, tbs, &asn1_oid_id_pkix_kp_clientAuth);
@@ -1746,6 +1756,11 @@ struct {
 	"pkinit-kdc",
 	"Certificates used for Kerberos PK-INIT KDC certificates",
 	pkinit_kdc
+    },
+    {
+	"https-negotiate-server",
+	"Used for HTTPS server and many other TLS server certificate types",
+	https_negotiate_server
     },
     {
 	"peap-server",

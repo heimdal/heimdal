@@ -20,7 +20,7 @@ if HAVE_DBHEADER
 AM_CPPFLAGS += -I$(DBHEADER)
 endif
 
-noinst_PROGRAMS = snprintf-test resolve-test rkpty test-detach test-auxval rkvis
+noinst_PROGRAMS = snprintf-test resolve-test rkpty test-detach test-auxval rkvis rkbase64
 
 CHECK_LOCAL = snprintf-test resolve-test rkpty make-roken
 
@@ -59,6 +59,9 @@ test_getuserinfo_LDADD = libtest.la $(LDADD)
 
 rkvis_SOURCES = vis.c
 rkvis_CPPFLAGS = -DTEST
+
+rkbase64_SOURCES = base64.c
+rkbase64_CPPFLAGS = -DTEST
 
 test_detach_SOURCES = test-detach.c
 

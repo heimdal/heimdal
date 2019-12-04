@@ -127,11 +127,13 @@ roken_detach_prep(int argc, char **argv, char *special_arg)
             (void) execvp(argv[0], new_argv);
             err(1, "failed to self-re-exec");
         }
+        free(new_argv);
         return pipefds[1];
     }
 #endif
 
     /* Parent */
+    free(new_argv);
     (void) close(pipefds[1]);
     pipefds[1] = -1;
     do {

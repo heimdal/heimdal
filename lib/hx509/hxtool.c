@@ -1296,9 +1296,7 @@ get_key(const char *fn, const char *type, int optbits,
             hx509_certs certs = NULL;
             hx509_cert cert = NULL;
 
-            cert = hx509_cert_init_private_key(context,
-                                               _hx509_private_key_ref(*signer),
-                                               NULL);
+            cert = hx509_cert_init_private_key(context, *signer, NULL);
             if (cert)
                 ret = hx509_certs_init(context, fn,
                                        HX509_CERTS_CREATE |

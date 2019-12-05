@@ -2395,18 +2395,17 @@ out:
      * In case of a non proxy error, build an error message.
      */
     if (ret != 0 && ret != HDB_ERR_NOT_FOUND_HERE && r->reply->length == 0)
-	/* We don't want to clobber the original error here... */
-	_kdc_fast_mk_error(r, &error_method,
-			   r->armor_crypto,
-			   &req->req_body,
-			   ret, r->e_text,
-			   r->server_princ,
-			   r->client_princ ?
-			       &r->client_princ->name : NULL,
-			   r->client_princ ?
-			       &r->client_princ->realm : NULL,
-			   NULL, NULL,
-			   r->reply);
+	ret = _kdc_fast_mk_error(r, &error_method,
+			         r->armor_crypto,
+			         &req->req_body,
+			         ret, r->e_text,
+			         r->server_princ,
+			         r->client_princ ?
+			             &r->client_princ->name : NULL,
+			         r->client_princ ?
+			             &r->client_princ->realm : NULL,
+			         NULL, NULL,
+			         r->reply);
 
     free_EncTicketPart(&r->et);
     free_EncKDCRepPart(&r->ek);

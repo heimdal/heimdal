@@ -25,4 +25,5 @@
 
 [logging]
 	kdc = 0-/FILE:@objdir@/messages.log
+	kdc-replay = 0-/FILE:@objdir@/messages.log
 	default = 0-/FILE:@objdir@/messages.log

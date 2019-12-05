@@ -4,10 +4,12 @@ include $(top_srcdir)/Makefile.am.common
 
 AM_CPPFLAGS += $(INCLUDE_libintl) $(INCLUDE_openssl_crypto) -I$(srcdir)/../lib/krb5
 
-lib_LTLIBRARIES = simple_csr_authorizer.la \
-		  ipc_csr_authorizer.la \
-		  libkdc.la cjwt_token_validator.la \
-		  negotiate_token_validator.la
+lib_LTLIBRARIES = simple_csr_authorizer.la  ipc_csr_authorizer.la \
+		  libkdc.la negotiate_token_validator.la
+
+if HAVE_CJWT
+lib_LTLIBRARIES += cjwt_token_validator.la
+endif
 
 bin_PROGRAMS = string2key
 

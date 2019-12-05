@@ -118,6 +118,10 @@ get_issuer_pubkeys(krb5_context context,
         previous->data = 0;
         previous->length = 0;
     }
+
+    if (previous->data == NULL && current->data == NULL && next->data == NULL)
+        return krb5_set_error_message(context, ENOENT, "No JWKs found"),
+               ENOENT;
     return 0;
 }
 
@@ -233,10 +237,13 @@ validate(void *ctx,
         return ret;
     }
 
-    if ((ret = cjwt_decode(tokstr, 0, &jwt, jwk_current.data,
-                           jwk_current.length)) == -2 &&
-        (ret = cjwt_decode(tokstr, 0, &jwt, jwk_next.data,
-                           jwk_next.length)) == -2)
+    if (jwk_current.length && jwk_current.data)
+        ret = cjwt_decode(tokstr, 0, &jwt, jwk_current.data,
+                          jwk_current.length);
+    if (ret && jwk_next.length && jwk_next.data)
+        ret = cjwt_decode(tokstr, 0, &jwt, jwk_next.data,
+                            jwk_next.length);
+    if (ret && jwk_previous.length && jwk_previous.data)
         ret = cjwt_decode(tokstr, 0, &jwt, jwk_previous.data,
                           jwk_previous.length);
     free(jwk_previous.data);

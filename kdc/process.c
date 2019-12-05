@@ -183,7 +183,7 @@ _kdc_audit_trail(kdc_request_t r, krb5_error_code ret)
     _kdc_audit_addkv_timediff(r, "elapsed", &r->tv_start, &r->tv_end);
 
     if (r->e_text)
-	_kdc_audit_addkv(r, KDC_AUDIT_VIS, "e-text", r->e_text);
+	_kdc_audit_addkv(r, KDC_AUDIT_VIS, "e-text", "%s", r->e_text);
 
     nelem = heim_array_get_length(r->kv);
     for (i=0, j=0; i < nelem; i++) {

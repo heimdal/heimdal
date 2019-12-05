@@ -2338,7 +2338,7 @@ server_lookup:
 	    goto out;
 	}
 
-	_kdc_audit_addkv((kdc_request_t)priv, 0, "impersonatee", tpn);
+	_kdc_audit_addkv((kdc_request_t)priv, 0, "impersonatee", "%s", tpn);
 	kdc_log(context, config, 4, "constrained delegation for %s "
 		"from %s (%s) to %s", tpn, cpn, dpn, spn);
     }

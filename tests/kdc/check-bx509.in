@@ -257,6 +257,11 @@ if ! which curl; then
     exit 0
 fi
 
+if ! test -x ${objdir}/../../kdc/bx509d; then
+    echo "Configured w/o libmicrohttpd -- not testing bx509d"
+    exit 0
+fi
+
 echo "Starting bx509d"
 ${bx509d} --reverse-proxied -H $H --cert=${objdir}/bx509.pem -t -p $port --daemon ||
     { echo "bx509 failed to start"; exit 2; }

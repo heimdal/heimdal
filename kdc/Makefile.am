@@ -59,9 +59,12 @@ test_csr_authorizer_SOURCES = test_csr_authorizer.c
 test_kdc_ca_SOURCES = test_kdc_ca.c
 
 # Token plugins (for bx509d)
+if HAVE_CJWT
 cjwt_token_validator_la_SOURCES = cjwt_token_validator.c
 cjwt_token_validator_la_AM_CPPFLAGS = $(CJSON_FLAGS) $(CJWT_FLAGS)
 cjwt_token_validator_la_LDFLAGS = -module $(CJSON_LIBS) $(CJWT_LIBS)
+endif
+
 negotiate_token_validator_la_SOURCES = negotiate_token_validator.c
 negotiate_token_validator_la_LDFLAGS = -module $(top_builddir)/lib/gssapi/libgssapi.la
 # CSR Authorizer plugins (for kdc/kx509 and bx509d)

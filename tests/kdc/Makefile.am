@@ -44,6 +44,7 @@ TESTS = $(SCRIPT_TESTS)
 port = 49188
 admport = 49189
 pwport = 49190
+bx509port = 49191
 
 if HAVE_DLOPEN
 do_dlopen = -e 's,[@]DLOPEN[@],true,g'
@@ -57,6 +58,7 @@ do_subst = $(heim_verbose)sed $(do_dlopen) \
 	-e 's,[@]srcdir[@],$(srcdir),g' \
 	-e 's,[@]port[@],$(port),g' \
 	-e 's,[@]admport[@],$(admport),g' \
+	-e 's,[@]bx509port[@],$(bx509port),g' \
 	-e 's,[@]pwport[@],$(pwport),g' \
 	-e 's,[@]objdir[@],$(top_builddir)/tests/kdc,g' \
 	-e 's,[@]top_builddir[@],$(top_builddir),g' \

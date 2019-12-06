@@ -378,6 +378,7 @@ read_one_token(gss_name_t service, const char *ccname, int negotiate)
 		return -1;
 	}
         in.length = ret;
+        ret = 0;
 
 	out.length = 0;
 	out.value  = 0;

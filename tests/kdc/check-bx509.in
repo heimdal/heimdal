@@ -44,19 +44,23 @@ ${have_db} || exit 77
 
 R=TEST.H5L.SE
 DCs="DC=test,DC=h5l,DC=se"
-H=datan.test.h5l.se
 
 port=@port@
+bx509port=@bx509port@
 
-#kadmin="${kadmin} -l -r $R"
-bx509="${bx509} --reverse-proxied -p $port"
+kadmin="${kadmin} -l -r $R"
+bx509="${bx509} --reverse-proxied -p $bx509port"
+kdc="${kdc} --addresses=localhost -P $port"
 
 server=datan.test.h5l.se
+otherserver=other.test.h5l.se
 cache="FILE:${objdir}/cache.krb5"
 keyfile="${hx509_data}/key.der"
 keyfile2="${hx509_data}/key2.der"
-keytab=FILE:${objdir}/kt
 kt=${objdir}/kt
+keytab=FILE:${kt}
+ukt=${objdir}/ukt
+ukeytab=FILE:${ukt}
 
 kinit="${kinit} -c $cache ${afs_no_afslog}"
 klist="${klist} --hidden -v -c $cache"
@@ -96,9 +100,10 @@ mkdir -p simple_csr_authz
 
 > messages.log
 
-# We'll avoid using a KDC.  We only need one for Negotiate tokens, and we'll
-# use ktutil and kimpersonate to make it possible to create and accept those
-# without a KDC.
+# We'll avoid using a KDC for now.  For testing /bx509 we only need keys for
+# Negotiate tokens, and we'll use ktutil and kimpersonate to make it possible
+# to create and accept those without a KDC.  When we test /bnegotiate, however,
+# we'll start a KDC.
 
 # csr_grant ext-type value princ
 csr_grant() {
@@ -114,21 +119,21 @@ csr_revoke() {
 # get_cert ""         curl-opts
 # get_cert "&qparams" curl-opts
 get_cert() {
-    url="http://${server}:${port}/bx509?csr=$csr${1}"
+    url="http://${server}:${bx509port}/bx509?csr=$csr${1}"
     shift
-    curl -g --connect-to ${server}:${port}:localhost:${port}            \
+    curl -g --connect-to ${server}:${bx509port}:localhost:${bx509port}            \
          -H "Authorization: Negotiate $token"                           \
          "$@" "$url"
 }
 
-rm -f $kt
+rm -f $kt $ukt
 $ktutil -k $keytab add -r -V 1 -e aes128-cts-hmac-sha1-96               \
-    -p HTTP/datan.test.h5l.se@TEST.H5L.SE ||
+    -p HTTP/datan.test.h5l.se@${R} ||
     { echo "failed to setup kimpersonate credentials"; exit 2; }
 $ktutil -k $keytab list ||
     { echo "failed to setup kimpersonate credentials"; exit 2; }
 $kimpersonate --ccache=$cache -k $keytab -R -t aes128-cts-hmac-sha1-96  \
-   -c foo@TEST.H5L.SE -s HTTP/datan.test.h5l.se@TEST.H5L.SE ||
+   -c foo@${R} -s HTTP/datan.test.h5l.se@${R} ||
     { echo "failed to setup kimpersonate credentials"; exit 2; }
 $klist ||
     { echo "failed to setup kimpersonate credentials"; exit 2; }
@@ -162,11 +167,11 @@ $hxtool ca  --issue-ca --self-signed --type=pkinit-kdc          \
 cp ${objdir}/user-issuer.pem ${objdir}/pkinit-anchor.pem
 
 # Put the cert alone in the trust anchors file
-#ex "${objdir}/pkinit-anchor.pem" <<"EOF"
-#/-----BEGIN CERTIFICATE-----
-#1,.-1 d
-#wq
-#EOF
+ex "${objdir}/pkinit-anchor.pem" <<"EOF"
+/-----BEGIN CERTIFICATE-----
+1,.-1 d
+wq
+EOF
 
 $hxtool ca  --issue-ca --self-signed                                \
             --ku=digitalSignature --ku=keyCertSign --ku=cRLSign     \
@@ -184,7 +189,7 @@ $hxtool ca  --issue-ca --self-signed                                \
 
 $hxtool ca  --issue-ca --type=https-negotiate-server                \
             --ca-certificate=PEM-FILE:"${objdir}/server-issuer.pem" \
-            --ku=digitalSignature --pk-init-principal=HTTP/${H}@${R}\
+            --ku=digitalSignature --pk-init-principal=HTTP/${server}@${R}\
             --generate-key=rsa --key-bits=1024 --subject=""         \
             --certificate=PEM-FILE:"${objdir}/bx509.pem" ||
     { echo "failed to setup CA certificate"; exit 2; }
@@ -196,10 +201,10 @@ $hxtool ca  --issue-ca --type=https-negotiate-server                \
 #  - the KDC CA tester program works
 
 echo "Check gss-token and Negotiate token validator plugin"
-token=$(KRB5CCNAME=$cache $gsstoken HTTP@$H | tr A B)
+token=$(KRB5CCNAME=$cache $gsstoken HTTP@$server | tr A B)
 $test_token_validator -a datan.test.h5l.se Negotiate "$token" &&
     { echo "Negotiate token validator accepted invalid token"; exit 2; }
-token=$(KRB5CCNAME=$cache $gsstoken HTTP@$H)
+token=$(KRB5CCNAME=$cache $gsstoken HTTP@$server)
 $test_token_validator -a datan.test.h5l.se Negotiate "$token" ||
     { echo "Negotiate token validator failed to validate valid token"; exit 2; }
 
@@ -211,11 +216,18 @@ $hxtool request-create  --subject='' --generate-key=rsa --key-bits=1024 \
 rm -f trivial.pem server.pem email.pem
 
 echo "Testing plain user cert issuance KDC CA"
-$test_kdc_ca -a bx509 -A foo@TEST.H5L.SE PKCS10:${objdir}/req       \
+$test_kdc_ca -a bx509 -A foo@${R} PKCS10:${objdir}/req       \
              PEM-FILE:${objdir}/trivial.pem ||
     { echo "Trivial offline CA test failed"; exit 2; }
 $hxtool print --content PEM-FILE:${objdir}/trivial.pem ||
     { echo "Trivial offline CA test failed"; exit 2; }
+$hxtool acert --end-entity                                              \
+              --expr="%{certificate.subject} == \"CN=foo,$DCs\""        \
+              -P "foo@${R}" "FILE:${objdir}/trivial.pem" ||
+    { echo "Trivial offline CA test failed"; exit 2; }
+$hxtool acert --expr="%{certificate.subject} == \"OU=Users,CN=KDC,$DCs\""   \
+              --lacks-private-key "FILE:${objdir}/trivial.pem" ||
+    { echo "Trivial offline CA test failed (issuer private keys included!!)"; exit 2; }
 
 echo "Testing other cert issuance KDC CA"
 csr_revoke
@@ -225,32 +237,38 @@ $hxtool request-create  --subject='' --generate-key=rsa --key-bits=1024 \
                         --eku=id_pkix_kp_serverAuth                     \
                         --dnsname=foo.test.h5l.se "${objdir}/req" ||
     { echo "Failed to make a CSR with a dNSName SAN request"; exit 2; }
-$test_kdc_ca -a bx509 foo@TEST.H5L.SE PKCS10:${objdir}/req              \
+$test_kdc_ca -a bx509 foo@${R} PKCS10:${objdir}/req              \
              PEM-FILE:${objdir}/server.pem &&
     { echo "Trivial offline CA test failed: unauthorized issuance (dNSName)"; exit 2; }
-csr_grant dnsname foo.test.h5l.se foo@TEST.H5L.SE
-csr_grant eku 1.3.6.1.5.5.7.3.1 foo@TEST.H5L.SE
-$test_kdc_ca -a bx509 foo@TEST.H5L.SE PKCS10:${objdir}/req              \
+csr_grant dnsname foo.test.h5l.se foo@${R}
+csr_grant eku 1.3.6.1.5.5.7.3.1 foo@${R}
+$test_kdc_ca -a bx509 foo@${R} PKCS10:${objdir}/req              \
              PEM-FILE:${objdir}/server.pem ||
     { echo "Offline CA test failed for explicitly authorized dNSName"; exit 2; }
 $hxtool print --content PEM-FILE:${objdir}/server.pem ||
     { echo "Offline CA test failed for explicitly authorized dNSName"; exit 2; }
+$hxtool acert --expr="%{certificate.subject} == \"OU=Servers,CN=KDC,$DCs\""   \
+              --lacks-private-key "FILE:${objdir}/server.pem" ||
+    { echo "Trivial offline CA test failed (issuer private keys included!!)"; exit 2; }
 # email cert
 $hxtool request-create  --subject='' --generate-key=rsa --key-bits=1024 \
                         --key=FILE:"${objdir}/k.der"                    \
                         --eku=id_pkix_kp_clientAuth                     \
                         --email=foo@test.h5l.se "${objdir}/req" ||
     { echo "Failed to make a CSR with an rfc822Name SAN request"; exit 2; }
-$test_kdc_ca -a bx509 foo@TEST.H5L.SE PKCS10:${objdir}/req              \
+$test_kdc_ca -a bx509 foo@${R} PKCS10:${objdir}/req              \
              PEM-FILE:${objdir}/email.pem &&
-    { echo "Trivial offline CA test failed: unauthorized issuance (dNSName)"; exit 2; }
-csr_grant email foo@test.h5l.se foo@TEST.H5L.SE
-csr_grant eku 1.3.6.1.5.5.7.3.2 foo@TEST.H5L.SE
-$test_kdc_ca -a bx509 foo@TEST.H5L.SE PKCS10:${objdir}/req              \
+    { echo "Offline CA test failed: unauthorized issuance (dNSName)"; exit 2; }
+csr_grant email foo@test.h5l.se foo@${R}
+csr_grant eku 1.3.6.1.5.5.7.3.2 foo@${R}
+$test_kdc_ca -a bx509 foo@${R} PKCS10:${objdir}/req              \
              PEM-FILE:${objdir}/email.pem ||
     { echo "Offline CA test failed for explicitly authorized dNSName"; exit 2; }
 $hxtool print --content PEM-FILE:${objdir}/email.pem ||
     { echo "Offline CA test failed for explicitly authorized dNSName"; exit 2; }
+$hxtool acert --expr="%{certificate.subject} == \"OU=Users,CN=KDC,$DCs\""   \
+              --lacks-private-key "FILE:${objdir}/email.pem" ||
+    { echo "Offline CA test failed (issuer private keys included!!)"; exit 2; }
 
 if ! which curl; then
     echo "curl is not available -- not testing bx509d"
@@ -262,12 +280,21 @@ if ! test -x ${objdir}/../../kdc/bx509d; then
     exit 0
 fi
 
+echo "Creating database"
+${kadmin} init \
+    --realm-max-ticket-life=1day \
+    --realm-max-renewable-life=1month \
+    ${R} || exit 1
+${kadmin} add -r --use-defaults foo@${R} || exit 1
+${kadmin} modify --pkinit-acl="CN=foo,DC=test,DC=h5l,DC=se" foo@${R} || exit 1
+
+
 echo "Starting bx509d"
-${bx509d} --reverse-proxied -H $H --cert=${objdir}/bx509.pem -t -p $port --daemon ||
+${bx509d} --reverse-proxied -H $server --cert=${objdir}/bx509.pem -t -p $bx509port --daemon ||
     { echo "bx509 failed to start"; exit 2; }
 bx509pid=`getpid bx509d`
 
-trap "kill -9 ${bx509pid}; echo signal killing bx509d; cat ca.crt kdc.crt pkinit.crt ;exit 1;" EXIT
+trap "kill -9 ${bx509pid}; echo signal killing bx509d; exit 1;" EXIT
 ec=0
 
 rm -f trivial.pem server.pem email.pem
@@ -283,16 +310,20 @@ csr=$($rkbase64 -- ${objdir}/req | $rkvis -h --stdin)
 #     Create a barebones bx509 HTTP/1.1 client test program?
 
 echo "Fetching a trivial user certificate"
-token=$(KRB5CCNAME=$cache $gsstoken HTTP@$H)
+token=$(KRB5CCNAME=$cache $gsstoken HTTP@$server)
 if (set -vx; get_cert '' -sf -o "${objdir}/trivial.pem"); then
     $hxtool print --content "FILE:${objdir}/trivial.pem"
     if $hxtool acert --end-entity                                            \
                     --expr="%{certificate.subject} == \"CN=foo,$DCs\""  \
-                    -P "foo@TEST.H5L.SE" "FILE:${objdir}/trivial.pem"; then
+                    -P "foo@${R}" "FILE:${objdir}/trivial.pem"; then
         echo 'Successfully obtained a trivial client certificate!'
     else
         echo 'FAIL: Obtained a trivial client certificate w/o expected PKINIT SAN)'
         exit 1
+    fi
+    if $hxtool acert --expr="%{certificate.subject} == \"OU=Users,$DCs\""   \
+                     --has-private-key "FILE:${objdir}/trivial.pem"; then
+        echo 'Successfully obtained a trivial client certificate!'
     fi
 else
     echo 'Failed to get a certificate!'
@@ -319,11 +350,11 @@ else
 fi
 
 echo "Fetching a server certificate with one dNSName SAN"
-csr_grant dnsname $server foo@TEST.H5L.SE
+csr_grant dnsname $server foo@${R}
 if (set -vx; get_cert "&dNSName=$server" -sf -o "${objdir}/server.pem"); then
     $hxtool print --content "FILE:${objdir}/server.pem"
     if (set -vx; $hxtool acert --expr="%{certificate.subject} == \"\""             \
-                    --end-entity -P foo@TEST.H5L.SE               \
+                    --end-entity -P foo@${R}               \
                     "FILE:${objdir}/server.pem"); then
         echo 'Got a broken server certificate (has PKINIT SAN)'
         exit 1
@@ -339,13 +370,13 @@ else
 fi
 
 echo "Fetching a server certificate with two dNSName SANs"
-csr_grant dnsname "second-$server" foo@TEST.H5L.SE
+csr_grant dnsname "second-$server" foo@${R}
 if (set -vx;
     get_cert "&dNSName=${server}&dNSName=second-$server" -sf \
         -o "${objdir}/server2.pem"); then
     $hxtool print --content "FILE:${objdir}/server2.pem"
     if $hxtool acert --expr="%{certificate.subject} == \"\""             \
-                    --end-entity -P foo@TEST.H5L.SE               \
+                    --end-entity -P foo@${R}               \
                     "FILE:${objdir}/server2.pem"; then
         echo 'Got a broken server certificate (has PKINIT SAN)'
         exit 1
@@ -363,10 +394,10 @@ else
 fi
 
 echo "Fetching an email certificate"
-csr_grant email foo@bar.example foo@TEST.H5L.SE
+csr_grant email foo@bar.example foo@${R}
 if (set -vx; get_cert "&rfc822Name=foo@bar.example" -sf -o "${objdir}/email.pem"); then
     $hxtool print --content "FILE:${objdir}/email.pem"
-    if $hxtool acert --end-entity -P "foo@TEST.H5L.SE" "FILE:${objdir}/email.pem"; then
+    if $hxtool acert --end-entity -P "foo@${R}" "FILE:${objdir}/email.pem"; then
         echo 'Got a broken email certificate (has PKINIT SAN)'
         exit 1
     elif $hxtool acert --expr="%{certificate.subject} == \"\""           \
@@ -382,30 +413,113 @@ else
     exit 1
 fi
 
-if false not yet; then
-    # XXX Need to start a KDC to test this.
-    echo "Fetching a Negotiate token"
-    if (set -vx;
-        curl -o negotiate-token -Lgsf --connect-to ${server}:${port}:localhost:${port} \
-            -H "Authorization: Negotiate $token" \
-            "http://${server}:${port}/bnegotiate?target=HTTP%40${server}"); then
-        # bx509 sends us a token w/o a newline for now; we add one because
-        # gss-token expects it.
-        [[ -s negotiate-token ]] && echo >> negotiate-token
-        if [[ -s negotiate-token ]] && KRB5_KTNAME="${etc}/keytab.user" $gsstoken -Nr < negotiate-token; then
-            echo 'Successfully obtained a Negotiate token!'
-        else
-            echo 'Failed to get a Negotiate token!'
-            exit 1
-        fi
+# Need to start a KDC to test this.
+rm -f $kt $ukt
+${kdestroy}
+${kadmin} add -r --use-defaults HTTP/${server}@${R} || exit 1
+${kadmin} ext_keytab -r -k $keytab  HTTP/${server}@${R} || exit 1
+${kadmin} add -r --use-defaults HTTP/${otherserver}@${R} || exit 1
+${kadmin} ext_keytab -r -k $ukeytab foo@${R} || exit 1
+
+echo "Starting kdc" ; > messages.log
+${kdc} --detach --testing || { echo "kdc failed to start"; exit 1; }
+kdcpid=`getpid kdc`
+trap "kill -9 ${kdcpid} ${bx509pid}; echo signal killing kdc and bx509d; exit 1;" EXIT
+
+${kinit} -kt $ukeytab foo@${R} || exit 1
+$klist || { echo "failed to setup kimpersonate credentials"; exit 2; }
+
+echo "Fetch negotiate token (pre-test)"
+# Do what /bnegotiate does, roughly, prior to testing /bnegotiate
+$hxtool request-create  --subject='' --generate-key=rsa --key-bits=1024 \
+                        --key=PEM-FILE:"${objdir}/k.pem" "${objdir}/req" ||
+    { echo "Failed to make a CSR"; exit 2; }
+$test_kdc_ca -a bx509 -A foo@${R} PKCS10:${objdir}/req       \
+             PEM-FILE:${objdir}/pkinit-test.pem ||
+    { echo "Trivial offline CA test failed (CA)"; exit 2; }
+cat ${objdir}/k.pem >> ${objdir}/pkinit-test.pem
+${kinit} -C PEM-FILE:${objdir}/pkinit-test.pem foo@${R} ||
+    { echo "Trivial offline CA test failed (PKINIT)"; exit 2; }
+#${kgetcred} -H HTTP/${server}@${R} ||
+#    { echo "Trivial offline CA test failed (TGS)"; exit 2; }
+KRB5CCNAME=$cache $gsstoken HTTP@$server | KRB5_KTNAME="$keytab" $gsstoken -r ||
+    { echo "Trivial offline CA test failed (gss-token)"; exit 2; }
+
+echo "Fetching a Negotiate token"
+token=$(KRB5CCNAME=$cache $gsstoken HTTP@$server)
+if (set -vx;
+    curl -o negotiate-token -Lgsf                                       \
+        --connect-to ${server}:${bx509port}:localhost:${bx509port}      \
+        -H "Authorization: Negotiate $token"                            \
+        "http://${server}:${bx509port}/bnegotiate?target=HTTP%40${server}"); then
+    # bx509 sends us a token w/o a newline for now; we add one because
+    # gss-token expects it.
+    test -s negotiate-token && echo >> negotiate-token
+    if test -s negotiate-token && KRB5_KTNAME="$keytab" $gsstoken -Nr < negotiate-token; then
+        echo 'Successfully obtained a Negotiate token!'
     else
-        echo 'Failed to get a Negotiate token!'
+        echo 'Failed to get a Negotiate token (got an unacceptable token)!'
         exit 1
     fi
+else
+    echo 'Failed to get a Negotiate token!'
+    exit 1
 fi
 
-echo "killing bx509d (${bx509pid})"
-sh ${leaks_kill} bx509 $bx509pid || ec=1
+referer=https://${otherserver}/blah
+redirect=$(${rkvis} -h https://${otherserver}/blah?q=whatever)
+if (set -vx;
+    curl -o negotiate-token -Lgsf                                       \
+         --connect-to ${server}:${bx509port}:localhost:${bx509port}     \
+        -H "Authorization: Negotiate $token"                            \
+        "http://${server}:${bx509port}/bnegotiate?target=HTTP%40${server}&redirect=${redirect}"); then
+    echo "Error: /bnegotiate with target and redirect succeeded"
+    exit 1
+fi
+
+if (set -vx;
+    curl -o negotiate-token -Lgsf                                       \
+         --connect-to ${server}:${bx509port}:localhost:${bx509port}     \
+        -H "Authorization: Negotiate $token"                            \
+        "http://${server}:${bx509port}/bnegotiate?redirect=${redirect}"); then
+    echo "Error: /bnegotiate with redirect but no Referer succeeded"
+    exit 1
+fi
+
+referer=http://${otherserver}/blah
+redirect=$(${rkvis} -h http://${otherserver}/blah?q=whatever)
+if (set -vx;
+    curl -gsf                                                           \
+         --connect-to ${server}:${bx509port}:localhost:${bx509port}     \
+        -H "Authorization: Negotiate $token"                            \
+        -H "Referer: $referer"                                          \
+        "http://${server}:${bx509port}/bnegotiate?redirect=${redirect}"); then
+    echo "Error: redirect for non-https referer"
+    exit 1
+fi
+
+referer=https://${otherserver}/blah
+redirect=$(${rkvis} -h https://${otherserver}/blah?q=whatever)
+if (set -vx;
+    curl -gfs -D curlheaders                                            \
+         --connect-to ${server}:${bx509port}:localhost:${bx509port}     \
+        -H "Authorization: Negotiate $token"                            \
+        -H "Referer: $referer"                                          \
+        "http://${server}:${bx509port}/bnegotiate?redirect=${redirect}"); then
+    read junk code junk < curlheaders
+    if test "$code" = 307; then
+        echo "Got a proper redirect"
+    else
+        echo "Error: unexpected status code $code (wanted 307)"
+    fi
+else
+    echo "Error: no redirect"
+    exit 1
+fi
+
+echo "killing kdc (${kdcpid}) and bx509d (${bx509pid})"
+sh ${leaks_kill} kdc $kdcpid || ec=1
+sh ${leaks_kill} bx509d $bx509pid || ec=1
 
 trap "" EXIT
 

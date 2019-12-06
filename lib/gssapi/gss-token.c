@@ -377,6 +377,7 @@ read_one_token(gss_name_t service, const char *ccname, int negotiate)
 			fprintf(stderr, "Token encoding is not valid base64\n");
 		return -1;
 	}
+        in.length = ret;
 
 	out.length = 0;
 	out.value  = 0;

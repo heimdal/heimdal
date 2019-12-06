@@ -2677,6 +2677,7 @@ acert1_validity(struct acert_options *opt, hx509_cert cert)
     time_t not_after_eq = 0;
     time_t not_after_lt = 0;
     time_t not_after_gt = 0;
+    int ret = 0;
 
     if (opt->valid_now_flag) {
         time_t now = time(NULL);
@@ -2684,12 +2685,12 @@ acert1_validity(struct acert_options *opt, hx509_cert cert)
         if (hx509_cert_get_notBefore(cert) > now) {
             if (opt->verbose_flag)
                 fprintf(stderr, "Certificate not valid yet\n");
-            return -1;
+            ret = -1;
         }
         if (hx509_cert_get_notAfter(cert) < now) {
             if (opt->verbose_flag)
                 fprintf(stderr, "Certificate currently expired\n");
-            return -1;
+            ret = -1;
         }
     }
     if (opt->valid_at_string) {
@@ -2699,13 +2700,13 @@ acert1_validity(struct acert_options *opt, hx509_cert cert)
             if (opt->verbose_flag)
                 fprintf(stderr, "Certificate not valid yet at %s\n",
                         opt->valid_at_string);
-            return -1;
+            ret = -1;
         }
         if (hx509_cert_get_notAfter(cert) < at) {
             if (opt->verbose_flag)
                 fprintf(stderr, "Certificate expired before %s\n",
                         opt->valid_at_string);
-            return -1;
+            ret = -1;
         }
     }
 
@@ -2727,17 +2728,29 @@ acert1_validity(struct acert_options *opt, hx509_cert cert)
         (not_before_gt && hx509_cert_get_notBefore(cert) <= not_before_gt)) {
         if (opt->verbose_flag)
             fprintf(stderr, "Certificate notBefore not as requested\n");
-        return -1;
+        ret = -1;
     }
     if ((not_after_eq && hx509_cert_get_notAfter(cert) != not_after_eq) ||
         (not_after_lt && hx509_cert_get_notAfter(cert) >= not_after_lt) ||
         (not_after_gt && hx509_cert_get_notAfter(cert) <= not_after_gt)) {
         if (opt->verbose_flag)
             fprintf(stderr, "Certificate notAfter not as requested\n");
-        return -1;
+        ret = -1;
     }
 
-    return 0;
+    if (opt->has_private_key_flag && !hx509_cert_have_private_key(cert)) {
+        if (opt->verbose_flag)
+            fprintf(stderr, "Certificate does not have a private key\n");
+        ret = -1;
+    }
+
+    if (opt->lacks_private_key_flag && hx509_cert_have_private_key(cert)) {
+        if (opt->verbose_flag)
+            fprintf(stderr, "Certificate does not have a private key\n");
+        ret = -1;
+    }
+
+    return ret;
 }
 
 static int
@@ -2810,7 +2823,7 @@ acert1(struct acert_options *opt, size_t cert_num, hx509_cert cert, int *matched
     if (e == NULL) {
         if (wanted)
             return -1;
-        return acert1_validity(opt, cert);;
+        return acert1_validity(opt, cert);
     }
 
     for (i = 0; i < e->len; i++) {

@@ -49,7 +49,7 @@ struct ks_file {
  */
 
 static int
-parse_certificate(hx509_context context, const char *fn,
+parse_certificate(hx509_context context, const char *fn, int flags,
 		  struct hx509_collector *c,
 		  const hx509_pem_header *headers,
 		  const void *data, size_t len,
@@ -74,6 +74,7 @@ parse_certificate(hx509_context context, const char *fn,
 static int
 try_decrypt(hx509_context context,
 	    struct hx509_collector *collector,
+            int flags,
 	    const AlgorithmIdentifier *alg,
 	    const EVP_CIPHER *c,
 	    const void *ivdata,
@@ -122,12 +123,9 @@ try_decrypt(hx509_context context,
 	EVP_CIPHER_CTX_cleanup(&ctx);
     }
 
-    ret = _hx509_collector_private_key_add(context,
-					   collector,
-					   alg,
-					   NULL,
-					   &clear,
-					   NULL);
+    if (!(flags & HX509_CERTS_NO_PRIVATE_KEYS))
+        ret = _hx509_collector_private_key_add(context, collector, alg, NULL,
+                                               &clear, NULL);
 
     memset_s(clear.data, clear.length, 0, clear.length);
     free(clear.data);
@@ -138,7 +136,7 @@ out:
 }
 
 static int
-parse_pkcs8_private_key(hx509_context context, const char *fn,
+parse_pkcs8_private_key(hx509_context context, const char *fn, int flags,
 			struct hx509_collector *c,
 			const hx509_pem_header *headers,
 			const void *data, size_t length,
@@ -146,28 +144,28 @@ parse_pkcs8_private_key(hx509_context context, const char *fn,
 {
     PKCS8PrivateKeyInfo ki;
     heim_octet_string keydata;
-
     int ret;
 
     ret = decode_PKCS8PrivateKeyInfo(data, length, &ki, NULL);
     if (ret)
 	return ret;
 
-    keydata.data = rk_UNCONST(data);
-    keydata.length = length;
-
-    ret = _hx509_collector_private_key_add(context,
-					   c,
-					   &ki.privateKeyAlgorithm,
-					   NULL,
-					   &ki.privateKey,
-					   &keydata);
+    if (!(flags & HX509_CERTS_NO_PRIVATE_KEYS)) {
+        keydata.data = rk_UNCONST(data);
+        keydata.length = length;
+        ret = _hx509_collector_private_key_add(context,
+                                               c,
+                                               &ki.privateKeyAlgorithm,
+                                               NULL,
+                                               &ki.privateKey,
+                                               &keydata);
+    }
     free_PKCS8PrivateKeyInfo(&ki);
     return ret;
 }
 
 static int
-parse_pem_private_key(hx509_context context, const char *fn,
+parse_pem_private_key(hx509_context context, const char *fn, int flags,
 		      struct hx509_collector *c,
 		      const hx509_pem_header *headers,
 		      const void *data, size_t len,
@@ -271,7 +269,7 @@ parse_pem_private_key(hx509_context context, const char *fn,
 		password = pw->val[i];
 		passwordlen = strlen(password);
 
-		ret = try_decrypt(context, c, ai, cipher, ivdata,
+		ret = try_decrypt(context, c, flags, ai, cipher, ivdata,
 				  password, passwordlen, data, len);
 		if (ret == 0) {
 		    decrypted = 1;
@@ -292,21 +290,21 @@ parse_pem_private_key(hx509_context context, const char *fn,
 
 	    ret = hx509_lock_prompt(lock, &prompt);
 	    if (ret == 0)
-		ret = try_decrypt(context, c, ai, cipher, ivdata, password,
-				  strlen(password), data, len);
+                ret = try_decrypt(context, c, flags, ai, cipher, ivdata,
+                                  password, strlen(password), data, len);
 	    /* XXX add password to lock password collection ? */
 	    memset_s(password, sizeof(password), 0, sizeof(password));
 	}
 	free(ivdata);
 
-    } else {
+    } else if (!(flags & HX509_CERTS_NO_PRIVATE_KEYS)) {
 	heim_octet_string keydata;
 
 	keydata.data = rk_UNCONST(data);
 	keydata.length = len;
 
-	ret = _hx509_collector_private_key_add(context, c, ai, NULL,
-					       &keydata, NULL);
+        ret = _hx509_collector_private_key_add(context, c, ai, NULL,
+                                               &keydata, NULL);
     }
 
     return ret;
@@ -315,7 +313,7 @@ parse_pem_private_key(hx509_context context, const char *fn,
 
 struct pem_formats {
     const char *name;
-    int (*func)(hx509_context, const char *, struct hx509_collector *,
+    int (*func)(hx509_context, const char *, int, struct hx509_collector *,
 		const hx509_pem_header *, const void *, size_t,
 		const AlgorithmIdentifier *);
     const AlgorithmIdentifier *(*ai)(void);
@@ -347,11 +345,12 @@ pem_func(hx509_context context, const char *type,
 	const char *q = formats[j].name;
 	if (strcasecmp(type, q) == 0) {
 	    const AlgorithmIdentifier *ai = NULL;
+
 	    if (formats[j].ai != NULL)
 		ai = (*formats[j].ai)();
 
-	    ret = (*formats[j].func)(context, NULL, pem_ctx->c,
-				     header, data, len, ai);
+            ret = (*formats[j].func)(context, NULL, pem_ctx->flags, pem_ctx->c,
+                                     header, data, len, ai);
 	    if (ret && (pem_ctx->flags & HX509_CERTS_UNPROTECT_ALL)) {
 		hx509_set_error_string(context, HX509_ERROR_APPEND, ret,
 				       "Failed parseing PEM format %s", type);
@@ -468,10 +467,12 @@ file_init_common(hx509_context context,
 
 	    for (i = 0; i < sizeof(formats)/sizeof(formats[0]); i++) {
 		const AlgorithmIdentifier *ai = NULL;
+
 		if (formats[i].ai != NULL)
 		    ai = (*formats[i].ai)();
 
-		ret = (*formats[i].func)(context, p, pem_ctx.c, NULL, ptr, length, ai);
+                ret = (*formats[i].func)(context, p, pem_ctx.flags, pem_ctx.c,
+                                         NULL, ptr, length, ai);
 		if (ret == 0)
 		    break;
 	    }
@@ -539,6 +540,7 @@ file_free(hx509_certs certs, void *data)
 struct store_ctx {
     FILE *f;
     outformat format;
+    int store_flags;
 };
 
 static int HX509_LIB_CALL
@@ -563,7 +565,8 @@ store_func(hx509_context context, void *ctx, hx509_cert c)
         if (data.data) {
             fwrite(data.data, data.length, 1, sc->f);
             free(data.data);
-        } else if (_hx509_cert_private_key_exportable(c)) {
+        } else if (_hx509_cert_private_key_exportable(c) &&
+                   !(sc->store_flags & HX509_CERTS_STORE_NO_PRIVATE_KEYS)) {
             hx509_private_key key = _hx509_cert_private_key(c);
 
             ret = _hx509_private_key_export(context, key,
@@ -573,7 +576,8 @@ store_func(hx509_context context, void *ctx, hx509_cert c)
         }
 	break;
     case USE_PEM:
-	if (_hx509_cert_private_key_exportable(c)) {
+	if (_hx509_cert_private_key_exportable(c) &&
+            !(sc->store_flags & HX509_CERTS_STORE_NO_PRIVATE_KEYS)) {
             heim_octet_string priv_key;
 	    hx509_private_key key = _hx509_cert_private_key(c);
 
@@ -658,6 +662,7 @@ file_store(hx509_context context,
 	return ret;
     }
     rk_cloexec_file(sc.f);
+    sc.store_flags = flags;
     sc.format = ksf->format;
 
     ret = hx509_certs_iter_f(context, ksf->certs, store_func, &sc);

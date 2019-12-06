@@ -63,6 +63,7 @@ struct hx509_certs_data {
     unsigned int ref;
     struct hx509_keyset_ops *ops;
     void *ops_data;
+    int flags;
 };
 
 static struct hx509_keyset_ops *
@@ -103,6 +104,7 @@ _hx509_ks_register(hx509_context context, struct hx509_keyset_ops *ops)
  * @param flags list of flags:
  * - HX509_CERTS_CREATE create a new keystore of the specific TYPE.
  * - HX509_CERTS_UNPROTECT_ALL fails if any private key failed to be extracted.
+ * - HX509_CERTS_NO_PRIVATE_KEYS does not load or permit adding private keys
  * @param lock a lock that unlocks the certificates store, use NULL to
  * select no password/certifictes/prompt lock (see @ref page_lock).
  * @param certs return pointer, free with hx509_certs_free().
@@ -158,6 +160,7 @@ hx509_certs_init(hx509_context context,
 	hx509_clear_error_string(context);
 	return ENOMEM;
     }
+    c->flags = flags;
     c->ops = ops;
     c->ref = 1;
 
@@ -201,9 +204,12 @@ hx509_certs_destroy(hx509_context context,
 /**
  * Write the certificate store to stable storage.
  *
+ * Use the HX509_CERTS_STORE_NO_PRIVATE_KEYS flag to ensure that no private
+ * keys are stored, even if added.
+ *
  * @param context A hx509 context.
  * @param certs a certificate store to store.
- * @param flags currently unused, use 0.
+ * @param flags currently one flag is defined: HX509_CERTS_STORE_NO_PRIVATE_KEYS
  * @param lock a lock that unlocks the certificates store, use NULL to
  * select no password/certifictes/prompt lock (see @ref page_lock).
  *
@@ -485,6 +491,9 @@ hx509_ci_print_names(hx509_context context, void *ctx, hx509_cert c)
 HX509_LIB_FUNCTION int HX509_LIB_CALL
 hx509_certs_add(hx509_context context, hx509_certs certs, hx509_cert cert)
 {
+    hx509_cert copy = NULL;
+    int ret;
+
     if (certs->ops->add == NULL) {
 	hx509_set_error_string(context, 0, ENOENT,
 			       "Keyset type %s doesn't support add operation",
@@ -492,7 +501,20 @@ hx509_certs_add(hx509_context context, hx509_certs certs, hx509_cert cert)
 	return ENOENT;
     }
 
-    return (*certs->ops->add)(context, certs, certs->ops_data, cert);
+    if ((certs->flags & HX509_CERTS_NO_PRIVATE_KEYS) &&
+        hx509_cert_have_private_key(cert)) {
+        if ((copy = hx509_cert_copy_no_private_key(context, cert,
+                                                   NULL)) == NULL) {
+            hx509_set_error_string(context, 0, ENOMEM,
+                                   "Could not add certificate to store");
+            return ENOMEM;
+        }
+        cert = copy;
+    }
+
+    ret = (*certs->ops->add)(context, certs, certs->ops_data, cert);
+    hx509_cert_free(copy);
+    return ret;
 }
 
 /**
@@ -637,8 +659,7 @@ certs_merge_func(hx509_context context, void *ctx, hx509_cert c)
 }
 
 /**
- * Merge a certificate store into another. The from store is keep
- * intact.
+ * Merge one certificate store into another. The from store is kept intact.
  *
  * @param context a hx509 context.
  * @param to the store to merge into.

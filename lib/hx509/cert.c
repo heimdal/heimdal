@@ -301,6 +301,26 @@ hx509_cert_init(hx509_context context, const Certificate *c, heim_error_t *error
 }
 
 /**
+ * Copy a certificate object, but drop any private key assignment.
+ *
+ * @param context A hx509 context.
+ * @param src Certificate object
+ * @param error
+ *
+ * @return Returns an hx509 certificate
+ *
+ * @ingroup hx509_cert
+ */
+
+HX509_LIB_FUNCTION hx509_cert HX509_LIB_CALL
+hx509_cert_copy_no_private_key(hx509_context context,
+                               hx509_cert src,
+                               heim_error_t *error)
+{
+    return hx509_cert_init(context, src->data, error);
+}
+
+/**
  * Allocate and init an hx509 certificate object containing only a private key
  * (but no Certificate).
  *

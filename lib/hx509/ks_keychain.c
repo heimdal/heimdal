@@ -328,6 +328,13 @@ keychain_init(hx509_context context,
 {
     struct ks_keychain *ctx;
 
+    if (flags & HX509_CERTS_NO_PRIVATE_KEYS) {
+        hx509_set_error_string(context, 0, ENOTSUP,
+                               "KEYCHAIN store does not support not reading "
+                               "private keys");
+        return ENOTSUP;
+    }
+
     ctx = calloc(1, sizeof(*ctx));
     if (ctx == NULL) {
 	hx509_clear_error_string(context);

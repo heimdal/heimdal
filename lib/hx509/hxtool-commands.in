@@ -996,6 +996,16 @@ command = {
                 argument = "datetime"
                 help = "check that the certificate's notBefore is after the given time"
         }
+        option = {
+                long = "has-private-key"
+                type = "flag"
+                help = "check that the certificate has a private key"
+        }
+        option = {
+                long = "lacks-private-key"
+                type = "flag"
+                help = "check that the certificate does not have a private key"
+        }
         name = "acert"
         min_args = "1"
         max_args = "1"

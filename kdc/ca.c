@@ -486,7 +486,6 @@ set_tbs(krb5_context context,
             ret = hx509_ca_tbs_add_san_rfc822name(context->hx509ctx, tbs, email);
             free(email);
         }
-        goto out;
     } else if (ncomp == 2 || ncomp == 3) {
         /*
          * 2- and 3-component principal name.
@@ -506,10 +505,6 @@ set_tbs(krb5_context context,
         if (ret == 0 && ncomp == 3)
             ret = hx509_env_add(context->hx509ctx, env, "principal-component2",
                                 comp2);
-
-        if (ret)
-            goto out;
-
         if (ret == 0 && strchr(comp1, '.')) {
             /* Looks like host-based or domain-based service */
             ret = hx509_env_add(context->hx509ctx, env,
@@ -586,7 +581,7 @@ kdc_issue_certificate(krb5_context context,
 {
     const krb5_config_binding *cf;
     krb5_error_code ret;
-    const char *kx509_ca;
+    const char *ca;
     hx509_ca_tbs tbs = NULL;
     hx509_certs chain = NULL;
     hx509_cert signer = NULL;
@@ -603,7 +598,7 @@ kdc_issue_certificate(krb5_context context,
     /* Get configuration */
     if ((cf = get_cf(context, config->app, req, cprinc)) == NULL)
         return KRB5KDC_ERR_POLICY;
-    if ((kx509_ca = krb5_config_get_string(context, cf, "ca", NULL)) == NULL) {
+    if ((ca = krb5_config_get_string(context, cf, "ca", NULL)) == NULL) {
         krb5_set_error_message(context, ret = KRB5KDC_ERR_POLICY,
                                "No kx509 CA issuer credential specified");
         return ret;
@@ -649,10 +644,9 @@ kdc_issue_certificate(krb5_context context,
         hx509_certs certs;
         hx509_query *q;
 
-        ret = hx509_certs_init(context->hx509ctx, kx509_ca, 0, NULL, &certs);
+        ret = hx509_certs_init(context->hx509ctx, ca, 0, NULL, &certs);
         if (ret) {
-            krb5_set_error_message(context, ret, "Failed to load CA %s",
-                                   kx509_ca);
+            krb5_set_error_message(context, ret, "Failed to load CA %s", ca);
             goto out;
         }
         ret = hx509_query_alloc(context->hx509ctx, &q);
@@ -668,8 +662,7 @@ kdc_issue_certificate(krb5_context context,
         hx509_query_free(context->hx509ctx, q);
         hx509_certs_free(&certs);
         if (ret) {
-            krb5_set_error_message(context, ret, "Failed to find a CA in %s",
-                                   kx509_ca);
+            krb5_set_error_message(context, ret, "Failed to find a CA in %s", ca);
             goto out;
         }
     }
@@ -701,12 +694,22 @@ kdc_issue_certificate(krb5_context context,
     if (ret)
         goto out;
 
-    /* Gather the certificate and chain into a MEMORY store */
-    ret = hx509_certs_init(context->hx509ctx, "MEMORY:certs", 0, NULL, out);
+    /*
+     * Gather the certificate and chain into a MEMORY store, being careful not
+     * to include private keys in the chain.
+     *
+     * We could have specified a separate configuration parameter for an hx509
+     * store meant to have only the chain and no private keys, but expecting
+     * the full chain in the issuer credential store and copying only the certs
+     * (but not the private keys) is safer and easier to configure.
+     */
+    ret = hx509_certs_init(context->hx509ctx, "MEMORY:certs",
+                           HX509_CERTS_NO_PRIVATE_KEYS, NULL, out);
     if (ret == 0)
         ret = hx509_certs_add(context->hx509ctx, *out, cert);
     if (ret == 0 && send_chain) {
-        ret = hx509_certs_init(context->hx509ctx, kx509_ca, 0, NULL, &chain);
+        ret = hx509_certs_init(context->hx509ctx, ca,
+                               HX509_CERTS_NO_PRIVATE_KEYS, NULL, &chain);
         if (ret == 0)
             ret = hx509_certs_merge(context->hx509ctx, *out, chain);
     }

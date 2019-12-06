@@ -257,7 +257,8 @@ generate_key(hx509_context context,
     if (ret == 0)
         ret = hx509_certs_add(context, certs, cert);
     if (ret == 0)
-        ret = hx509_certs_store(context, certs, 0, NULL);
+        ret = hx509_certs_store(context, certs,
+                                HX509_CERTS_STORE_NO_PRIVATE_KEYS, NULL);
     if (ret)
         hx509_err(context, 1, ret, "Could not generate and save private key "
                   "for %s", key_name);

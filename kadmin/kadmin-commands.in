@@ -301,6 +301,7 @@ command = {
 		short = "k"
 		type = "string"
 		help = "keytab to use"
+		argument = "keytab"
 	}
 	option = {
 		long = "random-key"

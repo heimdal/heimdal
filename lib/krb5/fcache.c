@@ -412,10 +412,15 @@ fcc_open(krb5_context context,
 
     if ((flags & O_EXCL)) {
         flags &= ~O_EXCL;
+        /*
+         * FIXME Instead of mkostemp()... we could instead try to use a .new
+         * file... with care.  Or the O_TMPFILE / linkat() extensions.  We need
+         * a roken / heimbase abstraction for that.
+         */
         if (asprintf(&TMPFILENAME(id), "%s-XXXXXX", FILENAME(id)) < 0 ||
             TMPFILENAME(id) == NULL)
             return krb5_enomem(context);
-        if ((*fd_ret = mkostemp(TMPFILENAME(id), O_CLOEXEC)) == -1) {
+        if ((fd = mkostemp(TMPFILENAME(id), O_CLOEXEC)) == -1) {
             free(TMPFILENAME(id));
             TMPFILENAME(id) = NULL;
             krb5_set_error_message(context, ret = errno,
@@ -423,6 +428,7 @@ fcc_open(krb5_context context,
                                    FILENAME(id));
             return ret;
         }
+        goto out;
     }
 
     filename = TMPFILENAME(id) ? TMPFILENAME(id) : FILENAME(id);
@@ -535,6 +541,7 @@ again:
 #endif
     }
 
+out:
     if((ret = fcc_lock(context, id, fd, exclusive)) != 0) {
 	close(fd);
 	return ret;

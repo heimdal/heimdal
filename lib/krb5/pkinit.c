@@ -2329,6 +2329,8 @@ krb5_get_init_creds_opt_set_pkinit(krb5_context context,
 {
 #ifdef PKINIT
     krb5_error_code ret;
+    char **freeme1 = NULL;
+    char **freeme2 = NULL;
     char *anchors = NULL;
 
     if (opt->opt_private == NULL) {
@@ -2348,16 +2350,13 @@ krb5_get_init_creds_opt_set_pkinit(krb5_context context,
 
     /* XXX implement krb5_appdefault_strings  */
     if (pool == NULL)
-	pool = krb5_config_get_strings(context, NULL,
-				       "appdefaults",
-				       "pkinit_pool",
-				       NULL);
+        pool = freeme1 = krb5_config_get_strings(context, NULL, "appdefaults",
+                                                 "pkinit_pool", NULL);
 
     if (pki_revoke == NULL)
-	pki_revoke = krb5_config_get_strings(context, NULL,
-					     "appdefaults",
-					     "pkinit_revoke",
-					     NULL);
+        pki_revoke = freeme2 = krb5_config_get_strings(context, NULL,
+                                                       "appdefaults",
+                                                       "pkinit_revoke", NULL);
 
     if (x509_anchors == NULL) {
 	krb5_appdefault_string(context, "kinit",
@@ -2378,6 +2377,8 @@ krb5_get_init_creds_opt_set_pkinit(krb5_context context,
 			   prompter,
 			   prompter_data,
 			   password);
+    krb5_config_free_strings(freeme2);
+    krb5_config_free_strings(freeme1);
     free(anchors);
     if (ret) {
 	free(opt->opt_private->pk_init_ctx);

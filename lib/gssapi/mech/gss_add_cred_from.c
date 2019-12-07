@@ -188,15 +188,6 @@ gss_add_cred_from(OM_uint32 *minor_status,
         goto done;
     }
 
-    new_mc = calloc(1, sizeof(struct _gss_mechanism_cred));
-    if (new_mc == NULL) {
-        *minor_status = ENOMEM;
-        major_status = GSS_S_FAILURE;
-        goto done;
-    }
-    new_mc->gmc_mech = m;
-    new_mc->gmc_mech_oid = &m->gm_mech_oid;
-
     major_status = _gss_mg_add_mech_cred(minor_status, m, NULL, mn, cred_usage,
 					 initiator_time_req, acceptor_time_req,
 					 cred_store, &new_mc,

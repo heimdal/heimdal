@@ -174,6 +174,7 @@ main(int argc, char **argv)
     switch_environment();
 
     start_kdc(context, config, argv[0]);
+    _krb5_unload_plugins(context, "kdc");
     krb5_free_context(context);
     free(config);
     return 0;

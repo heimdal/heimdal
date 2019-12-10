@@ -81,6 +81,8 @@ main(int argc, char **argv)
         printf("Token is valid.  Actual principal: %s\n", s);
     else
         printf("Token is valid.");
+    _krb5_unload_plugins(context, "kdc");
     krb5_free_principal(context, actual_princ);
+    krb5_free_context(context);
     return 0;
 }

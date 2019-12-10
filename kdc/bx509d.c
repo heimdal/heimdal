@@ -1825,6 +1825,7 @@ again:
     }
 
     MHD_stop_daemon(current);
+    _krb5_unload_plugins(context, "kdc");
     pthread_key_delete(k5ctx);
     return 0;
 }

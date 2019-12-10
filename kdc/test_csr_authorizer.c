@@ -72,6 +72,7 @@ main(int argc, char **argv)
         krb5_err(context, 1, ret, "Authorization failed");
     printf("Authorized!\n");
     krb5_free_principal(context, princ);
+    _krb5_unload_plugins(context, "kdc");
     krb5_free_context(context);
     hx509_request_free(&csr);
     /* FIXME There's no free function for config yet */

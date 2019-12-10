@@ -136,6 +136,7 @@ main(int argc, char **argv)
         if (ret != HX509_UNSUPPORTED_OPERATION)
             krb5_err(context, 1, ret,
                      "Could not store certificate and chain in %s", out);
+    _krb5_unload_plugins(context, "kdc");
     krb5_free_principal(context, p);
     krb5_free_context(context);
     hx509_request_free(&req);

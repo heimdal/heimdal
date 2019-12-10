@@ -98,6 +98,7 @@ _kdc_audit_addkv(kdc_request_t r, int flags, const char *k,
     }
 
     heim_array_append_value(r->kv, str);
+    heim_release(str);
 }
 
 void
@@ -360,7 +361,6 @@ process_request(krb5_context context,
     krb5_error_code ret;
     unsigned int i;
     int claim = 0;
-    heim_auto_release_t pool = heim_auto_release_create();
 
     r = calloc(sizeof(*r), 1);
     if (!r)
@@ -396,16 +396,16 @@ process_request(krb5_context context,
 		free(r->cname);
 		free(r->sname);
 		free(r->e_text_buf);
-		heim_release(r->kv);
 	    }
 
-	    heim_release(pool);
+            heim_release(r->kv);
+            free(r);
 	    return ret;
 	}
     }
 
-    heim_release(pool);
-
+    heim_release(r->kv);
+    free(r);
     return -1;
 }
 

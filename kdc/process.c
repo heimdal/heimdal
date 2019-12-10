@@ -133,12 +133,14 @@ _kdc_audit_trail(kdc_request_t r, krb5_error_code ret)
 {
     const char *retval;
     char kvbuf[1024];
+    char retvalbuf[30]; /* Enough for UNKNOWN-%d */
     size_t nelem;
     size_t i, j;
 
 #define CASE(x)	case x : retval = #x; break
     switch (ret) {
     CASE(ENOMEM);
+    CASE(EACCES);
     CASE(HDB_ERR_NOT_FOUND_HERE);
     CASE(HDB_ERR_WRONG_REALM);
     CASE(HDB_ERR_EXISTS);
@@ -169,7 +171,8 @@ _kdc_audit_trail(kdc_request_t r, krb5_error_code ret)
 	retval = "SUCCESS";
 	break;
     default:
-	retval = "UNKNOWN";
+        (void) snprintf(retvalbuf, sizeof(retvalbuf), "UNKNOWN-%d", ret);
+	retval = retvalbuf;
 	break;
     }
 
@@ -203,8 +206,10 @@ _kdc_audit_trail(kdc_request_t r, krb5_error_code ret)
     kvbuf[j] = '\0';
 
     kdc_log(r->context, r->config, 3, "%s %s %s %s %s%s",
-	    r->reqtype, retval, r->from, r->cname,
-	    r->sname, kvbuf);
+	    r->reqtype, retval, r->from,
+            r->cname ? r->cname : "<unknown>",
+	    r->sname ? r->sname : "<unknown>",
+            kvbuf);
 }
 
 void

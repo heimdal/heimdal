@@ -108,6 +108,20 @@
 #include "../lib/hx509/hx_locl.h"
 #include <hx509-private.h>
 
+struct bx509_request_desc {
+    KDC_REQUEST_DESC_COMMON_ELEMENTS;
+
+    struct MHD_Connection *connection;
+    krb5_times token_times;
+    hx509_request req;
+    const char *target;
+    const char *redir;
+    char *pkix_store;
+    char *ccname;
+    char *freeme1;
+    char frombuf[128];
+};
+
 static krb5_kdc_configuration *kdc_config;
 static pthread_key_t k5ctx;
 
@@ -138,33 +152,27 @@ static const char *priv_key_file;
 static const char *cache_dir;
 static char *impersonation_key_fn;
 
-static krb5_error_code resp(struct MHD_Connection *, int,
+static krb5_error_code resp(struct bx509_request_desc *, int,
                             enum MHD_ResponseMemoryMode, const void *, size_t,
                             const char *);
-static krb5_error_code bad_req(struct MHD_Connection *, krb5_error_code, int,
+static krb5_error_code bad_req(struct bx509_request_desc *, krb5_error_code, int,
                                const char *, ...)
                                HEIMDAL_PRINTF_ATTRIBUTE((__printf__, 4, 5));
 
-static krb5_error_code bad_reqv(struct MHD_Connection *, krb5_error_code, int,
-                                const char *, va_list)
-                                HEIMDAL_PRINTF_ATTRIBUTE((__printf__, 4, 0));
-static krb5_error_code bad_enomem(struct MHD_Connection *, krb5_error_code);
-static krb5_error_code bad_400(struct MHD_Connection *, krb5_error_code, char *);
-static krb5_error_code bad_401(struct MHD_Connection *, char *);
-static krb5_error_code bad_403(struct MHD_Connection *, krb5_error_code, char *);
-static krb5_error_code bad_404(struct MHD_Connection *, const char *);
-static krb5_error_code bad_405(struct MHD_Connection *, const char *);
-static krb5_error_code bad_500(struct MHD_Connection *, krb5_error_code, const char *);
-static krb5_error_code bad_503(struct MHD_Connection *, krb5_error_code, const char *);
+static krb5_error_code bad_enomem(struct bx509_request_desc *, krb5_error_code);
+static krb5_error_code bad_400(struct bx509_request_desc *, krb5_error_code, char *);
+static krb5_error_code bad_401(struct bx509_request_desc *, char *);
+static krb5_error_code bad_403(struct bx509_request_desc *, krb5_error_code, char *);
+static krb5_error_code bad_404(struct bx509_request_desc *, const char *);
+static krb5_error_code bad_405(struct bx509_request_desc *, const char *);
+static krb5_error_code bad_500(struct bx509_request_desc *, krb5_error_code, const char *);
+static krb5_error_code bad_503(struct bx509_request_desc *, krb5_error_code, const char *);
 
 static int
-validate_token(struct MHD_Connection *connection,
-               krb5_times *token_times,
-               char **cprinc_from_token)
+validate_token(struct bx509_request_desc *r)
 {
     krb5_error_code ret;
-    krb5_principal actual_cprinc = NULL;
-    krb5_context context;
+    krb5_principal cprinc = NULL;
     const char *token;
     const char *host;
     char token_type[64]; /* Plenty */
@@ -172,28 +180,22 @@ validate_token(struct MHD_Connection *connection,
     krb5_data tok;
     size_t host_len, brk, i;
 
-    *cprinc_from_token = NULL;
-    memset(token_times, 0, sizeof(*token_times));
-    ret = get_krb5_context(&context);
-    if (ret)
-        return bad_500(connection, ret,
-                       "Could not set up context for token validation");
-
-    host = MHD_lookup_connection_value(connection, MHD_HEADER_KIND,
+    memset(&r->token_times, 0, sizeof(r->token_times));
+    host = MHD_lookup_connection_value(r->connection, MHD_HEADER_KIND,
                                        MHD_HTTP_HEADER_HOST);
     if (host == NULL)
-        return bad_400(connection, ret, "Host header is missing");
+        return bad_400(r, EINVAL, "Host header is missing");
 
     /* Exclude port number here (IPv6-safe because of the below) */
     host_len = ((p = strchr(host, ':'))) ? p - host : strlen(host);
 
-    token = MHD_lookup_connection_value(connection, MHD_HEADER_KIND,
+    token = MHD_lookup_connection_value(r->connection, MHD_HEADER_KIND,
                                         MHD_HTTP_HEADER_AUTHORIZATION);
     if (token == NULL)
-        return bad_401(connection, "Authorization token is missing");
+        return bad_401(r, "Authorization token is missing");
     brk = strcspn(token, " \t");
     if (token[brk] == '\0' || brk > sizeof(token_type) - 1)
-        return bad_401(connection, "Authorization token is missing");
+        return bad_401(r, "Authorization token is missing");
     memcpy(token_type, token, brk);
     token_type[brk] = '\0';
     token += brk + 1;
@@ -205,19 +207,20 @@ validate_token(struct MHD_Connection *connection,
             audiences.strings[i][host_len] == '\0')
             break;
     if (i == audiences.num_strings)
-        return bad_403(connection, EINVAL, "Host: value is not accepted here");
+        return bad_403(r, EINVAL, "Host: value is not accepted here");
 
-    ret = kdc_validate_token(context, NULL /* realm */, token_type, &tok,
+    r->sname = strdup(host); /* No need to check for ENOMEM here */
+
+    ret = kdc_validate_token(r->context, NULL /* realm */, token_type, &tok,
                              (const char **)&audiences.strings[i], 1,
-                             &actual_cprinc, token_times);
+                             &cprinc, &r->token_times);
     if (ret)
-        return bad_403(connection, ret, "Token validation failed");
-    if (actual_cprinc == NULL)
-        return bad_403(connection, ret, "Could not extract a principal name "
+        return bad_403(r, ret, "Token validation failed");
+    if (cprinc == NULL)
+        return bad_403(r, ret, "Could not extract a principal name "
                        "from token");
-    ret = krb5_unparse_name(context, actual_cprinc,
-                            cprinc_from_token);
-    krb5_free_principal(context, actual_cprinc);
+    ret = krb5_unparse_name(r->context, cprinc, &r->cname);
+    krb5_free_principal(r->context, cprinc);
     return ret;
 }
 
@@ -353,7 +356,7 @@ mk_pkix_store(char **pkix_store)
  * response status message though, just the body.
  */
 static krb5_error_code
-resp(struct MHD_Connection *connection,
+resp(struct bx509_request_desc *r,
      int http_status_code,
      enum MHD_ResponseMemoryMode rmmode,
      const void *body,
@@ -362,6 +365,11 @@ resp(struct MHD_Connection *connection,
 {
     struct MHD_Response *response;
     int mret = MHD_YES;
+
+    (void) gettimeofday(&r->tv_end, NULL);
+    if (http_status_code == MHD_HTTP_OK ||
+        http_status_code == MHD_HTTP_TEMPORARY_REDIRECT)
+        _kdc_audit_trail((kdc_request_t)r, 0);
 
     response = MHD_create_response_from_buffer(bodylen, rk_UNCONST(body),
                                                rmmode);
@@ -378,7 +386,8 @@ resp(struct MHD_Connection *connection,
     } else if (http_status_code == MHD_HTTP_TEMPORARY_REDIRECT) {
         const char *redir;
 
-        redir = MHD_lookup_connection_value(connection, MHD_GET_ARGUMENT_KIND,
+        /* XXX Move this */
+        redir = MHD_lookup_connection_value(r->connection, MHD_GET_ARGUMENT_KIND,
                                             "redirect");
         mret = MHD_add_response_header(response, MHD_HTTP_HEADER_LOCATION,
                                        redir);
@@ -388,29 +397,13 @@ resp(struct MHD_Connection *connection,
                                            token);
     }
     if (mret != MHD_NO)
-        mret = MHD_queue_response(connection, http_status_code, response);
+        mret = MHD_queue_response(r->connection, http_status_code, response);
     MHD_destroy_response(response);
     return mret == MHD_NO ? -1 : 0;
 }
 
 static krb5_error_code
-bad_req(struct MHD_Connection *connection,
-        krb5_error_code code,
-        int http_status_code,
-        const char *fmt,
-        ...)
-{
-    krb5_error_code ret;
-    va_list ap;
-
-    va_start(ap, fmt);
-    ret = bad_reqv(connection, code, http_status_code, fmt, ap);
-    va_end(ap);
-    return ret;
-}
-
-static krb5_error_code
-bad_reqv(struct MHD_Connection *connection,
+bad_reqv(struct bx509_request_desc *r,
          krb5_error_code code,
          int http_status_code,
          const char *fmt,
@@ -423,18 +416,20 @@ bad_reqv(struct MHD_Connection *connection,
     char *formatted = NULL;
     char *msg = NULL;
 
-    get_krb5_context(&context);
-
+    _kdc_audit_addkv((kdc_request_t)r, 0, "http-status-code", "%d",
+                     http_status_code);
+    (void) gettimeofday(&r->tv_end, NULL);
     if (code == ENOMEM) {
-        if (context)
-            kdc_log(context, kdc_config, 4, "Out of memory");
-        return resp(connection, http_status_code, MHD_RESPMEM_PERSISTENT,
+        if (r->context)
+            kdc_log(r->context, kdc_config, 1, "Out of memory");
+        _kdc_audit_trail((kdc_request_t)r, code);
+        return resp(r, http_status_code, MHD_RESPMEM_PERSISTENT,
                     fmt, strlen(fmt), NULL);
     }
 
     if (code) {
-        if (context)
-            emsg = k5msg = krb5_get_error_message(context, code);
+        if (r->context)
+            emsg = k5msg = krb5_get_error_message(r->context, code);
         else
             emsg = strerror(code);
     }
@@ -447,21 +442,20 @@ bad_reqv(struct MHD_Connection *connection,
         msg = formatted;
         formatted = NULL;
     }
+    _kdc_audit_addkv((kdc_request_t)r, KDC_AUDIT_VIS, "reason", "%s",
+                     formatted);
+    _kdc_audit_trail((kdc_request_t)r, code);
     krb5_free_error_message(context, k5msg);
 
     if (ret == -1 || msg == NULL) {
         if (context)
-            kdc_log(context, kdc_config, 4, "Out of memory");
-        return resp(connection, MHD_HTTP_SERVICE_UNAVAILABLE,
+            kdc_log(r->context, kdc_config, 1, "Out of memory");
+        return resp(r, MHD_HTTP_SERVICE_UNAVAILABLE,
                     MHD_RESPMEM_PERSISTENT,
                     "Out of memory", sizeof("Out of memory") - 1, NULL);
     }
 
-    if (http_status_code == MHD_HTTP_OK)
-        kdc_log(context, kdc_config, 4, "HTTP Response status code %d", http_status_code);
-    else
-        kdc_log(context, kdc_config, 4, "HTTP Response status code %d: %s", http_status_code, msg);
-    ret = resp(connection, http_status_code, MHD_RESPMEM_MUST_COPY,
+    ret = resp(r, http_status_code, MHD_RESPMEM_MUST_COPY,
                msg, strlen(msg), NULL);
     free(formatted);
     free(msg);
@@ -469,83 +463,99 @@ bad_reqv(struct MHD_Connection *connection,
 }
 
 static krb5_error_code
-bad_enomem(struct MHD_Connection *connection, krb5_error_code ret)
+bad_req(struct bx509_request_desc *r,
+        krb5_error_code code,
+        int http_status_code,
+        const char *fmt,
+        ...)
 {
-    return bad_req(connection, ret, MHD_HTTP_SERVICE_UNAVAILABLE,
+    krb5_error_code ret;
+    va_list ap;
+
+    va_start(ap, fmt);
+    ret = bad_reqv(r, code, http_status_code, fmt, ap);
+    va_end(ap);
+    return ret;
+}
+
+static krb5_error_code
+bad_enomem(struct bx509_request_desc *r, krb5_error_code ret)
+{
+    return bad_req(r, ret, MHD_HTTP_SERVICE_UNAVAILABLE,
                    "Out of memory");
 }
 
 static krb5_error_code
-bad_400(struct MHD_Connection *connection, int ret, char *reason)
+bad_400(struct bx509_request_desc *r, int ret, char *reason)
 {
-    return bad_req(connection, ret, MHD_HTTP_BAD_REQUEST, "%s", reason);
+    return bad_req(r, ret, MHD_HTTP_BAD_REQUEST, "%s", reason);
 }
 
 static krb5_error_code
-bad_401(struct MHD_Connection *connection, char *reason)
+bad_401(struct bx509_request_desc *r, char *reason)
 {
-    return bad_req(connection, EACCES, MHD_HTTP_UNAUTHORIZED, "%s", reason);
+    return bad_req(r, EACCES, MHD_HTTP_UNAUTHORIZED, "%s", reason);
 }
 
 static krb5_error_code
-bad_403(struct MHD_Connection *connection, krb5_error_code ret, char *reason)
+bad_403(struct bx509_request_desc *r, krb5_error_code ret, char *reason)
 {
-    return bad_req(connection, EACCES, MHD_HTTP_FORBIDDEN, "%s", reason);
+    return bad_req(r, EACCES, MHD_HTTP_FORBIDDEN, "%s", reason);
 }
 
 static krb5_error_code
-bad_404(struct MHD_Connection *connection, const char *name)
+bad_404(struct bx509_request_desc *r, const char *name)
 {
-    return bad_req(connection, ENOENT, MHD_HTTP_NOT_FOUND,
+    return bad_req(r, ENOENT, MHD_HTTP_NOT_FOUND,
                    "Resource not found: %s", name);
 }
 
 static krb5_error_code
-bad_405(struct MHD_Connection *connection, const char *method)
+bad_405(struct bx509_request_desc *r, const char *method)
 {
-    return bad_req(connection, EPERM, MHD_HTTP_METHOD_NOT_ALLOWED,
+    return bad_req(r, EPERM, MHD_HTTP_METHOD_NOT_ALLOWED,
                    "Method not supported: %s", method);
 }
 
 static krb5_error_code
-bad_500(struct MHD_Connection *connection,
+bad_500(struct bx509_request_desc *r,
         krb5_error_code ret,
         const char *reason)
 {
-    return bad_req(connection, ret, MHD_HTTP_INTERNAL_SERVER_ERROR,
+    return bad_req(r, ret, MHD_HTTP_INTERNAL_SERVER_ERROR,
                    "Internal error: %s", reason);
 }
 
 static krb5_error_code
-bad_503(struct MHD_Connection *connection,
+bad_503(struct bx509_request_desc *r,
         krb5_error_code ret,
         const char *reason)
 {
-    return bad_req(connection, ret, MHD_HTTP_SERVICE_UNAVAILABLE,
+    return bad_req(r, ret, MHD_HTTP_SERVICE_UNAVAILABLE,
                    "Service unavailable: %s", reason);
 }
 
 static krb5_error_code
-good_bx509(struct MHD_Connection *connection,
-           const char *pkix_store)
+good_bx509(struct bx509_request_desc *r)
 {
     krb5_error_code ret;
     size_t bodylen;
     void *body;
 
-    ret = rk_undumpdata(strchr(pkix_store, ':') + 1, &body, &bodylen);
+    ret = rk_undumpdata(strchr(r->pkix_store, ':') + 1, &body, &bodylen);
     if (ret)
-        return bad_503(connection, ret, "Could not recover issued certificate "
+        return bad_503(r, ret, "Could not recover issued certificate "
                        "from PKIX store");
 
-    ret = resp(connection, MHD_HTTP_OK, MHD_RESPMEM_MUST_COPY, body, bodylen,
+    (void) gettimeofday(&r->tv_end, NULL);
+    ret = resp(r, MHD_HTTP_OK, MHD_RESPMEM_MUST_COPY, body, bodylen,
                NULL);
     free(body);
     return ret;
 }
 
 struct bx509_param_handler_arg {
-    krb5_context context;
+    struct bx509_request_desc *r;
     hx509_request req;
     krb5_error_code ret;
 };
@@ -560,73 +570,82 @@ bx509_param_cb(void *d,
     heim_oid oid = { 0, 0 };
 
     if (strcmp(key, "eku") == 0 && val) {
-
+        _kdc_audit_addkv((kdc_request_t)a->r, KDC_AUDIT_VIS, "requested_eku",
+                         "%s", val);
         a->ret = der_parse_heim_oid(val, ".", &oid);
         if (a->ret == 0)
-            a->ret = hx509_request_add_eku(a->context->hx509ctx, a->req, &oid);
+            a->ret = hx509_request_add_eku(a->r->context->hx509ctx, a->req,
+                                           &oid);
         der_free_oid(&oid);
     } else if (strcmp(key, "dNSName") == 0 && val) {
-        a->ret = hx509_request_add_dns_name(a->context->hx509ctx, a->req, val);
+        _kdc_audit_addkv((kdc_request_t)a->r, KDC_AUDIT_VIS,
+                         "requested_dNSName", "%s", val);
+        a->ret = hx509_request_add_dns_name(a->r->context->hx509ctx, a->req,
+                                            val);
     } else if (strcmp(key, "rfc822Name") == 0 && val) {
-        a->ret = hx509_request_add_email(a->context->hx509ctx, a->req, val);
+        _kdc_audit_addkv((kdc_request_t)a->r, KDC_AUDIT_VIS,
+                         "requested_rfc822Name", "%s", val);
+        a->ret = hx509_request_add_email(a->r->context->hx509ctx, a->req, val);
     } else if (strcmp(key, "xMPPName") == 0 && val) {
-        a->ret = hx509_request_add_xmpp_name(a->context->hx509ctx, a->req,
+        _kdc_audit_addkv((kdc_request_t)a->r, KDC_AUDIT_VIS,
+                         "requested_xMPPName", "%s", val);
+        a->ret = hx509_request_add_xmpp_name(a->r->context->hx509ctx, a->req,
                                              val);
     } else if (strcmp(key, "krb5PrincipalName") == 0 && val) {
-        a->ret = hx509_request_add_pkinit(a->context->hx509ctx, a->req, val);
+        _kdc_audit_addkv((kdc_request_t)a->r, KDC_AUDIT_VIS,
+                         "requested_krb5PrincipalName", "%s", val);
+        a->ret = hx509_request_add_pkinit(a->r->context->hx509ctx, a->req,
+                                          val);
     } else if (strcmp(key, "ms-upn") == 0 && val) {
-        a->ret = hx509_request_add_ms_upn_name(a->context->hx509ctx, a->req,
+        _kdc_audit_addkv((kdc_request_t)a->r, KDC_AUDIT_VIS,
+                         "requested_ms_upn", "%s", val);
+        a->ret = hx509_request_add_ms_upn_name(a->r->context->hx509ctx, a->req,
                                                val);
     } else if (strcmp(key, "registeredID") == 0 && val) {
+        _kdc_audit_addkv((kdc_request_t)a->r, KDC_AUDIT_VIS,
+                         "requested_registered_id", "%s", val);
         a->ret = der_parse_heim_oid(val, ".", &oid);
         if (a->ret == 0)
-            a->ret = hx509_request_add_registered(a->context->hx509ctx, a->req,
-                                                  &oid);
+            a->ret = hx509_request_add_registered(a->r->context->hx509ctx,
+                                                  a->req, &oid);
         der_free_oid(&oid);
     } else if (strcmp(key, "csr") == 0 && val) {
+        _kdc_audit_addkv((kdc_request_t)a->r, 0, "requested_csr", "true");
         a->ret = 0; /* Handled upstairs */
     } else {
         /* Produce error for unknown params */
-        krb5_set_error_message(a->context, a->ret = ENOTSUP,
+        _kdc_audit_addkv((kdc_request_t)a->r, 0, "requested_unknown", "true");
+        krb5_set_error_message(a->r->context, a->ret = ENOTSUP,
                                "Query parameter %s not supported", key);
     }
     return a->ret == 0 ? MHD_YES : MHD_NO /* Stop iterating */;
 }
 
 static krb5_error_code
-update_and_authorize_CSR(krb5_context context,
-                         struct MHD_Connection *connection,
-                         krb5_data *csr,
-                         krb5_const_principal p,
-                         hx509_request *req)
+authorize_CSR(struct bx509_request_desc *r,
+              krb5_data *csr,
+              krb5_const_principal p)
 {
     struct bx509_param_handler_arg cb_data;
     krb5_error_code ret;
 
-    *req = NULL;
-
-    ret = hx509_request_parse_der(context->hx509ctx, csr, req);
+    ret = hx509_request_parse_der(r->context->hx509ctx, csr, &r->req);
     if (ret)
-        return bad_req(connection, ret, MHD_HTTP_SERVICE_UNAVAILABLE,
+        return bad_req(r, ret, MHD_HTTP_SERVICE_UNAVAILABLE,
                        "Could not parse CSR");
-    cb_data.context = context;
-    cb_data.req = *req;
+    cb_data.r = r;
+    cb_data.req = r->req;
     cb_data.ret = 0;
-    (void) MHD_get_connection_values(connection, MHD_GET_ARGUMENT_KIND,
+    (void) MHD_get_connection_values(r->connection, MHD_GET_ARGUMENT_KIND,
                                      bx509_param_cb, &cb_data);
     ret = cb_data.ret;
-    if (ret) {
-        hx509_request_free(req);
-        return bad_req(connection, ret, MHD_HTTP_SERVICE_UNAVAILABLE,
+    if (ret)
+        return bad_req(r, ret, MHD_HTTP_SERVICE_UNAVAILABLE,
                        "Could not handle query parameters");
-    }
 
-    ret = kdc_authorize_csr(context, kdc_config, *req, p);
-    if (ret) {
-        hx509_request_free(req);
-        return bad_403(connection, ret,
-                       "Not authorized to requested certificate");
-    }
+    ret = kdc_authorize_csr(r->context, kdc_config, r->req, p);
+    if (ret)
+        return bad_403(r, ret, "Not authorized to requested certificate");
     return ret;
 }
 
@@ -665,31 +684,23 @@ store_certs(hx509_context context,
 
 /* Setup a CSR for bx509() */
 static krb5_error_code
-do_CA(krb5_context context,
-      struct MHD_Connection *connection,
-      const char *csr,
-      const char *princ,
-      krb5_times *token_times,
-      char **pkix_store)
+do_CA(struct bx509_request_desc *r, const char *csr)
 {
     krb5_error_code ret = 0;
     krb5_principal p;
-    hx509_request req = NULL;
     hx509_certs certs = NULL;
     krb5_data d;
     ssize_t bytes;
 
-    *pkix_store = NULL;
-
-    ret = krb5_parse_name(context, princ, &p);
+    ret = krb5_parse_name(r->context, r->cname, &p);
     if (ret)
-        return bad_req(connection, ret, MHD_HTTP_SERVICE_UNAVAILABLE,
+        return bad_req(r, ret, MHD_HTTP_SERVICE_UNAVAILABLE,
                        "Could not parse principal name");
 
     /* Set CSR */
     if ((d.data = malloc(strlen(csr))) == NULL) {
-        krb5_free_principal(context, p);
-        return bad_enomem(connection, ENOMEM);
+        krb5_free_principal(r->context, p);
+        return bad_enomem(r, ENOMEM);
     }
 
     bytes = rk_base64_decode(csr, d.data);
@@ -698,98 +709,171 @@ do_CA(krb5_context context,
     else
         d.length = bytes;
     if (ret) {
-        krb5_free_principal(context, p);
+        krb5_free_principal(r->context, p);
         free(d.data);
-        return bad_500(connection, ret, "Invalid base64 encoding of CSR");
+        return bad_500(r, ret, "Invalid base64 encoding of CSR");
     }
 
     /*
      * Parses and validates the CSR, adds external extension requests from
      * query parameters, then checks authorization.
      */
-    ret = update_and_authorize_CSR(context, connection, &d, p, &req);
+    ret = authorize_CSR(r, &d, p);
     free(d.data);
     d.data = 0;
     d.length = 0;
     if (ret) {
-        krb5_free_principal(context, p);
-        return ret; /* update_and_authorize_CSR() calls bad_req() */
+        krb5_free_principal(r->context, p);
+        return ret; /* authorize_CSR() calls bad_req() */
     }
 
     /* Issue the certificate */
-    ret = kdc_issue_certificate(context, kdc_config, req, p, token_times,
-                                1 /* send_chain */, &certs);
-    krb5_free_principal(context, p);
-    hx509_request_free(&req);
+    ret = kdc_issue_certificate(r->context, kdc_config, r->req, p,
+                                &r->token_times, 1 /* send_chain */, &certs);
+    krb5_free_principal(r->context, p);
     if (ret) {
         if (ret == KRB5KDC_ERR_POLICY || ret == EACCES)
-            return bad_403(connection, ret,
+            return bad_403(r, ret,
                            "Certificate request denied for policy reasons");
-        return bad_500(connection, ret, "Certificate issuance failed");
+        return bad_500(r, ret, "Certificate issuance failed");
     }
 
     /* Setup PKIX store */
-    if ((ret = mk_pkix_store(pkix_store)))
-        return bad_500(connection, ret,
+    if ((ret = mk_pkix_store(&r->pkix_store)))
+        return bad_500(r, ret,
                        "Could not create PEM store for issued certificate");
 
-    ret = store_certs(context->hx509ctx, *pkix_store, certs, NULL);
+    ret = store_certs(r->context->hx509ctx, r->pkix_store, certs, NULL);
     hx509_certs_free(&certs);
     if (ret) {
-        (void) unlink(strchr(*pkix_store, ':') + 1);
-        free(*pkix_store);
-        *pkix_store = NULL;
-        return bad_500(connection, ret,
+        (void) unlink(strchr(r->pkix_store, ':') + 1);
+        return bad_500(r, ret,
                        "Failed convert issued certificate and chain to PEM");
     }
     return 0;
 }
 
-/* Implements GETs of /bx509 */
-static krb5_error_code
-bx509(struct MHD_Connection *connection)
+/* Copied from kdc/connect.c */
+static void
+addr_to_string(krb5_context context,
+               struct sockaddr *addr,
+               char *str,
+               size_t len)
 {
     krb5_error_code ret;
-    krb5_context context;
-    krb5_times token_times;
-    const char *csr;
-    char *cprinc_from_token = NULL;
-    char *pkix_store = NULL;
+    krb5_address a;
 
-    if ((ret = get_krb5_context(&context)))
-        return bad_503(connection, ret, "Could not initialize Kerberos "
-                       "library");
+    ret = krb5_sockaddr2address(context, addr, &a);
+    if (ret == 0) {
+        ret = krb5_print_address(&a, str, len, &len);
+        krb5_free_address(context, &a);
+    }
+    if (ret)
+        snprintf(str, len, "<family=%d>", addr->sa_family);
+}
+
+static krb5_error_code
+set_req_desc(struct MHD_Connection *connection,
+             const char *url,
+             struct bx509_request_desc *r)
+{
+    const union MHD_ConnectionInfo *ci;
+    const char *token;
+    krb5_error_code ret;
+
+    memset(r, 0, sizeof(*r));
+    (void) gettimeofday(&r->tv_start, NULL);
+
+    ret = get_krb5_context(&r->context);
+    r->connection = connection;
+    r->request.data = "<HTTP-REQUEST>";
+    r->request.length = sizeof("<HTTP-REQUEST>");
+    r->from = r->frombuf;
+    r->config = kdc_config;
+    r->reqtype = url;
+    r->target = r->redir = NULL;
+    r->pkix_store = NULL;
+    r->freeme1 = NULL;
+    r->ccname = NULL;
+    r->reply = NULL;
+    r->sname = NULL;
+    r->cname = NULL;
+    r->addr = NULL;
+    r->req = NULL;
+    r->kv = heim_array_create();
+    ci = MHD_get_connection_info(connection,
+                                 MHD_CONNECTION_INFO_CLIENT_ADDRESS);
+    if (ci) {
+        r->addr = ci->client_addr;
+        addr_to_string(r->context, r->addr, r->frombuf, sizeof(r->frombuf));
+    }
+
+    _kdc_audit_addkv((kdc_request_t)r, 0, "method", "GET");
+    _kdc_audit_addkv((kdc_request_t)r, 0, "endpoint", "%s", r->reqtype);
+    token = MHD_lookup_connection_value(r->connection, MHD_HEADER_KIND,
+                                        MHD_HTTP_HEADER_AUTHORIZATION);
+    if (token && r->kv) {
+        const char *token_end;
+
+        if ((token_end = strchr(token, ' ')) == NULL ||
+            (token_end - token) > INT_MAX || (token_end - token) < 2)
+            _kdc_audit_addkv((kdc_request_t)r, 0, "auth", "<unknown>");
+        else
+            _kdc_audit_addkv((kdc_request_t)r, 0, "auth", "%.*s",
+                             (int)(token_end - token), token);
+
+    }
+
+    if (ret == 0 && r->kv == NULL) {
+        kdc_log(r->context, kdc_config, 1, "Out of memory");
+        ret = ENOMEM;
+    }
+    return ret;
+}
+
+static void
+clean_req_desc(struct bx509_request_desc *r)
+{
+    if (!r)
+        return;
+    if (r->pkix_store)
+        (void) unlink(strchr(r->pkix_store, ':') + 1);
+    hx509_request_free(&r->req);
+    heim_release(r->kv);
+    free(r->pkix_store);
+    free(r->freeme1);
+    free(r->ccname);
+    free(r->cname);
+    free(r->sname);
+}
+
+/* Implements GETs of /bx509 */
+static krb5_error_code
+bx509(struct bx509_request_desc *r)
+{
+    krb5_error_code ret;
+    const char *csr;
 
     /* Get required inputs */
-    csr = MHD_lookup_connection_value(connection, MHD_GET_ARGUMENT_KIND,
+    csr = MHD_lookup_connection_value(r->connection, MHD_GET_ARGUMENT_KIND,
                                       "csr");
     if (csr == NULL)
-        return bad_400(connection, EINVAL, "CSR is missing");
+        return bad_400(r, EINVAL, "CSR is missing");
 
-    if ((ret = validate_token(connection, &token_times, &cprinc_from_token)))
+    if ((ret = validate_token(r)))
         return ret; /* validate_token() calls bad_req() */
 
-    if (cprinc_from_token == NULL)
-        return bad_403(connection, EINVAL,
+    if (r->cname == NULL)
+        return bad_403(r, EINVAL,
                        "Could not extract principal name from token");
 
     /* Parse CSR, add extensions from parameters, authorize, issue cert */
-    if ((ret = do_CA(context, connection, csr, cprinc_from_token,
-                     &token_times, &pkix_store))) {
-        free(cprinc_from_token);
+    if ((ret = do_CA(r, csr)))
         return ret;
-    }
 
     /* Read and send the contents of the PKIX store */
-    kdc_log(context, kdc_config, 4, "Issued certificate to %s",
-            cprinc_from_token);
-    ret = good_bx509(connection, pkix_store);
-
-    if (pkix_store)
-        (void) unlink(strchr(pkix_store, ':') + 1);
-    free(cprinc_from_token);
-    free(pkix_store);
-    return ret == -1 ? MHD_NO : MHD_YES;
+    kdc_log(r->context, kdc_config, 4, "Issued certificate to %s", r->cname);
+    return good_bx509(r);
 }
 
 /*
@@ -909,10 +993,7 @@ find_ccache(krb5_context context, const char *princ, char **ccname)
  * for PKINIT.
  */
 static krb5_error_code
-do_pkinit(krb5_context context,
-          const char *princ,
-          const char *pkix_store,
-          const char *ccname)
+do_pkinit(struct bx509_request_desc *r)
 {
     krb5_get_init_creds_opt *opt = NULL;
     krb5_init_creds_context ctx = NULL;
@@ -943,7 +1024,7 @@ do_pkinit(krb5_context context,
      * FILE ccache would take care to mkstemp() and rename() into place.
      * fcc_open() basically does a similar thing.
      */
-    if (asprintf(&temp_ccname, "%s.ccnew", ccname) == -1 ||
+    if (asprintf(&temp_ccname, "%s.ccnew", r->ccname) == -1 ||
         temp_ccname == NULL)
         ret = ENOMEM;
     if (ret == 0)
@@ -978,9 +1059,9 @@ do_pkinit(krb5_context context,
 
     /* Check if we lost any race to acquire Kerberos creds */
     if (ret == 0)
-        ret = krb5_cc_resolve(context, temp_ccname, &temp_cc);
+        ret = krb5_cc_resolve(r->context, temp_ccname, &temp_cc);
     if (ret == 0)
-        ret = krb5_cc_get_lifetime(context, temp_cc, &life);
+        ret = krb5_cc_get_lifetime(r->context, temp_cc, &life);
     if (ret == 0 && life > 60)
         goto out; /* We lost the race, but we win: we get to do less work */
 
@@ -992,17 +1073,18 @@ do_pkinit(krb5_context context,
      * trust anchors, and so on, and acquire that way, then
      * gss_store_cred_into() to save it in a FILE ccache.
      */
-    ret = krb5_parse_name(context, princ, &p);
+    ret = krb5_parse_name(r->context, r->cname, &p);
     if (ret == 0)
-        crealm = krb5_principal_get_realm(context, p);
+        crealm = krb5_principal_get_realm(r->context, p);
     if (ret == 0 &&
-        (ret = krb5_get_init_creds_opt_alloc(context, &opt)) == 0)
-        krb5_get_init_creds_opt_set_default_flags(context, "kinit", crealm,
+        (ret = krb5_get_init_creds_opt_alloc(r->context, &opt)) == 0)
+        krb5_get_init_creds_opt_set_default_flags(r->context, "kinit", crealm,
                                                   opt);
     if (ret == 0 &&
-        (ret = krb5_get_init_creds_opt_set_addressless(context,
+        (ret = krb5_get_init_creds_opt_set_addressless(r->context,
                                                        opt, 1)) == 0)
-        ret = krb5_get_init_creds_opt_set_pkinit(context, opt, p, pkix_store,
+        ret = krb5_get_init_creds_opt_set_pkinit(r->context, opt, p,
+                                                 r->pkix_store,
                                                  NULL,  /* pkinit_anchor */
                                                  NULL,  /* anchor_chain */
                                                  NULL,  /* pkinit_crl */
@@ -1011,7 +1093,7 @@ do_pkinit(krb5_context context,
                                                  NULL,  /* prompter data */
                                                  NULL   /* password */);
     if (ret == 0)
-        ret = krb5_init_creds_init(context, p,
+        ret = krb5_init_creds_init(r->context, p,
                                    NULL /* prompter */,
                                    NULL /* prompter data */,
                                    0 /* start_time */,
@@ -1023,20 +1105,19 @@ do_pkinit(krb5_context context,
      * the source ccache, so we set temp_cc = NULL if it succeeds.
      */
     if (ret == 0 &&
-        (ret = krb5_init_creds_get(context, ctx)) == 0 &&
-        (ret = krb5_cc_initialize(context, temp_cc, p)) == 0 &&
-        (ret = krb5_init_creds_store(context, ctx, temp_cc)) == 0 &&
-        (ret = krb5_cc_resolve(context, ccname, &cc)) == 0 &&
-        (ret = krb5_cc_move(context, temp_cc, cc)) == 0)
+        (ret = krb5_init_creds_get(r->context, ctx)) == 0 &&
+        (ret = krb5_init_creds_store(r->context, ctx, temp_cc)) == 0 &&
+        (ret = krb5_cc_resolve(r->context, r->ccname, &cc)) == 0 &&
+        (ret = krb5_cc_move(r->context, temp_cc, cc)) == 0)
         temp_cc = NULL;
 
 out:
     if (ctx)
-        krb5_init_creds_free(context, ctx);
-    krb5_get_init_creds_opt_free(context, opt);
-    krb5_free_principal(context, p);
-    krb5_cc_close(context, temp_cc);
-    krb5_cc_close(context, cc);
+        krb5_init_creds_free(r->context, ctx);
+    krb5_get_init_creds_opt_free(r->context, opt);
+    krb5_free_principal(r->context, p);
+    krb5_cc_close(r->context, temp_cc);
+    krb5_cc_close(r->context, cc);
     free(temp_ccname);
     if (fd != -1)
         (void) close(fd); /* Drops the flock */
@@ -1070,11 +1151,7 @@ load_priv_key(krb5_context context, const char *fn, hx509_private_key *key)
 }
 
 static krb5_error_code
-bnegotiate_do_CA(krb5_context context,
-                 struct MHD_Connection *connection,
-                 const char *princ,
-                 krb5_times *token_times,
-                 char **pkix_store)
+bnegotiate_do_CA(struct bx509_request_desc *r)
 {
     SubjectPublicKeyInfo spki;
     hx509_private_key key = NULL;
@@ -1084,25 +1161,26 @@ bnegotiate_do_CA(krb5_context context,
     hx509_certs certs = NULL;
     KeyUsage ku = int2KeyUsage(0);
 
-    *pkix_store = NULL;
     memset(&spki, 0, sizeof(spki));
     ku.digitalSignature = 1;
 
     /* Make a CSR (halfway -- we don't need to sign it here) */
-    ret = load_priv_key(context, impersonation_key_fn, &key);
+    /* XXX Load impersonation key just once?? */
+    ret = load_priv_key(r->context, impersonation_key_fn, &key);
     if (ret == 0)
-    ret = hx509_request_init(context->hx509ctx, &req);
+    ret = hx509_request_init(r->context->hx509ctx, &req);
     if (ret == 0)
-        ret = krb5_parse_name(context, princ, &p);
+        ret = krb5_parse_name(r->context, r->cname, &p);
     if (ret == 0)
-        hx509_private_key2SPKI(context->hx509ctx, key, &spki);
+        hx509_private_key2SPKI(r->context->hx509ctx, key, &spki);
     if (ret == 0)
-        hx509_request_set_SubjectPublicKeyInfo(context->hx509ctx, req, &spki);
+        hx509_request_set_SubjectPublicKeyInfo(r->context->hx509ctx, req,
+                                               &spki);
     free_SubjectPublicKeyInfo(&spki);
     if (ret == 0)
-        ret = hx509_request_add_pkinit(context->hx509ctx, req, princ);
+        ret = hx509_request_add_pkinit(r->context->hx509ctx, req, r->cname);
     if (ret == 0)
-        ret = hx509_request_add_eku(context->hx509ctx, req,
+        ret = hx509_request_add_eku(r->context->hx509ctx, req,
                                     &asn1_oid_id_pkekuoid);
 
     /* Mark it authorized */
@@ -1115,77 +1193,59 @@ bnegotiate_do_CA(krb5_context context,
 
     /* Issue the certificate */
     if (ret == 0)
-        ret = kdc_issue_certificate(context, kdc_config, req, p, token_times,
-                                    1 /* send_chain */, &certs);
-    krb5_free_principal(context, p);
+        ret = kdc_issue_certificate(r->context, kdc_config, req, p,
+                                    &r->token_times, 1 /* send_chain */,
+                                    &certs);
+    krb5_free_principal(r->context, p);
     hx509_request_free(&req);
     p = NULL;
 
     if (ret == KRB5KDC_ERR_POLICY) {
         hx509_private_key_free(&key);
-        return bad_500(connection, ret,
+        return bad_500(r, ret,
                        "Certificate request denied for policy reasons");
     }
     if (ret == ENOMEM) {
         hx509_private_key_free(&key);
-        return bad_503(connection, ret, "Certificate issuance failed");
+        return bad_503(r, ret, "Certificate issuance failed");
     }
     if (ret) {
         hx509_private_key_free(&key);
-        return bad_500(connection, ret, "Certificate issuance failed");
+        return bad_500(r, ret, "Certificate issuance failed");
     }
 
     /* Setup PKIX store and extract the certificate chain into it */
-    ret = mk_pkix_store(pkix_store);
+    ret = mk_pkix_store(&r->pkix_store);
     if (ret == 0)
-        ret = store_certs(context->hx509ctx, *pkix_store, certs, key);
+        ret = store_certs(r->context->hx509ctx, r->pkix_store, certs, key);
     hx509_private_key_free(&key);
     hx509_certs_free(&certs);
-    if (ret) {
-        (void) unlink(strchr(*pkix_store, ':') + 1);
-        free(*pkix_store);
-        *pkix_store = NULL;
-        return bad_500(connection, ret,
+    if (ret)
+        return bad_500(r, ret,
                        "Could not create PEM store for issued certificate");
-    }
     return 0;
 }
 
 /* Get impersonated Kerberos credentials for `cprinc' */
 static krb5_error_code
-bnegotiate_get_creds(struct MHD_Connection *connection,
-                     const char *subject_cprinc,
-                     krb5_times *token_times,
-                     char **ccname)
+bnegotiate_get_creds(struct bx509_request_desc *r)
 {
     krb5_error_code ret;
-    krb5_context context;
-    char *pkix_store = NULL;
-
-    *ccname = NULL;
-
-    if ((ret = get_krb5_context(&context)))
-        return bad_503(connection, ret, "Could not initialize Kerberos "
-                       "library");
 
     /* If we have a live ccache for `cprinc', we're done */
-    if ((ret = find_ccache(context, subject_cprinc, ccname)) == 0)
+    if ((ret = find_ccache(r->context, r->cname, &r->ccname)) == 0)
         return ret; /* Success */
 
     /*
      * Else we have to acquire a credential for them using their bearer token
      * for authentication (and our keytab / initiator credentials perhaps).
      */
-    if ((ret = bnegotiate_do_CA(context, connection, subject_cprinc,
-                                token_times, &pkix_store)))
+    if ((ret = bnegotiate_do_CA(r)))
         return ret; /* bnegotiate_do_CA() calls bad_req() */
 
-    if (ret == 0 &&
-        (ret = do_pkinit(context, subject_cprinc, pkix_store, *ccname)))
-        ret = bad_403(connection, ret,
+    if (ret == 0 && (ret = do_pkinit(r)))
+        ret = bad_403(r, ret,
                       "Could not acquire Kerberos credentials using PKINIT");
-
-    free(pkix_store);
     return ret;
 }
 
@@ -1242,7 +1302,7 @@ fmt_gss_errors(const char *r, OM_uint32 major, OM_uint32 minor, gss_OID mech)
 
 /* GSS-API error */
 static krb5_error_code
-bad_req_gss(struct MHD_Connection *connection,
+bad_req_gss(struct bx509_request_desc *r,
             OM_uint32 major,
             OM_uint32 minor,
             gss_OID mech,
@@ -1255,22 +1315,19 @@ bad_req_gss(struct MHD_Connection *connection,
     if (major == GSS_S_BAD_NAME || major == GSS_S_BAD_NAMETYPE)
         http_status_code = MHD_HTTP_BAD_REQUEST;
 
-    ret = resp(connection, http_status_code, MHD_RESPMEM_MUST_COPY,
-               msg, strlen(msg), NULL);
+    ret = resp(r, http_status_code, MHD_RESPMEM_MUST_COPY, msg, strlen(msg),
+               NULL);
     free(msg);
     return ret;
 }
 
 /* Make an HTTP/Negotiate token */
 static krb5_error_code
-mk_nego_tok(struct MHD_Connection *connection,
-            const char *cprinc,
-            const char *target,
-            const char *ccname,
+mk_nego_tok(struct bx509_request_desc *r,
             char **nego_tok,
             size_t *nego_toksz)
 {
-    gss_key_value_element_desc kv[1] = { { "ccache", ccname } };
+    gss_key_value_element_desc kv[1] = { { "ccache", r->ccname } };
     gss_key_value_set_desc store = { 1, kv };
     gss_buffer_desc token = GSS_C_EMPTY_BUFFER;
     gss_buffer_desc name = GSS_C_EMPTY_BUFFER;
@@ -1286,22 +1343,22 @@ mk_nego_tok(struct MHD_Connection *connection,
     *nego_toksz = 0;
 
     /* Import initiator name */
-    name.length = strlen(cprinc);
-    name.value = rk_UNCONST(cprinc);
+    name.length = strlen(r->cname);
+    name.value = r->cname;
     major = gss_import_name(&minor, &name, GSS_KRB5_NT_PRINCIPAL_NAME, &iname);
     if (major != GSS_S_COMPLETE)
-        return bad_req_gss(connection, major, minor, GSS_C_NO_OID,
+        return bad_req_gss(r, major, minor, GSS_C_NO_OID,
                            MHD_HTTP_SERVICE_UNAVAILABLE,
                            "Could not import cprinc parameter value as "
                            "Kerberos principal name");
 
     /* Import target acceptor name */
-    name.length = strlen(target);
-    name.value = rk_UNCONST(target);
+    name.length = strlen(r->target);
+    name.value = rk_UNCONST(r->target);
     major = gss_import_name(&minor, &name, GSS_C_NT_HOSTBASED_SERVICE, &aname);
     if (major != GSS_S_COMPLETE) {
         (void) gss_release_name(&junk, &iname);
-        return bad_req_gss(connection, major, minor, GSS_C_NO_OID,
+        return bad_req_gss(r, major, minor, GSS_C_NO_OID,
                            MHD_HTTP_SERVICE_UNAVAILABLE,
                            "Could not import target parameter value as "
                            "Kerberos principal name");
@@ -1314,7 +1371,7 @@ mk_nego_tok(struct MHD_Connection *connection,
     (void) gss_release_name(&junk, &iname);
     if (major != GSS_S_COMPLETE) {
         (void) gss_release_name(&junk, &aname);
-        return bad_req_gss(connection, major, minor, GSS_KRB5_MECHANISM,
+        return bad_req_gss(r, major, minor, GSS_KRB5_MECHANISM,
                            MHD_HTTP_FORBIDDEN, "Could not acquire credentials "
                            "for requested cprinc");
     }
@@ -1327,7 +1384,7 @@ mk_nego_tok(struct MHD_Connection *connection,
     (void) gss_release_name(&junk, &aname);
     (void) gss_release_cred(&junk, &cred);
     if (major != GSS_S_COMPLETE)
-        return bad_req_gss(connection, major, minor, GSS_KRB5_MECHANISM,
+        return bad_req_gss(r, major, minor, GSS_KRB5_MECHANISM,
                            MHD_HTTP_SERVICE_UNAVAILABLE, "Could not acquire "
                            "Negotiate token for requested target");
 
@@ -1338,7 +1395,7 @@ mk_nego_tok(struct MHD_Connection *connection,
         ret = asprintf(nego_tok, "Negotiate %s", token_b64);
     free(token_b64);
     if (ret < 0 || *nego_tok == NULL)
-        return bad_req(connection, errno, MHD_HTTP_SERVICE_UNAVAILABLE,
+        return bad_req(r, errno, MHD_HTTP_SERVICE_UNAVAILABLE,
                        "Could not allocate memory for encoding Negotiate "
                        "token");
     *nego_toksz = ret;
@@ -1346,10 +1403,7 @@ mk_nego_tok(struct MHD_Connection *connection,
 }
 
 static krb5_error_code
-bnegotiate_get_target(struct MHD_Connection *connection,
-                      const char **out_target,
-                      const char **out_redir,
-                      char **freeme)
+bnegotiate_get_target(struct bx509_request_desc *r)
 {
     const char *target;
     const char *redir;
@@ -1359,33 +1413,29 @@ bnegotiate_get_target(struct MHD_Connection *connection,
     char *s1 = NULL;
     char *s2 = NULL;
 
-    *out_target = NULL;
-    *out_redir = NULL;
-    *freeme = NULL;
-
-    target = MHD_lookup_connection_value(connection, MHD_GET_ARGUMENT_KIND,
+    target = MHD_lookup_connection_value(r->connection, MHD_GET_ARGUMENT_KIND,
                                          "target");
-    redir = MHD_lookup_connection_value(connection, MHD_GET_ARGUMENT_KIND,
+    redir = MHD_lookup_connection_value(r->connection, MHD_GET_ARGUMENT_KIND,
                                         "redirect");
-    referer = MHD_lookup_connection_value(connection, MHD_HEADER_KIND,
-                                          "referer");
+    referer = MHD_lookup_connection_value(r->connection, MHD_HEADER_KIND,
+                                          MHD_HTTP_HEADER_REFERER);
     if (target != NULL && redir == NULL) {
-        *out_target = target;
+        r->target = target;
         return 0;
     }
     if (target == NULL && redir == NULL)
-        return bad_400(connection, EINVAL,
+        return bad_400(r, EINVAL,
                        "Query missing 'target' or 'redirect' parameter value");
     if (target != NULL && redir != NULL)
-        return bad_403(connection, EACCES,
+        return bad_403(r, EACCES,
                        "Only one of 'target' or 'redirect' parameter allowed");
     if (redir != NULL && referer == NULL)
-        return bad_403(connection, EACCES,
+        return bad_403(r, EACCES,
                        "Redirect request without Referer header nor allowed");
 
     if (strncmp(referer, "https://", sizeof("https://") - 1) ||
         strncmp(redir, "https://", sizeof("https://") - 1))
-        return bad_403(connection, EACCES,
+        return bad_403(r, EACCES,
                        "Redirect requests permitted only for https referrers");
 
     /* Parse out authority from each URI, redirect and referrer */
@@ -1393,41 +1443,40 @@ bnegotiate_get_target(struct MHD_Connection *connection,
     if ((local_part = strchr(authority, '/')) == NULL)
         local_part = authority + strlen(authority);
     if ((s1 = strndup(authority, local_part - authority)) == NULL)
-        return bad_enomem(connection, ENOMEM);
+        return bad_enomem(r, ENOMEM);
 
     authority = referer + sizeof("https://") - 1;
     if ((local_part = strchr(authority, '/')) == NULL)
         local_part = authority + strlen(authority);
     if ((s2 = strndup(authority, local_part - authority)) == NULL) {
         free(s1);
-        return bad_enomem(connection, ENOMEM);
+        return bad_enomem(r, ENOMEM);
     }
 
     /* Both must match */
     if (strcasecmp(s1, s2)) {
         free(s2);
         free(s1);
-        return bad_403(connection, EACCES,
-                       "Redirect request does not match referer");
+        return bad_403(r, EACCES, "Redirect request does not match referer");
     }
     free(s2);
 
     if (strchr(s1, '@')) {
         free(s1);
-        return bad_403(connection, EACCES,
+        return bad_403(r, EACCES,
                        "Redirect request authority has login information");
     }
 
     /* Extract hostname portion of authority and format GSS name */
     if (strchr(s1, ':'))
         *strchr(s1, ':') = '\0';
-    if (asprintf(freeme, "HTTP@%s", s1) == -1 || *freeme == NULL) {
+    if (asprintf(&r->freeme1, "HTTP@%s", s1) == -1 || r->freeme1 == NULL) {
         free(s1);
-        return bad_enomem(connection, ENOMEM);
+        return bad_enomem(r, ENOMEM);
     }
 
-    *out_target = *freeme;
-    *out_redir = redir;
+    r->target = r->freeme1;
+    r->redir = redir;
     free(s1);
     return 0;
 }
@@ -1444,28 +1493,23 @@ bnegotiate_get_target(struct MHD_Connection *connection,
  * well, and the authority of the redirect and Referer URIs must be the same.
  */
 static krb5_error_code
-bnegotiate(struct MHD_Connection *connection)
+bnegotiate(struct bx509_request_desc *r)
 {
     krb5_error_code ret;
-    krb5_times token_times;
-    const char *target;
-    const char *redir;
     size_t nego_toksz = 0;
     char *nego_tok = NULL;
-    char *cprinc_from_token = NULL;
-    char *ccname = NULL;
-    char *freeme = NULL;
 
-    /* bnegotiate_get_target() calls bad_req() */
-    ret = bnegotiate_get_target(connection, &target, &redir, &freeme);
-    if (ret)
-        return ret == -1 ? MHD_NO : MHD_YES;
-
-    if ((ret = validate_token(connection, &token_times,
-                              &cprinc_from_token))) {
-        free(freeme);
-        return ret; /* validate_token() calls bad_req() */
+    ret = bnegotiate_get_target(r);
+    if (ret == 0) {
+        _kdc_audit_addkv((kdc_request_t)r, KDC_AUDIT_VIS, "target", "%s",
+                         r->target ? r->target : "<unknown>");
+        _kdc_audit_addkv((kdc_request_t)r, 0, "redir", "%s",
+                         r->redir ? "yes" : "no");
+        ret = validate_token(r);
     }
+    /* bnegotiate_get_target() and validate_token() call bad_req() */
+    if (ret)
+        return ret;
 
     /*
      * Make sure we have Kerberos credentials for cprinc.  If we have them
@@ -1475,29 +1519,24 @@ bnegotiate(struct MHD_Connection *connection)
      * Perhaps we could use S4U instead, which would speed up the slow path a
      * bit.
      */
-    ret = bnegotiate_get_creds(connection, cprinc_from_token, &token_times,
-                               &ccname);
+    ret = bnegotiate_get_creds(r);
 
     /* Acquire the Negotiate token and output it */
-    if (ret == 0 && ccname != NULL)
-        ret = mk_nego_tok(connection, cprinc_from_token, target, ccname,
-                          &nego_tok, &nego_toksz);
+    if (ret == 0 && r->ccname != NULL)
+        ret = mk_nego_tok(r, &nego_tok, &nego_toksz);
 
     if (ret == 0) {
         /* Look ma', Negotiate as an OAuth-like token system! */
-        if (redir)
-            ret = resp(connection, MHD_HTTP_TEMPORARY_REDIRECT,
-                       MHD_RESPMEM_PERSISTENT, "", 0, nego_tok);
+        if (r->redir)
+            ret = resp(r, MHD_HTTP_TEMPORARY_REDIRECT, MHD_RESPMEM_PERSISTENT,
+                       "", 0, nego_tok);
         else
-            ret = resp(connection, MHD_HTTP_OK, MHD_RESPMEM_MUST_COPY,
-                       nego_tok, nego_toksz, NULL);
+            ret = resp(r, MHD_HTTP_OK, MHD_RESPMEM_MUST_COPY, nego_tok,
+                       nego_toksz, NULL);
     }
 
-    free(cprinc_from_token);
     free(nego_tok);
-    free(ccname);
-    free(freeme);
-    return ret == -1 ? MHD_NO : MHD_YES;
+    return ret;
 }
 
 /* Implements the entirety of this REST service */
@@ -1512,9 +1551,8 @@ route(void *cls,
       void **ctx)
 {
     static int aptr = 0;
-
-    if (0 != strcmp(method, "GET"))
-        return bad_405(connection, method) == -1 ? MHD_NO : MHD_YES;
+    struct bx509_request_desc r;
+    int ret;
 
     if (*ctx == NULL) {
         /*
@@ -1532,11 +1570,20 @@ route(void *cls,
         *ctx = &aptr;
         return MHD_YES;
     }
-    if (strcmp(url, "/bx509") == 0)
-        return bx509(connection);
-    if (strcmp(url, "/bnegotiate") == 0)
-        return bnegotiate(connection);
-    return bad_404(connection, url) == -1 ? MHD_NO : MHD_YES;
+
+    if ((ret = set_req_desc(connection, url, &r)))
+        return bad_503(&r, ret, "Could not initialize request state");
+    if (strcmp(method, "GET") != 0)
+        ret = bad_405(&r, method);
+    else if (strcmp(url, "/bx509") == 0)
+        ret = bx509(&r);
+    else if (strcmp(url, "/bnegotiate") == 0)
+        ret = bnegotiate(&r);
+    else
+        ret = bad_404(&r, url);
+
+    clean_req_desc(&r);
+    return ret == -1 ? MHD_NO : MHD_YES;
 }
 
 static struct getargs args[] = {

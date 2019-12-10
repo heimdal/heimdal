@@ -36,6 +36,7 @@ bx509d_LDADD =	-ldl \
 		 libkdc.la \
 		 $(MICROHTTPD_LIBS) \
 		 $(LIB_roken) \
+		 $(LIB_heimbase) \
 		 $(top_builddir)/lib/sl/libsl.la \
 		 $(top_builddir)/lib/asn1/libasn1.la \
 		 $(top_builddir)/lib/krb5/libkrb5.la \

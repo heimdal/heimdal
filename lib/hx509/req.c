@@ -48,7 +48,6 @@ struct hx509_request_data {
     struct abitstring_s authorized_EKUs;
     struct abitstring_s authorized_SANs;
     uint32_t nunsupported;  /* Count of unsupported features requested */
-    uint32_t nrequested;    /* Count of supported   features requested */
     uint32_t nauthorized;   /* Count of supported   features authorized */
     uint32_t ku_are_authorized:1;
 };
@@ -202,18 +201,11 @@ hx509_request_get_SubjectPublicKeyInfo(hx509_context context,
 HX509_LIB_FUNCTION int HX509_LIB_CALL
 hx509_request_set_ku(hx509_context context, hx509_request req, KeyUsage ku)
 {
-    KeyUsage oldku = req->ku;
     uint64_t n = KeyUsage2int(ku);
 
-    if ((KeyUsage2int(req->ku) & n) != n) {
+    if ((KeyUsage2int(req->ku) & n) != n)
         req->ku_are_authorized = 0;
-    }
     req->ku = ku;
-
-    if (KeyUsage2int(oldku) == 0 && n != 0)
-        req->nrequested++;
-    if (KeyUsage2int(oldku) && KeyUsage2int(req->ku) == 0)
-        req->nrequested--;
     return 0;
 }
 
@@ -286,12 +278,7 @@ hx509_request_add_GeneralName(hx509_context context,
                               hx509_request req,
                               const GeneralName *gn)
 {
-    int ret;
-
-    ret = add_GeneralNames(&req->san, gn);
-    if (ret == 0)
-        req->nrequested++;
-    return ret;
+    return add_GeneralNames(&req->san, gn);
 }
 
 static int
@@ -340,13 +327,8 @@ hx509_request_add_xmpp_name(hx509_context context,
                             hx509_request req,
                             const char *jid)
 {
-    int ret;
-
-    ret = add_utf8_other_san(context, &req->san, &asn1_oid_id_pkix_on_xmppAddr,
-                             jid);
-    if (ret == 0)
-        req->nrequested++;
-    return ret;
+    return add_utf8_other_san(context, &req->san,
+                              &asn1_oid_id_pkix_on_xmppAddr, jid);
 }
 
 /**
@@ -365,13 +347,8 @@ hx509_request_add_ms_upn_name(hx509_context context,
                               hx509_request req,
                               const char *upn)
 {
-    int ret;
-
-    ret = add_utf8_other_san(context, &req->san, &asn1_oid_id_pkinit_ms_san,
-                             upn);
-    if (ret == 0)
-        req->nrequested++;
-    return ret;
+    return add_utf8_other_san(context, &req->san, &asn1_oid_id_pkinit_ms_san,
+                              upn);
 }
 
 /**
@@ -391,17 +368,13 @@ hx509_request_add_dns_name(hx509_context context,
                            const char *hostname)
 {
     GeneralName name;
-    int ret;
 
     memset(&name, 0, sizeof(name));
     name.element = choice_GeneralName_dNSName;
     name.u.dNSName.data = rk_UNCONST(hostname);
     name.u.dNSName.length = strlen(hostname);
 
-    ret = add_GeneralNames(&req->san, &name);
-    if (ret == 0)
-        req->nrequested++;
-    return ret;
+    return add_GeneralNames(&req->san, &name);
 }
 
 /**
@@ -421,17 +394,13 @@ hx509_request_add_email(hx509_context context,
                         const char *email)
 {
     GeneralName name;
-    int ret;
 
     memset(&name, 0, sizeof(name));
     name.element = choice_GeneralName_rfc822Name;
     name.u.rfc822Name.data = rk_UNCONST(email);
     name.u.rfc822Name.length = strlen(email);
 
-    ret = add_GeneralNames(&req->san, &name);
-    if (ret == 0)
-        req->nrequested++;
-    return ret;
+    return add_GeneralNames(&req->san, &name);
 }
 
 /**
@@ -460,8 +429,6 @@ hx509_request_add_registered(hx509_context context,
         return ret;
     ret = add_GeneralNames(&req->san, &name);
     free_GeneralName(&name);
-    if (ret == 0)
-        req->nrequested++;
     return ret;
 }
 
@@ -498,8 +465,6 @@ hx509_request_add_pkinit(hx509_context context,
     if (ret == 0)
         ret = add_GeneralNames(&req->san, &gn);
     free_GeneralName(&gn);
-    if (ret == 0)
-        req->nrequested++;
     return ret;
 }
 
@@ -854,7 +819,6 @@ hx509_request_parse_der(hx509_context context,
              */
             if (KeyUsage2int((*req)->ku) & ~KeyUsage2int(int2KeyUsage(~0)))
                 (*req)->nunsupported++;
-            (*req)->nrequested++;
         } else if (der_heim_oid_cmp(&e->extnID,
                                     &asn1_oid_id_x509_ce_extKeyUsage) == 0) {
             ret = decode_ExtKeyUsage(e->extnValue.data, e->extnValue.length,
@@ -865,7 +829,6 @@ hx509_request_parse_der(hx509_context context,
              * Count each EKU as a separate requested extension to be
              * authorized.
              */
-            (*req)->nrequested += (*req)->eku.len;
         } else if (der_heim_oid_cmp(&e->extnID,
                                     &asn1_oid_id_x509_ce_subjectAltName) == 0) {
             ret = decode_GeneralNames(e->extnValue.data, e->extnValue.length,
@@ -876,7 +839,6 @@ hx509_request_parse_der(hx509_context context,
              * Count each SAN as a separate requested extension to be
              * authorized.
              */
-            (*req)->nrequested += (*req)->san.len;
         } else {
             char *oidstr = NULL;
 
@@ -1218,7 +1180,10 @@ hx509_request_count_unsupported(hx509_request req)
 HX509_LIB_FUNCTION size_t HX509_LIB_CALL
 hx509_request_count_unauthorized(hx509_request req)
 {
-    return req->nrequested - (req->nauthorized + req->ku_are_authorized);
+    size_t nrequested = req->eku.len + req->san.len +
+        (KeyUsage2int(req->ku) ? 1 : 0) + req->nunsupported;
+
+    return nrequested - (req->nauthorized + req->ku_are_authorized);
 }
 
 static hx509_san_type

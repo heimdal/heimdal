@@ -41,8 +41,6 @@
 #include "headers.h"
 
 typedef struct pk_client_params pk_client_params;
-struct DigestREQ;
-struct Kx509Request;
 
 #include <kdc-private.h>
 
@@ -116,6 +114,21 @@ struct astgs_request_desc {
 
     KDCFastState fast;
 };
+
+typedef struct kx509_req_context_desc {
+    KDC_REQUEST_DESC_COMMON_ELEMENTS;
+
+    struct Kx509Request req;
+    Kx509CSRPlus csr_plus;
+    krb5_auth_context ac;
+    const char *realm; /* XXX Confusion: is this crealm or srealm? */
+    krb5_keyblock *key;
+    hx509_request csr;
+    krb5_times ticket_times;
+    unsigned int send_chain:1;          /* Client expects a full chain */
+    unsigned int have_csr:1;            /* Client sent a CSR */
+} *kx509_req_context;
+
 
 extern sig_atomic_t exit_flag;
 extern size_t max_request_udp;

@@ -272,12 +272,12 @@ $hxtool acert --expr="%{certificate.subject} == \"OU=Users,CN=KDC,$DCs\""   \
 
 if ! which curl; then
     echo "curl is not available -- not testing bx509d"
-    exit 0
+    exit 77
 fi
 
 if ! test -x ${objdir}/../../kdc/bx509d; then
     echo "Configured w/o libmicrohttpd -- not testing bx509d"
-    exit 0
+    exit 77
 fi
 
 echo "Creating database"

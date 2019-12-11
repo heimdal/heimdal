@@ -87,24 +87,44 @@ fmtkv(int flags, const char *k, const char *fmt, va_list ap)
 }
 
 void
-_kdc_audit_addreason(kdc_request_t r, const char *fmt, ...)
-	__attribute__ ((__format__ (__printf__, 2, 3)))
+_kdc_audit_vaddreason(kdc_request_t r, const char *fmt, va_list ap)
+	__attribute__ ((__format__ (__printf__, 2, 0)))
 {
-    va_list ap;
     heim_string_t str;
 
-    va_start(ap, fmt);
     str = fmtkv(KDC_AUDIT_VISLAST, "reason", fmt, ap);
-    va_end(ap);
     if (!str) {
 	kdc_log(r->context, r->config, 1, "failed to add reason");
         return;
     }
 
-    kdc_log(r->context, r->config, 7, "_kdc_audit_addkv(): adding "
-            "kv pair %s", heim_string_get_utf8(str));
-    heim_release(r->reason);
+    kdc_log(r->context, r->config, 7, "_kdc_audit_addreason(): adding "
+            "reason %s", heim_string_get_utf8(str));
+    if (r->reason) {
+        heim_string_t str2;
+
+        str2 = heim_string_create_with_format("%s: %s",
+                                              heim_string_get_utf8(str),
+                                              heim_string_get_utf8(r->reason));
+        if (str2) {
+            heim_release(r->reason);
+            heim_release(str);
+            r->reason = str;
+        } /* else the earlier reason is likely better than the newer one */
+        return;
+    }
     r->reason = str;
+}
+
+void
+_kdc_audit_addreason(kdc_request_t r, const char *fmt, ...)
+	__attribute__ ((__format__ (__printf__, 2, 3)))
+{
+    va_list ap;
+
+    va_start(ap, fmt);
+    _kdc_audit_vaddreason(r, fmt, ap);
+    va_end(ap);
 }
 
 /*
@@ -114,16 +134,13 @@ _kdc_audit_addreason(kdc_request_t r, const char *fmt, ...)
  */
 
 void
-_kdc_audit_addkv(kdc_request_t r, int flags, const char *k,
-		 const char *fmt, ...)
-	__attribute__ ((__format__ (__printf__, 4, 5)))
+_kdc_audit_vaddkv(kdc_request_t r, int flags, const char *k,
+		  const char *fmt, va_list ap)
+	__attribute__ ((__format__ (__printf__, 4, 0)))
 {
-    va_list ap;
     heim_string_t str;
 
-    va_start(ap, fmt);
     str = fmtkv(flags, k, fmt, ap);
-    va_end(ap);
     if (!str) {
 	kdc_log(r->context, r->config, 1, "failed to add kv pair");
         return;
@@ -133,6 +150,18 @@ _kdc_audit_addkv(kdc_request_t r, int flags, const char *k,
             "kv pair %s", heim_string_get_utf8(str));
     heim_array_append_value(r->kv, str);
     heim_release(str);
+}
+
+void
+_kdc_audit_addkv(kdc_request_t r, int flags, const char *k,
+		 const char *fmt, ...)
+	__attribute__ ((__format__ (__printf__, 4, 5)))
+{
+    va_list ap;
+
+    va_start(ap, fmt);
+    _kdc_audit_vaddkv(r, flags, k, fmt, ap);
+    va_end(ap);
 }
 
 void
@@ -347,27 +376,21 @@ kdc_digest(kdc_request_t *rptr, int *claim)
 static krb5_error_code
 kdc_kx509(kdc_request_t *rptr, int *claim)
 {
-    kdc_request_t r = *rptr;
-    krb5_context context = r->context;
-    krb5_kdc_configuration *config = r->config;
-    krb5_data *req_buffer = &r->request;
-    krb5_data *reply = r->reply;
-    const char *from = r->from;
-    struct sockaddr *addr = r->addr;
-    Kx509Request kx509req;
+    kx509_req_context r;
     krb5_error_code ret;
 
-    ret = _kdc_try_kx509_request(req_buffer->data, req_buffer->length,
-                                 &kx509req);
+    /* We must free things in the extensions */
+    EXTEND_REQUEST_T(*rptr, r);
+
+    ret = _kdc_try_kx509_request(r);
     if (ret)
 	return ret;
 
-    r->use_request_t = 0;
+    r->use_request_t = 1;
+    r->reqtype = "KX509";
     *claim = 1;
 
-    ret = _kdc_do_kx509(context, config, &kx509req, reply, from, addr);
-    free_Kx509Request(&kx509req);
-    return ret;
+    return _kdc_do_kx509(r); /* Must clean up the req struct extensions */
 }
 
 #endif

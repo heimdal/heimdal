@@ -18,4 +18,6 @@ EXPORTS
 	krb5_kdc_pk_initialize
 	_kdc_audit_addkv
 	_kdc_audit_addreason
+	_kdc_audit_vaddkv
+	_kdc_audit_vaddreason
 	_kdc_audit_trail

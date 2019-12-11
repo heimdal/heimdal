@@ -43,6 +43,7 @@
 
 #include <hdb.h>
 #include <krb5.h>
+#include <kx509_asn1.h>
 
 enum krb5_kdc_trpolicy {
     TRPOLICY_ALWAYS_CHECK,
@@ -103,6 +104,7 @@ typedef struct krb5_kdc_configuration {
 
 typedef struct kdc_request_desc *kdc_request_t;
 typedef struct astgs_request_desc *astgs_request_t;
+typedef struct kx509_req_context_desc *kx509_req_context;
 
 struct krb5_kdc_service {
     unsigned int flags;

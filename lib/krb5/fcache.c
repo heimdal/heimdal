@@ -417,15 +417,19 @@ fcc_open(krb5_context context,
          * file... with care.  Or the O_TMPFILE / linkat() extensions.  We need
          * a roken / heimbase abstraction for that.
          */
+        if (TMPFILENAME(id))
+            (void) unlink(TMPFILENAME(id));
+        free(TMPFILENAME(id));
+        TMPFILENAME(id) = NULL;
         if (asprintf(&TMPFILENAME(id), "%s-XXXXXX", FILENAME(id)) < 0 ||
             TMPFILENAME(id) == NULL)
             return krb5_enomem(context);
         if ((fd = mkostemp(TMPFILENAME(id), O_CLOEXEC)) == -1) {
+            krb5_set_error_message(context, ret = errno,
+                                   N_("Could not make temp ccache FILE:%s", ""),
+                                   TMPFILENAME(id));
             free(TMPFILENAME(id));
             TMPFILENAME(id) = NULL;
-            krb5_set_error_message(context, ret = errno,
-                                   N_("Refuses to open symlinks for caches FILE:%s", ""),
-                                   FILENAME(id));
             return ret;
         }
         goto out;

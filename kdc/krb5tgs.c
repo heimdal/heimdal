@@ -398,35 +398,35 @@ check_tgs_flags(astgs_request_t r, KDC_REQ_BODY *b,
 
     if(f.validate){
 	if (!tgt->flags.invalid || tgt->starttime == NULL) {
-	    _kdc_audit_addkv((kdc_request_t)r, 0, "reason",
-			     "Bad request to validate ticket");
+	    _kdc_audit_addreason((kdc_request_t)r,
+                                 "Bad request to validate ticket");
 	    return KRB5KDC_ERR_BADOPTION;
 	}
 	if(*tgt->starttime > kdc_time){
-	    _kdc_audit_addkv((kdc_request_t)r, 0, "reason",
-			     "Early request to validate ticket");
+	    _kdc_audit_addreason((kdc_request_t)r,
+                                 "Early request to validate ticket");
 	    return KRB5KRB_AP_ERR_TKT_NYV;
 	}
 	/* XXX  tkt = tgt */
 	et->flags.invalid = 0;
     } else if (tgt->flags.invalid) {
-	_kdc_audit_addkv((kdc_request_t)r, 0, "reason",
-			 "Ticket-granting ticket has INVALID flag set");
+	_kdc_audit_addreason((kdc_request_t)r,
+                             "Ticket-granting ticket has INVALID flag set");
 	return KRB5KRB_AP_ERR_TKT_INVALID;
     }
 
     if(f.forwardable){
 	if (!tgt->flags.forwardable) {
-	    _kdc_audit_addkv((kdc_request_t)r, 0, "reason",
-			     "Bad request for forwardable ticket");
+	    _kdc_audit_addreason((kdc_request_t)r,
+                                 "Bad request for forwardable ticket");
 	    return KRB5KDC_ERR_BADOPTION;
 	}
 	et->flags.forwardable = 1;
     }
     if(f.forwarded){
 	if (!tgt->flags.forwardable) {
-	    _kdc_audit_addkv((kdc_request_t)r, 0, "reason",
-			     "Request to forward non-forwardable ticket");
+	    _kdc_audit_addreason((kdc_request_t)r,
+                                 "Request to forward non-forwardable ticket");
 	    return KRB5KDC_ERR_BADOPTION;
 	}
 	et->flags.forwarded = 1;
@@ -437,16 +437,16 @@ check_tgs_flags(astgs_request_t r, KDC_REQ_BODY *b,
 
     if(f.proxiable){
 	if (!tgt->flags.proxiable) {
-	    _kdc_audit_addkv((kdc_request_t)r, 0, "reason",
-			     "Bad request for proxiable ticket");
+	    _kdc_audit_addreason((kdc_request_t)r,
+                                 "Bad request for proxiable ticket");
 	    return KRB5KDC_ERR_BADOPTION;
 	}
 	et->flags.proxiable = 1;
     }
     if(f.proxy){
 	if (!tgt->flags.proxiable) {
-	    _kdc_audit_addkv((kdc_request_t)r, 0, "reason",
-			     "Request to proxy non-proxiable ticket");
+	    _kdc_audit_addreason((kdc_request_t)r,
+                                 "Request to proxy non-proxiable ticket");
 	    return KRB5KDC_ERR_BADOPTION;
 	}
 	et->flags.proxy = 1;
@@ -457,16 +457,16 @@ check_tgs_flags(astgs_request_t r, KDC_REQ_BODY *b,
 
     if(f.allow_postdate){
 	if (!tgt->flags.may_postdate) {
-	    _kdc_audit_addkv((kdc_request_t)r, 0, "reason",
-			     "Bad request for post-datable ticket");
+	    _kdc_audit_addreason((kdc_request_t)r,
+                                 "Bad request for post-datable ticket");
 	    return KRB5KDC_ERR_BADOPTION;
 	}
 	et->flags.may_postdate = 1;
     }
     if(f.postdated){
 	if (!tgt->flags.may_postdate) {
-	    _kdc_audit_addkv((kdc_request_t)r, 0, "reason",
-			     "Bad request for postdated ticket");
+	    _kdc_audit_addreason((kdc_request_t)r,
+                                 "Bad request for postdated ticket");
 	    return KRB5KDC_ERR_BADOPTION;
 	}
 	if(b->from)
@@ -474,15 +474,15 @@ check_tgs_flags(astgs_request_t r, KDC_REQ_BODY *b,
 	et->flags.postdated = 1;
 	et->flags.invalid = 1;
     } else if (b->from && *b->from > kdc_time + context->max_skew) {
-	_kdc_audit_addkv((kdc_request_t)r, 0, "reason",
-			 "Ticket cannot be postdated");
+	_kdc_audit_addreason((kdc_request_t)r,
+                             "Ticket cannot be postdated");
 	return KRB5KDC_ERR_CANNOT_POSTDATE;
     }
 
     if(f.renewable){
 	if (!tgt->flags.renewable || tgt->renew_till == NULL) {
-	    _kdc_audit_addkv((kdc_request_t)r, 0, "reason",
-			     "Bad request for renewable ticket");
+	    _kdc_audit_addreason((kdc_request_t)r,
+                                 "Bad request for renewable ticket");
 	    return KRB5KDC_ERR_BADOPTION;
 	}
 	et->flags.renewable = 1;
@@ -493,8 +493,8 @@ check_tgs_flags(astgs_request_t r, KDC_REQ_BODY *b,
     if(f.renew){
 	time_t old_life;
 	if (!tgt->flags.renewable || tgt->renew_till == NULL) {
-	    _kdc_audit_addkv((kdc_request_t)r, 0, "reason",
-			     "Request to renew non-renewable ticket");
+	    _kdc_audit_addreason((kdc_request_t)r,
+                                 "Request to renew non-renewable ticket");
 	    return KRB5KDC_ERR_BADOPTION;
 	}
 	old_life = tgt->endtime;
@@ -513,8 +513,8 @@ check_tgs_flags(astgs_request_t r, KDC_REQ_BODY *b,
      */
     if (tgt->flags.anonymous &&
 	!_kdc_is_anonymous(context, tgt_name)) {
-	_kdc_audit_addkv((kdc_request_t)r, 0, "reason",
-			 "Anonymous ticket flag set without "
+	_kdc_audit_addreason((kdc_request_t)r,
+                             "Anonymous ticket flag set without "
 			 "anonymous principal");
 	return KRB5KDC_ERR_BADOPTION;
     }
@@ -2357,7 +2357,7 @@ server_lookup:
 	    goto out;
 	}
 
-	_kdc_audit_addkv((kdc_request_t)priv, 0, "impersonatee", "%s", tpn);
+        _kdc_audit_addkv((kdc_request_t)priv, 0, "impersonatee", "%s", tpn);
 	kdc_log(context, config, 4, "constrained delegation for %s "
 		"from %s (%s) to %s", tpn, cpn, dpn, spn);
     }

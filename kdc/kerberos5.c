@@ -1407,7 +1407,8 @@ _log_astgs_req(astgs_request_t r, krb5_enctype setype)
 
     str = rk_strpoolcollect(s);
     if (str)
-	_kdc_audit_addkv((kdc_request_t)r, 0, "etypes", "%s", str);
+        _kdc_audit_addkv((kdc_request_t)r, KDC_AUDIT_EATWHITE, "etypes", "%s",
+                         str);
     free(str);
 
     ret = krb5_enctype_to_string(context, cetype, &cet);
@@ -1461,20 +1462,19 @@ kdc_check_flags(astgs_request_t r, krb5_boolean is_as_req)
 
 	/* check client */
 	if (client->flags.locked_out) {
-	    _kdc_audit_addkv((kdc_request_t)r, 0, "reason",
-			     "Client is locked out");
+	    _kdc_audit_addreason((kdc_request_t)r, "Client is locked out");
 	    return KRB5KDC_ERR_POLICY;
 	}
 
 	if (client->flags.invalid) {
-	    _kdc_audit_addkv((kdc_request_t)r, 0, "reason",
-			     "Client has invalid bit set");
+	    _kdc_audit_addreason((kdc_request_t)r,
+                                 "Client has invalid bit set");
 	    return KRB5KDC_ERR_POLICY;
 	}
 
 	if (!client->flags.client) {
-	    _kdc_audit_addkv((kdc_request_t)r, 0, "reason",
-			     "Principal may not act as client");
+	    _kdc_audit_addreason((kdc_request_t)r,
+                                 "Principal may not act as client");
 	    return KRB5KDC_ERR_POLICY;
 	}
 
@@ -1482,8 +1482,8 @@ kdc_check_flags(astgs_request_t r, krb5_boolean is_as_req)
 	    char starttime_str[100];
 	    krb5_format_time(context, *client->valid_start,
 			     starttime_str, sizeof(starttime_str), TRUE);
-	    _kdc_audit_addkv((kdc_request_t)r, 0, "reason",
-			     "Client not yet valid until %s", starttime_str);
+	    _kdc_audit_addreason((kdc_request_t)r, "Client not yet valid "
+                                 "until %s", starttime_str);
 	    return KRB5KDC_ERR_CLIENT_NOTYET;
 	}
 
@@ -1491,8 +1491,8 @@ kdc_check_flags(astgs_request_t r, krb5_boolean is_as_req)
 	    char endtime_str[100];
 	    krb5_format_time(context, *client->valid_end,
 			     endtime_str, sizeof(endtime_str), TRUE);
-	    _kdc_audit_addkv((kdc_request_t)r, 0, "reason",
-			     "Client expired at %s", endtime_str);
+	    _kdc_audit_addreason((kdc_request_t)r, "Client expired at %s",
+                                 endtime_str);
 	    return  KRB5KDC_ERR_NAME_EXP;
 	}
 
@@ -1505,8 +1505,8 @@ kdc_check_flags(astgs_request_t r, krb5_boolean is_as_req)
 	    char pwend_str[100];
 	    krb5_format_time(context, *client->pw_end,
 			     pwend_str, sizeof(pwend_str), TRUE);
-	    _kdc_audit_addkv((kdc_request_t)r, 0, "reason",
-			     "Client's key has expired at %s", pwend_str);
+	    _kdc_audit_addreason((kdc_request_t)r, "Client's key has expired "
+                                 "at %s", pwend_str);
 	    return KRB5KDC_ERR_KEY_EXPIRED;
 	}
     }
@@ -1517,24 +1517,23 @@ kdc_check_flags(astgs_request_t r, krb5_boolean is_as_req)
 	hdb_entry *server = &server_ex->entry;
 
 	if (server->flags.locked_out) {
-	    _kdc_audit_addkv((kdc_request_t)r, 0, "reason",
-			     "Server locked out");
+	    _kdc_audit_addreason((kdc_request_t)r, "Server locked out");
 	    return KRB5KDC_ERR_POLICY;
 	}
 	if (server->flags.invalid) {
-	    _kdc_audit_addkv((kdc_request_t)r, 0, "reason",
-			     "Server has invalid flag set");
+	    _kdc_audit_addreason((kdc_request_t)r,
+                                 "Server has invalid flag set");
 	    return KRB5KDC_ERR_POLICY;
 	}
 	if (!server->flags.server) {
-	    _kdc_audit_addkv((kdc_request_t)r, 0, "reason",
-			     "Principal may not act as server");
+	    _kdc_audit_addreason((kdc_request_t)r,
+                                 "Principal may not act as server");
 	    return KRB5KDC_ERR_POLICY;
 	}
 
 	if (!is_as_req && server->flags.initial) {
-	    _kdc_audit_addkv((kdc_request_t)r, 0, "reason",
-			     "AS-REQ is required for server");
+	    _kdc_audit_addreason((kdc_request_t)r,
+                                 "AS-REQ is required for server");
 	    return KRB5KDC_ERR_POLICY;
 	}
 
@@ -1542,8 +1541,8 @@ kdc_check_flags(astgs_request_t r, krb5_boolean is_as_req)
 	    char starttime_str[100];
 	    krb5_format_time(context, *server->valid_start,
 			     starttime_str, sizeof(starttime_str), TRUE);
-	    _kdc_audit_addkv((kdc_request_t)r, 0, "reason",
-			     "Server not yet valid until %s", starttime_str);
+	    _kdc_audit_addreason((kdc_request_t)r, "Server not yet valid "
+                                 "until %s", starttime_str);
 	    return KRB5KDC_ERR_SERVICE_NOTYET;
 	}
 
@@ -1551,8 +1550,8 @@ kdc_check_flags(astgs_request_t r, krb5_boolean is_as_req)
 	    char endtime_str[100];
 	    krb5_format_time(context, *server->valid_end,
 			     endtime_str, sizeof(endtime_str), TRUE);
-	    _kdc_audit_addkv((kdc_request_t)r, 0, "reason",
-			     "Server expired at %s", endtime_str);
+	    _kdc_audit_addreason((kdc_request_t)r, "Server expired at %s",
+                                 endtime_str);
 	    return KRB5KDC_ERR_SERVICE_EXP;
 	}
 
@@ -1560,8 +1559,8 @@ kdc_check_flags(astgs_request_t r, krb5_boolean is_as_req)
 	    char pwend_str[100];
 	    krb5_format_time(context, *server->pw_end,
 			     pwend_str, sizeof(pwend_str), TRUE);
-	    _kdc_audit_addkv((kdc_request_t)r, 0, "reason",
-			     "Server's key has expired at %s", pwend_str);
+	    _kdc_audit_addreason((kdc_request_t)r, "Server's key has expired "
+                                 "at %s", pwend_str);
 	    return KRB5KDC_ERR_KEY_EXPIRED;
 	}
     }
@@ -1623,8 +1622,8 @@ krb5_error_code
 _kdc_check_anon_policy(astgs_request_t r)
 {
     if (!r->config->allow_anonymous) {
-	_kdc_audit_addkv((kdc_request_t)r, 0, "reason", "anonymous tickets "
-			 "denied by local policy");
+	_kdc_audit_addreason((kdc_request_t)r,
+                             "Anonymous tickets denied by local policy");
 	return KRB5KDC_ERR_POLICY;
     }
 
@@ -1951,7 +1950,8 @@ _kdc_as_rep(astgs_request_t r)
 	    i = 0;
 	    pa = _kdc_find_padata(req, &i, pat[n].type);
 	    if (pa) {
-		_kdc_audit_addkv((kdc_request_t)r, 0, "pa", "%s", pat[n].name);
+                _kdc_audit_addkv((kdc_request_t)r, KDC_AUDIT_VIS, "pa", "%s",
+                                 pat[n].name);
 		ret = pat[n].validate(r, pa);
 		if (ret != 0) {
 		    krb5_error_code  ret2;

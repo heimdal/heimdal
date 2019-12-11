@@ -21,6 +21,7 @@ HEIMDAL_KDC_1.0 {
 		krb5_kdc_update_time;
 		krb5_kdc_pk_initialize;
 		_kdc_audit_addkv;
+		_kdc_audit_addreason;
 		_kdc_audit_trail;
 
 		# needed for digest-service

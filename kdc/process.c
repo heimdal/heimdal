@@ -42,6 +42,71 @@
 #undef  __attribute__
 #define __attribute__(x)
 
+static heim_string_t
+fmtkv(int flags, const char *k, const char *fmt, va_list ap)
+        __attribute__ ((__format__ (__printf__, 3, 0)))
+{
+    heim_string_t str;
+    size_t i,j;
+    char *buf1;
+    char *buf2;
+    char *buf3;
+
+    vasprintf(&buf1, fmt, ap);
+    if (!buf1)
+	return NULL;;
+
+    j = asprintf(&buf2, "%s=%s", k, buf1);
+    free(buf1);
+    if (!buf2)
+	return NULL;;
+
+    /* We optionally eat the whitespace. */
+
+    if (flags & KDC_AUDIT_EATWHITE) {
+	for (i=0, j=0; buf2[i]; i++)
+	    if (buf2[i] != ' ' && buf2[i] != '\t')
+		buf2[j++] = buf2[i];
+	buf2[j] = '\0';
+    }
+
+    if (flags & (KDC_AUDIT_VIS | KDC_AUDIT_VISLAST)) {
+        int vis_flags = VIS_CSTYLE | VIS_OCTAL | VIS_NL;
+
+        if (flags & KDC_AUDIT_VIS)
+            vis_flags |= VIS_WHITE;
+	buf3 = malloc((j + 1) * 4 + 1);
+	strvisx(buf3, buf2, j, vis_flags);
+	free(buf2);
+    } else
+	buf3 = buf2;
+
+    str = heim_string_create(buf3);
+    free(buf3);
+    return str;
+}
+
+void
+_kdc_audit_addreason(kdc_request_t r, const char *fmt, ...)
+	__attribute__ ((__format__ (__printf__, 2, 3)))
+{
+    va_list ap;
+    heim_string_t str;
+
+    va_start(ap, fmt);
+    str = fmtkv(KDC_AUDIT_VISLAST, "reason", fmt, ap);
+    va_end(ap);
+    if (!str) {
+	kdc_log(r->context, r->config, 1, "failed to add reason");
+        return;
+    }
+
+    kdc_log(r->context, r->config, 7, "_kdc_audit_addkv(): adding "
+            "kv pair %s", heim_string_get_utf8(str));
+    heim_release(r->reason);
+    r->reason = str;
+}
+
 /*
  * append_token adds a token which is optionally a kv-pair and it
  * also optionally eats the whitespace.  If k == NULL, then it's
@@ -55,48 +120,17 @@ _kdc_audit_addkv(kdc_request_t r, int flags, const char *k,
 {
     va_list ap;
     heim_string_t str;
-    size_t i,j;
-    char *buf1;
-    char *buf2;
-    char *buf3;
 
     va_start(ap, fmt);
-    vasprintf(&buf1, fmt, ap);
+    str = fmtkv(flags, k, fmt, ap);
     va_end(ap);
-    if (!buf1)
-	return;
-
-    j = asprintf(&buf2, "%s=%s", k, buf1);
-    free(buf1);
-    if (!buf2)
-	return;
-
-    /* We optionally eat the whitespace. */
-
-    if (flags | KDC_AUDIT_EATWHITE) {
-	for (i=0, j=0; buf2[i]; i++)
-	    if (buf2[i] != ' ' && buf2[i] != '\t')
-		buf2[j++] = buf2[i];
-	buf2[j] = '\0';
+    if (!str) {
+	kdc_log(r->context, r->config, 1, "failed to add kv pair");
+        return;
     }
-
-    if (flags | KDC_AUDIT_VIS) {
-	buf3 = malloc((j + 1) * 4 + 1);
-	strvisx(buf3, buf2, j, VIS_OCTAL);
-	free(buf2);
-    } else
-	buf3 = buf2;
 
     kdc_log(r->context, r->config, 7, "_kdc_audit_addkv(): adding "
-	    "kv pair %s", buf3);
-
-    str = heim_string_create(buf3);
-    free(buf3);
-    if (!str) {
-	kdc_log(r->context, r->config, 7, "failed to add kv pair");
-	return;
-    }
-
+            "kv pair %s", heim_string_get_utf8(str));
     heim_array_append_value(r->kv, str);
     heim_release(str);
 }
@@ -205,11 +239,12 @@ _kdc_audit_trail(kdc_request_t r, krb5_error_code ret)
     }
     kvbuf[j] = '\0';
 
-    kdc_log(r->context, r->config, 3, "%s %s %s %s %s%s",
+    kdc_log(r->context, r->config, 3, "%s %s %s %s %s%s%s%s",
 	    r->reqtype, retval, r->from,
             r->cname ? r->cname : "<unknown>",
 	    r->sname ? r->sname : "<unknown>",
-            kvbuf);
+            kvbuf, r->reason ? " " : "",
+            r->reason ? heim_string_get_utf8(r->reason) : "");
 }
 
 void
@@ -403,12 +438,14 @@ process_request(krb5_context context,
 		free(r->e_text_buf);
 	    }
 
+            heim_release(r->reason);
             heim_release(r->kv);
             free(r);
 	    return ret;
 	}
     }
 
+    heim_release(r->reason);
     heim_release(r->kv);
     free(r);
     return -1;

@@ -442,8 +442,7 @@ bad_reqv(struct bx509_request_desc *r,
         msg = formatted;
         formatted = NULL;
     }
-    _kdc_audit_addkv((kdc_request_t)r, KDC_AUDIT_VIS, "reason", "%s",
-                     formatted);
+    _kdc_audit_addreason((kdc_request_t)r, "%s", formatted);
     _kdc_audit_trail((kdc_request_t)r, code);
     krb5_free_error_message(context, k5msg);
 
@@ -794,6 +793,7 @@ set_req_desc(struct MHD_Connection *connection,
     r->target = r->redir = NULL;
     r->pkix_store = NULL;
     r->freeme1 = NULL;
+    r->reason = NULL;
     r->ccname = NULL;
     r->reply = NULL;
     r->sname = NULL;
@@ -839,6 +839,7 @@ clean_req_desc(struct bx509_request_desc *r)
     if (r->pkix_store)
         (void) unlink(strchr(r->pkix_store, ':') + 1);
     hx509_request_free(&r->req);
+    heim_release(r->reason);
     heim_release(r->kv);
     free(r->pkix_store);
     free(r->freeme1);

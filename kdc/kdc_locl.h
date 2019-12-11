@@ -50,6 +50,7 @@ struct Kx509Request;
 
 #define KDC_AUDIT_EATWHITE	0x1
 #define KDC_AUDIT_VIS		0x2
+#define KDC_AUDIT_VISLAST	0x4
 
 /* KFE == KDC_FIND_ETYPE */
 #define KFE_IS_TGS	0x1
@@ -77,6 +78,7 @@ struct Kx509Request;
     char *sname;						\
     const char *e_text;						\
     char *e_text_buf;						\
+    heim_string_t reason;                                       \
     heim_array_t kv
 
 struct kdc_request_desc {

@@ -132,7 +132,9 @@ LIBASN1_OBJS=	\
 
 $(OBJ)\oid_resolution.obj: $(LIBASN1_OBJS)
 
-$(LIBASN1): $(LIBASN1_OBJS) $(OBJ)\oid_resolution.obj
+LIBASN1_OBJS2=	$(LIBASN1_OBJS) $(OBJ)\oid_resolution.obj
+
+$(LIBASN1): $(LIBASN1_OBJS2)
 	$(LIBCON_C) -out:$@ @<<
 $(**: =
 )

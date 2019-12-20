@@ -188,7 +188,7 @@ AC_ARG_WITH([microhttpd],
   [],
   [with_microhttpd=check])
 if test "$with_microhttpd" != "no"; then
-  PKG_CHECK_MODULES([MICROHTTPD], [libmicrohttpd >= 0.9.59],
+  PKG_CHECK_MODULES([MICROHTTPD], [libmicrohttpd >= 0.9.37],
 		    [with_microhttpd=yes],[with_microhttpd=no])
 fi
 if test "$with_microhttpd" = "yes"; then

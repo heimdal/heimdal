@@ -64,7 +64,7 @@ test_kdc_ca_SOURCES = test_kdc_ca.c
 # Token plugins (for bx509d)
 if HAVE_CJWT
 cjwt_token_validator_la_SOURCES = cjwt_token_validator.c
-cjwt_token_validator_la_AM_CPPFLAGS = $(CJSON_FLAGS) $(CJWT_FLAGS)
+cjwt_token_validator_la_CFLAGS = $(CJSON_CFLAGS) $(CJWT_CFLAGS)
 cjwt_token_validator_la_LDFLAGS = -module $(CJSON_LIBS) $(CJWT_LIBS)
 endif
 

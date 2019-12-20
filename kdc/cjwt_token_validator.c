@@ -60,7 +60,7 @@
 #include <token_validator_plugin.h>
 #include <cjwt/cjwt.h>
 #ifdef HAVE_CJSON
-#include <cjson/cJSON.h>
+#include <cJSON.h>
 #endif
 
 static const char *

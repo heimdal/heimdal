@@ -723,6 +723,7 @@ hx509_request_parse_der(hx509_context context,
     if (ret) {
         hx509_set_error_string(context, 0, ret, "Failed to decode CSR");
         free(*req);
+        *req = NULL;
         return ret;
     }
     rinfo = &r.certificationRequestInfo;

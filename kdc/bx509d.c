@@ -690,19 +690,33 @@ do_CA(struct bx509_request_desc *r, const char *csr)
     hx509_certs certs = NULL;
     krb5_data d;
     ssize_t bytes;
+    char *csr2, *q;
+
+    /*
+     * Work around bug where microhttpd decodes %2b to + then + to space.  That
+     * bug does not affect other base64 special characters that get URI
+     * %-encoded.
+     */
+    if ((csr2 = strdup(csr)) == NULL)
+        return bad_enomem(r, ENOMEM);
+    for (q = strchr(csr2, ' '); q; q = strchr(q + 1, ' '))
+        *q = '+';
 
     ret = krb5_parse_name(r->context, r->cname, &p);
-    if (ret)
+    if (ret) {
+        free(csr2);
         return bad_req(r, ret, MHD_HTTP_SERVICE_UNAVAILABLE,
                        "Could not parse principal name");
+    }
 
     /* Set CSR */
-    if ((d.data = malloc(strlen(csr))) == NULL) {
+    if ((d.data = malloc(strlen(csr2))) == NULL) {
         krb5_free_principal(r->context, p);
         return bad_enomem(r, ENOMEM);
     }
 
-    bytes = rk_base64_decode(csr, d.data);
+    bytes = rk_base64_decode(csr2, d.data);
+    free(csr2);
     if (bytes < 0)
         ret = errno;
     else

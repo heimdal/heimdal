@@ -45,6 +45,7 @@ port = 49188
 admport = 49189
 pwport = 49190
 bx509port = 49191
+ipropport = 49192
 
 if HAVE_DLOPEN
 do_dlopen = -e 's,[@]DLOPEN[@],true,g'
@@ -60,6 +61,7 @@ do_subst = $(heim_verbose)sed $(do_dlopen) \
 	-e 's,[@]admport[@],$(admport),g' \
 	-e 's,[@]bx509port[@],$(bx509port),g' \
 	-e 's,[@]pwport[@],$(pwport),g' \
+	-e 's,[@]ipropport[@],$(ipropport),g' \
 	-e 's,[@]objdir[@],$(top_builddir)/tests/kdc,g' \
 	-e 's,[@]top_builddir[@],$(top_builddir),g' \
 	-e 's,[@]db_type[@],$(db_type),g' \

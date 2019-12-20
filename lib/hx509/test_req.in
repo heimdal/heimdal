@@ -87,18 +87,24 @@ ${hxtool} request-print \
 
 diff "$objdir/expected" "${objdir}/actual" || exit 1
 
-if openssl version > /dev/null &&
-   openssl req -inform DER -in "${objdir}/request.out" -text |
-   grep 'Version: 0'; then
-    v=0
-    k=
-else
-    v=1
-    k="RSA "
-fi
-
 # Check that OpenSSL can parse our request:
-cat > "$objdir/expected" <<EOF
+if openssl version > /dev/null; then
+    openssl req -inform DER -in "${objdir}/request.out" -text | head -25 > "${objdir}/actual"
+
+    # Various versions of openssl differ slightly in their text output for our
+    # CSR.  Figure out what to expect:
+    if grep "Version: 0" "${objdir}/actual" > /dev/null; then
+        v=0
+    else
+        v=1
+    fi
+    if grep "RSA Public-Key:" "${objdir}/actual" > /dev/null; then
+        k="RSA "
+    else
+        k=""
+    fi
+    # Note interpolation of $v and $k in the here doc below:
+    cat > "$objdir/expected" <<EOF
 Certificate Request:
     Data:
         Version: $v (0x0)
@@ -125,9 +131,5 @@ Certificate Request:
                 email:foo@test.h5l.se, DNS:nutcracker.test.h5l.se, DNS:foo.nutcracker.test.h5l.se, othername:<unsupported>, othername:<unsupported>, Registered ID:1.2.3.4.5.6.9
     Signature Algorithm: sha256WithRSAEncryption
 EOF
-
-if openssl version > /dev/null; then
-    openssl req -inform DER -in "${objdir}/request.out" -text | head -25 > "${objdir}/actual"
     diff -w "${objdir}/expected" "${objdir}/actual" || exit 1
 fi
-

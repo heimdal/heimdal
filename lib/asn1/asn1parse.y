@@ -415,12 +415,12 @@ IntegerType	: kw_INTEGER
 NamedNumberList	: NamedNumber
 		{
 			$$ = emalloc(sizeof(*$$));
-			ASN1_TAILQ_INIT($$);
-			ASN1_TAILQ_INSERT_HEAD($$, $1, members);
+			HEIM_TAILQ_INIT($$);
+			HEIM_TAILQ_INSERT_HEAD($$, $1, members);
 		}
 		| NamedNumberList ',' NamedNumber
 		{
-			ASN1_TAILQ_INSERT_TAIL($1, $3, members);
+			HEIM_TAILQ_INSERT_TAIL($1, $3, members);
 			$$ = $1;
 		}
 		| NamedNumberList ',' ELLIPSIS
@@ -455,7 +455,7 @@ BitStringType	: kw_BIT kw_STRING
 		{
 		  $$ = new_type(TBitString);
 		  $$->members = emalloc(sizeof(*$$->members));
-		  ASN1_TAILQ_INIT($$->members);
+		  HEIM_TAILQ_INIT($$->members);
 		  $$ = new_tag(ASN1_C_UNIV, UT_BitString, TE_EXPLICIT, $$);
 		}
 		| kw_BIT kw_STRING '{' NamedBitList '}'
@@ -763,12 +763,12 @@ RestrictedCharactedStringType: kw_GeneralString
 ComponentTypeList: ComponentType
 		{
 			$$ = emalloc(sizeof(*$$));
-			ASN1_TAILQ_INIT($$);
-			ASN1_TAILQ_INSERT_HEAD($$, $1, members);
+			HEIM_TAILQ_INIT($$);
+			HEIM_TAILQ_INSERT_HEAD($$, $1, members);
 		}
 		| ComponentTypeList ',' ComponentType
 		{
-			ASN1_TAILQ_INSERT_TAIL($1, $3, members);
+			HEIM_TAILQ_INSERT_TAIL($1, $3, members);
 			$$ = $1;
 		}
 		| ComponentTypeList ',' ELLIPSIS
@@ -777,7 +777,7 @@ ComponentTypeList: ComponentType
 			m->name = estrdup("...");
 			m->gen_name = estrdup("asn1_ellipsis");
 			m->ellipsis = 1;
-			ASN1_TAILQ_INSERT_TAIL($1, m, members);
+			HEIM_TAILQ_INSERT_TAIL($1, m, members);
 			$$ = $1;
 		}
 		;
@@ -816,12 +816,12 @@ ComponentType	: NamedType
 NamedBitList	: NamedBit
 		{
 			$$ = emalloc(sizeof(*$$));
-			ASN1_TAILQ_INIT($$);
-			ASN1_TAILQ_INSERT_HEAD($$, $1, members);
+			HEIM_TAILQ_INIT($$);
+			HEIM_TAILQ_INSERT_HEAD($$, $1, members);
 		}
 		| NamedBitList ',' NamedBit
 		{
-			ASN1_TAILQ_INSERT_TAIL($1, $3, members);
+			HEIM_TAILQ_INSERT_TAIL($1, $3, members);
 			$$ = $1;
 		}
 		;
@@ -1031,7 +1031,7 @@ static void fix_labels1(struct memhead *members, const char *prefix)
 
     if(members == NULL)
 	return;
-    ASN1_TAILQ_FOREACH(m, members, members) {
+    HEIM_TAILQ_FOREACH(m, members, members) {
 	if (asprintf(&m->label, "%s_%s", prefix, m->gen_name) < 0)
 	    errx(1, "malloc");
 	if (m->label == NULL)

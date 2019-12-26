@@ -71,7 +71,6 @@ nodist_check_gen_SOURCES = $(gen_files_test:.x=.c)
 build_HEADERZ = asn1-template.h
 
 asn1_compile_SOURCES = 				\
-	asn1_queue.h				\
 	asn1parse.y				\
 	der.h					\
 	gen.c					\

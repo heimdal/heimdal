@@ -548,10 +548,10 @@ space(int level)
 static const char *
 last_member_p(struct member *m)
 {
-    struct member *n = ASN1_TAILQ_NEXT(m, members);
+    struct member *n = HEIM_TAILQ_NEXT(m, members);
     if (n == NULL)
 	return "";
-    if (n->ellipsis && ASN1_TAILQ_NEXT(n, members) == NULL)
+    if (n->ellipsis && HEIM_TAILQ_NEXT(n, members) == NULL)
 	return "";
     return ",";
 }
@@ -560,7 +560,7 @@ static struct member *
 have_ellipsis(Type *t)
 {
     struct member *m;
-    ASN1_TAILQ_FOREACH(m, t->members, members) {
+    HEIM_TAILQ_FOREACH(m, t->members, members) {
 	if (m->ellipsis)
 	    return m;
     }
@@ -584,7 +584,7 @@ define_asn1 (int level, Type *t)
         } else {
 	    Member *m;
             fprintf (headerfile, "INTEGER {\n");
-	    ASN1_TAILQ_FOREACH(m, t->members, members) {
+	    HEIM_TAILQ_FOREACH(m, t->members, members) {
                 space (level + 1);
 		fprintf(headerfile, "%s(%d)%s\n", m->gen_name, m->val,
 			last_member_p(m));
@@ -608,7 +608,7 @@ define_asn1 (int level, Type *t)
 	    fprintf (headerfile, "BIT STRING {\n");
 	else
 	    fprintf (headerfile, "ENUMERATED {\n");
-	ASN1_TAILQ_FOREACH(m, t->members, members) {
+	HEIM_TAILQ_FOREACH(m, t->members, members) {
 	    space(level + 1);
 	    fprintf (headerfile, "%s(%d)%s\n", m->name, m->val,
 		     last_member_p(m));
@@ -629,13 +629,13 @@ define_asn1 (int level, Type *t)
 	    fprintf(headerfile, "SET {\n");
 	else
 	    fprintf(headerfile, "SEQUENCE {\n");
-	ASN1_TAILQ_FOREACH(m, t->members, members) {
+	HEIM_TAILQ_FOREACH(m, t->members, members) {
 	    if(strlen(m->name) > max_width)
 		max_width = strlen(m->name);
 	}
 	max_width += 3;
 	if(max_width < 16) max_width = 16;
-	ASN1_TAILQ_FOREACH(m, t->members, members) {
+	HEIM_TAILQ_FOREACH(m, t->members, members) {
 	    size_t width = max_width;
 	    space(level + 1);
 	    if (m->ellipsis) {
@@ -754,7 +754,7 @@ define_type (int level, const char *name, const char *basename, Type *t, int typ
 	if(t->members) {
             Member *m;
             fprintf (headerfile, "enum %s {\n", typedefp ? name : "");
-	    ASN1_TAILQ_FOREACH(m, t->members, members) {
+	    HEIM_TAILQ_FOREACH(m, t->members, members) {
                 space (level + 1);
                 fprintf(headerfile, "%s = %d%s\n", m->gen_name, m->val,
                         last_member_p(m));
@@ -799,7 +799,7 @@ define_type (int level, const char *name, const char *basename, Type *t, int typ
          * ABIs prior to this compiler supporting BIT STRING with larger
          * members, we stick to this.
          */
-        ASN1_TAILQ_FOREACH(m, t->members, members) {
+        HEIM_TAILQ_FOREACH(m, t->members, members) {
             if (m->val > max_memno)
                 max_memno = m->val;
         }
@@ -814,14 +814,14 @@ define_type (int level, const char *name, const char *basename, Type *t, int typ
 	i.constraint = NULL;
 
 	space(level);
-	if(ASN1_TAILQ_EMPTY(t->members))
+	if(HEIM_TAILQ_EMPTY(t->members))
 	    fprintf (headerfile, "heim_bit_string %s;\n", name);
 	else {
 	    int pos = 0;
 	    getnewbasename(&newbasename, typedefp, basename, name);
 
 	    fprintf (headerfile, "struct %s {\n", newbasename);
-	    ASN1_TAILQ_FOREACH(m, t->members, members) {
+	    HEIM_TAILQ_FOREACH(m, t->members, members) {
 		char *n = NULL;
 
 		/*
@@ -869,7 +869,7 @@ define_type (int level, const char *name, const char *basename, Type *t, int typ
 
 	space(level);
 	fprintf (headerfile, "enum %s {\n", typedefp ? name : "");
-	ASN1_TAILQ_FOREACH(m, t->members, members) {
+	HEIM_TAILQ_FOREACH(m, t->members, members) {
 	    space(level + 1);
 	    if (m->ellipsis)
 		fprintf (headerfile, "/* ... */\n");
@@ -893,7 +893,7 @@ define_type (int level, const char *name, const char *basename, Type *t, int typ
 	    space(level + 1);
 	    fprintf(headerfile, "heim_octet_string _save;\n");
 	}
-	ASN1_TAILQ_FOREACH(m, t->members, members) {
+	HEIM_TAILQ_FOREACH(m, t->members, members) {
 	    if (m->ellipsis) {
 		;
 	    } else if (m->optional) {
@@ -965,7 +965,7 @@ define_type (int level, const char *name, const char *basename, Type *t, int typ
 	    fprintf (headerfile, "%s = 0,\n", m->label);
 	    first = 0;
 	}
-	ASN1_TAILQ_FOREACH(m, t->members, members) {
+	HEIM_TAILQ_FOREACH(m, t->members, members) {
 	    space(level + 2);
 	    if (m->ellipsis)
 		fprintf (headerfile, "/* ... */\n");
@@ -979,7 +979,7 @@ define_type (int level, const char *name, const char *basename, Type *t, int typ
 	fprintf (headerfile, "} element;\n");
 	space(level + 1);
 	fprintf (headerfile, "union {\n");
-	ASN1_TAILQ_FOREACH(m, t->members, members) {
+	HEIM_TAILQ_FOREACH(m, t->members, members) {
 	    if (m->ellipsis) {
 		space(level + 2);
 		fprintf(headerfile, "heim_octet_string asn1_ellipsis;\n");

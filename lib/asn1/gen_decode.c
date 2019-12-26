@@ -297,7 +297,7 @@ decode_type(const char *name, const Type *t, int optional, struct value *defval,
 	Member *m;
 	int pos = 0;
 
-	if (ASN1_TAILQ_EMPTY(t->members)) {
+	if (HEIM_TAILQ_EMPTY(t->members)) {
 	    decode_primitive ("bit_string", name, forwstr);
 	    break;
 	}
@@ -307,7 +307,7 @@ decode_type(const char *name, const Type *t, int optional, struct value *defval,
 	fprintf(codefile,
 		"do {\n"
 		"if (len < 1) break;\n");
-	ASN1_TAILQ_FOREACH(m, t->members, members) {
+	HEIM_TAILQ_FOREACH(m, t->members, members) {
 	    while (m->val / 8 > pos / 8) {
 		fprintf (codefile,
 			 "p++; len--; ret++;\n"
@@ -330,7 +330,7 @@ decode_type(const char *name, const Type *t, int optional, struct value *defval,
 	if (t->members == NULL)
 	    break;
 
-	ASN1_TAILQ_FOREACH(m, t->members, members) {
+	HEIM_TAILQ_FOREACH(m, t->members, members) {
 	    char *s = NULL;
 
 	    if (m->ellipsis)
@@ -364,7 +364,7 @@ decode_type(const char *name, const Type *t, int optional, struct value *defval,
 		"if(e) %s;\n", forwstr);
 	fprintf(codefile, "switch (MAKE_TAG(class, type, tag)) {\n");
 	memno = 0;
-	ASN1_TAILQ_FOREACH(m, t->members, members) {
+	HEIM_TAILQ_FOREACH(m, t->members, members) {
 	    char *s;
 
 	    assert(m->type->type == TTag);
@@ -395,7 +395,7 @@ decode_type(const char *name, const Type *t, int optional, struct value *defval,
 	fprintf(codefile, "}\n");
 	fprintf(codefile, "}\n");
 	memno = 0;
-	ASN1_TAILQ_FOREACH(m, t->members, members) {
+	HEIM_TAILQ_FOREACH(m, t->members, members) {
 	    char *s;
 
 	    if (asprintf (&s, "%s->%s", name, m->gen_name) < 0 || s == NULL)
@@ -586,7 +586,7 @@ decode_type(const char *name, const Type *t, int optional, struct value *defval,
 	if (t->members == NULL)
 	    break;
 
-	ASN1_TAILQ_FOREACH(m, t->members, members) {
+	HEIM_TAILQ_FOREACH(m, t->members, members) {
 	    const Type *tt = m->type;
 	    char *s = NULL;
 	    Der_class cl;

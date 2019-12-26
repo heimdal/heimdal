@@ -36,7 +36,7 @@
 #ifndef _SYMBOL_H
 #define _SYMBOL_H
 
-#include "asn1_queue.h"
+#include <heimqueue.h>
 
 enum typetype {
     TBitString,
@@ -92,13 +92,13 @@ struct member {
     int optional;
     int ellipsis;
     struct type *type;
-    ASN1_TAILQ_ENTRY(member) members;
+    HEIM_TAILQ_ENTRY(member) members;
     struct value *defval;
 };
 
 typedef struct member Member;
 
-ASN1_TAILQ_HEAD(memhead, member);
+HEIM_TAILQ_HEAD(memhead, member);
 
 struct symbol;
 

@@ -153,7 +153,7 @@ encode_type (const char *name, const Type *t, const char *tmpstr)
 	Member *m;
 	int pos;
 
-	if (ASN1_TAILQ_EMPTY(t->members)) {
+	if (HEIM_TAILQ_EMPTY(t->members)) {
 	    encode_primitive("bit_string", name);
 	    constructed = 0;
 	    break;
@@ -178,13 +178,13 @@ encode_type (const char *name, const Type *t, const char *tmpstr)
 	 * I hate ASN.1 (and DER), but I hate it even more when everybody
 	 * has to screw it up differently.
 	 */
-	pos = ASN1_TAILQ_LAST(t->members, memhead)->val;
+	pos = HEIM_TAILQ_LAST(t->members, memhead)->val;
 	if (rfc1510_bitstring) {
 	    if (pos < 31)
 		pos = 31;
 	}
 
-	ASN1_TAILQ_FOREACH_REVERSE(m, t->members, memhead, members) {
+	HEIM_TAILQ_FOREACH_REVERSE(m, t->members, memhead, members) {
 	    while (m->val / 8 < pos / 8) {
 		if (!rfc1510_bitstring)
 		    fprintf (codefile,
@@ -259,7 +259,7 @@ encode_type (const char *name, const Type *t, const char *tmpstr)
 	if (t->members == NULL)
 	    break;
 
-	ASN1_TAILQ_FOREACH_REVERSE(m, t->members, memhead, members) {
+	HEIM_TAILQ_FOREACH_REVERSE(m, t->members, memhead, members) {
 	    char *s = NULL;
 
 	    if (m->ellipsis)
@@ -413,7 +413,7 @@ encode_type (const char *name, const Type *t, const char *tmpstr)
 	    errx(1, "malloc");
 	fprintf(codefile, "switch(%s->element) {\n", s);
 
-	ASN1_TAILQ_FOREACH_REVERSE(m, t->members, memhead, members) {
+	HEIM_TAILQ_FOREACH_REVERSE(m, t->members, memhead, members) {
 	    char *s2 = NULL;
 
 	    if (m->ellipsis) {

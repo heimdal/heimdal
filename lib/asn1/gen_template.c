@@ -246,19 +246,19 @@ struct template {
     char *tt;
     char *offset;
     char *ptr;
-    ASN1_TAILQ_ENTRY(template) members;
+    HEIM_TAILQ_ENTRY(template) members;
 };
 
-ASN1_TAILQ_HEAD(templatehead, template);
+HEIM_TAILQ_HEAD(templatehead, template);
 
 struct tlist {
     char *name;
     char *header;
     struct templatehead template;
-    ASN1_TAILQ_ENTRY(tlist) tmembers;
+    HEIM_TAILQ_ENTRY(tlist) tmembers;
 };
 
-ASN1_TAILQ_HEAD(tlisthead, tlist);
+HEIM_TAILQ_HEAD(tlisthead, tlist);
 
 static void tlist_header(struct tlist *, const char *, ...) __attribute__ ((__format__ (__printf__, 2, 3)));
 static struct template *
@@ -269,7 +269,7 @@ static void add_line_pointer(struct templatehead *, const char *, const char *, 
     __attribute__ ((__format__ (__printf__, 4, 5)));
 
 
-static struct tlisthead tlistmaster = ASN1_TAILQ_HEAD_INITIALIZER(tlistmaster);
+static struct tlisthead tlistmaster = HEIM_TAILQ_HEAD_INITIALIZER(tlistmaster);
 static unsigned long numdups = 0;
 
 static struct tlist *
@@ -277,7 +277,7 @@ tlist_new(const char *name)
 {
     struct tlist *tl = calloc(1, sizeof(*tl));
     tl->name = strdup(name);
-    ASN1_TAILQ_INIT(&tl->template);
+    HEIM_TAILQ_INIT(&tl->template);
     return tl;
 }
 
@@ -297,7 +297,7 @@ tlist_count(struct tlist *tl)
     unsigned int count = 0;
     struct template *q;
 
-    ASN1_TAILQ_FOREACH(q, &tl->template, members) {
+    HEIM_TAILQ_FOREACH(q, &tl->template, members) {
 	count++;
     }
     return count;
@@ -306,7 +306,7 @@ tlist_count(struct tlist *tl)
 static void
 tlist_add(struct tlist *tl)
 {
-    ASN1_TAILQ_INSERT_TAIL(&tlistmaster, tl, tmembers);
+    HEIM_TAILQ_INSERT_TAIL(&tlistmaster, tl, tmembers);
 }
 
 static void
@@ -318,8 +318,8 @@ tlist_print(struct tlist *tl)
 
     fprintf(f, "const struct asn1_template asn1_%s[] = {\n", tl->name);
     fprintf(f, "/* 0 */ %s,\n", tl->header);
-    ASN1_TAILQ_FOREACH(q, &tl->template, members) {
-	int last = (ASN1_TAILQ_LAST(&tl->template, templatehead) == q);
+    HEIM_TAILQ_FOREACH(q, &tl->template, members) {
+	int last = (HEIM_TAILQ_LAST(&tl->template, templatehead) == q);
 	fprintf(f, "/* %lu */ %s%s\n", (unsigned long)i++, q->line, last ? "" : ",");
     }
     fprintf(f, "};\n");
@@ -329,7 +329,7 @@ static struct tlist *
 tlist_find_by_name(const char *name)
 {
     struct tlist *ql;
-    ASN1_TAILQ_FOREACH(ql, &tlistmaster, tmembers) {
+    HEIM_TAILQ_FOREACH(ql, &tlistmaster, tmembers) {
 	if (strcmp(ql->name, name) == 0)
 	    return ql;
     }
@@ -357,8 +357,8 @@ tlist_cmp(const struct tlist *tl, const struct tlist *ql)
     ret = strcmp(tl->header, ql->header);
     if (ret) return ret;
 
-    q = ASN1_TAILQ_FIRST(&ql->template);
-    ASN1_TAILQ_FOREACH(t, &tl->template, members) {
+    q = HEIM_TAILQ_FIRST(&ql->template);
+    HEIM_TAILQ_FOREACH(t, &tl->template, members) {
 	if (q == NULL) return 1;
 
 	if (t->ptr == NULL || q->ptr == NULL) {
@@ -375,7 +375,7 @@ tlist_cmp(const struct tlist *tl, const struct tlist *ql)
 		(ret = tlist_cmp_name(t->ptr, q->ptr)) != 0)
 		return ret;
 	}
-	q = ASN1_TAILQ_NEXT(q, members);
+	q = HEIM_TAILQ_NEXT(q, members);
     }
     if (q != NULL) return -1;
     return 0;
@@ -387,7 +387,7 @@ tlist_find_dup(const struct tlist *tl)
 {
     struct tlist *ql;
 
-    ASN1_TAILQ_FOREACH(ql, &tlistmaster, tmembers) {
+    HEIM_TAILQ_FOREACH(ql, &tlistmaster, tmembers) {
 	if (tlist_cmp(ql, tl) == 0) {
 	    numdups++;
 	    return ql->name;
@@ -410,7 +410,7 @@ add_line(struct templatehead *t, const char *fmt, ...)
     if (vasprintf(&q->line, fmt, ap) < 0 || q->line == NULL)
 	errx(1, "malloc");
     va_end(ap);
-    ASN1_TAILQ_INSERT_TAIL(t, q, members);
+    HEIM_TAILQ_INSERT_TAIL(t, q, members);
     return q;
 }
 
@@ -573,9 +573,9 @@ template_members(struct templatehead *temp, const char *basetype, const char *na
 	FILE *f = get_code_file();
 	static unsigned long bmember_counter = 0;
 
-	ASN1_TAILQ_INIT(&template);
+	HEIM_TAILQ_INIT(&template);
 
-	if (ASN1_TAILQ_EMPTY(t->members)) {
+	if (HEIM_TAILQ_EMPTY(t->members)) {
 	    add_line(temp, "{ A1_PARSE_T(A1T_HEIM_BIT_STRING), %s, NULL }", poffset);
 	    break;
 	}
@@ -584,11 +584,11 @@ template_members(struct templatehead *temp, const char *basetype, const char *na
 	    errx(1, "malloc");
 	output_name(bname);
 
-	ASN1_TAILQ_FOREACH(m, t->members, members) {
+	HEIM_TAILQ_FOREACH(m, t->members, members) {
 	    add_line(&template, "{ 0, %d, 0 } /* %s */", m->val, m->gen_name);
 	}
 
-	ASN1_TAILQ_FOREACH(q, &template, members) {
+	HEIM_TAILQ_FOREACH(q, &template, members) {
 	    count++;
 	}
 
@@ -597,8 +597,8 @@ template_members(struct templatehead *temp, const char *basetype, const char *na
 		rfc1510_bitstring ? "|A1_HBF_RFC1510" : "",
 		basetype, (unsigned long)count);
 	i = 1;
-	ASN1_TAILQ_FOREACH(q, &template, members) {
-	    int last = (ASN1_TAILQ_LAST(&template, templatehead) == q);
+	HEIM_TAILQ_FOREACH(q, &template, members) {
+	    int last = (HEIM_TAILQ_LAST(&template, templatehead) == q);
 	    fprintf(f, "/* %lu */ %s%s\n", (unsigned long)i++, q->line, last ? "" : ",");
 	}
 	fprintf(f, "};\n");
@@ -614,7 +614,7 @@ template_members(struct templatehead *temp, const char *basetype, const char *na
 
 	fprintf(get_code_file(), "/* tsequence: members isstruct: %d */\n", isstruct);
 
-	ASN1_TAILQ_FOREACH(m, t->members, members) {
+	HEIM_TAILQ_FOREACH(m, t->members, members) {
 	    char *newbasename = NULL;
 
 	    if (m->ellipsis)
@@ -752,13 +752,13 @@ template_members(struct templatehead *temp, const char *basetype, const char *na
 	char *e;
 	static unsigned long choice_counter = 0;
 
-	ASN1_TAILQ_INIT(&template);
+	HEIM_TAILQ_INIT(&template);
 
 	if (asprintf(&tname, "asn1_choice_%s_%s%lu",
 		     basetype, name ? name : "", choice_counter++) < 0 || tname == NULL)
 	    errx(1, "malloc");
 
-	ASN1_TAILQ_FOREACH(m, t->members, members) {
+	HEIM_TAILQ_FOREACH(m, t->members, members) {
 	    const char *dupname;
 	    char *elname = NULL;
 	    char *newbasename = NULL;
@@ -803,7 +803,7 @@ template_members(struct templatehead *temp, const char *basetype, const char *na
 		errx(1, "malloc");
 	}
 
-	ASN1_TAILQ_FOREACH(q, &template, members) {
+	HEIM_TAILQ_FOREACH(q, &template, members) {
 	    count++;
 	}
 
@@ -811,8 +811,8 @@ template_members(struct templatehead *temp, const char *basetype, const char *na
 	fprintf(f, "/* 0 */ { %s, offsetof(%s%s, element), ((void *)%lu) },\n",
 		e ? e : "0", isstruct ? "struct " : "", basetype, (unsigned long)count);
 	i = 1;
-	ASN1_TAILQ_FOREACH(q, &template, members) {
-	    int last = (ASN1_TAILQ_LAST(&template, templatehead) == q);
+	HEIM_TAILQ_FOREACH(q, &template, members) {
+	    int last = (HEIM_TAILQ_LAST(&template, templatehead) == q);
 	    fprintf(f, "/* %lu */ %s%s\n", (unsigned long)i++, q->line, last ? "" : ",");
 	}
 	fprintf(f, "};\n");
@@ -885,7 +885,7 @@ generate_template_type(const char *varname,
     /* if its a sequence or set type, check if there is a ellipsis */
     if (type->type == TSequence || type->type == TSet) {
 	Member *m;
-	ASN1_TAILQ_FOREACH(m, type->members, members) {
+	HEIM_TAILQ_FOREACH(m, type->members, members) {
 	    if (m->ellipsis)
 		have_ellipsis = 1;
 	}
@@ -901,7 +901,7 @@ generate_template_type(const char *varname,
     if (n < 0 || szt == NULL)
 	errx(1, "malloc");
 
-    if (ASN1_TAILQ_EMPTY(&tl->template) && compact_tag(type)->type != TNull)
+    if (HEIM_TAILQ_EMPTY(&tl->template) && compact_tag(type)->type != TNull)
 	errx(1, "Tag %s...%s with no content ?", basetype, name ? name : "");
 
     fprintf(get_code_file(), "/* generate_template_type: %s */\n", tl->name);

@@ -40,7 +40,6 @@ dist_libheimbase_la_SOURCES =	\
 	error.c			\
 	heimbase.c		\
 	heimbasepriv.h		\
-	heimqueue.h		\
 	json.c			\
 	null.c			\
 	number.c		\

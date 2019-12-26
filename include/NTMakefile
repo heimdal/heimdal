@@ -40,6 +40,7 @@ SUBDIRS=kadm5 hcrypto gssapi
 INCFILES=			\
 	$(INCDIR)\config.h	\
 	$(INCDIR)\crypto-headers.h	\
+	$(INCDIR)\heimqueue.h	\
 	$(INCDIR)\heim_threads.h	\
 	$(INCDIR)\krb5-types.h	\
 	$(INCDIR)\version.h

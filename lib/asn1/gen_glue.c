@@ -52,7 +52,7 @@ generate_2int (const Type *t, const char *gen_name)
 	     "uint64_t r = 0;\n",
 	     gen_name, gen_name);
 
-    ASN1_TAILQ_FOREACH(m, t->members, members) {
+    HEIM_TAILQ_FOREACH(m, t->members, members) {
 	fprintf (codefile, "if(f.%s) r |= (1LU << %d);\n",
 		 m->gen_name, m->val);
     }
@@ -77,7 +77,7 @@ generate_int2 (const Type *t, const char *gen_name)
 	     gen_name, gen_name, gen_name);
 
     if(t->members) {
-	ASN1_TAILQ_FOREACH(m, t->members, members) {
+	HEIM_TAILQ_FOREACH(m, t->members, members) {
 	    fprintf (codefile, "\tflags.%s = (n >> %d) & 1;\n",
 		     m->gen_name, m->val);
 	}
@@ -112,7 +112,7 @@ generate_units (const Type *t, const char *gen_name)
 	     gen_name);
 
     if(t->members) {
-	ASN1_TAILQ_FOREACH_REVERSE(m, t->members, memhead, members) {
+	HEIM_TAILQ_FOREACH_REVERSE(m, t->members, memhead, members) {
 	    fprintf (codefile,
 		     "\t{\"%s\",\t1LU << %d},\n", m->name, m->val);
 	}
@@ -146,9 +146,9 @@ generate_glue (const Type *t, const char *gen_name)
     case TBitString : {
         Member *m;
 
-        if (ASN1_TAILQ_EMPTY(t->members))
+        if (HEIM_TAILQ_EMPTY(t->members))
             break;
-        ASN1_TAILQ_FOREACH(m, t->members, members) {
+        HEIM_TAILQ_FOREACH(m, t->members, members) {
             if (m->val > 63)
                 return;
         }

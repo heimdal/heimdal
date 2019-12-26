@@ -102,16 +102,16 @@ length_type (const char *name, const Type *t,
 	length_primitive ("octet_string", name, variable);
 	break;
     case TBitString: {
-	if (ASN1_TAILQ_EMPTY(t->members))
+	if (HEIM_TAILQ_EMPTY(t->members))
 	    length_primitive("bit_string", name, variable);
 	else {
 	    if (!rfc1510_bitstring) {
 		Member *m;
-		int pos = ASN1_TAILQ_LAST(t->members, memhead)->val;
+		int pos = HEIM_TAILQ_LAST(t->members, memhead)->val;
 
 		fprintf(codefile,
 			"do {\n");
-		ASN1_TAILQ_FOREACH_REVERSE(m, t->members, memhead, members) {
+		HEIM_TAILQ_FOREACH_REVERSE(m, t->members, memhead, members) {
 		    while (m->val / 8 < pos / 8) {
 			pos -= 8;
 		    }
@@ -139,7 +139,7 @@ length_type (const char *name, const Type *t,
 	if(t->type == TChoice)
 	    fprintf (codefile, "switch((%s)->element) {\n", name);
 
-	ASN1_TAILQ_FOREACH(m, t->members, members) {
+	HEIM_TAILQ_FOREACH(m, t->members, members) {
 	    char *s;
 
 	    if (m->ellipsis) {

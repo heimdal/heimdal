@@ -70,7 +70,7 @@ copy_type (const char *from, const char *to, const Type *t, int preserve)
 	copy_primitive ("octet_string", from, to);
 	break;
     case TBitString:
-	if (ASN1_TAILQ_EMPTY(t->members))
+	if (HEIM_TAILQ_EMPTY(t->members))
 	    copy_primitive ("bit_string", from, to);
 	else
 	    fprintf(codefile, "*(%s) = *(%s);\n", to, from);
@@ -98,7 +98,7 @@ copy_type (const char *from, const char *to, const Type *t, int preserve)
 	    fprintf(codefile, "switch((%s)->element) {\n", from);
 	}
 
-	ASN1_TAILQ_FOREACH(m, t->members, members) {
+	HEIM_TAILQ_FOREACH(m, t->members, members) {
 	    char *fs;
 	    char *ts;
 

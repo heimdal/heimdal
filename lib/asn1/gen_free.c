@@ -63,7 +63,7 @@ free_type (const char *name, const Type *t, int preserve)
     case TUTCTime:
 	break;
     case TBitString:
-	if (ASN1_TAILQ_EMPTY(t->members))
+	if (HEIM_TAILQ_EMPTY(t->members))
 	    free_primitive("bit_string", name);
 	break;
     case TOctetString:
@@ -83,7 +83,7 @@ free_type (const char *name, const Type *t, int preserve)
 	if(t->type == TChoice)
 	    fprintf(codefile, "switch((%s)->element) {\n", name);
 
-	ASN1_TAILQ_FOREACH(m, t->members, members) {
+	HEIM_TAILQ_FOREACH(m, t->members, members) {
 	    char *s;
 
 	    if (m->ellipsis){

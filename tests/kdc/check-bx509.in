@@ -121,7 +121,7 @@ csr_revoke() {
 get_cert() {
     url="http://${server}:${bx509port}/bx509?csr=$csr${1}"
     shift
-    curl -g --connect-to ${server}:${bx509port}:localhost:${bx509port}            \
+    curl -g --resolve ${server}:${bx509port}:127.0.0.1                  \
          -H "Authorization: Negotiate $token"                           \
          "$@" "$url"
 }
@@ -449,9 +449,9 @@ echo "Fetching a Negotiate token"
 token=$(KRB5CCNAME=$cache $gsstoken HTTP@$server)
 if (set -vx;
     curl -o negotiate-token -Lgsf                                       \
-        --connect-to ${server}:${bx509port}:localhost:${bx509port}      \
-        -H "Authorization: Negotiate $token"                            \
-        "http://${server}:${bx509port}/bnegotiate?target=HTTP%40${server}"); then
+         --resolve ${server}:${bx509port}:127.0.0.1                     \
+         -H "Authorization: Negotiate $token"                           \
+         "http://${server}:${bx509port}/bnegotiate?target=HTTP%40${server}"); then
     # bx509 sends us a token w/o a newline for now; we add one because
     # gss-token expects it.
     test -s negotiate-token && echo >> negotiate-token
@@ -470,7 +470,7 @@ referer=https://${otherserver}/blah
 redirect=$(${rkvis} -h https://${otherserver}/blah?q=whatever)
 if (set -vx;
     curl -o negotiate-token -Lgsf                                       \
-         --connect-to ${server}:${bx509port}:localhost:${bx509port}     \
+         --resolve ${server}:${bx509port}:127.0.0.1                     \
         -H "Authorization: Negotiate $token"                            \
         "http://${server}:${bx509port}/bnegotiate?target=HTTP%40${server}&redirect=${redirect}"); then
     echo "Error: /bnegotiate with target and redirect succeeded"
@@ -479,7 +479,7 @@ fi
 
 if (set -vx;
     curl -o negotiate-token -Lgsf                                       \
-         --connect-to ${server}:${bx509port}:localhost:${bx509port}     \
+         --resolve ${server}:${bx509port}:127.0.0.1                     \
         -H "Authorization: Negotiate $token"                            \
         "http://${server}:${bx509port}/bnegotiate?redirect=${redirect}"); then
     echo "Error: /bnegotiate with redirect but no Referer succeeded"
@@ -490,7 +490,7 @@ referer=http://${otherserver}/blah
 redirect=$(${rkvis} -h http://${otherserver}/blah?q=whatever)
 if (set -vx;
     curl -gsf                                                           \
-         --connect-to ${server}:${bx509port}:localhost:${bx509port}     \
+         --resolve ${server}:${bx509port}:127.0.0.1                     \
         -H "Authorization: Negotiate $token"                            \
         -H "Referer: $referer"                                          \
         "http://${server}:${bx509port}/bnegotiate?redirect=${redirect}"); then
@@ -502,7 +502,7 @@ referer=https://${otherserver}/blah
 redirect=$(${rkvis} -h https://${otherserver}/blah?q=whatever)
 if (set -vx;
     curl -gfs -D curlheaders                                            \
-         --connect-to ${server}:${bx509port}:localhost:${bx509port}     \
+         --resolve ${server}:${bx509port}:127.0.0.1                     \
         -H "Authorization: Negotiate $token"                            \
         -H "Referer: $referer"                                          \
         "http://${server}:${bx509port}/bnegotiate?redirect=${redirect}"); then

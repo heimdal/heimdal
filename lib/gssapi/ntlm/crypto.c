@@ -122,24 +122,30 @@ _gss_ntlm_set_key(struct ntlmv2_key *key, int acceptor, int sealsign,
 void
 _gss_ntlm_set_keys(ntlm_ctx ctx)
 {
+    int acceptor;
+
     if (ctx->sessionkey.length == 0)
 	return;
+
+    acceptor = !(ctx->status & STATUS_CLIENT);
 
     ctx->status |= STATUS_SESSIONKEY;
 
     if (ctx->flags & NTLM_NEG_NTLM2_SESSION) {
-	_gss_ntlm_set_key(&ctx->u.v2.send, 1,
+	_gss_ntlm_set_key(&ctx->u.v2.send, acceptor,
 			  (ctx->flags & NTLM_NEG_KEYEX),
 			  ctx->sessionkey.data,
 			  ctx->sessionkey.length);
-	_gss_ntlm_set_key(&ctx->u.v2.recv, 0,
+	_gss_ntlm_set_key(&ctx->u.v2.recv, !acceptor,
 			  (ctx->flags & NTLM_NEG_KEYEX),
 			  ctx->sessionkey.data,
 			  ctx->sessionkey.length);
     } else {
+	ctx->u.v1.crypto_send.seq = 0;
 	RC4_set_key(&ctx->u.v1.crypto_send.key,
 		    ctx->sessionkey.length,
 		    ctx->sessionkey.data);
+	ctx->u.v1.crypto_recv.seq = 0;
 	RC4_set_key(&ctx->u.v1.crypto_recv.key,
 		    ctx->sessionkey.length,
 		    ctx->sessionkey.data);

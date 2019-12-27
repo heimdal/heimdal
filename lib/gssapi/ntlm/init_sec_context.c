@@ -286,6 +286,7 @@ _gss_ntlm_init_sec_context
 	    *minor_status = EINVAL;
 	    return GSS_S_FAILURE;
 	}
+	ctx->status = STATUS_CLIENT;
 	*context_handle = (gss_ctx_id_t)ctx;
 
 	if (initiator_cred_handle != GSS_C_NO_CREDENTIAL) {
@@ -485,24 +486,8 @@ _gss_ntlm_init_sec_context
 	    }
 	}
 
-	if (ctx->flags & NTLM_NEG_NTLM2_SESSION) {
-	    ctx->status |= STATUS_SESSIONKEY;
-	    _gss_ntlm_set_key(&ctx->u.v2.send, 0, (ctx->flags & NTLM_NEG_KEYEX),
-			      ctx->sessionkey.data,
-			      ctx->sessionkey.length);
-	    _gss_ntlm_set_key(&ctx->u.v2.recv, 1, (ctx->flags & NTLM_NEG_KEYEX),
-			      ctx->sessionkey.data,
-			      ctx->sessionkey.length);
-	} else {
-	    ctx->status |= STATUS_SESSIONKEY;
-	    RC4_set_key(&ctx->u.v1.crypto_recv.key,
-			ctx->sessionkey.length,
-			ctx->sessionkey.data);
-	    RC4_set_key(&ctx->u.v1.crypto_send.key,
-			ctx->sessionkey.length,
-			ctx->sessionkey.data);
-	}
 
+	_gss_ntlm_set_keys(ctx);
 
 
 	ret = heim_ntlm_encode_type3(&type3, &data, NULL);

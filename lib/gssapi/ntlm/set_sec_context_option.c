@@ -53,7 +53,6 @@ _gss_ntlm_set_sec_context_option(OM_uint32 *minor_status,
 	return GSS_S_NO_CONTEXT;
 
     if (gss_oid_equal(object, GSS_C_NTLM_RESET_CRYPTO)) {
-	/* OM_uint32 verify = *((OM_uint32 *)value->value); */
 	_gss_ntlm_set_keys(ctx);
 	return GSS_S_COMPLETE;
     } else

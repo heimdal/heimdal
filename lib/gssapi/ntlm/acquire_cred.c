@@ -45,7 +45,6 @@ _gss_ntlm_acquire_cred_from(OM_uint32            *min_stat,
 			    OM_uint32            *time_rec)
 {
     ntlm_name name = (ntlm_name) desired_name;
-    const char *domain = NULL;
     OM_uint32 maj_stat;
     ntlm_ctx ctx;
 
@@ -63,8 +62,7 @@ _gss_ntlm_acquire_cred_from(OM_uint32            *min_stat,
 	if (maj_stat != GSS_S_COMPLETE)
 	    return maj_stat;
 
-        domain = name != NULL ? name->domain : NULL;
-	ret = (*ctx->server->nsi_probe)(min_stat, ctx->ictx, domain);
+	ret = (*ctx->server->nsi_probe)(min_stat, ctx->ictx, NULL);
 	{
 	    gss_ctx_id_t context = (gss_ctx_id_t)ctx;
 	    OM_uint32 junk;

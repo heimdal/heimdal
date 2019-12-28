@@ -130,7 +130,8 @@ gss_add_cred_from(OM_uint32 *minor_status,
         *acceptor_time_rec = 0;
     if (actual_mechs)
         *actual_mechs = GSS_C_NO_OID_SET;
-    if ((m = __gss_get_mechanism(desired_mech)) == NULL)
+    if ((m = __gss_get_mechanism(desired_mech)) == NULL ||
+	(m->gm_flags & GM_USE_MG_CRED))
         return GSS_S_BAD_MECH;
     if (input_cred_handle == GSS_C_NO_CREDENTIAL &&
         output_cred_handle == NULL) {

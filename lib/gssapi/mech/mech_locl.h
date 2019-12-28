@@ -57,7 +57,7 @@
 #include <gssapi_mech.h>
 #include <gssapi_krb5.h>
 
-#include "mechqueue.h"
+#include <heimqueue.h>
 
 #include "context.h"
 #include "cred.h"

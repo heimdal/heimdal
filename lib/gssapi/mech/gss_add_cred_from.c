@@ -175,7 +175,7 @@ gss_add_cred_from(OM_uint32 *minor_status,
      * mechanism.  If it matches, we call gss_add_cred for that mechanism,
      * otherwise we just add a new mc.
      */
-    HEIM_SLIST_FOREACH(mc, &mut_cred->gc_mc, gmc_link) {
+    HEIM_TAILQ_FOREACH(mc, &mut_cred->gc_mc, gmc_link) {
         if (!gss_oid_equal(mc->gmc_mech_oid, desired_mech))
             continue;
         major_status = _gss_mg_add_mech_cred(minor_status, m,
@@ -196,7 +196,7 @@ gss_add_cred_from(OM_uint32 *minor_status,
         _gss_mg_error(m, *minor_status);
         goto done;
     }
-    HEIM_SLIST_INSERT_HEAD(&mut_cred->gc_mc, new_mc, gmc_link);
+    HEIM_TAILQ_INSERT_TAIL(&mut_cred->gc_mc, new_mc, gmc_link);
     new_mc = NULL;
 
 done:

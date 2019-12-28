@@ -68,7 +68,7 @@ gss_get_neg_mechs (OM_uint32 *minor_status,
 
     major = GSS_S_UNAVAILABLE;
 
-    HEIM_SLIST_FOREACH(mc, &cred->gc_mc, gmc_link) {
+    HEIM_TAILQ_FOREACH(mc, &cred->gc_mc, gmc_link) {
 	gssapi_mech_interface m;
 	gss_OID_set mechs2 = GSS_C_NO_OID_SET;
 	size_t i;

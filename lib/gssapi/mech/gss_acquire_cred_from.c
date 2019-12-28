@@ -219,7 +219,7 @@ gss_acquire_cred_from(OM_uint32 *minor_status,
 	    continue;
         }
 
-	HEIM_SLIST_INSERT_HEAD(&cred->gc_mc, mc, gmc_link);
+	HEIM_TAILQ_INSERT_TAIL(&cred->gc_mc, mc, gmc_link);
 
 	if (cred_time < min_time)
 	    min_time = cred_time;
@@ -236,7 +236,7 @@ gss_acquire_cred_from(OM_uint32 *minor_status,
      * If we didn't manage to create a single credential, return
      * an error.
      */
-    if (!HEIM_SLIST_FIRST(&cred->gc_mc)) {
+    if (!HEIM_TAILQ_FIRST(&cred->gc_mc)) {
         if (mechs->count > 1) {
 	    *minor_status = 0;
 	    major_status = GSS_S_NO_CRED;

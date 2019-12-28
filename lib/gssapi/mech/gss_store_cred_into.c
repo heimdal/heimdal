@@ -110,7 +110,7 @@ gss_store_cred_into(OM_uint32 *minor_status,
     HEIM_TAILQ_FOREACH(mc, &cred->gc_mc, gmc_link) {
 	gssapi_mech_interface m = mc->gmc_mech;
 
-	if (m == NULL)
+	if (m == NULL || (m->gm_flags & GM_USE_MG_CRED) != 0)
 	    continue;
 
         if (desired_mech != GSS_C_NO_OID &&

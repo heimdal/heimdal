@@ -200,7 +200,7 @@ gss_acquire_cred_from(OM_uint32 *minor_status,
 	OM_uint32 cred_time;
 
 	m = __gss_get_mechanism(&mechs->elements[i]);
-	if (m == NULL)
+	if (m == NULL || (m->gm_flags & GM_USE_MG_CRED) != 0)
 	    continue;
 
 	if (desired_name != GSS_C_NO_NAME) {

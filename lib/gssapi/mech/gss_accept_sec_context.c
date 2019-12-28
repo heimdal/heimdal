@@ -210,7 +210,9 @@ gss_accept_sec_context(OM_uint32 *minor_status,
 		m = ctx->gc_mech;
 	}
 
-	if (cred) {
+	if (m->gm_flags & GM_USE_MG_CRED) {
+		acceptor_mc = acceptor_cred_handle;
+	} else if (cred) {
 		HEIM_TAILQ_FOREACH(mc, &cred->gc_mc, gmc_link)
 			if (mc->gmc_mech == m)
 				break;
@@ -270,9 +272,18 @@ gss_accept_sec_context(OM_uint32 *minor_status,
 
 	if (mech_ret_flags & GSS_C_DELEG_FLAG) {
 		if (!delegated_cred_handle) {
-			m->gm_release_cred(minor_status, &delegated_mc);
+			if (m->gm_flags	 & GM_USE_MG_CRED)
+				gss_release_cred(minor_status, &delegated_mc);
+			else
+				m->gm_release_cred(minor_status, &delegated_mc);
 			mech_ret_flags &=
 			    ~(GSS_C_DELEG_FLAG|GSS_C_DELEG_POLICY_FLAG);
+		} else if ((m->gm_flags & GM_USE_MG_CRED) != 0) {
+			/* 
+			 * If credential is uses mechglue cred, assume it
+			 * returns one too.
+			 */
+			*delegated_cred_handle = delegated_mc;
 		} else if (gss_oid_equal(mech_ret_type, &m->gm_mech_oid) == 0) {
 			/*
 			 * If the returned mech_type is not the same

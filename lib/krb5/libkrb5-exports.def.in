@@ -776,6 +776,7 @@ EXPORTS
 	_krb5_get_krbtgt
 	_krb5_build_authenticator
 	_krb5_kt_client_default_name
+	_krb5_have_debug
 
 	; Shared with libkadm5
 	_krb5_load_plugins

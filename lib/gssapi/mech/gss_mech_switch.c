@@ -167,7 +167,7 @@ do {									\
 	m->gm_mech.gm_ ## name = (_gss_##name##_t *)dlsym(so, "gss_" #name); \
 	if (!m->gm_mech.gm_ ## name ||					\
 	    m->gm_mech.gm_ ##name == gss_ ## name) {			\
-		fprintf(stderr, "can't find symbol gss_" #name "\n");	\
+		_gss_mg_log(1, "can't find symbol gss_" #name "\n");	\
 		goto bad;						\
 	}								\
 } while (0)
@@ -326,7 +326,7 @@ _gss_load_mech(void)
 
 		so = dlopen(lib, RTLD_LAZY | RTLD_LOCAL | RTLD_GROUP);
 		if (so == NULL) {
-/*			fprintf(stderr, "dlopen: %s\n", dlerror()); */
+			_gss_mg_log(1, "dlopen: %s\n", dlerror());
 			goto bad;
 		}
 

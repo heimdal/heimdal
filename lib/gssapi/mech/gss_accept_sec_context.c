@@ -136,6 +136,8 @@ choose_mech(const gss_buffer_t input, gss_OID *mech_oid)
 		return GSS_S_COMPLETE;
 	}
 
+	_gss_mg_log(10, "Don't have client request mech");
+
 	return status;
 }
 
@@ -176,7 +178,6 @@ gss_accept_sec_context(OM_uint32 *minor_status,
 	    *delegated_cred_handle = GSS_C_NO_CREDENTIAL;
 	_mg_buffer_zero(output_token);
 
-
 	/*
 	 * If this is the first call (*context_handle is NULL), we must
 	 * parse the input token to figure out the mechanism to use.
@@ -201,6 +202,7 @@ gss_accept_sec_context(OM_uint32 *minor_status,
 		m = ctx->gc_mech = __gss_get_mechanism(mech_oid);
 		if (!m) {
 			free(ctx);
+			_gss_mg_log(10, "mechanism client used is unknown");
 			return (GSS_S_BAD_MECH);
 		}
 		*context_handle = (gss_ctx_id_t) ctx;
@@ -214,6 +216,11 @@ gss_accept_sec_context(OM_uint32 *minor_status,
 				break;
 		if (!mc) {
 		        gss_delete_sec_context(&junk, context_handle, NULL);
+			_gss_mg_log(10, "gss-asc: client sent mech %s "
+				    "but no credential was matching",
+				    m->gm_name);
+			HEIM_TAILQ_FOREACH(mc, &cred->gc_mc, gmc_link)
+				_gss_mg_log(10, "gss-asc: available creds were %s", mc->gmc_mech->gm_name);
 			return (GSS_S_BAD_MECH);
 		}
 		acceptor_mc = mc->gmc_cred;
@@ -300,6 +307,8 @@ gss_accept_sec_context(OM_uint32 *minor_status,
 			*delegated_cred_handle = (gss_cred_id_t) dcred;
 		}
 	}
+
+	_gss_mg_log(10, "gss-asc: return %d/%d", (int)major_status, (int)*minor_status);
 
 	if (ret_flags)
 	    *ret_flags = mech_ret_flags;

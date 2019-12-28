@@ -173,6 +173,8 @@ gss_init_sec_context(OM_uint32 * minor_status,
 	if (time_rec)
 	    *time_rec = 0;
 
+	_gss_mg_check_name(target_name);
+
 	if (_gss_mg_log_level(1))
 	    log_init_sec_context(ctx, name, req_flags,
 				 (struct _gss_cred *)initiator_cred_handle,

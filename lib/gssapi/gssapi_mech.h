@@ -616,6 +616,12 @@ int _gss_mo_get_option_1(gss_const_OID, gss_mo_desc *, gss_buffer_t);
 int _gss_mo_get_option_0(gss_const_OID, gss_mo_desc *, gss_buffer_t);
 int _gss_mo_get_ctx_as_string(gss_const_OID, gss_mo_desc *, gss_buffer_t);
 
+struct _gss_name_type {
+    gss_OID    gnt_name_type;
+    OM_uint32  (*gnt_parse)(OM_uint32 *, gss_const_OID, const gss_buffer_t,
+			    gss_const_OID, gss_name_t *);
+};
+
 struct _gss_oid_name_table {
     gss_OID oid;
     const char *name;

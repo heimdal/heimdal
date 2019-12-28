@@ -1208,6 +1208,10 @@ gss_release_cred_by_mech(
 GSSAPI_LIB_FUNCTION void GSSAPI_LIB_CALL
 gss_set_log_function(void *ctx, void (*func)(void * ctx, int level, const char *fmt, va_list));
 
+GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_FUNCTION
+gss_destroy_cred(OM_uint32 *minor_status,
+		 gss_cred_id_t *cred_handle);
+
 GSSAPI_CPP_END
 
 #if defined(__APPLE__) && (defined(__ppc__) || defined(__ppc64__) || defined(__i386__) || defined(__x86_64__))

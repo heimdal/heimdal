@@ -99,6 +99,7 @@ mechsrc = \
 	mech/gss_decapsulate_token.c \
 	mech/gss_delete_name_attribute.c \
 	mech/gss_delete_sec_context.c \
+	mech/gss_destroy_cred.c \
 	mech/gss_display_name.c \
 	mech/gss_display_name_ext.c \
 	mech/gss_display_status.c \

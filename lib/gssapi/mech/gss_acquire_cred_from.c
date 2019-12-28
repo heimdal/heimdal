@@ -219,6 +219,11 @@ gss_acquire_cred_from(OM_uint32 *minor_status,
 	    continue;
         }
 
+	_gss_mg_log_name(10, name, &mechs->elements[i],
+			 "gss_acquire_cred %s name: %ld/%ld",
+			 m->gm_name,
+			 (long)major_status, (long)*minor_status);
+
 	HEIM_TAILQ_INSERT_TAIL(&cred->gc_mc, mc, gmc_link);
 
 	if (cred_time < min_time)
@@ -252,6 +257,8 @@ gss_acquire_cred_from(OM_uint32 *minor_status,
     *output_cred_handle = (gss_cred_id_t)cred;
     if (time_rec)
         *time_rec = min_time;
+
+    _gss_mg_log_cred(10, cred, "gss_acquire_cred_from");
 
 cleanup:
     if (major_status != GSS_S_COMPLETE) {

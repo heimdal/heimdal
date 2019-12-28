@@ -42,6 +42,7 @@ struct mg_thread_ctx {
     gss_OID mech;
     OM_uint32 min_stat;
     gss_buffer_desc min_error;
+    krb5_context context;
 };
 
 static HEIMDAL_MUTEX context_mutex = HEIMDAL_MUTEX_INITIALIZER;
@@ -59,6 +60,9 @@ destroy_context(void *ptr)
 	return;
 
     gss_release_buffer(&junk, &mg->min_error);
+
+    if (mg->context)
+	krb5_free_context(mg->context);
 
     free(mg);
 }
@@ -88,8 +92,16 @@ _gss_mechglue_thread(void)
 	ctx = calloc(1, sizeof(*ctx));
 	if (ctx == NULL)
 	    return NULL;
+
+	ret = krb5_init_context(&ctx->context);
+	if (ret) {
+	    free(ctx);
+	    return NULL;
+	}
+
 	HEIMDAL_setspecific(context_key, ctx, ret);
 	if (ret) {
+	    krb5_free_context(ctx->context);
 	    free(ctx);
 	    return NULL;
 	}
@@ -151,8 +163,13 @@ _gss_mg_error(struct gssapi_mech_interface_desc *m, OM_uint32 min)
 					&m->gm_mech_oid,
 					&message_content,
 					&mg->min_error);
-    if (major_status != GSS_S_COMPLETE)
+    if (major_status != GSS_S_COMPLETE) {
 	_mg_buffer_zero(&mg->min_error);
+    } else {
+	_gss_mg_log(5, "_gss_mg_error: captured %.*s (%d) from underlying mech %s",
+		    (int)mg->min_error.length, (const char *)mg->min_error.value,
+		    (int)min, m->gm_name);
+    }
 }
 
 void
@@ -163,3 +180,165 @@ gss_mg_collect_error(gss_OID mech, OM_uint32 maj, OM_uint32 min)
 	return;
     _gss_mg_error(m, min);
 }
+
+OM_uint32
+gss_mg_set_error_string(gss_OID mech,
+			OM_uint32 maj, OM_uint32 min,
+			const char *fmt, ...)
+{
+    struct mg_thread_ctx *mg;
+    char *str = NULL;
+    OM_uint32 junk;
+    va_list ap;
+
+    mg = _gss_mechglue_thread();
+    if (mg == NULL)
+	return maj;
+
+    va_start(ap, fmt);
+    (void) vasprintf(&str, fmt, ap);
+    va_end(ap);
+
+    if (str) {
+	gss_release_buffer(&junk, &mg->min_error);
+
+	mg->mech = mech;
+	mg->min_stat = min;
+
+	mg->min_error.value = str;
+	mg->min_error.length = strlen(str);
+
+	_gss_mg_log(5, "gss_mg_set_error_string: %.*s (%d/%d)",
+		    (int)mg->min_error.length, (const char *)mg->min_error.value,
+		    (int)maj, (int)min);
+    }
+    return maj;
+}
+
+static void *log_ctx = NULL;
+static void (*log_func)(void *ctx, int level, const char *fmt, va_list) = NULL;
+
+void
+gss_set_log_function(void *ctx, void (*func)(void * ctx, int level, const char *fmt, va_list))
+{
+    if (log_func == NULL) {
+	log_func = func;
+	log_ctx = ctx;
+    }
+}
+
+int
+_gss_mg_log_level(int level)
+{
+    struct mg_thread_ctx *mg;
+
+    mg = _gss_mechglue_thread();
+    if (mg == NULL)
+	return 0;
+
+    return _krb5_have_debug(mg->context, level);
+}
+
+/*
+ * TODO: refactor logging so that it no longer depends on libkrb5
+ * and can be configured independently.
+ */
+void
+_gss_mg_log(int level, const char *fmt, ...)
+{
+    struct mg_thread_ctx *mg;
+    va_list ap;
+
+    if (!_gss_mg_log_level(level))
+	return;
+
+    mg = _gss_mechglue_thread();
+    if (mg == NULL)
+	return;
+
+    if (mg->context && _krb5_have_debug(mg->context, level)) {
+	va_start(ap, fmt);
+	krb5_vlog(mg->context, mg->context->debug_dest, level, fmt, ap);
+	va_end(ap);
+    }
+
+    if (log_func) {
+	va_start(ap, fmt);
+	log_func(log_ctx, level, fmt, ap);
+	va_end(ap);
+    }
+}
+
+void
+_gss_mg_log_name(int level,
+		 struct _gss_name *name,
+		 gss_OID mech_type,
+		 const char *fmt, ...)
+{
+    struct _gss_mechanism_name *mn = NULL;
+    gssapi_mech_interface m;
+    OM_uint32 junk;
+
+    if (!_gss_mg_log_level(level))
+        return;
+
+    m = __gss_get_mechanism(mech_type);
+    if (m == NULL)
+        return;
+
+    if (_gss_find_mn(&junk, name, mech_type, &mn) == GSS_S_COMPLETE) {
+	OM_uint32 maj_stat = GSS_S_COMPLETE;
+	gss_buffer_desc namebuf;
+
+	if (mn == NULL) {
+	    namebuf.value = "no name";
+	    namebuf.length = strlen((char *)namebuf.value);
+	} else {
+	    maj_stat = m->gm_display_name(&junk, mn->gmn_name,
+					  &namebuf, NULL);
+	}
+	if (maj_stat == GSS_S_COMPLETE) {
+	    char *str = NULL;
+	    va_list ap;
+
+	    va_start(ap, fmt);
+	    (void) vasprintf(&str, fmt, ap);
+	    va_end(ap);
+
+	    if (str)
+	        _gss_mg_log(level, "%s %.*s", str,
+			    (int)namebuf.length, (char *)namebuf.value);
+	    free(str);
+	    if (mn != NULL)
+		gss_release_buffer(&junk, &namebuf);
+	}
+    }
+
+}
+
+void
+_gss_mg_log_cred(int level,
+		 struct _gss_cred *cred,
+		 const char *fmt, ...)
+{
+    struct _gss_mechanism_cred *mc;
+    char *str;
+    va_list ap;
+
+    if (!_gss_mg_log_level(level))
+        return;
+
+    va_start(ap, fmt);
+    (void) vasprintf(&str, fmt, ap);
+    va_end(ap);
+
+    if (cred) {
+	HEIM_TAILQ_FOREACH(mc, &cred->gc_mc, gmc_link) {
+	    _gss_mg_log(1, "%s: %s", str, mc->gmc_mech->gm_name);
+	}
+    } else {
+	_gss_mg_log(1, "%s: GSS_C_NO_CREDENTIAL", str);
+    }
+    free(str);
+}
+

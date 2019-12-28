@@ -48,9 +48,6 @@ _gss_mg_release_cred(struct _gss_cred *cred);
 struct _gss_mechanism_cred *
 _gss_copy_cred(struct _gss_mechanism_cred *mc);
 
-void
-_gss_mg_check_credential(gss_const_cred_id_t credential);
-
 struct _gss_mechanism_name;
 
 OM_uint32

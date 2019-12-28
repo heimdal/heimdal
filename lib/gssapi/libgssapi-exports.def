@@ -90,6 +90,7 @@ EXPORTS
 	gss_seal
 	gss_set_cred_option
 	gss_set_name_attribute
+	gss_set_log_function
 	gss_set_neg_mechs
 	gss_set_sec_context_option
 	gss_sign

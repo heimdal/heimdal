@@ -47,3 +47,31 @@ OM_uint32
 struct _gss_name *
 	_gss_create_name(gss_name_t new_mn, gssapi_mech_interface m);
 void	_gss_mg_release_name(struct _gss_name *);
+
+
+void	_gss_mg_check_name(gss_const_name_t name);
+
+gss_name_t
+	_gss_mg_get_underlying_mech_name(gss_name_t name, gss_const_OID mech);
+
+OM_uint32
+_gss_mech_import_name(OM_uint32 * minor_status,
+		      gss_const_OID mech,
+		      struct _gss_name_type *names,
+		      const gss_buffer_t input_name_buffer,
+		      gss_const_OID input_name_type,
+		      gss_name_t *output_name);
+
+OM_uint32
+gss_mg_export_name(OM_uint32 *minor_status,
+		   const gss_const_OID mech,
+		   const void *name,
+		   size_t length, 
+		   gss_buffer_t exported_name);
+
+OM_uint32
+_gss_mech_inquire_names_for_mech(OM_uint32 * minor_status,
+				 struct _gss_name_type *names,
+				 gss_OID_set *name_types);
+
+

@@ -157,7 +157,6 @@ mechsrc = \
 	mech/gss_wrap_size_limit.c \
 	mech/gss_inquire_sec_context_by_oid.c \
 	mech/mech_switch.h \
-	mech/mechqueue.h \
 	mech/mech_locl.h \
 	mech/name.h \
 	mech/utils.h

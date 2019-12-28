@@ -46,7 +46,7 @@ _gss_find_mn(OM_uint32 *minor_status,
 	if (name == NULL)
 	    return GSS_S_COMPLETE;
 
-	HEIM_SLIST_FOREACH(mn, &name->gn_mn, gmn_link) {
+	HEIM_TAILQ_FOREACH(mn, &name->gn_mn, gmn_link) {
 		if (gss_oid_equal(mech, mn->gmn_mech_oid))
 			break;
 	}
@@ -79,7 +79,7 @@ _gss_find_mn(OM_uint32 *minor_status,
 
 		mn->gmn_mech = m;
 		mn->gmn_mech_oid = &m->gm_mech_oid;
-		HEIM_SLIST_INSERT_HEAD(&name->gn_mn, mn, gmn_link);
+		HEIM_TAILQ_INSERT_TAIL(&name->gn_mn, mn, gmn_link);
 	}
 	*output_mn = mn;
 	return 0;
@@ -100,7 +100,7 @@ _gss_create_name(gss_name_t new_mn,
 	if (!name)
 		return (0);
 
-	HEIM_SLIST_INIT(&name->gn_mn);
+	HEIM_TAILQ_INIT(&name->gn_mn);
 
 	if (new_mn) {
 		mn = malloc(sizeof(struct _gss_mechanism_name));
@@ -112,7 +112,7 @@ _gss_create_name(gss_name_t new_mn,
 		mn->gmn_mech = m;
 		mn->gmn_mech_oid = &m->gm_mech_oid;
 		mn->gmn_name = new_mn;
-		HEIM_SLIST_INSERT_HEAD(&name->gn_mn, mn, gmn_link);
+		HEIM_TAILQ_INSERT_TAIL(&name->gn_mn, mn, gmn_link);
 	}
 
 	return (name);
@@ -126,13 +126,12 @@ void
 _gss_mg_release_name(struct _gss_name *name)
 {
 	OM_uint32 junk;
+	struct _gss_mechanism_name *mn, *next;
 
 	gss_release_oid(&junk, &name->gn_type);
 
-	while (HEIM_SLIST_FIRST(&name->gn_mn)) {
-		struct _gss_mechanism_name *mn;
-		mn = HEIM_SLIST_FIRST(&name->gn_mn);
-		HEIM_SLIST_REMOVE_HEAD(&name->gn_mn, gmn_link);
+	HEIM_TAILQ_FOREACH_SAFE(mn, &name->gn_mn, gmn_link, next) {
+		HEIM_TAILQ_REMOVE(&name->gn_mn, mn, gmn_link);
 		mn->gmn_mech->gm_release_name(&junk, &mn->gmn_name);
 		free(mn);
 	}

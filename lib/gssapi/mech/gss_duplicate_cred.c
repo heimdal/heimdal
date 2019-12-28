@@ -132,14 +132,14 @@ gss_duplicate_cred(OM_uint32 *minor_status,
     *minor_status = 0;
     major_status = GSS_S_NO_CRED;
 
-    HEIM_SLIST_FOREACH(mc, &cred->gc_mc, gmc_link) {
+    HEIM_TAILQ_FOREACH(mc, &cred->gc_mc, gmc_link) {
 	struct _gss_mechanism_cred *copy_mc;
 
         major_status = copy_cred_element(minor_status, mc, &copy_mc);
         if (major_status != GSS_S_COMPLETE)
             break;
 
-        HEIM_SLIST_INSERT_HEAD(&new_cred->gc_mc, copy_mc, gmc_link);
+        HEIM_TAILQ_INSERT_TAIL(&new_cred->gc_mc, copy_mc, gmc_link);
     }
 
     if (major_status != GSS_S_COMPLETE) {

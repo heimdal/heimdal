@@ -52,12 +52,11 @@ release_mech_cred(OM_uint32 *minor, struct _gss_mechanism_cred *mc)
 void
 _gss_mg_release_cred(struct _gss_cred *cred)
 {
-	struct _gss_mechanism_cred *mc;
+	struct _gss_mechanism_cred *mc, *next;
 	OM_uint32 junk;
 
-	while (HEIM_SLIST_FIRST(&cred->gc_mc)) {
-		mc = HEIM_SLIST_FIRST(&cred->gc_mc);
-		HEIM_SLIST_REMOVE_HEAD(&cred->gc_mc, gmc_link);
+	HEIM_TAILQ_FOREACH_SAFE(mc, &cred->gc_mc, gmc_link, next) {
+		HEIM_TAILQ_REMOVE(&cred->gc_mc, mc, gmc_link);
 		release_mech_cred(&junk, mc);
 	}
 	free(cred);
@@ -70,7 +69,7 @@ _gss_mg_alloc_cred(void)
 	cred = calloc(1, sizeof(struct _gss_cred));
 	if (cred == NULL)
 		return NULL;
-	HEIM_SLIST_INIT(&cred->gc_mc);
+	HEIM_TAILQ_INIT(&cred->gc_mc);
 
 	return cred;
 }
@@ -81,20 +80,17 @@ gss_release_cred_by_mech(OM_uint32 *minor_status,
 			 gss_const_OID mech_oid)
 {
 	struct _gss_cred *cred = (struct _gss_cred *)cred_handle;
-	struct _gss_mechanism_cred *mc;
-	OM_uint32 major_status;
+	struct _gss_mechanism_cred *mc, *next;
+	OM_uint32 major_status = GSS_S_NO_CRED;
 
-	HEIM_SLIST_FOREACH(mc, &cred->gc_mc, gmc_link) {
-		if (gss_oid_equal(mech_oid, mc->gmc_mech_oid))
-		    break;
-	}
+	*minor_status = 0;
 
-	if (mc) {
-		HEIM_SLIST_REMOVE(&cred->gc_mc, mc, _gss_mechanism_cred, gmc_link);
-		major_status = release_mech_cred(minor_status, mc);
-	} else {
-		*minor_status = 0;
-		major_status = GSS_S_NO_CRED;
+	HEIM_TAILQ_FOREACH_SAFE(mc, &cred->gc_mc, gmc_link, next) {
+		if (gss_oid_equal(mech_oid, mc->gmc_mech_oid)) {
+			HEIM_TAILQ_REMOVE(&cred->gc_mc, mc, gmc_link);
+			major_status = release_mech_cred(minor_status, mc);
+			break;
+		}
 	}
 
 	return major_status;

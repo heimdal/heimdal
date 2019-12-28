@@ -47,7 +47,7 @@ gss_export_name_composite(OM_uint32 *minor_status,
     if (input_name == GSS_C_NO_NAME)
         return GSS_S_BAD_NAME;
 
-    HEIM_SLIST_FOREACH(mn, &name->gn_mn, gmn_link) {
+    HEIM_TAILQ_FOREACH(mn, &name->gn_mn, gmn_link) {
         gssapi_mech_interface m = mn->gmn_mech;
 
         if (!m->gm_export_name_composite)

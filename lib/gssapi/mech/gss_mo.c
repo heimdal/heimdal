@@ -353,7 +353,7 @@ gss_inquire_mech_for_saslname(OM_uint32 *minor_status,
 
     *mech_type = NULL;
 
-    HEIM_SLIST_FOREACH(m, &_gss_mechs, gm_link) {
+    HEIM_TAILQ_FOREACH(m, &_gss_mechs, gm_link) {
         struct gss_mech_compat_desc_struct *gmc;
 
         /* Native SPI */
@@ -461,7 +461,7 @@ gss_indicate_mechs_by_attrs(OM_uint32 * minor_status,
 
     _gss_load_mech();
 
-    HEIM_SLIST_FOREACH(ms, &_gss_mechs, gm_link) {
+    HEIM_TAILQ_FOREACH(ms, &_gss_mechs, gm_link) {
 	gssapi_mech_interface mi = &ms->gm_mech;
         struct gss_mech_compat_desc_struct *gmc = mi->gm_compat;
         OM_uint32 tmp;
@@ -560,7 +560,7 @@ gss_inquire_attrs_for_mech(OM_uint32 * minor_status,
 
 	_gss_load_mech();
 
-	HEIM_SLIST_FOREACH(m, &_gss_mechs, gm_link)
+	HEIM_TAILQ_FOREACH(m, &_gss_mechs, gm_link)
 	    add_all_mo(&m->gm_mech, known_mech_attrs, GSS_MO_MA);
     }
 

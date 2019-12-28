@@ -34,7 +34,8 @@ gss_destroy_cred(void *status,
 		 gss_cred_id_t *cred_handle)
 {
     struct _gss_cred *cred;
-    struct _gss_mechanism_cred *mc;
+    struct _gss_mechanism_cred *mc, *next;
+
     OM_uint32 junk;
 
     if (cred_handle == NULL)
@@ -45,9 +46,8 @@ gss_destroy_cred(void *status,
     cred = (struct _gss_cred *)*cred_handle;
     *cred_handle = GSS_C_NO_CREDENTIAL;
 
-    while (HEIM_SLIST_FIRST(&cred->gc_mc)) {
-	mc = HEIM_SLIST_FIRST(&cred->gc_mc);
-	HEIM_SLIST_REMOVE_HEAD(&cred->gc_mc, gmc_link);
+    HEIM_TAILQ_FOREACH_SAFE(mc, &cred->gc_mc, gmc_link, next) {
+	HEIM_TAILQ_REMOVE(&cred->gc_mc, mc, gmc_link);
 	if (mc->gmc_mech->gm_destroy_cred)
 	    mc->gmc_mech->gm_destroy_cred(&junk, &mc->gmc_cred);
 	else

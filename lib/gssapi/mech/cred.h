@@ -28,12 +28,12 @@
  */
 
 struct _gss_mechanism_cred {
-	HEIM_SLIST_ENTRY(_gss_mechanism_cred) gmc_link;
+	HEIM_TAILQ_ENTRY(_gss_mechanism_cred) gmc_link;
 	gssapi_mech_interface	gmc_mech;	/* mechanism ops for MC */
 	gss_OID			gmc_mech_oid;	/* mechanism oid for MC */
 	gss_cred_id_t		gmc_cred;	/* underlying MC */
 };
-HEIM_SLIST_HEAD(_gss_mechanism_cred_list, _gss_mechanism_cred);
+HEIM_TAILQ_HEAD(_gss_mechanism_cred_list, _gss_mechanism_cred);
 
 struct _gss_cred {
 	struct _gss_mechanism_cred_list gc_mc;

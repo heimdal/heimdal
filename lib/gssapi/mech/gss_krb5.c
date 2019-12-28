@@ -225,7 +225,7 @@ gsskrb5_set_dns_canonicalize(int flag)
 	buffer.value = &b;
 	buffer.length = sizeof(b);
 
-	HEIM_SLIST_FOREACH(m, &_gss_mechs, gm_link) {
+	HEIM_TAILQ_FOREACH(m, &_gss_mechs, gm_link) {
 		if (m->gm_mech.gm_set_sec_context_option == NULL)
 			continue;
 		m->gm_mech.gm_set_sec_context_option(&junk, NULL,
@@ -500,7 +500,7 @@ gsskrb5_set_send_to_kdc(struct gsskrb5_send_to_kdc *c)
 	buffer.length = 0;
     }
 
-    HEIM_SLIST_FOREACH(m, &_gss_mechs, gm_link) {
+    HEIM_TAILQ_FOREACH(m, &_gss_mechs, gm_link) {
 	if (m->gm_mech.gm_set_sec_context_option == NULL)
 	    continue;
 	m->gm_mech.gm_set_sec_context_option(&junk, NULL,
@@ -535,7 +535,7 @@ gss_krb5_ccache_name(OM_uint32 *minor_status,
 	_mg_buffer_zero(&buffer);
     }
 
-    HEIM_SLIST_FOREACH(m, &_gss_mechs, gm_link) {
+    HEIM_TAILQ_FOREACH(m, &_gss_mechs, gm_link) {
 	if (m->gm_mech.gm_set_sec_context_option == NULL)
 	    continue;
 	m->gm_mech.gm_set_sec_context_option(&junk, NULL,
@@ -823,7 +823,7 @@ gsskrb5_set_default_realm(const char *realm)
 	buffer.value = rk_UNCONST(realm);
 	buffer.length = strlen(realm);
 
-	HEIM_SLIST_FOREACH(m, &_gss_mechs, gm_link) {
+	HEIM_TAILQ_FOREACH(m, &_gss_mechs, gm_link) {
 		if (m->gm_mech.gm_set_sec_context_option == NULL)
 			continue;
 		m->gm_mech.gm_set_sec_context_option(&junk, NULL,
@@ -885,7 +885,7 @@ gsskrb5_set_time_offset(int offset)
 	buffer.value = &o;
 	buffer.length = sizeof(o);
 
-	HEIM_SLIST_FOREACH(m, &_gss_mechs, gm_link) {
+	HEIM_TAILQ_FOREACH(m, &_gss_mechs, gm_link) {
 		if (m->gm_mech.gm_set_sec_context_option == NULL)
 			continue;
 		m->gm_mech.gm_set_sec_context_option(&junk, NULL,
@@ -908,7 +908,7 @@ gsskrb5_get_time_offset(int *offset)
 	buffer.value = &o;
 	buffer.length = sizeof(o);
 
-	HEIM_SLIST_FOREACH(m, &_gss_mechs, gm_link) {
+	HEIM_TAILQ_FOREACH(m, &_gss_mechs, gm_link) {
 		if (m->gm_mech.gm_set_sec_context_option == NULL)
 			continue;
 		maj_stat = m->gm_mech.gm_set_sec_context_option(&junk, NULL,
@@ -935,7 +935,7 @@ gsskrb5_plugin_register(struct gsskrb5_krb5_plugin *c)
     buffer.value = c;
     buffer.length = sizeof(*c);
 
-    HEIM_SLIST_FOREACH(m, &_gss_mechs, gm_link) {
+    HEIM_TAILQ_FOREACH(m, &_gss_mechs, gm_link) {
 	if (m->gm_mech.gm_set_sec_context_option == NULL)
 	    continue;
 	m->gm_mech.gm_set_sec_context_option(&junk, NULL,

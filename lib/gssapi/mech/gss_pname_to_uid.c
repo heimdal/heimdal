@@ -120,7 +120,7 @@ gss_localname(OM_uint32 *minor_status,
         if (major_status != GSS_S_COMPLETE)
             major_status = attr_localname(minor_status, mn, localname);
     } else {
-        HEIM_SLIST_FOREACH(mn, &name->gn_mn, gmn_link) {
+        HEIM_TAILQ_FOREACH(mn, &name->gn_mn, gmn_link) {
             major_status = mech_localname(minor_status, mn, localname);
             if (major_status != GSS_S_COMPLETE)
                 major_status = attr_localname(minor_status, mn, localname);

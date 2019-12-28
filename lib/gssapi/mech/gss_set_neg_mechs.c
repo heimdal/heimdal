@@ -55,7 +55,7 @@ gss_set_neg_mechs (OM_uint32 *minor_status,
     if (cred == NULL) {
 	struct _gss_mech_switch *m;
 
-        HEIM_SLIST_FOREACH(m, &_gss_mechs, gm_link) {
+        HEIM_TAILQ_FOREACH(m, &_gss_mechs, gm_link) {
 	    if (m->gm_mech.gm_set_neg_mechs == NULL)
 		continue;
 	    major = m->gm_mech.gm_set_neg_mechs(minor_status,
@@ -68,7 +68,7 @@ gss_set_neg_mechs (OM_uint32 *minor_status,
     } else {
 	struct _gss_mechanism_cred *mc;
 
-	HEIM_SLIST_FOREACH(mc, &cred->gc_mc, gmc_link) {
+	HEIM_TAILQ_FOREACH(mc, &cred->gc_mc, gmc_link) {
 	    gssapi_mech_interface m;
 
 	    m = mc->gmc_mech;

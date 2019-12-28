@@ -57,7 +57,7 @@ gss_export_name(OM_uint32 *minor_status,
 	 * one, otherwise export based on the first mechanism in our
 	 * list.
 	 */
-	mn = HEIM_SLIST_FIRST(&name->gn_mn);
+	mn = HEIM_TAILQ_FIRST(&name->gn_mn);
 	if (!mn) {
 		*minor_status = 0;
 		return (GSS_S_NAME_NOT_MN);

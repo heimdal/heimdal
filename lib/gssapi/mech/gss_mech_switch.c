@@ -33,7 +33,7 @@
 #define _PATH_GSS_MECH	"/etc/gss/mech"
 #endif
 
-struct _gss_mech_switch_list _gss_mechs = { NULL } ;
+struct _gss_mech_switch_list _gss_mechs = { NULL, NULL } ;
 gss_OID_set _gss_mech_oids;
 static HEIMDAL_MUTEX _gss_mech_mutex = HEIMDAL_MUTEX_INITIALIZER;
 
@@ -233,8 +233,16 @@ add_builtin(gssapi_mech_interface mech)
     if (m->gm_name_types == NULL)
 	gss_create_empty_oid_set(&minor_status, &m->gm_name_types);
 
-    HEIM_SLIST_INSERT_HEAD(&_gss_mechs, m, gm_link);
+    HEIM_TAILQ_INSERT_TAIL(&_gss_mechs, m, gm_link);
     return 0;
+}
+
+static void
+init_mech_switch_list(void *p)
+{
+    struct _gss_mech_switch_list *mechs = p;
+
+    HEIM_TAILQ_INIT(mechs);
 }
 
 /*
@@ -244,6 +252,7 @@ void
 _gss_load_mech(void)
 {
 	OM_uint32	major_status, minor_status;
+	static heim_base_once_t once = HEIM_BASE_ONCE_INIT;
 #ifdef HAVE_DLOPEN
 	FILE		*fp;
 	char		buf[256];
@@ -255,10 +264,11 @@ _gss_load_mech(void)
 	int		found;
 #endif
 
+	heim_base_once_f(&once, &_gss_mechs, init_mech_switch_list);
 
 	HEIMDAL_MUTEX_lock(&_gss_mech_mutex);
 
-	if (HEIM_SLIST_FIRST(&_gss_mechs)) {
+	if (!HEIM_TAILQ_EMPTY(&_gss_mechs)) {
 		HEIMDAL_MUTEX_unlock(&_gss_mech_mutex);
 		return;
 	}
@@ -305,7 +315,7 @@ _gss_load_mech(void)
 		 * Check for duplicates, already loaded mechs.
 		 */
 		found = 0;
-		HEIM_SLIST_FOREACH(m, &_gss_mechs, gm_link) {
+		HEIM_TAILQ_FOREACH(m, &_gss_mechs, gm_link) {
 			if (gss_oid_equal(&m->gm_mech.gm_mech_oid, mech_oid)) {
 				found = 1;
 				break;
@@ -424,7 +434,7 @@ _gss_load_mech(void)
 		if (m->gm_name_types == NULL)
 			gss_create_empty_oid_set(&minor_status, &m->gm_name_types);
 
-		HEIM_SLIST_INSERT_HEAD(&_gss_mechs, m, gm_link);
+		HEIM_TAILQ_INSERT_TAIL(&_gss_mechs, m, gm_link);
 		continue;
 
 	bad:
@@ -448,7 +458,7 @@ __gss_get_mechanism(gss_const_OID mech)
         struct _gss_mech_switch	*m;
 
 	_gss_load_mech();
-	HEIM_SLIST_FOREACH(m, &_gss_mechs, gm_link) {
+	HEIM_TAILQ_FOREACH(m, &_gss_mechs, gm_link) {
 		if (gss_oid_equal(&m->gm_mech.gm_mech_oid, mech))
 			return &m->gm_mech;
 	}
@@ -461,7 +471,7 @@ _gss_mg_support_mechanism(gss_const_OID mech)
 	struct _gss_mech_switch *m;
 
 	_gss_load_mech();
-	HEIM_SLIST_FOREACH(m, &_gss_mechs, gm_link) {
+	HEIM_TAILQ_FOREACH(m, &_gss_mechs, gm_link) {
 		if (gss_oid_equal(&m->gm_mech.gm_mech_oid, mech))
 			return m->gm_mech_oid;
 	}

@@ -39,7 +39,7 @@ _gss_mech_cred_find(gss_const_cred_id_t cred_handle, gss_OID mech_type)
 	if (cred == NULL)
 		return GSS_C_NO_CREDENTIAL;
 
-	HEIM_SLIST_FOREACH(mc, &cred->gc_mc, gmc_link) {
+	HEIM_TAILQ_FOREACH(mc, &cred->gc_mc, gmc_link) {
 		if (gss_oid_equal(mech_type, mc->gmc_mech_oid))
 			return mc->gmc_cred;
 	}

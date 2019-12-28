@@ -36,6 +36,81 @@
 #define	_HEIM_QUEUE_H_
 
 /*
+ * Singly-linked List definitions.
+ */
+#define	HEIM_SLIST_HEAD(name, type)						\
+struct name {								\
+	struct type *slh_first;	/* first element */			\
+}
+
+#define	HEIM_SLIST_HEAD_INITIALIZER(head)					\
+	{ NULL }
+
+#define	HEIM_SLIST_ENTRY(type)						\
+struct {								\
+	struct type *sle_next;	/* next element */			\
+}
+
+/*
+ * Singly-linked List functions.
+ */
+#define	HEIM_SLIST_INIT(head) do {						\
+	(head)->slh_first = NULL;					\
+} while (/*CONSTCOND*/0)
+
+#define	HEIM_SLIST_INSERT_AFTER(slistelm, elm, field) do {			\
+	(elm)->field.sle_next = (slistelm)->field.sle_next;		\
+	(slistelm)->field.sle_next = (elm);				\
+} while (/*CONSTCOND*/0)
+
+#define	HEIM_SLIST_INSERT_HEAD(head, elm, field) do {			\
+	(elm)->field.sle_next = (head)->slh_first;			\
+	(head)->slh_first = (elm);					\
+} while (/*CONSTCOND*/0)
+
+#define	HEIM_SLIST_REMOVE_HEAD(head, field) do {				\
+	(head)->slh_first = (head)->slh_first->field.sle_next;		\
+} while (/*CONSTCOND*/0)
+
+#define	HEIM_SLIST_REMOVE(head, elm, type, field) do {			\
+	if ((head)->slh_first == (elm)) {				\
+		HEIM_SLIST_REMOVE_HEAD((head), field);			\
+	}								\
+	else {								\
+		struct type *curelm = (head)->slh_first;		\
+		while(curelm->field.sle_next != (elm))			\
+			curelm = curelm->field.sle_next;		\
+		curelm->field.sle_next =				\
+		    curelm->field.sle_next->field.sle_next;		\
+	}								\
+} while (/*CONSTCOND*/0)
+
+#define	HEIM_SLIST_FOREACH(var, head, field)					\
+	for((var) = (head)->slh_first; (var); (var) = (var)->field.sle_next)
+
+/*
+ * Singly-linked List access methods.
+ */
+#define	HEIM_SLIST_EMPTY(head)	((head)->slh_first == NULL)
+#define	HEIM_SLIST_FIRST(head)	((head)->slh_first)
+#define	HEIM_SLIST_NEXT(elm, field)	((elm)->field.sle_next)
+
+/*
+ * Singly-linked List atomic functions.
+ */
+#include "heimbase.h"
+
+#define HEIM_SLIST_ATOMIC_INSERT_HEAD(head, elm, field) do {		\
+	(elm)->field.sle_next =						\
+	    heim_base_exchange_pointer(&(head)->slh_first, (elm));	\
+} while (/*CONSTCOND*/0)
+
+#define HEIM_SLIST_ATOMIC_FOREACH(var, head, field)			        \
+	for ((void)heim_base_exchange_pointer(&(var), (head)->slh_first);	\
+	     (var) != NULL;						        \
+	     (void)heim_base_exchange_pointer(&(var), (var)->field.sle_next))
+
+/*
  * Tail queue definitions.
  */
 #define	HEIM_TAILQ_HEAD(name, type)					\
@@ -146,10 +221,29 @@ struct {								\
 		(var);							\
 		(var) = ((var)->field.tqe_next))
 
+#define	HEIM_TAILQ_FOREACH_SAFE(var, head, field, next)			\
+	for ((var) = ((head)->tqh_first);                               \
+		(var) != NULL && ((next) = HEIM_TAILQ_NEXT(var, field), 1); \
+		(var) = (next))
+
 #define	HEIM_TAILQ_FOREACH_REVERSE(var, head, headname, field)		\
 	for ((var) = (*(((struct headname *)((head)->tqh_last))->tqh_last)); \
 		(var);							\
 		(var) = (*(((struct headname *)((var)->field.tqe_prev))->tqh_last)))
+
+#define	HEIM_TAILQ_FOREACH_REVERSE_SAFE(var, head, headname, field, prev)	\
+	for ((var) = HEIM_TAILQ_LAST((head), headname);			\
+		(var) && ((prev) = HEIM_TAILQ_PREV((var), headname, field), 1);\
+		(var) = (prev))
+
+#define	HEIM_TAILQ_CONCAT(head1, head2, field) do {			\
+	if (!HEIM_TAILQ_EMPTY(head2)) {					\
+		*(head1)->tqh_last = (head2)->tqh_first;		\
+		(head2)->tqh_first->field.tqe_prev = (head1)->tqh_last;	\
+		(head1)->tqh_last = (head2)->tqh_last;			\
+		HEIM_TAILQ_INIT((head2));				\
+	}								\
+} while (/*CONSTCOND*/0)
 
 /*
  * Tail queue access methods.

@@ -107,7 +107,7 @@ gss_store_cred_into(OM_uint32 *minor_status,
     major_status = GSS_S_NO_CRED;
     successes = 0;
 
-    HEIM_SLIST_FOREACH(mc, &cred->gc_mc, gmc_link) {
+    HEIM_TAILQ_FOREACH(mc, &cred->gc_mc, gmc_link) {
 	gssapi_mech_interface m = mc->gmc_mech;
 
 	if (m == NULL)

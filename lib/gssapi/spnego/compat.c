@@ -278,7 +278,6 @@ _gss_spnego_indicate_mechtypelist (OM_uint32 *minor_status,
     OM_uint32 ret, minor;
     OM_uint32 first_major = GSS_S_BAD_MECH, first_minor = 0;
     size_t i;
-    int present = FALSE;
     int added_negoex = FALSE;
 
     mechtypelist->len = 0;
@@ -296,30 +295,14 @@ _gss_spnego_indicate_mechtypelist (OM_uint32 *minor_status,
 		"NULL mech set returned by SPNEGO inquire/indicate mechs");
 
     /*
-     * Propose Kerberos mech first if we have Kerberos credentials/supported mechs
+     * Previously krb5 was tried explicitly, but now the internal mech
+     * list is reordered so that krb5 is first, this should no longer
+     * be required. This permits an application to specify another
+     * mechanism as preferred over krb5 using gss_set_neg_mechs().
      */
-
-    ret = gss_test_oid_set_member(minor_status, GSS_KRB5_MECHANISM,
-				  supported_mechs, &present);
-    if (ret == GSS_S_COMPLETE && present) {
+    for (i = 0; i < supported_mechs->count; i++) {
 	ret = add_mech_if_approved(minor_status, target_name,
 				   func, userptr, includeMSCompatOID,
-				   cred_handle, mechtypelist,
-				   GSS_KRB5_MECHANISM, &first_mech,
-				   &first_major, &first_minor,
-				   &added_negoex);
-    }
-
-    /*
-     * Now let's check all other mechs
-     */
-
-    for (i = 0; i < supported_mechs->count; i++) {
-	if (gss_oid_equal(&supported_mechs->elements[i], GSS_KRB5_MECHANISM))
-	    continue;
-
-	ret = add_mech_if_approved(minor_status, target_name,
-				   func, userptr, FALSE,
 				   cred_handle, mechtypelist,
 				   &supported_mechs->elements[i],
 				   &first_mech,

@@ -72,6 +72,9 @@ static int help_flag	= 0;
 static krb5_context context;
 static krb5_enctype limit_enctype = 0;
 
+static gss_OID_desc test_negoex_1_mech = { 6, "\x69\x85\xa2\xc0\xac\x66" };
+static gss_OID_desc test_negoex_2_mech = { 6, "\x69\x84\xb0\xd1\xa8\x2c" };
+
 static struct {
     const char *name;
     gss_OID oid;
@@ -79,7 +82,9 @@ static struct {
     { "krb5", NULL /* GSS_KRB5_MECHANISM */ },
     { "spnego", NULL /* GSS_SPNEGO_MECHANISM */ },
     { "ntlm", NULL /* GSS_NTLM_MECHANISM */ },
-    { "sasl-digest-md5", NULL /* GSS_SASL_DIGEST_MD5_MECHANISM */ }
+    { "sasl-digest-md5", NULL /* GSS_SASL_DIGEST_MD5_MECHANISM */ },
+    { "test_negoex_1", NULL },
+    { "test_negoex_2", NULL },
 };
 
 static void
@@ -89,6 +94,8 @@ init_o2n(void)
     o2n[1].oid = GSS_SPNEGO_MECHANISM;
     o2n[2].oid = GSS_NTLM_MECHANISM;
     o2n[3].oid = GSS_SASL_DIGEST_MD5_MECHANISM;
+    o2n[4].oid = &test_negoex_1_mech;
+    o2n[5].oid = &test_negoex_2_mech;
 }
 
 static gss_OID
@@ -98,7 +105,7 @@ string_to_oid(const char *name)
     for (i = 0; i < sizeof(o2n)/sizeof(o2n[0]); i++)
 	if (strcasecmp(name, o2n[i].name) == 0)
 	    return o2n[i].oid;
-    errx(1, "name '%s' not unknown", name);
+    errx(1, "name '%s' not known", name);
 }
 
 static void
@@ -612,7 +619,7 @@ main(int argc, char **argv)
     gss_cred_id_t client_cred = GSS_C_NO_CREDENTIAL, deleg_cred = GSS_C_NO_CREDENTIAL;
     gss_name_t cname = GSS_C_NO_NAME;
     gss_buffer_desc credential_data = GSS_C_EMPTY_BUFFER;
-    gss_OID_desc oids[4];
+    gss_OID_desc oids[6];
     gss_OID_set_desc mechoid_descs;
     gss_OID_set mechoids = GSS_C_NO_OID_SET;
     gss_key_value_element_desc client_cred_elements[2];

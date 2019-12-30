@@ -30,8 +30,10 @@
 
 #include "mech_locl.h"
 
-static gss_cred_id_t
-_gss_mech_cred_find(gss_const_cred_id_t cred_handle, gss_OID mech_type)
+gss_cred_id_t
+_gss_mg_find_mech_cred(
+    gss_const_cred_id_t cred_handle,
+    gss_const_OID mech_type)
 {
 	struct _gss_cred *cred = (struct _gss_cred *)cred_handle;
 	struct _gss_mechanism_cred *mc;
@@ -227,7 +229,7 @@ gss_init_sec_context(OM_uint32 * minor_status,
 	if (m->gm_flags & GM_USE_MG_CRED)
 		cred_handle = initiator_cred_handle;
 	else
-		cred_handle = _gss_mech_cred_find(initiator_cred_handle, mech_type);
+		cred_handle = _gss_mg_find_mech_cred(initiator_cred_handle, mech_type);
 
         if (initiator_cred_handle != GSS_C_NO_CREDENTIAL &&
             cred_handle == NULL) {

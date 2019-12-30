@@ -173,6 +173,9 @@ mechsrc = \
 	mech/gss_wrap.c \
 	mech/gss_wrap_size_limit.c \
 	mech/gss_inquire_sec_context_by_oid.c \
+	mech/gssspi_exchange_meta_data.c \
+	mech/gssspi_query_mechanism_info.c \
+	mech/gssspi_query_meta_data.c \
 	mech/mech_switch.h \
 	mech/mech_locl.h \
 	mech/name.h \
@@ -185,7 +188,10 @@ spnegosrc = \
 	spnego/cred_stubs.c \
 	spnego/external.c \
 	spnego/init_sec_context.c \
-	spnego/spnego_locl.h
+	spnego/negoex_ctx.c \
+	spnego/negoex_util.c \
+	spnego/spnego_locl.h \
+	spnego/negoex_locl.h
 
 ntlmsrc = \
 	ntlm/accept_sec_context.c \
@@ -258,6 +264,11 @@ $(OBJ)\gkrb5_err.c $(OBJ)\gkrb5_err.h: krb5\gkrb5_err.et
 	$(BINDIR)\compile_et.exe $(SRCDIR)\krb5\gkrb5_err.et
 	cd $(SRCDIR)
 
+$(OBJ)\negoex_err.c $(OBJ)\negoex_err.h: spnego\negoex_err.et
+	cd $(OBJ)
+	$(BINDIR)\compile_et.exe $(SRCDIR)\spnego\negoex_err.et
+	cd $(SRCDIR)
+
 INCFILES=				\
     $(INCDIR)\gssapi.h			\
     $(INCDIR)\gssapi\gssapi.h		\
@@ -270,6 +281,7 @@ INCFILES=				\
     $(OBJ)\spnego\spnego-private.h	\
     $(OBJ)\krb5\gsskrb5-private.h	\
     $(OBJ)\gkrb5_err.h			\
+    $(OBJ)\negoex_err.h			\
     $(OBJ)\gssapi\gssapi_asn1.h		\
     $(OBJ)\gssapi\gssapi_asn1-priv.h	\
     $(OBJ)\spnego\spnego_asn1.h		\
@@ -409,12 +421,17 @@ libgssapi_OBJs = \
 	$(OBJ)\mech/gss_wrap.obj \
 	$(OBJ)\mech/gss_wrap_size_limit.obj \
 	$(OBJ)\mech/gss_inquire_sec_context_by_oid.obj \
+	$(OBJ)\mech/gssspi_exchange_meta_data.obj \
+	$(OBJ)\mech/gssspi_query_mechanism_info.obj \
+	$(OBJ)\mech/gssspi_query_meta_data.obj \
 	$(OBJ)\spnego/accept_sec_context.obj \
 	$(OBJ)\spnego/compat.obj \
 	$(OBJ)\spnego/context_stubs.obj \
 	$(OBJ)\spnego/cred_stubs.obj \
 	$(OBJ)\spnego/external.obj \
 	$(OBJ)\spnego/init_sec_context.obj \
+	$(OBJ)\spnego/negoex_ctx.obj \
+	$(OBJ)\spnego/negoex_util.obj \
 	$(OBJ)\ntlm/accept_sec_context.obj \
 	$(OBJ)\ntlm/acquire_cred.obj \
 	$(OBJ)\ntlm/add_cred.obj \
@@ -447,6 +464,7 @@ libgssapi_OBJs = \
 	$(OBJ)\ntlm/set_sec_context_option.obj \
 	$(OBJ)\ntlm/kdc.obj \
 	$(OBJ)\gkrb5_err.obj \
+	$(OBJ)\negoex_err.obj \
 	$(spnego_files:.x=.obj) \
 	$(gssapi_files:.x=.obj)
 
@@ -588,6 +606,7 @@ $(OBJ)\gss-commands.c $(OBJ)\gss-commands.h: gss-commands.in
 
 (generate-obj-macro "libgssapi_OBJs"
 	            (concat "\t$(OBJ)\\gkrb5_err.obj \\\n"
+                            "\t$(OBJ)\\negoex_err.obj \\\n"
                             "\t$(spnego_files:.x=.obj) \\\n"
                             "\t$(gssapi_files:.x=.obj)")
                     "krb5src" "mechsrc" "spnegosrc" "ntlmsrc")

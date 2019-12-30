@@ -147,3 +147,62 @@ _gss_copy_buffer(OM_uint32 *minor_status,
 	return (GSS_S_COMPLETE);
 }
 
+void
+_gss_mg_encode_le_uint32(uint32_t n, uint8_t *p)
+{
+    p[0] = (n >> 0 ) & 0xFF;
+    p[1] = (n >> 8 ) & 0xFF;
+    p[2] = (n >> 16) & 0xFF;
+    p[3] = (n >> 24) & 0xFF;
+}
+
+void
+_gss_mg_decode_le_uint32(const void *ptr, uint32_t *n)
+{
+    const uint8_t *p = ptr;
+    *n = (p[0] << 0) | (p[1] << 8) | (p[2] << 16) | (p[3] << 24);
+}
+
+void
+_gss_mg_encode_be_uint32(uint32_t n, uint8_t *p)
+{
+    p[0] = (n >> 24) & 0xFF;
+    p[1] = (n >> 16) & 0xFF;
+    p[2] = (n >> 8 ) & 0xFF;
+    p[3] = (n >> 0 ) & 0xFF;
+}
+
+void
+_gss_mg_decode_be_uint32(const void *ptr, uint32_t *n)
+{
+    const uint8_t *p = ptr;
+    *n = (p[0] << 24) | (p[1] << 16) | (p[2] << 8) | (p[3] << 0);
+}
+
+void
+_gss_mg_encode_le_uint16(uint16_t n, uint8_t *p)
+{
+    p[0] = (n >> 0 ) & 0xFF;
+    p[1] = (n >> 8 ) & 0xFF;
+}
+
+void
+_gss_mg_decode_le_uint16(const void *ptr, uint16_t *n)
+{
+    const uint8_t *p = ptr;
+    *n = (p[0] << 0) | (p[1] << 8);
+}
+
+void
+_gss_mg_encode_be_uint16(uint16_t n, uint8_t *p)
+{
+    p[0] = (n >> 24) & 0xFF;
+    p[1] = (n >> 16) & 0xFF;
+}
+
+void
+_gss_mg_decode_be_uint16(const void *ptr, uint16_t *n)
+{
+    const uint8_t *p = ptr;
+    *n = (p[0] << 24) | (p[1] << 16);
+}

@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2005 Doug Rabson
+ * Copyright (c) 2019 AuriStor, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -22,22 +22,34 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- *	$FreeBSD: src/lib/libgssapi/utils.h,v 1.1 2005/12/29 14:40:20 dfr Exp $
- *	$Id$
  */
 
-OM_uint32 _gss_free_oid(OM_uint32 *, gss_OID);
-OM_uint32 _gss_intern_oid(OM_uint32 *, gss_const_OID, gss_OID *);
-OM_uint32 _gss_copy_buffer(OM_uint32 *minor_status,
-    const gss_buffer_t from_buf, gss_buffer_t to_buf);
+#include "mech_locl.h"
 
-void _gss_mg_encode_le_uint32(uint32_t n, uint8_t *p);
-void _gss_mg_decode_le_uint32(const void *ptr, uint32_t *n);
-void _gss_mg_encode_be_uint32(uint32_t n, uint8_t *p);
-void _gss_mg_decode_be_uint32(const void *ptr, uint32_t *n);
+GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL
+gssspi_query_mechanism_info(
+    OM_uint32 *minor_status,
+    gss_const_OID mech_type,
+    unsigned char auth_scheme[16])
+{
+    OM_uint32 major_status;
+    gssapi_mech_interface m;
 
-void _gss_mg_encode_le_uint16(uint16_t n, uint8_t *p);
-void _gss_mg_decode_le_uint16(const void *ptr, uint16_t *n);
-void _gss_mg_encode_be_uint16(uint16_t n, uint8_t *p);
-void _gss_mg_decode_be_uint16(const void *ptr, uint16_t *n);
+    *minor_status = 0;
+
+    if (mech_type == GSS_C_NO_OID)
+	return GSS_S_BAD_MECH;
+
+    m = __gss_get_mechanism(mech_type);
+    if (m == NULL || m->gm_query_mechanism_info == NULL)
+	return GSS_S_BAD_MECH;
+
+    major_status = m->gm_query_mechanism_info(minor_status,
+					      mech_type,
+					      auth_scheme);
+
+    if (major_status != GSS_S_COMPLETE)
+	_gss_mg_error(m, *minor_status);
+
+    return major_status;
+}

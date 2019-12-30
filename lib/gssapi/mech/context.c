@@ -37,6 +37,7 @@
 #include "heim_threads.h"
 #include <krb5.h>
 #include "krb5_locl.h"
+#include "negoex_err.h"
 
 struct mg_thread_ctx {
     gss_OID mech;
@@ -99,6 +100,8 @@ _gss_mechglue_thread(void)
 	    return NULL;
 	}
 
+	krb5_add_et_list(ctx->context, initialize_ngex_error_table_r);
+
 	HEIMDAL_setspecific(context_key, ctx, ret);
 	if (ret) {
 	    krb5_free_context(ctx->context);
@@ -107,6 +110,16 @@ _gss_mechglue_thread(void)
 	}
     }
     return ctx;
+}
+
+krb5_context
+_gss_mg_krb5_context(void)
+{
+    struct mg_thread_ctx *mg;
+
+    mg = _gss_mechglue_thread();
+
+    return mg ? mg->context : NULL;
 }
 
 OM_uint32

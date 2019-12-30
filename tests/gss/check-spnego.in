@@ -62,6 +62,7 @@ context="${TESTS_ENVIRONMENT} ../../lib/gssapi/test_context"
 KRB5_CONFIG="${objdir}/krb5.conf"
 export KRB5_CONFIG
 
+KRB5CCNAME=${cache}
 KRB5_KTNAME="${keytab}"
 export KRB5_KTNAME
 KRB5CCNAME="${cache}"

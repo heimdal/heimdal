@@ -68,48 +68,20 @@ OM_uint32 GSSAPI_CALLCONV _gss_spnego_acquire_cred_from
     )
 {
     OM_uint32 ret, tmp;
-    gss_OID_set_desc actual_desired_mechs;
     gss_OID_set mechs;
-    size_t i, j;
 
     *output_cred_handle = GSS_C_NO_CREDENTIAL;
 
-    ret = gss_indicate_mechs(minor_status, &mechs);
+    ret = _gss_spnego_indicate_mechs(minor_status, &mechs);
     if (ret != GSS_S_COMPLETE)
 	return ret;
 
-    /* Remove ourselves from this list */
-    actual_desired_mechs.count = mechs->count;
-    actual_desired_mechs.elements = malloc(actual_desired_mechs.count *
-					   sizeof(gss_OID_desc));
-    if (actual_desired_mechs.elements == NULL) {
-	*minor_status = ENOMEM;
-	ret = GSS_S_FAILURE;
-	goto out;
-    }
-
-    for (i = 0, j = 0; i < mechs->count; i++) {
-	if (gss_oid_equal(&mechs->elements[i], GSS_SPNEGO_MECHANISM))
-	    continue;
-
-	actual_desired_mechs.elements[j] = mechs->elements[i];
-	j++;
-    }
-    actual_desired_mechs.count = j;
-
     ret = gss_acquire_cred_from(minor_status, desired_name,
-				time_req, &actual_desired_mechs,
+				time_req, mechs,
 				cred_usage, cred_store,
 				output_cred_handle,
 				actual_mechs, time_rec);
     gss_release_oid_set(&tmp, &mechs);
-    if (actual_desired_mechs.elements != NULL) {
-	free(actual_desired_mechs.elements);
-    }
-
-    if (ret != GSS_S_COMPLETE) {
-	_gss_spnego_release_cred(&tmp, output_cred_handle);
-    }
 
     return ret;
 }
@@ -235,9 +207,6 @@ _gss_spnego_set_neg_mechs (OM_uint32 *minor_status,
 		    break;
 	    }
 	}
-
-	/* for inner negotiation mechs, such as NegoEx */
-	(void) gss_set_neg_mechs(&minor, cred_handle, mech_list);
     } else {
 	/*
 	 * RFC 4178 says that GSS_Set_neg_mechs() on NULL credential sets

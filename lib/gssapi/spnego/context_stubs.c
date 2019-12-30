@@ -32,40 +32,6 @@
 
 #include "spnego_locl.h"
 
-static OM_uint32
-spnego_supported_mechs(OM_uint32 *minor_status, gss_OID_set *mechs)
-{
-    OM_uint32 ret, junk;
-    gss_OID_set m;
-    size_t i;
-
-    ret = gss_indicate_mechs(minor_status, &m);
-    if (ret != GSS_S_COMPLETE)
-	return ret;
-
-    ret = gss_create_empty_oid_set(minor_status, mechs);
-    if (ret != GSS_S_COMPLETE) {
-	gss_release_oid_set(&junk, &m);
-	return ret;
-    }
-
-    for (i = 0; i < m->count; i++) {
-	if (gss_oid_equal(&m->elements[i], GSS_SPNEGO_MECHANISM))
-	    continue;
-
-	ret = gss_add_oid_set_member(minor_status, &m->elements[i], mechs);
-	if (ret) {
-	    gss_release_oid_set(&junk, &m);
-	    gss_release_oid_set(&junk, mechs);
-	    return ret;
-	}
-    }
-    gss_release_oid_set(&junk, &m);
-    return ret;
-}
-
-
-
 OM_uint32 GSSAPI_CALLCONV _gss_spnego_process_context_token
            (OM_uint32 *minor_status,
             gss_const_ctx_id_t context_handle,
@@ -450,7 +416,7 @@ OM_uint32 GSSAPI_CALLCONV _gss_spnego_import_sec_context (
 	return ret;
     }
 
-    ctx->open = 1;
+    ctx->flags.open = 1;
     /* don't bother filling in the rest of the fields */
 
     HEIMDAL_MUTEX_unlock(&ctx->ctx_id_mutex);
@@ -472,7 +438,7 @@ OM_uint32 GSSAPI_CALLCONV _gss_spnego_inquire_names_for_mech (
 
     *name_types = NULL;
 
-    ret = spnego_supported_mechs(minor_status, &mechs);
+    ret = _gss_spnego_indicate_mechs(minor_status, &mechs);
     if (ret != GSS_S_COMPLETE)
 	return ret;
 

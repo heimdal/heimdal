@@ -49,6 +49,7 @@ CLEANFILES =			\
 	getarg.h		\
 	glob.h			\
 	gssapi.h		\
+	gssapi_asn1.h		\
 	gssapi_mech.h		\
 	hdb-private.h		\
 	hdb-protos.h		\

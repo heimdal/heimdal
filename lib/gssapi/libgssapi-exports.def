@@ -195,3 +195,6 @@ EXPORTS
 	__gss_c_ma_pfs_oid_desc	DATA
 	__gss_c_ma_compress_oid_desc	DATA
 	__gss_c_ma_ctx_trans_oid_desc	DATA
+	__gss_c_ma_negoex_and_spnego_oid_desc	DATA
+	__gss_c_inq_negoex_key_oid_desc	DATA
+	__gss_c_inq_negoex_verify_key_oid_desc	DATA

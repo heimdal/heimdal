@@ -10,6 +10,7 @@ endif
 
 AM_CPPFLAGS += -I$(top_srcdir)/lib/hx509 \
 	       -I$(srcdir)/libtommath -DUSE_HCRYPTO_LTM=1 \
+	       -I$(srcdir)/x25519 \
 	       -I$(srcdir)/..
 
 lib_LTLIBRARIES = libhcrypto.la
@@ -55,9 +56,10 @@ hcryptoinclude_HEADERS =	\
 	rsa.h			\
 	sha.h			\
 	ui.h			\
-	undef.h
+	undef.h			\
+	x25519_ref10.h
 
-install-build-headers:: $(hcryptoinclude_HEADERS)
+install-build-headers:: $(hcryptoinclude_HEADERS) $(x25519include_HEADERS)
 	@foo='$(hcryptoinclude_HEADERS)'; \
 	for f in $$foo; do \
 		f=`basename $$f`; \
@@ -107,6 +109,7 @@ test_rand_LDADD = $(LDADD) -lm
 
 libhcrypto_la_SOURCES =	\
 	$(ltmsources)	\
+	$(x25519sources)\
 	aes.c		\
 	aes.h		\
 	bn.c		\
@@ -329,6 +332,10 @@ ltmsources = \
 	libtommath/bn_s_mp_sub.c \
 	libtommath/bn_s_mp_toom_mul.c \
 	libtommath/bn_s_mp_toom_sqr.c
+
+x25519sources = \
+	x25519/ed25519_ref10.c \
+	x25519/x25519_ref10.c
 
 $(libhcrypto_la_OBJECTS) $(test_rand_OBJECTS): hcrypto-link
 

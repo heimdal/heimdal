@@ -29,7 +29,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 # 
 
-SUBDIRS=libtommath
+SUBDIRS=libtommath x25519
 
 RELDIR=lib\hcrypto
 
@@ -87,7 +87,8 @@ INCFILES=	\
 	$(HCRYPTOINCLUDEDIR)\rsa.h	\
 	$(HCRYPTOINCLUDEDIR)\sha.h	\
 	$(HCRYPTOINCLUDEDIR)\ui.h	\
-	$(HCRYPTOINCLUDEDIR)\undef.h
+	$(HCRYPTOINCLUDEDIR)\undef.h	\
+	$(HCRYPTOINCLUDEDIR)\x25519_ref10.h	\
 
 mkincdir:
 !if !exist($(HCRYPTOINCLUDEDIR))

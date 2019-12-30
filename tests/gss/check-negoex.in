@@ -178,6 +178,88 @@ echo "test_negoex_1 alert from initiator to acceptor"
 	host@host.test.h5l.se || \
 	{ exitcode=1 ; echo test failed; }
 
+unset GSS_MECH_CONFIG
+
+echo "======test context building for sanon-x25519"
+for mech in sanon-x25519 sanon-x25519iov spnego spnegoiov; do
+	iov=""
+	if [ "$mech" = "sanon-x25519iov" ] ; then
+	    mech="sanon-x25519"
+	    iov="--iov"
+	fi
+	if [ "$mech" = "spnegoiov" ] ; then
+	    mech="spnego"
+	    iov="--iov"
+	fi
+
+	echo "${mech} anon-flag ${iov}" ; > messages.log
+	${context} --mech-type=${mech} \
+	    --anonymous \
+	    --ret-mech-type=sanon-x25519 \
+	    --channel-bindings=negoex_sanon_test_h5l_se \
+	    --wrapunwrap ${iov} \
+	    host@lucid.test.h5l.se || \
+		{ eval "$testfailed"; }
+
+	echo "${mech} anon-initiator ${iov}" ; > messages.log
+	${context} --mech-type=${mech} \
+	    --client-name=WELLKNOWN/ANONYMOUS@WELLKNOWN:ANONYMOUS \
+	    --ret-mech-type=sanon-x25519 \
+	    --channel-bindings=negoex_sanon_test_h5l_se \
+	    --wrapunwrap ${iov} \
+	    host@lucid.test.h5l.se || \
+		{ eval "$testfailed"; }
+
+	echo "${mech} anon-acceptor ${iov}" ; > messages.log
+	${context} --mech-type=${mech} \
+	    --ret-mech-type=sanon-x25519 \
+	    --channel-bindings=negoex_sanon_test_h5l_se \
+	    --wrapunwrap ${iov} \
+	    WELLKNOWN@ANONYMOUS || \
+		{ eval "$testfailed"; }
+done
+
+echo "======export-import-context for sanon-x25519"
+for mech in sanon-x25519 sanon-x25519iov spnego spnegoiov; do
+	iov=""
+	if [ "$mech" = "sanon-x25519iov" ] ; then
+	    mech="sanon-x25519"
+	    iov="--iov"
+	fi
+	if [ "$mech" = "spnegoiov" ] ; then
+	    mech="spnego"
+	    iov="--iov"
+	fi
+
+	echo "${mech}: export-import-context ${iov}" ; > messages.log
+	${context} \
+	    --mech-type=${mech} \
+	    --anonymous \
+	    --export-import-context \
+	    --wrapunwrap ${iov} \
+	    --name-type=hostbased-service host@lucid.test.h5l.se || \
+	    { eval "$testfailed"; }
+
+done
+
+echo "======dce-style for sanon-x25519"
+for mech in spnego spnegoiov; do
+	iov=""
+	if [ "$mech" = "spnegoiov" ] ; then
+	    mech="spnego"
+	    iov="--iov"
+	fi
+
+	echo "${mech}: dce-style ${iov}" ; > messages.log
+	${context} \
+	    --mech-type=${mech} \
+	    --anonymous --dce-style \
+	    --wrapunwrap ${iov} \
+	    --name-type=hostbased-service host@lucid.test.h5l.se || \
+	    { eval "$testfailed"; }
+
+done
+
 trap "" EXIT
 
 exit $exitcode

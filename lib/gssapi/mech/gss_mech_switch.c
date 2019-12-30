@@ -296,10 +296,8 @@ _gss_load_mech(void)
 
 #ifdef HAVE_DLOPEN
 	fp = fopen(conf ? conf : _PATH_GSS_MECH, "r");
-	if (!fp) {
-		HEIMDAL_MUTEX_unlock(&_gss_mech_mutex);
-		return;
-	}
+	if (!fp)
+		goto out;
 	rk_cloexec_file(fp);
 
 	while (fgets(buf, sizeof(buf), fp)) {
@@ -460,6 +458,9 @@ _gss_load_mech(void)
 	}
 	fclose(fp);
 #endif
+
+out:
+	add_builtin(__gss_sanon_initialize());
 	HEIMDAL_MUTEX_unlock(&_gss_mech_mutex);
 }
 

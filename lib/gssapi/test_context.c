@@ -54,6 +54,7 @@ static int iov_flag = 0;
 static int aead_flag = 0;
 static int getverifymic_flag = 0;
 static int deleg_flag = 0;
+static int anon_flag = 0;
 static int policy_deleg_flag = 0;
 static int server_no_deleg_flag = 0;
 static int ei_cred_flag = 0;
@@ -69,6 +70,7 @@ static char *limit_enctype_string = NULL;
 static int version_flag = 0;
 static int verbose_flag = 0;
 static int help_flag	= 0;
+static char *channel_bindings = NULL;
 
 static krb5_context context;
 static krb5_enctype limit_enctype = 0;
@@ -84,6 +86,7 @@ static struct {
     { "spnego", NULL /* GSS_SPNEGO_MECHANISM */ },
     { "ntlm", NULL /* GSS_NTLM_MECHANISM */ },
     { "sasl-digest-md5", NULL /* GSS_SASL_DIGEST_MD5_MECHANISM */ },
+    { "sanon-x25519", NULL /* GSS_SASL_SANON_X25519_MECHANISM */ },
     { "test_negoex_1", NULL },
     { "test_negoex_2", NULL },
 };
@@ -95,8 +98,9 @@ init_o2n(void)
     o2n[1].oid = GSS_SPNEGO_MECHANISM;
     o2n[2].oid = GSS_NTLM_MECHANISM;
     o2n[3].oid = GSS_SASL_DIGEST_MD5_MECHANISM;
-    o2n[4].oid = &test_negoex_1_mech;
-    o2n[5].oid = &test_negoex_2_mech;
+    o2n[4].oid = GSS_SANON_X25519_MECHANISM;
+    o2n[5].oid = &test_negoex_1_mech;
+    o2n[6].oid = &test_negoex_2_mech;
 }
 
 static gss_OID
@@ -166,6 +170,8 @@ loop(gss_OID mechoid,
     OM_uint32 flags = 0, ret_cflags, ret_sflags;
     gss_OID actual_mech_client;
     gss_OID actual_mech_server;
+    struct gss_channel_bindings_struct channel_bindings_data;
+    gss_channel_bindings_t channel_bindings_p = GSS_C_NO_CHANNEL_BINDINGS;
 
     *actual_mech = GSS_C_NO_OID;
 
@@ -175,6 +181,8 @@ loop(gss_OID mechoid,
 
     if (mutual_auth_flag)
 	flags |= GSS_C_MUTUAL_FLAG;
+    if (anon_flag)
+	flags |= GSS_C_ANON_FLAG;
     if (dce_style_flag)
 	flags |= GSS_C_DCE_STYLE;
     if (deleg_flag)
@@ -195,6 +203,12 @@ loop(gss_OID mechoid,
     input_token.length = 0;
     input_token.value = NULL;
 
+    if (channel_bindings) {
+	channel_bindings_data.application_data.length = strlen(channel_bindings);
+	channel_bindings_data.application_data.value = channel_bindings;
+	channel_bindings_p = &channel_bindings_data;
+    }
+
     while (!server_done || !client_done) {
 	num_loops++;
 
@@ -207,7 +221,7 @@ loop(gss_OID mechoid,
 					mechoid,
 					flags,
 					0,
-					NULL,
+					channel_bindings_p,
 					&input_token,
 					&actual_mech_client,
 					&output_token,
@@ -235,7 +249,7 @@ loop(gss_OID mechoid,
 					  sctx,
 					  GSS_C_NO_CREDENTIAL,
 					  &output_token,
-					  GSS_C_NO_CHANNEL_BINDINGS,
+					  channel_bindings_p,
 					  NULL,
 					  &actual_mech_server,
 					  &input_token,
@@ -283,6 +297,34 @@ loop(gss_OID mechoid,
 	printf("server time offset: %d\n", server_time_offset);
 	printf("client time offset: %d\n", client_time_offset);
 	printf("num loops %d\n", num_loops);
+	printf("flags: ");
+	if (ret_cflags & GSS_C_DELEG_FLAG)
+	    printf("deleg ");
+	if (ret_cflags & GSS_C_MUTUAL_FLAG)
+	    printf("mutual ");
+	if (ret_cflags & GSS_C_REPLAY_FLAG)
+	    printf("replay ");
+	if (ret_cflags & GSS_C_SEQUENCE_FLAG)
+	    printf("sequence ");
+	if (ret_cflags & GSS_C_CONF_FLAG)
+	    printf("conf ");
+	if (ret_cflags & GSS_C_INTEG_FLAG)
+	    printf("integ ");
+	if (ret_cflags & GSS_C_ANON_FLAG)
+	    printf("anon ");
+	if (ret_cflags & GSS_C_PROT_READY_FLAG)
+	    printf("prot-ready ");
+	if (ret_cflags & GSS_C_TRANS_FLAG)
+	    printf("trans ");
+	if (ret_cflags & GSS_C_DCE_STYLE)
+	    printf("dce-style ");
+	if (ret_cflags & GSS_C_IDENTIFY_FLAG)
+	    printf("identify " );
+	if (ret_cflags & GSS_C_EXTENDED_ERROR_FLAG)
+	    printf("extended-error " );
+	if (ret_cflags & GSS_C_DELEG_POLICY_FLAG)
+	    printf("deleg-policy " );
+	printf("\n");
     }
 }
 
@@ -580,6 +622,8 @@ static struct getargs args[] = {
     {"client-keytab",0, arg_string,	&client_keytab, "client keytab", NULL },
     {"client-name", 0,  arg_string,     &client_name, "client name", NULL },
     {"client-password", 0,  arg_string, &client_password, "client password", NULL },
+    {"anonymous", 0,	arg_flag,	&anon_flag, "anonymous auth", NULL },
+    {"channel-bindings", 0, arg_string,	&channel_bindings, "channel binding data", NULL },
     {"limit-enctype",0,	arg_string,	&limit_enctype_string, "enctype", NULL },
     {"dce-style",0,	arg_flag,	&dce_style_flag, "dce-style", NULL },
     {"wrapunwrap",0,	arg_flag,	&wrapunwrap_flag, "wrap/unwrap", NULL },
@@ -622,7 +666,7 @@ main(int argc, char **argv)
     gss_cred_id_t client_cred = GSS_C_NO_CREDENTIAL, deleg_cred = GSS_C_NO_CREDENTIAL;
     gss_name_t cname = GSS_C_NO_NAME;
     gss_buffer_desc credential_data = GSS_C_EMPTY_BUFFER;
-    gss_OID_desc oids[6];
+    gss_OID_desc oids[7];
     gss_OID_set_desc mechoid_descs;
     gss_OID_set mechoids = GSS_C_NO_OID_SET;
     gss_key_value_element_desc client_cred_elements[2];
@@ -778,7 +822,7 @@ main(int argc, char **argv)
 					 &client_cred,
 					 &actual_mechs,
 					 NULL);
-	if (GSS_ERROR(maj_stat))
+	if (GSS_ERROR(maj_stat) && !anon_flag)
 	    errx(1, "gss_acquire_cred: %s",
 		 gssapi_err(maj_stat, min_stat, GSS_C_NO_OID));
     }
@@ -790,6 +834,17 @@ main(int argc, char **argv)
 	for (i = 0; i < actual_mechs->count; i++)
 	    printf(" %s", oid_to_string(&actual_mechs->elements[i]));
 	printf("\n");
+    }
+
+    if (gss_oid_equal(mechoid, GSS_SPNEGO_MECHANISM) && mechs_string) {
+	maj_stat = gss_set_neg_mechs(&min_stat, client_cred, mechoids);
+	if (GSS_ERROR(maj_stat))
+	    errx(1, "gss_set_neg_mechs: %s",
+		 gssapi_err(maj_stat, min_stat, GSS_SPNEGO_MECHANISM));
+
+        mechoid_descs.elements = GSS_SPNEGO_MECHANISM;
+        mechoid_descs.count = 1;
+        mechoids = &mechoid_descs;
     }
 
     if (ei_cred_flag) {

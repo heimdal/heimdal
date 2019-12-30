@@ -168,6 +168,7 @@ EXPORTS
 	__gss_krb5_mechanism_oid_desc	DATA
 	__gss_ntlm_mechanism_oid_desc	DATA
 	__gss_spnego_mechanism_oid_desc	DATA
+	__gss_sanon_x25519_mechanism_oid_desc	DATA
 	__gss_c_ma_mech_concrete_oid_desc	DATA
 	__gss_c_ma_mech_pseudo_oid_desc	DATA
 	__gss_c_ma_mech_composite_oid_desc	DATA

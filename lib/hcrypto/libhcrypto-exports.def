@@ -350,4 +350,5 @@ EXPORTS
 	hc_EVP_CipherFinal_ex
 
         hc_hcrypto_validate
-
+	hc_hcrypto_scalarmult_curve25519
+	hc_hcrypto_scalarmult_curve25519_base

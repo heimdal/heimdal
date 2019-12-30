@@ -37,14 +37,17 @@ NegTokenInit ::= SEQUENCE {
     ...
 }
 
+NegResultEnum ::= ENUMERATED {
+    accept_completed(0),
+    accept_incomplete(1),
+    reject(2),
+    request-mic(3)
+}
+
 -- NB: negResult is not OPTIONAL in the new SPNEGO spec but
 -- Windows clients do not always send it
 NegTokenResp ::= SEQUENCE {
-    negResult      [0] ENUMERATED {
-                            accept_completed    (0),
-                            accept_incomplete   (1),
-                            reject              (2),
-                            request-mic         (3) }          OPTIONAL,
+    negResult      [0] NegResultEnum                           OPTIONAL,
     supportedMech  [1] MechType                                OPTIONAL,
     responseToken  [2] OCTET STRING                            OPTIONAL,
     mechListMIC    [3] OCTET STRING                            OPTIONAL,

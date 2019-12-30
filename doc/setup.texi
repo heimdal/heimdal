@@ -121,6 +121,12 @@ can point a file with the environment variable @samp{KRB5_CONFIG}.
 env KRB5_CONFIG=$HOME/etc/krb5.conf kinit user@@REALM
 @end example
 
+@cindex GSS_MECH_CONFIG
+The GSS-API mechanism configuration file can also be changed from the
+default with the enviornment variable @samp{GSS_MECH_CONFIG}. Note that
+this file only configures additional plugin mechanisms: Kerberos, NTLM
+and SPNEGO are built in to the Heimdal GSS-API library.
+
 @node Creating the database, Modifying the database, Configuration file, Setting up a realm
 @section Creating the database
 

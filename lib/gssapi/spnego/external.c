@@ -151,6 +151,9 @@ static gssapi_mech_interface_desc spnego_mech = {
     NULL, /* gm_store_cred_into */
     _gss_spnego_set_neg_mechs,
     _gss_spnego_get_neg_mechs,
+    NULL, /* gm_query_mechanism_info */
+    NULL, /* gm_query_meta_data */
+    NULL, /* gm_exchange_meta_data */
     NULL  /* gm_compat */
 };
 
@@ -159,3 +162,4 @@ __gss_spnego_initialize(void)
 {
 	return &spnego_mech;
 }
+

@@ -6,6 +6,9 @@ export HEIM_PIDFILE_DIR
 unset KRB5_CONFIG
 unset KRB5CCNAME
 
+unset GSS_MECH_CONFIG
+unset GSSAPI_SPNEGO_NAME
+
 top_builddir="@top_builddir@"
 top_srcdir="@top_srcdir@"
 EGREP="@EGREP@"

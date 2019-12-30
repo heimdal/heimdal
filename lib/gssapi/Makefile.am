@@ -14,7 +14,7 @@ AM_CPPFLAGS += \
 	-I$(srcdir)/spnego \
 	$(INCLUDE_libintl)
 
-lib_LTLIBRARIES = libgssapi.la
+lib_LTLIBRARIES = libgssapi.la test_negoex_mech.la
 
 krb5src = \
 	krb5/8003.c \
@@ -157,6 +157,9 @@ mechsrc = \
 	mech/gss_wrap.c \
 	mech/gss_wrap_size_limit.c \
 	mech/gss_inquire_sec_context_by_oid.c \
+	mech/gssspi_exchange_meta_data.c \
+	mech/gssspi_query_mechanism_info.c \
+	mech/gssspi_query_meta_data.c \
 	mech/mech_switch.h \
 	mech/mech_locl.h \
 	mech/name.h \
@@ -169,7 +172,10 @@ spnegosrc = \
 	spnego/cred_stubs.c \
 	spnego/external.c \
 	spnego/init_sec_context.c \
+	spnego/negoex_ctx.c \
+	spnego/negoex_util.c \
 	spnego/spnego_locl.h \
+	spnego/negoex_locl.h \
 	$(srcdir)/spnego/spnego-private.h
 
 ntlmsrc = \
@@ -217,6 +223,8 @@ dist_libgssapi_la_SOURCES  = \
 nodist_libgssapi_la_SOURCES  = \
 	gkrb5_err.c \
 	gkrb5_err.h \
+	negoex_err.c \
+	negoex_err.h \
 	$(BUILT_SOURCES)
 
 libgssapi_la_DEPENDENCIES = version-script.map
@@ -239,6 +247,7 @@ man_MANS = gssapi.3 gss_acquire_cred.3 mech/mech.5 gss-token.1
 
 include_HEADERS = gssapi.h
 noinst_HEADERS = \
+	gssapi_asn1.h \
 	gssapi_mech.h \
 	$(srcdir)/ntlm/ntlm-private.h \
 	$(srcdir)/spnego/spnego-private.h \
@@ -252,7 +261,7 @@ nobase_include_HEADERS = \
 	gssapi/gssapi_spnego.h
 
 gssapidir = $(includedir)/gssapi
-nodist_gssapi_HEADERS = gkrb5_err.h
+nodist_gssapi_HEADERS = gkrb5_err.h negoex_err.h
 
 gssapi_files = asn1_GSSAPIContextToken.x
 
@@ -265,7 +274,8 @@ spnego_files =					\
 	asn1_NegHints.x				\
 	asn1_NegTokenInit.x			\
 	asn1_NegTokenInitWin.x			\
-	asn1_NegTokenResp.x
+	asn1_NegTokenResp.x			\
+	asn1_NegResultEnum.x
 
 BUILTHEADERS = \
 	$(srcdir)/krb5/gsskrb5-private.h \
@@ -279,11 +289,12 @@ $(libgssapi_la_OBJECTS): $(srcdir)/version-script.map
 
 BUILT_SOURCES = $(spnego_files:.x=.c) $(gssapi_files:.x=.c)
 
-$(libgssapi_la_OBJECTS): gkrb5_err.h
+$(libgssapi_la_OBJECTS): gkrb5_err.h negoex_err.h
 gkrb5_err.h: $(srcdir)/krb5/gkrb5_err.et
+negoex_err.h: $(srcdir)/spnego/negoex_err.et
 
 CLEANFILES = $(BUILT_SOURCES) \
-	gkrb5_err.h gkrb5_err.c \
+	gkrb5_err.[ch] negoex_err.[ch] \
 	$(spnego_files) spnego_asn1*.h* spnego_asn1_files spnego_asn1-template.[cx] \
 	$(gssapi_files) gssapi_asn1*.h* gssapi_asn1_files gssapi_asn1-template.[cx] \
 	gss-commands.h gss-commands.c
@@ -365,6 +376,8 @@ EXTRA_DIST = \
 	mech/gssapi.asn1 \
 	spnego/spnego.asn1 \
 	spnego/spnego.opt \
+	spnego/negoex_err.et \
+	test_negoex_mech.c \
 	version-script.map \
 	gss-commands.in
 
@@ -375,6 +388,20 @@ $(libgssapi_la_OBJECTS): $(srcdir)/gssapi/gssapi_oid.h
 gkrb5_err.h gkrb5_err.c: $(srcdir)/krb5/gkrb5_err.et
 	$(COMPILE_ET) $(srcdir)/krb5/gkrb5_err.et
 
+negoex_err.h negoex_err.c: $(srcdir)/spnego/negoex_err.et
+	$(COMPILE_ET) $(srcdir)/spnego/negoex_err.et
+
 $(srcdir)/gssapi/gssapi_oid.h $(srcdir)/mech/gss_oid.c:
 	perl $(srcdir)/gen-oid.pl -b base -h $(srcdir)/oid.txt > $(srcdir)/gssapi/gssapi_oid.h
 	perl $(srcdir)/gen-oid.pl -b base $(srcdir)/oid.txt > $(srcdir)/mech/gss_oid.c
+
+#
+# NegoEx test mechanism, uses decode_GSSAPIContextToken
+#
+
+test_negoex_mech_la_SOURCES = test_negoex_mech.c $(gssapi_files:.x=.c)
+test_negoex_mech_la_LDFLAGS = -module
+test_negoex_mech_la_LIBADD = \
+	$(top_builddir)/lib/asn1/libasn1.la \
+	libgssapi.la
+

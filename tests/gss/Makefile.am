@@ -2,9 +2,9 @@
 
 include $(top_srcdir)/Makefile.am.common
 
-noinst_DATA = krb5.conf
+noinst_DATA = krb5.conf mech
 
-SCRIPT_TESTS = check-basic check-gss check-gssmask check-context check-spnego check-ntlm
+SCRIPT_TESTS = check-basic check-gss check-gssmask check-context check-spnego check-ntlm check-negoex
 
 TESTS = $(SCRIPT_TESTS)
 
@@ -49,9 +49,18 @@ check-ntlm: check-ntlm.in Makefile
 	chmod +x check-ntlm.tmp && \
 	mv check-ntlm.tmp check-ntlm
 
+check-negoex: check-negoex.in Makefile
+	$(do_subst) < $(srcdir)/check-negoex.in > check-negoex.tmp && \
+	chmod +x check-negoex.tmp && \
+	mv check-negoex.tmp check-negoex
+
 krb5.conf: krb5.conf.in Makefile
 	$(do_subst) < $(srcdir)/krb5.conf.in > krb5.conf.tmp && \
 	mv krb5.conf.tmp krb5.conf
+
+mech: mech.in Makefile
+	$(do_subst) < $(srcdir)/mech.in > mech.tmp && \
+	mv mech.tmp mech
 
 CLEANFILES= \
 	$(TESTS) \
@@ -61,6 +70,7 @@ CLEANFILES= \
 	krb5ccfile-ds \
 	server.keytab \
 	krb5.conf \
+	mech \
 	current-db* \
 	*.log \
 	tempfile \
@@ -80,4 +90,5 @@ EXTRA_DIST = \
 	check-ntlm.in \
 	check-context.in \
 	ntlm-user-file.txt \
-	krb5.conf.in
+	krb5.conf.in \
+	mech.in

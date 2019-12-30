@@ -132,6 +132,12 @@ extern GSSAPI_LIB_VARIABLE gss_OID_desc __gss_c_inq_win2k_pac_x_oid_desc;
 extern GSSAPI_LIB_VARIABLE gss_OID_desc __gss_c_inq_sspi_session_key_oid_desc;
 #define GSS_C_INQ_SSPI_SESSION_KEY (&__gss_c_inq_sspi_session_key_oid_desc)
 
+extern GSSAPI_LIB_VARIABLE gss_OID_desc __gss_c_inq_negoex_key_oid_desc;
+#define GSS_C_INQ_NEGOEX_KEY (&__gss_c_inq_negoex_key_oid_desc)
+
+extern GSSAPI_LIB_VARIABLE gss_OID_desc __gss_c_inq_negoex_verify_key_oid_desc;
+#define GSS_C_INQ_NEGOEX_VERIFY_KEY (&__gss_c_inq_negoex_verify_key_oid_desc)
+
 /*
  * "Standard" mechs
  */
@@ -150,6 +156,9 @@ extern GSSAPI_LIB_VARIABLE gss_OID_desc __gss_c_peer_has_updated_spnego_oid_desc
 
 extern GSSAPI_LIB_VARIABLE gss_OID_desc __gss_c_ntlm_reset_crypto_oid_desc;
 #define GSS_C_NTLM_RESET_CRYPTO (&__gss_c_ntlm_reset_crypto_oid_desc)
+
+extern GSSAPI_LIB_VARIABLE gss_OID_desc __gss_negoex_mechanism_oid_desc;
+#define GSS_NEGOEX_MECHANISM (&__gss_negoex_mechanism_oid_desc)
 
 /*
  * OID mappings with name and short description and and slightly longer description
@@ -237,5 +246,8 @@ extern GSSAPI_LIB_VARIABLE gss_OID_desc __gss_c_ma_compress_oid_desc;
 
 extern GSSAPI_LIB_VARIABLE gss_OID_desc __gss_c_ma_ctx_trans_oid_desc;
 #define GSS_C_MA_CTX_TRANS (&__gss_c_ma_ctx_trans_oid_desc)
+
+extern GSSAPI_LIB_VARIABLE gss_OID_desc __gss_c_ma_negoex_and_spnego_oid_desc;
+#define GSS_C_MA_NEGOEX_AND_SPNEGO (&__gss_c_ma_negoex_and_spnego_oid_desc)
 
 #endif /* GSSAPI_GSSAPI_OID */

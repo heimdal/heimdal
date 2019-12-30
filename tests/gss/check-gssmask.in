@@ -61,6 +61,7 @@ gssmaestro="../../appl/gssmask/gssmaestro"
 KRB5_CONFIG="${objdir}/krb5.conf"
 export KRB5_CONFIG
 
+KRB5CCNAME=${cache}
 rm -f ${keytabfile}
 rm -f current-db*
 rm -f out-*

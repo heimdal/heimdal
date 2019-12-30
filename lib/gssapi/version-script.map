@@ -198,6 +198,9 @@ HEIMDAL_GSS_2.0 {
 		__gss_c_ma_pfs_oid_desc;
 		__gss_c_ma_compress_oid_desc;
 		__gss_c_ma_ctx_trans_oid_desc;
+		__gss_c_ma_negoex_and_spnego_oid_desc;
+		__gss_c_inq_negoex_key_oid_desc;
+		__gss_c_inq_negoex_verify_key_oid_desc;
 
 	local:
 		*;

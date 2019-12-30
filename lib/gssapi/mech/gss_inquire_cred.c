@@ -96,8 +96,8 @@ gss_inquire_cred(OM_uint32 *minor_status,
 		struct _gss_mechanism_cred *mc;
 
 		HEIM_TAILQ_FOREACH(mc, &cred->gc_mc, gmc_link) {
-			gss_name_t mc_name;
-			OM_uint32 mc_lifetime;
+			gss_name_t mc_name = GSS_C_NO_NAME;
+			OM_uint32 mc_lifetime = GSS_C_INDEFINITE;
 
 			if (mc->gmc_mech->gm_inquire_cred == NULL)
 				continue;

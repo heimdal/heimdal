@@ -124,6 +124,12 @@ gss_OID_desc GSSAPI_LIB_VARIABLE __gss_c_inq_win2k_pac_x_oid_desc = { 8, rk_UNCO
 /* GSS_C_INQ_SSPI_SESSION_KEY - 1.2.840.113554.1.2.2.5.5 */
 gss_OID_desc GSSAPI_LIB_VARIABLE __gss_c_inq_sspi_session_key_oid_desc = { 11, rk_UNCONST("\x2a\x86\x48\x86\xf7\x12\x01\x02\x02\x05\x05") };
 
+/* GSS_C_INQ_NEGOEX_KEY - 1.2.840.113554.1.2.2.5.16 */
+gss_OID_desc GSSAPI_LIB_VARIABLE __gss_c_inq_negoex_key_oid_desc = { 11, rk_UNCONST("\x2a\x86\x48\x86\xf7\x12\x01\x02\x02\x05\x10") };
+
+/* GSS_C_INQ_NEGOEX_VERIFY_KEY - 1.2.840.113554.1.2.2.5.17 */
+gss_OID_desc GSSAPI_LIB_VARIABLE __gss_c_inq_negoex_verify_key_oid_desc = { 11, rk_UNCONST("\x2a\x86\x48\x86\xf7\x12\x01\x02\x02\x05\x11") };
+
 /* GSS_KRB5_MECHANISM - 1.2.840.113554.1.2.2 */
 gss_OID_desc GSSAPI_LIB_VARIABLE __gss_krb5_mechanism_oid_desc = { 9, rk_UNCONST("\x2a\x86\x48\x86\xf7\x12\x01\x02\x02") };
 
@@ -138,6 +144,9 @@ gss_OID_desc GSSAPI_LIB_VARIABLE __gss_c_peer_has_updated_spnego_oid_desc = { 9,
 
 /* GSS_C_NTLM_RESET_CRYPTO - 1.3.6.1.4.1.7165.655.1.3 */
 gss_OID_desc GSSAPI_LIB_VARIABLE __gss_c_ntlm_reset_crypto_oid_desc = { 11, rk_UNCONST("\x2b\x06\x01\x04\x01\xb7\x7d\x85\x0f\x01\x03") };
+
+/* GSS_NEGOEX_MECHANISM - 1.3.6.1.4.1.311.2.2.30 */
+gss_OID_desc GSSAPI_LIB_VARIABLE __gss_negoex_mechanism_oid_desc = { 10, rk_UNCONST("\x2b\x06\x01\x04\x01\x82\x37\x02\x02\x1e") };
 
 /* GSS_C_MA_MECH_CONCRETE - 1.3.6.1.5.5.13.1 */
 gss_OID_desc GSSAPI_LIB_VARIABLE __gss_c_ma_mech_concrete_oid_desc = { 7, rk_UNCONST("\x2b\x06\x01\x05\x05\x0d\x01") };
@@ -220,6 +229,9 @@ gss_OID_desc GSSAPI_LIB_VARIABLE __gss_c_ma_compress_oid_desc = { 7, rk_UNCONST(
 /* GSS_C_MA_CTX_TRANS - 1.3.6.1.5.5.13.27 */
 gss_OID_desc GSSAPI_LIB_VARIABLE __gss_c_ma_ctx_trans_oid_desc = { 7, rk_UNCONST("\x2b\x06\x01\x05\x05\x0d\x1b") };
 
+/* GSS_C_MA_NEGOEX_AND_SPNEGO - 1.2.840.113554.1.2.2.5.18 */
+gss_OID_desc GSSAPI_LIB_VARIABLE __gss_c_ma_negoex_and_spnego_oid_desc = { 11, rk_UNCONST("\x2a\x86\x48\x86\xf7\x12\x01\x02\x02\x05\x12") };
+
 struct _gss_oid_name_table _gss_ont_ma[] = {
   { GSS_C_MA_AUTH_INIT, "GSS_C_MA_AUTH_INIT", "auth-init-princ", "" },
   { GSS_C_MA_AUTH_INIT_ANON, "GSS_C_MA_AUTH_INIT_ANON", "auth-init-princ-anon", "" },
@@ -243,6 +255,7 @@ struct _gss_oid_name_table _gss_ont_ma[] = {
   { GSS_C_MA_MECH_NEGO, "GSS_C_MA_MECH_NEGO", "mech-negotiation-mech", "" },
   { GSS_C_MA_MECH_PSEUDO, "GSS_C_MA_MECH_PSEUDO", "pseudo-mech", "" },
   { GSS_C_MA_MIC, "GSS_C_MA_MIC", "mic", "" },
+  { GSS_C_MA_NEGOEX_AND_SPNEGO, "GSS_C_MA_NEGOEX_AND_SPNEGO", "negoex-and-spnego", "Indicates that a mechanism supports both NegoEx and SPNEGO" },
   { GSS_C_MA_NOT_DFLT_MECH, "GSS_C_MA_NOT_DFLT_MECH", "mech-not-default", "" },
   { GSS_C_MA_NOT_MECH, "GSS_C_MA_NOT_MECH", "not-mech", "" },
   { GSS_C_MA_OOS_DET, "GSS_C_MA_OOS_DET", "oos-detection", "" },
@@ -303,11 +316,14 @@ gss_OID _gss_ot_internal[] = {
   &__gss_netlogon_nt_netbios_dns_name_oid_desc,
   &__gss_c_inq_win2k_pac_x_oid_desc,
   &__gss_c_inq_sspi_session_key_oid_desc,
+  &__gss_c_inq_negoex_key_oid_desc,
+  &__gss_c_inq_negoex_verify_key_oid_desc,
   &__gss_krb5_mechanism_oid_desc,
   &__gss_ntlm_mechanism_oid_desc,
   &__gss_spnego_mechanism_oid_desc,
   &__gss_c_peer_has_updated_spnego_oid_desc,
   &__gss_c_ntlm_reset_crypto_oid_desc,
+  &__gss_negoex_mechanism_oid_desc,
   &__gss_c_ma_mech_concrete_oid_desc,
   &__gss_c_ma_mech_pseudo_oid_desc,
   &__gss_c_ma_mech_composite_oid_desc,
@@ -335,6 +351,7 @@ gss_OID _gss_ot_internal[] = {
   &__gss_c_ma_pfs_oid_desc,
   &__gss_c_ma_compress_oid_desc,
   &__gss_c_ma_ctx_trans_oid_desc,
+  &__gss_c_ma_negoex_and_spnego_oid_desc,
 };
 
 size_t _gss_ot_internal_count = sizeof(_gss_ot_internal) / sizeof(_gss_ot_internal[0]);

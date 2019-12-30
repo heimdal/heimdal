@@ -484,6 +484,29 @@ _gss_get_neg_mechs_t(OM_uint32 *minor_status,
 		     gss_const_cred_id_t cred_handle,
 		     gss_OID_set *mechs);
 
+typedef OM_uint32 GSSAPI_CALLCONV
+_gss_query_mechanism_info_t(OM_uint32 *minor_status,
+			    gss_const_OID mech_oid,
+			    unsigned char auth_scheme[16]);
+
+typedef OM_uint32 GSSAPI_CALLCONV
+_gss_query_meta_data_t(OM_uint32 *minor_status,
+		       gss_const_OID mech_oid,
+		       gss_cred_id_t cred_handle,
+		       gss_ctx_id_t *ctx_handle,
+		       gss_const_name_t targ_name,
+		       OM_uint32 req_flags,
+		       gss_buffer_t meta_data);
+
+typedef OM_uint32 GSSAPI_CALLCONV
+_gss_exchange_meta_data_t(OM_uint32 *minor_status,
+			  gss_const_OID mech_oid,
+			  gss_cred_id_t cred_handle,
+			  gss_ctx_id_t *ctx_handle,
+			  gss_const_name_t targ_name,
+			  OM_uint32 req_flags,
+			  gss_const_buffer_t meta_data);
+
 /*
  *
  */
@@ -597,6 +620,9 @@ typedef struct gssapi_mech_interface_desc {
 	_gss_store_cred_into_t		*gm_store_cred_into;
 	_gss_set_neg_mechs_t		*gm_set_neg_mechs;
 	_gss_get_neg_mechs_t		*gm_get_neg_mechs;
+	_gss_query_mechanism_info_t	*gm_query_mechanism_info;
+	_gss_query_meta_data_t		*gm_query_meta_data;
+	_gss_exchange_meta_data_t	*gm_exchange_meta_data;
         struct gss_mech_compat_desc_struct  *gm_compat;
 } gssapi_mech_interface_desc, *gssapi_mech_interface;
 
@@ -668,5 +694,18 @@ OM_uint32
 gss_mg_set_error_string(gss_OID mech,
                        OM_uint32 maj, OM_uint32 min,
                        const char *fmt, ...);
+
+gss_cred_id_t
+_gss_mg_find_mech_cred(gss_const_cred_id_t cred_handle,
+		       gss_const_OID mech_type);
+
+#include <krb5.h>
+
+/*
+ * Mechglue krb5 context for use by NegoEx. This is not shared with the
+ * krb5 GSS mechanism so we don't clobber its error state.
+ */
+krb5_context
+_gss_mg_krb5_context(void);
 
 #endif /* GSSAPI_MECH_H */

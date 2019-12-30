@@ -179,9 +179,18 @@ do {									\
 		m->gm_mech.gm_ ## name = NULL;				\
 } while (0)
 
+/* mech exports gssspi_XXX, internally referred to as gss_XXX */
 #define OPTSPISYM(name)							\
 do {									\
 	m->gm_mech.gm_ ## name =  (_gss_##name##_t *)dlsym(so, "gssspi_" #name); \
+} while (0)
+
+/* mech exports gssspi_XXX, internally referred to as gssspi_XXX */
+#define OPTSPISPISYM(name)							\
+do {									\
+	m->gm_mech.gm_ ## name =  (_gss_##name##_t *)dlsym(so, "gssspi_" #name); \
+	if (m->gm_mech.gm_ ## name == gssspi_ ## name)			\
+		m->gm_mech.gm_ ## name = NULL;				\
 } while (0)
 
 #define COMPATSYM(name)							\
@@ -262,6 +271,7 @@ _gss_load_mech(void)
 	void		*so;
 	gss_OID 	mech_oid;
 	int		found;
+	const char	*conf = secure_getenv("GSS_MECH_CONFIG");
 #endif
 
 	heim_base_once_f(&once, &_gss_mechs, init_mech_switch_list);
@@ -285,7 +295,7 @@ _gss_load_mech(void)
 	add_builtin(__gss_ntlm_initialize());
 
 #ifdef HAVE_DLOPEN
-	fp = fopen(_PATH_GSS_MECH, "r");
+	fp = fopen(conf ? conf : _PATH_GSS_MECH, "r");
 	if (!fp) {
 		HEIMDAL_MUTEX_unlock(&_gss_mech_mutex);
 		return;
@@ -410,6 +420,9 @@ _gss_load_mech(void)
 		OPTSYM(set_neg_mechs);
 		OPTSYM(get_neg_mechs);
 		OPTSPISYM(authorize_localname);
+		OPTSPISPISYM(query_mechanism_info);
+		OPTSPISPISYM(query_meta_data);
+		OPTSPISPISYM(exchange_meta_data);
 
 		mi = (_gss_mo_init *)dlsym(so, "gss_mo_init");
 		if (mi != NULL) {

@@ -166,6 +166,9 @@ extern GSSAPI_LIB_VARIABLE gss_OID_desc __gss_c_ntlm_reset_crypto_oid_desc;
 extern GSSAPI_LIB_VARIABLE gss_OID_desc __gss_negoex_mechanism_oid_desc;
 #define GSS_NEGOEX_MECHANISM (&__gss_negoex_mechanism_oid_desc)
 
+extern GSSAPI_LIB_VARIABLE gss_OID_desc __gss_sanon_x25519_mechanism_oid_desc;
+#define GSS_SANON_X25519_MECHANISM (&__gss_sanon_x25519_mechanism_oid_desc)
+
 /*
  * OID mappings with name and short description and and slightly longer description
  */

@@ -83,9 +83,11 @@ gss_err(int exitval, int status, const char *fmt, ...)
 
 static int version_flag = 0;
 static int help_flag	= 0;
+static int anon_flag	= 0;
 
 static struct getargs args[] = {
     {"version",	0,	arg_flag,	&version_flag, "print version", NULL },
+    {"anonymous", 0,	arg_flag,	&anon_flag, "test anonymous names", NULL },
     {"help",	0,	arg_flag,	&help_flag,  NULL, NULL }
 };
 
@@ -107,6 +109,7 @@ main(int argc, char **argv)
     int optidx = 0;
     char *str;
     int len, equal;
+    gss_OID mech_oid;
 
     setprogname(argv[0]);
     if(getarg(args, sizeof(args) / sizeof(args[0]), argc, argv, &optidx))
@@ -130,7 +133,8 @@ main(int argc, char **argv)
      */
 
     str = NULL;
-    len = asprintf(&str, "ftp@freeze-arrow.mit.edu");
+    len = asprintf(&str, anon_flag ?
+	"WELLKNOWN@ANONYMOUS" : "ftp@freeze-arrow.mit.edu");
     if (len < 0 || str == NULL)
 	errx(1, "asprintf");
 
@@ -144,9 +148,14 @@ main(int argc, char **argv)
 	gss_err(1, min_stat, "import name error");
     free(str);
 
+    if (anon_flag)
+	mech_oid = GSS_SANON_X25519_MECHANISM;
+    else
+	mech_oid = GSS_KRB5_MECHANISM;
+
     maj_stat = gss_canonicalize_name (&min_stat,
 				      name,
-				      GSS_KRB5_MECHANISM,
+				      mech_oid,
 				      &MNname);
     if (maj_stat != GSS_S_COMPLETE)
 	gss_err(1, min_stat, "canonicalize name error");
@@ -171,8 +180,8 @@ main(int argc, char **argv)
     maj_stat = gss_compare_name(&min_stat, MNname, MNname2, &equal);
     if (maj_stat != GSS_S_COMPLETE)
 	errx(1, "gss_compare_name");
-    if (!equal)
-	errx(1, "names not equal");
+    if (equal == anon_flag)
+	errx(1, "names %s equal", anon_flag ? "incorrectly" : "not");
 
     gss_release_name(&min_stat, &MNname2);
     gss_release_buffer(&min_stat, &name_buffer);
@@ -233,6 +242,40 @@ main(int argc, char **argv)
     gss_release_name(&min_stat, &MNname);
     gss_release_buffer(&min_stat, &name_buffer);
 #endif
+
+    if (anon_flag) {
+	/* check anonymous name canonicalizes to well known name */
+	gss_OID name_type;
+
+	name_buffer.length = 0;
+	name_buffer.value = NULL;
+
+	maj_stat = gss_import_name(&min_stat, &name_buffer,
+				   GSS_C_NT_ANONYMOUS, &name);
+	if (maj_stat != GSS_S_COMPLETE)
+	    gss_err(1, min_stat, "import (anon) name error");
+
+	maj_stat = gss_canonicalize_name(&min_stat, name,
+					 GSS_SANON_X25519_MECHANISM,
+					 &MNname);
+	if (maj_stat != GSS_S_COMPLETE)
+	    gss_err(1, min_stat, "canonicalize (anon) name error");
+
+	maj_stat = gss_display_name(&min_stat, MNname,
+				    &name_buffer, &name_type);
+	if (maj_stat != GSS_S_COMPLETE)
+	    gss_err(1, min_stat, "display_name (anon) name error");
+
+	if (!gss_oid_equal(name_type, GSS_C_NT_ANONYMOUS))
+	    gss_err(1, 0, "display name type not anonymous");
+	if (memcmp(name_buffer.value, "WELLKNOWN/ANONYMOUS@WELLKNOWN:ANONYMOUS",
+		   sizeof("WELLKNOWN/ANONYMOUS@WELLKNOWN:ANONYMOUS") - 1) != 0)
+	    gss_err(1, 0, "display name string not well known anonymous name");
+
+	gss_release_name(&min_stat, &MNname);
+	gss_release_name(&min_stat, &name);
+	gss_release_buffer(&min_stat, &name_buffer);
+    }
 
     return 0;
 }

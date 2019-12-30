@@ -35,11 +35,11 @@ RELDIR=lib\hcrypto\x25519
 
 intcflags=-I$(SRC)\lib\hcrypto
 
-libx25519_OBJs=	\
+LIBX25519_OBJS=	\
 	$(OBJ)\ed25519_ref10.obj	\
 	$(OBJ)\x25519_ref10.obj
 
-$(LIBX25519): $(libx25519_OBJs)
+$(LIBX25519): $(LIBX25519_OBJS)
 	$(LIBCON)
 
 all:: $(LIBX25519)

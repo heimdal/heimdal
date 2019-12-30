@@ -596,6 +596,7 @@ LIBSL	    =$(LIBDIR)\libsl.lib
 LIBSQLITE   =$(LIBDIR)\libsqlite.lib
 LIBVERS	    =$(LIBDIR)\libvers.lib
 LIBWIND	    =$(LIBDIR)\libwind.lib
+LIBX25519   =$(LIBDIR)\libx25519.lib
 
 !ifdef VER_DEBUG
 ASM_DBG=.Debug

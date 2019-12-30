@@ -636,6 +636,7 @@ _gss_mg_support_mechanism(gss_const_OID mech);
 gssapi_mech_interface __gss_spnego_initialize(void);
 gssapi_mech_interface __gss_krb5_initialize(void);
 gssapi_mech_interface __gss_ntlm_initialize(void);
+gssapi_mech_interface __gss_sanon_initialize(void);
 
 void		gss_mg_collect_error(gss_OID, OM_uint32, OM_uint32);
 

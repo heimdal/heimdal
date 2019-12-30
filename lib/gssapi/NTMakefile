@@ -228,6 +228,38 @@ ntlmsrc = \
 	ntlm/set_sec_context_option.c \
 	ntlm/kdc.c
 
+sanonsrc = \
+	sanon/accept_sec_context.c \
+	sanon/acquire_cred.c \
+	sanon/add_cred.c \
+	sanon/canonicalize_name.c \
+	sanon/compare_name.c \
+	sanon/context_time.c \
+	sanon/crypto.c \
+	sanon/delete_sec_context.c \
+	sanon/display_name.c \
+	sanon/display_status.c \
+	sanon/duplicate_cred.c \
+	sanon/duplicate_name.c \
+	sanon/export_cred.c \
+	sanon/export_name.c \
+	sanon/export_sec_context.c \
+	sanon/external.c \
+	sanon/import_cred.c \
+	sanon/import_name.c \
+	sanon/import_sec_context.c \
+	sanon/init_sec_context.c \
+	sanon/inquire_context.c \
+	sanon/inquire_cred.c \
+	sanon/inquire_cred_by_mech.c \
+	sanon/inquire_mechs_for_name.c \
+	sanon/inquire_names_for_mech.c \
+	sanon/inquire_sec_context_by_oid.c \
+	sanon/negoex.c \
+	sanon/process_context_token.c \
+	sanon/release_cred.c \
+	sanon/release_name.c
+
 $(OBJ)\ntlm\ntlm-private.h: $(ntlmsrc)
 	$(PERL) ../../cf/make-proto.pl -q -P remove -p $@ $(ntlmsrc)
 
@@ -236,6 +268,9 @@ $(OBJ)\krb5\gsskrb5-private.h: $(krb5src)
 
 $(OBJ)\spnego\spnego-private.h: $(spnegosrc)
 	$(PERL) ../../cf/make-proto.pl -q -P remove -p $@ $(spnegosrc)
+
+$(OBJ)\sanon\sanon-private.h: $(sanonsrc)
+	$(PERL) ../../cf/make-proto.pl -q -P remove -p $@ $(sanonsrc)
 
 gssapi_files = $(OBJ)\gssapi\asn1_gssapi_asn1.x
 
@@ -280,6 +315,7 @@ INCFILES=				\
     $(INCDIR)\gssapi\gkrb5_err.h	\
     $(OBJ)\ntlm\ntlm-private.h		\
     $(OBJ)\spnego\spnego-private.h	\
+    $(OBJ)\sanon\sanon-private.h	\
     $(OBJ)\krb5\gsskrb5-private.h	\
     $(OBJ)\gkrb5_err.h			\
     $(OBJ)\negoex_err.h			\
@@ -465,6 +501,36 @@ libgssapi_OBJs = \
 	$(OBJ)\ntlm/release_name.obj \
 	$(OBJ)\ntlm/set_sec_context_option.obj \
 	$(OBJ)\ntlm/kdc.obj \
+	$(OBJ)\sanon/accept_sec_context.obj \
+	$(OBJ)\sanon/acquire_cred.obj \
+	$(OBJ)\sanon/add_cred.obj \
+	$(OBJ)\sanon/canonicalize_name.obj \
+	$(OBJ)\sanon/compare_name.obj \
+	$(OBJ)\sanon/context_time.obj \
+	$(OBJ)\sanon/crypto.obj \
+	$(OBJ)\sanon/delete_sec_context.obj \
+	$(OBJ)\sanon/display_name.obj \
+	$(OBJ)\sanon/display_status.obj \
+	$(OBJ)\sanon/duplicate_cred.obj \
+	$(OBJ)\sanon/duplicate_name.obj \
+	$(OBJ)\sanon/export_cred.obj \
+	$(OBJ)\sanon/export_name.obj \
+	$(OBJ)\sanon/export_sec_context.obj \
+	$(OBJ)\sanon/external.obj \
+	$(OBJ)\sanon/import_cred.obj \
+	$(OBJ)\sanon/import_name.obj \
+	$(OBJ)\sanon/import_sec_context.obj \
+	$(OBJ)\sanon/init_sec_context.obj \
+	$(OBJ)\sanon/inquire_context.obj \
+	$(OBJ)\sanon/inquire_cred.obj \
+	$(OBJ)\sanon/inquire_cred_by_mech.obj \
+	$(OBJ)\sanon/inquire_mechs_for_name.obj \
+	$(OBJ)\sanon/inquire_names_for_mech.obj \
+	$(OBJ)\sanon/inquire_sec_context_by_oid.obj \
+	$(OBJ)\sanon/negoex.obj \
+	$(OBJ)\sanon/process_context_token.obj \
+	$(OBJ)\sanon/release_cred.obj \
+	$(OBJ)\sanon/release_name.obj \
 	$(OBJ)\gkrb5_err.obj \
 	$(OBJ)\negoex_err.obj \
 	$(spnego_files:.x=.obj) \
@@ -495,6 +561,12 @@ GCOPTS=-I$(SRCDIR) -I$(OBJ) -Igssapi -DBUILD_GSSAPI_LIB
 
 {spnego}.c{$(OBJ)\spnego}.obj::
 	$(C2OBJ_NP) -Fo$(OBJ)\spnego\ -Fd$(OBJ)\spnego\ -I$(OBJ)\spnego -Imech $(GCOPTS) -DASN1_LIB
+
+{$(OBJ)\sanon}.c{$(OBJ)\sanon}.obj::
+	$(C2OBJ_NP) -Fo$(OBJ)\sanon\ -Fd$(OBJ)\sanon\ -I$(OBJ)\sanon -I$(OBJ) -I$(OBJ)\krb5 -I$(OBJ)\gssapi -Ikrb5 -Imech -Igssapi $(GCOPTS)
+
+{sanon}.c{$(OBJ)\sanon}.obj::
+	$(C2OBJ_NP) -Fo$(OBJ)\sanon\ -Fd$(OBJ)\sanon\ -I$(OBJ)\sanon -I$(OBJ) -I$(OBJ)\krb5 -I$(OBJ)\gssapi -Ikrb5 -Imech -Igssapi $(GCOPTS) -DASN1_LIB
 
 {$(OBJ)\gssapi}.c{$(OBJ)\gssapi}.obj::
 	$(C2OBJ_NP) -Fo$(OBJ)\gssapi\ -Fd$(OBJ)\gssapi\ -I$(OBJ)\gssapi $(GCOPTS)
@@ -577,6 +649,9 @@ mkdirs-gss:
 !if !exist($(OBJ)\spnego)
 	$(MKDIR) $(OBJ)\spnego
 !endif
+!if !exist($(OBJ)\sanon)
+	$(MKDIR) $(OBJ)\sanon
+!endif
 !if !exist($(OBJ)\mech)
 	$(MKDIR) $(OBJ)\mech
 !endif
@@ -589,6 +664,7 @@ clean::
 	-$(RM) $(OBJ)\krb5\*.*
 	-$(RM) $(OBJ)\spnego\*.*
 	-$(RM) $(OBJ)\mech\*.*
+	-$(RM) $(OBJ)\sanon\*.*
 	-$(RM) $(OBJ)\gssapi\*.*
 
 all-tools:: $(BINDIR)\gsstool.exe

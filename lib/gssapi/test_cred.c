@@ -46,6 +46,8 @@
 #include <err.h>
 #include <getarg.h>
 
+static int anon_flag	= 0;
+
 static void
 gss_print_errors (int min_stat)
 {
@@ -113,6 +115,7 @@ acquire_add_release_add(gss_name_t name, gss_cred_usage_t usage)
 {
     OM_uint32 maj_stat, min_stat;
     gss_cred_id_t cred, cred2, cred3;
+    gss_OID mech_oid = anon_flag ? GSS_SANON_X25519_MECHANISM : GSS_KRB5_MECHANISM;
 
     maj_stat = gss_acquire_cred(&min_stat, name,
 				GSS_C_INDEFINITE,
@@ -127,7 +130,7 @@ acquire_add_release_add(gss_name_t name, gss_cred_usage_t usage)
     maj_stat = gss_add_cred(&min_stat,
 			    cred,
 			    GSS_C_NO_NAME,
-			    GSS_KRB5_MECHANISM,
+			    mech_oid,
 			    usage,
 			    GSS_C_INDEFINITE,
 			    GSS_C_INDEFINITE,
@@ -146,7 +149,7 @@ acquire_add_release_add(gss_name_t name, gss_cred_usage_t usage)
     maj_stat = gss_add_cred(&min_stat,
 			    cred2,
 			    GSS_C_NO_NAME,
-			    GSS_KRB5_MECHANISM,
+			    mech_oid,
 			    GSS_C_BOTH,
 			    GSS_C_INDEFINITE,
 			    GSS_C_INDEFINITE,
@@ -170,6 +173,7 @@ static int version_flag = 0;
 static int help_flag	= 0;
 
 static struct getargs args[] = {
+    {"anonymous", 0,	arg_flag,	&anon_flag, "try anonymous creds", NULL },
     {"version",	0,	arg_flag,	&version_flag, "print version", NULL },
     {"help",	0,	arg_flag,	&help_flag,  NULL, NULL }
 };

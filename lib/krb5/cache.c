@@ -851,23 +851,28 @@ krb5_cc_store_cred(krb5_context context,
     krb5_data realm;
     const char *cfg = "";
 
-    ret = (*id->ops->store)(context, id, creds);
-    if (ret)
-        return ret;
-
     /* Automatic cc_config-setting and other actions */
     if (krb5_principal_get_num_comp(context, creds->server) > 1 &&
         krb5_is_config_principal(context, creds->server))
         cfg = krb5_principal_get_comp_string(context, creds->server, 1);
 
+    if (id->cc_initialized && !id->cc_need_start_realm &&
+        strcmp(cfg, "start_realm") == 0)
+        return 0;
+
+    ret = (*id->ops->store)(context, id, creds);
+    if (ret)
+        return ret;
+
     if (id->cc_initialized && !id->cc_start_tgt_stored &&
+        id->cc_need_start_realm &&
         krb5_principal_is_root_krbtgt(context, creds->server)) {
         /* Mark the first root TGT's realm as the start realm */
         id->cc_start_tgt_stored = 1;
-        id->cc_need_start_realm = 0;
         realm.length = strlen(creds->server->realm);
         realm.data = creds->server->realm;
         (void) krb5_cc_set_config(context, id, NULL, "start_realm", &realm);
+        id->cc_need_start_realm = 0;
     } else if (id->cc_initialized && id->cc_start_tgt_stored &&
                !id->cc_kx509_done && strcmp(cfg, "kx509cert") == 0) {
         /*

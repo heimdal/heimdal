@@ -69,7 +69,7 @@ cjwt_token_validator_la_LDFLAGS = -module $(CJSON_LIBS) $(CJWT_LIBS)
 endif
 
 negotiate_token_validator_la_SOURCES = negotiate_token_validator.c
-negotiate_token_validator_la_LDFLAGS = -module $(top_builddir)/lib/gssapi/libgssapi.la
+negotiate_token_validator_la_LDFLAGS = -module $(LIB_gssapi)
 # CSR Authorizer plugins (for kdc/kx509 and bx509d)
 simple_csr_authorizer_la_SOURCES = simple_csr_authorizer.c
 simple_csr_authorizer_la_LDFLAGS = -module
@@ -194,7 +194,7 @@ digest_service_LDADD = \
 	$(LDADD) $(LIB_pidfile)
 kdc_replay_LDADD = libkdc.la $(LDADD) $(LIB_pidfile)
 kdc_tester_LDADD = libkdc.la $(LDADD) $(LIB_pidfile) $(LIB_heimbase)
-test_token_validator_LDADD = libkdc.la $(LDADD) $(LIB_pidfile) $(LIB_heimbase)
+test_token_validator_LDADD = libkdc.la $(LDADD) $(LIB_pidfile) $(LIB_heimbase) $(LIB_gssapi)
 test_csr_authorizer_LDADD = libkdc.la $(top_builddir)/lib/hx509/libhx509.la $(LDADD) $(LIB_pidfile) $(LIB_heimbase)
 test_kdc_ca_LDADD = libkdc.la $(top_builddir)/lib/hx509/libhx509.la $(LDADD) $(LIB_pidfile) $(LIB_heimbase)
 

@@ -270,10 +270,10 @@ spnego_files =					\
 	asn1_MechType.x				\
 	asn1_MechTypeList.x			\
 	asn1_NegotiationToken.x			\
-	asn1_NegotiationTokenWin.x		\
+	asn1_NegotiationToken2.x		\
 	asn1_NegHints.x				\
 	asn1_NegTokenInit.x			\
-	asn1_NegTokenInitWin.x			\
+	asn1_NegTokenInit2.x			\
 	asn1_NegTokenResp.x			\
 	asn1_NegResultEnum.x
 

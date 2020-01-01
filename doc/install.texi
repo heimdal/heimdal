@@ -1,4 +1,4 @@
-@node Building and Installing, Setting up a realm, What is Kerberos?, Top
+@node Building and Installing, Setting up a realm,  What is bx509?, Top
 @comment  node-name,  next,  previous,  up
 @chapter Building and Installing
 

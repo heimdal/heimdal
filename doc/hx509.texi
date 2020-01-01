@@ -48,7 +48,7 @@
 
 @page
 @copyrightstart
-Copyright (c) 1994-2008 Kungliga Tekniska Högskolan
+Copyright (c) 1994-2019 Kungliga Tekniska Högskolan
 (Royal Institute of Technology, Stockholm, Sweden).
 All rights reserved.
 
@@ -187,7 +187,7 @@ This manual is for version @value{VERSION} of hx509.
 
 @menu
 * Introduction::
-* What is X.509 ?::
+* What are X.509 and PKIX ?::
 * Setting up a CA::
 * CMS signing and encryption::
 * Certificate matching::
@@ -230,13 +230,20 @@ Software PKCS 11 module
 @end detailmenu
 @end menu
 
-@node Introduction, What is X.509 ?, Top, Top
+@node Introduction, What are X.509 and PKIX ?, Top, Top
 @chapter Introduction
 
-The goals of a PKI infrastructure (as defined in 
-<a href="http://www.ietf.org/rfc/rfc3280.txt">RFC 3280</a>) is to meet 
-@emph{the needs of deterministic, automated identification, authentication, access control, and authorization}.
+A Public Key Infrastructure (PKI) is an authentication mechanism based on
+entities having certified cryptographic public keys and corresponding private
+(secret) keys.
 
+The ITU-T PKI specifications are designated "x.509", while the IETF PKI
+specifications (PKIX) are specified by a number of Internet RFCs and are based
+on x.509.
+
+The goals of a PKI (as stated in 
+<a href="http://www.ietf.org/rfc/rfc5280.txt">RFC 5280</a>) is to meet 
+@emph{the needs of deterministic, automated identification, authentication, access control, and authorization}.
 
 The administrator should be aware of certain terminologies as explained by the aforementioned
 RFC before attemping to put in place a PKI infrastructure. Briefly, these are: 
@@ -246,6 +253,9 @@ RFC before attemping to put in place a PKI infrastructure. Briefly, these are:
 Certificate Authority
 @item RA
 Registration Authority, i.e., an optional system to which a CA delegates certain management functions.
+@item Certificate
+A binary document that names an entity and its public key and which is signed
+by an issuing CA.
 @item CRL Issuer
 An optional system to which a CA delegates the publication of certificate revocation lists.
 @item Repository
@@ -253,7 +263,7 @@ A system or collection of distributed systems that stores certificates and CRLs
 and serves as a means of distributing these certificates and CRLs to end entities
 @end itemize
 
-hx509 (Heimdal x509 support) is a near complete X.509 stack that can
+hx509 (Heimdal x509 support) is a near complete X.509/PKIX stack that can
 handle CMS messages (crypto system used in S/MIME and Kerberos PK-INIT)
 and basic certificate processing tasks, path construction, path
 validation, OCSP and CRL validation, PKCS10 message construction, CMS
@@ -263,10 +273,13 @@ signed), and CMS EnvelopedData (certificate encrypted).
 hx509 can use PKCS11 tokens, PKCS12 files, PEM files, and/or DER encoded
 files.
 
-@node What is X.509 ?, Setting up a CA, Introduction, Top
-@chapter What is X.509, PKIX, PKCS7 and CMS ? 
+hx509 consists of a library (libhx509) and a command-line utility (hxtool), as
+well as a RESTful, HTTPS-based service that implements an online CA.
 
-X.509 was created by CCITT (later ITU) for the X.500 directory
+@node What are X.509 and PKIX ?, Setting up a CA, Introduction, Top
+@chapter What are X.509 and PKIX, PKIX, PKCS7 and CMS ? 
+
+X.509 was created by CCITT (later ITU-T) for the X.500 directory
 service. Today, X.509 discussions and implementations commonly reference
 the IETF's PKIX Certificate and CRL Profile of the X.509 v3 certificate
 standard, as specified in RFC 3280.
@@ -348,7 +361,7 @@ The process starts by looking at the issuing CA of the certificate, by
 Name or Key Identifier, and tries to find that certificate while at the
 same time evaluting any policies in-place.
 
-@node Setting up a CA, Creating a CA certificate, What is X.509 ?, Top
+@node Setting up a CA, Creating a CA certificate, What are X.509 and PKIX ?, Top
 @chapter Setting up a CA
 
 Do not let information overload scare you off! If you are simply testing

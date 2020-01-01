@@ -22,19 +22,20 @@
 @ifinfo
 @dircategory Security
 @direntry
-* Heimdal: (heimdal).           The Kerberos 5 distribution from KTH
+* Heimdal: (heimdal).           The Kerberos 5 and PKIX distribution from KTH
 @end direntry
 @end ifinfo
 
 @c title page
 @titlepage
 @title Heimdal
-@subtitle Kerberos 5 from KTH
+@subtitle Kerberos 5 and PKIX from KTH
 @subtitle Edition @value{EDITION}, for version @value{VERSION}
 @subtitle 2008
 @author Johan Danielsson
 @author Love Hörnquist Åstrand
 @author Assar Westerlund
+@author et al
 
 @end titlepage
 
@@ -64,6 +65,10 @@ This manual for version @value{VERSION} of Heimdal.
 @menu
 * Introduction::                
 * What is Kerberos?::           
+* What is PKIX?::           
+* What is a Certification Authority (CA)?::           
+* What is kx509?::           
+* What is bx509?::           
 * Building and Installing::     
 * Setting up a realm::          
 * Applications::                

@@ -120,14 +120,14 @@ send_supported_mechs (OM_uint32 *minor_status,
 		      gss_const_cred_id_t acceptor_cred,
 		      gss_buffer_t output_token)
 {
-    NegotiationTokenWin nt;
+    NegotiationToken2 nt;
     size_t buf_len = 0;
     gss_buffer_desc data;
     OM_uint32 ret;
 
     memset(&nt, 0, sizeof(nt));
 
-    nt.element = choice_NegotiationTokenWin_negTokenInit;
+    nt.element = choice_NegotiationToken2_negTokenInit;
     nt.u.negTokenInit.reqFlags = NULL;
     nt.u.negTokenInit.mechToken = NULL;
     nt.u.negTokenInit.negHints = NULL;
@@ -142,23 +142,23 @@ send_supported_mechs (OM_uint32 *minor_status,
     ALLOC(nt.u.negTokenInit.negHints, 1);
     if (nt.u.negTokenInit.negHints == NULL) {
 	*minor_status = ENOMEM;
-	free_NegotiationTokenWin(&nt);
+	free_NegotiationToken2(&nt);
 	return GSS_S_FAILURE;
     }
 
     ALLOC(nt.u.negTokenInit.negHints->hintName, 1);
     if (nt.u.negTokenInit.negHints->hintName == NULL) {
 	*minor_status = ENOMEM;
-	free_NegotiationTokenWin(&nt);
+	free_NegotiationToken2(&nt);
 	return GSS_S_FAILURE;
     }
 
     *nt.u.negTokenInit.negHints->hintName = strdup("not_defined_in_RFC4178@please_ignore");
     nt.u.negTokenInit.negHints->hintAddress = NULL;
 
-    ASN1_MALLOC_ENCODE(NegotiationTokenWin,
+    ASN1_MALLOC_ENCODE(NegotiationToken2,
 		       data.value, data.length, &nt, &buf_len, ret);
-    free_NegotiationTokenWin(&nt);
+    free_NegotiationToken2(&nt);
     if (ret) {
 	*minor_status = ret;
 	return GSS_S_FAILURE;

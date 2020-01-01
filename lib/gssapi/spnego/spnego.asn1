@@ -22,7 +22,7 @@ NegHints ::= SEQUENCE {
     hintAddress    [1]  OCTET STRING	OPTIONAL
 } 
 
-NegTokenInitWin ::= SEQUENCE {
+NegTokenInit2 ::= SEQUENCE {
     mechTypes       [0] MechTypeList,
     reqFlags        [1] ContextFlags   OPTIONAL,
     mechToken       [2] OCTET STRING   OPTIONAL,
@@ -59,8 +59,8 @@ NegotiationToken ::= CHOICE {
 	negTokenResp[1]		NegTokenResp
 }
 
-NegotiationTokenWin ::= CHOICE {
-	negTokenInit[0]		NegTokenInitWin
+NegotiationToken2 ::= CHOICE {
+	negTokenInit[0]		NegTokenInit2
 }
 
 END

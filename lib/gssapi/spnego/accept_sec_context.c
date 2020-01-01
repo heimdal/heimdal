@@ -494,6 +494,16 @@ acceptor_complete(OM_uint32 * minor_status,
 	    *get_mic = 1;
 	}
 
+	/*
+	 * Change from previous versions: do not generate a MIC if not
+	 * necessary. This conforms to RFC4178 s.5 ("if the accepted
+	 * mechanism is the most preferred mechanism of both the initiator
+	 * and acceptor, then the MIC token exchange... is OPTIONAL"),
+	 * and is consistent with MIT and Windows behavior.
+	 */
+	if (ctx->flags.safe_omit)
+	    *get_mic = 0;
+
 	if (verify_mic && mic == NULL && ctx->flags.safe_omit) {
 	    /*
 	     * Peer is old and didn't send a mic while we expected

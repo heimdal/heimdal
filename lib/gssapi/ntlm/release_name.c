@@ -41,7 +41,7 @@ _gss_ntlm_release_name
 {
     if (minor_status)
 	*minor_status = 0;
-    if (input_name) {
+    if (input_name && *input_name) {
 	ntlm_name n = (ntlm_name)*input_name;
 	*input_name = GSS_C_NO_NAME;
 	free(n->user);

@@ -269,21 +269,7 @@ OM_uint32 GSSAPI_CALLCONV _gss_spnego_compare_name
             int * name_equal
            )
 {
-    spnego_name n1 = (spnego_name)name1;
-    spnego_name n2 = (spnego_name)name2;
-
-    *name_equal = 0;
-
-    if (!gss_oid_equal(n1->type, n2->type))
-	return GSS_S_COMPLETE;
-    if (n1->value.length != n2->value.length)
-	return GSS_S_COMPLETE;
-    if (memcmp(n1->value.value, n2->value.value, n2->value.length) != 0)
-	return GSS_S_COMPLETE;
-
-    *name_equal = 1;
-
-    return GSS_S_COMPLETE;
+    return gss_compare_name(minor_status, name1, name2, name_equal);
 }
 
 OM_uint32 GSSAPI_CALLCONV _gss_spnego_display_name
@@ -293,14 +279,7 @@ OM_uint32 GSSAPI_CALLCONV _gss_spnego_display_name
             gss_OID * output_name_type
            )
 {
-    spnego_name name = (spnego_name)input_name;
-
-    *minor_status = 0;
-
-    if (name == NULL || name->mech == GSS_C_NO_NAME)
-	return GSS_S_FAILURE;
-
-    return gss_display_name(minor_status, name->mech,
+    return gss_display_name(minor_status, input_name,
 			    output_name_buffer, output_name_type);
 }
 
@@ -311,33 +290,8 @@ OM_uint32 GSSAPI_CALLCONV _gss_spnego_import_name
             gss_name_t * output_name
            )
 {
-    spnego_name name;
-    OM_uint32 maj_stat;
-
-    *minor_status = 0;
-
-    name = calloc(1, sizeof(*name));
-    if (name == NULL) {
-	*minor_status = ENOMEM;
-	return GSS_S_FAILURE;
-    }
-
-    maj_stat = _gss_intern_oid(minor_status, name_type, &name->type);
-    if (maj_stat) {
-	free(name);
-	return GSS_S_FAILURE;
-    }
-
-    maj_stat = _gss_copy_buffer(minor_status, name_buffer, &name->value);
-    if (maj_stat) {
-	gss_name_t rname = (gss_name_t)name;
-	_gss_spnego_release_name(minor_status, &rname);
-	return GSS_S_FAILURE;
-    }
-    name->mech = GSS_C_NO_NAME;
-    *output_name = (gss_name_t)name;
-
-    return GSS_S_COMPLETE;
+    return gss_import_name(minor_status, name_buffer,
+			   name_type, output_name);
 }
 
 OM_uint32 GSSAPI_CALLCONV _gss_spnego_export_name
@@ -346,17 +300,7 @@ OM_uint32 GSSAPI_CALLCONV _gss_spnego_export_name
             gss_buffer_t exported_name
            )
 {
-    spnego_name name;
-    *minor_status = 0;
-
-    if (input_name == GSS_C_NO_NAME)
-	return GSS_S_BAD_NAME;
-
-    name = (spnego_name)input_name;
-    if (name->mech == GSS_C_NO_NAME)
-	return GSS_S_BAD_NAME;
-
-    return gss_export_name(minor_status, name->mech, exported_name);
+    return gss_export_name(minor_status, input_name, exported_name);
 }
 
 OM_uint32 GSSAPI_CALLCONV _gss_spnego_release_name
@@ -364,19 +308,7 @@ OM_uint32 GSSAPI_CALLCONV _gss_spnego_release_name
             gss_name_t * input_name
            )
 {
-    *minor_status = 0;
-
-    if (*input_name != GSS_C_NO_NAME) {
-	OM_uint32 junk;
-	spnego_name name = (spnego_name)*input_name;
-	gss_release_buffer(&junk, &name->value);
-	if (name->mech != GSS_C_NO_NAME)
-	    gss_release_name(&junk, &name->mech);
-	free(name);
-
-	*input_name = GSS_C_NO_NAME;
-    }
-    return GSS_S_COMPLETE;
+    return gss_release_name(minor_status, input_name);
 }
 
 OM_uint32 GSSAPI_CALLCONV _gss_spnego_inquire_context (
@@ -392,8 +324,7 @@ OM_uint32 GSSAPI_CALLCONV _gss_spnego_inquire_context (
            )
 {
     gssspnego_ctx ctx;
-    OM_uint32 maj_stat, junk;
-    gss_name_t src_mn, targ_mn;
+    OM_uint32 maj_stat;
 
     *minor_status = 0;
 
@@ -407,43 +338,15 @@ OM_uint32 GSSAPI_CALLCONV _gss_spnego_inquire_context (
 
     maj_stat = gss_inquire_context(minor_status,
 				   ctx->negotiated_ctx_id,
-				   &src_mn,
-				   &targ_mn,
+				   src_name,
+				   targ_name,
 				   lifetime_rec,
 				   mech_type,
 				   ctx_flags,
 				   locally_initiated,
 				   open_context);
-    if (maj_stat != GSS_S_COMPLETE)
-	return maj_stat;
 
-    if (src_name) {
-	spnego_name name = calloc(1, sizeof(*name));
-	if (name == NULL)
-	    goto enomem;
-	name->mech = src_mn;
-	*src_name = (gss_name_t)name;
-    } else
-	gss_release_name(&junk, &src_mn);
-
-    if (targ_name) {
-	spnego_name name = calloc(1, sizeof(*name));
-	if (name == NULL) {
-	    gss_release_name(minor_status, src_name);
-	    goto enomem;
-	}
-	name->mech = targ_mn;
-	*targ_name = (gss_name_t)name;
-    } else
-	gss_release_name(&junk, &targ_mn);
-
-    return GSS_S_COMPLETE;
-
-enomem:
-    gss_release_name(&junk, &targ_mn);
-    gss_release_name(&junk, &src_mn);
-    *minor_status = ENOMEM;
-    return GSS_S_FAILURE;
+    return maj_stat;
 }
 
 OM_uint32 GSSAPI_CALLCONV _gss_spnego_wrap_size_limit (

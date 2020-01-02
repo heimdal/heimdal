@@ -206,7 +206,6 @@ spnego_initial
     size_t ni_len;
     gss_ctx_id_t context;
     gssspnego_ctx ctx;
-    spnego_name name = (spnego_name)target_name;
 
     *minor_status = 0;
 
@@ -228,7 +227,7 @@ spnego_initial
 
     ctx->local = 1;
 
-    sub = gss_import_name(&minor, &name->value, name->type, &ctx->target_name);
+    sub = gss_duplicate_name(&minor, target_name, &ctx->target_name);
     if (GSS_ERROR(sub)) {
 	*minor_status = minor;
 	_gss_spnego_internal_delete_sec_context(&minor, &context, GSS_C_NO_BUFFER);

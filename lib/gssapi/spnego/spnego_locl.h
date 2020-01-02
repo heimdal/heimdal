@@ -97,12 +97,6 @@ typedef struct {
 
 } *gssspnego_ctx;
 
-typedef struct {
-	gss_OID			type;
-	gss_buffer_desc		value;
-	gss_name_t		mech;
-} *spnego_name;
-
 extern gss_OID_desc _gss_spnego_mskrb_mechanism_oid_desc;
 extern gss_OID_desc _gss_spnego_krb5_mechanism_oid_desc;
 

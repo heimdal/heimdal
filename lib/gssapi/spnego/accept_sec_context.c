@@ -665,16 +665,10 @@ out:
 
 
     if (ret == GSS_S_COMPLETE) {
-	if (src_name != NULL && ctx->mech_src_name != NULL) {
-	    spnego_name name;
-
-	    name = calloc(1, sizeof(*name));
-	    if (name) {
-		name->mech = ctx->mech_src_name;
-		ctx->mech_src_name = NULL;
-		*src_name = (gss_name_t)name;
-	    }
-	}
+	if (src_name != NULL && ctx->mech_src_name != GSS_C_NO_NAME)
+	    ret = gss_duplicate_name(minor_status,
+				     ctx->mech_src_name,
+				     src_name);
     }
 
     if (mech_type != NULL)
@@ -853,16 +847,10 @@ acceptor_continue
     }
 
     if (ret == GSS_S_COMPLETE) {
-	if (src_name != NULL && ctx->mech_src_name != NULL) {
-	    spnego_name name;
-
-	    name = calloc(1, sizeof(*name));
-	    if (name) {
-		name->mech = ctx->mech_src_name;
-		ctx->mech_src_name = NULL;
-		*src_name = (gss_name_t)name;
-	    }
-	}
+	if (src_name != NULL && ctx->mech_src_name != GSS_C_NO_NAME)
+	    ret = gss_duplicate_name(minor_status,
+				     ctx->mech_src_name,
+				     src_name);
     }
 
     if (mech_type != NULL)

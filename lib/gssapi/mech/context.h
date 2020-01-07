@@ -38,4 +38,4 @@ void
 _gss_mg_error(gssapi_mech_interface, OM_uint32);
 
 OM_uint32
-_gss_mg_get_error(const gss_OID, OM_uint32, gss_buffer_t);
+_gss_mg_get_error(gss_const_OID, OM_uint32, gss_buffer_t);

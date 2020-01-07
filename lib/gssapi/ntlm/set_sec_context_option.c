@@ -38,8 +38,8 @@
 OM_uint32 GSSAPI_CALLCONV
 _gss_ntlm_set_sec_context_option(OM_uint32 *minor_status,
 				 gss_ctx_id_t *context_handle,
-				 const gss_OID object,
-				 const gss_buffer_t value)
+				 gss_const_OID object,
+				 gss_const_buffer_t value)
 {
     ntlm_ctx ctx;
 

@@ -36,7 +36,7 @@ static OM_uint32
 import_cred(OM_uint32 *minor_status,
 	    krb5_context context,
             gss_cred_id_t *cred_handle,
-            const gss_buffer_t value)
+            gss_const_buffer_t value)
 {
     OM_uint32 major_stat;
     krb5_error_code ret;
@@ -127,7 +127,7 @@ static OM_uint32
 allowed_enctypes(OM_uint32 *minor_status,
 		 krb5_context context,
 		 gss_cred_id_t *cred_handle,
-		 const gss_buffer_t value)
+		 gss_const_buffer_t value)
 {
     OM_uint32 major_stat;
     krb5_error_code ret;
@@ -199,7 +199,7 @@ static OM_uint32
 no_ci_flags(OM_uint32 *minor_status,
 	    krb5_context context,
 	    gss_cred_id_t *cred_handle,
-	    const gss_buffer_t value)
+	    gss_const_buffer_t value)
 {
     gsskrb5_cred cred;
 
@@ -221,8 +221,8 @@ OM_uint32 GSSAPI_CALLCONV
 _gsskrb5_set_cred_option
            (OM_uint32 *minor_status,
             gss_cred_id_t *cred_handle,
-            const gss_OID desired_object,
-            const gss_buffer_t value)
+            gss_const_OID desired_object,
+            gss_const_buffer_t value)
 {
     krb5_context context;
 

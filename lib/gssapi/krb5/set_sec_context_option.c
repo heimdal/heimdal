@@ -38,7 +38,7 @@
 
 static OM_uint32
 get_bool(OM_uint32 *minor_status,
-	 const gss_buffer_t value,
+	 gss_const_buffer_t value,
 	 int *flag)
 {
     if (value->value == NULL || value->length != 1) {
@@ -51,7 +51,7 @@ get_bool(OM_uint32 *minor_status,
 
 static OM_uint32
 get_string(OM_uint32 *minor_status,
-	   const gss_buffer_t value,
+	   gss_const_buffer_t value,
 	   char **str)
 {
     if (value == NULL || value->length == 0) {
@@ -70,7 +70,7 @@ get_string(OM_uint32 *minor_status,
 
 static OM_uint32
 get_int32(OM_uint32 *minor_status,
-	  const gss_buffer_t value,
+	  gss_const_buffer_t value,
 	  OM_uint32 *ret)
 {
     *minor_status = 0;
@@ -86,7 +86,7 @@ get_int32(OM_uint32 *minor_status,
 
 static OM_uint32
 set_int32(OM_uint32 *minor_status,
-	  const gss_buffer_t value,
+	  gss_const_buffer_t value,
 	  OM_uint32 set)
 {
     *minor_status = 0;
@@ -102,8 +102,8 @@ OM_uint32 GSSAPI_CALLCONV
 _gsskrb5_set_sec_context_option
            (OM_uint32 *minor_status,
             gss_ctx_id_t *context_handle,
-            const gss_OID desired_object,
-            const gss_buffer_t value)
+            gss_const_OID desired_object,
+            gss_const_buffer_t value)
 {
     krb5_context context;
     OM_uint32 maj_stat;

@@ -35,8 +35,8 @@
 GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL
 gss_set_sec_context_option (OM_uint32 *minor_status,
 			    gss_ctx_id_t *context_handle,
-			    const gss_OID object,
-			    const gss_buffer_t value)
+			    gss_const_OID object,
+			    gss_const_buffer_t value)
 {
 	struct _gss_context	*ctx;
 	OM_uint32		major_status;

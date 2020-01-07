@@ -174,7 +174,7 @@ gss_mo_name(gss_const_OID mech, gss_const_OID option, gss_buffer_t name)
  */
 
 static OM_uint32
-mo_value(const gss_const_OID mech, gss_const_OID option, gss_buffer_t name)
+mo_value(gss_const_OID mech, gss_const_OID option, gss_buffer_t name)
 {
     if (name == NULL)
 	return GSS_S_COMPLETE;
@@ -186,7 +186,7 @@ mo_value(const gss_const_OID mech, gss_const_OID option, gss_buffer_t name)
 static char basis_32[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
 
 static OM_uint32
-make_sasl_name(OM_uint32 *minor, const gss_OID mech, char sasl_name[16])
+make_sasl_name(OM_uint32 *minor, gss_const_OID mech, char sasl_name[16])
 {
     EVP_MD_CTX *ctx;
     char *p = sasl_name;
@@ -230,7 +230,7 @@ make_sasl_name(OM_uint32 *minor, const gss_OID mech, char sasl_name[16])
  */
 static OM_uint32
 inquire_saslname_for_mech_compat(OM_uint32 *minor,
-                                 const gss_OID desired_mech,
+                                 gss_const_OID desired_mech,
                                  gss_buffer_t sasl_mech_name,
                                  gss_buffer_t mech_name,
                                  gss_buffer_t mech_description)
@@ -274,7 +274,7 @@ inquire_saslname_for_mech_compat(OM_uint32 *minor,
 
 GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL
 gss_inquire_saslname_for_mech(OM_uint32 *minor_status,
-			      const gss_OID desired_mech,
+			      gss_const_OID desired_mech,
 			      gss_buffer_t sasl_mech_name,
 			      gss_buffer_t mech_name,
 			      gss_buffer_t mech_description)
@@ -341,7 +341,7 @@ gss_inquire_saslname_for_mech(OM_uint32 *minor_status,
 
 GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL
 gss_inquire_mech_for_saslname(OM_uint32 *minor_status,
-			      const gss_buffer_t sasl_mech_name,
+			      gss_const_buffer_t sasl_mech_name,
 			      gss_OID *mech_type)
 {
     struct _gss_mech_switch *m;

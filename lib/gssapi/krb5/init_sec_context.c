@@ -41,7 +41,7 @@
 static OM_uint32
 set_addresses (krb5_context context,
 	       krb5_auth_context ac,
-	       const gss_channel_bindings_t input_chan_bindings)
+	       gss_const_channel_bindings_t input_chan_bindings)
 {
     /* Port numbers are expected to be in application_data.value,
      * initator's port first */
@@ -103,7 +103,7 @@ _gsskrb5_create_ctx(
         OM_uint32 * minor_status,
 	gss_ctx_id_t * context_handle,
 	krb5_context context,
- 	const gss_channel_bindings_t input_chan_bindings,
+ 	gss_const_channel_bindings_t input_chan_bindings,
  	enum gss_ctx_id_t_state state)
 {
     krb5_error_code kret;
@@ -359,10 +359,10 @@ init_auth
  gsskrb5_ctx ctx,
  krb5_context context,
  gss_const_name_t name,
- const gss_OID mech_type,
+ gss_const_OID mech_type,
  OM_uint32 req_flags,
  OM_uint32 time_req,
- const gss_buffer_t input_token,
+ gss_const_buffer_t input_token,
  gss_OID * actual_mech_type,
  gss_buffer_t output_token,
  OM_uint32 * ret_flags,
@@ -462,8 +462,8 @@ init_auth_restart
  gsskrb5_ctx ctx,
  krb5_context context,
  OM_uint32 req_flags,
- const gss_channel_bindings_t input_chan_bindings,
- const gss_buffer_t input_token,
+ gss_const_channel_bindings_t input_chan_bindings,
+ gss_const_buffer_t input_token,
  gss_OID * actual_mech_type,
  gss_buffer_t output_token,
  OM_uint32 * ret_flags,
@@ -703,11 +703,11 @@ repl_mutual
 (OM_uint32 * minor_status,
  gsskrb5_ctx ctx,
  krb5_context context,
- const gss_OID mech_type,
+ gss_const_OID mech_type,
  OM_uint32 req_flags,
  OM_uint32 time_req,
- const gss_channel_bindings_t input_chan_bindings,
- const gss_buffer_t input_token,
+ gss_const_channel_bindings_t input_chan_bindings,
+ gss_const_buffer_t input_token,
  gss_OID * actual_mech_type,
  gss_buffer_t output_token,
  OM_uint32 * ret_flags,
@@ -826,11 +826,11 @@ OM_uint32 GSSAPI_CALLCONV _gsskrb5_init_sec_context
  gss_const_cred_id_t cred_handle,
  gss_ctx_id_t * context_handle,
  gss_const_name_t target_name,
- const gss_OID mech_type,
+ gss_const_OID mech_type,
  OM_uint32 req_flags,
  OM_uint32 time_req,
- const gss_channel_bindings_t input_chan_bindings,
- const gss_buffer_t input_token,
+ gss_const_channel_bindings_t input_chan_bindings,
+ gss_const_buffer_t input_token,
  gss_OID * actual_mech_type,
  gss_buffer_t output_token,
  OM_uint32 * ret_flags,
@@ -912,7 +912,7 @@ OM_uint32 GSSAPI_CALLCONV _gsskrb5_init_sec_context
 			time_rec);
 	if (ret != GSS_S_COMPLETE)
 	    break;
-	/* FALL THOUGH */
+	/* FALL THROUGH */
     case INITIATOR_RESTART:
 	ret = init_auth_restart(minor_status,
 				cred,

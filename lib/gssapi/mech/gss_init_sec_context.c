@@ -31,7 +31,7 @@
 #include "mech_locl.h"
 
 static gss_cred_id_t
-_gss_mech_cred_find(gss_const_cred_id_t cred_handle, gss_OID mech_type)
+_gss_mech_cred_find(gss_const_cred_id_t cred_handle, gss_const_OID mech_type)
 {
 	struct _gss_cred *cred = (struct _gss_cred *)cred_handle;
 	struct _gss_mechanism_cred *mc;
@@ -112,11 +112,11 @@ gss_init_sec_context(OM_uint32 * minor_status,
     gss_const_cred_id_t initiator_cred_handle,
     gss_ctx_id_t * context_handle,
     gss_const_name_t target_name,
-    const gss_OID input_mech_type,
+    gss_const_OID input_mech_type,
     OM_uint32 req_flags,
     OM_uint32 time_req,
-    const gss_channel_bindings_t input_chan_bindings,
-    const gss_buffer_t input_token,
+    gss_const_channel_bindings_t input_chan_bindings,
+    gss_const_buffer_t input_token,
     gss_OID * actual_mech_type,
     gss_buffer_t output_token,
     OM_uint32 * ret_flags,
@@ -129,7 +129,7 @@ gss_init_sec_context(OM_uint32 * minor_status,
 	struct _gss_context *ctx = (struct _gss_context *) *context_handle;
 	gss_const_cred_id_t cred_handle;
 	int allocated_ctx;
-	gss_OID mech_type = input_mech_type;
+	gss_const_OID mech_type = input_mech_type;
 
 	*minor_status = 0;
 

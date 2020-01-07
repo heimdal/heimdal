@@ -32,7 +32,7 @@
 
 typedef OM_uint32 GSSAPI_CALLCONV _gss_inquire_saslname_for_mech_t (
 	       OM_uint32 *,           /* minor_status */
-	       const gss_OID,         /* desired_mech */
+	       gss_const_OID,         /* desired_mech */
 	       gss_buffer_t,          /* sasl_mech_name */
 	       gss_buffer_t,          /* mech_name */
 	       gss_buffer_t           /* mech_description */
@@ -40,7 +40,7 @@ typedef OM_uint32 GSSAPI_CALLCONV _gss_inquire_saslname_for_mech_t (
 
 typedef OM_uint32 GSSAPI_CALLCONV _gss_inquire_mech_for_saslname_t (
 	       OM_uint32 *,           /* minor_status */
-	       const gss_buffer_t,    /* sasl_mech_name */
+	       gss_const_buffer_t,    /* sasl_mech_name */
 	       gss_OID *              /* mech_type */
 	    );
 
@@ -54,9 +54,9 @@ typedef OM_uint32 GSSAPI_CALLCONV _gss_inquire_attrs_for_mech_t (
 typedef OM_uint32 GSSAPI_CALLCONV _gss_acquire_cred_with_password_t
 	      (OM_uint32 *,            /* minor_status */
 	       gss_const_name_t,       /* desired_name */
-	       const gss_buffer_t,     /* password */
+	       gss_const_buffer_t,     /* password */
 	       OM_uint32,              /* time_req */
-	       const gss_OID_set,      /* desired_mechs */
+	       gss_const_OID_set,      /* desired_mechs */
 	       gss_cred_usage_t,       /* cred_usage */
 	       gss_cred_id_t *,        /* output_cred_handle */
 	       gss_OID_set *,          /* actual_mechs */
@@ -67,8 +67,8 @@ typedef OM_uint32 GSSAPI_CALLCONV _gss_add_cred_with_password_t (
 	       OM_uint32 *,            /* minor_status */
 	       gss_const_cred_id_t,    /* input_cred_handle */
 	       gss_const_name_t,       /* desired_name */
-	       const gss_OID,          /* desired_mech */
-	       const gss_buffer_t,     /* password */
+	       gss_const_OID,          /* desired_mech */
+	       gss_const_buffer_t,     /* password */
 	       gss_cred_usage_t,       /* cred_usage */
 	       OM_uint32,              /* initiator_time_req */
 	       OM_uint32,              /* acceptor_time_req */

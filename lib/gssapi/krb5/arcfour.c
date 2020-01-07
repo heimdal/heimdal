@@ -117,9 +117,9 @@ arcfour_mic_cksum_iov(krb5_context context,
 		      u_char *sgn_cksum, size_t sgn_cksum_sz,
 		      const u_char *v1, size_t l1,
 		      const void *v2, size_t l2,
-		      const gss_iov_buffer_desc *iov,
+		      gss_const_iov_buffer_t iov,
 		      int iov_count,
-		      const gss_iov_buffer_desc *padding)
+		      gss_const_iov_buffer_t padding)
 {
     Checksum CKSUM;
     u_char *ptr;
@@ -226,10 +226,10 @@ arcfour_mic_cksum(krb5_context context,
 
 OM_uint32
 _gssapi_get_mic_arcfour(OM_uint32 * minor_status,
-			const gsskrb5_ctx context_handle,
+			gsskrb5_ctx context_handle,
 			krb5_context context,
 			gss_qop_t qop_req,
-			const gss_buffer_t message_buffer,
+			gss_const_buffer_t message_buffer,
 			gss_buffer_t message_token,
 			krb5_keyblock *key)
 {
@@ -313,10 +313,10 @@ _gssapi_get_mic_arcfour(OM_uint32 * minor_status,
 
 OM_uint32
 _gssapi_verify_mic_arcfour(OM_uint32 * minor_status,
-			   const gsskrb5_ctx context_handle,
+			   gsskrb5_ctx context_handle,
 			   krb5_context context,
-			   const gss_buffer_t message_buffer,
-			   const gss_buffer_t token_buffer,
+			   gss_const_buffer_t message_buffer,
+			   gss_const_buffer_t token_buffer,
 			   gss_qop_t * qop_state,
 			   krb5_keyblock *key,
 			   const char *type)
@@ -407,11 +407,11 @@ _gssapi_verify_mic_arcfour(OM_uint32 * minor_status,
 
 OM_uint32
 _gssapi_wrap_arcfour(OM_uint32 * minor_status,
-		     const gsskrb5_ctx context_handle,
+		     gsskrb5_ctx context_handle,
 		     krb5_context context,
 		     int conf_req_flag,
 		     gss_qop_t qop_req,
-		     const gss_buffer_t input_message_buffer,
+		     gss_const_buffer_t input_message_buffer,
 		     int * conf_state,
 		     gss_buffer_t output_message_buffer,
 		     krb5_keyblock *key)
@@ -561,9 +561,9 @@ _gssapi_wrap_arcfour(OM_uint32 * minor_status,
 }
 
 OM_uint32 _gssapi_unwrap_arcfour(OM_uint32 *minor_status,
-				 const gsskrb5_ctx context_handle,
+				 gsskrb5_ctx context_handle,
 				 krb5_context context,
-				 const gss_buffer_t input_message_buffer,
+				 gss_const_buffer_t input_message_buffer,
 				 gss_buffer_t output_message_buffer,
 				 int *conf_state,
 				 gss_qop_t *qop_state,
@@ -751,7 +751,7 @@ OM_uint32 _gssapi_unwrap_arcfour(OM_uint32 *minor_status,
 }
 
 static OM_uint32
-max_wrap_length_arcfour(const gsskrb5_ctx ctx,
+max_wrap_length_arcfour(gsskrb5_ctx ctx,
 			krb5_crypto crypto,
 			size_t input_length,
 			OM_uint32 *max_input_size)
@@ -795,7 +795,7 @@ max_wrap_length_arcfour(const gsskrb5_ctx ctx,
 
 OM_uint32
 _gssapi_wrap_size_arcfour(OM_uint32 *minor_status,
-			  const gsskrb5_ctx ctx,
+			  gsskrb5_ctx ctx,
 			  krb5_context context,
 			  int conf_req_flag,
 			  gss_qop_t qop_req,

@@ -38,7 +38,7 @@
 krb5_error_code
 _gsskrb5i_address_to_krb5addr(krb5_context context,
 			      OM_uint32 gss_addr_type,
-			      gss_buffer_desc *gss_addr,
+			      gss_const_buffer_t gss_addr,
 			      int16_t port,
 			      krb5_address *address)
 {

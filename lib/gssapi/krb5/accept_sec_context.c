@@ -349,8 +349,8 @@ gsskrb5_acceptor_start(OM_uint32 * minor_status,
 		       gsskrb5_ctx ctx,
 		       krb5_context context,
 		       gss_const_cred_id_t acceptor_cred_handle,
-		       const gss_buffer_t input_token_buffer,
-		       const gss_channel_bindings_t input_chan_bindings,
+		       gss_const_buffer_t input_token_buffer,
+		       gss_const_channel_bindings_t input_chan_bindings,
 		       gss_name_t * src_name,
 		       gss_OID * mech_type,
 		       gss_buffer_t output_token,
@@ -365,7 +365,7 @@ gsskrb5_acceptor_start(OM_uint32 * minor_status,
     krb5_keytab keytab = NULL;
     int is_cfx = 0;
     int close_kt = 0;
-    const gsskrb5_cred acceptor_cred = (gsskrb5_cred)acceptor_cred_handle;
+    gsskrb5_const_cred acceptor_cred = (gsskrb5_cred)acceptor_cred_handle;
 
     /*
      * We may, or may not, have an escapsulation.
@@ -694,8 +694,8 @@ acceptor_wait_for_dcestyle(OM_uint32 * minor_status,
 			   gsskrb5_ctx ctx,
 			   krb5_context context,
 			   gss_const_cred_id_t acceptor_cred_handle,
-			   const gss_buffer_t input_token_buffer,
-			   const gss_channel_bindings_t input_chan_bindings,
+			   gss_const_buffer_t input_token_buffer,
+			   gss_const_channel_bindings_t input_chan_bindings,
 			   gss_name_t * src_name,
 			   gss_OID * mech_type,
 			   gss_buffer_t output_token,
@@ -857,8 +857,8 @@ OM_uint32 GSSAPI_CALLCONV
 _gsskrb5_accept_sec_context(OM_uint32 * minor_status,
 			    gss_ctx_id_t * context_handle,
 			    gss_const_cred_id_t acceptor_cred_handle,
-			    const gss_buffer_t input_token_buffer,
-			    const gss_channel_bindings_t input_chan_bindings,
+			    gss_const_buffer_t input_token_buffer,
+			    gss_const_channel_bindings_t input_chan_bindings,
 			    gss_name_t * src_name,
 			    gss_OID * mech_type,
 			    gss_buffer_t output_token,

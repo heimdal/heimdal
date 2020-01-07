@@ -658,9 +658,9 @@ _netlogon_wrap_iov_length(OM_uint32 * minor_status,
 
 OM_uint32 _netlogon_get_mic
            (OM_uint32 * minor_status,
-            gss_const_ctx_id_t context_handle,
+            gss_ctx_id_t context_handle,
             gss_qop_t qop_req,
-            const gss_buffer_t message_buffer,
+            gss_const_buffer_t message_buffer,
             gss_buffer_t message_token
            )
 {
@@ -684,9 +684,9 @@ OM_uint32 _netlogon_get_mic
 OM_uint32
 _netlogon_verify_mic
            (OM_uint32 * minor_status,
-            gss_const_ctx_id_t context_handle,
-            const gss_buffer_t message_buffer,
-            const gss_buffer_t token_buffer,
+            gss_ctx_id_t context_handle,
+            gss_const_buffer_t message_buffer,
+            gss_const_buffer_t token_buffer,
             gss_qop_t * qop_state
             )
 {
@@ -704,7 +704,7 @@ _netlogon_verify_mic
 OM_uint32
 _netlogon_wrap_size_limit (
             OM_uint32 * minor_status,
-            gss_const_ctx_id_t context_handle,
+            gss_ctx_id_t context_handle,
             int conf_req_flag,
             gss_qop_t qop_req,
             OM_uint32 req_output_size,

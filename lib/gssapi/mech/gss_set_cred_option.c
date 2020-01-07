@@ -35,8 +35,8 @@
 GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL
 gss_set_cred_option (OM_uint32 *minor_status,
 		     gss_cred_id_t *cred_handle,
-		     const gss_OID object,
-		     const gss_buffer_t value)
+		     gss_const_OID object,
+		     gss_const_buffer_t value)
 {
 	struct _gss_cred *cred = (struct _gss_cred *) *cred_handle;
 	OM_uint32	major_status = GSS_S_COMPLETE;

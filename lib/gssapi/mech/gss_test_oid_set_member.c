@@ -30,8 +30,8 @@
 
 GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL
 gss_test_oid_set_member(OM_uint32 *minor_status,
-    const gss_OID member,
-    const gss_OID_set set,
+    gss_const_OID member,
+    gss_const_OID_set set,
     int *present)
 {
 	size_t i;

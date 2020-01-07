@@ -39,7 +39,7 @@ OM_uint32 _netlogon_display_status
            (OM_uint32        	*minor_status,
             OM_uint32		 status_value,
             int			 status_type,
-            const gss_OID	 mech_type,
+            gss_const_OID	 mech_type,
             OM_uint32		*message_context,
             gss_buffer_t	 status_string)
 {

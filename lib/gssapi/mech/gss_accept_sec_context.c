@@ -29,7 +29,7 @@
 #include "mech_locl.h"
 
 static OM_uint32
-parse_header(const gss_buffer_t input_token, gss_OID *mech_oid)
+parse_header(gss_const_buffer_t input_token, gss_OID *mech_oid)
 {
 	gss_OID_desc mech;
 	unsigned char *p = input_token->value;
@@ -94,7 +94,7 @@ parse_header(const gss_buffer_t input_token, gss_OID *mech_oid)
 }
 
 static OM_uint32
-choose_mech(const gss_buffer_t input, gss_OID *mech_oid)
+choose_mech(gss_const_buffer_t input, gss_OID *mech_oid)
 {
 	OM_uint32 status;
 
@@ -144,8 +144,8 @@ GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL
 gss_accept_sec_context(OM_uint32 *minor_status,
     gss_ctx_id_t *context_handle,
     gss_const_cred_id_t acceptor_cred_handle,
-    const gss_buffer_t input_token,
-    const gss_channel_bindings_t input_chan_bindings,
+    gss_const_buffer_t input_token,
+    gss_const_channel_bindings_t input_chan_bindings,
     gss_name_t *src_name,
     gss_OID *mech_type,
     gss_buffer_t output_token,

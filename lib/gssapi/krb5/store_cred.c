@@ -103,7 +103,7 @@ OM_uint32 GSSAPI_CALLCONV
 _gsskrb5_store_cred_into(OM_uint32         *minor_status,
 			 gss_const_cred_id_t input_cred_handle,
 			 gss_cred_usage_t  cred_usage,
-			 const gss_OID     desired_mech,
+			 gss_const_OID     desired_mech,
 			 OM_uint32         overwrite_cred,
 			 OM_uint32         default_cred,
 			 gss_const_key_value_set_t cred_store,

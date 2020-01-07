@@ -89,7 +89,7 @@ typedef struct gsskrb5_ctx {
   krb5_crypto crypto;
 } *gsskrb5_ctx;
 
-typedef struct {
+typedef struct gsskrb5_cred {
   krb5_principal principal;
   int cred_flags;
 #define GSS_CF_DESTROY_CRED_ON_RELEASE	1
@@ -102,8 +102,10 @@ typedef struct {
   HEIMDAL_MUTEX cred_id_mutex;
   krb5_enctype *enctypes;
 } *gsskrb5_cred;
+typedef const struct gsskrb5_cred *gsskrb5_const_cred;
 
 typedef struct Principal *gsskrb5_name;
+typedef const struct Principal *gsskrb5_const_name;
 
 /*
  *

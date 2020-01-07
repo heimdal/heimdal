@@ -707,7 +707,7 @@ gsskrb5_extract_authz_data_from_sec_context(OM_uint32 *minor_status,
 static OM_uint32
 gsskrb5_extract_key(OM_uint32 *minor_status,
 		    gss_ctx_id_t context_handle,
-		    const gss_OID oid,
+		    gss_const_OID oid,
 		    krb5_keyblock **keyblock)
 {
     krb5_error_code ret;

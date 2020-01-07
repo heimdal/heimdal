@@ -69,7 +69,7 @@ _gsskrb5_get_mech (const u_char *ptr,
 OM_uint32
 _gssapi_verify_mech_header(u_char **str,
 			   size_t total_len,
-			   gss_OID mech)
+			   gss_const_OID mech)
 {
     const u_char *p;
     ssize_t mech_len;
@@ -123,9 +123,9 @@ _gsskrb5_verify_header(u_char **str,
 OM_uint32
 _gssapi_decapsulate(
     OM_uint32 *minor_status,
-    gss_buffer_t input_token_buffer,
+    gss_const_buffer_t input_token_buffer,
     krb5_data *out_data,
-    const gss_OID mech
+    gss_const_OID mech
 )
 {
     u_char *p;
@@ -153,7 +153,7 @@ _gssapi_decapsulate(
 
 OM_uint32
 _gsskrb5_decapsulate(OM_uint32 *minor_status,
-			gss_buffer_t input_token_buffer,
+			gss_const_buffer_t input_token_buffer,
 			krb5_data *out_data,
 			const void *type,
 			gss_OID oid)
@@ -182,7 +182,7 @@ _gsskrb5_decapsulate(OM_uint32 *minor_status,
  */
 
 OM_uint32
-_gssapi_verify_pad(gss_buffer_t wrapped_token,
+_gssapi_verify_pad(gss_const_buffer_t wrapped_token,
 		   size_t datalen,
 		   size_t *padlen)
 {

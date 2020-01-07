@@ -98,7 +98,7 @@ _gss_mechglue_thread(void)
 }
 
 OM_uint32
-_gss_mg_get_error(const gss_OID mech,
+_gss_mg_get_error(gss_const_OID mech,
 		  OM_uint32 value,
 		  gss_buffer_t string)
 {

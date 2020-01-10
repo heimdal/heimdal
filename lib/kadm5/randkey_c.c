@@ -132,7 +132,7 @@ kadm5_c_randkey_principal(void *server_handle,
     for (i = 0; ret == 0 && i < tmp; i++) {
 	ret = krb5_ret_keyblock(sp, &k[i]);
 	if (ret)
-	    goto out;
+	    break;
     }
     if (ret == 0 && n_keys && new_keys) {
 	*n_keys = tmp;

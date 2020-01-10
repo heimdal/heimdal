@@ -141,6 +141,7 @@ _krb5_mk_ncred(krb5_context context,
         ;
 
     memset (&cred, 0, sizeof(cred));
+    memset (&enc_krb_cred_part, 0, sizeof(enc_krb_cred_part));
     cred.pvno = 5;
     cred.msg_type = krb_cred;
     ALLOC_SEQ(&cred.tickets, ncreds);
@@ -148,7 +149,6 @@ _krb5_mk_ncred(krb5_context context,
         ret = krb5_enomem(context);
         goto out;
     }
-    memset (&enc_krb_cred_part, 0, sizeof(enc_krb_cred_part));
     ALLOC_SEQ(&enc_krb_cred_part.ticket_info, ncreds);
     if (enc_krb_cred_part.ticket_info.val == NULL) {
         ret = krb5_enomem(context);

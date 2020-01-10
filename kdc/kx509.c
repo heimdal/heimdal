@@ -757,8 +757,6 @@ check_authz(krb5_context context,
             break;
 
         if ((ret = der_parse_heim_oid(s, ".", &oid))) {
-            free(cprinc);
-            free(s);
             goto out;
         }
         for (k = 0; k < sizeof(eku_whitelist)/sizeof(eku_whitelist[0]); k++) {

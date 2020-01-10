@@ -499,7 +499,7 @@ bad_401(struct bx509_request_desc *r, char *reason)
 static krb5_error_code
 bad_403(struct bx509_request_desc *r, krb5_error_code ret, char *reason)
 {
-    return bad_req(r, EACCES, MHD_HTTP_FORBIDDEN, "%s", reason);
+    return bad_req(r, ret, MHD_HTTP_FORBIDDEN, "%s", reason);
 }
 
 static krb5_error_code
@@ -1215,9 +1215,9 @@ bnegotiate_do_CA(struct bx509_request_desc *r)
     hx509_request_free(&req);
     p = NULL;
 
-    if (ret == KRB5KDC_ERR_POLICY) {
+    if (ret == KRB5KDC_ERR_POLICY || ret == EACCES) {
         hx509_private_key_free(&key);
-        return bad_500(r, ret,
+        return bad_403(r, ret,
                        "Certificate request denied for policy reasons");
     }
     if (ret == ENOMEM) {

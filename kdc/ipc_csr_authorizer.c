@@ -260,7 +260,7 @@ mark_authorized(hx509_request csr)
         hx509_san_type san_type;
         ret = hx509_request_get_san(csr, i, &san_type, &s);
         if (ret == 0)
-            hx509_request_authorize_eku(csr, i);
+            hx509_request_authorize_san(csr, i);
         frees(&s);
     }
     return ret == HX509_NO_ITEM ? 0 : ret;

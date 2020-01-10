@@ -332,7 +332,7 @@ parse_extensions(char **strp, HDB_extensions **e)
 	void *d;
 
 	len = strlen(p);
-	d = emalloc(len);
+	d = emalloc(len+1);
 
 	len = hex_decode(p, d, len);
 	if (len < 0) {

@@ -14,14 +14,9 @@ For information how to install see [here](http://www.h5l.org/compile.html).
 
 There are man pages for most of the commands.
 
-Bug reports and bugs are appreciated.  Use GitHub issues or send e-mail to [heimdal-bugs@h5l.org](mailto:heimdal-bugs@h5l.org).
+Bug reports and bugs are appreciated.  Use GitHub issues.
 
-For more information see the project homepage [https://www.h5l.org/](https://www.h5l.org/) or the mailing lists:
-
- - [heimdal-announce@sics.se](mailto:heimdal-announce@sics.se)	low-volume announcement
- - [heimdal-discuss@sics.se](mailto:heimdal-discuss@sics.se)	high-volume discussion
-
-Send e-mail to [heimdal-announce-request@sics.se](heimdal-announce-request@sics.se) and [heimdal-discuss-request@sics.se](heimdal-discuss-request@sics.se) respectively to subscribe.
+For more information see the project homepage [https://heimdal.software/heimdal/](https://heimdal.software/heimdal/).
 
 Build Status
 ============

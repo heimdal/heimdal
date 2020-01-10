@@ -892,10 +892,12 @@ _kdc_do_kx509(kx509_req_context r)
     /* Authenticate the request (consume the AP-REQ) */
     ret = krb5_kt_resolve(r->context, "HDBGET:", &id);
     if (ret) {
+	const char *msg = krb5_get_error_message(r->context, ret);
         ret = mk_error_response(r->context, r, 1,
                                 KRB5KDC_ERR_S_PRINCIPAL_UNKNOWN,
                                 "Can't open HDB/keytab for kx509: %s",
-                                krb5_get_error_message(r->context, ret));
+				msg);
+	krb5_free_error_message(context, msg);
         goto out;
     }
 
@@ -972,18 +974,20 @@ _kdc_do_kx509(kx509_req_context r)
     /* Extract and parse CSR or a DER-encoded RSA public key */
     ret = get_csr(r->context, r);
     if (ret) {
+	const char *msg = krb5_get_error_message(r->context, ret);
         ret = mk_error_response(r->context, r, 3, ret,
-                                "Failed to parse CSR: %s",
-                                krb5_get_error_message(r->context, ret));
+                                "Failed to parse CSR: %s", msg);
+	krb5_free_error_message(context, msg);
         goto out;
     }
 
     /* Authorize the request */
     ret = check_authz(r->context, r, cprincipal);
     if (ret) {
+	const char *msg = krb5_get_error_message(r->context, ret);
         ret = mk_error_response(r->context, r, 3, ret,
-                                "Rejected by policy: %s",
-                                krb5_get_error_message(r->context, ret));
+                                "Rejected by policy: %s", msg);
+	krb5_free_error_message(context, msg);
         goto out;
     }
 
@@ -1003,20 +1007,23 @@ _kdc_do_kx509(kx509_req_context r)
                                 &r->ticket_times, r->send_chain, &certs);
     if (ret) {
         int level = 1;
+	const char *msg = krb5_get_error_message(r->context, ret);
 
         if (ret == KRB5KDC_ERR_POLICY)
             level = 4; /* _kdc_audit_trail() logs at level 3 */
         ret = mk_error_response(r->context, r, level, ret,
-                                "Certificate isuance failed: %s",
-                                krb5_get_error_message(r->context, ret));
+                                "Certificate isuance failed: %s", msg);
+	krb5_free_error_message(context, msg);
         goto out;
     }
 
     ret = encode_cert_and_chain(r->context->hx509ctx, certs, rep.certificate);
     if (ret) {
+	const char *msg = krb5_get_error_message(r->context, ret);
         ret = mk_error_response(r->context, r, 1, ret,
                                 "Could not encode certificate and chain: %s",
-                                krb5_get_error_message(r->context, ret));
+				msg);
+	krb5_free_error_message(context, msg);
         goto out;
     }
 

@@ -1554,6 +1554,19 @@ bnegotiate(struct bx509_request_desc *r)
     return ret;
 }
 
+static krb5_error_code
+health(const char *method, struct bx509_request_desc *r)
+{
+    if (strcmp(method, "HEAD") == 0)
+        return resp(r, MHD_HTTP_OK, MHD_RESPMEM_PERSISTENT, "", 0, NULL);
+    return resp(r, MHD_HTTP_OK, MHD_RESPMEM_PERSISTENT,
+                "To determine the health of the service, use the /bx509 "
+                "end-point.\n",
+                sizeof("To determine the health of the service, use the "
+                       "/bx509 end-point.\n") - 1, NULL);
+
+}
+
 /* Implements the entirety of this REST service */
 static int
 route(void *cls,
@@ -1588,7 +1601,10 @@ route(void *cls,
 
     if ((ret = set_req_desc(connection, url, &r)))
         return bad_503(&r, ret, "Could not initialize request state");
-    if (strcmp(method, "GET") != 0)
+    if ((strcmp(method, "HEAD") == 0 || strcmp(method, "GET") == 0) &&
+        (strcmp(url, "/health") == 0 || strcmp(url, "/") == 0))
+        ret = health(method, &r);
+    else if (strcmp(method, "GET") != 0)
         ret = bad_405(&r, method);
     else if (strcmp(url, "/bx509") == 0)
         ret = bx509(&r);

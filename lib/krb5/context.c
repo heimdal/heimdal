@@ -250,16 +250,18 @@ init_context_from_config_file(krb5_context context)
 	if (context->debug_dest)
 	    krb5_closelog(context, context->debug_dest);
 
-	krb5_initlog(context, "libkrb5", &context->debug_dest);
+	ret = krb5_initlog(context, "libkrb5", &context->debug_dest);
 
-	if (s) {
-	    for(p = s; *p; p++)
-		krb5_addlog_dest(context, context->debug_dest, *p);
-	    krb5_config_free_strings(s);
+	if (ret == 0) {
+	    if (s) {
+		for(p = s; *p; p++)
+		    krb5_addlog_dest(context, context->debug_dest, *p);
+		krb5_config_free_strings(s);
+	    }
+
+	    if (tmp)
+		krb5_addlog_dest(context, context->debug_dest, tmp);
 	}
-
-	if (tmp)
-	    krb5_addlog_dest(context, context->debug_dest, tmp);
     }
 
     tmp = krb5_config_get_string(context, NULL, "libdefaults",

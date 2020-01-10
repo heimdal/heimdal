@@ -240,13 +240,13 @@ log_file(krb5_context context, const char *timestr, const char *msg, void *data)
 	if (_krb5_expand_path_tokens(context, f->filename, 1, &filename))
 	    return;
 	fd = open(filename, flags, 0666);
+	free(filename);
 	if (fd == -1) {
 	    if (f->disp == FILEDISP_IFEXISTS)
 		gettimeofday(&f->tv, NULL);
 	    return;
 	}
 	f->fd = fdopen(fd, f->mode);
-	free(filename);
     }
     if(f->fd == NULL)
 	return;

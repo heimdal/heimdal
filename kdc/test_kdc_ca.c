@@ -69,6 +69,7 @@ main(int argc, char **argv)
         err(1, "Could not initialize krb5_context");
     if ((ret = krb5_kdc_get_config(context, &config)))
         krb5_err(context, 1, ret, "Could not get KDC configuration");
+    config->app = app_string;
     if ((ret = krb5_initlog(context, argv0, &config->logf)) ||
         (ret = krb5_addlog_dest(context, config->logf, "0-5/STDERR")))
         krb5_err(context, 1, ret, "Could not set up logging to stderr");

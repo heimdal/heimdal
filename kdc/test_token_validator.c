@@ -3,9 +3,12 @@
 static int help_flag;
 static int version_flag;
 static char *realm;
+static char *app;
 static struct getarg_strings audiences;
 
 struct getargs args[] = {
+    {   "app",          'A',    arg_string,    &app,
+        "app name (krb5.conf section)", "APP-NAME" },
     {   "help",         'h',    arg_flag,    &help_flag,
         "Print usage message", NULL },
     {   NULL,           'r',    arg_string,  &realm,
@@ -59,6 +62,7 @@ main(int argc, char **argv)
         err(1, "Could not initialize krb5_context");
     if ((ret = krb5_kdc_get_config(context, &config)))
         krb5_err(context, 1, ret, "Could not get KDC configuration");
+    config->app = app;
 
     token_type = argv[0];
     token.data = argv[1];

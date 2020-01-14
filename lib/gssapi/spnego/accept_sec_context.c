@@ -42,12 +42,12 @@ send_reject (OM_uint32 *minor_status,
 
     nt.element = choice_NegotiationToken_negTokenResp;
 
-    ALLOC(nt.u.negTokenResp.negResult, 1);
-    if (nt.u.negTokenResp.negResult == NULL) {
+    ALLOC(nt.u.negTokenResp.negState, 1);
+    if (nt.u.negTokenResp.negState == NULL) {
 	*minor_status = ENOMEM;
 	return GSS_S_FAILURE;
     }
-    *(nt.u.negTokenResp.negResult)  = reject;
+    *(nt.u.negTokenResp.negState)  = reject;
     nt.u.negTokenResp.supportedMech = NULL;
     nt.u.negTokenResp.responseToken = NULL;
     nt.u.negTokenResp.mechListMIC   = NULL;
@@ -199,8 +199,8 @@ send_accept (OM_uint32 *minor_status,
 
     nt.element = choice_NegotiationToken_negTokenResp;
 
-    ALLOC(nt.u.negTokenResp.negResult, 1);
-    if (nt.u.negTokenResp.negResult == NULL) {
+    ALLOC(nt.u.negTokenResp.negState, 1);
+    if (nt.u.negTokenResp.negState == NULL) {
 	*minor_status = ENOMEM;
 	return GSS_S_FAILURE;
     }
@@ -209,14 +209,14 @@ send_accept (OM_uint32 *minor_status,
 	if (mech_token != GSS_C_NO_BUFFER
 	    && mech_token->length != 0
 	    && mech_buf != GSS_C_NO_BUFFER)
-	    *(nt.u.negTokenResp.negResult)  = accept_incomplete;
+	    *(nt.u.negTokenResp.negState)  = accept_incomplete;
 	else
-	    *(nt.u.negTokenResp.negResult)  = accept_completed;
+	    *(nt.u.negTokenResp.negState)  = accept_completed;
     } else {
 	if (initial_response && !optimistic_mech_ok)
-	    *(nt.u.negTokenResp.negResult)  = request_mic;
+	    *(nt.u.negTokenResp.negState)  = request_mic;
 	else
-	    *(nt.u.negTokenResp.negResult)  = accept_incomplete;
+	    *(nt.u.negTokenResp.negState)  = accept_incomplete;
     }
 
     if (initial_response) {
@@ -299,7 +299,7 @@ send_accept (OM_uint32 *minor_status,
      * specifies encapsulation for all _Kerberos_ tokens).
      */
 
-    if (*(nt.u.negTokenResp.negResult) == accept_completed)
+    if (*(nt.u.negTokenResp.negState) == accept_completed)
 	ret = GSS_S_COMPLETE;
     else
 	ret = GSS_S_CONTINUE_NEEDED;
@@ -834,7 +834,7 @@ acceptor_continue
     NegotiationToken nt;
     size_t nt_len;
     NegTokenResp *na;
-    unsigned int negResult = accept_incomplete;
+    unsigned int negState = accept_incomplete;
     gss_buffer_t mech_input_token = GSS_C_NO_BUFFER;
     gss_buffer_t mech_output_token = GSS_C_NO_BUFFER;
     gssspnego_ctx ctx;
@@ -859,8 +859,8 @@ acceptor_continue
     }
     na = &nt.u.negTokenResp;
 
-    if (na->negResult != NULL) {
-	negResult = *(na->negResult);
+    if (na->negState != NULL) {
+	negState = *(na->negState);
     }
 
     HEIMDAL_MUTEX_lock(&ctx->ctx_id_mutex);
@@ -912,7 +912,7 @@ acceptor_continue
 				    output_token);
 
 	if (ctx->mech_flags & GSS_C_DCE_STYLE)
-	    require_response = (negResult != accept_completed);
+	    require_response = (negState != accept_completed);
 	else
 	    require_response = 0;
 
@@ -922,7 +922,7 @@ acceptor_continue
 	 */
 	if ((mech_output_token != GSS_C_NO_BUFFER &&
 	     mech_output_token->length != 0)
-	    || (ctx->flags.open && negResult == accept_incomplete)
+	    || (ctx->flags.open && negState == accept_incomplete)
 	    || require_response
 	    || get_mic) {
 	    ret2 = send_accept (minor_status,

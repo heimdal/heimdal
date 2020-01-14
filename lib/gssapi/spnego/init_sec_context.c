@@ -133,13 +133,13 @@ make_reply(OM_uint32 *minor_status,
     gss_buffer_desc mic_buf;
     OM_uint32 ret, minor;
     size_t size;
-    NegResultEnum result;
+    NegStateEnum state;
 
     memset(&nt, 0, sizeof(nt));
 
     nt.element = choice_NegotiationToken_negTokenResp;
 
-    nt.u.negTokenResp.negResult = NULL;
+    nt.u.negTokenResp.negState = NULL;
     nt.u.negTokenResp.supportedMech = NULL;
 
     output_token->length = 0;
@@ -149,11 +149,11 @@ make_reply(OM_uint32 *minor_status,
 
     if (ctx->flags.open) {
 	if (ctx->flags.verified_mic == 1 || ctx->flags.require_mic == 0)
-	    result = accept_completed;
+	    state = accept_completed;
 	else
-	    result = accept_incomplete;
+	    state = accept_incomplete;
     } else  {
-	result = accept_incomplete;
+	state = accept_incomplete;
     }
 
     if (mech_token->length == 0) {
@@ -212,13 +212,13 @@ make_reply(OM_uint32 *minor_status,
 	nt.u.negTokenResp.mechListMIC = NULL;
     }
 
-    ALLOC(nt.u.negTokenResp.negResult, 1);
-    if (nt.u.negTokenResp.negResult == NULL) {
+    ALLOC(nt.u.negTokenResp.negState, 1);
+    if (nt.u.negTokenResp.negState == NULL) {
 	free_NegotiationToken(&nt);
 	*minor_status = ENOMEM;
 	return GSS_S_FAILURE;
     }
-    *nt.u.negTokenResp.negResult = result;
+    *nt.u.negTokenResp.negState = state;
 
     ASN1_MALLOC_ENCODE(NegotiationToken,
 		       output_token->value, output_token->length,
@@ -229,7 +229,7 @@ make_reply(OM_uint32 *minor_status,
 	return GSS_S_FAILURE;
     }
 
-    if (result != accept_completed)
+    if (state != accept_completed)
 	return GSS_S_CONTINUE_NEEDED;
 
     return GSS_S_COMPLETE;
@@ -446,8 +446,8 @@ spnego_reply(OM_uint32 * minor_status,
 	return GSS_S_BAD_MECH;
     }
 
-    if (resp.u.negTokenResp.negResult == NULL
-	|| *(resp.u.negTokenResp.negResult) == reject)
+    if (resp.u.negTokenResp.negState == NULL
+	|| *(resp.u.negTokenResp.negState) == reject)
     {
 	free_NegotiationToken(&resp);
 	return GSS_S_BAD_MECH;
@@ -577,7 +577,7 @@ spnego_reply(OM_uint32 * minor_status,
 	if (ret == GSS_S_COMPLETE) {
 	    ctx->flags.open = 1;
 	}
-    } else if (*resp.u.negTokenResp.negResult == accept_completed) {
+    } else if (*resp.u.negTokenResp.negState == accept_completed) {
 	if (ctx->flags.maybe_open)
 	    ctx->flags.open = 1;
 
@@ -589,7 +589,7 @@ spnego_reply(OM_uint32 * minor_status,
 	}
     }
 
-    if (*resp.u.negTokenResp.negResult == request_mic) {
+    if (*resp.u.negTokenResp.negState == request_mic) {
 	ctx->flags.peer_require_mic = 1;
     }
 
@@ -642,7 +642,7 @@ spnego_reply(OM_uint32 * minor_status,
 
     if (ctx->flags.open) {
 
-	if (*resp.u.negTokenResp.negResult == accept_completed && ctx->flags.safe_omit) {
+	if (*resp.u.negTokenResp.negState == accept_completed && ctx->flags.safe_omit) {
 	    ctx->initiator_state = step_completed;
 	    ret = GSS_S_COMPLETE;
 	} else if (ctx->flags.require_mic != 0 && ctx->flags.verified_mic == 0) {
@@ -654,7 +654,7 @@ spnego_reply(OM_uint32 * minor_status,
 	}
     }
 
-    if (*resp.u.negTokenResp.negResult != accept_completed ||
+    if (*resp.u.negTokenResp.negState != accept_completed ||
 	ctx->initiator_state != step_completed ||
 	mech_output_token.length)
     {
@@ -703,8 +703,8 @@ wait_server_mic(OM_uint32 * minor_status,
 				       "Failed to decode NegotiationToken");
 
     if (resp.element != choice_NegotiationToken_negTokenResp
-	|| resp.u.negTokenResp.negResult == NULL
-	|| *resp.u.negTokenResp.negResult != accept_completed)
+	|| resp.u.negTokenResp.negState == NULL
+	|| *resp.u.negTokenResp.negState != accept_completed)
     {
 	free_NegotiationToken(&resp);
 	return gss_mg_set_error_string(GSS_SPNEGO_MECHANISM,

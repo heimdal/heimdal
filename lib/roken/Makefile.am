@@ -20,11 +20,12 @@ if HAVE_DBHEADER
 AM_CPPFLAGS += -I$(DBHEADER)
 endif
 
-noinst_PROGRAMS = snprintf-test resolve-test rkpty test-detach test-auxval rkvis rkbase64
+noinst_PROGRAMS = snprintf-test resolve-test rkpty test-detach test-auxval rkvis rkbase32 rkbase64
 
 CHECK_LOCAL = snprintf-test resolve-test rkpty make-roken
 
 check_PROGRAMS = 				\
+		base32-test			\
 		base64-test			\
 		getaddrinfo-test		\
 		getifaddrs-test			\
@@ -60,6 +61,9 @@ test_getuserinfo_LDADD = libtest.la $(LDADD)
 rkvis_SOURCES = vis.c
 rkvis_CPPFLAGS = -DTEST
 
+rkbase32_SOURCES = base32.c
+rkbase32_CPPFLAGS = -DTEST
+
 rkbase64_SOURCES = base64.c
 rkbase64_CPPFLAGS = -DTEST
 
@@ -82,6 +86,7 @@ tsearch_test_CFLAGS	= -DTEST_TSEARCH
 resolve_test_SOURCES = resolve-test.c
 
 libroken_la_SOURCES =		\
+	base32.c		\
 	base64.c		\
 	bswap.c			\
 	concat.c		\
@@ -191,6 +196,7 @@ XHEADERS = $(err_h) $(fnmatch_h) $(ifaddrs_h) $(search_h) $(vis_h)
 CLEANFILES += err.h fnmatch.h ifaddrs.h search.h vis.h
 
 dist_include_HEADERS = 				\
+	base32.h				\
 	base64.h				\
 	getarg.h				\
 	hex.h					\

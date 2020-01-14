@@ -33,6 +33,8 @@ HEIMDAL_ROKEN_2.0 {
 		print_units_table;
 		rk_asnprintf;
 		rk_asprintf;
+		rk_base32_decode;
+		rk_base32_encode;
 		rk_base64_decode;
 		rk_base64_encode;
 		rk_bswap16;

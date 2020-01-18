@@ -460,6 +460,10 @@ ${kgetcred} ${server}@${R} || { ec=1 ; eval "${testfailed}"; }
 ${klist} -f | grep ${server} | grep FRA > /dev/null || \
 	{ ec=1 ; eval "${testfailed}"; }
 
+echo "Testing strip of forwardable when the server is disallowed in TGS-REQ"
+${kgetcred} sensitive@${R} || { ec=1 ; eval "${testfailed}"; }
+${klist} -f | grep sensitive | grep FRA > /dev/null && \
+	{ ec=1 ; eval "${testfailed}"; }
 
 echo "Specific enctype"; > messages.log
 ${kinit} --password-file=${objdir}/foopassword \

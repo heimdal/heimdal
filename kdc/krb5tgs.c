@@ -912,6 +912,12 @@ tgs_make_reply(astgs_request_t r,
     et.flags.hw_authent  = tgt->flags.hw_authent;
     et.flags.ok_as_delegate = server->entry.flags.ok_as_delegate;
 
+    /* See MS-KILE 3.3.5.1 */
+    if (!server->entry.flags.forwardable)
+	et.flags.forwardable = 0;
+    if (!server->entry.flags.proxiable)
+	et.flags.proxiable = 0;
+
     /*
      * For anonymous tickets, we should filter out positive authorization data
      * that could reveal the client's identity, and return a policy error for

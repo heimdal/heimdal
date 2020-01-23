@@ -104,7 +104,7 @@ main (int argc, char **argv)
  * Add a new ccache type with operations `ops', overwriting any
  * existing one if `override'.
  *
- * @param context a Keberos context
+ * @param context a Kerberos context
  * @param ops type of plugin symbol
  * @param override flag to select if the registration is to overide
  * an existing ops with the same name.
@@ -180,10 +180,11 @@ _krb5_cc_allocate(krb5_context context,
  */
 
 static krb5_error_code
-allocate_ccache (krb5_context context,
-		 const krb5_cc_ops *ops,
-		 const char *residual,
-		 krb5_ccache *id)
+allocate_ccache(krb5_context context,
+                const krb5_cc_ops *ops,
+                const char *residual,
+                const char *subsidiary,
+                krb5_ccache *id)
 {
     krb5_error_code ret;
 #ifdef KRB5_USE_PATH_TOKENS
@@ -210,7 +211,7 @@ allocate_ccache (krb5_context context,
 	return ret;
     }
 
-    ret = (*id)->ops->resolve(context, id, residual);
+    ret = (*id)->ops->resolve(context, id, residual, subsidiary);
     if(ret) {
 	free(*id);
         *id = NULL;
@@ -247,7 +248,7 @@ is_possible_path_name(const char * name)
  * Find and allocate a ccache in `id' from the specification in `residual'.
  * If the ccache name doesn't contain any colon, interpret it as a file name.
  *
- * @param context a Keberos context.
+ * @param context a Kerberos context.
  * @param name string name of a credential cache.
  * @param id return pointer to a found credential cache.
  *
@@ -273,17 +274,164 @@ krb5_cc_resolve(krb5_context context,
 	if(strncmp(context->cc_ops[i]->prefix, name, prefix_len) == 0
 	   && name[prefix_len] == ':') {
 	    return allocate_ccache (context, context->cc_ops[i],
-				    name + prefix_len + 1,
+				    name + prefix_len + 1, NULL,
 				    id);
 	}
     }
     if (is_possible_path_name(name))
-	return allocate_ccache (context, &krb5_fcc_ops, name, id);
+	return allocate_ccache (context, &krb5_fcc_ops, name, NULL, id);
     else {
 	krb5_set_error_message(context, KRB5_CC_UNKNOWN_TYPE,
 			       N_("unknown ccache type %s", "name"), name);
 	return KRB5_CC_UNKNOWN_TYPE;
     }
+}
+
+static const char *
+get_default_cc_type(krb5_context context, int simple)
+{
+    const char *def_ccname;
+    const char *def_cctype =
+        krb5_config_get_string_default(context, NULL,
+                                       secure_getenv("KRB5CCTYPE"),
+                                       "libdefaults", "default_cc_type", NULL);
+
+    if (!simple &&
+        (def_ccname = krb5_cc_default_name(context))) {
+        size_t i;
+
+        for (i = 0; i < context->num_cc_ops && context->cc_ops[i]->prefix; i++) {
+            size_t prefix_len = strlen(context->cc_ops[i]->prefix);
+
+            if (!strncmp(context->cc_ops[i]->prefix, def_ccname, prefix_len) &&
+                def_ccname[prefix_len] == ':')
+                return context->cc_ops[i]->prefix;
+        }
+        if (is_possible_path_name(def_ccname))
+            return "FILE";
+    }
+    return def_cctype ? def_cctype : "DIR";
+}
+
+/**
+ * Find and allocate a ccache in `id' for the subsidiary cache named by
+ * `subsidiary' in the collection named by `collection'.
+ *
+ * @param context a Kerberos context.
+ * @param cctype string name of a credential cache collection type.
+ * @param collection string name of a credential cache collection.
+ * @param subsidiary string name of a credential cache in a collection.
+ * @param id return pointer to a found credential cache.
+ *
+ * @return Return 0 or an error code. In case of an error, id is set
+ * to NULL, see krb5_get_error_message().
+ *
+ * @ingroup krb5_ccache
+ */
+
+
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
+krb5_cc_resolve_sub(krb5_context context,
+                    const char *cctype,
+                    const char *collection,
+                    const char *subsidiary,
+                    krb5_ccache *id)
+{
+    size_t i;
+
+    *id = NULL;
+
+    if (!cctype && collection) {
+        /* Get the cctype from the collection, maybe */
+        for (i = 0; i < context->num_cc_ops && context->cc_ops[i]->prefix; i++) {
+            size_t plen = strlen(context->cc_ops[i]->prefix);
+
+            if ((strncmp(context->cc_ops[i]->prefix, collection, plen) ||
+                 collection[plen] != ':'))
+                continue;
+            cctype = context->cc_ops[i]->prefix;
+            collection += plen + 1;
+            break;
+        }
+    }
+
+
+    if (!cctype) {
+        const char *def_cctype = get_default_cc_type(context, 0);
+        int might_be_path = collection && is_possible_path_name(collection);
+
+        if (def_cctype)
+            cctype = def_cctype;
+        else if (might_be_path && subsidiary)
+            cctype = "DIR";     /* Default to DIR */
+        else if (might_be_path && !subsidiary)
+            cctype = "FILE";    /* Default to FILE */
+    }
+
+    /* If either `cctype' is not NULL or `collection' starts with TYPE: */
+    if (cctype || collection) {
+        for (i = 0; i < context->num_cc_ops && context->cc_ops[i]->prefix; i++) {
+            size_t plen = strlen(context->cc_ops[i]->prefix);
+
+            if (cctype && strcmp(context->cc_ops[i]->prefix, cctype))
+                continue;
+            if (!cctype &&
+                (strncmp(context->cc_ops[i]->prefix, collection, plen) ||
+                 collection[plen] != ':'))
+                continue;
+
+            return allocate_ccache(context, context->cc_ops[i],
+                                   cctype ? collection : collection + plen + 1,
+                                   subsidiary, id);
+        }
+    }
+
+    krb5_set_error_message(context, KRB5_CC_UNKNOWN_TYPE,
+                           N_("unknown ccache type %s", ""),
+                           cctype ? cctype : collection);
+    return KRB5_CC_UNKNOWN_TYPE;
+}
+
+
+/**
+ * Find and allocate a ccache in `id' from the specification in `residual', but
+ * specific to the given principal `principal' by using the principal name as
+ * the name of a "subsidiary" credentials cache in the collection named by
+ * `name'.  If the ccache name doesn't contain any colon, interpret it as a
+ * file name.
+ *
+ * @param context a Kerberos context.
+ * @param name string name of a credential cache.
+ * @param principal principal name of desired credentials.
+ * @param id return pointer to a found credential cache.
+ *
+ * @return Return 0 or an error code. In case of an error, id is set
+ * to NULL, see krb5_get_error_message().
+ *
+ * @ingroup krb5_ccache
+ */
+
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
+krb5_cc_resolve_for(krb5_context context,
+                    const char *cctype,
+		    const char *name,
+                    krb5_const_principal principal,
+                    krb5_ccache *id)
+{
+    krb5_error_code ret;
+    char *p, *s;
+
+    *id = NULL;
+
+    ret = krb5_unparse_name(context, principal, &p);
+    if (ret)
+        return ret;
+    /* Subsidiary components cannot have ':'s in them */
+    for (s = strchr(p, ':'); s; s = strchr(s + 1, ':'))
+        *s = '-';
+    ret = krb5_cc_resolve_sub(context, cctype, name, p, id);
+    free(p);
+    return ret;
 }
 
 /**
@@ -334,7 +482,42 @@ KRB5_LIB_FUNCTION const char* KRB5_LIB_CALL
 krb5_cc_get_name(krb5_context context,
 		 krb5_ccache id)
 {
-    return id->ops->get_name(context, id);
+    const char *name;
+
+    (void) id->ops->get_name(context, id, &name, NULL, NULL);
+    return name;
+}
+
+/**
+ * Return the name of the ccache collection associated with `id'
+ *
+ * @ingroup krb5_ccache
+ */
+
+
+KRB5_LIB_FUNCTION const char* KRB5_LIB_CALL
+krb5_cc_get_collection(krb5_context context, krb5_ccache id)
+{
+    const char *name;
+
+    (void) id->ops->get_name(context, id, NULL, &name, NULL);
+    return name;
+}
+
+/**
+ * Return the name of the subsidiary ccache of `id'
+ *
+ * @ingroup krb5_ccache
+ */
+
+
+KRB5_LIB_FUNCTION const char* KRB5_LIB_CALL
+krb5_cc_get_subsidiary(krb5_context context, krb5_ccache id)
+{
+    const char *name;
+
+    (void) id->ops->get_name(context, id, NULL, NULL, &name);
+    return name;
 }
 
 /**
@@ -354,7 +537,7 @@ krb5_cc_get_type(krb5_context context,
 /**
  * Return the complete resolvable name the cache
 
- * @param context a Keberos context
+ * @param context a Kerberos context
  * @param id return pointer to a found credential cache
  * @param str the returned name of a credential cache, free with krb5_xfree()
  *
@@ -620,8 +803,7 @@ krb5_cc_configured_default_name(krb5_context context)
     }
 
     /* Else try a configured default ccache type's default */
-    cfg = krb5_config_get_string(context, NULL, "libdefaults",
-                                 "default_cc_type", NULL);
+    cfg = get_default_cc_type(context, 1);
     if (cfg) {
         const krb5_cc_ops *ops;
 
@@ -687,16 +869,50 @@ krb5_cc_configured_default_name(krb5_context context)
  * @ingroup krb5_ccache
  */
 
-
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_cc_default(krb5_context context,
 		krb5_ccache *id)
 {
     const char *p = krb5_cc_default_name(context);
 
+    *id = NULL;
     if (p == NULL)
 	return krb5_enomem(context);
     return krb5_cc_resolve(context, p, id);
+}
+
+/**
+ * Open the named subsidiary cache from the default ccache collection in `id'.
+ *
+ * @return Return an error code or 0, see krb5_get_error_message().
+ *
+ * @ingroup krb5_ccache
+ */
+
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
+krb5_cc_default_sub(krb5_context context,
+                    const char *subsidiary,
+		    krb5_ccache *id)
+{
+    return krb5_cc_resolve_sub(context, get_default_cc_type(context, 0), NULL,
+                               subsidiary, id);
+}
+
+/**
+ * Open the default ccache in `id' that corresponds to the given principal.
+ *
+ * @return Return an error code or 0, see krb5_get_error_message().
+ *
+ * @ingroup krb5_ccache
+ */
+
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
+krb5_cc_default_for(krb5_context context,
+                    krb5_const_principal principal,
+                    krb5_ccache *id)
+{
+    return krb5_cc_resolve_for(context, get_default_cc_type(context, 0), NULL,
+                               principal, id);
 }
 
 /**
@@ -1424,7 +1640,7 @@ krb5_cc_cache_match (krb5_context context,
  * Move the content from one credential cache to another. The
  * operation is an atomic switch.
  *
- * @param context a Keberos context
+ * @param context a Kerberos context
  * @param from the credential cache to move the content from
  * @param to the credential cache to move the content to
 
@@ -1515,7 +1731,7 @@ build_conf_principals(krb5_context context, krb5_ccache id,
  * principal (generated part of krb5_cc_set_config()). Returns FALSE
  * (zero) if not a configuration principal.
  *
- * @param context a Keberos context
+ * @param context a Kerberos context
  * @param principal principal to check if it a configuration principal
  *
  * @ingroup krb5_ccache
@@ -1539,7 +1755,7 @@ krb5_is_config_principal(krb5_context context,
  * Store some configuration for the credential cache in the cache.
  * Existing configuration under the same name is over-written.
  *
- * @param context a Keberos context
+ * @param context a Kerberos context
  * @param id the credential cache to store the data for
  * @param principal configuration for a specific principal, if
  * NULL, global for the whole cache.
@@ -1586,7 +1802,7 @@ out:
 /**
  * Get some configuration for the credential cache in the cache.
  *
- * @param context a Keberos context
+ * @param context a Kerberos context
  * @param id the credential cache to store the data for
  * @param principal configuration for a specific principal, if
  * NULL, global for the whole cache.
@@ -1637,7 +1853,7 @@ struct krb5_cccol_cursor_data {
  * Get a new cache interation cursor that will interate over all
  * credentials caches independent of type.
  *
- * @param context a Keberos context
+ * @param context a Kerberos context
  * @param cursor passed into krb5_cccol_cursor_next() and free with krb5_cccol_cursor_free().
  *
  * @return Returns 0 or and error code, see krb5_get_error_message().
@@ -1711,7 +1927,7 @@ krb5_cccol_cursor_next(krb5_context context, krb5_cccol_cursor cursor,
 	return KRB5_CC_END;
     }
 
-    return 0;
+    return ret;
 }
 
 /**

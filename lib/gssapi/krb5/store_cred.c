@@ -51,64 +51,54 @@ same_princ(krb5_context context, krb5_ccache id1, krb5_ccache id2)
     return same;
 }
 
-/*
- * Like krb5_cc_cache_match(), but only looking in the default collection.
- *
- * We need this to avoid looking for MEMORY ccaches, which risks matching the
- * same credential that we're storing.  We could make sure that MEMORY ccaches
- * are searched for last in krb5_cc_cache_match(), then ignore any MEMORY
- * ccaches we find there, but, if we might then store in a ccache that will not
- * be found later as the default ccache, then it's not worth it.
- *
- * XXX In order to remove this, we'll first need to make sure that
- *     krb5_cc_default() searches all collections when KRB5CCNAME is not set,
- *     then we'll need to make sure that krb5_cc_cache_match() searches MEMORY
- *     ccaches last (or else introduce a new ccache type like MEMORY but which
- *     is never searched or searchable), then make sure that the caller below
- *     treat finding a MEMORY the same as not finding a ccache at all.
- */
-static krb5_error_code
-ccache_match(krb5_context context,
-             krb5_principal princ,
-             const char *cctype,
-             krb5_ccache *id)
+static OM_uint32
+add_env(OM_uint32 *minor,
+        gss_buffer_set_t *env,
+        const char *var,
+        const char *val)
 {
-    krb5_cc_cache_cursor cursor = NULL;
-    krb5_error_code ret;
+    OM_uint32 major;
+    gss_buffer_desc b;
+    char *varval = NULL;
 
-    *id = NULL;
-    ret = krb5_cc_cache_get_first(context, cctype, &cursor);
-    if (ret)
-        return ret;
-
-    while (krb5_cc_cache_next(context, cursor, id) == 0) {
-        krb5_principal p = NULL;
-
-        ret = krb5_cc_get_principal(context, *id, &p);
-        if (ret == 0 &&
-            krb5_principal_compare(context, princ, p)) {
-            krb5_free_principal(context, p);
-            krb5_cc_cache_end_seq_get(context, cursor);
-            return 0;
-        }
-        if (*id)
-            krb5_cc_close(context, *id);
-        *id = NULL;
+    if (asprintf(&varval, "%s=%s", var, val) == -1 || varval == NULL) {
+        *minor = ENOMEM;
+        return GSS_S_FAILURE;
     }
-    krb5_cc_cache_end_seq_get(context, cursor);
-    return KRB5_CC_END;
+
+    b.value = varval;
+    b.length = strlen(varval) + 1;
+    major = gss_add_buffer_set_member(minor, &b, env);
+    free(varval);
+    return major;
+}
+
+static OM_uint32
+set_proc(OM_uint32 *minor, gss_buffer_set_t env)
+{
+    size_t i;
+
+    /*
+     * XXX On systems with setpag(), call setpag().  On WIN32... create a
+     * session, set the access token, ...?
+     */
+#ifndef WIN32
+    for (i = 0; i < env->count; i++)
+        putenv(env->elements[i].value);
+#endif
+    return GSS_S_COMPLETE;
 }
 
 OM_uint32 GSSAPI_CALLCONV
-_gsskrb5_store_cred_into(OM_uint32         *minor_status,
-			 gss_const_cred_id_t input_cred_handle,
-			 gss_cred_usage_t  cred_usage,
-			 const gss_OID     desired_mech,
-			 OM_uint32         overwrite_cred,
-			 OM_uint32         default_cred,
-			 gss_const_key_value_set_t cred_store,
-			 gss_OID_set       *elements_stored,
-			 gss_cred_usage_t  *cred_usage_stored)
+_gsskrb5_store_cred_into2(OM_uint32         *minor_status,
+			  gss_const_cred_id_t input_cred_handle,
+			  gss_cred_usage_t  cred_usage,
+			  const gss_OID     desired_mech,
+			  OM_uint32         store_cred_flags,
+			  gss_const_key_value_set_t cred_store,
+			  gss_OID_set       *elements_stored,
+			  gss_cred_usage_t  *cred_usage_stored,
+                          gss_buffer_set_t  *envp)
 {
     krb5_context context;
     krb5_error_code ret;
@@ -116,8 +106,11 @@ _gsskrb5_store_cred_into(OM_uint32         *minor_status,
     krb5_ccache id = NULL;
     time_t exp_current;
     time_t exp_new;
+    gss_buffer_set_t env = GSS_C_NO_BUFFER_SET;
     const char *cs_ccache_name = NULL;
-    OM_uint32 major_status;
+    OM_uint32 major_status, junk;
+    OM_uint32 overwrite_cred = store_cred_flags & GSS_C_STORE_CRED_OVERWRITE;
+    OM_uint32 default_cred = store_cred_flags & GSS_C_STORE_CRED_DEFAULT;
 
     *minor_status = 0;
 
@@ -168,45 +161,17 @@ _gsskrb5_store_cred_into(OM_uint32         *minor_status,
     }
 
     if (cs_ccache_name) {
-        /*
-         * Not the default ccache.
-         *
-         * Therefore not a collection type cache.
-         *
-         * Therefore there's no question of switching the primary ccache.
-         *
-         * Therefore we reset default_cred.
-         *
-         * XXX Perhaps we should fail in this case if default_cred is true.
-         */
         default_cred = 0;
-	ret = krb5_cc_resolve(context, cs_ccache_name, &id);
+        ret = krb5_cc_resolve(context, cs_ccache_name, &id);
     } else {
-        const char *cctype = NULL;
-
         /*
          * Use the default ccache, and if it's a collection, switch it if
          * default_cred is true.
          */
-        ret = krb5_cc_default(context, &id);
-        if (ret == 0) {
-	    cctype = krb5_cc_get_type(context, id);
-            if (krb5_cc_support_switch(context, cctype)) {
-                /* The default ccache is a collection type */
-
-                krb5_cc_close(context, id);
-                id = NULL;
-
-                /* Find a matching ccache or create a new one */
-                ret = ccache_match(context, input_cred->principal,
-                                   cctype, &id);
-                if (ret || id == NULL) {
-                    /* Since the ccache is new, just store unconditionally */
-                    overwrite_cred = 1;
-                    ret = krb5_cc_new_unique(context, cctype, NULL, &id);
-                }
-            }
-        }
+        ret = krb5_cc_default_for(context, input_cred->principal, &id);
+        if (ret == 0 &&
+            krb5_cc_support_switch(context, krb5_cc_get_type(context, id)))
+            overwrite_cred = 1;
     }
 
     if (ret || id == NULL) {
@@ -215,14 +180,7 @@ _gsskrb5_store_cred_into(OM_uint32         *minor_status,
 	return ret == 0 ? GSS_S_NO_CRED : GSS_S_FAILURE;
     }
 
-    /*
-     * If the new creds are for a different principal than we had before,
-     * overwrite.
-     */
-    if (!overwrite_cred && !same_princ(context, id, input_cred->ccache))
-        overwrite_cred = 1;
-
-    if (!overwrite_cred) {
+    if (!overwrite_cred && same_princ(context, id, input_cred->ccache)) {
         /*
          * If current creds are for the same princ as we already had creds for,
          * and the new creds live longer than the old, overwrite.
@@ -246,9 +204,47 @@ _gsskrb5_store_cred_into(OM_uint32         *minor_status,
                                    NULL);
     if (ret == 0 && default_cred)
         krb5_cc_switch(context, id);
+
+    if ((store_cred_flags & GSS_C_STORE_CRED_SET_PROCESS) && envp == NULL)
+        envp = &env;
+    if (envp != NULL) {
+        char *fullname = NULL;
+        
+        if ((ret = krb5_cc_get_full_name(context, id, &fullname)) == 0) {
+            major_status = add_env(minor_status, envp, "KRB5CCNAME", fullname);
+            free(fullname);
+            if (major_status)
+                ret = *minor_status;
+        }
+    }
     (void) krb5_cc_close(context, id);
 
     HEIMDAL_MUTEX_unlock(&input_cred->cred_id_mutex);
+    if (ret == 0 && (store_cred_flags & GSS_C_STORE_CRED_SET_PROCESS) &&
+        (major_status = set_proc(minor_status, *envp)) != GSS_S_COMPLETE)
+        ret = *minor_status;
+    (void) gss_release_buffer_set(&junk, &env);
     *minor_status = ret;
     return ret ? GSS_S_FAILURE : GSS_S_COMPLETE;
+}
+
+OM_uint32 GSSAPI_CALLCONV
+_gsskrb5_store_cred_into(OM_uint32         *minor_status,
+			 gss_const_cred_id_t input_cred_handle,
+			 gss_cred_usage_t  cred_usage,
+			 const gss_OID     desired_mech,
+			 OM_uint32         overwrite_cred,
+			 OM_uint32         default_cred,
+			 gss_const_key_value_set_t cred_store,
+			 gss_OID_set       *elements_stored,
+			 gss_cred_usage_t  *cred_usage_stored)
+{
+    OM_uint32 store_cred_flags =
+        (overwrite_cred ? GSS_C_STORE_CRED_OVERWRITE : 0) |
+        (default_cred ? GSS_C_STORE_CRED_DEFAULT : 0);
+
+    return _gsskrb5_store_cred_into2(minor_status, input_cred_handle,
+                                     cred_usage, desired_mech,
+                                     store_cred_flags, cred_store,
+                                     elements_stored, cred_usage_stored, NULL);
 }

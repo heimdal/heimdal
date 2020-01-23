@@ -37,8 +37,10 @@
 
 typedef struct krb5_dcache{
     krb5_ccache fcache;
-    char *dir;
     char *name;
+    char *dir;
+    char *sub;
+    unsigned int default_candidate:1;
 } krb5_dcache;
 
 #define DCACHE(X) ((krb5_dcache*)(X)->data.data)
@@ -46,7 +48,47 @@ typedef struct krb5_dcache{
 
 static krb5_error_code KRB5_CALLCONV dcc_close(krb5_context, krb5_ccache);
 static krb5_error_code KRB5_CALLCONV dcc_get_default_name(krb5_context, char **);
+static krb5_error_code KRB5_CALLCONV dcc_set_default(krb5_context, krb5_ccache);
 
+/*
+ * Make subsidiary filesystem safe by mapping / and : to -.  If the subsidiary
+ * is longer than 128 bytes, then truncate.
+ * In all cases, "tkt." is prefixed to be compatible with the DIR requirement
+ * that subsidiary ccache files be named tkt*.
+ *
+ * Thus host/foo.bar.baz@BAR.BAZ -> tkt.host-foo.bar.baz@BAR.BAZ.
+ *
+ * In particular, no filesystem component separators will be emitted, and . and
+ * .. will never be traversed.
+ */
+static krb5_error_code
+fs_encode_subsidiary(krb5_context context,
+                     krb5_dcache *dc,
+                     const char *subsidiary,
+                     char **res)
+{
+    size_t len = strlen(subsidiary);
+    size_t i;
+
+    *res = NULL;
+    if (asprintf(res, "tkt.%s", subsidiary) == -1 || *res == NULL)
+        return krb5_enomem(context);
+    for (i = sizeof("tkt.") - 1; i < len; i++) {
+        switch ((*res)[i]) {
+#ifdef WIN32
+        case '\\':  (*res)[0] = '-'; break;
+#endif
+        case '/':   (*res)[0] = '-'; break;
+        case ':':   (*res)[0] = '-'; break;
+        default:                     break;
+        }
+    }
+
+    /* Hopefully this will work on all filesystems */
+    if (len > 128 - sizeof("tkt.") - 1)
+        (*res)[127] = '\0';
+    return 0;
+}
 
 static char *
 primary_create(krb5_dcache *dc)
@@ -63,8 +105,14 @@ primary_create(krb5_dcache *dc)
 static int
 is_filename_cacheish(const char *name)
 {
-    return strncmp(name, "tkt", 3) == 0;
-	
+    size_t i;
+
+    if (strncmp(name, "tkt", sizeof("tkt") - 1))
+        return 0;
+    for (i = sizeof("tkt") - 1; name[i]; i++)
+        if (ISPATHSEP(name[i]))
+            return 0;
+    return 1;
 }
 
 static krb5_error_code
@@ -76,12 +124,6 @@ set_default_cache(krb5_context context, krb5_dcache *dc, const char *residual)
     size_t len;
     int fd = -1;
     int asprintf_ret;
-
-    if (!is_filename_cacheish(residual)) {
-	krb5_set_error_message(context, KRB5_CC_FORMAT,
-			       "name %s is not a cache (doesn't start with tkt)", residual);
-	return KRB5_CC_FORMAT;
-    }
 
     asprintf_ret = asprintf(&path, "%s/primary-XXXXXX", dc->dir);
     if (asprintf_ret == -1 || path == NULL) {
@@ -141,14 +183,18 @@ set_default_cache(krb5_context context, krb5_dcache *dc, const char *residual)
 }
 
 static krb5_error_code
-get_default_cache(krb5_context context, krb5_dcache *dc, char **residual)
+get_default_cache(krb5_context context, krb5_dcache *dc,
+                  const char *subsidiary, char **residual)
 {
     krb5_error_code ret;
     char buf[MAXPATHLEN];
-    char *primary;
+    char *primary = NULL;
     FILE *f;
 
     *residual = NULL;
+    if (subsidiary)
+        return fs_encode_subsidiary(context, dc, subsidiary, residual);
+
     primary = primary_create(dc);
     if (primary == NULL)
 	return krb5_enomem(context);
@@ -197,12 +243,22 @@ get_default_cache(krb5_context context, krb5_dcache *dc, char **residual)
 
 
 
-static const char* KRB5_CALLCONV
+static krb5_error_code KRB5_CALLCONV
 dcc_get_name(krb5_context context,
-	     krb5_ccache id)
+	     krb5_ccache id,
+             const char **name,
+             const char **dir,
+             const char **sub)
 {
     krb5_dcache *dc = DCACHE(id);
-    return dc->name;
+
+    if (name)
+        *name = dc->name;
+    if (dir)
+        *dir = dc->dir;
+    if (sub)
+        *sub = dc->sub;
+    return 0;
 }
 
 
@@ -210,6 +266,12 @@ static krb5_error_code
 verify_directory(krb5_context context, const char *path)
 {
     struct stat sb;
+
+    if (!path[0]) {
+        krb5_set_error_message(context, EINVAL,
+                               N_("DIR empty directory component", ""));
+        return EINVAL;
+    }
 
     if (stat(path, &sb) != 0) {
 	if (errno == ENOENT) {
@@ -241,118 +303,176 @@ dcc_release(krb5_context context, krb5_dcache *dc)
 {
     if (dc->fcache)
 	krb5_cc_close(context, dc->fcache);
-    if (dc->dir)
-	free(dc->dir);
-    if (dc->name)
-	free(dc->name);
+    free(dc->sub);
+    free(dc->dir);
+    free(dc->name);
     memset(dc, 0, sizeof(*dc));
     free(dc);
 }
 
-static krb5_error_code KRB5_CALLCONV
-dcc_resolve(krb5_context context, krb5_ccache *id, const char *res)
+static krb5_error_code
+get_default_dir(krb5_context context, char **res)
 {
-    char *filename = NULL;
     krb5_error_code ret;
-    krb5_dcache *dc;
-    const char *p;
-    int asprintf_ret;
+    char *s;
 
-    p = res;
-    do {
-	p = strstr(p, "..");
-	if (p && (p == res || ISPATHSEP(p[-1])) && (ISPATHSEP(p[2]) || p[2] == '\0')) {
-	    krb5_set_error_message(context, KRB5_CC_FORMAT,
-				   N_("Path contains a .. component", ""));
-	    return KRB5_CC_FORMAT;
-	}
-	if (p)
-	    p += 3;
-    } while (p);
-
-    dc = calloc(1, sizeof(*dc));
-    if (dc == NULL) {
-	krb5_set_error_message(context, KRB5_CC_NOMEM,
-			       N_("malloc: out of memory", ""));
-	return KRB5_CC_NOMEM;
+    if ((ret = dcc_get_default_name(context, &s)))
+        return ret;
+    if (strncmp(s, "DIR:", sizeof("DIR:") - 1)) {
+        *res = s;
+        s = NULL;
+    } else if ((*res = strdup(s + sizeof("DIR:") - 1)) == NULL) {
+        ret = krb5_enomem(context);
     }
-    
-    /* check for explicit component */
-    if (res[0] == ':') {
-	char *q;
+    free(s);
+    return ret;
+}
 
-	dc->dir = strdup(&res[1]);
-#ifdef _WIN32
-	q = strrchr(dc->dir, '\\');
-	if (q == NULL)
-#endif
-	q = strrchr(dc->dir, '/');
-	if (q) {
-	    *q++ = '\0';
-	} else {
-	    krb5_set_error_message(context, KRB5_CC_FORMAT, N_("Cache not an absolute path: %s", ""), dc->dir);
-	    dcc_release(context, dc);
-	    return KRB5_CC_FORMAT;
-	}
+static krb5_error_code KRB5_CALLCONV
+dcc_resolve(krb5_context context,
+            krb5_ccache *id,
+            const char *res,
+            const char *sub)
+{
+    krb5_error_code ret;
+    krb5_dcache *dc = NULL;
+    char *filename = NULL;
+    size_t len;
+    int has_pathsep = 0;
 
-	if (!is_filename_cacheish(q)) {
-	    krb5_set_error_message(context, KRB5_CC_FORMAT,
-				   N_("Name %s is not a cache (doesn't start with tkt)", ""), q);
-	    dcc_release(context, dc);
-	    return KRB5_CC_FORMAT;
-	}
-	
-	ret = verify_directory(context, dc->dir);
-	if (ret) {
-	    dcc_release(context, dc);
-	    return ret;
-	}
-
-	dc->name = strdup(res);
-	if (dc->name == NULL) {
-	    dcc_release(context, dc);
-	    return krb5_enomem(context);
-	}
-
+    if (sub) {
+        /*
+         * Here `res' has the directory name (or, if NULL, refers to the
+         * default DIR cccol), and `sub' has the "subsidiary" name, to which
+         * we'll prefix "tkt." (though we will insist only on "tkt" later).
+         */
+        if ((dc = calloc(1, sizeof(*dc))) == NULL ||
+            asprintf(&dc->sub, "tkt.%s", sub) == -1 || dc->sub == NULL) {
+            free(dc);
+            return krb5_enomem(context);
+        }
+        if (res && res[0] && (dc->dir = strdup(res)) == NULL) {
+            free(dc->sub);
+            free(dc);
+            return krb5_enomem(context);
+        } else if ((!res || !res[0]) && (ret = get_default_dir(context, &dc->dir))) {
+            free(dc->sub);
+            free(dc);
+            return ret;
+        }
     } else {
-	char *residual;
-	size_t len;
+        const char *p;
+        int is_drive_letter_colon = 0;
 
-	dc->dir = strdup(res);
-	if (dc->dir == NULL) {
-	    dcc_release(context, dc);
-	    return krb5_enomem(context);
-	}
+        /*
+         * Here `res' has whatever string followed "DIR:", and we need to parse
+         * it into `dc->dir' and `dc->sub'.
+         *
+         * Conventions we support for DIR cache naming:
+         *
+         *  - DIR:path:NAME     ---> FILE:path/tktNAME
+         *  - DIR::path/tktNAME ---> FILE:path/tktNAME
+         *  - DIR::NAME         ---> FILE:${default_DIR_cccol_path}/tktNAME
+         *                       \-> FILE:/tmp/krb5cc_${uid}_dir/tktNAME
+         *  - DIR:path          ---> FILE:path/$(cat primary) or FILE:path/tkt
+         *
+         */
 
-	len = strlen(dc->dir);
+        if (*res == '\0' || (res[0] == ':' && res[1] == '\0')) {
+            /* XXX Why not? */
+            krb5_set_error_message(context, KRB5_CC_FORMAT,
+                                   N_("\"DIR:\" is not a valid ccache name", ""));
+            return KRB5_CC_FORMAT;
+        }
 
-	if (ISPATHSEP(dc->dir[len - 1]))
-	    dc->dir[len - 1] = '\0';
+#ifdef WIN32
+        has_pathsep = strchr(res, '\\') != NULL;
+#endif
+        has_pathsep |= strchr(res, '/') != NULL;
 
-	ret = verify_directory(context, dc->dir);
-	if (ret) {
-	    dcc_release(context, dc);
-	    return ret;
-	}
+        if ((dc = calloc(1, sizeof(*dc))) == NULL)
+            return krb5_enomem(context);
 
-	ret = get_default_cache(context, dc, &residual);
-	if (ret) {
-	    dcc_release(context, dc);
-	    return ret;
-	}
-	asprintf_ret = asprintf(&dc->name, ":%s/%s", dc->dir, residual);
-	free(residual);
-	if (asprintf_ret == -1 || dc->name == NULL) {
-	    dc->name = NULL;
-	    dcc_release(context, dc);
-	    return krb5_enomem(context);
-	}
+        p = strrchr(res, ':');
+#ifdef WIN32
+        is_drive_letter_colon =
+            p && ((res[0] == ':' && res[1] != ':' && p - res == 2) ||
+                  (res[0] != ':' && p - res == 1));
+#endif
+
+        if (res[0] != ':' && p && !is_drive_letter_colon) {
+            /* DIR:path:NAME */
+            if ((dc->dir = strndup(res, (p - res))) == NULL ||
+                asprintf(&dc->sub, "tkt.%s", p + 1) < 0 || dc->sub == NULL) {
+                dcc_release(context, dc);
+                return krb5_enomem(context);
+            }
+        } else if (res[0] == ':' && has_pathsep) {
+            char *q;
+
+            /* DIR::path/tktNAME (the "tkt" must be there; we'll check) */
+            if ((dc->dir = strdup(&res[1])) == NULL) {
+                dcc_release(context, dc);
+                return krb5_enomem(context);
+            }
+#ifdef _WIN32
+            q = strrchr(dc->dir, '\\');
+            if (q == NULL || ((p = strrchr(dc->dir, '/')) && q < p))
+#endif
+                q = strrchr(dc->dir, '/');
+            *q++ = '\0';
+            if ((dc->sub = strdup(q)) == NULL) {
+                dcc_release(context, dc);
+                return krb5_enomem(context);
+            }
+        } else if (res[0] == ':') {
+            /* DIR::NAME -- no path component separators in NAME */
+            if ((ret = get_default_dir(context, &dc->dir))) {
+                dcc_release(context, dc);
+                return ret;
+            }
+            if (asprintf(&dc->sub, "tkt.%s", res + 1) < 0 || dc->sub == NULL) {
+                dcc_release(context, dc);
+                return krb5_enomem(context);
+            }
+        } else {
+            /* DIR:path */
+            if ((dc->dir = strdup(res)) == NULL) {
+                dcc_release(context, dc);
+                return krb5_enomem(context);
+            }
+
+            if ((ret = get_default_cache(context, dc, NULL, &dc->sub))) {
+                dcc_release(context, dc);
+                return ret;
+            }
+        }
     }
 
-    asprintf_ret = asprintf(&filename, "FILE%s", dc->name);
-    if (asprintf_ret == -1 || filename == NULL) {
-	dcc_release(context, dc);
-	return krb5_enomem(context);
+    /* Strip off extra slashes on the end */
+    for (len = strlen(dc->dir);
+         len && ISPATHSEP(dc->dir[len - 1]);
+         len -= len ? 1 : 0)
+        dc->dir[len - 1] = '\0';
+
+    /* If we got here then `dc->dir' and `dc->sub' must both be set */
+
+    if ((ret = verify_directory(context, dc->dir))) {
+        dcc_release(context, dc);
+        return ret;
+    }
+    if (!is_filename_cacheish(dc->sub)) {
+        krb5_set_error_message(context, KRB5_CC_FORMAT,
+                               N_("Name %s is not a cache "
+                                  "(doesn't start with tkt)", ""), dc->sub);
+        dcc_release(context, dc);
+        return KRB5_CC_FORMAT;
+    }
+    if (asprintf(&dc->name, ":%s/%s", dc->dir, dc->sub) == -1 ||
+        dc->name == NULL ||
+        asprintf(&filename, "FILE%s", dc->name) == -1 || filename == NULL) {
+        dcc_release(context, dc);
+        return krb5_enomem(context);
     }
 
     ret = krb5_cc_resolve(context, filename, &dc->fcache);
@@ -362,86 +482,36 @@ dcc_resolve(krb5_context context, krb5_ccache *id, const char *res)
 	return ret;
     }
 
-
+    dc->default_candidate = 1;
     (*id)->data.data = dc;
     (*id)->data.length = sizeof(*dc);
     return 0;
 }
 
-static char *
-copy_default_dcc_cache(krb5_context context)
-{
-    const char *defname;
-    krb5_error_code ret;
-    char *name = NULL;
-    size_t len;
-
-    len = strlen(krb5_dcc_ops.prefix);
-
-    defname = krb5_cc_default_name(context);
-    if (defname == NULL ||
-	strncmp(defname, krb5_dcc_ops.prefix, len) != 0 ||
-	defname[len] != ':')
-    {
-	ret = dcc_get_default_name(context, &name);
-	if (ret)
-	    return NULL;
-
-	return name;
-    } else {
-	return strdup(&defname[len + 1]);
-    }
-}
-
-
 static krb5_error_code KRB5_CALLCONV
 dcc_gen_new(krb5_context context, krb5_ccache *id)
 {
     krb5_error_code ret;
+    char *def_dir = NULL;
     char *name = NULL;
-    krb5_dcache *dc;
-    int fd;
-    size_t len;
-    int asprintf_ret;
+    int fd = -1;
 
-    name = copy_default_dcc_cache(context);
-    if (name == NULL) {
-	krb5_set_error_message(context, KRB5_CC_FORMAT,
-			       N_("Can't generate DIR caches unless its the default type", ""));
-	return KRB5_CC_FORMAT;
-    }
+    ret = get_default_dir(context, &def_dir);
+    if (ret == 0)
+        ret = verify_directory(context, def_dir);
+    if (ret == 0 &&
+        (asprintf(&name, "DIR::%s/tktXXXXXX", def_dir) == -1 || name == NULL))
+	ret = krb5_enomem(context);
+    if (ret == 0 && (fd = mkstemp(name + sizeof("DIR::") - 1)) == -1)
+	ret = errno;
+    if (ret == 0)
+        ret = dcc_resolve(context, id, name + sizeof("DIR:") - 1, NULL);
 
-    len = strlen(krb5_dcc_ops.prefix);
-    if (strncmp(name, krb5_dcc_ops.prefix, len) == 0 && name[len] == ':')
-	++len;
-    else
-	len = 0;
-
-    ret = dcc_resolve(context, id, name + len);
+    free(def_dir);
     free(name);
-    name = NULL;
-    if (ret)
-	return ret;
-
-    dc = DCACHE((*id));
-
-    asprintf_ret = asprintf(&name, ":%s/tktXXXXXX", dc->dir);
-    if (asprintf_ret == -1 || name == NULL) {
-	dcc_close(context, *id);
-	return krb5_enomem(context);
-    }
-
-    fd = mkstemp(&name[1]);
-    if (fd < 0) {
-	dcc_close(context, *id);
-	return krb5_enomem(context);
-    }
-    close(fd);
-
-    free(dc->name);
-    dc->name = name;
-
-    return 0;
+    if (fd != -1)
+        close(fd);
+    return ret;
 }
 
 static krb5_error_code KRB5_CALLCONV
@@ -457,6 +527,25 @@ static krb5_error_code KRB5_CALLCONV
 dcc_close(krb5_context context,
 	  krb5_ccache id)
 {
+    krb5_dcache *dc = DCACHE(id);
+    krb5_principal p = NULL;
+    struct stat st;
+    char *primary = NULL;
+
+    /*
+     * If there's no default cache, but we're closing one, and the one we're
+     * closing has been initialized, then make it the default.  This makes the
+     * first cache created the default.
+     *
+     * FIXME We should check if `D2FCACHE(dc)' has live credentials.
+     */
+    if (dc->default_candidate && D2FCACHE(dc) &&
+        krb5_cc_get_principal(context, D2FCACHE(dc), &p) == 0 &&
+        (primary = primary_create(dc)) &&
+        (stat(primary, &st) == -1 || !S_ISREG(st.st_mode) || st.st_size == 0))
+        dcc_set_default(context, id);
+    krb5_free_principal(context, p);
+    free(primary);
     dcc_release(context, DCACHE(id));
     return 0;
 }
@@ -545,39 +634,61 @@ dcc_get_version(krb5_context context,
 }
 
 struct dcache_iter {
-    int first;
+    char *primary;
     krb5_dcache *dc;
+    DIR *d;
+    unsigned int first:1;
 };
 
 static krb5_error_code KRB5_CALLCONV
 dcc_get_cache_first(krb5_context context, krb5_cc_cursor *cursor)
 {
-    struct dcache_iter *iter;
-    krb5_error_code ret;
-    char *name;
+    struct dcache_iter *iter = NULL;
+    const char *name = krb5_cc_default_name(context);
+    size_t len;
+    char *p;
 
     *cursor = NULL;
-    iter = calloc(1, sizeof(*iter));
-    if (iter == NULL)
-	return krb5_enomem(context);
-    iter->first = 1;
 
-    name = copy_default_dcc_cache(context);
-    if (name == NULL) {
-        free(iter);
+    if (strncmp(name, "DIR:", sizeof("DIR:") - 1) != 0) {
 	krb5_set_error_message(context, KRB5_CC_FORMAT,
-			       N_("Can't generate DIR caches unless its the default type", ""));
+			       N_("Can't list DIR caches unless its the default type", ""));
 	return KRB5_CC_FORMAT;
     }
 
-    ret = dcc_resolve(context, NULL, name);
-    free(name);
-    if (ret) {
+    if ((iter = calloc(1, sizeof(*iter))) == NULL ||
+        (iter->dc = calloc(1, sizeof(iter->dc[0]))) == NULL ||
+        (iter->dc->dir = strdup(name + sizeof("DIR:") - 1)) == NULL) {
+        if (iter)
+            free(iter->dc);
         free(iter);
-        return ret;
+	return krb5_enomem(context);
+    }
+    iter->first = 1;
+    p = strrchr(iter->dc->dir, ':');
+#ifdef WIN32
+    if (p == iter->dc->dir + 1)
+        p = NULL;
+#endif
+    if (p)
+        *p = '\0';
+
+    /* Strip off extra slashes on the end */
+    for (len = strlen(iter->dc->dir);
+         len && ISPATHSEP(iter->dc->dir[len - 1]);
+         len -= len ? 1 : 0) {
+        iter->dc->dir[len - 1] = '\0';
     }
 
-    /* XXX We need to opendir() here */
+    if ((iter->d = opendir(iter->dc->dir)) == NULL) {
+        free(iter->dc->dir);
+        free(iter->dc);
+        free(iter);
+	krb5_set_error_message(context, KRB5_CC_FORMAT,
+                               N_("Can't open DIR %s: %s", ""),
+                               iter->dc->dir, strerror(errno));
+	return KRB5_CC_FORMAT;
+    }
 
     *cursor = iter;
     return 0;
@@ -587,18 +698,49 @@ static krb5_error_code KRB5_CALLCONV
 dcc_get_cache_next(krb5_context context, krb5_cc_cursor cursor, krb5_ccache *id)
 {
     struct dcache_iter *iter = cursor;
+    krb5_error_code ret;
+    struct stat st;
+    struct dirent *dentry;
+    char *p = NULL;
 
+    *id = NULL;
     if (iter == NULL)
         return krb5_einval(context, 2);
 
-    if (!iter->first) {
-	krb5_clear_error_message(context);
-	return KRB5_CC_END;
+    /* Emit primary subsidiary first */
+    if (iter->first &&
+        (ret = get_default_cache(context, iter->dc, NULL, &iter->primary)) == 0 &&
+        is_filename_cacheish(iter->primary)) {
+        iter->first = 0;
+        ret = KRB5_CC_END;
+        if (asprintf(&p, "FILE:%s/%s", iter->dc->dir, iter->primary) > -1 && p != NULL &&
+            stat(p + sizeof("FILE:") - 1, &st) == 0 && S_ISREG(st.st_mode))
+            ret = krb5_cc_resolve(context, p, id);
+        if (p == NULL)
+            return krb5_enomem(context);
+        free(p);
+        if (ret == 0)
+            return ret;
+        p = NULL;
     }
 
-    /* XXX We need to readdir() here */
     iter->first = 0;
-
+    for (dentry = readdir(iter->d); dentry; dentry = readdir(iter->d)) {
+        if (!is_filename_cacheish(dentry->d_name) ||
+            (iter->primary && strcmp(dentry->d_name, iter->primary) == 0))
+            continue;
+        p = NULL;
+        ret = KRB5_CC_END;
+        if (asprintf(&p, "FILE:%s/%s", iter->dc->dir, dentry->d_name) > -1 &&
+            p != NULL &&
+            stat(p + sizeof("FILE:") - 1, &st) == 0 && S_ISREG(st.st_mode))
+            ret = krb5_cc_resolve(context, p, id);
+        free(p);
+        if (p == NULL)
+            return krb5_enomem(context);
+        if (ret == 0)
+            return ret;
+    }
     return KRB5_CC_END;
 }
 
@@ -610,9 +752,10 @@ dcc_end_cache_get(krb5_context context, krb5_cc_cursor cursor)
     if (iter == NULL)
         return krb5_einval(context, 2);
 
-    /* XXX We need to closedir() here */
-    if (iter->dc)
-	dcc_release(context, iter->dc);
+    (void) closedir(iter->d);
+    free(iter->dc->dir);
+    free(iter->dc);
+    free(iter->primary);
     free(iter);
     return 0;
 }
@@ -622,14 +765,22 @@ dcc_move(krb5_context context, krb5_ccache from, krb5_ccache to)
 {
     krb5_dcache *dcfrom = DCACHE(from);
     krb5_dcache *dcto = DCACHE(to);
+
+    dcfrom->default_candidate = 0;
+    dcto->default_candidate = 1;
     return krb5_cc_move(context, D2FCACHE(dcfrom), D2FCACHE(dcto));
 }
 
 static krb5_error_code KRB5_CALLCONV
 dcc_get_default_name(krb5_context context, char **str)
 {
-    return _krb5_expand_default_cc_name(context,
-					KRB5_DEFAULT_CCNAME_DIR,
+    const char *def_cc_colname =
+        krb5_config_get_string_default(context, NULL, KRB5_DEFAULT_CCNAME_DIR,
+                                       "libdefaults", "default_cc_collection",
+                                       NULL);
+
+    /* What if def_cc_colname does not start with DIR:?  We tolerate it. */
+    return _krb5_expand_default_cc_name(context, def_cc_colname,
 					str);
 }
 
@@ -637,13 +788,10 @@ static krb5_error_code KRB5_CALLCONV
 dcc_set_default(krb5_context context, krb5_ccache id)
 {
     krb5_dcache *dc = DCACHE(id);
-    const char *name;
 
-    name = krb5_cc_get_name(context, D2FCACHE(dc));
-    if (name == NULL)
+    if (dc->sub == NULL)
 	return ENOENT;
-
-    return set_default_cache(context, dc, name);
+    return set_default_cache(context, dc, dc->sub);
 }
 
 static krb5_error_code KRB5_CALLCONV

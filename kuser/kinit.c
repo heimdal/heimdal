@@ -1316,65 +1316,12 @@ get_princ_kt(krb5_context context,
     free(def_realm);
 }
 
-static krb5_error_code
-get_switched_ccache(krb5_context context,
-		    const char * type,
-		    krb5_principal principal,
-		    krb5_ccache *ccache)
-{
-    krb5_error_code ret;
-
-#ifdef _WIN32
-    if (strcmp(type, "API") == 0) {
-	/*
-	 * Windows stores the default ccache name in the
-	 * registry which is shared across multiple logon
-	 * sessions for the same user.  The API credential
-	 * cache provides a unique name space per logon
-	 * session.  Therefore there is no need to generate
-	 * a unique ccache name.  Instead use the principal
-	 * name.  This provides a friendlier user experience.
-	 */
-	char * unparsed_name;
-	char * cred_cache;
-
-	ret = krb5_unparse_name(context, principal,
-				&unparsed_name);
-	if (ret)
-	    krb5_err(context, 1, ret,
-		     N_("unparsing principal name", ""));
-
-	ret = asprintf(&cred_cache, "API:%s", unparsed_name);
-	krb5_free_unparsed_name(context, unparsed_name);
-	if (ret == -1 || cred_cache == NULL)
-	    krb5_err(context, 1, ret,
-		      N_("building credential cache name", ""));
-
-	ret = krb5_cc_resolve(context, cred_cache, ccache);
-	free(cred_cache);
-    } else if (strcmp(type, "MSLSA") == 0) {
-	/*
-	 * The Windows MSLSA cache when it is writeable
-	 * stores tickets for multiple client principals
-	 * in a single credential cache.
-	 */
-	ret = krb5_cc_resolve(context, "MSLSA:", ccache);
-    } else {
-	ret = krb5_cc_new_unique(context, type, NULL, ccache);
-    }
-#else /* !_WIN32 */
-    ret = krb5_cc_new_unique(context, type, NULL, ccache);
-#endif /* _WIN32 */
-
-    return ret;
-}
-
 int
 main(int argc, char **argv)
 {
     krb5_error_code ret;
     krb5_context context;
-    krb5_ccache  ccache;
+    krb5_ccache  ccache = NULL;
     krb5_principal principal = NULL;
     int optidx = 0;
     krb5_deltat ticket_life = 0;
@@ -1477,42 +1424,8 @@ main(int argc, char **argv)
 
     if (cred_cache)
 	ret = krb5_cc_resolve(context, cred_cache, &ccache);
-    else {
-	if (argc > 1) {
-	    char s[1024];
-	    ret = krb5_cc_new_unique(context, NULL, NULL, &ccache);
-	    if (ret)
-		krb5_err(context, 1, ret, "creating cred cache");
-	    snprintf(s, sizeof(s), "%s:%s",
-		     krb5_cc_get_type(context, ccache),
-		     krb5_cc_get_name(context, ccache));
-	    setenv("KRB5CCNAME", s, 1);
-	    unique_ccache = TRUE;
-	} else {
-	    ret = krb5_cc_cache_match(context, principal, &ccache);
-	    if (ret) {
-		const char *type;
-		ret = krb5_cc_default(context, &ccache);
-		if (ret)
-		    krb5_err(context, 1, ret,
-			     N_("resolving credentials cache", ""));
-
-		/*
-		 * Check if the type support switching, and we do,
-		 * then do that instead over overwriting the current
-		 * default credential
-		 */
-		type = krb5_cc_get_type(context, ccache);
-		if (krb5_cc_support_switch(context, type)) {
-		    krb5_cc_close(context, ccache);
-		    ret = get_switched_ccache(context, type, principal,
-					      &ccache);
-		    if (ret == 0)
-			unique_ccache = TRUE;
-		}
-	    }
-	}
-    }
+    else
+        ret = krb5_cc_default_for(context, principal, &ccache);
     if (ret)
 	krb5_err(context, 1, ret, N_("resolving credentials cache", ""));
 

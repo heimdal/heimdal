@@ -669,6 +669,176 @@ test_cc_config(krb5_context context, const char *cc_type,
     krb5_free_principal(context, p);
 }
 
+static krb5_error_code
+test_cccol(krb5_context context, const char *def_cccol, const char **what)
+{
+    krb5_cc_cache_cursor cursor;
+    krb5_error_code ret;
+    krb5_principal p1, p2;
+    krb5_ccache id, id1, id2;
+    krb5_creds cred1, cred2;
+    size_t match1 = 0;
+    size_t match2 = 0;
+
+    memset(&cred1, 0, sizeof(cred1));
+    memset(&cred2, 0, sizeof(cred2));
+
+    *what = "krb5_parse_name";
+    ret = krb5_parse_name(context, "krbtgt/SU.SE@SU.SE", &cred1.server);
+    if (ret) return ret;
+    ret = krb5_parse_name(context, "lha@SU.SE", &cred1.client);
+    if (ret) return ret;
+    ret = krb5_parse_name(context, "krbtgt/H5L.SE@H5L.SE", &cred2.server);
+    if (ret) return ret;
+    ret = krb5_parse_name(context, "lha@H5L.SE", &cred2.client);
+    if (ret) return ret;
+    *what = "krb5_cc_set_default_name";
+    ret = krb5_cc_set_default_name(context, def_cccol);
+    if (ret) return ret;
+    *what = "krb5_cc_default";
+    ret = krb5_cc_default(context, &id1);
+    if (ret) return ret;
+    *what = "krb5_cc_initialize";
+    ret = krb5_cc_initialize(context, id1, cred1.client);
+    if (ret) return ret;
+    *what = "krb5_cc_store_cred";
+    ret = krb5_cc_store_cred(context, id1, &cred1);
+    if (ret) return ret;
+    *what = "krb5_cc_resolve";
+    ret = krb5_cc_resolve_for(context, NULL, def_cccol, cred2.client, &id2);
+    if (ret) return ret;
+    *what = "krb5_cc_initialize";
+    ret = krb5_cc_initialize(context, id2, cred2.client);
+    if (ret) return ret;
+    *what = "krb5_cc_store_cred";
+    ret = krb5_cc_store_cred(context, id2, &cred2);
+    if (ret) return ret;
+
+    krb5_cc_close(context, id1);
+    krb5_cc_close(context, id2);
+    id1 = id2 = NULL;
+
+    *what = "krb5_cc_default";
+    ret = krb5_cc_default(context, &id1);
+    if (ret) return ret;
+    *what = "krb5_cc_resolve";
+    ret = krb5_cc_resolve_for(context, NULL, def_cccol, cred2.client, &id2);
+    if (ret) return ret;
+
+    *what = "krb5_cc_get_principal";
+    ret = krb5_cc_get_principal(context, id1, &p1);
+    if (ret) return ret;
+    ret = krb5_cc_get_principal(context, id2, &p2);
+    if (ret) return ret;
+
+    if (!krb5_principal_compare(context, p1, cred1.client)) {
+        char *u1 = NULL;
+        char *u2 = NULL;
+
+        (void) krb5_unparse_name(context, p1, &u1);
+        (void) krb5_unparse_name(context, cred1.client, &u2);
+        warnx("Inconsistent principals for ccaches in %s: %s vs %s "
+              "(expected lha@SU.SE)", def_cccol, u1, u2);
+        return EINVAL;
+    }
+    if (!krb5_principal_compare(context, p2, cred2.client)) {
+        char *u1 = NULL;
+        char *u2 = NULL;
+
+        (void) krb5_unparse_name(context, p2, &u1);
+        (void) krb5_unparse_name(context, cred2.client, &u2);
+        warnx("Inconsistent principals for ccaches in %s: %s and %s "
+              "(expected lha@H5L.SE)", def_cccol, u1, u2);
+        return EINVAL;
+    }
+    krb5_free_principal(context, p1);
+    krb5_free_principal(context, p2);
+
+    *what = "krb5_cc_cache_get_first";
+    ret = krb5_cc_cache_get_first(context, NULL, &cursor);
+    if (ret) return ret;
+    *what = "krb5_cc_cache_next";
+    while (krb5_cc_cache_next(context, cursor, &id) == 0) {
+        krb5_principal p;
+
+        *what = "krb5_cc_get_principal";
+        ret = krb5_cc_get_principal(context, id, &p);
+        if (ret) return ret;
+        if (krb5_principal_compare(context, p, cred1.client))
+            match1++;
+        else if (krb5_principal_compare(context, p, cred2.client))
+            match2++;
+	krb5_free_principal(context, p);
+        krb5_cc_close(context, id);
+    }
+    (void) krb5_cc_cache_end_seq_get(context, cursor);
+
+    *what = "cccol iteration inconsistency";
+    if (match1 != 1 || match2 != 1) return EINVAL;
+
+    krb5_cc_close(context, id1);
+    krb5_cc_close(context, id2);
+
+    krb5_free_cred_contents(context, &cred1);
+    krb5_free_cred_contents(context, &cred2);
+
+    return 0;
+}
+
+static void
+test_cccol_dcache(krb5_context context)
+{
+    krb5_error_code ret;
+    char template[sizeof("DIR:dcache-XXXXXX")];
+    char *s;
+    const char *what;
+
+    memcpy(template, "DIR:dcache-XXXXXX", sizeof("DIR:dcache-XXXXXX"));
+    if (mkdtemp(template + sizeof("DIR:") - 1) == NULL)
+        krb5_err(context, 1, errno, "mkdtemp");
+
+    ret = test_cccol(context, template, &what);
+
+    if (asprintf(&s, "%s/primary", template + sizeof("DIR:") - 1) > 0) {
+        (void) unlink(s);
+        free(s);
+    }
+    if (asprintf(&s, "%s/tkt", template + sizeof("DIR:") - 1) > 0) {
+        (void) unlink(s);
+        free(s);
+    }
+    if (asprintf(&s, "%s/tkt.lha@H5L.SE", template + sizeof("DIR:") - 1) > 0) {
+        (void) unlink(s);
+        free(s);
+    }
+    if (asprintf(&s, "%s/tkt.lha@SU.SE", template + sizeof("DIR:") - 1) > 0) {
+        (void) unlink(s);
+        free(s);
+    }
+    (void) rmdir(template + sizeof("DIR:") - 1); /* XXX Check that this succeeds */
+    if (ret)
+        krb5_err(context, 1, errno, "%s", what);
+}
+
+static void
+test_cccol_scache(krb5_context context)
+{
+    krb5_error_code ret;
+    char template[sizeof("SCC:scache-XXXXXX")];
+    const char *what;
+    int fd;
+
+    memcpy(template, "SCC:scache-XXXXXX", sizeof("SCC:scache-XXXXXX"));
+    if ((fd = mkstemp(template + sizeof("SCC:") - 1)) == -1)
+        krb5_err(context, 1, errno, "mkstemp");
+    (void) close(fd);
+
+    ret = test_cccol(context, template, &what);
+    (void) unlink(template + sizeof("SCC:") - 1);
+    if (ret)
+        krb5_err(context, 1, ret, "%s", what);
+}
+
 
 static struct getargs args[] = {
     {"debug",	'd',	arg_flag,	&debug_flag,
@@ -725,6 +895,10 @@ main(int argc, char **argv)
 
     test_default_name(context);
     test_mcache(context);
+    /*
+     * XXX Make sure to set default ccache names for each cc type!
+     * Otherwise we clobber the user's ccaches.
+     */
     test_init_vs_destroy(context, krb5_cc_type_memory);
     test_init_vs_destroy(context, krb5_cc_type_file);
 #if 0
@@ -753,6 +927,14 @@ main(int argc, char **argv)
     test_cache_find(context, "lha@SU.SE", 1);
     test_cache_find(context, "hulabundulahotentot@SU.SE", 0);
 
+    /*
+     * XXX We should compose and krb5_cc_set_default_name() a default ccache
+     * for each cc type that we test with test_cache_iter(), and we should do
+     * that inside test_cache_iter().
+     *
+     * Alternatively we should remove test_cache_iter() in favor of
+     * test_cccol(), which is a much more complete test.
+     */
     test_cache_iter(context, krb5_cc_type_memory, 0);
     test_cache_iter(context, krb5_cc_type_memory, 1);
     test_cache_iter(context, krb5_cc_type_memory, 0);
@@ -859,6 +1041,22 @@ main(int argc, char **argv)
 
     test_cc_config(context, "MEMORY", "bar", 1000);  /* 1000 because fast */
     test_cc_config(context, "FILE", "/tmp/foocc", 30); /* 30 because slower */
+
+    test_cccol_dcache(context);
+    test_cccol_scache(context);
+#ifdef HAVE_KEYUTILS_H
+    {
+        const char *what;
+
+        ret = test_cccol(context, "KEYRING:legacy:fooccol", &what);
+        if (ret)
+            krb5_err(context, 1, ret, "%s", what);
+
+        ret = test_cccol(context, "MEMORY:fooccol", &what);
+        if (ret)
+            krb5_err(context, 1, ret, "%s", what);
+    }
+#endif /* HAVE_KEYUTILS_H */
 
     krb5_free_context(context);
 

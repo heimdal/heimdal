@@ -169,8 +169,7 @@ gsskrb5_accept_delegated_token
     }
 
     *delegated_cred_handle = NULL;
-    kret = krb5_cc_new_unique (context, krb5_cc_type_memory,
-                               NULL, &ccache);
+    kret = krb5_cc_resolve(context, "MEMORY:anonymous", &ccache);
     if (kret) {
 	ctx->flags &= ~GSS_C_DELEG_FLAG;
 	goto out;
@@ -204,7 +203,7 @@ gsskrb5_accept_delegated_token
 	gsskrb5_cred handle;
 
 	ret = _gsskrb5_krb5_import_cred(minor_status,
-					ccache,
+					&ccache,
 					NULL,
 					NULL,
 					delegated_cred_handle);
@@ -212,10 +211,7 @@ gsskrb5_accept_delegated_token
 	    goto out;
 
 	handle = (gsskrb5_cred) *delegated_cred_handle;
-
 	handle->cred_flags |= GSS_CF_DESTROY_CRED_ON_RELEASE;
-	krb5_cc_close(context, ccache);
-	ccache = NULL;
     }
 
 out:

@@ -38,7 +38,8 @@
 typedef struct krb5_mcache {
     char *name;
     unsigned int refcnt;
-    int dead;
+    unsigned int anonymous:1;
+    unsigned int dead:1;
     krb5_principal primary_principal;
     struct link {
 	krb5_creds cred;
@@ -57,42 +58,89 @@ static struct krb5_mcache *mcc_head;
 
 #define MISDEAD(X)	((X)->dead)
 
-static const char* KRB5_CALLCONV
+static krb5_error_code KRB5_CALLCONV
 mcc_get_name(krb5_context context,
-	     krb5_ccache id)
+	     krb5_ccache id,
+             const char **name,
+             const char **col,
+             const char **sub)
 {
-    return MCACHE(id)->name;
+    if (name)
+        *name = MCACHE(id)->name;
+    if (col)
+        *col = NULL;
+    if (sub)
+        *sub = MCACHE(id)->name;
+    return 0;
 }
 
-static krb5_mcache * KRB5_CALLCONV
-mcc_alloc(const char *name)
+static krb5_error_code
+mcc_alloc(krb5_context context, const char *name, krb5_mcache **out)
 {
     krb5_mcache *m, *m_c;
+    size_t counter = 0;
     int ret = 0;
 
+    *out = NULL;
     ALLOC(m, 1);
     if(m == NULL)
-	return NULL;
+	return krb5_enomem(context);
+
+again:
+    if (counter > 3) {
+        free(m->name);
+        free(m);
+        return EAGAIN; /* XXX */
+    }
     if(name == NULL)
-	ret = asprintf(&m->name, "%p", m);
+	ret = asprintf(&m->name, "u%p-%llu", m, (unsigned long long)counter);
     else
 	m->name = strdup(name);
     if(ret < 0 || m->name == NULL) {
 	free(m);
-	return NULL;
+	return krb5_enomem(context);
     }
+    if (strcmp(m->name, "anonymous") == 0) {
+        m->anonymous = 1;
+        m->dead = 0;
+        m->refcnt = 1;
+        m->primary_principal = NULL;
+        m->creds = NULL;
+        m->mtime = time(NULL);
+        m->kdc_offset = 0;
+        m->next = NULL;
+        *out = m;
+        return 0;
+    }
+
     /* check for dups first */
     HEIMDAL_MUTEX_lock(&mcc_mutex);
     for (m_c = mcc_head; m_c != NULL; m_c = m_c->next)
-	if (strcmp(m->name, m_c->name) == 0)
-	    break;
+        if (strcmp(m->name, m_c->name) == 0)
+            break;
     if (m_c) {
-	free(m->name);
-	free(m);
-	HEIMDAL_MUTEX_unlock(&mcc_mutex);
-	return NULL;
+        free(m->name);
+        free(m);
+        if (name) {
+            /* We raced with another thread to create this cache */
+            m = m_c;
+            HEIMDAL_MUTEX_lock(&(m->mutex));
+            m->refcnt++;
+            HEIMDAL_MUTEX_unlock(&(m->mutex));
+        } else {
+            /* How likely are we to conflict on new_unique anyways?? */
+            counter++;
+            free(m->name);
+            m->name = NULL;
+            HEIMDAL_MUTEX_unlock(&mcc_mutex);
+            goto again;
+        }
+        HEIMDAL_MUTEX_unlock(&mcc_mutex);
+        *out = m;
+        return 0;
     }
 
+    m->anonymous = 0;
     m->dead = 0;
     m->refcnt = 1;
     m->primary_principal = NULL;
@@ -103,35 +151,21 @@ mcc_alloc(const char *name)
     HEIMDAL_MUTEX_init(&(m->mutex));
     mcc_head = m;
     HEIMDAL_MUTEX_unlock(&mcc_mutex);
-    return m;
+    *out = m;
+    return 0;
 }
 
 static krb5_error_code KRB5_CALLCONV
-mcc_resolve(krb5_context context, krb5_ccache *id, const char *res)
+mcc_resolve(krb5_context context,
+            krb5_ccache *id,
+            const char *res,
+            const char *sub)
 {
+    krb5_error_code ret;
     krb5_mcache *m;
 
-    HEIMDAL_MUTEX_lock(&mcc_mutex);
-    for (m = mcc_head; m != NULL; m = m->next)
-	if (strcmp(m->name, res) == 0)
-	    break;
-    HEIMDAL_MUTEX_unlock(&mcc_mutex);
-
-    if (m != NULL) {
-    	HEIMDAL_MUTEX_lock(&(m->mutex));
-    	m->refcnt++;
-    	HEIMDAL_MUTEX_unlock(&(m->mutex));
-    	(*id)->data.data = m;
-    	(*id)->data.length = sizeof(*m);
-    	return 0;
-    }
-
-    m = mcc_alloc(res);
-    if (m == NULL) {
-	krb5_set_error_message(context, KRB5_CC_NOMEM,
-			       N_("malloc: out of memory", ""));
-	return KRB5_CC_NOMEM;
-    }
+    if ((ret = mcc_alloc(context, sub && *sub ? sub : res, &m)))
+        return ret;
 
     (*id)->data.data = m;
     (*id)->data.length = sizeof(*m);
@@ -143,15 +177,11 @@ mcc_resolve(krb5_context context, krb5_ccache *id, const char *res)
 static krb5_error_code KRB5_CALLCONV
 mcc_gen_new(krb5_context context, krb5_ccache *id)
 {
+    krb5_error_code ret;
     krb5_mcache *m;
 
-    m = mcc_alloc(NULL);
-
-    if (m == NULL) {
-	krb5_set_error_message(context, KRB5_CC_NOMEM,
-			       N_("malloc: out of memory", ""));
-	return KRB5_CC_NOMEM;
-    }
+    if ((ret = mcc_alloc(context, NULL, &m)))
+        return ret;
 
     (*id)->data.data = m;
     (*id)->data.length = sizeof(*m);
@@ -221,7 +251,7 @@ mcc_close_internal(krb5_mcache *m)
 	return 0;
     }
     if (MISDEAD(m)) {
-	free (m->name);
+	free(m->name);
 	HEIMDAL_MUTEX_unlock(&(m->mutex));
 	return 1;
     }
@@ -247,6 +277,18 @@ mcc_destroy(krb5_context context,
 	    krb5_ccache id)
 {
     krb5_mcache **n, *m = MCACHE(id);
+
+    if (m->anonymous) {
+        HEIMDAL_MUTEX_lock(&(m->mutex));
+        if (m->refcnt == 0) {
+            HEIMDAL_MUTEX_unlock(&(m->mutex));
+            krb5_abortx(context, "mcc_destroy: refcnt already 0");
+        }
+        if (!MISDEAD(m))
+            mcc_destroy_internal(context, m);
+        HEIMDAL_MUTEX_unlock(&(m->mutex));
+        return 0;
+    }
 
     HEIMDAL_MUTEX_lock(&mcc_mutex);
     HEIMDAL_MUTEX_lock(&(m->mutex));
@@ -290,12 +332,8 @@ mcc_store_cred(krb5_context context,
     }
 
     l = malloc (sizeof(*l));
-    if (l == NULL) {
-    	krb5_set_error_message(context, KRB5_CC_NOMEM,
-    			N_("malloc: out of memory", ""));
-    	HEIMDAL_MUTEX_unlock(&(m->mutex));
-    	return KRB5_CC_NOMEM;
-    }
+    if (l == NULL)
+        return krb5_enomem(context);
     l->next = m->creds;
     m->creds = l;
     memset (&l->cred, 0, sizeof(l->cred));

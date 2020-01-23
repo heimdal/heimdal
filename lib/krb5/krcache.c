@@ -207,6 +207,8 @@ typedef union _krb5_krcache_and_princ_id {
  */
 typedef struct _krb5_krcache {
     char *krc_name;			/* Name for this credentials cache */
+    char *krc_collection;
+    char *krc_subsidiary;
     krb5_timestamp krc_changetime;	/* update time, does not decrease (mutable) */
     krb5_krcache_and_princ_id krc_id;	/* cache and principal IDs (mutable) */
     #define krc_cache_and_principal_id	krc_id.krcu_cache_and_princ_id
@@ -384,8 +386,6 @@ parse_residual(krb5_context context,
 	collection_name = strdup(residual);
 	if (collection_name == NULL)
 	    goto nomem;
-
-	subsidiary_name = NULL;
     } else {
 	collection_name = strndup(residual, sep - residual);
 	if (collection_name == NULL)
@@ -918,14 +918,18 @@ initialize_internal(krb5_context context,
 static krb5_error_code KRB5_CALLCONV
 krcc_initialize(krb5_context context, krb5_ccache id, krb5_principal princ)
 {
+    krb5_krcache *data = KRCACHE(id);
     krb5_error_code ret;
+
+    if (data == NULL)
+	return krb5_einval(context, 2);
 
     if (princ == NULL)
 	return KRB5_CC_BADNAME;
 
     ret = initialize_internal(context, id, princ);
     if (ret == 0)
-	update_change_time(context, 0, KRCACHE(id));
+	update_change_time(context, 0, data);
 
     return ret;
 }
@@ -939,6 +943,8 @@ krcc_close(krb5_context context, krb5_ccache id)
     if (data == NULL)
 	return krb5_einval(context, 2);
 
+    free(data->krc_subsidiary);
+    free(data->krc_collection);
     free(data->krc_name);
     krb5_data_free(&id->data);
 
@@ -1048,16 +1054,26 @@ make_cache(krb5_context context,
 
 /* Create a keyring ccache handle for the given residual string. */
 static krb5_error_code KRB5_CALLCONV
-krcc_resolve(krb5_context context, krb5_ccache *id, const char *residual)
+krcc_resolve(krb5_context context,
+             krb5_ccache *id,
+             const char *residual,
+             const char *sub)
 {
     krb5_error_code ret;
     key_serial_t collection_id, cache_id;
     char *anchor_name = NULL, *collection_name = NULL, *subsidiary_name = NULL;
 
     ret = parse_residual(context, residual, &anchor_name, &collection_name,
-			 &subsidiary_name);
+                         &subsidiary_name);
     if (ret)
 	goto cleanup;
+    if (sub) {
+        free(subsidiary_name);
+        if ((subsidiary_name = strdup(sub)) == NULL) {
+            ret = krb5_enomem(context);
+            goto cleanup;
+        }
+    }
 
     ret = get_collection(context, anchor_name, collection_name, &collection_id);
     if (ret)
@@ -1243,8 +1259,16 @@ alloc_cache(krb5_context context,
 
     ret = make_subsidiary_residual(context, anchor_name, collection_name,
 				   subsidiary_name, &data->krc_name);
-    if (ret) {
+    if (ret ||
+        (data->krc_collection = strdup(collection_name)) == NULL ||
+        (data->krc_subsidiary = strdup(subsidiary_name)) == NULL) {
+        if (data) {
+            free(data->krc_collection);
+            free(data->krc_name);
+        }
 	free(data);
+        if (ret == 0)
+            ret = krb5_enomem(context);
 	return ret;
     }
 
@@ -1321,10 +1345,25 @@ cleanup:
 }
 
 /* Return an alias to the residual string of the cache. */
-static const char *KRB5_CALLCONV
-krcc_get_name(krb5_context context, krb5_ccache id)
+static krb5_error_code KRB5_CALLCONV
+krcc_get_name(krb5_context context,
+              krb5_ccache id,
+              const char **name,
+              const char **collection_name,
+              const char **subsidiary_name)
 {
-    return KRCACHE(id)->krc_name;
+    krb5_krcache *data = KRCACHE(id);
+
+    if (data == NULL)
+	return krb5_einval(context, 2);
+
+    if (name)
+        *name = data->krc_name;
+    if (collection_name)
+        *collection_name = data->krc_collection;
+    if (subsidiary_name)
+        *subsidiary_name = data->krc_subsidiary;
+    return 0;
 }
 
 /* Retrieve a copy of the default principal, if the cache is initialized. */
@@ -1640,6 +1679,9 @@ krcc_set_kdc_offset(krb5_context context, krb5_ccache id, krb5_deltat offset)
     krb5_krcache *data = KRCACHE(id);
     key_serial_t cache_id;
     krb5_error_code ret;
+
+    if (data == NULL)
+	return krb5_einval(context, 2);
 
     heim_base_exchange_32(&cache_id, data->krc_cache_id);
  

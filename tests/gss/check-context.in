@@ -53,6 +53,7 @@ nokeytab="FILE:no-such-keytab"
 cache="FILE:krb5ccfile"
 
 kinit="${TESTS_ENVIRONMENT} ../../kuser/kinit -c $cache ${afs_no_afslog}"
+kdestroy="${TESTS_ENVIRONMENT} ../../kuser/kdestroy -c $cache"
 klist="${TESTS_ENVIRONMENT} ../../kuser/heimtools klist -c $cache"
 kgetcred="${TESTS_ENVIRONMENT} ../../kuser/kgetcred -c $cache"
 kadmin="${TESTS_ENVIRONMENT} ../../kadmin/kadmin -l -r $R"
@@ -121,17 +122,23 @@ trap "kill ${kdcpid}; echo signal killing kdc; exit 1;" EXIT
 testfailed="echo test failed; cat messages.log; exit 1"
 
 echo "Test gss_acquire_cred_with_password" ; > messages.log
+${kdestroy}
 ${context} --client-name=user1@${R} --client-password=u1 --mech-type=krb5 \
         host@lucid.test.h5l.se || { eval "$testfailed"; }
+${klist} && { eval "$testfailed"; }
 # These must fail (because wrong password)
 ${context} --client-name=user1@${R} --client-password=u2 --mech-type=krb5 \
         host@lucid.test.h5l.se && { eval "$testfailed"; }
+${klist} && { eval "$testfailed"; }
 ${context} --client-name=user1@${R} --client-password=u2 --mech-type='' \
         --mech-types=krb5 host@lucid.test.h5l.se && { eval "$testfailed"; }
+${klist} && { eval "$testfailed"; }
 ${context} --client-name=user1@${R} --client-password=u2 --mech-type=krb5 \
         --mech-types=krb5 host@lucid.test.h5l.se && { eval "$testfailed"; }
+${klist} && { eval "$testfailed"; }
 ${context} --client-name=user1@${R} --client-password=u2 --mech-type=all \
         --mech-types=krb5 host@lucid.test.h5l.se && { eval "$testfailed"; }
+${klist} && { eval "$testfailed"; }
 ${context} --client-name=user1@${R} --client-password=u2 \
         --mech-type=krb5,ntlm --mech-types=krb5 host@lucid.test.h5l.se \
         && { eval "$testfailed"; }

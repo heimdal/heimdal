@@ -36,7 +36,7 @@ objdir="@objdir@"
 
 . ${env_setup}
 
-KRB5_CONFIG="${objdir}/krb5-cc.conf"
+KRB5_CONFIG="${objdir}/krb5.conf"
 export KRB5_CONFIG
 
 unset KRB5CCNAME
@@ -68,8 +68,6 @@ rm -f mkey.file*
 
 > messages.log
 
-cp "${objdir}/krb5.conf" "${objdir}/krb5-cc.conf"
-
 echo Creating database
 ${kadmin} \
     init \
@@ -95,12 +93,7 @@ trap "kill -9 ${kdcpid}; echo signal killing kdc; exit 1;" EXIT
 
 ec=0
 
-(cat ${objdir}/krb5.conf ; 			\
- echo '' ;					\
- echo '[libdefaults]' ; 			\
- echo "    default_cc_type = SCC" ;		\
- echo '' ) 					\
-    > ${objdir}/krb5-cc.conf
+export KRB5CCNAME=SCC:${objdir}/sdb
 
 ${kswitch} -p foo@${R} 2>/dev/null && ${kdestroy}
 ${kswitch} -p foo@${R} 2>/dev/null && ${kdestroy}
@@ -114,8 +107,8 @@ ${klist} -l | grep foo@ >/dev/null || { ec=1 ; eval "${testfailed}"; }
 ${kdestroy}
 
 echo "getting both tickets"; > messages.log
-${kinit} -c SCC:1 foo@${R} || { ec=1 ; eval "${testfailed}"; }
-${kinit} -c SCC:2 bar@${R} || { ec=1 ; eval "${testfailed}"; }
+${kinit} -c ${KRB5CCNAME}:1 foo@${R} || { ec=1 ; eval "${testfailed}"; }
+${kinit} -c ${KRB5CCNAME}:2 bar@${R} || { ec=1 ; eval "${testfailed}"; }
 echo "switch foo"
 ${kswitch} -p foo@${R} || { ec=1 ; eval "${testfailed}"; }
 ${klist} | head -2 | grep foo@ >/dev/null || { ec=1 ; eval "${testfailed}"; }
@@ -140,6 +133,22 @@ ${klist} -l | grep foo@ >/dev/null && { ec=1 ; eval "${testfailed}"; }
 echo "check that bar is gone"
 ${klist} -l | grep bar@ >/dev/null && { ec=1 ; eval "${testfailed}"; }
 
+echo "getting tickets (DIR)"; > messages.log
+KRB5_CONFIG="${objdir}/krb5-cccol.conf"
+export KRB5_CONFIG
+unset KRB5CCNAME
+rm -rf ${objdir}/kt ${objdir}/cc_dir
+mkdir ${objdir}/cc_dir || { ec=1 ; eval "${testfailed}"; }
+${kinit} foo@${R} || { ec=1 ; eval "${testfailed}"; }
+${kinit} --no-change-default bar@${R} || { ec=1 ; eval "${testfailed}"; }
+primary=`cat ${objdir}/cc_dir/primary`
+[ "x$primary" = xtkt.foo@${R} ] || { ec=1 ; eval "${testfailed}"; }
+${klist} -l |
+    grep "foo@TEST.H5L.SE.*FILE:${objdir}/cc_dir/tkt.foo@TEST.H5L.SE" > /dev/null ||
+    { ec=1 ; eval "${testfailed}"; }
+${klist} -l |
+    grep "bar@TEST.H5L.SE.*FILE:${objdir}/cc_dir/tkt.bar@TEST.H5L.SE" > /dev/null ||
+    { ec=1 ; eval "${testfailed}"; }
 
 echo "killing kdc (${kdcpid})"
 sh ${leaks_kill} kdc $kdcpid || exit 1

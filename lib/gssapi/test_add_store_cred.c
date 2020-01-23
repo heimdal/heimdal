@@ -94,12 +94,21 @@ gss_err(int exitval, OM_uint32 major, OM_uint32 minor, gss_OID mech,
     exit(exitval);
 }
 
-static int version_flag = 0;
-static int help_flag    = 0;
+static int version_flag         = 0;
+static int help_flag            = 0;
+static int env_flag             = 0;
+static int def_flag             = 0;
+static int overwrite_flag       = 0;
 
 static struct getargs args[] = {
     {"version", 0,      arg_flag,       &version_flag, "print version", NULL },
-    {"help",    0,      arg_flag,       &help_flag,  NULL, NULL }
+    {"help",    0,      arg_flag,       &help_flag,  NULL, NULL },
+    {"env",     'e',    arg_flag,       &env_flag,
+     "output env settings", NULL },
+    {"default", 0,      arg_flag,       &def_flag,
+     "switch credential store default principal", NULL },
+    {"overwrite", 0,    arg_flag,       &overwrite_flag,
+     "overwrite matching credential", NULL },
 };
 
 static void
@@ -119,6 +128,8 @@ main(int argc, char **argv)
     gss_cred_id_t cred = GSS_C_NO_CREDENTIAL;
     gss_key_value_element_desc from_elements, to_elements;
     gss_key_value_set_desc from, to;
+    gss_buffer_set_t env = GSS_C_NO_BUFFER_SET;
+    OM_uint32 store_flags = 0;
     int optidx = 0;
 
     setprogname(argv[0]);
@@ -132,6 +143,11 @@ main(int argc, char **argv)
         print_version(NULL);
         exit(0);
     }
+
+    if (def_flag)
+        store_flags |= GSS_C_STORE_CRED_DEFAULT;
+    if (overwrite_flag)
+        store_flags |= GSS_C_STORE_CRED_OVERWRITE;
 
     argc -= optidx;
     argv += optidx;
@@ -159,11 +175,34 @@ main(int argc, char **argv)
         gss_err(1, major, minor, GSS_KRB5_MECHANISM,
                 "failed to acquire creds from %s", argv[0]);
 
-    major = gss_store_cred_into(&minor, from_cred, GSS_C_INITIATE,
-				GSS_KRB5_MECHANISM, 1, 1, &to, NULL, NULL);
+    major = gss_store_cred_into2(&minor, from_cred, GSS_C_INITIATE,
+                                 GSS_KRB5_MECHANISM, store_flags, &to, NULL,
+                                 NULL, env_flag ? &env : NULL);
     if (major != GSS_S_COMPLETE)
         gss_err(1, major, minor, GSS_KRB5_MECHANISM,
                 "failed to store creds into %s", argv[1]);
+
+    if (env_flag) {
+        size_t i;
+        int got_krb5ccname = 0;
+
+        if (env == GSS_C_NO_BUFFER_SET)
+            warnx("No environment settings");
+
+        for (i = 0; env != GSS_C_NO_BUFFER_SET && i < env->count; i++) {
+            got_krb5ccname = got_krb5ccname ||
+                (env->elements[i].length > sizeof("KRB5CCNAME=") &&
+                 strncmp((const char *)env->elements[i].value, "KRB5CCNAME=",
+                         sizeof("KRB5CCNAME=") - 1) == 0);
+            printf("%.*s\n", (int)env->elements[i].length,
+                   (const char *)env->elements[i].value);
+        }
+        (void) gss_release_buffer_set(&minor, &env);
+
+        if (!got_krb5ccname)
+            errx(1, "KRB5CCNAME environment variable not set by "
+                 "gss_store_cred_into2()");
+    }
 
     (void) gss_release_cred(&minor, &from_cred);
     (void) gss_release_cred(&minor, &to_cred);

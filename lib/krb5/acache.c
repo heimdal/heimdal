@@ -49,6 +49,7 @@ static void *cc_handle;
 
 typedef struct krb5_acc {
     char *cache_name;
+    char *cache_subsidiary;
     cc_context_t context;
     cc_ccache_t ccache;
 } krb5_acc;
@@ -442,41 +443,51 @@ get_cc_name(krb5_acc *a)
 }
 
 
-static const char* KRB5_CALLCONV
+static krb5_error_code KRB5_CALLCONV
 acc_get_name(krb5_context context,
-	     krb5_ccache id)
+	     krb5_ccache id,
+             const char **name,
+             const char **colname,
+             const char **subsidiary)
 {
+    krb5_error_code ret;
     krb5_acc *a = ACACHE(id);
     int32_t error;
 
-    if (a->cache_name == NULL) {
-	krb5_error_code ret;
-	krb5_principal principal;
-	char *name;
+    if (name)
+        *name = NULL;
+    if (colname)
+        *colname = NULL;
+    if (subsidiary)
+        *subsidiary = NULL;
+    if (a->cache_subsidiary == NULL) {
+	krb5_principal principal = NULL;
 
 	ret = _krb5_get_default_principal_local(context, &principal);
-	if (ret)
-	    return NULL;
-
-	ret = krb5_unparse_name(context, principal, &name);
+	if (ret == 0)
+            ret = krb5_unparse_name(context, principal, &a->cache_subsidiary);
 	krb5_free_principal(context, principal);
 	if (ret)
-	    return NULL;
-
-	error = (*a->context->func->create_new_ccache)(a->context,
-						       cc_credentials_v5,
-						       name,
-						       &a->ccache);
-	krb5_xfree(name);
-	if (error)
-	    return NULL;
-
-	error = get_cc_name(a);
-	if (error)
-	    return NULL;
+	    return ret;
     }
 
-    return a->cache_name;
+    if (a->cache_name == NULL) {
+        error = (*a->context->func->create_new_ccache)(a->context,
+                                                       cc_credentials_v5,
+                                                       a->cache_subsidiary,
+                                                       &a->ccache);
+        if (error == ccNoError)
+            error = get_cc_name(a);
+        if (error != ccNoError)
+            ret = translate_cc_error(context, error);
+    }
+    if (name)
+        *name = a->cache_name;
+    if (colname)
+        *colname = "";
+    if (subsidiary)
+    *subsidiary = a->cache_subsidiary;
+    return ret;
 }
 
 static krb5_error_code KRB5_CALLCONV
@@ -497,6 +508,10 @@ acc_alloc(krb5_context context, krb5_ccache *id)
     }
 
     a = ACACHE(*id);
+    a->cache_subsidiary = NULL;
+    a->cache_name = NULL;
+    a->context = NULL;
+    a->ccache = NULL;
 
     error = (*init_func)(&a->context, ccapi_version_3, NULL, NULL);
     if (error) {
@@ -504,17 +519,17 @@ acc_alloc(krb5_context context, krb5_ccache *id)
 	return translate_cc_error(context, error);
     }
 
-    a->cache_name = NULL;
-
     return 0;
 }
 
 static krb5_error_code KRB5_CALLCONV
-acc_resolve(krb5_context context, krb5_ccache *id, const char *res)
+acc_resolve(krb5_context context, krb5_ccache *id, const char *res, const char *sub)
 {
     krb5_error_code ret;
+    cc_time_t offset;
     cc_int32 error;
     krb5_acc *a;
+    char *s = NULL;
 
     ret = acc_alloc(context, id);
     if (ret)
@@ -522,49 +537,44 @@ acc_resolve(krb5_context context, krb5_ccache *id, const char *res)
 
     a = ACACHE(*id);
 
-    error = (*a->context->func->open_ccache)(a->context, res, &a->ccache);
-    if (error == ccNoError) {
-	cc_time_t offset;
-	error = get_cc_name(a);
-	if (error != ccNoError) {
+    if (sub) {
+        if (asprintf(&s, "%s:%s", res, sub) == -1 || s == NULL ||
+            (a->cache_subsidiary = strdup(sub)) == NULL) {
 	    acc_close(context, *id);
-	    *id = NULL;
-	    return translate_cc_error(context, error);
-	}
-
-	error = (*a->ccache->func->get_kdc_time_offset)(a->ccache,
-							cc_credentials_v5,
-							&offset);
-	if (error == 0)
-	    context->kdc_sec_offset = offset;
-
-    } else if (error == ccErrCCacheNotFound) {
-	a->ccache = NULL;
-	a->cache_name = NULL;
-    } else {
-	*id = NULL;
-	return translate_cc_error(context, error);
+            free(s);
+            return krb5_enomem(context);
+        }
+        res = s;
+        /*
+         * XXX With a bit of extra refactoring we could use the collection name
+         * as the path to the shared object implementing CCAPI...  For now we
+         * ignore the collection name.
+         */
     }
 
+    error = (*a->context->func->open_ccache)(a->context, res, &a->ccache);
+    if (error == ccNoError)
+        error = get_cc_name(a);
+    if (error != ccNoError) {
+        acc_close(context, *id);
+        *id = NULL;
+        free(s);
+        return translate_cc_error(context, error);
+    }
+
+    error = (*a->ccache->func->get_kdc_time_offset)(a->ccache,
+                                                    cc_credentials_v5,
+                                                    &offset);
+    if (error == 0)
+        context->kdc_sec_offset = offset;
+    free(s);
     return 0;
 }
 
 static krb5_error_code KRB5_CALLCONV
 acc_gen_new(krb5_context context, krb5_ccache *id)
 {
-    krb5_error_code ret;
-    krb5_acc *a;
-
-    ret = acc_alloc(context, id);
-    if (ret)
-	return ret;
-
-    a = ACACHE(*id);
-
-    a->ccache = NULL;
-    a->cache_name = NULL;
-
-    return 0;
+    return acc_alloc(context, id);
 }
 
 static krb5_error_code KRB5_CALLCONV

@@ -136,7 +136,9 @@ krb5_kcm_storage_request(krb5_context context,
 }
 
 static krb5_error_code
-kcm_alloc(krb5_context context, const char *name, krb5_ccache *id)
+kcm_alloc(krb5_context context,
+          const char *name,
+          krb5_ccache *id)
 {
     krb5_kcmcache *k;
 
@@ -229,17 +231,42 @@ kcm_free(krb5_context context, krb5_ccache *id)
     }
 }
 
-static const char *
+static krb5_error_code KRB5_CALLCONV
 kcm_get_name(krb5_context context,
-	     krb5_ccache id)
+	     krb5_ccache id,
+             const char **name,
+             const char **col,
+             const char **sub)
 {
-    return CACHENAME(id);
+    /*
+     * TODO:
+     *
+     *  - name should be <IPC-name>:<cache-name>
+     *  - col  should be <IPC-name>
+     *  - sub  should be <cache-name>
+     */
+    if (name)
+        *name = CACHENAME(id);
+    if (col)
+        *col = NULL;
+    if (sub)
+        *sub = CACHENAME(id);
+    return 0;
 }
 
 static krb5_error_code
-kcm_resolve(krb5_context context, krb5_ccache *id, const char *res)
+kcm_resolve(krb5_context context,
+            krb5_ccache *id,
+            const char *res,
+            const char *sub)
 {
-    return kcm_alloc(context, res, id);
+    /*
+     * For now, for KCM the `res' is the `sub'.
+     *
+     * TODO: We should use `res' as the IPC name instead of the one currently
+     *       hard-coded in `kcm_ipc_name'.
+     */
+    return kcm_alloc(context, sub && *sub ? sub : res, id);
 }
 
 /*

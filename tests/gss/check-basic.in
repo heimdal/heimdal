@@ -105,7 +105,7 @@ echo "initial ticket"
 ${kinit} -c ${cache} --password-file=${objdir}/foopassword user@${R} || exitcode=1
 
 echo "copy ccache with gss_store_cred"
-${test_add_store_cred} ${cache} ${cache2} || exit 1
+${test_add_store_cred} --default --overwrite --env ${cache} ${cache2} || exit 1
 ${klist} -c ${cache2} || exit 1
 
 echo "keytab"

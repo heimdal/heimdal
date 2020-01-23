@@ -106,6 +106,7 @@ struct mbuf;
 #endif
 
 #include <parse_time.h>
+#include <base32.h>
 #include <base64.h>
 
 #include <wind.h>

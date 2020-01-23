@@ -1187,6 +1187,29 @@ gss_store_cred_into(
     gss_cred_usage_t * /* cred_usage_stored */
     );
 
+GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL
+gss_store_cred_into2(
+    OM_uint32 * /* minor_status */,
+    gss_const_cred_id_t /* input_cred_handle */,
+    gss_cred_usage_t /* input_usage */,
+    const gss_OID /* desired_mech */,
+    OM_uint32 /* store_cred_flags */,
+    gss_const_key_value_set_t /* cred_store */,
+    gss_OID_set * /* elements_stored */,
+    gss_cred_usage_t * /* cred_usage_stored */,
+    gss_buffer_set_t * /* env */
+    );
+
+enum gss_store_cred_flags {
+    GSS_C_STORE_CRED_DEFAULT = 1,
+    GSS_C_STORE_CRED_OVERWRITE = 2,
+    GSS_C_STORE_CRED_SET_PROCESS = 4,
+};
+#define GSS_C_STORE_CRED_DEFAULT GSS_C_STORE_CRED_DEFAULT
+#define GSS_C_STORE_CRED_OVERWRITE GSS_C_STORE_CRED_OVERWRITE
+#define GSS_C_STORE_CRED_SET_PROCESS GSS_C_STORE_CRED_SET_PROCESS
+
+
 GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_CALLCONV
 gss_set_neg_mechs(
     OM_uint32 * /* minor_status */,

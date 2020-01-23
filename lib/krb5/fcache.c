@@ -62,14 +62,23 @@ struct fcc_cursor {
 
 #define FCC_CURSOR(C) ((struct fcc_cursor*)(C))
 
-static const char* KRB5_CALLCONV
+static krb5_error_code KRB5_CALLCONV
 fcc_get_name(krb5_context context,
-	     krb5_ccache id)
+	     krb5_ccache id,
+             const char **name,
+             const char **colname,
+             const char **sub)
 {
     if (FCACHE(id) == NULL)
-        return NULL;
+        return KRB5_CC_NOTFOUND;
 
-    return FILENAME(id);
+    if (name)
+        *name = FILENAME(id);
+    if (colname)
+        *colname = FILENAME(id);
+    if (sub)
+        *sub = NULL;
+    return 0;
 }
 
 KRB5_LIB_FUNCTION int KRB5_LIB_CALL
@@ -178,15 +187,32 @@ static krb5_error_code KRB5_CALLCONV
 fcc_lock(krb5_context context, krb5_ccache id,
 	 int fd, krb5_boolean exclusive)
 {
+    krb5_error_code ret;
+    const char *name;
+
     if (exclusive == FALSE)
         return 0;
-    return _krb5_xlock(context, fd, exclusive, fcc_get_name(context, id));
+    ret = fcc_get_name(context, id, &name, NULL, NULL);
+    if (ret == 0)
+        ret = _krb5_xlock(context, fd, exclusive, name);
+    return ret;
 }
 
 static krb5_error_code KRB5_CALLCONV
-fcc_resolve(krb5_context context, krb5_ccache *id, const char *res)
+fcc_resolve(krb5_context context,
+            krb5_ccache *id,
+            const char *res,
+            const char *sub)
 {
     krb5_fcache *f;
+
+    if (sub && *sub) {
+        krb5_set_error_message(context, KRB5_CC_NOSUPP,
+                               N_("FILE ccache type is not a collection "
+                                  "type", ""));
+        return KRB5_CC_NOSUPP;
+    }
+
     f = calloc(1, sizeof(*f));
     if(f == NULL) {
 	krb5_set_error_message(context, KRB5_CC_NOMEM,
@@ -204,6 +230,7 @@ fcc_resolve(krb5_context context, krb5_ccache *id, const char *res)
     f->version = 0;
     (*id)->data.data = f;
     (*id)->data.length = sizeof(*f);
+
     return 0;
 }
 
@@ -647,11 +674,8 @@ fcc_destroy(krb5_context context,
     if (FCACHE(id) == NULL)
         return krb5_einval(context, 2);
 
-    if (TMPFILENAME(id)) {
+    if (TMPFILENAME(id))
         (void) _krb5_erase_file(context, TMPFILENAME(id));
-        free(TMPFILENAME(id));
-        TMPFILENAME(id) = NULL;
-    }
     return _krb5_erase_file(context, FILENAME(id));
 }
 

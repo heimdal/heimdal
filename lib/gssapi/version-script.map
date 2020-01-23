@@ -90,6 +90,7 @@ HEIMDAL_GSS_2.0 {
 		gss_sign;
 		gss_store_cred;
 		gss_store_cred_into;
+		gss_store_cred_into2;
 		gss_test_oid_set_member;
 		gss_unseal;
 		gss_unwrap;

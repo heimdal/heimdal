@@ -708,6 +708,11 @@ ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL mkstemp(char *);
 ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL mkostemp(char *, int);
 #endif
 
+#ifndef HAVE_MKDTEMP
+#define mkdtemp rk_mkdtemp
+ROKEN_LIB_FUNCTION char * ROKEN_LIB_CALL mkdtemp(char *);
+#endif
+
 #ifndef HAVE_CGETENT
 #define cgetent rk_cgetent
 #define cgetstr rk_cgetstr

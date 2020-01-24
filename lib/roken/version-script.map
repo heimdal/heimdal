@@ -88,6 +88,7 @@ HEIMDAL_ROKEN_2.0 {
 		rk_memmem;
 		rk_memset_s;
 		rk_mkdir;
+		rk_mkdtemp;
 		rk_mkostemp;
 		rk_mkstemp;
 		rk_parse_flags;

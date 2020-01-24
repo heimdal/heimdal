@@ -78,6 +78,7 @@ libroken_la_OBJS =			\
 	$(OBJ)\memset_s.obj 		\
 	$(OBJ)\mkdir.obj                \
 	$(OBJ)\mini_inetd.obj		\
+	$(OBJ)\mkdtemp.obj		\
 	$(OBJ)\mkstemp.obj		\
 	$(OBJ)\mkostemp.obj		\
 	$(OBJ)\net_read.obj		\

@@ -41,15 +41,15 @@
 
 #include "randi.h"
 
-volatile static HCRYPTPROV g_cryptprovider = NULL;
+volatile static HCRYPTPROV g_cryptprovider;
 
 static HCRYPTPROV
 _hc_CryptProvider(void)
 {
     BOOL rv;
-    HCRYPTPROV cryptprovider = NULL;
+    HCRYPTPROV cryptprovider = (HCRYPTPROV)NULL;
 
-    if (g_cryptprovider != NULL)
+    if (g_cryptprovider != (HCRYPTPROV)NULL)
 	goto out;
 
     rv = CryptAcquireContext(&cryptprovider, NULL,

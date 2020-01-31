@@ -47,9 +47,9 @@ static HCRYPTPROV
 _hc_CryptProvider(void)
 {
     BOOL rv;
-    HCRYPTPROV cryptprovider = (HCRYPTPROV)NULL;
+    HCRYPTPROV cryptprovider = (HCRYPTPROV)0;
 
-    if (g_cryptprovider != (HCRYPTPROV)NULL)
+    if (g_cryptprovider)
 	goto out;
 
     rv = CryptAcquireContext(&cryptprovider, NULL,

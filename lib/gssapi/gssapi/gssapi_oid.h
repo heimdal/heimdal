@@ -138,6 +138,9 @@ extern GSSAPI_LIB_VARIABLE gss_OID_desc __gss_c_inq_negoex_key_oid_desc;
 extern GSSAPI_LIB_VARIABLE gss_OID_desc __gss_c_inq_negoex_verify_key_oid_desc;
 #define GSS_C_INQ_NEGOEX_VERIFY_KEY (&__gss_c_inq_negoex_verify_key_oid_desc)
 
+extern GSSAPI_LIB_VARIABLE gss_OID_desc __gss_c_inq_require_mechlist_mic_oid_desc;
+#define GSS_C_INQ_REQUIRE_MECHLIST_MIC (&__gss_c_inq_require_mechlist_mic_oid_desc)
+
 /*
  * "Standard" mechs
  */

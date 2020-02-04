@@ -130,6 +130,9 @@ gss_OID_desc GSSAPI_LIB_VARIABLE __gss_c_inq_negoex_key_oid_desc = { 11, rk_UNCO
 /* GSS_C_INQ_NEGOEX_VERIFY_KEY - 1.2.840.113554.1.2.2.5.17 */
 gss_OID_desc GSSAPI_LIB_VARIABLE __gss_c_inq_negoex_verify_key_oid_desc = { 11, rk_UNCONST("\x2a\x86\x48\x86\xf7\x12\x01\x02\x02\x05\x11") };
 
+/* GSS_C_INQ_REQUIRE_MECHLIST_MIC - 1.3.6.1.4.1.7165.655.1.2 */
+gss_OID_desc GSSAPI_LIB_VARIABLE __gss_c_inq_require_mechlist_mic_oid_desc = { 11, rk_UNCONST("\x2b\x06\x01\x04\x01\xb7\x7d\x85\x0f\x01\x02") };
+
 /* GSS_KRB5_MECHANISM - 1.2.840.113554.1.2.2 */
 gss_OID_desc GSSAPI_LIB_VARIABLE __gss_krb5_mechanism_oid_desc = { 9, rk_UNCONST("\x2a\x86\x48\x86\xf7\x12\x01\x02\x02") };
 
@@ -318,6 +321,7 @@ gss_OID _gss_ot_internal[] = {
   &__gss_c_inq_sspi_session_key_oid_desc,
   &__gss_c_inq_negoex_key_oid_desc,
   &__gss_c_inq_negoex_verify_key_oid_desc,
+  &__gss_c_inq_require_mechlist_mic_oid_desc,
   &__gss_krb5_mechanism_oid_desc,
   &__gss_ntlm_mechanism_oid_desc,
   &__gss_spnego_mechanism_oid_desc,

@@ -94,6 +94,8 @@ EXPORTS
 	hx509_cert_check_eku
 	hx509_cert_cmp
 	hx509_cert_find_subjectAltName_otherName
+	hx509_cert_find_subjectAltName_heim_ia5_string
+	hx509_cert_find_subjectAltName_rfc822Name
 	hx509_cert_free
 	hx509_cert_get_SPKI
 	hx509_cert_get_SPKI_AlgorithmIdentifier

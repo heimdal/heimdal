@@ -892,6 +892,93 @@ hx509_cert_find_subjectAltName_otherName(hx509_context context,
     }
 }
 
+/**
+ * Return a the subjectAltNames specified by the
+ * GeneralName_enum.
+ *
+ * The returned string should be freed with free().
+ *
+ * @param context A hx509 context.
+ * @param cert a hx509 certificate object.
+ * @param g_enum the general enum to look for.
+ * @param p_name a string containing the value or NULL.
+ *
+ * @return An hx509 error code, see hx509_get_error_string().
+ *
+ * @ingroup hx509_cert
+ */
+
+int
+hx509_cert_find_subjectAltName_heim_ia5_string(hx509_context context,
+					 hx509_cert cert,
+					 enum GeneralName_enum g_enum,
+					 const char **p_name)
+{
+    GeneralNames sa;
+    int ret = 0;
+    size_t i, j;
+    char *s = NULL;
+
+    i = 0;
+    while (1) {
+	ret = find_extension_subject_alt_name(_hx509_get_cert(cert), &i, &sa);
+	i++;
+	if (ret == HX509_EXTENSION_NOT_FOUND) {
+	    return 0;
+	} else if (ret != 0) {
+	    hx509_set_error_string(context, 0, ret, "Error searching for SAN");
+	    return ret;
+	}
+
+	for (j = 0; j < sa.len; j++) {
+        size_t copy_size = 0;
+
+	    if ((sa.val[j].element == choice_GeneralName_rfc822Name && 
+             (copy_size = asnprintf(&s, (sa.val[j].u.rfc822Name.length + 1), "%s", (char*)sa.val[j].u.rfc822Name.data)) != sa.val[j].u.rfc822Name.length) ||
+	        (sa.val[j].element == choice_GeneralName_dNSName && 
+             (copy_size = asnprintf(&s, (sa.val[j].u.dNSName.length + 1), "%s", (char*)sa.val[j].u.dNSName.data)) != sa.val[j].u.dNSName.length) ||
+	        (sa.val[j].element == choice_GeneralName_uniformResourceIdentifier && 
+             (copy_size = asnprintf(&s, (sa.val[j].u.uniformResourceIdentifier.length + 1), "%s", (char*)sa.val[j].u.uniformResourceIdentifier.data)) != sa.val[j].u.uniformResourceIdentifier.length))
+	    {
+            ret = ENOMEM;
+		    hx509_set_error_string(context, 0, ret,
+					   "Error adding an extra SAN to "
+					   "return list");
+            free_GeneralNames(&sa);
+		    return ret;
+	    }
+
+        if(s) *p_name = s;
+	}
+	free_GeneralNames(&sa);
+    }
+}
+
+/**
+ * Return the rfc822 name on the certificate.
+ *
+ * The returned string should be freed with free().
+ *
+ * @param context A hx509 context.
+ * @param cert a hx509 certificate object.
+ * @param p_name a string with the rfc822 name or NULL.
+ *
+ * @return An hx509 error code, see hx509_get_error_string().
+ *
+ * @ingroup hx509_cert
+ */
+
+int
+hx509_cert_find_subjectAltName_rfc822Name(hx509_context context,
+					 hx509_cert cert,
+					 const char **p_name)
+{
+    return hx509_cert_find_subjectAltName_heim_ia5_string(context,
+                             cert,
+                             choice_GeneralName_rfc822Name,
+                             p_name);
+}
+
 
 static int
 check_key_usage(hx509_context context, const Certificate *cert,

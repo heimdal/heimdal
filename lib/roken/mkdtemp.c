@@ -81,7 +81,6 @@ mkdtemp(char *template)
 	    if (template[i] <= 'z')
 		break;
 	    template[i] = 'a';
-	    i++;
 	}
     } while(1);
 }

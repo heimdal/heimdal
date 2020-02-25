@@ -66,7 +66,7 @@ plcallback(krb5_context context, const void *plug, void *plugctx, void *userctx)
 
 static const char *plugin_deps[] = { "krb5", NULL };
 
-static struct krb5_plugin_data token_validator_data = {
+static struct heim_plugin_data token_validator_data = {
     "kdc",
     KDC_PLUGIN_BEARER,
     1,

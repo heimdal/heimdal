@@ -50,7 +50,7 @@ assembly=..\thirdparty\assembly
 assembly=..\packages\windows\assembly
 !endif
 
-SUBDIRS = roken base vers com_err sl wind asn1 sqlite \
+SUBDIRS = roken vers com_err base sl wind asn1 sqlite \
 	hcrypto hx509 krb5 heimdal ntlm kafs gssapi hdb \
 	kadm5 $(dir_otp) $(dir_dce) $(plugin) $(assembly)
 

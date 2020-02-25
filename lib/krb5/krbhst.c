@@ -676,7 +676,7 @@ plcallback(krb5_context context,
 
 static const char *locate_plugin_deps[] = { "krb5", NULL };
 
-static struct krb5_plugin_data
+static struct heim_plugin_data
 locate_plugin_data = {
     "krb5",
     KRB5_PLUGIN_LOCATE,

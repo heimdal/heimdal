@@ -457,7 +457,7 @@ krb5_kuserok(krb5_context context,
 
 static const char *kuserok_plugin_deps[] = { "krb5", NULL };
 
-static struct krb5_plugin_data
+static struct heim_plugin_data
 kuserok_plugin_data = {
     "krb5",
     KRB5_PLUGIN_KUSEROK,

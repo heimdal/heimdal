@@ -63,21 +63,48 @@ associated header file with the string "plugin_load" (e.g.
 "krb5_plugin_kuserok_plugin_load" for the plugin for
 .Xr krb5_kuserok 3
 ).
-The plugin load function has the following signature:
+The plugin load function must be of type
+.Va heim_plugin_load_ft
+which is:
 .Bd -literal -offset indent
-krb5_error_code
-krb5_plugin_kuserok_plugin_load(
-    krb5_context context,
-    krb5_get_instance_func_t *get_instance,
-    size_t *n_plugins,
-    const common_plugin_ftable *const **plugins);
+krb5_error_code HEIM_CALLCONV
+my_plugin_load(heim_pcontext context,
+               krb5_get_instance_func_t *get_instance,
+               size_t *num_plugins,
+               heim_plugin_common_ftable_cp **plugins);
+
+.Ed
+where
+.Va HEIM_CALLCONV
+is
+.Va __stdcall
+on Windows.
+.Pp
+The plugin should set the get_instance output parameter to the a
+function that will return the instances of its library
+dependencies.  For example:
+.Bd -literal -offset indent
+static uintptr_t HEIM_LIB_CALL
+my_plugin_get_instance(const char *name)
+{
+    if (strcmp(name, "krb5") == 0)
+        return krb5_get_instance(name);
+    return 0;
+}
 .Ed
 .Pp
-The plugin should set the get_instance output parameter to the a function
-that will return the instances of its library dependencies. The output
-parameters n_plugins and plugins specify the number of plugins, and an array of
-pointers to function tables, respectively.
-.Ed
+The
+.Va get_instance
+function is used to check that dynamically-linked plugins are
+linked with the same Heimdal shared objects as the one loading
+and running the plugin.
+.Pp
+The output parameters
+.Va plugins
+and
+.Va n_plugins
+output an array of pointers to function tabls, and the number of
+those, respectively.
 .Pp
 The plugin structs for all plugin types always begin with the same three
 common fields:
@@ -88,24 +115,41 @@ common fields:
 associated header file.
 .It
 .Va init
-, a pointer to a function with two arguments, a krb5_context and a
-void **, returning a krb5_error_code.  This function will be called to
-initialize a plugin-specific context in the form of a void * that will
-be output through the init function's second argument.
+, a pointer to a function with two arguments, a
+.Va heim_pcontext
+(which for krb5 plugins is actually a krb5_context),
+and a
+.Va void **
+, returning a heim_error_code.  This function will be called to
+initialize a plugin-specific context in the form of a
+.Va void *
+that will be output through the init function's second argument.
 .It
 .Va fini
-, a pointer to a function of one argument, a void *, consisting of the
-plugin's context to be destroyed, and returning void.
+, a pointer to a function of one argument, a
+.Va void *
+, consisting of the plugin's context to be destroyed, and
+returning
+.Va void.
 .El
 .Pp
-Each plugin type must add zero or more fields to this struct following
-the above three.  Plugins are typically invoked in no particular order
-until one succeeds or fails, or all return a special return value such
-as KRB5_PLUGIN_NO_HANDLE to indicate that the plugin was not applicable.
-Most plugin types obtain deterministic plugin behavior in spite of the
-non-deterministic invocation order by, for example, invoking all plugins
-for each "rule" and passing the rule to each plugin with the expectation
-that just one plugin will match any given rule.
+Each plugin type may add fields to this struct following the above
+three.  Plugins are typically invoked in no particular order until one
+succeeds or fails, or all return a special return value that indicates
+that the plugin was not applicable.  For krb5 plugins,
+.Va KRB5_PLUGIN_NO_HANDLE
+indicates that the plugin was not applicable.
+.Pp
+Heimdal plugin callers either invoke all plugins until one returns an
+error or all return
+.Va KRB5_PLUGIN_NO_HANDLE
+, or invoke all plugins until one returns a value other than
+.Va KRB5_PLUGIN_NO_HANDLE
+with the expectation that only one plugin would return success and all
+oters would return
+.Va KRB5_PLUGIN_NO_HANDLE.
+Thus Heimdal plugin invokation can be deterministic in spite of
+non-deterministic invocation order.
 .Pp
 There is a database plugin system intended for many of the uses of
 databases in Heimdal.  The plugin is expected to call
@@ -185,8 +229,9 @@ follows:
 .Bd -literal -offset indent
 #include <krb5/an2ln_plugin.h>
 
+/* Note that `context' here is actually a krb5_context value */
 static krb5_error_code
-nouser_plug_init(krb5_context context, void **ctx)
+nouser_plug_init(heim_pcontext context, void **ctx)
 {
     *ctx = NULL;
     return 0;
@@ -230,8 +275,9 @@ an2ln_get_instance(const char *libname)
     return 0;
 }
 
+/* Note that `context' here is actually a krb5_context value */
 krb5_error_code
-an2ln_plugin_load(krb5_context context,
+an2ln_plugin_load(heim_pcontext context,
                  krb5_get_instance_func_t *get_instance,
                  size_t *num_plugins,
                  const krb5plugin_an2ln_ftable * const **pplugins)
@@ -252,7 +298,7 @@ there exists a built-in plugin with this functionality; see
 #include <krb5/kuserok_plugin.h>
 
 static krb5_error_code
-reject_plug_init(krb5_context context, void **ctx)
+reject_plug_init(heim_context context, void **ctx)
 {
     *ctx = NULL;
     return 0;
@@ -295,7 +341,7 @@ kuserok_get_instance(const char *libname)
 
 krb5_error_code
 krb5_plugin_kuserok_plugin_load(
-    krb5_context context,
+    heim_context context,
     krb5_get_instance_func_t *get_instance,
     size_t *num_plugins,
     const krb5plugin_kuserok_ftable * const **pplugins)

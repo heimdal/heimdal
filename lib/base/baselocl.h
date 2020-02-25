@@ -37,6 +37,13 @@
 
 #include <roken.h>
 
+#define ISTILDE(x) (x == '~')
+#ifdef _WIN32
+# define ISPATHSEP(x) (x == '/' || x =='\\')
+#else
+# define ISPATHSEP(x) (x == '/')
+#endif
+
 #ifdef HAVE_SYS_SELECT_H
 #include <sys/select.h>
 #endif

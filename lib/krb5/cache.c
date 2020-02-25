@@ -2022,8 +2022,8 @@ _get_default_cc_name_from_registry(krb5_context context, HKEY hkBase)
     if (code != ERROR_SUCCESS)
         return NULL;
 
-    ccname = _krb5_parse_reg_value_as_string(context, hk_k5, "ccname",
-                                             REG_NONE, 0);
+    ccname = heim_parse_reg_value_as_string(context, hk_k5, "ccname",
+                                            REG_NONE, 0);
 
     RegCloseKey(hk_k5);
 
@@ -2062,8 +2062,8 @@ _krb5_set_default_cc_name_to_registry(krb5_context context, krb5_ccache id)
     if (ret < 0)
         goto cleanup;
 
-    ret = _krb5_store_string_to_reg_value(context, hk_k5, "ccname",
-                                          REG_SZ, ccname, -1, 0);
+    ret = heim_store_string_to_reg_value(context, hk_k5, "ccname",
+                                         REG_SZ, ccname, -1, 0);
 
   cleanup:
 

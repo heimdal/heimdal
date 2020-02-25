@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997 - 2001 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997 - 2020 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  *
@@ -36,22 +36,22 @@
 # pragma warning(disable: 4716)
 #endif
 
-#include "krb5_locl.h"
+#include "baselocl.h"
 #include <err.h>
 
-static krb5_error_code _warnerr(krb5_context context, int do_errtext,
-	 krb5_error_code code, int level, const char *fmt, va_list ap)
+static heim_error_code _warnerr(heim_context context, int do_errtext,
+	 heim_error_code code, int level, const char *fmt, va_list ap)
 	__attribute__ ((__format__ (__printf__, 5, 0)));
 
-static krb5_error_code
-_warnerr(krb5_context context, int do_errtext,
-	 krb5_error_code code, int level, const char *fmt, va_list ap)
+static heim_error_code
+_warnerr(heim_context context, int do_errtext,
+	 heim_error_code code, int level, const char *fmt, va_list ap)
 {
     char xfmt[7] = "";
     const char *args[2], **arg;
     char *msg = NULL;
     const char *err_str = NULL;
-    krb5_error_code ret;
+    heim_error_code ret;
 
     args[0] = args[1] = NULL;
     arg = args;
@@ -64,10 +64,10 @@ _warnerr(krb5_context context, int do_errtext,
 	    return ENOMEM;
 	*arg++ = msg;
     }
-    if(context && do_errtext){
+    if (context && do_errtext) {
 	strlcat(xfmt, "%s", sizeof(xfmt));
 
-	err_str = krb5_get_error_message(context, code);
+	err_str = heim_get_error_message(context, code);
 	if (err_str != NULL) {
 	    *arg = err_str;
 	} else {
@@ -75,26 +75,21 @@ _warnerr(krb5_context context, int do_errtext,
 	}
     }
 
-    if(context && context->warn_dest)
-	krb5_log(context, context->warn_dest, level, xfmt, args[0], args[1]);
+    if (context && heim_get_warn_dest(context))
+        heim_log(context, heim_get_warn_dest(context), level, xfmt, args[0],
+                 args[1]);
     else
 	warnx(xfmt, args[0], args[1]);
     free(msg);
-    krb5_free_error_message(context, err_str);
+    heim_free_error_message(context, err_str);
     return 0;
 }
 
 #define FUNC(ETEXT, CODE, LEVEL)					\
-    krb5_error_code ret;						\
+    heim_error_code ret;						\
     va_list ap;								\
     va_start(ap, fmt);							\
     ret = _warnerr(context, ETEXT, CODE, LEVEL, fmt, ap); 		\
-    va_end(ap);
-
-#define FUNC_NORET(ETEXT, CODE, LEVEL)					\
-    va_list ap;								\
-    va_start(ap, fmt);							\
-    (void) _warnerr(context, ETEXT, CODE, LEVEL, fmt, ap); 		\
     va_end(ap);
 
 #undef __attribute__
@@ -109,11 +104,11 @@ _warnerr(krb5_context context, int do_errtext,
  * @param fmt message to print
  * @param ap arguments
  *
- * @ingroup krb5_error
+ * @ingroup heim_error
  */
 
-KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
-krb5_vwarn(krb5_context context, krb5_error_code code,
+heim_error_code
+heim_vwarn(heim_context context, heim_error_code code,
 	   const char *fmt, va_list ap)
      __attribute__ ((__format__ (__printf__, 3, 0)))
 {
@@ -128,11 +123,11 @@ krb5_vwarn(krb5_context context, krb5_error_code code,
  * @param code error code of the last error
  * @param fmt message to print
  *
- * @ingroup krb5_error
+ * @ingroup heim_error
  */
 
-KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
-krb5_warn(krb5_context context, krb5_error_code code, const char *fmt, ...)
+heim_error_code
+heim_warn(heim_context context, heim_error_code code, const char *fmt, ...)
      __attribute__ ((__format__ (__printf__, 3, 4)))
 {
     FUNC(1, code, 1);
@@ -146,11 +141,11 @@ krb5_warn(krb5_context context, krb5_error_code code, const char *fmt, ...)
  * @param fmt message to print
  * @param ap arguments
  *
- * @ingroup krb5_error
+ * @ingroup heim_error
  */
 
-KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
-krb5_vwarnx(krb5_context context, const char *fmt, va_list ap)
+heim_error_code
+heim_vwarnx(heim_context context, const char *fmt, va_list ap)
      __attribute__ ((__format__ (__printf__, 2, 0)))
 {
     return _warnerr(context, 0, 0, 1, fmt, ap);
@@ -162,198 +157,13 @@ krb5_vwarnx(krb5_context context, const char *fmt, va_list ap)
  * @param context A Kerberos 5 context.
  * @param fmt message to print
  *
- * @ingroup krb5_error
+ * @ingroup heim_error
  */
 
-KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
-krb5_warnx(krb5_context context, const char *fmt, ...)
+heim_error_code
+heim_warnx(heim_context context, const char *fmt, ...)
      __attribute__ ((__format__ (__printf__, 2, 3)))
 {
     FUNC(0, 0, 1);
     return ret;
-}
-
-/**
- * Log a warning to the log, default stderr, include bthe error from
- * the last failure and then exit.
- *
- * @param context A Kerberos 5 context
- * @param eval the exit code to exit with
- * @param code error code of the last error
- * @param fmt message to print
- * @param ap arguments
- *
- * @ingroup krb5_error
- */
-
-KRB5_LIB_NORETURN_FUNCTION krb5_error_code KRB5_LIB_CALL
-krb5_verr(krb5_context context, int eval, krb5_error_code code,
-	  const char *fmt, va_list ap)
-     __attribute__ ((__noreturn__, __format__ (__printf__, 4, 0)))
-{
-    _warnerr(context, 1, code, 0, fmt, ap);
-    exit(eval);
-    UNREACHABLE(return 0);
-}
-
-/**
- * Log a warning to the log, default stderr, include bthe error from
- * the last failure and then exit.
- *
- * @param context A Kerberos 5 context
- * @param eval the exit code to exit with
- * @param code error code of the last error
- * @param fmt message to print
- *
- * @ingroup krb5_error
- */
-
-KRB5_LIB_NORETURN_FUNCTION krb5_error_code KRB5_LIB_CALL
-krb5_err(krb5_context context, int eval, krb5_error_code code,
-	 const char *fmt, ...)
-     __attribute__ ((__noreturn__, __format__ (__printf__, 4, 5)))
-{
-    FUNC_NORET(1, code, 0);
-    exit(eval);
-    UNREACHABLE(return 0);
-}
-
-/**
- * Log a warning to the log, default stderr, and then exit.
- *
- * @param context A Kerberos 5 context
- * @param eval the exit code to exit with
- * @param fmt message to print
- * @param ap arguments
- *
- * @ingroup krb5_error
- */
-
-KRB5_LIB_NORETURN_FUNCTION krb5_error_code KRB5_LIB_CALL
-krb5_verrx(krb5_context context, int eval, const char *fmt, va_list ap)
-     __attribute__ ((__noreturn__, __format__ (__printf__, 3, 0)))
-{
-    _warnerr(context, 0, 0, 0, fmt, ap);
-    exit(eval);
-    UNREACHABLE(return 0);
-}
-
-/**
- * Log a warning to the log, default stderr, and then exit.
- *
- * @param context A Kerberos 5 context
- * @param eval the exit code to exit with
- * @param fmt message to print
- *
- * @ingroup krb5_error
- */
-
-KRB5_LIB_NORETURN_FUNCTION krb5_error_code KRB5_LIB_CALL
-krb5_errx(krb5_context context, int eval, const char *fmt, ...)
-     __attribute__ ((__noreturn__, __format__ (__printf__, 3, 4)))
-{
-    FUNC_NORET(0, 0, 0);
-    exit(eval);
-    UNREACHABLE(return 0);
-}
-
-/**
- * Log a warning to the log, default stderr, include bthe error from
- * the last failure and then abort.
- *
- * @param context A Kerberos 5 context
- * @param code error code of the last error
- * @param fmt message to print
- * @param ap arguments
- *
- * @ingroup krb5_error
- */
-
-KRB5_LIB_NORETURN_FUNCTION krb5_error_code KRB5_LIB_CALL
-krb5_vabort(krb5_context context, krb5_error_code code,
-	    const char *fmt, va_list ap)
-     __attribute__ ((__noreturn__, __format__ (__printf__, 3, 0)))
-{
-    _warnerr(context, 1, code, 0, fmt, ap);
-    abort();
-    UNREACHABLE(return 0);
-}
-
-/**
- * Log a warning to the log, default stderr, include the error from
- * the last failure and then abort.
- *
- * @param context A Kerberos 5 context
- * @param code error code of the last error
- * @param fmt message to print
- * @param ... arguments for format string
- *
- * @ingroup krb5_error
- */
-
-KRB5_LIB_NORETURN_FUNCTION krb5_error_code KRB5_LIB_CALL
-krb5_abort(krb5_context context, krb5_error_code code, const char *fmt, ...)
-     __attribute__ ((__noreturn__, __format__ (__printf__, 3, 4)))
-{
-    FUNC_NORET(1, code, 0);
-    abort();
-    UNREACHABLE(return 0);
-}
-
-KRB5_LIB_NORETURN_FUNCTION krb5_error_code KRB5_LIB_CALL
-krb5_vabortx(krb5_context context, const char *fmt, va_list ap)
-     __attribute__ ((__noreturn__, __format__ (__printf__, 2, 0)))
-{
-    _warnerr(context, 0, 0, 0, fmt, ap);
-    abort();
-    UNREACHABLE(return 0);
-}
-
-/**
- * Log a warning to the log, default stderr, and then abort.
- *
- * @param context A Kerberos 5 context
- * @param fmt printf format string of message to print
- * @param ... arguments for format string
- *
- * @ingroup krb5_error
- */
-
-KRB5_LIB_NORETURN_FUNCTION krb5_error_code KRB5_LIB_CALL
-krb5_abortx(krb5_context context, const char *fmt, ...)
-     __attribute__ ((__noreturn__, __format__ (__printf__, 2, 3)))
-{
-    FUNC_NORET(0, 0, 0);
-    abort();
-    UNREACHABLE(return 0);
-}
-
-/**
- * Set the default logging facility.
- *
- * @param context A Kerberos 5 context
- * @param fac Facility to use for logging.
- *
- * @ingroup krb5_error
- */
-
-KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
-krb5_set_warn_dest(krb5_context context, krb5_log_facility *fac)
-{
-    context->warn_dest = fac;
-    return 0;
-}
-
-/**
- * Get the default logging facility.
- *
- * @param context A Kerberos 5 context
- *
- * @ingroup krb5_error
- */
-
-KRB5_LIB_FUNCTION krb5_log_facility * KRB5_LIB_CALL
-krb5_get_warn_dest(krb5_context context)
-{
-    return context->warn_dest;
 }

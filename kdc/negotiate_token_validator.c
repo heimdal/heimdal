@@ -42,7 +42,7 @@
 
 #define _DEFAULT_SOURCE
 #define _BSD_SOURCE
-#define _GNU_SOURCE
+#define _GNU_SOURCE 1
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -56,6 +56,7 @@
 
 #include <base64.h>
 #include <roken.h>
+#include <heimbase.h>
 #include <krb5.h>
 #include <common_plugin.h>
 #include <gssapi/gssapi.h>
@@ -310,7 +311,7 @@ negotiate_get_instance(const char *libname)
 krb5_plugin_load_ft kdc_token_validator_plugin_load;
 
 krb5_error_code KRB5_CALLCONV
-kdc_token_validator_plugin_load(krb5_context context,
+kdc_token_validator_plugin_load(heim_pcontext context,
                                 krb5_get_instance_func_t *get_instance,
                                 size_t *num_plugins,
                                 krb5_plugin_common_ftable_cp **plugins)

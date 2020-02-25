@@ -134,7 +134,6 @@ struct ContentInfo;
 struct AlgorithmIdentifier;
 typedef struct krb5_pk_init_ctx_data *krb5_pk_init_ctx;
 struct krb5_dh_moduli;
-struct krb5_plugin_data;
 
 /* v4 glue */
 struct _krb5_krb_auth_data;
@@ -234,6 +233,7 @@ typedef uint32_t krb5_enctype_set;
  * if plugins are not built with a matching version.
  */
 typedef struct krb5_context_data {
+    heim_context hcontext;
     krb5_enctype *etypes;
     krb5_enctype *cfg_etypes;
     krb5_enctype *etypes_des;/* deprecated */
@@ -249,8 +249,6 @@ typedef struct krb5_context_data {
     int32_t kdc_usec_offset;
     krb5_config_section *cf;
     struct et_list *et_list;
-    struct krb5_log_facility *warn_dest;
-    struct krb5_log_facility *debug_dest;
     const krb5_cc_ops **cc_ops;
     int num_cc_ops;
     const char *http_proxy;
@@ -398,13 +396,5 @@ struct krb5_pk_init_ctx_data {
 #else
 # define ISPATHSEP(x) (x == '/')
 #endif
-
-struct krb5_plugin_data {
-    const char *module;
-    const char *name;
-    int min_version;
-    const char **deps;
-    krb5_get_instance_func_t get_instance;
-};
 
 #endif /* __KRB5_LOCL_H__ */

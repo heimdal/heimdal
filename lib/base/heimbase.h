@@ -55,7 +55,88 @@
 #endif
 #endif
 
+#include <stdint.h>
+
+#include <heim_err.h>
+
+#ifdef _WIN32
+#define HEIM_CALLCONV __stdcall
+#define HEIM_LIB_CALL __stdcall
+#else
+#define HEIM_CALLCONV
+#define HEIM_LIB_CALL
+#endif
+
+#if !defined(__GNUC__) && !defined(__attribute__)
+#define __attribute__(x)
+#endif
+
 #define HEIM_BASE_API_VERSION 20130210
+
+typedef int32_t heim_error_code;
+typedef struct heim_context_s *heim_context;
+typedef struct heim_pcontext_s *heim_pcontext;
+
+typedef void (HEIM_CALLCONV *heim_log_log_func_t)(heim_context,
+                                                  const char *,
+                                                  const char *,
+                                                  void *);
+typedef void (HEIM_CALLCONV *heim_log_close_func_t)(void *);
+
+struct heim_log_facility_internal {
+    int min;
+    int max;
+    heim_log_log_func_t log_func;
+    heim_log_close_func_t close_func;
+    void *data;
+};
+
+
+typedef struct heim_log_facility_s {
+    char *program;
+    int len;
+    struct heim_log_facility_internal *val;
+} heim_log_facility;
+
+typedef uintptr_t
+(HEIM_LIB_CALL *heim_get_instance_func_t)(const char *);
+
+#define HEIM_PLUGIN_INVOKE_ALL 1
+
+struct heim_plugin_data {
+    const char *module;
+    const char *name;
+    int min_version;
+    const char **deps;
+    heim_get_instance_func_t get_instance;
+};
+
+typedef struct heim_err_cb_context_s *heim_err_cb_context;
+typedef void (*heim_err_cb_clear_msg)(heim_err_cb_context);
+typedef void (*heim_err_cb_free_msg)(heim_err_cb_context, const char *);
+typedef const char * (*heim_err_cb_get_msg)(heim_err_cb_context, int32_t);
+typedef void (*heim_err_cb_set_msg)(heim_err_cb_context, int32_t,
+                                    const char *, va_list)
+    __attribute__ ((__format__ (__printf__, 3, 0)));
+
+typedef struct heim_config_binding heim_config_binding;
+struct heim_config_binding {
+    enum {
+        heim_config_string,
+        heim_config_list,
+        /* For compatibility in krb5 code */
+        krb5_config_string = heim_config_string,
+        krb5_config_list = heim_config_list,
+    } type;
+    char *name;
+    struct heim_config_binding *next;
+    union {
+        char *string;
+        struct heim_config_binding *list;
+        void *generic;
+    } u;
+};
+typedef struct heim_config_binding heim_config_section;
 
 typedef void * heim_object_t;
 typedef unsigned int heim_tid_t;
@@ -571,5 +652,8 @@ heim_base_exchange_pointer(void *target, void *value)
 #else
 #error set SIZEOF_TIME_T for your platform
 #endif
+
+#include <heim_threads.h>
+#include <heimbase-protos.h>
 
 #endif /* HEIM_BASE_H */

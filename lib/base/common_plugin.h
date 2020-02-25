@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2006 - 2007 Kungliga Tekniska Högskolan
+ * Copyright (c) 2006 - 2020 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  *
@@ -33,37 +33,63 @@
  * SUCH DAMAGE.
  */
 
-#ifndef HEIMDAL_KRB5_COMMON_PLUGIN_H
-#define HEIMDAL_KRB5_COMMON_PLUGIN_H
+#ifndef HEIMDAL_BASE_COMMON_PLUGIN_H
+#define HEIMDAL_BASE_COMMON_PLUGIN_H
+
+#ifdef _WIN32
+#ifndef HEIM_CALLCONV
+#define HEIM_CALLCONV __stdcall
+#endif
+#ifndef HEIM_LIB_CALL
+#define HEIM_LIB_CALL __stdcall
+#endif
+#else
+#ifndef HEIM_CALLCONV
+#define HEIM_CALLCONV
+#endif
+#ifndef HEIM_LIB_CALL
+#define HEIM_LIB_CALL
+#endif
+#endif
+
+/* For krb5 plugins, this is a krb5_context */
+typedef struct heim_pcontext_s *heim_pcontext;
 
 /*
  * All plugin function tables extend the following structure.
  */
-struct krb5_plugin_common_ftable_desc {
+struct heim_plugin_common_ftable_desc {
     int			version;
-    krb5_error_code	(KRB5_LIB_CALL *init)(krb5_context, void **);
-    void		(KRB5_LIB_CALL *fini)(void *);
+    int            	(HEIM_LIB_CALL *init)(heim_pcontext, void **);
+    void		(HEIM_LIB_CALL *fini)(void *);
 };
-typedef struct krb5_plugin_common_ftable_desc krb5_plugin_common_ftable;
-typedef struct krb5_plugin_common_ftable_desc *krb5_plugin_common_ftable_p;
-typedef struct krb5_plugin_common_ftable_desc * const krb5_plugin_common_ftable_cp;
+typedef struct heim_plugin_common_ftable_desc heim_plugin_common_ftable;
+typedef struct heim_plugin_common_ftable_desc *heim_plugin_common_ftable_p;
+typedef struct heim_plugin_common_ftable_desc * const heim_plugin_common_ftable_cp;
 
-typedef krb5_error_code
-(KRB5_CALLCONV krb5_plugin_load_ft)(krb5_context context,
-                                    krb5_get_instance_func_t *func,
+typedef int
+(HEIM_CALLCONV heim_plugin_load_ft)(heim_pcontext context,
+                                    heim_get_instance_func_t *func,
                                     size_t *n_ftables,
-                                    krb5_plugin_common_ftable_cp **ftables);
+                                    heim_plugin_common_ftable_cp **ftables);
 
-typedef krb5_plugin_load_ft *krb5_plugin_load_t;
+typedef heim_plugin_load_ft *heim_plugin_load_t;
+
+/* For source backwards-compatibility */
+typedef struct heim_plugin_common_ftable_desc krb5_plugin_common_ftable;
+typedef struct heim_plugin_common_ftable_desc *krb5_plugin_common_ftable_p;
+typedef struct heim_plugin_common_ftable_desc * const krb5_plugin_common_ftable_cp;
+typedef heim_plugin_load_ft krb5_plugin_load_ft;
+typedef heim_plugin_load_ft *krb5_plugin_load_t;
 
 /*
  * All plugins must export a function named "<type>_plugin_load" with
  * a signature of:
  *
- * krb5_error_code KRB5_CALLCONV
- * <type>_plugin_load(krb5_context context,
- *	              krb5_get_instance_func_t *func,
+ * int HEIM_CALLCONV
+ * <type>_plugin_load(heim_pcontext context,
+ *	              heim_get_instance_func_t *func,
  *		      size_t *n_ftables,
- *		      const krb5_plugin_common_ftable *const **ftables);
+ *		      const heim_plugin_common_ftable *const **ftables);
  */
-#endif /* HEIMDAL_KRB5_COMMON_PLUGIN_H */
+#endif /* HEIMDAL_BASE_COMMON_PLUGIN_H */

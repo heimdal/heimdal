@@ -82,7 +82,7 @@ plcallback(krb5_context context,
 
 static const char *an2ln_plugin_deps[] = { "krb5", NULL };
 
-static struct krb5_plugin_data
+static struct heim_plugin_data
 an2ln_plugin_data = {
     "krb5",
     KRB5_PLUGIN_AN2LN,

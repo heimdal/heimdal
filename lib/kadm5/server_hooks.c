@@ -37,7 +37,7 @@ static const char *kadm5_hook_plugin_deps[] = {
     NULL
 };
 
-struct krb5_plugin_data kadm5_hook_plugin_data = {
+struct heim_plugin_data kadm5_hook_plugin_data = {
     "kadm5",
     "kadm5_hook",
     KADM5_HOOK_VERSION_V1,

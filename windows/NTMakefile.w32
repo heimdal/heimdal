@@ -164,7 +164,7 @@ cdefines=$(cdefines) -DHAVE_CONFIG_H
 # Windows CNG provider
 cdefines=$(cdefines) -DHCRYPTO_DEF_PROVIDER=w32crypto
 cdebug=$(cdebug) /Zi
-ldebug=$(ldebug) /DEBUG
+ldebug=$(ldebug) /RELEASE
 localcflags=$(localcflags) /Oy-
 
 # Disable warnings:

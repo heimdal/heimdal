@@ -247,19 +247,14 @@ init_context_from_config_file(krb5_context context)
     if (tmp || s) {
 	char **p;
 
-	if (context->debug_dest)
-	    krb5_closelog(context, context->debug_dest);
-
-	krb5_initlog(context, "libkrb5", &context->debug_dest);
-
 	if (s) {
-	    for(p = s; *p; p++)
-		krb5_addlog_dest(context, context->debug_dest, *p);
+	    for (p = s; *p; p++)
+                heim_add_debug_dest(context->hcontext, "libkrb5", *p);
 	    krb5_config_free_strings(s);
 	}
 
 	if (tmp)
-	    krb5_addlog_dest(context, context->debug_dest, tmp);
+            heim_add_debug_dest(context->hcontext, "libkrb5", *p);
     }
 
     tmp = krb5_config_get_string(context, NULL, "libdefaults",
@@ -409,6 +404,31 @@ init_context_once(void *ctx)
     bindtextdomain(HEIMDAL_TEXTDOMAIN, HEIMDAL_LOCALEDIR);
 }
 
+static void
+clear_error_message_cb(heim_err_cb_context ctx)
+{
+    krb5_clear_error_message((krb5_context)ctx);
+}
+
+static void
+free_error_message_cb(heim_err_cb_context ctx, const char *msg)
+{
+    krb5_free_error_message((krb5_context)ctx, msg);
+}
+
+static const char *
+get_error_message_cb(heim_err_cb_context ctx, int32_t ret)
+{
+    return krb5_get_error_message((krb5_context)ctx, ret);
+}
+
+static void
+set_error_message_cb(heim_err_cb_context ctx, int32_t ret,
+                     const char *fmt, va_list args)
+{
+    krb5_vset_error_message((krb5_context)ctx, ret, fmt, args);
+}
+
 
 /**
  * Initializes the context structure and reads the configuration file
@@ -455,6 +475,16 @@ krb5_init_context(krb5_context *context)
 	return ENOMEM;
 
     HEIMDAL_MUTEX_init(&p->mutex);
+    if ((p->hcontext = heim_context_init()) == NULL) {
+        ret = ENOMEM;
+        goto out;
+    }
+
+    heim_context_set_msg_cb(p->hcontext, (void *)p,
+                            clear_error_message_cb,
+                            free_error_message_cb,
+                            get_error_message_cb,
+                            set_error_message_cb);
 
     p->flags |= KRB5_CTX_F_HOMEDIR_ACCESS;
 
@@ -483,9 +513,11 @@ krb5_init_context(krb5_context *context)
 	p->flags |= KRB5_CTX_F_SOCKETS_INITIALIZED;
 
 out:
-    if(ret) {
+    if (ret) {
 	krb5_free_context(p);
 	p = NULL;
+    } else {
+        heim_context_set_log_utc(p->hcontext, p->log_utc);
     }
     *context = p;
     return ret;
@@ -549,12 +581,35 @@ krb5_copy_context(krb5_context context, krb5_context *out)
 
     HEIMDAL_MUTEX_init(&p->mutex);
 
-    if (context->default_cc_name)
-	p->default_cc_name = strdup(context->default_cc_name);
-    if (context->default_cc_name_env)
-	p->default_cc_name_env = strdup(context->default_cc_name_env);
-    if (context->configured_default_cc_name)
-	p->configured_default_cc_name = strdup(context->configured_default_cc_name);
+    if ((p->hcontext = heim_context_init()) == NULL) {
+        ret = ENOMEM;
+        goto out;
+    }
+
+    heim_context_set_log_utc(p->hcontext, context->log_utc);
+    heim_context_set_msg_cb(p->hcontext, (void *)p,
+                            clear_error_message_cb,
+                            free_error_message_cb,
+                            get_error_message_cb,
+                            set_error_message_cb);
+
+    if (context->default_cc_name &&
+	(p->default_cc_name = strdup(context->default_cc_name)) == NULL) {
+        ret = ENOMEM;
+        goto out;
+    }
+    if (context->default_cc_name_env &&
+	(p->default_cc_name_env =
+            strdup(context->default_cc_name_env)) == NULL) {
+        ret = ENOMEM;
+        goto out;
+    }
+    if (context->configured_default_cc_name &&
+	(p->configured_default_cc_name =
+            strdup(context->configured_default_cc_name)) == NULL) {
+        ret = ENOMEM;
+        goto out;
+    }
 
     if (context->etypes) {
 	ret = copy_etypes(context, context->etypes, &p->etypes);
@@ -588,13 +643,6 @@ krb5_copy_context(krb5_context context, krb5_context *out)
 
     cc_ops_copy(p, context);
     kt_ops_copy(p, context);
-
-#if 0 /* XXX */
-    if(context->warn_dest != NULL)
-	;
-    if(context->debug_dest != NULL)
-	;
-#endif
 
     ret = krb5_set_extra_addresses(p, context->extra_addresses);
     if (ret)
@@ -648,10 +696,6 @@ krb5_free_context(krb5_context context)
     free(rk_UNCONST(context->cc_ops));
     free(context->kt_types);
     krb5_clear_error_message(context);
-    if(context->warn_dest != NULL)
-	krb5_closelog(context, context->warn_dest);
-    if(context->debug_dest != NULL)
-	krb5_closelog(context, context->debug_dest);
     krb5_set_extra_addresses(context, NULL);
     krb5_set_ignore_addresses(context, NULL);
     krb5_set_send_to_kdc_func(context, NULL, NULL);
@@ -666,9 +710,15 @@ krb5_free_context(krb5_context context)
  	rk_SOCK_EXIT();
     }
 
+    heim_context_free(&context->hcontext);
     memset(context, 0, sizeof(*context));
     free(context);
 }
+
+#ifdef _WIN32
+#define REGPATH_KERBEROS "SOFTWARE\\Kerberos"
+#define REGPATH_HEIMDAL  "SOFTWARE\\Heimdal"
+#endif
 
 /**
  * Reinit the context from a new set of filenames.
@@ -704,7 +754,8 @@ krb5_set_config_files(krb5_context context, char **filenames)
 #endif
 
 #ifdef _WIN32
-    _krb5_load_config_from_registry(context, &tmp);
+    heim_load_config_from_registry(context->hcontext, REGPATH_KERBEROS,
+                                   REGPATH_HEIMDAL, &tmp);
 #endif
 
     krb5_config_file_free(context, context->cf);
@@ -846,8 +897,8 @@ _krb5_get_default_config_config_files_from_registry()
 
     rcode = RegOpenKeyEx(HKEY_CURRENT_USER, KeyName, 0, KEY_READ, &key);
     if (rcode == ERROR_SUCCESS) {
-        config_file = _krb5_parse_reg_value_as_multi_string(NULL, key, "config",
-                                                            REG_NONE, 0, PATH_SEP);
+        config_file = heim_parse_reg_value_as_multi_string(NULL, key, "config",
+                                                           REG_NONE, 0, PATH_SEP);
         RegCloseKey(key);
     }
 
@@ -856,8 +907,8 @@ _krb5_get_default_config_config_files_from_registry()
 
     rcode = RegOpenKeyEx(HKEY_LOCAL_MACHINE, KeyName, 0, KEY_READ, &key);
     if (rcode == ERROR_SUCCESS) {
-        config_file = _krb5_parse_reg_value_as_multi_string(NULL, key, "config",
-                                                            REG_NONE, 0, PATH_SEP);
+        config_file = heim_parse_reg_value_as_multi_string(NULL, key, "config",
+                                                           REG_NONE, 0, PATH_SEP);
         RegCloseKey(key);
     }
 
@@ -1587,12 +1638,14 @@ KRB5_LIB_FUNCTION krb5_boolean KRB5_LIB_CALL
 krb5_set_home_dir_access(krb5_context context, krb5_boolean allow)
 {
     krb5_boolean old;
+
     if (context) {
 	old = (context->flags & KRB5_CTX_F_HOMEDIR_ACCESS) ? TRUE : FALSE;
 	if (allow)
 	    context->flags |= KRB5_CTX_F_HOMEDIR_ACCESS;
 	else
 	    context->flags &= ~KRB5_CTX_F_HOMEDIR_ACCESS;
+        heim_context_set_homedir_access(context->hcontext, allow ? 1 : 0);
     } else {
 	HEIMDAL_MUTEX_lock(&homedir_mutex);
 	old = allow_homedir;

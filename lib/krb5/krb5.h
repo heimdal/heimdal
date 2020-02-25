@@ -526,21 +526,7 @@ typedef struct krb5_cc_ops {
     krb5_error_code (KRB5_CALLCONV * get_kdc_offset)(krb5_context, krb5_ccache, krb5_deltat *);
 } krb5_cc_ops;
 
-struct krb5_log_facility;
-
-struct krb5_config_binding {
-    enum { krb5_config_string, krb5_config_list } type;
-    char *name;
-    struct krb5_config_binding *next;
-    union {
-	char *string;
-	struct krb5_config_binding *list;
-	void *generic;
-    } u;
-};
-
-typedef struct krb5_config_binding krb5_config_binding;
-
+typedef struct heim_config_binding krb5_config_binding;
 typedef krb5_config_binding krb5_config_section;
 
 typedef struct krb5_ticket {
@@ -684,11 +670,7 @@ typedef void (KRB5_CALLCONV * krb5_log_log_func_t)(krb5_context,
 						   void*);
 typedef void (KRB5_CALLCONV * krb5_log_close_func_t)(void*);
 
-typedef struct krb5_log_facility {
-    char *program;
-    int len;
-    struct facility *val;
-} krb5_log_facility;
+typedef struct heim_log_facility_s krb5_log_facility;
 
 typedef EncAPRepPart krb5_ap_rep_enc_part;
 

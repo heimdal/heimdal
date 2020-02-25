@@ -526,7 +526,8 @@ LIBGSSAPI_LIBS=\
 	$(LIBCOMERR)
 
 LIBGSSAPI_SDKLIBS=\
-	$(PTHREAD_LIB)
+	$(PTHREAD_LIB)  \
+        Secur32.lib Shell32.lib Advapi32.lib
 
 !ifndef STATICLIBS
 

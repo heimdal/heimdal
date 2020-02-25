@@ -53,7 +53,7 @@ plcallback(krb5_context context, const void *plug, void *plugctx, void *userctx)
 
 static const char *plugin_deps[] = { "krb5", NULL };
 
-static struct krb5_plugin_data csr_authorizer_data = {
+static struct heim_plugin_data csr_authorizer_data = {
     "kdc",
     KDC_CSR_AUTHORIZER,
     1,

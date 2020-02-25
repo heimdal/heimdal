@@ -46,6 +46,8 @@
 #ifndef HEIM_THREADS_H
 #define HEIM_THREADS_H 1
 
+#include <errno.h>
+
 #ifdef _MSC_VER
 
 #define HEIMDAL_THREAD_LOCAL __declspec(thread)

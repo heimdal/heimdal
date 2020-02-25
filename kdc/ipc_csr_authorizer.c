@@ -431,7 +431,7 @@ ipc_csr_authorizer_get_instance(const char *libname)
 krb5_plugin_load_ft kdc_csr_authorizer_plugin_load;
 
 krb5_error_code KRB5_CALLCONV
-kdc_csr_authorizer_plugin_load(krb5_context context,
+kdc_csr_authorizer_plugin_load(heim_pcontext context,
                                krb5_get_instance_func_t *get_instance,
                                size_t *num_plugins,
                                krb5_plugin_common_ftable_cp **plugins)

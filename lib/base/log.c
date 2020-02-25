@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997-2006 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997-2020 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  *
@@ -33,25 +33,19 @@
  * SUCH DAMAGE.
  */
 
-#include "krb5_locl.h"
+#include "baselocl.h"
+#include "heim_threads.h"
 #include <assert.h>
+#include <stdarg.h>
 #include <vis.h>
 
-struct facility {
-    int min;
-    int max;
-    krb5_log_log_func_t log_func;
-    krb5_log_close_func_t close_func;
-    void *data;
-};
-
-static struct facility*
-log_realloc(krb5_log_facility *f)
+static struct heim_log_facility_internal *
+log_realloc(heim_log_facility *f)
 {
-    struct facility *fp;
+    struct heim_log_facility_internal *fp;
     fp = realloc(f->val, (f->len + 1) * sizeof(*f->val));
-    if(fp == NULL)
-	return NULL;
+    if (fp == NULL)
+        return NULL;
     f->len++;
     f->val = fp;
     fp += f->len - 1;
@@ -111,40 +105,40 @@ static struct s2i syslogvals[] = {
 static int
 find_value(const char *s, struct s2i *table)
 {
-    while(table->s && strcasecmp(table->s, s))
-	table++;
+    while (table->s && strcasecmp(table->s, s))
+        table++;
     return table->val;
 }
 
-KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
-krb5_initlog(krb5_context context,
-	     const char *program,
-	     krb5_log_facility **fac)
+heim_error_code
+heim_initlog(heim_context context,
+             const char *program,
+             heim_log_facility **fac)
 {
-    krb5_log_facility *f = calloc(1, sizeof(*f));
+    heim_log_facility *f = calloc(1, sizeof(*f));
     if (f == NULL)
-	return krb5_enomem(context);
+        return heim_enomem(context);
     f->program = strdup(program);
-    if(f->program == NULL){
-	free(f);
-	return krb5_enomem(context);
+    if (f->program == NULL) {
+        free(f);
+        return heim_enomem(context);
     }
     *fac = f;
     return 0;
 }
 
-KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
-krb5_addlog_func(krb5_context context,
-		 krb5_log_facility *fac,
-		 int min,
-		 int max,
-		 krb5_log_log_func_t log_func,
-		 krb5_log_close_func_t close_func,
-		 void *data)
+heim_error_code
+heim_addlog_func(heim_context context,
+                 heim_log_facility *fac,
+                 int min,
+                 int max,
+                 heim_log_log_func_t log_func,
+                 heim_log_close_func_t close_func,
+                 void *data)
 {
-    struct facility *fp = log_realloc(fac);
+    struct heim_log_facility_internal *fp = log_realloc(fac);
     if (fp == NULL)
-	return krb5_enomem(context);
+        return heim_enomem(context);
     fp->min = min;
     fp->max = max;
     fp->log_func = log_func;
@@ -158,42 +152,42 @@ struct _heimdal_syslog_data{
     int priority;
 };
 
-static void KRB5_CALLCONV
-log_syslog(krb5_context context, const char *timestr,
-	   const char *msg, void *data)
+static void
+log_syslog(heim_context context, const char *timestr,
+           const char *msg, void *data)
 {
     struct _heimdal_syslog_data *s = data;
     syslog(s->priority, "%s", msg);
 }
 
-static void KRB5_CALLCONV
+static void
 close_syslog(void *data)
 {
     free(data);
     closelog();
 }
 
-static krb5_error_code
-open_syslog(krb5_context context,
-	    krb5_log_facility *facility, int min, int max,
-	    const char *sev, const char *fac)
+static heim_error_code
+open_syslog(heim_context context,
+            heim_log_facility *facility, int min, int max,
+            const char *sev, const char *fac)
 {
     struct _heimdal_syslog_data *sd = malloc(sizeof(*sd));
     int i;
 
     if (sd == NULL)
-	return krb5_enomem(context);
+        return heim_enomem(context);
     i = find_value(sev, syslogvals);
-    if(i == -1)
-	i = LOG_ERR;
+    if (i == -1)
+        i = LOG_ERR;
     sd->priority = i;
     i = find_value(fac, syslogvals);
-    if(i == -1)
-	i = LOG_AUTH;
+    if (i == -1)
+        i = LOG_AUTH;
     sd->priority |= i;
     roken_openlog(facility->program, LOG_PID | LOG_NDELAY, i);
-    return krb5_addlog_func(context, facility, min, max,
-			    log_syslog, close_syslog, sd);
+    return heim_addlog_func(context, facility, min, max,
+                            log_syslog, close_syslog, sd);
 }
 
 struct file_data {
@@ -202,14 +196,14 @@ struct file_data {
     struct timeval tv;
     FILE *fd;
     int disp;
-#define FILEDISP_KEEPOPEN	0x1
-#define FILEDISP_REOPEN		0x2
-#define FILEDISP_IFEXISTS	0x3
+#define FILEDISP_KEEPOPEN       0x1
+#define FILEDISP_REOPEN         0x2
+#define FILEDISP_IFEXISTS       0x3
     int freefilename;
 };
 
-static void KRB5_CALLCONV
-log_file(krb5_context context, const char *timestr, const char *msg, void *data)
+static void
+log_file(heim_context context, const char *timestr, const char *msg, void *data)
 {
     struct timeval tv;
     struct file_data *f = data;
@@ -218,38 +212,38 @@ log_file(krb5_context context, const char *timestr, const char *msg, void *data)
     size_t j;
 
     if (f->disp != FILEDISP_KEEPOPEN) {
-	char *filename;
-	int flags = -1;
-	int fd;
+        char *filename;
+        int flags = -1;
+        int fd;
 
-	if (f->mode[0] == 'w' && f->mode[1] == 0)
-	    flags = O_WRONLY|O_TRUNC;
-	if (f->mode[0] == 'a' && f->mode[1] == 0)
-	    flags = O_WRONLY|O_APPEND;
-	assert(flags != -1);
+        if (f->mode[0] == 'w' && f->mode[1] == 0)
+            flags = O_WRONLY|O_TRUNC;
+        if (f->mode[0] == 'a' && f->mode[1] == 0)
+            flags = O_WRONLY|O_APPEND;
+        assert(flags != -1);
 
-	if (f->disp == FILEDISP_IFEXISTS) {
-	    /* Cache failure for 1s */
-	    gettimeofday(&tv, NULL);
-	    if (tv.tv_sec == f->tv.tv_sec)
-		return;
-	} else {
-	    flags |= O_CREAT;
-	}
+        if (f->disp == FILEDISP_IFEXISTS) {
+            /* Cache failure for 1s */
+            gettimeofday(&tv, NULL);
+            if (tv.tv_sec == f->tv.tv_sec)
+                return;
+        } else {
+            flags |= O_CREAT;
+        }
 
-	if (_krb5_expand_path_tokens(context, f->filename, 1, &filename))
-	    return;
-	fd = open(filename, flags, 0666);
-	if (fd == -1) {
-	    if (f->disp == FILEDISP_IFEXISTS)
-		gettimeofday(&f->tv, NULL);
-	    return;
-	}
-	f->fd = fdopen(fd, f->mode);
-	free(filename);
+        if (heim_expand_path_tokens(context, f->filename, 1, &filename, NULL))
+            return;
+        fd = open(filename, flags, 0666);
+        if (fd == -1) {
+            if (f->disp == FILEDISP_IFEXISTS)
+                gettimeofday(&f->tv, NULL);
+            return;
+        }
+        f->fd = fdopen(fd, f->mode);
+        free(filename);
     }
-    if(f->fd == NULL)
-	return;
+    if (f->fd == NULL)
+        return;
     /*
      * make sure the log doesn't contain special chars:
      * we used to use strvisx(3) to encode the log, but this is
@@ -260,40 +254,40 @@ log_file(krb5_context context, const char *timestr, const char *msg, void *data)
      */
     msgclean = strdup(msg);
     if (msgclean == NULL)
-	goto out;
+        goto out;
     for (i=0, j=0; msg[i]; i++)
-	if (msg[i] >= 32 || msg[i] == '\t')
-	    msgclean[j++] = msg[i];
+        if (msg[i] >= 32 || msg[i] == '\t')
+            msgclean[j++] = msg[i];
     fprintf(f->fd, "%s %s\n", timestr, msgclean);
     free(msgclean);
- out:
-    if(f->disp != FILEDISP_KEEPOPEN) {
-	fclose(f->fd);
-	f->fd = NULL;
+out:
+    if (f->disp != FILEDISP_KEEPOPEN) {
+        fclose(f->fd);
+        f->fd = NULL;
     }
 }
 
-static void KRB5_CALLCONV
+static void
 close_file(void *data)
 {
     struct file_data *f = data;
-    if(f->disp == FILEDISP_KEEPOPEN && f->filename)
-	fclose(f->fd);
+    if (f->disp == FILEDISP_KEEPOPEN && f->filename)
+        fclose(f->fd);
     if (f->filename && f->freefilename)
-	free((char *)f->filename);
+        free((char *)f->filename);
     free(data);
 }
 
-static krb5_error_code
-open_file(krb5_context context, krb5_log_facility *fac, int min, int max,
-	  const char *filename, const char *mode, FILE *f, int disp,
-	  int freefilename)
+static heim_error_code
+open_file(heim_context context, heim_log_facility *fac, int min, int max,
+          const char *filename, const char *mode, FILE *f, int disp,
+          int freefilename)
 {
     struct file_data *fd = malloc(sizeof(*fd));
     if (fd == NULL) {
-	if (freefilename && filename)
-	    free((char *)filename);
-	return krb5_enomem(context);
+        if (freefilename && filename)
+            free((char *)filename);
+        return heim_enomem(context);
     }
     fd->filename = filename;
     fd->mode = mode;
@@ -301,15 +295,13 @@ open_file(krb5_context context, krb5_log_facility *fac, int min, int max,
     fd->disp = disp;
     fd->freefilename = freefilename;
 
-    return krb5_addlog_func(context, fac, min, max, log_file, close_file, fd);
+    return heim_addlog_func(context, fac, min, max, log_file, close_file, fd);
 }
 
-
-
-KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
-krb5_addlog_dest(krb5_context context, krb5_log_facility *f, const char *orig)
+heim_error_code
+heim_addlog_dest(heim_context context, heim_log_facility *f, const char *orig)
 {
-    krb5_error_code ret = 0;
+    heim_error_code ret = 0;
     int min = 0, max = 3, n;
     char c;
     const char *p = orig;
@@ -318,149 +310,158 @@ krb5_addlog_dest(krb5_context context, krb5_log_facility *f, const char *orig)
 #endif
 
     n = sscanf(p, "%d%c%d/", &min, &c, &max);
-    if(n == 2){
-	if(ISPATHSEP(c)) {
-	    if(min < 0){
-		max = -min;
-		min = 0;
-	    }else{
-		max = min;
-	    }
-	}
-	if (c == '-')
-	    max = -1;
+    if (n == 2) {
+        if (ISPATHSEP(c)) {
+            if (min < 0) {
+                max = -min;
+                min = 0;
+            } else {
+                max = min;
+            }
+        }
+        if (c == '-')
+            max = -1;
     }
-    if(n){
+    if (n) {
 #ifdef _WIN32
-	q = strrchr(p, '\\');
-	if (q != NULL)
-	    p = q;
-	else
+        q = strrchr(p, '\\');
+        if (q != NULL)
+            p = q;
+        else
 #endif
-	p = strchr(p, '/');
-	if(p == NULL) {
-	    krb5_set_error_message(context, HEIM_ERR_LOG_PARSE,
-				   N_("failed to parse \"%s\"", ""), orig);
-	    return HEIM_ERR_LOG_PARSE;
-	}
-	p++;
+            p = strchr(p, '/');
+        if (p == NULL) {
+            heim_set_error_message(context, EINVAL /*XXX HEIM_ERR_LOG_PARSE*/,
+                                   N_("failed to parse \"%s\"", ""), orig);
+            return EINVAL /*XXX HEIM_ERR_LOG_PARSE*/;
+        }
+        p++;
     }
-    if(strcmp(p, "STDERR") == 0){
-	ret = open_file(context, f, min, max, NULL, NULL, stderr, 1, 0);
-    }else if(strcmp(p, "CONSOLE") == 0){
-	ret = open_file(context, f, min, max, "/dev/console", "w", NULL,
-			FILEDISP_REOPEN, 0);
-    }else if (strncmp(p, "EFILE", 5) == 0 && p[5] == ':') {
-	ret = open_file(context, f, min, max, strdup(p+6), "a", NULL,
-			FILEDISP_IFEXISTS, 1);
-    }else if(strncmp(p, "FILE", 4) == 0 && (p[4] == ':' || p[4] == '=')){
-	char *fn;
-	FILE *file = NULL;
-	int disp = FILEDISP_REOPEN;
-	fn = strdup(p + 5);
-	if (fn == NULL)
-	    return krb5_enomem(context);
-	if(p[4] == '='){
-	    int i = open(fn, O_WRONLY | O_CREAT |
-			 O_TRUNC | O_APPEND, 0666);
-	    if(i < 0) {
-		ret = errno;
-		krb5_set_error_message(context, ret,
-				       N_("open(%s) logfile: %s", ""), fn,
-				       strerror(ret));
-		free(fn);
-		return ret;
-	    }
-	    rk_cloexec(i);
-	    file = fdopen(i, "a");
-	    if(file == NULL){
-		ret = errno;
-		close(i);
-		krb5_set_error_message(context, ret,
-				       N_("fdopen(%s) logfile: %s", ""),
-				       fn, strerror(ret));
-		free(fn);
-		return ret;
-	    }
-	    disp = FILEDISP_KEEPOPEN;
-	}
-	ret = open_file(context, f, min, max, fn, "a", file, disp, 1);
-    }else if(strncmp(p, "DEVICE", 6) == 0 && (p[6] == ':' || p[6] == '=')){
-	ret = open_file(context, f, min, max, strdup(p + 7), "w", NULL,
-			FILEDISP_REOPEN, 1);
-    }else if(strncmp(p, "SYSLOG", 6) == 0 && (p[6] == '\0' || p[6] == ':')){
-	char severity[128] = "";
-	char facility[128] = "";
-	p += 6;
-	if(*p != '\0')
-	    p++;
-	if(strsep_copy(&p, ":", severity, sizeof(severity)) != -1)
-	    strsep_copy(&p, ":", facility, sizeof(facility));
-	if(*severity == '\0')
-	    strlcpy(severity, "ERR", sizeof(severity));
- 	if(*facility == '\0')
-	    strlcpy(facility, "AUTH", sizeof(facility));
-	ret = open_syslog(context, f, min, max, severity, facility);
-    }else{
-	ret = HEIM_ERR_LOG_PARSE; /* XXX */
-	krb5_set_error_message (context, ret,
-				N_("unknown log type: %s", ""), p);
+    if (strcmp(p, "STDERR") == 0) {
+        ret = open_file(context, f, min, max, NULL, NULL, stderr, 1, 0);
+    } else if (strcmp(p, "CONSOLE") == 0) {
+        ret = open_file(context, f, min, max, "/dev/console", "w", NULL,
+                        FILEDISP_REOPEN, 0);
+    } else if (strncmp(p, "EFILE", 5) == 0 && p[5] == ':') {
+        ret = open_file(context, f, min, max, strdup(p+6), "a", NULL,
+                        FILEDISP_IFEXISTS, 1);
+    } else if (strncmp(p, "FILE", 4) == 0 && (p[4] == ':' || p[4] == '=')) {
+        char *fn;
+        FILE *file = NULL;
+        int disp = FILEDISP_REOPEN;
+        fn = strdup(p + 5);
+        if (fn == NULL)
+            return heim_enomem(context);
+        if (p[4] == '=') {
+            int i = open(fn, O_WRONLY | O_CREAT |
+                         O_TRUNC | O_APPEND, 0666);
+            if (i < 0) {
+                ret = errno;
+                heim_set_error_message(context, ret,
+                                       N_("open(%s) logfile: %s", ""), fn,
+                                       strerror(ret));
+                free(fn);
+                return ret;
+            }
+            rk_cloexec(i);
+            file = fdopen(i, "a");
+            if (file == NULL) {
+                ret = errno;
+                close(i);
+                heim_set_error_message(context, ret,
+                                       N_("fdopen(%s) logfile: %s", ""),
+                                       fn, strerror(ret));
+                free(fn);
+                return ret;
+            }
+            disp = FILEDISP_KEEPOPEN;
+        }
+        ret = open_file(context, f, min, max, fn, "a", file, disp, 1);
+    } else if (strncmp(p, "DEVICE", 6) == 0 && (p[6] == ':' || p[6] == '=')) {
+        ret = open_file(context, f, min, max, strdup(p + 7), "w", NULL,
+                        FILEDISP_REOPEN, 1);
+    } else if (strncmp(p, "SYSLOG", 6) == 0 && (p[6] == '\0' || p[6] == ':')) {
+        char severity[128] = "";
+        char facility[128] = "";
+        p += 6;
+        if (*p != '\0')
+            p++;
+        if (strsep_copy(&p, ":", severity, sizeof(severity)) != -1)
+            strsep_copy(&p, ":", facility, sizeof(facility));
+        if (*severity == '\0')
+            strlcpy(severity, "ERR", sizeof(severity));
+        if (*facility == '\0')
+            strlcpy(facility, "AUTH", sizeof(facility));
+        ret = open_syslog(context, f, min, max, severity, facility);
+    } else {
+        ret = EINVAL; /*XXX HEIM_ERR_LOG_PARSE*/
+        heim_set_error_message(context, ret,
+                               N_("unknown log type: %s", ""), p);
     }
     return ret;
 }
 
-
-KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
-krb5_openlog(krb5_context context,
-	     const char *program,
-	     krb5_log_facility **fac)
+heim_error_code
+heim_openlog(heim_context context,
+             const char *program,
+             const char **specs,
+             heim_log_facility **fac)
 {
-    krb5_error_code ret;
-    char **p, **q;
+    heim_error_code ret;
 
-    ret = krb5_initlog(context, program, fac);
-    if(ret)
-	return ret;
+    ret = heim_initlog(context, program, fac);
+    if (ret)
+        return ret;
 
-    p = krb5_config_get_strings(context, NULL, "logging", program, NULL);
-    if(p == NULL)
-	p = krb5_config_get_strings(context, NULL, "logging", "default", NULL);
-    if(p){
-	for(q = p; *q && ret == 0; q++)
-	    ret = krb5_addlog_dest(context, *fac, *q);
-	krb5_config_free_strings(p);
-    }else
-	ret = krb5_addlog_dest(context, *fac, "SYSLOG");
+    if (specs) {
+        size_t i;
+        for (i = 0; specs[i] && ret == 0; i++)
+            ret = heim_addlog_dest(context, *fac, specs[i]);
+    } else {
+        ret = heim_addlog_dest(context, *fac, "SYSLOG");
+    }
     return ret;
 }
 
-KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
-krb5_closelog(krb5_context context,
-	      krb5_log_facility *fac)
+void
+heim_closelog(heim_context context, heim_log_facility *fac)
 {
     int i;
-    for(i = 0; i < fac->len; i++)
-	(*fac->val[i].close_func)(fac->val[i].data);
+
+    if (!fac)
+        return;
+    for (i = 0; i < fac->len; i++)
+        (*fac->val[i].close_func)(fac->val[i].data);
     free(fac->val);
     free(fac->program);
     fac->val = NULL;
     fac->len = 0;
     fac->program = NULL;
     free(fac);
-    return 0;
+    return;
+}
+
+static void
+format_time(heim_context context, time_t t, char *s, size_t len)
+{
+    struct tm *tm = heim_context_get_log_utc(context) ?
+        gmtime(&t) : localtime(&t);
+    if (tm && strftime(s, len, heim_context_get_time_fmt(context), tm))
+        return;
+    snprintf(s, len, "%ld", (long)t);
 }
 
 #undef __attribute__
 #define __attribute__(X)
 
-KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
-krb5_vlog_msg(krb5_context context,
-	      krb5_log_facility *fac,
-	      char **reply,
-	      int level,
-	      const char *fmt,
-	      va_list ap)
-     __attribute__ ((__format__ (__printf__, 5, 0)))
+heim_error_code
+heim_vlog_msg(heim_context context,
+              heim_log_facility *fac,
+              char **reply,
+              int level,
+              const char *fmt,
+              va_list ap)
+__attribute__ ((__format__ (__printf__, 5, 0)))
 {
 
     char *msg = NULL;
@@ -469,114 +470,156 @@ krb5_vlog_msg(krb5_context context,
     time_t t = 0;
     int i;
 
-    for(i = 0; fac && i < fac->len; i++)
-	if(fac->val[i].min <= level &&
-	   (fac->val[i].max < 0 || fac->val[i].max >= level)) {
-	    if(t == 0) {
-		t = time(NULL);
-		krb5_format_time(context, t, buf, sizeof(buf), TRUE);
-	    }
-	    if(actual == NULL) {
-		int ret = vasprintf(&msg, fmt, ap);
-		if(ret < 0 || msg == NULL)
-		    actual = fmt;
-		else
-		    actual = msg;
-	    }
-	    (*fac->val[i].log_func)(context, buf, actual, fac->val[i].data);
-	}
-    if(reply == NULL)
-	free(msg);
+    for (i = 0; fac && i < fac->len; i++)
+        if (fac->val[i].min <= level &&
+            (fac->val[i].max < 0 || fac->val[i].max >= level)) {
+            if (t == 0) {
+                t = time(NULL);
+                format_time(context, t, buf, sizeof(buf));
+            }
+            if (actual == NULL) {
+                int ret = vasprintf(&msg, fmt, ap);
+                if (ret < 0 || msg == NULL)
+                    actual = fmt;
+                else
+                    actual = msg;
+            }
+            (*fac->val[i].log_func)(context, buf, actual, fac->val[i].data);
+        }
+    if (reply == NULL)
+        free(msg);
     else
-	*reply = msg;
+        *reply = msg;
     return 0;
 }
 
-KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
-krb5_vlog(krb5_context context,
-	  krb5_log_facility *fac,
-	  int level,
-	  const char *fmt,
-	  va_list ap)
-     __attribute__ ((__format__ (__printf__, 4, 0)))
+heim_error_code
+heim_vlog(heim_context context,
+          heim_log_facility *fac,
+          int level,
+          const char *fmt,
+          va_list ap)
+__attribute__ ((__format__ (__printf__, 4, 0)))
 {
-    return krb5_vlog_msg(context, fac, NULL, level, fmt, ap);
+    return heim_vlog_msg(context, fac, NULL, level, fmt, ap);
 }
 
-KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
-krb5_log_msg(krb5_context context,
-	     krb5_log_facility *fac,
-	     int level,
-	     char **reply,
-	     const char *fmt,
-	     ...)
-     __attribute__ ((__format__ (__printf__, 5, 6)))
+heim_error_code
+heim_log_msg(heim_context context,
+             heim_log_facility *fac,
+             int level,
+             char **reply,
+             const char *fmt,
+             ...)
+__attribute__ ((__format__ (__printf__, 5, 6)))
 {
     va_list ap;
-    krb5_error_code ret;
+    heim_error_code ret;
 
     va_start(ap, fmt);
-    ret = krb5_vlog_msg(context, fac, reply, level, fmt, ap);
+    ret = heim_vlog_msg(context, fac, reply, level, fmt, ap);
     va_end(ap);
     return ret;
 }
 
 
-KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
-krb5_log(krb5_context context,
-	 krb5_log_facility *fac,
-	 int level,
-	 const char *fmt,
-	 ...)
-     __attribute__ ((__format__ (__printf__, 4, 5)))
+heim_error_code
+heim_log(heim_context context,
+         heim_log_facility *fac,
+         int level,
+         const char *fmt,
+         ...)
+__attribute__ ((__format__ (__printf__, 4, 5)))
 {
     va_list ap;
-    krb5_error_code ret;
+    heim_error_code ret;
 
     va_start(ap, fmt);
-    ret = krb5_vlog(context, fac, level, fmt, ap);
+    ret = heim_vlog(context, fac, level, fmt, ap);
     va_end(ap);
     return ret;
 }
 
-void KRB5_LIB_FUNCTION
-_krb5_debug(krb5_context context,
-	    int level,
-	    const char *fmt,
-	    ...)
-    __attribute__ ((__format__ (__printf__, 3, 4)))
+void
+heim_debug(heim_context context,
+           int level,
+           const char *fmt,
+           ...)
+__attribute__ ((__format__ (__printf__, 3, 4)))
 {
+    heim_log_facility *fac;
     va_list ap;
 
-    if (context == NULL || context->debug_dest == NULL)
-	return;
+    if (context == NULL ||
+        (fac = heim_get_debug_dest(context)) == NULL)
+        return;
 
     va_start(ap, fmt);
-    krb5_vlog(context, context->debug_dest, level, fmt, ap);
+    heim_vlog(context, fac, level, fmt, ap);
     va_end(ap);
 }
 
-KRB5_LIB_FUNCTION krb5_boolean KRB5_LIB_CALL
-_krb5_have_debug(krb5_context context, int level)
+void
+heim_vdebug(heim_context context,
+            int level,
+            const char *fmt,
+            va_list ap)
+__attribute__ ((__format__ (__printf__, 3, 0)))
 {
-    if (context == NULL || context->debug_dest == NULL)
-	return 0 ;
-    return 1;
+    heim_log_facility *fac;
+
+    if (context == NULL ||
+        (fac = heim_get_debug_dest(context)) == NULL)
+        return;
+
+    heim_vlog(context, fac, level, fmt, ap);
 }
 
-KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
-krb5_set_debug_dest(krb5_context context, const char *program,
-                    const char *log_spec)
+heim_error_code
+heim_have_debug(heim_context context, int level)
 {
-    krb5_error_code ret;
+    heim_log_facility *fac;
 
-    if (context->debug_dest == NULL) {
-        ret = krb5_initlog(context, program, &context->debug_dest);
+    return (context != NULL &&
+        (fac = heim_get_debug_dest(context)) != NULL);
+}
+
+heim_error_code
+heim_add_warn_dest(heim_context context, const char *program,
+                   const char *log_spec)
+{
+    heim_log_facility *fac;
+
+    heim_error_code ret;
+
+    if ((fac = heim_get_warn_dest(context)) == NULL) {
+        ret = heim_initlog(context, program, &fac);
         if (ret)
             return ret;
+        heim_set_warn_dest(context, fac);
     }
 
-    ret = krb5_addlog_dest(context, context->debug_dest, log_spec);
+    ret = heim_addlog_dest(context, fac, log_spec);
+    if (ret)
+        return ret;
+    return 0;
+}
+
+heim_error_code
+heim_add_debug_dest(heim_context context, const char *program,
+                    const char *log_spec)
+{
+    heim_log_facility *fac;
+    heim_error_code ret;
+
+    if ((fac = heim_get_debug_dest(context)) == NULL) {
+        ret = heim_initlog(context, program, &fac);
+        if (ret)
+            return ret;
+        heim_set_debug_dest(context, fac);
+    }
+
+    ret = heim_addlog_dest(context, fac, log_spec);
     if (ret)
         return ret;
     return 0;

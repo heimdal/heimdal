@@ -46,7 +46,7 @@ static const char *windc_plugin_deps[] = {
     NULL
 };
 
-static struct krb5_plugin_data windc_plugin_data = {
+static struct heim_plugin_data windc_plugin_data = {
     "krb5",
     "windc",
     KRB5_WINDC_PLUGIN_MINOR,

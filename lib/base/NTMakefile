@@ -35,30 +35,78 @@ intcflags=-I$(SRCDIR) -I$(OBJ)
 
 !include ../../windows/NTMakefile.w32
 
-INCFILES=$(INCDIR)\heimbase.h
+INCFILES=				\
+	$(INCDIR)\heimbase.h		\
+	$(INCDIR)\heimbase-protos.h	\
+	$(INCDIR)\heim_err.h		\
+	$(INCDIR)\common_plugin.h
 
 test_binaries = $(OBJ)\test_base.exe
+
+libheimbase_SOURCES =		\
+	array.c			\
+	bool.c			\
+	bsearch.c		\
+	config_file.c		\
+	config_reg.c		\
+	context.c		\
+	data.c			\
+	db.c			\
+	dict.c			\
+	dll.c			\
+	error.c			\
+	expand_path.c		\
+	heimbase.c		\
+	json.c			\
+	log.c			\
+	null.c			\
+	number.c		\
+	plugin.c		\
+	string.c		\
+	warn.c
 
 libheimbase_OBJS =		\
 	$(OBJ)\array.obj	\
 	$(OBJ)\bool.obj		\
 	$(OBJ)\bsearch.obj	\
+	$(OBJ)\config_file.obj	\
+	$(OBJ)\config_reg.obj	\
+	$(OBJ)\context.obj	\
 	$(OBJ)\data.obj		\
 	$(OBJ)\db.obj		\
 	$(OBJ)\dict.obj		\
 	$(OBJ)\dll.obj		\
 	$(OBJ)\error.obj	\
+	$(OBJ)\expand_path.obj	\
 	$(OBJ)\heimbase.obj	\
 	$(OBJ)\json.obj		\
+	$(OBJ)\log.obj		\
 	$(OBJ)\null.obj		\
 	$(OBJ)\number.obj	\
-	$(OBJ)\string.obj
+	$(OBJ)\plugin.obj	\
+	$(OBJ)\string.obj	\
+	$(OBJ)\warn.obj
 
-$(LIBHEIMBASE): $(libheimbase_OBJS)
-	$(LIBCON_C) -OUT:$@ $(LIBROKEN) @<<
+libheimbase_gen_OBJS= $(OBJ)\heim_err.obj
+
+$(LIBHEIMBASE): $(libheimbase_OBJS) $(libheimbase_gen_OBJS)
+	$(LIBCON_C) -OUT:$@ $(LIBROKEN) $(PTHREAD_LIB) Secur32.lib Shell32.lib Advapi32.lib @<<
 $(libheimbase_OBJS: =
 )
+$(libheimbase_gen_OBJS: =
+)
 <<
+
+$(OBJ)\heimbase-protos.h: $(libheimbase_SOURCES)
+	$(PERL) ..\..\cf\make-proto.pl -E KRB5_LIB -q -P remove -o $(OBJ)\heimbase-protos.h $(libheimbase_SOURCES) || $(RM) -f $(OBJ)\heimbase-protos.h
+
+$(OBJ)\heimbase-private.h: $(libheimbase_SOURCES)
+	$(PERL) ..\..\cf\make-proto.pl -q -P remove -p $(OBJ)\heimbase-private.h $(libheimbase_SOURCES) || $(RM) -f $(OBJ)\heimbase-private.h
+
+$(OBJ)\heim_err.c $(OBJ)\heim_err.h: heim_err.et
+	cd $(OBJ)
+	$(BINDIR)\compile_et.exe $(SRCDIR)\heim_err.et
+	cd $(SRCDIR)
 
 test:: test-binaries test-run
 

@@ -416,7 +416,7 @@ hdb_list_builtin(krb5_context context, char **list)
         if (h->create == NULL) {
             struct cb_s cb_ctx;
             char *f;
-	    struct krb5_plugin_data hdb_plugin_data;
+	    struct heim_plugin_data hdb_plugin_data;
 
 	    hdb_plugin_data.module = "krb5";
 	    hdb_plugin_data.min_version = HDB_INTERFACE_VERSION;
@@ -489,7 +489,7 @@ hdb_create(krb5_context context, HDB **db, const char *filename)
     cb_ctx.filename = filename;
 
     if (cb_ctx.h == NULL || cb_ctx.h->create == NULL) {
-	struct krb5_plugin_data hdb_plugin_data;
+	struct heim_plugin_data hdb_plugin_data;
 
 	hdb_plugin_data.module = "krb5";
 	hdb_plugin_data.min_version = HDB_INTERFACE_VERSION;

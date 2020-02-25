@@ -1,5 +1,6 @@
+
 /***********************************************************************
- * Copyright (c) 2010, Secure Endpoints Inc.
+ * Copyright (c) 2009, Secure Endpoints Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -30,52 +31,59 @@
  **********************************************************************/
 
 #include "krb5_locl.h"
-#include "ccache_plugin.h"
-#ifdef HAVE_DLFCN_H
-#include <dlfcn.h>
-#endif
-#include <assert.h>
 
-/*
- * cc_plugin_register_to_context is executed once per krb5_init_context().
- * Its job is to register the plugin's krb5_cc_ops structure with the
- * krb5_context.
+#include <stdarg.h>
+
+/**
+ * Internal function to expand tokens in paths.
+ *
+ * Inputs:
+ *
+ * @context   A krb5_context
+ * @path_in   The path to expand tokens from
+ * 
+ * Outputs:
+ *
+ * @ppath_out Path with expanded tokens (caller must free() this)
  */
-
-static krb5_error_code KRB5_LIB_CALL
-cc_plugin_register_to_context(krb5_context context, const void *plug, void *plugctx, void *userctx)
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
+_krb5_expand_path_tokens(krb5_context context,
+			 const char *path_in,
+			 int filepath,
+			 char **ppath_out)
 {
-    krb5_cc_ops *ccops = (krb5_cc_ops *)plugctx;
-    krb5_error_code ret;
-
-    if (ccops == NULL || ccops->version < KRB5_CC_OPS_VERSION)
-       return KRB5_PLUGIN_NO_HANDLE;
-
-    ret = krb5_cc_register(context, ccops, TRUE);
-    if (ret != 0)
-       *((krb5_error_code *)userctx) = ret;
-
-    return KRB5_PLUGIN_NO_HANDLE;
+    return heim_expand_path_tokens(context->hcontext, path_in, filepath,
+                                   ppath_out, NULL);
 }
 
-static const char *ccache_plugin_deps[] = { "krb5", NULL };
-
-static struct heim_plugin_data
-ccache_plugin_data = {
-    "krb5",
-    KRB5_PLUGIN_CCACHE,
-    0,
-    ccache_plugin_deps,
-    krb5_get_instance
-};
-
+/**
+ * Internal function to expand tokens in paths.
+ *
+ * Inputs:
+ *
+ * @context   A krb5_context
+ * @path_in   The path to expand tokens from
+ * @ppath_out The expanded path
+ * @...       Variable number of pairs of strings, the first of each
+ *            being a token (e.g., "luser") and the second a string to
+ *            replace it with.  The list is terminated by a NULL.
+ * 
+ * Outputs:
+ *
+ * @ppath_out Path with expanded tokens (caller must free() this)
+ */
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
-_krb5_load_ccache_plugins(krb5_context context)
+_krb5_expand_path_tokensv(krb5_context context,
+			  const char *path_in,
+			  int filepath,
+			  char **ppath_out, ...)
 {
-    krb5_error_code userctx = 0;
+    krb5_error_code ret;
+    va_list ap;
 
-    (void)_krb5_plugin_run_f(context, &ccache_plugin_data, 0,
-			     &userctx, cc_plugin_register_to_context);
+    va_start(ap, ppath_out);
+    ret = heim_expand_path_tokensv(context->hcontext, path_in, filepath, ppath_out, ap);
+    va_end(ap);
 
-    return userctx;
+    return ret;
 }

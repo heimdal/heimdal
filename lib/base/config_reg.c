@@ -29,7 +29,7 @@
  *
  **********************************************************************/
 
-#include "krb5_locl.h"
+#include "baselocl.h"
 
 #ifndef _WIN32
 #error  config_reg.c is only for Windows
@@ -40,9 +40,6 @@
 #ifndef MAX_DWORD
 #define MAX_DWORD 0xFFFFFFFF
 #endif
-
-#define REGPATH_KERBEROS "SOFTWARE\\Kerberos"
-#define REGPATH_HEIMDAL  "SOFTWARE\\Heimdal"
 
 /**
  * Store a string as a registry value of the specified type
@@ -83,14 +80,14 @@
  *
  * @retval 0 if success or non-zero on error.
  * If non-zero is returned, an error message has been set using
- * krb5_set_error_message().
+ * heim_set_error_message().
  *
  */
-KRB5_LIB_FUNCTION int KRB5_LIB_CALL
-_krb5_store_string_to_reg_value(krb5_context context,
-                                HKEY key, const char * valuename,
-                                DWORD type, const char *data, DWORD cb_data,
-                                const char * separator)
+int
+heim_store_string_to_reg_value(heim_context context,
+                               HKEY key, const char *valuename,
+                               DWORD type, const char *data, DWORD cb_data,
+                               const char *separator)
 {
     LONG        rcode;
     DWORD       dwData;
@@ -100,7 +97,7 @@ _krb5_store_string_to_reg_value(krb5_context context,
     if (data == NULL)
     {
         if (context)
-            krb5_set_error_message(context, 0,
+            heim_set_error_message(context, 0,
                                    "'data' must not be NULL");
         return -1;
     }
@@ -113,7 +110,7 @@ _krb5_store_string_to_reg_value(krb5_context context,
              cb_data >= sizeof(static_buffer))
     {
         if (context)
-            krb5_set_error_message(context, 0, "cb_data too big");
+            heim_set_error_message(context, 0, "cb_data too big");
         return -1;
     }
     else if (data[cb_data-1] != '\0')
@@ -146,7 +143,7 @@ _krb5_store_string_to_reg_value(krb5_context context,
         if (rcode)
         {
             if (context)
-                krb5_set_error_message(context, 0,
+                heim_set_error_message(context, 0,
                                        "Unexpected error when setting registry value %s gle 0x%x",
                                        valuename,
                                        GetLastError());
@@ -171,7 +168,7 @@ _krb5_store_string_to_reg_value(krb5_context context,
             if (rcode)
             {
                 if (context)
-                    krb5_set_error_message(context, 0,
+                    heim_set_error_message(context, 0,
                                            "Unexpected error when setting registry value %s gle 0x%x",
                                            valuename,
                                            GetLastError());
@@ -183,7 +180,7 @@ _krb5_store_string_to_reg_value(krb5_context context,
         if ( !StrToIntExA( data, STIF_SUPPORT_HEX, &dwData) )
         {
             if (context)
-                krb5_set_error_message(context, 0,
+                heim_set_error_message(context, 0,
                                        "Unexpected error when parsing %s as number gle 0x%x",
                                        data,
                                        GetLastError());
@@ -193,7 +190,7 @@ _krb5_store_string_to_reg_value(krb5_context context,
         if (rcode)
         {
             if (context)
-                krb5_set_error_message(context, 0,
+                heim_set_error_message(context, 0,
                                        "Unexpected error when setting registry value %s gle 0x%x",
                                        valuename,
                                        GetLastError());
@@ -210,15 +207,15 @@ _krb5_store_string_to_reg_value(krb5_context context,
 /**
  * Parse a registry value as a string
  *
- * @see _krb5_parse_reg_value_as_multi_string()
+ * @see heim_parse_reg_value_as_multi_string()
  */
-KRB5_LIB_FUNCTION char * KRB5_LIB_CALL
-_krb5_parse_reg_value_as_string(krb5_context context,
-                                HKEY key, const char * valuename,
-                                DWORD type, DWORD cb_data)
+char *
+heim_parse_reg_value_as_string(heim_context context,
+                               HKEY key, const char * valuename,
+                               DWORD type, DWORD cb_data)
 {
-    return _krb5_parse_reg_value_as_multi_string(context, key, valuename,
-                                                 type, cb_data, " ");
+    return heim_parse_reg_value_as_multi_string(context, key, valuename,
+                                                type, cb_data, " ");
 }
 
 /**
@@ -249,12 +246,12 @@ _krb5_parse_reg_value_as_string(krb5_context context,
  *
  * @retval The registry value string, or NULL if there was an error.
  * If NULL is returned, an error message has been set using
- * krb5_set_error_message().
+ * heim_set_error_message().
  */
-KRB5_LIB_FUNCTION char * KRB5_LIB_CALL
-_krb5_parse_reg_value_as_multi_string(krb5_context context,
-                                      HKEY key, const char * valuename,
-                                      DWORD type, DWORD cb_data, char *separator)
+char *
+heim_parse_reg_value_as_multi_string(heim_context context,
+                                     HKEY key, const char * valuename,
+                                     DWORD type, DWORD cb_data, char *separator)
 {
     LONG                rcode = ERROR_MORE_DATA;
 
@@ -293,7 +290,7 @@ _krb5_parse_reg_value_as_multi_string(krb5_context context,
     case REG_DWORD:
         if (cb_data != sizeof(DWORD)) {
             if (context)
-                krb5_set_error_message(context, 0,
+                heim_set_error_message(context, 0,
                                        "Unexpected size while reading registry value %s",
                                        valuename);
             return NULL;
@@ -322,7 +319,7 @@ _krb5_parse_reg_value_as_multi_string(krb5_context context,
 
     default:
         if (context)
-            krb5_set_error_message(context, 0,
+            heim_set_error_message(context, 0,
                                    "Unexpected type while reading registry value %s",
                                    valuename);
         return NULL;
@@ -347,7 +344,7 @@ _krb5_parse_reg_value_as_multi_string(krb5_context context,
          * its value.  Ideally we would retry the query in a loop. */
 
         if (context)
-            krb5_set_error_message(context, 0,
+            heim_set_error_message(context, 0,
                                    "Unexpected error while reading registry value %s",
                                    valuename);
         goto done;
@@ -355,7 +352,7 @@ _krb5_parse_reg_value_as_multi_string(krb5_context context,
 
     if (cb_data > cb_alloc || cb_data == 0) {
         if (context)
-            krb5_set_error_message(context, 0,
+            heim_set_error_message(context, 0,
                                    "Unexpected size while reading registry value %s",
                                    valuename);
         goto done;
@@ -405,7 +402,7 @@ have_data:
             ret_string = strdup(expsz);
         } else {
             if (context)
-                krb5_set_error_message(context, 0,
+                heim_set_error_message(context, 0,
                                        "Overflow while expanding environment strings "
                                        "for registry value %s", valuename);
         }
@@ -441,7 +438,7 @@ have_data:
 
     default:
         if (context)
-            krb5_set_error_message(context, 0,
+            heim_set_error_message(context, 0,
                                    "Unexpected type while reading registry value %s",
                                    valuename);
     }
@@ -458,21 +455,21 @@ done:
  *
  * @see parse_reg_value_as_string()
  */
-static krb5_error_code
-parse_reg_value(krb5_context context,
+static heim_error_code
+parse_reg_value(heim_context context,
                 HKEY key, const char * valuename,
-                DWORD type, DWORD cbdata, krb5_config_section ** parent)
+                DWORD type, DWORD cbdata, heim_config_section ** parent)
 {
     char                *reg_string = NULL;
-    krb5_config_section *value;
-    krb5_error_code     code = 0;
+    heim_config_section *value;
+    heim_error_code     code = 0;
 
-    reg_string = _krb5_parse_reg_value_as_string(context, key, valuename, type, cbdata);
+    reg_string = heim_parse_reg_value_as_string(context, key, valuename, type, cbdata);
 
     if (reg_string == NULL)
-        return KRB5_CONFIG_BADFORMAT;
+        return HEIM_ERR_CONFIG_BADFORMAT;
 
-    value = _krb5_config_get_entry(parent, valuename, krb5_config_string);
+    value = heim_config_get_entry(parent, valuename, heim_config_string);
     if (value == NULL) {
         code = ENOMEM;
         goto done;
@@ -491,10 +488,10 @@ done:
     return code;
 }
 
-static krb5_error_code
-parse_reg_values(krb5_context context,
+static heim_error_code
+parse_reg_values(heim_context context,
                  HKEY key,
-                 krb5_config_section ** parent)
+                 heim_config_section ** parent)
 {
     DWORD index;
     LONG  rcode;
@@ -504,7 +501,7 @@ parse_reg_values(krb5_context context,
         DWORD   cch = sizeof(name)/sizeof(name[0]);
         DWORD   type;
         DWORD   cbdata = 0;
-        krb5_error_code code;
+        heim_error_code code;
 
         rcode = RegEnumValue(key, index, name, &cch, NULL,
                              &type, NULL, &cbdata);
@@ -522,10 +519,10 @@ parse_reg_values(krb5_context context,
     return 0;
 }
 
-static krb5_error_code
-parse_reg_subkeys(krb5_context context,
+static heim_error_code
+parse_reg_subkeys(heim_context context,
                   HKEY key,
-                  krb5_config_section ** parent)
+                  heim_config_section ** parent)
 {
     DWORD index;
     LONG  rcode;
@@ -534,8 +531,8 @@ parse_reg_subkeys(krb5_context context,
         HKEY    subkey = NULL;
         char    name[256];
         DWORD   cch = sizeof(name)/sizeof(name[0]);
-        krb5_config_section     *section = NULL;
-        krb5_error_code         code;
+        heim_config_section     *section = NULL;
+        heim_error_code         code;
 
         rcode = RegEnumKeyEx(key, index, name, &cch, NULL, NULL, NULL, NULL);
         if (rcode != ERROR_SUCCESS)
@@ -545,7 +542,7 @@ parse_reg_subkeys(krb5_context context,
         if (rcode != ERROR_SUCCESS)
             continue;
 
-        section = _krb5_config_get_entry(parent, name, krb5_config_list);
+        section = heim_config_get_entry(parent, name, heim_config_list);
         if (section == NULL) {
             RegCloseKey(subkey);
             return ENOMEM;
@@ -569,17 +566,17 @@ parse_reg_subkeys(krb5_context context,
     return 0;
 }
 
-static krb5_error_code
-parse_reg_root(krb5_context context,
+static heim_error_code
+parse_reg_root(heim_context context,
                HKEY key,
-               krb5_config_section ** parent)
+               heim_config_section ** parent)
 {
-    krb5_config_section *libdefaults = NULL;
-    krb5_error_code     code = 0;
+    heim_config_section *libdefaults = NULL;
+    heim_error_code     code = 0;
 
-    libdefaults = _krb5_config_get_entry(parent, "libdefaults", krb5_config_list);
+    libdefaults = heim_config_get_entry(parent, "libdefaults", heim_config_list);
     if (libdefaults == NULL)
-        return krb5_enomem(context);
+        return heim_enomem(context);
 
     code = parse_reg_values(context, key, &libdefaults->u.list);
     if (code)
@@ -588,15 +585,15 @@ parse_reg_root(krb5_context context,
     return parse_reg_subkeys(context, key, parent);
 }
 
-static krb5_error_code
-load_config_from_regpath(krb5_context context,
+static heim_error_code
+load_config_from_regpath(heim_context context,
                          HKEY hk_root,
                          const char* key_path,
-                         krb5_config_section ** res)
+                         heim_config_section ** res)
 {
     HKEY            key  = NULL;
     LONG            rcode;
-    krb5_error_code code = 0;
+    heim_error_code code = 0;
 
     rcode = RegOpenKeyEx(hk_root, key_path, 0, KEY_READ, &key);
     if (rcode == ERROR_SUCCESS) {
@@ -620,30 +617,43 @@ load_config_from_regpath(krb5_context context,
  *
  * @see parse_reg_value() for details about how each type of value is handled.
  */
-KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
-_krb5_load_config_from_registry(krb5_context context,
-                                krb5_config_section ** res)
+heim_error_code
+heim_load_config_from_registry(heim_context context,
+                               const char *path0,
+                               const char *path1,
+                               heim_config_section **res)
 {
-    krb5_error_code code;
+    heim_error_code code;
 
-    code = load_config_from_regpath(context, HKEY_LOCAL_MACHINE,
-                                    REGPATH_KERBEROS, res);
-    if (code)
-        return code;
+    if (!path0 && !path1)
+        return EINVAL;
 
-    code = load_config_from_regpath(context, HKEY_LOCAL_MACHINE,
-                                    REGPATH_HEIMDAL, res);
-    if (code)
-        return code;
+    if (path0) {
+        code = load_config_from_regpath(context, HKEY_LOCAL_MACHINE,
+                                        path0, res);
+        if (code)
+            return code;
+    }
 
-    code = load_config_from_regpath(context, HKEY_CURRENT_USER,
-                                    REGPATH_KERBEROS, res);
-    if (code)
-        return code;
+    if (path1) {
+        code = load_config_from_regpath(context, HKEY_LOCAL_MACHINE,
+                                        path1, res);
+        if (code)
+            return code;
+    }
 
-    code = load_config_from_regpath(context, HKEY_CURRENT_USER,
-                                    REGPATH_HEIMDAL, res);
-    if (code)
-        return code;
+    if (path0) {
+        code = load_config_from_regpath(context, HKEY_CURRENT_USER,
+                                        path0, res);
+        if (code)
+            return code;
+    }
+
+    if (path0) {
+        code = load_config_from_regpath(context, HKEY_CURRENT_USER,
+                                        path1, res);
+        if (code)
+            return code;
+    }
     return 0;
 }

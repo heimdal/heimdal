@@ -197,7 +197,7 @@ enum kadm_recover_mode {
 #define KADMIN_APPL_VERSION "KADM0.1"
 #define KADMIN_OLD_APPL_VERSION "KADM0.0"
 
-extern struct krb5_plugin_data kadm5_hook_plugin_data;
+extern struct heim_plugin_data kadm5_hook_plugin_data;
 
 #include "kadm5-private.h"
 

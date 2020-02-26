@@ -497,6 +497,8 @@ dcc_gen_new(krb5_context context, krb5_ccache *id)
     int fd = -1;
 
     ret = get_default_dir(context, &def_dir);
+    if (ret == 0)
+        ret = verify_directory(context, def_dir);
     if (ret == 0 &&
         (asprintf(&name, "DIR::%s/tktXXXXXX", def_dir) == -1 || name == NULL))
 	ret = krb5_enomem(context);

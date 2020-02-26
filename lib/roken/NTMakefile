@@ -34,6 +34,7 @@ RELDIR=lib\roken
 !include ../../windows/NTMakefile.w32
 
 libroken_la_OBJS =			\
+	$(OBJ)\base32.obj		\
 	$(OBJ)\base64.obj		\
 	$(OBJ)\bswap.obj		\
 	$(OBJ)\concat.obj		\
@@ -155,6 +156,7 @@ $(INCDIR)\roken.h: $(OBJ)\make-roken.exe
 	$(OBJ)\make-roken.exe > $@ || $(RM) $@
 
 INCFILES = 			\
+	$(INCDIR)\base32.h	\
 	$(INCDIR)\base64.h	\
 	$(INCDIR)\dirent.h	\
 	$(INCDIR)\dlfcn.h	\
@@ -193,6 +195,7 @@ TMP_PROGS = $(OBJ)\snprintf-test.exe $(OBJ)\resolve-test.exe $(OBJ)\test-getuser
 # Tests
 
 TEST_PROGS =			    \
+	$(OBJ)\base32-test.exe	    \
 	$(OBJ)\base64-test.exe	    \
 	$(OBJ)\getaddrinfo-test.exe \
 	$(OBJ)\getifaddrs-test.exe  \
@@ -250,6 +253,9 @@ $(OBJ)\snprintf-test.exe: $(OBJ)\snprintf-test.obj $(OBJ)\libtest.lib $(LIBROKEN
 $(OBJ)\resolve-test.exe: $(OBJ)\resolve-test.obj $(LIBROKEN)
 	$(EXECONLINK) DnsAPI.lib
 
+$(OBJ)\base32-test.exe: $(OBJ)\base32-test.obj $(OBJ)\base32.obj $(LIBROKEN)
+	$(EXECONLINK)
+
 $(OBJ)\base64-test.exe: $(OBJ)\base64-test.obj $(OBJ)\base64.obj $(LIBROKEN)
 	$(EXECONLINK)
 
@@ -283,6 +289,7 @@ test-run:
 	cd $(OBJ)
 	-test-mini_inetd.exe
 	-dirent-test.exe
+	-base32-test.exe
 	-base64-test.exe
 	-getaddrinfo-test.exe www.h5l.org http
 	-getifaddrs-test.exe

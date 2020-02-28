@@ -918,14 +918,18 @@ initialize_internal(krb5_context context,
 static krb5_error_code KRB5_CALLCONV
 krcc_initialize(krb5_context context, krb5_ccache id, krb5_principal princ)
 {
+    krb5_krcache *data = KRCACHE(id);
     krb5_error_code ret;
+
+    if (data == NULL)
+	return krb5_einval(context, 2);
 
     if (princ == NULL)
 	return KRB5_CC_BADNAME;
 
     ret = initialize_internal(context, id, princ);
     if (ret == 0)
-	update_change_time(context, 0, KRCACHE(id));
+	update_change_time(context, 0, data);
 
     return ret;
 }
@@ -1261,9 +1265,10 @@ alloc_cache(krb5_context context,
         if (data) {
             free(data->krc_collection);
             free(data->krc_name);
-            ret = krb5_enomem(context);
         }
 	free(data);
+        if (ret == 0)
+            ret = krb5_enomem(context);
 	return ret;
     }
 
@@ -1348,6 +1353,9 @@ krcc_get_name(krb5_context context,
               const char **subsidiary_name)
 {
     krb5_krcache *data = KRCACHE(id);
+
+    if (data == NULL)
+	return krb5_einval(context, 2);
 
     if (name)
         *name = data->krc_name;
@@ -1671,6 +1679,9 @@ krcc_set_kdc_offset(krb5_context context, krb5_ccache id, krb5_deltat offset)
     krb5_krcache *data = KRCACHE(id);
     key_serial_t cache_id;
     krb5_error_code ret;
+
+    if (data == NULL)
+	return krb5_einval(context, 2);
 
     heim_base_exchange_32(&cache_id, data->krc_cache_id);
  

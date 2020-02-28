@@ -85,7 +85,7 @@ fs_encode_subsidiary(krb5_context context,
     }
 
     /* Hopefully this will work on all filesystems */
-    if (len > 128 - sizeof("tkt.%s") - 1)
+    if (len > 128 - sizeof("tkt.") - 1)
         (*res)[127] = '\0';
     return 0;
 }
@@ -107,9 +107,9 @@ is_filename_cacheish(const char *name)
 {
     size_t i;
 
-    if (strncmp(name, "tkt", 3))
+    if (strncmp(name, "tkt", sizeof("tkt") - 1))
         return 0;
-    for (i = 0; name[i]; i++)
+    for (i = sizeof("tkt") - 1; name[i]; i++)
         if (ISPATHSEP(name[i]))
             return 0;
     return 1;
@@ -681,6 +681,8 @@ dcc_get_cache_first(krb5_context context, krb5_cc_cursor *cursor)
     }
 
     if ((iter->d = opendir(iter->dc->dir)) == NULL) {
+        free(iter->dc->dir);
+        free(iter->dc);
         free(iter);
 	krb5_set_error_message(context, KRB5_CC_FORMAT,
                                N_("Can't open DIR %s: %s", ""),

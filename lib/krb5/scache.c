@@ -1352,8 +1352,10 @@ again:
     ret = _krb5_cc_allocate(context, &krb5_scc_ops, id);
     if (ret == 0)
         ret = scc_resolve(context, id, ctx->file, name);
-    if (ret)
+    if (ret) {
         free(*id);
+        *id = NULL;
+    }
     return ret;
 }
 

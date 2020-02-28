@@ -457,9 +457,9 @@ acc_get_name(krb5_context context,
     if (name)
         *name = NULL;
     if (colname)
-        *name = NULL;
+        *colname = NULL;
     if (subsidiary)
-        *name = NULL;
+        *subsidiary = NULL;
     if (a->cache_subsidiary == NULL) {
 	krb5_principal principal = NULL;
 
@@ -541,6 +541,7 @@ acc_resolve(krb5_context context, krb5_ccache *id, const char *res, const char *
         if (asprintf(&s, "%s:%s", res, sub) == -1 || s == NULL ||
             (a->cache_subsidiary = strdup(sub)) == NULL) {
 	    acc_close(context, *id);
+            free(s);
             return krb5_enomem(context);
         }
         res = s;

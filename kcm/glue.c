@@ -44,15 +44,27 @@ RCSID("$Id$");
 #define KCMCACHE(X)	((kcm_ccache)(X)->data.data)
 #define CACHENAME(X)	(KCMCACHE(X)->name)
 
-static const char *
+static krb5_error_code
 kcmss_get_name(krb5_context context,
-	       krb5_ccache id)
+	       krb5_ccache id,
+               const char **name,
+               const char **col,
+               const char **sub)
 {
-    return CACHENAME(id);
+    if (name)
+        *name = CACHENAME(id);
+    if (col)
+        *col = NULL;
+    if (name)
+        *sub = CACHENAME(id);
+    return 0;
 }
 
 static krb5_error_code
-kcmss_resolve(krb5_context context, krb5_ccache *id, const char *res)
+kcmss_resolve(krb5_context context,
+              krb5_ccache *id,
+              const char *res,
+              const char *sub)
 {
     return KRB5_FCC_INTERNAL;
 }

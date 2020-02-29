@@ -78,14 +78,22 @@ static krb5_error_code
 mcc_alloc(krb5_context context, const char *name, krb5_mcache **out)
 {
     krb5_mcache *m, *m_c;
+    size_t counter = 0;
     int ret = 0;
 
     *out = NULL;
     ALLOC(m, 1);
     if(m == NULL)
 	return krb5_enomem(context);
+
+again:
+    if (counter > 3) {
+        free(m->name);
+        free(m);
+        return EAGAIN; /* XXX */
+    }
     if(name == NULL)
-	ret = asprintf(&m->name, "u%p", m);
+	ret = asprintf(&m->name, "u%p-%llu", m, (unsigned long long)counter);
     else
 	m->name = strdup(name);
     if(ret < 0 || m->name == NULL) {
@@ -120,7 +128,12 @@ mcc_alloc(krb5_context context, const char *name, krb5_mcache **out)
             m->refcnt++;
             HEIMDAL_MUTEX_unlock(&(m->mutex));
         } else {
-            m = NULL;
+            /* How likely are we to conflict on new_unique anyways?? */
+            counter++;
+            free(m->name);
+            m->name = NULL;
+            HEIMDAL_MUTEX_unlock(&mcc_mutex);
+            goto again;
         }
         HEIMDAL_MUTEX_unlock(&mcc_mutex);
         *out = m;
@@ -151,29 +164,7 @@ mcc_resolve(krb5_context context,
     krb5_error_code ret;
     krb5_mcache *m;
 
-    if (sub && *sub)
-        res = sub;
-
-    if (strcmp(res, "anonymous")) {
-        HEIMDAL_MUTEX_lock(&mcc_mutex);
-        for (m = mcc_head; m != NULL; m = m->next) {
-            if (strcmp(m->name, res) == 0) {
-                HEIMDAL_MUTEX_lock(&(m->mutex));
-                m->refcnt++;
-                HEIMDAL_MUTEX_unlock(&(m->mutex));
-                break;
-            }
-        }
-        HEIMDAL_MUTEX_unlock(&mcc_mutex);
-
-        if (m != NULL) {
-            (*id)->data.data = m;
-            (*id)->data.length = sizeof(*m);
-            return 0;
-        }
-    }
-
-    if ((ret = mcc_alloc(context, res, &m)))
+    if ((ret = mcc_alloc(context, sub ? sub : res, &m)))
         return ret;
 
     (*id)->data.data = m;

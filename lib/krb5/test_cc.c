@@ -1044,6 +1044,7 @@ main(int argc, char **argv)
 
     test_cccol_dcache(context);
     test_cccol_scache(context);
+#ifdef HAVE_KEYUTILS_H
     {
         const char *what;
 
@@ -1055,6 +1056,7 @@ main(int argc, char **argv)
         if (ret)
             krb5_err(context, 1, ret, "%s", what);
     }
+#endif /* HAVE_KEYUTILS_H */
 
     krb5_free_context(context);
 

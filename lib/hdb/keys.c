@@ -661,7 +661,8 @@ hdb_generate_key_set(krb5_context context, krb5_principal principal,
 
     ktypes = ks_tuple_strs;
     if (ktypes == NULL) {
-	ktypes = glob_rules_keys(context, principal);
+        config_ktypes = glob_rules_keys(context, principal);
+        ktypes = config_ktypes;
     }
     if (ktypes == NULL) {
 	config_ktypes = krb5_config_get_strings(context, NULL, "kadmin",

@@ -161,9 +161,9 @@ gss_accept_sec_context(OM_uint32 *minor_status,
 	struct _gss_cred *cred = (struct _gss_cred *) acceptor_cred_handle;
 	struct _gss_mechanism_cred *mc;
 	gss_const_cred_id_t acceptor_mc;
-	gss_cred_id_t delegated_mc;
-	gss_name_t src_mn;
-	gss_OID mech_ret_type = NULL;
+	gss_cred_id_t delegated_mc = GSS_C_NO_CREDENTIAL;
+	gss_name_t src_mn = GSS_C_NO_NAME;
+	gss_OID mech_ret_type = GSS_C_NO_OID;
 
 	*minor_status = 0;
 	if (src_name)
@@ -229,7 +229,6 @@ gss_accept_sec_context(OM_uint32 *minor_status,
 	} else {
 		acceptor_mc = GSS_C_NO_CREDENTIAL;
 	}
-	delegated_mc = GSS_C_NO_CREDENTIAL;
 
 	mech_ret_flags = 0;
 	major_status = m->gm_accept_sec_context(minor_status,

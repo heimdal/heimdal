@@ -157,6 +157,7 @@ gss_accept_sec_context(OM_uint32 *minor_status, gss_ctx_id_t *context_handle,
 			   sizeof(mechbuf),
 			   &ct.thisMech,
 			   &mech_len);
+	free_GSSAPIContextToken(&ct);
     }
     if (ret) {
 	*minor_status = ret;

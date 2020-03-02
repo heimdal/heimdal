@@ -21,10 +21,11 @@ build_script:
   - set dbg__type=Debug
   - title Heimdal Build %CPU% %dbg__type%
   - echo PATH=%PATH%
+  - C:\msys64\usr\bin\bash -lc "cp /c/Windows/System32/msvcr100d.dll /c/projects/heimdal"
   # Newer texinfo has no .exe's, so we have to invoke it as
   # "perl ...\makeinfo ...".  See doc/NTMakefile.
   - nmake /f NTMakefile APPVEYOR=1 MAKEINFO=makeinfo NO_INSTALLERS=1
-  - 7z a heimdal-out.zip C:\projects\heimdal\out\
+  - 7z a heimdal.zip C:\projects\heimdal
 
 test_script:
   # Packages are not validated in the Appveyor build, FYI.
@@ -33,9 +34,11 @@ test_script:
 artifacts:
   - path: heimdal-out.zip
     name: heimdal-out
+  - path: heimdal.zip
+    name: heimdal
 
 on_failure:
-  - 7z a heimdal-out.zip C:\projects\heimdal\out\
+  - 7z a heimdal-out.zip C:\projects\heimdal
   - appveyor PushArtifact heimdal-out.zip
 
 # To get RDP access to an appveyor worker for debugging a build, just

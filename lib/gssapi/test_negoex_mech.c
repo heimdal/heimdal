@@ -68,6 +68,13 @@ gss_init_sec_context(OM_uint32 *minor_status,
     const char *envstr;
     uint8_t hops, mech_last_octet;
 
+    if (actual_mech)
+	*actual_mech = GSS_C_NO_OID;
+    if (ret_flags)
+	*ret_flags = 0;
+    if (time_rec)
+	*time_rec = 0;
+
     major = gss_duplicate_oid(minor_status, mech_type, actual_mech);
     if (major != GSS_S_COMPLETE)
 	return major;
@@ -132,6 +139,17 @@ gss_accept_sec_context(OM_uint32 *minor_status, gss_ctx_id_t *context_handle,
     int ret;
     size_t mech_len;
 
+    if (src_name)
+	*src_name = GSS_C_NO_NAME;
+    if (mech_type)
+	*mech_type = GSS_C_NO_OID;
+    if (ret_flags)
+	*ret_flags = 0;
+    if (time_rec)
+	*time_rec = 0;
+    if (delegated_cred_handle)
+	*delegated_cred_handle = GSS_C_NO_CREDENTIAL;
+
     ret = decode_GSSAPIContextToken(input_token->value, input_token->length,
 				    &ct, NULL);
     if (ret == 0) {
@@ -148,7 +166,8 @@ gss_accept_sec_context(OM_uint32 *minor_status, gss_ctx_id_t *context_handle,
     oid.length   = (OM_uint32)mech_len;
     oid.elements = mechbuf + sizeof(mechbuf) - mech_len;
 
-    gss_duplicate_oid(minor_status, &oid, mech_type);
+    if (mech_type)
+	gss_duplicate_oid(minor_status, &oid, mech_type);
 
     /*
      * The unwrapped token sits at the end and is just one byte giving the

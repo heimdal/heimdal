@@ -27,6 +27,12 @@ HEIMDAL_BASE_1.0 {
 		heim_array_iterate_f;
 		heim_array_iterate_reverse_f;
 		heim_array_set_value;
+		heim_audit_addkv;
+		heim_audit_addkv_timediff;
+		heim_audit_addreason;
+		heim_audit_trail;
+		heim_audit_vaddkv;
+		heim_audit_vaddreason;
 		heim_auto_release;
 		heim_auto_release_create;
 		heim_auto_release_drain;
@@ -124,6 +130,7 @@ HEIMDAL_BASE_1.0 {
 		heim_get_hash;
 		_heim_get_isa;
 		_heim_get_isaextra;
+		heim_get_log_dest;
 		heim_get_tid;
 		heim_get_warn_dest;
 		heim_have_debug;
@@ -158,6 +165,7 @@ HEIMDAL_BASE_1.0 {
 		heim_set_config_files;
 		heim_set_debug_dest;
 		heim_set_error_message;
+		heim_set_log_dest;
 		heim_set_warn_dest;
 		heim_show;
 		heim_sorted_text_file_dbtype;

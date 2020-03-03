@@ -42,78 +42,11 @@
 #undef  __attribute__
 #define __attribute__(x)
 
-static heim_string_t
-fmtkv(int flags, const char *k, const char *fmt, va_list ap)
-        __attribute__ ((__format__ (__printf__, 3, 0)))
-{
-    heim_string_t str;
-    size_t i,j;
-    char *buf1;
-    char *buf2;
-    char *buf3;
-
-    vasprintf(&buf1, fmt, ap);
-    if (!buf1)
-	return NULL;;
-
-    j = asprintf(&buf2, "%s=%s", k, buf1);
-    free(buf1);
-    if (!buf2)
-	return NULL;;
-
-    /* We optionally eat the whitespace. */
-
-    if (flags & KDC_AUDIT_EATWHITE) {
-	for (i=0, j=0; buf2[i]; i++)
-	    if (buf2[i] != ' ' && buf2[i] != '\t')
-		buf2[j++] = buf2[i];
-	buf2[j] = '\0';
-    }
-
-    if (flags & (KDC_AUDIT_VIS | KDC_AUDIT_VISLAST)) {
-        int vis_flags = VIS_CSTYLE | VIS_OCTAL | VIS_NL;
-
-        if (flags & KDC_AUDIT_VIS)
-            vis_flags |= VIS_WHITE;
-	buf3 = malloc((j + 1) * 4 + 1);
-	strvisx(buf3, buf2, j, vis_flags);
-	free(buf2);
-    } else
-	buf3 = buf2;
-
-    str = heim_string_create(buf3);
-    free(buf3);
-    return str;
-}
-
 void
 _kdc_audit_vaddreason(kdc_request_t r, const char *fmt, va_list ap)
 	__attribute__ ((__format__ (__printf__, 2, 0)))
 {
-    heim_string_t str;
-
-    str = fmtkv(KDC_AUDIT_VISLAST, "reason", fmt, ap);
-    if (!str) {
-	kdc_log(r->context, r->config, 1, "failed to add reason");
-        return;
-    }
-
-    kdc_log(r->context, r->config, 7, "_kdc_audit_addreason(): adding "
-            "reason %s", heim_string_get_utf8(str));
-    if (r->reason) {
-        heim_string_t str2;
-
-        str2 = heim_string_create_with_format("%s: %s",
-                                              heim_string_get_utf8(str),
-                                              heim_string_get_utf8(r->reason));
-        if (str2) {
-            heim_release(r->reason);
-            heim_release(str);
-            r->reason = str;
-        } /* else the earlier reason is likely better than the newer one */
-        return;
-    }
-    r->reason = str;
+    heim_audit_vaddreason((heim_svc_req_desc)r, fmt, ap);
 }
 
 void
@@ -123,7 +56,7 @@ _kdc_audit_addreason(kdc_request_t r, const char *fmt, ...)
     va_list ap;
 
     va_start(ap, fmt);
-    _kdc_audit_vaddreason(r, fmt, ap);
+    heim_audit_vaddreason((heim_svc_req_desc)r, fmt, ap);
     va_end(ap);
 }
 
@@ -138,18 +71,7 @@ _kdc_audit_vaddkv(kdc_request_t r, int flags, const char *k,
 		  const char *fmt, va_list ap)
 	__attribute__ ((__format__ (__printf__, 4, 0)))
 {
-    heim_string_t str;
-
-    str = fmtkv(flags, k, fmt, ap);
-    if (!str) {
-	kdc_log(r->context, r->config, 1, "failed to add kv pair");
-        return;
-    }
-
-    kdc_log(r->context, r->config, 7, "_kdc_audit_addkv(): adding "
-            "kv pair %s", heim_string_get_utf8(str));
-    heim_array_append_value(r->kv, str);
-    heim_release(str);
+    heim_audit_vaddkv((heim_svc_req_desc)r, flags, k, fmt, ap);
 }
 
 void
@@ -160,7 +82,7 @@ _kdc_audit_addkv(kdc_request_t r, int flags, const char *k,
     va_list ap;
 
     va_start(ap, fmt);
-    _kdc_audit_vaddkv(r, flags, k, fmt, ap);
+    heim_audit_vaddkv((heim_svc_req_desc)r, flags, k, fmt, ap);
     va_end(ap);
 }
 
@@ -169,38 +91,16 @@ _kdc_audit_addkv_timediff(kdc_request_t r, const char *k,
 			  const struct timeval *start,
 			  const struct timeval *end)
 {
-    time_t sec;
-    int usec;
-    const char *sign = "";
-
-    if (end->tv_sec > start->tv_sec ||
-	(end->tv_sec == start->tv_sec && end->tv_usec >= start->tv_usec)) {
-	sec  = end->tv_sec  - start->tv_sec;
-	usec = end->tv_usec - start->tv_usec;
-    } else {
-	sec  = start->tv_sec  - end->tv_sec;
-	usec = start->tv_usec - end->tv_usec;
-	sign = "-";
-    }
-
-    if (usec < 0) {
-	usec += 1000000;
-	sec  -= 1;
-    }
-
-    _kdc_audit_addkv(r, 0, k, "%s%ld.%06d", sign, sec, usec);
+    heim_audit_addkv_timediff((heim_svc_req_desc)r,k, start, end);
 }
 
 void
 _kdc_audit_trail(kdc_request_t r, krb5_error_code ret)
 {
-    const char *retval;
-    char kvbuf[1024];
-    char retvalbuf[30]; /* Enough for UNKNOWN-%d */
-    size_t nelem;
-    size_t i, j;
+    const char *retname = NULL;
 
-#define CASE(x)	case x : retval = #x; break
+    /* Get a symbolic name for some error codes */
+#define CASE(x)	case x : retname = #x; break
     switch (ret) {
     CASE(ENOMEM);
     CASE(EACCES);
@@ -231,49 +131,20 @@ _kdc_audit_trail(kdc_request_t r, krb5_error_code ret)
     CASE(KRB5KDC_ERR_TRTYPE_NOSUPP);
     CASE(KRB5KRB_ERR_RESPONSE_TOO_BIG);
     case 0:
-	retval = "SUCCESS";
+	retname = "SUCCESS";
 	break;
     default:
-        (void) snprintf(retvalbuf, sizeof(retvalbuf), "UNKNOWN-%d", ret);
-	retval = retvalbuf;
+        retname = NULL;
 	break;
     }
 
     /* Let's save a few bytes */
 #define PREFIX "KRB5KDC_"
-    if (!strncmp(PREFIX, retval, strlen(PREFIX)))
-	retval += strlen(PREFIX);
+    if (retname && !strncmp(PREFIX, retname, strlen(PREFIX)))
+	retname += strlen(PREFIX);
 #undef PREFIX
 
-    /* Calculate metrics and add them */
-
-    _kdc_audit_addkv_timediff(r, "elapsed", &r->tv_start, &r->tv_end);
-
-    if (r->e_text)
-	_kdc_audit_addkv(r, KDC_AUDIT_VIS, "e-text", "%s", r->e_text);
-
-    nelem = heim_array_get_length(r->kv);
-    for (i=0, j=0; i < nelem; i++) {
-	heim_string_t s;
-	const char *kvpair;
-
-	s = heim_array_get_value(r->kv, i);
-	/* XXXrcd: in string.c the check? */
-	kvpair = heim_string_get_utf8(s);
-
-	if (j < sizeof(kvbuf) - 1)
-	    kvbuf[j++] = ' ';
-	for (; *kvpair && j < sizeof(kvbuf) - 1; j++)
-	    kvbuf[j] = *kvpair++;
-    }
-    kvbuf[j] = '\0';
-
-    kdc_log(r->context, r->config, 3, "%s %s %s %s %s%s%s%s",
-	    r->reqtype, retval, r->from,
-            r->cname ? r->cname : "<unknown>",
-	    r->sname ? r->sname : "<unknown>",
-            kvbuf, r->reason ? " " : "",
-            r->reason ? heim_string_get_utf8(r->reason) : "");
+    heim_audit_trail((heim_svc_req_desc)r, ret, retname);
 }
 
 void
@@ -430,7 +301,9 @@ process_request(krb5_context context,
 	return krb5_enomem(context);
 
     r->context = context;
+    r->hcontext = context->hcontext;
     r->config = config;
+    r->logf = config->logf;
     r->from = from;
     r->request.data = buf;
     r->request.length = len;

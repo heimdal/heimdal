@@ -39,11 +39,17 @@
 #include "config.h"
 
 #include <sys/types.h>
+#ifndef _WIN32
+#include <sys/socket.h>
+#endif
 #if !defined(WIN32) && !defined(HAVE_DISPATCH_DISPATCH_H) && defined(ENABLE_PTHREAD_SUPPORT)
 #include <pthread.h>
 #endif
 #include <krb5-types.h>
 #include <stdarg.h>
+#ifdef _WIN32
+#include <winsock2.h>
+#endif
 #ifdef HAVE_STDBOOL_H
 #include <stdbool.h>
 #else
@@ -73,6 +79,10 @@
 
 #define HEIM_BASE_API_VERSION 20130210
 
+/*
+ * Generic facilities (moved from lib/krb5/.
+ */
+
 typedef int32_t heim_error_code;
 typedef struct heim_context_s *heim_context;
 typedef struct heim_pcontext_s *heim_pcontext;
@@ -90,7 +100,6 @@ struct heim_log_facility_internal {
     heim_log_close_func_t close_func;
     void *data;
 };
-
 
 typedef struct heim_log_facility_s {
     char *program;
@@ -137,6 +146,10 @@ struct heim_config_binding {
     } u;
 };
 typedef struct heim_config_binding heim_config_section;
+
+/*
+ * CF-like, JSON APIs
+ */
 
 typedef void * heim_object_t;
 typedef unsigned int heim_tid_t;
@@ -654,6 +667,18 @@ heim_base_exchange_pointer(void *target, void *value)
 #endif
 
 #include <heim_threads.h>
+#include <com_err.h>
+
+/*
+ * Service logging facility (moved from kdc/).
+ */
+
+#define HEIM_SVC_AUDIT_EATWHITE      0x1
+#define HEIM_SVC_AUDIT_VIS           0x2
+#define HEIM_SVC_AUDIT_VISLAST       0x4
+
+typedef struct heim_svc_req_desc_common_s *heim_svc_req_desc;
+
 #include <heimbase-protos.h>
 
 #endif /* HEIM_BASE_H */

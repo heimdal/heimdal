@@ -108,8 +108,12 @@
 #include "../lib/hx509/hx_locl.h"
 #include <hx509-private.h>
 
+#define heim_pcontext krb5_context
+#define heim_pconfig krb5_kdc_configuration *
+#include <heimbase-svc.h>
+
 struct bx509_request_desc {
-    KDC_REQUEST_DESC_COMMON_ELEMENTS;
+    HEIM_SVC_REQUEST_DESC_COMMON_ELEMENTS;
 
     struct MHD_Connection *connection;
     krb5_times token_times;
@@ -802,7 +806,9 @@ set_req_desc(struct MHD_Connection *connection,
     r->request.data = "<HTTP-REQUEST>";
     r->request.length = sizeof("<HTTP-REQUEST>");
     r->from = r->frombuf;
+    r->hcontext = r->context->hcontext;
     r->config = kdc_config;
+    r->logf = kdc_config->logf;
     r->reqtype = url;
     r->target = r->redir = NULL;
     r->pkix_store = NULL;

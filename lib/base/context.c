@@ -37,7 +37,8 @@
 #define __attribute__(X)
 
 struct heim_context_s {
-    heim_log_facility       *warn_dest; /* XXX Move warn.c into lib/base as well */
+    heim_log_facility       *log_dest;
+    heim_log_facility       *warn_dest;
     heim_log_facility       *debug_dest;
     char                    *time_fmt;
     unsigned int            log_utc:1;
@@ -69,6 +70,7 @@ heim_context_init(void)
     context->success = "Success";
     context->debug_dest = NULL;
     context->warn_dest = NULL;
+    context->log_dest = NULL;
     context->time_fmt = NULL;
     return context;
 }
@@ -83,6 +85,7 @@ heim_context_free(heim_context *contextp)
         return;
     heim_closelog(context, context->debug_dest);
     heim_closelog(context, context->warn_dest);
+    heim_closelog(context, context->log_dest);
     free(context->time_fmt);
     free(context);
 }
@@ -208,6 +211,12 @@ heim_enomem(heim_context context)
 }
 
 heim_log_facility *
+heim_get_log_dest(heim_context context)
+{
+    return context->log_dest;
+}
+
+heim_log_facility *
 heim_get_warn_dest(heim_context context)
 {
     return context->warn_dest;
@@ -217,6 +226,13 @@ heim_log_facility *
 heim_get_debug_dest(heim_context context)
 {
     return context->debug_dest;
+}
+
+heim_error_code
+heim_set_log_dest(heim_context context, heim_log_facility *fac)
+{
+    context->log_dest = fac;
+    return 0;
 }
 
 heim_error_code

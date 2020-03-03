@@ -35,9 +35,16 @@
 
 #include "baselocl.h"
 #include "heim_threads.h"
+#include "heimbase-svc.h"
 #include <assert.h>
 #include <stdarg.h>
 #include <vis.h>
+
+typedef struct heim_pcontext_s *heim_pcontext;
+typedef struct heim_pconfig *heim_pconfig;
+struct heim_svc_req_desc_common_s {
+    HEIM_SVC_REQUEST_DESC_COMMON_ELEMENTS;
+};
 
 static struct heim_log_facility_internal *
 log_realloc(heim_log_facility *f)
@@ -623,4 +630,209 @@ heim_add_debug_dest(heim_context context, const char *program,
     if (ret)
         return ret;
     return 0;
+}
+
+static heim_string_t
+fmtkv(int flags, const char *k, const char *fmt, va_list ap)
+        __attribute__ ((__format__ (__printf__, 3, 0)))
+{
+    heim_string_t str;
+    size_t i,j;
+    char *buf1;
+    char *buf2;
+    char *buf3;
+
+    vasprintf(&buf1, fmt, ap);
+    if (!buf1)
+	return NULL;;
+
+    j = asprintf(&buf2, "%s=%s", k, buf1);
+    free(buf1);
+    if (!buf2)
+	return NULL;;
+
+    /* We optionally eat the whitespace. */
+
+    if (flags & HEIM_SVC_AUDIT_EATWHITE) {
+	for (i=0, j=0; buf2[i]; i++)
+	    if (buf2[i] != ' ' && buf2[i] != '\t')
+		buf2[j++] = buf2[i];
+	buf2[j] = '\0';
+    }
+
+    if (flags & (HEIM_SVC_AUDIT_VIS | HEIM_SVC_AUDIT_VISLAST)) {
+        int vis_flags = VIS_CSTYLE | VIS_OCTAL | VIS_NL;
+
+        if (flags & HEIM_SVC_AUDIT_VIS)
+            vis_flags |= VIS_WHITE;
+	buf3 = malloc((j + 1) * 4 + 1);
+	strvisx(buf3, buf2, j, vis_flags);
+	free(buf2);
+    } else
+	buf3 = buf2;
+
+    str = heim_string_create(buf3);
+    free(buf3);
+    return str;
+}
+
+void
+heim_audit_vaddreason(heim_svc_req_desc r, const char *fmt, va_list ap)
+	__attribute__ ((__format__ (__printf__, 2, 0)))
+{
+    heim_string_t str;
+
+    str = fmtkv(HEIM_SVC_AUDIT_VISLAST, "reason", fmt, ap);
+    if (!str) {
+        heim_log(r->hcontext, r->logf, 1, "heim_audit_vaddreason: "
+                 "failed to add reason (out of memory)");
+        return;
+    }
+
+    heim_log(r->hcontext, r->logf, 7, "heim_audit_vaddreason(): "
+             "adding reason %s", heim_string_get_utf8(str));
+    if (r->reason) {
+        heim_string_t str2;
+
+        str2 = heim_string_create_with_format("%s: %s",
+                                              heim_string_get_utf8(str),
+                                              heim_string_get_utf8(r->reason));
+        if (str2) {
+            heim_release(r->reason);
+            heim_release(str);
+            r->reason = str;
+        } /* else the earlier reason is likely better than the newer one */
+        return;
+    }
+    r->reason = str;
+}
+
+void
+heim_audit_addreason(heim_svc_req_desc r, const char *fmt, ...)
+	__attribute__ ((__format__ (__printf__, 2, 3)))
+{
+    va_list ap;
+
+    va_start(ap, fmt);
+    heim_audit_vaddreason(r, fmt, ap);
+    va_end(ap);
+}
+
+/*
+ * append_token adds a token which is optionally a kv-pair and it
+ * also optionally eats the whitespace.  If k == NULL, then it's
+ * not a kv-pair.
+ */
+
+void
+heim_audit_vaddkv(heim_svc_req_desc r, int flags, const char *k,
+		  const char *fmt, va_list ap)
+	__attribute__ ((__format__ (__printf__, 4, 0)))
+{
+    heim_string_t str;
+
+    str = fmtkv(flags, k, fmt, ap);
+    if (!str) {
+        heim_log(r->hcontext, r->logf, 1, "heim_audit_vaddkv: "
+                 "failed to add kv pair (out of memory)");
+        return;
+    }
+
+    heim_log(r->hcontext, r->logf, 7, "heim_audit_vaddkv(): "
+             "adding kv pair %s", heim_string_get_utf8(str));
+    heim_array_append_value(r->kv, str);
+    heim_release(str);
+}
+
+void
+heim_audit_addkv(heim_svc_req_desc r, int flags, const char *k,
+		 const char *fmt, ...)
+	__attribute__ ((__format__ (__printf__, 4, 5)))
+{
+    va_list ap;
+
+    va_start(ap, fmt);
+    heim_audit_vaddkv(r, flags, k, fmt, ap);
+    va_end(ap);
+}
+
+void
+heim_audit_addkv_timediff(heim_svc_req_desc r, const char *k,
+			  const struct timeval *start,
+			  const struct timeval *end)
+{
+    time_t sec;
+    int usec;
+    const char *sign = "";
+
+    if (end->tv_sec > start->tv_sec ||
+	(end->tv_sec == start->tv_sec && end->tv_usec >= start->tv_usec)) {
+	sec  = end->tv_sec  - start->tv_sec;
+	usec = end->tv_usec - start->tv_usec;
+    } else {
+	sec  = start->tv_sec  - end->tv_sec;
+	usec = start->tv_usec - end->tv_usec;
+	sign = "-";
+    }
+
+    if (usec < 0) {
+	usec += 1000000;
+	sec  -= 1;
+    }
+
+    heim_audit_addkv(r, 0, k, "%s%ld.%06d", sign, sec, usec);
+}
+
+void
+heim_audit_trail(heim_svc_req_desc r, heim_error_code ret, const char *retname)
+{
+    const char *retval;
+    char kvbuf[1024];
+    char retvalbuf[30]; /* Enough for UNKNOWN-%d */
+    size_t nelem;
+    size_t i, j;
+
+#define CASE(x)	case x : retval = #x; break
+    if (retname) {
+        retval = retname;
+    } else switch (ret) {
+    CASE(ENOMEM);
+    CASE(ENOENT);
+    CASE(EACCES);
+    case 0:
+	retval = "SUCCESS";
+	break;
+    default:
+        /* Wish we had a com_err number->symbolic name function */
+        (void) snprintf(retvalbuf, sizeof(retvalbuf), "UNKNOWN-%d", ret);
+	retval = retvalbuf;
+	break;
+    }
+
+    heim_audit_addkv_timediff(r, "elapsed", &r->tv_start, &r->tv_end);
+    if (r->e_text)
+	heim_audit_addkv(r, HEIM_SVC_AUDIT_VIS, "e-text", "%s", r->e_text);
+
+    nelem = heim_array_get_length(r->kv);
+    for (i=0, j=0; i < nelem; i++) {
+	heim_string_t s;
+	const char *kvpair;
+
+        /* We know these are strings... */
+	s = heim_array_get_value(r->kv, i);
+	kvpair = heim_string_get_utf8(s);
+
+	if (j < sizeof(kvbuf) - 1)
+	    kvbuf[j++] = ' ';
+	for (; *kvpair && j < sizeof(kvbuf) - 1; j++)
+	    kvbuf[j] = *kvpair++;
+    }
+    kvbuf[j] = '\0';
+
+    heim_log(r->hcontext, r->logf, 3, "%s %s %s %s %s%s%s%s",
+             r->reqtype, retval, r->from,
+             r->cname ? r->cname : "<unknown>",
+             r->sname ? r->sname : "<unknown>",
+             kvbuf, r->reason ? " " : "",
+             r->reason ? heim_string_get_utf8(r->reason) : "");
 }

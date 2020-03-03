@@ -46,45 +46,25 @@ typedef struct pk_client_params pk_client_params;
 
 #define FAST_EXPIRATION_TIME (3 * 60)
 
-#define KDC_AUDIT_EATWHITE	0x1
-#define KDC_AUDIT_VIS		0x2
-#define KDC_AUDIT_VISLAST	0x4
-
 /* KFE == KDC_FIND_ETYPE */
 #define KFE_IS_TGS	0x1
 #define KFE_IS_PREAUTH	0x2
 #define KFE_USE_CLIENT	0x4
 
-#define KDC_REQUEST_DESC_COMMON_ELEMENTS			\
-    /* Input */							\
-    krb5_context context;					\
-    krb5_kdc_configuration *config;				\
-    const char *from;						\
-    struct sockaddr *addr;					\
-    int datagram_reply;						\
-    krb5_data request;						\
-								\
-    /* Output */						\
-    krb5_data *reply;						\
-    krb5_boolean use_request_t;					\
-								\
-    /* Common state, to be freed in process.c */		\
-    struct timeval tv_start;					\
-    struct timeval tv_end;					\
-    const char *reqtype;					\
-    char *cname;						\
-    char *sname;						\
-    const char *e_text;						\
-    char *e_text_buf;						\
-    heim_string_t reason;                                       \
-    heim_array_t kv
+#define heim_pcontext krb5_context
+#define heim_pconfig krb5_kdc_configuration *
+#include <heimbase-svc.h>
+
+#define KDC_AUDIT_EATWHITE      HEIM_SVC_AUDIT_EATWHITE
+#define KDC_AUDIT_VIS           HEIM_SVC_AUDIT_VIS
+#define KDC_AUDIT_VISLAST       HEIM_SVC_AUDIT_VISLAST
 
 struct kdc_request_desc {
-    KDC_REQUEST_DESC_COMMON_ELEMENTS;
+    HEIM_SVC_REQUEST_DESC_COMMON_ELEMENTS;
 };
 
 struct astgs_request_desc {
-    KDC_REQUEST_DESC_COMMON_ELEMENTS;
+    HEIM_SVC_REQUEST_DESC_COMMON_ELEMENTS;
 
     /* Both AS and TGS */
     KDC_REQ req;
@@ -116,7 +96,7 @@ struct astgs_request_desc {
 };
 
 typedef struct kx509_req_context_desc {
-    KDC_REQUEST_DESC_COMMON_ELEMENTS;
+    HEIM_SVC_REQUEST_DESC_COMMON_ELEMENTS;
 
     struct Kx509Request req;
     Kx509CSRPlus csr_plus;
@@ -129,6 +109,8 @@ typedef struct kx509_req_context_desc {
     unsigned int have_csr:1;            /* Client sent a CSR */
 } *kx509_req_context;
 
+#undef heim_pconfig
+#undef heim_pcontext
 
 extern sig_atomic_t exit_flag;
 extern size_t max_request_udp;

@@ -712,11 +712,6 @@ krb5_free_context(krb5_context context)
     free(context);
 }
 
-#ifdef _WIN32
-#define REGPATH_KERBEROS "SOFTWARE\\Kerberos"
-#define REGPATH_HEIMDAL  "SOFTWARE\\Heimdal"
-#endif
-
 /**
  * Reinit the context from a new set of filenames.
  *
@@ -733,31 +728,10 @@ KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_set_config_files(krb5_context context, char **filenames)
 {
     krb5_error_code ret;
-    krb5_config_binding *tmp = NULL;
-    while(filenames != NULL && *filenames != NULL && **filenames != '\0') {
-	ret = krb5_config_parse_file_multi(context, *filenames, &tmp);
-	if (ret != 0 && ret != ENOENT && ret != EACCES && ret != EPERM
-	    && ret != KRB5_CONFIG_BADFORMAT) {
-	    krb5_config_file_free(context, tmp);
-	    return ret;
-	}
-	filenames++;
-    }
-#if 0
-    /* with this enabled and if there are no config files, Kerberos is
-       considererd disabled */
-    if(tmp == NULL)
-	return ENXIO;
-#endif
 
-#ifdef _WIN32
-    heim_load_config_from_registry(context->hcontext, REGPATH_KERBEROS,
-                                   REGPATH_HEIMDAL, &tmp);
-#endif
-
-    krb5_config_file_free(context, context->cf);
-    context->cf = tmp;
-    ret = init_context_from_config_file(context);
+    if ((ret = heim_set_config_files(context->hcontext, filenames,
+                                     &context->cf)) == 0)
+        ret = init_context_from_config_file(context);
     return ret;
 }
 
@@ -830,54 +804,7 @@ add_file(char ***pfilenames, int *len, char *file)
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_prepend_config_files(const char *filelist, char **pq, char ***ret_pp)
 {
-    krb5_error_code ret;
-    const char *p, *q;
-    char **pp;
-    int len;
-    char *fn;
-
-    pp = NULL;
-
-    len = 0;
-    p = filelist;
-    while(1) {
-	ssize_t l;
-	q = p;
-	l = strsep_copy(&q, PATH_SEP, NULL, 0);
-	if(l == -1)
-	    break;
-	fn = malloc(l + 1);
-	if(fn == NULL) {
-	    krb5_free_config_files(pp);
-	    return ENOMEM;
-	}
-	(void)strsep_copy(&p, PATH_SEP, fn, l + 1);
-	ret = add_file(&pp, &len, fn);
-	if (ret) {
-	    krb5_free_config_files(pp);
-	    return ret;
-	}
-    }
-
-    if (pq != NULL) {
-	int i;
-
-	for (i = 0; pq[i] != NULL; i++) {
-	    fn = strdup(pq[i]);
-	    if (fn == NULL) {
-		krb5_free_config_files(pp);
-		return ENOMEM;
-	    }
-	    ret = add_file(&pp, &len, fn);
-	    if (ret) {
-		krb5_free_config_files(pp);
-		return ret;
-	    }
-	}
-    }
-
-    *ret_pp = pp;
-    return 0;
+    return heim_prepend_config_files(filelist, pq, ret_pp);
 }
 
 /**
@@ -895,60 +822,9 @@ krb5_prepend_config_files(const char *filelist, char **pq, char ***ret_pp)
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_prepend_config_files_default(const char *filelist, char ***pfilenames)
 {
-    krb5_error_code ret;
-    char **defpp, **pp = NULL;
-
-    ret = krb5_get_default_config_files(&defpp);
-    if (ret)
-	return ret;
-
-    ret = krb5_prepend_config_files(filelist, defpp, &pp);
-    krb5_free_config_files(defpp);
-    if (ret) {
-	return ret;
-    }
-    *pfilenames = pp;
-    return 0;
+    return heim_prepend_config_files_default(filelist, krb5_config_file,
+                                             "KRB5_CONFIG", pfilenames);
 }
-
-#ifdef _WIN32
-
-/**
- * Checks the registry for configuration file location
- *
- * Kerberos for Windows and other legacy Kerberos applications expect
- * to find the configuration file location in the
- * SOFTWARE\MIT\Kerberos registry key under the value "config".
- */
-KRB5_LIB_FUNCTION char * KRB5_LIB_CALL
-_krb5_get_default_config_config_files_from_registry()
-{
-    static const char * KeyName = "Software\\MIT\\Kerberos";
-    char *config_file = NULL;
-    LONG rcode;
-    HKEY key;
-
-    rcode = RegOpenKeyEx(HKEY_CURRENT_USER, KeyName, 0, KEY_READ, &key);
-    if (rcode == ERROR_SUCCESS) {
-        config_file = heim_parse_reg_value_as_multi_string(NULL, key, "config",
-                                                           REG_NONE, 0, PATH_SEP);
-        RegCloseKey(key);
-    }
-
-    if (config_file)
-        return config_file;
-
-    rcode = RegOpenKeyEx(HKEY_LOCAL_MACHINE, KeyName, 0, KEY_READ, &key);
-    if (rcode == ERROR_SUCCESS) {
-        config_file = heim_parse_reg_value_as_multi_string(NULL, key, "config",
-                                                           REG_NONE, 0, PATH_SEP);
-        RegCloseKey(key);
-    }
-
-    return config_file;
-}
-
-#endif
 
 /**
  * Get the global configuration list.
@@ -964,31 +840,10 @@ _krb5_get_default_config_config_files_from_registry()
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_get_default_config_files(char ***pfilenames)
 {
-    const char *files = NULL;
-
     if (pfilenames == NULL)
         return EINVAL;
-    files = secure_getenv("KRB5_CONFIG");
-
-#ifdef _WIN32
-    if (files == NULL) {
-        char * reg_files;
-        reg_files = _krb5_get_default_config_config_files_from_registry();
-        if (reg_files != NULL) {
-            krb5_error_code code;
-
-            code = krb5_prepend_config_files(reg_files, NULL, pfilenames);
-            free(reg_files);
-
-            return code;
-        }
-    }
-#endif
-
-    if (files == NULL)
-	files = krb5_config_file;
-
-    return krb5_prepend_config_files(files, NULL, pfilenames);
+    return heim_get_default_config_files(krb5_config_file, "KRB5_CONFIG",
+                                         pfilenames);
 }
 
 /**
@@ -1006,10 +861,7 @@ krb5_get_default_config_files(char ***pfilenames)
 KRB5_LIB_FUNCTION void KRB5_LIB_CALL
 krb5_free_config_files(char **filenames)
 {
-    char **p;
-    for(p = filenames; p && *p != NULL; p++)
-	free(*p);
-    free(filenames);
+    heim_free_config_files(filenames);
 }
 
 /**

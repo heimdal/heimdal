@@ -232,3 +232,207 @@ heim_set_debug_dest(heim_context context, heim_log_facility *fac)
     context->debug_dest = fac;
     return 0;
 }
+
+#define PATH_SEP ":"
+
+static heim_error_code
+add_file(char ***pfilenames, int *len, char *file)
+{
+    char **pp = *pfilenames;
+    int i;
+
+    for(i = 0; i < *len; i++) {
+        if(strcmp(pp[i], file) == 0) {
+            free(file);
+            return 0;
+        }
+    }
+
+    pp = realloc(*pfilenames, (*len + 2) * sizeof(*pp));
+    if (pp == NULL) {
+        free(file);
+        return ENOMEM;
+    }
+
+    pp[*len] = file;
+    pp[*len + 1] = NULL;
+    *pfilenames = pp;
+    *len += 1;
+    return 0;
+}
+
+#ifdef WIN32
+static char *
+get_default_config_config_files_from_registry(void)
+{
+    static const char *KeyName = "Software\\Heimdal"; /* XXX #define this */
+    char *config_file = NULL;
+    LONG rcode;
+    HKEY key;
+
+    rcode = RegOpenKeyEx(HKEY_CURRENT_USER, KeyName, 0, KEY_READ, &key);
+    if (rcode == ERROR_SUCCESS) {
+        config_file = heim_parse_reg_value_as_multi_string(NULL, key, "config",
+                                                           REG_NONE, 0, PATH_SEP);
+        RegCloseKey(key);
+    }
+
+    if (config_file)
+        return config_file;
+
+    rcode = RegOpenKeyEx(HKEY_LOCAL_MACHINE, KeyName, 0, KEY_READ, &key);
+    if (rcode == ERROR_SUCCESS) {
+        config_file = heim_parse_reg_value_as_multi_string(NULL, key, "config",
+                                                           REG_NONE, 0, PATH_SEP);
+        RegCloseKey(key);
+    }
+
+    return config_file;
+}
+#endif
+
+heim_error_code
+heim_prepend_config_files(const char *filelist,
+                          char **pq,
+                          char ***ret_pp)
+{
+    heim_error_code ret;
+    const char *p, *q;
+    char **pp;
+    int len;
+    char *fn;
+
+    pp = NULL;
+
+    len = 0;
+    p = filelist;
+    while(1) {
+        ssize_t l;
+        q = p;
+        l = strsep_copy(&q, PATH_SEP, NULL, 0);
+        if(l == -1)
+            break;
+        fn = malloc(l + 1);
+        if(fn == NULL) {
+            heim_free_config_files(pp);
+            return ENOMEM;
+        }
+        (void) strsep_copy(&p, PATH_SEP, fn, l + 1);
+        ret = add_file(&pp, &len, fn);
+        if (ret) {
+            heim_free_config_files(pp);
+            return ret;
+        }
+    }
+
+    if (pq != NULL) {
+        int i;
+
+        for (i = 0; pq[i] != NULL; i++) {
+            fn = strdup(pq[i]);
+            if (fn == NULL) {
+                heim_free_config_files(pp);
+                return ENOMEM;
+            }
+            ret = add_file(&pp, &len, fn);
+            if (ret) {
+                heim_free_config_files(pp);
+                return ret;
+            }
+        }
+    }
+
+    *ret_pp = pp;
+    return 0;
+}
+
+heim_error_code
+heim_prepend_config_files_default(const char *prepend,
+                                  const char *def,
+                                  const char *envvar,
+                                  char ***pfilenames)
+{
+    heim_error_code ret;
+    char **defpp, **pp = NULL;
+
+    ret = heim_get_default_config_files(def, envvar, &defpp);
+    if (ret)
+        return ret;
+
+    ret = heim_prepend_config_files(prepend, defpp, &pp);
+    heim_free_config_files(defpp);
+    if (ret) {
+        return ret;
+    }
+    *pfilenames = pp;
+    return 0;
+}
+
+heim_error_code
+heim_get_default_config_files(const char *def,
+                              const char *envvar,
+                              char ***pfilenames)
+{
+    const char *files = NULL;
+
+    files = secure_getenv(envvar);
+
+#ifdef _WIN32
+    if (files == NULL) {
+        char * reg_files;
+        reg_files = get_default_config_config_files_from_registry();
+        if (reg_files != NULL) {
+            heim_error_code code;
+
+            code = heim_prepend_config_files(reg_files, NULL, pfilenames);
+            free(reg_files);
+
+            return code;
+        }
+    }
+#endif
+
+    if (files == NULL)
+        files = def;
+    return heim_prepend_config_files(files, NULL, pfilenames);
+}
+
+#ifdef _WIN32
+#define REGPATH_KERBEROS "SOFTWARE\\Kerberos"
+#define REGPATH_HEIMDAL  "SOFTWARE\\Heimdal"
+#endif
+
+heim_error_code
+heim_set_config_files(heim_context context, char **filenames,
+                      heim_config_binding **res)
+{
+    heim_error_code ret;
+
+    *res = NULL;
+    while (filenames != NULL && *filenames != NULL && **filenames != '\0') {
+        ret = heim_config_parse_file_multi(context, *filenames, res);
+        if (ret != 0 && ret != ENOENT && ret != EACCES && ret != EPERM
+            && ret != HEIM_ERR_CONFIG_BADFORMAT) {
+            heim_config_file_free(context, *res);
+            *res = NULL;
+            return ret;
+        }
+        filenames++;
+    }
+
+#ifdef _WIN32
+    heim_load_config_from_registry(context, REGPATH_KERBEROS,
+                                   REGPATH_HEIMDAL, res);
+#endif
+    return ret;
+}
+
+void
+heim_free_config_files(char **filenames)
+{
+    char **p;
+
+    for (p = filenames; p && *p != NULL; p++)
+        free(*p);
+    free(filenames);
+}

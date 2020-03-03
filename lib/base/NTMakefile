@@ -90,7 +90,7 @@ libheimbase_OBJS =		\
 libheimbase_gen_OBJS= $(OBJ)\heim_err.obj
 
 $(LIBHEIMBASE): $(libheimbase_OBJS) $(libheimbase_gen_OBJS)
-	$(LIBCON_C) -OUT:$@ $(LIBROKEN) $(PTHREAD_LIB) Secur32.lib Shell32.lib Advapi32.lib @<<
+	$(LIBCON_C) -OUT:$@ $(LIBROKEN) $(PTHREAD_LIB) Secur32.lib Shell32.lib Advapi32.lib Shlwapi.lib @<<
 $(libheimbase_OBJS: =
 )
 $(libheimbase_gen_OBJS: =

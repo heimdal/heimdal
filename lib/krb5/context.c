@@ -728,11 +728,14 @@ KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_set_config_files(krb5_context context, char **filenames)
 {
     krb5_error_code ret;
+    heim_config_binding *tmp = NULL;
 
     if ((ret = heim_set_config_files(context->hcontext, filenames,
-                                     &context->cf)) == 0)
-        ret = init_context_from_config_file(context);
-    return ret;
+                                     &tmp)))
+        return ret;
+    krb5_config_file_free(context, context->cf);
+    context->cf = tmp;
+    return init_context_from_config_file(context);
 }
 
 #ifndef HEIMDAL_SMALLER

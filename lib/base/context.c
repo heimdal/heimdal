@@ -406,7 +406,7 @@ heim_error_code
 heim_set_config_files(heim_context context, char **filenames,
                       heim_config_binding **res)
 {
-    heim_error_code ret;
+    heim_error_code ret = 0;
 
     *res = NULL;
     while (filenames != NULL && *filenames != NULL && **filenames != '\0') {
@@ -421,10 +421,14 @@ heim_set_config_files(heim_context context, char **filenames,
     }
 
 #ifdef _WIN32
+    /*
+     * We always ignored errors from loading from the registry, so we still do.
+     */
     heim_load_config_from_registry(context, REGPATH_KERBEROS,
                                    REGPATH_HEIMDAL, res);
+
 #endif
-    return ret;
+    return 0;
 }
 
 void

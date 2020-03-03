@@ -208,6 +208,8 @@ struct hx509_context_data {
     struct et_list *et_list;
     char *querystat;
     hx509_certs default_trust_anchors;
+    heim_context hcontext;
+    heim_config_section *cf;
 };
 
 /* _hx509_calculate_path flag field */

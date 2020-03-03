@@ -125,6 +125,18 @@ hx509_get_instance(const char *libname)
     return 0;
 }
 
+#define PATH_SEP ":"
+static const char *hx509_config_file =
+"~/.hx509/config" PATH_SEP
+SYSCONFDIR "/hx509.conf" PATH_SEP
+#ifdef _WIN32
+"%{COMMON_APPDATA}/Heimdal/hx509.conf" PATH_SEP
+"%{WINDOWS}/hx509.ini"
+#else /* _WIN32 */
+"/etc/hx509.conf"
+#endif /* _WIN32 */
+;
+
 /**
  * Creates a hx509 context that most functions in the library
  * uses. The context is only allowed to be used by one thread at each
@@ -138,34 +150,68 @@ hx509_get_instance(const char *libname)
  */
 
 HX509_LIB_FUNCTION int HX509_LIB_CALL
-hx509_context_init(hx509_context *context)
+hx509_context_init(hx509_context *contextp)
 {
     static heim_base_once_t init_context = HEIM_BASE_ONCE_INIT;
+    heim_error_code ret;
+    hx509_context context;
+    const char *anchors;
+    char **files = NULL;
 
-    *context = calloc(1, sizeof(**context));
-    if (*context == NULL)
+    *contextp = NULL;
+    context = calloc(1, sizeof(*context));
+    if (context == NULL)
 	return ENOMEM;
 
     heim_base_once_f(&init_context, NULL, init_context_once);
 
-    _hx509_ks_null_register(*context);
-    _hx509_ks_mem_register(*context);
-    _hx509_ks_file_register(*context);
-    _hx509_ks_pkcs12_register(*context);
-    _hx509_ks_pkcs11_register(*context);
-    _hx509_ks_dir_register(*context);
-    _hx509_ks_keychain_register(*context);
+    if ((context->hcontext = heim_context_init()) == NULL) {
+        free(context);
+        return ENOMEM;
+    }
 
-    (*context)->ocsp_time_diff = HX509_DEFAULT_OCSP_TIME_DIFF;
+    if ((ret = heim_get_default_config_files(hx509_config_file,
+                                             "HX509_CONFIG",
+                                             &files))) {
+        heim_context_free(&context->hcontext);
+        free(context);
+        return ret;
+    }
 
-    initialize_hx_error_table_r(&(*context)->et_list);
-    initialize_asn1_error_table_r(&(*context)->et_list);
+    /* If there's no hx509 config, we continue, as we never needed it before */
+    if (files)
+        (void) heim_set_config_files(context->hcontext, files, &context->cf);
+    heim_free_config_files(files);
+
+    _hx509_ks_null_register(context);
+    _hx509_ks_mem_register(context);
+    _hx509_ks_file_register(context);
+    _hx509_ks_pkcs12_register(context);
+    _hx509_ks_pkcs11_register(context);
+    _hx509_ks_dir_register(context);
+    _hx509_ks_keychain_register(context);
+
+    context->ocsp_time_diff =
+        heim_config_get_time_default(context->hcontext, context->cf,
+                                     HX509_DEFAULT_OCSP_TIME_DIFF,
+                                     "libdefaults", "ocsp_time_dif", NULL);
+
+    initialize_hx_error_table_r(&context->et_list);
+    initialize_asn1_error_table_r(&context->et_list);
 
 #ifdef HX509_DEFAULT_ANCHORS
-    (void)hx509_certs_init(*context, HX509_DEFAULT_ANCHORS, 0,
-			   NULL, &(*context)->default_trust_anchors);
+    anchors = heim_config_get_string_default(context->hcontext, context->cf,
+                                             HX509_DEFAULT_ANCHORS,
+                                             "libdefaults", "anchors", NULL);
+#else
+    anchors = heim_config_get_string(context->hcontext, context->cf,
+                                     "libdefaults", "anchors", NULL);
 #endif
+    if (anchors)
+        (void)hx509_certs_init(context, anchors, 0, NULL,
+                               &context->default_trust_anchors);
 
+    *contextp = context;
     return 0;
 }
 

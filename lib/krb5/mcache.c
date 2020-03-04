@@ -101,6 +101,7 @@ again:
 	return krb5_enomem(context);
     }
     if (strcmp(m->name, "anonymous") == 0) {
+        HEIMDAL_MUTEX_init(&(m->mutex));
         m->anonymous = 1;
         m->dead = 0;
         m->refcnt = 1;

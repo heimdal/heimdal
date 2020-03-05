@@ -234,13 +234,13 @@ log_file(heim_context context, const char *timestr, const char *msg, void *data)
         if (heim_expand_path_tokens(context, f->filename, 1, &filename, NULL))
             return;
         fd = open(filename, flags, 0666);
+        free(filename);
         if (fd == -1) {
             if (f->disp == FILEDISP_IFEXISTS)
                 gettimeofday(&f->tv, NULL);
             return;
         }
         f->fd = fdopen(fd, f->mode);
-        free(filename);
     }
     if (f->fd == NULL)
         return;

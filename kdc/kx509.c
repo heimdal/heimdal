@@ -897,7 +897,7 @@ _kdc_do_kx509(kx509_req_context r)
                                 KRB5KDC_ERR_S_PRINCIPAL_UNKNOWN,
                                 "Can't open HDB/keytab for kx509: %s",
 				msg);
-	krb5_free_error_message(context, msg);
+	krb5_free_error_message(r->context, msg);
         goto out;
     }
 
@@ -977,7 +977,7 @@ _kdc_do_kx509(kx509_req_context r)
 	const char *msg = krb5_get_error_message(r->context, ret);
         ret = mk_error_response(r->context, r, 3, ret,
                                 "Failed to parse CSR: %s", msg);
-	krb5_free_error_message(context, msg);
+	krb5_free_error_message(r->context, msg);
         goto out;
     }
 
@@ -987,7 +987,7 @@ _kdc_do_kx509(kx509_req_context r)
 	const char *msg = krb5_get_error_message(r->context, ret);
         ret = mk_error_response(r->context, r, 3, ret,
                                 "Rejected by policy: %s", msg);
-	krb5_free_error_message(context, msg);
+	krb5_free_error_message(r->context, msg);
         goto out;
     }
 
@@ -1013,7 +1013,7 @@ _kdc_do_kx509(kx509_req_context r)
             level = 4; /* _kdc_audit_trail() logs at level 3 */
         ret = mk_error_response(r->context, r, level, ret,
                                 "Certificate isuance failed: %s", msg);
-	krb5_free_error_message(context, msg);
+	krb5_free_error_message(r->context, msg);
         goto out;
     }
 
@@ -1023,7 +1023,7 @@ _kdc_do_kx509(kx509_req_context r)
         ret = mk_error_response(r->context, r, 1, ret,
                                 "Could not encode certificate and chain: %s",
 				msg);
-	krb5_free_error_message(context, msg);
+	krb5_free_error_message(r->context, msg);
         goto out;
     }
 

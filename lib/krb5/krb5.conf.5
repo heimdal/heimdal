@@ -209,6 +209,28 @@ If you want to change the type only use
 .Li default_cc_type .
 The string can contain variables that are expanded at runtime. See the TOKEN
 EXPANSION section.
+.It Li default_file_cache_collections = Va FILE:/path/with/tokens ...
+This multi-valued parameter allows more than one path to be
+configured for the FILE credentials cache type to look in.  The FILE
+credentials cache type will also consider file names whose prefixes
+match these and end in
+.Va +name
+as subsidiary caches in the collection.  The values of this
+parameter are subject to token expansion.  See the TOKEN EXPANSION
+section.
+.It Li enable_file_cache_iteration = Va boolean
+If enabled, the
+.Va FILE
+credential cache type will support iteration of all subsidiary
+caches in the default collection, meaning that
+.Xr kinit 1
+.Va -l
+option will list them.  This does require scanning the directory
+containing a given
+.Va FILE
+ccache, which, if it is
+.Va /tmp
+may be a slow operation.  Defaults to false.
 .It Li default_etypes = Va etypes ...
 A list of default encryption types to use. (Default: all enctypes if
 allow_weak_crypto = TRUE, else all enctypes except single DES enctypes.)

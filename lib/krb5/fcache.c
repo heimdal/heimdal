@@ -37,6 +37,8 @@
 
 typedef struct krb5_fcache{
     char *filename;
+    char *res;
+    char *sub;
     char *tmpfn;
     int version;
 }krb5_fcache;
@@ -59,6 +61,8 @@ struct fcc_cursor {
 
 #define FILENAME(X) (FCACHE(X)->filename)
 #define TMPFILENAME(X) (FCACHE(X)->tmpfn)
+#define RESFILENAME(X) (FCACHE(X)->res)
+#define SUBFILENAME(X) (FCACHE(X)->sub)
 
 #define FCC_CURSOR(C) ((struct fcc_cursor*)(C))
 
@@ -199,38 +203,66 @@ fcc_lock(krb5_context context, krb5_ccache id,
 }
 
 static krb5_error_code KRB5_CALLCONV
+fcc_get_default_name(krb5_context, char **);
+
+/*
+ * This is the character used to separate the residual from the subsidiary name
+ * when both are given.  It's tempting to use ':' just as we do in the ccache
+ * names, but we can't on Windows.
+ */
+#define FILESUBSEP "+"
+#define FILESUBSEPCHR ((FILESUBSEP)[0])
+
+static krb5_error_code KRB5_CALLCONV
 fcc_resolve(krb5_context context,
             krb5_ccache *id,
             const char *res,
             const char *sub)
 {
     krb5_fcache *f;
+    char *freeme = NULL;
 
-    if (sub && *sub) {
-        krb5_set_error_message(context, KRB5_CC_NOSUPP,
-                               N_("FILE ccache type is not a collection "
-                                  "type", ""));
-        return KRB5_CC_NOSUPP;
+    if (res == NULL && sub == NULL)
+        return krb5_einval(context, 3);
+    if (res == NULL) {
+        krb5_error_code ret;
+
+        if ((ret = fcc_get_default_name(context, &freeme)))
+            return ret;
+        res = freeme + sizeof("FILE:") - 1;
+    } else if (!sub && (sub = strchr(res, FILESUBSEPCHR))) {
+        if (sub[1] == '\0') {
+            sub = NULL;
+        } else {
+            /* `res' has a subsidiary component, so split on it */
+            if ((freeme = strndup(res, sub - res)) == NULL)
+                return krb5_enomem(context);
+            res = freeme;
+            sub++;
+        }
     }
 
-    f = calloc(1, sizeof(*f));
-    if(f == NULL) {
-	krb5_set_error_message(context, KRB5_CC_NOMEM,
-			       N_("malloc: out of memory", ""));
-	return KRB5_CC_NOMEM;
+    if ((f = calloc(1, sizeof(*f))) == NULL ||
+        (f->res = strdup(res)) == NULL ||
+        (f->sub = sub ? strdup(sub) : NULL) == (sub ? NULL : "") ||
+        asprintf(&f->filename, "%s%s%s",
+                 res, sub ? FILESUBSEP : "", sub ? sub : "") == -1 ||
+        f->filename == NULL) {
+        if (f) {
+            free(f->filename);
+            free(f->res);
+            free(f->sub);
+        }
+        free(f);
+        free(freeme);
+        return krb5_enomem(context);
     }
     f->tmpfn = NULL;
-    f->filename = strdup(res);
-    if(f->filename == NULL){
-	free(f);
-	krb5_set_error_message(context, KRB5_CC_NOMEM,
-			       N_("malloc: out of memory", ""));
-	return KRB5_CC_NOMEM;
-    }
     f->version = 0;
     (*id)->data.data = f;
     (*id)->data.length = sizeof(*f);
 
+    free(freeme);
     return 0;
 }
 
@@ -353,6 +385,11 @@ fcc_gen_new(krb5_context context, krb5_ccache *id)
 	return KRB5_CC_NOMEM;
     }
     f->tmpfn = NULL;
+    /*
+     * XXX We should asprintf(&file, "%s:XXXXXX", KRB5_DEFAULT_CCNAME_FILE)
+     * instead so that new unique FILE ccaches can be found in the user's
+     * default collection.
+     * */
     ret = asprintf(&file, "%sXXXXXX", KRB5_DEFAULT_CCFILE_ROOT);
     if(ret < 0 || file == NULL) {
 	free(f);
@@ -379,6 +416,8 @@ fcc_gen_new(krb5_context context, krb5_ccache *id)
     }
     close(fd);
     f->filename = exp_file;
+    f->res = strdup(exp_file); /* XXX See above commentary about collection */
+    f->sub = NULL;
     f->version = 0;
     (*id)->data.data = f;
     (*id)->data.length = sizeof(*f);
@@ -466,7 +505,9 @@ fcc_open(krb5_context context,
     strict_checking = (flags & O_CREAT) == 0 &&
 	(context->flags & KRB5_CTX_F_FCACHE_STRICT_CHECKING) != 0;
 
+#ifndef WIN32
 again:
+#endif
     memset(&sb1, 0, sizeof(sb1));
     ret = lstat(filename, &sb1);
     if (ret == 0) {
@@ -662,6 +703,8 @@ fcc_close(krb5_context context,
     if (TMPFILENAME(id))
         (void) unlink(TMPFILENAME(id));
     free(TMPFILENAME(id));
+    free(RESFILENAME(id));
+    free(SUBFILENAME(id));
     free(FILENAME(id));
     krb5_data_free(&id->data);
     return 0;
@@ -903,14 +946,14 @@ fcc_get_principal(krb5_context context,
 }
 
 static krb5_error_code KRB5_CALLCONV
-fcc_end_get (krb5_context context,
-	     krb5_ccache id,
-	     krb5_cc_cursor *cursor);
+fcc_end_get(krb5_context context,
+	    krb5_ccache id,
+	    krb5_cc_cursor *cursor);
 
 static krb5_error_code KRB5_CALLCONV
-fcc_get_first (krb5_context context,
-	       krb5_ccache id,
-	       krb5_cc_cursor *cursor)
+fcc_get_first(krb5_context context,
+	      krb5_ccache id,
+	      krb5_cc_cursor *cursor)
 {
     krb5_error_code ret;
     krb5_principal principal;
@@ -1162,62 +1205,320 @@ fcc_get_version(krb5_context context,
     return FCACHE(id)->version;
 }
 
-struct fcache_iter {
-    int first;
-};
-
-static krb5_error_code KRB5_CALLCONV
-fcc_get_cache_first(krb5_context context, krb5_cc_cursor *cursor)
+static const char *
+my_basename(const char *fn)
 {
-    struct fcache_iter *iter;
+    const char *base, *p;
 
-    iter = calloc(1, sizeof(*iter));
-    if (iter == NULL) {
-	krb5_set_error_message(context, ENOMEM, N_("malloc: out of memory", ""));
-	return ENOMEM;
+    if (strncmp(fn, "FILE:", sizeof("FILE:") - 1))
+        return "";
+    fn += sizeof("FILE:") - 1;
+    for (p = base = fn; *p; p++) {
+#ifdef WIN32
+        if (*p == '/' || *p == '\\')
+            base = p + 1;
+#else
+        if (*p == '/')
+            base = p + 1;
+#endif
     }
-    iter->first = 1;
-    *cursor = iter;
+    return base;
+}
+
+/* We could use an rk_dirname()... */
+static char *
+my_dirname(const char *fn)
+{
+    size_t len, i;
+    char *dname;
+
+    if (strncmp(fn, "FILE:", sizeof("FILE:") - 1) == 0)
+        fn += sizeof("FILE:") - 1;
+
+    if ((dname = strdup(fn)) == NULL)
+        return NULL;
+    len = strlen(dname);
+    for (i = 0; i < len; i++) {
+#ifdef WIN32
+        if (dname[len - i] == '\\' ||
+            dname[len - i] == '/') {
+            dname[len - i] = '\0';
+            break;
+        }
+#else
+        if (dname[len - i] == '/') {
+            dname[len - i] = '\0';
+            break;
+        }
+#endif
+    }
+    if (i < len)
+        return dname;
+    free(dname);
+    return strdup(".");
+}
+
+/*
+ * This checks that a directory entry matches a required basename and has a
+ * non-empty subsidiary component.
+ */
+static int
+matchbase(const char *fn, const char *base, size_t baselen)
+{
+    return strncmp(fn, base, baselen) == 0 &&
+        (fn[baselen] == FILESUBSEPCHR && fn[baselen + 1] != '\0');
+}
+
+/*
+ * Check if `def_locs' contains `name' (which must be the default ccache name),
+ * in which case the caller may look for subsidiaries of all of `def_locs'.
+ *
+ * This is needed because the collection iterators don't take a base location
+ * as an argument, so we can only search default locations, but only if the
+ * current default ccache name is indeed a default (as opposed to from
+ * KRB5CCNAME being set in the environment pointing to a non-default name).
+ */
+static krb5_error_code
+is_default_collection(krb5_context context, const char *name,
+                      const char * const *def_locs, int *res)
+{
+    krb5_error_code ret;
+    const char *def_loc[2] = { KRB5_DEFAULT_CCNAME_FILE, NULL };
+    size_t i;
+
+    *res = 0;
+    if (name == NULL) {
+        *res = 1;
+        return 0;
+    }
+    if (def_locs == NULL)
+        def_locs = def_loc;
+    for (i = 0; !(*res) && def_locs[i]; i++) {
+        char *e = NULL;
+
+        if ((ret = _krb5_expand_default_cc_name(context, def_locs[i], &e)))
+            return ret;
+        *res = strcmp(name, e) == 0;
+        free(e);
+    }
     return 0;
 }
 
+/*
+ * Collection iterator cursor.
+ *
+ * There may be an array of locations, and for each location we'll try
+ * resolving it, as well as doing a readdir() of the dirname of it and output
+ * all ccache names in that directory that begin with the current location and
+ * end in "+${subsidiary}".
+ */
+struct fcache_iter {
+    const char *curr_location;
+    char *def_ccname;   /* The default ccname */
+    char **locations;   /* All the other places we'll look for a ccache */
+    char *dname;        /* dirname() of curr_location */
+    DIR *d;
+    struct dirent *dentry;
+    int location;       /* Index of `locations' */
+    unsigned int first:1;
+    unsigned int dead:1;
+};
+
+/* Initiate FILE collection iteration */
 static krb5_error_code KRB5_CALLCONV
-fcc_get_cache_next(krb5_context context, krb5_cc_cursor cursor, krb5_ccache *id)
+fcc_get_cache_first(krb5_context context, krb5_cc_cursor *cursor)
 {
-    struct fcache_iter *iter = cursor;
+    struct fcache_iter *iter = NULL;
     krb5_error_code ret;
-    const char *fn, *cc_type;
-    krb5_ccache cc;
+    const char *def_ccname = NULL;
+    char **def_locs = NULL;
+    int is_def_coll = 0;
 
-    if (iter == NULL)
-        return krb5_einval(context, 2);
-
-    if (!iter->first) {
-	krb5_clear_error_message(context);
-	return KRB5_CC_END;
+    if (krb5_config_get_bool_default(context, NULL, FALSE, "libdefaults",
+                                     "enable_file_cache_iteration", NULL)) {
+        def_ccname = krb5_cc_default_name(context);
+        def_locs = krb5_config_get_strings(context, NULL, "libdefaults",
+                                           "default_file_cache_collections",
+                                           NULL);
     }
-    iter->first = 0;
 
     /*
      * Note: do not allow krb5_cc_default_name() to recurse via
      * krb5_cc_cache_match().
      * Note that context->default_cc_name will be NULL even though
-     * KRB5CCNAME is set in the environment if
-     * krb5_cc_set_default_name() hasn't
+     * KRB5CCNAME is set in the environment if neither krb5_cc_default_name()
+     * nor krb5_cc_set_default_name() have been called.
      */
-    fn = krb5_cc_default_name(context);
-    ret = krb5_cc_resolve(context, fn, &cc);
-    if (ret != 0)
-        return ret;
-    cc_type = krb5_cc_get_type(context, cc);
-    if (strcmp(cc_type, "FILE") != 0) {
-        krb5_cc_close(context, cc);
-        return KRB5_CC_END;
+
+    /*
+     * Figure out if the current default ccache name is a really a default one
+     * so we know whether to search any other default FILE collection
+     * locations.
+     */
+    if ((ret = is_default_collection(context, def_ccname,
+                                     (const char **)def_locs,
+                                     &is_def_coll)))
+        goto out;
+
+    /* Setup the cursor */
+    if ((iter = calloc(1, sizeof(*iter))) == NULL ||
+        (def_ccname && (iter->def_ccname = strdup(def_ccname)) == NULL)) {
+        ret = krb5_enomem(context);
+        goto out;
     }
 
-    *id = cc;
+    if (is_def_coll) {
+        /* Since def_ccname is in the `def_locs', we'll include those */
+        iter->locations = def_locs;
+        free(iter->def_ccname);
+        iter->def_ccname = NULL;
+        def_locs = NULL;
+    } else {
+        /* Since def_ccname is NOT in the `def_locs', we'll exclude those */
+        iter->locations = NULL;
+    }
+    iter->curr_location = NULL;
+    iter->location = -1; /* Pre-incremented */
+    iter->first = 1;
+    iter->dname = NULL;
+    iter->d = NULL;
+    *cursor = iter;
+    iter = NULL;
+    ret = 0;
 
+out:
+    krb5_config_free_strings(def_locs);
+    free(iter);
+    return ret;
+}
+
+/* Pick the next location as the `iter->curr_location' */
+static krb5_error_code
+next_location(krb5_context context, struct fcache_iter *iter)
+{
+    if (iter->first && iter->def_ccname) {
+        iter->curr_location = iter->def_ccname;
+        iter->first = 0;
+        return 0;
+    }
+    iter->first = 0;
+
+    if (iter->d)
+        closedir(iter->d);
+    iter->d = NULL;
+    iter->curr_location = NULL;
+    if (iter->locations &&
+        (iter->curr_location = iter->locations[++(iter->location)]))
+        return 0;
+
+    iter->dead = 1; /* Do not run off the end of iter->locations */
+    return KRB5_CC_END;
+}
+
+/* Output the next match for `iter->curr_location' from readdir() */
+static krb5_error_code
+next_dir_match(krb5_context context, struct fcache_iter *iter, char **fn)
+{
+    struct stat st;
+    const char *base = my_basename(iter->curr_location);
+    size_t baselen = strlen(base);
+    char *s;
+
+    *fn = NULL;
+    if (iter->d == NULL)
+        return 0;
+    for (iter->dentry = readdir(iter->d);
+         iter->dentry;
+         iter->dentry = readdir(iter->d)) {
+        if (!matchbase(iter->dentry->d_name, base, baselen))
+            continue;
+        if (asprintf(&s, "FILE:%s/%s", iter->dname, iter->dentry->d_name) == -1 ||
+            s == NULL)
+            return krb5_enomem(context);
+        if (stat(s + sizeof("FILE:") - 1, &st) == 0 && S_ISREG(st.st_mode)) {
+            *fn = s;
+            return 0;
+        }
+        free(s);
+    }
+    iter->curr_location = NULL;
+    closedir(iter->d);
+    iter->d = NULL;
     return 0;
+}
+
+/* See if the given `ccname' is a FILE ccache we can resolve */
+static krb5_error_code
+try1(krb5_context context, const char *ccname, krb5_ccache *id)
+{
+    krb5_error_code ret;
+    krb5_ccache cc;
+
+    ret = krb5_cc_resolve(context, ccname, &cc);
+    if (ret == ENOMEM)
+        return ret;
+    if (ret == 0) {
+        if (strcmp(krb5_cc_get_type(context, cc), "FILE") == 0) {
+            *id = cc;
+            cc = NULL;
+        }
+        krb5_cc_close(context, cc);
+    }
+    return 0;
+}
+
+/* Output the next FILE ccache in the FILE ccache collection */
+static krb5_error_code KRB5_CALLCONV
+fcc_get_cache_next(krb5_context context, krb5_cc_cursor cursor, krb5_ccache *id)
+{
+    struct fcache_iter *iter = cursor;
+    krb5_error_code ret;
+    char *name = NULL;
+
+    *id = NULL;
+    if (iter == NULL)
+        return krb5_einval(context, 2);
+
+    /* Do not run off the end of iter->locations */
+    if (iter->dead)
+        return KRB5_CC_END;
+
+    if (!iter->curr_location) {
+        /* Next base location */
+        if ((ret = next_location(context, iter)))
+            return ret;
+        /* Output the current base location */
+        if ((ret = try1(context, iter->curr_location, id)) || *id)
+            return ret;
+    }
+
+    /* Look for subsidiaries of iter->curr_location */
+    if (!iter->d) {
+        free(iter->dname);
+        if ((iter->dname = my_dirname(iter->curr_location)) == NULL)
+            return krb5_enomem(context);
+        if ((iter->d = opendir(iter->dname)) == NULL) {
+            /* Dirname ENOENT -> next location */
+            if ((ret = next_location(context, iter)))
+                return ret;
+            /* Tail-recurse */
+            return fcc_get_cache_next(context, cursor, id);
+        }
+    }
+    for (ret = next_dir_match(context, iter, &name);
+         ret == 0 && name != NULL;
+         ret = next_dir_match(context, iter, &name)) {
+        if ((ret = try1(context, name, id)) || *id) {
+            free(name);
+            return ret;
+        }
+        free(name);
+    }
+
+    /* Directory listing exhausted -> go to next location, tail-recurse */
+    if ((ret = next_location(context, iter)))
+        return ret;
+    return fcc_get_cache_next(context, cursor, id);
 }
 
 static krb5_error_code KRB5_CALLCONV
@@ -1228,6 +1529,11 @@ fcc_end_cache_get(krb5_context context, krb5_cc_cursor cursor)
     if (iter == NULL)
         return krb5_einval(context, 2);
 
+    krb5_config_free_strings(iter->locations);
+    if (iter->d)
+        closedir(iter->d);
+    free(iter->def_ccname);
+    free(iter->dname);
     free(iter);
     return 0;
 }
@@ -1254,6 +1560,35 @@ fcc_get_default_name(krb5_context context, char **str)
     return _krb5_expand_default_cc_name(context,
 					KRB5_DEFAULT_CCNAME_FILE,
 					str);
+}
+
+static krb5_error_code KRB5_CALLCONV
+fcc_set_default_cache(krb5_context context, krb5_ccache id)
+{
+    krb5_error_code ret;
+    krb5_ccache dest;
+    char *s = NULL;
+
+    if (SUBFILENAME(id) == NULL)
+        return 0; /* Already a primary */
+    if (asprintf(&s, "FILE:%s", RESFILENAME(id)) == -1 || s == NULL)
+        return krb5_enomem(context);
+
+    /*
+     * We can't hard-link, since we refuse to open ccaches with st_nlink > 1,
+     * and we can't rename() the ccache because the old name should remain
+     * available.  Ergo, we copy the ccache.
+     */
+    ret = krb5_cc_resolve(context, s, &dest);
+    if (ret == 0)
+        ret = krb5_cc_copy_cache(context, id, dest);
+    free(s);
+    if (ret)
+	krb5_set_error_message(context, ret,
+                               N_("Failed to copy subsidiary cache file %s to "
+                                  "default %s", ""), FILENAME(id),
+                               RESFILENAME(id));
+    return ret;
 }
 
 static krb5_error_code KRB5_CALLCONV
@@ -1327,7 +1662,7 @@ KRB5_LIB_VARIABLE const krb5_cc_ops krb5_fcc_ops = {
     fcc_end_cache_get,
     fcc_move,
     fcc_get_default_name,
-    NULL,
+    fcc_set_default_cache,
     fcc_lastchange,
     fcc_set_kdc_offset,
     fcc_get_kdc_offset

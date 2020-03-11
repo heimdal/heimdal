@@ -815,7 +815,9 @@ test_cccol_dcache(krb5_context context)
         (void) unlink(s);
         free(s);
     }
-    (void) rmdir(template + sizeof("DIR:") - 1); /* XXX Check that this succeeds */
+    if (rmdir(template + sizeof("DIR:") - 1))
+        krb5_warn(context, errno, "Could not rmdir(%s) (DIR)",
+                  template + sizeof("DIR:") - 1);
     if (ret)
         krb5_err(context, 1, errno, "%s", what);
 }
@@ -1057,6 +1059,40 @@ main(int argc, char **argv)
             krb5_err(context, 1, ret, "%s", what);
     }
 #endif /* HAVE_KEYUTILS_H */
+
+    {
+        const char *what;
+        char *config;
+        char *fname;
+        char *d;
+
+        if ((d = strdup("FILE:filesXXXXXX")) == NULL ||
+            mkdtemp(d + sizeof("FILE:") - 1) == NULL ||
+            asprintf(&fname, "%s/foobar", d) == -1 ||
+            fname == NULL ||
+            asprintf(&config,
+                     "[libdefaults]\n"
+                     "\tdefault_file_cache_collections = %1$s/foobar\n"
+                     "\tenable_file_cache_iteration = true\n",
+                     d) == -1 || config == NULL)
+            krb5_err(context, 1, errno, "Could not make temp dir");
+        ret = krb5_set_config(context, config);
+        if (ret)
+            krb5_err(context, 1, ret,
+                     "Could not configure context from string:\n%s\n", config);
+        ret = test_cccol(context, fname, &what);
+        if (ret)
+            krb5_err(context, 1, ret, "%s", what);
+        if (chdir(d + sizeof("FILE:") - 1) == 0) {
+            unlink("foobar");
+            unlink("foobar+lha@H5L.SE");
+            unlink("foobar+lha@SU.SE");
+            chdir("..");
+        }
+        if (rmdir(d + sizeof("FILE:") - 1))
+            krb5_warn(context, errno, "Could not rmdir(%s) (FILE)",
+                      d + sizeof("FILE:") - 1);
+    }
 
     krb5_free_context(context);
 

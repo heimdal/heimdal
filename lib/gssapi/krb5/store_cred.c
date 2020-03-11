@@ -160,7 +160,9 @@ _gsskrb5_store_cred_into2(OM_uint32         *minor_status,
 	return GSS_S_NO_CRED;
     }
 
-    if (cs_ccache_name) {
+    if (cs_ccache_name && strcmp(cs_ccache_name, "unique") == 0) {
+        ret = krb5_cc_new_unique(context, NULL, NULL, &id);
+    } else if (cs_ccache_name) {
         default_cred = 0;
         ret = krb5_cc_resolve(context, cs_ccache_name, &id);
     } else {

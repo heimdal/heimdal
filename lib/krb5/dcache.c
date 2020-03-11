@@ -779,9 +779,10 @@ dcc_get_default_name(krb5_context context, char **str)
                                        "libdefaults", "default_cc_collection",
                                        NULL);
 
-    /* What if def_cc_colname does not start with DIR:?  We tolerate it. */
-    return _krb5_expand_default_cc_name(context, def_cc_colname,
-					str);
+    /* [libdefaults] default_cc_collection is for testing */
+    if (strncmp(def_cc_colname, "DIR:", sizeof("DIR:") - 1))
+        def_cc_colname = KRB5_DEFAULT_CCNAME_DIR;
+    return _krb5_expand_default_cc_name(context, def_cc_colname, str);
 }
 
 static krb5_error_code KRB5_CALLCONV

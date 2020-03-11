@@ -789,7 +789,7 @@ krb5_set_config(krb5_context context, const char *config)
 #if 0
     /* with this enabled and if there are no config files, Kerberos is
        considererd disabled */
-    if(tmp == NULL)
+    if (tmp == NULL)
 	return ENXIO;
 #endif
 

@@ -764,6 +764,42 @@ krb5_set_config_files(krb5_context context, char **filenames)
     return ret;
 }
 
+#ifndef HEIMDAL_SMALLER
+/**
+ * Reinit the context from configuration file contents in a C string.
+ * This should only be used in tests.
+ *
+ * @param context context to add configuration too.
+ * @param config configuration.
+ *
+ * @return Returns 0 to indicate success.  Otherwise an kerberos et
+ * error code is returned, see krb5_get_error_message().
+ *
+ * @ingroup krb5
+ */
+
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
+krb5_set_config(krb5_context context, const char *config)
+{
+    krb5_error_code ret;
+    krb5_config_binding *tmp = NULL;
+
+    if ((ret = krb5_config_parse_string_multi(context, config, &tmp)))
+        return ret;
+#if 0
+    /* with this enabled and if there are no config files, Kerberos is
+       considererd disabled */
+    if(tmp == NULL)
+	return ENXIO;
+#endif
+
+    krb5_config_file_free(context, context->cf);
+    context->cf = tmp;
+    ret = init_context_from_config_file(context);
+    return ret;
+}
+#endif
+
 static krb5_error_code
 add_file(char ***pfilenames, int *len, char *file)
 {

@@ -368,7 +368,7 @@ dsstringprep(const DirectoryString *ds, uint32_t **rname, size_t *rlen)
 {
     wind_profile_flags flags;
     size_t i, len;
-    int ret;
+    int ret = 0;
     uint32_t *name;
 
     *rname = NULL;
@@ -418,7 +418,10 @@ dsstringprep(const DirectoryString *ds, uint32_t **rname, size_t *rlen)
     /* try a couple of times to get the length right, XXX gross */
     for (i = 0; i < 4; i++) {
 	*rlen = *rlen * 2;
-	*rname = malloc(*rlen * sizeof((*rname)[0]));
+	if ((*rname = malloc(*rlen * sizeof((*rname)[0]))) == NULL) {
+            ret = ENOMEM;
+            break;
+        }
 
 	ret = wind_stringprep(name, len, *rname, rlen, flags);
 	if (ret == WIND_ERR_OVERRUN) {

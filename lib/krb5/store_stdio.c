@@ -34,6 +34,11 @@
 #include "krb5_locl.h"
 #include "store-int.h"
 
+#ifndef HAVE_FSEEKO
+#define fseeko fseek
+#define ftello ftell
+#endif
+
 typedef struct stdio_storage {
     FILE *f;
     off_t pos;

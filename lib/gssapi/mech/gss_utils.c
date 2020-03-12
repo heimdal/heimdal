@@ -196,8 +196,8 @@ _gss_mg_decode_le_uint16(const void *ptr, uint16_t *n)
 void
 _gss_mg_encode_be_uint16(uint16_t n, uint8_t *p)
 {
-    p[0] = (n >> 24) & 0xFF;
-    p[1] = (n >> 16) & 0xFF;
+    p[0] = (n >> 8) & 0xFF;
+    p[1] = (n >> 0) & 0xFF;
 }
 
 void

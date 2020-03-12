@@ -320,7 +320,7 @@ roken_get_loginname(char *user, size_t usersz)
         return NULL;
 #endif
 #endif
-#endif
     errno = 0;
     return NULL;
+#endif
 }

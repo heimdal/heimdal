@@ -68,7 +68,7 @@ static void
 do_readprocauxv(void)
 {
     char *p = (void *)auxv;
-    ssize_t bytes;
+    ssize_t bytes = 0;
     size_t sz = sizeof(auxv) - sizeof(auxv[0]); /* leave terminator */
     int save_errno = errno;
     int fd;

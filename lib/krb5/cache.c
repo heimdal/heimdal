@@ -1895,7 +1895,7 @@ KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_cccol_cursor_next(krb5_context context, krb5_cccol_cursor cursor,
 		       krb5_ccache *cache)
 {
-    krb5_error_code ret;
+    krb5_error_code ret = 0;
 
     *cache = NULL;
 
@@ -2238,7 +2238,7 @@ _get_default_cc_name_from_registry(krb5_context context, HKEY hkBase)
     if (code != ERROR_SUCCESS)
         return NULL;
 
-    ccname = heim_parse_reg_value_as_string(context, hk_k5, "ccname",
+    ccname = heim_parse_reg_value_as_string(context->hcontext, hk_k5, "ccname",
                                             REG_NONE, 0);
 
     RegCloseKey(hk_k5);
@@ -2278,7 +2278,7 @@ _krb5_set_default_cc_name_to_registry(krb5_context context, krb5_ccache id)
     if (ret < 0)
         goto cleanup;
 
-    ret = heim_store_string_to_reg_value(context, hk_k5, "ccname",
+    ret = heim_store_string_to_reg_value(context->hcontext, hk_k5, "ccname",
                                          REG_SZ, ccname, -1, 0);
 
   cleanup:

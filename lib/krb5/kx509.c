@@ -760,7 +760,7 @@ mk_kx509_req(krb5_context context,
     HMAC_CTX ctx;
     const char *hostname;
     char *start_realm = NULL;
-    size_t len;
+    size_t len = 0;
 
     krb5_data_zero(&pre_req);
     memset(&spki, 0, sizeof(spki));

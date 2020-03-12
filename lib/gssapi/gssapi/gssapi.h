@@ -1231,7 +1231,7 @@ gss_release_cred_by_mech(
 GSSAPI_LIB_FUNCTION void GSSAPI_LIB_CALL
 gss_set_log_function(void *ctx, void (*func)(void * ctx, int level, const char *fmt, va_list));
 
-GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_FUNCTION
+GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL
 gss_destroy_cred(OM_uint32 *minor_status,
 		 gss_cred_id_t *cred_handle);
 

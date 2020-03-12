@@ -636,7 +636,7 @@ hx509_request_to_pkcs10(hx509_context context,
     if (ret == 0)
         ret = get_exts(context, req, &exts);
     if (ret == 0 && exts.len) {
-        Attribute *a;
+        Attribute *a = NULL; /* Quiet VC */
         heim_any extns;
 
         r.certificationRequestInfo.attributes =
@@ -655,7 +655,7 @@ hx509_request_to_pkcs10(hx509_context context,
         if (ret == 0)
             ASN1_MALLOC_ENCODE(Extensions, extns.data, extns.length,
                                &exts, &size, ret);
-        if (ret == 0)
+        if (ret == 0 && a)
             ret = der_copy_oid(&asn1_oid_id_pkcs9_extReq, &a->type);
         if (ret == 0)
             ret = add_AttributeValues(&a->value, &extns);

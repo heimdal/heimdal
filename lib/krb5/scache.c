@@ -384,7 +384,7 @@ scc_alloc(krb5_context context,
 
         if ((subsidiary = strrchr(s->file, ':'))) {
 #ifdef WIN32
-            if (subsidiary == &s->file + 1)
+            if (subsidiary == s->file + 1)
                 subsidiary = NULL;
             else
 #endif

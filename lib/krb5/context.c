@@ -243,18 +243,15 @@ init_context_from_config_file(krb5_context context)
     context->configured_default_cc_name = NULL;
 
     tmp = secure_getenv("KRB5_TRACE");
+    if (tmp)
+        heim_add_debug_dest(context->hcontext, "libkrb5", tmp);
     s = krb5_config_get_strings(context, NULL, "logging", "krb5", NULL);
-    if (tmp || s) {
+    if (s) {
 	char **p;
 
-	if (s) {
-	    for (p = s; *p; p++)
-                heim_add_debug_dest(context->hcontext, "libkrb5", *p);
-	    krb5_config_free_strings(s);
-	}
-
-	if (tmp)
+        for (p = s; *p; p++)
             heim_add_debug_dest(context->hcontext, "libkrb5", *p);
+        krb5_config_free_strings(s);
     }
 
     tmp = krb5_config_get_string(context, NULL, "libdefaults",

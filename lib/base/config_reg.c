@@ -90,9 +90,8 @@ heim_store_string_to_reg_value(heim_context context,
                                const char *separator)
 {
     LONG        rcode;
-    DWORD       dwData;
+    int         dwData;
     BYTE        static_buffer[16384];
-    BYTE        *pbuffer = &static_buffer[0];
 
     if (data == NULL)
     {

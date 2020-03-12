@@ -104,7 +104,7 @@ krb5_plugin_register(krb5_context context,
 KRB5_LIB_FUNCTION void KRB5_LIB_CALL
 _krb5_load_plugins(krb5_context context, const char *name, const char **paths)
 {
-    return heim_load_plugins(context->hcontext, name, paths);
+    heim_load_plugins(context->hcontext, name, paths);
 }
 
 /**

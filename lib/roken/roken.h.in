@@ -448,7 +448,7 @@ rk_wcsdup(const unsigned short *);
 
 #ifndef HAVE_MEMMEM
 #define memmem rk_smemmem
-ROKEN_LIB_FUNCTION char * ROKEN_LIB_CALL memmem(const char *);
+ROKEN_LIB_FUNCTION void * ROKEN_LIB_CALL memmem(const void *, size_t, const void *, size_t);
 #endif
 
 #ifdef HAVE_WINSOCK

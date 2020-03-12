@@ -112,6 +112,7 @@ krb5_storage_from_socket(krb5_socket_t sock_in)
 #ifdef _WIN32
     WSAPROTOCOL_INFO info;
 
+    sock = rk_INVALID_SOCKET;
     if (WSADuplicateSocket(sock_in, GetCurrentProcessId(), &info) == 0)
     {
 

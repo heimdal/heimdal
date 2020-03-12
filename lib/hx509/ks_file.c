@@ -619,7 +619,7 @@ mk_temp(const char *fn, char **tfn)
         return -1;
     }
 
-    if (p = strrchr(ds, '\\') == NULL) {
+    if ((p = strrchr(ds, '\\')) == NULL) {
         ret = asprintf(tfn, ".%s-XXXXXX", ds); /* XXX can't happen */
     } else {
         *(p++) = '\0';

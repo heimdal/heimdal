@@ -1064,8 +1064,6 @@ get_left(kadm5_server_context *server_context, slave *s, krb5_storage *sp,
          */
     }
 
-    return left;
-
  err:
     flock(log_fd, LOCK_UN);
     return -1;
@@ -1190,7 +1188,6 @@ send_diffs(kadm5_server_context *server_context, slave *s, int log_fd,
     sp = krb5_storage_from_data(&data);
     if (sp == NULL) {
         krb5_err(context, IPROPD_RESTART_SLOW, ENOMEM, "out of memory");
-        krb5_warnx(context, "send_diffs: krb5_storage_from_data");
         return;
     }
     krb5_store_uint32(sp, FOR_YOU);

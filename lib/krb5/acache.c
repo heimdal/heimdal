@@ -450,7 +450,7 @@ acc_get_name(krb5_context context,
              const char **colname,
              const char **subsidiary)
 {
-    krb5_error_code ret;
+    krb5_error_code ret = 0;
     krb5_acc *a = ACACHE(id);
     int32_t error;
 
@@ -486,7 +486,7 @@ acc_get_name(krb5_context context,
     if (colname)
         *colname = "";
     if (subsidiary)
-    *subsidiary = a->cache_subsidiary;
+        *subsidiary = a->cache_subsidiary;
     return ret;
 }
 

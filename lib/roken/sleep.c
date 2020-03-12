@@ -41,7 +41,7 @@ ROKEN_LIB_FUNCTION unsigned int ROKEN_LIB_CALL
 sleep(unsigned int seconds)
 {
     if (SleepEx(1000 * (DWORD) seconds, FALSE) != 0)
-	return -1;
+	return 1; /* XXX Should get time before and after */
     return 0;
 }
 
@@ -50,6 +50,6 @@ ROKEN_LIB_FUNCTION unsigned int ROKEN_LIB_CALL
 usleep(unsigned int useconds)
 {
     if (SleepEx((DWORD)(useconds / 1000), FALSE) != 0)
-	return -1;
+	return 1000; /* XXX Should get time before and after */
     return 0;
 }

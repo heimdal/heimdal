@@ -76,13 +76,13 @@ add_env(OM_uint32 *minor,
 static OM_uint32
 set_proc(OM_uint32 *minor, gss_buffer_set_t env)
 {
-    size_t i;
-
     /*
      * XXX On systems with setpag(), call setpag().  On WIN32... create a
      * session, set the access token, ...?
      */
 #ifndef WIN32
+    size_t i;
+
     for (i = 0; i < env->count; i++)
         putenv(env->elements[i].value);
 #endif

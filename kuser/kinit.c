@@ -1482,7 +1482,22 @@ main(int argc, char **argv)
     if (cred_cache) {
 	ret = krb5_cc_resolve(context, cred_cache, &ccache);
     } else if (default_for_flag) {
-        ret = krb5_cc_default_for(context, principal, &ccache);
+        char username[64];
+        char *user_realm;
+
+        if ((user_realm = get_user_realm(context)) == NULL)
+            user_realm = get_default_realm(context);
+        if (user_realm &&
+            krb5_principal_get_num_comp(context, principal) == 1 &&
+            strcmp(user_realm,
+                   krb5_principal_get_realm(context, principal)) == 0 &&
+            roken_get_username(username, sizeof(username)) &&
+            strcmp(username,
+                   krb5_principal_get_comp_string(context, principal, 0)) == 0)
+            ret = krb5_cc_default(context, &ccache);
+        else
+            ret = krb5_cc_default_for(context, principal, &ccache);
+        free(user_realm);
     } else {
 	if (argc > 1) {
 	    char s[1024];

@@ -56,6 +56,7 @@ int validate_flag	= 0;
 int version_flag	= 0;
 int help_flag		= 0;
 int addrs_flag		= -1;
+int default_for_flag	= -1;
 struct getarg_strings extra_addresses;
 int anonymous_flag	= 0;
 char *lifetime 		= NULL;
@@ -107,6 +108,9 @@ static struct getargs args[] = {
 
     { "cache", 		'c', arg_string, &cred_cache,
       NP_("credentials cache", ""), "cachename" },
+
+    { "cache-default-for"  , 0, arg_flag, &default_for_flag,
+      NP_("name cache after client principal", ""), NULL },
 
     { "forwardable",	'F', arg_negative_flag, &forwardable_flag,
       NP_("get tickets not forwardable", ""), NULL },
@@ -1475,9 +1479,11 @@ main(int argc, char **argv)
 				krb5_principal_get_realm(context, principal),
 				"afslog", TRUE, &do_afslog);
 
-    if (cred_cache)
+    if (cred_cache) {
 	ret = krb5_cc_resolve(context, cred_cache, &ccache);
-    else {
+    } else if (default_for_flag) {
+        ret = krb5_cc_default_for(context, principal, &ccache);
+    } else {
 	if (argc > 1) {
 	    char s[1024];
 	    ret = krb5_cc_new_unique(context, NULL, NULL, &ccache);

@@ -108,6 +108,8 @@ _gsskrb5_store_cred_into2(OM_uint32         *minor_status,
     time_t exp_new;
     gss_buffer_set_t env = GSS_C_NO_BUFFER_SET;
     const char *cs_ccache_name = NULL;
+    const char *cs_user_name = NULL;
+    const char *cs_app_name = NULL;
     OM_uint32 major_status, junk;
     OM_uint32 overwrite_cred = store_cred_flags & GSS_C_STORE_CRED_OVERWRITE;
     OM_uint32 default_cred = store_cred_flags & GSS_C_STORE_CRED_DEFAULT;
@@ -147,6 +149,14 @@ _gsskrb5_store_cred_into2(OM_uint32         *minor_status,
 	}
 	if (GSS_ERROR(major_status))
 	    return major_status;
+	major_status = __gsskrb5_cred_store_find(minor_status, cred_store,
+						 "username", &cs_user_name);
+	if (GSS_ERROR(major_status))
+	    return major_status;
+	major_status = __gsskrb5_cred_store_find(minor_status, cred_store,
+						 "appname", &cs_app_name);
+	if (GSS_ERROR(major_status))
+	    return major_status;
     }
 
     GSSAPI_KRB5_INIT (&context);
@@ -161,19 +171,14 @@ _gsskrb5_store_cred_into2(OM_uint32         *minor_status,
     }
 
     if (cs_ccache_name && strcmp(cs_ccache_name, "unique") == 0) {
+        overwrite_cred = 1;
+        default_cred = 0;
         ret = krb5_cc_new_unique(context, NULL, NULL, &id);
     } else if (cs_ccache_name) {
         default_cred = 0;
         ret = krb5_cc_resolve(context, cs_ccache_name, &id);
     } else {
-        /*
-         * Use the default ccache, and if it's a collection, switch it if
-         * default_cred is true.
-         */
         ret = krb5_cc_default_for(context, input_cred->principal, &id);
-        if (ret == 0 &&
-            krb5_cc_support_switch(context, krb5_cc_get_type(context, id)))
-            overwrite_cred = 1;
     }
 
     if (ret || id == NULL) {
@@ -204,8 +209,34 @@ _gsskrb5_store_cred_into2(OM_uint32         *minor_status,
     if (ret == 0)
         ret = krb5_cc_copy_match_f(context, input_cred->ccache, id, NULL, NULL,
                                    NULL);
-    if (ret == 0 && default_cred)
-        krb5_cc_switch(context, id);
+    if (ret == 0 && default_cred) {
+        char *user_realm;
+
+        krb5_appdefault_string(context, cs_app_name ? cs_app_name : "kinit",
+                               NULL, "user_realm", NULL, &user_realm);
+
+        /*
+         * Switch the new ccache to be the default IFF:
+         *
+         *  - it was requested (default_cred)
+         *  - the principal has one component
+         *  - the principal's realm is the "user_realm" if configured
+         *  - the principal's one component is the given username if given
+         */
+        if (krb5_principal_get_num_comp(context, input_cred->principal) != 1)
+            default_cred = 0;
+        if (default_cred && user_realm &&
+            strcmp(user_realm,
+                   krb5_principal_get_realm(context, input_cred->principal)))
+            default_cred = 0;
+        if (default_cred && cs_user_name &&
+            strcmp(cs_user_name,
+                   krb5_principal_get_comp_string(context,
+                                                  input_cred->principal, 0)))
+            default_cred = 0;
+        if (default_cred)
+            krb5_cc_switch(context, id);
+    }
 
     if ((store_cred_flags & GSS_C_STORE_CRED_SET_PROCESS) && envp == NULL)
         envp = &env;

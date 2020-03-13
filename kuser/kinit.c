@@ -56,7 +56,7 @@ int validate_flag	= 0;
 int version_flag	= 0;
 int help_flag		= 0;
 int addrs_flag		= -1;
-int default_for_flag	= -1;
+int default_for_flag	= 0;
 struct getarg_strings extra_addresses;
 int anonymous_flag	= 0;
 char *lifetime 		= NULL;

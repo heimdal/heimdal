@@ -221,9 +221,9 @@ _gsskrb5_store_cred_into2(OM_uint32         *minor_status,
     } else if (principal_is_best_for_user(context, cs_app_name,
                                           input_cred->principal,
                                           cs_user_name)) {
-        ret = krb5_cc_default_for(context, input_cred->principal, &id);
-    } else {
         ret = krb5_cc_default(context, &id);
+    } else {
+        ret = krb5_cc_default_for(context, input_cred->principal, &id);
     }
 
     if (ret || id == NULL) {

@@ -71,7 +71,7 @@ clean::
 
 
 $(BINDIR)\kinit.exe: $(OBJ)\kinit.obj $(BINLIBS) $(OBJ)\kinit-version.res
-	$(EXECONLINK)
+	$(EXECONLINK) Secur32.lib Shell32.lib
 	$(EXEPREP)
 
 HEIMTOOLS_OBJS =				\
@@ -87,7 +87,7 @@ HEIMTOOLSLIBS=\
 	$(LIBSL)
 
 $(BINDIR)\heimtools.exe: $(HEIMTOOLS_OBJS) $(HEIMTOOLSLIBS) $(OBJ)\heimtools-version.res
-	$(EXECONLINK)
+	$(EXECONLINK) Secur32.lib Shell32.lib
 	$(EXEPREP)
 
 

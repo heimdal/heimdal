@@ -143,7 +143,6 @@ _gsskrb5_store_cred_into2(OM_uint32         *minor_status,
     const char *cs_app_name = NULL;
     OM_uint32 major_status, junk;
     OM_uint32 overwrite_cred = store_cred_flags & GSS_C_STORE_CRED_OVERWRITE;
-    OM_uint32 default_cred = store_cred_flags & GSS_C_STORE_CRED_DEFAULT;
 
     *minor_status = 0;
 
@@ -212,11 +211,9 @@ _gsskrb5_store_cred_into2(OM_uint32         *minor_status,
      *  - the default ccache
      */
     if (cs_ccache_name) {
-        default_cred = 0;
         ret = krb5_cc_resolve(context, cs_ccache_name, &id);
     } else if (cs_unique_ccache) {
         overwrite_cred = 1;
-        default_cred = 0;
         ret = krb5_cc_new_unique(context, cs_unique_ccache, NULL, &id);
     } else if (principal_is_best_for_user(context, cs_app_name,
                                           input_cred->principal,
@@ -254,8 +251,6 @@ _gsskrb5_store_cred_into2(OM_uint32         *minor_status,
     if (ret == 0)
         ret = krb5_cc_copy_match_f(context, input_cred->ccache, id, NULL, NULL,
                                    NULL);
-    if (ret == 0 && default_cred)
-        krb5_cc_switch(context, id);
 
     if ((store_cred_flags & GSS_C_STORE_CRED_SET_PROCESS) && envp == NULL)
         envp = &env;

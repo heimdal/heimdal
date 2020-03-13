@@ -102,18 +102,19 @@ principal_is_best_for_user(krb5_context context,
                            krb5_const_principal p,
                            const char *user)
 {
-    char *user_realm;
+    char *default_realm = NULL;
+    char *user_realm = NULL;
     int ret;
 
-    if (!user)
-        return 0;
-
-    krb5_appdefault_string(context, app, NULL, "user_realm", NULL,
+    (void) krb5_get_default_realm(context, &default_realm);
+    krb5_appdefault_string(context, app, NULL, "user_realm", default_realm,
                            &user_realm);
     ret = user_realm &&
         krb5_principal_get_num_comp(context, p) == 0 &&
-        strcmp(user, krb5_principal_get_comp_string(context, p, 0)) == 0 &&
-        strcmp(user_realm, krb5_principal_get_realm(context, p)) == 0;
+        strcmp(user_realm, krb5_principal_get_realm(context, p)) == 0 &&
+        (!user ||
+         strcmp(user, krb5_principal_get_comp_string(context, p, 0)) == 0);
+    free(default_realm);
     free(user_realm);
     return ret;
 }

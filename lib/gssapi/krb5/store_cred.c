@@ -110,7 +110,7 @@ principal_is_best_for_user(krb5_context context,
     krb5_appdefault_string(context, app, NULL, "user_realm", default_realm,
                            &user_realm);
     ret = user_realm &&
-        krb5_principal_get_num_comp(context, p) == 0 &&
+        krb5_principal_get_num_comp(context, p) == 1 &&
         strcmp(user_realm, krb5_principal_get_realm(context, p)) == 0 &&
         (!user ||
          strcmp(user, krb5_principal_get_comp_string(context, p, 0)) == 0);

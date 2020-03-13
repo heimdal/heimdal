@@ -44,8 +44,8 @@ same_princ(krb5_context context, krb5_ccache id1, krb5_ccache id2)
     ret = krb5_cc_get_principal(context, id1, &p1);
     if (ret == 0)
         ret = krb5_cc_get_principal(context, id2, &p2);
-    if (ret == 0)
-        same = krb5_principal_compare(context, p1, p2);
+    /* If either principal is absent, it's the same for our purposes */
+    same = ret ? 1 : krb5_principal_compare(context, p1, p2);
     krb5_free_principal(context, p1);
     krb5_free_principal(context, p2);
     return same;
@@ -143,6 +143,7 @@ _gsskrb5_store_cred_into2(OM_uint32         *minor_status,
     const char *cs_app_name = NULL;
     OM_uint32 major_status, junk;
     OM_uint32 overwrite_cred = store_cred_flags & GSS_C_STORE_CRED_OVERWRITE;
+    int default_for = 0;
 
     *minor_status = 0;
 
@@ -219,8 +220,14 @@ _gsskrb5_store_cred_into2(OM_uint32         *minor_status,
                                           input_cred->principal,
                                           cs_user_name)) {
         ret = krb5_cc_default(context, &id);
+        if (ret == 0 && !same_princ(context, id, input_cred->ccache)) {
+            krb5_cc_close(context, id);
+            ret = krb5_cc_default_for(context, input_cred->principal, &id);
+            default_for = 1;
+        }
     } else {
         ret = krb5_cc_default_for(context, input_cred->principal, &id);
+        default_for = 1;
     }
 
     if (ret || id == NULL) {
@@ -229,6 +236,13 @@ _gsskrb5_store_cred_into2(OM_uint32         *minor_status,
 	return ret == 0 ? GSS_S_NO_CRED : GSS_S_FAILURE;
     }
 
+    /*
+     * If we're using a subsidiary ccache for this principal and it has some
+     * other principal's tickets in it -> overwrite.
+     */
+    if (!overwrite_cred && default_for &&
+        !same_princ(context, id, input_cred->ccache))
+        overwrite_cred = 1;
     if (!overwrite_cred && same_princ(context, id, input_cred->ccache)) {
         /*
          * If current creds are for the same princ as we already had creds for,
@@ -239,18 +253,12 @@ _gsskrb5_store_cred_into2(OM_uint32         *minor_status,
             overwrite_cred = 1;
     }
 
-    if (!overwrite_cred) {
-        /* Nothing to do */
-        HEIMDAL_MUTEX_unlock(&input_cred->cred_id_mutex);
-        krb5_cc_close(context, id);
-        *minor_status = 0;
-        return GSS_S_DUPLICATE_ELEMENT;
+    if (overwrite_cred) {
+        ret = krb5_cc_initialize(context, id, input_cred->principal);
+        if (ret == 0)
+            ret = krb5_cc_copy_match_f(context, input_cred->ccache, id, NULL, NULL,
+                                       NULL);
     }
-
-    ret = krb5_cc_initialize(context, id, input_cred->principal);
-    if (ret == 0)
-        ret = krb5_cc_copy_match_f(context, input_cred->ccache, id, NULL, NULL,
-                                   NULL);
 
     if ((store_cred_flags & GSS_C_STORE_CRED_SET_PROCESS) && envp == NULL)
         envp = &env;

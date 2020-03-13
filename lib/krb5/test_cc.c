@@ -1072,7 +1072,7 @@ main(int argc, char **argv)
             fname == NULL ||
             asprintf(&config,
                      "[libdefaults]\n"
-                     "\tdefault_file_cache_collection = %1$s/foobar\n"
+                     "\tdefault_file_cache_collections = %1$s/foobar\n"
                      "\tenable_file_cache_iteration = true\n",
                      d) == -1 || config == NULL)
             krb5_err(context, 1, errno, "Could not make temp dir");

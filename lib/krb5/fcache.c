@@ -1338,7 +1338,7 @@ fcc_get_cache_first(krb5_context context, krb5_cc_cursor *cursor)
                                      "enable_file_cache_iteration", NULL)) {
         def_ccname = krb5_cc_default_name(context);
         def_locs = krb5_config_get_strings(context, NULL, "libdefaults",
-                                           "default_file_cache_collection",
+                                           "default_file_cache_collections",
                                            NULL);
     }
 

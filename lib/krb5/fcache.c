@@ -1543,8 +1543,23 @@ fcc_move(krb5_context context, krb5_ccache from, krb5_ccache to)
 {
     krb5_error_code ret = 0;
 
-    if ((ret = rk_rename(FILENAME(from), FILENAME(to))))
+    if (TMPFILENAME(from)) {
+        /*
+         * If `from' has a temp file and we haven't renamed it into place yet,
+         * then we should rename TMPFILENAME(from) to FILENAME(to).
+         *
+         * This can only happen if we're moving a ccache where only cc config
+         * entries, or no entries, have been written.  That's not likely.
+         */
+        if (rk_rename(TMPFILENAME(from), FILENAME(to))) {
+            ret = errno;
+        } else {
+            free(TMPFILENAME(from));
+            TMPFILENAME(from) = NULL;
+        }
+    } else if ((ret = rk_rename(FILENAME(from), FILENAME(to)))) {
         ret = errno;
+    }
     /*
      * We need only close from -- we can't destroy it since the rename
      * succeeded, which "destroyed" it at its old name.

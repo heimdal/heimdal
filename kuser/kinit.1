@@ -39,6 +39,7 @@
 .Nd acquire initial tickets
 .Sh SYNOPSIS
 .Nm kinit
+.Op Fl Fl no-change-default
 .Op Fl Fl afslog
 .Oo Fl c Ar cachename \*(Ba Xo
 .Fl Fl cache= Ns Ar cachename
@@ -97,13 +98,22 @@ can later be used to obtain tickets for other services.
 .Pp
 Supported options:
 .Bl -tag -width Ds
-.It Fl c Ar cachename Fl Fl cache= Ns Ar cachename
+.It Fl c Ar cachename | Fl Fl cache= Ns Ar cachename
 The credentials cache to put the acquired ticket in, if other than
 default.
-.It Fl Fl cache-default-for
-Use a cache in the default collection (for the default cache type)
-named after the client principal.  This is useful for users with
-multiple client principals.
+.It Fl Fl no-change-default
+By default the principal's credentials will be stored in the default
+credential cache.  This option will cause them to instead be stored
+only in a cache whose name is derived from the principal's name.  Note
+that
+.Xr klist 1
+with the
+.Fl l
+option will list all the credential caches the user has, along with
+the name of the principal whose credentials are stored therein.  This
+option is ignored if the
+.Fl c Ar cachename | Fl Fl cache= Ns Ar cachename
+option is given.
 .It Fl f Fl Fl forwardable
 Obtain a ticket than can be forwarded to another host.
 .It Fl F Fl Fl no-forwardable

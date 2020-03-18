@@ -267,7 +267,7 @@ default_db(krb5_context context, const char *name, sqlite3 **db, char **file)
 
     ret = sqlite3_open_v2(f, db, SQLITE_OPEN_READWRITE, NULL);
     if (ret != SQLITE_OK) {
-        sqlite3_close_v2(*db);
+        sqlite3_close(*db);
 	krb5_clear_error_message(context);
         free(f);
 	return ENOENT;

@@ -1284,6 +1284,8 @@ is_default_collection(krb5_context context, const char *name,
 {
     krb5_error_code ret;
     const char *def_loc[2] = { KRB5_DEFAULT_CCNAME_FILE, NULL };
+    const char *sep;
+    size_t namelen;
     size_t i;
 
     *res = 0;
@@ -1291,6 +1293,10 @@ is_default_collection(krb5_context context, const char *name,
         *res = 1;
         return 0;
     }
+    if ((sep = strchr(name, FILESUBSEPCHR)))
+        namelen = (size_t)(sep - name);
+    else
+        namelen = strlen(name);
     if (def_locs == NULL)
         def_locs = def_loc;
     for (i = 0; !(*res) && def_locs[i]; i++) {
@@ -1298,7 +1304,8 @@ is_default_collection(krb5_context context, const char *name,
 
         if ((ret = _krb5_expand_default_cc_name(context, def_locs[i], &e)))
             return ret;
-        *res = strcmp(name, e) == 0;
+        *res = strncmp(e, name, namelen) == 0 &&
+        (sep == NULL || e[namelen] == FILESUBSEPCHR || e[namelen] == '\0');
         free(e);
     }
     return 0;

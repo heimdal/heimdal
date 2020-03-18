@@ -141,6 +141,7 @@ _gsskrb5_store_cred_into2(OM_uint32         *minor_status,
     const char *cs_ccache_name = NULL;
     const char *cs_user_name = NULL;
     const char *cs_app_name = NULL;
+    char *ccache_name = NULL;
     OM_uint32 major_status, junk;
     OM_uint32 overwrite_cred = store_cred_flags & GSS_C_STORE_CRED_OVERWRITE;
     int default_for = 0;
@@ -194,11 +195,23 @@ _gsskrb5_store_cred_into2(OM_uint32         *minor_status,
     GSSAPI_KRB5_INIT (&context);
     HEIMDAL_MUTEX_lock(&input_cred->cred_id_mutex);
 
+    if (cs_ccache_name && strchr(cs_ccache_name, '%')) {
+        ret = _krb5_expand_default_cc_name(context, cs_ccache_name,
+                                           &ccache_name);
+        if (ret) {
+            HEIMDAL_MUTEX_unlock(&input_cred->cred_id_mutex);
+            *minor_status = ret;
+            return GSS_S_FAILURE;
+        }
+        cs_ccache_name = ccache_name;
+    }
+
     /* More sanity checking of the input_cred (good to fail early) */
     ret = krb5_cc_get_lifetime(context, input_cred->ccache, &exp_new);
     if (ret) {
 	HEIMDAL_MUTEX_unlock(&input_cred->cred_id_mutex);
 	*minor_status = ret;
+        free(ccache_name);
 	return GSS_S_NO_CRED;
     }
 
@@ -233,6 +246,7 @@ _gsskrb5_store_cred_into2(OM_uint32         *minor_status,
     if (ret || id == NULL) {
 	HEIMDAL_MUTEX_unlock(&input_cred->cred_id_mutex);
 	*minor_status = ret;
+        free(ccache_name);
 	return ret == 0 ? GSS_S_NO_CRED : GSS_S_FAILURE;
     }
 
@@ -279,6 +293,7 @@ _gsskrb5_store_cred_into2(OM_uint32         *minor_status,
         (major_status = set_proc(minor_status, *envp)) != GSS_S_COMPLETE)
         ret = *minor_status;
     (void) gss_release_buffer_set(&junk, &env);
+    free(ccache_name);
     *minor_status = ret;
     return ret ? GSS_S_FAILURE : GSS_S_COMPLETE;
 }

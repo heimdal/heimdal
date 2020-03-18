@@ -298,7 +298,7 @@ ltmsources = \
 	libtommath/bn_mp_to_unsigned_bin_n.c
 
 
-$(libhcrypto_la_OBJECTS): hcrypto-link
+$(libhcrypto_la_OBJECTS) $(test_rand_OBJECTS): hcrypto-link
 
 libhcrypto_la_CPPFLAGS = -DBUILD_HCRYPTO_LIB $(AM_CPPFLAGS)
 

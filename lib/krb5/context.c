@@ -1217,6 +1217,8 @@ krb5_init_ets(krb5_context context)
 	krb5_add_et_list(context, initialize_k524_error_table_r);
 	krb5_add_et_list(context, initialize_k5e1_error_table_r);
 
+	krb5_add_et_list(context, initialize_hdb_error_table_r);
+
 #ifdef COM_ERR_BINDDOMAIN_krb5
 	bindtextdomain(COM_ERR_BINDDOMAIN_krb5, HEIMDAL_LOCALEDIR);
 	bindtextdomain(COM_ERR_BINDDOMAIN_asn1, HEIMDAL_LOCALEDIR);

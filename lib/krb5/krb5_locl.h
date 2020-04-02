@@ -144,6 +144,7 @@ struct _krb5_krb_auth_data;
 #include <krb5_err.h>
 #include <k5e1_err.h>
 #include <asn1_err.h>
+#include <hdb_err.h>
 #ifdef PKINIT
 #include <hx509.h>
 #endif

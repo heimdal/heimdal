@@ -35,7 +35,6 @@
 
 #include "krb5_locl.h"
 #include <assert.h>
-#include <com_err.h>
 
 #define INIT_FIELD(C, T, E, D, F)					\
     (C)->E = krb5_config_get_ ## T ## _default ((C), NULL, (D), 	\

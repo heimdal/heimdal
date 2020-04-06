@@ -298,6 +298,7 @@ add_mech_if_approved(OM_uint32 *minor_status,
 OM_uint32 GSSAPI_CALLCONV
 _gss_spnego_indicate_mechtypelist (OM_uint32 *minor_status,
 				   gss_const_name_t target_name,
+				   OM_uint32 req_flags,
 				   OM_uint32 (*func)(OM_uint32 *, void *, gss_const_name_t, gss_const_cred_id_t, gss_OID),
 				   void *userptr,
 				   int includeMSCompatOID,
@@ -316,10 +317,10 @@ _gss_spnego_indicate_mechtypelist (OM_uint32 *minor_status,
     mechtypelist->val = NULL;
 
     if (cred_handle != GSS_C_NO_CREDENTIAL)
-	ret = _gss_spnego_inquire_cred_mechs(minor_status,
+	ret = _gss_spnego_inquire_cred_mechs(minor_status, req_flags,
 					     cred_handle, &supported_mechs);
     else
-	ret = _gss_spnego_indicate_mechs(minor_status, &supported_mechs);
+	ret = _gss_spnego_indicate_mechs(minor_status, req_flags, &supported_mechs);
     if (ret != GSS_S_COMPLETE)
 	return ret;
 
@@ -505,22 +506,37 @@ _gss_spnego_log_mechTypes(MechTypeList *mechTypes)
 
 OM_uint32
 _gss_spnego_indicate_mechs(OM_uint32 *minor_status,
+			   OM_uint32 req_flags,
 			   gss_OID_set *mechs_p)
 {
-    gss_OID_desc oids[3];
-    gss_OID_set_desc except;
+    gss_OID_desc desired_oids[2], except_oids[3];
+    gss_OID_set_desc desired, except;
+    size_t i = 0;
 
     *mechs_p = GSS_C_NO_OID_SET;
 
-    oids[0] = *GSS_C_MA_DEPRECATED;
-    oids[1] = *GSS_C_MA_NOT_DFLT_MECH;
-    oids[2] = *GSS_C_MA_MECH_NEGO;
+    /*
+     * If the caller requires mutual authentication or anonymous
+     * support, restrict the list of mechanisms to those that
+     * support these flags.
+     */
+    if (req_flags & GSS_C_MUTUAL_FLAG)
+	desired_oids[i++] = *GSS_C_MA_AUTH_TARG;
+    if (req_flags & GSS_C_ANON_FLAG)
+	desired_oids[i++] = *GSS_C_MA_AUTH_INIT_ANON;
 
-    except.count = sizeof(oids) / sizeof(oids[0]);
-    except.elements = oids;
+    desired.count = i;
+    desired.elements = desired_oids;
+
+    except_oids[0] = *GSS_C_MA_DEPRECATED;
+    except_oids[1] = *GSS_C_MA_NOT_DFLT_MECH;
+    except_oids[2] = *GSS_C_MA_MECH_NEGO;
+
+    except.count = sizeof(except_oids) / sizeof(except_oids[0]);
+    except.elements = except_oids;
 
     return gss_indicate_mechs_by_attrs(minor_status,
-				       GSS_C_NO_OID_SET,
+				       &desired,
 				       &except,
 				       GSS_C_NO_OID_SET,
 				       mechs_p);
@@ -532,6 +548,7 @@ _gss_spnego_indicate_mechs(OM_uint32 *minor_status,
 
 OM_uint32
 _gss_spnego_inquire_cred_mechs(OM_uint32 *minor_status,
+			       OM_uint32 req_flags,
 			       gss_const_cred_id_t cred,
 			       gss_OID_set *mechs_p)
 {
@@ -551,7 +568,7 @@ _gss_spnego_inquire_cred_mechs(OM_uint32 *minor_status,
     heim_assert(cred_mechs != GSS_C_NO_OID_SET,
 		"gss_inquire_cred succeeded but returned null OID set");
 
-    ret = _gss_spnego_indicate_mechs(minor_status, &mechs);
+    ret = _gss_spnego_indicate_mechs(minor_status, req_flags, &mechs);
     if (ret != GSS_S_COMPLETE)
 	goto out;
 

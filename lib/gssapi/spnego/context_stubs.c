@@ -438,7 +438,7 @@ OM_uint32 GSSAPI_CALLCONV _gss_spnego_inquire_names_for_mech (
 
     *name_types = NULL;
 
-    ret = _gss_spnego_indicate_mechs(minor_status, &mechs);
+    ret = _gss_spnego_indicate_mechs(minor_status, 0, &mechs);
     if (ret != GSS_S_COMPLETE)
 	return ret;
 

@@ -79,7 +79,7 @@ acceptor_approved(OM_uint32 *minor_status,
     if (gss_oid_equal(mech, GSS_NEGOEX_MECHANISM)) {
 	size_t i;
 
-	ret = _gss_spnego_indicate_mechs(minor_status, &oidset);
+	ret = _gss_spnego_indicate_mechs(minor_status, 0, &oidset);
 	if (ret != GSS_S_COMPLETE)
 	    return ret;
 
@@ -132,7 +132,7 @@ send_supported_mechs (OM_uint32 *minor_status,
     nt.u.negTokenInit.mechToken = NULL;
     nt.u.negTokenInit.negHints = NULL;
 
-    ret = _gss_spnego_indicate_mechtypelist(minor_status, NULL,
+    ret = _gss_spnego_indicate_mechtypelist(minor_status, GSS_C_NO_NAME, 0,
 					    acceptor_approved, ctx, 1, acceptor_cred,
 					    &nt.u.negTokenInit.mechTypes, NULL);
     if (ret != GSS_S_COMPLETE) {
@@ -674,11 +674,11 @@ acceptor_start
     }
 
     if (acceptor_cred_handle != GSS_C_NO_CREDENTIAL)
-	ret = _gss_spnego_inquire_cred_mechs(minor_status,
+	ret = _gss_spnego_inquire_cred_mechs(minor_status, 0,
 					     acceptor_cred_handle,
 					     &supported_mechs);
     else
-	ret = _gss_spnego_indicate_mechs(minor_status, &supported_mechs);
+	ret = _gss_spnego_indicate_mechs(minor_status, 0, &supported_mechs);
     if (ret != GSS_S_COMPLETE)
 	goto out;
 

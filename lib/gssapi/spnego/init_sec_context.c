@@ -285,6 +285,7 @@ spnego_initial(OM_uint32 * minor_status,
 
     sub = _gss_spnego_indicate_mechtypelist(&minor,
 					    ctx->target_name,
+					    req_flags,
 					    initiator_approved,
 					    &sel,
 					    0,

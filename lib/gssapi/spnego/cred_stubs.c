@@ -72,7 +72,7 @@ OM_uint32 GSSAPI_CALLCONV _gss_spnego_acquire_cred_from
 
     *output_cred_handle = GSS_C_NO_CREDENTIAL;
 
-    ret = _gss_spnego_indicate_mechs(minor_status, &mechs);
+    ret = _gss_spnego_indicate_mechs(minor_status, 0, &mechs);
     if (ret != GSS_S_COMPLETE)
 	return ret;
 

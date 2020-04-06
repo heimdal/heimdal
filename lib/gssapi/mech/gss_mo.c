@@ -451,8 +451,6 @@ gss_indicate_mechs_by_attrs(OM_uint32 * minor_status,
 			    gss_OID_set *mechs)
 {
     struct _gss_mech_switch *ms;
-    gss_OID_set mech_attrs = GSS_C_NO_OID_SET;
-    gss_OID_set known_mech_attrs = GSS_C_NO_OID_SET;
     OM_uint32 major;
 
     major = gss_create_empty_oid_set(minor_status, mechs);
@@ -464,25 +462,40 @@ gss_indicate_mechs_by_attrs(OM_uint32 * minor_status,
     HEIM_TAILQ_FOREACH(ms, &_gss_mechs, gm_link) {
 	gssapi_mech_interface mi = &ms->gm_mech;
         struct gss_mech_compat_desc_struct *gmc = mi->gm_compat;
+	gss_OID_set mech_attrs = GSS_C_NO_OID_SET;
+	gss_OID_set known_mech_attrs = GSS_C_NO_OID_SET;
         OM_uint32 tmp;
 
-        if (gmc && gmc->gmc_inquire_attrs_for_mech) {
-            major = gmc->gmc_inquire_attrs_for_mech(minor_status,
-                                                    &mi->gm_mech_oid,
-                                                    &mech_attrs,
-                                                    &known_mech_attrs);
-            if (GSS_ERROR(major))
-                continue;
-        }
+	if (gmc != NULL) { /* loadable mechanisms have this set */
+	    if (gmc->gmc_inquire_attrs_for_mech == NULL) {
+		/*
+		 * Mechanism was loadable mech not supporting RFC 5587; mark
+		 * supported unless caller marked any attributes as critical.
+		 */
+		if (critical_mech_attrs == GSS_C_NO_OID_SET ||
+		    critical_mech_attrs->count == 0)
+		    goto mech_supported;
+		else
+		    continue;
+	    }
+
+	    major = gmc->gmc_inquire_attrs_for_mech(minor_status,
+						    &mi->gm_mech_oid,
+						    &mech_attrs,
+						    &known_mech_attrs);
+	    if (GSS_ERROR(major))
+		continue;
+	}
 
         /*
          * Test mechanism supports all of desired_mech_attrs;
-         * none of except_mech_attrs;
-         * and knows of all critical_mech_attrs.
+         * none of except_mech_attrs; and knows of all critical_mech_attrs.
+	 * This function also interrogates mi->gm_mo for internal mechs.
          */
         if (test_mech_attrs(mi, mech_attrs,       desired_mech_attrs,  0) &&
             test_mech_attrs(mi, mech_attrs,       except_mech_attrs,   1) &&
             test_mech_attrs(mi, known_mech_attrs, critical_mech_attrs, 0)) {
+mech_supported:
             major = gss_add_oid_set_member(minor_status, &mi->gm_mech_oid, mechs);
         }
 

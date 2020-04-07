@@ -205,6 +205,95 @@ _gss_spnego_safe_omit_mechlist_mic(gssspnego_ctx ctx)
     return safe_omit;
 }
 
+/*
+ * A map between a GSS-API flag and a (mechanism attribute, weight)
+ * tuple. The list of mechanisms is re-ordered by aggregate weight
+ * (highest weight is more preferred, e.g. if GSS_C_MUTUAL_FLAG and
+ * GSS_C_ANON_FLAG are set, we prefer a mechanism that supports
+ * mutual authentication over one that only supports anonymous).
+ */
+static struct {
+    OM_uint32 flag;
+    gss_OID ma;
+    int weight;
+} flag_to_ma_map[] = {
+    { GSS_C_MUTUAL_FLAG, GSS_C_MA_AUTH_TARG, 2 },
+    { GSS_C_ANON_FLAG, GSS_C_MA_AUTH_INIT_ANON, 1 },
+};
+
+/*
+ * Returns a bitmask indicating GSS flags we can sort on.
+ */
+static inline OM_uint32
+mech_flag_mask(void)
+{
+    size_t i;
+    OM_uint32 mask = 0;
+
+    for (i = 0; i < sizeof(flag_to_ma_map)/sizeof(flag_to_ma_map[0]); i++)
+	mask |= flag_to_ma_map[i].flag;
+
+    return mask;
+}
+
+/*
+ * Returns an integer representing the preference weighting for a
+ * mechanism, based on the requested GSS flags.
+ */
+static int
+mech_weight(gss_const_OID mech, OM_uint32 req_flags)
+{
+    OM_uint32 major, minor;
+    gss_OID_set mech_attrs = GSS_C_NO_OID_SET;
+    int weight = 0;
+    size_t i, j;
+
+    major = gss_inquire_attrs_for_mech(&minor, mech, &mech_attrs, NULL);
+    if (GSS_ERROR(major))
+	return 0;
+
+    for (i = 0; i < sizeof(flag_to_ma_map)/sizeof(flag_to_ma_map[0]); i++) {
+	if ((req_flags & flag_to_ma_map[i].flag) == 0)
+	    continue;
+
+	for (j = 0; j < mech_attrs->count; j++) {
+	    if (gss_oid_equal(flag_to_ma_map[i].ma, &mech_attrs->elements[j])) {
+		weight += flag_to_ma_map[i].weight;
+		continue;
+	    }
+	}
+    }
+
+    gss_release_oid_set(&minor, &mech_attrs);
+
+    return weight;
+}
+
+static int
+mech_compare(const void *mech1, const void *mech2, void *req_flags_p)
+{
+    OM_uint32 req_flags = *((OM_uint32 *)req_flags_p);
+    int mech1_weight = mech_weight(mech1, req_flags);
+    int mech2_weight = mech_weight(mech2, req_flags);
+
+    return mech2_weight - mech1_weight;
+}
+
+/*
+ * Order a list of mechanisms by weight based on requested GSS flags.
+ */
+static void
+order_mechs_by_flags(gss_OID_set mechs, OM_uint32 req_flags)
+{
+    if (req_flags & mech_flag_mask()) { /* skip if flags irrelevant */
+	/*
+	 * NB: must be a stable sort to preserve the existing order
+	 * of mechanisms that are equally weighted.
+	 */
+	mergesort_r(mechs->elements, mechs->count,
+		    sizeof(gss_OID_desc), mech_compare, &req_flags);
+    }
+}
 
 static OM_uint32
 add_mech_type(OM_uint32 *minor_status,
@@ -298,6 +387,7 @@ add_mech_if_approved(OM_uint32 *minor_status,
 OM_uint32 GSSAPI_CALLCONV
 _gss_spnego_indicate_mechtypelist (OM_uint32 *minor_status,
 				   gss_const_name_t target_name,
+				   OM_uint32 req_flags,
 				   OM_uint32 (*func)(OM_uint32 *, void *, gss_const_name_t, gss_const_cred_id_t, gss_OID),
 				   void *userptr,
 				   int includeMSCompatOID,
@@ -322,6 +412,12 @@ _gss_spnego_indicate_mechtypelist (OM_uint32 *minor_status,
 	ret = _gss_spnego_indicate_mechs(minor_status, &supported_mechs);
     if (ret != GSS_S_COMPLETE)
 	return ret;
+
+    /*
+     * XXX when gss_set_neg_mechs() obeys application order this should
+     * apply only to the default mech list
+     */
+    order_mechs_by_flags(supported_mechs, req_flags);
 
     heim_assert(supported_mechs != GSS_C_NO_OID_SET,
 		"NULL mech set returned by SPNEGO inquire/indicate mechs");

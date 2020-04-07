@@ -76,6 +76,7 @@ libroken_la_OBJS =			\
 	$(OBJ)\lstat.obj		\
 	$(OBJ)\memmem.obj 		\
 	$(OBJ)\memset_s.obj 		\
+	$(OBJ)\mergesort_r.obj 		\
 	$(OBJ)\mkdir.obj                \
 	$(OBJ)\mini_inetd.obj		\
 	$(OBJ)\mkdtemp.obj		\

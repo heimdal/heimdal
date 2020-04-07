@@ -367,6 +367,8 @@ AC_BROKEN([					\
 	lstat					\
 	memmove					\
 	memset_s				\
+	mergesort				\
+	mergesort_r				\
 	mkstemp					\
 	putenv					\
 	rcmd					\

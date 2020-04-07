@@ -409,7 +409,7 @@ gsskrb5_get_creds(
      */
     if (cred != NULL) {
 	if (krb5_principal_is_anonymous(context, cred->principal,
-					KRB5_ANON_MATCH_UNAUTHENTICATED))
+					KRB5_ANON_MATCH_UNAUTHENTICATED | KRB5_ANON_IGNORE_NAME_TYPE))
 	    req_flags |= GSS_C_ANON_FLAG; /* cred implies anonymous */
 	else
 	    req_flags &= ~(GSS_C_ANON_FLAG); /* non-anon cred overrides flag */
@@ -716,7 +716,7 @@ init_auth_restart
      * identity, not just the unauthenticated one.
      */
     if (krb5_principal_is_anonymous(context, ctx->source,
-				    KRB5_ANON_MATCH_ANY))
+				    KRB5_ANON_MATCH_ANY_NONT))
 	flags |= GSS_C_ANON_FLAG;
     if (req_flags & GSS_C_DCE_STYLE) {
 	/* GSS_C_DCE_STYLE implies GSS_C_MUTUAL_FLAG */

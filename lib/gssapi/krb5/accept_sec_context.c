@@ -646,7 +646,7 @@ gsskrb5_acceptor_start(OM_uint32 * minor_status,
      */
     if ((ctx->flags & GSS_C_ANON_FLAG) &&
         !krb5_principal_is_anonymous(context, ctx->ticket->client,
-				      KRB5_ANON_MATCH_ANY)) {
+				      KRB5_ANON_MATCH_ANY_NONT)) {
 	ctx->flags &= ~(GSS_C_ANON_FLAG);
     }
 

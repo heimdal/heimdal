@@ -67,7 +67,7 @@ OM_uint32 GSSAPI_CALLCONV _gsskrb5_display_name
     free (buf);
     if (output_name_type) {
 	if (krb5_principal_is_anonymous(context, name,
-					KRB5_ANON_MATCH_UNAUTHENTICATED))
+					KRB5_ANON_MATCH_UNAUTHENTICATED | KRB5_ANON_IGNORE_NAME_TYPE))
 	    *output_name_type = GSS_C_NT_ANONYMOUS;
 	else
 	    *output_name_type = GSS_KRB5_NT_PRINCIPAL_NAME;

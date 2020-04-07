@@ -52,9 +52,9 @@ OM_uint32 GSSAPI_CALLCONV _gsskrb5_compare_name
      * indicate FALSE.
      */
     if (krb5_principal_is_anonymous(context, princ1,
-				    KRB5_ANON_MATCH_UNAUTHENTICATED) ||
+				    KRB5_ANON_MATCH_UNAUTHENTICATED | KRB5_ANON_IGNORE_NAME_TYPE) ||
 	krb5_principal_is_anonymous(context, princ2,
-				    KRB5_ANON_MATCH_UNAUTHENTICATED))
+				    KRB5_ANON_MATCH_UNAUTHENTICATED | KRB5_ANON_IGNORE_NAME_TYPE))
 	*name_equal = FALSE;
     else
 	*name_equal = krb5_principal_compare(context,

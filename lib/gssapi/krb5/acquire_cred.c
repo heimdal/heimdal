@@ -97,7 +97,7 @@ is_anonymous_name_p(krb5_context context, krb5_const_principal principal)
 {
     return principal != NULL &&
 	krb5_principal_is_anonymous(context, principal,
-				    KRB5_ANON_MATCH_UNAUTHENTICATED);
+				    KRB5_ANON_MATCH_UNAUTHENTICATED | KRB5_ANON_IGNORE_NAME_TYPE);
 }
 
 static krb5_error_code

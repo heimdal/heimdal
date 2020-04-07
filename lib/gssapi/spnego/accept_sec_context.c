@@ -132,7 +132,7 @@ send_supported_mechs (OM_uint32 *minor_status,
     nt.u.negTokenInit.mechToken = NULL;
     nt.u.negTokenInit.negHints = NULL;
 
-    ret = _gss_spnego_indicate_mechtypelist(minor_status, NULL,
+    ret = _gss_spnego_indicate_mechtypelist(minor_status, GSS_C_NO_NAME, 0,
 					    acceptor_approved, ctx, 1, acceptor_cred,
 					    &nt.u.negTokenInit.mechTypes, NULL);
     if (ret != GSS_S_COMPLETE) {

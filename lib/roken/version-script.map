@@ -87,6 +87,8 @@ HEIMDAL_ROKEN_2.0 {
 		rk_localtime_r;
 		rk_memmem;
 		rk_memset_s;
+		rk_mergesort;
+		rk_mergesort_r;
 		rk_mkdir;
 		rk_mkdtemp;
 		rk_mkostemp;

@@ -1243,6 +1243,20 @@ void
 rk_qsort(void *, size_t, size_t, int (*)(const void *, const void *));
 #endif
 
+#if !defined(HAVE_MERGESORT)
+#define mergesort rk_mergesort
+int
+mergesort(void *base, size_t nel, size_t width,
+	  int (*compar)(const void *, const void *));
+#endif
+
+#if !defined(HAVE_MERGESORT_R)
+#define mergesort_r rk_mergesort_r
+int
+mergesort_r(void *base, size_t nel, size_t width,
+	    int (*compar)(const void *, const void *, void *), void *thunk);
+#endif
+
 #ifndef HAVE_MEMSET_S
 #define memset_s rk_memset_s
 ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL memset_s(void *s, size_t smax,

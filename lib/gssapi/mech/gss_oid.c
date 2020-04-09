@@ -142,9 +142,6 @@ gss_OID_desc GSSAPI_LIB_VARIABLE __gss_ntlm_mechanism_oid_desc = { 10, rk_UNCONS
 /* GSS_SPNEGO_MECHANISM - 1.3.6.1.5.5.2 */
 gss_OID_desc GSSAPI_LIB_VARIABLE __gss_spnego_mechanism_oid_desc = { 6, rk_UNCONST("\x2b\x06\x01\x05\x05\x02") };
 
-/* GSS_C_PEER_HAS_UPDATED_SPNEGO - 1.3.6.1.4.1.5322.19.5 */
-gss_OID_desc GSSAPI_LIB_VARIABLE __gss_c_peer_has_updated_spnego_oid_desc = { 9, rk_UNCONST("\x2b\x06\x01\x04\x01\xa9\x4a\x13\x05") };
-
 /* GSS_C_NTLM_RESET_CRYPTO - 1.3.6.1.4.1.7165.655.1.3 */
 gss_OID_desc GSSAPI_LIB_VARIABLE __gss_c_ntlm_reset_crypto_oid_desc = { 11, rk_UNCONST("\x2b\x06\x01\x04\x01\xb7\x7d\x85\x0f\x01\x03") };
 
@@ -325,7 +322,6 @@ gss_OID _gss_ot_internal[] = {
   &__gss_krb5_mechanism_oid_desc,
   &__gss_ntlm_mechanism_oid_desc,
   &__gss_spnego_mechanism_oid_desc,
-  &__gss_c_peer_has_updated_spnego_oid_desc,
   &__gss_c_ntlm_reset_crypto_oid_desc,
   &__gss_negoex_mechanism_oid_desc,
   &__gss_c_ma_mech_concrete_oid_desc,

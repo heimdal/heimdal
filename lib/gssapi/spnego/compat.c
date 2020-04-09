@@ -152,38 +152,30 @@ OM_uint32 GSSAPI_CALLCONV _gss_spnego_internal_delete_sec_context
     return ret;
 }
 
-/*
- * Returns TRUE if the mechanism believes that a mechListMIC is required.
- * This is an internal interface for NTLM which requires a mechListMIC if
- * an internal MIC in the NTLM protocol was used. Note that only the Samba
- * NTLM mechanism supports this, it is not yet implemented in Heimdal's.
- */
-
 static int
-mech_require_mechlist_mic_p(gssspnego_ctx ctx)
+inq_context_by_oid_bool(gssspnego_ctx ctx, gss_OID oid)
 {
     OM_uint32 major, minor;
     gss_buffer_set_t data_set = GSS_C_NO_BUFFER_SET;
-    uint8_t mech_require_mic = 0;
+    uint8_t ret = 0;
 
     major = gss_inquire_sec_context_by_oid(&minor, ctx->negotiated_ctx_id,
-					   GSS_C_INQ_REQUIRE_MECHLIST_MIC, &data_set);
+					   oid, &data_set);
     if (major != GSS_S_COMPLETE)
 	return FALSE;
 
     if (data_set != GSS_C_NO_BUFFER_SET &&
 	data_set->count == 1 &&
 	data_set->elements[0].length == 1)
-	mech_require_mic = *((uint8_t *)data_set->elements[0].value);
+	ret = *((uint8_t *)data_set->elements[0].value);
 
     gss_release_buffer_set(&minor, &data_set);
 
-    return mech_require_mic == 1;
+    return ret != 0;
 }
 
 /*
- * Returns TRUE if it is safe to omit mechListMIC because the preferred
- * mechanism was selected, and the peer did not require it.
+ * Returns TRUE if it is safe to omit mechListMIC.
  */
 
 int
@@ -193,11 +185,16 @@ _gss_spnego_safe_omit_mechlist_mic(gssspnego_ctx ctx)
 
     if (ctx->flags.peer_require_mic) {
 	_gss_mg_log(10, "spnego: mechListMIC required by peer");
-    } else if (mech_require_mechlist_mic_p(ctx)) {
+    } else if (inq_context_by_oid_bool(ctx, GSS_C_INQ_PEER_HAS_BUGGY_SPNEGO)) {
+	/* [MS-SPNG] Appendix A <7> Section 3.1.5.1: may be old peer with buggy SPNEGO */
+	safe_omit = TRUE;
+	_gss_mg_log(10, "spnego: mechListMIC omitted for legacy interoperability");
+    } else if (inq_context_by_oid_bool(ctx, GSS_C_INQ_REQUIRE_MECHLIST_MIC)) {
+	/*  [MS-SPNG] Appendix A <7> Section 3.1.5.1: allow NTLM to force MIC */
 	_gss_mg_log(10, "spnego: mechListMIC required by mechanism");
     } else if (gss_oid_equal(ctx->selected_mech_type, ctx->preferred_mech_type)) {
 	safe_omit = TRUE;
-	_gss_mg_log(10, "spnego: mechListMIC may be omitted as preferred mechanism selected");
+	_gss_mg_log(10, "spnego: mechListMIC omitted as preferred mechanism selected");
     } else {
 	_gss_mg_log(10, "spnego: mechListMIC required by default");
     }

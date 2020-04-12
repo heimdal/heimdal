@@ -1,5 +1,5 @@
-To use the pretty graphs you have to first build/run the ltmtest from the root directory of the package.
-Todo this type
+To use the pretty graphs you have to first build/run the ltmtest from the root directory of the package.  
+Todo this type 
 
 make timing ; ltmtest
 

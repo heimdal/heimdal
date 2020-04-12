@@ -34,4 +34,4 @@ _t_read:
    sub eax,[time+4]
    sbb edx,[time+0]
    ret
-
+   

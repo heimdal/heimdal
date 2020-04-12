@@ -534,9 +534,11 @@ ltm_rsa_generate_key(RSA *rsa, int bits, BIGNUM *e, BN_GENCB *cb)
     /* generate p and q so that p != q and bits(pq) ~ bits */
     counter = 0;
     do {
+	int trials = mp_prime_rabin_miller_trials(bitsp);
+
 	BN_GENCB_call(cb, 2, counter++);
 	CHECK(random_num(&p, bitsp), 0);
-	CHECK(mp_prime_next_prime(&p,128,0), MP_OKAY);
+	CHECK(mp_prime_next_prime(&p, trials, 0), MP_OKAY);
 
 	mp_sub_d(&p, 1, &t1);
 	mp_gcd(&t1, &el, &t2);
@@ -546,9 +548,11 @@ ltm_rsa_generate_key(RSA *rsa, int bits, BIGNUM *e, BN_GENCB *cb)
 
     counter = 0;
     do {
+	int trials = mp_prime_rabin_miller_trials(bits - bitsp);
+
 	BN_GENCB_call(cb, 2, counter++);
 	CHECK(random_num(&q, bits - bitsp), 0);
-	CHECK(mp_prime_next_prime(&q,128,0), MP_OKAY);
+	CHECK(mp_prime_next_prime(&q, trials, 0), MP_OKAY);
 
 	if (mp_cmp(&p, &q) == 0) /* don't let p and q be the same */
 	    continue;

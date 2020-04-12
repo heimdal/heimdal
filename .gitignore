@@ -235,6 +235,7 @@ tags
 /lib/hcrypto/test_rand
 /lib/hcrypto/test_rsa
 /lib/hcrypto/unix
+/lib/hcrypto/libtommath/callgraph.txt
 /lib/hdb/hdb-protos.h
 /lib/hdb/hdb-private.h
 /lib/hdb/test_dbinfo

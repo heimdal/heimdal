@@ -233,14 +233,6 @@ static gss_mo_desc krb5_mo[] = {
 	NULL
     },
     {
-	GSS_C_MA_AUTH_INIT_ANON,
-	GSS_MO_MA,
-	NULL,
-	NULL,
-	NULL,
-	NULL
-    },
-    {
 	GSS_C_MA_DELEG_CRED,
 	GSS_MO_MA,
 	NULL,

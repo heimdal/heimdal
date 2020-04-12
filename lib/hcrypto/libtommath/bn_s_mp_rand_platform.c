@@ -128,20 +128,40 @@ static mp_err s_read_ltm_rng(void *p, size_t n)
 }
 #endif
 
+#ifdef BN_S_READ_ARC4RANDOM_C
 mp_err s_read_arc4random(void *p, size_t n);
+#endif
+#ifdef BN_S_READ_WINCSP_C
 mp_err s_read_wincsp(void *p, size_t n);
+#endif
+#ifdef BN_S_READ_GETRANDOM_C
 mp_err s_read_getrandom(void *p, size_t n);
+#endif
+#ifdef BN_S_READ_URANDOM_C
 mp_err s_read_urandom(void *p, size_t n);
+#endif
+#ifdef BN_S_READ_LTM_RNG
 mp_err s_read_ltm_rng(void *p, size_t n);
+#endif
 
 mp_err s_mp_rand_platform(void *p, size_t n)
 {
    mp_err err = MP_ERR;
+#ifdef BN_S_READ_ARC4RANDOM_C
    if ((err != MP_OKAY) && MP_HAS(S_READ_ARC4RANDOM)) err = s_read_arc4random(p, n);
+#endif
+#ifdef BN_S_READ_WINCSP_C
    if ((err != MP_OKAY) && MP_HAS(S_READ_WINCSP))     err = s_read_wincsp(p, n);
+#endif
+#ifdef BN_S_READ_GETRANDOM_C
    if ((err != MP_OKAY) && MP_HAS(S_READ_GETRANDOM))  err = s_read_getrandom(p, n);
+#endif
+#ifdef BN_S_READ_URANDOM_C
    if ((err != MP_OKAY) && MP_HAS(S_READ_URANDOM))    err = s_read_urandom(p, n);
+#endif
+#ifdef BN_S_READ_LTM_RNG
    if ((err != MP_OKAY) && MP_HAS(S_READ_LTM_RNG))    err = s_read_ltm_rng(p, n);
+#endif
    return err;
 }
 

@@ -33,23 +33,6 @@
 #include "spnego_locl.h"
 #include <gssapi_mech.h>
 
-OM_uint32 GSSAPI_CALLCONV
-_gss_spnego_release_cred(OM_uint32 *minor_status, gss_cred_id_t *cred_handle)
-{
-    OM_uint32 ret;
-
-    *minor_status = 0;
-
-    if (cred_handle == NULL || *cred_handle == GSS_C_NO_CREDENTIAL)
-	return GSS_S_COMPLETE;
-
-    ret = gss_release_cred(minor_status, cred_handle);
-
-    *cred_handle = GSS_C_NO_CREDENTIAL;
-
-    return ret;
-}
-
 /*
  * For now, just a simple wrapper that avoids recursion. When
  * we support gss_{get,set}_neg_mechs() we will need to expose
@@ -95,6 +78,11 @@ OM_uint32 GSSAPI_CALLCONV _gss_spnego_inquire_cred
             gss_OID_set * mechanisms
            )
 {
+    /*
+     * A wrapper around the mechglue is required to error out
+     * where cred_handle == GSS_C_NO_CREDENTIAL, otherwise we
+     * would infinitely recurse.
+     */
     if (cred_handle == GSS_C_NO_CREDENTIAL) {
 	*minor_status = 0;
 	return GSS_S_NO_CRED;
@@ -114,30 +102,12 @@ OM_uint32 GSSAPI_CALLCONV _gss_spnego_inquire_cred_by_mech (
             gss_cred_usage_t * cred_usage
            )
 {
-    if (cred_handle == GSS_C_NO_CREDENTIAL) {
-	*minor_status = 0;
-	return GSS_S_NO_CRED;
-    }
+    /* Similar to _gss_spnego_inquire_cred(), wrapper is required */
+    heim_assert(gss_oid_equal(mech_type, GSS_SPNEGO_MECHANISM),
+		"Mechglue called inquire_cred_by_mech with wrong OID");
 
-    return gss_inquire_cred_by_mech(minor_status, cred_handle, mech_type,
-				   name, initiator_lifetime,
-				   acceptor_lifetime, cred_usage);
-}
-
-OM_uint32 GSSAPI_CALLCONV _gss_spnego_inquire_cred_by_oid
-           (OM_uint32 * minor_status,
-            gss_const_cred_id_t cred_handle,
-            const gss_OID desired_object,
-            gss_buffer_set_t *data_set)
-{
-    if (cred_handle == GSS_C_NO_CREDENTIAL) {
-	*minor_status = 0;
-	return GSS_S_NO_CRED;
-    }
-
-    return gss_inquire_cred_by_oid(minor_status, cred_handle,
-				   desired_object, data_set);
-
+    *minor_status = 0;
+    return GSS_S_BAD_MECH;
 }
 
 OM_uint32 GSSAPI_CALLCONV
@@ -146,6 +116,7 @@ _gss_spnego_set_cred_option (OM_uint32 *minor_status,
 			     const gss_OID object,
 			     const gss_buffer_t value)
 {
+    /* Similar to _gss_spnego_inquire_cred(), wrapper is required */
     if (cred_handle == NULL || *cred_handle == GSS_C_NO_CREDENTIAL) {
 	*minor_status = 0;
 	return GSS_S_NO_CRED;
@@ -155,23 +126,6 @@ _gss_spnego_set_cred_option (OM_uint32 *minor_status,
 			      cred_handle,
 			      object,
 			      value);
-}
-
-
-OM_uint32 GSSAPI_CALLCONV
-_gss_spnego_export_cred (OM_uint32 *minor_status,
-			 gss_cred_id_t cred_handle,
-			 gss_buffer_t value)
-{
-    return gss_export_cred(minor_status, cred_handle, value);
-}
-
-OM_uint32 GSSAPI_CALLCONV
-_gss_spnego_import_cred (OM_uint32 *minor_status,
-			 gss_buffer_t value,
-			 gss_cred_id_t *cred_handle)
-{
-    return gss_import_cred(minor_status, value, cred_handle);
 }
 
 

@@ -211,6 +211,7 @@ UI_UTIL_read_pw_string(char *buf, int length, const char *prompt, int verify)
 		fflush(stderr);
 	    }
 	    ret = 1;
+	}
 	free(buf2);
     }
     return ret;

@@ -146,7 +146,7 @@ static gssapi_mech_interface_desc spnego_mech = {
     NULL, /* gm_set_name_attribute */
     NULL, /* gm_delete_name_attribute */
     NULL, /* gm_export_name_composite */
-    NULL, /* gm_duplicate_cred */
+    gss_duplicate_cred,
     gss_add_cred_from,
     NULL, /* gm_store_cred_into */
     _gss_spnego_set_neg_mechs,

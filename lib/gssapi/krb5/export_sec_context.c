@@ -82,6 +82,10 @@ _gsskrb5_export_sec_context(
 	flags |= SC_LOCAL_SUBKEY;
     if (ac->remote_subkey)
 	flags |= SC_REMOTE_SUBKEY;
+    if (ctx->source)
+	flags |= SC_SOURCE_NAME;
+    if (ctx->target)
+	flags |= SC_TARGET_NAME;
 
     kret = krb5_store_int32 (sp, flags);
     if (kret) {
@@ -164,34 +168,38 @@ _gsskrb5_export_sec_context(
     }
 
     /* names */
+    if (ctx->source) {
+	ret = _gsskrb5_export_name (minor_status,
+				    (gss_name_t)ctx->source, &buffer);
+	if (ret)
+	    goto failure;
+	data.data   = buffer.value;
+	data.length = buffer.length;
+	kret = krb5_store_data (sp, data);
+	_gsskrb5_release_buffer (&minor, &buffer);
 
-    ret = _gsskrb5_export_name (minor_status,
-				(gss_name_t)ctx->source, &buffer);
-    if (ret)
-	goto failure;
-    data.data   = buffer.value;
-    data.length = buffer.length;
-    kret = krb5_store_data (sp, data);
-    _gsskrb5_release_buffer (&minor, &buffer);
-    if (kret) {
-	*minor_status = kret;
-	goto failure;
+	ret = GSS_S_FAILURE;
+	if (kret) {
+	    *minor_status = kret;
+	    goto failure;
+	}
     }
 
-    ret = _gsskrb5_export_name (minor_status,
-				(gss_name_t)ctx->target, &buffer);
-    if (ret)
-	goto failure;
-    data.data   = buffer.value;
-    data.length = buffer.length;
+    if (ctx->target) {
+	ret = _gsskrb5_export_name (minor_status,
+				    (gss_name_t)ctx->target, &buffer);
+	if (ret)
+	    goto failure;
+	data.data   = buffer.value;
+	data.length = buffer.length;
+	kret = krb5_store_data (sp, data);
+	_gsskrb5_release_buffer (&minor, &buffer);
 
-    ret = GSS_S_FAILURE;
-
-    kret = krb5_store_data (sp, data);
-    _gsskrb5_release_buffer (&minor, &buffer);
-    if (kret) {
-	*minor_status = kret;
-	goto failure;
+	ret = GSS_S_FAILURE;
+	if (kret) {
+	    *minor_status = kret;
+	    goto failure;
+	}
     }
 
     kret = krb5_store_int32 (sp, ctx->flags);

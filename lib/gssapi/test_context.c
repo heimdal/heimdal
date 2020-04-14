@@ -169,6 +169,7 @@ loop(gss_OID mechoid,
 
     *actual_mech = GSS_C_NO_OID;
 
+    flags |= GSS_C_REPLAY_FLAG;
     flags |= GSS_C_INTEG_FLAG;
     flags |= GSS_C_CONF_FLAG;
 

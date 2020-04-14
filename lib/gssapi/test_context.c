@@ -56,7 +56,8 @@ static int getverifymic_flag = 0;
 static int deleg_flag = 0;
 static int policy_deleg_flag = 0;
 static int server_no_deleg_flag = 0;
-static int ei_flag = 0;
+static int ei_cred_flag = 0;
+static int ei_ctx_flag = 0;
 static char *client_ccache = NULL;
 static char *client_keytab = NULL;
 static char *gsskrb5_acceptor_identity = NULL;
@@ -589,7 +590,8 @@ static struct getargs args[] = {
     {"policy-delegate",0,	arg_flag,	&policy_deleg_flag, "policy delegate credential", NULL },
     {"server-no-delegate",0,	arg_flag,	&server_no_deleg_flag,
      "server should get a credential", NULL },
-    {"export-import-cred",0,	arg_flag,	&ei_flag, "test export/import cred", NULL },
+    {"export-import-context",0,	arg_flag,	&ei_ctx_flag, "test export/import context", NULL },
+    {"export-import-cred",0,	arg_flag,	&ei_cred_flag, "test export/import cred", NULL },
     {"gsskrb5-acceptor-identity", 0, arg_string, &gsskrb5_acceptor_identity, "keytab", NULL },
     {"session-enctype",	0, arg_string,	&session_enctype_string, "enctype", NULL },
     {"client-time-offset",	0, arg_integer,	&client_time_offset, "time", NULL },
@@ -1012,6 +1014,40 @@ main(int argc, char **argv)
 	getverifymic_flag = 1;
     }
 
+    if (ei_ctx_flag) {
+	gss_buffer_desc ctx_token = GSS_C_EMPTY_BUFFER;
+
+	maj_stat = gss_export_sec_context(&min_stat, &cctx, &ctx_token);
+	if (maj_stat != GSS_S_COMPLETE)
+	    errx(1, "export client context failed: %s",
+		 gssapi_err(maj_stat, min_stat, NULL));
+
+	heim_assert(cctx == GSS_C_NO_CONTEXT,
+		    "gss_export_sec_context did not delete context");
+
+	maj_stat = gss_import_sec_context(&min_stat, &ctx_token, &cctx);
+	if (maj_stat != GSS_S_COMPLETE)
+	    errx(1, "import client context failed: %s",
+		 gssapi_err(maj_stat, min_stat, NULL));
+
+	gss_release_buffer(&min_stat, &ctx_token);
+
+	maj_stat = gss_export_sec_context(&min_stat, &sctx, &ctx_token);
+	if (maj_stat != GSS_S_COMPLETE)
+	    errx(1, "export server context failed: %s",
+		 gssapi_err(maj_stat, min_stat, NULL));
+
+	heim_assert(sctx == GSS_C_NO_CONTEXT,
+		    "gss_export_sec_context did not delete context");
+
+	maj_stat = gss_import_sec_context(&min_stat, &ctx_token, &sctx);
+	if (maj_stat != GSS_S_COMPLETE)
+	    errx(1, "import server context failed: %s",
+		 gssapi_err(maj_stat, min_stat, NULL));
+
+	gss_release_buffer(&min_stat, &ctx_token);
+    }
+
     if (wrapunwrap_flag) {
 	wrapunwrap(cctx, sctx, 0, actual_mech);
 	wrapunwrap(cctx, sctx, 1, actual_mech);
@@ -1119,7 +1155,6 @@ main(int argc, char **argv)
 	getverifymic(sctx, cctx, actual_mech);
     }
 
-
     gss_delete_sec_context(&min_stat, &cctx, NULL);
     gss_delete_sec_context(&min_stat, &sctx, NULL);
 
@@ -1157,16 +1192,16 @@ main(int argc, char **argv)
 #endif
 
 	/* check export/import */
-	if (ei_flag) {
+	if (ei_cred_flag) {
 
 	    maj_stat = gss_export_cred(&min_stat, deleg_cred, &cb);
 	    if (maj_stat != GSS_S_COMPLETE)
-		errx(1, "export failed: %s",
+		errx(1, "export cred failed: %s",
 		     gssapi_err(maj_stat, min_stat, NULL));
 
 	    maj_stat = gss_import_cred(&min_stat, &cb, &cred2);
 	    if (maj_stat != GSS_S_COMPLETE)
-		errx(1, "import failed: %s",
+		errx(1, "import cred failed: %s",
 		     gssapi_err(maj_stat, min_stat, NULL));
 
 	    gss_release_buffer(&min_stat, &cb);

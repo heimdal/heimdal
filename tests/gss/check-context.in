@@ -265,6 +265,29 @@ for mech in krb5 krb5iov spnego; do
 
 done
 
+echo "======export-import-context"
+for mech in krb5 krb5iov spnego spnegoiov; do
+	iov=""
+	if [ "$mech" = "krb5iov" ] ; then
+	    mech="krb5"
+	    iov="--iov"
+	fi
+	if [ "$mech" = "spnegoiov" ] ; then
+	    mech="spnego"
+	    iov="--iov"
+	fi
+
+	echo "${mech}: export-import-context ${iov}" ; > messages.log
+	${context} \
+	    --mech-type=${mech} \
+	    --mutual \
+	    --export-import-context \
+	    --wrapunwrap ${iov} \
+	    --name-type=hostbased-service host@lucid.test.h5l.se || \
+	    { eval "$testfailed"; }
+
+done
+
 echo "test gsskrb5_register_acceptor_identity (both positive and negative)"
 
 cp ${keytabfile} ${keytabfile}.new

@@ -1022,8 +1022,8 @@ main(int argc, char **argv)
 	    errx(1, "export client context failed: %s",
 		 gssapi_err(maj_stat, min_stat, NULL));
 
-	heim_assert(cctx == GSS_C_NO_CONTEXT,
-		    "gss_export_sec_context did not delete context");
+	if (cctx != GSS_C_NO_CONTEXT)
+	    errx(1, "export client context did not release it");
 
 	maj_stat = gss_import_sec_context(&min_stat, &ctx_token, &cctx);
 	if (maj_stat != GSS_S_COMPLETE)
@@ -1037,8 +1037,8 @@ main(int argc, char **argv)
 	    errx(1, "export server context failed: %s",
 		 gssapi_err(maj_stat, min_stat, NULL));
 
-	heim_assert(sctx == GSS_C_NO_CONTEXT,
-		    "gss_export_sec_context did not delete context");
+	if (sctx != GSS_C_NO_CONTEXT)
+	    errx(1, "export server context did not release it");
 
 	maj_stat = gss_import_sec_context(&min_stat, &ctx_token, &sctx);
 	if (maj_stat != GSS_S_COMPLETE)

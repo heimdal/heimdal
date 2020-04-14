@@ -124,7 +124,8 @@ main(int argc, char **argv)
 		buf[strcspn(buf, "\r\n")] = '\0';
 
 	    } else {
-		if(UI_UTIL_read_pw_string(buf, sizeof(buf), "Master key: ", 1))
+		if(UI_UTIL_read_pw_string(buf, sizeof(buf), "Master key: ",
+					  UI_UTIL_FLAG_VERIFY))
 		    exit(1);
 	    }
 	    krb5_string_to_key_salt(context, enctype, buf, salt, &key);

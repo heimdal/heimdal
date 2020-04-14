@@ -13,21 +13,25 @@ before_install:
     - if [ $TRAVIS_OS_NAME = linux ]; then sudo apt-get install -qq bison comerr-dev flex libcap-ng-dev libdb-dev libedit-dev libjson-perl libldap2-dev libncurses5-dev libperl4-corelibs-perl libsqlite3-dev libkeyutils-dev pkg-config python ss-dev texinfo unzip netbase keyutils; fi
     - if [ $TRAVIS_OS_NAME = linux ]; then sudo apt-get install -qq ldap-utils gdb; fi
     - if [ $TRAVIS_OS_NAME = linux ]; then sudo apt-get install -qq libmicrohttpd-dev; fi
+    - if [ $TRAVIS_OS_NAME = linux -a -n "$COVERAGE" ]; then sudo apt-get install -qq jq; fi
     - if [ $TRAVIS_OS_NAME = osx ]; then brew update; fi
     - if [ $TRAVIS_OS_NAME = osx ]; then brew install cpanm bison flex berkeley-db lmdb openldap openssl; fi
     - if [ $TRAVIS_OS_NAME = osx ]; then sudo cpanm install JSON; fi
+    - if [ $TRAVIS_OS_NAME = osx -a -n "$COVERAGE" ]; then brew install jq; fi
     - mkdir ci-build
     - mkdir coverity-build
     - ./autogen.sh
 
 install:
     - cd ci-build
-    - if [ -n "$COVERAGE" ]; then pip install --user cpp-coveralls; fi
     - |
       if [ $TRAVIS_OS_NAME = osx ]; then
           LDFLAGS="-L/usr/local/opt/berkeley-db/lib -L/usr/local/opt/lmdb/lib" \
           CFLAGS="-I/usr/local/opt/lmdb/include" \
-          ../configure --prefix=/tmp/heimdal \
+          ../configure \
+                  --srcdir=`dirname "$PWD"` \
+                  --prefix=/tmp/heimdal \
+                  --enable-maintainer-mode $COVERAGE \
                   --enable-static=no \
                   --enable-pthread-support \
                   --disable-afs-support \
@@ -38,7 +42,7 @@ install:
                   --with-berkeley-db \
                   --with-berkeley-db-include=/usr/local/opt/berkeley-db/include
       else
-          ../configure --enable-maintainer-mode $COVERAGE
+          ../configure --srcdir=`dirname "$PWD"` --enable-maintainer-mode $COVERAGE
       fi
     - ulimit -c unlimited; make -j3
 
@@ -46,7 +50,11 @@ script:
     - if [ x${COVERITY_SCAN_BRANCH} != x1 ]; then ulimit -c unlimited; make check; fi
 
 after_script:
-    - if [ -n "$COVERAGE" ]; then coveralls --gcov-options '\-lp'; fi
+    - |
+      if [ -n "$COVERAGE" ]; then
+          ../tools/coveralls-tool -v -o cov.json -O $PWD -S ..
+          curl -vvvsf -X POST -F "json_file=@cov.json" -F "Filename=json_file" https://coveralls.io/api/v1/jobs
+      fi
 
 after_failure:
     - find . -name test-suite.log -print0 | xargs -0 cat

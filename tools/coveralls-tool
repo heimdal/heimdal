@@ -1,0 +1,168 @@
+#!/bin/bash
+
+set -euo pipefail
+set +o noglob
+
+PROG=${0##*/}
+
+job=${TRAVIS_JOB_ID:-}
+out=
+incr=false
+repo=
+branch=
+srcdir=$PWD
+objdir=
+token=${COVERALLS_REPO_TOKEN:-}
+verbose=0
+
+function usage {
+    cat <<EOF
+Usage: $PROG [OPTIONS]
+Usage: $PROG [-o FILE] [-S SRCDIR] [-O OBJDIR] [-R URI] [-t TOKEN] [-v] [-x]
+    Options:
+
+     -v         Verbose (on stderr).
+     -x         Trace $PROG
+     -o FILE    Output to FILE instead of stdout.
+     -t TOKEN   Token for Coveralls         (defaults to
+                                             \$COVERALLS_REPO_TOKEN)
+     -J ID      Job ID (e.g., Travis-CI job ID)
+     -S SRCDIR  Path to clone               (defaults to \$PWD)
+     -O OBJDIR  Path to object directory    (defaults to SRCDIR)
+     -R URI     Repository URI              (defaults to origin URI
+                                             for SRCDIR)
+
+    $PROG will look for .gcno and .gcda files in OBJDIR for source files
+    in the clone at SRCDIR and will run gcov on them, and produce
+    a request body as JSON in FILE (or stdout if -o FILE not given)
+    for Coveralls.
+
+    Only C and C++ source files are reported on.  E.g., Yacc/Bison/Flex
+    source files are not reported.
+EOF
+}
+
+while getopts +:J:O:R:S:b:ho:t:vx opt; do
+case "$opt" in
+J) job=$OPTARG;;
+O) cd "$OPTARG"; objdir=$PWD; cd "$OLDPWD";;
+R) repo=$OPTARG;;
+S) cd "$OPTARG"; srcdir=$PWD; cd "$OLDPWD";;
+h) usage 0;;
+b) branch=;;
+i) incr=true;;
+o) out=$OPTARG;;
+t) token=$OPTARG;;
+v) ((verbose++)) || true;;
+x) set -vx;;
+*) usage 1;;
+esac
+done
+
+# Note: we don't cd to $srcdir or $objdir or anywhere, so if $out is a relative
+# path, we do the right thing.
+
+: ${objdir:=${srcdir}}
+: ${repo:=git@github.com:${TRAVIS_REPO_SLUG:-heimdal/heimdal}}
+: ${repo:=$(cd "$srcdir"; git remote get-url origin)}
+: ${branch:=${TRAVIS_BRANCH:-}}
+
+if ((verbose > 1)); then
+    exec 3>&2
+else
+    exec 3>/dev/null
+fi
+
+d=
+function cleanup {
+    [[ -n $d ]] && rm -rf "$d"
+}
+
+trap cleanup EXIT
+d=$(mktemp -d)
+touch "${d}/f"
+
+declare -a gcov
+
+(cd "$srcdir" && git ls-files -- '*.c' '*.cpp') |
+while read f; do
+    # Remember to be careful to refer to ${srcdir}/${f}
+    ((verbose)) && printf 'Processing: %s\n' "$f" 1>&2
+
+    dir=${f%/*}
+    base=${f##*/}
+    base=${base%.*}
+
+    if $incr && [[ -f ${objdir}/${f}.gcov ]]; then
+        true
+    elif [[ -f ${objdir}/${dir}/.libs/${base}.gcda ]]; then
+        ((verbose)) && printf 'Running gcov for %s using gcda from .libs\n' "$f"
+        if ! (cd "${objdir}/${f%/*}"; ((verbose > 1)) && set -vx; gcov -o .libs "${f##*/}") 1>&3; then
+            printf 'Warning: gcov failed for %s\n' "$f" 1>&2
+            continue
+        fi
+    elif ! (cd "${objdir}/${f%/*}"; ((verbose > 1)) && set -vx; gcov "${f##*/}") 1>&3; then
+        printf 'Warning: gcov failed for %s\n' "$f" 1>&2
+        continue
+    fi
+
+    if [[ ! -f ${objdir}/${f}.gcov ]]; then
+        printf 'Warning: gcov did not produce a .gcov file for %s\n' "$f" 1>&2
+        continue
+    fi
+
+    md5=$(md5sum "${srcdir}/${f}")
+    md5=${md5%% *}
+
+    jq -Rn --arg sum "${md5}" --arg f "$f" '
+        {
+            name: $f,
+            source_digest: $sum,
+            coverage: [
+                inputs
+              | split(":")
+              | (.[1] |= tonumber)
+              | select(.[1] > 0)
+              | if .[0]|endswith("#")
+                then 0
+                elif .[0]|endswith("-")
+                then null
+                else .[0]|tonumber
+                end
+            ]
+        }
+    ' "${objdir}/${f}.gcov" >> "${d}/f"
+done
+
+
+[[ -n $out ]] && exec 1>"$out"
+jq -s --arg job "$job" \
+      --arg token "$token" \
+      --arg repo "$repo" \
+      --arg branch "$TRAVIS_BRANCH" \
+      --arg head "$(git log -n1 --format=%H)" \
+      --arg subject "$(git log -n1 --format=%s)" \
+      --arg aN "$(git log -n1 --format=%aN)" \
+      --arg ae "$(git log -n1 --format=%ae)" \
+      --arg cN "$(git log -n1 --format=%cN)" \
+      --arg ce "$(git log -n1 --format=%ce)" \
+    '{
+        service_job_id: $job,
+        service_name: "travis-ci",
+        repo_token: $token,
+        git: {
+            id: $head,
+            author_name:  $aN,
+            author_email: $ae,
+            committer_name:  $cN,
+            committer_email: $ce,
+            message: $subject,
+            branch: $branch,
+            remotes: [ {
+                "name": "origin",
+                "url": $repo
+                }
+            ]
+        },
+        source_files: .
+    }' "${d}/f"

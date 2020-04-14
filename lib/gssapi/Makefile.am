@@ -139,6 +139,7 @@ mechsrc = \
 	mech/gss_release_name.c \
 	mech/gss_release_oid.c \
 	mech/gss_release_oid_set.c \
+	mech/gss_rfc4121.c \
 	mech/gss_seal.c \
 	mech/gss_set_cred_option.c \
 	mech/gss_set_name_attribute.c \

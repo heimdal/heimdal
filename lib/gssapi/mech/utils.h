@@ -45,3 +45,11 @@ void _gss_mg_encode_le_uint16(uint16_t n, uint8_t *p);
 void _gss_mg_decode_le_uint16(const void *ptr, uint16_t *n);
 void _gss_mg_encode_be_uint16(uint16_t n, uint8_t *p);
 void _gss_mg_decode_be_uint16(const void *ptr, uint16_t *n);
+
+OM_uint32
+_gss_mg_import_rfc4121_context(OM_uint32 *minor,
+			       uint8_t initiator_flag,
+			       OM_uint32 gss_flags,
+			       int32_t rfc3961_enctype,
+			       gss_const_buffer_t session_key,
+			       gss_ctx_id_t *rfc4121_context_handle);

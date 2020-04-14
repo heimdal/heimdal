@@ -139,7 +139,7 @@ static void
 emem_free(krb5_storage *sp)
 {
     emem_storage *s = sp->data;
-    memset(s->base, 0, s->len);
+    memset_s(s->base, s->len, 0, s->len);
     free(s->base);
 }
 

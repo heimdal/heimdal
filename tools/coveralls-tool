@@ -93,6 +93,25 @@ while read f; do
     base=${f##*/}
     base=${base%.*}
 
+    if [[ ! -f ${objdir}/${dir}/.libs/${base}.gcda && ! -f ${objdir}/${dir}/${base}.gcda ]]; then
+        # Look for .libs/libfoo_la-${base}.gcda -- we don't know "foo", and
+        # there may be more than one!
+        gcda=
+        for gcda in ${objdir}/${dir}/.libs/*_la-${base}.gcda; do
+            break
+        done
+        gcno=
+        for gcno in ${objdir}/${dir}/.libs/*_la-${base}.gcno; do
+            break
+        done
+        [[ -n $gcno && -f $gcno ]] && ln -f "$gcno" "${objdir}/${dir}/.libs/${base}.gcno"
+        [[ -n $gcda && -f $gcda ]] && ln -f "$gcda" "${objdir}/${dir}/.libs/${base}.gcda"
+        if [[ ( -n $gcda && ! -f $gcda ) || ( -n $gcno && ! -f $gcno ) ]]; then
+            ((verbose)) && printf 'Warning: %s has no gcov notes file\n' "$f" 1>&3
+            continue
+        fi
+    fi
+
     if $incr && [[ -f ${objdir}/${f}.gcov ]]; then
         true
     elif [[ -f ${objdir}/${dir}/.libs/${base}.gcda ]]; then
@@ -101,9 +120,11 @@ while read f; do
             printf 'Warning: gcov failed for %s\n' "$f" 1>&2
             continue
         fi
-    elif ! (cd "${objdir}/${f%/*}"; ((verbose > 1)) && set -vx; gcov "${f##*/}") 1>&3; then
-        printf 'Warning: gcov failed for %s\n' "$f" 1>&2
-        continue
+    elif [[ -f ${objdir}/${dir}/${base}.gcda ]]; then
+        if ! (cd "${objdir}/${f%/*}"; ((verbose > 1)) && set -vx; gcov "${f##*/}") 1>&3; then
+            printf 'Warning: gcov failed for %s\n' "$f" 1>&2
+            continue
+        fi
     fi
 
     if [[ ! -f ${objdir}/${f}.gcov ]]; then

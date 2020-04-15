@@ -147,6 +147,16 @@ _gss_copy_buffer(OM_uint32 *minor_status,
 	return (GSS_S_COMPLETE);
 }
 
+OM_uint32
+_gss_secure_release_buffer(OM_uint32 *minor_status,
+			   gss_buffer_t buffer)
+{
+    if (buffer->value)
+	memset_s(buffer->value, buffer->length, 0, buffer->length);
+
+    return gss_release_buffer(minor_status, buffer);
+}
+
 void
 _gss_mg_encode_le_uint32(uint32_t n, uint8_t *p)
 {

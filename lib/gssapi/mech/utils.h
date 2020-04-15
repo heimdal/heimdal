@@ -31,6 +31,8 @@ OM_uint32 _gss_free_oid(OM_uint32 *, gss_OID);
 OM_uint32 _gss_intern_oid(OM_uint32 *, gss_const_OID, gss_OID *);
 OM_uint32 _gss_copy_buffer(OM_uint32 *minor_status,
     const gss_buffer_t from_buf, gss_buffer_t to_buf);
+OM_uint32 _gss_secure_release_buffer(OM_uint32 *minor_status,
+				     gss_buffer_t buffer);
 
 void _gss_mg_encode_le_uint32(uint32_t n, uint8_t *p);
 void _gss_mg_decode_le_uint32(const void *ptr, uint32_t *n);

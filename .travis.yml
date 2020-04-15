@@ -50,11 +50,7 @@ script:
     - if [ x${COVERITY_SCAN_BRANCH} != x1 ]; then ulimit -c unlimited; make check; fi
 
 after_script:
-    - |
-      if [ -n "$COVERAGE" ]; then
-          ../tools/coveralls-tool -v -o cov.json -O $PWD -S ..
-          curl -vvvsf -X POST -F "json_file=@cov.json" -F "Filename=json_file" https://coveralls.io/api/v1/jobs
-      fi
+    - if [ -n "$COVERAGE" ]; then ../tools/coveralls-tool -O $PWD -S ..; fi
 
 after_failure:
     - find . -name test-suite.log -print0 | xargs -0 cat

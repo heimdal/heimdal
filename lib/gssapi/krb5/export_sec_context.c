@@ -232,7 +232,7 @@ _gsskrb5_export_sec_context(
     ret = _gsskrb5_delete_sec_context (minor_status, context_handle,
 				       GSS_C_NO_BUFFER);
     if (ret != GSS_S_COMPLETE)
-	_gsskrb5_release_buffer (NULL, interprocess_token);
+	_gss_secure_release_buffer (&minor, interprocess_token);
     *minor_status = 0;
     return ret;
  failure:

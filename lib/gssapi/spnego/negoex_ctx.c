@@ -48,25 +48,6 @@
  * authenticate the entire exchange.
  */
 
-static void
-zero_and_release_buffer_set(gss_buffer_set_t *pBuffers)
-{
-    OM_uint32 tmpMinor;
-    gss_buffer_set_t buffers = *pBuffers;
-    size_t i;
-
-    if (buffers != GSS_C_NO_BUFFER_SET) {
-	for (i = 0; i < buffers->count; i++)
-	    memset_s(buffers->elements[i].value,
-		     buffers->elements[i].length, 0,
-		     buffers->elements[i].length);
-
-	gss_release_buffer_set(&tmpMinor, &buffers);
-    }
-
-    *pBuffers = GSS_C_NO_BUFFER_SET;
-}
-
 static OM_uint32
 buffer_set_to_crypto(OM_uint32 *minor,
 		     krb5_context context,
@@ -120,7 +101,7 @@ get_session_keys(OM_uint32 *minor,
     if (major == GSS_S_COMPLETE) {
 	major = buffer_set_to_crypto(minor, context,
 				     buffers, &mech->crypto);
-	zero_and_release_buffer_set(&buffers);
+	_gss_secure_release_buffer_set(&tmpMinor, &buffers);
 	if (major != GSS_S_COMPLETE)
 	    return major;
     }
@@ -131,7 +112,7 @@ get_session_keys(OM_uint32 *minor,
     if (major == GSS_S_COMPLETE) {
 	major = buffer_set_to_crypto(minor, context,
 				     buffers, &mech->verify_crypto);
-	zero_and_release_buffer_set(&buffers);
+	_gss_secure_release_buffer_set(&tmpMinor, &buffers);
 	if (major != GSS_S_COMPLETE)
 	    return major;
     }

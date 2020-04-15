@@ -58,8 +58,8 @@ gss_inquire_cred_by_oid (OM_uint32 *minor_status,
 
 		m = mc->gmc_mech;
 		if (m == NULL) {
-	       		gss_release_buffer_set(minor_status, &set);
-			*minor_status = 0;
+			_gss_secure_release_buffer_set(minor_status, &set);
+			minor_status = 0;
 			return GSS_S_BAD_MECH;
 		}
 
@@ -79,7 +79,7 @@ gss_inquire_cred_by_oid (OM_uint32 *minor_status,
 			if (status != GSS_S_COMPLETE)
 				break;
 		}
-		gss_release_buffer_set(minor_status, &rset);
+		_gss_secure_release_buffer_set(minor_status, &rset);
 	}
 	if (set == GSS_C_NO_BUFFER_SET && status == GSS_S_COMPLETE)
 		status = GSS_S_FAILURE;

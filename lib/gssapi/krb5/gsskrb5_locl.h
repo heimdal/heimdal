@@ -44,6 +44,7 @@
 #include <gssapi_mech.h>
 #include <gssapi_krb5.h>
 #include <assert.h>
+#include <mech/utils.h>
 
 #include "cfx.h"
 

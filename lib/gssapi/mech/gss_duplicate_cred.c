@@ -53,7 +53,7 @@ copy_cred_element(OM_uint32 *minor_status,
 	major_status = m->gm_export_cred(minor_status, mc->gmc_cred, &export);
 	if (major_status == GSS_S_COMPLETE) {
 	    major_status = m->gm_import_cred(minor_status, &export, &dup_cred);
-	    gss_release_buffer(&tmp, &export);
+	    _gss_secure_release_buffer(&tmp, &export);
 	}
     } else {
 	struct _gss_mechanism_name mn;

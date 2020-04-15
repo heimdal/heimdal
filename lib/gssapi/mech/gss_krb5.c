@@ -383,7 +383,7 @@ gss_krb5_export_lucid_sec_context(OM_uint32 *minor_status,
     *rctx = ctx;
 
 out:
-    gss_release_buffer_set(minor_status, &data_set);
+    _gss_secure_release_buffer_set(minor_status, &data_set);
     if (sp)
 	krb5_storage_free(sp);
     if (context)
@@ -736,7 +736,7 @@ gsskrb5_extract_key(OM_uint32 *minor_status,
 	return major_status;
 
     if (data_set == GSS_C_NO_BUFFER_SET || data_set->count != 1) {
-	gss_release_buffer_set(minor_status, &data_set);
+	_gss_secure_release_buffer_set(minor_status, &data_set);
 	*minor_status = EINVAL;
 	return GSS_S_FAILURE;
     }
@@ -757,7 +757,7 @@ gsskrb5_extract_key(OM_uint32 *minor_status,
     ret = krb5_ret_keyblock(sp, *keyblock);
 
 out:
-    gss_release_buffer_set(minor_status, &data_set);
+    _gss_secure_release_buffer_set(minor_status, &data_set);
     if (sp)
 	krb5_storage_free(sp);
     if (ret && keyblock) {

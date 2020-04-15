@@ -90,13 +90,13 @@ gss_export_cred(OM_uint32 * minor_status,
 	if (buffer.length) {
 	    bytes = krb5_storage_write(sp, buffer.value, buffer.length);
 	    if (bytes < 0 || (size_t)bytes != buffer.length) {
-		gss_release_buffer(minor_status, &buffer);
+		_gss_secure_release_buffer(minor_status, &buffer);
 		krb5_storage_free(sp);
 		*minor_status = EINVAL;
 		return GSS_S_FAILURE;
 	    }
 	}
-	gss_release_buffer(minor_status, &buffer);
+	_gss_secure_release_buffer(minor_status, &buffer);
     }
 
     ret = krb5_storage_to_data(sp, &data);

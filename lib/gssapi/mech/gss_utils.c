@@ -157,6 +157,26 @@ _gss_secure_release_buffer(OM_uint32 *minor_status,
     return gss_release_buffer(minor_status, buffer);
 }
 
+OM_uint32
+_gss_secure_release_buffer_set(OM_uint32 *minor_status,
+			       gss_buffer_set_t *buffer_set)
+{
+    size_t i;
+    OM_uint32 minor;
+
+    *minor_status = 0;
+
+    if (*buffer_set == GSS_C_NO_BUFFER_SET)
+	return GSS_S_COMPLETE;
+
+    for (i = 0; i < (*buffer_set)->count; i++)
+	_gss_secure_release_buffer(&minor, &((*buffer_set)->elements[i]));
+
+    (*buffer_set)->count = 0;
+
+    return gss_release_buffer_set(minor_status, buffer_set);
+}
+
 void
 _gss_mg_encode_le_uint32(uint32_t n, uint8_t *p)
 {

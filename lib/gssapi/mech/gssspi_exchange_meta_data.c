@@ -104,7 +104,7 @@ gssspi_exchange_meta_data(
 	_gss_mg_error(m, *minor_status);
 
 cleanup:
-    if (major_status != GSS_S_COMPLETE || ctx->gc_ctx == GSS_C_NO_CONTEXT)
+    if (allocated_ctx && major_status != GSS_S_COMPLETE)
 	gss_delete_sec_context(&junk, (gss_ctx_id_t *)&ctx, GSS_C_NO_BUFFER);
 
     *context_handle = (gss_ctx_id_t) ctx;

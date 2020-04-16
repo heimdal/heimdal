@@ -1241,6 +1241,7 @@ main(int argc, char **argv)
 
     }
 
+    gss_release_cred(&min_stat, &client_cred);
     empty_release();
 
     krb5_free_context(context);

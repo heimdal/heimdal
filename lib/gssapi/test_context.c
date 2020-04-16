@@ -54,6 +54,7 @@ static int iov_flag = 0;
 static int aead_flag = 0;
 static int getverifymic_flag = 0;
 static int deleg_flag = 0;
+static int anon_flag = 0;
 static int policy_deleg_flag = 0;
 static int server_no_deleg_flag = 0;
 static int ei_cred_flag = 0;
@@ -166,6 +167,7 @@ loop(gss_OID mechoid,
     OM_uint32 flags = 0, ret_cflags, ret_sflags;
     gss_OID actual_mech_client;
     gss_OID actual_mech_server;
+    gss_name_t initiator_name = GSS_C_NO_NAME;
 
     *actual_mech = GSS_C_NO_OID;
 
@@ -175,6 +177,8 @@ loop(gss_OID mechoid,
 
     if (mutual_auth_flag)
 	flags |= GSS_C_MUTUAL_FLAG;
+    if (anon_flag)
+	flags |= GSS_C_ANON_FLAG;
     if (dce_style_flag)
 	flags |= GSS_C_DCE_STYLE;
     if (deleg_flag)
@@ -228,6 +232,8 @@ loop(gss_OID mechoid,
 
 	if (input_token.length != 0)
 	    gss_release_buffer(&min_stat, &input_token);
+	if (initiator_name != GSS_C_NO_NAME)
+	    gss_release_name(&min_stat, &initiator_name);
 
 	gsskrb5_set_time_offset(server_time_offset);
 
@@ -236,7 +242,7 @@ loop(gss_OID mechoid,
 					  GSS_C_NO_CREDENTIAL,
 					  &output_token,
 					  GSS_C_NO_CHANNEL_BINDINGS,
-					  NULL,
+					  &initiator_name,
 					  &actual_mech_server,
 					  &input_token,
 					  &ret_sflags,
@@ -280,9 +286,45 @@ loop(gss_OID mechoid,
 	     num_loops, max_loops);
 
     if (verbose_flag) {
+	gss_buffer_desc output = GSS_C_EMPTY_BUFFER;
+
+	if (gss_display_name(&min_stat, initiator_name,
+			     &output, NULL) == GSS_S_COMPLETE) {
+	    printf("client name: %.*s\n", (int)output.length, output.value);
+	    gss_release_buffer(&min_stat, &output);
+	}
+
 	printf("server time offset: %d\n", server_time_offset);
 	printf("client time offset: %d\n", client_time_offset);
 	printf("num loops %d\n", num_loops);
+	printf("flags: ");
+	if (ret_cflags & GSS_C_DELEG_FLAG)
+	    printf("deleg ");
+	if (ret_cflags & GSS_C_MUTUAL_FLAG)
+	    printf("mutual ");
+	if (ret_cflags & GSS_C_REPLAY_FLAG)
+	    printf("replay ");
+	if (ret_cflags & GSS_C_SEQUENCE_FLAG)
+	    printf("sequence ");
+	if (ret_cflags & GSS_C_CONF_FLAG)
+	    printf("conf ");
+	if (ret_cflags & GSS_C_INTEG_FLAG)
+	    printf("integ ");
+	if (ret_cflags & GSS_C_ANON_FLAG)
+	    printf("anon ");
+	if (ret_cflags & GSS_C_PROT_READY_FLAG)
+	    printf("prot-ready ");
+	if (ret_cflags & GSS_C_TRANS_FLAG)
+	    printf("trans ");
+	if (ret_cflags & GSS_C_DCE_STYLE)
+	    printf("dce-style ");
+	if (ret_cflags & GSS_C_IDENTIFY_FLAG)
+	    printf("identify " );
+	if (ret_cflags & GSS_C_EXTENDED_ERROR_FLAG)
+	    printf("extended-error " );
+	if (ret_cflags & GSS_C_DELEG_POLICY_FLAG)
+	    printf("deleg-policy " );
+	printf("\n");
     }
 }
 
@@ -580,6 +622,7 @@ static struct getargs args[] = {
     {"client-keytab",0, arg_string,	&client_keytab, "client keytab", NULL },
     {"client-name", 0,  arg_string,     &client_name, "client name", NULL },
     {"client-password", 0,  arg_string, &client_password, "client password", NULL },
+    {"anonymous", 0,	arg_flag,	&anon_flag, "anonymous auth", NULL },
     {"limit-enctype",0,	arg_string,	&limit_enctype_string, "enctype", NULL },
     {"dce-style",0,	arg_flag,	&dce_style_flag, "dce-style", NULL },
     {"wrapunwrap",0,	arg_flag,	&wrapunwrap_flag, "wrap/unwrap", NULL },
@@ -736,7 +779,14 @@ main(int argc, char **argv)
 	client_cred_store.count++;
     }
 
-    if (client_name) {
+    if (anon_flag) {
+	gss_buffer_desc cn = GSS_C_EMPTY_BUFFER;
+
+	maj_stat = gss_import_name(&min_stat, &cn, GSS_C_NT_ANONYMOUS, &cname);
+	if (maj_stat)
+	    errx(1, "gss_import_name: %s",
+		 gssapi_err(maj_stat, min_stat, GSS_C_NO_OID));
+    } else if (client_name) {
 	gss_buffer_desc cn;
 
 	cn.value = client_name;
@@ -777,7 +827,7 @@ main(int argc, char **argv)
 					 &client_cred,
 					 NULL,
 					 NULL);
-	if (GSS_ERROR(maj_stat))
+	if (GSS_ERROR(maj_stat) && !anon_flag)
 	    errx(1, "gss_acquire_cred: %s",
 		 gssapi_err(maj_stat, min_stat, GSS_C_NO_OID));
     }

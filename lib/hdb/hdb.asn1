@@ -49,6 +49,8 @@ HDBFlags ::= BIT STRING {
 	locked-out(17),			-- Account is locked out,
 					-- authentication will be denied
 	require-pwchange(18),		-- require a passwd change
+	disallow-anonymous(19),		-- disallow anonymous ticket issuance
+	force-anonymous(20),		-- force client to be anonymous principal
 	force-canonicalize(30),		-- force the KDC to return the canonical
 					-- principal irrespective of the setting
 					-- of the canonicalize KDC option

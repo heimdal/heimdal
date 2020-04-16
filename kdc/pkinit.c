@@ -626,7 +626,7 @@ _kdc_pk_rd_padata(astgs_request_t priv,
 	int flags = HX509_CMS_VS_ALLOW_DATA_OID_MISMATCH; /* BTMM */
 
 	if (_kdc_is_anonymous(context, client->entry.principal)
-	    || (config->historical_anon_realm && _kdc_is_anon_request(req)))
+	    || (config->historical_anon_realm && _kdc_is_anon_request(priv)))
 	    flags |= HX509_CMS_VS_ALLOW_ZERO_SIGNER;
 
 	ret = hx509_cms_verify_signed(context->hx509ctx,

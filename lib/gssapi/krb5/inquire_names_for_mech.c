@@ -38,6 +38,7 @@ static gss_OID name_list[] = {
     GSS_C_NT_USER_NAME,
     GSS_KRB5_NT_PRINCIPAL_NAME,
     GSS_C_NT_EXPORT_NAME,
+    GSS_C_NT_ANONYMOUS,
     NULL
 };
 

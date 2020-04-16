@@ -138,6 +138,14 @@ OM_uint32 GSSAPI_CALLCONV _gsskrb5_duplicate_cred (
         }
     }
 
+    if (cred->pkinit_anchors) {
+	dup->pkinit_anchors = strdup(cred->pkinit_anchors);
+	if (dup->pkinit_anchors == NULL) {
+	    *minor_status = krb5_enomem(context);
+	    goto fail;
+	}
+    }
+
     major = gss_create_empty_oid_set(minor_status, &dup->mechanisms);
     if (major != GSS_S_COMPLETE)
         goto fail;

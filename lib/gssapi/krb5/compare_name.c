@@ -46,8 +46,20 @@ OM_uint32 GSSAPI_CALLCONV _gsskrb5_compare_name
 
     GSSAPI_KRB5_INIT(&context);
 
-    *name_equal = krb5_principal_compare (context,
-					  princ1, princ2);
+    /*
+     * RFC2743: if either name presented to GSS_Compare_name()
+     * denoted an anonymous principal, GSS_Compare_name() shall
+     * indicate FALSE.
+     */
+    if (krb5_principal_is_anonymous(context, princ1,
+				    KRB5_ANON_MATCH_UNAUTHENTICATED | KRB5_ANON_IGNORE_NAME_TYPE) ||
+	krb5_principal_is_anonymous(context, princ2,
+				    KRB5_ANON_MATCH_UNAUTHENTICATED | KRB5_ANON_IGNORE_NAME_TYPE))
+	*name_equal = FALSE;
+    else
+	*name_equal = krb5_principal_compare(context,
+					     princ1, princ2);
+
     *minor_status = 0;
     return GSS_S_COMPLETE;
 }

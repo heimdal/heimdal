@@ -67,6 +67,7 @@ OM_uint32 GSSAPI_CALLCONV _gsskrb5_release_cred
     gss_release_oid_set(&junk, &cred->mechanisms);
     if (cred->enctypes)
 	free(cred->enctypes);
+    free(cred->pkinit_anchors);
     HEIMDAL_MUTEX_unlock(&cred->cred_id_mutex);
     HEIMDAL_MUTEX_destroy(&cred->cred_id_mutex);
     memset(cred, 0, sizeof(*cred));

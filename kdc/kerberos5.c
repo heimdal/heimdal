@@ -121,9 +121,9 @@ is_default_salt_p(const krb5_salt *default_salt, const Key *key)
 
 
 krb5_boolean
-_kdc_is_anon_request(const KDC_REQ *req)
+_kdc_is_anon_request(astgs_request_t r)
 {
-    const KDC_REQ_BODY *b = &req->req_body;
+    const KDC_REQ_BODY *b = &r->req.req_body;
 
     /*
      * Versions of Heimdal from 0.9rc1 through 1.50 use bit 14 instead
@@ -133,7 +133,8 @@ _kdc_is_anon_request(const KDC_REQ *req)
      * additional ticket present.
      */
     return b->kdc_options.request_anonymous ||
-	   (b->kdc_options.cname_in_addl_tkt && !b->additional_tickets);
+	   (b->kdc_options.cname_in_addl_tkt && !b->additional_tickets) ||
+	   (r->client != NULL && r->client->entry.flags.force_anonymous);
 }
 
 /*
@@ -512,7 +513,7 @@ pa_enc_chal_validate(astgs_request_t r, const PA_DATA *pa)
 
     heim_assert(r->armor_crypto != NULL, "ENC-CHAL called for non FAST");
     
-    if (_kdc_is_anon_request(&r->req)) {
+    if (_kdc_is_anon_request(r)) {
 	ret = KRB5KRB_AP_ERR_BAD_INTEGRITY;
 	kdc_log(r->context, r->config, 4, "ENC-CHALL doesn't support anon");
 	return ret;
@@ -1627,6 +1628,19 @@ _kdc_check_anon_policy(astgs_request_t r)
 	return KRB5KDC_ERR_POLICY;
     }
 
+    if (r->client != NULL &&
+	r->client->entry.flags.disallow_anonymous) {
+	kdc_log(r->context, r->config, 0,
+		"Request for anonymous ticket denied by client principal policy");
+	return KRB5KDC_ERR_POLICY;
+    }
+
+    if (r->server->entry.flags.disallow_anonymous) {
+	kdc_log(r->context, r->config, 0,
+		"Request for anonymous ticket denied by server principal policy");
+	return KRB5KDC_ERR_POLICY;
+    }
+
     return 0;
 }
 
@@ -1845,7 +1859,7 @@ _kdc_as_rep(astgs_request_t r)
     is_tgs = krb5_principal_is_krbtgt(context, r->server_princ);
 
     if (_kdc_is_anonymous(context, r->client_princ) &&
-	!_kdc_is_anon_request(req)) {
+	!_kdc_is_anon_request(r)) {
 	kdc_log(context, config, 2, "Anonymous client w/o anonymous flag");
 	ret = KRB5KDC_ERR_BADOPTION;
 	goto out;
@@ -2012,7 +2026,7 @@ _kdc_as_rep(astgs_request_t r)
 	 * send requre preauth is its required or anon is requested,
 	 * anon is today only allowed via preauth mechanisms.
 	 */
-	if (require_preauth_p(r) || _kdc_is_anon_request(&r->req)) {
+	if (require_preauth_p(r) || _kdc_is_anon_request(r)) {
 	    ret = KRB5KDC_ERR_PREAUTH_REQUIRED;
 	    _kdc_set_e_text(r, "Need to use PA-ENC-TIMESTAMP/PA-PK-AS-REQ");
 	    goto out;
@@ -2043,7 +2057,7 @@ _kdc_as_rep(astgs_request_t r)
     if(ret)
 	goto out;
 
-    if (_kdc_is_anon_request(&r->req)) {
+    if (_kdc_is_anon_request(r)) {
 	ret = _kdc_check_anon_policy(r);
 	if (ret) {
 	    _kdc_set_e_text(r, "Anonymous ticket requests are disabled");

@@ -157,8 +157,14 @@ get_client_keytab(krb5_context context,
 	    krb5_kt_free_entry(context, &entry);
     }
 
-    if (ret)
+    if (ret) {
+	if (*keytab) {
+	    krb5_kt_close(context, *keytab);
+	    *keytab = NULL;
+	}
+
 	ret = get_system_keytab(context, GSS_C_NO_CRED_STORE, keytab);
+    }
 
     return ret;
 }

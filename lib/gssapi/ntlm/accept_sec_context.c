@@ -139,7 +139,7 @@ _gss_ntlm_accept_sec_context
 	if (ret) {
 	    _gss_ntlm_delete_sec_context(minor_status, context_handle, NULL);
 	    *minor_status = ret;
-	    return GSS_S_FAILURE;
+	    return GSS_S_DEFECTIVE_TOKEN;
 	}
 
 	if ((type1.flags & NTLM_NEG_UNICODE) == 0) {
@@ -195,7 +195,7 @@ _gss_ntlm_accept_sec_context
 	if (ret) {
 	    _gss_ntlm_delete_sec_context(minor_status, context_handle, NULL);
 	    *minor_status = ret;
-	    return GSS_S_FAILURE;
+	    return GSS_S_DEFECTIVE_TOKEN;
 	}
 
 	maj_stat = (*ctx->server->nsi_type3)(minor_status,

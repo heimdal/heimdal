@@ -93,36 +93,22 @@ parse_header(const gss_buffer_t input_token, gss_OID *mech_oid)
 	return GSS_S_COMPLETE;
 }
 
-static OM_uint32
-choose_mech(const gss_buffer_t input, gss_OID *mech_oid)
+static gss_OID
+choose_mech(const gss_buffer_t input)
 {
 	OM_uint32 status;
+        gss_OID mech_oid = GSS_C_NO_OID;
 
 	/*
 	 * First try to parse the gssapi token header and see if it's a
 	 * correct header, use that in the first hand.
 	 */
 
-	status = parse_header(input, mech_oid);
-	if (status == GSS_S_COMPLETE)
-	    return GSS_S_COMPLETE;
+	status = parse_header(input, &mech_oid);
+	if (status == GSS_S_COMPLETE && mech_oid != GSS_C_NO_OID)
+	    return mech_oid;
 
-	/*
-	 * Lets guess what mech is really is, callback function to mech ??
-	 */
-
-	if (input->length > 8 &&
-	    memcmp((const char *)input->value, "NTLMSSP\x00", 8) == 0)
-	{
-		*mech_oid = &__gss_ntlm_mechanism_oid_desc;
-		return GSS_S_COMPLETE;
-	} else if (input->length != 0 &&
-		   ((const char *)input->value)[0] == 0x6E)
-	{
-		/* Could be a raw AP-REQ (check for APPLICATION tag) */
-		*mech_oid = &__gss_krb5_mechanism_oid_desc;
-		return GSS_S_COMPLETE;
-	} else if (input->length == 0) {
+	if (input->length == 0) {
 		/*
 		 * There is the a wierd mode of SPNEGO (in CIFS and
 		 * SASL GSS-SPENGO where the first token is zero
@@ -132,13 +118,12 @@ choose_mech(const gss_buffer_t input, gss_OID *mech_oid)
 		 * http://msdn.microsoft.com/en-us/library/cc213114.aspx
 		 * "NegTokenInit2 Variation for Server-Initiation"
 		 */
-		*mech_oid = &__gss_spnego_mechanism_oid_desc;
-		return GSS_S_COMPLETE;
+		return &__gss_spnego_mechanism_oid_desc;
 	}
 
 	_gss_mg_log(10, "Don't have client request mech");
 
-	return status;
+	return mech_oid;
 }
 
 
@@ -156,14 +141,19 @@ gss_accept_sec_context(OM_uint32 *minor_status,
     gss_cred_id_t *delegated_cred_handle)
 {
 	OM_uint32 major_status, mech_ret_flags, junk;
-	gssapi_mech_interface m;
+	gssapi_mech_interface m = NULL;
 	struct _gss_context *ctx = (struct _gss_context *) *context_handle;
 	struct _gss_cred *cred = (struct _gss_cred *) acceptor_cred_handle;
 	struct _gss_mechanism_cred *mc;
+        gss_buffer_desc defective_token_error;
 	gss_const_cred_id_t acceptor_mc;
 	gss_cred_id_t delegated_mc = GSS_C_NO_CREDENTIAL;
 	gss_name_t src_mn = GSS_C_NO_NAME;
 	gss_OID mech_ret_type = GSS_C_NO_OID;
+        int initial = !!(*context_handle == GSS_C_NO_CONTEXT);
+
+        defective_token_error.length = 0;
+        defective_token_error.value = NULL;
 
 	*minor_status = 0;
 	if (src_name)
@@ -182,33 +172,124 @@ gss_accept_sec_context(OM_uint32 *minor_status,
 	 * If this is the first call (*context_handle is NULL), we must
 	 * parse the input token to figure out the mechanism to use.
 	 */
-	if (*context_handle == GSS_C_NO_CONTEXT) {
+	if (initial) {
 		gss_OID mech_oid;
 
-		major_status = choose_mech(input_token, &mech_oid);
-		if (major_status != GSS_S_COMPLETE)
-			return major_status;
+		mech_oid = choose_mech(input_token);
 
-		/*
-		 * Now that we have a mechanism, we can find the
-		 * implementation.
-		 */
+                /*
+                 * If mech_oid == GSS_C_NO_OID then the mech is non-standard
+                 * and we have to try all mechs (that we have a cred element
+                 * for, if we have a cred).
+                 */
 		ctx = malloc(sizeof(struct _gss_context));
 		if (!ctx) {
 			*minor_status = ENOMEM;
 			return (GSS_S_DEFECTIVE_TOKEN);
 		}
 		memset(ctx, 0, sizeof(struct _gss_context));
-		m = ctx->gc_mech = __gss_get_mechanism(mech_oid);
-		if (!m) {
-			free(ctx);
-			_gss_mg_log(10, "mechanism client used is unknown");
-			return (GSS_S_BAD_MECH);
-		}
+                if (mech_oid != GSS_C_NO_OID) {
+                        m = ctx->gc_mech = __gss_get_mechanism(mech_oid);
+                        if (!m) {
+                                free(ctx);
+                                _gss_mg_log(10, "mechanism client used is unknown");
+                                return (GSS_S_BAD_MECH);
+                        }
+                }
 		*context_handle = (gss_ctx_id_t) ctx;
 	} else {
 		m = ctx->gc_mech;
 	}
+
+        if (initial && !m && acceptor_cred_handle == GSS_C_NO_CREDENTIAL) {
+                /*
+                 * No header, not a standard mechanism.  Try all the mechanisms
+                 * (because default credential).
+                 */
+                struct _gss_mech_switch *ms;
+
+                _gss_load_mech();
+                acceptor_mc = GSS_C_NO_CREDENTIAL;
+                HEIM_TAILQ_FOREACH(ms, &_gss_mechs, gm_link) {
+                        m = &ms->gm_mech;
+                        mech_ret_flags = 0;
+                        major_status = m->gm_accept_sec_context(minor_status,
+                            &ctx->gc_ctx,
+                            acceptor_mc,
+                            input_token,
+                            input_chan_bindings,
+                            &src_mn,
+                            &mech_ret_type,
+                            output_token,
+                            &mech_ret_flags,
+                            time_rec,
+                            &delegated_mc);
+                        if (major_status == GSS_S_DEFECTIVE_TOKEN) {
+                                /*
+                                 * Try to retain and output one error token for
+                                 * GSS_S_DEFECTIVE_TOKEN.  The first one.
+                                 */
+                                if (output_token->length &&
+                                    defective_token_error.length == 0) {
+                                    defective_token_error = *output_token;
+                                    output_token->length = 0;
+                                    output_token->value = NULL;
+                                }
+                                gss_release_buffer(&junk, output_token);
+                                continue;
+                        }
+                        gss_release_buffer(&junk, &defective_token_error);
+                        ctx->gc_mech = m;
+                        goto got_one;
+                }
+                m = NULL;
+                acceptor_mc = GSS_C_NO_CREDENTIAL;
+        } else if (initial && !m) {
+                /*
+                 * No header, not a standard mechanism.  Try all the mechanisms
+                 * that we have a credential element for if we have a
+                 * non-default credential.
+                 */
+		HEIM_TAILQ_FOREACH(mc, &cred->gc_mc, gmc_link) {
+                        m = mc->gmc_mech;
+                        acceptor_mc = (m->gm_flags & GM_USE_MG_CRED) ?
+                            acceptor_cred_handle : mc->gmc_cred;
+                        mech_ret_flags = 0;
+                        major_status = m->gm_accept_sec_context(minor_status,
+                            &ctx->gc_ctx,
+                            acceptor_mc,
+                            input_token,
+                            input_chan_bindings,
+                            &src_mn,
+                            &mech_ret_type,
+                            output_token,
+                            &mech_ret_flags,
+                            time_rec,
+                            &delegated_mc);
+                        if (major_status == GSS_S_DEFECTIVE_TOKEN) {
+                                if (output_token->length &&
+                                    defective_token_error.length == 0) {
+                                    defective_token_error = *output_token;
+                                    output_token->length = 0;
+                                    output_token->value = NULL;
+                                }
+                                gss_release_buffer(&junk, output_token);
+                                continue;
+                        }
+                        gss_release_buffer(&junk, &defective_token_error);
+                        ctx->gc_mech = m;
+                        goto got_one;
+                }
+                m = NULL;
+                acceptor_mc = GSS_C_NO_CREDENTIAL;
+        }
+
+        if (m == NULL) {
+                _gss_mg_log(10, "No mechanism accepted the non-standard initial security context token");
+                *output_token = defective_token_error;
+                free(ctx);
+                return GSS_S_BAD_MECH;
+        }
 
 	if (m->gm_flags & GM_USE_MG_CRED) {
 		acceptor_mc = acceptor_cred_handle;
@@ -242,6 +323,8 @@ gss_accept_sec_context(OM_uint32 *minor_status,
 	    &mech_ret_flags,
 	    time_rec,
 	    &delegated_mc);
+
+got_one:
 	if (major_status != GSS_S_COMPLETE &&
 	    major_status != GSS_S_CONTINUE_NEEDED)
 	{

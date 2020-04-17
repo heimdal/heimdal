@@ -373,6 +373,13 @@ gsskrb5_acceptor_start(OM_uint32 * minor_status,
 				GSS_KRB5_MECHANISM);
 
     if (ret) {
+	/* Could be a raw AP-REQ (check for APPLICATION tag) */
+	if (input_token_buffer->length == 0 ||
+	    ((const uint8_t *)input_token_buffer->value)[0] != 0x6E) {
+	    *minor_status = ASN1_MISPLACED_FIELD;
+	    return GSS_S_DEFECTIVE_TOKEN;
+	}
+
 	/* Assume that there is no OID wrapping. */
 	indata.length	= input_token_buffer->length;
 	indata.data	= input_token_buffer->value;

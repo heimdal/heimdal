@@ -347,7 +347,7 @@ _gss_ntlm_init_sec_context
 	if (ret) {
 	    _gss_ntlm_delete_sec_context(minor_status, context_handle, NULL);
 	    *minor_status = ret;
-	    return GSS_S_FAILURE;
+	    return GSS_S_DEFECTIVE_TOKEN;
 	}
 
 	ctx->flags = type2.flags;
@@ -437,7 +437,7 @@ _gss_ntlm_init_sec_context
 		_gss_ntlm_delete_sec_context(minor_status,
 					     context_handle, NULL);
 		*minor_status = ret;
-		return GSS_S_FAILURE;
+		return GSS_S_DEFECTIVE_TOKEN;
 	    }
 
 	    if (ti.domainname && strcmp(ti.domainname, name->domain) != 0) {

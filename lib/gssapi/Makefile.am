@@ -106,6 +106,7 @@ mechsrc = \
 	mech/gss_duplicate_cred.c \
 	mech/gss_duplicate_name.c \
 	mech/gss_duplicate_oid.c \
+	mech/gss_duplicate_oid_set.c \
 	mech/gss_encapsulate_token.c \
 	mech/gss_export_name.c \
 	mech/gss_export_name_composite.c \

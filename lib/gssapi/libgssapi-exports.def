@@ -34,6 +34,7 @@ EXPORTS
 	gss_display_status
 	gss_duplicate_name
 	gss_duplicate_oid
+	gss_duplicate_oid_set
 	gss_encapsulate_token
         gss_export_cred
 	gss_export_name

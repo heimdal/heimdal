@@ -751,6 +751,12 @@ GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL gss_duplicate_oid (
 	    gss_OID * /* dest_oid */
            );
 
+GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL gss_duplicate_oid_set (
+	    OM_uint32 * /* minor_status */,
+	    gss_OID_set /* src_oid */,
+	    gss_OID_set * /* dest_oid */
+           );
+
 GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL
 gss_release_oid
 	(OM_uint32 * /*minor_status*/,

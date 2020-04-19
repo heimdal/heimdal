@@ -149,7 +149,7 @@ gss_acquire_cred_from(OM_uint32 *minor_status,
     struct _gss_cred *cred = NULL;
     size_t i;
     OM_uint32 min_time = GSS_C_INDEFINITE;
-    gss_OID_set mechs;
+    gss_OID_set mechs = GSS_C_NO_OID_SET;
 
     *minor_status = 0;
     if (output_cred_handle == NULL)
@@ -162,28 +162,40 @@ gss_acquire_cred_from(OM_uint32 *minor_status,
 
     _gss_load_mech();
 
-    if (desired_mechs) {
-	int match = 0;
+    if (desired_mechs != GSS_C_NO_OID_SET) {
+	int only_mg_cred_mechs = -1;
 
 	for (i = 0; i < desired_mechs->count; i++) {
-	    gss_test_oid_set_member(minor_status, &desired_mechs->elements[i],
-				    _gss_mech_oids, &match);
-	    if (match)
-		break;
+	    m = __gss_get_mechanism(&desired_mechs->elements[i]);
+	    if (m != NULL) {
+		if ((m->gm_flags & GM_USE_MG_CRED) == 0)
+		    only_mg_cred_mechs = 0;
+		else if (only_mg_cred_mechs == -1)
+		    only_mg_cred_mechs = 1;
+	    }
 	}
-	if (!match) {
+	/*
+	 * Now SPNEGO supports GM_USE_MG_CRED it's no longer necessary
+	 * to specifically acquire SPNEGO credentials. If the caller
+	 * did not specify any concrete mechanisms then we will acquire
+	 * credentials for all of them.
+	 */
+	if (only_mg_cred_mechs == -1) {
 	    *minor_status = 0;
 	    major_status = GSS_S_BAD_MECH;
 	    goto cleanup;
-	}
-	mechs = desired_mechs;
+	} else if (only_mg_cred_mechs == 0)
+	    mechs = desired_mechs;
+	else
+	    mechs = _gss_mech_oids;
     } else
 	mechs = _gss_mech_oids;
 
     cred = _gss_mg_alloc_cred();
     if (cred == NULL) {
 	*minor_status = ENOMEM;
-	return GSS_S_FAILURE;
+	major_status = GSS_S_FAILURE;
+	goto cleanup;
     }
 
     if (actual_mechs) {
@@ -249,6 +261,24 @@ gss_acquire_cred_from(OM_uint32 *minor_status,
 	heim_assert(major_status != GSS_S_COMPLETE,
 		    "lack of credentials must result in an error");
 	goto cleanup;
+    }
+
+    /* add all GM_USE_MG_CRED mechs such as SPNEGO */
+    if (actual_mechs != NULL) {
+	struct _gss_mech_switch *ms;
+
+	HEIM_TAILQ_FOREACH(ms, &_gss_mechs, gm_link) {
+	    m = &ms->gm_mech;
+
+	    if ((m->gm_flags & GM_USE_MG_CRED) == 0)
+		continue;
+
+	    major_status = gss_add_oid_set_member(minor_status,
+						  &m->gm_mech_oid,
+						  actual_mechs);
+	    if (GSS_ERROR(major_status))
+		goto cleanup;
+	}
     }
 
     *minor_status = 0;

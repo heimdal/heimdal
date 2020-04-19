@@ -171,7 +171,6 @@ spnegosrc = \
 	spnego/accept_sec_context.c \
 	spnego/compat.c \
 	spnego/context_stubs.c \
-	spnego/cred_stubs.c \
 	spnego/external.c \
 	spnego/init_sec_context.c \
 	spnego/negoex_ctx.c \

@@ -34,12 +34,56 @@
 #include "mech_locl.h"
 #include <krb5.h>
 
+static OM_uint32
+export_oid_set(OM_uint32 *minor_status,
+	       gss_const_OID mech,
+	       gss_const_OID_set oids,
+	       krb5_storage *sp)
+{
+    krb5_error_code ret;
+    krb5_data data;
+    size_t i, len;
+
+    data.length = mech->length;
+    data.data = mech->elements;
+
+    ret = krb5_store_data(sp, data);
+    if (ret)
+	goto out;
+
+    for (i = 0, len = 0; i < oids->count; i++)
+	len += 4 + oids->elements[i].length;
+
+    ret = krb5_store_uint32(sp, len);
+    if (ret)
+	goto out;
+
+    for (i = 0; i < oids->count; i++) {
+	data.length = oids->elements[i].length;
+	data.data = oids->elements[i].elements;
+
+	ret = krb5_store_data(sp, data);
+	if (ret)
+	    goto out;
+    }
+
+    ret = krb5_storage_to_data(sp, &data);
+    if (ret)
+	goto out;
+
+out:
+    *minor_status = ret;
+    return ret ? GSS_S_FAILURE : GSS_S_COMPLETE;
+}
+
 /*
  * format: any number of:
  *     mech-len: int32
  *     mech-data: char * (not alligned)
  *     cred-len: int32
  *     cred-data char * (not alligned)
+ *
+ * where neg_mechs is encoded for GSS_SPNEGO_MECHANISM
 */
 
 GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL
@@ -99,6 +143,15 @@ gss_export_cred(OM_uint32 * minor_status,
 	_gss_secure_release_buffer(minor_status, &buffer);
     }
 
+    if (cred->gc_neg_mechs != GSS_C_NO_OID_SET) {
+	major = export_oid_set(minor_status, GSS_SPNEGO_MECHANISM,
+			       cred->gc_neg_mechs, sp);
+	if (major != GSS_S_COMPLETE) {
+	    krb5_storage_free(sp);
+	    return major;
+	}
+    }
+
     ret = krb5_storage_to_data(sp, &data);
     krb5_storage_free(sp);
     if (ret) {
@@ -118,6 +171,66 @@ gss_export_cred(OM_uint32 * minor_status,
     token->length = data.length;
 
     return GSS_S_COMPLETE;
+}
+
+static OM_uint32
+import_oid_set(OM_uint32 *minor_status,
+	       gss_const_buffer_t token,
+	       gss_OID_set *oids)
+{
+    OM_uint32 major, junk;
+    krb5_error_code ret;
+    krb5_storage *sp = NULL;
+
+    *oids = GSS_C_NO_OID_SET;
+
+    if (token->length == 0)
+	return GSS_S_COMPLETE;
+
+    major = gss_create_empty_oid_set(minor_status, oids);
+    if (major != GSS_S_COMPLETE)
+	goto out;
+
+    sp = krb5_storage_from_readonly_mem(token->value, token->length);
+    if (sp == NULL) {
+	*minor_status = ENOMEM;
+	major = GSS_S_FAILURE;
+	goto out;
+    }
+
+    while (1) {
+	gss_OID_desc oid;
+	krb5_data data;
+
+	ret = krb5_ret_data(sp, &data);
+	if (ret == HEIM_ERR_EOF)
+	    break;
+	else if (ret) {
+	    *minor_status = ret;
+	    major = GSS_S_FAILURE;
+	    goto out;
+	}
+
+	oid.elements = data.data;
+	oid.length = (OM_uint32)data.length;
+
+	major = gss_add_oid_set_member(minor_status, &oid, oids);
+	if (major != GSS_S_COMPLETE) {
+	    krb5_data_free(&data);
+	    goto out;
+	}
+	krb5_data_free(&data);
+    }
+
+    major = GSS_S_COMPLETE;
+    *minor_status = 0;
+
+out:
+    if (major != GSS_S_COMPLETE)
+	gss_release_oid_set(&junk, oids);
+    krb5_storage_free(sp);
+
+    return major;
 }
 
 GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL
@@ -179,7 +292,8 @@ gss_import_cred(OM_uint32 * minor_status,
 	    goto out;
 	}
 
-	if (m->gm_import_cred == NULL) {
+	if (m->gm_import_cred == NULL &&
+	    !gss_oid_equal(&m->gm_mech_oid, GSS_SPNEGO_MECHANISM)) {
 	    *minor_status = 0;
 	    major = GSS_S_BAD_MECH;
 	    goto out;
@@ -194,6 +308,15 @@ gss_import_cred(OM_uint32 * minor_status,
 
 	buffer.value = data.data;
 	buffer.length = data.length;
+
+	if (gss_oid_equal(&m->gm_mech_oid, GSS_SPNEGO_MECHANISM)) {
+	    major = import_oid_set(minor_status, &buffer, &cred->gc_neg_mechs);
+	    krb5_data_free(&data);
+	    if (major != GSS_S_COMPLETE)
+		goto out;
+	    else
+		continue;
+	}
 
 	major = m->gm_import_cred(minor_status,
 				  &buffer, &mcred);

@@ -33,61 +33,28 @@
 #include "mech_locl.h"
 
 GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL
-gss_set_neg_mechs (OM_uint32 *minor_status,
-		   gss_cred_id_t cred_handle,
-		   const gss_OID_set mechs)
+gss_set_neg_mechs(OM_uint32 *minor_status,
+		  gss_cred_id_t cred_handle,
+		  const gss_OID_set mechs)
 {
     struct _gss_cred *cred = (struct _gss_cred *)cred_handle;
-    OM_uint32 major;
-    int found = 0;
+    OM_uint32 major_status, junk;
+    gss_OID_set tmp_mechs;
 
     if (minor_status == NULL)
 	return GSS_S_CALL_INACCESSIBLE_WRITE;
+
     *minor_status = 0;
 
-    if (mechs == GSS_C_NO_OID_SET)
+    if (cred_handle == GSS_C_NO_CREDENTIAL || mechs == GSS_C_NO_OID_SET)
 	return GSS_S_CALL_INACCESSIBLE_READ;
 
-    _gss_load_mech();
+    major_status = gss_duplicate_oid_set(minor_status, mechs, &tmp_mechs);
+    if (major_status != GSS_S_COMPLETE)
+	return major_status;
 
-    major = GSS_S_UNAVAILABLE;
+    gss_release_oid_set(&junk, &cred->gc_neg_mechs);
+    cred->gc_neg_mechs = tmp_mechs;
 
-    if (cred == NULL) {
-	struct _gss_mech_switch *m;
-
-        HEIM_TAILQ_FOREACH(m, &_gss_mechs, gm_link) {
-	    if (m->gm_mech.gm_set_neg_mechs == NULL)
-		continue;
-	    major = m->gm_mech.gm_set_neg_mechs(minor_status,
-						GSS_C_NO_CREDENTIAL, mechs);
-	    if (major == GSS_S_COMPLETE)
-		found++;
-	    else
-		_gss_mg_error(&m->gm_mech, *minor_status);
-	}
-    } else {
-	struct _gss_mechanism_cred *mc;
-
-	HEIM_TAILQ_FOREACH(mc, &cred->gc_mc, gmc_link) {
-	    gssapi_mech_interface m;
-
-	    m = mc->gmc_mech;
-	    if (m == NULL)
-		return GSS_S_BAD_MECH;
-	    if (m->gm_set_neg_mechs == NULL)
-		continue;
-	    major = m->gm_set_neg_mechs(minor_status, mc->gmc_cred, mechs);
-	    if (major == GSS_S_COMPLETE)
-		found++;
-	    else
-		_gss_mg_error(m, *minor_status);
-	}
-    }
-
-    if (found) {
-	*minor_status = 0;
-	return GSS_S_COMPLETE;
-    }
-
-    return major;
+    return GSS_S_COMPLETE;
 }

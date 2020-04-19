@@ -187,7 +187,6 @@ spnegosrc = \
 	spnego/accept_sec_context.c \
 	spnego/compat.c \
 	spnego/context_stubs.c \
-	spnego/cred_stubs.c \
 	spnego/external.c \
 	spnego/init_sec_context.c \
 	spnego/negoex_ctx.c \
@@ -431,7 +430,6 @@ libgssapi_OBJs = \
 	$(OBJ)\spnego/accept_sec_context.obj \
 	$(OBJ)\spnego/compat.obj \
 	$(OBJ)\spnego/context_stubs.obj \
-	$(OBJ)\spnego/cred_stubs.obj \
 	$(OBJ)\spnego/external.obj \
 	$(OBJ)\spnego/init_sec_context.obj \
 	$(OBJ)\spnego/negoex_ctx.obj \

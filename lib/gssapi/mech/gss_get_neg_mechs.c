@@ -33,81 +33,22 @@
 #include "mech_locl.h"
 
 GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL
-gss_get_neg_mechs (OM_uint32 *minor_status,
-		   gss_const_cred_id_t cred_handle,
-		   gss_OID_set *mechs)
+gss_get_neg_mechs(OM_uint32 *minor_status,
+		  gss_const_cred_id_t cred_handle,
+		  gss_OID_set *mechs)
 {
     struct _gss_cred *cred = (struct _gss_cred *)cred_handle;
-    OM_uint32 major, minor;
-    gss_cred_id_t tmp_cred = GSS_C_NO_CREDENTIAL;
-    struct _gss_mechanism_cred *mc;
 
     if (minor_status == NULL)
 	return GSS_S_CALL_INACCESSIBLE_WRITE;
+
     *minor_status = 0;
 
     if (mechs == NULL)
 	return GSS_S_CALL_INACCESSIBLE_WRITE;
-    *mechs = GSS_C_NO_OID_SET;
 
-    _gss_load_mech();
+    if (cred->gc_neg_mechs != GSS_C_NO_OID_SET)
+        return gss_duplicate_oid_set(minor_status, cred->gc_neg_mechs, mechs);
 
-    if (cred == NULL) {
-	major = gss_acquire_cred(minor_status, GSS_C_NO_NAME, GSS_C_INDEFINITE,
-				 GSS_C_NO_OID_SET, GSS_C_BOTH,
-				 &tmp_cred, NULL, NULL);
-	if (GSS_ERROR(major))
-	    return major;
-
-	cred = (struct _gss_cred *)tmp_cred;
-    }
-
-    major = gss_create_empty_oid_set(minor_status, mechs);
-    if (GSS_ERROR(major))
-	goto cleanup;
-
-    major = GSS_S_UNAVAILABLE;
-
-    HEIM_TAILQ_FOREACH(mc, &cred->gc_mc, gmc_link) {
-	gssapi_mech_interface m;
-	gss_OID_set mechs2 = GSS_C_NO_OID_SET;
-	size_t i;
-
-	m = mc->gmc_mech;
-	if (m == NULL) {
-	    major = GSS_S_BAD_MECH;
-	    goto cleanup;
-	}
-
-	if (m->gm_get_neg_mechs == NULL)
-	    continue;
-
-	major = m->gm_get_neg_mechs(minor_status, mc->gmc_cred, &mechs2);
-	if (GSS_ERROR(major))
-	    goto cleanup;
-
-	if (mechs2 == GSS_C_NO_OID_SET)
-	    continue;
-
-	for (i = 0; i < mechs2->count; i++) {
-	    major = gss_add_oid_set_member(minor_status, &mechs2->elements[i],
-					   mechs);
-	    if (GSS_ERROR(major)) {
-		gss_release_oid_set(&minor, &mechs2);
-		goto cleanup;
-	    }
-	}
-
-	gss_release_oid_set(&minor, &mechs2);
-    }
-
-cleanup:
-    if (tmp_cred)
-	gss_release_cred(&minor, &tmp_cred);
-    if (major == GSS_S_COMPLETE && *mechs == GSS_C_NO_OID_SET)
-	major = GSS_S_NO_CRED;
-    if (GSS_ERROR(major))
-	gss_release_oid_set(&minor, mechs);
-
-    return major;
+    return GSS_S_UNAVAILABLE;
 }

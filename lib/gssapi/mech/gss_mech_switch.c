@@ -417,8 +417,6 @@ _gss_load_mech(void)
 		OPTSYM(duplicate_cred);
 		OPTSYM(add_cred_from);
 		OPTSYM(store_cred_into);
-		OPTSYM(set_neg_mechs);
-		OPTSYM(get_neg_mechs);
 		OPTSPISYM(authorize_localname);
 		OPTSPISPISYM(query_mechanism_info);
 		OPTSPISPISYM(query_meta_data);

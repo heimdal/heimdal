@@ -601,8 +601,7 @@ acceptor_start
     gss_buffer_t mech_input_token = GSS_C_NO_BUFFER;
     gss_buffer_desc mech_output_token;
     gssspnego_ctx ctx;
-    int get_mic = 0;
-    int first_ok = 0;
+    int get_mic = 0, first_ok = 0, canonical_order;
     gss_const_OID advertised_mech = GSS_C_NO_OID;
 
     memset(&nt, 0, sizeof(nt));
@@ -676,7 +675,8 @@ acceptor_start
     if (acceptor_cred_handle != GSS_C_NO_CREDENTIAL)
 	ret = _gss_spnego_inquire_cred_mechs(minor_status,
 					     acceptor_cred_handle,
-					     &supported_mechs);
+					     &supported_mechs,
+					     &canonical_order);
     else
 	ret = _gss_spnego_indicate_mechs(minor_status, &supported_mechs);
     if (ret != GSS_S_COMPLETE)

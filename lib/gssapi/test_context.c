@@ -627,6 +627,7 @@ main(int argc, char **argv)
     gss_OID_set mechoids = GSS_C_NO_OID_SET;
     gss_key_value_element_desc client_cred_elements[2];
     gss_key_value_set_desc client_cred_store;
+    gss_OID_set actual_mechs = GSS_C_NO_OID_SET;
 
     setprogname(argv[0]);
 
@@ -756,7 +757,7 @@ main(int argc, char **argv)
 						  mechoids,
 						  GSS_C_INITIATE,
 						  &client_cred,
-						  NULL,
+						  &actual_mechs,
 						  NULL);
 	if (GSS_ERROR(maj_stat)) {
             if (mechoids != GSS_C_NO_OID_SET && mechoids->count == 1)
@@ -775,11 +776,39 @@ main(int argc, char **argv)
 					 client_cred_store.count ? &client_cred_store
 								 : GSS_C_NO_CRED_STORE,
 					 &client_cred,
-					 NULL,
+					 &actual_mechs,
 					 NULL);
 	if (GSS_ERROR(maj_stat))
 	    errx(1, "gss_acquire_cred: %s",
 		 gssapi_err(maj_stat, min_stat, GSS_C_NO_OID));
+    }
+
+    if (verbose_flag) {
+	size_t i;
+
+	printf("cred mechs:");
+	for (i = 0; i < actual_mechs->count; i++)
+	    printf(" %s", oid_to_string(&actual_mechs->elements[i]));
+	printf("\n");
+    }
+
+    if (ei_cred_flag) {
+	gss_cred_id_t cred2 = GSS_C_NO_CREDENTIAL;
+	gss_buffer_desc cb;
+
+	maj_stat = gss_export_cred(&min_stat, client_cred, &cb);
+	if (maj_stat != GSS_S_COMPLETE)
+	    errx(1, "export cred failed: %s",
+		 gssapi_err(maj_stat, min_stat, NULL));
+
+	maj_stat = gss_import_cred(&min_stat, &cb, &cred2);
+	if (maj_stat != GSS_S_COMPLETE)
+	    errx(1, "import cred failed: %s",
+		 gssapi_err(maj_stat, min_stat, NULL));
+
+	gss_release_buffer(&min_stat, &cb);
+	gss_release_cred(&min_stat, &client_cred);
+	client_cred = cred2;
     }
 
     if (limit_enctype_string) {
@@ -1242,6 +1271,7 @@ main(int argc, char **argv)
     }
 
     gss_release_cred(&min_stat, &client_cred);
+    gss_release_oid_set(&min_stat, &actual_mechs);
     empty_release();
 
     krb5_free_context(context);

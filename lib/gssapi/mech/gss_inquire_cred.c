@@ -99,6 +99,9 @@ gss_inquire_cred(OM_uint32 *minor_status,
 			gss_name_t mc_name = GSS_C_NO_NAME;
 			OM_uint32 mc_lifetime = GSS_C_INDEFINITE;
 
+			heim_assert((mc->gmc_mech->gm_flags & GM_USE_MG_CRED) == 0,
+				    "should not have mech creds for GM_USE_MG_CRED mechs");
+
 			if (mc->gmc_mech->gm_inquire_cred == NULL)
 				continue;
 
@@ -137,7 +140,8 @@ gss_inquire_cred(OM_uint32 *minor_status,
 			gss_name_t mc_name;
 			OM_uint32 mc_lifetime;
 
-			if (m->gm_mech.gm_inquire_cred == NULL)
+			if (m->gm_mech.gm_inquire_cred == NULL ||
+			    (m->gm_mech.gm_flags & GM_USE_MG_CRED))
 				continue;
 
 			major_status = m->gm_mech.gm_inquire_cred(minor_status,
@@ -171,6 +175,17 @@ gss_inquire_cred(OM_uint32 *minor_status,
 				gss_add_oid_set_member(minor_status,
 				    m->gm_mech_oid, mechanisms);
 			found++;
+		}
+	}
+
+	if (found && mechanisms) {
+		/* GM_USE_MG_CRED mechs (SPNEGO) always can be used */
+		HEIM_TAILQ_FOREACH(m, &_gss_mechs, gm_link) {
+			if ((m->gm_mech.gm_flags & GM_USE_MG_CRED) == 0)
+				continue;
+
+			gss_add_oid_set_member(minor_status,
+					       m->gm_mech_oid, mechanisms);
 		}
 	}
 

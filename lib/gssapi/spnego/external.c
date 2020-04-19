@@ -88,9 +88,9 @@ static gssapi_mech_interface_desc spnego_mech = {
     GMI_VERSION,
     "spnego",
     {6, rk_UNCONST("\x2b\x06\x01\x05\x05\x02") },
-    0,
+    GM_USE_MG_CRED,
     NULL, /* gm_acquire_cred */
-    gss_release_cred,
+    NULL, /* gm_release_cred */
     _gss_spnego_init_sec_context,
     _gss_spnego_accept_sec_context,
     _gss_spnego_process_context_token,
@@ -107,11 +107,11 @@ static gssapi_mech_interface_desc spnego_mech = {
     _gss_spnego_import_name,
     _gss_spnego_export_name,
     _gss_spnego_release_name,
-    _gss_spnego_inquire_cred,
+    NULL, /* gm_inquire_cred */
     _gss_spnego_inquire_context,
     _gss_spnego_wrap_size_limit,
-    gss_add_cred,
-    _gss_spnego_inquire_cred_by_mech,
+    NULL, /* gm_add_cred */
+    NULL, /* gm_inquire_cred_by_mech */
     _gss_spnego_export_sec_context,
     _gss_spnego_import_sec_context,
     NULL /* _gss_spnego_inquire_names_for_mech */,
@@ -119,17 +119,17 @@ static gssapi_mech_interface_desc spnego_mech = {
     _gss_spnego_canonicalize_name,
     _gss_spnego_duplicate_name,
     _gss_spnego_inquire_sec_context_by_oid,
-    gss_inquire_cred_by_oid,
+    NULL, /* gm_inquire_cred_by_oid */
     _gss_spnego_set_sec_context_option,
-    _gss_spnego_set_cred_option,
+    NULL, /* gm_set_cred_option */
     _gss_spnego_pseudo_random,
     _gss_spnego_wrap_iov,
     _gss_spnego_unwrap_iov,
     _gss_spnego_wrap_iov_length,
     NULL,
-    gss_export_cred,
-    gss_import_cred,
-    _gss_spnego_acquire_cred_from,
+    NULL, /* gm_export_cred */
+    NULL, /* gm_import_cred */
+    NULL, /* gm_acquire_cred_from */
     NULL,
     NULL,
     NULL,
@@ -146,11 +146,9 @@ static gssapi_mech_interface_desc spnego_mech = {
     NULL, /* gm_set_name_attribute */
     NULL, /* gm_delete_name_attribute */
     NULL, /* gm_export_name_composite */
-    gss_duplicate_cred,
-    gss_add_cred_from,
+    NULL, /* gm_duplicate_cred */
+    NULL, /* gm_add_cred_from */
     NULL, /* gm_store_cred_into */
-    _gss_spnego_set_neg_mechs,
-    _gss_spnego_get_neg_mechs,
     NULL, /* gm_query_mechanism_info */
     NULL, /* gm_query_meta_data */
     NULL, /* gm_exchange_meta_data */

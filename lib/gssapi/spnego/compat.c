@@ -397,24 +397,21 @@ _gss_spnego_indicate_mechtypelist (OM_uint32 *minor_status,
     OM_uint32 ret, minor;
     OM_uint32 first_major = GSS_S_BAD_MECH, first_minor = 0;
     size_t i;
-    int added_negoex = FALSE;
+    int added_negoex = FALSE, canonical_order = FALSE;
 
     mechtypelist->len = 0;
     mechtypelist->val = NULL;
 
     if (cred_handle != GSS_C_NO_CREDENTIAL)
-	ret = _gss_spnego_inquire_cred_mechs(minor_status,
-					     cred_handle, &supported_mechs);
+	ret = _gss_spnego_inquire_cred_mechs(minor_status, cred_handle,
+					     &supported_mechs, &canonical_order);
     else
 	ret = _gss_spnego_indicate_mechs(minor_status, &supported_mechs);
     if (ret != GSS_S_COMPLETE)
 	return ret;
 
-    /*
-     * XXX when gss_set_neg_mechs() obeys application order this should
-     * apply only to the default mech list
-     */
-    order_mechs_by_flags(supported_mechs, req_flags);
+    if (!canonical_order)
+	order_mechs_by_flags(supported_mechs, req_flags);
 
     heim_assert(supported_mechs != GSS_C_NO_OID_SET,
 		"NULL mech set returned by SPNEGO inquire/indicate mechs");
@@ -626,40 +623,48 @@ _gss_spnego_indicate_mechs(OM_uint32 *minor_status,
 OM_uint32
 _gss_spnego_inquire_cred_mechs(OM_uint32 *minor_status,
 			       gss_const_cred_id_t cred,
-			       gss_OID_set *mechs_p)
+			       gss_OID_set *mechs_p,
+			       int *canonical_order)
 {
     OM_uint32 ret, junk;
     gss_OID_set cred_mechs = GSS_C_NO_OID_SET;
-    gss_OID_set mechs = GSS_C_NO_OID_SET;
+    gss_OID_set negotiable_mechs = GSS_C_NO_OID_SET;
     size_t i;
 
     *mechs_p = GSS_C_NO_OID_SET;
+    *canonical_order = FALSE;
 
     heim_assert(cred != GSS_C_NO_CREDENTIAL, "Invalid null credential handle");
 
-    ret = gss_inquire_cred(minor_status, cred, NULL, NULL, NULL, &cred_mechs);
+    ret = gss_get_neg_mechs(minor_status, cred, &cred_mechs);
+    if (ret == GSS_S_COMPLETE) {
+	*canonical_order = TRUE;
+    } else {
+	ret = gss_inquire_cred(minor_status, cred, NULL, NULL, NULL, &cred_mechs);
+	if (ret != GSS_S_COMPLETE)
+	    goto out;
+    }
+
+    heim_assert(cred_mechs != GSS_C_NO_OID_SET && cred_mechs->count > 0,
+		"gss_inquire_cred succeeded but returned no mechanisms");
+
+    ret = _gss_spnego_indicate_mechs(minor_status, &negotiable_mechs);
     if (ret != GSS_S_COMPLETE)
 	goto out;
 
-    heim_assert(cred_mechs != GSS_C_NO_OID_SET,
-		"gss_inquire_cred succeeded but returned null OID set");
-
-    ret = _gss_spnego_indicate_mechs(minor_status, &mechs);
-    if (ret != GSS_S_COMPLETE)
-	goto out;
-
-    heim_assert(mechs != GSS_C_NO_OID_SET,
+    heim_assert(negotiable_mechs != GSS_C_NO_OID_SET,
 		"_gss_spnego_indicate_mechs succeeded but returned null OID set");
 
     ret = gss_create_empty_oid_set(minor_status, mechs_p);
     if (ret != GSS_S_COMPLETE)
 	goto out;
 
+    /* Filter credential mechs by negotiable mechs, order by credential mechs */
     for (i = 0; i < cred_mechs->count; i++) {
 	gss_OID cred_mech = &cred_mechs->elements[i];
 	int present = 0;
 
-	gss_test_oid_set_member(&junk, cred_mech, mechs, &present);
+	gss_test_oid_set_member(&junk, cred_mech, negotiable_mechs, &present);
 	if (!present)
 	    continue;
 
@@ -672,7 +677,7 @@ out:
     if (ret != GSS_S_COMPLETE)
 	gss_release_oid_set(&junk, mechs_p);
     gss_release_oid_set(&junk, &cred_mechs);
-    gss_release_oid_set(&junk, &mechs);
+    gss_release_oid_set(&junk, &negotiable_mechs);
 
     return ret;
 }

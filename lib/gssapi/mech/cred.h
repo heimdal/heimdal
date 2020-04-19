@@ -37,6 +37,7 @@ HEIM_TAILQ_HEAD(_gss_mechanism_cred_list, _gss_mechanism_cred);
 
 struct _gss_cred {
 	struct _gss_mechanism_cred_list gc_mc;
+	gss_OID_set gc_neg_mechs;
 };
 
 struct _gss_cred *

@@ -1228,12 +1228,6 @@ gss_get_neg_mechs(
     gss_const_cred_id_t /* cred_handle */,
     gss_OID_set * /* mech_list */);
 
-GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL
-gss_release_cred_by_mech(
-    OM_uint32 * /* minor_status */,
-    gss_cred_id_t /* cred_handle */,
-    gss_const_OID /* mech */);
-
 GSSAPI_LIB_FUNCTION void GSSAPI_LIB_CALL
 gss_set_log_function(void *ctx, void (*func)(void * ctx, int level, const char *fmt, va_list));
 

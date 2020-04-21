@@ -391,4 +391,7 @@ struct krb5_pk_init_ctx_data {
 # define ISPATHSEP(x) (x == '/')
 #endif
 
+/* Flag in KRB5_AUTHDATA_AP_OPTIONS */
+#define KERB_AP_OPTIONS_CBT 0x00004000
+
 #endif /* __KRB5_LOCL_H__ */

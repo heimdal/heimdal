@@ -788,6 +788,7 @@ EXPORTS
 	_krb5_kt_client_default_name
 	_krb5_have_debug
 	_krb5_SP800_108_HMAC_KDF
+	_krb5_get_ad
 
 	; Shared with libkadm5
 	_krb5_load_plugins

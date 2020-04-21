@@ -181,6 +181,7 @@ _gsskrb5_verify_8003_checksum(
     OM_uint32 length;
     int DlgOpt;
     static unsigned char zeros[16];
+    krb5_boolean channel_bound = FALSE;
 
     /* XXX should handle checksums > 24 bytes */
     if(cksum->cksumtype != CKSUMTYPE_GSSAPI || cksum->checksum.length < 24) {
@@ -207,6 +208,7 @@ _gsskrb5_verify_8003_checksum(
 	    *minor_status = 0;
 	    return GSS_S_BAD_BINDINGS;
 	}
+	channel_bound = TRUE;
     }
 
     p += sizeof(hash);
@@ -239,6 +241,12 @@ _gsskrb5_verify_8003_checksum(
 	    return GSS_S_FAILURE;
 	}
 	memcpy(fwd_data->data, p, fwd_data->length);
+    }
+
+    if (channel_bound) {
+	*flags |= GSS_C_CHANNEL_BOUND_FLAG;
+    } else {
+	*flags &= ~GSS_C_CHANNEL_BOUND_FLAG;
     }
 
     return GSS_S_COMPLETE;

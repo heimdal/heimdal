@@ -427,6 +427,7 @@ spnego_reply(OM_uint32 * minor_status,
     OM_uint32 ret, minor;
     NegotiationToken resp;
     gss_buffer_desc mech_output_token;
+    NegStateEnum negState;
 
     *minor_status = 0;
 
@@ -441,18 +442,21 @@ spnego_reply(OM_uint32 * minor_status,
     if (ret)
       return ret;
 
+    /* The SPNEGO token must be a negTokenResp */
     if (resp.element != choice_NegotiationToken_negTokenResp) {
 	free_NegotiationToken(&resp);
 	*minor_status = 0;
 	return GSS_S_BAD_MECH;
     }
 
-    if (resp.u.negTokenResp.negState == NULL
-	|| *(resp.u.negTokenResp.negState) == reject)
-    {
-	free_NegotiationToken(&resp);
-	return GSS_S_BAD_MECH;
-    }
+    /*
+     * When negState is absent, the actual state should be inferred from
+     * the state of the negotiated mechanism context. (RFC 4178 4.2.2.)
+     */
+    if (resp.u.negTokenResp.negState != NULL)
+	negState = *resp.u.negTokenResp.negState;
+    else
+	negState = accept_incomplete;
 
     /*
      * Pick up the mechanism that the acceptor selected, only pick up
@@ -528,7 +532,7 @@ spnego_reply(OM_uint32 * minor_status,
 				       "SPNEGO acceptor didn't send supportedMech");
     }
 
-    /* if a token (of non zero length), or no context, pass to underlaying mech */
+    /* if a token (of non zero length) pass to underlaying mech */
     if ((resp.u.negTokenResp.responseToken != NULL && resp.u.negTokenResp.responseToken->length) ||
 	ctx->negotiated_ctx_id == GSS_C_NO_CONTEXT) {
 	gss_buffer_desc mech_input_token;
@@ -567,9 +571,16 @@ spnego_reply(OM_uint32 * minor_status,
 				       &mech_output_token,
 				       &ctx->mech_flags,
 				       &ctx->mech_time_rec);
-	    if (GSS_ERROR(ret))
+	    if (GSS_ERROR(ret)) {
 		gss_mg_collect_error(ctx->selected_mech_type, ret, minor);
+	    }
 	}
+	/*
+	 * If the acceptor rejected, we're out even if the inner context is
+	 * now complete. Note that the rejection is not integrity-protected.
+	 */
+	if (negState == reject)
+	    ret = GSS_S_BAD_MECH;
 	if (GSS_ERROR(ret)) {
 	    free_NegotiationToken(&resp);
 	    *minor_status = minor;
@@ -578,11 +589,22 @@ spnego_reply(OM_uint32 * minor_status,
 	if (ret == GSS_S_COMPLETE) {
 	    ctx->flags.open = 1;
 	}
-    } else if (*resp.u.negTokenResp.negState == accept_completed) {
+    } else if (negState == reject) {
+	free_NegotiationToken(&resp);
+	return gss_mg_set_error_string(GSS_SPNEGO_MECHANISM,
+				       GSS_S_BAD_MECH, (*minor_status = EPERM),
+				       "SPNEGO acceptor rejected initiator token");
+    } else if (negState == accept_completed) {
+	/*
+	 * Note that the accept_completed isn't integrity-protected, but
+	 * ctx->maybe_open can only be true if the inner context is fully
+	 * established.
+	 */
 	if (ctx->flags.maybe_open)
 	    ctx->flags.open = 1;
 
 	if (!ctx->flags.open) {
+	    free_NegotiationToken(&resp);
 	    return gss_mg_set_error_string(GSS_SPNEGO_MECHANISM,
 					   GSS_S_BAD_MECH, (*minor_status = EINVAL),
 					   "SPNEGO acceptor sent acceptor complete, "
@@ -590,7 +612,7 @@ spnego_reply(OM_uint32 * minor_status,
 	}
     }
 
-    if (*resp.u.negTokenResp.negState == request_mic) {
+    if (negState == request_mic) {
 	ctx->flags.peer_require_mic = 1;
     }
 
@@ -643,7 +665,7 @@ spnego_reply(OM_uint32 * minor_status,
 
     if (ctx->flags.open) {
 
-	if (*resp.u.negTokenResp.negState == accept_completed && ctx->flags.safe_omit) {
+	if (negState == accept_completed && ctx->flags.safe_omit) {
 	    ctx->initiator_state = step_completed;
 	    ret = GSS_S_COMPLETE;
 	} else if (ctx->flags.require_mic != 0 && ctx->flags.verified_mic == 0) {
@@ -655,7 +677,7 @@ spnego_reply(OM_uint32 * minor_status,
 	}
     }
 
-    if (*resp.u.negTokenResp.negState != accept_completed ||
+    if (negState != accept_completed ||
 	ctx->initiator_state != step_completed ||
 	mech_output_token.length)
     {

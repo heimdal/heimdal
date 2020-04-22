@@ -285,9 +285,9 @@ gss_accept_sec_context(OM_uint32 *minor_status,
         }
 
         if (m == NULL) {
+                gss_delete_sec_context(&junk, context_handle, NULL);
                 _gss_mg_log(10, "No mechanism accepted the non-standard initial security context token");
                 *output_token = defective_token_error;
-                free(ctx);
                 return GSS_S_BAD_MECH;
         }
 

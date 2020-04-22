@@ -63,6 +63,7 @@ _gss_mg_release_cred(struct _gss_cred *cred)
 		HEIM_TAILQ_REMOVE(&cred->gc_mc, mc, gmc_link);
 		release_mech_cred(&junk, mc);
 	}
+        gss_release_oid_set(&junk, &cred->gc_neg_mechs);
 	free(cred);
 }
 

@@ -260,6 +260,7 @@ hx509_context_free(hx509_context *context)
     free_error_table ((*context)->et_list);
     if ((*context)->querystat)
 	free((*context)->querystat);
+    heim_context_free(&(*context)->hcontext);
     memset(*context, 0, sizeof(**context));
     free(*context);
     *context = NULL;

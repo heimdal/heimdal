@@ -49,8 +49,6 @@ krb5_init_context(krb5_context *context)
     if(!p)
         return ENOMEM;
 
-    HEIMDAL_MUTEX_init(&p->mutex);
-
     *context = p;
     return 0;
 }
@@ -60,7 +58,6 @@ krb5_free_context(krb5_context context)
 {
     krb5_clear_error_message(context);
 
-    HEIMDAL_MUTEX_destroy(&context->mutex);
     if (context->flags & KRB5_CTX_F_SOCKETS_INITIALIZED) {
         rk_SOCK_EXIT();
     }

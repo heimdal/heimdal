@@ -120,14 +120,6 @@ struct heim_plugin_data {
     heim_get_instance_func_t get_instance;
 };
 
-typedef struct heim_err_cb_context_s *heim_err_cb_context;
-typedef void (*heim_err_cb_clear_msg)(heim_err_cb_context);
-typedef void (*heim_err_cb_free_msg)(heim_err_cb_context, const char *);
-typedef const char * (*heim_err_cb_get_msg)(heim_err_cb_context, int32_t);
-typedef void (*heim_err_cb_set_msg)(heim_err_cb_context, int32_t,
-                                    const char *, va_list)
-    __attribute__ ((__format__ (__printf__, 3, 0)));
-
 typedef struct heim_config_binding heim_config_binding;
 struct heim_config_binding {
     enum {

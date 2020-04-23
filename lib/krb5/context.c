@@ -37,6 +37,8 @@
 #include <assert.h>
 #include <com_err.h>
 
+static void _krb5_init_ets(krb5_context);
+
 #define INIT_FIELD(C, T, E, D, F)					\
     (C)->E = krb5_config_get_ ## T ## _default ((C), NULL, (D), 	\
 						"libdefaults", F, NULL)
@@ -401,32 +403,6 @@ init_context_once(void *ctx)
     bindtextdomain(HEIMDAL_TEXTDOMAIN, HEIMDAL_LOCALEDIR);
 }
 
-static void
-clear_error_message_cb(heim_err_cb_context ctx)
-{
-    krb5_clear_error_message((krb5_context)ctx);
-}
-
-static void
-free_error_message_cb(heim_err_cb_context ctx, const char *msg)
-{
-    krb5_free_error_message((krb5_context)ctx, msg);
-}
-
-static const char *
-get_error_message_cb(heim_err_cb_context ctx, int32_t ret)
-{
-    return krb5_get_error_message((krb5_context)ctx, ret);
-}
-
-static void
-set_error_message_cb(heim_err_cb_context ctx, int32_t ret,
-                     const char *fmt, va_list args)
-{
-    krb5_vset_error_message((krb5_context)ctx, ret, fmt, args);
-}
-
-
 /**
  * Initializes the context structure and reads the configuration file
  * /etc/krb5.conf. The structure should be freed by calling
@@ -471,17 +447,10 @@ krb5_init_context(krb5_context *context)
     if(!p)
 	return ENOMEM;
 
-    HEIMDAL_MUTEX_init(&p->mutex);
     if ((p->hcontext = heim_context_init()) == NULL) {
         ret = ENOMEM;
         goto out;
     }
-
-    heim_context_set_msg_cb(p->hcontext, (void *)p,
-                            clear_error_message_cb,
-                            free_error_message_cb,
-                            get_error_message_cb,
-                            set_error_message_cb);
 
     p->flags |= KRB5_CTX_F_HOMEDIR_ACCESS;
 
@@ -497,7 +466,7 @@ krb5_init_context(krb5_context *context)
     heim_base_once_f(&init_context, p, init_context_once);
 
     /* init error tables */
-    krb5_init_ets(p);
+    _krb5_init_ets(p);
     cc_ops_register(p);
     kt_ops_register(p);
 
@@ -576,19 +545,12 @@ krb5_copy_context(krb5_context context, krb5_context *out)
     if (p == NULL)
 	return krb5_enomem(context);
 
-    HEIMDAL_MUTEX_init(&p->mutex);
-
     if ((p->hcontext = heim_context_init()) == NULL) {
         ret = ENOMEM;
         goto out;
     }
 
     heim_context_set_log_utc(p->hcontext, context->log_utc);
-    heim_context_set_msg_cb(p->hcontext, (void *)p,
-                            clear_error_message_cb,
-                            free_error_message_cb,
-                            get_error_message_cb,
-                            set_error_message_cb);
 
     if (context->default_cc_name &&
 	(p->default_cc_name = strdup(context->default_cc_name)) == NULL) {
@@ -636,7 +598,7 @@ krb5_copy_context(krb5_context context, krb5_context *out)
 	goto out;
 
     /* XXX should copy */
-    krb5_init_ets(p);
+    _krb5_init_ets(p);
 
     cc_ops_copy(p, context);
     kt_ops_copy(p, context);
@@ -689,7 +651,6 @@ krb5_free_context(krb5_context context)
     free(context->as_etypes);
     krb5_free_host_realm (context, context->default_realms);
     krb5_config_file_free (context, context->cf);
-    free_error_table (context->et_list);
     free(rk_UNCONST(context->cc_ops));
     free(context->kt_types);
     krb5_clear_error_message(context);
@@ -702,7 +663,6 @@ krb5_free_context(krb5_context context)
 	hx509_context_free(&context->hx509ctx);
 #endif
 
-    HEIMDAL_MUTEX_destroy(&context->mutex);
     if (context->flags & KRB5_CTX_F_SOCKETS_INITIALIZED) {
  	rk_SOCK_EXIT();
     }
@@ -773,32 +733,6 @@ krb5_set_config(krb5_context context, const char *config)
     return ret;
 }
 #endif
-
-static krb5_error_code
-add_file(char ***pfilenames, int *len, char *file)
-{
-    char **pp = *pfilenames;
-    int i;
-
-    for(i = 0; i < *len; i++) {
-	if(strcmp(pp[i], file) == 0) {
-	    free(file);
-	    return 0;
-	}
-    }
-
-    pp = realloc(*pfilenames, (*len + 2) * sizeof(*pp));
-    if (pp == NULL) {
-	free(file);
-	return ENOMEM;
-    }
-
-    pp[*len] = file;
-    pp[*len + 1] = NULL;
-    *pfilenames = pp;
-    *len += 1;
-    return 0;
-}
 
 /*
  *  `pq' isn't free, it's up the the caller
@@ -1065,28 +999,31 @@ krb5_get_default_in_tkt_etypes(krb5_context context,
 KRB5_LIB_FUNCTION void KRB5_LIB_CALL
 krb5_init_ets(krb5_context context)
 {
-    if(context->et_list == NULL){
-	krb5_add_et_list(context, initialize_krb5_error_table_r);
-	krb5_add_et_list(context, initialize_asn1_error_table_r);
-	krb5_add_et_list(context, initialize_heim_error_table_r);
+}
 
-	krb5_add_et_list(context, initialize_k524_error_table_r);
-	krb5_add_et_list(context, initialize_k5e1_error_table_r);
+static void
+_krb5_init_ets(krb5_context context)
+{
+    heim_add_et_list(context->hcontext, initialize_krb5_error_table_r);
+    heim_add_et_list(context->hcontext, initialize_asn1_error_table_r);
+    heim_add_et_list(context->hcontext, initialize_heim_error_table_r);
+
+    heim_add_et_list(context->hcontext, initialize_k524_error_table_r);
+    heim_add_et_list(context->hcontext, initialize_k5e1_error_table_r);
 
 #ifdef COM_ERR_BINDDOMAIN_krb5
-	bindtextdomain(COM_ERR_BINDDOMAIN_krb5, HEIMDAL_LOCALEDIR);
-	bindtextdomain(COM_ERR_BINDDOMAIN_asn1, HEIMDAL_LOCALEDIR);
-	bindtextdomain(COM_ERR_BINDDOMAIN_heim, HEIMDAL_LOCALEDIR);
-	bindtextdomain(COM_ERR_BINDDOMAIN_k524, HEIMDAL_LOCALEDIR);
+    bindtextdomain(COM_ERR_BINDDOMAIN_krb5, HEIMDAL_LOCALEDIR);
+    bindtextdomain(COM_ERR_BINDDOMAIN_asn1, HEIMDAL_LOCALEDIR);
+    bindtextdomain(COM_ERR_BINDDOMAIN_heim, HEIMDAL_LOCALEDIR);
+    bindtextdomain(COM_ERR_BINDDOMAIN_k524, HEIMDAL_LOCALEDIR);
 #endif
 
 #ifdef PKINIT
-	krb5_add_et_list(context, initialize_hx_error_table_r);
+    heim_add_et_list(context->hcontext, initialize_hx_error_table_r);
 #ifdef COM_ERR_BINDDOMAIN_hx
-	bindtextdomain(COM_ERR_BINDDOMAIN_hx, HEIMDAL_LOCALEDIR);
+    bindtextdomain(COM_ERR_BINDDOMAIN_hx, HEIMDAL_LOCALEDIR);
 #endif
 #endif
-    }
 }
 
 /**

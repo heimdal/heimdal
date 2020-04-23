@@ -248,7 +248,6 @@ typedef struct krb5_context_data {
     int32_t kdc_sec_offset;
     int32_t kdc_usec_offset;
     krb5_config_section *cf;
-    struct et_list *et_list;
     const krb5_cc_ops **cc_ops;
     int num_cc_ops;
     const char *http_proxy;
@@ -266,14 +265,12 @@ typedef struct krb5_context_data {
     int num_kt_types;			/* # of registered keytab types */
     struct krb5_keytab_data *kt_types;  /* registered keytab types */
     const char *date_fmt;
-    char *error_string;
     krb5_error_code error_code;
     krb5_addresses *ignore_addresses;
     char *default_cc_name;
     char *default_cc_name_env;
     char *configured_default_cc_name;
     int default_cc_name_set;
-    HEIMDAL_MUTEX mutex;		/* protects error_string */
     int large_msg_size;
     int max_msg_size;
     int tgs_negative_timeout;		/* timeout for TGS negative cache */

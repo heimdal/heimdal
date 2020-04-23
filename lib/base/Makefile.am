@@ -47,6 +47,7 @@ dist_libheimbase_la_SOURCES =	\
 	dict.c			\
 	$(IMPLEMENT_TLS)	\
 	error.c			\
+	error_string.c		\
 	expand_path.c		\
 	heimbase.c		\
 	heimbasepriv.h		\

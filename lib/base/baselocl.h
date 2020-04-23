@@ -84,3 +84,15 @@
 #define HEIMDAL_NORETURN_ATTRIBUTE
 #undef HEIMDAL_PRINTF_ATTRIBUTE
 #define HEIMDAL_PRINTF_ATTRIBUTE(x)
+
+struct heim_context_s {
+    heim_log_facility       *log_dest;
+    heim_log_facility       *warn_dest;
+    heim_log_facility       *debug_dest;
+    char                    *time_fmt;
+    unsigned int            log_utc:1;
+    unsigned int            homedir_access:1;
+    struct et_list          *et_list;
+    char                    *error_string;
+    heim_error_code         error_code;
+};

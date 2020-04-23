@@ -10,6 +10,7 @@ HEIMDAL_BASE_1.0 {
 		heim_abort;
 		heim_abortv;
 		heim_add_debug_dest;
+		heim_add_et_list;
 		heim_addlog_dest;
 		heim_addlog_func;
 		heim_add_warn_dest;
@@ -81,7 +82,6 @@ HEIMDAL_BASE_1.0 {
 		heim_context_init;
 		heim_context_set_homedir_access;
 		heim_context_set_log_utc;
-		heim_context_set_msg_cb;
 		heim_context_set_time_fmt;
 		_heim_create_type;
 		heim_data_create;
@@ -127,6 +127,7 @@ HEIMDAL_BASE_1.0 {
 		heim_get_debug_dest;
 		heim_get_default_config_files;
 		heim_get_error_message;
+		heim_get_error_string;
 		heim_get_hash;
 		_heim_get_isa;
 		_heim_get_isaextra;
@@ -134,6 +135,7 @@ HEIMDAL_BASE_1.0 {
 		heim_get_tid;
 		heim_get_warn_dest;
 		heim_have_debug;
+		heim_have_error_string;
 		heim_initlog;
 		heim_json_copy_serialize;
 		heim_json_create;

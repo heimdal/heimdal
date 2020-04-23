@@ -622,24 +622,14 @@ KRB5_LIB_FUNCTION char * KRB5_LIB_CALL
 krb5_get_error_string(krb5_context context)
     KRB5_DEPRECATED_FUNCTION("Use krb5_get_error_message instead")
 {
-    char *ret = NULL;
-
-    HEIMDAL_MUTEX_lock(&context->mutex);
-    if (context->error_string)
-	ret = strdup(context->error_string);
-    HEIMDAL_MUTEX_unlock(&context->mutex);
-    return ret;
+    return heim_get_error_string(context->hcontext);
 }
 
 KRB5_LIB_FUNCTION krb5_boolean KRB5_LIB_CALL
 krb5_have_error_string(krb5_context context)
     KRB5_DEPRECATED_FUNCTION("Use krb5_get_error_message instead")
 {
-    char *str;
-    HEIMDAL_MUTEX_lock(&context->mutex);
-    str = context->error_string;
-    HEIMDAL_MUTEX_unlock(&context->mutex);
-    return str != NULL;
+    return heim_have_error_string(context->hcontext);
 }
 
 struct send_to_kdc {

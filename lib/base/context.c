@@ -36,22 +36,6 @@
 #undef __attribute__
 #define __attribute__(X)
 
-struct heim_context_s {
-    heim_log_facility       *log_dest;
-    heim_log_facility       *warn_dest;
-    heim_log_facility       *debug_dest;
-    char                    *time_fmt;
-    unsigned int            log_utc:1;
-    unsigned int            homedir_access:1;
-    heim_err_cb_context     error_context;
-    heim_err_cb_clear_msg    clear_error_message;
-    heim_err_cb_free_msg    free_error_message;
-    heim_err_cb_get_msg     get_error_message;
-    heim_err_cb_set_msg     set_error_message;
-    const char              *unknown_error;
-    const char              *success;
-};
-
 heim_context
 heim_context_init(void)
 {
@@ -61,17 +45,12 @@ heim_context_init(void)
         return NULL;
 
     context->log_utc = 1;
-    context->clear_error_message = NULL;
-    context->free_error_message = NULL;
-    context->get_error_message = NULL;
-    context->set_error_message = NULL;
-    context->error_context = NULL;
-    context->unknown_error = "Unknown error";
-    context->success = "Success";
+    context->error_string = NULL;
     context->debug_dest = NULL;
     context->warn_dest = NULL;
     context->log_dest = NULL;
     context->time_fmt = NULL;
+    context->et_list = NULL;
     return context;
 }
 
@@ -86,23 +65,17 @@ heim_context_free(heim_context *contextp)
     heim_closelog(context, context->debug_dest);
     heim_closelog(context, context->warn_dest);
     heim_closelog(context, context->log_dest);
+    free_error_table(context->et_list);
     free(context->time_fmt);
+    free(context->error_string);
     free(context);
 }
 
-void
-heim_context_set_msg_cb(heim_context context,
-                        heim_err_cb_context cb_context,
-                        heim_err_cb_clear_msg cb_clear_msg,
-                        heim_err_cb_free_msg cb_free_msg,
-                        heim_err_cb_get_msg cb_get_msg,
-                        heim_err_cb_set_msg cb_set_msg)
+heim_error_code
+heim_add_et_list(heim_context context, void (*func)(struct et_list **))
 {
-    context->error_context = cb_context;
-    context->clear_error_message = cb_clear_msg;
-    context->free_error_message = cb_free_msg;
-    context->set_error_message = cb_set_msg;
-    context->get_error_message = cb_get_msg;
+    (*func)(&context->et_list);
+    return 0;
 }
 
 heim_error_code
@@ -155,52 +128,6 @@ unsigned int
 heim_context_get_homedir_access(heim_context context)
 {
     return context->homedir_access;
-}
-
-void
-heim_clear_error_message(heim_context context)
-{
-    if (context != NULL && context->clear_error_message != NULL)
-        context->clear_error_message(context->error_context);
-}
-
-void
-heim_free_error_message(heim_context context, const char *msg)
-{
-    if (context != NULL && context->free_error_message != NULL &&
-        msg != context->unknown_error && msg != context->success)
-        context->free_error_message(context->error_context, msg);
-}
-
-const char *
-heim_get_error_message(heim_context context, heim_error_code ret)
-{
-    if (context != NULL && context->get_error_message != NULL)
-        return context->get_error_message(context->error_context, ret);
-    if (ret)
-        return context->unknown_error;
-    return context->success;
-}
-
-void
-heim_set_error_message(heim_context context, heim_error_code ret,
-		       const char *fmt, ...)
-    __attribute__ ((__format__ (__printf__, 3, 4)))
-{
-    va_list ap;
-
-    va_start(ap, fmt);
-    heim_vset_error_message(context, ret, fmt, ap);
-    va_end(ap);
-}
-
-void
-heim_vset_error_message(heim_context context, heim_error_code ret,
-                        const char *fmt, va_list args)
-    __attribute__ ((__format__ (__printf__, 3, 0)))
-{
-    if (context != NULL && context->set_error_message != NULL)
-        context->set_error_message(context->error_context, ret, fmt, args);
 }
 
 heim_error_code

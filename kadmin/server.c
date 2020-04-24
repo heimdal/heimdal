@@ -778,6 +778,7 @@ v5_loop (krb5_context contextp,
 	    krb5_err(contextp, 1, ret, "kadmind_dispatch");
 	krb5_data_free(&in);
 	ret = krb5_write_priv_message(contextp, ac, &fd, &out);
+	krb5_data_free(&out);
 	if(ret)
 	    krb5_err(contextp, 1, ret, "krb5_write_priv_message");
     }

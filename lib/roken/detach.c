@@ -52,7 +52,7 @@ roken_detach_prep(int argc, char **argv, char *special_arg)
     pid_t child;
     char **new_argv;
     char buf[1];
-    char *fildes;
+    char fildes[21];
     int status;
 
     pipefds[0] = -1;
@@ -78,9 +78,9 @@ roken_detach_prep(int argc, char **argv, char *special_arg)
     fcntl(pipefds[1], F_SETFD, fcntl(pipefds[1], F_GETFD & ~(O_CLOEXEC)));
 #endif
 
-    if (asprintf(&fildes, "%d", pipefds[1]) == -1 ||
-        fildes == NULL)
-        err(1, "failed to setup to detach daemon (_dup failed)");
+    if (snprintf(fildes, sizeof(fildes), "%d", pipefds[1]) >= sizeof(fildes))
+        err(1, "failed to setup to detach daemon (fd number %d too large)",
+            pipefds[1]);
 
     new_argv[0] = argv[0];
     new_argv[1] = special_arg;

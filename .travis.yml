@@ -51,6 +51,7 @@ script:
 
 after_script:
     - if [ -n "$COVERAGE" ]; then ../tools/coveralls-tool -O $PWD -S ..; fi
+    - find . -name \*.log -print0|xargs -0 grep '^==[1-9]'
 
 after_failure:
     - find . -name test-suite.log -print0 | xargs -0 cat

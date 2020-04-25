@@ -158,6 +158,7 @@ gss_init_sec_context(OM_uint32 * minor_status,
 {
 	OM_uint32 major_status;
 	gssapi_mech_interface m;
+        gss_const_name_t mn_inner = GSS_C_NO_NAME;
 	struct _gss_name *name = (struct _gss_name *) target_name;
 	struct _gss_mechanism_name *mn;
 	struct _gss_context *ctx = (struct _gss_context *) *context_handle;
@@ -216,12 +217,18 @@ gss_init_sec_context(OM_uint32 * minor_status,
 	/*
 	 * Find the MN for this mechanism.
 	 */
-	major_status = _gss_find_mn(minor_status, name, mech_type, &mn);
-	if (major_status != GSS_S_COMPLETE) {
-		if (allocated_ctx)
-                    free(ctx);
-		return major_status;
-	}
+        if ((m->gm_flags & GM_USE_MG_NAME)) {
+            mn_inner = target_name;
+        } else {
+            major_status = _gss_find_mn(minor_status, name, mech_type, &mn);
+            if (major_status != GSS_S_COMPLETE) {
+                    if (allocated_ctx)
+                        free(ctx);
+                    return major_status;
+            }
+            if (mn)
+                mn_inner = mn->gmn_name;
+        }
 
 	/*
 	 * If we have a cred, find the cred for this mechanism.
@@ -246,7 +253,7 @@ gss_init_sec_context(OM_uint32 * minor_status,
 	major_status = m->gm_init_sec_context(minor_status,
 	    cred_handle,
 	    &ctx->gc_ctx,
-	    mn ? mn->gmn_name : GSS_C_NO_NAME,
+	    mn_inner,
 	    mech_type,
 	    req_flags,
 	    time_req,

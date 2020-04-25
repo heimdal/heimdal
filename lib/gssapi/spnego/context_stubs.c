@@ -228,55 +228,6 @@ OM_uint32 GSSAPI_CALLCONV _gss_spnego_unwrap
 		      qop_state);
 }
 
-OM_uint32 GSSAPI_CALLCONV _gss_spnego_compare_name
-           (OM_uint32 *minor_status,
-            gss_const_name_t name1,
-            gss_const_name_t name2,
-            int * name_equal
-           )
-{
-    return gss_compare_name(minor_status, name1, name2, name_equal);
-}
-
-OM_uint32 GSSAPI_CALLCONV _gss_spnego_display_name
-           (OM_uint32 * minor_status,
-            gss_const_name_t input_name,
-            gss_buffer_t output_name_buffer,
-            gss_OID * output_name_type
-           )
-{
-    return gss_display_name(minor_status, input_name,
-			    output_name_buffer, output_name_type);
-}
-
-OM_uint32 GSSAPI_CALLCONV _gss_spnego_import_name
-           (OM_uint32 * minor_status,
-            const gss_buffer_t name_buffer,
-            const gss_OID name_type,
-            gss_name_t * output_name
-           )
-{
-    return gss_import_name(minor_status, name_buffer,
-			   name_type, output_name);
-}
-
-OM_uint32 GSSAPI_CALLCONV _gss_spnego_export_name
-           (OM_uint32  * minor_status,
-            gss_const_name_t input_name,
-            gss_buffer_t exported_name
-           )
-{
-    return gss_export_name(minor_status, input_name, exported_name);
-}
-
-OM_uint32 GSSAPI_CALLCONV _gss_spnego_release_name
-           (OM_uint32 * minor_status,
-            gss_name_t * input_name
-           )
-{
-    return gss_release_name(minor_status, input_name);
-}
-
 OM_uint32 GSSAPI_CALLCONV _gss_spnego_inquire_context (
             OM_uint32 * minor_status,
             gss_const_ctx_id_t context_handle,
@@ -467,47 +418,6 @@ out:
     gss_release_oid_set(&junk, &mechs);
 
     return ret;
-}
-
-OM_uint32 GSSAPI_CALLCONV _gss_spnego_inquire_mechs_for_name (
-            OM_uint32 * minor_status,
-            gss_const_name_t input_name,
-            gss_OID_set * mech_types
-           )
-{
-    OM_uint32 ret, junk;
-
-    ret = gss_create_empty_oid_set(minor_status, mech_types);
-    if (ret)
-	return ret;
-
-    ret = gss_add_oid_set_member(minor_status,
-				 GSS_SPNEGO_MECHANISM,
-				 mech_types);
-    if (ret)
-	gss_release_oid_set(&junk, mech_types);
-
-    return ret;
-}
-
-OM_uint32 GSSAPI_CALLCONV _gss_spnego_canonicalize_name (
-            OM_uint32 * minor_status,
-            gss_const_name_t input_name,
-            const gss_OID mech_type,
-            gss_name_t * output_name
-           )
-{
-    /* XXX */
-    return gss_duplicate_name(minor_status, input_name, output_name);
-}
-
-OM_uint32 GSSAPI_CALLCONV _gss_spnego_duplicate_name (
-            OM_uint32 * minor_status,
-            gss_const_name_t src_name,
-            gss_name_t * dest_name
-           )
-{
-    return gss_duplicate_name(minor_status, src_name, dest_name);
 }
 
 OM_uint32 GSSAPI_CALLCONV

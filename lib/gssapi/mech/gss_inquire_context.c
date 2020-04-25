@@ -82,7 +82,11 @@ gss_inquire_context(OM_uint32 *minor_status,
 		return (major_status);
 	}
 
-	if (src_name) {
+	if (src_name && (m->gm_flags & GM_USE_MG_NAME)) {
+		*src_name = src_mn;
+		src_mn = GSS_C_NO_NAME;
+	} else if (src_name && src_mn) {
+		/* _gss_create_name() consumes `src_mn' on success */
 		name = _gss_create_name(src_mn, m);
 		if (!name) {
 			if (mech_type)
@@ -92,9 +96,12 @@ gss_inquire_context(OM_uint32 *minor_status,
 			return (GSS_S_FAILURE);
 		}
 		*src_name = (gss_name_t) name;
+		src_mn = GSS_C_NO_NAME;
 	}
 
-	if (targ_name) {
+	if (targ_name && (m->gm_flags & GM_USE_MG_NAME)) {
+		*targ_name = targ_mn;
+	} else if (targ_name && targ_mn) {
 		name = _gss_create_name(targ_mn, m);
 		if (!name) {
 			if (mech_type)
@@ -106,6 +113,7 @@ gss_inquire_context(OM_uint32 *minor_status,
 			return (GSS_S_FAILURE);
 		}
 		*targ_name = (gss_name_t) name;
+		targ_mn = GSS_C_NO_NAME;
 	}
 
 	return (GSS_S_COMPLETE);

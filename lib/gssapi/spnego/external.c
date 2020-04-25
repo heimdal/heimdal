@@ -88,7 +88,7 @@ static gssapi_mech_interface_desc spnego_mech = {
     GMI_VERSION,
     "spnego",
     {6, rk_UNCONST("\x2b\x06\x01\x05\x05\x02") },
-    GM_USE_MG_CRED,
+    GM_USE_MG_CRED | GM_USE_MG_NAME,
     NULL, /* gm_acquire_cred */
     NULL, /* gm_release_cred */
     _gss_spnego_init_sec_context,
@@ -102,11 +102,11 @@ static gssapi_mech_interface_desc spnego_mech = {
     _gss_spnego_unwrap,
     NULL, /* gm_display_status */
     NULL, /* gm_indicate_mechs */
-    _gss_spnego_compare_name,
-    _gss_spnego_display_name,
-    _gss_spnego_import_name,
-    _gss_spnego_export_name,
-    _gss_spnego_release_name,
+    NULL, /* gm_compare_name */
+    NULL, /* gm_display_name */
+    NULL, /* gm_import_name */
+    NULL, /* gm_export_name */
+    NULL, /* gm_release_name */
     NULL, /* gm_inquire_cred */
     _gss_spnego_inquire_context,
     _gss_spnego_wrap_size_limit,
@@ -114,10 +114,10 @@ static gssapi_mech_interface_desc spnego_mech = {
     NULL, /* gm_inquire_cred_by_mech */
     _gss_spnego_export_sec_context,
     _gss_spnego_import_sec_context,
-    NULL /* _gss_spnego_inquire_names_for_mech */,
-    _gss_spnego_inquire_mechs_for_name,
-    _gss_spnego_canonicalize_name,
-    _gss_spnego_duplicate_name,
+    NULL, /* gm_spnego_inquire_names_for_mech */
+    NULL, /* gm_spnego_inquire_mechs_for_name */
+    NULL, /* gm_spnego_canonicalize_name */
+    NULL, /* gm_spnego_duplicate_name */
     _gss_spnego_inquire_sec_context_by_oid,
     NULL, /* gm_inquire_cred_by_oid */
     _gss_spnego_set_sec_context_option,

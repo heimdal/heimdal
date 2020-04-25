@@ -553,6 +553,7 @@ struct gss_mech_compat_desc_struct;
 
 /* gm_flags */
 #define GM_USE_MG_CRED      	1	/* uses mech glue credentials */
+#define GM_USE_MG_NAME      	2	/* uses mech glue names       */
 
 typedef struct gssapi_mech_interface_desc {
 	unsigned			gm_version;

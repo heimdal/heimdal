@@ -182,12 +182,11 @@ gss_accept_sec_context(OM_uint32 *minor_status,
                  * and we have to try all mechs (that we have a cred element
                  * for, if we have a cred).
                  */
-		ctx = malloc(sizeof(struct _gss_context));
+		ctx = calloc(1, sizeof(struct _gss_context));
 		if (!ctx) {
 			*minor_status = ENOMEM;
 			return (GSS_S_DEFECTIVE_TOKEN);
 		}
-		memset(ctx, 0, sizeof(struct _gss_context));
                 if (mech_oid != GSS_C_NO_OID) {
                         m = ctx->gc_mech = __gss_get_mechanism(mech_oid);
                         if (!m) {
@@ -334,11 +333,18 @@ got_one:
 	}
 
 	if (mech_type)
-	    *mech_type = mech_ret_type;
+		*mech_type = mech_ret_type;
 
-	if (src_name && src_mn) {
+	if (src_name && src_mn && (ctx->gc_mech->gm_flags & GM_USE_MG_NAME)) {
+		/* Negotiation mechanisms use mechglue names as names */
+		*src_name = src_mn;
+		src_mn = GSS_C_NO_NAME;
+	} else if (src_name && src_mn) {
 		/*
 		 * Make a new name and mark it as an MN.
+		 *
+		 * Note that _gss_create_name() consumes `src_mn' but doesn't
+		 * take a pointer, so it can't set it to GSS_C_NO_NAME.
 		 */
 		struct _gss_name *name = _gss_create_name(src_mn, m);
 
@@ -348,6 +354,7 @@ got_one:
 			return (GSS_S_FAILURE);
 		}
 		*src_name = (gss_name_t) name;
+		src_mn = GSS_C_NO_NAME;
 	} else if (src_mn) {
 		m->gm_release_name(minor_status, &src_mn);
 	}

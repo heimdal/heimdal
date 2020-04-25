@@ -217,6 +217,7 @@ for mech in krb5 krb5iov spnego spnegoiov; do
 	echo "${mech} no-mutual ${iov}" ; > messages.log
 	${context} --mech-type=${mech} \
 	    --wrapunwrap ${iov} \
+            --localname=mapped_user1 \
 	    --name-type=hostbased-service host@lucid.test.h5l.se || \
 		{ eval "$testfailed"; }
 

@@ -4,8 +4,6 @@ os:
 
 language: c
 
-cache: ccache
-
 env:
     global:
         secure: "YKG77M7zMvJ+IeV2ziw//HcHqMqFoAzIZlE99Yw/aOn5pvMYKq6Ep7EFVhbfDu9yN0T7M5csCGQeH7/ylDlsZSRMUw72844ezMDM8e10T/lW/T/OYN7j1ZVHh3WSJgS+1D9VG6/Y0OY1Si3lb7PcOdAIU0fPJV5xQONN2+hpJeI="
@@ -20,7 +18,6 @@ before_install:
     - if [ $TRAVIS_OS_NAME = osx ]; then brew install cpanm bison flex berkeley-db lmdb openldap openssl; fi
     - if [ $TRAVIS_OS_NAME = osx ]; then sudo cpanm install JSON; fi
     - if [ $TRAVIS_OS_NAME = osx -a -n "$COVERAGE" ]; then brew install jq; fi
-    - if [ $TRAVIS_OS_NAME = osx -a -n "$COVERAGE" ]; then brew install ccache; export PATH="/usr/local/opt/ccache/libexec:$PATH"; fi
     - mkdir ci-build
     - mkdir coverity-build
     - ./autogen.sh

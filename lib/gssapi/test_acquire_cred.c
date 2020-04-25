@@ -337,7 +337,8 @@ main(int argc, char **argv)
 	}
 	gss_release_cred(&min_stat, &cred);
     }
-
+    gss_release_oid_set(&min_stat, &oidset);
+    gss_release_name(&min_stat, &target);
 
     return 0;
 }

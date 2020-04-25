@@ -254,7 +254,7 @@ loop(gss_OID mechoid,
 	    gss_release_buffer(&min_stat, &output_token);
 
 	if (maj_stat & GSS_S_CONTINUE_NEEDED)
-	    ;
+	    gss_release_name(&min_stat, &src_name);
 	else
 	    server_done = 1;
     }
@@ -828,6 +828,8 @@ main(int argc, char **argv)
 	    errx(1, "gss_acquire_cred: %s",
 		 gssapi_err(maj_stat, min_stat, GSS_C_NO_OID));
     }
+
+    gss_release_name(&min_stat, &cname);
 
     if (verbose_flag) {
 	size_t i;

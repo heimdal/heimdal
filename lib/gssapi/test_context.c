@@ -44,8 +44,10 @@ static char *type_string;
 static char *mech_string;
 static char *mechs_string;
 static char *ret_mech_string;
+static char *localname_string;
 static char *client_name;
 static char *client_password;
+static char *localname_string;
 static int dns_canon_flag = -1;
 static int mutual_auth_flag = 0;
 static int dce_style_flag = 0;
@@ -165,7 +167,7 @@ loop(gss_OID mechoid,
     int server_done = 0, client_done = 0;
     int num_loops = 0;
     OM_uint32 maj_stat, min_stat;
-    gss_name_t gss_target_name;
+    gss_name_t gss_target_name, src_name;
     gss_buffer_desc input_token, output_token;
     OM_uint32 flags = 0, ret_cflags, ret_sflags;
     gss_OID actual_mech_client;
@@ -250,7 +252,8 @@ loop(gss_OID mechoid,
 					  GSS_C_NO_CREDENTIAL,
 					  &output_token,
 					  channel_bindings_p,
-					  NULL,
+					  GSS_C_NO_CHANNEL_BINDINGS,
+					  &src_name,
 					  &actual_mech_server,
 					  &input_token,
 					  &ret_sflags,
@@ -266,7 +269,7 @@ loop(gss_OID mechoid,
 	    gss_release_buffer(&min_stat, &output_token);
 
 	if (maj_stat & GSS_S_CONTINUE_NEEDED)
-	    ;
+	    gss_release_name(&min_stat, &src_name);
 	else
 	    server_done = 1;
     }
@@ -288,6 +291,49 @@ loop(gss_OID mechoid,
     if (gss_oid_equal(actual_mech_server, actual_mech_client) == 0)
 	errx(1, "mech mismatch");
     *actual_mech = actual_mech_server;
+
+    if (localname_string) {
+        gss_buffer_desc lname;
+
+        maj_stat = gss_localname(&min_stat, src_name, GSS_C_NO_OID, &lname);
+        if (maj_stat != GSS_S_COMPLETE)
+            errx(1, "localname: %s",
+                 gssapi_err(maj_stat, min_stat, GSS_C_NO_OID));
+        if (verbose_flag)
+            printf("localname: %.*s\n", (int)lname.length,
+                   (char *)lname.value);
+        if (lname.length != strlen(localname_string) ||
+            strncmp(localname_string, lname.value, lname.length))
+            errx(1, "localname: expected \"%s\", got \"%.*s\" (1)",
+                 localname_string, (int)lname.length, (char *)lname.value);
+        gss_release_buffer(&min_stat, &lname);
+        maj_stat = gss_localname(&min_stat, src_name, actual_mech_server,
+                                 &lname);
+        if (maj_stat != GSS_S_COMPLETE)
+            errx(1, "localname: %s",
+                 gssapi_err(maj_stat, min_stat, actual_mech_server));
+        if (lname.length != strlen(localname_string) ||
+            strncmp(localname_string, lname.value, lname.length))
+            errx(1, "localname: expected \"%s\", got \"%.*s\" (2)",
+                 localname_string, (int)lname.length, (char *)lname.value);
+        gss_release_buffer(&min_stat, &lname);
+
+        if (!gss_userok(src_name, localname_string))
+            errx(1, "localname is not userok");
+        if (gss_userok(src_name, "nosuchuser:no"))
+            errx(1, "gss_userok() appears broken");
+    }
+    if (verbose_flag) {
+        gss_buffer_desc iname;
+
+        maj_stat = gss_display_name(&min_stat, src_name, &iname, NULL);
+        if (maj_stat != GSS_S_COMPLETE)
+            errx(1, "display_name: %s",
+                 gssapi_err(maj_stat, min_stat, GSS_C_NO_OID));
+        printf("client name: %.*s\n", (int)iname.length, (char *)iname.value);
+        gss_release_buffer(&min_stat, &iname);
+    }
+    gss_release_name(&min_stat, &src_name);
 
     if (max_loops && num_loops > max_loops)
 	errx(1, "num loops %d was lager then max loops %d",
@@ -637,6 +683,7 @@ static struct getargs args[] = {
      "server should get a credential", NULL },
     {"export-import-context",0,	arg_flag,	&ei_ctx_flag, "test export/import context", NULL },
     {"export-import-cred",0,	arg_flag,	&ei_cred_flag, "test export/import cred", NULL },
+    {"localname",0,     arg_string, &localname_string, "expected localname for client", "USERNAME"},
     {"gsskrb5-acceptor-identity", 0, arg_string, &gsskrb5_acceptor_identity, "keytab", NULL },
     {"session-enctype",	0, arg_string,	&session_enctype_string, "enctype", NULL },
     {"client-time-offset",	0, arg_integer,	&client_time_offset, "time", NULL },
@@ -826,6 +873,8 @@ main(int argc, char **argv)
 	    errx(1, "gss_acquire_cred: %s",
 		 gssapi_err(maj_stat, min_stat, GSS_C_NO_OID));
     }
+
+    gss_release_name(&min_stat, &cname);
 
     if (verbose_flag) {
 	size_t i;

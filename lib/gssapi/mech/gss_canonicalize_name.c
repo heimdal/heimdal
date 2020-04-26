@@ -67,7 +67,11 @@ gss_canonicalize_name(OM_uint32 *minor_status,
 	gss_name_t new_canonical_name;
 
 	*minor_status = 0;
-	*output_name = 0;
+	*output_name = GSS_C_NO_NAME;
+
+	if ((m = __gss_get_mechanism(mech_type)) == NULL ||
+            (m->gm_flags & GM_USE_MG_NAME))
+		return GSS_S_BAD_MECH;
 
 	major_status = _gss_find_mn(minor_status, name, mech_type, &mn);
 	if (major_status)

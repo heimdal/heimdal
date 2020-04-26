@@ -74,7 +74,7 @@ _gss_find_mn(OM_uint32 *minor_status,
 			return GSS_S_BAD_NAME;
 
 		m = __gss_get_mechanism(mech);
-		if (!m)
+		if (!m || !m->gm_import_name)
 			return (GSS_S_BAD_MECH);
 
 		mn = malloc(sizeof(struct _gss_mechanism_name));

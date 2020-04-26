@@ -120,7 +120,7 @@ _gss_import_export_name(OM_uint32 *minor_status,
 		return (GSS_S_BAD_NAME);
 
 	m = __gss_get_mechanism(&mech_oid);
-	if (!m)
+	if (!m || !m->gm_import_name)
 		return (GSS_S_BAD_MECH);
 
 	/*
@@ -241,6 +241,9 @@ gss_import_name(OM_uint32 *minor_status,
 
 	HEIM_TAILQ_FOREACH(m, &_gss_mechs, gm_link) {
 		int present = 0;
+
+                if ((m->gm_mech.gm_flags & GM_USE_MG_NAME))
+                    continue;
 
 		major_status = gss_test_oid_set_member(minor_status,
 		    name_type, m->gm_name_types, &present);

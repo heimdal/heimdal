@@ -73,6 +73,7 @@ mapped1@TEST2.H5L.SE m1
 mapped1@TEST3.H5L.SE mapped1
 mapped2@TEST2.H5L.SE m2
 mapped2@TEST3.H5L.SE mapped2
+user1@@TEST.H5L.SE mapped_user1
 z008213d189aac2b junk
 z07644c5c50f29d5 junk
 z094067ad439189c junk

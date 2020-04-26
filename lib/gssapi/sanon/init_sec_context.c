@@ -117,7 +117,8 @@ _gss_sanon_init_sec_context(OM_uint32 *minor,
 	    goto out;
 	}
 
-	sc->flags = SANON_FLAG_INITIATOR | rfc4757_to_sanon_flags(req_flags);
+        sc->is_initiator = 1;
+	sc->flags = req_flags;
 
 	/* compute public and secret keys */
 	major = _gss_sanon_curve25519_base(minor, sc);
@@ -144,8 +145,7 @@ _gss_sanon_init_sec_context(OM_uint32 *minor,
 	    input_token->length < crypto_scalarmult_curve25519_BYTES) {
 	    major = GSS_S_DEFECTIVE_TOKEN;
 	    goto out;
-	} else if (sc->rfc4121 != GSS_C_NO_CONTEXT ||
-	    !(sc->flags & SANON_FLAG_INITIATOR)) {
+	} else if (sc->rfc4121 != GSS_C_NO_CONTEXT || !(sc->is_initiator)) {
 	    major = GSS_S_BAD_STATUS;
 	    goto out;
 	}
@@ -159,8 +159,9 @@ _gss_sanon_init_sec_context(OM_uint32 *minor,
 	    goto out;
 
 	flags |= GSS_C_TRANS_FLAG;
+        sc->flags |= GSS_C_TRANS_FLAG;
 
-	major = _gss_sanon_import_rfc4121_context(minor, sc, flags, &session_key);
+	major = _gss_sanon_import_rfc4121_context(minor, sc, &session_key);
 	if (major != GSS_S_COMPLETE)
 	    goto out;
 

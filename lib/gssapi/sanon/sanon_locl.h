@@ -43,23 +43,16 @@
 
 #include "mech/mech_locl.h"
 
-/* context is initiator context */
-#define SANON_FLAG_INITIATOR	0x0001
-
-/* RFC 4757 extended flags */
-#define SANON_FLAG_DCE_STYLE    0x1000
-#define SANON_FLAG_IDENTIFY	0x2000
-#define SANON_FLAG_EXTENDED_ERROR   0x4000
-
 typedef struct sanon_ctx_desc {
     /* X25519 ECDH secret key */
     uint8_t sk[crypto_scalarmult_curve25519_BYTES];
     /* X25519 ECDH public key */
     uint8_t pk[crypto_scalarmult_curve25519_BYTES];
-    /* SANON_FLAG_xxx */
+    /* GSS_C_*_FLAG */
     uint32_t flags;
     /* krb5 context for message protection/PRF */
     gss_ctx_id_t rfc4121;
+    int is_initiator;
 } *sanon_ctx;
 
 extern gss_name_t _gss_sanon_anonymous_identity;
@@ -85,36 +78,6 @@ buffer_equal_p(gss_const_buffer_t b1, gss_const_buffer_t b2)
 {
     return b1->length == b2->length &&
 	memcmp(b1->value, b2->value, b2->length) == 0;
-}
-
-static inline OM_uint32
-sanon_to_rfc4757_flags(uint32_t flags)
-{
-    OM_uint32 ret = 0;
-
-    if (flags & SANON_FLAG_DCE_STYLE)
-	ret |= GSS_C_DCE_STYLE;
-    if (flags & SANON_FLAG_IDENTIFY)
-	ret |= GSS_C_IDENTIFY_FLAG;
-    if (flags & SANON_FLAG_EXTENDED_ERROR)
-	ret |= GSS_C_EXTENDED_ERROR_FLAG;
-
-    return ret;
-}
-
-static inline uint32_t
-rfc4757_to_sanon_flags(OM_uint32 flags)
-{
-    uint32_t ret = 0;
-
-    if (flags & GSS_C_DCE_STYLE)
-	ret |= SANON_FLAG_DCE_STYLE;
-    if (flags & GSS_C_IDENTIFY_FLAG)
-	ret |= SANON_FLAG_IDENTIFY;
-    if (flags & GSS_C_EXTENDED_ERROR_FLAG)
-	ret |= SANON_FLAG_EXTENDED_ERROR;
-
-    return ret;
 }
 
 #endif /* SANON_LOCL_H */

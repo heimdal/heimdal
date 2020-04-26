@@ -49,7 +49,6 @@ _gss_sanon_accept_sec_context(OM_uint32 *minor,
     sanon_ctx sc = (sanon_ctx)*context_handle;
     gss_buffer_desc mech_input_token = GSS_C_EMPTY_BUFFER;
     gss_buffer_desc hok_mic = GSS_C_EMPTY_BUFFER;
-    OM_uint32 flags;
     gss_buffer_desc session_key = GSS_C_EMPTY_BUFFER;
 
     if (output_token == GSS_C_NO_BUFFER) {
@@ -94,11 +93,10 @@ _gss_sanon_accept_sec_context(OM_uint32 *minor,
     if (major != GSS_S_COMPLETE)
 	goto out;
 
-    flags = GSS_C_REPLAY_FLAG | GSS_C_SEQUENCE_FLAG | GSS_C_CONF_FLAG |
-	    GSS_C_INTEG_FLAG | GSS_C_ANON_FLAG | GSS_C_TRANS_FLAG;
-    flags |= sanon_to_rfc4757_flags(sc->flags);
+    sc->flags |= GSS_C_REPLAY_FLAG | GSS_C_SEQUENCE_FLAG | GSS_C_CONF_FLAG |
+        GSS_C_INTEG_FLAG | GSS_C_ANON_FLAG | GSS_C_TRANS_FLAG;
 
-    major = _gss_sanon_import_rfc4121_context(minor, sc, flags, &session_key);
+    major = _gss_sanon_import_rfc4121_context(minor, sc, &session_key);
     if (major != GSS_S_COMPLETE)
 	goto out;
 
@@ -126,7 +124,7 @@ _gss_sanon_accept_sec_context(OM_uint32 *minor,
     if (src_name)
 	*src_name = _gss_sanon_anonymous_identity;
     if (ret_flags)
-	*ret_flags = flags;
+	*ret_flags = sc->flags;
     if (time_rec)
 	*time_rec = GSS_C_INDEFINITE;
 

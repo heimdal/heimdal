@@ -43,6 +43,7 @@ _gss_sanon_inquire_context(OM_uint32 *minor,
 			   int *open_context)
 {
     const sanon_ctx sc = (const sanon_ctx)context_handle;
+    OM_uint32 major = GSS_S_COMPLETE;
 
     *minor = 0;
 
@@ -57,13 +58,17 @@ _gss_sanon_inquire_context(OM_uint32 *minor,
 	*lifetime_rec = GSS_C_INDEFINITE;
     if (mech_type)
 	*mech_type = GSS_SANON_X25519_MECHANISM;
-    if (ctx_flags)
-	gss_inquire_context(minor, sc->rfc4121,
-			    NULL, NULL, NULL, NULL,
-			    ctx_flags, NULL, NULL);
-    if (locally_initiated)
-	*locally_initiated = !!(sc->flags & SANON_FLAG_INITIATOR);
-    if (open_context)
-	*open_context = !!(sc->rfc4121 != GSS_C_NO_CONTEXT);
-    return GSS_S_COMPLETE;
+    if (sc->rfc4121 == GSS_C_NO_CONTEXT) {
+        if (locally_initiated)
+            *locally_initiated = sc->is_initiator;
+        if (open_context)
+            *open_context = 0;
+        if (ctx_flags)
+            *ctx_flags = sc->flags;
+    } else {
+        major = gss_inquire_context(minor, sc->rfc4121, NULL, NULL, NULL,
+                                    NULL, ctx_flags, locally_initiated,
+                                    open_context);
+    }
+    return major;
 }

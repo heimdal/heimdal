@@ -64,7 +64,7 @@ _gss_sanon_inquire_negoex_key(OM_uint32 *minor,
 	return GSS_S_UNAVAILABLE;
     }
 
-    initiator_key = !!(sc->flags & SANON_FLAG_INITIATOR);
+    initiator_key = !!(sc->is_initiator);
 
     if (gss_oid_equal(desired_object, GSS_C_INQ_NEGOEX_VERIFY_KEY))
 	initiator_key ^= 1;
@@ -193,7 +193,8 @@ _gssspi_sanon_exchange_meta_data(OM_uint32 *minor,
     if (major != GSS_S_COMPLETE)
 	return major;
 
-    sc->flags |= rfc4757_to_sanon_flags(init_flags);
+    init_flags &= ~(GSS_C_DCE_STYLE | GSS_C_IDENTIFY_FLAG | GSS_C_EXTENDED_ERROR_FLAG);
+    sc->flags |= init_flags | req_flags;
 
     return GSS_S_COMPLETE;
 }

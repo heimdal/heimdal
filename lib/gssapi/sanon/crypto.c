@@ -278,7 +278,7 @@ _gss_sanon_curve25519(OM_uint32 *minor,
 
     p = kdf_context.data;
 
-    if (sc->flags & SANON_FLAG_INITIATOR) {
+    if (sc->is_initiator) {
 	memcpy(p, sc->pk, sizeof(sc->pk));
 	memcpy(&p[pk->length], pk->value, pk->length);
     } else {
@@ -318,14 +318,10 @@ _gss_sanon_curve25519(OM_uint32 *minor,
 OM_uint32
 _gss_sanon_import_rfc4121_context(OM_uint32 *minor,
 				  sanon_ctx sc,
-				  OM_uint32 flags,
 				  gss_const_buffer_t session_key)
 {
-    return _gss_mg_import_rfc4121_context(minor,
-					  !!(sc->flags & SANON_FLAG_INITIATOR),
-					  flags,
-					  KRB5_ENCTYPE_AES128_CTS_HMAC_SHA256_128,
-					  session_key,
-					  &sc->rfc4121);
+    return _gss_mg_import_rfc4121_context(minor, sc->is_initiator, sc->flags,
+                                          KRB5_ENCTYPE_AES128_CTS_HMAC_SHA256_128,
+                                          session_key, &sc->rfc4121);
 }
 

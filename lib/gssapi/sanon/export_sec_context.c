@@ -46,9 +46,7 @@ _gss_sanon_export_sec_context(OM_uint32 *minor,
     }
 
     major = gss_export_sec_context(minor, &sc->rfc4121, interprocess_token);
-    if (major == GSS_S_COMPLETE) {
-	_gss_sanon_delete_sec_context(minor, context_handle,
-				      GSS_C_NO_BUFFER);
-    }
+    if (major == GSS_S_COMPLETE)
+        _gss_sanon_delete_sec_context(minor, context_handle, GSS_C_NO_BUFFER);
     return major;
 }

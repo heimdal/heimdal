@@ -618,7 +618,7 @@ krb5_auth_getremoteseqnumber(krb5_context context,
  * @ingroup krb5_error
  */
 
-KRB5_LIB_FUNCTION char * KRB5_LIB_CALL
+KRB5_LIB_FUNCTION const char * KRB5_LIB_CALL
 krb5_get_error_string(krb5_context context)
     KRB5_DEPRECATED_FUNCTION("Use krb5_get_error_message instead")
 {

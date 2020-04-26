@@ -159,7 +159,7 @@ OM_uint32 GSSAPI_CALLCONV _gsskrb5_display_status
     if (gss_oid_equal(mech_type, GSS_C_NO_OID) == 0 &&
 	gss_oid_equal(mech_type, GSS_KRB5_MECHANISM) == 0) {
 	*minor_status = 0;
-	return GSS_C_GSS_CODE;
+	return GSS_S_BAD_MECH;
     }
 
     if (status_type == GSS_C_GSS_CODE) {

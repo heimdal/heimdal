@@ -39,6 +39,8 @@ _gss_sanon_inquire_cred(OM_uint32 *minor,
 		        gss_cred_usage_t *cred_usage,
 		        gss_OID_set *mechanisms)
 {
+    *minor = 0;
+
     if (cred_handle == GSS_C_NO_CREDENTIAL)
 	return GSS_S_NO_CRED;
 

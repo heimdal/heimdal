@@ -97,19 +97,6 @@ _gss_sanon_inquire_negoex_key(OM_uint32 *minor,
     return major;
 }
 
-static OM_uint32
-make_flags_meta_data(OM_uint32 *minor,
-		     OM_uint32 flags,
-		     gss_buffer_t meta_data)
-{
-    uint8_t data[4];
-    gss_buffer_desc buffer = { sizeof(data), data };
-
-    _gss_mg_encode_le_uint32(flags, data);
-
-    return _gss_copy_buffer(minor, &buffer, meta_data);
-}
-
 OM_uint32 GSSAPI_CALLCONV
 _gssspi_sanon_query_meta_data(OM_uint32 *minor,
 			      gss_const_OID mech_oid,
@@ -119,45 +106,13 @@ _gssspi_sanon_query_meta_data(OM_uint32 *minor,
 			      OM_uint32 req_flags,
 			      gss_buffer_t meta_data)
 {
-    OM_uint32 major;
-    int local = (targ_name != GSS_C_NO_NAME);
+    int is_initiator = (targ_name != GSS_C_NO_NAME);
 
     *minor = 0;
 
-    if (local) {
-	if (!_gss_sanon_available_p(cred_handle, targ_name, req_flags))
-	    return GSS_S_UNAVAILABLE;
-
-	/*
-	 * Obscure Windows interoperability hack: use metadata to convey
-	 * RFC4757 extended flags from initiator to acceptor.
-	 */
-	req_flags &= (GSS_C_DCE_STYLE | GSS_C_IDENTIFY_FLAG | GSS_C_EXTENDED_ERROR_FLAG);
-	if (req_flags) {
-	    major = make_flags_meta_data(minor, req_flags, meta_data);
-	    if (major != GSS_S_COMPLETE)
-		return major;
-	}
-    }
-
-    return GSS_S_COMPLETE;
-}
-
-static OM_uint32
-parse_flags_meta_data(OM_uint32 *minor,
-		      gss_const_buffer_t meta_data,
-		      OM_uint32 *flags)
-{
-    *minor = 0;
-    *flags = 0;
-
-    if (meta_data->length == 0)
-	return GSS_S_COMPLETE;
-
-    if (meta_data->length < 4)
-	return GSS_S_DEFECTIVE_TOKEN;
-
-    _gss_mg_decode_le_uint32(meta_data->value, flags);
+    if (is_initiator &&
+	!_gss_sanon_available_p(cred_handle, targ_name, req_flags))
+	return GSS_S_UNAVAILABLE;
 
     return GSS_S_COMPLETE;
 }
@@ -171,30 +126,6 @@ _gssspi_sanon_exchange_meta_data(OM_uint32 *minor,
 				 OM_uint32 req_flags,
 				 gss_const_buffer_t meta_data)
 {
-    sanon_ctx sc = (sanon_ctx)*context_handle;
-    int local = (targ_name != GSS_C_NO_NAME);
-    OM_uint32 major, init_flags;
-
     *minor = 0;
-
-    if (local)
-	return GSS_S_COMPLETE;
-
-    if (sc == NULL) {
-	sc = calloc(1, sizeof(*sc));
-	if (sc == NULL) {
-	    *minor = ENOMEM;
-	    return GSS_S_FAILURE;
-	}
-	*context_handle = (gss_ctx_id_t)sc;
-    }
-
-    major = parse_flags_meta_data(minor, meta_data, &init_flags);
-    if (major != GSS_S_COMPLETE)
-	return major;
-
-    init_flags &= ~(GSS_C_DCE_STYLE | GSS_C_IDENTIFY_FLAG | GSS_C_EXTENDED_ERROR_FLAG);
-    sc->flags |= init_flags | req_flags;
-
     return GSS_S_COMPLETE;
 }

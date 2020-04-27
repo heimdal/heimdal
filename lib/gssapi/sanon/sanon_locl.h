@@ -48,11 +48,9 @@ typedef struct sanon_ctx_desc {
     uint8_t sk[crypto_scalarmult_curve25519_BYTES];
     /* X25519 ECDH public key */
     uint8_t pk[crypto_scalarmult_curve25519_BYTES];
-    /* GSS_C_*_FLAG */
-    uint32_t flags;
     /* krb5 context for message protection/PRF */
     gss_ctx_id_t rfc4121;
-    int is_initiator;
+    int is_initiator : 1;
 } *sanon_ctx;
 
 extern gss_name_t _gss_sanon_anonymous_identity;
@@ -79,5 +77,8 @@ buffer_equal_p(gss_const_buffer_t b1, gss_const_buffer_t b2)
     return b1->length == b2->length &&
 	memcmp(b1->value, b2->value, b2->length) == 0;
 }
+
+/* flags that are valid to be sent from a SAnon initiator in the flags field */
+#define SANON_PROTOCOL_FLAG_MASK ( GSS_C_DCE_STYLE | GSS_C_IDENTIFY_FLAG | GSS_C_EXTENDED_ERROR_FLAG )
 
 #endif /* SANON_LOCL_H */

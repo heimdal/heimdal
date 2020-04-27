@@ -99,12 +99,13 @@ _gss_sanon_init_sec_context(OM_uint32 *minor,
     }
 
     flags |= GSS_C_REPLAY_FLAG | GSS_C_SEQUENCE_FLAG | GSS_C_CONF_FLAG |
-	     GSS_C_INTEG_FLAG | GSS_C_DCE_STYLE | GSS_C_IDENTIFY_FLAG |
-	     GSS_C_EXTENDED_ERROR_FLAG; /* supported flags */
+	     GSS_C_INTEG_FLAG | SANON_PROTOCOL_FLAG_MASK; /* supported flags */
     flags &= req_flags;
     flags |= GSS_C_ANON_FLAG; /* always set this flag */
 
     if (sc == NULL) {
+	uint8_t pk_and_flags[crypto_scalarmult_curve25519_BYTES + 8];
+
 	if (input_token != GSS_C_NO_BUFFER && input_token->length != 0) {
 	    major = GSS_S_DEFECTIVE_TOKEN;
 	    goto out;
@@ -118,15 +119,23 @@ _gss_sanon_init_sec_context(OM_uint32 *minor,
 	}
 
         sc->is_initiator = 1;
-	sc->flags = req_flags;
 
 	/* compute public and secret keys */
 	major = _gss_sanon_curve25519_base(minor, sc);
 	if (major != GSS_S_COMPLETE)
 	    goto out;
 
-	mech_token.length = sizeof(sc->pk);
-	mech_token.value = sc->pk;
+	if (req_flags & SANON_PROTOCOL_FLAG_MASK) {
+	    memcpy(pk_and_flags, sc->pk, sizeof(sc->pk));
+	    _gss_mg_encode_be_uint32(0, &pk_and_flags[sizeof(sc->pk)]);
+	    _gss_mg_encode_be_uint32(req_flags & SANON_PROTOCOL_FLAG_MASK,
+				     &pk_and_flags[sizeof(sc->pk) + 4]);
+	    mech_token.length = sizeof(pk_and_flags);
+	    mech_token.value = pk_and_flags;
+	} else {
+	    mech_token.length = sizeof(sc->pk);
+	    mech_token.value = sc->pk;
+	}
 
 	/* send public key to acceptor */
 	major = gss_encapsulate_token(&mech_token,
@@ -154,14 +163,14 @@ _gss_sanon_init_sec_context(OM_uint32 *minor,
 	pk.value = input_token->value;
 
 	/* compute shared secret */
-	major = _gss_sanon_curve25519(minor, sc, &pk, input_chan_bindings, &session_key);
+	major = _gss_sanon_curve25519(minor, sc, &pk, flags & SANON_PROTOCOL_FLAG_MASK,
+				      input_chan_bindings, &session_key);
 	if (major != GSS_S_COMPLETE)
 	    goto out;
 
 	flags |= GSS_C_TRANS_FLAG;
-        sc->flags |= GSS_C_TRANS_FLAG;
 
-	major = _gss_sanon_import_rfc4121_context(minor, sc, &session_key);
+	major = _gss_sanon_import_rfc4121_context(minor, sc, flags, &session_key);
 	if (major != GSS_S_COMPLETE)
 	    goto out;
 

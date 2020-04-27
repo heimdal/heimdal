@@ -466,12 +466,66 @@ mpz2BN(mp_int *s)
     return (ret == MP_OKAY) ? bn : NULL;
 }
 
+enum gen_pq_type { GEN_P, GEN_Q };
+
+static int
+gen_p(int bits, enum gen_pq_type pq_type, uint8_t nibble_pair, mp_int *p, mp_int *e, BN_GENCB *cb)
+{
+    unsigned char *buf;
+    mp_bool res;
+    mp_err ret = MP_MEM;
+    mp_int t1, t2;
+    size_t len = (bits + 7) / 8;
+    int trials = mp_prime_rabin_miller_trials(bits);
+    int counter = 0;
+    int where = 0; /* Ignore the set-but-unused warning from this */
+
+
+    FIRST(mp_init_multi(&t1, &t2, NULL));
+    if (ret == MP_OKAY && (buf = malloc(len))) do {
+        BN_GENCB_call(cb, 2, counter++);
+        /* random bytes */
+        ret = (RAND_bytes(buf, len) == 1) ? MP_OKAY : MP_ERR;
+
+        /* make it odd */
+        buf[len - 1] |= 1;
+
+        /* ensure the high nibble of the product is at least 128 */
+        if (pq_type == GEN_P)
+            buf[0] = (nibble_pair & 0xf0)         | (buf[0] & 0x0f);
+        else
+            buf[0] = ((nibble_pair & 0x0f) << 4)  | (buf[0] & 0x0f);
+
+        /* load number */
+        THEN_MP(mp_from_ubin(p, buf, len));
+
+        /* test primality; repeat if not */
+        THEN_MP(mp_prime_is_prime(p, trials, &res));
+        if (ret == MP_OKAY && res == MP_NO) continue;
+
+        /* check gcd(p - 1, e) == 1 */
+	THEN_MP(mp_sub_d(p, 1, &t1));
+	THEN_MP(mp_gcd(&t1, e, &t2));
+    } while (ret == MP_OKAY && mp_cmp_d(&t2, 1) != MP_EQ);
+
+    mp_clear_multi(&t1, &t2, NULL);
+    free(buf);
+    return ret;
+}
+
+static uint8_t pq_high_nibble_pairs[] = {
+0x9f, 0xad, 0xae, 0xaf, 0xbc, 0xbd, 0xbe, 0xbf, 0xcb, 0xcc, 0xcd, 0xce, 0xcf,
+0xda, 0xdb, 0xdc, 0xdd, 0xde, 0xdf, 0xea, 0xeb, 0xec, 0xed, 0xee, 0xef, 0xf9,
+0xfa, 0xfb, 0xfc, 0xfd, 0xfe, 0xff
+};
+
 static int
 ltm_rsa_generate_key(RSA *rsa, int bits, BIGNUM *e, BN_GENCB *cb)
 {
     mp_int el, p, q, n, d, dmp1, dmq1, iqmp, t1, t2, t3;
     mp_err ret;
-    int counter, bitsp;
+    uint8_t high_nibbles = 0;
+    int bitsp;
     int where = 0;
 
     if (bits < 789)
@@ -486,34 +540,19 @@ ltm_rsa_generate_key(RSA *rsa, int bits, BIGNUM *e, BN_GENCB *cb)
                         &t1, &t2, &t3, NULL));
     THEN_MP(BN2mpz(&el, e));
 
+    /*
+     * randomly pick a pair of high nibbles for p and q to ensure the product's
+     * high nibble is at least 128
+     */
+    if (ret == MP_OKAY)
+        ret = (RAND_bytes(&high_nibbles, 1) == 1) ? MP_OKAY : MP_ERR;
+    high_nibbles %= sizeof(pq_high_nibble_pairs);
+    high_nibbles = pq_high_nibble_pairs[high_nibbles];
+
     /* generate p and q so that p != q and bits(pq) ~ bits */
-    counter = 0;
-    if (ret == MP_OKAY) do {
-	int trials = mp_prime_rabin_miller_trials(bitsp);
-
-	BN_GENCB_call(cb, 2, counter++);
-	CHECK(random_num(&p, bitsp));
-	CHECK(mp_prime_next_prime(&p, trials, 0));
-	THEN_MP(mp_sub_d(&p, 1, &t1));
-	THEN_MP(mp_gcd(&t1, &el, &t2));
-    } while(mp_cmp_d(&t2, 1) != 0);
-
+    THEN_MP(gen_p(bitsp, GEN_P, high_nibbles, &p, &el, cb));
     BN_GENCB_call(cb, 3, 0);
-
-    counter = 0;
-    do {
-	int trials = mp_prime_rabin_miller_trials(bits - bitsp);
-
-	BN_GENCB_call(cb, 2, counter++);
-	CHECK(random_num(&q, bits - bitsp));
-	CHECK(mp_prime_next_prime(&q, trials, 0));
-
-	if (mp_cmp(&p, &q) == 0) /* don't let p and q be the same */
-	    continue;
-
-	THEN_MP(mp_sub_d(&q, 1, &t1));
-	THEN_MP(mp_gcd(&t1, &el, &t2));
-    } while(mp_cmp_d(&t2, 1) != 0);
+    THEN_MP(gen_p(bitsp, GEN_Q, high_nibbles, &q, &el, cb));
 
     /* make p > q */
     if (mp_cmp(&p, &q) < 0) {

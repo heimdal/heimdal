@@ -68,7 +68,6 @@
 #include <asn1_err.h>
 
 #include <gssapi_mech.h>
-#include <mech_locl.h>
 
 #include "spnego_asn1.h"
 #include "negoex_locl.h"

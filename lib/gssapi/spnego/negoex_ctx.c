@@ -783,7 +783,8 @@ _gss_negoex_init(OM_uint32 *minor,
     size_t nmessages = 0;
     int send_alert = FALSE, mech_error = FALSE;
 
-    _mg_buffer_zero(output_token);
+    output_token->length = 0;
+    output_token->value = NULL;
 
     if (ctx->negoex_step == 0 && input_token != GSS_C_NO_BUFFER &&
 	input_token->length != 0)
@@ -903,7 +904,8 @@ _gss_negoex_accept(OM_uint32 *minor,
     size_t nmessages;
     int send_alert = FALSE, mech_error = FALSE;
 
-    _mg_buffer_zero(output_token);
+    output_token->length = 0;
+    output_token->value = NULL;
     if (deleg_cred)
 	*deleg_cred = GSS_C_NO_CREDENTIAL;
 

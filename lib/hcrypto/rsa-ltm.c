@@ -166,7 +166,7 @@ static int
 ltm_rsa_public_encrypt(int flen, const unsigned char* from,
 			unsigned char* to, RSA* rsa, int padding)
 {
-    unsigned char *p, *p0 = NULL;
+    unsigned char *p = NULL, *p0 = NULL;
     size_t size, ssize, padlen;
     mp_int enc, dec, n, e;
     mp_err ret;
@@ -186,18 +186,19 @@ ltm_rsa_public_encrypt(int flen, const unsigned char* from,
     THEN_IF_MP((mp_cmp_d(&e, 3) == MP_LT), MP_ERR);
     THEN_ALLOC((p = p0 = malloc(size - 1)));
 
-    padlen = size - flen - 3;
-    *p++ = 2;
+    if (ret == MP_OKAY) {
+        padlen = size - flen - 3;
+        *p++ = 2;
+    }
     THEN_IF_MP((RAND_bytes(p, padlen) != 1), MP_ERR);
 
-    while(padlen) {
-	if (*p == 0)
-	    *p = 1;
-	padlen--;
-	p++;
-    }
-
     if (ret == MP_OKAY) {
+        while (padlen) {
+            if (*p == 0)
+                *p = 1;
+            padlen--;
+            p++;
+        }
         *p++ = 0;
         memcpy(p, from, flen);
         p += flen;
@@ -471,7 +472,7 @@ enum gen_pq_type { GEN_P, GEN_Q };
 static int
 gen_p(int bits, enum gen_pq_type pq_type, uint8_t nibble_pair, mp_int *p, mp_int *e, BN_GENCB *cb)
 {
-    unsigned char *buf;
+    unsigned char *buf = NULL;
     mp_bool res;
     mp_err ret = MP_MEM;
     mp_int t1, t2;

@@ -239,6 +239,7 @@ OM_uint32
 _gss_sanon_curve25519(OM_uint32 *minor,
 		      sanon_ctx sc,
 		      gss_buffer_t pk,
+		      OM_uint32 gss_flags,
 		      const gss_channel_bindings_t input_chan_bindings,
 		      gss_buffer_t session_key)
 {
@@ -268,7 +269,7 @@ _gss_sanon_curve25519(OM_uint32 *minor,
     kdf_label.length = sizeof("sanon-x25519") - 1;
 
     ret = krb5_data_alloc(&kdf_context,
-			  2 * crypto_scalarmult_curve25519_BYTES +
+			  2 * crypto_scalarmult_curve25519_BYTES + 8 +
 			  (input_chan_bindings ? input_chan_bindings->application_data.length : 0));
     if (ret != 0) {
 	krb5_free_context(context);
@@ -285,11 +286,15 @@ _gss_sanon_curve25519(OM_uint32 *minor,
 	memcpy(p, pk->value, pk->length);
 	memcpy(&p[sizeof(sc->pk)], sc->pk, sizeof(sc->pk));
     }
+    p += 2 * crypto_scalarmult_curve25519_BYTES;
+    _gss_mg_encode_be_uint32(0, p); /* upper 32 bits presently unused */
+    p += 4;
+    _gss_mg_encode_be_uint32(gss_flags, p);
+    p += 4;
 
     if (input_chan_bindings != GSS_C_NO_CHANNEL_BINDINGS &&
 	input_chan_bindings->application_data.value != NULL) {
-	memcpy(&p[2 * crypto_scalarmult_curve25519_BYTES],
-	       input_chan_bindings->application_data.value,
+	memcpy(p, input_chan_bindings->application_data.value,
 	       input_chan_bindings->application_data.length);
     }
 
@@ -318,9 +323,10 @@ _gss_sanon_curve25519(OM_uint32 *minor,
 OM_uint32
 _gss_sanon_import_rfc4121_context(OM_uint32 *minor,
 				  sanon_ctx sc,
+				  OM_uint32 gss_flags,
 				  gss_const_buffer_t session_key)
 {
-    return _gss_mg_import_rfc4121_context(minor, sc->is_initiator, sc->flags,
+    return _gss_mg_import_rfc4121_context(minor, sc->is_initiator, gss_flags,
                                           KRB5_ENCTYPE_AES128_CTS_HMAC_SHA256_128,
                                           session_key, &sc->rfc4121);
 }

@@ -48,8 +48,10 @@ _gss_sanon_accept_sec_context(OM_uint32 *minor,
     OM_uint32 major, tmp;
     sanon_ctx sc = (sanon_ctx)*context_handle;
     gss_buffer_desc mech_input_token = GSS_C_EMPTY_BUFFER;
+    gss_buffer_desc initiator_pk = GSS_C_EMPTY_BUFFER;
     gss_buffer_desc hok_mic = GSS_C_EMPTY_BUFFER;
     gss_buffer_desc session_key = GSS_C_EMPTY_BUFFER;
+    OM_uint32 req_flags = 0;
 
     if (output_token == GSS_C_NO_BUFFER) {
 	*minor = EINVAL;
@@ -62,7 +64,7 @@ _gss_sanon_accept_sec_context(OM_uint32 *minor,
     if (input_token == GSS_C_NO_BUFFER) {
 	major = GSS_S_DEFECTIVE_TOKEN;
 	goto out;
-    } else if (sc != NULL && sc->rfc4121 != GSS_C_NO_CONTEXT) {
+    } else if (sc != NULL) {
 	major = GSS_S_BAD_STATUS;
 	goto out;
     }
@@ -73,30 +75,50 @@ _gss_sanon_accept_sec_context(OM_uint32 *minor,
     if (major != GSS_S_COMPLETE)
 	goto out;
 
+    sc = calloc(1, sizeof(*sc));
     if (sc == NULL) {
-	sc = calloc(1, sizeof(*sc));
-	if (sc == NULL) {
-	    *minor = ENOMEM;
-	    major = GSS_S_FAILURE;
-	    goto out;
-	}
+	*minor = ENOMEM;
+	major = GSS_S_FAILURE;
+	goto out;
     }
+
+    /* initiator token can include optional 64-bit flags */
+    if (mech_input_token.length != crypto_scalarmult_curve25519_BYTES &&
+	mech_input_token.length != crypto_scalarmult_curve25519_BYTES + 8) {
+	*minor = 0;
+	major = GSS_S_DEFECTIVE_TOKEN;
+	goto out;
+    }
+
+    initiator_pk = mech_input_token;
+    initiator_pk.length = crypto_scalarmult_curve25519_BYTES;
 
     /* compute public and secret keys */
     major = _gss_sanon_curve25519_base(minor, sc);
     if (major != GSS_S_COMPLETE)
 	goto out;
 
+    if (mech_input_token.length > crypto_scalarmult_curve25519_BYTES) {
+	/* extra flags */
+	uint8_t *p = (uint8_t *)mech_input_token.value + crypto_scalarmult_curve25519_BYTES;
+	uint32_t dummy;
+
+	_gss_mg_decode_be_uint32(p, &dummy); /* upper 32 bits presently unused */
+	_gss_mg_decode_be_uint32(&p[4], &req_flags);
+    }
+
+    req_flags &= SANON_PROTOCOL_FLAG_MASK; /* do not let initiator set any other flags */
+
     /* compute shared secret */
-    major = _gss_sanon_curve25519(minor, sc, &mech_input_token,
+    major = _gss_sanon_curve25519(minor, sc, &initiator_pk, req_flags,
 				  input_chan_bindings, &session_key);
     if (major != GSS_S_COMPLETE)
 	goto out;
 
-    sc->flags |= GSS_C_REPLAY_FLAG | GSS_C_SEQUENCE_FLAG | GSS_C_CONF_FLAG |
+    req_flags |= GSS_C_REPLAY_FLAG | GSS_C_SEQUENCE_FLAG | GSS_C_CONF_FLAG |
         GSS_C_INTEG_FLAG | GSS_C_ANON_FLAG | GSS_C_TRANS_FLAG;
 
-    major = _gss_sanon_import_rfc4121_context(minor, sc, &session_key);
+    major = _gss_sanon_import_rfc4121_context(minor, sc, req_flags, &session_key);
     if (major != GSS_S_COMPLETE)
 	goto out;
 
@@ -124,7 +146,7 @@ _gss_sanon_accept_sec_context(OM_uint32 *minor,
     if (src_name)
 	*src_name = _gss_sanon_anonymous_identity;
     if (ret_flags)
-	*ret_flags = sc->flags;
+	*ret_flags = req_flags;
     if (time_rec)
 	*time_rec = GSS_C_INDEFINITE;
 

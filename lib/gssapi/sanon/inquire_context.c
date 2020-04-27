@@ -64,7 +64,8 @@ _gss_sanon_inquire_context(OM_uint32 *minor,
         if (open_context)
             *open_context = 0;
         if (ctx_flags)
-            *ctx_flags = sc->flags;
+            *ctx_flags = GSS_C_REPLAY_FLAG | GSS_C_SEQUENCE_FLAG |
+			 GSS_C_CONF_FLAG | GSS_C_INTEG_FLAG | GSS_C_ANON_FLAG;
     } else {
         major = gss_inquire_context(minor, sc->rfc4121, NULL, NULL, NULL,
                                     NULL, ctx_flags, locally_initiated,

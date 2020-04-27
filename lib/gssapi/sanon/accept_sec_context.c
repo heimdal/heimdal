@@ -107,13 +107,13 @@ _gss_sanon_accept_sec_context(OM_uint32 *minor,
 	_gss_mg_decode_be_uint32(&p[4], &req_flags);
     }
 
-    req_flags &= SANON_PROTOCOL_FLAG_MASK; /* do not let initiator set any other flags */
-
     /* compute shared secret */
     major = _gss_sanon_curve25519(minor, sc, &initiator_pk, req_flags,
 				  input_chan_bindings, &session_key);
     if (major != GSS_S_COMPLETE)
 	goto out;
+
+    req_flags &= SANON_PROTOCOL_FLAG_MASK; /* do not let initiator set any other flags */
 
     req_flags |= GSS_C_REPLAY_FLAG | GSS_C_SEQUENCE_FLAG | GSS_C_CONF_FLAG |
         GSS_C_INTEG_FLAG | GSS_C_ANON_FLAG | GSS_C_TRANS_FLAG;

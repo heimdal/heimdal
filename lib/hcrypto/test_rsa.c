@@ -292,6 +292,7 @@ main(int argc, char **argv)
 
 	    if (RSA_generate_key_ex(rsa, 1024, e, NULL) != 1)
 		errx(1, "RSA_generate_key_ex");
+            BN_free(e);
 	} else {
 	    rsa = read_key(engine, time_key);
 	}
@@ -314,6 +315,7 @@ main(int argc, char **argv)
 	RSA_free(rsa);
 	ENGINE_finish(engine);
 
+        free(p);
 	return 0;
     }
 

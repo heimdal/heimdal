@@ -50,7 +50,7 @@ typedef struct sanon_ctx_desc {
     uint8_t pk[crypto_scalarmult_curve25519_BYTES];
     /* krb5 context for message protection/PRF */
     gss_ctx_id_t rfc4121;
-    int is_initiator : 1;
+    unsigned is_initiator : 1;
 } *sanon_ctx;
 
 extern gss_name_t _gss_sanon_anonymous_identity;

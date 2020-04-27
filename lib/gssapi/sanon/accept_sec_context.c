@@ -113,10 +113,11 @@ _gss_sanon_accept_sec_context(OM_uint32 *minor,
     if (major != GSS_S_COMPLETE)
 	goto out;
 
-    req_flags &= SANON_PROTOCOL_FLAG_MASK; /* do not let initiator set any other flags */
+    /* do not let initiator set any other flags */
+    req_flags &= SANON_PROTOCOL_FLAG_MASK;
 
     req_flags |= GSS_C_REPLAY_FLAG | GSS_C_SEQUENCE_FLAG | GSS_C_CONF_FLAG |
-        GSS_C_INTEG_FLAG | GSS_C_ANON_FLAG | GSS_C_TRANS_FLAG;
+		 GSS_C_INTEG_FLAG | GSS_C_ANON_FLAG | GSS_C_TRANS_FLAG;
 
     major = _gss_sanon_import_rfc4121_context(minor, sc, req_flags, &session_key);
     if (major != GSS_S_COMPLETE)

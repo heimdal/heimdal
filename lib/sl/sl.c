@@ -248,7 +248,7 @@ sl_make_argv(char *line, int *ret_argc, char ***ret_argv)
 	    if (p[1] == '\0')
 		goto failed;
 	    memmove(&p[0], &p[1], strlen(&p[1]) + 1);
-	    p += 2;
+	    p += 1;
 	    continue;
 	} else if (quote || !isspace((unsigned char)*p)) {
 	    p++;

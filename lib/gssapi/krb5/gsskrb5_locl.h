@@ -117,7 +117,7 @@ extern HEIMDAL_MUTEX gssapi_keytab_mutex;
  * Prototypes
  */
 
-#include "gsskrb5-private.h"
+#include "krb5/gsskrb5-private.h"
 
 #define GSSAPI_KRB5_INIT(ctx) do {				\
     krb5_error_code kret_gss_init;				\

@@ -27,67 +27,33 @@
  */
 
 #include "mech_locl.h"
-
-#include <krb5.h>
-#include <roken.h>
-
+#include "krb5/gsskrb5_locl.h"
 
 GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL
 gss_krb5_copy_ccache(OM_uint32 *minor_status,
 		     gss_cred_id_t cred,
 		     krb5_ccache out)
 {
-    gss_buffer_set_t data_set = GSS_C_NO_BUFFER_SET;
+    gss_key_value_element_desc cred_store_kvs[1];
+    gss_key_value_set_desc cred_store;
     krb5_context context;
-    krb5_error_code kret;
-    krb5_ccache id;
-    OM_uint32 ret;
-    char *str = NULL;
+    OM_uint32 major = GSS_S_FAILURE;
+    char *fullname = NULL;
 
-    ret = gss_inquire_cred_by_oid(minor_status,
-				  cred,
-				  GSS_KRB5_COPY_CCACHE_X,
-				  &data_set);
-    if (ret)
-	return ret;
-
-    if (data_set == GSS_C_NO_BUFFER_SET || data_set->count < 1) {
-	gss_release_buffer_set(minor_status, &data_set);
-	*minor_status = EINVAL;
-	return GSS_S_FAILURE;
+    GSSAPI_KRB5_INIT(&context);
+    *minor_status = krb5_cc_get_full_name(context, out, &fullname);
+    if (*minor_status == 0) {
+        cred_store_kvs[0].key = "ccache";
+        cred_store_kvs[0].value = fullname;
+        cred_store.count = 1;
+        cred_store.elements = cred_store_kvs;
+        major = gss_store_cred_into2(minor_status, cred, GSS_C_INITIATE,
+                                     GSS_KRB5_MECHANISM,
+                                     GSS_C_STORE_CRED_OVERWRITE, &cred_store,
+                                     NULL, NULL, NULL);
+        free(fullname);
     }
-
-    kret = krb5_init_context(&context);
-    if (kret) {
-	*minor_status = kret;
-	gss_release_buffer_set(minor_status, &data_set);
-	return GSS_S_FAILURE;
-    }
-
-    kret = asprintf(&str, "%.*s", (int)data_set->elements[0].length,
-		    (char *)data_set->elements[0].value);
-    gss_release_buffer_set(minor_status, &data_set);
-    if (kret < 0 || str == NULL) {
-	*minor_status = ENOMEM;
-	return GSS_S_FAILURE;
-    }
-
-    kret = krb5_cc_resolve(context, str, &id);
-    free(str);
-    if (kret) {
-	*minor_status = kret;
-	return GSS_S_FAILURE;
-    }
-
-    kret = krb5_cc_copy_cache(context, id, out);
-    krb5_cc_close(context, id);
-    krb5_free_context(context);
-    if (kret) {
-	*minor_status = kret;
-	return GSS_S_FAILURE;
-    }
-
-    return ret;
+    return major;
 }
 
 GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL

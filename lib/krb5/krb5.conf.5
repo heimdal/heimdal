@@ -513,6 +513,11 @@ Defaults to true.
 Note, absent an explicit setting, hierarchical capaths are always used by
 the KDC when generating a referral to a destination with which is no direct
 trust.
+.It Li client_aware_channel_bindings = Va boolean
+If this flag is true, then all application protocol authentication
+requests will be flagged to indicate that the application supports
+channel bindings when operating over a secure channel.
+The default value is false.
 .El
 .It Li [domain_realm]
 This is a list of mappings from DNS domain to Kerberos realm.

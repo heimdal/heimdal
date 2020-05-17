@@ -72,7 +72,8 @@ static char *limit_enctype_string = NULL;
 static int version_flag = 0;
 static int verbose_flag = 0;
 static int help_flag	= 0;
-static char *channel_bindings = NULL;
+static char *i_channel_bindings = NULL;
+static char *a_channel_bindings = NULL;
 
 static krb5_context context;
 static krb5_enctype limit_enctype = 0;
@@ -172,8 +173,10 @@ loop(gss_OID mechoid,
     OM_uint32 flags = 0, ret_cflags, ret_sflags;
     gss_OID actual_mech_client;
     gss_OID actual_mech_server;
-    struct gss_channel_bindings_struct channel_bindings_data;
-    gss_channel_bindings_t channel_bindings_p = GSS_C_NO_CHANNEL_BINDINGS;
+    struct gss_channel_bindings_struct i_channel_bindings_data = {0};
+    struct gss_channel_bindings_struct a_channel_bindings_data = {0};
+    gss_channel_bindings_t i_channel_bindings_p = GSS_C_NO_CHANNEL_BINDINGS;
+    gss_channel_bindings_t a_channel_bindings_p = GSS_C_NO_CHANNEL_BINDINGS;
 
     *actual_mech = GSS_C_NO_OID;
 
@@ -205,10 +208,15 @@ loop(gss_OID mechoid,
     input_token.length = 0;
     input_token.value = NULL;
 
-    if (channel_bindings) {
-	channel_bindings_data.application_data.length = strlen(channel_bindings);
-	channel_bindings_data.application_data.value = channel_bindings;
-	channel_bindings_p = &channel_bindings_data;
+    if (i_channel_bindings) {
+	i_channel_bindings_data.application_data.length = strlen(i_channel_bindings);
+	i_channel_bindings_data.application_data.value = i_channel_bindings;
+	i_channel_bindings_p = &i_channel_bindings_data;
+    }
+    if (a_channel_bindings) {
+	a_channel_bindings_data.application_data.length = strlen(a_channel_bindings);
+	a_channel_bindings_data.application_data.value = a_channel_bindings;
+	a_channel_bindings_p = &a_channel_bindings_data;
     }
 
     while (!server_done || !client_done) {
@@ -223,7 +231,7 @@ loop(gss_OID mechoid,
 					mechoid,
 					flags,
 					0,
-					channel_bindings_p,
+					i_channel_bindings_p,
 					&input_token,
 					&actual_mech_client,
 					&output_token,
@@ -251,7 +259,7 @@ loop(gss_OID mechoid,
 					  sctx,
 					  GSS_C_NO_CREDENTIAL,
 					  &output_token,
-					  channel_bindings_p,
+					  a_channel_bindings_p,
 					  &src_name,
 					  &actual_mech_server,
 					  &input_token,
@@ -342,7 +350,7 @@ loop(gss_OID mechoid,
 	printf("server time offset: %d\n", server_time_offset);
 	printf("client time offset: %d\n", client_time_offset);
 	printf("num loops %d\n", num_loops);
-	printf("flags: ");
+	printf("cflags: ");
 	if (ret_cflags & GSS_C_DELEG_FLAG)
 	    printf("deleg ");
 	if (ret_cflags & GSS_C_MUTUAL_FLAG)
@@ -369,6 +377,10 @@ loop(gss_OID mechoid,
 	    printf("extended-error " );
 	if (ret_cflags & GSS_C_DELEG_POLICY_FLAG)
 	    printf("deleg-policy " );
+	printf("\n");
+	printf("sflags: ");
+	if (ret_sflags & GSS_C_CHANNEL_BOUND_FLAG)
+	    printf("channel-bound " );
 	printf("\n");
     }
 }
@@ -668,7 +680,8 @@ static struct getargs args[] = {
     {"client-name", 0,  arg_string,     &client_name, "client name", NULL },
     {"client-password", 0,  arg_string, &client_password, "client password", NULL },
     {"anonymous", 0,	arg_flag,	&anon_flag, "anonymous auth", NULL },
-    {"channel-bindings", 0, arg_string,	&channel_bindings, "channel binding data", NULL },
+    {"i-channel-bindings", 0, arg_string, &i_channel_bindings, "initiator channel binding data", NULL },
+    {"a-channel-bindings", 0, arg_string, &a_channel_bindings, "acceptor channel binding data", NULL },
     {"limit-enctype",0,	arg_string,	&limit_enctype_string, "enctype", NULL },
     {"dce-style",0,	arg_flag,	&dce_style_flag, "dce-style", NULL },
     {"wrapunwrap",0,	arg_flag,	&wrapunwrap_flag, "wrap/unwrap", NULL },

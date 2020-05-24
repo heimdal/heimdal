@@ -31,3 +31,5 @@ include @srcdirabs@/include-krb5.conf
 [logging]
 	kdc = 0-/FILE:@objdir@/messages.log
 	default = 0-/FILE:@objdir@/messages.log
+
+include @srcdirabs@/missing-krb5.conf

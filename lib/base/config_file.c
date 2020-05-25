@@ -575,40 +575,18 @@ heim_config_parse_file_multi(heim_context context,
      * enabled by calling heim_set_home_dir_access().
      */
     if (ISTILDE(fname[0]) && ISPATHSEP(fname[1])) {
-#ifndef HEIM_BASE_USE_PATH_TOKENS
-        const char *home = NULL;
-        char homebuf[MAX_PATH];
-
         if (!heim_context_get_homedir_access(context)) {
             heim_set_error_message(context, EPERM,
                                    "Access to home directory not allowed");
 	    ret = EPERM;
 	    goto out;
         }
-
-        home = roken_get_appdatadir(homebuf, sizeof(homebuf));
-        if (home) {
-            int aret;
-
-            aret = asprintf(&newfname, "%s%s", home, &fname[1]);
-            if (aret == -1 || newfname == NULL) {
-		ret = heim_enomem(context);
-		goto out;
-            }
-            fname = newfname;
-        }
-#else  /* HEIM_BASE_USE_PATH_TOKENS */
-        /*
-         * Really, this is Windows, and on Windows we'd want to allow homedir
-         * access.  We could refactor this a bit though.
-         */
         if (asprintf(&newfname, "%%{USERCONFIG}%s", &fname[1]) < 0 ||
             newfname == NULL) {
 	    ret = heim_enomem(context);
 	    goto out;
         }
         fname = newfname;
-#endif /* HEIM_BASE_USE_PATH_TOKENS */
     }
 
     if (is_plist_file(fname)) {
@@ -626,14 +604,19 @@ heim_config_parse_file_multi(heim_context context,
 	goto out;
 #endif
     } else {
-#ifdef HEIM_BASE_USE_PATH_TOKENS
-	char *exp_fname;	/* newfname might be non-NULL */
+	char *exp_fname = NULL;
+
+        /*
+         * Note that heim_config_parse_dir_multi() doesn't want tokens
+         * expanded here, but it happens to limit the names of files to
+         * include such that there can be no tokens to expand.  Don't
+         * add token expansion for tokens using _, say.
+         */
         ret = heim_expand_path_tokens(context, fname, 1, &exp_fname, NULL);
         if (ret)
             goto out;
 	free(newfname);
         fname = newfname = exp_fname;
-#endif /* HEIM_BASE_USE_PATH_TOKENS */
 
         f.context = context;
         f.f = fopen(fname, "r");

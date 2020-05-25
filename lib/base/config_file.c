@@ -392,6 +392,9 @@ heim_config_parse_debug(struct fileptr *f,
     char buf[2048];
     heim_error_code ret;
 
+    *lineno = 0;
+    *err_message = "";
+
     while (config_fgets(buf, sizeof(buf), f) != NULL) {
         char *p;
 

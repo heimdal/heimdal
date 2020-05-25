@@ -44,7 +44,7 @@ struct validate_store {
     int grace;
 };
 
-static int
+static int KRB5_CALLCONV
 validate1(hx509_context hx509ctx, void *d, hx509_cert cert)
 {
     struct validate_store *v = d;
@@ -111,7 +111,7 @@ validate(krb5_context context,
     hx509_context_free(&hx509ctx);
 }
 
-static krb5_error_code
+static krb5_error_code KRB5_CALLCONV
 add1_2chain(hx509_context hx509ctx, void *d, hx509_cert cert)
 {
     heim_octet_string os;

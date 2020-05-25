@@ -176,7 +176,9 @@ heim_set_debug_dest(heim_context context, heim_log_facility *fac)
     return 0;
 }
 
-#define PATH_SEP ":"
+#ifndef PATH_SEP
+# define PATH_SEP ":"
+#endif
 
 static heim_error_code
 add_file(char ***pfilenames, int *len, char *file)

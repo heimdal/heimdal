@@ -125,7 +125,9 @@ hx509_get_instance(const char *libname)
     return 0;
 }
 
-#define PATH_SEP ":"
+#ifndef PATH_SEP
+# define PATH_SEP ":"
+#endif
 static const char *hx509_config_file =
 "~/.hx509/config" PATH_SEP
 SYSCONFDIR "/hx509.conf" PATH_SEP

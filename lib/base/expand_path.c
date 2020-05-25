@@ -319,6 +319,22 @@ expand_euid(heim_context context, PTYPE param, const char *postfix,
 #endif /* _WIN32 */
 
 static heim_error_code
+expand_home(heim_context context, PTYPE param, const char *postfix,
+            const char *arg, char **str)
+{
+    char homedir[MAX_PATH];
+    int ret;
+
+    if (roken_get_homedir(homedir, sizeof(homedir)))
+        ret = asprintf(str, "%s", homedir);
+    else
+        ret = asprintf(str, "/unknown");
+    if (ret < 0 || *str == NULL)
+        return heim_enomem(context);
+    return 0;
+}
+
+static heim_error_code
 expand_username(heim_context context, PTYPE param, const char *postfix,
                 const char *arg, char **str)
 {
@@ -442,6 +458,7 @@ static const struct {
     {"BINDIR", FTYPE_SPECIAL, 0, BINDIR, expand_path},
     {"LIBEXEC", FTYPE_SPECIAL, 0, LIBEXECDIR, expand_path},
     {"SBINDIR", FTYPE_SPECIAL, 0, SBINDIR, expand_path},
+    {"USERCONFIG", SPECIAL(expand_home)}, /* same as %{HOME} on not-Windows */
     {"euid", SPECIAL(expand_euid)},
     {"ruid", SPECIAL(expand_userid)},
     {"loginname", SPECIAL(expand_loginname)},
@@ -451,7 +468,8 @@ static const struct {
     {"USERID", SPECIAL(expand_userid)},
     {"uid", SPECIAL(expand_userid)},
     {"null", SPECIAL(expand_null)},
-    {"strftime", SPECIAL(expand_strftime)}
+    {"strftime", SPECIAL(expand_strftime)},
+    {"HOME", SPECIAL(expand_home)},
 };
 
 static heim_error_code

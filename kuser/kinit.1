@@ -40,6 +40,7 @@
 .Sh SYNOPSIS
 .Nm kinit
 .Op Fl Fl no-change-default
+.Op Fl Fl default-for-principal
 .Op Fl Fl afslog
 .Oo Fl c Ar cachename \*(Ba Xo
 .Fl Fl cache= Ns Ar cachename
@@ -114,6 +115,32 @@ the name of the principal whose credentials are stored therein.  This
 option is ignored if the
 .Fl c Ar cachename | Fl Fl cache= Ns Ar cachename
 option is given.
+See also
+.Xr kswitch 1 .
+.It Fl Fl default-for-principal
+If this option is given and
+.Fl c Ar cachename | Fl Fl cache= Ns Ar cachename
+is not given, then the cache that will be used will be one that
+is appropriate for the client principal.  For example, if the
+default cache type is
+.Ar FILE
+then the default cache may be either
+.Ar FILE:/tmp/krb5cc_%{uid}+%{principal_name}
+or
+.Ar FILE:/tmp/krb5cc_%{uid}
+if the principal is the default principal for the user, meaning
+that it is of rht form
+.Ar ${USER}@${user_realm}
+or
+.Ar ${USER}@${default_realm} .
+This option implies
+.Fl Fl no-change-default
+unless
+.Fl Fl change-default
+is given.  Caches for the user can be listed with the
+.Fl l
+option to
+.Xr klist 1 .
 .It Fl f Fl Fl forwardable
 Obtain a ticket than can be forwarded to another host.
 .It Fl F Fl Fl no-forwardable
@@ -253,6 +280,7 @@ the default being
 .Sh SEE ALSO
 .Xr kdestroy 1 ,
 .Xr klist 1 ,
+.Xr kswitch 1 ,
 .Xr krb5_appdefault 3 ,
 .Xr krb5.conf 5
 .\".Sh STANDARDS

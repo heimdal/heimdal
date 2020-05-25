@@ -64,7 +64,8 @@ char *server_str	= NULL;
 static krb5_principal tgs_service;
 char *cred_cache	= NULL;
 char *start_str		= NULL;
-static int switch_cache_flags = 1;
+static int switch_cache_flags = -1;
+static int default_for = 0;
 struct getarg_strings etype_str;
 int use_keytab		= 0;
 char *keytab_str	= NULL;
@@ -190,6 +191,9 @@ static struct getargs args[] = {
 
     { "change-default",  0,  arg_negative_flag, &switch_cache_flags,
       NP_("switch the default cache to the new credentials cache", ""), NULL },
+
+    { "default-for-principal",  0,  arg_negative_flag, &default_for,
+      NP_("use a default cache appropriate for the client principal name", ""), NULL },
 
     { "ok-as-delegate",	0,  arg_flag, &ok_as_delegate_flag,
       NP_("honor ok-as-delegate on tickets", ""), NULL },
@@ -1364,7 +1368,6 @@ main(int argc, char **argv)
 #endif
     krb5_boolean unique_ccache = FALSE;
     krb5_boolean historical_anon_pkinit = FALSE;
-    krb5_boolean default_for = FALSE;
     int anonymous_pkinit = FALSE;
 
     setprogname(argv[0]);
@@ -1493,10 +1496,18 @@ main(int argc, char **argv)
                  krb5_cc_get_name(context, ccache));
         setenv("KRB5CCNAME", s, 1);
         unique_ccache = TRUE;
-    } else {
+    } else if (default_for) {
         ret = krb5_cc_default_for(context, principal, &ccache);
-        default_for = TRUE;
+        if (switch_cache_flags == -1)
+            switch_cache_flags = 0;
+    } else {
+        ret = krb5_cc_default(context, &ccache);
+        if (switch_cache_flags == -1)
+            switch_cache_flags = 0;
     }
+
+    if (switch_cache_flags == -1)
+        switch_cache_flags = 1;
 
     if (ret)
 	krb5_err(context, 1, ret, N_("resolving credentials cache", ""));
@@ -1535,7 +1546,8 @@ main(int argc, char **argv)
 
     if (renew_flag || validate_flag) {
 	ret = renew_validate(context, renew_flag, validate_flag,
-                             &ccache, principal, default_for, server_str,
+                             &ccache, principal,
+                             default_for ? TRUE : FALSE, server_str,
                              ticket_life);
 
 #ifndef NO_AFS

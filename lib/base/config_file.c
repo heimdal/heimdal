@@ -527,7 +527,7 @@ heim_config_parse_dir_multi(heim_context context,
         free(path);
         if (ret == ENOMEM) {
             (void) closedir(d);
-            return heim_enomem(context);
+            return ENOMEM;
         }
         /* Ignore malformed config files so we don't lock out admins, etc... */
     }

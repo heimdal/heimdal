@@ -572,7 +572,7 @@ heim_config_parse_file_multi(heim_context context,
      * enabled by calling heim_set_home_dir_access().
      */
     if (ISTILDE(fname[0]) && ISPATHSEP(fname[1])) {
-#ifndef KRB5_USE_PATH_TOKENS
+#ifndef HEIM_BASE_USE_PATH_TOKENS
         const char *home = NULL;
         char homebuf[MAX_PATH];
 
@@ -594,7 +594,7 @@ heim_config_parse_file_multi(heim_context context,
             }
             fname = newfname;
         }
-#else  /* KRB5_USE_PATH_TOKENS */
+#else  /* HEIM_BASE_USE_PATH_TOKENS */
         /*
          * Really, this is Windows, and on Windows we'd want to allow homedir
          * access.  We could refactor this a bit though.
@@ -605,7 +605,7 @@ heim_config_parse_file_multi(heim_context context,
             return heim_enomem(context);
         }
         fname = newfname;
-#endif
+#endif /* HEIM_BASE_USE_PATH_TOKENS */
     }
 
     if (is_plist_file(fname)) {
@@ -624,15 +624,8 @@ heim_config_parse_file_multi(heim_context context,
         return ENOENT;
 #endif
     } else {
-#ifdef KRB5_USE_PATH_TOKENS
-        char * exp_fname = NULL;
-
-        /*
-         * Note that heim_config_parse_dir_multi() doesn't want tokens
-         * expanded here, but it happens to limit the names of files to
-         * include such that there can be no tokens to expand.  Don't
-         * add token expansion for tokens using _, say.
-         */
+#ifdef HEIM_BASE_USE_PATH_TOKENS
+	char *exp_fname;	/* newfname might be non-NULL */
         ret = heim_expand_path_tokens(context, fname, 1, &exp_fname, NULL);
         if (ret) {
             config_include_depth--;
@@ -642,7 +635,7 @@ heim_config_parse_file_multi(heim_context context,
 
         free(newfname);
         fname = newfname = exp_fname;
-#endif
+#endif /* HEIM_BASE_USE_PATH_TOKENS */
 
         f.context = context;
         f.f = fopen(fname, "r");

@@ -40,6 +40,7 @@
 #define ISTILDE(x) (x == '~')
 #ifdef _WIN32
 # define ISPATHSEP(x) (x == '/' || x =='\\')
+# define HEIM_BASE_USE_PATH_TOKENS 1
 #else
 # define ISPATHSEP(x) (x == '/')
 #endif

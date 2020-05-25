@@ -159,7 +159,7 @@ struct _heimdal_syslog_data{
     int priority;
 };
 
-static void
+static void HEIM_CALLCONV
 log_syslog(heim_context context, const char *timestr,
            const char *msg, void *data)
 {
@@ -167,7 +167,7 @@ log_syslog(heim_context context, const char *timestr,
     syslog(s->priority, "%s", msg);
 }
 
-static void
+static void HEIM_CALLCONV
 close_syslog(void *data)
 {
     free(data);
@@ -209,7 +209,7 @@ struct file_data {
     int freefilename;
 };
 
-static void
+static void HEIM_CALLCONV
 log_file(heim_context context, const char *timestr, const char *msg, void *data)
 {
     struct timeval tv;
@@ -274,7 +274,7 @@ out:
     }
 }
 
-static void
+static void HEIM_CALLCONV
 close_file(void *data)
 {
     struct file_data *f = data;

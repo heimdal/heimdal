@@ -519,7 +519,7 @@ store_kx509_disabled(krb5_context context, const char *realm, krb5_ccache cc)
     krb5_cc_set_config(context, cc, NULL, "kx509_service_status", &data);
 }
 
-static int
+static int KRB5_CALLCONV
 certs_export_func(hx509_context context, void *d, hx509_cert c)
 {
     heim_octet_string os;

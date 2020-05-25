@@ -231,7 +231,7 @@ gss_mg_set_error_string(gss_OID mech,
 static void *log_ctx = NULL;
 static void (*log_func)(void *ctx, int level, const char *fmt, va_list) = NULL;
 
-void
+void GSSAPI_LIB_CALL
 gss_set_log_function(void *ctx, void (*func)(void * ctx, int level, const char *fmt, va_list))
 {
     if (log_func == NULL) {

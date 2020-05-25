@@ -667,8 +667,11 @@ heim_config_parse_file_multi(heim_context context,
         config_include_depth--;
         fclose(f.f);
         if (ret) {
-            heim_set_error_message(context, ret, "%s:%u: %s",
-                                   fname, lineno, str);
+            if (ret != HEIM_ERR_CONFIG_BADFORMAT) {
+		ret = HEIM_ERR_CONFIG_BADFORMAT;
+		heim_set_error_message(context, ret, "%s:%u: %s",
+				       fname, lineno, str);
+	    }
             free(newfname);
             return ret;
         }
@@ -1462,8 +1465,11 @@ heim_config_parse_string_multi(heim_context context,
 
     ret = heim_config_parse_debug(&f, res, &lineno, &str);
     if (ret) {
-        heim_set_error_message(context, ret, "%s:%u: %s",
-                               "<constant>", lineno, str);
+	if (ret != HEIM_ERR_CONFIG_BADFORMAT) {
+	    ret = HEIM_ERR_CONFIG_BADFORMAT;
+	    heim_set_error_message(context, ret, "%s:%u: %s",
+				   "<constant>", lineno, str);
+	}
         return ret;
     }
     return 0;

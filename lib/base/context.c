@@ -44,6 +44,7 @@ heim_context_init(void)
     if ((context = calloc(1, sizeof(*context))) == NULL)
         return NULL;
 
+    context->homedir_access = !issuid();
     context->log_utc = 1;
     context->error_string = NULL;
     context->debug_dest = NULL;

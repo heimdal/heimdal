@@ -187,8 +187,7 @@ allocate_ccache(krb5_context context,
                 krb5_ccache *id)
 {
     krb5_error_code ret;
-#ifdef KRB5_USE_PATH_TOKENS
-    char * exp_residual = NULL;
+    char *exp_residual = NULL;
     int filepath;
 
     filepath = (strcmp("FILE", ops->prefix) == 0
@@ -196,37 +195,22 @@ allocate_ccache(krb5_context context,
 		 || strcmp("SCC", ops->prefix) == 0);
 
     ret = _krb5_expand_path_tokens(context, residual, filepath, &exp_residual);
-    if (ret)
-	return ret;
+    if (ret == 0)
+        ret = _krb5_cc_allocate(context, ops, id);
 
-    residual = exp_residual;
-#endif
-
-    ret = _krb5_cc_allocate(context, ops, id);
-    if (ret) {
-#ifdef KRB5_USE_PATH_TOKENS
-	if (exp_residual)
-	    free(exp_residual);
-#endif
-	return ret;
-    }
-
-    if ((*id)->ops->version < KRB5_CC_OPS_VERSION_5
-	|| (*id)->ops->resolve_2 == NULL) {
-	ret = (*id)->ops->resolve(context, id, residual);
-    } else {
-	ret = (*id)->ops->resolve_2(context, id, residual, subsidiary);
+    if (ret == 0) {
+        if ((*id)->ops->version < KRB5_CC_OPS_VERSION_5
+            || (*id)->ops->resolve_2 == NULL) {
+            ret = (*id)->ops->resolve(context, id, exp_residual);
+        } else {
+            ret = (*id)->ops->resolve_2(context, id, exp_residual, subsidiary);
+        }
     }
     if (ret) {
 	free(*id);
         *id = NULL;
     }
-
-#ifdef KRB5_USE_PATH_TOKENS
-    if (exp_residual)
-	free(exp_residual);
-#endif
-
+    free(exp_residual);
     return ret;
 }
 

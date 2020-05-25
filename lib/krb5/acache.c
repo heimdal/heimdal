@@ -88,6 +88,7 @@ static krb5_error_code
 init_ccapi(krb5_context context)
 {
     const char *lib = NULL;
+    char *explib = NULL;
 
     HEIMDAL_MUTEX_lock(&acc_mutex);
     if (init_func) {
@@ -104,26 +105,19 @@ init_ccapi(krb5_context context)
     if (lib == NULL) {
 #ifdef __APPLE__
 	lib = "/System/Library/Frameworks/Kerberos.framework/Kerberos";
-#elif defined(KRB5_USE_PATH_TOKENS) && defined(_WIN32)
+#elif defined(_WIN32)
 	lib = "%{LIBDIR}/libkrb5_cc.dll";
 #else
-	lib = "/usr/lib/libkrb5_cc.so";
+	lib = "%{LIBDIR}/libkrb5_cc.so";
 #endif
     }
 
 #ifdef HAVE_DLOPEN
 
-#ifdef KRB5_USE_PATH_TOKENS
-    {
-      char * explib = NULL;
-      if (_krb5_expand_path_tokens(context, lib, 0, &explib) == 0) {
-	cc_handle = dlopen(explib, RTLD_LAZY|RTLD_LOCAL|RTLD_GROUP);
-	free(explib);
-      }
+    if (_krb5_expand_path_tokens(context, lib, 0, &explib) == 0) {
+        cc_handle = dlopen(explib, RTLD_LAZY|RTLD_LOCAL|RTLD_GROUP);
+        free(explib);
     }
-#else
-    cc_handle = dlopen(lib, RTLD_LAZY|RTLD_LOCAL|RTLD_GROUP);
-#endif
 
     if (cc_handle == NULL) {
 	HEIMDAL_MUTEX_unlock(&acc_mutex);

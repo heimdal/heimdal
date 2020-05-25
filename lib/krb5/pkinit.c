@@ -2183,9 +2183,8 @@ _krb5_parse_moduli(krb5_context context, const char *file,
     if (file == NULL)
 	file = MODULI_FILE;
 
-#ifdef KRB5_USE_PATH_TOKENS
     {
-        char * exp_file;
+        char *exp_file;
 
 	if (_krb5_expand_path_tokens(context, file, 1, &exp_file) == 0) {
             f = fopen(exp_file, "r");
@@ -2194,9 +2193,6 @@ _krb5_parse_moduli(krb5_context context, const char *file,
             f = NULL;
         }
     }
-#else
-    f = fopen(file, "r");
-#endif
 
     if (f == NULL) {
 	*moduli = m;

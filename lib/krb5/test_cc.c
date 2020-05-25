@@ -50,11 +50,8 @@ static int debug_flag	= 0;
 static int version_flag = 0;
 static int help_flag	= 0;
 
-#ifdef KRB5_USE_PATH_TOKENS
 #define TEST_CC_NAME "%{TEMP}/krb5-cc-test-foo"
-#else
-#define TEST_CC_NAME "/tmp/krb5-cc-test-foo"
-#endif
+#define EXP_TEST_CC_NAME "/tmp/krb5-cc-test-foo"
 
 static void
 test_default_name(krb5_context context)
@@ -62,6 +59,13 @@ test_default_name(krb5_context context)
     krb5_error_code ret;
     const char *p, *test_cc_name = TEST_CC_NAME;
     char *p1, *p2, *p3;
+    char *exp_test_cc_name;
+
+    ret = _krb5_expand_path_tokens(context, test_cc_name, 1,
+                                   &exp_test_cc_name);
+    if (ret)
+        krb5_err(context, 1, ret, "_krb5_expand_path_tokens(%s) failed",
+                 test_cc_name);
 
     p = krb5_cc_default_name(context);
     if (p == NULL)
@@ -89,14 +93,12 @@ test_default_name(krb5_context context)
 	krb5_errx (context, 1, "krb5_cc_default_name 2 failed");
     p3 = estrdup(p);
 
-#ifndef KRB5_USE_PATH_TOKENS
-    /* If we are using path tokens, we don't expect the p3 and
-       test_cc_name to match since p3 is going to have expanded
-       tokens. */
-    if (strcmp(p3, test_cc_name) != 0)
+#ifndef WIN32
+    if (strcmp(exp_test_cc_name, EXP_TEST_CC_NAME) != 0)
 	krb5_errx (context, 1, "krb5_cc_set_default_name 1 failed");
 #endif
 
+    free(exp_test_cc_name);
     free(p1);
     free(p2);
     free(p3);
@@ -324,7 +326,7 @@ struct {
     { "%{nulll}", 1, NULL },
     { "%{does not exist}", 1, NULL },
     { "%{}", 1, NULL },
-#ifdef KRB5_USE_PATH_TOKENS
+#ifdef WIN32
     { "%{APPDATA}", 0, NULL },
     { "%{COMMON_APPDATA}", 0, NULL},
     { "%{LOCAL_APPDATA}", 0, NULL},

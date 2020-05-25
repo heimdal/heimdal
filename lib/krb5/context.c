@@ -452,7 +452,8 @@ krb5_init_context(krb5_context *context)
         goto out;
     }
 
-    p->flags |= KRB5_CTX_F_HOMEDIR_ACCESS;
+    if (!issuid())
+        p->flags |= KRB5_CTX_F_HOMEDIR_ACCESS;
 
     ret = krb5_get_default_config_files(&files);
     if(ret)
@@ -1426,21 +1427,12 @@ _krb5_init_etype(krb5_context context,
  * Allow homedir access
  */
 
-static HEIMDAL_MUTEX homedir_mutex = HEIMDAL_MUTEX_INITIALIZER;
-static krb5_boolean allow_homedir = TRUE;
-
 KRB5_LIB_FUNCTION krb5_boolean KRB5_LIB_CALL
 _krb5_homedir_access(krb5_context context)
 {
-    krb5_boolean allow;
-
-    if (context && (context->flags & KRB5_CTX_F_HOMEDIR_ACCESS) == 0)
-	return FALSE;
-
-    HEIMDAL_MUTEX_lock(&homedir_mutex);
-    allow = allow_homedir;
-    HEIMDAL_MUTEX_unlock(&homedir_mutex);
-    return allow;
+    if (context)
+        return !!(context->flags & KRB5_CTX_F_HOMEDIR_ACCESS);
+    return !issuid();
 }
 
 /**
@@ -1462,20 +1454,14 @@ _krb5_homedir_access(krb5_context context)
 KRB5_LIB_FUNCTION krb5_boolean KRB5_LIB_CALL
 krb5_set_home_dir_access(krb5_context context, krb5_boolean allow)
 {
-    krb5_boolean old;
+    krb5_boolean old = _krb5_homedir_access(context);
 
     if (context) {
-	old = (context->flags & KRB5_CTX_F_HOMEDIR_ACCESS) ? TRUE : FALSE;
 	if (allow)
 	    context->flags |= KRB5_CTX_F_HOMEDIR_ACCESS;
 	else
 	    context->flags &= ~KRB5_CTX_F_HOMEDIR_ACCESS;
         heim_context_set_homedir_access(context->hcontext, allow ? 1 : 0);
-    } else {
-	HEIMDAL_MUTEX_lock(&homedir_mutex);
-	old = allow_homedir;
-	allow_homedir = allow;
-	HEIMDAL_MUTEX_unlock(&homedir_mutex);
     }
 
     return old;

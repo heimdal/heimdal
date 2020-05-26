@@ -373,7 +373,7 @@ der_put_heim_integer (unsigned char *p, size_t len,
 
 int
 der_put_generalized_time (unsigned char *p, size_t len,
-			  const time_t *data, size_t *size)
+			  const der_timestamp *data, size_t *size)
 {
     heim_octet_string k;
     size_t l;
@@ -393,7 +393,7 @@ der_put_generalized_time (unsigned char *p, size_t len,
 
 int
 der_put_utctime (unsigned char *p, size_t len,
-		 const time_t *data, size_t *size)
+		 const der_timestamp *data, size_t *size)
 {
     heim_octet_string k;
     size_t l;
@@ -497,7 +497,7 @@ der_put_length_and_tag (unsigned char *p, size_t len, size_t len_val,
 }
 
 int
-_heim_time2generalizedtime (time_t t, heim_octet_string *s, int gtimep)
+_heim_time2generalizedtime (der_timestamp t, heim_octet_string *s, int gtimep)
 {
      struct tm tm;
      const size_t len = gtimep ? 15 : 13;

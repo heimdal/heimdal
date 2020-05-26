@@ -76,14 +76,14 @@ der_copy_unsigned64 (const uint64_t *from, uint64_t *to)
 }
 
 int
-der_copy_generalized_time (const time_t *from, time_t *to)
+der_copy_generalized_time (const der_timestamp *from, der_timestamp *to)
 {
     *to = *from;
     return 0;
 }
 
 int
-der_copy_utctime (const time_t *from, time_t *to)
+der_copy_utctime (const der_timestamp *from, der_timestamp *to)
 {
     *to = *from;
     return 0;

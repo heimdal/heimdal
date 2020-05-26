@@ -40,7 +40,7 @@ test_timegm(void)
 {
     int ret = 0;
     struct tm tm;
-    time_t t;
+    der_timestamp t;
 
     memset(&tm, 0, sizeof(tm));
     tm.tm_year = 106;

@@ -400,7 +400,6 @@ typedef const struct Principal *krb5_const_principal;
 typedef struct Principals *krb5_principals;
 
 typedef time_t krb5_deltat;
-typedef time_t krb5_timestamp;
 
 typedef struct krb5_times {
   krb5_timestamp authtime;

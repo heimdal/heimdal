@@ -588,7 +588,7 @@ create_checksum(krb5_context context,
 #define NTTIME_EPOCH 0x019DB1DED53E8000LL
 
 static uint64_t
-unix2nttime(time_t unix_time)
+unix2nttime(krb5_timestamp unix_time)
 {
     long long wt;
     wt = unix_time * (uint64_t)10000000 + (uint64_t)NTTIME_EPOCH;
@@ -599,7 +599,7 @@ static krb5_error_code
 verify_logonname(krb5_context context,
 		 const struct PAC_INFO_BUFFER *logon_name,
 		 const krb5_data *data,
-		 time_t authtime,
+		 krb5_timestamp authtime,
 		 krb5_const_principal principal)
 {
     krb5_error_code ret;
@@ -720,7 +720,7 @@ out:
 
 static krb5_error_code
 build_logon_name(krb5_context context,
-		 time_t authtime,
+		 krb5_timestamp authtime,
 		 krb5_const_principal principal,
 		 krb5_data *logon)
 {
@@ -839,7 +839,7 @@ out:
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_pac_verify(krb5_context context,
 		const krb5_pac pac,
-		time_t authtime,
+		krb5_timestamp authtime,
 		krb5_const_principal principal,
 		const krb5_keyblock *server,
 		const krb5_keyblock *privsvr)
@@ -975,7 +975,7 @@ pac_checksum(krb5_context context,
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 _krb5_pac_sign(krb5_context context,
 	       krb5_pac p,
-	       time_t authtime,
+	       krb5_timestamp authtime,
 	       krb5_principal principal,
 	       const krb5_keyblock *server_key,
 	       const krb5_keyblock *priv_key,

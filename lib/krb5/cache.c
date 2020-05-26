@@ -2103,7 +2103,7 @@ krb5_cc_set_friendly_name(krb5_context context,
  */
 
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
-krb5_cc_get_lifetime(krb5_context context, krb5_ccache id, time_t *t)
+krb5_cc_get_lifetime(krb5_context context, krb5_ccache id, krb5_timestamp *t)
 {
     krb5_data config_start_realm;
     char *start_realm;

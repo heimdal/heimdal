@@ -122,7 +122,7 @@ krb5_appdefault_string(krb5_context context, const char *appname,
 KRB5_LIB_FUNCTION void KRB5_LIB_CALL
 krb5_appdefault_time(krb5_context context, const char *appname,
 		     krb5_const_realm realm, const char *option,
-		     time_t def_val, time_t *ret_val)
+		     krb5_timestamp def_val, krb5_timestamp *ret_val)
 {
     krb5_deltat t;
     char *val;

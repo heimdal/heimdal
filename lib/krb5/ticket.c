@@ -157,7 +157,7 @@ krb5_ticket_get_server(krb5_context context,
  * @ingroup krb5
  */
 
-KRB5_LIB_FUNCTION time_t KRB5_LIB_CALL
+KRB5_LIB_FUNCTION krb5_timestamp KRB5_LIB_CALL
 krb5_ticket_get_endtime(krb5_context context,
 			const krb5_ticket *ticket)
 {

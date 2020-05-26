@@ -41,7 +41,7 @@ krb5_mk_error_ext(krb5_context context,
 		  const krb5_principal server,
 		  const PrincipalName *client_name,
 		  const Realm *client_realm,
-		  time_t *client_time,
+		  krb5_timestamp *client_time,
 		  int *client_usec,
 		  krb5_data *reply)
 {
@@ -99,7 +99,7 @@ krb5_mk_error(krb5_context context,
 	      const krb5_data *e_data,
 	      const krb5_principal client,
 	      const krb5_principal server,
-	      time_t *client_time,
+	      krb5_timestamp *client_time,
 	      int *client_usec,
 	      krb5_data *reply)
 {

@@ -106,7 +106,7 @@ krb5_us_timeofday (krb5_context context,
 }
 
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
-krb5_format_time(krb5_context context, time_t t,
+krb5_format_time(krb5_context context, krb5_timestamp t,
 		 char *s, size_t len, krb5_boolean include_time)
 {
     struct tm *tm;

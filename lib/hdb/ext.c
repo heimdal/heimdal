@@ -501,7 +501,7 @@ hdb_entry_clear_kvno_diff_svc(krb5_context context, hdb_entry *entry)
 
 krb5_error_code
 hdb_set_last_modified_by(krb5_context context, hdb_entry *entry,
-                         krb5_principal modby, time_t modtime)
+                         krb5_principal modby, krb5_timestamp modtime)
 {
     krb5_error_code ret;
     Event *old_ev;
@@ -520,9 +520,10 @@ hdb_set_last_modified_by(krb5_context context, hdb_entry *entry,
         free(ev);
         return ret;
     }
-    ev->time = modtime;
-    if (!ev->time)
-        time(&ev->time);
+    if (modtime)
+	    ev->time = modtime;
+	else
+		ev->time = time(NULL);
 
     entry->modified_by = ev;
     if (old_ev)

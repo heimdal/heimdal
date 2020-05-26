@@ -2110,7 +2110,7 @@ krb5_cc_get_lifetime(krb5_context context, krb5_ccache id, time_t *t)
     krb5_cc_cursor cursor;
     krb5_error_code ret;
     krb5_creds cred;
-    time_t now, endtime = 0;
+    krb5_timestamp now, endtime = 0;
 
     *t = 0;
     krb5_timeofday(context, &now);

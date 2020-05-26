@@ -99,7 +99,7 @@ _gsskrb5_krb5_import_cred(OM_uint32 *minor_status,
     handle->destination_realm = NULL;
 
     if (*id) {
-	time_t now;
+	krb5_timestamp now;
 	OM_uint32 left;
 
 	handle->usage |= GSS_C_INITIATE;

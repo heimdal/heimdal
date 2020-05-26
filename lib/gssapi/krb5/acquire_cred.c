@@ -206,7 +206,7 @@ acquire_cred_with_password(OM_uint32 *minor_status,
     krb5_get_init_creds_opt *opt;
     krb5_ccache ccache = NULL;
     krb5_error_code kret;
-    time_t now;
+    krb5_timestamp now;
     OM_uint32 left;
     const char *realm;
 
@@ -319,7 +319,7 @@ acquire_initiator_cred(OM_uint32 *minor_status,
     OM_uint32 left;
     const char *cs_ccache_name;
     time_t lifetime = 0;
-    time_t now;
+    krb5_timestamp now;
 
     memset(&cred, 0, sizeof(cred));
 

@@ -558,7 +558,7 @@ heim_config_parse_file_multi(heim_context context,
     const char *str;
     char *newfname = NULL;
     unsigned lineno = 0;
-    heim_error_code ret;
+    heim_error_code ret = 0;
     struct fileptr f;
     struct stat st;
 
@@ -580,10 +580,10 @@ heim_config_parse_file_multi(heim_context context,
         char homebuf[MAX_PATH];
 
         if (!heim_context_get_homedir_access(context)) {
-            config_include_depth--;
             heim_set_error_message(context, EPERM,
                                    "Access to home directory not allowed");
-            return EPERM;
+	    ret = EPERM;
+	    goto out;
         }
 
         home = roken_get_appdatadir(homebuf, sizeof(homebuf));
@@ -592,8 +592,8 @@ heim_config_parse_file_multi(heim_context context,
 
             aret = asprintf(&newfname, "%s%s", home, &fname[1]);
             if (aret == -1 || newfname == NULL) {
-                config_include_depth--;
-                return heim_enomem(context);
+		ret = heim_enomem(context);
+		goto out;
             }
             fname = newfname;
         }
@@ -604,39 +604,34 @@ heim_config_parse_file_multi(heim_context context,
          */
         if (asprintf(&newfname, "%%{USERCONFIG}%s", &fname[1]) < 0 ||
             newfname == NULL) {
-            config_include_depth--;
-            return heim_enomem(context);
+	    ret = heim_enomem(context);
+	    goto out;
         }
         fname = newfname;
 #endif /* HEIM_BASE_USE_PATH_TOKENS */
     }
 
     if (is_plist_file(fname)) {
-        config_include_depth--;
 #if defined(HAVE_FRAMEWORK_COREFOUNDATION)
         ret = parse_plist_config(context, fname, res);
         if (ret) {
             heim_set_error_message(context, ret,
                                    "Failed to parse plist %s", fname);
-            free(newfname);
-            return ret;
+            goto out;
         }
 #else
         heim_set_error_message(context, ENOENT,
                                "no support for plist configuration files");
-        return ENOENT;
+        ret = ENOENT;
+	goto out;
 #endif
     } else {
 #ifdef HEIM_BASE_USE_PATH_TOKENS
 	char *exp_fname;	/* newfname might be non-NULL */
         ret = heim_expand_path_tokens(context, fname, 1, &exp_fname, NULL);
-        if (ret) {
-            config_include_depth--;
-            free(newfname);
-            return ret;
-        }
-
-        free(newfname);
+        if (ret)
+            goto out;
+	free(newfname);
         fname = newfname = exp_fname;
 #endif /* HEIM_BASE_USE_PATH_TOKENS */
 
@@ -646,37 +641,36 @@ heim_config_parse_file_multi(heim_context context,
         if (f.f == NULL || fstat(fileno(f.f), &st) == -1) {
             if (f.f != NULL)
                 (void) fclose(f.f);
-            config_include_depth--;
             ret = errno;
             heim_set_error_message(context, ret, "open or stat %s: %s",
                                    fname, strerror(ret));
-           free(newfname);
-            return ret;
+            goto out;
         }
 
         if (!S_ISREG(st.st_mode)) {
             (void) fclose(f.f);
-            config_include_depth--;
             heim_set_error_message(context, EISDIR, "not a regular file %s: %s",
                                    fname, strerror(EISDIR));
-            free(newfname);
-            return EISDIR;
+            ret = EISDIR;
+	    goto out;
         }
 
         ret = heim_config_parse_debug(&f, res, &lineno, &str);
-        config_include_depth--;
         fclose(f.f);
         if (ret) {
-            if (ret != HEIM_ERR_CONFIG_BADFORMAT) {
-		ret = HEIM_ERR_CONFIG_BADFORMAT;
+	    if (ret != HEIM_ERR_CONFIG_BADFORMAT) {
+                ret = HEIM_ERR_CONFIG_BADFORMAT;
 		heim_set_error_message(context, ret, "%s:%u: %s",
 				       fname, lineno, str);
 	    }
-            free(newfname);
-            return ret;
+            goto out;
         }
     }
-    return 0;
+
+  out:
+    config_include_depth--;
+    free(newfname);
+    return ret;
 }
 
 heim_error_code

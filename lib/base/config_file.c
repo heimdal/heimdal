@@ -658,17 +658,21 @@ heim_config_parse_file_multi(heim_context context,
         ret = heim_config_parse_debug(&f, res, &lineno, &str);
         fclose(f.f);
         if (ret) {
-	    if (ret != HEIM_ERR_CONFIG_BADFORMAT) {
+	    if (ret != HEIM_ERR_CONFIG_BADFORMAT)
                 ret = HEIM_ERR_CONFIG_BADFORMAT;
-		heim_set_error_message(context, ret, "%s:%u: %s",
-				       fname, lineno, str);
-	    }
+	    heim_set_error_message(context, ret, "%s:%u: %s",
+				   fname, lineno, str);
             goto out;
         }
     }
 
   out:
     config_include_depth--;
+    if (ret == HEIM_ERR_CONFIG_BADFORMAT || (ret && config_include_depth > 0)) {
+	heim_warn(context, ret, "Ignoring", fname);
+	if (config_include_depth > 0)
+	    ret = 0;
+    }
     free(newfname);
     return ret;
 }

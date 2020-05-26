@@ -69,13 +69,13 @@ der_free_unsigned64 (uint64_t *u)
 }
 
 void
-der_free_generalized_time(time_t *t)
+der_free_generalized_time(der_timestamp *t)
 {
     *t = 0;
 }
 
 void
-der_free_utctime(time_t *t)
+der_free_utctime(der_timestamp *t)
 {
     *t = 0;
 }

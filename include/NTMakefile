@@ -43,10 +43,14 @@ INCFILES=			\
 	$(INCDIR)\heimqueue.h	\
 	$(INCDIR)\heim_threads.h	\
 	$(INCDIR)\krb5-types.h	\
+	$(INCDIR)\der-types.h	\
 	$(INCDIR)\version.h
 
 $(INCDIR)\krb5-types.h: $(OBJ)\bits.exe
 	$(OBJ)\bits.exe $(INCDIR)\krb5-types.h
+
+$(INCDIR)\der-types.h: $(OBJ)\bits.exe
+	$(OBJ)\bits.exe $(INCDIR)\der-types.h der
 
 $(OBJ)\bits.exe: $(OBJ)\bits.obj
 	$(EXECONLINK)

@@ -269,7 +269,7 @@ der_length_oid (const heim_oid *k)
 }
 
 size_t
-der_length_generalized_time (const time_t *t)
+der_length_generalized_time (const der_timestamp *t)
 {
     heim_octet_string k;
     size_t ret;
@@ -281,7 +281,7 @@ der_length_generalized_time (const time_t *t)
 }
 
 size_t
-der_length_utctime (const time_t *t)
+der_length_utctime (const der_timestamp *t)
 {
     heim_octet_string k;
     size_t ret;

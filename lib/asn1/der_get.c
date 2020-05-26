@@ -463,7 +463,7 @@ der_get_heim_integer (const unsigned char *p, size_t len,
 }
 
 static int
-generalizedtime2time (const char *s, time_t *t)
+generalizedtime2time (const char *s, der_timestamp *t)
 {
     struct tm tm;
 
@@ -488,7 +488,7 @@ generalizedtime2time (const char *s, time_t *t)
 
 static int ASN1CALL
 der_get_time (const unsigned char *p, size_t len,
-	      time_t *data, size_t *size)
+	      der_timestamp *data, size_t *size)
 {
     char *times;
     int e;
@@ -509,14 +509,14 @@ der_get_time (const unsigned char *p, size_t len,
 
 int ASN1CALL
 der_get_generalized_time (const unsigned char *p, size_t len,
-			  time_t *data, size_t *size)
+			  der_timestamp *data, size_t *size)
 {
     return der_get_time(p, len, data, size);
 }
 
 int ASN1CALL
-der_get_utctime (const unsigned char *p, size_t len,
-			  time_t *data, size_t *size)
+der_get_utctime(const unsigned char *p, size_t len,
+		der_timestamp *data, size_t *size)
 {
     return der_get_time(p, len, data, size);
 }

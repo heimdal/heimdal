@@ -1,0 +1,76 @@
+/*
+ * generic der-types.h for cross compiling, assume system is posix/sus
+ */
+
+#ifndef __DER_TYPES_H__
+#define __DER_TYPES_H__
+
+#include <inttypes.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <time.h>
+
+typedef socklen_t der_socklen_t;
+#include <unistd.h>
+typedef ssize_t der_ssize_t;
+
+#if SIZEOF_TIME_T == 4
+typedef uint32_t der_timestamp;
+#elif SIZEOF_TIME_T == 8
+"typedef int64_t der_timestamp;
+#else
+#error set SIZEOF_TIME_T for your platform
+#endif
+
+#if !defined(__has_extension)
+#define __has_extension(x) 0
+#endif
+
+#define DERTYPES_REQUIRE_GNUC(m,n,p) \
+    (((__GNUC__ * 10000) + (__GNUC_MINOR__ * 100) + __GNUC_PATCHLEVEL__) >= \
+     (((m) * 10000) + ((n) * 100) + (p)))
+
+
+#ifndef HEIMDAL_DEPRECATED
+#if __has_extension(deprecated) || DERTYPES_REQUIRE_GNUC(3,1,0)
+#define HEIMDAL_DEPRECATED __attribute__ ((__deprecated__))
+#elif defined(_MSC_VER) && (_MSC_VER>1200) 
+#define HEIMDAL_DEPRECATED __declspec(deprecated)
+#else
+#define HEIMDAL_DEPRECATED
+#endif
+#endif
+
+#ifndef HEIMDAL_PRINTF_ATTRIBUTE
+#if __has_extension(format) || DERTYPES_REQUIRE_GNUC(3,1,0)
+#define HEIMDAL_PRINTF_ATTRIBUTE(x) __attribute__ ((__format__ x))
+#else
+#define HEIMDAL_PRINTF_ATTRIBUTE(x)
+#endif
+#endif
+
+#ifndef HEIMDAL_NORETURN_ATTRIBUTE
+#if __has_extension(noreturn) || DERTYPES_REQUIRE_GNUC(3,1,0)
+#define HEIMDAL_NORETURN_ATTRIBUTE __attribute__ ((__noreturn__))
+#else
+#define HEIMDAL_NORETURN_ATTRIBUTE
+#endif
+#endif
+
+#ifndef HEIMDAL_UNUSED_ATTRIBUTE
+#if __has_extension(unused) || DERTYPES_REQUIRE_GNUC(3,1,0)
+#define HEIMDAL_UNUSED_ATTRIBUTE __attribute__ ((__unused__))
+#else
+#define HEIMDAL_UNUSED_ATTRIBUTE
+#endif
+#endif
+
+#ifndef HEIMDAL_WARN_UNUSED_RESULT_ATTRIBUTE
+#if __has_extension(__warn_unused_result__) || DERTYPES_REQUIRE_GNUC(3,3,0)
+#define HEIMDAL_WARN_UNUSED_RESULT_ATTRIBUTE __attribute__ ((__warn_unused_result__))
+#endif
+#endif
+
+typedef int der_socket_t;
+
+#endif /* __DER_TYPES_h__ */

@@ -163,15 +163,24 @@ init_generate (const char *filename, const char *base)
     fprintf (headerfile,
 	     "#ifndef __asn1_common_definitions__\n"
 	     "#define __asn1_common_definitions__\n\n");
-	fprintf (headerfile,
-		 "#ifndef __HEIM_BASE_DATA__\n"
-		 "#define __HEIM_BASE_DATA__ 1\n"
-		 "struct heim_base_data {\n"
-		 "    size_t length;\n"
-		 "    void *data;\n"
-		 "};\n"
-		 "typedef struct heim_base_data heim_octet_string;\n"
-		 "#endif\n\n");
+    fprintf (headerfile,
+             "#ifndef __HEIM_SIZEOF_TIME_T\n"
+             "#define __HEIM_SIZEOF_TIME_T %lu\n"
+             "#endif\n\n"
+             "typedef %s der_timestamp;\n\n",
+             (unsigned long)SIZEOF_TIME_T,
+             SIZEOF_TIME_T == 4 ?
+                "uint32_t" :
+                SIZEOF_TIME_T == 8 ? "int64_t" : "unknown_time_t");
+    fprintf (headerfile,
+             "#ifndef __HEIM_BASE_DATA__\n"
+             "#define __HEIM_BASE_DATA__ 1\n"
+             "struct heim_base_data {\n"
+             "    size_t length;\n"
+             "    void *data;\n"
+             "};\n"
+             "typedef struct heim_base_data heim_octet_string;\n"
+             "#endif\n\n");
     fprintf (headerfile,
 	     "typedef struct heim_integer {\n"
 	     "  size_t length;\n"
@@ -932,7 +941,12 @@ define_type (int level, const char *name, const char *basename, Type *t, int typ
     }
     case TGeneralizedTime:
 	space(level);
-	fprintf (headerfile, "time_t %s;\n", name);
+        fprintf(headerfile, "%s %s;\n",
+                SIZEOF_TIME_T == 4 ?
+                    "uint32_t" :
+                    SIZEOF_TIME_T == 8 ?
+                        "int64_t" : "unknown_time_t",
+                 name);
 	break;
     case TGeneralString:
 	space(level);
@@ -1001,7 +1015,12 @@ define_type (int level, const char *name, const char *basename, Type *t, int typ
     }
     case TUTCTime:
 	space(level);
-	fprintf (headerfile, "time_t %s;\n", name);
+	fprintf(headerfile, "%s %s;\n", 
+                SIZEOF_TIME_T == 4 ?
+                    "uint32_t" :
+                    SIZEOF_TIME_T == 8 ?
+                        "int64_t" : "unknown_time_t",
+                name);
 	break;
     case TUTF8String:
 	space(level);

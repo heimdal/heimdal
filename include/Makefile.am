@@ -9,21 +9,27 @@ CHECK_LOCAL = no-check-local
 
 AM_CPPFLAGS += -DHOST=\"$(CANONICAL_HOST)\"
 
-nodist_include_HEADERS = krb5-types.h
+nodist_include_HEADERS = krb5-types.h der-types.h
 
 noinst_HEADERS = heimqueue.h heim_threads.h crypto-headers.h
 
-EXTRA_DIST = NTMakefile krb5-types.cross config.h.w32
+EXTRA_DIST = NTMakefile krb5-types.cross der-types.cross config.h.w32
 
 if !CROSS_COMPILE
 
 krb5-types.h: bits$(EXEEXT)
 	./bits$(EXEEXT) krb5-types.h
 
+der-types.h: bits$(EXEEXT)
+	./bits$(EXEEXT) der-types.h der
+
 else
 
 krb5-types.h: krb5-types.cross
 	cp $(srcdir)/krb5-types.cross krb5-types.h
+
+der-types.h: der-types.cross
+	cp $(srcdir)/der-types.cross der-types.h
 
 endif
 
@@ -43,6 +49,7 @@ CLEANFILES =			\
 	der-private.h 		\
 	der-protos.h 		\
 	der.h			\
+	der-types.h		\
 	digest_asn1.h 		\
 	editline.h		\
 	err.h			\

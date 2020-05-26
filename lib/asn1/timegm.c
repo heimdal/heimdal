@@ -52,10 +52,10 @@ static const unsigned ndays[2][12] ={
  * valid in asn1 encodings.
  */
 
-time_t
+der_timestamp
 _der_timegm (struct tm *tm)
 {
-  time_t res = 0;
+  der_timestamp res = 0;
   int i;
 
   /*
@@ -93,10 +93,10 @@ _der_timegm (struct tm *tm)
 }
 
 struct tm *
-_der_gmtime(time_t t, struct tm *tm)
+_der_gmtime(der_timestamp t, struct tm *tm)
 {
-    time_t secday = t % (3600 * 24);
-    time_t days = t / (3600 * 24);
+    der_timestamp secday = t % (3600 * 24);
+    der_timestamp days = t / (3600 * 24);
 
     memset(tm, 0, sizeof(*tm));
 

@@ -353,6 +353,9 @@ krb5_config_parse_debug (struct fileptr *f,
     char buf[KRB5_BUFSIZ];
     krb5_error_code ret;
 
+    *lineno = 0;
+    *err_message = "";
+
     while (config_fgets(buf, sizeof(buf), f) != NULL) {
 	char *p;
 

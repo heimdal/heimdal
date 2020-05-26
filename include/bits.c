@@ -120,6 +120,8 @@ int main(int argc, char **argv)
     int flag;
     char *p = NULL;
     const char *hb;
+    const char *prefix = "krb5";
+    const char *upprefix = "KRB5";
 
     if (argc > 1 && strcmp(argv[1], "--version") == 0) {
 	printf("some version");
@@ -136,9 +138,22 @@ int main(int argc, char **argv)
 	for(; *p; p++){
 	    if(!isalnum((unsigned char)*p))
 		*p = '_';
+            else if (isalpha((unsigned char)*p))
+                *p = toupper((unsigned char)*p);
 	}
 	f = fopen(argv[1], "w");
     }
+    if (argc > 2) {
+        upprefix = p = strdup(argv[2]);
+
+        prefix = argv[2];
+
+        for (; *p; p++) {
+            if (isalpha((unsigned char)*p))
+                *p = toupper((unsigned char)*p);
+        }
+    }
+
     fprintf(f, "#ifndef %s\n", hb);
     fprintf(f, "#define %s\n", hb);
     fprintf(f, "\n");
@@ -156,6 +171,9 @@ int main(int argc, char **argv)
 #endif
 #ifdef HAVE_NETINET_IN6_MACHTYPES_H
     fprintf(f, "#include <netinet/in6_machtypes.h>\n");
+#endif
+#ifdef HAVE_SYS_TIME_H
+    fprintf(f, "#include <sys/time.h>\n");
 #endif
 #ifdef HAVE_SOCKLEN_T
 #ifndef WIN32
@@ -224,27 +242,36 @@ int main(int argc, char **argv)
 	fprintf(f, "\n");
 	fprintf(f, "#endif /* __BIT_TYPES_DEFINED__ */\n\n");
     }
+
+#if SIZEOF_TIME_T == 4
+    fprintf(f, "typedef uint32_t %s_timestamp;\n\n", prefix);
+#elif SIZEOF_TIME_T == 8
+    fprintf(f, "typedef int64_t %s_timestamp;\n\n", prefix);
+#else
+#error set SIZEOF_TIME_T for your platform
+#endif
+
 #ifdef KRB5
     fprintf(f, "\n");
 #if defined(HAVE_SOCKLEN_T)
-    fprintf(f, "typedef socklen_t krb5_socklen_t;\n");
+    fprintf(f, "typedef socklen_t %s_socklen_t;\n", prefix);
 #else
-    fprintf(f, "typedef int krb5_socklen_t;\n");
+    fprintf(f, "typedef int %s_socklen_t;\n", prefix);
 #endif
 #if defined(HAVE_SSIZE_T)
 #ifdef HAVE_UNISTD_H
     fprintf(f, "#include <unistd.h>\n");
 #endif
-    fprintf(f, "typedef ssize_t krb5_ssize_t;\n");
+    fprintf(f, "typedef ssize_t %s_ssize_t;\n", prefix);
 #else
-    fprintf(f, "typedef int krb5_ssize_t;\n");
+    fprintf(f, "typedef int %s_ssize_t;\n", prefix);
 #endif
     fprintf(f, "\n");
 
 #if defined(_WIN32)
-    fprintf(f, "typedef SOCKET krb5_socket_t;\n");
+    fprintf(f, "typedef SOCKET %s_socket_t;\n", prefix);
 #else
-    fprintf(f, "typedef int krb5_socket_t;\n");
+    fprintf(f, "typedef int %s_socket_t;\n", prefix);
 #endif
     fprintf(f, "\n");
 
@@ -254,14 +281,14 @@ int main(int argc, char **argv)
     fprintf(f, "#define __has_extension(x) 0\n");
     fprintf(f, "#endif\n\n");
 
-    fprintf(f, "#ifndef KRB5TYPES_REQUIRE_GNUC\n");
-    fprintf(f, "#define KRB5TYPES_REQUIRE_GNUC(m,n,p) \\\n");
+    fprintf(f, "#ifndef %sTYPES_REQUIRE_GNUC\n", upprefix);
+    fprintf(f, "#define %sTYPES_REQUIRE_GNUC(m,n,p) \\\n", upprefix);
     fprintf(f, "    (((__GNUC__ * 10000) + (__GNUC_MINOR__ * 100) + __GNUC_PATCHLEVEL__) >= \\\n");
     fprintf(f, "     (((m) * 10000) + ((n) * 100) + (p)))\n");
     fprintf(f, "#endif\n\n");
 
     fprintf(f, "#ifndef HEIMDAL_DEPRECATED\n");
-    fprintf(f, "#if __has_extension(deprecated) || KRB5TYPES_REQUIRE_GNUC(3,1,0)\n");
+    fprintf(f, "#if __has_extension(deprecated) || %sTYPES_REQUIRE_GNUC(3,1,0)\n", upprefix);
     fprintf(f, "#define HEIMDAL_DEPRECATED __attribute__ ((__deprecated__))\n");
     fprintf(f, "#elif defined(_MSC_VER) && (_MSC_VER>1200)\n");
     fprintf(f, "#define HEIMDAL_DEPRECATED __declspec(deprecated)\n");
@@ -271,7 +298,7 @@ int main(int argc, char **argv)
     fprintf(f, "#endif\n\n");
 
     fprintf(f, "#ifndef HEIMDAL_PRINTF_ATTRIBUTE\n");
-    fprintf(f, "#if __has_extension(format) || KRB5TYPES_REQUIRE_GNUC(3,1,0)\n");
+    fprintf(f, "#if __has_extension(format) || %sTYPES_REQUIRE_GNUC(3,1,0)\n", upprefix);
     fprintf(f, "#define HEIMDAL_PRINTF_ATTRIBUTE(x) __attribute__ ((__format__ x))\n");
     fprintf(f, "#else\n");
     fprintf(f, "#define HEIMDAL_PRINTF_ATTRIBUTE(x)\n");
@@ -279,7 +306,7 @@ int main(int argc, char **argv)
     fprintf(f, "#endif\n\n");
 
     fprintf(f, "#ifndef HEIMDAL_NORETURN_ATTRIBUTE\n");
-    fprintf(f, "#if __has_extension(noreturn) || KRB5TYPES_REQUIRE_GNUC(3,1,0)\n");
+    fprintf(f, "#if __has_extension(noreturn) || %sTYPES_REQUIRE_GNUC(3,1,0)\n", upprefix);
     fprintf(f, "#define HEIMDAL_NORETURN_ATTRIBUTE __attribute__ ((__noreturn__))\n");
     fprintf(f, "#else\n");
     fprintf(f, "#define HEIMDAL_NORETURN_ATTRIBUTE\n");
@@ -287,7 +314,7 @@ int main(int argc, char **argv)
     fprintf(f, "#endif\n\n");
 
     fprintf(f, "#ifndef HEIMDAL_UNUSED_ATTRIBUTE\n");
-    fprintf(f, "#if __has_extension(unused) || KRB5TYPES_REQUIRE_GNUC(3,1,0)\n");
+    fprintf(f, "#if __has_extension(unused) || %sTYPES_REQUIRE_GNUC(3,1,0)\n", upprefix);
     fprintf(f, "#define HEIMDAL_UNUSED_ATTRIBUTE __attribute__ ((__unused__))\n");
     fprintf(f, "#else\n");
     fprintf(f, "#define HEIMDAL_UNUSED_ATTRIBUTE\n");
@@ -295,7 +322,7 @@ int main(int argc, char **argv)
     fprintf(f, "#endif\n\n");
 
     fprintf(f, "#ifndef HEIMDAL_WARN_UNUSED_RESULT_ATTRIBUTE\n");
-    fprintf(f, "#if __has_extension(warn_unused_result) || KRB5TYPES_REQUIRE_GNUC(3,3,0)\n");
+    fprintf(f, "#if __has_extension(warn_unused_result) || %sTYPES_REQUIRE_GNUC(3,3,0)\n", upprefix);
     fprintf(f, "#define HEIMDAL_WARN_UNUSED_RESULT_ATTRIBUTE __attribute__ ((__warn_unused_result__))\n");
     fprintf(f, "#else\n");
     fprintf(f, "#define HEIMDAL_WARN_UNUSED_RESULT_ATTRIBUTE\n");

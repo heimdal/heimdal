@@ -2,16 +2,20 @@
  * generic krb5-types.h for cross compiling, assume system is posix/sus
  */
 
-#ifndef __krb5_types_h__
-#define __krb5_types_h__
+#ifndef __KRB5_TYPES_H__
+#define __KRB5_TYPES_H__
 
 #include <inttypes.h>
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <time.h>
 
 typedef socklen_t krb5_socklen_t;
 #include <unistd.h>
 typedef ssize_t krb5_ssize_t;
+
+/* XXX Pick an appropriate type for krb5_timestamp for cross-compilation */
+typedef time_t krb5_timestamp;
 
 #if !defined(__has_extension)
 #define __has_extension(x) 0
@@ -64,4 +68,4 @@ typedef ssize_t krb5_ssize_t;
 
 typedef int krb5_socket_t;
 
-#endif /* __krb5_types_h__ */
+#endif /* __KRB5_TYPES_h__ */

@@ -486,7 +486,7 @@ gss_krb5_ccache_name(OM_uint32 *minor_status,
 		     const char **out_name)
 {
     struct _gss_mech_switch *m;
-    gss_buffer_desc buffer;
+    gss_buffer_desc buffer = GSS_C_EMPTY_BUFFER;
     OM_uint32 junk;
 
     _gss_load_mech();
@@ -494,11 +494,9 @@ gss_krb5_ccache_name(OM_uint32 *minor_status,
     if (out_name)
 	*out_name = NULL;
 
+    buffer.value = rk_UNCONST(name);
     if (name) {
-	buffer.value = rk_UNCONST(name);
 	buffer.length = strlen(name);
-    } else {
-	_mg_buffer_zero(&buffer);
     }
 
     HEIM_TAILQ_FOREACH(m, &_gss_mechs, gm_link) {

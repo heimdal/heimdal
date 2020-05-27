@@ -55,6 +55,10 @@
 /* For krb5 plugins, this is a krb5_context */
 typedef struct heim_pcontext_s *heim_pcontext;
 
+typedef uintptr_t
+(HEIM_LIB_CALL *heim_get_instance_func_t)(const char *);
+typedef heim_get_instance_func_t krb5_get_instance_t;
+
 /*
  * All plugin function tables extend the following structure.
  */

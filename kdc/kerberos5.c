@@ -332,13 +332,14 @@ _kdc_set_e_text(astgs_request_t r, char *fmt, ...)
 	__attribute__ ((__format__ (__printf__, 2, 3)))
 {
     va_list ap;
-    char *e_text;
+    char *e_text = NULL;
+    int vasprintf_ret;
 
     va_start(ap, fmt);
-    vasprintf(&e_text, fmt, ap);
+    vasprintf_ret = vasprintf(&e_text, fmt, ap);
     va_end(ap);
 
-    if (!e_text)
+    if (vasprintf_ret < 0 || !e_text)
 	/* not much else to do... */
 	return;
 

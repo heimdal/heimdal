@@ -638,18 +638,18 @@ fmtkv(int flags, const char *k, const char *fmt, va_list ap)
         __attribute__ ((__format__ (__printf__, 3, 0)))
 {
     heim_string_t str;
-    size_t i,j;
+    size_t i;
+    ssize_t j;
     char *buf1;
     char *buf2;
     char *buf3;
-
-    vasprintf(&buf1, fmt, ap);
-    if (!buf1)
+    int ret = vasprintf(&buf1, fmt, ap);
+    if (ret < 0 || !buf1)
 	return NULL;;
 
     j = asprintf(&buf2, "%s=%s", k, buf1);
     free(buf1);
-    if (!buf2)
+    if (j < 0 || !buf2)
 	return NULL;;
 
     /* We optionally eat the whitespace. */

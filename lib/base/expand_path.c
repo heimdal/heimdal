@@ -490,8 +490,10 @@ expand_token(heim_context context,
 
             errcode = 0;
             if (*colon == ':') {
-                asprintf(&arg, "%.*s", (int)(token_end - colon - 1), colon + 1);
-                if (!arg)
+                int asprintf_ret = asprintf(&arg, "%.*s",
+                                            (int)(token_end - colon - 1),
+                                            colon + 1);
+                if (asprintf_ret < 0 || !arg)
                     errcode = ENOMEM;
             }
             if (!errcode)

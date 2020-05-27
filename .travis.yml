@@ -42,7 +42,12 @@ install:
                   --with-berkeley-db \
                   --with-berkeley-db-include=/usr/local/opt/berkeley-db/include
       else
-          ../configure --srcdir=`dirname "$PWD"` --enable-maintainer-mode $COVERAGE
+          # This list of -Wno-error options should be reduced over time where possible
+          if [ x"$TRAVIS_COMPILER" != x"clang" ]; then
+              CFLAGS="-Wno-error=empty-body -Wno-error=shadow -Wno-error=unused-value -Wno-error=unused-but-set-variable -Wno-error=bad-function-cast -Wno-error=unused-function -Wno-error=unused-result -Wno-error=deprecated-declarations" ../configure --enable-developer --srcdir=`dirname "$PWD"` --enable-maintainer-mode $COVERAGE
+          else
+              CFLAGS="-Wno-error=shadow -Wno-error=bad-function-cast -Wno-error=unused-function -Wno-error=unused-result -Wno-error=deprecated-declarations" ../configure --enable-developer --srcdir=`dirname "$PWD"` --enable-maintainer-mode $COVERAGE
+          fi
       fi
     - ulimit -c unlimited; make -j3
 

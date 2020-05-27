@@ -669,7 +669,7 @@ heim_config_parse_file_multi(heim_context context,
   out:
     config_include_depth--;
     if (ret == HEIM_ERR_CONFIG_BADFORMAT || (ret && config_include_depth > 0)) {
-	heim_warn(context, ret, "Ignoring", fname);
+	heim_warn(context, ret, "Ignoring");
 	if (config_include_depth > 0)
 	    ret = 0;
     }

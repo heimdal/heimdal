@@ -684,15 +684,17 @@ static int
 not_found(krb5_context context, krb5_const_principal p, krb5_error_code code)
 {
     krb5_error_code ret;
-    char *str, *err;
+    char *str;
+    const char *err;
 
-    err = krb5_get_error_message(context, code);
     ret = krb5_unparse_name(context, p, &str);
     if(ret) {
 	krb5_clear_error_message(context);
 	return code;
     }
+    err = krb5_get_error_message(context, code);
     krb5_set_error_message(context, code, N_("%s (%s)", ""), err, str);
+    krb5_free_error_message(context, err);
     free(str);
     return code;
 }

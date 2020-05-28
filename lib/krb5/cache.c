@@ -524,9 +524,11 @@ krb5_cc_get_collection(krb5_context context, krb5_ccache id)
 KRB5_LIB_FUNCTION const char* KRB5_LIB_CALL
 krb5_cc_get_subsidiary(krb5_context context, krb5_ccache id)
 {
-    const char *name;
+    const char *name = NULL;
 
-    (void) id->ops->get_name(context, id, NULL, NULL, &name);
+    if (id->ops->version < KRB5_CC_OPS_VERSION_5
+	|| id->ops->get_name_2 == NULL)
+        (void) id->ops->get_name_2(context, id, NULL, NULL, &name);
     return name;
 }
 

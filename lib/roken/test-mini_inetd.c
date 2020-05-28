@@ -253,7 +253,8 @@ do_client(void)
 {
     int rv = 0;
 
-    rk_SOCK_INIT();
+    if (rk_SOCK_INIT())
+	errx(1, "Couldn't initialize sockets. Err=%d\n", rk_SOCK_ERRNO);
 
     prog = "Client";
     is_client = 1;
@@ -272,7 +273,8 @@ do_server(void)
 {
     int rv = 0;
 
-    rk_SOCK_INIT();
+    if (rk_SOCK_INIT())
+	errx(1, "Couldn't initialize sockets. Err=%d\n", rk_SOCK_ERRNO);
 
     prog = "Server";
 

@@ -132,7 +132,7 @@ ltm_rsa_private_calculate(mp_int * in, mp_int * p,  mp_int * q,
 {
     mp_err ret;
     mp_int vp, vq, u;
-    int where = 0; /* Ignore the set-but-unused warning from this */
+    int where HEIMDAL_UNUSED_ATTRIBUTE = 0;
 
     FIRST(mp_init_multi(&vp, &vq, &u, NULL));
 
@@ -479,7 +479,7 @@ gen_p(int bits, enum gen_pq_type pq_type, uint8_t nibble_pair, mp_int *p, mp_int
     size_t len = (bits + 7) / 8;
     int trials = mp_prime_rabin_miller_trials(bits);
     int counter = 0;
-    int where = 0; /* Ignore the set-but-unused warning from this */
+    int where HEIMDAL_UNUSED_ATTRIBUTE = 0;
 
 
     FIRST(mp_init_multi(&t1, &t2, NULL));

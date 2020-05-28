@@ -487,7 +487,14 @@ KRB5_LIB_FUNCTION const char* KRB5_LIB_CALL
 krb5_cc_get_name(krb5_context context,
 		 krb5_ccache id)
 {
-    return id->ops->get_name(context, id);
+    const char *name = NULL;
+
+    if (id->ops->version < KRB5_CC_OPS_VERSION_5
+	|| id->ops->get_name_2 == NULL)
+	return id->ops->get_name(context, id);
+
+    (void) id->ops->get_name_2(context, id, &name, NULL, NULL);
+    return name;
 }
 
 /**
@@ -500,17 +507,13 @@ krb5_cc_get_name(krb5_context context,
 KRB5_LIB_FUNCTION const char* KRB5_LIB_CALL
 krb5_cc_get_collection(krb5_context context, krb5_ccache id)
 {
-    const char *name;
-    int ret;
+    const char *name = NULL;
 
     if (id->ops->version < KRB5_CC_OPS_VERSION_5
 	|| id->ops->get_name_2 == NULL)
 	return NULL;
 
-    ret = id->ops->get_name_2(context, id, NULL, &name, NULL);
-    if (ret)
-	return NULL;
-
+    (void) id->ops->get_name_2(context, id, NULL, &name, NULL);
     return name;
 }
 

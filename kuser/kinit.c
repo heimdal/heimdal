@@ -64,8 +64,8 @@ char *server_str	= NULL;
 static krb5_principal tgs_service;
 char *cred_cache	= NULL;
 char *start_str		= NULL;
-static int switch_cache_flags = -1;
 static int default_for = 0;
+static int switch_cache_flags = 1;
 struct getarg_strings etype_str;
 int use_keytab		= 0;
 char *keytab_str	= NULL;
@@ -1354,6 +1354,59 @@ get_princ_kt(krb5_context context,
     free(def_realm);
 }
 
+static krb5_error_code
+get_switched_ccache(krb5_context context,
+		    const char * type,
+		    krb5_principal principal,
+		    krb5_ccache *ccache)
+{
+    krb5_error_code ret;
+
+#ifdef _WIN32
+    if (strcmp(type, "API") == 0) {
+	/*
+	 * Windows stores the default ccache name in the
+	 * registry which is shared across multiple logon
+	 * sessions for the same user.  The API credential
+	 * cache provides a unique name space per logon
+	 * session.  Therefore there is no need to generate
+	 * a unique ccache name.  Instead use the principal
+	 * name.  This provides a friendlier user experience.
+	 */
+	char * unparsed_name;
+	char * cred_cache;
+
+	ret = krb5_unparse_name(context, principal,
+				&unparsed_name);
+	if (ret)
+	    krb5_err(context, 1, ret,
+		     N_("unparsing principal name", ""));
+
+	ret = asprintf(&cred_cache, "API:%s", unparsed_name);
+	krb5_free_unparsed_name(context, unparsed_name);
+	if (ret == -1 || cred_cache == NULL)
+	    krb5_err(context, 1, ret,
+		      N_("building credential cache name", ""));
+
+	ret = krb5_cc_resolve(context, cred_cache, ccache);
+	free(cred_cache);
+    } else if (strcmp(type, "MSLSA") == 0) {
+	/*
+	 * The Windows MSLSA cache when it is writeable
+	 * stores tickets for multiple client principals
+	 * in a single credential cache.
+	 */
+	ret = krb5_cc_resolve(context, "MSLSA:", ccache);
+    } else {
+	ret = krb5_cc_new_unique(context, type, NULL, ccache);
+    }
+#else /* !_WIN32 */
+    ret = krb5_cc_new_unique(context, type, NULL, ccache);
+#endif /* _WIN32 */
+
+    return ret;
+}
+
 int
 main(int argc, char **argv)
 {
@@ -1466,8 +1519,10 @@ main(int argc, char **argv)
      *  - use the given ccache
      *  - use a new unique ccache for running a command with (in this case we
      *    get to set KRB5CCNAME, so a new unique ccache makes sense)
-     *  - use the default ccache for the given principal and maybe later switch
-     *    the collection's default/primary to it
+     *  - use the default ccache for the given principal as requested and do
+     *    not later switch the collection's default/primary to it
+     *  - use the default cache, possibly a new unique one that later gets
+     *    switched to it
      *
      * The important thing is that, except for the case where we're running a
      * command, we _can't set KRB5CCNAME_, and we can't expect the user to read
@@ -1501,14 +1556,29 @@ main(int argc, char **argv)
         if (switch_cache_flags == -1)
             switch_cache_flags = 0;
     } else {
-        ret = krb5_cc_default(context, &ccache);
-        if (switch_cache_flags == -1)
-            switch_cache_flags = 0;
+        ret = krb5_cc_cache_match(context, principal, &ccache);
+        if (ret) {
+            const char *type;
+            ret = krb5_cc_default(context, &ccache);
+            if (ret)
+                krb5_err(context, 1, ret,
+                         N_("resolving credentials cache", ""));
+
+            /*
+             * Check if the type support switching, and we do,
+             * then do that instead over overwriting the current
+             * default credential
+             */
+            type = krb5_cc_get_type(context, ccache);
+            if (krb5_cc_support_switch(context, type)) {
+                krb5_cc_close(context, ccache);
+                ret = get_switched_ccache(context, type, principal,
+                                          &ccache);
+                if (ret == 0)
+                    unique_ccache = TRUE;
+            }
+        }
     }
-
-    if (switch_cache_flags == -1)
-        switch_cache_flags = 1;
-
     if (ret)
 	krb5_err(context, 1, ret, N_("resolving credentials cache", ""));
 

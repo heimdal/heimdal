@@ -62,11 +62,20 @@ krb5_config_parse_dir_multi(krb5_context context,
                             krb5_config_section **res)
 {
     krb5_error_code ret;
+    heim_config_section *section = NULL;
 
-    if ((ret = heim_config_parse_dir_multi(context->hcontext, dname,
-                                           res)) == HEIM_ERR_CONFIG_BADFORMAT)
+    if (res == NULL)
+	return EINVAL;
+
+    *res = NULL;
+
+    ret = heim_config_parse_dir_multi(context->hcontext, dname, &section);
+    if (ret == HEIM_ERR_CONFIG_BADFORMAT)
         return KRB5_CONFIG_BADFORMAT;
-    return ret;
+    if (ret)
+	return ret;
+    *res = (krb5_config_section *)section;
+    return 0;
 }
 
 /**
@@ -88,11 +97,20 @@ krb5_config_parse_file_multi(krb5_context context,
 			     krb5_config_section **res)
 {
     krb5_error_code ret;
+    heim_config_section *section = NULL;
 
-    if ((ret = heim_config_parse_file_multi(context->hcontext, fname,
-                                            res)) == HEIM_ERR_CONFIG_BADFORMAT)
+    if (res == NULL)
+	return EINVAL;
+
+    *res = NULL;
+
+    ret = heim_config_parse_file_multi(context->hcontext, fname, &section);
+    if (ret == HEIM_ERR_CONFIG_BADFORMAT)
         return KRB5_CONFIG_BADFORMAT;
-    return ret;
+    if (ret)
+	return ret;
+    *res = (krb5_config_section *)section;
+    return 0;
 }
 
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
@@ -100,7 +118,6 @@ krb5_config_parse_file(krb5_context context,
                        const char *fname,
                        krb5_config_section **res)
 {
-    *res = NULL;
     return krb5_config_parse_file_multi(context, fname, res);
 }
 
@@ -120,7 +137,7 @@ krb5_config_parse_file(krb5_context context,
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_config_file_free(krb5_context context, krb5_config_section *s)
 {
-    return heim_config_file_free(context->hcontext, s);
+    return heim_config_file_free(context->hcontext, (heim_config_section *)s);
 }
 
 #ifndef HEIMDAL_SMALLER
@@ -128,9 +145,20 @@ krb5_config_file_free(krb5_context context, krb5_config_section *s)
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 _krb5_config_copy(krb5_context context,
 		  krb5_config_section *c,
-		  krb5_config_section **head)
+		  krb5_config_section **res)
 {
-    return heim_config_copy(context->hcontext, c, head);
+    krb5_error_code ret;
+    heim_config_section *section = NULL;
+
+    if (res == NULL)
+	return EINVAL;
+
+    *res = NULL;
+    ret = heim_config_copy(context->hcontext, (heim_config_section *)c, &section);
+    if (ret)
+	return ret;
+    *res = (krb5_config_section *)section;
+    return 0;
 }
 
 #endif /* HEIMDAL_SMALLER */
@@ -146,8 +174,9 @@ _krb5_config_get_next(krb5_context context,
     va_list args;
 
     va_start(args, type);
-    ret = heim_config_vget_next(context->hcontext, c ? c : context->cf,
-                                pointer, type, args);
+    ret = heim_config_vget_next(context->hcontext,
+				(const heim_config_section *)(c ? c : context->cf),
+                                (const heim_config_binding **)pointer, type, args);
     va_end(args);
     return ret;
 }
@@ -159,8 +188,9 @@ _krb5_config_vget_next(krb5_context context,
                        int type,
                        va_list args)
 {
-    return heim_config_vget_next(context->hcontext, c ? c : context->cf,
-                                 pointer, type, args);
+    return heim_config_vget_next(context->hcontext,
+				 (const heim_config_section *)(c ? c : context->cf),
+				 (const heim_config_binding **)pointer, type, args);
 }
 
 KRB5_LIB_FUNCTION const void * KRB5_LIB_CALL
@@ -173,7 +203,9 @@ _krb5_config_get(krb5_context context,
     va_list args;
 
     va_start(args, type);
-    ret = heim_config_vget(context->hcontext, c ? c : context->cf, type, args);
+    ret = heim_config_vget(context->hcontext,
+			   (const heim_config_section *)(c ? c : context->cf),
+			   type, args);
     va_end(args);
     return ret;
 }
@@ -185,7 +217,9 @@ _krb5_config_vget(krb5_context context,
 		  int type,
 		  va_list args)
 {
-    return heim_config_vget(context->hcontext, c ? c : context->cf, type, args);
+    return heim_config_vget(context->hcontext,
+			    (const heim_config_section *)(c ? c : context->cf),
+			    type, args);
 }
 
 /**
@@ -205,13 +239,15 @@ krb5_config_get_list(krb5_context context,
 		     const krb5_config_section *c,
 		     ...)
 {
-    const krb5_config_binding *ret;
+    const heim_config_binding *ret;
     va_list args;
 
     va_start(args, c);
-    ret = heim_config_vget_list(context->hcontext, c ? c : context->cf, args);
+    ret = heim_config_vget_list(context->hcontext,
+				(const heim_config_section *)(c ? c : context->cf),
+				args);
     va_end(args);
-    return ret;
+    return (const krb5_config_binding *)ret;
 }
 
 /**
@@ -231,7 +267,12 @@ krb5_config_vget_list(krb5_context context,
 		      const krb5_config_section *c,
 		      va_list args)
 {
-    return heim_config_vget_list(context->hcontext, c ? c : context->cf, args);
+    const heim_config_binding *ret;
+
+    ret = heim_config_vget_list(context->hcontext,
+				(const heim_config_section *)(c ? c : context->cf),
+				args);
+    return (const krb5_config_binding *)ret;
 }
 
 /**
@@ -258,8 +299,9 @@ krb5_config_get_string(krb5_context context,
     va_list args;
 
     va_start(args, c);
-    ret = heim_config_vget_string(context->hcontext, c ? c : context->cf,
-                                  args);
+    ret = heim_config_vget_string(context->hcontext,
+				  (const heim_config_section *)(c ? c : context->cf),
+				  args);
     va_end(args);
     return ret;
 }
@@ -281,8 +323,9 @@ krb5_config_vget_string(krb5_context context,
                         const krb5_config_section *c,
                         va_list args)
 {
-    return heim_config_vget_string(context->hcontext, c ? c : context->cf,
-                                   args);
+    return heim_config_vget_string(context->hcontext,
+				   (const heim_config_section *)(c ? c : context->cf),
+				   args);
 }
 
 /**
@@ -307,8 +350,8 @@ krb5_config_vget_string_default(krb5_context context,
                                 va_list args)
 {
     return heim_config_vget_string_default(context->hcontext,
-                                           c ? c : context->cf, def_value,
-                                           args);
+					   (const heim_config_section *)(c ? c : context->cf),
+					   def_value, args);
 }
 
 /**
@@ -337,8 +380,8 @@ krb5_config_get_string_default(krb5_context context,
 
     va_start(args, def_value);
     ret = heim_config_vget_string_default(context->hcontext,
-                                          c ? c : context->cf, def_value,
-                                          args);
+					  (const heim_config_section *)(c ? c : context->cf),
+					  def_value, args);
     va_end(args);
     return ret;
 }
@@ -362,7 +405,8 @@ krb5_config_vget_strings(krb5_context context,
 			 va_list args)
 {
     return heim_config_vget_strings(context->hcontext,
-                                    c ? c : context->cf, args);
+				    (const heim_config_section *)(c ? c : context->cf),
+				    args);
 }
 
 /**
@@ -386,7 +430,9 @@ krb5_config_get_strings(krb5_context context,
     va_list ap;
     char **ret;
     va_start(ap, c);
-    ret = heim_config_vget_strings(context->hcontext, c ? c : context->cf, ap);
+    ret = heim_config_vget_strings(context->hcontext,
+				   (const heim_config_section *)(c ? c : context->cf),
+				   ap);
     va_end(ap);
     return ret;
 }
@@ -431,7 +477,8 @@ krb5_config_vget_bool_default(krb5_context context,
 			      va_list args)
 {
     return heim_config_vget_bool_default(context->hcontext,
-                                         c ? c : context->cf, def_value, args);
+					 (const heim_config_section *)(c ? c : context->cf),
+					 def_value, args);
 }
 
 /**
@@ -453,8 +500,9 @@ krb5_config_vget_bool(krb5_context context,
                       const krb5_config_section *c,
                       va_list args)
 {
-    return heim_config_vget_bool_default(context->hcontext, c ? c :
-                                         context->cf, FALSE, args);
+    return heim_config_vget_bool_default(context->hcontext,
+					 (const heim_config_section *)(c ? c : context->cf),
+					 FALSE, args);
 }
 
 /**
@@ -482,8 +530,9 @@ krb5_config_get_bool_default(krb5_context context,
     va_list ap;
     krb5_boolean ret;
     va_start(ap, def_value);
-    ret = heim_config_vget_bool_default(context->hcontext, c ? c : context->cf,
-                                        def_value, ap);
+    ret = heim_config_vget_bool_default(context->hcontext,
+					(const heim_config_section *)(c ? c : context->cf),
+					def_value, ap);
     va_end(ap);
     return ret;
 }
@@ -540,8 +589,9 @@ krb5_config_vget_time_default(krb5_context context,
 			      int def_value,
 			      va_list args)
 {
-    return heim_config_vget_time_default(context->hcontext, c ? c :
-                                         context->cf, def_value, args);
+    return heim_config_vget_time_default(context->hcontext,
+					 (const heim_config_section *)(c ? c : context->cf),
+					 def_value, args);
 }
 
 /**
@@ -562,7 +612,8 @@ krb5_config_vget_time(krb5_context context,
                       va_list args)
 {
     return heim_config_vget_time_default(context->hcontext,
-                                         c ? c : context->cf, -1, args);
+					 (const heim_config_section *)(c ? c : context->cf),
+					 -1, args);
 }
 
 /**
@@ -588,8 +639,9 @@ krb5_config_get_time_default(krb5_context context,
     va_list ap;
     int ret;
     va_start(ap, def_value);
-    ret = heim_config_vget_time_default(context->hcontext, c ? c : context->cf,
-                                        def_value, ap);
+    ret = heim_config_vget_time_default(context->hcontext,
+					(const heim_config_section *)(c ? c : context->cf),
+					def_value, ap);
     va_end(ap);
     return ret;
 }
@@ -614,7 +666,9 @@ krb5_config_get_time(krb5_context context,
     va_list ap;
     int ret;
     va_start(ap, c);
-    ret = heim_config_vget_time(context->hcontext, c ? c : context->cf, ap);
+    ret = heim_config_vget_time(context->hcontext,
+				(const heim_config_section *)(c ? c : context->cf),
+				ap);
     va_end(ap);
     return ret;
 }
@@ -626,8 +680,9 @@ krb5_config_vget_int_default(krb5_context context,
 			     int def_value,
 			     va_list args)
 {
-    return heim_config_vget_int_default(context->hcontext, c ? c : context->cf,
-                                        def_value, args);
+    return heim_config_vget_int_default(context->hcontext,
+					(const heim_config_section *)(c ? c : context->cf),
+					def_value, args);
 }
 
 KRB5_LIB_FUNCTION int KRB5_LIB_CALL
@@ -635,8 +690,9 @@ krb5_config_vget_int(krb5_context context,
 		     const krb5_config_section *c,
 		     va_list args)
 {
-    return heim_config_vget_int_default(context->hcontext, c ? c : context->cf,
-                                        -1, args);
+    return heim_config_vget_int_default(context->hcontext,
+					(const heim_config_section *)(c ? c : context->cf),
+					-1, args);
 }
 
 KRB5_LIB_FUNCTION int KRB5_LIB_CALL
@@ -648,8 +704,9 @@ krb5_config_get_int_default(krb5_context context,
     va_list ap;
     int ret;
     va_start(ap, def_value);
-    ret = heim_config_vget_int_default(context->hcontext, c ? c : context->cf,
-                                       def_value, ap);
+    ret = heim_config_vget_int_default(context->hcontext,
+				       (const heim_config_section *)(c ? c : context->cf),
+				       def_value, ap);
     va_end(ap);
     return ret;
 }
@@ -662,7 +719,9 @@ krb5_config_get_int(krb5_context context,
     va_list ap;
     int ret;
     va_start(ap, c);
-    ret = heim_config_vget_int(context->hcontext, c ? c : context->cf, ap);
+    ret = heim_config_vget_int(context->hcontext,
+			       (const heim_config_section *)(c ? c : context->cf),
+			       ap);
     va_end(ap);
     return ret;
 }
@@ -682,10 +741,18 @@ krb5_config_parse_string_multi(krb5_context context,
     KRB5_DEPRECATED_FUNCTION("Use X instead")
 {
     krb5_error_code ret;
+    heim_config_section *section = NULL;
 
-    ret = heim_config_parse_string_multi(context->hcontext, string, res);
+    if (res == NULL)
+	return EINVAL;
+
+    *res = NULL;
+    ret = heim_config_parse_string_multi(context->hcontext, string, &section);
     if (ret == HEIM_ERR_CONFIG_BADFORMAT)
         return KRB5_CONFIG_BADFORMAT;
-    return ret;
+    if (ret)
+	return ret;
+    *res = (krb5_config_section *)section;
+    return 0;
 }
 #endif

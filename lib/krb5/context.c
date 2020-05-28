@@ -695,7 +695,7 @@ krb5_set_config_files(krb5_context context, char **filenames)
                                      &tmp)))
         return ret;
     krb5_config_file_free(context, context->cf);
-    context->cf = tmp;
+    context->cf = (krb5_config_binding *)tmp;
     return init_context_from_config_file(context);
 }
 

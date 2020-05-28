@@ -120,15 +120,17 @@ struct heim_plugin_data {
     heim_get_instance_func_t get_instance;
 };
 
-typedef struct heim_config_binding heim_config_binding;
+/*
+ * heim_config_binding is identical to struct krb5_config_binding
+ * within krb5.h.  Its format is public and used by callers of
+ * krb5_config_get_list() and krb5_config_vget_list().
+ */
+enum heim_config_type {
+    heim_config_string,
+    heim_config_list,
+};
 struct heim_config_binding {
-    enum {
-        heim_config_string,
-        heim_config_list,
-        /* For compatibility in krb5 code */
-        krb5_config_string = heim_config_string,
-        krb5_config_list = heim_config_list,
-    } type;
+    enum heim_config_type type;
     char *name;
     struct heim_config_binding *next;
     union {
@@ -137,6 +139,7 @@ struct heim_config_binding {
         void *generic;
     } u;
 };
+typedef struct heim_config_binding heim_config_binding;
 typedef struct heim_config_binding heim_config_section;
 
 /*

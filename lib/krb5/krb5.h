@@ -534,7 +534,27 @@ typedef struct krb5_cc_ops {
     /* Add new functions here for versions 6 and above */
 } krb5_cc_ops;
 
-typedef struct heim_config_binding krb5_config_binding;
+/*
+ * krb5_config_binding is identical to struct heim_config_binding
+ * within heimbase.h.  Its format is public and used by callers of
+ * krb5_config_get_list() and krb5_config_vget_list().
+ */
+enum krb5_config_type {
+    krb5_config_string,
+    krb5_config_list,
+};
+struct krb5_config_binding {
+    enum krb5_config_type type;
+    char *name;
+    struct krb5_config_binding *next;
+    union {
+        char *string;
+        struct krb5_config_binding *list;
+        void *generic;
+    } u;
+};
+
+typedef struct krb5_config_binding krb5_config_binding;
 typedef krb5_config_binding krb5_config_section;
 
 typedef struct krb5_ticket {

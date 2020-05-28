@@ -1054,10 +1054,10 @@ make_cache(krb5_context context,
 
 /* Create a keyring ccache handle for the given residual string. */
 static krb5_error_code KRB5_CALLCONV
-krcc_resolve(krb5_context context,
-             krb5_ccache *id,
-             const char *residual,
-             const char *sub)
+krcc_resolve_2(krb5_context context,
+	       krb5_ccache *id,
+	       const char *residual,
+	       const char *sub)
 {
     krb5_error_code ret;
     key_serial_t collection_id, cache_id;
@@ -1346,11 +1346,11 @@ cleanup:
 
 /* Return an alias to the residual string of the cache. */
 static krb5_error_code KRB5_CALLCONV
-krcc_get_name(krb5_context context,
-              krb5_ccache id,
-              const char **name,
-              const char **collection_name,
-              const char **subsidiary_name)
+krcc_get_name_2(krb5_context context,
+		krb5_ccache id,
+		const char **name,
+		const char **collection_name,
+		const char **subsidiary_name)
 {
     krb5_krcache *data = KRCACHE(id);
 
@@ -2040,10 +2040,10 @@ krcc_get_default_name(krb5_context context, char **str)
  * be stored at the process or thread level respectively.
  */
 KRB5_LIB_VARIABLE const krb5_cc_ops krb5_krcc_ops = {
-    KRB5_CC_OPS_VERSION,
+    KRB5_CC_OPS_VERSION_5,
     "KEYRING",
-    krcc_get_name,
-    krcc_resolve,
+    NULL,
+    NULL,
     krcc_gen_new,
     krcc_initialize,
     krcc_destroy,
@@ -2066,6 +2066,8 @@ KRB5_LIB_VARIABLE const krb5_cc_ops krb5_krcc_ops = {
     krcc_lastchange,
     krcc_set_kdc_offset,
     krcc_get_kdc_offset,
+    krcc_get_name_2,
+    krcc_resolve_2
 };
 
 #endif /* HAVE_KEYUTILS_H */

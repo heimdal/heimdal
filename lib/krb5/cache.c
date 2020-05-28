@@ -211,8 +211,13 @@ allocate_ccache(krb5_context context,
 	return ret;
     }
 
-    ret = (*id)->ops->resolve(context, id, residual, subsidiary);
-    if(ret) {
+    if ((*id)->ops->version < KRB5_CC_OPS_VERSION_5
+	|| (*id)->ops->resolve_2 == NULL) {
+	ret = (*id)->ops->resolve(context, id, residual);
+    } else {
+	ret = (*id)->ops->resolve_2(context, id, residual, subsidiary);
+    }
+    if (ret) {
 	free(*id);
         *id = NULL;
     }
@@ -482,10 +487,7 @@ KRB5_LIB_FUNCTION const char* KRB5_LIB_CALL
 krb5_cc_get_name(krb5_context context,
 		 krb5_ccache id)
 {
-    const char *name;
-
-    (void) id->ops->get_name(context, id, &name, NULL, NULL);
-    return name;
+    return id->ops->get_name(context, id);
 }
 
 /**
@@ -499,8 +501,16 @@ KRB5_LIB_FUNCTION const char* KRB5_LIB_CALL
 krb5_cc_get_collection(krb5_context context, krb5_ccache id)
 {
     const char *name;
+    int ret;
 
-    (void) id->ops->get_name(context, id, NULL, &name, NULL);
+    if (id->ops->version < KRB5_CC_OPS_VERSION_5
+	|| id->ops->get_name_2 == NULL)
+	return NULL;
+
+    ret = id->ops->get_name_2(context, id, NULL, &name, NULL);
+    if (ret)
+	return NULL;
+
     return name;
 }
 
@@ -658,7 +668,8 @@ krb5_cc_switch(krb5_context context, krb5_ccache id)
     _krb5_set_default_cc_name_to_registry(context, id);
 #endif
 
-    if (id->ops->set_default == NULL)
+    if (id->ops->version == KRB5_CC_OPS_VERSION_0
+	|| id->ops->set_default == NULL)
 	return 0;
 
     return (*id->ops->set_default)(context, id);
@@ -676,7 +687,7 @@ krb5_cc_support_switch(krb5_context context, const char *type)
     const krb5_cc_ops *ops;
 
     ops = krb5_cc_get_prefix_ops(context, type);
-    if (ops && ops->set_default)
+    if (ops && ops->version > KRB5_CC_OPS_VERSION_0 && ops->set_default)
 	return 1;
     return FALSE;
 }
@@ -1975,6 +1986,11 @@ krb5_cc_last_change_time(krb5_context context,
 			 krb5_timestamp *mtime)
 {
     *mtime = 0;
+
+    if (id->ops->version < KRB5_CC_OPS_VERSION_2
+	 || id->ops->lastchange == NULL)
+	return KRB5_CC_NOSUPP;
+
     return (*id->ops->lastchange)(context, id, mtime);
 }
 
@@ -2189,7 +2205,8 @@ krb5_cc_get_lifetime(krb5_context context, krb5_ccache id, time_t *t)
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_cc_set_kdc_offset(krb5_context context, krb5_ccache id, krb5_deltat offset)
 {
-    if (id->ops->set_kdc_offset == NULL) {
+    if (id->ops->version < KRB5_CC_OPS_VERSION_3
+	|| id->ops->set_kdc_offset == NULL) {
 	context->kdc_sec_offset = offset;
 	context->kdc_usec_offset = 0;
 	return 0;
@@ -2214,7 +2231,8 @@ krb5_cc_set_kdc_offset(krb5_context context, krb5_ccache id, krb5_deltat offset)
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_cc_get_kdc_offset(krb5_context context, krb5_ccache id, krb5_deltat *offset)
 {
-    if (id->ops->get_kdc_offset == NULL) {
+    if (id->ops->version < KRB5_CC_OPS_VERSION_3
+	|| id->ops->get_kdc_offset == NULL) {
 	*offset = context->kdc_sec_offset;
 	return 0;
     }

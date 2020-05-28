@@ -59,11 +59,11 @@ static struct krb5_mcache *mcc_head;
 #define MISDEAD(X)	((X)->dead)
 
 static krb5_error_code KRB5_CALLCONV
-mcc_get_name(krb5_context context,
-	     krb5_ccache id,
-             const char **name,
-             const char **col,
-             const char **sub)
+mcc_get_name_2(krb5_context context,
+	       krb5_ccache id,
+	       const char **name,
+	       const char **col,
+	       const char **sub)
 {
     if (name)
         *name = MCACHE(id)->name;
@@ -157,10 +157,10 @@ again:
 }
 
 static krb5_error_code KRB5_CALLCONV
-mcc_resolve(krb5_context context,
-            krb5_ccache *id,
-            const char *res,
-            const char *sub)
+mcc_resolve_2(krb5_context context,
+	      krb5_ccache *id,
+	      const char *res,
+	      const char *sub)
 {
     krb5_error_code ret;
     krb5_mcache *m;
@@ -610,10 +610,10 @@ mcc_get_kdc_offset(krb5_context context, krb5_ccache id, krb5_deltat *kdc_offset
  */
 
 KRB5_LIB_VARIABLE const krb5_cc_ops krb5_mcc_ops = {
-    KRB5_CC_OPS_VERSION,
+    KRB5_CC_OPS_VERSION_5,
     "MEMORY",
-    mcc_get_name,
-    mcc_resolve,
+    NULL,
+    NULL,
     mcc_gen_new,
     mcc_initialize,
     mcc_destroy,
@@ -635,5 +635,7 @@ KRB5_LIB_VARIABLE const krb5_cc_ops krb5_mcc_ops = {
     NULL,
     mcc_lastchange,
     mcc_set_kdc_offset,
-    mcc_get_kdc_offset
+    mcc_get_kdc_offset,
+    mcc_get_name_2,
+    mcc_resolve_2
 };

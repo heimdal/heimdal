@@ -491,16 +491,19 @@ typedef struct krb5_creds {
 
 typedef struct krb5_cc_cache_cursor_data *krb5_cc_cache_cursor;
 
-#define KRB5_CC_OPS_VERSION 4
+#define KRB5_CC_OPS_VERSION_0	0
+#define KRB5_CC_OPS_VERSION_1	1
+#define KRB5_CC_OPS_VERSION_2	2
+#define KRB5_CC_OPS_VERSION_3	3
+#define KRB5_CC_OPS_VERSION_5	5
 
+/* Only extend the structure. Do not change signatures. */
 typedef struct krb5_cc_ops {
+    /* Version 0 */
     int version;
     const char *prefix;
-    krb5_error_code (KRB5_CALLCONV * get_name)(krb5_context, krb5_ccache,
-                                               const char **, const char **,
-                                               const char **);
-    krb5_error_code (KRB5_CALLCONV * resolve)(krb5_context, krb5_ccache *, const char *,
-                                              const char *);
+    const char* (KRB5_CALLCONV * get_name)(krb5_context, krb5_ccache);
+    krb5_error_code (KRB5_CALLCONV * resolve)(krb5_context, krb5_ccache *, const char *);
     krb5_error_code (KRB5_CALLCONV * gen_new)(krb5_context, krb5_ccache *);
     krb5_error_code (KRB5_CALLCONV * init)(krb5_context, krb5_ccache, krb5_principal);
     krb5_error_code (KRB5_CALLCONV * destroy)(krb5_context, krb5_ccache);
@@ -523,10 +526,20 @@ typedef struct krb5_cc_ops {
     krb5_error_code (KRB5_CALLCONV * end_cache_get)(krb5_context, krb5_cc_cursor);
     krb5_error_code (KRB5_CALLCONV * move)(krb5_context, krb5_ccache, krb5_ccache);
     krb5_error_code (KRB5_CALLCONV * get_default_name)(krb5_context, char **);
+    /* Version 1 */
     krb5_error_code (KRB5_CALLCONV * set_default)(krb5_context, krb5_ccache);
+    /* Version 2 */
     krb5_error_code (KRB5_CALLCONV * lastchange)(krb5_context, krb5_ccache, krb5_timestamp *);
+    /* Version 3 */
     krb5_error_code (KRB5_CALLCONV * set_kdc_offset)(krb5_context, krb5_ccache, krb5_deltat);
     krb5_error_code (KRB5_CALLCONV * get_kdc_offset)(krb5_context, krb5_ccache, krb5_deltat *);
+    /* Version 5 */
+    krb5_error_code (KRB5_CALLCONV * get_name_2)(krb5_context, krb5_ccache,
+						 const char **id, const char **res,
+						 const char **sub);
+    krb5_error_code (KRB5_CALLCONV * resolve_2)(krb5_context, krb5_ccache *id, const char *res,
+						const char *sub);
+    /* Add new functions here for versions 6 and above */
 } krb5_cc_ops;
 
 typedef struct heim_config_binding krb5_config_binding;

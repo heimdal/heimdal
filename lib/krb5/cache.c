@@ -526,8 +526,8 @@ krb5_cc_get_subsidiary(krb5_context context, krb5_ccache id)
 {
     const char *name = NULL;
 
-    if (id->ops->version < KRB5_CC_OPS_VERSION_5
-	|| id->ops->get_name_2 == NULL)
+    if (id->ops->version >= KRB5_CC_OPS_VERSION_5
+	&& id->ops->get_name_2 == NULL)
         (void) id->ops->get_name_2(context, id, NULL, NULL, &name);
     return name;
 }

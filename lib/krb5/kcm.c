@@ -232,11 +232,11 @@ kcm_free(krb5_context context, krb5_ccache *id)
 }
 
 static krb5_error_code KRB5_CALLCONV
-kcm_get_name(krb5_context context,
-	     krb5_ccache id,
-             const char **name,
-             const char **col,
-             const char **sub)
+kcm_get_name_2(krb5_context context,
+	       krb5_ccache id,
+	       const char **name,
+	       const char **col,
+	       const char **sub)
 {
     /*
      * TODO:
@@ -255,10 +255,10 @@ kcm_get_name(krb5_context context,
 }
 
 static krb5_error_code
-kcm_resolve(krb5_context context,
-            krb5_ccache *id,
-            const char *res,
-            const char *sub)
+kcm_resolve_2(krb5_context context,
+	      krb5_ccache *id,
+	      const char *res,
+	      const char *sub)
 {
     /*
      * For now, for KCM the `res' is the `sub'.
@@ -1126,7 +1126,7 @@ kcm_get_kdc_offset(krb5_context context, krb5_ccache id, krb5_deltat *kdc_offset
  */
 
 KRB5_LIB_VARIABLE const krb5_cc_ops krb5_kcm_ops = {
-    KRB5_CC_OPS_VERSION,
+    KRB5_CC_OPS_VERSION_5,
     "KCM",
     kcm_get_name,
     kcm_resolve,
@@ -1151,14 +1151,16 @@ KRB5_LIB_VARIABLE const krb5_cc_ops krb5_kcm_ops = {
     kcm_set_default,
     kcm_lastchange,
     kcm_set_kdc_offset,
-    kcm_get_kdc_offset
+    kcm_get_kdc_offset,
+    kcm_get_name_2,
+    kcm_resolve_2
 };
 
 KRB5_LIB_VARIABLE const krb5_cc_ops krb5_akcm_ops = {
-    KRB5_CC_OPS_VERSION,
+    KRB5_CC_OPS_VERSION_5,
     "API",
-    kcm_get_name,
-    kcm_resolve,
+    NULL,
+    NULL,
     kcm_gen_new,
     kcm_initialize,
     kcm_destroy,
@@ -1180,7 +1182,9 @@ KRB5_LIB_VARIABLE const krb5_cc_ops krb5_akcm_ops = {
     kcm_set_default,
     kcm_lastchange,
     NULL,
-    NULL
+    NULL,
+    kcm_get_name_2,
+    kcm_resolve_2
 };
 
 

@@ -566,11 +566,11 @@ bind_principal(krb5_context context,
  */
 
 static krb5_error_code KRB5_CALLCONV
-scc_get_name(krb5_context context,
-	     krb5_ccache id,
-             const char **name,
-             const char **file,
-             const char **sub)
+scc_get_name_2(krb5_context context,
+	       krb5_ccache id,
+	       const char **name,
+	       const char **file,
+	       const char **sub)
 {
     if (name)
         *name = SCACHE(id)->name;
@@ -582,10 +582,10 @@ scc_get_name(krb5_context context,
 }
 
 static krb5_error_code KRB5_CALLCONV
-scc_resolve(krb5_context context,
-            krb5_ccache *id,
-            const char *res,
-            const char *sub)
+scc_resolve_2(krb5_context context,
+	      krb5_ccache *id,
+	      const char *res,
+	      const char *sub)
 {
     krb5_error_code ret;
     krb5_scache *s;
@@ -1351,7 +1351,7 @@ again:
 
     ret = _krb5_cc_allocate(context, &krb5_scc_ops, id);
     if (ret == 0)
-        ret = scc_resolve(context, id, ctx->file, name);
+	ret = scc_resolve_2(context, id, ctx->file, name);
     if (ret) {
         free(*id);
         *id = NULL;
@@ -1485,10 +1485,10 @@ scc_set_default(krb5_context context, krb5_ccache id)
  */
 
 KRB5_LIB_VARIABLE const krb5_cc_ops krb5_scc_ops = {
-    KRB5_CC_OPS_VERSION,
+    KRB5_CC_OPS_VERSION_5,
     "SCC",
-    scc_get_name,
-    scc_resolve,
+    NULL,
+    NULL,
     scc_gen_new,
     scc_initialize,
     scc_destroy,
@@ -1510,7 +1510,9 @@ KRB5_LIB_VARIABLE const krb5_cc_ops krb5_scc_ops = {
     scc_set_default,
     NULL,
     NULL,
-    NULL
+    NULL,
+    scc_get_name_2,
+    scc_resolve_2
 };
 
 #endif

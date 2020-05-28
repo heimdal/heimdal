@@ -244,11 +244,11 @@ get_default_cache(krb5_context context, krb5_dcache *dc,
 
 
 static krb5_error_code KRB5_CALLCONV
-dcc_get_name(krb5_context context,
-	     krb5_ccache id,
-             const char **name,
-             const char **dir,
-             const char **sub)
+dcc_get_name_2(krb5_context context,
+	       krb5_ccache id,
+	       const char **name,
+	       const char **dir,
+	       const char **sub)
 {
     krb5_dcache *dc = DCACHE(id);
 
@@ -329,10 +329,10 @@ get_default_dir(krb5_context context, char **res)
 }
 
 static krb5_error_code KRB5_CALLCONV
-dcc_resolve(krb5_context context,
-            krb5_ccache *id,
-            const char *res,
-            const char *sub)
+dcc_resolve_2(krb5_context context,
+	      krb5_ccache *id,
+	      const char *res,
+	      const char *sub)
 {
     krb5_error_code ret;
     krb5_dcache *dc = NULL;
@@ -505,7 +505,7 @@ dcc_gen_new(krb5_context context, krb5_ccache *id)
     if (ret == 0 && (fd = mkstemp(name + sizeof("DIR::") - 1)) == -1)
 	ret = errno;
     if (ret == 0)
-        ret = dcc_resolve(context, id, name + sizeof("DIR:") - 1, NULL);
+	ret = dcc_resolve_2(context, id, name + sizeof("DIR:") - 1, NULL);
 
     free(def_dir);
     free(name);
@@ -824,10 +824,10 @@ dcc_get_kdc_offset(krb5_context context, krb5_ccache id, krb5_deltat *kdc_offset
  */
 
 KRB5_LIB_VARIABLE const krb5_cc_ops krb5_dcc_ops = {
-    KRB5_CC_OPS_VERSION,
+    KRB5_CC_OPS_VERSION_5,
     "DIR",
-    dcc_get_name,
-    dcc_resolve,
+    NULL,
+    NULL,
     dcc_gen_new,
     dcc_initialize,
     dcc_destroy,
@@ -849,5 +849,7 @@ KRB5_LIB_VARIABLE const krb5_cc_ops krb5_dcc_ops = {
     dcc_set_default,
     dcc_lastchange,
     dcc_set_kdc_offset,
-    dcc_get_kdc_offset
+    dcc_get_kdc_offset,
+    dcc_get_name_2,
+    dcc_resolve_2
 };

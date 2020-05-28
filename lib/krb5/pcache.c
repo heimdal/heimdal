@@ -48,7 +48,7 @@ cc_plugin_register_to_context(krb5_context context, const void *plug, void *plug
     krb5_cc_ops *ccops = (krb5_cc_ops *)plugctx;
     krb5_error_code ret;
 
-    if (ccops == NULL || ccops->version < KRB5_CC_OPS_VERSION)
+    if (ccops == NULL)
        return KRB5_PLUGIN_NO_HANDLE;
 
     ret = krb5_cc_register(context, ccops, TRUE);

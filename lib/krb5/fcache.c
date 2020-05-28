@@ -67,11 +67,11 @@ struct fcc_cursor {
 #define FCC_CURSOR(C) ((struct fcc_cursor*)(C))
 
 static krb5_error_code KRB5_CALLCONV
-fcc_get_name(krb5_context context,
-	     krb5_ccache id,
-             const char **name,
-             const char **colname,
-             const char **sub)
+fcc_get_name_2(krb5_context context,
+	       krb5_ccache id,
+	       const char **name,
+	       const char **colname,
+	       const char **sub)
 {
     if (FCACHE(id) == NULL)
         return KRB5_CC_NOTFOUND;
@@ -196,7 +196,7 @@ fcc_lock(krb5_context context, krb5_ccache id,
 
     if (exclusive == FALSE)
         return 0;
-    ret = fcc_get_name(context, id, &name, NULL, NULL);
+    ret = fcc_get_name_2(context, id, &name, NULL, NULL);
     if (ret == 0)
         ret = _krb5_xlock(context, fd, exclusive, name);
     return ret;
@@ -214,10 +214,10 @@ fcc_get_default_name(krb5_context, char **);
 #define FILESUBSEPCHR ((FILESUBSEP)[0])
 
 static krb5_error_code KRB5_CALLCONV
-fcc_resolve(krb5_context context,
-            krb5_ccache *id,
-            const char *res,
-            const char *sub)
+fcc_resolve_2(krb5_context context,
+	      krb5_ccache *id,
+	      const char *res,
+	      const char *sub)
 {
     krb5_fcache *f;
     char *freeme = NULL;
@@ -1662,10 +1662,10 @@ fcc_get_kdc_offset(krb5_context context, krb5_ccache id, krb5_deltat *kdc_offset
  */
 
 KRB5_LIB_VARIABLE const krb5_cc_ops krb5_fcc_ops = {
-    KRB5_CC_OPS_VERSION,
+    KRB5_CC_OPS_VERSION_5,
     "FILE",
-    fcc_get_name,
-    fcc_resolve,
+    NULL,
+    NULL,
     fcc_gen_new,
     fcc_initialize,
     fcc_destroy,
@@ -1687,5 +1687,7 @@ KRB5_LIB_VARIABLE const krb5_cc_ops krb5_fcc_ops = {
     fcc_set_default_cache,
     fcc_lastchange,
     fcc_set_kdc_offset,
-    fcc_get_kdc_offset
+    fcc_get_kdc_offset,
+    fcc_get_name_2,
+    fcc_resolve_2
 };

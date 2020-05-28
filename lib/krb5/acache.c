@@ -444,11 +444,11 @@ get_cc_name(krb5_acc *a)
 
 
 static krb5_error_code KRB5_CALLCONV
-acc_get_name(krb5_context context,
-	     krb5_ccache id,
-             const char **name,
-             const char **colname,
-             const char **subsidiary)
+acc_get_name_2(krb5_context context,
+	       krb5_ccache id,
+	       const char **name,
+	       const char **colname,
+	       const char **subsidiary)
 {
     krb5_error_code ret = 0;
     krb5_acc *a = ACACHE(id);
@@ -523,7 +523,7 @@ acc_alloc(krb5_context context, krb5_ccache *id)
 }
 
 static krb5_error_code KRB5_CALLCONV
-acc_resolve(krb5_context context, krb5_ccache *id, const char *res, const char *sub)
+acc_resolve_2(krb5_context context, krb5_ccache *id, const char *res, const char *sub)
 {
     krb5_error_code ret;
     cc_time_t offset;
@@ -1095,10 +1095,10 @@ acc_lastchange(krb5_context context, krb5_ccache id, krb5_timestamp *mtime)
  */
 
 KRB5_LIB_VARIABLE const krb5_cc_ops krb5_acc_ops = {
-    KRB5_CC_OPS_VERSION,
+    KRB5_CC_OPS_VERSION_5,
     "API",
-    acc_get_name,
-    acc_resolve,
+    NULL,
+    NULL,
     acc_gen_new,
     acc_initialize,
     acc_destroy,
@@ -1121,6 +1121,8 @@ KRB5_LIB_VARIABLE const krb5_cc_ops krb5_acc_ops = {
     acc_lastchange,
     NULL,
     NULL,
+    acc_get_name_2,
+    acc_resolve_2
 };
 
 #endif

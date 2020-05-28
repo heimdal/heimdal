@@ -1128,8 +1128,8 @@ kcm_get_kdc_offset(krb5_context context, krb5_ccache id, krb5_deltat *kdc_offset
 KRB5_LIB_VARIABLE const krb5_cc_ops krb5_kcm_ops = {
     KRB5_CC_OPS_VERSION_5,
     "KCM",
-    kcm_get_name,
-    kcm_resolve,
+    NULL,
+    NULL,
     kcm_gen_new,
     kcm_initialize,
     kcm_destroy,

@@ -806,7 +806,7 @@ define_type (int level, const char *name, const char *basename, Type *t, int typ
         if (max_memno > 63)
             range.max = INT64_MAX;
         else
-            range.max = 1LU << max_memno;
+            range.max = 1ULL << max_memno;
 
 	i.type = TInteger;
 	i.range = &range;

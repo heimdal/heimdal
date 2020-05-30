@@ -53,7 +53,7 @@ generate_2int (const Type *t, const char *gen_name)
 	     gen_name, gen_name);
 
     HEIM_TAILQ_FOREACH(m, t->members, members) {
-	fprintf (codefile, "if(f.%s) r |= (1LU << %d);\n",
+	fprintf (codefile, "if(f.%s) r |= (1ULL << %d);\n",
 		 m->gen_name, m->val);
     }
     fprintf (codefile, "return r;\n"
@@ -114,7 +114,7 @@ generate_units (const Type *t, const char *gen_name)
     if(t->members) {
 	HEIM_TAILQ_FOREACH_REVERSE(m, t->members, memhead, members) {
 	    fprintf (codefile,
-		     "\t{\"%s\",\t1LU << %d},\n", m->name, m->val);
+		     "\t{\"%s\",\t1ULL << %d},\n", m->name, m->val);
 	}
     }
 

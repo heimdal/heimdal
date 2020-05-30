@@ -41,7 +41,7 @@
  * Either 0 or an error code is returned.
  */
 
-int
+int ASN1CALL
 der_get_unsigned (const unsigned char *p, size_t len,
 		  unsigned *ret, size_t *size)
 {
@@ -60,7 +60,7 @@ der_get_unsigned (const unsigned char *p, size_t len,
     return 0;
 }
 
-int
+int ASN1CALL
 der_get_unsigned64 (const unsigned char *p, size_t len,
                    uint64_t *ret, size_t *size)
 {
@@ -79,7 +79,7 @@ der_get_unsigned64 (const unsigned char *p, size_t len,
     return 0;
 }
 
-int
+int ASN1CALL
 der_get_integer (const unsigned char *p, size_t len,
 		 int *ret, size_t *size)
 {
@@ -99,7 +99,7 @@ der_get_integer (const unsigned char *p, size_t len,
     return 0;
 }
 
-int
+int ASN1CALL
 der_get_integer64 (const unsigned char *p, size_t len,
 		   int64_t *ret, size_t *size)
 {
@@ -120,7 +120,7 @@ der_get_integer64 (const unsigned char *p, size_t len,
 }
 
 
-int
+int ASN1CALL
 der_get_length (const unsigned char *p, size_t len,
 		size_t *val, size_t *size)
 {
@@ -154,7 +154,7 @@ der_get_length (const unsigned char *p, size_t len,
     return 0;
 }
 
-int
+int ASN1CALL
 der_get_boolean(const unsigned char *p, size_t len, int *data, size_t *size)
 {
     if(len < 1)
@@ -167,7 +167,7 @@ der_get_boolean(const unsigned char *p, size_t len, int *data, size_t *size)
     return 0;
 }
 
-int
+int ASN1CALL
 der_get_general_string (const unsigned char *p, size_t len,
 			heim_general_string *str, size_t *size)
 {
@@ -203,7 +203,7 @@ der_get_general_string (const unsigned char *p, size_t len,
     return 0;
 }
 
-int
+int ASN1CALL
 der_get_utf8string (const unsigned char *p, size_t len,
 		    heim_utf8_string *str, size_t *size)
 {
@@ -213,7 +213,7 @@ der_get_utf8string (const unsigned char *p, size_t len,
 #define gen_data_zero(_data) \
 	do { (_data)->length = 0; (_data)->data = NULL; } while(0)
 
-int
+int ASN1CALL
 der_get_printable_string(const unsigned char *p, size_t len,
 			 heim_printable_string *str, size_t *size)
 {
@@ -233,14 +233,14 @@ der_get_printable_string(const unsigned char *p, size_t len,
     return 0;
 }
 
-int
+int ASN1CALL
 der_get_ia5_string(const unsigned char *p, size_t len,
 		   heim_ia5_string *str, size_t *size)
 {
     return der_get_printable_string(p, len, str, size);
 }
 
-int
+int ASN1CALL
 der_get_bmp_string (const unsigned char *p, size_t len,
 		    heim_bmp_string *data, size_t *size)
 {
@@ -276,7 +276,7 @@ der_get_bmp_string (const unsigned char *p, size_t len,
     return 0;
 }
 
-int
+int ASN1CALL
 der_get_universal_string (const unsigned char *p, size_t len,
 			  heim_universal_string *data, size_t *size)
 {
@@ -311,14 +311,14 @@ der_get_universal_string (const unsigned char *p, size_t len,
     return 0;
 }
 
-int
+int ASN1CALL
 der_get_visible_string (const unsigned char *p, size_t len,
 			heim_visible_string *str, size_t *size)
 {
     return der_get_general_string(p, len, str, size);
 }
 
-int
+int ASN1CALL
 der_get_octet_string (const unsigned char *p, size_t len,
 		      heim_octet_string *data, size_t *size)
 {
@@ -331,7 +331,7 @@ der_get_octet_string (const unsigned char *p, size_t len,
     return 0;
 }
 
-int
+int ASN1CALL
 der_get_octet_string_ber (const unsigned char *p, size_t len,
 			  heim_octet_string *data, size_t *size)
 {
@@ -400,7 +400,7 @@ der_get_octet_string_ber (const unsigned char *p, size_t len,
 }
 
 
-int
+int ASN1CALL
 der_get_heim_integer (const unsigned char *p, size_t len,
 		      heim_integer *data, size_t *size)
 {
@@ -486,7 +486,7 @@ generalizedtime2time (const char *s, time_t *t)
     return 0;
 }
 
-static int
+static int ASN1CALL
 der_get_time (const unsigned char *p, size_t len,
 	      time_t *data, size_t *size)
 {
@@ -507,21 +507,21 @@ der_get_time (const unsigned char *p, size_t len,
     return e;
 }
 
-int
+int ASN1CALL
 der_get_generalized_time (const unsigned char *p, size_t len,
 			  time_t *data, size_t *size)
 {
     return der_get_time(p, len, data, size);
 }
 
-int
+int ASN1CALL
 der_get_utctime (const unsigned char *p, size_t len,
 			  time_t *data, size_t *size)
 {
     return der_get_time(p, len, data, size);
 }
 
-int
+int ASN1CALL
 der_get_oid (const unsigned char *p, size_t len,
 	     heim_oid *data, size_t *size)
 {
@@ -569,7 +569,7 @@ der_get_oid (const unsigned char *p, size_t len,
     return 0;
 }
 
-int
+int ASN1CALL
 der_get_tag (const unsigned char *p, size_t len,
 	     Der_class *cls, Der_type *type,
 	     unsigned int *tag, size_t *size)
@@ -601,7 +601,7 @@ der_get_tag (const unsigned char *p, size_t len,
     return 0;
 }
 
-int
+int ASN1CALL
 der_match_tag (const unsigned char *p, size_t len,
 	       Der_class cls, Der_type type,
 	       unsigned int tag, size_t *size)
@@ -615,7 +615,7 @@ der_match_tag (const unsigned char *p, size_t len,
     return 0;
 }
 
-int
+int ASN1CALL
 der_match_tag2 (const unsigned char *p, size_t len,
 		Der_class cls, Der_type *type,
 		unsigned int tag, size_t *size)
@@ -637,7 +637,7 @@ der_match_tag2 (const unsigned char *p, size_t len,
     return 0;
 }
 
-int
+int ASN1CALL
 der_match_tag_and_length (const unsigned char *p, size_t len,
 			  Der_class cls, Der_type *type, unsigned int tag,
 			  size_t *length_ret, size_t *size)
@@ -682,7 +682,7 @@ _heim_fix_dce(size_t reallen, size_t *len)
     return 0;
 }
 
-int
+int ASN1CALL
 der_get_bit_string (const unsigned char *p, size_t len,
 		    heim_bit_string *data, size_t *size)
 {

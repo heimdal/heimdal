@@ -94,11 +94,11 @@ struct asn1_template {
     const void *ptr;
 };
 
-typedef int (*asn1_type_decode)(const unsigned char *, size_t, void *, size_t *);
-typedef int (*asn1_type_encode)(unsigned char *, size_t, const void *, size_t *);
-typedef size_t (*asn1_type_length)(const void *);
-typedef void (*asn1_type_release)(void *);
-typedef int (*asn1_type_copy)(const void *, void *);
+typedef int (ASN1CALL *asn1_type_decode)(const unsigned char *, size_t, void *, size_t *);
+typedef int (ASN1CALL *asn1_type_encode)(unsigned char *, size_t, const void *, size_t *);
+typedef size_t (ASN1CALL *asn1_type_length)(const void *);
+typedef void (ASN1CALL *asn1_type_release)(void *);
+typedef int (ASN1CALL *asn1_type_copy)(const void *, void *);
 
 struct asn1_type_func {
     asn1_type_encode encode;

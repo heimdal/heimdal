@@ -384,7 +384,7 @@ decode_type(const char *name, const Type *t, int optional, struct value *defval,
 	    decode_type (s, m->type, 0, NULL, forwstr, m->gen_name, NULL, depth + 1);
 	    free (s);
 
-	    fprintf(codefile, "members |= (1LU << %u);\n", memno);
+	    fprintf(codefile, "members |= (1ULL << %u);\n", memno);
 	    memno++;
 	    fprintf(codefile, "break;\n");
 	}
@@ -400,7 +400,7 @@ decode_type(const char *name, const Type *t, int optional, struct value *defval,
 
 	    if (asprintf (&s, "%s->%s", name, m->gen_name) < 0 || s == NULL)
 		errx(1, "malloc");
-	    fprintf(codefile, "if((members & (1LU << %u)) == 0)\n", memno);
+	    fprintf(codefile, "if((members & (1ULL << %u)) == 0)\n", memno);
 	    if(m->optional)
 		fprintf(codefile, "%s = NULL;\n", s);
 	    else if(m->defval)

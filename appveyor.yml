@@ -5,11 +5,10 @@
 #
 
 install:
-  - C:\msys64\usr\bin\bash -lc "pacman --needed --noconfirm -Sy pacman-mirrors"
-  - C:\msys64\usr\bin\bash -lc "pacman --noconfirm -Sy"
+  - C:\msys64\usr\bin\bash -lc "pacman --noconfirm -S pacman"
   - C:\msys64\usr\bin\bash -lc "pacman --noconfirm -S zstd"
   - C:\msys64\usr\bin\bash -lc "pacman --noconfirm -S autoconf automake"
-  - C:\msys64\usr\bin\bash -lc "pacman --noconfirm -S  bison flex"
+  - C:\msys64\usr\bin\bash -lc "pacman --noconfirm -S bison flex"
 
 build_script:
   - set PSDKDir=C:\Program Files\Microsoft SDKs\Windows\v7.1

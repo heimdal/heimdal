@@ -268,6 +268,7 @@ _gsskrb5_import_cred(OM_uint32 * minor_status,
     }
 
     handle->usage = GSS_C_INITIATE;
+    handle->destination_realm = NULL;
     krb5_cc_get_principal(context, id, &handle->principal);
     handle->ccache = id;
     handle->cred_flags = flags;

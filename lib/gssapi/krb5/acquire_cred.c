@@ -603,6 +603,7 @@ OM_uint32 GSSAPI_CALLCONV _gsskrb5_acquire_cred_from
         return GSS_S_FAILURE;
     }
 
+    handle->destination_realm = NULL;
     HEIMDAL_MUTEX_init(&handle->cred_id_mutex);
 
     if (desired_name != GSS_C_NO_NAME) {

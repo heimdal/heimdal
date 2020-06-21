@@ -96,6 +96,7 @@ _gsskrb5_krb5_import_cred(OM_uint32 *minor_status,
     HEIMDAL_MUTEX_init(&handle->cred_id_mutex);
 
     handle->usage = 0;
+    handle->destination_realm = NULL;
 
     if (*id) {
 	time_t now;

@@ -149,12 +149,10 @@ _gsskrb5i_is_cfx(krb5_context context, gsskrb5_ctx ctx, int acceptor)
 
 
 static OM_uint32
-gsskrb5_accept_delegated_token
-(OM_uint32 * minor_status,
- gsskrb5_ctx ctx,
- krb5_context context,
- gss_cred_id_t * delegated_cred_handle
-    )
+gsskrb5_accept_delegated_token(OM_uint32 *minor_status,
+                               gsskrb5_ctx ctx,
+                               krb5_context context,
+                               gss_cred_id_t *delegated_cred_handle)
 {
     krb5_ccache ccache = NULL;
     krb5_error_code kret;
@@ -212,6 +210,40 @@ gsskrb5_accept_delegated_token
 
 	handle = (gsskrb5_cred) *delegated_cred_handle;
 	handle->cred_flags |= GSS_CF_DESTROY_CRED_ON_RELEASE;
+
+        /*
+         * A root TGT is one of the form krbtgt/REALM@SAME-REALM.
+         *
+         * A destination TGT is a root TGT for the same realm as the acceptor
+         * service's realm.
+         *
+         * Normally clients delegate a root TGT for the client's realm.
+         *
+         * In some deployments clients may want to delegate destination TGTs as
+         * a form of constrained delegation: so that the destination service
+         * cannot use the delegated credential to impersonate the client
+         * principal to services in its home realm (due to KDC lineage/transit
+         * checks).  In those deployments there may not even be a route back to
+         * the KDCs of the client's realm, and attempting to use a
+         * non-destination TGT might even lead to timeouts.
+         *
+         * We could simply pretend not to have obtained a credential, except
+         * that a) we don't (yet) have an app name here for the appdefault we
+         * need to check, b) the application really wants to be able to log a
+         * message about the delegated credential being no good.
+         *
+         * Thus we leave it to _gsskrb5_store_cred_into2() to decide what to do
+         * with non-destination TGTs.  To do that, it needs the realm of the
+         * acceptor service, which we record here.
+         */
+        handle->destination_realm =
+            strdup(krb5_principal_get_realm(context, ctx->target));
+        if (handle->destination_realm == NULL) {
+            _gsskrb5_release_cred(minor_status, delegated_cred_handle);
+            *minor_status = krb5_enomem(context);
+            ret = GSS_S_FAILURE;
+            goto out;
+        }
     }
 
 out:

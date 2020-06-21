@@ -119,6 +119,49 @@ principal_is_best_for_user(krb5_context context,
     return ret;
 }
 
+static krb5_error_code
+check_destination_tgt_policy(krb5_context context,
+                             const char *appname,
+                             gsskrb5_cred input_cred)
+{
+    krb5_error_code ret;
+    krb5_boolean want_dst_tgt = 0;
+    krb5_data v;
+
+    if (input_cred->destination_realm == NULL)
+        /*
+         * Not a delegated credential, so we can't check the destination TGT
+         * policy for the realm of the service -- we don't know the realm of
+         * the service.
+         */
+        return 0;
+
+    krb5_appdefault_boolean(context, appname, input_cred->destination_realm,
+                            "require_delegate_destination_tgt", FALSE,
+                            &want_dst_tgt);
+    if (!want_dst_tgt)
+        return 0;
+
+    krb5_data_zero(&v);
+    ret = krb5_cc_get_config(context, input_cred->ccache, NULL,
+                             "start_realm", &v);
+    if (ret == 0 &&
+        v.length != strlen(input_cred->destination_realm))
+        ret = KRB5_CC_NOTFOUND;
+    if (ret == 0 &&
+        strncmp(input_cred->destination_realm, v.data, v.length) != 0)
+        ret = KRB5_CC_NOTFOUND;
+    if (ret)
+        krb5_set_error_message(context, ret,
+                               "Delegated TGT is not a destination TGT for "
+                               "realm \"%s\" but for \"%.*s\"",
+                               input_cred->destination_realm,
+                               (int)(v.length ? v.length : sizeof("<UNKNOWN>") - 1),
+                               v.data ? (const char *)v.data : "<UNKNOWN>");
+    krb5_data_free(&v);
+    return ret;
+}
+
 OM_uint32 GSSAPI_CALLCONV
 _gsskrb5_store_cred_into2(OM_uint32         *minor_status,
 			  gss_const_cred_id_t input_cred_handle,
@@ -208,6 +251,14 @@ _gsskrb5_store_cred_into2(OM_uint32         *minor_status,
 
     /* More sanity checking of the input_cred (good to fail early) */
     ret = krb5_cc_get_lifetime(context, input_cred->ccache, &exp_new);
+    if (ret) {
+	HEIMDAL_MUTEX_unlock(&input_cred->cred_id_mutex);
+	*minor_status = ret;
+        free(ccache_name);
+	return GSS_S_NO_CRED;
+    }
+
+    ret = check_destination_tgt_policy(context, cs_app_name, input_cred);
     if (ret) {
 	HEIMDAL_MUTEX_unlock(&input_cred->cred_id_mutex);
 	*minor_status = ret;

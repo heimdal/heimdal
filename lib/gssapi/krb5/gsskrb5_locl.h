@@ -92,6 +92,7 @@ typedef struct gsskrb5_ctx {
 
 typedef struct {
   krb5_principal principal;
+  char *destination_realm;  /* Realm of acceptor service, if delegated */
   int cred_flags;
 #define GSS_CF_DESTROY_CRED_ON_RELEASE	1
 #define GSS_CF_NO_CI_FLAGS		2

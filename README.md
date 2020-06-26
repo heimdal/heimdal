@@ -23,7 +23,7 @@ For more information see the project homepage [https://heimdal.software/heimdal/
   heimdal-discuss@heimdal.software	high-volume discussion
 
 send mail to [heimdal-announce-subscribe@heimdal.software](mailto:heimdal-announce-subscribe@heimdal.software) and
-heimdal-discuss-subscribe@heimdal.software](mailto:heimdal-discuss-subscribe@heimdal.software)
+[heimdal-discuss-subscribe@heimdal.software](mailto:heimdal-discuss-subscribe@heimdal.software)
 respectively to subscribe.
 
 

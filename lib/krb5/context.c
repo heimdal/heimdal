@@ -660,8 +660,7 @@ krb5_free_context(krb5_context context)
     krb5_set_send_to_kdc_func(context, NULL, NULL);
 
 #ifdef PKINIT
-    if (context->hx509ctx)
-	hx509_context_free(&context->hx509ctx);
+    hx509_context_free(&context->hx509ctx);
 #endif
 
     if (context->flags & KRB5_CTX_F_SOCKETS_INITIALIZED) {

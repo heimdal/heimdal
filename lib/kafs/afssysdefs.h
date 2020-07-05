@@ -104,10 +104,6 @@
 #define AFS_SYSCALL 210
 #endif
 
-#ifdef __APPLE__		/* MacOS X */
-#define AFS_SYSCALL 230
-#endif
-
 #ifdef SYS_afs_syscall
 #define AFS_SYSCALL3	SYS_afs_syscall
 #endif

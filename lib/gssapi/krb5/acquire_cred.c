@@ -208,6 +208,7 @@ acquire_cred_with_password(OM_uint32 *minor_status,
     krb5_error_code kret;
     time_t now;
     OM_uint32 left;
+    const char *realm;
 
     if (!is_valid_password_cred_store(cred_store)) {
 	*minor_status = GSS_KRB5_S_G_BAD_PASSWORD_CRED_STORE;
@@ -238,6 +239,10 @@ acquire_cred_with_password(OM_uint32 *minor_status,
     kret = krb5_get_init_creds_opt_alloc(context, &opt);
     if (kret)
         goto end;
+
+    realm = krb5_principal_get_realm(context, handle->principal);
+
+    krb5_get_init_creds_opt_set_default_flags(context, "gss_krb5", realm, opt);
 
     /*
      * Get the current time before the AS exchange so we don't

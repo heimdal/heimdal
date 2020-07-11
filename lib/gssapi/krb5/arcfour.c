@@ -880,7 +880,8 @@ _gssapi_wrap_iov_length_arcfour(OM_uint32 *minor_status,
 	}
     }
 
-    major_status = _gk_verify_buffers(minor_status, ctx, header, padding, trailer);
+    major_status = _gk_verify_buffers(minor_status, ctx, header,
+				      padding, trailer, FALSE);
     if (major_status != GSS_S_COMPLETE) {
 	    return major_status;
     }
@@ -937,7 +938,8 @@ _gssapi_wrap_iov_arcfour(OM_uint32 *minor_status,
     padding = _gk_find_buffer(iov, iov_count, GSS_IOV_BUFFER_TYPE_PADDING);
     trailer = _gk_find_buffer(iov, iov_count, GSS_IOV_BUFFER_TYPE_TRAILER);
 
-    major_status = _gk_verify_buffers(minor_status, ctx, header, padding, trailer);
+    major_status = _gk_verify_buffers(minor_status, ctx, header,
+				      padding, trailer, FALSE);
     if (major_status != GSS_S_COMPLETE) {
 	return major_status;
     }
@@ -1181,10 +1183,11 @@ _gssapi_unwrap_iov_arcfour(OM_uint32 *minor_status,
 
     /* Check if the packet is correct */
     major_status = _gk_verify_buffers(minor_status,
-				  ctx,
-				  header,
-				  padding,
-				  trailer);
+				      ctx,
+				      header,
+				      padding,
+				      trailer,
+				      FALSE); /* behaves as stream cipher */
     if (major_status != GSS_S_COMPLETE) {
 	return major_status;
     }

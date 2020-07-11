@@ -1197,15 +1197,19 @@ _gssapi_unwrap_iov_arcfour(OM_uint32 *minor_status,
 	return GSS_S_FAILURE;
     }
 
-    if (IS_DCE_STYLE(context)) {
-	verify_len = GSS_ARCFOUR_WRAP_TOKEN_SIZE +
-		     GSS_ARCFOUR_WRAP_TOKEN_DCE_DER_HEADER_SIZE;
-	if (header->buffer.length > verify_len) {
-	    return GSS_S_BAD_MECH;
+    verify_len = header->buffer.length;
+
+    if (!IS_DCE_STYLE(context)) {
+	for (i = 0; i < iov_count; i++) {
+	    /* length in header also includes data and padding */
+	    if (GSS_IOV_BUFFER_TYPE(iov[i].type) == GSS_IOV_BUFFER_TYPE_DATA)
+		verify_len += iov[i].buffer.length;
 	}
-    } else {
-	verify_len = header->buffer.length;
+
+	if (padding)
+	    verify_len += padding->buffer.length;
     }
+
     _p = header->buffer.value;
 
     ret = _gssapi_verify_mech_header(&_p,

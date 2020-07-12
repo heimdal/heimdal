@@ -171,6 +171,28 @@ heim_base_exchange_pointer(void *target, void *value)
     return old;
 }
 
+static inline uint32_t
+heim_base_exchange_32(uint32_t *p, uint32_t newval)
+{
+    uint32_t old;
+    HEIMDAL_MUTEX_lock(&_heim_base_mutex);
+    old = *p;
+    *p = newval;
+    HEIMDAL_MUTEX_unlock(&_heim_base_mutex);
+    return old;
+}
+
+static inline uint64_t
+heim_base_exchange_64(uint64_t *p, uint64_t newval)
+{
+    uint64_t old;
+    HEIMDAL_MUTEX_lock(&_heim_base_mutex);
+    old = *p;
+    *p = newval;
+    HEIMDAL_MUTEX_unlock(&_heim_base_mutex);
+    return old;
+}
+
 #endif /* defined(__GNUC__) && defined(HAVE___SYNC_ADD_AND_FETCH) */
 
 #if SIZEOF_TIME_T == 8

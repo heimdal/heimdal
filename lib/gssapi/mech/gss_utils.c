@@ -60,11 +60,11 @@ _gss_free_oid(OM_uint32 *minor_status, gss_OID oid)
 }
 
 struct _gss_interned_oid {
-    HEIM_SLIST_ENTRY(_gss_interned_oid) gio_link;
+    HEIM_SLIST_ATOMIC_ENTRY(_gss_interned_oid) gio_link;
     gss_OID_desc gio_oid;
 };
 
-static HEIM_SLIST_HEAD(_gss_interned_oid_list, _gss_interned_oid) interned_oids =
+static HEIM_SLIST_ATOMIC_HEAD(_gss_interned_oid_list, _gss_interned_oid) interned_oids =
 HEIM_SLIST_HEAD_INITIALIZER(interned_oids);
 
 extern gss_OID _gss_ot_internal[];

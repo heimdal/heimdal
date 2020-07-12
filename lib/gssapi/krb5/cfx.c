@@ -224,6 +224,17 @@ _gk_find_buffer(gss_iov_buffer_desc *iov, int iov_count, OM_uint32 type)
 	}
     }
 
+    /*
+     * For compatibility with SSPI, an empty padding buffer is treated
+     * equivalent to an absent padding buffer (unless the caller is
+     * requesting that a padding buffer be allocated).
+     */
+    if (iovp &&
+	iovp->buffer.length == 0 &&
+	type == GSS_IOV_BUFFER_TYPE_PADDING &&
+	(GSS_IOV_BUFFER_FLAGS(iovp->type) & GSS_IOV_BUFFER_FLAG_ALLOCATE) == 0)
+	iovp = NULL;
+
     return iovp;
 }
 

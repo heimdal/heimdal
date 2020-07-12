@@ -206,11 +206,25 @@ gss_iov_buffer_desc *
 _gk_find_buffer(gss_iov_buffer_desc *iov, int iov_count, OM_uint32 type)
 {
     int i;
+    gss_iov_buffer_t iovp = GSS_C_NO_IOV_BUFFER;
 
-    for (i = 0; i < iov_count; i++)
-	if (type == GSS_IOV_BUFFER_TYPE(iov[i].type))
-	    return &iov[i];
-    return NULL;
+    if (iov == GSS_C_NO_IOV_BUFFER)
+	return GSS_C_NO_IOV_BUFFER;
+
+    /*
+     * This function is used to find header, padding or trailer buffers
+     * which are singletons; return NULL if multiple instances are found.
+     */
+    for (i = 0; i < iov_count; i++) {
+	if (type == GSS_IOV_BUFFER_TYPE(iov[i].type)) {
+	    if (iovp == GSS_C_NO_IOV_BUFFER)
+		iovp = &iov[i];
+	    else
+		return GSS_C_NO_IOV_BUFFER;
+	}
+    }
+
+    return iovp;
 }
 
 OM_uint32

@@ -976,7 +976,7 @@ _gssapi_wrap_iov_arcfour(OM_uint32 *minor_status,
 	header_len -= data_len;
     }
 
-    if (GSS_IOV_BUFFER_FLAGS(header->type) & GSS_IOV_BUFFER_TYPE_FLAG_ALLOCATE) {
+    if (GSS_IOV_BUFFER_FLAGS(header->type) & GSS_IOV_BUFFER_FLAG_ALLOCATE) {
 	major_status = _gk_allocate_buffer(minor_status, header,
 					   header_len);
 	if (major_status != GSS_S_COMPLETE)
@@ -990,7 +990,7 @@ _gssapi_wrap_iov_arcfour(OM_uint32 *minor_status,
     }
 
     if (padding) {
-	if (GSS_IOV_BUFFER_FLAGS(padding->type) & GSS_IOV_BUFFER_TYPE_FLAG_ALLOCATE) {
+	if (GSS_IOV_BUFFER_FLAGS(padding->type) & GSS_IOV_BUFFER_FLAG_ALLOCATE) {
 	    major_status = _gk_allocate_buffer(minor_status, padding, 1);
 	    if (major_status != GSS_S_COMPLETE)
 		goto failure;

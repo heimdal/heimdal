@@ -451,7 +451,7 @@ wrapunwrap_iov(gss_ctx_id_t cctx, gss_ctx_id_t sctx, int flags, gss_OID mechoid)
 
     memset(iov, 0, sizeof(iov));
 
-    iov[0].type = GSS_IOV_BUFFER_TYPE_HEADER | GSS_IOV_BUFFER_TYPE_FLAG_ALLOCATE;
+    iov[0].type = GSS_IOV_BUFFER_TYPE_HEADER | GSS_IOV_BUFFER_FLAG_ALLOCATE;
 
     if (header.length != 0) {
 	iov[1].type = GSS_IOV_BUFFER_TYPE_SIGN_ONLY;
@@ -481,7 +481,7 @@ wrapunwrap_iov(gss_ctx_id_t cctx, gss_ctx_id_t sctx, int flags, gss_OID mechoid)
     if (dce_style_flag) {
 	iov[4].type = GSS_IOV_BUFFER_TYPE_EMPTY;
     } else {
-	iov[4].type = GSS_IOV_BUFFER_TYPE_PADDING | GSS_IOV_BUFFER_TYPE_FLAG_ALLOCATE;
+	iov[4].type = GSS_IOV_BUFFER_TYPE_PADDING | GSS_IOV_BUFFER_FLAG_ALLOCATE;
     }
     iov[4].buffer.length = 0;
     iov[4].buffer.value = 0;
@@ -490,7 +490,7 @@ wrapunwrap_iov(gss_ctx_id_t cctx, gss_ctx_id_t sctx, int flags, gss_OID mechoid)
     } else if (flags & USE_HEADER_ONLY) {
 	iov[5].type = GSS_IOV_BUFFER_TYPE_EMPTY;
     } else {
-	iov[5].type = GSS_IOV_BUFFER_TYPE_TRAILER | GSS_IOV_BUFFER_TYPE_FLAG_ALLOCATE;
+	iov[5].type = GSS_IOV_BUFFER_TYPE_TRAILER | GSS_IOV_BUFFER_FLAG_ALLOCATE;
     }
     iov[5].buffer.length = 0;
     iov[5].buffer.value = 0;

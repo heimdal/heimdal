@@ -42,7 +42,20 @@
  * Atomic operations
  */
 
-#if defined(__GNUC__) && defined(HAVE___SYNC_ADD_AND_FETCH)
+#if defined(HAVE_STDATOMIC_H)
+ 
+#include <stdatomic.h>
+
+#define heim_base_atomic_inc(x)		(atomic_fetch_add((x), 1) + 1)
+#define heim_base_atomic_dec(x)		(atomic_fetch_sub((x), 1) - 1)
+#define heim_base_atomic_type		atomic_uint
+#define heim_base_atomic_max	 	UINT_MAX
+
+#define heim_base_exchange_pointer(t,v) atomic_exchange((t), (v))
+#define heim_base_exchange_32(t,v)	atomic_exchange((t), (v))
+#define heim_base_exchange_64(t,v)	atomic_exchange((t), (v))
+
+#elif defined(__GNUC__) && defined(HAVE___SYNC_ADD_AND_FETCH)
 
 #define heim_base_atomic_inc(x) __sync_add_and_fetch((x), 1)
 #define heim_base_atomic_dec(x) __sync_sub_and_fetch((x), 1)

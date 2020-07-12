@@ -412,6 +412,7 @@ AC_CHECK_HEADERS([\
 	signal.h				\
 	strings.h				\
 	stropts.h				\
+	stdatomic.h				\
 	sys/bitypes.h				\
 	sys/category.h				\
 	sys/file.h				\

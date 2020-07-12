@@ -43,12 +43,18 @@
  */
 
 #if defined(HAVE_STDATOMIC_H)
- 
+
 #include <stdatomic.h>
+
+#define heim_base_atomic_init(t, v)	atomic_init(t, v)
+#define heim_base_atomic_load(x)	atomic_load((x))
+#define heim_base_atomic_store(t, v)	atomic_store((t), (v))
+
+#define heim_base_atomic(T)		_Atomic(T)
 
 #define heim_base_atomic_inc(x)		(atomic_fetch_add((x), 1) + 1)
 #define heim_base_atomic_dec(x)		(atomic_fetch_sub((x), 1) - 1)
-#define heim_base_atomic_type		atomic_uint
+#define heim_base_atomic_type		heim_base_atomic(unsigned int)
 #define heim_base_atomic_max	 	UINT_MAX
 
 #define heim_base_exchange_pointer(t,v) atomic_exchange((t), (v))
@@ -57,10 +63,12 @@
 
 #elif defined(__GNUC__) && defined(HAVE___SYNC_ADD_AND_FETCH)
 
-#define heim_base_atomic_inc(x) __sync_add_and_fetch((x), 1)
-#define heim_base_atomic_dec(x) __sync_sub_and_fetch((x), 1)
-#define heim_base_atomic_type	unsigned int
-#define heim_base_atomic_max    UINT_MAX
+#define heim_base_atomic_barrier()	__sync_synchronize()
+
+#define heim_base_atomic_inc(x)		__sync_add_and_fetch((x), 1)
+#define heim_base_atomic_dec(x)		__sync_sub_and_fetch((x), 1)
+#define heim_base_atomic_type		unsigned int
+#define heim_base_atomic_max		UINT_MAX
 
 #ifndef __has_builtin
 #define __has_builtin(x) 0
@@ -80,10 +88,12 @@
 
 #include <sys/atomic.h>
 
-#define heim_base_atomic_inc(x) atomic_inc_uint_nv((volatile uint_t *)(x))
-#define heim_base_atomic_dec(x) atomic_dec_uint_nv((volatile uint_t *)(x))
-#define heim_base_atomic_type	uint_t
-#define heim_base_atomic_max    UINT_MAX
+#define heim_base_atomic_barrier()	__machine_rw_barrier()
+
+#define heim_base_atomic_inc(x)		atomic_inc_uint_nv((volatile uint_t *)(x))
+#define heim_base_atomic_dec(x)		atomic_dec_uint_nv((volatile uint_t *)(x))
+#define heim_base_atomic_type		uint_t
+#define heim_base_atomic_max		UINT_MAX
 
 #define heim_base_exchange_pointer(t,v) atomic_swap_ptr((volatile void *)(t), (void *)(v))
 #define heim_base_exchange_32(t,v)	atomic_swap_32((volatile uint32_t *)(t), (v))
@@ -93,10 +103,12 @@
 
 #include <sys/atomic_op.h>
 
-#define heim_base_atomic_inc(x) (fetch_and_add((atomic_p)(x)) + 1)
-#define heim_base_atomic_dec(x) (fetch_and_add((atomic_p)(x)) - 1)
-#define heim_base_atomic_type   unsigned int
-#define heim_base_atomic_max    UINT_MAX
+#define heim_base_atomic_barrier()	__isync()
+
+#define heim_base_atomic_inc(x)		(fetch_and_add((atomic_p)(x)) + 1)
+#define heim_base_atomic_dec(x)		(fetch_and_add((atomic_p)(x)) - 1)
+#define heim_base_atomic_type		unsigned int
+#define heim_base_atomic_max		UINT_MAX
 
 static inline void *
 heim_base_exchange_pointer(void *p, void *newval)
@@ -133,10 +145,12 @@ heim_base_exchange_64(uint64_t *p, uint64_t newval)
 
 #elif defined(_WIN32)
 
-#define heim_base_atomic_inc(x) InterlockedIncrement(x)
-#define heim_base_atomic_dec(x) InterlockedDecrement(x)
-#define heim_base_atomic_type	LONG
-#define heim_base_atomic_max    MAXLONG
+#define heim_base_atomic_barrier()	MemoryBarrier()
+
+#define heim_base_atomic_inc(x)		InterlockedIncrement(x)
+#define heim_base_atomic_dec(x)		InterlockedDecrement(x)
+#define heim_base_atomic_type		LONG
+#define heim_base_atomic_max		MAXLONG
 
 #define heim_base_exchange_pointer(t,v) InterlockedExchangePointer((PVOID volatile *)(t), (PVOID)(v))
 #define heim_base_exchange_32(t,v)	((ULONG)InterlockedExchange((LONG volatile *)(t), (LONG)(v)))
@@ -144,12 +158,13 @@ heim_base_exchange_64(uint64_t *p, uint64_t newval)
 
 #else
 
-#include "heim_threads.h"
+#include <heim_threads.h>
 
 #define HEIM_BASE_NEED_ATOMIC_MUTEX 1
 extern HEIMDAL_MUTEX _heim_base_mutex;
 
-#define heim_base_atomic_type	unsigned int
+#define heim_base_atomic_type		unsigned int
+#define heim_base_atomic_max		UINT_MAX
 
 static inline heim_base_atomic_type
 heim_base_atomic_inc(heim_base_atomic_type *x)
@@ -170,8 +185,6 @@ heim_base_atomic_dec(heim_base_atomic_type *x)
     HEIMDAL_MUTEX_unlock(&_heim_base_mutex);
     return t;
 }
-
-#define heim_base_atomic_max    UINT_MAX
 
 static inline void *
 heim_base_exchange_pointer(void *target, void *value)
@@ -207,6 +220,29 @@ heim_base_exchange_64(uint64_t *p, uint64_t newval)
 }
 
 #endif /* defined(__GNUC__) && defined(HAVE___SYNC_ADD_AND_FETCH) */
+
+#ifndef heim_base_atomic
+#define heim_base_atomic(T)		T
+#endif
+
+#ifndef heim_base_atomic_barrier
+#define heim_base_atomic_barrier()
+#endif
+
+#ifndef heim_base_atomic_load
+#define heim_base_atomic_load(x)	(heim_base_atomic_barrier(), *(x))
+#endif
+
+#ifndef heim_base_atomic_init
+#define heim_base_atomic_init(t, v)	do { (*(t) = (v)); } while (0)
+#endif
+
+#ifndef heim_base_atomic_store
+#define heim_base_atomic_store(t, v)	do {					\
+					    (*(t) = (v));			\
+					    heim_base_atomic_barrier();		\
+					} while (0)
+#endif
 
 #if SIZEOF_TIME_T == 8
 #define heim_base_exchange_time_t(t,v)	heim_base_exchange_64((t), (v))

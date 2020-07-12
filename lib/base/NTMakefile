@@ -38,6 +38,7 @@ intcflags=-I$(SRCDIR) -I$(OBJ)
 INCFILES=				\
 	$(INCDIR)\heimbase.h		\
 	$(INCDIR)\heimbase-protos.h	\
+	$(INCDIR)\heimbase-atomics.h	\
 	$(INCDIR)\heimbase-svc.h	\
 	$(INCDIR)\heim_err.h		\
 	$(INCDIR)\common_plugin.h

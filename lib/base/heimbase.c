@@ -91,7 +91,7 @@ heim_retain(void *ptr)
     if (ptr == NULL || heim_base_is_tagged(ptr))
 	return ptr;
 
-    if (p->ref_cnt == heim_base_atomic_integer_max)
+    if (heim_base_atomic_load(&p->ref_cnt) == heim_base_atomic_integer_max)
 	return ptr;
 
     if ((heim_base_atomic_inc(&p->ref_cnt) - 1) == 0)
@@ -114,7 +114,7 @@ heim_release(void *ptr)
     if (ptr == NULL || heim_base_is_tagged(ptr))
 	return;
 
-    if (p->ref_cnt == heim_base_atomic_integer_max)
+    if (heim_base_atomic_load(&p->ref_cnt) == heim_base_atomic_integer_max)
 	return;
 
     old = heim_base_atomic_dec(&p->ref_cnt) + 1;
@@ -156,7 +156,7 @@ void
 _heim_make_permanent(heim_object_t ptr)
 {
     struct heim_base *p = PTR2BASE(ptr);
-    p->ref_cnt = heim_base_atomic_integer_max;
+    heim_base_atomic_store(&p->ref_cnt, heim_base_atomic_integer_max);
 }
 
 

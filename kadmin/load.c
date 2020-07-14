@@ -71,7 +71,7 @@ skip_next(char *p)
  */
 
 static int
-parse_time_string(time_t *t, const char *s)
+parse_time_string(KerberosTime *t, const char *s)
 {
     int year, month, date, hour, minute, second;
     struct tm tm;
@@ -97,9 +97,9 @@ parse_time_string(time_t *t, const char *s)
  */
 
 static int
-parse_time_string_alloc (time_t **t, const char *s)
+parse_time_string_alloc (KerberosTime **t, const char *s)
 {
-    time_t tmp;
+    KerberosTime tmp;
     int ret;
 
     *t = NULL;

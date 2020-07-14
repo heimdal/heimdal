@@ -156,70 +156,7 @@ heim_base_exchange_64(uint64_t *p, uint64_t newval)
 #define heim_base_exchange_32(t,v)	((ULONG)InterlockedExchange((LONG volatile *)(t), (LONG)(v)))
 #define heim_base_exchange_64(t,v)	((ULONG64)InterlockedExchange64((LONG64 violatile *)(t), (LONG64)(v)))
 
-#else
-
-#include <heim_threads.h>
-
-#define HEIM_BASE_NEED_ATOMIC_MUTEX 1
-extern HEIMDAL_MUTEX _heim_base_mutex;
-
-#define heim_base_atomic_integer_type	unsigned int
-#define heim_base_atomic_integer_max	UINT_MAX
-
-static inline heim_base_atomic_integer_type
-heim_base_atomic_inc(heim_base_atomic_integer_type *x)
-{
-    heim_base_atomic_integer_type t;
-    HEIMDAL_MUTEX_lock(&_heim_base_mutex);
-    t = ++(*x);
-    HEIMDAL_MUTEX_unlock(&_heim_base_mutex);
-    return t;
-}
-
-static inline heim_base_atomic_integer_type
-heim_base_atomic_dec(heim_base_atomic_integer_type *x)
-{
-    heim_base_atomic_integer_type t;
-    HEIMDAL_MUTEX_lock(&_heim_base_mutex);
-    t = --(*x);
-    HEIMDAL_MUTEX_unlock(&_heim_base_mutex);
-    return t;
-}
-
-static inline void *
-heim_base_exchange_pointer(void *target, void *value)
-{
-    void *old;
-    HEIMDAL_MUTEX_lock(&_heim_base_mutex);
-    old = *(void **)target;
-    *(void **)target = value;
-    HEIMDAL_MUTEX_unlock(&_heim_base_mutex);
-    return old;
-}
-
-static inline uint32_t
-heim_base_exchange_32(uint32_t *p, uint32_t newval)
-{
-    uint32_t old;
-    HEIMDAL_MUTEX_lock(&_heim_base_mutex);
-    old = *p;
-    *p = newval;
-    HEIMDAL_MUTEX_unlock(&_heim_base_mutex);
-    return old;
-}
-
-static inline uint64_t
-heim_base_exchange_64(uint64_t *p, uint64_t newval)
-{
-    uint64_t old;
-    HEIMDAL_MUTEX_lock(&_heim_base_mutex);
-    old = *p;
-    *p = newval;
-    HEIMDAL_MUTEX_unlock(&_heim_base_mutex);
-    return old;
-}
-
-#endif /* defined(__GNUC__) && defined(HAVE___SYNC_ADD_AND_FETCH) */
+#endif /* HAVE_STDATOMIC_H */
 
 #ifndef heim_base_atomic
 #define heim_base_atomic(T)		T

@@ -60,10 +60,6 @@ struct heim_base_mem {
 #define PTR2BASE(ptr) (((struct heim_base *)ptr) - 1)
 #define BASE2PTR(ptr) ((void *)(((struct heim_base *)ptr) + 1))
 
-#ifdef HEIM_BASE_NEED_ATOMIC_MUTEX
-HEIMDAL_MUTEX _heim_base_mutex = HEIMDAL_MUTEX_INITIALIZER;
-#endif
-
 /*
  * Auto release structure
  */

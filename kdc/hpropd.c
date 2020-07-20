@@ -141,6 +141,7 @@ main(int argc, char **argv)
 	    mini_inetd (krb5_getportbyname (context, "hprop", "tcp",
 					    HPROP_PORT), &sock);
 	}
+	socket_set_keepalive(sock, 1);
 	sin_len = sizeof(ss);
 	if (getpeername(sock, sa, &sin_len) < 0)
 	    krb5_err(context, 1, errno, "getpeername");

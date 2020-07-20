@@ -288,6 +288,8 @@ start_server(krb5_context contextp, const char *port_str)
 		rk_closesocket(s);
 		continue;
 	    }
+
+	    socket_set_keepalive(s, 1);
 	    socks[num_socks++] = s;
 	}
 	freeaddrinfo (ai);

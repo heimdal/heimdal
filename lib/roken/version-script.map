@@ -123,6 +123,7 @@ HEIMDAL_ROKEN_2.0 {
 		rk_socket_set_any;
 		rk_socket_set_debug;
 		rk_socket_set_ipv6only;
+		rk_socket_set_keepalive;
 		rk_socket_set_nonblocking;
 		rk_socket_set_port;
 		rk_socket_set_portrange;

@@ -456,6 +456,10 @@ socket_set_reuseaddr (rk_socket_t, int);
 ROKEN_LIB_FUNCTION void ROKEN_LIB_CALL
 socket_set_ipv6only (rk_socket_t, int);
 
+#define socket_set_keepalive rk_socket_set_keepalive
+ROKEN_LIB_FUNCTION void ROKEN_LIB_CALL
+socket_set_keepalive (rk_socket_t, int);
+
 #define socket_to_fd rk_socket_to_fd
 ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
 socket_to_fd(rk_socket_t, int);

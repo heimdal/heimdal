@@ -305,6 +305,16 @@ socket_set_ipv6only (rk_socket_t sock, int val)
 #endif
 }
 
+/*
+ * Set the that the `sock' keepalive setting.
+ */
+
+ROKEN_LIB_FUNCTION void ROKEN_LIB_CALL
+socket_set_keepalive(rk_socket_t sock, int val)
+{
+    setsockopt(sock, SOL_SOCKET, SO_KEEPALIVE, (void *)&val, sizeof(val));
+}
+
 /**
  * Create a file descriptor from a socket
  *

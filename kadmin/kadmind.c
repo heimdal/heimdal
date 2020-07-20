@@ -204,6 +204,8 @@ main(int argc, char **argv)
 	}
 #endif /* _WIN32 */
 	sfd = STDIN_FILENO;
+
+	socket_set_keepalive(sfd, 1);
     }
 
     if(realm)

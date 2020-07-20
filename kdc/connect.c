@@ -291,6 +291,7 @@ init_socket(krb5_context context,
 	d->s = rk_INVALID_SOCKET;
 	return;
     }
+    socket_set_keepalive(d->s, 1);
 }
 
 /*

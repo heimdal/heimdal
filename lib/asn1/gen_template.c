@@ -33,6 +33,26 @@
  * SUCH DAMAGE.
  */
 
+/*
+ * Currently we generate C source code defining constant arrays of structures
+ * containing a sort of a "byte-coded" template of an ASN.1 compiler to be
+ * interpreted at run-time.
+ *
+ * FIXME: Also generate binary representations of these arrays and structs
+ *        directly so that we can implement value notation where a value
+ *        assignment in a module will get "compiled" by first compiling the
+ *        type into such a binary representation in memory, _then_ interpreting
+ *        it to produce a BER/DER encoding of the value on the fly, then we can
+ *        store the encoded value in the module's compiled form.
+ *
+ * FIXME MORE: Also, make all this compiler into a library so that we can have
+ *             programs like hxtool(1) take a module and an ASN.1 value
+ *             representation and have that encoded into BER/DER directly.
+ *             This would allow hxtool(1) to support arbitrary PKIX certificate
+ *             and CSR and ... extensions on the fly without having to change
+ *             any source code.  (Like OpenSSL, but without sucking.)
+ */
+
 #include "gen_locl.h"
 
 static const char *symbol_name(const char *, const Type *);

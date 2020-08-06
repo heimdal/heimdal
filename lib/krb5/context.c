@@ -33,6 +33,9 @@
  * SUCH DAMAGE.
  */
 
+#undef KRB5_DEPRECATED_FUNCTION
+#define KRB5_DEPRECATED_FUNCTION(x)
+
 #include "krb5_locl.h"
 #include <assert.h>
 #include <com_err.h>

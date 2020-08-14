@@ -665,7 +665,8 @@ check_authz(krb5_context context,
      */
     if (!reqctx->have_csr)
         return 0;
-    ret = kdc_authorize_csr(context, reqctx->config, reqctx->csr, cprincipal);
+    ret = kdc_authorize_csr(context, reqctx->config->app, reqctx->csr,
+                            cprincipal);
     if (ret == 0) {
         _kdc_audit_addkv((kdc_request_t)reqctx, 0, "authorized", "true");
 

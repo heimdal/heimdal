@@ -30,7 +30,6 @@ usage(int e)
 int
 main(int argc, char **argv)
 {
-    krb5_kdc_configuration *config;
     krb5_error_code ret;
     krb5_context context;
     krb5_data token;
@@ -60,9 +59,6 @@ main(int argc, char **argv)
 
     if ((ret = krb5_init_context(&context)))
         err(1, "Could not initialize krb5_context");
-    if ((ret = krb5_kdc_get_config(context, &config)))
-        krb5_err(context, 1, ret, "Could not get KDC configuration");
-    config->app = app;
 
     token_type = argv[0];
     token.data = argv[1];

@@ -30,7 +30,7 @@ usage(int e)
 int
 main(int argc, char **argv)
 {
-    krb5_kdc_configuration *config;
+    krb5_log_facility *logf;
     krb5_error_code ret;
     krb5_context context;
     hx509_request csr;
@@ -56,25 +56,19 @@ main(int argc, char **argv)
 
     if ((errno = krb5_init_context(&context)))
         err(1, "Could not initialize krb5_context");
-    if ((ret = krb5_kdc_get_config(context, &config)))
-        krb5_err(context, 1, ret, "Could not get KDC configuration");
-    config->app = app_string;
-    if ((ret = krb5_initlog(context, argv0, &config->logf)) ||
-        (ret = krb5_addlog_dest(context, config->logf, "0-5/STDERR")))
+    if ((ret = krb5_initlog(context, argv0, &logf)) ||
+        (ret = krb5_addlog_dest(context, logf, "0-5/STDERR")))
         krb5_err(context, 1, ret, "Could not set up logging to stderr");
-    if ((ret = krb5_kdc_set_dbinfo(context, config)))
-        krb5_err(context, 1, ret, "Could not get KDC configuration (HDB)");
     if ((ret = hx509_request_parse(context->hx509ctx, argv[0], &csr)))
         krb5_err(context, 1, ret, "Could not parse PKCS#10 CSR from %s", argv[0]);
     if ((ret = krb5_parse_name(context, argv[1], &princ)))
         krb5_err(context, 1, ret, "Could not parse principal %s", argv[1]);
-    if ((ret = kdc_authorize_csr(context, config, csr, princ)))
+    if ((ret = kdc_authorize_csr(context, app_string, csr, princ)))
         krb5_err(context, 1, ret, "Authorization failed");
     printf("Authorized!\n");
     krb5_free_principal(context, princ);
     _krb5_unload_plugins(context, "kdc");
     krb5_free_context(context);
     hx509_request_free(&csr);
-    /* FIXME There's no free function for config yet */
     return 0;
 }

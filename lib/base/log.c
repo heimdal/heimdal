@@ -199,38 +199,44 @@ open_syslog(heim_context context,
 }
 
 struct file_data {
-    const char *filename;
+    char *filename;
     const char *mode;
     struct timeval tv;
     FILE *fd;
     int disp;
 #define FILEDISP_KEEPOPEN       0x1
 #define FILEDISP_REOPEN         0x2
-#define FILEDISP_IFEXISTS       0x3
-    int freefilename;
+#define FILEDISP_IFEXISTS       0x4
 };
 
-static void HEIM_CALLCONV
+#ifndef O_CLOEXEC
+#define O_CLOEXEC 0
+#endif
+
+static void
 log_file(heim_context context, const char *timestr, const char *msg, void *data)
 {
     struct timeval tv;
     struct file_data *f = data;
+    FILE *logf = f->fd;
     char *msgclean;
-    size_t i;
+    size_t i = 0;
     size_t j;
 
-    if (f->disp != FILEDISP_KEEPOPEN) {
-        char *filename;
-        int flags = -1;
+    if (logf == NULL || (f->disp & FILEDISP_REOPEN)) {
+        int flags = O_WRONLY|O_APPEND;
         int fd;
 
-        if (f->mode[0] == 'w' && f->mode[1] == 0)
-            flags = O_WRONLY|O_TRUNC;
-        if (f->mode[0] == 'a' && f->mode[1] == 0)
-            flags = O_WRONLY|O_APPEND;
-        assert(flags != -1);
+        if (f->mode[0] == 'e') {
+            flags |= O_CLOEXEC;
+            i = 1;
+        }
+        if (f->mode[i] == 'w')
+            flags |= O_TRUNC;
+        if (f->mode[i + 1] == '+')
+            flags |= O_RDWR;
 
-        if (f->disp == FILEDISP_IFEXISTS) {
+        if (f->disp & FILEDISP_IFEXISTS) {
             /* Cache failure for 1s */
             gettimeofday(&tv, NULL);
             if (tv.tv_sec == f->tv.tv_sec)
@@ -239,18 +245,18 @@ log_file(heim_context context, const char *timestr, const char *msg, void *data)
             flags |= O_CREAT;
         }
 
-        if (heim_expand_path_tokens(context, f->filename, 1, &filename, NULL))
-            return;
-        fd = open(filename, flags, 0666);
-        free(filename);
+        fd = open(f->filename, flags, 0666); /* umask best be set */
         if (fd == -1) {
-            if (f->disp == FILEDISP_IFEXISTS)
+            if (f->disp & FILEDISP_IFEXISTS)
                 gettimeofday(&f->tv, NULL);
             return;
         }
-        f->fd = fdopen(fd, f->mode);
+        rk_cloexec(fd);
+        logf = fdopen(fd, f->mode);
     }
-    if (f->fd == NULL)
+    if (f->fd == NULL && (f->disp & FILEDISP_KEEPOPEN))
+        f->fd = logf;
+    if (logf == NULL)
         return;
     /*
      * make sure the log doesn't contain special chars:
@@ -260,50 +266,58 @@ log_file(heim_context context, const char *timestr, const char *msg, void *data)
      * been quoted such as what krb5_unparse_principal() gives us.
      * So, we change here to eat the special characters, instead.
      */
-    msgclean = strdup(msg);
-    if (msgclean == NULL)
-        goto out;
-    for (i=0, j=0; msg[i]; i++)
-        if (msg[i] >= 32 || msg[i] == '\t')
-            msgclean[j++] = msg[i];
-    fprintf(f->fd, "%s %s\n", timestr, msgclean);
-    free(msgclean);
-out:
-    if (f->disp != FILEDISP_KEEPOPEN) {
-        fclose(f->fd);
-        f->fd = NULL;
+    if (msg && (msgclean = strdup(msg))) {
+        for (i = 0, j = 0; msg[i]; i++)
+            if (msg[i] >= 32 || msg[i] == '\t')
+                msgclean[j++] = msg[i];
+        fprintf(logf, "%s %s\n", timestr ? timestr : "", msgclean);
+        free(msgclean);
     }
+    if (logf != f->fd)
+        fclose(logf);
 }
 
 static void HEIM_CALLCONV
 close_file(void *data)
 {
     struct file_data *f = data;
-    if (f->disp == FILEDISP_KEEPOPEN && f->filename)
+    if (f->fd && f->fd != stdout && f->fd != stderr)
         fclose(f->fd);
-    if (f->filename && f->freefilename)
-        free((char *)f->filename);
+    free(f->filename);
     free(data);
 }
 
 static heim_error_code
 open_file(heim_context context, heim_log_facility *fac, int min, int max,
           const char *filename, const char *mode, FILE *f, int disp,
-          int freefilename)
+          int exp_tokens)
 {
-    struct file_data *fd = malloc(sizeof(*fd));
-    if (fd == NULL) {
-        if (freefilename && filename)
-            free((char *)filename);
+    heim_error_code ret = 0;
+    struct file_data *fd;
+
+    if ((fd = calloc(1, sizeof(*fd))) == NULL)
         return heim_enomem(context);
-    }
-    fd->filename = filename;
+
+    fd->filename = NULL;
     fd->mode = mode;
     fd->fd = f;
     fd->disp = disp;
-    fd->freefilename = freefilename;
 
-    return heim_addlog_func(context, fac, min, max, log_file, close_file, fd);
+    if (filename) {
+        if (exp_tokens)
+            ret = heim_expand_path_tokens(context, filename, 1, &fd->filename, NULL);
+        else if ((fd->filename = strdup(filename)) == NULL)
+            ret = heim_enomem(context);
+    }
+    if (ret == 0)
+        ret = heim_addlog_func(context, fac, min, max, log_file, close_file, fd);
+    if (ret) {
+        free(fd->filename);
+        free(fd);
+    }
+    if (disp & FILEDISP_KEEPOPEN)
+        log_file(context, NULL, NULL, fd);
+    return ret;
 }
 
 heim_error_code
@@ -346,48 +360,30 @@ heim_addlog_dest(heim_context context, heim_log_facility *f, const char *orig)
         p++;
     }
     if (strcmp(p, "STDERR") == 0) {
-        ret = open_file(context, f, min, max, NULL, NULL, stderr, 1, 0);
+        ret = open_file(context, f, min, max, NULL, NULL, stderr,
+                        FILEDISP_KEEPOPEN, 0);
     } else if (strcmp(p, "CONSOLE") == 0) {
+        /* XXX WIN32 */
         ret = open_file(context, f, min, max, "/dev/console", "w", NULL,
-                        FILEDISP_REOPEN, 0);
-    } else if (strncmp(p, "EFILE", 5) == 0 && p[5] == ':') {
-        ret = open_file(context, f, min, max, strdup(p+6), "a", NULL,
-                        FILEDISP_IFEXISTS, 1);
-    } else if (strncmp(p, "FILE", 4) == 0 && (p[4] == ':' || p[4] == '=')) {
-        char *fn;
-        FILE *file = NULL;
-        int disp = FILEDISP_REOPEN;
-        fn = strdup(p + 5);
-        if (fn == NULL)
-            return heim_enomem(context);
-        if (p[4] == '=') {
-            int i = open(fn, O_WRONLY | O_CREAT |
-                         O_TRUNC | O_APPEND, 0666);
-            if (i < 0) {
-                ret = errno;
-                heim_set_error_message(context, ret,
-                                       N_("open(%s) logfile: %s", ""), fn,
-                                       strerror(ret));
-                free(fn);
-                return ret;
-            }
-            rk_cloexec(i);
-            file = fdopen(i, "a");
-            if (file == NULL) {
-                ret = errno;
-                close(i);
-                heim_set_error_message(context, ret,
-                                       N_("fdopen(%s) logfile: %s", ""),
-                                       fn, strerror(ret));
-                free(fn);
-                return ret;
-            }
-            disp = FILEDISP_KEEPOPEN;
-        }
-        ret = open_file(context, f, min, max, fn, "a", file, disp, 1);
-    } else if (strncmp(p, "DEVICE", 6) == 0 && (p[6] == ':' || p[6] == '=')) {
-        ret = open_file(context, f, min, max, strdup(p + 7), "w", NULL,
-                        FILEDISP_REOPEN, 1);
+                        FILEDISP_KEEPOPEN, 0);
+    } else if (strncmp(p, "EFILE:", 5) == 0) {
+        ret = open_file(context, f, min, max, p + sizeof("EFILE:") - 1, "a",
+                        NULL, FILEDISP_IFEXISTS | FILEDISP_REOPEN, 1);
+    } else if (strncmp(p, "EFILE=", 5) == 0) {
+        ret = open_file(context, f, min, max, p + sizeof("EFILE=") - 1, "a",
+                        NULL, FILEDISP_IFEXISTS | FILEDISP_KEEPOPEN, 1);
+    } else if (strncmp(p, "FILE:", sizeof("FILE:") - 1) == 0) {
+        ret = open_file(context, f, min, max, p + sizeof("FILE:") - 1, "a",
+                        NULL, FILEDISP_REOPEN, 1);
+    } else if (strncmp(p, "FILE=", sizeof("FILE=") - 1) == 0) {
+        ret = open_file(context, f, min, max, p + sizeof("FILE=") - 1, "a",
+                        NULL, FILEDISP_KEEPOPEN, 1);
+    } else if (strncmp(p, "DEVICE:", sizeof("DEVICE:") - 1) == 0) {
+        ret = open_file(context, f, min, max, p + sizeof("DEVICE:") - 1, "a",
+                        NULL, FILEDISP_REOPEN, 0);
+    } else if (strncmp(p, "DEVICE=", sizeof("DEVICE=") - 1) == 0) {
+        ret = open_file(context, f, min, max, p + sizeof("DEVICE=") - 1, "a",
+                        NULL, FILEDISP_KEEPOPEN, 0);
     } else if (strncmp(p, "SYSLOG", 6) == 0 && (p[6] == '\0' || p[6] == ':')) {
         char severity[128] = "";
         char facility[128] = "";

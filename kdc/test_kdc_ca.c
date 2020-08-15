@@ -37,7 +37,7 @@ usage(int e)
 int
 main(int argc, char **argv)
 {
-    krb5_kdc_configuration *config;
+    krb5_log_facility *logf = NULL;
     krb5_error_code ret;
     krb5_principal p = NULL;
     krb5_context context;
@@ -67,16 +67,9 @@ main(int argc, char **argv)
 
     if ((errno = krb5_init_context(&context)))
         err(1, "Could not initialize krb5_context");
-    if ((ret = krb5_kdc_get_config(context, &config)))
-        krb5_err(context, 1, ret, "Could not get KDC configuration");
-    config->app = app_string;
-    if ((ret = krb5_initlog(context, argv0, &config->logf)) ||
-        (ret = krb5_addlog_dest(context, config->logf, "0-5/STDERR")))
+    if ((ret = krb5_initlog(context, argv0, &logf)) ||
+        (ret = krb5_addlog_dest(context, logf, "0-5/STDERR")))
         krb5_err(context, 1, ret, "Could not set up logging to stderr");
-#if 0
-    if ((ret = krb5_kdc_set_dbinfo(context, config)))
-        krb5_err(context, 1, ret, "Could not get KDC configuration (HDB)");
-#endif
     if ((ret = krb5_parse_name(context, argv[0], &p)))
         krb5_err(context, 1, ret, "Could not parse principal %s", argv[0]);
     if ((ret = hx509_request_parse(context->hx509ctx, argv[1], &req)))
@@ -110,7 +103,7 @@ main(int argc, char **argv)
         }
         if (ret == HX509_NO_ITEM)
             ret = 0;
-    } else if ((ret = kdc_authorize_csr(context, config, req, p))) {
+    } else if ((ret = kdc_authorize_csr(context, app_string, req, p))) {
         krb5_err(context, 1, ret,
                  "Requested certificate extensions rejected by policy");
     }
@@ -118,7 +111,7 @@ main(int argc, char **argv)
     memset(&t, 0, sizeof(t));
     t.starttime = time(NULL);
     t.endtime = t.starttime + 3600;
-    if ((ret = kdc_issue_certificate(context, config, req, p, &t, 1,
+    if ((ret = kdc_issue_certificate(context, app_string, logf, req, p, &t, 1,
                                      &certs)))
         krb5_err(context, 1, ret, "Certificate issuance failed");
 
@@ -143,6 +136,5 @@ main(int argc, char **argv)
     hx509_request_free(&req);
     hx509_certs_free(&store);
     hx509_certs_free(&certs);
-    /* FIXME There's no free function for config yet */
     return 0;
 }

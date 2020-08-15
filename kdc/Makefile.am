@@ -33,6 +33,7 @@ if HAVE_MICROHTTPD
 bx509d_SOURCES = bx509d.c
 bx509d_AM_CPPFLAGS = $(AM_CPPFLAGS) $(MICROHTTPD_CFLAGS)
 bx509d_LDADD =	-ldl \
+                 $(top_builddir)/lib/hdb/libhdb.la \
 		 libkdc.la \
 		 $(MICROHTTPD_LIBS) \
 		 $(LIB_roken) \

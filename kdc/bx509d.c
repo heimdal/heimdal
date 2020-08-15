@@ -126,7 +126,7 @@ struct bx509_request_desc {
     char frombuf[128];
 };
 
-static krb5_kdc_configuration *kdc_config;
+static krb5_log_facility *logfac;
 static pthread_key_t k5ctx;
 
 static krb5_error_code
@@ -425,7 +425,7 @@ bad_reqv(struct bx509_request_desc *r,
     (void) gettimeofday(&r->tv_end, NULL);
     if (code == ENOMEM) {
         if (r->context)
-            kdc_log(r->context, kdc_config, 1, "Out of memory");
+            krb5_log_msg(r->context, logfac, 1, NULL, "Out of memory");
         _kdc_audit_trail((kdc_request_t)r, code);
         return resp(r, http_status_code, MHD_RESPMEM_PERSISTENT,
                     fmt, strlen(fmt), NULL);
@@ -452,7 +452,7 @@ bad_reqv(struct bx509_request_desc *r,
 
     if (ret == -1 || msg == NULL) {
         if (context)
-            kdc_log(r->context, kdc_config, 1, "Out of memory");
+            krb5_log_msg(r->context, logfac, 1, NULL, "Out of memory");
         return resp(r, MHD_HTTP_SERVICE_UNAVAILABLE,
                     MHD_RESPMEM_PERSISTENT,
                     "Out of memory", sizeof("Out of memory") - 1, NULL);
@@ -646,7 +646,7 @@ authorize_CSR(struct bx509_request_desc *r,
         return bad_req(r, ret, MHD_HTTP_SERVICE_UNAVAILABLE,
                        "Could not handle query parameters");
 
-    ret = kdc_authorize_csr(r->context, kdc_config, r->req, p);
+    ret = kdc_authorize_csr(r->context, "bx509d", r->req, p);
     if (ret)
         return bad_403(r, ret, "Not authorized to requested certificate");
     return ret;
@@ -745,7 +745,7 @@ do_CA(struct bx509_request_desc *r, const char *csr)
     }
 
     /* Issue the certificate */
-    ret = kdc_issue_certificate(r->context, kdc_config, r->req, p,
+    ret = kdc_issue_certificate(r->context, "bx509d", logfac, r->req, p,
                                 &r->token_times, 1 /* send_chain */, &certs);
     krb5_free_principal(r->context, p);
     if (ret) {
@@ -807,8 +807,8 @@ set_req_desc(struct MHD_Connection *connection,
     r->request.length = sizeof("<HTTP-REQUEST>");
     r->from = r->frombuf;
     r->hcontext = r->context->hcontext;
-    r->config = kdc_config;
-    r->logf = kdc_config->logf;
+    r->config = NULL;
+    r->logf = logfac;
     r->reqtype = url;
     r->target = r->redir = NULL;
     r->pkix_store = NULL;
@@ -845,7 +845,7 @@ set_req_desc(struct MHD_Connection *connection,
     }
 
     if (ret == 0 && r->kv == NULL) {
-        kdc_log(r->context, kdc_config, 1, "Out of memory");
+        krb5_log_msg(r->context, logfac, 1, NULL, "Out of memory");
         ret = ENOMEM;
     }
     return ret;
@@ -893,7 +893,8 @@ bx509(struct bx509_request_desc *r)
         return ret;
 
     /* Read and send the contents of the PKIX store */
-    kdc_log(r->context, kdc_config, 4, "Issued certificate to %s", r->cname);
+    krb5_log_msg(r->context, logfac, 1, NULL, "Issued certificate to %s",
+                 r->cname);
     return good_bx509(r);
 }
 
@@ -1214,7 +1215,7 @@ bnegotiate_do_CA(struct bx509_request_desc *r)
 
     /* Issue the certificate */
     if (ret == 0)
-        ret = kdc_issue_certificate(r->context, kdc_config, req, p,
+        ret = kdc_issue_certificate(r->context, "bx509d", logfac, req, p,
                                     &r->token_times, 1 /* send_chain */,
                                     &certs);
     krb5_free_principal(r->context, p);
@@ -1664,6 +1665,32 @@ sighandler(int sig)
         ;
 }
 
+static void
+bx509_openlog(krb5_context context,
+              const char *svc,
+              krb5_log_facility **fac)
+{
+    char **s = NULL, **p;
+
+    krb5_initlog(context, "kdc", fac);
+    s = krb5_config_get_strings(context, NULL, svc, "logging", NULL);
+    if (s == NULL)
+        s = krb5_config_get_strings(context, NULL, "logging", svc, NULL);
+    if (s) {
+        for(p = s; *p; p++)
+            krb5_addlog_dest(context, *fac, *p);
+        krb5_config_free_strings(s);
+    } else {
+        char *ss;
+        if (asprintf(&ss, "0-1/FILE:%s/%s", hdb_db_dir(context),
+            KDC_LOG_FILE) < 0)
+            err(1, "out of memory");
+        krb5_addlog_dest(context, *fac, ss);
+        free(ss);
+    }
+    krb5_set_warn_dest(context, *fac);
+}
+
 int
 main(int argc, char **argv)
 {
@@ -1721,11 +1748,7 @@ main(int argc, char **argv)
     if ((errno = get_krb5_context(&context)))
         err(1, "Could not init krb5 context");
 
-    if ((ret = krb5_kdc_get_config(context, &kdc_config)))
-        krb5_err(context, 1, ret, "Could not init krb5 context");
-
-    kdc_openlog(context, "bx509d", kdc_config);
-    kdc_config->app = "bx509";
+    bx509_openlog(context, "bx509d", &logfac);
 
     if (cache_dir == NULL) {
         char *s = NULL;

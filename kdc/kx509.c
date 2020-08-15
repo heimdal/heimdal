@@ -1004,8 +1004,9 @@ _kdc_do_kx509(kx509_req_context r)
     krb5_data_zero(rep.hash);
     krb5_data_zero(rep.certificate);
     krb5_ticket_get_times(r->context, ticket, &r->ticket_times);
-    ret = kdc_issue_certificate(r->context, r->config, r->csr, cprincipal,
-                                &r->ticket_times, r->send_chain, &certs);
+    ret = kdc_issue_certificate(r->context, r->config->app, r->logf, r->csr,
+                                cprincipal, &r->ticket_times, r->send_chain,
+                                &certs);
     if (ret) {
         int level = 1;
 	const char *msg = krb5_get_error_message(r->context, ret);

@@ -219,7 +219,8 @@ characterize(krb5_context context,
  */
 static const krb5_config_binding *
 get_cf(krb5_context context,
-       krb5_kdc_configuration *config,
+       const char *app_name,
+       krb5_log_facility *logf,
        hx509_request req,
        krb5_principal cprinc)
 {
@@ -236,7 +237,7 @@ get_cf(krb5_context context,
     size_t nsans = 0;
 
     if (ncomp == 0) {
-        kdc_log(context, config, 5, "Client principal has no components!");
+        krb5_log_msg(context, logf, 5, NULL, "Client principal has no components!");
         krb5_set_error_message(context, ENOTSUP,
                                "Client principal has no components!");
         return NULL;
@@ -244,7 +245,7 @@ get_cf(krb5_context context,
 
     if ((ret = count_sans(req, &nsans)) ||
         (certtype = characterize(context, cprinc, req)) == CERT_NOTSUP) {
-        kdc_log(context, config, 5, "Could not characterize CSR");
+        krb5_log_msg(context, logf, 5, NULL, "Could not characterize CSR");
         krb5_set_error_message(context, ret, "Could not characterize CSR");
         return NULL;
     }
@@ -275,24 +276,24 @@ get_cf(krb5_context context,
         }
     }
 
-    if (strcmp(config->app, "kdc") == 0)
-        cf = krb5_config_get_list(context, NULL, config->app, "realms", realm,
+    if (strcmp(app_name, "kdc") == 0)
+        cf = krb5_config_get_list(context, NULL, app_name, "realms", realm,
                                   "kx509", label, svc, NULL);
     else
-        cf = krb5_config_get_list(context, NULL, config->app, "realms", realm,
+        cf = krb5_config_get_list(context, NULL, app_name, "realms", realm,
                                   label, svc, NULL);
     if (cf == NULL) {
-        kdc_log(context, config, 3,
-                "No %s configuration for %s %s certificates [%s] realm "
-                "-> %s -> kx509 -> %s%s%s",
-                strcmp(config->app, "bx509") == 0 ? "bx509" : "kx509",
-                def, label, config->app, realm, label,
-                svc ? " -> " : "", svc ? svc : "");
+        krb5_log_msg(context, logf, 3, NULL,
+                     "No %s configuration for %s %s certificates [%s] realm "
+                     "-> %s -> kx509 -> %s%s%s",
+                     strcmp(app_name, "bx509") == 0 ? "bx509" : "kx509",
+                     def, label, app_name, realm, label,
+                     svc ? " -> " : "", svc ? svc : "");
         krb5_set_error_message(context, KRB5KDC_ERR_POLICY,
                 "No %s configuration for %s %s certificates [%s] realm "
                 "-> %s -> kx509 -> %s%s%s",
-                strcmp(config->app, "bx509") == 0 ? "bx509" : "kx509",
-                def, label, config->app, realm, label,
+                strcmp(app_name, "bx509") == 0 ? "bx509" : "kx509",
+                def, label, app_name, realm, label,
                 svc ? " -> " : "", svc ? svc : "");
     }
     return cf;
@@ -312,7 +313,7 @@ get_cf(krb5_context context,
  */
 static krb5_error_code
 set_template(krb5_context context,
-             krb5_kdc_configuration *config,
+             krb5_log_facility *logf,
              const krb5_config_binding *cf,
              hx509_ca_tbs tbs)
 {
@@ -338,9 +339,9 @@ set_template(krb5_context context,
             ret = hx509_get_one_cert(context->hx509ctx, certs, &template);
         hx509_certs_free(&certs);
         if (ret) {
-            kdc_log(context, config, 1,
-                    "Failed to load certificate template from %s",
-                    cert_template);
+            krb5_log_msg(context, logf, 1, NULL,
+                         "Failed to load certificate template from %s",
+                         cert_template);
             krb5_set_error_message(context, KRB5KDC_ERR_POLICY,
                                    "Failed to load certificate template from "
                                    "%s", cert_template);
@@ -418,7 +419,7 @@ set_template(krb5_context context,
  */
 static krb5_error_code
 set_tbs(krb5_context context,
-        krb5_kdc_configuration *config,
+        krb5_log_facility *logf,
         const krb5_config_binding *cf,
         hx509_request req,
         krb5_principal cprinc,
@@ -451,7 +452,7 @@ set_tbs(krb5_context context,
     /* Populate requested certificate extensions from CSR/CSRPlus if allowed */
     ret = hx509_ca_tbs_set_from_csr(context->hx509ctx, tbs, req);
     if (ret == 0)
-        ret = set_template(context, config, cf, tbs);
+        ret = set_template(context, logf, cf, tbs);
 
     /*
      * Optionally add PKINIT SAN.
@@ -533,8 +534,8 @@ set_tbs(krb5_context context,
             }
         }
     } else {
-        kdc_log(context, config, 5, "kx509/bx509 client %s has too many "
-                "components!", princ);
+        krb5_log_msg(context, logf, 5, NULL,
+                     "kx509/bx509 client %s has too many components!", princ);
         krb5_set_error_message(context, ret = KRB5KDC_ERR_POLICY,
                                "kx509/bx509 client %s has too many "
                                "components!", princ);
@@ -548,8 +549,8 @@ out:
     return ret;
 
 enomem:
-    kdc_log(context, config, 0,
-            "Could not set up TBSCertificate: Out of memory");
+    krb5_log_msg(context, logf, 0, NULL,
+                 "Could not set up TBSCertificate: Out of memory");
     ret = krb5_enomem(context);
     goto out;
 }
@@ -591,7 +592,8 @@ tbs_set_times(krb5_context context,
  */
 krb5_error_code
 kdc_issue_certificate(krb5_context context,
-                      krb5_kdc_configuration *config,
+                      const char *app_name,
+                      krb5_log_facility *logf,
                       hx509_request req,
                       krb5_principal cprinc,
                       krb5_times *auth_times,
@@ -615,10 +617,11 @@ kdc_issue_certificate(krb5_context context,
     hx509_request_authorize_ku(req, ku);
 
     /* Get configuration */
-    if ((cf = get_cf(context, config, req, cprinc)) == NULL)
+    if ((cf = get_cf(context, app_name, logf, req, cprinc)) == NULL)
         return KRB5KDC_ERR_POLICY;
     if ((ca = krb5_config_get_string(context, cf, "ca", NULL)) == NULL) {
-        kdc_log(context, config, 3, "No kx509 CA issuer credential specified");
+        krb5_log_msg(context, logf, 3, NULL,
+                     "No kx509 CA issuer credential specified");
         krb5_set_error_message(context, ret = KRB5KDC_ERR_POLICY,
                                "No kx509 CA issuer credential specified");
         return ret;
@@ -626,14 +629,14 @@ kdc_issue_certificate(krb5_context context,
 
     ret = hx509_ca_tbs_init(context->hx509ctx, &tbs);
     if (ret) {
-        kdc_log(context, config, 0,
-                "Failed to create certificate: Out of memory");
+        krb5_log_msg(context, logf, 0, NULL,
+                     "Failed to create certificate: Out of memory");
         return ret;
     }
 
     /* Lookup a template and set things in `env' and `tbs' as appropriate */
     if (ret == 0)
-        ret = set_tbs(context, config, cf, req, cprinc, &env, tbs);
+        ret = set_tbs(context, logf, cf, req, cprinc, &env, tbs);
 
     /* Populate generic template "env" variables */
 
@@ -646,8 +649,8 @@ kdc_issue_certificate(krb5_context context,
      */
     if (ret == 0 && hx509_name_is_null_p(hx509_ca_tbs_get_name(tbs)) &&
         !has_sans(req)) {
-        kdc_log(context, config, 3,
-                "Not issuing certificate because it would have no names");
+        krb5_log_msg(context, logf, 3, NULL,
+                     "Not issuing certificate because it would have no names");
         krb5_set_error_message(context, ret = KRB5KDC_ERR_POLICY,
                                "Not issuing certificate because it "
                                "would have no names");
@@ -672,8 +675,9 @@ kdc_issue_certificate(krb5_context context,
 
         ret = hx509_certs_init(context->hx509ctx, ca, 0, NULL, &certs);
         if (ret) {
-            kdc_log(context, config, 1,
-                    "Failed to load CA certificate and private key %s", ca);
+            krb5_log_msg(context, logf, 1, NULL,
+                         "Failed to load CA certificate and private key %s",
+                         ca);
             krb5_set_error_message(context, ret, "Failed to load CA "
                                    "certificate and private key %s", ca);
             goto out;
@@ -691,8 +695,8 @@ kdc_issue_certificate(krb5_context context,
         hx509_query_free(context->hx509ctx, q);
         hx509_certs_free(&certs);
         if (ret) {
-            kdc_log(context, config, 1,
-                    "Failed to find a CA certificate in %s", ca);
+            krb5_log_msg(context, logf, 1, NULL,
+                         "Failed to find a CA certificate in %s", ca);
             krb5_set_error_message(context, ret,
                                    "Failed to find a CA certificate in %s",
                                    ca);

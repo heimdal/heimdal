@@ -109,10 +109,10 @@
 #include <hx509-private.h>
 
 #define heim_pcontext krb5_context
-#define heim_pconfig krb5_kdc_configuration *
+#define heim_pconfig krb5_context
 #include <heimbase-svc.h>
 
-struct bx509_request_desc {
+typedef struct bx509_request_desc {
     HEIM_SVC_REQUEST_DESC_COMMON_ELEMENTS;
 
     struct MHD_Connection *connection;
@@ -124,7 +124,59 @@ struct bx509_request_desc {
     char *ccname;
     char *freeme1;
     char frombuf[128];
-};
+} *bx509_request_desc;
+
+static void
+audit_trail(bx509_request_desc r, krb5_error_code ret)
+{
+    const char *retname = NULL;
+
+    /* Get a symbolic name for some error codes */
+#define CASE(x) case x : retname = #x; break
+    switch (ret) {
+    CASE(ENOMEM);
+    CASE(EACCES);
+    CASE(HDB_ERR_NOT_FOUND_HERE);
+    CASE(HDB_ERR_WRONG_REALM);
+    CASE(HDB_ERR_EXISTS);
+    CASE(HDB_ERR_KVNO_NOT_FOUND);
+    CASE(HDB_ERR_NOENTRY);
+    CASE(HDB_ERR_NO_MKEY);
+    CASE(KRB5KDC_ERR_BADOPTION);
+    CASE(KRB5KDC_ERR_CANNOT_POSTDATE);
+    CASE(KRB5KDC_ERR_CLIENT_NOTYET);
+    CASE(KRB5KDC_ERR_C_PRINCIPAL_UNKNOWN);
+    CASE(KRB5KDC_ERR_ETYPE_NOSUPP);
+    CASE(KRB5KDC_ERR_KEY_EXPIRED);
+    CASE(KRB5KDC_ERR_NAME_EXP);
+    CASE(KRB5KDC_ERR_NEVER_VALID);
+    CASE(KRB5KDC_ERR_NONE);
+    CASE(KRB5KDC_ERR_NULL_KEY);
+    CASE(KRB5KDC_ERR_PADATA_TYPE_NOSUPP);
+    CASE(KRB5KDC_ERR_POLICY);
+    CASE(KRB5KDC_ERR_PREAUTH_FAILED);
+    CASE(KRB5KDC_ERR_PREAUTH_REQUIRED);
+    CASE(KRB5KDC_ERR_SERVER_NOMATCH);
+    CASE(KRB5KDC_ERR_SERVICE_EXP);
+    CASE(KRB5KDC_ERR_SERVICE_NOTYET);
+    CASE(KRB5KDC_ERR_S_PRINCIPAL_UNKNOWN);
+    CASE(KRB5KDC_ERR_TRTYPE_NOSUPP);
+    CASE(KRB5KRB_ERR_RESPONSE_TOO_BIG);
+    /* XXX Add relevant error codes */
+    case 0:
+        retname = "SUCCESS";
+        break;
+    default:
+        retname = NULL;
+        break;
+    }
+
+    /* Let's save a few bytes */
+    if (retname && !strncmp("KRB5KDC_", retname, sizeof("KRB5KDC_") - 1))
+        retname += sizeof("KRB5KDC_") - 1;
+#undef PREFIX
+    heim_audit_trail((heim_svc_req_desc)r, ret, retname);
+}
 
 static krb5_log_facility *logfac;
 static pthread_key_t k5ctx;
@@ -373,7 +425,7 @@ resp(struct bx509_request_desc *r,
     (void) gettimeofday(&r->tv_end, NULL);
     if (http_status_code == MHD_HTTP_OK ||
         http_status_code == MHD_HTTP_TEMPORARY_REDIRECT)
-        _kdc_audit_trail((kdc_request_t)r, 0);
+        audit_trail(r, 0);
 
     response = MHD_create_response_from_buffer(bodylen, rk_UNCONST(body),
                                                rmmode);
@@ -420,13 +472,13 @@ bad_reqv(struct bx509_request_desc *r,
     char *formatted = NULL;
     char *msg = NULL;
 
-    _kdc_audit_addkv((kdc_request_t)r, 0, "http-status-code", "%d",
+    heim_audit_addkv((heim_svc_req_desc)r, 0, "http-status-code", "%d",
                      http_status_code);
     (void) gettimeofday(&r->tv_end, NULL);
     if (code == ENOMEM) {
         if (r->context)
             krb5_log_msg(r->context, logfac, 1, NULL, "Out of memory");
-        _kdc_audit_trail((kdc_request_t)r, code);
+        audit_trail(r, code);
         return resp(r, http_status_code, MHD_RESPMEM_PERSISTENT,
                     fmt, strlen(fmt), NULL);
     }
@@ -446,8 +498,8 @@ bad_reqv(struct bx509_request_desc *r,
         msg = formatted;
         formatted = NULL;
     }
-    _kdc_audit_addreason((kdc_request_t)r, "%s", formatted);
-    _kdc_audit_trail((kdc_request_t)r, code);
+    heim_audit_addreason((heim_svc_req_desc)r, "%s", formatted);
+    audit_trail(r, code);
     krb5_free_error_message(context, k5msg);
 
     if (ret == -1 || msg == NULL) {
@@ -573,7 +625,7 @@ bx509_param_cb(void *d,
     heim_oid oid = { 0, 0 };
 
     if (strcmp(key, "eku") == 0 && val) {
-        _kdc_audit_addkv((kdc_request_t)a->r, KDC_AUDIT_VIS, "requested_eku",
+        heim_audit_addkv((heim_svc_req_desc)a->r, KDC_AUDIT_VIS, "requested_eku",
                          "%s", val);
         a->ret = der_parse_heim_oid(val, ".", &oid);
         if (a->ret == 0)
@@ -581,31 +633,31 @@ bx509_param_cb(void *d,
                                            &oid);
         der_free_oid(&oid);
     } else if (strcmp(key, "dNSName") == 0 && val) {
-        _kdc_audit_addkv((kdc_request_t)a->r, KDC_AUDIT_VIS,
+        heim_audit_addkv((heim_svc_req_desc)a->r, KDC_AUDIT_VIS,
                          "requested_dNSName", "%s", val);
         a->ret = hx509_request_add_dns_name(a->r->context->hx509ctx, a->req,
                                             val);
     } else if (strcmp(key, "rfc822Name") == 0 && val) {
-        _kdc_audit_addkv((kdc_request_t)a->r, KDC_AUDIT_VIS,
+        heim_audit_addkv((heim_svc_req_desc)a->r, KDC_AUDIT_VIS,
                          "requested_rfc822Name", "%s", val);
         a->ret = hx509_request_add_email(a->r->context->hx509ctx, a->req, val);
     } else if (strcmp(key, "xMPPName") == 0 && val) {
-        _kdc_audit_addkv((kdc_request_t)a->r, KDC_AUDIT_VIS,
+        heim_audit_addkv((heim_svc_req_desc)a->r, KDC_AUDIT_VIS,
                          "requested_xMPPName", "%s", val);
         a->ret = hx509_request_add_xmpp_name(a->r->context->hx509ctx, a->req,
                                              val);
     } else if (strcmp(key, "krb5PrincipalName") == 0 && val) {
-        _kdc_audit_addkv((kdc_request_t)a->r, KDC_AUDIT_VIS,
+        heim_audit_addkv((heim_svc_req_desc)a->r, KDC_AUDIT_VIS,
                          "requested_krb5PrincipalName", "%s", val);
         a->ret = hx509_request_add_pkinit(a->r->context->hx509ctx, a->req,
                                           val);
     } else if (strcmp(key, "ms-upn") == 0 && val) {
-        _kdc_audit_addkv((kdc_request_t)a->r, KDC_AUDIT_VIS,
+        heim_audit_addkv((heim_svc_req_desc)a->r, KDC_AUDIT_VIS,
                          "requested_ms_upn", "%s", val);
         a->ret = hx509_request_add_ms_upn_name(a->r->context->hx509ctx, a->req,
                                                val);
     } else if (strcmp(key, "registeredID") == 0 && val) {
-        _kdc_audit_addkv((kdc_request_t)a->r, KDC_AUDIT_VIS,
+        heim_audit_addkv((heim_svc_req_desc)a->r, KDC_AUDIT_VIS,
                          "requested_registered_id", "%s", val);
         a->ret = der_parse_heim_oid(val, ".", &oid);
         if (a->ret == 0)
@@ -613,11 +665,11 @@ bx509_param_cb(void *d,
                                                   a->req, &oid);
         der_free_oid(&oid);
     } else if (strcmp(key, "csr") == 0 && val) {
-        _kdc_audit_addkv((kdc_request_t)a->r, 0, "requested_csr", "true");
+        heim_audit_addkv((heim_svc_req_desc)a->r, 0, "requested_csr", "true");
         a->ret = 0; /* Handled upstairs */
     } else {
         /* Produce error for unknown params */
-        _kdc_audit_addkv((kdc_request_t)a->r, 0, "requested_unknown", "true");
+        heim_audit_addkv((heim_svc_req_desc)a->r, 0, "requested_unknown", "true");
         krb5_set_error_message(a->r->context, a->ret = ENOTSUP,
                                "Query parameter %s not supported", key);
     }
@@ -828,8 +880,8 @@ set_req_desc(struct MHD_Connection *connection,
         addr_to_string(r->context, r->addr, r->frombuf, sizeof(r->frombuf));
     }
 
-    _kdc_audit_addkv((kdc_request_t)r, 0, "method", "GET");
-    _kdc_audit_addkv((kdc_request_t)r, 0, "endpoint", "%s", r->reqtype);
+    heim_audit_addkv((heim_svc_req_desc)r, 0, "method", "GET");
+    heim_audit_addkv((heim_svc_req_desc)r, 0, "endpoint", "%s", r->reqtype);
     token = MHD_lookup_connection_value(r->connection, MHD_HEADER_KIND,
                                         MHD_HTTP_HEADER_AUTHORIZATION);
     if (token && r->kv) {
@@ -837,9 +889,9 @@ set_req_desc(struct MHD_Connection *connection,
 
         if ((token_end = strchr(token, ' ')) == NULL ||
             (token_end - token) > INT_MAX || (token_end - token) < 2)
-            _kdc_audit_addkv((kdc_request_t)r, 0, "auth", "<unknown>");
+            heim_audit_addkv((heim_svc_req_desc)r, 0, "auth", "<unknown>");
         else
-            _kdc_audit_addkv((kdc_request_t)r, 0, "auth", "%.*s",
+            heim_audit_addkv((heim_svc_req_desc)r, 0, "auth", "%.*s",
                              (int)(token_end - token), token);
 
     }
@@ -1523,9 +1575,9 @@ bnegotiate(struct bx509_request_desc *r)
 
     ret = bnegotiate_get_target(r);
     if (ret == 0) {
-        _kdc_audit_addkv((kdc_request_t)r, KDC_AUDIT_VIS, "target", "%s",
+        heim_audit_addkv((heim_svc_req_desc)r, KDC_AUDIT_VIS, "target", "%s",
                          r->target ? r->target : "<unknown>");
-        _kdc_audit_addkv((kdc_request_t)r, 0, "redir", "%s",
+        heim_audit_addkv((heim_svc_req_desc)r, 0, "redir", "%s",
                          r->redir ? "yes" : "no");
         ret = validate_token(r);
     }
@@ -1672,7 +1724,7 @@ bx509_openlog(krb5_context context,
 {
     char **s = NULL, **p;
 
-    krb5_initlog(context, "kdc", fac);
+    krb5_initlog(context, "bx509d", fac);
     s = krb5_config_get_strings(context, NULL, svc, "logging", NULL);
     if (s == NULL)
         s = krb5_config_get_strings(context, NULL, "logging", svc, NULL);

@@ -120,6 +120,20 @@ hx509_set_error_string(hx509_context context, int flags, int code,
 }
 
 /**
+ * Sets ENOMEM as the error on a hx509 context.
+ *
+ * @param context A hx509 context.
+ *
+ * @ingroup hx509_error
+ */
+
+HX509_LIB_FUNCTION int HX509_LIB_CALL
+hx509_enomem(hx509_context context)
+{
+    return heim_enomem(context->hcontext);
+}
+
+/**
  * Get an error string from context associated with error_code.
  *
  * @param context A hx509 context.

@@ -1835,3 +1835,753 @@ hx509_ca_sign_self(hx509_context context,
 		   NULL,
 		   certificate);
 }
+
+/*
+ * The following used to be `kdc_issue_certificate()', which was added for
+ * kx509 support in the kdc, then adapted for bx509d.  It now has no
+ * kdc-specific code and very little krb5-specific code, and is named
+ * `hx509_ca_issue_certificate()'.
+ */
+
+/* From lib/krb5/principal.c */
+#define princ_num_comp(P) ((P)->principalName.name_string.len)
+#define princ_type(P) ((P)->principalName.name_type)
+#define princ_comp(P) ((P)->principalName.name_string.val)
+#define princ_ncomp(P, N) ((P)->principalName.name_string.val[(N)])
+#define princ_realm(P) ((P)->realm)
+
+static const char *
+princ_get_comp_string(KRB5PrincipalName *principal, unsigned int component)
+{
+    if (component >= princ_num_comp(principal))
+       return NULL;
+    return princ_ncomp(principal, component);
+}
+/* XXX Add unparse_name() */
+
+typedef enum {
+    CERT_NOTSUP = 0,
+    CERT_CLIENT = 1,
+    CERT_SERVER = 2,
+    CERT_MIXED  = 3
+} cert_type;
+
+static void
+frees(char **s)
+{
+    free(*s);
+    *s = NULL;
+}
+
+static heim_error_code
+count_sans(hx509_request req, size_t *n)
+{
+    size_t i;
+    char *s = NULL;
+    int ret = 0;
+
+    *n = 0;
+    for (i = 0; ret == 0; i++) {
+        hx509_san_type san_type;
+
+        frees(&s);
+        ret = hx509_request_get_san(req, i, &san_type, &s);
+        if (ret)
+            break;
+        switch (san_type) {
+        case HX509_SAN_TYPE_DNSNAME:
+        case HX509_SAN_TYPE_EMAIL:
+        case HX509_SAN_TYPE_XMPP:
+        case HX509_SAN_TYPE_PKINIT:
+        case HX509_SAN_TYPE_MS_UPN:
+            (*n)++;
+            break;
+        default:
+            ret = ENOTSUP;
+        }
+        frees(&s);
+    }
+    return ret == HX509_NO_ITEM ? 0 : ret;
+}
+
+static int
+has_sans(hx509_request req)
+{
+    hx509_san_type san_type;
+    char *s = NULL;
+    int ret = hx509_request_get_san(req, 0, &san_type, &s);
+
+    frees(&s);
+    return ret == HX509_NO_ITEM ? 0 : 1;
+}
+
+static cert_type
+characterize_cprinc(hx509_context context,
+                    KRB5PrincipalName *cprinc)
+{
+    unsigned int ncomp = princ_num_comp(cprinc);
+    const char *comp1 = princ_get_comp_string(cprinc, 1);
+
+    switch (ncomp) {
+    case 1:
+        return CERT_CLIENT;
+    case 2:
+        if (strchr(comp1, '.') == NULL)
+            return CERT_CLIENT;
+        return CERT_SERVER;
+    case 3:
+        if (strchr(comp1, '.'))
+            return CERT_SERVER;
+        return CERT_NOTSUP;
+    default:
+        return CERT_NOTSUP;
+    }
+}
+
+/* Characterize request as client or server cert req */
+static cert_type
+characterize(hx509_context context,
+             KRB5PrincipalName *cprinc,
+             hx509_request req)
+{
+    heim_error_code ret = 0;
+    cert_type res = CERT_NOTSUP;
+    size_t i;
+    char *s = NULL;
+    int want_ekus = 0;
+
+    if (!has_sans(req))
+        return characterize_cprinc(context, cprinc);
+
+    for (i = 0; ret == 0; i++) {
+        heim_oid oid;
+
+        frees(&s);
+        ret = hx509_request_get_eku(req, i, &s);
+        if (ret)
+            break;
+
+        want_ekus = 1;
+        ret = der_parse_heim_oid(s, ".", &oid);
+        if (ret)
+            break;
+        /*
+         * If the client wants only a server certificate, then we'll be
+         * willing to issue one that may be longer-lived than the client's
+         * ticket/token.
+         *
+         * There may be other server EKUs, but these are the ones we know
+         * of.
+         */
+        if (der_heim_oid_cmp(&asn1_oid_id_pkix_kp_serverAuth, &oid) &&
+            der_heim_oid_cmp(&asn1_oid_id_pkix_kp_OCSPSigning, &oid) &&
+            der_heim_oid_cmp(&asn1_oid_id_pkix_kp_secureShellServer, &oid))
+            res |= CERT_CLIENT;
+        else
+            res |= CERT_SERVER;
+        der_free_oid(&oid);
+    }
+    frees(&s);
+    if (ret == HX509_NO_ITEM)
+        ret = 0;
+
+    for (i = 0; ret == 0; i++) {
+        hx509_san_type san_type;
+
+        frees(&s);
+        ret = hx509_request_get_san(req, i, &san_type, &s);
+        if (ret)
+            break;
+        switch (san_type) {
+        case HX509_SAN_TYPE_DNSNAME:
+            if (!want_ekus)
+                res |= CERT_SERVER;
+            break;
+        case HX509_SAN_TYPE_EMAIL:
+        case HX509_SAN_TYPE_XMPP:
+        case HX509_SAN_TYPE_PKINIT:
+        case HX509_SAN_TYPE_MS_UPN:
+            if (!want_ekus)
+                res |= CERT_CLIENT;
+            break;
+        default:
+            ret = ENOTSUP;
+        }
+        if (ret)
+            break;
+    }
+    frees(&s);
+    if (ret == HX509_NO_ITEM)
+        ret = 0;
+    return ret ? CERT_NOTSUP : res;
+}
+
+/*
+ * Get a configuration sub-tree for kx509 based on what's being requested and
+ * by whom.
+ *
+ * We have a number of cases:
+ *
+ *  - default certificate (no CSR used, or no certificate extensions requested)
+ *     - for client principals
+ *     - for service principals
+ *  - client certificate requested (CSR used and client-y SANs/EKUs requested)
+ *  - server certificate requested (CSR used and server-y SANs/EKUs requested)
+ *  - mixed client/server certificate requested (...)
+ */
+static heim_error_code
+get_cf(hx509_context context,
+       const heim_config_binding *cf,
+       heim_log_facility *logf,
+       hx509_request req,
+       KRB5PrincipalName *cprinc,
+       const heim_config_binding **out)
+{
+    heim_error_code ret;
+    unsigned int ncomp = princ_num_comp(cprinc);
+    const char *realm = princ_realm(cprinc);
+    const char *comp0 = princ_get_comp_string(cprinc, 0);
+    const char *comp1 = princ_get_comp_string(cprinc, 1);
+    const char *label = NULL;
+    const char *svc = NULL;
+    const char *def = NULL;
+    cert_type certtype = CERT_NOTSUP;
+    size_t nsans = 0;
+
+    *out = NULL;
+    if (ncomp == 0) {
+        heim_log_msg(context->hcontext, logf, 5, NULL,
+                     "Client principal has no components!");
+        hx509_set_error_string(context, 0, ret = ENOTSUP,
+                               "Client principal has no components!");
+        return ret;
+    }
+
+    if ((ret = count_sans(req, &nsans)) ||
+        (certtype = characterize(context, cprinc, req)) == CERT_NOTSUP) {
+        heim_log_msg(context->hcontext, logf, 5, NULL,
+                     "Could not characterize CSR");
+        hx509_set_error_string(context, 0, ret, "Could not characterize CSR");
+        return ret;
+    }
+
+    if (nsans) {
+        def = "custom";
+        /* Client requested some certificate extension, a SAN or EKU */
+        switch (certtype) {
+        case CERT_MIXED:    label = "mixed";  break;
+        case CERT_CLIENT:   label = "client"; break;
+        case CERT_SERVER:   label = "server"; break;
+        default:
+            hx509_set_error_string(context, 0, ret = ENOTSUP,
+                                   "Requested SAN/EKU combination not "
+                                   "supported");
+            return ret;
+        }
+    } else {
+        def = "default";
+        /* Default certificate desired */
+        if (ncomp == 1) {
+            label = "user";
+        } else if (ncomp == 2 && strcmp(comp1, "root") == 0) {
+            label = "root_user";
+        } else if (ncomp == 2 && strcmp(comp1, "admin") == 0) {
+            label = "admin_user";
+        } else if (strchr(comp1, '.')) {
+            label = "hostbased_service";
+            svc = comp0;
+        } else {
+            label = "other";
+        }
+    }
+
+    *out = heim_config_get_list(context->hcontext, cf, label, svc, NULL);
+    if (*out)
+        ret = 0;
+    if (ret) {
+        heim_log_msg(context->hcontext, logf, 3, NULL,
+                     "No configuration for %s %s certificates realm "
+                     "-> %s -> kx509 -> %s%s%s", def, label, realm, label,
+                     svc ? " -> " : "", svc ? svc : "");
+        hx509_set_error_string(context, 0, EACCES,
+                "No configuration for %s %s certificates realm "
+                "-> %s -> kx509 -> %s%s%s", def, label, realm, label,
+                svc ? " -> " : "", svc ? svc : "");
+    }
+    return ret;
+}
+
+
+/*
+ * Find and set a certificate template using a configuration sub-tree
+ * appropriate to the requesting principal.
+ *
+ * This allows for the specification of the following in configuration:
+ *
+ *  - certificates as templates, with ${var} tokens in subjectName attribute
+ *    values that will be expanded later
+ *  - a plain string with ${var} tokens to use as the subjectName
+ *  - EKUs
+ *  - whether to include a PKINIT SAN
+ */
+static heim_error_code
+set_template(hx509_context context,
+             heim_log_facility *logf,
+             const heim_config_binding *cf,
+             hx509_ca_tbs tbs)
+{
+    heim_error_code ret = 0;
+    const char *cert_template = NULL;
+    const char *subj_name = NULL;
+    char **ekus = NULL;
+
+    if (cf == NULL)
+        return EACCES; /* Can't happen */
+
+    cert_template = heim_config_get_string(context->hcontext, cf,
+                                           "template_cert", NULL);
+    subj_name = heim_config_get_string(context->hcontext, cf, "subject_name",
+                                       NULL);
+    ekus = heim_config_get_strings(context->hcontext, cf, "ekus", NULL);
+
+    if (cert_template) {
+        hx509_certs certs;
+        hx509_cert template;
+
+        ret = hx509_certs_init(context, cert_template, 0, NULL, &certs);
+        if (ret == 0)
+            ret = hx509_get_one_cert(context, certs, &template);
+        hx509_certs_free(&certs);
+        if (ret) {
+            heim_log_msg(context->hcontext, logf, 1, NULL,
+                         "Failed to load certificate template from %s",
+                         cert_template);
+            hx509_set_error_string(context, 0, EACCES,
+                                   "Failed to load certificate template from "
+                                   "%s", cert_template);
+            return ret;
+        }
+
+        /*
+         * Only take the subjectName, the keyUsage, and EKUs from the template
+         * certificate.
+         */
+        ret = hx509_ca_tbs_set_template(context, tbs,
+                                        HX509_CA_TEMPLATE_SUBJECT |
+                                        HX509_CA_TEMPLATE_KU |
+                                        HX509_CA_TEMPLATE_EKU,
+                                        template);
+        hx509_cert_free(template);
+        if (ret)
+            return ret;
+    }
+
+    if (subj_name) {
+        hx509_name dn = NULL;
+
+        ret = hx509_parse_name(context, subj_name, &dn);
+        if (ret == 0)
+            ret = hx509_ca_tbs_set_subject(context, tbs, dn);
+        hx509_name_free(&dn);
+        if (ret)
+            return ret;
+    }
+
+    if (cert_template == NULL && subj_name == NULL) {
+        hx509_name dn = NULL;
+
+        ret = hx509_empty_name(context, &dn);
+        if (ret == 0)
+            ret = hx509_ca_tbs_set_subject(context, tbs, dn);
+        hx509_name_free(&dn);
+        if (ret)
+            return ret;
+    }
+
+    if (ekus) {
+        size_t i;
+
+        for (i = 0; ret == 0 && ekus[i]; i++) {
+            heim_oid oid = { 0, 0 };
+
+            if ((ret = der_find_or_parse_heim_oid(ekus[i], ".", &oid)) == 0)
+                ret = hx509_ca_tbs_add_eku(context, tbs, &oid);
+            der_free_oid(&oid);
+        }
+        heim_config_free_strings(ekus);
+    }
+
+    /*
+     * XXX A KeyUsage template would be nice, but it needs some smarts to
+     * remove, e.g., encipherOnly, decipherOnly, keyEncipherment, if the SPKI
+     * algorithm does not support encryption.  The same logic should be added
+     * to hx509_ca_tbs_set_template()'s HX509_CA_TEMPLATE_KU functionality.
+     */
+    return ret;
+}
+
+/*
+ * Find and set a certificate template, set "variables" in `env', and add add
+ * default SANs/EKUs as appropriate.
+ *
+ * TODO:
+ *  - lookup a template for the client principal in its HDB entry
+ *  - lookup subjectName, SANs for a principal in its HDB entry
+ *  - lookup a host-based client principal's HDB entry and add its canonical
+ *    name / aliases as dNSName SANs
+ *    (this would have to be if requested by the client, perhaps)
+ */
+static heim_error_code
+set_tbs(hx509_context context,
+        heim_log_facility *logf,
+        const heim_config_binding *cf,
+        hx509_request req,
+        KRB5PrincipalName *cprinc,
+        hx509_env *env,
+        hx509_ca_tbs tbs)
+{
+    KRB5PrincipalName cprinc_no_realm = *cprinc;
+    heim_error_code ret;
+    unsigned int ncomp = princ_num_comp(cprinc);
+    const char *realm = princ_realm(cprinc);
+    const char *comp0 = princ_get_comp_string(cprinc, 0);
+    const char *comp1 = princ_get_comp_string(cprinc, 1);
+    const char *comp2 = princ_get_comp_string(cprinc, 2);
+    struct rk_strpool *strpool;
+    char *princ_no_realm = NULL;
+    char *princ = NULL;
+
+    strpool = _hx509_unparse_kerberos_name(NULL, cprinc);
+    if (strpool)
+        princ = rk_strpoolcollect(strpool);
+    cprinc_no_realm.realm = NULL;
+    strpool = _hx509_unparse_kerberos_name(NULL, &cprinc_no_realm);
+    if (strpool)
+        princ_no_realm = rk_strpoolcollect(strpool);
+    if (princ == NULL || princ_no_realm == NULL) {
+        free(princ);
+        return hx509_enomem(context);
+    }
+    strpool = NULL;
+    ret = hx509_env_add(context, env, "principal-name-without-realm",
+                        princ_no_realm);
+    if (ret == 0)
+        ret = hx509_env_add(context, env, "principal-name", princ);
+    if (ret == 0)
+        ret = hx509_env_add(context, env, "principal-name-realm",
+                            realm);
+
+    /* Populate requested certificate extensions from CSR/CSRPlus if allowed */
+    ret = hx509_ca_tbs_set_from_csr(context, tbs, req);
+    if (ret == 0)
+        ret = set_template(context, logf, cf, tbs);
+
+    /*
+     * Optionally add PKINIT SAN.
+     *
+     * Adding an id-pkinit-san means the client can use the certificate to
+     * initiate PKINIT.  That might seem odd, but it enables a sort of PKIX
+     * credential delegation by allowing forwarded Kerberos tickets to be
+     * used to acquire PKIX credentials.  Thus this can work:
+     *
+     *      PKIX (w/ HW token) -> Kerberos ->
+     *        PKIX (w/ softtoken) -> Kerberos ->
+     *          PKIX (w/ softtoken) -> Kerberos ->
+     *            ...
+     *
+     * Note that we may not have added the PKINIT EKU -- that depends on the
+     * template, and host-based service templates might well not include it.
+     */
+    if (ret == 0 && !has_sans(req) &&
+        heim_config_get_bool_default(context->hcontext, cf, FALSE,
+                                     "include_pkinit_san", NULL)) {
+        ret = hx509_ca_tbs_add_san_pkinit(context, tbs, princ);
+    }
+
+    if (ret)
+        goto out;
+
+    if (ncomp == 1) {
+        const char *email_domain;
+
+        ret = hx509_env_add(context, env, "principal-component0",
+                            princ_no_realm);
+
+        /*
+         * If configured, include an rfc822Name that's just the client's
+         * principal name sans realm @ configured email domain.
+         */
+        if (ret == 0 && !has_sans(req) &&
+            (email_domain = heim_config_get_string(context->hcontext, cf,
+                                                   "email_domain", NULL))) {
+            char *email;
+
+            if (asprintf(&email, "%s@%s", princ_no_realm, email_domain) == -1 ||
+                email == NULL)
+                goto enomem;
+            ret = hx509_ca_tbs_add_san_rfc822name(context, tbs, email);
+            free(email);
+        }
+    } else if (ncomp == 2 || ncomp == 3) {
+        /*
+         * 2- and 3-component principal name.
+         *
+         * We do not have a reliable name-type indicator.  If the second
+         * component has a '.' in it then we'll assume that the name is a
+         * host-based (2-component) or domain-based (3-component) service
+         * principal name.  Else we'll assume it's a two-component admin-style
+         * username.
+         */
+
+        ret = hx509_env_add(context, env, "principal-component0", comp0);
+        if (ret == 0)
+            ret = hx509_env_add(context, env, "principal-component1", comp1);
+        if (ret == 0 && ncomp == 3)
+            ret = hx509_env_add(context, env, "principal-component2", comp2);
+        if (ret == 0 && strchr(comp1, '.')) {
+            /* Looks like host-based or domain-based service */
+            ret = hx509_env_add(context, env, "principal-service-name", comp0);
+            if (ret == 0)
+                ret = hx509_env_add(context, env, "principal-host-name",
+                                    comp1);
+            if (ret == 0 && ncomp == 3)
+                ret = hx509_env_add(context, env, "principal-domain-name",
+                                    comp2);
+            if (ret == 0 && !has_sans(req) &&
+                heim_config_get_bool_default(context->hcontext, cf, FALSE,
+                                             "include_dnsname_san", NULL)) {
+                ret = hx509_ca_tbs_add_san_hostname(context, tbs, comp1);
+            }
+        }
+    } else {
+        heim_log_msg(context->hcontext, logf, 5, NULL,
+                     "kx509/bx509 client %s has too many components!", princ);
+        hx509_set_error_string(context, 0, ret = EACCES,
+                               "kx509/bx509 client %s has too many "
+                               "components!", princ);
+    }
+
+out:
+    if (ret == ENOMEM)
+        goto enomem;
+    free(princ_no_realm);
+    free(princ);
+    return ret;
+
+enomem:
+    heim_log_msg(context->hcontext, logf, 0, NULL,
+                 "Could not set up TBSCertificate: Out of memory");
+    ret = hx509_enomem(context);
+    goto out;
+}
+
+static heim_error_code
+tbs_set_times(hx509_context context,
+              const heim_config_binding *cf,
+              time_t starttime,
+              time_t endtime,
+              time_t req_life,
+              hx509_ca_tbs tbs)
+{
+    time_t now = time(NULL);
+    time_t fudge =
+        heim_config_get_time_default(context->hcontext, cf, 5 * 24 * 3600,
+                                     "force_cert_lifetime", NULL);
+    time_t clamp =
+        heim_config_get_time_default(context->hcontext, cf, 0,
+                                     "max_cert_lifetime", NULL);
+
+    starttime = starttime ?  starttime : now - 5 * 60;
+    if (fudge && now + fudge > endtime)
+        endtime = now + fudge;
+    if (req_life && req_life < endtime - now)
+        endtime = now + req_life;
+    if (clamp && clamp < endtime - now)
+        endtime = now + clamp;
+
+    hx509_ca_tbs_set_notAfter(context, tbs, endtime);
+    hx509_ca_tbs_set_notBefore(context, tbs, starttime);
+    return 0;
+}
+
+/*
+ * Build a certifate for `principal' and its CSR.
+ *
+ * XXX Make `cprinc' a GeneralName!  That's why this is private for now.
+ */
+heim_error_code
+_hx509_ca_issue_certificate(hx509_context context,
+                            const heim_config_binding *cf,
+                            heim_log_facility *logf,
+                            hx509_request req,
+                            KRB5PrincipalName *cprinc,
+                            time_t starttime,
+                            time_t endtime,
+                            int send_chain,
+                            hx509_certs *out)
+{
+    heim_error_code ret;
+    const char *ca;
+    hx509_ca_tbs tbs = NULL;
+    hx509_certs chain = NULL;
+    hx509_cert signer = NULL;
+    hx509_cert cert = NULL;
+    hx509_env env = NULL;
+    KeyUsage ku;
+
+    *out = NULL;
+    /* Force KU */
+    ku = int2KeyUsage(0);
+    ku.digitalSignature = 1;
+    hx509_request_authorize_ku(req, ku);
+
+    ret = get_cf(context, cf, logf, req, cprinc, &cf);
+
+    if ((ca = heim_config_get_string(context->hcontext, cf,
+                                     "ca", NULL)) == NULL) {
+        heim_log_msg(context->hcontext, logf, 3, NULL,
+                     "No kx509 CA issuer credential specified");
+        hx509_set_error_string(context, 0, ret = EACCES,
+                               "No kx509 CA issuer credential specified");
+        return ret;
+    }
+
+    ret = hx509_ca_tbs_init(context, &tbs);
+    if (ret) {
+        heim_log_msg(context->hcontext, logf, 0, NULL,
+                     "Failed to create certificate: Out of memory");
+        return ret;
+    }
+
+    /* Lookup a template and set things in `env' and `tbs' as appropriate */
+    if (ret == 0)
+        ret = set_tbs(context, logf, cf, req, cprinc, &env, tbs);
+
+    /* Populate generic template "env" variables */
+
+    /*
+     * The `tbs' and `env' are now complete as to naming and EKUs.
+     *
+     * We check that the `tbs' is not name-less, after which all remaining
+     * failures here will not be policy failures.  So we also log the intent to
+     * issue a certificate now.
+     */
+    if (ret == 0 && hx509_name_is_null_p(hx509_ca_tbs_get_name(tbs)) &&
+        !has_sans(req)) {
+        heim_log_msg(context->hcontext, logf, 3, NULL,
+                     "Not issuing certificate because it would have no names");
+        hx509_set_error_string(context, 0, ret = EACCES,
+                               "Not issuing certificate because it "
+                               "would have no names");
+    }
+    if (ret)
+        goto out;
+
+    /*
+     * Still to be done below:
+     *
+     *  - set certificate spki
+     *  - set certificate validity
+     *  - expand variables in certificate subject name template
+     *  - sign certificate
+     *  - encode certificate and chain
+     */
+
+    /* Load the issuer certificate and private key */
+    {
+        hx509_certs certs;
+        hx509_query *q;
+
+        ret = hx509_certs_init(context, ca, 0, NULL, &certs);
+        if (ret) {
+            heim_log_msg(context->hcontext, logf, 1, NULL,
+                         "Failed to load CA certificate and private key %s",
+                         ca);
+            hx509_set_error_string(context, 0, ret, "Failed to load "
+                                   "CA certificate and private key %s", ca);
+            goto out;
+        }
+        ret = hx509_query_alloc(context, &q);
+        if (ret) {
+            hx509_certs_free(&certs);
+            goto out;
+        }
+
+        hx509_query_match_option(q, HX509_QUERY_OPTION_PRIVATE_KEY);
+        hx509_query_match_option(q, HX509_QUERY_OPTION_KU_KEYCERTSIGN);
+
+        ret = hx509_certs_find(context, certs, q, &signer);
+        hx509_query_free(context, q);
+        hx509_certs_free(&certs);
+        if (ret) {
+            heim_log_msg(context->hcontext, logf, 1, NULL,
+                         "Failed to find a CA certificate in %s", ca);
+            hx509_set_error_string(context, 0, ret,
+                                   "Failed to find a CA certificate in %s",
+                                   ca);
+            goto out;
+        }
+    }
+
+    /* Populate the subject public key in the TBS context */
+    {
+        SubjectPublicKeyInfo spki;
+
+        ret = hx509_request_get_SubjectPublicKeyInfo(context,
+                                                     req, &spki);
+        if (ret == 0)
+            ret = hx509_ca_tbs_set_spki(context, tbs, &spki);
+        free_SubjectPublicKeyInfo(&spki);
+        if (ret)
+            goto out;
+    }
+
+    /* Work out cert expiration */
+    if (ret == 0)
+        ret = tbs_set_times(context, cf, starttime, endtime,
+                            0 /* XXX req_life */, tbs);
+
+    /* Expand the subjectName template in the TBS using the env */
+    if (ret == 0)
+        ret = hx509_ca_tbs_subject_expand(context, tbs, env);
+    hx509_env_free(&env);
+
+    /* All done with the TBS, sign/issue the certificate */
+    ret = hx509_ca_sign(context, tbs, signer, &cert);
+    if (ret)
+        goto out;
+
+    /*
+     * Gather the certificate and chain into a MEMORY store, being careful not
+     * to include private keys in the chain.
+     *
+     * We could have specified a separate configuration parameter for an hx509
+     * store meant to have only the chain and no private keys, but expecting
+     * the full chain in the issuer credential store and copying only the certs
+     * (but not the private keys) is safer and easier to configure.
+     */
+    ret = hx509_certs_init(context, "MEMORY:certs",
+                           HX509_CERTS_NO_PRIVATE_KEYS, NULL, out);
+    if (ret == 0)
+        ret = hx509_certs_add(context, *out, cert);
+    if (ret == 0 && send_chain) {
+        ret = hx509_certs_init(context, ca,
+                               HX509_CERTS_NO_PRIVATE_KEYS, NULL, &chain);
+        if (ret == 0)
+            ret = hx509_certs_merge(context, *out, chain);
+    }
+
+out:
+    hx509_certs_free(&chain);
+    if (env)
+        hx509_env_free(&env);
+    if (tbs)
+        hx509_ca_tbs_free(&tbs);
+    if (cert)
+        hx509_cert_free(cert);
+    if (signer)
+        hx509_cert_free(signer);
+    if (ret)
+        hx509_certs_free(out);
+    return ret;
+}

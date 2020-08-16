@@ -43,6 +43,7 @@ HEIMDAL_X509_1.2 {
 		_hx509_unmap_file_os;
 		_hx509_write_file;
 		hx509_bitstring_print;
+		_hx509_ca_issue_certificate;
 		hx509_ca_sign;
 		hx509_ca_sign_self;
 		hx509_ca_tbs_add_crl_dp_uri;

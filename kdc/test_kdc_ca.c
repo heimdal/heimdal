@@ -34,6 +34,37 @@ usage(int e)
     return e;
 }
 
+static const char *sysplugin_dirs[] =  {
+#ifdef _WIN32
+    "$ORIGIN",
+#else
+    "$ORIGIN/../lib/plugin/kdc",
+#endif
+#ifdef __APPLE__
+    LIBDIR "/plugin/kdc",
+#endif
+    NULL
+};
+
+static void
+load_plugins(krb5_context context)
+{
+    const char * const *dirs = sysplugin_dirs;
+#ifndef _WIN32
+    char **cfdirs;
+
+    cfdirs = krb5_config_get_strings(context, NULL, "kdc", "plugin_dir", NULL);
+    if (cfdirs)
+        dirs = (const char * const *)cfdirs;
+#endif
+
+    _krb5_load_plugins(context, "kdc", (const char **)dirs);
+
+#ifndef _WIN32
+    krb5_config_free_strings(cfdirs);
+#endif
+}
+
 int
 main(int argc, char **argv)
 {
@@ -70,6 +101,7 @@ main(int argc, char **argv)
     if ((ret = krb5_initlog(context, argv0, &logf)) ||
         (ret = krb5_addlog_dest(context, logf, "0-5/STDERR")))
         krb5_err(context, 1, ret, "Could not set up logging to stderr");
+    load_plugins(context);
     if ((ret = krb5_parse_name(context, argv[0], &p)))
         krb5_err(context, 1, ret, "Could not parse principal %s", argv[0]);
     if ((ret = hx509_request_parse(context->hx509ctx, argv[1], &req)))

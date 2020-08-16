@@ -1021,24 +1021,34 @@ hx509_name_is_null_p(const hx509_name name)
  * of ASN.1 strings as C strings.
  */
 struct rk_strpool *
-_hx509_unparse_kerberos_name(struct rk_strpool *strpool, heim_any *value)
+_hx509_unparse_KRB5PrincipalName(struct rk_strpool *strpool, heim_any *value)
 {
-    static const char comp_quotable_chars[] = " \n\t\b\\/@";
-    static const char realm_quotable_chars[] = " \n\t\b\\@";
     KRB5PrincipalName kn;
-    const char *s;
-    size_t i, k, len, plen;
-    int extra_bits;
-    int need_slash = 0;
+    size_t len;
     int ret;
 
     ret = decode_KRB5PrincipalName(value->data, value->length, &kn, &len);
+    if (ret == 0)
+        strpool = _hx509_unparse_kerberos_name(strpool, &kn);
+    free_KRB5PrincipalName(&kn);
+    if (ret == 0 && strpool && (value->length != len))
+        strpool = rk_strpoolprintf(strpool, " <garbage>");
     if (ret)
         return rk_strpoolprintf(strpool, "<error-decoding-PrincipalName");
-    extra_bits = (value->length != len);
+    return strpool;
+}
 
-    for (i = 0; i < kn.principalName.name_string.len; i++) {
-        s = kn.principalName.name_string.val[i];
+struct rk_strpool *
+_hx509_unparse_kerberos_name(struct rk_strpool *strpool, KRB5PrincipalName *kn)
+{
+    static const char comp_quotable_chars[] = " \n\t\b\\/@";
+    static const char realm_quotable_chars[] = " \n\t\b\\@";
+    const char *s;
+    size_t i, k, len, plen;
+    int need_slash = 0;
+
+    for (i = 0; i < kn->principalName.name_string.len; i++) {
+        s = kn->principalName.name_string.val[i];
         len = strlen(s);
 
         if (need_slash)
@@ -1062,9 +1072,12 @@ _hx509_unparse_kerberos_name(struct rk_strpool *strpool, heim_any *value)
             }
         }
     }
+    if (!kn->realm)
+        return strpool;
     strpool = rk_strpoolprintf(strpool, "@");
-    s = kn.realm;
-    len = strlen(kn.realm);
+
+    s = kn->realm;
+    len = strlen(kn->realm);
     for (k = 0; k < len; s += plen, k += plen) {
         char c;
 
@@ -1081,9 +1094,6 @@ _hx509_unparse_kerberos_name(struct rk_strpool *strpool, heim_any *value)
         default:    strpool = rk_strpoolprintf(strpool, "\\%c", c); break;
         }
     }
-    if (extra_bits)
-        strpool = rk_strpoolprintf(strpool, " <garbage>");
-    free_KRB5PrincipalName(&kn);
     return strpool;
 }
 
@@ -1127,8 +1137,9 @@ hx509_general_name_unparse(GeneralName *name, char **str)
 	strpool = rk_strpoolprintf(strpool, "otherName: %s ", oid);
         if (der_heim_oid_cmp(&name->u.otherName.type_id,
                              &asn1_oid_id_pkinit_san) == 0) {
-            strpool = _hx509_unparse_kerberos_name(strpool,
-                                                   &name->u.otherName.value);
+            strpool =
+                _hx509_unparse_KRB5PrincipalName(strpool,
+                                                 &name->u.otherName.value);
         } else if (der_heim_oid_cmp(&name->u.otherName.type_id,
                                     &asn1_oid_id_pkix_on_xmppAddr) == 0) {
             strpool = rk_strpoolprintf(strpool, "xmppAddr ");

@@ -1263,15 +1263,13 @@ hx509_request_get_san(hx509_request req,
     case HX509_SAN_TYPE_XMPP:
         /*fallthrough*/
     case HX509_SAN_TYPE_MS_UPN:
-        pool = hx509_unparse_utf8_string_name(NULL,
-                                              &san->u.otherName.value);
+        pool = hx509_unparse_utf8_string_name(NULL, &san->u.otherName.value);
         if (pool == NULL ||
             (*out = rk_strpoolcollect(pool)) == NULL)
             return ENOMEM;
         return 0;
     case HX509_SAN_TYPE_PKINIT:
-        pool = _hx509_unparse_kerberos_name(NULL,
-                                            &san->u.otherName.value);
+        pool = _hx509_unparse_KRB5PrincipalName(NULL, &san->u.otherName.value);
         if (pool == NULL ||
             (*out = rk_strpoolcollect(pool)) == NULL)
             return ENOMEM;

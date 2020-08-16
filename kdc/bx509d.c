@@ -797,7 +797,7 @@ do_CA(struct bx509_request_desc *r, const char *csr)
     }
 
     /* Issue the certificate */
-    ret = kdc_issue_certificate(r->context, "bx509d", logfac, r->req, p,
+    ret = kdc_issue_certificate(r->context, "bx509", logfac, r->req, p,
                                 &r->token_times, 1 /* send_chain */, &certs);
     krb5_free_principal(r->context, p);
     if (ret) {
@@ -1267,7 +1267,7 @@ bnegotiate_do_CA(struct bx509_request_desc *r)
 
     /* Issue the certificate */
     if (ret == 0)
-        ret = kdc_issue_certificate(r->context, "bx509d", logfac, req, p,
+        ret = kdc_issue_certificate(r->context, "bx509", logfac, req, p,
                                     &r->token_times, 1 /* send_chain */,
                                     &certs);
     krb5_free_principal(r->context, p);
@@ -1743,6 +1743,38 @@ bx509_openlog(krb5_context context,
     krb5_set_warn_dest(context, *fac);
 }
 
+static const char *sysplugin_dirs[] =  {
+#ifdef _WIN32
+    "$ORIGIN",
+#else
+    "$ORIGIN/../lib/plugin/kdc",
+#endif
+#ifdef __APPLE__
+    LIBDIR "/plugin/kdc",
+#endif
+    NULL
+};
+
+static void
+load_plugins(krb5_context context)
+{
+    const char * const *dirs = sysplugin_dirs;
+#ifndef _WIN32
+    char **cfdirs;
+
+    cfdirs = krb5_config_get_strings(context, NULL, "kdc", "plugin_dir", NULL);
+    if (cfdirs)
+        dirs = (const char * const *)cfdirs;
+#endif
+
+    /* XXX kdc? */
+    _krb5_load_plugins(context, "kdc", (const char **)dirs);
+
+#ifndef _WIN32
+    krb5_config_free_strings(cfdirs);
+#endif
+}
+
 int
 main(int argc, char **argv)
 {
@@ -1801,6 +1833,7 @@ main(int argc, char **argv)
         err(1, "Could not init krb5 context");
 
     bx509_openlog(context, "bx509d", &logfac);
+    load_plugins(context);
 
     if (cache_dir == NULL) {
         char *s = NULL;

@@ -347,6 +347,7 @@ heim_load_plugins(heim_context context,
             HEIMDAL_MUTEX_unlock(&modules_mutex);
             heim_release(s);
             heim_release(modules);
+            heim_debug(context, 5, "Load plugins for module %s failed", module);
             return;
         }
         heim_dict_set_value(modules, s, mod);
@@ -357,12 +358,19 @@ heim_load_plugins(heim_context context,
     for (di = paths; *di != NULL; di++) {
         free(dirname);
         dirname = resolve_origin(*di, module);
-        if (dirname == NULL)
+        if (dirname == NULL) {
+            heim_debug(context, 10, "Could not resolve %s", *di);
             continue;
+        }
         d = opendir(dirname);
-        if (d == NULL)
+        if (d == NULL) {
+            heim_debug(context, 10, "No such directory %s", dirname);
             continue;
+        }
         rk_cloexec_dir(d);
+
+        heim_debug(context, 10, "Load plugins for module %s; search %s (%s)",
+                   module, *di, dirname);
 
         while ((entry = readdir(d)) != NULL) {
             char *n = entry->d_name;
@@ -424,6 +432,8 @@ heim_load_plugins(heim_context context,
                     p->path = heim_retain(spath);
                     p->plugins_by_name = heim_dict_create(11);
                     heim_dict_set_value(mod, spath, p);
+                    heim_debug(context, 10, "Load plugins for module %s; "
+                               "found DSO %s", module, path);
                 }
             }
             heim_release(p);
@@ -503,8 +513,10 @@ add_dso_plugin_struct(heim_context context,
 
     /* suppress error here because we may be looking for a different plugin type */
     cpm = (heim_plugin_common_ftable_p)dlsym(dsohandle, name);
-    if (cpm == NULL)
+    if (cpm == NULL) {
+        heim_debug(context, 15, "Symbol %s not found in %s", name, dsopath);
         return NULL;
+    }
 
     heim_warnx(context, "plugin %s uses deprecated loading mechanism", dsopath);
 
@@ -590,8 +602,10 @@ add_dso_plugins_load_fn(heim_context context,
     /* suppress error here because we may be looking for a different plugin type */
     load_fn = (heim_plugin_load_t)dlsym(dsohandle, sym);
     free(sym);
-    if (load_fn == NULL)
+    if (load_fn == NULL) {
+        heim_debug(context, 15, "Symbol %s not found in %s", sym, dsopath);
         return NULL;
+    }
 
     ret = load_fn(pcontext, &get_instance, &n_ftables, &ftables);
     if (ret) {
@@ -624,6 +638,7 @@ add_dso_plugins_load_fn(heim_context context,
         heim_release(pl);
     }
 
+    heim_debug(context, 15, "DSO %s loaded (%s)", dsopath, sym);
     return plugins;
 }
 #endif /* HAVE_DLOPEN */

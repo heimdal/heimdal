@@ -41,6 +41,21 @@
 #include <stdarg.h>
 #include <vis.h>
 
+struct heim_log_facility_internal {
+    int min;
+    int max;
+    heim_log_log_func_t log_func;
+    heim_log_close_func_t close_func;
+    void *data;
+};
+
+struct heim_log_facility_s {
+    char *program;
+    size_t refs;
+    size_t len;
+    struct heim_log_facility_internal *val;
+};
+
 typedef struct heim_pcontext_s *heim_pcontext;
 typedef struct heim_pconfig *heim_pconfig;
 struct heim_svc_req_desc_common_s {
@@ -126,6 +141,7 @@ heim_initlog(heim_context context,
     heim_log_facility *f = calloc(1, sizeof(*f));
     if (f == NULL)
         return heim_enomem(context);
+    f->refs = 1;
     f->program = strdup(program);
     if (f->program == NULL) {
         free(f);
@@ -133,6 +149,14 @@ heim_initlog(heim_context context,
     }
     *fac = f;
     return 0;
+}
+
+heim_log_facility *
+heim_log_ref(heim_log_facility *fac)
+{
+    if (fac)
+        fac->refs++;
+    return fac;
 }
 
 heim_error_code
@@ -432,7 +456,7 @@ heim_closelog(heim_context context, heim_log_facility *fac)
 {
     int i;
 
-    if (!fac)
+    if (!fac || --(fac->refs))
         return;
     for (i = 0; i < fac->len; i++)
         (*fac->val[i].close_func)(fac->val[i].data);

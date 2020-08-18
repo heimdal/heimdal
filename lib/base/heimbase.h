@@ -93,19 +93,7 @@ typedef void (HEIM_CALLCONV *heim_log_log_func_t)(heim_context,
                                                   void *);
 typedef void (HEIM_CALLCONV *heim_log_close_func_t)(void *);
 
-struct heim_log_facility_internal {
-    int min;
-    int max;
-    heim_log_log_func_t log_func;
-    heim_log_close_func_t close_func;
-    void *data;
-};
-
-typedef struct heim_log_facility_s {
-    char *program;
-    int len;
-    struct heim_log_facility_internal *val;
-} heim_log_facility;
+typedef struct heim_log_facility_s heim_log_facility;
 
 typedef uintptr_t
 (HEIM_LIB_CALL *heim_get_instance_func_t)(const char *);

@@ -498,6 +498,8 @@ __attribute__ ((__format__ (__printf__, 5, 0)))
     time_t t = 0;
     int i;
 
+    if (!fac)
+        fac = context->log_dest;
     for (i = 0; fac && i < fac->len; i++)
         if (fac->val[i].min <= level &&
             (fac->val[i].max < 0 || fac->val[i].max >= level)) {

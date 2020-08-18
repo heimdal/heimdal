@@ -180,3 +180,9 @@ krb5_set_debug_dest(krb5_context context, const char *program,
 {
     return heim_add_debug_dest(context->hcontext, program, log_spec);
 }
+
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
+krb5_set_log_dest(krb5_context context, krb5_log_facility *fac)
+{
+    return heim_set_log_dest(context->hcontext, fac);
+}

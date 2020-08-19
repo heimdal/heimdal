@@ -217,6 +217,24 @@ hx509_context_init(hx509_context *contextp)
     return 0;
 }
 
+HX509_LIB_FUNCTION int HX509_LIB_CALL
+hx509_set_log_dest(hx509_context context, heim_log_facility *fac)
+{
+    return heim_set_log_dest(context->hcontext, fac);
+}
+
+HX509_LIB_FUNCTION int HX509_LIB_CALL
+hx509_set_debug_dest(hx509_context context, heim_log_facility *fac)
+{
+    return heim_set_debug_dest(context->hcontext, fac);
+}
+
+HX509_LIB_FUNCTION int HX509_LIB_CALL
+hx509_set_warn_dest(hx509_context context, heim_log_facility *fac)
+{
+    return heim_set_warn_dest(context->hcontext, fac);
+}
+
 /**
  * Selects if the hx509_revoke_verify() function is going to require
  * the existans of a revokation method (OCSP, CRL) or not. Note that

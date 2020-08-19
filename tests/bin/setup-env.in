@@ -19,6 +19,7 @@ NO_AFS="@NO_AFS@"
 
 # regular apps
 bx509d="${TESTS_ENVIRONMENT} ${top_builddir}/kdc/bx509d"
+httpkadmind="${TESTS_ENVIRONMENT} ${top_builddir}/kdc/httpkadmind"
 hxtool="${TESTS_ENVIRONMENT} ${top_builddir}/lib/hx509/hxtool"
 iprop_log="${TESTS_ENVIRONMENT} ${top_builddir}/lib/kadm5/iprop-log"
 ipropd_master="${TESTS_ENVIRONMENT} ${top_builddir}/lib/kadm5/ipropd-master"

@@ -44,6 +44,24 @@ bx509d_LDADD =	-ldl \
 		 $(top_builddir)/lib/hx509/libhx509.la \
 		 $(top_builddir)/lib/gssapi/libgssapi.la
 libexec_PROGRAMS += bx509d
+
+httpkadmind_SOURCES = httpkadmind.c
+httpkadmind_AM_CPPFLAGS = $(AM_CPPFLAGS) $(MICROHTTPD_CFLAGS)
+httpkadmind_LDADD =	-ldl \
+		 $(top_builddir)/lib/hdb/libhdb.la \
+		 $(top_builddir)/lib/kadm5/libkadm5clnt.la \
+		 $(top_builddir)/lib/kadm5/libkadm5srv.la \
+		 libkdc.la \
+		 $(MICROHTTPD_LIBS) \
+		 $(LIB_roken) \
+		 $(LIB_heimbase) \
+		 $(LIB_hcrypto) \
+		 $(top_builddir)/lib/sl/libsl.la \
+		 $(top_builddir)/lib/asn1/libasn1.la \
+		 $(top_builddir)/lib/krb5/libkrb5.la \
+		 $(top_builddir)/lib/hx509/libhx509.la \
+		 $(top_builddir)/lib/gssapi/libgssapi.la
+libexec_PROGRAMS += httpkadmind
 endif
 
 digest_service_SOURCES = \
@@ -116,6 +134,7 @@ ALL_OBJECTS += $(hprop_OBJECTS)
 ALL_OBJECTS += $(hpropd_OBJECTS)
 ALL_OBJECTS += $(digest_service_OBJECTS)
 ALL_OBJECTS += $(bx509d_OBJECTS)
+ALL_OBJECTS += $(httpkadmind_OBJECTS)
 ALL_OBJECTS += $(cjwt_token_validator_la_OBJECTS)
 ALL_OBJECTS += $(simple_csr_authorizer_la_OBJECTS)
 ALL_OBJECTS += $(test_token_validator_OBJECTS)

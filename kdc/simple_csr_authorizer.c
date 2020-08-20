@@ -173,7 +173,7 @@ authorize(void *ctx,
     char *princ = NULL;
     char *s = NULL;
 
-    if ((d = krb5_config_get_string(context, NULL, "kdc",
+    if ((d = krb5_config_get_string(context, NULL, app ? app : "kdc",
                                     "simple_csr_authorizer_directory",
                                     NULL)) == NULL)
         return KRB5_PLUGIN_NO_HANDLE;

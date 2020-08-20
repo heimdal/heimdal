@@ -698,7 +698,7 @@ authorize_CSR(struct bx509_request_desc *r,
         return bad_req(r, ret, MHD_HTTP_SERVICE_UNAVAILABLE,
                        "Could not handle query parameters");
 
-    ret = kdc_authorize_csr(r->context, "bx509d", r->req, p);
+    ret = kdc_authorize_csr(r->context, "bx509", r->req, p);
     if (ret)
         return bad_403(r, ret, "Not authorized to requested certificate");
     return ret;

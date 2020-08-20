@@ -89,13 +89,13 @@ _kadm5_c_init_context(kadm5_client_context **ctx,
     char *colon;
 
     *ctx = malloc(sizeof(**ctx));
-    if(*ctx == NULL)
+    if (*ctx == NULL)
 	return krb5_enomem(context);
     memset(*ctx, 0, sizeof(**ctx));
-    krb5_add_et_list (context, initialize_kadm5_error_table_r);
+    krb5_add_et_list(context, initialize_kadm5_error_table_r);
     set_funcs(*ctx);
     (*ctx)->context = context;
-    if(params->mask & KADM5_CONFIG_REALM) {
+    if (params->mask & KADM5_CONFIG_REALM) {
 	ret = 0;
 	(*ctx)->realm = strdup(params->realm);
 	if ((*ctx)->realm == NULL)
@@ -106,19 +106,24 @@ _kadm5_c_init_context(kadm5_client_context **ctx,
 	free(*ctx);
 	return ret;
     }
-    if(params->mask & KADM5_CONFIG_ADMIN_SERVER)
+
+    /*
+     * FIXME: If we have a hostlist, we should use the hostlist so that if we
+     *        can't reach one server we try another.
+     */
+    if (params->mask & KADM5_CONFIG_ADMIN_SERVER)
 	(*ctx)->admin_server = strdup(params->admin_server);
     else {
 	char **hostlist;
 
-	ret = krb5_get_krb_admin_hst (context, &(*ctx)->realm, &hostlist);
+	ret = krb5_get_krb_admin_hst(context, &(*ctx)->realm, &hostlist);
 	if (ret) {
 	    free((*ctx)->realm);
 	    free(*ctx);
 	    return ret;
 	}
 	(*ctx)->admin_server = strdup(*hostlist);
-	krb5_free_krbhst (context, hostlist);
+	krb5_free_krbhst(context, hostlist);
     }
 
     if ((*ctx)->admin_server == NULL) {
@@ -126,22 +131,64 @@ _kadm5_c_init_context(kadm5_client_context **ctx,
 	free(*ctx);
 	return krb5_enomem(context);
     }
-    colon = strchr ((*ctx)->admin_server, ':');
+    colon = strchr((*ctx)->admin_server, ':');
     if (colon != NULL)
 	*colon++ = '\0';
 
     (*ctx)->kadmind_port = 0;
 
-    if(params->mask & KADM5_CONFIG_KADMIND_PORT)
+    if (params->mask & KADM5_CONFIG_KADMIND_PORT)
 	(*ctx)->kadmind_port = params->kadmind_port;
     else if (colon != NULL) {
 	char *end;
 
-	(*ctx)->kadmind_port = htons(strtol (colon, &end, 0));
+	(*ctx)->kadmind_port = htons(strtol(colon, &end, 0));
     }
     if ((*ctx)->kadmind_port == 0)
-	(*ctx)->kadmind_port = krb5_getportbyname (context, "kerberos-adm",
-						   "tcp", 749);
+	(*ctx)->kadmind_port = krb5_getportbyname(context, "kerberos-adm",
+						  "tcp", 749);
+
+    if (params->mask & KADM5_CONFIG_READONLY_ADMIN_SERVER) {
+	(*ctx)->readonly_admin_server = strdup(params->readonly_admin_server);
+        if ((*ctx)->readonly_admin_server == NULL) {
+            free((*ctx)->realm);
+            free(*ctx);
+            return krb5_enomem(context);
+        }
+    } else {
+	char **hostlist;
+
+        ret = krb5_get_krb_readonly_admin_hst(context, &(*ctx)->realm,
+                                              &hostlist);
+        if (ret == 0) {
+            (*ctx)->readonly_admin_server = strdup(*hostlist);
+            krb5_free_krbhst(context, hostlist);
+            if ((*ctx)->readonly_admin_server == NULL) {
+                free((*ctx)->realm);
+                free(*ctx);
+                return krb5_enomem(context);
+            }
+        }
+    }
+    if ((*ctx)->readonly_admin_server) {
+        colon = strchr((*ctx)->readonly_admin_server, ':');
+        if (colon != NULL)
+            *colon++ = '\0';
+
+    } else {
+        colon = NULL;
+    }
+
+    (*ctx)->readonly_kadmind_port = 0;
+    if (params->mask & KADM5_CONFIG_READONLY_KADMIN_PORT)
+	(*ctx)->readonly_kadmind_port = params->readonly_kadmind_port;
+    else if (colon != NULL) {
+	char *end;
+
+	(*ctx)->readonly_kadmind_port = htons(strtol(colon, &end, 0));
+    }
+    if ((*ctx)->readonly_kadmind_port == 0)
+	(*ctx)->readonly_kadmind_port = (*ctx)->kadmind_port;
     return 0;
 }
 
@@ -434,10 +481,24 @@ kadm_connect(kadm5_client_context *ctx)
     struct addrinfo *ai, *a;
     struct addrinfo hints;
     int error;
+    int kadmin_port = 0;
+    const char *admin_server = NULL;
     char portstr[NI_MAXSERV];
     char *hostname, *slash;
     char *service_name;
     krb5_context context = ctx->context;
+    int writable = 0;
+
+    if (!ctx->want_write) {
+        admin_server = ctx->readonly_admin_server;
+        kadmin_port = ctx->readonly_kadmind_port;
+    }
+    if (admin_server == NULL) {
+        admin_server = ctx->admin_server;
+        writable = 1;
+    }
+    if (kadmin_port < 1)
+        kadmin_port = ctx->kadmind_port;
 
     memset (&hints, 0, sizeof(hints));
     hints.ai_socktype = SOCK_STREAM;
@@ -563,14 +624,31 @@ kadm_connect(kadm5_client_context *ctx)
 	krb5_cc_close(context, cc);
     ctx->sock = s;
 
+    ctx->connected_to_writable = !!writable;
     return 0;
 }
 
 kadm5_ret_t
-_kadm5_connect(void *handle)
+_kadm5_connect(void *handle, int want_write)
 {
     kadm5_client_context *ctx = handle;
-    if(ctx->sock == -1)
+
+    /*
+     * Reconnect?  Note that we don't reconnect to read-only kadmin servers if
+     * we're already connected to a writable kadmin server because we sometimes
+     * get a principal record after writing it.  We really need the application
+     * upstairs to tell us when to stop hogging writable kadmin servers.
+     *
+     * FIXME: Add an API for marking a kadm5_client_context as not needing to
+     * connect to writable kadmin servers.
+     */
+    ctx->want_write = !!want_write;
+    if (ctx->sock != rk_INVALID_SOCKET && want_write &&
+        !ctx->connected_to_writable) {
+        rk_closesocket(ctx->sock);
+        ctx->sock = rk_INVALID_SOCKET;
+    }
+    if (ctx->sock == rk_INVALID_SOCKET)
 	return kadm_connect(ctx);
     return 0;
 }

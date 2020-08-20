@@ -149,12 +149,12 @@ void start_server(krb5_context, const char*);
 /* server.c */
 
 krb5_error_code
-kadmind_loop (krb5_context, krb5_keytab, int);
+kadmind_loop (krb5_context, krb5_keytab, int, int);
 
 /* rpc.c */
 
 int
-handle_mit(krb5_context, void *, size_t, int);
+handle_mit(krb5_context, void *, size_t, int, int);
 
 /* mod.c */
 

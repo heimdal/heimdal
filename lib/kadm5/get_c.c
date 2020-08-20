@@ -48,7 +48,7 @@ kadm5_c_get_principal(void *server_handle,
     int32_t tmp;
     krb5_data reply;
 
-    ret = _kadm5_connect(server_handle);
+    ret = _kadm5_connect(server_handle, 0 /* want_write */);
     if (ret)
 	return ret;
 

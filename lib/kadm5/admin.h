@@ -204,6 +204,8 @@ typedef struct _kadm5_policy_ent_t {
 #define KADM5_CONFIG_EXPIRATION			(1 << 16)
 #define KADM5_CONFIG_FLAGS			(1 << 17)
 #define KADM5_CONFIG_ENCTYPES			(1 << 18)
+#define KADM5_CONFIG_READONLY_ADMIN_SERVER	(1 << 19)
+#define KADM5_CONFIG_READONLY_KADMIN_PORT	(1 << 20)
 
 #define KADM5_PRIV_GET		(1 << 0)
 #define KADM5_PRIV_ADD 		(1 << 1)
@@ -218,6 +220,10 @@ typedef struct _kadm5_policy_ent_t {
 
 #define KADM5_BOGUS_KEY_DATA    "\xe5\xe5\xe5\xe5"
 
+/*
+ * ABI NOTE: We can add fields at the end of this provided that we define new
+ * mask bits that must be set in the mask field when setting the new fields.
+ */
 typedef struct _kadm5_config_params {
     uint32_t mask;
 
@@ -234,6 +240,10 @@ typedef struct _kadm5_config_params {
 
     /* server library (database) fields */
     char *stash_file;
+
+    /* read-only kadmin server */
+    char *readonly_admin_server;
+    int readonly_kadmind_port;
 } kadm5_config_params;
 
 typedef krb5_error_code kadm5_ret_t;

@@ -378,6 +378,7 @@ EXPORTS
 	krb5_get_krb524hst
 	krb5_get_krb_admin_hst
 	krb5_get_krb_changepw_hst
+	krb5_get_krb_readonly_admin_hst
 	krb5_get_krbhst
 	krb5_get_max_time_skew
 	krb5_get_pw_salt

@@ -41,6 +41,7 @@ kadm5_c_destroy(void *server_handle)
     kadm5_client_context *context = server_handle;
 
     free(context->realm);
+    free(context->readonly_admin_server);
     free(context->admin_server);
     rk_closesocket(context->sock);
     if (context->client_name)

@@ -163,6 +163,8 @@ srv_find_realm(krb5_context context, krb5_krbhst_info ***res, int *count,
 
 
 struct krb5_krbhst_data {
+    const char *config_param;
+    const char *srv_label;
     char *realm;
     unsigned int flags;
     int def_port;
@@ -739,7 +741,7 @@ kdc_get_next(krb5_context context,
     }
 
     if((kd->flags & KD_CONFIG) == 0) {
-	config_get_hosts(context, kd, "kdc");
+	config_get_hosts(context, kd, kd->config_param);
 	kd->flags |= KD_CONFIG;
 	if(get_next(kd, host))
 	    return 0;
@@ -754,20 +756,20 @@ kdc_get_next(krb5_context context,
 
     if(context->srv_lookup) {
 	if((kd->flags & KD_SRV_UDP) == 0 && (kd->flags & KD_LARGE_MSG) == 0) {
-	    srv_get_hosts(context, kd, "udp", "kerberos");
+	    srv_get_hosts(context, kd, "udp", kd->srv_label);
 	    kd->flags |= KD_SRV_UDP;
 	    if(get_next(kd, host))
 		return 0;
 	}
 
 	if((kd->flags & KD_SRV_TCP) == 0) {
-	    srv_get_hosts(context, kd, "tcp", "kerberos");
+	    srv_get_hosts(context, kd, "tcp", kd->srv_label);
 	    kd->flags |= KD_SRV_TCP;
 	    if(get_next(kd, host))
 		return 0;
 	}
 	if((kd->flags & KD_SRV_HTTP) == 0) {
-	    srv_get_hosts(context, kd, "http", "kerberos");
+	    srv_get_hosts(context, kd, "http", kd->srv_label);
 	    kd->flags |= KD_SRV_HTTP;
 	    if(get_next(kd, host))
 		return 0;
@@ -804,7 +806,7 @@ admin_get_next(krb5_context context,
     }
 
     if((kd->flags & KD_CONFIG) == 0) {
-	config_get_hosts(context, kd, "admin_server");
+	config_get_hosts(context, kd, kd->config_param);
 	kd->flags |= KD_CONFIG;
 	if(get_next(kd, host))
 	    return 0;
@@ -819,7 +821,7 @@ admin_get_next(krb5_context context,
 
     if(context->srv_lookup) {
 	if((kd->flags & KD_SRV_TCP) == 0) {
-	    srv_get_hosts(context, kd, "tcp", "kerberos-adm");
+	    srv_get_hosts(context, kd, "tcp", kd->srv_label);
 	    kd->flags |= KD_SRV_TCP;
 	    if(get_next(kd, host))
 		return 0;
@@ -858,7 +860,7 @@ kpasswd_get_next(krb5_context context,
     }
 
     if((kd->flags & KD_CONFIG) == 0) {
-	config_get_hosts(context, kd, "kpasswd_server");
+	config_get_hosts(context, kd, kd->config_param);
 	kd->flags |= KD_CONFIG;
 	if(get_next(kd, host))
 	    return 0;
@@ -873,13 +875,13 @@ kpasswd_get_next(krb5_context context,
 
     if(context->srv_lookup) {
 	if((kd->flags & KD_SRV_UDP) == 0) {
-	    srv_get_hosts(context, kd, "udp", "kpasswd");
+	    srv_get_hosts(context, kd, "udp", kd->srv_label);
 	    kd->flags |= KD_SRV_UDP;
 	    if(get_next(kd, host))
 		return 0;
 	}
 	if((kd->flags & KD_SRV_TCP) == 0) {
-	    srv_get_hosts(context, kd, "tcp", "kpasswd");
+	    srv_get_hosts(context, kd, "tcp", kd->srv_label);
 	    kd->flags |= KD_SRV_TCP;
 	    if(get_next(kd, host))
 		return 0;
@@ -921,6 +923,8 @@ krbhost_dealloc(void *ptr)
 
 static struct krb5_krbhst_data*
 common_init(krb5_context context,
+	    const char *config_param,
+	    const char *srv_label,
 	    const char *service,
 	    const char *realm,
 	    int flags)
@@ -934,6 +938,9 @@ common_init(krb5_context context,
 	heim_release(kd);
 	return NULL;
     }
+
+    kd->config_param = config_param;
+    kd->srv_label = srv_label;
 
     _krb5_debug(context, 2, "Trying to find service %s for realm %s flags %x",
 		service, realm, flags);
@@ -972,6 +979,8 @@ krb5_krbhst_init_flags(krb5_context context,
     krb5_error_code (*next)(krb5_context, struct krb5_krbhst_data *,
 			    krb5_krbhst_info **);
     int def_port;
+    const char *config_param;
+    const char *srv_label;
     const char *service;
 
     *handle = NULL;
@@ -979,19 +988,33 @@ krb5_krbhst_init_flags(krb5_context context,
     switch(type) {
     case KRB5_KRBHST_KDC:
 	next = kdc_get_next;
-	def_port = ntohs(krb5_getportbyname (context, "kerberos", "udp", 88));
+	def_port = ntohs(krb5_getportbyname(context, "kerberos", "udp", 88));
+        config_param = "kdc";
+        srv_label = "kerberos";
 	service = "kdc";
 	break;
     case KRB5_KRBHST_ADMIN:
 	next = admin_get_next;
-	def_port = ntohs(krb5_getportbyname (context, "kerberos-adm",
-					     "tcp", 749));
+	def_port = ntohs(krb5_getportbyname(context, "kerberos-adm",
+					    "tcp", 749));
+        config_param = "admin_server";
+        srv_label = "kerberos-adm";
+	service = "admin";
+	break;
+    case KRB5_KRBHST_READONLY_ADMIN:
+	next = admin_get_next;
+	def_port = ntohs(krb5_getportbyname(context, "kerberos-adm",
+					    "tcp", 749));
+        config_param = "readonly_admin_server";
+        srv_label = "kerberos-adm-readonly";
 	service = "admin";
 	break;
     case KRB5_KRBHST_CHANGEPW:
 	next = kpasswd_get_next;
-	def_port = ntohs(krb5_getportbyname (context, "kpasswd", "udp",
-					     KPASSWD_PORT));
+	def_port = ntohs(krb5_getportbyname(context, "kpasswd", "udp",
+					    KPASSWD_PORT));
+        config_param = "kpasswd_server";
+        srv_label = "kpasswd";
 	service = "change_password";
 	break;
     default:
@@ -999,7 +1022,8 @@ krb5_krbhst_init_flags(krb5_context context,
 			       N_("unknown krbhst type (%u)", ""), type);
 	return ENOTTY;
     }
-    if((kd = common_init(context, service, realm, flags)) == NULL)
+    if((kd = common_init(context, config_param, srv_label, service, realm,
+                         flags)) == NULL)
 	return ENOMEM;
     kd->get_next = next;
     kd->def_port = def_port;
@@ -1118,15 +1142,27 @@ gethostlist(krb5_context context, const char *realm,
 }
 
 /*
- * return an malloced list of kadmin-hosts for `realm' in `hostlist'
+ * Return a malloced list of kadmin-hosts for `realm' in `hostlist'
  */
 
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
-krb5_get_krb_admin_hst (krb5_context context,
-			const krb5_realm *realm,
-			char ***hostlist)
+krb5_get_krb_admin_hst(krb5_context context,
+                       const krb5_realm *realm,
+                       char ***hostlist)
 {
     return gethostlist(context, *realm, KRB5_KRBHST_ADMIN, hostlist);
+}
+
+/*
+ * Return a malloced list of writable kadmin-hosts for `realm' in `hostlist'
+ */
+
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
+krb5_get_krb_readonly_admin_hst(krb5_context context,
+                                const krb5_realm *realm,
+                                char ***hostlist)
+{
+    return gethostlist(context, *realm, KRB5_KRBHST_READONLY_ADMIN, hostlist);
 }
 
 /*

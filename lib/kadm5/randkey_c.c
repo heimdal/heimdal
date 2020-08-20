@@ -53,7 +53,7 @@ kadm5_c_randkey_principal(void *server_handle,
     krb5_data reply;
     krb5_keyblock *k;
 
-    ret = _kadm5_connect(server_handle);
+    ret = _kadm5_connect(server_handle, 1 /* want_write */);
     if (ret)
 	return ret;
 

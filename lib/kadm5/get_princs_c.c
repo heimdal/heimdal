@@ -52,7 +52,7 @@ kadm5_c_get_principals(void *server_handle,
     *count = 0;
     *princs = NULL;
 
-    ret = _kadm5_connect(server_handle);
+    ret = _kadm5_connect(server_handle, 0 /* want_write */);
     if (ret)
 	return ret;
 

@@ -45,7 +45,7 @@ kadm5_c_delete_principal(void *server_handle, krb5_principal princ)
     int32_t tmp;
     krb5_data reply;
 
-    ret = _kadm5_connect(server_handle);
+    ret = _kadm5_connect(server_handle, 1 /* want_write */);
     if (ret)
 	return ret;
 

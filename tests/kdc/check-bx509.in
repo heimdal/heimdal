@@ -49,7 +49,7 @@ port=@port@
 bx509port=@bx509port@
 
 kadmin="${kadmin} -l -r $R"
-bx509="${bx509} --reverse-proxied -p $bx509port"
+bx509d="${bx509d} --reverse-proxied -p $bx509port"
 kdc="${kdc} --addresses=localhost -P $port"
 
 server=datan.test.h5l.se
@@ -105,7 +105,7 @@ mkdir -p simple_csr_authz
 # to create and accept those without a KDC.  When we test /bnegotiate, however,
 # we'll start a KDC.
 
-# csr_grant ext-type value princ
+# csr_grant ext-type value grantee_principal
 csr_grant() {
     mkdir -p "${objdir}/simple_csr_authz/${3}"
     touch "${objdir}/simple_csr_authz/${3}/${1}-${2}"
@@ -290,7 +290,7 @@ ${kadmin} modify --pkinit-acl="CN=foo,DC=test,DC=h5l,DC=se" foo@${R} || exit 1
 
 
 echo "Starting bx509d"
-${bx509d} --reverse-proxied -H $server --cert=${objdir}/bx509.pem -t -p $bx509port --daemon ||
+${bx509d} -H $server --cert=${objdir}/bx509.pem -t --daemon ||
     { echo "bx509 failed to start"; exit 2; }
 bx509pid=`getpid bx509d`
 

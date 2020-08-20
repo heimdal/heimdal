@@ -83,6 +83,7 @@
 	db-dir = @objdir@
  
 [bx509]
+        simple_csr_authorizer_directory = @objdir@/simple_csr_authz
         realms = {
                 TEST.H5L.SE = {
                         # Default (no cert exts requested)

@@ -248,6 +248,14 @@ str2time_t (const char *str, time_t *t)
 	*t += time(NULL);
 	return 0;
     }
+    if (str[0] == '-') {
+	str++;
+	*t = parse_time(str, "month");
+	if (*t < 0)
+	    return -1;
+	*t = time(NULL) - *t;
+	return 0;
+    }
 
     if(strcasecmp(str, "never") == 0) {
 	*t = 0;

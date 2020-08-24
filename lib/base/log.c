@@ -723,7 +723,7 @@ heim_audit_vaddreason(heim_svc_req_desc r, const char *fmt, va_list ap)
         if (str2) {
             heim_release(r->reason);
             heim_release(str);
-            r->reason = str;
+            r->reason = str2;
         } /* else the earlier reason is likely better than the newer one */
         return;
     }

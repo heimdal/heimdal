@@ -265,13 +265,22 @@ kadm5_s_create_principal(void *server_handle,
     if (ret)
 	return ret;
 
-    ret = create_principal(context, princ, mask, &ent,
-			   KADM5_PRINCIPAL,
-			   KADM5_LAST_PWD_CHANGE | KADM5_MOD_TIME
-			   | KADM5_MOD_NAME | KADM5_MKVNO
-			   | KADM5_AUX_ATTRIBUTES | KADM5_KEY_DATA
-			   | KADM5_POLICY_CLR | KADM5_LAST_SUCCESS
-			   | KADM5_LAST_FAILED | KADM5_FAIL_AUTH_COUNT);
+    if (use_pw)
+        ret = create_principal(context, princ, mask, &ent,
+                               KADM5_PRINCIPAL,
+                               KADM5_LAST_PWD_CHANGE | KADM5_MOD_TIME
+                               | KADM5_MOD_NAME | KADM5_MKVNO
+                               | KADM5_AUX_ATTRIBUTES | KADM5_KEY_DATA
+                               | KADM5_POLICY_CLR | KADM5_LAST_SUCCESS
+                               | KADM5_LAST_FAILED | KADM5_FAIL_AUTH_COUNT);
+    else
+        ret = create_principal(context, princ, mask, &ent,
+                               KADM5_PRINCIPAL | KADM5_KEY_DATA,
+                               KADM5_LAST_PWD_CHANGE | KADM5_MOD_TIME
+                               | KADM5_MOD_NAME | KADM5_MKVNO
+                               | KADM5_AUX_ATTRIBUTES
+                               | KADM5_POLICY_CLR | KADM5_LAST_SUCCESS
+                               | KADM5_LAST_FAILED | KADM5_FAIL_AUTH_COUNT);
     if (ret)
         return ret;
 

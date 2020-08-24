@@ -901,28 +901,76 @@ SANs are configured, then no certificate will be issued.
 Otherwise if a template and subject name are not specified, then
 subject of the certificate will be empty.
 .El
-.It Li enable_derived_keys = Va boolean
-Enable the use of derived key namespaces.
-When enabled, principals of the form
+.El
 .Pp
-.Ar WELLKNOWN/DERIVED-KEY/<alg>/<namespace>@REALM
-.Pp
-match any request of the form:
-.Ar */*.<namespace>@REALM .
-The keys are derived from the keys in the database and
-the name of the requested principal via the algorithm
-specified by
-.Ar <alg> .
-Currently, only
-.Ar KRB5-CRYPTO-PRFPLUS
-which is implemented by the function
-.Fn krb5_crypto_prfplus .
-.It Li derived_keys_ndots = Va Integer
-The minimum number of dots in a name matched via
-derived key namespaces.
-.It Li derived_keys_maxdots = Va Integer
-The maximim number of dots in a name matched via
-derived key namespaces.
+.It Li [hdb]
+.Bl -tag -width "xxx" -offset indent
+.It Li db-dir = Va path
+This parameter defines a directory that can contain:
+.Bl -tag -width "xxx" -offset indent
+.It Va kdc.conf
+A configuration file with the same format as krb5.conf that will
+be included.
+.It Va m-key
+The master key file.
+.It Va kdc.log
+The default logfile for the KDC when a logfile is not specified in
+.Li [logging]
+.It Va kadm5.acl
+The access controls for
+.Nm kadmind .
+.It Va log
+The (binary) log of transactions used for
+.Nm HDB
+replication via the
+.Nm iprop
+protocol.
+See
+.Nm iprop-log(1)
+for more detail.
+.It Va pki-mapping
+The default PKINIT mapping file if one is not specified in
+.Va [kdc] pkinit_mappings_file .
+.El
+and other files related to
+.Nm iprop
+operation.
+.It Li new_service_key_delay = Va time
+Sets a bias such that new keys are not taken into service until
+after the given time has passed since they were set.
+This is useful for key rotation on concrete principals shared by
+multiple instances of an application: set this time to twice or
+more the keytab fetch period used by applications.
+.It Li enable_virtual_hostbased_princs = Va boolean
+Heimdal supports a notion of virtual host-based service
+principals whose keys are derived from those of a base namespace
+principal of the form
+.Nm WELLKNOWN/HOSTBASED-NAMESPACE/svc/hostname .
+The service name can be wild-carded as
+.Va _ .
+Non-wildcarded services have to be listed in the
+.Li virtual_hostbased_princ_svcs
+parameter (see below).
+This parameter enables this feature, which is disabled by
+default.
+.It Li virtual_hostbased_princ_ndots = Va Integer
+Minimum number of label-separating periods in virtual host-based
+service principals' hostname component.
+.It Li virtual_hostbased_princ_maxdots = Va Integer
+Maximum number of label-separating periods in namespaces'
+hostname component.
+.It Li virtual_hostbased_princ_svcs = Va service-name
+This multi-valued parameter lists service names not to wildcard
+when searching for a namespace for a virtual host-based service
+principal.
+Other service names will have keys derived from a matching
+namespace with a wild-carded service name.
+This allows one to have different attributes for different
+services.
+For example, the
+.Nm "host"
+service can be configured to have the ok-as-delegate flag while
+all others do not.
 .El
 .Pp
 .It Li [kadmin]

@@ -800,6 +800,7 @@ hdb_sqlite_destroy(krb5_context context, HDB *db)
 
     hsdb = (hdb_sqlite_db*)(db->hdb_db);
 
+    krb5_config_free_strings(db->virtual_hostbased_princ_svcs);
     free(hsdb->db_file);
     free(db->hdb_db);
     free(db);

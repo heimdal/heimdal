@@ -61,6 +61,7 @@ static struct field_name {
     { "fail_auth_count", KADM5_FAIL_AUTH_COUNT, 0, 0, "Fail count", "Failed login count", RTBL_ALIGN_RIGHT },
     { "policy", KADM5_POLICY, 0, 0, "Policy", "Policy", 0 },
     { "keytypes", KADM5_KEY_DATA, 0, KADM5_PRINCIPAL | KADM5_KVNO, "Keytypes", "Keytypes", 0 },
+    { "server-keytypes", KADM5_TL_DATA, KRB5_TL_ETYPES, 0, "Server keytypes", "Supported keytypes (servers)", 0 },
     { "password", KADM5_TL_DATA, KRB5_TL_PASSWORD, KADM5_KEY_DATA, "Password", "Password", 0 },
     { "pkinit-acl", KADM5_TL_DATA, KRB5_TL_PKINIT_ACL, 0, "PK-INIT ACL", "PK-INIT ACL", 0 },
     { "aliases", KADM5_TL_DATA, KRB5_TL_ALIASES, 0, "Aliases", "Aliases", 0 },
@@ -81,6 +82,8 @@ struct get_entry_data {
     uint32_t mask;
     uint32_t extra_mask;
     struct field_info *chead, **ctail;
+    const char *krb5_config_fname;
+    uint32_t n;
 };
 
 static int
@@ -174,9 +177,59 @@ format_keytype(krb5_key_data *k, krb5_salt *def_salt, char *buf, size_t buf_len)
     free(s);
 }
 
+static int
+is_special_file(const char *fname)
+{
+#ifdef WIN32
+    if (strcasecmp(fname, "con") == 0 || strcasecmp(fname, "nul") == 0 ||
+        strcasecmp(fname, "aux") == 0 || strcasecmp(fname, "prn") == 0)
+        return 1;
+    if ((strncasecmp(fname, "com", sizeof("com") - 1) == 0  ||
+         strncasecmp(fname, "lpt", sizeof("lpt") - 1) == 0) &&
+        fname[sizeof("lpt")] >= '0' && fname[sizeof("lpt")] <= '9' &&
+        fname[sizeof("lpt") + 1] == '\0')
+        return 1;
+#else
+    if (strncmp(fname, "/dev/", sizeof("/dev/") - 1) == 0)
+        return 1;
+#endif
+    return 0;
+}
+
+static char *
+write_krb5_config(krb5_tl_data *tl,
+                  const char *fn,
+                  uint32_t i)
+{
+    char *s = NULL;
+    FILE *f = NULL;
+
+    if (fn == NULL)
+        return NULL;
+    if (i == 0 || is_special_file(fn))
+        s = strdup(fn);
+    else if (asprintf(&s, "%s-%u", fn, i) == -1)
+        s = NULL;
+    if (s == NULL)
+        krb5_err(context, 1, errno, "Out of memory");
+
+    /* rk_dumpdata() doesn't allow error checking :( */
+    if ((f = fopen(s, "w")) &&
+        fwrite(tl->tl_data_contents, tl->tl_data_length, 1, f) != 1)
+        krb5_warn(context, errno, "Could not write to %s", fn);
+    if (f && fclose(f))
+        krb5_warn(context, errno, "Could not write to %s", fn);
+    return s;
+}
+
 static void
-format_field(kadm5_principal_ent_t princ, unsigned int field,
-	     unsigned int subfield, char *buf, size_t buf_len, int condensed)
+format_field(struct get_entry_data *data,
+             kadm5_principal_ent_t princ,
+             unsigned int field,
+	     unsigned int subfield,
+             char *buf,
+             size_t buf_len,
+             int condensed)
 {
     switch(field) {
     case KADM5_PRINCIPAL:
@@ -276,6 +329,31 @@ format_field(kadm5_principal_ent_t princ, unsigned int field,
 		     (int)tl->tl_data_length,
 		     (const char *)tl->tl_data_contents);
 	    break;
+	case KRB5_TL_ETYPES: {
+            HDB_EncTypeList etypes;
+	    size_t i, size;
+            char *str;
+	    int ret;
+
+            ret = decode_HDB_EncTypeList(tl->tl_data_contents,
+                                         tl->tl_data_length,
+                                         &etypes, &size);
+	    if (ret) {
+		snprintf(buf, buf_len, "failed to decode server etypes");
+		break;
+	    }
+            buf[0] = '\0';
+            for (i = 0; i < etypes.len; i++) {
+                ret = krb5_enctype_to_string(context, etypes.val[i], &str);
+                if (ret == 0) {
+                    if (i)
+                        strlcat(buf, ",", buf_len);
+                    strlcat(buf, str, buf_len);
+                }
+            }
+            free_HDB_EncTypeList(&etypes);
+            break;
+        }
 	case KRB5_TL_PKINIT_ACL: {
 	    HDB_Ext_PKINIT_acl acl;
 	    size_t size;
@@ -307,6 +385,16 @@ format_field(kadm5_principal_ent_t princ, unsigned int field,
 		    strlcat(buf, ", ", buf_len);
 	    }
 	    free_HDB_Ext_PKINIT_acl(&acl);
+	    break;
+	}
+	case KRB5_TL_KRB5_CONFIG: {
+            char *fname;
+
+            fname = write_krb5_config(tl, data->krb5_config_fname, data->n);
+            if (fname) {
+                strlcat(buf, fname, buf_len);
+                free(fname);
+            }
 	    break;
 	}
 	case KRB5_TL_ALIASES: {
@@ -356,7 +444,8 @@ print_entry_short(struct get_entry_data *data, kadm5_principal_ent_t princ)
     struct field_info *f;
 
     for(f = data->chead; f != NULL; f = f->next) {
-	format_field(princ, f->ff->fieldvalue, f->ff->subvalue, buf, sizeof(buf), 1);
+        format_field(data, princ, f->ff->fieldvalue, f->ff->subvalue, buf,
+                     sizeof(buf), 1);
 	rtbl_add_column_entry_by_id(data->table, f->ff->fieldvalue, buf);
     }
 }
@@ -374,7 +463,8 @@ print_entry_long(struct get_entry_data *data, kadm5_principal_ent_t princ)
 	    width = w;
     }
     for(f = data->chead; f != NULL; f = f->next) {
-	format_field(princ, f->ff->fieldvalue, f->ff->subvalue, buf, sizeof(buf), 0);
+        format_field(data, princ, f->ff->fieldvalue, f->ff->subvalue, buf,
+                     sizeof(buf), 0);
 	printf("%*s: %s\n", width, f->header ? f->header : f->ff->def_longheader, buf);
     }
     printf("\n");
@@ -391,13 +481,13 @@ do_get_entry(krb5_principal principal, void *data)
     ret = kadm5_get_principal(kadm_handle, principal,
 			      &princ,
 			      e->mask | e->extra_mask);
-    if(ret)
-	return ret;
-    else {
-	(e->format)(e, &princ);
-	kadm5_free_principal_ent(kadm_handle, &princ);
+    if (ret == 0) {
+        (e->format)(e, &princ);
+        kadm5_free_principal_ent(kadm_handle, &princ);
     }
-    return 0;
+
+    e->n++;
+    return ret;
 }
 
 static void
@@ -467,7 +557,7 @@ listit(const char *funcname, int argc, char **argv)
 }
 
 #define DEFAULT_COLUMNS_SHORT "principal,princ_expire_time,pw_expiration,last_pwd_change,max_life,max_rlife"
-#define DEFAULT_COLUMNS_LONG "principal,princ_expire_time,pw_expiration,last_pwd_change,max_life,max_rlife,kvno,mkvno,last_success,last_failed,fail_auth_count,mod_time,mod_name,attributes,keytypes,pkinit-acl,aliases"
+#define DEFAULT_COLUMNS_LONG "principal,princ_expire_time,pw_expiration,last_pwd_change,max_life,max_rlife,kvno,mkvno,last_success,last_failed,fail_auth_count,mod_time,mod_name,attributes,server-keytypes,keytypes,pkinit-acl,aliases"
 
 static int
 getit(struct get_options *opt, const char *name, int argc, char **argv)
@@ -493,6 +583,8 @@ getit(struct get_options *opt, const char *name, int argc, char **argv)
     data.ctail = &data.chead;
     data.mask = 0;
     data.extra_mask = 0;
+    data.krb5_config_fname = opt->krb5_config_file_string;
+    data.n = 0;
 
     if(opt->short_flag) {
 	data.table = rtbl_create();

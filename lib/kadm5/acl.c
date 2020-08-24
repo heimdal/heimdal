@@ -124,13 +124,29 @@ fetch_acl (kadm5_server_context *context,
 	if (princ != NULL) {
 	    krb5_principal pattern_princ;
 	    krb5_boolean match;
+            const char *c0 = krb5_principal_get_comp_string(context->context,
+                                                            princ, 0);
+            const char *pat_c0;
 
-	    ret = krb5_parse_name (context->context, p, &pattern_princ);
+	    ret = krb5_parse_name(context->context, p, &pattern_princ);
 	    if (ret)
 		break;
-	    match = krb5_principal_match (context->context,
-					  princ, pattern_princ);
-	    krb5_free_principal (context->context, pattern_princ);
+            pat_c0 = krb5_principal_get_comp_string(context->context,
+                                                    pattern_princ, 0);
+	    match = krb5_principal_match(context->context,
+					 princ, pattern_princ);
+
+            /*
+             * If `princ' is a WELLKNOWN name, then require the WELLKNOWN label
+             * be matched exactly.
+             *
+             * FIXME: We could do something similar for krbtgt and kadmin other
+             *        principal types.
+             */
+            if (match && c0 && strcmp(c0, "WELLKNOWN") == 0 &&
+                (!pat_c0 || strcmp(pat_c0, "WELLKNOWN") != 0))
+                match = FALSE;
+	    krb5_free_principal(context->context, pattern_princ);
 	    if (match) {
 		*ret_flags = flags;
 		break;

@@ -81,6 +81,12 @@ enum hdb_lockop{ HDB_RLOCK, HDB_WLOCK };
 /* key usage for master key */
 #define HDB_KU_MKEY	0x484442
 
+/*
+ * Second component of WELLKNOWN namespace principals, the third component is
+ * the common DNS suffix of the implied virtual hosts.
+ */
+#define HDB_WK_NAMESPACE "HOSTBASED-NAMESPACE"
+
 typedef struct hdb_master_key_data *hdb_master_key;
 
 /**
@@ -114,6 +120,17 @@ typedef struct HDB {
     int hdb_capability_flags;
     int lock_count;
     int lock_type;
+    /*
+     * These fields cache config values.
+     *
+     * XXX Move these into a structure that we point to so that we
+     * don't need to break the ABI every time we add a field.
+     */
+    int enable_virtual_hostbased_princs;
+    size_t virtual_hostbased_princ_ndots;   /* Min. # of .s in hostname */
+    size_t virtual_hostbased_princ_maxdots; /* Max. # of .s in namespace */
+    char **virtual_hostbased_princ_svcs;    /* Which svcs are not wildcarded */
+    time_t new_service_key_delay;           /* Delay for new keys */
     /**
      * Open (or create) the a Kerberos database.
      *

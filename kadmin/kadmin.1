@@ -140,6 +140,55 @@ The only policy supported by Heimdal servers is
 .Ql default .
 .Ed
 .Pp
+.Nm add_namespace
+.Ar Fl Fl key-rotation-epoch= Ns Ar time
+.Ar Fl Fl key-rotation-period= Ns Ar time
+.Op Fl Fl enctypes= Ns Ar string
+.Op Fl Fl max-ticket-life= Ns Ar lifetime
+.Op Fl Fl max-renewable-life= Ns Ar lifetime
+.Op Fl Fl attributes= Ns Ar attributes
+.Ar principal...
+.Bd -ragged -offset indent
+Adds a new namespace of virtual host-based or domain-based
+principals to the database, whose keys will be automatically
+derived from base keys stored in the namespace record, and which
+keys will be rotated automatically.
+The namespace names should look like
+.Ar hostname@REALM
+and these will match all host-based or domain-based service names
+where hostname component of such a principal ends in the labels
+of the hostname in the namespace name.
+.Pp
+For example,
+.Ar bar.baz.example@BAZ.EXAMPLE
+will match
+.Ar host/foo.bar.baz.example@BAZ.EXAMPLE
+but not
+.Ar host/foobar.baz.example@BAZ.EXAMPLE .
+.Pp
+Note well that services are expected to
+.Ar ext_keytab
+or otherwise re-fetch their keytabs at least as often as one
+quarter of the key rotation period, otherwise they risk not
+having keys they need to decrypt tickets with.
+.Pp
+The epoch must be given as either an absolute time,
+.Ar "now",
+or as
+.Ar "+<N>[<unit>]"
+where
+.Ar N
+is a natural and
+.Ar unit
+is one "s", "m", "h", "day", "week", "month", defaulting to
+"month".
+The default key rotation period is
+.Ar 7d .
+The default enctypes is as for the
+.Nm add
+command.
+.Ed
+.Pp
 .Nm add_enctype
 .Op Fl r | Fl Fl random-key
 .Ar principal enctypes...
@@ -213,6 +262,7 @@ behavior is the default if none of these are given.
 .Op Fl s | Fl Fl short
 .Op Fl t | Fl Fl terse
 .Op Fl o Ar string | Fl Fl column-info= Ns Ar string
+.Op Fl C Ar path | Fl Fl krb5-config-file= Ns Ar path
 .Ar principal...
 .Bd -ragged -offset indent
 Lists the matching principals, short prints the result as a table,
@@ -228,6 +278,16 @@ slightly between short and long output.
 The default terse output format is similar to
 .Fl s o Ar principal= ,
 just printing the names of matched principals.
+.Pp
+If
+.Fl C
+or
+.Fl Fl krb5-config-file
+is given and the principal has krb5 config file contents saved
+in its HDB entry, then that will be saved in the given file.
+Note that if multiple principals are requested, then the second,
+third, and so on will have -1, -2, and so on appended to the
+given filename unless the given filename is a device name.
 .Pp
 Possible column names include:
 .Li principal ,
@@ -260,14 +320,17 @@ and
 .Op Fl Fl pw-expiration-time= Ns Ar time
 .Op Fl Fl kvno= Ns Ar number
 .Op Fl Fl policy= Ns Ar policy-name
+.Op Fl C Ar path | Fl Fl krb5-config-file= Ns Ar path
 .Ar principal...
 .Bd -ragged -offset indent
 Modifies certain attributes of a principal. If run without command
 line options, you will be prompted. With command line options, it will
 only change the ones specified.
 .Pp
-Only policy supported by Heimdal is
+The only policy supported by Heimdal is
 .Ql default .
+.Pp
+If a krb5 config file is given, it will be saved in the entry.
 .Pp
 Possible attributes are:
 .Li new-princ ,

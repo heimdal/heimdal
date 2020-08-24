@@ -156,5 +156,9 @@ kadmind_loop (krb5_context, krb5_keytab, int);
 int
 handle_mit(krb5_context, void *, size_t, int);
 
+/* mod.c */
+
+void
+add_tl(kadm5_principal_ent_rec *, int, krb5_data *);
 
 #endif /* __ADMIN_LOCL_H__ */

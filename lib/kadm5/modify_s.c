@@ -117,8 +117,14 @@ modify_principal(void *server_handle,
     if (ret)
         goto out;
 
+    /*
+     * NOTE: We do not use hdb_fetch_kvno() here, which means we'll
+     *       automatically reject modifications of would-be virtual principals.
+     */
     ret = context->db->hdb_fetch_kvno(context->context, context->db,
-				      princ->principal, HDB_F_GET_ANY|HDB_F_ADMIN_DATA, 0, &ent);
+				      princ->principal,
+                                      HDB_F_DECRYPT|HDB_F_GET_ANY|HDB_F_ADMIN_DATA,
+                                      0, &ent);
     if (ret)
 	goto out2;
 
@@ -126,6 +132,10 @@ modify_principal(void *server_handle,
 				0, princ, mask);
     if (ret)
 	goto out3;
+    /*
+     * XXX Make sure that _kadm5_setup_entry() checks that the time of last
+     * change in `ent' matches the one in `princ'.
+     */
     ret = _kadm5_setup_entry(context, &ent, mask, princ, mask, NULL, 0);
     if (ret)
 	goto out3;

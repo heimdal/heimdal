@@ -65,7 +65,8 @@ hkt_destroy(krb5_context context, HDB *db)
     hdb_keytab k = (hdb_keytab)db->hdb_db;
     krb5_error_code ret;
 
-    ret = hdb_clear_master_key (context, db);
+    ret = hdb_clear_master_key(context, db);
+    krb5_config_free_strings(db->virtual_hostbased_princ_svcs);
 
     free(k->path);
     free(k);

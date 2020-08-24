@@ -60,6 +60,9 @@ attr_to_flags(unsigned attr, HDBFlags *flags)
     flags->trusted_for_delegation = !!(attr & KRB5_KDB_TRUSTED_FOR_DELEGATION);
     flags->allow_kerberos4 =   !!(attr & KRB5_KDB_ALLOW_KERBEROS4);
     flags->allow_digest =      !!(attr & KRB5_KDB_ALLOW_DIGEST);
+    flags->materialize =       !!(attr & KRB5_KDB_MATERIALIZE);
+    flags->virtual_keys =      !!(attr & KRB5_KDB_VIRTUAL_KEYS);
+    flags->virtual =           !!(attr & KRB5_KDB_VIRTUAL);
 }
 
 /*
@@ -95,6 +98,25 @@ perform_tl_data(krb5_context context,
 
 	ret = hdb_entry_set_pw_change_time(context, &ent->entry, t);
 
+    } else if (tl_data->tl_data_type == KRB5_TL_KEY_ROTATION) {
+        HDB_Ext_KeyRotation *prev_kr = 0;
+	HDB_extension *prev_ext;
+	HDB_extension ext;
+
+        ext.mandatory = 0;
+        ext.data.element = choice_HDB_extension_data_key_rotation;
+        prev_ext = hdb_find_extension(&ent->entry, ext.data.element);
+        if (prev_ext)
+            prev_kr = &prev_ext->data.u.key_rotation;
+        ret = decode_HDB_Ext_KeyRotation(tl_data->tl_data_contents,
+                                         tl_data->tl_data_length,
+                                         &ext.data.u.key_rotation, NULL);
+        if (ret == 0)
+            ret = hdb_validate_key_rotations(context, prev_kr,
+                                             &ext.data.u.key_rotation);
+        if (ret == 0)
+            ret = hdb_replace_extension(context, &ent->entry, &ext);
+	free_HDB_extension(&ext);
     } else if (tl_data->tl_data_type == KRB5_TL_EXTENSION) {
 	HDB_extension ext;
 
@@ -105,8 +127,34 @@ perform_tl_data(krb5_context context,
 	if (ret)
 	    return KADM5_BAD_TL_TYPE;
 
-	ret = hdb_replace_extension(context, &ent->entry, &ext);
+        if (ext.data.element == choice_HDB_extension_data_key_rotation) {
+            HDB_extension *prev_ext = hdb_find_extension(&ent->entry,
+                                                         ext.data.element);
+            HDB_Ext_KeyRotation *prev_kr = 0;
+
+            if (prev_ext)
+                prev_kr = &prev_ext->data.u.key_rotation;
+            ret = hdb_validate_key_rotations(context, prev_kr,
+                                             &ext.data.u.key_rotation);
+        }
+	if (ret)
+	    ret = KADM5_BAD_TL_TYPE; /* XXX Need new error code */
+        if (ret == 0)
+            ret = hdb_replace_extension(context, &ent->entry, &ext);
 	free_HDB_extension(&ext);
+    } else if (tl_data->tl_data_type == KRB5_TL_ETYPES) {
+        if (!ent->entry.etypes &&
+            (ent->entry.etypes = calloc(1,
+                                        sizeof(ent->entry.etypes[0]))) == NULL)
+            ret = krb5_enomem(context);
+        if (ent->entry.etypes)
+            free_HDB_EncTypeList(ent->entry.etypes);
+        if (ret == 0)
+            ret = decode_HDB_EncTypeList(tl_data->tl_data_contents,
+                                         tl_data->tl_data_length,
+                                         ent->entry.etypes, NULL);
+	if (ret)
+	    return KADM5_BAD_TL_TYPE;
     } else {
 	return KADM5_BAD_TL_TYPE;
     }

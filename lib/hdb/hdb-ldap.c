@@ -1882,6 +1882,7 @@ LDAP_destroy(krb5_context context, HDB * db)
 	free(HDB2CREATE(db));
     if (HDB2URL(db))
 	free(HDB2URL(db));
+    krb5_config_free_strings(db->virtual_hostbased_princ_svcs);
     if (db->hdb_name)
 	free(db->hdb_name);
     free(db->hdb_db);

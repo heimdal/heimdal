@@ -241,7 +241,7 @@ tags
 /lib/hdb/hdb-private.h
 /lib/hdb/test_dbinfo
 /lib/hdb/test_hdbkeys
-/lib/hdb/test_hdbplugin
+/lib/hdb/test_namespace
 /lib/hdb/test_mkey
 /lib/hx509/PKITS_data/
 /lib/hx509/cert-ca.der

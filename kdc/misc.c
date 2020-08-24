@@ -49,184 +49,6 @@ name_type_ok(krb5_context context,
     return 0;
 }
 
-static void
-log_princ(krb5_context context, krb5_kdc_configuration *config, int lvl,
-	  const char *fmt, krb5_const_principal princ)
-{
-    krb5_error_code ret;
-    char *princstr;
-
-    ret = krb5_unparse_name(context, princ, &princstr);
-    if (ret) {
-	kdc_log(context, config, 1, "log_princ: ENOMEM");
-	return;
-    }
-    kdc_log(context, config, lvl, fmt, princstr);
-    free(princstr);
-}
-
-static krb5_error_code
-_derive_the_keys(krb5_context context, krb5_kdc_configuration *config,
-		 krb5_const_principal princ, krb5uint32 kvno, hdb_entry_ex *h)
-{
-    krb5_error_code ret;
-    krb5_crypto crypto = NULL;
-    krb5_data in;
-    size_t i;
-    char *princstr = NULL;
-    const char *errmsg = NULL;
-
-    ret = krb5_unparse_name(context, princ, &princstr);
-    if (ret) {
-	errmsg = "krb5_unparse_name failed";
-	goto bail;
-    }
-
-    in.data   = princstr;
-    in.length = strlen(in.data);
-
-    for (i = 0; i < h->entry.keys.len; i++) {
-	krb5_enctype etype = h->entry.keys.val[i].key.keytype;
-	krb5_keyblock *keyptr = &h->entry.keys.val[i].key;
-	krb5_data rnd;
-	size_t len;
-
-	kdc_log(context, config, 8, "        etype=%d", etype);
-
-        errmsg = "Failed to init crypto";
-	ret = krb5_crypto_init(context, keyptr, 0, &crypto);
-	if (ret)
-	    goto bail;
-
-	errmsg = "Failed to determine keysize";
-	ret = krb5_enctype_keysize(context, etype, &len);
-	if (ret)
-	    goto bail;
-
-	errmsg = "krb5_crypto_prfplus() failed";
-	ret = krb5_crypto_prfplus(context, crypto, &in, len, &rnd);
-	krb5_crypto_destroy(context, crypto);
-	crypto = NULL;
-	if (ret)
-	    goto bail;
-
-	errmsg = "krb5_random_to_key() failed";
-	krb5_free_keyblock_contents(context, keyptr);
-	ret = krb5_random_to_key(context, etype, rnd.data, rnd.length, keyptr);
-	krb5_data_free(&rnd);
-	if (ret)
-	    goto bail;
-    }
-
-bail:
-    if (ret) {
-	const char *msg = krb5_get_error_message(context, ret);
-	kdc_log(context, config, 1, "%s: %s", errmsg, msg);
-	krb5_free_error_message(context, msg);
-    }
-    if (crypto)
-	krb5_crypto_destroy(context, crypto);
-    free(princstr);
-
-    return 0;
-}
-
-static krb5_error_code
-_fetch_it(krb5_context context, krb5_kdc_configuration *config, HDB *db,
-	  krb5_const_principal princ, unsigned flags, krb5uint32 kvno,
-	  hdb_entry_ex *ent)
-{
-    krb5_principal tmpprinc;
-    krb5_error_code ret;
-    char *host = NULL;
-    char *tmp;
-    const char *realm = NULL;
-    int is_derived_key = 0;
-    size_t hdots;
-    size_t ndots = 0;
-    size_t maxdots = -1;
-
-    flags |= HDB_F_DECRYPT;
-
-    if (config->enable_derived_keys) {
-	if (krb5_principal_get_num_comp(context, princ) == 2) {
-	    realm = krb5_principal_get_realm(context, princ);
-	    host = strdup(krb5_principal_get_comp_string(context, princ, 1));
-	    if (!host)
-		return krb5_enomem(context);
-
-	    /* Strip the :port */
-	    tmp = strchr(host, ':');
-	    if (tmp) {
-		*tmp++ = '\0';
-		if (strchr(tmp, ':')) {
-		    kdc_log(context, config, 7, "Strange host instance, "
-			"port %s contains a colon (``:'')", tmp);
-		    free(host);
-		    host = NULL;
-		}
-	    }
-
-	    ndots = config->derived_keys_ndots;
-	    maxdots = config->derived_keys_maxdots;
-
-	    for (hdots = 0, tmp = host; tmp && *tmp; tmp++)
-		if (*tmp == '.')
-		    hdots++;
-	}
-    }
-
-    /*
-     * XXXrcd: should we exclude certain principals from this
-     * muckery?  E.g. host? krbtgt?
-     */
-
-    krb5_copy_principal(context, princ, &tmpprinc);
-
-    tmp = host;
-    for (;;) {
-	log_princ(context, config, 7, "Looking up %s", tmpprinc);
-	ret = db->hdb_fetch_kvno(context, db, tmpprinc, flags, kvno, ent);
-
-	if (ret != HDB_ERR_NOENTRY)
-	    break;
-
-	if (!tmp || !*tmp || hdots < ndots)
-	    break;
-
-	while (maxdots > 0 && hdots > maxdots) {
-		tmp = strchr(tmp, '.');
-		/* tmp != NULL because maxdots > 0 */
-		tmp++;
-		hdots--;
-	}
-
-	is_derived_key = 1;
-	krb5_free_principal(context, tmpprinc);
-	krb5_build_principal(context, &tmpprinc, strlen(realm), realm,
-	    "WELLKNOWN", "DERIVED-KEY", "KRB5-CRYPTO-PRFPLUS", tmp, NULL);
-
-	tmp = strchr(tmp, '.');
-	if (!tmp)
-	    break;
-	tmp++;
-	hdots--;
-    }
-
-    if (ret == 0 && is_derived_key) {
-	kdc_log(context,   config, 7, "Deriving keys:");
-	log_princ(context, config, 7, "    for %s", princ);
-	log_princ(context, config, 7, "    from %s", tmpprinc);
-	_derive_the_keys(context, config, princ, kvno, ent);
-	/* the next function frees the target */
-	copy_Principal(princ, ent->entry.principal);
-    }
-
-    free(host);
-    krb5_free_principal(context, tmpprinc);
-    return ret;
-}
-
 struct timeval _kdc_now;
 
 krb5_error_code
@@ -250,6 +72,7 @@ _kdc_db_fetch(krb5_context context,
     if (!name_type_ok(context, config, principal))
         goto out2;
 
+    flags |= HDB_F_DECRYPT;
     if (kvno_ptr != NULL && *kvno_ptr != 0) {
 	kvno = *kvno_ptr;
 	flags |= HDB_F_KVNO_SPECIFIED;
@@ -291,7 +114,7 @@ _kdc_db_fetch(krb5_context context,
         if (!(curdb->hdb_capability_flags & HDB_CAP_F_HANDLE_ENTERPRISE_PRINCIPAL) && enterprise_principal)
             princ = enterprise_principal;
 
-	ret = _fetch_it(context, config, curdb, princ, flags, kvno, ent);
+        ret = hdb_fetch_kvno(context, curdb, princ, flags, 0, 0, kvno, ent);
 	curdb->hdb_close(context, curdb);
 
 	switch (ret) {

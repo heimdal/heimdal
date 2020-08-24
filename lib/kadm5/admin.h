@@ -73,6 +73,9 @@
 #define KRB5_KDB_TRUSTED_FOR_DELEGATION	0x00020000
 #define KRB5_KDB_ALLOW_KERBEROS4	0x00040000
 #define KRB5_KDB_ALLOW_DIGEST		0x00080000
+#define KRB5_KDB_MATERIALIZE            0x00100000
+#define KRB5_KDB_VIRTUAL_KEYS           0x00200000
+#define KRB5_KDB_VIRTUAL                0x00400000
 
 #define KADM5_PRINCIPAL		0x000001U
 #define KADM5_PRINC_EXPIRE_TIME	0x000002U
@@ -141,6 +144,9 @@ typedef struct _krb5_tl_data {
 #define KRB5_TL_ALIASES           	0x000a
 #define KRB5_TL_HIST_KVNO_DIFF_CLNT	0x000b
 #define KRB5_TL_HIST_KVNO_DIFF_SVC	0x000c
+#define KRB5_TL_ETYPES			0x000d
+#define KRB5_TL_KEY_ROTATION		0x000e
+#define KRB5_TL_KRB5_CONFIG		0x000f
 
 typedef struct _kadm5_principal_ent_t {
     krb5_principal principal;

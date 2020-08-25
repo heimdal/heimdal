@@ -195,7 +195,7 @@ KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_string_to_key_data (krb5_context context,
 			 krb5_enctype enctype,
 			 krb5_data password,
-			 krb5_principal principal,
+			 krb5_const_principal principal,
 			 krb5_keyblock *key)
 {
     krb5_error_code ret;
@@ -213,7 +213,7 @@ KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_string_to_key (krb5_context context,
 		    krb5_enctype enctype,
 		    const char *password,
-		    krb5_principal principal,
+		    krb5_const_principal principal,
 		    krb5_keyblock *key)
 {
     krb5_data pw;

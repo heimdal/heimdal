@@ -253,6 +253,9 @@ krb5-pkinit-win.conf: krb5-pkinit.conf.in Makefile
 	$(do_subst) -e 's,[@]w2k[@],yes,g' < $(srcdir)/krb5-pkinit.conf.in > krb5-pkinit-win.conf.tmp && \
 	mv krb5-pkinit-win.conf.tmp krb5-pkinit-win.conf
 
+clean: clean-am
+	rm -rf cc_dir simple_csr_authz
+
 CLEANFILES= \
 	$(TESTS) \
 	*.crt \
@@ -267,7 +270,9 @@ CLEANFILES= \
 	cache.krb5 \
 	cdigest-reply \
 	client-cache \
+	curlheaders \
 	current-db* \
+	current.log* \
 	digest-reply \
 	foopassword \
 	foopassword.rkpty \
@@ -280,6 +285,7 @@ CLEANFILES= \
 	krb5-canon.conf \
 	krb5-canon2.conf \
 	krb5-cc.conf \
+	krb5-cccol.conf \
 	krb5-hdb-mitdb.conf \
 	krb5-pkinit-win.conf \
 	krb5-pkinit.conf \
@@ -294,18 +300,21 @@ CLEANFILES= \
 	malloc-log \
 	malloc-log-master \
 	malloc-log-slave \
+	negotiate-token \
 	notfoopassword \
 	o2cache.krb5 \
 	o2digest-reply \
 	ocache.krb5 \
 	out-log \
 	s2digest-reply \
+	sdb \
 	sdigest-init \
 	sdigest-reply \
 	server.keytab \
 	signal \
 	tempfile \
 	test-rc-file.rc \
+	ukt \
 	uuserver.log
 
 EXTRA_DIST = \

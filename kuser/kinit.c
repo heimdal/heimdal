@@ -1570,7 +1570,8 @@ main(int argc, char **argv)
              * default credential
              */
             type = krb5_cc_get_type(context, ccache);
-            if (krb5_cc_support_switch(context, type)) {
+            if (krb5_cc_support_switch(context, type) &&
+                strcmp(type, "FILE")) {
                 krb5_cc_close(context, ccache);
                 ret = get_switched_ccache(context, type, principal,
                                           &ccache);

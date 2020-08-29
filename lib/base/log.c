@@ -833,10 +833,10 @@ heim_audit_trail(heim_svc_req_desc r, heim_error_code ret, const char *retname)
     }
 
     heim_audit_addkv_timediff(r, "elapsed", &r->tv_start, &r->tv_end);
-    if (r->e_text)
+    if (r->e_text && r->kv)
 	heim_audit_addkv(r, HEIM_SVC_AUDIT_VIS, "e-text", "%s", r->e_text);
 
-    nelem = heim_array_get_length(r->kv);
+    nelem = r->kv ? heim_array_get_length(r->kv) : 0;
     for (i=0, j=0; i < nelem; i++) {
 	heim_string_t s;
 	const char *kvpair;

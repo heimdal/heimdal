@@ -130,7 +130,7 @@ main(int argc, char **argv)
     }
 
     if (rk_SOCK_INIT())
-	errx(1, "Couldn't initialize sockets. Err=%d\n", rk_SOCK_ERRNO);
+	errx(1, "Failed to initialize sockets (%s)", strerror(rk_SOCK_ERRNO));
 
     argc -= optidx;
     argv += optidx;

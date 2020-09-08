@@ -1088,24 +1088,25 @@ gethostlist(krb5_context context, const char *realm,
     if (ret)
 	return ret;
 
-    while(krb5_krbhst_next(context, handle, &hostinfo) == 0)
+    while (krb5_krbhst_next(context, handle, &hostinfo) == 0)
 	nhost++;
-    if(nhost == 0) {
+    if (nhost == 0) {
 	krb5_set_error_message(context, KRB5_KDC_UNREACH,
 			       N_("No KDC found for realm %s", ""), realm);
+        krb5_krbhst_free(context, handle);
 	return KRB5_KDC_UNREACH;
     }
     *hostlist = calloc(nhost + 1, sizeof(**hostlist));
-    if(*hostlist == NULL) {
+    if (*hostlist == NULL) {
 	krb5_krbhst_free(context, handle);
 	return krb5_enomem(context);
     }
 
     krb5_krbhst_reset(context, handle);
     nhost = 0;
-    while(krb5_krbhst_next_as_string(context, handle,
-				     host, sizeof(host)) == 0) {
-	if(((*hostlist)[nhost++] = strdup(host)) == NULL) {
+    while (krb5_krbhst_next_as_string(context, handle,
+				      host, sizeof(host)) == 0) {
+	if (((*hostlist)[nhost++] = strdup(host)) == NULL) {
 	    krb5_free_krbhst(context, *hostlist);
 	    krb5_krbhst_free(context, handle);
 	    return krb5_enomem(context);

@@ -839,6 +839,50 @@ main(int argc, char **argv)
     krs[1].base_kvno = krs[0].base_kvno + 1 + (krs[1].epoch + (krs[0].period - 1) - krs[0].epoch) / krs[0].period;
     krs[1].base_key_kvno = 2;
 
+    {
+        HDB_Ext_KeyRotation existing_krs, new_krs;
+        KeyRotation ordered_krs[2];
+
+        ordered_krs[0] = krs[1];
+        ordered_krs[1] = krs[0];
+        existing_krs.len = 0;
+        existing_krs.val = 0;
+        new_krs.len = 1;
+        new_krs.val = &ordered_krs[1];
+        if ((ret = hdb_validate_key_rotations(context, NULL, &new_krs)) ||
+            (ret = hdb_validate_key_rotations(context, &existing_krs,
+                                              &new_krs)))
+            krb5_err(context, 1, ret, "Valid KeyRotation thought invalid");
+        new_krs.len = 1;
+        new_krs.val = &ordered_krs[0];
+        if ((ret = hdb_validate_key_rotations(context, NULL, &new_krs)) ||
+            (ret = hdb_validate_key_rotations(context, &existing_krs,
+                                              &new_krs)))
+            krb5_err(context, 1, ret, "Valid KeyRotation thought invalid");
+        new_krs.len = 2;
+        new_krs.val = &ordered_krs[0];
+        if ((ret = hdb_validate_key_rotations(context, NULL, &new_krs)) ||
+            (ret = hdb_validate_key_rotations(context, &existing_krs,
+                                              &new_krs)))
+            krb5_err(context, 1, ret, "Valid KeyRotation thought invalid");
+        existing_krs.len = 1;
+        existing_krs.val = &ordered_krs[1];
+        if ((ret = hdb_validate_key_rotations(context, &existing_krs,
+                                              &new_krs)))
+            krb5_err(context, 1, ret, "Valid KeyRotation thought invalid");
+        existing_krs.len = 2;
+        existing_krs.val = &ordered_krs[0];
+        if ((ret = hdb_validate_key_rotations(context, &existing_krs,
+                                              &new_krs)))
+            krb5_err(context, 1, ret, "Valid KeyRotation thought invalid");
+
+        new_krs.len = 2;
+        new_krs.val = &krs[0];
+        if ((ret = hdb_validate_key_rotations(context, &existing_krs,
+                                              &new_krs)) == 0)
+            krb5_errx(context, 1, "Invalid KeyRotation thought valid");
+    }
+
     make_namespace(context, db, WK_PREFIX "_/bar.example@BAR.EXAMPLE");
 
     fetch_entries(context, db, 1, 0, 0);

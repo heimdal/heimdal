@@ -1702,7 +1702,8 @@ tgs_build_reply(astgs_request_t priv,
      */
 
 server_lookup:
-    ret = _kdc_db_fetch(context, config, sp, HDB_F_GET_SERVER | flags,
+    ret = _kdc_db_fetch(context, config, sp,
+                        HDB_F_GET_SERVER | HDB_F_DELAY_NEW_KEYS | flags,
 			NULL, NULL, &server);
     priv->server = server;
     if (ret == HDB_ERR_NOT_FOUND_HERE) {

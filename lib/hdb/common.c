@@ -1161,10 +1161,11 @@ fix_keys(krb5_context context,
     size_t i;
 
     /*
-     * If we want a specific kvno, or if we're not decrypting the keys, or if
-     * there's no new-key delay, then we're out.
+     * If we want a specific kvno, or if the caller doesn't want new keys
+     * delayed, or if there's no new-key delay configured, or we're not
+     * fetching for use as a service principal, then we're out.
      */
-    if (!(flags & HDB_F_DECRYPT) || kvno || h->entry.flags.virtual ||
+    if (!(flags & HDB_F_DELAY_NEW_KEYS) || kvno || h->entry.flags.virtual ||
         h->entry.flags.virtual_keys || db->new_service_key_delay <= 0)
         return 0;
 

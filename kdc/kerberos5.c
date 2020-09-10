@@ -1945,7 +1945,8 @@ _kdc_as_rep(astgs_request_t r)
 	goto out;
     }
     ret = _kdc_db_fetch(context, config, r->server_princ,
-			HDB_F_GET_SERVER | flags | (is_tgs ? HDB_F_GET_KRBTGT : 0),
+			HDB_F_GET_SERVER | HDB_F_DELAY_NEW_KEYS |
+			flags | (is_tgs ? HDB_F_GET_KRBTGT : 0),
 			NULL, NULL, &r->server);
     switch (ret) {
     case 0:	/* Success */

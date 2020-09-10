@@ -429,7 +429,8 @@ _kdc_fast_unwrap_request(astgs_request_t r)
     }
 
     ret = _kdc_db_fetch(r->context, r->config, armor_server,
-			HDB_F_GET_SERVER, NULL, NULL, &armor_user);
+			HDB_F_GET_SERVER | HDB_F_DELAY_NEW_KEYS,
+			NULL, NULL, &armor_user);
     if(ret == HDB_ERR_NOT_FOUND_HERE) {
 	kdc_log(r->context, r->config, 5,
 		"armor key does not have secrets at this KDC, "

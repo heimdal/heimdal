@@ -543,9 +543,9 @@ fkt_add_entry(krb5_context context,
     krb5_data keytab;
     int32_t len;
 
-    fd = open (d->filename, O_RDWR | O_BINARY | O_CLOEXEC);
+    fd = open(d->filename, O_RDWR | O_BINARY | O_CLOEXEC);
     if (fd < 0) {
-	fd = open (d->filename, O_RDWR | O_CREAT | O_EXCL | O_BINARY | O_CLOEXEC, 0600);
+	fd = open(d->filename, O_RDWR | O_CREAT | O_EXCL | O_BINARY | O_CLOEXEC, 0600);
 	if (fd < 0) {
 	    ret = errno;
 	    krb5_set_error_message(context, ret,
@@ -561,9 +561,13 @@ fkt_add_entry(krb5_context context,
 	    return ret;
 	}
 	sp = krb5_storage_stdio_from_fd(fd, "wb+");
+        if (sp == NULL) {
+	    close(fd);
+	    return krb5_enomem(context);
+        }
 	krb5_storage_set_eof_code(sp, KRB5_KT_END);
 	ret = fkt_setup_keytab(context, id, sp);
-	if(ret) {
+	if (ret) {
 	    goto out;
 	}
 	storage_set_flags(context, sp, id->version);

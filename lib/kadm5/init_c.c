@@ -475,19 +475,24 @@ static kadm5_ret_t
 kadm_connect(kadm5_client_context *ctx)
 {
     kadm5_ret_t ret;
-    krb5_principal server;
-    krb5_ccache cc;
+    krb5_principal server = NULL;
+    krb5_ccache cc = NULL;
     rk_socket_t s = rk_INVALID_SOCKET;
     struct addrinfo *ai, *a;
     struct addrinfo hints;
+    int free_ai = 0;
     int error;
     int kadmin_port = 0;
     const char *admin_server = NULL;
     char portstr[NI_MAXSERV];
-    char *hostname, *slash;
-    char *service_name;
+    const char *hostname, *slash;
+    char *service_name = NULL;
     krb5_context context = ctx->context;
     int writable = 0;
+
+    if (ctx->ac)
+        krb5_auth_con_free(context, ctx->ac);
+    ctx->ac = NULL;
 
     if (!ctx->want_write) {
         admin_server = ctx->readonly_admin_server;
@@ -500,52 +505,47 @@ kadm_connect(kadm5_client_context *ctx)
     if (kadmin_port < 1)
         kadmin_port = ctx->kadmind_port;
 
-    memset (&hints, 0, sizeof(hints));
+    memset(&hints, 0, sizeof(hints));
     hints.ai_socktype = SOCK_STREAM;
     hints.ai_protocol = IPPROTO_TCP;
 
-    snprintf (portstr, sizeof(portstr), "%u", ntohs(ctx->kadmind_port));
+    snprintf(portstr, sizeof(portstr), "%u", ntohs(ctx->kadmind_port));
 
     hostname = ctx->admin_server;
-    slash = strchr (hostname, '/');
+    slash = strchr(hostname, '/');
     if (slash != NULL)
 	hostname = slash + 1;
 
-    error = getaddrinfo (hostname, portstr, &hints, &ai);
+    error = getaddrinfo(hostname, portstr, &hints, &ai);
     if (error) {
-	krb5_clear_error_message(context);
-	return KADM5_BAD_SERVER_NAME;
+	ret = KADM5_BAD_SERVER_NAME;
+        goto out;
     }
 
+    free_ai = 1;
     for (a = ai; a != NULL; a = a->ai_next) {
-	s = socket (a->ai_family, a->ai_socktype, a->ai_protocol);
+	s = socket(a->ai_family, a->ai_socktype, a->ai_protocol);
 	if (s < 0)
 	    continue;
-	if (connect (s, a->ai_addr, a->ai_addrlen) < 0) {
-	    krb5_clear_error_message(context);
-	    krb5_warn (context, errno, "connect(%s)", hostname);
-	    rk_closesocket (s);
+	if (connect(s, a->ai_addr, a->ai_addrlen) < 0) {
+	    krb5_warn(context, errno, "connect(%s)", hostname);
+	    rk_closesocket(s);
 	    continue;
 	}
 	break;
     }
     if (a == NULL) {
-	freeaddrinfo (ai);
-	krb5_clear_error_message(context);
-	krb5_warnx (context, "failed to contact %s", hostname);
-	return KADM5_FAILURE;
+	krb5_set_error_message(context, ret = KADM5_FAILURE,
+                               "failed to contact %s", hostname);
+        goto out;
     }
     ret = _kadm5_c_get_cred_cache(context,
 				  ctx->client_name,
 				  ctx->service_name,
 				  NULL, ctx->prompter, ctx->keytab,
 				  ctx->ccache, &cc);
-
-    if(ret) {
-	freeaddrinfo (ai);
-	rk_closesocket(s);
-	return ret;
-    }
+    if (ret)
+	goto out;
 
     if (ctx->realm)
 	error = asprintf(&service_name, "%s@%s", KADM5_ADMIN_SERVICE,
@@ -554,27 +554,19 @@ kadm_connect(kadm5_client_context *ctx)
 	error = asprintf(&service_name, "%s", KADM5_ADMIN_SERVICE);
 
     if (error == -1 || service_name == NULL) {
-	freeaddrinfo (ai);
-	rk_closesocket(s);
-	return krb5_enomem(context);
+	ret = krb5_enomem(context);
+        goto out;
     }
 
     ret = krb5_parse_name(context, service_name, &server);
-    free(service_name);
-    if(ret) {
-	freeaddrinfo (ai);
-	if(ctx->ccache == NULL)
-	    krb5_cc_close(context, cc);
-	rk_closesocket(s);
-	return ret;
-    }
-    ctx->ac = NULL;
+    if (ret)
+	goto out;
 
     ret = krb5_sendauth(context, &ctx->ac, &s,
 			KADMIN_APPL_VERSION, NULL,
 			server, AP_OPTS_MUTUAL_REQUIRED,
 			NULL, NULL, cc, NULL, NULL, NULL);
-    if(ret == 0) {
+    if (ret == 0) {
 	krb5_data params;
 	kadm5_config_params p;
 	memset(&p, 0, sizeof(p));
@@ -583,49 +575,30 @@ kadm_connect(kadm5_client_context *ctx)
 	    p.realm = ctx->realm;
 	}
 	ret = _kadm5_marshal_params(context, &p, &params);
-
-	ret = krb5_write_priv_message(context, ctx->ac, &s, &params);
-	krb5_data_free(&params);
-	if(ret) {
-	    freeaddrinfo (ai);
-	    rk_closesocket(s);
-	    if(ctx->ccache == NULL)
-		krb5_cc_close(context, cc);
-	    return ret;
-	}
-    } else if(ret == KRB5_SENDAUTH_BADAPPLVERS) {
-	rk_closesocket(s);
-
-	s = socket (a->ai_family, a->ai_socktype, a->ai_protocol);
-	if (s < 0) {
-	    freeaddrinfo (ai);
-	    krb5_clear_error_message(context);
-	    return errno;
-	}
-	if (connect (s, a->ai_addr, a->ai_addrlen) < 0) {
-	    rk_closesocket (s);
-	    freeaddrinfo (ai);
-	    krb5_clear_error_message(context);
-	    return errno;
-	}
-	ret = krb5_sendauth(context, &ctx->ac, &s,
-			    KADMIN_OLD_APPL_VERSION, NULL,
-			    server, AP_OPTS_MUTUAL_REQUIRED,
-			    NULL, NULL, cc, NULL, NULL, NULL);
-    }
-    freeaddrinfo (ai);
-    if(ret) {
-	rk_closesocket(s);
-	return ret;
+        if (ret == 0) {
+            ret = krb5_write_priv_message(context, ctx->ac, &s, &params);
+            krb5_data_free(&params);
+        }
     }
 
+    if (ret == 0) {
+        ctx->sock = s;
+        ctx->connected_to_writable = !!writable;
+    }
+
+out:
+    free(service_name);
+    krb5_cc_close(context, cc);
     krb5_free_principal(context, server);
-    if(ctx->ccache == NULL)
-	krb5_cc_close(context, cc);
-    ctx->sock = s;
-
-    ctx->connected_to_writable = !!writable;
-    return 0;
+    if (free_ai)
+        freeaddrinfo(ai);
+    if (ret) {
+        if (s != rk_INVALID_SOCKET)
+            rk_closesocket(s);
+        krb5_auth_con_free(context, ctx->ac);
+        ctx->ac = NULL;
+    }
+    return ret;
 }
 
 kadm5_ret_t

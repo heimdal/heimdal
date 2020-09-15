@@ -215,8 +215,10 @@ krb5_storage_stdio_from_fd(int fd_in, const char *mode)
         return NULL;
 
     f = fdopen(fd, mode);
-    if (f == NULL)
+    if (f == NULL) {
+        (void) close(fd);
         return NULL;
+    }
 
     errno = saved_errno;
 

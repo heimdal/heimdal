@@ -582,6 +582,10 @@ fkt_add_entry(krb5_context context,
 	    return ret;
 	}
 	sp = krb5_storage_stdio_from_fd(fd, "wb+");
+        if (sp == NULL) {
+            (void) close(fd);
+            return ret;
+        }
 	krb5_storage_set_eof_code(sp, KRB5_KT_END);
 	ret = krb5_ret_int8(sp, &pvno);
 	if(ret) {

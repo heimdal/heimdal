@@ -1372,7 +1372,8 @@ set_req_desc(struct MHD_Connection *connection,
     memset(r, 0, sizeof(*r));
     (void) gettimeofday(&r->tv_start, NULL);
 
-    ret = get_krb5_context(&r->context);
+    if ((ret = get_krb5_context(&r->context)))
+        return ret;
     /* HEIM_SVC_REQUEST_DESC_COMMON_ELEMENTS fields */
     r->request.data = "<HTTP-REQUEST>";
     r->request.length = sizeof("<HTTP-REQUEST>");

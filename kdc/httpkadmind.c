@@ -990,6 +990,8 @@ make_keytab(kadmin_request_desc r)
         ret = errno;
     if (ret == 0)
         ret = krb5_kt_resolve(r->context, r->keytab_name, &r->keytab);
+    if (fd != -1)
+        (void) close(fd);
     return ret;
 }
 

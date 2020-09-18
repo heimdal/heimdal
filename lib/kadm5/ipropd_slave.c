@@ -45,6 +45,7 @@ static char *server_time_lost = five_min;
 static int time_before_lost;
 static const char *slave_str;
 static const char *pidfile_basename;
+static char *realm;
 
 static int
 connect_to_master (krb5_context context, const char *master,
@@ -136,10 +137,12 @@ get_creds(krb5_context context, const char *keytab_str,
     if(ret)
 	krb5_err(context, 1, ret, "%s", keytab_str);
 
-
-    ret = krb5_sname_to_principal (context, slave_str, IPROP_NAME,
-				   KRB5_NT_SRV_HST, &client);
+    ret = krb5_sname_to_principal(context, slave_str, IPROP_NAME,
+                                  KRB5_NT_SRV_HST, &client);
     if (ret) krb5_err(context, 1, ret, "krb5_sname_to_principal");
+    if (realm)
+        ret = krb5_principal_set_realm(context, client, realm);
+    if (ret) krb5_err(context, 1, ret, "krb5_principal_set_realm");
 
     ret = krb5_get_init_creds_opt_alloc(context, &init_opts);
     if (ret) krb5_err(context, 1, ret, "krb5_get_init_creds_opt_alloc");
@@ -671,7 +674,6 @@ is_up_to_date(krb5_context context, const char *file,
 
 static char *status_file;
 static char *config_file;
-static char *realm;
 static int version_flag;
 static int help_flag;
 static char *keytab_str;

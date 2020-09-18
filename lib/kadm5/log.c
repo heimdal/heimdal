@@ -682,6 +682,40 @@ kadm5_log_init(kadm5_server_context *server_context)
     return log_init(server_context, LOCK_EX);
 }
 
+/* Upgrade log lock to exclusive */
+kadm5_ret_t
+kadm5_log_exclusivelock(kadm5_server_context *server_context)
+{
+    kadm5_log_context *log_context = &server_context->log_context;
+
+    if (log_context->lock_mode == LOCK_EX)
+        return 0;
+    if (log_context->log_fd == -1)
+        return EINVAL;
+    if (flock(log_context->log_fd, LOCK_EX) < 0)
+        return errno;
+    log_context->read_only = 0;
+    log_context->lock_mode = LOCK_EX;
+    return 0;
+}
+
+/* Downgrade log lock to shared */
+kadm5_ret_t
+kadm5_log_sharedlock(kadm5_server_context *server_context)
+{
+    kadm5_log_context *log_context = &server_context->log_context;
+
+    if (log_context->lock_mode == LOCK_SH)
+        return 0;
+    if (log_context->log_fd == -1)
+        return EINVAL;
+    if (flock(log_context->log_fd, LOCK_SH) < 0)
+        return errno;
+    log_context->read_only = 1;
+    log_context->lock_mode = LOCK_SH;
+    return 0;
+}
+
 /* Open the log with an exclusive non-blocking lock */
 kadm5_ret_t
 kadm5_log_init_nb(kadm5_server_context *server_context)

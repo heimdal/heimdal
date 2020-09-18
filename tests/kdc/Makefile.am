@@ -15,6 +15,7 @@ noinst_DATA = \
 	krb5-bx509.conf \
 	krb5-httpkadmind.conf \
 	krb5-pkinit-win.conf \
+	krb5-master2.conf \
 	krb5-slave2.conf \
 	krb5-slave.conf
 
@@ -51,6 +52,7 @@ pwport = 49191
 restport = 49192
 restport2 = 49193
 ipropport = 49194
+ipropport2 = 49195
 
 if HAVE_DLOPEN
 do_dlopen = -e 's,[@]DLOPEN[@],true,g'
@@ -70,6 +72,7 @@ do_subst = $(heim_verbose)sed $(do_dlopen) \
 	-e 's,[@]restport2[@],$(restport2),g' \
 	-e 's,[@]pwport[@],$(pwport),g' \
 	-e 's,[@]ipropport[@],$(ipropport),g' \
+	-e 's,[@]ipropport2[@],$(ipropport2),g' \
 	-e 's,[@]objdir[@],$(top_builddir)/tests/kdc,g' \
 	-e 's,[@]top_builddir[@],$(top_builddir),g' \
 	-e 's,[@]db_type[@],$(db_type),g' \
@@ -165,7 +168,7 @@ check-httpkadmind: check-httpkadmind.in Makefile krb5-httpkadmind.conf
 	$(chmod) +x check-httpkadmind.tmp && \
 	mv check-httpkadmind.tmp check-httpkadmind
 
-check-iprop: check-iprop.in Makefile krb5.conf krb5-slave.conf krb5-slave2.conf
+check-iprop: check-iprop.in Makefile krb5.conf krb5-master2.conf krb5-slave.conf krb5-slave2.conf
 	$(do_subst) < $(srcdir)/check-iprop.in > check-iprop.tmp && \
 	$(chmod) +x check-iprop.tmp && \
 	mv check-iprop.tmp check-iprop
@@ -193,6 +196,9 @@ krb5.conf: krb5.conf.in Makefile
 	$(do_subst) \
 	   -e 's,[@]WEAK[@],false,g' \
 	   -e 's,[@]dk[@],,g' \
+	   -e 's,[@]messages[@],messages,g' \
+	   -e 's,[@]ipropstats[@],iprop-stats,g' \
+	   -e 's,[@]signalsocket[@],signal,g' \
 	   -e 's,[@]kdc[@],,g' < $(srcdir)/krb5.conf.in > krb5.conf.tmp && \
 	mv krb5.conf.tmp krb5.conf
 
@@ -236,6 +242,9 @@ krb5-weak.conf: krb5.conf.in Makefile
 	$(do_subst) \
 	   -e 's,[@]WEAK[@],true,g' \
 	   -e 's,[@]dk[@],default_keys = aes256-cts-hmac-sha1-96:pw-salt arcfour-hmac-md5:pw-salt des3-cbc-sha1:pw-salt des:pw-salt,g' \
+	   -e 's,[@]messages[@],messages,g' \
+	   -e 's,[@]signalsocket[@],signal,g' \
+	   -e 's,[@]ipropstats[@],iprop-stats,g' \
 	   -e 's,[@]kdc[@],,g' < $(srcdir)/krb5.conf.in > krb5-weak.conf.tmp && \
 	mv krb5-weak.conf.tmp krb5-weak.conf
 
@@ -243,13 +252,29 @@ krb5-slave.conf: krb5.conf.in Makefile
 	$(do_subst) \
 	   -e 's,[@]WEAK[@],true,g' \
 	   -e 's,[@]dk[@],,g' \
+	   -e 's,[@]messages[@],messages,g' \
+	   -e 's,[@]signalsocket[@],signal2,g' \
+	   -e 's,[@]ipropstats[@],iprop-stats,g' \
 	   -e 's,[@]kdc[@],.slave,g' < $(srcdir)/krb5.conf.in > krb5-slave.conf.tmp && \
 	mv krb5-slave.conf.tmp krb5-slave.conf
+
+krb5-master2.conf: krb5.conf.in Makefile
+	$(do_subst) \
+	   -e 's,[@]WEAK[@],true,g' \
+	   -e 's,[@]dk[@],,g' \
+	   -e 's,[@]messages[@],messages2,g' \
+	   -e 's,[@]signalsocket[@],signal2,g' \
+	   -e 's,[@]ipropstats[@],iprop-stats2,g' \
+	   -e 's,[@]kdc[@],.slave,g' < $(srcdir)/krb5.conf.in > krb5-master2.conf.tmp && \
+	mv krb5-master2.conf.tmp krb5-master2.conf
 
 krb5-slave2.conf: krb5.conf.in Makefile
 	$(do_subst) \
 	   -e 's,[@]WEAK[@],true,g' \
 	   -e 's,[@]dk[@],,g' \
+	   -e 's,[@]messages[@],messages2,g' \
+	   -e 's,[@]signalsocket[@],signal3,g' \
+	   -e 's,[@]ipropstats[@],iprop-stats2,g' \
 	   -e 's,[@]kdc[@],.slave2,g' < $(srcdir)/krb5.conf.in > krb5-slave2.conf.tmp && \
 	mv krb5-slave2.conf.tmp krb5-slave2.conf
 
@@ -295,6 +320,7 @@ CLEANFILES= \
 	foopassword \
 	foopassword.rkpty \
 	iprop-stats \
+	iprop-stats2 \
 	iprop.keytab \
 	ipropd.dumpfile \
 	kdc-tester4.json \
@@ -333,6 +359,8 @@ CLEANFILES= \
 	sdigest-reply \
 	server.keytab \
 	signal \
+	signal2 \
+	signal3 \
 	tempfile \
 	test-rc-file.rc \
 	ukt \

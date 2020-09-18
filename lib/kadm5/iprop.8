@@ -139,6 +139,12 @@ There is a keep-alive feature logged in the master's
 file (e.g.\&
 .Pa /var/heimdal/slave-stats ) .
 .Pp
+Note that hierarchical replication is supported by running
+an
+.Nm ipropd-master
+on the same KDC as an
+.Nm ipropd-slave .
+.Pp
 Supported options for
 .Nm ipropd-master :
 .Bl -tag -width Ds

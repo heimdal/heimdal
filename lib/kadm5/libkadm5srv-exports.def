@@ -61,7 +61,9 @@ EXPORTS
 	kadm5_s_init_with_creds
 	kadm5_s_chpass_principal_cond
 	kadm5_s_create_principal_with_key
+	kadm5_log_exclusivelock
 	kadm5_log_set_version
+	kadm5_log_sharedlock
 	kadm5_log_signal_master
 ;!	kadm5_log_signal_socket
 	kadm5_log_signal_socket_info    ;!

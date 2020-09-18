@@ -260,6 +260,10 @@ append_to_log_file(krb5_context context,
         ret = fsync(server_context->log_context.log_fd);
     if (ret == 0)
         return 0;
+    krb5_warn(context, ret,
+              "Failed to write iprop log fd %d %llu bytes at offset %lld: %d",
+              server_context->log_context.log_fd, (unsigned long long)len,
+              (long long)log_off, ret);
 
     /*
      * Attempt to recover from this.  First, truncate the log file

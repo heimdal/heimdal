@@ -655,9 +655,8 @@ slave_status(krb5_context context,
 	(void) unlink(file);
 	return;
     }
-    krb5_warnx(context, "slave status change: %s", status);
-    
     rk_dumpdata(file, status, len);
+    krb5_warnx(context, "slave status change: %s", status);
     free(status);
 }
 

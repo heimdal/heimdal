@@ -123,8 +123,7 @@ kadm5_s_get_principal(void *server_handle,
     kadm5_server_context *context = server_handle;
     kadm5_ret_t ret;
     hdb_entry_ex ent;
-    unsigned int flags = HDB_F_GET_ANY | HDB_F_ADMIN_DATA |
-        HDB_F_DELAY_NEW_KEYS;
+    unsigned int flags = HDB_F_GET_ANY | HDB_F_ADMIN_DATA;
 
     if ((mask & KADM5_KEY_DATA) || (mask & KADM5_KVNO))
         flags |= HDB_F_ALL_KVNOS | HDB_F_DECRYPT;

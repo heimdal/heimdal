@@ -1194,11 +1194,10 @@ fix_keys(krb5_context context,
             continue;
 
         /*
-         * Ignore the keyset with kvno 1 when the entry is at 2 because
-         * kadmin's `ank -r' command immediately changes the keys.
+         * Ignore the keyset with kvno 1 when the entry has better kvnos
+         * because kadmin's `ank -r' command immediately changes the keys.
          */
-        if (h->entry.kvno == 2 && keys.val[i].kvno == 1 &&
-            keys.val[i].set_time[0] - best < 30)
+        if (kvno > 1 && keys.val[i].kvno == 1)
             continue;
 
         /*

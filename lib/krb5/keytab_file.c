@@ -745,6 +745,7 @@ fkt_remove_entry(krb5_context context,
 		 krb5_keytab id,
 		 krb5_keytab_entry *entry)
 {
+    struct fkt_data *fkt = id->data;
     krb5_ssize_t bytes;
     krb5_keytab_entry e;
     krb5_kt_cursor cursor;
@@ -753,37 +754,53 @@ fkt_remove_entry(krb5_context context,
     krb5_error_code ret;
 
     ret = fkt_start_seq_get_int(context, id, O_RDWR | O_BINARY | O_CLOEXEC, 1, &cursor);
-    if(ret != 0)
-	goto out; /* return other error here? */
-    while(fkt_next_entry_int(context, id, &e, &cursor,
-			     &pos_start, &pos_end) == 0) {
-	if(krb5_kt_compare(context, &e, entry->principal,
-			   entry->vno, entry->keyblock.keytype)) {
+    if (ret != 0) {
+        const char *emsg = krb5_get_error_message(context, ret);
+
+	krb5_set_error_message(context, ret,
+			       N_("Could not open keytab file for write: %s: %s", ""),
+			       fkt->filename,
+                               emsg);
+        krb5_free_error_message(context, emsg);
+	return ret;
+    }
+    while (ret == 0 &&
+           (ret = fkt_next_entry_int(context, id, &e, &cursor,
+                                     &pos_start, &pos_end)) == 0) {
+	if (krb5_kt_compare(context, &e, entry->principal,
+			    entry->vno, entry->keyblock.keytype)) {
 	    int32_t len;
 	    unsigned char buf[128];
 	    found = 1;
 	    krb5_storage_seek(cursor.sp, pos_start, SEEK_SET);
 	    len = pos_end - pos_start - 4;
 	    ret = krb5_store_int32(cursor.sp, -len);
-            if (ret)
-                goto out;
 	    memset(buf, 0, sizeof(buf));
-	    while(len > 0) {
+	    while (ret == 0 && len > 0) {
 		bytes = krb5_storage_write(cursor.sp, buf,
 		    min((size_t)len, sizeof(buf)));
                 if (bytes != min((size_t)len, sizeof(buf))) {
                     ret = bytes == -1 ? errno : KRB5_KT_END;
-                    goto out;
+                    break;
                 }
 		len -= min((size_t)len, sizeof(buf));
 	    }
 	}
 	krb5_kt_free_entry(context, &e);
     }
-    krb5_kt_end_seq_get(context, id, &cursor);
-  out:
-    if (!found) {
-	krb5_clear_error_message (context);
+    (void) krb5_kt_end_seq_get(context, id, &cursor);
+    if (ret == KRB5_KT_END)
+        ret = 0;
+    if (ret) {
+        const char *emsg = krb5_get_error_message(context, ret);
+
+        krb5_set_error_message(context, ret,
+                               N_("Could not remove keytab entry from %s: %s", ""),
+                               fkt->filename,
+                               krb5_get_error_message(context, ret));
+        krb5_free_error_message(context, emsg);
+    } else if (!found) {
+	krb5_clear_error_message(context);
 	return KRB5_KT_NOTFOUND;
     }
     return ret;

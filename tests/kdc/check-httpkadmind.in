@@ -208,6 +208,7 @@ ${kadmin} add -r --use-defaults foo@${R} || exit 1
 ${kadmin} add -r --use-defaults httpkadmind/admin@${R} || exit 1
 ${kadmin} add -r --use-defaults WELLKNOWN/CSRFTOKEN@${R} || exit 1
 ${kadmin} add -r --use-defaults HTTP/localhost@${R} || exit 1
+${kadmin} add -r --use-defaults host/xyz.${domain}@${R} || exit 1
 ${kadmin} add -r --use-defaults HTTP/xyz.${domain}@${R} || exit 1
 ${kadmin} add_ns --key-rotation-epoch=-1d --key-rotation-period=5m  \
                  --max-ticket-life=1d --max-renewable-life=5d       \
@@ -336,6 +337,18 @@ get_keytab "dNSName=xyz.${domain}" -sf -o "${objdir}/extracted_keytab" &&
     { echo "Got a keytab for HTTP/xyz.${domain} when not authorized!"; exit 1; }
 get_keytab "dNSName=foo.ns.${domain}" -sf -o "${objdir}/extracted_keytab" &&
     { echo "Got a keytab for HTTP/foo.ns.${domain} when not authorized!"; exit 1; } 
+
+echo "Checking that host service keys are not served"
+hn=xyz.${domain}
+p=host/$hn
+echo "Fetching keytab for virtual principal $p"
+rm -f extracted_keytab*
+grant dnsname $hn foo@${R}
+get_keytab "service=host&dNSName=xyz.${domain}" -sf -o "${objdir}/extracted_keytab" &&
+    { echo "Got a keytab for $p even though it is a host service!"; exit 1; }
+get_keytab "spn=host/xyz.${domain}" -sf -o "${objdir}/extracted_keytab" &&
+    { echo "Got a keytab for $p even though it is a host service!"; exit 1; }
+revoke
 
 hn=xyz.${domain}
 p=HTTP/$hn

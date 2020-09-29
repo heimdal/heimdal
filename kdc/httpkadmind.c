@@ -80,6 +80,41 @@
 #define heim_pconfig krb5_context
 #include <heimbase-svc.h>
 
+#define BODYLEN_IS_STRLEN (~0)
+
+/*
+ * Libmicrohttpd is not the easiest API to use.  It's got issues.
+ *
+ * One of the issues is how responses are handled, and the return value of the
+ * resource handler (MHD_NO -> close the connection, MHD_YES -> send response).
+ * Note that the handler could return MHD_YES without having set an HTTP
+ * response.
+ *
+ * There's memory management issues as well.
+ *
+ * Here we have to be careful about return values.
+ *
+ * Some of the functions defined here return just a krb5_error_code without
+ * having set an HTTP response on error.
+ * Others do set an HTTP response on error.
+ * The convention is to either set an HTTP response on error, or not at all,
+ * but not a mix of errors where for some the function will set a response and
+ * for others it won't.
+ *
+ * We do use some system error codes to stand in for errors here.
+ * Specifically:
+ *
+ *  - EACCES -> authorization failed
+ *  - EINVAL -> bad API usage
+ *  - ENOSYS -> missing CSRF token but CSRF token required
+ *
+ * FIXME: We should rely only on krb5_set_error_message() and friends and make
+ *        error responses only in route(), mapping krb5_error_code values to
+ *        HTTP status codes.  This would simplify the error handling convention
+ *        here.
+ */
+
+/* Our request description structure */
 typedef struct kadmin_request_desc {
     HEIM_SVC_REQUEST_DESC_COMMON_ELEMENTS;
 
@@ -129,6 +164,7 @@ typedef struct kadmin_request_desc {
     char *freeme1;
     char *enctypes;
     const char *method;
+    unsigned int response_set:1;
     unsigned int materialize:1;
     unsigned int rotate_now:1;
     unsigned int rotate:1;
@@ -151,6 +187,8 @@ audit_trail(kadmin_request_desc r, krb5_error_code ret)
      */
 #define CASE(x) case x : retname = #x; break
     switch (ret) {
+    case ENOSYS: retname = "ECSRFTOKENREQD"; break;
+    CASE(EINVAL);
     CASE(ENOMEM);
     CASE(EACCES);
     CASE(HDB_ERR_NOT_FOUND_HERE);
@@ -284,6 +322,10 @@ static struct getarg_strings auth_types;
         conf.mask |= b; \
     }
 
+/*
+ * Does NOT set an HTTP response, naturally, as it doesn't even have access to
+ * the connection.
+ */
 static krb5_error_code
 get_kadm_handle(krb5_context context,
                 const char *want_realm,
@@ -366,7 +408,7 @@ out:
     return ret;
 }
 
-static krb5_error_code resp(kadmin_request_desc, int,
+static krb5_error_code resp(kadmin_request_desc, int, krb5_error_code,
                             enum MHD_ResponseMemoryMode, const char *,
                             const void *, size_t, const char *, const char *);
 static krb5_error_code bad_req(kadmin_request_desc, krb5_error_code, int,
@@ -430,9 +472,13 @@ validate_token(kadmin_request_desc r)
     if (ret)
         return bad_403(r, ret, "Token validation failed");
     if (r->cprinc == NULL)
-        return bad_403(r, ret, "Could not extract a principal name "
-                       "from token");
-    return krb5_unparse_name(r->context, r->cprinc, &r->cname);
+        return bad_403(r, ret,
+                       "Could not extract a principal name from token");
+    ret = krb5_unparse_name(r->context, r->cprinc, &r->cname);
+    if (ret)
+        return bad_503(r, ret,
+                       "Could not extract a principal name from token");
+    return 0;
 }
 
 static void
@@ -557,10 +603,19 @@ make_redirect_uri(kadmin_request_desc r, const char *base)
  * XXX Shouldn't be a body, but a status message.  The body should be
  * configurable to be from a file.  MHD doesn't give us a way to set the
  * response status message though, just the body.
+ *
+ * Calls audit_trail().
+ *
+ * Returns -1 if something terrible happened, which should ultimately cause
+ * route() to return MHD_NO, which should cause libmicrohttpd to close the
+ * connection to the user-agent.
+ *
+ * Returns 0 in all other cases.
  */
 static krb5_error_code
 resp(kadmin_request_desc r,
      int http_status_code,
+     krb5_error_code ret,
      enum MHD_ResponseMemoryMode rmmode,
      const char *content_type,
      const void *body,
@@ -571,9 +626,17 @@ resp(kadmin_request_desc r,
     struct MHD_Response *response;
     int mret = MHD_YES;
 
+    if (r->response_set) {
+        krb5_log_msg(r->context, logfac, 1, NULL,
+                     "Internal error; attempted to set a second response");
+        return 0;
+    }
+
     (void) gettimeofday(&r->tv_end, NULL);
-    if (http_status_code == MHD_HTTP_OK)
-        audit_trail(r, 0);
+    audit_trail(r, ret);
+
+    if (body && bodylen == BODYLEN_IS_STRLEN)
+        bodylen = strlen(body);
 
     response = MHD_create_response_from_buffer(bodylen, rk_UNCONST(body),
                                                rmmode);
@@ -615,6 +678,7 @@ resp(kadmin_request_desc r,
     if (mret != MHD_NO)
         mret = MHD_queue_response(r->connection, http_status_code, response);
     MHD_destroy_response(response);
+    r->response_set = 1;
     return mret == MHD_NO ? -1 : 0;
 }
 
@@ -641,9 +705,8 @@ bad_reqv(kadmin_request_desc r,
     if (code == ENOMEM) {
         if (context)
             krb5_log_msg(context, logfac, 1, NULL, "Out of memory");
-        audit_trail(r, code);
-        return resp(r, http_status_code, MHD_RESPMEM_PERSISTENT,
-                    NULL, fmt, strlen(fmt), NULL, NULL);
+        return resp(r, http_status_code, code, MHD_RESPMEM_PERSISTENT,
+                    NULL, fmt, BODYLEN_IS_STRLEN, NULL, NULL);
     }
 
     if (code) {
@@ -661,22 +724,20 @@ bad_reqv(kadmin_request_desc r,
         msg = formatted;
         formatted = NULL;
     }
-    if (r && r->hcontext) {
+    if (r && r->hcontext)
         heim_audit_addreason((heim_svc_req_desc)r, "%s", formatted);
-        audit_trail(r, code);
-    }
     krb5_free_error_message(context, k5msg);
 
     if (ret == -1 || msg == NULL) {
         if (context)
             krb5_log_msg(context, logfac, 1, NULL, "Out of memory");
-        return resp(r, MHD_HTTP_SERVICE_UNAVAILABLE,
+        return resp(r, MHD_HTTP_SERVICE_UNAVAILABLE, ENOMEM,
                     MHD_RESPMEM_PERSISTENT, NULL,
-                    "Out of memory", sizeof("Out of memory") - 1, NULL, NULL);
+                    "Out of memory", BODYLEN_IS_STRLEN, NULL, NULL);
     }
 
-    ret = resp(r, http_status_code, MHD_RESPMEM_MUST_COPY,
-               NULL, msg, strlen(msg), NULL, NULL);
+    ret = resp(r, http_status_code, code, MHD_RESPMEM_MUST_COPY,
+               NULL, msg, BODYLEN_IS_STRLEN, NULL, NULL);
     free(formatted);
     free(msg);
     return ret == -1 ? -1 : code;
@@ -781,7 +842,7 @@ good_ext_keytab(kadmin_request_desc r)
     if (ret)
         return bad_503(r, ret, "Could not recover keytab from temp file");
 
-    ret = resp(r, MHD_HTTP_OK, MHD_RESPMEM_MUST_COPY,
+    ret = resp(r, MHD_HTTP_OK, 0, MHD_RESPMEM_MUST_COPY,
                "application/octet-stream", body, bodylen, NULL, NULL);
     free(body);
     return ret;
@@ -911,7 +972,7 @@ param_cb(void *d,
             ret = krb5_principal_set_realm(r->context, p,
                                            r->realm ? r->realm : realm);
         if (ret == 0 && krb5_principal_get_num_comp(r->context, p) != 2)
-                ret = ENOTSUP;
+            ret = ENOTSUP;
         if (ret == 0)
             ret = check_service_name(r,
                                      krb5_principal_get_comp_string(r->context,
@@ -1088,7 +1149,11 @@ make_kstuple(krb5_context context,
     return *kstuple ? 0 :krb5_enomem(context);
 }
 
-/* Get keys for one principal */
+/*
+ * Get keys for one principal.
+ *
+ * Does NOT set an HTTP response.
+ */
 static krb5_error_code
 get_keys1(kadmin_request_desc r, const char *pname)
 {
@@ -1261,6 +1326,11 @@ get_keys1(kadmin_request_desc r, const char *pname)
 
 static krb5_error_code check_csrf(kadmin_request_desc);
 
+/*
+ * Calls get_keys1() to extract each requested principal's keys.
+ *
+ * When this returns a response will have been set.
+ */
 static krb5_error_code
 get_keysN(kadmin_request_desc r, const char *method)
 {
@@ -1273,24 +1343,19 @@ get_keysN(kadmin_request_desc r, const char *method)
     /* Parses and validates the request, then checks authorization */
     ret = authorize_req(r);
     if (ret)
-        return ret; /* authorize_req() calls bad_req() */
+        return ret; /* authorize_req() calls bad_req() on error */
 
     ret = get_kadm_handle(r->context, r->realm ? r->realm : realm,
                           0 /* want_write */, &r->kadm_handle);
 
     if (strcmp(method, "POST") == 0 && (ret = check_csrf(r)))
-        return bad_403(r, ret,
-                       "CSRF token needed; copy the X-CSRF-Token: response "
-                       "header to your next POST");
+        return ret; /* check_csrf() calls bad_req() on error */
 
     nhosts = heim_array_get_length(r->hostnames);
     nsvcs = heim_array_get_length(r->service_names);
     nspns = heim_array_get_length(r->spns);
-    if (!nhosts && !nspns) {
-        krb5_set_error_message(r->context, ret = EINVAL,
-                               "No service principals requested");
-        return ret;
-    }
+    if (!nhosts && !nspns)
+        return bad_403(r, EINVAL, "No service principals requested");
 
     if (nhosts && !nsvcs) {
         heim_string_t s;
@@ -1304,11 +1369,8 @@ get_keysN(kadmin_request_desc r, const char *method)
     }
 
     /* FIXME: Make this configurable */
-    if (nsvcs > 4) {
-        krb5_set_error_message(r->context, ret = ERANGE,
-                               "Requested too many service names");
-        return ret;
-    }
+    if (nspns + nsvcs * nhosts > 40)
+        return bad_403(r, EINVAL, "Requested keys for too many principals");
 
     ret = make_keytab(r);
     for (i = 0; ret == 0 && i < nsvcs; i++) {
@@ -1339,7 +1401,34 @@ get_keysN(kadmin_request_desc r, const char *method)
                         heim_string_get_utf8(heim_array_get_value(r->spns,
                                                                   i)));
     }
-    return ret;
+    switch (ret) {
+    case -1:
+        /* Can't happen */
+        krb5_log_msg(r->context, logfac, 1, NULL,
+                     "Failed to extract keys for unknown reasons");
+        if (r->response_set)
+            return MHD_YES;
+        return bad_503(r, ret, "Could not get keys");
+    case ENOSYS:
+        /* Our convention */
+        return bad_method_want_POST(r);
+    case KADM5_READ_ONLY:
+        if (primary_server_URI) {
+            krb5_log_msg(r->context, logfac, 1, NULL,
+                         "Redirect %s to primary server", r->cname);
+            return resp(r, MHD_HTTP_TEMPORARY_REDIRECT, KADM5_READ_ONLY,
+                        MHD_RESPMEM_PERSISTENT, NULL, "", 0, NULL, NULL);
+        } else {
+            krb5_log_msg(r->context, logfac, 1, NULL, "HDB is read-only");
+            return bad_403(r, ret, "HDB is read-only");
+        }
+    case 0:
+        krb5_log_msg(r->context, logfac, 1, NULL, "Sent keytab to %s",
+                     r->cname);
+        return good_ext_keytab(r);
+    default:
+        return bad_503(r, ret, "Could not get keys");
+    }
 }
 
 /* Copied from kdc/connect.c */
@@ -1467,37 +1556,12 @@ get_keys(kadmin_request_desc r, const char *method)
 {
     krb5_error_code ret;
 
-
     if ((ret = validate_token(r)))
         return ret; /* validate_token() calls bad_req() */
     if (r->cname == NULL || r->cprinc == NULL)
         return bad_403(r, EINVAL,
                        "Could not extract principal name from token");
-    switch ((ret = get_keysN(r, method))) {
-    case -1: /* XXX */
-        return MHD_YES;
-    case ENOSYS: /* XXX */
-        return bad_method_want_POST(r);
-    case KADM5_READ_ONLY:
-        if (primary_server_URI) {
-            krb5_log_msg(r->context, logfac, 1, NULL,
-                         "Redirect for %s to primary server to "
-                         "materialize or rotate principal", r->cname);
-            return resp(r, MHD_HTTP_TEMPORARY_REDIRECT, MHD_RESPMEM_PERSISTENT,
-                        NULL, "", 0, NULL, NULL);
-        } else {
-            krb5_log_msg(r->context, logfac, 1, NULL, "HDB is read-only here "
-                         "and no primary URI configured");
-            return bad_403(r, ret, "HDB is read-only here "
-                           "and no primary URI configured");
-        }
-    case 0:
-        krb5_log_msg(r->context, logfac, 1, NULL,
-                     "Issued service principal keys to %s", r->cname);
-        return good_ext_keytab(r);
-    default:
-        return bad_503(r, ret, "Could not get keys");
-    }
+    return get_keysN(r, method); /* Sets an HTTP response */
 }
 
 /* Implements GETs of /get-config */
@@ -1558,7 +1622,7 @@ get_config(kadmin_request_desc r)
     if (ret == 0) {
         krb5_log_msg(r->context, logfac, 1, NULL,
                      "Returned krb5.conf contents to %s", r->cname);
-        ret = resp(r, MHD_HTTP_OK, MHD_RESPMEM_MUST_COPY,
+        ret = resp(r, MHD_HTTP_OK, 0, MHD_RESPMEM_MUST_COPY,
                    "application/text", body, bodylen, NULL, NULL);
     } else {
         ret = bad_503(r, ret, "Could not retrieve principal configuration");
@@ -1701,6 +1765,10 @@ make_csrf_token(kadmin_request_desc r,
     return ret;
 }
 
+/*
+ * Returns system or krb5_error_code on error, but also calls resp() or bad_*()
+ * on error.
+ */
 static krb5_error_code
 check_csrf(kadmin_request_desc r)
 {
@@ -1714,13 +1782,17 @@ check_csrf(kadmin_request_desc r)
                                         "X-CSRF-Token");
     ret = make_csrf_token(r, given, &expected, &age);
     if (ret)
-        bad_503(r, ret, "Could not create a CSRF token");
+        return bad_503(r, ret, "Could not create a CSRF token");
+    /*
+     * If CSRF token needed but missing, call resp() directly, bypassing
+     * bad_403(), to return a 403 with an expected CSRF token in the response.
+     */
     if (given == NULL) {
-        (void) resp(r, MHD_HTTP_FORBIDDEN, MHD_RESPMEM_PERSISTENT, NULL,
-                    "Request missing a CSRF token",
-                    sizeof("Request missing a CSRF token"), NULL,
+        (void) resp(r, MHD_HTTP_FORBIDDEN, ENOSYS, MHD_RESPMEM_PERSISTENT,
+                    NULL, "CSRF token needed; copy the X-CSRF-Token: response "
+                    "header to your next POST", BODYLEN_IS_STRLEN, NULL,
                     expected);
-        return -1;
+        return ENOSYS;
     }
 
     /* Validate the CSRF token for this request */
@@ -1740,14 +1812,13 @@ check_csrf(kadmin_request_desc r)
 static krb5_error_code
 health(const char *method, kadmin_request_desc r)
 {
-    if (strcmp(method, "HEAD") == 0)
-        return resp(r, MHD_HTTP_OK, MHD_RESPMEM_PERSISTENT, NULL, "", 0, NULL,
-                    NULL);
-    return resp(r, MHD_HTTP_OK, MHD_RESPMEM_PERSISTENT, NULL,
+    if (strcmp(method, "HEAD") == 0) {
+        return resp(r, MHD_HTTP_OK, 0, MHD_RESPMEM_PERSISTENT, NULL, "", 0,
+                    NULL, NULL);
+    }
+    return resp(r, MHD_HTTP_OK, 0, MHD_RESPMEM_PERSISTENT, NULL,
                 "To determine the health of the service, use the /get-config "
-                "end-point.\n",
-                sizeof("To determine the health of the service, use the "
-                       "/get-config end-point.\n") - 1, NULL, NULL);
+                "end-point.\n", BODYLEN_IS_STRLEN, NULL, NULL);
 
 }
 

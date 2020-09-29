@@ -585,6 +585,9 @@ cmp extracted_keytab.rest1 extracted_keytab.rest2 > /dev/null &&
 test "$(grep $p extracted_keytab.rest2 | wc -l)" -eq 3 ||
     { echo "Wrong number of new keys!"; exit 1; }
 
+grep 'Internal error' messages.log &&
+    { echo "Internal errors in log"; exit 1; }
+
 sh ${leaks_kill} httpkadmind $httpkadmindpid || ec=1
 sh ${leaks_kill} kadmind $kadmindpid || ec=1
 sh ${leaks_kill} kadmind $kadmind2pid || ec=1

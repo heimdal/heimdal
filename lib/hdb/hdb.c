@@ -802,7 +802,19 @@ hdb_create(krb5_context context, HDB **db, const char *filename)
             *db = NULL;
         }
     }
+#ifdef HDB_DEFAULT_DB_TYPE
+    if (cb_ctx.h == NULL || cb_ctx.h->prefix == NULL) {
+        /*
+         * If still we've not picked a backend, use a build configuration time
+         * default.
+         */
+        for (cb_ctx.h = methods; cb_ctx.h->prefix != NULL; cb_ctx.h++)
+            if (strcmp(cb_ctx.h->prefix, HDB_DEFAULT_DB_TYPE) == 0)
+                break;
+    }
+#endif
     if (cb_ctx.h == NULL || cb_ctx.h->prefix == NULL)
+        /* Last resort default */
         cb_ctx.h = &default_dbmethod;
     if (cb_ctx.h == NULL || cb_ctx.h->prefix == NULL) {
         krb5_set_error_message(context, ENOTSUP,

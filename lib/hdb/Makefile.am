@@ -7,6 +7,7 @@ AM_CPPFLAGS += $(INCLUDE_openldap) -DHDB_DB_DIR=\"$(DIR_hdbdir)\"
 AM_CPPFLAGS += -I$(srcdir)/../krb5
 AM_CPPFLAGS += $(INCLUDE_sqlite3)
 AM_CPPFLAGS += $(INCLUDE_libintl)
+AM_CPPFLAGS += -DHDB_DEFAULT_DB_TYPE=\"$(db_type):\"
 if HAVE_DBHEADER
 AM_CPPFLAGS += -I$(DBHEADER)
 endif

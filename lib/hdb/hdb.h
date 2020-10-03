@@ -303,6 +303,8 @@ typedef struct HDB {
 
 struct hdb_method {
     int			version;
+    unsigned int	is_file_based:1;
+    unsigned int	can_taste:1;
     krb5_error_code	(*init)(krb5_context, void **);
     void		(*fini)(void *);
     const char *prefix;

@@ -66,58 +66,42 @@ const int hdb_interface_version = HDB_INTERFACE_VERSION;
 static struct hdb_method methods[] = {
     /* "db:" should be db3 if we have db3, or db1 if we have db1 */
 #if HAVE_DB3
-    { HDB_INTERFACE_VERSION, NULL, NULL, "db:",	hdb_db3_create},
+    { HDB_INTERFACE_VERSION, 1 /*is_file_based*/, 1 /*can_taste*/, NULL, NULL,
+                                               "db:",	hdb_db3_create},
 #elif HAVE_DB1
-    { HDB_INTERFACE_VERSION, NULL, NULL, "db:",	hdb_db1_create},
+    { HDB_INTERFACE_VERSION, 1, 1, NULL, NULL, "db:",	hdb_db1_create},
 #endif
 #if HAVE_DB1
-    { HDB_INTERFACE_VERSION, NULL, NULL, "db1:",	hdb_db1_create},
+    { HDB_INTERFACE_VERSION, 1, 1, NULL, NULL, "db1:",	hdb_db1_create},
 #endif
 #if HAVE_DB3
-    { HDB_INTERFACE_VERSION, NULL, NULL, "db3:",	hdb_db3_create},
+    { HDB_INTERFACE_VERSION, 1, 1, NULL, NULL, "db3:",	hdb_db3_create},
 #endif
 #if HAVE_DB1
-    { HDB_INTERFACE_VERSION, NULL, NULL, "mit-db:",	hdb_mitdb_create},
+    { HDB_INTERFACE_VERSION, 1, 1, NULL, NULL, "mit-db:",	hdb_mitdb_create},
 #endif
 #if HAVE_LMDB
-    { HDB_INTERFACE_VERSION, NULL, NULL, "mdb:",	hdb_mdb_create},
-    { HDB_INTERFACE_VERSION, NULL, NULL, "lmdb:",	hdb_mdb_create},
+    { HDB_INTERFACE_VERSION, 1, 1, NULL, NULL, "mdb:",	hdb_mdb_create},
+    { HDB_INTERFACE_VERSION, 1, 1, NULL, NULL, "lmdb:",	hdb_mdb_create},
 #endif
 #if HAVE_NDBM
-    { HDB_INTERFACE_VERSION, NULL, NULL, "ndbm:",	hdb_ndbm_create},
-#endif
-    { HDB_INTERFACE_VERSION, NULL, NULL, "keytab:",	hdb_keytab_create},
-#if defined(OPENLDAP) && !defined(OPENLDAP_MODULE)
-    { HDB_INTERFACE_VERSION, NULL, NULL, "ldap:",	hdb_ldap_create},
-    { HDB_INTERFACE_VERSION, NULL, NULL, "ldapi:",	hdb_ldapi_create},
-#elif defined(OPENLDAP)
-    { HDB_INTERFACE_VERSION, NULL, NULL, "ldap:",	NULL},
-    { HDB_INTERFACE_VERSION, NULL, NULL, "ldapi:",	NULL},
+    { HDB_INTERFACE_VERSION, 1, 0, NULL, NULL, "ndbm:",	hdb_ndbm_create},
 #endif
 #ifdef HAVE_SQLITE3
-    { HDB_INTERFACE_VERSION, NULL, NULL, "sqlite:", hdb_sqlite_create},
+    { HDB_INTERFACE_VERSION, 1, 1, NULL, NULL, "sqlite:", hdb_sqlite_create},
 #endif
-    { 0, NULL, NULL, NULL, NULL}
+    /* The keytab interface can't use its hdb_open() method to "taste" a DB */
+    { HDB_INTERFACE_VERSION, 1, 0, NULL, NULL, "keytab:",	hdb_keytab_create},
+    /* The rest are not file-based */
+#if defined(OPENLDAP) && !defined(OPENLDAP_MODULE)
+    { HDB_INTERFACE_VERSION, 0, 0, NULL, NULL, "ldap:",	hdb_ldap_create},
+    { HDB_INTERFACE_VERSION, 0, 0, NULL, NULL, "ldapi:",	hdb_ldapi_create},
+#elif defined(OPENLDAP)
+    { HDB_INTERFACE_VERSION, 0, 0, NULL, NULL, "ldap:",	NULL},
+    { HDB_INTERFACE_VERSION, 0, 0, NULL, NULL, "ldapi:", NULL},
+#endif
+    { 0, 0, 0, NULL, NULL, NULL, NULL}
 };
-
-/*
- * It'd be nice if we could try opening an HDB with each supported
- * backend until one works or all fail.  It may not be possible for all
- * flavors, but where it's possible we should.
- */
-#if defined(HAVE_LMDB)
-static struct hdb_method default_dbmethod =
-    { HDB_INTERFACE_VERSION, NULL, NULL, "", hdb_mdb_create };
-#elif defined(HAVE_DB3)
-static struct hdb_method default_dbmethod =
-    { HDB_INTERFACE_VERSION, NULL, NULL, "", hdb_db3_create };
-#elif defined(HAVE_DB1)
-static struct hdb_method default_dbmethod =
-    { HDB_INTERFACE_VERSION, NULL, NULL, "", hdb_db1_create };
-#elif defined(HAVE_NDBM)
-static struct hdb_method default_dbmethod =
-    { HDB_INTERFACE_VERSION, NULL, NULL, "", hdb_ndbm_create };
-#endif
 
 /**
  * Returns the Keys of `e' for `kvno', or NULL if not found.  The Keys will
@@ -510,38 +494,68 @@ hdb_init_db(krb5_context context, HDB *db)
 }
 
 /*
+ * `default_dbmethod' is the last resort default.
+ *
+ * In hdb_create() we may try all the `methods[]' until one succeeds or all
+ * fail.
+ */
+#if defined(HAVE_LMDB)
+static struct hdb_method default_dbmethod =
+    { HDB_INTERFACE_VERSION, 1, 1, NULL, NULL, "", hdb_mdb_create };
+#elif defined(HAVE_DB3)
+static struct hdb_method default_dbmethod =
+    { HDB_INTERFACE_VERSION, 1, 1, NULL, NULL, "", hdb_db3_create };
+#elif defined(HAVE_DB1)
+static struct hdb_method default_dbmethod =
+    { HDB_INTERFACE_VERSION, 1, 1, NULL, NULL, "", hdb_db1_create };
+#elif defined(HAVE_NDBM)
+static struct hdb_method default_dbmethod =
+    { HDB_INTERFACE_VERSION, 0, 1, NULL, NULL, "", hdb_ndbm_create };
+#else
+static struct hdb_method default_dbmethod =
+    { 0, 0, 0, NULL, NULL, NULL, NULL};
+#endif
+
+static int
+is_pathish(const char *s)
+{
+    if (s[0] == '/' ||
+        strncmp(s, "./", sizeof("./") - 1) == 0 ||
+        strncmp(s, "../", sizeof("../") - 1) == 0)
+        return 1;
+#ifdef WIN32
+    if (s[0] == '\\' || (isalpha(s[0]) && s[0] == ':') ||
+        strncmp(s, ".\\", sizeof(".\\") - 1) == 0 ||
+        strncmp(s, "\\\\", sizeof("\\\\") - 1) == 0)
+        return 1;
+#endif
+    return 0;
+}
+
+static const struct hdb_method *
+has_method_prefix(const char *filename)
+{
+    const struct hdb_method *h;
+
+    for (h = methods; h->prefix != NULL; ++h)
+	if (strncmp(filename, h->prefix, strlen(h->prefix)) == 0)
+	    return h;
+    return NULL;
+}
+
+/*
  * find the relevant method for `filename', returning a pointer to the
  * rest in `rest'.
  * return NULL if there's no such method.
  */
 
 static const struct hdb_method *
-find_method (const char *filename, const char **rest)
+find_method(const char *filename, const char **rest)
 {
-    const struct hdb_method *h;
+    const struct hdb_method *h = has_method_prefix(filename);
 
-    for (h = methods; h->prefix != NULL; ++h) {
-	if (strncmp (filename, h->prefix, strlen(h->prefix)) == 0) {
-	    *rest = filename + strlen(h->prefix);
-	    return h;
-	}
-    }
-#if defined(HAVE_DB1) || defined(HAVE_DB3) || defined(HAVE_LMDB) || defined(HAVE_NDBM)
-    if (strncmp(filename, "/", sizeof("/") - 1) == 0
-	|| strncmp(filename, "./", sizeof("./") - 1) == 0
-	|| strncmp(filename, "../", sizeof("../") - 1) == 0
-#ifdef WIN32
-        || strncmp(filename, "\\\\", sizeof("\\\\") - 1)
-        || (isalpha(filename[0]) && filename[1] == ':')
-#endif
-        )
-    {
-	*rest = filename;
-	return &default_dbmethod;
-    }
-#endif
-
-    return NULL;
+    *rest = h ? filename + strlen(h->prefix) : filename;
+    return h;
 }
 
 struct cb_s {
@@ -662,12 +676,62 @@ _hdb_keytab2hdb_entry(krb5_context context,
 				       &entry->entry.keys.val[0].key);
 }
 
+static krb5_error_code
+load_config(krb5_context context, HDB *db)
+{
+    db->enable_virtual_hostbased_princs =
+        krb5_config_get_bool_default(context, NULL, FALSE, "hdb",
+                                     "enable_virtual_hostbased_princs",
+                                     NULL);
+    db->virtual_hostbased_princ_ndots =
+        krb5_config_get_int_default(context, NULL, 1, "hdb",
+                                    "virtual_hostbased_princ_mindots",
+                                    NULL);
+    db->virtual_hostbased_princ_maxdots =
+        krb5_config_get_int_default(context, NULL, 0, "hdb",
+                                    "virtual_hostbased_princ_maxdots",
+                                    NULL);
+    db->new_service_key_delay =
+        krb5_config_get_time_default(context, NULL, 0, "hdb",
+                                     "new_service_key_delay", NULL);
+    /*
+     * XXX Needs freeing in the HDB backends because we don't have a
+     * first-class hdb_close() :(
+     */
+    db->virtual_hostbased_princ_svcs =
+      krb5_config_get_strings(context, NULL, "hdb",
+                              "virtual_hostbased_princ_svcs", NULL);
+    /* Check for ENOMEM */
+    if (db->virtual_hostbased_princ_svcs == NULL
+        && krb5_config_get_string(context, NULL, "hdb",
+                                  "virtual_hostbased_princ_svcs", NULL)) {
+        return krb5_enomem(context);
+    }
+    return 0;
+}
+
 /**
  * Create a handle for a Kerberos database
  *
  * Create a handle for a Kerberos database backend specified by a
- * filename.  Doesn't create a file if its doesn't exists, you have to
- * use O_CREAT to tell the backend to create the file.
+ * filename.  Doesn't actually create or even open an HDB file(s);
+ * you have to call the hdb_open() open method of the resulting HDB
+ * to open the database, and you have to use O_CREAT to create it.
+ *
+ * If `filename' does not have a backend type prefix, all file-based
+ * backends will be tried until one succeeds or all fail, and if the
+ * HDB exists for some backend, that will be used.  A build-time
+ * default backend type will be used if the `filename' does not exist.
+ *
+ * Note that the actual filename may have a suffix added, such as
+ * ".db".  Also, for backends such as "ldap:" and "ldapi:" the
+ * `filename' is more like a URI.
+ *
+ * @param [in] context Context
+ * @param [out] db HDB handle output
+ * @param [in] filename The name of the HDB
+ *
+ * @return Zero on success else a krb5 error code.
  */
 
 krb5_error_code
@@ -679,12 +743,17 @@ hdb_create(krb5_context context, HDB **db, const char *filename)
     *db = NULL;
     if (filename == NULL)
 	filename = HDB_DEFAULT_DB;
-    cb_ctx.h = find_method (filename, &cb_ctx.residual);
+    cb_ctx.h = find_method(filename, &cb_ctx.residual);
     cb_ctx.filename = filename;
 
     if (cb_ctx.h == NULL || cb_ctx.h->create == NULL) {
 	struct heim_plugin_data hdb_plugin_data;
 
+        /*
+         * `filename' does not start with a known HDB backend prefix.
+         *
+         * Try plugins.
+         */
 	hdb_plugin_data.module = "krb5";
 	hdb_plugin_data.min_version = HDB_INTERFACE_VERSION;
 	hdb_plugin_data.deps = hdb_plugin_deps;
@@ -693,46 +762,61 @@ hdb_create(krb5_context context, HDB **db, const char *filename)
         if ((hdb_plugin_data.name = make_sym(filename)) == NULL)
             return krb5_enomem(context);
 
-        (void)_krb5_plugin_run_f(context, &hdb_plugin_data,
-                                 0, &cb_ctx, callback);
+        (void)_krb5_plugin_run_f(context, &hdb_plugin_data, 0 /* flags */,
+                                 &cb_ctx, callback);
 
         free(rk_UNCONST(hdb_plugin_data.name));
     }
-    /* XXX krb5_errx()?! */
-    if (cb_ctx.h == NULL)
-	krb5_errx(context, 1, "No database support for %s", cb_ctx.filename);
-    ret = (*cb_ctx.h->create)(context, db, cb_ctx.residual);
-    if (ret == 0 && *db) {
-        (*db)->enable_virtual_hostbased_princs =
-            krb5_config_get_bool_default(context, NULL, FALSE, "hdb",
-                                         "enable_virtual_hostbased_princs",
-                                         NULL);
-        (*db)->virtual_hostbased_princ_ndots =
-            krb5_config_get_int_default(context, NULL, 1, "hdb",
-                                         "virtual_hostbased_princ_mindots",
-                                         NULL);
-        (*db)->virtual_hostbased_princ_maxdots =
-            krb5_config_get_int_default(context, NULL, 0, "hdb",
-                                         "virtual_hostbased_princ_maxdots",
-                                         NULL);
-        (*db)->new_service_key_delay =
-            krb5_config_get_time_default(context, NULL, 0, "hdb",
-                                         "new_service_key_delay", NULL);
+
+    if (cb_ctx.h == NULL || cb_ctx.h->create == NULL) {
+        int pathish = is_pathish(filename);
         /*
-         * XXX Needs freeing in the HDB backends because we don't have a
-         * first-class hdb_close() :(
+         * `filename' does not start with a known HDB backend prefix and it
+         * wasn't handled by any plugin.
+         *
+         * If it's "filename-ish", try all builtin HDB backends that are
+         * local-file-ish, but use hdb_open() to see if the HDB exists and stop
+         * when a backend is found for which the HDB exists.
          */
-        (*db)->virtual_hostbased_princ_svcs =
-            krb5_config_get_strings(context, NULL, "hdb",
-                                    "virtual_hostbased_princ_svcs", NULL);
-        /* Check for ENOMEM */
-        if ((*db)->virtual_hostbased_princ_svcs == NULL
-            && krb5_config_get_string(context, NULL, "hdb",
-                                      "virtual_hostbased_princ_svcs", NULL)) {
-            (*db)->hdb_destroy(context, *db);
-            *db = NULL;
-            ret = krb5_enomem(context);
+        if (!pathish) {
+            krb5_set_error_message(context, ret = ENOTSUP,
+                                   "No database support for %s",
+                                   cb_ctx.filename);
+            return ret;
         }
+        for (cb_ctx.h = methods; cb_ctx.h->prefix != NULL; cb_ctx.h++) {
+            if (cb_ctx.h->is_file_based && !pathish)
+                continue;
+            if (!cb_ctx.h->can_taste)
+                continue;
+            /* Taste the file */
+            ret = (*cb_ctx.h->create)(context, db, filename);
+            if (ret == 0)
+                ret = (*db)->hdb_open(context, *db, O_RDONLY, 0);
+            if (ret == 0) {
+                (void) (*db)->hdb_close(context, *db);
+                break;
+            }
+            if (*db)
+                (*db)->hdb_destroy(context, *db);
+            *db = NULL;
+        }
+    }
+    if (cb_ctx.h == NULL || cb_ctx.h->prefix == NULL)
+        cb_ctx.h = &default_dbmethod;
+    if (cb_ctx.h == NULL || cb_ctx.h->prefix == NULL) {
+        krb5_set_error_message(context, ENOTSUP,
+                               "Could not determine default DB backend for %s",
+                               filename);
+        return ENOTSUP;
+    }
+    if (!*db)
+        ret = (*cb_ctx.h->create)(context, db, cb_ctx.residual);
+    if (ret == 0 && *db)
+        ret = load_config(context, *db);
+    if (ret && *db) {
+        (*db)->hdb_destroy(context, *db);
+        *db = NULL;
     }
     return ret;
 }

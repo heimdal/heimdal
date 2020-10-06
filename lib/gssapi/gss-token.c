@@ -511,8 +511,10 @@ main(int argc, char **argv)
 	    { NULL, 'D', arg_flag, &Dflag, NULL, NULL },
 	    { NULL, 'M', arg_flag, &Mflag, NULL, NULL },
 	    { NULL, 'N', arg_flag, &Nflag, NULL, NULL },
-	    { NULL, 'r', arg_flag, &rflag, NULL, NULL },
+	    { NULL, 'c', arg_integer, &count, NULL, NULL },
 	    { NULL, 'l', arg_flag, &lflag, NULL, NULL },
+	    { NULL, 'n', arg_flag, &nflag, NULL, NULL },
+	    { NULL, 'r', arg_flag, &rflag, NULL, NULL },
 	};
 
 	setprogname(argv[0]);

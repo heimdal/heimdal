@@ -78,8 +78,8 @@ libhdb_la_LDFLAGS += $(LDFLAGS_VERSION_SCRIPT)$(srcdir)/version-script.map
 endif
 
 # test_hdbkeys and test_mkey are not tests -- they are manual test utils
-noinst_PROGRAMS = test_dbinfo test_hdbkeys test_mkey test_namespace
-TESTS = test_dbinfo test_namespace
+noinst_PROGRAMS = test_dbinfo test_hdbkeys test_mkey test_namespace test_concurrency
+TESTS = test_dbinfo test_namespace test_concurrency
 
 dist_libhdb_la_SOURCES =			\
 	common.c				\
@@ -126,6 +126,7 @@ ALL_OBJECTS += $(test_dbinfo_OBJECTS)
 ALL_OBJECTS += $(test_hdbkeys_OBJECTS)
 ALL_OBJECTS += $(test_mkey_OBJECTS)
 ALL_OBJECTS += $(test_namespace_OBJECTS)
+ALL_OBJECTS += $(test_concurrency_OBJECTS)
 
 $(ALL_OBJECTS): $(HDB_PROTOS) hdb_asn1.h hdb_asn1-priv.h hdb_err.h
 

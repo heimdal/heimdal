@@ -37,6 +37,7 @@
 /*
  * First, include stddef.h to get size_t defined.
  */
+#include <stdarg.h>
 #include <stddef.h>
 
 #include <krb5-types.h>

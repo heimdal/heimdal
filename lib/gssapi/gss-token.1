@@ -20,7 +20,9 @@
 .Sh DESCRIPTION
 .Nm
 generates and consumes base64 encoded GSS tokens.
-It is mostly useful for testing.
+By default, it runs as an initiator and with the
+.Fl r
+flag it becomes an acceptor.
 .Pp
 .Nm
 supports the following options:
@@ -54,22 +56,22 @@ to generated tokens and expect it on consumed tokens.
 repeat the operation
 .Ar count
 times.
+This flag only changes the behaviour when operating in initiator mode.
 This is good for very basic benchmarking.
 .It Fl l
-loop infinitely in read mode.
-This is to support a multiple round trip GSS mechanism.
+loop indefinitely in acceptor mode.
 .It Fl n
-do not output the generated token.
+do not output the generated tokens.
 .It Fl r
-read a token rather than generate a token.
+run in acceptor mode.
 .El
 .Pp
 .Nm
 takes one argument, a
 .Ar host@service
 specifier.
-The argument is required when generating a token but is optional if
-consuming (reading) a token.
+The argument is required when running as an initiator but is optional as
+an acceptor.
 .Sh SEE ALSO
 .Xr gssapi 3 ,
 .Xr kerberos 8 .

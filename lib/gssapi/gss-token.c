@@ -89,6 +89,7 @@
  * global variables
  */
 
+int	Sflag = 0;
 int	nflag = 0;
 
 static char *
@@ -207,18 +208,35 @@ write_token(gss_buffer_t out, int negotiate)
 	char	*outstr = NULL;
 	char	*p = out->value;
 	size_t	 len = out->length;
+	size_t	 inc;
 	int	 ret;
+	int	 first = 1;
 
 	if (nflag)
 		return 0;
 
-	ret = rk_base64_encode(p, len, &outstr);
-	if (ret < 0) {
-		fprintf(stderr, "Out of memory.\n");
-		return 1;
-	}
-	printf("%s%s\n", negotiate?"Negotiate ":"", outstr);
-	free(outstr);
+	inc = len;
+	if (Sflag)
+		inc = Sflag;
+
+	do {
+		if (first)
+			first = 0;
+		else
+			printf("\n");
+		if (len < inc)
+			inc = len;
+		ret = rk_base64_encode(p, inc, &outstr);
+		if (ret < 0) {
+			fprintf(stderr, "Out of memory.\n");
+			return 1;
+		}
+		printf("%s%s\n", negotiate?"Negotiate ":"", outstr);
+		free(outstr);
+		p   += inc;
+		len -= inc;
+	} while (len > 0);
+
 	return 0;
 }
 
@@ -528,6 +546,7 @@ main(int argc, char **argv)
 	    { NULL, 'D', arg_flag, &Dflag, NULL, NULL },
 	    { NULL, 'M', arg_flag, &Mflag, NULL, NULL },
 	    { NULL, 'N', arg_flag, &Nflag, NULL, NULL },
+	    { NULL, 'S', arg_integer, &Sflag, NULL, NULL },
 	    { NULL, 'c', arg_integer, &count, NULL, NULL },
 	    { NULL, 'l', arg_flag, &lflag, NULL, NULL },
 	    { NULL, 'n', arg_flag, &nflag, NULL, NULL },

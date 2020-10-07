@@ -78,6 +78,23 @@ takes one argument, a
 specifier.
 The argument is required when running as an initiator but is optional as
 an acceptor.
+.Pp
+.Nm
+will try to read a token whenever the GSS mechanism expects one
+and will output a token whenever the GSS mechanism provides one.
+Tokens are base64 encoded and terminated by either two successive
+newlines or one newline and EOF.
+The base64 encoding may be broken up by single newlines which will
+be ignored when read.  No extra whitespace will be ignored.
+.Sh EXAMPLES
+To test a simple GSS mechanism which doesn't require a round trip,
+a single
+.Pa /bin/sh
+pipeline will suffice:
+.Bd -literal -offset indent
+$ export KRB5_KTNAME=/path/to/keytab
+$ gss-token HTTP@$(hostname) | gss-token -r
+.Ed
 .Sh SEE ALSO
 .Xr gssapi 3 ,
 .Xr kerberos 8 .

@@ -15,6 +15,7 @@
 .Fl r
 .Op Fl MNln
 .Op Fl C Ar ccache
+.Op Fl S Ar maxsize
 .Op Fl c count
 .Op Ar service@host
 .Sh DESCRIPTION
@@ -52,6 +53,11 @@ This can be used to load test the KDC.
 prepend
 .Dq Negotiate\ 
 to generated tokens and expect it on consumed tokens.
+.It Fl S Ar maxsize
+split each token that is generated into components of maximum
+size
+.Ar maxsize .
+Each token is base64 encoded and output separately.
 .It Fl c Ar count
 repeat the operation
 .Ar count

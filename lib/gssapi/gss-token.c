@@ -203,17 +203,25 @@ read_buffer(FILE *fp)
 }
 
 static int
-write_token(gss_buffer_t out, int negotiate)
+write_and_free_token(gss_buffer_t out, int negotiate)
 {
-	char	*outstr = NULL;
-	char	*p = out->value;
-	size_t	 len = out->length;
-	size_t	 inc;
-	int	 ret;
-	int	 first = 1;
+	OM_uint32	 min;
+	char		*outstr = NULL;
+	char		*p = out->value;
+	size_t		 len = out->length;
+	size_t		 inc;
+	int		 ret = 0;
+	int		 first = 1;
 
 	if (nflag)
-		return 0;
+		goto bail;
+
+	/*
+	 * According to RFC 2744 page 25, we simply don't output
+	 * zero length output tokens.
+	 */
+	if (len == 0)
+		goto bail;
 
 	inc = len;
 	if (Sflag)
@@ -229,7 +237,8 @@ write_token(gss_buffer_t out, int negotiate)
 		ret = rk_base64_encode(p, inc, &outstr);
 		if (ret < 0) {
 			fprintf(stderr, "Out of memory.\n");
-			return 1;
+			ret = 1;
+			goto bail;
 		}
 		printf("%s%s\n", negotiate?"Negotiate ":"", outstr);
 		free(outstr);
@@ -237,6 +246,8 @@ write_token(gss_buffer_t out, int negotiate)
 		len -= inc;
 	} while (len > 0);
 
+bail:
+	gss_release_buffer(&min, out);
 	return 0;
 }
 
@@ -247,6 +258,9 @@ read_token(gss_buffer_t in, int negotiate)
 	char	*tmp;
 	size_t	 len;
 	int	 ret = 0;
+
+	/* We must flush before we block wanting input */
+	fflush(stdout);
 
 	inbuf = read_buffer(stdin);
 	if (!inbuf)
@@ -301,28 +315,42 @@ initiate_one(gss_name_t service, int delegate, int negotiate)
 	OM_uint32	 maj;
 	OM_uint32	 min;
 	OM_uint32	 flags = 0;
+	int		 first = 1;
 	int		 ret = 0;
-
-	in.length  = 0;
-	in.value   = 0;
-	out.length = 0;
-	out.value  = 0;
 
 	if (delegate)
 		flags |= GSS_C_DELEG_FLAG;
 
-        maj = gss_init_sec_context(&min, GSS_C_NO_CREDENTIAL, &ctx, service,
-	    GSS_C_NO_OID, flags, 0, GSS_C_NO_CHANNEL_BINDINGS, &in, NULL, &out,
-	    NULL, NULL);
+	do {
+		out.length = 0;
+		out.value  = 0;
 
-	GBAIL("gss_init_sec_context", maj, min);
+		if (first) {
+			in.length  = 0;
+			in.value   = 0;
+			first      = 0;
+		} else {
+			printf("\n");
+			ret = read_token(&in, negotiate);
+			if (ret)
+				return ret;
+			if (feof(stdin))
+				return -1;
+		}
 
-	write_token(&out, negotiate);
+		maj = gss_init_sec_context(&min, GSS_C_NO_CREDENTIAL, &ctx,
+		    service, GSS_C_NO_OID, flags, 0,
+		    GSS_C_NO_CHANNEL_BINDINGS, &in, NULL, &out,
+		    NULL, NULL);
+
+		ret = write_and_free_token(&out, negotiate);
+		if (ret)
+			return ret;
+
+		GBAIL("gss_init_sec_context", maj, min);
+	} while (maj & GSS_S_CONTINUE_NEEDED);
 
 bail:
-	if (out.value)
-		gss_release_buffer(&min, &out);
-
 	if (ctx != GSS_C_NO_CONTEXT) {
 		/*
 		 * XXXrcd: here we ignore the fact that we might have an
@@ -425,18 +453,25 @@ accept_one(gss_name_t service, const char *ccname, int negotiate)
 		GBAIL("gss_acquire_cred", maj, min);
 	}
 
-	ret = read_token(&in, negotiate);
-	if (ret)
-		return ret;
+	do {
+		if (feof(stdin))
+			return -1;
+		ret = read_token(&in, negotiate);
+		if (ret)
+			return ret;
 
-	out.length = 0;
-	out.value  = 0;
- 
-        maj = gss_accept_sec_context(&min, &ctx, cred, &in,
-	    GSS_C_NO_CHANNEL_BINDINGS, &client, &mech_oid, &out,
-	    NULL, NULL, &deleg_creds);
+		out.length = 0;
+		out.value  = 0;
 
-	GBAIL("gss_accept_sec_context", maj, min);
+		maj = gss_accept_sec_context(&min, &ctx, cred, &in,
+		    GSS_C_NO_CHANNEL_BINDINGS, &client, &mech_oid, &out,
+		    NULL, NULL, &deleg_creds);
+
+		ret = write_and_free_token(&out, negotiate);
+		if (ret)
+			return ret;
+		GBAIL("gss_accept_sec_context", maj, min);
+	} while (maj & GSS_S_CONTINUE_NEEDED);
 
 	/*
 	 * XXXrcd: not bothering to clean up because we're about to exit.

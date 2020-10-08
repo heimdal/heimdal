@@ -17,6 +17,7 @@
 .Op Fl C Ar ccache
 .Op Fl S Ar maxsize
 .Op Fl c count
+.Op Fl m mech
 .Op Ar service@host
 .Sh DESCRIPTION
 .Nm
@@ -66,6 +67,13 @@ This flag only changes the behaviour when operating in initiator mode.
 This is good for very basic benchmarking.
 .It Fl l
 loop indefinitely in acceptor mode.
+.It Fl m Ar mech
+specifies the GSS mechanism that will be used in initiator mode.
+If a mechanism name of
+.Do ? Dc
+is specified, a list of supported mechanisms will be output and
+.Nm
+will exit.
 .It Fl n
 do not output the generated tokens.
 .It Fl r

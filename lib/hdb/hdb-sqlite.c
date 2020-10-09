@@ -1042,7 +1042,7 @@ hdb_sqlite_create(krb5_context context, HDB **db, const char *filename)
     if (ret) {
         free((*db)->hdb_db);
         free(*db);
-
+        *db = NULL;
         return ret;
     }
 

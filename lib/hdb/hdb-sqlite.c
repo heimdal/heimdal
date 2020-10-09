@@ -84,7 +84,6 @@ typedef struct hdb_sqlite_db {
                  "  WHERE entry = OLD.id;" \
                  " END"
 #define HDBSQLITE_CONNECT \
-                 " PRAGMA read_uncommitted = false;" \
                  " PRAGMA journal_mode = WAL"
 #define HDBSQLITE_GET_VERSION \
                  " SELECT number FROM Version"
@@ -361,9 +360,6 @@ hdb_sqlite_open_database(krb5_context context, HDB *db, int flags)
 	    ret = krb5_enomem(context);
         return ret;
     }
-
-    (void) hdb_sqlite_step(context, hsdb->db, hsdb->connect);
-    sqlite3_reset(hsdb->connect);
     return 0;
 }
 
@@ -452,6 +448,10 @@ hdb_sqlite_make_database(krb5_context context, HDB *db, const char *filename)
 
     ret = prep_stmts(context, hsdb);
     if (ret) goto out;
+
+    sqlite3_reset(hsdb->connect);
+    (void) hdb_sqlite_step(context, hsdb->db, hsdb->connect);
+    sqlite3_reset(hsdb->connect);
 
     ret = hdb_sqlite_step(context, hsdb->db, hsdb->get_version);
     if(ret == SQLITE_ROW) {

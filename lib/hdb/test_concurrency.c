@@ -52,10 +52,6 @@
 #include <pthread.h>
 #include <getarg.h>
 
-static int use_threads;
-static int help_flag;
-static int version_flag;
-
 struct tsync {
     pthread_mutex_t lock;
     pthread_cond_t rcv;
@@ -81,6 +77,15 @@ threaded_reader(void *d)
 
     if ((krb5_init_context(&context)))
 	errx(1, "krb5_init_context failed");
+
+    printf("Reader thread waiting for writer to create the HDB\n");
+    (void) pthread_mutex_lock(&s->lock);
+    s->writer_go = 1;
+    (void) pthread_cond_signal(&s->wcv);
+    while (!s->reader_go)
+        (void) pthread_cond_wait(&s->rcv, &s->lock);
+    s->reader_go = 0;
+    (void) pthread_mutex_unlock(&s->lock);
 
     /* Open a new HDB handle to read */
     if ((ret = hdb_create(context, &dbr, s->hdb_name))) {
@@ -108,6 +113,8 @@ threaded_reader(void *d)
     printf("Reader thread waiting for writer\n");
     while (!s->reader_go)
         (void) pthread_cond_wait(&s->rcv, &s->lock);
+    s->reader_go = 0;
+    (void) pthread_mutex_unlock(&s->lock);
 
     /* Iterate the rest */
     printf("Reader thread iterating another entry\n");
@@ -161,6 +168,11 @@ forked_reader(struct tsync *s)
     if ((krb5_init_context(&context)))
 	errx(1, "krb5_init_context failed");
 
+    printf("Reader process waiting for writer\n");
+    while ((bytes = read(s->reader_go_pipe[0], b, sizeof(b))) == -1 &&
+           errno == EINTR)
+        ;
+
     /* Open a new HDB handle to read */
     if ((ret = hdb_create(context, &dbr, s->hdb_name))) {
         //(void) unlink(s->fname);
@@ -175,6 +187,7 @@ forked_reader(struct tsync *s)
         //(void) unlink(s->fname);
         krb5_err(context, 1, ret, "Could not iterate HDB %s", s->hdb_name);
     }
+    printf("Reader process iterated one entry\n");
     free_hdb_entry(&entr.entry);
 
     /* Tell the writer to go ahead and write */
@@ -195,7 +208,6 @@ forked_reader(struct tsync *s)
         errx(1, "Could not read from reader-go pipe (EOF)");
 
     /* Iterate the rest */
-    printf("Reader process iterating another entry\n");
     if ((ret = dbr->hdb_nextkey(context, dbr, 0, &entr))) {
         //(void) unlink(s->fname);
         krb5_err(context, 1, ret,
@@ -257,7 +269,50 @@ make_entry(krb5_context context, hdb_entry_ex *entry, const char *name)
 }
 
 static void
-test_hdb_concurrency(char *name, const char *ext)
+readers_turn(struct tsync *s, pid_t child, int threaded)
+{
+    if (threaded) {
+        (void) pthread_mutex_lock(&s->lock);
+        s->reader_go = 1;
+        (void) pthread_cond_signal(&s->rcv);
+
+        while (!s->writer_go)
+            (void) pthread_cond_wait(&s->wcv, &s->lock);
+        s->writer_go = 0;
+        (void) pthread_mutex_unlock(&s->lock);
+    } else {
+        ssize_t bytes;
+        char b[1];
+
+        while ((bytes = write(s->reader_go_pipe[1], "", sizeof(""))) == -1 &&
+               errno == EINTR)
+            ;
+        if (bytes == -1) {
+            kill(child, SIGKILL);
+            err(1, "Could not write to reader-go pipe (error)");
+        }
+        if (bytes == 0) {
+            kill(child, SIGKILL);
+            err(1, "Could not write to reader-go pipe (EOF?)");
+        }
+
+        while ((bytes = read(s->writer_go_pipe[0], b, sizeof(b))) == -1 &&
+               errno == EINTR)
+            ;
+        if (bytes == -1) {
+            kill(child, SIGKILL);
+            err(1, "Could not read from writer-go pipe");
+        }
+        if (bytes == 0) {
+            kill(child, SIGKILL);
+            errx(1, "Child errored");
+        }
+        s->writer_go = 0;
+    }
+}
+
+static void
+test_hdb_concurrency(char *name, const char *ext, int threaded)
 {
     krb5_error_code ret;
     krb5_context context;
@@ -290,6 +345,32 @@ test_hdb_concurrency(char *name, const char *ext)
     ts.hdb_name = name;
     ts.fname = fname_ext;
 
+    if (threaded) {
+        printf("Starting reader thread\n");
+        (void) pthread_mutex_lock(&ts.lock);
+        if ((errno = pthread_create(&reader_thread, NULL, threaded_reader, &ts))) {
+            (void) unlink(fname_ext);
+            krb5_err(context, 1, errno, "Could not create a thread to read HDB");
+        }
+
+        /* Wait for reader */
+        while (!ts.writer_go)
+            (void) pthread_cond_wait(&ts.wcv, &ts.lock);
+        (void) pthread_mutex_unlock(&ts.lock);
+    } else {
+        printf("Starting reader process\n");
+        if (pipe(ts.writer_go_pipe) == -1)
+            err(1, "Could not create a pipe");
+        if (pipe(ts.reader_go_pipe) == -1)
+            err(1, "Could not create a pipe");
+        switch ((child = fork())) {
+        case -1: err(1, "Could not fork a child");
+        case  0: forked_reader(&ts); _exit(0);
+        default: break;
+        }
+        (void) close(ts.writer_go_pipe[1]);
+        ts.writer_go_pipe[1] = -1;
+    }
 
     printf("Writing two entries into HDB\n");
     if ((ret = hdb_create(context, &dbw, name)))
@@ -315,32 +396,8 @@ test_hdb_concurrency(char *name, const char *ext)
     }
     free_hdb_entry(&entw.entry);
 
-    if (use_threads) {
-        printf("Starting reader thread\n");
-        (void) pthread_mutex_lock(&ts.lock);
-        if ((errno = pthread_create(&reader_thread, NULL, threaded_reader, &ts))) {
-            (void) unlink(fname_ext);
-            krb5_err(context, 1, ret, "Could not create a thread to read HDB");
-        }
-
-        /* Wait for reader */
-        while (!ts.writer_go)
-            (void) pthread_cond_wait(&ts.wcv, &ts.lock);
-        (void) pthread_mutex_unlock(&ts.lock);
-    } else {
-        printf("Starting reader process\n");
-        if (pipe(ts.writer_go_pipe) == -1)
-            err(1, "Could not create a pipe");
-        if (pipe(ts.reader_go_pipe) == -1)
-            err(1, "Could not create a pipe");
-        switch ((child = fork())) {
-        case -1: err(1, "Could not fork a child");
-        case  0: forked_reader(&ts); _exit(0);
-        default: break;
-        }
-        (void) close(ts.writer_go_pipe[1]);
-        ts.writer_go_pipe[1] = -1;
-    }
+    /* Tell the reader to start reading */
+    readers_turn(&ts, child, threaded);
 
     /* Store one more entry */
     if ((ret = make_entry(context, &entw, "foobar")) ||
@@ -352,46 +409,12 @@ test_hdb_concurrency(char *name, const char *ext)
     }
     free_hdb_entry(&entw.entry);
 
-    if (use_threads) {
-        (void) pthread_mutex_lock(&ts.lock);
-        ts.reader_go = 1;
-        (void) pthread_cond_signal(&ts.rcv);
-
-        while (!ts.writer_go)
-            (void) pthread_cond_wait(&ts.wcv, &ts.lock);
-    } else {
-        ssize_t bytes;
-        char b[1];
-
-        while ((bytes = write(ts.reader_go_pipe[1], "", sizeof(""))) == -1 &&
-               errno == EINTR)
-            ;
-        if (bytes == -1) {
-            kill(child, SIGKILL);
-            err(1, "Could not write to reader-go pipe (error)");
-        }
-        if (bytes == 0) {
-            kill(child, SIGKILL);
-            err(1, "Could not write to reader-go pipe (EOF?)");
-        }
-
-        while ((bytes = read(ts.writer_go_pipe[0], b, sizeof(b))) == -1 &&
-               errno == EINTR)
-            ;
-        if (bytes == -1) {
-            kill(child, SIGKILL);
-            err(1, "Could not read from writer-go pipe");
-        }
-        if (bytes == 0) {
-            kill(child, SIGKILL);
-            errx(1, "Child errored");
-        }
-    }
-
+    /* Tell the reader to go again */
+    readers_turn(&ts, child, threaded);
 
     dbw->hdb_close(context, dbw);
     dbw->hdb_destroy(context, dbw);
-    if (use_threads) {
+    if (threaded) {
         (void) pthread_join(reader_thread, NULL);
     } else {
         (void) close(ts.writer_go_pipe[1]);
@@ -409,7 +432,13 @@ test_hdb_concurrency(char *name, const char *ext)
     krb5_free_context(context);
 }
 
+static int use_fork;
+static int use_threads;
+static int help_flag;
+static int version_flag;
+
 struct getargs args[] = {
+    { "use-fork",	'f',	arg_flag,   &use_fork,  NULL, NULL },
     { "use-threads",	't',	arg_flag,   &use_threads,  NULL, NULL },
     { "help",		'h',	arg_flag,   &help_flag,    NULL, NULL },
     { "version",	0,	arg_flag,   &version_flag, NULL, NULL }
@@ -439,14 +468,33 @@ main(int argc, char **argv)
 	return 0;
     }
 
-    printf("Testing SQLite3 HDB backend\n");
-    memcpy(stemplate, "sqlite:testhdb-XXXXXX", sizeof("sqlite:testhdb-XXXXXX"));
-    test_hdb_concurrency(stemplate, "");
+    if (!use_fork && !use_threads)
+        use_threads = use_fork = 1;
+
+#ifdef HAVE_FORK
+    if (use_fork) {
+        printf("Testing SQLite3 HDB backend (multi-process)\n");
+        memcpy(stemplate, "sqlite:testhdb-XXXXXX", sizeof("sqlite:testhdb-XXXXXX"));
+        test_hdb_concurrency(stemplate, "", 0);
 
 #ifdef HAVE_LMDB
-    printf("Testing LMDB HDB backend\n");
-    memcpy(ltemplate, "lmdb:testhdb-XXXXXX", sizeof("lmdb:testhdb-XXXXXX"));
-    test_hdb_concurrency(ltemplate, ".lmdb");
+        printf("Testing LMDB HDB backend (multi-process)\n");
+        memcpy(ltemplate, "lmdb:testhdb-XXXXXX", sizeof("lmdb:testhdb-XXXXXX"));
+        test_hdb_concurrency(ltemplate, ".lmdb", 0);
 #endif
+    }
+#endif
+
+    if (use_threads) {
+        printf("Testing SQLite3 HDB backend (multi-process)\n");
+        memcpy(stemplate, "sqlite:testhdb-XXXXXX", sizeof("sqlite:testhdb-XXXXXX"));
+        test_hdb_concurrency(stemplate, "", 1);
+
+#ifdef HAVE_LMDB
+        printf("Testing LMDB HDB backend (multi-process)\n");
+        memcpy(ltemplate, "lmdb:testhdb-XXXXXX", sizeof("lmdb:testhdb-XXXXXX"));
+        test_hdb_concurrency(ltemplate, ".lmdb", 1);
+#endif
+    }
     return 0;
 }

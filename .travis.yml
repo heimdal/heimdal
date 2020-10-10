@@ -61,6 +61,7 @@ after_script:
 after_failure:
     - find . -name test-suite.log -print0 | xargs -0 cat
     - if [ $TRAVIS_OS_NAME = linux ]; then echo "thread apply all bt" > x; find . -name core -print | while read core; do gdb -batch -x x `file "$core"|sed -e "s/^[^']*'//" -e "s/[ '].*$//"` "$core"; done; fi
+    - if [ $TRAVIS_OS_NAME = osx ]; then find . -name core -print | while read core; do echo bt | lldb --core "$core" `file "$core"|sed -e "s/^[^']*'//" -e "s/[ '].*$//"` "$core"; done; fi
 
 compiler:
     - clang

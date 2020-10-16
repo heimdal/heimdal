@@ -166,12 +166,33 @@ _krb5_debug(krb5_context context,
     va_end(ap);
 }
 
+void KRB5_LIB_FUNCTION
+krb5_debug(krb5_context context,
+	    int level,
+	    const char *fmt,
+	    ...)
+    __attribute__ ((__format__ (__printf__, 3, 4)))
+{
+    va_list ap;
+
+    va_start(ap, fmt);
+    if (context && context->hcontext)
+        heim_vdebug(context->hcontext, level, fmt, ap);
+    va_end(ap);
+}
+
 KRB5_LIB_FUNCTION krb5_boolean KRB5_LIB_CALL
 _krb5_have_debug(krb5_context context, int level)
 {
     if (context == NULL || context->hcontext == NULL)
 	return 0;
     return heim_have_debug(context->hcontext, level);
+}
+
+KRB5_LIB_FUNCTION krb5_boolean KRB5_LIB_CALL
+krb5_have_debug(krb5_context context, int level)
+{
+    return _krb5_have_debug(context, level);
 }
 
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL

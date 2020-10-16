@@ -202,6 +202,7 @@ HEIMDAL_KRB5_2.0 {
 		krb5_data_free;
 		krb5_data_realloc;
 		krb5_data_zero;
+		krb5_debug;
 		krb5_decode_Authenticator;
 		krb5_decode_ETYPE_INFO2;
 		krb5_decode_ETYPE_INFO;
@@ -387,6 +388,7 @@ HEIMDAL_KRB5_2.0 {
 		krb5_h_addr2addr;
 		krb5_h_addr2sockaddr;
 		krb5_h_errno_to_heim_errno;
+		krb5_have_debug;
 		krb5_have_error_string;
 		krb5_hmac;
 		krb5_init_context;

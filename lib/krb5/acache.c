@@ -560,7 +560,8 @@ acc_resolve_2(krb5_context context, krb5_ccache *id, const char *res, const char
     if (error == ccErrCCacheNotFound) {
         a->ccache = NULL;
         a->cache_name = NULL;
-        return 0;
+	free(s);
+	return 0;
     }
     if (error == ccNoError)
         error = get_cc_name(a);

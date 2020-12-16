@@ -43,6 +43,10 @@ gen_files_crmf		= $(OBJ)\asn1_crmf_asn1.x
 
 gen_files_rfc2459	= $(OBJ)\asn1_rfc2459_asn1.x
 
+gen_files_rfc4043	= $(OBJ)\asn1_rfc4043_asn1.x
+
+gen_files_rfc4108	= $(OBJ)\asn1_rfc4108_asn1.x
+
 gen_files_ocsp		= $(OBJ)\asn1_ocsp_asn1.x
 
 gen_files_pkinit	= $(OBJ)\asn1_pkinit_asn1.x
@@ -117,6 +121,8 @@ LIBASN1_OBJS=	\
 	$(OBJ)\extra.obj		\
 	$(OBJ)\timegm.obj		\
 	$(gen_files_rfc2459:.x=.obj)	\
+	$(gen_files_rfc4043:.x=.obj)	\
+	$(gen_files_rfc4108:.x=.obj)	\
 	$(gen_files_cms:.x=.obj)	\
 	$(gen_files_crmf:.x=.obj)	\
 	$(gen_files_krb5:.x=.obj)		\
@@ -174,6 +180,10 @@ $(gen_files_digest:.x=.c)   : $$(@R).x
 $(gen_files_kx509:.x=.c)    : $$(@R).x
 
 $(gen_files_rfc2459:.x=.c)  : $$(@R).x
+
+$(gen_files_rfc4043:.x=.c)  : $$(@R).x
+
+$(gen_files_rfc4108:.x=.c)  : $$(@R).x
 
 $(gen_files_cms:.x=.c)	    : $$(@R).x
 
@@ -255,6 +265,22 @@ $(gen_files_rfc2459) $(OBJ)\rfc2459_asn1.hx: $(BINDIR)\asn1_compile.exe rfc2459.
 	|| ($(RM) $(OBJ)\rfc2459_asn1.h ; exit /b 1)
 	cd $(SRCDIR)
 
+$(gen_files_rfc4043) $(OBJ)\rfc4043_asn1.hx: $(BINDIR)\asn1_compile.exe rfc4043.asn1
+	cd $(OBJ)
+	$(BINDIR)\asn1_compile.exe \
+		--one-code-file \
+		$(SRCDIR)\rfc4043.asn1 rfc4043_asn1 \
+	|| ($(RM) $(OBJ)\rfc4043_asn1.h ; exit /b 1)
+	cd $(SRCDIR)
+
+$(gen_files_rfc4108) $(OBJ)\rfc4108_asn1.hx: $(BINDIR)\asn1_compile.exe rfc4108.asn1
+	cd $(OBJ)
+	$(BINDIR)\asn1_compile.exe \
+		--one-code-file \
+		$(SRCDIR)\rfc4108.asn1 rfc4108_asn1 \
+	|| ($(RM) $(OBJ)\rfc4108_asn1.h ; exit /b 1)
+	cd $(SRCDIR)
+
 $(gen_files_cms) $(OBJ)\cms_asn1.hx: $(BINDIR)\asn1_compile.exe cms.asn1 cms.opt
 	cd $(OBJ)
 	$(BINDIR)\asn1_compile.exe \
@@ -304,12 +330,16 @@ GENINCFILES=			    \
 	$(INCDIR)\pkcs10_asn1.h	    \
 	$(INCDIR)\pkinit_asn1.h	    \
 	$(INCDIR)\rfc2459_asn1.h    \
+	$(INCDIR)\rfc4043_asn1.h    \
+	$(INCDIR)\rfc4108_asn1.h    \
 	$(OBJ)\krb5_asn1-priv.h	    \
 	$(OBJ)\ocsp_asn1-priv.h     \
 	$(OBJ)\pkinit_asn1-priv.h   \
 	$(OBJ)\cms_asn1-priv.h	    \
 	$(OBJ)\crmf_asn1-priv.h	    \
 	$(OBJ)\rfc2459_asn1-priv.h  \
+	$(OBJ)\rfc4043_asn1-priv.h  \
+	$(OBJ)\rfc4108_asn1-priv.h  \
 	$(OBJ)\pkcs8_asn1-priv.h    \
 	$(OBJ)\pkcs9_asn1-priv.h    \
 	$(OBJ)\pkcs10_asn1-priv.h   \

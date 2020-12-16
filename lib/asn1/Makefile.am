@@ -23,6 +23,8 @@ libasn1_la_LIBADD = \
 
 BUILT_SOURCES =				\
 	$(gen_files_rfc2459:.x=.c)	\
+	$(gen_files_rfc4043:.x=.c)	\
+	$(gen_files_rfc4108:.x=.c)	\
 	$(gen_files_cms:.x=.c)		\
 	$(gen_files_krb5:.x=.c)		\
 	$(gen_files_ocsp:.x=.c)	\
@@ -38,6 +40,8 @@ gen_files_krb5 = asn1_krb5_asn1.x
 gen_files_cms = asn1_cms_asn1.x
 gen_files_crmf = asn1_crmf_asn1.x
 gen_files_rfc2459 = asn1_rfc2459_asn1.x
+gen_files_rfc4043 = asn1_rfc4043_asn1.x
+gen_files_rfc4108 = asn1_rfc4108_asn1.x
 gen_files_ocsp = asn1_ocsp_asn1.x
 gen_files_pkinit = asn1_pkinit_asn1.x
 gen_files_pkcs10 = asn1_pkcs10_asn1.x
@@ -48,6 +52,8 @@ gen_files_test_template = test_template_asn1-template.x
 gen_files_test = asn1_test_asn1.x
 gen_files_digest = asn1_digest_asn1.x
 gen_files_kx509 = asn1_kx509_asn1.x
+gen_files_rfc4043 = asn1_rfc4043_asn1.x
+gen_files_rfc4108 = asn1_rfc4108_asn1.x
 
 oid_resolution.lo: $(BUILT_SOURCES)
 
@@ -139,6 +145,8 @@ check_ber_LDADD = $(check_gen_LDADD)
 CLEANFILES = \
 	$(BUILT_SOURCES) \
 	$(gen_files_rfc2459) \
+	$(gen_files_rfc4043) \
+	$(gen_files_rfc4108) \
 	$(gen_files_cms) \
 	$(gen_files_krb5) \
 	$(gen_files_ocsp) \
@@ -154,6 +162,8 @@ CLEANFILES = \
 	$(nodist_check_gen_SOURCES) \
 	asn1_err.c asn1_err.h \
 	rfc2459_asn1_files rfc2459_asn1*.h* \
+	rfc4043_asn1_files rfc4043_asn1*.h* \
+	rfc4108_asn1_files rfc4108_asn1*.h* \
 	cms_asn1_files cms_asn1*.h* \
 	crmf_asn1_files crmf_asn1*.h* \
 	krb5_asn1_files krb5_asn1*.h* \
@@ -179,6 +189,8 @@ nodist_include_HEADERS += pkinit_asn1.h
 nodist_include_HEADERS += cms_asn1.h
 nodist_include_HEADERS += crmf_asn1.h
 nodist_include_HEADERS += rfc2459_asn1.h
+nodist_include_HEADERS += rfc4043_asn1.h
+nodist_include_HEADERS += rfc4108_asn1.h
 nodist_include_HEADERS += ocsp_asn1.h
 nodist_include_HEADERS += pkcs8_asn1.h
 nodist_include_HEADERS += pkcs9_asn1.h
@@ -192,6 +204,8 @@ priv_headers += pkinit_asn1-priv.h
 priv_headers += cms_asn1-priv.h
 priv_headers += crmf_asn1-priv.h
 priv_headers += rfc2459_asn1-priv.h
+priv_headers += rfc4043_asn1-priv.h
+priv_headers += rfc4108_asn1-priv.h
 priv_headers += ocsp_asn1-priv.h
 priv_headers += pkcs8_asn1-priv.h
 priv_headers += pkcs9_asn1-priv.h
@@ -223,6 +237,8 @@ $(gen_files_pkcs12) pkcs12_asn1.hx pkcs12_asn1-priv.hx: pkcs12_asn1_files
 $(gen_files_digest) digest_asn1.hx digest_asn1-priv.hx: digest_asn1_files
 $(gen_files_kx509) kx509_asn1.hx kx509_asn1-priv.hx: kx509_asn1_files
 $(gen_files_rfc2459) rfc2459_asn1.hx rfc2459_asn1-priv.hx: rfc2459_asn1_files
+$(gen_files_rfc4043) rfc4043_asn1.hx rfc4043_asn1-priv.hx: rfc4043_asn1_files
+$(gen_files_rfc4108) rfc4108_asn1.hx rfc4108_asn1-priv.hx: rfc4108_asn1_files
 $(gen_files_cms) cms_asn1.hx cms_asn1-priv.hx: cms_asn1_files
 $(gen_files_crmf) crmf_asn1.hx crmf_asn1-priv.hx: crmf_asn1_files
 $(gen_files_test) test_asn1.hx test_asn1-priv.hx: test_asn1_files
@@ -230,6 +246,12 @@ $(gen_files_test_template) test_template_asn1.hx test_template_asn1-priv.hx: tes
 
 rfc2459_asn1_files: asn1_compile$(EXEEXT) $(srcdir)/rfc2459.asn1
 	$(ASN1_COMPILE) --one-code-file --option-file=$(srcdir)/rfc2459.opt $(srcdir)/rfc2459.asn1 rfc2459_asn1 || (rm -f rfc2459_asn1_files ; exit 1)
+
+rfc4043_asn1_files: asn1_compile$(EXEEXT) $(srcdir)/rfc4043.asn1
+	$(ASN1_COMPILE) --one-code-file $(srcdir)/rfc4043.asn1 rfc4043_asn1 || (rm -f rfc4043_asn1_files ; exit 1)
+
+rfc4108_asn1_files: asn1_compile$(EXEEXT) $(srcdir)/rfc4108.asn1
+	$(ASN1_COMPILE) --one-code-file $(srcdir)/rfc4108.asn1 rfc4108_asn1 || (rm -f rfc4108_asn1_files ; exit 1)
 
 cms_asn1_files: asn1_compile$(EXEEXT) $(srcdir)/cms.asn1 $(srcdir)/cms.opt
 	$(ASN1_COMPILE) --one-code-file --option-file=$(srcdir)/cms.opt $(srcdir)/cms.asn1 cms_asn1 || (rm -f cms_asn1_files ; exit 1)
@@ -293,6 +315,8 @@ EXTRA_DIST =		\
 	pkcs10.asn1	\
 	pkinit.asn1	\
 	rfc2459.asn1	\
+	rfc4043.asn1	\
+	rfc4108.asn1	\
 	setchgpw2.asn1	\
 	test.asn1	\
 	test.gen	\

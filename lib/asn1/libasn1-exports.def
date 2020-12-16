@@ -19,6 +19,14 @@ EXPORTS
 	asn1_KDCFastFlags_units
 	asn1_KDCOptions_units
 	asn1_KeyUsage_units
+	asn1_oid_id_aa_communityIdentifiers	DATA
+	asn1_oid_id_aa_decryptKeyID	DATA
+	asn1_oid_id_aa_firmwarePackageID	DATA
+	asn1_oid_id_aa_firmwarePackageInfo	DATA
+	asn1_oid_id_aa_implCompressAlgs	DATA
+	asn1_oid_id_aa_implCryptoAlgs	DATA
+	asn1_oid_id_aa_targetHardwareIDs	DATA
+	asn1_oid_id_aa_wrappedFirmwareKey	DATA
 	asn1_oid_id_aes_128_cbc	DATA
 	asn1_oid_id_aes_192_cbc	DATA
 	asn1_oid_id_aes_256_cbc	DATA
@@ -40,6 +48,9 @@ EXPORTS
 	asn1_oid_id_at_streetAddress	DATA
 	asn1_oid_id_at_surname	DATA
 	asn1_oid_id_at_title	DATA
+	asn1_oid_id_ct_firmwareLoadError	DATA
+	asn1_oid_id_ct_firmwareLoadReceipt	DATA
+	asn1_oid_id_ct_firmwarePackage	DATA
 	asn1_oid_id_dhpublicnumber	DATA
 	asn1_oid_id_domainComponent	DATA
 	asn1_oid_id_dsa	DATA
@@ -73,6 +84,9 @@ EXPORTS
 	asn1_oid_id_nist_aes_algs	DATA
 	asn1_oid_id_nistAlgorithm	DATA
 	asn1_oid_id_nist_sha_algs	DATA
+	asn1_oid_id_on	DATA
+	asn1_oid_id_on_hardwareModuleName	DATA
+	asn1_oid_id_on_permanentIdentifier	DATA
 	asn1_oid_id_pbeWithSHAAnd128BitRC2_CBC	DATA
 	asn1_oid_id_pbeWithSHAAnd128BitRC4	DATA
 	asn1_oid_id_pbeWithSHAAnd2_KeyTripleDES_CBC	DATA
@@ -274,12 +288,16 @@ EXPORTS
 	copy_CMSIdentifier
 	copy_CMSRC2CBCParameter
 	copy_CMSVersion
+	copy_CommunityIdentifier
+	copy_CommunityIdentifiers
 	copy_ContentEncryptionAlgorithmIdentifier
 	copy_ContentInfo
 	copy_ContentType
 	copy_CRLCertificateList
 	copy_CRLDistributionPoints
 	copy_CRLReason
+	copy_CurrentFWConfig
+	copy_DecryptKeyIdentifier
 	copy_DHNonce
 	copy_DHParameter
 	copy_DHPublicKey
@@ -334,14 +352,27 @@ EXPORTS
 	copy_ExternalPrincipalIdentifiers
 	copy_ExtKeyUsage
 	copy_FastOptions
+	copy_FirmwarePackageIdentifier
+	copy_FirmwarePackageInfo
+	copy_FirmwarePackageLoadError
+	copy_FirmwarePackageLoadErrorCode
+	copy_FirmwarePackageLoadReceipt
+	copy_FirmwarePkgData
+	copy_FWErrorVersion
+	copy_FWReceiptVersion
 	copy_GeneralName
 	copy_GeneralNames
 	copy_GeneralSubtree
 	copy_GeneralSubtrees
+	copy_HardwareModuleName
+	copy_HardwareModules
+	copy_HardwareSerialEntry
 	copy_heim_any
 	copy_heim_any_set
 	copy_HostAddress
 	copy_HostAddresses
+	copy_ImplementedCompressAlgorithms
+	copy_ImplementedCryptoAlgorithms
 	copy_IssuerAndSerialNumber
 	copy_KDCDHKeyInfo
 	copy_KDCDHKeyInfo_Win2k
@@ -442,6 +473,7 @@ EXPORTS
 	copy_PA_ServerReferralData
 	copy_PA_SERVER_REFERRAL_DATA
 	copy_PA_SvrReferralData
+	copy_PermanentIdentifier
 	copy_PKAuthenticator
 	copy_PKAuthenticator_Win2k
 	copy_PKCS12_Attribute
@@ -465,6 +497,9 @@ EXPORTS
 	copy_PkinitSP80056AOtherInfo
 	copy_PkinitSuppPubInfo
 	copy_PKIXXmppAddr
+	copy_PreferredOrLegacyPackageIdentifier
+	copy_PreferredOrLegacyStalePackageIdentifier
+	copy_PreferredPackageIdentifier
 	copy_Principal
 	copy_PrincipalName
 	copy_Principals
@@ -491,6 +526,7 @@ EXPORTS
 	copy_SubjectInfoAccessSyntax
 	copy_SubjectKeyIdentifier
 	copy_SubjectPublicKeyInfo
+	copy_TargetHardwareIdentifiers
 	copy_TBSCertificate
 	copy_TBSCRLCertList
 	copy_TD_DH_PARAMETERS
@@ -510,7 +546,9 @@ EXPORTS
 	copy_UnprotectedAttributes
 	copy_ValidationParms
 	copy_Validity
+	copy_VendorLoadErrorCode
 	copy_Version
+	copy_WrappedFirmwareKey
 	decode_AccessDescription
 	decode_AD_AND_OR
 	decode_AD_IF_RELEVANT
@@ -556,12 +594,16 @@ EXPORTS
 	decode_CMSIdentifier
 	decode_CMSRC2CBCParameter
 	decode_CMSVersion
+	decode_CommunityIdentifier
+	decode_CommunityIdentifiers
 	decode_ContentEncryptionAlgorithmIdentifier
 	decode_ContentInfo
 	decode_ContentType
 	decode_CRLCertificateList
 	decode_CRLDistributionPoints
 	decode_CRLReason
+	decode_CurrentFWConfig
+	decode_DecryptKeyIdentifier
 	decode_DHNonce
 	decode_DHParameter
 	decode_DHPublicKey
@@ -616,14 +658,27 @@ EXPORTS
 	decode_ExternalPrincipalIdentifiers
 	decode_ExtKeyUsage
 	decode_FastOptions
+	decode_FirmwarePackageIdentifier
+	decode_FirmwarePackageInfo
+	decode_FirmwarePackageLoadError
+	decode_FirmwarePackageLoadErrorCode
+	decode_FirmwarePackageLoadReceipt
+	decode_FirmwarePkgData
+	decode_FWErrorVersion
+	decode_FWReceiptVersion
 	decode_GeneralName
 	decode_GeneralNames
 	decode_GeneralSubtree
 	decode_GeneralSubtrees
+	decode_HardwareModuleName
+	decode_HardwareModules
+	decode_HardwareSerialEntry
 	decode_heim_any
 	decode_heim_any_set
 	decode_HostAddress
 	decode_HostAddresses
+	decode_ImplementedCompressAlgorithms
+	decode_ImplementedCryptoAlgorithms
 	decode_IssuerAndSerialNumber
 	decode_KDCDHKeyInfo
 	decode_KDCDHKeyInfo_Win2k
@@ -724,6 +779,7 @@ EXPORTS
 	decode_PA_ServerReferralData
 	decode_PA_SERVER_REFERRAL_DATA
 	decode_PA_SvrReferralData
+	decode_PermanentIdentifier
 	decode_PKAuthenticator
 	decode_PKAuthenticator_Win2k
 	decode_PKCS12_Attribute
@@ -747,6 +803,9 @@ EXPORTS
 	decode_PkinitSP80056AOtherInfo
 	decode_PkinitSuppPubInfo
 	decode_PKIXXmppAddr
+	decode_PreferredOrLegacyPackageIdentifier
+	decode_PreferredOrLegacyStalePackageIdentifier
+	decode_PreferredPackageIdentifier
 	decode_Principal
 	decode_PrincipalName
 	decode_Principals
@@ -773,6 +832,7 @@ EXPORTS
 	decode_SubjectInfoAccessSyntax
 	decode_SubjectKeyIdentifier
 	decode_SubjectPublicKeyInfo
+	decode_TargetHardwareIdentifiers
 	decode_TBSCertificate
 	decode_TBSCRLCertList
 	decode_TD_DH_PARAMETERS
@@ -792,7 +852,9 @@ EXPORTS
 	decode_UnprotectedAttributes
 	decode_ValidationParms
 	decode_Validity
+	decode_VendorLoadErrorCode
 	decode_Version
+	decode_WrappedFirmwareKey
 	der_copy_bit_string
 	der_copy_bmp_string
 	der_copy_generalized_time
@@ -965,12 +1027,16 @@ EXPORTS
 	encode_CMSIdentifier
 	encode_CMSRC2CBCParameter
 	encode_CMSVersion
+	encode_CommunityIdentifier
+	encode_CommunityIdentifiers
 	encode_ContentEncryptionAlgorithmIdentifier
 	encode_ContentInfo
 	encode_ContentType
 	encode_CRLCertificateList
 	encode_CRLDistributionPoints
 	encode_CRLReason
+	encode_CurrentFWConfig
+	encode_DecryptKeyIdentifier
 	encode_DHNonce
 	encode_DHParameter
 	encode_DHPublicKey
@@ -1025,14 +1091,27 @@ EXPORTS
 	encode_ExternalPrincipalIdentifiers
 	encode_ExtKeyUsage
 	encode_FastOptions
+	encode_FirmwarePackageIdentifier
+	encode_FirmwarePackageInfo
+	encode_FirmwarePackageLoadError
+	encode_FirmwarePackageLoadErrorCode
+	encode_FirmwarePackageLoadReceipt
+	encode_FirmwarePkgData
+	encode_FWErrorVersion
+	encode_FWReceiptVersion
 	encode_GeneralName
 	encode_GeneralNames
 	encode_GeneralSubtree
 	encode_GeneralSubtrees
+	encode_HardwareModuleName
+	encode_HardwareModules
+	encode_HardwareSerialEntry
 	encode_heim_any
 	encode_heim_any_set
 	encode_HostAddress
 	encode_HostAddresses
+	encode_ImplementedCompressAlgorithms
+	encode_ImplementedCryptoAlgorithms
 	encode_IssuerAndSerialNumber
 	encode_KDCDHKeyInfo
 	encode_KDCDHKeyInfo_Win2k
@@ -1133,6 +1212,7 @@ EXPORTS
 	encode_PA_ServerReferralData
 	encode_PA_SERVER_REFERRAL_DATA
 	encode_PA_SvrReferralData
+	encode_PermanentIdentifier
 	encode_PKAuthenticator
 	encode_PKAuthenticator_Win2k
 	encode_PKCS12_Attribute
@@ -1156,6 +1236,9 @@ EXPORTS
 	encode_PkinitSP80056AOtherInfo
 	encode_PkinitSuppPubInfo
 	encode_PKIXXmppAddr
+	encode_PreferredOrLegacyPackageIdentifier
+	encode_PreferredOrLegacyStalePackageIdentifier
+	encode_PreferredPackageIdentifier
 	encode_Principal
 	encode_PrincipalName
 	encode_Principals
@@ -1182,6 +1265,7 @@ EXPORTS
 	encode_SubjectInfoAccessSyntax
 	encode_SubjectKeyIdentifier
 	encode_SubjectPublicKeyInfo
+	encode_TargetHardwareIdentifiers
 	encode_TBSCertificate
 	encode_TBSCRLCertList
 	encode_TD_DH_PARAMETERS
@@ -1201,7 +1285,9 @@ EXPORTS
 	encode_UnprotectedAttributes
 	encode_ValidationParms
 	encode_Validity
+	encode_VendorLoadErrorCode
 	encode_Version
+	encode_WrappedFirmwareKey
 	FastOptions2int
 	free_AccessDescription
 	free_AD_AND_OR
@@ -1248,12 +1334,16 @@ EXPORTS
 	free_CMSIdentifier
 	free_CMSRC2CBCParameter
 	free_CMSVersion
+	free_CommunityIdentifier
+	free_CommunityIdentifiers
 	free_ContentEncryptionAlgorithmIdentifier
 	free_ContentInfo
 	free_ContentType
 	free_CRLCertificateList
 	free_CRLDistributionPoints
 	free_CRLReason
+	free_CurrentFWConfig
+	free_DecryptKeyIdentifier
 	free_DHNonce
 	free_DHParameter
 	free_DHPublicKey
@@ -1308,14 +1398,27 @@ EXPORTS
 	free_ExternalPrincipalIdentifiers
 	free_ExtKeyUsage
 	free_FastOptions
+	free_FirmwarePackageIdentifier
+	free_FirmwarePackageInfo
+	free_FirmwarePackageLoadError
+	free_FirmwarePackageLoadErrorCode
+	free_FirmwarePackageLoadReceipt
+	free_FirmwarePkgData
+	free_FWErrorVersion
+	free_FWReceiptVersion
 	free_GeneralName
 	free_GeneralNames
 	free_GeneralSubtree
 	free_GeneralSubtrees
+	free_HardwareModuleName
+	free_HardwareModules
+	free_HardwareSerialEntry
 	free_heim_any
 	free_heim_any_set
 	free_HostAddress
 	free_HostAddresses
+	free_ImplementedCompressAlgorithms
+	free_ImplementedCryptoAlgorithms
 	free_IssuerAndSerialNumber
 	free_KDCDHKeyInfo
 	free_KDCDHKeyInfo_Win2k
@@ -1416,6 +1519,7 @@ EXPORTS
 	free_PA_ServerReferralData
 	free_PA_SERVER_REFERRAL_DATA
 	free_PA_SvrReferralData
+	free_PermanentIdentifier
 	free_PKAuthenticator
 	free_PKAuthenticator_Win2k
 	free_PKCS12_Attribute
@@ -1439,6 +1543,9 @@ EXPORTS
 	free_PkinitSP80056AOtherInfo
 	free_PkinitSuppPubInfo
 	free_PKIXXmppAddr
+	free_PreferredOrLegacyPackageIdentifier
+	free_PreferredOrLegacyStalePackageIdentifier
+	free_PreferredPackageIdentifier
 	free_Principal
 	free_PrincipalName
 	free_Principals
@@ -1465,6 +1572,7 @@ EXPORTS
 	free_SubjectInfoAccessSyntax
 	free_SubjectKeyIdentifier
 	free_SubjectPublicKeyInfo
+	free_TargetHardwareIdentifiers
 	free_TBSCertificate
 	free_TBSCRLCertList
 	free_TD_DH_PARAMETERS
@@ -1484,7 +1592,9 @@ EXPORTS
 	free_UnprotectedAttributes
 	free_ValidationParms
 	free_Validity
+	free_VendorLoadErrorCode
 	free_Version
+	free_WrappedFirmwareKey
 	heim_any_cmp
 	_heim_der_set_sort
 	_heim_fix_dce
@@ -1552,12 +1662,16 @@ EXPORTS
 	length_CMSIdentifier
 	length_CMSRC2CBCParameter
 	length_CMSVersion
+	length_CommunityIdentifier
+	length_CommunityIdentifiers
 	length_ContentEncryptionAlgorithmIdentifier
 	length_ContentInfo
 	length_ContentType
 	length_CRLCertificateList
 	length_CRLDistributionPoints
 	length_CRLReason
+	length_CurrentFWConfig
+	length_DecryptKeyIdentifier
 	length_DHNonce
 	length_DHParameter
 	length_DHPublicKey
@@ -1612,14 +1726,27 @@ EXPORTS
 	length_ExternalPrincipalIdentifiers
 	length_ExtKeyUsage
 	length_FastOptions
+	length_FirmwarePackageIdentifier
+	length_FirmwarePackageInfo
+	length_FirmwarePackageLoadError
+	length_FirmwarePackageLoadErrorCode
+	length_FirmwarePackageLoadReceipt
+	length_FirmwarePkgData
+	length_FWErrorVersion
+	length_FWReceiptVersion
 	length_GeneralName
 	length_GeneralNames
 	length_GeneralSubtree
 	length_GeneralSubtrees
+	length_HardwareModuleName
+	length_HardwareModules
+	length_HardwareSerialEntry
 	length_heim_any
 	length_heim_any_set
 	length_HostAddress
 	length_HostAddresses
+	length_ImplementedCompressAlgorithms
+	length_ImplementedCryptoAlgorithms
 	length_IssuerAndSerialNumber
 	length_KDCDHKeyInfo
 	length_KDCDHKeyInfo_Win2k
@@ -1720,6 +1847,7 @@ EXPORTS
 	length_PA_ServerReferralData
 	length_PA_SERVER_REFERRAL_DATA
 	length_PA_SvrReferralData
+	length_PermanentIdentifier
 	length_PKAuthenticator
 	length_PKAuthenticator_Win2k
 	length_PKCS12_Attribute
@@ -1743,6 +1871,9 @@ EXPORTS
 	length_PkinitSP80056AOtherInfo
 	length_PkinitSuppPubInfo
 	length_PKIXXmppAddr
+	length_PreferredOrLegacyPackageIdentifier
+	length_PreferredOrLegacyStalePackageIdentifier
+	length_PreferredPackageIdentifier
 	length_Principal
 	length_PrincipalName
 	length_Principals
@@ -1769,6 +1900,7 @@ EXPORTS
 	length_SubjectInfoAccessSyntax
 	length_SubjectKeyIdentifier
 	length_SubjectPublicKeyInfo
+	length_TargetHardwareIdentifiers
 	length_TBSCertificate
 	length_TBSCRLCertList
 	length_TD_DH_PARAMETERS
@@ -1788,7 +1920,9 @@ EXPORTS
 	length_UnprotectedAttributes
 	length_ValidationParms
 	length_Validity
+	length_VendorLoadErrorCode
 	length_Version
+	length_WrappedFirmwareKey
 	remove_AttributeValues
 	remove_AuthorizationData
 	remove_Certificates

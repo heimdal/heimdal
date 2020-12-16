@@ -181,6 +181,8 @@ bitstring_symbol(const char *basename, const Type *t)
 
 
 
+/* XXX Make sure this is sorted by `type' and can just index this by type */
+/* XXX Make this const! */
 struct {
     enum typetype type;
     const char *(*symbol_name)(const char *, const Type *);
@@ -932,6 +934,7 @@ generate_template_type(const char *varname,
 
     free(szt);
 
+    /* XXX Accidentally O(N^2)? */
     d = tlist_find_dup(tl);
     if (d) {
 #if 0

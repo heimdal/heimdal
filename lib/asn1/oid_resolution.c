@@ -46,6 +46,7 @@
 #include "pkcs9_asn1.h"
 #include "pkinit_asn1.h"
 #include "rfc2459_asn1.h"
+#include "tcg_asn1.h"
 
 
 struct sym_oid {
@@ -70,6 +71,7 @@ static const struct sym_oid sym_oids[] = {
 #include "pkcs9_asn1_oids.x"
 #include "pkinit_asn1_oids.x"
 #include "rfc2459_asn1_oids.x"
+#include "tcg_asn1_oids.x"
 };
 
 static size_t num_sym_oids = sizeof(sym_oids) / sizeof(sym_oids[0]);

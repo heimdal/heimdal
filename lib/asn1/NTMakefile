@@ -47,6 +47,8 @@ gen_files_rfc4043	= $(OBJ)\asn1_rfc4043_asn1.x
 
 gen_files_rfc4108	= $(OBJ)\asn1_rfc4108_asn1.x
 
+gen_files_tcg		= $(OBJ)\asn1_tcg_asn1.x
+
 gen_files_ocsp		= $(OBJ)\asn1_ocsp_asn1.x
 
 gen_files_pkinit	= $(OBJ)\asn1_pkinit_asn1.x
@@ -123,9 +125,10 @@ LIBASN1_OBJS=	\
 	$(gen_files_rfc2459:.x=.obj)	\
 	$(gen_files_rfc4043:.x=.obj)	\
 	$(gen_files_rfc4108:.x=.obj)	\
+	$(gen_files_tcg:.x=.obj)	\
 	$(gen_files_cms:.x=.obj)	\
 	$(gen_files_crmf:.x=.obj)	\
-	$(gen_files_krb5:.x=.obj)		\
+	$(gen_files_krb5:.x=.obj)	\
 	$(gen_files_ocsp:.x=.obj)	\
 	$(gen_files_pkinit:.x=.obj)	\
 	$(gen_files_pkcs8:.x=.obj)	\
@@ -184,6 +187,8 @@ $(gen_files_rfc2459:.x=.c)  : $$(@R).x
 $(gen_files_rfc4043:.x=.c)  : $$(@R).x
 
 $(gen_files_rfc4108:.x=.c)  : $$(@R).x
+
+$(gen_files_tcg:.x=.c)      : $$(@R).x
 
 $(gen_files_cms:.x=.c)	    : $$(@R).x
 
@@ -281,6 +286,14 @@ $(gen_files_rfc4108) $(OBJ)\rfc4108_asn1.hx: $(BINDIR)\asn1_compile.exe rfc4108.
 	|| ($(RM) $(OBJ)\rfc4108_asn1.h ; exit /b 1)
 	cd $(SRCDIR)
 
+$(gen_files_tcg) $(OBJ)\tcg_asn1.hx: $(BINDIR)\asn1_compile.exe tcg.asn1
+	cd $(OBJ)
+	$(BINDIR)\asn1_compile.exe \
+		--one-code-file \
+		$(SRCDIR)\tcg.asn1 tcg_asn1 \
+	|| ($(RM) $(OBJ)\tcg_asn1.h ; exit /b 1)
+	cd $(SRCDIR)
+
 $(gen_files_cms) $(OBJ)\cms_asn1.hx: $(BINDIR)\asn1_compile.exe cms.asn1 cms.opt
 	cd $(OBJ)
 	$(BINDIR)\asn1_compile.exe \
@@ -332,6 +345,7 @@ GENINCFILES=			    \
 	$(INCDIR)\rfc2459_asn1.h    \
 	$(INCDIR)\rfc4043_asn1.h    \
 	$(INCDIR)\rfc4108_asn1.h    \
+	$(INCDIR)\tcg_asn1.h        \
 	$(OBJ)\krb5_asn1-priv.h	    \
 	$(OBJ)\ocsp_asn1-priv.h     \
 	$(OBJ)\pkinit_asn1-priv.h   \
@@ -340,6 +354,7 @@ GENINCFILES=			    \
 	$(OBJ)\rfc2459_asn1-priv.h  \
 	$(OBJ)\rfc4043_asn1-priv.h  \
 	$(OBJ)\rfc4108_asn1-priv.h  \
+	$(OBJ)\tcg_asn1-priv.h      \
 	$(OBJ)\pkcs8_asn1-priv.h    \
 	$(OBJ)\pkcs9_asn1-priv.h    \
 	$(OBJ)\pkcs10_asn1-priv.h   \

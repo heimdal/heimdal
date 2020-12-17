@@ -241,6 +241,20 @@ EXPORTS
 	asn1_oid_id_x509_ce_subjectKeyIdentifier	DATA
 	asn1_oid_id_x520_at	DATA
 	asn1_oid_id_x9_57	DATA
+	asn1_oid_tcg_at_tpmManufacturer	DATA
+	asn1_oid_tcg_at_tpmModel	DATA
+	asn1_oid_tcg_at_tpmSecurityAssertions	DATA
+	asn1_oid_tcg_at_tpmSpecification	DATA
+	asn1_oid_tcg_at_tpmVersion	DATA
+	asn1_oid_tcg_attribute	DATA
+	asn1_oid_tcg_cap_verifiedTPMFixed	DATA
+	asn1_oid_tcg_cap_verifiedTPMResidency	DATA
+	asn1_oid_tcg_cap_verifiedTPMRestricted	DATA
+	asn1_oid_tcg	DATA
+	asn1_oid_tcg_kp	DATA
+	asn1_oid_tcg_kp_EKCertificate	DATA
+	asn1_oid_tcg_on_ekPermIdSha256	DATA
+	asn1_oid_tcg_tpm20	DATA
 	asn1_SAMFlags_units
 	asn1_TicketFlags_units
 	copy_AccessDescription
@@ -288,6 +302,7 @@ EXPORTS
 	copy_CMSIdentifier
 	copy_CMSRC2CBCParameter
 	copy_CMSVersion
+	copy_CommonCriteriaMeasures
 	copy_CommunityIdentifier
 	copy_CommunityIdentifiers
 	copy_ContentEncryptionAlgorithmIdentifier
@@ -326,6 +341,9 @@ EXPORTS
 	copy_ECDSA_Sig_Value
 	copy_ECParameters
 	copy_ECPoint
+	copy_EKCertificateGenerationLocation
+	copy_EKGenerationLocation
+	copy_EKGenerationType
 	copy_EncAPRepPart
 	copy_EncapsulatedContentInfo
 	copy_EncASRepPart
@@ -346,12 +364,15 @@ EXPORTS
 	copy_ETYPE_INFO2_ENTRY
 	copy_ETYPE_INFO_ENTRY
 	copy_EtypeList
+	copy_EvaluationAssuranceLevel
+	copy_EvaluationStatus
 	copy_Extension
 	copy_Extensions
 	copy_ExternalPrincipalIdentifier
 	copy_ExternalPrincipalIdentifiers
 	copy_ExtKeyUsage
 	copy_FastOptions
+	copy_FIPSLevel
 	copy_FirmwarePackageIdentifier
 	copy_FirmwarePackageInfo
 	copy_FirmwarePackageLoadError
@@ -517,12 +538,14 @@ EXPORTS
 	copy_RSAPrivateKey
 	copy_RSAPublicKey
 	copy_SAMFlags
+	copy_SecurityLevel
 	copy_SignatureAlgorithmIdentifier
 	copy_SignatureValue
 	copy_SignedData
 	copy_SignerIdentifier
 	copy_SignerInfo
 	copy_SignerInfos
+	copy_StrengthOfFunction
 	copy_SubjectInfoAccessSyntax
 	copy_SubjectKeyIdentifier
 	copy_SubjectPublicKeyInfo
@@ -537,6 +560,9 @@ EXPORTS
 	copy_Ticket
 	copy_TicketFlags
 	copy_Time
+	copy_TPMSecurityAssertions
+	copy_TPMSpecification
+	copy_TPMVersion
 	copy_TransitedEncoding
 	copy_TrustedCA
 	copy_TrustedCA_Win2k
@@ -544,6 +570,7 @@ EXPORTS
 	copy_TYPED_DATA
 	copy_UniqueIdentifier
 	copy_UnprotectedAttributes
+	copy_URIReference
 	copy_ValidationParms
 	copy_Validity
 	copy_VendorLoadErrorCode
@@ -594,6 +621,7 @@ EXPORTS
 	decode_CMSIdentifier
 	decode_CMSRC2CBCParameter
 	decode_CMSVersion
+	decode_CommonCriteriaMeasures
 	decode_CommunityIdentifier
 	decode_CommunityIdentifiers
 	decode_ContentEncryptionAlgorithmIdentifier
@@ -632,6 +660,9 @@ EXPORTS
 	decode_ECDSA_Sig_Value
 	decode_ECParameters
 	decode_ECPoint
+	decode_EKCertificateGenerationLocation
+	decode_EKGenerationLocation
+	decode_EKGenerationType
 	decode_EncAPRepPart
 	decode_EncapsulatedContentInfo
 	decode_EncASRepPart
@@ -652,12 +683,15 @@ EXPORTS
 	decode_ETYPE_INFO2_ENTRY
 	decode_ETYPE_INFO_ENTRY
 	decode_EtypeList
+	decode_EvaluationAssuranceLevel
+	decode_EvaluationStatus
 	decode_Extension
 	decode_Extensions
 	decode_ExternalPrincipalIdentifier
 	decode_ExternalPrincipalIdentifiers
 	decode_ExtKeyUsage
 	decode_FastOptions
+	decode_FIPSLevel
 	decode_FirmwarePackageIdentifier
 	decode_FirmwarePackageInfo
 	decode_FirmwarePackageLoadError
@@ -823,12 +857,14 @@ EXPORTS
 	decode_RSAPrivateKey
 	decode_RSAPublicKey
 	decode_SAMFlags
+	decode_SecurityLevel
 	decode_SignatureAlgorithmIdentifier
 	decode_SignatureValue
 	decode_SignedData
 	decode_SignerIdentifier
 	decode_SignerInfo
 	decode_SignerInfos
+	decode_StrengthOfFunction
 	decode_SubjectInfoAccessSyntax
 	decode_SubjectKeyIdentifier
 	decode_SubjectPublicKeyInfo
@@ -843,6 +879,9 @@ EXPORTS
 	decode_Ticket
 	decode_TicketFlags
 	decode_Time
+	decode_TPMSecurityAssertions
+	decode_TPMSpecification
+	decode_TPMVersion
 	decode_TransitedEncoding
 	decode_TrustedCA
 	decode_TrustedCA_Win2k
@@ -850,6 +889,7 @@ EXPORTS
 	decode_TYPED_DATA
 	decode_UniqueIdentifier
 	decode_UnprotectedAttributes
+	decode_URIReference
 	decode_ValidationParms
 	decode_Validity
 	decode_VendorLoadErrorCode
@@ -1027,6 +1067,7 @@ EXPORTS
 	encode_CMSIdentifier
 	encode_CMSRC2CBCParameter
 	encode_CMSVersion
+	encode_CommonCriteriaMeasures
 	encode_CommunityIdentifier
 	encode_CommunityIdentifiers
 	encode_ContentEncryptionAlgorithmIdentifier
@@ -1065,6 +1106,9 @@ EXPORTS
 	encode_ECDSA_Sig_Value
 	encode_ECParameters
 	encode_ECPoint
+	encode_EKCertificateGenerationLocation
+	encode_EKGenerationLocation
+	encode_EKGenerationType
 	encode_EncAPRepPart
 	encode_EncapsulatedContentInfo
 	encode_EncASRepPart
@@ -1085,12 +1129,15 @@ EXPORTS
 	encode_ETYPE_INFO2_ENTRY
 	encode_ETYPE_INFO_ENTRY
 	encode_EtypeList
+	encode_EvaluationAssuranceLevel
+	encode_EvaluationStatus
 	encode_Extension
 	encode_Extensions
 	encode_ExternalPrincipalIdentifier
 	encode_ExternalPrincipalIdentifiers
 	encode_ExtKeyUsage
 	encode_FastOptions
+	encode_FIPSLevel
 	encode_FirmwarePackageIdentifier
 	encode_FirmwarePackageInfo
 	encode_FirmwarePackageLoadError
@@ -1256,12 +1303,14 @@ EXPORTS
 	encode_RSAPrivateKey
 	encode_RSAPublicKey
 	encode_SAMFlags
+	encode_SecurityLevel
 	encode_SignatureAlgorithmIdentifier
 	encode_SignatureValue
 	encode_SignedData
 	encode_SignerIdentifier
 	encode_SignerInfo
 	encode_SignerInfos
+	encode_StrengthOfFunction
 	encode_SubjectInfoAccessSyntax
 	encode_SubjectKeyIdentifier
 	encode_SubjectPublicKeyInfo
@@ -1276,6 +1325,9 @@ EXPORTS
 	encode_Ticket
 	encode_TicketFlags
 	encode_Time
+	encode_TPMSecurityAssertions
+	encode_TPMSpecification
+	encode_TPMVersion
 	encode_TransitedEncoding
 	encode_TrustedCA
 	encode_TrustedCA_Win2k
@@ -1283,6 +1335,7 @@ EXPORTS
 	encode_TYPED_DATA
 	encode_UniqueIdentifier
 	encode_UnprotectedAttributes
+	encode_URIReference
 	encode_ValidationParms
 	encode_Validity
 	encode_VendorLoadErrorCode
@@ -1334,6 +1387,7 @@ EXPORTS
 	free_CMSIdentifier
 	free_CMSRC2CBCParameter
 	free_CMSVersion
+	free_CommonCriteriaMeasures
 	free_CommunityIdentifier
 	free_CommunityIdentifiers
 	free_ContentEncryptionAlgorithmIdentifier
@@ -1372,6 +1426,9 @@ EXPORTS
 	free_ECDSA_Sig_Value
 	free_ECParameters
 	free_ECPoint
+	free_EKCertificateGenerationLocation
+	free_EKGenerationLocation
+	free_EKGenerationType
 	free_EncAPRepPart
 	free_EncapsulatedContentInfo
 	free_EncASRepPart
@@ -1392,12 +1449,15 @@ EXPORTS
 	free_ETYPE_INFO2_ENTRY
 	free_ETYPE_INFO_ENTRY
 	free_EtypeList
+	free_EvaluationAssuranceLevel
+	free_EvaluationStatus
 	free_Extension
 	free_Extensions
 	free_ExternalPrincipalIdentifier
 	free_ExternalPrincipalIdentifiers
 	free_ExtKeyUsage
 	free_FastOptions
+	free_FIPSLevel
 	free_FirmwarePackageIdentifier
 	free_FirmwarePackageInfo
 	free_FirmwarePackageLoadError
@@ -1563,12 +1623,14 @@ EXPORTS
 	free_RSAPrivateKey
 	free_RSAPublicKey
 	free_SAMFlags
+	free_SecurityLevel
 	free_SignatureAlgorithmIdentifier
 	free_SignatureValue
 	free_SignedData
 	free_SignerIdentifier
 	free_SignerInfo
 	free_SignerInfos
+	free_StrengthOfFunction
 	free_SubjectInfoAccessSyntax
 	free_SubjectKeyIdentifier
 	free_SubjectPublicKeyInfo
@@ -1583,6 +1645,9 @@ EXPORTS
 	free_Ticket
 	free_TicketFlags
 	free_Time
+	free_TPMSecurityAssertions
+	free_TPMSpecification
+	free_TPMVersion
 	free_TransitedEncoding
 	free_TrustedCA
 	free_TrustedCA_Win2k
@@ -1590,6 +1655,7 @@ EXPORTS
 	free_TYPED_DATA
 	free_UniqueIdentifier
 	free_UnprotectedAttributes
+	free_URIReference
 	free_ValidationParms
 	free_Validity
 	free_VendorLoadErrorCode
@@ -1662,6 +1728,7 @@ EXPORTS
 	length_CMSIdentifier
 	length_CMSRC2CBCParameter
 	length_CMSVersion
+	length_CommonCriteriaMeasures
 	length_CommunityIdentifier
 	length_CommunityIdentifiers
 	length_ContentEncryptionAlgorithmIdentifier
@@ -1700,6 +1767,9 @@ EXPORTS
 	length_ECDSA_Sig_Value
 	length_ECParameters
 	length_ECPoint
+	length_EKCertificateGenerationLocation
+	length_EKGenerationLocation
+	length_EKGenerationType
 	length_EncAPRepPart
 	length_EncapsulatedContentInfo
 	length_EncASRepPart
@@ -1720,12 +1790,15 @@ EXPORTS
 	length_ETYPE_INFO2_ENTRY
 	length_ETYPE_INFO_ENTRY
 	length_EtypeList
+	length_EvaluationAssuranceLevel
+	length_EvaluationStatus
 	length_Extension
 	length_Extensions
 	length_ExternalPrincipalIdentifier
 	length_ExternalPrincipalIdentifiers
 	length_ExtKeyUsage
 	length_FastOptions
+	length_FIPSLevel
 	length_FirmwarePackageIdentifier
 	length_FirmwarePackageInfo
 	length_FirmwarePackageLoadError
@@ -1891,12 +1964,14 @@ EXPORTS
 	length_RSAPrivateKey
 	length_RSAPublicKey
 	length_SAMFlags
+	length_SecurityLevel
 	length_SignatureAlgorithmIdentifier
 	length_SignatureValue
 	length_SignedData
 	length_SignerIdentifier
 	length_SignerInfo
 	length_SignerInfos
+	length_StrengthOfFunction
 	length_SubjectInfoAccessSyntax
 	length_SubjectKeyIdentifier
 	length_SubjectPublicKeyInfo
@@ -1911,6 +1986,9 @@ EXPORTS
 	length_Ticket
 	length_TicketFlags
 	length_Time
+	length_TPMSecurityAssertions
+	length_TPMSpecification
+	length_TPMVersion
 	length_TransitedEncoding
 	length_TrustedCA
 	length_TrustedCA_Win2k
@@ -1918,6 +1996,7 @@ EXPORTS
 	length_TYPED_DATA
 	length_UniqueIdentifier
 	length_UnprotectedAttributes
+	length_URIReference
 	length_ValidationParms
 	length_Validity
 	length_VendorLoadErrorCode

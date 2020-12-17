@@ -324,9 +324,9 @@ gen_assign_defval(const char *var, struct value *val)
 	break;
     case booleanvalue:
 	if(val->u.booleanvalue)
-	    fprintf(codefile, "%s = TRUE;\n", var);
+	    fprintf(codefile, "%s = 1;\n", var);
 	else
-	    fprintf(codefile, "%s = FALSE;\n", var);
+	    fprintf(codefile, "%s = 0;\n", var);
 	break;
     default:
 	abort();

@@ -925,7 +925,7 @@ BooleanValue	: kw_TRUE
 		{
 			$$ = emalloc(sizeof(*$$));
 			$$->type = booleanvalue;
-			$$->u.booleanvalue = 0;
+			$$->u.booleanvalue = 1;
 		}
 		| kw_FALSE
 		{

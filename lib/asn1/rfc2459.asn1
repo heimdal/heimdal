@@ -317,6 +317,67 @@ KeyUsage ::= BIT STRING {
 	decipherOnly		(8)
 }
 
+-- private key usage period extension OID and syntax
+
+PrivateKeyUsagePeriod ::= SEQUENCE {
+     notBefore       [0]     GeneralizedTime OPTIONAL,
+     notAfter        [1]     GeneralizedTime OPTIONAL
+     -- either notBefore or notAfter MUST be present
+}
+
+-- certificate policies extension OID and syntax
+
+CertPolicyId ::= OBJECT IDENTIFIER
+PolicyQualifierId ::= OBJECT IDENTIFIER -- ( id-qt-cps | id-qt-unotice )
+
+PolicyQualifierInfo ::= SEQUENCE {
+     policyQualifierId  PolicyQualifierId,
+     qualifier          heim_any -- ANY DEFINED BY policyQualifierId
+}
+
+PolicyQualifierInfos ::= SEQUENCE SIZE (1..MAX) OF PolicyQualifierInfo
+
+PolicyInformation ::= SEQUENCE {
+     policyIdentifier   CertPolicyId,
+     policyQualifiers   PolicyQualifierInfos OPTIONAL
+}
+
+CertificatePolicies ::= SEQUENCE SIZE (1..MAX) OF PolicyInformation
+
+-- CPS pointer qualifier
+
+CPSuri ::= IA5String
+
+-- user notice qualifier
+
+DisplayText ::= CHOICE {
+     ia5String        IA5String,        --(SIZE (1..200))
+     visibleString    VisibleString,    --(SIZE (1..200))
+     bmpString        BMPString,        --(SIZE (1..200))
+     utf8String       UTF8String        --(SIZE (1..200))
+}
+
+NoticeReference ::= SEQUENCE {
+     organization     DisplayText,
+     noticeNumbers    SEQUENCE OF INTEGER
+}
+
+UserNotice ::= SEQUENCE {
+     noticeRef        NoticeReference OPTIONAL,
+     explicitText     DisplayText OPTIONAL
+}
+
+-- policy mapping extension OID and syntax
+
+PolicyMapping ::= SEQUENCE {
+     issuerDomainPolicy      CertPolicyId,
+     subjectDomainPolicy     CertPolicyId
+}
+
+PolicyMappings ::= SEQUENCE SIZE (1..MAX) OF PolicyMapping
+
+-- subject key identifier OID and syntax
+
 id-x509-ce-authorityKeyIdentifier OBJECT IDENTIFIER ::=  { id-x509-ce 35 }
 
 KeyIdentifier ::= OCTET STRING
@@ -358,6 +419,7 @@ NameConstraints ::= SEQUENCE {
 
 id-x509-ce-privateKeyUsagePeriod OBJECT IDENTIFIER ::=  { id-x509-ce 16 }
 id-x509-ce-certificatePolicies OBJECT IDENTIFIER ::=  { id-x509-ce 32 }
+id-x509-ce-certificatePolicies-anyPolicy OBJECT IDENTIFIER ::= { id-x509-ce-certificatePolicies 0 }
 id-x509-ce-policyMappings OBJECT IDENTIFIER ::=  { id-x509-ce 33 }
 id-x509-ce-subjectAltName OBJECT IDENTIFIER ::=  { id-x509-ce 17 }
 id-x509-ce-issuerAltName OBJECT IDENTIFIER ::=  { id-x509-ce 18 }

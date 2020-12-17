@@ -1,6 +1,7 @@
 EXPORTS
 	add_AttributeValues
 	add_AuthorizationData
+	add_CertificatePolicies
 	add_Certificates
 	add_CRLDistributionPoints
 	add_DigestAlgorithmIdentifiers
@@ -9,6 +10,8 @@ EXPORTS
 	add_Extensions
 	add_GeneralNames
 	add_METHOD_DATA
+	add_PolicyMappings
+	add_PolicyQualifierInfos
 	add_Principals
 	add_RDNSequence
 	APOptions2int
@@ -217,6 +220,7 @@ EXPORTS
 	asn1_oid_id_x509_ce_authorityKeyIdentifier	DATA
 	asn1_oid_id_x509_ce_basicConstraints	DATA
 	asn1_oid_id_x509_ce_certificateIssuer	DATA
+	asn1_oid_id_x509_ce_certificatePolicies_anyPolicy	DATA
 	asn1_oid_id_x509_ce_certificatePolicies	DATA
 	asn1_oid_id_x509_ce_cRLDistributionPoints	DATA
 	asn1_oid_id_x509_ce_cRLNumber	DATA
@@ -287,12 +291,14 @@ EXPORTS
 	copy_BasicConstraints
 	copy_Certificate
 	copy_CertificateList
+	copy_CertificatePolicies
 	copy_CertificateRevocationLists
 	copy_Certificates
 	copy_CertificateSerialNumber
 	copy_CertificateSet
 	copy_CertificationRequest
 	copy_CertificationRequestInfo
+	copy_CertPolicyId
 	copy_ChangePasswdDataMS
 	copy_Checksum
 	copy_CKSUMTYPE
@@ -308,6 +314,7 @@ EXPORTS
 	copy_ContentEncryptionAlgorithmIdentifier
 	copy_ContentInfo
 	copy_ContentType
+	copy_CPSuri
 	copy_CRLCertificateList
 	copy_CRLDistributionPoints
 	copy_CRLReason
@@ -331,6 +338,7 @@ EXPORTS
 	copy_DigestResponse
 	copy_DigestTypes
 	copy_DirectoryString
+	copy_DisplayText
 	copy_DistributionPoint
 	copy_DistributionPointName
 	copy_DistributionPointReasonFlags
@@ -450,6 +458,7 @@ EXPORTS
 	copy_Name
 	copy_NameConstraints
 	copy_NAME_TYPE
+	copy_NoticeReference
 	copy_NTLMInit
 	copy_NTLMInitReply
 	copy_NTLMReply
@@ -518,12 +527,19 @@ EXPORTS
 	copy_PkinitSP80056AOtherInfo
 	copy_PkinitSuppPubInfo
 	copy_PKIXXmppAddr
+	copy_PolicyInformation
+	copy_PolicyMapping
+	copy_PolicyMappings
+	copy_PolicyQualifierId
+	copy_PolicyQualifierInfo
+	copy_PolicyQualifierInfos
 	copy_PreferredOrLegacyPackageIdentifier
 	copy_PreferredOrLegacyStalePackageIdentifier
 	copy_PreferredPackageIdentifier
 	copy_Principal
 	copy_PrincipalName
 	copy_Principals
+	copy_PrivateKeyUsagePeriod
 	copy_PROV_SRV_LOCATION
 	copy_ProxyCertInfo
 	copy_ProxyPolicy
@@ -545,6 +561,7 @@ EXPORTS
 	copy_SignerIdentifier
 	copy_SignerInfo
 	copy_SignerInfos
+	copy_SRVName
 	copy_StrengthOfFunction
 	copy_SubjectInfoAccessSyntax
 	copy_SubjectKeyIdentifier
@@ -571,6 +588,7 @@ EXPORTS
 	copy_UniqueIdentifier
 	copy_UnprotectedAttributes
 	copy_URIReference
+	copy_UserNotice
 	copy_ValidationParms
 	copy_Validity
 	copy_VendorLoadErrorCode
@@ -606,12 +624,14 @@ EXPORTS
 	decode_BasicConstraints
 	decode_Certificate
 	decode_CertificateList
+	decode_CertificatePolicies
 	decode_CertificateRevocationLists
 	decode_Certificates
 	decode_CertificateSerialNumber
 	decode_CertificateSet
 	decode_CertificationRequest
 	decode_CertificationRequestInfo
+	decode_CertPolicyId
 	decode_ChangePasswdDataMS
 	decode_Checksum
 	decode_CKSUMTYPE
@@ -627,6 +647,7 @@ EXPORTS
 	decode_ContentEncryptionAlgorithmIdentifier
 	decode_ContentInfo
 	decode_ContentType
+	decode_CPSuri
 	decode_CRLCertificateList
 	decode_CRLDistributionPoints
 	decode_CRLReason
@@ -650,6 +671,7 @@ EXPORTS
 	decode_DigestResponse
 	decode_DigestTypes
 	decode_DirectoryString
+	decode_DisplayText
 	decode_DistributionPoint
 	decode_DistributionPointName
 	decode_DistributionPointReasonFlags
@@ -769,6 +791,7 @@ EXPORTS
 	decode_Name
 	decode_NameConstraints
 	decode_NAME_TYPE
+	decode_NoticeReference
 	decode_NTLMInit
 	decode_NTLMInitReply
 	decode_NTLMReply
@@ -837,12 +860,19 @@ EXPORTS
 	decode_PkinitSP80056AOtherInfo
 	decode_PkinitSuppPubInfo
 	decode_PKIXXmppAddr
+	decode_PolicyInformation
+	decode_PolicyMapping
+	decode_PolicyMappings
+	decode_PolicyQualifierId
+	decode_PolicyQualifierInfo
+	decode_PolicyQualifierInfos
 	decode_PreferredOrLegacyPackageIdentifier
 	decode_PreferredOrLegacyStalePackageIdentifier
 	decode_PreferredPackageIdentifier
 	decode_Principal
 	decode_PrincipalName
 	decode_Principals
+	decode_PrivateKeyUsagePeriod
 	decode_PROV_SRV_LOCATION
 	decode_ProxyCertInfo
 	decode_ProxyPolicy
@@ -864,6 +894,7 @@ EXPORTS
 	decode_SignerIdentifier
 	decode_SignerInfo
 	decode_SignerInfos
+	decode_SRVName
 	decode_StrengthOfFunction
 	decode_SubjectInfoAccessSyntax
 	decode_SubjectKeyIdentifier
@@ -890,6 +921,7 @@ EXPORTS
 	decode_UniqueIdentifier
 	decode_UnprotectedAttributes
 	decode_URIReference
+	decode_UserNotice
 	decode_ValidationParms
 	decode_Validity
 	decode_VendorLoadErrorCode
@@ -1052,12 +1084,14 @@ EXPORTS
 	encode_BasicConstraints
 	encode_Certificate
 	encode_CertificateList
+	encode_CertificatePolicies
 	encode_CertificateRevocationLists
 	encode_Certificates
 	encode_CertificateSerialNumber
 	encode_CertificateSet
 	encode_CertificationRequest
 	encode_CertificationRequestInfo
+	encode_CertPolicyId
 	encode_ChangePasswdDataMS
 	encode_Checksum
 	encode_CKSUMTYPE
@@ -1073,6 +1107,7 @@ EXPORTS
 	encode_ContentEncryptionAlgorithmIdentifier
 	encode_ContentInfo
 	encode_ContentType
+	encode_CPSuri
 	encode_CRLCertificateList
 	encode_CRLDistributionPoints
 	encode_CRLReason
@@ -1096,6 +1131,7 @@ EXPORTS
 	encode_DigestResponse
 	encode_DigestTypes
 	encode_DirectoryString
+	encode_DisplayText
 	encode_DistributionPoint
 	encode_DistributionPointName
 	encode_DistributionPointReasonFlags
@@ -1215,6 +1251,7 @@ EXPORTS
 	encode_Name
 	encode_NameConstraints
 	encode_NAME_TYPE
+	encode_NoticeReference
 	encode_NTLMInit
 	encode_NTLMInitReply
 	encode_NTLMReply
@@ -1283,12 +1320,19 @@ EXPORTS
 	encode_PkinitSP80056AOtherInfo
 	encode_PkinitSuppPubInfo
 	encode_PKIXXmppAddr
+	encode_PolicyInformation
+	encode_PolicyMapping
+	encode_PolicyMappings
+	encode_PolicyQualifierId
+	encode_PolicyQualifierInfo
+	encode_PolicyQualifierInfos
 	encode_PreferredOrLegacyPackageIdentifier
 	encode_PreferredOrLegacyStalePackageIdentifier
 	encode_PreferredPackageIdentifier
 	encode_Principal
 	encode_PrincipalName
 	encode_Principals
+	encode_PrivateKeyUsagePeriod
 	encode_PROV_SRV_LOCATION
 	encode_ProxyCertInfo
 	encode_ProxyPolicy
@@ -1310,6 +1354,7 @@ EXPORTS
 	encode_SignerIdentifier
 	encode_SignerInfo
 	encode_SignerInfos
+	encode_SRVName
 	encode_StrengthOfFunction
 	encode_SubjectInfoAccessSyntax
 	encode_SubjectKeyIdentifier
@@ -1336,6 +1381,7 @@ EXPORTS
 	encode_UniqueIdentifier
 	encode_UnprotectedAttributes
 	encode_URIReference
+	encode_UserNotice
 	encode_ValidationParms
 	encode_Validity
 	encode_VendorLoadErrorCode
@@ -1372,12 +1418,14 @@ EXPORTS
 	free_BasicConstraints
 	free_Certificate
 	free_CertificateList
+	free_CertificatePolicies
 	free_CertificateRevocationLists
 	free_Certificates
 	free_CertificateSerialNumber
 	free_CertificateSet
 	free_CertificationRequest
 	free_CertificationRequestInfo
+	free_CertPolicyId
 	free_ChangePasswdDataMS
 	free_Checksum
 	free_CKSUMTYPE
@@ -1393,6 +1441,7 @@ EXPORTS
 	free_ContentEncryptionAlgorithmIdentifier
 	free_ContentInfo
 	free_ContentType
+	free_CPSuri
 	free_CRLCertificateList
 	free_CRLDistributionPoints
 	free_CRLReason
@@ -1416,6 +1465,7 @@ EXPORTS
 	free_DigestResponse
 	free_DigestTypes
 	free_DirectoryString
+	free_DisplayText
 	free_DistributionPoint
 	free_DistributionPointName
 	free_DistributionPointReasonFlags
@@ -1535,6 +1585,7 @@ EXPORTS
 	free_Name
 	free_NameConstraints
 	free_NAME_TYPE
+	free_NoticeReference
 	free_NTLMInit
 	free_NTLMInitReply
 	free_NTLMReply
@@ -1603,12 +1654,19 @@ EXPORTS
 	free_PkinitSP80056AOtherInfo
 	free_PkinitSuppPubInfo
 	free_PKIXXmppAddr
+	free_PolicyInformation
+	free_PolicyMapping
+	free_PolicyMappings
+	free_PolicyQualifierId
+	free_PolicyQualifierInfo
+	free_PolicyQualifierInfos
 	free_PreferredOrLegacyPackageIdentifier
 	free_PreferredOrLegacyStalePackageIdentifier
 	free_PreferredPackageIdentifier
 	free_Principal
 	free_PrincipalName
 	free_Principals
+	free_PrivateKeyUsagePeriod
 	free_PROV_SRV_LOCATION
 	free_ProxyCertInfo
 	free_ProxyPolicy
@@ -1630,6 +1688,7 @@ EXPORTS
 	free_SignerIdentifier
 	free_SignerInfo
 	free_SignerInfos
+	free_SRVName
 	free_StrengthOfFunction
 	free_SubjectInfoAccessSyntax
 	free_SubjectKeyIdentifier
@@ -1656,6 +1715,7 @@ EXPORTS
 	free_UniqueIdentifier
 	free_UnprotectedAttributes
 	free_URIReference
+	free_UserNotice
 	free_ValidationParms
 	free_Validity
 	free_VendorLoadErrorCode
@@ -1713,12 +1773,14 @@ EXPORTS
 	length_BasicConstraints
 	length_Certificate
 	length_CertificateList
+	length_CertificatePolicies
 	length_CertificateRevocationLists
 	length_Certificates
 	length_CertificateSerialNumber
 	length_CertificateSet
 	length_CertificationRequest
 	length_CertificationRequestInfo
+	length_CertPolicyId
 	length_ChangePasswdDataMS
 	length_Checksum
 	length_CKSUMTYPE
@@ -1734,6 +1796,7 @@ EXPORTS
 	length_ContentEncryptionAlgorithmIdentifier
 	length_ContentInfo
 	length_ContentType
+	length_CPSuri
 	length_CRLCertificateList
 	length_CRLDistributionPoints
 	length_CRLReason
@@ -1757,6 +1820,7 @@ EXPORTS
 	length_DigestResponse
 	length_DigestTypes
 	length_DirectoryString
+	length_DisplayText
 	length_DistributionPoint
 	length_DistributionPointName
 	length_DistributionPointReasonFlags
@@ -1876,6 +1940,7 @@ EXPORTS
 	length_Name
 	length_NameConstraints
 	length_NAME_TYPE
+	length_NoticeReference
 	length_NTLMInit
 	length_NTLMInitReply
 	length_NTLMReply
@@ -1944,12 +2009,19 @@ EXPORTS
 	length_PkinitSP80056AOtherInfo
 	length_PkinitSuppPubInfo
 	length_PKIXXmppAddr
+	length_PolicyInformation
+	length_PolicyMapping
+	length_PolicyMappings
+	length_PolicyQualifierId
+	length_PolicyQualifierInfo
+	length_PolicyQualifierInfos
 	length_PreferredOrLegacyPackageIdentifier
 	length_PreferredOrLegacyStalePackageIdentifier
 	length_PreferredPackageIdentifier
 	length_Principal
 	length_PrincipalName
 	length_Principals
+	length_PrivateKeyUsagePeriod
 	length_PROV_SRV_LOCATION
 	length_ProxyCertInfo
 	length_ProxyPolicy
@@ -1971,6 +2043,7 @@ EXPORTS
 	length_SignerIdentifier
 	length_SignerInfo
 	length_SignerInfos
+	length_SRVName
 	length_StrengthOfFunction
 	length_SubjectInfoAccessSyntax
 	length_SubjectKeyIdentifier
@@ -1997,6 +2070,7 @@ EXPORTS
 	length_UniqueIdentifier
 	length_UnprotectedAttributes
 	length_URIReference
+	length_UserNotice
 	length_ValidationParms
 	length_Validity
 	length_VendorLoadErrorCode
@@ -2004,6 +2078,7 @@ EXPORTS
 	length_WrappedFirmwareKey
 	remove_AttributeValues
 	remove_AuthorizationData
+	remove_CertificatePolicies
 	remove_Certificates
 	remove_CRLDistributionPoints
 	remove_DigestAlgorithmIdentifiers
@@ -2012,6 +2087,8 @@ EXPORTS
 	remove_Extensions
 	remove_GeneralNames
 	remove_METHOD_DATA
+	remove_PolicyMappings
+	remove_PolicyQualifierInfos
 	remove_Principals
 	remove_RDNSequence
 	SAMFlags2int

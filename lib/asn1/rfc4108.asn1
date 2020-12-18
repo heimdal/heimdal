@@ -116,7 +116,7 @@ id-ct-firmwareLoadReceipt OBJECT IDENTIFIER ::= {
   iso(1) member-body(2) us(840) rsadsi(113549) pkcs(1) pkcs9(9)
   smime(16) ct(1) 17 }
 
-FWReceiptVersion ::= INTEGER { v1(1) }
+FWReceiptVersion ::= INTEGER { rfc4108-v1(1) }
 
 FirmwarePackageLoadReceipt ::= SEQUENCE {
   version FWReceiptVersion DEFAULT 1, -- v1, but asn1_compile doesn't handle this

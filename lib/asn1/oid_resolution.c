@@ -46,6 +46,8 @@
 #include "pkcs9_asn1.h"
 #include "pkinit_asn1.h"
 #include "rfc2459_asn1.h"
+#include "rfc4043_asn1.h"
+#include "rfc4108_asn1.h"
 #include "tcg_asn1.h"
 
 
@@ -71,6 +73,8 @@ static const struct sym_oid sym_oids[] = {
 #include "pkcs9_asn1_oids.x"
 #include "pkinit_asn1_oids.x"
 #include "rfc2459_asn1_oids.x"
+#include "rfc4043_asn1_oids.x"
+#include "rfc4108_asn1_oids.x"
 #include "tcg_asn1_oids.x"
 };
 

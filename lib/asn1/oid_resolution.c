@@ -180,16 +180,37 @@ sort_sym_oids(int (*cmp)(const void *, const void *))
     return tmp;
 }
 
+static int
+fix_oid_name(const char **namep, char **freeme)
+{
+    char *dash = strchr(*namep, '-');
+
+    *freeme = NULL;
+    if (dash == NULL)
+        return 0;
+    if ((*freeme = strdup(*namep)) == NULL)
+        return ENOMEM;
+    *namep = *freeme;
+    for (dash = strchr(*namep, '-'); dash; dash = strchr(dash, '-'))
+        *dash = '_';
+    return 0;
+}
+
 int
 der_find_heim_oid_by_name(const char *str, const heim_oid **oid)
 {
     size_t right = num_sym_oids - 1;
     size_t left = 0;
+    char *s = NULL;
+    int ret;
 
     *oid = NULL;
     if (sym_oids_sorted_by_name == NULL &&
         (sym_oids_sorted_by_name = sort_sym_oids(sym_cmp_name)) == NULL)
         return ENOMEM;
+
+    if ((ret = fix_oid_name(&str, &s)))
+        return ret;
 
     while (left <= right) {
         size_t mid = left + (right - left) / 2;
@@ -198,15 +219,19 @@ der_find_heim_oid_by_name(const char *str, const heim_oid **oid)
         cmp = strcmp(str, sym_oids_sorted_by_name[mid].sym);
         if (cmp == 0) {
             *oid = sym_oids_sorted_by_name[mid].oid;
+            free(s);
             return 0;
         }
-        if (cmp < 0 && mid > 0) /* avoid underflow */
+        if (cmp < 0 && mid > 0) {/* avoid underflow */
             right = mid - 1;
-        else if (cmp < 0)
+        } else if (cmp < 0) {
+            free(s);
             return -1;
-        else
+        } else {
             left = mid + 1;
+        }
     }
+    free(s);
     return -1;
 }
 
@@ -217,7 +242,7 @@ der_find_or_parse_heim_oid(const char *str, const char *sep, heim_oid *oid)
 
     switch (der_find_heim_oid_by_name(str, &found)) {
     case 0: return der_copy_oid(found, oid);
-    case -1: return der_parse_heim_oid (str, sep, oid);
+    case -1: return der_parse_heim_oid(str, sep, oid);
     default: return ENOMEM;
     }
 }
@@ -258,6 +283,11 @@ int
 der_match_heim_oid_by_name(const char *str, int *c, const heim_oid **oid)
 {
     size_t i;
+    char *s = NULL;
+    int ret;
+
+    if ((ret = fix_oid_name(&str, &s)))
+        return ret;
 
     if (*c < 0)
         *c = 0;
@@ -270,12 +300,14 @@ der_match_heim_oid_by_name(const char *str, int *c, const heim_oid **oid)
          */
         if (strstr(sym_oids[i].sym, str)) {
             *oid = sym_oids[i].oid;
+            free(s);
             if (i >= INT_MAX)
                 return -1;
             *c = i + 1; /* num_sym_oids is much less than INT_MAX */
             return 0;
         }
     }
+    free(s);
     return -1;
 }
 

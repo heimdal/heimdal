@@ -118,6 +118,14 @@ ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
 ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
 	rk_strsvisx(char *, const char *, size_t, int, const char *);
 ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
+	rk_strasvis(char **, const char *, int, const char *);
+ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
+	rk_strasvisx(char **, const char *, size_t, int, const char *);
+ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
+	rk_strrasvis(char **, size_t *, const char *, int, const char *);
+ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
+	rk_strrasvisx(char **, size_t *, const char *, size_t, int, const char *);
+ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
 	rk_strunvis(char *, const char *);
 ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
 	rk_strunvisx(char *, const char *, int);

@@ -49,7 +49,7 @@ struct rk_strpool {
 ROKEN_LIB_FUNCTION void ROKEN_LIB_CALL
 rk_strpoolfree(struct rk_strpool *p)
 {
-    if (p->str) {
+    if (p && p->str) {
 	free(p->str);
 	p->str = NULL;
     }

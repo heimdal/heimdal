@@ -61,6 +61,8 @@ seq_type(const char *p)
 }
 
 const char *fuzzer_string = "";
+const char *enum_prefix;
+int prefix_enum;
 int fuzzer_flag;
 int support_ber;
 int template_flag;
@@ -74,6 +76,12 @@ int help_flag;
 struct getargs args[] = {
     { "fuzzer", 0, arg_flag, &fuzzer_flag, NULL, NULL },
     { "template", 0, arg_flag, &template_flag, NULL, NULL },
+    { "prefix-enum", 0, arg_flag, &prefix_enum,
+        "prefix C enum labels for ENUMERATED types and INTEGER types with the "
+            "type's name", NULL },
+    { "enum-prefix", 0, arg_string, &enum_prefix,
+        "prefix for C enum labels for ENUMERATED types and INTEGER types with "
+            "enumerated values", "PREFIX" },
     { "encode-rfc1510-bit-string", 0, arg_flag, &rfc1510_bitstring, NULL, NULL },
     { "decode-dce-ber", 0, arg_flag, &support_ber, NULL, NULL },
     { "support-ber", 0, arg_flag, &support_ber, NULL, NULL },

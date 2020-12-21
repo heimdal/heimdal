@@ -35,6 +35,9 @@
 
 #include "gen_locl.h"
 
+extern const char *enum_prefix;
+extern int prefix_enum;
+
 RCSID("$Id$");
 
 FILE *privheaderfile, *headerfile, *oidsfile, *codefile, *logfile, *templatefile;
@@ -742,6 +745,8 @@ getnewbasename(char **newbasename, int typedefp, const char *basename, const cha
 static void
 define_type (int level, const char *name, const char *basename, Type *t, int typedefp, int preservep)
 {
+    const char *label_prefix = NULL;
+    const char *label_prefix_sep = NULL;
     char *newbasename = NULL;
 
     switch (t->type) {
@@ -753,11 +758,15 @@ define_type (int level, const char *name, const char *basename, Type *t, int typ
 	space(level);
 	if(t->members) {
             Member *m;
+
+            label_prefix = prefix_enum ? name : (enum_prefix ? enum_prefix : "");
+            label_prefix_sep = prefix_enum ? "_" : "";
             fprintf (headerfile, "enum %s {\n", typedefp ? name : "");
 	    HEIM_TAILQ_FOREACH(m, t->members, members) {
                 space (level + 1);
-                fprintf(headerfile, "%s = %d%s\n", m->gen_name, m->val,
-                        last_member_p(m));
+                fprintf(headerfile, "%s%s%s = %d%s\n",
+                        label_prefix, label_prefix_sep,
+                        m->gen_name, m->val, last_member_p(m));
             }
             fprintf (headerfile, "} %s;\n", name);
 	} else if (t->range == NULL) {
@@ -867,6 +876,8 @@ define_type (int level, const char *name, const char *basename, Type *t, int typ
     case TEnumerated: {
 	Member *m;
 
+        label_prefix = prefix_enum ? name : (enum_prefix ? enum_prefix : "");
+        label_prefix_sep = prefix_enum ? "_" : "";
 	space(level);
 	fprintf (headerfile, "enum %s {\n", typedefp ? name : "");
 	HEIM_TAILQ_FOREACH(m, t->members, members) {
@@ -874,8 +885,9 @@ define_type (int level, const char *name, const char *basename, Type *t, int typ
 	    if (m->ellipsis)
 		fprintf (headerfile, "/* ... */\n");
 	    else
-		fprintf (headerfile, "%s = %d%s\n", m->gen_name, m->val,
-			 last_member_p(m));
+		fprintf(headerfile, "%s%s%s = %d%s\n",
+                        label_prefix, label_prefix_sep,
+                        m->gen_name, m->val, last_member_p(m));
 	}
 	space(level);
 	fprintf (headerfile, "} %s;\n\n", name);

@@ -18,6 +18,7 @@ dnl Checks for programs.
 AC_PROG_CC
 AM_PROG_CC_C_O
 AC_PROG_CPP
+AM_PATH_PYTHON
 
 m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])
 

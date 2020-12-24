@@ -752,9 +752,12 @@ define_type (int level, const char *name, const char *basename, Type *t, int typ
     switch (t->type) {
     case TType:
 	space(level);
-	fprintf (headerfile, "%s %s;\n", t->symbol->gen_name, name);
+        fprintf(headerfile, "%s %s;\n", t->symbol->gen_name, name);
 	break;
     case TInteger:
+        if (t->symbol && t->symbol->emitted_definition)
+            break;
+
 	space(level);
 	if(t->members) {
             Member *m;
@@ -768,11 +771,11 @@ define_type (int level, const char *name, const char *basename, Type *t, int typ
                         label_prefix, label_prefix_sep,
                         m->gen_name, m->val, last_member_p(m));
             }
-            fprintf (headerfile, "} %s;\n", name);
+            fprintf(headerfile, "} %s;\n", name);
 	} else if (t->range == NULL) {
-	    fprintf (headerfile, "heim_integer %s;\n", name);
+            fprintf(headerfile, "heim_integer %s;\n", name);
 	} else if (t->range->min < INT_MIN && t->range->max <= INT64_MAX) {
-	    fprintf (headerfile, "int64_t %s;\n", name);
+            fprintf(headerfile, "int64_t %s;\n", name);
 	} else if (t->range->min >= 0 && t->range->max > UINT_MAX) {
 	    fprintf (headerfile, "uint64_t %s;\n", name);
 	} else if (t->range->min >= INT_MIN && t->range->max <= INT_MAX) {
@@ -797,6 +800,10 @@ define_type (int level, const char *name, const char *basename, Type *t, int typ
 	struct range range = { 0, UINT_MAX };
         size_t max_memno = 0;
         size_t bitset_size;
+
+        if (t->symbol && t->symbol->emitted_definition)
+            break;
+        memset(&i, 0, sizeof(i));
 
         /*
          * range.max implies the size of the base unsigned integer used for the
@@ -827,7 +834,7 @@ define_type (int level, const char *name, const char *basename, Type *t, int typ
 	    fprintf (headerfile, "heim_bit_string %s;\n", name);
 	else {
 	    int pos = 0;
-	    getnewbasename(&newbasename, typedefp, basename, name);
+	    getnewbasename(&newbasename, typedefp || level == 0, basename, name);
 
 	    fprintf (headerfile, "struct %s {\n", newbasename);
 	    HEIM_TAILQ_FOREACH(m, t->members, members) {
@@ -876,6 +883,9 @@ define_type (int level, const char *name, const char *basename, Type *t, int typ
     case TEnumerated: {
 	Member *m;
 
+        if (t->symbol && t->symbol->emitted_definition)
+            break;
+
         label_prefix = prefix_enum ? name : (enum_prefix ? enum_prefix : "");
         label_prefix_sep = prefix_enum ? "_" : "";
 	space(level);
@@ -897,7 +907,7 @@ define_type (int level, const char *name, const char *basename, Type *t, int typ
     case TSequence: {
 	Member *m;
 
-	getnewbasename(&newbasename, typedefp, basename, name);
+	getnewbasename(&newbasename, typedefp || level == 0, basename, name);
 
 	space(level);
 	fprintf (headerfile, "struct %s {\n", newbasename);
@@ -927,12 +937,11 @@ define_type (int level, const char *name, const char *basename, Type *t, int typ
 	Type i;
 	struct range range = { 0, UINT_MAX };
 
-	getnewbasename(&newbasename, typedefp, basename, name);
+	getnewbasename(&newbasename, typedefp || level == 0, basename, name);
 
+        memset(&i, 0, sizeof(i));
 	i.type = TInteger;
 	i.range = &range;
-	i.members = NULL;
-	i.constraint = NULL;
 
 	space(level);
 	fprintf (headerfile, "struct %s {\n", newbasename);
@@ -955,13 +964,13 @@ define_type (int level, const char *name, const char *basename, Type *t, int typ
 	fprintf (headerfile, "heim_general_string %s;\n", name);
 	break;
     case TTag:
-	define_type (level, name, basename, t->subtype, typedefp, preservep);
+        define_type (level, name, basename, t->subtype, typedefp, preservep);
 	break;
     case TChoice: {
 	int first = 1;
 	Member *m;
 
-	getnewbasename(&newbasename, typedefp, basename, name);
+	getnewbasename(&newbasename, typedefp || level == 0, basename, name);
 
 	space(level);
 	fprintf (headerfile, "struct %s {\n", newbasename);
@@ -1050,24 +1059,229 @@ define_type (int level, const char *name, const char *basename, Type *t, int typ
     default:
 	abort ();
     }
-    if (newbasename)
-	free(newbasename);
+    free(newbasename);
+}
+
+static void
+declare_type(const Symbol *s, Type *t, int typedefp)
+{
+    char *newbasename = NULL;
+
+    if (typedefp)
+        fprintf(headerfile, "typedef ");
+
+    switch (t->type) {
+    case TType:
+        define_type(0, s->gen_name, s->gen_name, s->type, TRUE, TRUE);
+        if (template_flag)
+            generate_template_type_forward(s->gen_name);
+        emitted_declaration(s);
+        return;
+    case TInteger:
+    case TBoolean:
+    case TOctetString:
+    case TBitString: 
+    case TEnumerated: 
+    case TGeneralizedTime:
+    case TGeneralString:
+    case TTeletexString:
+    case TUTCTime:
+    case TUTF8String:
+    case TPrintableString:
+    case TIA5String:
+    case TBMPString:
+    case TUniversalString:
+    case TVisibleString:
+    case TOID :
+    case TNull:
+        define_type(0, s->gen_name, s->gen_name, s->type, TRUE, TRUE);
+        if (template_flag)
+            generate_template_type_forward(s->gen_name);
+        emitted_declaration(s);
+        emitted_definition(s);
+        return;
+    case TTag:
+	declare_type(s, t->subtype, FALSE);
+        emitted_declaration(s);
+	return;
+    default:
+        break;
+    }
+
+    switch (t->type) {
+    case TSet:
+    case TSequence:
+	getnewbasename(&newbasename, TRUE, s->gen_name, s->gen_name);
+	fprintf(headerfile, "struct %s %s;\n", newbasename, s->gen_name);
+	break;
+    case TSetOf:
+    case TSequenceOf:
+	getnewbasename(&newbasename, TRUE, s->gen_name, s->gen_name);
+	fprintf(headerfile, "struct %s %s;\n", newbasename, s->gen_name);
+	break;
+    case TChoice:
+	getnewbasename(&newbasename, TRUE, s->gen_name, s->gen_name);
+	fprintf(headerfile, "struct %s %s;\n", newbasename, s->gen_name);
+	break;
+    default:
+	abort ();
+    }
+    free(newbasename);
+    emitted_declaration(s);
+}
+
+static void generate_subtypes_header_helper(const Member *m);
+static void generate_type_header(const Symbol *);
+
+static void
+generate_subtypes_header_helper(const Member *m)
+{
+    Member *sm;
+    Symbol *s;
+
+    if (m->ellipsis)
+        return;
+    if (m->type->symbol && (s = getsym(m->type->symbol->name)) &&
+        !s->emitted_definition) {
+        /* A field of some named type; recurse */
+        if (!m->optional && !m->defval)
+            generate_type_header(s);
+        return;
+    }
+    if (!m->type->subtype && !m->type->members)
+        return;
+    if (m->type->type == TTag &&
+        m->type->subtype && m->type->subtype->symbol &&
+        (s = getsym(m->type->subtype->symbol->name))) {
+        if (!m->optional && !m->defval)
+            generate_type_header(s);
+        return;
+    }
+    if (m->type->subtype) {
+        switch (m->type->subtype->type) {
+        case TSet:
+        case TSequence:
+        case TChoice:
+            break;
+        default:
+            return;
+        }
+        /* A field of some anonymous (inlined) structured type */
+        HEIM_TAILQ_FOREACH(sm, m->type->subtype->members, members) {
+            generate_subtypes_header_helper(sm);
+        }
+    }
+    if (m->type->members) {
+        HEIM_TAILQ_FOREACH(sm, m->type->members, members) {
+            generate_subtypes_header_helper(sm);
+        }
+    }
+}
+
+static void
+generate_subtypes_header(const Symbol *s)
+{
+    Type *t = s->type;
+    Member *m;
+
+    /*
+     * Recurse down structured types to make sure top-level types get
+     * defined before they are referenced.
+     *
+     * We'll take care to skip OPTIONAL member fields of constructed types so
+     * that we can have circular types like:
+     *
+     *  Foo ::= SEQUENCE {
+     *    bar Bar OPTIONAL
+     *  }
+     *
+     *  Bar ::= SEQUENCE {
+     *    foo Foo OPTIONAL
+     *  }
+     *
+     * not unlike XDR, which uses `*' to mean "optional", except in XDR it's
+     * called a "pointer".  With some care we should be able to eventually
+     * support the silly XDR linked list example:
+     *
+     *  ListOfFoo ::= SEQUENCE {
+     *    someField SomeType,
+     *    next ListOfFoo OPTIONAL
+     *  }
+     *
+     * Not that anyone needs it -- just use a SEQUENCE OF and be done.
+     */
+
+    while (t->type == TTag && t->subtype) {
+        switch (t->subtype->type) {
+        case TTag:
+        case TSet:
+        case TSequence:
+        case TChoice:
+            t = t->subtype;
+            continue;
+        default:
+            break;
+        }
+        break;
+    }
+
+    switch (t->type) {
+    default: return;
+    case TType:
+        if (t->symbol && (s = getsym(t->symbol->name)))
+            generate_type_header(s);
+        return;
+    case TSet:
+    case TSequence:
+    case TChoice:
+        break;
+    }
+
+    HEIM_TAILQ_FOREACH(m, t->members, members) {
+        generate_subtypes_header_helper(m);
+    }
 }
 
 static void
 generate_type_header (const Symbol *s)
 {
-    int preservep = preserve_type(s->name) ? TRUE : FALSE;
 
-    fprintf (headerfile, "/*\n");
-    fprintf (headerfile, "%s ::= ", s->name);
+    /*
+     * Recurse down the types of member fields of `s' to make sure that
+     * referenced types have had their definitions emitted already if the
+     * member fields are not OPTIONAL/DEFAULTed.
+     */
+    if (s->type)
+        generate_subtypes_header(s);
+
+    if (!s->type)
+        return;
+
+    fprintf(headerfile, "/*\n");
+    fprintf(headerfile, "%s ::= ", s->name);
     define_asn1 (0, s->type);
-    fprintf (headerfile, "\n*/\n\n");
+    fprintf(headerfile, "\n*/\n\n");
 
-    fprintf (headerfile, "typedef ");
-    define_type (0, s->gen_name, s->gen_name, s->type, TRUE, preservep);
+    if (s->emitted_definition)
+        return;
 
-    fprintf (headerfile, "\n");
+    fprintf(headerfile, "typedef ");
+    define_type(0, s->gen_name, s->gen_name, s->type, TRUE,
+                preserve_type(s->name) ? TRUE : FALSE);
+
+    fprintf(headerfile, "\n");
+
+    if (template_flag)
+        generate_template_type_forward(s->gen_name);
+
+    emitted_definition(s);
+}
+
+void
+generate_type_header_forwards(const Symbol *s)
+{
+    declare_type(s, s->type, TRUE);
+    fprintf(headerfile, "\n");
 }
 
 void

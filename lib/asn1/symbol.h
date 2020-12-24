@@ -156,12 +156,27 @@ struct symbol {
     enum { SUndefined, SValue, Stype } stype;
     struct value *value;
     Type *type;
+    HEIM_TAILQ_ENTRY(symbol) symlist;
+    unsigned int emitted_declaration:1;
+    unsigned int emitted_definition:1;
 };
 
 typedef struct symbol Symbol;
 
+//HEIM_TAILQ_HEAD(symhead, symbol);
+struct symhead {
+    struct symbol *tqh_first;
+    struct symbol **tqh_last;
+};
+
+extern struct symhead symbols;
+
 void initsym (void);
 Symbol *addsym (char *);
+Symbol *getsym(char *name);
 void output_name (char *);
 int checkundefined(void);
+void generate_types(void);
+void emitted_declaration(const Symbol *);
+void emitted_definition(const Symbol *);
 #endif

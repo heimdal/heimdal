@@ -103,13 +103,16 @@ typedef struct asn1_module {
     /* CLI options and flags needed everywhere: */
     getarg_strings preserve;
     getarg_strings seq;
+    const char *enum_prefix;
     unsigned int one_code_file:1;
     unsigned int support_ber:1;
     unsigned int parse_units_flag:1;
+    unsigned int prefix_enum:1; /* Should be a getarg_strings of bitrsting types to do this for */
     unsigned int rfc1510_bitstring:1; /* Should be a getarg_strings of bitrsting types to do this for */
 } *asn1_module;
 
 void generate_type (const Symbol *);
+void generate_type_header_forwards(const Symbol *);
 void generate_constant (const Symbol *);
 void generate_type_encode (const Symbol *);
 void generate_type_decode (const Symbol *);
@@ -143,6 +146,7 @@ void close_codefile(void);
 
 int is_template_compat (const Symbol *);
 void generate_template(const Symbol *);
+void generate_template_type_forward(const char *);
 void gen_template_import(const Symbol *);
 
 
@@ -152,6 +156,7 @@ extern int support_ber;
 extern int template_flag;
 extern int rfc1510_bitstring;
 extern int one_code_file;
+extern int original_order;
 extern int parse_units_flag;
 extern char *type_file_string;
 

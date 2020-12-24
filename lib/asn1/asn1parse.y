@@ -240,7 +240,6 @@ static int default_tag_env = TE_EXPLICIT;
 ModuleDefinition: IDENTIFIER objid_opt kw_DEFINITIONS TagDefault ExtensionDefault
 			EEQUAL kw_BEGIN ModuleBody kw_END
 		{
-			checkundefined();
 		}
 		;
 
@@ -320,11 +319,14 @@ referencenames	: IDENTIFIER ',' referencenames
 
 TypeAssignment	: IDENTIFIER EEQUAL Type
 		{
-		    Symbol *s = addsym ($1);
+		    Symbol *s = addsym($1);
 		    s->stype = Stype;
 		    s->type = $3;
 		    fix_labels(s);
-		    generate_type (s);
+                    if (original_order)
+                        generate_type(s);
+                    else
+                        generate_type_header_forwards(s);
 		}
 		;
 

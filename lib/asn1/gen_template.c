@@ -879,6 +879,12 @@ gen_template_import(const Symbol *s)
     gen_extern_stubs(f, s->gen_name);
 }
 
+void
+generate_template_type_forward(const char *name)
+{
+    fprintf(get_code_file(), "extern const struct asn1_template asn1_%s[];\n", name);
+}
+
 static void
 generate_template_type(const char *varname,
 		       const char **dupname,
@@ -899,8 +905,6 @@ generate_template_type(const char *varname,
 
     if (type->type == TTag)
 	implicit = (type->tag.tagenv == TE_IMPLICIT);
-
-    fprintf(get_code_file(), "extern const struct asn1_template asn1_%s[];\n", tl->name);
 
     template_members(&tl->template, basetype, name, type, optional, implicit, isstruct, need_offset);
 

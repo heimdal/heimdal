@@ -6,6 +6,33 @@ BEGIN
 
 IMPORTS heim_any FROM heim;
 
+-- Check that we handle out of order definitions.
+-- The compiler should emit the definition of TESTOutOfOrderBar before that of
+-- TESTOutOfOrderFoo.
+TESTOutOfOrderFoo ::= SEQUENCE {
+        bar TESTOutOfOrderBar
+}
+
+TESTOutOfOrderBar ::= SEQUENCE {
+        aMember INTEGER
+}
+
+-- Check that we can handle rpc.mountd style "lists".  This is unnecessarily
+-- inefficient in its encoding, and there's no point to using this over
+-- SEQUENCE OF (arrays), but it's neat that we can do this now that we can do
+-- out of order definitions.
+--
+-- This could be useful if we ever extend asn1_compile to also handle XDR,
+-- which we well might since XDR's syntax is a dual of a strict subset of
+-- ASN.1, and since XDR the encoding is fairly straightforward.
+--
+-- Note that the `next' member has to be OPTIONAL or DEFAULTed for this to
+-- work.
+TESTCircular ::= SEQUENCE {
+        name UTF8String,
+        next TESTCircular OPTIONAL
+}
+
 TESTuint32 ::= INTEGER (0..4294967295)
 TESTuint64 ::= INTEGER(0..9223372036854775807)
 TESTint64 ::= INTEGER(-9223372036854775808..9223372036854775807)

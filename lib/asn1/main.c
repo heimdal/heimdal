@@ -71,6 +71,7 @@ int one_code_file;
 char *option_file;
 int parse_units_flag = 1;
 char *type_file_string = "krb5-types.h";
+int original_order;
 int version_flag;
 int help_flag;
 struct getargs args[] = {
@@ -88,7 +89,15 @@ struct getargs args[] = {
     { "preserve-binary", 0, arg_strings, &preserve, NULL, NULL },
     { "sequence", 0, arg_strings, &seq, NULL, NULL },
     { "one-code-file", 0, arg_flag, &one_code_file, NULL, NULL },
-    { "option-file", 0, arg_string, &option_file, NULL, NULL },
+    { "gen-name", 0, arg_string, &name,
+        "Name of generated module", "NAME" },
+    { "option-file", 0, arg_string, &option_file,
+        "File with additional compiler CLI options", "FILE" },
+    { "original-order", 0, arg_flag, &original_order,
+        "Define C types and functions in the order in which they appear in "
+            "the ASN.1 module instead of topologically sorting types.  This "
+            "is useful for comparing output to earlier compiler versions.",
+        NULL },
     { "parse-units", 0, arg_negative_flag, &parse_units_flag, NULL, NULL },
     { "type-file", 0, arg_string, &type_file_string, NULL, NULL },
     { "version", 0, arg_flag, &version_flag, NULL, NULL },
@@ -116,11 +125,11 @@ main(int argc, char **argv)
     int len = 0, i;
 
     setprogname(argv[0]);
-    if(getarg(args, num_args, argc, argv, &optidx))
+    if (getarg(args, num_args, argc, argv, &optidx))
 	usage(1);
-    if(help_flag)
+    if (help_flag)
 	usage(0);
-    if(version_flag) {
+    if (version_flag) {
 	print_version(NULL);
 	exit(0);
     }
@@ -204,7 +213,7 @@ main(int argc, char **argv)
     }
 
 
-    init_generate (file, name);
+    init_generate(file, name);
 
     if (one_code_file)
 	generate_header_of_codefile(name);
@@ -213,6 +222,8 @@ main(int argc, char **argv)
     ret = yyparse ();
     if(ret != 0 || error_flag != 0)
 	exit(1);
+    if (!original_order)
+        generate_types();
     close_generate ();
     if (argc != optidx)
 	fclose(yyin);

@@ -60,8 +60,26 @@ seq_type(const char *p)
     return 0;
 }
 
+static const char *
+my_basename(const char *fn)
+{
+    const char *base, *p;
+
+    for (p = base = fn; *p; p++) {
+#ifdef WIN32
+        if (*p == '/' || *p == '\\')
+            base = p + 1;
+#else
+        if (*p == '/')
+            base = p + 1;
+#endif
+    }
+    return base;
+}
+
 const char *fuzzer_string = "";
 const char *enum_prefix;
+const char *name;
 int prefix_enum;
 int fuzzer_flag;
 int support_ber;
@@ -83,11 +101,18 @@ struct getargs args[] = {
     { "enum-prefix", 0, arg_string, &enum_prefix,
         "prefix for C enum labels for ENUMERATED types and INTEGER types with "
             "enumerated values", "PREFIX" },
-    { "encode-rfc1510-bit-string", 0, arg_flag, &rfc1510_bitstring, NULL, NULL },
-    { "decode-dce-ber", 0, arg_flag, &support_ber, NULL, NULL },
-    { "support-ber", 0, arg_flag, &support_ber, NULL, NULL },
-    { "preserve-binary", 0, arg_strings, &preserve, NULL, NULL },
-    { "sequence", 0, arg_strings, &seq, NULL, NULL },
+    { "encode-rfc1510-bit-string", 0, arg_flag, &rfc1510_bitstring,
+        "Use RFC1510 incorrect BIT STRING handling for all BIT STRING types "
+            "in the module", NULL },
+    { "decode-dce-ber", 0, arg_flag, &support_ber,
+        "Allow DCE-style BER on decode", NULL },
+    { "support-ber", 0, arg_flag, &support_ber, "Allow BER on decode", NULL },
+    { "preserve-binary", 0, arg_strings, &preserve,
+        "Names of types for which to generate _save fields, saving original "
+            "encoding, in containing structures (useful for signature "
+            "verification)", "TYPE-NAME" },
+    { "sequence", 0, arg_strings, &seq,
+        "Generate add/remove functions for SEQUENCE OF types", "TYPE-NAME" },
     { "one-code-file", 0, arg_flag, &one_code_file, NULL, NULL },
     { "gen-name", 0, arg_string, &name,
         "Name of generated module", "NAME" },
@@ -99,7 +124,9 @@ struct getargs args[] = {
             "is useful for comparing output to earlier compiler versions.",
         NULL },
     { "parse-units", 0, arg_negative_flag, &parse_units_flag, NULL, NULL },
-    { "type-file", 0, arg_string, &type_file_string, NULL, NULL },
+    { "type-file", 0, arg_string, &type_file_string,
+        "Name of a C header file to generate includes of for base types",
+        "C-HEADER-FILE" },
     { "version", 0, arg_flag, &version_flag, NULL, NULL },
     { "help", 0, arg_flag, &help_flag, NULL, NULL }
 };
@@ -119,10 +146,12 @@ main(int argc, char **argv)
 {
     int ret;
     const char *file;
-    const char *name = NULL;
+    FILE *opt = NULL;
     int optidx = 0;
     char **arg = NULL;
-    int len = 0, i;
+    size_t len = 0;
+    size_t sz = 0;
+    int i;
 
     setprogname(argv[0]);
     if (getarg(args, num_args, argc, argv, &optidx))
@@ -134,17 +163,39 @@ main(int argc, char **argv)
 	exit(0);
     }
     if (argc == optidx) {
+        /* Compile the module on stdin */
 	file = "stdin";
 	name = "stdin";
 	yyin = stdin;
     } else {
+        /* Compile a named module */
 	file = argv[optidx];
+
+        /*
+         * If the .asn1 stem is not given, then assume it, and also assume
+         * --option-file was given if the .opt file exists
+         */
+        if (strchr(file, '.') == NULL) {
+            char *s = NULL;
+
+            if (asprintf(&s, "%s.opt", file) == -1 || s == NULL)
+                err(1, "Out of memory");
+            if ((opt = fopen(s, "r")))
+                option_file = s;
+            else
+                free(s);
+            if (asprintf(&s, "%s.asn1", file) == -1 || s == NULL)
+                err(1, "Out of memory");
+            file = s;
+        }
 	yyin = fopen (file, "r");
 	if (yyin == NULL)
 	    err (1, "open %s", file);
 	if (argc == optidx + 1) {
 	    char *p;
-	    name = estrdup(file);
+
+            /* C module name substring not given; derive from file name */
+            name = my_basename(estrdup(file));
 	    p = strrchr(name, '.');
 	    if (p)
 		*p = '\0';
@@ -157,13 +208,10 @@ main(int argc, char **argv)
      */
     if (option_file) {
 	char buf[1024];
-	FILE *opt;
 
-	opt = fopen(option_file, "r");
-	if (opt == NULL) {
-	    perror("open");
-	    exit(1);
-	}
+        if (opt == NULL &&
+            (opt = fopen(option_file, "r")) == NULL)
+	    err(1, "Could not open given option file %s", option_file);
 
 	arg = calloc(2, sizeof(arg[0]));
 	if (arg == NULL) {
@@ -173,15 +221,19 @@ main(int argc, char **argv)
 	arg[0] = option_file;
 	arg[1] = NULL;
 	len = 1;
+        sz = 2;
 
 	while (fgets(buf, sizeof(buf), opt) != NULL) {
 	    buf[strcspn(buf, "\n\r")] = '\0';
 
-	    arg = realloc(arg, (len + 2) * sizeof(arg[0]));
-	    if (arg == NULL) {
-		perror("malloc");
-		exit(1);
-	    }
+            if (len + 1 >= sz) {
+                arg = realloc(arg, (sz + (sz>>1) + 2) * sizeof(arg[0]));
+                if (arg == NULL) {
+                    perror("malloc");
+                    exit(1);
+                }
+                sz += (sz>>1) + 2;
+            }
 	    arg[len] = strdup(buf);
 	    if (arg[len] == NULL) {
 		perror("strdup");

@@ -903,7 +903,7 @@ ${kimpersonate} -s ${ps} -c bar@${R} -t ${aesenctype} || \
 ${kgetcred} --out-cache=${o2cache} --delegation-credential-cache=${ocache} ${server}@${R} > /dev/null 2>/dev/null && \
 	{ ec=1 ; eval "${testfailed}"; }
 
-echo "test constrained delegation impersonation (missing KRB5SignedPath)"; > messages.log
+echo "test constrained delegation impersonation (missing PAC)"; > messages.log
 rm -f ocache.krb5
 ${kimpersonate} -s ${ps} -c bar@${R} -t ${aesenctype} -f forwardable || \
 	{ ec=1 ; eval "${testfailed}"; }

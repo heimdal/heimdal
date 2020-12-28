@@ -48,231 +48,6 @@ get_krbtgt_realm(const PrincipalName *p)
 }
 
 /*
- * The KDC might add a signed path to the ticket authorization data
- * field. This is to avoid server impersonating clients and the
- * request constrained delegation.
- *
- * This is done by storing a KRB5_AUTHDATA_IF_RELEVANT with a single
- * entry of type KRB5SignedPath.
- */
-
-static krb5_error_code
-find_KRB5SignedPath(krb5_context context,
-		    const AuthorizationData *ad,
-		    krb5_data *data)
-{
-    AuthorizationData child;
-    krb5_error_code ret;
-    int pos;
-
-    if (ad == NULL || ad->len == 0)
-	return KRB5KDC_ERR_PADATA_TYPE_NOSUPP;
-
-    pos = ad->len - 1;
-
-    if (ad->val[pos].ad_type != KRB5_AUTHDATA_IF_RELEVANT)
-	return KRB5KDC_ERR_PADATA_TYPE_NOSUPP;
-
-    ret = decode_AuthorizationData(ad->val[pos].ad_data.data,
-				   ad->val[pos].ad_data.length,
-				   &child,
-				   NULL);
-    if (ret) {
-	krb5_set_error_message(context, ret, "Failed to decode "
-			       "IF_RELEVANT with %d", ret);
-	return ret;
-    }
-
-    if (child.len != 1) {
-	free_AuthorizationData(&child);
-	return KRB5KDC_ERR_PADATA_TYPE_NOSUPP;
-    }
-
-    if (child.val[0].ad_type != KRB5_AUTHDATA_SIGNTICKET) {
-	free_AuthorizationData(&child);
-	return KRB5KDC_ERR_PADATA_TYPE_NOSUPP;
-    }
-
-    if (data)
-	ret = der_copy_octet_string(&child.val[0].ad_data, data);
-    free_AuthorizationData(&child);
-    return ret;
-}
-
-krb5_error_code
-_kdc_add_KRB5SignedPath(krb5_context context,
-			krb5_kdc_configuration *config,
-			hdb_entry_ex *krbtgt,
-			krb5_enctype enctype,
-			krb5_const_principal client,
-			krb5_const_principal server,
-			krb5_principals principals,
-			EncTicketPart *tkt)
-{
-    krb5_error_code ret;
-    KRB5SignedPath sp;
-    krb5_data data;
-    krb5_crypto crypto = NULL;
-    size_t size = 0;
-
-    if (server && principals) {
-	ret = add_Principals(principals, server);
-	if (ret)
-	    return ret;
-    }
-
-    {
-	KRB5SignedPathData spd;
-
-	spd.client = rk_UNCONST(client);
-	spd.authtime = tkt->authtime;
-	spd.delegated = principals;
-	spd.method_data = NULL;
-
-	ASN1_MALLOC_ENCODE(KRB5SignedPathData, data.data, data.length,
-			   &spd, &size, ret);
-	if (ret)
-	    return ret;
-	if (data.length != size)
-	    krb5_abortx(context, "internal asn.1 encoder error");
-    }
-
-    {
-	Key *key;
-	ret = hdb_enctype2key(context, &krbtgt->entry, NULL, enctype, &key);
-	if (ret == 0)
-	    ret = krb5_crypto_init(context, &key->key, 0, &crypto);
-	if (ret) {
-	    free(data.data);
-	    return ret;
-	}
-    }
-
-    /*
-     * Fill in KRB5SignedPath
-     */
-
-    sp.etype = enctype;
-    sp.delegated = principals;
-    sp.method_data = NULL;
-
-    ret = krb5_create_checksum(context, crypto, KRB5_KU_KRB5SIGNEDPATH, 0,
-			       data.data, data.length, &sp.cksum);
-    krb5_crypto_destroy(context, crypto);
-    free(data.data);
-    if (ret)
-	return ret;
-
-    ASN1_MALLOC_ENCODE(KRB5SignedPath, data.data, data.length, &sp, &size, ret);
-    free_Checksum(&sp.cksum);
-    if (ret)
-	return ret;
-    if (data.length != size)
-	krb5_abortx(context, "internal asn.1 encoder error");
-
-
-    /*
-     * Add IF-RELEVANT(KRB5SignedPath) to the last slot in
-     * authorization data field.
-     */
-
-    ret = _kdc_tkt_add_if_relevant_ad(context, tkt,
-				      KRB5_AUTHDATA_SIGNTICKET, &data);
-    krb5_data_free(&data);
-
-    return ret;
-}
-
-static krb5_error_code
-check_KRB5SignedPath(krb5_context context,
-		     krb5_kdc_configuration *config,
-		     hdb_entry_ex *krbtgt,
-		     krb5_principal cp,
-		     EncTicketPart *tkt,
-		     krb5_principals *delegated,
-		     int *signedpath)
-{
-    krb5_error_code ret;
-    krb5_data data;
-    krb5_crypto crypto = NULL;
-
-    if (delegated)
-	*delegated = NULL;
-
-    ret = find_KRB5SignedPath(context, tkt->authorization_data, &data);
-    if (ret == 0) {
-	KRB5SignedPathData spd;
-	KRB5SignedPath sp;
-	size_t size = 0;
-
-	ret = decode_KRB5SignedPath(data.data, data.length, &sp, NULL);
-	krb5_data_free(&data);
-	if (ret)
-	    return ret;
-
-	spd.client = cp;
-	spd.authtime = tkt->authtime;
-	spd.delegated = sp.delegated;
-	spd.method_data = sp.method_data;
-
-	ASN1_MALLOC_ENCODE(KRB5SignedPathData, data.data, data.length,
-			   &spd, &size, ret);
-	if (ret) {
-	    free_KRB5SignedPath(&sp);
-	    return ret;
-	}
-	if (data.length != size)
-	    krb5_abortx(context, "internal asn.1 encoder error");
-
-	{
-	    Key *key;
-	    ret = hdb_enctype2key(context, &krbtgt->entry, NULL, /* XXX use correct kvno! */
-				  sp.etype, &key);
-	    if (ret == 0)
-		ret = krb5_crypto_init(context, &key->key, 0, &crypto);
-	    if (ret) {
-		free(data.data);
-		free_KRB5SignedPath(&sp);
-		return ret;
-	    }
-	}
-	ret = krb5_verify_checksum(context, crypto, KRB5_KU_KRB5SIGNEDPATH,
-				   data.data, data.length,
-				   &sp.cksum);
-	krb5_crypto_destroy(context, crypto);
-	free(data.data);
-	if (ret) {
-	    free_KRB5SignedPath(&sp);
-	    kdc_log(context, config, 4,
-		    "KRB5SignedPath not signed correctly, not marking as signed");
-	    return 0;
-	}
-
-	if (delegated && sp.delegated) {
-
-	    *delegated = malloc(sizeof(*sp.delegated));
-	    if (*delegated == NULL) {
-		free_KRB5SignedPath(&sp);
-		return ENOMEM;
-	    }
-
-	    ret = copy_Principals(*delegated, sp.delegated);
-	    if (ret) {
-		free_KRB5SignedPath(&sp);
-		free(*delegated);
-		*delegated = NULL;
-		return ret;
-	    }
-	}
-	free_KRB5SignedPath(&sp);
-
-	*signedpath = 1;
-    }
-
-    return 0;
-}
-
-/*
  *
  */
 
@@ -773,7 +548,6 @@ tgs_make_reply(astgs_request_t r,
                const char *tgt_realm,
 	       hdb_entry_ex *krbtgt,
 	       krb5_enctype krbtgt_etype,
-	       krb5_principals spp,
 	       const krb5_data *rspac,
 	       const METHOD_DATA *enc_pa_data)
 {
@@ -955,20 +729,6 @@ tgs_make_reply(astgs_request_t r,
 		goto out;
 	    }
 	}
-
-	/* Filter out type KRB5SignedPath */
-	ret = find_KRB5SignedPath(context, et.authorization_data, NULL);
-	if (ret == 0) {
-	    if (et.authorization_data->len == 1) {
-		free_AuthorizationData(et.authorization_data);
-		free(et.authorization_data);
-		et.authorization_data = NULL;
-	    } else {
-		AuthorizationData *ad = et.authorization_data;
-		free_AuthorizationDataElement(&ad->val[ad->len - 1]);
-		ad->len--;
-	    }
-	}
     }
 
     ret = krb5_copy_keyblock_contents(context, sessionkey, &et.key);
@@ -996,24 +756,6 @@ tgs_make_reply(astgs_request_t r,
 
     _kdc_log_timestamp(r, "TGS-REQ", et.authtime, et.starttime,
 		       et.endtime, et.renew_till);
-
-    /* Don't sign cross realm tickets, they can't be checked anyway */
-    {
-	char *realm = get_krbtgt_realm(&ek.sname);
-
-	if (realm == NULL || strcmp(realm, ek.srealm) == 0) {
-	    ret = _kdc_add_KRB5SignedPath(context,
-					  config,
-					  krbtgt,
-					  krbtgt_etype,
-					  client_principal,
-					  NULL,
-					  spp,
-					  &et);
-	    if (ret)
-		goto out;
-	}
-    }
 
     if (enc_pa_data->len) {
 	rep.padata = calloc(1, sizeof(*rep.padata));
@@ -1565,7 +1307,6 @@ tgs_build_reply(astgs_request_t priv,
     HDB *clientdb, *s4u2self_impersonated_clientdb;
     krb5_realm ref_realm = NULL;
     EncTicketPart *tgt = &ticket->ticket;
-    krb5_principals spp = NULL;
     const EncryptionKey *ekey;
     krb5_keyblock sessionkey;
     krb5_kvno kvno;
@@ -2067,24 +1808,6 @@ server_lookup:
 	goto out;
     }
 
-    /* also check the krbtgt for signature */
-    ret = check_KRB5SignedPath(context,
-			       config,
-			       krbtgt,
-			       cp,
-			       tgt,
-			       &spp,
-			       &signedpath);
-    if (ret) {
-	const char *msg = krb5_get_error_message(context, ret);
-        _kdc_audit_addreason((kdc_request_t)priv, "KRB5SignedPath check failed");
-	kdc_log(context, config, 4,
-		"KRB5SignedPath check failed for %s (%s) from %s with %s",
-		spn, cpn, from, msg);
-	krb5_free_error_message(context, msg);
-	goto out;
-    }
-
     /*
      * Process request
      */
@@ -2417,29 +2140,6 @@ server_lookup:
 	    goto out;
 	}
 
-	/*
-	 * Check that the KDC issued the user's ticket.
-	 */
-	ret = check_KRB5SignedPath(context,
-				   config,
-				   krbtgt,
-				   cp,
-				   &adtkt,
-				   NULL,
-				   &ad_signedpath);
-	if (ret) {
-	    const char *msg = krb5_get_error_message(context, ret);
-	    kdc_log(context, config, 4,
-		    "KRB5SignedPath check from service %s failed "
-		    "for delegation to %s for client %s (%s)"
-		    "from %s failed with %s",
-		    spn, tpn, dpn, cpn, from, msg);
-	    krb5_free_error_message(context, msg);
-            _kdc_audit_addreason((kdc_request_t)priv,
-                                 "KRB5SignedPath check failed");
-	    goto out;
-	}
-
 	if (!ad_signedpath) {
 	    ret = KRB5KDC_ERR_BADOPTION;
 	    kdc_log(context, config, 4,
@@ -2549,7 +2249,6 @@ server_lookup:
                          tgt_realm,
 			 krbtgt_out,
 			 tkey_sign->key.keytype,
-			 spp,
 			 &rspac,
 			 &enc_pa_data);
 

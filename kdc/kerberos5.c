@@ -2511,28 +2511,6 @@ _kdc_as_rep(astgs_request_t r)
 		       r->et.starttime, r->et.endtime,
 		       r->et.renew_till);
 
-    {
-	krb5_principal client_principal;
-
-	ret = _krb5_principalname2krb5_principal(context, &client_principal,
-						 rep.cname, rep.crealm);
-	if (ret)
-	    goto out;
-
-	/* do this as the last thing since this signs the EncTicketPart */
-	ret = _kdc_add_KRB5SignedPath(context,
-				      config,
-				      r->server,
-				      setype,
-				      client_principal,
-				      NULL,
-				      NULL,
-				      &r->et);
-	krb5_free_principal(context, client_principal);
-	if (ret)
-	    goto out;
-    }
-
     _log_astgs_req(r, setype);
 
     /*

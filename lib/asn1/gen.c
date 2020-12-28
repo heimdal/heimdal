@@ -515,9 +515,34 @@ generate_constant (const Symbol *s)
 }
 
 int
-is_primitive_type(int type)
+is_primitive_type(const Type *t)
 {
-    switch(type) {
+    while (t->type == TType &&
+           t->symbol &&
+           t->symbol->type &&
+           t->symbol->type->type == TType)
+        t = t->symbol->type;
+    /* EXPLICIT non-UNIVERSAL tags are constructed */
+    if (t->type == TTag && t->tag.tagclass != ASN1_C_UNIV &&
+        t->tag.tagenv == TE_EXPLICIT)
+        return 0;
+    if (t->symbol && t->symbol->type) {
+        /* EXPLICIT non-UNIVERSAL tags are constructed */
+        if (t->symbol->type->type == TTag &&
+            t->symbol->type->tag.tagclass != ASN1_C_UNIV &&
+            t->symbol->type->tag.tagenv == TE_EXPLICIT)
+            return 0;
+        /* EXPLICIT UNIVERSAL tags are constructed if they are SEQUENCE/SET */
+        if (t->symbol->type->type == TTag &&
+            t->symbol->type->tag.tagclass == ASN1_C_UNIV) {
+            switch (t->symbol->type->tag.tagvalue) {
+            case UT_Sequence: return 0;
+            case UT_Set: return 0;
+            default: return 1;
+            }
+        }
+    }
+    switch(t->type) {
     case TInteger:
     case TBoolean:
     case TOctetString:

@@ -576,7 +576,7 @@ der_get_tag (const unsigned char *p, size_t len,
 {
     size_t ret = 0;
     if (len < 1)
-	return ASN1_OVERRUN;
+	return ASN1_MISSING_FIELD;
     *cls = (Der_class)(((*p) >> 6) & 0x03);
     *type = (Der_type)(((*p) >> 5) & 0x01);
     *tag = (*p) & 0x1f;
@@ -625,15 +625,20 @@ der_match_tag2 (const unsigned char *p, size_t len,
     unsigned int thistag;
     int e;
 
-    e = der_get_tag (p, len, &thisclass, type, &thistag, &l);
+    e = der_get_tag(p, len, &thisclass, type, &thistag, &l);
     if (e) return e;
-    if (cls != thisclass)
-	return ASN1_BAD_ID;
-    if(tag > thistag)
-	return ASN1_MISPLACED_FIELD;
-    if(tag < thistag)
+    /*
+     * We do depend on ASN1_BAD_ID being returned in places where we're
+     * essentially implementing an application-level CHOICE where we try to
+     * decode one way then the other.  In Heimdal this happens only in lib/hdb/
+     * where we try to decode a blob as an hdb_entry, then as an
+     * hdb_entry_alias.  Applications should really not depend on this.
+     */
+    if (cls != thisclass && (cls == ASN1_C_APPL || thisclass == ASN1_C_APPL))
+        return ASN1_BAD_ID;
+    if (tag != thistag)
 	return ASN1_MISSING_FIELD;
-    if(size) *size = l;
+    if (size) *size = l;
     return 0;
 }
 

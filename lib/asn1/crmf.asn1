@@ -51,7 +51,6 @@ SubsequentMessage ::= INTEGER {
 	challengeResp (1)
 }
 
--- XXX IMPLICIT brokenness
 POPOPrivKey ::= CHOICE {
 	thisMessage       [0] BIT STRING,         -- Deprecated
 	subsequentMessage [1] IMPLICIT SubsequentMessage,
@@ -60,7 +59,6 @@ POPOPrivKey ::= CHOICE {
 	encryptedKey      [4] heim_any
 }
 
--- XXX IMPLICIT brokenness
 ProofOfPossession ::= CHOICE {
 	raVerified        [0] NULL,
 	signature         [1] POPOSigningKey,

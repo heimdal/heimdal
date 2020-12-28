@@ -137,8 +137,10 @@ find_tag (const Type *t,
 	break;
     case TTag:
 	*cl  = t->tag.tagclass;
-	*ty  = is_primitive_type(t->subtype->type) ? PRIM : CONS;
-	*tag = t->tag.tagvalue;
+        *ty  = !(t->tag.tagclass != ASN1_C_UNIV &&
+                 t->tag.tagenv == TE_EXPLICIT) &&
+            is_primitive_type(t->subtype) ? PRIM : CONS;
+	*tag = t->tag.tagvalue; /* XXX is this correct? */
 	break;
     case TType:
 	if ((t->symbol->stype == Stype && t->symbol->type == NULL)
@@ -224,13 +226,26 @@ decode_type(const char *name, const Type *t, int optional, struct value *defval,
 		 t->symbol->gen_name, name);
 	if (optional) {
 	    fprintf (codefile,
-		     "if(e) {\n"
+		     "if(e == ASN1_MISSING_FIELD) {\n"
 		     "free(%s);\n"
 		     "%s = NULL;\n"
+		     "} else if (e) { %s; \n"
 		     "} else {\n"
 		     "p += l; len -= l; ret += l;\n"
 		     "}\n",
-		     name, name);
+		     name, name, forwstr);
+        } else if (defval) {
+            fprintf(codefile,
+                    "if (e == ASN1_MISSING_FIELD) {\n");
+            /*
+             * `name' starts with an ampersand here and is not an lvalue.
+             * We skip the ampersand and then it is an lvalue.
+             */
+            gen_assign_defval(name + 1, defval);
+            fprintf(codefile,
+                    "} else if (e) { %s;\n"
+                    "} else { p += l; len -= l; ret += l; }\n",
+                    forwstr);
 	} else {
 	    fprintf (codefile,
 		     "if(e) %s;\n",
@@ -371,7 +386,7 @@ decode_type(const char *name, const Type *t, int optional, struct value *defval,
 
 	    fprintf(codefile, "case MAKE_TAG(%s, %s, %s):\n",
 		    classname(m->type->tag.tagclass),
-		    is_primitive_type(m->type->subtype->type) ? "PRIM" : "CONS",
+		    is_primitive_type(m->type->subtype) ? "PRIM" : "CONS",
 		    valuename(m->type->tag.tagclass, m->type->tag.tagvalue));
 
 	    if (asprintf (&s, "%s(%s)->%s", m->optional ? "" : "&", name, m->gen_name) < 0 || s == NULL)
@@ -481,6 +496,10 @@ decode_type(const char *name, const Type *t, int optional, struct value *defval,
     case TTag:{
     	char *tname = NULL, *typestring = NULL;
 	char *ide = NULL;
+        int replace_tag = 0;
+        int prim = !(t->tag.tagclass != ASN1_C_UNIV &&
+                     t->tag.tagenv == TE_EXPLICIT) &&
+            is_primitive_type(t->subtype);
 
 	if (asprintf(&typestring, "%s_type", tmpstr) < 0 || typestring == NULL)
 	    errx(1, "malloc");
@@ -508,7 +527,7 @@ decode_type(const char *name, const Type *t, int optional, struct value *defval,
 	    fprintf(codefile,
 		    "if (e == 0 && %s != %s) { e = ASN1_BAD_ID; }\n",
 		    typestring,
-		    is_primitive_type(t->subtype->type) ? "PRIM" : "CONS");
+		    prim ? "PRIM" : "CONS");
 	}
 
 	if(optional) {
@@ -519,21 +538,19 @@ decode_type(const char *name, const Type *t, int optional, struct value *defval,
 		     "%s = calloc(1, sizeof(*%s));\n"
 		     "if (%s == NULL) { e = ENOMEM; %s; }\n",
 		     name, name, name, name, forwstr);
-	} else {
-            if (defval) {
-                char *s;
+	} else if (defval) {
+            char *s;
 
-                if (asprintf(&s, "*(%s)", name) == -1 || s == NULL)
-                    return ENOMEM;
-                fprintf(codefile, "if (e && e != ASN1_MISSING_FIELD) %s;\n", forwstr);
-                fprintf(codefile, "if (e == ASN1_MISSING_FIELD) {\n");
-                gen_assign_defval(s, defval);
-                free(s);
-                fprintf(codefile, "e = 0; l= 0;\n} else {\n");
-            } else {
-                fprintf(codefile, "if (e) %s;\n", forwstr);
-            }
-	}
+            if (asprintf(&s, "*(%s)", name) == -1 || s == NULL)
+                return ENOMEM;
+            fprintf(codefile, "if (e && e != ASN1_MISSING_FIELD) %s;\n", forwstr);
+            fprintf(codefile, "if (e == ASN1_MISSING_FIELD) {\n");
+            gen_assign_defval(s, defval);
+            free(s);
+            fprintf(codefile, "e = 0; l= 0;\n} else {\n");
+        } else {
+            fprintf(codefile, "if (e) %s;\n", forwstr);
+        }
 	fprintf (codefile,
 		 "p += l; len -= l; ret += l;\n"
 		 "%s_oldlen = len;\n",
@@ -550,7 +567,45 @@ decode_type(const char *name, const Type *t, int optional, struct value *defval,
 		    "len = %s_datalen;\n", tmpstr, forwstr, tmpstr);
 	if (asprintf (&tname, "%s_Tag", tmpstr) < 0 || tname == NULL)
 	    errx(1, "malloc");
-	decode_type(name, t->subtype, 0, NULL, forwstr, tname, ide, depth + 1);
+        /*
+         * XXX See the comments in gen_encode() about this.
+         */
+        if (t->tag.tagenv == TE_IMPLICIT && !prim &&
+            t->subtype->type != TSequenceOf && t->subtype->type != TSetOf &&
+            t->subtype->type != TChoice) {
+            if (t->subtype->symbol &&
+                (t->subtype->type == TSequence ||
+                 t->subtype->type == TSet))
+                replace_tag = 1;
+            else if (t->subtype->symbol && strcmp(t->subtype->symbol->name, "heim_any"))
+                replace_tag = 1;
+        } else if (t->tag.tagenv == TE_IMPLICIT && prim && t->subtype->symbol)
+            replace_tag = 1;
+        if (replace_tag) {
+            /*
+             * XXX We're assuming the IMPLICIT and original tags have the same
+             * length.  This is one of the places that needs fixing if we want
+             * to properly support tags > 30.
+             */
+            fprintf(codefile,
+                    "{ unsigned char *pcopy;\n"
+                    "pcopy = calloc (1, len);\n"
+                    "if (pcopy == 0) { e = ENOMEM; %s;}\n"
+                    "memcpy (pcopy, p, len);\n"
+                    "e = der_replace_tag (pcopy, len, %s, %s, %s);\n"
+                    "if (e) %s;\n",
+                    forwstr,
+                    classname(t->subtype->tag.tagclass),
+                    prim ? "PRIM" : "CONS",
+                    valuename(t->subtype->tag.tagclass, t->subtype->tag.tagvalue),
+                    forwstr);
+            decode_type(name, t->subtype, 0, NULL, forwstr, tname, ide, depth + 1);
+            fprintf(codefile,
+                    "free(pcopy);"
+                    "}\n");
+        } else {
+            decode_type(name, t->subtype, 0, NULL, forwstr, tname, ide, depth + 1);
+        }
 	if(support_ber)
 	    fprintf(codefile,
 		    "if(is_indefinite%u){\n"

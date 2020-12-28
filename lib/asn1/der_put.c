@@ -442,6 +442,25 @@ der_put_oid (unsigned char *p, size_t len,
 }
 
 int
+der_replace_tag(unsigned char *p, size_t len, Der_class class, Der_type type,
+                unsigned int tag)
+{
+    Der_class found_class;
+    Der_type found_type;
+    unsigned int found_tag;
+    size_t found_size, actual_size;
+    int e;
+
+    e = der_get_tag(p, len, &found_class, &found_type, &found_tag,
+                    &found_size);
+    if (e == 0)
+        e = der_put_tag(p, len, class, type, tag, &actual_size);
+    if (e == 0 && actual_size != found_size)
+        e = ASN1_OVERFLOW;
+    return 0;
+}
+
+int
 der_put_tag (unsigned char *p, size_t len, Der_class class, Der_type type,
 	     unsigned int tag, size_t *size)
 {

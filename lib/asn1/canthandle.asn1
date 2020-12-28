@@ -2,24 +2,14 @@
 
 CANTHANDLE DEFINITIONS ::= BEGIN
 
--- Code the tag [1] but not the [ CONTEXT CONS UT_Sequence ] for Kaka2
--- Workaround: use inline the structure directly
--- Code the tag [2] but it should be primitive since KAKA3 is
--- Workaround: use the INTEGER type directly
+-- Can't handle tags larger than 30 because while we encode large tags
+-- correctly, we don't account for more than one byte of them in the length
+-- functions.  The compiler shouldn't crash, but the code generate will be
+-- incorrect and should crash.
 
-Kaka2  ::= SEQUENCE {
-        kaka2-1 [0] INTEGER
-}
+Foo31 ::= SEQUENCE { foo [31] INTEGER }
 
-Kaka3  ::= INTEGER
-
-Foo ::= SEQUENCE {
-        kaka1 [0] IMPLICIT INTEGER OPTIONAL,
-        kaka2 [1] IMPLICIT Kaka2 OPTIONAL,
-        kaka3 [2] IMPLICIT Kaka3 OPTIONAL
-}
-
---  Can't handle primitives in SET OF
+--  Can't handle primitives in SET OF, causing the compiler to crash
 --  Workaround is to define a type that is only an integer and use that
 
 Baz ::= SET OF INTEGER

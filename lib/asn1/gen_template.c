@@ -663,6 +663,9 @@ template_members(struct templatehead *temp, const char *basetype, const char *na
 	int subtype_is_struct = is_struct(t->subtype, isstruct);
 	static unsigned long tag_counter = 0;
 	int tagimplicit = (t->tag.tagenv == TE_IMPLICIT);
+        int prim = !(t->tag.tagclass != ASN1_C_UNIV &&
+                     t->tag.tagenv == TE_EXPLICIT) &&
+            is_primitive_type(t->subtype);
 	struct type *subtype;
 
 	fprintf(get_code_file(), "/* template_members: %s %s %s */\n", basetype, implicit ? "imp" : "exp", tagimplicit ? "imp" : "exp");
@@ -714,7 +717,7 @@ template_members(struct templatehead *temp, const char *basetype, const char *na
 	add_line_pointer(temp, dupname, poffset,
 			 "A1_TAG_T(%s,%s,%s)%s%s",
 			 classname(t->tag.tagclass),
-			 is_primitive_type(subtype->type)  ? "PRIM" : "CONS",
+			 prim  ? "PRIM" : "CONS",
 			 valuename(t->tag.tagclass, t->tag.tagvalue),
 			 optional ? "|A1_FLAG_OPTIONAL" : "",
 			 tagimplicit ? "|A1_FLAG_IMPLICIT" : "");

@@ -1051,6 +1051,7 @@ EXPORTS
 	der_put_utctime
 	der_put_utf8string
 	der_put_visible_string
+	der_replace_tag
 	_der_timegm
 	DigestTypes2int
 	DistributionPointReasonFlags2int

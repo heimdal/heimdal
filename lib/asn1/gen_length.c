@@ -248,11 +248,31 @@ length_type (const char *name, const Type *t,
 	break;
     case TTag:{
     	char *tname = NULL;
+        int replace_tag = 0;
+        int prim = !(t->tag.tagclass != ASN1_C_UNIV &&
+                     t->tag.tagenv == TE_EXPLICIT) &&
+            is_primitive_type(t->subtype);
+
 	if (asprintf(&tname, "%s_tag", tmpstr) < 0 || tname == NULL)
 	    errx(1, "malloc");
 	length_type (name, t->subtype, variable, tname);
-	fprintf (codefile, "ret += %lu + der_length_len (ret);\n",
-		 (unsigned long)length_tag(t->tag.tagvalue));
+        /*
+         * XXX See the comments in gen_encode() about this.
+         */
+        if (t->tag.tagenv == TE_IMPLICIT && !prim &&
+            t->subtype->type != TSequenceOf && t->subtype->type != TSetOf &&
+            t->subtype->type != TChoice) {
+            if (t->subtype->symbol &&
+                (t->subtype->type == TSequence ||
+                 t->subtype->type == TSet))
+                replace_tag = 1;
+            else if (t->subtype->symbol && strcmp(t->subtype->symbol->name, "heim_any"))
+                replace_tag = 1;
+        } else if (t->tag.tagenv == TE_IMPLICIT && prim && t->subtype->symbol)
+            replace_tag = 1;
+        if (!replace_tag)
+            fprintf(codefile, "ret += %lu + der_length_len (ret);\n",
+                    (unsigned long)length_tag(t->tag.tagvalue));
 	free(tname);
 	break;
     }

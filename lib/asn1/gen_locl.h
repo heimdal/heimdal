@@ -136,7 +136,7 @@ void add_import(const char *);
 void add_export(const char *);
 int is_export(const char *);
 int yyparse(void);
-int is_primitive_type(int);
+int is_primitive_type(const Type *);
 
 int preserve_type(const char *);
 int seq_type(const char *);

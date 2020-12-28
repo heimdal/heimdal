@@ -116,6 +116,7 @@ encode_type (const char *name, const Type *t, const char *tmpstr)
 		 "e = encode_%s(p, len, %s, &l);\n"
 		 "if (e) return e;\np -= l; len -= l; ret += l;\n\n",
 		 t->symbol->gen_name, name);
+        constructed = !is_primitive_type(t);
 	break;
     case TInteger:
 	if(t->members) {
@@ -387,17 +388,89 @@ encode_type (const char *name, const Type *t, const char *tmpstr)
 	break;
     case TTag: {
     	char *tname = NULL;
+        int replace_tag = 0;
+        int prim = !(t->tag.tagclass != ASN1_C_UNIV &&
+                     t->tag.tagenv == TE_EXPLICIT) &&
+            is_primitive_type(t->subtype);
 	int c;
 	if (asprintf (&tname, "%s_tag", tmpstr) < 0 || tname == NULL)
 	    errx(1, "malloc");
 	c = encode_type (name, t->subtype, tname);
-	fprintf (codefile,
-		 "e = der_put_length_and_tag (p, len, ret, %s, %s, %s, &l);\n"
-		 "if (e) return e;\np -= l; len -= l; ret += l;\n\n",
-		 classname(t->tag.tagclass),
-		 c ? "CONS" : "PRIM",
-		 valuename(t->tag.tagclass, t->tag.tagvalue));
-	free (tname);
+        /* Explicit tags are always constructed */
+        if (!c && t->tag.tagclass != ASN1_C_UNIV && t->tag.tagenv == TE_EXPLICIT)
+            c = 1;
+        /*
+         * HACK HACK HACK
+         *
+         * This is part of the fix to the bug where we treat IMPLICIT tags of
+         * named types as EXPLICIT.  I.e.
+         *
+         *  Foo ::= SEQUENCE { ... }
+         *  Bar ::= SEQUENCE { foo [0] IMPLICIT Foo }
+         *
+         * would get a context [0] constructed tag *and* a universal sequence
+         * constructed tag when it should get only the first tag.
+         *
+         * Properly fixing this would require changing the signatures of the
+         * encode, lenght, and decode functions we generate to take an optional
+         * tag to replace the one the encoder would generate / decoder would
+         * expect.  That would change the ABI, which... isn't stable, but it's
+         * a bit soon to make that change.
+         *
+         * So, we're looking for IMPLICIT tags of named SEQUENCE/SET types, and
+         * if we see any, we generate code to replace the tag.
+         *
+         * NOTE WELL: We're assuming that the length of the encoding of the tag
+         *            of the subtype and the length of the encoding of the
+         *            IMPLICIT tag are the same.
+         *
+         *            To avoid this we'll need to generate new length_tag_*
+         *            functions or else we'll need to add a boolean argument to
+         *            the length_* functions we generate to count only the
+         *            length of the tag of the type.  The latter is an ABI
+         *            change.  Or we'll need to enhance asn1_compile to be able
+         *            to load multiple modules so that we use the AST of the
+         *            modules to internally compute the length of types and
+         *            tags.  The latter would be great anyways as it would
+         *            allow the computation of tag lengths for tagged types to
+         *            be constant.
+         *
+         * NOTE WELL: We *do* "replace" the tags of IMPLICIT-tagged primitive
+         *            types, but our primitive codec functions leave those tags
+         *            out, which is why we don't have to der_replace_tag() them
+         *            here.
+         */
+        if (t->tag.tagenv == TE_IMPLICIT && !prim &&
+            t->subtype->type != TSequenceOf && t->subtype->type != TSetOf &&
+            t->subtype->type != TChoice) {
+            if (t->subtype->symbol &&
+                (t->subtype->type == TSequence ||
+                 t->subtype->type == TSet))
+                replace_tag = 1;
+            else if (t->subtype->symbol && strcmp(t->subtype->symbol->name, "heim_any"))
+                replace_tag = 1;
+        } else if (t->tag.tagenv == TE_IMPLICIT && prim && t->subtype->symbol)
+            /*
+             * Because the subtype is named we are generating its codec
+             * functions, and those will be adding their UNIVERSAL or whatever
+             * tags unlike our raw primtive codec library.
+             */
+            replace_tag = 1;
+        if (replace_tag)
+            fprintf(codefile,
+                    "e = der_replace_tag (p, len, %s, %s, %s);\n"
+                    "if (e) return e;\np -= l; len -= l; ret += l;\n\n",
+                    classname(t->tag.tagclass),
+                    c ? "CONS" : "PRIM",
+                    valuename(t->tag.tagclass, t->tag.tagvalue));
+        else
+            fprintf(codefile,
+                    "e = der_put_length_and_tag (p, len, ret, %s, %s, %s, &l);\n"
+                    "if (e) return e;\np -= l; len -= l; ret += l;\n\n",
+                    classname(t->tag.tagclass),
+                    c ? "CONS" : "PRIM",
+                    valuename(t->tag.tagclass, t->tag.tagvalue));
+	free(tname);
 	break;
     }
     case TChoice:{

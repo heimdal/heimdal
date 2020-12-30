@@ -162,23 +162,24 @@ CLEANFILES = \
 	$(gen_files_test) \
 	$(gen_files_test_template) \
 	$(nodist_check_gen_SOURCES) \
+	asn1parse.c asn1parse.h lex.c \
 	asn1_err.c asn1_err.h \
-	rfc2459_asn1_files rfc2459_asn1*.h* \
-	rfc4043_asn1_files rfc4043_asn1*.h* \
-	rfc4108_asn1_files rfc4108_asn1*.h* \
-	tcg_asn1_files tcg_asn1*.h* \
-	cms_asn1_files cms_asn1*.h* \
-	crmf_asn1_files crmf_asn1*.h* \
-	krb5_asn1_files krb5_asn1*.h* \
-	ocsp_asn1_files ocsp_asn1*.h* \
-	pkinit_asn1_files pkinit_asn1*.h* \
-	pkcs8_asn1_files pkcs8_asn1*.h* \
-	pkcs9_asn1_files pkcs9_asn1*.h* \
-	pkcs10_asn1_files pkcs10_asn1*.h* \
-	pkcs12_asn1_files pkcs12_asn1*.h* \
-	digest_asn1_files digest_asn1*.h* \
-	kx509_asn1_files kx509_asn1*.h* \
-	test_asn1_files test_asn1*.h* \
+	rfc2459_asn1_files rfc2459_asn1*.h* rfc2459_asn1*.x \
+	rfc4043_asn1_files rfc4043_asn1*.h* rfc4043_asn1*.x \
+	rfc4108_asn1_files rfc4108_asn1*.h* rfc4108_asn1*.x \
+	tcg_asn1_files tcg_asn1*.h* tcg_asn1*.x \
+	cms_asn1_files cms_asn1*.h* cms_asn1*.x \
+	crmf_asn1_files crmf_asn1*.h* crmf_asn1*.x \
+	krb5_asn1_files krb5_asn1*.h* krb5_asn1*.x \
+	ocsp_asn1_files ocsp_asn1*.h* ocsp_asn1*.x \
+	pkinit_asn1_files pkinit_asn1*.h* pkinit_asn1*.x \
+	pkcs8_asn1_files pkcs8_asn1*.h* pkcs8_asn1*.x* \
+	pkcs9_asn1_files pkcs9_asn1*.h* pkcs9_asn1*.x \
+	pkcs10_asn1_files pkcs10_asn1*.h* pkcs10_asn1*.x \
+	pkcs12_asn1_files pkcs12_asn1*.h* pkcs12_asn1*.x \
+	digest_asn1_files digest_asn1*.h* digest_asn1*.x \
+	kx509_asn1_files kx509_asn1*.h* kx509_asn1*.x \
+	test_asn1_files test_asn1*.h* test_asn1*.x \
 	test_template_asn1* \
 	asn1_*.x
 

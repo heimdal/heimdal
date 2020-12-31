@@ -5,10 +5,40 @@
 #
 
 install:
-  - C:\msys64\usr\bin\bash -lc "pacman --noconfirm -S pacman"
-  - C:\msys64\usr\bin\bash -lc "pacman --noconfirm -S zstd"
-  - C:\msys64\usr\bin\bash -lc "pacman --noconfirm -S autoconf automake"
-  - C:\msys64\usr\bin\bash -lc "pacman --noconfirm -S bison flex"
+  # HACK -- pacman installation in Appveyor seems broken
+  # Taken from https://github.com/johnkerl/miller/blob/master/appveyor.yml
+  - set PATH=C:\msys64\usr\bin;%PATH%
+  - bash -lc "curl -Lo pacman-5.2.1-6-x86_64.pkg.tar.xz.sig http://repo.msys2.org/msys/x86_64/pacman-5.2.1-6-x86_64.pkg.tar.xz.sig"
+  - bash -lc "curl -Lo pacman-5.2.1-6-x86_64.pkg.tar.xz http://repo.msys2.org/msys/x86_64/pacman-5.2.1-6-x86_64.pkg.tar.xz"
+  - bash -lc "curl -Lo zstd-1.4.4-2-x86_64.pkg.tar.xz.sig http://repo.msys2.org/msys/x86_64/zstd-1.4.4-2-x86_64.pkg.tar.xz.sig"
+  - bash -lc "curl -Lo zstd-1.4.4-2-x86_64.pkg.tar.xz http://repo.msys2.org/msys/x86_64/zstd-1.4.4-2-x86_64.pkg.tar.xz"
+  - bash -lc "curl -Lo autoconf-2.69-5-any.pkg.tar.xz.sig http://repo.msys2.org/msys/x86_64/autoconf-2.69-5-any.pkg.tar.xz.sig"
+  - bash -lc "curl -Lo autoconf-2.69-5-any.pkg.tar.xz http://repo.msys2.org/msys/x86_64/autoconf-2.69-5-any.pkg.tar.xz"
+  - bash -lc "curl -Lo automake1.16-1.16.2-2-any.pkg.tar.zst.sig http://repo.msys2.org/msys/x86_64/automake1.16-1.16.2-2-any.pkg.tar.zst.sig"
+  - bash -lc "curl -Lo automake1.16-1.16.2-2-any.pkg.tar.zst http://repo.msys2.org/msys/x86_64/automake1.16-1.16.2-2-any.pkg.tar.zst"
+  - bash -lc "curl -Lo bison-3.5-1-x86_64.pkg.tar.xz.sig http://repo.msys2.org/msys/x86_64/bison-3.5-1-x86_64.pkg.tar.xz.sig"
+  - bash -lc "curl -Lo bison-3.5-1-x86_64.pkg.tar.xz http://repo.msys2.org/msys/x86_64/bison-3.5-1-x86_64.pkg.tar.xz"
+  - bash -lc "curl -Lo flex-2.6.4-1-x86_64.pkg.tar.xz.sig http://repo.msys2.org/msys/x86_64/flex-2.6.4-1-x86_64.pkg.tar.xz.sig"
+  - bash -lc "curl -Lo flex-2.6.4-1-x86_64.pkg.tar.xz http://repo.msys2.org/msys/x86_64/flex-2.6.4-1-x86_64.pkg.tar.xz"
+  - bash -lc "curl -Lo perl-5.30.2-1-x86_64.pkg.tar.xz.sig http://repo.msys2.org/msys/x86_64/perl-5.30.2-1-x86_64.pkg.tar.xz.sig"
+  - bash -lc "curl -Lo perl-5.30.2-1-x86_64.pkg.tar.xz http://repo.msys2.org/msys/x86_64/perl-5.30.2-1-x86_64.pkg.tar.xz"
+  - bash -lc "curl -Lo perl-JSON-4.02-1-any.pkg.tar.zst.sig http://repo.msys2.org/msys/x86_64/perl-JSON-4.02-1-any.pkg.tar.zst.sig"
+  - bash -lc "curl -Lo perl-JSON-4.02-1-any.pkg.tar.zst http://repo.msys2.org/msys/x86_64/perl-JSON-4.02-1-any.pkg.tar.zst"
+  - bash -lc "pacman-key --init"
+  - bash -lc "pacman-key --populate msys2"
+  - bash -lc "pwd; ls -l"
+  - bash -lc "pacman-key --verify pacman-5.2.1-6-x86_64.pkg.tar.xz.sig"
+  - bash -lc "pacman --noconfirm -S zstd || pacman --ask 20 -U file://$PWD/zstd-1.4.4-2-x86_64.pkg.tar.xz"
+    #- bash -lc "pacman --ask 20 -U file://$PWD/pacman-5.2.1-6-x86_64.pkg.tar.xz"
+    #- bash -lc "pacman-key --populate zstd"
+    #- bash -lc "pacman-key --verify zstd-1.4.4-2-x86_64.pkg.tar.xz.sig"
+    #- bash -lc "pacman --ask 20 -U file://$PWD/zstd-1.4.4-2-x86_64.pkg.tar.xz"
+  - bash -lc "pacman --noconfirm -S autoconf || pacman --ask 20 -U file://$PWD/autoconf-2.69-5-any.pkg.tar.xz.sig"
+  - bash -lc "pacman --noconfirm -S automake || pacman --ask 20 -U file://$PWD/automake1.16-1.16.2-2-any.pkg.tar.zst"
+  - bash -lc "pacman --noconfirm -S flex || pacman --ask 20 -U file://$PWD/flex-2.6.4-1-x86_64.pkg.tar.xz"
+  - bash -lc "pacman --noconfirm -S bison || pacman --ask 20 -U file://$PWD/bison-3.5-1-x86_64.pkg.tar.xz"
+  - bash -lc "pacman --noconfirm -S perl || pacman --ask 20 -U file://$PWD/perl-5.30.2-1-x86_64.pkg.tar.xz"
+  - bash -lc "pacman --noconfirm -S perl-JSON || pacman --ask 20 -U file://$PWD/perl-JSON-4.02-1-any.pkg.tar.zst"
 
 build_script:
   - set PSDKDir=C:\Program Files\Microsoft SDKs\Windows\v7.1

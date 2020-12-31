@@ -45,6 +45,7 @@
 #include <krb5_asn1.h>
 #include <heim_asn1.h>
 #include <rfc2459_asn1.h>
+#include <x690sample_asn1.h>
 #include <test_asn1.h>
 #include <cms_asn1.h>
 
@@ -1497,6 +1498,7 @@ check_TESTMechTypeList(void)
 	errx(1, "TESTMechTypeList: %d", ret);
     if (len != size)
 	abort();
+    free(ptr);
     return 0;
 }
 
@@ -1770,6 +1772,68 @@ test_seqof5(void)
     return ret;
 }
 
+static int
+test_x690sample(void)
+{
+    /* Taken from X.690, Appendix A */
+    X690SamplePersonnelRecord r;
+    heim_octet_string os;
+    unsigned char encoded_sample[] = {
+      0x60, 0x81, 0x85, 0x61, 0x10, 0x1a, 0x04, 0x4a, 0x6f, 0x68, 0x6e, 0x1a,
+      0x01, 0x50, 0x1a, 0x05, 0x53, 0x6d, 0x69, 0x74, 0x68, 0xa0, 0x0a, 0x1a,
+      0x08, 0x44, 0x69, 0x72, 0x65, 0x63, 0x74, 0x6f, 0x72, 0x42, 0x01, 0x33,
+      0xa1, 0x0a, 0x43, 0x08, 0x31, 0x39, 0x37, 0x31, 0x30, 0x39, 0x31, 0x37,
+      0xa2, 0x12, 0x61, 0x10, 0x1a, 0x04, 0x4d, 0x61, 0x72, 0x79, 0x1a, 0x01,
+      0x54, 0x1a, 0x05, 0x53, 0x6d, 0x69, 0x74, 0x68, 0xa3, 0x42, 0x31, 0x1f,
+      0x61, 0x11, 0x1a, 0x05, 0x52, 0x61, 0x6c, 0x70, 0x68, 0x1a, 0x01, 0x54,
+      0x1a, 0x05, 0x53, 0x6d, 0x69, 0x74, 0x68, 0xa0, 0x0a, 0x43, 0x08, 0x31,
+      0x39, 0x35, 0x37, 0x31, 0x31, 0x31, 0x31, 0x31, 0x1f, 0x61, 0x11, 0x1a,
+      0x05, 0x53, 0x75, 0x73, 0x61, 0x6e, 0x1a, 0x01, 0x42, 0x1a, 0x05, 0x53,
+      0x6d, 0x69, 0x74, 0x68, 0xa0, 0x0a, 0x43, 0x08, 0x31, 0x39, 0x35, 0x39,
+      0x30, 0x37, 0x31, 0x37
+    };
+    size_t sz = 0;
+    int ret;
+
+    memset(&r, 0, sizeof(r));
+    if (decode_X690SamplePersonnelRecord(encoded_sample, sizeof(encoded_sample), &r, &sz))
+        return 1;
+    if (sz != sizeof(encoded_sample))
+        return 1;
+    free_X690SamplePersonnelRecord(&r);
+    memset(&r, 0, sizeof(r));
+
+    r.name.givenName = strdup("John");
+    r.name.initial = strdup("P");
+    r.name.familyName = strdup("Smith");
+    r.title = strdup("Director");
+    r.dateOfHire = strdup("19710917");
+    r.number = 51;
+    r.nameOfSpouse.givenName = strdup("Mary");
+    r.nameOfSpouse.initial = strdup("T");
+    r.nameOfSpouse.familyName = strdup("Smith");
+    r.children.val = calloc(2, sizeof(r.children.val[0]));
+    r.children.len = 2;
+    r.children.val[0].name.givenName = strdup("Ralph");
+    r.children.val[0].name.initial = strdup("T");
+    r.children.val[0].name.familyName = strdup("Smith");
+    r.children.val[0].dateOfBirth = strdup("19571111");
+    r.children.val[1].name.givenName = strdup("Susan");
+    r.children.val[1].name.initial = strdup("B");
+    r.children.val[1].name.familyName = strdup("Smith");
+    r.children.val[1].dateOfBirth = strdup("19590717");
+    os.length = 0;
+    os.data = 0;
+    ASN1_MALLOC_ENCODE(X690SamplePersonnelRecord, os.data, os.length, &r, &sz,
+                       ret);
+    if (ret || sz != sizeof(encoded_sample) || sz != os.length ||
+        memcmp(encoded_sample, os.data, sz) != 0)
+        return 1;
+    free_X690SamplePersonnelRecord(&r);
+    free(os.data);
+    return 0;
+}
+
 int
 main(int argc, char **argv)
 {
@@ -1807,6 +1871,8 @@ main(int argc, char **argv)
     ret += check_TESTMechTypeList();
     ret += test_seq4();
     ret += test_seqof5();
+
+    ret += test_x690sample();
 
     return ret;
 }

@@ -35,7 +35,8 @@ BUILT_SOURCES =				\
 	$(gen_files_pkcs10:.x=.c)	\
 	$(gen_files_pkcs12:.x=.c)	\
 	$(gen_files_digest:.x=.c)	\
-	$(gen_files_kx509:.x=.c)
+	$(gen_files_kx509:.x=.c)	\
+	$(gen_files_x690sample:.x=.c)
 
 gen_files_krb5 = asn1_krb5_asn1.x
 gen_files_cms = asn1_cms_asn1.x
@@ -54,7 +55,7 @@ gen_files_test_template = test_template_asn1-template.x
 gen_files_test = asn1_test_asn1.x
 gen_files_digest = asn1_digest_asn1.x
 gen_files_kx509 = asn1_kx509_asn1.x
-gen_files_tcg = asn1_tcg_asn1.x
+gen_files_x690sample = asn1_x690sample_asn1.x
 
 oid_resolution.lo: $(BUILT_SOURCES)
 
@@ -159,6 +160,7 @@ CLEANFILES = \
 	$(gen_files_pkcs12) \
 	$(gen_files_digest) \
 	$(gen_files_kx509) \
+	$(gen_files_x690sample) \
 	$(gen_files_test) \
 	$(gen_files_test_template) \
 	$(nodist_check_gen_SOURCES) \
@@ -179,6 +181,7 @@ CLEANFILES = \
 	pkcs12_asn1_files pkcs12_asn1*.h* pkcs12_asn1*.x \
 	digest_asn1_files digest_asn1*.h* digest_asn1*.x \
 	kx509_asn1_files kx509_asn1*.h* kx509_asn1*.x \
+	x690sample_asn1_files x690sample_asn1*.h* x690sample_asn1*.x \
 	test_asn1_files test_asn1*.h* test_asn1*.x \
 	test_template_asn1* \
 	asn1_*.x
@@ -203,6 +206,7 @@ nodist_include_HEADERS += pkcs10_asn1.h
 nodist_include_HEADERS += pkcs12_asn1.h
 nodist_include_HEADERS += digest_asn1.h
 nodist_include_HEADERS += kx509_asn1.h
+nodist_include_HEADERS += x690sample_asn1.h
 
 priv_headers  = krb5_asn1-priv.h
 priv_headers += pkinit_asn1-priv.h
@@ -219,6 +223,7 @@ priv_headers += pkcs10_asn1-priv.h
 priv_headers += pkcs12_asn1-priv.h
 priv_headers += digest_asn1-priv.h
 priv_headers += kx509_asn1-priv.h
+priv_headers += x690sample_asn1-priv.h
 priv_headers += test_template_asn1.h test_template_asn1-priv.h
 priv_headers += test_asn1.h test_asn1-priv.h
 
@@ -248,6 +253,7 @@ $(gen_files_rfc4108) rfc4108_asn1.hx rfc4108_asn1-priv.hx: rfc4108_asn1_files
 $(gen_files_tcg) tcg_asn1.hx tcg_asn1-priv.hx: tcg_asn1_files
 $(gen_files_cms) cms_asn1.hx cms_asn1-priv.hx: cms_asn1_files
 $(gen_files_crmf) crmf_asn1.hx crmf_asn1-priv.hx: crmf_asn1_files
+$(gen_files_x690sample) x690sample_asn1.hx x690sample_asn1-priv.hx: x690sample_asn1_files
 $(gen_files_test) test_asn1.hx test_asn1-priv.hx: test_asn1_files
 $(gen_files_test_template) test_template_asn1.hx test_template_asn1-priv.hx: test_template_asn1_files
 
@@ -296,6 +302,9 @@ digest_asn1_files: asn1_compile$(EXEEXT) $(srcdir)/digest.asn1
 kx509_asn1_files: asn1_compile$(EXEEXT) $(srcdir)/kx509.asn1
 	$(ASN1_COMPILE) --one-code-file $(srcdir)/kx509.asn1 kx509_asn1 || (rm -f kx509_asn1_files ; exit 1)
 
+x690sample_asn1_files: asn1_compile$(EXEEXT) $(srcdir)/x690sample.asn1
+	$(ASN1_COMPILE) --one-code-file $(srcdir)/x690sample.asn1 x690sample_asn1 || (rm -f x690sample_asn1_files ; exit 1)
+
 test_template_asn1_files: asn1_compile$(EXEEXT) $(srcdir)/test.asn1
 	$(ASN1_COMPILE) --template --sequence=TESTSeqOf $(srcdir)/test.asn1 test_template_asn1 || (rm -f test_template_asn1_files ; exit 1)
 
@@ -329,6 +338,7 @@ EXTRA_DIST =		\
 	rfc4108.asn1	\
 	tcg.asn1	\
 	setchgpw2.asn1	\
+	x690sample.asn1	\
 	test.asn1	\
 	test.gen	\
 	version-script.map

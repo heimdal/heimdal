@@ -594,6 +594,11 @@ EXPORTS
 	copy_VendorLoadErrorCode
 	copy_Version
 	copy_WrappedFirmwareKey
+	copy_X690SampleChildInformation
+	copy_X690SampleDate
+	copy_X690SampleEmployeeNumber
+	copy_X690SampleName
+	copy_X690SamplePersonnelRecord
 	decode_AccessDescription
 	decode_AD_AND_OR
 	decode_AD_IF_RELEVANT
@@ -927,6 +932,11 @@ EXPORTS
 	decode_VendorLoadErrorCode
 	decode_Version
 	decode_WrappedFirmwareKey
+	decode_X690SampleChildInformation
+	decode_X690SampleDate
+	decode_X690SampleEmployeeNumber
+	decode_X690SampleName
+	decode_X690SamplePersonnelRecord
 	der_copy_bit_string
 	der_copy_bmp_string
 	der_copy_generalized_time
@@ -1388,6 +1398,11 @@ EXPORTS
 	encode_VendorLoadErrorCode
 	encode_Version
 	encode_WrappedFirmwareKey
+	encode_X690SampleChildInformation
+	encode_X690SampleDate
+	encode_X690SampleEmployeeNumber
+	encode_X690SampleName
+	encode_X690SamplePersonnelRecord
 	FastOptions2int
 	free_AccessDescription
 	free_AD_AND_OR
@@ -1722,6 +1737,11 @@ EXPORTS
 	free_VendorLoadErrorCode
 	free_Version
 	free_WrappedFirmwareKey
+	free_X690SampleChildInformation
+	free_X690SampleDate
+	free_X690SampleEmployeeNumber
+	free_X690SampleName
+	free_X690SamplePersonnelRecord
 	heim_any_cmp
 	_heim_der_set_sort
 	_heim_fix_dce
@@ -2077,6 +2097,11 @@ EXPORTS
 	length_VendorLoadErrorCode
 	length_Version
 	length_WrappedFirmwareKey
+	length_X690SampleChildInformation
+	length_X690SampleDate
+	length_X690SampleEmployeeNumber
+	length_X690SampleName
+	length_X690SamplePersonnelRecord
 	remove_AttributeValues
 	remove_AuthorizationData
 	remove_CertificatePolicies

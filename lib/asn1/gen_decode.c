@@ -374,20 +374,25 @@ decode_type(const char *name, const Type *t, int optional, struct value *defval,
 	fprintf(codefile,
 		"Der_class class;\n"
 		"Der_type type;\n"
-		"int tag;\n"
+		"unsigned int tag;\n"
 		"e = der_get_tag (p, len, &class, &type, &tag, NULL);\n"
 		"if(e) %s;\n", forwstr);
 	fprintf(codefile, "switch (MAKE_TAG(class, type, tag)) {\n");
 	memno = 0;
 	HEIM_TAILQ_FOREACH(m, t->members, members) {
+            Type *mst = m->type; /* Member sub-type */
 	    char *s;
 
-	    assert(m->type->type == TTag);
+            while (mst->type == TType) {
+                assert(mst->subtype || (mst->symbol && mst->symbol->type));
+                mst = mst->subtype ? mst->subtype : mst->symbol->type;
+            }
+	    assert(mst->type == TTag);
 
 	    fprintf(codefile, "case MAKE_TAG(%s, %s, %s):\n",
-		    classname(m->type->tag.tagclass),
-		    is_primitive_type(m->type->subtype) ? "PRIM" : "CONS",
-		    valuename(m->type->tag.tagclass, m->type->tag.tagvalue));
+		    classname(mst->tag.tagclass),
+		    is_primitive_type(mst->subtype) ? "PRIM" : "CONS",
+		    valuename(mst->tag.tagclass, mst->tag.tagvalue));
 
 	    if (asprintf (&s, "%s(%s)->%s", m->optional ? "" : "&", name, m->gen_name) < 0 || s == NULL)
 		errx(1, "malloc");
@@ -396,7 +401,7 @@ decode_type(const char *name, const Type *t, int optional, struct value *defval,
 			"%s = calloc(1, sizeof(*%s));\n"
 			"if (%s == NULL) { e = ENOMEM; %s; }\n",
 			s, s, s, forwstr);
-	    decode_type (s, m->type, 0, NULL, forwstr, m->gen_name, NULL, depth + 1);
+	    decode_type (s, mst, 0, NULL, forwstr, m->gen_name, NULL, depth + 1);
 	    free (s);
 
 	    fprintf(codefile, "members |= (1ULL << %u);\n", memno);

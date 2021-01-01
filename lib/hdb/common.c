@@ -143,13 +143,21 @@ add_default_salts(krb5_context context, HDB *db, hdb_entry *entry)
     return ret;
 }
 
-krb5_error_code
-_hdb_fetch_kvno(krb5_context context, HDB *db, krb5_const_principal principal,
-		unsigned flags, krb5_kvno kvno, hdb_entry_ex *entry)
+static krb5_error_code
+fetch_entry_or_alias(krb5_context context,
+                     HDB *db,
+                     krb5_const_principal principal,
+                     unsigned flags,
+                     hdb_entry_ex *entry)
 {
+    HDB_EntryOrAlias eoa;
     krb5_principal enterprise_principal = NULL;
     krb5_data key, value;
     krb5_error_code ret;
+
+    value.length = 0;
+    value.data = 0;
+    key = value;
 
     if (principal->name.name_type == KRB5_NT_ENTERPRISE_PRINCIPAL) {
 	if (principal->name.name_string.len != 1) {
@@ -166,41 +174,58 @@ _hdb_fetch_kvno(krb5_context context, HDB *db, krb5_const_principal principal,
 	principal = enterprise_principal;
     }
 
-    hdb_principal2key(context, principal, &key);
-    if (enterprise_principal)
-	krb5_free_principal(context, enterprise_principal);
-    ret = db->hdb__get(context, db, key, &value);
-    krb5_data_free(&key);
-    if(ret)
-	return ret;
-    ret = hdb_value2entry(context, &value, &entry->entry);
-    /* HDB_F_GET_ANY indicates request originated from KDC (not kadmin) */
-    if (ret == ASN1_BAD_ID && (flags & (HDB_F_CANON|HDB_F_GET_ANY)) == 0) {
-	krb5_data_free(&value);
-	return HDB_ERR_NOENTRY;
-    } else if (ret == ASN1_BAD_ID) {
-	hdb_entry_alias alias;
-
-	ret = hdb_value2entry_alias(context, &value, &alias);
-	if (ret) {
-	    krb5_data_free(&value);
-	    return ret;
-	}
-	hdb_principal2key(context, alias.principal, &key);
-	krb5_data_free(&value);
-	free_hdb_entry_alias(&alias);
-
-	ret = db->hdb__get(context, db, key, &value);
-	krb5_data_free(&key);
-	if (ret)
-	    return ret;
-	ret = hdb_value2entry(context, &value, &entry->entry);
-	if (ret) {
-	    krb5_data_free(&value);
-	    return ret;
-	}
+    ret = hdb_principal2key(context, principal, &key);
+    if (ret == 0)
+        ret = db->hdb__get(context, db, key, &value);
+    if (ret == 0)
+        ret = decode_HDB_EntryOrAlias(value.data, value.length, &eoa, NULL);
+    if (ret == 0 && eoa.element == choice_HDB_EntryOrAlias_entry) {
+        entry->entry = eoa.u.entry;
+    } else if (ret == 0 && eoa.element == choice_HDB_EntryOrAlias_alias) {
+        krb5_data_free(&key);
+	ret = hdb_principal2key(context, eoa.u.alias.principal, &key);
+        if (ret == 0)
+            ret = db->hdb__get(context, db, key, &value);
+        if (ret == 0)
+            /* No alias chaining */
+            ret = hdb_value2entry(context, &value, &entry->entry);
+    } else if (ret == 0)
+        ret = ENOTSUP;
+    if (ret == 0 && enterprise_principal) {
+	/*
+	 * Whilst Windows does not canonicalize enterprise principal names if
+	 * the canonicalize flag is unset, the original specification in
+	 * draft-ietf-krb-wg-kerberos-referrals-03.txt says we should.
+	 */
+	entry->entry.flags.force_canonicalize = 1;
     }
+
+    /* HDB_F_GET_ANY indicates request originated from KDC (not kadmin) */
+    if (ret == 0 && eoa.element == choice_HDB_EntryOrAlias_alias &&
+        (flags & (HDB_F_CANON|HDB_F_GET_ANY)) == 0) {
+
+        /* `principal' was alias but canon not req'd */
+        free_hdb_entry(&entry->entry);
+        ret = HDB_ERR_NOENTRY;
+    }
+
+    krb5_free_principal(context, enterprise_principal);
     krb5_data_free(&value);
+    krb5_data_free(&key);
+    principal = enterprise_principal = NULL;
+    return ret;
+}
+
+krb5_error_code
+_hdb_fetch_kvno(krb5_context context, HDB *db, krb5_const_principal principal,
+		unsigned flags, krb5_kvno kvno, hdb_entry_ex *entry)
+{
+    krb5_error_code ret;
+
+    ret = fetch_entry_or_alias(context, db, principal, flags, entry);
+    if (ret)
+        return ret;
+
     if ((flags & HDB_F_DECRYPT) && (flags & HDB_F_ALL_KVNOS)) {
 	/* Decrypt the current keys */
 	ret = hdb_unseal_keys(context, db, &entry->entry);
@@ -248,14 +273,6 @@ _hdb_fetch_kvno(krb5_context context, HDB *db, krb5_const_principal principal,
 	    hdb_free_entry(context, entry);
 	    return ret;
 	}
-    }
-    if (enterprise_principal) {
-	/*
-	 * Whilst Windows does not canonicalize enterprise principal names if
-	 * the canonicalize flag is unset, the original specification in
-	 * draft-ietf-krb-wg-kerberos-referrals-03.txt says we should.
-	 */
-	entry->entry.flags.force_canonicalize = 1;
     }
 
     return 0;
@@ -336,48 +353,47 @@ hdb_add_aliases(krb5_context context, HDB *db,
     return 0;
 }
 
+/* Check if new aliases are already used for other entries */
 static krb5_error_code
 hdb_check_aliases(krb5_context context, HDB *db, hdb_entry_ex *entry)
 {
-    const HDB_Ext_Aliases *aliases;
-    int code;
+    const HDB_Ext_Aliases *aliases = NULL;
+    HDB_EntryOrAlias eoa;
+    krb5_data akey, value;
     size_t i;
+    int ret;
 
-    /* check if new aliases already is used */
+    memset(&eoa, 0, sizeof(eoa));
+    krb5_data_zero(&value);
+    akey = value;
 
-    code = hdb_entry_get_aliases(&entry->entry, &aliases);
-    if (code)
-	return code;
+    ret = hdb_entry_get_aliases(&entry->entry, &aliases);
+    for (i = 0; ret == 0 && aliases && i < aliases->aliases.len; i++) {
+	ret = hdb_principal2key(context, &aliases->aliases.val[i], &akey);
+        if (ret == 0)
+            ret = db->hdb__get(context, db, akey, &value);
+        if (ret == 0)
+            ret = decode_HDB_EntryOrAlias(value.data, value.length, &eoa, NULL);
+        if (ret == 0 && eoa.element != choice_HDB_EntryOrAlias_entry &&
+            eoa.element != choice_HDB_EntryOrAlias_alias)
+            ret = ENOTSUP;
+        if (ret == 0 && eoa.element == choice_HDB_EntryOrAlias_entry)
+            /* New alias names an existing non-alias entry in the HDB */
+            ret = HDB_ERR_EXISTS;
+        if (ret == 0 && eoa.element == choice_HDB_EntryOrAlias_alias &&
+            !krb5_principal_compare(context, eoa.u.alias.principal,
+                                    entry->entry.principal))
+            /* New alias names an existing alias of a different entry */
+            ret = HDB_ERR_EXISTS;
+        if (ret == HDB_ERR_NOENTRY) /* from db->hdb__get */
+            /* New alias is a name that doesn't exist in the HDB */
+            ret = 0;
 
-    for (i = 0; aliases && i < aliases->aliases.len; i++) {
-	hdb_entry_alias alias;
-	krb5_data akey, value;
-
-	code = hdb_principal2key(context, &aliases->aliases.val[i], &akey);
-        if (code == 0) {
-            code = db->hdb__get(context, db, akey, &value);
-            krb5_data_free(&akey);
-        }
-	if (code == HDB_ERR_NOENTRY)
-	    continue;
-	else if (code)
-	    return code;
-
-	code = hdb_value2entry_alias(context, &value, &alias);
+        free_HDB_EntryOrAlias(&eoa);
 	krb5_data_free(&value);
-
-	if (code == ASN1_BAD_ID)
-	    return HDB_ERR_EXISTS;
-	else if (code)
-	    return code;
-
-	code = krb5_principal_compare(context, alias.principal,
-				      entry->entry.principal);
-	free_hdb_entry_alias(&alias);
-	if (code == 0)
-	    return HDB_ERR_EXISTS;
+        krb5_data_free(&akey);
     }
-    return 0;
+    return ret;
 }
 
 /*

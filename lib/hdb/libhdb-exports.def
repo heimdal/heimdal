@@ -107,12 +107,18 @@ EXPORTS
 	asn1_HDBFlags_units
 	copy_Event
 	copy_HDB_EncTypeList
+	copy_hdb_entry
+	copy_hdb_entry_alias
+	copy_HDB_EntryOrAlias
 	copy_HDB_extensions
 	copy_HDB_Ext_KeyRotation
 	copy_Key
 	copy_Keys
 	copy_Salt
 	decode_HDB_EncTypeList
+	decode_hdb_entry
+	decode_hdb_entry_alias
+	decode_HDB_EntryOrAlias
 	decode_HDB_Ext_Aliases
 	decode_HDB_extension
 	decode_HDB_Ext_KeyRotation
@@ -120,6 +126,9 @@ EXPORTS
 	decode_Key
 	decode_Keys
 	encode_HDB_EncTypeList
+	encode_hdb_entry
+	encode_hdb_entry_alias
+	encode_HDB_EntryOrAlias
 	encode_HDB_Ext_Aliases
 	encode_HDB_extension
 	encode_HDB_Ext_KeyRotation
@@ -129,6 +138,8 @@ EXPORTS
 	free_Event
 	free_HDB_EncTypeList
 	free_hdb_entry
+	free_hdb_entry_alias
+	free_HDB_EntryOrAlias
 	free_HDB_Ext_Aliases
 	free_HDB_extension
 	free_HDB_extensions
@@ -144,6 +155,9 @@ EXPORTS
 	int2KeyRotationFlags
 	KeyRotationFlags2int
 	length_HDB_EncTypeList
+	length_hdb_entry
+	length_hdb_entry_alias
+	length_HDB_EntryOrAlias
 	length_HDB_Ext_Aliases
 	length_HDB_extension
 	length_HDB_Ext_KeyRotation

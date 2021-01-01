@@ -240,4 +240,9 @@ hdb_entry_alias ::= [APPLICATION 0] SEQUENCE {
 	principal[0]	Principal  OPTIONAL
 }
 
+HDB-EntryOrAlias ::= CHOICE {
+        entry       hdb_entry,
+        alias       hdb_entry_alias
+}
+
 END

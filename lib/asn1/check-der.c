@@ -1126,25 +1126,25 @@ check_random(void)
 	memset(input, 0, r->inputsize);
 
 	ret = r->decoder(input, r->inputsize, type, &size);
-	if (ret)
+	if (!ret)
 	    r->release(type);
 	
 	/* try all one first */
 	memset(input, 0xff, r->inputsize);
 	ret = r->decoder(input, r->inputsize, type, &size);
-	if (ret)
+	if (!ret)
 	    r->release(type);
 
 	/* try 0x41 too */
 	memset(input, 0x41, r->inputsize);
 	ret = r->decoder(input, r->inputsize, type, &size);
-	if (ret)
+	if (!ret)
 	    r->release(type);
 
 	/* random */
 	asn1rand(input, r->inputsize);
 	ret = r->decoder(input, r->inputsize, type, &size);
-	if (ret)
+	if (!ret)
 	    r->release(type);
 
 	/* let make buffer smaller */
@@ -1154,7 +1154,7 @@ check_random(void)
 	    asn1rand(input, insize);
 
 	    ret = r->decoder(input, insize, type, &size);
-	    if (ret == 0)
+	    if (!ret)
 		r->release(type);
 	} while(insize > 0);
 

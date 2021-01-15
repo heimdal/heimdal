@@ -40,6 +40,7 @@ typedef struct abitstring_s {
 } *abitstring;
 
 struct hx509_request_data {
+    hx509_context context;
     hx509_name name;
     SubjectPublicKeyInfo key;
     KeyUsage ku;
@@ -70,6 +71,7 @@ hx509_request_init(hx509_context context, hx509_request *req)
     if (*req == NULL)
 	return ENOMEM;
 
+    (*req)->context = context;
     return 0;
 }
 
@@ -1228,7 +1230,7 @@ hx509_request_get_san(hx509_request req,
                       hx509_san_type *type,
                       char **out)
 {
-    struct rk_strpool *pool;
+    struct rk_strpool *pool = NULL;
     GeneralName *san;
 
     *out = NULL;
@@ -1262,18 +1264,26 @@ hx509_request_get_san(hx509_request req,
         return der_print_heim_oid(&san->u.registeredID, '.', out);
     case HX509_SAN_TYPE_XMPP:
         /*fallthrough*/
-    case HX509_SAN_TYPE_MS_UPN:
-        pool = hx509_unparse_utf8_string_name(NULL, &san->u.otherName.value);
-        if (pool == NULL ||
+    case HX509_SAN_TYPE_MS_UPN: {
+        int ret;
+
+        ret = _hx509_unparse_utf8_string_name(req->context, &pool,
+                                              &san->u.otherName.value);
+        if (ret == 0 &&
             (*out = rk_strpoolcollect(pool)) == NULL)
-            return ENOMEM;
-        return 0;
-    case HX509_SAN_TYPE_PKINIT:
-        pool = _hx509_unparse_KRB5PrincipalName(NULL, &san->u.otherName.value);
-        if (pool == NULL ||
+            return hx509_enomem(req->context);
+        return ret;
+    }
+    case HX509_SAN_TYPE_PKINIT: {
+        int ret;
+
+        ret = _hx509_unparse_KRB5PrincipalName(req->context, &pool,
+                                               &san->u.otherName.value);
+        if (ret == 0 &&
             (*out = rk_strpoolcollect(pool)) == NULL)
-            return ENOMEM;
+            return hx509_enomem(req->context);
         return 0;
+    }
     default:
         *type = HX509_SAN_TYPE_UNSUPPORTED;
         return 0;

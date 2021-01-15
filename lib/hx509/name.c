@@ -1020,22 +1020,31 @@ hx509_name_is_null_p(const hx509_name name)
  * Note that we cannot handle embedded NULs because of Heimdal's representation
  * of ASN.1 strings as C strings.
  */
-struct rk_strpool *
-_hx509_unparse_KRB5PrincipalName(struct rk_strpool *strpool, heim_any *value)
+int
+_hx509_unparse_KRB5PrincipalName(hx509_context context,
+                                 struct rk_strpool **strpool,
+                                 heim_any *value)
 {
     KRB5PrincipalName kn;
     size_t len;
     int ret;
 
     ret = decode_KRB5PrincipalName(value->data, value->length, &kn, &len);
-    if (ret == 0)
-        strpool = _hx509_unparse_kerberos_name(strpool, &kn);
+    if (ret == 0 &&
+        (*strpool = _hx509_unparse_kerberos_name(*strpool, &kn)) == NULL)
+        ret = hx509_enomem(context);
     free_KRB5PrincipalName(&kn);
-    if (ret == 0 && strpool && (value->length != len))
-        strpool = rk_strpoolprintf(strpool, " <garbage>");
-    if (ret)
-        return rk_strpoolprintf(strpool, "<error-decoding-PrincipalName");
-    return strpool;
+    if (ret == 0 && (value->length != len) &&
+        (*strpool = rk_strpoolprintf(*strpool, " <garbage>")) == NULL)
+        ret = hx509_enomem(context);
+    if (ret) {
+        rk_strpoolfree(*strpool);
+        *strpool = rk_strpoolprintf(NULL,
+                                    "<error-decoding-PrincipalName");
+        hx509_set_error_string(context, 0, ret,
+                               "Failed to decode PermanentIdentifier");
+    }
+    return ret;
 }
 
 struct rk_strpool *
@@ -1097,18 +1106,73 @@ _hx509_unparse_kerberos_name(struct rk_strpool *strpool, KRB5PrincipalName *kn)
     return strpool;
 }
 
-struct rk_strpool *
-hx509_unparse_utf8_string_name(struct rk_strpool *strpool, heim_any *value)
+int
+_hx509_unparse_utf8_string_name(hx509_context context,
+                                struct rk_strpool **strpool,
+                                heim_any *value)
 {
     PKIXXmppAddr us;
     size_t size;
+    int ret;
 
-    if (decode_PKIXXmppAddr(value->data, value->length, &us, &size))
-        return rk_strpoolprintf(strpool, "<decode-error>");
-    strpool = rk_strpoolprintf(strpool, "%s", us);
+    ret = decode_PKIXXmppAddr(value->data, value->length, &us, &size);
+    if (ret == 0 &&
+        (*strpool = rk_strpoolprintf(*strpool, "%s", us)) == NULL)
+        ret = hx509_enomem(context);
+    if (ret) {
+        rk_strpoolfree(*strpool);
+        *strpool = rk_strpoolprintf(NULL,
+                                    "<error-decoding-UTF8String-SAN>");
+        hx509_set_error_string(context, 0, ret,
+                               "Failed to decode UTF8String SAN");
+    }
     free_PKIXXmppAddr(&us);
-    return strpool;
+    return ret;
 }
+
+int
+_hx509_unparse_ia5_string_name(hx509_context context,
+                               struct rk_strpool **strpool,
+                               heim_any *value)
+{
+    SRVName us;
+    size_t size;
+    int ret;
+
+    ret = decode_SRVName(value->data, value->length, &us, &size);
+    if (ret == 0) {
+        rk_strpoolfree(*strpool);
+        *strpool = rk_strpoolprintf(NULL,
+                                    "<error-decoding-IA5String-SAN>");
+        hx509_set_error_string(context, 0, ret,
+                               "Failed to decode UTF8String SAN");
+        return ret;
+    }
+    *strpool = rk_strpoolprintf(*strpool, "%.*s",
+                                (int)us.length, (char *)us.data);
+    free_SRVName(&us);
+    return ret;
+}
+
+typedef int (*other_unparser_f)(hx509_context,
+                                struct rk_strpool **,
+                                heim_any *);
+
+struct {
+    const heim_oid *oid;
+    const char *friendly_name;
+    other_unparser_f f;
+} o_unparsers[] = {
+    { &asn1_oid_id_pkinit_san,
+        "KerberosPrincipalName",
+        _hx509_unparse_KRB5PrincipalName },
+    { &asn1_oid_id_pkix_on_xmppAddr,
+        "XMPPName",
+        _hx509_unparse_utf8_string_name },
+    { &asn1_oid_id_pkinit_ms_san,
+        "MSFTKerberosPrincipalName",
+        _hx509_unparse_utf8_string_name },
+};
 
 /**
  * Unparse the hx509 name in name into a string.
@@ -1124,34 +1188,61 @@ hx509_unparse_utf8_string_name(struct rk_strpool *strpool, heim_any *value)
 HX509_LIB_FUNCTION int HX509_LIB_CALL
 hx509_general_name_unparse(GeneralName *name, char **str)
 {
+    hx509_context context;
+    int ret;
+
+    if ((ret = hx509_context_init(&context)))
+        return ret;
+    return hx509_general_name_unparse2(context, name, str);
+}
+
+/**
+ * Unparse the hx509 name in name into a string.
+ *
+ * @param context hx509 library context
+ * @param name the name to print
+ * @param str an allocated string returns the name in string form
+ *
+ * @return An hx509 error code, see hx509_get_error_string().
+ *
+ * @ingroup hx509_name
+ */
+
+HX509_LIB_FUNCTION int HX509_LIB_CALL
+hx509_general_name_unparse2(hx509_context context,
+                            GeneralName *name,
+                            char **str)
+{
     struct rk_strpool *strpool = NULL;
+    int ret = 0;
 
     *str = NULL;
 
     switch (name->element) {
     case choice_GeneralName_otherName: {
+        size_t i;
 	char *oid;
-	hx509_oid_sprint(&name->u.otherName.type_id, &oid);
-	if (oid == NULL)
-	    return ENOMEM;
-	strpool = rk_strpoolprintf(strpool, "otherName: %s ", oid);
-        if (der_heim_oid_cmp(&name->u.otherName.type_id,
-                             &asn1_oid_id_pkinit_san) == 0) {
-            strpool =
-                _hx509_unparse_KRB5PrincipalName(strpool,
-                                                 &name->u.otherName.value);
-        } else if (der_heim_oid_cmp(&name->u.otherName.type_id,
-                                    &asn1_oid_id_pkix_on_xmppAddr) == 0) {
-            strpool = rk_strpoolprintf(strpool, "xmppAddr ");
-            strpool = hx509_unparse_utf8_string_name(strpool,
-                                                     &name->u.otherName.value);
-        } else if (der_heim_oid_cmp(&name->u.otherName.type_id,
-                                    &asn1_oid_id_pkinit_ms_san) == 0) {
-            strpool = rk_strpoolprintf(strpool, "pkinitMsSan ");
-            strpool = hx509_unparse_utf8_string_name(strpool,
-                                                     &name->u.otherName.value);
-        } else {
-            strpool = rk_strpoolprintf(strpool, "<unknown-other-name-type");
+
+	ret = hx509_oid_sprint(&name->u.otherName.type_id, &oid);
+        if (ret == 0)
+            strpool = rk_strpoolprintf(strpool, "otherName: %s ", oid);
+        if (strpool == NULL)
+            ret = ENOMEM;
+
+        for (i = 0; ret == 0 && i < sizeof(o_unparsers)/sizeof(o_unparsers[0]); i++) {
+            if (der_heim_oid_cmp(&name->u.otherName.type_id,
+                                 o_unparsers[i].oid))
+                continue;
+            strpool = rk_strpoolprintf(strpool, "%s ",o_unparsers[i].friendly_name);
+            if (strpool == NULL)
+                ret = ENOMEM;
+            if (ret == 0)
+                ret = o_unparsers[i].f(context, &strpool, &name->u.otherName.value);
+            break;
+        }
+        if (ret == 0 && i == sizeof(o_unparsers)/sizeof(o_unparsers[0])) {
+            strpool = rk_strpoolprintf(strpool, "<unknown-other-name-type>");
+            ret = ENOTSUP;
         }
 	free(oid);
 	break;
@@ -1169,7 +1260,6 @@ hx509_general_name_unparse(GeneralName *name, char **str)
     case choice_GeneralName_directoryName: {
 	Name dir;
 	char *s;
-	int ret;
 	memset(&dir, 0, sizeof(dir));
 	dir.element = (enum Name_enum)name->u.directoryName.element;
 	dir.u.rdnSequence = name->u.directoryName.u.rdnSequence;

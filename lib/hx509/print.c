@@ -32,6 +32,7 @@
  */
 
 #include "hx_locl.h"
+#include <vis.h>
 
 /**
  * @page page_print Hx509 printing functions
@@ -40,6 +41,7 @@
  */
 
 struct hx509_validate_ctx_data {
+    hx509_context context;
     int flags;
     hx509_vprint_func vprint_func;
     void *ctx;
@@ -413,67 +415,6 @@ check_extKeyUsage(hx509_validate_ctx ctx,
 }
 
 static int
-check_pkinit_san(hx509_validate_ctx ctx, heim_any *a)
-{
-    KRB5PrincipalName kn;
-    unsigned i;
-    size_t size;
-    int ret;
-
-    ret = decode_KRB5PrincipalName(a->data, a->length, &kn, &size);
-    if (ret) {
-	validate_print(ctx, HX509_VALIDATE_F_VALIDATE,
-		       "Decoding kerberos name in SAN failed: %d", ret);
-	return 1;
-    }
-
-    if (size != a->length) {
-	validate_print(ctx, HX509_VALIDATE_F_VALIDATE,
-		       "Decoding kerberos name have extra bits on the end");
-	return 1;
-    }
-
-    /* print kerberos principal, add code to quote / within components */
-    for (i = 0; i < kn.principalName.name_string.len; i++) {
-	validate_print(ctx, HX509_VALIDATE_F_VERBOSE, "%s",
-		       kn.principalName.name_string.val[i]);
-	if (i + 1 < kn.principalName.name_string.len)
-	    validate_print(ctx, HX509_VALIDATE_F_VERBOSE, "/");
-    }
-    validate_print(ctx, HX509_VALIDATE_F_VERBOSE, "@");
-    validate_print(ctx, HX509_VALIDATE_F_VERBOSE, "%s", kn.realm);
-
-    free_KRB5PrincipalName(&kn);
-    return 0;
-}
-
-static int
-check_utf8_string_san(hx509_validate_ctx ctx, heim_any *a)
-{
-    PKIXXmppAddr jid;
-    size_t size;
-    int ret;
-
-    ret = decode_PKIXXmppAddr(a->data, a->length, &jid, &size);
-    if (ret) {
-	validate_print(ctx, HX509_VALIDATE_F_VALIDATE,
-		       "Decoding JID in SAN failed: %d", ret);
-	return 1;
-    }
-
-    validate_print(ctx, HX509_VALIDATE_F_VERBOSE, "%s", jid);
-    free_PKIXXmppAddr(&jid);
-
-    return 0;
-}
-
-static int
-check_altnull(hx509_validate_ctx ctx, heim_any *a)
-{
-    return 0;
-}
-
-static int
 check_CRLDistributionPoints(hx509_validate_ctx ctx,
 			   struct cert_status *status,
 			   enum critical_flag cf,
@@ -518,8 +459,13 @@ check_CRLDistributionPoints(hx509_validate_ctx ctx,
 		    char *s;
 		    GeneralName *name = &dpname.u.fullName.val[j];
 
-		    ret = hx509_general_name_unparse(name, &s);
-		    if (ret == 0 && s != NULL) {
+		    ret = hx509_general_name_unparse2(ctx->context, name, &s);
+		    if (ret) {
+                        s = hx509_get_error_string(ctx->context, ret);
+                        validate_print(ctx, HX509_VALIDATE_F_VALIDATE,
+                                       "Unknown DistributionPointName: %s", s);
+                        hx509_free_error_string(s);
+                    } else {
 			validate_print(ctx, HX509_VALIDATE_F_VERBOSE, "   %s\n", s);
 			free(s);
 		    }
@@ -543,19 +489,6 @@ check_CRLDistributionPoints(hx509_validate_ctx ctx,
 
     return 0;
 }
-
-
-struct {
-    const char *name;
-    const heim_oid *oid;
-    int (*func)(hx509_validate_ctx, heim_any *);
-} altname_types[] = {
-    { "pk-init", &asn1_oid_id_pkinit_san, check_pkinit_san },
-    { "jabber", &asn1_oid_id_pkix_on_xmppAddr, check_utf8_string_san },
-    { "dns-srv", &asn1_oid_id_pkix_on_dnsSRV, check_altnull },
-    { "card-id", &asn1_oid_id_uspkicommon_card_id, check_altnull },
-    { "Microsoft NT-PRINCIPAL-NAME", &asn1_oid_id_pkinit_ms_san, check_utf8_string_san }
-};
 
 static int
 check_altName(hx509_validate_ctx ctx,
@@ -591,48 +524,21 @@ check_altName(hx509_validate_ctx ctx,
     }
 
     for (i = 0; i < gn.len; i++) {
-	switch (gn.val[i].element) {
-	case choice_GeneralName_otherName: {
-	    unsigned j;
+        char *s;
 
-	    validate_print(ctx, HX509_VALIDATE_F_VERBOSE,
-			   "%sAltName otherName ", name);
-
-	    for (j = 0; j < sizeof(altname_types)/sizeof(altname_types[0]); j++) {
-		if (der_heim_oid_cmp(altname_types[j].oid,
-				     &gn.val[i].u.otherName.type_id) != 0)
-		    continue;
-
-		validate_print(ctx, HX509_VALIDATE_F_VERBOSE, "%s: ",
-			       altname_types[j].name);
-		(*altname_types[j].func)(ctx, &gn.val[i].u.otherName.value);
-		break;
-	    }
-	    if (j == sizeof(altname_types)/sizeof(altname_types[0])) {
-		hx509_oid_print(&gn.val[i].u.otherName.type_id,
-				validate_vprint, ctx);
-		validate_print(ctx, HX509_VALIDATE_F_VERBOSE, " unknown");
-	    }
-	    validate_print(ctx, HX509_VALIDATE_F_VERBOSE, "\n");
-	    break;
-	}
-	default: {
-	    char *s;
-	    ret = hx509_general_name_unparse(&gn.val[i], &s);
-	    if (ret) {
-		validate_print(ctx, HX509_VALIDATE_F_VALIDATE,
-			       "ret = %d unparsing GeneralName\n", ret);
-		return 1;
-	    }
-	    validate_print(ctx, HX509_VALIDATE_F_VERBOSE, "%s\n", s);
-	    free(s);
-	    break;
-	}
-	}
+        ret = hx509_general_name_unparse2(ctx->context, &gn.val[i], &s);
+        if (ret) {
+            s = hx509_get_error_string(ctx->context, ret);
+            validate_print(ctx, HX509_VALIDATE_F_VALIDATE,
+                           "Error unparsing GeneralName: %s\n", s);
+            hx509_free_error_string(s);
+            return 1;
+        }
+        validate_print(ctx, HX509_VALIDATE_F_VERBOSE, "\t%s\n", s);
+        free(s);
     }
 
     free_GeneralNames(&gn);
-
     return 0;
 }
 
@@ -737,14 +643,59 @@ check_authorityInfoAccess(hx509_validate_ctx ctx,
 	validate_print(ctx, HX509_VALIDATE_F_VERBOSE,
 		       "\ttype: ");
 	hx509_oid_print(&aia.val[i].accessMethod, validate_vprint, ctx);
-	hx509_general_name_unparse(&aia.val[i].accessLocation, &str);
-	validate_print(ctx, HX509_VALIDATE_F_VERBOSE,
-		       "\n\tdirname: %s\n", str);
-	free(str);
+        ret = hx509_general_name_unparse2(ctx->context,
+                                          &aia.val[i].accessLocation, &str);
+        if (ret) {
+            str = hx509_get_error_string(ctx->context, ret);
+            validate_print(ctx, HX509_VALIDATE_F_VALIDATE,
+                           "Error unparsing AuthorityInfoAccessSyntax "
+                           "accessLocation: %s", str);
+            hx509_free_error_string(str);
+        } else {
+            validate_print(ctx, HX509_VALIDATE_F_VERBOSE,
+                           "\n\tdirname: %s\n", str);
+            free(str);
+        }
     }
     free_AuthorityInfoAccessSyntax(&aia);
 
-    return 0;
+    return ret;
+}
+
+static int
+get_display_text(DisplayText *dt, char **out)
+{
+    int r = -1;
+
+    *out = NULL;
+
+    /*
+     * XXX We're cheating with various string types here.
+     *
+     * Proper support for IA5String is a real pain, and we don't have it.
+     *
+     * We also don't have support for BMPString.
+     */
+    switch (dt->element) {
+    case choice_DisplayText_ia5String:
+        r = rk_strasvisx(out, dt->u.ia5String.data, dt->u.ia5String.length,
+                         VIS_CSTYLE | VIS_TAB | VIS_NL, "");
+        break;
+    case choice_DisplayText_visibleString:
+        r = rk_strasvis(out, dt->u.visibleString,
+                        VIS_CSTYLE | VIS_TAB | VIS_NL, "");
+        break;
+    case choice_DisplayText_bmpString:
+        errno = ENOTSUP; /* XXX Need a UTF-16 -> UTF-8 conversion */
+        break;
+    case choice_DisplayText_utf8String:
+        r = rk_strasvis(out, dt->u.visibleString,
+                        VIS_CSTYLE | VIS_TAB | VIS_NL, "");
+        break;
+    default:
+        errno = EINVAL;
+    }
+    return r < 0 ? errno : 0;
 }
 
 /*
@@ -810,10 +761,10 @@ struct {
 HX509_LIB_FUNCTION int HX509_LIB_CALL
 hx509_validate_ctx_init(hx509_context context, hx509_validate_ctx *ctx)
 {
-    *ctx = malloc(sizeof(**ctx));
+    *ctx = calloc(1, sizeof(**ctx));
     if (*ctx == NULL)
-	return ENOMEM;
-    memset(*ctx, 0, sizeof(**ctx));
+	return hx509_enomem(context);
+    (*ctx)->context = context;
     return 0;
 }
 

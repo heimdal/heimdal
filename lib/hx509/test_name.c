@@ -390,10 +390,10 @@ test_pkinit_san(hx509_context context, const char *p, const char *realm, ...)
         ret = hx509_general_name_unparse(&gn, &round_trip);
     if (ret)
         return 1;
-    if (strncmp(round_trip, "otherName: 1.3.6.1.5.2.2 ",
-                sizeof("otherName: 1.3.6.1.5.2.2 ") - 1))
+    if (strncmp(round_trip, "otherName: 1.3.6.1.5.2.2 KerberosPrincipalName ",
+                sizeof("otherName: 1.3.6.1.5.2.2 KerberosPrincipalName ") - 1))
         return 1;
-    if (ret || strcmp(round_trip + sizeof("otherName: 1.3.6.1.5.2.2 ") - 1, p))
+    if (ret || strcmp(round_trip + sizeof("otherName: 1.3.6.1.5.2.2 KerberosPrincipalName ") - 1, p))
         return 1;
     free_KRB5PrincipalName(&kn);
     free_GeneralName(&gn);

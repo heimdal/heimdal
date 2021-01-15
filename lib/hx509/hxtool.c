@@ -109,7 +109,7 @@ parse_oid(const char *str, const heim_oid *def, heim_oid *oid)
         if (ret == 0)
             ret = der_copy_oid(found, oid);
         else
-            ret = der_parse_heim_oid (str, " .", oid);
+            ret = der_parse_heim_oid(str, " .", oid);
     } else {
 	ret = der_copy_oid(def, oid);
     }
@@ -1411,10 +1411,7 @@ request_create(struct request_create_options *opt, int argc, char **argv)
     for (i = 0; i < opt->registered_strings.num_strings; i++) {
         heim_oid oid;
 
-        ret = der_parse_heim_oid(opt->registered_strings.strings[i], NULL,
-                                 &oid);
-        if (ret)
-            hx509_err(context, 1, ret, "OID parse error");
+	parse_oid(opt->registered_strings.strings[i], NULL, &oid);
         ret = hx509_request_add_registered(context, req, &oid);
         der_free_oid(&oid);
 	if (ret)
@@ -1879,9 +1876,11 @@ hxtool_ca(struct certificate_sign_options *opt, int argc, char **argv)
     hx509_private_key cert_key = NULL;
     hx509_name subject = NULL;
     SubjectPublicKeyInfo spki;
+    heim_oid oid;
     size_t i;
     int delta = 0;
 
+    memset(&oid, 0, sizeof(oid));
     memset(&spki, 0, sizeof(spki));
 
     if (opt->ca_certificate_string == NULL && !opt->self_signed_flag)
@@ -2021,12 +2020,11 @@ hxtool_ca(struct certificate_sign_options *opt, int argc, char **argv)
 	hx509_err(context, 1, ret, "hx509_ca_tbs_init");
 
     for (i = 0; i < opt->eku_strings.num_strings; i++) {
-        heim_oid oid;
-
 	parse_oid(opt->eku_strings.strings[i], NULL, &oid);
 	ret = hx509_ca_tbs_add_eku(context, tbs, &oid);
 	if (ret)
 	    hx509_err(context, 1, ret, "hx509_request_add_eku");
+        der_free_oid(&oid);
     }
     if (opt->ku_strings.num_strings) {
         const struct units *kus = asn1_KeyUsage_units();
@@ -2116,6 +2114,48 @@ hxtool_ca(struct certificate_sign_options *opt, int argc, char **argv)
     }
 
     eval_types(context, tbs, opt);
+
+    for (i = 0; ret == 0 && i < opt->policy_strings.num_strings; i++) {
+        char *oidstr, *uri, *dt;
+
+        if ((oidstr = strdup(opt->policy_strings.strings[i])) == NULL)
+            hx509_err(context, 1, ENOMEM, "out of memory");
+        uri = strchr(oidstr, ':');
+        if (uri)
+            *(uri++) = '\0';
+        dt = strchr(uri ? uri : "", ' ');
+        if (dt)
+            *(dt++) = '\0';
+
+	parse_oid(oidstr, NULL, &oid);
+        ret = hx509_ca_tbs_add_pol(context, tbs, &oid, uri, dt);
+        der_free_oid(&oid);
+        free(oidstr);
+    }
+
+    for (i = 0; ret == 0 && i < opt->policy_mapping_strings.num_strings; i++) {
+        char *issuer_oidstr, *subject_oidstr;
+        heim_oid issuer_oid, subject_oid;
+
+        if ((issuer_oidstr =
+             strdup(opt->policy_mapping_strings.strings[i])) == NULL)
+            hx509_err(context, 1, ENOMEM, "out of memory");
+        subject_oidstr = strchr(issuer_oidstr, ':');
+        if (subject_oidstr == NULL)
+            subject_oidstr = issuer_oidstr;
+        else
+            *(subject_oidstr++) = '\0';
+
+	parse_oid(issuer_oidstr, NULL, &issuer_oid);
+	parse_oid(subject_oidstr, NULL, &subject_oid);
+        ret = hx509_ca_tbs_add_pol_mapping(context, tbs, &issuer_oid,
+                                           &subject_oid);
+        if (ret)
+            hx509_err(context, 1, ret, "failed to add policy mapping");
+        der_free_oid(&issuer_oid);
+        der_free_oid(&subject_oid);
+        free(issuer_oidstr);
+    }
 
     if (opt->issue_ca_flag) {
 	ret = hx509_ca_tbs_set_ca(context, tbs, opt->path_length_integer);
@@ -2521,8 +2561,7 @@ acert1_sans(struct acert_options *opt,
 
                 s = opt->has_registeredID_san_strings.strings[k];
                 memset(&oid, 0, sizeof(oid));
-                if ((ret = der_parse_heim_oid(s, NULL, &oid)))
-                    break;
+                parse_oid(s, NULL, &oid);
                 if (der_heim_oid_cmp(&gn->u.registeredID, &oid) == 0) {
                     der_free_oid(&oid);
                     if (opt->verbose_flag)
@@ -2571,8 +2610,7 @@ acert1_ekus(struct acert_options *opt,
             heim_oid oid;
 
             memset(&oid, 0, sizeof(oid));
-            if ((ret = der_parse_heim_oid(s, NULL, &oid)))
-                break;
+            parse_oid(s, NULL, &oid);
             if (der_heim_oid_cmp(&eku.val[i], &oid) == 0) {
                 der_free_oid(&oid);
                 if (opt->verbose_flag)

@@ -698,6 +698,169 @@ get_display_text(DisplayText *dt, char **out)
     return r < 0 ? errno : 0;
 }
 
+static int
+check_certificatePolicies(hx509_validate_ctx ctx,
+                          struct cert_status *status,
+                          enum critical_flag cf,
+                          const Extension *e)
+{
+    CertificatePolicies cp;
+    size_t i, size;
+    int ret = 0;
+
+    check_Null(ctx, status, cf, e);
+
+    if (e->extnValue.length == 0) {
+	validate_print(ctx, HX509_VALIDATE_F_VALIDATE,
+		       "CertificatePolicies empty, not allowed");
+	return 1;
+    }
+    ret = decode_CertificatePolicies(e->extnValue.data, e->extnValue.length,
+                                     &cp, &size);
+    if (ret) {
+	validate_print(ctx, HX509_VALIDATE_F_VALIDATE,
+                       "\tret = %d while decoding CertificatePolicies\n", ret);
+	return 1;
+    }
+    if (cp.len == 0) {
+	validate_print(ctx, HX509_VALIDATE_F_VALIDATE,
+		       "CertificatePolicies empty, not allowed\n");
+	return 1;
+    }
+
+    for (i = 0; ret == 0 && i < cp.len; i++) {
+        size_t k;
+        char *poid = NULL;
+        char *qoid = NULL;
+        char *dt = NULL;
+
+        ret = der_print_heim_oid(&cp.val[i].policyIdentifier, '.', &poid);
+        if (ret == 0)
+        validate_print(ctx, HX509_VALIDATE_F_VERBOSE, "\tPolicy: %s", poid);
+
+        for (k = 0;
+             ret == 0 && cp.val[i].policyQualifiers &&
+             k < cp.val[i].policyQualifiers->len;
+             k++) {
+            PolicyQualifierInfo *pi = &cp.val[i].policyQualifiers->val[k];
+
+            if (der_heim_oid_cmp(&pi->policyQualifierId,
+                                 &asn1_oid_id_pkix_qt_cps) == 0) {
+                CPSuri cps;
+
+                ret = decode_CPSuri(pi->qualifier.data, pi->qualifier.length,
+                                    &cps, &size);
+                if (ret == 0) {
+                    if (cps.length > 4096)
+                        cps.length = 4096;
+                    validate_print(ctx, HX509_VALIDATE_F_VERBOSE,
+                                   ":CPSuri:%.*s",
+                                   (int)cps.length, (char *)cps.data);
+                    free_CPSuri(&cps);
+                }
+            } else if (der_heim_oid_cmp(&pi->policyQualifierId,
+                                        &asn1_oid_id_pkix_qt_unotice) == 0) {
+                UserNotice un;
+
+                ret = decode_UserNotice(pi->qualifier.data,
+                                        pi->qualifier.length, &un, &size);
+                if (ret == 0) {
+                    if (un.explicitText) {
+                        /*
+                         * get_display_text() will strvis to make it safer to
+                         * print.
+                         */
+                        ret = get_display_text(un.explicitText, &dt);
+                        validate_print(ctx, HX509_VALIDATE_F_VERBOSE,
+                                       " UserNotice:DistplayText:%s", dt);
+                    } else if (un.noticeRef) {
+                        validate_print(ctx, HX509_VALIDATE_F_VERBOSE,
+                                       " UserNotice:NoticeRef:<noticeRef-not-supported>",
+                                       qoid);
+                    } else {
+                        ret = der_print_heim_oid(&pi->policyQualifierId, '.',
+                                                 &qoid);
+                        if (ret)
+                            break;
+                        validate_print(ctx, HX509_VALIDATE_F_VERBOSE,
+                                       " Unknown:%s", qoid);
+                    }
+                }
+            } else {
+                validate_print(ctx, HX509_VALIDATE_F_VERBOSE,
+                               ", qualifier %s:<unknown>", qoid);
+            }
+            free(qoid);
+            free(dt);
+            qoid = dt = 0;
+        }
+        if (ret == 0) {
+            validate_print(ctx, HX509_VALIDATE_F_VERBOSE, "\n");
+        } else {
+            validate_print(ctx, HX509_VALIDATE_F_VALIDATE,
+                           "\nOut of memory formatting certificate policy");
+            ret = ENOMEM;
+        }
+        free(poid);
+        free(qoid);
+        free(dt);
+        poid = qoid = dt = 0;
+    }
+
+    free_CertificatePolicies(&cp);
+
+    return ret ? 1 : 0;
+}
+
+static int
+check_policyMappings(hx509_validate_ctx ctx,
+                     struct cert_status *status,
+                     enum critical_flag cf,
+                     const Extension *e)
+{
+    PolicyMappings pm;
+    size_t i, size;
+    int ret = 0;
+
+    check_Null(ctx, status, cf, e);
+
+    if (e->extnValue.length == 0) {
+	validate_print(ctx, HX509_VALIDATE_F_VALIDATE,
+		       "PolicyMappings empty, not allowed");
+	return 1;
+    }
+    ret = decode_PolicyMappings(e->extnValue.data, e->extnValue.length,
+                                &pm, &size);
+    if (ret) {
+	validate_print(ctx, HX509_VALIDATE_F_VALIDATE,
+		       "\tret = %d while decoding PolicyMappings\n", ret);
+	return 1;
+    }
+    if (pm.len == 0) {
+	validate_print(ctx, HX509_VALIDATE_F_VALIDATE,
+		       "PolicyMappings empty, not allowed\n");
+	return 1;
+    }
+
+    for (i = 0; ret == 0 && i < pm.len; i++) {
+        char *idpoid = NULL;
+        char *sdpoid = NULL;
+
+        ret = der_print_heim_oid(&pm.val[i].issuerDomainPolicy, '.', &idpoid);
+        if (ret == 0)
+            ret = der_print_heim_oid(&pm.val[i].subjectDomainPolicy, '.',
+                                     &sdpoid);
+        if (ret == 0)
+            validate_print(ctx, HX509_VALIDATE_F_VERBOSE,
+                           "\tPolicy mapping %s -> %s\n", idpoid, sdpoid);
+        else
+            validate_print(ctx, HX509_VALIDATE_F_VALIDATE,
+                           "ret=%d while decoding PolicyMappings\n", ret);
+    }
+
+    return 0;
+}
+
 /*
  *
  */
@@ -727,8 +890,8 @@ struct {
     { ext(certificateIssuer, Null), M_C },
     { ext(nameConstraints, Null), M_C },
     { ext(cRLDistributionPoints, CRLDistributionPoints), S_N_C },
-    { ext(certificatePolicies, Null), 0 },
-    { ext(policyMappings, Null), M_N_C },
+    { ext(certificatePolicies, certificatePolicies), 0 },
+    { ext(policyMappings, policyMappings), M_N_C },
     { ext(authorityKeyIdentifier, authorityKeyIdentifier), M_N_C },
     { ext(policyConstraints, Null), D_C },
     { ext(extKeyUsage, extKeyUsage), D_C },

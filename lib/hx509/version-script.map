@@ -49,6 +49,8 @@ HEIMDAL_X509_1.2 {
 		hx509_ca_tbs_add_crl_dp_uri;
 		hx509_ca_tbs_add_eku;
 		hx509_ca_tbs_add_ku;
+		hx509_ca_tbs_add_pol;
+		hx509_ca_tbs_add_pol_mapping;
 		hx509_ca_tbs_add_san;
 		hx509_ca_tbs_add_san_hostname;
 		hx509_ca_tbs_add_san_jid;

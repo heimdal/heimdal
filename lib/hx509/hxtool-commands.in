@@ -762,6 +762,16 @@ command = {
 		help = "XMPP jabber id (for SAN)"
 	}
 	option = {
+		long = "policy"
+		type = "strings"
+		help = "Certificate Policy OID and optional URI and/or notice (OID:URI<space>notice_text)"
+	}
+	option = {
+		long = "policy-mapping"
+		type = "strings"
+		help = "Certificate Policy mapping (OID:OID)"
+	}
+	option = {
 		long = "req"
 		type = "string"
 		help = "certificate request"

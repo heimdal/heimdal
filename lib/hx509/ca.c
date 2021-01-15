@@ -32,7 +32,6 @@
  */
 
 #include "hx_locl.h"
-#include <pkinit_asn1.h>
 
 /**
  * @page page_ca Hx509 CA functions
@@ -46,6 +45,8 @@ struct hx509_ca_tbs {
     KeyUsage ku;
     ExtKeyUsage eku;
     GeneralNames san;
+    CertificatePolicies cps;
+    PolicyMappings pms;
     heim_integer serial;
     struct {
 	unsigned int proxy:1;
@@ -102,6 +103,8 @@ hx509_ca_tbs_free(hx509_ca_tbs *tbs)
 	return;
 
     free_SubjectPublicKeyInfo(&(*tbs)->spki);
+    free_CertificatePolicies(&(*tbs)->cps);
+    free_PolicyMappings(&(*tbs)->pms);
     free_GeneralNames(&(*tbs)->san);
     free_ExtKeyUsage(&(*tbs)->eku);
     der_free_heim_integer(&(*tbs)->serial);
@@ -526,6 +529,127 @@ hx509_ca_tbs_add_eku(hx509_context context,
     }
     tbs->eku.len += 1;
     return 0;
+}
+
+/**
+ * Add a certificate policy to the to-be-signed certificate object.  Duplicates
+ * will detected and not added.
+ *
+ * @param context A hx509 context.
+ * @param tbs object to be signed.
+ * @param oid policy OID.
+ * @param cps_uri CPS URI to qualify policy with.
+ * @param user_notice user notice display text to qualify policy with.
+ *
+ * @return An hx509 error code, see hx509_get_error_string().
+ *
+ * @ingroup hx509_ca
+ */
+
+HX509_LIB_FUNCTION int HX509_LIB_CALL
+hx509_ca_tbs_add_pol(hx509_context context,
+		     hx509_ca_tbs tbs,
+		     const heim_oid *oid,
+                     const char *cps_uri,
+                     const char *user_notice)
+{
+    PolicyQualifierInfos pqis;
+    PolicyQualifierInfo pqi;
+    PolicyInformation pi;
+    size_t i, size;
+    int ret = 0;
+
+    /* search for duplicates */
+    for (i = 0; i < tbs->cps.len; i++) {
+	if (der_heim_oid_cmp(oid, &tbs->cps.val[i].policyIdentifier) == 0)
+	    return 0;
+    }
+
+    memset(&pi, 0, sizeof(pi));
+    memset(&pqi, 0, sizeof(pqi));
+    memset(&pqis, 0, sizeof(pqis));
+
+    pi.policyIdentifier = *oid;
+    if (cps_uri) {
+        CPSuri uri;
+
+        uri.length = strlen(cps_uri);
+        uri.data = (void *)(uintptr_t)cps_uri;
+        pqi.policyQualifierId = asn1_oid_id_pkix_qt_cps;
+
+	ASN1_MALLOC_ENCODE(CPSuri,
+			   pqi.qualifier.data,
+			   pqi.qualifier.length,
+			   &uri, &size, ret);
+        if (ret == 0) {
+            ret = add_PolicyQualifierInfos(&pqis, &pqi);
+            free_heim_any(&pqi.qualifier);
+        }
+    }
+    if (ret == 0 && user_notice) {
+        DisplayText dt;
+        UserNotice un;
+
+        dt.element = choice_DisplayText_utf8String;
+        dt.u.utf8String = (void *)(uintptr_t)user_notice;
+        un.explicitText = &dt;
+        un.noticeRef = 0;
+
+        pqi.policyQualifierId = asn1_oid_id_pkix_qt_unotice;
+	ASN1_MALLOC_ENCODE(UserNotice,
+			   pqi.qualifier.data,
+			   pqi.qualifier.length,
+			   &un, &size, ret);
+        if (ret == 0) {
+            ret = add_PolicyQualifierInfos(&pqis, &pqi);
+            free_heim_any(&pqi.qualifier);
+        }
+    }
+
+    pi.policyQualifiers = pqis.len ? &pqis : 0;
+
+    if (ret == 0)
+        ret = add_CertificatePolicies(&tbs->cps, &pi);
+
+    free_PolicyQualifierInfos(&pqis);
+    return ret;
+}
+
+/**
+ * Add a certificate policy mapping to the to-be-signed certificate object.
+ * Duplicates will detected and not added.
+ *
+ * @param context A hx509 context.
+ * @param tbs object to be signed.
+ * @param issuer issuerDomainPolicy policy OID.
+ * @param subject subjectDomainPolicy policy OID.
+ *
+ * @return An hx509 error code, see hx509_get_error_string().
+ *
+ * @ingroup hx509_ca
+ */
+
+HX509_LIB_FUNCTION int HX509_LIB_CALL
+hx509_ca_tbs_add_pol_mapping(hx509_context context,
+                             hx509_ca_tbs tbs,
+                             const heim_oid *issuer,
+                             const heim_oid *subject)
+{
+    PolicyMapping pm;
+    size_t i;
+
+    /* search for duplicates */
+    for (i = 0; i < tbs->pms.len; i++) {
+        PolicyMapping *pmp = &tbs->pms.val[i];
+	if (der_heim_oid_cmp(issuer, &pmp->issuerDomainPolicy) == 0 &&
+            der_heim_oid_cmp(subject, &pmp->subjectDomainPolicy) == 0)
+	    return 0;
+    }
+
+    memset(&pm, 0, sizeof(pm));
+    pm.issuerDomainPolicy = *issuer;
+    pm.subjectDomainPolicy = *subject;
+    return add_PolicyMappings(&tbs->pms, &pm);
 }
 
 /**
@@ -1613,8 +1737,8 @@ ca_sign(hx509_context context,
 	    goto out;
     }
 
+    /* Add CRL distribution point */
     if (tbs->crldp.len) {
-
 	ASN1_MALLOC_ENCODE(CRLDistributionPoints, data.data, data.length,
 			   &tbs->crldp, &size, ret);
 	if (ret) {
@@ -1627,6 +1751,40 @@ ca_sign(hx509_context context,
 			    &asn1_oid_id_x509_ce_cRLDistributionPoints,
 			    &data);
 	free(data.data);
+	if (ret)
+	    goto out;
+    }
+
+    /* Add CertificatePolicies */
+    if (tbs->cps.len) {
+	ASN1_MALLOC_ENCODE(CertificatePolicies, data.data, data.length,
+			   &tbs->cps, &size, ret);
+	if (ret) {
+	    hx509_set_error_string(context, 0, ret, "Out of memory");
+	    goto out;
+	}
+	if (size != data.length)
+	    _hx509_abort("internal ASN.1 encoder error");
+        ret = add_extension(context, tbsc, FALSE,
+                            &asn1_oid_id_x509_ce_certificatePolicies, &data);
+        free(data.data);
+	if (ret)
+	    goto out;
+    }
+
+    /* Add PolicyMappings */
+    if (tbs->cps.len) {
+	ASN1_MALLOC_ENCODE(PolicyMappings, data.data, data.length,
+			   &tbs->pms, &size, ret);
+	if (ret) {
+	    hx509_set_error_string(context, 0, ret, "Out of memory");
+	    goto out;
+	}
+	if (size != data.length)
+	    _hx509_abort("internal ASN.1 encoder error");
+        ret = add_extension(context, tbsc, FALSE,
+                            &asn1_oid_id_x509_ce_policyMappings, &data);
+        free(data.data);
 	if (ret)
 	    goto out;
     }

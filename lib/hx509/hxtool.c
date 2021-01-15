@@ -1844,6 +1844,14 @@ eval_types(hx509_context contextp,
 	    hx509_err(contextp, 1, ret, "hx509_ca_tbs_add_san_hostname");
     }
 
+    for (i = 0; i < opt->dnssrv_strings.num_strings; i++) {
+	const char *dnssrv = opt->dnssrv_strings.strings[i];
+
+	ret = hx509_ca_tbs_add_san_dnssrv(contextp, tbs, dnssrv);
+	if (ret)
+	    hx509_err(contextp, 1, ret, "hx509_ca_tbs_add_san_dnssrv");
+    }
+
     for (i = 0; i < opt->email_strings.num_strings; i++) {
 	const char *email = opt->email_strings.strings[i];
 
@@ -2114,6 +2122,20 @@ hxtool_ca(struct certificate_sign_options *opt, int argc, char **argv)
     }
 
     eval_types(context, tbs, opt);
+
+    if (opt->permanent_id_string) {
+        ret = hx509_ca_tbs_add_san_permanentIdentifier_string(context, tbs,
+                                                              opt->permanent_id_string);
+	if (ret)
+	    hx509_err(context, 1, ret, "hx509_ca_tbs_add_san_permanentIdentifier");
+    }
+
+    if (opt->hardware_module_name_string) {
+        ret = hx509_ca_tbs_add_san_hardwareModuleName_string(context, tbs,
+                                                             opt->hardware_module_name_string);
+	if (ret)
+	    hx509_err(context, 1, ret, "hx509_ca_tbs_add_san_hardwareModuleName_string");
+    }
 
     for (i = 0; ret == 0 && i < opt->policy_strings.num_strings; i++) {
         char *oidstr, *uri, *dt;

@@ -926,6 +926,73 @@ out:
     return ret;
 }
 
+static int
+add_ia5string_san(hx509_context context,
+                  hx509_ca_tbs tbs,
+                  const heim_oid *oid,
+                  const char *string)
+{
+    SRVName ustring;
+    heim_octet_string os;
+    size_t size;
+    int ret;
+
+    ustring.data = (void *)(uintptr_t)string;
+    ustring.length = strlen(string);
+
+    os.length = 0;
+    os.data = NULL;
+
+    ASN1_MALLOC_ENCODE(SRVName, os.data, os.length, &ustring, &size, ret);
+    if (ret) {
+	hx509_set_error_string(context, 0, ret, "Out of memory");
+	return ret;
+    }
+    if (size != os.length)
+	_hx509_abort("internal ASN.1 encoder error");
+
+    ret = hx509_ca_tbs_add_san_otherName(context, tbs, oid, &os);
+    free(os.data);
+    return ret;
+}
+
+/**
+ * Add DNSSRV Subject Alternative Name to the to-be-signed certificate object.
+ *
+ * @param context A hx509 context.
+ * @param tbs object to be signed.
+ * @param dnssrv An ASCII string of the for _Service.Name.
+ *
+ * @return An hx509 error code, see hx509_get_error_string().
+ *
+ * @ingroup hx509_ca
+ */
+
+HX509_LIB_FUNCTION int HX509_LIB_CALL
+hx509_ca_tbs_add_san_dnssrv(hx509_context context,
+			    hx509_ca_tbs tbs,
+			    const char *dnssrv)
+{
+    size_t i, len;
+
+    /* Minimal DNSSRV input validation */
+    if (dnssrv == 0 || dnssrv[0] != '_') {
+        hx509_set_error_string(context, 0, EINVAL, "Invalid DNSSRV name");
+        return EINVAL;
+    }
+    for (i = 1, len = strlen(dnssrv); i < len; i++) {
+        if (dnssrv[i] == '.' && dnssrv[i + 1] != '\0')
+            break;
+    }
+    if (i == len) {
+        hx509_set_error_string(context, 0, EINVAL, "Invalid DNSSRV name");
+        return EINVAL;
+    }
+
+    return add_ia5string_san(context, tbs,
+                             &asn1_oid_id_pkix_on_dnsSRV, dnssrv);
+}
+
 /**
  * Add Kerberos Subject Alternative Name to the to-be-signed
  * certificate object. The principal string is a UTF8 string.
@@ -965,7 +1032,7 @@ add_utf8_san(hx509_context context,
 	     const heim_oid *oid,
 	     const char *string)
 {
-    const PKIXXmppAddr ustring = (const PKIXXmppAddr)(intptr_t)string;
+    const PKIXXmppAddr ustring = (const PKIXXmppAddr)(uintptr_t)string;
     heim_octet_string os;
     size_t size;
     int ret;
@@ -976,17 +1043,13 @@ add_utf8_san(hx509_context context,
     ASN1_MALLOC_ENCODE(PKIXXmppAddr, os.data, os.length, &ustring, &size, ret);
     if (ret) {
 	hx509_set_error_string(context, 0, ret, "Out of memory");
-	goto out;
+	return ret;
     }
     if (size != os.length)
 	_hx509_abort("internal ASN.1 encoder error");
 
-    ret = hx509_ca_tbs_add_san_otherName(context,
-					 tbs,
-					 oid,
-					 &os);
+    ret = hx509_ca_tbs_add_san_otherName(context, tbs, oid, &os);
     free(os.data);
-out:
     return ret;
 }
 
@@ -1090,6 +1153,253 @@ hx509_ca_tbs_add_san_rfc822name(hx509_context context,
     gn.u.rfc822Name.length = strlen(rfc822Name);
 
     return add_GeneralNames(&tbs->san, &gn);
+}
+
+/*
+ * PermanentIdentifier is one SAN for naming devices with TPMs after their
+ * endorsement keys or EK certificates.  See TPM 2.0 Keys for Device Identity
+ * and Attestation, Version 1.00, Revision 2, 9/17/2020 (DRAFT).
+ *
+ * The text on the form of permanent identifiers for TPM endorsement keys sans
+ * certificates is clearly problematic, saying: "When the TPM does not have an
+ * EK certificate, the identifierValue is a digest of a concatenation of the
+ * UTF8 string “EkPubkey” (terminating NULL not included) with the binary EK
+ * public key", but since arbitrary binary is not necessarily valid UTF-8...
+ * and since NULs embedded in UTF-8 might be OK in some contexts but really
+ * isn't in C (and Heimdal's ASN.1 compiler does not allow NULs in the
+ * middle of strings)...  That just cannot be correct.  Since elsewhere the TCG
+ * specs use the hex encoding of the SHA-256 digest of the DER encoding of
+ * public keys, that's what we should support in Heimdal, and maybe send in a
+ * comment.
+ *
+ * Also, even where one should use hex encoding of the SHA-256 digest of the
+ * DER encoding of public keys, how should the public keys be represented?
+ * Presumably as SPKIs, with all the required parameters and no more.
+ */
+
+/**
+ * Add a Subject Alternative Name of PermanentIdentifier type to a to-be-signed
+ * certificate object.  The permanent identifier form for TPM endorsement key
+ * certificates is the hex encoding of the SHA-256 digest of the DER encoding
+ * of the certificate.  The permanent identifier form for TPM endorsement keys
+ * are of the form "EkPubkey<public-key>", where the form of <public-key> is
+ * not well specified at this point.  It is the caller's responsibility to
+ * format the identifierValue.
+ *
+ * @param context A hx509 context.
+ * @param tbs object to be signed.
+ * @param str permanent identifier name in the form "[<assigner-oid>]:[<id>]".
+ * @param assigner The OID of an assigner.
+ *
+ * @return An hx509 error code, see hx509_get_error_string().
+ *
+ * @ingroup hx509_ca
+ */
+
+HX509_LIB_FUNCTION int HX509_LIB_CALL
+hx509_ca_tbs_add_san_permanentIdentifier_string(hx509_context context,
+                                                hx509_ca_tbs tbs,
+                                                const char *str)
+{
+    const heim_oid *found = NULL;
+    heim_oid oid;
+    const char *oidstr, *id;
+    char *freeme, *p;
+    int ret;
+
+    if ((freeme = strdup(str)) == NULL)
+        return hx509_enomem(context);
+
+    oidstr = freeme;
+    p = strchr(freeme, ':');
+    if (!p) {
+        hx509_set_error_string(context, 0, EINVAL,
+                               "Invalid PermanentIdentifier string (should be \"[<oid>]:[<id>]\")",
+                               oidstr);
+        free(freeme);
+        return EINVAL;
+    }
+    if (p) {
+        *(p++) = '\0';
+        id = p;
+    }
+    if (oidstr[0] != '\0') {
+        ret = der_find_heim_oid_by_name(oidstr, &found);
+        if (ret) {
+            ret = der_parse_heim_oid(oidstr, " .", &oid);
+            if (ret == 0)
+                found = &oid;
+        }
+    }
+    ret = hx509_ca_tbs_add_san_permanentIdentifier(context, tbs, id, found);
+    if (found == &oid)
+        der_free_oid(&oid);
+    free(freeme);
+    return ret;
+}
+
+/**
+ * Add a Subject Alternative Name of PermanentIdentifier type to a to-be-signed
+ * certificate object.  The permanent identifier form for TPM endorsement key
+ * certificates is the hex encoding of the SHA-256 digest of the DER encoding
+ * of the certificate.  The permanent identifier form for TPM endorsement keys
+ * are of the form "EkPubkey<public-key>", where the form of <public-key> is
+ * not well specified at this point.  It is the caller's responsibility to
+ * format the identifierValue.
+ *
+ * @param context A hx509 context.
+ * @param tbs object to be signed.
+ * @param identifierValue The permanent identifier name.
+ * @param assigner The OID of an assigner.
+ *
+ * @return An hx509 error code, see hx509_get_error_string().
+ *
+ * @ingroup hx509_ca
+ */
+
+HX509_LIB_FUNCTION int HX509_LIB_CALL
+hx509_ca_tbs_add_san_permanentIdentifier(hx509_context context,
+                                         hx509_ca_tbs tbs,
+                                         const char *identifierValue,
+                                         const heim_oid *assigner)
+{
+    PermanentIdentifier pi;
+    heim_utf8_string s = (void *)(uintptr_t)identifierValue;
+    heim_octet_string os;
+    size_t size;
+    int ret;
+
+    pi.identifierValue = &s;
+    pi.assigner = (heim_oid*)(uintptr_t)assigner;
+    os.length = 0;
+    os.data = NULL;
+
+    ASN1_MALLOC_ENCODE(PermanentIdentifier, os.data, os.length, &pi, &size,
+                       ret);
+    if (ret) {
+	hx509_set_error_string(context, 0, ret, "Out of memory");
+	return ret;
+    }
+    if (size != os.length)
+	_hx509_abort("internal ASN.1 encoder error");
+
+    ret = hx509_ca_tbs_add_san_otherName(context, tbs,
+                                         &asn1_oid_id_on_permanentIdentifier,
+                                         &os);
+    free(os.data);
+    return ret;
+}
+
+/**
+ * Add a Subject Alternative Name of HardwareModuleName type to a to-be-signed
+ * certificate object.
+ *
+ * @param context A hx509 context.
+ * @param tbs object to be signed.
+ * @param str a string of the form "<oid>:<serial>".
+ * @param hwserial The serial number.
+ *
+ * @return An hx509 error code, see hx509_get_error_string().
+ *
+ * @ingroup hx509_ca
+ */
+
+HX509_LIB_FUNCTION int HX509_LIB_CALL
+hx509_ca_tbs_add_san_hardwareModuleName_string(hx509_context context,
+                                               hx509_ca_tbs tbs,
+                                               const char *str)
+{
+    const heim_oid *found = NULL;
+    heim_oid oid;
+    const char *oidstr, *sno;
+    char *freeme, *p;
+    int ret;
+
+    if ((freeme = strdup(str)) == NULL)
+        return hx509_enomem(context);
+
+    oidstr = freeme;
+    p = strchr(freeme, ':');
+    if (!p) {
+        hx509_set_error_string(context, 0, EINVAL,
+                               "Invalid HardwareModuleName string (should be \"<oid>:<serial>\")",
+                               oidstr);
+        free(freeme);
+        return EINVAL;
+    }
+    if (p) {
+        *(p++) = '\0';
+        sno = p;
+    }
+    if (oidstr[0] == '\0') {
+        found = &asn1_oid_tcg_tpm20;
+    } else {
+        ret = der_find_heim_oid_by_name(oidstr, &found);
+        if (ret) {
+            ret = der_parse_heim_oid(oidstr, " .", &oid);
+            if (ret == 0)
+                found = &oid;
+        }
+    }
+    if (!found) {
+        hx509_set_error_string(context, 0, EINVAL,
+                               "Could not resolve or parse OID \"%s\"",
+                               oidstr);
+        free(freeme);
+        return EINVAL;
+    }
+    ret = hx509_ca_tbs_add_san_hardwareModuleName(context, tbs, found, sno);
+    if (found == &oid)
+        der_free_oid(&oid);
+    free(freeme);
+    return ret;
+}
+
+/**
+ * Add a Subject Alternative Name of HardwareModuleName type to a to-be-signed
+ * certificate object.
+ *
+ * @param context A hx509 context.
+ * @param tbs object to be signed.
+ * @param hwtype The hardwar module type (e.g., `&asn1_oid_tcg_tpm20').
+ * @param hwserial The serial number.
+ *
+ * @return An hx509 error code, see hx509_get_error_string().
+ *
+ * @ingroup hx509_ca
+ */
+
+HX509_LIB_FUNCTION int HX509_LIB_CALL
+hx509_ca_tbs_add_san_hardwareModuleName(hx509_context context,
+                                        hx509_ca_tbs tbs,
+                                        const heim_oid *hwtype,
+                                        const char *hwserial)
+{
+    HardwareModuleName hm;
+    heim_octet_string os;
+    size_t size;
+    int ret;
+
+    hm.hwType = *hwtype;
+    hm.hwSerialNum.data = (void *)(uintptr_t)hwserial;
+    hm.hwSerialNum.length = strlen(hwserial);
+    os.length = 0;
+    os.data = NULL;
+
+    ASN1_MALLOC_ENCODE(HardwareModuleName, os.data, os.length, &hm, &size,
+                       ret);
+    if (ret) {
+	hx509_set_error_string(context, 0, ret, "Out of memory");
+	return ret;
+    }
+    if (size != os.length)
+	_hx509_abort("internal ASN.1 encoder error");
+
+    ret = hx509_ca_tbs_add_san_otherName(context, tbs,
+                                         &asn1_oid_id_on_hardwareModuleName,
+                                         &os);
+    free(os.data);
+    return ret;
 }
 
 /**

@@ -742,6 +742,11 @@ command = {
 		help = "DNS names this certificate is allowed to serve"
 	}
 	option = {
+		long = "dnssrv"
+		type = "strings"
+		help = "DNS SRV names this certificate is allowed to serve"
+	}
+	option = {
 		long = "email"
 		type = "strings"
 		help = "email addresses assigned to this certificate"
@@ -760,6 +765,16 @@ command = {
 		long = "jid"
 		type = "string"
 		help = "XMPP jabber id (for SAN)"
+	}
+	option = {
+		long = "permanent-id"
+		type = "string"
+		help = "PermanentIdentifier ([oid]:[serial])"
+	}
+	option = {
+		long = "hardware-module-name"
+		type = "string"
+		help = "HardwareModuleName (oid:serial)"
 	}
 	option = {
 		long = "policy"

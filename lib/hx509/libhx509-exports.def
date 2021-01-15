@@ -23,6 +23,7 @@ EXPORTS
 	_hx509_private_key_ref
 	hx509_request_add_GeneralName
 	hx509_request_add_dns_name
+	hx509_request_add_dns_srv
 	hx509_request_add_eku
 	hx509_request_add_email
 	hx509_request_add_ms_upn_name
@@ -68,10 +69,15 @@ EXPORTS
 	hx509_ca_tbs_add_pol
 	hx509_ca_tbs_add_pol_mapping
 	hx509_ca_tbs_add_san
+	hx509_ca_tbs_add_san_dnssrv
+	hx509_ca_tbs_add_san_hardwareModuleName
+	hx509_ca_tbs_add_san_hardwareModuleName_string
 	hx509_ca_tbs_add_san_hostname
 	hx509_ca_tbs_add_san_jid
 	hx509_ca_tbs_add_san_ms_upn
 	hx509_ca_tbs_add_san_otherName
+	hx509_ca_tbs_add_san_permanentIdentifier
+	hx509_ca_tbs_add_san_permanentIdentifier_string
 	hx509_ca_tbs_add_san_pkinit
 	hx509_ca_tbs_add_san_rfc822name
 	hx509_ca_tbs_free

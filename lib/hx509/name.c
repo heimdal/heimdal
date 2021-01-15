@@ -85,7 +85,12 @@ static const struct {
     { "STREET", &asn1_oid_id_at_streetAddress, 0, 0 }, /* ENOTSUP */
     { "UID", &asn1_oid_id_Userid, 0, ub_numeric_user_id_length },
     { "emailAddress", &asn1_oid_id_pkcs9_emailAddress, 0, ub_emailaddress_length },
-    { "serialNumber", &asn1_oid_id_at_serialNumber, 0, ub_serial_number }
+    /* This is for DevID certificates and maybe others */
+    { "serialNumber", &asn1_oid_id_at_serialNumber, 0, ub_serial_number },
+    /* These are for TPM 2.0 Endorsement Key Certificates (EKCerts) */
+    { "TPMManufacturer", &asn1_oid_tcg_at_tpmManufacturer, 0, ub_emailaddress_length },
+    { "TPMModel", &asn1_oid_tcg_at_tpmModel, 0, ub_emailaddress_length },
+    { "TPMVersion", &asn1_oid_tcg_at_tpmVersion, 0, ub_emailaddress_length },
 };
 
 static char *
@@ -1004,6 +1009,73 @@ hx509_name_is_null_p(const hx509_name name)
         name->der_name.u.rdnSequence.len == 0;
 }
 
+int
+_hx509_unparse_PermanentIdentifier(hx509_context context,
+                                   struct rk_strpool **strpool,
+                                   heim_any *value)
+{
+    PermanentIdentifier pi;
+    size_t len;
+    const char *pid = "";
+    char *s = NULL;
+    int ret;
+
+    ret = decode_PermanentIdentifier(value->data, value->length, &pi, &len);
+    if (ret == 0 && pi.assigner &&
+        der_print_heim_oid(pi.assigner, '.', &s) != 0)
+	ret = hx509_enomem(context);
+    if (pi.identifierValue && *pi.identifierValue)
+        pid = *pi.identifierValue;
+    if (ret == 0 &&
+        (*strpool = rk_strpoolprintf(*strpool, "%s:%s", s ? s : "", pid)) == NULL)
+        ret = hx509_enomem(context);
+    free_PermanentIdentifier(&pi);
+    free(s);
+    if (ret) {
+        rk_strpoolfree(*strpool);
+        *strpool = rk_strpoolprintf(NULL,
+                                    "<error-decoding-PermanentIdentifier");
+        hx509_set_error_string(context, 0, ret,
+                               "Failed to decode PermanentIdentifier");
+    }
+    return ret;
+}
+
+int
+_hx509_unparse_HardwareModuleName(hx509_context context,
+                                  struct rk_strpool **strpool,
+                                  heim_any *value)
+{
+    HardwareModuleName hm;
+    size_t len;
+    char *s = NULL;
+    int ret;
+
+    ret = decode_HardwareModuleName(value->data, value->length, &hm, &len);
+    if (ret == 0 && hm.hwSerialNum.length > 256)
+        hm.hwSerialNum.length = 256;
+    if (ret == 0)
+        ret = der_print_heim_oid(&hm.hwType, '.', &s);
+    if (ret == 0) {
+        *strpool = rk_strpoolprintf(*strpool, "%s:%.*s%s", s,
+                                    (int)hm.hwSerialNum.length,
+                                    (char *)hm.hwSerialNum.data,
+                                    value->length == len ? "" : ", <garbage>");
+        if (*strpool == NULL)
+            ret = hx509_enomem(context);
+    }
+    free_HardwareModuleName(&hm);
+    free(s);
+    if (ret) {
+        rk_strpoolfree(*strpool);
+        *strpool = rk_strpoolprintf(NULL,
+                                    "<error-decoding-HardwareModuleName");
+        hx509_set_error_string(context, 0, ret,
+                               "Failed to decode HardwareModuleName");
+    }
+    return ret;
+}
+
 /*
  * This necessarily duplicates code from libkrb5, and has to unless we move
  * common code here or to lib/roken for it.  We do have slightly different
@@ -1166,12 +1238,21 @@ struct {
     { &asn1_oid_id_pkinit_san,
         "KerberosPrincipalName",
         _hx509_unparse_KRB5PrincipalName },
+    { &asn1_oid_id_on_permanentIdentifier,
+        "PermanentIdentifier",
+        _hx509_unparse_PermanentIdentifier },
+    { &asn1_oid_id_on_hardwareModuleName,
+        "HardwareModuleName",
+        _hx509_unparse_HardwareModuleName },
     { &asn1_oid_id_pkix_on_xmppAddr,
         "XMPPName",
         _hx509_unparse_utf8_string_name },
     { &asn1_oid_id_pkinit_ms_san,
         "MSFTKerberosPrincipalName",
         _hx509_unparse_utf8_string_name },
+    { &asn1_oid_id_pkix_on_dnsSRV,
+        "SRVName",
+        _hx509_unparse_ia5_string_name },
 };
 
 /**

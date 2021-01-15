@@ -37,6 +37,8 @@
 #define HEIMDAL_HX509_H 1
 
 #include <rfc2459_asn1.h>
+#include <rfc4043_asn1.h>
+#include <rfc4108_asn1.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <heimbase.h>
@@ -82,6 +84,9 @@ typedef enum {
     HX509_SAN_TYPE_XMPP = 32,
     HX509_SAN_TYPE_PKINIT = 33,
     HX509_SAN_TYPE_MS_UPN = 34,
+    HX509_SAN_TYPE_DNSSRV = 35,         /* SRVName             [RFC4985] */
+    HX509_SAN_TYPE_PERMANENT_ID = 36,   /* PermanentIdentifier [RFC4043] */
+    HX509_SAN_TYPE_HW_MODULE = 37,      /* HardwareModuleName  [RFC4108] */
 } hx509_san_type;
 
 enum {

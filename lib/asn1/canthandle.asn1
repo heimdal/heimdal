@@ -2,13 +2,6 @@
 
 CANTHANDLE DEFINITIONS ::= BEGIN
 
--- Can't handle tags larger than 30 because while we encode large tags
--- correctly, we don't account for more than one byte of them in the length
--- functions.  The compiler shouldn't crash, but the code generate will be
--- incorrect and should crash.
-
-Foo31 ::= SEQUENCE { foo [31] INTEGER }
-
 --  Can't handle primitives in SET OF, causing the compiler to crash
 --  Workaround is to define a type that is only an integer and use that
 

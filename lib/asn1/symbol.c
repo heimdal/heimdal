@@ -165,3 +165,9 @@ emitted_definition(const Symbol *s)
 {
     ((Symbol *)(uintptr_t)s)->emitted_definition = 1;
 }
+
+void
+emitted_tag_enums(const Symbol *s)
+{
+    ((Symbol *)(uintptr_t)s)->emitted_tag_enums = 1;
+}

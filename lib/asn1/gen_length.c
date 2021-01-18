@@ -256,9 +256,7 @@ length_type (const char *name, const Type *t,
 	if (asprintf(&tname, "%s_tag", tmpstr) < 0 || tname == NULL)
 	    errx(1, "malloc");
 	length_type (name, t->subtype, variable, tname);
-        /*
-         * XXX See the comments in gen_encode() about this.
-         */
+        /* See the comments in encode_type() about IMPLICIT tags */
         if (t->tag.tagenv == TE_IMPLICIT && !prim &&
             t->subtype->type != TSequenceOf && t->subtype->type != TSetOf &&
             t->subtype->type != TChoice) {
@@ -270,7 +268,18 @@ length_type (const char *name, const Type *t,
                 replace_tag = 1;
         } else if (t->tag.tagenv == TE_IMPLICIT && prim && t->subtype->symbol)
             replace_tag = 1;
-        if (!replace_tag)
+        if (replace_tag)
+            /*
+             * We're replacing the tag of the underlying type.  If that type is
+             * imported, then we don't know its tag, so we rely on the
+             * asn1_tag_tag_<TypeName> enum value we generated for it, and we
+             * use the asn1_tag_length_<TypeName> enum value to avoid having to
+             * call der_length_tag() at run-time.
+             */
+            fprintf(codefile, "ret += %lu - asn1_tag_length_%s;\n",
+                    (unsigned long)length_tag(t->tag.tagvalue),
+                    t->subtype->symbol->gen_name);
+        else
             fprintf(codefile, "ret += %lu + der_length_len (ret);\n",
                     (unsigned long)length_tag(t->tag.tagvalue));
 	free(tname);

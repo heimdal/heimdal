@@ -48,6 +48,21 @@ static const char *orig_filename;
 static char *privheader, *header, *template;
 static const char *headerbase = STEM;
 
+/* XXX same as der_length_tag */
+static size_t
+length_tag(unsigned int tag)
+{
+    size_t len = 0;
+
+    if(tag <= 30)
+        return 1;
+    while(tag) {
+        tag /= 128;
+        len++;
+    }
+    return len + 1;
+}
+
 /*
  * list of all IMPORTs
  */
@@ -162,6 +177,7 @@ init_generate (const char *filename, const char *base)
 	     "#define __%s_h__\n\n", headerbase, headerbase);
     fprintf (headerfile,
 	     "#include <stddef.h>\n"
+	     "#include <stdint.h>\n"
 	     "#include <time.h>\n\n");
     fprintf (headerfile,
 	     "#ifndef __asn1_common_definitions__\n"
@@ -517,12 +533,36 @@ generate_constant (const Symbol *s)
 int
 is_primitive_type(const Type *t)
 {
+    /*
+     * Start by chasing aliasings like this:
+     *
+     * Type0 ::= ...
+     * Type1 ::= Type0
+     * ..
+     * TypeN ::= TypeN-1
+     *
+     * to <Type0>, then check if <Type0> is primitive.
+     */
     while (t->type == TType &&
            t->symbol &&
-           t->symbol->type &&
-           t->symbol->type->type == TType)
-        t = t->symbol->type;
-    /* EXPLICIT non-UNIVERSAL tags are constructed */
+           t->symbol->type) {
+        if (t->symbol->type->type == TType)
+            t = t->symbol->type; /* Alias */
+        else if (t->symbol->type->type == TTag &&
+                 t->symbol->type->tag.tagenv == TE_IMPLICIT)
+            /*
+             * IMPLICIT-tagged alias, something like:
+             *
+             * Type0 ::= [0] IMPLICIT ...
+             *
+             * Just recurse.
+             */
+            return is_primitive_type(t->symbol->type);
+        else
+            break;
+
+    }
+    /* EXPLICIT non-UNIVERSAL tags are always constructed */
     if (t->type == TTag && t->tag.tagclass != ASN1_C_UNIV &&
         t->tag.tagenv == TE_EXPLICIT)
         return 0;
@@ -561,6 +601,8 @@ is_primitive_type(const Type *t)
     case TVisibleString:
     case TNull:
 	return 1;
+    case TTag:
+        return is_primitive_type(t->subtype);
     default:
 	return 0;
     }
@@ -1270,22 +1312,63 @@ generate_subtypes_header(const Symbol *s)
 static void
 generate_type_header (const Symbol *s)
 {
+    Type *t = s->type;
+    if (!s->type)
+        return;
 
     /*
      * Recurse down the types of member fields of `s' to make sure that
      * referenced types have had their definitions emitted already if the
      * member fields are not OPTIONAL/DEFAULTed.
      */
-    if (s->type)
-        generate_subtypes_header(s);
-
-    if (!s->type)
-        return;
-
+    generate_subtypes_header(s);
     fprintf(headerfile, "/*\n");
     fprintf(headerfile, "%s ::= ", s->name);
     define_asn1 (0, s->type);
     fprintf(headerfile, "\n*/\n\n");
+
+    /*
+     * Emit enums for the outermost tag of this type.  These are needed for
+     * dealing with IMPLICIT tags so we know what to rewrite the tag to when
+     * decoding.
+     *
+     * See gen_encode.c and gen_decode.c for a complete explanation.  Short
+     * version: we need to change the prototypes of the length/encode/decode
+     * functions to take an optional IMPLICIT tag to use instead of the type's
+     * outermost tag, but for now we hack it, and to do that we need to know
+     * the type's outermost tag outside the context of the bodies of the codec
+     * functions we generate for it.  Using an enum means no extra space is
+     * needed in stripped objects.
+     */
+    if (!s->emitted_tag_enums) {
+        while (t->type == TType && s->type->symbol && s->type->symbol->type)
+            t = s->type->symbol->type;
+
+        if (t->type == TType && t->symbol && strcmp(t->symbol->name, "heim_any")) {
+            /*
+             * This type is ultimately an alias of an imported type, so we don't
+             * know its outermost tag here.
+             */
+            fprintf(headerfile,
+                    "enum { asn1_tag_length_%s = asn1_tag_length_%s,\n"
+                    "       asn1_tag_class_%s = asn1_tag_class_%s,\n"
+                    "       asn1_tag_tag_%s = asn1_tag_tag_%s };\n",
+                    s->gen_name, s->type->symbol->gen_name,
+                    s->gen_name, s->type->symbol->gen_name,
+                    s->gen_name, s->type->symbol->gen_name);
+            emitted_tag_enums(s);
+        } else if (t->type != TType) {
+            /* This type's outermost tag is known here */
+            fprintf(headerfile,
+                    "enum { asn1_tag_length_%s = %lu,\n"
+                    "       asn1_tag_class_%s = %d,\n"
+                    "       asn1_tag_tag_%s = %d };\n",
+                    s->gen_name, (unsigned long)length_tag(s->type->tag.tagvalue),
+                    s->gen_name, s->type->tag.tagclass,
+                    s->gen_name, s->type->tag.tagvalue);
+            emitted_tag_enums(s);
+        }
+    }
 
     if (s->emitted_definition)
         return;
@@ -1293,7 +1376,6 @@ generate_type_header (const Symbol *s)
     fprintf(headerfile, "typedef ");
     define_type(0, s->gen_name, s->gen_name, s->type, TRUE,
                 preserve_type(s->name) ? TRUE : FALSE);
-
     fprintf(headerfile, "\n");
 
     if (template_flag)

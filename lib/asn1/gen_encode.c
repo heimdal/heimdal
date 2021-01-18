@@ -33,6 +33,21 @@
 
 #include "gen_locl.h"
 
+/* XXX same as der_length_tag */
+static size_t
+length_tag(unsigned int tag)
+{
+    size_t len = 0;
+
+    if(tag <= 30)
+        return 1;
+    while(tag) {
+        tag /= 128;
+        len++;
+    }
+    return len + 1;
+}
+
 static void
 encode_primitive (const char *typename, const char *name)
 {
@@ -395,14 +410,10 @@ encode_type (const char *name, const Type *t, const char *tmpstr)
 	int c;
 	if (asprintf (&tname, "%s_tag", tmpstr) < 0 || tname == NULL)
 	    errx(1, "malloc");
-	c = encode_type (name, t->subtype, tname);
-        /* Explicit tags are always constructed */
-        if (!c && t->tag.tagclass != ASN1_C_UNIV && t->tag.tagenv == TE_EXPLICIT)
-            c = 1;
         /*
          * HACK HACK HACK
          *
-         * This is part of the fix to the bug where we treat IMPLICIT tags of
+         * This is part of the fix to the bug where we treated IMPLICIT tags of
          * named types as EXPLICIT.  I.e.
          *
          *  Foo ::= SEQUENCE { ... }
@@ -412,37 +423,29 @@ encode_type (const char *name, const Type *t, const char *tmpstr)
          * constructed tag when it should get only the first tag.
          *
          * Properly fixing this would require changing the signatures of the
-         * encode, lenght, and decode functions we generate to take an optional
+         * encode, length, and decode functions we generate to take an optional
          * tag to replace the one the encoder would generate / decoder would
          * expect.  That would change the ABI, which... isn't stable, but it's
          * a bit soon to make that change.
          *
-         * So, we're looking for IMPLICIT tags of named SEQUENCE/SET types, and
-         * if we see any, we generate code to replace the tag.
+         * So, we're looking for IMPLICIT, and if we see any, we generate code
+         * to replace the tag.
          *
-         * NOTE WELL: We're assuming that the length of the encoding of the tag
-         *            of the subtype and the length of the encoding of the
-         *            IMPLICIT tag are the same.
+         * On the decode side we need to know what tag to restore.  For this we
+         * generate enums in the generated header.
          *
-         *            To avoid this we'll need to generate new length_tag_*
-         *            functions or else we'll need to add a boolean argument to
-         *            the length_* functions we generate to count only the
-         *            length of the tag of the type.  The latter is an ABI
-         *            change.  Or we'll need to enhance asn1_compile to be able
-         *            to load multiple modules so that we use the AST of the
-         *            modules to internally compute the length of types and
-         *            tags.  The latter would be great anyways as it would
-         *            allow the computation of tag lengths for tagged types to
-         *            be constant.
-         *
-         * NOTE WELL: We *do* "replace" the tags of IMPLICIT-tagged primitive
-         *            types, but our primitive codec functions leave those tags
-         *            out, which is why we don't have to der_replace_tag() them
-         *            here.
+         * NOTE: We *do* "replace" the tags of IMPLICIT-tagged primitive types,
+         *       but our primitive codec functions leave those tags out, which
+         *       is why we don't have to der_replace_tag() them here.
+         */
+        /*
+         * If the tag is IMPLICIT and it's not primitive and the subtype is not
+         * any kind of structure...
          */
         if (t->tag.tagenv == TE_IMPLICIT && !prim &&
             t->subtype->type != TSequenceOf && t->subtype->type != TSetOf &&
             t->subtype->type != TChoice) {
+            /* If it is a named type for a structured thing */
             if (t->subtype->symbol &&
                 (t->subtype->type == TSequence ||
                  t->subtype->type == TSet))
@@ -456,13 +459,132 @@ encode_type (const char *name, const Type *t, const char *tmpstr)
              * tags unlike our raw primtive codec library.
              */
             replace_tag = 1;
+
         if (replace_tag)
             fprintf(codefile,
-                    "e = der_replace_tag (p, len, %s, %s, %s);\n"
-                    "if (e) return e;\np -= l; len -= l; ret += l;\n\n",
+                    "{ unsigned char *psave_%s = p;\n"
+                    "size_t l2_%s, lensave_%s = len;\n"
+                    "len = length_%s(%s);\n"
+                    /* Allocate a temp buffer for the encoder */
+                    "if ((p = malloc(len)) == NULL) return ENOMEM;\n"
+                    /* Make p point to the last byte of the allocated buf */
+                    "p += len - 1;\n",
+                    tmpstr, tmpstr, tmpstr,
+                    t->subtype->symbol->gen_name, name);
+
+	c = encode_type (name, t->subtype, tname);
+        /* Explicit non-UNIVERSAL tags are always constructed */
+        if (!c && t->tag.tagclass != ASN1_C_UNIV && t->tag.tagenv == TE_EXPLICIT)
+            c = 1;
+        if (replace_tag)
+            fprintf(codefile,
+                    "if (len) abort();\n"
+                    /*
+                     * Here we have `p' pointing to one byte before the buffer
+                     * we allocated above.
+                     *
+                     *     [ T_wrong | LL | VVVV ] // temp buffer
+                     *   ^   ^
+                     *   |   |
+                     *   |   \
+                     *   \    +-- p + 1
+                     *    +-- p
+                     *
+                     * psave_<fieldName> still points to the last byte in the
+                     * original buffer passed in where we should write the
+                     * encoding of <fieldName>.
+                     *
+                     * We adjust psave_<fieldName> to point to before the TLV
+                     * encoding of <fieldName> (with wrong tag) in the original
+                     * buffer (this may NOT be a valid pointer, but we won't
+                     * dereference it):
+                     *
+                     * [ ... | T_wrong | LL | VVVVV | ... ] // original buffer
+                     *      ^
+                     *      |
+                     *      \
+                     *       +-- psave_<fieldName>
+                     */
+                    "psave_%s -= l;\n"
+                    /*
+                     * We further adjust psave_<fieldName> to point to the last
+                     * byte of what should be the T(ag) of the TLV encoding of
+                     * <fieldName> (this is now a valid pointer), then...
+                     *
+                     *         |<--->| (not written yet)
+                     *         |     | |<-------->| (not written yet)
+                     * [ ... | T_right | LL | VVVVV | ... ] // original buffer
+                     *                ^
+                     *                |
+                     *                \
+                     *                 +-- psave_<fieldName>
+                     */
+                    "psave_%s += asn1_tag_length_%s;\n"
+                    /*
+                     * ...copy the L(ength)V(alue) of the TLV encoding of
+                     * <fieldName>.
+                     *
+                     * [ ... | T_right | LL | VVVVV | ... ] // original buffer
+                     *                   ^
+                     *                   |
+                     *                   \
+                     *                    +-- psave_<fieldName> + 1
+                     *
+                     *             |<----->| length is
+                     *             |       | `l' - asn1_tag_length_<fieldName>
+                     * [ T_wrong | LL | VVVV ] // temp buffer
+                     *   ^         ^
+                     *   |         |
+                     *   |         \
+                     *   \          +-- p + 1 + asn1_tag_length_%s
+                     *    +-- p + 1
+                     */
+                    "memcpy(psave_%s + 1, p + 1 + asn1_tag_length_%s, l - asn1_tag_length_%s);\n"
+                    /*
+                     * Encode the IMPLICIT tag.  Recall that encoders like
+                     * der_put_tag() take a pointer to the last byte they
+                     * should write to, and a length of bytes to the left of
+                     * that that they are allowed to write into.
+                     *
+                     * [ ... | T_right | LL | VVVVV | ... ] // original buffer
+                     *                ^
+                     *                |
+                     *                \
+                     *                 +-- psave_<fieldName>
+                     */
+                    "e = der_put_tag(psave_%s, %lu, %s, %s, %d, &l2_%s);\n"
+                    "if (e) return e;\n"
+                    /* Restore `len' and adjust it (see `p' below) */
+                    "len = lensave_%s - (l + %lu - asn1_tag_length_%s);\n"
+                    /*
+                     * Adjust `ret' to account for the difference in size
+                     * between the length of the right and wrong tags.
+                     */
+                    "ret += %lu - asn1_tag_length_%s;\n"
+                    /* Free the buffer and restore `p' */
+                    "free(p + 1);\n"
+                    /*
+                     * Make `p' point into the original buffer again, to one
+                     * byte before the bytes we wrote:
+                     *
+                     * [ ... | T_right | LL | VVVVV | ... ] // original buffer
+                     *      ^
+                     *      |
+                     *      \
+                     *       +-- p
+                     */
+                    "p = psave_%s - (1 + %lu - asn1_tag_length_%s); }\n",
+                    tmpstr, tmpstr, t->subtype->symbol->name,
+                    tmpstr, t->subtype->symbol->name, t->subtype->symbol->name,
+                    tmpstr, length_tag(t->tag.tagvalue),
                     classname(t->tag.tagclass),
                     c ? "CONS" : "PRIM",
-                    valuename(t->tag.tagclass, t->tag.tagvalue));
+                    t->tag.tagvalue,
+                    tmpstr,
+
+                    tmpstr, length_tag(t->tag.tagvalue), t->subtype->symbol->name,
+                    length_tag(t->tag.tagvalue), t->subtype->symbol->name,
+                    tmpstr, length_tag(t->tag.tagvalue), t->subtype->symbol->name);
         else
             fprintf(codefile,
                     "e = der_put_length_and_tag (p, len, ret, %s, %s, %s, &l);\n"
@@ -471,6 +593,7 @@ encode_type (const char *name, const Type *t, const char *tmpstr)
                     c ? "CONS" : "PRIM",
                     valuename(t->tag.tagclass, t->tag.tagvalue));
 	free(tname);
+        constructed = c;
 	break;
     }
     case TChoice:{

@@ -159,6 +159,7 @@ struct symbol {
     HEIM_TAILQ_ENTRY(symbol) symlist;
     unsigned int emitted_declaration:1;
     unsigned int emitted_definition:1;
+    unsigned int emitted_tag_enums:1;
 };
 
 typedef struct symbol Symbol;
@@ -179,4 +180,5 @@ int checkundefined(void);
 void generate_types(void);
 void emitted_declaration(const Symbol *);
 void emitted_definition(const Symbol *);
+void emitted_tag_enums(const Symbol *);
 #endif

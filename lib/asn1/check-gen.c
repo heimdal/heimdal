@@ -1016,7 +1016,6 @@ test_choice (void)
     return ret;
 }
 
-#ifdef IMPLICIT_TAGGING_WORKS
 static int
 cmp_TESTImplicit (void *a, void *b)
 {
@@ -1028,7 +1027,20 @@ cmp_TESTImplicit (void *a, void *b)
     COMPARE_INTEGER(aa,ab,ti3);
     return 0;
 }
-#endif
+
+static int
+cmp_TESTImplicit2 (void *a, void *b)
+{
+    TESTImplicit2 *aa = a;
+    TESTImplicit2 *ab = b;
+
+    COMPARE_INTEGER(aa,ab,ti1);
+    COMPARE_INTEGER(aa,ab,ti3);
+    IF_OPT_COMPARE(aa,ab,ti4) {
+	COMPARE_INTEGER(aa,ab,ti4[0]);
+    }
+    return 0;
+}
 
 /*
 UNIV CONS Sequence 14
@@ -1043,16 +1055,20 @@ static int
 test_implicit (void)
 {
     int ret = 0;
-#ifdef IMPLICIT_TAGGING_WORKS
     struct test_case tests[] = {
-	{ NULL,  18,
-	  "\x30\x10\x80\x01\x00\xa1\x06\xbf"
-	  "\x7f\x03\x02\x01\x02\xa2\x03\x84\x01\x03",
+	{ NULL,  16,
+          "\x30\x0e\x80\x01\x00\xa1\x06\xbf\x7f\x03\x02\x01\x02\x82\x01\x03",
 	  "implicit 1" }
     };
+    struct test_case tests2[] = {
+	{ NULL,  12,
+          "\x30\x0a\x80\x01\x01\x82\x01\x03\x9f\x33\x01\x04",
+	  "implicit 2" }
+    };
 
-    int ntests = sizeof(tests) / sizeof(*tests);
     TESTImplicit c0;
+    TESTImplicit2 c1;
+    int ti4 = 4;
 
     memset(&c0, 0, sizeof(c0));
     c0.ti1 = 0;
@@ -1060,23 +1076,32 @@ test_implicit (void)
     c0.ti3 = 3;
     tests[0].val = &c0;
 
-    ret += generic_test (tests, ntests, sizeof(TESTImplicit),
-			 (generic_encode)encode_TESTImplicit,
-			 (generic_length)length_TESTImplicit,
-			 (generic_decode)decode_TESTImplicit,
-			 (generic_free)free_TESTImplicit,
-			 cmp_TESTImplicit,
-			 (generic_copy)copy_TESTImplicit);
+    memset(&c1, 0, sizeof(c1));
+    c1.ti1 = 1;
+    c1.ti3 = 3;
+    c1.ti4 = &ti4;
+    tests2[0].val = &c1;
 
-    ret += generic_test (tests, ntests, sizeof(TESTImplicit2),
-			 (generic_encode)encode_TESTImplicit2,
-			 (generic_length)length_TESTImplicit2,
-			 (generic_decode)decode_TESTImplicit2,
-			 (generic_free)free_TESTImplicit2,
-			 cmp_TESTImplicit,
-			 NULL);
+    ret += generic_test(tests,
+                        sizeof(tests) / sizeof(*tests),
+                        sizeof(TESTImplicit),
+                        (generic_encode)encode_TESTImplicit,
+                        (generic_length)length_TESTImplicit,
+                        (generic_decode)decode_TESTImplicit,
+                        (generic_free)free_TESTImplicit,
+                        cmp_TESTImplicit,
+                        (generic_copy)copy_TESTImplicit);
 
-#endif /* IMPLICIT_TAGGING_WORKS */
+    ret += generic_test(tests2,
+                        sizeof(tests2) / sizeof(*tests2),
+                        sizeof(TESTImplicit2),
+                        (generic_encode)encode_TESTImplicit2,
+                        (generic_length)length_TESTImplicit2,
+                        (generic_decode)decode_TESTImplicit2,
+                        (generic_free)free_TESTImplicit2,
+                        cmp_TESTImplicit2,
+                        NULL);
+
     return ret;
 }
 
@@ -1502,7 +1527,6 @@ check_TESTMechTypeList(void)
     return 0;
 }
 
-#ifdef IMPLICIT_TAGGING_WORKS
 static int
 cmp_TESTSeqOf4(void *a, void *b)
 {
@@ -1545,13 +1569,11 @@ cmp_TESTSeqOf4(void *a, void *b)
     }
     return 0;
 }
-#endif  /* IMPLICIT_TAGGING_WORKS */
 
 static int
 test_seq4 (void)
 {
     int ret = 0;
-#ifdef IMPLICIT_TAGGING_WORKS
     struct test_case tests[] = {
 	{ NULL,  2,
 	  "\x30\x00",
@@ -1674,7 +1696,6 @@ test_seq4 (void)
 			 (generic_free)free_TESTSeqOf4,
 			 cmp_TESTSeqOf4,
 			 (generic_copy)copy_TESTSeqOf4);
-#endif  /* IMPLICIT_TAGGING_WORKS */
     return ret;
 }
 
@@ -1775,7 +1796,11 @@ test_seqof5(void)
 static int
 test_x690sample(void)
 {
-    /* Taken from X.690, Appendix A */
+    /*
+     * Taken from X.690, Appendix A, though sadly it's not specified whether
+     * it's in BER, DER, or CER, but it turns out to be DER since, as you can
+     * see below, we re-encode and get the same encoding back.
+     */
     X690SamplePersonnelRecord r;
     heim_octet_string os;
     unsigned char encoded_sample[] = {
@@ -1803,6 +1828,7 @@ test_x690sample(void)
     free_X690SamplePersonnelRecord(&r);
     memset(&r, 0, sizeof(r));
 
+    /* We re-construct the record manually to double-check the spec */
     r.name.givenName = strdup("John");
     r.name.initial = strdup("P");
     r.name.familyName = strdup("Smith");
@@ -1839,40 +1865,41 @@ main(int argc, char **argv)
 {
     int ret = 0;
 
-    ret += test_principal ();
-    ret += test_authenticator();
-    ret += test_krb_error();
-    ret += test_Name();
-    ret += test_bit_string();
-    ret += test_bit_string_rfc1510();
-    ret += test_time();
-    ret += test_cert();
+#define DO_ONE(t) if (t()) { fprintf(stderr, "%s() failed!\n", #t); ret++; }
+    DO_ONE(test_principal);
+    DO_ONE(test_authenticator);
+    DO_ONE(test_krb_error);
+    DO_ONE(test_Name);
+    DO_ONE(test_bit_string);
+    DO_ONE(test_bit_string_rfc1510);
+    DO_ONE(test_time);
+    DO_ONE(test_cert);
 
-    ret += check_tag_length();
-    ret += check_tag_length64();
-    ret += check_tag_length64s();
-    ret += test_large_tag();
-    ret += test_choice();
+    DO_ONE(check_tag_length);
+    DO_ONE(check_tag_length64);
+    DO_ONE(check_tag_length64s);
+    DO_ONE(test_large_tag);
+    DO_ONE(test_choice);
 
-    ret += test_implicit();
+    DO_ONE(test_implicit);
 
-    ret += test_taglessalloc();
-    ret += test_optional();
+    DO_ONE(test_taglessalloc);
+    DO_ONE(test_optional);
 
-    ret += check_fail_largetag();
-    ret += check_fail_sequence();
-    ret += check_fail_choice();
-    ret += check_fail_Ticket();
+    DO_ONE(check_fail_largetag);
+    DO_ONE(check_fail_sequence);
+    DO_ONE(check_fail_choice);
+    DO_ONE(check_fail_Ticket);
 
-    ret += check_seq();
-    ret += check_seq_of_size();
-    ret += test_SignedData();
+    DO_ONE(check_seq);
+    DO_ONE(check_seq_of_size);
+    DO_ONE(test_SignedData);
 
-    ret += check_TESTMechTypeList();
-    ret += test_seq4();
-    ret += test_seqof5();
+    DO_ONE(check_TESTMechTypeList);
+    DO_ONE(test_seq4);
+    DO_ONE(test_seqof5);
 
-    ret += test_x690sample();
+    DO_ONE(test_x690sample);
 
     return ret;
 }

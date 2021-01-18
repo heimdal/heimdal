@@ -441,24 +441,101 @@ der_put_oid (unsigned char *p, size_t len,
     return 0;
 }
 
+/*
+ * Output a copy of the DER TLV at `p' with a different outermost tag.
+ *
+ * This is used in the implementation of IMPLICIT tags in generated decoder
+ * functions.
+ */
 int
-der_replace_tag(unsigned char *p, size_t len, Der_class class, Der_type type,
+der_replace_tag(const unsigned char *p, size_t len,
+                unsigned char **out, size_t *outlen,
+                Der_class class, Der_type type,
                 unsigned int tag)
 {
     Der_class found_class;
     Der_type found_type;
     unsigned int found_tag;
-    size_t found_size, actual_size;
+    size_t payload_len, l, tag_len, len_len;
     int e;
 
-    e = der_get_tag(p, len, &found_class, &found_type, &found_tag,
-                    &found_size);
-    if (e == 0)
-        e = der_put_tag(p, len, class, type, tag, &actual_size);
-    if (e == 0 && actual_size != found_size)
-        e = ASN1_OVERFLOW;
+    e = der_get_tag(p, len, &found_class, &found_type, &found_tag, &l);
+    if (e)
+        return e;
+    if (found_type != type)
+        return ASN1_TYPE_MISMATCH;
+    /* We don't care what found_class and found_tag are though */
+    tag_len = der_length_tag(tag);
+    p += l;
+    len -= l;
+    e = der_get_length(p, len, &payload_len, &len_len);
+    if (e)
+        return e;
+    /*
+     * `p' now points at the payload; `*out' + the length of the tag points at
+     * where we should copy the DER length and the payload.
+     */
+    if ((*out = malloc(*outlen = tag_len + len_len + payload_len)) == NULL)
+        return ENOMEM;
+    memcpy(*out + tag_len, p, len_len + payload_len);
+
+    /* Put the new tag */
+    e = der_put_tag(*out + tag_len - 1, tag_len, class, type, tag, &l);
+    if (e)
+        return e;
+    if (l != tag_len)
+        return ASN1_OVERFLOW;
     return 0;
 }
+
+#if 0
+int
+der_encode_implicit(unsigned char *p, size_t len,
+                    asn1_generic_encoder_f encoder,
+                    void *obj, size_t *size,
+                    Der_type type,
+                    unsigned int ttag, Der_class iclass, unsigned int itag)
+{
+    size_t ttaglen = der_length_tag(ttag);
+    size_t itaglen = der_length_tag(itag);
+    size_t l;
+    unsigned char *p2;
+    int e;
+
+    /* Attempt to encode in place */
+    e = encoder(p, len, obj, size);
+    if (e == 0) {
+        /* Fits!  Rewrite tag, adjust reported size. */
+        e = der_put_tag(p + ttaglen - 1, itaglen, iclass, type, itag, &l);
+        if (e == 0) {
+            (*size) -= ttaglen;
+            (*size) += itaglen;
+        }
+        return e;
+    }
+    if (e != ASN1_OVERFLOW || itaglen <= ttaglen)
+        return e;
+
+    /*
+     * Did not fit because ttaglen > itaglen and this was the last / only thing
+     * being encoded in a buffer of just the right size.
+     */
+    if ((p2 = malloc(len + ttaglen - itaglen)) == NULL)
+        e = ENOMEM;
+    if (e == 0)
+        e = encoder(p2 + len + ttaglen - itaglen - 1, len + ttaglen - itaglen,
+                    obj, size);
+    if (e == 0)
+        e = der_put_tag(p2 + ttaglen - 1, itaglen, iclass, type, itag, &l);
+    if (e == 0) {
+        (*size) -= ttaglen;
+        (*size) += itaglen;
+        memcpy(p - *size, p2 + ttaglen - itaglen, *size);
+    }
+    free(p2);
+    return e;
+}
+#endif
 
 int
 der_put_tag (unsigned char *p, size_t len, Der_class class, Der_type type,

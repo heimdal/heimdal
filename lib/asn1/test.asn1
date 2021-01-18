@@ -74,9 +74,10 @@ TESTImplicit ::= SEQUENCE {
 }
 
 TESTImplicit2 ::= SEQUENCE {
-	ti1[0] IMPLICIT TESTInteger,
---	ti2[1] IMPLICIT TESTLargeTag,   this is disabled since the IMPLICT encoder does't get the types right when stepping inside an structure --
-	ti3[2] IMPLICIT TESTInteger3
+	ti1[0]  IMPLICIT TESTInteger,
+--	ti2[1]  IMPLICIT TESTLargeTag,   this is disabled since the IMPLICT encoder does't get the types right when stepping inside an structure --
+	ti3[2]  IMPLICIT TESTInteger3,
+        ti4[51] IMPLICIT TESTInteger OPTIONAL
 }
 
 TESTAllocInner ::= SEQUENCE {

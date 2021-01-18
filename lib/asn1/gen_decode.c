@@ -362,6 +362,20 @@ decode_type(const char *name, const Type *t, int optional, struct value *defval,
 	break;
     }
     case TSet: {
+        /*
+         * SET { ... } is the dumbest construct in ASN.1.  It's semantically
+         * indistinguishable from SEQUENCE { ... } but in BER you can write the
+         * fields in any order you wish, and in DER you have to write them in
+         * lexicographic order.  If you want a reason to hate ASN.1, this is
+         * certainly one, though the real reason to hate ASN.1 is BER/DER/CER,
+         * and, really, all tag-length-value (TLV) encodings ever invented,
+         * including Protocol Buffers.  Fortunately not all ASN.1 encoding
+         * rules are TLV or otherwise self-describing.  "Self-describing"
+         * encoding rules other than those meant to be [somewhat] readable by
+         * humans, such as XML and JSON, are simply dumb.  But SET { ... } is a
+         * truly special sort of dumb.  The only possible use of SET { ... }
+         * might well be for ASN.1 mappings of XML schemas(?).
+         */
 	Member *m;
 	unsigned int memno;
 
@@ -391,6 +405,7 @@ decode_type(const char *name, const Type *t, int optional, struct value *defval,
 
 	    fprintf(codefile, "case MAKE_TAG(%s, %s, %s):\n",
 		    classname(mst->tag.tagclass),
+                    (mst->tag.tagclass == ASN1_C_UNIV || mst->tag.tagenv == TE_IMPLICIT) &&
 		    is_primitive_type(mst->subtype) ? "PRIM" : "CONS",
 		    valuename(mst->tag.tagclass, mst->tag.tagvalue));
 
@@ -506,17 +521,41 @@ decode_type(const char *name, const Type *t, int optional, struct value *defval,
                      t->tag.tagenv == TE_EXPLICIT) &&
             is_primitive_type(t->subtype);
 
+        /*
+         * XXX See the comments in gen_encode() about this.
+         */
+        if (t->tag.tagenv == TE_IMPLICIT && !prim &&
+            t->subtype->type != TSequenceOf && t->subtype->type != TSetOf &&
+            t->subtype->type != TChoice) {
+            if (t->subtype->symbol &&
+                (t->subtype->type == TSequence ||
+                 t->subtype->type == TSet))
+                replace_tag = 1;
+            else if (t->subtype->symbol && strcmp(t->subtype->symbol->name, "heim_any"))
+                replace_tag = 1;
+        } else if (t->tag.tagenv == TE_IMPLICIT && prim && t->subtype->symbol)
+            replace_tag = 1;
+
 	if (asprintf(&typestring, "%s_type", tmpstr) < 0 || typestring == NULL)
 	    errx(1, "malloc");
 
 	fprintf(codefile,
 		"{\n"
-		"size_t %s_datalen, %s_oldlen;\n"
+		"size_t %s_datalen;\n"
 		"Der_type %s;\n",
-		tmpstr, tmpstr, typestring);
-	if(support_ber)
+		tmpstr, typestring);
+        if (replace_tag)
+            fprintf(codefile,
+                    "const unsigned char *psave%u = p;\n"
+                    "unsigned char *pcopy%u;\n"
+                    "size_t lensave%u, lsave%u;\n",
+                    depth, depth, depth, depth);
+        else if (support_ber)
 	    fprintf(codefile,
 		    "int is_indefinite%u;\n", depth);
+        if (!replace_tag)
+            fprintf(codefile,
+                    "size_t %s_oldlen;\n", tmpstr);
 
 	fprintf(codefile, "e = der_match_tag_and_length(p, len, %s, &%s, %s, "
 		"&%s_datalen, &l);\n",
@@ -526,7 +565,7 @@ decode_type(const char *name, const Type *t, int optional, struct value *defval,
 		tmpstr);
 
 	/* XXX hardcode for now */
-	if (support_ber && t->subtype->type == TOctetString) {
+	if (!replace_tag && support_ber && t->subtype->type == TOctetString) {
 	    ide = typestring;
 	} else {
 	    fprintf(codefile,
@@ -556,62 +595,50 @@ decode_type(const char *name, const Type *t, int optional, struct value *defval,
         } else {
             fprintf(codefile, "if (e) %s;\n", forwstr);
         }
-	fprintf (codefile,
-		 "p += l; len -= l; ret += l;\n"
-		 "%s_oldlen = len;\n",
-		 tmpstr);
-	if(support_ber)
+
+        if (replace_tag)
+            fprintf(codefile,
+                    "lsave%u = %s_datalen + l;\n"
+                    "lensave%u = len;\n"
+                    "e = der_replace_tag(p, len, &pcopy%u, &len, asn1_tag_class_%s, %s, asn1_tag_tag_%s);\n"
+                    "if (e) %s;\n"
+                    "p = pcopy%u;\n",
+                    depth, tmpstr, depth, depth, t->subtype->symbol->gen_name,
+                    prim ? "PRIM" : "CONS",
+                    t->subtype->symbol->gen_name,
+                    forwstr, depth);
+        else
+            fprintf(codefile,
+                    "p += l; len -= l; ret += l;\n");
+        if (!replace_tag)
+            fprintf(codefile,
+                    "%s_oldlen = len;\n",
+                    tmpstr);
+	if (support_ber && !replace_tag)
 	    fprintf (codefile,
 		     "if((is_indefinite%u = _heim_fix_dce(%s_datalen, &len)) < 0)\n"
 		     "{ e = ASN1_BAD_FORMAT; %s; }\n"
 		     "if (is_indefinite%u) { if (len < 2) { e = ASN1_OVERRUN; %s; } len -= 2; }",
 		     depth, tmpstr, forwstr, depth, forwstr);
-	else
+	else if (!replace_tag)
 	    fprintf(codefile,
 		    "if (%s_datalen > len) { e = ASN1_OVERRUN; %s; }\n"
 		    "len = %s_datalen;\n", tmpstr, forwstr, tmpstr);
 	if (asprintf (&tname, "%s_Tag", tmpstr) < 0 || tname == NULL)
 	    errx(1, "malloc");
         /*
-         * XXX See the comments in gen_encode() about this.
+         * If `replace_tag' then here `p' and `len' will be the copy mutated by
+         * der_replace_tag().
          */
-        if (t->tag.tagenv == TE_IMPLICIT && !prim &&
-            t->subtype->type != TSequenceOf && t->subtype->type != TSetOf &&
-            t->subtype->type != TChoice) {
-            if (t->subtype->symbol &&
-                (t->subtype->type == TSequence ||
-                 t->subtype->type == TSet))
-                replace_tag = 1;
-            else if (t->subtype->symbol && strcmp(t->subtype->symbol->name, "heim_any"))
-                replace_tag = 1;
-        } else if (t->tag.tagenv == TE_IMPLICIT && prim && t->subtype->symbol)
-            replace_tag = 1;
-        if (replace_tag) {
-            /*
-             * XXX We're assuming the IMPLICIT and original tags have the same
-             * length.  This is one of the places that needs fixing if we want
-             * to properly support tags > 30.
-             */
+        decode_type(name, t->subtype, 0, NULL, forwstr, tname, ide, depth + 1);
+        if (replace_tag)
             fprintf(codefile,
-                    "{ unsigned char *pcopy;\n"
-                    "pcopy = calloc (1, len);\n"
-                    "if (pcopy == 0) { e = ENOMEM; %s;}\n"
-                    "memcpy (pcopy, p, len);\n"
-                    "e = der_replace_tag (pcopy, len, %s, %s, %s);\n"
-                    "if (e) %s;\n",
-                    forwstr,
-                    classname(t->subtype->tag.tagclass),
-                    prim ? "PRIM" : "CONS",
-                    valuename(t->subtype->tag.tagclass, t->subtype->tag.tagvalue),
-                    forwstr);
-            decode_type(name, t->subtype, 0, NULL, forwstr, tname, ide, depth + 1);
-            fprintf(codefile,
-                    "free(pcopy);"
-                    "}\n");
-        } else {
-            decode_type(name, t->subtype, 0, NULL, forwstr, tname, ide, depth + 1);
-        }
-	if(support_ber)
+                    "p = psave%u + lsave%u;\n"
+                    "len = lensave%u - lsave%u;\n"
+                    "ret += lsave%u - l;\n"
+                    "free(pcopy%u);\n",
+                    depth, depth, depth, depth, depth, depth);
+        else if(support_ber)
 	    fprintf(codefile,
 		    "if(is_indefinite%u){\n"
 		    "len += 2;\n"
@@ -627,9 +654,10 @@ decode_type(const char *name, const Type *t, int optional, struct value *defval,
 		    tmpstr,
 		    forwstr,
 		    typestring, forwstr);
-	fprintf(codefile,
-		"len = %s_oldlen - %s_datalen;\n",
-		tmpstr, tmpstr);
+        if (!replace_tag)
+            fprintf(codefile,
+                    "len = %s_oldlen - %s_datalen;\n",
+                    tmpstr, tmpstr);
 	if (optional)
 	    fprintf(codefile, "}\n");
         else if (defval)

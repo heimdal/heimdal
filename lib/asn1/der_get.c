@@ -642,6 +642,15 @@ der_match_tag2 (const unsigned char *p, size_t len,
     return 0;
 }
 
+/*
+ * Returns 0 if the encoded data at `p' of length `len' starts with the tag of
+ * class `cls`, type `type', and tag value `tag', and puts the length of the
+ * payload (i.e., the length of V in TLV, not the length of TLV) in
+ * `*length_ret', and the size of the whole thing (the TLV) in `*size' if
+ * `size' is not NULL.
+ *
+ * Else returns an error.
+ */
 int ASN1CALL
 der_match_tag_and_length (const unsigned char *p, size_t len,
 			  Der_class cls, Der_type *type, unsigned int tag,

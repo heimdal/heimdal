@@ -138,6 +138,73 @@ _asn1_bmember_put_bit(unsigned char *p, const void *data, unsigned int bit,
     }
 }
 
+/*
+ * Utility function to tell us if the encoding of some type per its template
+ * will have an outer tag.  This is needed when the caller wants to slap on an
+ * IMPLICIT tag: if the inner type has a tag then we need to replace it.
+ */
+static int
+is_tagged(const struct asn1_template *t)
+{
+    size_t elements = A1_HEADER_LEN(t);
+
+    t += A1_HEADER_LEN(t);
+    if (elements != 1)
+        return 0;
+    switch (t->tt & A1_OP_MASK) {
+    case A1_OP_SEQOF:       return 0;
+    case A1_OP_SETOF:       return 0;
+    case A1_OP_BMEMBER:     return 0;
+    case A1_OP_PARSE:       return 0;
+    case A1_OP_TAG:         return 1;
+    case A1_OP_CHOICE:      return 1;
+    case A1_OP_TYPE:        return 1;
+    case A1_OP_TYPE_EXTERN: {
+        const struct asn1_type_func *f = t->ptr;
+
+        /*
+         * XXX Add a boolean to struct asn1_type_func to tell us if the type is
+         * tagged or not.  Basically, it's not tagged if it's primitive.
+         */
+        if (f->encode == (asn1_type_encode)encode_heim_any)
+            return 0;
+        abort(); /* XXX */
+    }
+    default: abort();
+    }
+}
+
+static size_t
+inner_type_taglen(const struct asn1_template *t)
+{
+    size_t elements = A1_HEADER_LEN(t);
+
+    t += A1_HEADER_LEN(t);
+    if (elements != 1)
+        return 0;
+    switch (t->tt & A1_OP_MASK) {
+    case A1_OP_SEQOF:       return 0;
+    case A1_OP_SETOF:       return 0;
+    case A1_OP_BMEMBER:     return 0;
+    case A1_OP_PARSE:       return 0;
+    case A1_OP_CHOICE:      return 1;
+    case A1_OP_TYPE:        return inner_type_taglen(t->ptr);
+    case A1_OP_TAG:         return der_length_tag(A1_TAG_TAG(t->tt));
+    case A1_OP_TYPE_EXTERN: {
+        const struct asn1_type_func *f = t->ptr;
+
+        /*
+         * XXX Add a boolean to struct asn1_type_func to tell us if the type is
+         * tagged or not.  Basically, it's not tagged if it's primitive.
+         */
+        if (f->encode == (asn1_type_encode)encode_heim_any)
+            return 0;
+        abort(); /* XXX */
+    }
+    default: abort();
+    }
+}
+
 int
 _asn1_decode(const struct asn1_template *t, unsigned flags,
 	     const unsigned char *p, size_t len, void *data, size_t *size)
@@ -200,6 +267,7 @@ _asn1_decode(const struct asn1_template *t, unsigned flags,
 	    void *olddata = data;
 	    int is_indefinite = 0;
 	    int subflags = flags;
+            int replace_tag = (t->tt & A1_FLAG_IMPLICIT) && is_tagged(t->ptr);
 
 	    ret = der_match_tag_and_length(p, len, A1_TAG_CLASS(t->tt),
 					   &dertype, A1_TAG_TAG(t->tt),
@@ -250,9 +318,23 @@ _asn1_decode(const struct asn1_template *t, unsigned flags,
 		data = *el;
 	    }
 
-	    ret = _asn1_decode(t->ptr, subflags, p, datalen, data, &newsize);
-	    if (ret)
-		return ret;
+            if (replace_tag) {
+                const struct asn1_template *subtype = t->ptr;
+
+                if (A1_HEADER_LEN(subtype++) != 1) {
+                    ret = _asn1_decode(t->ptr, subflags, p, datalen, data, &newsize);
+                } else {
+                    subtype = subtype->ptr;
+                    if (A1_HEADER_LEN(subtype++) != 1)
+                        ret = _asn1_decode(t->ptr, subflags, p, datalen, data, &newsize);
+                    else
+                        ret = _asn1_decode(subtype->ptr, subflags, p, datalen, data, &newsize);
+                }
+            } else {
+                ret = _asn1_decode(t->ptr, subflags, p, datalen, data, &newsize);
+            }
+            if (ret)
+                return ret;
 
 	    if (is_indefinite) {
 		/* If we use indefinite encoding, the newsize is the datasize. */
@@ -477,6 +559,7 @@ _asn1_encode(const struct asn1_template *t, unsigned char *p, size_t len, const 
 	case A1_OP_TAG: {
 	    const void *olddata = data;
 	    size_t l, datalen;
+            int replace_tag = 0;
 
 	    data = DPOC(data, t->offset);
 
@@ -489,20 +572,73 @@ _asn1_encode(const struct asn1_template *t, unsigned char *p, size_t len, const 
 		data = *el;
 	    }
 
-	    ret = _asn1_encode(t->ptr, p, len, data, &datalen);
+            replace_tag = (t->tt & A1_FLAG_IMPLICIT) && is_tagged(t->ptr);
+
+            /* IMPLICIT tags need special handling (see gen_encode.c) */
+            if (replace_tag) {
+                unsigned char *pfree, *psave = p;
+                Der_class found_class;
+                Der_type found_type;
+                unsigned int found_tag;
+                size_t lensave = len;
+                size_t oldtaglen;
+                size_t taglen = der_length_tag(A1_TAG_TAG(t->tt));;
+
+                /* Allocate a buffer at least as big as we need */
+                len = _asn1_length(t->ptr, data) + taglen;
+                if ((p = pfree = malloc(len)) == NULL) {
+                    ret = ENOMEM;
+                } else {
+                    /*
+                     * Encode into it (with the wrong tag, which we'll replace
+                     * below).
+                     */
+                    p += len - 1;
+                    ret = _asn1_encode(t->ptr, p, len, data, &datalen);
+                }
+                if (ret == 0) {
+                    /* Get the old tag and, critically, its length */
+                    len -= datalen; p -= datalen;
+                    ret = der_get_tag(p + 1, datalen, &found_class, &found_type,
+                                      &found_tag, &oldtaglen);
+                }
+                if (ret == 0) {
+                    /* Drop the old tag */
+                    len += oldtaglen; p += oldtaglen;
+                    /* Put the new tag */
+                    ret = der_put_tag(p, len,
+                                      A1_TAG_CLASS(t->tt),
+                                      found_type,
+                                      A1_TAG_TAG(t->tt), &l);
+                }
+                if (ret == 0) {
+                    /* Copy the encoding where it belongs */
+                    len -= l; p -= l;
+                    psave -= (datalen + l - oldtaglen);
+                    lensave -= (datalen + l - oldtaglen);
+                    memcpy(psave + 1, p + 1, datalen + l - oldtaglen);
+                    p = psave;
+                    len = lensave;
+                }
+                free(pfree);
+            } else {
+                /* Easy case */
+                ret = _asn1_encode(t->ptr, p, len, data, &datalen);
+                if (ret)
+                    return ret;
+
+                len -= datalen; p -= datalen;
+
+                ret = der_put_length_and_tag(p, len, datalen,
+                                             A1_TAG_CLASS(t->tt),
+                                             A1_TAG_TYPE(t->tt),
+                                             A1_TAG_TAG(t->tt), &l);
+                if (ret == 0) {
+                    p -= l; len -= l;
+                }
+            }
 	    if (ret)
 		return ret;
-
-	    len -= datalen; p -= datalen;
-
-	    ret = der_put_length_and_tag(p, len, datalen,
-					 A1_TAG_CLASS(t->tt),
-					 A1_TAG_TYPE(t->tt),
-					 A1_TAG_TAG(t->tt), &l);
-	    if (ret)
-		return ret;
-
-	    p -= l; len -= l;
 
 	    data = olddata;
 
@@ -731,6 +867,7 @@ _asn1_length(const struct asn1_template *t, const void *data)
 	case A1_OP_TAG: {
 	    size_t datalen;
 	    const void *olddata = data;
+            size_t oldtaglen = 0;
 
 	    data = DPO(data, t->offset);
 
@@ -742,9 +879,14 @@ _asn1_length(const struct asn1_template *t, const void *data)
 		}
 		data = *el;
 	    }
+
+            if (t->tt & A1_FLAG_IMPLICIT)
+                oldtaglen = inner_type_taglen(t->ptr);
+
 	    datalen = _asn1_length(t->ptr, data);
-	    ret += der_length_tag(A1_TAG_TAG(t->tt)) + der_length_len(datalen);
 	    ret += datalen;
+	    ret += der_length_tag(A1_TAG_TAG(t->tt));
+            ret += oldtaglen ? -oldtaglen : der_length_len(datalen);
 	    data = olddata;
 	    break;
 	}

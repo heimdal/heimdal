@@ -63,7 +63,7 @@ noinst_PROGRAMS = asn1_gen
 
 libexec_heimdal_PROGRAMS = asn1_compile asn1_print
 
-TESTS = check-der check-gen check-timegm check-ber check-template
+TESTS = check-der check-gen check-gen-template check-timegm check-ber check-template
 check_PROGRAMS = $(TESTS)
 
 asn1_gen_SOURCES = asn1_gen.c
@@ -72,6 +72,9 @@ check_der_SOURCES = check-der.c check-common.c check-common.h
 
 check_template_SOURCES = check-template.c check-common.c check-common.h
 nodist_check_template_SOURCES = $(gen_files_test_template:.x=.c)
+
+dist_check_gen_template_SOURCES = check-gen.c check-common.c check-common.h
+nodist_check_gen_template_SOURCES = $(gen_files_test_template:.x=.c)
 
 dist_check_gen_SOURCES = check-gen.c check-common.c check-common.h
 nodist_check_gen_SOURCES = $(gen_files_test:.x=.c)
@@ -138,6 +141,11 @@ asn1_print_LDADD = libasn1.la $(LIB_roken) $(LIB_com_err)
 asn1_gen_LDADD = $(check_der_LDADD)
 check_timegm_LDADD = $(check_der_LDADD)
 
+check_gen_template_LDADD = \
+	libasn1.la \
+	$(LIB_roken)
+
+check_gen_CFLAGS = -DIMPLICIT_TAGGING_WORKS
 check_gen_LDADD = \
 	libasn1.la \
 	$(LIB_roken)

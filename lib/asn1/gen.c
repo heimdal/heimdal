@@ -298,6 +298,7 @@ init_generate (const char *filename, const char *base)
 	     "#include <string.h>\n"
 	     "#include <errno.h>\n"
 	     "#include <limits.h>\n"
+	     "#include <asn1_err.h>\n"
 	     "#include <%s>\n",
 	     filename,
 	     type_file_string);

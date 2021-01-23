@@ -145,7 +145,7 @@ check_gen_template_LDADD = \
 	libasn1.la \
 	$(LIB_roken)
 
-check_gen_CFLAGS = -DIMPLICIT_TAGGING_WORKS
+check_gen_CPPFLAGS = -DIMPLICIT_TAGGING_WORKS
 check_gen_LDADD = \
 	libasn1.la \
 	$(LIB_roken)

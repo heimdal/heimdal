@@ -1,8 +1,5 @@
 x690sample DEFINITIONS ::= BEGIN
 
-IMPORTS heim_any,
- heim_any_set FROM heim;
-
 -- This is taken from Appendix A of X.690.
 --
 -- This doesn't exercise every feature, like OPTIONAL, not really DEFAULT, not

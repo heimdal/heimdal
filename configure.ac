@@ -138,6 +138,11 @@ if test "$enable_hdb_openldap_module" = yes -a "$with_openldap" = yes; then
 fi
 AM_CONDITIONAL(OPENLDAP_MODULE, test "$enable_hdb_openldap_module" = yes -a "$with_openldap" = yes)
 
+AC_ARG_ENABLE(asn1-templating, 
+	AS_HELP_STRING([--enable-asn1-templating],
+		[if you want disable to use of the ASN.1 templating compiler]))
+AM_CONDITIONAL(ASN1_TEMPLATING, test "x$enable_asn1_templating" = xyes)
+
 dnl
 dnl Optional modules, pk-init, digest, kx509
 dnl

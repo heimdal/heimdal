@@ -666,43 +666,13 @@ template_members(struct templatehead *temp, const char *basetype, const char *na
         int prim = !(t->tag.tagclass != ASN1_C_UNIV &&
                      t->tag.tagenv == TE_EXPLICIT) &&
             is_primitive_type(t->subtype);
-	struct type *subtype;
 
 	fprintf(get_code_file(), "/* template_members: %s %s %s */\n", basetype, implicit ? "imp" : "exp", tagimplicit ? "imp" : "exp");
-
-	if (tagimplicit) {
-
-	    struct type *type = t->subtype;
-	    int have_tag = 0;
-
-	    while (!have_tag) {
-		if (type->type == TTag) {
-		    fprintf(get_code_file(), "/* template_members: imp skip tag */\n");
-		    type = type->subtype;
-		    have_tag = 1;
-		} else if(type->type == TType && type->symbol && type->symbol->type) {
-		    /* XXX really, we should stop here and find a
-		     * pointer to where this is encoded instead of
-		     * generated an new structure and hope that the
-		     * optimizer catch it later.
-		     */
-		    subtype_is_struct = is_struct(type, isstruct);
-		    fprintf(get_code_file(), "/* template_members: imp skip type %s isstruct: %d */\n",
-			    type->symbol->name, subtype_is_struct);
-		    type = type->symbol->type;
-		} else {
-		    have_tag = 1;
-		}
-	    }
-	    subtype = type;
-	} else {
-	    subtype = t->subtype;
-	}
 
 	if (subtype_is_struct)
 	    sename = basetype;
 	else
-	    sename = symbol_name(basetype, subtype);
+	    sename = symbol_name(basetype, t->subtype);
 
 	if (asprintf(&tname, "tag_%s_%lu", name ? name : "", tag_counter++) < 0 || tname == NULL)
 	    errx(1, "malloc");
@@ -712,7 +682,7 @@ template_members(struct templatehead *temp, const char *basetype, const char *na
 	    errx(1, "malloc");
 
 	generate_template_type(elname, &dupname, NULL, sename, name,
-			       subtype, 0, subtype_is_struct, 0);
+			       t->subtype, 0, subtype_is_struct, 0);
 
 	add_line_pointer(temp, dupname, poffset,
 			 "A1_TAG_T(%s,%s,%s)%s%s",

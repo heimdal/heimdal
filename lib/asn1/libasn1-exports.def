@@ -1,4 +1,9 @@
 EXPORTS
+	_asn1_decode_top
+	_asn1_encode
+	_asn1_length
+	_asn1_free_top
+	_asn1_copy_top
 	add_AttributeValues
 	add_AuthorizationData
 	add_CertificatePolicies

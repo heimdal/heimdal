@@ -320,15 +320,30 @@ _asn1_decode(const struct asn1_template *t, unsigned flags,
 
             if (replace_tag) {
                 const struct asn1_template *subtype = t->ptr;
+                int have_tag = 0;
 
-                if (A1_HEADER_LEN(subtype++) != 1) {
-                    ret = _asn1_decode(t->ptr, subflags, p, datalen, data, &newsize);
-                } else {
-                    subtype = subtype->ptr;
-                    if (A1_HEADER_LEN(subtype++) != 1)
-                        ret = _asn1_decode(t->ptr, subflags, p, datalen, data, &newsize);
-                    else
+                /*
+                 * So, we have an IMPLICIT tag.  What we want to do is find the
+                 * template for the body of the type so-tagged.  That's going
+                 * to be a template that has a tag that isn't itself IMPLICIT.
+                 *
+                 * So we chase the pointer in the template until we find such a
+                 * thing, then decode using that template.
+                 */
+                while (!have_tag) {
+                    subtype++;
+                    if ((subtype->tt & A1_OP_MASK) == A1_OP_TAG)
+                        replace_tag = (subtype->tt & A1_FLAG_IMPLICIT) && is_tagged(t->ptr);
+                    if (replace_tag) {
+                        subtype = subtype->ptr;
+                        continue;
+                    }
+                    if ((subtype->tt & A1_OP_MASK) == A1_OP_TAG) {
                         ret = _asn1_decode(subtype->ptr, subflags, p, datalen, data, &newsize);
+                        have_tag = 1;
+                    } else {
+                        subtype = subtype->ptr;
+                    }
                 }
             } else {
                 ret = _asn1_decode(t->ptr, subflags, p, datalen, data, &newsize);

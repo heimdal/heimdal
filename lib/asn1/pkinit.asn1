@@ -3,7 +3,7 @@
 PKINIT DEFINITIONS ::= BEGIN
 
 IMPORTS EncryptionKey, PrincipalName, Realm, KerberosTime, Checksum, Ticket FROM krb5
-	IssuerAndSerialNumber, ContentInfo FROM cms
+	IssuerAndSerialNumber FROM cms
 	SubjectPublicKeyInfo, AlgorithmIdentifier FROM rfc2459
 	heim_any FROM heim;
 

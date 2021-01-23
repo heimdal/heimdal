@@ -38,7 +38,7 @@ RCSID("$Id$");
 static FILE *
 get_code_file(void)
 {
-    if (!one_code_file && templatefile)
+    if (!one_code_file && template_flag && templatefile)
         return templatefile;
     return codefile;
 }

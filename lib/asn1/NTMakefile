@@ -63,6 +63,8 @@ gen_files_pkcs10	= $(OBJ)\asn1_pkcs10_asn1.x
 
 gen_files_test		= $(OBJ)\asn1_test_asn1.x
 
+gen_files_test_template	= $(OBJ)\test_template_asn1-template.x
+
 gen_files_digest	= $(OBJ)\asn1_digest_asn1.x
 
 gen_files_kx509		= $(OBJ)\asn1_kx509_asn1.x
@@ -122,6 +124,7 @@ LIBASN1_OBJS=	\
 	$(OBJ)\der_copy.obj			\
 	$(OBJ)\der_cmp.obj			\
 	$(OBJ)\der_format.obj			\
+	$(OBJ)\template.obj			\
 	$(OBJ)\extra.obj			\
 	$(OBJ)\timegm.obj			\
 	$(gen_files_rfc2459:.x=.obj)		\
@@ -200,6 +203,8 @@ $(gen_files_crmf:.x=.c)	    : $$(@R).x
 $(gen_files_x690sample:.x=.c)	    : $$(@R).x
 
 $(gen_files_test:.x=.c)	    : $$(@R).x
+
+$(gen_files_test_template:.x=.c)	    : $$(@R).x
 
 $(gen_files_krb5) $(OBJ)\krb5_asn1.hx: $(BINDIR)\asn1_compile.exe krb5.asn1 krb5.opt
 	cd $(OBJ)
@@ -331,6 +336,14 @@ $(gen_files_test) $(OBJ)\test_asn1.hx: $(BINDIR)\asn1_compile.exe test.asn1
 	|| ($(RM) $(OBJ)\test_asn1.h ; exit /b 1)
 	cd $(SRCDIR)
 
+$(gen_files_test_template) $(OBJ)\test_template_asn1.hx: $(BINDIR)\asn1_compile.exe test.asn1
+	cd $(OBJ)
+	$(BINDIR)\asn1_compile.exe \
+		--template --sequence=TESTSeqOf \
+		$(SRCDIR)\test.asn1 test_template_asn1 \
+	|| ($(RM) $(OBJ)\test_template_asn1.h ; exit /b 1)
+	cd $(SRCDIR)
+
 INCFILES=			    \
 	$(INCDIR)\der.h		    \
 	$(INCDIR)\heim_asn1.h	    \
@@ -342,41 +355,43 @@ INCFILES=			    \
 
 $(INCDIR)\der-protos.h: $(OBJ)\der-protos.h
 
-GENINCFILES=				\
-	$(INCDIR)\asn1_err.h		\
-	$(INCDIR)\cms_asn1.h		\
-	$(INCDIR)\crmf_asn1.h		\
-	$(INCDIR)\digest_asn1.h		\
-	$(INCDIR)\krb5_asn1.h		\
-	$(INCDIR)\kx509_asn1.h		\
-	$(INCDIR)\ocsp_asn1.h		\
-	$(INCDIR)\pkcs12_asn1.h		\
-	$(INCDIR)\pkcs8_asn1.h		\
-	$(INCDIR)\pkcs9_asn1.h		\
-	$(INCDIR)\pkcs10_asn1.h		\
-	$(INCDIR)\pkinit_asn1.h		\
-	$(INCDIR)\rfc2459_asn1.h	\
-	$(INCDIR)\rfc4043_asn1.h	\
-	$(INCDIR)\rfc4108_asn1.h	\
-	$(INCDIR)\tcg_asn1.h		\
-	$(INCDIR)\x690sample_asn1.h	\
-	$(OBJ)\krb5_asn1-priv.h		\
-	$(OBJ)\ocsp_asn1-priv.h		\
-	$(OBJ)\pkinit_asn1-priv.h	\
-	$(OBJ)\cms_asn1-priv.h		\
-	$(OBJ)\crmf_asn1-priv.h		\
-	$(OBJ)\rfc2459_asn1-priv.h	\
-	$(OBJ)\rfc4043_asn1-priv.h	\
-	$(OBJ)\rfc4108_asn1-priv.h	\
-	$(OBJ)\tcg_asn1-priv.h		\
-	$(OBJ)\x690sample_asn1-priv.h	\
-	$(OBJ)\pkcs8_asn1-priv.h	\
-	$(OBJ)\pkcs9_asn1-priv.h	\
-	$(OBJ)\pkcs10_asn1-priv.h	\
-	$(OBJ)\pkcs12_asn1-priv.h	\
-	$(OBJ)\digest_asn1-priv.h	\
-	$(OBJ)\kx509_asn1-priv.h	\
-	$(OBJ)\test_asn1.h		\
+GENINCFILES=					\
+	$(INCDIR)\asn1_err.h			\
+	$(INCDIR)\cms_asn1.h			\
+	$(INCDIR)\crmf_asn1.h			\
+	$(INCDIR)\digest_asn1.h			\
+	$(INCDIR)\krb5_asn1.h			\
+	$(INCDIR)\kx509_asn1.h			\
+	$(INCDIR)\ocsp_asn1.h			\
+	$(INCDIR)\pkcs12_asn1.h			\
+	$(INCDIR)\pkcs8_asn1.h			\
+	$(INCDIR)\pkcs9_asn1.h			\
+	$(INCDIR)\pkcs10_asn1.h			\
+	$(INCDIR)\pkinit_asn1.h			\
+	$(INCDIR)\rfc2459_asn1.h		\
+	$(INCDIR)\rfc4043_asn1.h		\
+	$(INCDIR)\rfc4108_asn1.h		\
+	$(INCDIR)\tcg_asn1.h			\
+	$(INCDIR)\x690sample_asn1.h		\
+	$(OBJ)\krb5_asn1-priv.h			\
+	$(OBJ)\ocsp_asn1-priv.h			\
+	$(OBJ)\pkinit_asn1-priv.h		\
+	$(OBJ)\cms_asn1-priv.h			\
+	$(OBJ)\crmf_asn1-priv.h			\
+	$(OBJ)\rfc2459_asn1-priv.h		\
+	$(OBJ)\rfc4043_asn1-priv.h		\
+	$(OBJ)\rfc4108_asn1-priv.h		\
+	$(OBJ)\tcg_asn1-priv.h			\
+	$(OBJ)\x690sample_asn1-priv.h		\
+	$(OBJ)\pkcs8_asn1-priv.h		\
+	$(OBJ)\pkcs9_asn1-priv.h		\
+	$(OBJ)\pkcs10_asn1-priv.h		\
+	$(OBJ)\pkcs12_asn1-priv.h		\
+	$(OBJ)\digest_asn1-priv.h		\
+	$(OBJ)\kx509_asn1-priv.h		\
+	$(OBJ)\test_template_asn1.h		\
+	$(OBJ)\test_template_asn1-priv.h	\
+	$(OBJ)\test_asn1.h			\
 	$(OBJ)\test_asn1-priv.h
 
 libasn1_base_SOURCES=	\
@@ -390,6 +405,7 @@ libasn1_base_SOURCES=	\
 	der_copy.c	\
 	der_cmp.c	\
 	der_format.c	\
+	template.c	\
 	heim_asn1.h	\
 	extra.c		\
 	timegm.c
@@ -419,11 +435,12 @@ clean::
 	-$(RM) $(LIBEXECDIR)\asn1_gen.*
 
 TEST_BINARIES=\
-	$(OBJ)\check-der.exe	\
-	$(OBJ)\check-gen.exe	\
-	$(OBJ)\check-timegm.exe \
-	$(OBJ)\check-ber.exe	\
-	$(OBJ)\check-template.exe \
+	$(OBJ)\check-der.exe		\
+	$(OBJ)\check-gen.exe		\
+	$(OBJ)\check-gen-template.exe	\
+	$(OBJ)\check-timegm.exe 	\
+	$(OBJ)\check-ber.exe		\
+	$(OBJ)\check-template.exe
 
 test-binaries: $(TEST_BINARIES)
 
@@ -431,6 +448,7 @@ test-run:
 	cd $(OBJ)
 	-check-der.exe
 	-check-gen.exe
+	-check-gen-template.exe
 	-check-timegm.exe
 	-check-ber.exe
 	-check-template.exe
@@ -453,6 +471,11 @@ $(OBJ)\check-der.exe: $(OBJ)\check-der.obj $(OBJ)\check-common.obj \
 
 $(OBJ)\check-gen.exe: $(OBJ)\check-gen.obj $(OBJ)\check-common.obj \
 		$(LIBHEIMDAL) $(LIBROKEN) $(gen_files_test:.x=.obj)
+	$(EXECONLINK)
+	$(EXEPREP_NODIST)
+
+$(OBJ)\check-gen-template.exe: $(OBJ)\check-gen.obj $(OBJ)\check-common.obj \
+		$(LIBHEIMDAL) $(LIBROKEN) $(gen_files_test_template:.x=.obj)
 	$(EXECONLINK)
 	$(EXEPREP_NODIST)
 

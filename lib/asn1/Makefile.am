@@ -145,7 +145,6 @@ check_gen_template_LDADD = \
 	libasn1.la \
 	$(LIB_roken)
 
-check_gen_CPPFLAGS = -DIMPLICIT_TAGGING_WORKS
 check_gen_LDADD = \
 	libasn1.la \
 	$(LIB_roken)
@@ -192,7 +191,7 @@ CLEANFILES = \
 	x690sample_asn1_files x690sample_asn1*.h* x690sample_asn1*.x \
 	test_asn1_files test_asn1*.h* test_asn1*.x \
 	test_template_asn1* \
-	asn1_*.x
+	asn1_*.tmp.c asn1_*.x
 
 dist_include_HEADERS = der.h heim_asn1.h
 dist_include_HEADERS += $(srcdir)/der-protos.h $(srcdir)/der-private.h
@@ -265,50 +264,58 @@ $(gen_files_x690sample) x690sample_asn1.hx x690sample_asn1-priv.hx: x690sample_a
 $(gen_files_test) test_asn1.hx test_asn1-priv.hx: test_asn1_files
 $(gen_files_test_template) test_template_asn1.hx test_template_asn1-priv.hx: test_template_asn1_files
 
+if ASN1_TEMPLATING
+TEMPLATE_OPTION=--template
+else
+TEMPLATE_OPTION=
+endif
+
+# XXX Currently using the template compiler for rfc2459.asn1 breaks
 rfc2459_asn1_files: asn1_compile$(EXEEXT) $(srcdir)/rfc2459.asn1
 	$(ASN1_COMPILE) --one-code-file --option-file=$(srcdir)/rfc2459.opt $(srcdir)/rfc2459.asn1 rfc2459_asn1 || (rm -f rfc2459_asn1_files ; exit 1)
 
 rfc4043_asn1_files: asn1_compile$(EXEEXT) $(srcdir)/rfc4043.asn1
-	$(ASN1_COMPILE) --one-code-file $(srcdir)/rfc4043.asn1 rfc4043_asn1 || (rm -f rfc4043_asn1_files ; exit 1)
+	$(ASN1_COMPILE) --one-code-file $(TEMPLATE_OPTION) $(srcdir)/rfc4043.asn1 rfc4043_asn1 || (rm -f rfc4043_asn1_files ; exit 1)
 
 rfc4108_asn1_files: asn1_compile$(EXEEXT) $(srcdir)/rfc4108.asn1
-	$(ASN1_COMPILE) --one-code-file $(srcdir)/rfc4108.asn1 rfc4108_asn1 || (rm -f rfc4108_asn1_files ; exit 1)
+	$(ASN1_COMPILE) --one-code-file $(TEMPLATE_OPTION) $(srcdir)/rfc4108.asn1 rfc4108_asn1 || (rm -f rfc4108_asn1_files ; exit 1)
 
 tcg_asn1_files: asn1_compile$(EXEEXT) $(srcdir)/tcg.asn1
-	$(ASN1_COMPILE) --prefix-enum --one-code-file $(srcdir)/tcg.asn1 tcg_asn1 || (rm -f tcg_asn1_files ; exit 1)
+	$(ASN1_COMPILE) --prefix-enum --one-code-file $(TEMPLATE_OPTION) $(srcdir)/tcg.asn1 tcg_asn1 || (rm -f tcg_asn1_files ; exit 1)
 
 cms_asn1_files: asn1_compile$(EXEEXT) $(srcdir)/cms.asn1 $(srcdir)/cms.opt
-	$(ASN1_COMPILE) --one-code-file --option-file=$(srcdir)/cms.opt $(srcdir)/cms.asn1 cms_asn1 || (rm -f cms_asn1_files ; exit 1)
+	$(ASN1_COMPILE) --one-code-file $(TEMPLATE_OPTION) --option-file=$(srcdir)/cms.opt $(srcdir)/cms.asn1 cms_asn1 || (rm -f cms_asn1_files ; exit 1)
 
 crmf_asn1_files: asn1_compile$(EXEEXT) $(srcdir)/crmf.asn1 $(srcdir)/crmf.opt
-	$(ASN1_COMPILE) --one-code-file --option-file=$(srcdir)/crmf.opt $(srcdir)/crmf.asn1 crmf_asn1 || (rm -f crmf_asn1_files ; exit 1)
+	$(ASN1_COMPILE) --one-code-file $(TEMPLATE_OPTION) --option-file=$(srcdir)/crmf.opt $(srcdir)/crmf.asn1 crmf_asn1 || (rm -f crmf_asn1_files ; exit 1)
 
 krb5_asn1_files: asn1_compile$(EXEEXT) $(srcdir)/krb5.asn1 $(srcdir)/krb5.opt
-	$(ASN1_COMPILE) --one-code-file --option-file=$(srcdir)/krb5.opt $(srcdir)/krb5.asn1 krb5_asn1 || (rm -f krb5_asn1_files ; exit 1)
+	$(ASN1_COMPILE) --one-code-file $(TEMPLATE_OPTION) --option-file=$(srcdir)/krb5.opt $(srcdir)/krb5.asn1 krb5_asn1 || (rm -f krb5_asn1_files ; exit 1)
 
 ocsp_asn1_files: asn1_compile$(EXEEXT) $(srcdir)/ocsp.asn1
-	$(ASN1_COMPILE) --one-code-file --option-file=$(srcdir)/ocsp.opt $(srcdir)/ocsp.asn1 ocsp_asn1 || (rm -f ocsp_asn1_files ; exit 1)
+	$(ASN1_COMPILE) --one-code-file $(TEMPLATE_OPTION) --option-file=$(srcdir)/ocsp.opt $(srcdir)/ocsp.asn1 ocsp_asn1 || (rm -f ocsp_asn1_files ; exit 1)
 
 pkinit_asn1_files: asn1_compile$(EXEEXT) $(srcdir)/pkinit.asn1
-	$(ASN1_COMPILE) --one-code-file $(srcdir)/pkinit.asn1 pkinit_asn1 || (rm -f pkinit_asn1_files ; exit 1)
+	$(ASN1_COMPILE) --one-code-file $(TEMPLATE_OPTION) $(srcdir)/pkinit.asn1 pkinit_asn1 || (rm -f pkinit_asn1_files ; exit 1)
 
 pkcs8_asn1_files: asn1_compile$(EXEEXT) $(srcdir)/pkcs8.asn1
-	$(ASN1_COMPILE) --one-code-file $(srcdir)/pkcs8.asn1 pkcs8_asn1 || (rm -f pkcs8_asn1_files ; exit 1)
+	$(ASN1_COMPILE) --one-code-file $(TEMPLATE_OPTION) $(srcdir)/pkcs8.asn1 pkcs8_asn1 || (rm -f pkcs8_asn1_files ; exit 1)
 
 pkcs9_asn1_files: asn1_compile$(EXEEXT) $(srcdir)/pkcs9.asn1
-	$(ASN1_COMPILE) --one-code-file $(srcdir)/pkcs9.asn1 pkcs9_asn1 || (rm -f pkcs9_asn1_files ; exit 1)
+	$(ASN1_COMPILE) --one-code-file $(TEMPLATE_OPTION) $(srcdir)/pkcs9.asn1 pkcs9_asn1 || (rm -f pkcs9_asn1_files ; exit 1)
 
 pkcs10_asn1_files: asn1_compile$(EXEEXT) $(srcdir)/pkcs10.asn1
-	$(ASN1_COMPILE) --one-code-file --option-file=$(srcdir)/pkcs10.opt $(srcdir)/pkcs10.asn1 pkcs10_asn1 || (rm -f pkcs10_asn1_files ; exit 1)
+	$(ASN1_COMPILE) --one-code-file $(TEMPLATE_OPTION) --option-file=$(srcdir)/pkcs10.opt $(srcdir)/pkcs10.asn1 pkcs10_asn1 || (rm -f pkcs10_asn1_files ; exit 1)
 
+# XXX Currently using the template compiler for pkcs12.asn1 breaks
 pkcs12_asn1_files: asn1_compile$(EXEEXT) $(srcdir)/pkcs12.asn1
 	$(ASN1_COMPILE) --one-code-file $(srcdir)/pkcs12.asn1 pkcs12_asn1 || (rm -f pkcs12_asn1_files ; exit 1)
 
 digest_asn1_files: asn1_compile$(EXEEXT) $(srcdir)/digest.asn1
-	$(ASN1_COMPILE) --one-code-file $(srcdir)/digest.asn1 digest_asn1 || (rm -f digest_asn1_files ; exit 1)
+	$(ASN1_COMPILE) --one-code-file $(TEMPLATE_OPTION) $(srcdir)/digest.asn1 digest_asn1 || (rm -f digest_asn1_files ; exit 1)
 
 kx509_asn1_files: asn1_compile$(EXEEXT) $(srcdir)/kx509.asn1
-	$(ASN1_COMPILE) --one-code-file $(srcdir)/kx509.asn1 kx509_asn1 || (rm -f kx509_asn1_files ; exit 1)
+	$(ASN1_COMPILE) --one-code-file $(TEMPLATE_OPTION) $(srcdir)/kx509.asn1 kx509_asn1 || (rm -f kx509_asn1_files ; exit 1)
 
 x690sample_asn1_files: asn1_compile$(EXEEXT) $(srcdir)/x690sample.asn1
 	$(ASN1_COMPILE) --one-code-file $(srcdir)/x690sample.asn1 x690sample_asn1 || (rm -f x690sample_asn1_files ; exit 1)

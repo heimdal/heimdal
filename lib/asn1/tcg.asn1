@@ -1,8 +1,6 @@
 TCG DEFINITIONS ::= BEGIN
 
-IMPORTS CertificateSerialNumber, AlgorithmIdentifier, Name,
-        Attribute, Certificate, SubjectKeyIdentifier FROM rfc2459
-        heim_any, heim_any_set FROM heim;
+IMPORTS AlgorithmIdentifier FROM rfc2459;
 
 
 -- BEGIN Heimdal commentary

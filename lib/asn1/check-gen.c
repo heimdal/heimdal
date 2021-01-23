@@ -1016,7 +1016,6 @@ test_choice (void)
     return ret;
 }
 
-#ifdef IMPLICIT_TAGGING_WORKS
 static int
 cmp_TESTImplicit (void *a, void *b)
 {
@@ -1105,7 +1104,6 @@ test_implicit (void)
 
     return ret;
 }
-#endif
 
 static int
 cmp_TESTAlloc (void *a, void *b)
@@ -1883,9 +1881,7 @@ main(int argc, char **argv)
     DO_ONE(test_large_tag);
     DO_ONE(test_choice);
 
-#ifdef IMPLICIT_TAGGING_WORKS
     DO_ONE(test_implicit);
-#endif
 
     DO_ONE(test_taglessalloc);
     DO_ONE(test_optional);

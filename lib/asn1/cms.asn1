@@ -5,7 +5,7 @@ CMS DEFINITIONS ::= BEGIN
 
 IMPORTS CertificateSerialNumber, AlgorithmIdentifier, Name,
 	Attribute, Certificate, SubjectKeyIdentifier FROM rfc2459
-	heim_any, heim_any_set FROM heim;
+	heim_any FROM heim;
 
 id-pkcs7 OBJECT IDENTIFIER ::= { iso(1) member-body(2)
          us(840) rsadsi(113549) pkcs(1) pkcs7(7) }

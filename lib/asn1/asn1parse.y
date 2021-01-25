@@ -653,14 +653,36 @@ TaggedType	: Tag tagenv Type
 			$$->tag.tagenv = $2;
 			if (template_flag) {
 			    $$->subtype = $3;
-			} else {
+			} else if ($2 == TE_IMPLICIT) {
+                            Type *t = $3;
+
+                            /*
+                             * XXX We shouldn't do this... The logic for
+                             * dealing with IMPLICIT tags belongs elsewhere.
+                             */
+                            while (t->type == TType) {
+                                if (t->subtype)
+                                    t = t->subtype;
+                                else if (t->symbol && t->symbol->type)
+                                    t = t->symbol->type;
+                                else
+                                    break;
+                            }
+                            /*
+                             * IMPLICIT tags of CHOICE types are EXPLICIT
+                             * instead.
+                             */
+                            if (t->type == TChoice)
+                                $$->tag.tagenv = TE_EXPLICIT;
 			    if($3->type == TTag && $2 == TE_IMPLICIT) {
 				$$->subtype = $3->subtype;
 				free($3);
-			    } else {
-				$$->subtype = $3;
+                            } else {
+                                $$->subtype = $3;
 			    }
-			}
+			} else {
+                            $$->subtype = $3;
+                        }
 		}
 		;
 

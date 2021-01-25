@@ -662,10 +662,19 @@ template_members(struct templatehead *temp, const char *basetype, const char *na
 	const char *sename, *dupname;
 	int subtype_is_struct = is_struct(t->subtype, isstruct);
 	static unsigned long tag_counter = 0;
-	int tagimplicit = (t->tag.tagenv == TE_IMPLICIT);
+	int tagimplicit = 0;
         int prim = !(t->tag.tagclass != ASN1_C_UNIV &&
                      t->tag.tagenv == TE_EXPLICIT) &&
             is_primitive_type(t->subtype);
+
+        if (t->tag.tagenv == TE_IMPLICIT) {
+            Type *t2 = t->subtype ? t->subtype : t->symbol->type;
+
+            while (t2->type == TType && (t2->subtype || t2->symbol->type))
+                t2 = t2->subtype ? t2->subtype : t2->symbol->type;
+            if (t2->type != TChoice)
+                tagimplicit = 1;
+        }
 
 	fprintf(get_code_file(), "/* template_members: %s %s %s */\n", basetype, implicit ? "imp" : "exp", tagimplicit ? "imp" : "exp");
 
@@ -876,8 +885,14 @@ generate_template_type(const char *varname,
 
     tl = tlist_new(varname);
 
-    if (type->type == TTag)
-	implicit = (type->tag.tagenv == TE_IMPLICIT);
+    if (type->type == TTag && type->tag.tagenv == TE_IMPLICIT) {
+        Type *t = type->subtype ? type->subtype : type->symbol->type;
+
+        while (t->type == TType && (t->subtype || t->symbol->type))
+            t = t->subtype ? t->subtype : t->symbol->type;
+        if (t->type != TChoice)
+            implicit = (type->tag.tagenv == TE_IMPLICIT);
+    }
 
     template_members(&tl->template, basetype, name, type, optional, implicit, isstruct, need_offset);
 

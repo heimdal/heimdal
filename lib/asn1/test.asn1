@@ -80,6 +80,16 @@ TESTImplicit2 ::= SEQUENCE {
         ti4[51] IMPLICIT TESTInteger OPTIONAL
 }
 
+TESTImplicit3 ::= CHOICE {
+        ti1[0] IMPLICIT INTEGER (-2147483648..2147483647),
+        ti2[5] IMPLICIT CHOICE { i1[1] INTEGER (-2147483648..2147483647) }
+}
+
+TESTImplicit4 ::= CHOICE {
+        ti1[0] IMPLICIT INTEGER (-2147483648..2147483647),
+        ti2[5] IMPLICIT TESTChoice2
+}
+
 TESTAllocInner ::= SEQUENCE {
 	ai[0] TESTInteger
 }

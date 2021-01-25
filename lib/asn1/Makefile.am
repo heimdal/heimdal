@@ -272,7 +272,7 @@ endif
 
 # XXX Currently using the template compiler for rfc2459.asn1 breaks
 rfc2459_asn1_files: asn1_compile$(EXEEXT) $(srcdir)/rfc2459.asn1
-	$(ASN1_COMPILE) --one-code-file --option-file=$(srcdir)/rfc2459.opt $(srcdir)/rfc2459.asn1 rfc2459_asn1 || (rm -f rfc2459_asn1_files ; exit 1)
+	$(ASN1_COMPILE) --one-code-file $(TEMPLATE_OPTION) --option-file=$(srcdir)/rfc2459.opt $(srcdir)/rfc2459.asn1 rfc2459_asn1 || (rm -f rfc2459_asn1_files ; exit 1)
 
 rfc4043_asn1_files: asn1_compile$(EXEEXT) $(srcdir)/rfc4043.asn1
 	$(ASN1_COMPILE) --one-code-file $(TEMPLATE_OPTION) $(srcdir)/rfc4043.asn1 rfc4043_asn1 || (rm -f rfc4043_asn1_files ; exit 1)
@@ -307,9 +307,8 @@ pkcs9_asn1_files: asn1_compile$(EXEEXT) $(srcdir)/pkcs9.asn1
 pkcs10_asn1_files: asn1_compile$(EXEEXT) $(srcdir)/pkcs10.asn1
 	$(ASN1_COMPILE) --one-code-file $(TEMPLATE_OPTION) --option-file=$(srcdir)/pkcs10.opt $(srcdir)/pkcs10.asn1 pkcs10_asn1 || (rm -f pkcs10_asn1_files ; exit 1)
 
-# XXX Currently using the template compiler for pkcs12.asn1 breaks
 pkcs12_asn1_files: asn1_compile$(EXEEXT) $(srcdir)/pkcs12.asn1
-	$(ASN1_COMPILE) --one-code-file $(srcdir)/pkcs12.asn1 pkcs12_asn1 || (rm -f pkcs12_asn1_files ; exit 1)
+	$(ASN1_COMPILE) --one-code-file $(TEMPLATE_OPTION) $(srcdir)/pkcs12.asn1 pkcs12_asn1 || (rm -f pkcs12_asn1_files ; exit 1)
 
 digest_asn1_files: asn1_compile$(EXEEXT) $(srcdir)/digest.asn1
 	$(ASN1_COMPILE) --one-code-file $(TEMPLATE_OPTION) $(srcdir)/digest.asn1 digest_asn1 || (rm -f digest_asn1_files ; exit 1)
@@ -317,6 +316,8 @@ digest_asn1_files: asn1_compile$(EXEEXT) $(srcdir)/digest.asn1
 kx509_asn1_files: asn1_compile$(EXEEXT) $(srcdir)/kx509.asn1
 	$(ASN1_COMPILE) --one-code-file $(TEMPLATE_OPTION) $(srcdir)/kx509.asn1 kx509_asn1 || (rm -f kx509_asn1_files ; exit 1)
 
+# The template compiler doesn't support SET { ... } types yet, so it can't be
+# used to compile x690sample.asn1
 x690sample_asn1_files: asn1_compile$(EXEEXT) $(srcdir)/x690sample.asn1
 	$(ASN1_COMPILE) --one-code-file $(srcdir)/x690sample.asn1 x690sample_asn1 || (rm -f x690sample_asn1_files ; exit 1)
 

@@ -1,5 +1,11 @@
 -- $Id$ --
--- Definitions from rfc2459/rfc3280
+-- Definitions from RFCs 2459, 3280, 5280
+--
+-- Note that those RFCs come with *two* ASN.1 modules, one being a default-
+-- EXPLICIT tagged module, and the other being default-IMPLICIT.  Some types
+-- are in one module, while others are in the other.  Here the two modules
+-- are merged into a single default-EXPLICIT tagged module, with IMPLICIT added
+-- for all tags for types in the default-IMPLICIT module.
 
 RFC2459 DEFINITIONS ::= BEGIN
 
@@ -320,8 +326,8 @@ KeyUsage ::= BIT STRING {
 -- private key usage period extension OID and syntax
 
 PrivateKeyUsagePeriod ::= SEQUENCE {
-     notBefore       [0]     GeneralizedTime OPTIONAL,
-     notAfter        [1]     GeneralizedTime OPTIONAL
+     notBefore       [0] IMPLICIT GeneralizedTime OPTIONAL,
+     notAfter        [1] IMPLICIT GeneralizedTime OPTIONAL
      -- either notBefore or notAfter MUST be present
 }
 

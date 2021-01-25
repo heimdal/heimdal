@@ -1042,32 +1042,95 @@ cmp_TESTImplicit2 (void *a, void *b)
     return 0;
 }
 
-/*
-UNIV CONS Sequence 14
-  CONTEXT PRIM 0 1 00
-  CONTEXT CONS 1 6
-    CONTEXT CONS 127 3
-      UNIV PRIM Integer 1 02
-  CONTEXT PRIM 2 1 03
-*/
+static int
+cmp_TESTImplicit3 (void *a, void *b)
+{
+    TESTImplicit3 *aa = a;
+    TESTImplicit3 *ab = b;
+
+    COMPARE_INTEGER(aa,ab,element);
+    if (aa->element == choice_TESTImplicit3_ti1) {
+        COMPARE_INTEGER(aa,ab,u.ti1);
+    } else {
+        COMPARE_INTEGER(aa,ab,u.ti2.element);
+        COMPARE_INTEGER(aa,ab,u.ti2.u.i1);
+    }
+    return 0;
+}
+
+static int
+cmp_TESTImplicit4 (void *a, void *b)
+{
+    TESTImplicit4 *aa = a;
+    TESTImplicit4 *ab = b;
+
+    COMPARE_INTEGER(aa,ab,element);
+    if (aa->element == choice_TESTImplicit4_ti1) {
+        COMPARE_INTEGER(aa,ab,u.ti1);
+    } else {
+        COMPARE_INTEGER(aa,ab,u.ti2.element);
+        COMPARE_INTEGER(aa,ab,u.ti2.u.i1);
+    }
+    return 0;
+}
 
 static int
 test_implicit (void)
 {
     int ret = 0;
+    /*
+     * UNIV CONS Sequence = 14 bytes {
+     *   CONTEXT PRIM tag 0 = 1 bytes [0] IMPLICIT content
+     *   CONTEXT CONS tag 1 = 6 bytes [1]
+     *     CONTEXT CONS tag 127 = 3 bytes [127]
+     *       UNIV PRIM Integer = integer 2
+     *   CONTEXT PRIM tag 2 = 1 bytes [2] IMPLICIT content
+     * }
+     */
     struct test_case tests[] = {
 	{ NULL,  16,
           "\x30\x0e\x80\x01\x00\xa1\x06\xbf\x7f\x03\x02\x01\x02\x82\x01\x03",
 	  "implicit 1" }
     };
+    /*
+     * UNIV CONS Sequence = 10 bytes {
+     *   CONTEXT PRIM tag 0 = 1 bytes [0] IMPLICIT content
+     *   CONTEXT PRIM tag 2 = 1 bytes [2] IMPLICIT content
+     *   CONTEXT PRIM tag 51 = 1 bytes [51] IMPLICIT content
+     * }
+     */
     struct test_case tests2[] = {
 	{ NULL,  12,
           "\x30\x0a\x80\x01\x01\x82\x01\x03\x9f\x33\x01\x04",
 	  "implicit 2" }
     };
+    /*
+     * CONTEXT CONS tag 5 = 5 bytes [5]
+     *   CONTEXT CONS tag 1 = 3 bytes [1]
+     *     UNIV PRIM Integer = integer 5
+     */
+    struct test_case tests3[] = {
+	{ NULL,  7,
+          "\xa5\x05\xa1\x03\x02\x01\x05",
+	  "implicit 3" }
+    };
+    /*
+     * Notice: same as tests3[].bytes.
+     *
+     * CONTEXT CONS tag 5 = 5 bytes [5]
+     *   CONTEXT CONS tag 1 = 3 bytes [1]
+     *     UNIV PRIM Integer = integer 5
+     */
+    struct test_case tests4[] = {
+	{ NULL,  7,
+          "\xa5\x05\xa1\x03\x02\x01\x05",
+	  "implicit 4" }
+    };
 
     TESTImplicit c0;
     TESTImplicit2 c1;
+    TESTImplicit3 c2;
+    TESTImplicit4 c3;
     int ti4 = 4;
 
     memset(&c0, 0, sizeof(c0));
@@ -1081,6 +1144,18 @@ test_implicit (void)
     c1.ti3 = 3;
     c1.ti4 = &ti4;
     tests2[0].val = &c1;
+
+    memset(&c2, 0, sizeof(c2));
+    c2.element = choice_TESTImplicit3_ti2;
+    c2.u.ti2.element = choice_TESTImplicit3_ti2_i1;
+    c2.u.ti2.u.i1 = 5;
+    tests3[0].val = &c2;
+
+    memset(&c3, 0, sizeof(c3));
+    c3.element = choice_TESTImplicit4_ti2;
+    c3.u.ti2.element = choice_TESTChoice2_i1;
+    c3.u.ti2.u.i1 = 5;
+    tests4[0].val = &c3;
 
     ret += generic_test(tests,
                         sizeof(tests) / sizeof(*tests),
@@ -1100,6 +1175,26 @@ test_implicit (void)
                         (generic_decode)decode_TESTImplicit2,
                         (generic_free)free_TESTImplicit2,
                         cmp_TESTImplicit2,
+                        NULL);
+
+    ret += generic_test(tests3,
+                        sizeof(tests3) / sizeof(*tests3),
+                        sizeof(TESTImplicit3),
+                        (generic_encode)encode_TESTImplicit3,
+                        (generic_length)length_TESTImplicit3,
+                        (generic_decode)decode_TESTImplicit3,
+                        (generic_free)free_TESTImplicit3,
+                        cmp_TESTImplicit3,
+                        NULL);
+
+    ret += generic_test(tests4,
+                        sizeof(tests4) / sizeof(*tests4),
+                        sizeof(TESTImplicit4),
+                        (generic_encode)encode_TESTImplicit4,
+                        (generic_length)length_TESTImplicit4,
+                        (generic_decode)decode_TESTImplicit4,
+                        (generic_free)free_TESTImplicit4,
+                        cmp_TESTImplicit4,
                         NULL);
 
     return ret;

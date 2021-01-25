@@ -51,7 +51,7 @@ gen_files_pkcs10 = asn1_pkcs10_asn1.x
 gen_files_pkcs12 = asn1_pkcs12_asn1.x
 gen_files_pkcs8 = asn1_pkcs8_asn1.x
 gen_files_pkcs9 = asn1_pkcs9_asn1.x
-gen_files_test_template = test_template_asn1-template.x
+gen_files_test_template = asn1_test_template_asn1.x
 gen_files_test = asn1_test_asn1.x
 gen_files_digest = asn1_digest_asn1.x
 gen_files_kx509 = asn1_kx509_asn1.x
@@ -322,7 +322,7 @@ x690sample_asn1_files: asn1_compile$(EXEEXT) $(srcdir)/x690sample.asn1
 	$(ASN1_COMPILE) --one-code-file $(srcdir)/x690sample.asn1 x690sample_asn1 || (rm -f x690sample_asn1_files ; exit 1)
 
 test_template_asn1_files: asn1_compile$(EXEEXT) $(srcdir)/test.asn1
-	$(ASN1_COMPILE) --template --sequence=TESTSeqOf $(srcdir)/test.asn1 test_template_asn1 || (rm -f test_template_asn1_files ; exit 1)
+	$(ASN1_COMPILE) --one-code-file --template --sequence=TESTSeqOf $(srcdir)/test.asn1 test_template_asn1 || (rm -f test_template_asn1_files ; exit 1)
 
 test_asn1_files: asn1_compile$(EXEEXT) $(srcdir)/test.asn1
 	$(ASN1_COMPILE) --one-code-file --sequence=TESTSeqOf $(srcdir)/test.asn1 test_asn1 || (rm -f test_asn1_files ; exit 1)

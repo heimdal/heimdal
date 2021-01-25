@@ -63,7 +63,7 @@ gen_files_pkcs10	= $(OBJ)\asn1_pkcs10_asn1.x
 
 gen_files_test		= $(OBJ)\asn1_test_asn1.x
 
-gen_files_test_template	= $(OBJ)\test_template_asn1-template.x
+gen_files_test_template	= $(OBJ)\asn1_test_template_asn1.x
 
 gen_files_digest	= $(OBJ)\asn1_digest_asn1.x
 
@@ -339,7 +339,8 @@ $(gen_files_test) $(OBJ)\test_asn1.hx: $(BINDIR)\asn1_compile.exe test.asn1
 $(gen_files_test_template) $(OBJ)\test_template_asn1.hx: $(BINDIR)\asn1_compile.exe test.asn1
 	cd $(OBJ)
 	$(BINDIR)\asn1_compile.exe \
-		--template --sequence=TESTSeqOf \
+		--one-code-file --template \
+		--sequence=TESTSeqOf \
 		$(SRCDIR)\test.asn1 test_template_asn1 \
 	|| ($(RM) $(OBJ)\test_template_asn1.h ; exit /b 1)
 	cd $(SRCDIR)

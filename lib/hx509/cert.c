@@ -2074,7 +2074,7 @@ match_tree(const GeneralSubtrees *t, const Certificate *c, int *match)
 
 	    memset(&certname, 0, sizeof(certname));
 	    certname.element = choice_GeneralName_directoryName;
-	    certname.u.directoryName.element = (enum GeneralName_directoryName_enum)
+	    certname.u.directoryName.element = (enum Name_enum)
 		c->tbsCertificate.subject.element;
 	    certname.u.directoryName.u.rdnSequence =
 		c->tbsCertificate.subject.u.rdnSequence;

@@ -1360,8 +1360,7 @@ hx509_request_get_san(hx509_request req,
     case HX509_SAN_TYPE_DN: {
         Name name;
 
-        if (san->u.directoryName.element ==
-            choice_GeneralName_directoryName_rdnSequence) {
+        if (san->u.directoryName.element == choice_Name_rdnSequence) {
             name.element = choice_Name_rdnSequence;
             name.u.rdnSequence = san->u.directoryName.u.rdnSequence;
             return _hx509_Name_to_string(&name, out);

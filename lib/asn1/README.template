@@ -11,15 +11,25 @@ Notes about the template parser:
 
 - assumption: code is large, tables smaller
 
+- smaller tables and code, smaller cache footprint, better performance
+
 - how to generate template based stubs:
 
 	make check asn1_compile_FLAGS=--template > log
 
+  or 
+
+        ./configure --enable-asn1-templating
+
 - pretty much the same as the generate code, except uses tables instead of code
 
-TODO:
-	- Make hdb work
+- much easier to extend!  adding new encoding rules is just adding a few
+  functions to template.c, one set of length/encode/decode functions per ER,
+  so we could add OER/PER/XDR/GSER/JER with very little work outside that one
+  file and gen_template.c (to generate stub functions) and gen.c (to generate
+  declarations of those stub functions).
 
+TODO:
 	- Fuzzing tests
 
 	- Performance testing
@@ -28,7 +38,29 @@ TODO:
 
 	- Fix SIZE constraits
 
+        - Proper implementation of `SET { ... }`
+
 	- Compact types that only contain on entry to not having a header.
+
+          Or maybe not.  We can afford larger template footprint if we can get
+          more bang for that.  For example, if we add type and member names to
+          the templates, we could have template interpreters that implement JER
+          (JSON Encoding Rules) and/or GSER (Generic String Encoding Rules),
+          and it will cost only the size of the new interpreters plust the
+          extra metadata (type and member names).
+
+          Perhaps we could rely on `dladdr()` to find the names of template
+          data structures and work out the type and member names from that?
+          But then, making more of those static / stripping them would save us
+          some of the cost of adding type and member names to the templates.
+          Using `dladdr()` might be a problem because it's not really portable,
+          and our implementation in lib/roken for WIN32 does not report a
+          symbol name, but there is a way to get that in WIN32
+          (see https://github.com/dlfcn-win32/dlfcn-win32/).
+
+          E.g., if we know the name of a template table as
+          "asn1_TBSCertificate_tag_version_28" then we can work out that it's
+          for the member named `version` in the type named `TBSCertificate`.
 
 
 SIZE - Futher down is later generations of the template parser

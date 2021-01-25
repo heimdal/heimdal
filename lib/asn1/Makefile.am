@@ -316,10 +316,8 @@ digest_asn1_files: asn1_compile$(EXEEXT) $(srcdir)/digest.asn1
 kx509_asn1_files: asn1_compile$(EXEEXT) $(srcdir)/kx509.asn1
 	$(ASN1_COMPILE) --one-code-file $(TEMPLATE_OPTION) $(srcdir)/kx509.asn1 kx509_asn1 || (rm -f kx509_asn1_files ; exit 1)
 
-# The template compiler doesn't support SET { ... } types yet, so it can't be
-# used to compile x690sample.asn1
 x690sample_asn1_files: asn1_compile$(EXEEXT) $(srcdir)/x690sample.asn1
-	$(ASN1_COMPILE) --one-code-file $(srcdir)/x690sample.asn1 x690sample_asn1 || (rm -f x690sample_asn1_files ; exit 1)
+	$(ASN1_COMPILE) --one-code-file $(TEMPLATE_OPTION) $(srcdir)/x690sample.asn1 x690sample_asn1 || (rm -f x690sample_asn1_files ; exit 1)
 
 test_template_asn1_files: asn1_compile$(EXEEXT) $(srcdir)/test.asn1
 	$(ASN1_COMPILE) --one-code-file --template --sequence=TESTSeqOf $(srcdir)/test.asn1 test_template_asn1 || (rm -f test_template_asn1_files ; exit 1)

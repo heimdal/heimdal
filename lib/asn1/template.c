@@ -269,6 +269,16 @@ _asn1_decode(const struct asn1_template *t, unsigned flags,
 	    int subflags = flags;
             int replace_tag = (t->tt & A1_FLAG_IMPLICIT) && is_tagged(t->ptr);
 
+            /*
+             * XXX If this type (chasing t->ptr through IMPLICIT tags, if this
+             * one is too, till we find a non-TTag) is a [UNIVERSAL SET] type,
+             * then we have to accept fields out of order.  For each field tag
+             * we see we'd have to do a linear search of the SET's template
+             * because it won't be sorted (or we could sort a copy and do a
+             * binary search on that, but these SETs will always be small so it
+             * won't be worthwhile).  We'll need a utility function to do all
+             * of this.
+             */
 	    ret = der_match_tag_and_length(p, len, A1_TAG_CLASS(t->tt),
 					   &dertype, A1_TAG_TAG(t->tt),
 					   &datalen, &l);
@@ -575,6 +585,16 @@ _asn1_encode(const struct asn1_template *t, unsigned char *p, size_t len, const 
 	    const void *olddata = data;
 	    size_t l, datalen;
             int replace_tag = 0;
+
+            /*
+             * XXX If this type (chasing t->ptr through IMPLICIT tags, if this
+             * one is too) till we find a non-TTag) is a [UNIVERSAL SET] type,
+             * then we have to sort [a copy of] its template by tag, then
+             * encode the SET using that sorted template.  These SETs will
+             * generally be small, so when they are we might want to allocate
+             * the copy on the stack and insertion sort it.  We'll need a
+             * utility function to do all of this.
+             */
 
 	    data = DPOC(data, t->offset);
 

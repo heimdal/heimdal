@@ -1893,8 +1893,17 @@ test_x690sample(void)
 {
     /*
      * Taken from X.690, Appendix A, though sadly it's not specified whether
-     * it's in BER, DER, or CER, but it turns out to be DER since, as you can
-     * see below, we re-encode and get the same encoding back.
+     * it's in BER, DER, or CER, but it is clearly BER and neither DER nor CER
+     * because the tags of the members of the X690SamplePersonnelRecord type
+     * are not canonically sorted in the given sample.
+     *
+     * Our compiler does NOT canonically sort the members of SET { ... } types
+     * so it produces the same encoding after decoding this test vector.  That
+     * is clearly a bug given that we aim to output DER.
+     *
+     * The template compiler doesn't even decode SET { ... } values properly
+     * when their members are not in the same order as defined (but the regular
+     * compiler does).
      */
     X690SamplePersonnelRecord r;
     heim_octet_string os;

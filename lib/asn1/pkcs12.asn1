@@ -6,7 +6,7 @@ BEGIN
 
 IMPORTS ContentInfo FROM cms
 	DigestInfo FROM rfc2459
-	heim_any, heim_any_set FROM heim;
+	heim_any FROM heim;
 
 -- The PFX PDU
 
@@ -50,7 +50,7 @@ PKCS12-AuthenticatedSafe ::= SEQUENCE OF ContentInfo
 
 PKCS12-Attribute ::= SEQUENCE {
 	attrId	   	OBJECT IDENTIFIER,
-	attrValues 	-- SET OF -- heim_any_set
+	attrValues 	SET OF heim_any
 }
 
 PKCS12-Attributes ::= SET OF PKCS12-Attribute

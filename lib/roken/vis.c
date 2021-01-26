@@ -427,7 +427,7 @@ rk_strrasvisx(char **out,
 {
 	size_t want = 4 * len + 4;
 	size_t have = *outsz;
-	char *s;
+	char *s = *out;
 	int r;
 
 	_DIAGASSERT(dst != NULL);
@@ -444,12 +444,10 @@ rk_strrasvisx(char **out,
 		*out = s;
 	}
 	**out = '\0'; /* Makes source debugging nicer, that's all */
-	if ((r = rk_strsvisx(s, csrc, len, flag, extra)) < 0) {
-		free(s);
+	if ((r = rk_strsvisx(*out, csrc, len, flag, extra)) < 0)
 		return r;
-	}
-	errno = s ? errno : EINVAL;
-	return s ? r : -1;
+	errno = *out ? errno : EINVAL;
+	return *out ? r : -1;
 }
 
 #if !HAVE_VIS

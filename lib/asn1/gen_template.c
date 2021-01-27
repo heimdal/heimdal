@@ -631,6 +631,32 @@ template_members(struct templatehead *temp, const char *basetype, const char *na
 
 	break;
     }
+    case TSet: {
+	Member *m;
+
+	fprintf(get_code_file(), "/* tset: members isstruct: %d */\n", isstruct);
+
+	HEIM_TAILQ_FOREACH(m, t->members, members) {
+	    char *newbasename = NULL;
+
+	    if (m->ellipsis)
+		continue;
+
+	    if (name) {
+		if (asprintf(&newbasename, "%s_%s", basetype, name) < 0)
+		    errx(1, "malloc");
+	    } else
+		newbasename = strdup(basetype);
+	    if (newbasename == NULL)
+		errx(1, "malloc");
+
+	    template_members(temp, newbasename, m->gen_name, m->type, m->optional, 0, isstruct, 1);
+
+	    free(newbasename);
+	}
+
+	break;
+    }
     case TSequence: {
 	Member *m;
 

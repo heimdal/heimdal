@@ -54,6 +54,7 @@
  */
 
 #include "gen_locl.h"
+#include <vis.h>
 
 static const char *symbol_name(const char *, const Type *);
 static void generate_template_type(const char *, const char **, const char *, const char *, const char *,
@@ -182,8 +183,7 @@ bitstring_symbol(const char *basename, const Type *t)
 
 
 /* XXX Make sure this is sorted by `type' and can just index this by type */
-/* XXX Make this const! */
-struct {
+const struct {
     enum typetype type;
     const char *(*symbol_name)(const char *, const Type *);
     int is_struct;
@@ -499,7 +499,109 @@ compact_tag(const Type *t)
 }
 
 static void
-template_members(struct templatehead *temp, const char *basetype, const char *name, const Type *t, int optional, int implicit, int isstruct, int need_offset)
+defval(struct templatehead *temp, Member *m)
+{
+    switch (m->defval->type) {
+    case booleanvalue:
+        add_line(temp, "{ A1_OP_DEFVAL|A1_DV_BOOLEAN, ~0, (void *)%u }",
+                 m->defval->u.booleanvalue);
+        break;
+    case nullvalue:
+        add_line(temp, "{ A1_OP_DEFVAL|A1_DV_NULL, ~0, (void *)0 }");
+        break;
+    case integervalue: {
+        const char *dv = "A1_DV_INTEGER";
+        Type *t = m->type;
+
+        for (;;) {
+            if (t->range)
+                break;
+            if (t->type == TInteger && t->members)
+                break;
+            if (t->type == TEnumerated)
+                break;
+            if (t->subtype)
+                t = t->subtype;
+            else if (t->symbol && t->symbol->type)
+                t = t->symbol->type;
+            else
+                errx(1, "DEFAULT values for unconstrained INTEGER members not supported");
+        }
+
+        if (t->members)
+            dv = "A1_DV_INTEGER32"; /* XXX Enum size assumptions!  No good! */
+        else if (t->range->min < INT_MIN && t->range->max <= INT64_MAX)
+            dv = "A1_DV_INTEGER64";
+        else if (t->range->min >= 0 && t->range->max > UINT_MAX)
+            dv = "A1_DV_INTEGER64";
+        else if (t->range->min >= INT_MIN && t->range->max <= INT_MAX)
+            dv = "A1_DV_INTEGER32";
+        else if (t->range->min >= 0 && t->range->max <= UINT_MAX)
+            dv = "A1_DV_INTEGER32";
+        else
+            errx(1, "unsupported range %lld -> %lld",
+                 (long long)m->type->range->min, (long long)m->type->range->max);
+        add_line(temp, "{ A1_OP_DEFVAL|%s, ~0, (void *)%llu }",
+                 dv, (long long)m->defval->u.integervalue);
+        break;
+    }
+    case stringvalue: {
+        char *quoted;
+
+        if (rk_strasvis(&quoted, m->defval->u.stringvalue,
+                        VIS_CSTYLE | VIS_DQ | VIS_NL, "") < 0)
+            err(1, "Could not quote a string");
+        add_line(temp, "{ A1_OP_DEFVAL|A1_DV_UTF8STRING, ~0, (void *)\"%s\" }",
+                 quoted);
+        free(quoted);
+        break;
+    }
+    case objectidentifiervalue: {
+        struct objid *o;
+        size_t sz = sizeof("{ }");
+        char *s, *p;
+        int len;
+
+        for (o = m->defval->u.objectidentifiervalue; o != NULL; o = o->next) {
+            if ((len = snprintf(0, 0, " %d", o->value)) < 0)
+                err(1, "Could not format integer");
+            sz += len;
+        }
+
+        if ((p = s = malloc(sz)) == NULL)
+                err(1, "Could not allocate string");
+
+        len = snprintf(p, sz, "{");
+        sz -= len;
+        p += len;
+        for (o = m->defval->u.objectidentifiervalue; o != NULL; o = o->next) {
+            if ((len = snprintf(p, sz, " %d", o->value)) < 0 || len > sz - 1)
+                err(1, "Could not format integer");
+            sz -= len;
+            p += len;
+        }
+        len = snprintf(p, sz, " }");
+        sz -= len;
+        p += len;
+
+        add_line(temp, "{ A1_OP_DEFVAL|A1_DV_INTEGER, ~0, (void *)\"%s\" }", s);
+        free(s);
+        break;
+    }
+    default: abort();
+    }
+}
+
+static void
+template_members(struct templatehead *temp,
+                 const char *basetype,
+                 const char *name,
+                 const Type *t,
+                 int optional,
+                 int defaulted,
+                 int implicit,
+                 int isstruct,
+                 int need_offset)
 {
     char *poffset = NULL;
 
@@ -511,15 +613,17 @@ template_members(struct templatehead *temp, const char *basetype, const char *na
     switch (t->type) {
     case TType:
 	if (use_extern(t->symbol)) {
-	    add_line(temp, "{ A1_OP_TYPE_EXTERN %s%s, %s, &asn1_extern_%s}",
-		     optional ? "|A1_FLAG_OPTIONAL" : "",
-		     implicit ? "|A1_FLAG_IMPLICIT" : "",
+	    add_line(temp, "{ A1_OP_TYPE_EXTERN %s%s%s, %s, &asn1_extern_%s}",
+		     optional  ? "|A1_FLAG_OPTIONAL" : "",
+		     defaulted ? "|A1_FLAG_DEFAULT" : "",
+		     implicit  ? "|A1_FLAG_IMPLICIT" : "",
 		     poffset, t->symbol->gen_name);
 	} else {
 	    add_line_pointer(temp, t->symbol->gen_name, poffset,
-			     "A1_OP_TYPE %s%s",
-			     optional ? "|A1_FLAG_OPTIONAL" : "",
-			     implicit ? "|A1_FLAG_IMPLICIT" : "");
+			     "A1_OP_TYPE %s%s%s",
+			     optional  ? "|A1_FLAG_OPTIONAL" : "",
+			     defaulted ? "|A1_FLAG_DEFAULT" : "",
+			     implicit  ? "|A1_FLAG_IMPLICIT" : "");
 
 	}
 	break;
@@ -650,7 +754,10 @@ template_members(struct templatehead *temp, const char *basetype, const char *na
 	    if (newbasename == NULL)
 		errx(1, "malloc");
 
-	    template_members(temp, newbasename, m->gen_name, m->type, m->optional, 0, isstruct, 1);
+            if (m->defval)
+                defval(temp, m);
+
+	    template_members(temp, newbasename, m->gen_name, m->type, m->optional, m->defval ? 1 : 0, 0, isstruct, 1);
 
 	    free(newbasename);
 	}
@@ -676,7 +783,10 @@ template_members(struct templatehead *temp, const char *basetype, const char *na
 	    if (newbasename == NULL)
 		errx(1, "malloc");
 
-	    template_members(temp, newbasename, m->gen_name, m->type, m->optional, 0, isstruct, 1);
+            if (m->defval)
+                defval(temp, m);
+            
+	    template_members(temp, newbasename, m->gen_name, m->type, m->optional, m->defval ? 1 : 0, 0, isstruct, 1);
 
 	    free(newbasename);
 	}
@@ -720,11 +830,12 @@ template_members(struct templatehead *temp, const char *basetype, const char *na
 			       t->subtype, 0, subtype_is_struct, 0);
 
 	add_line_pointer(temp, dupname, poffset,
-			 "A1_TAG_T(%s,%s,%s)%s%s",
+			 "A1_TAG_T(%s,%s,%s)%s%s%s",
 			 classname(t->tag.tagclass),
 			 prim  ? "PRIM" : "CONS",
 			 valuename(t->tag.tagclass, t->tag.tagvalue),
-			 optional ? "|A1_FLAG_OPTIONAL" : "",
+			 optional    ? "|A1_FLAG_OPTIONAL" : "",
+			 defaulted   ? "|A1_FLAG_DEFAULT" : "",
 			 tagimplicit ? "|A1_FLAG_IMPLICIT" : "");
 
 	free(tname);
@@ -900,7 +1011,9 @@ generate_template_type(const char *varname,
 		       const char *basetype,
 		       const char *name,
 		       Type *type,
-		       int optional, int isstruct, int need_offset)
+		       int optional,
+                       int isstruct,
+                       int need_offset)
 {
     struct tlist *tl;
     const char *d;
@@ -920,7 +1033,8 @@ generate_template_type(const char *varname,
             implicit = (type->tag.tagenv == TE_IMPLICIT);
     }
 
-    template_members(&tl->template, basetype, name, type, optional, implicit, isstruct, need_offset);
+    template_members(&tl->template, basetype, name, type, optional, 0,
+                     implicit, isstruct, need_offset);
 
     /* if its a sequence or set type, check if there is a ellipsis */
     if (type->type == TSequence || type->type == TSet) {

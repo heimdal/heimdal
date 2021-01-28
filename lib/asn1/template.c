@@ -209,6 +209,7 @@ int
 _asn1_decode(const struct asn1_template *t, unsigned flags,
 	     const unsigned char *p, size_t len, void *data, size_t *size)
 {
+    const struct asn1_template *tdefval = NULL;
     size_t elements = A1_HEADER_LEN(t);
     size_t oldlen = len;
     int ret = 0;
@@ -223,6 +224,9 @@ _asn1_decode(const struct asn1_template *t, unsigned flags,
 
     while (elements) {
 	switch (t->tt & A1_OP_MASK) {
+	case A1_OP_DEFVAL:
+            tdefval = t;
+            break;
 	case A1_OP_TYPE:
 	case A1_OP_TYPE_EXTERN: {
 	    size_t newsize, elsize;
@@ -250,10 +254,45 @@ _asn1_decode(const struct asn1_template *t, unsigned flags,
 	    }
 	    if (ret) {
 		if (t->tt & A1_FLAG_OPTIONAL) {
+                    /*
+                     * Optional field not present in encoding, presumably,
+                     * though we should really look more carefully at `ret'.
+                     */
 		    free(*pel);
 		    *pel = NULL;
 		    break;
-		}
+		} else if (t->tt & A1_FLAG_DEFAULT) {
+                    /*
+                     * Defaulted field not present in encoding, presumably,
+                     * though we should really look more carefully at `ret'.
+                     */
+                    if (tdefval->tt & A1_DV_BOOLEAN) {
+                        int *i = (void *)(char *)el;
+
+                        *i = tdefval->ptr ? 1 : 0;
+                    } else if (tdefval->tt & A1_DV_INTEGER64) {
+                        int64_t *i = (void *)(char *)el;
+
+                        *i = (int64_t)(intptr_t)tdefval->ptr;
+                    } else if (tdefval->tt & A1_DV_INTEGER32) {
+                        int32_t *i = (void *)(char *)el;
+
+                        *i = (int32_t)(intptr_t)tdefval->ptr;
+                    } else if (tdefval->tt & A1_DV_INTEGER) {
+                        struct heim_integer *i = (void *)(char *)el;
+
+                        if ((ret = der_copy_heim_integer(tdefval->ptr, i)))
+                            return ret;
+                    } else if (tdefval->tt & A1_DV_UTF8STRING) {
+                        char **s = el;
+
+                        if ((*s = strdup(tdefval->ptr)) == NULL)
+                            return ENOMEM;
+                    } else {
+                        abort();
+                    }
+                    break;
+                }
 		return ret;
 	    }
 	    p += newsize; len -= newsize;
@@ -269,6 +308,8 @@ _asn1_decode(const struct asn1_template *t, unsigned flags,
 	    int subflags = flags;
             int replace_tag = (t->tt & A1_FLAG_IMPLICIT) && is_tagged(t->ptr);
 
+	    data = DPO(data, t->offset);
+
             /*
              * XXX If this type (chasing t->ptr through IMPLICIT tags, if this
              * one is too, till we find a non-TTag) is a [UNIVERSAL SET] type,
@@ -283,8 +324,42 @@ _asn1_decode(const struct asn1_template *t, unsigned flags,
 					   &dertype, A1_TAG_TAG(t->tt),
 					   &datalen, &l);
 	    if (ret) {
-		if (t->tt & A1_FLAG_OPTIONAL)
+		if (t->tt & A1_FLAG_OPTIONAL) {
+                    data = olddata;
 		    break;
+                } else if (t->tt & A1_FLAG_DEFAULT) {
+                    /*
+                     * Defaulted field not present in encoding, presumably,
+                     * though we should really look more carefully at `ret'.
+                     */
+                    if (tdefval->tt & A1_DV_BOOLEAN) {
+                        int *i = (void *)(char *)data;
+
+                        *i = tdefval->ptr ? 1 : 0;
+                    } else if (tdefval->tt & A1_DV_INTEGER64) {
+                        int64_t *i = (void *)(char *)data;
+
+                        *i = (int64_t)(intptr_t)tdefval->ptr;
+                    } else if (tdefval->tt & A1_DV_INTEGER32) {
+                        int32_t *i = (void *)(char *)data;
+
+                        *i = (int32_t)(intptr_t)tdefval->ptr;
+                    } else if (tdefval->tt & A1_DV_INTEGER) {
+                        struct heim_integer *i = (void *)(char *)data;
+
+                        if ((ret = der_copy_heim_integer(tdefval->ptr, i)))
+                            return ret;
+                    } else if (tdefval->tt & A1_DV_UTF8STRING) {
+                        char **s = data;
+
+                        if ((*s = strdup(tdefval->ptr)) == NULL)
+                            return ENOMEM;
+                    } else {
+                        abort();
+                    }
+                    data = olddata;
+                    break;
+                }
 		return ret;
 	    }
 
@@ -315,8 +390,6 @@ _asn1_decode(const struct asn1_template *t, unsigned flags,
 		datalen -= 2;
 	    } else if (datalen > len)
 		return ASN1_OVERRUN;
-
-	    data = DPO(data, t->offset);
 
 	    if (t->tt & A1_FLAG_OPTIONAL) {
 		void **el = (void **)data;
@@ -484,7 +557,7 @@ _asn1_decode(const struct asn1_template *t, unsigned flags,
 
 	    /* provide a saner value as default, we should have a NO element value */
 	    *element = 1;
-	   
+
 	    for (i = 1; i < A1_HEADER_LEN(choice) + 1; i++) {
 		/* should match first tag instead, store it in choice.tt */
 		ret = _asn1_decode(choice[i].ptr, 0, p, len,
@@ -556,6 +629,7 @@ _asn1_encode(const struct asn1_template *t, unsigned char *p, size_t len, const 
 
     while (elements) {
 	switch (t->tt & A1_OP_MASK) {
+	case A1_OP_DEFVAL: break;
 	case A1_OP_TYPE:
 	case A1_OP_TYPE_EXTERN: {
 	    size_t newsize;
@@ -566,7 +640,40 @@ _asn1_encode(const struct asn1_template *t, unsigned char *p, size_t len, const 
 		if (*pel == NULL)
 		    break;
 		el = *pel;
-	    }
+            } else if ((t->tt & A1_FLAG_DEFAULT) && elements > 1) {
+                const struct asn1_template *tdefval = t - 1;
+                /* Compare tdefval to whatever's at `el' */
+                if (tdefval->tt & A1_DV_BOOLEAN) {
+                    const int *i = (void *)(char *)el;
+
+                    if ((*i && tdefval->ptr) || (!*i && !tdefval->ptr))
+                        break;
+                } else if (tdefval->tt & A1_DV_INTEGER64) {
+                    const int64_t *i = (void *)(char *)el;
+
+                    if (*i == (int64_t)(intptr_t)tdefval->ptr)
+                        break;
+                } else if (tdefval->tt & A1_DV_INTEGER32) {
+                    const int32_t *i = (void *)(char *)el;
+
+                    if ((int64_t)(intptr_t)tdefval->ptr <= INT_MAX &&
+                        (int64_t)(intptr_t)tdefval->ptr >= INT_MIN &&
+                        *i == (int32_t)(intptr_t)tdefval->ptr)
+                        break;
+                } else if (tdefval->tt & A1_DV_INTEGER) {
+                    const struct heim_integer *i = (void *)(char *)el;
+
+                    if (der_heim_integer_cmp(i, tdefval->ptr) == 0)
+                        break;
+                } else if (tdefval->tt & A1_DV_UTF8STRING) {
+                    const char * const *s = el;
+
+                    if (*s && strcmp(*s, tdefval->ptr) == 0)
+                        break;
+                } else {
+                    abort();
+                }
+            }
 
 	    if ((t->tt & A1_OP_MASK) == A1_OP_TYPE) {
 		ret = _asn1_encode(t->ptr, p, len, el, &newsize);
@@ -605,7 +712,46 @@ _asn1_encode(const struct asn1_template *t, unsigned char *p, size_t len, const 
 		    break;
 		}
 		data = *el;
-	    }
+            } else if ((t->tt & A1_FLAG_DEFAULT) && elements > 1) {
+                const struct asn1_template *tdefval = t - 1;
+                int exclude = 0;
+
+                /* Compare tdefval to whatever's at `data' */
+                if (tdefval->tt & A1_DV_BOOLEAN) {
+                    const int *i = (void *)(char *)data;
+
+                    if ((*i && tdefval->ptr) || (!*i && !tdefval->ptr))
+                        exclude = 1;
+                } else if (tdefval->tt & A1_DV_INTEGER64) {
+                    const int64_t *i = (void *)(char *)data;
+
+                    if (*i == (int64_t)(intptr_t)tdefval->ptr)
+                        exclude = 1;
+                } else if (tdefval->tt & A1_DV_INTEGER32) {
+                    const int32_t *i = (void *)(char *)data;
+
+                    if ((int64_t)(intptr_t)tdefval->ptr <= INT_MAX &&
+                        (int64_t)(intptr_t)tdefval->ptr >= INT_MIN &&
+                        *i == (int32_t)(intptr_t)tdefval->ptr)
+                        exclude = 1;
+                } else if (tdefval->tt & A1_DV_INTEGER) {
+                    const struct heim_integer *i = (void *)(char *)data;
+
+                    if (der_heim_integer_cmp(i, tdefval->ptr) == 0)
+                        break;
+                } else if (tdefval->tt & A1_DV_UTF8STRING) {
+                    const char * const *s = data;
+
+                    if (*s && strcmp(*s, tdefval->ptr) == 0)
+                        exclude = 1;
+                } else {
+                    abort();
+                }
+                if (exclude) {
+                    data = olddata;
+                    break;
+                }
+            }
 
             replace_tag = (t->tt & A1_FLAG_IMPLICIT) && is_tagged(t->ptr);
 
@@ -880,6 +1026,7 @@ _asn1_length(const struct asn1_template *t, const void *data)
 
     while (elements) {
 	switch (t->tt & A1_OP_MASK) {
+	case A1_OP_DEFVAL: break;
 	case A1_OP_TYPE:
 	case A1_OP_TYPE_EXTERN: {
 	    const void *el = DPOC(data, t->offset);
@@ -889,7 +1036,41 @@ _asn1_length(const struct asn1_template *t, const void *data)
 		if (*pel == NULL)
 		    break;
 		el = *pel;
-	    }
+            } else if ((t->tt & A1_FLAG_DEFAULT) && elements > 1) {
+                const struct asn1_template *tdefval = t - 1;
+
+                /* Compare tdefval to whatever's at `el' */
+                if (tdefval->tt & A1_DV_BOOLEAN) {
+                    const int *i = (void *)(char *)el;
+
+                    if ((*i && tdefval->ptr) || (!*i && !tdefval->ptr))
+                        break;
+                } else if (tdefval->tt & A1_DV_INTEGER64) {
+                    const int64_t *i = (void *)(char *)el;
+
+                    if (*i == (int64_t)(intptr_t)tdefval->ptr)
+                        break;
+                } else if (tdefval->tt & A1_DV_INTEGER32) {
+                    const int32_t *i = (void *)(char *)el;
+
+                    if ((int64_t)(intptr_t)tdefval->ptr <= INT_MAX &&
+                        (int64_t)(intptr_t)tdefval->ptr >= INT_MIN &&
+                        *i == (int32_t)(intptr_t)tdefval->ptr)
+                        break;
+                } else if (tdefval->tt & A1_DV_INTEGER) {
+                    const struct heim_integer *i = (void *)(char *)el;
+
+                    if (der_heim_integer_cmp(i, tdefval->ptr) == 0)
+                        break;
+                } else if (tdefval->tt & A1_DV_UTF8STRING) {
+                    const char * const *s = el;
+
+                    if (*s && strcmp(*s, tdefval->ptr) == 0)
+                        break;
+                } else {
+                    abort();
+                }
+            }
 
 	    if ((t->tt & A1_OP_MASK) == A1_OP_TYPE) {
 		ret += _asn1_length(t->ptr, el);
@@ -913,7 +1094,46 @@ _asn1_length(const struct asn1_template *t, const void *data)
 		    break;
 		}
 		data = *el;
-	    }
+	    } else if ((t->tt & A1_FLAG_DEFAULT) && elements > 1) {
+                const struct asn1_template *tdefval = t - 1;
+                int exclude = 0;
+
+                /* Compare tdefval to whatever's at `data' */
+                if (tdefval->tt & A1_DV_BOOLEAN) {
+                    const int *i = (void *)(char *)data;
+
+                    if ((*i && tdefval->ptr) || (!*i && !tdefval->ptr))
+                        exclude = 1;
+                } else if (tdefval->tt & A1_DV_INTEGER64) {
+                    const int64_t *i = (void *)(char *)data;
+
+                    if (*i == (int64_t)(intptr_t)tdefval->ptr)
+                        exclude = 1;
+                } else if (tdefval->tt & A1_DV_INTEGER32) {
+                    const int32_t *i = (void *)(char *)data;
+
+                    if ((int64_t)(intptr_t)tdefval->ptr <= INT_MAX &&
+                        (int64_t)(intptr_t)tdefval->ptr >= INT_MIN &&
+                        *i == (int32_t)(intptr_t)tdefval->ptr)
+                        exclude = 1;
+                } else if (tdefval->tt & A1_DV_INTEGER) {
+                    const struct heim_integer *i = (void *)(char *)data;
+
+                    if (der_heim_integer_cmp(i, tdefval->ptr) == 0)
+                        exclude = 1;
+                } else if (tdefval->tt & A1_DV_UTF8STRING) {
+                    const char * const *s = data;
+
+                    if (*s && strcmp(*s, tdefval->ptr) == 0)
+                        exclude = 1;
+                } else {
+                    abort();
+                }
+                if (exclude) {
+                    data = olddata;
+                    break;
+                }
+            }
 
             if (t->tt & A1_FLAG_IMPLICIT)
                 oldtaglen = inner_type_taglen(t->ptr);
@@ -1011,6 +1231,7 @@ _asn1_free(const struct asn1_template *t, void *data)
 
     while (elements) {
 	switch (t->tt & A1_OP_MASK) {
+	case A1_OP_DEFVAL: break;
 	case A1_OP_TYPE:
 	case A1_OP_TYPE_EXTERN: {
 	    void *el = DPO(data, t->offset);
@@ -1121,6 +1342,7 @@ _asn1_copy(const struct asn1_template *t, const void *from, void *to)
 
     while (elements) {
 	switch (t->tt & A1_OP_MASK) {
+	case A1_OP_DEFVAL: break;
 	case A1_OP_TYPE:
 	case A1_OP_TYPE_EXTERN: {
 	    const void *fel = DPOC(from, t->offset);

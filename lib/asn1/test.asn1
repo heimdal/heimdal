@@ -26,11 +26,17 @@ TESTOutOfOrderBar ::= SEQUENCE {
 -- which we well might since XDR's syntax is a dual of a strict subset of
 -- ASN.1, and since XDR the encoding is fairly straightforward.
 --
--- Note that the `next' member has to be OPTIONAL or DEFAULTed for this to
--- work.
+-- Note that the `next' member has to be OPTIONAL for this to work.
 TESTCircular ::= SEQUENCE {
         name UTF8String,
         next TESTCircular OPTIONAL
+}
+
+TESTDefault ::= SEQUENCE {
+        name UTF8String DEFAULT "Heimdal",
+        version [0] TESTuint32 DEFAULT 8,
+        maxint TESTuint64 DEFAULT 9223372036854775807,
+        works BOOLEAN DEFAULT TRUE
 }
 
 TESTuint32 ::= INTEGER (0..4294967295)

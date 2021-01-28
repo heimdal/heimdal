@@ -1889,6 +1889,71 @@ test_seqof5(void)
 }
 
 static int
+cmp_default(void *a, void *b)
+{
+    TESTDefault *aa = a;
+    TESTDefault *ab = b;
+
+    COMPARE_STRING(aa,ab,name);
+    COMPARE_INTEGER(aa,ab,version);
+    COMPARE_INTEGER(aa,ab,maxint);
+    COMPARE_INTEGER(aa,ab,works);
+    return 0;
+}
+
+static int
+test_default(void)
+{
+    struct test_case tests[] = {
+	{ NULL, 2, "\x30\x00", NULL },
+	{ NULL, 25,
+          "\x30\x17\x0c\x07\x68\x65\x69\x6d\x64\x61"
+          "\x6c\xa0\x03\x02\x01\x07\x02\x04\x7f\xff"
+          "\xff\xff\x01\x01\x00",
+	  NULL
+	},
+	{ NULL, 10,
+          "\x30\x08\xa0\x03\x02\x01\x07\x01\x01\x00",
+	  NULL
+	},
+	{ NULL, 17,
+          "\x30\x0f\x0c\x07\x68\x65\x69\x6d\x64\x61\x6c\x02\x04"
+          "\x7f\xff\xff\xff",
+	  NULL
+	}
+    };
+
+    TESTDefault values[] = {
+	{ "Heimdal", 8, 9223372036854775807, 1 },
+	{ "heimdal", 7, 2147483647, 0 },
+	{ "Heimdal", 7, 9223372036854775807, 0 },
+	{ "heimdal", 8, 2147483647, 1 },
+    };
+    int i, ret;
+    int ntests = sizeof(tests) / sizeof(*tests);
+
+    for (i = 0; i < ntests; ++i) {
+	tests[i].val = &values[i];
+	if (asprintf (&tests[i].name, "TESTDefault %d", i) < 0)
+	    errx(1, "malloc");
+	if (tests[i].name == NULL)
+	    errx(1, "malloc");
+    }
+
+    ret = generic_test (tests, ntests, sizeof(TESTDefault),
+			(generic_encode)encode_TESTDefault,
+			(generic_length)length_TESTDefault,
+			(generic_decode)decode_TESTDefault,
+			(generic_free)free_TESTDefault,
+			cmp_default,
+			(generic_copy)copy_TESTDefault);
+    for (i = 0; i < ntests; ++i)
+	free(tests[i].name);
+
+    return ret;
+}
+
+static int
 test_x690sample(void)
 {
     /*
@@ -2004,6 +2069,8 @@ main(int argc, char **argv)
     DO_ONE(test_seqof5);
 
     DO_ONE(test_x690sample);
+
+    DO_ONE(test_default);
 
     return ret;
 }

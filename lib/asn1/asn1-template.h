@@ -38,6 +38,11 @@
 #ifndef __TEMPLATE_H__
 #define __TEMPLATE_H__
 
+/* header:
+ *   HF  flags if not a BIT STRING type
+ *   HBF flags if     a BIT STRING type
+ */
+
 /* tag:
  *  0..20 tag
  * 21     type
@@ -53,6 +58,11 @@
  * 28..31 op
  */
 
+/* defval: (next template entry is defaulted)
+ *
+ *  DV    flags (ptr is or points to defval)
+ */
+
 #define A1_OP_MASK		(0xf0000000)
 #define A1_OP_TYPE		(0x10000000)
 #define A1_OP_TYPE_EXTERN	(0x20000000)
@@ -62,10 +72,12 @@
 #define A1_OP_SETOF		(0x60000000)
 #define A1_OP_BMEMBER		(0x70000000)
 #define A1_OP_CHOICE		(0x80000000)
+#define A1_OP_DEFVAL		(0x90000000)
 
 #define A1_FLAG_MASK		(0x0f000000)
 #define A1_FLAG_OPTIONAL	(0x01000000)
 #define A1_FLAG_IMPLICIT	(0x02000000)
+#define A1_FLAG_DEFAULT		(0x04000000)
 
 #define A1_TAG_T(CLASS,TYPE,TAG)	((A1_OP_TAG) | (((CLASS) << 22) | ((TYPE) << 21) | (TAG)))
 #define A1_TAG_CLASS(x)		(((x) >> 22) & 0x3)
@@ -86,6 +98,12 @@
 #define A1_HF_ELLIPSIS		0x2
 
 #define A1_HBF_RFC1510		0x1
+
+#define A1_DV_BOOLEAN		0x01
+#define A1_DV_INTEGER		0x02
+#define A1_DV_INTEGER32		0x04
+#define A1_DV_INTEGER64		0x08
+#define A1_DV_UTF8STRING	0x10
 
 
 struct asn1_template {

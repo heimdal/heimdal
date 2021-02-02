@@ -1,14 +1,31 @@
 Bringing the power of X.682 (ASN.1 Information Object System) to Heimdal
 ========================================================================
 
-X.681 is an ITU-T standard in the X.680 series (ASN.1) that is incredibly
-useful and would be fantastic to implement in Heimdal.
+The base of ASN.1 is specified by X.680, an ITU-T standard.
+
+Various extensions are specified in other X.680 series documents:
+
+ - X.681: Information Object specification
+ - X.682: Constraint specification
+ - X.683: Parameterization of ASN.1 specifications
+
+While X.680 is essential for implementing many Internet (and other) protocols,
+implementing a subset of X.681, X.682, and X.683, can enable some magical
+features.
 
 This README will cover some ideas for implementation and why we should want
 this.  This is also covered extensively in RFC 6025, in section 2.1.3.
 
 RFC 6025 does an excellent job of elucidating X.681, which otherwise most
 readers unfamiliar with it will no doubt find inscrutable.
+
+This README should explain the magic that we're after:
+
+    Automatic handling of open types by the Heimdal ASN.1 compiler, which,
+    combined with an implementation of the ASN.1 JSON Encoding Rules (JER
+    [X.697]), should allow one to build a trivial command-line tool and APIs to
+    dump as JSON, or parse from JSON, the DER encoding of random PDU types from
+    random ASN.1 modules, with deep traversal of open types / typed holes.
 
 https://www.itu.int/rec/T-REC-X.681-201508-I/en
 
@@ -27,8 +44,11 @@ A very common thing to see in projects that use ASN.1, as well as projects that
 use alternatives to ASN.1, is a pattern known as the "typed hole" or "open
 type".
 
-The ASN.1 Information Object System (X.681) is all about automating the
+The ASN.1 Information Object System (IOS) [X.681] is all about automating the
 otherwise very annoying task of dealing with "typed holes" / "open types".
+
+The ASN.1 IOS is not sufficient to implement the magic we're after.  Also
+needed is constraint specification and parameterization of types.
 
 
 Typed Holes / Open Types
@@ -73,15 +93,17 @@ or
     }
 ```
 
-or any number of variations.  (Note: the `ANY` variations are no longer
-conformant to X.680 (the base ASN.1 specification).)
+or any number of variations.
+
+    Note: the `ANY` variations are no longer conformant to X.680 (the base
+    ASN.1 specification).
 
 The pattern is `{ id, hole }` where the `hole` is ultimately an opaque sequence
 of bytes whose content's schema is identified by the `id` in the same data
-structure.
-
-Sometimes the "hole" is an `OCTET STRING`, sometimes it's a `BIT STRING`,
-sometimes it's an `ANY` or `ANY DEFINED BY`.
+structure.  The pattern does not require just two fields, and it does not
+require any particular type for the hole, nor for the type ID.  Sometimes the
+"hole" is an `OCTET STRING`, sometimes it's a `BIT STRING`, sometimes it's an
+`ANY` or `ANY DEFINED BY`.
 
 An example from PKIX:
 
@@ -199,8 +221,8 @@ display or compile DER (and other encodings) of certifcates and many other
 interesting data structures.
 
 
-ASN.1 IOS
-=========
+ASN.1 IOS, Constraint, and Parameterization
+===========================================
 
 The ASN.1 IOS is additional syntax that allows ASN.1 module authors to express
 all the details about typed holes that ASN.1 compilers need to make developers'
@@ -210,40 +232,72 @@ RFC5912 has lots of examples, such as this `CLASS` corresponding to the
 `Extension` type from PKIX:
 
 ```
+  -- A class that provides some of the details of the PKIX Extension typed
+  -- hole:
   EXTENSION ::= CLASS {
-      &id  OBJECT IDENTIFIER UNIQUE,
-      &ExtnType,
-      &Critical    BOOLEAN DEFAULT {TRUE | FALSE }
+      -- The following are fields of a class (as opposed to "members" of
+      -- SEQUENCE or SET types):
+      &id  OBJECT IDENTIFIER UNIQUE,    -- UNIQUE -> this is the hole type ID.
+      &ExtnType,                        -- This is a type field (the hole).
+      &Critical    BOOLEAN DEFAULT {TRUE | FALSE } -- this is a value field.
   } WITH SYNTAX {
+      -- This is a specification of easy to use (but hard-to-parse) syntax for
+      -- specifying instances of this CLASS:
       SYNTAX &ExtnType IDENTIFIED BY &id
       [CRITICALITY &Critical]
   }
 
-  Extensions{EXTENSION:ExtensionSet} ::=
-      SEQUENCE SIZE (1..MAX) OF Extension{{ExtensionSet}}
-
+  -- Here's a parameterized Extension type.  The formal parameter is an as-yet
+  -- unspecified set of valid things this hole can carry for some particular
+  -- instance of this type.  The actual parameter will be specified later (see
+  -- below).
   Extension{EXTENSION:ExtensionSet} ::= SEQUENCE {
+      -- The type ID has to be the &id field of the EXTENSION CLASS of the
+      -- ExtensionSet object set parameter.
       extnID      EXTENSION.&id({ExtensionSet}),
+      -- This is the critical field, whose DEFAULT value should be that of
+      -- the &Critical field of the EXTENSION CLASS of the ExtensionSet object
+      -- set parameter.
       critical    BOOLEAN
   --                     (EXTENSION.&Critical({ExtensionSet}{@extnID}))
                        DEFAULT FALSE,
+      -- Finally, the hole is an OCTET STRING constrained to hold the encoding
+      -- of the type named by the &ExtnType field of the EXTENSION CLASS of the
+      -- ExtensionSet object set parameter.
+      --
+      -- Note that for all members of this SEQUENCE, the fields of the object
+      -- referenced must be of the same object in the ExtensionSet object set
+      -- parameter.  That's how we get to say that some OID implies some type
+      -- for the hole.
       extnValue   OCTET STRING (CONTAINING
                   EXTENSION.&ExtnType({ExtensionSet}{@extnID}))
                   --  contains the DER encoding of the ASN.1 value
                   --  corresponding to the extension type identified
                   --  by extnID
   }
+
+  -- This is just a SEQUENCE of Extensions, the parameterized version.
+  Extensions{EXTENSION:ExtensionSet} ::=
+      SEQUENCE SIZE (1..MAX) OF Extension{{ExtensionSet}}
 ```
 
 and these uses of it in RFC5280 (PKIX base):
 
 ```
+   -- Here we have an individual "object" specifying that the OID
+   -- id-ce-authorityKeyIdentifier implies AuthorityKeyIdentifier as the hole
+   -- type:
    ext-AuthorityKeyIdentifier EXTENSION ::= { SYNTAX
        AuthorityKeyIdentifier IDENTIFIED BY
        id-ce-authorityKeyIdentifier }
+
+   -- And here's the OID, for completeness:
    id-ce-authorityKeyIdentifier OBJECT IDENTIFIER ::=  { id-ce 35 }
    ...
 
+   -- And Here's an object set for the EXTENSION CLASS collecting a bunch of
+   -- related extensions (here they are the extensions that certificates can
+   -- carry in their extensions member):
    CertExtensions EXTENSION ::= {
            ext-AuthorityKeyIdentifier | ext-SubjectKeyIdentifier |
            ext-KeyUsage | ext-PrivateKeyUsagePeriod |
@@ -256,6 +310,11 @@ and these uses of it in RFC5280 (PKIX base):
            ext-FreshestCRL | ext-AuthorityInfoAccess |
            ext-SubjectInfoAccessSyntax, ... }
    ...
+
+   -- Lastly, we have a Certificate, and the place where the Extensions type's
+   -- actual parameter is specified.
+   --
+   -- This is where the *rubber meets the road*!
 
    Certificate  ::=  SIGNED{TBSCertificate}
 
@@ -275,11 +334,17 @@ and these uses of it in RFC5280 (PKIX base):
        ]],
        [[3:               -- If present, version MUST be v3 --
        extensions      [3]  Extensions{{CertExtensions}} OPTIONAL
+                         -- ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                         -- The rubber meets the road *here*.
+                         --
+                         -- This says that the set of *known* certificate
+                         -- extensions are those for which there are "objects"
+                         -- in the "object set" named CertExtensions.
        ]], ... }
 ```
 
 Notice that the `extensions` field of `TBSCertificate` is of type `Extensions`
-parametrized by the `CertExtensions` IOS object set.
+parametrized by the `CertExtensions` information object set.
 
 This allows the compiler to know that if any of the OIDs listed in the
 `CertExtensions` object set appear as the actual value of the `extnID` member
@@ -292,20 +357,20 @@ an `Extension` with `extnID == id-ce-authorityKeyIdentifier` must have an
 Implementation Thoughts
 =======================
 
- - The ASN.1 IOS is fairly large and non-trivial.  Perhaps we can just bake in
-   a few useful IOS classes without adding support for defining arbitrary
-   classes.
+ - The required specifications, X.681, X.682, and X.683, are fairly large and
+   non-trivial.  Perhaps we can implement just the subset of those three that
+   we need to implement PKIX, just as we already implement just the subset of
+   X.680 that we need to implement PKIX and Kerberos.
 
    For dealing with PKIX, the bare minimum of IOS classes we should want are:
 
-    - ATTRIBUTE (used for DN attributes in PKIX base)
-    - EXTENSION (used for certificate attributes in PKIX base)
+    - `ATTRIBUTE` (used for `DN` attributes in RFC5280)
+    - `EXTENSION` (used for certificate extensions in RFC5280)
+    - `TYPE-IDENTIFIER` (used for CMS)
 
-   Then we can implement support for just declarations of information objects
-   and information object sets in `lib/asn1parse.y`, which is probably not a
-   very big deal.
-
-   Internally we can have a function for creating a class.
+   The minimal subset of X.681, X.682, and X.683 needed to implement those
+   three is all we need.  Eventually we may want to increase that subset so as
+   to implement other IOS classes from PKIX, such as `DIGEST-ALGORITHM`
 
  - We'll really want to do this mainly for the template compiler and begin
    abandoning the original compiler -- hacking on two compilers is difficult,
@@ -314,17 +379,21 @@ Implementation Thoughts
    rules supported and `N` is the number of types in an ASN.1 module (or all
    modules).
 
- - Also, to make the transition to using IOS in-tree, we'll want to add fields
-   to the C structures generated by the compiler today, that way code that
-   hasn't been updated to use the automatic encoding/decoding can still work.
+ - Also, to make the transition to using IOS in-tree, we'll want to keep
+   existing fields of C structures as generated by the compiler today, only
+   adding new ones, that way code that hasn't been updated to use the automatic
+   encoding/decoding can still work and we can then update Heimdal in-tree
+   slowly to take advantage of the new magic.
 
    Thus `Extension` should compile to:
 
 ```
     typedef struct Extension {
+      -- Existing fields:
       heim_oid extnID;
       int *critical;
       heim_octet_string extnValue;
+      -- New, CHOICE-like fields:
       enum Extension_iosnum {
         Extension_iosnumunknown = 0, /* when the extnID is unrecognized */
         Extension_iosnum_ext_AuthorityKeyIdentifier = 1,
@@ -343,11 +412,28 @@ Implementation Thoughts
    If a caller to `encode_Certificate()` passes a certificate object with
    extensions with `_ioselement == Extension_iosnumunknown`, then the encoder
    should use the `extnID` and `extnValue` fields, otherwise it should use the
-   `_ioselement` and `_iosu` fields.  (In both cases, the `critical` field
-   should get used.)
+   `_ioselement` and `_iosu` fields and ignore the `extnID` and `extnValue`
+   fields.
 
- - We'll need to reduce the number of bits used to encode tag values in the
-   templates.  Currently we use 20 bits, but that's far too many.  We can
-   almost certainly get away with using only 10 bits for tags.  This will allow
-   us to have more opcodes, which we'll need more of in order to handle typed
-   holes described by IOS classes and information object sets.
+   In both cases, the `critical` field should get used as-is.  The rule should
+   be that we support *two* special fields: a hole type ID enum field, and a
+   decoded hole value union.  All other fields will map to either normal
+   members of the SET/SEQUENCE, or to members that are derived from a CLASS but
+   which are neither hole type ID fields nor hole fields.
+
+ - Type ID values must get mapped to discrete enum values.  We'll want type IDs
+   to be sorted, too, so that we can binary search the "object set" when
+   decoding.  For encoding we'll want to "switch" on the mapped type ID enum.
+
+ - The ASN.1 parser merely builds an AST.  That will not change.
+
+ - The C header generator will remain shared between the two backends.
+
+ - Only the template backend will support the ASN.1 IOS.  We'll basically
+   encode a new template for the combination of object set and typed hole
+   container type.  This will come with a header entry indicating how many
+   items are in the object set, and each item will be one entry pointing to the
+   template for one particular object in the object set.  The template for each
+   object will identify the type ID and the template for the associated type.
+
+   Perhaps we'll inline the objects for locality of reference.

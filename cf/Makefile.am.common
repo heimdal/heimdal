@@ -151,7 +151,7 @@ SUFFIXES += .x .z .hx
 	    cmp -s $< $@ 2> /dev/null || cp $< $@; \
 	else \
 	    cp $< $@.tmp.c; \
-            $(CLANG_FORMAT) -style='{BasedOnStyle: Chromium, SortIncludes: false}' -i $@.tmp.c; \
+            $(CLANG_FORMAT) -style='{BasedOnStyle: Mozilla, AlwaysBreakAfterReturnType: TopLevelDefinitions, IndentWidth: 4, SortIncludes: false}' -i $@.tmp.c; \
 	    cmp -s $@.tmp.c $@ 2> /dev/null || mv $@.tmp.c $@; \
 	fi
 

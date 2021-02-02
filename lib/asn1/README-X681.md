@@ -1,5 +1,5 @@
-Bringing the power of X.682 (ASN.1 Information Object System) to Heimdal
-========================================================================
+Bringing the Magical Power of X.681 (ASN.1 Information Object System) to Heimdal
+================================================================================
 
 The base of ASN.1 is specified by X.680, an ITU-T standard.
 
@@ -11,21 +11,34 @@ Various extensions are specified in other X.680 series documents:
 
 While X.680 is essential for implementing many Internet (and other) protocols,
 implementing a subset of X.681, X.682, and X.683, can enable some magical
-features.
+features.  These magical features are generally not the focus of those ITU-T
+specifications nor of many RFCs that make use of them.
 
-This README will cover some ideas for implementation and why we should want
-this.  This is also covered extensively in RFC 6025, in section 2.1.3.
+The intent of X.681, X.682, and X.683 is to add ways to formally express
+constraints that would otherwise require natural language to express.  But give
+a compiler more formally-expressed constraints and it can do more labor-saving
+than it could otherwise.
+
+This README will cover some ideas for what this magic will be, and
+implementation of it.
 
 RFC 6025 does an excellent job of elucidating X.681, which otherwise most
 readers unfamiliar with it will no doubt find inscrutable.
 
-This README should explain the magic that we're after:
+The magic that we're after is simply the *automatic and recursive handling of
+open types by the Heimdal ASN.1 compiler*.
 
-    Automatic handling of open types by the Heimdal ASN.1 compiler, which,
-    combined with an implementation of the ASN.1 JSON Encoding Rules (JER
-    [X.697]), should allow one to build a trivial command-line tool and APIs to
-    dump as JSON, or parse from JSON, the DER encoding of random PDU types from
-    random ASN.1 modules, with deep traversal of open types / typed holes.
+Combined with adding support for the ASN.1 JSON Encoding Rules (JER) [X.697],
+the automatic handling of open types should allow us to trivially implement a
+command-line tool that can parse any DER or JER (JSON) encoding of any value
+whose type is known and compiled, and which could transcode to the other
+encoding rules.  I.e., dump DER to JSON, and parse JSON to output DER.
+
+We especially want this for PKIX, and more than anything for Certificates.
+
+Besides a magical ASN.1 DER/JER dumper/transcoder utility, we want to replace
+DN attribute and subject alternative name (SAN) `otherName` tables and much
+open-coded handling of certificate extensions in `lib/hx509/`.
 
 https://www.itu.int/rec/T-REC-X.681-201508-I/en
 
@@ -54,7 +67,8 @@ needed is constraint specification and parameterization of types.
 Typed Holes / Open Types
 ========================
 
-A typed hole or open type is a data structure with a form like:
+A typed hole or open type is a pattern of data structure that generally looks
+like:
 
 ```
     { type_id, bytes_encoding_a_value_of_a_type_identified_by_type_id }
@@ -67,17 +81,24 @@ what all possible things are that can go in a typed hole, but many years ago
 didn't, say, or anyways, had a reason to use a typed hole.
 
 These are used not only in protocols that use ASN.1, but in many protocols that
-use alternative syntaxes and encodings.
+use syntaxes and encodings unrelated to ASN.1.  I.e., these concepts are *not*
+ASN.1-specific.
+
+Many Internet protocols use typed holes, and many use ASN.1 and typed holes.
+For example, PKIX, Kerberos, LDAP, and others, use ASN.1 and typed holes.
+
+For an example of an Internet protocol that does not use ASN.1 but which still
+has typed holes, see SSHv2.
 
 In ASN.1 these generally look like:
 
-```
+```ASN.1
     TypedHole ::= SEQUENCE { typeId INTEGER, hole OCTET STRING }
 ```
 
 or
 
-```
+```ASN.1
     TypedHole ::= SEQUENCE {
         typeId OBJECT IDENTIFIER,
         opaque ANY DEFINED BY typeID
@@ -86,7 +107,7 @@ or
 
 or
 
-```
+```ASN.1
     TypedHole ::= SEQUENCE {
         typeId OBJECT IDENTIFIER,
         opaque ANY -- DEFINED BY typeID
@@ -107,7 +128,7 @@ require any particular type for the hole, nor for the type ID.  Sometimes the
 
 An example from PKIX:
 
-```
+```ASN.1
 Extension ::= SEQUENCE {
   extnID          OBJECT IDENTIFIER, -- <- type ID
   critical        BOOLEAN OPTIONAL,
@@ -121,7 +142,7 @@ identifier isn't always an integer.
 Now, Heimdal's ASN.1 compiler generates the obvious C data structure for PKIX's
 `Extension` type:
 
-```
+```C
     typedef struct Extension {
       heim_oid extnID;
       int *critical;
@@ -138,7 +159,7 @@ This is very inconvenient.
 Compare this to the handling of discriminated unions (what ASN.1 calls a
 `CHOICE`):
 
-```
+```C
     /*
      * ASN.1 definition:
      *
@@ -175,7 +196,7 @@ In fact, extensible `CHOICE`s are handled by our compiler as a discriminated
 union one of whose alternatives is a typed hole when the `CHOICE` is
 extensible:
 
-```
+```C
     typedef struct DigestRepInner {
       enum DigestRepInner_enum {
         choice_DigestRepInner_asn1_ellipsis = 0, /* <--- unknown CHOICE arm */
@@ -231,7 +252,7 @@ lives much easier.
 RFC5912 has lots of examples, such as this `CLASS` corresponding to the
 `Extension` type from PKIX:
 
-```
+```ASN.1
   -- A class that provides some of the details of the PKIX Extension typed
   -- hole:
   EXTENSION ::= CLASS {
@@ -283,7 +304,7 @@ RFC5912 has lots of examples, such as this `CLASS` corresponding to the
 
 and these uses of it in RFC5280 (PKIX base):
 
-```
+```ASN.1
    -- Here we have an individual "object" specifying that the OID
    -- id-ce-authorityKeyIdentifier implies AuthorityKeyIdentifier as the hole
    -- type:
@@ -366,11 +387,16 @@ Implementation Thoughts
 
     - `ATTRIBUTE` (used for `DN` attributes in RFC5280)
     - `EXTENSION` (used for certificate extensions in RFC5280)
-    - `TYPE-IDENTIFIER` (used for CMS)
+    - `TYPE-IDENTIFIER` (used for `OtherName` and for CMS' `Content-Type`)
 
    The minimal subset of X.681, X.682, and X.683 needed to implement those
    three is all we need.  Eventually we may want to increase that subset so as
    to implement other IOS classes from PKIX, such as `DIGEST-ALGORITHM`
+
+   Note that there's no object set specified for OTHER-NAME instances, but we
+   can create our own, and will.  We want magic open type decoding to recurse
+   all the way down and handle DN attributes, extensions, SANs, policy
+   qualifiers, the works.
 
  - We'll really want to do this mainly for the template compiler and begin
    abandoning the original compiler -- hacking on two compilers is difficult,
@@ -387,7 +413,7 @@ Implementation Thoughts
 
    Thus `Extension` should compile to:
 
-```
+```C
     typedef struct Extension {
       -- Existing fields:
       heim_oid extnID;

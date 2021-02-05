@@ -1,14 +1,14 @@
-#Bringing the Magical Power of X.681 (ASN.1 Information Object System) to Heimdal
+# Bringing the Magical Power of X.681 (ASN.1 Information Object System) to Heimdal
 
-##Table of Contents
+## Table of Contents
 
- - [Introduction](#Introduction)
- - [Typed Holes / Open Types](#typed-holes--open-types)
- - [ASN.1 IOS, Constraint, and Parameterization](#asn1-ios-constraint-and-parameterization)
+ 1. [Introduction](#Introduction)
+ 2. [Typed Holes / Open Types](#typed-holes--open-types)
+ 3. [ASN.1 IOS, Constraint, and Parameterization](#asn1-ios-constraint-and-parameterization)
     - [IOS Crash Course](#ios-crash-course)
- - [Implementation Thoughts](#implementation-thoughts)
+ 4. [Implementation Thoughts](#implementation-thoughts)
 
-##Introduction
+## Introduction
 
 The base of ASN.1 is specified by X.680, an ITU-T standard.
 
@@ -79,7 +79,7 @@ https://www.itu.int/rec/T-REC-X.682-201508-I/en
 https://www.itu.int/rec/T-REC-X.683-201508-I/en
 
 
-##Typed Holes / Open Types
+## Typed Holes / Open Types
 
 A typed hole or open type is a pattern of data structure that generally looks
 like:
@@ -256,7 +256,7 @@ display or compile DER (and other encodings) of certifcates and many other
 interesting data structures.
 
 
-##ASN.1 IOS, Constraint, and Parameterization
+## ASN.1 IOS, Constraint, and Parameterization
 
 The ASN.1 IOS is additional syntax that allows ASN.1 module authors to express
 all the details about typed holes that ASN.1 compilers need to make developers'
@@ -395,7 +395,7 @@ an `Extension` with `extnID == id-ce-authorityKeyIdentifier` must have an
 `extnValue` of type `AuthorityKeyIdentifier`.
 
 
-###IOS Crash Course
+### IOS Crash Course
 
 The ASN.1 IOS is... a bit difficult to understand.  X.681 has a lot of strange
 terminology, like "variable type value set field".  An IOS "class" has fields,
@@ -656,7 +656,7 @@ the same in C, C++, Java, etc, and can refer to them when applying those
 cryptographic algorithms.
 
 
-##Implementation Thoughts
+## Implementation Thoughts
 
  - The required specifications, X.681, X.682, and X.683, are fairly large and
    non-trivial.  Perhaps we can implement just the subset of those three that

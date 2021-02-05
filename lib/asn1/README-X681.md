@@ -28,19 +28,29 @@ readers unfamiliar with it will no doubt find inscrutable.
 The magic that we're after is simply the *automatic and recursive handling of
 open types by the Heimdal ASN.1 compiler*.
 
-Combined with adding support for the ASN.1 JSON Encoding Rules (JER) [X.697],
+Combined with future support for the ASN.1 JSON Encoding Rules (JER) [X.697],
 the automatic handling of open types should allow us to trivially implement a
 command-line tool that can parse any DER or JER (JSON) encoding of any value
 whose type is known and compiled, and which could transcode to the other
 encoding rules.  I.e., dump DER to JSON, and parse JSON to output DER.
 
-We especially want this for PKIX, and more than anything for Certificates.
+Combined with transcoders for JSON/CBOR and other binary-JSON formats, we could
+support those encodings too.
+
+We especially want this for PKIX, and more than anything for certificates, as
+the TBSCertificate type is full of open types: DN and subjectDirectory
+attributes, otherName SAN types, and certificate extensions.
 
 Besides a magical ASN.1 DER/JER dumper/transcoder utility, we want to replace
 DN attribute and subject alternative name (SAN) `otherName` tables and much
-open-coded handling of certificate extensions in `lib/hx509/`.
+hand-coded handling of certificate extensions in `lib/hx509/`.
 
+ITU-T references:
+
+https://www.itu.int/rec/T-REC-X.680-201508-I/en
 https://www.itu.int/rec/T-REC-X.681-201508-I/en
+https://www.itu.int/rec/T-REC-X.682-201508-I/en
+https://www.itu.int/rec/T-REC-X.683-201508-I/en
 
 
 Introduction
@@ -463,3 +473,261 @@ Implementation Thoughts
    object will identify the type ID and the template for the associated type.
 
    Perhaps we'll inline the objects for locality of reference.
+
+
+IOS Crash Course
+================
+
+The ASN.1 IOS is... a bit difficult to understand.  X.681 has a lot of strange
+terminology, like "variable type value set field".  An IOS "class" has fields,
+and those fields are of kind `[Fixed]Type[Value[Set]]` or `Object[Set]`.
+
+Classes can have "object sets" associated with them, and each object set has
+zero, one, or more "objects".  Each object has settings for all required fields
+of a class, and possibly also for optional/defaulted fields as well.
+
+IOS object sets really are akin to relational database tables, while objects
+are akin to rows of the same.  And classes?  They're like a specification of
+relational database tables that object sets derive.
+
+So far, that is so useless to us: we have no need to specify constant (because
+defined in compiled modules) relational data.
+
+The magic for us lies in being able to document and constrain actual types
+using IOS classes and object sets.  We want to use classes and object sets to
+constrain `SET` or `SEQUENCE` types (well, really, just `SEQUENCE`) in such a
+way that the compiler can auto-generate decoding and encoding of values of open
+types.
+
+`SET` and `SEQUENCE` types have "members".
+
+Classes and objects have "fields".
+
+Objects of a class have all the required fields of a class and any of the
+`OPTIONAL` or `DEFAULT` fields of the class.  This is very similar to
+`SET`/`SEQUENCE` members, which can be `OPTIONAL` or `DEFAULT`ed.
+
+The "members" (we call them fields in C, instance variables in C++, Java, ...)
+of a `SET` or `SEQUENCE` type are typed, just as in C, C++, Java, etc. for
+struct or object types.
+
+There are several kinds of fields of classes.  These can be confusing, so it's
+essential that we explain them by reference to how they relate to the members
+of `SEQUENCE` types derived from a class:
+
+ - a `type field` of a class is one that specifies a SET or SEQUENCE member of
+   unknown (open) type.
+
+   The type of that SET or SEQUENCE member will not be not truly unknown, but
+   determined by some other member of the SET or SEQUENCE, and that will be
+   specified in a "value field" (or "value set" field) an "object" in an
+   "object set" of that class.
+
+ - a `fixed type value field` of a class is one that specifies a SET or
+   SEQUENCE member of fixed type.
+
+ - a `fixed type value set field` of a class is like a `fixed type value field`,
+   but where object sets should provide a set of values for the SET or SEQUENCE
+   member corresponding to the field.
+
+ - a `variable type value [set] field` is one where the type of the SET or
+   SEQUENCE member corresponding to the field will vary according to some
+   specified `type field` of the same class.
+
+ - an `object field` will be a field that names another class (possibly the
+   same class), which can be used to provide rich hierarchical type semantics
+   that... we don't need for PKIX.
+
+ - similarly for `object set field`s.
+
+As usual for ASN.1, the case of the first letter of a field name is meaningful:
+
+ - value and object field names start with a lower case letter;
+ - type, value set, and object set fields start with an upper-case letter;
+ - object and object set fields are also known as `link fields`.
+
+The form of a `fixed type value` field and a `fixed type value set` field is
+the same, differing only the case of the first letter of the field name.
+Similarly for `variable type value` and `variable type value set` fields.
+Similarly, again, for `object` and `object set` fields.
+
+Here's a simple example from PKIX:
+
+```ASN.1
+  -- An IOS class used to impose constraints on the PKIX Extension type:
+  EXTENSION ::= CLASS {
+      &id  OBJECT IDENTIFIER UNIQUE,
+      &ExtnType,
+      &Critical    BOOLEAN DEFAULT {TRUE | FALSE }
+  } WITH SYNTAX {
+      SYNTAX &ExtnType IDENTIFIED BY &id
+      [CRITICALITY &Critical]
+  }
+```
+
+ - The `&id` field is a fixed-type value field.  It's not a fixed-type value
+   _set_ field because its identifier (`id`) starts with a lower-case letter.
+
+   The `&id` field is intended to make the `extnId` member of the `Extension`
+   `SEQUENCE` type name identify the actual type of the `extnValue` member of
+   the same `SEQUENCE` type.
+
+   The `UNIQUE` keyword tells us there can be only one object with any given
+   value of this field in any object set of this class.
+
+ - The `&ExtnType` field is a type field.  We can tell because no type is named
+   in its declaration.
+
+ - The `&Critical` field is a fixed-type value set field.  We can tell because
+   it specifies a type (`BOOLEAN`) and starts with an upper-case letter.
+
+ - Ignore the `WITH SYNTAX` clause for now.  All it does is specify a
+   user-friendly butimplementor-hostile syntax for specifying objects for this
+   class.
+
+Note that none of the `Extension` extensions in PKIX actually specify
+`CRITICALITY`/`&Critical`, so... we just don't need fixed-type value set
+fields.  We could elide the `&Critical` field of the `EXTENSION` class
+altogether.
+
+Here's another, much more complex example from PKIX:
+
+```ASN.1
+  ATTRIBUTE ::= CLASS {
+      &id             OBJECT IDENTIFIER UNIQUE,
+      &Type           OPTIONAL,
+      &equality-match MATCHING-RULE OPTIONAL,
+      &minCount       INTEGER DEFAULT 1,
+      &maxCount       INTEGER OPTIONAL
+  }
+  MATCHING-RULE ::= CLASS {
+      &ParentMatchingRules   MATCHING-RULE OPTIONAL,
+      &AssertionType         OPTIONAL,
+      &uniqueMatchIndicator  ATTRIBUTE OPTIONAL,
+      &id                    OBJECT IDENTIFIER UNIQUE
+  }
+```
+
+ - For `ATTRIBUTE` the fields are:
+    - The `&id` field is a fixed-type value field (intended to name the type of
+      members linked to the `&Type` field).
+    - The `&Type` field is a type field (open type).
+    - The `&equality-match` is an object field linking to object sets of the
+      `MATCHING-RULE` class.
+    - The `minCount` and `maxCount` fields are fixed-type value fields.
+ - For `MATCHING-RULE` the fields are:
+    - The `&ParentMatchingRules` is an object set field linking to more
+      `MATCHING-RULE`s.
+    - The `&AssertionType` field is a type field (open type).
+    - The `&uniqueMatchIndicator` field is an object field linking back to some
+      object of the `ATTRIBUTE` class that indicates whether the match is
+      unique (presumably).
+    - The `&id` field is a fixed-type value field (intended to name the type of
+      members linked to the `&AssertionType` field).
+
+No `Attribute`s in PKIX specify matching rules, so we really don't need support
+for object nor object set fields.
+
+Because
+ - no objects in object sets of `EXTENSION` in PKIX specify "criticality",
+ - and no objects in object sets of `ATTRIBUTE` in PKIX specify matching rules,
+ - and no matching rules are specified in PKIX.
+we can drop `MATCHING-RULE` and simplify `ATTRIBUTE` and `EXTENSION` as:
+
+```ASN.1
+  EXTENSION ::= CLASS {
+      &id  OBJECT IDENTIFIER UNIQUE,
+      &ExtnType
+  }
+  ATTRIBUTE ::= CLASS {
+      &id             OBJECT IDENTIFIER UNIQUE,
+      &Type           OPTIONAL,
+      &minCount       INTEGER DEFAULT 1,
+      &maxCount       INTEGER OPTIONAL
+  }
+```
+
+X.681 has an example in appendix D.2 that has at least one field of every kind.
+
+Again, the rubber that are IOS classes and object sets meet the road when
+defining types:
+
+```ASN.1
+  -- Define the Extension type but link it to the EXTENSION class so that
+  -- an object set for that class can constrain it:
+  Extension{EXTENSION:ExtensionSet} ::= SEQUENCE {
+      extnID      EXTENSION.&id({ExtensionSet}),
+      critical    BOOLEAN
+                  (EXTENSION.&Critical({ExtensionSet}{@extnID}))
+                  DEFAULT FALSE,
+      extnValue   OCTET STRING (CONTAINING
+                  EXTENSION.&ExtnType({ExtensionSet}{@extnID}))
+  }
+  -- Most members of TBSCertificate elided for brevity:
+  TBSCertificate  ::=  SEQUENCE  {
+      ...,
+      extensions      [3]  Extensions{{CertExtensions}} OPTIONAL
+                                   -- ^^^^^^^^^^^^^^^^
+                                   -- the rubber meets the road here!!
+      ...
+  }
+
+  OTHER-NAME ::= TYPE-IDENTIFIER
+  -- Most members of GeneralName elided for brevity:
+  GeneralName ::= CHOICE {
+      otherName       [0]  INSTANCE OF OTHER-NAME({OtherNames}),
+                                               -- ^^^^^^^^^^^^
+                                               -- rubber & road meet!
+      ...
+  }
+```
+
+(The `CertExtensions` and `OtherNames` object sets are not shown here for
+brevity.  PKIX doesn't even define an `OtherNames` object set, though it well
+could.)
+
+The above demonstrates two ways to create `SEQUENCE` types that are constrained
+by IOS classes.  One is by defining the types of the members of a `SEQUENCE`
+type by reference to class fields.  The other is by using `INSTANCE OF` to say
+that the class defines the type directly.  The first lets us do things like
+have a mix members of a `SEQUENCE` type where some are defined by relation to a
+class and others are not, or where multiple classes are used.
+
+In the case of `INSTANCE OF`, what shall the names of the members of the
+derived type be?  Well, such types can _only_ be instances of `TYPE-IDENTIFIER`
+or classes isomorphic to it (as `OTHER-NAME` is in the above exammle), and so
+the names of their two members are just baked in by X.681 annex C.1 as:
+
+```ASN.1
+    SEQUENCE {
+        type-id     <DefinedObjectClass>.&id,
+        value[0]    <DefinedObjectClass>.&Type
+    }
+    -- where <DefinedObjectClass> is the name of the class, which has to be
+    -- `TYPE-IDENTIFIER` or exactly like it.
+```
+
+(This means we can't use `INSTANCE OF` with `EXTENSION`.)
+
+PKIX has much more complex classes for relating and constraining cryptographic
+algorithms and their parameters:
+
+ - `DIGEST-ALGORITHM`,
+ - `SIGNATURE-ALGORITHM`,
+ - `PUBLIC-KEY`,
+ - `KEY-TRANSPORT`,
+ - `KEY-AGREE`,
+ - `KEY-WRAP`,
+ - `KEY-DERIVATION`,
+ - `MAC-ALGORITHM`,
+ - `CONTENT-ENCRYPTION`,
+ - `ALGORITHM`,
+ - `SMIME-CAPS`,
+ - and `CURVE`.
+
+These show the value of just the relational data aspect of IOS.  They can not
+only be used by the codecs at run-time to perform validation of, e.g.,
+cryptographic algorithm parameters, but also to provide those rules to other
+code in the application so that the programmer doesn't have to manually write
+the same in C, C++, Java, etc, and can refer to them when applying those
+cryptographic algorithms.

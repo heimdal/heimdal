@@ -70,7 +70,13 @@ static const char *
 integer_symbol(const char *basename, const Type *t)
 {
     if (t->members)
-	return "int"; /* XXX enum foo */
+        /*
+         * XXX enum foo -- compute the size either from inspecting the members
+         * and applying the ABI's rules for enum size, OR infer the field
+         * size from a template by using the offsetof field.  The latter is
+         * hard to do though.
+         */
+	return "int";
     else if (t->range == NULL)
 	return "heim_integer";
     else if (t->range->min < INT_MIN && t->range->max <= INT64_MAX)

@@ -123,7 +123,8 @@ struct getargs args[] = {
             "the ASN.1 module instead of topologically sorting types.  This "
             "is useful for comparing output to earlier compiler versions.",
         NULL },
-    { "parse-units", 0, arg_negative_flag, &parse_units_flag, NULL, NULL },
+    { "parse-units", 0, arg_negative_flag, &parse_units_flag,
+        "Do not generate roken-style units", NULL },
     { "type-file", 0, arg_string, &type_file_string,
         "Name of a C header file to generate includes of for base types",
         "C-HEADER-FILE" },

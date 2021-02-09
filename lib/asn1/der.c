@@ -66,7 +66,7 @@ static const char *tag_names[] = {
     NULL,			/* 9 */
     "Enumerated",		/* 10 */
     NULL,			/* 11 */
-    NULL,			/* 12 */
+    "UTF8String",		/* 12 */
     NULL,			/* 13 */
     NULL,			/* 14 */
     NULL,			/* 15 */

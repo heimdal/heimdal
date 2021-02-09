@@ -5,6 +5,9 @@ CMSFirmwareWrapper
 DEFINITIONS IMPLICIT TAGS ::= BEGIN
 
 IMPORTS
+    -- We moved HardwareModuleName to avoid circular dependencies if
+    -- we have to have rfc2459 import it from here so we can define an
+    -- object set of OTHER-NAME class.
     EnvelopedData
     FROM cms -- [CMS]
          { iso(1) member-body(2) us(840) rsadsi(113549)
@@ -195,8 +198,10 @@ id-on-hardwareModuleName OBJECT IDENTIFIER ::= {
   iso(1) identified-organization(3) dod(6) internet(1) security(5)
   mechanisms(5) pkix(7) on(8) 4 }
 
-HardwareModuleName ::= SEQUENCE {
-  hwType OBJECT IDENTIFIER,
-  hwSerialNum OCTET STRING }
+-- Moved to rfc2459.asn1 so we can have the OtherName type decode it
+-- automatically:
+--HardwareModuleName ::= SEQUENCE {
+--  hwType OBJECT IDENTIFIER,
+--  hwSerialNum OCTET STRING }
 
 END

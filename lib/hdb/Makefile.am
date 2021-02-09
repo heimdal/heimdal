@@ -38,9 +38,9 @@ gen_files_hdb = \
 	asn1_HDB_EntryOrAlias.x \
 	asn1_KeyRotation.x \
 	asn1_KeyRotationFlags.x \
-	asn1_hdb_entry.x \
-	asn1_hdb_entry_alias.x \
-	asn1_hdb_keyset.x \
+	asn1_HDB_entry.x \
+	asn1_HDB_entry_alias.x \
+	asn1_HDB_keyset.x \
 	asn1_Keys.x
 
 CLEANFILES = $(BUILT_SOURCES) $(gen_files_hdb) \

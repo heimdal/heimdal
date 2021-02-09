@@ -101,7 +101,7 @@ threaded_reader(void *d)
         //(void) unlink(s->fname);
         krb5_err(context, 1, ret, "Could not iterate HDB %s", s->hdb_name);
     }
-    free_hdb_entry(&entr.entry);
+    free_HDB_entry(&entr.entry);
 
     /* Tell the writer to go ahead and write */
     printf("Reader thread iterated one entry; telling writer to write more\n");
@@ -124,7 +124,7 @@ threaded_reader(void *d)
                  "Could not iterate while writing to HDB %s", s->hdb_name);
     }
     printf("Reader thread iterated another entry\n");
-    free_hdb_entry(&entr.entry);
+    free_HDB_entry(&entr.entry);
     if ((ret = dbr->hdb_nextkey(context, dbr, 0, &entr)) == 0) {
         //(void) unlink(s->fname);
         krb5_warn(context, ret,
@@ -188,7 +188,7 @@ forked_reader(struct tsync *s)
         krb5_err(context, 1, ret, "Could not iterate HDB %s", s->hdb_name);
     }
     printf("Reader process iterated one entry\n");
-    free_hdb_entry(&entr.entry);
+    free_HDB_entry(&entr.entry);
 
     /* Tell the writer to go ahead and write */
     printf("Reader process iterated one entry; telling writer to write more\n");
@@ -213,7 +213,7 @@ forked_reader(struct tsync *s)
         krb5_err(context, 1, ret,
                  "Could not iterate while writing to HDB %s", s->hdb_name);
     }
-    free_hdb_entry(&entr.entry);
+    free_HDB_entry(&entr.entry);
     printf("Reader process iterated another entry\n");
     if ((ret = dbr->hdb_nextkey(context, dbr, 0, &entr)) == 0) {
         //(void) unlink(s->fname);
@@ -387,14 +387,14 @@ test_hdb_concurrency(char *name, const char *ext, int threaded)
         krb5_err(context, 1, ret,
                  "Could not store entry for \"foo\" in HDB %s", name);
     }
-    free_hdb_entry(&entw.entry);
+    free_HDB_entry(&entw.entry);
     if ((ret = make_entry(context, &entw, "bar")) ||
         (ret = dbw->hdb_store(context, dbw, 0, &entw))) {
         (void) unlink(fname_ext);
         krb5_err(context, 1, ret,
                  "Could not store entry for \"foo\" in HDB %s", name);
     }
-    free_hdb_entry(&entw.entry);
+    free_HDB_entry(&entw.entry);
 
     /* Tell the reader to start reading */
     readers_turn(&ts, child, threaded);
@@ -407,7 +407,7 @@ test_hdb_concurrency(char *name, const char *ext, int threaded)
                  "Could not store entry for \"foobar\" in HDB %s "
                  "while iterating it", name);
     }
-    free_hdb_entry(&entw.entry);
+    free_HDB_entry(&entw.entry);
 
     /* Tell the reader to go again */
     readers_turn(&ts, child, threaded);

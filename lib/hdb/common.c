@@ -65,7 +65,7 @@ hdb_entry2value(krb5_context context, const hdb_entry *ent, krb5_data *value)
     size_t len = 0;
     int ret;
 
-    ASN1_MALLOC_ENCODE(hdb_entry, value->data, value->length, ent, &len, ret);
+    ASN1_MALLOC_ENCODE(HDB_entry, value->data, value->length, ent, &len, ret);
     if (ret == 0 && value->length != len)
 	krb5_abortx(context, "internal asn.1 encoder error");
     return ret;
@@ -74,7 +74,7 @@ hdb_entry2value(krb5_context context, const hdb_entry *ent, krb5_data *value)
 int
 hdb_value2entry(krb5_context context, krb5_data *value, hdb_entry *ent)
 {
-    return decode_hdb_entry(value->data, value->length, ent, NULL);
+    return decode_HDB_entry(value->data, value->length, ent, NULL);
 }
 
 int
@@ -85,7 +85,7 @@ hdb_entry_alias2value(krb5_context context,
     size_t len = 0;
     int ret;
 
-    ASN1_MALLOC_ENCODE(hdb_entry_alias, value->data, value->length,
+    ASN1_MALLOC_ENCODE(HDB_entry_alias, value->data, value->length,
 		       alias, &len, ret);
     if (ret == 0 && value->length != len)
 	krb5_abortx(context, "internal asn.1 encoder error");
@@ -96,7 +96,7 @@ int
 hdb_value2entry_alias(krb5_context context, krb5_data *value,
 		      hdb_entry_alias *ent)
 {
-    return decode_hdb_entry_alias(value->data, value->length, ent, NULL);
+    return decode_HDB_entry_alias(value->data, value->length, ent, NULL);
 }
 
 /*
@@ -205,7 +205,7 @@ fetch_entry_or_alias(krb5_context context,
         (flags & (HDB_F_CANON|HDB_F_GET_ANY)) == 0) {
 
         /* `principal' was alias but canon not req'd */
-        free_hdb_entry(&entry->entry);
+        free_HDB_entry(&entry->entry);
         ret = HDB_ERR_NOENTRY;
     }
 
@@ -300,7 +300,7 @@ hdb_remove_aliases(krb5_context context, HDB *db, krb5_data *key)
 
     code = hdb_entry_get_aliases(&oldentry, &aliases);
     if (code || aliases == NULL) {
-	free_hdb_entry(&oldentry);
+	free_HDB_entry(&oldentry);
 	return code;
     }
     for (i = 0; i < aliases->aliases.len; i++) {
@@ -312,11 +312,11 @@ hdb_remove_aliases(krb5_context context, HDB *db, krb5_data *key)
             krb5_data_free(&akey);
         }
 	if (code) {
-	    free_hdb_entry(&oldentry);
+	    free_HDB_entry(&oldentry);
 	    return code;
 	}
     }
-    free_hdb_entry(&oldentry);
+    free_HDB_entry(&oldentry);
     return 0;
 }
 
@@ -790,7 +790,7 @@ derive_keys_for_kr(krb5_context context,
     if (ret == 0)
         ret = hdb_install_keyset(context, &h->entry, is_current_keyset, &dks);
 
-    free_hdb_keyset(&dks);
+    free_HDB_keyset(&dks);
     return ret;
 }
 
@@ -1467,4 +1467,112 @@ hdb_fetch_kvno(krb5_context context,
     if (ret == HDB_ERR_NOENTRY)
 	krb5_set_error_message(context, ret, "no such entry found in hdb");
     return ret;
+}
+
+size_t ASN1CALL
+length_hdb_keyset(HDB_keyset *data)
+{
+    return length_HDB_keyset(data);
+}
+
+size_t ASN1CALL
+length_hdb_entry(HDB_entry *data)
+{
+    return length_HDB_entry(data);
+}
+
+size_t ASN1CALL
+length_hdb_entry_alias(HDB_entry_alias *data)
+{
+    return length_HDB_entry_alias(data);
+}
+
+void ASN1CALL
+free_hdb_keyset(HDB_keyset *data)
+{
+    free_HDB_keyset(data);
+}
+
+void ASN1CALL
+free_hdb_entry(HDB_entry *data)
+{
+    free_HDB_entry(data);
+}
+
+void ASN1CALL
+free_hdb_entry_alias(HDB_entry_alias *data)
+{
+    free_HDB_entry_alias(data);
+}
+
+size_t ASN1CALL
+copy_hdb_keyset(const HDB_keyset *from, HDB_keyset *to)
+{
+    return copy_HDB_keyset(from, to);
+}
+
+size_t ASN1CALL
+copy_hdb_entry(const HDB_entry *from, HDB_entry *to)
+{
+    return copy_HDB_entry(from, to);
+}
+
+size_t ASN1CALL
+copy_hdb_entry_alias(const HDB_entry_alias *from, HDB_entry_alias *to)
+{
+    return copy_HDB_entry_alias(from, to);
+}
+
+int ASN1CALL
+decode_hdb_keyset(const unsigned char *p,
+                  size_t len,
+                  HDB_keyset *data,
+                  size_t *size)
+{
+    return decode_HDB_keyset(p, len, data, size);
+}
+
+int ASN1CALL
+decode_hdb_entry(const unsigned char *p,
+                 size_t len,
+                 HDB_entry *data,
+                 size_t *size)
+{
+    return decode_HDB_entry(p, len, data, size);
+}
+
+int ASN1CALL
+decode_hdb_entry_alias(const unsigned char *p,
+                       size_t len,
+                       HDB_entry_alias *data,
+                       size_t *size)
+{
+    return decode_HDB_entry_alias(p, len, data, size);
+}
+
+int ASN1CALL
+encode_hdb_keyset(unsigned char *p,
+                  size_t len,
+                  const HDB_keyset *data,
+                  size_t *size)
+{
+    return encode_HDB_keyset(p, len, data, size);
+}
+
+int ASN1CALL
+encode_hdb_entry(unsigned char *p,
+                 size_t len,
+                 const HDB_entry *data,
+                 size_t *size)
+{
+    return encode_HDB_entry(p, len, data, size);
+}
+
+int ASN1CALL
+encode_hdb_entry_alias(unsigned char *p,
+                       size_t len,
+                       const HDB_entry_alias *data,
+                       size_t *size)
+{
+    return encode_HDB_entry_alias(p, len, data, size);
 }

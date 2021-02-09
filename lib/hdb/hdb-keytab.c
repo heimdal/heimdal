@@ -163,7 +163,7 @@ hkt_fetch_kvno(krb5_context context, HDB * db, krb5_const_principal principal,
 
  out:
     if (ret) {
-	free_hdb_entry(&entry->entry);
+	free_HDB_entry(&entry->entry);
 	memset(&entry->entry, 0, sizeof(entry->entry));
     }
     krb5_kt_free_entry(context, &ktentry);

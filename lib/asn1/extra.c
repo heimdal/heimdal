@@ -103,6 +103,38 @@ copy_heim_any(const heim_any *from, heim_any *to)
 }
 
 int
+encode_HEIM_ANY(unsigned char *p, size_t len,
+		const heim_any *data, size_t *size)
+{
+    return encode_heim_any(p, len, data, size);
+}
+
+int
+decode_HEIM_ANY(const unsigned char *p, size_t len,
+		heim_any *data, size_t *size)
+{
+    return decode_heim_any(p, len, data, size);
+}
+
+void
+free_HEIM_ANY(heim_any *data)
+{
+    der_free_octet_string(data);
+}
+
+size_t
+length_HEIM_ANY(const heim_any *data)
+{
+    return data->length;
+}
+
+int
+copy_HEIM_ANY(const heim_any *from, heim_any *to)
+{
+    return der_copy_octet_string(from, to);
+}
+
+int
 encode_heim_any_set(unsigned char *p, size_t len,
 		    const heim_any_set *data, size_t *size)
 {
@@ -136,6 +168,44 @@ copy_heim_any_set(const heim_any_set *from, heim_any_set *to)
 
 int
 heim_any_cmp(const heim_any_set *p, const heim_any_set *q)
+{
+    return der_heim_octet_string_cmp(p, q);
+}
+
+int
+encode_HEIM_ANY_SET(unsigned char *p, size_t len,
+		    const heim_any_set *data, size_t *size)
+{
+    return encode_heim_any_set(p, len, data, size);
+}
+
+int
+decode_HEIM_ANY_SET(const unsigned char *p, size_t len,
+                    heim_any_set *data, size_t *size)
+{
+    return decode_heim_any_set(p, len, data, size);
+}
+
+void
+free_HEIM_ANY_SET(heim_any_set *data)
+{
+    der_free_octet_string(data);
+}
+
+size_t
+length_HEIM_ANY_SET(const heim_any *data)
+{
+    return data->length;
+}
+
+int
+copy_HEIM_ANY_SET(const heim_any_set *from, heim_any_set *to)
+{
+    return der_copy_octet_string(from, to);
+}
+
+int
+HEIM_ANY_cmp(const heim_any_set *p, const heim_any_set *q)
 {
     return der_heim_octet_string_cmp(p, q);
 }

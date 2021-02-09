@@ -128,6 +128,7 @@ const char *valuename(Der_class, int);
 void gen_compare_defval(const char *, struct value *);
 void gen_assign_defval(const char *, struct value *);
 
+int objid_cmp(struct objid *, struct objid *);
 
 void init_generate (const char *, const char *);
 const char *get_filename (void);
@@ -144,9 +145,15 @@ int seq_type(const char *);
 void generate_header_of_codefile(const char *);
 void close_codefile(void);
 
+void get_open_type_defn_fields(const Type *, Member **, Member **, Field **,
+                               Field **, int *);
+void sort_object_set(IOSObjectSet *, Field *, IOSObject ***, size_t *);
+
+
 int is_template_compat (const Symbol *);
 void generate_template(const Symbol *);
 void generate_template_type_forward(const char *);
+void generate_template_objectset_forwards(const Symbol *);
 void gen_template_import(const Symbol *);
 
 

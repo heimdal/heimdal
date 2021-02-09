@@ -406,7 +406,7 @@ hdb_free_entry(krb5_context context, hdb_entry_ex *ent)
 
 	memset (k->key.keyvalue.data, 0, k->key.keyvalue.length);
     }
-    free_hdb_entry(&ent->entry);
+    free_HDB_entry(&ent->entry);
 }
 
 krb5_error_code

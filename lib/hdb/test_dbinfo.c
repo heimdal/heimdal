@@ -68,7 +68,7 @@ check_HDB_EntryOrAlias(krb5_context context)
                               NULL);
     if (ret)
         krb5_err(context, 1, ret, "krb5_make_principal");
-    ASN1_MALLOC_ENCODE(hdb_entry_alias, v.data, v.length, &alias, &len, ret);
+    ASN1_MALLOC_ENCODE(HDB_entry_alias, v.data, v.length, &alias, &len, ret);
     if (ret)
         krb5_err(context, 1, ret, "encode_HDB_EntryOrAlias");
     if (v.length != len)
@@ -79,7 +79,7 @@ check_HDB_EntryOrAlias(krb5_context context)
     if (v.length != len)
         abort();
     free_HDB_EntryOrAlias(&eoa);
-    free_hdb_entry_alias(&alias);
+    free_HDB_entry_alias(&alias);
     krb5_data_free(&v);
 
     ret = krb5_make_principal(context, &entry.principal, "KTH.SE", "foo",
@@ -88,7 +88,7 @@ check_HDB_EntryOrAlias(krb5_context context)
         krb5_err(context, 1, ret, "krb5_make_principal");
     entry.kvno = 5;
     entry.flags.initial = 1;
-    ASN1_MALLOC_ENCODE(hdb_entry, v.data, v.length, &entry, &len, ret);
+    ASN1_MALLOC_ENCODE(HDB_entry, v.data, v.length, &entry, &len, ret);
     if (ret)
         krb5_err(context, 1, ret, "encode_HDB_EntryOrAlias");
     if (v.length != len)
@@ -99,7 +99,7 @@ check_HDB_EntryOrAlias(krb5_context context)
     if (v.length != len)
         abort();
     free_HDB_EntryOrAlias(&eoa);
-    free_hdb_entry(&entry);
+    free_HDB_entry(&entry);
     krb5_data_free(&v);
 }
 

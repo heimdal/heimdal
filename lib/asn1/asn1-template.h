@@ -38,9 +38,55 @@
 #ifndef __TEMPLATE_H__
 #define __TEMPLATE_H__
 
+/*
+ * TBD:
+ * 
+ *  - For OER also encode number of optional/default/extension elements into
+ *    header entry's ptr field, not just the number of entries that follow it
+ *
+ *  - For JER/GSER/whatver, and probably for not-C-coded template interpreters,
+ *    we'll need to have an entry type for the names of structures and their
+ *    fields.
+ *
+ *  - For auto open types we need a new opcode, let's call it
+ *    A1_OP_OPENTYPE_OBJSET, and we need to encode into its entry:
+ *    a) the index of the template entry for the type ID field, and
+ *    b) the index of the template entry for the open type field,
+ *    c) 1 bit to indicate whether the object set is sorted by type ID value,
+ *    d) a pointer to the object set's template.
+ *    With that we can then find the struct offsets of those, and also their
+ *    types (since we can find their template entries).
+ *    The object set entries should be encoded into two template entries each:
+ *    one pointing to the value of the type ID field for that object (unless
+ *    the value is an integer, in which case the ptr should be the integer
+ *    value directly), and the other pointing to the template for the type
+ *    identified by the type ID.  These will need an opcode each...
+ *    A1_OP_OPENTYPE_ID and A1_OP_OPENTYPE.
+ *    We should also end the object set with an A1_OP_OPENTYPE_OBJSET entry so
+ *    that iterating backwards can be fast.  Unless... unless we don't inline
+ *    the object set and its objects but point to the object set's template.
+ *    Also, for extensible object sets we can point to the object set's name,
+ *    and we can then have a function to get an object set template by name,
+ *    one to release that, and one to add an object to the object set (there's
+ *    no need to remove objects from object sets, which helps with thread-
+ *    safety).  And then we don't need (c) either.
+ *    The decoder will then not see these entries until after decoding the type
+ *    ID and open type field (as its outer type, so OCTET STRING, BIT STRING,
+ *    or HEIM_ANY) and so it will be able to find those values in the struct at
+ *    their respective offsets.
+ *    The encoder and decoder both need to identify the relevant object in the
+ *    object set, either by linear search or binary search if they are sorted
+ *    by type ID value, then interpret the template for the identified type.
+ *    The encoder needs to place the encoding into the normal location for it
+ *    in the struct, then it can execute the normal template entry for it.
+ */
+
 /* header:
  *   HF  flags if not a BIT STRING type
  *   HBF flags if     a BIT STRING type
+ *
+ * ptr is count of elements
+ * offset is size of struct
  */
 
 /* tag:
@@ -49,6 +95,9 @@
  * 22..23 class
  * 24..27 flags
  * 28..31 op
+ *
+ * ptr points to template for tagged type
+ * offset is offset of struct field
  */
 
 /* parse:
@@ -56,11 +105,55 @@
  * 12..23 unused
  * 24..27 flags
  * 28..31 op
+ *
+ * ptr is NULL
+ * offset is ...
  */
 
 /* defval: (next template entry is defaulted)
  *
  *  DV    flags (ptr is or points to defval)
+ *
+ * ptr is default value or pointer to default value
+ * offset is all ones
+ */
+
+/* name: when it happens at index 1 it's the name of the SET/SEQUENCE/CHOICE
+ *       when it happens at any other index it's the name of the field that the
+ *       next entry deals with
+ *
+ *  0..23 unused
+ * 24..27 flags A1_NM_*
+ * 28..31 op
+ *
+ * ptr is const char * pointer to the name as C string
+ * offset is all zeros
+ */
+
+/* objset:
+ *  0..9  open type ID entry index
+ * 10..19 open type entry index
+ * 20..23 unused
+ * 24..27 flags A1_OS_*
+ * 28..31 op
+ *
+ * ptr points to object set template
+ * offset is the offset of the choice struct
+ */
+
+/* opentypeid: offset is zero
+ *             ptr points to value if it is not an integer
+ *             ptr   is the  value if it is     an integer
+ *  0..23 unused
+ * 24..27 flags A1_OTI_*
+ * 28..31 op
+ */
+
+/* opentype: offset is sizeof C type for this open type choice
+ *           ptr points to template for type choice
+ *  0..23 unused
+ * 24..27 flags
+ * 28..31 op
  */
 
 #define A1_OP_MASK		(0xf0000000)
@@ -73,6 +166,10 @@
 #define A1_OP_BMEMBER		(0x70000000)
 #define A1_OP_CHOICE		(0x80000000)
 #define A1_OP_DEFVAL		(0x90000000)
+#define A1_OP_OPENTYPE_OBJSET	(0xa0000000)
+#define A1_OP_OPENTYPE_ID	(0xb0000000)
+#define A1_OP_OPENTYPE		(0xc0000000)
+#define A1_OP_NAME		(0xd0000000)
 
 #define A1_FLAG_MASK		(0x0f000000)
 #define A1_FLAG_OPTIONAL	(0x01000000)
@@ -104,6 +201,10 @@
 #define A1_DV_INTEGER32		0x04
 #define A1_DV_INTEGER64		0x08
 #define A1_DV_UTF8STRING	0x10
+
+#define A1_OS_IS_SORTED		(0x01000000)
+#define A1_OS_OT_IS_ARRAY	(0x02000000)
+#define A1_OTI_IS_INTEGER	(0x04000000)
 
 
 struct asn1_template {

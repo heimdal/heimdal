@@ -146,7 +146,7 @@ check_transited(krb5_context context, Ticket *ticket, EncTicketPart *enc)
     if(enc->transited.tr_type == 0 && enc->transited.contents.length == 0)
 	return 0;
 
-    if(enc->transited.tr_type != DOMAIN_X500_COMPRESS)
+    if(enc->transited.tr_type != domain_X500_Compress)
 	return KRB5KDC_ERR_TRTYPE_NOSUPP;
 
     if(enc->transited.contents.length == 0)

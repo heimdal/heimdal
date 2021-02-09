@@ -31,7 +31,7 @@
 
 RELDIR=lib\asn1
 
-intcflags=-I$(SRCDIR) -I$(OBJ) -DROKEN_RENAME
+intcflags=-I$(SRCDIR) -I$(OBJ) -DROKEN_RENAME -DASN1_IOS_SUPPORTED
 
 !include ../../windows/NTMakefile.w32
 
@@ -43,11 +43,7 @@ gen_files_crmf		= $(OBJ)\asn1_crmf_asn1.x
 
 gen_files_rfc2459	= $(OBJ)\asn1_rfc2459_asn1.x
 
-gen_files_rfc4043	= $(OBJ)\asn1_rfc4043_asn1.x
-
 gen_files_rfc4108	= $(OBJ)\asn1_rfc4108_asn1.x
-
-gen_files_tcg		= $(OBJ)\asn1_tcg_asn1.x
 
 gen_files_ocsp		= $(OBJ)\asn1_ocsp_asn1.x
 
@@ -128,11 +124,8 @@ LIBASN1_OBJS=	\
 	$(OBJ)\extra.obj			\
 	$(OBJ)\timegm.obj			\
 	$(gen_files_rfc2459:.x=.obj)		\
-	$(gen_files_rfc4043:.x=.obj)		\
 	$(gen_files_rfc4108:.x=.obj)		\
-	$(gen_files_tcg:.x=.obj)		\
 	$(gen_files_cms:.x=.obj)		\
-	$(gen_files_crmf:.x=.obj)		\
 	$(gen_files_krb5:.x=.obj)		\
 	$(gen_files_ocsp:.x=.obj)		\
 	$(gen_files_pkinit:.x=.obj)		\
@@ -190,11 +183,7 @@ $(gen_files_kx509:.x=.c)    : $$(@R).x
 
 $(gen_files_rfc2459:.x=.c)  : $$(@R).x
 
-$(gen_files_rfc4043:.x=.c)  : $$(@R).x
-
 $(gen_files_rfc4108:.x=.c)  : $$(@R).x
-
-$(gen_files_tcg:.x=.c)      : $$(@R).x
 
 $(gen_files_cms:.x=.c)	    : $$(@R).x
 
@@ -209,6 +198,7 @@ $(gen_files_test_template:.x=.c)	    : $$(@R).x
 $(gen_files_krb5) $(OBJ)\krb5_asn1.hx: $(BINDIR)\asn1_compile.exe krb5.asn1 krb5.opt
 	cd $(OBJ)
 	$(BINDIR)\asn1_compile.exe \
+		--template	\
 		--one-code-file	\
 		--option-file=$(SRCDIR)\krb5.opt \
 		$(SRCDIR)\krb5.asn1 krb5_asn1 \
@@ -218,6 +208,7 @@ $(gen_files_krb5) $(OBJ)\krb5_asn1.hx: $(BINDIR)\asn1_compile.exe krb5.asn1 krb5
 $(gen_files_ocsp) $(OBJ)\ocsp_asn1.hx: $(BINDIR)\asn1_compile.exe ocsp.asn1
 	cd $(OBJ)
 	$(BINDIR)\asn1_compile.exe \
+		--template	\
 		--one-code-file \
 		--option-file=$(SRCDIR)\ocsp.opt \
 		$(SRCDIR)\ocsp.asn1 \
@@ -227,25 +218,26 @@ $(gen_files_ocsp) $(OBJ)\ocsp_asn1.hx: $(BINDIR)\asn1_compile.exe ocsp.asn1
 
 $(gen_files_pkinit) $(OBJ)\pkinit_asn1.hx: $(BINDIR)\asn1_compile.exe pkinit.asn1
 	cd $(OBJ)
-	$(BINDIR)\asn1_compile.exe --one-code-file $(SRCDIR)\pkinit.asn1 pkinit_asn1 \
+	$(BINDIR)\asn1_compile.exe --template --one-code-file $(SRCDIR)\pkinit.asn1 pkinit_asn1 \
 	|| ($(RM) $(OBJ)\pkinit_asn1.h ; exit /b 1)
 	cd $(SRCDIR)
 
 $(gen_files_pkcs8) $(OBJ)\pkcs8_asn1.hx: $(BINDIR)\asn1_compile.exe pkcs8.asn1
 	cd $(OBJ)
-	$(BINDIR)\asn1_compile.exe --one-code-file $(SRCDIR)\pkcs8.asn1 pkcs8_asn1 \
+	$(BINDIR)\asn1_compile.exe --template --one-code-file $(SRCDIR)\pkcs8.asn1 pkcs8_asn1 \
 	|| ($(RM) $(OBJ)\pkcs8_asn1.h ; exit /b 1)
 	cd $(SRCDIR)
 
 $(gen_files_pkcs9) $(OBJ)\pkcs9_asn1.hx: $(BINDIR)\asn1_compile.exe pkcs9.asn1
 	cd $(OBJ)
-	$(BINDIR)\asn1_compile.exe --one-code-file $(SRCDIR)\pkcs9.asn1 pkcs9_asn1 \
+	$(BINDIR)\asn1_compile.exe --template --one-code-file $(SRCDIR)\pkcs9.asn1 pkcs9_asn1 \
 	|| ($(RM) $(OBJ)\pkcs9_asn1.h ; exit /b 1)
 	cd $(SRCDIR)
 
 $(gen_files_pkcs10) $(OBJ)\pkcs10_asn1.hx: $(BINDIR)\asn1_compile.exe pkcs10.asn1
 	cd $(OBJ)
 	$(BINDIR)\asn1_compile.exe \
+		--template	\
 		--one-code-file \
 		--option-file=$(SRCDIR)\pkcs10.opt \
 		$(SRCDIR)\pkcs10.asn1 \
@@ -255,58 +247,45 @@ $(gen_files_pkcs10) $(OBJ)\pkcs10_asn1.hx: $(BINDIR)\asn1_compile.exe pkcs10.asn
 
 $(gen_files_pkcs12) $(OBJ)\pkcs12_asn1.hx: $(BINDIR)\asn1_compile.exe pkcs12.asn1
 	cd $(OBJ)
-	$(BINDIR)\asn1_compile.exe --one-code-file $(SRCDIR)\pkcs12.asn1 pkcs12_asn1 \
+	$(BINDIR)\asn1_compile.exe --template --one-code-file $(SRCDIR)\pkcs12.asn1 pkcs12_asn1 \
 	|| ($(RM) $(OBJ)\pkcs12_asn1.h ; exit /b 1)
 	cd $(SRCDIR)
 
 $(gen_files_digest) $(OBJ)\digest_asn1.hx: $(BINDIR)\asn1_compile.exe digest.asn1
 	cd $(OBJ)
-	$(BINDIR)\asn1_compile.exe --one-code-file $(SRCDIR)\digest.asn1 digest_asn1 \
+	$(BINDIR)\asn1_compile.exe --template --one-code-file $(SRCDIR)\digest.asn1 digest_asn1 \
 	|| ($(RM) $(OBJ)\digest_asn1.h ; exit /b 1)
 	cd $(SRCDIR)
 
 $(gen_files_kx509) $(OBJ)\kx509_asn1.hx: $(BINDIR)\asn1_compile.exe kx509.asn1
 	cd $(OBJ)
-	$(BINDIR)\asn1_compile.exe --one-code-file $(SRCDIR)\kx509.asn1 kx509_asn1 \
+	$(BINDIR)\asn1_compile.exe --template --one-code-file $(SRCDIR)\kx509.asn1 kx509_asn1 \
 	|| ($(RM) $(OBJ)\kx509_asn1.h ; exit /b 1)
 	cd $(SRCDIR)
 
 $(gen_files_rfc2459) $(OBJ)\rfc2459_asn1.hx: $(BINDIR)\asn1_compile.exe rfc2459.asn1
 	cd $(OBJ)
 	$(BINDIR)\asn1_compile.exe \
+		--template	\
 		--one-code-file \
 		--option-file=$(SRCDIR)\rfc2459.opt \
 		$(SRCDIR)\rfc2459.asn1 rfc2459_asn1 \
 	|| ($(RM) $(OBJ)\rfc2459_asn1.h ; exit /b 1)
 	cd $(SRCDIR)
 
-$(gen_files_rfc4043) $(OBJ)\rfc4043_asn1.hx: $(BINDIR)\asn1_compile.exe rfc4043.asn1
-	cd $(OBJ)
-	$(BINDIR)\asn1_compile.exe \
-		--one-code-file \
-		$(SRCDIR)\rfc4043.asn1 rfc4043_asn1 \
-	|| ($(RM) $(OBJ)\rfc4043_asn1.h ; exit /b 1)
-	cd $(SRCDIR)
-
 $(gen_files_rfc4108) $(OBJ)\rfc4108_asn1.hx: $(BINDIR)\asn1_compile.exe rfc4108.asn1
 	cd $(OBJ)
 	$(BINDIR)\asn1_compile.exe \
+		--template	\
 		--one-code-file \
 		$(SRCDIR)\rfc4108.asn1 rfc4108_asn1 \
 	|| ($(RM) $(OBJ)\rfc4108_asn1.h ; exit /b 1)
 	cd $(SRCDIR)
 
-$(gen_files_tcg) $(OBJ)\tcg_asn1.hx: $(BINDIR)\asn1_compile.exe tcg.asn1
-	cd $(OBJ)
-	$(BINDIR)\asn1_compile.exe \
-		--one-code-file \
-		$(SRCDIR)\tcg.asn1 tcg_asn1 \
-	|| ($(RM) $(OBJ)\tcg_asn1.h ; exit /b 1)
-	cd $(SRCDIR)
-
 $(gen_files_cms) $(OBJ)\cms_asn1.hx: $(BINDIR)\asn1_compile.exe cms.asn1 cms.opt
 	cd $(OBJ)
 	$(BINDIR)\asn1_compile.exe \
+		--template	\
 		--one-code-file --option-file=$(SRCDIR)\cms.opt \
 		$(SRCDIR)\cms.asn1 cms_asn1 \
 	|| ($(RM) $(OBJ)\cms_asn1.h ; exit /b 1)
@@ -315,6 +294,7 @@ $(gen_files_cms) $(OBJ)\cms_asn1.hx: $(BINDIR)\asn1_compile.exe cms.asn1 cms.opt
 $(gen_files_crmf) $(OBJ)\crmf_asn1.hx: $(BINDIR)\asn1_compile.exe crmf.asn1 crmf.opt
 	cd $(OBJ)
 	$(BINDIR)\asn1_compile.exe \
+		--template	\
 		--one-code-file --option-file=$(SRCDIR)\crmf.opt \
 		$(SRCDIR)\crmf.asn1 crmf_asn1 \
 	|| ($(RM) $(OBJ)\crmf_asn1.h ; exit /b 1)
@@ -323,6 +303,7 @@ $(gen_files_crmf) $(OBJ)\crmf_asn1.hx: $(BINDIR)\asn1_compile.exe crmf.asn1 crmf
 $(gen_files_x690sample) $(OBJ)\x690sample_asn1.hx: $(BINDIR)\asn1_compile.exe x690sample.asn1
 	cd $(OBJ)
 	$(BINDIR)\asn1_compile.exe \
+		--template	\
 		--one-code-file \
 		$(SRCDIR)\x690sample.asn1 x690sample_asn1 \
 	|| ($(RM) $(OBJ)\x690sample_asn1.h ; exit /b 1)
@@ -331,6 +312,7 @@ $(gen_files_x690sample) $(OBJ)\x690sample_asn1.hx: $(BINDIR)\asn1_compile.exe x6
 $(gen_files_test) $(OBJ)\test_asn1.hx: $(BINDIR)\asn1_compile.exe test.asn1
 	cd $(OBJ)
 	$(BINDIR)\asn1_compile.exe \
+		--template	\
 		--one-code-file --sequence=TESTSeqOf \
 		$(SRCDIR)\test.asn1 test_asn1 \
 	|| ($(RM) $(OBJ)\test_asn1.h ; exit /b 1)
@@ -339,6 +321,7 @@ $(gen_files_test) $(OBJ)\test_asn1.hx: $(BINDIR)\asn1_compile.exe test.asn1
 $(gen_files_test_template) $(OBJ)\test_template_asn1.hx: $(BINDIR)\asn1_compile.exe test.asn1
 	cd $(OBJ)
 	$(BINDIR)\asn1_compile.exe \
+		--template	\
 		--one-code-file --template \
 		--sequence=TESTSeqOf \
 		$(SRCDIR)\test.asn1 test_template_asn1 \
@@ -370,9 +353,7 @@ GENINCFILES=					\
 	$(INCDIR)\pkcs10_asn1.h			\
 	$(INCDIR)\pkinit_asn1.h			\
 	$(INCDIR)\rfc2459_asn1.h		\
-	$(INCDIR)\rfc4043_asn1.h		\
 	$(INCDIR)\rfc4108_asn1.h		\
-	$(INCDIR)\tcg_asn1.h			\
 	$(INCDIR)\x690sample_asn1.h		\
 	$(OBJ)\krb5_asn1-priv.h			\
 	$(OBJ)\ocsp_asn1-priv.h			\
@@ -380,9 +361,7 @@ GENINCFILES=					\
 	$(OBJ)\cms_asn1-priv.h			\
 	$(OBJ)\crmf_asn1-priv.h			\
 	$(OBJ)\rfc2459_asn1-priv.h		\
-	$(OBJ)\rfc4043_asn1-priv.h		\
 	$(OBJ)\rfc4108_asn1-priv.h		\
-	$(OBJ)\tcg_asn1-priv.h			\
 	$(OBJ)\x690sample_asn1-priv.h		\
 	$(OBJ)\pkcs8_asn1-priv.h		\
 	$(OBJ)\pkcs9_asn1-priv.h		\
@@ -437,7 +416,6 @@ clean::
 
 TEST_BINARIES=\
 	$(OBJ)\check-der.exe		\
-	$(OBJ)\check-gen.exe		\
 	$(OBJ)\check-gen-template.exe	\
 	$(OBJ)\check-timegm.exe 	\
 	$(OBJ)\check-ber.exe		\
@@ -448,7 +426,6 @@ test-binaries: $(TEST_BINARIES)
 test-run:
 	cd $(OBJ)
 	-check-der.exe
-	-check-gen.exe
 	-check-gen-template.exe
 	-check-timegm.exe
 	-check-ber.exe
@@ -467,11 +444,6 @@ $(OBJ)\check-ber.exe: $(OBJ)\check-ber.obj \
 
 $(OBJ)\check-der.exe: $(OBJ)\check-der.obj $(OBJ)\check-common.obj \
 		$(LIBHEIMDAL) $(LIBROKEN)
-	$(EXECONLINK)
-	$(EXEPREP_NODIST)
-
-$(OBJ)\check-gen.exe: $(OBJ)\check-gen.obj $(OBJ)\check-common.obj \
-		$(LIBHEIMDAL) $(LIBROKEN) $(gen_files_test:.x=.obj)
 	$(EXECONLINK)
 	$(EXEPREP_NODIST)
 

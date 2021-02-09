@@ -1284,7 +1284,7 @@ hx509_ca_tbs_add_san_permanentIdentifier(hx509_context context,
 	_hx509_abort("internal ASN.1 encoder error");
 
     ret = hx509_ca_tbs_add_san_otherName(context, tbs,
-                                         &asn1_oid_id_on_permanentIdentifier,
+                                         &asn1_oid_id_pkix_on_permanentIdentifier,
                                          &os);
     free(os.data);
     return ret;
@@ -1595,16 +1595,7 @@ add_extension(hx509_context context,
 
     memset(&ext, 0, sizeof(ext));
 
-    if (critical_flag) {
-	ext.critical = malloc(sizeof(*ext.critical));
-	if (ext.critical == NULL) {
-	    ret = ENOMEM;
-	    hx509_set_error_string(context, 0, ret, "Out of memory");
-	    goto out;
-	}
-	*ext.critical = TRUE;
-    }
-
+    ext.critical = critical_flag;
     ret = der_copy_oid(oid, &ext.extnID);
     if (ret) {
 	hx509_set_error_string(context, 0, ret, "Out of memory");
@@ -1975,13 +1966,12 @@ ca_sign(hx509_context context,
     /* Add BasicConstraints */
     {
 	BasicConstraints bc;
-	int aCA = 1;
 	unsigned int path;
 
 	memset(&bc, 0, sizeof(bc));
 
 	if (tbs->flags.ca) {
-	    bc.cA = &aCA;
+	    bc.cA = 1;
 	    if (tbs->pathLenConstraint >= 0) {
 		path = tbs->pathLenConstraint;
 		bc.pathLenConstraint = &path;

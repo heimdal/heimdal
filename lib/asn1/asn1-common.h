@@ -52,6 +52,8 @@ typedef struct heim_bit_string {
 
 typedef struct heim_base_data heim_any;
 typedef struct heim_base_data heim_any_set;
+typedef struct heim_base_data HEIM_ANY;
+typedef struct heim_base_data HEIM_ANY_SET;
 
 #define ASN1_MALLOC_ENCODE(T, B, BL, S, L, R)                  \
   do {                                                         \

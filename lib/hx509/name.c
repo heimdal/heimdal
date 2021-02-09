@@ -1238,7 +1238,7 @@ struct {
     { &asn1_oid_id_pkinit_san,
         "KerberosPrincipalName",
         _hx509_unparse_KRB5PrincipalName },
-    { &asn1_oid_id_on_permanentIdentifier,
+    { &asn1_oid_id_pkix_on_permanentIdentifier,
         "PermanentIdentifier",
         _hx509_unparse_PermanentIdentifier },
     { &asn1_oid_id_on_hardwareModuleName,

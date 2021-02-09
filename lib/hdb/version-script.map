@@ -92,6 +92,7 @@ HEIMDAL_HDB_1.0 {
 		hdb_value2entry_alias;
 		hdb_write_master_key;
 		length_hdb_keyset;
+		length_HDB_keyset;
 		hdb_interface_version;
 		initialize_hdb_error_table_r;
 
@@ -113,6 +114,8 @@ HEIMDAL_HDB_1.0 {
 		copy_HDB_EncTypeList;
 		copy_hdb_entry;
 		copy_hdb_entry_alias;
+		copy_HDB_entry;
+		copy_HDB_entry_alias;
 		copy_HDB_EntryOrAlias;
 		copy_HDB_extensions;
 		copy_HDB_Ext_KeyRotation;
@@ -122,6 +125,8 @@ HEIMDAL_HDB_1.0 {
 		decode_HDB_EncTypeList;
 		decode_hdb_entry;
 		decode_hdb_entry_alias;
+		decode_HDB_entry;
+		decode_HDB_entry_alias;
 		decode_HDB_EntryOrAlias;
 		decode_HDB_Ext_Aliases;
 		decode_HDB_extension;
@@ -132,18 +137,23 @@ HEIMDAL_HDB_1.0 {
 		encode_HDB_EncTypeList;
 		encode_hdb_entry;
 		encode_hdb_entry_alias;
+		encode_HDB_entry;
+		encode_HDB_entry_alias;
 		encode_HDB_EntryOrAlias;
 		encode_HDB_Ext_Aliases;
 		encode_HDB_extension;
 		encode_HDB_Ext_KeyRotation;
 		encode_HDB_Ext_PKINIT_acl;
 		encode_hdb_keyset;
+		encode_HDB_keyset;
 		encode_Key;
 		encode_Keys;
 		free_Event;
 		free_HDB_EncTypeList;
 		free_hdb_entry;
 		free_hdb_entry_alias;
+		free_HDB_entry;
+		free_HDB_entry_alias;
 		free_HDB_EntryOrAlias;
 		free_HDB_Ext_Aliases;
 		free_HDB_extension;
@@ -152,6 +162,7 @@ HEIMDAL_HDB_1.0 {
 		free_HDB_Ext_KeySet;
 		free_HDB_Ext_PKINIT_acl;
 		free_hdb_keyset;
+		free_HDB_keyset;
 		free_Key;
 		free_Keys;
 		free_Salt;
@@ -162,6 +173,8 @@ HEIMDAL_HDB_1.0 {
 		length_HDB_EncTypeList;
 		length_hdb_entry;
 		length_hdb_entry_alias;
+		length_HDB_entry;
+		length_HDB_entry_alias;
 		length_HDB_EntryOrAlias;
 		length_HDB_Ext_Aliases;
 		length_HDB_extension;

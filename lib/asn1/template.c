@@ -166,7 +166,8 @@ is_tagged(const struct asn1_template *t)
          * XXX Add a boolean to struct asn1_type_func to tell us if the type is
          * tagged or not.  Basically, it's not tagged if it's primitive.
          */
-        if (f->encode == (asn1_type_encode)encode_heim_any)
+        if (f->encode == (asn1_type_encode)encode_heim_any ||
+            f->encode == (asn1_type_encode)encode_HEIM_ANY)
             return 0;
         abort(); /* XXX */
     }
@@ -197,11 +198,507 @@ inner_type_taglen(const struct asn1_template *t)
          * XXX Add a boolean to struct asn1_type_func to tell us if the type is
          * tagged or not.  Basically, it's not tagged if it's primitive.
          */
-        if (f->encode == (asn1_type_encode)encode_heim_any)
+        if (f->encode == (asn1_type_encode)encode_heim_any ||
+            f->encode == (asn1_type_encode)encode_HEIM_ANY)
             return 0;
         abort(); /* XXX */
     }
     default: abort();
+#ifdef WIN32
+             _exit(0); /* Quiet VC */
+#endif
+    }
+}
+
+/*
+ * Compare some int of unknown size in a type ID field to the int value in
+ * some IOS object's type ID template entry.
+ *
+ * This should be called with a `A1_TAG_T(ASN1_C_UNIV, PRIM, UT_Integer)'
+ * template as the `ttypeid'.
+ */
+static int
+typeid_int_cmp(const void *intp,
+               int64_t i,
+               const struct asn1_template *ttypeid)
+{
+    const struct asn1_template *tint = ttypeid->ptr;
+
+    if ((tint[1].tt & A1_OP_MASK) != A1_OP_PARSE)
+        return -1;
+    if (A1_PARSE_TYPE(tint[1].tt) != A1T_INTEGER)
+        return -1;
+    switch (tint[0].offset) {
+    case 8:     return i - *(const int64_t *)intp;
+    case 4:     return i - *(const int32_t *)intp;
+    default:    return -1;
+    }
+}
+
+/*
+ * Map a logical SET/SEQUENCE member to a template entry.
+ *
+ * This should really have been done by the compiler, but clearly it wasn't.
+ *
+ * The point is that a struct type's template may be littered with entries that
+ * don't directly correspond to a struct field (SET/SEQUENCE member), so we
+ * have to count just the ones that do to get to the one we want.
+ */
+static const struct asn1_template *
+template4member(const struct asn1_template *t, size_t f)
+{
+    size_t n = (uintptr_t)t->ptr;
+    size_t i;
+
+    for (i = 0, t++; i < n; t++, i++) {
+        switch (t->tt & A1_OP_MASK) {
+        case A1_OP_TAG:
+        case A1_OP_TYPE:
+        case A1_OP_TYPE_EXTERN:
+            if (f-- == 0)
+                return t;
+            continue;
+        case A1_OP_OPENTYPE_OBJSET:
+        case A1_OP_NAME:
+            return NULL;
+        default:
+            continue;
+        }
+    }
+    return NULL;
+}
+
+/*
+ * Attempt to decode known open type alternatives into a CHOICE-like
+ * discriminated union.
+ *
+ * Arguments:
+ *
+ *  - object set template
+ *  - decoder flags
+ *  - pointer to memory object (C struct) to decode into
+ *  - template for type ID field of `data'
+ *  - template for open type field of `data' (an octet string or HEIM_ANY)
+ *
+ * Returns:
+ *
+ *  - 0
+ *  - ENOMEM
+ *
+ * Other errors in decoding open type values are ignored, but applications can
+ * note that an error must have occurred.  (Perhaps we should generate a `ret'
+ * field for the discriminated union we decode into that we could use to
+ * indicate what went wrong with decoding an open type value?  The application
+ * can always try to decode itself to find out what the error was, but the
+ * whole point is to save the developer the bother of writing code to decode
+ * open type values.  Then again, the specific cause of any one decode failure
+ * is not usually very important to users, so it's not very important to
+ * applications either.)
+ *
+ * Here `data' is something like this:
+ *
+ *      typedef struct SingleAttribute {
+ *          heim_oid type;              // <--- decoded already
+ *          HEIM_ANY value;             // <--- decoded already
+ *       // We must set this:
+ *       // vvvvvvvv
+ *          struct {
+ *              enum {
+ *                  choice_SingleAttribute_iosnumunknown = 0,
+ *                  choice_SingleAttribute_iosnum_id_at_name,
+ *                  ..
+ *                  choice_SingleAttribute_iosnum_id_at_emailAddress,
+ *              } element;     // <--- map type ID to enum
+ *              union {
+ *                  X520name* at_name;
+ *                  X520name* at_surname;
+ *                  ..
+ *                  AliasIA5String* at_emailAddress;
+ *              } u;           // <--- alloc and decode val above into this
+ *          } _ioschoice_value;
+ *      } SingleAttribute;
+ *
+ * or
+ *
+ *      typedef struct AttributeSet {
+ *          heim_oid type;              // <--- decoded already
+ *          struct AttributeSet_values {
+ *              unsigned int len;       // <--- decoded already
+ *              HEIM_ANY *val;          // <--- decoded already
+ *          } values;
+ *       // We must set this:
+ *       // vvvvvvvv
+ *          struct {
+ *              enum { choice_AttributeSet_iosnumunknown = 0,
+ *                  choice_AttributeSet_iosnum_id_at_name,
+ *                  choice_AttributeSet_iosnum_id_at_surname,
+ *                  ..
+ *                  choice_AttributeSet_iosnum_id_at_emailAddress,
+ *              } element;         // <--- map type ID to enum
+ *              unsigned int len;   // <--- set len to len as above
+ *              union {
+ *                  X520name *at_name;
+ *                  X520name *at_surname;
+ *                  ..
+ *                  AliasIA5String *at_emailAddress;
+ *              } *val;         // <--- alloc and decode vals above into this
+ *          } _ioschoice_values;
+ *      } AttributeSet;
+ */
+static int
+_asn1_decode_open_type(const struct asn1_template *t,
+                       unsigned flags,
+                       void *data,
+                       const struct asn1_template *ttypeid,
+                       const struct asn1_template *topentype)
+{
+    const struct asn1_template *ttypeid_univ = ttypeid;
+    const struct asn1_template *tactual_type;
+    const struct asn1_template *tos = t->ptr;
+    size_t sz, n;
+    size_t i = 0;
+    unsigned int *lenp = NULL;  /* Pointer to array length field */
+    unsigned int len = 1;       /* Array length */
+    void **dp = NULL;           /* Decoded open type struct pointer */
+    int *elementp;              /* Choice enum pointer */
+    int typeid_is_oid = 0;
+    int typeid_is_int = 0;
+    int ret = 0;
+
+    /*
+     * NOTE: Here expressions like `DPO(data, t->offset + ...)' refer to parts
+     *       of a _ioschoice_<fieldName> struct field of `data'.
+     *
+     *       Expressions like `DPO(data, topentype->offset + ...)' refer to
+     *       the open type field in `data', which is either a `heim_any', a
+     *       `heim_octet_string', or an array of one of those.
+     *
+     *       Expressions like `DPO(data, ttypeid->offset)' refer to the open
+     *       type's type ID field in `data'.
+     */
+
+    /*
+     * Minimal setup:
+     *
+     *  - set type choice to choice_<type>_iosnumunknown (zero).
+     *  - set union value to zero
+     *
+     * We need a pointer to the choice ID:
+     *
+     *      typedef struct AttributeSet {
+     *          heim_oid type;              // <--- decoded already
+     *          struct AttributeSet_values {
+     *              unsigned int len;       // <--- decoded already
+     *              HEIM_ANY *val;          // <--- decoded already
+     *          } values;
+     *          struct {
+     *              enum { choice_AttributeSet_iosnumunknown = 0,
+     * ----------->     ...
+     *              } element; // HERE
+     *              ...
+     *          } ...
+     *      }
+     *
+     * XXX NOTE: We're assuming that sizeof(enum) == sizeof(int)!
+     */
+    elementp = DPO(data, t->offset);
+    *elementp = 0; /* Set the choice to choice_<type>_iosnumunknown */
+    if (t->tt & A1_OS_OT_IS_ARRAY) {
+        /*
+         * The open type is a SET OF / SEQUENCE OF -- an array.
+         *
+         * Get the number of elements to decode from:
+         *
+         *      typedef struct AttributeSet {
+         *          heim_oid type;
+         *          struct AttributeSet_values {
+         * ------------>unsigned int len;       // HERE
+         *              HEIM_ANY *val;
+         *          } values;
+         *          ...
+         *      }
+         */
+        len = *((unsigned int *)DPO(data, topentype->offset));
+
+        /*
+         * Set the number of decoded elements to zero for now:
+         *
+         *      typedef struct AttributeSet {
+         *          heim_oid type;
+         *          struct AttributeSet_values {
+         *              unsigned int len;
+         *              HEIM_ANY *val;
+         *          } values;
+         *          struct {
+         *              enum { ... } element;
+         * ------------>unsigned int len;       // HERE
+         *              ...
+         *          } _ioschoice_values;
+         *      }
+         */
+        lenp = DPO(data, t->offset + sizeof(*elementp));
+        *lenp = 0;
+        /*
+         * Get a pointer to the place where we must put the decoded value:
+         *
+         *      typedef struct AttributeSet {
+         *          heim_oid type;
+         *          struct AttributeSet_values {
+         *              unsigned int len;
+         *              HEIM_ANY *val;
+         *          } values;
+         *          struct {
+         *              enum { ... } element;
+         *              unsigned int len;
+         *              struct {
+         *                  union { SomeType *some_choice; ... } u;
+         * ------------>} *val;         // HERE
+         *          } _ioschoice_values;
+         *      } AttributeSet;
+         */
+        dp = DPO(data, t->offset + sizeof(*elementp) + sizeof(*lenp));
+    } else {
+        /*
+         * Get a pointer to the place where we must put the decoded value:
+         *
+         *      typedef struct SingleAttribute {
+         *          heim_oid type;
+         *          HEIM_ANY value;
+         *          struct {
+         *              enum { ... } element;
+         * ------------>union { SomeType *some_choice; ... } u; // HERE
+         *          } _ioschoice_value;
+         *      } SingleAttribute;
+         */
+        dp = DPO(data, t->offset + sizeof(*elementp));
+    }
+
+    /* Align `dp' */
+    while (sizeof(void *) != sizeof(*elementp) &&
+        ((uintptr_t)dp) % sizeof(void *) != 0)
+        dp = (void *)(((char *)dp) + sizeof(*elementp));
+    *dp = NULL;
+
+    /*
+     * Find out the type of the type ID member.  We currently support only
+     * integers and OIDs.
+     *
+     * Chase through any tags to get to the type.
+     */
+    while (((ttypeid_univ->tt & A1_OP_MASK) == A1_OP_TAG &&
+            A1_TAG_CLASS(ttypeid_univ->tt) == ASN1_C_CONTEXT) ||
+           ((ttypeid_univ->tt & A1_OP_MASK) == A1_OP_TYPE)) {
+        ttypeid_univ = ttypeid_univ->ptr;
+        ttypeid_univ++;
+    }
+    switch (ttypeid_univ->tt & A1_OP_MASK) {
+    case A1_OP_TAG:
+        if (A1_TAG_CLASS(ttypeid_univ->tt) != ASN1_C_UNIV)
+            return 0;       /* Do nothing, silently */
+        switch (A1_TAG_TAG(ttypeid_univ->tt)) {
+        case UT_OID:
+            typeid_is_oid = 1;
+            break;
+        case UT_Integer: {
+            const struct asn1_template *tint = ttypeid_univ->ptr;
+
+            tint++;
+            
+            if ((tint->tt & A1_OP_MASK) != A1_OP_PARSE)
+                return 0;   /* Do nothing, silently */
+            if (A1_PARSE_TYPE(tint->tt) != A1T_INTEGER)
+                return 0;   /* Do nothing, silently (probably a large int) */
+            typeid_is_int = 1;
+            break;
+        }
+        /* It might be cool to support string types as type ID types */
+        default: return 0;  /* Do nothing, silently */
+        }
+        break;
+    default: return 0;      /* Do nothing, silently */
+    }
+
+    /*
+     * Find the type of the open type.
+     *
+     * An object set template looks like:
+     *
+     * const struct asn1_template asn1_ObjectSetName[] = {
+     *     { 0, 0, ((void*)17) }, // HEADER ENTRY, here 17 objects
+     *     // then two entries per object:
+     *     { A1_OP_OPENTYPE_ID, 0, (const void*)&asn1_oid_oidName },
+     *     { A1_OP_OPENTYPE, sizeof(SomeType), (const void*)&asn1_SomeType },
+     *     ...
+     * };
+     *
+     * `i' will be a logical object offset, so i*2+1 will be the index of the
+     * A1_OP_OPENTYPE_ID entry for the current object, and i*2+2 will be the
+     * index of the A1_OP_OPENTYPE entry for the current object.
+     */
+    if (t->tt & A1_OS_IS_SORTED) {
+        size_t left = 0;
+        size_t right = A1_HEADER_LEN(tos);
+        const void *vp = DPO(data, ttypeid->offset);
+        int c = -1;
+
+        while (left <= right) {
+            size_t mid = (left + right) >> 1;
+
+            if ((tos[1 + mid * 2].tt & A1_OP_MASK) != A1_OP_OPENTYPE_ID)
+                return 0;
+            if (typeid_is_int)
+                c = typeid_int_cmp(vp, (intptr_t)tos[1 + mid * 2].ptr,
+                                   ttypeid_univ);
+            else if (typeid_is_oid)
+                c = der_heim_oid_cmp(vp, tos[1 + mid * 2].ptr);
+            if (c < 0) {
+                if (mid)
+                    right = mid - 1;
+                else
+                    break;
+            } else if (c > 0) {
+                left = mid + 1;
+            } else {
+                i = mid;
+                break;
+            }
+        }
+        if (c)
+            return 0; /* No match */
+    } else {
+        for (i = 0, n = A1_HEADER_LEN(tos); i < n; i++) {
+            /* We add 1 to `i' because we're skipping the header */
+            if ((tos[1 + i*2].tt & A1_OP_MASK) != A1_OP_OPENTYPE_ID)
+                return 0;
+            if (typeid_is_int &&
+                typeid_int_cmp(DPO(data, ttypeid->offset),
+                               (intptr_t)tos[1 + i*2].ptr,
+                               ttypeid_univ))
+                continue;
+            if (typeid_is_oid &&
+                der_heim_oid_cmp(DPO(data, ttypeid->offset), tos[1 + i*2].ptr))
+                continue;
+            break;
+        }
+        if (i == n)
+            return 0; /* No match */
+    }
+
+    /* Match! */
+    *elementp = i+1; /* Zero is the "unknown" choice, so add 1 */
+
+    /*
+     * We want the A1_OP_OPENTYPE template entry.  Its `offset' is the sizeof
+     * the object we'll be decoding into, and its `ptr' is the pointer to the
+     * template for decoding that type.
+     */
+    tactual_type = &tos[i*2 + 2];
+
+    /* Decode the encoded open type value(s) */
+    if (!(t->tt & A1_OS_OT_IS_ARRAY)) {
+        /*
+         * Not a SET OF/SEQUENCE OF open type, just singular.
+         *
+         * We need the address of the octet string / ANY field containing the
+         * encoded open type value:
+         *
+         *      typedef struct SingleAttribute {
+         *          heim_oid type;
+         * -------->HEIM_ANY value; // HERE
+         *          struct {
+         *              ...
+         *          } ...
+         *      }
+         */
+        const struct heim_base_data *d = DPOC(data, topentype->offset);
+        void *o;
+
+        if ((o = calloc(1, tactual_type->offset)) == NULL)
+            return ENOMEM;
+
+        /* Re-enter to decode the encoded open type value */
+        ret = _asn1_decode(tactual_type->ptr, flags, d->data, d->length, o, &sz);
+        /*
+         * Store the decoded object in the union:
+         *
+         *      typedef struct SingleAttribute {
+         *          heim_oid type;
+         *          HEIM_ANY value;
+         *          struct {
+         *              enum { ... } element;
+         * ------------>union { SomeType *some_choice; ... } u; // HERE
+         *          } _ioschoice_value;
+         *      } SingleAttribute;
+         *
+         * All the union arms are pointers.
+         */
+        if (ret) {
+            free(o);
+            /*
+             * So we failed to decode the open type -- that should not be fatal
+             * to decoding the rest of the input.  Only ENOMEM should be fatal.
+             */
+            ret = 0;
+        } else {
+            *dp = o;
+        }
+        return ret;
+    } else {
+        const struct heim_base_data * const *d;
+        void **val; /* Array of pointers */
+
+        /*
+         * A SET OF/SEQUENCE OF open type, plural.
+         *
+         * We need the address of the octet string / ANY array pointer field
+         * containing the encoded open type values:
+         *
+         *      typedef struct AttributeSet {
+         *          heim_oid type;
+         *          struct AttributeSet_values {
+         *              unsigned int len;
+         * ------------>HEIM_ANY *val;      // HERE
+         *          } values;
+         *      ...
+         *      }
+         *
+         * We already know the value of the `len' field.
+         */
+        d = DPOC(data, topentype->offset + sizeof(unsigned int));
+        while (sizeof(void *) != sizeof(len) &&
+               ((uintptr_t)d) % sizeof(void *) != 0)
+            d = (const void *)(((const char *)d) + sizeof(len));
+
+        if ((val = calloc(len, sizeof(*val))) == NULL)
+            ret = ENOMEM;
+
+        /* Increment the count of decoded values as we decode */
+        *lenp = len;
+        for (i = 0; ret != ENOMEM && i < len; i++) {
+            if ((val[i] = calloc(len, tactual_type->offset)) == NULL)
+                ret = ENOMEM;
+            if (ret == 0)
+                /* Re-enter to decode the encoded open type value */
+                ret = _asn1_decode(tactual_type->ptr, flags, d[i]->data,
+                                   d[i]->length, val[i], &sz);
+            if (ret) {
+                free(val[i]);
+                val[i] = NULL;
+            }
+        }
+        if (ret == ENOMEM) {
+            for (i = 0; i < len; i++) {
+                _asn1_free(tactual_type->ptr, val[i]);
+                free(val[i]);
+            }
+            free(val);
+            val = 0;
+            *lenp = 0;
+        }
+        if (ret != ENOMEM)
+            ret = 0; /* See above */
+        *dp = val;
+        return ret;
     }
 }
 
@@ -209,6 +706,7 @@ int
 _asn1_decode(const struct asn1_template *t, unsigned flags,
 	     const unsigned char *p, size_t len, void *data, size_t *size)
 {
+    const struct asn1_template *tbase = t;
     const struct asn1_template *tdefval = NULL;
     size_t elements = A1_HEADER_LEN(t);
     size_t oldlen = len;
@@ -224,6 +722,19 @@ _asn1_decode(const struct asn1_template *t, unsigned flags,
 
     while (elements) {
 	switch (t->tt & A1_OP_MASK) {
+        case A1_OP_OPENTYPE_OBJSET: {
+            size_t opentypeid = t->tt & ((1<<10)-1);
+            size_t opentype = (t->tt >> 10) & ((1<<10)-1);
+
+            /* Note that the only error returned here would be ENOMEM */
+            ret = _asn1_decode_open_type(t, flags, data,
+                                         template4member(tbase, opentypeid),
+                                         template4member(tbase, opentype));
+            if (ret)
+                return ret;
+            break;
+        }
+        case A1_OP_NAME: break;
 	case A1_OP_DEFVAL:
             tdefval = t;
             break;
@@ -293,7 +804,7 @@ _asn1_decode(const struct asn1_template *t, unsigned flags,
                     }
                     break;
                 }
-		return ret;
+		return ret; /* Error decoding required field */
 	    }
 	    p += newsize; len -= newsize;
 
@@ -301,8 +812,8 @@ _asn1_decode(const struct asn1_template *t, unsigned flags,
 	}
 	case A1_OP_TAG: {
 	    Der_type dertype;
-	    size_t newsize;
-	    size_t datalen, l;
+	    size_t newsize = 0;
+	    size_t datalen, l = 0;
 	    void *olddata = data;
 	    int is_indefinite = 0;
 	    int subflags = flags;
@@ -360,7 +871,7 @@ _asn1_decode(const struct asn1_template *t, unsigned flags,
                     data = olddata;
                     break;
                 }
-		return ret;
+		return ret; /* Error decoding required field */
 	    }
 
 	    p += l; len -= l;
@@ -555,11 +1066,32 @@ _asn1_decode(const struct asn1_template *t, unsigned flags,
 	    size_t datalen;
 	    unsigned int i;
 
-	    /* provide a saner value as default, we should have a NO element value */
+	    /*
+             * Provide a saner value as default, we should have a NO element value.
+             *
+             * XXX We do have an element value for the ellipsis case: 0.  All
+             * CHOICE discriminant enums start off at 1.
+             */
 	    *element = 1;
 
 	    for (i = 1; i < A1_HEADER_LEN(choice) + 1; i++) {
-		/* should match first tag instead, store it in choice.tt */
+		/*
+                 * This is more permissive than is required.  CHOICE
+                 * alternatives must have different outer tags, so in principle
+                 * we should just match the tag at `p' and `len' in sequence to
+                 * the choice alternatives.
+                 *
+                 * Trying every alternative instead happens to do this anyways
+                 * because each one will first match the tag at `p' and `len',
+                 * but if there are CHOICE altnernatives with the same outer
+                 * tag, then we'll allow it, and they had better be unambiguous
+                 * in their internal details, otherwise there would be some
+                 * aliasing.
+                 *
+                 * Arguably the *compiler* should detect ambiguous CHOICE types
+                 * and raise an error, then we don't have to be concerned here
+                 * at all.
+                 */
 		ret = _asn1_decode(choice[i].ptr, 0, p, len,
 				   DPO(data, choice[i].offset), &datalen);
 		if (ret == 0) {
@@ -618,9 +1150,182 @@ _asn1_decode(const struct asn1_template *t, unsigned flags,
     return 0;
 }
 
+/*
+ * This should be called with a `A1_TAG_T(ASN1_C_UNIV, PRIM, UT_Integer)'
+ * template as the `ttypeid'.
+ */
+static int
+typeid_int_copy(void *intp,
+                int64_t i,
+                const struct asn1_template *ttypeid)
+{
+    const struct asn1_template *tint = ttypeid->ptr;
+
+    if ((tint[1].tt & A1_OP_MASK) != A1_OP_PARSE)
+        return -1;
+    if (A1_PARSE_TYPE(tint[1].tt) != A1T_INTEGER)
+        return -1;
+    switch (tint[0].offset) {
+    case 8:     *((int64_t *)intp) = i; return 0;
+    case 4:     *((int32_t *)intp) = i; return 0;
+    default:    memset(intp, 0, tint[0].offset); return 0;
+    }
+}
+
+/* See commentary in _asn1_decode_open_type() */
+static int
+_asn1_encode_open_type(const struct asn1_template *t,
+                       const void *data,    /* NOTE: Not really const */
+                       const struct asn1_template *ttypeid,
+                       const struct asn1_template *topentype)
+{
+    const struct asn1_template *ttypeid_univ = ttypeid;
+    const struct asn1_template *tactual_type;
+    const struct asn1_template *tos = t->ptr;
+    size_t sz, i;
+    unsigned int *lenp = NULL;
+    unsigned int len = 1;
+    int element = *(const int *)DPOC(data, t->offset);
+    int typeid_is_oid = 0;
+    int typeid_is_int = 0;
+    int enotsup = 0;
+    int ret = 0;
+
+    if (element == 0 || element >= A1_HEADER_LEN(tos) + 1)
+        return 0;
+
+    if (t->tt & A1_OS_OT_IS_ARRAY) {
+        /* The actual `len' is from the decoded open type field */
+        len = *(const unsigned int *)DPOC(data, t->offset + sizeof(element));
+
+        if (!len)
+            return 0; /* The app may be encoding the open type by itself */
+    }
+
+    /* Work out the type ID field's type */
+    while (((ttypeid_univ->tt & A1_OP_MASK) == A1_OP_TAG &&
+            A1_TAG_CLASS(ttypeid_univ->tt) == ASN1_C_CONTEXT) ||
+           ((ttypeid_univ->tt & A1_OP_MASK) == A1_OP_TYPE)) {
+        ttypeid_univ = ttypeid_univ->ptr;
+        ttypeid_univ++;
+    }
+    switch (ttypeid_univ->tt & A1_OP_MASK) {
+    case A1_OP_TAG:
+        if (A1_TAG_CLASS(ttypeid_univ->tt) != ASN1_C_UNIV) {
+            enotsup = 1;
+            break;
+        }
+        switch (A1_TAG_TAG(ttypeid_univ->tt)) {
+        case UT_OID:
+            typeid_is_oid = 1;
+            break;
+        case UT_Integer: {
+            const struct asn1_template *tint = ttypeid_univ->ptr;
+
+            tint++;
+            if ((tint->tt & A1_OP_MASK) != A1_OP_PARSE ||
+                A1_PARSE_TYPE(tint->tt) != A1T_INTEGER) {
+                enotsup = 1;
+                break;
+            }
+            typeid_is_int = 1;
+            break;
+        }
+        default: enotsup = 1; break;
+        }
+        break;
+    default: enotsup = 1; break;
+    }
+
+    /*
+     * The app may not be aware of our automatic open type handling, so if the
+     * open type already appears to have been encoded, then ignore the decoded
+     * values.
+     */
+    if (!(t->tt & A1_OS_OT_IS_ARRAY)) {
+        struct heim_base_data *os = DPO(data, topentype->offset);
+
+        if (os->length && os->data)
+            return 0;
+    } else {
+        struct heim_base_data **os = DPO(data, topentype->offset + sizeof(len));
+
+        lenp = DPO(data, topentype->offset);
+        if (*lenp == len && os[0]->length && os[1]->data)
+            return 0;
+    }
+
+    if (typeid_is_int) {
+        /*
+         * Copy the int from the type ID object field to the type ID struct
+         * field.
+         */
+        ret = typeid_int_copy(DPO(data, ttypeid->offset),
+                              (intptr_t)tos[1 + (element-1)*2].ptr, ttypeid_univ);
+    } else if (typeid_is_oid) {
+        /*
+         * Copy the OID from the type ID object field to the type ID struct
+         * field.
+         */
+        ret = der_copy_oid(tos[1 + (element-1)*2].ptr, DPO(data, ttypeid->offset));
+    } else
+        enotsup = 1;
+
+    /*
+     * If the app did not already encode the open type, we can't help it if we
+     * don't know what it is.
+     */
+    if (enotsup)
+        return ENOTSUP;
+
+    tactual_type = &tos[(element-1)*2 + 2];
+
+    if (!(t->tt & A1_OS_OT_IS_ARRAY)) {
+        struct heim_base_data *os = DPO(data, topentype->offset);
+        const void * const *d = DPOC(data, t->offset + sizeof(element));
+
+        while (sizeof(void *) != sizeof(element) &&
+               ((uintptr_t)d) % sizeof(void *) != 0) {
+            d = (void *)(((char *)d) + sizeof(element));
+        }
+
+        os->length = _asn1_length(tactual_type->ptr, *d);
+        if ((os->data = malloc(os->length)) == NULL)
+            return ENOMEM;
+        ret = _asn1_encode(tactual_type->ptr, (os->length - 1) + (unsigned char *)os->data, os->length, *d, &sz);
+    } else {
+        struct heim_base_data *os;
+        const void * const *val =
+            DPOC(data, t->offset + sizeof(element) + sizeof(*lenp));
+
+        if ((os = calloc(len, sizeof(*os))) == NULL)
+            return ENOMEM;
+
+        *lenp = len;
+        for (i = 0; ret == 0 && i < len; i++) {
+            os[i].length = _asn1_length(tactual_type->ptr, val[i]);
+            if ((os[i].data = malloc(os[i].length)) == NULL)
+                ret = ENOMEM;
+            if (ret == 0)
+                ret = _asn1_encode(tactual_type->ptr, (os[i].length - 1) + (unsigned char *)os[i].data, os[i].length,
+                                   val[i], &sz);
+        }
+        if (ret) {
+            for (i = 0; i < (*lenp); i++)
+                free(os[i].data);
+            free(os);
+            *lenp = 0;
+            return ret;
+        }
+        *(struct heim_base_data **)DPO(data, topentype->offset + sizeof(len)) = os;
+    }
+    return ret;
+}
+
 int
 _asn1_encode(const struct asn1_template *t, unsigned char *p, size_t len, const void *data, size_t *size)
 {
+    const struct asn1_template *tbase = t;
     size_t elements = A1_HEADER_LEN(t);
     int ret = 0;
     size_t oldlen = len;
@@ -629,6 +1334,17 @@ _asn1_encode(const struct asn1_template *t, unsigned char *p, size_t len, const 
 
     while (elements) {
 	switch (t->tt & A1_OP_MASK) {
+        case A1_OP_OPENTYPE_OBJSET: {
+            size_t opentypeid = t->tt & ((1<<10)-1);
+            size_t opentype = (t->tt >> 10) & ((1<<10)-1);
+            ret = _asn1_encode_open_type(t, data,
+                                         template4member(tbase, opentypeid),
+                                         template4member(tbase, opentype));
+            if (ret)
+                return ret;
+            break;
+        }
+        case A1_OP_NAME: break;
 	case A1_OP_DEFVAL: break;
 	case A1_OP_TYPE:
 	case A1_OP_TYPE_EXTERN: {
@@ -690,7 +1406,7 @@ _asn1_encode(const struct asn1_template *t, unsigned char *p, size_t len, const 
 	}
 	case A1_OP_TAG: {
 	    const void *olddata = data;
-	    size_t l, datalen;
+	    size_t l, datalen = 0;
             int replace_tag = 0;
 
             /*
@@ -759,10 +1475,10 @@ _asn1_encode(const struct asn1_template *t, unsigned char *p, size_t len, const 
             if (replace_tag) {
                 unsigned char *pfree, *psave = p;
                 Der_class found_class;
-                Der_type found_type;
+                Der_type found_type = 0;
                 unsigned int found_tag;
                 size_t lensave = len;
-                size_t oldtaglen;
+                size_t oldtaglen = 0;
                 size_t taglen = der_length_tag(A1_TAG_TAG(t->tt));;
 
                 /* Allocate a buffer at least as big as we need */
@@ -1016,9 +1732,174 @@ _asn1_encode(const struct asn1_template *t, unsigned char *p, size_t len, const 
     return 0;
 }
 
+static size_t
+_asn1_length_open_type_helper(const struct asn1_template *t,
+                              size_t sz)
+{
+    const struct asn1_template *tinner = t->ptr;
+
+    switch (t->tt & A1_OP_MASK) {
+    case A1_OP_TAG:
+        /* XXX Not tail-recursive :( */
+        sz = _asn1_length_open_type_helper(tinner, sz);
+        sz += der_length_len(sz);
+        sz += der_length_tag(A1_TAG_TAG(t->tt));
+        return sz;
+    default:
+        return sz;
+    }
+}
+
+static size_t
+_asn1_length_open_type_id(const struct asn1_template *t,
+                          const void *data)
+{
+    struct asn1_template pretend[2] = {
+        { 0, 0, ((void*)1) },
+    };
+    pretend[1] = *t;
+    while ((t->tt & A1_OP_MASK) == A1_OP_TAG)
+        t = t->ptr;
+    pretend[0].offset = t->offset;
+    return _asn1_length(pretend, data);
+}
+
+/* See commentary in _asn1_encode_open_type() */
+static size_t
+_asn1_length_open_type(const struct asn1_template *tbase,
+                       const struct asn1_template *t,
+                       const void *data,
+                       const struct asn1_template *ttypeid,
+                       const struct asn1_template *topentype)
+{
+    const struct asn1_template *ttypeid_univ = ttypeid;
+    const struct asn1_template *tactual_type;
+    const struct asn1_template *tos = t->ptr;
+    const unsigned int *lenp = NULL;
+    unsigned int len = 1;
+    size_t sz = 0;
+    size_t i;
+    int element = *(const int *)DPOC(data, t->offset);
+    int typeid_is_oid = 0;
+    int typeid_is_int = 0;
+
+    /* If nothing to encode, we add nothing to the length */
+    if (element == 0 || element >= A1_HEADER_LEN(tos) + 1)
+        return 0;
+    if (t->tt & A1_OS_OT_IS_ARRAY) {
+        len = *(const unsigned int *)DPOC(data, t->offset + sizeof(element));
+        if (!len)
+            return 0;
+    }
+
+    /* Work out the type ID field's type */
+    while (((ttypeid_univ->tt & A1_OP_MASK) == A1_OP_TAG &&
+            A1_TAG_CLASS(ttypeid_univ->tt) == ASN1_C_CONTEXT) ||
+           ((ttypeid_univ->tt & A1_OP_MASK) == A1_OP_TYPE)) {
+        ttypeid_univ = ttypeid_univ->ptr;
+        ttypeid_univ++;
+    }
+    switch (ttypeid_univ->tt & A1_OP_MASK) {
+    case A1_OP_TAG:
+        if (A1_TAG_CLASS(ttypeid_univ->tt) != ASN1_C_UNIV)
+            return 0;
+        switch (A1_TAG_TAG(ttypeid_univ->tt)) {
+        case UT_OID:
+            typeid_is_oid = 1;
+            break;
+        case UT_Integer: {
+            const struct asn1_template *tint = ttypeid_univ->ptr;
+
+            tint++;
+            if ((tint->tt & A1_OP_MASK) != A1_OP_PARSE ||
+                A1_PARSE_TYPE(tint->tt) != A1T_INTEGER)
+                return 0;
+            typeid_is_int = 1;
+            break;
+        }
+        default: return 0;
+        }
+        break;
+    default: return 0;
+    }
+    if (!typeid_is_int && !typeid_is_oid)
+        return 0;
+    if (!(t->tt & A1_OS_OT_IS_ARRAY)) {
+        struct heim_base_data *os = DPO(data, topentype->offset);
+
+        if (os->length && os->data)
+            return 0;
+    } else {
+        struct heim_base_data **os = DPO(data, topentype->offset + sizeof(len));
+
+        lenp = DPOC(data, topentype->offset);
+        if (*lenp == len && os[0]->length && os[1]->data)
+            return 0;
+    }
+
+    /* Compute the size of the type ID field */
+    if (typeid_is_int) {
+        int64_t i8;
+        int32_t i4;
+
+        switch (ttypeid_univ->offset) {
+        case 8:
+            i8 = (intptr_t)t->ptr;
+            sz = _asn1_length_open_type_id(ttypeid, &i8);
+            i8 = 0;
+            sz -= _asn1_length_open_type_id(ttypeid, &i8);
+            break;
+        case 4:
+            i4 = (intptr_t)t->ptr;
+            sz = _asn1_length_open_type_id(ttypeid, &i4);
+            i4 = 0;
+            sz -= _asn1_length_open_type_id(ttypeid, &i8);
+            break;
+        default:
+            return 0;
+        }
+    } else if (typeid_is_oid) {
+        heim_oid no_oid = { 0, 0 };
+
+        sz = _asn1_length_open_type_id(ttypeid, tos[1 + (element - 1)*2].ptr);
+        sz -= _asn1_length_open_type_id(ttypeid, &no_oid);
+    }
+
+    tactual_type = &tos[(element-1)*2 + 2];
+
+    /* Compute the size of the encoded value(s) */
+    if (!(t->tt & A1_OS_OT_IS_ARRAY)) {
+        const void * const *d = DPOC(data, t->offset + sizeof(element));
+
+        while (sizeof(void *) != sizeof(element) &&
+               ((uintptr_t)d) % sizeof(void *) != 0)
+            d = (void *)(((char *)d) + sizeof(element));
+        if (*d)
+            sz += _asn1_length(tactual_type->ptr, *d);
+    } else {
+        size_t bodysz;
+        const void * const * val =
+            DPOC(data, t->offset + sizeof(element) + sizeof(*lenp));
+
+        /* Compute the size of the encoded SET OF / SEQUENCE OF body */
+        for (i = 0, bodysz = 0; i < len; i++) {
+            if (val[i])
+                bodysz += _asn1_length(tactual_type->ptr, val[i]);
+        }
+
+        /*
+         * We now know the size of the body of the SET OF or SEQUENCE OF.  Now
+         * we just need to count the length of all the TLs on the outside.
+         */
+        sz += _asn1_length_open_type_helper(topentype, bodysz);
+    }
+    return sz;
+}
+
 size_t
 _asn1_length(const struct asn1_template *t, const void *data)
 {
+    const struct asn1_template *tbase = t;
     size_t elements = A1_HEADER_LEN(t);
     size_t ret = 0;
 
@@ -1026,6 +1907,15 @@ _asn1_length(const struct asn1_template *t, const void *data)
 
     while (elements) {
 	switch (t->tt & A1_OP_MASK) {
+        case A1_OP_OPENTYPE_OBJSET: {
+            size_t opentypeid = t->tt & ((1<<10)-1);
+            size_t opentype = (t->tt >> 10) & ((1<<10)-1);
+            ret += _asn1_length_open_type(tbase, t, data,
+                                          template4member(tbase, opentypeid),
+                                          template4member(tbase, opentype));
+            break;
+        }
+        case A1_OP_NAME: break;
 	case A1_OP_DEFVAL: break;
 	case A1_OP_TYPE:
 	case A1_OP_TYPE_EXTERN: {
@@ -1219,6 +2109,57 @@ _asn1_length(const struct asn1_template *t, const void *data)
     return ret;
 }
 
+/* See commentary in _asn1_decode_open_type() */
+static void
+_asn1_free_open_type(const struct asn1_template *t, /* object set template */
+                     void *data)
+{
+    const struct asn1_template *tactual_type;
+    const struct asn1_template *tos = t->ptr;
+    unsigned int *lenp = NULL;  /* Pointer to array length field */
+    unsigned int len = 1;       /* Array length */
+    size_t i;
+    void **dp;
+    void **val;
+    int *elementp = DPO(data, t->offset);   /* Choice enum pointer */
+
+    /* XXX We assume sizeof(enum) == sizeof(int) */
+    if (!*elementp || *elementp >= A1_HEADER_LEN(tos) + 1)
+        return; /* Unknown choice -> it's not decoded, nothing to free here */
+    tactual_type = tos[2*(*elementp - 1) + 2].ptr;
+
+    if (!(t->tt & A1_OS_OT_IS_ARRAY)) {
+        dp = DPO(data, t->offset + sizeof(*elementp));
+        while (sizeof(void *) != sizeof(*elementp) &&
+               ((uintptr_t)dp) % sizeof(void *) != 0)
+            dp = (void *)(((char *)dp) + sizeof(*elementp));
+        if (*dp) {
+            _asn1_free(tactual_type, *dp);
+            free(*dp);
+            *dp = NULL;
+        }
+        return;
+    }
+
+    lenp = DPO(data, t->offset + sizeof(*elementp));
+    len = *lenp;
+    dp = DPO(data, t->offset + sizeof(*elementp) + sizeof(*lenp));
+    while (sizeof(void *) != sizeof(*elementp) &&
+           ((uintptr_t)dp) % sizeof(void *) != 0)
+        dp = (void *)(((char *)dp) + sizeof(*elementp));
+    val = *dp;
+
+    for (i = 0; i < len; i++) {
+        if (val[i]) {
+            _asn1_free(tactual_type, val[i]);
+            free(val[i]);
+        }
+    }
+    free(val);
+    *lenp = 0;
+    *dp = NULL;
+}
+
 void
 _asn1_free(const struct asn1_template *t, void *data)
 {
@@ -1231,6 +2172,11 @@ _asn1_free(const struct asn1_template *t, void *data)
 
     while (elements) {
 	switch (t->tt & A1_OP_MASK) {
+        case A1_OP_OPENTYPE_OBJSET: {
+            _asn1_free_open_type(t, data);
+            break;
+        }
+        case A1_OP_NAME: break;
 	case A1_OP_DEFVAL: break;
 	case A1_OP_TYPE:
 	case A1_OP_TYPE_EXTERN: {
@@ -1325,6 +2271,95 @@ _asn1_free(const struct asn1_template *t, void *data)
     }
 }
 
+/* See commentary in _asn1_decode_open_type() */
+static int
+_asn1_copy_open_type(const struct asn1_template *t, /* object set template */
+                     const void *from,
+                     void *to)
+{
+    const struct asn1_template *tactual_type;
+    const struct asn1_template *tos = t->ptr;
+    size_t i;
+    const void * const *dfromp;
+    const void * const *valfrom;
+    const unsigned int *lenfromp;
+    void **dtop;
+    void **valto;
+    unsigned int *lentop;
+    unsigned int len;
+    const int *efromp = DPO(from, t->offset);
+    int *etop = DPO(to, t->offset);
+    int ret = 0;
+
+    /* XXX We assume sizeof(enum) == sizeof(int) */
+    if (!*efromp || *efromp >= A1_HEADER_LEN(tos) + 1) {
+        if ((t->tt & A1_OS_OT_IS_ARRAY))
+            memset(etop, 0, sizeof(int) + sizeof(unsigned int) + sizeof(void *));
+        else
+            memset(etop, 0, sizeof(int) + sizeof(void *));
+        return 0; /* Unknown choice -> not copied */
+    }
+    tactual_type = &tos[2*(*efromp - 1) + 2];
+
+    if (!(t->tt & A1_OS_OT_IS_ARRAY)) {
+        dfromp = DPO(from, t->offset + sizeof(*efromp));
+        while (sizeof(void *) != sizeof(*efromp) &&
+               ((uintptr_t)dfromp) % sizeof(void *) != 0)
+            dfromp = (void *)(((char *)dfromp) + sizeof(*efromp));
+        if (!*dfromp)
+            return 0;
+
+        dtop = DPO(to, t->offset + sizeof(*etop));
+        while (sizeof(void *) != sizeof(*etop) &&
+               ((uintptr_t)dtop) % sizeof(void *) != 0)
+            dtop = (void *)(((char *)dtop) + sizeof(*etop));
+
+        if ((*dtop = calloc(1, tactual_type->offset)) == NULL)
+            ret = ENOMEM;
+        if (ret == 0)
+            ret = _asn1_copy(tactual_type->ptr, *dfromp, *dtop);
+        if (ret == 0)
+            *etop = *efromp;
+        return ret;
+    }
+
+    lenfromp = DPO(from, t->offset + sizeof(*efromp));
+    dfromp   = DPO(from, t->offset + sizeof(*efromp) + sizeof(*lenfromp));
+    valfrom  = *dfromp;
+    lentop   = DPO(to,   t->offset + sizeof(*etop));
+    dtop     = DPO(to,   t->offset + sizeof(*etop)   + sizeof(*lentop));
+
+    *etop = *efromp;
+
+    len = *lenfromp;
+    *lentop = 0;
+    *dtop = NULL;
+    if ((valto = calloc(len, sizeof(valto[0]))) == NULL)
+        ret = ENOMEM;
+    for (i = 0, len = *lenfromp; ret == 0 && i < len; (*lentop)++, i++) {
+        if (valfrom[i] == NULL) {
+            valto[i] = NULL;
+            continue;
+        }
+        if ((valto[i] = calloc(1, tactual_type->offset)) == NULL)
+            ret = ENOMEM;
+        else
+            ret = _asn1_copy(tactual_type->ptr, valfrom[i], valto[i]);
+    }
+
+    for (i = 0; ret && i < len; i++) {
+        if (valto[i]) {
+            _asn1_free(tactual_type->ptr, valto[i]);
+            free(valto[i]);
+        }
+    }
+    if (ret)
+        free(valto);
+    else
+        *dtop = valto;
+    return ret;
+}
+
 int
 _asn1_copy(const struct asn1_template *t, const void *from, void *to)
 {
@@ -1342,6 +2377,11 @@ _asn1_copy(const struct asn1_template *t, const void *from, void *to)
 
     while (elements) {
 	switch (t->tt & A1_OP_MASK) {
+        case A1_OP_OPENTYPE_OBJSET: {
+            _asn1_copy_open_type(t, from, to);
+            break;
+        }
+        case A1_OP_NAME: break;
 	case A1_OP_DEFVAL: break;
 	case A1_OP_TYPE:
 	case A1_OP_TYPE_EXTERN: {

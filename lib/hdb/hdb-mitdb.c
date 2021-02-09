@@ -662,7 +662,7 @@ out:
     if (ret == HEIM_ERR_EOF)
 	/* Better error code than "end of file" */
 	ret = HEIM_ERR_BAD_HDBENT_ENCODING;
-    free_hdb_entry(entry);
+    free_HDB_entry(entry);
     free_Key(&k);
     return ret;
 }

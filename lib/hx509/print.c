@@ -585,21 +585,16 @@ check_basicConstraints(hx509_validate_ctx ctx,
 	printf("\tlength of der data isn't same as extension\n");
 
     validate_print(ctx, HX509_VALIDATE_F_VERBOSE,
-		   "\tis %sa CA\n", b.cA && *b.cA ? "" : "NOT ");
+		   "\tis %sa CA\n", b.cA ? "" : "NOT ");
     if (b.pathLenConstraint)
 	validate_print(ctx, HX509_VALIDATE_F_VERBOSE,
 		       "\tpathLenConstraint: %d\n", *b.pathLenConstraint);
 
     if (b.cA) {
-	if (*b.cA) {
-	    if (!e->critical)
-		validate_print(ctx, HX509_VALIDATE_F_VALIDATE,
-			       "Is a CA and not BasicConstraints CRITICAL\n");
-	    status->isca = 1;
-	}
-	else
-	    validate_print(ctx, HX509_VALIDATE_F_VALIDATE,
-			   "cA is FALSE, not allowed to be\n");
+        if (!e->critical)
+            validate_print(ctx, HX509_VALIDATE_F_VALIDATE,
+                           "Is a CA and not BasicConstraints CRITICAL\n");
+        status->isca = 1;
     }
     free_BasicConstraints(&b);
 

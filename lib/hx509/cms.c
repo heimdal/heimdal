@@ -1510,7 +1510,7 @@ hx509_cms_create_signed(hx509_context context,
     sigctx.anchors = anchors;
     sigctx.pool = pool;
 
-    sigctx.sd.version = CMSVersion_v3;
+    sigctx.sd.version = cMSVersion_v3;
 
     der_copy_oid(eContentType, &sigctx.sd.encapContentInfo.eContentType);
 

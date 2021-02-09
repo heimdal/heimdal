@@ -322,8 +322,8 @@ hdb_add_history_keyset(krb5_context context,
     for (i = 0; i < hist_keys->len; i++) {
         if (hist_keys->val[i].kvno == ks->kvno) {
             /* Replace existing */
-            free_hdb_keyset(&hist_keys->val[i]);
-            ret = copy_hdb_keyset(ks, &hist_keys->val[i]);
+            free_HDB_keyset(&hist_keys->val[i]);
+            ret = copy_HDB_keyset(ks, &hist_keys->val[i]);
             break;
         }
     }
@@ -422,7 +422,7 @@ hdb_add_history_key(krb5_context context, hdb_entry *entry, krb5_kvno kvno, Key 
     }
 
 out:
-    free_hdb_keyset(&keyset);
+    free_HDB_keyset(&keyset);
     free_HDB_extension(&ext);
     return ret;
 }
@@ -462,7 +462,7 @@ hdb_change_kvno(krb5_context context, krb5_kvno new_kvno, hdb_entry *entry)
     for (i = 0; i < hist_keys->len; i++) {
 	if (hist_keys->val[i].kvno == new_kvno) {
 	    found = 1;
-	    ret = copy_hdb_keyset(&hist_keys->val[i], &keyset);
+	    ret = copy_HDB_keyset(&hist_keys->val[i], &keyset);
 	    if (ret)
 		goto out;
 	    ret = remove_HDB_Ext_KeySet(hist_keys, i);
@@ -485,7 +485,7 @@ hdb_change_kvno(krb5_context context, krb5_kvno new_kvno, hdb_entry *entry)
     memset(&keyset.keys, 0, sizeof (keyset.keys));
 
 out:
-    free_hdb_keyset(&keyset);
+    free_HDB_keyset(&keyset);
     return ret;
 }
 

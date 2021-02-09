@@ -531,7 +531,7 @@ decode_type(const char *name, const Type *t, int optional, struct value *defval,
                 (t->subtype->type == TSequence ||
                  t->subtype->type == TSet))
                 replace_tag = 1;
-            else if (t->subtype->symbol && strcmp(t->subtype->symbol->name, "heim_any"))
+            else if (t->subtype->symbol && strcmp(t->subtype->symbol->name, "HEIM_ANY"))
                 replace_tag = 1;
         } else if (t->tag.tagenv == TE_IMPLICIT && prim && t->subtype->symbol)
             replace_tag = 1;

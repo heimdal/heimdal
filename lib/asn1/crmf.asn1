@@ -12,7 +12,7 @@ IMPORTS
 	Extension,
 	AlgorithmIdentifier
 	FROM rfc2459
-	heim_any
+	HEIM_ANY
 	FROM heim;
 
 CRMFRDNSequence ::= SEQUENCE OF RelativeDistinguishedName
@@ -56,7 +56,7 @@ POPOPrivKey ::= CHOICE {
 	subsequentMessage [1] IMPLICIT SubsequentMessage,
 	dhMAC             [2] BIT STRING,         -- Deprecated
 	agreeMAC          [3] IMPLICIT PKMACValue,
-	encryptedKey      [4] heim_any
+	encryptedKey      [4] HEIM_ANY
 }
 
 ProofOfPossession ::= CHOICE {
@@ -71,7 +71,7 @@ CertTemplate ::= SEQUENCE {
 	serialNumber [1] INTEGER OPTIONAL,
 	signingAlg   [2] SEQUENCE {
 		algorithm	OBJECT IDENTIFIER,
-		parameters	heim_any OPTIONAL
+		parameters	HEIM_ANY OPTIONAL
 	} -- AlgorithmIdentifier --   OPTIONAL,
 	issuer       [3] IMPLICIT CHOICE {
 		rdnSequence  CRMFRDNSequence

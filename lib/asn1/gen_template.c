@@ -295,6 +295,8 @@ static int tlist_cmp(const struct tlist *, const struct tlist *);
 
 static void add_line_pointer(struct templatehead *, const char *, const char *, const char *, ...)
     __attribute__ ((__format__ (__printf__, 4, 5)));
+static void add_line_pointer_reference(struct templatehead *, const char *, const char *, const char *, ...)
+    __attribute__ ((__format__ (__printf__, 4, 5)));
 
 
 static struct tlisthead tlistmaster = HEIM_TAILQ_HEAD_INITIALIZER(tlistmaster);
@@ -426,7 +428,7 @@ tlist_find_dup(const struct tlist *tl)
 
 
 /*
- *
+ * Add an entry to a template.
  */
 
 static struct template *
@@ -442,6 +444,10 @@ add_line(struct templatehead *t, const char *fmt, ...)
     return q;
 }
 
+/*
+ * Add an entry to a template, with the pointer field bein a symbol name of a
+ * template (i.e., an array, which decays to a pointer as usual in C).
+ */
 static void
 add_line_pointer(struct templatehead *t,
 		 const char *ptr,
@@ -459,6 +465,28 @@ add_line_pointer(struct templatehead *t,
     va_end(ap);
 
     q = add_line(t, "{ %s, %s, asn1_%s }", tt, offset, ptr);
+    q->tt = tt;
+    q->offset = strdup(offset);
+    q->ptr = strdup(ptr);
+}
+
+static void
+add_line_pointer_reference(struct templatehead *t,
+                           const char *ptr,
+                           const char *offset,
+                           const char *ttfmt,
+                           ...)
+{
+    struct template *q;
+    va_list ap;
+    char *tt = NULL;
+
+    va_start(ap, ttfmt);
+    if (vasprintf(&tt, ttfmt, ap) < 0 || tt == NULL)
+	errx(1, "malloc");
+    va_end(ap);
+
+    q = add_line(t, "{ %s, %s, (const void *)&asn1_%s }", tt, offset, ptr);
     q->tt = tt;
     q->offset = strdup(offset);
     q->ptr = strdup(ptr);
@@ -596,6 +624,229 @@ defval(struct templatehead *temp, Member *m)
     }
     default: abort();
     }
+}
+
+int
+objid_cmp(struct objid *oida, struct objid *oidb)
+{
+    struct objid *p;
+    size_t ai, bi, alen, blen;
+    int avals[20];
+    int bvals[20];
+    int c;
+
+    /*
+     * Our OID values are backwards here.  Comparing them is hard.
+     */
+
+    for (p = oida, alen = 0;
+         p && alen < sizeof(avals)/sizeof(avals[0]);
+         p = p->next)
+        avals[alen++] = p->value;
+    for (p = oidb, blen = 0;
+         p && blen < sizeof(bvals)/sizeof(bvals[0]);
+         p = p->next)
+        bvals[blen++] = p->value;
+    if (alen >= sizeof(avals)/sizeof(avals[0]) ||
+        blen >= sizeof(bvals)/sizeof(bvals[0]))
+        err(1, "OIDs with more components than %llu not supported",
+            (unsigned long long)sizeof(avals)/sizeof(avals[0]));
+
+    for (ai = 0, bi = 0; ai < alen && bi < blen;)
+        if ((c = avals[(alen-1)-(ai++)] - bvals[(blen-1)-(bi++)]))
+            return c;
+
+    if (ai == alen && bi == blen)
+        return 0;
+    if (ai == alen)
+        return 1;
+    return -1;
+}
+
+static int
+object_cmp(const void *va, const void *vb)
+{
+    const IOSObject *oa = *(const IOSObject * const *)va;
+    const IOSObject *ob = *(const IOSObject * const *)vb;
+
+    switch (oa->typeidf->value->type) {
+    case booleanvalue:
+        return oa->typeidf->value->u.booleanvalue -
+            ob->typeidf->value->u.booleanvalue;
+    case nullvalue:
+        return 0;
+    case integervalue:
+        return oa->typeidf->value->u.integervalue -
+            ob->typeidf->value->u.integervalue;
+    case stringvalue:
+        return strcmp(oa->typeidf->value->u.stringvalue,
+            ob->typeidf->value->u.stringvalue);
+    case objectidentifiervalue: {
+        return objid_cmp(oa->typeidf->value->u.objectidentifiervalue,
+            ob->typeidf->value->u.objectidentifiervalue);
+    }
+    default:
+            abort();
+            return -1;
+    }
+}
+
+void
+sort_object_set(IOSObjectSet *os,       /* Object set to sort fields of */
+                Field *typeidfield,     /* Field to sort by */
+                IOSObject ***objectsp,  /* Output: array of objects */
+                size_t *nobjsp)         /* Output: count of objects */
+{
+    IOSObject **objects;
+    IOSObject *o;
+    size_t i, nobjs = 0;
+
+    /* FIXME: This would be a good place to check field UNIQUE constraints */
+
+    HEIM_TAILQ_FOREACH(o, os->objects, objects) {
+        ObjectField *typeidobjf = NULL;
+        ObjectField *of;
+
+        HEIM_TAILQ_FOREACH(of, o->objfields, objfields) {
+            if (strcmp(of->name, typeidfield->name) == 0)
+                typeidobjf = of;
+        }
+        if (!typeidobjf) {
+            warnx("Ignoring incomplete object specification of %s "
+                  "(missing type ID field)",
+                  o->symbol ? o->symbol->name : "<unknown>");
+            continue;
+        }
+        o->typeidf = typeidobjf;
+        nobjs++;
+    }
+    *nobjsp = nobjs;
+
+    if ((objects = calloc(nobjs, sizeof(*objects))) == NULL)
+        err(1, "Out of memory");
+    *objectsp = objects;
+
+    i = 0;
+    HEIM_TAILQ_FOREACH(o, os->objects, objects) {
+        ObjectField *typeidobjf = NULL;
+        ObjectField *of;
+
+        HEIM_TAILQ_FOREACH(of, o->objfields, objfields) {
+            if (strcmp(of->name, typeidfield->name) == 0)
+                typeidobjf = of;
+        }
+        if (typeidobjf)
+            objects[i++] = o;
+    }
+    qsort(objects, nobjs, sizeof(*objects), object_cmp);
+}
+
+static void
+template_object_set(IOSObjectSet *os, Field *typeidfield, Field *opentypefield)
+{
+    IOSObject **objects;
+    IOSObject *o;
+    struct tlist *tl;
+    size_t nobjs, i;
+
+    if (os->symbol->emitted_template)
+        return;
+
+    sort_object_set(os, typeidfield, &objects, &nobjs);
+
+    tl = tlist_new(os->symbol->name);
+    for (i = 0; i < nobjs; i++) {
+        ObjectField *typeidobjf = NULL, *opentypeobjf = NULL;
+        ObjectField *of;
+        char *s = NULL;
+
+        o = objects[i];
+
+        HEIM_TAILQ_FOREACH(of, o->objfields, objfields) {
+            if (strcmp(of->name, typeidfield->name) == 0)
+                typeidobjf = of;
+            else if (strcmp(of->name, opentypefield->name) == 0)
+                opentypeobjf = of;
+        }
+        if (!typeidobjf)
+            continue; /* We've warned about this one already when sorting */
+        if (!opentypeobjf) {
+            warnx("Ignoring incomplete object specification of %s "
+                  "(missing open type field)",
+                  o->symbol ? o->symbol->name : "<unknown>");
+            continue;
+        }
+
+        /*
+         * Some of this logic could stand to move into sanity checks of object
+         * definitions in asn1parse.y.
+         */
+        switch (typeidobjf->value->type) {
+        case integervalue:
+            add_line(&tl->template,
+                     "{ A1_OP_OPENTYPE_ID | A1_OTI_IS_INTEGER, 0, (void *)%lld }",
+                     (long long)typeidobjf->value->u.integervalue);
+            break;
+        case objectidentifiervalue:
+            if (asprintf(&s, "oid_%s",
+                         typeidobjf->value->s->gen_name) == -1 || !s)
+                err(1, "Out of memory");
+            add_line_pointer_reference(&tl->template, s, "0", "A1_OP_OPENTYPE_ID");
+            free(s);
+            s = NULL;
+            break;
+        default:
+            errx(1, "Only integer and OID types supported "
+                 "for open type type-ID fields");
+        }
+
+        if (asprintf(&s, "sizeof(%s)",
+                     opentypeobjf->type->symbol->gen_name) == -1 || !s)
+            err(1, "Out of memory");
+        add_line_pointer_reference(&tl->template,
+                                   opentypeobjf->type->symbol->gen_name, s,
+                                   "A1_OP_OPENTYPE");
+        free(s);
+    }
+    free(objects);
+
+    tlist_header(tl, "{ 0, 0, ((void *)%lu) }", nobjs);
+    tlist_print(tl);
+    tlist_add(tl);
+    os->symbol->emitted_template = 1;
+}
+
+static void
+template_open_type(struct templatehead *temp,
+                   const char *basetype,
+                   const Type *t,
+                   size_t typeididx,
+                   size_t opentypeidx,
+                   Field *typeidfield,
+                   Field *opentypefield,
+                   Member *m,
+                   int is_array_of_open_type)
+{
+    char *s = NULL;
+
+    if (typeididx >= 1<<10 || opentypeidx >= 1<<10)
+        errx(1, "SET/SEQUENCE with too many members (%s)", basetype);
+
+    if (asprintf(&s, "offsetof(%s, _ioschoice_%s)",
+                 basetype, m->gen_name) == -1 || !s)
+        err(1, "Out of memory");
+
+    template_object_set(t->actual_parameter, typeidfield, opentypefield);
+    add_line_pointer(temp, t->actual_parameter->symbol->gen_name, s,
+                     /*
+                      * We always sort object sets for now as we can't import
+                      * values yet, so they must all be known.
+                      */
+                     "A1_OP_OPENTYPE_OBJSET | A1_OS_IS_SORTED |%s | (%llu << 10) | %llu",
+                     is_array_of_open_type ? "A1_OS_OT_IS_ARRAY" : "0",
+                     (unsigned long long)opentypeidx,
+                     (unsigned long long)typeididx);
+    free(s);
 }
 
 static void
@@ -742,7 +993,18 @@ template_members(struct templatehead *temp,
 	break;
     }
     case TSet: {
+        Member *opentypemember = NULL;
+	Member *typeidmember = NULL;
+        Field *opentypefield = NULL;
+        Field *typeidfield = NULL;
 	Member *m;
+        size_t i = 0, typeididx = 0, opentypeidx = 0;
+        int is_array_of_open_type = 0;
+
+        if (isstruct && t->actual_parameter)
+            get_open_type_defn_fields(t, &typeidmember, &opentypemember,
+                                      &typeidfield, &opentypefield,
+                                      &is_array_of_open_type);
 
 	fprintf(get_code_file(), "/* tset: members isstruct: %d */\n", isstruct);
 
@@ -751,6 +1013,9 @@ template_members(struct templatehead *temp,
 
 	    if (m->ellipsis)
 		continue;
+
+            if (typeidmember == m) typeididx = i;
+            if (opentypemember == m) opentypeidx = i;
 
 	    if (name) {
 		if (asprintf(&newbasename, "%s_%s", basetype, name) < 0)
@@ -766,12 +1031,28 @@ template_members(struct templatehead *temp,
 	    template_members(temp, newbasename, m->gen_name, m->type, m->optional, m->defval ? 1 : 0, 0, isstruct, 1);
 
 	    free(newbasename);
+            i++;
 	}
 
+        if (isstruct && t->actual_parameter)
+            template_open_type(temp, basetype, t, typeididx, opentypeidx,
+                               typeidfield, opentypefield, opentypemember,
+                               is_array_of_open_type);
 	break;
     }
     case TSequence: {
+        Member *opentypemember = NULL;
+	Member *typeidmember = NULL;
+        Field *opentypefield = NULL;
+        Field *typeidfield = NULL;
 	Member *m;
+        size_t i = 0, typeididx = 0, opentypeidx = 0;
+        int is_array_of_open_type = 0;
+
+        if (isstruct && t->actual_parameter)
+            get_open_type_defn_fields(t, &typeidmember, &opentypemember,
+                                      &typeidfield, &opentypefield,
+                                      &is_array_of_open_type);
 
 	fprintf(get_code_file(), "/* tsequence: members isstruct: %d */\n", isstruct);
 
@@ -780,6 +1061,9 @@ template_members(struct templatehead *temp,
 
 	    if (m->ellipsis)
 		continue;
+
+            if (typeidmember == m) typeididx = i;
+            if (opentypemember == m) opentypeidx = i;
 
 	    if (name) {
 		if (asprintf(&newbasename, "%s_%s", basetype, name) < 0)
@@ -795,8 +1079,13 @@ template_members(struct templatehead *temp,
 	    template_members(temp, newbasename, m->gen_name, m->type, m->optional, m->defval ? 1 : 0, 0, isstruct, 1);
 
 	    free(newbasename);
+            i++;
 	}
 
+        if (isstruct && t->actual_parameter)
+            template_open_type(temp, basetype, t, typeididx, opentypeidx,
+                               typeidfield, opentypefield, opentypemember,
+                               is_array_of_open_type);
 	break;
     }
     case TTag: {
@@ -1008,6 +1297,15 @@ void
 generate_template_type_forward(const char *name)
 {
     fprintf(get_code_file(), "extern const struct asn1_template asn1_%s[];\n", name);
+}
+
+void
+generate_template_objectset_forwards(const Symbol *s)
+{
+    if (!template_flag)
+        return;
+    fprintf(get_code_file(), "extern const struct asn1_template asn1_%s[];\n",
+            s->gen_name);
 }
 
 static void

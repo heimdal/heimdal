@@ -4,6 +4,18 @@ EXPORTS
 	_asn1_length
 	_asn1_free_top
 	_asn1_copy_top
+	_asn1_bmember_isset_bit
+	_asn1_bmember_put_bit
+	_asn1_copy
+	_asn1_copy_top
+	_asn1_decode
+	_asn1_decode_top
+	_asn1_encode
+	_asn1_free
+	_asn1_free_top
+	_asn1_length
+	_asn1_print_top
+	_asn1_sizeofType
 	add_AttributeValues
 	add_AuthorizationData
 	add_CertificatePolicies
@@ -43,6 +55,7 @@ EXPORTS
 	asn1_oid_id_at_countryName	DATA
 	asn1_oid_id_at_description	DATA
 	asn1_oid_id_at_dnQualifier	DATA
+	asn1_oid_id_at_emailAddress	DATA
 	asn1_oid_id_at_generationQualifier	DATA
 	asn1_oid_id_at_givenName	DATA
 	asn1_oid_id_at_initials	DATA
@@ -92,9 +105,7 @@ EXPORTS
 	asn1_oid_id_nist_aes_algs	DATA
 	asn1_oid_id_nistAlgorithm	DATA
 	asn1_oid_id_nist_sha_algs	DATA
-	asn1_oid_id_on	DATA
 	asn1_oid_id_on_hardwareModuleName	DATA
-	asn1_oid_id_on_permanentIdentifier	DATA
 	asn1_oid_id_pbeWithSHAAnd128BitRC2_CBC	DATA
 	asn1_oid_id_pbeWithSHAAnd128BitRC4	DATA
 	asn1_oid_id_pbeWithSHAAnd2_KeyTripleDES_CBC	DATA
@@ -191,6 +202,10 @@ EXPORTS
 	asn1_oid_id_pkix_ocsp_nonce	DATA
 	asn1_oid_id_pkix_on	DATA
 	asn1_oid_id_pkix_on_dnsSRV	DATA
+	asn1_oid_id_pkix_on_hardwareModuleName	DATA
+	asn1_oid_id_pkix_on_permanentIdentifier	DATA
+	asn1_oid_id_pkix_on_pkinit_ms_san	DATA
+	asn1_oid_id_pkix_on_pkinit_san	DATA
 	asn1_oid_id_pkix_on_xmppAddr	DATA
 	asn1_oid_id_pkix_pe_authorityInfoAccess	DATA
 	asn1_oid_id_pkix_pe	DATA
@@ -274,12 +289,16 @@ EXPORTS
 	copy_AD_LoginAlias
 	copy_AD_MANDATORY_FOR_KDC
 	copy_AlgorithmIdentifier
+	copy_AliasIA5String
+	copy_AliasPrintableString
+	copy_AliasUTF8String
 	copy_APOptions
 	copy_AP_REP
 	copy_AP_REQ
 	copy_AS_REP
 	copy_AS_REQ
 	copy_Attribute
+	copy_AttributeSet
 	copy_AttributeType
 	copy_AttributeTypeAndValue
 	copy_AttributeValue
@@ -402,7 +421,9 @@ EXPORTS
 	copy_HardwareModules
 	copy_HardwareSerialEntry
 	copy_heim_any
+	copy_HEIM_ANY
 	copy_heim_any_set
+	copy_HEIM_ANY_SET
 	copy_HostAddress
 	copy_HostAddresses
 	copy_ImplementedCompressAlgorithms
@@ -432,11 +453,11 @@ EXPORTS
 	copy_KeyIdentifier
 	copy_KeyTransRecipientInfo
 	copy_KeyUsage
-	copy_krb5int32
+	copy_Krb5Int32
 	copy_KRB5PrincipalName
 	copy_KRB5SignedPath
 	copy_KRB5SignedPathData
-	copy_krb5uint32
+	copy_Krb5UInt32
 	copy_KRB_CRED
 	copy_KrbCredInfo
 	copy_KRB_ERROR
@@ -532,6 +553,7 @@ EXPORTS
 	copy_PkinitSP80056AOtherInfo
 	copy_PkinitSuppPubInfo
 	copy_PKIXXmppAddr
+	copy_PolicyConstraints
 	copy_PolicyInformation
 	copy_PolicyMapping
 	copy_PolicyMappings
@@ -566,8 +588,11 @@ EXPORTS
 	copy_SignerIdentifier
 	copy_SignerInfo
 	copy_SignerInfos
+	copy_SingleAttribute
+	copy_SkipCerts
 	copy_SRVName
 	copy_StrengthOfFunction
+	copy_SubjectDirectoryAttributes
 	copy_SubjectInfoAccessSyntax
 	copy_SubjectKeyIdentifier
 	copy_SubjectPublicKeyInfo
@@ -599,6 +624,12 @@ EXPORTS
 	copy_VendorLoadErrorCode
 	copy_Version
 	copy_WrappedFirmwareKey
+	copy_X520CommonName
+	copy_X520LocalityName
+	copy_X520name
+	copy_X520OrganizationalUnitName
+	copy_X520OrganizationName
+	copy_X520StateOrProvinceName
 	copy_X690SampleChildInformation
 	copy_X690SampleDate
 	copy_X690SampleEmployeeNumber
@@ -612,12 +643,16 @@ EXPORTS
 	decode_AD_LoginAlias
 	decode_AD_MANDATORY_FOR_KDC
 	decode_AlgorithmIdentifier
+	decode_AliasIA5String
+	decode_AliasPrintableString
+	decode_AliasUTF8String
 	decode_APOptions
 	decode_AP_REP
 	decode_AP_REQ
 	decode_AS_REP
 	decode_AS_REQ
 	decode_Attribute
+	decode_AttributeSet
 	decode_AttributeType
 	decode_AttributeTypeAndValue
 	decode_AttributeValue
@@ -740,7 +775,9 @@ EXPORTS
 	decode_HardwareModules
 	decode_HardwareSerialEntry
 	decode_heim_any
+	decode_HEIM_ANY
 	decode_heim_any_set
+	decode_HEIM_ANY_SET
 	decode_HostAddress
 	decode_HostAddresses
 	decode_ImplementedCompressAlgorithms
@@ -770,11 +807,11 @@ EXPORTS
 	decode_KeyIdentifier
 	decode_KeyTransRecipientInfo
 	decode_KeyUsage
-	decode_krb5int32
+	decode_Krb5Int32
 	decode_KRB5PrincipalName
 	decode_KRB5SignedPath
 	decode_KRB5SignedPathData
-	decode_krb5uint32
+	decode_Krb5UInt32
 	decode_KRB_CRED
 	decode_KrbCredInfo
 	decode_KRB_ERROR
@@ -870,6 +907,7 @@ EXPORTS
 	decode_PkinitSP80056AOtherInfo
 	decode_PkinitSuppPubInfo
 	decode_PKIXXmppAddr
+	decode_PolicyConstraints
 	decode_PolicyInformation
 	decode_PolicyMapping
 	decode_PolicyMappings
@@ -904,8 +942,11 @@ EXPORTS
 	decode_SignerIdentifier
 	decode_SignerInfo
 	decode_SignerInfos
+	decode_SingleAttribute
+	decode_SkipCerts
 	decode_SRVName
 	decode_StrengthOfFunction
+	decode_SubjectDirectoryAttributes
 	decode_SubjectInfoAccessSyntax
 	decode_SubjectKeyIdentifier
 	decode_SubjectPublicKeyInfo
@@ -937,6 +978,12 @@ EXPORTS
 	decode_VendorLoadErrorCode
 	decode_Version
 	decode_WrappedFirmwareKey
+	decode_X520CommonName
+	decode_X520LocalityName
+	decode_X520name
+	decode_X520OrganizationalUnitName
+	decode_X520OrganizationName
+	decode_X520StateOrProvinceName
 	decode_X690SampleChildInformation
 	decode_X690SampleDate
 	decode_X690SampleEmployeeNumber
@@ -1042,9 +1089,27 @@ EXPORTS
 	der_parse_heim_oid
 	der_parse_hex_heim_integer
 	der_printable_string_cmp
+	der_print_bit_string
+	der_print_bmp_string
+	der_print_boolean
+	der_print_generalized_time
+	der_print_general_string
+	der_print_heim_integer
 	der_print_heim_oid
 	der_print_heim_oid_sym
 	der_print_hex_heim_integer
+	der_print_ia5_string
+	der_print_integer
+	der_print_integer64
+	der_print_octet_string
+	der_print_oid
+	der_print_printable_string
+	der_print_universal_string
+	der_print_unsigned
+	der_print_unsigned64
+	der_print_utctime
+	der_print_utf8string
+	der_print_visible_string
 	der_put_bit_string
 	der_put_bmp_string
 	der_put_boolean
@@ -1078,12 +1143,16 @@ EXPORTS
 	encode_AD_LoginAlias
 	encode_AD_MANDATORY_FOR_KDC
 	encode_AlgorithmIdentifier
+	encode_AliasIA5String
+	encode_AliasPrintableString
+	encode_AliasUTF8String
 	encode_APOptions
 	encode_AP_REP
 	encode_AP_REQ
 	encode_AS_REP
 	encode_AS_REQ
 	encode_Attribute
+	encode_AttributeSet
 	encode_AttributeType
 	encode_AttributeTypeAndValue
 	encode_AttributeValue
@@ -1206,7 +1275,9 @@ EXPORTS
 	encode_HardwareModules
 	encode_HardwareSerialEntry
 	encode_heim_any
+	encode_HEIM_ANY
 	encode_heim_any_set
+	encode_HEIM_ANY_SET
 	encode_HostAddress
 	encode_HostAddresses
 	encode_ImplementedCompressAlgorithms
@@ -1236,11 +1307,11 @@ EXPORTS
 	encode_KeyIdentifier
 	encode_KeyTransRecipientInfo
 	encode_KeyUsage
-	encode_krb5int32
+	encode_Krb5Int32
 	encode_KRB5PrincipalName
 	encode_KRB5SignedPath
 	encode_KRB5SignedPathData
-	encode_krb5uint32
+	encode_Krb5UInt32
 	encode_KRB_CRED
 	encode_KrbCredInfo
 	encode_KRB_ERROR
@@ -1336,6 +1407,7 @@ EXPORTS
 	encode_PkinitSP80056AOtherInfo
 	encode_PkinitSuppPubInfo
 	encode_PKIXXmppAddr
+	encode_PolicyConstraints
 	encode_PolicyInformation
 	encode_PolicyMapping
 	encode_PolicyMappings
@@ -1370,8 +1442,11 @@ EXPORTS
 	encode_SignerIdentifier
 	encode_SignerInfo
 	encode_SignerInfos
+	encode_SingleAttribute
+	encode_SkipCerts
 	encode_SRVName
 	encode_StrengthOfFunction
+	encode_SubjectDirectoryAttributes
 	encode_SubjectInfoAccessSyntax
 	encode_SubjectKeyIdentifier
 	encode_SubjectPublicKeyInfo
@@ -1403,6 +1478,12 @@ EXPORTS
 	encode_VendorLoadErrorCode
 	encode_Version
 	encode_WrappedFirmwareKey
+	encode_X520CommonName
+	encode_X520LocalityName
+	encode_X520name
+	encode_X520OrganizationalUnitName
+	encode_X520OrganizationName
+	encode_X520StateOrProvinceName
 	encode_X690SampleChildInformation
 	encode_X690SampleDate
 	encode_X690SampleEmployeeNumber
@@ -1417,12 +1498,16 @@ EXPORTS
 	free_AD_LoginAlias
 	free_AD_MANDATORY_FOR_KDC
 	free_AlgorithmIdentifier
+	free_AliasIA5String
+	free_AliasPrintableString
+	free_AliasUTF8String
 	free_APOptions
 	free_AP_REP
 	free_AP_REQ
 	free_AS_REP
 	free_AS_REQ
 	free_Attribute
+	free_AttributeSet
 	free_AttributeType
 	free_AttributeTypeAndValue
 	free_AttributeValue
@@ -1545,7 +1630,9 @@ EXPORTS
 	free_HardwareModules
 	free_HardwareSerialEntry
 	free_heim_any
+	free_HEIM_ANY
 	free_heim_any_set
+	free_HEIM_ANY_SET
 	free_HostAddress
 	free_HostAddresses
 	free_ImplementedCompressAlgorithms
@@ -1575,11 +1662,11 @@ EXPORTS
 	free_KeyIdentifier
 	free_KeyTransRecipientInfo
 	free_KeyUsage
-	free_krb5int32
+	free_Krb5Int32
 	free_KRB5PrincipalName
 	free_KRB5SignedPath
 	free_KRB5SignedPathData
-	free_krb5uint32
+	free_Krb5UInt32
 	free_KRB_CRED
 	free_KrbCredInfo
 	free_KRB_ERROR
@@ -1675,6 +1762,7 @@ EXPORTS
 	free_PkinitSP80056AOtherInfo
 	free_PkinitSuppPubInfo
 	free_PKIXXmppAddr
+	free_PolicyConstraints
 	free_PolicyInformation
 	free_PolicyMapping
 	free_PolicyMappings
@@ -1709,8 +1797,11 @@ EXPORTS
 	free_SignerIdentifier
 	free_SignerInfo
 	free_SignerInfos
+	free_SingleAttribute
+	free_SkipCerts
 	free_SRVName
 	free_StrengthOfFunction
+	free_SubjectDirectoryAttributes
 	free_SubjectInfoAccessSyntax
 	free_SubjectKeyIdentifier
 	free_SubjectPublicKeyInfo
@@ -1742,12 +1833,19 @@ EXPORTS
 	free_VendorLoadErrorCode
 	free_Version
 	free_WrappedFirmwareKey
+	free_X520CommonName
+	free_X520LocalityName
+	free_X520name
+	free_X520OrganizationalUnitName
+	free_X520OrganizationName
+	free_X520StateOrProvinceName
 	free_X690SampleChildInformation
 	free_X690SampleDate
 	free_X690SampleEmployeeNumber
 	free_X690SampleName
 	free_X690SamplePersonnelRecord
 	heim_any_cmp
+	HEIM_ANY_cmp
 	_heim_der_set_sort
 	_heim_fix_dce
 	_heim_len_int
@@ -1777,12 +1875,16 @@ EXPORTS
 	length_AD_LoginAlias
 	length_AD_MANDATORY_FOR_KDC
 	length_AlgorithmIdentifier
+	length_AliasIA5String
+	length_AliasPrintableString
+	length_AliasUTF8String
 	length_APOptions
 	length_AP_REP
 	length_AP_REQ
 	length_AS_REP
 	length_AS_REQ
 	length_Attribute
+	length_AttributeSet
 	length_AttributeType
 	length_AttributeTypeAndValue
 	length_AttributeValue
@@ -1905,7 +2007,9 @@ EXPORTS
 	length_HardwareModules
 	length_HardwareSerialEntry
 	length_heim_any
+	length_HEIM_ANY
 	length_heim_any_set
+	length_HEIM_ANY_SET
 	length_HostAddress
 	length_HostAddresses
 	length_ImplementedCompressAlgorithms
@@ -1935,11 +2039,11 @@ EXPORTS
 	length_KeyIdentifier
 	length_KeyTransRecipientInfo
 	length_KeyUsage
-	length_krb5int32
+	length_Krb5Int32
 	length_KRB5PrincipalName
 	length_KRB5SignedPath
 	length_KRB5SignedPathData
-	length_krb5uint32
+	length_Krb5UInt32
 	length_KRB_CRED
 	length_KrbCredInfo
 	length_KRB_ERROR
@@ -2035,6 +2139,7 @@ EXPORTS
 	length_PkinitSP80056AOtherInfo
 	length_PkinitSuppPubInfo
 	length_PKIXXmppAddr
+	length_PolicyConstraints
 	length_PolicyInformation
 	length_PolicyMapping
 	length_PolicyMappings
@@ -2069,8 +2174,11 @@ EXPORTS
 	length_SignerIdentifier
 	length_SignerInfo
 	length_SignerInfos
+	length_SingleAttribute
+	length_SkipCerts
 	length_SRVName
 	length_StrengthOfFunction
+	length_SubjectDirectoryAttributes
 	length_SubjectInfoAccessSyntax
 	length_SubjectKeyIdentifier
 	length_SubjectPublicKeyInfo
@@ -2102,6 +2210,12 @@ EXPORTS
 	length_VendorLoadErrorCode
 	length_Version
 	length_WrappedFirmwareKey
+	length_X520CommonName
+	length_X520LocalityName
+	length_X520name
+	length_X520OrganizationalUnitName
+	length_X520OrganizationName
+	length_X520StateOrProvinceName
 	length_X690SampleChildInformation
 	length_X690SampleDate
 	length_X690SampleEmployeeNumber

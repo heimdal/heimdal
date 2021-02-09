@@ -1060,14 +1060,14 @@ check_basic_constraints(hx509_context context, const Certificate *cert,
 	return ret;
     switch(type) {
     case PROXY_CERT:
-	if (bc.cA != NULL && *bc.cA)
+	if (bc.cA)
 	    ret = HX509_PARENT_IS_CA;
 	break;
     case EE_CERT:
 	ret = 0;
 	break;
     case CA_CERT:
-	if (bc.cA == NULL || !*bc.cA)
+	if (!bc.cA)
 	    ret = HX509_PARENT_NOT_CA;
 	else if (bc.pathLenConstraint)
 	    if (depth - 1 > *bc.pathLenConstraint)

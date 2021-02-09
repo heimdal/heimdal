@@ -122,6 +122,8 @@ struct mbuf;
 
 
 #include <krb5_asn1.h>
+typedef Krb5Int32 krb5int32;
+typedef Krb5UInt32 krb5uint32;
 #include <pkinit_asn1.h>
 
 struct send_to_kdc;

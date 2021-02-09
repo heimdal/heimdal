@@ -2255,7 +2255,7 @@ _kdc_as_rep(astgs_request_t r)
 	copy_HostAddresses(b->addresses, r->et.caddr);
     }
 
-    r->et.transited.tr_type = DOMAIN_X500_COMPRESS;
+    r->et.transited.tr_type = domain_X500_Compress;
     krb5_data_zero(&r->et.transited.contents);
 
     /* The MIT ASN.1 library (obviously) doesn't tell lengths encoded

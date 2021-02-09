@@ -37,7 +37,6 @@
 #define HEIMDAL_HX509_H 1
 
 #include <rfc2459_asn1.h>
-#include <rfc4043_asn1.h>
 #include <rfc4108_asn1.h>
 #include <stdarg.h>
 #include <stdio.h>

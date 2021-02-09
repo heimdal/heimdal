@@ -103,17 +103,9 @@ generate_units (const Type *t, const char *gen_name)
 {
     Member *m;
 
-    if (template_flag) {
-	fprintf (headerfile,
-		 "extern const struct units *asn1_%s_table_units;\n",
-		 gen_name);
-	fprintf (headerfile, "#define asn1_%s_units() (asn1_%s_table_units)\n",
-		 gen_name, gen_name);
-    } else {
-	fprintf (headerfile,
-		 "const struct units * asn1_%s_units(void);\n",
-		 gen_name);
-    }
+    fprintf (headerfile,
+             "const struct units * asn1_%s_units(void);\n",
+             gen_name);
 
     fprintf (get_code_file(),
 	     "static struct units %s_units[] = {\n",
@@ -130,16 +122,11 @@ generate_units (const Type *t, const char *gen_name)
 	     "\t{NULL,\t0}\n"
 	     "};\n\n");
 
-    if (template_flag)
-	fprintf (get_code_file(),
-		 "const struct units * asn1_%s_table_units = %s_units;\n",
-		 gen_name, gen_name);
-    else
-	fprintf (get_code_file(),
-		 "const struct units * asn1_%s_units(void){\n"
-		 "return %s_units;\n"
-		 "}\n\n",
-		 gen_name, gen_name);
+    fprintf (get_code_file(),
+             "const struct units * asn1_%s_units(void){\n"
+             "return %s_units;\n"
+             "}\n\n",
+             gen_name, gen_name);
 
 
 }

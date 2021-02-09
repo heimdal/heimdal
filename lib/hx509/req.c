@@ -530,10 +530,7 @@ get_exts(hx509_context context,
 
         memset(&e, 0, sizeof(e));
         /* The critical field needs to be made DEFAULT FALSE... */
-        if ((e.critical = malloc(sizeof(*e.critical))) == NULL)
-            ret = ENOMEM;
-        if (ret == 0)
-            *e.critical = 1;
+        e.critical = 1;
         if (ret == 0)
             ASN1_MALLOC_ENCODE(KeyUsage, e.extnValue.data, e.extnValue.length,
                                &req->ku, &size, ret);
@@ -547,10 +544,7 @@ get_exts(hx509_context context,
         Extension e;
 
         memset(&e, 0, sizeof(e));
-        if ((e.critical = malloc(sizeof(*e.critical))) == NULL)
-            ret = ENOMEM;
-        if (ret == 0)
-            *e.critical = 1;
+        e.critical = 1;
         if (ret == 0)
             ASN1_MALLOC_ENCODE(ExtKeyUsage,
                                e.extnValue.data, e.extnValue.length,
@@ -570,17 +564,11 @@ get_exts(hx509_context context,
          *
          * The empty DN check could probably stand to be a function we export.
          */
-        e.critical = NULL;
+        e.critical = FALSE;
         if (req->name &&
             req->name->der_name.element == choice_Name_rdnSequence &&
-            req->name->der_name.u.rdnSequence.len == 0) {
-
-            if ((e.critical = malloc(sizeof(*e.critical))) == NULL)
-                ret = ENOMEM;
-            if (ret == 0) {
-                *e.critical = 1;
-            }
-        }
+            req->name->der_name.u.rdnSequence.len == 0)
+            e.critical = 1;
         if (ret == 0)
             ASN1_MALLOC_ENCODE(GeneralNames,
                                e.extnValue.data, e.extnValue.length,
@@ -1241,7 +1229,7 @@ san_map_type(GeneralName *san)
         { &asn1_oid_id_pkinit_san, HX509_SAN_TYPE_PKINIT },
         { &asn1_oid_id_pkix_on_xmppAddr, HX509_SAN_TYPE_XMPP },
         { &asn1_oid_id_pkinit_ms_san, HX509_SAN_TYPE_MS_UPN },
-        { &asn1_oid_id_on_permanentIdentifier, HX509_SAN_TYPE_PERMANENT_ID },
+        { &asn1_oid_id_pkix_on_permanentIdentifier, HX509_SAN_TYPE_PERMANENT_ID },
         { &asn1_oid_id_on_hardwareModuleName, HX509_SAN_TYPE_HW_MODULE },
     };
     size_t i;

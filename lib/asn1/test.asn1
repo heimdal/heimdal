@@ -4,7 +4,7 @@ TEST DEFINITIONS ::=
 
 BEGIN
 
-IMPORTS heim_any FROM heim;
+IMPORTS HEIM_ANY FROM heim;
 
 -- Check that we handle out of order definitions.
 -- The compiler should emit the definition of TESTOutOfOrderBar before that of
@@ -103,7 +103,7 @@ TESTAllocInner ::= SEQUENCE {
 TESTAlloc ::= SEQUENCE {
 	  tagless TESTAllocInner OPTIONAL,
 	  three [1] INTEGER (-2147483648..2147483647),
-	  tagless2 heim_any OPTIONAL
+	  tagless2 HEIM_ANY OPTIONAL
 }
 
 TESTOptional ::= SEQUENCE {
@@ -117,22 +117,22 @@ TESTENCODEDBY ::= OCTET STRING ( ENCODED BY
   { joint-iso-itu-t(2) asn(1) ber-derived(2) distinguished-encoding(1) }
 )
 
-TESTDer OBJECT IDENTIFIER ::= {
+testDer OBJECT IDENTIFIER ::= {
 	joint-iso-itu-t(2) asn(1) ber-derived(2) distinguished-encoding(1)
 }
 
-TESTCONTAININGENCODEDBY ::= OCTET STRING ( CONTAINING INTEGER ENCODED BY
+testContainingEncodedBy ::= OCTET STRING ( CONTAINING INTEGER ENCODED BY
   { joint-iso-itu-t(2) asn(1) ber-derived(2) distinguished-encoding(1) }
 )
 
-TESTCONTAININGENCODEDBY2 ::= OCTET STRING (
-	CONTAINING INTEGER ENCODED BY TESTDer
+testContainingEncodedBy2 ::= OCTET STRING (
+	CONTAINING INTEGER ENCODED BY testDer
 )
 
 
-TESTValue1 INTEGER ::= 1
+testValue1 INTEGER ::= 1
 
-TESTUSERCONSTRAINED ::= OCTET STRING (CONSTRAINED BY { -- meh -- })
+testUserConstrained ::= OCTET STRING (CONSTRAINED BY { -- meh -- })
 -- TESTUSERCONSTRAINED2 ::= OCTET STRING (CONSTRAINED BY { TESTInteger })
 -- TESTUSERCONSTRAINED3 ::= OCTET STRING (CONSTRAINED BY { INTEGER })
 -- TESTUSERCONSTRAINED4 ::= OCTET STRING (CONSTRAINED BY { INTEGER : 1 })
@@ -249,5 +249,41 @@ TESTLargeBitString ::= BIT STRING {
 
 TESTMechType::= OBJECT IDENTIFIER
 TESTMechTypeList ::= SEQUENCE OF TESTMechType
+
+
+-- IOS stuff
+_EXTENSION ::= CLASS {
+    &id  OBJECT IDENTIFIER UNIQUE,
+    &ExtnType,
+    &Critical    BOOLEAN DEFAULT FALSE
+}
+
+TESTExtension{_EXTENSION:ExtensionSet} ::= SEQUENCE {
+    extnID      _EXTENSION.&id({ExtensionSet}),
+    critical    BOOLEAN
+--                     (EXTENSION.&Critical({ExtensionSet}{@extnID}))
+                     DEFAULT FALSE,
+    extnValue   OCTET STRING (CONTAINING
+                _EXTENSION.&ExtnType({ExtensionSet}{@extnID}))
+}
+
+id-test-default OBJECT IDENTIFIER ::=  { 1 2 3 4 }
+testext-TESTDefault _EXTENSION ::= {
+     &id id-test-default,
+     &Critical FALSE,
+     &ExtnType TESTDefault
+}
+
+-- And Here's an object set for the EXTENSION CLASS collecting a bunch of
+-- related extensions (here they are the extensions that certificates can
+-- carry in their extensions member):
+TestExtensions _EXTENSION ::= { testext-TESTDefault }
+
+TESTExtension ::= TESTExtension { TestExtensions }
+
+TESTExtensible ::= SEQUENCE {
+  version     INTEGER,
+  extensions  SEQUENCE OF TESTExtension
+}
 
 END

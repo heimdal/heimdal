@@ -7,6 +7,7 @@
  3. [ASN.1 IOS, Constraint, and Parameterization](#asn1-ios-constraint-and-parameterization)
     - [IOS Crash Course](#ios-crash-course)
  4. [Implementation Thoughts](#implementation-thoughts)
+ 5. [Moving From C](#moving-from-c)
 
 ## Introduction
 
@@ -19,23 +20,25 @@ Various extensions are specified in other X.680 series documents:
  - X.683: Parameterization of ASN.1 specifications
 
 While X.680 is essential for implementing many Internet (and other) protocols,
-implementing a subset of X.681, X.682, and X.683, can enable some magical
-features.  These magical features are generally not the focus of those ITU-T
-specifications nor of many RFCs that make use of them.
+and sufficient for implementing all of those, implementing a subset of X.681,
+X.682, and X.683, can enable some magical features.  These magical features are
+generally not the focus of those ITU-T specifications nor of many RFCs that
+make use of them.
 
 The intent of X.681, X.682, and X.683 is to add ways to formally express
-constraints that would otherwise require natural language to express.  But give
-a compiler more formally-expressed constraints and it can do more labor-saving
+constraints that would otherwise require natural language to express.  Give a
+compiler more formally-expressed constraints and it can do more labor-saving
 than it could otherwise.
 
 This README will cover some ideas for what this magic will be, and
 implementation of it.
 
 RFC 6025 does an excellent job of elucidating X.681, which otherwise most
-readers unfamiliar with it will no doubt find inscrutable.
+readers unfamiliar with it will no doubt find inscrutable.  Hopefully this
+README improces that further.
 
 The magic that we're after is simply the *automatic and recursive handling of
-open types by the Heimdal ASN.1 compiler*.
+open types by an ASN.1 compiler*.
 
 Combined with future support for the ASN.1 JSON Encoding Rules (JER) [X.697],
 the automatic handling of open types should allow us to trivially implement a
@@ -46,9 +49,12 @@ encoding rules.  I.e., dump DER to JSON, and parse JSON to output DER.
 Combined with transcoders for JSON/CBOR and other binary-JSON formats, we could
 support those encodings too.
 
+We could really see how much space OER/JER/CBOR save over DER for Kerberos
+tickets, PKIX certificates, and much else.
+
 We especially want this for PKIX, and more than anything for certificates, as
-the TBSCertificate type is full of open types: DN and subjectDirectory
-attributes, otherName SAN types, and certificate extensions.
+the TBSCertificate type is full of deeply nested open types: DN and
+subjectDirectory attributes, otherName SAN types, and certificate extensions.
 
 Besides a magical ASN.1 DER/JER dumper/transcoder utility, we want to replace
 DN attribute and subject alternative name (SAN) `otherName` tables and much
@@ -406,21 +412,26 @@ zero, one, or more "objects".  Each object has settings for all required fields
 of a class, and possibly also for optional/defaulted fields as well.
 
 IOS object sets really are akin to relational database tables, while objects
-are akin to rows of the same.  And classes?  They're like a specification of
-relational database tables that object sets derive.
+are akin to rows of the same, with columns specified by classes.  Or one can
+think of classes as tables with one predefined column naming object sets, rows
+being objects grouped into oject sets by that column.  IOS supports complex
+path expressions across these objects (but we won't need that yet).
 
-So far, that is so useless to us: we have no need to specify constant (because
-defined in compiled modules) relational data.
+These relational entities are constant in that they are defined in ASN.1
+modules that are compiled.  There is no way to change them at run-time, only
+query them.  They also have no on-the-wire representation.
 
-The magic for us lies in being able to document and constrain actual types
-using IOS classes and object sets.  We want to use classes and object sets to
-constrain `SET` or `SEQUENCE` types (well, really, just `SEQUENCE`) in such a
-way that the compiler can auto-generate decoding and encoding of values of open
-types.
+So far, the IOS seems just so useless to us: we have some, but non-urgent need
+to specify constant relational data.
 
-`SET` and `SEQUENCE` types have "members".
+The magic for us lies in being able to document and constrain actual datatypes
+using the IOS.  We want to use classes and object sets to constrain `SET` or
+`SEQUENCE` types (well, really, just `SEQUENCE`) so that our ASN.1 compiler can
+have the metadata it needs in ordr to auto-generate decoding and encoding of
+values of open types.
 
-Classes and objects have "fields".
+A termnology point: `SET` and `SEQUENCE` types have "members", but classes and
+objects have "fields".
 
 Objects of a class have all the required fields of a class and any of the
 `OPTIONAL` or `DEFAULT` fields of the class.  This is very similar to
@@ -432,9 +443,9 @@ struct or object types.
 
 There are several kinds of fields of classes.  These can be confusing, so it's
 essential that we explain them by reference to how they relate to the members
-of `SEQUENCE` types derived from a class:
+of `SEQUENCE` types constrained by object sets:
 
- - a `type field` of a class is one that specifies a SET or SEQUENCE member of
+ - A `type field` of a class is one that specifies a SET or SEQUENCE member of
    unknown (open) type.
 
    The type of that SET or SEQUENCE member will not be not truly unknown, but
@@ -442,22 +453,28 @@ of `SEQUENCE` types derived from a class:
    specified in a "value field" (or "value set" field) an "object" in an
    "object set" of that class.
 
- - a `fixed type value field` of a class is one that specifies a SET or
-   SEQUENCE member of fixed type.
+   This is essentially a "type variable", as is seen in high-level languages
+   like Haskell.
 
- - a `fixed type value set field` of a class is like a `fixed type value field`,
-   but where object sets should provide a set of values for the SET or SEQUENCE
-   member corresponding to the field.
+ - A `fixed type value field` of a class is one that specifies a SET or
+   SEQUENCE member of fixed type.  Being of fixed-type, this is not a type
+   variable.
 
- - a `variable type value [set] field` is one where the type of the SET or
-   SEQUENCE member corresponding to the field will vary according to some
+ - A `fixed type value set field` of a class is like a `fixed type value
+   field`, but where object sets should provide a set of values with which to
+   constrain `SET`/`SEQUENCE` members corresponding to the field.
+
+ - A `variable type value [set] field` is one where the type of the `SET` or
+   `SEQUENCE` member corresponding to the field will vary according to some
    specified `type field` of the same class.
 
- - an `object field` will be a field that names another class (possibly the
+ - An `object field` will be a field that names another class (possibly the
    same class), which can be used to provide rich hierarchical type semantics
    that... we don't need for PKIX.
 
- - similarly for `object set field`s.
+   These define relations between classes, much like `FOREIGN KEY`s in SQL.
+
+ - Similarly for `object set field`s.
 
 As usual for ASN.1, the case of the first letter of a field name is meaningful:
 
@@ -618,8 +635,9 @@ class and others are not, or where multiple classes are used.
 
 In the case of `INSTANCE OF`, what shall the names of the members of the
 derived type be?  Well, such types can _only_ be instances of `TYPE-IDENTIFIER`
-or classes isomorphic to it (as `OTHER-NAME` is in the above exammle), and so
-the names of their two members are just baked in by X.681 annex C.1 as:
+or classes copied from and isomorphic to it (as `OTHER-NAME` is in the above
+exammle), and so the names of their two members are just baked in by X.681
+annex C.1 as:
 
 ```ASN.1
     SEQUENCE {
@@ -630,7 +648,8 @@ the names of their two members are just baked in by X.681 annex C.1 as:
     -- `TYPE-IDENTIFIER` or exactly like it.
 ```
 
-(This means we can't use `INSTANCE OF` with `EXTENSION`.)
+(This means we can't use `INSTANCE OF` with `EXTENSION`, though we can for
+`OTHER-NAME`.)
 
 PKIX has much more complex classes for relating and constraining cryptographic
 algorithms and their parameters:
@@ -653,7 +672,12 @@ only be used by the codecs at run-time to perform validation of, e.g.,
 cryptographic algorithm parameters, but also to provide those rules to other
 code in the application so that the programmer doesn't have to manually write
 the same in C, C++, Java, etc, and can refer to them when applying those
-cryptographic algorithms.
+cryptographic algorithms.  And, of course, the object sets for the above
+classes can be and are specified in standards documents, making it very easy to
+import them into projects that have an IOS-capable ASN.1 compiler.
+
+Still, for Heimdal we won't bother with the full power of X.681/X.682/X.683 for
+now.
 
 
 ## Implementation Thoughts
@@ -679,11 +703,11 @@ cryptographic algorithms.
    qualifiers, the works.
 
  - We'll really want to do this mainly for the template compiler and begin
-   abandoning the original compiler -- hacking on two compilers is difficult,
-   and the template compiler is superior just on account of emitted code size
-   scaling as `O(N)` instead of `O(M * N)` where `M` is the number of encoding
-   rules supported and `N` is the number of types in an ASN.1 module (or all
-   modules).
+   abandoning the original compiler -- maintaining and developing two compiler
+   backends is difficult enough, but the template compiler is superior just on
+   account of emitted code size scaling as `O(N)` instead of `O(M * N)` where
+   `M` is the number of encoding rules supported and `N` is the number of types
+   in an ASN.1 module (or all modules).
 
  - Also, to make the transition to using IOS in-tree, we'll want to keep
    existing fields of C structures as generated by the compiler today, only
@@ -691,7 +715,7 @@ cryptographic algorithms.
    encoding/decoding can still work and we can then update Heimdal in-tree
    slowly to take advantage of the new magic.
 
-   Thus `Extension` should compile to:
+   Thus `Extension` should compile to something like:
 
 ```C
     typedef struct Extension {
@@ -722,14 +746,14 @@ cryptographic algorithms.
    fields.
 
    In both cases, the `critical` field should get used as-is.  The rule should
-   be that we support *two* special fields: a hole type ID enum field, and a
-   decoded hole value union.  All other fields will map to either normal
-   members of the SET/SEQUENCE, or to members that are derived from a CLASS but
-   which are neither hole type ID fields nor hole fields.
+   be that we support *two* special C struct fields for open types: a hole type
+   ID enum field, and a decoded hole value union.  All other fields will map to
+   either normal (possibly constrained) members of the SET/SEQUENCE.
 
  - Type ID values must get mapped to discrete enum values.  We'll want type IDs
-   to be sorted, too, so that we can binary search the "object set" when
-   decoding.  For encoding we'll want to "switch" on the mapped type ID enum.
+   to be sorted, too, so that we can binary search the object set's template
+   when decoding for extra speed.  For encoding we'll want to "switch" on the
+   mapped type ID enum, directly indexing the template for the object set.
 
  - The ASN.1 parser merely builds an AST.  That will not change.
 
@@ -744,3 +768,11 @@ cryptographic algorithms.
 
    Perhaps we'll inline the objects for locality of reference.
 
+
+## Moving From C
+
+ - Generate a JSON representation of each ASN.1 module
+
+ - Code codegen/templategen backends in jq or Haskell or whatever
+
+ - Code template interpreters in &lt;host&gt; language

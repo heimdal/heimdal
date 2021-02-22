@@ -60,6 +60,7 @@ if [ ! -d "$nistdir" ] ; then
 	{ rm -rf "$nistdir" ; exit 1; }
 fi
 
+ec=0
 while read id verify cert arg1 arg2 arg3 arg4 arg5 ; do
     expr "$id" : "#" > /dev/null && continue
     
@@ -98,14 +99,14 @@ while read id verify cert arg1 arg2 arg3 arg4 arg5 ; do
 
     if ${hxtool} verify --time=2008-05-20 $args > /dev/null; then
 	if test "$verify" = "f"; then
+            echo ${hxtool} verify --time=2008-05-20 $args
 	    echo "verify passed on fail: $id $cert"
-	    exit 1
+	    ec=1
 	fi
-    else
-	if test "$verify" = "p"; then
-	    echo "verify failed on pass: $id $cert"
-	    exit 1
-	fi
+    elif test "$verify" = "p"; then
+        echo ${hxtool} verify --time=2008-05-20 $args
+        echo "verify failed on pass: $id $cert"
+        ec=1
     fi
 
 done < $srcdir/data/nist-data
@@ -113,4 +114,4 @@ done < $srcdir/data/nist-data
 
 echo "done!"
 
-exit 0
+exit $ec

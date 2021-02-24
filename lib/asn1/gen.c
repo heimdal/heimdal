@@ -237,6 +237,11 @@ init_generate (const char *filename, const char *base)
 	     "typedef struct heim_base_data heim_any_set;\n"
 	     "typedef struct heim_base_data HEIM_ANY;\n"
 	     "typedef struct heim_base_data HEIM_ANY_SET;\n\n");
+
+    fprintf (headerfile,
+             "enum asn1_print_flags {\n"
+             "   ASN1_PRINT_INDENT = 1,\n"
+             "};\n\n");
     fputs("#define ASN1_MALLOC_ENCODE(T, B, BL, S, L, R)                  \\\n"
 	  "  do {                                                         \\\n"
 	  "    (BL) = length_##T((S));                                    \\\n"
@@ -1674,6 +1679,12 @@ generate_type (const Symbol *s)
 	     "%svoid   ASN1CALL free_%s  (%s *);\n",
 	     exp,
 	     s->gen_name, s->gen_name);
+
+    if (template_flag)
+        fprintf(h,
+                "%schar * ASN1CALL print_%s (const %s *, int);\n",
+                exp,
+                s->gen_name, s->gen_name);
 
     fprintf(h, "\n\n");
 

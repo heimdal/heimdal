@@ -6,7 +6,7 @@ YFLAGS = -d -t
 
 AM_CPPFLAGS += $(ROKEN_RENAME)
 
-man_MANS = asn1_compile.1
+man_MANS = asn1_print.1 asn1_compile.1
 
 lib_LTLIBRARIES = libasn1.la
 libasn1_la_LDFLAGS = -version-info 8:0:0
@@ -109,6 +109,7 @@ dist_libasn1base_la_SOURCES =			\
 	der_get.c				\
 	der_put.c				\
 	der_free.c				\
+	der_print.c				\
 	der_length.c				\
 	der_copy.c				\
 	der_cmp.c				\
@@ -132,7 +133,7 @@ asn1_compile_LDADD = \
 	$(LIB_roken) $(LEXLIB)
 
 check_der_LDADD = \
-	libasn1base.la \
+	libasn1.la \
 	$(LIB_roken)
 
 check_template_LDADD = $(check_der_LDADD)

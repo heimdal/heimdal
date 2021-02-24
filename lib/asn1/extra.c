@@ -90,6 +90,12 @@ free_heim_any(heim_any *data)
     der_free_octet_string(data);
 }
 
+char *
+print_heim_any(const heim_any *data)
+{
+    return der_print_octet_string(data, 0);
+}
+
 size_t
 length_heim_any(const heim_any *data)
 {
@@ -122,6 +128,12 @@ free_HEIM_ANY(heim_any *data)
     der_free_octet_string(data);
 }
 
+char *
+print_HEIM_ANY(const heim_any *data)
+{
+    return der_print_octet_string(data, 0);
+}
+
 size_t
 length_HEIM_ANY(const heim_any *data)
 {
@@ -152,6 +164,12 @@ void
 free_heim_any_set(heim_any_set *data)
 {
     der_free_octet_string(data);
+}
+
+char *
+print_heim_any_set(const heim_any_set *data)
+{
+    return der_print_octet_string(data, 0);
 }
 
 size_t
@@ -190,6 +208,12 @@ void
 free_HEIM_ANY_SET(heim_any_set *data)
 {
     der_free_octet_string(data);
+}
+
+char *
+print_HEIM_ANY_SET(const heim_any_set *data)
+{
+    return der_print_octet_string(data, 0);
 }
 
 size_t

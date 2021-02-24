@@ -116,6 +116,7 @@ LIBASN1_OBJS=	\
 	$(OBJ)\der_get.obj			\
 	$(OBJ)\der_put.obj			\
 	$(OBJ)\der_free.obj			\
+	$(OBJ)\der_print.obj			\
 	$(OBJ)\der_length.obj			\
 	$(OBJ)\der_copy.obj			\
 	$(OBJ)\der_cmp.obj			\
@@ -381,6 +382,7 @@ libasn1_base_SOURCES=	\
 	der_get.c	\
 	der_put.c	\
 	der_free.c	\
+	der_print.c	\
 	der_length.c	\
 	der_copy.c	\
 	der_cmp.c	\

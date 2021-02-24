@@ -159,6 +159,55 @@ make it easy to add support for encoding rules other than X.690.
  - Most of X.690 is supported for decoding, with only DER supported for
    encoding.
 
+ - We have an `asn1_print` program that can decode DER from any exported types
+   from any ASN.1 modules committed in Heimdal:
+
+   ```bash
+   $ ./asn1_print ek.crt Certificate |
+     jq '.tbsCertificate.extensions[3]._open_type[]._open_type'
+   ```
+
+   ```JSON
+   [
+     {
+       "_type": "TPMSpecification",
+       "family": "2.0",
+       "level": "0",
+       "revision": "138"
+     }
+   ]
+   [
+     {
+       "_type": "TPMSecurityAssertions",
+       "version": "0",
+       "fieldUpgradable": "1",
+       "ekGenerationType": "655617",
+       "ekGenerationLocation": "655616",
+       "ekCertificateGenerationLocation": "655616",
+       "ccInfo": {
+         "_type": "CommonCriteriaMeasures",
+         "version": "3.1",
+         "assurancelevel": "4",
+         "evaluationStatus": "2",
+         "plus": "1",
+         "strengthOfFunction": null,
+         "profileOid": null,
+         "profileUri": null,
+         "targetOid": null,
+         "targetUri": null
+       },
+       "fipsLevel": {
+         "_type": "FIPSLevel",
+         "version": "140-2",
+         "level": "2",
+         "plus": "0"
+       },
+       "iso9000Certified": "0",
+       "iso9000Uri": null
+     }
+   ]
+   ```
+
  - Unconstrained integer types have a large integer representation in C that is
    not terribly useful in common cases.  Range constraints on integer types
    cause the compiler to use `int32_t`, `int64_t`, `uint32_t`, and/or
@@ -182,6 +231,11 @@ make it easy to add support for encoding rules other than X.690.
 ...
 
 ## Limitations
+
+ - `asn1_print`'s JSON support is not X.697 (JER) compatible.
+
+ - Control over C types generated is very limited, mainly only for integer
+   types.
 
  - When using the template backend, `SET { .. }` types are currently not sorted
    by tag as they should be, but if the module author sorts them by hand then

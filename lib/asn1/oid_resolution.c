@@ -319,6 +319,7 @@ der_print_heim_oid_sym(const heim_oid *oid, char delim, char **strp)
     const char *sym;
     char *s1 = NULL;
     char *s2 = NULL;
+    char *p;
     int ret;
 
     if (der_find_heim_oid_by_oid(oid, &sym))
@@ -329,6 +330,11 @@ der_print_heim_oid_sym(const heim_oid *oid, char delim, char **strp)
     if (asprintf(&s2, "%s (%s)", s1, sym) == -1 || s2 == NULL) {
         *strp = s1;
         return 0;
+    }
+    p = s2 + strlen(s1) + 1;
+    for (p = s2 + strlen(s1) + 1; *p; p++) {
+        if (*p == '_')
+            *p = '-';
     }
     *strp = s2;
     free(s1);

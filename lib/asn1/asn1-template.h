@@ -118,9 +118,8 @@
  * offset is all ones
  */
 
-/* name: when it happens at index 1 it's the name of the SET/SEQUENCE/CHOICE
- *       when it happens at any other index it's the name of the field that the
- *       next entry deals with
+/* name: first one is the name of the SET/SEQUENCE/CHOICE type
+ *       subsequent ones are the name of the nth field
  *
  *  0..23 unused
  * 24..27 flags A1_NM_*
@@ -218,6 +217,7 @@ typedef int (ASN1CALL *asn1_type_encode)(unsigned char *, size_t, const void *, 
 typedef size_t (ASN1CALL *asn1_type_length)(const void *);
 typedef void (ASN1CALL *asn1_type_release)(void *);
 typedef int (ASN1CALL *asn1_type_copy)(const void *, void *);
+typedef char * (ASN1CALL *asn1_type_print)(const void *, int);
 
 struct asn1_type_func {
     asn1_type_encode encode;
@@ -225,6 +225,7 @@ struct asn1_type_func {
     asn1_type_length length;
     asn1_type_copy copy;
     asn1_type_release release;
+    asn1_type_print print;
     size_t size;
 };
 
@@ -279,8 +280,10 @@ _asn1_copy_top (
 	void * /*to*/);
 
 void
-_asn1_free_top(const struct asn1_template *t,
-	       void *data);
+_asn1_free_top(const struct asn1_template *, void *);
+
+char *
+_asn1_print_top(const struct asn1_template *, int, const void *);
 
 int
 _asn1_decode_top (

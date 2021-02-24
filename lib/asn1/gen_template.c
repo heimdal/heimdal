@@ -295,6 +295,8 @@ static int tlist_cmp(const struct tlist *, const struct tlist *);
 
 static void add_line_pointer(struct templatehead *, const char *, const char *, const char *, ...)
     __attribute__ ((__format__ (__printf__, 4, 5)));
+static void add_line_string(struct templatehead *, const char *, const char *, const char *, ...)
+    __attribute__ ((__format__ (__printf__, 4, 5)));
 static void add_line_pointer_reference(struct templatehead *, const char *, const char *, const char *, ...)
     __attribute__ ((__format__ (__printf__, 4, 5)));
 
@@ -384,6 +386,8 @@ tlist_cmp(const struct tlist *tl, const struct tlist *ql)
     int ret;
     struct template *t, *q;
 
+    if (tl == ql)
+        return 0;
     ret = strcmp(tl->header, ql->header);
     if (ret) return ret;
 
@@ -468,6 +472,28 @@ add_line_pointer(struct templatehead *t,
     q->tt = tt;
     q->offset = strdup(offset);
     q->ptr = strdup(ptr);
+}
+
+static void
+add_line_string(struct templatehead *t,
+		const char *str,
+		const char *offset,
+		const char *ttfmt,
+		...)
+{
+    struct template *q;
+    va_list ap;
+    char *tt = NULL;
+
+    va_start(ap, ttfmt);
+    if (vasprintf(&tt, ttfmt, ap) < 0 || tt == NULL)
+	errx(1, "malloc");
+    va_end(ap);
+
+    q = add_line(t, "{ %s, %s, \"%s\" }", tt, offset, str);
+    q->tt = tt;
+    q->offset = strdup(offset);
+    q->ptr = strdup(str);
 }
 
 static void
@@ -755,6 +781,7 @@ template_object_set(IOSObjectSet *os, Field *typeidfield, Field *opentypefield)
     sort_object_set(os, typeidfield, &objects, &nobjs);
 
     tl = tlist_new(os->symbol->name);
+    add_line(&tl->template, "{ A1_OP_NAME, 0, \"%s\" }", os->symbol->name);
     for (i = 0; i < nobjs; i++) {
         ObjectField *typeidobjf = NULL, *opentypeobjf = NULL;
         ObjectField *of;
@@ -777,6 +804,7 @@ template_object_set(IOSObjectSet *os, Field *typeidfield, Field *opentypefield)
             continue;
         }
 
+        add_line(&tl->template, "{ A1_OP_NAME, 0, \"%s\" }", o->symbol->name);
         /*
          * Some of this logic could stand to move into sanity checks of object
          * definitions in asn1parse.y.
@@ -847,6 +875,17 @@ template_open_type(struct templatehead *temp,
                      (unsigned long long)opentypeidx,
                      (unsigned long long)typeididx);
     free(s);
+}
+
+static void
+template_names(struct templatehead *temp, const char *basetype, const Type *t)
+{
+    Member *m;
+
+    add_line_string(temp, basetype, "0", "A1_OP_NAME");
+    HEIM_TAILQ_FOREACH(m, t->members, members) {
+        add_line_string(temp, m->name, "0", "A1_OP_NAME");
+    }
 }
 
 static void
@@ -968,7 +1007,7 @@ template_members(struct templatehead *temp,
 	output_name(bname);
 
 	HEIM_TAILQ_FOREACH(m, t->members, members) {
-	    add_line(&template, "{ 0, %d, 0 } /* %s */", m->val, m->gen_name);
+	    add_line(&template, "{ 0, %d, \"%s\" }", m->val, m->gen_name);
 	}
 
 	HEIM_TAILQ_FOREACH(q, &template, members) {
@@ -1038,6 +1077,9 @@ template_members(struct templatehead *temp,
             template_open_type(temp, basetype, t, typeididx, opentypeidx,
                                typeidfield, opentypefield, opentypemember,
                                is_array_of_open_type);
+
+        if (isstruct)
+            template_names(temp, basetype, t);
 	break;
     }
     case TSequence: {
@@ -1086,6 +1128,9 @@ template_members(struct templatehead *temp,
             template_open_type(temp, basetype, t, typeididx, opentypeidx,
                                typeidfield, opentypefield, opentypemember,
                                is_array_of_open_type);
+
+        if (isstruct)
+            template_names(temp, basetype, t);
 	break;
     }
     case TTag: {
@@ -1233,6 +1278,10 @@ template_members(struct templatehead *temp,
 	    free(newbasename);
 	}
 
+	HEIM_TAILQ_FOREACH(m, t->members, members) {
+            add_line(&template, "{ 0, 0, \"%s\" }", m->name);
+        }
+
 	e = NULL;
 	if (ellipsis) {
 	    if (asprintf(&e, "offsetof(%s%s, u.asn1_ellipsis)", isstruct ? "struct " : "", basetype) < 0 || e == NULL)
@@ -1276,10 +1325,11 @@ gen_extern_stubs(FILE *f, const char *name)
 	    "\t(asn1_type_length)length_%s,\n"
 	    "\t(asn1_type_copy)copy_%s,\n"
 	    "\t(asn1_type_release)free_%s,\n"
+	    "\t(asn1_type_print)print_%s,\n"
 	    "\tsizeof(%s)\n"
 	    "};\n",
 	    name, name, name, name,
-	    name, name, name);
+	    name, name, name, name);
 }
 
 void
@@ -1460,6 +1510,18 @@ generate_template(const Symbol *s)
 	    "}\n"
 	    "\n",
 	    s->gen_name,
+	    s->gen_name,
+	    s->gen_name,
+	    dupname);
+
+    fprintf(f,
+	    "\n"
+	    "char *\n"
+	    "print_%s(const %s *data, int flags)\n"
+	    "{\n"
+	    "    return _asn1_print_top(asn1_%s, flags, data);\n"
+	    "}\n"
+	    "\n",
 	    s->gen_name,
 	    s->gen_name,
 	    dupname);

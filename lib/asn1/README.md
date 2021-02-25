@@ -9,12 +9,13 @@ annotations](/lib/asn1/README-X681.md).
 
  1. [Introduction](#Introduction)
  2. [ASN.1 Support in Heimdal](#asn1-support-in-heimdal)
- 3. [Features](#Features)
- 4. [Limitations](#Limitations)
- 5. [Compiler Usage](#Compiler-usage)
- 6. [asn1_print Usage](#asn1_print-usage)
- 7. [Implementation](#implementation)
- 8. [Moving From C](#moving-from-c)
+ 3. [News](#News)
+ 4. [Features](#Features)
+ 5. [Limitations](#Limitations)
+ 6. [Compiler Usage](#Compiler-usage)
+ 7. [asn1_print Usage](#asn1_print-usage)
+ 8. [Implementation](#implementation)
+ 9. [Moving From C](#moving-from-c)
 
 ## Introduction
 
@@ -151,6 +152,26 @@ sufficient control over generated types and APIs for programming languages.
 Heimdal's ASN.1 compiler supports a large subset of X.680, X.681, X.682, and
 X.683, as well as a large subset of X.690, with an architecture that should
 make it easy to add support for encoding rules other than X.690.
+
+## News
+
+In recent times the following features have been added:
+
+ - Feature parity for the "template" backend, even superiority, as the codegen
+   backend does not yet support automatic open type decoding/encoding.
+
+ - IMPLICIT tagging support is finally complete.
+
+ - Automatic open type traversal, using a subset of X.681/X.682/X.683 for
+   expressing the requisite metadata.
+
+## Futures
+
+ - JER support?
+
+ - XDR/OER support?
+
+ - Generate comparators?  (lib/hx509 has a half-baked Certificate comparator)
 
 ## Features
 

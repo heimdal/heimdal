@@ -1,0 +1,94 @@
+.\" Copyright (c) 2021 Kungliga Tekniska Högskolan
+.\" (Royal Institute of Technology, Stockholm, Sweden).
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\"
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\"
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" 3. Neither the name of the Institute nor the names of its contributors
+.\"    may be used to endorse or promote products derived from this software
+.\"    without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE INSTITUTE AND CONTRIBUTORS ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE INSTITUTE OR CONTRIBUTORS BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.\" $Id$
+.\"
+.Dd February 22, 2021
+.Dt ASN1_PRINT 1
+.Os HEIMDAL
+.Sh NAME
+.Nm asn1_print
+.Nd dump ASN.1 DER encoded values
+.Sh SYNOPSIS
+.Nm
+.Bk -words
+.Oo Fl i \*(Ba Xo
+.Fl Fl no-indent
+.Xc
+.Oc
+.Oo Fl I \*(Ba Xo
+.Fl Fl inner
+.Xc
+.Oc
+.Oo Fl l \*(Ba Xo
+.Fl Fl list-types
+.Xc
+.Oc
+.Oo Fl l v \*(Ba Xo
+.Fl Fl version
+.Xc
+.Oc
+.Oo Fl l h \*(Ba Xo
+.Fl Fl help
+.Xc
+.Oc
+.Op Ar FILE Op Ar TypeName
+.Ek
+.Sh DESCRIPTION
+.Nm
+Dumps ASN.1 DER-encoded values.
+If a
+.Ar TypeName
+is given, then
+.Nm
+will print the value in a JSON-like format using its knowledge of
+the ASN.1 module defining that type.
+If a
+.Ar TypeName
+is given, it must be the name of an ASN.1 type exported by an
+ASN.1 module that is compiled into
+.Nm .
+Use the
+.Fl Fl list-types
+option to list ASN.1 types known to
+.Nm .
+.Pp
+Options supported:
+.Bl -tag -width Ds
+.It Fl i, Fl Fl no-indent
+Do not indent dump.
+.It Fl I, Fl Fl inner
+Try to parse inner structures of OCTET STRING and constructed values.
+.It Fl l, Fl Fl list-types
+Try to parse inner structures of OCTET STRING and constructed values.
+.It Fl v, Fl Fl version
+.It Fl h, Fl Fl help
+.El

@@ -41,6 +41,7 @@ extern int prefix_enum;
 RCSID("$Id$");
 
 FILE *privheaderfile, *headerfile, *oidsfile, *codefile, *logfile, *templatefile;
+FILE *symsfile;
 
 #define STEM "asn1"
 
@@ -285,6 +286,11 @@ init_generate (const char *filename, const char *base)
     oidsfile = fopen(fn, "w");
     if (oidsfile == NULL)
 	err (1, "open %s", fn);
+    if (asprintf(&fn, "%s_syms.x", base) < 0 || fn == NULL)
+	errx(1, "malloc");
+    symsfile = fopen(fn, "w");
+    if (symsfile == NULL)
+	err (1, "open %s", fn);
     free(fn);
     fn = NULL;
 
@@ -462,6 +468,10 @@ generate_constant (const Symbol *s)
                 "enum { %s = %lld };\n\n",
                 s->gen_name, s->gen_name, s->gen_name,
                 (long long)s->value->u.integervalue);
+        if (is_export(s->name))
+            fprintf(symsfile, "ASN1_SYM_INTVAL(\"%s\", \"%s\", %s, %lld)\n",
+                    s->name, s->gen_name, s->gen_name,
+                    (long long)s->value->u.integervalue);
 	break;
     case nullvalue:
 	break;
@@ -508,6 +518,9 @@ generate_constant (const Symbol *s)
 		 s->gen_name, (unsigned long)len, s->gen_name);
 
         fprintf(oidsfile, "DEFINE_OID_WITH_NAME(%s)\n", s->gen_name);
+        if (is_export(s->name))
+            fprintf(symsfile, "ASN1_SYM_OID(\"%s\", \"%s\", %s)\n",
+                    s->name, s->gen_name, s->gen_name);
 
 	free(list);
 
@@ -1606,6 +1619,9 @@ generate_type_header (const Symbol *s)
     if (s->emitted_definition)
         return;
 
+    if (is_export(s->name))
+        fprintf(symsfile, "ASN1_SYM_TYPE(\"%s\", \"%s\", %s)\n",
+                s->name, s->gen_name, s->gen_name);
     fprintf(headerfile, "typedef ");
     define_type(0, s->gen_name, s->gen_name, NULL, s->type, TRUE,
                 preserve_type(s->name) ? TRUE : FALSE);
@@ -1632,7 +1648,7 @@ generate_type (const Symbol *s)
     if (!one_code_file)
 	generate_header_of_codefile(s->gen_name);
 
-    generate_type_header (s);
+    generate_type_header(s);
 
     if (template_flag)
 	generate_template(s);
@@ -1691,5 +1707,5 @@ generate_type (const Symbol *s)
     if (!one_code_file) {
 	fprintf(codefile, "\n\n");
 	close_codefile();
-	}
+    }
 }

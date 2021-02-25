@@ -37,15 +37,64 @@
 #include <com_err.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <dlfcn.h>
 #include <getarg.h>
 #include <err.h>
 #include <der.h>
+#include "cms_asn1.h"
+#include "digest_asn1.h"
+#include "krb5_asn1.h"
+#include "kx509_asn1.h"
+#include "ocsp_asn1.h"
+#include "pkcs10_asn1.h"
+#include "pkcs12_asn1.h"
+#include "pkcs8_asn1.h"
+#include "pkcs9_asn1.h"
+#include "pkinit_asn1.h"
+#include "rfc2459_asn1.h"
+#include "rfc4108_asn1.h"
+#include "x690sample_asn1.h"
 
 static int indent_flag = 1;
 static int inner_flag = 0;
 
 static unsigned long indefinite_form_loop;
 static unsigned long indefinite_form_loop_max = 10000;
+
+typedef int (*decoder)(const unsigned char *, size_t, void *, size_t *);
+typedef char *(*printer)(const void *, int);
+typedef void (*releaser)(void *);
+struct types {
+    const char *name;
+    decoder decode;
+    printer print;
+    releaser release;
+    size_t sz;
+} types[] = {
+#define ASN1_SYM_INTVAL(n, gn, gns, i)
+#define ASN1_SYM_OID(n, gn, gns)
+#define ASN1_SYM_TYPE(n, gn, gns)       \
+    {                                   \
+        n,                              \
+        (decoder)decode_ ## gns,        \
+        (printer)print_ ## gns,         \
+        (releaser)free_ ## gns,         \
+        sizeof(gns)                     \
+    },
+#include "cms_asn1_syms.x"
+#include "digest_asn1_syms.x"
+#include "krb5_asn1_syms.x"
+#include "kx509_asn1_syms.x"
+#include "ocsp_asn1_syms.x"
+#include "pkcs10_asn1_syms.x"
+#include "pkcs12_asn1_syms.x"
+#include "pkcs8_asn1_syms.x"
+#include "pkcs9_asn1_syms.x"
+#include "pkinit_asn1_syms.x"
+#include "rfc2459_asn1_syms.x"
+#include "rfc4108_asn1_syms.x"
+#include "x690sample_asn1_syms.x"
+};
 
 static size_t
 loop (unsigned char *buf, size_t len, int indent)
@@ -289,44 +338,161 @@ loop (unsigned char *buf, size_t len, int indent)
 }
 
 static int
-doit (const char *filename)
+type_cmp(const void *va, const void *vb)
 {
-    int fd = open (filename, O_RDONLY);
+    const struct types *ta = (const struct types *)va;
+    const struct types *tb = (const struct types *)vb;
+
+    return strcmp(ta->name, tb->name);
+}
+
+static int
+doit(const char *filename, const char *typename)
+{
+    int fd = open(filename, O_RDONLY);
     struct stat sb;
     unsigned char *buf;
     size_t len;
     int ret;
 
     if(fd < 0)
-	err (1, "opening %s for read", filename);
+	err(1, "opening %s for read", filename);
     if (fstat (fd, &sb) < 0)
-	err (1, "stat %s", filename);
+	err(1, "stat %s", filename);
     len = sb.st_size;
-    buf = emalloc (len);
-    if (read (fd, buf, len) != len)
-	errx (1, "read failed");
-    close (fd);
-    ret = loop (buf, len, 0);
-    free (buf);
+    buf = emalloc(len);
+    if (read(fd, buf, len) != len)
+	errx(1, "read failed");
+    close(fd);
+    if (typename) {
+        struct types *sorted_types = emalloc(sizeof(types));
+        size_t right = sizeof(types)/sizeof(types[0]) - 1;
+        size_t left = 0;
+        size_t mid;
+        size_t sz;
+        char *s;
+        void *v;
+        int c = -1;
+
+        memcpy(sorted_types, types, sizeof(types));
+        qsort(sorted_types,
+              sizeof(types)/sizeof(types[0]),
+              sizeof(types[0]),
+              type_cmp);
+
+        while (left <= right) {
+            mid = (left + right) >> 1;
+            c = strcmp(sorted_types[mid].name, typename);
+            if (c < 0)
+                left = mid + 1;
+            else if (c > 0)
+                right = mid - 1;
+            else
+                break;
+        }
+        if (c != 0)
+            errx(1, "Type %s not found", typename);
+        v = ecalloc(1, sorted_types[mid].sz);
+        ret = sorted_types[mid].decode(buf, len, v, &sz);
+        if (ret == 0) {
+            s = sorted_types[mid].print(v,
+                                        indent_flag ? ASN1_PRINT_INDENT : 0);
+            sorted_types[mid].release(v);
+            if (!s)
+                ret = errno;
+        }
+        if (ret == 0) {
+            fprintf(stdout, "%s\n", s);
+            free(buf);
+            free(s);
+            exit(0);
+        }
+        switch (ret) {
+        case ASN1_BAD_TIMEFORMAT:
+            errx(1, "Could not decode and print data as type %s: "
+                 "Bad time format", typename);
+        case ASN1_MISSING_FIELD:
+            errx(1, "Could not decode and print data as type %s: "
+                 "Missing required field", typename);
+        case ASN1_MISPLACED_FIELD:
+            errx(1, "Could not decode and print data as type %s: "
+                 "Fields out of order", typename);
+        case ASN1_TYPE_MISMATCH:
+            errx(1, "Could not decode and print data as type %s: "
+                 "Type mismatch", typename);
+        case ASN1_OVERFLOW:
+            errx(1, "Could not decode and print data as type %s: "
+                 "DER value too large", typename);
+        case ASN1_OVERRUN:
+            errx(1, "Could not decode and print data as type %s: "
+                 "DER value too short", typename);
+        case ASN1_BAD_ID:
+            errx(1, "Could not decode and print data as type %s: "
+                 "DER tag is unexpected", typename);
+        case ASN1_BAD_LENGTH:
+            errx(1, "Could not decode and print data as type %s: "
+                 "DER length does not match value", typename);
+        case ASN1_BAD_FORMAT:
+        case ASN1_PARSE_ERROR:
+            errx(1, "Could not decode and print data as type %s: "
+                 "DER badly formatted", typename);
+        case ASN1_EXTRA_DATA:
+            errx(1, "Could not decode and print data as type %s: "
+                 "Extra data past end of end structure", typename);
+        case ASN1_BAD_CHARACTER:
+            errx(1, "Could not decode and print data as type %s: "
+                 "Invalid character encoding in string", typename);
+        case ASN1_MIN_CONSTRAINT:
+            errx(1, "Could not decode and print data as type %s: "
+                 "Too few elements", typename);
+        case ASN1_MAX_CONSTRAINT:
+            errx(1, "Could not decode and print data as type %s: "
+                 "Too many elements", typename);
+        case ASN1_EXACT_CONSTRAINT:
+            errx(1, "Could not decode and print data as type %s: "
+                 "Wrong count of elements", typename);
+        case ASN1_INDEF_OVERRUN:
+            errx(1, "Could not decode and print data as type %s: "
+                 "BER indefinte encoding overun", typename);
+        case ASN1_INDEF_UNDERRUN:
+            errx(1, "Could not decode and print data as type %s: "
+                 "BER indefinte encoding underun", typename);
+        case ASN1_GOT_BER:
+            errx(1, "Could not decode and print data as type %s: "
+                 "BER encoding when DER expected", typename);
+        case ASN1_INDEF_EXTRA_DATA:
+            errx(1, "Could not decode and print data as type %s: "
+                 "End-of-contents tag contains data", typename);
+        default:
+            err(1, "Could not decode and print data as type %s", typename);
+        }
+
+    }
+    ret = loop(buf, len, 0);
+    free(buf);
     return ret;
 }
 
 
+static int list_types_flag = 0;
 static int version_flag;
 static int help_flag;
 struct getargs args[] = {
-    { "indent", 0, arg_negative_flag, &indent_flag, NULL, NULL },
-    { "inner", 0, arg_flag, &inner_flag,
-      "try to parse inner structures of OCTET STRING", NULL },
-    { "version", 0, arg_flag, &version_flag, NULL, NULL },
-    { "help", 0, arg_flag, &help_flag, NULL, NULL }
+    { "indent", 'i', arg_negative_flag, &indent_flag,
+        "\tdo not indent dump", NULL },
+    { "inner", 'I', arg_flag, &inner_flag,
+        "\ttry to parse inner structures of OCTET STRING", NULL },
+    { "list-types", 'l', arg_flag, &list_types_flag,
+        "\tlist ASN.1 types known to this program", NULL },
+    { "version", 'v', arg_flag, &version_flag, NULL, NULL },
+    { "help", 'h', arg_flag, &help_flag, NULL, NULL }
 };
 int num_args = sizeof(args) / sizeof(args[0]);
 
 static void
 usage(int code)
 {
-    arg_printusage(args, num_args, NULL, "dump-file");
+    arg_printusage(args, num_args, NULL, "dump-file [TypeName]");
     exit(code);
 }
 
@@ -335,19 +501,29 @@ main(int argc, char **argv)
 {
     int optidx = 0;
 
-    setprogname (argv[0]);
-    initialize_asn1_error_table ();
-    if(getarg(args, num_args, argc, argv, &optidx))
+    setprogname(argv[0]);
+    initialize_asn1_error_table();
+    if (getarg(args, num_args, argc, argv, &optidx))
 	usage(1);
-    if(help_flag)
+    if (help_flag)
 	usage(0);
-    if(version_flag) {
+    if (version_flag) {
 	print_version(NULL);
 	exit(0);
     }
     argv += optidx;
     argc -= optidx;
-    if (argc != 1)
-	usage (1);
-    return doit (argv[0]);
+    if (list_types_flag) {
+        size_t i;
+
+        if (argc)
+            usage(1);
+
+        for (i = 0; i < sizeof(types)/sizeof(types[0]); i++)
+            printf("%s\n", types[i].name);
+        exit(0);
+    }
+    if (argc != 1 && argc != 2)
+	usage(1);
+    return doit(argv[0], argv[1]);
 }

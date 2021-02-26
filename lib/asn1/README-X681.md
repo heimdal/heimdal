@@ -743,12 +743,6 @@ For examples of X.681/X.682/X.683 usage, look at `lib/asn1/rfc2459.asn1`.
 
 ## Limitations
 
- - Currently no effort is made to check the uniqueness of `UNIQUE` fields of
-   objects in object sets.
-
- - Currently no effort is made to check that required fields are specified in
-   objects.
-
  - `AtNotation` is very limited.
 
  - Object set extensibility is not supported.

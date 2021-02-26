@@ -60,6 +60,7 @@ static Field *new_type_field(char *, int, Type *);
 static Field *new_fixed_type_value_field(char *, Type *, int, int, struct value *);
 static Type *parametrize_type(Type *, IOSClass *);
 static Type *type_from_class_field(IOSClass *, const char *);
+static void validate_object_set(IOSObjectSet *);
 /*static Type *type_from_object(const char *, const char *);*/
 static struct constraint_spec *new_constraint_spec(enum ctype);
 static Type *new_tag(int tagclass, int tagvalue, int tagenv, Type *oldtype);
@@ -499,6 +500,7 @@ ObjectSetAssignment
 		    s->objectset = $4;
                     s->objectset->symbol = s->objectset->symbol ? s->objectset->symbol : s;
 		    s->objectset->iosclass = $2;
+                    validate_object_set($4);
                     generate_template_objectset_forwards(s);
 		}
 		;
@@ -1905,4 +1907,61 @@ type_from_class_field(IOSClass *c, const char *n)
 	}
     }
     return NULL;
+}
+
+static void
+validate_object_set(IOSObjectSet *os)
+{
+    IOSObject **objects;
+    ObjectField *of;
+    IOSObject *o;
+    Field *cf;
+    size_t nobjs, i;
+
+    /* Check unique fields */
+    HEIM_TAILQ_FOREACH(cf, os->iosclass->fields, fields) {
+        if (!cf->unique)
+            continue;
+        if (!cf->type)
+            errx(1, "Type fields of classes can't be UNIQUE (%s)",
+                 os->iosclass->symbol->name);
+        sort_object_set(os, cf, &objects, &nobjs);
+        for (i = 0; i < nobjs; i++) {
+            HEIM_TAILQ_FOREACH(of, objects[i]->objfields, objfields) {
+                if (strcmp(cf->name, of->name))
+                    continue;
+                if (!of->value)
+                    errx(1, "Value not specified for required UNIQUE field %s of object %s",
+                         cf->name, objects[i]->symbol->name);
+                break;
+            }
+            if (i == 0)
+                continue;
+            if (object_cmp(&objects[i - 1], &objects[i]) == 0)
+                errx(1, "Duplicate values of UNIQUE field %s of objects %s and %s",
+                     cf->name, objects[i - 1]->symbol->name,
+                     objects[i]->symbol->name);
+        }
+        free(objects);
+    }
+
+    /* Check required fields */
+    HEIM_TAILQ_FOREACH(cf, os->iosclass->fields, fields) {
+        if (cf->optional || cf->defval || !cf->type)
+            continue;
+        HEIM_TAILQ_FOREACH(o, os->objects, objects) {
+            int specified = 0;
+
+            HEIM_TAILQ_FOREACH(of, o->objfields, objfields) {
+                if (strcmp(of->name, cf->name))
+                    continue;
+                if (of->value)
+                    specified = 1;
+                break;
+            }
+            if (!specified)
+                errx(1, "Value not specified for required non-UNIQUE field %s of object %s",
+                     cf->name, o->symbol->name);
+        }
+    }
 }

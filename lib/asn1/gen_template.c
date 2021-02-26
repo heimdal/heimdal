@@ -689,7 +689,7 @@ objid_cmp(struct objid *oida, struct objid *oidb)
     return -1;
 }
 
-static int
+int
 object_cmp(const void *va, const void *vb)
 {
     const IOSObject *oa = *(const IOSObject * const *)va;
@@ -726,8 +726,6 @@ sort_object_set(IOSObjectSet *os,       /* Object set to sort fields of */
     IOSObject **objects;
     IOSObject *o;
     size_t i, nobjs = 0;
-
-    /* FIXME: This would be a good place to check field UNIQUE constraints */
 
     HEIM_TAILQ_FOREACH(o, os->objects, objects) {
         ObjectField *typeidobjf = NULL;

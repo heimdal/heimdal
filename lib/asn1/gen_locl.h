@@ -148,7 +148,7 @@ void close_codefile(void);
 void get_open_type_defn_fields(const Type *, Member **, Member **, Field **,
                                Field **, int *);
 void sort_object_set(IOSObjectSet *, Field *, IOSObject ***, size_t *);
-
+int object_cmp(const void *, const void *);
 
 int is_template_compat (const Symbol *);
 void generate_template(const Symbol *);

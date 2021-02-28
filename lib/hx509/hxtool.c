@@ -715,6 +715,24 @@ print_f(hx509_context hxcontext, void *ctx, hx509_cert cert)
     return 0;
 }
 
+static int HX509_LIB_CALL
+print_fjson(hx509_context hxcontext, void *ctx, hx509_cert cert)
+{
+    const Certificate *c = NULL;
+    char *json = NULL;
+
+    c = _hx509_get_cert(cert);
+    if (c)
+        json = print_Certificate(c, ASN1_PRINT_INDENT);
+    if (json)
+        printf("%s\n", json);
+    else
+        hx509_err(context, 1, errno, "Could not format certificate as JSON");
+    free(json);
+    return 0;
+}
+
+
 int
 pcert_print(struct print_options *opt, int argc, char **argv)
 {
@@ -738,9 +756,13 @@ pcert_print(struct print_options *opt, int argc, char **argv)
 	    }
 	    hx509_err(context, 1, ret, "hx509_certs_init");
 	}
-	if (opt->info_flag)
-	    hx509_certs_info(context, certs, NULL, NULL);
-	hx509_certs_iter_f(context, certs, print_f, &s);
+        if (opt->raw_json_flag) {
+            hx509_certs_iter_f(context, certs, print_fjson, &s);
+        } else {
+            if (opt->info_flag)
+                hx509_certs_info(context, certs, NULL, NULL);
+            hx509_certs_iter_f(context, certs, print_f, &s);
+        }
 	hx509_certs_free(&certs);
 	argv++;
     }

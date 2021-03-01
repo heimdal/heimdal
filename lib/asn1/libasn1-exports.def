@@ -693,6 +693,8 @@ EXPORTS
 	decode_ContentInfo
 	decode_ContentType
 	decode_CPSuri
+	decode_CRIAttributeSet
+	decode_CRIExtensions
 	decode_CRLCertificateList
 	decode_CRLDistributionPoints
 	decode_CRLReason
@@ -782,6 +784,8 @@ EXPORTS
 	decode_HostAddresses
 	decode_ImplementedCompressAlgorithms
 	decode_ImplementedCryptoAlgorithms
+	decode_IOSCertificationRequest
+	decode_IOSCertificationRequestInfo
 	decode_IssuerAndSerialNumber
 	decode_KDCDHKeyInfo
 	decode_KDCDHKeyInfo_Win2k
@@ -1193,6 +1197,8 @@ EXPORTS
 	encode_ContentInfo
 	encode_ContentType
 	encode_CPSuri
+	encode_CRIAttributeSet
+	encode_CRIExtensions
 	encode_CRLCertificateList
 	encode_CRLDistributionPoints
 	encode_CRLReason
@@ -1282,6 +1288,8 @@ EXPORTS
 	encode_HostAddresses
 	encode_ImplementedCompressAlgorithms
 	encode_ImplementedCryptoAlgorithms
+	encode_IOSCertificationRequest
+	encode_IOSCertificationRequestInfo
 	encode_IssuerAndSerialNumber
 	encode_KDCDHKeyInfo
 	encode_KDCDHKeyInfo_Win2k
@@ -1548,6 +1556,8 @@ EXPORTS
 	free_ContentInfo
 	free_ContentType
 	free_CPSuri
+	free_CRIAttributeSet
+	free_CRIExtensions
 	free_CRLCertificateList
 	free_CRLDistributionPoints
 	free_CRLReason
@@ -1637,6 +1647,8 @@ EXPORTS
 	free_HostAddresses
 	free_ImplementedCompressAlgorithms
 	free_ImplementedCryptoAlgorithms
+	free_IOSCertificationRequest
+	free_IOSCertificationRequestInfo
 	free_IssuerAndSerialNumber
 	free_KDCDHKeyInfo
 	free_KDCDHKeyInfo_Win2k
@@ -2279,6 +2291,8 @@ EXPORTS
 	print_ContentInfo
 	print_ContentType
 	print_CPSuri
+	print_CRIAttributeSet
+	print_CRIExtensions
 	print_CRLCertificateList
 	print_CRLDistributionPoints
 	print_CRLReason
@@ -2368,6 +2382,8 @@ EXPORTS
 	print_HostAddresses
 	print_ImplementedCompressAlgorithms
 	print_ImplementedCryptoAlgorithms
+	print_IOSCertificationRequest
+	print_IOSCertificationRequestInfo
 	print_IssuerAndSerialNumber
 	print_KDCDHKeyInfo
 	print_KDCDHKeyInfo_Win2k

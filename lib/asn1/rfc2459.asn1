@@ -967,10 +967,6 @@ SupportedAttributes _ATTRIBUTE ::= {
   | at-TPMSpecification
 }
 
--- Currently this crashes the ASN.1 compiler because it knows how to deal with
--- contents constraints that use ObjectClassFieldType references, but it
--- doesn't know how to deal with those as SEQUENCE/SET member types.
---
 SingleAttribute ::= SingleAttribute{SupportedAttributes}
 AttributeSet ::= AttributeSet{SupportedAttributes}
 SubjectDirectoryAttributes ::= SEQUENCE SIZE (1..MAX) OF AttributeSet

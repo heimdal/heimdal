@@ -2488,7 +2488,7 @@ _asn1_print(const struct asn1_template *t,
 
                 s = (f->print)(el, 0);
                 if (s == NULL ||
-                    rk_strasvis(&s2, s, VIS_TAB|VIS_NL|VIS_DQ, "") == -1) {
+                    rk_strasvis(&s2, s, VIS_CSTYLE|VIS_TAB|VIS_NL|VIS_DQ, "") == -1) {
                     rk_strpoolfree(r);
                     free(indents);
                     free(s);
@@ -2524,7 +2524,7 @@ _asn1_print(const struct asn1_template *t,
                 char *s2 = NULL;
 
                 if (s)
-                    (void) rk_strasvis(&s2, s, VIS_TAB|VIS_NL|VIS_DQ, "");
+                    (void) rk_strasvis(&s2, s, VIS_CSTYLE|VIS_TAB|VIS_NL|VIS_DQ, "");
                 free(s);
                 s = s2;
                 if (s)

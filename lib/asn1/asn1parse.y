@@ -1171,6 +1171,11 @@ ParameterizedType
 		  Symbol *s, *ps;
 		  char *pname = NULL;
 
+		  if ($3 == NULL) {
+                    lex_error_message("Unknown ActualParameter object set parametrizing %s\n", $1);
+                    exit(1);
+                  }
+
 		  /* Lookup the type from a ParameterizedTypeAssignment */
 		  if (asprintf(&pname, "%s{%s:x}", $1,
 			       $3->iosclass->symbol->name) == -1 ||

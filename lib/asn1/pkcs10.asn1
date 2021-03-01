@@ -31,7 +31,7 @@ IOSCertificationRequestInfo ::= SEQUENCE {
 }
 
 IOSCertificationRequest ::= SEQUENCE {
-    certificationRequestInfo CertificationRequestInfo,
+    certificationRequestInfo IOSCertificationRequestInfo,
     signatureAlgorithm	     AlgorithmIdentifier,
     signature                BIT STRING
 }

@@ -52,6 +52,10 @@
 .Fl Fl list-types
 .Xc
 .Oc
+.Oo Fl A \*(Ba Xo
+.Fl Fl try-all-types
+.Xc
+.Oc
 .Oo Fl l v \*(Ba Xo
 .Fl Fl version
 .Xc
@@ -60,25 +64,30 @@
 .Fl Fl help
 .Xc
 .Oc
-.Op Ar FILE Op Ar TypeName
+.Op Ar FILE Op Ar TypeName...
 .Ek
 .Sh DESCRIPTION
 .Nm
 Dumps ASN.1 DER-encoded values.
-If a
+If one or more
 .Ar TypeName
-is given, then
+arguments are given, then
 .Nm
 will print the value in a JSON-like format using its knowledge of
-the ASN.1 module defining that type.
-If a
-.Ar TypeName
-is given, it must be the name of an ASN.1 type exported by an
-ASN.1 module that is compiled into
+the ASN.1 modules defining those types, stopping at the first type
+for which it can successfully decode the value.
+If
+.Ar TypeNames
+are given, they must be the names of ASN.1 types exported by an
+ASN.1 modules that are compiled into
 .Nm .
 Use the
 .Fl Fl list-types
 option to list ASN.1 types known to
+.Nm .
+Use the
+.Fl Fl try-all-types
+option to attempt decoding as all ASN.1 types known to
 .Nm .
 .Pp
 Options supported:

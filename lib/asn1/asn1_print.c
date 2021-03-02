@@ -55,6 +55,7 @@
 #include "rfc4108_asn1.h"
 #include "x690sample_asn1.h"
 
+static int try_all_flag = 0;
 static int indent_flag = 1;
 static int inner_flag = 0;
 
@@ -347,66 +348,86 @@ type_cmp(const void *va, const void *vb)
 }
 
 static int
-doit(const char *filename, const char *typename)
+dotype(unsigned char *buf, size_t len, char **argv)
 {
-    int fd = open(filename, O_RDONLY);
-    struct stat sb;
-    unsigned char *buf;
-    size_t len;
-    int ret;
+    struct types *sorted_types = emalloc(sizeof(types));
+    const char *typename;
+    size_t matches = 0;
+    size_t sz;
+    size_t i = 0;
+    char *s;
+    void *v;
+    int ret = 0;
 
-    if(fd < 0)
-	err(1, "opening %s for read", filename);
-    if (fstat (fd, &sb) < 0)
-	err(1, "stat %s", filename);
-    len = sb.st_size;
-    buf = emalloc(len);
-    if (read(fd, buf, len) != len)
-	errx(1, "read failed");
-    close(fd);
-    if (typename) {
-        struct types *sorted_types = emalloc(sizeof(types));
-        size_t right = sizeof(types)/sizeof(types[0]) - 1;
-        size_t left = 0;
-        size_t mid;
-        size_t sz;
-        char *s;
-        void *v;
-        int c = -1;
+    memcpy(sorted_types, types, sizeof(types));
+    qsort(sorted_types,
+          sizeof(types)/sizeof(types[0]),
+          sizeof(types[0]),
+          type_cmp);
 
-        memcpy(sorted_types, types, sizeof(types));
-        qsort(sorted_types,
-              sizeof(types)/sizeof(types[0]),
-              sizeof(types[0]),
-              type_cmp);
+    while ((try_all_flag && i < sizeof(types)/sizeof(types[0])) ||
+           (typename = (argv++)[0])) {
 
-        while (left <= right) {
-            mid = (left + right) >> 1;
-            c = strcmp(sorted_types[mid].name, typename);
-            if (c < 0)
-                left = mid + 1;
-            else if (c > 0)
-                right = mid - 1;
-            else
-                break;
+        if (try_all_flag) {
+            typename = sorted_types[i].name;
+        } else {
+            size_t right = sizeof(types)/sizeof(types[0]) - 1;
+            size_t left = 0;
+            size_t mid;
+            int c = -1;
+
+            while (left <= right) {
+                mid = (left + right) >> 1;
+                c = strcmp(sorted_types[mid].name, typename);
+                if (c < 0)
+                    left = mid + 1;
+                else if (c > 0)
+                    right = mid - 1;
+                else
+                    break;
+            }
+            if (c != 0)
+                errx(1, "Type %s not found", typename);
+            i = mid;
         }
-        if (c != 0)
-            errx(1, "Type %s not found", typename);
-        v = ecalloc(1, sorted_types[mid].sz);
-        ret = sorted_types[mid].decode(buf, len, v, &sz);
+        v = ecalloc(1, sorted_types[i].sz);
+        ret = sorted_types[i].decode(buf, len, v, &sz);
         if (ret == 0) {
-            s = sorted_types[mid].print(v,
+            if (sz == len)
+                fprintf(stderr, "Match: %s\n", typename);
+            else
+                fprintf(stderr, "Prefix match: %s\n", typename);
+            s = sorted_types[i].print(v,
                                         indent_flag ? ASN1_PRINT_INDENT : 0);
-            sorted_types[mid].release(v);
+            sorted_types[i].release(v);
             if (!s)
                 ret = errno;
         }
         if (ret == 0) {
             fprintf(stdout, "%s\n", s);
+
+            matches++;
+            i++;
+            if (try_all_flag)
+                continue;
             free(buf);
             free(s);
             exit(0);
         }
+
+        if (argv[0])
+            continue;
+
+        if (try_all_flag) {
+            i++;
+            if (i < sizeof(types)/sizeof(types[0]))
+                continue;
+            if (matches)
+                break;
+            errx(1, "No type matched the input value");
+        }
+
+        /* XXX Use com_err */
         switch (ret) {
         case ASN1_BAD_TIMEFORMAT:
             errx(1, "Could not decode and print data as type %s: "
@@ -466,9 +487,36 @@ doit(const char *filename, const char *typename)
         default:
             err(1, "Could not decode and print data as type %s", typename);
         }
-
     }
-    ret = loop(buf, len, 0);
+    free(buf);
+    free(s);
+    return 0;
+}
+
+static int
+doit(char **argv)
+{
+    int fd = open(argv[0], O_RDONLY);
+    struct stat sb;
+    unsigned char *buf;
+    size_t len;
+    int ret;
+
+    if(fd < 0)
+	err(1, "opening %s for read", argv[0]);
+    if (fstat (fd, &sb) < 0)
+	err(1, "stat %s", argv[0]);
+    len = sb.st_size;
+    buf = emalloc(len);
+    if (read(fd, buf, len) != len)
+	errx(1, "read failed");
+    close(fd);
+
+    argv++;
+    if (argv[0] || try_all_flag)
+        ret = dotype(buf, len, argv);
+    else
+        ret = loop(buf, len, 0);
     free(buf);
     return ret;
 }
@@ -484,6 +532,8 @@ struct getargs args[] = {
         "\ttry to parse inner structures of OCTET STRING", NULL },
     { "list-types", 'l', arg_flag, &list_types_flag,
         "\tlist ASN.1 types known to this program", NULL },
+    { "try-all-types", 'A', arg_flag, &try_all_flag,
+        "\ttry all known types", NULL },
     { "version", 'v', arg_flag, &version_flag, NULL, NULL },
     { "help", 'h', arg_flag, &help_flag, NULL, NULL }
 };
@@ -492,7 +542,7 @@ int num_args = sizeof(args) / sizeof(args[0]);
 static void
 usage(int code)
 {
-    arg_printusage(args, num_args, NULL, "dump-file [TypeName]");
+    arg_printusage(args, num_args, NULL, "dump-file [TypeName [TypeName ...]]");
     exit(code);
 }
 
@@ -523,7 +573,7 @@ main(int argc, char **argv)
             printf("%s\n", types[i].name);
         exit(0);
     }
-    if (argc != 1 && argc != 2)
+    if (argc < 1)
 	usage(1);
-    return doit(argv[0], argv[1]);
+    return doit(argv);
 }

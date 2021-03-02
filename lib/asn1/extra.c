@@ -35,6 +35,7 @@
 
 #include "der_locl.h"
 #include "heim_asn1.h"
+#include "vis.h"
 
 RCSID("$Id$");
 
@@ -93,7 +94,18 @@ free_heim_any(heim_any *data)
 char *
 print_heim_any(const heim_any *data)
 {
-    return der_print_octet_string(data, 0);
+    char *s2 = NULL;
+    char *s = der_print_octet_string(data, 0);
+    int r = -1;
+
+    if (s)
+        r = rk_strasvis(&s2, s, VIS_CSTYLE|VIS_TAB|VIS_NL|VIS_DQ, "");
+    free(s);
+    s = NULL;
+    if (r > -1)
+        r = asprintf(&s, "\"%s\"", s2);
+    free(s2);
+    return s;
 }
 
 size_t
@@ -131,7 +143,18 @@ free_HEIM_ANY(heim_any *data)
 char *
 print_HEIM_ANY(const heim_any *data)
 {
-    return der_print_octet_string(data, 0);
+    char *s2 = NULL;
+    char *s = der_print_octet_string(data, 0);
+    int r = -1;
+
+    if (s)
+        r = rk_strasvis(&s2, s, VIS_CSTYLE|VIS_TAB|VIS_NL|VIS_DQ, "");
+    free(s);
+    s = NULL;
+    if (r > -1)
+        r = asprintf(&s, "\"%s\"", s2);
+    free(s2);
+    return s;
 }
 
 size_t
@@ -169,7 +192,18 @@ free_heim_any_set(heim_any_set *data)
 char *
 print_heim_any_set(const heim_any_set *data)
 {
-    return der_print_octet_string(data, 0);
+    char *s2 = NULL;
+    char *s = der_print_octet_string(data, 0);
+    int r = -1;
+
+    if (s)
+        r = rk_strasvis(&s2, s, VIS_CSTYLE|VIS_TAB|VIS_NL|VIS_DQ, "");
+    free(s);
+    s = NULL;
+    if (r > -1)
+        r = asprintf(&s, "\"%s\"", s2);
+    free(s2);
+    return s;
 }
 
 size_t
@@ -213,7 +247,18 @@ free_HEIM_ANY_SET(heim_any_set *data)
 char *
 print_HEIM_ANY_SET(const heim_any_set *data)
 {
-    return der_print_octet_string(data, 0);
+    char *s2 = NULL;
+    char *s = der_print_octet_string(data, 0);
+    int r = -1;
+
+    if (s)
+        r = rk_strasvis(&s2, s, VIS_CSTYLE|VIS_TAB|VIS_NL|VIS_DQ, "");
+    free(s);
+    s = NULL;
+    if (r > -1)
+        r = asprintf(&s, "\"%s\"", s2);
+    free(s2);
+    return s;
 }
 
 size_t

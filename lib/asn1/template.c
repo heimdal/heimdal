@@ -2483,20 +2483,16 @@ _asn1_print(const struct asn1_template *t,
 		r = _asn1_print(t->ptr, r, flags, indent + 1, el, saved);
 	    } else {
 		const struct asn1_type_func *f = t->ptr;
-                char *s2 = NULL;
                 char *s = NULL;
 
                 s = (f->print)(el, 0);
-                if (s == NULL ||
-                    rk_strasvis(&s2, s, VIS_CSTYLE|VIS_TAB|VIS_NL|VIS_DQ, "") == -1) {
+                if (s == NULL) {
                     rk_strpoolfree(r);
                     free(indents);
-                    free(s);
                     return NULL;
                 }
+		r = rk_strpoolprintf(r, "%s", s);
                 free(s);
-		r = rk_strpoolprintf(r, "\"%s\"", s2);
-                free(s2);
 	    }
 	    break;
 	}

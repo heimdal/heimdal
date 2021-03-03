@@ -56,6 +56,10 @@
 .Fl Fl try-all-types
 .Xc
 .Oc
+.Oo Fl S \*(Ba Xo
+.Fl Fl raw-sequence
+.Xc
+.Oc
 .Oo Fl l v \*(Ba Xo
 .Fl Fl version
 .Xc
@@ -82,13 +86,15 @@ are given, they must be the names of ASN.1 types exported by an
 ASN.1 modules that are compiled into
 .Nm .
 Use the
-.Fl Fl list-types
-option to list ASN.1 types known to
-.Nm .
-Use the
 .Fl Fl try-all-types
 option to attempt decoding as all ASN.1 types known to
 .Nm .
+If neither any
+.Ar TypeName
+nor
+.Fl Fl try-all-types
+are given, then the value will be parsed and displayed using just
+the self-describing nature of DER.
 .Pp
 Options supported:
 .Bl -tag -width Ds
@@ -97,7 +103,16 @@ Do not indent dump.
 .It Fl I, Fl Fl inner
 Try to parse inner structures of OCTET STRING and constructed values.
 .It Fl l, Fl Fl list-types
-Try to parse inner structures of OCTET STRING and constructed values.
+List all types known to
+.Nm .
+.It Fl A, Fl Fl try-all-types
+Attempt to decode the value as any of all types known to
+.Nm .
+.It Fl S, Fl Fl raw-sequence
+If a value parses as a given
+.Ar TypeName
+but any bytes are left over, try to parse those separately as
+well until all bytes are consumed or an error occurs.
 .It Fl v, Fl Fl version
 .It Fl h, Fl Fl help
 .El

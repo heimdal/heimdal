@@ -55,6 +55,7 @@
 #include "rfc4108_asn1.h"
 #include "x690sample_asn1.h"
 
+static int sequence_flag = 0;
 static int try_all_flag = 0;
 static int indent_flag = 1;
 static int inner_flag = 0;
@@ -350,7 +351,7 @@ type_cmp(const void *va, const void *vb)
 }
 
 static int
-dotype(unsigned char *buf, size_t len, char **argv)
+dotype(unsigned char *buf, size_t len, char **argv, size_t *size)
 {
     const char *typename;
     size_t matches = 0;
@@ -359,6 +360,8 @@ dotype(unsigned char *buf, size_t len, char **argv)
     char *s;
     void *v;
     int ret = 0;
+
+    *size = len;
 
     memcpy(sorted_types, types, sizeof(types));
     qsort(sorted_types,
@@ -394,14 +397,19 @@ dotype(unsigned char *buf, size_t len, char **argv)
         v = ecalloc(1, sorted_types[i].sz);
         ret = sorted_types[i].decode(buf, len, v, &sz);
         if (ret == 0) {
-            if (sz == len)
+            if (sz == len) {
                 fprintf(stderr, "Match: %s\n", typename);
-            else
+            } else if (sequence_flag) {
+                *size = sz;
+            } else {
                 fprintf(stderr, "Prefix match: %s\n", typename);
+            }
             s = sorted_types[i].print(v, indent_flag ? ASN1_PRINT_INDENT : 0);
             sorted_types[i].release(v);
-            if (!s)
+            if (!s) {
                 ret = errno;
+                err(1, "Could not print %s\n", typename);
+            }
         }
         free(v);
         if (ret == 0) {
@@ -411,9 +419,8 @@ dotype(unsigned char *buf, size_t len, char **argv)
             i++;
             if (try_all_flag)
                 continue;
-            free(buf);
             free(s);
-            exit(0);
+            return 0;
         }
 
         if (argv[0])
@@ -513,10 +520,17 @@ doit(char **argv)
     close(fd);
 
     argv++;
-    if (argv[0] || try_all_flag)
-        ret = dotype(buf, len, argv);
-    else
+    if (argv[0] || try_all_flag) {
+        size_t off = 0;
+        size_t sz = 0;
+
+        do {
+            ret = dotype(buf + off, len - off, argv, &sz);
+            off += sz;
+        } while (ret == 0 && sequence_flag && off < len);
+    } else {
         ret = loop(buf, len, 0);
+    }
     free(buf);
     return ret;
 }
@@ -534,6 +548,8 @@ struct getargs args[] = {
         "\tlist ASN.1 types known to this program", NULL },
     { "try-all-types", 'A', arg_flag, &try_all_flag,
         "\ttry all known types", NULL },
+    { "raw-sequence", 'S', arg_flag, &sequence_flag,
+        "\ttry parsing leftover data", NULL },
     { "version", 'v', arg_flag, &version_flag, NULL, NULL },
     { "help", 'h', arg_flag, &help_flag, NULL, NULL }
 };
@@ -563,6 +579,10 @@ main(int argc, char **argv)
     }
     argv += optidx;
     argc -= optidx;
+
+    if (sequence_flag && try_all_flag)
+        errx(1, "--raw-sequence and --try-all-types are mutually exclusive");
+
     if (list_types_flag) {
         size_t i;
 

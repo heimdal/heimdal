@@ -2353,7 +2353,6 @@ _asn1_print_open_type(const struct asn1_template *t, /* object set template */
     const void * const *val;
     const int *elementp = DPOC(data, t->offset);   /* Choice enum pointer */
     char *indents = getindent(flags, indent);
-    char *s;
 
     /* XXX We assume sizeof(enum) == sizeof(int) */
     if (!*elementp || *elementp >= A1_HEADER_LEN(tos) + 1) {
@@ -2378,18 +2377,19 @@ _asn1_print_open_type(const struct asn1_template *t, /* object set template */
             dp = (void *)(((char *)dp) + sizeof(*elementp));
         if (*dp) {
             struct rk_strpool *r2 = NULL;
+            char *s = NULL;
 
             r2 = _asn1_print(tactual_type, r2, flags, indent + 1, *dp, NULL);
             if (r2 == NULL) {
-                r = rk_strpoolprintf(r,
-                                        ",%s\"_%s\":\"_ERROR_FORMATTING_\"",
-                                        indents ? indents : "", opentype_name);
+                r = rk_strpoolprintf(r, ",%s\"_%s\":\"_ERROR_FORMATTING_\"",
+                                     indents ? indents : "", opentype_name);
                 free(indents);
                 return r;
             }
             s = rk_strpoolcollect(r2);
-            r = rk_strpoolprintf(r, ",%s\"_%s\":%s",
-                                 indents ? indents : "", opentype_name, s);
+            if (s)
+                r = rk_strpoolprintf(r, ",%s\"_%s\":%s",
+                                     indents ? indents : "", opentype_name, s);
             free(indents);
             free(s);
         }
@@ -2412,10 +2412,15 @@ _asn1_print_open_type(const struct asn1_template *t, /* object set template */
         r = rk_strpoolprintf(r, "%s", indents ? indents : "");
     for (i = 0; r && i < len; i++) {
         struct rk_strpool *r2 = NULL;
+        char *s = NULL;;
+
         if (val[i]) {
             r2 = _asn1_print(tactual_type, r2, flags, indent + 2, val[i], NULL);
-            if (r2 == NULL)
-                continue;
+            if (r2 == NULL) {
+                rk_strpoolfree(r);
+                free(indents);
+                return NULL;
+            }
         }
         if (i)
             r = rk_strpoolprintf(r, ",%s", indents ? indents : "");
@@ -2423,6 +2428,7 @@ _asn1_print_open_type(const struct asn1_template *t, /* object set template */
             r = rk_strpoolprintf(r, "%s", (s = rk_strpoolcollect(r2)));
         free(s);
     }
+    free(indents);
     return rk_strpoolprintf(r, "]");
 }
 
@@ -2467,7 +2473,7 @@ _asn1_print(const struct asn1_template *t,
         saved = data;
 
     t = tbase + 1;
-    while (elements && (t->tt & A1_OP_MASK) != A1_OP_NAME) {
+    while (r && elements && (t->tt & A1_OP_MASK) != A1_OP_NAME) {
 	switch (t->tt & A1_OP_MASK) {
         case A1_OP_NAME:
             continue;

@@ -2452,6 +2452,9 @@ _asn1_print(const struct asn1_template *t,
 
     tnames = tbase + nelements - nnames + 1;
 
+    if (!r)
+        r = rk_strpoolprintf(r, "%s", "");
+
     if (nnames)
         r = rk_strpoolprintf(r, "%s{\"_type\":\"%s\"",
                              indents ? indents : "",

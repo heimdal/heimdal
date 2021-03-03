@@ -624,34 +624,36 @@ _asn1_decode_open_type(const struct asn1_template *t,
         const struct heim_base_data *d = DPOC(data, topentype->offset);
         void *o;
 
-        if ((o = calloc(1, tactual_type->offset)) == NULL)
-            return ENOMEM;
+        if (d->data && d->length) {
+            if ((o = calloc(1, tactual_type->offset)) == NULL)
+                return ENOMEM;
 
-        /* Re-enter to decode the encoded open type value */
-        ret = _asn1_decode(tactual_type->ptr, flags, d->data, d->length, o, &sz);
-        /*
-         * Store the decoded object in the union:
-         *
-         *      typedef struct SingleAttribute {
-         *          heim_oid type;
-         *          HEIM_ANY value;
-         *          struct {
-         *              enum { ... } element;
-         * ------------>union { SomeType *some_choice; ... } u; // HERE
-         *          } _ioschoice_value;
-         *      } SingleAttribute;
-         *
-         * All the union arms are pointers.
-         */
-        if (ret) {
-            free(o);
+            /* Re-enter to decode the encoded open type value */
+            ret = _asn1_decode(tactual_type->ptr, flags, d->data, d->length, o, &sz);
             /*
-             * So we failed to decode the open type -- that should not be fatal
-             * to decoding the rest of the input.  Only ENOMEM should be fatal.
+             * Store the decoded object in the union:
+             *
+             *      typedef struct SingleAttribute {
+             *          heim_oid type;
+             *          HEIM_ANY value;
+             *          struct {
+             *              enum { ... } element;
+             * ------------>union { SomeType *some_choice; ... } u; // HERE
+             *          } _ioschoice_value;
+             *      } SingleAttribute;
+             *
+             * All the union arms are pointers.
              */
-            ret = 0;
-        } else {
-            *dp = o;
+            if (ret) {
+                free(o);
+                /*
+                 * So we failed to decode the open type -- that should not be fatal
+                 * to decoding the rest of the input.  Only ENOMEM should be fatal.
+                 */
+                ret = 0;
+            } else {
+                *dp = o;
+            }
         }
         return ret;
     } else {
@@ -688,7 +690,7 @@ _asn1_decode_open_type(const struct asn1_template *t,
         for (i = 0; ret != ENOMEM && i < len; i++) {
             if ((val[i] = calloc(len, tactual_type->offset)) == NULL)
                 ret = ENOMEM;
-            if (ret == 0)
+            if (ret == 0 && d[i])
                 /* Re-enter to decode the encoded open type value */
                 ret = _asn1_decode(tactual_type->ptr, flags, d[i]->data,
                                    d[i]->length, val[i], &sz);

@@ -175,17 +175,21 @@ segv_handler(int sig)
 {
     int fd;
     char msg[] = "SIGSEGV i current test: ";
+    /* For compilers that insist we check write(2)'s result here */
+    int e = 1;
 
     fd = open("/dev/stdout", O_WRONLY, 0600);
     if (fd >= 0) {
-	write(fd, msg, sizeof(msg));
-	write(fd, current_test, strlen(current_test));
-	write(fd, " ", 1);
-	write(fd, current_state, strlen(current_state));
-	write(fd, "\n", 1);
-	close(fd);
+
+	if (write(fd, msg, sizeof(msg)) == -1 ||
+	    write(fd, current_test, strlen(current_test)) == -1 ||
+	    write(fd, " ", 1) == -1 ||
+	    write(fd, current_state, strlen(current_state)) == -1 ||
+	    write(fd, "\n", 1) == -1)
+            e = 2;
+	(void) close(fd);
     }
-    _exit(1);
+    _exit(e);
 }
 
 int

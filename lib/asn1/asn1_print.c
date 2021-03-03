@@ -357,7 +357,7 @@ dotype(unsigned char *buf, size_t len, char **argv, size_t *size)
     size_t matches = 0;
     size_t sz;
     size_t i = 0;
-    char *s;
+    char *s = NULL;
     void *v;
     int ret = 0;
 

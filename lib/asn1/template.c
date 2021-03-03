@@ -767,22 +767,37 @@ _asn1_decode(const struct asn1_template *t, unsigned flags,
 		if (*pel == NULL)
 		    return ENOMEM;
 		el = *pel;
-	    }
-	    if ((t->tt & A1_OP_MASK) == A1_OP_TYPE) {
-		ret = _asn1_decode(t->ptr, flags, p, len, el, &newsize);
-	    } else {
-		const struct asn1_type_func *f = t->ptr;
-		ret = (f->decode)(p, len, el, &newsize);
-	    }
-	    if (ret) {
-		if (t->tt & A1_FLAG_OPTIONAL) {
+                if ((t->tt & A1_OP_MASK) == A1_OP_TYPE) {
+                    ret = _asn1_decode(t->ptr, flags, p, len, el, &newsize);
+                } else {
+                    const struct asn1_type_func *f = t->ptr;
+                    ret = (f->decode)(p, len, el, &newsize);
+                }
+                if (ret) {
                     /*
                      * Optional field not present in encoding, presumably,
                      * though we should really look more carefully at `ret'.
                      */
+                    if ((t->tt & A1_OP_MASK) == A1_OP_TYPE) {
+                        _asn1_free(t->ptr, el);
+                    } else {
+                        const struct asn1_type_func *f = t->ptr;
+                        f->release(el);
+                    }
 		    free(*pel);
 		    *pel = NULL;
 		    break;
+                }
+	    } else {
+                if ((t->tt & A1_OP_MASK) == A1_OP_TYPE) {
+                    ret = _asn1_decode(t->ptr, flags, p, len, el, &newsize);
+                } else {
+                    const struct asn1_type_func *f = t->ptr;
+                    ret = (f->decode)(p, len, el, &newsize);
+                }
+            }
+	    if (ret) {
+		if (t->tt & A1_FLAG_OPTIONAL) {
 		} else if (t->tt & A1_FLAG_DEFAULT) {
                     /*
                      * Defaulted field not present in encoding, presumably,
@@ -829,8 +844,8 @@ _asn1_decode(const struct asn1_template *t, unsigned flags,
 	    int is_indefinite = 0;
 	    int subflags = flags;
             int replace_tag = (t->tt & A1_FLAG_IMPLICIT) && is_tagged(t->ptr);
-
-	    data = DPO(data, t->offset);
+	    void *el = data = DPO(data, t->offset);
+	    void **pel = (void **)el;
 
             /*
              * XXX If this type (chasing t->ptr through IMPLICIT tags, if this
@@ -914,13 +929,12 @@ _asn1_decode(const struct asn1_template *t, unsigned flags,
 		return ASN1_OVERRUN;
 
 	    if (t->tt & A1_FLAG_OPTIONAL) {
-		void **el = (void **)data;
 		size_t ellen = _asn1_sizeofType(t->ptr);
 
-		*el = calloc(1, ellen);
-		if (*el == NULL)
+		*pel = calloc(1, ellen);
+		if (*pel == NULL)
 		    return ENOMEM;
-		data = *el;
+		data = *pel;
 	    }
 
             if (replace_tag) {
@@ -953,36 +967,45 @@ _asn1_decode(const struct asn1_template *t, unsigned flags,
             } else {
                 ret = _asn1_decode(t->ptr, subflags, p, datalen, data, &newsize);
             }
-            if (ret)
+            if (ret == 0 && !is_indefinite && newsize != datalen)
+		/* Hidden data */
+                ret = ASN1_EXTRA_DATA;
+
+            if (ret == 0) {
+                if (is_indefinite) {
+                    /* If we use indefinite encoding, the newsize is the datasize. */
+                    datalen = newsize;
+                }
+
+                len -= datalen;
+                p += datalen;
+
+                /*
+                 * Indefinite encoding needs a trailing EndOfContent,
+                 * check for that.
+                 */
+                if (is_indefinite) {
+                    ret = der_match_tag_and_length(p, len, ASN1_C_UNIV,
+                                                   &dertype, UT_EndOfContent,
+                                                   &datalen, &l);
+                    if (ret == 0 && dertype != PRIM)
+                        ret = ASN1_BAD_ID;
+                    else if (ret == 0 && datalen != 0)
+                        ret = ASN1_INDEF_EXTRA_DATA;
+                    if (ret == 0) {
+                        p += l; len -= l;
+                    }
+                }
+            }
+            if (ret) {
+                if (!(t->tt & A1_FLAG_OPTIONAL))
+                    return ret;
+
+                _asn1_free(t->ptr, data);
+                free(data);
+                *pel = NULL;
                 return ret;
-
-	    if (is_indefinite) {
-		/* If we use indefinite encoding, the newsize is the datasize. */
-		datalen = newsize;
-	    } else if (newsize != datalen) {
-		/* Check for hidden data that might be after the real tag */
-		return ASN1_EXTRA_DATA;
-	    }
-
-	    len -= datalen;
-	    p += datalen;
-
-	    /*
-	     * Indefinite encoding needs a trailing EndOfContent,
-	     * check for that.
-	     */
-	    if (is_indefinite) {
-		ret = der_match_tag_and_length(p, len, ASN1_C_UNIV,
-					       &dertype, UT_EndOfContent,
-					       &datalen, &l);
-		if (ret)
-		    return ret;
-		if (dertype != PRIM)
-		    return ASN1_BAD_ID;
-		if (datalen != 0)
-		    return ASN1_INDEF_EXTRA_DATA;
-		p += l; len -= l;
-	    }
+            }
 	    data = olddata;
 
 	    break;
@@ -1024,6 +1047,7 @@ _asn1_decode(const struct asn1_template *t, unsigned flags,
 		if (vallength > newlen)
 		    return ASN1_OVERFLOW;
 
+                /* XXX Slow */
 		tmp = realloc(el->val, newlen);
 		if (tmp == NULL)
 		    return ENOMEM;
@@ -1033,8 +1057,10 @@ _asn1_decode(const struct asn1_template *t, unsigned flags,
 
 		ret = _asn1_decode(t->ptr, flags & (~A1_PF_INDEFINTE), p, len,
 				   DPO(el->val, vallength), &newsize);
-		if (ret)
+		if (ret) {
+                    _asn1_free(t->ptr, DPO(el->val, vallength));
 		    return ret;
+                }
 		vallength = newlen;
 		el->len++;
 		p += newsize; len -= newsize;
@@ -2193,9 +2219,9 @@ _asn1_free(const struct asn1_template *t, void *data)
 	case A1_OP_TYPE:
 	case A1_OP_TYPE_EXTERN: {
 	    void *el = DPO(data, t->offset);
+            void **pel = (void **)el;
 
 	    if (t->tt & A1_FLAG_OPTIONAL) {
-		void **pel = (void **)el;
 		if (*pel == NULL)
 		    break;
 		el = *pel;
@@ -2207,8 +2233,10 @@ _asn1_free(const struct asn1_template *t, void *data)
 		const struct asn1_type_func *f = t->ptr;
 		(f->release)(el);
 	    }
-	    if (t->tt & A1_FLAG_OPTIONAL)
+	    if (t->tt & A1_FLAG_OPTIONAL) {
 		free(el);
+                *pel = NULL;
+            }
 
 	    break;
 	}
@@ -2227,16 +2255,16 @@ _asn1_free(const struct asn1_template *t, void *data)
 	    void *el = DPO(data, t->offset);
 
 	    if (t->tt & A1_FLAG_OPTIONAL) {
-		void **pel = (void **)el;
+                void **pel = (void **)el;
+
 		if (*pel == NULL)
 		    break;
-		el = *pel;
-	    }
-
-	    _asn1_free(t->ptr, el);
-
-	    if (t->tt & A1_FLAG_OPTIONAL)
-		free(el);
+                _asn1_free(t->ptr, *pel);
+		free(*pel);
+                *pel = NULL;
+            } else {
+                _asn1_free(t->ptr, el);
+            }
 
 	    break;
 	}

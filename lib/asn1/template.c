@@ -1059,10 +1059,8 @@ _asn1_decode(const struct asn1_template *t, unsigned flags,
 
 		ret = _asn1_decode(t->ptr, flags & (~A1_PF_INDEFINTE), p, len,
 				   DPO(el->val, vallength), &newsize);
-		if (ret) {
-                    _asn1_free(t->ptr, DPO(el->val, vallength));
+		if (ret)
 		    return ret;
-                }
 		vallength = newlen;
 		el->len++;
 		p += newsize; len -= newsize;

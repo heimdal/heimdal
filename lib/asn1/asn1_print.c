@@ -65,7 +65,7 @@ static unsigned long indefinite_form_loop_max = 10000;
 typedef int (*decoder)(const unsigned char *, size_t, void *, size_t *);
 typedef char *(*printer)(const void *, int);
 typedef void (*releaser)(void *);
-struct types {
+const struct types {
     const char *name;
     decoder decode;
     printer print;
@@ -96,6 +96,8 @@ struct types {
 #include "rfc4108_asn1_syms.x"
 #include "x690sample_asn1_syms.x"
 };
+
+struct types sorted_types[sizeof(types)/sizeof(types[0])];
 
 static size_t
 loop (unsigned char *buf, size_t len, int indent)
@@ -350,7 +352,6 @@ type_cmp(const void *va, const void *vb)
 static int
 dotype(unsigned char *buf, size_t len, char **argv)
 {
-    struct types *sorted_types = emalloc(sizeof(types));
     const char *typename;
     size_t matches = 0;
     size_t sz;
@@ -397,12 +398,12 @@ dotype(unsigned char *buf, size_t len, char **argv)
                 fprintf(stderr, "Match: %s\n", typename);
             else
                 fprintf(stderr, "Prefix match: %s\n", typename);
-            s = sorted_types[i].print(v,
-                                        indent_flag ? ASN1_PRINT_INDENT : 0);
+            s = sorted_types[i].print(v, indent_flag ? ASN1_PRINT_INDENT : 0);
             sorted_types[i].release(v);
             if (!s)
                 ret = errno;
         }
+        free(v);
         if (ret == 0) {
             fprintf(stdout, "%s\n", s);
 
@@ -488,7 +489,6 @@ dotype(unsigned char *buf, size_t len, char **argv)
             err(1, "Could not decode and print data as type %s", typename);
         }
     }
-    free(buf);
     free(s);
     return 0;
 }

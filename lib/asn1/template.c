@@ -645,6 +645,7 @@ _asn1_decode_open_type(const struct asn1_template *t,
              * All the union arms are pointers.
              */
             if (ret) {
+                _asn1_free(tactual_type->ptr, o);
                 free(o);
                 /*
                  * So we failed to decode the open type -- that should not be fatal
@@ -688,25 +689,17 @@ _asn1_decode_open_type(const struct asn1_template *t,
         /* Increment the count of decoded values as we decode */
         *lenp = len;
         for (i = 0; ret != ENOMEM && i < len; i++) {
-            if ((val[i] = calloc(len, tactual_type->offset)) == NULL)
+            if ((val[i] = calloc(1, tactual_type->offset)) == NULL)
                 ret = ENOMEM;
             if (ret == 0 && d[i])
                 /* Re-enter to decode the encoded open type value */
-                ret = _asn1_decode(tactual_type->ptr, flags, d[i]->data,
-                                   d[i]->length, val[i], &sz);
+                ret = _asn1_decode(tactual_type->ptr, flags, d[0][i].data,
+                                   d[0][i].length, val[i], &sz);
             if (ret) {
+                _asn1_free(tactual_type->ptr, val[i]);
                 free(val[i]);
                 val[i] = NULL;
             }
-        }
-        if (ret == ENOMEM) {
-            for (i = 0; i < len; i++) {
-                _asn1_free(tactual_type->ptr, val[i]);
-                free(val[i]);
-            }
-            free(val);
-            val = 0;
-            *lenp = 0;
         }
         if (ret != ENOMEM)
             ret = 0; /* See above */

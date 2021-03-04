@@ -77,7 +77,43 @@ Notes about the template parser:
 
 TODO:
 
- - Fuzzing tests
+ - Fuzzing tests, always more fuzzing:
+
+    - Instructions:
+
+```
+    $ cd build/lib/asn1
+    $ make clean
+    $ AFL_HARDEN=1 make -j4 asn1_print check CC=afl-gcc # or CC=afl-clang
+    $ mkdir i
+    $ cp ../../../lib/hx509/data/ca.crt # etc.
+    $ mkdir f
+    $ ../../libtool --mode=execute afl-fuzz -i $PWD/i -o $PWD/f ./asn1_print '@@' Certificate
+    $ 
+    $ # Or
+    $ ../../libtool --mode=execute afl-fuzz -i $PWD/i -o $PWD/f ./asn1_print -A '@@'
+    $
+    $ # Examing crash reports, if any.  Each crash report consists of an input
+    $ # that caused a crash, so run:
+    $ 
+    $ for i in f/crashes/id*; do
+    >   echo $i
+    >   ../../libtool --mode=execute valgrind --num-callers=64 ./asn1_print $i \
+    >        Certificate IOSCertificationRequest >/dev/null 2> f3/crashes/vg-${i##*/}
+    > done
+    $ 
+    $ $PAGER f3/crashes/vg-*
+```
+
+    - Currently using a largish certificate as the input corpus.  Need more,
+      and more minimized DER encodings.
+
+    - Make building with AFL a ./cofigure option.
+
+    - Make fuzzing with AFL a make target.
+
+    - Fuzz decode round-tripping (don't just decode, but also encoded the
+      decoded).
 
  - Performance testing
 

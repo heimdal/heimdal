@@ -691,7 +691,7 @@ _asn1_decode_open_type(const struct asn1_template *t,
         for (i = 0; ret != ENOMEM && i < len; i++) {
             if ((val[i] = calloc(1, tactual_type->offset)) == NULL)
                 ret = ENOMEM;
-            if (ret == 0 && d[i])
+            if (ret == 0)
                 /* Re-enter to decode the encoded open type value */
                 ret = _asn1_decode(tactual_type->ptr, flags, d[0][i].data,
                                    d[0][i].length, val[i], &sz);
@@ -1050,12 +1050,12 @@ _asn1_decode(const struct asn1_template *t, unsigned flags,
 		memset(DPO(tmp, vallength), 0, ellen);
 		el->val = tmp;
 
+		el->len++;
 		ret = _asn1_decode(t->ptr, flags & (~A1_PF_INDEFINTE), p, len,
 				   DPO(el->val, vallength), &newsize);
 		if (ret)
 		    return ret;
 		vallength = newlen;
-		el->len++;
 		p += newsize; len -= newsize;
 	    }
 

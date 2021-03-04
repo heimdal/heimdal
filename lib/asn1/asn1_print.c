@@ -353,7 +353,7 @@ type_cmp(const void *va, const void *vb)
 static int
 dotype(unsigned char *buf, size_t len, char **argv, size_t *size)
 {
-    const char *typename;
+    const char *typename = "";
     size_t matches = 0;
     size_t sz;
     size_t i = 0;
@@ -377,7 +377,7 @@ dotype(unsigned char *buf, size_t len, char **argv, size_t *size)
         } else {
             size_t right = sizeof(types)/sizeof(types[0]) - 1;
             size_t left = 0;
-            size_t mid;
+            size_t mid = (left + right) >> 1;
             int c = -1;
 
             while (left <= right) {

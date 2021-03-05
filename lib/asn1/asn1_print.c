@@ -439,6 +439,7 @@ dotype(unsigned char *buf, size_t len, char **argv, size_t *size)
                     errx(1, "Encoding failed");
                 if (memcmp(buf, der, sz))
                     errx(1, "Encoding did not round trip");
+                free(der);
             }
             if (test_copy_flag) {
                 void *vcpy = ecalloc(1, sorted_types[i].sz);
@@ -457,6 +458,7 @@ dotype(unsigned char *buf, size_t len, char **argv, size_t *size)
                         errx(1, "Encoding of copy failed");
                     if (memcmp(buf, der, sz))
                         errx(1, "Encoding of copy did not round trip");
+                    free(der);
                 }
                 sorted_types[i].release(vcpy);
                 free(vcpy);

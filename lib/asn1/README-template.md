@@ -75,7 +75,11 @@ Notes about the template parser:
    alterations to templates) and gen.c (to generate declarations of those stub
    functions).
 
+ - template decoding has been fuzzed extensively with American Fuzzy Lop (AFL)
+
 TODO:
+
+ - Remove old fuzzer.  Rely on AFL only.
 
  - Fuzzing tests, always more fuzzing:
 

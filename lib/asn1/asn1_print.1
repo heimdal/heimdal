@@ -60,6 +60,9 @@
 .Fl Fl raw-sequence
 .Xc
 .Oc
+.Oo Fl n \*(Ba Xo Fl Fl no-print Xc Oc
+.Oo Xo Fl Fl test-encode Xc Oc
+.Oo Xo Fl Fl test-copy Xc Oc
 .Oo Fl l v \*(Ba Xo
 .Fl Fl version
 .Xc
@@ -113,6 +116,22 @@ If a value parses as a given
 .Ar TypeName
 but any bytes are left over, try to parse those separately as
 well until all bytes are consumed or an error occurs.
+.It Fl n, Fl Fl no-print
+For the case where
+.Fl A
+or
+.Fl Fl try-all-types
+or where a
+.Ar TypeName
+is given, do not output a JSON representation of the value, just
+attempt to decode it.
+This is useful for fuzzing.
+.It Fl Fl test-encode
+Check that encoding produces the same value as decoding.
+Useful for fuzzing.
+.It Fl Fl test-copy
+Test copy functions.
+Useful for fuzzing.
 .It Fl v, Fl Fl version
 .It Fl h, Fl Fl help
 .El

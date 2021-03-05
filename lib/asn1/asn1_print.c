@@ -55,33 +55,45 @@
 #include "rfc4108_asn1.h"
 #include "x690sample_asn1.h"
 
-static int sequence_flag = 0;
-static int try_all_flag = 0;
+static int print_flag = 1;
+static int test_copy_flag;
+static int test_encode_flag;
+static int sequence_flag;
+static int try_all_flag;
 static int indent_flag = 1;
-static int inner_flag = 0;
+static int inner_flag;
 
 static unsigned long indefinite_form_loop;
 static unsigned long indefinite_form_loop_max = 10000;
 
+typedef size_t (*lengther)(void *);
+typedef size_t (*copyer)(const void *, void *);
+typedef int (*encoder)(unsigned char *, size_t, void *, size_t *);
 typedef int (*decoder)(const unsigned char *, size_t, void *, size_t *);
 typedef char *(*printer)(const void *, int);
 typedef void (*releaser)(void *);
 const struct types {
     const char *name;
+    size_t sz;
+    copyer cpy;
+    lengther len;
     decoder decode;
+    encoder encode;
     printer print;
     releaser release;
-    size_t sz;
 } types[] = {
 #define ASN1_SYM_INTVAL(n, gn, gns, i)
 #define ASN1_SYM_OID(n, gn, gns)
 #define ASN1_SYM_TYPE(n, gn, gns)       \
     {                                   \
         n,                              \
+        sizeof(gns),                    \
+        (copyer)copy_ ## gns,           \
+        (lengther)length_ ## gns,       \
         (decoder)decode_ ## gns,        \
+        (encoder)encode_ ## gns,        \
         (printer)print_ ## gns,         \
         (releaser)free_ ## gns,         \
-        sizeof(gns)                     \
     },
 #include "cms_asn1_syms.x"
 #include "digest_asn1_syms.x"
@@ -356,8 +368,8 @@ dotype(unsigned char *buf, size_t len, char **argv, size_t *size)
     const char *typename = "";
     size_t matches = 0;
     size_t sz;
+    size_t tried = 0;
     size_t i = 0;
-    char *s = NULL;
     void *v;
     int ret = 0;
 
@@ -397,6 +409,7 @@ dotype(unsigned char *buf, size_t len, char **argv, size_t *size)
         v = ecalloc(1, sorted_types[i].sz);
         ret = sorted_types[i].decode(buf, len, v, &sz);
         if (ret == 0) {
+            matches++;
             if (sz == len) {
                 fprintf(stderr, "Match: %s\n", typename);
             } else if (sequence_flag) {
@@ -404,36 +417,70 @@ dotype(unsigned char *buf, size_t len, char **argv, size_t *size)
             } else {
                 fprintf(stderr, "Prefix match: %s\n", typename);
             }
-            s = sorted_types[i].print(v, indent_flag ? ASN1_PRINT_INDENT : 0);
-            sorted_types[i].release(v);
-            if (!s) {
-                ret = errno;
-                err(1, "Could not print %s\n", typename);
+            if (print_flag) {
+                char *s = NULL;
+
+                s = sorted_types[i].print(v, indent_flag ? ASN1_PRINT_INDENT : 0);
+                if (!s) {
+                    ret = errno;
+                    err(1, "Could not print %s\n", typename);
+                }
+                fprintf(stdout, "%s\n", s);
+                free(s);
+            }
+            if (test_encode_flag) {
+                unsigned char *der = emalloc(sz);
+                size_t wants = sorted_types[i].len(v);
+
+                if (wants != sz)
+                    errx(1, "Encoding will not round trip");
+                ret = sorted_types[i].encode(der, sz, v, &sz);
+                if (ret != 0)
+                    errx(1, "Encoding failed");
+                if (memcmp(buf, der, sz))
+                    errx(1, "Encoding did not round trip");
+            }
+            if (test_copy_flag) {
+                void *vcpy = ecalloc(1, sorted_types[i].sz);
+
+                ret = sorted_types[i].cpy(v, vcpy);
+                if (ret != 0)
+                    errx(1, "Copy function failed");
+                if (test_encode_flag) {
+                    unsigned char *der = emalloc(sz);
+                    size_t wants = sorted_types[i].len(vcpy);
+
+                    if (wants != sz)
+                        errx(1, "Encoding of copy will not round trip");
+                    ret = sorted_types[i].encode(der, sz, vcpy, &sz);
+                    if (ret != 0)
+                        errx(1, "Encoding of copy failed");
+                    if (memcmp(buf, der, sz))
+                        errx(1, "Encoding of copy did not round trip");
+                }
+                sorted_types[i].release(vcpy);
+                free(vcpy);
             }
         }
+        sorted_types[i].release(v);
         free(v);
-        if (ret == 0) {
-            fprintf(stdout, "%s\n", s);
+        tried++;
+        i++;
 
-            matches++;
-            i++;
-            if (try_all_flag)
-                continue;
-            free(s);
+        if (ret == 0 && !try_all_flag && !argv[0])
             return 0;
-        }
 
-        if (argv[0])
+        if (!try_all_flag && argv[0])
             continue;
 
         if (try_all_flag) {
-            i++;
             if (i < sizeof(types)/sizeof(types[0]))
                 continue;
             if (matches)
                 break;
-            errx(1, "No type matched the input value");
         }
+        if (tried > 1)
+            errx(1, "No type matched the input value");
 
         /* XXX Use com_err */
         switch (ret) {
@@ -493,10 +540,9 @@ dotype(unsigned char *buf, size_t len, char **argv, size_t *size)
             errx(1, "Could not decode and print data as type %s: "
                  "End-of-contents tag contains data", typename);
         default:
-            err(1, "Could not decode and print data as type %s", typename);
+            errx(1, "Could not decode and print data as type %s", typename);
         }
     }
-    free(s);
     return 0;
 }
 
@@ -536,7 +582,7 @@ doit(char **argv)
 }
 
 
-static int list_types_flag = 0;
+static int list_types_flag;
 static int version_flag;
 static int help_flag;
 struct getargs args[] = {
@@ -550,6 +596,12 @@ struct getargs args[] = {
         "\ttry all known types", NULL },
     { "raw-sequence", 'S', arg_flag, &sequence_flag,
         "\ttry parsing leftover data", NULL },
+    { "test-encode", 0, arg_flag, &test_encode_flag,
+        "\ttest encode round trip (for memory debugging and fuzzing)", NULL },
+    { "test-copy", 0, arg_flag, &test_copy_flag,
+        "\ttest copy operation (for memory debugging and fuzzing)", NULL },
+    { "print", 'n', arg_negative_flag, &print_flag,
+        "\ttest copy operation (for memory debugging and fuzzing)", NULL },
     { "version", 'v', arg_flag, &version_flag, NULL, NULL },
     { "help", 'h', arg_flag, &help_flag, NULL, NULL }
 };

@@ -720,6 +720,26 @@ _asn1_decode(const struct asn1_template *t, unsigned flags,
     const unsigned char *startp = NULL;
     unsigned int template_flags = t->tt;
 
+    /*
+     * Important notes:
+     *
+     *  - by and large we don't call _asn1_free() on error, except when we're
+     *    decoding optional things, then we do call _asn1_free() here
+     *
+     *    instead we leave it to _asn1_decode_top() to call _asn1_free() on
+     *    error
+     *
+     *  - on error all fields of whatever we didn't _asn1_free() must have been
+     *    initialized to sane values because _asn1_decode_top() will call
+     *    _asn1_free() on error, so we must have left everything initialized
+     *    that _asn1_free() could possibly look at
+     *
+     *  - so we must initialize everything
+     *
+     *  - we don't use malloc() unless we're going to write over the whole
+     *    thing with memcpy() or whatever
+     */
+
     /* skip over header */
     t++;
 
@@ -1097,12 +1117,12 @@ _asn1_decode(const struct asn1_template *t, unsigned flags,
 	    unsigned int i;
 
 	    /*
-             * Provide a saner value as default, we should have a NO element value.
-             *
-             * XXX We do have an element value for the ellipsis case: 0.  All
-             * CHOICE discriminant enums start off at 1.
+             * CHOICE element IDs are assigned in monotonically increasing
+             * fashion.  Therefore any unrealistic value is a suitable invalid
+             * CHOICE value.  The largest binary value (or -1 if treating the
+             * enum as signed on a twos-complement system, or...) will do.
              */
-	    *element = 1;
+	    *element = ~0;
 
 	    for (i = 1; i < A1_HEADER_LEN(choice) + 1 && choice[i].tt; i++) {
 		/*

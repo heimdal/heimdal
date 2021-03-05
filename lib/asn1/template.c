@@ -1301,8 +1301,12 @@ _asn1_encode_open_type(const struct asn1_template *t,
     } else {
         struct heim_base_data **os = DPO(data, topentype->offset + sizeof(len));
 
+        while (sizeof(void *) != sizeof(unsigned int) &&
+               ((uintptr_t)os) % sizeof(void *) != 0)
+            os = (void *)(((char *)os) + sizeof(unsigned int));
+
         lenp = DPO(data, topentype->offset);
-        if (*lenp == len && os[0]->length && os[1]->data)
+        if (*lenp == len && os[0]->length && os[0]->data)
             return 0;
     }
 
@@ -1883,8 +1887,12 @@ _asn1_length_open_type(const struct asn1_template *tbase,
     } else {
         struct heim_base_data **os = DPO(data, topentype->offset + sizeof(len));
 
+        while (sizeof(void *) != sizeof(unsigned int) &&
+               ((uintptr_t)os) % sizeof(void *) != 0)
+            os = (void *)(((char *)os) + sizeof(unsigned int));
+
         lenp = DPOC(data, topentype->offset);
-        if (*lenp == len && os[0]->length && os[1]->data)
+        if (*lenp == len && os[0]->length && os[0]->data)
             return 0;
     }
 

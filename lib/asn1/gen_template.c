@@ -37,20 +37,6 @@
  * Currently we generate C source code defining constant arrays of structures
  * containing a sort of a "byte-coded" template of an ASN.1 compiler to be
  * interpreted at run-time.
- *
- * FIXME: Also generate binary representations of these arrays and structs
- *        directly so that we can implement value notation where a value
- *        assignment in a module will get "compiled" by first compiling the
- *        type into such a binary representation in memory, _then_ interpreting
- *        it to produce a BER/DER encoding of the value on the fly, then we can
- *        store the encoded value in the module's compiled form.
- *
- * FIXME MORE: Also, make all this compiler into a library so that we can have
- *             programs like hxtool(1) take a module and an ASN.1 value
- *             representation and have that encoded into BER/DER directly.
- *             This would allow hxtool(1) to support arbitrary PKIX certificate
- *             and CSR and ... extensions on the fly without having to change
- *             any source code.  (Like OpenSSL, but without sucking.)
  */
 
 #include "gen_locl.h"
@@ -145,7 +131,7 @@ ia5string_symbol(const char *basename, const Type *t)
 static const char *
 teletexstring_symbol(const char *basename, const Type *t)
 {
-    return "heim_teletex_string";
+    return "heim_general_string";
 }
 
 static const char *
@@ -188,35 +174,36 @@ bitstring_symbol(const char *basename, const Type *t)
 
 
 
-/* XXX Make sure this is sorted by `type' and can just index this by type */
+/* Keep this sorted by `type' so we can just index this by type */
 const struct {
     enum typetype type;
     const char *(*symbol_name)(const char *, const Type *);
     int is_struct;
 } types[] =  {
-    { TBMPString, bmpstring_symbol, 0 },
     { TBitString, bitstring_symbol, 0 },
     { TBoolean, boolean_symbol, 0 },
+    { TChoice, sequence_symbol, 1 },
+    { TEnumerated, integer_symbol, 0 },
     { TGeneralString, generalstring_symbol, 0 },
+    { TTeletexString, teletexstring_symbol, 0 },
     { TGeneralizedTime, time_symbol, 0 },
     { TIA5String, ia5string_symbol, 0 },
-    { TTeletexString, generalstring_symbol, 0 },
     { TInteger, integer_symbol, 0 },
+    { TNull, integer_symbol, 1 },
     { TOID, oid_symbol, 0 },
     { TOctetString, octetstring_symbol, 0 },
     { TPrintableString, printablestring_symbol, 0 },
     { TSequence, sequence_symbol, 1 },
     { TSequenceOf, tag_symbol, 1 },
+    { TSet, sequence_symbol, 1 },
     { TSetOf, tag_symbol, 1 },
     { TTag, tag_symbol, 1 },
     { TType, ttype_symbol, 1 },
     { TUTCTime, time_symbol, 0 },
-    { TUniversalString, universalstring_symbol, 0 },
-    { TTeletexString, teletexstring_symbol, 0 },
-    { TVisibleString,  visiblestring_symbol, 0 },
     { TUTF8String, utf8string_symbol, 0 },
-    { TChoice, sequence_symbol, 1 },
-    { TNull, integer_symbol, 1 }
+    { TBMPString, bmpstring_symbol, 0 },
+    { TUniversalString, universalstring_symbol, 0 },
+    { TVisibleString, visiblestring_symbol, 0 },
 };
 
 static FILE *
@@ -231,12 +218,8 @@ get_code_file(void)
 static int
 is_supported_type_p(const Type *t)
 {
-    size_t i;
-
-    for (i = 0; i < sizeof(types)/sizeof(types[0]); i++)
-	if (t->type == types[i].type)
-	    return 1;
-    return 0;
+    return t->type >= 0 && t->type <= TVisibleString &&
+        types[t->type].type == t->type;
 }
 
 int
@@ -248,13 +231,13 @@ is_template_compat (const Symbol *s)
 static const char *
 symbol_name(const char *basename, const Type *t)
 {
-    size_t i;
-
-    for (i = 0; i < sizeof(types)/sizeof(types[0]); i++)
-	if (t->type == types[i].type)
-	    return (types[i].symbol_name)(basename, t);
-    printf("unknown der type: %d\n", t->type);
-    exit(1);
+    if (t->type >= 0 && t->type <= TVisibleString &&
+        types[t->type].type == t->type)
+        return (types[t->type].symbol_name)(basename, t);
+    if (t->type >= 0 && t->type <= TVisibleString)
+        errx(1, "types[] is not sorted");
+    errx(1, "unknown der type: %d\n", t->type);
+    return NULL;
 }
 
 
@@ -529,8 +512,6 @@ use_extern(const Symbol *s)
 static int
 is_struct(const Type *t, int isstruct)
 {
-    size_t i;
-
     if (t->type == TType)
 	return 0;
     if (t->type == TSequence || t->type == TSet || t->type == TChoice)
@@ -538,15 +519,15 @@ is_struct(const Type *t, int isstruct)
     if (t->type == TTag)
 	return is_struct(t->subtype, isstruct);
 
-    for (i = 0; i < sizeof(types)/sizeof(types[0]); i++) {
-	if (t->type == types[i].type) {
-	    if (types[i].is_struct == 0)
-		return 0;
-	    else
-		break;
-	}
+    if (t->type >= 0 && t->type <= TVisibleString &&
+        types[t->type].type == t->type) {
+        if (types[t->type].is_struct == 0)
+            return 0;
+        return isstruct;
     }
-
+    if (t->type >= 0 && t->type <= TVisibleString)
+        errx(1, "types[] is not sorted");
+    errx(1, "unknown der type: %d\n", t->type);
     return isstruct;
 }
 

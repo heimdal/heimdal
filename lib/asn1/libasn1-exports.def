@@ -339,6 +339,7 @@ EXPORTS
 	copy_ContentInfo
 	copy_ContentType
 	copy_CPSuri
+	copy_CRIAttributeSet
 	copy_CRIExtensions
 	copy_CRLCertificateList
 	copy_CRLDistributionPoints
@@ -1949,6 +1950,7 @@ EXPORTS
 	length_ContentInfo
 	length_ContentType
 	length_CPSuri
+	length_CRIAttributeSet
 	length_CRIExtensions
 	length_CRLCertificateList
 	length_CRLDistributionPoints

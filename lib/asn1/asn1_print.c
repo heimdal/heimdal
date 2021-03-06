@@ -55,6 +55,7 @@
 #include "rfc4108_asn1.h"
 #include "x690sample_asn1.h"
 
+static int quiet_flag = 0;
 static int print_flag = 1;
 static int test_copy_flag;
 static int test_encode_flag;
@@ -410,11 +411,11 @@ dotype(unsigned char *buf, size_t len, char **argv, size_t *size)
         ret = sorted_types[i].decode(buf, len, v, &sz);
         if (ret == 0) {
             matches++;
-            if (sz == len) {
+            if (!quiet_flag && sz == len) {
                 fprintf(stderr, "Match: %s\n", typename);
             } else if (sequence_flag) {
                 *size = sz;
-            } else {
+            } else if (!quiet_flag) {
                 fprintf(stderr, "Prefix match: %s\n", typename);
             }
             if (print_flag) {
@@ -425,7 +426,8 @@ dotype(unsigned char *buf, size_t len, char **argv, size_t *size)
                     ret = errno;
                     err(1, "Could not print %s\n", typename);
                 }
-                fprintf(stdout, "%s\n", s);
+                if (!quiet_flag)
+                    printf("%s\n", s);
                 free(s);
             }
             if (test_encode_flag) {
@@ -604,6 +606,8 @@ struct getargs args[] = {
         "\ttest copy operation (for memory debugging and fuzzing)", NULL },
     { "print", 'n', arg_negative_flag, &print_flag,
         "\ttest copy operation (for memory debugging and fuzzing)", NULL },
+    { "quiet", 'q', arg_flag, &quiet_flag,
+        "\tOutput nothing (exit status 0 means type matched)", NULL },
     { "version", 'v', arg_flag, &version_flag, NULL, NULL },
     { "help", 'h', arg_flag, &help_flag, NULL, NULL }
 };
@@ -636,17 +640,22 @@ main(int argc, char **argv)
 
     if (sequence_flag && try_all_flag)
         errx(1, "--raw-sequence and --try-all-types are mutually exclusive");
+    if (quiet_flag && !try_all_flag && argc < 2)
+        errx(1, "--quiet requires --try-all-types or that a TypeName be given");
+    if (!print_flag && !try_all_flag && argc < 2)
+        errx(1, "--no-print requires --try-all-types or that a TypeName be given");
 
     if (list_types_flag) {
         size_t i;
 
         if (argc)
-            usage(1);
+            errx(1, "--list-types is exclusive of other options or arguments");
 
         for (i = 0; i < sizeof(types)/sizeof(types[0]); i++)
             printf("%s\n", types[i].name);
         exit(0);
     }
+
     if (argc < 1)
 	usage(1);
     return doit(argv);

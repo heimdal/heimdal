@@ -71,7 +71,7 @@ Notes about the template parser:
  - much easier to extend!  adding new encoding rules is just adding a few
    functions to template.c, one set of length/encode/decode functions per ER,
    so we could add OER/PER/XDR/GSER/JER with very little work outside that one
-   file and gen_template.c (to generate stub functions and possibly slight
+   file and `gen_template.c` (to generate stub functions and possibly slight
    alterations to templates) and gen.c (to generate declarations of those stub
    functions).
 
@@ -86,42 +86,85 @@ TODO:
     - Instructions:
 
 ```
-    $ cd build/lib/asn1
+    $ git clone https://github.com/heimdal/heimdal
+    $ cd heimdal
+    $ srcdir=$PWD
+    $ autoreconf -fi
+    $ 
+    $ mkdir build
+    $ cd build
+    $ 
+    $ ../configure --srcdir=$srcdir ...
+    $ make -j4
+    $
+    $ cd lib/asn1
     $ make clean
     $ AFL_HARDEN=1 make -j4 asn1_print check CC=afl-gcc # or CC=afl-clang
-    $ mkdir i
-    $ cp ../../../lib/hx509/data/ca.crt # etc.
+    $ 
+    $ # $srcdir/lib/asn1/fuzz-inputs/ has at least one minimized DER value
+    $ # produced by taking an EK certificate and truncating the signatureValue
+    $ # and tbsCertificate.subjectPublicKeyInfo fields then re-encoding, thus
+    $ # cutting down the size of the certificate by 45%.  AFL finds interesting
+    $ # code paths much faster if the input corpus is minimized.
+    $ 
     $ mkdir f
-    $ ../../libtool --mode=execute afl-fuzz -i $PWD/i -o $PWD/f ./asn1_print '@@' Certificate
+    $ ../../libtool --mode=execute afl-fuzz -i $srcdir/lib/asn1/fuzz-inputs -o $PWD/f ./asn1_print '@@' Certificate
     $ 
     $ # Or
-    $ ../../libtool --mode=execute afl-fuzz -i $PWD/i -o $PWD/f ./asn1_print -A '@@'
+    $ ../../libtool --mode=execute afl-fuzz -i $srcdir/lib/asn1/fuzz-inputs -o $PWD/f ./asn1_print -A '@@'
     $
-    $ # Examing crash reports, if any.  Each crash report consists of an input
-    $ # that caused a crash, so run:
+    $ # Examine crash reports, if any.  Each crash report consists of an input
+    $ # that caused a crash, so run valgrind on each such input:
     $ 
     $ for i in f/crashes/id*; do
     >   echo $i
     >   ../../libtool --mode=execute valgrind --num-callers=64 ./asn1_print $i \
-    >        Certificate IOSCertificationRequest >/dev/null 2> f3/crashes/vg-${i##*/}
+    >        Certificate IOSCertificationRequest >/dev/null 2> f/crashes/vg-${i##*/}
     > done
     $ 
-    $ $PAGER f3/crashes/vg-*
+    $ # then review the valgrind output:
+    $ $PAGER f/crashes/vg-*
 ```
 
-    - Currently using a largish certificate as the input corpus.  Need more,
-      and more minimized DER encodings.
+    - Here's a screenshot of AFL running on the previous commit:
 
-    - Make building with AFL a ./cofigure option.
+```
+                     american fuzzy lop 2.52b (asn1_print)
 
-    - Make fuzzing with AFL a make target.
+┌─ process timing ─────────────────────────────────────┬─ overall results ─────┐
+│        run time : 0 days, 11 hrs, 58 min, 8 sec      │  cycles done : 8      │
+│   last new path : 0 days, 0 hrs, 0 min, 43 sec       │  total paths : 1109   │
+│ last uniq crash : none seen yet                      │ uniq crashes : 0      │
+│  last uniq hang : none seen yet                      │   uniq hangs : 0      │
+├─ cycle progress ────────────────────┬─ map coverage ─┴───────────────────────┤
+│  now processing : 654* (58.97%)     │    map density : 1.57% / 3.33%         │
+│ paths timed out : 0 (0.00%)         │ count coverage : 3.13 bits/tuple       │
+├─ stage progress ────────────────────┼─ findings in depth ────────────────────┤
+│  now trying : interest 16/8         │ favored paths : 201 (18.12%)           │
+│ stage execs : 8544/17.0k (50.19%)   │  new edges on : 295 (26.60%)           │
+│ total execs : 52.1M                 │ total crashes : 0 (0 unique)           │
+│  exec speed : 1224/sec              │  total tmouts : 23 (9 unique)          │
+├─ fuzzing strategy yields ───────────┴───────────────┬─ path geometry ────────┤
+│   bit flips : 373/3.38M, 93/3.37M, 46/3.37M         │    levels : 11         │
+│  byte flips : 14/421k, 13/240k, 19/247k             │   pending : 440        │
+│ arithmetics : 150/13.2M, 19/6.63M, 1/266k           │  pend fav : 0          │
+│  known ints : 16/1.12M, 72/6.41M, 116/10.8M         │ own finds : 1108       │
+│  dictionary : 0/0, 0/0, 1/1.10M                     │  imported : n/a        │
+│       havoc : 175/1.28M, 0/0                        │ stability : 100.00%    │
+│        trim : 2.19%/203k, 43.61%                    ├────────────────────────┘
+└─────────────────────────────────────────────────────┘          [cpu000:184%]
+```
+
+    - TODO: Make building with AFL a ./cofigure option.
+
+    - TODO: Make fuzzing with AFL a make target.
 
     - Fuzz decode round-tripping (don't just decode, but also encoded the
       decoded).
 
  - Performance testing
 
- - ASN1_MALLOC_ENCODE() as a function, replaces encode_ and length_
+ - `ASN1_MALLOC_ENCODE()` as a function, replaces `encode_` and `length_`
 
  - Fix SIZE constraits
 

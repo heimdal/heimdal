@@ -259,7 +259,7 @@ der_find_heim_oid_by_oid(const heim_oid *oid, const char **name)
         return ENOMEM;
 
     while (left <= right) {
-        size_t mid = left + (right - left) / 2;
+        size_t mid = (left + right) >> 1;
         int cmp;
 
         cmp = der_heim_oid_cmp(oid, sym_oids_sorted_by_oid[mid].oid);
@@ -267,7 +267,7 @@ der_find_heim_oid_by_oid(const heim_oid *oid, const char **name)
             *name = sym_oids_sorted_by_oid[mid].sym;
             return 0;
         }
-        if (cmp < 0 && right)
+        if (cmp < 0 && mid)
             right = mid - 1;
         else if (cmp < 0)
             return -1;

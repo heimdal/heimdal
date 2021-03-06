@@ -79,6 +79,9 @@ Notes about the template parser:
 
 TODO:
 
+ - Generate templates for enumerations, with their names and values, so that
+   values of enumerated types can be printed.
+
  - Remove old fuzzer.  Rely on AFL only.
 
  - Fuzzing tests, always more fuzzing:

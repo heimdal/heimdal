@@ -2380,6 +2380,7 @@ _asn1_print_open_type(const struct asn1_template *t, /* object set template */
         r = rk_strpoolprintf(r, ",%s\"_%s_choice\":\"_ERROR_DECODING_\"",
                              indents ? indents : "", opentype_name);
         free(indents);
+        return r;
     }
     tactual_type = tos[3*(*elementp - 1) + 4].ptr;
 

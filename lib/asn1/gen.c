@@ -695,7 +695,7 @@ define_asn1 (int level, Type *t)
     case TOctetString:
 	fprintf (headerfile, "OCTET STRING");
 	break;
-    case TEnumerated :
+    case TEnumerated:
     case TBitString: {
 	Member *m;
 

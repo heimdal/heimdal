@@ -921,6 +921,7 @@ template_members(struct templatehead *temp,
 
 	}
 	break;
+    case TEnumerated:
     case TInteger: {
 	char *itype = NULL;
 

@@ -863,13 +863,14 @@ TPMVersion ::= INTEGER { tpm-v1(0) }
 TPMSecurityAssertions ::= SEQUENCE {
     version TPMVersion DEFAULT 0, -- v1
     fieldUpgradable BOOLEAN DEFAULT FALSE,
-    ekGenerationType [0] IMPLICIT EKGenerationType OPTIONAL,
-    ekGenerationLocation [1] IMPLICIT EKGenerationLocation OPTIONAL,
-    ekCertificateGenerationLocation [2] IMPLICIT EKCertificateGenerationLocation OPTIONAL,
-    -- These two are marked IMPLICIT, but...
-    ccInfo [3] CommonCriteriaMeasures OPTIONAL,
-    fipsLevel [4] FIPSLevel OPTIONAL,
-    iso9000Certified [5] IMPLICIT BOOLEAN DEFAULT FALSE,
+    -- The TCG EK cert profile spec says all these context tags are IMPLICIT,
+    -- but samples in the field have them as EXPLICIT.
+    ekGenerationType [0] EXPLICIT EKGenerationType OPTIONAL,
+    ekGenerationLocation [1] EXPLICIT EKGenerationLocation OPTIONAL,
+    ekCertificateGenerationLocation [2] EXPLICIT EKCertificateGenerationLocation OPTIONAL,
+    ccInfo [3] EXPLICIT CommonCriteriaMeasures OPTIONAL,
+    fipsLevel [4] EXPLICIT FIPSLevel OPTIONAL,
+    iso9000Certified [5] EXPLICIT BOOLEAN DEFAULT FALSE,
     iso9000Uri IA5String OPTIONAL, -- (SIZE (1..URIMAX))
     ...
 }

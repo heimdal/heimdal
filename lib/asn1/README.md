@@ -241,7 +241,7 @@ In recent times the following features have been added:
      "tbsCertificate": {
        "_type": "TBSCertificate",
        "_save": "30820376A00302010202146A0597BA71D7E6D3AC0EDC9EDC95A15B998DE40A300D06092A864886F70D01010B05003055310B3009060355040613024348311E301C060355040A131553544D6963726F656C656374726F6E696373204E56312630240603550403131D53544D2054504D20454B20496E7465726D656469617465204341203035301E170D3138313231343030303030305A170D3238313231343030303030305A300030820122300D06092A864886F70D01010105000382010F003082010A0282010100CC14EB27A78CEB0EA486FA2DF7835F5FA8E905B097012B5BDE50380C355B1A2A721BBC3D08DD21796CDB239FA95310651B1B56FD2CFE53C87352EBD996E33256160404CE9302A08066801E786A2F86E181F949966F492A85B58EAA4A6A8CB3697551BB236E87CC7BF8EC1347871C91E15437E8F266BF1EA5EB271FDCF374D8B47DF8BCE89E1FAD61C2A088CB4036B359CB72A294973FEDCCF0C340AFFD14B64F041165581ACA34147C1C75617047058F7ED7D603E032508094FA73E8B9153DA3BF255D2CBBC5DF301BA8F74D198BEBCE86040FC1D2927C7657414490D802F482F3EBF2DE35EE149A1A6DE8D16891FBFBA02A18AFE59F9D6F149744E5F0D559B10203010001A38201A9308201A5301F0603551D230418301680141ADB994AB58BE57A0CC9B900E7851E1A43C0866030420603551D20043B303930370604551D2000302F302D06082B060105050702011621687474703A2F2F7777772E73742E636F6D2F54504D2F7265706F7369746F72792F30590603551D110101FF044F304DA44B304931163014060567810502010C0B69643A353335343444323031173015060567810502020C0C53543333485450484148433031163014060567810502030C0B69643A303034393030303830670603551D090460305E301706056781050210310E300C0C03322E300201000202008A304306056781050212313A30380201000101FFA0030A0101A1030A0100A2030A0100A310300E1603332E310A01040A01020101FFA40F300D16053134302D320A0102010100300E0603551D0F0101FF040403020520300C0603551D130101FF0402300030100603551D250409300706056781050801304A06082B06010505070101043E303C303A06082B06010505073002862E687474703A2F2F7365637572652E676C6F62616C7369676E2E636F6D2F73746D74706D656B696E7430352E637274",
-       "version": "2",
+       "version": "rfc3280_version_3",
        "serialNumber": "6A0597BA71D7E6D3AC0EDC9EDC95A15B998DE40A",
        "signature": {
          "_type": "AlgorithmIdentifier",
@@ -381,7 +381,7 @@ In recent times the following features have been added:
            },
            "critical": false,
            "extnValue": "301680141ADB994AB58BE57A0CC9B900E7851E1A43C08660",
-           "_extnValue_choice": "ext-AuthorityKeyIdentifier",
+           "_extnValue_choice": "",
            "_extnValue": {
              "_type": "AuthorityKeyIdentifier",
              "keyIdentifier": "1ADB994AB58BE57A0CC9B900E7851E1A43C08660",
@@ -404,7 +404,7 @@ In recent times the following features have been added:
            },
            "critical": false,
            "extnValue": "303930370604551D2000302F302D06082B060105050702011621687474703A2F2F7777772E73742E636F6D2F54504D2F7265706F7369746F72792F",
-           "_extnValue_choice": "ext-CertificatePolicies",
+           "_extnValue_choice": "",
            "_extnValue": [
              {
                "_type": "PolicyInformation",
@@ -460,7 +460,7 @@ In recent times the following features have been added:
            },
            "critical": true,
            "extnValue": "304DA44B304931163014060567810502010C0B69643A353335343444323031173015060567810502020C0C53543333485450484148433031163014060567810502030C0B69643A3030343930303038",
-           "_extnValue_choice": "ext-SubjectAltName",
+           "_extnValue_choice": "",
            "_extnValue": [
              {
                "_choice": "directoryName",
@@ -550,7 +550,7 @@ In recent times the following features have been added:
            },
            "critical": false,
            "extnValue": "305E301706056781050210310E300C0C03322E300201000202008A304306056781050212313A30380201000101FFA0030A0101A1030A0100A2030A0100A310300E1603332E310A01040A01020101FFA40F300D16053134302D320A0102010100",
-           "_extnValue_choice": "ext-SubjectDirectoryAttributes",
+           "_extnValue_choice": "",
            "_extnValue": [
              {
                "_type": "AttributeSet",
@@ -569,7 +569,7 @@ In recent times the following features have been added:
                "values": [
                  "300C0C03322E300201000202008A"
                ],
-               "_values_choice": "at-TPMSpecification",
+               "_values_choice": "",
                "_values": [
                  {
                    "_type": "TPMSpecification",
@@ -596,20 +596,20 @@ In recent times the following features have been added:
                "values": [
                  "30380201000101FFA0030A0101A1030A0100A2030A0100A310300E1603332E310A01040A01020101FFA40F300D16053134302D320A0102010100"
                ],
-               "_values_choice": "at-TPMSecurityAssertions",
+               "_values_choice": "",
                "_values": [
                  {
                    "_type": "TPMSecurityAssertions",
-                   "version": "0",
+                   "version": 0,
                    "fieldUpgradable": true,
-                   "ekGenerationType": "655617",
-                   "ekGenerationLocation": "655616",
-                   "ekCertificateGenerationLocation": "655616",
+                   "ekGenerationType": "ekgt_injected",
+                   "ekGenerationLocation": "tpmManufacturer",
+                   "ekCertificateGenerationLocation": "tpmManufacturer",
                    "ccInfo": {
                      "_type": "CommonCriteriaMeasures",
                      "version": "3.1",
-                     "assurancelevel": "4",
-                     "evaluationStatus": "2",
+                     "assurancelevel": "ealevel4",
+                     "evaluationStatus": "evaluationCompleted",
                      "plus": true,
                      "strengthOfFunction": null,
                      "profileOid": null,
@@ -620,7 +620,7 @@ In recent times the following features have been added:
                    "fipsLevel": {
                      "_type": "FIPSLevel",
                      "version": "140-2",
-                     "level": "2",
+                     "level": "sllevel2",
                      "plus": false
                    },
                    "iso9000Certified": false,
@@ -645,7 +645,7 @@ In recent times the following features have been added:
            },
            "critical": true,
            "extnValue": "03020520",
-           "_extnValue_choice": "ext-KeyUsage",
+           "_extnValue_choice": "",
            "_extnValue": [
              "keyEncipherment"
            ]
@@ -665,7 +665,7 @@ In recent times the following features have been added:
            },
            "critical": true,
            "extnValue": "3000",
-           "_extnValue_choice": "ext-BasicConstraints",
+           "_extnValue_choice": "",
            "_extnValue": {
              "_type": "BasicConstraints",
              "cA": false,
@@ -687,7 +687,7 @@ In recent times the following features have been added:
            },
            "critical": false,
            "extnValue": "300706056781050801",
-           "_extnValue_choice": "ext-ExtKeyUsage",
+           "_extnValue_choice": "",
            "_extnValue": [
              {
                "_type": "OBJECT IDENTIFIER",
@@ -723,7 +723,7 @@ In recent times the following features have been added:
            },
            "critical": false,
            "extnValue": "303C303A06082B06010505073002862E687474703A2F2F7365637572652E676C6F62616C7369676E2E636F6D2F73746D74706D656B696E7430352E637274",
-           "_extnValue_choice": "ext-AuthorityInfoAccess",
+           "_extnValue_choice": "",
            "_extnValue": [
              {
                "_type": "AccessDescription",

@@ -230,7 +230,11 @@ typeid_int_cmp(const void *intp,
 
     if ((tint[1].tt & A1_OP_MASK) != A1_OP_PARSE)
         return -1;
-    if (A1_PARSE_TYPE(tint[1].tt) != A1T_INTEGER)
+    if (A1_PARSE_TYPE(tint[1].tt) != A1T_INTEGER &&
+        A1_PARSE_TYPE(tint[1].tt) != A1T_UNSIGNED &&
+        A1_PARSE_TYPE(tint[1].tt) != A1T_INTEGER64 &&
+        A1_PARSE_TYPE(tint[1].tt) != A1T_UNSIGNED64 &&
+        A1_PARSE_TYPE(tint[1].tt) != A1T_IMEMBER)
         return -1;
     switch (tint[0].offset) {
     case 8:     return i - *(const int64_t *)intp;
@@ -510,8 +514,12 @@ _asn1_decode_open_type(const struct asn1_template *t,
             
             if ((tint->tt & A1_OP_MASK) != A1_OP_PARSE)
                 return 0;   /* Do nothing, silently */
-            if (A1_PARSE_TYPE(tint->tt) != A1T_INTEGER)
-                return 0;   /* Do nothing, silently (probably a large int) */
+            if (A1_PARSE_TYPE(tint->tt) != A1T_INTEGER &&
+                A1_PARSE_TYPE(tint->tt) != A1T_UNSIGNED &&
+                A1_PARSE_TYPE(tint->tt) != A1T_INTEGER64 &&
+                A1_PARSE_TYPE(tint->tt) != A1T_UNSIGNED64 &&
+                A1_PARSE_TYPE(tint->tt) != A1T_IMEMBER)
+                return 0;   /* Do nothing, silently (maybe a large int) */
             typeid_is_int = 1;
             break;
         }
@@ -2564,9 +2572,42 @@ _asn1_print(const struct asn1_template *t,
 		ABORT_ON_ERROR();
 		break;
 	    }
+
+            if (type == A1T_IMEMBER && t->ptr) {
+                /* Enumeration.  Use the symbolic name of this value */
+                const struct asn1_template *tenum = t->ptr;
+                size_t left = 0;
+                size_t right = A1_HEADER_LEN(tenum);
+                size_t mid;
+                uint32_t v = *(unsigned int *)el;
+                int c = -1;
+
+                while (left <= right) {
+                    mid = (left + right) >> 1;
+
+                    if ((tenum[mid].tt & A1_OP_MASK) != A1_OP_NAME)
+                        break;
+                    c = v - tenum[mid].offset;
+                    if (c < 0) {
+                        if (mid)
+                            right = mid - 1;
+                        else
+                            break;
+                    } else if (c > 0) {
+                        left = mid + 1;
+                    } else {
+                        break;
+                    }
+                }
+                if (c == 0) {
+                    r = rk_strpoolprintf(r, "\"%s\"", (const char *)tenum[mid].ptr);
+                    break;
+                }
+            }
 	    s = (asn1_template_prim[type].print)(el, flags);
             switch (type) {
             case A1T_OID:
+            case A1T_IMEMBER:
             case A1T_BOOLEAN:
             case A1T_INTEGER:
             case A1T_INTEGER64:

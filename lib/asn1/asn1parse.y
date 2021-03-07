@@ -840,6 +840,17 @@ TypeAssignment	: Identifier EEQUAL Type
 		    s->stype = Stype;
 		    s->type = $3;
 		    fix_labels(s);
+
+		    /*
+		     * Hack: make sure that non-anonymous enumeration types get
+		     * a symbol tacked on so we can generate a template for
+		     * their members for value printing.
+		     */
+		    if (s->type->type == TTag && $3->symbol == NULL &&
+			$3->subtype != NULL && $3->subtype->type == TInteger &&
+			$3->subtype->symbol == NULL) {
+			$3->subtype->symbol = s;
+		    }
 		    if (original_order)
 			generate_type(s);
 		    else

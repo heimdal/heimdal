@@ -432,7 +432,7 @@ add_line(struct templatehead *t, const char *fmt, ...)
 }
 
 /*
- * Add an entry to a template, with the pointer field bein a symbol name of a
+ * Add an entry to a template, with the pointer field being a symbol name of a
  * template (i.e., an array, which decays to a pointer as usual in C).
  */
 static void
@@ -457,6 +457,9 @@ add_line_pointer(struct templatehead *t,
     q->ptr = strdup(ptr);
 }
 
+/*
+ * Add an entry to a template where the pointer firled is a string literal.
+ */
 static void
 add_line_string(struct templatehead *t,
 		const char *str,
@@ -479,6 +482,10 @@ add_line_string(struct templatehead *t,
     q->ptr = strdup(str);
 }
 
+/*
+ * Add an entry to a template, with the pointer field being a reference to
+ * named object of a type other than a template or other array type.
+ */
 static void
 add_line_pointer_reference(struct templatehead *t,
                            const char *ptr,
@@ -904,6 +911,7 @@ template_members(struct templatehead *temp,
 	break;
     case TEnumerated:
     case TInteger: {
+        char *varname = NULL;
 	char *itype = NULL;
 
 	if (t->members)
@@ -922,7 +930,49 @@ template_members(struct templatehead *temp,
 	    errx(1, "%s: unsupported range %lld -> %lld",
 		 name, (long long)t->range->min, (long long)t->range->max);
 
-	add_line(temp, "{ A1_PARSE_T(A1T_%s), %s, NULL }", itype, poffset);
+        /*
+         * If `t->members' then we should generate a template for those
+         * members.
+         *
+         * We don't know the name of this field, and the type may not have a
+         * name.  If it has no name, we should generate a name for it, and if
+         * it does have a name, use it, to name a template for its members.
+         *
+         * Then we could use that in _asn1_print() to pretty-print values of
+         * enumerations.
+         */
+        if (t->members && t->symbol) {
+            struct tlist *tl;
+            Member *m;
+            size_t nmemb = 0;
+
+            if (asprintf(&varname, "%s_enum_names", t->symbol->gen_name) == -1 ||
+                varname == NULL)
+                err(1, "Out of memory");
+
+            tl = tlist_new(varname);
+            /*
+             * XXX We're going to assume that t->members is sorted in
+             * numerically ascending order in the module source.  We should
+             * really sort it here.
+             */
+            HEIM_TAILQ_FOREACH(m, t->members, members) {
+                if (m->val > UINT32_MAX)
+                    continue; /* Wouldn't fit in the offset field */
+                add_line(&tl->template,
+                         "{ A1_OP_NAME, %d, \"%s\" }", m->val, m->gen_name);
+                nmemb++;
+            }
+            tlist_header(tl, "{ 0, 0, ((void *)%lu) }", nmemb);
+            /* XXX Accidentally O(N^2)? */
+            if (!tlist_find_dup(tl)) {
+                tlist_print(tl);
+                tlist_add(tl);
+            }
+            add_line(temp, "{ A1_PARSE_T(A1T_%s), %s, asn1_%s }", itype, poffset, varname);
+        } else {
+            add_line(temp, "{ A1_PARSE_T(A1T_%s), %s, NULL }", itype, poffset);
+        }
 	break;
     }
     case TGeneralString:

@@ -960,7 +960,7 @@ template_members(struct templatehead *temp,
                 if (m->val > UINT32_MAX)
                     continue; /* Wouldn't fit in the offset field */
                 add_line(&tl->template,
-                         "{ A1_OP_NAME, %d, \"%s\" }", m->val, m->gen_name);
+                         "{ A1_OP_NAME, %d, \"%s\" }", m->val, m->name);
                 nmemb++;
             }
             tlist_header(tl, "{ 0, 0, ((void *)%lu) }", nmemb);

@@ -193,23 +193,23 @@ In recent times the following features have been added:
      {
        "_type": "TPMSpecification",
        "family": "2.0",
-       "level": "0",
-       "revision": "138"
+       "level": 0,
+       "revision": 138
      }
    ]
    [
      {
        "_type": "TPMSecurityAssertions",
-       "version": "0",
+       "version": 0,
        "fieldUpgradable": true,
-       "ekGenerationType": "655617",
-       "ekGenerationLocation": "655616",
-       "ekCertificateGenerationLocation": "655616",
+       "ekGenerationType": "ekgt-injected",
+       "ekGenerationLocation": "tpmManufacturer",
+       "ekCertificateGenerationLocation": "tpmManufacturer",
        "ccInfo": {
          "_type": "CommonCriteriaMeasures",
          "version": "3.1",
-         "assurancelevel": "4",
-         "evaluationStatus": "2",
+         "assurancelevel": "ealevel4",
+         "evaluationStatus": "evaluationCompleted",
          "plus": true,
          "strengthOfFunction": null,
          "profileOid": null,
@@ -220,7 +220,7 @@ In recent times the following features have been added:
        "fipsLevel": {
          "_type": "FIPSLevel",
          "version": "140-2",
-         "level": "2",
+         "level": "sllevel2",
          "plus": false
        },
        "iso9000Certified": false,
@@ -602,7 +602,7 @@ In recent times the following features have been added:
                    "_type": "TPMSecurityAssertions",
                    "version": 0,
                    "fieldUpgradable": true,
-                   "ekGenerationType": "ekgt_injected",
+                   "ekGenerationType": "ekgt-injected",
                    "ekGenerationLocation": "tpmManufacturer",
                    "ekCertificateGenerationLocation": "tpmManufacturer",
                    "ccInfo": {

@@ -2296,7 +2296,7 @@ test_ios(void)
         "101FFA0030A0101A1030A0100A2030A0100A310300E1603332E310A01040A010"
         "20101FFA40F300D16053134302D320A0102010100\"],\"_values_choice\":\"\","
         "\"_values\":[{\"_type\":\"TPMSecurityAssertions\",\"version\":0,\"fieldUp"
-        "gradable\":true,\"ekGenerationType\":\"ekgt_injected\",\"ekGenerationL"
+        "gradable\":true,\"ekGenerationType\":\"ekgt-injected\",\"ekGenerationL"
         "ocation\":\"tpmManufacturer\",\"ekCertificateGenerationLocation\":\"tp"
         "mManufacturer\",\"ccInfo\":{\"_type\":\"CommonCriteriaMeasures\",\"versi"
         "on\":\"3.1\",\"assurancelevel\":\"ealevel4\",\"evaluationStatus\":\"evalua"

@@ -2184,7 +2184,7 @@ get_AuthorityKeyIdentifier(hx509_context context,
 
 	memset(&gn, 0, sizeof(gn));
 	gn.element = choice_GeneralName_directoryName;
-	gn.u.directoryName.element = choice_GeneralName_directoryName;
+	gn.u.directoryName.element = choice_Name_rdnSequence;
 	gn.u.directoryName.u.rdnSequence = name.u.rdnSequence;
 
 	ret = add_GeneralNames(&gns, &gn);

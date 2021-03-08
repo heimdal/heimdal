@@ -63,6 +63,10 @@ encoding of any value whose type is known and compiled, and which could
 transcode to the other encoding rules.  I.e., dump DER to JSON, and parse JSON
 to output DER.
 
+Indeed, Heimdal's `asn1_print` program currently supports transcoding of DER to
+JSON, though it's not quite X.697-compliant JSON!  Heimdal does not currently
+support parsing JSON-encoded values of ASN.1 types.
+
 Combined with transcoders for JSON/CBOR and other binary-JSON formats, we could
 support those encodings too.
 
@@ -70,7 +74,7 @@ We could really see how much space OER/JER/CBOR save over DER for Kerberos
 tickets, PKIX certificates, and much else.
 
 We especially want this for PKIX, and more than anything for certificates, as
-the TBSCertificate type is full of deeply nested open types: DN and
+the TBSCertificate type is full of deeply nested open types: DNs and
 subjectDirectory attributes, otherName SAN types, and certificate extensions.
 
 Besides a magical ASN.1 DER/JER dumper/transcoder utility, we want to replace
@@ -121,11 +125,14 @@ These are used not only in protocols that use ASN.1, but in many protocols that
 use syntaxes and encodings unrelated to ASN.1.  I.e., these concepts are *not*
 ASN.1-specific.
 
-Many Internet protocols use typed holes, and many use ASN.1 and typed holes.
-For example, PKIX, Kerberos, LDAP, and others, use ASN.1 and typed holes.
+Many Internet protocols use typed holes, and many use typed holes in ASN.1
+types.  For example, PKIX, Kerberos, LDAP, and others, use ASN.1 and typed
+holes.
 
-For an example of an Internet protocol that does not use ASN.1 but which still
-has typed holes, see SSHv2.
+For examples of an Internet protocol that does not use ASN.1 but which still
+has typed holes, see IP, MIME, SSHv2, IKEv2, and others.  Most quintessentilly,
+IP itself, since IP packet payloads are for some upper layer protocol
+identified in the IP packet header.
 
 In ASN.1 these generally look like:
 
@@ -166,7 +173,8 @@ of bytes whose content's schema is identified by the `id` in the same data
 structure.  The pattern does not require just two fields, and it does not
 require any particular type for the hole, nor for the type ID.  Sometimes the
 "hole" is an `OCTET STRING`, sometimes it's a `BIT STRING`, sometimes it's an
-`ANY` or `ANY DEFINED BY`.
+`ANY` or `ANY DEFINED BY`.  Sometimes the hole is even an array of (`SET OF` or
+`SEQUENCE OF`, in ASN.1) values of the type identified by the id field.
 
 An example from PKIX:
 
@@ -263,14 +271,16 @@ extensible:
 ```
 
 The critical thing to understand is that our compiler automatically decodes
-(and encodes) `CHOICE`s' alternatives, but it does NOT do that for typed holes
-because it knows nothing about them.
+(and encodes) `CHOICE`s' alternatives, but it used to NOT do that for typed
+holes because it knows nothing about them.  Now, however, our compiler can
+do this for typed holes provided the module specifies what the alternatives
+are.
 
 It would be nice if we could treat *all* typed holes like `CHOICE`s whenever
 the compiler knows the alternatives!
 
 And that's exactly what the ASN.1 IOS system makes possible.  With ASN.1 IOS
-support, our compiler could automatically decode all the `Certificate`
+support, our compiler can automatically decode all the `Certificate`
 extensions, and all the distinguished name extensions it knows about.
 
 There is a fair bit of code in `lib/hx509/` that deals with encoding and
@@ -283,6 +293,8 @@ Rules (GSER) [RFC2641], we could have a utility program to automatically
 display or compile DER (and other encodings) of certifcates and many other
 interesting data structures.
 
+Indeed, we do now have such a utility (`asn1_print`), able to transcode DER to
+JSON.
 
 ## ASN.1 IOS, Constraint, and Parameterization
 
@@ -452,8 +464,10 @@ won't need to support that yet).
 
 These relational entities are immutable in that they are defined in ASN.1
 modules that are compiled and there is no way to change them at run-time, only
-query them.  To mutate them one must edit the ASN.1 module that defines them
-and recompile it.  IOS entities also have no on-the-wire representation.
+query them (although perhaps object sets marked as extensible are intended to
+be extensible at run-time?).  To mutate them one must edit the ASN.1 module
+that defines them and recompile it.  IOS entities also have no on-the-wire
+representation.
 
 So far, the IOS seems just so useless to us: we have some, but non-urgent need
 to specify immutable relational data.  For example, cryptosystem parameters,
@@ -471,16 +485,16 @@ parameterization [X.683].  We can express the following things:
  - what pairs of `{type ID value, type}` are allowed for some `SET`'s or
    `SEQUENCE`'s open type members
 
-With this our ASN.1 compiler can have the metadata it needs in order to
+With this our ASN.1 compiler has the metadata it needs in order to
 auto-generate decoding and encoding of values of open types.
 
 A termnology point: `CHOICE`, `SET`, and `SEQUENCE` types have "members", but
-_classes_ and _objects_ have "fields", and _object sets_ have elements.
+_classes_ and _objects_ have "fields", and _object sets_ have "elements".
 
-Objects have _settings_ for all the required fields of the object's class and
-none, some, or all of the `OPTIONAL` or `DEFAULT` fields of the class.  This is
-very similar to `SET`/`SEQUENCE` members, which can be `OPTIONAL` or
-`DEFAULT`ed.
+Objects must have "_settings_" for all the required fields of the object's
+class and none, some, or all of the `OPTIONAL` or `DEFAULT` fields of the
+class.  This is very similar to `SET`/`SEQUENCE` members, which can be
+`OPTIONAL` or `DEFAULT`ed.
 
 The _members_ (we call them fields in C, instance variables in C++, Java, ...)
 of a `SET` or `SEQUENCE` type are typed, just as in C, C++, Java, etc. for
@@ -614,8 +628,8 @@ Here's another, much more complex example from PKIX:
     - The `&id` field is a fixed-type value field (intended to name the type of
       members linked to the `&AssertionType` field).
 
-No `Attribute`s in PKIX specify matching rules, so we really don't need support
-for object nor object set fields.
+No `Attribute`s in PKIX (at least RFC 5912) specify matching rules, so we
+really don't need support for object nor object set fields.
 
 Because
  - no objects in object sets of `EXTENSION` in PKIX specify "criticality",
@@ -664,16 +678,16 @@ defining types:
   OTHER-NAME ::= TYPE-IDENTIFIER
   -- Most members of GeneralName elided for brevity:
   GeneralName ::= CHOICE {
-      otherName       [0]  INSTANCE OF OTHER-NAME({OtherNames}),
-                                               -- ^^^^^^^^^^^^
+      otherName       [0]  INSTANCE OF OTHER-NAME({KnownOtherNames}),
+                                               -- ^^^^^^^^^^^^^^^^^
                                                -- rubber & road meet!
       ...
   }
 ```
 
-(The `CertExtensions` and `OtherNames` object sets are not shown here for
-brevity.  PKIX doesn't even define an `OtherNames` object set, though it well
-could.)
+(The `CertExtensions` and `KnownOtherNames` object sets are not shown here for
+brevity.  PKIX doesn't even define an `KnownOtherNames` object set, though it
+well could.)
 
 The above demonstrates two ways to create `SEQUENCE` types that are constrained
 by IOS classes.  One is by defining the types of the members of a `SEQUENCE`
@@ -743,7 +757,7 @@ For examples of X.681/X.682/X.683 usage, look at `lib/asn1/rfc2459.asn1`.
 
 ## Limitations
 
- - `AtNotation` is very limited.
+ - `AtNotation` supported is very limited.
 
  - Object set extensibility is not supported.
 
@@ -764,15 +778,14 @@ For examples of X.681/X.682/X.683 usage, look at `lib/asn1/rfc2459.asn1`.
 
 ## Implementation Design
 
-NOTE: Much of this is already implemented in the `x68x` branch of
-https://github.com/nicowilliams/heimdal.
+NOTE: This has already be implemented in the `master` branch of Heimdal.
 
  - The required specifications, X.681, X.682, and X.683, are fairly large and
    non-trivial.  We can implement just the subset of those three that we need
    to implement PKIX, just as we already implement just the subset of X.680
    that we need to implement PKIX and Kerberos.
 
-   For dealing with PKIX, the bare minimum of IOS classes we should want are:
+   For dealing with PKIX, the bare minimum of IOS classes we want are:
 
     - `ATTRIBUTE` (used for `DN` attributes in RFC5280, specifically for the
       `SingleAttribute` and `AttributeSet` types, RDNs, and the
@@ -791,13 +804,13 @@ https://github.com/nicowilliams/heimdal.
    now.
 
    Note that there's no object set specified for OTHER-NAME instances, but we
-   can and will create our own.  We want magic open type decoding to recurse
+   can and have creates our own.  We want magic open type decoding to recurse
    all the way down and handle DN attributes, extensions, SANs, policy
    qualifiers, the works.
 
  - We'll really want to do this mainly for the template compiler and begin
-   abandoning the original compiler.  The codegen backend should generate the
-   same C types, but no code for automatic, recursive handling of open types.
+   abandoning the original compiler.  The codegen backend generates the same C
+   types, but no code for automatic, recursive handling of open types.
 
    Maintaining two compiler backends is difficult enough; adding complex
    features beyond X.680 to both is too much work.  The template compiler is
@@ -814,7 +827,7 @@ https://github.com/nicowilliams/heimdal.
    Below are the C types for the ASN.1 PKIX types we care about, as generated
    by the current prototype.
 
-   `Extension` should and does compile to something like:
+   `Extension` compiles to:
 
 ```C
 typedef struct Extension {
@@ -844,6 +857,7 @@ typedef struct Extension {
             choice_Extension_iosnum_id_pkix_pe_subjectInfoAccess,
         } element;
         union {
+            void *_any;
             AuthorityKeyIdentifier* ext_AuthorityKeyIdentifier;
             SubjectKeyIdentifier* ext_SubjectKeyIdentifier;
             KeyUsage* ext_KeyUsage;
@@ -866,7 +880,7 @@ typedef struct Extension {
 } Extension;
 ```
 
-   The `SingleAttribute` and `AttributeSet` types should and do compile to:
+   The `SingleAttribute` and `AttributeSet` types compile to:
 
 ```C
 typedef struct SingleAttribute {
@@ -894,6 +908,7 @@ typedef struct SingleAttribute {
             choice_SingleAttribute_iosnum_id_at_emailAddress,
         } element;
         union {
+            void *_any;
             X520name* at_name;
             X520name* at_surname;
             X520name* at_givenName;
@@ -949,6 +964,7 @@ typedef struct AttributeSet {
         } element;
         unsigned int len;
         union {
+            void *_any;
             X520name* at_name;
             X520name* at_surname;
             X520name* at_givenName;
@@ -971,7 +987,7 @@ typedef struct AttributeSet {
 } AttributeSet;
 ```
 
-   The `OtherName` type should and does compile to:
+   The `OtherName` type compiles to:
 
 ```C
 typedef struct OtherName {
@@ -988,6 +1004,7 @@ typedef struct OtherName {
             choice_OtherName_iosnum_id_pkix_on_pkinit_ms_san,
         } element;
         union {
+            void *_any;
             heim_utf8_string* on_xmppAddr;
             heim_ia5_string* on_dnsSRV;
             HardwareModuleName* on_hardwareModuleName;
@@ -1001,21 +1018,21 @@ typedef struct OtherName {
 
    If a caller to `encode_Certificate()` passes a certificate object with
    extensions with `_ioselement == choice_Extension_iosnumunknown` (or
-   whatever, for each open type), then the encoder should use the `extnID` and
-   `extnValue` fields, otherwise it should use the new `_ioschoice_extnValue`
+   whatever, for each open type), then the encoder will use the `extnID` and
+   `extnValue` fields, otherwise it will use the new `_ioschoice_extnValue`
    field and leave `extnID` and `extnValue` cleared.  If both are set, the
    `extnID` and `extnValue` fields, and also the new `_ioschoice_extnValue`
    field, then the encoder will ignore the latter.
 
-   In both cases, the `critical` field should get used as-is.  The rule should
-   be that we support *two* special C struct fields for open types: a hole type
-   ID enum field, and a decoded hole value union.  All other fields will map to
-   either normal (possibly constrained) members of the SET/SEQUENCE.
+   In both cases, the `critical` field gets used as-is.  The rule is be that we
+   support *two* special C struct fields for open types: a hole type ID enum
+   field, and a decoded hole value union.  All other fields will map to either
+   normal (possibly constrained) members of the SET/SEQUENCE.
 
  - Type ID values get mapped to discrete enum values.  Object sets get sorted
-   by object type IDs, allowing for a binary search when decoding.  For
-   encoding and other case we directly index the object set by the mapped type
-   ID enum.
+   by object type IDs so that for decoding they can be and are binary-searched.
+   For encoding and other cases (destructors and copy constructors) we directly
+   index the object set by the mapped type ID enum.
 
  - The C header generator remains shared between the two backends.
 
@@ -1094,7 +1111,7 @@ typedef struct OtherName {
    of them representing the object set.
 
    This allows the encoder and decoder to both find the object set quickly,
-   especially if the objects are sorted by type ID value.
+   especially since the objects are sorted by type ID value.
 
 ## Moving From C
 

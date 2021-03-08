@@ -117,6 +117,7 @@ typedef struct bx509_request_desc {
 
     struct MHD_Connection *connection;
     krb5_times token_times;
+    time_t req_life;
     hx509_request req;
     const char *target;
     const char *redir;
@@ -667,6 +668,8 @@ bx509_param_cb(void *d,
     } else if (strcmp(key, "csr") == 0 && val) {
         heim_audit_addkv((heim_svc_req_desc)a->r, 0, "requested_csr", "true");
         a->ret = 0; /* Handled upstairs */
+    } else if (strcmp(key, "lifetime") == 0 && val) {
+        a->r->req_life = parse_time(val, "day");
     } else {
         /* Produce error for unknown params */
         heim_audit_addkv((heim_svc_req_desc)a->r, 0, "requested_unknown", "true");
@@ -798,7 +801,8 @@ do_CA(struct bx509_request_desc *r, const char *csr)
 
     /* Issue the certificate */
     ret = kdc_issue_certificate(r->context, "bx509", logfac, r->req, p,
-                                &r->token_times, 1 /* send_chain */, &certs);
+                                &r->token_times, r->req_life,
+                                1 /* send_chain */, &certs);
     krb5_free_principal(r->context, p);
     if (ret) {
         if (ret == KRB5KDC_ERR_POLICY || ret == EACCES)
@@ -872,6 +876,7 @@ set_req_desc(struct MHD_Connection *connection,
     r->cname = NULL;
     r->addr = NULL;
     r->req = NULL;
+    r->req_life = 0;
     r->kv = heim_array_create();
     ci = MHD_get_connection_info(connection,
                                  MHD_CONNECTION_INFO_CLIENT_ADDRESS);
@@ -1268,8 +1273,8 @@ bnegotiate_do_CA(struct bx509_request_desc *r)
     /* Issue the certificate */
     if (ret == 0)
         ret = kdc_issue_certificate(r->context, "bx509", logfac, req, p,
-                                    &r->token_times, 1 /* send_chain */,
-                                    &certs);
+                                    &r->token_times, 0,
+                                    1 /* send_chain */, &certs);
     krb5_free_principal(r->context, p);
     hx509_request_free(&req);
     p = NULL;

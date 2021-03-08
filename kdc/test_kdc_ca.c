@@ -2,12 +2,15 @@
 
 static int authorized_flag;
 static int help_flag;
+static char *lifetime_string;
 static const char *app_string = "kdc";
 static int version_flag;
 
 struct getargs args[] = {
     {   "authorized",   'A',    arg_flag,   &authorized_flag,
         "Assume CSR is authorized", NULL },
+    {   "lifetime",     'l',    arg_string, &lifetime_string,
+        "Certificate lifetime desired", "TIME" },
     {   "help",         'h',    arg_flag,   &help_flag,
         "Print usage message", NULL },
     {   "app",          'a',    arg_string, &app_string,
@@ -78,6 +81,7 @@ main(int argc, char **argv)
     hx509_certs certs = NULL;
     const char *argv0 = argv[0];
     const char *out = "MEMORY:junk-it";
+    time_t req_life = 0;
     int optidx = 0;
 
     setprogname(argv[0]);
@@ -143,8 +147,9 @@ main(int argc, char **argv)
     memset(&t, 0, sizeof(t));
     t.starttime = time(NULL);
     t.endtime = t.starttime + 3600;
-    if ((ret = kdc_issue_certificate(context, app_string, logf, req, p, &t, 1,
-                                     &certs)))
+    req_life = lifetime_string ? parse_time(lifetime_string, "day") : 0;
+    if ((ret = kdc_issue_certificate(context, app_string, logf, req, p, &t,
+                                     req_life, 1, &certs)))
         krb5_err(context, 1, ret, "Certificate issuance failed");
 
     if (argv[2])

@@ -827,9 +827,30 @@ for non-default client and server certificates.
 and where the parameters are as follows:
 .Bl -tag -width "xxx" -offset indent
 .It Li ca = Va file
-Specifies the PEM credentials for the kx509 certification
-authority.  If not specified for any specific use-case, then that
-use-case will be disabled.
+Specifies the PEM credentials for the kx509 / bx509d certification
+authority.
+If not specified for any specific use-case, then that use-case
+will be disabled.
+.It Li max_cert_lifetime = Va NUMunit
+Specifies the maximum certificate lifetime as a decimal number
+and an optional unit (the default unit is
+.Dq day
+).
+.It Li force_cert_lifetime = Va NUMunit
+Specifies a minimum certificate lifetime as a decimal number and
+an optional unit (the default unit is
+.Dq day
+).
+.It Li allow_extra_lifetime = Va boolean
+Indicates whether a client may request longer lifetimes than
+their authentication credentials.
+Defaults to false.
+If a
+.Li force_cert_lifetime
+is specified, then
+.Li allow_extra_lifetime
+is implicitly forced to
+.Va true .
 .It Li require_initial_kca_tickets = Va boolean
 Specified whether to require that tickets for the
 .Li kca_service

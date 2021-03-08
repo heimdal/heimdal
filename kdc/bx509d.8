@@ -113,6 +113,45 @@ Uses a thread per-client instead of as many threads as there are CPUs.
 .Xc
 verbose
 .El
+.Sh API
+This service provides an HTTP-based Certification Authority (CA).
+The protocol consists of a
+.Ar GET
+of
+.Ar /bx509
+with the base-63 encoding of a DER encoding of a PKCS#10
+.Ar CertificationRequest
+(Certificate Signing Request, or CSR) in a
+.Ar csr
+required query parameter.
+In a successful query, the response body will contain a PEM
+encoded end entity certificate and certification chain.
+.Pp
+Authentication is required.
+Unauthenticated requests will elicit a 401 response.
+.Pp
+Subject Alternative Names (SANs) and Extended Key Usage values
+may be requested, both in-band in the CSR as a requested
+extensions attribute, and/or via optional query parameters.
+.Pp
+Supported query parameters (separated by ampersands)
+.Bl -tag -width Ds -offset indent
+.It Li csr = Va <base64-encoded-DER-encoded-CSR>
+.It Li dNSName = Va <hostname>
+.It Li rfc822Name = Va <email-address>
+.It Li xMPPName = Va <XMPP-address>
+.It Li krb5PrincipalName = Va <Kerberos-principal-name>
+.It Li ms-upn = Va <UPN>
+.It Li eku = Va <OID>
+.It Li lifetime = Va <lifetime>
+.El
+.Pp
+More than one name or EKU may be requested.
+.Pp
+Certificate lifetimes are expressed as a decimal number and
+an optional unit (which defaults to
+.Dq day
+).
 .Sh ENVIRONMENT
 .Bl -tag -width Ds
 .It Ev KRB5_CONFIG
@@ -122,6 +161,8 @@ the default being
 .Pa /etc/krb5.conf .
 .El
 .Sh FILES
+Configuration parameters are specified in
+.Ar /etc/krb5.conf .
 .Bl -tag -width Ds
 .It Pa /etc/krb5.conf
 .El

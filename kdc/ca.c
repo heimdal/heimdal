@@ -104,6 +104,7 @@ kdc_issue_certificate(krb5_context context,
                       hx509_request req,
                       krb5_principal cprinc,
                       krb5_times *auth_times,
+                      time_t req_life,
                       int send_chain,
                       hx509_certs *out)
 {
@@ -122,7 +123,9 @@ kdc_issue_certificate(krb5_context context,
                                           (const heim_config_binding *)cf,
                                           logf, req, &cprinc2,
                                           auth_times->starttime,
-                                          auth_times->endtime, send_chain,
+                                          auth_times->endtime,
+                                          req_life,
+                                          send_chain,
                                           out);
     if (ret == EACCES)
         ret = KRB5KDC_ERR_POLICY;

@@ -2835,6 +2835,7 @@ enomem:
 static heim_error_code
 tbs_set_times(hx509_context context,
               const heim_config_binding *cf,
+              heim_log_facility *logf,
               time_t starttime,
               time_t endtime,
               time_t req_life,
@@ -2847,14 +2848,28 @@ tbs_set_times(hx509_context context,
     time_t clamp =
         heim_config_get_time_default(context->hcontext, cf, 0,
                                      "max_cert_lifetime", NULL);
+    int allow_more =
+        heim_config_get_bool_default(context->hcontext, cf, FALSE,
+                                     "allow_extra_lifetime", NULL);
+
+    if (!allow_more && fudge && now + fudge > endtime)
+        allow_more = 1;
 
     starttime = starttime ?  starttime : now - 5 * 60;
     if (fudge && now + fudge > endtime)
         endtime = now + fudge;
-    if (req_life && req_life < endtime - now)
+    if (req_life > 0 && req_life < endtime - now)
         endtime = now + req_life;
     if (clamp && clamp < endtime - now)
         endtime = now + clamp;
+
+    if (endtime < now) {
+        heim_log_msg(context->hcontext, logf, 3, NULL,
+                     "Endtime would be in the past");
+        hx509_set_error_string(context, 0, ERANGE,
+                               "Endtime would be in the past");
+        return ERANGE;
+    }
 
     hx509_ca_tbs_set_notAfter(context, tbs, endtime);
     hx509_ca_tbs_set_notBefore(context, tbs, starttime);
@@ -2874,6 +2889,7 @@ _hx509_ca_issue_certificate(hx509_context context,
                             KRB5PrincipalName *cprinc,
                             time_t starttime,
                             time_t endtime,
+                            time_t req_life,
                             int send_chain,
                             hx509_certs *out)
 {
@@ -2995,8 +3011,8 @@ _hx509_ca_issue_certificate(hx509_context context,
 
     /* Work out cert expiration */
     if (ret == 0)
-        ret = tbs_set_times(context, cf, starttime, endtime,
-                            0 /* XXX req_life */, tbs);
+        ret = tbs_set_times(context, cf, logf, starttime, endtime, req_life,
+                            tbs);
 
     /* Expand the subjectName template in the TBS using the env */
     if (ret == 0)

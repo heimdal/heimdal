@@ -732,7 +732,8 @@ _asn1_decode(const struct asn1_template *t, unsigned flags,
      * Important notes:
      *
      *  - by and large we don't call _asn1_free() on error, except when we're
-     *    decoding optional things, then we do call _asn1_free() here
+     *    decoding optional things or choices, then we do call _asn1_free()
+     *    here
      *
      *    instead we leave it to _asn1_decode_top() to call _asn1_free() on
      *    error
@@ -743,6 +744,8 @@ _asn1_decode(const struct asn1_template *t, unsigned flags,
      *    that _asn1_free() could possibly look at
      *
      *  - so we must initialize everything
+     *
+     *    FIXME? but we mostly rely on calloc() to do this...
      *
      *  - we don't use malloc() unless we're going to write over the whole
      *    thing with memcpy() or whatever
@@ -1156,9 +1159,11 @@ _asn1_decode(const struct asn1_template *t, unsigned flags,
 		    *element = i;
 		    p += datalen; len -= datalen;
 		    break;
-		} else if (ret != ASN1_BAD_ID && ret != ASN1_MISPLACED_FIELD && ret != ASN1_MISSING_FIELD) {
-		    return ret;
 		}
+                _asn1_free(choice[i].ptr, DPO(data, choice[i].offset));
+                if (ret != ASN1_BAD_ID && ret != ASN1_MISPLACED_FIELD &&
+                    ret != ASN1_MISSING_FIELD)
+		    return ret;
 	    }
 	    if (i >= A1_HEADER_LEN(choice) + 1 || !choice[i].tt) {
 		if (choice->tt == 0)

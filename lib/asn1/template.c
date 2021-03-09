@@ -2682,11 +2682,13 @@ _asn1_print(const struct asn1_template *t,
             bmember += belements;
             r = rk_strpoolprintf(r, "%s[", indents ? indents : "");
             while (r && belements) {
-                if (!first)
-                    r = rk_strpoolprintf(r, ",");
-                if (r && _asn1_bmember_isset_bit(data, bmember->offset, size))
+                if (r && _asn1_bmember_isset_bit(data, bmember->offset, size)) {
+                    if (!first)
+                        r = rk_strpoolprintf(r, ",");
+                    first = 0;
                     r = rk_strpoolprintf(r, "%s\"%s\"", indents ? indents : "",
                                          (const char *)bmember->ptr);
+                }
                 belements--; bmember--;
 	    }
             if (r)

@@ -135,27 +135,27 @@ TODO:
                      american fuzzy lop 2.52b (asn1_print)
 
 ┌─ process timing ─────────────────────────────────────┬─ overall results ─────┐
-│        run time : 0 days, 11 hrs, 58 min, 8 sec      │  cycles done : 8      │
-│   last new path : 0 days, 0 hrs, 0 min, 43 sec       │  total paths : 1109   │
+│        run time : 1 days, 5 hrs, 10 min, 39 sec      │  cycles done : 13     │
+│   last new path : 0 days, 0 hrs, 0 min, 24 sec       │  total paths : 1248   │
 │ last uniq crash : none seen yet                      │ uniq crashes : 0      │
 │  last uniq hang : none seen yet                      │   uniq hangs : 0      │
 ├─ cycle progress ────────────────────┬─ map coverage ─┴───────────────────────┤
-│  now processing : 654* (58.97%)     │    map density : 1.57% / 3.33%         │
-│ paths timed out : 0 (0.00%)         │ count coverage : 3.13 bits/tuple       │
+│  now processing : 1049* (84.05%)    │    map density : 2.22% / 3.96%         │
+│ paths timed out : 0 (0.00%)         │ count coverage : 3.14 bits/tuple       │
 ├─ stage progress ────────────────────┼─ findings in depth ────────────────────┤
-│  now trying : interest 16/8         │ favored paths : 201 (18.12%)           │
-│ stage execs : 8544/17.0k (50.19%)   │  new edges on : 295 (26.60%)           │
-│ total execs : 52.1M                 │ total crashes : 0 (0 unique)           │
-│  exec speed : 1224/sec              │  total tmouts : 23 (9 unique)          │
+│  now trying : interest 32/8         │ favored paths : 214 (17.15%)           │
+│ stage execs : 12.3k/25.1k (49.15%)  │  new edges on : 321 (25.72%)           │
+│ total execs : 69.4M                 │ total crashes : 0 (0 unique)           │
+│  exec speed : 832.4/sec             │  total tmouts : 5794 (160 unique)      │
 ├─ fuzzing strategy yields ───────────┴───────────────┬─ path geometry ────────┤
-│   bit flips : 373/3.38M, 93/3.37M, 46/3.37M         │    levels : 11         │
-│  byte flips : 14/421k, 13/240k, 19/247k             │   pending : 440        │
-│ arithmetics : 150/13.2M, 19/6.63M, 1/266k           │  pend fav : 0          │
-│  known ints : 16/1.12M, 72/6.41M, 116/10.8M         │ own finds : 1108       │
-│  dictionary : 0/0, 0/0, 1/1.10M                     │  imported : n/a        │
-│       havoc : 175/1.28M, 0/0                        │ stability : 100.00%    │
-│        trim : 2.19%/203k, 43.61%                    ├────────────────────────┘
-└─────────────────────────────────────────────────────┘          [cpu000:184%]
+│   bit flips : 430/4.37M, 98/4.37M, 54/4.36M         │    levels : 11         │
+│  byte flips : 17/545k, 12/310k, 19/320k             │   pending : 379        │
+│ arithmetics : 178/17.1M, 26/8.56M, 1/361k           │  pend fav : 1          │
+│  known ints : 29/1.45M, 74/8.28M, 109/14.0M         │ own finds : 1247       │
+│  dictionary : 0/0, 0/0, 4/3.41M                     │  imported : n/a        │
+│       havoc : 196/1.75M, 0/0                        │ stability : 100.00%    │
+│        trim : 1.87%/263k, 43.75%                    ├────────────────────────┘
+└─────────────────────────────────────────────────────┘          [cpu000:197%]
 ```
 
     - TODO: Make building with AFL a ./cofigure option.

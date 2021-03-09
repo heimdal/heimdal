@@ -2399,7 +2399,7 @@ _asn1_print_open_type(const struct asn1_template *t, /* object set template */
 
     r = rk_strpoolprintf(r, ",%s\"_%s_choice\":\"%s\"",
                          indents ? indents : "", opentype_name,
-                         (const char *)tactual_type);
+                         (const char *)tos[3*(*elementp - 1) + 2].ptr);
     if (!r) {
         free(indents);
         return r;

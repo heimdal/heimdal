@@ -1079,17 +1079,16 @@ define_type(int level, const char *name, const char *basename, Type *pt, Type *t
             fprintf(headerfile, "} %s;\n", name);
 	} else if (t->range == NULL) {
             fprintf(headerfile, "heim_integer %s;\n", name);
-	} else if (t->range->min < INT_MIN && t->range->max <= INT64_MAX) {
+	} else if (t->range->min < 0 &&
+                   (t->range->min < INT_MIN || t->range->max > INT_MAX)) {
             fprintf(headerfile, "int64_t %s;\n", name);
-	} else if (t->range->min >= 0 && t->range->max > UINT_MAX) {
-	    fprintf (headerfile, "uint64_t %s;\n", name);
-	} else if (t->range->min >= 0 && t->range->max <= UINT_MAX) {
-	    fprintf (headerfile, "unsigned int %s;\n", name);
-	} else if (t->range->min >= INT_MIN && t->range->max <= INT_MAX) {
+	} else if (t->range->min < 0) {
 	    fprintf (headerfile, "int %s;\n", name);
-	} else
-	    errx(1, "%s: unsupported range %lld -> %lld",
-		 name, (long long)t->range->min, (long long)t->range->max);
+	} else if (t->range->max > UINT_MAX) {
+	    fprintf (headerfile, "uint64_t %s;\n", name);
+	} else {
+	    fprintf (headerfile, "unsigned int %s;\n", name);
+	}
 	break;
     case TBoolean:
 	space(level);

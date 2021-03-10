@@ -65,18 +65,15 @@ integer_symbol(const char *basename, const Type *t)
 	return "int";
     else if (t->range == NULL)
 	return "heim_integer";
-    else if (t->range->min < INT_MIN && t->range->max <= INT64_MAX)
+    else if (t->range->min < 0 &&
+             (t->range->min < INT_MIN || t->range->max > INT_MAX))
 	return "int64_t";
-    else if (t->range->min >= 0 && t->range->max > UINT_MAX)
-	return "uint64_t";
-    else if (t->range->min >= INT_MIN && t->range->max <= INT_MAX)
+    else if (t->range->min < 0)
 	return "int";
-    else if (t->range->min >= 0 && t->range->max <= UINT_MAX)
+    else if (t->range->max > UINT_MAX)
+	return "uint64_t";
+    else
 	return "unsigned";
-    else {
-	abort();
-        UNREACHABLE(return NULL);
-    }
 }
 
 static const char *
@@ -578,17 +575,15 @@ defval(struct templatehead *temp, Member *m)
 
         if (t->members)
             dv = "A1_DV_INTEGER32"; /* XXX Enum size assumptions!  No good! */
-        else if (t->range->min < INT_MIN && t->range->max <= INT64_MAX)
+        else if (t->range->min < 0 &&
+                 (t->range->min < INT_MIN || t->range->max > INT_MAX))
             dv = "A1_DV_INTEGER64";
-        else if (t->range->min >= 0 && t->range->max > UINT_MAX)
+        else if (t->range->min < 0)
+            dv = "A1_DV_INTEGER32";
+        else if (t->range->max > UINT_MAX)
             dv = "A1_DV_INTEGER64";
-        else if (t->range->min >= INT_MIN && t->range->max <= INT_MAX)
-            dv = "A1_DV_INTEGER32";
-        else if (t->range->min >= 0 && t->range->max <= UINT_MAX)
-            dv = "A1_DV_INTEGER32";
         else
-            errx(1, "unsupported range %lld -> %lld",
-                 (long long)m->type->range->min, (long long)m->type->range->max);
+            dv = "A1_DV_INTEGER32";
         add_line(temp, "{ A1_OP_DEFVAL|%s, ~0, (void *)%llu }",
                  dv, (long long)m->defval->u.integervalue);
         break;
@@ -918,17 +913,15 @@ template_members(struct templatehead *temp,
 	    itype = "IMEMBER";
 	else if (t->range == NULL)
 	    itype = "HEIM_INTEGER";
-	else if (t->range->min < INT_MIN && t->range->max <= INT64_MAX)
+	else if (t->range->min < 0 &&
+                 (t->range->min < INT_MIN || t->range->max > INT_MAX))
 	    itype = "INTEGER64";
-	else if (t->range->min >= 0 && t->range->max > UINT_MAX)
-	    itype = "UNSIGNED64";
-	else if (t->range->min >= INT_MIN && t->range->max <= INT_MAX)
+	else if (t->range->min < 0)
 	    itype = "INTEGER";
-	else if (t->range->min >= 0 && t->range->max <= UINT_MAX)
-	    itype = "UNSIGNED";
+	else if (t->range->max > UINT_MAX)
+	    itype = "UNSIGNED64";
 	else
-	    errx(1, "%s: unsupported range %lld -> %lld",
-		 name, (long long)t->range->min, (long long)t->range->max);
+	    itype = "UNSIGNED";
 
         /*
          * If `t->members' then we should generate a template for those

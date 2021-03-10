@@ -139,21 +139,20 @@ encode_type (const char *name, const Type *t, const char *tmpstr)
 		    "{\n"
 		    "int enumint = (int)*%s;\n",
 		    name);
-	    encode_primitive ("integer", "&enumint");
+	    encode_primitive("integer", "&enumint");
 	    fprintf(codefile, "}\n;");
 	} else if (t->range == NULL) {
-	    encode_primitive ("heim_integer", name);
-	} else if (t->range->min < INT_MIN && t->range->max <= INT64_MAX) {
-	    encode_primitive ("integer64", name);
-	} else if (t->range->min >= 0 && t->range->max > UINT_MAX) {
-	    encode_primitive ("unsigned64", name);
-	} else if (t->range->min >= INT_MIN && t->range->max <= INT_MAX) {
-	    encode_primitive ("integer", name);
-	} else if (t->range->min >= 0 && t->range->max <= UINT_MAX) {
-	    encode_primitive ("unsigned", name);
-	} else
-	    errx(1, "%s: unsupported range %lld -> %lld",
-		 name, (long long)t->range->min, (long long)t->range->max);
+	    encode_primitive("heim_integer", name);
+	} else if (t->range->min < 0 &&
+                   (t->range->min < INT_MIN || t->range->max > INT_MAX)) {
+            encode_primitive("integer64", name);
+	} else if (t->range->min < 0) {
+            encode_primitive("integer", name);
+	} else if (t->range->max > UINT_MAX) {
+	    encode_primitive("unsigned64", name);
+	} else {
+	    encode_primitive("unsigned", name);
+	}
 
 	constructed = 0;
 	break;

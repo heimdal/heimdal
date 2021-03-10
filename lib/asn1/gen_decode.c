@@ -275,17 +275,16 @@ decode_type(const char *name, const Type *t, int optional, struct value *defval,
 		    name);
 	} else if (t->range == NULL) {
 	    decode_primitive ("heim_integer", name, forwstr);
-	} else if (t->range->min < INT_MIN && t->range->max <= INT64_MAX) {
+	} else if (t->range->min < 0 &&
+                   (t->range->min < INT_MIN || t->range->max > INT_MAX)) {
 	    decode_primitive ("integer64", name, forwstr);
-	} else if (t->range->min >= 0 && t->range->max > UINT_MAX) {
-	    decode_primitive ("unsigned64", name, forwstr);
-	} else if (t->range->min >= INT_MIN && t->range->max <= INT_MAX) {
+	} else if (t->range->min < 0) {
 	    decode_primitive ("integer", name, forwstr);
-	} else if (t->range->min >= 0 && t->range->max <= UINT_MAX) {
+	} else if (t->range->max > UINT_MAX) {
+	    decode_primitive ("unsigned64", name, forwstr);
+	} else {
 	    decode_primitive ("unsigned", name, forwstr);
-	} else
-	    errx(1, "%s: unsupported range %lld -> %lld",
-		 name, (long long)t->range->min, (long long)t->range->max);
+	}
 	break;
     case TBoolean:
       decode_primitive ("boolean", name, forwstr);

@@ -66,6 +66,9 @@ check_PROGRAMS = $(TESTS)
 
 asn1_gen_SOURCES = asn1_gen.c
 asn1_print_SOURCES = asn1_print.c
+if ASN1_TEMPLATING
+asn1_print_CPPFLAGS = -DASN1_IOS_SUPPORTED
+endif
 check_der_SOURCES = check-der.c check-common.c check-common.h
 
 check_template_SOURCES = check-template.c check-common.c check-common.h

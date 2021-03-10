@@ -85,6 +85,7 @@ const struct types {
 } types[] = {
 #define ASN1_SYM_INTVAL(n, gn, gns, i)
 #define ASN1_SYM_OID(n, gn, gns)
+#ifdef ASN1_IOS_SUPPORTED
 #define ASN1_SYM_TYPE(n, gn, gns)       \
     {                                   \
         n,                              \
@@ -96,6 +97,19 @@ const struct types {
         (printer)print_ ## gns,         \
         (releaser)free_ ## gns,         \
     },
+#else
+#define ASN1_SYM_TYPE(n, gn, gns)       \
+    {                                   \
+        n,                              \
+        sizeof(gns),                    \
+        (copyer)copy_ ## gns,           \
+        (lengther)length_ ## gns,       \
+        (decoder)decode_ ## gns,        \
+        (encoder)encode_ ## gns,        \
+        0,                              \
+        (releaser)free_ ## gns,         \
+    },
+#endif
 #include "cms_asn1_syms.x"
 #include "digest_asn1_syms.x"
 #include "krb5_asn1_syms.x"
@@ -421,6 +435,9 @@ dotype(unsigned char *buf, size_t len, char **argv, size_t *size)
             if (print_flag) {
                 char *s = NULL;
 
+                if (!sorted_types[i].print)
+                    err(1, "Missing print support; try enabling / not "
+                        "disabling ASN.1 templating in build configuration");
                 s = sorted_types[i].print(v, indent_flag ? ASN1_PRINT_INDENT : 0);
                 if (!s) {
                     ret = errno;

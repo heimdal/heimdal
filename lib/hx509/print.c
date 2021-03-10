@@ -439,17 +439,8 @@ check_CRLDistributionPoints(hx509_validate_ctx ctx,
     validate_print(ctx, HX509_VALIDATE_F_VERBOSE, "CRL Distribution Points:\n");
     for (i = 0 ; i < dp.len; i++) {
 	if (dp.val[i].distributionPoint) {
-	    DistributionPointName dpname;
-	    heim_any *data = dp.val[i].distributionPoint;
+	    DistributionPointName dpname = dp.val[i].distributionPoint[0];
 	    size_t j;
-
-	    ret = decode_DistributionPointName(data->data, data->length,
-					       &dpname, NULL);
-	    if (ret) {
-		validate_print(ctx, HX509_VALIDATE_F_VALIDATE,
-			       "Failed to parse CRL Distribution Point Name: %d\n", ret);
-		continue;
-	    }
 
 	    switch (dpname.element) {
 	    case choice_DistributionPointName_fullName:
@@ -480,7 +471,6 @@ check_CRLDistributionPoints(hx509_validate_ctx ctx,
 			       "Unknown DistributionPointName");
 		break;
 	    }
-	    free_DistributionPointName(&dpname);
 	}
     }
     free_CRLDistributionPoints(&dp);

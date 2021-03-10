@@ -672,88 +672,43 @@ hx509_ca_tbs_add_crl_dp_uri(hx509_context context,
 			    const char *uri,
 			    hx509_name issuername)
 {
+    DistributionPointName dpn;
     DistributionPoint dp;
+    GeneralNames crlissuer;
+    GeneralName gn, ign;
+    Name in;
     int ret;
 
     memset(&dp, 0, sizeof(dp));
-
-    dp.distributionPoint = ecalloc(1, sizeof(*dp.distributionPoint));
-
-    {
-	DistributionPointName name;
-	GeneralName gn;
-	size_t size;
-
-	name.element = choice_DistributionPointName_fullName;
-	name.u.fullName.len = 1;
-	name.u.fullName.val = &gn;
-
-	gn.element = choice_GeneralName_uniformResourceIdentifier;
-	gn.u.uniformResourceIdentifier.data = rk_UNCONST(uri);
-	gn.u.uniformResourceIdentifier.length = strlen(uri);
-
-	ASN1_MALLOC_ENCODE(DistributionPointName,
-			   dp.distributionPoint->data,
-			   dp.distributionPoint->length,
-			   &name, &size, ret);
-	if (ret) {
-	    hx509_set_error_string(context, 0, ret,
-				   "Failed to encoded DistributionPointName");
-	    goto out;
-	}
-	if (dp.distributionPoint->length != size)
-	    _hx509_abort("internal ASN.1 encoder error");
-    }
+    memset(&gn, 0, sizeof(gn));
+    memset(&ign, 0, sizeof(ign));
+    memset(&in, 0, sizeof(in));
+    gn.element = choice_GeneralName_uniformResourceIdentifier;
+    gn.u.uniformResourceIdentifier.data = rk_UNCONST(uri);
+    gn.u.uniformResourceIdentifier.length = strlen(uri);
+    dpn.element = choice_DistributionPointName_fullName;
+    dpn.u.fullName.len = 1;
+    dpn.u.fullName.val = &gn;
+    dp.distributionPoint = &dpn;
 
     if (issuername) {
-#if 1
-	/**
-	 * issuername not supported
-	 */
-	hx509_set_error_string(context, 0, EINVAL,
-			       "CRLDistributionPoints.name.issuername not yet supported");
-	return EINVAL;
-#else
-	GeneralNames *crlissuer;
-	GeneralName gn;
-	Name n;
-
-	crlissuer = calloc(1, sizeof(*crlissuer));
-	if (crlissuer == NULL) {
-	    return ENOMEM;
-	}
-	memset(&gn, 0, sizeof(gn));
-
-	gn.element = choice_GeneralName_directoryName;
-	ret = hx509_name_to_Name(issuername, &n);
+	ign.element = choice_GeneralName_directoryName;
+	ret = hx509_name_to_Name(issuername, &ign.u.directoryName);
 	if (ret) {
 	    hx509_set_error_string(context, 0, ret, "out of memory");
-	    goto out;
+	    return ret;
 	}
-
-	gn.u.directoryName.element = n.element;
-	gn.u.directoryName.u.rdnSequence = n.u.rdnSequence;
-
-	ret = add_GeneralNames(&crlissuer, &gn);
-	free_Name(&n);
-	if (ret) {
-	    hx509_set_error_string(context, 0, ret, "out of memory");
-	    goto out;
-	}
-
+        crlissuer.len = 1;
+        crlissuer.val = &ign;
 	dp.cRLIssuer = &crlissuer;
-#endif
     }
 
     ret = add_CRLDistributionPoints(&tbs->crldp, &dp);
-    if (ret) {
+    if (issuername)
+        free_Name(&ign.u.directoryName);
+
+    if (ret)
 	hx509_set_error_string(context, 0, ret, "out of memory");
-	goto out;
-    }
-
-out:
-    free_DistributionPoint(&dp);
-
     return ret;
 }
 

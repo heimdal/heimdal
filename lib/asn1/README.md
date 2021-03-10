@@ -382,7 +382,7 @@ In recent times the following features have been added:
            },
            "critical": false,
            "extnValue": "301680141ADB994AB58BE57A0CC9B900E7851E1A43C08660",
-           "_extnValue_choice": "",
+           "_extnValue_choice": "ext-AuthorityKeyIdentifier",
            "_extnValue": {
              "_type": "AuthorityKeyIdentifier",
              "keyIdentifier": "1ADB994AB58BE57A0CC9B900E7851E1A43C08660",
@@ -405,7 +405,7 @@ In recent times the following features have been added:
            },
            "critical": false,
            "extnValue": "303930370604551D2000302F302D06082B060105050702011621687474703A2F2F7777772E73742E636F6D2F54504D2F7265706F7369746F72792F",
-           "_extnValue_choice": "",
+           "_extnValue_choice": "ext-CertificatePolicies",
            "_extnValue": [
              {
                "_type": "PolicyInformation",
@@ -461,7 +461,7 @@ In recent times the following features have been added:
            },
            "critical": true,
            "extnValue": "304DA44B304931163014060567810502010C0B69643A353335343444323031173015060567810502020C0C53543333485450484148433031163014060567810502030C0B69643A3030343930303038",
-           "_extnValue_choice": "",
+           "_extnValue_choice": "ext-SubjectAltName",
            "_extnValue": [
              {
                "_choice": "directoryName",
@@ -551,7 +551,7 @@ In recent times the following features have been added:
            },
            "critical": false,
            "extnValue": "305E301706056781050210310E300C0C03322E300201000202008A304306056781050212313A30380201000101FFA0030A0101A1030A0100A2030A0100A310300E1603332E310A01040A01020101FFA40F300D16053134302D320A0102010100",
-           "_extnValue_choice": "",
+           "_extnValue_choice": "ext-SubjectDirectoryAttributes",
            "_extnValue": [
              {
                "_type": "AttributeSet",
@@ -570,7 +570,7 @@ In recent times the following features have been added:
                "values": [
                  "300C0C03322E300201000202008A"
                ],
-               "_values_choice": "",
+               "_values_choice": "at-TPMSpecification",
                "_values": [
                  {
                    "_type": "TPMSpecification",
@@ -597,7 +597,7 @@ In recent times the following features have been added:
                "values": [
                  "30380201000101FFA0030A0101A1030A0100A2030A0100A310300E1603332E310A01040A01020101FFA40F300D16053134302D320A0102010100"
                ],
-               "_values_choice": "",
+               "_values_choice": "at-TPMSecurityAssertions",
                "_values": [
                  {
                    "_type": "TPMSecurityAssertions",
@@ -646,7 +646,7 @@ In recent times the following features have been added:
            },
            "critical": true,
            "extnValue": "03020520",
-           "_extnValue_choice": "",
+           "_extnValue_choice": "ext-KeyUsage",
            "_extnValue": [
              "keyEncipherment"
            ]
@@ -666,7 +666,7 @@ In recent times the following features have been added:
            },
            "critical": true,
            "extnValue": "3000",
-           "_extnValue_choice": "",
+           "_extnValue_choice": "ext-BasicConstraints",
            "_extnValue": {
              "_type": "BasicConstraints",
              "cA": false,
@@ -688,7 +688,7 @@ In recent times the following features have been added:
            },
            "critical": false,
            "extnValue": "300706056781050801",
-           "_extnValue_choice": "",
+           "_extnValue_choice": "ext-ExtKeyUsage",
            "_extnValue": [
              {
                "_type": "OBJECT IDENTIFIER",
@@ -724,7 +724,7 @@ In recent times the following features have been added:
            },
            "critical": false,
            "extnValue": "303C303A06082B06010505073002862E687474703A2F2F7365637572652E676C6F62616C7369676E2E636F6D2F73746D74706D656B696E7430352E637274",
-           "_extnValue_choice": "",
+           "_extnValue_choice": "ext-AuthorityInfoAccess",
            "_extnValue": [
              {
                "_type": "AccessDescription",
@@ -813,6 +813,10 @@ In recent times the following features have been added:
    by tag as they should be, but if the module author sorts them by hand then
    DER will be produced.
 
+ - `REAL` is not supported.
+
+ - `EmbeddedPDV` is not supported.
+
  - `BMPString` is not supported.
 
  - IA5String is not properly supported -- it's essentially treated as a
@@ -822,8 +826,9 @@ In recent times the following features have been added:
    will not be able to import anything other than types, values, and object
    sets.
 
- - Only simple value syntax is supported.  Structured value syntax is not
-   supported.
+ - Only simple value syntax is supported.  Constructed value syntax (i.e.,
+   values of `SET`, `SEQUENCE`, `SET OF`, and `SEQUENCE OF`), is not supported.
+   Values of `CHOICE` types are also not supported.
 
  - ...
 
@@ -1046,15 +1051,21 @@ NAME
 
 SYNOPSIS
      asn1_print [-i | --no-indent] [-I | --inner] [-l | --list-types]
-		[-l -v | --version] [-l -h | --help] [FILE [TypeName]]
+		[-A | --try-all-types] [-S | --raw-sequence] [-n | --no-print]
+		[-q | --quiet] [--test-encode] [--test-copy]
+		[-l -v | --version] [-l -h | --help] [FILE [TypeName...]]
 
 DESCRIPTION
-     asn1_print Dumps ASN.1 DER-encoded values.  If a TypeName is given, then
-     asn1_print will print the value in a JSON-like format using its knowledge
-     of the ASN.1 module defining that type.  If a TypeName is given, it must
-     be the name of an ASN.1 type exported by an ASN.1 module that is compiled
-     into asn1_print.  Use the --list-types option to list ASN.1 types known
-     to asn1_print.
+     asn1_print Dumps ASN.1 DER-encoded values.  If one or more TypeName argu‐
+     ments are given, then asn1_print will print the value in a JSON-like for‐
+     mat using its knowledge of the ASN.1 modules defining those types, stop‐
+     ping at the first type for which it can successfully decode the value.
+     If TypeNames are given, they must be the names of ASN.1 types exported by
+     an ASN.1 modules that are compiled into asn1_print.  Use the
+     --try-all-types option to attempt decoding as all ASN.1 types known to
+     asn1_print.  If neither any TypeName nor --try-all-types are given, then
+     the value will be parsed and displayed using just the self-describing
+     nature of DER.
 
      Options supported:
 
@@ -1066,8 +1077,34 @@ DESCRIPTION
 	     values.
 
      -l, --list-types
-	     Try to parse inner structures of OCTET STRING and constructed
-	     values.
+	     List all types known to asn1_print.
+
+     -A, --try-all-types
+	     Attempt to decode the value as any of all types known to
+	     asn1_print.
+
+     -S, --raw-sequence
+	     If a value parses as a given TypeName but any bytes are left
+	     over, try to parse those separately as well until all bytes are
+	     consumed or an error occurs.
+
+     -n, --no-print
+	     For the case where -A or --try-all-types or where a TypeName is
+	     given, do not output a JSON representation of the value, just
+	     attempt to decode it.  This is useful for fuzzing.
+
+     -q, --quiet
+	     Similar to -n, --no-print but JSON output will be formatted, just
+	     not output.  As with -n, --no-print, this option requires -A -/
+	     --try-all-types or that a TypeName be given.  This is useful for
+	     fuzzing.
+
+     --test-encode
+	     Check that encoding produces the same value as decoding.  Useful
+	     for fuzzing.
+
+     --test-copy
+	     Test copy functions.  Useful for fuzzing.
 
      -v, --version
 

@@ -513,9 +513,9 @@ DistributionPointName ::= CHOICE {
 }
 
 DistributionPoint ::= SEQUENCE {
-	distributionPoint       [0]     IMPLICIT HEIM_ANY -- DistributionPointName -- OPTIONAL,
-	reasons                 [1]     IMPLICIT HEIM_ANY -- DistributionPointReasonFlags -- OPTIONAL,
-	cRLIssuer               [2]     IMPLICIT HEIM_ANY -- GeneralNames -- OPTIONAL
+	distributionPoint       [0]     IMPLICIT DistributionPointName OPTIONAL,
+	reasons                 [1]     IMPLICIT DistributionPointReasonFlags OPTIONAL,
+	cRLIssuer               [2]     IMPLICIT GeneralNames OPTIONAL
 }
 
 CRLDistributionPoints ::= SEQUENCE SIZE (1..MAX) OF DistributionPoint

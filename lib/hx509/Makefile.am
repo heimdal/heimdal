@@ -110,6 +110,10 @@ hxtool_LDADD = \
 	$(LIB_roken) \
 	$(top_builddir)/lib/sl/libsl.la
 
+if ASN1_TEMPLATING
+hxtool_CPPFLAGS = -DASN1_PRINTING_WORKS
+endif
+
 CLEANFILES = $(BUILT_SOURCES) sel-gram.c sel-lex.c \
 	$(TESTS) \
 	hxtool-commands.c hxtool-commands.h *.tmp \

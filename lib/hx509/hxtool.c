@@ -718,6 +718,7 @@ print_f(hx509_context hxcontext, void *ctx, hx509_cert cert)
 static int HX509_LIB_CALL
 print_fjson(hx509_context hxcontext, void *ctx, hx509_cert cert)
 {
+#ifdef ASN1_PRINTING_WORKS
     const Certificate *c = NULL;
     char *json = NULL;
 
@@ -730,6 +731,10 @@ print_fjson(hx509_context hxcontext, void *ctx, hx509_cert cert)
         hx509_err(context, 1, errno, "Could not format certificate as JSON");
     free(json);
     return 0;
+#else
+    err(1, "JSON printing of certificates not supported; try enabling or "
+        "not disabling ASN.1 templating in Heimdal build configuration");
+#endif
 }
 
 

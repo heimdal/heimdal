@@ -371,7 +371,7 @@ der_get_octet_string_ber (const unsigned char *p, size_t len,
 	if (datalen > len)
 	    return ASN1_OVERRUN;
 
-	if (type == PRIM) {
+	if (type == PRIM && datalen) {
 	    void *ptr;
 
 	    ptr = realloc(data->data, data->length + datalen);
@@ -382,7 +382,7 @@ der_get_octet_string_ber (const unsigned char *p, size_t len,
 	    data->data = ptr;
 	    memcpy(((unsigned char *)data->data) + data->length, p, datalen);
 	    data->length += datalen;
-	} else
+	} else if (type != PRIM)
 	    depth++;
 
 	p += datalen;

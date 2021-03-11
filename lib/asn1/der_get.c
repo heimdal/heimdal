@@ -636,7 +636,7 @@ der_match_tag2 (const unsigned char *p, size_t len,
      */
     if (cls != thisclass && (cls == ASN1_C_APPL || thisclass == ASN1_C_APPL))
         return ASN1_BAD_ID;
-    if (tag != thistag)
+    if (cls != thisclass || tag != thistag)
 	return ASN1_MISSING_FIELD;
     if (size) *size = l;
     return 0;

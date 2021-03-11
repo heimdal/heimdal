@@ -457,7 +457,7 @@ encode_type (const char *name, const Type *t, const char *tmpstr)
              * functions, and those will be adding their UNIVERSAL or whatever
              * tags unlike our raw primtive codec library.
              */
-            replace_tag = 1;
+            replace_tag = is_tagged_type(t->subtype->symbol->type);
 
         if (replace_tag)
             fprintf(codefile,

@@ -266,7 +266,7 @@ length_type (const char *name, const Type *t,
             else if (t->subtype->symbol && strcmp(t->subtype->symbol->name, "heim_any"))
                 replace_tag = 1;
         } else if (t->tag.tagenv == TE_IMPLICIT && prim && t->subtype->symbol)
-            replace_tag = 1;
+            replace_tag = is_tagged_type(t->subtype->symbol->type);
         if (replace_tag)
             /*
              * We're replacing the tag of the underlying type.  If that type is

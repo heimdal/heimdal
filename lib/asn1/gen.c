@@ -552,6 +552,41 @@ generate_constant (const Symbol *s)
 }
 
 int
+is_tagged_type(const Type *t)
+{
+    /*
+     * Start by chasing aliasings like this:
+     *
+     * Type0 ::= ...
+     * Type1 ::= Type0
+     * ..
+     * TypeN ::= TypeN-1
+     *
+     * to <Type0>, then check if <Type0> is tagged.
+     */
+    while (t->type == TType) {
+        if (t->subtype)
+            t = t->subtype;
+        else if (t->symbol && t->symbol->type)
+            t = t->symbol->type;
+        else
+            abort();
+
+    }
+    if (t->type == TTag && t->tag.tagenv == TE_EXPLICIT)
+        return 1;
+    if (t->type == TTag) {
+        if (t->subtype)
+            return is_tagged_type(t->subtype);
+        if (t->symbol && t->symbol->type)
+            return is_tagged_type(t->symbol->type);
+        /* This is the tag */
+        return 1;
+    }
+    return 0;
+}
+
+int
 is_primitive_type(const Type *t)
 {
     /*

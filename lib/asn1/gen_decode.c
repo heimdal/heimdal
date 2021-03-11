@@ -533,7 +533,7 @@ decode_type(const char *name, const Type *t, int optional, struct value *defval,
             else if (t->subtype->symbol && strcmp(t->subtype->symbol->name, "HEIM_ANY"))
                 replace_tag = 1;
         } else if (t->tag.tagenv == TE_IMPLICIT && prim && t->subtype->symbol)
-            replace_tag = 1;
+            replace_tag = is_tagged_type(t->subtype->symbol->type);
 
 	if (asprintf(&typestring, "%s_type", tmpstr) < 0 || typestring == NULL)
 	    errx(1, "malloc");

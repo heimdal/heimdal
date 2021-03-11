@@ -61,8 +61,6 @@ gen_files_test		= $(OBJ)\asn1_test_asn1.x
 
 gen_files_test_template	= $(OBJ)\asn1_test_template_asn1.x
 
-gen_files_x690sample_template	= $(OBJ)\asn1_x690sample_template_asn1.x
-
 gen_files_digest	= $(OBJ)\asn1_digest_asn1.x
 
 gen_files_kx509		= $(OBJ)\asn1_kx509_asn1.x
@@ -198,8 +196,6 @@ $(gen_files_test:.x=.c)	    : $$(@R).x
 
 $(gen_files_test_template:.x=.c)	    : $$(@R).x
 
-$(gen_files_x690sample_template:.x=.c)	    : $$(@R).x
-
 $(gen_files_krb5) $(OBJ)\krb5_asn1.hx: $(BINDIR)\asn1_compile.exe krb5.asn1 krb5.opt
 	cd $(OBJ)
 	$(BINDIR)\asn1_compile.exe \
@@ -333,15 +329,6 @@ $(gen_files_test_template) $(OBJ)\test_template_asn1.hx: $(BINDIR)\asn1_compile.
 	|| ($(RM) $(OBJ)\test_template_asn1.h ; exit /b 1)
 	cd $(SRCDIR)
 
-$(gen_files_x690sample_template) $(OBJ)\x690sample_template_asn1.hx: $(BINDIR)\asn1_compile.exe x690sample.asn1
-	cd $(OBJ)
-	$(BINDIR)\asn1_compile.exe \
-		--template	\
-		--one-code-file --template \
-		$(SRCDIR)\x690sample.asn1 x690sample_template_asn1 \
-	|| ($(RM) $(OBJ)\x690sample_template_asn1.h ; exit /b 1)
-	cd $(SRCDIR)
-
 INCFILES=			    \
 	$(INCDIR)\der.h		    \
 	$(INCDIR)\heim_asn1.h	    \
@@ -463,8 +450,7 @@ $(OBJ)\check-der.exe: $(OBJ)\check-der.obj $(OBJ)\check-common.obj \
 	$(EXEPREP_NODIST)
 
 $(OBJ)\check-gen-template.exe: $(OBJ)\check-gen.obj $(OBJ)\check-common.obj \
-		$(LIBHEIMDAL) $(LIBROKEN) $(gen_files_test_template:.x=.obj) \
-		$(gen_files_x690sample_template:.x=.obj)
+		$(LIBHEIMDAL) $(LIBROKEN) $(gen_files_test_template:.x=.obj)
 	$(EXECONLINK)
 	$(EXEPREP_NODIST)
 

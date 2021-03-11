@@ -53,7 +53,11 @@
 #include "pkinit_asn1.h"
 #include "rfc2459_asn1.h"
 #include "rfc4108_asn1.h"
+#ifdef ASN1_PRINT_SUPPORTED
+#include "x690sample_template_asn1.h"
+#else
 #include "x690sample_asn1.h"
+#endif
 
 static int quiet_flag = 0;
 static int print_flag = 1;

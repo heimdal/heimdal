@@ -53,7 +53,7 @@ gen_files_test = asn1_test_asn1.x
 gen_files_digest = asn1_digest_asn1.x
 gen_files_kx509 = asn1_kx509_asn1.x
 gen_files_x690sample = asn1_x690sample_asn1.x
-gen_files_x690sample_template = asn1_x690sample_asn1.x
+gen_files_x690sample_template = asn1_x690sample_template_asn1.x
 
 oid_resolution.lo: $(BUILT_SOURCES)
 
@@ -193,6 +193,7 @@ CLEANFILES = \
 	digest_asn1_files digest_asn1*.h* digest_asn1*.x \
 	kx509_asn1_files kx509_asn1*.h* kx509_asn1*.x \
 	x690sample_asn1_files x690sample_asn1*.h* x690sample_asn1*.x \
+	x690sample_template_asn1_files x690sample_template_asn1*.h* x690sample_template_asn1*.x \
 	test_asn1_files test_asn1*.h* test_asn1*.x \
 	test_template_asn1* \
 	asn1_*.tmp.c asn1_*.x
@@ -216,6 +217,7 @@ nodist_include_HEADERS += pkcs12_asn1.h
 nodist_include_HEADERS += digest_asn1.h
 nodist_include_HEADERS += kx509_asn1.h
 nodist_include_HEADERS += x690sample_asn1.h
+nodist_include_HEADERS += x690sample_template_asn1.h
 
 priv_headers  = krb5_asn1-priv.h
 priv_headers += pkinit_asn1-priv.h
@@ -230,7 +232,7 @@ priv_headers += pkcs10_asn1-priv.h
 priv_headers += pkcs12_asn1-priv.h
 priv_headers += digest_asn1-priv.h
 priv_headers += kx509_asn1-priv.h
-priv_headers += x690sample_asn1-priv.h
+priv_headers += x690sample_template_asn1-priv.h
 priv_headers += test_template_asn1.h test_template_asn1-priv.h
 priv_headers += test_asn1.h test_asn1-priv.h
 

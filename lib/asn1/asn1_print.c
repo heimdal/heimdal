@@ -85,7 +85,7 @@ const struct types {
 } types[] = {
 #define ASN1_SYM_INTVAL(n, gn, gns, i)
 #define ASN1_SYM_OID(n, gn, gns)
-#ifdef ASN1_IOS_SUPPORTED
+#ifdef ASN1_PRINT_SUPPORTED
 #define ASN1_SYM_TYPE(n, gn, gns)       \
     {                                   \
         n,                              \
@@ -122,7 +122,6 @@ const struct types {
 #include "pkinit_asn1_syms.x"
 #include "rfc2459_asn1_syms.x"
 #include "rfc4108_asn1_syms.x"
-#include "x690sample_asn1_syms.x"
 };
 
 struct types sorted_types[sizeof(types)/sizeof(types[0])];

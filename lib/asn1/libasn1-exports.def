@@ -634,11 +634,6 @@ EXPORTS
 	copy_X520OrganizationalUnitName
 	copy_X520OrganizationName
 	copy_X520StateOrProvinceName
-	copy_X690SampleChildInformation
-	copy_X690SampleDate
-	copy_X690SampleEmployeeNumber
-	copy_X690SampleName
-	copy_X690SamplePersonnelRecord
 	decode_AccessDescription
 	decode_AD_AND_OR
 	decode_AD_IF_RELEVANT
@@ -995,11 +990,6 @@ EXPORTS
 	decode_X520OrganizationalUnitName
 	decode_X520OrganizationName
 	decode_X520StateOrProvinceName
-	decode_X690SampleChildInformation
-	decode_X690SampleDate
-	decode_X690SampleEmployeeNumber
-	decode_X690SampleName
-	decode_X690SamplePersonnelRecord
 	der_copy_bit_string
 	der_copy_bmp_string
 	der_copy_generalized_time
@@ -1502,11 +1492,6 @@ EXPORTS
 	encode_X520OrganizationalUnitName
 	encode_X520OrganizationName
 	encode_X520StateOrProvinceName
-	encode_X690SampleChildInformation
-	encode_X690SampleDate
-	encode_X690SampleEmployeeNumber
-	encode_X690SampleName
-	encode_X690SamplePersonnelRecord
 	FastOptions2int
 	free_AccessDescription
 	free_AD_AND_OR
@@ -1864,11 +1849,6 @@ EXPORTS
 	free_X520OrganizationalUnitName
 	free_X520OrganizationName
 	free_X520StateOrProvinceName
-	free_X690SampleChildInformation
-	free_X690SampleDate
-	free_X690SampleEmployeeNumber
-	free_X690SampleName
-	free_X690SamplePersonnelRecord
 	heim_any_cmp
 	HEIM_ANY_cmp
 	_heim_der_set_sort
@@ -2245,11 +2225,6 @@ EXPORTS
 	length_X520OrganizationalUnitName
 	length_X520OrganizationName
 	length_X520StateOrProvinceName
-	length_X690SampleChildInformation
-	length_X690SampleDate
-	length_X690SampleEmployeeNumber
-	length_X690SampleName
-	length_X690SamplePersonnelRecord
 	print_AccessDescription
 	print_AD_AND_OR
 	print_AD_IF_RELEVANT
@@ -2606,11 +2581,6 @@ EXPORTS
 	print_X520OrganizationalUnitName
 	print_X520OrganizationName
 	print_X520StateOrProvinceName
-	print_X690SampleChildInformation
-	print_X690SampleDate
-	print_X690SampleEmployeeNumber
-	print_X690SampleName
-	print_X690SamplePersonnelRecord
 	remove_AttributeValues
 	remove_AuthorizationData
 	remove_CertificatePolicies

@@ -35,8 +35,7 @@ BUILT_SOURCES =				\
 	$(gen_files_pkcs10:.x=.c)	\
 	$(gen_files_pkcs12:.x=.c)	\
 	$(gen_files_digest:.x=.c)	\
-	$(gen_files_kx509:.x=.c)	\
-	$(gen_files_x690sample:.x=.c)
+	$(gen_files_kx509:.x=.c)
 
 gen_files_krb5 = asn1_krb5_asn1.x
 gen_files_cms = asn1_cms_asn1.x
@@ -54,6 +53,7 @@ gen_files_test = asn1_test_asn1.x
 gen_files_digest = asn1_digest_asn1.x
 gen_files_kx509 = asn1_kx509_asn1.x
 gen_files_x690sample = asn1_x690sample_asn1.x
+gen_files_x690sample_template = asn1_x690sample_asn1.x
 
 oid_resolution.lo: $(BUILT_SOURCES)
 
@@ -67,7 +67,7 @@ check_PROGRAMS = $(TESTS)
 asn1_gen_SOURCES = asn1_gen.c
 asn1_print_SOURCES = asn1_print.c
 if ASN1_TEMPLATING
-asn1_print_CPPFLAGS = -DASN1_IOS_SUPPORTED
+asn1_print_CPPFLAGS = -DASN1_PRINT_SUPPORTED
 endif
 check_der_SOURCES = check-der.c check-common.c check-common.h
 
@@ -76,10 +76,11 @@ nodist_check_template_SOURCES = $(gen_files_test_template:.x=.c)
 
 check_gen_template_CPPFLAGS = -DASN1_IOS_SUPPORTED
 dist_check_gen_template_SOURCES = check-gen.c check-common.c check-common.h
-nodist_check_gen_template_SOURCES = $(gen_files_test_template:.x=.c)
+nodist_check_gen_template_SOURCES =	$(gen_files_test_template:.x=.c) \
+					$(gen_files_x690sample_template:.x=.c)
 
 dist_check_gen_SOURCES = check-gen.c check-common.c check-common.h
-nodist_check_gen_SOURCES = $(gen_files_test:.x=.c)
+nodist_check_gen_SOURCES = $(gen_files_test:.x=.c) $(gen_files_x690sample:.x=.c)
 
 build_HEADERZ = asn1-template.h
 
@@ -169,6 +170,7 @@ CLEANFILES = \
 	$(gen_files_digest) \
 	$(gen_files_kx509) \
 	$(gen_files_x690sample) \
+	$(gen_files_x690sample_template) \
 	$(gen_files_test) \
 	$(gen_files_test_template) \
 	$(nodist_check_gen_SOURCES) \
@@ -254,6 +256,7 @@ $(gen_files_rfc4108) rfc4108_asn1.hx rfc4108_asn1-priv.hx: rfc4108_asn1_files
 $(gen_files_cms) cms_asn1.hx cms_asn1-priv.hx: cms_asn1_files
 $(gen_files_crmf) crmf_asn1.hx crmf_asn1-priv.hx: crmf_asn1_files
 $(gen_files_x690sample) x690sample_asn1.hx x690sample_asn1-priv.hx: x690sample_asn1_files
+$(gen_files_x690sample_template) x690sample_template_asn1.hx x690sample_template_asn1-priv.hx: x690sample_template_asn1_files
 $(gen_files_test) test_asn1.hx test_asn1-priv.hx: test_asn1_files
 $(gen_files_test_template) test_template_asn1.hx test_template_asn1-priv.hx: test_template_asn1_files
 
@@ -302,8 +305,11 @@ digest_asn1_files: asn1_compile$(EXEEXT) $(srcdir)/digest.asn1
 kx509_asn1_files: asn1_compile$(EXEEXT) $(srcdir)/kx509.asn1
 	$(ASN1_COMPILE) --one-code-file $(TEMPLATE_OPTION) $(srcdir)/kx509.asn1 kx509_asn1 || (rm -f kx509_asn1_files ; exit 1)
 
+x690sample_template_asn1_files: asn1_compile$(EXEEXT) $(srcdir)/x690sample.asn1
+	$(ASN1_COMPILE) --one-code-file --template $(srcdir)/x690sample.asn1 x690sample_template_asn1 || (rm -f x690sample_asn1_files ; exit 1)
+
 x690sample_asn1_files: asn1_compile$(EXEEXT) $(srcdir)/x690sample.asn1
-	$(ASN1_COMPILE) --one-code-file $(TEMPLATE_OPTION) $(srcdir)/x690sample.asn1 x690sample_asn1 || (rm -f x690sample_asn1_files ; exit 1)
+	$(ASN1_COMPILE) --one-code-file $(srcdir)/x690sample.asn1 x690sample_asn1 || (rm -f x690sample_asn1_files ; exit 1)
 
 test_template_asn1_files: asn1_compile$(EXEEXT) $(srcdir)/test.asn1
 	$(ASN1_COMPILE) --one-code-file --template --sequence=TESTSeqOf $(srcdir)/test.asn1 test_template_asn1 || (rm -f test_template_asn1_files ; exit 1)

@@ -471,6 +471,8 @@ der_replace_tag(const unsigned char *p, size_t len,
     e = der_get_length(p, len, &payload_len, &len_len);
     if (e)
         return e;
+    if (payload_len > len)
+        return ASN1_OVERFLOW;
     /*
      * `p' now points at the payload; `*out' + the length of the tag points at
      * where we should copy the DER length and the payload.

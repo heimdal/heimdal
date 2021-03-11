@@ -122,6 +122,11 @@ const struct types {
 #include "pkinit_asn1_syms.x"
 #include "rfc2459_asn1_syms.x"
 #include "rfc4108_asn1_syms.x"
+#ifdef ASN1_PRINT_SUPPORTED
+#include "x690sample_template_asn1_syms.x"
+#else
+#include "x690sample_asn1_syms.x"
+#endif
 };
 
 struct types sorted_types[sizeof(types)/sizeof(types[0])];

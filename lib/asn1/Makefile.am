@@ -67,7 +67,10 @@ check_PROGRAMS = $(TESTS)
 asn1_gen_SOURCES = asn1_gen.c
 asn1_print_SOURCES = asn1_print.c
 if ASN1_TEMPLATING
+asn1_print_SOURCES += $(gen_files_x690sample_template:.x=.c)
 asn1_print_CPPFLAGS = -DASN1_PRINT_SUPPORTED
+else
+asn1_print_SOURCES += $(gen_files_x690sample:.x=.c)
 endif
 check_der_SOURCES = check-der.c check-common.c check-common.h
 

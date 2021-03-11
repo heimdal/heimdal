@@ -441,19 +441,26 @@ dotype(unsigned char *buf, size_t len, char **argv, size_t *size)
                 fprintf(stderr, "Prefix match: %s\n", typename);
             }
             if (print_flag) {
-                char *s = NULL;
+                static int warned = 0;
 
-                if (!sorted_types[i].print)
-                    err(1, "Missing print support; try enabling / not "
-                        "disabling ASN.1 templating in build configuration");
-                s = sorted_types[i].print(v, indent_flag ? ASN1_PRINT_INDENT : 0);
-                if (!s) {
-                    ret = errno;
-                    err(1, "Could not print %s\n", typename);
+                if (!sorted_types[i].print) {
+                    if (!warned)
+                        warnx("Missing print support; try enabling / not "
+                              "disabling ASN.1 templating in build "
+                              "configuration");
+                    warned = 1;
+                } else {
+                    char *s;
+
+                    s = sorted_types[i].print(v, indent_flag ? ASN1_PRINT_INDENT : 0);
+                    if (!s) {
+                        ret = errno;
+                        err(1, "Could not print %s\n", typename);
+                    }
+                    if (!quiet_flag)
+                        printf("%s\n", s);
+                    free(s);
                 }
-                if (!quiet_flag)
-                    printf("%s\n", s);
-                free(s);
             }
             if (test_encode_flag) {
                 unsigned char *der = emalloc(sz);

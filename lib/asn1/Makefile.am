@@ -232,6 +232,7 @@ priv_headers += pkcs10_asn1-priv.h
 priv_headers += pkcs12_asn1-priv.h
 priv_headers += digest_asn1-priv.h
 priv_headers += kx509_asn1-priv.h
+priv_headers += x690sample_asn1-priv.h
 priv_headers += x690sample_template_asn1-priv.h
 priv_headers += test_template_asn1.h test_template_asn1-priv.h
 priv_headers += test_asn1.h test_asn1-priv.h

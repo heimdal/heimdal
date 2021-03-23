@@ -387,6 +387,18 @@ be allowed to run.
 .It Li fcache_strict_checking
 strict checking in FILE credential caches that owner, no symlink and
 permissions is correct.
+.It Li moduli = Va FILE
+Names a file that contains acceptable modular Diffie-Hellman
+groups for PKINIT.
+The given file should contain lines with whitespace-separated
+fields in this order:
+.Va name, nbits, p, g, q .
+Lines starting with a
+.Va #
+are comments.
+.It Li pkinit_dh_min_bits = Va NUMBER
+PKINIT client's minimum acceptable modular Diffie-Hellman public
+key size in bits.
 .It Li enable-kx509 = Va boolean
 Enable use of kx509 so that every TGT that can has a corresponding
 PKIX certificate.  Default: false.
@@ -619,6 +631,33 @@ No additional principal to username mapping is done. Note that
 and any preceding
 .Va auth_to_local
 rules have precedence.
+.It Li pkinit_require_eku = BOOL
+If
+.Va true
+then the KDC PKINIT Extended Key Usage (EKU) OID (1.3.6.5.2.3.5)
+must be present in KDCs' PKINIT certificates.
+Defaults to
+.Va true .
+.It Li pkinit_require_krbtgt_otherName = BOOL
+If
+.Va true
+then the PKINIT Subject Alternative Name (SAN) for the TGS must
+be present in KDCs' PKINIT certificates, and must match their
+realm.
+Defaults to
+.Va true .
+.It Li pkinit_require_hostname_match = BOOL
+If
+.Va true
+then KDCs' PKINIT certificates must match their hostnames.
+Defaults to
+.Va false .
+.It Li pkinit_trustedCertifiers = BOOL
+If
+.Va true
+then PKINIT client will tell KDCs which trust anchors it trusts.
+Defaults to
+.Va true .
 .El
 .It Li }
 .El
@@ -739,6 +778,68 @@ Allow address-less tickets.
 .\" XXX
 .It Li allow-anonymous = Va BOOL
 If the kdc is allowed to hand out anonymous tickets.
+.It Li pkinit_identity = Va HX509-STORE
+This is an HX509 store containing the KDC's PKINIT credential
+(private key and end-entity certificate).
+This is single valued, though multiple stores can be specified by
+separating them with commas.
+An
+.Va HX509-STORE
+is of the form
+.Va TYPE:name
+where
+.Va TYPE
+is one of
+.Va FILE, Va PEM-FILE, Va DER-FILE, Va PKCS12, Va PKCS11,
+or on OX X,
+.Va KEYCHAIN .
+The form of the
+.Va name
+depends on the
+.Va TYPE .
+For
+.Va FILE, Va PEM-FILE, Va DER-FILE,
+and
+.Va PKCS12
+the
+.Va name
+is a file path.
+See the Heimdal hx509 documentation for more information.
+.It Li pkinit_pool = Va HX509-STORE
+This is a multi-valued parameter naming one or more stores of
+intermediate certification authority (CA) certificates for the
+KDC's end entity certificate.
+.It Li pkinit_anchors = Va HX509-STORE
+This is a multi-valued parameter naming one or more stores of
+anchors for PKINIT client certificates.
+Note that the
+.Va DIR
+type of
+.Va HX509-STORE
+is also supported here.
+.Va DIR
+type stores are OpenSSL-style CA certificate hash directories.
+.It Li pkinit_kdc_ocsp = Va PATH
+This names a file whose contents is the DER encoding of an
+OCSPResponse for the KDC's end entity certificate.
+.It Li pkinit_kdc_friendly_name = Va NAME
+This is an optional friendly name of the KDC's end entity
+certificate.
+This is only helpful when the
+.Li pkinit_identity
+store contains many credentials.
+.It Li pkinit_principal_in_certificate = Va BOOL
+If set to
+.Va true
+then the KDC will match AS-REQ client principal names to the
+PKINIT
+.Va subjectAlternativeName
+values from the clients' certificates.
+Defaults to
+.Va true .
+.It Li pkinit_dh_min_bits = Va NUMBER
+Minimum acceptable modular Diffie-Hellman public key size in
+bits.
 .It Li historical_anon_realm = Va boolean
 Enables pre-7.0 non-RFC-comformant KDC behavior.
 With this option set to

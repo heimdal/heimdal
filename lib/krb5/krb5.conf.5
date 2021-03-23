@@ -840,6 +840,20 @@ Defaults to
 .It Li pkinit_dh_min_bits = Va NUMBER
 Minimum acceptable modular Diffie-Hellman public key size in
 bits.
+.It Li pkinit_ticket_max_life_from_cert = Va TIME
+If set, this will override the
+.Va max_life
+attribute of the client principal's HDB record with the
+.Va notAfter
+of the client's certificate minus the current time, bounded to
+the given relative
+.Va TIME .
+As usual,
+.Va TIME
+can be given as a number followed by a unit, such as
+.Dq 2d
+for
+.Dq two days .
 .It Li historical_anon_realm = Va boolean
 Enables pre-7.0 non-RFC-comformant KDC behavior.
 With this option set to

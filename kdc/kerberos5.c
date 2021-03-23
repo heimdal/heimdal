@@ -464,6 +464,7 @@ pa_pkinit_validate(astgs_request_t r, const PA_DATA *pa)
     pk_client_params *pkp = NULL;
     char *client_cert = NULL;
     krb5_error_code ret;
+    krb5_timestamp max_life;
 
     ret = _kdc_pk_rd_padata(r, pa, &pkp);
     if (ret || pkp == NULL) {
@@ -478,6 +479,14 @@ pa_pkinit_validate(astgs_request_t r, const PA_DATA *pa)
 	_kdc_set_e_text(r, "PKINIT certificate not allowed to "
 			"impersonate principal");
 	goto out;
+    }
+
+    max_life = krb5_config_get_time_default(r->context, NULL, 0, "kdc",
+                                            "pkinit_ticket_max_life_from_cert",
+                                            NULL);
+    if (max_life > 0) {
+        r->pa_max_life = max_life;
+        r->pa_endtime = _kdc_pk_endtime(pkp);
     }
 
     _kdc_r_log(r, 4, "PKINIT pre-authentication succeeded -- %s using %s",
@@ -1938,6 +1947,12 @@ _kdc_as_rep(astgs_request_t r)
 	goto out;
     }
     default:
+        /*
+         * We could have an option to synthetically construct an HDB entry for
+         * the client from its certificate, if it used PKINIT and its cert has
+         * the PKINIT SAN.  We could have a default HDB entry for this case to
+         * provide default field values.
+         */
 	msg = krb5_get_error_message(context, ret);
 	kdc_log(context, config, 4, "UNKNOWN -- %s: %s", r->cname, msg);
 	krb5_free_error_message(context, msg);
@@ -2216,9 +2231,18 @@ _kdc_as_rep(astgs_request_t r)
 
 	/* be careful not overflowing */
 
-	if(r->client->entry.max_life)
+	if (r->client->entry.max_life) {
 	    t = start + min(t - start, *r->client->entry.max_life);
-	if(r->server->entry.max_life)
+            if (r->pa_max_life > 0 &&
+                r->pa_endtime > 0 &&
+                t < r->pa_endtime &&
+                r->pa_max_life > *r->client->entry.max_life)
+                t = start + min(r->pa_endtime - start, r->pa_max_life);
+        } else if (r->pa_max_life > 0 &&
+                   r->pa_endtime > 0 &&
+                   t < r->pa_endtime)
+            t = start + min(r->pa_endtime - start, r->pa_max_life);
+	if (r->server->entry.max_life)
 	    t = start + min(t - start, *r->server->entry.max_life);
 #if 0
 	t = min(t, start + realm->max_life);

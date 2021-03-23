@@ -799,6 +799,12 @@ out:
     return ret;
 }
 
+krb5_timestamp
+_kdc_pk_endtime(pk_client_params *pkp)
+{
+    return hx509_cert_get_notAfter(pkp->cert);
+}
+
 /*
  *
  */

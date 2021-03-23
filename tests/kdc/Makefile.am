@@ -53,6 +53,7 @@ restport = 49192
 restport2 = 49193
 ipropport = 49194
 ipropport2 = 49195
+pkinit_ticket_max_life_from_cert = 0
 
 if HAVE_DLOPEN
 do_dlopen = -e 's,[@]DLOPEN[@],true,g'
@@ -76,6 +77,7 @@ do_subst = $(heim_verbose)sed $(do_dlopen) \
 	-e 's,[@]objdir[@],$(top_builddir)/tests/kdc,g' \
 	-e 's,[@]top_builddir[@],$(top_builddir),g' \
 	-e 's,[@]db_type[@],$(db_type),g' \
+	-e 's,[@]max_life_from_cert[@],$(pkinit_ticket_max_life_from_cert),g' \
         -e 's,[@]ENABLE_AFS_STRING_TO_KEY[@],$(ENABLE_AFS_STRING_TO_KEY),' \
 	-e 's,[@]EGREP[@],$(EGREP),g' 
 
@@ -281,6 +283,12 @@ krb5-slave2.conf: krb5.conf.in Makefile
 krb5-pkinit.conf: krb5-pkinit.conf.in Makefile
 	$(do_subst) -e 's,[@]w2k[@],no,g' < $(srcdir)/krb5-pkinit.conf.in > krb5-pkinit.conf.tmp && \
 	mv krb5-pkinit.conf.tmp krb5-pkinit.conf
+
+krb5-pkinit2.conf : pkinit_ticket_max_life_from_cert = 30d
+
+krb5-pkinit2.conf: krb5-pkinit.conf.in Makefile
+	$(do_subst) -e 's,[@]w2k[@],no,g' < $(srcdir)/krb5-pkinit.conf.in > krb5-pkinit2.conf.tmp && \
+	mv krb5-pkinit2.conf.tmp krb5-pkinit2.conf
 
 krb5-bx509.conf: krb5-bx509.conf.in Makefile
 	$(do_subst) -e 's,[@]w2k[@],no,g' < $(srcdir)/krb5-bx509.conf.in > krb5-bx509.conf.tmp && \

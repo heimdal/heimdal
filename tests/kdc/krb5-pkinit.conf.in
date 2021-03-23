@@ -19,6 +19,7 @@
 	pkinit_identity = FILE:@objdir@/kdc.crt,@srcdir@/../../lib/hx509/data/key2.der
 	pkinit_anchors = FILE:@objdir@/ca.crt
 	pkinit_mappings_file = @srcdir@/pki-mapping
+	pkinit_ticket_max_life_from_cert = @max_life_from_cert@
 
         plugin_dir =  @objdir@/../../kdc/.libs
 

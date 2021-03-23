@@ -55,6 +55,8 @@ keyfile="${hx509_data}/key.der"
 keyfile2="${hx509_data}/key2.der"
 
 kinit="${kinit} -c $cache ${afs_no_afslog}"
+klistjson="${klist} --json -c $cache"
+klistplain="${klist} -c $cache"
 klist="${klist} --hidden -v -c $cache"
 kgetcred="${kgetcred} -c $cache"
 kdestroy="${kdestroy} -c $cache ${afs_no_unlog}"
@@ -95,6 +97,7 @@ ${kadmin} \
     --realm-max-renewable-life=1month \
     ${R} || exit 1
 
+${kadmin} modify --max-ticket-life=5d krbtgt/${R}@${R} || exit 1
 ${kadmin} add -p foo --use-defaults foo@${R} || exit 1
 ${kadmin} add -p bar --use-defaults bar@${R} || exit 1
 ${kadmin} add -p baz --use-defaults baz@${R} || exit 1
@@ -150,6 +153,7 @@ ${hxtool} issue-certificate \
 	  --type="pkinit-client" \
           --pk-init-principal="bar@TEST.H5L.SE" \
 	  --req="PKCS10:req-pkinit.der" \
+          --lifetime=7d \
 	  --certificate="FILE:pkinit.crt" || exit 1
 
 echo "issue user 2 certificate (no san)"
@@ -198,6 +202,27 @@ ${kinit} -C FILE:${base}/pkinit.crt,${keyfile2} bar@${R} || \
 	{ ec=1 ; eval "${testfailed}"; }
 ${kgetcred} ${server}@${R} || { ec=1 ; eval "${testfailed}"; }
 ${klist}
+${kdestroy}
+
+echo "Restarting kdc (${kdcpid}) for longer max_life test"
+sh ${leaks_kill} kdc $kdcpid || ec=1
+KRB5_CONFIG="${objdir}/krb5-pkinit2.conf"
+${kdc} --detach --testing || { echo "kdc failed to start"; exit 1; }
+kdcpid=`getpid kdc`
+
+echo "Trying pk-init (principal in cert; longer max_life)"; > messages.log
+base="${objdir}"
+${kinit} --lifetime=5d -C FILE:${base}/pkinit.crt,${keyfile2} bar@${R} || \
+	{ ec=1 ; eval "${testfailed}"; }
+${kgetcred} ${server}@${R} || { ec=1 ; eval "${testfailed}"; }
+${klist}
+if jq --version >/dev/null 2>&1 && jq -ne true >/dev/null 2>&1; then
+    ${klistjson} |
+        jq -e '(((.tickets[0].Expires|
+               strptime("%b %d %H:%M:%S %Y")|mktime) - now) / 86400) |
+               (floor < 4)' >/dev/null &&
+           { ec=1 ; eval "${testfailed}"; }
+fi
 
 echo "Check kx509 certificate acquisition"
 ${kx509} -s || { ec=1 ; eval "${testfailed}"; }

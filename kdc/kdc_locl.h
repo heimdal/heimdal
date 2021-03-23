@@ -89,6 +89,8 @@ struct astgs_request_desc {
 
     krb5_principal server_princ;
     hdb_entry_ex *server;
+    krb5_timestamp pa_endtime;
+    krb5_timestamp pa_max_life;
 
     krb5_crypto armor_crypto;
 

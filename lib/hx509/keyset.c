@@ -66,7 +66,7 @@ struct hx509_certs_data {
     int flags;
 };
 
-static struct hx509_keyset_ops *
+struct hx509_keyset_ops *
 _hx509_ks_type(hx509_context context, const char *type)
 {
     int i;

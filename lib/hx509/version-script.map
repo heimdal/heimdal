@@ -17,6 +17,7 @@ HEIMDAL_X509_1.2 {
 		_hx509_generate_private_key_init;
 		_hx509_generate_private_key_is_ca;
 		_hx509_get_cert;
+		_hx509_ks_type;
 		_hx509_make_pkinit_san;
 		_hx509_map_file_os;
 		_hx509_name_from_Name;

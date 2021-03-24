@@ -75,6 +75,39 @@ lock_strings(hx509_lock lock, getarg_strings *pass)
     }
 }
 
+static char *
+fix_store_name(hx509_context contextp, const char *sn, const char *def_type)
+{
+    const char *residue = strchr(sn, ':');
+    char *s = NULL;
+
+    if (residue) {
+        s = estrdup(sn);
+        s[residue - sn] = '\0';
+        if (_hx509_ks_type(contextp, s)) {
+            free(s);
+            return estrdup(sn);
+        }
+        free(s);
+        s = NULL;
+    }
+    if (asprintf(&s, "%s:%s", def_type, sn) == -1 || s == NULL)
+        err(1, "Out of memory");
+    return s;
+}
+
+static char *
+fix_csr_name(const char *cn, const char *def_type)
+{
+    char *s = NULL;
+
+    if (strncmp(cn, "PKCS10:", sizeof("PKCS10:") - 1) == 0 || strchr(cn, ':'))
+        return estrdup(cn);
+    if (asprintf(&s, "%s:%s", def_type, cn) == -1 || s == NULL)
+        err(1, "Out of memory");
+    return s;
+}
+
 /*
  *
  */
@@ -86,10 +119,13 @@ certs_strings(hx509_context contextp, const char *type, hx509_certs certs,
     int i, ret;
 
     for (i = 0; i < s->num_strings; i++) {
-	ret = hx509_certs_append(contextp, certs, lock, s->strings[i]);
+        char *sn = fix_store_name(contextp, s->strings[i], "FILE");
+
+	ret = hx509_certs_append(contextp, certs, lock, sn);
 	if (ret)
 	    hx509_err(contextp, 1, ret,
-		      "hx509_certs_append: %s %s", type, s->strings[i]);
+		      "hx509_certs_append: %s %s", type, sn);
+        free(sn);
     }
 }
 
@@ -752,8 +788,11 @@ pcert_print(struct print_options *opt, int argc, char **argv)
     lock_strings(lock, &opt->pass_strings);
 
     while(argc--) {
+        char *sn = fix_store_name(context, argv[0], "FILE");
 	int ret;
-	ret = hx509_certs_init(context, argv[0], 0, lock, &certs);
+
+	ret = hx509_certs_init(context, sn, 0, lock, &certs);
+        free(sn);
 	if (ret) {
 	    if (opt->never_fail_flag) {
 		printf("ignoreing failure: %d\n", ret);
@@ -800,8 +839,10 @@ pcert_validate(struct validate_options *opt, int argc, char **argv)
     hx509_validate_ctx_add_flags(ctx, HX509_VALIDATE_F_VALIDATE);
 
     while(argc--) {
+        char *sn = fix_store_name(context, argv[0], "FILE");
 	int ret;
-	ret = hx509_certs_init(context, argv[0], 0, lock, &certs);
+
+	ret = hx509_certs_init(context, sn, 0, lock, &certs);
 	if (ret)
 	    errx(1, "hx509_certs_init: %d", ret);
 	hx509_certs_iter_f(context, certs, validate_f, ctx);
@@ -820,6 +861,7 @@ certificate_copy(struct certificate_copy_options *opt, int argc, char **argv)
 {
     hx509_certs certs;
     hx509_lock inlock, outlock = NULL;
+    char *sn;
     int ret;
 
     hx509_lock_init(context, &inlock);
@@ -833,16 +875,21 @@ certificate_copy(struct certificate_copy_options *opt, int argc, char **argv)
 		 opt->out_pass_string, ret);
     }
 
-    ret = hx509_certs_init(context, argv[argc - 1],
+    sn = fix_store_name(context, argv[argc - 1], "FILE");
+    ret = hx509_certs_init(context, sn,
 			   HX509_CERTS_CREATE, inlock, &certs);
     if (ret)
-	hx509_err(context, 1, ret, "hx509_certs_init");
+	hx509_err(context, 1, ret, "hx509_certs_init %s", sn);
+    free(sn);
 
     while(argc-- > 1) {
 	int retx;
-	retx = hx509_certs_append(context, certs, inlock, argv[0]);
+
+        sn = fix_store_name(context, argv[0], "FILE");
+	retx = hx509_certs_append(context, certs, inlock, sn);
 	if (retx)
-	    hx509_err(context, 1, retx, "hx509_certs_append");
+	    hx509_err(context, 1, retx, "hx509_certs_append %s", sn);
+        free(sn);
 	argv++;
     }
 
@@ -951,29 +998,35 @@ pcert_verify(struct verify_options *opt, int argc, char **argv)
 	errx(1, "hx509_revoke_init: %d", ret);
 
     while(argc--) {
-	char *s = *argv++;
+	const char *s = *argv++;
+        char *sn = NULL;
 
 	if (strncmp(s, "chain:", 6) == 0) {
 	    s += 6;
 
-	    ret = hx509_certs_append(context, chain, NULL, s);
+            sn = fix_store_name(context, s, "FILE");
+	    ret = hx509_certs_append(context, chain, NULL, sn);
 	    if (ret)
-		hx509_err(context, 1, ret, "hx509_certs_append: chain: %s: %d", s, ret);
+                hx509_err(context, 1, ret, "hx509_certs_append: chain: %s: %d",
+                          sn, ret);
 
 	} else if (strncmp(s, "anchor:", 7) == 0) {
 	    s += 7;
 
-	    ret = hx509_certs_append(context, anchors, NULL, s);
+            sn = fix_store_name(context, s, "FILE");
+	    ret = hx509_certs_append(context, anchors, NULL, sn);
 	    if (ret)
-		hx509_err(context, 1, ret, "hx509_certs_append: anchor: %s: %d", s, ret);
+		hx509_err(context, 1, ret,
+                          "hx509_certs_append: anchor: %s: %d", sn, ret);
 
 	} else if (strncmp(s, "cert:", 5) == 0) {
 	    s += 5;
 
-	    ret = hx509_certs_append(context, certs, NULL, s);
+            sn = fix_store_name(context, s, "FILE");
+	    ret = hx509_certs_append(context, certs, NULL, sn);
 	    if (ret)
 		hx509_err(context, 1, ret, "hx509_certs_append: certs: %s: %d",
-			  s, ret);
+			  sn, ret);
 
 	} else if (strncmp(s, "crl:", 4) == 0) {
 	    s += 4;
@@ -992,6 +1045,7 @@ pcert_verify(struct verify_options *opt, int argc, char **argv)
 	} else {
 	    errx(1, "unknown option to verify: `%s'\n", s);
 	}
+        free(sn);
     }
 
     hx509_verify_attach_anchors(ctx, anchors);
@@ -1044,10 +1098,12 @@ query(struct query_options *opt, int argc, char **argv)
     if (ret) hx509_err(context, 1, ret, "hx509_certs_init: MEMORY");
 
     while (argc > 0) {
+        char *sn = fix_store_name(context, argv[0], "FILE");
 
-	ret = hx509_certs_append(context, certs, lock, argv[0]);
+	ret = hx509_certs_append(context, certs, lock, sn);
 	if (ret)
-	    errx(1, "hx509_certs_append: %s: %d", argv[0], ret);
+	    errx(1, "hx509_certs_append: %s: %d", sn, ret);
+        free(sn);
 
 	argc--;
 	argv++;
@@ -1130,9 +1186,12 @@ ocsp_fetch(struct ocsp_fetch_options *opt, int argc, char **argv)
     if (ret) hx509_err(context, 1, ret, "hx509_certs_init: MEMORY");
 
     for (i = 1; i < argc; i++) {
-	ret = hx509_certs_append(context, reqcerts, lock, argv[i]);
+        char *sn = fix_store_name(context, argv[i], "FILE");
+
+	ret = hx509_certs_append(context, reqcerts, lock, sn);
 	if (ret)
-	    errx(1, "hx509_certs_append: req: %s: %d", argv[i], ret);
+	    errx(1, "hx509_certs_append: req: %s: %d", sn, ret);
+        free(sn);
     }
 
     ret = hx509_ocsp_request(context, reqcerts, pool, NULL, NULL, &req, nonce);
@@ -1257,9 +1316,12 @@ ocsp_verify(struct ocsp_verify_options *opt, int argc, char **argv)
     if (ret) hx509_err(context, 1, ret, "hx509_certs_init: MEMORY");
 
     for (i = 0; i < argc; i++) {
-	ret = hx509_certs_append(context, certs, lock, argv[i]);
+        char *sn = fix_store_name(context, argv[i], "FILE");
+
+	ret = hx509_certs_append(context, certs, lock, sn);
 	if (ret)
-	    hx509_err(context, 1, ret, "hx509_certs_append: %s", argv[i]);
+	    hx509_err(context, 1, ret, "hx509_certs_append: %s", sn);
+        free(sn);
     }
 
     ret = hx509_certs_iter_f(context, certs, verify_o, &os);
@@ -1276,20 +1338,22 @@ read_private_key(const char *fn, hx509_private_key *key)
 {
     hx509_private_key *keys;
     hx509_certs certs;
+    char *sn = fix_store_name(context, fn, "FILE");
     int ret;
 
     *key = NULL;
 
-    ret = hx509_certs_init(context, fn, 0, NULL, &certs);
+    ret = hx509_certs_init(context, sn, 0, NULL, &certs);
     if (ret)
-	hx509_err(context, 1, ret, "hx509_certs_init: %s", fn);
+	hx509_err(context, 1, ret, "hx509_certs_init: %s", sn);
 
     ret = _hx509_certs_keys_get(context, certs, &keys);
     hx509_certs_free(&certs);
     if (ret)
 	hx509_err(context, 1, ret, "hx509_certs_keys_get");
     if (keys[0] == NULL)
-	errx(1, "no keys in key store: %s", fn);
+	errx(1, "no keys in key store: %s", sn);
+    free(sn);
 
     *key = _hx509_private_key_ref(keys[0]);
     _hx509_certs_keys_free(context, keys);
@@ -1320,12 +1384,13 @@ get_key(const char *fn, const char *type, int optbits,
             hx509_err(context, 1, ret, "failed to generate private key of type %s", type);
 
         if (fn) {
+            char *sn = fix_store_name(context, fn, "FILE");
             hx509_certs certs = NULL;
             hx509_cert cert = NULL;
 
             cert = hx509_cert_init_private_key(context, *signer, NULL);
             if (cert)
-                ret = hx509_certs_init(context, fn,
+                ret = hx509_certs_init(context, sn,
                                        HX509_CERTS_CREATE |
                                        HX509_CERTS_UNPROTECT_ALL,
                                        NULL, &certs);
@@ -1335,12 +1400,13 @@ get_key(const char *fn, const char *type, int optbits,
                 ret = hx509_certs_store(context, certs, 0, NULL);
             if (ret)
                 hx509_err(context, 1, ret, "failed to store generated private "
-                          "key in %s", fn);
+                          "key in %s", sn);
 
             if (certs)
                 hx509_certs_free(&certs);
             if (cert)
                 hx509_cert_free(cert);
+            free(sn);
         }
     } else {
         if (fn == NULL)
@@ -1493,15 +1559,17 @@ request_print(struct request_print_options *opt, int argc, char **argv)
 
     for (i = 0; i < argc; i++) {
 	hx509_request req;
+        char *cn = fix_csr_name(argv[i], "PKCS10");
 
-	ret = hx509_request_parse(context, argv[i], &req);
+	ret = hx509_request_parse(context, cn, &req);
 	if (ret)
-	    hx509_err(context, 1, ret, "parse_request: %s", argv[i]);
+	    hx509_err(context, 1, ret, "parse_request: %s", cn);
 
 	ret = hx509_request_print(context, req, stdout);
 	hx509_request_free(&req);
 	if (ret)
-	    hx509_err(context, 1, ret, "Failed to print file %s", argv[i]);
+	    hx509_err(context, 1, ret, "Failed to print file %s", cn);
+        free(cn);
     }
 
     return 0;
@@ -1937,12 +2005,11 @@ hxtool_ca(struct certificate_sign_options *opt, int argc, char **argv)
     if (opt->ca_certificate_string) {
 	hx509_certs cacerts = NULL;
 	hx509_query *q;
+        char *sn = fix_store_name(context, opt->ca_certificate_string, "FILE");
 
-	ret = hx509_certs_init(context, opt->ca_certificate_string, 0,
-			       NULL, &cacerts);
+        ret = hx509_certs_init(context, sn, 0, NULL, &cacerts);
 	if (ret)
-	    hx509_err(context, 1, ret,
-		      "hx509_certs_init: %s", opt->ca_certificate_string);
+	    hx509_err(context, 1, ret, "hx509_certs_init: %s", sn);
 
 	ret = hx509_query_alloc(context, &q);
 	if (ret)
@@ -1957,6 +2024,7 @@ hxtool_ca(struct certificate_sign_options *opt, int argc, char **argv)
 	hx509_certs_free(&cacerts);
 	if (ret)
 	    hx509_err(context, 1, ret, "no CA certificate found");
+        free(sn);
     } else if (opt->self_signed_flag) {
 	if (opt->generate_key_string == NULL
 	    && opt->ca_private_key_string == NULL)
@@ -1983,23 +2051,24 @@ hxtool_ca(struct certificate_sign_options *opt, int argc, char **argv)
 
     if (opt->req_string) {
 	hx509_request req;
+        char *cn = fix_csr_name(opt->req_string, "PKCS10");
 
         /*
-         * XXX Extract the CN and other attributes we want to preserve from the
+         * Extract the CN and other attributes we want to preserve from the
          * requested subjectName and then set them in the hx509_env for the
          * template.
          */
-	ret = hx509_request_parse(context, opt->req_string, &req);
+	ret = hx509_request_parse(context, cn, &req);
 	if (ret)
-	    hx509_err(context, 1, ret, "parse_request: %s", opt->req_string);
+	    hx509_err(context, 1, ret, "parse_request: %s", cn);
 	ret = hx509_request_get_name(context, req, &subject);
 	if (ret)
 	    hx509_err(context, 1, ret, "get name");
 	ret = hx509_request_get_SubjectPublicKeyInfo(context, req, &spki);
 	if (ret)
 	    hx509_err(context, 1, ret, "get spki");
-        /* XXX Add option to extract */
 	hx509_request_free(&req);
+        free(cn);
     }
 
     if (opt->generate_key_string) {
@@ -2092,13 +2161,13 @@ hxtool_ca(struct certificate_sign_options *opt, int argc, char **argv)
     if (opt->template_certificate_string) {
 	hx509_cert template;
 	hx509_certs tcerts;
+        char *sn = fix_store_name(context, opt->template_certificate_string,
+                                  "FILE");
 	int flags;
 
-	ret = hx509_certs_init(context, opt->template_certificate_string, 0,
-			       NULL, &tcerts);
+	ret = hx509_certs_init(context, sn, 0, NULL, &tcerts);
 	if (ret)
-	    hx509_err(context, 1, ret,
-		      "hx509_certs_init: %s", opt->template_certificate_string);
+	    hx509_err(context, 1, ret, "hx509_certs_init: %s", sn);
 
 	ret = hx509_get_one_cert(context, tcerts, &template);
 
@@ -2114,6 +2183,7 @@ hxtool_ca(struct certificate_sign_options *opt, int argc, char **argv)
 	    hx509_err(context, 1, ret, "hx509_ca_tbs_set_template");
 
 	hx509_cert_free(template);
+        free(sn);
     }
 
     if (opt->serial_number_string) {
@@ -2246,9 +2316,9 @@ hxtool_ca(struct certificate_sign_options *opt, int argc, char **argv)
 
     {
 	hx509_certs certs;
+        char *sn = fix_store_name(context, opt->certificate_string, "FILE");
 
-	ret = hx509_certs_init(context, opt->certificate_string,
-			       HX509_CERTS_CREATE, NULL, &certs);
+        ret = hx509_certs_init(context, sn, HX509_CERTS_CREATE, NULL, &certs);
 	if (ret)
 	    hx509_err(context, 1, ret, "hx509_certs_init");
 
@@ -2261,6 +2331,7 @@ hxtool_ca(struct certificate_sign_options *opt, int argc, char **argv)
 	    hx509_err(context, 1, ret, "hx509_certs_store");
 
 	hx509_certs_free(&certs);
+        free(sn);
     }
 
     if (subject)
@@ -2324,9 +2395,11 @@ test_crypto(struct test_crypto_options *opt, int argc, char ** argv)
     if (ret) hx509_err(context, 1, ret, "hx509_certs_init: MEMORY");
 
     for (i = 0; i < argc; i++) {
-	ret = hx509_certs_append(context, certs, lock, argv[i]);
+        char *sn = fix_store_name(context, argv[i], "FILE");
+	ret = hx509_certs_append(context, certs, lock, sn);
 	if (ret)
-	    hx509_err(context, 1, ret, "hx509_certs_append");
+	    hx509_err(context, 1, ret, "hx509_certs_append %s", sn);
+        free(sn);
     }
 
     ret = hx509_verify_init_ctx(context, &vctx);
@@ -2385,12 +2458,11 @@ crl_sign(struct crl_sign_options *opt, int argc, char **argv)
     {
 	hx509_certs certs = NULL;
 	hx509_query *q;
+        char *sn = fix_store_name(context, opt->signer_string, "FILE");
 
-	ret = hx509_certs_init(context, opt->signer_string, 0,
-			       NULL, &certs);
+        ret = hx509_certs_init(context, sn, 0, NULL, &certs);
 	if (ret)
-	    hx509_err(context, 1, ret,
-		      "hx509_certs_init: %s", opt->signer_string);
+	    hx509_err(context, 1, ret, "hx509_certs_init: %s", sn);
 
 	ret = hx509_query_alloc(context, &q);
 	if (ret)
@@ -2403,6 +2475,7 @@ crl_sign(struct crl_sign_options *opt, int argc, char **argv)
 	hx509_certs_free(&certs);
 	if (ret)
 	    hx509_err(context, 1, ret, "no signer certificate found");
+        free(sn);
     }
 
     if (opt->lifetime_string) {
@@ -2426,9 +2499,11 @@ crl_sign(struct crl_sign_options *opt, int argc, char **argv)
 		      "hx509_certs_init: MEMORY cert");
 
 	for (i = 0; i < argc; i++) {
-	    ret = hx509_certs_append(context, revoked, lock, argv[i]);
+            char *sn = fix_store_name(context, argv[i], "FILE");
+
+	    ret = hx509_certs_append(context, revoked, lock, sn);
 	    if (ret)
-		hx509_err(context, 1, ret, "hx509_certs_append: %s", argv[i]);
+		hx509_err(context, 1, ret, "hx509_certs_append: %s", sn);
 	}
 
 	hx509_crl_add_revoked_certs(context, crl, revoked);
@@ -2970,6 +3045,7 @@ acert(struct acert_options *opt, int argc, char **argv)
     hx509_query *q = NULL;
     hx509_certs certs = NULL;
     hx509_cert cert = NULL;
+    char *sn = fix_store_name(context, argv[0], "FILE");
     size_t n = 0;
     int matched = 0;
     int ret;
@@ -2981,9 +3057,8 @@ acert(struct acert_options *opt, int argc, char **argv)
         (opt->not_before_lt_string || opt->not_before_gt_string))
         errx(1, "--not-before-eq should not be given with --not-before-lt/gt");
 
-    if ((ret = hx509_certs_init(context, argv[0], 0, NULL, &certs)))
-        hx509_err(context, 1, ret, "Could not load certificates from %s",
-                  argv[0]);
+    if ((ret = hx509_certs_init(context, sn, 0, NULL, &certs)))
+        hx509_err(context, 1, ret, "Could not load certificates from %s", sn);
 
     if (opt->expr_string) {
         if ((ret = hx509_query_alloc(context, &q)) ||
@@ -3015,6 +3090,7 @@ acert(struct acert_options *opt, int argc, char **argv)
     if (ret)
         hx509_err(context, 1, ret, "Matching certificate did not meet "
                   "requirements");
+    free(sn);
     return 0;
 }
 

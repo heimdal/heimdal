@@ -927,7 +927,8 @@ hx509_request_parse(hx509_context context,
     /* XXX Add support for PEM */
     if (strncmp(csr, "PKCS10:", 7) != 0) {
 	hx509_set_error_string(context, 0, HX509_UNSUPPORTED_OPERATION,
-			       "unsupport type in %s", csr);
+                               "CSR location does not start with \"PKCS10:\": %s",
+                               csr);
 	return HX509_UNSUPPORTED_OPERATION;
     }
 

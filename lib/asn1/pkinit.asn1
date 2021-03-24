@@ -17,6 +17,9 @@ id-pkrkeydata  OBJECT IDENTIFIER  ::= { id-pkinit 3 }
 id-pkekuoid    OBJECT IDENTIFIER  ::= { id-pkinit 4 }
 id-pkkdcekuoid OBJECT IDENTIFIER  ::= { id-pkinit 5 }
 
+id-heim-eku-pkinit-certlife-is-max-life OBJECT IDENTIFIER ::=
+    { iso(1) member-body(2) se(752) su(43) heim-pkix(16) 3 }
+
 id-apple-system-id OBJECT IDENTIFIER ::= { 1 2 840 113635 100 4 4 }
 
 id-pkinit-kdf OBJECT IDENTIFIER           ::= { id-pkinit 6 }

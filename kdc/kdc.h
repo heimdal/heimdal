@@ -85,6 +85,9 @@ typedef struct krb5_kdc_configuration {
     int pkinit_dh_min_bits;
     int pkinit_require_binding;
     int pkinit_allow_proxy_certs;
+    int pkinit_max_life_from_cert_extension;
+    krb5_timestamp pkinit_max_life_from_cert;
+    krb5_timestamp pkinit_max_life_bound;
 
     krb5_log_facility *logf;
 

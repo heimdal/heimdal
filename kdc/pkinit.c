@@ -59,6 +59,8 @@ struct pk_client_params {
 	} ecdh;
     } u;
     hx509_cert cert;
+    krb5_timestamp endtime;
+    krb5_timestamp max_life;
     unsigned nonce;
     EncryptionKey reply_key;
     char *dh_group_name;
@@ -802,7 +804,13 @@ out:
 krb5_timestamp
 _kdc_pk_endtime(pk_client_params *pkp)
 {
-    return hx509_cert_get_notAfter(pkp->cert);
+    return pkp->endtime;
+}
+
+krb5_timestamp
+_kdc_pk_max_life(pk_client_params *pkp)
+{
+    return pkp->max_life;
 }
 
 /*
@@ -1693,6 +1701,18 @@ _kdc_pk_check_client(astgs_request_t r,
 	if (*subject_name == NULL)
 	    return ENOMEM;
 	return 0;
+    }
+
+    cp->endtime = hx509_cert_get_notAfter(cp->cert);
+    cp->max_life = 0;
+    if (config->pkinit_max_life_from_cert_extension)
+        cp->max_life =
+            hx509_cert_get_pkinit_max_life(context->hx509ctx, cp->cert,
+                                           config->pkinit_max_life_bound);
+    if (cp->max_life == 0 && config->pkinit_max_life_from_cert > 0) {
+        cp->max_life = cp->endtime - hx509_cert_get_notBefore(cp->cert);
+        if (cp->max_life > config->pkinit_max_life_from_cert)
+            cp->max_life = config->pkinit_max_life_from_cert;
     }
 
     ret = hx509_cert_get_base_subject(context->hx509ctx,

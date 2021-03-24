@@ -840,14 +840,42 @@ Defaults to
 .It Li pkinit_dh_min_bits = Va NUMBER
 Minimum acceptable modular Diffie-Hellman public key size in
 bits.
-.It Li pkinit_ticket_max_life_from_cert = Va TIME
+.It Li pkinit_max_life_from_cert_extension = Va BOOL
+If set to
+.Va true
+then the KDC will override the
+.Va max_life
+attribute of the client principal's HDB record with a maximum
+ticket life taken from a certificate extension with OID
+.Va { iso(1) member-body(2) se(752) su(43) heim-pkix(16) 4 }
+and the DER encoding of an
+.Va INTEGER
+number of seconds.
+Alternatively, if the extended key usage OID
+.Va { iso(1) member-body(2) se(752) su(43) heim-pkix(16) 3 }
+is included in the client's certificate, then the
+.Va notAfter
+minus the current time will be used.
+.It Li pkinit_max_life_bound = Va TIME
+If set, this will be a hard bound on the maximum ticket lifetime
+taken from the client's certificate.
+As usual,
+.Va TIME
+can be given as a number followed by a unit, such as
+.Dq 2d
+for
+.Dq two days .
+.It Li pkinit_max_life_from_cert = Va TIME
 If set, this will override the
 .Va max_life
 attribute of the client principal's HDB record with the
 .Va notAfter
 of the client's certificate minus the current time, bounded to
 the given relative
-.Va TIME .
+.Va TIME
+unless the
+.Li pkinit_max_life_from_cert_extension
+parameter is set and the client's certificate has that extension.
 As usual,
 .Va TIME
 can be given as a number followed by a unit, such as

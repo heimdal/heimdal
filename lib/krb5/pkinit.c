@@ -473,16 +473,29 @@ build_auth_pack(krb5_context context,
 		free_DomainParameters(&dp);
 		return ret;
 	    }
-	    dp.q = calloc(1, sizeof(*dp.q));
-	    if (dp.q == NULL) {
-		free_DomainParameters(&dp);
-		return ENOMEM;
-	    }
-	    ret = BN_to_integer(context, dh->q, dp.q);
-	    if (ret) {
-		free_DomainParameters(&dp);
-		return ret;
-	    }
+            if (dh->q && BN_num_bits(dh->q)) {
+                /*
+                 * The q parameter is required, but MSFT made it optional.
+                 * It's only required in order to verify the domain parameters
+                 * -- the security of the DH group --, but we validate groups
+                 * against known groups rather than accepting arbitrary groups
+                 * chosen by the peer, so we really don't need to have put it
+                 * on the wire.  Because these are Oakley groups, and the
+                 * primes are Sophie Germain primes, q is p>>1 and we can
+                 * compute it on the fly like MIT Kerberos does, but we'd have
+                 * to implement BN_rshift1().
+                 */
+                dp.q = calloc(1, sizeof(*dp.q));
+                if (dp.q == NULL) {
+                    free_DomainParameters(&dp);
+                    return ENOMEM;
+                }
+                ret = BN_to_integer(context, dh->q, dp.q);
+                if (ret) {
+                    free_DomainParameters(&dp);
+                    return ret;
+                }
+            }
 	    dp.j = NULL;
 	    dp.validationParms = NULL;
 
@@ -2063,8 +2076,13 @@ _krb5_parse_moduli_line(krb5_context context,
     if (ret)
 	goto out;
     ret = parse_integer(context, &p, file, lineno, "q", &m1->q);
-    if (ret)
-	goto out;
+    if (ret) {
+        m1->q.negative = 0;
+        m1->q.length = 0;
+        m1->q.data = 0;
+        krb5_clear_error_message(context);
+	ret = 0;
+    }
 
     *m = m1;
 
@@ -2245,7 +2263,8 @@ _krb5_dh_group_ok(krb5_context context, unsigned long bits,
     for (i = 0; moduli[i] != NULL; i++) {
 	if (der_heim_integer_cmp(&moduli[i]->g, g) == 0 &&
 	    der_heim_integer_cmp(&moduli[i]->p, p) == 0 &&
-	    (q == NULL || der_heim_integer_cmp(&moduli[i]->q, q) == 0))
+	    (q == NULL || moduli[i]->q.length == 0 ||
+             der_heim_integer_cmp(&moduli[i]->q, q) == 0))
 	    {
 		if (bits && bits > moduli[i]->bits) {
 		    krb5_set_error_message(context,

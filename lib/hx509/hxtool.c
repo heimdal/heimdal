@@ -2297,6 +2297,13 @@ hxtool_ca(struct certificate_sign_options *opt, int argc, char **argv)
 	if (ret)
 	    hx509_err(context, 1, ret, "hx509_ca_tbs_set_notAfter_lifetime");
     }
+    if (opt->pkinit_max_life_string) {
+        time_t t = parse_time(opt->pkinit_max_life_string, "s");
+
+        ret = hx509_ca_tbs_set_pkinit_max_life(context, tbs, t);
+	if (ret)
+	    hx509_err(context, 1, ret, "hx509_ca_tbs_set_pkinit_max_life");
+    }
 
     if (opt->self_signed_flag) {
 	ret = hx509_ca_sign_self(context, tbs, private_key, &cert);

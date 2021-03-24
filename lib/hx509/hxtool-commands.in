@@ -792,6 +792,11 @@ command = {
 		help = "Certificate Policy mapping (OID:OID)"
 	}
 	option = {
+		long = "pkinit-max-life"
+		type = "string"
+		help = "maximum Kerberos ticket lifetime extension for PKINIT"
+	}
+	option = {
 		long = "req"
 		type = "string"
 		help = "certificate request"

@@ -197,6 +197,7 @@ typedef enum {
 #define HX509_CA_TEMPLATE_SPKI 16
 #define HX509_CA_TEMPLATE_KU 32
 #define HX509_CA_TEMPLATE_EKU 64
+#define HX509_CA_TEMPLATE_PKINIT_MAX_LIFE 128
 
 /* flags hx509_cms_create_signed* */
 #define HX509_CMS_SIGNATURE_DETACHED			0x01

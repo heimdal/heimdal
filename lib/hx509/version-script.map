@@ -74,6 +74,7 @@ HEIMDAL_X509_1.2 {
 		hx509_ca_tbs_set_notAfter;
 		hx509_ca_tbs_set_notAfter_lifetime;
 		hx509_ca_tbs_set_notBefore;
+		hx509_ca_tbs_set_pkinit_max_life;
 		hx509_ca_tbs_set_proxy;
 		hx509_ca_tbs_set_serialnumber;
 		hx509_ca_tbs_set_spki;
@@ -97,6 +98,7 @@ HEIMDAL_X509_1.2 {
 		hx509_cert_get_issuer;
 		hx509_cert_get_notAfter;
 		hx509_cert_get_notBefore;
+		hx509_cert_get_pkinit_max_life;
 		hx509_cert_get_serialnumber;
 		hx509_cert_get_subject;
 		hx509_cert_get_issuer_unique_id;

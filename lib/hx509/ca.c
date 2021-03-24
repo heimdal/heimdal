@@ -58,6 +58,7 @@ struct hx509_ca_tbs {
     } flags;
     time_t notBefore;
     time_t notAfter;
+    HeimPkinitPrincMaxLifeSecs pkinitTicketMaxLife;
     int pathLenConstraint; /* both for CA and Proxy */
     CRLDistributionPoints crldp;
     heim_bit_string subjectUniqueID;
@@ -186,6 +187,15 @@ hx509_ca_tbs_set_notAfter_lifetime(hx509_context context,
     return hx509_ca_tbs_set_notAfter(context, tbs, time(NULL) + delta);
 }
 
+HX509_LIB_FUNCTION int HX509_LIB_CALL
+hx509_ca_tbs_set_pkinit_max_life(hx509_context context,
+                                 hx509_ca_tbs tbs,
+                                 time_t max_life)
+{
+    tbs->pkinitTicketMaxLife = max_life;
+    return 0;
+}
+
 static const struct units templatebits[] = {
     { "ExtendedKeyUsage", HX509_CA_TEMPLATE_EKU },
     { "KeyUsage", HX509_CA_TEMPLATE_KU },
@@ -194,6 +204,7 @@ static const struct units templatebits[] = {
     { "notBefore", HX509_CA_TEMPLATE_NOTBEFORE },
     { "serial", HX509_CA_TEMPLATE_SERIAL },
     { "subject", HX509_CA_TEMPLATE_SUBJECT },
+    { "pkinitMaxLife", HX509_CA_TEMPLATE_PKINIT_MAX_LIFE },
     { NULL, 0 }
 };
 
@@ -284,6 +295,12 @@ hx509_ca_tbs_set_template(hx509_context context,
 	    }
 	}
 	free_ExtKeyUsage(&eku);
+    }
+    if (flags & HX509_CA_TEMPLATE_PKINIT_MAX_LIFE) {
+        time_t max_life;
+
+        if ((max_life = hx509_cert_get_pkinit_max_life(context, cert, 0)) > 0)
+            hx509_ca_tbs_set_pkinit_max_life(context, tbs, max_life);
     }
     return 0;
 }
@@ -1812,7 +1829,7 @@ ca_sign(hx509_context context,
 	    goto out;
     }
 
-    /* add KeyUsage */
+    /* Add KeyUsage */
     if (KeyUsage2int(tbs->ku) > 0) {
         ASN1_MALLOC_ENCODE(KeyUsage, data.data, data.length,
                            &tbs->ku, &size, ret);
@@ -1829,7 +1846,7 @@ ca_sign(hx509_context context,
 	    goto out;
     }
 
-    /* add ExtendedKeyUsage */
+    /* Add ExtendedKeyUsage */
     if (tbs->eku.len > 0) {
 	ASN1_MALLOC_ENCODE(ExtKeyUsage, data.data, data.length,
 			   &tbs->eku, &size, ret);
@@ -1846,7 +1863,7 @@ ca_sign(hx509_context context,
 	    goto out;
     }
 
-    /* add Subject Alternative Name */
+    /* Add Subject Alternative Name */
     if (tbs->san.len > 0) {
 	ASN1_MALLOC_ENCODE(GeneralNames, data.data, data.length,
 			   &tbs->san, &size, ret);
@@ -1950,7 +1967,7 @@ ca_sign(hx509_context context,
 	    goto out;
     }
 
-    /* add Proxy */
+    /* Add Proxy */
     if (tbs->flags.proxy) {
 	ProxyCertInfo info;
 
@@ -2039,6 +2056,23 @@ ca_sign(hx509_context context,
 	    _hx509_abort("internal ASN.1 encoder error");
         ret = add_extension(context, tbsc, FALSE,
                             &asn1_oid_id_x509_ce_policyMappings, &data);
+        free(data.data);
+	if (ret)
+	    goto out;
+    }
+
+    /* Add Heimdal PKINIT ticket max life extension */
+    if (tbs->pkinitTicketMaxLife > 0) {
+        ASN1_MALLOC_ENCODE(HeimPkinitPrincMaxLifeSecs, data.data, data.length,
+                           &tbs->pkinitTicketMaxLife, &size, ret);
+	if (ret) {
+	    hx509_set_error_string(context, 0, ret, "Out of memory");
+	    goto out;
+	}
+	if (size != data.length)
+	    _hx509_abort("internal ASN.1 encoder error");
+        ret = add_extension(context, tbsc, FALSE,
+                            &asn1_oid_id_heim_ce_pkinit_princ_max_life, &data);
         free(data.data);
 	if (ret)
 	    goto out;

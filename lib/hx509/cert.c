@@ -3490,12 +3490,11 @@ hx509_cert_check_eku(hx509_context context, hx509_cert cert,
 	    return 0;
 	}
 	if (allow_any_eku) {
-#if 0
-	    if (der_heim_oid_cmp(id_any_eku, &e.val[i]) == 0) {
+	    if (der_heim_oid_cmp(&asn1_oid_id_x509_ce_anyExtendedKeyUsage,
+                                 &e.val[i]) == 0) {
 		free_ExtKeyUsage(&e);
 		return 0;
 	    }
-#endif
 	}
     }
     free_ExtKeyUsage(&e);

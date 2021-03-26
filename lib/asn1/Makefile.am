@@ -244,7 +244,7 @@ $(libasn1_la_OBJECTS): $(nodist_include_HEADERS) $(priv_headers) asn1_err.h $(sr
 $(libasn1base_la_OBJECTS): asn1_err.h $(srcdir)/der-protos.h $(srcdir)/der-private.h
 $(check_gen_OBJECTS): test_asn1.h
 $(check_template_OBJECTS): test_asn1_files
-$(asn1_print_OBJECTS): krb5_asn1.h
+$(asn1_print_OBJECTS): krb5_asn1.h x690sample_asn1.h x690sample_template_asn1.h
 
 asn1parse.h: asn1parse.c
 

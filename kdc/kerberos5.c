@@ -632,7 +632,7 @@ pa_enc_chal_validate(astgs_request_t r, const PA_DATA *pa)
 	    ret2 = krb5_enctype_to_string(r->context, k->key.keytype, &str);
 	    if (ret2)
 		str = NULL;
-	    _kdc_r_log(r, 4, "Failed to decrypt ENC-CHAL -- %s "
+	    _kdc_r_log(r, 2, "Failed to decrypt ENC-CHAL -- %s "
 		       "(enctype %s) error %s",
 		       r->cname, str ? str : "unknown enctype", msg);
 	    krb5_free_error_message(r->context, msg);
@@ -780,7 +780,7 @@ pa_enc_ts_validate(astgs_request_t r, const PA_DATA *pa)
 				      pa_key->key.keytype, &str);
 	if (ret2)
 	    str = NULL;
-	_kdc_r_log(r, 4, "Failed to decrypt PA-DATA -- %s "
+	_kdc_r_log(r, 2, "Failed to decrypt PA-DATA -- %s "
 		   "(enctype %s) error %s",
 		   r->cname, str ? str : "unknown enctype", msg);
 	krb5_free_error_message(r->context, msg);

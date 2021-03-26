@@ -312,7 +312,7 @@ kx509_asn1_files: asn1_compile$(EXEEXT) $(srcdir)/kx509.asn1
 	$(ASN1_COMPILE) --one-code-file $(TEMPLATE_OPTION) $(srcdir)/kx509.asn1 kx509_asn1 || (rm -f kx509_asn1_files ; exit 1)
 
 x690sample_template_asn1_files: asn1_compile$(EXEEXT) $(srcdir)/x690sample.asn1
-	$(ASN1_COMPILE) --one-code-file --template $(srcdir)/x690sample.asn1 x690sample_template_asn1 || (rm -f x690sample_asn1_files ; exit 1)
+	$(ASN1_COMPILE) --one-code-file --template $(srcdir)/x690sample.asn1 x690sample_template_asn1 || (rm -f x690sample_template_asn1_files ; exit 1)
 
 x690sample_asn1_files: asn1_compile$(EXEEXT) $(srcdir)/x690sample.asn1
 	$(ASN1_COMPILE) --one-code-file $(srcdir)/x690sample.asn1 x690sample_asn1 || (rm -f x690sample_asn1_files ; exit 1)

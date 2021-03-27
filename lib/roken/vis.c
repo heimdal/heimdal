@@ -444,7 +444,7 @@ rk_strrasvisx(char **out,
 		*out = s;
 	}
 	**out = '\0'; /* Makes source debugging nicer, that's all */
-	if ((r = rk_strsvisx(*out, csrc, len, flag, extra)) < 0)
+	if ((r = strsvisx(*out, csrc, len, flag, extra)) < 0)
 		return r;
 	errno = *out ? errno : EINVAL;
 	return *out ? r : -1;

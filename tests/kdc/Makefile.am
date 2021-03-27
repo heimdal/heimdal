@@ -155,7 +155,7 @@ check-uu: check-uu.in Makefile
 	$(chmod) +x check-uu.tmp && \
 	mv check-uu.tmp check-uu
 
-check-pkinit: check-pkinit.in Makefile krb5-pkinit.conf
+check-pkinit: check-pkinit.in Makefile krb5-pkinit.conf krb5-pkinit2.conf
 	$(do_subst) < $(srcdir)/check-pkinit.in > check-pkinit.tmp && \
 	$(chmod) +x check-pkinit.tmp && \
 	mv check-pkinit.tmp check-pkinit

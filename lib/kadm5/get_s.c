@@ -331,13 +331,11 @@ kadm5_s_get_principal(void *server_handle,
             ret = add_tl_data(out, KRB5_TL_KRB5_CONFIG, krb5_config.data,
                               krb5_config.length);
         }
-	if (ret)
-	    goto out;
 	/*
 	 * If the client was allowed to get key data, let it have the
 	 * password too.
 	 */
-	if (mask & KADM5_KEY_DATA) {
+	if (ret == 0 && (mask & KADM5_KEY_DATA)) {
 	    heim_utf8_string pw;
 
             /* XXX But not if the client doesn't have ext-keys */
@@ -350,7 +348,8 @@ kadm5_s_get_principal(void *server_handle,
 	    krb5_clear_error_message(context->context);
 	}
 
-	ret = hdb_entry_get_pkinit_acl(&ent.entry, &acl);
+        if (ret == 0)
+            ret = hdb_entry_get_pkinit_acl(&ent.entry, &acl);
 	if (ret == 0 && acl) {
 	    krb5_data buf;
 	    size_t len;
@@ -367,10 +366,9 @@ kadm5_s_get_principal(void *server_handle,
 	    if (ret)
 		goto out;
 	}
-	if (ret)
-	    goto out;
 
-	ret = hdb_entry_get_aliases(&ent.entry, &aliases);
+        if (ret == 0)
+            ret = hdb_entry_get_aliases(&ent.entry, &aliases);
 	if (ret == 0 && aliases) {
 	    krb5_data buf;
 	    size_t len;
@@ -387,28 +385,19 @@ kadm5_s_get_principal(void *server_handle,
 	    if (ret)
 		goto out;
 	}
-	if (ret)
-	    goto out;
 
-        ret = hdb_entry_get_key_rotation(context->context, &ent.entry, &kr);
+        if (ret == 0)
+            ret = hdb_entry_get_key_rotation(context->context, &ent.entry, &kr);
 	if (ret == 0 && kr) {
 	    krb5_data buf;
 	    size_t len;
 
 	    ASN1_MALLOC_ENCODE(HDB_Ext_KeyRotation, buf.data, buf.length,
 			       kr, &len, ret);
-	    if (ret)
-		goto out;
-	    if (len != buf.length)
-		krb5_abortx(context->context,
-			    "internal ASN.1 encoder error");
-	    ret = add_tl_data(out, KRB5_TL_KEY_ROTATION, buf.data, buf.length);
+            if (ret == 0)
+                ret = add_tl_data(out, KRB5_TL_KEY_ROTATION, buf.data, buf.length);
 	    free(buf.data);
-	    if (ret)
-		goto out;
 	}
-	if (ret)
-	    goto out;
     }
 
  out:

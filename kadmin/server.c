@@ -691,6 +691,10 @@ iter_aliases(kadm5_principal_ent_rec *from,
 
     if (ctx->done > 0)
         return 0;
+    if (from == NULL) {
+        ctx->done = 1;
+        return 0;
+    }
 
     if (ctx->done == 0) {
         if (ctx->alias_idx < ctx->aliases.aliases.len) {

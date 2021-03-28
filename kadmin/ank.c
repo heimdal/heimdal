@@ -464,10 +464,12 @@ add_one_namespace(const char *name,
 
     /* XXX Shouldn't need a password for this */
     random_password(pwbuf, sizeof(pwbuf));
-    ret = kadm5_create_principal_3(kadm_handle, &princ, mask,
-                                   nkstuple, kstuple, pwbuf);
-    if (ret)
-	krb5_warn(context, ret, "kadm5_create_principal_3");
+    if (ret == 0) {
+        ret = kadm5_create_principal_3(kadm_handle, &princ, mask,
+                                       nkstuple, kstuple, pwbuf);
+        if (ret)
+            krb5_warn(context, ret, "kadm5_create_principal_3");
+    }
 
     kadm5_free_principal_ent(kadm_handle, &princ); /* frees princ_ent */
     if (default_ent)

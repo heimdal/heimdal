@@ -37,6 +37,7 @@
  * SUCH DAMAGE.
  */
 
+#define HC_DEPRECATED_CRYPTO
 #include "kafs_locl.h"
 
 static int rxkad_derive_des_key(const void *, size_t, char[8]);

@@ -130,7 +130,11 @@ main(int argc, char **argv)
 	errx (1, "krb5_init_context failed: %d", ret);
 
     argc -= optidx;
+#ifndef __clang_analyzer__
     argv += optidx;
+#endif
+    if (argc != 0)
+        usage(1);
 
     if (config_file == NULL) {
 	int aret;

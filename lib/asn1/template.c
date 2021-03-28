@@ -2625,7 +2625,7 @@ _asn1_print(const struct asn1_template *t,
                 char *s2 = NULL;
 
                 if (s)
-                    (void) rk_strasvis(&s2, s, VIS_CSTYLE|VIS_TAB|VIS_NL|VIS_DQ, "");
+                    (void) rk_strasvis(&s2, s, VIS_CSTYLE|VIS_TAB|VIS_NL, "\"");
                 free(s);
                 s = s2;
                 if (s)

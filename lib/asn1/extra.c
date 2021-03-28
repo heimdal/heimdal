@@ -99,7 +99,7 @@ print_heim_any(const heim_any *data)
     int r = -1;
 
     if (s)
-        r = rk_strasvis(&s2, s, VIS_CSTYLE|VIS_TAB|VIS_NL|VIS_DQ, "");
+        r = rk_strasvis(&s2, s, VIS_CSTYLE|VIS_TAB|VIS_NL, "\"");
     free(s);
     s = NULL;
     if (r > -1)
@@ -148,7 +148,7 @@ print_HEIM_ANY(const heim_any *data)
     int r = -1;
 
     if (s)
-        r = rk_strasvis(&s2, s, VIS_CSTYLE|VIS_TAB|VIS_NL|VIS_DQ, "");
+        r = rk_strasvis(&s2, s, VIS_CSTYLE|VIS_TAB|VIS_NL, "\"");
     free(s);
     s = NULL;
     if (r > -1)
@@ -197,7 +197,7 @@ print_heim_any_set(const heim_any_set *data)
     int r = -1;
 
     if (s)
-        r = rk_strasvis(&s2, s, VIS_CSTYLE|VIS_TAB|VIS_NL|VIS_DQ, "");
+        r = rk_strasvis(&s2, s, VIS_CSTYLE|VIS_TAB|VIS_NL, "\"");
     free(s);
     s = NULL;
     if (r > -1)
@@ -252,7 +252,7 @@ print_HEIM_ANY_SET(const heim_any_set *data)
     int r = -1;
 
     if (s)
-        r = rk_strasvis(&s2, s, VIS_CSTYLE|VIS_TAB|VIS_NL|VIS_DQ, "");
+        r = rk_strasvis(&s2, s, VIS_CSTYLE|VIS_TAB|VIS_NL, "\"");
     free(s);
     s = NULL;
     if (r > -1)

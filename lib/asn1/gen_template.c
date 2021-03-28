@@ -592,7 +592,7 @@ defval(struct templatehead *temp, Member *m)
         char *quoted;
 
         if (rk_strasvis(&quoted, m->defval->u.stringvalue,
-                        VIS_CSTYLE | VIS_DQ | VIS_NL, "") < 0)
+                        VIS_CSTYLE | VIS_NL, "\"") < 0)
             err(1, "Could not quote a string");
         add_line(temp, "{ A1_OP_DEFVAL|A1_DV_UTF8STRING, ~0, (void *)\"%s\" }",
                  quoted);

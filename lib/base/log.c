@@ -205,10 +205,13 @@ open_syslog(heim_context context,
             heim_log_facility *facility, int min, int max,
             const char *sev, const char *fac)
 {
-    struct _heimdal_syslog_data *sd = malloc(sizeof(*sd));
+    struct _heimdal_syslog_data *sd;
+    heim_error_code ret;
     int i;
 
-    if (sd == NULL)
+    if (facility == NULL)
+        return EINVAL;
+    if ((sd = calloc(1, sizeof(*sd))) == NULL)
         return heim_enomem(context);
     i = find_value(sev, syslogvals);
     if (i == -1)
@@ -219,8 +222,11 @@ open_syslog(heim_context context,
         i = LOG_AUTH;
     sd->priority |= i;
     roken_openlog(facility->program, LOG_PID | LOG_NDELAY, i);
-    return heim_addlog_func(context, facility, min, max,
-                            log_syslog, close_syslog, sd);
+    ret = heim_addlog_func(context, facility, min, max, log_syslog,
+                           close_syslog, sd);
+    if (ret)
+        free(sd);
+    return ret;
 }
 
 struct file_data {
@@ -248,7 +254,7 @@ log_file(heim_context context, const char *timestr, const char *msg, void *data)
     size_t i = 0;
     size_t j;
 
-    if (logf == NULL || (f->disp & FILEDISP_REOPEN)) {
+    if (f->filename && (logf == NULL || (f->disp & FILEDISP_REOPEN))) {
         int flags = O_WRONLY|O_APPEND;
         int fd;
 
@@ -339,9 +345,9 @@ open_file(heim_context context, heim_log_facility *fac, int min, int max,
     if (ret) {
         free(fd->filename);
         free(fd);
-    }
-    if (disp & FILEDISP_KEEPOPEN)
+    } else if (disp & FILEDISP_KEEPOPEN) {
         log_file(context, NULL, NULL, fd);
+    }
     return ret;
 }
 
@@ -385,7 +391,7 @@ heim_addlog_dest(heim_context context, heim_log_facility *f, const char *orig)
         p++;
     }
     if (strcmp(p, "STDERR") == 0) {
-        ret = open_file(context, f, min, max, NULL, NULL, stderr,
+        ret = open_file(context, f, min, max, NULL, "a", stderr,
                         FILEDISP_KEEPOPEN, 0);
     } else if (strcmp(p, "CONSOLE") == 0) {
         /* XXX WIN32 */
@@ -609,10 +615,7 @@ __attribute__ ((__format__ (__printf__, 3, 0)))
 heim_error_code
 heim_have_debug(heim_context context, int level)
 {
-    heim_log_facility *fac;
-
-    return (context != NULL &&
-        (fac = heim_get_debug_dest(context)) != NULL);
+    return (context != NULL && heim_get_debug_dest(context) != NULL);
 }
 
 heim_error_code

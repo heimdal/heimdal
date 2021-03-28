@@ -630,7 +630,6 @@ heim_expand_path_tokensv(heim_context context,
                 break;
             extra_tokens[i] = strdup(s);
             if (extra_tokens[i++] == NULL) {
-                va_end(ap);
                 free_extra_tokens(extra_tokens);
                 return heim_enomem(context);
             }
@@ -639,7 +638,6 @@ heim_expand_path_tokensv(heim_context context,
                 s = "";
             extra_tokens[i] = strdup(s);
             if (extra_tokens[i] == NULL) {
-                va_end(ap);
                 free_extra_tokens(extra_tokens);
                 return heim_enomem(context);
             }

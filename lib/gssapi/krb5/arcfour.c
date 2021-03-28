@@ -177,7 +177,7 @@ arcfour_mic_cksum_iov(krb5_context context,
 	memcpy(ptr + ofs,
 	       padding->buffer.value,
 	       padding->buffer.length);
-	ofs += padding->buffer.length;
+	/* ofs += padding->buffer.length; */
     }
 
     ret = krb5_crypto_init(context, key, 0, &crypto);
@@ -878,6 +878,11 @@ _gssapi_wrap_iov_length_arcfour(OM_uint32 *minor_status,
 	    *minor_status = EINVAL;
 	    return GSS_S_FAILURE;
 	}
+    }
+
+    if (header == NULL) {
+        *minor_status = EINVAL;
+        return GSS_S_FAILURE;
     }
 
     major_status = _gk_verify_buffers(minor_status, ctx, header,

@@ -1762,7 +1762,7 @@ _krb5_get_name_canon_rules(krb5_context context, krb5_name_canon_rule *rules)
                                      "libdefaults", "safe_name_canon", NULL))
         make_rules_safe(context, *rules);
 
-    heim_assert(rules != NULL && (*rules)[0].type != KRB5_NCRT_BOGUS,
+    heim_assert((*rules)[0].type != KRB5_NCRT_BOGUS,
                 "internal error in parsing principal name "
                 "canonicalization rules");
 

@@ -2152,7 +2152,10 @@ krb5_crypto_length(krb5_context context,
 	    *len = 0;
 	return 0;
     case KRB5_CRYPTO_TYPE_TRAILER:
-	*len = CHECKSUMSIZE(crypto->et->keyed_checksum);
+        if (crypto->et->keyed_checksum)
+            *len = CHECKSUMSIZE(crypto->et->keyed_checksum);
+        else
+            *len = 0;
 	return 0;
     case KRB5_CRYPTO_TYPE_CHECKSUM:
 	if (crypto->et->keyed_checksum)

@@ -473,7 +473,7 @@ make_subsidiary_residual(krb5_context context,
 			 char **presidual)
 {
     if (asprintf(presidual, "%s:%s:%s", anchor_name, collection_name,
-		 subsidiary_name) < 0) {
+		 subsidiary_name ? subsidiary_name : "tkt") < 0) {
 	*presidual = NULL;
 	return krb5_enomem(context);
     }
@@ -497,6 +497,9 @@ get_collection(krb5_context context,
     uid_t uidnum;
 
     heim_base_atomic_init(pcollection_id, 0);
+
+    if (!anchor_name || !collection_name)
+	return KRB5_KCC_INVALID_ANCHOR;
 
     if (strcmp(anchor_name, KRCC_PERSISTENT_ANCHOR) == 0) {
 	/*
@@ -1262,7 +1265,7 @@ alloc_cache(krb5_context context,
 				   subsidiary_name, &data->krc_name);
     if (ret ||
         (data->krc_collection = strdup(collection_name)) == NULL ||
-        (data->krc_subsidiary = strdup(subsidiary_name)) == NULL) {
+        (data->krc_subsidiary = strdup(subsidiary_name ? subsidiary_name : "tkt")) == NULL) {
         if (data) {
             free(data->krc_collection);
             free(data->krc_name);
@@ -1887,7 +1890,8 @@ krcc_get_cache_next(krb5_context context,
 	    continue;
 
 	/* Don't repeat the primary cache. */
-	if (strcmp(subsidiary_name, iter->primary_name) == 0)
+	if (iter->primary_name &&
+            strcmp(subsidiary_name ? subsidiary_name : "tkt", iter->primary_name) == 0)
 	    continue;
 
 	/* We found a valid key */

@@ -371,6 +371,7 @@ fkt_start_seq_get_int(krb5_context context,
     struct fkt_data *d = id->data;
     const char *stdio_mode = "rb";
 
+    memset(c, 0, sizeof(*c));
     c->fd = open (d->filename, flags);
     if (c->fd < 0) {
 	ret = errno;

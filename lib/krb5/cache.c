@@ -514,7 +514,7 @@ krb5_cc_get_subsidiary(krb5_context context, krb5_ccache id)
     const char *name = NULL;
 
     if (id->ops->version >= KRB5_CC_OPS_VERSION_5
-	&& id->ops->get_name_2 == NULL)
+	&& id->ops->get_name_2 != NULL)
         (void) id->ops->get_name_2(context, id, NULL, NULL, &name);
     return name;
 }
@@ -923,7 +923,7 @@ krb5_cc_destroy(krb5_context context,
     /*
      * Destroy associated hx509 PKIX credential store created by krb5_kx509*().
      */
-    if ((ret = krb5_cc_get_config(context, id, NULL, "kx509store", &d)) == 0) {
+    if (krb5_cc_get_config(context, id, NULL, "kx509store", &d) == 0) {
         char *name;
 
         if ((name = strndup(d.data, d.length)) == NULL) {
@@ -1001,7 +1001,6 @@ krb5_cc_close(krb5_context context,
                 _krb5_debug(context, 2, "failed to fetch a certificate");
             else
                 _krb5_debug(context, 2, "fetched a certificate");
-            ret = 0;
         }
     }
 

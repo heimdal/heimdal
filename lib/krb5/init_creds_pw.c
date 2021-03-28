@@ -2701,27 +2701,23 @@ keytab_key_proc(krb5_context context, krb5_enctype enctype,
     krb5_keytab keytab = args->keytab;
     krb5_principal principal = args->principal;
     krb5_error_code ret;
-    krb5_keytab real_keytab;
+    krb5_keytab real_keytab = NULL;
     krb5_keytab_entry entry;
 
     if (keytab == NULL) {
 	ret = krb5_kt_default(context, &real_keytab);
 	if (ret)
 	    return ret;
-    } else
-	real_keytab = keytab;
+        keytab = real_keytab;
+    }
 
-    ret = krb5_kt_get_entry (context, real_keytab, principal,
-			     0, enctype, &entry);
+    ret = krb5_kt_get_entry (context, keytab, principal, 0, enctype, &entry);
+    if (ret == 0) {
+        ret = krb5_copy_keyblock(context, &entry.keyblock, key);
+        krb5_kt_free_entry(context, &entry);
+    }
 
-    if (keytab == NULL)
-	krb5_kt_close (context, real_keytab);
-
-    if (ret)
-	return ret;
-
-    ret = krb5_copy_keyblock (context, &entry.keyblock, key);
-    krb5_kt_free_entry(context, &entry);
+    krb5_kt_close(context, real_keytab);
     return ret;
 }
 
@@ -4009,7 +4005,7 @@ _krb5_init_creds_init_gss(krb5_context context,
 			  const struct gss_OID_desc_struct *gss_mech,
 			  unsigned int flags)
 {
-    krb5_gss_init_ctx gssic = ctx->gss_init_ctx;
+    krb5_gss_init_ctx gssic;
 
     gssic = calloc(1, sizeof(*gssic));
     if (gssic == NULL)

@@ -681,12 +681,12 @@ dcc_get_cache_first(krb5_context context, krb5_cc_cursor *cursor)
     }
 
     if ((iter->d = opendir(iter->dc->dir)) == NULL) {
-        free(iter->dc->dir);
-        free(iter->dc);
-        free(iter);
 	krb5_set_error_message(context, KRB5_CC_FORMAT,
                                N_("Can't open DIR %s: %s", ""),
                                iter->dc->dir, strerror(errno));
+        free(iter->dc->dir);
+        free(iter->dc);
+        free(iter);
 	return KRB5_CC_FORMAT;
     }
 
@@ -709,8 +709,8 @@ dcc_get_cache_next(krb5_context context, krb5_cc_cursor cursor, krb5_ccache *id)
 
     /* Emit primary subsidiary first */
     if (iter->first &&
-        (ret = get_default_cache(context, iter->dc, NULL, &iter->primary)) == 0 &&
-        is_filename_cacheish(iter->primary)) {
+        get_default_cache(context, iter->dc, NULL, &iter->primary) == 0 &&
+        iter->primary && is_filename_cacheish(iter->primary)) {
         iter->first = 0;
         ret = KRB5_CC_END;
         if (asprintf(&p, "FILE:%s/%s", iter->dc->dir, iter->primary) > -1 && p != NULL &&

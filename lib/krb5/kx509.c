@@ -1262,7 +1262,9 @@ krb5_kx509(krb5_context context, krb5_ccache cc, const char *realm)
     char *store_exp = NULL;
 
     ret = krb5_kx509_ctx_init(context, &kx509_ctx);
-    if (ret == 0 && realm)
+    if (ret)
+        return ret;
+    if (realm)
         ret = krb5_kx509_ctx_set_realm(context, kx509_ctx, realm);
 
     /*

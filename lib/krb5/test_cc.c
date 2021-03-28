@@ -670,6 +670,8 @@ test_move(krb5_context context, const char *type)
 	krb5_err(context, 1, ret, "krb5_cc_new_unique");
 
     ret = krb5_cc_move(context, fromid, toid);
+    if (ret)
+	krb5_err(context, 1, ret, "krb5_cc_move");
 
     ret = krb5_cc_get_principal(context, toid, &p2);
     if (ret)

@@ -78,7 +78,7 @@ _krb5_ticket2krb5_principal(krb5_context context,
                             const AuthorizationData *authenticator_ad)
 {
     krb5_error_code ret;
-    krb5_principal p;
+    krb5_principal p = NULL;
 
     *principal = NULL;
 
@@ -127,7 +127,7 @@ _krb5_kdcrep2krb5_principal(krb5_context context,
                             const EncKDCRepPart *kdcrep)
 {
     krb5_error_code ret;
-    krb5_principal p;
+    krb5_principal p = NULL;
 
     *principal = NULL;
 

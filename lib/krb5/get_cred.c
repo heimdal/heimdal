@@ -1375,6 +1375,8 @@ _krb5_get_cred_kdc_any(krb5_context context,
     krb5_deltat offset;
     krb5_data data;
 
+    krb5_data_zero(&data);
+
     /*
      * If we are using LKDC, lets pull out the addreses from the
      * ticket and use that.
@@ -1382,23 +1384,19 @@ _krb5_get_cred_kdc_any(krb5_context context,
     
     ret = krb5_cc_get_config(context, ccache, NULL, "lkdc-hostname", &data);
     if (ret == 0) {
-	kdc_hostname = malloc(data.length + 1);
-	if (kdc_hostname == NULL)
-	    return krb5_enomem(context);
-	
-	memcpy(kdc_hostname, data.data, data.length);
-	kdc_hostname[data.length] = '\0';
+	if ((kdc_hostname = strndup(data.data, data.length)) == NULL) {
+            ret = krb5_enomem(context);
+            goto out;
+        }
 	krb5_data_free(&data);
     }
 
     ret = krb5_cc_get_config(context, ccache, NULL, "sitename", &data);
     if (ret == 0) {
-	sitename = malloc(data.length + 1);
-	if (sitename == NULL)
-	    return krb5_enomem(context);
-
-	memcpy(sitename, data.data, data.length);
-	sitename[data.length] = '\0';
+	if ((sitename = strndup(data.data, data.length)) == NULL) {
+	    ret = krb5_enomem(context);
+            goto out;
+        }
 	krb5_data_free(&data);
     }
 
@@ -1441,9 +1439,9 @@ _krb5_get_cred_kdc_any(krb5_context context,
                                 out_creds);
     
 out:
+    krb5_data_free(&data);
     free(kdc_hostname);
     free(sitename);
-
     return ret;
 }
 

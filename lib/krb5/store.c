@@ -1370,16 +1370,18 @@ krb5_ret_times(krb5_storage *sp, krb5_times *times)
 {
     int ret;
     int32_t tmp;
+
     ret = krb5_ret_int32(sp, &tmp);
+    if (ret) return ret;
     times->authtime = tmp;
-    if(ret) return ret;
     ret = krb5_ret_int32(sp, &tmp);
+    if (ret) return ret;
     times->starttime = tmp;
-    if(ret) return ret;
     ret = krb5_ret_int32(sp, &tmp);
+    if (ret) return ret;
     times->endtime = tmp;
-    if(ret) return ret;
     ret = krb5_ret_int32(sp, &tmp);
+    if (ret) return ret;
     times->renew_till = tmp;
     return ret;
 }

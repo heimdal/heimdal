@@ -477,7 +477,6 @@ fcc_open(krb5_context context,
         return krb5_einval(context, 2);
 
     if ((flags & O_EXCL)) {
-        flags &= ~O_EXCL;
         /*
          * FIXME Instead of mkostemp()... we could instead try to use a .new
          * file... with care.  Or the O_TMPFILE / linkat() extensions.  We need

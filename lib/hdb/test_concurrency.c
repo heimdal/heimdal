@@ -172,6 +172,8 @@ forked_reader(struct tsync *s)
     while ((bytes = read(s->reader_go_pipe[0], b, sizeof(b))) == -1 &&
            errno == EINTR)
         ;
+    if (bytes == -1)
+        err(1, "Could not read from reader-go pipe (error)");
 
     /* Open a new HDB handle to read */
     if ((ret = hdb_create(context, &dbr, s->hdb_name))) {
@@ -195,6 +197,8 @@ forked_reader(struct tsync *s)
     while ((bytes = write(s->writer_go_pipe[1], "", sizeof(""))) == -1 &&
            errno == EINTR)
         ;
+    if (bytes == -1)
+        err(1, "Could not write to writer-go pipe (error)");
 
 
     /* Wait for the writer to have written one more entry to the HDB */
@@ -231,6 +235,8 @@ forked_reader(struct tsync *s)
     while ((bytes = write(s->writer_go_pipe[1], "", sizeof(""))) == -1 &&
            errno == EINTR)
         ;
+    if (bytes == -1)
+        err(1, "Could not write to writer-go pipe (error)");
 
     dbr->hdb_close(context, dbr);
     dbr->hdb_destroy(context, dbr);

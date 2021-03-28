@@ -312,12 +312,12 @@ hdb_install_keyset(krb5_context context,
             (ret = hdb_add_current_keys_to_history(context, e)))
             return ret;
         free_Keys(&e->keys);
+        e->kvno = ks->kvno;
         if (ret == 0)
             ret = copy_Keys(&ks->keys, &e->keys);
-        e->kvno = ks->kvno;
-        if (ks->set_time)
-            return hdb_entry_set_pw_change_time(context, e, *ks->set_time);
-        return 0;
+        if (ret == 0 && ks->set_time)
+            ret = hdb_entry_set_pw_change_time(context, e, *ks->set_time);
+        return ret;
     }
     return hdb_add_history_keyset(context, e, ks);
 }

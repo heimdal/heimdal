@@ -433,14 +433,8 @@ hdb_derive_etypes(krb5_context context, hdb_entry *e, HDB_Ext_KeySet *base_keys)
         free(e->etypes->val);
         e->etypes->len = 0;
         e->etypes->val = 0;
-    }
-
-    if (e->etypes == NULL &&
-        (e->etypes = malloc(sizeof(e->etypes[0]))) == NULL)
+    } else if ((e->etypes = calloc(1, sizeof(e->etypes[0]))) == NULL) {
         ret = krb5_enomem(context);
-    if (ret == 0) {
-        e->etypes->len = 0;
-        e->etypes->val = 0;
     }
     if (ret == 0 &&
         (e->etypes->val = calloc(netypes, sizeof(e->etypes->val[0]))) == NULL)
@@ -516,7 +510,9 @@ _hdb_store(krb5_context context, HDB *db, unsigned flags, hdb_entry_ex *entry)
     if (code)
 	return code;
 
-    hdb_principal2key(context, entry->entry.principal, &key);
+    code = hdb_principal2key(context, entry->entry.principal, &key);
+    if (code)
+        return code;
 
     /* remove aliases */
     code = hdb_remove_aliases(context, db, &key);
@@ -554,8 +550,9 @@ _hdb_remove(krb5_context context, HDB *db,
      * HDB_entry_alias instead and assume it's an entry if decoding fails...
      */
 
-    hdb_principal2key(context, principal, &key);
-    code = db->hdb__get(context, db, key, &value);
+    code = hdb_principal2key(context, principal, &key);
+    if (code == 0)
+        code = db->hdb__get(context, db, key, &value);
     if (code == 0) {
         code = decode_HDB_EntryOrAlias(value.data, value.length, &eoa, NULL);
         krb5_data_free(&value);
@@ -573,7 +570,8 @@ _hdb_remove(krb5_context context, HDB *db,
         return code;
     }
 
-    code = hdb_remove_aliases(context, db, &key);
+    if (code == 0)
+        code = hdb_remove_aliases(context, db, &key);
     if (code == 0)
         code = db->hdb__del(context, db, key);
     krb5_data_free(&key);
@@ -714,7 +712,7 @@ derive_keyset(krb5_context context,
 {
     dks->kvno = kvno;
     dks->keys.val = 0;
-    dks->set_time = malloc(sizeof(*dks->set_time));
+    dks->set_time = malloc(sizeof(*(dks->set_time)));
     if (dks->set_time == NULL)
         return krb5_enomem(context);
     *dks->set_time = set_time;
@@ -1136,7 +1134,7 @@ derive_keys(krb5_context context,
      * the KDC won't issue tickets longer lived than this.
      */
     if (ret == 0 && !h->entry.max_life &&
-        (h->entry.max_life = malloc(sizeof(h->entry.max_life[0]))) == NULL)
+        (h->entry.max_life = calloc(1, sizeof(h->entry.max_life[0]))) == NULL)
         ret = krb5_enomem(context);
     if (ret == 0 && *h->entry.max_life > kr.val[current_kr].period >> 1)
         *h->entry.max_life = kr.val[current_kr].period >> 1;

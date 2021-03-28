@@ -1172,6 +1172,11 @@ LDAP_message2entry(krb5_context context, HDB * db, LDAPMessage * msg,
 	ret = hex_decode(ntPasswordIN,
 			 ent->entry.keys.val[ent->entry.keys.len].key.keyvalue.data, 16);
 	ent->entry.keys.len++;
+        if (ret == -1) {
+            krb5_set_error_message(context, ret = EINVAL,
+                                   "invalid hex encoding of password");
+            goto out;
+        }
 
 	if (ent->entry.etypes == NULL) {
 	    ent->entry.etypes = malloc(sizeof(*(ent->entry.etypes)));

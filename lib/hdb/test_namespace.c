@@ -151,14 +151,13 @@ TDB__put(krb5_context context, HDB *db, int rplc, krb5_data kd, krb5_data vd)
 {
     krb5_error_code ret = 0;
     TEST_HDB *tdb = (void *)db;
-    heim_object_t e = NULL;
     heim_object_t k = NULL;
     heim_object_t v = NULL;
 
     if ((k = heim_data_create(kd.data, kd.length)) == NULL ||
         (v = heim_data_create(vd.data, vd.length)) == NULL)
         ret = krb5_enomem(context);
-    if (ret == 0 && !rplc && (e = heim_dict_get_value(tdb->dict, k)) != NULL)
+    if (ret == 0 && !rplc && heim_dict_get_value(tdb->dict, k) != NULL)
         ret = HDB_ERR_EXISTS;
     if (ret == 0 && heim_dict_set_value(tdb->dict, k, v))
         ret = krb5_enomem(context);
@@ -172,11 +171,11 @@ TDB__del(krb5_context context, HDB *db, krb5_data key)
 {
     krb5_error_code ret = 0;
     TEST_HDB *tdb = (void *)db;
-    heim_object_t k, v;
+    heim_object_t k;
 
     if ((k = heim_data_create(key.data, key.length)) == NULL)
         ret = krb5_enomem(context);
-    if (ret == 0 && (v = heim_dict_get_value(tdb->dict, k)) == NULL)
+    if (ret == 0 && heim_dict_get_value(tdb->dict, k) == NULL)
         ret = HDB_ERR_NOENTRY;
     if (ret == 0)
         heim_dict_delete_key(tdb->dict, k);
@@ -198,7 +197,8 @@ hdb_test_create(krb5_context context, struct HDB **db, const char *arg)
     if ((tdb = calloc(1, sizeof(tdb[0]))) == NULL ||
         (tdb->hdb.hdb_name = strdup(arg)) == NULL ||
         (tdb->dict = heim_dict_create(10)) == NULL) {
-        free(tdb->hdb.hdb_name);
+        if (tdb)
+            free(tdb->hdb.hdb_name);
         free(tdb);
         return krb5_enomem(context);
     }

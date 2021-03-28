@@ -160,8 +160,11 @@ find_db (krb5_context context,
     }
     hdb_free_dbinfo(context, &head);
     if (*dbname == NULL &&
-        (*dbname = strdup(hdb_default_db(context))) == NULL)
+        (*dbname = strdup(hdb_default_db(context))) == NULL) {
+        free(*mkey);
+        *mkey = NULL;
         return krb5_enomem(context);
+    }
     return 0;
 }
 

@@ -555,7 +555,7 @@ _hdb_mdb_value2entry(krb5_context context, krb5_data *data,
                 goto out;
             }
             CHECK(ret = krb5_parse_name(context, p, &modby));
-            ret = hdb_set_last_modified_by(context, entry, modby, u32);
+            CHECK(ret = hdb_set_last_modified_by(context, entry, modby, u32));
             krb5_free_principal(context, modby);
             free(p);
             break;
@@ -1435,8 +1435,10 @@ _hdb_mit_dump2mitdb_entry(krb5_context context, char *line, krb5_storage *sp)
         if (tl_length) {
             buf = malloc(tl_length);
             if (!buf) return ENOMEM;
-            if (getdata(&p, buf, tl_length, reading_what) != tl_length)
+            if (getdata(&p, buf, tl_length, reading_what) != tl_length) {
+                free(buf);
                 return EINVAL;
+            }
             sz = krb5_storage_write(sp, buf, tl_length);
             free(buf);
             if (sz != tl_length) return ENOMEM;
@@ -1478,8 +1480,10 @@ _hdb_mit_dump2mitdb_entry(krb5_context context, char *line, krb5_storage *sp)
             if (keylen) {
                 buf = malloc(keylen);
                 if (!buf) return ENOMEM;
-                if (getdata(&p, buf, keylen, "key (or salt) data") != keylen)
+                if (getdata(&p, buf, keylen, "key (or salt) data") != keylen) {
+                    free(buf);
                     return EINVAL;
+                }
                 sz = krb5_storage_write(sp, buf, keylen);
                 free(buf);
                 if (sz != keylen) return ENOMEM;

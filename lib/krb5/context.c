@@ -101,7 +101,7 @@ init_context_from_config_file(krb5_context context)
     krb5_error_code ret;
     const char * tmp;
     char **s;
-    krb5_enctype *tmptypes;
+    krb5_enctype *tmptypes = NULL;
 
     INIT_FIELD(context, time, max_skew, 5 * 60, "clockskew");
     INIT_FIELD(context, time, kdc_timeout, 30, "kdc_timeout");

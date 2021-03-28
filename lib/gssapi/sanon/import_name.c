@@ -59,16 +59,14 @@ storage_ret_der_oid(krb5_storage *sp, gss_OID_desc *oid)
     oid->elements = NULL;
 
     ret = krb5_ret_uint16(sp, &der_oid_len);
-    if (ret != 0)
+    if (ret == 0)
+        ret = krb5_ret_uint8(sp, &tag);
+    if (ret == 0)
+        ret = krb5_ret_uint8(sp, &oid_len);
+    if (ret)
 	return ret;
-
-    ret = krb5_ret_uint8(sp, &tag);
     if (tag != 0x06)
 	return EINVAL;
-
-    ret = krb5_ret_uint8(sp, &oid_len);
-    if (ret != 0)
-	return ret;
 
     if (der_oid_len != 2 + oid_len)
 	return EINVAL;
@@ -126,10 +124,11 @@ import_export_name(OM_uint32 *minor,
     }
     if (ret == 0)
 	ret = krb5_ret_uint32(sp, &name_len);
-    if (name_len != 1)
-	ret = EINVAL;
-    ret = krb5_ret_uint8(sp, &is_anonymous);
+    if (ret == 0)
+        ret = krb5_ret_uint8(sp, &is_anonymous);
     if (ret == 0) {
+        if (name_len != 1)
+            ret = EINVAL;
 	if (is_anonymous == 1) {
 	    *output_name = _gss_sanon_anonymous_identity;
 	    major = GSS_S_COMPLETE;

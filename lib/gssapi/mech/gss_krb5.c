@@ -520,7 +520,8 @@ gss_krb5_ccache_name(OM_uint32 *minor_status,
 	}
     }
 
-    *out_name = args.out_name;
+    if (out_name)
+        *out_name = args.out_name;
 
     return major_status;
 }

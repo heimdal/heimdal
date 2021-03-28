@@ -250,7 +250,7 @@ write_and_free_token(gss_buffer_t out, int negotiate)
 
 bail:
 	gss_release_buffer(&min, out);
-	return 0;
+	return ret;
 }
 
 static int
@@ -402,7 +402,7 @@ static int
 initiate_many(gss_name_t service, int delegate, int negotiate, int memcache,
 	      size_t count)
 {
-	krb5_error_code	kret;
+	krb5_error_code	kret = 0;
 	krb5_context	kctx = NULL;
 	krb5_ccache	def_cache = NULL;
 	krb5_ccache	mem_cache = NULL;
@@ -567,7 +567,7 @@ print_all_mechs(void)
 	for (i=0; i < mech_set->count; i++)
 		printf("%s\n", gss_oid_to_name(&mech_set->elements[i]));
 
-	maj = gss_release_oid_set(&min, &mech_set);
+	(void) gss_release_oid_set(&min, &mech_set);
 
 bail:
 	exit(ret);

@@ -1257,7 +1257,7 @@ main(int argc, char **argv)
 
 	if (maj_stat != GSS_S_COMPLETE)
 	    keyblock2 = NULL;
-	else if (limit_enctype && keyblock->keytype != limit_enctype)
+	else if (limit_enctype && keyblock && keyblock->keytype != limit_enctype)
 	    errx(1, "gsskrb5_get_subkey wrong enctype");
 
 	if (keyblock || keyblock2) {
@@ -1285,7 +1285,7 @@ main(int argc, char **argv)
 	    if (ret)
 		krb5_err(context, 1, ret, "krb5_string_to_enctype");
 
-	    if (enctype != keyblock->keytype)
+	    if (keyblock && enctype != keyblock->keytype)
 		errx(1, "keytype is not the expected %d != %d",
 		     (int)enctype, (int)keyblock2->keytype);
 	}

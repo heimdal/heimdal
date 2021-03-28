@@ -271,7 +271,7 @@ main(int argc, char **argv)
     } else {
         void *d;
 
-        if ((ret = rk_undumpdata(argv[0], &d, &bufsz)))
+        if ((errno = rk_undumpdata(argv[0], &d, &bufsz)))
             err(1, "Could not read %s", argv[0]);
         buflen = bufsz;
         buf = d;

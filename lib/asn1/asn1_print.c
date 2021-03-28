@@ -453,10 +453,8 @@ dotype(unsigned char *buf, size_t len, char **argv, size_t *size)
                     char *s;
 
                     s = sorted_types[i].print(v, indent_flag ? ASN1_PRINT_INDENT : 0);
-                    if (!s) {
-                        ret = errno;
+                    if (!s)
                         err(1, "Could not print %s\n", typename);
-                    }
                     if (!quiet_flag)
                         printf("%s\n", s);
                     free(s);

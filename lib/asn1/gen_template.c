@@ -579,12 +579,12 @@ defval(struct templatehead *temp, Member *m)
 
         if (t->members)
             dv = "A1_DV_INTEGER32"; /* XXX Enum size assumptions!  No good! */
-        else if (t->range->min < 0 &&
+        else if (t->range && t->range->min < 0 &&
                  (t->range->min < INT_MIN || t->range->max > INT_MAX))
             dv = "A1_DV_INTEGER64";
-        else if (t->range->min < 0)
+        else if (t->range && t->range->min < 0)
             dv = "A1_DV_INTEGER32";
-        else if (t->range->max > UINT_MAX)
+        else if (t->range && t->range->max > UINT_MAX)
             dv = "A1_DV_INTEGER64";
         else
             dv = "A1_DV_INTEGER32";
@@ -627,9 +627,11 @@ defval(struct templatehead *temp, Member *m)
             sz -= len;
             p += len;
         }
-        len = snprintf(p, sz, " }");
+        if ((len = snprintf(p, sz, " }")) >= sz)
+            abort();
         sz -= len;
-        p += len;
+        if (sz != 0)
+            abort();
 
 	add_line(temp, "{ A1_OP_DEFVAL|A1_DV_INTEGER, ~0, (void *)(uintptr_t)\"%s\" }", s);
         free(s);
@@ -733,6 +735,9 @@ sort_object_set(IOSObjectSet *os,       /* Object set to sort fields of */
     }
     *nobjsp = nobjs;
 
+    if (nobjs == 0)
+        return;
+
     if ((objects = calloc(nobjs, sizeof(*objects))) == NULL)
         err(1, "Out of memory");
     *objectsp = objects;
@@ -755,7 +760,7 @@ sort_object_set(IOSObjectSet *os,       /* Object set to sort fields of */
 static void
 template_object_set(IOSObjectSet *os, Field *typeidfield, Field *opentypefield)
 {
-    IOSObject **objects;
+    IOSObject **objects = NULL;
     IOSObject *o;
     struct tlist *tl;
     size_t nobjs, i;

@@ -331,7 +331,6 @@ der_print_heim_oid_sym(const heim_oid *oid, char delim, char **strp)
         *strp = s1;
         return 0;
     }
-    p = s2 + strlen(s1) + 1;
     for (p = s2 + strlen(s1) + 1; *p; p++) {
         if (*p == '_')
             *p = '-';

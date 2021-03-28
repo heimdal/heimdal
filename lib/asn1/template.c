@@ -831,6 +831,8 @@ _asn1_decode(const struct asn1_template *t, unsigned flags,
 	    if (ret) {
 		if (t->tt & A1_FLAG_OPTIONAL) {
 		} else if (t->tt & A1_FLAG_DEFAULT) {
+                    if (!tdefval)
+                        return ASN1_PARSE_ERROR; /* Can't happen */
                     /*
                      * Defaulted field not present in encoding, presumably,
                      * though we should really look more carefully at `ret'.
@@ -897,6 +899,8 @@ _asn1_decode(const struct asn1_template *t, unsigned flags,
                     data = olddata;
 		    break;
                 } else if (t->tt & A1_FLAG_DEFAULT) {
+                    if (!tdefval)
+                        return ASN1_PARSE_ERROR; /* Can't happen */
                     /*
                      * Defaulted field not present in encoding, presumably,
                      * though we should really look more carefully at `ret'.
@@ -1586,10 +1590,9 @@ _asn1_encode(const struct asn1_template *t, unsigned char *p, size_t len, const 
                 }
                 if (ret == 0) {
                     /* Copy the encoding where it belongs */
-                    len -= l; p -= l;
                     psave -= (datalen + l - oldtaglen);
                     lensave -= (datalen + l - oldtaglen);
-                    memcpy(psave + 1, p + 1, datalen + l - oldtaglen);
+                    memcpy(psave + 1, p + 1 - l, datalen + l - oldtaglen);
                     p = psave;
                     len = lensave;
                 }
@@ -2287,7 +2290,7 @@ _asn1_free(const struct asn1_template *t, void *data)
                     *(void **)el = 0;
                 } else if (f && f->release)
                     (f->release)(el);
-                else
+                else if (f)
                     memset(el, 0, f->size);
 	    }
 	    if (t->tt & A1_FLAG_OPTIONAL) {
@@ -2833,7 +2836,7 @@ _asn1_copy_open_type(const struct asn1_template *t, /* object set template */
     *dtop = NULL;
     if ((valto = calloc(len, sizeof(valto[0]))) == NULL)
         ret = ENOMEM;
-    for (i = 0, len = *lenfromp; ret == 0 && i < len; (*lentop)++, i++) {
+    for (i = 0, len = *lenfromp; ret == 0 && i < len; i++) {
         if (valfrom[i] == NULL) {
             valto[i] = NULL;
             continue;
@@ -2842,17 +2845,19 @@ _asn1_copy_open_type(const struct asn1_template *t, /* object set template */
             ret = ENOMEM;
         else
             ret = _asn1_copy(tactual_type->ptr, valfrom[i], valto[i]);
+        (*lentop)++;
     }
 
-    for (i = 0; ret && i < len; i++) {
+    for (i = 0; ret && i < (*lentop); i++) {
         if (valto[i]) {
             _asn1_free(tactual_type->ptr, valto[i]);
             free(valto[i]);
         }
     }
-    if (ret)
+    if (ret) {
         free(valto);
-    else
+        *lentop = 0;
+    } else
         *dtop = valto;
     return ret;
 }
@@ -2920,9 +2925,9 @@ _asn1_copy(const struct asn1_template *t, const void *from, void *to)
                 /* A1_OP_TYPE_DECORATE_EXTERN */
                 if (t->tt & A1_FLAG_HEIM_OBJ)
                     *(heim_object_t *)tel = heim_retain(*(void **)fel);
-                else if (f->copy)
+                else if (f && f->copy)
                     ret = (f->copy)(fel, tel);
-                else
+                else if (f)
                     memset(tel, 0, f->size);
 	    }
 

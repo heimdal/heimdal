@@ -39,6 +39,8 @@
 void
 heim_clear_error_message(heim_context context)
 {
+    if (!context)
+        return;
     if (context->error_string)
         free(context->error_string);
     context->error_code = 0;
@@ -164,7 +166,7 @@ heim_get_error_string(heim_context context)
 int
 heim_have_error_string(heim_context context)
 {
-    return context->error_string != NULL;
+    return context && context->error_string != NULL;
 }
 
 void

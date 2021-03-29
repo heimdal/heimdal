@@ -107,7 +107,9 @@ main(int argc, char **argv)
     }
 
     argc -= optidx;
+#ifndef __clang_analyzer__
     argv += optidx;
+#endif
 
     if (argc != 0)
 	usage(1);
@@ -145,7 +147,7 @@ main(int argc, char **argv)
 	if (getpeername(sock, sa, &sin_len) < 0)
 	    krb5_err(context, 1, errno, "getpeername");
 
-	if (inet_ntop(ss.ss_family,
+	if (inet_ntop(sa->sa_family,
 		      socket_get_address (sa),
 		      addr_name,
 		      sizeof(addr_name)) == NULL)

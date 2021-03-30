@@ -1625,6 +1625,8 @@ _hx509_private_key_export(hx509_context context,
 			  hx509_key_format_t format,
 			  heim_octet_string *data)
 {
+    data->length = 0;
+    data->data = NULL;
     if (key->ops->export == NULL) {
 	hx509_clear_error_string(context);
 	return HX509_UNIMPLEMENTED_OPERATION;

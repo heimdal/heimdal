@@ -218,9 +218,11 @@ hx509_free_error_string(char *str)
  * @ingroup hx509_error
  */
 
-HX509_LIB_FUNCTION void HX509_LIB_CALL
+HX509_LIB_NORETURN_FUNCTION
+     __attribute__ ((__noreturn__, __format__ (__printf__, 4, 5)))
+void HX509_LIB_CALL
 hx509_err(hx509_context context, int exit_code,
-	  int error_code, const char *fmt, ...)
+          int error_code, const char *fmt, ...)
 {
     va_list ap;
     const char *msg;

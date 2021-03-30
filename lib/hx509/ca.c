@@ -2741,7 +2741,8 @@ set_tbs(hx509_context context,
                             realm);
 
     /* Populate requested certificate extensions from CSR/CSRPlus if allowed */
-    ret = hx509_ca_tbs_set_from_csr(context, tbs, req);
+    if (ret == 0)
+        ret = hx509_ca_tbs_set_from_csr(context, tbs, req);
     if (ret == 0)
         ret = set_template(context, logf, cf, tbs);
 
@@ -2939,6 +2940,8 @@ _hx509_ca_issue_certificate(hx509_context context,
     hx509_request_authorize_ku(req, ku);
 
     ret = get_cf(context, cf, logf, req, cprinc, &cf);
+    if (ret)
+        return ret;
 
     if ((ca = heim_config_get_string(context->hcontext, cf,
                                      "ca", NULL)) == NULL) {
@@ -3050,9 +3053,8 @@ _hx509_ca_issue_certificate(hx509_context context,
     hx509_env_free(&env);
 
     /* All done with the TBS, sign/issue the certificate */
-    ret = hx509_ca_sign(context, tbs, signer, &cert);
-    if (ret)
-        goto out;
+    if (ret == 0)
+        ret = hx509_ca_sign(context, tbs, signer, &cert);
 
     /*
      * Gather the certificate and chain into a MEMORY store, being careful not
@@ -3063,8 +3065,9 @@ _hx509_ca_issue_certificate(hx509_context context,
      * the full chain in the issuer credential store and copying only the certs
      * (but not the private keys) is safer and easier to configure.
      */
-    ret = hx509_certs_init(context, "MEMORY:certs",
-                           HX509_CERTS_NO_PRIVATE_KEYS, NULL, out);
+    if (ret == 0)
+        ret = hx509_certs_init(context, "MEMORY:certs",
+                               HX509_CERTS_NO_PRIVATE_KEYS, NULL, out);
     if (ret == 0)
         ret = hx509_certs_add(context, *out, cert);
     if (ret == 0 && send_chain) {

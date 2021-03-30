@@ -518,14 +518,13 @@ get_exts(hx509_context context,
          const hx509_request req,
          Extensions *exts)
 {
-    uint64_t ku_num;
     size_t size;
     int ret = 0;
 
     exts->val = NULL;
     exts->len = 0;
 
-    if ((ku_num = KeyUsage2int(req->ku))) {
+    if (KeyUsage2int(req->ku)) {
         Extension e;
 
         memset(&e, 0, sizeof(e));
@@ -718,6 +717,7 @@ hx509_request_to_pkcs10(hx509_context context,
 	abort();
 
     free_CertificationRequest(&r);
+    free_Extensions(&exts);
     return ret;
 }
 
@@ -899,9 +899,9 @@ hx509_request_parse_der(hx509_context context,
 
 out:
     free_CertificationRequest(&r);
+    free_Extensions(&exts);
     if (ret)
         hx509_request_free(req);
-    free_CertificationRequest(&r);
     return ret;
 }
 

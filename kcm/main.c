@@ -36,6 +36,7 @@
 RCSID("$Id$");
 
 krb5_context kcm_context = NULL;
+extern const char *socket_path;
 
 const char *service_name = "org.h5l.kcm";
 
@@ -89,6 +90,9 @@ main(int argc, char **argv)
     if (detach_from_console && !launchd_flag && daemon_child == -1)
         daemon_child = roken_detach_prep(argc, argv, "--daemon-child");
     rk_pidfile(NULL);
+
+    if (socket_path)
+        setenv("HEIM_IPC_DIR", socket_path, 1);
 
     if (launchd_flag) {
 	heim_sipc mach;

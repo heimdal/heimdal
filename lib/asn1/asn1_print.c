@@ -72,7 +72,7 @@ static unsigned long indefinite_form_loop;
 static unsigned long indefinite_form_loop_max = 10000;
 
 typedef size_t (*lengther)(void *);
-typedef size_t (*copyer)(const void *, void *);
+typedef int (*copyer)(const void *, void *);
 typedef int (*encoder)(unsigned char *, size_t, void *, size_t *);
 typedef int (*decoder)(const unsigned char *, size_t, void *, size_t *);
 typedef char *(*printer)(const void *, int);

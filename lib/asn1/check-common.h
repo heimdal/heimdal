@@ -58,9 +58,9 @@ struct test_case {
 };
 
 typedef int (ASN1CALL *generic_encode)(unsigned char *, size_t, void *, size_t *);
-typedef int (ASN1CALL *generic_length)(void *);
+typedef size_t (ASN1CALL *generic_length)(void *);
 typedef int (ASN1CALL *generic_decode)(unsigned char *, size_t, void *, size_t *);
-typedef int (ASN1CALL *generic_free)(void *);
+typedef void (ASN1CALL *generic_free)(void *);
 typedef int (ASN1CALL *generic_copy)(const void *, void *);
 
 int
@@ -68,9 +68,9 @@ generic_test (const struct test_case *tests,
 	      unsigned ntests,
 	      size_t data_size,
 	      int (ASN1CALL *encode)(unsigned char *, size_t, void *, size_t *),
-	      int (ASN1CALL *length)(void *),
+	      size_t (ASN1CALL *length)(void *),
 	      int (ASN1CALL *decode)(unsigned char *, size_t, void *, size_t *),
-	      int (ASN1CALL *free_data)(void *),
+	      void (ASN1CALL *free_data)(void *),
 	      int (*cmp)(void *a, void *b),
 	      int (ASN1CALL *copy)(const void *a, void *b));
 

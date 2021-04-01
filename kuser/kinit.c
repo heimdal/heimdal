@@ -447,7 +447,7 @@ renew_validate(krb5_context context,
         if (ret2 == 0 &&
             krb5_principal_compare(context, principal, in.client)) {
             krb5_cc_close(context, *cachep);
-            *cachep = def_ccache;
+            cache = *cachep = def_ccache;
             def_ccache = NULL;
             ret = 0;
         }

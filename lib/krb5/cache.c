@@ -191,7 +191,7 @@ allocate_ccache(krb5_context context,
                 const char *subsidiary,
                 krb5_ccache *id)
 {
-    krb5_error_code ret;
+    krb5_error_code ret = 0;
     char *exp_residual = NULL;
     int filepath;
 
@@ -199,7 +199,8 @@ allocate_ccache(krb5_context context,
 		 || strcmp("DIR", ops->prefix) == 0
 		 || strcmp("SCC", ops->prefix) == 0);
 
-    ret = _krb5_expand_path_tokens(context, residual, filepath, &exp_residual);
+    if (residual)
+        ret = _krb5_expand_path_tokens(context, residual, filepath, &exp_residual);
     if (ret == 0)
         ret = _krb5_cc_allocate(context, ops, id);
 

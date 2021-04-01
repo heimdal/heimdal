@@ -38,6 +38,7 @@ RCSID("$Id$");
 static const char *config_name = "ipropd-slave";
 
 static int verbose;
+static int async_hdb = 0;
 
 static krb5_log_facility *log_facility;
 static char five_min[] = "5 min";
@@ -431,18 +432,18 @@ receive(krb5_context context,
         kadm5_server_context *server_context)
 {
     krb5_error_code ret, ret2;
+    HDB *mydb = server_context->db;
 
-    ret = server_context->db->hdb_open(context,
-				       server_context->db,
-				       O_RDWR | O_CREAT, 0600);
+    ret = mydb->hdb_open(context, server_context->db, O_RDWR | O_CREAT, 0600);
     if (ret)
         krb5_err(context, IPROPD_RESTART_SLOW, ret, "db->open");
 
+    (void) mydb->hdb_set_sync(context, mydb, !async_hdb);
     ret2 = receive_loop(context, sp, server_context);
     if (ret2)
 	krb5_warn(context, ret2, "receive from ipropd-master had errors");
 
-    ret = server_context->db->hdb_close(context, server_context->db);
+    ret = mydb->hdb_close(context, server_context->db);
     if (ret)
         krb5_err(context, IPROPD_RESTART_SLOW, ret, "db->close");
 
@@ -598,7 +599,7 @@ receive_everything(krb5_context context, int fd,
 
     reinit_log(context, server_context, vno);
 
-    ret = mydb->hdb_set_sync(context, mydb, 1);
+    ret = mydb->hdb_set_sync(context, mydb, !async_hdb);
     if (ret)
         krb5_err(context, IPROPD_RESTART_SLOW, ret, "failed to sync the received HDB");
     ret = mydb->hdb_close(context, mydb);
@@ -701,6 +702,7 @@ static struct getargs args[] = {
       "private argument, do not use", NULL },
     { "pidfile-basename", 0, arg_string, &pidfile_basename,
       "basename of pidfile; private argument for testing", "NAME" },
+    { "async-hdb", 'a', arg_flag, &async_hdb, NULL, NULL },
     { "hostname", 0, arg_string, rk_UNCONST(&slave_str),
       "hostname of slave (if not same as hostname)", "hostname" },
     { "verbose", 0, arg_flag, &verbose, NULL, NULL },

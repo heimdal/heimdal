@@ -92,12 +92,13 @@ free_heim_any(heim_any *data)
 }
 
 char *
-print_heim_any(const heim_any *data)
+print_heim_any(const heim_any *data, int flags)
 {
     char *s2 = NULL;
     char *s = der_print_octet_string(data, 0);
     int r = -1;
 
+    (void)flags;
     if (s)
         r = rk_strasvis(&s2, s, VIS_CSTYLE|VIS_TAB|VIS_NL, "\"");
     free(s);
@@ -141,12 +142,13 @@ free_HEIM_ANY(heim_any *data)
 }
 
 char *
-print_HEIM_ANY(const heim_any *data)
+print_HEIM_ANY(const heim_any *data, int flags)
 {
     char *s2 = NULL;
     char *s = der_print_octet_string(data, 0);
     int r = -1;
 
+    (void)flags;
     if (s)
         r = rk_strasvis(&s2, s, VIS_CSTYLE|VIS_TAB|VIS_NL, "\"");
     free(s);
@@ -190,12 +192,13 @@ free_heim_any_set(heim_any_set *data)
 }
 
 char *
-print_heim_any_set(const heim_any_set *data)
+print_heim_any_set(const heim_any_set *data, int flags)
 {
     char *s2 = NULL;
     char *s = der_print_octet_string(data, 0);
     int r = -1;
 
+    (void)flags;
     if (s)
         r = rk_strasvis(&s2, s, VIS_CSTYLE|VIS_TAB|VIS_NL, "\"");
     free(s);
@@ -245,12 +248,13 @@ free_HEIM_ANY_SET(heim_any_set *data)
 }
 
 char *
-print_HEIM_ANY_SET(const heim_any_set *data)
+print_HEIM_ANY_SET(const heim_any_set *data, int flags)
 {
     char *s2 = NULL;
     char *s = der_print_octet_string(data, 0);
     int r = -1;
 
+    (void)flags;
     if (s)
         r = rk_strasvis(&s2, s, VIS_CSTYLE|VIS_TAB|VIS_NL, "\"");
     free(s);

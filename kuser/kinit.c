@@ -65,7 +65,7 @@ static krb5_principal tgs_service;
 char *cred_cache	= NULL;
 char *start_str		= NULL;
 static int default_for = 0;
-static int switch_cache_flags = 1;
+static int switch_cache_flags = -1;
 struct getarg_strings etype_str;
 int use_keytab		= 0;
 char *keytab_str	= NULL;

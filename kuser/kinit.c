@@ -192,8 +192,8 @@ static struct getargs args[] = {
     { "change-default",  0,  arg_negative_flag, &switch_cache_flags,
       NP_("switch the default cache to the new credentials cache", ""), NULL },
 
-    { "default-for-principal",  0,  arg_negative_flag, &default_for,
-      NP_("use a default cache appropriate for the client principal name", ""), NULL },
+    { "default-for-principal",  0,  arg_flag, &default_for,
+      NP_("Use a default cache appropriate for the client principal", ""), NULL },
 
     { "ok-as-delegate",	0,  arg_flag, &ok_as_delegate_flag,
       NP_("honor ok-as-delegate on tickets", ""), NULL },
@@ -1551,6 +1551,7 @@ main(int argc, char **argv)
                  krb5_cc_get_name(context, ccache));
         setenv("KRB5CCNAME", s, 1);
         unique_ccache = TRUE;
+        switch_cache_flags = 0;
     } else if (default_for) {
         ret = krb5_cc_default_for(context, principal, &ccache);
         if (switch_cache_flags == -1)

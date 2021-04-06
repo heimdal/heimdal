@@ -113,12 +113,12 @@ Uses a thread per-client instead of as many threads as there are CPUs.
 .Xc
 verbose
 .El
-.Sh API
+.Sh ONLINE CERTIFICATION AUTHORITY HTTP API
 This service provides an HTTP-based Certification Authority (CA).
 The protocol consists of a
 .Ar GET
 of
-.Ar /bx509
+.Ar /get-cert
 with the base-63 encoding of a DER encoding of a PKCS#10
 .Ar CertificationRequest
 (Certificate Signing Request, or CSR) in a
@@ -126,6 +126,54 @@ with the base-63 encoding of a DER encoding of a PKCS#10
 required query parameter.
 In a successful query, the response body will contain a PEM
 encoded end entity certificate and certification chain.
+.Pp
+Or
+.Ar GET
+of
+.Ar /bx509 ,
+as this used to be called.
+.Pp
+Authentication is required.
+Unauthenticated requests will elicit a 401 response.
+.Pp
+Authorization is required.
+Unauthorized requests will elicit a 403 response.
+.Pp
+Subject Alternative Names (SANs) and Extended Key Usage values
+may be requested, both in-band in the CSR as a requested
+extensions attribute, and/or via optional query parameters.
+.Pp
+Supported query parameters (separated by ampersands)
+.Bl -tag -width Ds -offset indent
+.It Li csr = Va base64-encoded-DER-encoded-CSR
+.It Li dNSName = Va hostname
+.It Li rfc822Name = Va email-address
+.It Li xMPPName = Va XMPP-address
+.It Li krb5PrincipalName = Va Kerberos-principal-name
+.It Li ms-upn = Va UPN
+.It Li eku = Va OID
+.It Li lifetime = Va lifetime
+.El
+.Pp
+More than one name or EKU may be requested.
+.Pp
+Certificate lifetimes are expressed as a decimal number and
+an optional unit (which defaults to
+.Dq day
+).
+.Sh NEGOTIATE TOKEN HTTP API
+This service provides an HTTP-based Negotiate token service.
+The protocol consists of a
+.Ar GET
+of
+.Ar /get-negotiate-token
+with a
+.Ar target = Ar service@host
+query parameter.
+.Pp
+In a successful query, the response body will contain a Negotiate
+token for the authenticated client principal to the requested
+target.
 .Pp
 Authentication is required.
 Unauthenticated requests will elicit a 401 response.
@@ -136,22 +184,16 @@ extensions attribute, and/or via optional query parameters.
 .Pp
 Supported query parameters (separated by ampersands)
 .Bl -tag -width Ds -offset indent
-.It Li csr = Va <base64-encoded-DER-encoded-CSR>
-.It Li dNSName = Va <hostname>
-.It Li rfc822Name = Va <email-address>
-.It Li xMPPName = Va <XMPP-address>
-.It Li krb5PrincipalName = Va <Kerberos-principal-name>
-.It Li ms-upn = Va <UPN>
-.It Li eku = Va <OID>
-.It Li lifetime = Va <lifetime>
+.It Li target = Va service@hostname
+.It Li redirect = Va URI
 .El
 .Pp
-More than one name or EKU may be requested.
-.Pp
-Certificate lifetimes are expressed as a decimal number and
-an optional unit (which defaults to
-.Dq day
-).
+If a redirect URI is given and a matching
+.Va Referer
+header is included in the request, then the response will be a
+redirect to that URI with the Negotiate token in an
+.Va Authorization
+header that the user-agent should copy to the redirected request.
 .Sh ENVIRONMENT
 .Bl -tag -width Ds
 .It Ev KRB5_CONFIG

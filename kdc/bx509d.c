@@ -1670,9 +1670,11 @@ route(void *cls,
         ret = health(method, &r);
     else if (strcmp(method, "GET") != 0)
         ret = bad_405(&r, method);
-    else if (strcmp(url, "/bx509") == 0)
+    else if (strcmp(url, "/get-cert") == 0 ||
+             strcmp(url, "/bx509") == 0) /* old name */
         ret = bx509(&r);
-    else if (strcmp(url, "/bnegotiate") == 0)
+    else if (strcmp(url, "/get-negotiate-token") == 0 ||
+             strcmp(url, "/bnegotiate") == 0) /* old name */
         ret = bnegotiate(&r);
     else
         ret = bad_404(&r, url);

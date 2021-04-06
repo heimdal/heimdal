@@ -1062,29 +1062,16 @@ find_ccache(krb5_context context, const char *princ, char **ccname)
     return ret ? ret : ENOENT;
 }
 
-/*
- * Acquire credentials for `princ' using PKINIT and the PKIX credentials in
- * `pkix_store', then place the result in the ccache named `ccname' (which will
- * be in our own private `cache_dir').
- *
- * XXX This function could be rewritten using gss_acquire_cred_from() and
- * gss_store_cred_into() provided we add new generic cred store key/value pairs
- * for PKINIT.
- */
+enum k5_creds_kind { K5_CREDS_EPHEMERAL, K5_CREDS_CACHED };
+
 static krb5_error_code
-do_pkinit(struct bx509_request_desc *r)
+get_ccache(struct bx509_request_desc *r, krb5_ccache *cc, int *won)
 {
-    krb5_get_init_creds_opt *opt = NULL;
-    krb5_init_creds_context ctx = NULL;
     krb5_error_code ret = 0;
-    krb5_ccache temp_cc = NULL;
-    krb5_ccache cc = NULL;
-    krb5_principal p = NULL;
     struct stat st1, st2;
-    time_t life;
-    const char *crealm;
-    const char *fn = NULL;
     char *temp_ccname = NULL;
+    const char *fn = NULL;
+    time_t life;
     int fd = -1;
 
     /*
@@ -1103,6 +1090,8 @@ do_pkinit(struct bx509_request_desc *r)
      * FILE ccache would take care to mkstemp() and rename() into place.
      * fcc_open() basically does a similar thing.
      */
+    *cc = NULL;
+    *won = -1;
     if (asprintf(&temp_ccname, "%s.ccnew", r->ccname) == -1 ||
         temp_ccname == NULL)
         ret = ENOMEM;
@@ -1138,30 +1127,70 @@ do_pkinit(struct bx509_request_desc *r)
 
     /* Check if we lost any race to acquire Kerberos creds */
     if (ret == 0)
-        ret = krb5_cc_resolve(r->context, temp_ccname, &temp_cc);
-    if (ret == 0)
-        ret = krb5_cc_get_lifetime(r->context, temp_cc, &life);
-    if (ret == 0 && life > 60)
-        goto out; /* We lost the race, but we win: we get to do less work */
+        ret = krb5_cc_resolve(r->context, temp_ccname, cc);
+    if (ret == 0) {
+        ret = krb5_cc_get_lifetime(r->context, *cc, &life);
+        if (ret == 0 && life > 60)
+            *won = 0; /* We lost the race, but we win: we get to do less work */
+        *won = 1;
+        ret = 0;
+    }
+    free(temp_ccname);
+    if (fd != -1)
+        (void) close(fd); /* Drops the flock */
+    return ret;
+}
 
-    /*
-     * We won the race.  Setup to acquire Kerberos creds with PKINIT.
-     *
-     * We should really make sure that gss_acquire_cred_from() can do this for
-     * us.  We'd add generic cred store key/value pairs for PKIX cred store,
-     * trust anchors, and so on, and acquire that way, then
-     * gss_store_cred_into() to save it in a FILE ccache.
-     */
+/*
+ * Acquire credentials for `princ' using PKINIT and the PKIX credentials in
+ * `pkix_store', then place the result in the ccache named `ccname' (which will
+ * be in our own private `cache_dir').
+ *
+ * XXX This function could be rewritten using gss_acquire_cred_from() and
+ * gss_store_cred_into() provided we add new generic cred store key/value pairs
+ * for PKINIT.
+ */
+static krb5_error_code
+do_pkinit(struct bx509_request_desc *r, enum k5_creds_kind kind)
+{
+    krb5_get_init_creds_opt *opt = NULL;
+    krb5_init_creds_context ctx = NULL;
+    krb5_error_code ret = 0;
+    krb5_ccache temp_cc = NULL;
+    krb5_ccache cc = NULL;
+    krb5_principal p = NULL;
+    const char *crealm;
+
+    if (kind == K5_CREDS_CACHED) {
+        int won = -1;
+
+        ret = get_ccache(r, &temp_cc, &won);
+        if (ret || !won)
+            goto out;
+        /*
+         * We won the race to do PKINIT.  Setup to acquire Kerberos creds with
+         * PKINIT.
+         *
+         * We should really make sure that gss_acquire_cred_from() can do this
+         * for us.  We'd add generic cred store key/value pairs for PKIX cred
+         * store, trust anchors, and so on, and acquire that way, then
+         * gss_store_cred_into() to save it in a FILE ccache.
+         */
+    } else {
+        ret = krb5_cc_new_unique(r->context, "FILE", NULL, &temp_cc);
+    }
+
     ret = krb5_parse_name(r->context, r->cname, &p);
     if (ret == 0)
         crealm = krb5_principal_get_realm(r->context, p);
-    if (ret == 0 &&
-        (ret = krb5_get_init_creds_opt_alloc(r->context, &opt)) == 0)
+    if (ret == 0)
+        ret = krb5_get_init_creds_opt_alloc(r->context, &opt);
+    if (ret == 0)
         krb5_get_init_creds_opt_set_default_flags(r->context, "kinit", crealm,
                                                   opt);
-    if (ret == 0 &&
-        (ret = krb5_get_init_creds_opt_set_addressless(r->context,
-                                                       opt, 1)) == 0)
+    if (ret == 0)
+        ret = krb5_get_init_creds_opt_set_addressless(r->context, opt, 1);
+    if (ret == 0)
         ret = krb5_get_init_creds_opt_set_pkinit(r->context, opt, p,
                                                  r->pkix_store,
                                                  NULL,  /* pkinit_anchor */
@@ -1183,12 +1212,20 @@ do_pkinit(struct bx509_request_desc *r)
      * into temp_cc, and rename into place.  Note that krb5_cc_move() closes
      * the source ccache, so we set temp_cc = NULL if it succeeds.
      */
-    if (ret == 0 &&
-        (ret = krb5_init_creds_get(r->context, ctx)) == 0 &&
-        (ret = krb5_init_creds_store(r->context, ctx, temp_cc)) == 0 &&
-        (ret = krb5_cc_resolve(r->context, r->ccname, &cc)) == 0 &&
-        (ret = krb5_cc_move(r->context, temp_cc, cc)) == 0)
-        temp_cc = NULL;
+    if (ret == 0)
+        ret = krb5_init_creds_get(r->context, ctx);
+    if (ret == 0)
+        ret = krb5_init_creds_store(r->context, ctx, temp_cc);
+    if (kind == K5_CREDS_CACHED) {
+        if (ret == 0)
+            ret = krb5_cc_resolve(r->context, r->ccname, &cc);
+        if (ret == 0)
+            ret = krb5_cc_move(r->context, temp_cc, cc);
+        if (ret == 0)
+            temp_cc = NULL;
+    } else if (ret == 0 && kind == K5_CREDS_EPHEMERAL) {
+        ret = krb5_cc_get_full_name(r->context, temp_cc, &r->ccname);
+    }
 
 out:
     if (ctx)
@@ -1197,9 +1234,6 @@ out:
     krb5_free_principal(r->context, p);
     krb5_cc_close(r->context, temp_cc);
     krb5_cc_close(r->context, cc);
-    free(temp_ccname);
-    if (fd != -1)
-        (void) close(fd); /* Drops the flock */
     return ret;
 }
 
@@ -1230,7 +1264,7 @@ load_priv_key(krb5_context context, const char *fn, hx509_private_key *key)
 }
 
 static krb5_error_code
-bnegotiate_do_CA(struct bx509_request_desc *r)
+k5_do_CA(struct bx509_request_desc *r)
 {
     SubjectPublicKeyInfo spki;
     hx509_private_key key = NULL;
@@ -1272,7 +1306,7 @@ bnegotiate_do_CA(struct bx509_request_desc *r)
 
     /* Issue the certificate */
     if (ret == 0)
-        ret = kdc_issue_certificate(r->context, "bx509", logfac, req, p,
+        ret = kdc_issue_certificate(r->context, "getTGT", logfac, req, p,
                                     &r->token_times, 0,
                                     1 /* send_chain */, &certs);
     krb5_free_principal(r->context, p);
@@ -1307,22 +1341,23 @@ bnegotiate_do_CA(struct bx509_request_desc *r)
 
 /* Get impersonated Kerberos credentials for `cprinc' */
 static krb5_error_code
-bnegotiate_get_creds(struct bx509_request_desc *r)
+k5_get_creds(struct bx509_request_desc *r, enum k5_creds_kind kind)
 {
     krb5_error_code ret;
 
     /* If we have a live ccache for `cprinc', we're done */
-    if ((ret = find_ccache(r->context, r->cname, &r->ccname)) == 0)
+    if (kind == K5_CREDS_CACHED &&
+        (ret = find_ccache(r->context, r->cname, &r->ccname)) == 0)
         return ret; /* Success */
 
     /*
      * Else we have to acquire a credential for them using their bearer token
      * for authentication (and our keytab / initiator credentials perhaps).
      */
-    if ((ret = bnegotiate_do_CA(r)))
-        return ret; /* bnegotiate_do_CA() calls bad_req() */
+    if ((ret = k5_do_CA(r)))
+        return ret; /* k5_do_CA() calls bad_req() */
 
-    if (ret == 0 && (ret = do_pkinit(r)))
+    if (ret == 0 && (ret = do_pkinit(r, kind)))
         ret = bad_403(r, ret,
                       "Could not acquire Kerberos credentials using PKINIT");
     return ret;
@@ -1598,7 +1633,7 @@ bnegotiate(struct bx509_request_desc *r)
      * Perhaps we could use S4U instead, which would speed up the slow path a
      * bit.
      */
-    ret = bnegotiate_get_creds(r);
+    ret = k5_get_creds(r, K5_CREDS_CACHED);
 
     /* Acquire the Negotiate token and output it */
     if (ret == 0 && r->ccname != NULL)
@@ -1615,6 +1650,72 @@ bnegotiate(struct bx509_request_desc *r)
     }
 
     free(nego_tok);
+    return ret;
+}
+
+static krb5_error_code
+authorize_TGT_REQ(struct bx509_request_desc *r, const char *cname)
+{
+    krb5_principal p = NULL;
+    krb5_error_code ret;
+
+    ret = krb5_parse_name(r->context, r->cname, &p);
+    ret = hx509_request_init(r->context->hx509ctx, &r->req);
+    if (ret)
+        return bad_500(r, ret, "Out of resources");
+    heim_audit_addkv((heim_svc_req_desc)r, KDC_AUDIT_VIS,
+                     "requested_krb5PrincipalName", "%s", cname);
+    ret = hx509_request_add_pkinit(r->context->hx509ctx, r->req, cname);
+    if (ret == 0)
+        ret = kdc_authorize_csr(r->context, "getTGT", r->req, p);
+    krb5_free_principal(r->context, p);
+    hx509_request_free(&r->req);
+    if (ret)
+        return bad_403(r, ret, "Not authorized to requested TGT");
+    return ret;
+}
+
+/*
+ * Implements /get-tgt end-point.
+ *
+ * Query parameters (mutually exclusive):
+ *
+ *  - cname=<name> (client principal name, if not the same as the authenticated
+ *                  name, then this will be impersonated if allowed)
+ */
+static krb5_error_code
+get_tgt(struct bx509_request_desc *r)
+{
+    krb5_error_code ret;
+    size_t bodylen;
+    const char *cname = NULL;
+    const char *fn;
+    void *body;
+
+    cname = MHD_lookup_connection_value(r->connection, MHD_GET_ARGUMENT_KIND,
+                                        "cname");
+    ret = validate_token(r);
+    if (ret == 0)
+        ret = authorize_TGT_REQ(r, cname ? cname : r->cname);
+    /* validate_token() and authorize_TGT_REQ() call bad_req() */
+    if (ret)
+        return ret;
+
+    ret = k5_get_creds(r, K5_CREDS_EPHEMERAL);
+    if (ret)
+        return bad_503(r, ret, "Could not get TGT");
+
+    fn = strchr(r->ccname, ':');
+    if (fn == NULL)
+        return bad_500(r, ret, "Impossible error");
+    fn++;
+    if ((errno = rk_undumpdata(fn, &body, &bodylen))) {
+        (void) unlink(fn);
+        return bad_503(r, ret, "Could not get TGT");
+    }
+
+    ret = resp(r, MHD_HTTP_OK, MHD_RESPMEM_MUST_COPY, body, bodylen, NULL);
+    free(body);
     return ret;
 }
 
@@ -1676,6 +1777,8 @@ route(void *cls,
     else if (strcmp(url, "/get-negotiate-token") == 0 ||
              strcmp(url, "/bnegotiate") == 0) /* old name */
         ret = bnegotiate(&r);
+    else if (strcmp(url, "/get-tgt") == 0)
+        ret = get_tgt(&r);
     else
         ret = bad_404(&r, url);
 

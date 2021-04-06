@@ -317,6 +317,7 @@ CLEANFILES= \
 	barpassword \
 	ca.crt \
 	cache.krb5 \
+	cache2.krb5 \
 	cdigest-reply \
 	client-cache \
 	curlheaders \
@@ -339,8 +340,10 @@ CLEANFILES= \
 	krb5-cc.conf \
 	krb5-cccol.conf \
 	krb5-hdb-mitdb.conf \
+	krb5-master2.conf \
 	krb5-pkinit-win.conf \
 	krb5-pkinit.conf \
+	krb5-pkinit2.conf \
 	krb5-bx509.conf \
 	krb5-httpkadmind.conf \
 	krb5-slave2.conf \
@@ -354,12 +357,14 @@ CLEANFILES= \
 	malloc-log \
 	malloc-log-master \
 	malloc-log-slave \
+	messages.log2 \
 	negotiate-token \
 	notfoopassword \
 	o2cache.krb5 \
 	o2digest-reply \
 	ocache.krb5 \
 	out-log \
+	req \
 	response-headers \
 	s2digest-reply \
 	sdb \

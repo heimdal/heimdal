@@ -54,7 +54,10 @@ kdc="${kdc} --addresses=localhost -P $port"
 
 server=datan.test.h5l.se
 otherserver=other.test.h5l.se
-cache="FILE:${objdir}/cache.krb5"
+cachefile="${objdir}/cache.krb5"
+cache="FILE:${cachefile}"
+cachefile2="${objdir}/cache2.krb5"
+cache2="FILE:${cachefile2}"
 keyfile="${hx509_data}/key.der"
 keyfile2="${hx509_data}/key2.der"
 kt=${objdir}/kt
@@ -63,6 +66,7 @@ ukt=${objdir}/ukt
 ukeytab=FILE:${ukt}
 
 kinit="${kinit} -c $cache ${afs_no_afslog}"
+klist2="${klist} --hidden -v -c $cache2"
 klist="${klist} --hidden -v -c $cache"
 kgetcred="${kgetcred} -c $cache"
 kdestroy="${kdestroy} -c $cache ${afs_no_unlog}"
@@ -428,6 +432,30 @@ trap "kill -9 ${kdcpid} ${bx509pid}; echo signal killing kdc and bx509d; exit 1;
 
 ${kinit} -kt $ukeytab foo@${R} || exit 1
 $klist || { echo "failed to setup kimpersonate credentials"; exit 2; }
+
+echo "Fetch TGT"
+(set -vx; csr_grant pkinit foo@${R} foo@${R})
+token=$(KRB5CCNAME=$cache $gsstoken HTTP@$server)
+if ! (set -vx;
+    curl -o "${cachefile2}" -Lgsf                                       \
+         --resolve ${server}:${bx509port}:127.0.0.1                     \
+         -H "Authorization: Negotiate $token"                           \
+         "http://${server}:${bx509port}/get-tgt"); then
+    echo "Failed to get a TGT with /get-tgt end-point"
+    exit 2
+fi
+
+echo "Fetch TGT (inception)"
+${kdestroy}
+token=$(KRB5CCNAME=$cache2 $gsstoken HTTP@$server)
+if ! (set -vx;
+    curl -o "${cachefile}" -Lgsf                                        \
+         --resolve ${server}:${bx509port}:127.0.0.1                     \
+         -H "Authorization: Negotiate $token"                           \
+         "http://${server}:${bx509port}/get-tgt"); then
+    echo "Failed to get a TGT with /get-tgt end-point"
+    exit 2
+fi
 
 echo "Fetch negotiate token (pre-test)"
 # Do what /bnegotiate does, roughly, prior to testing /bnegotiate

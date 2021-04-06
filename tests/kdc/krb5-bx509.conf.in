@@ -121,6 +121,45 @@
                 }
         }
 
+[getTGT]
+        simple_csr_authorizer_directory = @objdir@/simple_csr_authz
+        realms = {
+                TEST.H5L.SE = {
+                        # Default (no cert exts requested)
+                        user = {
+                                # Use an issuer for user certs:
+                                ca = PEM-FILE:@objdir@/user-issuer.pem
+                                subject_name = CN=${principal-name-without-realm},DC=test,DC=h5l,DC=se
+                                ekus = 1.3.6.1.5.5.7.3.2
+                                include_pkinit_san = true
+                        }
+                        hostbased_service = {
+                                # Only for HTTP services
+                                HTTP = {
+                                        # Use an issuer for server certs:
+                                        ca = PEM-FILE:@objdir@/server-issuer.pem
+                                        include_dnsname_san = true
+                                        # Don't bother with a template
+                                }
+                        }
+                        # Non-default certs (extensions requested)
+                        #
+                        # Use no templates -- get empty subject names,
+                        # use SANs.
+                        #
+                        # Use appropriate issuers.
+                        client = {
+                                ca = PEM-FILE:@objdir@/user-issuer.pem
+                        }
+                        server = {
+                                ca = PEM-FILE:@objdir@/server-issuer.pem
+                        }
+                        mixed = {
+                                ca = PEM-FILE:@objdir@/mixed-issuer.pem
+                        }
+                }
+        }
+
 [logging]
 	kdc = 0-/FILE:@objdir@/messages.log
 	bx509d = 0-/FILE:@objdir@/messages.log

@@ -773,6 +773,9 @@ target service principal's hdb entry's current keyset.  Defaults to TRUE.
 .It Li check-ticket-addresses = Va BOOL
 Verify the addresses in the tickets used in tgs requests.
 .\" XXX
+.It Li warn_ticket_addresses = Va BOOL
+Warn about, but allow, usage of tickets from hosts that don't match the
+addresses in the tickets.
 .It Li allow-null-ticket-addresses = Va BOOL
 Allow address-less tickets.
 .\" XXX

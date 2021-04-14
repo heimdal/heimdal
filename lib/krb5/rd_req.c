@@ -307,6 +307,7 @@ krb5_verify_ap_req2(krb5_context context,
     krb5_auth_context ac;
     krb5_error_code ret;
     EtypeList etypes;
+    int badaddr = 0;
 
     memset(&etypes, 0, sizeof(etypes));
 
@@ -391,9 +392,19 @@ krb5_verify_ap_req2(krb5_context context,
 	&& !krb5_address_search (context,
 				 ac->remote_address,
 				 t->ticket.caddr)) {
-	ret = KRB5KRB_AP_ERR_BADADDR;
-	krb5_clear_error_message (context);
-	goto out;
+        /*
+         * Hack alert.  If KRB5_VERIFY_AP_REQ_IGNORE_ADDRS and the client's
+         * address didn't check out then we'll return KRB5KRB_AP_ERR_BADADDR
+         * even on success, and we'll let the caller figure it out because
+         * `*ticket != NULL' or `*auth_context != NULL'.
+         */
+        if ((flags & KRB5_VERIFY_AP_REQ_IGNORE_ADDRS)) {
+            badaddr = 1;
+        } else {
+            ret = KRB5KRB_AP_ERR_BADADDR;
+            krb5_clear_error_message(context);
+            goto out;
+        }
     }
 
     /* check timestamp in authenticator */
@@ -463,6 +474,11 @@ krb5_verify_ap_req2(krb5_context context,
     } else
 	krb5_auth_con_free (context, ac);
     free_EtypeList(&etypes);
+
+    if (badaddr) {
+        krb5_clear_error_message(context);
+        return KRB5KRB_AP_ERR_BADADDR;
+    }
     return 0;
  out:
     free_EtypeList(&etypes);

@@ -1644,10 +1644,15 @@ _kdc_check_addresses(astgs_request_t r, HostAddresses *addresses,
     krb5_boolean only_netbios = TRUE;
     size_t i;
 
-    if(config->check_ticket_addresses == 0)
+    if (!config->check_ticket_addresses && !config->warn_ticket_addresses)
 	return TRUE;
 
-    if(addresses == NULL)
+    /*
+     * Fields of HostAddresses type are always OPTIONAL and should be non-
+     * empty, but we check for empty just in case as our compiler doesn't
+     * support size constraints on SEQUENCE OF.
+     */
+    if (addresses == NULL || addresses->len == 0)
 	return config->allow_null_ticket_addresses;
 
     for (i = 0; i < addresses->len; ++i) {

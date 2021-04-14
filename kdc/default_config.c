@@ -93,6 +93,7 @@ krb5_kdc_get_config(krb5_context context, krb5_kdc_configuration **config)
     c->svc_use_strongest_session_key = FALSE;
     c->use_strongest_server_key = TRUE;
     c->check_ticket_addresses = TRUE;
+    c->warn_ticket_addresses = FALSE;
     c->allow_null_ticket_addresses = TRUE;
     c->allow_anonymous = FALSE;
     c->historical_anon_realm = FALSE;
@@ -176,6 +177,11 @@ krb5_kdc_get_config(krb5_context context, krb5_kdc_configuration **config)
 				     c->check_ticket_addresses,
 				     "kdc",
 				     "check-ticket-addresses", NULL);
+    c->warn_ticket_addresses =
+	krb5_config_get_bool_default(context, NULL,
+				     c->warn_ticket_addresses,
+				     "kdc",
+				     "warn_ticket_addresses", NULL);
     c->allow_null_ticket_addresses =
 	krb5_config_get_bool_default(context, NULL,
 				     c->allow_null_ticket_addresses,

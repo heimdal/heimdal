@@ -1214,7 +1214,7 @@ tgs_parse_request(astgs_request_t r,
     krb5_principal princ;
     krb5_auth_context ac = NULL;
     krb5_flags ap_req_options;
-    krb5_flags verify_ap_req_flags;
+    krb5_flags verify_ap_req_flags = 0;
     krb5_crypto crypto;
     krb5uint32 krbtgt_kvno;     /* kvno used for the PA-TGS-REQ AP-REQ Ticket */
     krb5uint32 krbtgt_kvno_try;
@@ -1337,9 +1337,10 @@ next_kvno:
     }
 
     if (b->kdc_options.validate)
-	verify_ap_req_flags = KRB5_VERIFY_AP_REQ_IGNORE_INVALID;
-    else
-	verify_ap_req_flags = 0;
+	verify_ap_req_flags |= KRB5_VERIFY_AP_REQ_IGNORE_INVALID;
+
+    if (r->config->warn_ticket_addresses)
+        verify_ap_req_flags |= KRB5_VERIFY_AP_REQ_IGNORE_ADDRS;
 
     ret = krb5_verify_ap_req2(context,
 			      &ac,
@@ -1350,6 +1351,11 @@ next_kvno:
 			      &ap_req_options,
 			      ticket,
 			      KRB5_KU_TGS_REQ_AUTH);
+    if (r->config->warn_ticket_addresses && ret == KRB5KRB_AP_ERR_BADADDR &&
+        *ticket != NULL) {
+        kdc_log(context, config, 4, "Request from wrong address (ignoring)");
+        ret = 0;
+    }
     if (ret == KRB5KRB_AP_ERR_BAD_INTEGRITY && kvno_search_tries > 0) {
 	kvno_search_tries--;
 	krbtgt_kvno_try--;
@@ -2388,9 +2394,13 @@ server_lookup:
 
     /* check for valid set of addresses */
     if (!_kdc_check_addresses(priv, tgt->caddr, from_addr)) {
-	ret = KRB5KRB_AP_ERR_BADADDR;
-	kdc_log(context, config, 4, "Request from wrong address");
-	goto out;
+        if (config->check_ticket_addresses) {
+            ret = KRB5KRB_AP_ERR_BADADDR;
+            kdc_log(context, config, 4, "Request from wrong address");
+            goto out;
+        } else if (config->warn_ticket_addresses) {
+            kdc_log(context, config, 4, "Request from wrong address (ignoring)");
+        }
     }
 
     /* check local and per-principal anonymous ticket issuance policy */

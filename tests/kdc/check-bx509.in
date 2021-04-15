@@ -440,10 +440,13 @@ if ! (set -vx;
     curl -o "${cachefile2}" -Lgsf                                       \
          --resolve ${server}:${bx509port}:127.0.0.1                     \
          -H "Authorization: Negotiate $token"                           \
-         "http://${server}:${bx509port}/get-tgt"); then
+         "http://${server}:${bx509port}/get-tgt?address=8.8.8.8"); then
     echo "Failed to get a TGT with /get-tgt end-point"
     exit 2
 fi
+
+${klist2} | grep Addresses:.IPv4:8.8.8.8 ||
+    { echo "Failed to get a TGT with /get-tgt end-point with addresses"; exit 2; }
 
 echo "Fetch TGT (inception)"
 ${kdestroy}
@@ -452,10 +455,14 @@ if ! (set -vx;
     curl -o "${cachefile}" -Lgsf                                        \
          --resolve ${server}:${bx509port}:127.0.0.1                     \
          -H "Authorization: Negotiate $token"                           \
-         "http://${server}:${bx509port}/get-tgt"); then
+         "http://${server}:${bx509port}/get-tgt?address=8.8.8.8"); then
     echo "Failed to get a TGT with /get-tgt end-point"
     exit 2
 fi
+${kgetcred} -H HTTP/${server}@${R} ||
+    { echo "Trivial offline CA test failed (TGS)"; exit 2; }
+${klist} | grep Addresses:.IPv4:8.8.8.8 ||
+    { echo "Failed to get a TGT with /get-tgt end-point with addresses"; exit 2; }
 
 echo "Fetch negotiate token (pre-test)"
 # Do what /bnegotiate does, roughly, prior to testing /bnegotiate
@@ -468,10 +475,13 @@ $test_kdc_ca -a bx509 -A foo@${R} PKCS10:${objdir}/req       \
 cat ${objdir}/k.pem >> ${objdir}/pkinit-test.pem
 ${kinit} -C PEM-FILE:${objdir}/pkinit-test.pem foo@${R} ||
     { echo "Trivial offline CA test failed (PKINIT)"; exit 2; }
-#${kgetcred} -H HTTP/${server}@${R} ||
-#    { echo "Trivial offline CA test failed (TGS)"; exit 2; }
+${kgetcred} -H HTTP/${server}@${R} ||
+    { echo "Trivial offline CA test failed (TGS)"; exit 2; }
 KRB5CCNAME=$cache $gsstoken HTTP@$server | KRB5_KTNAME="$keytab" $gsstoken -r ||
     { echo "Trivial offline CA test failed (gss-token)"; exit 2; }
+
+grep 'Request from wrong address .ignoring' ${objdir}/messages.log ||
+    { echo "KDC not warning about requests from wrong address"; exit 2; }
 
 echo "Fetching a Negotiate token"
 token=$(KRB5CCNAME=$cache $gsstoken HTTP@$server)

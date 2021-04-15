@@ -17,6 +17,8 @@
 	}
 
 [kdc]
+        check-ticket-addresses = no
+        warn_ticket_addresses = yes
         num-kdc-processes = 1
         strict-nametypes = true
 	enable-pkinit = true
@@ -121,7 +123,9 @@
                 }
         }
 
-[getTGT]
+[get-tgt]
+        no_addresses = true
+        allow_addresses = true
         simple_csr_authorizer_directory = @objdir@/simple_csr_authz
         realms = {
                 TEST.H5L.SE = {

@@ -2201,9 +2201,13 @@ _kdc_as_rep(astgs_request_t r)
 
     /* check for valid set of addresses */
     if (!_kdc_check_addresses(r, b->addresses, r->addr)) {
-	_kdc_set_e_text(r, "Bad address list in requested");
-	ret = KRB5KRB_AP_ERR_BADADDR;
-	goto out;
+        if (r->config->warn_ticket_addresses) {
+            kdc_log(context, config, 4, "Request from wrong address (ignoring)");
+        } else {
+            _kdc_set_e_text(r, "Request from wrong address");
+            ret = KRB5KRB_AP_ERR_BADADDR;
+            goto out;
+        }
     }
 
     ret = copy_PrincipalName(&rep.cname, &r->et.cname);

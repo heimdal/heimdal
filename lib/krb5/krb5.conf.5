@@ -1140,6 +1140,58 @@ service can be configured to have the ok-as-delegate flag while
 all others do not.
 .El
 .Pp
+.It Li [bx509]
+This section contains online certification authority configuration, much
+like
+.Li kx509
+in the
+.Li [kdc]
+section, but with the
+.Li kx509
+layer removed.
+.Bd -literal -offset indent
+[kdc]
+    realm = {
+        <REALM> = {
+            ...
+        }
+    }
+.Ed
+.It Li [get-tgt]
+.Bl -tag -width "xxx" -offset indent
+.It Li no_addresses = Va BOOL
+If set to
+.Va true
+then the
+.Va /get-tgt
+end-point of the
+.Xr bx509d 8
+service will issue address-less TGTs.
+If set to
+.Va false
+then the
+.Va /get-tgt
+end-point of the
+.Xr bx509d 8
+service will include the client's IP address in the TGT it issues
+it.
+Defaults to
+.Va true .
+.It Li allow_addresses = Va BOOL
+If set to
+.Va true
+then the
+.Va /get-tgt
+end-point of the
+.Xr bx509d 8
+service will add arbitrary addresses requested by clients to the
+TGTs it issues them.
+Defaults to
+.Va false .
+.El
+.Pp
+Certification authority related parameters are as for
+.Va bx509 .
 .It Li [kadmin]
 .Bl -tag -width "xxx" -offset indent
 .It Li password_lifetime = Va time

@@ -124,6 +124,8 @@ typedef struct bx509_request_desc {
     char *pkix_store;
     char *ccname;
     char *freeme1;
+    krb5_addresses tgt_addresses; /* For /get-tgt */
+    krb5_error_code ret;
     char frombuf[128];
 } *bx509_request_desc;
 
@@ -610,73 +612,65 @@ good_bx509(struct bx509_request_desc *r)
     return ret;
 }
 
-struct bx509_param_handler_arg {
-    struct bx509_request_desc *r;
-    hx509_request req;
-    krb5_error_code ret;
-};
-
 static int
 bx509_param_cb(void *d,
                enum MHD_ValueKind kind,
                const char *key,
                const char *val)
 {
-    struct bx509_param_handler_arg *a = d;
+    struct bx509_request_desc *r = d;
     heim_oid oid = { 0, 0 };
 
     if (strcmp(key, "eku") == 0 && val) {
-        heim_audit_addkv((heim_svc_req_desc)a->r, KDC_AUDIT_VIS, "requested_eku",
+        heim_audit_addkv((heim_svc_req_desc)r, KDC_AUDIT_VIS, "requested_eku",
                          "%s", val);
-        a->ret = der_parse_heim_oid(val, ".", &oid);
-        if (a->ret == 0)
-            a->ret = hx509_request_add_eku(a->r->context->hx509ctx, a->req,
-                                           &oid);
+        r->ret = der_parse_heim_oid(val, ".", &oid);
+        if (r->ret == 0)
+            r->ret = hx509_request_add_eku(r->context->hx509ctx, r->req, &oid);
         der_free_oid(&oid);
     } else if (strcmp(key, "dNSName") == 0 && val) {
-        heim_audit_addkv((heim_svc_req_desc)a->r, KDC_AUDIT_VIS,
+        heim_audit_addkv((heim_svc_req_desc)r, KDC_AUDIT_VIS,
                          "requested_dNSName", "%s", val);
-        a->ret = hx509_request_add_dns_name(a->r->context->hx509ctx, a->req,
-                                            val);
+        r->ret = hx509_request_add_dns_name(r->context->hx509ctx, r->req, val);
     } else if (strcmp(key, "rfc822Name") == 0 && val) {
-        heim_audit_addkv((heim_svc_req_desc)a->r, KDC_AUDIT_VIS,
+        heim_audit_addkv((heim_svc_req_desc)r, KDC_AUDIT_VIS,
                          "requested_rfc822Name", "%s", val);
-        a->ret = hx509_request_add_email(a->r->context->hx509ctx, a->req, val);
+        r->ret = hx509_request_add_email(r->context->hx509ctx, r->req, val);
     } else if (strcmp(key, "xMPPName") == 0 && val) {
-        heim_audit_addkv((heim_svc_req_desc)a->r, KDC_AUDIT_VIS,
+        heim_audit_addkv((heim_svc_req_desc)r, KDC_AUDIT_VIS,
                          "requested_xMPPName", "%s", val);
-        a->ret = hx509_request_add_xmpp_name(a->r->context->hx509ctx, a->req,
+        r->ret = hx509_request_add_xmpp_name(r->context->hx509ctx, r->req,
                                              val);
     } else if (strcmp(key, "krb5PrincipalName") == 0 && val) {
-        heim_audit_addkv((heim_svc_req_desc)a->r, KDC_AUDIT_VIS,
+        heim_audit_addkv((heim_svc_req_desc)r, KDC_AUDIT_VIS,
                          "requested_krb5PrincipalName", "%s", val);
-        a->ret = hx509_request_add_pkinit(a->r->context->hx509ctx, a->req,
+        r->ret = hx509_request_add_pkinit(r->context->hx509ctx, r->req,
                                           val);
     } else if (strcmp(key, "ms-upn") == 0 && val) {
-        heim_audit_addkv((heim_svc_req_desc)a->r, KDC_AUDIT_VIS,
+        heim_audit_addkv((heim_svc_req_desc)r, KDC_AUDIT_VIS,
                          "requested_ms_upn", "%s", val);
-        a->ret = hx509_request_add_ms_upn_name(a->r->context->hx509ctx, a->req,
+        r->ret = hx509_request_add_ms_upn_name(r->context->hx509ctx, r->req,
                                                val);
     } else if (strcmp(key, "registeredID") == 0 && val) {
-        heim_audit_addkv((heim_svc_req_desc)a->r, KDC_AUDIT_VIS,
+        heim_audit_addkv((heim_svc_req_desc)r, KDC_AUDIT_VIS,
                          "requested_registered_id", "%s", val);
-        a->ret = der_parse_heim_oid(val, ".", &oid);
-        if (a->ret == 0)
-            a->ret = hx509_request_add_registered(a->r->context->hx509ctx,
-                                                  a->req, &oid);
+        r->ret = der_parse_heim_oid(val, ".", &oid);
+        if (r->ret == 0)
+            r->ret = hx509_request_add_registered(r->context->hx509ctx, r->req,
+                                                  &oid);
         der_free_oid(&oid);
     } else if (strcmp(key, "csr") == 0 && val) {
-        heim_audit_addkv((heim_svc_req_desc)a->r, 0, "requested_csr", "true");
-        a->ret = 0; /* Handled upstairs */
+        heim_audit_addkv((heim_svc_req_desc)r, 0, "requested_csr", "true");
+        r->ret = 0; /* Handled upstairs */
     } else if (strcmp(key, "lifetime") == 0 && val) {
-        a->r->req_life = parse_time(val, "day");
+        r->req_life = parse_time(val, "day");
     } else {
         /* Produce error for unknown params */
-        heim_audit_addkv((heim_svc_req_desc)a->r, 0, "requested_unknown", "true");
-        krb5_set_error_message(a->r->context, a->ret = ENOTSUP,
+        heim_audit_addkv((heim_svc_req_desc)r, 0, "requested_unknown", "true");
+        krb5_set_error_message(r->context, r->ret = ENOTSUP,
                                "Query parameter %s not supported", key);
     }
-    return a->ret == 0 ? MHD_YES : MHD_NO /* Stop iterating */;
+    return r->ret == 0 ? MHD_YES : MHD_NO /* Stop iterating */;
 }
 
 static krb5_error_code
@@ -684,19 +678,16 @@ authorize_CSR(struct bx509_request_desc *r,
               krb5_data *csr,
               krb5_const_principal p)
 {
-    struct bx509_param_handler_arg cb_data;
     krb5_error_code ret;
 
     ret = hx509_request_parse_der(r->context->hx509ctx, csr, &r->req);
     if (ret)
         return bad_req(r, ret, MHD_HTTP_SERVICE_UNAVAILABLE,
                        "Could not parse CSR");
-    cb_data.r = r;
-    cb_data.req = r->req;
-    cb_data.ret = 0;
+    r->ret = 0;
     (void) MHD_get_connection_values(r->connection, MHD_GET_ARGUMENT_KIND,
-                                     bx509_param_cb, &cb_data);
-    ret = cb_data.ret;
+                                     bx509_param_cb, r);
+    ret = r->ret;
     if (ret)
         return bad_req(r, ret, MHD_HTTP_SERVICE_UNAVAILABLE,
                        "Could not handle query parameters");
@@ -862,6 +853,8 @@ set_req_desc(struct MHD_Connection *connection,
     r->request.data = "<HTTP-REQUEST>";
     r->request.length = sizeof("<HTTP-REQUEST>");
     r->from = r->frombuf;
+    r->tgt_addresses.len = 0;
+    r->tgt_addresses.val = 0;
     r->hcontext = r->context->hcontext;
     r->config = NULL;
     r->logf = logfac;
@@ -877,6 +870,7 @@ set_req_desc(struct MHD_Connection *connection,
     r->addr = NULL;
     r->req = NULL;
     r->req_life = 0;
+    r->ret = 0;
     r->kv = heim_array_create();
     ci = MHD_get_connection_info(connection,
                                  MHD_CONNECTION_INFO_CLIENT_ADDRESS);
@@ -915,6 +909,7 @@ clean_req_desc(struct bx509_request_desc *r)
         return;
     if (r->pkix_store)
         (void) unlink(strchr(r->pkix_store, ':') + 1);
+    krb5_free_addresses(r->context, &r->tgt_addresses);
     hx509_request_free(&r->req);
     heim_release(r->reason);
     heim_release(r->kv);
@@ -1188,8 +1183,20 @@ do_pkinit(struct bx509_request_desc *r, enum k5_creds_kind kind)
     if (ret == 0)
         krb5_get_init_creds_opt_set_default_flags(r->context, "kinit", crealm,
                                                   opt);
-    if (ret == 0)
+    if (ret == 0 && kind == K5_CREDS_EPHEMERAL &&
+        !krb5_config_get_bool_default(r->context, NULL, TRUE,
+                                      "get-tgt", "no_addresses", NULL)) {
+        krb5_addresses addr;
+
+        ret = _krb5_parse_address_no_lookup(r->context, r->frombuf, &addr);
+        if (ret == 0)
+            ret = krb5_append_addresses(r->context, &r->tgt_addresses,
+                                        &addr);
+    }
+    if (ret == 0 && r->tgt_addresses.len == 0)
         ret = krb5_get_init_creds_opt_set_addressless(r->context, opt, 1);
+    else
+        krb5_get_init_creds_opt_set_address_list(opt, &r->tgt_addresses);
     if (ret == 0)
         ret = krb5_get_init_creds_opt_set_pkinit(r->context, opt, p,
                                                  r->pkix_store,
@@ -1306,7 +1313,7 @@ k5_do_CA(struct bx509_request_desc *r)
 
     /* Issue the certificate */
     if (ret == 0)
-        ret = kdc_issue_certificate(r->context, "getTGT", logfac, req, p,
+        ret = kdc_issue_certificate(r->context, "get-tgt", logfac, req, p,
                                     &r->token_times, 0,
                                     1 /* send_chain */, &certs);
     krb5_free_principal(r->context, p);
@@ -1667,12 +1674,50 @@ authorize_TGT_REQ(struct bx509_request_desc *r, const char *cname)
                      "requested_krb5PrincipalName", "%s", cname);
     ret = hx509_request_add_pkinit(r->context->hx509ctx, r->req, cname);
     if (ret == 0)
-        ret = kdc_authorize_csr(r->context, "getTGT", r->req, p);
+        ret = kdc_authorize_csr(r->context, "get-tgt", r->req, p);
     krb5_free_principal(r->context, p);
     hx509_request_free(&r->req);
     if (ret)
         return bad_403(r, ret, "Not authorized to requested TGT");
     return ret;
+}
+
+static int
+get_tgt_param_cb(void *d,
+                 enum MHD_ValueKind kind,
+                 const char *key,
+                 const char *val)
+{
+    struct bx509_request_desc *r = d;
+
+    if (strcmp(key, "address") == 0 && val) {
+        if (!krb5_config_get_bool_default(r->context, NULL,
+                                         FALSE,
+                                         "get-tgt", "allow_addresses", NULL)) {
+            krb5_set_error_message(r->context, r->ret = ENOTSUP,
+                                   "Query parameter %s not allowed", key);
+        } else {
+            krb5_addresses addresses;
+
+            r->ret = _krb5_parse_address_no_lookup(r->context, val,
+                                                   &addresses);
+            if (r->ret == 0)
+                r->ret = krb5_append_addresses(r->context, &r->tgt_addresses,
+                                               &addresses);
+            krb5_free_addresses(r->context, &addresses);
+        }
+    } else if (strcmp(key, "cname") == 0) {
+        /* Handled upstairs */
+        ;
+    } else if (strcmp(key, "lifetime") == 0 && val) {
+        r->req_life = parse_time(val, "day");
+    } else {
+        /* Produce error for unknown params */
+        heim_audit_addkv((heim_svc_req_desc)r, 0, "requested_unknown", "true");
+        krb5_set_error_message(r->context, r->ret = ENOTSUP,
+                               "Query parameter %s not supported", key);
+    }
+    return r->ret == 0 ? MHD_YES : MHD_NO /* Stop iterating */;
 }
 
 /*
@@ -1700,6 +1745,11 @@ get_tgt(struct bx509_request_desc *r)
     /* validate_token() and authorize_TGT_REQ() call bad_req() */
     if (ret)
         return ret;
+
+    r->ret = 0;
+    (void) MHD_get_connection_values(r->connection, MHD_GET_ARGUMENT_KIND,
+                                     get_tgt_param_cb, r);
+    ret = r->ret;
 
     ret = k5_get_creds(r, K5_CREDS_EPHEMERAL);
     if (ret)

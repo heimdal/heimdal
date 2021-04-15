@@ -115,6 +115,11 @@ verbose
 .El
 .Sh ONLINE CERTIFICATION AUTHORITY HTTP API
 This service provides an HTTP-based Certification Authority (CA).
+CA credentials and configuration are specified in the
+.Va [bx509]
+section of
+.Xr krb5.conf 5 .
+.Pp
 The protocol consists of a
 .Ar GET
 of
@@ -163,6 +168,10 @@ an optional unit (which defaults to
 ).
 .Sh NEGOTIATE TOKEN HTTP API
 This service provides an HTTP-based Negotiate token service.
+This service requires a certification authority (CA) issuer
+credential as it impersonates client principals to the KDC using
+PKINIT client certificates it issues itself.
+.Pp
 The protocol consists of a
 .Ar GET
 of
@@ -194,28 +203,34 @@ header is included in the request, then the response will be a
 redirect to that URI with the Negotiate token in an
 .Va Authorization
 header that the user-agent should copy to the redirected request.
+.Pp
+The certification authority configuration is the same as for the
+.Va /get-cert
+end-point, but as configured in the
+.Va [get-tgt]
+section of
+.Xr krb5.conf 5 .
 .Sh TGT HTTP API
 This service provides an HTTP-based "kinit" service.
+This service requires a certification authority (CA) issuer
+credential as it impersonates client principals to the KDC using
+PKINIT client certificates it issues itself.
+.Pp
 The protocol consists of a
 .Ar GET
 of
-.Ar /get-tgt
-with an optional
-.Ar cname = Ar principal-name
-query parameter.
+.Ar /get-tgt .
+.Pp
+Supported query parameters (separated by ampersands)
+.Bl -tag -width Ds -offset indent
+.It Li cname = Va principal-name
+.It Li address = Va IP-address
+.El
 .Pp
 In a successful query, the response body will contain a TGT and
 its session key encoded as a "ccache" file contents.
 .Pp
 Authentication is required.
-Unauthenticated requests will elicit a 401 response.
-.Pp
-Supported query parameters (separated by ampersands)
-.Bl -tag -width Ds -offset indent
-.It Li cname = Va principal
-.El
-.Pp
-Authentication is required
 Unauthenticated requests will elicit a 401 response.
 .Pp
 Authorization is required, where the authorization check is the
@@ -225,6 +240,23 @@ by the authenticated client principal to get a certificate with
 a PKINIT SAN for itself or the requested principal if a
 .Va cname
 query parameter was included.
+.Pp
+Unauthorized requests will elicit a 403 response.
+.Pp
+Requested IP addresses will be added to the issued TGT if allowed.
+The IP address of the client will be included if address-less TGTs
+are not allowed.
+See the
+.Va [get-tgt]
+section of
+.Xr krb5.conf 5 .
+.Pp
+The certification authority configuration is the same as for the
+.Va /get-cert
+end-point, but as configured in the
+.Va [get-tgt]
+section of
+.Xr krb5.conf 5 .
 .Sh ENVIRONMENT
 .Bl -tag -width Ds
 .It Ev KRB5_CONFIG

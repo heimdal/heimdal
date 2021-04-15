@@ -497,6 +497,7 @@ HEIMDAL_KRB5_2.0 {
 		krb5_pac_parse;
 		krb5_pac_verify;
 		krb5_padata_add;
+		_krb5_parse_address_no_lookup;
 		krb5_parse_address;
 		krb5_parse_name;
 		krb5_parse_name_flags;

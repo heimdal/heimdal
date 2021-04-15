@@ -1143,6 +1143,32 @@ krb5_print_address (const krb5_address *addr,
     return 0;
 }
 
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
+_krb5_parse_address_no_lookup(krb5_context context,
+                              const char *string,
+                              krb5_addresses *addresses)
+{
+    int i;
+
+    addresses->len = 0;
+    addresses->val = NULL;
+
+    for(i = 0; i < num_addrs; i++) {
+	if(at[i].parse_addr) {
+	    krb5_address addr;
+	    if((*at[i].parse_addr)(context, string, &addr) == 0) {
+		ALLOC_SEQ(addresses, 1);
+		if (addresses->val == NULL)
+		    return krb5_enomem(context);
+		addresses->val[0] = addr;
+		return 0;
+	    }
+	}
+    }
+
+    return -1;
+}
+
 /**
  * krb5_parse_address returns the resolved hostname in string to the
  * krb5_addresses addresses .
@@ -1161,6 +1187,7 @@ krb5_parse_address(krb5_context context,
 		   const char *string,
 		   krb5_addresses *addresses)
 {
+    krb5_error_code ret;
     int i, n;
     struct addrinfo *ai, *a;
     struct addrinfo hint;
@@ -1170,18 +1197,9 @@ krb5_parse_address(krb5_context context,
     addresses->len = 0;
     addresses->val = NULL;
 
-    for(i = 0; i < num_addrs; i++) {
-	if(at[i].parse_addr) {
-	    krb5_address addr;
-	    if((*at[i].parse_addr)(context, string, &addr) == 0) {
-		ALLOC_SEQ(addresses, 1);
-		if (addresses->val == NULL)
-		    return krb5_enomem(context);
-		addresses->val[0] = addr;
-		return 0;
-	    }
-	}
-    }
+    ret = _krb5_parse_address_no_lookup(context, string, addresses);
+    if (ret == 0 || ret != -1)
+        return ret;
 
     /* if not parsed as numeric address, do a name lookup */
     memset(&hint, 0, sizeof(hint));

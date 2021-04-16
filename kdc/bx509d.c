@@ -1672,7 +1672,10 @@ authorize_TGT_REQ(struct bx509_request_desc *r, const char *cname)
         return bad_500(r, ret, "Out of resources");
     heim_audit_addkv((heim_svc_req_desc)r, KDC_AUDIT_VIS,
                      "requested_krb5PrincipalName", "%s", cname);
-    ret = hx509_request_add_pkinit(r->context->hx509ctx, r->req, cname);
+    ret = hx509_request_add_eku(r->context->hx509ctx, r->req,
+                                ASN1_OID_ID_PKEKUOID);
+    if (ret == 0)
+        ret = hx509_request_add_pkinit(r->context->hx509ctx, r->req, cname);
     if (ret == 0)
         ret = kdc_authorize_csr(r->context, "get-tgt", r->req, p);
     krb5_free_principal(r->context, p);

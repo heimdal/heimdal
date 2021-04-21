@@ -280,6 +280,8 @@ validate_token(struct bx509_request_desc *r)
                        "from token");
     ret = krb5_unparse_name(r->context, cprinc, &r->cname);
     krb5_free_principal(r->context, cprinc);
+    if (ret)
+        return bad_503(r, ret, "Could not parse principal name");
     return ret;
 }
 
@@ -1641,6 +1643,8 @@ bnegotiate(struct bx509_request_desc *r)
      * bit.
      */
     ret = k5_get_creds(r, K5_CREDS_CACHED);
+    if (ret)
+        return ret;
 
     /* Acquire the Negotiate token and output it */
     if (ret == 0 && r->ccname != NULL)
@@ -1754,9 +1758,10 @@ get_tgt(struct bx509_request_desc *r)
                                      get_tgt_param_cb, r);
     ret = r->ret;
 
+    /* k5_get_creds() calls bad_req() */
     ret = k5_get_creds(r, K5_CREDS_EPHEMERAL);
     if (ret)
-        return bad_503(r, ret, "Could not get TGT");
+        return ret;
 
     fn = strchr(r->ccname, ':');
     if (fn == NULL)

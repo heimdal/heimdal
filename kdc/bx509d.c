@@ -119,6 +119,7 @@ typedef struct bx509_request_desc {
     krb5_times token_times;
     time_t req_life;
     hx509_request req;
+    const char *for_cname;
     const char *target;
     const char *redir;
     char *pkix_store;
@@ -863,6 +864,7 @@ set_req_desc(struct MHD_Connection *connection,
     r->reqtype = url;
     r->target = r->redir = NULL;
     r->pkix_store = NULL;
+    r->for_cname = NULL;
     r->freeme1 = NULL;
     r->reason = NULL;
     r->ccname = NULL;
@@ -1157,6 +1159,7 @@ do_pkinit(struct bx509_request_desc *r, enum k5_creds_kind kind)
     krb5_ccache cc = NULL;
     krb5_principal p = NULL;
     const char *crealm;
+    const char *cname = r->for_cname ? r->for_cname : r->cname;
 
     if (kind == K5_CREDS_CACHED) {
         int won = -1;
@@ -1177,7 +1180,7 @@ do_pkinit(struct bx509_request_desc *r, enum k5_creds_kind kind)
         ret = krb5_cc_new_unique(r->context, "FILE", NULL, &temp_cc);
     }
 
-    ret = krb5_parse_name(r->context, r->cname, &p);
+    ret = krb5_parse_name(r->context, cname, &p);
     if (ret == 0)
         crealm = krb5_principal_get_realm(r->context, p);
     if (ret == 0)
@@ -1282,6 +1285,7 @@ k5_do_CA(struct bx509_request_desc *r)
     hx509_request req = NULL;
     hx509_certs certs = NULL;
     KeyUsage ku = int2KeyUsage(0);
+    const char *cname = r->for_cname ? r->for_cname : r->cname;
 
     memset(&spki, 0, sizeof(spki));
     ku.digitalSignature = 1;
@@ -1292,7 +1296,7 @@ k5_do_CA(struct bx509_request_desc *r)
     if (ret == 0)
     ret = hx509_request_init(r->context->hx509ctx, &req);
     if (ret == 0)
-        ret = krb5_parse_name(r->context, r->cname, &p);
+        ret = krb5_parse_name(r->context, cname, &p);
     if (ret == 0)
         hx509_private_key2SPKI(r->context->hx509ctx, key, &spki);
     if (ret == 0)
@@ -1300,7 +1304,7 @@ k5_do_CA(struct bx509_request_desc *r)
                                                &spki);
     free_SubjectPublicKeyInfo(&spki);
     if (ret == 0)
-        ret = hx509_request_add_pkinit(r->context->hx509ctx, req, r->cname);
+        ret = hx509_request_add_pkinit(r->context->hx509ctx, req, cname);
     if (ret == 0)
         ret = hx509_request_add_eku(r->context->hx509ctx, req,
                                     &asn1_oid_id_pkekuoid);
@@ -1353,10 +1357,11 @@ static krb5_error_code
 k5_get_creds(struct bx509_request_desc *r, enum k5_creds_kind kind)
 {
     krb5_error_code ret;
+    const char *cname = r->for_cname ? r->for_cname : r->cname;
 
     /* If we have a live ccache for `cprinc', we're done */
     if (kind == K5_CREDS_CACHED &&
-        (ret = find_ccache(r->context, r->cname, &r->ccname)) == 0)
+        (ret = find_ccache(r->context, cname, &r->ccname)) == 0)
         return ret; /* Success */
 
     /*
@@ -1460,14 +1465,15 @@ mk_nego_tok(struct bx509_request_desc *r,
     gss_name_t aname = GSS_C_NO_NAME;
     OM_uint32 major, minor, junk;
     krb5_error_code ret; /* More like a system error code here */
+    const char *cname = r->for_cname ? r->for_cname : r->cname;
     char *token_b64 = NULL;
 
     *nego_tok = NULL;
     *nego_toksz = 0;
 
     /* Import initiator name */
-    name.length = strlen(r->cname);
-    name.value = r->cname;
+    name.length = strlen(cname);
+    name.value = rk_UNCONST(cname);
     major = gss_import_name(&minor, &name, GSS_KRB5_NT_PRINCIPAL_NAME, &iname);
     if (major != GSS_S_COMPLETE)
         return bad_req_gss(r, major, minor, GSS_C_NO_OID,
@@ -1665,21 +1671,26 @@ bnegotiate(struct bx509_request_desc *r)
 }
 
 static krb5_error_code
-authorize_TGT_REQ(struct bx509_request_desc *r, const char *cname)
+authorize_TGT_REQ(struct bx509_request_desc *r)
 {
     krb5_principal p = NULL;
     krb5_error_code ret;
+    const char *for_cname = r->for_cname ? r->for_cname : r->cname;
+
+    if (for_cname == r->cname || strcmp(r->cname, r->for_cname) == 0)
+        return 0;
 
     ret = krb5_parse_name(r->context, r->cname, &p);
     ret = hx509_request_init(r->context->hx509ctx, &r->req);
     if (ret)
         return bad_500(r, ret, "Out of resources");
     heim_audit_addkv((heim_svc_req_desc)r, KDC_AUDIT_VIS,
-                     "requested_krb5PrincipalName", "%s", cname);
+                     "requested_krb5PrincipalName", "%s", for_cname);
     ret = hx509_request_add_eku(r->context->hx509ctx, r->req,
                                 ASN1_OID_ID_PKEKUOID);
     if (ret == 0)
-        ret = hx509_request_add_pkinit(r->context->hx509ctx, r->req, cname);
+        ret = hx509_request_add_pkinit(r->context->hx509ctx, r->req,
+                                       for_cname);
     if (ret == 0)
         ret = kdc_authorize_csr(r->context, "get-tgt", r->req, p);
     krb5_free_principal(r->context, p);
@@ -1740,15 +1751,16 @@ get_tgt(struct bx509_request_desc *r)
 {
     krb5_error_code ret;
     size_t bodylen;
-    const char *cname = NULL;
     const char *fn;
     void *body;
 
-    cname = MHD_lookup_connection_value(r->connection, MHD_GET_ARGUMENT_KIND,
-                                        "cname");
+    r->for_cname = MHD_lookup_connection_value(r->connection,
+                                               MHD_GET_ARGUMENT_KIND, "cname");
+    if (r->for_cname && r->for_cname[0] == '\0')
+        r->for_cname = NULL;
     ret = validate_token(r);
     if (ret == 0)
-        ret = authorize_TGT_REQ(r, cname ? cname : r->cname);
+        ret = authorize_TGT_REQ(r);
     /* validate_token() and authorize_TGT_REQ() call bad_req() */
     if (ret)
         return ret;

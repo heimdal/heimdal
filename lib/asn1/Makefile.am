@@ -77,7 +77,9 @@ check_der_SOURCES = check-der.c check-common.c check-common.h
 check_template_SOURCES = check-template.c check-common.c check-common.h
 nodist_check_template_SOURCES = $(gen_files_test_template:.x=.c)
 
+if ASN1_TEMPLATING
 check_gen_template_CPPFLAGS = -DASN1_IOS_SUPPORTED
+endif
 dist_check_gen_template_SOURCES = check-gen.c check-common.c check-common.h
 nodist_check_gen_template_SOURCES =	$(gen_files_test_template:.x=.c) \
 					$(gen_files_x690sample_template:.x=.c)

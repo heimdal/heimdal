@@ -2821,6 +2821,22 @@ enomem:
     goto out;
 }
 
+/*
+ * Set the notBefore/notAfter for the certificate to be issued.
+ *
+ * Here `starttime' is the supplicant's credentials' notBefore equivalent,
+ * while `endtime' is the supplicant's credentials' notAfter equivalent.
+ *
+ * `req_life' is the lifetime requested by the supplicant.
+ *
+ * `endtime' must be larger than the current time.
+ *
+ * `starttime' can be zero or negative, in which case the notBefore will be the
+ * current time minus five minutes.
+ *
+ * `endtime', `req_life' and configuration parameters will be used to compute
+ * the actual notAfter.
+ */
 static heim_error_code
 tbs_set_times(hx509_context context,
               const heim_config_binding *cf,
@@ -2831,34 +2847,36 @@ tbs_set_times(hx509_context context,
               hx509_ca_tbs tbs)
 {
     time_t now = time(NULL);
-    time_t fudge =
-        heim_config_get_time_default(context->hcontext, cf, 5 * 24 * 3600,
-                                     "force_cert_lifetime", NULL);
-    time_t clamp =
-        heim_config_get_time_default(context->hcontext, cf, 0,
-                                     "max_cert_lifetime", NULL);
-    int allow_more =
-        heim_config_get_bool_default(context->hcontext, cf, FALSE,
-                                     "allow_extra_lifetime", NULL);
-
-    if (!allow_more && fudge && now + fudge > endtime)
-        allow_more = 1;
-
-    starttime = starttime ?  starttime : now - 5 * 60;
-    if (fudge && now + fudge > endtime)
-        endtime = now + fudge;
-    if (req_life > 0 && req_life < endtime - now)
-        endtime = now + req_life;
-    if (clamp && clamp < endtime - now)
-        endtime = now + clamp;
+    time_t force = heim_config_get_time_default(context->hcontext,
+                                                cf, 5 * 24 * 3600,
+                                                "force_cert_lifetime", NULL);
+    time_t clamp = heim_config_get_time_default(context->hcontext, cf, 0,
+                                                "max_cert_lifetime", NULL);
+    int allow_more = heim_config_get_bool_default(context->hcontext, cf, FALSE,
+                                                  "allow_extra_lifetime",
+                                                  NULL);
+    starttime = starttime > 0 ? starttime : now - 5 * 60;
 
     if (endtime < now) {
         heim_log_msg(context->hcontext, logf, 3, NULL,
-                     "Endtime would be in the past");
-        hx509_set_error_string(context, 0, ERANGE,
-                               "Endtime would be in the past");
+                     "Endtime is in the past");
+        hx509_set_error_string(context, 0, ERANGE, "Endtime is in the past");
         return ERANGE;
     }
+
+    /* Apply requested lifetime if shorter or if allowed more */
+    if (req_life > 0 && req_life <= endtime - now)
+        endtime = now + req_life;
+    else if (req_life > 0 && allow_more)
+        endtime = now + req_life;
+
+    /* Apply floor */
+    if (force > 0 && force > endtime - now)
+        endtime = now + force;
+
+    /* Apply ceiling */
+    if (clamp > 0 && clamp < endtime - now)
+        endtime = now + clamp;
 
     hx509_ca_tbs_set_notAfter(context, tbs, endtime);
     hx509_ca_tbs_set_notBefore(context, tbs, starttime);

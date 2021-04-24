@@ -20,7 +20,7 @@ libexec_PROGRAMS = hprop hpropd kdc digest-service \
 
 noinst_PROGRAMS = kdc-replay kdc-tester
 
-man_MANS = kdc.8 kstash.8 hprop.8 hpropd.8 string2key.8
+man_MANS = bx509d.8 httpkadmind.8 kdc.8 kstash.8 hprop.8 hpropd.8 string2key.8
 
 hprop_SOURCES = hprop.c mit_dump.c hprop.h
 hpropd_SOURCES = hpropd.c hprop.h

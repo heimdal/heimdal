@@ -20,7 +20,8 @@ if HAVE_DBHEADER
 AM_CPPFLAGS += -I$(DBHEADER)
 endif
 
-noinst_PROGRAMS = snprintf-test resolve-test rkpty test-detach test-auxval rkvis rkbase32 rkbase64 rtbl
+bin_PROGRAMS = rkvis rkbase32 rkbase64
+noinst_PROGRAMS = snprintf-test resolve-test rkpty test-detach test-auxval rtbl
 
 CHECK_LOCAL = snprintf-test resolve-test rkpty make-roken
 

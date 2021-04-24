@@ -96,6 +96,7 @@ asn1_compile_SOURCES = 				\
 	gen_copy.c				\
 	gen_decode.c				\
 	gen_encode.c				\
+	gen_print.c				\
 	gen_free.c				\
 	gen_glue.c				\
 	gen_length.c				\

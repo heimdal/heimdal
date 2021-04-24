@@ -118,6 +118,7 @@ void generate_type_encode (const Symbol *);
 void generate_type_decode (const Symbol *);
 void generate_type_free (const Symbol *);
 void generate_type_length (const Symbol *);
+void generate_type_print_stub(const Symbol *);
 void generate_type_copy (const Symbol *);
 void generate_type_seq (const Symbol *);
 void generate_glue (const Type *, const char*);

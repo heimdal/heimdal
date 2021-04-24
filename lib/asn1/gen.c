@@ -1693,6 +1693,7 @@ generate_type (const Symbol *s)
 	generate_type_free (s);
 	generate_type_length (s);
 	generate_type_copy (s);
+        generate_type_print_stub(s);
     }
     generate_type_seq (s);
     generate_glue (s->type, s->gen_name);
@@ -1730,11 +1731,10 @@ generate_type (const Symbol *s)
 	     exp,
 	     s->gen_name, s->gen_name);
 
-    if (template_flag)
-        fprintf(h,
-                "%schar * ASN1CALL print_%s (const %s *, int);\n",
-                exp,
-                s->gen_name, s->gen_name);
+    fprintf(h,
+            "%schar * ASN1CALL print_%s (const %s *, int);\n",
+            exp,
+            s->gen_name, s->gen_name);
 
     fprintf(h, "\n\n");
 

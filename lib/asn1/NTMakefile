@@ -76,6 +76,7 @@ $(BINDIR)\asn1_compile.exe:				    \
 	$(OBJ)\gen_copy.obj				    \
 	$(OBJ)\gen_decode.obj				    \
 	$(OBJ)\gen_encode.obj				    \
+	$(OBJ)\gen_print.obj				    \
 	$(OBJ)\gen_free.obj				    \
 	$(OBJ)\gen_glue.obj				    \
 	$(OBJ)\gen_length.obj				    \

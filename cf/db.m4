@@ -148,6 +148,8 @@ for db_type in unknown $db_type_preference; do
     db_type=unknown
 done
 
+dnl Note that these lines can only do anything if the user explicitly passed
+dnl --with-db-type-preference and did not include sqlite at all.
 AS_IF([test "x$have_db3" = xyes -a "$db_type" = unknown], db_type=db3, db_type="$db_type")
 AS_IF([test "x$have_db1" = xyes -a "$db_type" = unknown], db_type=db1, db_type="$db_type")
 AS_IF([test "x$have_lmdb" = xyes -a "$db_type" = unknown], db_type=lmdb, db_type="$db_type")

@@ -2,7 +2,7 @@
 
 include $(top_srcdir)/Makefile.am.common
 
-noinst_DATA = krb5.conf mech
+noinst_DATA = krb5.conf new_clients_k5.conf mech
 
 SCRIPT_TESTS = check-basic check-gss check-gssmask check-context check-spnego check-ntlm check-negoex
 
@@ -12,12 +12,13 @@ check_SCRIPTS = $(SCRIPT_TESTS)
 
 port = 49188
 
-do_subst = srcdirabs=`cd "$(srcdir)"; pwd`; sed \
+do_subst = srcdirabs=`cd "$(srcdir)"; pwd`; objdirabs=`pwd`; sed \
 	-e 's,[@]srcdir[@],$(srcdir),g' \
 	-e "s,[@]srcdirabs[@],$${srcdirabs},g" \
 	-e 's,[@]env_setup[@],$(top_builddir)/tests/bin/setup-env,g' \
 	-e 's,[@]port[@],$(port),g' \
-	-e 's,[@]objdir[@],$(top_builddir)/tests/gss,g'
+	-e 's,[@]objdir[@],$(top_builddir)/tests/gss,g' \
+	-e "s,[@]objdirabs[@],$${objdirabs},g"
 
 check-gss: check-gss.in Makefile
 	$(do_subst) < $(srcdir)/check-gss.in > check-gss.tmp && \
@@ -58,6 +59,10 @@ krb5.conf: krb5.conf.in Makefile
 	$(do_subst) < $(srcdir)/krb5.conf.in > krb5.conf.tmp && \
 	mv krb5.conf.tmp krb5.conf
 
+new_clients_k5.conf: new_clients_k5.conf.in Makefile
+	$(do_subst) < $(srcdir)/new_clients_k5.conf.in > new_clients_k5.conf.tmp && \
+	mv new_clients_k5.conf.tmp new_clients_k5.conf
+
 mech: mech.in Makefile
 	$(do_subst) < $(srcdir)/mech.in > mech.tmp && \
 	mv mech.tmp mech
@@ -70,6 +75,7 @@ CLEANFILES= \
 	krb5ccfile-ds \
 	server.keytab \
 	krb5.conf \
+	new_clients_k5.conf \
 	mech \
 	current-db* \
 	*.log \
@@ -91,4 +97,5 @@ EXTRA_DIST = \
 	check-context.in \
 	ntlm-user-file.txt \
 	krb5.conf.in \
+	new_clients_k5.conf.in \
 	mech.in

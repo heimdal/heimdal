@@ -566,9 +566,10 @@ gsskrb5_acceptor_start(OM_uint32 * minor_status,
 
         if (authenticator->cksum != NULL
 	    && authenticator->cksum->cksumtype == CKSUMTYPE_GSSAPI) {
-            ret = _gsskrb5_verify_8003_checksum(minor_status,
+            ret = _gsskrb5_verify_8003_checksum(context,
+						minor_status,
 						input_chan_bindings,
-						authenticator->cksum,
+						authenticator,
 						&ctx->flags,
 						&ctx->fwd_data);
 

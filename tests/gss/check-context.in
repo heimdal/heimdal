@@ -312,6 +312,64 @@ done
 
 rm ${keytabfile}.new
 
+echo "====== test channel-bindings."
+
+for mech in krb5 spnego; do
+	echo "${mech}: initiator only bindings" ; > messages.log
+	${context} -v --i-channel-bindings=abc \
+		--mech-type=$mech host@lucid.test.h5l.se > cbinding.log || \
+		{ eval "$testfailed"; }
+	grep "sflags:" cbinding.log | grep "channel-bound" > /dev/null && \
+		{ echo "channel-bound flag unexpected"; eval "$testfailed"; }
+
+	echo "${mech}: acceptor only bindings" ; > messages.log
+	${context} -v --a-channel-bindings=abc \
+		--mech-type=$mech host@lucid.test.h5l.se > cbinding.log || \
+		{ eval "$testfailed"; }
+	grep "sflags:" cbinding.log | grep "channel-bound" > /dev/null && \
+		{ echo "channel-bound flag unexpected"; eval "$testfailed"; }
+
+	echo "${mech}: matching bindings" ; > messages.log
+	${context} -v --i-channel-bindings=abc --a-channel-bindings=abc \
+		--mech-type=$mech host@lucid.test.h5l.se > cbinding.log || \
+		{ eval "$testfailed"; }
+	grep "sflags:" cbinding.log | grep "channel-bound" > /dev/null || \
+		{ echo "no channel-bound flag"; eval "$testfailed"; }
+
+	echo "${mech}: non matching bindings" ; > messages.log
+	${context} --i-channel-bindings=abc --a-channel-bindings=xyz \
+		--mech-type=$mech host@lucid.test.h5l.se 2>/dev/null && \
+		{ eval "$testfailed"; }
+
+	echo "${mech}: initiator only bindings (client-aware)" ; > messages.log
+	KRB5_CONFIG="${objdir}/new_clients_k5.conf" ${context} -v \
+		--i-channel-bindings=abc \
+		--mech-type=$mech host@lucid.test.h5l.se > cbinding.log || \
+		{ eval "$testfailed"; }
+	grep "sflags:" cbinding.log | grep "channel-bound" > /dev/null && \
+		{ echo "channel-bound flag unexpected"; eval "$testfailed"; }
+
+	echo "${mech}: acceptor only bindings (client-aware)" ; > messages.log
+	KRB5_CONFIG="${objdir}/new_clients_k5.conf" ${context} \
+		--a-channel-bindings=abc \
+		--mech-type=$mech host@lucid.test.h5l.se 2>/dev/null && \
+		{ eval "$testfailed"; }
+
+	echo "${mech}: matching bindings (client-aware)" ; > messages.log
+	KRB5_CONFIG="${objdir}/new_clients_k5.conf" ${context} -v \
+		--i-channel-bindings=abc --a-channel-bindings=abc \
+		--mech-type=$mech host@lucid.test.h5l.se > cbinding.log || \
+		{ eval "$testfailed"; }
+	grep "sflags:" cbinding.log | grep "channel-bound" > /dev/null || \
+		{ echo "no channel-bound flag"; eval "$testfailed"; }
+
+	echo "${mech}: non matching bindings (client-aware)" ; > messages.log
+	KRB5_CONFIG="${objdir}/new_clients_k5.conf" ${context} \
+		--i-channel-bindings=abc --a-channel-bindings=xyz \
+		--mech-type=$mech host@lucid.test.h5l.se 2>/dev/null && \
+		{ eval "$testfailed"; }
+
+done
 
 #echo "sasl-digest-md5"
 #${context}  --mech-type=sasl-digest-md5 \

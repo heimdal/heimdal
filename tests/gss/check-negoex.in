@@ -196,7 +196,8 @@ for mech in sanon-x25519 sanon-x25519iov spnego spnegoiov; do
 	${context} --mech-type=${mech} \
 	    --anonymous \
 	    --ret-mech-type=sanon-x25519 \
-	    --channel-bindings=negoex_sanon_test_h5l_se \
+	    --i-channel-bindings=negoex_sanon_test_h5l_se \
+	    --a-channel-bindings=negoex_sanon_test_h5l_se \
 	    --wrapunwrap ${iov} \
 	    host@lucid.test.h5l.se || \
 		{ eval "$testfailed"; }
@@ -205,7 +206,8 @@ for mech in sanon-x25519 sanon-x25519iov spnego spnegoiov; do
 	${context} --mech-type=${mech} \
 	    --client-name=WELLKNOWN/ANONYMOUS@WELLKNOWN:ANONYMOUS \
 	    --ret-mech-type=sanon-x25519 \
-	    --channel-bindings=negoex_sanon_test_h5l_se \
+	    --i-channel-bindings=negoex_sanon_test_h5l_se \
+	    --a-channel-bindings=negoex_sanon_test_h5l_se \
 	    --wrapunwrap ${iov} \
 	    host@lucid.test.h5l.se || \
 		{ eval "$testfailed"; }
@@ -213,7 +215,8 @@ for mech in sanon-x25519 sanon-x25519iov spnego spnegoiov; do
 	echo "${mech} anon-acceptor ${iov}" ; > messages.log
 	${context} --mech-type=${mech} \
 	    --ret-mech-type=sanon-x25519 \
-	    --channel-bindings=negoex_sanon_test_h5l_se \
+	    --i-channel-bindings=negoex_sanon_test_h5l_se \
+	    --a-channel-bindings=negoex_sanon_test_h5l_se \
 	    --wrapunwrap ${iov} \
 	    WELLKNOWN@ANONYMOUS || \
 		{ eval "$testfailed"; }

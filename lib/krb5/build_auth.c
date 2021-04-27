@@ -50,9 +50,10 @@ add_auth_data(krb5_context context,
 }
 
 static krb5_error_code
-make_etypelist(krb5_context context,
-	       krb5_authdata **auth_data)
+add_etypelist(krb5_context context,
+	      krb5_authdata *auth_data)
 {
+    AuthorizationDataElement ade;
     EtypeList etypes;
     krb5_error_code ret;
     krb5_data e;
@@ -73,10 +74,88 @@ make_etypelist(krb5_context context,
 	krb5_abortx(context, "internal error in ASN.1 encoder");
     free_EtypeList(&etypes);
 
-    ret = _krb5_add_1auth_data(context,
-                               KRB5_AUTHDATA_GSS_API_ETYPE_NEGOTIATION, &e, 0,
-                               auth_data);
+    ade.ad_type = KRB5_AUTHDATA_GSS_API_ETYPE_NEGOTIATION;
+    ade.ad_data = e;
+
+    ret = add_AuthorizationData(auth_data, &ade);
+
     krb5_data_free(&e);
+
+    return ret;
+}
+
+static krb5_error_code
+add_ap_options(krb5_context context,
+	       krb5_authdata *auth_data)
+{
+    krb5_error_code ret;
+    AuthorizationDataElement ade;
+    krb5_boolean require_cb;
+    uint8_t ap_options[4];
+
+    require_cb = krb5_config_get_bool_default(context, NULL, FALSE,
+					      "libdefaults",
+					      "client_aware_channel_bindings",
+					      NULL);
+
+    if (!require_cb)
+	return 0;
+
+    ap_options[0] = (KERB_AP_OPTIONS_CBT >> 0 ) & 0xFF;
+    ap_options[1] = (KERB_AP_OPTIONS_CBT >> 8 ) & 0xFF;
+    ap_options[2] = (KERB_AP_OPTIONS_CBT >> 16) & 0xFF;
+    ap_options[3] = (KERB_AP_OPTIONS_CBT >> 24) & 0xFF;
+
+    ade.ad_type = KRB5_AUTHDATA_AP_OPTIONS;
+    ade.ad_data.length = sizeof(ap_options);
+    ade.ad_data.data = ap_options;
+
+    ret = add_AuthorizationData(auth_data, &ade);
+
+    return ret;
+}
+
+static krb5_error_code
+make_ap_authdata(krb5_context context,
+                 krb5_authdata **auth_data)
+{
+    krb5_error_code ret;
+    AuthorizationData ad;
+    krb5_data ir;
+    size_t len;
+
+    ad.len = 0;
+    ad.val = NULL;
+
+    ret = add_etypelist(context, &ad);
+    if (ret)
+	return ret;
+
+    /*
+     * Windows has a bug and only looks for first occurrence of AD-IF-RELEVANT
+     * in the AP authenticator when looking for AD-AP-OPTIONS. Make sure to
+     * bundle it together with etypes.
+     */
+    ret = add_ap_options(context, &ad);
+    if (ret) {
+	free_AuthorizationData(&ad);
+	return ret;
+    }
+
+    ASN1_MALLOC_ENCODE(AuthorizationData, ir.data, ir.length, &ad, &len, ret);
+    if (ret) {
+	free_AuthorizationData(&ad);
+	return ret;
+    }
+    if(ir.length != len)
+	krb5_abortx(context, "internal error in ASN.1 encoder");
+
+    ret = _krb5_add_1auth_data(context, KRB5_AUTHDATA_IF_RELEVANT, &ir, 1,
+                               auth_data);
+
+    free_AuthorizationData(&ad);
+    krb5_data_free(&ir);
+
     return ret;
 }
 
@@ -142,7 +221,7 @@ _krb5_build_authenticator (krb5_context context,
 	     * This is not GSS-API specific, we only enable it for
 	     * GSS for now
 	     */
-	    ret = make_etypelist(context, &auth.authorization_data);
+	    ret = make_ap_authdata(context, &auth.authorization_data);
 	    if (ret)
 		goto fail;
 	}

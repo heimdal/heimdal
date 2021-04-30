@@ -213,8 +213,8 @@ static const char *cache_dir;
 static char *impersonation_key_fn;
 
 static krb5_error_code resp(struct bx509_request_desc *, int,
-                            enum MHD_ResponseMemoryMode, const void *, size_t,
-                            const char *);
+                            enum MHD_ResponseMemoryMode, const char *,
+                            const void *, size_t, const char *);
 static krb5_error_code bad_req(struct bx509_request_desc *, krb5_error_code, int,
                                const char *, ...)
                                HEIMDAL_PRINTF_ATTRIBUTE((__printf__, 4, 5));
@@ -421,6 +421,7 @@ static krb5_error_code
 resp(struct bx509_request_desc *r,
      int http_status_code,
      enum MHD_ResponseMemoryMode rmmode,
+     const char *content_type,
      const void *body,
      size_t bodylen,
      const char *token)
@@ -437,7 +438,9 @@ resp(struct bx509_request_desc *r,
                                                rmmode);
     if (response == NULL)
         return -1;
-    if (http_status_code == MHD_HTTP_UNAUTHORIZED) {
+    mret = MHD_add_response_header(response, MHD_HTTP_HEADER_CACHE_CONTROL,
+                                   "no-store, max-age=0");
+    if (mret == MHD_YES && http_status_code == MHD_HTTP_UNAUTHORIZED) {
         mret = MHD_add_response_header(response,
                                        MHD_HTTP_HEADER_WWW_AUTHENTICATE,
                                        "Bearer");
@@ -445,7 +448,7 @@ resp(struct bx509_request_desc *r,
             mret = MHD_add_response_header(response,
                                            MHD_HTTP_HEADER_WWW_AUTHENTICATE,
                                            "Negotiate");
-    } else if (http_status_code == MHD_HTTP_TEMPORARY_REDIRECT) {
+    } else if (mret == MHD_YES && http_status_code == MHD_HTTP_TEMPORARY_REDIRECT) {
         const char *redir;
 
         /* XXX Move this */
@@ -458,7 +461,12 @@ resp(struct bx509_request_desc *r,
                                            MHD_HTTP_HEADER_AUTHORIZATION,
                                            token);
     }
-    if (mret != MHD_NO)
+    if (mret == MHD_YES && content_type) {
+        mret = MHD_add_response_header(response,
+                                       MHD_HTTP_HEADER_CONTENT_TYPE,
+                                       content_type);
+    }
+    if (mret == MHD_YES)
         mret = MHD_queue_response(r->connection, http_status_code, response);
     MHD_destroy_response(response);
     return mret == MHD_NO ? -1 : 0;
@@ -486,7 +494,7 @@ bad_reqv(struct bx509_request_desc *r,
             krb5_log_msg(r->context, logfac, 1, NULL, "Out of memory");
         audit_trail(r, code);
         return resp(r, http_status_code, MHD_RESPMEM_PERSISTENT,
-                    fmt, strlen(fmt), NULL);
+                    NULL, fmt, strlen(fmt), NULL);
     }
 
     if (code) {
@@ -511,13 +519,12 @@ bad_reqv(struct bx509_request_desc *r,
     if (ret == -1 || msg == NULL) {
         if (context)
             krb5_log_msg(r->context, logfac, 1, NULL, "Out of memory");
-        return resp(r, MHD_HTTP_SERVICE_UNAVAILABLE,
-                    MHD_RESPMEM_PERSISTENT,
-                    "Out of memory", sizeof("Out of memory") - 1, NULL);
+        return resp(r, MHD_HTTP_SERVICE_UNAVAILABLE, MHD_RESPMEM_PERSISTENT,
+                    NULL, "Out of memory", sizeof("Out of memory") - 1, NULL);
     }
 
     ret = resp(r, http_status_code, MHD_RESPMEM_MUST_COPY,
-               msg, strlen(msg), NULL);
+               NULL, msg, strlen(msg), NULL);
     free(formatted);
     free(msg);
     return ret == -1 ? -1 : code;
@@ -609,8 +616,8 @@ good_bx509(struct bx509_request_desc *r)
                        "from PKIX store");
 
     (void) gettimeofday(&r->tv_end, NULL);
-    ret = resp(r, MHD_HTTP_OK, MHD_RESPMEM_MUST_COPY, body, bodylen,
-               NULL);
+    ret = resp(r, MHD_HTTP_OK, MHD_RESPMEM_MUST_COPY, "application/x-pem-file",
+               body, bodylen, NULL);
     free(body);
     return ret;
 }
@@ -1443,8 +1450,8 @@ bad_req_gss(struct bx509_request_desc *r,
     if (major == GSS_S_BAD_NAME || major == GSS_S_BAD_NAMETYPE)
         http_status_code = MHD_HTTP_BAD_REQUEST;
 
-    ret = resp(r, http_status_code, MHD_RESPMEM_MUST_COPY, msg, strlen(msg),
-               NULL);
+    ret = resp(r, http_status_code, MHD_RESPMEM_MUST_COPY, NULL,
+               msg, strlen(msg), NULL);
     free(msg);
     return ret;
 }
@@ -1660,10 +1667,11 @@ bnegotiate(struct bx509_request_desc *r)
         /* Look ma', Negotiate as an OAuth-like token system! */
         if (r->redir)
             ret = resp(r, MHD_HTTP_TEMPORARY_REDIRECT, MHD_RESPMEM_PERSISTENT,
-                       "", 0, nego_tok);
+                       NULL, "", 0, nego_tok);
         else
-            ret = resp(r, MHD_HTTP_OK, MHD_RESPMEM_MUST_COPY, nego_tok,
-                       nego_toksz, NULL);
+            ret = resp(r, MHD_HTTP_OK, MHD_RESPMEM_MUST_COPY,
+                       "application/x-negotiate-token", nego_tok, nego_toksz,
+                       NULL);
     }
 
     free(nego_tok);
@@ -1784,7 +1792,8 @@ get_tgt(struct bx509_request_desc *r)
         return bad_503(r, ret, "Could not get TGT");
     }
 
-    ret = resp(r, MHD_HTTP_OK, MHD_RESPMEM_MUST_COPY, body, bodylen, NULL);
+    ret = resp(r, MHD_HTTP_OK, MHD_RESPMEM_MUST_COPY,
+               "application/x-krb5-ccache", body, bodylen, NULL);
     free(body);
     return ret;
 }
@@ -1793,8 +1802,8 @@ static krb5_error_code
 health(const char *method, struct bx509_request_desc *r)
 {
     if (strcmp(method, "HEAD") == 0)
-        return resp(r, MHD_HTTP_OK, MHD_RESPMEM_PERSISTENT, "", 0, NULL);
-    return resp(r, MHD_HTTP_OK, MHD_RESPMEM_PERSISTENT,
+        return resp(r, MHD_HTTP_OK, MHD_RESPMEM_PERSISTENT, NULL, "", 0, NULL);
+    return resp(r, MHD_HTTP_OK, MHD_RESPMEM_PERSISTENT, NULL,
                 "To determine the health of the service, use the /bx509 "
                 "end-point.\n",
                 sizeof("To determine the health of the service, use the "

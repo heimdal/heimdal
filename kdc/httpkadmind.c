@@ -643,7 +643,7 @@ resp(kadmin_request_desc r,
     if (response == NULL)
         return -1;
     mret = MHD_add_response_header(response, MHD_HTTP_HEADER_CACHE_CONTROL,
-                                   "no-cache");
+                                   "no-store, max-age=0");
     if (mret == MHD_YES && http_status_code == MHD_HTTP_UNAUTHORIZED) {
         size_t i;
 
@@ -654,7 +654,7 @@ resp(kadmin_request_desc r,
                 mret = MHD_add_response_header(response,
                                                MHD_HTTP_HEADER_WWW_AUTHENTICATE,
                                                auth_types.strings[i]);
-    } else if (http_status_code == MHD_HTTP_TEMPORARY_REDIRECT) {
+    } else if (mret == MHD_YES && http_status_code == MHD_HTTP_TEMPORARY_REDIRECT) {
         const char *redir = make_redirect_uri(r, primary_server_URI);
 
         if (redir)

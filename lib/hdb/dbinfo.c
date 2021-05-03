@@ -271,5 +271,21 @@ hdb_db_dir(krb5_context context)
 const char *
 hdb_default_db(krb5_context context)
 {
-    return HDB_DEFAULT_DB;
+    static char *default_hdb = NULL;
+    struct hdb_dbinfo *dbinfo = NULL;
+    struct hdb_dbinfo *d = NULL;
+    const char *s;
+
+    if (default_hdb)
+        return default_hdb;
+
+    (void) hdb_get_dbinfo(context, &dbinfo);
+    while ((d = hdb_dbinfo_get_next(dbinfo, d)) != NULL) {
+        if ((s = hdb_dbinfo_get_dbname(context, d)) &&
+            (default_hdb = strdup(s)))
+            break;
+    }
+
+    hdb_free_dbinfo(context, &dbinfo);
+    return default_hdb ? default_hdb : HDB_DEFAULT_DB;
 }

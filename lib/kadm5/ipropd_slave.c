@@ -676,6 +676,7 @@ is_up_to_date(krb5_context context, const char *file,
 		 (unsigned long)server_context->log_context.version, buf);
 }
 
+static char *database;
 static char *status_file;
 static char *config_file;
 static int version_flag;
@@ -688,6 +689,7 @@ static int daemon_child = -1;
 static struct getargs args[] = {
     { "config-file", 'c', arg_string, &config_file, NULL, NULL },
     { "realm", 'r', arg_string, &realm, NULL, NULL },
+    { "database", 'd', arg_string, &database, "database", "file"},
     { "keytab", 'k', arg_string, &keytab_str,
       "keytab to get authentication from", "kspec" },
     { "time-lost", 0, arg_string, &server_time_lost,
@@ -812,6 +814,10 @@ main(int argc, char **argv)
     if(realm) {
 	conf.mask |= KADM5_CONFIG_REALM;
 	conf.realm = realm;
+    }
+    if (database) {
+	conf.mask |= KADM5_CONFIG_DBNAME;
+	conf.dbname = database;
     }
     ret = kadm5_init_with_password_ctx (context,
 					KADM5_ADMIN_SERVICE,

@@ -742,7 +742,8 @@ hdb_create(krb5_context context, HDB **db, const char *filename)
 
     *db = NULL;
     if (filename == NULL)
-	filename = HDB_DEFAULT_DB;
+	filename = hdb_default_db(context);
+
     cb_ctx.h = find_method(filename, &cb_ctx.residual);
     cb_ctx.filename = filename;
 
@@ -822,8 +823,11 @@ hdb_create(krb5_context context, HDB **db, const char *filename)
                                filename);
         return ENOTSUP;
     }
-    if (!*db)
+    if (!*db) {
         ret = (*cb_ctx.h->create)(context, db, cb_ctx.residual);
+        if (ret == 0)
+            (*db)->hdb_method_name = cb_ctx.h->prefix;
+    }
     if (ret == 0 && *db)
         ret = load_config(context, *db);
     if (ret && *db) {

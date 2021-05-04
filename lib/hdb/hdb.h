@@ -117,6 +117,7 @@ typedef struct hdb_entry_ex {
 typedef struct HDB {
     void *hdb_db;
     void *hdb_dbc; /** don't use, only for DB3 */
+    const char *hdb_method_name;
     char *hdb_name;
     int hdb_master_key_set;
     hdb_master_key hdb_master_key;
@@ -302,7 +303,7 @@ typedef struct HDB {
     krb5_error_code (*hdb_set_sync)(krb5_context, struct HDB *, int);
 }HDB;
 
-#define HDB_INTERFACE_VERSION	10
+#define HDB_INTERFACE_VERSION	11
 
 struct hdb_method {
     int			version;

@@ -527,7 +527,14 @@ receive_everything(krb5_context context, int fd,
     if (ret)
         krb5_err(context, IPROPD_RESTART, ret,
                  "Failed to lock iprop log for writes");
-    ret = asprintf(&dbname, "%s-NEW", server_context->db->hdb_name);
+    if (server_context->db->hdb_method_name) {
+        ret = asprintf(&dbname, "%.*s:%s-NEW",
+                       (int) strlen(server_context->db->hdb_method_name) - 1,
+                       server_context->db->hdb_method_name,
+                       server_context->db->hdb_name);
+    } else {
+        ret = asprintf(&dbname, "%s-NEW", server_context->db->hdb_name);
+    }
     if (ret == -1)
         krb5_err(context, IPROPD_RESTART, ENOMEM, "asprintf");
     ret = hdb_create(context, &mydb, dbname);

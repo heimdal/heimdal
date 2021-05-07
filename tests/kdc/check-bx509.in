@@ -67,6 +67,7 @@ ukeytab=FILE:${ukt}
 
 kinit="${kinit} -c $cache ${afs_no_afslog}"
 klist2="${klist} --hidden -v -c $cache2"
+klistjson="${klist} --json -c $cache"
 klist="${klist} --hidden -v -c $cache"
 kgetcred="${kgetcred} -c $cache"
 kdestroy="${kdestroy} -c $cache ${afs_no_unlog}"
@@ -493,6 +494,84 @@ ${kgetcred} -H HTTP/${server}@${R} ||
     { echo "Trivial offline CA test failed (TGS)"; exit 2; }
 ${klist} | grep Addresses:.IPv4:8.8.8.8 ||
     { echo "Failed to get a TGT with /get-tgt end-point with addresses"; exit 2; }
+
+echo "Fetch TGT (for other, w/ lifetime req under max)"
+${kadmin} modify --max-ticket-life=10d krbtgt/${R}@${R}
+(set -vx; csr_grant pkinit bar@${R} foo@${R})
+${kdestroy}
+token=$(KRB5CCNAME=$cache2 $gsstoken HTTP@$server)
+if ! (set -vx;
+    curl -o "${cachefile}" -Lgsf                                        \
+         --resolve ${server}:${bx509port}:127.0.0.1                     \
+         -H "Authorization: Negotiate $token"                           \
+         "http://${server}:${bx509port}/get-tgt?cname=bar@${R}&address=8.8.8.8&lifetime=3d"); then
+    echo "Failed to get a TGT with /get-tgt end-point"
+    exit 2
+fi
+${kgetcred} -H HTTP/${server}@${R} ||
+    { echo "Trivial offline CA test failed (TGS)"; exit 2; }
+if which jq >/dev/null; then
+    if ! ${klistjson} | jq -e '
+            (reduce (.tickets[0]|(.Issued,.Expires)|
+                    strptime("%b %e %H:%M:%S %Y")|mktime) as $t
+                (0; if .==0 then $t else $t - . end) / 86400) | floor |
+            . == 3'; then
+        echo "Incorrect lifetime"
+        exit 2
+    fi
+fi
+
+echo "Fetch TGT (for other, w/ lifetime req over max)"
+${kadmin} modify --max-ticket-life=10d krbtgt/${R}@${R}
+(set -vx; csr_grant pkinit bar@${R} foo@${R})
+${kdestroy}
+token=$(KRB5CCNAME=$cache2 $gsstoken HTTP@$server)
+if ! (set -vx;
+    curl -o "${cachefile}" -Lgsf                                        \
+         --resolve ${server}:${bx509port}:127.0.0.1                     \
+         -H "Authorization: Negotiate $token"                           \
+         "http://${server}:${bx509port}/get-tgt?cname=bar@${R}&address=8.8.8.8&lifetime=10d"); then
+    echo "Failed to get a TGT with /get-tgt end-point"
+    exit 2
+fi
+${kgetcred} -H HTTP/${server}@${R} ||
+    { echo "Trivial offline CA test failed (TGS)"; exit 2; }
+if which jq >/dev/null; then
+    if ! ${klistjson} | jq -e '
+            (reduce (.tickets[0]|(.Issued,.Expires)|
+                    strptime("%b %e %H:%M:%S %Y")|mktime) as $t
+                (0; if .==0 then $t else $t - . end) / 86400) | floor |
+            . == 5'; then
+        echo "Incorrect lifetime"
+        exit 2
+    fi
+fi
+
+echo "Fetch TGT (for other, w/ lifetime req under max)"
+${kadmin} modify --max-ticket-life=10d krbtgt/${R}@${R}
+(set -vx; csr_grant pkinit bar@${R} foo@${R})
+${kdestroy}
+token=$(KRB5CCNAME=$cache2 $gsstoken HTTP@$server)
+if ! (set -vx;
+    curl -o "${cachefile}" -Lgsf                                        \
+         --resolve ${server}:${bx509port}:127.0.0.1                     \
+         -H "Authorization: Negotiate $token"                           \
+         "http://${server}:${bx509port}/get-tgt?cname=bar@${R}&address=8.8.8.8&lifetime=5d"); then
+    echo "Failed to get a TGT with /get-tgt end-point"
+    exit 2
+fi
+${kgetcred} -H HTTP/${server}@${R} ||
+    { echo "Trivial offline CA test failed (TGS)"; exit 2; }
+if which jq >/dev/null; then
+    if ! ${klistjson} | jq -e '
+            (reduce (.tickets[0]|(.Issued,.Expires)|
+                    strptime("%b %e %H:%M:%S %Y")|mktime) as $t
+                (0; if .==0 then $t else $t - . end) / 86400) |
+            . >= 4'; then
+        echo "Failed to get a TGT with /get-tgt end-point with addresses"
+        exit 2
+    fi
+fi
 
 echo "Fetch negotiate token (pre-test)"
 # Do what /bnegotiate does, roughly, prior to testing /bnegotiate

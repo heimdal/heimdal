@@ -1327,7 +1327,7 @@ k5_do_CA(struct bx509_request_desc *r)
     /* Issue the certificate */
     if (ret == 0)
         ret = kdc_issue_certificate(r->context, "get-tgt", logfac, req, p,
-                                    &r->token_times, 0,
+                                    &r->token_times, r->req_life,
                                     1 /* send_chain */, &certs);
     krb5_free_principal(r->context, p);
     hx509_request_free(&req);

@@ -1351,9 +1351,11 @@ next_kvno:
 			      &ap_req_options,
 			      ticket,
 			      KRB5_KU_TGS_REQ_AUTH);
+    if (ticket && (*ticket)->ticket.caddr)
+        _kdc_audit_addaddrs((kdc_request_t)r, (*ticket)->ticket.caddr, "tixaddrs");
     if (r->config->warn_ticket_addresses && ret == KRB5KRB_AP_ERR_BADADDR &&
         *ticket != NULL) {
-        kdc_log(context, config, 4, "Request from wrong address (ignoring)");
+        _kdc_audit_addkv((kdc_request_t)r, 0, "wrongaddr", "yes");
         ret = 0;
     }
     if (ret == KRB5KRB_AP_ERR_BAD_INTEGRITY && kvno_search_tries > 0) {
@@ -2396,10 +2398,11 @@ server_lookup:
     if (!_kdc_check_addresses(priv, tgt->caddr, from_addr)) {
         if (config->check_ticket_addresses) {
             ret = KRB5KRB_AP_ERR_BADADDR;
+            _kdc_audit_addkv((kdc_request_t)priv, 0, "wrongaddr", "yes");
             kdc_log(context, config, 4, "Request from wrong address");
             goto out;
         } else if (config->warn_ticket_addresses) {
-            kdc_log(context, config, 4, "Request from wrong address (ignoring)");
+            _kdc_audit_addkv((kdc_request_t)priv, 0, "wrongaddr", "yes");
         }
     }
 

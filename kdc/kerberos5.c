@@ -2199,10 +2199,13 @@ _kdc_as_rep(astgs_request_t r)
 	goto out;
     }
 
+    if (b->addresses)
+        _kdc_audit_addaddrs((kdc_request_t)r, b->addresses, "reqaddrs");
+
     /* check for valid set of addresses */
     if (!_kdc_check_addresses(r, b->addresses, r->addr)) {
         if (r->config->warn_ticket_addresses) {
-            kdc_log(context, config, 4, "Request from wrong address (ignoring)");
+            _kdc_audit_addkv((kdc_request_t)r, 0, "wrongaddr", "yes");
         } else {
             _kdc_set_e_text(r, "Request from wrong address");
             ret = KRB5KRB_AP_ERR_BADADDR;

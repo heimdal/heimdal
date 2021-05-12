@@ -589,7 +589,7 @@ ${kgetcred} -H HTTP/${server}@${R} ||
 KRB5CCNAME=$cache $gsstoken HTTP@$server | KRB5_KTNAME="$keytab" $gsstoken -r ||
     { echo "Trivial offline CA test failed (gss-token)"; exit 2; }
 
-grep 'Request from wrong address .ignoring' ${objdir}/messages.log ||
+grep 'REQ.*wrongaddr' ${objdir}/messages.log ||
     { echo "KDC not warning about requests from wrong address"; exit 2; }
 
 echo "Fetching a Negotiate token"

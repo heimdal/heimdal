@@ -94,6 +94,30 @@ _kdc_audit_addkv_timediff(kdc_request_t r, const char *k,
     heim_audit_addkv_timediff((heim_svc_req_desc)r,k, start, end);
 }
 
+/*
+ * Add up to 3 key value pairs to record HostAddresses from request body or
+ * PA-TGS ticket or whatever.
+ */
+void
+_kdc_audit_addaddrs(kdc_request_t r, HostAddresses *a, const char *key)
+{
+    size_t i;
+    char buf[128];
+
+    if (a->len > 3) {
+        char numkey[32];
+
+        if (snprintf(numkey, sizeof(numkey), "num%s", key) >= sizeof(numkey))
+            numkey[31] = '\0';
+        _kdc_audit_addkv(r, 0, numkey, "%llu", (unsigned long long)a->len);
+    }
+
+    for (i = 0; i < 3 && i < a->len; i++) {
+        if (krb5_print_address(&a->val[0], buf, sizeof(buf), NULL) == 0)
+            _kdc_audit_addkv(r, 0, key, "%s", buf);
+    }
+}
+
 void
 _kdc_audit_trail(kdc_request_t r, krb5_error_code ret)
 {

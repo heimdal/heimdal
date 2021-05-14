@@ -1351,7 +1351,7 @@ next_kvno:
 			      &ap_req_options,
 			      ticket,
 			      KRB5_KU_TGS_REQ_AUTH);
-    if (ticket && (*ticket)->ticket.caddr)
+    if (ticket && *ticket && (*ticket)->ticket.caddr)
         _kdc_audit_addaddrs((kdc_request_t)r, (*ticket)->ticket.caddr, "tixaddrs");
     if (r->config->warn_ticket_addresses && ret == KRB5KRB_AP_ERR_BADADDR &&
         *ticket != NULL) {

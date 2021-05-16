@@ -396,6 +396,8 @@ rk_strsvisx(char *dst, const char *csrc, size_t len, int flag, const char *extra
  * buffer as needed.  Based on OpenBSD's stravis().
  */
 
+#include <vis-extras.h>
+
 ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
 rk_strasvis(char **out, const char *csrc, int flag, const char *extra)
 {

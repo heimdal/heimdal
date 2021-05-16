@@ -179,6 +179,7 @@ INCFILES = 			\
 	$(INCDIR)\stdbool.h	\
 	$(INCDIR)\syslog.h	\
 	$(INCDIR)\vis.h		\
+	$(INCDIR)\vis-extras.h	\
 !ifndef HAVE_STDINT_H
 	$(INCDIR)\stdint.h	\
 !endif

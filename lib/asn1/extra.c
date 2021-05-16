@@ -35,7 +35,8 @@
 
 #include "der_locl.h"
 #include "heim_asn1.h"
-#include "vis.h"
+#include <vis.h>
+#include <vis-extras.h>
 
 RCSID("$Id$");
 

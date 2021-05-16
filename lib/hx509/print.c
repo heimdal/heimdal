@@ -33,6 +33,7 @@
 
 #include "hx_locl.h"
 #include <vis.h>
+#include <vis-extras.h>
 
 /**
  * @page page_print Hx509 printing functions

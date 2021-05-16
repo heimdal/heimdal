@@ -89,7 +89,7 @@ else
 vis_h = vis.h
 endif
 
-rkvis_SOURCES = vis.c $(vis_h)
+rkvis_SOURCES = vis.c $(vis_h) vis-extras.h
 rkvis_CPPFLAGS = -DTEST
 
 rkbase32_SOURCES = base32.c
@@ -179,6 +179,7 @@ libroken_la_SOURCES =		\
 	unvis.c			\
 	vis.c			\
 	$(vis_h)		\
+	vis-extras.h		\
 	warnerr.c		\
 	write_pid.c		\
 	xfree.c			\

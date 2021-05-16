@@ -36,6 +36,7 @@
 #include "der_locl.h"
 #include <com_err.h>
 #include <vis.h>
+#include <vis-extras.h>
 
 struct asn1_type_func asn1_template_prim[A1T_NUM_ENTRY] = {
 #define el(name, type) {				\

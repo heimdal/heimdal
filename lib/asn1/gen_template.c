@@ -41,6 +41,7 @@
 
 #include "gen_locl.h"
 #include <vis.h>
+#include <vis-extras.h>
 
 static const char *symbol_name(const char *, const Type *);
 static void generate_template_type(const char *, const char **, const char *, const char *, const char *,

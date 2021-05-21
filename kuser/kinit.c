@@ -1078,6 +1078,7 @@ struct renew_ctx {
     krb5_principal principal;
     krb5_deltat ticket_life;
     krb5_deltat timeout;
+    int anonymous_pkinit;
 };
 
 static time_t
@@ -1114,7 +1115,7 @@ renew_func(void *ptr)
                              NULL, FALSE, server_str, ctx->ticket_life);
     } else {
 	ret = get_new_tickets(ctx->context, ctx->principal, ctx->ccache,
-			      ctx->ticket_life, 0, 0);
+			      ctx->ticket_life, 0, ctx->anonymous_pkinit);
     }
     expire = ticket_lifetime(ctx->context, ctx->ccache, ctx->principal,
 			     server_str, &renew_expire);
@@ -1657,6 +1658,7 @@ main(int argc, char **argv)
 	ctx.principal = principal;
 	ctx.ticket_life = ticket_life;
 	ctx.timeout = timeout;
+	ctx.anonymous_pkinit = anonymous_pkinit;
 
 #ifdef HAVE_SIGACTION
 	memset(&sa, 0, sizeof(sa));

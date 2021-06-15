@@ -900,7 +900,7 @@ kcm_get_cache_next(krb5_context context, krb5_cc_cursor cursor, const krb5_cc_op
 
     ret = krb5_kcm_call(context, request, &response, &response_data);
     krb5_storage_free(request);
-    if (ret == KRB5_CC_END)
+    if (ret == KRB5_CC_END || ret == KRB5_FCC_NOFILE)
 	goto again;
 
     ret = krb5_ret_stringz(response, &name);

@@ -674,7 +674,8 @@ kcm_get_next (krb5_context context,
     krb5_storage_free(request);
     if (ret == KRB5_CC_END) {
 	goto again;
-    }
+    } else if (ret)
+	return ret;
 
     ret = krb5_ret_creds(response, creds);
     if (ret)
@@ -902,6 +903,8 @@ kcm_get_cache_next(krb5_context context, krb5_cc_cursor cursor, const krb5_cc_op
     krb5_storage_free(request);
     if (ret == KRB5_CC_END)
 	goto again;
+    else if (ret)
+	return ret;
 
     ret = krb5_ret_stringz(response, &name);
     krb5_storage_free(response);

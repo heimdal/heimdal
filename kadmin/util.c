@@ -47,6 +47,10 @@ get_response(const char *prompt, const char *def, char *buf, size_t len);
  */
 
 struct units kdb_attrs[] = {
+    { "disallow-client",	KRB5_KDB_DISALLOW_CLIENT },
+    { "virtual",		KRB5_KDB_VIRTUAL },
+    { "virtual-keys",		KRB5_KDB_VIRTUAL_KEYS },
+    { "materialize",		KRB5_KDB_MATERIALIZE },
     { "allow-digest",		KRB5_KDB_ALLOW_DIGEST },
     { "allow-kerberos4",	KRB5_KDB_ALLOW_KERBEROS4 },
     { "trusted-for-delegation",	KRB5_KDB_TRUSTED_FOR_DELEGATION },
@@ -54,7 +58,6 @@ struct units kdb_attrs[] = {
     { "new-princ",		KRB5_KDB_NEW_PRINC },
     { "support-desmd5",		KRB5_KDB_SUPPORT_DESMD5 },
     { "pwchange-service",	KRB5_KDB_PWCHANGE_SERVICE },
-    { "disallow-client",	KRB5_KDB_DISALLOW_CLIENT },
     { "disallow-svr",		KRB5_KDB_DISALLOW_SVR },
     { "requires-pw-change",	KRB5_KDB_REQUIRES_PWCHANGE },
     { "requires-hw-auth",	KRB5_KDB_REQUIRES_HW_AUTH },

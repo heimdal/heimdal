@@ -556,7 +556,7 @@ if ! (set -vx;
     curl -o "${cachefile}" -Lgsf                                        \
          --resolve ${server}:${bx509port}:127.0.0.1                     \
          -H "Authorization: Negotiate $token"                           \
-         "http://${server}:${bx509port}/get-tgt?cname=bar@${R}&address=8.8.8.8&lifetime=5d"); then
+         "http://${server}:${bx509port}/get-tgt?cname=bar@${R}&address=8.8.8.8&address=8.9.10.11&address=11.11.11.11&address=12.12.12.12&lifetime=5d"); then
     echo "Failed to get a TGT with /get-tgt end-point"
     exit 2
 fi
@@ -589,7 +589,8 @@ ${kgetcred} -H HTTP/${server}@${R} ||
 KRB5CCNAME=$cache $gsstoken HTTP@$server | KRB5_KTNAME="$keytab" $gsstoken -r ||
     { echo "Trivial offline CA test failed (gss-token)"; exit 2; }
 
-grep 'REQ.*wrongaddr' ${objdir}/messages.log ||
+# Check that we get up to three tixaddrs k/v in the log
+grep 'REQ.*numtixaddrs=4 tixaddrs=IPv4:8.8.8.8 tixaddrs=IPv4:8.9.10.11 tixaddrs=IPv4:11.11.11.11 wrongaddr=yes' ${objdir}/messages.log ||
     { echo "KDC not warning about requests from wrong address"; exit 2; }
 
 echo "Fetching a Negotiate token"

@@ -113,7 +113,7 @@ _kdc_audit_addaddrs(kdc_request_t r, HostAddresses *a, const char *key)
     }
 
     for (i = 0; i < 3 && i < a->len; i++) {
-        if (krb5_print_address(&a->val[0], buf, sizeof(buf), NULL) == 0)
+        if (krb5_print_address(&a->val[i], buf, sizeof(buf), NULL) == 0)
             _kdc_audit_addkv(r, 0, key, "%s", buf);
     }
 }

@@ -176,6 +176,7 @@ kadm5_s_get_principal(void *server_handle,
 	out->attributes |= ent.entry.flags.invalid ? KRB5_KDB_DISALLOW_ALL_TIX : 0;
 	out->attributes |= ent.entry.flags.require_preauth ? KRB5_KDB_REQUIRES_PRE_AUTH : 0;
 	out->attributes |= ent.entry.flags.require_pwchange ? KRB5_KDB_REQUIRES_PWCHANGE : 0;
+	out->attributes |= ent.entry.flags.client ? 0 : KRB5_KDB_DISALLOW_CLIENT;
 	out->attributes |= ent.entry.flags.server ? 0 : KRB5_KDB_DISALLOW_SVR;
 	out->attributes |= ent.entry.flags.change_pw ? KRB5_KDB_PWCHANGE_SERVICE : 0;
 	out->attributes |= ent.entry.flags.ok_as_delegate ? KRB5_KDB_OK_AS_DELEGATE : 0;

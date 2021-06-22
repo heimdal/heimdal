@@ -54,6 +54,7 @@ struct units kdb_attrs[] = {
     { "new-princ",		KRB5_KDB_NEW_PRINC },
     { "support-desmd5",		KRB5_KDB_SUPPORT_DESMD5 },
     { "pwchange-service",	KRB5_KDB_PWCHANGE_SERVICE },
+    { "disallow-client",	KRB5_KDB_DISALLOW_CLIENT },
     { "disallow-svr",		KRB5_KDB_DISALLOW_SVR },
     { "requires-pw-change",	KRB5_KDB_REQUIRES_PWCHANGE },
     { "requires-hw-auth",	KRB5_KDB_REQUIRES_HW_AUTH },

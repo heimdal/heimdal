@@ -69,13 +69,30 @@
 #define KRB5_KDB_PWCHANGE_SERVICE	0x00002000
 #define KRB5_KDB_SUPPORT_DESMD5		0x00004000
 #define KRB5_KDB_NEW_PRINC		0x00008000
-#define KRB5_KDB_OK_AS_DELEGATE		0x00010000
-#define KRB5_KDB_TRUSTED_FOR_DELEGATION	0x00020000
-#define KRB5_KDB_ALLOW_KERBEROS4	0x00040000
-#define KRB5_KDB_ALLOW_DIGEST		0x00080000
-#define KRB5_KDB_MATERIALIZE            0x00100000
-#define KRB5_KDB_VIRTUAL_KEYS           0x00200000
-#define KRB5_KDB_VIRTUAL                0x00400000
+#define KRB5_KDB_OK_AS_DELEGATE		0x00010000 /* 0x00100000 in MIT */
+#define KRB5_KDB_TRUSTED_FOR_DELEGATION	0x00020000 /* MIT has as 0x00200000 */
+#define KRB5_KDB_ALLOW_KERBEROS4	0x00040000 /* MIT doesn't have this; XXX remove */
+#define KRB5_KDB_ALLOW_DIGEST		0x00080000 /* MIT doesn't have this */
+#define KRB5_KDB_MATERIALIZE            0x00100000 /* MIT doesn't have this */
+#define KRB5_KDB_VIRTUAL_KEYS           0x00200000 /* MIT doesn't have this */
+#define KRB5_KDB_VIRTUAL                0x00400000 /* MIT doesn't have this */
+#define KRB5_KDB_DISALLOW_CLIENT        0x00800000 /* MIT doesn't have this */
+
+/*
+ * MIT has:
+ *
+ *  - Same as our KRB5_KDB_TRUSTED_FOR_DELEGATION:
+ *
+ *    #define KRB5_KDB_OK_TO_AUTH_AS_DELEGATE 0x00200000 // S4U2Self OK
+ *
+ *  - Misc:
+ *
+ *    #define KRB5_KDB_NO_AUTH_DATA_REQUIRED  0x00400000 // Don't lookup / add
+ *                                                       // authz data
+ *    #define KRB5_KDB_LOCKDOWN_KEYS          0x00800000 // Don't allow
+ *                                                       // deletion of princ
+ */
+
 
 #define KADM5_PRINCIPAL		0x000001U
 #define KADM5_PRINC_EXPIRE_TIME	0x000002U

@@ -55,7 +55,7 @@ attr_to_flags(unsigned attr, HDBFlags *flags)
     /* HW_AUTH */
     flags->server =		!(attr & KRB5_KDB_DISALLOW_SVR);
     flags->change_pw = 	       !!(attr & KRB5_KDB_PWCHANGE_SERVICE);
-    flags->client =	        1; /* XXX */
+    flags->client =	        !(attr & KRB5_KDB_DISALLOW_CLIENT);
     flags->ok_as_delegate =    !!(attr & KRB5_KDB_OK_AS_DELEGATE);
     flags->trusted_for_delegation = !!(attr & KRB5_KDB_TRUSTED_FOR_DELEGATION);
     flags->allow_kerberos4 =   !!(attr & KRB5_KDB_ALLOW_KERBEROS4);
@@ -162,10 +162,10 @@ perform_tl_data(krb5_context context,
 }
 
 static void
-default_flags(hdb_entry_ex *ent, int server)
+default_flags(hdb_entry_ex *ent)
 {
     ent->entry.flags.client      = 1;
-    ent->entry.flags.server      = !!server;
+    ent->entry.flags.server      = 1;
     ent->entry.flags.forwardable = 1;
     ent->entry.flags.proxiable   = 1;
     ent->entry.flags.renewable   = 1;
@@ -209,7 +209,7 @@ _kadm5_setup_entry(kadm5_server_context *context,
 	    attr_to_flags(def->attributes, &ent->entry.flags);
 	    ent->entry.flags.invalid = 0;
 	} else {
-	    default_flags(ent, 1);
+	    default_flags(ent);
 	}
     }
 

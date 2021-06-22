@@ -361,6 +361,7 @@ trap "kill -9 ${kdcpid} ${kpasswddpid}; echo signal killing kdc kpasswdd; exit 1
 ec=0
 
 echo "Getting client initial tickets with wrong password"; > messages.log
+${kadmin} modify --attributes=+disallow-client ${server} || exit 1
 ${kinit} --password-file=${objdir}/notfoopassword \
         foo@${R} 2>kinit-log.tmp && \
 	{ ec=1 ; eval "${testfailed}"; }
@@ -626,6 +627,8 @@ done
 ${kdestroy}
 
 echo "Getting server initial tickets"; > messages.log
+${kinit} --keytab=${keytab} ${server}@$R && { ec=1 ; eval "${testfailed}"; }
+${kadmin} modify --attributes=-disallow-client ${server} || exit 1
 ${kinit} --keytab=${keytab} ${server}@$R || { ec=1 ; eval "${testfailed}"; }
 echo "Listing tickets"; > messages.log
 ${klist} | grep "Principal: ${server}" > /dev/null || \

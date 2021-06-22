@@ -1651,6 +1651,9 @@ tgs_build_reply(astgs_request_t priv,
 	    goto out;
 	}
 	_krb5_principalname2krb5_principal(context, &p, t->sname, t->realm);
+	ret = krb5_unparse_name(context, p, &tpn);
+	if (ret)
+		goto out;
 	if(t->enc_part.kvno){
 	    second_kvno = *t->enc_part.kvno;
 	    kvno_ptr = &second_kvno;
@@ -1676,7 +1679,7 @@ tgs_build_reply(astgs_request_t priv,
 	if(ret)
 	    goto out;
 
-	ret = verify_flags(context, config, &adtkt, spn);
+	ret = verify_flags(context, config, &adtkt, tpn);
 	if (ret)
 	    goto out;
 

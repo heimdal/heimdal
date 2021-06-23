@@ -62,6 +62,14 @@ typedef struct krb5_kdc_configuration {
 
     krb5_boolean encode_as_rep_as_tgs_rep; /* bug compatibility */
 
+    /*
+     * Windows 2019 (and earlier versions) always sends the salt
+     * and Samba has testsuites that check this behaviour, so a
+     * Samba AD DC will set this flag to match the AS-REP packet
+     * exactly.
+     */
+    krb5_boolean force_include_pa_etype_salt;
+
     krb5_boolean tgt_use_strongest_session_key;
     krb5_boolean preauth_use_strongest_session_key;
     krb5_boolean svc_use_strongest_session_key;

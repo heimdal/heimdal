@@ -1404,6 +1404,15 @@ get_pa_etype_info_both(krb5_context context,
     krb5_error_code ret;
 
     /*
+     * Windows 2019 (and earlier versions) always sends the salt
+     * and Samba has testsuites that check this behaviour, so a
+     * Samba AD DC will set this flag to match the AS-REP packet
+     * more closely.
+     */
+    if (config->force_include_pa_etype_salt)
+	include_salt = TRUE;
+
+    /*
      * RFC4120 requires:
      *   When the AS server is to include pre-authentication data in a
      *   KRB-ERROR or in an AS-REP, it MUST use PA-ETYPE-INFO2, not

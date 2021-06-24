@@ -457,9 +457,10 @@ _gss_load_mech(void)
 		continue;
 	}
 	fclose(fp);
-#endif
 
 out:
+
+#endif
 	add_builtin(__gss_sanon_initialize());
 	HEIMDAL_MUTEX_unlock(&_gss_mech_mutex);
 }

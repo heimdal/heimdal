@@ -127,6 +127,7 @@ main(int argc, char **argv)
 	krb5_ticket *ticket;
 	char *server;
 
+        memset(&ss, 0, sizeof(ss));
 	sock = STDIN_FILENO;
 #ifdef SUPPORT_INETD
 	if (inetd_flag == -1) {

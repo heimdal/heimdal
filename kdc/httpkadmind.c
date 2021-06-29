@@ -171,6 +171,7 @@ typedef struct kadmin_request_desc {
     unsigned int revoke:1;
     unsigned int create:1;
     unsigned int ro:1;
+    unsigned int is_self:1;
     char frombuf[128];
 } *kadmin_request_desc;
 
@@ -875,7 +876,7 @@ check_service_name(kadmin_request_desc r, const char *name)
         return 0;
     krb5_set_error_message(r->context, EACCES,
                            "No one is allowed to fetch keys for "
-                           "Heimdal service %s because of authorizer "
+                           "service \"%s\" because of authorizer "
                            "limitations", name);
     return EACCES;
 }
@@ -916,6 +917,8 @@ param_cb(void *d,
                strcmp(key, "rotate") == 0       ||
                strcmp(key, "create") == 0       ||
                strcmp(key, "ro") == 0) {
+        heim_audit_addkv((heim_svc_req_desc)r, KDC_AUDIT_VIS,
+                         "requested_option", "%s", key);
         if (!val || strcmp(val, "true") != 0)
             krb5_set_error_message(r->context, ret = EINVAL,
                                    "get-keys \"%s\" q-param accepts "
@@ -930,28 +933,38 @@ param_cb(void *d,
             r->create = 1;
         else if (strcmp(key, "ro") == 0)
             r->ro = 1;
-        if (ret == 0)
-            heim_audit_addkv((heim_svc_req_desc)r, KDC_AUDIT_VIS,
-                             "requested_option", "%s", key);
     } else if (strcmp(key, "dNSName") == 0 && val) {
-        s = heim_string_create(val);
-        if (!s)
-            ret = krb5_enomem(r->context);
-        else
-            ret = heim_array_append_value(r->hostnames, s);
         heim_audit_addkv((heim_svc_req_desc)r, KDC_AUDIT_VIS,
                          "requested_dNSName", "%s", val);
-        ret = hx509_request_add_dns_name(r->context->hx509ctx, r->req, val);
+        if (r->is_self) {
+            krb5_set_error_message(r->context, ret = EACCES,
+                                   "only one service may be requested for self");
+        } else if (strchr(val, '.') == NULL) {
+            krb5_set_error_message(r->context, ret = EACCES,
+                                   "dNSName must have at least one '.' in it");
+        } else {
+            s = heim_string_create(val);
+            if (!s)
+                ret = krb5_enomem(r->context);
+            else
+                ret = heim_array_append_value(r->hostnames, s);
+        }
+        if (ret == 0)
+            ret = hx509_request_add_dns_name(r->context->hx509ctx, r->req, val);
     } else if (strcmp(key, "service") == 0 && val) {
-        ret = check_service_name(r, val);
+        heim_audit_addkv((heim_svc_req_desc)r, KDC_AUDIT_VIS,
+                         "requested_service", "%s", val);
+        if (r->is_self)
+            krb5_set_error_message(r->context, ret = EACCES,
+                                   "use \"spn\" for self");
+        else
+            ret = check_service_name(r, val);
         if (ret == 0) {
             s = heim_string_create(val);
             if (!s)
                 ret = krb5_enomem(r->context);
             else
                 ret = heim_array_append_value(r->service_names, s);
-            heim_audit_addkv((heim_svc_req_desc)r, KDC_AUDIT_VIS,
-                             "requested_service", "%s", val);
         }
     } else if (strcmp(key, "enctypes") == 0 && val) {
         r->enctypes = strdup(val);
@@ -959,6 +972,11 @@ param_cb(void *d,
             ret = krb5_enomem(r->context);
         heim_audit_addkv((heim_svc_req_desc)r, KDC_AUDIT_VIS,
                          "requested_enctypes", "%s", val);
+    } else if (r->is_self && strcmp(key, "spn") == 0 && val) {
+        heim_audit_addkv((heim_svc_req_desc)r, KDC_AUDIT_VIS,
+                         "requested_spn", "%s", val);
+        krb5_set_error_message(r->context, ret = EACCES,
+                               "only one service may be requested for self");
     } else if (strcmp(key, "spn") == 0 && val) {
         krb5_principal p = NULL;
         const char *hostname = "";
@@ -971,17 +989,44 @@ param_cb(void *d,
         if (ret == 0 && krb5_principal_get_realm(r->context, p) == NULL)
             ret = krb5_principal_set_realm(r->context, p,
                                            r->realm ? r->realm : realm);
+
+        /*
+         * The SPN has to have two components.
+         *
+         * TODO: Support more components?  Support AD-style NetBIOS computer
+         *       account names?
+         */
         if (ret == 0 && krb5_principal_get_num_comp(r->context, p) != 2)
             ret = ENOTSUP;
-        if (ret == 0)
+
+        /*
+         * Allow only certain service names.  Except that when
+         * the SPN == the requestor's principal name then allow the "host"
+         * service name.
+         */
+        if (ret == 0) {
+            const char *service =
+                krb5_principal_get_comp_string(r->context, p, 0);
+
+            if (strcmp(service, "host") == 0 &&
+                krb5_principal_compare(r->context, p, r->cprinc) &&
+                !r->is_self &&
+                heim_array_get_length(r->hostnames) == 0 &&
+                heim_array_get_length(r->spns) == 0) {
+                r->is_self = 1;
+            } else
+                ret = check_service_name(r, service);
+        }
+        if (ret == 0 && !krb5_principal_compare(r->context, p, r->cprinc))
             ret = check_service_name(r,
                                      krb5_principal_get_comp_string(r->context,
                                                                     p, 0));
-        if (ret == 0)
+        if (ret == 0) {
             hostname = krb5_principal_get_comp_string(r->context, p, 1);
-        if (!hostname || !strchr(hostname, '.'))
-            krb5_set_error_message(r->context, ret = ENOTSUP,
-                                   "Only host-based service names supported");
+            if (!hostname || !strchr(hostname, '.'))
+                krb5_set_error_message(r->context, ret = ENOTSUP,
+                                       "Only host-based service names supported");
+        }
         if (ret == 0 && r->realm)
             ret = krb5_principal_set_realm(r->context, p, r->realm);
         else if (ret == 0 && realm)
@@ -1016,19 +1061,25 @@ authorize_req(kadmin_request_desc r)
 {
     krb5_error_code ret;
 
+    r->is_self = 0;
     ret = hx509_request_init(r->context->hx509ctx, &r->req);
     if (ret)
         return bad_enomem(r, ret);
     (void) MHD_get_connection_values(r->connection, MHD_GET_ARGUMENT_KIND,
                                      param_cb, r);
     ret = r->ret;
+    if (ret == EACCES)
+        return bad_403(r, ret, "Not authorized to requested principal(s)");
     if (ret)
         return bad_req(r, ret, MHD_HTTP_SERVICE_UNAVAILABLE,
                        "Could not handle query parameters");
-    ret = kdc_authorize_csr(r->context, "ext_keytab", r->req, r->cprinc);
+    if (r->is_self)
+        ret = 0;
+    else
+        ret = kdc_authorize_csr(r->context, "ext_keytab", r->req, r->cprinc);
     if (ret == EACCES || ret == EINVAL || ret == ENOTSUP ||
         ret == KRB5KDC_ERR_POLICY)
-        return bad_403(r, ret, "Not authorized to requested certificate");
+        return bad_403(r, ret, "Not authorized to requested principal(s)");
     if (ret)
         return bad_req(r, ret, MHD_HTTP_SERVICE_UNAVAILABLE,
                        "Error checking authorization");

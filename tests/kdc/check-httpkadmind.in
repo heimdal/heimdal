@@ -65,7 +65,8 @@ restport2=@restport2@
 server=datan.test.h5l.se
 otherserver=other.test.h5l.se
 cache="FILE:${objdir}/cache.krb5"
-admincache="FILE:${objdir}/cache2.krb5"
+cache2="FILE:${objdir}/cache2.krb5"
+admincache="FILE:${objdir}/cache3.krb5"
 keyfile="${hx509_data}/key.der"
 keyfile2="${hx509_data}/key2.der"
 kt=${objdir}/kt
@@ -81,10 +82,14 @@ kadmind="${kadmind} --keytab=${keytab} --detach -p $admport"
 httpkadmind2="${httpkadmind} --reverse-proxied -T Negotiate -p $restport2"
 httpkadmind="${httpkadmind} --reverse-proxied -T Negotiate -p $restport1"
 
+kinit2="${kinit} -c $cache2 ${afs_no_afslog}"
 kinit="${kinit} -c $cache ${afs_no_afslog}"
 adminklist="${klist} --hidden -v -c $admincache"
+klist2="${klist} --hidden -v -c $cache2"
 klist="${klist} --hidden -v -c $cache"
+kgetcred2="${kgetcred} -c $cache2"
 kgetcred="${kgetcred} -c $cache"
+kdestroy2="${kdestroy} -c $cache2 ${afs_no_unlog}"
 kdestroy="${kdestroy} -c $cache ${afs_no_unlog}"
 kx509="${kx509} -c $cache"
 
@@ -159,11 +164,11 @@ get_keytab_POST() {
     get_keytab "$q" -X POST --data-binary @/dev/null -f "$@" && 
         { echo "POST succeeded w/o CSRF token!"; return 1; }
     get_keytab "$q" -X POST --data-binary @/dev/null -D response-headers "$@"
-    grep ^X-CSRF-Token: response-headers >/dev/null ||
-        { echo "POST w/o CSRF token had response w/o CSRF token!"; return 1; }
-    get_keytab "$q" -X POST --data-binary @/dev/null -f                 \
+    grep ^X-CSRF-Token: response-headers >/dev/null || return 1
+    get_keytab "$q" -X POST --data-binary @/dev/null -D response-headers \
         -H "$(sed -e 's/\r//' response-headers | grep ^X-CSRF-Token:)" "$@"
-    return $?
+    grep '^HTTP/1.1 200' response-headers >/dev/null || return $?
+    return 0
 }
 
 get_keytab_POST_redir() {
@@ -481,6 +486,38 @@ $kimpersonate --ticket-flags=initial --ccache=$admincache -k $keytab -t aes128-c
 $adminklist -t >/dev/null ||
     { echo "failed to setup kimpersonate credentials"; exit 2; }
 
+
+echo "Making PKINIT certs for KDC"
+${hxtool} issue-certificate \
+          --self-signed \
+          --issue-ca \
+          --ca-private-key=FILE:${keyfile} \
+          --subject="CN=CA,DC=test,DC=h5l,DC=se" \
+          --certificate="FILE:ca.crt" || exit 1
+${hxtool} request-create \
+         --subject="CN=kdc,DC=test,DC=h5l,DC=se" \
+         --key=FILE:${keyfile2} \
+         req-kdc.der || exit 1
+${hxtool} issue-certificate \
+          --ca-certificate=FILE:$objdir/ca.crt,${keyfile} \
+          --type="pkinit-kdc" \
+          --pk-init-principal="krbtgt/TEST.H5L.SE@TEST.H5L.SE" \
+          --req="PKCS10:req-kdc.der" \
+          --certificate="FILE:kdc.crt" || exit 1
+${hxtool} request-create \
+         --subject="CN=bar,DC=test,DC=h5l,DC=se" \
+         --key=FILE:${keyfile2} \
+         req-pkinit.der ||
+         { echo "Failed to make CSR for PKINIT client cert"; exit 1; }
+${hxtool} issue-certificate \
+          --ca-certificate=FILE:$objdir/ca.crt,${keyfile} \
+          --type="pkinit-client" \
+          --pk-init-principal="host/synthesized.${domain}@$R" \
+          --req="PKCS10:req-pkinit.der" \
+          --lifetime=7d \
+          --certificate="FILE:pkinit-synthetic.crt" ||
+         { echo "Failed to make PKINIT client cert"; exit 1; }
+
 echo "Starting kdc needed for httpkadmind authentication to kadmind"
 ${kdc} --detach --testing || { echo "kdc failed to start"; exit 1; }
 kdcpid=`getpid kdc`
@@ -585,6 +622,50 @@ cmp extracted_keytab.rest1 extracted_keytab.rest2 > /dev/null &&
 test "$(grep $p extracted_keytab.rest2 | wc -l)" -eq 3 ||
     { echo "Wrong number of new keys!"; exit 1; }
 
+echo "Checking that host services as clients can self-serve"
+hn=synthesized.${domain}
+p=host/$hn
+KRB5CCNAME=$admincache ${kadmin} get -s $p &&
+    { echo "Internal error -- $p exists too soon"; exit 1; }
+${kinit2} -C "FILE:${objdir}/pkinit-synthetic.crt,${keyfile2}" ${p}@${R} || \
+    { echo "Failed to kinit with PKINIT client cert"; exit 1; }
+${kgetcred2} HTTP/localhost@$R || echo WAT
+${klist2}
+rm -f extracted_keytab*
+KRB5CCNAME=$cache2 \
+get_keytab_POST "spn=$p&create=true" -s -o "${objdir}/extracted_keytab" ||
+    { echo "Failed to create and extract host keys for self"; exit 1; }
+${ktutil} -k "${objdir}/extracted_keytab" list ||
+    { echo "Failed to create and extract host keys for self (bogus keytab)"; exit 1; }
+KRB5CCNAME=$admincache ${kadmin} get -s $p ||
+    { echo "Failed to create and extract host keys for self"; exit 1; }
+
+echo "Checking that host services can't get other host service principals"
+hn=nonexistent.${domain}
+p=host/$hn
+KRB5CCNAME=$cache2 \
+get_keytab_POST "spn=$p&create=true" -s -o "${objdir}/extracted_keytab2" &&
+    { echo "Failed to fail to create and extract host keys for other!"; exit 1; }
+${ktutil} -k "${objdir}/extracted_keytab2" list || true
+KRB5CCNAME=$admincache ${kadmin} get -s $p &&
+    { echo "Failed to fail to create and extract host keys for other!"; exit 1; }
+
+echo "Checking that host services can't get keys for themselves and others"
+hn=synthesized.${domain}
+p=host/$hn
+p2=host/nonexistent.${domain}
+${kinit2} -C "FILE:${objdir}/pkinit-synthetic.crt,${keyfile2}" ${p}@${R} || \
+    { echo "Failed to kinit with PKINIT client cert"; exit 1; }
+${kgetcred2} HTTP/localhost@$R || echo WAT
+${klist2}
+rm -f extracted_keytab*
+KRB5CCNAME=$cache2 \
+get_keytab_POST "spn=$p&spn=$p2&create=true" -s -o "${objdir}/extracted_keytab" &&
+    { echo "Failed to fail to create and extract host keys for other!"; exit 1; }
+${ktutil} -k "${objdir}/extracted_keytab2" list || true
+KRB5CCNAME=$admincache ${kadmin} get -s $p2 &&
+    { echo "Failed to fail to create and extract host keys for other!"; exit 1; }
+
 grep 'Internal error' messages.log &&
     { echo "Internal errors in log"; exit 1; }
 
@@ -593,7 +674,10 @@ sh ${leaks_kill} kadmind $kadmindpid || ec=1
 sh ${leaks_kill} kadmind $kadmind2pid || ec=1
 sh ${leaks_kill} kdc $kdcpid || ec=1
 
-trap "" EXIT
+if [ $ec = 0 ]; then
+    trap "" EXIT
+    echo "Success"
+fi
 
 # TODO
 #

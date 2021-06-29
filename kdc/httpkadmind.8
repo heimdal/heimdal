@@ -160,6 +160,23 @@ but using
 .Nm [ext_keytab]
 as the
 .Nm krb5.conf(5) section.
+Clients with host-based principals for the the host service can
+create and extract keys for their own service name, but otherwise
+a number of service names are not denied:
+.Bl -tag -width Ds -offset indent
+.It Dq host
+.It Dq root
+.It Dq exceed
+.El
+as well as all the service names for Heimdal-specific services:
+.Bl -tag -width Ds -offset indent
+.It Dq krbtgt
+.It Dq iprop
+.It Dq kadmin
+.It Dq hprop
+.It Dq WELLKNOWN
+.It Dq K
+.El
 .Pp
 Supported options:
 .Bl -tag -width Ds -offset indent

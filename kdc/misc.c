@@ -76,7 +76,8 @@ synthesize_client(krb5_context context,
     /* Hope this works! */
     null_db.hdb_destroy = synthesize_hdb_close;
     null_db.hdb_close = synthesize_hdb_close;
-    *db = &null_db;
+    if (db)
+        *db = &null_db;
 
     ret = (e = calloc(1, sizeof(*e))) ? 0 : krb5_enomem(context);
     if (ret == 0) {
@@ -98,10 +99,10 @@ synthesize_client(krb5_context context,
         e->entry.extensions = NULL;
     }
     if (ret == 0)
-        ret = (e->entry.max_renew = calloc(1, sizeof(e->entry.max_renew))) ?
+        ret = (e->entry.max_renew = calloc(1, sizeof(*e->entry.max_renew))) ?
             0 : krb5_enomem(context);
     if (ret == 0)
-        ret = (e->entry.max_life = calloc(1, sizeof(e->entry.max_life))) ?
+        ret = (e->entry.max_life = calloc(1, sizeof(*e->entry.max_life))) ?
             0 : krb5_enomem(context);
     if (ret == 0)
         ret = krb5_copy_principal(context, princ, &e->entry.principal);

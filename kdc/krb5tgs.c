@@ -1977,8 +1977,28 @@ server_lookup:
 	goto out;
     }
 
+    {
+        krb5_data verified_cas;
+
+        /*
+         * If the client doesn't exist in the HDB but has a TGT and it's
+         * obtained with PKINIT then we assume it's a synthetic client -- that
+         * is, a client whose name was vouched for by a CA using a PKINIT SAN,
+         * but which doesn't exist in the HDB proper.  We'll allow such a
+         * client to do TGT requests even though normally we'd reject all
+         * clients that don't exist in the HDB.
+         */
+        ret = krb5_ticket_get_authorization_data_type(context, ticket,
+                                                      KRB5_AUTHDATA_INITIAL_VERIFIED_CAS,
+                                                      &verified_cas);
+        if (ret == 0) {
+            krb5_data_free(&verified_cas);
+            flags |= HDB_F_SYNTHETIC_OK;
+        }
+    }
     ret = _kdc_db_fetch(context, config, cp, HDB_F_GET_CLIENT | flags,
 			NULL, &clientdb, &client);
+    flags &= ~HDB_F_SYNTHETIC_OK;
     priv->client = client;
     if(ret == HDB_ERR_NOT_FOUND_HERE) {
 	/* This is OK, we are just trying to find out if they have
@@ -2006,6 +2026,11 @@ server_lookup:
 	msg = krb5_get_error_message(context, ret);
 	kdc_log(context, config, 4, "Client not found in database: %s", msg);
 	krb5_free_error_message(context, msg);
+    } else if (ret == 0 &&
+               (client->entry.flags.invalid || !client->entry.flags.client)) {
+        kdc_log(context, config, 4, "Client has invalid attribute set");
+        ret = KRB5KDC_ERR_POLICY;
+        goto out;
     }
 
     ret = check_PAC(context, config, cp, NULL,
@@ -2139,6 +2164,10 @@ server_lookup:
 	    if (ret)
 		goto out;
 
+            /*
+             * Note no HDB_F_SYNTHETIC_OK -- impersonating non-existent clients
+             * is probably not desirable!
+             */
 	    ret = _kdc_db_fetch(context, config, tp, HDB_F_GET_CLIENT | flags,
 				NULL, &s4u2self_impersonated_clientdb,
 				&s4u2self_impersonated_client);

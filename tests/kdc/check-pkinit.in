@@ -156,6 +156,15 @@ ${hxtool} issue-certificate \
           --lifetime=7d \
 	  --certificate="FILE:pkinit.crt" || exit 1
 
+echo "issue user certificate (pkinit san; synthetic principal)"
+${hxtool} issue-certificate \
+	  --ca-certificate=FILE:$objdir/ca.crt,${keyfile} \
+	  --type="pkinit-client" \
+          --pk-init-principal="synthetized@TEST.H5L.SE" \
+	  --req="PKCS10:req-pkinit.der" \
+          --lifetime=7d \
+	  --certificate="FILE:pkinit-synthetic.crt" || exit 1
+
 echo "issue user 2 certificate (no san)"
 ${hxtool} issue-certificate \
 	  --ca-certificate=FILE:$objdir/ca.crt,${keyfile} \
@@ -193,7 +202,7 @@ KRB5_CONFIG="${objdir}/krb5-pkinit2.conf"
 ${kdc} --detach --testing || { echo "kdc failed to start"; exit 1; }
 kdcpid=`getpid kdc`
 
-trap 'kill -9 ${kdcpid}; echo signal killing kdc; cat ca.crt kdc.crt pkinit.crt; exit 1;' EXIT
+trap 'kill -9 ${kdcpid}; echo signal killing kdc; cat ca.crt kdc.crt pkinit.crt pkinit-synthetic.crt; exit 1;' EXIT
 
 ec=0
 
@@ -210,6 +219,14 @@ if jq --version >/dev/null 2>&1 && jq -ne true >/dev/null 2>&1; then
                (floor < 4)' >/dev/null &&
            { ec=1 ; eval "${testfailed}"; }
 fi
+${kdestroy}
+
+echo "Trying pk-init (principal in cert; synthetic)"; > messages.log
+base="${objdir}"
+${kinit} --lifetime=5d -C FILE:${base}/pkinit-synthetic.crt,${keyfile2} synthetized@${R} || \
+	{ ec=1 ; eval "${testfailed}"; }
+${kgetcred} ${server}@${R} || { ec=1 ; eval "${testfailed}"; }
+${klist}
 ${kdestroy}
 
 echo "Restarting kdc ($kdcpid)"

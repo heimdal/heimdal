@@ -781,6 +781,17 @@ Allow address-less tickets.
 .\" XXX
 .It Li allow-anonymous = Va BOOL
 If the kdc is allowed to hand out anonymous tickets.
+.It Li synthetic_clients = Va BOOL
+If enabled then the KDC will issue tickets for clients that don't
+exist in the HDB provided that they use PKINIT, that PKINIT is
+enabled, and that the client's have certificates with PKINIT
+subject alternative names (SANs).
+.It Li synthetic_clients_max_life = Va TIME
+Maximum ticket lifetime for synthetic clients.
+Default: 5 minutes.
+.It Li synthetic_clients_max_renew = Va TIME
+Maximum ticket renewable lifetime for synthetic clients.
+Default: 5 minutes.
 .It Li pkinit_identity = Va HX509-STORE
 This is an HX509 store containing the KDC's PKINIT credential
 (private key and end-entity certificate).

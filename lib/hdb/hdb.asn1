@@ -53,6 +53,7 @@ HDBFlags ::= BIT STRING {
 	materialize(19),		-- store even if within virtual namespace
 	virtual-keys(20),		-- entry     stored; keys mostly derived
 	virtual(21),			-- entry not stored; keys always derived
+	synthetic(22),			-- entry not stored; for PKINIT
 
 	force-canonicalize(30),		-- force the KDC to return the canonical
 					-- principal irrespective of the setting

@@ -171,7 +171,11 @@ _kdc_find_etype(astgs_request_t r, uint32_t flags,
     Key *key = NULL;
     size_t i, k, m;
 
-    if (flags & KFE_USE_CLIENT) {
+    if (is_preauth && (flags & KFE_USE_CLIENT) &&
+        r->client->entry.flags.synthetic)
+        return KRB5KDC_ERR_ETYPE_NOSUPP;
+
+    if ((flags & KFE_USE_CLIENT) && !r->client->entry.flags.synthetic) {
 	princ = r->client;
 	request_princ = r->client_princ;
     } else {
@@ -481,7 +485,8 @@ pa_pkinit_validate(astgs_request_t r, const PA_DATA *pa)
     }
 
     r->pa_endtime = _kdc_pk_endtime(pkp);
-    r->pa_max_life = _kdc_pk_max_life(pkp);
+    if (!r->client->entry.flags.synthetic)
+        r->pa_max_life = _kdc_pk_max_life(pkp);
 
     _kdc_r_log(r, 4, "PKINIT pre-authentication succeeded -- %s using %s",
 	       r->cname, client_cert);
@@ -492,10 +497,8 @@ pa_pkinit_validate(astgs_request_t r, const PA_DATA *pa)
 	_kdc_set_e_text(r, "Failed to build PK-INIT reply");
 	goto out;
     }
-#if 0
     ret = _kdc_add_initial_verified_cas(r->context, r->config,
 					pkp, &r->et);
-#endif
  out:
     if (pkp)
 	_kdc_pk_free_client_param(r->context, pkp);
@@ -864,13 +867,15 @@ struct kdc_patypes {
     unsigned int flags;
 #define PA_ANNOUNCE	1
 #define PA_REQ_FAST	2 /* only use inside fast */
+#define PA_SYNTHETIC_OK	4
     krb5_error_code (*validate)(astgs_request_t, const PA_DATA *pa);
 };
 
 static const struct kdc_patypes pat[] = {
 #ifdef PKINIT
     {
-	KRB5_PADATA_PK_AS_REQ, "PK-INIT(ietf)", PA_ANNOUNCE,
+	KRB5_PADATA_PK_AS_REQ, "PK-INIT(ietf)",
+        PA_ANNOUNCE | PA_SYNTHETIC_OK,
 	pa_pkinit_validate
     },
     {
@@ -1916,8 +1921,8 @@ _kdc_as_rep(astgs_request_t r)
     }
 
     ret = _kdc_db_fetch(context, config, r->client_princ,
-			HDB_F_GET_CLIENT | flags, NULL,
-			&r->clientdb, &r->client);
+                        HDB_F_GET_CLIENT | HDB_F_SYNTHETIC_OK | flags, NULL,
+                        &r->clientdb, &r->client);
     switch (ret) {
     case 0:	/* Success */
 	break;
@@ -1946,12 +1951,6 @@ _kdc_as_rep(astgs_request_t r)
 	goto out;
     }
     default:
-        /*
-         * We could have an option to synthetically construct an HDB entry for
-         * the client from its certificate, if it used PKINIT and its cert has
-         * the PKINIT SAN.  We could have a default HDB entry for this case to
-         * provide default field values.
-         */
 	msg = krb5_get_error_message(context, ret);
 	kdc_log(context, config, 4, "UNKNOWN -- %s: %s", r->cname, msg);
 	krb5_free_error_message(context, msg);
@@ -2015,6 +2014,12 @@ _kdc_as_rep(astgs_request_t r)
 	    i = 0;
 	    pa = _kdc_find_padata(req, &i, pat[n].type);
 	    if (pa) {
+                if (r->client->entry.flags.synthetic &&
+                    !(pat[n].flags & PA_SYNTHETIC_OK)) {
+                    kdc_log(context, config, 4, "UNKNOWN -- %s", r->cname);
+                    ret = HDB_ERR_NOENTRY;
+                    goto out;
+                }
                 _kdc_audit_addkv((kdc_request_t)r, KDC_AUDIT_VIS, "pa", "%s",
                                  pat[n].name);
 		ret = pat[n].validate(r, pa);
@@ -2050,6 +2055,12 @@ _kdc_as_rep(astgs_request_t r)
 	Key *ckey = NULL;
 	size_t n;
 	krb5_boolean default_salt;
+
+        if (r->client->entry.flags.synthetic) {
+            kdc_log(context, config, 4, "UNKNOWN -- %s", r->cname);
+            ret = HDB_ERR_NOENTRY;
+            goto out;
+        }
 
 	for (n = 0; n < sizeof(pat) / sizeof(pat[0]); n++) {
 	    if ((pat[n].flags & PA_ANNOUNCE) == 0)

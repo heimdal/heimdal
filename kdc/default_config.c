@@ -102,8 +102,11 @@ krb5_kdc_get_config(krb5_context context, krb5_kdc_configuration **config)
     c->enable_pkinit = FALSE;
     c->pkinit_princ_in_cert = TRUE;
     c->pkinit_require_binding = TRUE;
+    c->synthetic_clients = FALSE;
     c->pkinit_max_life_from_cert_extension = FALSE;
     c->pkinit_max_life_bound = 0;
+    c->synthetic_clients_max_life = 300;
+    c->synthetic_clients_max_renew = 300;
     c->pkinit_dh_min_bits = 1024;
     c->db = NULL;
     c->num_db = 0;
@@ -299,6 +302,13 @@ krb5_kdc_get_config(krb5_context context, krb5_kdc_configuration **config)
                                      "pkinit_max_life_from_cert_extension",
                                      NULL);
 
+    c->synthetic_clients =
+	krb5_config_get_bool_default(context, NULL,
+				     c->synthetic_clients,
+				     "kdc",
+				     "synthetic_clients",
+				     NULL);
+
     c->pkinit_max_life_bound =
          krb5_config_get_time_default(context, NULL, 0, "kdc",
                                       "pkinit_max_life_bound",
@@ -307,6 +317,16 @@ krb5_kdc_get_config(krb5_context context, krb5_kdc_configuration **config)
     c->pkinit_max_life_from_cert =
          krb5_config_get_time_default(context, NULL, 0, "kdc",
                                       "pkinit_max_life_from_cert",
+                                      NULL);
+
+    c->synthetic_clients_max_life =
+         krb5_config_get_time_default(context, NULL, 300, "kdc",
+                                      "synthetic_clients_max_life",
+                                      NULL);
+
+    c->synthetic_clients_max_renew =
+         krb5_config_get_time_default(context, NULL, 300, "kdc",
+                                      "synthetic_clients_max_renew",
                                       NULL);
 
     *config = c;

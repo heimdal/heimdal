@@ -737,7 +737,7 @@ load_config(krb5_context context, HDB *db)
 krb5_error_code
 hdb_create(krb5_context context, HDB **db, const char *filename)
 {
-    krb5_error_code ret;
+    krb5_error_code ret = ENOTSUP;
     struct cb_s cb_ctx;
 
     *db = NULL;

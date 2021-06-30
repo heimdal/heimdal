@@ -387,7 +387,7 @@ _kdc_r_log(astgs_request_t r, int level, const char *fmt, ...)
 }
 
 void
-_kdc_set_e_text(astgs_request_t r, char *fmt, ...)
+_kdc_set_e_text(astgs_request_t r, const char *fmt, ...)
 	__attribute__ ((__format__ (__printf__, 2, 3)))
 {
     va_list ap;

@@ -1690,7 +1690,7 @@ tgs_build_reply(astgs_request_t priv,
 	    goto out;
         }
 
-	ret = verify_flags(context, config, &adtkt, spn);
+	ret = verify_flags(context, config, &adtkt, tpn);
 	if (ret) {
             _kdc_audit_addreason((kdc_request_t)priv,
                                  "User-to-user TGT expired or invalid");

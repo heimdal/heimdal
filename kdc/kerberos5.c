@@ -580,6 +580,13 @@ pa_enc_chal_validate(astgs_request_t r, const PA_DATA *pa)
 	return ret;
     }
 
+    if (r->client->entry.flags.locked_out) {
+       ret = KRB5KDC_ERR_CLIENT_REVOKED;
+       kdc_log(r->context, r->config, 0,
+               "Client (%s) is locked out", r->cname);
+       return ret;
+    }
+
     ret = decode_EncryptedData(pa->padata_value.data,
 			       pa->padata_value.length,
 			       &enc_data,
@@ -722,6 +729,13 @@ pa_enc_ts_validate(astgs_request_t r, const PA_DATA *pa)
     Key *pa_key;
     char *str;
 	
+    if (r->client->entry.flags.locked_out) {
+       ret = KRB5KDC_ERR_CLIENT_REVOKED;
+       kdc_log(r->context, r->config, 0,
+               "Client (%s) is locked out", r->cname);
+       return ret;
+    }
+
     ret = decode_EncryptedData(pa->padata_value.data,
 			       pa->padata_value.length,
 			       &enc_data,

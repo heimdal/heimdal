@@ -99,7 +99,7 @@ sequence_symbol(const char *basename, const Type *t)
 static const char *
 time_symbol(const char *basename, const Type *t)
 {
-    return "time_t";
+    return "der_timestamp";
 }
 
 static const char *

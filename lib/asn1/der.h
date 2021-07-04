@@ -37,6 +37,7 @@
 #define __DER_H__
 
 #include <stdint.h>
+#include <der-types.h>
 
 typedef enum {
     ASN1_C_UNIV = 0,
@@ -85,23 +86,12 @@ enum {
 
 #define ASN1_INDEFINITE 0xdce0deed
 
-typedef struct heim_der_time_t {
-    time_t dt_sec;
-    unsigned long dt_nsec;
-} heim_der_time_t;
-
-typedef struct heim_ber_time_t {
-    time_t bt_sec;
-    unsigned bt_nsec;
-    int bt_zone;
-} heim_ber_time_t;
-
 struct asn1_template;
 
 #include <der-protos.h>
 
 int _heim_fix_dce(size_t reallen, size_t *len);
 int _heim_der_set_sort(const void *, const void *);
-int _heim_time2generalizedtime (time_t, heim_octet_string *, int);
+int _heim_time2generalizedtime(der_timestamp, heim_octet_string *, int);
 
 #endif /* __DER_H__ */

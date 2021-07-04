@@ -284,9 +284,10 @@ LDAP_addmod_generalized_time(LDAPMod *** mods, int modop,
 {
     char buf[22];
     struct tm *tm;
+	time_t tmp = *time;
 
     /* XXX not threadsafe */
-    tm = gmtime(time);
+    tm = gmtime(&tmp);
     strftime(buf, sizeof(buf), "%Y%m%d%H%M%SZ", tm);
 
     return LDAP_addmod(mods, modop, attribute, buf);

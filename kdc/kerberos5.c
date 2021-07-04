@@ -39,7 +39,7 @@
 #define __attribute__(X)
 
 void
-_kdc_fix_time(time_t **t)
+_kdc_fix_time(krb5_timestamp **t)
 {
     if(*t == NULL){
 	ALLOC(*t);

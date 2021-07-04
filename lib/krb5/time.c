@@ -106,17 +106,18 @@ krb5_us_timeofday (krb5_context context,
 }
 
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
-krb5_format_time(krb5_context context, time_t t,
+krb5_format_time(krb5_context context, krb5_timestamp t,
 		 char *s, size_t len, krb5_boolean include_time)
 {
     struct tm *tm;
+    time_t tmp = t;
     if(context->log_utc)
-	tm = gmtime (&t);
+	tm = gmtime (&tmp);
     else
-	tm = localtime(&t);
+	tm = localtime(&tmp);
     if(tm == NULL ||
        strftime(s, len, include_time ? context->time_fmt : context->date_fmt, tm) == 0)
-	snprintf(s, len, "%ld", (long)t);
+	snprintf(s, len, "%llu", (unsigned long long)t);
     return 0;
 }
 

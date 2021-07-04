@@ -388,8 +388,8 @@ test_general_string (void)
 static int
 cmp_generalized_time (void *a, void *b)
 {
-    time_t *ta = (time_t *)a;
-    time_t *tb = (time_t *)b;
+    der_timestamp *ta = (der_timestamp *)a;
+    der_timestamp *tb = (der_timestamp *)b;
 
     return (int)(*tb - *ta);
 }
@@ -401,7 +401,7 @@ test_generalized_time (void)
 	{NULL, 15, "19700101000000Z", 		NULL },
 	{NULL, 15, "19851106210627Z", 		NULL }
     };
-    time_t values[] = {0, 500159187};
+    der_timestamp values[] = {0, 500159187};
     int i, ret;
     int ntests = sizeof(tests) / sizeof(*tests);
 
@@ -413,7 +413,7 @@ test_generalized_time (void)
 	    errx(1, "malloc");
     }
 
-    ret = generic_test (tests, ntests, sizeof(time_t),
+    ret = generic_test (tests, ntests, sizeof(der_timestamp),
 			(generic_encode)der_put_generalized_time,
 			(generic_length)der_length_generalized_time,
 			(generic_decode)der_get_generalized_time,
@@ -743,7 +743,7 @@ check_fail_generalized_time(void)
     };
     int ntests = sizeof(tests) / sizeof(*tests);
 
-    return generic_decode_fail(tests, ntests, sizeof(time_t),
+    return generic_decode_fail(tests, ntests, sizeof(der_timestamp),
 			       (generic_decode)der_get_generalized_time);
 }
 
@@ -1027,7 +1027,7 @@ corner_generalized_time(void)
 {
     const char *str = "760520140000Z";
     size_t size;
-    time_t t;
+    der_timestamp t;
     int ret;
 
     ret = der_get_generalized_time((const unsigned char*)str, strlen(str),
@@ -1090,8 +1090,8 @@ struct randomcheck {
     { (asn1_type_decode)der_get_octet_string_ber,
       (asn1_type_release)der_free_octet_string,
       sizeof(heim_octet_string), 20 },
-    el(generalized_time, time_t, 20),
-    el(utctime, time_t, 20),
+    el(generalized_time, der_timestamp, 20),
+    el(utctime, der_timestamp, 20),
     el(bit_string, heim_bit_string, 10),
     el(oid, heim_oid, 10),
     { NULL, NULL, 0, 0 }

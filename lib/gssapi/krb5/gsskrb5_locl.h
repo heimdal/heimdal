@@ -97,7 +97,7 @@ typedef struct {
 #define GSS_CF_DESTROY_CRED_ON_RELEASE	1
 #define GSS_CF_NO_CI_FLAGS		2
   struct krb5_keytab_data *keytab;
-  time_t endtime;
+  krb5_timestamp endtime;
   gss_cred_usage_t usage;
   gss_OID_set mechanisms;
   struct krb5_ccache_data *ccache;

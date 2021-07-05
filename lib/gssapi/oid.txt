@@ -1,5 +1,5 @@
 # /*
-#  * Contact Love Hörnquist Åstrand <lha at h5l.org> for new oid arcs */
+#  * Contact Love Hörnquist Åstrand <lha at h5l.org> for new oid arcs
 #  */
 # /*
 #  * 1.2.752.43 is SU's arc.  SU's registry has arcs 13, 14, and 16

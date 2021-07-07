@@ -58,7 +58,6 @@ typedef struct gsskrb5_ctx {
   struct krb5_auth_context_data *auth_context;
   struct krb5_auth_context_data *deleg_auth_context;
   krb5_principal source, target;
-#define IS_DCE_STYLE(ctx) (((ctx)->flags & GSS_C_DCE_STYLE) != 0)
   OM_uint32 flags;
   enum { LOCAL = 1, OPEN = 2,
 	 COMPAT_OLD_DES3 = 4,
@@ -89,6 +88,12 @@ typedef struct gsskrb5_ctx {
   krb5_data fwd_data;
   krb5_crypto crypto;
 } *gsskrb5_ctx;
+
+static inline krb5_boolean
+IS_DCE_STYLE(gsskrb5_ctx ctx)
+{
+  return (ctx->flags & GSS_C_DCE_STYLE) != 0;
+}
 
 typedef struct {
   krb5_principal principal;

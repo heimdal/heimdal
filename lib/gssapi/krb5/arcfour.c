@@ -1199,7 +1199,7 @@ _gssapi_unwrap_iov_arcfour(OM_uint32 *minor_status,
 
     verify_len = header->buffer.length;
 
-    if (!IS_DCE_STYLE(context)) {
+    if (!IS_DCE_STYLE(ctx)) {
 	for (i = 0; i < iov_count; i++) {
 	    /* length in header also includes data and padding */
 	    if (GSS_IOV_BUFFER_TYPE(iov[i].type) == GSS_IOV_BUFFER_TYPE_DATA)

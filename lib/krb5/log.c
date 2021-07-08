@@ -45,17 +45,60 @@ krb5_initlog(krb5_context context,
     return heim_initlog(context->hcontext, program, fac);
 }
 
+struct krb5_addlog_func_wrapper {
+	krb5_context context;
+	krb5_log_log_func_t log_func;
+	krb5_log_close_func_t close_func;
+	void *data;
+};
+
+static void HEIM_CALLCONV krb5_addlog_func_wrapper_log(heim_context hcontext,
+                                                       const char *prefix,
+                                                       const char *msg,
+                                                       void *data)
+{
+    struct krb5_addlog_func_wrapper *w =
+        (struct krb5_addlog_func_wrapper *)data;
+
+    w->log_func(w->context,
+                prefix,
+                msg,
+                w->data);
+}
+
+static void HEIM_CALLCONV krb5_addlog_func_wrapper_close(void *data)
+{
+    struct krb5_addlog_func_wrapper *w =
+        (struct krb5_addlog_func_wrapper *)data;
+
+    w->close_func(w->data);
+    free(w);
+}
+
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_addlog_func(krb5_context context,
-		 krb5_log_facility *fac,
-		 int min,
-		 int max,
-		 krb5_log_log_func_t log_func,
-		 krb5_log_close_func_t close_func,
-		 void *data)
-    KRB5_DEPRECATED_FUNCTION("Use X instead")
+                 krb5_log_facility *fac,
+                 int min,
+                 int max,
+                 krb5_log_log_func_t log_func,
+                 krb5_log_close_func_t close_func,
+                 void *data)
 {
-    return ENOTSUP;
+    struct krb5_addlog_func_wrapper *w = NULL;
+
+    w = calloc(1, sizeof(*w));
+    if (w == NULL)
+	return heim_enomem(context->hcontext);
+
+    w->context = context;
+    w->log_func = log_func;
+    w->close_func = close_func;
+    w->data = data;
+
+    return heim_addlog_func(context->hcontext, fac, min, max,
+                            krb5_addlog_func_wrapper_log,
+                            krb5_addlog_func_wrapper_close,
+                            w);
 }
 
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL

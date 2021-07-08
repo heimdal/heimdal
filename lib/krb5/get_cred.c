@@ -559,7 +559,7 @@ get_cred_kdc(krb5_context context,
 
 	/* XXX should do better testing */
 	if (flags.b.cname_in_addl_tkt || impersonate_principal)
-	    eflags |= EXTRACT_TICKET_ALLOW_CNAME_MISMATCH;
+	    eflags |= EXTRACT_TICKET_MATCH_S4U_CLIENT;
 	if (flags.b.request_anonymous)
 	    eflags |= EXTRACT_TICKET_MATCH_ANON;
 

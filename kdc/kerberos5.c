@@ -1347,6 +1347,10 @@ get_pa_etype_info2(krb5_context context,
     if(pa.val == NULL)
 	return ENOMEM;
 
+    if (config->always_include_salt) {
+	include_salt = TRUE;
+    }
+
     ret = make_etype_info2_entry(&pa.val[0], ckey, include_salt);
     if (ret) {
 	free_ETYPE_INFO2(&pa);

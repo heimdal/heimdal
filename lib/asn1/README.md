@@ -89,7 +89,7 @@ Encoding rules?  There are many:
 
  - XML Encoding Rules (XER) ([X.693](https://www.itu.int/rec/T-REC-X/recommendation.asp?lang=en&parent=T-REC-X.693))
 
- - Generic String Encoding Rules (GSER) ([RFC2641](https://tools.ietf.org/html/rfc2641))
+ - Generic String Encoding Rules (GSER) ([RFC3641](https://tools.ietf.org/html/rfc3641))
 
  - Basic, Distinguished, and Canonical Encoding Rules (BER, DER, CER) ([X.690](https://www.itu.int/rec/T-REC-X/recommendation.asp?lang=en&parent=T-REC-X.690)
 

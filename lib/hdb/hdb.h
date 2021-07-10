@@ -71,6 +71,7 @@ enum hdb_lockop{ HDB_RLOCK, HDB_WLOCK };
 #define HDB_F_PRECHECK		16384	/* check that the operation would succeed */
 #define HDB_F_DELAY_NEW_KEYS	32768	/* apply [hdb] new_service_key_delay */
 #define HDB_F_SYNTHETIC_OK	65536	/* synthetic principal for PKINIT OK */
+#define HDB_F_GET_FAST_COOKIE  131072	/* fetch the FX-COOKIE key (not a normal principal) */
 
 /* hdb_capability_flags */
 #define HDB_CAP_F_HANDLE_ENTERPRISE_PRINCIPAL 1

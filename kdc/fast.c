@@ -53,7 +53,7 @@ get_fastuser_crypto(astgs_request_t r, krb5_enctype enctype,
 	goto out;
 
     ret = _kdc_db_fetch(r->context, r->config, fast_princ,
-			HDB_F_GET_CLIENT, NULL, NULL, &fast_user);
+			HDB_F_GET_FAST_COOKIE, NULL, NULL, &fast_user);
     krb5_free_principal(r->context, fast_princ);
     if (ret)
 	goto out;
@@ -429,7 +429,8 @@ _kdc_fast_unwrap_request(astgs_request_t r)
     }
 
     ret = _kdc_db_fetch(r->context, r->config, armor_server,
-			HDB_F_GET_SERVER | HDB_F_DELAY_NEW_KEYS,
+			HDB_F_GET_KRBTGT
+			| HDB_F_DELAY_NEW_KEYS,
 			NULL, NULL, &armor_user);
     if(ret == HDB_ERR_NOT_FOUND_HERE) {
 	kdc_log(r->context, r->config, 5,

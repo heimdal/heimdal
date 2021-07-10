@@ -629,14 +629,17 @@ rk_dns_srv_order(struct rk_dns_reply *r)
     struct rk_resource_record **srvs, **ss, **headp;
     struct rk_resource_record *rr;
     int num_srv = 0;
+    unsigned int srv_found = FALSE;
 
     rk_random_init();
 
     for(rr = r->head; rr; rr = rr->next)
-	if(rr->type == rk_ns_t_srv)
+	if(rr->type == rk_ns_t_srv) {
 	    num_srv++;
+	    srv_found = TRUE;
+	}
 
-    if(num_srv == 0)
+    if(srv_found == FALSE)
 	return;
 
     srvs = malloc(num_srv * sizeof(*srvs));

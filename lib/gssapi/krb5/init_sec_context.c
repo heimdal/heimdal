@@ -205,6 +205,7 @@ gsskrb5_get_creds(
         OM_uint32 * minor_status,
 	krb5_context context,
 	krb5_ccache ccache,
+	krb5_flags options,
 	gsskrb5_ctx ctx,
 	gss_const_name_t target_name,
 	OM_uint32 time_req,
@@ -245,7 +246,7 @@ gsskrb5_get_creds(
     this_cred.session.keytype = KEYTYPE_NULL;
 
     kret = krb5_get_credentials(context,
-				0,
+				options,
 				ccache,
 				&this_cred,
 				&ctx->kcred);
@@ -373,6 +374,7 @@ init_auth
     krb5_error_code kret;
     krb5_data fwd_data;
     OM_uint32 lifetime_rec;
+    krb5_flags options = 0;
 
     krb5_data_zero(&fwd_data);
 
@@ -389,8 +391,12 @@ init_auth
 	    goto failure;
 	}
 	ctx->more_flags |= CLOSE_CCACHE;
-    } else
+    } else {
 	ctx->ccache = cred->ccache;
+	if (cred->cred_flags & GSS_CF_NO_TRANSIT_CHECK) {
+	    options |= KRB5_GC_NO_TRANSIT_CHECK;
+	}
+    }
 
     kret = krb5_cc_get_principal (context, ctx->ccache, &ctx->source);
     if (kret) {
@@ -408,7 +414,7 @@ init_auth
 	krb5_set_default_in_tkt_etypes(context, cred->enctypes);
 
     ret = gsskrb5_get_creds(minor_status, context, ctx->ccache,
-			    ctx, name, time_req, time_rec);
+			    options, ctx, name, time_req, time_rec);
     if (ret)
 	goto failure;
 

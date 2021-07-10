@@ -1,0 +1,11 @@
+include @objdirabs@/krb5.conf
+
+# The capaths section should be private to
+# the kdc, clients should just use referrals
+[capaths]
+	TEST.H5L.SE = {
+		TEST2.H5L.SE = .
+		TEST3.H5L.SE = TEST2.H5L.SE
+		TEST4.H5L.SE = TEST2.H5L.SE
+		TEST4.H5L.SE = TEST3.H5L.SE
+	}

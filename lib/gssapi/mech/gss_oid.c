@@ -97,6 +97,12 @@ gss_OID_desc GSSAPI_LIB_VARIABLE __gss_krb5_import_cred_x_oid_desc = { 6, rk_UNC
 /* GSS_KRB5_IMPORT_RFC4121_CONTEXT_X - 1.2.752.43.13.31 */
 gss_OID_desc GSSAPI_LIB_VARIABLE __gss_krb5_import_rfc4121_context_x_oid_desc = { 6, rk_UNCONST("\x2a\x85\x70\x2b\x0d\x1f") };
 
+/* GSS_KRB5_CRED_NO_TRANSIT_CHECK_X - 1.2.752.43.13.32 */
+gss_OID_desc GSSAPI_LIB_VARIABLE __gss_krb5_cred_no_transit_check_x_oid_desc = { 6, rk_UNCONST("\x2a\x85\x70\x2b\x0d\x20") };
+
+/* GSS_KRB5_CRED_ITERATE_ACCEPTOR_KEYTAB_X - 1.2.752.43.13.33 */
+gss_OID_desc GSSAPI_LIB_VARIABLE __gss_krb5_cred_iterate_acceptor_keytab_x_oid_desc = { 6, rk_UNCONST("\x2a\x85\x70\x2b\x0d\x21") };
+
 /* GSS_C_MA_SASL_MECH_NAME - 1.2.752.43.13.100 */
 gss_OID_desc GSSAPI_LIB_VARIABLE __gss_c_ma_sasl_mech_name_oid_desc = { 6, rk_UNCONST("\x2a\x85\x70\x2b\x0d\x64") };
 
@@ -317,6 +323,8 @@ gss_OID _gss_ot_internal[] = {
   &__gss_krb5_cred_no_ci_flags_x_oid_desc,
   &__gss_krb5_import_cred_x_oid_desc,
   &__gss_krb5_import_rfc4121_context_x_oid_desc,
+  &__gss_krb5_cred_no_transit_check_x_oid_desc,
+  &__gss_krb5_cred_iterate_acceptor_keytab_x_oid_desc,
   &__gss_c_ma_sasl_mech_name_oid_desc,
   &__gss_c_ma_mech_name_oid_desc,
   &__gss_c_ma_mech_description_oid_desc,

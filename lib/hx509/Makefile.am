@@ -2,8 +2,9 @@ include $(top_srcdir)/Makefile.am.common
 
 AM_CPPFLAGS += $(INCLUDE_openssl_crypto)
 
-lib_LTLIBRARIES = libhx509.la
+lib_LTLIBRARIES = libhx509.la libhx509template.la
 libhx509_la_LDFLAGS = -version-info 5:0:0
+libhx509template_la_LDFLAGS = -version-info 5:0:0
 
 BUILT_SOURCES =				\
 	sel-gram.h			\
@@ -47,9 +48,12 @@ dist_libhx509_la_SOURCES = \
 	req.c \
 	revoke.c
 
+dist_libhx509template_la_SOURCES = $(dist_libhx509_la_SOURCES)
+
 sel-lex.c: sel-gram.h
 
 libhx509_la_DEPENDENCIES = version-script.map
+libhx509template_la_DEPENDENCIES = version-script.map
 
 libhx509_la_LIBADD = \
 	$(LIB_com_err) \
@@ -61,16 +65,30 @@ libhx509_la_LIBADD = \
 	$(LIBADD_roken) \
 	$(LIB_dlopen)
 
+libhx509template_la_LIBADD = \
+	$(LIB_com_err) \
+	$(LIB_hcrypto) \
+	$(LIB_openssl_crypto) \
+	$(top_builddir)/lib/asn1/libasn1template.la \
+	$(top_builddir)/lib/wind/libwind.la \
+	$(top_builddir)/lib/base/libheimbase.la \
+	$(LIBADD_roken) \
+	$(LIB_dlopen)
+
 if FRAMEWORK_SECURITY
 libhx509_la_LDFLAGS += -framework Security -framework CoreFoundation
+libhx509template_la_LDFLAGS += -framework Security -framework CoreFoundation
 endif
 
 if versionscript
 libhx509_la_LDFLAGS += $(LDFLAGS_VERSION_SCRIPT)$(srcdir)/version-script.map
+libhx509template_la_LDFLAGS += $(LDFLAGS_VERSION_SCRIPT)$(srcdir)/version-script.map
 endif
 $(libhx509_la_OBJECTS): $(srcdir)/version-script.map $(nodist_include_HEADERS) $(priv_headers)
+$(libhx509template_la_OBJECTS): $(srcdir)/version-script.map $(nodist_include_HEADERS) $(priv_headers)
 
 nodist_libhx509_la_SOURCES = $(BUILT_SOURCES)
+nodist_libhx509template_la_SOURCES = $(BUILT_SOURCES)
 
 dist_include_HEADERS = hx509.h $(srcdir)/hx509-protos.h
 
@@ -86,6 +104,7 @@ HX509_PROTOS = $(srcdir)/hx509-protos.h $(srcdir)/hx509-private.h
 $(ALL_OBJECTS): $(HX509_PROTOS)
 
 $(libhx509_la_OBJECTS): $(srcdir)/hx_locl.h
+$(libhx509template_la_OBJECTS): $(srcdir)/hx_locl.h
 
 $(srcdir)/hx509-protos.h: $(dist_libhx509_la_SOURCES)
 	$(heim_verbose)cd $(srcdir) && perl ../../cf/make-proto.pl -R '^(_|^C)' -E HX509_LIB -q -P comment -o hx509-protos.h $(dist_libhx509_la_SOURCES) || rm -f hx509-protos.h
@@ -104,15 +123,11 @@ nodist_hxtool_SOURCES = hxtool-commands.c hxtool-commands.h
 $(hxtool_OBJECTS): hxtool-commands.h $(nodist_include_HEADERS)
 
 hxtool_LDADD = \
-	libhx509.la \
+	libhx509template.la \
 	$(top_builddir)/lib/asn1/libasn1.la \
 	$(LIB_hcrypto) \
 	$(LIB_roken) \
 	$(top_builddir)/lib/sl/libsl.la
-
-if ASN1_TEMPLATING
-hxtool_CPPFLAGS = -DASN1_PRINTING_WORKS
-endif
 
 CLEANFILES = $(BUILT_SOURCES) sel-gram.c sel-lex.c \
 	$(TESTS) \

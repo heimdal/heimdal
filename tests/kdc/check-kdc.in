@@ -89,6 +89,7 @@ icache="FILE:${objdir}/icache.krb5"
 keytabfile=${objdir}/server.keytab
 keytab="FILE:${keytabfile}"
 ps="proxy-service@${R}"
+rps="restricted-proxy-service@${R}"
 aesenctype="aes256-cts-hmac-sha1-96"
 
 kinit="${kinit} -c $cache ${afs_no_afslog}"
@@ -224,6 +225,11 @@ ${kadmin} modify --attributes=+trusted-for-delegation ${ps} || exit 1
 ${kadmin} modify --constrained-delegation=${server} ${ps} || exit 1
 ${kadmin} ext -k ${keytab} ${server}@${R} || exit 1
 ${kadmin} ext -k ${keytab} ${ps} || exit 1
+
+# Note: rps is not trusted-for-delegation
+${kadmin} add -p foo --use-defaults ${rps} || exit 1
+${kadmin} modify --constrained-delegation=${server} ${rps} || exit 1
+${kadmin} ext -k ${keytab} ${rps} || exit 1
 
 ${kadmin} add -p kaka --use-defaults ${server2}@${R2} || exit 1
 ${kadmin} ext -k ${keytab} ${server2}@${R2} || exit 1
@@ -904,6 +910,46 @@ ${kimpersonate} -s ${ps} -c bar@${R} -t ${aesenctype} -f forwardable || \
 ${kgetcred} --out-cache=${o2cache} --delegation-credential-cache=${ocache} ${server}@${R} > /dev/null 2>/dev/null && \
 	{ ec=1 ; eval "${testfailed}"; }
 
+${kdestroy}
+
+echo "test constrained delegation NOT trusted-for-delegation (evidence from TGS)"; > messages.log
+
+${kinit} --forwardable --password-file=${objdir}/foopassword ${rps} || \
+	{ ec=1 ; eval "${testfailed}"; }
+${kinit} --cache=${icache} --forwardable --password-file=${objdir}/barpassword bar@${R} || \
+        { ec=1 ; eval "${testfailed}"; }
+${kgetcred} --cache=${icache} --out-cache=${ocache} ${rps} || \
+	{ ec=1 ; eval "${testfailed}"; }
+${kgetcred} \
+	--out-cache=${o2cache} \
+	--delegation-credential-cache=${ocache} \
+	${server}@${R} || \
+	{ ec=1 ; eval "${testfailed}"; }
+${test_ap_req} ${server}@${R} ${keytab} ${o2cache} || \
+	{ ec=1 ; eval "${testfailed}"; }
+
+echo "test constrained delegation NOT trusted-for-delegation (evidence from impersonate, negative)"; > messages.log
+rm -f ocache.krb5
+${kgetcred_imp} --impersonate=bar@${R} ${rps} || \
+	{ ec=1 ; eval "${testfailed}"; }
+${test_ap_req} ${rps} ${keytab} ${ocache} || \
+	{ ec=1 ; eval "${testfailed}"; }
+${kgetcred} \
+	--out-cache=${o2cache} \
+	--delegation-credential-cache=${ocache} \
+	${server}@${R} && \
+	{ ec=1 ; eval "${testfailed}"; }
+
+echo "test constrained delegation bronze-bit attack, aka CVE-2020-17049"; > messages.log
+
+KRB5CCNAME=${ocache} KRB5_KTNAME=${keytab} ${test_mkforwardable} ${rps} ${icache} || \
+{ ec=1 ; eval "${testfailed}"; }
+
+${kgetcred} \
+	--out-cache=${o2cache} \
+	--delegation-credential-cache=${icache} \
+	${server}@${R} && \
+	{ ec=1 ; eval "${testfailed}"; }
 ${kdestroy}
 
 echo "check renewing" > messages.log

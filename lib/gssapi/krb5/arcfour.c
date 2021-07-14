@@ -167,9 +167,11 @@ arcfour_mic_cksum_iov(krb5_context context,
 	    continue;
 	}
 
-	memcpy(ptr + ofs,
-	       iov[i].buffer.value,
-	       iov[i].buffer.length);
+	if (iov[i].buffer.value != NULL) {
+	    memcpy(ptr + ofs,
+		   iov[i].buffer.value,
+		   iov[i].buffer.length);
+	}
 	ofs += iov[i].buffer.length;
     }
 

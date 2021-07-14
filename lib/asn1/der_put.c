@@ -237,7 +237,9 @@ der_put_general_string (unsigned char *p, size_t len,
     if (len < slen)
 	return ASN1_OVERFLOW;
     p -= slen;
-    memcpy (p+1, *str, slen);
+    if (*str != NULL) {
+	memcpy (p+1, *str, slen);
+    }
     *size = slen;
     return 0;
 }
@@ -313,7 +315,9 @@ der_put_octet_string (unsigned char *p, size_t len,
     if (len < data->length)
 	return ASN1_OVERFLOW;
     p -= data->length;
-    memcpy (p+1, data->data, data->length);
+    if (data->data) {
+	memcpy (p+1, data->data, data->length);
+    }
     *size = data->length;
     return 0;
 }
@@ -633,7 +637,9 @@ der_put_bit_string (unsigned char *p, size_t len,
 	return ASN1_OVERFLOW;
     p -= data_size + 1;
 
-    memcpy (p+2, data->data, data_size);
+    if (data->data != NULL) {
+	memcpy (p+2, data->data, data_size);
+    }
     if (data->length && (data->length % 8) != 0)
 	p[1] = 8 - (data->length % 8);
     else

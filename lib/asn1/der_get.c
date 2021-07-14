@@ -326,7 +326,9 @@ der_get_octet_string (const unsigned char *p, size_t len,
     data->data = malloc(len);
     if (data->data == NULL && data->length != 0)
 	return ENOMEM;
-    memcpy (data->data, p, len);
+    if (data->data != NULL) {
+	memcpy (data->data, p, len);
+    }
     if(size) *size = len;
     return 0;
 }

@@ -360,8 +360,10 @@ krb5_pac_add_buffer(krb5_context context, krb5_pac p,
      * copy in new data part
      */
 
-    memcpy((unsigned char *)p->data.data + offset,
-	   data->data, data->length);
+    if (data->data != NULL) {
+	memcpy((unsigned char *)p->data.data + offset,
+	       data->data, data->length);
+    }
     memset((unsigned char *)p->data.data + offset + data->length,
 	   0, p->data.length - offset - data->length);
 

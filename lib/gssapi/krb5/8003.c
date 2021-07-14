@@ -57,7 +57,10 @@ krb5_error_code
 _gsskrb5_decode_om_uint32(const void *ptr, OM_uint32 *n)
 {
     const u_char *p = ptr;
-    *n = (p[0] << 0) | (p[1] << 8) | (p[2] << 16) | (p[3] << 24);
+    *n = ((uint32_t)p[0])
+       | ((uint32_t)p[1] << 8)
+       | ((uint32_t)p[2] << 16)
+       | ((uint32_t)p[3] << 24);
     return 0;
 }
 
@@ -65,7 +68,10 @@ krb5_error_code
 _gsskrb5_decode_be_om_uint32(const void *ptr, OM_uint32 *n)
 {
     const u_char *p = ptr;
-    *n = (p[0] <<24) | (p[1] << 16) | (p[2] << 8) | (p[3] << 0);
+    *n = ((uint32_t)p[0] <<24)
+       | ((uint32_t)p[1] << 16)
+       | ((uint32_t)p[2] << 8)
+       | ((uint32_t)p[3]);
     return 0;
 }
 

@@ -115,9 +115,9 @@ _asn1_bmember_get_bit(const unsigned char *p, void *data,
     unsigned int localbit = bit % 8;
     if ((*p >> (7 - localbit)) & 1) {
 #ifdef WORDS_BIGENDIAN
-	*(unsigned int *)data |= (1 << ((size * 8) - bit - 1));
+	*(unsigned int *)data |= (1u << ((size * 8) - bit - 1));
 #else
-	*(unsigned int *)data |= (1 << bit);
+	*(unsigned int *)data |= (1u << bit);
 #endif
     }
 }
@@ -126,11 +126,11 @@ int
 _asn1_bmember_isset_bit(const void *data, unsigned int bit, size_t size)
 {
 #ifdef WORDS_BIGENDIAN
-    if ((*(unsigned int *)data) & (1 << ((size * 8) - bit - 1)))
+    if ((*(unsigned int *)data) & (1u << ((size * 8) - bit - 1)))
 	return 1;
     return 0;
 #else
-    if ((*(unsigned int *)data) & (1 << bit))
+    if ((*(unsigned int *)data) & (1u << bit))
 	return 1;
     return 0;
 #endif
@@ -143,7 +143,7 @@ _asn1_bmember_put_bit(unsigned char *p, const void *data, unsigned int bit,
     unsigned int localbit = bit % 8;
 
     if (_asn1_bmember_isset_bit(data, bit, size)) {
-	*p |= (1 << (7 - localbit));
+	*p |= (1u << (7 - localbit));
 	if (*bitset == 0)
 	    *bitset = (7 - localbit) + 1;
     }

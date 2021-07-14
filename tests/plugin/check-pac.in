@@ -116,22 +116,22 @@ ${test_apreq} --verify-pac ${server}@${R} ${keytab} ${cache} || \
 	{ ec=1 ; eval "${testfailed}"; }
 ${kdestroy}
 
-echo "Getting client initial tickets (pag)"; > messages.log
+echo "Getting client initial tickets (pac)"; > messages.log
 ${kinit} --request-pac --password-file=${objdir}/foopassword foo@${R} || \
 	{ ec=1 ; eval "${testfailed}"; }
 echo "Getting tickets" ; > messages.log
 ${kgetcred} ${server}@${R} || { ec=1 ; eval "${testfailed}"; }
-echo "Verify PAC on server (pag)"; > messages.log
+echo "Verify PAC on server (pac)"; > messages.log
 ${test_apreq} --verify-pac ${server}@${R} ${keytab} ${cache} || \
 	{ ec=1 ; eval "${testfailed}"; }
 ${kdestroy}
 
-echo "Getting client initial tickets (no pag)"; > messages.log
+echo "Getting client initial tickets (no pac)"; > messages.log
 ${kinit} --no-request-pac --password-file=${objdir}/foopassword foo@${R} || \
 	{ ec=1 ; eval "${testfailed}"; }
 echo "Getting tickets" ; > messages.log
 ${kgetcred} ${server}@${R} || { ec=1 ; eval "${testfailed}"; }
-echo "Verify PAC on server (no pag)"; > messages.log
+echo "Verify PAC on server (no pac)"; > messages.log
 ${test_apreq} --verify-pac ${server}@${R} ${keytab} ${cache} 2> /dev/null && \
 	{ ec=1 ; eval "${testfailed}"; }
 ${kdestroy}

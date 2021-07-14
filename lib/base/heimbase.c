@@ -86,10 +86,12 @@ struct heim_auto_release {
 heim_object_t
 heim_retain(heim_object_t ptr)
 {
-    struct heim_base *p = PTR2BASE(ptr);
+    struct heim_base *p;
 
     if (ptr == NULL || heim_base_is_tagged(ptr))
 	return ptr;
+
+    p = PTR2BASE(ptr);
 
     if (heim_base_atomic_load(&p->ref_cnt) == heim_base_atomic_integer_max)
 	return ptr;
@@ -109,10 +111,12 @@ void
 heim_release(void *ptr)
 {
     heim_base_atomic_integer_type old;
-    struct heim_base *p = PTR2BASE(ptr);
+    struct heim_base *p;
 
     if (ptr == NULL || heim_base_is_tagged(ptr))
 	return;
+
+    p = PTR2BASE(ptr);
 
     if (heim_base_atomic_load(&p->ref_cnt) == heim_base_atomic_integer_max)
 	return;
@@ -342,9 +346,10 @@ _heim_alloc_object(heim_type_t type, size_t size)
 void *
 _heim_get_isaextra(heim_object_t ptr, size_t idx)
 {
-    struct heim_base *p = (struct heim_base *)PTR2BASE(ptr);
+    struct heim_base *p;
 
     heim_assert(ptr != NULL, "internal error");
+    p = (struct heim_base *)PTR2BASE(ptr);
     if (p->isa == &memory_object)
 	return NULL;
     heim_assert(idx < 3, "invalid private heim_base extra data index");
@@ -666,12 +671,14 @@ heim_auto_release_create(void)
 heim_object_t
 heim_auto_release(heim_object_t ptr)
 {
-    struct heim_base *p = PTR2BASE(ptr);
+    struct heim_base *p;
     struct ar_tls *tls = autorel_tls();
     heim_auto_release_t ar;
 
     if (ptr == NULL || heim_base_is_tagged(ptr))
 	return ptr;
+
+    p = PTR2BASE(ptr);
 
     /* drop from old pool */
     if ((ar = p->autorelpool) != NULL) {

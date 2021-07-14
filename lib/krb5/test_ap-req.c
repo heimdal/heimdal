@@ -39,7 +39,7 @@
 #include <getarg.h>
 #include <roken.h>
 
-static int verify_pac = 0;
+static int verify_pac = 1;
 static int server_any = 0;
 static int version_flag = 0;
 static int help_flag	= 0;

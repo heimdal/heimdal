@@ -506,7 +506,7 @@ ${kinit} -n --password-file=${objdir}/foopassword foo@$R || \
 for a in $enctypes; do
 	echo "Getting tickets ($a)"; > messages.log
 	${kgetcred} -e $a ${server}@${R} || { ec=1 ; eval "${testfailed}"; }
-	${test_ap_req} ${server}@${R} ${keytab} ${cache} || \
+	${test_ap_req} --no-verify-pac ${server}@${R} ${keytab} ${cache} || \
 		{ ec=1 ; eval "${testfailed}"; }
 	${kdestroy} --credential=${server}@${R}
 done

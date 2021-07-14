@@ -134,6 +134,12 @@ ${kgetcred} ${server}@${R} || { ec=1 ; eval "${testfailed}"; }
 echo "Verify PAC on server (no pac)"; > messages.log
 ${test_apreq} --verify-pac ${server}@${R} ${keytab} ${cache} 2> /dev/null && \
 	{ ec=1 ; eval "${testfailed}"; }
+
+# now that verify-pac is the default, also verify that --no-verify-pac works
+${test_apreq} ${server}@${R} ${keytab} ${cache} 2> /dev/null && \
+	{ ec=1 ; eval "${testfailed}"; }
+${test_apreq} --no-verify-pac ${server}@${R} ${keytab} ${cache} 2> /dev/null || \
+	{ ec=1 ; eval "${testfailed}"; }
 ${kdestroy}
 
 

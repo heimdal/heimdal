@@ -801,6 +801,8 @@ EXPORTS
 	_krb5_get_int
         _krb5_get_int64
 	_krb5_pac_sign
+	_krb5_pac_verify_ticket
+	_pac_get_kdc_checksum_type
 	_krb5_parse_moduli
 	_krb5_pk_kdf
 	_krb5_pk_load_id

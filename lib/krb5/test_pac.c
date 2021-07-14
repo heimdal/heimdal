@@ -187,7 +187,7 @@ main(int argc, char **argv)
     if (ret)
 	krb5_err(context, 1, ret, "krb5_pac_verify");
 
-    ret = _krb5_pac_sign(context, pac, authtime, p,
+    ret = _krb5_pac_sign(context, pac, authtime, p, NULL,
 			 &member_keyblock, &kdc_keyblock, &data);
     if (ret)
 	krb5_err(context, 1, ret, "_krb5_pac_sign");
@@ -243,7 +243,7 @@ main(int argc, char **argv)
 	}
 	free(list);
 
-	ret = _krb5_pac_sign(context, pac2, authtime, p,
+	ret = _krb5_pac_sign(context, pac2, authtime, p, NULL,
 			     &member_keyblock, &kdc_keyblock, &data);
 	if (ret)
 	    krb5_err(context, 1, ret, "_krb5_pac_sign 4");
@@ -342,7 +342,7 @@ main(int argc, char **argv)
 	krb5_data_free(&data);
     }
 
-    ret = _krb5_pac_sign(context, pac, authtime, p,
+    ret = _krb5_pac_sign(context, pac, authtime, p, NULL,
 			 &member_keyblock, &kdc_keyblock, &data);
     if (ret)
 	krb5_err(context, 1, ret, "_krb5_pac_sign");

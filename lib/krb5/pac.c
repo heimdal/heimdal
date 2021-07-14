@@ -53,6 +53,7 @@ struct krb5_pac_data {
     struct PAC_INFO_BUFFER *server_checksum;
     struct PAC_INFO_BUFFER *privsvr_checksum;
     struct PAC_INFO_BUFFER *logon_name;
+    struct PAC_INFO_BUFFER *ticket_checksum;
 };
 
 #define PAC_ALIGNMENT			8
@@ -64,6 +65,7 @@ struct krb5_pac_data {
 #define PAC_PRIVSVR_CHECKSUM		7
 #define PAC_LOGON_NAME			10
 #define PAC_CONSTRAINED_DELEGATION	11
+#define PAC_TICKET_CHECKSUM		16
 
 #define CHECK(r,f,l)						\
 	do {							\
@@ -239,6 +241,14 @@ krb5_pac_parse(krb5_context context, const void *ptr, size_t len,
 		goto out;
 	    }
 	    p->logon_name = &p->pac->buffers[i];
+	} else if (p->pac->buffers[i].type == PAC_TICKET_CHECKSUM) {
+	    if (p->ticket_checksum) {
+		ret = EINVAL;
+		krb5_set_error_message(context, ret,
+				       N_("PAC has two Ticket checksums", ""));
+		goto out;
+	    }
+	    p->ticket_checksum = &p->pac->buffers[i];
 	}
     }
 
@@ -916,6 +926,24 @@ krb5_pac_verify(krb5_context context,
     return 0;
 }
 
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
+_krb5_pac_verify_ticket(krb5_context context,
+			const krb5_pac pac,
+			const krb5_keyblock *key,
+			const krb5_data *tkt)
+{
+    if (pac->ticket_checksum == NULL) {
+	krb5_set_error_message(context, EINVAL, "PAC missing ticket checksum");
+	return EINVAL;
+    }
+    return verify_checksum(context,
+			   pac->ticket_checksum,
+			   &pac->data,
+			   tkt->data,
+			   tkt->length,
+			   key);
+}
+
 /*
  *
  */
@@ -977,6 +1005,7 @@ _krb5_pac_sign(krb5_context context,
 	       krb5_pac p,
 	       time_t authtime,
 	       krb5_principal principal,
+	       const krb5_data *tkt,
 	       const krb5_keyblock *server_key,
 	       const krb5_keyblock *priv_key,
 	       krb5_data *data)
@@ -985,7 +1014,7 @@ _krb5_pac_sign(krb5_context context,
     krb5_storage *sp = NULL, *spdata = NULL;
     uint32_t end;
     size_t server_size, priv_size;
-    uint32_t server_offset = 0, priv_offset = 0;
+    uint32_t server_offset = 0, priv_offset = 0, ticket_offset = 0;
     uint32_t server_cksumtype = 0, priv_cksumtype = 0;
     int num = 0;
     size_t i;
@@ -1024,6 +1053,16 @@ _krb5_pac_sign(krb5_context context,
 				       N_("PAC have two logon names", ""));
 		goto out;
 	    }
+	} else if (p->pac->buffers[i].type == PAC_TICKET_CHECKSUM) {
+	    if (p->ticket_checksum == NULL) {
+		p->ticket_checksum = &p->pac->buffers[i];
+	    }
+	    if (p->ticket_checksum != &p->pac->buffers[i]) {
+		ret = EINVAL;
+		krb5_set_error_message(context, ret,
+				       N_("PAC has two Ticket Checksums", ""));
+		goto out;
+	    }
 	}
     }
 
@@ -1032,6 +1071,8 @@ _krb5_pac_sign(krb5_context context,
     if (p->server_checksum == NULL)
 	num++;
     if (p->privsvr_checksum == NULL)
+	num++;
+    if (tkt && p->ticket_checksum == NULL)
 	num++;
 
     if (num) {
@@ -1058,6 +1099,11 @@ _krb5_pac_sign(krb5_context context,
 	    memset(p->privsvr_checksum, 0, sizeof(*p->privsvr_checksum));
 	    p->privsvr_checksum->type = PAC_PRIVSVR_CHECKSUM;
 	}
+	if (tkt && p->ticket_checksum == NULL) {
+	    p->ticket_checksum = &p->pac->buffers[p->pac->numbuffers++];
+	    memset(p->ticket_checksum, 0, sizeof(*p->privsvr_checksum));
+	    p->ticket_checksum->type = PAC_TICKET_CHECKSUM;
+	}
     }
 
     /* Calculate LOGON NAME */
@@ -1069,6 +1115,7 @@ _krb5_pac_sign(krb5_context context,
     ret = pac_checksum(context, server_key, &server_cksumtype, &server_size);
     if (ret)
 	goto out;
+
     ret = pac_checksum(context, priv_key, &priv_cksumtype, &priv_size);
     if (ret)
 	goto out;
@@ -1107,6 +1154,11 @@ _krb5_pac_sign(krb5_context context,
 	} else if (p->pac->buffers[i].type == PAC_PRIVSVR_CHECKSUM) {
 	    len = priv_size + 4;
 	    priv_offset = end + 4;
+	    CHECK(ret, krb5_store_uint32(spdata, priv_cksumtype), out);
+	    CHECK(ret, fill_zeros(context, spdata, priv_size), out);
+	} else if (tkt && p->pac->buffers[i].type == PAC_TICKET_CHECKSUM) {
+	    len = priv_size + 4;
+	    ticket_offset = end + 4;
 	    CHECK(ret, krb5_store_uint32(spdata, priv_cksumtype), out);
 	    CHECK(ret, fill_zeros(context, spdata, priv_size), out);
 	} else if (p->pac->buffers[i].type == PAC_LOGON_NAME) {
@@ -1170,6 +1222,15 @@ _krb5_pac_sign(krb5_context context,
     }
 
     /* sign */
+    if (tkt) {
+	ret = create_checksum(context, priv_key, priv_cksumtype,
+			      tkt->data, tkt->length,
+			      (char *)d.data + ticket_offset, priv_size);
+	if (ret) {
+	    krb5_data_free(&d);
+	    goto out;
+	}
+    }
     ret = create_checksum(context, server_key, server_cksumtype,
 			  d.data, d.length,
 			  (char *)d.data + server_offset, server_size);
@@ -1199,5 +1260,35 @@ out:
 	krb5_storage_free(sp);
     if (spdata)
 	krb5_storage_free(spdata);
+    return ret;
+}
+
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
+_pac_get_kdc_checksum_type(krb5_context context,
+			   krb5_pac pac,
+			   krb5_cksumtype *cstype)
+{
+    krb5_error_code ret;
+    krb5_storage *sp = NULL;
+    const struct PAC_INFO_BUFFER *sig;
+    uint32_t type = 0;
+
+    sig = pac->privsvr_checksum;
+    if (sig == NULL) {
+	krb5_set_error_message(context, EINVAL, "PAC missing kdc checksum");
+	return EINVAL;
+    }
+
+    sp = krb5_storage_from_mem((char *)pac->data.data + sig->offset_lo,
+			       sig->buffersize);
+    if (sp == NULL)
+	return krb5_enomem(context);
+
+    krb5_storage_set_flags(sp, KRB5_STORAGE_BYTEORDER_LE);
+
+    ret = krb5_ret_uint32(sp, &type);
+    krb5_storage_free(sp);
+
+    *cstype = type;
     return ret;
 }

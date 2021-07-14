@@ -459,8 +459,6 @@ EXPORTS
 	copy_KeyUsage
 	copy_Krb5Int32
 	copy_KRB5PrincipalName
-	copy_KRB5SignedPath
-	copy_KRB5SignedPathData
 	copy_Krb5UInt32
 	copy_KRB_CRED
 	copy_KrbCredInfo
@@ -820,8 +818,6 @@ EXPORTS
 	decode_KeyUsage
 	decode_Krb5Int32
 	decode_KRB5PrincipalName
-	decode_KRB5SignedPath
-	decode_KRB5SignedPathData
 	decode_Krb5UInt32
 	decode_KRB_CRED
 	decode_KrbCredInfo
@@ -1327,8 +1323,6 @@ EXPORTS
 	encode_KeyUsage
 	encode_Krb5Int32
 	encode_KRB5PrincipalName
-	encode_KRB5SignedPath
-	encode_KRB5SignedPathData
 	encode_Krb5UInt32
 	encode_KRB_CRED
 	encode_KrbCredInfo
@@ -1689,8 +1683,6 @@ EXPORTS
 	free_KeyUsage
 	free_Krb5Int32
 	free_KRB5PrincipalName
-	free_KRB5SignedPath
-	free_KRB5SignedPathData
 	free_Krb5UInt32
 	free_KRB_CRED
 	free_KrbCredInfo
@@ -2070,8 +2062,6 @@ EXPORTS
 	length_KeyUsage
 	length_Krb5Int32
 	length_KRB5PrincipalName
-	length_KRB5SignedPath
-	length_KRB5SignedPathData
 	length_Krb5UInt32
 	length_KRB_CRED
 	length_KrbCredInfo
@@ -2431,8 +2421,6 @@ EXPORTS
 	print_KeyUsage
 	print_Krb5Int32
 	print_KRB5PrincipalName
-	print_KRB5SignedPath
-	print_KRB5SignedPathData
 	print_Krb5UInt32
 	print_KRB_CRED
 	print_KrbCredInfo

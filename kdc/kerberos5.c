@@ -1745,11 +1745,16 @@ generate_pac(astgs_request_t r, Key *skey)
 		   r->cname);
 	return ret;
     }
-    if (p == NULL)
-	return 0;
+
+    if (p == NULL) {
+	ret = krb5_pac_init(r->context, &p);
+	if (ret)
+	    return ret;
+    }
 
     ret = _krb5_pac_sign(r->context, p, r->et.authtime,
 			 r->client->entry.principal,
+			 NULL, /* should actually be set when server is not krbtgt, unlike windows ... */
 			 &skey->key, /* Server key */
 			 &skey->key, /* FIXME: should be krbtgt key */
 			 &data);
@@ -1760,9 +1765,7 @@ generate_pac(astgs_request_t r, Key *skey)
 	return ret;
     }
     
-    ret = _kdc_tkt_add_if_relevant_ad(r->context, &r->et,
-				      KRB5_AUTHDATA_WIN2K_PAC,
-				      &data);
+    ret = _kdc_tkt_insert_pac(r->context, &r->et, &data);
     krb5_data_free(&data);
 
     return ret;
@@ -2415,28 +2418,6 @@ _kdc_as_rep(astgs_request_t r)
 		       r->et.starttime, r->et.endtime,
 		       r->et.renew_till);
 
-    {
-	krb5_principal client_principal;
-
-	ret = _krb5_principalname2krb5_principal(context, &client_principal,
-						 rep.cname, rep.crealm);
-	if (ret)
-	    goto out;
-
-	/* do this as the last thing since this signs the EncTicketPart */
-	ret = _kdc_add_KRB5SignedPath(context,
-				      config,
-				      r->server,
-				      setype,
-				      client_principal,
-				      NULL,
-				      NULL,
-				      &r->et);
-	krb5_free_principal(context, client_principal);
-	if (ret)
-	    goto out;
-    }
-
     _log_astgs_req(r, setype);
 
     /*
@@ -2589,6 +2570,31 @@ _kdc_tkt_add_if_relevant_ad(krb5_context context,
 	    return ret;
 	}
     }
+
+    return 0;
+}
+
+/* Insert a PAC wrapped in AD-IF-RELEVANT container as the first AD element */
+krb5_error_code
+_kdc_tkt_insert_pac(krb5_context context,
+		    EncTicketPart *tkt,
+		    const krb5_data *data)
+{
+    AuthorizationDataElement ade;
+    unsigned int i;
+    krb5_error_code ret;
+
+    ret = _kdc_tkt_add_if_relevant_ad(context, tkt, KRB5_AUTHDATA_WIN2K_PAC,
+				      data);
+    if (ret)
+	return ret;
+
+    heim_assert(tkt->authorization_data->len != 0, "No authorization_data!");
+    ade = tkt->authorization_data->val[tkt->authorization_data->len - 1];
+    for (i = 0; i < tkt->authorization_data->len - 1; i++) {
+	tkt->authorization_data->val[i + 1] = tkt->authorization_data->val[i];
+    }
+    tkt->authorization_data->val[0] = ade;
 
     return 0;
 }

@@ -131,9 +131,9 @@ struct _krb5_encryption_type {
 			   krb5_crypto, const krb5_data *, krb5_data *);
 };
 
-#define ENCRYPTION_USAGE(U) (((U) << 8) | 0xAA)
-#define INTEGRITY_USAGE(U) (((U) << 8) | 0x55)
-#define CHECKSUM_USAGE(U) (((U) << 8) | 0x99)
+#define ENCRYPTION_USAGE(U) (((uint32_t)(U) << 8) | 0xAA)
+#define INTEGRITY_USAGE(U) (((uint32_t)(U) << 8) | 0x55)
+#define CHECKSUM_USAGE(U) (((uint32_t)(U) << 8) | 0x99)
 
 /* Checksums */
 

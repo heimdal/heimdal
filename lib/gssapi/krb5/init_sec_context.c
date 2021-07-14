@@ -591,7 +591,10 @@ init_auth_restart
     if (ret == 0) {
 	if (timedata.length == 4) {
 	    const u_char *p = timedata.data;
-	    offset = (p[0] <<24) | (p[1] << 16) | (p[2] << 8) | (p[3] << 0);
+	    offset = ((uint32_t)p[0] << 24)
+		   | ((uint32_t)p[1] << 16)
+		   | ((uint32_t)p[2] << 8)
+		   | ((uint32_t)p[3] << 0);
 	}
 	krb5_data_free(&timedata);
     }

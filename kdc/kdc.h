@@ -44,6 +44,7 @@
 #include <hdb.h>
 #include <krb5.h>
 #include <kx509_asn1.h>
+#include <gssapi/gssapi.h>
 
 enum krb5_kdc_trpolicy {
     TRPOLICY_ALWAYS_CHECK,
@@ -106,6 +107,11 @@ typedef struct krb5_kdc_configuration {
 
     int enable_digest;
     int digests_allowed;
+
+    int enable_gss_preauth;
+    int enable_gss_auth_data;
+    gss_OID_set gss_mechanisms_allowed;
+    gss_OID_set gss_cross_realm_mechanisms_allowed;
 
     size_t max_datagram_reply_length;
 

@@ -192,7 +192,9 @@ PADATA-TYPE ::= INTEGER {
 	KRB5-PADATA-PKINIT-KX(147),		-- krb-wg-anon
 	KRB5-PADATA-PKU2U-NAME(148),		-- zhu-pku2u
 	KRB5-PADATA-REQ-ENC-PA-REP(149),	--
-	KRB5-PADATA-SUPPORTED-ETYPES(165)	-- MS-KILE
+	KRB5-PADATA-SUPPORTED-ETYPES(165),	-- MS-KILE
+	KRB5-PADATA-GSS(655)			-- krb-wg-gss-preauth
+
 }
 
 AUTHDATA-TYPE ::= INTEGER {
@@ -221,8 +223,9 @@ AUTHDATA-TYPE ::= INTEGER {
 	KRB5-AUTHDATA-BEARER-TOKEN-JWT(581),  -- JWT token
 	KRB5-AUTHDATA-BEARER-TOKEN-SAML(582), -- SAML token
 	KRB5-AUTHDATA-BEARER-TOKEN-OIDC(583), -- OIDC token
-	KRB5-AUTHDATA-CSR-AUTHORIZED(584)     -- Proxy has authorized client
+	KRB5-AUTHDATA-CSR-AUTHORIZED(584),     -- Proxy has authorized client
                                               -- to requested exts in CSR
+	KRB5-AUTHDATA-GSS-COMPOSITE-NAME(655) -- gss_export_name_composite
 }
 
 -- checksumtypes
@@ -924,7 +927,6 @@ KERB-ARMOR-SERVICE-REPLY ::= SEQUENCE {
 	armor		[0] KrbFastArmor,
 	armor-key	[1] EncryptionKey
 }
-
 
 END
 

@@ -40,6 +40,7 @@ EXPORTS
 	gss_export_name
 	gss_export_name_composite
 	gss_export_sec_context
+	gss_get_instance
 	gss_get_mic
 	gss_get_neg_mechs
 	gss_get_name_attribute
@@ -122,6 +123,14 @@ EXPORTS
 	gsskrb5_set_send_to_kdc
 	gsskrb5_set_time_offset
 	krb5_gss_register_acceptor_identity
+	krb5_gss_set_init_creds
+
+	_krb5_gss_data_to_buffer
+	_krb5_gss_buffer_to_data
+	_krb5_gss_map_error
+	_krb5_gss_pa_parse_name
+	_krb5_gss_pa_unparse_name
+	_krb5_gss_pa_derive_key
 
 ; _gsskrb5cfx_ are really internal symbols, but export
 ; then now to make testing easier.

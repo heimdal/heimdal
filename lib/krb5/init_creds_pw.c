@@ -38,6 +38,21 @@
 #include <heim-ipc.h>
 #endif /* WIN32 */
 
+struct krb5_gss_init_ctx_data {
+    unsigned int flags;
+#define GSSIC_FLAG_RELEASE_CRED	(1 << 0)
+#define GSSIC_FLAG_CONTEXT_OPEN	(1 << 1)
+
+    krb5_gssic_step step;
+    krb5_gssic_finish finish;
+    krb5_gssic_release_cred release_cred;
+    krb5_gssic_delete_sec_context delete_sec_context;
+
+    const struct gss_OID_desc_struct *mech;
+    struct gss_cred_id_t_desc_struct *cred;
+    struct gss_ctx_id_t_desc_struct *ctx;
+};
+
 typedef struct krb5_get_init_creds_ctx {
     KDCOptions flags;
     krb5_creds cred;
@@ -62,6 +77,7 @@ typedef struct krb5_get_init_creds_ctx {
     krb5_get_init_creds_tristate req_pac;
 
     krb5_pk_init_ctx pk_init_ctx;
+    krb5_gss_init_ctx gss_init_ctx;
     int ic_flags;
 
     struct {
@@ -106,6 +122,7 @@ typedef struct krb5_get_init_creds_ctx {
 	krb5_keyblock *strengthen_key;
 	krb5_get_init_creds_opt *anon_pkinit_opt;
 	krb5_init_creds_context anon_pkinit_ctx;
+	krb5_data cookie;
     } fast_state;
 } krb5_get_init_creds_ctx;
 
@@ -156,6 +173,15 @@ default_s2k_func(krb5_context context, krb5_enctype type,
 }
 
 static void
+free_gss_init_ctx(krb5_context context, krb5_gss_init_ctx gssic)
+{
+    if (gssic->flags & GSSIC_FLAG_RELEASE_CRED)
+	gssic->release_cred(context, gssic, gssic->cred);
+    gssic->delete_sec_context(context, gssic, gssic->ctx);
+    free(gssic);
+}
+
+static void
 free_init_creds_ctx(krb5_context context, krb5_init_creds_context ctx)
 {
     if (ctx->etypes)
@@ -172,6 +198,8 @@ free_init_creds_ctx(krb5_context context, krb5_init_creds_context ctx)
 	memset_s(ctx->password, len, 0, len);
 	free(ctx->password);
     }
+    if (ctx->gss_init_ctx)
+	free_gss_init_ctx(context, ctx->gss_init_ctx);
     /*
      * FAST state (we don't close the armor_ccache because we might have
      * to destroy it, and how would we know? also, the caller should
@@ -183,6 +211,7 @@ free_init_creds_ctx(krb5_context context, krb5_init_creds_context ctx)
 	krb5_crypto_destroy(context, ctx->fast_state.armor_crypto);
     if (ctx->fast_state.strengthen_key)
 	krb5_free_keyblock(context, ctx->fast_state.strengthen_key);
+    krb5_data_free(&ctx->fast_state.cookie);
     krb5_free_keyblock_contents(context, &ctx->fast_state.armor_key);
     if (ctx->fast_state.flags & KRB5_FAST_ANON_PKINIT_ARMOR)
 	krb5_cc_destroy(context, ctx->fast_state.armor_ccache);
@@ -1170,6 +1199,105 @@ pa_data_to_md_pkinit(krb5_context context,
 }
 
 static krb5_error_code
+gss_pa_step(krb5_context context,
+	    const krb5_creds *creds,
+	    const krb5_get_init_creds_ctx *ctx,
+	    const METHOD_DATA *md,
+	    krb5_data *output_token)
+{
+    krb5_error_code ret;
+    size_t len = 0;
+    krb5_gss_init_ctx gssic = ctx->gss_init_ctx;
+    krb5_data req_body;
+    PA_DATA *pa;
+    krb5_data *input_token;
+
+    krb5_data_zero(&req_body);
+    krb5_data_zero(output_token);
+
+    pa = find_pa_data(md, KRB5_PADATA_GSS);
+    input_token = pa ? &pa->padata_value : NULL;
+
+    if (input_token == NULL || input_token->length == 0) {
+	if (gssic->ctx == NULL)
+	    ret = 0; /* initial context token */
+	else {
+	    krb5_set_error_message(context, KRB5_PREAUTH_BAD_TYPE,
+				   "Missing GSS preauthentication data from KDC");
+	    ret = KRB5_PREAUTH_BAD_TYPE;
+	}
+	if (ret)
+	    goto out;
+    }
+
+    if (input_token && input_token->length &&
+	(gssic->flags & GSSIC_FLAG_CONTEXT_OPEN)) {
+	krb5_set_error_message(context, KRB5_GET_IN_TKT_LOOP,
+			       "Already completed GSS authentication, looping");
+	ret = KRB5_GET_IN_TKT_LOOP;
+	goto out;
+    }
+
+    ASN1_MALLOC_ENCODE(KDC_REQ_BODY, req_body.data, req_body.length,
+		       &ctx->as_req.req_body, &len, ret);
+    if (ret)
+	goto out;
+    heim_assert(req_body.length == len, "ASN.1 internal error");
+
+    ret = gssic->step(context, gssic, creds, ctx->flags, &req_body,
+		      input_token, output_token);
+
+    /*
+     * If FAST authenticated the KDC (which will be the case unless anonymous
+     * PKINIT was used without KDC certificate validation) then we can relax
+     * the mutual authentication requirement.
+     */
+    if (ret == KRB5_MUTUAL_FAILED &&
+	(ctx->fast_state.flags & KRB5_FAST_EXPECTED) &&
+	(ctx->fast_state.flags & KRB5_FAST_KDC_VERIFIED))
+	ret = 0;
+
+out:
+    krb5_data_free(&req_body);
+
+    return ret;
+}
+
+static krb5_error_code
+pa_data_to_md_gss(krb5_context context,
+		  const AS_REQ *a,
+		  const krb5_creds *creds,
+		  krb5_get_init_creds_ctx *ctx,
+		  METHOD_DATA *in_md,
+		  METHOD_DATA *out_md)
+{
+    krb5_error_code ret;
+    krb5_data output_token;
+    krb5_gss_init_ctx gssic = ctx->gss_init_ctx;
+
+    heim_assert(gssic != NULL, "invalid context passed to pa_data_to_md_gss");
+
+    ret = gss_pa_step(context, creds, ctx, in_md, &output_token);
+    if (ret == 0)
+	gssic->flags |= GSSIC_FLAG_CONTEXT_OPEN;
+    else if (ret == KRB5_KDC_ERR_MORE_PREAUTH_DATA_REQUIRED)
+	ret = 0;
+
+    if (output_token.length) {
+	ret = krb5_padata_add(context, out_md, KRB5_PADATA_GSS,
+			      output_token.data, output_token.length);
+	if (ret) {
+	    krb5_data_free(&output_token);
+	    return ret;
+	}
+	krb5_data_zero(&output_token);
+    } else
+	krb5_data_free(&output_token);
+
+    return ret;
+}
+
+static krb5_error_code
 pa_data_add_pac_request(krb5_context context,
 			krb5_get_init_creds_ctx *ctx,
 			METHOD_DATA *md)
@@ -1261,6 +1389,12 @@ process_pa_data_to_md(krb5_context context,
  	else
  	    ctx->used_pa_types |= USED_PKINIT;
 
+    } else if (ctx->gss_init_ctx) {
+	_krb5_debug(context, 5, "krb5_get_init_creds: preparing GSS credentials");
+
+	ret = pa_data_to_md_gss(context, a, creds, ctx, in_md, *out_md);
+	if (ret)
+	    return ret;
     } else if (in_md->len != 0) {
 	struct pa_info_data *paid, *ppaid;
  	unsigned flag;
@@ -1318,6 +1452,61 @@ process_pa_data_to_md(krb5_context context,
 }
 
 static krb5_error_code
+gss_pa_data_to_key(krb5_context context,
+		   krb5_get_init_creds_ctx *ctx,
+		   krb5_creds *creds,
+		   krb5_enctype etype,
+		   METHOD_DATA *md,
+		   krb5_keyblock **key)
+{
+    krb5_error_code ret;
+    krb5_principal cname = NULL;
+    krb5_gss_init_ctx gssic = ctx->gss_init_ctx;
+
+    /*
+     * Finish the GSS authentication and extract the reply key. If the GSS mechanism
+     * required an odd number of legs, the context may already be open, but we still
+     * needed to wait for a reply from the KDC.
+     */
+    if ((gssic->flags & GSSIC_FLAG_CONTEXT_OPEN) == 0) {
+	krb5_data output_token;
+
+	ret = gss_pa_step(context, creds, ctx, md, &output_token);
+	if (ret == KRB5_KDC_ERR_MORE_PREAUTH_DATA_REQUIRED ||
+	    output_token.length) {
+	    krb5_set_error_message(context, KRB5KDC_ERR_PREAUTH_FAILED,
+				   "KDC sent AS-REP before GSS preauthentication completed");
+	    ret = KRB5_PREAUTH_FAILED;
+	}
+	krb5_data_free(&output_token);
+	if (ret)
+	    goto out;
+
+	gssic->flags |= GSSIC_FLAG_CONTEXT_OPEN;
+    }
+
+    ret = gssic->finish(context, gssic, creds, ctx->nonce, etype, &cname, key);
+    if (ret)
+	goto out;
+
+    if (krb5_principal_is_federated(context, creds->client)) {
+	/* replace the wellknown federated name with the initiator name */
+	krb5_free_principal(context, creds->client);
+	creds->client = cname;
+	cname = NULL;
+
+	/* allow the KDC to canonicalize the name */
+	if (ctx->flags.canonicalize)
+	    ctx->ic_flags |= KRB5_INIT_CREDS_NO_C_CANON_CHECK;
+    }
+
+out:
+    krb5_free_principal(context, cname);
+
+    return ret;
+}
+
+static krb5_error_code
 process_pa_data_to_key(krb5_context context,
 		       krb5_get_init_creds_ctx *ctx,
 		       krb5_creds *creds,
@@ -1353,18 +1542,9 @@ process_pa_data_to_key(krb5_context context,
 
     pa = NULL;
     if (rep->padata) {
-	int idx = 0;
-	pa = krb5_find_padata(rep->padata->val,
-			      rep->padata->len,
-			      KRB5_PADATA_PK_AS_REP,
-			      &idx);
-	if (pa == NULL) {
-	    idx = 0;
-	    pa = krb5_find_padata(rep->padata->val,
-				  rep->padata->len,
-				  KRB5_PADATA_PK_AS_REP_19,
-				  &idx);
-	}
+	pa = find_pa_data(rep->padata, KRB5_PADATA_PK_AS_REP);
+	if (pa == NULL)
+	    pa = find_pa_data(rep->padata, KRB5_PADATA_PK_AS_REP_19);
     }
     if (pa && ctx->pk_init_ctx) {
 #ifdef PKINIT
@@ -1383,6 +1563,9 @@ process_pa_data_to_key(krb5_context context,
 	ret = EINVAL;
 	krb5_set_error_message(context, ret, N_("no support for PKINIT compiled in", ""));
 #endif
+    } else if (ctx->gss_init_ctx) {
+	_krb5_debug(context, 5, "krb5_get_init_creds: using GSS for reply key");
+	ret = gss_pa_data_to_key(context, ctx, creds, etype, rep->padata, key);
     } else if (ctx->keyseed) {
  	_krb5_debug(context, 5, "krb5_get_init_creds: using keyproc");
 	ret = pa_data_to_key_plain(context, creds->client, ctx,
@@ -1765,15 +1948,12 @@ fast_unwrap_as_rep(krb5_context context, int32_t nonce,
     KrbFastResponse fastrep;
     krb5_error_code ret;
     PA_DATA *pa = NULL;
-    int idx = 0;
 
     if (state->armor_crypto == NULL || rep->padata == NULL)
 	return check_fast(context, state);
 
     /* find PA_FX_FAST_REPLY */
-
-    pa = krb5_find_padata(rep->padata->val, rep->padata->len,
-			  KRB5_PADATA_FX_FAST, &idx);
+    pa = find_pa_data(rep->padata, KRB5_PADATA_FX_FAST);
     if (pa == NULL)
 	return check_fast(context, state);
 
@@ -1863,17 +2043,105 @@ fast_unwrap_as_rep(krb5_context context, int32_t nonce,
 
  out:
     free_PA_FX_FAST_REPLY(&fxfastrep);
+    free_KrbFastResponse(&fastrep);
 
     return ret;
 }
 
 static krb5_error_code
-fast_unwrap_error(krb5_context context, struct fast_state *state, KRB_ERROR *error)
+fast_unwrap_error(krb5_context context,
+		  int32_t nonce,
+		  struct fast_state *state,
+		  KRB_ERROR *error,
+		  METHOD_DATA *error_method)
 {
-    if (state->armor_crypto == NULL)
-	return check_fast(context, state);
+    METHOD_DATA md;
+    PA_FX_FAST_REPLY fxfastrep;
+    KrbFastResponse fastrep;
+    krb5_error_code ret;
+    PA_DATA *pa;
+    KRB_ERROR fast_error;
 
-    return 0;
+    memset(&md, 0, sizeof(md));
+    memset(&fxfastrep, 0, sizeof(fxfastrep));
+    memset(&fastrep, 0, sizeof(fastrep));
+    memset(&fast_error, 0, sizeof(fast_error));
+
+    if (error->e_data) {
+	ret = decode_METHOD_DATA(error->e_data->data,
+				 error->e_data->length, &md, NULL);
+	if (ret) {
+	    krb5_set_error_message(context, ret,
+				   N_("Failed to decode METHOD-DATA", ""));
+	    return ret;
+	}
+    }
+
+    if (state->armor_crypto == NULL ||
+	(pa = find_pa_data(&md, KRB5_PADATA_FX_FAST)) == NULL) {
+	free_METHOD_DATA(error_method);
+	*error_method = md;
+	return check_fast(context, state);
+    }
+
+    ret = decode_PA_FX_FAST_REPLY(pa->padata_value.data,
+				  pa->padata_value.length,
+				  &fxfastrep,
+				  NULL);
+    if (ret)
+	goto out;
+
+    if (fxfastrep.element == choice_PA_FX_FAST_REPLY_armored_data) {
+	krb5_data data;
+	ret = krb5_decrypt_EncryptedData(context,
+					 state->armor_crypto,
+					 KRB5_KU_FAST_REP,
+					 &fxfastrep.u.armored_data.enc_fast_rep,
+					 &data);
+	if (ret)
+	    goto out;
+
+	ret = decode_KrbFastResponse(data.data, data.length, &fastrep, NULL);
+	krb5_data_free(&data);
+	if (ret)
+	    goto out;
+
+    } else {
+	ret = KRB5KDC_ERR_PREAUTH_FAILED;
+	goto out;
+    }
+
+    /* RFC 6113 5.4.3: strengthen key must be absent in error reply */
+    if (fastrep.strengthen_key || nonce != fastrep.nonce) {
+	ret = KRB5KDC_ERR_PREAUTH_FAILED;
+	goto out;
+    }
+
+    pa = find_pa_data(&fastrep.padata, KRB5_PADATA_FX_ERROR);
+    if (pa == NULL) {
+	ret = KRB5KDC_ERR_PREAUTH_FAILED;
+	goto out;
+    }
+
+    ret = krb5_rd_error(context, &pa->padata_value, &fast_error);
+    if (ret)
+	goto out;
+
+    free_KRB_ERROR(error);
+    *error = fast_error;
+    memset(&fast_error, 0, sizeof(fast_error));
+
+    free_METHOD_DATA(error_method);
+    *error_method = fastrep.padata;
+    memset(&fastrep.padata, 0, sizeof(fastrep.padata));
+
+out:
+    free_METHOD_DATA(&md);
+    free_PA_FX_FAST_REPLY(&fxfastrep);
+    free_KrbFastResponse(&fastrep);
+    free_KRB_ERROR(&fast_error);
+
+    return ret;
 }
 
 krb5_error_code
@@ -2058,7 +2326,9 @@ make_fast_ap_fxarmor(krb5_context context,
 }
 
 static krb5_error_code
-fast_wrap_req(krb5_context context, struct fast_state *state, KDC_REQ *req)
+fast_wrap_req(krb5_context context,
+	      struct fast_state *state,
+	      KDC_REQ *req)
 {
     KrbFastArmor *fxarmor = NULL;
     PA_FX_FAST_REQUEST fxreq;
@@ -2066,6 +2336,16 @@ fast_wrap_req(krb5_context context, struct fast_state *state, KDC_REQ *req)
     KrbFastReq fastreq;
     krb5_data data;
     size_t size;
+
+    /* FX-COOKIE can be used without FAST armor */
+    if (state->cookie.data) {
+	ret = krb5_padata_add(context, req->padata, KRB5_PADATA_FX_COOKIE,
+			      state->cookie.data, state->cookie.length);
+	if (ret)
+	    return ret;
+
+	krb5_data_zero(&state->cookie);
+    }
 
     if (state->flags & KRB5_FAST_DISABLED) {
 	_krb5_debug(context, 10, "fast disabled, not doing any fast wrapping");
@@ -2196,6 +2476,43 @@ fast_wrap_req(krb5_context context, struct fast_state *state, KDC_REQ *req)
     return ret;
 }
 
+static krb5_error_code
+fast_validate_conversation(METHOD_DATA *md, struct fast_state *state)
+{
+    PA_DATA *pa;
+
+    /*
+     * RFC 6113 5.4.3: PA-FX-COOKIE MUST be included if the KDC
+     * expects at least one more message from the client.
+     */
+    pa = find_pa_data(md, KRB5_PADATA_FX_COOKIE);
+    if (pa == NULL)
+	return KRB5_PREAUTH_FAILED;
+
+    krb5_data_free(&state->cookie);
+    state->cookie = pa->padata_value;
+    krb5_data_zero(&pa->padata_value);
+
+    return 0;
+}
+
+static size_t
+available_padata_count(METHOD_DATA *md)
+{
+    size_t i, count = 0;
+
+    for (i = 0; i < md->len; i++) {
+	PA_DATA *pa = &md->val[i];
+
+	if (pa->padata_type == KRB5_PADATA_FX_COOKIE ||
+	    pa->padata_type == KRB5_PADATA_FX_ERROR)
+	    continue;
+
+	count++;
+    }
+
+    return count;
+}
 
 static krb5_error_code
 init_creds_step(krb5_context context,
@@ -2219,7 +2536,7 @@ init_creds_step(krb5_context context,
 	    return ret;
     }
 
-#define MAX_PA_COUNTER 10
+#define MAX_PA_COUNTER 15
     if (ctx->pa_counter > MAX_PA_COUNTER) {
 	krb5_set_error_message(context, KRB5_GET_IN_TKT_LOOP,
 			       N_("Looping %d times while getting "
@@ -2296,13 +2613,8 @@ init_creds_step(krb5_context context,
 				       NULL);
 	    if (ret == 0 && ctx->pk_init_ctx) {
 		PA_DATA *pa_pkinit_kx;
-		int idx = 0;
 
-		pa_pkinit_kx =
-		    krb5_find_padata(rep.kdc_rep.padata->val,
-				     rep.kdc_rep.padata->len,
-				     KRB5_PADATA_PKINIT_KX,
-				     &idx);
+		pa_pkinit_kx = find_pa_data(rep.kdc_rep.padata, KRB5_PADATA_PKINIT_KX);
 
 		ret = _krb5_pk_kx_confirm(context, ctx->pk_init_ctx,
 					  ctx->fast_state.reply_key,
@@ -2344,7 +2656,8 @@ init_creds_step(krb5_context context,
 	    /*
 	     * Unwrap KRB-ERROR
 	     */
-	    ret = fast_unwrap_error(context, &ctx->fast_state, &ctx->error);
+	    ret = fast_unwrap_error(context, ctx->nonce, &ctx->fast_state,
+				    &ctx->error, &ctx->md);
 	    if (ret)
 		goto out;
 
@@ -2361,24 +2674,17 @@ init_creds_step(krb5_context context,
 	     * more try.
 	     */
 
-	    if (ret == KRB5KDC_ERR_PREAUTH_REQUIRED) {
-
-	        free_METHOD_DATA(&ctx->md);
-		memset_s(&ctx->md, sizeof(ctx->md), 0, sizeof(ctx->md));
-
-		if (ctx->error.e_data) {
-		    ret = decode_METHOD_DATA(ctx->error.e_data->data,
-					     ctx->error.e_data->length,
-					     &ctx->md,
-					     NULL);
-		    if (ret)
-			krb5_set_error_message(context, ret,
-					       N_("Failed to decode METHOD-DATA", ""));
-		} else {
+	    if (ret == KRB5KDC_ERR_PREAUTH_REQUIRED ||
+		ret == KRB5_KDC_ERR_MORE_PREAUTH_DATA_REQUIRED) {
+		if (available_padata_count(&ctx->md) == 0) {
 		    krb5_set_error_message(context, ret,
 					   N_("Preauth required but no preauth "
 					      "options send by KDC", ""));
 		}
+		if (ret == KRB5_KDC_ERR_MORE_PREAUTH_DATA_REQUIRED)
+		    ret = fast_validate_conversation(&ctx->md, &ctx->fast_state);
+		else
+		    ret = 0;
 	    } else if (ret == KRB5KRB_AP_ERR_SKEW && context->kdc_sec_offset == 0) {
 		/*
 		 * Try adapt to timeskrew when we are using pre-auth, and
@@ -2819,7 +3125,7 @@ krb5_init_creds_get(krb5_context context, krb5_init_creds_context ctx)
 	if (ret)
 	    goto out;
 
-	if ((flags & 1) == 0)
+	if ((flags & KRB5_INIT_CREDS_STEP_FLAG_CONTINUE) == 0)
 	    break;
 
 	ret = krb5_sendto_context (context, stctx, &out,
@@ -3055,4 +3361,89 @@ krb5_get_init_creds_keytab(krb5_context context,
 	krb5_init_creds_free(context, ctx);
 
     return ret;
+}
+
+KRB5_LIB_FUNCTION void KRB5_LIB_CALL
+_krb5_init_creds_set_gss_mechanism(krb5_context context,
+				   krb5_gss_init_ctx gssic,
+				   const struct gss_OID_desc_struct *gss_mech)
+{
+    gssic->mech = gss_mech; /* OIDs are interned, so no copy required */
+}
+
+KRB5_LIB_FUNCTION const struct gss_OID_desc_struct * KRB5_LIB_CALL
+_krb5_init_creds_get_gss_mechanism(krb5_context context,
+				   krb5_gss_init_ctx gssic)
+{
+    return gssic->mech;
+}
+
+KRB5_LIB_FUNCTION void KRB5_LIB_CALL
+_krb5_init_creds_set_gss_cred(krb5_context context,
+			      krb5_gss_init_ctx gssic,
+			      struct gss_cred_id_t_desc_struct *gss_cred)
+{
+    if (gssic->cred != gss_cred &&
+	(gssic->flags & GSSIC_FLAG_RELEASE_CRED))
+	gssic->release_cred(context, gssic, gssic->cred);
+
+    gssic->cred = gss_cred;
+    gssic->flags |= GSSIC_FLAG_RELEASE_CRED;
+}
+
+KRB5_LIB_FUNCTION const struct gss_cred_id_t_desc_struct * KRB5_LIB_CALL
+_krb5_init_creds_get_gss_cred(krb5_context context,
+			      krb5_gss_init_ctx gssic)
+{
+    return gssic->cred;
+}
+
+KRB5_LIB_FUNCTION void KRB5_LIB_CALL
+_krb5_init_creds_set_gss_context(krb5_context context,
+				 krb5_gss_init_ctx gssic,
+				 struct gss_ctx_id_t_desc_struct *gss_ctx)
+{
+    if (gssic->ctx != gss_ctx)
+	gssic->delete_sec_context(context, gssic, gssic->ctx);
+    gssic->ctx = gss_ctx;
+}
+
+KRB5_LIB_FUNCTION const struct gss_ctx_id_t_desc_struct * KRB5_LIB_CALL
+_krb5_init_creds_get_gss_context(krb5_context context,
+				 krb5_gss_init_ctx gssic)
+{
+    return gssic->ctx;
+}
+
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
+_krb5_init_creds_init_gss(krb5_context context,
+			  krb5_init_creds_context ctx,
+			  krb5_gssic_step step,
+			  krb5_gssic_finish finish,
+			  krb5_gssic_release_cred release_cred,
+			  krb5_gssic_delete_sec_context delete_sec_context,
+			  const struct gss_cred_id_t_desc_struct *gss_cred,
+			  const struct gss_OID_desc_struct *gss_mech,
+			  unsigned int flags)
+{
+    krb5_gss_init_ctx gssic = ctx->gss_init_ctx;
+
+    gssic = calloc(1, sizeof(*gssic));
+    if (gssic == NULL)
+	return krb5_enomem(context);
+
+    if (ctx->gss_init_ctx)
+	free_gss_init_ctx(context, ctx->gss_init_ctx);
+    ctx->gss_init_ctx = gssic;
+
+    gssic->cred = (struct gss_cred_id_t_desc_struct *)gss_cred;
+    gssic->mech = gss_mech;
+    gssic->flags = flags;
+
+    gssic->step = step;
+    gssic->finish = finish;
+    gssic->release_cred = release_cred;
+    gssic->delete_sec_context = delete_sec_context;
+
+    return 0;
 }

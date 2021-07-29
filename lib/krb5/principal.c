@@ -1312,6 +1312,28 @@ krb5_principal_is_anonymous(krb5_context context,
     return strcmp(p->realm, KRB5_ANON_REALM) != 0;
 }
 
+/**
+ * Returns true iff name is WELLKNOWN/FEDERATED
+ *
+ * @ingroup krb5_principal
+ */
+
+KRB5_LIB_FUNCTION krb5_boolean KRB5_LIB_CALL
+krb5_principal_is_federated(krb5_context context,
+			     krb5_const_principal p)
+{
+    if (p->name.name_type != KRB5_NT_WELLKNOWN &&
+	p->name.name_type != KRB5_NT_UNKNOWN)
+	return FALSE;
+
+    if (p->name.name_string.len != 2 ||
+        strcmp(p->name.name_string.val[0], KRB5_WELLKNOWN_NAME) != 0 ||
+        strcmp(p->name.name_string.val[1], KRB5_FEDERATED_NAME) != 0)
+        return FALSE;
+
+    return TRUE;
+}
+
 static int
 tolower_ascii(int c)
 {

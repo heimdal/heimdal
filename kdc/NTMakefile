@@ -107,7 +107,8 @@ LIBKDC_OBJS=\
 	$(OBJ)\token_validator.obj	\
 	$(OBJ)\csr_authorizer.obj	\
 	$(OBJ)\process.obj		\
-	$(OBJ)\windc.obj
+	$(OBJ)\windc.obj		\
+	$(OBJ)\gss_preauth.obj
 
 LIBKDC_LIBS=\
 	$(LIBHDB)		\
@@ -146,6 +147,7 @@ libkdc_la_SOURCES = 		\
 	csr_authorizer.c	\
 	process.c		\
 	windc.c			\
+	gss_preauth.c		\
 	rx.h
 
 $(OBJ)\kdc-protos.h: $(libkdc_la_SOURCES)

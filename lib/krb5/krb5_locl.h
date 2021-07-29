@@ -140,6 +140,13 @@ struct krb5_dh_moduli;
 /* v4 glue */
 struct _krb5_krb_auth_data;
 
+struct krb5_gss_init_ctx_data;
+typedef struct krb5_gss_init_ctx_data *krb5_gss_init_ctx;
+
+struct gss_ctx_id_t_desc_struct;
+struct gss_cred_id_t_desc_struct;
+struct gss_OID_desc_struct;
+
 #include <der.h>
 
 #include <krb5.h>
@@ -151,6 +158,34 @@ struct _krb5_krb_auth_data;
 #endif
 
 #include "crypto.h"
+
+typedef krb5_error_code (KRB5_LIB_CALL *krb5_gssic_step)(
+    krb5_context,
+    krb5_gss_init_ctx,
+    const krb5_creds *,
+    KDCOptions options,
+    krb5_data *,
+    krb5_data *,
+    krb5_data *);
+
+typedef krb5_error_code (KRB5_LIB_CALL *krb5_gssic_finish)(
+    krb5_context,
+    krb5_gss_init_ctx,
+    const krb5_creds *,
+    krb5int32,
+    krb5_enctype,
+    krb5_principal *,
+    krb5_keyblock **);
+
+typedef void (KRB5_LIB_CALL *krb5_gssic_release_cred)(
+    krb5_context,
+    krb5_gss_init_ctx,
+    struct gss_cred_id_t_desc_struct *);
+
+typedef void (KRB5_LIB_CALL *krb5_gssic_delete_sec_context)(
+    krb5_context,
+    krb5_gss_init_ctx,
+    struct gss_ctx_id_t_desc_struct *);
 
 #include <krb5-private.h>
 

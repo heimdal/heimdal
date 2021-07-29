@@ -117,6 +117,7 @@ libkdc_la_SOURCES = 		\
 	csr_authorizer.c	\
 	process.c		\
 	windc.c			\
+	gss_preauth.c		\
 	rx.h
 
 KDC_PROTOS = $(srcdir)/kdc-protos.h $(srcdir)/kdc-private.h
@@ -185,6 +186,7 @@ libkdc_la_LIBADD = \
 	$(LIB_pkinit) \
 	$(top_builddir)/lib/hdb/libhdb.la \
 	$(top_builddir)/lib/krb5/libkrb5.la \
+	$(top_builddir)/lib/gssapi/libgssapi.la \
 	$(LIB_kdb)  \
 	$(top_builddir)/lib/ntlm/libheimntlm.la \
 	$(LIB_hcrypto) \

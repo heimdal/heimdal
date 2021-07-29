@@ -13,6 +13,7 @@ AM_CPPFLAGS += \
 	-I$(srcdir)/krb5 \
 	-I$(srcdir)/spnego \
 	-I$(srcdir)/sanon \
+	-I$(srcdir)/preauth \
 	$(INCLUDE_libintl)
 
 lib_LTLIBRARIES = libgssapi.la test_negoex_mech.la
@@ -250,12 +251,17 @@ sanonsrc = \
 	sanon/release_name.c \
 	sanon/sanon-private.h
 
+preauthsrc = \
+	preauth/pa_client.c \
+	preauth/pa_common.c
+
 dist_libgssapi_la_SOURCES  = \
 	$(krb5src) \
 	$(mechsrc) \
 	$(ntlmsrc) \
 	$(spnegosrc) \
-	$(sanonsrc)
+	$(sanonsrc) \
+	$(preauthsrc)
 
 nodist_libgssapi_la_SOURCES  = \
 	gkrb5_err.c \
@@ -289,6 +295,7 @@ noinst_HEADERS = \
 	$(srcdir)/ntlm/ntlm-private.h \
 	$(srcdir)/spnego/spnego-private.h \
 	$(srcdir)/sanon/sanon-private.h \
+	$(srcdir)/preauth/pa-private.h \
 	$(srcdir)/krb5/gsskrb5-private.h
 
 nobase_include_HEADERS = \
@@ -296,6 +303,7 @@ nobase_include_HEADERS = \
 	gssapi/gssapi_krb5.h \
 	gssapi/gssapi_ntlm.h \
 	gssapi/gssapi_oid.h \
+	gssapi/gssapi_preauth.h \
 	gssapi/gssapi_spnego.h
 
 gssapidir = $(includedir)/gssapi
@@ -319,7 +327,8 @@ BUILTHEADERS = \
 	$(srcdir)/krb5/gsskrb5-private.h \
 	$(srcdir)/spnego/spnego-private.h \
 	$(srcdir)/sanon/sanon-private.h \
-	$(srcdir)/ntlm/ntlm-private.h
+	$(srcdir)/ntlm/ntlm-private.h \
+	$(srcdir)/preauth/pa-private.h
 
 $(libgssapi_la_OBJECTS): $(BUILTHEADERS)
 $(test_context_OBJECTS): $(BUILTHEADERS)
@@ -355,6 +364,9 @@ $(srcdir)/spnego/spnego-private.h:
 
 $(srcdir)/sanon/sanon-private.h:
 	cd $(srcdir) && perl ../../cf/make-proto.pl -q -P comment -p sanon/sanon-private.h $(sanonsrc) || rm -f sanon/sanon-private.h
+
+$(srcdir)/preauth/pa-private.h:
+	cd $(srcdir) && perl ../../cf/make-proto.pl -q -P comment -p preauth/pa-private.h $(preauthsrc) || rm -f preauth/pa-private.h
 
 TESTS = test_oid test_names test_cfx
 # test_sequence 

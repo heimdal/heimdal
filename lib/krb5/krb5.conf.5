@@ -901,6 +901,32 @@ can be given as a number followed by a unit, such as
 .Dq 2d
 for
 .Dq two days .
+.It Li enable_gss_preauth = Va boolean
+Enables pre-authentication using a GSS-API mechanism supported by the client and KDC.
+The GSS-API initiator and AS request client names must match, unless the
+.Li
+WELLKNOWN/FEDERATED
+name was used in the AS request, in which case the AS reply will contain the
+GSS-API initiator name. Authorization and mapping behavior may be customized
+by plugins. If synthetic clients are enabled, then the GSS-API initiator need
+not exist in the local database. GSS-API pre-authentication is disabled by
+default.
+.It Li enable_gss_auth_data = Va boolean
+When using GSS-API pre-authentication, includes a Kerberos authorization data
+element containing naming attributes associated with the GSS-API initiator. This
+is disabled by default as it may significantly increase the size of returned
+tickets.
+.It Li gss_mechanisms_allowed = Va mechs ...
+A list of GSS-API mechanisms that may be used for GSS-API pre-authentication.
+.It Li gss_cross_realm_mechanisms_allowed = Va mechs ...
+A list of GSS-API mechanisms that, when using the default authorization
+mechanism, will be permitted to map Kerberos principals in foreign realms. The
+list is empty by default. Initiator names from mechanisms not on this list will
+be mapped to an enterprise principal in the AS-REQ realm. This option is
+intended to avoid conflating GSS-API pre-authentication and Kerberos
+cross-realm authentication. The behavior is provided by the default
+authorization mechanism and will be overridden by an authorization plugin.
+Mechanisms may be identified by dot-separated OID or a short name.
 .It Li historical_anon_realm = Va boolean
 Enables pre-7.0 non-RFC-comformant KDC behavior.
 With this option set to

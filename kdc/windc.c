@@ -227,6 +227,8 @@ kdc_get_instance(const char *libname)
 	return hdb_get_instance(libname);
     else if (strcmp(libname, "krb5") == 0)
         return krb5_get_instance(libname);
+    else if (strcmp(libname, "gssapi") == 0)
+        return gss_get_instance(libname);
 
     return 0;
 }

@@ -522,6 +522,7 @@ HEIMDAL_KRB5_2.0 {
 		krb5_principal_set_realm;
 		krb5_principal_set_type;
 		krb5_principal_is_anonymous;
+		krb5_principal_is_federated;
 		krb5_principal_is_krbtgt;
 		krb5_principal_is_root_krbtgt;
 		krb5_print_address;
@@ -783,6 +784,15 @@ HEIMDAL_KRB5_2.0 {
 		_krb5_have_debug;
 		_krb5_SP800_108_HMAC_KDF;
 		_krb5_get_ad;
+
+		# Shared with GSSAPI preauth wrapper
+		_krb5_init_creds_set_gss_mechanism;
+		_krb5_init_creds_get_gss_mechanism;
+		_krb5_init_creds_set_gss_cred;
+		_krb5_init_creds_get_gss_cred;
+		_krb5_init_creds_set_gss_context;
+		_krb5_init_creds_get_gss_context;
+		_krb5_init_creds_init_gss;
 
 		# Shared with libkadm5
 		_krb5_load_plugins;

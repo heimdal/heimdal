@@ -508,6 +508,56 @@ pa_pkinit_validate(astgs_request_t r, const PA_DATA *pa)
 
 #endif /* PKINIT */
 
+static krb5_error_code
+pa_gss_validate(astgs_request_t r, const PA_DATA *pa)
+{
+    gss_client_params *gcp = NULL;
+    char *client_name = NULL;
+    krb5_error_code ret;
+    int open;
+
+    ret = _kdc_gss_rd_padata(r, pa, &gcp, &open);
+    if (ret) {
+	_kdc_r_log(r, 4, "Failed to decode GSS PA-DATA -- %s",
+		   r->cname);
+	goto out;
+    }
+
+    if (open) {
+	ret = _kdc_gss_check_client(r, gcp, &client_name);
+	if (ret) {
+	    _kdc_set_e_text(r, "GSS-API client not allowed to "
+			    "impersonate principal");
+	    goto out;
+	}
+
+	r->pa_endtime = _kdc_gss_endtime(r, gcp);
+
+	_kdc_r_log(r, 4, "GSS pre-authentication succeeded -- %s using %s",
+		   r->cname, client_name);
+	free(client_name);
+
+	ret = _kdc_gss_mk_composite_name_ad(r, gcp);
+	if (ret) {
+	    _kdc_set_e_text(r, "Failed to build GSS authorization data");
+	    goto out;
+	}
+    }
+
+    ret = _kdc_gss_mk_pa_reply(r, gcp);
+    if (ret &&
+	ret != KRB5_KDC_ERR_MORE_PREAUTH_DATA_REQUIRED) {
+	_kdc_set_e_text(r, "Failed to build GSS pre-authentication reply");
+	goto out;
+    }
+
+ out:
+    if (gcp)
+	_kdc_gss_free_client_param(r, gcp);
+
+    return ret;
+}
+
 /*
  *
  */
@@ -919,7 +969,12 @@ static const struct kdc_patypes pat[] = {
     { KRB5_PADATA_REQ_ENC_PA_REP , "REQ-ENC-PA-REP", 0, NULL },
     { KRB5_PADATA_FX_FAST, "FX-FAST", PA_ANNOUNCE, NULL },
     { KRB5_PADATA_FX_ERROR, "FX-ERROR", 0, NULL },
-    { KRB5_PADATA_FX_COOKIE, "FX-COOKIE", 0, NULL }
+    { KRB5_PADATA_FX_COOKIE, "FX-COOKIE", 0, NULL },
+    {
+	KRB5_PADATA_GSS , "GSS",
+	PA_ANNOUNCE | PA_SYNTHETIC_OK,
+	pa_gss_validate
+    },
 };
 
 static void
@@ -1808,6 +1863,20 @@ _kdc_is_anonymous(krb5_context context, krb5_const_principal principal)
     return krb5_principal_is_anonymous(context, principal, KRB5_ANON_MATCH_ANY);
 }
 
+/*
+ * Returns TRUE if principal is the unauthenticated anonymous identity,
+ * i.e. WELLKNOWN/ANONYMOUS@WELLKNOWN:ANONYMOUS. Unfortunately due to
+ * backwards compatibility logic in krb5_principal_is_anonymous() we
+ * have to use our own implementation.
+ */
+
+krb5_boolean
+_kdc_is_anonymous_pkinit(krb5_context context, krb5_const_principal principal)
+{
+    return _kdc_is_anonymous(context, principal) &&
+	strcmp(principal->realm, KRB5_ANON_REALM) == 0;
+}
+
 static int
 require_preauth_p(astgs_request_t r)
 {
@@ -2521,7 +2590,9 @@ out:
      * In case of a non proxy error, build an error message.
      */
     if (ret != 0 && ret != HDB_ERR_NOT_FOUND_HERE && r->reply->length == 0)
-	ret = _kdc_fast_mk_error(r, &error_method,
+	ret = _kdc_fast_mk_error(r,
+				 (ret == KRB5_KDC_ERR_MORE_PREAUTH_DATA_REQUIRED)
+				    ? &r->outpadata : &error_method,
 			         r->armor_crypto,
 			         &req->req_body,
 			         ret, r->e_text,

@@ -74,6 +74,7 @@ krb5_kdc_get_config(krb5_context context, krb5_kdc_configuration **config)
 {
     static heim_base_once_t load_kdc_plugins = HEIM_BASE_ONCE_INIT;
     krb5_kdc_configuration *c;
+    krb5_error_code ret;
 
     heim_base_once_f(&load_kdc_plugins, context, load_kdc_plugins_once);
 
@@ -328,6 +329,36 @@ krb5_kdc_get_config(krb5_context context, krb5_kdc_configuration **config)
          krb5_config_get_time_default(context, NULL, 300, "kdc",
                                       "synthetic_clients_max_renew",
                                       NULL);
+
+    c->enable_gss_preauth =
+	krb5_config_get_bool_default(context, NULL,
+				     c->enable_gss_preauth,
+				     "kdc",
+				     "enable_gss_preauth", NULL);
+
+    c->enable_gss_auth_data =
+	krb5_config_get_bool_default(context, NULL,
+				     c->enable_gss_auth_data,
+				     "kdc",
+				     "enable_gss_auth_data", NULL);
+
+    ret = _kdc_gss_get_mechanism_config(context, "kdc",
+					"gss_mechanisms_allowed",
+					&c->gss_mechanisms_allowed);
+    if (ret) {
+	free(c);
+	return ret;
+    }
+
+    ret = _kdc_gss_get_mechanism_config(context, "kdc",
+					"gss_cross_realm_mechanisms_allowed",
+					&c->gss_cross_realm_mechanisms_allowed);
+    if (ret) {
+	OM_uint32 minor;
+	gss_release_oid_set(&minor, &c->gss_mechanisms_allowed);
+	free(c);
+	return ret;
+    }
 
     *config = c;
 

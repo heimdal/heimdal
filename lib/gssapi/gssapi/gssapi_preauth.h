@@ -31,87 +31,25 @@
  * SUCH DAMAGE.
  */
 
-/*
- * $Id$
- */
+/* $Id$ */
 
-#ifndef __HEADERS_H__
-#define __HEADERS_H__
+#ifndef GSSAPI_PREAUTH_H_
+#define GSSAPI_PREAUTH_H_
 
-#include <config.h>
-
-#include <limits.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <errno.h>
-#include <signal.h>
-#include <stdarg.h>
-#ifdef HAVE_UNISTD_H
-#include <unistd.h>
-#endif
-#ifdef HAVE_SYS_TYPES_H
-#include <sys/types.h>
-#endif
-#ifdef HAVE_FCNTL_H
-#include <fcntl.h>
-#endif
-#ifdef HAVE_SYS_SELECT_H
-#include <sys/select.h>
-#endif
-#ifdef HAVE_SYS_SOCKET_H
-#include <sys/socket.h>
-#endif
-#ifdef HAVE_NETINET_IN_H
-#include <netinet/in.h>
-#endif
-#ifdef HAVE_NETINET_IN6_H
-#include <netinet/in6.h>
-#endif
-#ifdef HAVE_NETINET6_IN6_H
-#include <netinet6/in6.h>
-#endif
-#ifdef HAVE_ARPA_INET_H
-#include <arpa/inet.h>
-#endif
-#ifdef HAVE_SYS_WAIT_H
-#include <sys/wait.h>
-#endif
-#ifdef HAVE_NETDB_H
-#include <netdb.h>
-#endif
-#ifdef HAVE_UTIL_H
-#include <util.h>
-#endif
-#ifdef HAVE_LIBUTIL_H
-#include <libutil.h>
-#endif
-#include <err.h>
-#include <roken.h>
-#include <getarg.h>
-#include <base64.h>
-#include <parse_units.h>
+#include <gssapi.h>
 #include <krb5.h>
-#include <krb5_locl.h>
-#include <digest_asn1.h>
-#include <kx509_asn1.h>
-#include <hdb.h>
-#include <hdb_err.h>
-#include <der.h>
-#include <gssapi/gssapi.h>
 
-#ifndef NO_NTLM
-#include <heimntlm.h>
+GSSAPI_CPP_START
+
+#if !defined(__GNUC__) && !defined(__attribute__)
+#define __attribute__(x)
 #endif
-#include <kdc.h>
-#include <windc_plugin.h>
 
-#include <heimbase.h>
+GSSAPI_LIB_FUNCTION krb5_error_code GSSAPI_LIB_CALL
+krb5_gss_set_init_creds(krb5_context context,
+                        krb5_init_creds_context ctx,
+                        gss_const_cred_id_t gss_cred,
+                        gss_const_OID gss_mech);
 
-#undef ALLOC
-#define ALLOC(X) ((X) = calloc(1, sizeof(*(X))))
-#undef ALLOC_SEQ
-#define ALLOC_SEQ(X, N) do { (X)->len = (N); \
-(X)->val = calloc((X)->len, sizeof(*(X)->val)); } while(0)
 
-#endif /* __HEADERS_H__ */
+#endif /* GSSAPI_PREAUTH_H_ */

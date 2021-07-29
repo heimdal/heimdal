@@ -257,6 +257,20 @@ _kdc_fast_mk_error(astgs_request_t r,
 
     krb5_data_zero(&e_data);
 
+    if (armor_crypto || (r && r->fast.fast_state.len)) {
+	if (r)
+	    ret = fast_add_cookie(r, error_method);
+	else
+	    ret = krb5_padata_add(context, error_method,
+				  KRB5_PADATA_FX_COOKIE,
+				  NULL, 0);
+	if (ret) {
+	    kdc_log(r->context, r->config, 1, "failed to add fast cookie with: %d", ret);
+	    free_METHOD_DATA(error_method);
+	    return ret;
+	}
+    }
+
     if (armor_crypto) {
 	PA_FX_FAST_REPLY fxfastrep;
 	KrbFastResponse fastrep;
@@ -292,18 +306,6 @@ _kdc_fast_mk_error(astgs_request_t r,
         error_server = NULL;
         e_text = NULL;
 
-	if (r)
-	    ret = fast_add_cookie(r, error_method);
-	else
-	    ret = krb5_padata_add(context, error_method,
-				  KRB5_PADATA_FX_COOKIE,
-				  NULL, 0);
-	if (ret) {
-	    kdc_log(r->context, r->config, 1, "failed to add fast cookie with: %d", ret);
-	    free_METHOD_DATA(error_method);
-	    return ret;
-	}
-	
 	ret = _kdc_fast_mk_response(context, armor_crypto,
 				    error_method, NULL, NULL, 
 				    req_body->nonce, &e_data);
@@ -342,8 +344,8 @@ _kdc_fast_mk_error(astgs_request_t r,
     return ret;
 }
 
-krb5_error_code
-_kdc_fast_unwrap_request(astgs_request_t r)
+static krb5_error_code
+fast_unwrap_request(astgs_request_t r)
 {
     krb5_principal armor_server = NULL;
     hdb_entry_ex *armor_user = NULL;
@@ -362,17 +364,6 @@ _kdc_fast_unwrap_request(astgs_request_t r)
     const PA_DATA *pa;
     int i = 0;
 
-    /*
-     * First look for FX_COOKIE and and process it
-     */
-    pa = _kdc_find_padata(&r->req, &i, KRB5_PADATA_FX_COOKIE);
-    if (pa) {
-	ret = fast_parse_cookie(r, pa);
-	if (ret)
-	    goto out;
-    }
-			  
-    i = 0;
     pa = _kdc_find_padata(&r->req, &i, KRB5_PADATA_FX_FAST);
     if (pa == NULL)
 	return 0;
@@ -560,6 +551,30 @@ _kdc_fast_unwrap_request(astgs_request_t r)
     free(buf);
 
     return ret;
+}
+
+krb5_error_code
+_kdc_fast_unwrap_request(astgs_request_t r)
+{
+    krb5_error_code ret;
+    const PA_DATA *pa;
+    int i = 0;
+
+    ret = fast_unwrap_request(r);
+    if (ret)
+	return ret;
+
+    /*
+     * Non-FAST mechanisms may use FX-COOKIE to manage state.
+     */
+    pa = _kdc_find_padata(&r->req, &i, KRB5_PADATA_FX_COOKIE);
+    if (pa) {
+	ret = fast_parse_cookie(r, pa);
+	if (ret)
+	    return ret;
+    }
+
+    return 0;
 }
 
 void

@@ -72,6 +72,11 @@
 #include <parse_time.h>
 #include <err.h>
 #include <krb5.h>
+#include <heimbase.h>
+
+#include <gssapi_mech.h>
+#include <gssapi/gssapi_preauth.h>
+#include "../lib/gssapi/preauth/pa-private.h"
 
 #if defined(HAVE_SYS_IOCTL_H) && SunOS != 40
 #include <sys/ioctl.h>

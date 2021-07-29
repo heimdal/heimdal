@@ -240,6 +240,15 @@ An example of an enterprise name is
 and this option is usually used with canonicalize so that the
 principal returned from the KDC will typically be the real principal
 name.
+.It Fl Fl gss-mech
+Enable GSS-API pre-authentication using the specified mechanism OID. Unless
+.Ar gss-name
+is also set, then the specified principal name will be used as the GSS-API
+initiator name. If the principal is specified as @REALM or left unspecified,
+then the default GSS-API credential will be used.
+.It Fl Fl gss-name
+Attempt GSS-API pre-authentication using an initiator name distinct from the
+Kerberos client principal,
 .It Fl Fl afslog
 Gets AFS tickets, converts them to version 4 format, and stores them
 in the kernel.

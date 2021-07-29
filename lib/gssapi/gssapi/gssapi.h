@@ -1240,6 +1240,9 @@ GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL
 gss_destroy_cred(OM_uint32 *minor_status,
 		 gss_cred_id_t *cred_handle);
 
+GSSAPI_LIB_FUNCTION uintptr_t GSSAPI_CALLCONV
+gss_get_instance(const char *libname);
+
 GSSAPI_CPP_END
 
 #if defined(__APPLE__) && (defined(__ppc__) || defined(__ppc64__) || defined(__i386__) || defined(__x86_64__))

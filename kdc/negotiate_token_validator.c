@@ -304,7 +304,9 @@ negotiate_get_instance(const char *libname)
 {
     if (strcmp(libname, "krb5") == 0)
         return krb5_get_instance(libname);
-    /* XXX gss_get_instance() doesn't exist :( */
+    else if (strcmp(libname, "gssapi") == 0)
+	return gss_get_instance(libname);
+
     return 0;
 }
 

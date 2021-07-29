@@ -525,6 +525,7 @@ EXPORTS
 	krb5_principal_get_realm
 	krb5_principal_get_type
 	krb5_principal_is_anonymous
+	krb5_principal_is_federated
 	krb5_principal_is_krbtgt
 	krb5_principal_is_root_krbtgt
 	krb5_principal_match
@@ -791,6 +792,15 @@ EXPORTS
 	_krb5_have_debug
 	_krb5_SP800_108_HMAC_KDF
 	_krb5_get_ad
+
+	; Shared with GSSAPI preauth wrapper
+	_krb5_init_creds_set_gss_mechanism
+	_krb5_init_creds_get_gss_mechanism
+	_krb5_init_creds_set_gss_cred
+	_krb5_init_creds_get_gss_cred
+	_krb5_init_creds_set_gss_context
+	_krb5_init_creds_get_gss_context
+	_krb5_init_creds_init_gss
 
 	; Shared with libkadm5
 	_krb5_load_plugins

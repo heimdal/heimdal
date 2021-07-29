@@ -236,6 +236,12 @@ init(struct init_options *opt, int argc, char **argv)
 			    KRB5_KDB_REQUIRES_PRE_AUTH, 0);
 	krb5_free_principal(context, princ);
 
+	/* Create `WELLKNOWN/FEDERATED' for GSS preauth */
+	krb5_make_principal(context, &princ, realm,
+			    KRB5_WELLKNOWN_NAME, KRB5_FEDERATED_NAME, NULL);
+	create_random_entry(princ, 60*60, 60*60,
+			    KRB5_KDB_REQUIRES_PRE_AUTH, 0);
+	krb5_free_principal(context, princ);
 
 	/* Create `WELLKNONW/org.h5l.fast-cookie@WELLKNOWN:ORG.H5L' for FAST cookie */
 	krb5_make_principal(context, &princ, KRB5_WELLKNOWN_ORG_H5L_REALM,

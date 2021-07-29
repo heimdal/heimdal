@@ -101,12 +101,13 @@ error_code DIGEST_IN_SIGNED_DATA_NOT_ACCEPTED, "Digest in signedData not accepte
 error_code PUBLIC_KEY_ENCRYPTION_NOT_SUPPORTED, "Public key encryption not supported"
 
 ## these are never used
-#index 80
+#index 85
 #prefix KRB5_IAKERB
 #error_code ERR_KDC_NOT_FOUND,	"IAKERB proxy could not find a KDC"
 #error_code ERR_KDC_NO_RESPONSE,	"IAKERB proxy never reeived a response from a KDC"
 
-# 82-93 are reserved
+index 91
+error_code MORE_PREAUTH_DATA_REQUIRED, "More pre-authentication data required"
 
 index 94
 error_code INVALID_HASH_ALG, "Invalid OTP digest algorithm"

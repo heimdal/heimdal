@@ -335,28 +335,35 @@ got_one:
 	if (mech_type)
 		*mech_type = mech_ret_type;
 
-	if (src_name && src_mn && (ctx->gc_mech->gm_flags & GM_USE_MG_NAME)) {
-		/* Negotiation mechanisms use mechglue names as names */
-		*src_name = src_mn;
-		src_mn = GSS_C_NO_NAME;
-	} else if (src_name && src_mn) {
-		/*
-		 * Make a new name and mark it as an MN.
-		 *
-		 * Note that _gss_create_name() consumes `src_mn' but doesn't
-		 * take a pointer, so it can't set it to GSS_C_NO_NAME.
-		 */
-		struct _gss_name *name = _gss_create_name(src_mn, m);
+	if (src_name && src_mn) {
+		if (ctx->gc_mech->gm_flags & GM_USE_MG_NAME) {
+			/* Negotiation mechanisms use mechglue names as names */
+			*src_name = src_mn;
+			src_mn = GSS_C_NO_NAME;
+		} else {
+			/*
+			 * Make a new name and mark it as an MN.
+			 *
+			 * Note that _gss_create_name() consumes `src_mn' but doesn't
+			 * take a pointer, so it can't set it to GSS_C_NO_NAME.
+			 */
+			struct _gss_name *name = _gss_create_name(src_mn, m);
 
-		if (!name) {
-			m->gm_release_name(minor_status, &src_mn);
-		        gss_delete_sec_context(&junk, context_handle, NULL);
-			return (GSS_S_FAILURE);
+			if (!name) {
+				m->gm_release_name(minor_status, &src_mn);
+				gss_delete_sec_context(&junk, context_handle, NULL);
+				return (GSS_S_FAILURE);
+			}
+			*src_name = (gss_name_t) name;
+			src_mn = GSS_C_NO_NAME;
 		}
-		*src_name = (gss_name_t) name;
-		src_mn = GSS_C_NO_NAME;
 	} else if (src_mn) {
-		m->gm_release_name(minor_status, &src_mn);
+		if (ctx->gc_mech->gm_flags & GM_USE_MG_NAME) {
+			_gss_mg_release_name((struct _gss_name *)src_mn);
+			src_mn = GSS_C_NO_NAME;
+		} else {
+			m->gm_release_name(minor_status, &src_mn);
+		}
 	}
 
 	if (mech_ret_flags & GSS_C_DELEG_FLAG) {

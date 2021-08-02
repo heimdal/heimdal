@@ -40,6 +40,14 @@
 #include <gssapi_ntlm.h>
 #include "test_common.h"
 
+#ifdef NOTYET
+/*
+ * export/import of sec contexts on the initiator side
+ * don't work properly, yet.
+ */
+#define DO_IMPORT_EXPORT_OF_CLIENT_CONTEXT 1
+#endif
+
 static char *type_string;
 static char *mech_string;
 static char *mechs_string;
@@ -69,6 +77,7 @@ static int client_time_offset = 0;
 static int server_time_offset = 0;
 static int max_loops = 0;
 static char *limit_enctype_string = NULL;
+static int token_split  = 0;
 static int version_flag = 0;
 static int verbose_flag = 0;
 static int help_flag	= 0;
@@ -169,11 +178,16 @@ loop(gss_OID mechoid,
     OM_uint32 maj_stat, min_stat;
     gss_name_t gss_target_name, src_name;
     gss_buffer_desc input_token, output_token;
+#ifdef DO_IMPORT_EXPORT_OF_CLIENT_CONTEXT
+    gss_buffer_desc cctx_tok = GSS_C_EMPTY_BUFFER;
+#endif
+    gss_buffer_desc sctx_tok = GSS_C_EMPTY_BUFFER;
     OM_uint32 flags = 0, ret_cflags, ret_sflags;
     gss_OID actual_mech_client;
     gss_OID actual_mech_server;
     struct gss_channel_bindings_struct channel_bindings_data;
     gss_channel_bindings_t channel_bindings_p = GSS_C_NO_CHANNEL_BINDINGS;
+    size_t offset = 0;
 
     *actual_mech = GSS_C_NO_OID;
 
@@ -211,66 +225,132 @@ loop(gss_OID mechoid,
 	channel_bindings_p = &channel_bindings_data;
     }
 
+    /*
+     * This loop simulates both the initiator and acceptor sides of
+     * a GSS conversation.  We also simulate tokens that are broken
+     * into pieces before handed to gss_accept_sec_context().  Each
+     * iteration of the loop optionally calls gss_init_sec_context()
+     * then optionally calls gss_accept_sec_context().
+     */
+
     while (!server_done || !client_done) {
 	num_loops++;
+        if (verbose_flag)
+            printf("loop #%d: input_token.length=%zu client_done=%d\n",
+                num_loops, input_token.length, client_done);
 
-	gsskrb5_set_time_offset(client_time_offset);
+        /*
+         * First, we need to call gss_import_sec_context() if we are
+         * running through the loop the first time, or if we have been
+         * given a token (input_token) by gss_accept_sec_context().
+         * We aren't going to be called every time because when we are
+         * using split tokens, we may need to call gss_accept_sec_context()
+         * multiple times because it receives an entire token.
+         */
+        if ((num_loops == 1 || input_token.length > 0) && !client_done) {
+            gsskrb5_set_time_offset(client_time_offset);
+#ifdef DO_IMPORT_EXPORT_OF_CLIENT_CONTEXT
+            if (ei_ctx_flag && cctx_tok.length > 0) {
+                maj_stat = gss_import_sec_context(&min_stat, &cctx_tok, cctx);
+                if (maj_stat != GSS_S_COMPLETE)
+                    errx(1, "import client context failed: %s",
+                         gssapi_err(maj_stat, min_stat, NULL));
+                gss_release_buffer(&min_stat, &cctx_tok);
+            }
+#endif
 
-	maj_stat = gss_init_sec_context(&min_stat,
-					init_cred,
-					cctx,
-					gss_target_name,
-					mechoid,
-					flags,
-					0,
-					channel_bindings_p,
-					&input_token,
-					&actual_mech_client,
-					&output_token,
-					&ret_cflags,
-					NULL);
-	if (GSS_ERROR(maj_stat))
-	    errx(1, "init_sec_context: %s",
-		 gssapi_err(maj_stat, min_stat, mechoid));
-	if (maj_stat & GSS_S_CONTINUE_NEEDED)
-	    ;
-	else
-	    client_done = 1;
+            maj_stat = gss_init_sec_context(&min_stat, init_cred, cctx,
+                                            gss_target_name, mechoid,
+                                            flags, 0, channel_bindings_p,
+                                            &input_token, &actual_mech_client,
+                                            &output_token, &ret_cflags, NULL);
+            if (GSS_ERROR(maj_stat))
+                errx(1, "init_sec_context: %s",
+                     gssapi_err(maj_stat, min_stat, mechoid));
+            client_done = !(maj_stat & GSS_S_CONTINUE_NEEDED);
 
-	gsskrb5_get_time_offset(&client_time_offset);
-
-	if (client_done && server_done)
-	    break;
-
-	if (input_token.length != 0)
 	    gss_release_buffer(&min_stat, &input_token);
+            input_token.length = 0;
+            input_token.value  = NULL;
 
-	gsskrb5_set_time_offset(server_time_offset);
+#if DO_IMPORT_EXPORT_OF_CLIENT_CONTEXT
+            if (!client_done && ei_ctx_flag) {
+                maj_stat = gss_export_sec_context(&min_stat, cctx, &cctx_tok);
+                if (maj_stat != GSS_S_COMPLETE)
+                    errx(1, "export server context failed: %s",
+                         gssapi_err(maj_stat, min_stat, NULL));
+                if (*cctx != GSS_C_NO_CONTEXT)
+                    errx(1, "export client context did not release it");
+            }
+#endif
 
-	maj_stat = gss_accept_sec_context(&min_stat,
-					  sctx,
-					  GSS_C_NO_CREDENTIAL,
-					  &output_token,
-					  channel_bindings_p,
-					  &src_name,
-					  &actual_mech_server,
-					  &input_token,
-					  &ret_sflags,
-					  NULL,
-					  deleg_cred);
-	if (GSS_ERROR(maj_stat))
-		errx(1, "accept_sec_context: %s",
-		     gssapi_err(maj_stat, min_stat, actual_mech_server));
+            if (verbose_flag)
+                printf("loop #%d: output_token.length=%zu\n", num_loops,
+                    output_token.length);
 
-	gsskrb5_get_time_offset(&server_time_offset);
+            offset = 0;
+        }
 
-	if (output_token.length != 0)
-	    gss_release_buffer(&min_stat, &output_token);
+        /*
+         * We now call gss_accept_sec_context().  To support split
+         * tokens, we keep track of the offset into the token that
+         * we have used and keep handing in chunks until we're done.
+         */
 
-	if (maj_stat & GSS_S_CONTINUE_NEEDED)
-	    gss_release_name(&min_stat, &src_name);
-	else
-	    server_done = 1;
+        if (offset < output_token.length && !server_done) {
+            gss_buffer_desc tmp;
+
+            gsskrb5_get_time_offset(&client_time_offset);
+            gsskrb5_set_time_offset(server_time_offset);
+
+            tmp.length = output_token.length - offset;
+            if (token_split && tmp.length > token_split)
+                tmp.length = token_split;
+            tmp.value  = (char *)output_token.value + offset;
+
+            if (verbose_flag)
+                printf("loop #%d: accept offset=%zu len=%zu\n", num_loops,
+                    offset, tmp.length);
+
+            if (ei_ctx_flag && sctx_tok.length > 0) {
+                maj_stat = gss_import_sec_context(&min_stat, &sctx_tok, sctx);
+                if (maj_stat != GSS_S_COMPLETE)
+                    errx(1, "import server context failed: %s",
+                         gssapi_err(maj_stat, min_stat, NULL));
+                gss_release_buffer(&min_stat, &sctx_tok);
+            }
+
+            maj_stat = gss_accept_sec_context(&min_stat, sctx,
+                                              GSS_C_NO_CREDENTIAL, &tmp,
+                                              channel_bindings_p, &src_name,
+                                              &actual_mech_server,
+                                              &input_token, &ret_sflags,
+                                              NULL, deleg_cred);
+            if (GSS_ERROR(maj_stat))
+                errx(1, "accept_sec_context: %s",
+                     gssapi_err(maj_stat, min_stat, actual_mech_server));
+            offset += tmp.length;
+            if (maj_stat & GSS_S_CONTINUE_NEEDED)
+                gss_release_name(&min_stat, &src_name);
+            else
+                server_done = 1;
+
+            if (ei_ctx_flag && !server_done) {
+                maj_stat = gss_export_sec_context(&min_stat, sctx, &sctx_tok);
+                if (maj_stat != GSS_S_COMPLETE)
+                    errx(1, "export server context failed: %s",
+                         gssapi_err(maj_stat, min_stat, NULL));
+                if (*sctx != GSS_C_NO_CONTEXT)
+                    errx(1, "export server context did not release it");
+            }
+
+            gsskrb5_get_time_offset(&server_time_offset);
+
+            if (output_token.length == offset)
+                gss_release_buffer(&min_stat, &output_token);
+        }
+        if (verbose_flag)
+            printf("loop #%d: end\n", num_loops);
     }
     if (output_token.length != 0)
 	gss_release_buffer(&min_stat, &output_token);
@@ -326,11 +406,13 @@ loop(gss_OID mechoid,
         gss_buffer_desc iname;
 
         maj_stat = gss_display_name(&min_stat, src_name, &iname, NULL);
-        if (maj_stat != GSS_S_COMPLETE)
-            errx(1, "display_name: %s",
+        if (maj_stat == GSS_S_COMPLETE) {
+            printf("client name: %.*s\n", (int)iname.length,
+                (char *)iname.value);
+            gss_release_buffer(&min_stat, &iname);
+        } else
+            warnx("display_name: %s",
                  gssapi_err(maj_stat, min_stat, GSS_C_NO_OID));
-        printf("client name: %.*s\n", (int)iname.length, (char *)iname.value);
-        gss_release_buffer(&min_stat, &iname);
     }
     gss_release_name(&min_stat, &src_name);
 
@@ -688,6 +770,7 @@ static struct getargs args[] = {
     {"client-time-offset",	0, arg_integer,	&client_time_offset, "time", NULL },
     {"server-time-offset",	0, arg_integer,	&server_time_offset, "time", NULL },
     {"max-loops",	0, arg_integer,	&max_loops, "time", NULL },
+    {"token-split",	0, arg_integer, &token_split, "bytes", NULL },
     {"version",	0,	arg_flag,	&version_flag, "print version", NULL },
     {"verbose",	'v',	arg_flag,	&verbose_flag, "verbose", NULL },
     {"help",	0,	arg_flag,	&help_flag,  NULL, NULL }

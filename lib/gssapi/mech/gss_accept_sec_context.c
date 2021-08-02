@@ -28,87 +28,148 @@
 
 #include "mech_locl.h"
 
+/*
+ * accumulate_token() tries to assemble a complete GSS token which may
+ * be fed to it in pieces.  Microsoft does this when tokens are too large
+ * in CIFS, e.g.  It may occur in other places as well.  It is specified in:
+ *
+ *      [MS-SPNG]: Simple and Protected GSS-API Negotiation
+ *                 Mechanism (SPNEGO) Extension
+ *
+ *      https://winprotocoldoc.blob.core.windows.net/
+ *      productionwindowsarchives/MS-SPNG/%5bMS-SPNG%5d.pdf
+ *
+ * Sections 3.1.5.4 to 3.1.5.9.
+ *
+ * We only accumulate if we see the appropriate application tag in the
+ * first byte of 0x60 because in the absence of this, we cannot interpret
+ * the following bytes as a DER length.
+ *
+ * We only allocate an accumulating buffer if we detect that the token
+ * is split between multiple packets as this is the uncommon case and
+ * we want to optimise for the common case.  If we aren't accumulating,
+ * we simply return success.
+ *
+ * Our return value is GSS_S_CONTINUE_NEEDED if we need more input.
+ * We return GSS_S_COMPLETE if we are either finished accumulating or
+ * if we decide that we do not understand this token.  We only return
+ * an error if we think that we should understand the token and still
+ * fail to understand it.
+ */
+
 static OM_uint32
-parse_header(const gss_buffer_t input_token, gss_OID *mech_oid)
+accumulate_token(struct _gss_context *ctx, gss_buffer_t input_token)
 {
-	gss_OID_desc mech;
 	unsigned char *p = input_token->value;
 	size_t len = input_token->length;
-	size_t a, b;
+        gss_buffer_t gci;
+        size_t l;
 
 	/*
 	 * Token must start with [APPLICATION 0] SEQUENCE.
 	 * But if it doesn't assume it is DCE-STYLE Kerberos!
 	 */
+        if (!ctx->gc_target_len) {
+                free(ctx->gc_free_this);
+                ctx->gc_free_this = NULL;
+                _mg_buffer_zero(&ctx->gc_input);
+
+                /*
+                 * Let's prepare gc_input for the case where
+                 * we aren't accumulating.
+                 */
+
+                ctx->gc_input.length = len;
+                ctx->gc_input.value  = p;
+
+                if (len == 0)
+                        return GSS_S_COMPLETE;
+
+                /* Not our DER w/ a length */
+                if (*p != 0x60)
+                        return GSS_S_COMPLETE;
+
+                if (der_get_length(p+1, len-1, &ctx->gc_target_len, &l) != 0)
+                        return GSS_S_DEFECTIVE_TOKEN;
+
+                _gss_mg_log(10, "gss-asc: DER length: %zu",
+                    ctx->gc_target_len);
+
+                ctx->gc_oid_offset  = l + 1;
+                ctx->gc_target_len += ctx->gc_oid_offset;
+
+                _gss_mg_log(10, "gss-asc: total length: %zu",
+                    ctx->gc_target_len);
+
+                if (ctx->gc_target_len == ASN1_INDEFINITE ||
+                    ctx->gc_target_len < len)
+                        return GSS_S_DEFECTIVE_TOKEN;
+
+                /* We've got it all, short-circuit the accumulating */
+                if (ctx->gc_target_len == len)
+                        goto done;
+
+                _gss_mg_log(10, "gss-asc: accumulating partial token");
+
+                ctx->gc_input.length = 0;
+                ctx->gc_input.value  = calloc(ctx->gc_target_len, 1);
+                if (!ctx->gc_input.value)
+                        return GSS_S_FAILURE;
+                ctx->gc_free_this = ctx->gc_input.value;
+        }
+
 	if (len == 0)
-		return (GSS_S_DEFECTIVE_TOKEN);
+                return GSS_S_DEFECTIVE_TOKEN;
 
-	p++;
-	len--;
+        gci = &ctx->gc_input;
 
-	/*
-	 * Decode the length and make sure it agrees with the
-	 * token length.
-	 */
-	if (len == 0)
-		return (GSS_S_DEFECTIVE_TOKEN);
-	if ((*p & 0x80) == 0) {
-		a = *p;
-		p++;
-		len--;
-	} else {
-		b = *p & 0x7f;
-		p++;
-		len--;
-		if (len < b)
-		    return (GSS_S_DEFECTIVE_TOKEN);
-		a = 0;
-		while (b) {
-		    a = (a << 8) | *p;
-		    p++;
-		    len--;
-		    b--;
-		}
-	}
-	if (a != len)
-		return (GSS_S_DEFECTIVE_TOKEN);
+        if (ctx->gc_target_len > gci->length) {
+                if (gci->length + len > ctx->gc_target_len) {
+                        _gss_mg_log(10, "gss-asc: accumulation exceeded "
+                            "target length: bailing");
+                        return GSS_S_DEFECTIVE_TOKEN;
+                }
+                memcpy((char *)gci->value + gci->length, p, len);
+                gci->length += len;
+        }
 
-	/*
-	 * Decode the OID for the mechanism. Simplify life by
-	 * assuming that the OID length is less than 128 bytes.
-	 */
-	if (len < 2 || *p != 0x06)
-		return (GSS_S_DEFECTIVE_TOKEN);
-	if ((p[1] & 0x80) || p[1] > (len - 2))
-		return (GSS_S_DEFECTIVE_TOKEN);
-	mech.length = p[1];
-	p += 2;
-	len -= 2;
-	mech.elements = p;
+        if (gci->length != ctx->gc_target_len) {
+                _gss_mg_log(10, "gss-asc: collected %zu/%zu bytes",
+                    gci->length, ctx->gc_target_len);
+                return GSS_S_CONTINUE_NEEDED;
+        }
 
-	*mech_oid = _gss_mg_support_mechanism(&mech);
-	if (*mech_oid == GSS_C_NO_OID)
-		return GSS_S_BAD_MECH;
+done:
+        _gss_mg_log(10, "gss-asc: received complete %zu byte token",
+            ctx->gc_target_len);
+        ctx->gc_target_len = 0;
 
 	return GSS_S_COMPLETE;
 }
 
-static gss_OID
-choose_mech(const gss_buffer_t input)
+static void
+log_oid(const char *str, gss_OID mech)
 {
-	OM_uint32 status;
-        gss_OID mech_oid = GSS_C_NO_OID;
+        OM_uint32        maj, min;
+        gss_buffer_desc  buf;
 
-	/*
-	 * First try to parse the gssapi token header and see if it's a
-	 * correct header, use that in the first hand.
-	 */
+        maj = gss_oid_to_str(&min, mech, &buf);
+        if (maj == GSS_S_COMPLETE) {
+                _gss_mg_log(10, "%s: %.*s", str, (int)buf.length,
+                    (char *)buf.value);
+                gss_release_buffer(&min, &buf);
+        }
+}
 
-	status = parse_header(input, &mech_oid);
-	if (status == GSS_S_COMPLETE && mech_oid != GSS_C_NO_OID)
-	    return mech_oid;
+static OM_uint32
+choose_mech(struct _gss_context *ctx)
+{
+        gss_OID_desc     mech;
+        gss_OID          mech_oid;
+        unsigned char   *p = ctx->gc_input.value;
+        size_t           len = ctx->gc_input.length;
 
-	if (input->length == 0) {
+        if (len == 0) {
 		/*
 		 * There is the a wierd mode of SPNEGO (in CIFS and
 		 * SASL GSS-SPENGO where the first token is zero
@@ -118,14 +179,51 @@ choose_mech(const gss_buffer_t input)
 		 * http://msdn.microsoft.com/en-us/library/cc213114.aspx
 		 * "NegTokenInit2 Variation for Server-Initiation"
 		 */
-		return &__gss_spnego_mechanism_oid_desc;
+                mech_oid = &__gss_spnego_mechanism_oid_desc;
+                goto gss_get_mechanism;
 	}
 
-	_gss_mg_log(10, "Don't have client request mech");
+        p   += ctx->gc_oid_offset;
+        len -= ctx->gc_oid_offset;
 
-	return mech_oid;
+        /*
+         * Decode the OID for the mechanism. Simplify life by
+         * assuming that the OID length is less than 128 bytes.
+         */
+        if (len < 2 || *p != 0x06)
+                goto bail;
+        if ((p[1] & 0x80) || p[1] > (len - 2))
+                goto bail;
+        mech.length = p[1];
+        p += 2;
+        len -= 2;
+        mech.elements = p;
+
+        mech_oid = _gss_mg_support_mechanism(&mech);
+        if (mech_oid == GSS_C_NO_OID)
+                return GSS_S_COMPLETE;
+
+gss_get_mechanism:
+        /*
+         * If mech_oid == GSS_C_NO_OID then the mech is non-standard
+         * and we have to try all mechs (that we have a cred element
+         * for, if we have a cred).
+         */
+        if (mech_oid != GSS_C_NO_OID) {
+                log_oid("mech oid", mech_oid);
+                ctx->gc_mech = __gss_get_mechanism(mech_oid);
+                if (!ctx->gc_mech) {
+                        _gss_mg_log(10, "mechanism client used is unknown");
+                        return (GSS_S_BAD_MECH);
+                }
+                _gss_mg_log(10, "using mech \"%s\"", ctx->gc_mech->gm_name);
+                return GSS_S_COMPLETE;
+        }
+
+bail:
+        _gss_mg_log(10, "no mech oid found");
+        return GSS_S_COMPLETE;
 }
-
 
 GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL
 gss_accept_sec_context(OM_uint32 *minor_status,
@@ -150,7 +248,7 @@ gss_accept_sec_context(OM_uint32 *minor_status,
 	gss_cred_id_t delegated_mc = GSS_C_NO_CREDENTIAL;
 	gss_name_t src_mn = GSS_C_NO_NAME;
 	gss_OID mech_ret_type = GSS_C_NO_OID;
-        int initial = !!(*context_handle == GSS_C_NO_CONTEXT);
+        int initial;
 
         defective_token_error.length = 0;
         defective_token_error.value = NULL;
@@ -168,37 +266,35 @@ gss_accept_sec_context(OM_uint32 *minor_status,
 	    *delegated_cred_handle = GSS_C_NO_CREDENTIAL;
 	_mg_buffer_zero(output_token);
 
-	/*
-	 * If this is the first call (*context_handle is NULL), we must
-	 * parse the input token to figure out the mechanism to use.
-	 */
-	if (initial) {
-		gss_OID mech_oid;
-
-		mech_oid = choose_mech(input_token);
-
-                /*
-                 * If mech_oid == GSS_C_NO_OID then the mech is non-standard
-                 * and we have to try all mechs (that we have a cred element
-                 * for, if we have a cred).
-                 */
-		ctx = calloc(1, sizeof(struct _gss_context));
+        if (!*context_handle) {
+                ctx = calloc(sizeof(*ctx), 1);
 		if (!ctx) {
 			*minor_status = ENOMEM;
 			return (GSS_S_DEFECTIVE_TOKEN);
 		}
-                if (mech_oid != GSS_C_NO_OID) {
-                        m = ctx->gc_mech = __gss_get_mechanism(mech_oid);
-                        if (!m) {
-                                free(ctx);
-                                _gss_mg_log(10, "mechanism client used is unknown");
-                                return (GSS_S_BAD_MECH);
-                        }
-                }
-		*context_handle = (gss_ctx_id_t) ctx;
-	} else {
-		m = ctx->gc_mech;
-	}
+                *context_handle = (gss_ctx_id_t)ctx;
+                ctx->gc_initial = 1;
+        }
+
+        major_status = accumulate_token(ctx, input_token);
+        if (major_status != GSS_S_COMPLETE)
+                return major_status;
+
+        /*
+         * If we get here, then we have a complete token.  Please note
+         * that we may have a major_status of GSS_S_DEFECTIVE_TOKEN.  This
+         * 
+         */
+
+        initial = ctx->gc_initial;
+        ctx->gc_initial = 0;
+
+        if (major_status == GSS_S_COMPLETE && initial) {
+                major_status = choose_mech(ctx);
+                if (major_status != GSS_S_COMPLETE)
+                        return major_status;
+        }
+        m = ctx->gc_mech;
 
         if (initial && !m && acceptor_cred_handle == GSS_C_NO_CREDENTIAL) {
                 /*
@@ -215,7 +311,7 @@ gss_accept_sec_context(OM_uint32 *minor_status,
                         major_status = m->gm_accept_sec_context(minor_status,
                             &ctx->gc_ctx,
                             acceptor_mc,
-                            input_token,
+                            &ctx->gc_input,
                             input_chan_bindings,
                             &src_mn,
                             &mech_ret_type,
@@ -257,7 +353,7 @@ gss_accept_sec_context(OM_uint32 *minor_status,
                         major_status = m->gm_accept_sec_context(minor_status,
                             &ctx->gc_ctx,
                             acceptor_mc,
-                            input_token,
+                            &ctx->gc_input,
                             input_chan_bindings,
                             &src_mn,
                             &mech_ret_type,
@@ -314,7 +410,7 @@ gss_accept_sec_context(OM_uint32 *minor_status,
 	major_status = m->gm_accept_sec_context(minor_status,
 	    &ctx->gc_ctx,
 	    acceptor_mc,
-	    input_token,
+	    &ctx->gc_input,
 	    input_chan_bindings,
 	    &src_mn,
 	    &mech_ret_type,

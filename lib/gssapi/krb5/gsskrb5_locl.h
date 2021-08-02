@@ -135,12 +135,14 @@ extern HEIMDAL_MUTEX gssapi_keytab_mutex;
 
 /* sec_context flags */
 
-#define SC_LOCAL_ADDRESS  0x01
-#define SC_REMOTE_ADDRESS 0x02
-#define SC_KEYBLOCK	  0x04
-#define SC_LOCAL_SUBKEY	  0x08
-#define SC_REMOTE_SUBKEY  0x10
-#define SC_SOURCE_NAME    0x20
-#define SC_TARGET_NAME    0x40
+#define SC_LOCAL_ADDRESS  0x0001
+#define SC_REMOTE_ADDRESS 0x0002
+#define SC_KEYBLOCK       0x0004
+#define SC_LOCAL_SUBKEY   0x0008
+#define SC_REMOTE_SUBKEY  0x0010
+#define SC_SOURCE_NAME    0x0020
+#define SC_TARGET_NAME    0x0040
+#define SC_ORDER          0x0080
+#define SC_AUTHENTICATOR  0x0100
 
 #endif

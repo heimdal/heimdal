@@ -35,7 +35,7 @@
 
 static OM_uint32
 send_reject (OM_uint32 *minor_status,
-	     gss_buffer_t mech_token,
+	     gss_const_buffer_t mech_token,
 	     gss_buffer_t output_token)
 {
     NegotiationToken nt;
@@ -64,6 +64,7 @@ send_reject (OM_uint32 *minor_status,
     ASN1_MALLOC_ENCODE(NegotiationToken,
 		       output_token->value, output_token->length, &nt,
 		       &size, *minor_status);
+    nt.u.negTokenResp.responseToken = NULL; /* allocated on stack */
     free_NegotiationToken(&nt);
     if (*minor_status != 0)
 	return GSS_S_FAILURE;

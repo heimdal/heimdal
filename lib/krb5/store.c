@@ -39,6 +39,7 @@
 #define BYTEORDER_IS_BE(SP) BYTEORDER_IS((SP), KRB5_STORAGE_BYTEORDER_BE)
 #define BYTEORDER_IS_HOST(SP) (BYTEORDER_IS((SP), KRB5_STORAGE_BYTEORDER_HOST) || \
 			       krb5_storage_is_flags((SP), KRB5_STORAGE_HOST_BYTEORDER))
+#define BYTEORDER_IS_PACKED(SP) BYTEORDER_IS((SP), KRB5_STORAGE_BYTEORDER_PACKED)
 
 /**
  * Add the flags on a storage buffer by or-ing in the flags to the buffer.
@@ -335,17 +336,62 @@ krb5_storage_to_data(krb5_storage *sp, krb5_data *data)
     return 0;
 }
 
+static size_t
+pack_int(void *buffer, uint64_t value)
+{
+    unsigned char *p = buffer;
+    size_t i = 0;
+
+    p[i++] = value & 0x1f;
+    value >>= 5;
+
+    while (value) {
+        p[i++] = value & 0xff;
+        value >>= 8;
+    }
+
+    p[0] |= i << 5;
+
+    return i;
+}
+
+static ssize_t
+unpack_int(void *buffer, uint64_t *value, size_t size)
+{
+    unsigned char *p = buffer;
+    uint64_t v;
+    size_t i = 0;
+    size_t l;
+
+    l = p[i  ] >> 5;
+    v = p[i++] & 0x1f;
+
+    if (size == 0)
+        return l;
+
+    for (; i < l; i++)
+        v  |= ((uint64_t)p[i] & 0xff) << ((i-1)*8+5);
+
+    *value = v;
+
+    return l + 1;
+}
+
 static krb5_error_code
 krb5_store_int(krb5_storage *sp,
 	       int64_t value,
 	       size_t len)
 {
     int ret;
-    unsigned char v[8];
+    unsigned char v[9];
 
-    if (len > sizeof(v))
+    if (len > sizeof(value))
 	return EINVAL;
-    _krb5_put_int(v, value, len);
+
+    if (BYTEORDER_IS_PACKED(sp)) {
+        len = pack_int(v, value);
+    } else
+        _krb5_put_int(v, value, len);
     ret = sp->store(sp, v, len);
     if (ret < 0)
 	return errno;
@@ -449,8 +495,20 @@ krb5_ret_int(krb5_storage *sp,
 {
     int ret;
     unsigned char v[8];
-    uint64_t w;
+    uint64_t w = 0;
     *value = 0; /* quiets warnings */
+    if (BYTEORDER_IS_PACKED(sp)) {
+        ret = sp->fetch(sp, v, 1);
+        if (ret < 0)
+            return errno;
+        len = unpack_int(v, &w, 0);
+        ret = sp->fetch(sp, v + 1, len - 1);
+        if (ret < 0)
+            return errno;
+        unpack_int(v, &w, len);
+        *value = w;
+        return 0;
+    }
     ret = sp->fetch(sp, v, len);
     if (ret < 0)
 	return errno;

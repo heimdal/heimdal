@@ -82,10 +82,14 @@ _gsskrb5_export_sec_context(
 	flags |= SC_LOCAL_SUBKEY;
     if (ac->remote_subkey)
 	flags |= SC_REMOTE_SUBKEY;
+    if (ac->authenticator)
+	flags |= SC_AUTHENTICATOR;
     if (ctx->source)
 	flags |= SC_SOURCE_NAME;
     if (ctx->target)
 	flags |= SC_TARGET_NAME;
+    if (ctx->order)
+	flags |= SC_ORDER;
 
     kret = krb5_store_int32 (sp, flags);
     if (kret) {
@@ -155,6 +159,18 @@ _gsskrb5_export_sec_context(
 	    *minor_status = kret;
 	    goto failure;
 	}
+    if (ac->authenticator) {
+        kret = krb5_store_int64(sp, ac->authenticator->ctime);
+        if (kret) {
+            *minor_status = kret;
+            goto failure;
+        }
+        kret = krb5_store_int32(sp, ac->authenticator->cusec);
+        if (kret) {
+            *minor_status = kret;
+            goto failure;
+        }
+    }
 
     kret = krb5_store_int32 (sp, ac->keytype);
     if (kret) {
@@ -212,6 +228,11 @@ _gsskrb5_export_sec_context(
 	*minor_status = kret;
 	goto failure;
     }
+    kret = krb5_store_int32 (sp, ctx->state);
+    if (kret) {
+        *minor_status = kret;
+        goto failure;
+    }
     /*
      * XXX We should put a 64-bit int here, but we don't have a
      * krb5_store_int64() yet.
@@ -221,10 +242,12 @@ _gsskrb5_export_sec_context(
 	*minor_status = kret;
 	goto failure;
     }
-    kret = _gssapi_msg_order_export(sp, ctx->order);
-    if (kret ) {
-        *minor_status = kret;
-        goto failure;
+    if (ctx->order) {
+        kret = _gssapi_msg_order_export(sp, ctx->order);
+        if (kret) {
+            *minor_status = kret;
+            goto failure;
+        }
     }
 
     kret = krb5_storage_to_data (sp, &data);

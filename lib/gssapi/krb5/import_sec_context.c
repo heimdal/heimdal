@@ -51,6 +51,7 @@ _gsskrb5_import_sec_context (
     gss_buffer_desc buffer;
     krb5_keyblock keyblock;
     int32_t flags, tmp;
+    int64_t tmp64;
     gsskrb5_ctx ctx;
     gss_name_t name;
 
@@ -141,6 +142,15 @@ _gsskrb5_import_sec_context (
     if (krb5_ret_uint32 (sp, &ac->remote_seqnumber))
 	goto failure;
 
+    if (flags & SC_AUTHENTICATOR) {
+        if (krb5_ret_int64(sp, &tmp64))
+            goto failure;
+        ac->authenticator->ctime = tmp64;
+        if (krb5_ret_int32(sp, &tmp))
+            goto failure;
+        ac->authenticator->cusec = tmp;
+    }
+
     if (krb5_ret_int32 (sp, &tmp) != 0)
 	goto failure;
     ac->keytype = tmp;
@@ -195,6 +205,9 @@ _gsskrb5_import_sec_context (
     if (krb5_ret_int32 (sp, &tmp))
 	goto failure;
     ctx->more_flags = tmp;
+    if (krb5_ret_int32 (sp, &tmp))
+        goto failure;
+    ctx->state = tmp;
     /*
      * XXX endtime should be a 64-bit int, but we don't have
      * krb5_ret_int64() yet.
@@ -203,9 +216,11 @@ _gsskrb5_import_sec_context (
 	goto failure;
     ctx->endtime = tmp;
 
-    ret = _gssapi_msg_order_import(minor_status, sp, &ctx->order);
-    if (ret)
-        goto failure;
+    if (flags & SC_ORDER) {
+        ret = _gssapi_msg_order_import(minor_status, sp, &ctx->order);
+        if (ret)
+            goto failure;
+    }
 
     krb5_storage_free (sp);
 

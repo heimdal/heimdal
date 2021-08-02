@@ -39,6 +39,7 @@
 #define BYTEORDER_IS_BE(SP) BYTEORDER_IS((SP), KRB5_STORAGE_BYTEORDER_BE)
 #define BYTEORDER_IS_HOST(SP) (BYTEORDER_IS((SP), KRB5_STORAGE_BYTEORDER_HOST) || \
 			       krb5_storage_is_flags((SP), KRB5_STORAGE_HOST_BYTEORDER))
+#define BYTEORDER_IS_PACKED(SP) BYTEORDER_IS((SP), KRB5_STORAGE_BYTEORDER_PACKED)
 
 /**
  * Add the flags on a storage buffer by or-ing in the flags to the buffer.
@@ -335,18 +336,88 @@ krb5_storage_to_data(krb5_storage *sp, krb5_data *data)
     return 0;
 }
 
+static size_t
+pack_int(uint8_t *p, uint64_t val)
+{
+    size_t l = 0;
+
+    if (val < 128) {
+        *p = val;
+    } else {
+        while (val > 0) {
+            *p-- = val % 256;
+            val /= 256;
+            l++;
+        }
+        *p = 0x80 | l;
+    }
+    return l + 1;
+}
+
+static size_t
+unpack_int_length(uint8_t *v)
+{
+    size_t size;
+
+    if (*v < 128)
+        size = 0;
+    else
+        size = *v & 0x7f;
+
+    return size + 1;
+}
+
+static int
+unpack_int(uint8_t *p, size_t len, uint64_t *val, size_t *size)
+{
+    size_t v;
+
+    if (len == 0)
+        return EINVAL;
+    --len;
+    v = *p++;
+    if (v < 128) {
+        *val = v;
+        *size = 1;
+    } else {
+        int e;
+        size_t l;
+        uint64_t tmp;
+
+        if (v == 0x80) {
+            *size = 1;
+            return EINVAL;
+        }
+        v &= 0x7F;
+        if (len < v)
+            return ERANGE;
+        e = der_get_unsigned64(p, v, &tmp, &l);
+        if (e)
+            return ERANGE;
+        *val = tmp;
+        *size = l + 1;
+    }
+    return 0;
+}
+
 static krb5_error_code
 krb5_store_int(krb5_storage *sp,
 	       int64_t value,
 	       size_t len)
 {
     int ret;
-    unsigned char v[8];
+    uint8_t v[9], *p = v;
 
-    if (len > sizeof(v))
+    if (len > sizeof(value))
 	return EINVAL;
-    _krb5_put_int(v, value, len);
-    ret = sp->store(sp, v, len);
+
+    if (BYTEORDER_IS_PACKED(sp)) {
+        p += sizeof(v) - 1;
+        len = pack_int(p, value);
+        p = v + sizeof(v) - len;
+    } else
+        _krb5_put_int(v, value, len);
+    ret = sp->store(sp, p, len);
     if (ret < 0)
 	return errno;
     if ((size_t)ret != len)
@@ -448,9 +519,28 @@ krb5_ret_int(krb5_storage *sp,
 	     size_t len)
 {
     int ret;
-    unsigned char v[8];
-    uint64_t w;
+    unsigned char v[9];
+    uint64_t w = 0;
     *value = 0; /* quiets warnings */
+    if (BYTEORDER_IS_PACKED(sp)) {
+        ret = sp->fetch(sp, v, 1);
+        if (ret < 0)
+            return errno;
+
+        len = unpack_int_length(v);
+        if (len < 1)
+            return ERANGE;
+        else if (len > 1) {
+            ret = sp->fetch(sp, v + 1, len - 1);
+            if (ret < 0)
+                return errno;
+        }
+        ret = unpack_int(v, len, &w, &len);
+        if (ret)
+            return ret;
+        *value = w;
+        return 0;
+    }
     ret = sp->fetch(sp, v, len);
     if (ret < 0)
 	return errno;

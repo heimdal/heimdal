@@ -46,7 +46,6 @@ _gsskrb5_export_sec_context(
     krb5_auth_context ac;
     OM_uint32 ret = GSS_S_COMPLETE;
     krb5_data data;
-    gss_buffer_desc buffer;
     int flags;
     OM_uint32 minor;
     krb5_error_code kret;
@@ -68,6 +67,9 @@ _gsskrb5_export_sec_context(
 	return GSS_S_FAILURE;
     }
     ac = ctx->auth_context;
+
+    krb5_storage_set_byteorder(sp, KRB5_STORAGE_BYTEORDER_PACKED);
+    krb5_storage_set_flags(sp, KRB5_STORAGE_PRINCIPAL_NO_NAME_TYPE);
 
     /* flagging included fields */
 
@@ -185,16 +187,7 @@ _gsskrb5_export_sec_context(
 
     /* names */
     if (ctx->source) {
-	ret = _gsskrb5_export_name (minor_status,
-				    (gss_name_t)ctx->source, &buffer);
-	if (ret)
-	    goto failure;
-	data.data   = buffer.value;
-	data.length = buffer.length;
-	kret = krb5_store_data (sp, data);
-	_gsskrb5_release_buffer (&minor, &buffer);
-
-	ret = GSS_S_FAILURE;
+        kret = krb5_store_principal(sp, ctx->source);
 	if (kret) {
 	    *minor_status = kret;
 	    goto failure;
@@ -202,16 +195,7 @@ _gsskrb5_export_sec_context(
     }
 
     if (ctx->target) {
-	ret = _gsskrb5_export_name (minor_status,
-				    (gss_name_t)ctx->target, &buffer);
-	if (ret)
-	    goto failure;
-	data.data   = buffer.value;
-	data.length = buffer.length;
-	kret = krb5_store_data (sp, data);
-	_gsskrb5_release_buffer (&minor, &buffer);
-
-	ret = GSS_S_FAILURE;
+        kret = krb5_store_principal(sp, ctx->source);
 	if (kret) {
 	    *minor_status = kret;
 	    goto failure;

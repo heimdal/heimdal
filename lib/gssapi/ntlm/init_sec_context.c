@@ -206,7 +206,8 @@ _gss_ntlm_get_user_cred(const ntlm_name target_name,
 	ret = get_user_ccache(target_name,
                               &cred->domain, &cred->username, &cred->key);
     if (ret) {
-	free(cred);
+	OM_uint32 tmp;
+	_gss_ntlm_release_cred(&tmp, (gss_cred_id_t *)&cred);
 	return ret;
     }
 

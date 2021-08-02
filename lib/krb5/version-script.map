@@ -653,6 +653,7 @@ HEIMDAL_KRB5_2.0 {
 		krb5_store_creds;
 		krb5_store_creds_tag;
 		krb5_store_data;
+		krb5_store_datalen;
 		krb5_store_int16;
 		krb5_store_int32;
 		krb5_store_int64;

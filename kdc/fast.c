@@ -556,6 +556,7 @@ _kdc_fast_unwrap_request(astgs_request_t r)
 	krb5_free_principal(r->context, armor_server);
     if(armor_user)
 	_kdc_free_ent(r->context, armor_user);
+    free(buf);
 
     return ret;
 }

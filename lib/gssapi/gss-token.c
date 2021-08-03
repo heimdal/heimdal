@@ -263,6 +263,7 @@ read_token(gss_buffer_t in, int negotiate)
 	/* We must flush before we block wanting input */
 	fflush(stdout);
 
+	*in = (gss_buffer_desc)GSS_C_EMPTY_BUFFER;
 	inbuf = read_buffer(stdin);
 	if (!inbuf)
 		/* Just a couple of \n's in a row or EOF, no error. */

@@ -560,3 +560,18 @@ _kdc_fast_unwrap_request(astgs_request_t r)
 
     return ret;
 }
+
+void
+_kdc_free_fast_state(KDCFastState *state)
+{
+    size_t i;
+
+    for (i = 0; i < state->fast_state.len; i++) {
+	PA_DATA *pa = &state->fast_state.val[i];
+
+	if (pa->padata_value.data)
+	    memset_s(pa->padata_value.data, 0,
+		     pa->padata_value.length, pa->padata_value.length);
+    }
+    free_KDCFastState(state);
+}

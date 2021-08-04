@@ -2505,7 +2505,7 @@ out:
 
     free_EncTicketPart(&r->et);
     free_EncKDCRepPart(&r->ek);
-    free_KDCFastState(&r->fast);
+    _kdc_free_fast_state(&r->fast);
 
     if (error_method.len)
 	free_METHOD_DATA(&error_method);

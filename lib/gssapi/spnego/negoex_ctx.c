@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2019 PADL Software Pty Ltd.
+ * Copyright (C) 2011-2021 PADL Software Pty Ltd.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -88,33 +88,42 @@ buffer_set_to_crypto(OM_uint32 *minor,
     return GSS_S_COMPLETE;
 }
 
+#define NEGOEX_SIGN_KEY	    1
+#define NEGOEX_VERIFY_KEY   2
+#define NEGOEX_BOTH_KEYS    (NEGOEX_SIGN_KEY|NEGOEX_VERIFY_KEY)
+
 static OM_uint32
 get_session_keys(OM_uint32 *minor,
 		 krb5_context context,
+		 OM_uint32 flags,
 		 struct negoex_auth_mech *mech)
 {
     OM_uint32 major, tmpMinor;
     gss_buffer_set_t buffers = GSS_C_NO_BUFFER_SET;
 
-    major = gss_inquire_sec_context_by_oid(&tmpMinor, mech->mech_context,
-					   GSS_C_INQ_NEGOEX_KEY, &buffers);
-    if (major == GSS_S_COMPLETE) {
-	major = buffer_set_to_crypto(minor, context,
-				     buffers, &mech->crypto);
-	_gss_secure_release_buffer_set(&tmpMinor, &buffers);
-	if (major != GSS_S_COMPLETE)
-	    return major;
+    if (flags & NEGOEX_SIGN_KEY) {
+	major = gss_inquire_sec_context_by_oid(&tmpMinor, mech->mech_context,
+					       GSS_C_INQ_NEGOEX_KEY, &buffers);
+	if (major == GSS_S_COMPLETE) {
+	    major = buffer_set_to_crypto(minor, context,
+					 buffers, &mech->crypto);
+	    _gss_secure_release_buffer_set(&tmpMinor, &buffers);
+	    if (major != GSS_S_COMPLETE)
+		return major;
+	}
     }
 
-    major = gss_inquire_sec_context_by_oid(&tmpMinor, mech->mech_context,
-					   GSS_C_INQ_NEGOEX_VERIFY_KEY,
-					   &buffers);
-    if (major == GSS_S_COMPLETE) {
-	major = buffer_set_to_crypto(minor, context,
-				     buffers, &mech->verify_crypto);
-	_gss_secure_release_buffer_set(&tmpMinor, &buffers);
-	if (major != GSS_S_COMPLETE)
-	    return major;
+    if (flags & NEGOEX_VERIFY_KEY) {
+	major = gss_inquire_sec_context_by_oid(&tmpMinor, mech->mech_context,
+					       GSS_C_INQ_NEGOEX_VERIFY_KEY,
+					       &buffers);
+	if (major == GSS_S_COMPLETE) {
+	    major = buffer_set_to_crypto(minor, context,
+					 buffers, &mech->verify_crypto);
+	    _gss_secure_release_buffer_set(&tmpMinor, &buffers);
+	    if (major != GSS_S_COMPLETE)
+		return major;
+	}
     }
 
     return GSS_S_COMPLETE;
@@ -411,7 +420,7 @@ mech_init(OM_uint32 *minor,
 	    }
 	}
 	if (!GSS_ERROR(major))
-	    return get_session_keys(minor, context, mech);
+	    return get_session_keys(minor, context, NEGOEX_BOTH_KEYS, mech);
 
 	/* Remember the error we got from the first mech. */
 	if (first_mech) {
@@ -509,7 +518,7 @@ mech_accept(OM_uint32 *minor,
 	    !gss_oid_equal(ctx->negotiated_mech_type, mech->oid))
 	    _gss_mg_log(1, "negoex client didn't send the mech they said they would");
 
-	major = get_session_keys(minor, context, mech);
+	major = get_session_keys(minor, context, NEGOEX_BOTH_KEYS, mech);
     } else if (ctx->negoex_step == 1) {
 	gss_mg_collect_error(ctx->negotiated_mech_type, major, *minor);
 	*mech_error = TRUE;
@@ -530,6 +539,13 @@ verify_keyusage(gssspnego_ctx ctx, int make_checksum)
     /* Of course, these are the wrong way around in the spec. */
     return (ctx->flags.local ^ !make_checksum) ?
 	NEGOEX_KEYUSAGE_ACCEPTOR_CHECKSUM : NEGOEX_KEYUSAGE_INITIATOR_CHECKSUM;
+}
+
+static OM_uint32
+verify_key_flags(gssspnego_ctx ctx, int make_checksum)
+{
+    return (ctx->flags.local ^ make_checksum) ?
+	NEGOEX_SIGN_KEY : NEGOEX_VERIFY_KEY;
 }
 
 static OM_uint32
@@ -557,6 +573,13 @@ verify_checksum(OM_uint32 *minor,
     msg = _gss_negoex_locate_verify_message(messages, nmessages);
     if (msg == NULL || !GUID_EQ(msg->scheme, mech->scheme))
 	return GSS_S_COMPLETE;
+
+    /*
+     * Last chance attempt to obtain session key for imported exported partial
+     * contexts (which do not carry the session key at the NegoEx layer).
+     */
+    if (mech->verify_crypto == NULL)
+	get_session_keys(minor, context, verify_key_flags(ctx, FALSE), mech);
 
     /*
      * A recoverable error may cause us to be unable to verify a token from the
@@ -618,8 +641,15 @@ make_checksum(OM_uint32 *minor, gssspnego_ctx ctx)
 
     if (mech->crypto == NULL) {
 	if (mech->complete) {
-	    *minor = (OM_uint32)NEGOEX_NO_VERIFY_KEY;
-	    return GSS_S_UNAVAILABLE;
+	    /*
+	     * Last chance attempt to obtain session key for imported exported partial
+	     * contexts (which do not carry the session key at the NegoEx layer).
+	     */
+	    get_session_keys(minor, context, verify_key_flags(ctx, TRUE), mech);
+	    if (mech->crypto == NULL) {
+		*minor = (OM_uint32)NEGOEX_NO_VERIFY_KEY;
+		return GSS_S_UNAVAILABLE;
+	    }
 	} else {
 	    return GSS_S_COMPLETE;
 	}

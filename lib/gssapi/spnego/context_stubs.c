@@ -263,6 +263,9 @@ OM_uint32 GSSAPI_CALLCONV _gss_spnego_inquire_context (
 				   locally_initiated,
 				   open_context);
 
+    if (open_context)
+	*open_context = gssspnego_ctx_complete_p(ctx);
+
     return maj_stat;
 }
 
@@ -304,13 +307,12 @@ OM_uint32 GSSAPI_CALLCONV _gss_spnego_export_sec_context (
            )
 {
     gssspnego_ctx ctx;
-    OM_uint32 ret;
+    OM_uint32 major_status;
 
     *minor_status = 0;
 
-    if (context_handle == NULL) {
+    if (context_handle == NULL)
 	return GSS_S_NO_CONTEXT;
-    }
 
     ctx = (gssspnego_ctx)*context_handle;
 
@@ -319,25 +321,30 @@ OM_uint32 GSSAPI_CALLCONV _gss_spnego_export_sec_context (
 
     HEIMDAL_MUTEX_lock(&ctx->ctx_id_mutex);
 
-    if (ctx->negotiated_ctx_id == GSS_C_NO_CONTEXT) {
+    /*
+     * Partial context export is only supported on the acceptor side, as we
+     * cannot represent the initiator function pointer state in an exported
+     * token, and also because it is mostly useful for acceptors which need
+     * to manage multiple initiator states.
+     */
+    if (ctx->flags.local && !gssspnego_ctx_complete_p(ctx)) {
+	major_status = GSS_S_NO_CONTEXT;
+	goto out;
+    }
+
+    major_status = _gss_spnego_export_sec_context_internal(minor_status,
+							   ctx,
+							   interprocess_token);
+
+out:
+    if (major_status == GSS_S_COMPLETE)
+	major_status = _gss_spnego_internal_delete_sec_context(minor_status,
+							       context_handle,
+							       GSS_C_NO_BUFFER);
+    else
 	HEIMDAL_MUTEX_unlock(&ctx->ctx_id_mutex);
-	return GSS_S_NO_CONTEXT;
-    }
 
-    ret = gss_export_sec_context(minor_status,
-				 &ctx->negotiated_ctx_id,
-				 interprocess_token);
-    if (ret == GSS_S_COMPLETE) {
-	ret = _gss_spnego_internal_delete_sec_context(minor_status,
-					     context_handle,
-					     GSS_C_NO_BUFFER);
-	if (ret == GSS_S_COMPLETE)
-	    return GSS_S_COMPLETE;
-    }
-
-    HEIMDAL_MUTEX_unlock(&ctx->ctx_id_mutex);
-
-    return ret;
+    return major_status;
 }
 
 OM_uint32 GSSAPI_CALLCONV _gss_spnego_import_sec_context (
@@ -346,35 +353,9 @@ OM_uint32 GSSAPI_CALLCONV _gss_spnego_import_sec_context (
             gss_ctx_id_t *context_handle
            )
 {
-    OM_uint32 ret, minor;
-    gss_ctx_id_t context;
-    gssspnego_ctx ctx;
-
-    *context_handle = GSS_C_NO_CONTEXT;
-    ret = _gss_spnego_alloc_sec_context(minor_status, &context);
-    if (ret != GSS_S_COMPLETE) {
-	return ret;
-    }
-    ctx = (gssspnego_ctx)context;
-
-    HEIMDAL_MUTEX_lock(&ctx->ctx_id_mutex);
-
-    ret = gss_import_sec_context(minor_status,
-				 interprocess_token,
-				 &ctx->negotiated_ctx_id);
-    if (ret != GSS_S_COMPLETE) {
-	_gss_spnego_internal_delete_sec_context(&minor, &context, GSS_C_NO_BUFFER);
-	return ret;
-    }
-
-    ctx->flags.open = 1;
-    /* don't bother filling in the rest of the fields */
-
-    HEIMDAL_MUTEX_unlock(&ctx->ctx_id_mutex);
-
-    *context_handle = (gss_ctx_id_t)ctx;
-
-    return GSS_S_COMPLETE;
+    return _gss_spnego_import_sec_context_internal(minor_status,
+						   interprocess_token,
+						   (gssspnego_ctx *)context_handle);
 }
 
 OM_uint32 GSSAPI_CALLCONV _gss_spnego_inquire_names_for_mech (

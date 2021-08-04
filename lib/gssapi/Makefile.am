@@ -171,6 +171,7 @@ mechsrc = \
 spnegosrc = \
 	spnego/accept_sec_context.c \
 	spnego/compat.c \
+	spnego/context_storage.c \
 	spnego/context_stubs.c \
 	spnego/external.c \
 	spnego/init_sec_context.c \

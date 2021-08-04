@@ -71,7 +71,7 @@ typedef struct gsskrb5_ctx {
       /* initiator states */
       INITIATOR_START,
       INITIATOR_RESTART,
-      INITIATOR_WAIT_FOR_MUTAL,
+      INITIATOR_WAIT_FOR_MUTUAL,
       INITIATOR_READY,
       /* acceptor states */
       ACCEPTOR_START,

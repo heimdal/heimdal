@@ -78,6 +78,8 @@
 
 #define ALLOC(X, N) (X) = calloc((N), sizeof(*(X)))
 
+#define CHECK(ret, x) do { (ret) = (x); if (ret) goto fail; } while (0)
+
 struct gssspnego_ctx_desc;
 typedef struct gssspnego_ctx_desc *gssspnego_ctx;
 
@@ -120,7 +122,7 @@ struct gssspnego_ctx_desc {
 	gss_name_t		target_name;
 	gssspnego_initiator_state   initiator_state;
 
-	int			negoex_step;
+	uint8_t			negoex_step;
 	krb5_storage		*negoex_transcript;
 	uint32_t		negoex_seqnum;
 	conversation_id		negoex_conv_id;
@@ -146,5 +148,12 @@ struct gssspnego_optimistic_ctx {
 };
 
 #include "spnego-private.h"
+
+static inline int
+gssspnego_ctx_complete_p(gssspnego_ctx ctx)
+{
+    return ctx->flags.open &&
+	    (ctx->flags.safe_omit || (ctx->flags.sent_mic && ctx->flags.verified_mic));
+}
 
 #endif /* SPNEGO_LOCL_H */

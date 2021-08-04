@@ -30,9 +30,6 @@
 
 #include "spnego_locl.h"
 
-static void
-release_auth_mech(krb5_context context, struct negoex_auth_mech *mech);
-
 /*
  * SPNEGO expects to find the active mech context in ctx->negotiated_ctx_id,
  * but the metadata exchange APIs force us to have one mech context per mech
@@ -92,7 +89,7 @@ release_all_mechs(gssspnego_ctx ctx, krb5_context context)
     struct negoex_auth_mech *mech, *next;
 
     HEIM_TAILQ_FOREACH_SAFE(mech, &ctx->negoex_mechs, links, next) {
-	release_auth_mech(context, mech);
+	_gss_negoex_release_auth_mech(context, mech);
     }
 
     HEIM_TAILQ_INIT(&ctx->negoex_mechs);
@@ -656,20 +653,6 @@ _gss_negoex_locate_alert_message(struct negoex_message *messages,
     return (msg == NULL) ? NULL : &msg->u.a;
 }
 
-#define CHECK(ret, x) do { (ret) = (x); if (ret) goto fail; } while (0)
-
-static krb5_error_code
-store_bytes(krb5_storage *sp, const void *bytes, size_t length)
-{
-    ssize_t ssize;
-
-    ssize = krb5_storage_write(sp, bytes, length);
-    if (ssize != length)
-	return ENOMEM;
-
-    return 0;
-}
-
 /*
  * Add the encoding of a MESSAGE_HEADER structure to buf, given the number of
  * bytes of the payload following the full header. Increment the sequence
@@ -707,7 +690,7 @@ put_message_header(OM_uint32 *minor, gssspnego_ctx ctx,
     /* cbMessageLength */
     CHECK(ret, krb5_store_uint32(ctx->negoex_transcript, header_len + payload_len));
     /* ConversationId */
-    CHECK(ret, store_bytes(ctx->negoex_transcript, ctx->negoex_conv_id, GUID_LENGTH));
+    CHECK(ret, krb5_store_bytes(ctx->negoex_transcript, ctx->negoex_conv_id, GUID_LENGTH));
 
     _gss_negoex_log_message(0, type,
 			    ctx->negoex_conv_id, ctx->negoex_seqnum,
@@ -745,7 +728,7 @@ _gss_negoex_add_nego_message(OM_uint32 *minor,
     if (major != GSS_S_COMPLETE)
 	return major;
 
-    CHECK(ret, store_bytes(ctx->negoex_transcript, random, 32));
+    CHECK(ret, krb5_store_bytes(ctx->negoex_transcript, random, 32));
     /* ProtocolVersion */
     CHECK(ret, krb5_store_uint64(ctx->negoex_transcript, 0));
     /* AuthSchemes vector */
@@ -755,11 +738,11 @@ _gss_negoex_add_nego_message(OM_uint32 *minor,
     CHECK(ret, krb5_store_uint32(ctx->negoex_transcript, payload_start));
     CHECK(ret, krb5_store_uint16(ctx->negoex_transcript, 0));
     /* Four bytes of padding to reach a multiple of 8 bytes. */
-    CHECK(ret, store_bytes(ctx->negoex_transcript, "\0\0\0\0", 4));
+    CHECK(ret, krb5_store_bytes(ctx->negoex_transcript, "\0\0\0\0", 4));
 
     /* Payload (auth schemes) */
     HEIM_TAILQ_FOREACH(mech, &ctx->negoex_mechs, links) {
-	CHECK(ret, store_bytes(ctx->negoex_transcript, mech->scheme, GUID_LENGTH));
+	CHECK(ret, krb5_store_bytes(ctx->negoex_transcript, mech->scheme, GUID_LENGTH));
     }
 
     return GSS_S_COMPLETE;
@@ -784,12 +767,12 @@ _gss_negoex_add_exchange_message(OM_uint32 *minor,
     if (major != GSS_S_COMPLETE)
 	return major;
 
-    CHECK(ret, store_bytes(ctx->negoex_transcript, scheme, GUID_LENGTH));
+    CHECK(ret, krb5_store_bytes(ctx->negoex_transcript, scheme, GUID_LENGTH));
     /* Exchange byte vector */
     CHECK(ret, krb5_store_uint32(ctx->negoex_transcript, payload_start));
     CHECK(ret, krb5_store_uint32(ctx->negoex_transcript, token->length));
     /* Payload (token) */
-    CHECK(ret, store_bytes(ctx->negoex_transcript, token->value, token->length));
+    CHECK(ret, krb5_store_bytes(ctx->negoex_transcript, token->value, token->length));
 
     return GSS_S_COMPLETE;
 
@@ -814,7 +797,7 @@ _gss_negoex_add_verify_message(OM_uint32 *minor,
     if (major != GSS_S_COMPLETE)
 	return major;
 
-    CHECK(ret, store_bytes(ctx->negoex_transcript, scheme, GUID_LENGTH));
+    CHECK(ret, krb5_store_bytes(ctx->negoex_transcript, scheme, GUID_LENGTH));
     CHECK(ret, krb5_store_uint32(ctx->negoex_transcript, CHECKSUM_HEADER_LENGTH));
     CHECK(ret, krb5_store_uint32(ctx->negoex_transcript, CHECKSUM_SCHEME_RFC3961));
     CHECK(ret, krb5_store_uint32(ctx->negoex_transcript, cksum_type));
@@ -822,9 +805,9 @@ _gss_negoex_add_verify_message(OM_uint32 *minor,
     CHECK(ret, krb5_store_uint32(ctx->negoex_transcript, payload_start));
     CHECK(ret, krb5_store_uint32(ctx->negoex_transcript, cksum_len));
     /* Four bytes of padding to reach a multiple of 8 bytes. */
-    CHECK(ret, store_bytes(ctx->negoex_transcript, "\0\0\0\0", 4));
+    CHECK(ret, krb5_store_bytes(ctx->negoex_transcript, "\0\0\0\0", 4));
     /* Payload (checksum contents) */
-    CHECK(ret, store_bytes(ctx->negoex_transcript, cksum, cksum_len));
+    CHECK(ret, krb5_store_bytes(ctx->negoex_transcript, cksum, cksum_len));
 
     return GSS_S_COMPLETE;
 
@@ -852,14 +835,14 @@ _gss_negoex_add_verify_no_key_alert(OM_uint32 *minor,
     if (major != GSS_S_COMPLETE)
 	return major;
 
-    CHECK(ret, store_bytes(ctx->negoex_transcript, scheme, GUID_LENGTH));
+    CHECK(ret, krb5_store_bytes(ctx->negoex_transcript, scheme, GUID_LENGTH));
     /* ErrorCode */
     CHECK(ret, krb5_store_uint32(ctx->negoex_transcript, 0));
     /* Alerts vector */
     CHECK(ret, krb5_store_uint32(ctx->negoex_transcript, payload_start));
     CHECK(ret, krb5_store_uint16(ctx->negoex_transcript, 1));
     /* Six bytes of padding to reach a multiple of 8 bytes. */
-    CHECK(ret, store_bytes(ctx->negoex_transcript, "\0\0\0\0\0\0", 6));
+    CHECK(ret, krb5_store_bytes(ctx->negoex_transcript, "\0\0\0\0\0\0", 6));
     /* Payload part 1: a single ALERT element */
     CHECK(ret, krb5_store_uint32(ctx->negoex_transcript, ALERT_TYPE_PULSE));
     CHECK(ret, krb5_store_uint32(ctx->negoex_transcript,
@@ -877,9 +860,9 @@ fail:
 }
 
 
-static void
-release_auth_mech(krb5_context context,
-		  struct negoex_auth_mech *mech)
+void
+_gss_negoex_release_auth_mech(krb5_context context,
+			      struct negoex_auth_mech *mech)
 {
     OM_uint32 tmpmin;
 
@@ -904,7 +887,7 @@ _gss_negoex_delete_auth_mech(gssspnego_ctx ctx,
     krb5_context context = _gss_mg_krb5_context();
 
     HEIM_TAILQ_REMOVE(&ctx->negoex_mechs, mech, links);
-    release_auth_mech(context, mech);
+    _gss_negoex_release_auth_mech(context, mech);
 }
 
 /* Remove all auth mech entries except for mech from ctx->mechs. */

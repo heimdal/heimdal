@@ -646,7 +646,7 @@ init_auth_restart
     free_Checksum(&cksum);
 
     if (flags & GSS_C_MUTUAL_FLAG) {
-	ctx->state = INITIATOR_WAIT_FOR_MUTAL;
+	ctx->state = INITIATOR_WAIT_FOR_MUTUAL;
 	return GSS_S_CONTINUE_NEEDED;
     }
 
@@ -926,7 +926,7 @@ OM_uint32 GSSAPI_CALLCONV _gsskrb5_init_sec_context
 				ret_flags,
 				time_rec);
 	break;
-    case INITIATOR_WAIT_FOR_MUTAL:
+    case INITIATOR_WAIT_FOR_MUTUAL:
 	ret = repl_mutual(minor_status,
 			  ctx,
 			  context,

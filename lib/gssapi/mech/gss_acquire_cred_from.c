@@ -91,7 +91,8 @@ acquire_mech_cred(OM_uint32 *minor_status,
 					       &mc->gmc_cred,
 					       NULL,
 					       time_rec);
-    } else if (cred_store == GSS_C_NO_CRED_STORE && m->gm_acquire_cred) {
+    } else if ((cred_store == GSS_C_NO_CRED_STORE || cred_store->count == 0) &&
+	       m->gm_acquire_cred) {
 	major_status = m->gm_acquire_cred(minor_status,
 					  mn ? mn->gmn_name : GSS_C_NO_NAME,
 					  time_req,

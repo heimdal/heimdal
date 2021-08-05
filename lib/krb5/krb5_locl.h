@@ -354,6 +354,7 @@ struct krb5_pk_identity {
     hx509_revoke_ctx revokectx;
     int flags;
 #define PKINIT_BTMM 1
+#define PKINIT_NO_KDC_ANCHOR 2
 };
 
 enum krb5_pk_type {
@@ -380,6 +381,7 @@ struct krb5_pk_init_ctx_data {
     unsigned int require_hostname_match:1;
     unsigned int trustedCertifiers:1;
     unsigned int anonymous:1;
+    unsigned int kdc_verified:1;
 };
 
 #endif /* PKINIT */

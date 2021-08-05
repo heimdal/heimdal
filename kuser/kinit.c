@@ -78,6 +78,7 @@ int pk_enterprise_flag = 0;
 struct hx509_certs_data *ent_user_id = NULL;
 char *pk_x509_anchors	= NULL;
 int pk_use_enckey	= 0;
+int pk_anon_fast_armor	= 0;
 static int canonicalize_flag = 0;
 static int enterprise_flag = 0;
 static int ok_as_delegate_flag = 0;
@@ -183,6 +184,9 @@ static struct getargs args[] = {
 
     { "pk-use-enckey",	0,  arg_flag, &pk_use_enckey,
       NP_("Use RSA encrypted reply (instead of DH)", ""), NULL },
+
+    { "pk-anon-fast-armor",	0,  arg_flag, &pk_anon_fast_armor,
+      NP_("use unauthenticated anonymous PKINIT as FAST armor", ""), NULL },
 #endif
 #ifndef NO_NTLM
     { "ntlm-domain",	0,  arg_string, &ntlm_domain,
@@ -620,6 +624,7 @@ get_new_tickets(krb5_context context,
     krb5_init_creds_context ctx = NULL;
     krb5_get_init_creds_opt *opt = NULL;
     krb5_prompter_fct prompter = krb5_prompter_posix;
+
 #ifndef NO_NTLM
     struct ntlm_buf ntlmkey;
     memset(&ntlmkey, 0, sizeof(ntlmkey));
@@ -785,17 +790,28 @@ get_new_tickets(krb5_context context,
     }
 
     if (fast_armor_cache_string) {
-	krb5_ccache fastid;
-	
+	krb5_ccache fastid = NULL;
+
+	if (pk_anon_fast_armor)
+	    krb5_errx(context, 1,
+		N_("cannot specify FAST armor cache with FAST "
+		     "anonymous PKINIT option", ""));
+
 	ret = krb5_cc_resolve(context, fast_armor_cache_string, &fastid);
 	if (ret) {
 	    krb5_warn(context, ret, "krb5_cc_resolve(FAST cache)");
 	    goto out;
 	}
-	
+
 	ret = krb5_init_creds_set_fast_ccache(context, ctx, fastid);
 	if (ret) {
 	    krb5_warn(context, ret, "krb5_init_creds_set_fast_ccache");
+	    goto out;
+	}
+    } else if (pk_anon_fast_armor) {
+	ret = krb5_init_creds_set_fast_anon_pkinit(context, ctx);
+	if (ret) {
+	    krb5_warn(context, ret, "krb5_init_creds_set_fast_anon_pkinit");
 	    goto out;
 	}
     }
@@ -968,7 +984,6 @@ out:
 	krb5_init_creds_free(context, ctx);
     if (tempccache)
 	krb5_cc_destroy(context, tempccache);
-
     if (enctype)
 	free(enctype);
 

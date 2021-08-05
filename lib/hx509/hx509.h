@@ -182,6 +182,9 @@ typedef enum {
 #define HX509_CMS_VS_ALLOW_ZERO_SIGNER			0x04
 #define HX509_CMS_VS_NO_VALIDATE			0x08
 
+/* flags from hx509_cms_verify_signed_ext (out verify_flags) */
+#define HX509_CMS_VSE_VALIDATED				0x01
+
 /* selectors passed to hx509_crypto_select and hx509_crypto_available */
 #define HX509_SELECT_ALL 0
 #define HX509_SELECT_DIGEST 1

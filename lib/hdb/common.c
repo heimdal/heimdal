@@ -184,11 +184,14 @@ fetch_entry_or_alias(krb5_context context,
     } else if (ret == 0 && eoa.element == choice_HDB_EntryOrAlias_alias) {
         krb5_data_free(&key);
 	ret = hdb_principal2key(context, eoa.u.alias.principal, &key);
-        if (ret == 0)
+        if (ret == 0) {
+	    krb5_data_free(&value);
             ret = db->hdb__get(context, db, key, &value);
+	}
         if (ret == 0)
             /* No alias chaining */
             ret = hdb_value2entry(context, &value, &entry->entry);
+	krb5_free_principal(context, eoa.u.alias.principal);
     } else if (ret == 0)
         ret = ENOTSUP;
     if (ret == 0 && enterprise_principal) {

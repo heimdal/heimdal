@@ -787,7 +787,7 @@ _krb5_pk_mk_padata(krb5_context context,
 				     NULL);
     if (ic_flags & KRB5_INIT_CREDS_NO_C_NO_EKU_CHECK)
 	ctx->require_eku = 0;
-    if (ctx->id->flags & PKINIT_BTMM)
+    if (ctx->id->flags & (PKINIT_BTMM | PKINIT_NO_KDC_ANCHOR))
 	ctx->require_eku = 0;
 
     ctx->require_krbtgt_otherName =
@@ -829,32 +829,38 @@ pk_verify_sign(krb5_context context,
 	       struct krb5_pk_cert **signer)
 {
     hx509_certs signer_certs;
-    int ret, flags = 0;
+    int ret;
+    unsigned flags = 0, verify_flags = 0;
 
-    /* BTMM is broken in Leo and SnowLeo */
+    *signer = NULL;
+
     if (id->flags & PKINIT_BTMM) {
 	flags |= HX509_CMS_VS_ALLOW_DATA_OID_MISMATCH;
 	flags |= HX509_CMS_VS_NO_KU_CHECK;
 	flags |= HX509_CMS_VS_NO_VALIDATE;
     }
+    if (id->flags & PKINIT_NO_KDC_ANCHOR)
+	flags |= HX509_CMS_VS_NO_VALIDATE;
 
-    *signer = NULL;
-
-    ret = hx509_cms_verify_signed(context->hx509ctx,
-				  id->verify_ctx,
-				  flags,
-				  data,
-				  length,
-				  NULL,
-				  id->certpool,
-				  contentType,
-				  content,
-				  &signer_certs);
+    ret = hx509_cms_verify_signed_ext(context->hx509ctx,
+				      id->verify_ctx,
+				      flags,
+				      data,
+				      length,
+				      NULL,
+				      id->certpool,
+				      contentType,
+				      content,
+				      &signer_certs,
+				      &verify_flags);
     if (ret) {
 	pk_copy_error(context, context->hx509ctx, ret,
 		      "CMS verify signed failed");
 	return ret;
     }
+
+    if ((verify_flags & HX509_CMS_VSE_VALIDATED) == 0)
+	goto out;
 
     *signer = calloc(1, sizeof(**signer));
     if (*signer == NULL) {
@@ -1061,7 +1067,9 @@ pk_verify_host(krb5_context context,
 	    free_KRB5PrincipalName(&r);
 	}
 	hx509_free_octet_string_list(&list);
-	if (matched == 0) {
+
+	if (matched == 0 &&
+	    (ctx->id->flags & PKINIT_NO_KDC_ANCHOR) == 0) {
 	    ret = KRB5_KDC_ERR_INVALID_CERTIFICATE;
 	    /* XXX: Lost in translation... */
 	    krb5_set_error_message(context, ret,
@@ -1192,10 +1200,16 @@ pk_rd_pa_reply_enckey(krb5_context context,
     ret = krb5_data_copy(&content, unwrapped.data, unwrapped.length);
     der_free_octet_string(&unwrapped);
 
-    /* make sure that it is the kdc's certificate */
-    ret = pk_verify_host(context, realm, hi, ctx, host);
-    if (ret) {
-	goto out;
+    heim_assert(host || (ctx->id->flags & PKINIT_NO_KDC_ANCHOR),
+		"KDC signature must be verified unless PKINIT_NO_KDC_ANCHOR set");
+
+    if (host) {
+	/* make sure that it is the kdc's certificate */
+	ret = pk_verify_host(context, realm, hi, ctx, host);
+	if (ret)
+	    goto out;
+
+	ctx->kdc_verified = 1;
     }
 
 #if 0
@@ -1374,10 +1388,17 @@ pk_rd_pa_reply_dh(krb5_context context,
     if (ret)
 	goto out;
 
-    /* make sure that it is the kdc's certificate */
-    ret = pk_verify_host(context, realm, hi, ctx, host);
-    if (ret)
-	goto out;
+    heim_assert(host || (ctx->id->flags & PKINIT_NO_KDC_ANCHOR),
+		"KDC signature must be verified unless PKINIT_NO_KDC_ANCHOR set");
+
+    if (host) {
+	/* make sure that it is the kdc's certificate */
+	ret = pk_verify_host(context, realm, hi, ctx, host);
+	if (ret)
+	    goto out;
+
+	ctx->kdc_verified = 1;
+    }
 
     if (der_heim_oid_cmp(&contentType, &asn1_oid_id_pkdhkeydata)) {
 	ret = KRB5KRB_AP_ERR_MSG_TYPE;
@@ -1835,12 +1856,6 @@ _krb5_pk_load_id(krb5_context context,
     int ret;
 
     *ret_id = NULL;
-
-    if (anchor_id == NULL) {
-	krb5_set_error_message(context, HEIM_PKINIT_NO_VALID_CA,
-			       N_("PKINIT: No anchor given", ""));
-	return HEIM_PKINIT_NO_VALID_CA;
-    }
 
     /* load cert */
 
@@ -2383,6 +2398,13 @@ krb5_get_init_creds_opt_set_pkinit(krb5_context context,
     if (flags & KRB5_GIC_OPT_PKINIT_ANONYMOUS)
 	opt->opt_private->pk_init_ctx->anonymous = 1;
 
+    if ((flags & KRB5_GIC_OPT_PKINIT_NO_KDC_ANCHOR) == 0 &&
+	x509_anchors == NULL) {
+	krb5_set_error_message(context, HEIM_PKINIT_NO_VALID_CA,
+			       N_("PKINIT: No anchor given", ""));
+	return HEIM_PKINIT_NO_VALID_CA;
+    }
+
     ret = _krb5_pk_load_id(context,
 			   &opt->opt_private->pk_init_ctx->id,
 			   user_id,
@@ -2402,9 +2424,10 @@ krb5_get_init_creds_opt_set_pkinit(krb5_context context,
     }
     if (flags & KRB5_GIC_OPT_PKINIT_BTMM)
 	opt->opt_private->pk_init_ctx->id->flags |= PKINIT_BTMM;
-
     if (principal && krb5_principal_is_lkdc(context, principal))
 	opt->opt_private->pk_init_ctx->id->flags |= PKINIT_BTMM;
+    if (flags & KRB5_GIC_OPT_PKINIT_NO_KDC_ANCHOR)
+	opt->opt_private->pk_init_ctx->id->flags |= PKINIT_NO_KDC_ANCHOR;
 
     if (opt->opt_private->pk_init_ctx->id->certs) {
         ret = _krb5_pk_set_user_id(context,
@@ -2623,4 +2646,16 @@ krb5_pk_enterprise_cert(krb5_context context,
 			   N_("no support for PKINIT compiled in", ""));
     return EINVAL;
 #endif
+}
+
+KRB5_LIB_FUNCTION krb5_boolean KRB5_LIB_CALL
+_krb5_pk_is_kdc_verified(krb5_context context,
+			 krb5_get_init_creds_opt *opt)
+{
+    if (opt == NULL ||
+	opt->opt_private == NULL ||
+	opt->opt_private->pk_init_ctx == NULL)
+	return FALSE;
+
+    return opt->opt_private->pk_init_ctx->kdc_verified;
 }

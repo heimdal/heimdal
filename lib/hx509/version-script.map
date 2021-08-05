@@ -137,6 +137,7 @@ HEIMDAL_X509_1.2 {
 		hx509_cms_unenvelope;
 		hx509_cms_unwrap_ContentInfo;
 		hx509_cms_verify_signed;
+		hx509_cms_verify_signed_ext;
 		hx509_cms_wrap_ContentInfo;
 		hx509_context_free;
 		hx509_context_init;

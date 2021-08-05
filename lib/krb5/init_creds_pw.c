@@ -96,12 +96,16 @@ typedef struct krb5_get_init_creds_ctx {
 #define KRB5_FAST_REQUIRED 64 /* fast required by action of caller */
 #define KRB5_FAST_DISABLED 128
 #define KRB5_FAST_AP_ARMOR_SERVICE 256
+#define KRB5_FAST_ANON_PKINIT_ARMOR 512
+#define KRB5_FAST_KDC_VERIFIED 1024
 	krb5_keyblock *reply_key;
 	krb5_ccache armor_ccache;
 	krb5_principal armor_service;
 	krb5_crypto armor_crypto;
 	krb5_keyblock armor_key;
 	krb5_keyblock *strengthen_key;
+	krb5_get_init_creds_opt *anon_pkinit_opt;
+	krb5_init_creds_context anon_pkinit_ctx;
     } fast_state;
 } krb5_get_init_creds_ctx;
 
@@ -180,7 +184,12 @@ free_init_creds_ctx(krb5_context context, krb5_init_creds_context ctx)
     if (ctx->fast_state.strengthen_key)
 	krb5_free_keyblock(context, ctx->fast_state.strengthen_key);
     krb5_free_keyblock_contents(context, &ctx->fast_state.armor_key);
-
+    if (ctx->fast_state.flags & KRB5_FAST_ANON_PKINIT_ARMOR)
+	krb5_cc_destroy(context, ctx->fast_state.armor_ccache);
+    if (ctx->fast_state.anon_pkinit_ctx)
+	free_init_creds_ctx(context, ctx->fast_state.anon_pkinit_ctx);
+    if (ctx->fast_state.anon_pkinit_opt)
+	krb5_get_init_creds_opt_free(context, ctx->fast_state.anon_pkinit_opt);
     krb5_data_free(&ctx->req_buffer);
     krb5_free_cred_contents(context, &ctx->cred);
     free_METHOD_DATA(&ctx->md);
@@ -1692,6 +1701,21 @@ krb5_init_creds_set_fast_ccache(krb5_context context,
 {
     ctx->fast_state.armor_ccache = fast_ccache;
     ctx->fast_state.flags |= KRB5_FAST_REQUIRED;
+    ctx->fast_state.flags |= KRB5_FAST_KDC_VERIFIED;
+    ctx->fast_state.flags &= ~(KRB5_FAST_ANON_PKINIT_ARMOR);
+
+    return 0;
+}
+
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
+krb5_init_creds_set_fast_anon_pkinit(krb5_context context,
+				     krb5_init_creds_context ctx)
+{
+    if (ctx->fast_state.armor_ccache)
+	return EINVAL;
+
+    ctx->fast_state.flags |= KRB5_FAST_REQUIRED;
+    ctx->fast_state.flags |= KRB5_FAST_ANON_PKINIT_ARMOR;
     return 0;
 }
 
@@ -1855,6 +1879,7 @@ fast_unwrap_error(krb5_context context, struct fast_state *state, KRB_ERROR *err
 krb5_error_code
 _krb5_make_fast_ap_fxarmor(krb5_context context,
 			   krb5_ccache armor_ccache,
+			   krb5_const_realm realm,
 			   krb5_data *armor_value,
 			   krb5_keyblock *armor_key,
 			   krb5_crypto *armor_crypto)
@@ -1863,6 +1888,7 @@ _krb5_make_fast_ap_fxarmor(krb5_context context,
     krb5_creds cred, *credp = NULL;
     krb5_error_code ret;
     krb5_data empty;
+    krb5_const_realm tgs_realm;
 
     krb5_data_zero(&empty);
 
@@ -1875,11 +1901,19 @@ _krb5_make_fast_ap_fxarmor(krb5_context context,
     ret = krb5_cc_get_principal(context, armor_ccache, &cred.client);
     if (ret)
 	goto out;
-    
+
+    /*
+     * Make sure we don't ask for a krbtgt/WELLKNOWN:ANONYMOUS
+     */
+    if (strcmp(cred.client->realm, KRB5_ANON_REALM) == 0)
+	tgs_realm = realm;
+    else
+	tgs_realm = cred.client->realm;
+
     ret = krb5_make_principal(context, &cred.server,
-			      cred.client->realm,
+			      tgs_realm,
 			      KRB5_TGS_NAME,
-			      cred.client->realm,
+			      tgs_realm,
 			      NULL);
     if (ret) {
 	krb5_free_principal(context, cred.client);
@@ -2162,34 +2196,13 @@ fast_wrap_req(krb5_context context, struct fast_state *state, KDC_REQ *req)
 }
 
 
-/**
- * The core loop if krb5_get_init_creds() function family. Create the
- * packets and have the caller send them off to the KDC.
- *
- * If the caller want all work been done for them, use
- * krb5_init_creds_get() instead.
- *
- * @param context a Kerberos 5 context.
- * @param ctx ctx krb5_init_creds_context context.
- * @param in input data from KDC, first round it should be reset by krb5_data_zer().
- * @param out reply to KDC.
- * @param hostinfo KDC address info, first round it can be NULL.
- * @param flags status of the round, if
- *        KRB5_INIT_CREDS_STEP_FLAG_CONTINUE is set, continue one more round.
- *
- * @return 0 for success, or an Kerberos 5 error code, see
- *     krb5_get_error_message().
- *
- * @ingroup krb5_credential
- */
-
-KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
-krb5_init_creds_step(krb5_context context,
-		     krb5_init_creds_context ctx,
-		     krb5_data *in,
-		     krb5_data *out,
-		     krb5_krbhst_info *hostinfo,
-		     unsigned int *flags)
+static krb5_error_code
+init_creds_step(krb5_context context,
+		krb5_init_creds_context ctx,
+		krb5_data *in,
+		krb5_data *out,
+		krb5_krbhst_info *hostinfo,
+		unsigned int *flags)
 {
     krb5_error_code ret;
     size_t len = 0;
@@ -2201,10 +2214,8 @@ krb5_init_creds_step(krb5_context context,
     if (ctx->as_req.req_body.cname == NULL) {
 	ret = init_as_req(context, ctx->flags, &ctx->cred,
 			  ctx->addrs, ctx->etypes, &ctx->as_req);
-	if (ret) {
-	    free_init_creds_ctx(context, ctx);
+	if (ret)
 	    return ret;
-	}
     }
 
 #define MAX_PA_COUNTER 10
@@ -2468,10 +2479,8 @@ krb5_init_creds_step(krb5_context context,
     if (ctx->as_req.req_body.cname == NULL) {
 	ret = init_as_req(context, ctx->flags, &ctx->cred,
 			  ctx->addrs, ctx->etypes, &ctx->as_req);
-	if (ret) {
-	    free_init_creds_ctx(context, ctx);
+	if (ret)
 	    return ret;
-	}
     }
 
     if (ctx->as_req.padata) {
@@ -2520,6 +2529,165 @@ krb5_init_creds_step(krb5_context context,
     return 0;
  out:
     return ret;
+}
+
+static krb5_error_code
+fast_anon_pkinit_step(krb5_context context,
+		      krb5_init_creds_context ctx,
+		      krb5_data *in,
+		      krb5_data *out,
+		      krb5_krbhst_info *hostinfo,
+		      unsigned int *flags)
+{
+    krb5_error_code ret;
+    krb5_const_realm realm = ctx->cred.client->realm;
+    struct fast_state *state = &ctx->fast_state;
+    krb5_init_creds_context anon_pk_ctx;
+    krb5_principal principal = NULL;
+    krb5_ccache ccache = NULL;
+    krb5_creds cred;
+
+    memset(&cred, 0, sizeof(cred));
+
+    if (state->anon_pkinit_opt == NULL) {
+	ret = krb5_get_init_creds_opt_alloc(context, &state->anon_pkinit_opt);
+	if (ret)
+	    goto out;
+
+	/* ticket lifetime matches FAST_EXPIRATION_TIME in kdc_locl.h */
+	krb5_get_init_creds_opt_set_tkt_life(state->anon_pkinit_opt, 3 * 60);
+	krb5_get_init_creds_opt_set_anonymous(state->anon_pkinit_opt, TRUE);
+
+	ret = krb5_make_principal(context, &principal, realm,
+				  KRB5_WELLKNOWN_NAME, KRB5_ANON_NAME, NULL);
+	if (ret)
+	    return ret;
+
+	ret = krb5_get_init_creds_opt_set_pkinit(context,
+						 state->anon_pkinit_opt,
+						 principal,
+						 NULL, NULL, NULL, NULL,
+						 KRB5_GIC_OPT_PKINIT_ANONYMOUS |
+						 KRB5_GIC_OPT_PKINIT_NO_KDC_ANCHOR,
+						 NULL, NULL, NULL);
+	if (ret)
+	    goto out;
+
+	ret = krb5_init_creds_init(context, principal, NULL, NULL,
+				   ctx->cred.times.starttime,
+				   state->anon_pkinit_opt,
+				   &state->anon_pkinit_ctx);
+	if (ret)
+	    goto out;
+
+	heim_assert((state->anon_pkinit_ctx->fast_state.flags & KRB5_FAST_ANON_PKINIT_ARMOR) == 0,
+		    "Invalid recursive PKINIT armor state");
+    }
+
+    anon_pk_ctx = state->anon_pkinit_ctx;
+
+    ret = init_creds_step(context, anon_pk_ctx, in, out, hostinfo, flags);
+    if (ret ||
+	(*flags & KRB5_INIT_CREDS_STEP_FLAG_CONTINUE))
+	goto out;
+
+    ret = krb5_process_last_request(context, state->anon_pkinit_opt, anon_pk_ctx);
+    if (ret)
+	goto out;
+
+    ret = krb5_cc_new_unique(context, "MEMORY", NULL, &ccache);
+    if (ret)
+	goto out;
+
+    ret = krb5_init_creds_get_creds(context, anon_pk_ctx, &cred);
+    if (ret)
+	goto out;
+
+    if (!cred.flags.b.enc_pa_rep) {
+	ret = KRB5KDC_ERR_BADOPTION; /* KDC does not support FAST */
+	goto out;
+    }
+
+    ret = krb5_cc_initialize(context, ccache, anon_pk_ctx->cred.client);
+    if (ret)
+	goto out;
+
+    ret = krb5_cc_store_cred(context, ccache, &cred);
+    if (ret)
+	goto out;
+
+    if (_krb5_pk_is_kdc_verified(context, state->anon_pkinit_opt))
+	state->flags |= KRB5_FAST_KDC_VERIFIED;
+    else
+	state->flags &= ~(KRB5_FAST_KDC_VERIFIED);
+
+    state->armor_ccache = ccache;
+    ccache = NULL;
+
+    free_init_creds_ctx(context, state->anon_pkinit_ctx);
+    state->anon_pkinit_ctx = NULL;
+
+    krb5_get_init_creds_opt_free(context, state->anon_pkinit_opt);
+    state->anon_pkinit_opt = NULL;
+
+    *flags |= KRB5_INIT_CREDS_STEP_FLAG_CONTINUE;
+
+out:
+    krb5_free_principal(context, principal);
+    krb5_free_cred_contents(context, &cred);
+    if (ccache)
+	krb5_cc_destroy(context, ccache);
+
+    return ret;
+}
+
+/**
+ * The core loop if krb5_get_init_creds() function family. Create the
+ * packets and have the caller send them off to the KDC.
+ *
+ * If the caller want all work been done for them, use
+ * krb5_init_creds_get() instead.
+ *
+ * @param context a Kerberos 5 context.
+ * @param ctx ctx krb5_init_creds_context context.
+ * @param in input data from KDC, first round it should be reset by krb5_data_zer().
+ * @param out reply to KDC.
+ * @param hostinfo KDC address info, first round it can be NULL.
+ * @param flags status of the round, if
+ *        KRB5_INIT_CREDS_STEP_FLAG_CONTINUE is set, continue one more round.
+ *
+ * @return 0 for success, or an Kerberos 5 error code, see
+ *     krb5_get_error_message().
+ *
+ * @ingroup krb5_credential
+ */
+
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
+krb5_init_creds_step(krb5_context context,
+		     krb5_init_creds_context ctx,
+		     krb5_data *in,
+		     krb5_data *out,
+		     krb5_krbhst_info *hostinfo,
+		     unsigned int *flags)
+{
+    krb5_error_code ret;
+    krb5_data empty;
+
+    krb5_data_zero(&empty);
+
+    if ((ctx->fast_state.flags & KRB5_FAST_ANON_PKINIT_ARMOR) &&
+	ctx->fast_state.armor_ccache == NULL) {
+	ret = fast_anon_pkinit_step(context, ctx, in, out,
+				    hostinfo, flags);
+	if (ret ||
+	    ((*flags & KRB5_INIT_CREDS_STEP_FLAG_CONTINUE) == 0) ||
+	    out->length)
+	    return ret;
+
+	in = &empty;
+    }
+
+    return init_creds_step(context, ctx, in, out, hostinfo, flags);
 }
 
 /**

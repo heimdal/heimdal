@@ -801,6 +801,60 @@ hx509_cms_verify_signed(hx509_context context,
 			heim_octet_string *content,
 			hx509_certs *signer_certs)
 {
+    unsigned int verify_flags;
+
+    return hx509_cms_verify_signed_ext(context,
+				       ctx,
+				       flags,
+				       data,
+				       length,
+				       signedContent,
+				       pool,
+				       contentType,
+				       content,
+				       signer_certs,
+				       &verify_flags);
+}
+
+/**
+ * Decode SignedData and verify that the signature is correct.
+ *
+ * @param context A hx509 context.
+ * @param ctx a hx509 verify context.
+ * @param flags to control the behaivor of the function.
+ *    - HX509_CMS_VS_NO_KU_CHECK - Don't check KeyUsage
+ *    - HX509_CMS_VS_ALLOW_DATA_OID_MISMATCH - allow oid mismatch
+ *    - HX509_CMS_VS_ALLOW_ZERO_SIGNER - no signer, see below.
+ * @param data pointer to CMS SignedData encoded data.
+ * @param length length of the data that data point to.
+ * @param signedContent external data used for signature.
+ * @param pool certificate pool to build certificates paths.
+ * @param contentType free with der_free_oid().
+ * @param content the output of the function, free with
+ * der_free_octet_string().
+ * @param signer_certs list of the cerficates used to sign this
+ * request, free with hx509_certs_free().
+ * @param verify_flags flags indicating whether the certificate
+ * was verified or not
+ *
+ * @return an hx509 error code.
+ *
+ * @ingroup hx509_cms
+ */
+
+HX509_LIB_FUNCTION int HX509_LIB_CALL
+hx509_cms_verify_signed_ext(hx509_context context,
+			    hx509_verify_ctx ctx,
+			    unsigned int flags,
+			    const void *data,
+			    size_t length,
+			    const heim_octet_string *signedContent,
+			    hx509_certs pool,
+			    heim_oid *contentType,
+			    heim_octet_string *content,
+			    hx509_certs *signer_certs,
+			    unsigned int *verify_flags)
+{
     SignerInfo *signer_info;
     hx509_cert cert = NULL;
     hx509_certs certs = NULL;
@@ -810,6 +864,8 @@ hx509_cms_verify_signed(hx509_context context,
     size_t i;
 
     *signer_certs = NULL;
+    *verify_flags = 0;
+
     content->data = NULL;
     content->length = 0;
     contentType->length = 0;
@@ -1038,21 +1094,18 @@ hx509_cms_verify_signed(hx509_context context,
 	    goto next_sigature;
 
 	/**
-	 * If HX509_CMS_VS_NO_VALIDATE flags is set, do not verify the
-	 * signing certificates and leave that up to the caller.
+	 * If HX509_CMS_VS_NO_VALIDATE flags is set, return the signer
+	 * certificate unconditionally but do not set HX509_CMS_VSE_VALIDATED.
 	 */
+	ret = hx509_verify_path(context, ctx, cert, certs);
+	if (ret == 0 || (flags & HX509_CMS_VS_NO_VALIDATE)) {
+	    if (ret == 0)
+		*verify_flags |= HX509_CMS_VSE_VALIDATED;
 
-	if ((flags & HX509_CMS_VS_NO_VALIDATE) == 0) {
-	    ret = hx509_verify_path(context, ctx, cert, certs);
-	    if (ret)
-		goto next_sigature;
+	    ret = hx509_certs_add(context, *signer_certs, cert);
+	    if (ret == 0)
+		found_valid_sig++;
 	}
-
-	ret = hx509_certs_add(context, *signer_certs, cert);
-	if (ret)
-	    goto next_sigature;
-
-	found_valid_sig++;
 
     next_sigature:
 	if (cert)

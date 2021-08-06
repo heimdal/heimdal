@@ -799,12 +799,35 @@ krb5_store_data(krb5_storage *sp,
  * @ingroup krb5_storage
  */
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
-krb5_store_datalen(krb5_storage *sp, void *d, size_t len)
+krb5_store_datalen(krb5_storage *sp, const void *d, size_t len)
 {
     krb5_data data;
     data.length = len;
-    data.data = d;
+    data.data = (void *)d;
     return krb5_store_data(sp, data);
+}
+
+/**
+ * Store a data blob to the storage. The data is stored without a length.
+ *
+ * @param sp the storage buffer to write to
+ * @param s the string to store.
+ * @param len length of the string to be stored.
+ *
+ * @return 0 on success, a Kerberos 5 error code on failure.
+ *
+ * @ingroup krb5_storage
+ */
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
+krb5_store_bytes(krb5_storage *sp, const void *d, size_t len)
+{
+    ssize_t ssize;
+
+    ssize = krb5_storage_write(sp, d, len);
+    if (ssize != len)
+	return ENOMEM;
+
+    return 0;
 }
 
 /**

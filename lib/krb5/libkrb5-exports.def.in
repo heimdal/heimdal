@@ -657,6 +657,7 @@ EXPORTS
 	krb5_store_address
 	krb5_store_addrs
 	krb5_store_authdata
+	krb5_store_bytes
 	krb5_store_creds
 	krb5_store_creds_tag
 	krb5_store_data

@@ -786,6 +786,28 @@ krb5_store_data(krb5_storage *sp,
 }
 
 /**
+ * Store a data blob to the storage. The data is stored with an int32 as
+ * length plus the data (not padded).  This function only differs from
+ * krb5_store_data() insofar as it takes a void * and a length as parameters.
+ *
+ * @param sp the storage buffer to write to
+ * @param s the string to store.
+ * @param len length of the string to be stored.
+ *
+ * @return 0 on success, a Kerberos 5 error code on failure.
+ *
+ * @ingroup krb5_storage
+ */
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
+krb5_store_datalen(krb5_storage *sp, void *d, size_t len)
+{
+    krb5_data data;
+    data.length = len;
+    data.data = d;
+    return krb5_store_data(sp, data);
+}
+
+/**
  * Parse a data from the storage.
  *
  * @param sp the storage buffer to read from

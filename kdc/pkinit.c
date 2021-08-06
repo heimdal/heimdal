@@ -1955,7 +1955,7 @@ krb5_kdc_pk_initialize(krb5_context context,
 
     ret = _krb5_parse_moduli(context, file, &moduli);
     if (ret)
-	krb5_err(context, 1, ret, "PKINIT: failed to load modidi file");
+	krb5_err(context, 1, ret, "PKINIT: failed to load moduli file");
 
     principal_mappings.len = 0;
     principal_mappings.val = NULL;

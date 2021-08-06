@@ -56,7 +56,7 @@ gss_inquire_cred(OM_uint32 *minor_status,
 	struct _gss_name *name;
 	struct _gss_mechanism_name *mn;
 	OM_uint32 min_lifetime;
-	int found = 0;
+	int found = FALSE;
 	int usagemask = 0;
 	gss_cred_usage_t usage;
 
@@ -133,7 +133,7 @@ gss_inquire_cred(OM_uint32 *minor_status,
 			if (mechanisms)
 				gss_add_oid_set_member(minor_status,
 				    mc->gmc_mech_oid, mechanisms);
-			found++;
+			found = TRUE;
 		}
 	} else {
 		HEIM_TAILQ_FOREACH(m, &_gss_mechs, gm_link) {
@@ -174,7 +174,7 @@ gss_inquire_cred(OM_uint32 *minor_status,
 			if (mechanisms)
 				gss_add_oid_set_member(minor_status,
 				    m->gm_mech_oid, mechanisms);
-			found++;
+			found = TRUE;
 		}
 	}
 
@@ -189,7 +189,7 @@ gss_inquire_cred(OM_uint32 *minor_status,
 		}
 	}
 
-	if (found == 0 || min_lifetime == 0) {
+	if (found == FALSE || min_lifetime == 0) {
 		gss_name_t n = (gss_name_t)name;
 		if (n)
 			gss_release_name(minor_status, &n);

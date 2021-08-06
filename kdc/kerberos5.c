@@ -1527,7 +1527,7 @@ kdc_check_flags(astgs_request_t r, krb5_boolean is_as_req)
 	/* check client */
 	if (client->flags.locked_out) {
 	    _kdc_audit_addreason((kdc_request_t)r, "Client is locked out");
-	    return KRB5KDC_ERR_POLICY;
+	    return KRB5KDC_ERR_CLIENT_REVOKED;
 	}
 
 	if (client->flags.invalid) {
@@ -1582,7 +1582,7 @@ kdc_check_flags(astgs_request_t r, krb5_boolean is_as_req)
 
 	if (server->flags.locked_out) {
 	    _kdc_audit_addreason((kdc_request_t)r, "Server locked out");
-	    return KRB5KDC_ERR_POLICY;
+	    return KRB5KDC_ERR_SERVICE_REVOKED;
 	}
 	if (server->flags.invalid) {
 	    _kdc_audit_addreason((kdc_request_t)r,

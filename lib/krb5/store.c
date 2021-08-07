@@ -412,6 +412,8 @@ krb5_store_int(krb5_storage *sp,
 	return EINVAL;
 
     if (BYTEORDER_IS_PACKED(sp)) {
+        size_t mask = ~0ULL >> (64 - len * 8);
+        value &= mask;
         p += sizeof(v) - 1;
         len = pack_int(p, value);
         p = v + sizeof(v) - len;

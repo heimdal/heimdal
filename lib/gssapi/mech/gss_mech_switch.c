@@ -490,3 +490,21 @@ _gss_mg_support_mechanism(gss_const_OID mech)
 	}
 	return NULL;
 }
+
+GSSAPI_LIB_FUNCTION gss_const_OID GSSAPI_CALLCONV
+gss_mg_name_to_oid(const char *name)
+{
+	struct _gss_mech_switch *m;
+	gss_OID oid = GSS_C_NO_OID;
+
+	if (isdigit(name[0]) && _gss_string_to_oid(name, &oid) == 0)
+		return oid;
+
+	_gss_load_mech();
+	HEIM_TAILQ_FOREACH(m, &_gss_mechs, gm_link) {
+		if (m->gm_mech.gm_name &&
+		    strcmp(m->gm_mech.gm_name, name) == 0)
+			return m->gm_mech_oid;
+	}
+	return NULL;
+}

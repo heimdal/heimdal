@@ -69,6 +69,7 @@ HEIMDAL_GSS_2.0 {
 		gss_krb5_set_allowable_enctypes;
 		gss_localname;
 		gss_mg_collect_error;
+		gss_mg_name_to_oid;
 		gss_oid_equal;
 		gss_oid_to_str;
 		gss_pname_to_uid;

@@ -69,6 +69,7 @@ EXPORTS
 	gss_krb5_set_allowable_enctypes
 	gss_localname
 	gss_mg_collect_error
+	gss_mg_name_to_oid
         gss_mo_get
         gss_mo_set
         gss_mo_list

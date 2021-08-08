@@ -243,6 +243,16 @@ for mech in sanon-x25519 sanon-x25519iov spnego spnegoiov; do
 	    --name-type=hostbased-service host@lucid.test.h5l.se || \
 	    { eval "$testfailed"; }
 
+	echo "${mech}: export-import-context ${iov} (split tokens)" ; > messages.log
+	${context} \
+	    --mech-type=${mech} \
+	    --anonymous \
+	    --export-import-context \
+	    --wrapunwrap ${iov} \
+	    --token-split=128 \
+	    --name-type=hostbased-service host@lucid.test.h5l.se || \
+	    { eval "$testfailed"; }
+
 done
 
 echo "======dce-style for sanon-x25519"

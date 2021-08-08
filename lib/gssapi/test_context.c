@@ -87,6 +87,17 @@ static char *a_channel_bindings = NULL;
 static krb5_context context;
 static krb5_enctype limit_enctype = 0;
 
+static gss_OID
+string_to_oid(const char *name)
+{
+    gss_OID oid = gss_name_to_oid(name);
+
+    if (oid == GSS_C_NO_OID)
+	errx(1, "name '%s' not known", name);
+
+    return oid;
+}
+
 static void
 string_to_oids(gss_OID_set *oidsetp, char *names)
 {
@@ -113,10 +124,7 @@ string_to_oids(gss_OID_set *oidsetp, char *names)
         for (name = strtok_r(names, ", ", &s);
              name != NULL;
              name = strtok_r(NULL, ", ", &s)) {
-	    gss_OID oid = gss_name_to_oid(name);
-
-	    if (oid == GSS_C_NO_OID)
-		errx(1, "gss_name_to_oid: unknown mech %s", name);
+	    gss_OID oid = string_to_oid(name);
 
 	    maj_stat = gss_add_oid_set_member(&min_stat, oid, oidsetp);
 	    if (GSS_ERROR(maj_stat))
@@ -814,7 +822,7 @@ main(int argc, char **argv)
     if (mech_string == NULL)
 	mechoid = GSS_KRB5_MECHANISM;
     else
-	mechoid = gss_name_to_oid(mech_string);
+	mechoid = string_to_oid(mech_string);
 
     if (mechs_string == NULL) {
         /*
@@ -998,7 +1006,7 @@ main(int argc, char **argv)
     if (ret_mech_string) {
 	gss_OID retoid;
 
-	retoid = gss_name_to_oid(ret_mech_string);
+	retoid = string_to_oid(ret_mech_string);
 
 	if (gss_oid_equal(retoid, actual_mech) == 0)
 	    errx(1, "actual_mech mech is not the expected type %s",

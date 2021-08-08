@@ -87,49 +87,10 @@ static char *a_channel_bindings = NULL;
 static krb5_context context;
 static krb5_enctype limit_enctype = 0;
 
-static gss_OID_desc test_negoex_1_mech = { 6, "\x69\x85\xa2\xc0\xac\x66" };
-static gss_OID_desc test_negoex_2_mech = { 6, "\x69\x84\xb0\xd1\xa8\x2c" };
-
-static struct {
-    const char *name;
-    gss_OID oid;
-} o2n[] = {
-    { "krb5", NULL /* GSS_KRB5_MECHANISM */ },
-    { "spnego", NULL /* GSS_SPNEGO_MECHANISM */ },
-    { "ntlm", NULL /* GSS_NTLM_MECHANISM */ },
-    { "sasl-digest-md5", NULL /* GSS_SASL_DIGEST_MD5_MECHANISM */ },
-    { "sanon-x25519", NULL /* GSS_SASL_SANON_X25519_MECHANISM */ },
-    { "test_negoex_1", NULL },
-    { "test_negoex_2", NULL },
-};
-
 static void
-init_o2n(void)
+string_to_oids(gss_OID_set *oidsetp, char *names)
 {
-    o2n[0].oid = GSS_KRB5_MECHANISM;
-    o2n[1].oid = GSS_SPNEGO_MECHANISM;
-    o2n[2].oid = GSS_NTLM_MECHANISM;
-    o2n[3].oid = GSS_SASL_DIGEST_MD5_MECHANISM;
-    o2n[4].oid = GSS_SANON_X25519_MECHANISM;
-    o2n[5].oid = &test_negoex_1_mech;
-    o2n[6].oid = &test_negoex_2_mech;
-}
-
-static gss_OID
-string_to_oid(const char *name)
-{
-    size_t i;
-    for (i = 0; i < sizeof(o2n)/sizeof(o2n[0]); i++)
-	if (strcasecmp(name, o2n[i].name) == 0)
-	    return o2n[i].oid;
-    errx(1, "name '%s' not known", name);
-}
-
-static void
-string_to_oids(gss_OID_set *oidsetp, gss_OID_set oidset,
-               gss_OID_desc *oidarray, size_t oidarray_len,
-               char *names)
-{
+    OM_uint32 maj_stat, min_stat;
     char *name;
     char *s;
 
@@ -138,32 +99,31 @@ string_to_oids(gss_OID_set *oidsetp, gss_OID_set oidset,
         return;
     }
 
-    oidset->elements = &oidarray[0];
     if (strcasecmp(names, "all") == 0) {
-        if (sizeof(o2n)/sizeof(o2n[0]) > oidarray_len)
-            errx(1, "internal error: oidarray must be enlarged");
-        for (oidset->count = 0; oidset->count < oidarray_len; oidset->count++)
-            oidset->elements[oidset->count] = *o2n[oidset->count].oid;
+	maj_stat = gss_indicate_mechs(&min_stat, oidsetp);
+	if (GSS_ERROR(maj_stat))
+	    errx(1, "gss_indicate_mechs: %s",
+		 gssapi_err(maj_stat, min_stat, GSS_C_NO_OID));
     } else {
-        for (oidset->count = 0, name = strtok_r(names, ", ", &s);
+	maj_stat = gss_create_empty_oid_set(&min_stat, oidsetp);
+	if (GSS_ERROR(maj_stat))
+	    errx(1, "gss_create_empty_oid_set: %s",
+		 gssapi_err(maj_stat, min_stat, GSS_C_NO_OID));
+
+        for (name = strtok_r(names, ", ", &s);
              name != NULL;
-             oidset->count++, name = strtok_r(NULL, ", ", &s)) {
-            if (oidset->count >= oidarray_len)
-                errx(1, "too many mech names given");
-            oidset->elements[oidset->count] = *string_to_oid(name);
+             name = strtok_r(NULL, ", ", &s)) {
+	    gss_OID oid = gss_name_to_oid(name);
+
+	    if (oid == GSS_C_NO_OID)
+		errx(1, "gss_name_to_oid: unknown mech %s", name);
+
+	    maj_stat = gss_add_oid_set_member(&min_stat, oid, oidsetp);
+	    if (GSS_ERROR(maj_stat))
+		errx(1, "gss_add_oid_set_member: %s",
+		    gssapi_err(maj_stat, min_stat, GSS_C_NO_OID));
         }
     }
-    *oidsetp = oidset;
-}
-
-static const char *
-oid_to_string(const gss_OID oid)
-{
-    size_t i;
-    for (i = 0; i < sizeof(o2n)/sizeof(o2n[0]); i++)
-	if (gss_oid_equal(oid, o2n[i].oid))
-	    return o2n[i].name;
-    return "unknown oid";
 }
 
 static void
@@ -817,8 +777,6 @@ main(int argc, char **argv)
 
     setprogname(argv[0]);
 
-    init_o2n();
-
     if (krb5_init_context(&context))
 	errx(1, "krb5_init_context");
 
@@ -856,7 +814,7 @@ main(int argc, char **argv)
     if (mech_string == NULL)
 	mechoid = GSS_KRB5_MECHANISM;
     else
-	mechoid = string_to_oid(mech_string);
+	mechoid = gss_name_to_oid(mech_string);
 
     if (mechs_string == NULL) {
         /*
@@ -885,8 +843,7 @@ main(int argc, char **argv)
         mechoid_descs.count = 1;
         mechoids = &mechoid_descs;
     } else {
-        string_to_oids(&mechoids, &mechoid_descs,
-                       oids, sizeof(oids)/sizeof(oids[0]), mechs_string);
+        string_to_oids(&mechoids, mechs_string);
     }
 
     if (gsskrb5_acceptor_identity) {
@@ -976,7 +933,7 @@ main(int argc, char **argv)
 
 	printf("cred mechs:");
 	for (i = 0; i < actual_mechs->count; i++)
-	    printf(" %s", oid_to_string(&actual_mechs->elements[i]));
+	    printf(" %s", gss_oid_to_name(&actual_mechs->elements[i]));
 	printf("\n");
     }
 
@@ -1036,12 +993,12 @@ main(int argc, char **argv)
 	 &sctx, &cctx, &actual_mech, &deleg_cred);
 
     if (verbose_flag)
-	printf("resulting mech: %s\n", oid_to_string(actual_mech));
+	printf("resulting mech: %s\n", gss_oid_to_name(actual_mech));
 
     if (ret_mech_string) {
 	gss_OID retoid;
 
-	retoid = string_to_oid(ret_mech_string);
+	retoid = gss_name_to_oid(ret_mech_string);
 
 	if (gss_oid_equal(retoid, actual_mech) == 0)
 	    errx(1, "actual_mech mech is not the expected type %s",
@@ -1393,7 +1350,7 @@ main(int argc, char **argv)
 
 	if (verbose_flag)
 	    printf("checking actual mech (%s) on delegated cred\n",
-		   oid_to_string(actual_mech));
+		   gss_oid_to_name(actual_mech));
 	loop(actual_mech, nameoid, argv[0], deleg_cred, &sctx, &cctx, &actual_mech2, &cred2);
 
 	gss_delete_sec_context(&min_stat, &cctx, NULL);
@@ -1438,7 +1395,7 @@ main(int argc, char **argv)
 
 	    if (verbose_flag)
 		printf("checking actual mech (%s) on export/imported cred\n",
-		       oid_to_string(actual_mech));
+		       gss_oid_to_name(actual_mech));
 	    loop(actual_mech, nameoid, argv[0], cred2, &sctx, &cctx,
 		 &actual_mech2, &deleg_cred);
 
@@ -1471,6 +1428,8 @@ main(int argc, char **argv)
 
     gss_release_cred(&min_stat, &client_cred);
     gss_release_oid_set(&min_stat, &actual_mechs);
+    if (mechoids != GSS_C_NO_OID_SET && mechoids != &mechoid_descs)
+	gss_release_oid_set(&min_stat, &mechoids);
     empty_release();
 
     krb5_free_context(context);

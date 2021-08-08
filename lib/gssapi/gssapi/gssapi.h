@@ -1144,9 +1144,12 @@ GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL gss_duplicate_cred (
             gss_const_cred_id_t /*input_cred_handle*/,
             gss_cred_id_t * /*output_cred_handle*/
            );
+
+/* Return a mechanism short name from an OID */
 GSSAPI_LIB_FUNCTION const char * GSSAPI_LIB_CALL
 gss_oid_to_name(gss_const_OID oid);
 
+/* Return a mechanism OID from a short name or dotted OID */
 GSSAPI_LIB_FUNCTION gss_OID GSSAPI_LIB_CALL
 gss_name_to_oid(const char *name);
 

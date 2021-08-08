@@ -701,9 +701,6 @@ gss_cred_id_t
 _gss_mg_find_mech_cred(gss_const_cred_id_t cred_handle,
 		       gss_const_OID mech_type);
 
-GSSAPI_LIB_FUNCTION gss_const_OID
-GSSAPI_CALLCONV gss_mg_name_to_oid(const char *);
-
 #include <krb5.h>
 
 /*

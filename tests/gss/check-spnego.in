@@ -135,6 +135,7 @@ ${context} \
     --mech-type=spnego \
     --ret-mech-type=krb5 \
     --name-type=hostbased-service \
+    --export-import-context \
     host@host.test.h5l.se || \
     { exitcode=1 ; echo test failed; }
 
@@ -145,6 +146,7 @@ ${context} \
     --mech-type=spnego \
     --ret-mech-type=krb5 \
     --name-type=hostbased-service \
+    --export-import-context \
     host@host.test.h5l.se || \
     { exitcode=1 ; echo test failed; }
 

@@ -33,7 +33,7 @@ gss_import_sec_context(OM_uint32 *minor_status,
     const gss_buffer_t interprocess_token,
     gss_ctx_id_t *context_handle)
 {
-        OM_uint32 ret = GSS_S_FAILURE;
+        OM_uint32 ret = GSS_S_FAILURE, tmp_minor;
         krb5_storage *sp;
         krb5_data data;
 	gssapi_mech_interface m;
@@ -88,10 +88,15 @@ gss_import_sec_context(OM_uint32 *minor_status,
             if (krb5_ret_data(sp, &data))
                 goto failure;
 
+            ctx->gc_input.value  = calloc(target_len, 1);
+	    if (ctx->gc_input.value == NULL)
+		goto failure;
+
             ctx->gc_target_len   = target_len;
-            ctx->gc_input.value  = data.data;
             ctx->gc_input.length = data.length;
-            /* Don't need to free data because we gave it to gc_input */
+	    memcpy(ctx->gc_input.value, data.data, data.length);
+
+	    krb5_data_free(&data);
         }
 
         if (verflags & EXPORT_CONTEXT_FLAG_MECH_CTX) {
@@ -102,8 +107,10 @@ gss_import_sec_context(OM_uint32 *minor_status,
             mech_oid.elements = data.data;
             m = __gss_get_mechanism(&mech_oid);
             krb5_data_free(&data);
-            if (!m)
-                return GSS_S_DEFECTIVE_TOKEN;
+            if (m == NULL) {
+                ret = GSS_S_DEFECTIVE_TOKEN;
+		goto failure;
+	    }
             ctx->gc_mech = m;
 
             if (krb5_ret_data(sp, &data))
@@ -113,16 +120,17 @@ gss_import_sec_context(OM_uint32 *minor_status,
             buf.value  = data.data;
 
             ret = m->gm_import_sec_context(minor_status, &buf, &ctx->gc_ctx);
+            _gss_secure_release_buffer(&tmp_minor, &buf);
             if (ret != GSS_S_COMPLETE) {
                 _gss_mg_error(m, *minor_status);
-                free(ctx);
-            } else {
-                *context_handle = (gss_ctx_id_t) ctx;
-            }
+                goto failure;
+	    }
         }
 
-        krb5_storage_free(sp);
-        return (ret);
+	*context_handle = (gss_ctx_id_t) ctx;
+	ctx = NULL;
+
+	ret = GSS_S_COMPLETE;
 
 failure:
         free(ctx);

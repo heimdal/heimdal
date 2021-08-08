@@ -33,13 +33,13 @@ gss_export_sec_context(OM_uint32 *minor_status,
     gss_ctx_id_t *context_handle,
     gss_buffer_t interprocess_token)
 {
-        OM_uint32 major_status = GSS_S_FAILURE;
+        OM_uint32 major_status = GSS_S_FAILURE, tmp_minor;
         krb5_storage *sp;
         krb5_data data;
         krb5_error_code kret;
 	struct _gss_context *ctx;
 	gssapi_mech_interface m;
-	gss_buffer_desc buf;
+	gss_buffer_desc buf = GSS_C_EMPTY_BUFFER;
         unsigned char verflags;
 
 	*minor_status = 0;
@@ -56,16 +56,10 @@ gss_export_sec_context(OM_uint32 *minor_status,
         if (ctx == NULL)
             return GSS_S_NO_CONTEXT;
 
-        if (!ctx->gc_ctx && ctx->gc_target_len) {
-            free(ctx);
-            *context_handle = GSS_C_NO_CONTEXT;
-	    return GSS_S_NO_CONTEXT;
-	}
-
         sp = krb5_storage_emem();
         if (sp == NULL) {
             *minor_status = ENOMEM;
-            return GSS_S_FAILURE;
+	    goto failure;
         }
         krb5_storage_set_byteorder(sp, KRB5_STORAGE_BYTEORDER_PACKED);
 
@@ -98,37 +92,36 @@ gss_export_sec_context(OM_uint32 *minor_status,
                 *minor_status = kret;
                 goto failure;
             }
+        } else if (ctx->gc_ctx == GSS_C_NO_CONTEXT) {
+	    gss_delete_sec_context(&tmp_minor, context_handle,
+				   GSS_C_NO_BUFFER);
+	    return GSS_S_NO_CONTEXT;
         }
 
-        if (!ctx->gc_ctx) {
-            free(ctx);
-            *context_handle = GSS_C_NO_CONTEXT;
-            return GSS_S_COMPLETE;
-        }
+	if (ctx->gc_ctx) {
+	    m = ctx->gc_mech;
 
-	m = ctx->gc_mech;
+	    major_status = m->gm_export_sec_context(minor_status,
+						    &ctx->gc_ctx, &buf);
 
-	major_status = m->gm_export_sec_context(minor_status,
-	    &ctx->gc_ctx, &buf);
+	    if (major_status != GSS_S_COMPLETE) {
+		_gss_mg_error(m, *minor_status);
+		goto failure;
+	    }
 
-        if (major_status != GSS_S_COMPLETE) {
-            _gss_mg_error(m, *minor_status);
-            goto failure;
-        }
+	    kret = krb5_store_datalen(sp, m->gm_mech_oid.elements,
+				      m->gm_mech_oid.length);
+	    if (kret) {
+		*minor_status = kret;
+		goto failure;
+	    }
 
-        kret = krb5_store_datalen(sp, m->gm_mech_oid.elements,
-                                  m->gm_mech_oid.length);
-        if (kret) {
-            *minor_status = kret;
-            goto failure;
-        }
-
-        kret = krb5_store_datalen(sp, buf.value, buf.length);
-        if (kret) {
-            *minor_status = kret;
-            goto failure;
-        }
-        _gss_secure_release_buffer(minor_status, &buf);
+	    kret = krb5_store_datalen(sp, buf.value, buf.length);
+	    if (kret) {
+		*minor_status = kret;
+		goto failure;
+	    }
+	}
 
         kret = krb5_storage_to_data(sp, &data);
         if (kret) {
@@ -139,34 +132,18 @@ gss_export_sec_context(OM_uint32 *minor_status,
         interprocess_token->length = data.length;
         interprocess_token->value  = data.data;
 
+	major_status = GSS_S_COMPLETE;
+
         _gss_mg_log(1, "gss-esc: token length %zu", data.length);
 
-        free(ctx);
-        *context_handle = GSS_C_NO_CONTEXT;
-
-#if 0
-		if (!interprocess_token->value) {
-			/*
-			 * We are in trouble here - the context is
-			 * already gone. This is allowed as long as we
-			 * set the caller's context_handle to
-			 * GSS_C_NO_CONTEXT, which we did above.
-			 * Return GSS_S_FAILURE.
-			 */
-			_mg_buffer_zero(interprocess_token);
-			*minor_status = ENOMEM;
-			return (GSS_S_FAILURE);
-		}
-		p = interprocess_token->value;
-		p[0] = m->gm_mech_oid.length >> 8;
-		p[1] = m->gm_mech_oid.length;
-		memcpy(p + 2, m->gm_mech_oid.elements, m->gm_mech_oid.length);
-		memcpy(p + 2 + m->gm_mech_oid.length, buf.value, buf.length);
-	} else {
-	}
-#endif
-
 failure:
+	if (major_status == GSS_S_COMPLETE && *minor_status == 0)
+	    gss_delete_sec_context(&tmp_minor, context_handle,
+				   GSS_C_NO_BUFFER);
+	else if (*minor_status)
+	    major_status = GSS_S_FAILURE;
+
+	_gss_secure_release_buffer(minor_status, &buf);
         krb5_storage_free(sp);
         return major_status;
 }

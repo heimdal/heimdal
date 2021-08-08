@@ -279,10 +279,13 @@ loop(gss_OID mechoid,
             gsskrb5_get_time_offset(&client_time_offset);
             gsskrb5_set_time_offset(server_time_offset);
 
-            tmp.length = output_token.length - offset;
-            if (token_split && tmp.length > token_split)
-                tmp.length = token_split;
-            tmp.value  = (char *)output_token.value + offset;
+	    if (output_token.length && ((uint8_t *)output_token.value)[0] == 0x60) {
+		tmp.length = output_token.length - offset;
+		if (token_split && tmp.length > token_split)
+		    tmp.length = token_split;
+		tmp.value  = (char *)output_token.value + offset;
+	    } else
+		tmp = output_token;
 
             if (verbose_flag)
                 printf("loop #%d: accept offset=%zu len=%zu\n", num_loops,

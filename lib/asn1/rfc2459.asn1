@@ -382,12 +382,17 @@ PrivateKeyUsagePeriod ::= SEQUENCE {
 
 -- certificate policies extension OID and syntax
 
+_POLICYQUALIFIERINFO ::= CLASS { -- Heimdal extension
+    &id  OBJECT IDENTIFIER UNIQUE,
+    &Type
+}
+
 CertPolicyId ::= OBJECT IDENTIFIER
 PolicyQualifierId ::= OBJECT IDENTIFIER -- ( id-qt-cps | id-qt-unotice )
 
-PolicyQualifierInfo ::= SEQUENCE {
-     policyQualifierId  PolicyQualifierId,
-     qualifier          HEIM_ANY -- ANY DEFINED BY policyQualifierId
+PolicyQualifierInfo{_POLICYQUALIFIERINFO:PolicyQualifierSet} ::= SEQUENCE {
+    policyQualifierId   _POLICYQUALIFIERINFO.&id({PolicyQualifierSet}),
+    qualifier _POLICYQUALIFIERINFO.&Type({PolicyQualifierSet}{@policyQualifierId})
 }
 
 PolicyQualifierInfos ::= SEQUENCE SIZE (1..MAX) OF PolicyQualifierInfo
@@ -1177,5 +1182,19 @@ id-pkix-ad-ocsp         OBJECT IDENTIFIER ::= { id-pkix-ad 1 }
 id-pkix-ad-caIssuers    OBJECT IDENTIFIER ::= { id-pkix-ad 2 }
 id-pkix-ad-timeStamping OBJECT IDENTIFIER ::= { id-pkix-ad 3 }
 id-pkix-ad-caRepository OBJECT IDENTIFIER ::= { id-pkix-ad 5 }
+
+pq-CPS _POLICYQUALIFIERINFO ::= {
+    &id id-pkix-qt-cps,
+    &Type AliasIA5String
+}
+pq-UserNotice _POLICYQUALIFIERINFO ::= {
+    &id id-pkix-qt-unotice,
+    &Type UserNotice
+}
+KnownPolicyQualifiers _POLICYQUALIFIERINFO ::= {
+    pq-CPS
+  | pq-UserNotice
+}
+PolicyQualifierInfo ::= PolicyQualifierInfo{KnownPolicyQualifiers}
 
 END

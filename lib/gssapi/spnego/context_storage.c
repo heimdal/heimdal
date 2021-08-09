@@ -436,6 +436,7 @@ store_negoex_auth_mech(krb5_storage *sp, struct negoex_auth_mech *mech)
         CHECK(major, gss_export_sec_context(&minor, &mech->mech_context,
                                             &buf));
         CHECK(ret, store_gss_buffer(sp, &buf));
+        gss_release_buffer(&minor, &buf);
     }
 
     if (snc_flags & SNC_METADATA)

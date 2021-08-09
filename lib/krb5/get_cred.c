@@ -3,7 +3,7 @@
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  *
- * Portions Copyright (c) 2009 Apple Inc. All rights reserved.
+ * Portions Copyright (c) 2009 - 2010 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -38,8 +38,10 @@
 
 static krb5_error_code
 get_cred_kdc_capath(krb5_context, krb5_kdc_flags,
-		    krb5_ccache, krb5_creds *, krb5_principal,
-		    Ticket *, krb5_creds **, krb5_creds ***);
+		    krb5_ccache, struct krb5_fast_state *,
+		    krb5_creds *, krb5_principal,
+		    Ticket *, const char *, const char *,
+		    krb5_creds **, krb5_creds ***);
 
 /*
  * Take the `body' and encode it into `padata' using the credentials
@@ -50,33 +52,31 @@ static krb5_error_code
 make_pa_tgs_req(krb5_context context,
 		krb5_auth_context ac,
 		KDC_REQ_BODY *body,
-		PA_DATA *padata,
-		krb5_creds *creds)
+		krb5_ccache ccache,
+		krb5_creds *creds,
+		krb5_data *tgs_req)
 {
-    u_char *buf;
+    krb5_error_code ret;
+    krb5_data in_data;
     size_t buf_size;
     size_t len = 0;
-    krb5_data in_data;
-    krb5_error_code ret;
+    uint8_t *buf;
 
     ASN1_MALLOC_ENCODE(KDC_REQ_BODY, buf, buf_size, body, &len, ret);
     if (ret)
-	goto out;
+	return ret;
+
     if(buf_size != len)
 	krb5_abortx(context, "internal error in ASN.1 encoder");
 
     in_data.length = len;
     in_data.data   = buf;
-    ret = _krb5_mk_req_internal(context, &ac, 0, &in_data, creds,
-				&padata->padata_value,
+    ret = _krb5_mk_req_internal(context, &ac, 0, &in_data,
+				creds, tgs_req,
 				KRB5_KU_TGS_REQ_AUTH_CKSUM,
 				KRB5_KU_TGS_REQ_AUTH);
- out:
     free (buf);
-    if(ret)
-	return ret;
-    padata->padata_type = KRB5_PADATA_TGS_REQ;
-    return 0;
+    return ret;
 }
 
 /*
@@ -138,6 +138,7 @@ set_auth_data (krb5_context context,
 static krb5_error_code
 init_tgs_req (krb5_context context,
 	      krb5_ccache ccache,
+	      struct krb5_fast_state *state,
 	      krb5_addresses *addresses,
 	      krb5_kdc_flags flags,
 	      Ticket *second_ticket,
@@ -150,8 +151,11 @@ init_tgs_req (krb5_context context,
 {
     krb5_auth_context ac = NULL;
     krb5_error_code ret = 0;
+    krb5_data tgs_req;
 
     memset(t, 0, sizeof(*t));
+    memset(t, 0, sizeof(*t));
+
     t->pvno = 5;
     t->msg_type = krb_tgs_req;
     if (in_creds->session.keytype) {
@@ -234,26 +238,19 @@ init_tgs_req (krb5_context context,
 	if (ret)
 	    goto fail;
     }
-    ALLOC(t->padata, 1);
-    if (t->padata == NULL) {
-	ret = krb5_enomem(context);
-	goto fail;
-    }
-    ALLOC_SEQ(t->padata, 1 + padata->len);
-    if (t->padata->val == NULL) {
-	ret = krb5_enomem(context);
-	goto fail;
-    }
-    {
-	size_t i;
-	for (i = 0; i < padata->len; i++) {
-	    ret = copy_PA_DATA(&padata->val[i], &t->padata->val[i + 1]);
-	    if (ret) {
-		krb5_set_error_message(context, ret,
-				       N_("malloc: out of memory", ""));
+    
+    if (padata) {
+	if (t->padata == NULL) {
+	    ALLOC(t->padata, 1);
+	    if (t->padata == NULL) {
+		ret = krb5_enomem(context);
 		goto fail;
 	    }
 	}
+	
+	ret = copy_METHOD_DATA(padata, t->padata);
+	if (ret)
+	    goto fail;
     }
 
     ret = krb5_auth_con_init(context, &ac);
@@ -264,18 +261,60 @@ init_tgs_req (krb5_context context,
     if (ret)
 	goto fail;
 
-    ret = set_auth_data (context, &t->req_body, &in_creds->authdata,
-			 ac->local_subkey);
+    if (state) {
+	krb5_data empty;
+
+	krb5_data_zero(&empty);
+	ret = krb5_auth_con_add_AuthorizationData(context, ac,
+						  KRB5_AUTHDATA_FX_FAST_USED,
+						   &empty);
+	if (ret)
+	    goto fail;
+    }
+
+    ret = set_auth_data(context, &t->req_body,
+			&in_creds->authdata, ac->local_subkey);
     if (ret)
 	goto fail;
+
+    if (t->padata == NULL) {
+	ALLOC(t->padata, 1);
+	if (t->padata == NULL) {
+	    ret = krb5_enomem(context);
+	    goto fail;
+	}
+    }
 
     ret = make_pa_tgs_req(context,
 			  ac,
 			  &t->req_body,
-			  &t->padata->val[0],
-			  krbtgt);
+			  ccache,
+			  krbtgt,
+			  &tgs_req);
     if(ret)
 	goto fail;
+
+    if (state) {
+	state->armor_ac = ac;
+	ret = _krb5_fast_create_armor(context, state, NULL);
+	state->armor_ac = NULL;
+	if (ret)
+	    goto fail;
+
+	ret = _krb5_fast_wrap_req(context, state, &tgs_req, t);
+	if (ret)
+	    goto fail;
+
+	/* Its ok if there is no fast in the TGS-REP, older heimdal only support it in the AS code path */
+	state->flags &= ~KRB5_FAST_EXPECTED;
+    }
+
+    ret = krb5_padata_add(context, t->padata, KRB5_PADATA_TGS_REQ,
+			  tgs_req.data, tgs_req.length);
+    if (ret)
+	goto fail;
+
+    krb5_data_zero(&tgs_req);
 
     ret = krb5_auth_con_getlocalsubkey(context, ac, subkey);
     if (ret)
@@ -288,6 +327,8 @@ fail:
 	t->req_body.addresses = NULL;
 	free_TGS_REQ (t);
     }
+    krb5_data_free(&tgs_req);
+
     return ret;
 }
 
@@ -336,6 +377,42 @@ _krb5_get_krbtgt(krb5_context context,
     return 0;
 }
 
+static krb5_error_code
+fast_tgs_strengthen_key(krb5_context context,
+			struct krb5_fast_state *state,
+			krb5_keyblock *reply_key,
+			krb5_keyblock *extract_key)
+{
+    krb5_error_code ret;
+
+    if (state && state->strengthen_key) {
+	_krb5_debug(context, 5, "_krb5_fast_tgs_strengthen_key");
+	
+	if (state->strengthen_key->keytype != reply_key->keytype) {
+	    krb5_set_error_message(context, KRB5KRB_AP_ERR_MODIFIED,
+				   N_("strengthen_key %d not same enctype as reply key %d", ""),
+				   state->strengthen_key->keytype, reply_key->keytype);
+	    return KRB5KRB_AP_ERR_MODIFIED;
+	}
+
+	ret = _krb5_fast_cf2(context,
+			     state->strengthen_key,
+			     "strengthenkey",
+			     reply_key,
+			     "replykey",
+			     extract_key,
+			     NULL);
+	if (ret)
+	    return ret;
+    } else {
+	ret = krb5_copy_keyblock_contents(context, reply_key, extract_key);
+	if (ret)
+	    return ret;
+    }
+
+    return 0;
+}
+
 /* DCE compatible decrypt proc */
 static krb5_error_code KRB5_CALLCONV
 decrypt_tkt_with_subkey (krb5_context context,
@@ -344,11 +421,14 @@ decrypt_tkt_with_subkey (krb5_context context,
 			 krb5_const_pointer skey,
 			 krb5_kdc_rep *dec_rep)
 {
-    const krb5_keyblock *subkey = skey;
+    struct krb5_decrypt_tkt_with_subkey_state *state;
     krb5_error_code ret = 0;
     krb5_data data;
     size_t size;
     krb5_crypto crypto;
+    krb5_keyblock extract_key;
+
+    state = (struct krb5_decrypt_tkt_with_subkey_state *)skey;
 
     assert(usage == 0);
 
@@ -357,8 +437,14 @@ decrypt_tkt_with_subkey (krb5_context context,
     /*
      * start out with trying with subkey if we have one
      */
-    if (subkey) {
-	ret = krb5_crypto_init(context, subkey, 0, &crypto);
+    if (state->subkey) {
+	ret = fast_tgs_strengthen_key(context, state->fast_state,
+				      state->subkey, &extract_key);
+	if (ret)
+	    return ret;
+
+	ret = krb5_crypto_init(context, &extract_key, 0, &crypto);
+	krb5_free_keyblock_contents(context, &extract_key);
 	if (ret)
 	    return ret;
 	ret = krb5_decrypt_EncryptedData (context,
@@ -370,7 +456,7 @@ decrypt_tkt_with_subkey (krb5_context context,
 	 * If the is Windows 2000 DC, we need to retry with key usage
 	 * 8 when doing ARCFOUR.
 	 */
-	if (ret && subkey->keytype == ETYPE_ARCFOUR_HMAC_MD5) {
+	if (ret && state->subkey->keytype == ETYPE_ARCFOUR_HMAC_MD5) {
 	    ret = krb5_decrypt_EncryptedData(context,
 					     crypto,
 					     8,
@@ -379,7 +465,11 @@ decrypt_tkt_with_subkey (krb5_context context,
 	}
 	krb5_crypto_destroy(context, crypto);
     }
-    if (subkey == NULL || ret) {
+    if (state->subkey == NULL || ret) {
+	ret = fast_tgs_strengthen_key(context, state->fast_state, key, &extract_key);
+	if (ret)
+	    return ret;
+
 	ret = krb5_crypto_init(context, key, 0, &crypto);
 	if (ret)
 	    return ret;
@@ -412,19 +502,21 @@ decrypt_tkt_with_subkey (krb5_context context,
 static krb5_error_code
 get_cred_kdc(krb5_context context,
 	     krb5_ccache id,
+	     struct krb5_fast_state *fast_state,
 	     krb5_kdc_flags flags,
 	     krb5_addresses *addresses,
 	     krb5_creds *in_creds,
 	     krb5_creds *krbtgt,
 	     krb5_principal impersonate_principal,
 	     Ticket *second_ticket,
+	     const char *kdc_hostname,
+	     const char *sitename,
 	     krb5_creds *out_creds)
 {
     TGS_REQ req;
     krb5_data enc;
     krb5_data resp;
     krb5_kdc_rep rep = {0};
-    KRB_ERROR error;
     krb5_error_code ret;
     unsigned nonce;
     krb5_keyblock *subkey = NULL;
@@ -503,6 +595,7 @@ get_cred_kdc(krb5_context context,
 
     ret = init_tgs_req (context,
 			id,
+			fast_state,
 			addresses,
 			flags,
 			second_ticket,
@@ -535,6 +628,11 @@ get_cred_kdc(krb5_context context,
 	    return ret;
 	krb5_sendto_ctx_set_func(stctx, _krb5_kdc_retry, NULL);
 
+	if (kdc_hostname)
+	    krb5_sendto_set_hostname(context, stctx, kdc_hostname);
+	if (sitename)
+	    krb5_sendto_set_sitename(context, stctx, sitename);
+
 	ret = krb5_sendto_context (context, stctx, &enc,
 				   krbtgt->server->name.name_string.val[1],
 				   &resp);
@@ -544,18 +642,33 @@ get_cred_kdc(krb5_context context,
 	goto out;
 
     if(decode_TGS_REP(resp.data, resp.length, &rep.kdc_rep, &len) == 0) {
+	struct krb5_decrypt_tkt_with_subkey_state state;
 	unsigned eflags = 0;
+	krb5_data data;
+	size_t size;
+
+	ASN1_MALLOC_ENCODE(Ticket, data.data, data.length,
+			   &rep.kdc_rep.ticket, &size, ret);
+	if (ret)
+	    goto out;
+	heim_assert(data.length == size, "ASN.1 internal error");
+
+	ret = _krb5_fast_unwrap_kdc_rep(context, nonce, &data,
+					fast_state, &rep.kdc_rep);
+	krb5_data_free(&data);
+	if (ret)
+	    goto out;
 
 	ret = krb5_copy_principal(context,
 				  in_creds->client,
 				  &out_creds->client);
 	if(ret)
-	    goto out2;
+	    goto out;
 	ret = krb5_copy_principal(context,
 				  in_creds->server,
 				  &out_creds->server);
 	if(ret)
-	    goto out2;
+	    goto out;
 	/* this should go someplace else */
 	out_creds->times.endtime = in_creds->times.endtime;
 
@@ -564,6 +677,9 @@ get_cred_kdc(krb5_context context,
 	    eflags |= EXTRACT_TICKET_ALLOW_CNAME_MISMATCH;
 	if (flags.b.request_anonymous)
 	    eflags |= EXTRACT_TICKET_MATCH_ANON;
+
+	state.subkey = subkey;
+	state.fast_state = fast_state;
 
 	ret = _krb5_extract_ticket(context,
 				   &rep,
@@ -576,12 +692,36 @@ get_cred_kdc(krb5_context context,
 				   eflags,
 				   NULL,
 				   decrypt_tkt_with_subkey,
-				   subkey);
-    out2:
-	krb5_free_kdc_rep(context, &rep);
-    } else if(krb5_rd_error(context, &resp, &error) == 0) {
-	ret = krb5_error_from_rd_error(context, &error, in_creds);
-	krb5_free_error_contents(context, &error);
+				   &state);
+    } else if(krb5_rd_error(context, &resp, &rep.error) == 0) {
+	METHOD_DATA md;
+
+	memset(&md, 0, sizeof(md));
+
+	if (rep.error.e_data) {
+	    ret = decode_METHOD_DATA(rep.error.e_data->data,
+				     rep.error.e_data->length,
+				     &md, NULL);
+	    if (ret) {
+		krb5_set_error_message(context, ret,
+				       N_("Failed to decode METHOD-DATA", ""));
+		goto out;
+	    }
+	}
+
+	ret = _krb5_fast_unwrap_error(context, nonce, fast_state, &md, &rep.error);
+	free_METHOD_DATA(&md);
+	if (ret)
+	    goto out;
+
+	ret = krb5_error_from_rd_error(context, &rep.error, in_creds);
+
+	/* log the failure */
+	if (_krb5_have_debug(context, 5)) {
+	    const char *str = krb5_get_error_message(context, ret);
+	    _krb5_debug(context, 5, "parse_tgs_rep: KRB-ERROR %d/%s", ret, str);
+	    krb5_free_error_message(context, str);
+	}
     } else if(resp.length > 0 && ((char*)resp.data)[0] == 4) {
 	ret = KRB5KRB_AP_ERR_V4_REPLY;
 	krb5_clear_error_message(context);
@@ -591,6 +731,7 @@ get_cred_kdc(krb5_context context,
     }
 
 out:
+    krb5_free_kdc_rep(context, &rep);
     if (second_ticket == &second_ticket_data)
 	free_Ticket(&second_ticket_data);
     free_METHOD_DATA(&padata);
@@ -610,12 +751,15 @@ out:
 static krb5_error_code
 get_cred_kdc_address(krb5_context context,
 		     krb5_ccache id,
+		     struct krb5_fast_state *fast_state,
 		     krb5_kdc_flags flags,
 		     krb5_addresses *addrs,
 		     krb5_creds *in_creds,
 		     krb5_creds *krbtgt,
 		     krb5_principal impersonate_principal,
 		     Ticket *second_ticket,
+		     const char *kdc_hostname,
+		     const char *sitename,
 		     krb5_creds *out_creds)
 {
     krb5_error_code ret;
@@ -640,9 +784,9 @@ get_cred_kdc_address(krb5_context context,
 		addrs = NULL;
 	}
     }
-    ret = get_cred_kdc(context, id, flags, addrs, in_creds,
-		       krbtgt, impersonate_principal,
-		       second_ticket, out_creds);
+    ret = get_cred_kdc(context, id, fast_state, flags, addrs,
+		       in_creds, krbtgt, impersonate_principal,
+		       second_ticket, kdc_hostname, sitename, out_creds);
     krb5_free_addresses(context, &addresses);
     return ret;
 }
@@ -659,6 +803,9 @@ krb5_get_kdc_cred(krb5_context context,
 {
     krb5_error_code ret;
     krb5_creds *krbtgt;
+    struct krb5_fast_state fast_state;
+
+    memset(&fast_state, 0, sizeof(fast_state));
 
     *out_creds = calloc(1, sizeof(**out_creds));
     if(*out_creds == NULL)
@@ -672,9 +819,11 @@ krb5_get_kdc_cred(krb5_context context,
 	*out_creds = NULL;
 	return ret;
     }
-    ret = get_cred_kdc(context, id, flags, addresses,
-		       in_creds, krbtgt, NULL, NULL, *out_creds);
+    ret = get_cred_kdc(context, id, &fast_state, flags,
+		       addresses, in_creds, krbtgt,
+		       NULL, NULL, NULL, NULL, *out_creds);
     krb5_free_creds (context, krbtgt);
+    _krb5_fast_free(context, &fast_state);
     if(ret) {
 	free(*out_creds);
 	*out_creds = NULL;
@@ -752,10 +901,13 @@ static krb5_error_code
 get_cred_kdc_capath_worker(krb5_context context,
                            krb5_kdc_flags flags,
                            krb5_ccache ccache,
+			   struct krb5_fast_state *fast_state,
                            krb5_creds *in_creds,
                            krb5_const_realm try_realm,
                            krb5_principal impersonate_principal,
                            Ticket *second_ticket,
+			   const char *kdc_hostname,
+			   const char *sitename,
                            krb5_creds **out_creds,
                            krb5_creds ***ret_tgts)
 {
@@ -802,11 +954,14 @@ get_cred_kdc_capath_worker(krb5_context context,
 		ok_as_delegate = tgts.flags.b.ok_as_delegate;
 	    }
 
-	    ret = get_cred_kdc_address(context, ccache, flags, NULL,
-				   in_creds, &tgts,
-				   impersonate_principal,
-				   second_ticket,
-				   *out_creds);
+	    ret = get_cred_kdc_address(context, ccache, fast_state,
+				       flags, NULL,
+				       in_creds, &tgts,
+				       impersonate_principal,
+				       second_ticket,
+				       kdc_hostname,
+				       sitename,
+				       *out_creds);
             krb5_free_cred_contents(context, &tgts);
 	    if (ret == 0 &&
                 !krb5_principal_compare(context, in_creds->server,
@@ -838,8 +993,10 @@ get_cred_kdc_capath_worker(krb5_context context,
     while (1) {
 	heim_general_string tgt_inst;
 
-	ret = get_cred_kdc_capath(context, flags, ccache, &tmp_creds,
-				  NULL, NULL, &tgt, ret_tgts);
+	ret = get_cred_kdc_capath(context, flags, ccache, fast_state,
+				  &tmp_creds, NULL, NULL,
+				  kdc_hostname, sitename,
+				  &tgt, ret_tgts);
 	if (ret)
 	    goto out;
 
@@ -870,9 +1027,9 @@ get_cred_kdc_capath_worker(krb5_context context,
 	    goto out;
     }
 
-    ret = get_cred_kdc_address(context, ccache, flags, NULL,
+    ret = get_cred_kdc_address(context, ccache, fast_state, flags, NULL,
 			       in_creds, tgt, impersonate_principal,
-			       second_ticket, *out_creds);
+			       second_ticket, kdc_hostname, sitename, *out_creds);
     if (ret == 0 &&
         !krb5_principal_compare(context, in_creds->server,
                                     (*out_creds)->server)) {
@@ -915,9 +1072,12 @@ static krb5_error_code
 get_cred_kdc_capath(krb5_context context,
 		    krb5_kdc_flags flags,
 		    krb5_ccache ccache,
+		    struct krb5_fast_state *fast_state,
 		    krb5_creds *in_creds,
 		    krb5_principal impersonate_principal,
 		    Ticket *second_ticket,
+		    const char *kdc_hostname,
+		    const char *sitename,
 		    krb5_creds **out_creds,
 		    krb5_creds ***ret_tgts)
 {
@@ -928,18 +1088,20 @@ get_cred_kdc_capath(krb5_context context,
     server_realm = krb5_principal_get_realm(context, in_creds->server);
 
     try_realm = client_realm;
-    ret = get_cred_kdc_capath_worker(context, flags, ccache, in_creds, try_realm,
-                                     impersonate_principal, second_ticket, out_creds,
-                                     ret_tgts);
+    ret = get_cred_kdc_capath_worker(context, flags, ccache, fast_state,
+				     in_creds, try_realm, impersonate_principal,
+				     second_ticket, kdc_hostname, sitename,
+				     out_creds, ret_tgts);
 
     if (ret == KRB5KDC_ERR_S_PRINCIPAL_UNKNOWN) {
         try_realm = krb5_config_get_string(context, NULL, "capaths",
                                            client_realm, server_realm, NULL);
 
         if (try_realm != NULL && strcmp(try_realm, client_realm) != 0) {
-            ret = get_cred_kdc_capath_worker(context, flags, ccache, in_creds,
-                                             try_realm, impersonate_principal,
-                                             second_ticket, out_creds, ret_tgts);
+            ret = get_cred_kdc_capath_worker(context, flags, ccache, fast_state,
+					     in_creds, try_realm, impersonate_principal,
+                                             second_ticket, kdc_hostname, sitename,
+					     out_creds, ret_tgts);
         }
     }
 
@@ -963,9 +1125,12 @@ static krb5_error_code
 get_cred_kdc_referral(krb5_context context,
 		      krb5_kdc_flags flags,
 		      krb5_ccache ccache,
+		      struct krb5_fast_state *fast_state,
 		      krb5_creds *in_creds,
 		      krb5_principal impersonate_principal,
 		      Ticket *second_ticket,
+		      const char *kdc_hostname,
+		      const char *sitename,
 		      krb5_creds **out_creds)
 {
     krb5_realm start_realm = NULL;
@@ -1076,9 +1241,9 @@ get_cred_kdc_referral(krb5_context context,
 	    ret = EINVAL;
 
 	if (ret) {
-	    ret = get_cred_kdc_address(context, ccache, flags, NULL,
+	    ret = get_cred_kdc_address(context, ccache, fast_state, flags, NULL,
 				       &referral, &tgt, impersonate_principal,
-				       second_ticket, &ticket);
+				       second_ticket, kdc_hostname, sitename, &ticket);
 	    if (ret)
 		goto out;
 	}
@@ -1197,14 +1362,45 @@ KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 _krb5_get_cred_kdc_any(krb5_context context,
 		       krb5_kdc_flags flags,
 		       krb5_ccache ccache,
+		       struct krb5_fast_state *fast_state,
 		       krb5_creds *in_creds,
 		       krb5_principal impersonate_principal,
 		       Ticket *second_ticket,
 		       krb5_creds **out_creds,
 		       krb5_creds ***ret_tgts)
 {
+    char *kdc_hostname = NULL;
+    char *sitename = NULL;
     krb5_error_code ret;
     krb5_deltat offset;
+    krb5_data data;
+
+    /*
+     * If we are using LKDC, lets pull out the addreses from the
+     * ticket and use that.
+     */
+    
+    ret = krb5_cc_get_config(context, ccache, NULL, "lkdc-hostname", &data);
+    if (ret == 0) {
+	kdc_hostname = malloc(data.length + 1);
+	if (kdc_hostname == NULL)
+	    return krb5_enomem(context);
+	
+	memcpy(kdc_hostname, data.data, data.length);
+	kdc_hostname[data.length] = '\0';
+	krb5_data_free(&data);
+    }
+
+    ret = krb5_cc_get_config(context, ccache, NULL, "sitename", &data);
+    if (ret == 0) {
+	sitename = malloc(data.length + 1);
+	if (sitename == NULL)
+	    return krb5_enomem(context);
+
+	memcpy(sitename, data.data, data.length);
+	sitename[data.length] = '\0';
+	krb5_data_free(&data);
+    }
 
     ret = krb5_cc_get_kdc_offset(context, ccache, &offset);
     if (ret == 0) {
@@ -1219,24 +1415,36 @@ _krb5_get_cred_kdc_any(krb5_context context,
          */
         ret = get_cred_kdc_capath(context,
                                   flags,
-                                  ccache,
-                                  in_creds,
-                                  impersonate_principal,
-                                  second_ticket,
-                                  out_creds,
-                                  ret_tgts);
+				  ccache,
+				  fast_state,
+				  in_creds,
+				  impersonate_principal,
+				  second_ticket,
+				  kdc_hostname,
+				  sitename,
+				  out_creds,
+				  ret_tgts);
         if (ret == 0 || skip_referrals(in_creds->server, &flags))
-            return ret;
+	    goto out;
     }
 
     /* Otherwise try referrals */
-    return get_cred_kdc_referral(context,
-                                 flags,
-                                 ccache,
-                                 in_creds,
-                                 impersonate_principal,
-                                 second_ticket,
-                                 out_creds);
+    ret = get_cred_kdc_referral(context,
+                                flags,
+                                ccache,
+				fast_state,
+                                in_creds,
+                                impersonate_principal,
+                                second_ticket,
+				kdc_hostname,
+				sitename,
+                                out_creds);
+    
+out:
+    free(kdc_hostname);
+    free(sitename);
+
+    return ret;
 }
 
 static krb5_error_code
@@ -1342,6 +1550,7 @@ krb5_get_credentials_with_flags(krb5_context context,
 				krb5_creds *in_creds,
 				krb5_creds **out_creds)
 {
+    struct krb5_fast_state fast_state;
     krb5_error_code ret;
     krb5_name_canon_iterator name_canon_iter = NULL;
     krb5_name_canon_rule_options rule_opts;
@@ -1350,6 +1559,8 @@ krb5_get_credentials_with_flags(krb5_context context,
     krb5_creds **tgts;
     krb5_creds *res_creds;
     int i;
+
+    memset(&fast_state, 0, sizeof(fast_state));
 
     if (_krb5_have_debug(context, 5)) {
         char *unparsed;
@@ -1380,7 +1591,7 @@ krb5_get_credentials_with_flags(krb5_context context,
     ret = krb5_name_canon_iterator_start(context, in_creds->server,
 					 &name_canon_iter);
     if (ret)
-	return ret;
+	goto out;
 
 next_rule:
     krb5_free_cred_contents(context, res_creds);
@@ -1416,7 +1627,7 @@ next_rule:
 	options |= KRB5_GC_NO_STORE;
 
     tgts = NULL;
-    ret = _krb5_get_cred_kdc_any(context, flags, ccache,
+    ret = _krb5_get_cred_kdc_any(context, flags, ccache, &fast_state,
 				 in_creds, NULL, NULL, out_creds, &tgts);
     for (i = 0; tgts && tgts[i]; i++) {
 	if ((options & KRB5_GC_NO_STORE) == 0)
@@ -1451,6 +1662,7 @@ out:
     in_creds->server = save_princ;
     krb5_free_creds(context, res_creds);
     krb5_free_name_canon_iterator(context, name_canon_iter);
+    _krb5_fast_free(context, &fast_state);
     if (ret)
 	return not_found(context, in_creds->server, ret);
     return 0;
@@ -1569,6 +1781,7 @@ krb5_get_creds(krb5_context context,
 	       krb5_const_principal inprinc,
 	       krb5_creds **out_creds)
 {
+    struct krb5_fast_state fast_state;
     krb5_kdc_flags flags;
     krb5_flags options;
     krb5_creds in_creds;
@@ -1582,6 +1795,7 @@ krb5_get_creds(krb5_context context,
     int type;
     const char *comp;
 
+    memset(&fast_state, 0, sizeof(fast_state));
     memset(&in_creds, 0, sizeof(in_creds));
     in_creds.server = rk_UNCONST(inprinc);
 
@@ -1683,7 +1897,7 @@ next_rule:
 	flags.b.request_anonymous = 1;
 
     tgts = NULL;
-    ret = _krb5_get_cred_kdc_any(context, flags, ccache,
+    ret = _krb5_get_cred_kdc_any(context, flags, ccache, &fast_state,
 				 &in_creds, opt ? opt->self : 0,
 				 opt ? opt->ticket : 0, out_creds,
 				 &tgts);
@@ -1717,6 +1931,7 @@ next_rule:
     }
 
 out:
+    _krb5_fast_free(context, &fast_state);
     krb5_free_creds(context, res_creds);
     krb5_free_principal(context, in_creds.client);
     krb5_free_name_canon_iterator(context, name_canon_iter);

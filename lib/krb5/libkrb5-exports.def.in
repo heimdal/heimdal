@@ -607,6 +607,8 @@ EXPORTS
 	krb5_sendto_ctx_set_type
 	krb5_sendto_kdc
 	krb5_sendto_kdc_flags
+	krb5_sendto_set_hostname
+	krb5_sendto_set_sitename
 	krb5_set_config
 	krb5_set_config_files
 	krb5_set_debug_dest
@@ -799,9 +801,12 @@ EXPORTS
 	_krb5_init_creds_get_gss_mechanism
 	_krb5_init_creds_set_gss_cred
 	_krb5_init_creds_get_gss_cred
-	_krb5_init_creds_set_gss_context
-	_krb5_init_creds_get_gss_context
 	_krb5_init_creds_init_gss
+
+	; Private init_creds API
+	_krb5_init_creds_get_cred_starttime
+	_krb5_init_creds_get_cred_endtime
+	_krb5_init_creds_get_cred_client
 
 	; Shared with libkadm5
 	_krb5_load_plugins
@@ -834,6 +839,8 @@ EXPORTS
 	_krb5_HMAC_MD5_checksum
 	_krb5_crypto_set_flags
 	_krb5_expand_path_tokens	;!
+	_krb5_make_pa_enc_challenge
+	_krb5_validate_pa_enc_challenge
 
         ; kinit helper
 	krb5_get_init_creds_opt_set_pkinit_user_certs
@@ -842,14 +849,17 @@ EXPORTS
 	krb5_auth_con_getsendsubkey
 	krb5_init_creds_free
 	krb5_init_creds_get
+	krb5_init_creds_get_as_reply_key
 	krb5_init_creds_get_creds
 	krb5_init_creds_get_error
 	krb5_init_creds_init
 	krb5_init_creds_set_fast_anon_pkinit
 	krb5_init_creds_set_fast_ccache
 	krb5_init_creds_set_keytab
+	krb5_init_creds_set_kdc_hostname
 	krb5_init_creds_set_password
 	krb5_init_creds_set_service
+	krb5_init_creds_set_sitename
 	krb5_init_creds_step
 	krb5_init_creds_store
 	krb5_process_last_request

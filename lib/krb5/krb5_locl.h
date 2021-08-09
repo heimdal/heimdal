@@ -136,6 +136,8 @@ struct ContentInfo;
 struct AlgorithmIdentifier;
 typedef struct krb5_pk_init_ctx_data *krb5_pk_init_ctx;
 struct krb5_dh_moduli;
+struct krb5_fast_state;
+struct krb5_gss_init_ctx_data;
 
 /* v4 glue */
 struct _krb5_krb_auth_data;
@@ -163,6 +165,7 @@ typedef krb5_error_code (KRB5_LIB_CALL *krb5_gssic_step)(
     krb5_context,
     krb5_gss_init_ctx,
     const krb5_creds *,
+    struct gss_ctx_id_t_desc_struct **,
     KDCOptions options,
     krb5_data *,
     krb5_data *,
@@ -172,6 +175,7 @@ typedef krb5_error_code (KRB5_LIB_CALL *krb5_gssic_finish)(
     krb5_context,
     krb5_gss_init_ctx,
     const krb5_creds *,
+    struct gss_ctx_id_t_desc_struct *,
     krb5int32,
     krb5_enctype,
     krb5_principal *,
@@ -187,9 +191,13 @@ typedef void (KRB5_LIB_CALL *krb5_gssic_delete_sec_context)(
     krb5_gss_init_ctx,
     struct gss_ctx_id_t_desc_struct *);
 
+#define KRB5_GSS_IC_FLAG_RELEASE_CRED 1
+
 #include <krb5-private.h>
 
 #include "heim_threads.h"
+
+extern const char _krb5_wellknown_lkdc[];
 
 #define ALLOC(X, N) (X) = calloc((N), sizeof(*(X)))
 #define ALLOC_SEQ(X, N) do { (X)->len = (N); ALLOC((X)->val, (N)); } while(0)
@@ -246,10 +254,11 @@ struct _krb5_get_init_creds_opt_private {
     krb5_pk_init_ctx pk_init_ctx;
     krb5_get_init_creds_tristate addressless;
     int flags;
-#define KRB5_INIT_CREDS_CANONICALIZE		1
-#define KRB5_INIT_CREDS_NO_C_CANON_CHECK	2
-#define KRB5_INIT_CREDS_NO_C_NO_EKU_CHECK	4
-#define KRB5_INIT_CREDS_PKINIT_KX_VALID		32
+#define KRB5_INIT_CREDS_DONE				    1
+#define KRB5_INIT_CREDS_CANONICALIZE			    2
+#define KRB5_INIT_CREDS_NO_C_CANON_CHECK		    4
+#define KRB5_INIT_CREDS_NO_C_NO_EKU_CHECK		    8
+#define KRB5_INIT_CREDS_PKINIT_KX_VALID			    32
 #define KRB5_INIT_CREDS_PKINIT_NO_KRBTGT_OTHERNAME_CHECK    64
     struct {
         krb5_gic_process_last_req func;
@@ -420,6 +429,45 @@ struct krb5_pk_init_ctx_data {
 };
 
 #endif /* PKINIT */
+
+struct krb5_fast_state {
+    enum PA_FX_FAST_REQUEST_enum type;
+    unsigned int flags;
+#define KRB5_FAST_REPLY_KEY_USE_TO_ENCRYPT_THE_REPLY	0x0001
+#define KRB5_FAST_REPLY_KEY_USE_IN_TRANSACTION		0x0002
+#define KRB5_FAST_KDC_REPLY_KEY_REPLACED		0x0004
+#define KRB5_FAST_REPLY_REPLY_VERIFIED			0x0008
+#define KRB5_FAST_STRONG				0x0010
+#define KRB5_FAST_EXPECTED				0x0020 /* in exchange with KDC, fast was discovered */
+#define KRB5_FAST_REQUIRED				0x0040 /* fast required by action of caller */
+#define KRB5_FAST_DISABLED				0x0080
+
+#define KRB5_FAST_AP_ARMOR_SERVICE			0x0100
+#define KRB5_FAST_OPTIMISTIC				0x0200 /* Optimistic try, like Anon + PKINIT or service fast bit */
+#define KRB5_FAST_REQUIRE_ENC_PA			0x0400
+
+#define KRB5_FAST_AS_REQ				0x1000
+#define KRB5_FAST_ANON_PKINIT_ARMOR			0x2000
+#define KRB5_FAST_KDC_VERIFIED				0x4000
+
+    krb5_keyblock *reply_key;
+    krb5_ccache armor_ccache;
+    krb5_auth_context armor_ac;
+    KrbFastArmor *armor_data;
+    krb5_principal armor_service;
+    krb5_crypto armor_crypto;
+    krb5_keyblock armor_key;
+    krb5_keyblock *strengthen_key;
+
+    /* KRB5_FAST_ANON_PKINIT_ARMOR */
+    krb5_get_init_creds_opt *anon_pkinit_opt;
+    krb5_init_creds_context anon_pkinit_ctx;
+};
+
+struct krb5_decrypt_tkt_with_subkey_state {
+    krb5_keyblock *subkey;
+    struct krb5_fast_state *fast_state;
+};
 
 #define ISTILDE(x) (x == '~')
 #ifdef _WIN32

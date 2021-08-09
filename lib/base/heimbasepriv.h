@@ -64,6 +64,7 @@ enum {
     HEIM_TID_ERROR = 133,
     HEIM_TID_DATA = 134,
     HEIM_TID_DB = 135,
+    HEIM_TID_PA_AUTH_MECH = 136,
     HEIM_TID_USER = 255
 
 };

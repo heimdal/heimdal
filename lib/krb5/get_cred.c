@@ -306,6 +306,9 @@ _krb5_get_krbtgt(krb5_context context,
     if (ret)
 	return ret;
 
+    if (realm == NULL)
+	realm = tmp_cred.client->realm;
+
     ret = krb5_make_principal(context,
 			      &tmp_cred.server,
 			      realm,

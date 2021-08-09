@@ -52,13 +52,13 @@ struct krb5_addlog_func_wrapper {
     void *data;
 };
 
-static void HEIM_CALLCONV krb5_addlog_func_wrapper_log(heim_context hcontext,
-                                                       const char *prefix,
-                                                       const char *msg,
-                                                       void *data)
+static void HEIM_CALLCONV
+krb5_addlog_func_wrapper_log(heim_context hcontext,
+			     const char *prefix,
+			     const char *msg,
+			     void *data)
 {
-    struct krb5_addlog_func_wrapper *w =
-        (struct krb5_addlog_func_wrapper *)data;
+    struct krb5_addlog_func_wrapper *w = data;
 
     w->log_func(w->context,
                 prefix,
@@ -66,10 +66,10 @@ static void HEIM_CALLCONV krb5_addlog_func_wrapper_log(heim_context hcontext,
                 w->data);
 }
 
-static void HEIM_CALLCONV krb5_addlog_func_wrapper_close(void *data)
+static void HEIM_CALLCONV
+krb5_addlog_func_wrapper_close(void *data)
 {
-    struct krb5_addlog_func_wrapper *w =
-        (struct krb5_addlog_func_wrapper *)data;
+    struct krb5_addlog_func_wrapper *w = data;
 
     w->close_func(w->data);
     free(w);

@@ -413,7 +413,7 @@ krb5_verify_ap_req2(krb5_context context,
 
 	krb5_timeofday (context, &now);
 
-	if (labs(ac->authenticator->ctime - now) > context->max_skew) {
+	if (krb5_time_abs(ac->authenticator->ctime, now) > context->max_skew) {
 	    ret = KRB5KRB_AP_ERR_SKEW;
 	    krb5_clear_error_message (context);
 	    goto out;

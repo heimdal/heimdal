@@ -207,6 +207,9 @@ AUTHDATA-TYPE ::= INTEGER {
 	KRB5-AUTHDATA-OSF-DCE(64),
 	KRB5-AUTHDATA-SESAME(65),
 	KRB5-AUTHDATA-OSF-DCE-PKI-CERTID(66),
+	KRB5-AUTHDATA-AUTHENTICATION-STRENGTH(70),
+	KRB5-AUTHDATA-FX-FAST-ARMOR(71),
+	KRB5-AUTHDATA-FX-FAST-USED(72),
 	KRB5-AUTHDATA-WIN2K-PAC(128),
 	KRB5-AUTHDATA-GSS-API-ETYPE-NEGOTIATION(129), -- Authenticator only
 	KRB5-AUTHDATA-SIGNTICKET-OLDER(-17),
@@ -843,10 +846,11 @@ PA-FX-FAST-REPLY ::= CHOICE {
 }
 
 KDCFastFlags ::= BIT STRING {
-	use_reply_key(0),
-	reply_key_used(1),
-	reply_key_replaced(2),
-	kdc_verfied(3)
+	use-reply-key(0),
+	reply-key-used(1),
+	reply-key-replaced(2),
+	kdc-verified(3),
+	requested-hidden-names(4)
 }
 
 -- KDCFastState is stored in FX_COOKIE

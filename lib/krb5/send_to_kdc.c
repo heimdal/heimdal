@@ -151,6 +151,7 @@ struct krb5_sendto_ctx_data {
     krb5_sendto_ctx_func func;
     void *data;
     char *hostname;
+    char *sitename;
     krb5_krbhst_handle krbhst;
 
     /* context2 */
@@ -181,6 +182,8 @@ dealloc_sendto_ctx(void *ptr)
     krb5_sendto_ctx ctx = (krb5_sendto_ctx)ptr;
     if (ctx->hostname)
 	free(ctx->hostname);
+    if (ctx->sitename)
+	free(ctx->sitename);
     heim_release(ctx->hosts);
     heim_release(ctx->krbhst);
 }
@@ -244,12 +247,25 @@ krb5_sendto_set_hostname(krb5_context context,
      * disposing of any previous value after.
      */
     newname = strdup(hostname);
-    if (newname == NULL) {
-	krb5_set_error_message(context, ENOMEM, N_("malloc: out of memory", ""));
-	return ENOMEM;
-    }
+    if (newname == NULL)
+	return krb5_enomem(context);
     free(ctx->hostname);
     ctx->hostname = newname;
+    return 0;
+}
+
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
+krb5_sendto_set_sitename(krb5_context context,
+			 krb5_sendto_ctx ctx,
+			 const char *sitename)
+{
+    char *newname;
+
+    newname = strdup(sitename);
+    if (newname == NULL)
+	return krb5_enomem(context);
+    free(ctx->sitename);
+    ctx->sitename = newname;
     return 0;
 }
 
@@ -1189,7 +1205,11 @@ krb5_sendto_context(krb5_context context,
 		    if (ret)
 			goto out;
 		}
-
+		if (ctx->sitename) {
+		    ret = krb5_krbhst_set_sitename(context, handle, ctx->sitename);
+		    if (ret)
+			goto out;
+		}
 	    } else {
 		handle = heim_retain(ctx->krbhst);
 	    }
@@ -1266,6 +1286,24 @@ krb5_sendto_context(krb5_context context,
 				   &ctx->response, &action);
 		if (ret)
 		    goto out;
+
+		/*
+		 * If we are not done, ask to continue/reset
+		 */
+		switch (action) {
+		case KRB5_SENDTO_DONE:
+		    break;
+		case KRB5_SENDTO_RESET:
+		case KRB5_SENDTO_CONTINUE:
+		    /* free response to clear it out so we don't loop */
+		    krb5_data_free(&ctx->response);
+		    break;
+		default:
+		    ret = KRB5_KDC_UNREACH;
+		    krb5_set_error_message(context, ret,
+					   "sendto filter funcation return unsupported state: %d", (int)action);
+		    goto out;
+		}
 	    }
 	    break;
 	case KRB5_SENDTO_FAILED:

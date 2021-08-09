@@ -50,7 +50,7 @@ _krb5_gss_map_error(OM_uint32 major, OM_uint32 minor)
         ret = 0;
         break;
     case GSS_S_CONTINUE_NEEDED:
-        ret = KRB5_KDC_ERR_MORE_PREAUTH_DATA_REQUIRED;
+        ret = HEIM_ERR_PA_CONTINUE_NEEDED;
         break;
     case GSS_S_BAD_NAME:
     case GSS_S_BAD_NAMETYPE:

@@ -81,6 +81,7 @@ static krb5_error_code KRB5_LIB_CALL
 pa_gss_step(krb5_context context,
             krb5_gss_init_ctx gssic,
             const krb5_creds *kcred,
+            gss_ctx_id_t *ctx,
             KDCOptions flags,
             krb5_data *enc_as_req,
             krb5_data *in,
@@ -91,7 +92,6 @@ pa_gss_step(krb5_context context,
 
     OM_uint32 major, minor;
     gss_cred_id_t cred;
-    gss_ctx_id_t ctx;
     gss_name_t target_name = GSS_C_NO_NAME;
     OM_uint32 req_flags = GSS_C_MUTUAL_FLAG;
     OM_uint32 ret_flags;
@@ -113,8 +113,6 @@ pa_gss_step(krb5_context context,
         _krb5_init_creds_set_gss_cred(context, gssic, cred);
     }
 
-    ctx = (gss_ctx_id_t)_krb5_init_creds_get_gss_context(context, gssic);
-
     ret = krb5_make_principal(context, &tgs_name, kcred->server->realm,
                               KRB5_TGS_NAME, kcred->server->realm, NULL);
     if (ret)
@@ -129,7 +127,7 @@ pa_gss_step(krb5_context context,
 
     major = gss_init_sec_context(&minor,
                                  cred,
-                                 &ctx,
+                                 ctx,
                                  target_name,
                                  (gss_OID)_krb5_init_creds_get_gss_mechanism(context, gssic),
                                  req_flags,
@@ -140,8 +138,6 @@ pa_gss_step(krb5_context context,
                                  &output_token,
                                  &ret_flags,
                                  NULL);
-
-    _krb5_init_creds_set_gss_context(context, gssic, ctx);
 
     _krb5_gss_buffer_to_data(&output_token, out);
 
@@ -166,6 +162,7 @@ static krb5_error_code KRB5_LIB_CALL
 pa_gss_finish(krb5_context context,
               krb5_gss_init_ctx gssic,
               const krb5_creds *kcred,
+              gss_ctx_id_t ctx,
               krb5int32 nonce,
               krb5_enctype enctype,
               krb5_principal *client_p,
@@ -177,7 +174,6 @@ pa_gss_finish(krb5_context context,
 
     OM_uint32 major, minor;
     gss_name_t initiator_name = GSS_C_NO_NAME;
-    gss_ctx_id_t ctx = (gss_ctx_id_t)_krb5_init_creds_get_gss_context(context, gssic);
 
     *client_p = NULL;
     *reply_key_p = NULL;

@@ -296,10 +296,6 @@ store_spnego_context(krb5_storage *sp, gssspnego_ctx ctx)
         uint32_t nschemes;
         struct negoex_auth_mech *mech;
 
-        if (ctx->negoex_step > 0xff) {
-            ret = ERANGE;
-            goto fail;
-        }
         CHECK(ret, krb5_store_uint8(sp, ctx->negoex_step));
 
         if (ctx->negoex_transcript) {

@@ -859,6 +859,10 @@ pk_verify_sign(krb5_context context,
 	return ret;
     }
 
+    heim_assert((verify_flags & HX509_CMS_VSE_VALIDATED) ||
+	(id->flags & PKINIT_NO_KDC_ANCHOR),
+	"Either PKINIT signer must be validated, or NO_KDC_ANCHOR must be set");
+
     if ((verify_flags & HX509_CMS_VSE_VALIDATED) == 0)
 	goto out;
 

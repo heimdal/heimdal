@@ -35,11 +35,9 @@ gss_import_sec_context(OM_uint32 *minor_status,
 {
         OM_uint32 ret = GSS_S_FAILURE, tmp_minor;
         krb5_storage *sp;
-        krb5_data data;
 	gssapi_mech_interface m;
         struct _gss_context *ctx = NULL;
-	gss_OID_desc mech_oid;
-	gss_buffer_desc buf;
+	gss_buffer_desc buf = GSS_C_EMPTY_BUFFER;
         unsigned char verflags;
 
         _gss_mg_log(10, "gss-isc called");
@@ -85,42 +83,51 @@ gss_import_sec_context(OM_uint32 *minor_status,
             if (krb5_ret_uint32(sp, &target_len))
                 goto failure;
 
-            if (krb5_ret_data(sp, &data))
+	    ret = _gss_mg_ret_buffer(minor_status, sp, &buf);
+            if (ret != GSS_S_COMPLETE)
                 goto failure;
 
-            ctx->gc_input.value  = calloc(target_len, 1);
+            ctx->gc_input.value = calloc(target_len, 1);
 	    if (ctx->gc_input.value == NULL)
 		goto failure;
 
             ctx->gc_target_len   = target_len;
-            ctx->gc_input.length = data.length;
-	    memcpy(ctx->gc_input.value, data.data, data.length);
+            ctx->gc_input.length = buf.length;
+	    if (buf.value)
+		memcpy(ctx->gc_input.value, buf.value, buf.length);
 
-	    krb5_data_free(&data);
+	    gss_release_buffer(&tmp_minor, &buf);
         }
 
         if (verflags & EXPORT_CONTEXT_FLAG_MECH_CTX) {
-            if (krb5_ret_data(sp, &data))
+	    gss_OID mech_oid;
+
+	    ret = _gss_mg_ret_oid(minor_status, sp, &mech_oid);
+            if (ret != GSS_S_COMPLETE)
                 goto failure;
 
-            mech_oid.length   = data.length;
-            mech_oid.elements = data.data;
-            m = __gss_get_mechanism(&mech_oid);
-            krb5_data_free(&data);
+	    if (mech_oid == GSS_C_NO_OID) {
+		ret = GSS_S_BAD_MECH;
+		goto failure;
+	    }
+
+            m = __gss_get_mechanism(mech_oid);
             if (m == NULL) {
                 ret = GSS_S_DEFECTIVE_TOKEN;
 		goto failure;
 	    }
             ctx->gc_mech = m;
 
-            if (krb5_ret_data(sp, &data))
-                goto failure;
+	    ret = _gss_mg_ret_buffer(minor_status, sp, &buf);
+	    if (ret != GSS_S_COMPLETE)
+		goto failure;
 
-            buf.length = data.length;
-            buf.value  = data.data;
+	    if (buf.value == NULL) {
+		ret = GSS_S_DEFECTIVE_TOKEN;
+		goto failure;
+	    }
 
             ret = m->gm_import_sec_context(minor_status, &buf, &ctx->gc_ctx);
-            _gss_secure_release_buffer(&tmp_minor, &buf);
             if (ret != GSS_S_COMPLETE) {
                 _gss_mg_error(m, *minor_status);
                 goto failure;
@@ -135,5 +142,6 @@ gss_import_sec_context(OM_uint32 *minor_status,
 failure:
         free(ctx);
         krb5_storage_free(sp);
+	_gss_secure_release_buffer(&tmp_minor, &buf);
         return ret;
 }

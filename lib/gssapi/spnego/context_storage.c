@@ -56,16 +56,6 @@ ret_negoex_auth_mech(krb5_storage *sp, struct negoex_auth_mech **mechp);
 static krb5_error_code
 store_negoex_auth_mech(krb5_storage *sp, struct negoex_auth_mech *mech);
 
-static krb5_error_code
-ret_gss_oid(krb5_storage *sp, gss_OID *oidp);
-static krb5_error_code
-store_gss_oid(krb5_storage *sp, gss_OID oid);
-
-static krb5_error_code
-ret_gss_buffer(krb5_storage *sp, gss_buffer_t buffer);
-static krb5_error_code
-store_gss_buffer(krb5_storage *sp, gss_const_buffer_t buffer);
-
 static uint16_t
 spnego_flags_to_int(struct spnego_flags flags);
 static struct spnego_flags
@@ -148,16 +138,16 @@ ret_spnego_context(krb5_storage *sp, gssspnego_ctx *ctxp)
     ctx->flags = int_to_spnego_flags(spnego_flags);
 
     if (sc_flags & SC_MECH_TYPES)
-        CHECK(ret, ret_gss_buffer(sp, &ctx->NegTokenInit_mech_types));
+        CHECK(major, _gss_mg_ret_buffer(&minor, sp, &ctx->NegTokenInit_mech_types));
     if (sc_flags & SC_PREFERRED_MECH_TYPE)
-        CHECK(ret, ret_gss_oid(sp, &ctx->preferred_mech_type));
+        CHECK(major, _gss_mg_ret_oid(&minor, sp, &ctx->preferred_mech_type));
     if (sc_flags & SC_SELECTED_MECH_TYPE)
-        CHECK(ret, ret_gss_oid(sp, &ctx->selected_mech_type));
+        CHECK(major, _gss_mg_ret_oid(&minor, sp, &ctx->selected_mech_type));
     if (sc_flags & SC_NEGOTIATED_MECH_TYPE)
-        CHECK(ret, ret_gss_oid(sp, &ctx->negotiated_mech_type));
+        CHECK(major, _gss_mg_ret_oid(&minor, sp, &ctx->negotiated_mech_type));
 
     if (sc_flags & SC_NEGOTIATED_CTX_ID) {
-        CHECK(ret, ret_gss_buffer(sp, &buf));
+        CHECK(major, _gss_mg_ret_buffer(&minor, sp, &buf));
         CHECK(major, gss_import_sec_context(&minor, &buf,
               &ctx->negotiated_ctx_id));
         gss_release_buffer(&minor, &buf);
@@ -171,14 +161,14 @@ ret_spnego_context(krb5_storage *sp, gssspnego_ctx *ctxp)
         ctx->mech_time_rec = GSS_C_INDEFINITE;
 
     if (sc_flags & SC_MECH_SRC_NAME) {
-        CHECK(ret, ret_gss_buffer(sp, &buf));
+        CHECK(major, _gss_mg_ret_buffer(&minor, sp, &buf));
         CHECK(major, gss_import_name(&minor, &buf, GSS_C_NT_EXPORT_NAME,
                                      &ctx->mech_src_name));
         gss_release_buffer(&minor, &buf);
     }
 
     if (sc_flags & SC_TARGET_NAME) {
-        CHECK(ret, ret_gss_buffer(sp, &buf));
+        CHECK(major, _gss_mg_ret_buffer(&minor, sp, &buf));
         CHECK(major, gss_import_name(&minor, &buf, GSS_C_NT_EXPORT_NAME,
                                      &ctx->target_name));
         gss_release_buffer(&minor, &buf);
@@ -273,17 +263,17 @@ store_spnego_context(krb5_storage *sp, gssspnego_ctx ctx)
     CHECK(ret, krb5_store_uint16(sp, spnego_flags));
 
     if (sc_flags & SC_MECH_TYPES)
-        CHECK(ret, store_gss_buffer(sp, &ctx->NegTokenInit_mech_types));
+        CHECK(major, _gss_mg_store_buffer(&minor, sp, &ctx->NegTokenInit_mech_types));
     if (sc_flags & SC_PREFERRED_MECH_TYPE)
-        CHECK(ret, store_gss_oid(sp, ctx->preferred_mech_type));
+        CHECK(major, _gss_mg_store_oid(&minor, sp, ctx->preferred_mech_type));
     if (sc_flags & SC_SELECTED_MECH_TYPE)
-        CHECK(ret, store_gss_oid(sp, ctx->selected_mech_type));
+        CHECK(major, _gss_mg_store_oid(&minor, sp, ctx->selected_mech_type));
     if (sc_flags & SC_NEGOTIATED_MECH_TYPE)
-        CHECK(ret, store_gss_oid(sp, ctx->negotiated_mech_type));
+        CHECK(major, _gss_mg_store_oid(&minor, sp, ctx->negotiated_mech_type));
     if (sc_flags & SC_NEGOTIATED_CTX_ID) {
         CHECK(major, gss_export_sec_context(&minor, &ctx->negotiated_ctx_id,
                                             &buf));
-        CHECK(ret, store_gss_buffer(sp, &buf));
+        CHECK(major, _gss_mg_store_buffer(&minor, sp, &buf));
         gss_release_buffer(&minor, &buf);
     }
     if (sc_flags & SC_MECH_FLAGS)
@@ -292,13 +282,13 @@ store_spnego_context(krb5_storage *sp, gssspnego_ctx ctx)
         CHECK(ret, krb5_store_uint32(sp, ctx->mech_time_rec));
     if (sc_flags & SC_MECH_SRC_NAME) {
         CHECK(major, gss_export_name(&minor, ctx->mech_src_name, &buf));
-        CHECK(ret, store_gss_buffer(sp, &buf));
+        CHECK(major, _gss_mg_store_buffer(&minor, sp, &buf));
         gss_release_buffer(&minor, &buf);
     }
 
     if (sc_flags & SC_TARGET_NAME) {
         CHECK(major, gss_export_name(&minor, ctx->target_name, &buf));
-        CHECK(ret, store_gss_buffer(sp, &buf));
+        CHECK(major, _gss_mg_store_buffer(&minor, sp, &buf));
         gss_release_buffer(&minor, &buf);
     }
 
@@ -372,7 +362,7 @@ ret_negoex_auth_mech(krb5_storage *sp, struct negoex_auth_mech **mechp)
         mech->verified_checksum = 1;
 
     if (snc_flags & SNC_OID)
-        CHECK(ret, ret_gss_oid(sp, &mech->oid));
+        CHECK(major, _gss_mg_ret_oid(&minor, sp, &mech->oid));
 
     if (krb5_storage_read(sp, mech->scheme, GUID_LENGTH) != GUID_LENGTH) {
         ret = KRB5_BAD_MSIZE;
@@ -380,14 +370,14 @@ ret_negoex_auth_mech(krb5_storage *sp, struct negoex_auth_mech **mechp)
     }
 
     if (snc_flags & SNC_MECH_CONTEXT) {
-        CHECK(ret, ret_gss_buffer(sp, &buf));
+        CHECK(major, _gss_mg_ret_buffer(&minor, sp, &buf));
         CHECK(major, gss_import_sec_context(&minor, &buf,
                                             &mech->mech_context));
         gss_release_buffer(&minor, &buf);
     }
 
     if (snc_flags & SNC_METADATA)
-        CHECK(ret, ret_gss_buffer(sp, &mech->metadata));
+        CHECK(major, _gss_mg_ret_buffer(&minor, sp, &mech->metadata));
 
     *mechp = mech;
 
@@ -428,19 +418,19 @@ store_negoex_auth_mech(krb5_storage *sp, struct negoex_auth_mech *mech)
     CHECK(ret, krb5_store_uint8(sp, negoex_flags));
 
     if (snc_flags & SNC_OID)
-        CHECK(ret, store_gss_oid(sp, mech->oid));
+        CHECK(major, _gss_mg_store_oid(&minor, sp, mech->oid));
 
     CHECK(ret, krb5_store_bytes(sp, mech->scheme, GUID_LENGTH));
 
     if (snc_flags & SNC_MECH_CONTEXT) {
         CHECK(major, gss_export_sec_context(&minor, &mech->mech_context,
                                             &buf));
-        CHECK(ret, store_gss_buffer(sp, &buf));
+        CHECK(major, _gss_mg_store_buffer(&minor, sp, &buf));
         gss_release_buffer(&minor, &buf);
     }
 
     if (snc_flags & SNC_METADATA)
-        CHECK(ret, store_gss_buffer(sp, &mech->metadata));
+        CHECK(major, _gss_mg_store_buffer(&minor, sp, &mech->metadata));
 
 fail:
     if (ret == 0 && GSS_ERROR(major))
@@ -448,84 +438,6 @@ fail:
     gss_release_buffer(&minor, &buf);
 
     return ret;
-}
-
-static krb5_error_code
-ret_gss_oid(krb5_storage *sp, gss_OID *oidp)
-{
-    krb5_data data;
-    krb5_error_code ret;
-    gss_OID_desc oid;
-    OM_uint32 major, minor;
-
-    *oidp = GSS_C_NO_OID;
-
-    ret = krb5_ret_data(sp, &data);
-    if (ret)
-        return ret;
-
-    if (data.length) {
-        oid.length = data.length;
-        oid.elements = data.data;
-
-        major = _gss_intern_oid(&minor, &oid, oidp);
-    } else
-        major = GSS_S_COMPLETE;
-
-    krb5_data_free(&data);
-
-    return GSS_ERROR(major) ? ENOMEM : 0;
-}
-
-static krb5_error_code
-store_gss_oid(krb5_storage *sp, gss_OID oid)
-{
-    krb5_data data;
-
-    krb5_data_zero(&data);
-
-    if (oid) {
-        data.length = oid->length;
-        data.data = oid->elements;
-    }
-
-    return krb5_store_data(sp, data);
-}
-
-static krb5_error_code
-ret_gss_buffer(krb5_storage *sp, gss_buffer_t buffer)
-{
-    krb5_error_code ret;
-    krb5_data data;
-
-    _mg_buffer_zero(buffer);
-
-    ret = krb5_ret_data(sp, &data);
-    if (ret)
-        return ret;
-
-    if (data.length) {
-        buffer->length = data.length;
-        buffer->value = data.data;
-    } else
-        krb5_data_free(&data);
-
-    return 0;
-}
-
-static krb5_error_code
-store_gss_buffer(krb5_storage *sp, gss_const_buffer_t buffer)
-{
-    krb5_data data;
-
-    krb5_data_zero(&data);
-
-    if (buffer) {
-        data.length = buffer->length;
-        data.data = buffer->value;
-    }
-
-    return krb5_store_data(sp, data);
 }
 
 static uint16_t

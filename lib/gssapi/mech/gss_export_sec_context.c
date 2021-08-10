@@ -86,12 +86,10 @@ gss_export_sec_context(OM_uint32 *minor_status,
                 *minor_status = kret;
                 goto failure;
             }
-            kret = krb5_store_datalen(sp, ctx->gc_input.value,
-                                      ctx->gc_input.length);
-            if (kret) {
-                *minor_status = kret;
+	    major_status = _gss_mg_store_buffer(minor_status, sp,
+						&ctx->gc_input);
+            if (major_status != GSS_S_COMPLETE)
                 goto failure;
-            }
         } else if (ctx->gc_ctx == GSS_C_NO_CONTEXT) {
 	    gss_delete_sec_context(&tmp_minor, context_handle,
 				   GSS_C_NO_BUFFER);
@@ -109,18 +107,14 @@ gss_export_sec_context(OM_uint32 *minor_status,
 		goto failure;
 	    }
 
-	    kret = krb5_store_datalen(sp, m->gm_mech_oid.elements,
-				      m->gm_mech_oid.length);
-	    if (kret) {
-		*minor_status = kret;
+	    major_status = _gss_mg_store_oid(minor_status, sp,
+					     &m->gm_mech_oid);
+	    if (major_status != GSS_S_COMPLETE)
 		goto failure;
-	    }
 
-	    kret = krb5_store_datalen(sp, buf.value, buf.length);
-	    if (kret) {
-		*minor_status = kret;
+	    major_status = _gss_mg_store_buffer(minor_status, sp, &buf);
+	    if (major_status != GSS_S_COMPLETE)
 		goto failure;
-	    }
 	}
 
         kret = krb5_storage_to_data(sp, &data);

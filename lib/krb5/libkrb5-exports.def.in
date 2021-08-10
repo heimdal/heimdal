@@ -838,6 +838,7 @@ EXPORTS
 
 	; testing
 ;!	_krb5_aes_cts_encrypt
+	krb5_time_abs;
 	_krb5_n_fold
 	_krb5_expand_default_cc_name
 

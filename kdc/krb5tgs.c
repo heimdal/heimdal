@@ -2417,7 +2417,8 @@ out:
 				 r->armor_crypto,
 				 &req->req_body,
 				 ret, r->e_text,
-				 NULL, NULL,
+				 ticket != NULL ? ticket->client : NULL,
+				 ticket != NULL ? ticket->server : NULL,
 				 csec, cusec,
 				 data);
 	free_METHOD_DATA(&error_method);

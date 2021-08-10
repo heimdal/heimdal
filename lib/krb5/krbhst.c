@@ -1017,6 +1017,13 @@ krb5_krbhst_init_flags(krb5_context context,
         srv_label = "kpasswd";
 	service = "change_password";
 	break;
+    case KRB5_KRBHST_TKTBRIDGEAP:
+	next = kdc_get_next;
+	def_port = ntohs(krb5_getportbyname(context, "kerberos", "tcp", 88));
+        config_param = "tktbridgeap";
+        srv_label = "kerberos-tkt-bridge";
+	service = "kdc";
+	break;
     default:
 	krb5_set_error_message(context, ENOTTY,
 			       N_("unknown krbhst type (%u)", ""), type);

@@ -36,17 +36,85 @@
 #include "kdc_locl.h"
 
 static krb5_error_code
-get_fastuser_crypto(astgs_request_t r, krb5_enctype enctype,
+salt_fastuser_crypto(astgs_request_t r,
+		     krb5_const_principal salt_principal,
+		     krb5_enctype enctype,
+		     krb5_crypto fast_crypto,
+		     krb5_crypto *salted_crypto)
+{
+    krb5_error_code ret;
+    krb5_principal client_princ = NULL;
+    krb5_data salt;
+    krb5_keyblock dkey;
+    size_t size;
+
+    *salted_crypto = NULL;
+
+    krb5_data_zero(&salt);
+    krb5_keyblock_zero(&dkey);
+
+    if (salt_principal == NULL) {
+	if (r->req.req_body.cname == NULL) {
+	    ret = KRB5KRB_ERR_GENERIC;
+	    goto out;
+	}
+
+	ret = _krb5_principalname2krb5_principal(r->context, &client_princ,
+						 *(r->req.req_body.cname),
+						 r->req.req_body.realm);
+	if (ret)
+	    goto out;
+
+	salt_principal = client_princ;
+    }
+
+    ret = krb5_unparse_name(r->context, salt_principal, (char **)&salt.data);
+    if (ret)
+	goto out;
+
+    salt.length = strlen(salt.data);
+
+    kdc_log(r->context, r->config, 10,
+	    "salt_fastuser_crypto: salt principal is %s (%d)",
+	    (char *)salt.data, enctype);
+
+    ret = krb5_enctype_keysize(r->context, enctype, &size);
+    if (ret)
+	goto out;
+
+    ret = krb5_crypto_prfplus(r->context, fast_crypto, &salt,
+			      size, &dkey.keyvalue);
+    if (ret)
+	goto out;
+
+    dkey.keytype = enctype;
+
+    ret = krb5_crypto_init(r->context, &dkey, ENCTYPE_NULL, salted_crypto);
+    if (ret)
+	goto out;
+
+out:
+    krb5_free_keyblock_contents(r->context, &dkey);
+    krb5_data_free(&salt);
+    krb5_free_principal(r->context, client_princ);
+
+    return ret;
+}
+
+static krb5_error_code
+get_fastuser_crypto(astgs_request_t r,
+		    krb5_const_principal ticket_client,
+		    krb5_enctype enctype,
 		    krb5_crypto *crypto)
 {
     krb5_principal fast_princ;
     hdb_entry_ex *fast_user = NULL;
     Key *cookie_key = NULL;
+    krb5_crypto fast_crypto = NULL;
     krb5_error_code ret;
 
     *crypto = NULL;
 
-    /* TODO: salt cookie key with client name and realm */
     ret = krb5_make_principal(r->context, &fast_princ,
 			      KRB5_WELLKNOWN_ORG_H5L_REALM,
 			      KRB5_WELLKNOWN_NAME, "org.h5l.fast-cookie", NULL);
@@ -55,7 +123,6 @@ get_fastuser_crypto(astgs_request_t r, krb5_enctype enctype,
 
     ret = _kdc_db_fetch(r->context, r->config, fast_princ,
 			HDB_F_GET_FAST_COOKIE, NULL, NULL, &fast_user);
-    krb5_free_principal(r->context, fast_princ);
     if (ret)
 	goto out;
 
@@ -68,20 +135,32 @@ get_fastuser_crypto(astgs_request_t r, krb5_enctype enctype,
     if (ret)
 	goto out;
 
-    ret = krb5_crypto_init(r->context, &cookie_key->key, 0, crypto);
+    ret = krb5_crypto_init(r->context, &cookie_key->key,
+			   ENCTYPE_NULL, &fast_crypto);
+    if (ret)
+	goto out;
+
+    ret = salt_fastuser_crypto(r, ticket_client,
+			       cookie_key->key.keytype,
+			       fast_crypto, crypto);
     if (ret)
 	goto out;
 
  out:
     if (fast_user)
 	_kdc_free_ent(r->context, fast_user);
+    if (fast_crypto)
+	krb5_crypto_destroy(r->context, fast_crypto);
+    krb5_free_principal(r->context, fast_princ);
 
     return ret;
 }
 
 
 static krb5_error_code
-fast_parse_cookie(astgs_request_t r, const PA_DATA *pa)
+fast_parse_cookie(astgs_request_t r,
+		  krb5_const_principal ticket_client,
+		  const PA_DATA *pa)
 {
     krb5_crypto crypto = NULL;
     krb5_error_code ret;
@@ -100,7 +179,7 @@ fast_parse_cookie(astgs_request_t r, const PA_DATA *pa)
 	return KRB5KDC_ERR_POLICY;
     }
 
-    ret = get_fastuser_crypto(r, data.cookie.etype, &crypto);
+    ret = get_fastuser_crypto(r, ticket_client, data.cookie.etype, &crypto);
     if (ret)
 	goto out;
 
@@ -129,7 +208,9 @@ fast_parse_cookie(astgs_request_t r, const PA_DATA *pa)
 }
 
 static krb5_error_code
-fast_add_cookie(astgs_request_t r, METHOD_DATA *method_data)
+fast_add_cookie(astgs_request_t r,
+		krb5_const_principal ticket_client,
+		METHOD_DATA *method_data)
 {
     krb5_crypto crypto = NULL;
     KDCFastCookie shell;
@@ -147,7 +228,7 @@ fast_add_cookie(astgs_request_t r, METHOD_DATA *method_data)
 	return ret;
     heim_assert(size == data.length, "internal asn.1 encoder error");
 
-    ret = get_fastuser_crypto(r, KRB5_ENCTYPE_NULL, &crypto);
+    ret = get_fastuser_crypto(r, ticket_client, KRB5_ENCTYPE_NULL, &crypto);
     if (ret) {
 	kdc_log(r->context, r->config, 0,
 		"Failed to find FAST principal for cookie encryption: %d", ret);
@@ -266,7 +347,7 @@ _kdc_fast_mk_error(astgs_request_t r,
      * FX-COOKIE can be used outside of FAST, e.g. SRP or GSS.
      */
     if (armor_crypto || r->fast.fast_state.len) {
-	ret = fast_add_cookie(r, error_method);
+	ret = fast_add_cookie(r, error_client, error_method);
 	if (ret) {
 	    kdc_log(r->context, r->config, 1,
 		    "Failed to add FAST cookie: %d", ret);
@@ -625,8 +706,14 @@ _kdc_fast_unwrap_request(astgs_request_t r,
      * FX-COOKIE can be used outside of FAST, e.g. SRP or GSS.
      */
     pa = _kdc_find_padata(&r->req, &i, KRB5_PADATA_FX_COOKIE);
-    if (pa)
-	ret = fast_parse_cookie(r, pa);
+    if (pa) {
+	krb5_const_principal ticket_client = NULL;
+
+	if (tgs_ticket)
+	    ticket_client = tgs_ticket->client;
+
+	ret = fast_parse_cookie(r, ticket_client, pa);
+    }
 
     return ret;
 }

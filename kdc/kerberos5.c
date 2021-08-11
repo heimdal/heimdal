@@ -1071,9 +1071,16 @@ _kdc_encode_reply(krb5_context context,
 	 * Hide client name of privacy reasons
 	 */
 	if (1 /* r->fast_options.hide_client_names */) {
-	    rep->crealm[0] = '\0';
-	    free_PrincipalName(&rep->cname);
-	    rep->cname.name_type = 0;
+	    Realm anon_realm = KRB5_ANON_REALM;
+
+	    free_Realm(&rep->crealm);
+	    ret = copy_Realm(&anon_realm, &rep->crealm);
+	    if (ret == 0) {
+		free_PrincipalName(&rep->cname);
+		ret = _kdc_make_anonymous_principalname(&rep->cname);
+	    }
+	    if (ret)
+		return ret;
 	}
     }
 

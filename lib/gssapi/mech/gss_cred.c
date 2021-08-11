@@ -250,7 +250,7 @@ gss_import_cred(OM_uint32 * minor_status,
 	gss_OID oid;
 
 	major = _gss_mg_ret_oid(minor_status, sp, &oid);
-	if (*minor_status == HEIM_ERR_EOF)
+	if (*minor_status == (OM_uint32)HEIM_ERR_EOF)
 	    break;
 	else if (major != GSS_S_COMPLETE)
 	    goto out;

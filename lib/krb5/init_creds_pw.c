@@ -2038,6 +2038,7 @@ make_fast_ap_fxarmor(krb5_context context,
 
 	ret = _krb5_make_fast_ap_fxarmor(context,
 					 state->armor_ccache,
+					 realm,
 					 &fxarmor->armor_value,
 					 &state->armor_key,
 					 &state->armor_crypto);

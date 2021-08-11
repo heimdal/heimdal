@@ -29,7 +29,6 @@
  */
 
 #include "spnego_locl.h"
-#include "mech/mech_locl.h"
 
 #define SC_MECH_TYPES               0x0001
 #define SC_PREFERRED_MECH_TYPE      0x0002

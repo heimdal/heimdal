@@ -237,7 +237,7 @@ struct file_data {
 #define O_CLOEXEC 0
 #endif
 
-static void
+static void HEIM_CALLCONV
 log_file(heim_context context, const char *timestr, const char *msg, void *data)
 {
     struct timeval tv;

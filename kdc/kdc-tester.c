@@ -269,6 +269,8 @@ eval_kinit(heim_dict_t o)
 	ret = krb5_init_creds_set_fast_ccache(kdc_context, ctx, fast_cc);
 	if (ret)
 	    krb5_err(kdc_context, 1, ret, "krb5_init_creds_set_fast_ccache");
+
+	fast_cc = NULL;
     }
     
     if (password) {

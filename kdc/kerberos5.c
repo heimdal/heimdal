@@ -555,62 +555,10 @@ pa_gss_validate(astgs_request_t r, const PA_DATA *pa)
     return ret;
 }
 
-/*
- *
- */
-
-static krb5_error_code
-make_pa_enc_challange(astgs_request_t r, krb5_crypto crypto)
-{
-    krb5_context context = r->context;
-    METHOD_DATA *md = &r->outpadata;
-    PA_ENC_TS_ENC p;
-    unsigned char *buf;
-    size_t buf_size;
-    size_t len;
-    EncryptedData encdata;
-    krb5_error_code ret;
-    int32_t usec;
-    int usec2;
-
-    krb5_us_timeofday (context, &p.patimestamp, &usec);
-    usec2         = usec;
-    p.pausec      = &usec2;
-
-    ASN1_MALLOC_ENCODE(PA_ENC_TS_ENC, buf, buf_size, &p, &len, ret);
-    if (ret)
-	return ret;
-    if(buf_size != len)
-	krb5_abortx(context, "internal error in ASN.1 encoder");
-
-    ret = krb5_encrypt_EncryptedData(context,
-				     crypto,
-				     KRB5_KU_ENC_CHALLENGE_KDC,
-				     buf,
-				     len,
-				     0,
-				     &encdata);
-    free(buf);
-    if (ret)
-	return ret;
-
-    ASN1_MALLOC_ENCODE(EncryptedData, buf, buf_size, &encdata, &len, ret);
-    free_EncryptedData(&encdata);
-    if (ret)
-	return ret;
-    if(buf_size != len)
-	krb5_abortx(context, "internal error in ASN.1 encoder");
-
-    ret = krb5_padata_add(context, md, KRB5_PADATA_ENCRYPTED_CHALLENGE, buf, len);
-    if (ret)
-	free(buf);
-    return ret;
-}
-
 static krb5_error_code
 pa_enc_chal_validate(astgs_request_t r, const PA_DATA *pa)
 {
-    krb5_data pepper1, pepper2, ts_data;
+    krb5_data pepper1, pepper2;
     int invalidPassword = 0;
     EncryptedData enc_data;
     krb5_enctype aenctype;
@@ -652,39 +600,46 @@ pa_enc_chal_validate(astgs_request_t r, const PA_DATA *pa)
 
     krb5_crypto_getenctype(r->context, r->armor_crypto, &aenctype);
 
+    kdc_log(r->context, r->config, 5, "FAST armor enctype is: %d", (int)aenctype);
+
     for (i = 0; i < r->client->entry.keys.len; i++) {
-	krb5_crypto challangecrypto, longtermcrypto;
-	krb5_keyblock challangekey;
-	PA_ENC_TS_ENC p;
+	krb5_crypto challengecrypto, longtermcrypto;
+	krb5_keyblock challengekey;
 
 	k = &r->client->entry.keys.val[i];
 	
 	ret = krb5_crypto_init(r->context, &k->key, 0, &longtermcrypto);
 	if (ret)
-	    continue;			
+	    continue;
 	
 	ret = krb5_crypto_fx_cf2(r->context, r->armor_crypto, longtermcrypto,
 				 &pepper1, &pepper2, aenctype,
-				 &challangekey);
-	krb5_crypto_destroy(r->context, longtermcrypto);
-	if (ret)
+				 &challengekey);
+	if (ret) {
+	    krb5_crypto_destroy(r->context, longtermcrypto);
 	    continue;
+	}
 	
-	ret = krb5_crypto_init(r->context, &challangekey, 0,
-			       &challangecrypto);
-	if (ret)
+	ret = krb5_crypto_init(r->context, &challengekey, 0,
+			       &challengecrypto);
+	krb5_free_keyblock_contents(r->context, &challengekey);
+	if (ret) {
+	    krb5_crypto_destroy(r->context, longtermcrypto);
 	    continue;
-	
-	ret = krb5_decrypt_EncryptedData(r->context, challangecrypto,
-					 KRB5_KU_ENC_CHALLENGE_CLIENT,
-					 &enc_data,
-					 &ts_data);
+	}
+
+	ret = _krb5_validate_pa_enc_challenge(r->context,
+					      challengecrypto,
+					      KRB5_KU_ENC_CHALLENGE_CLIENT,
+					      &enc_data,
+					      r->cname);
+	krb5_crypto_destroy(r->context, challengecrypto);
 	if (ret) {
 	    const char *msg = krb5_get_error_message(r->context, ret);
 	    krb5_error_code ret2;
 	    char *str = NULL;
 
-	    invalidPassword = 1;
+	    invalidPassword = (ret == KRB5KRB_AP_ERR_BAD_INTEGRITY);
 
 	    ret2 = krb5_enctype_to_string(r->context, k->key.keytype, &str);
 	    if (ret2)
@@ -695,68 +650,66 @@ pa_enc_chal_validate(astgs_request_t r, const PA_DATA *pa)
 	    krb5_free_error_message(r->context, msg);
 	    free(str);
 
+	    krb5_crypto_destroy(r->context, longtermcrypto);
 	    continue;
 	}
-	
-	ret = decode_PA_ENC_TS_ENC(ts_data.data,
-				   ts_data.length,
-				   &p,
-				   &size);
-	krb5_data_free(&ts_data);
-	if(ret){
-	    krb5_crypto_destroy(r->context, challangecrypto);
-	    ret = KRB5KDC_ERR_PREAUTH_FAILED;
-	    _kdc_r_log(r, 4, "Failed to decode PA-ENC-TS_ENC -- %s",
-		       r->cname);
-	    continue;
-	}
+    
+	/*
+	 * Found a key that the client used, lets pick that as the reply key
+	 */
 
-	if (labs(kdc_time - p.patimestamp) > r->context->max_skew) {
-	    char client_time[100];
-
-	    krb5_crypto_destroy(r->context, challangecrypto);
-
-	    krb5_format_time(r->context, p.patimestamp,
-			     client_time, sizeof(client_time), TRUE);
-
-	    ret = KRB5KRB_AP_ERR_SKEW;
-	    _kdc_r_log(r, 4, "Too large time skew, "
-		       "client time %s is out by %u > %u seconds -- %s",
-		       client_time,
-		       (unsigned)labs(kdc_time - p.patimestamp),
-		       r->context->max_skew,
-		       r->cname);
-
-	    free_PA_ENC_TS_ENC(&p);
+	krb5_free_keyblock_contents(r->context, &r->reply_key);
+	ret = krb5_copy_keyblock_contents(r->context, &k->key, &r->reply_key);
+	if (ret) {
+	    krb5_crypto_destroy(r->context, longtermcrypto);
 	    goto out;
 	}
 
-	free_PA_ENC_TS_ENC(&p);
+	krb5_free_keyblock_contents(r->context, &challengekey);
 
-	ret = make_pa_enc_challange(r, challangecrypto);
-	krb5_crypto_destroy(r->context, challangecrypto);
+	/*
+	 * Provide KDC authentication to the client, uses a different
+	 * challenge key (different pepper).
+	 */
+
+	pepper1.data = "kdcchallengearmor";
+	pepper1.length = strlen(pepper1.data);
+
+	ret = krb5_crypto_fx_cf2(r->context, r->armor_crypto, longtermcrypto,
+				 &pepper1, &pepper2, aenctype,
+				 &challengekey);
+	krb5_crypto_destroy(r->context, longtermcrypto);
+	if (ret)
+	    goto out;
+
+	ret = krb5_crypto_init(r->context, &challengekey, 0, &challengecrypto);
+	krb5_free_keyblock_contents(r->context, &challengekey);
+	if (ret)
+	    goto out;
+
+	ret = _krb5_make_pa_enc_challenge(r->context, challengecrypto,
+					  KRB5_KU_ENC_CHALLENGE_KDC,
+					  &r->outpadata);
+	krb5_crypto_destroy(r->context, challengecrypto);
 	if (ret)
 	    goto out;
 					    
 	set_salt_padata(&r->outpadata, k->salt);
-	krb5_free_keyblock_contents(r->context,  &r->reply_key);
-	ret = krb5_copy_keyblock_contents(r->context, &k->key, &r->reply_key);
-	if (ret)
-	    goto out;
 
-	/*
-	 * Success
-	 */
+       /*
+	* Success
+	*/
 	if (r->clientdb->hdb_auth_status)
 	    r->clientdb->hdb_auth_status(r->context, r->clientdb, r->client,
 					 HDB_AUTH_SUCCESS);
 	goto out;
     }
 
+    ret = KRB5KDC_ERR_PREAUTH_FAILED;
+
     if (invalidPassword && r->clientdb->hdb_auth_status) {
 	r->clientdb->hdb_auth_status(r->context, r->clientdb, r->client,
 				     HDB_AUTH_WRONG_PASSWORD);
-	ret = KRB5KDC_ERR_PREAUTH_FAILED;
     }
  out:
     free_EncryptedData(&enc_data);
@@ -1016,11 +969,11 @@ log_patypes(astgs_request_t r, METHOD_DATA *padata)
 krb5_error_code
 _kdc_encode_reply(krb5_context context,
 		  krb5_kdc_configuration *config,
-		  krb5_crypto armor_crypto, uint32_t nonce,
+		  astgs_request_t r, uint32_t nonce,
 		  KDC_REP *rep, EncTicketPart *et, EncKDCRepPart *ek,
 		  krb5_enctype etype,
 		  int skvno, const EncryptionKey *skey,
-		  int ckvno, const EncryptionKey *reply_key,
+		  int ckvno,
 		  int rk_is_subkey,
 		  const char **e_text,
 		  krb5_data *reply)
@@ -1066,10 +1019,9 @@ _kdc_encode_reply(krb5_context context,
 	return ret;
     }
 
-    if (armor_crypto) {
-	krb5_data data;
-	krb5_keyblock *strengthen_key = NULL;
+    if (r && r->armor_crypto) {
 	KrbFastFinished finished;
+	krb5_data data;
 
 	kdc_log(context, config, 4, "FAST armor protection");
 
@@ -1088,7 +1040,7 @@ _kdc_encode_reply(krb5_context context,
 	if (data.length != len)
 	    krb5_abortx(context, "internal asn.1 error");
 
-	ret = krb5_create_checksum(context, armor_crypto,
+	ret = krb5_create_checksum(context, r->armor_crypto,
 				   KRB5_KU_FAST_FINISHED, 0,
 				   data.data, data.length,
 				   &finished.ticket_checksum);
@@ -1096,8 +1048,8 @@ _kdc_encode_reply(krb5_context context,
 	if (ret)
 	    return ret;
 
-	ret = _kdc_fast_mk_response(context, armor_crypto,
-				    rep->padata, strengthen_key, &finished,
+	ret = _kdc_fast_mk_response(context, r->armor_crypto,
+				    rep->padata, &r->strengthen_key, &finished,
 				    nonce, &data);
 	free_Checksum(&finished.ticket_checksum);
 	if (ret)
@@ -1120,9 +1072,9 @@ _kdc_encode_reply(krb5_context context,
 	    return ret;
 
 	/*
-	 * Hide client name of privacy reasons
+	 * Hide client name for privacy reasons
 	 */
-	if (1 /* r->fast_options.hide_client_names */) {
+	if (r->fast.flags.requested_hidden_names) {
 	    Realm anon_realm = KRB5_ANON_REALM;
 
 	    free_Realm(&rep->crealm);
@@ -1152,7 +1104,7 @@ _kdc_encode_reply(krb5_context context,
 	*e_text = "KDC internal error";
 	return KRB5KRB_ERR_GENERIC;
     }
-    ret = krb5_crypto_init(context, reply_key, 0, &crypto);
+    ret = krb5_crypto_init(context, &r->reply_key, 0, &crypto);
     if (ret) {
 	const char *msg = krb5_get_error_message(context, ret);
 	free(buf);
@@ -1988,7 +1940,6 @@ _kdc_as_rep(astgs_request_t r)
     Key *skey;
     int found_pa = 0;
     int i, flags = HDB_F_FOR_AS_REQ;
-    METHOD_DATA error_method;
     const PA_DATA *pa;
     krb5_boolean is_tgs;
     const char *msg;
@@ -1996,13 +1947,11 @@ _kdc_as_rep(astgs_request_t r)
     Key *krbtgt_key;
 
     memset(&rep, 0, sizeof(rep));
-    error_method.len = 0;
-    error_method.val = NULL;
 
     /*
      * Look for FAST armor and unwrap
      */
-    ret = _kdc_fast_unwrap_request(r);
+    ret = _kdc_fast_unwrap_request(r, NULL, NULL);
     if (ret) {
 	_kdc_r_log(r, 1, "FAST unwrap request from %s failed: %d", from, ret);
 	goto out;
@@ -2081,10 +2030,10 @@ _kdc_as_rep(astgs_request_t r)
 		r->cname, fixed_client_name);
 	free(fixed_client_name);
 
-	ret = _kdc_fast_mk_error(r, &error_method, r->armor_crypto,
+	ret = _kdc_fast_mk_error(r, &r->outpadata, r->armor_crypto,
 				 &req->req_body, KRB5_KDC_ERR_WRONG_REALM,
-				 NULL, r->server_princ, NULL,
-				 &r->client->entry.principal->realm,
+				 NULL,
+				 r->client->entry.principal, r->server_princ,
 				 NULL, NULL, r->reply);
 	goto out;
     }
@@ -2174,7 +2123,7 @@ _kdc_as_rep(astgs_request_t r)
 					   NULL, &ckey, &default_salt);
 		    if (ret2 == 0) {
 			ret2 = get_pa_etype_info_both(context, config, &b->etype,
-						      &error_method, ckey, !default_salt);
+						      &r->outpadata, ckey, !default_salt);
 			if (ret2 != 0)
 			    ret = ret2;
 		    }
@@ -2203,7 +2152,7 @@ _kdc_as_rep(astgs_request_t r)
 	for (n = 0; n < sizeof(pat) / sizeof(pat[0]); n++) {
 	    if ((pat[n].flags & PA_ANNOUNCE) == 0)
 		continue;
-	    ret = krb5_padata_add(context, &error_method,
+	    ret = krb5_padata_add(context, &r->outpadata,
 				  pat[n].type, NULL, 0);
 	    if (ret)
 		goto out;
@@ -2217,7 +2166,7 @@ _kdc_as_rep(astgs_request_t r)
 			      NULL, &ckey, &default_salt);
 	if (ret == 0) {
 	    ret = get_pa_etype_info_both(context, config, &b->etype,
-					 &error_method, ckey, !default_salt);
+					 &r->outpadata, ckey, !default_salt);
 	    if (ret)
 		goto out;
 	}
@@ -2253,7 +2202,7 @@ _kdc_as_rep(astgs_request_t r)
      * with in a preauth mech.
      */
 
-    ret = _kdc_check_access(r, req, &error_method);
+    ret = _kdc_check_access(r, req, &r->outpadata);
     if(ret)
 	goto out;
 
@@ -2578,6 +2527,14 @@ _kdc_as_rep(astgs_request_t r)
     r->et.flags.enc_pa_rep = r->ek.flags.enc_pa_rep = 1;
 
     /*
+     * update reply-key with strengthen-key
+     */
+
+    ret = _kdc_fast_strengthen_reply_key(r);
+    if (ret)
+	goto out;
+
+    /*
      * Add REQ_ENC_PA_REP if client supports it
      */
 
@@ -2599,11 +2556,11 @@ _kdc_as_rep(astgs_request_t r)
      */
 
     ret = _kdc_encode_reply(context, config,
-			    r->armor_crypto, req->req_body.nonce,
+			    r, req->req_body.nonce,
 			    &rep, &r->et, &r->ek, setype,
 			    r->server->entry.kvno, &skey->key,
 			    r->client->entry.kvno,
-			    &r->reply_key, 0, &r->e_text, r->reply);
+			    0, &r->e_text, r->reply);
     if (ret)
 	goto out;
 
@@ -2624,16 +2581,12 @@ out:
      */
     if (ret != 0 && ret != HDB_ERR_NOT_FOUND_HERE && r->reply->length == 0)
 	ret = _kdc_fast_mk_error(r,
-				 (ret == KRB5_KDC_ERR_MORE_PREAUTH_DATA_REQUIRED)
-				    ? &r->outpadata : &error_method,
+				 &r->outpadata,
 			         r->armor_crypto,
 			         &req->req_body,
 			         ret, r->e_text,
+			         r->client_princ,
 			         r->server_princ,
-			         r->client_princ ?
-			             &r->client_princ->name : NULL,
-			         r->client_princ ?
-			             &r->client_princ->realm : NULL,
 			         NULL, NULL,
 			         r->reply);
 
@@ -2641,8 +2594,6 @@ out:
     free_EncKDCRepPart(&r->ek);
     _kdc_free_fast_state(&r->fast);
 
-    if (error_method.len)
-	free_METHOD_DATA(&error_method);
     if (r->outpadata.len)
 	free_METHOD_DATA(&r->outpadata);
     if (r->client_princ) {
@@ -2665,5 +2616,7 @@ out:
     }
     krb5_free_keyblock_contents(r->context, &r->reply_key);
     krb5_free_keyblock_contents(r->context, &r->session_key);
+    krb5_free_keyblock_contents(r->context, &r->strengthen_key);
+
     return ret;
 }

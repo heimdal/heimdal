@@ -1077,6 +1077,18 @@ get_new_tickets(krb5_context context,
 	goto out;
     }
 
+    ret = krb5_init_creds_store_config(context, ctx, tempccache);
+    if (ret) {
+	krb5_warn(context, ret, "krb5_init_creds_store_config");
+	goto out;
+    }
+
+    ret = krb5_init_creds_warn_user(context, ctx);
+    if (ret) {
+	krb5_warn(context, ret, "krb5_init_creds_warn_user");
+	goto out;
+    }
+
     krb5_init_creds_free(context, ctx);
     ctx = NULL;
 

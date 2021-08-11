@@ -515,8 +515,6 @@ static krb5_error_code
 tgs_make_reply(astgs_request_t r,
 	       krb5_principal tgt_name,
 	       const EncTicketPart *tgt,
-	       const krb5_keyblock *replykey,
-	       int rk_is_subkey,
 	       const EncryptionKey *serverkey,
 	       const EncryptionKey *krbtgtkey,
 	       const krb5_keyblock *sessionkey,
@@ -526,14 +524,12 @@ tgs_make_reply(astgs_request_t r,
 	       krb5_principal server_principal,
 	       hdb_entry_ex *client,
 	       krb5_principal client_principal,
-               const char *tgt_realm,
+	       const char *tgt_realm,
 	       krb5_pac mspac,
 	       uint16_t rodc_id,
 	       krb5_boolean add_ticket_sig,
 	       const METHOD_DATA *enc_pa_data)
 {
-    krb5_context context = r->context;
-    krb5_kdc_configuration *config = r->config;
     KDC_REQ_BODY *b = &r->req.req_body;
     const char **e_text = &r->e_text;
     krb5_data *reply = r->reply;
@@ -570,17 +566,17 @@ tgs_make_reply(astgs_request_t r,
     */
 
 #define GLOBAL_FORCE_TRANSITED_CHECK		\
-    (config->trpolicy == TRPOLICY_ALWAYS_CHECK)
+    (r->config->trpolicy == TRPOLICY_ALWAYS_CHECK)
 #define GLOBAL_ALLOW_PER_PRINCIPAL			\
-    (config->trpolicy == TRPOLICY_ALLOW_PER_PRINCIPAL)
+    (r->config->trpolicy == TRPOLICY_ALLOW_PER_PRINCIPAL)
 #define GLOBAL_ALLOW_DISABLE_TRANSITED_CHECK			\
-    (config->trpolicy == TRPOLICY_ALWAYS_HONOUR_REQUEST)
+    (r->config->trpolicy == TRPOLICY_ALWAYS_HONOUR_REQUEST)
 
 /* these will consult the database in future release */
 #define PRINCIPAL_FORCE_TRANSITED_CHECK(P)		0
 #define PRINCIPAL_ALLOW_DISABLE_TRANSITED_CHECK(P)	0
 
-    ret = fix_transited_encoding(context, config,
+    ret = fix_transited_encoding(r->context, r->config,
 				 !f.disable_transited_check ||
 				 GLOBAL_FORCE_TRANSITED_CHECK ||
 				 PRINCIPAL_FORCE_TRANSITED_CHECK(server) ||
@@ -588,8 +584,8 @@ tgs_make_reply(astgs_request_t r,
 				    PRINCIPAL_ALLOW_DISABLE_TRANSITED_CHECK(server)) ||
 				   GLOBAL_ALLOW_DISABLE_TRANSITED_CHECK),
 				 &tgt->transited, &et,
-				 krb5_principal_get_realm(context, client_principal),
-				 krb5_principal_get_realm(context, server->entry.principal),
+				 krb5_principal_get_realm(r->context, client_principal),
+				 krb5_principal_get_realm(r->context, server->entry.principal),
 				 tgt_realm);
     if(ret)
 	goto out;
@@ -682,20 +678,20 @@ tgs_make_reply(astgs_request_t r,
 	    et.authorization_data = calloc(1, sizeof(*et.authorization_data));
 	    if (et.authorization_data == NULL) {
 		ret = ENOMEM;
-		krb5_set_error_message(context, ret, "malloc: out of memory");
+		krb5_set_error_message(r->context, ret, "malloc: out of memory");
 		goto out;
 	    }
 	}
 	for(i = 0; i < auth_data->len ; i++) {
 	    ret = add_AuthorizationData(et.authorization_data, &auth_data->val[i]);
 	    if (ret) {
-		krb5_set_error_message(context, ret, "malloc: out of memory");
+		krb5_set_error_message(r->context, ret, "malloc: out of memory");
 		goto out;
 	    }
 	}
     }
 
-    ret = krb5_copy_keyblock_contents(context, sessionkey, &et.key);
+    ret = krb5_copy_keyblock_contents(r->context, sessionkey, &et.key);
     if (ret)
 	goto out;
     et.crealm = rep.crealm;
@@ -732,10 +728,10 @@ tgs_make_reply(astgs_request_t r,
 	    goto out;
     }
 
-    if (krb5_enctype_valid(context, serverkey->keytype) != 0
+    if (krb5_enctype_valid(r->context, serverkey->keytype) != 0
 	&& _kdc_is_weak_exception(server->entry.principal, serverkey->keytype))
     {
-	krb5_enctype_enable(context, serverkey->keytype);
+	krb5_enctype_enable(r->context, serverkey->keytype);
 	is_weak = 1;
     }
 
@@ -748,7 +744,7 @@ tgs_make_reply(astgs_request_t r,
     if (mspac && !et.flags.anonymous) {
 
 	/* The PAC should be the last change to the ticket. */
-	ret = _krb5_kdc_pac_sign_ticket(context, mspac, tgt_name, serverkey,
+	ret = _krb5_kdc_pac_sign_ticket(r->context, mspac, tgt_name, serverkey,
 					krbtgtkey, rodc_id, add_ticket_sig, &et);
 	if (ret)
 	    goto out;
@@ -764,15 +760,14 @@ tgs_make_reply(astgs_request_t r,
        CAST session key. Should the DES3 etype be added to the
        etype list, even if we don't want a session key with
        DES3? */
-    ret = _kdc_encode_reply(context, config, NULL, 0,
+    ret = _kdc_encode_reply(r->context, r->config, r, b->nonce,
 			    &rep, &et, &ek, serverkey->keytype,
 			    kvno,
-			    serverkey, 0, replykey, rk_is_subkey,
+			    serverkey, 0, r->rk_is_subkey,
 			    e_text, reply);
     if (is_weak)
-	krb5_enctype_disable(context, serverkey->keytype);
+	krb5_enctype_disable(r->context, serverkey->keytype);
 
-    r->reply_key.keytype = replykey->keytype;
     _log_astgs_req(r, serverkey->keytype);
 
 out:
@@ -888,6 +883,33 @@ need_referral(krb5_context context, krb5_kdc_configuration *config,
 }
 
 static krb5_error_code
+validate_fast_ad(astgs_request_t r, krb5_authdata *auth_data)
+{
+    krb5_error_code ret;
+    krb5_data data;
+
+    krb5_data_zero(&data);
+
+    ret = _krb5_get_ad(r->context, auth_data, NULL,
+		       KRB5_AUTHDATA_FX_FAST_USED, &data);
+    if (ret == 0) {
+	r->fast_asserted = 1;
+	krb5_data_free(&data);
+    }
+
+    ret = _krb5_get_ad(r->context, auth_data, NULL,
+		       KRB5_AUTHDATA_FX_FAST_ARMOR, &data);
+    if (ret == 0) {
+	kdc_log(r->context, r->config, 2,
+		"Invalid ticket usage: TGS-REQ contains AD-fx-fast-armor");
+	krb5_data_free(&data);
+	return KRB5KRB_AP_ERR_BAD_INTEGRITY;
+    }
+
+    return 0;
+}
+
+static krb5_error_code
 tgs_parse_request(astgs_request_t r,
 		  const PA_DATA *tgs_req,
 		  hdb_entry_ex **krbtgt,
@@ -898,10 +920,7 @@ tgs_parse_request(astgs_request_t r,
 		  const struct sockaddr *from_addr,
 		  time_t **csec,
 		  int **cusec,
-		  AuthorizationData **auth_data,
-		  krb5_keyblock **replykey,
-		  Key **header_key,
-		  int *rk_is_subkey)
+		  AuthorizationData **auth_data)
 {
     krb5_context context = r->context;
     krb5_kdc_configuration *config = r->config;
@@ -925,7 +944,6 @@ tgs_parse_request(astgs_request_t r,
     *auth_data = NULL;
     *csec  = NULL;
     *cusec = NULL;
-    *replykey = NULL;
 
     memset(&ap_req, 0, sizeof(ap_req));
     ret = krb5_decode_ap_req(context, &tgs_req->padata_value, &ap_req);
@@ -1070,7 +1088,7 @@ next_kvno:
 	goto out;
     }
 
-    *header_key = tkey;
+    r->ticket_key = tkey;
 
     {
 	krb5_authenticator auth;
@@ -1091,7 +1109,11 @@ next_kvno:
 		goto out;
 	    }
 	    **cusec  = auth->cusec;
+
+	    ret = validate_fast_ad(r, auth->authorization_data);
 	    krb5_free_authenticator(context, &auth);
+	    if (ret)
+		goto out;
 	}
     }
 
@@ -1103,7 +1125,7 @@ next_kvno:
     }
 
     usage = KRB5_KU_TGS_REQ_AUTH_DAT_SUBKEY;
-    *rk_is_subkey = 1;
+    r->rk_is_subkey = 1;
 
     ret = krb5_auth_con_getremotesubkey(context, ac, &subkey);
     if(ret){
@@ -1115,7 +1137,7 @@ next_kvno:
     }
     if(subkey == NULL){
 	usage = KRB5_KU_TGS_REQ_AUTH_DAT_SESSION;
-	*rk_is_subkey = 0;
+	r->rk_is_subkey = 0;
 
 	ret = krb5_auth_con_getkey(context, ac, &subkey);
 	if(ret) {
@@ -1134,12 +1156,16 @@ next_kvno:
 	goto out;
     }
 
-    *replykey = subkey;
+    krb5_free_keyblock_contents(r->context,  &r->reply_key);
+    ret = krb5_copy_keyblock_contents(r->context, subkey, &r->reply_key);
+    krb5_free_keyblock(r->context, subkey);
+    if (ret)
+	goto out;
 
     if (b->enc_authorization_data) {
 	krb5_data ad;
 
-	ret = krb5_crypto_init(context, subkey, 0, &crypto);
+	ret = krb5_crypto_init(context, &r->reply_key, 0, &crypto);
 	if (ret) {
 	    const char *msg = krb5_get_error_message(context, ret);
 	    krb5_auth_con_free(context, ac);
@@ -1175,7 +1201,20 @@ next_kvno:
 	    ret = KRB5KRB_AP_ERR_BAD_INTEGRITY; /* ? */
 	    goto out;
 	}
+
+	ret = validate_fast_ad(r, *auth_data);
+	if (ret)
+	    goto out;
     }
+
+    
+    /*
+     * Check for FAST request
+     */
+
+    ret = _kdc_fast_unwrap_request(r, *ticket, ac);
+    if (ret)
+	goto out;
 
     krb5_auth_con_free(context, ac);
 
@@ -1316,9 +1355,6 @@ static krb5_error_code
 tgs_build_reply(astgs_request_t priv,
 		hdb_entry_ex *krbtgt,
 		krb5_enctype krbtgt_etype,
-		Key *tkey_check,
-		const krb5_keyblock *replykey,
-		int rk_is_subkey,
 		krb5_ticket *ticket,
 		const char **e_text,
 		AuthorizationData **auth_data,
@@ -1781,7 +1817,7 @@ server_lookup:
     priv->client = client;
 
     ret = check_PAC(context, config, cp, NULL, client, server, krbtgt, krbtgt,
-		    &tkey_check->key, &tkey_check->key, tgt, &kdc_issued, &mspac);
+		    &priv->ticket_key->key, &priv->ticket_key->key, tgt, &kdc_issued, &mspac);
     if (ret) {
 	const char *msg = krb5_get_error_message(context, ret);
         _kdc_audit_addreason((kdc_request_t)priv, "PAC check failed");
@@ -2101,7 +2137,7 @@ server_lookup:
 	 * a S4U_DELEGATION_INFO blob to the PAC.
 	 */
 	ret = check_PAC(context, config, tp, dp, adclient, server, krbtgt, client,
-			&clientkey->key, &tkey_check->key, &adtkt, &ad_kdc_issued, &mspac);
+			&clientkey->key, &priv->ticket_key->key, &adtkt, &ad_kdc_issued, &mspac);
 	if (adclient)
 	    _kdc_free_ent(context, adclient);
 	if (ret) {
@@ -2230,8 +2266,6 @@ server_lookup:
     ret = tgs_make_reply(priv,
 			 tp,
 			 tgt,
-			 replykey,
-			 rk_is_subkey,
 			 ekey,
 			 &tkey_sign->key,
 			 &sessionkey,
@@ -2297,16 +2331,13 @@ _kdc_tgs_rep(astgs_request_t r)
     AuthorizationData *auth_data = NULL;
     krb5_error_code ret;
     int i = 0;
-    const PA_DATA *tgs_req;
-    Key *header_key = NULL;
+    const PA_DATA *tgs_req, *pa;
 
     hdb_entry_ex *krbtgt = NULL;
     krb5_ticket *ticket = NULL;
     const char *e_text = NULL;
     krb5_enctype krbtgt_etype = ETYPE_NULL;
 
-    krb5_keyblock *replykey = NULL;
-    int rk_is_subkey = 0;
     time_t *csec = NULL;
     int *cusec = NULL;
 
@@ -2317,8 +2348,16 @@ _kdc_tgs_rep(astgs_request_t r)
 	goto out;
     }
 
-    tgs_req = _kdc_find_padata(req, &i, KRB5_PADATA_TGS_REQ);
+    i = 0;
+    pa = _kdc_find_padata(&r->req, &i, KRB5_PADATA_FX_FAST_ARMOR);
+    if (pa) {
+	kdc_log(r->context, r->config, 10, "Found TGS-REQ FAST armor inside TGS-REQ pa-data");
+	ret = KRB5KRB_ERR_GENERIC;
+	goto out;
+    }
 
+    i = 0;
+    tgs_req = _kdc_find_padata(req, &i, KRB5_PADATA_TGS_REQ);
     if(tgs_req == NULL){
 	ret = KRB5KDC_ERR_PADATA_TYPE_NOSUPP;
 
@@ -2333,10 +2372,7 @@ _kdc_tgs_rep(astgs_request_t r)
 			    &e_text,
 			    from, from_addr,
 			    &csec, &cusec,
-			    &auth_data,
-			    &replykey,
-			    &header_key,
-			    &rk_is_subkey);
+			    &auth_data);
     if (ret == HDB_ERR_NOT_FOUND_HERE) {
 	/* kdc_log() is called in tgs_parse_request() */
 	goto out;
@@ -2347,19 +2383,13 @@ _kdc_tgs_rep(astgs_request_t r)
 	goto out;
     }
 
-    {
-	const PA_DATA *pa = _kdc_find_padata(req, &i, KRB5_PADATA_FX_FAST);
-	if (pa)
-	    kdc_log(context, config, 5, "Got TGS FAST request"); 
-    }
-
+    ret = _kdc_fast_strengthen_reply_key(r);
+    if (ret)
+	goto out;
 
     ret = tgs_build_reply(r,
 			  krbtgt,
 			  krbtgt_etype,
-			  header_key,
-			  replykey,
-			  rk_is_subkey,
 			  ticket,
 			  &e_text,
 			  &auth_data,
@@ -2378,21 +2408,15 @@ _kdc_tgs_rep(astgs_request_t r)
     }
 
 out:
-    if (replykey)
-	krb5_free_keyblock(context, replykey);
-
     if(ret && ret != HDB_ERR_NOT_FOUND_HERE && data->data == NULL){
-	/* XXX add fast wrapping on the error */
 	METHOD_DATA error_method = { 0, NULL };
-	
 
 	kdc_log(context, config, 5, "tgs-req: sending error: %d to client", ret);
 	ret = _kdc_fast_mk_error(r,
 				 &error_method,
-				 NULL,
-				 NULL,
-				 ret, NULL,
-				 NULL,
+				 r->armor_crypto,
+				 &req->req_body,
+				 ret, r->e_text,
 				 NULL, NULL,
 				 csec, cusec,
 				 data);
@@ -2400,10 +2424,16 @@ out:
     }
     free(csec);
     free(cusec);
+
+    krb5_free_keyblock_contents(r->context, &r->reply_key);
+    krb5_free_keyblock_contents(r->context, &r->strengthen_key);
+
     if (ticket)
 	krb5_free_ticket(context, ticket);
     if(krbtgt)
 	_kdc_free_ent(context, krbtgt);
+
+    _kdc_free_fast_state(&r->fast);
 
     if (auth_data) {
 	free_AuthorizationData(auth_data);

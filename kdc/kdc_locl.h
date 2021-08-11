@@ -93,6 +93,13 @@ struct astgs_request_desc {
     krb5_timestamp pa_endtime;
     krb5_timestamp pa_max_life;
 
+    krb5_keyblock strengthen_key;
+    const Key *ticket_key;
+
+    /* only valid for tgs-req */
+    unsigned int rk_is_subkey : 1;
+    unsigned int fast_asserted : 1;
+
     krb5_crypto armor_crypto;
 
     KDCFastState fast;

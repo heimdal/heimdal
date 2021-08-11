@@ -862,6 +862,8 @@ EXPORTS
 	krb5_init_creds_set_sitename
 	krb5_init_creds_step
 	krb5_init_creds_store
+	krb5_init_creds_store_config
+	krb5_init_creds_warn_user
 	krb5_process_last_request
 
 	; testing

@@ -582,10 +582,10 @@ GCOPTS=-I$(SRCDIR) -I$(OBJ) -Igssapi -DBUILD_GSSAPI_LIB
 	$(C2OBJ_NP) -Fo$(OBJ)\sanon\ -Fd$(OBJ)\sanon\ -I$(OBJ)\sanon -I$(OBJ) -I$(OBJ)\krb5 -I$(OBJ)\gssapi -Ikrb5 -Imech -Igssapi $(GCOPTS) -DASN1_LIB
 
 {$(OBJ)\preauth}.c{$(OBJ)\preauth}.obj::
-	$(C2OBJ_NP) -Fo$(OBJ)\preauth\ -Fd$(OBJ)\pa\ -I$(OBJ)\pa -I$(OBJ) -I$(OBJ)\krb5 -I$(OBJ)\gssapi -Ikrb5 -Imech -Igssapi $(GCOPTS)
+	$(C2OBJ_NP) -Fo$(OBJ)\preauth\ -Fd$(OBJ)\preauth\ -I$(OBJ)\preauth -I$(OBJ) -I$(OBJ)\krb5 -I$(OBJ)\gssapi -Ikrb5 -Imech -Igssapi $(GCOPTS)
 
 {preauth}.c{$(OBJ)\preauth}.obj::
-	$(C2OBJ_NP) -Fo$(OBJ)\preauth\ -Fd$(OBJ)\pa\ -I$(OBJ)\pa -I$(OBJ) -I$(OBJ)\krb5 -I$(OBJ)\gssapi -Ikrb5 -Imech -Igssapi $(GCOPTS) -DASN1_LIB
+	$(C2OBJ_NP) -Fo$(OBJ)\preauth\ -Fd$(OBJ)\preauth\ -I$(OBJ)\preauth -I$(OBJ) -I$(OBJ)\krb5 -I$(OBJ)\gssapi -Ikrb5 -Imech -Igssapi $(GCOPTS) -DASN1_LIB
 
 {$(OBJ)\gssapi}.c{$(OBJ)\gssapi}.obj::
 	$(C2OBJ_NP) -Fo$(OBJ)\gssapi\ -Fd$(OBJ)\gssapi\ -I$(OBJ)\gssapi $(GCOPTS)

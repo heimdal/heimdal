@@ -1475,7 +1475,7 @@ generate_template(const Symbol *s)
 
     fprintf(f,
 	    "\n"
-	    "int\n"
+	    "int ASN1CALL\n"
 	    "decode_%s(const unsigned char *p, size_t len, %s *data, size_t *size)\n"
 	    "{\n"
 	    "    return _asn1_decode_top(asn1_%s, 0|%s, p, len, data, size);\n"
@@ -1488,7 +1488,7 @@ generate_template(const Symbol *s)
 
     fprintf(f,
 	    "\n"
-	    "int\n"
+	    "int ASN1CALL\n"
 	    "encode_%s(unsigned char *p, size_t len, const %s *data, size_t *size)\n"
 	    "{\n"
 	    "    return _asn1_encode%s(asn1_%s, p, len, data, size);\n"
@@ -1501,7 +1501,7 @@ generate_template(const Symbol *s)
 
     fprintf(f,
 	    "\n"
-	    "size_t\n"
+	    "size_t ASN1CALL\n"
 	    "length_%s(const %s *data)\n"
 	    "{\n"
 	    "    return _asn1_length%s(asn1_%s, data);\n"
@@ -1515,7 +1515,7 @@ generate_template(const Symbol *s)
 
     fprintf(f,
 	    "\n"
-	    "void\n"
+	    "void ASN1CALL\n"
 	    "free_%s(%s *data)\n"
 	    "{\n"
 	    "    _asn1_free_top(asn1_%s, data);\n"
@@ -1527,7 +1527,7 @@ generate_template(const Symbol *s)
 
     fprintf(f,
 	    "\n"
-	    "int\n"
+	    "int ASN1CALL\n"
 	    "copy_%s(const %s *from, %s *to)\n"
 	    "{\n"
 	    "    return _asn1_copy_top(asn1_%s, from, to);\n"
@@ -1540,7 +1540,7 @@ generate_template(const Symbol *s)
 
     fprintf(f,
 	    "\n"
-	    "char *\n"
+	    "char * ASN1CALL\n"
 	    "print_%s(const %s *data, int flags)\n"
 	    "{\n"
 	    "    return _asn1_print_top(asn1_%s, flags, data);\n"

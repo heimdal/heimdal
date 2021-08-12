@@ -76,7 +76,7 @@
 
 #include <gssapi_mech.h>
 #include <gssapi/gssapi_preauth.h>
-#include "../lib/gssapi/preauth/pa-private.h"
+#include <preauth/pa-private.h>
 
 #if defined(HAVE_SYS_IOCTL_H) && SunOS != 40
 #include <sys/ioctl.h>

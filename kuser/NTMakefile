@@ -31,7 +31,7 @@
 
 RELDIR=kuser
 
-intcflags=-I$(OBJ)
+intcflags=-I$(OBJ) -I$(SRC)\lib\gssapi -I$(OBJDIR)\lib\gssapi
 
 !include ../windows/NTMakefile.w32 
 
@@ -55,6 +55,7 @@ NOINSTPROGRAMS=\
 
 
 BINLIBS=\
+	$(LIBGSSAPI)	\
 	$(LIBHEIMDAL)	\
 	$(LIBHEIMNTLM)	\
 	$(LIBHX509)	\

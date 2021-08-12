@@ -7,6 +7,7 @@ afs_lib = $(LIB_kafs)
 endif
 
 AM_CPPFLAGS += -I$(srcdir)/../lib/krb5 \
+	-I$(srcdir)/../lib/gssapi \
 	$(INCLUDE_libintl) \
 	-DHEIMDAL_LOCALEDIR='"$(localedir)"'
 

@@ -320,6 +320,7 @@ INCFILES=				\
     $(INCDIR)\gssapi\gssapi_oid.h	\
     $(INCDIR)\gssapi\gssapi_ntlm.h	\
     $(INCDIR)\gssapi\gssapi_spnego.h	\
+    $(INCDIR)\gssapi\gssapi_preauth.h	\
     $(INCDIR)\gssapi\gkrb5_err.h	\
     $(OBJ)\ntlm\ntlm-private.h		\
     $(OBJ)\spnego\spnego-private.h	\

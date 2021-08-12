@@ -287,7 +287,7 @@ struct pa_gss_plugin_ctx {
     krb5_principal initiator_princ;
 };
 
-static krb5_error_code
+static krb5_error_code KRB5_LIB_CALL
 pa_gss_authorize_cb(krb5_context context,
                     const void *plug,
                     void *plugctx,

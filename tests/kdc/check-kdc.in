@@ -874,6 +874,22 @@ ${kgetcred} \
 	bar@${R} 2>/dev/null && \
 	{ ec=1 ; eval "${testfailed}"; }
 
+echo "test constrained delegation with foreign client (evidence from TGS)"; > messages.log
+# We can't test foreign client with evidence from S4U2Self, since Heimdal doesn't support it yet
+rm -f ocache.krb5
+${kinit} --cache=${icache} --forwardable --password-file=${objdir}/foopassword foo@${R2} || \
+        { ec=1 ; eval "${testfailed}"; }
+${kgetcred} --cache=${icache} --out-cache=${ocache} ${ps} || \
+	{ ec=1 ; eval "${testfailed}"; }
+${kgetcred} \
+	--out-cache=${o2cache} \
+	--delegation-credential-cache=${ocache} \
+	${server}@${R} || \
+	{ ec=1 ; eval "${testfailed}"; }
+echo "  try using the credential"
+${test_ap_req} ${server}@${R} ${keytab} ${o2cache} || \
+	{ ec=1 ; eval "${testfailed}"; }
+
 echo "test constrained delegation impersonation (non forward)"; > messages.log
 rm -f ocache.krb5
 ${kimpersonate} -s ${ps} -c bar@${R} -t ${aesenctype} || \

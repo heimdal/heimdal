@@ -121,6 +121,7 @@ dist_libkrb5_la_SOURCES =			\
 	appdefault.c				\
 	asn1_glue.c				\
 	auth_context.c				\
+	authdata.c				\
 	build_ap_req.c				\
 	build_auth.c				\
 	cache.c					\

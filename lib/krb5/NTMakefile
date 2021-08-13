@@ -42,6 +42,7 @@ libkrb5_OBJS =			\
 	$(OBJ)\appdefault.obj		    \
 	$(OBJ)\asn1_glue.obj		    \
 	$(OBJ)\auth_context.obj		    \
+	$(OBJ)\authdata.obj		    \
 	$(OBJ)\build_ap_req.obj		    \
 	$(OBJ)\build_auth.obj		    \
 	$(OBJ)\cache.obj		    \
@@ -204,6 +205,7 @@ dist_libkrb5_la_SOURCES =			\
 	appdefault.c				\
 	asn1_glue.c				\
 	auth_context.c				\
+	authdata.c				\
 	build_ap_req.c				\
 	build_auth.c				\
 	cache.c					\

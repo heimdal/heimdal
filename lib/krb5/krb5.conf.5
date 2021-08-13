@@ -663,6 +663,12 @@ If
 then PKINIT client will tell KDCs which trust anchors it trusts.
 Defaults to
 .Va true .
+.It Li disable_pac = BOOL
+If
+.Va true
+then the KDC will not sign tickets with PAC, which disables S4U2Proxy support.
+Defaults to
+.Va false .
 .El
 .It Li }
 .El

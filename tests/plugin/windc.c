@@ -1,5 +1,5 @@
 #include <string.h>
-#include <krb5.h>
+#include <krb5_locl.h>
 #include <hdb.h>
 #include <hx509.h>
 #include <kdc.h>
@@ -52,16 +52,36 @@ pac_verify(void *ctx, krb5_context context,
 {
     krb5_error_code ret;
     krb5_data data;
+    krb5_cksumtype cstype;
+    uint16_t rodc_id;
+    krb5_enctype etype;
+    Key *key;
 
     krb5_warnx(context, "pac_verify");
 
     ret = krb5_pac_get_buffer(context, *pac, 1, &data);
     if (ret)
 	return ret;
-
     krb5_data_free(&data);
 
-    return 0;
+    ret = _krb5_pac_get_kdc_checksum_info(context, *pac, &cstype, &rodc_id);
+    if (ret)
+	return ret;
+
+    if (rodc_id == 0 || rodc_id != krbtgt->entry.kvno >> 16) {
+	krb5_warnx(context, "Wrong RODCIdentifier");
+	return EINVAL;
+    }
+
+    ret = krb5_cksumtype_to_enctype(context, cstype, &etype);
+    if (ret)
+	return ret;
+
+    ret = hdb_enctype2key(context, &krbtgt->entry, NULL, etype, &key);
+    if (ret)
+	return ret;
+
+    return krb5_pac_verify(context, *pac, 0, NULL, NULL, &key->key);
 }
 
 static krb5_error_code

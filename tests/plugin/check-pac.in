@@ -47,6 +47,7 @@ testfailed="echo test failed; cat messages.log; exit 1"
 ../db/have-db || exit 77
 
 R=TEST.H5L.SE
+R2=TEST2.H5L.SE
 
 port=@port@
 
@@ -57,6 +58,7 @@ server=host/datan.test.h5l.se
 cache="FILE:${objdir}/cache.krb5"
 keytabfile=${objdir}/server.keytab
 keytab="FILE:${keytabfile}"
+rodc_kvno="3058761729"
 
 kinit="${TESTS_ENVIRONMENT} ../../kuser/kinit -c $cache ${afs_no_afslog}"
 klist="${TESTS_ENVIRONMENT} ../../kuser/klist -c $cache"
@@ -83,7 +85,18 @@ ${kadmin} \
 
 ${kadmin} add -p foo --use-defaults foo@${R} || exit 1
 ${kadmin} add -p bar --use-defaults ${server}@${R} || exit 1
+${kadmin} modify --kvno=$rodc_kvno "krbtgt/${R}@${R}" || exit 1
 ${kadmin} ext -k ${keytab} ${server}@${R} || exit 1
+
+${kadmin} \
+    init \
+    --realm-max-ticket-life=1day \
+    --realm-max-renewable-life=1month \
+    ${R2} || exit 1
+
+${kadmin} add -p foo --use-defaults foo@${R2} || exit 1
+${kadmin} add -p bar --use-defaults bar@${R2} || exit 1
+${kadmin} ext -k ${keytab} bar@${R2} || exit 1
 
 echo "Doing database check"
 ${kadmin} check ${R} || exit 1
@@ -134,13 +147,23 @@ ${kgetcred} ${server}@${R} || { ec=1 ; eval "${testfailed}"; }
 echo "Verify PAC on server (no pac)"; > messages.log
 ${test_apreq} --verify-pac ${server}@${R} ${keytab} ${cache} 2> /dev/null && \
 	{ ec=1 ; eval "${testfailed}"; }
-
-# now that verify-pac is the default, also verify that --no-verify-pac works
 ${test_apreq} ${server}@${R} ${keytab} ${cache} 2> /dev/null && \
 	{ ec=1 ; eval "${testfailed}"; }
+echo "Check the --no-verify-pac option"; > messages.log
 ${test_apreq} --no-verify-pac ${server}@${R} ${keytab} ${cache} 2> /dev/null || \
 	{ ec=1 ; eval "${testfailed}"; }
 ${kdestroy}
+
+echo "Getting client initial tickets (no pac - realm config)"; > messages.log
+${kinit} --no-request-pac --password-file=${objdir}/foopassword foo@${R2} || \
+	{ ec=1 ; eval "${testfailed}"; }
+echo "Getting tickets" ; > messages.log
+${kgetcred} bar@${R2} || { ec=1 ; eval "${testfailed}"; }
+echo "Verify PAC on server (no pac - realm config)"; > messages.log
+${test_apreq} --verify-pac bar@${R2} ${keytab} ${cache} 2> /dev/null && \
+	{ ec=1 ; eval "${testfailed}"; }
+${test_apreq} bar@${R2} ${keytab} ${cache} 2> /dev/null && \
+	{ ec=1 ; eval "${testfailed}"; }
 
 
 echo "killing kdc (${kdcpid})"

@@ -2,6 +2,9 @@
 
 include $(top_srcdir)/Makefile.am.common
 
+# for krb5_locl.h
+AM_CPPFLAGS += -I$(srcdir)/../../lib/krb5
+
 noinst_DATA = krb5.conf
 
 SCRIPT_TESTS = check-pac

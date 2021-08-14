@@ -138,13 +138,17 @@ _krb5_gss_pa_unparse_name(krb5_context context,
     name_buf.length = strlen(name);
     name_buf.value = name;
 
-    if (principal->name.name_type == KRB5_NT_PRINCIPAL ||
-        principal->name.name_type == KRB5_NT_ENTERPRISE_PRINCIPAL)
+    if (principal->name.name_type == KRB5_NT_ENTERPRISE_PRINCIPAL)
         name_type = GSS_C_NT_USER_NAME;
     else
         name_type = GSS_KRB5_NT_PRINCIPAL_NAME;
 
     major = gss_import_name(&minor, &name_buf, name_type, namep);
+    if (major == GSS_S_BAD_NAMETYPE &&
+        gss_oid_equal(name_type, GSS_KRB5_NT_PRINCIPAL_NAME)) {
+        major = gss_import_name(&minor, &name_buf,
+                                GSS_C_NT_USER_NAME, namep);
+    }
 
     if (name != principal->name.name_string.val[0])
         krb5_xfree(name);

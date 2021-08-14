@@ -88,6 +88,7 @@ pa_gss_step(krb5_context context,
             krb5_data *out)
 {
     krb5_error_code ret;
+    krb5_principal tgs_name = NULL;
 
     OM_uint32 major, minor;
     gss_cred_id_t cred;
@@ -115,7 +116,12 @@ pa_gss_step(krb5_context context,
 
     ctx = (gss_ctx_id_t)_krb5_init_creds_get_gss_context(context, gssic);
 
-    ret = _krb5_gss_pa_unparse_name(context, kcred->server, &target_name);
+    ret = krb5_make_principal(context, &tgs_name, kcred->server->realm,
+                              KRB5_TGS_NAME, kcred->server->realm, NULL);
+    if (ret)
+        goto out;
+
+    ret = _krb5_gss_pa_unparse_name(context, tgs_name, &target_name);
     if (ret)
         goto out;
 
@@ -154,6 +160,7 @@ pa_gss_step(krb5_context context,
 out:
     gss_release_name(&minor, &target_name);
     gss_release_buffer(&minor, &output_token);
+    krb5_free_principal(context, tgs_name);
 
     return ret;
 }
@@ -162,6 +169,7 @@ static krb5_error_code KRB5_LIB_CALL
 pa_gss_finish(krb5_context context,
               krb5_gss_init_ctx gssic,
               const krb5_creds *kcred,
+              gss_ctx_id_t ctx,
               krb5int32 nonce,
               krb5_enctype enctype,
               krb5_principal *client_p,

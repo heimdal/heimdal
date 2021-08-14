@@ -140,6 +140,7 @@ pa_gss_acquire_acceptor_cred(astgs_request_t r,
                              gss_cred_id_t *cred)
 {
     krb5_error_code ret;
+    krb5_principal tgs_name;
 
     OM_uint32 major, minor;
     gss_name_t target_name = GSS_C_NO_NAME;
@@ -148,7 +149,13 @@ pa_gss_acquire_acceptor_cred(astgs_request_t r,
 
     *cred = GSS_C_NO_CREDENTIAL;
 
-    ret = _krb5_gss_pa_unparse_name(r->context, r->server_princ, &target_name);
+    ret = krb5_make_principal(r->context, &tgs_name, r->req.req_body.realm,
+                              KRB5_TGS_NAME, r->req.req_body.realm, NULL);
+    if (ret)
+        return ret;
+
+    ret = _krb5_gss_pa_unparse_name(r->context, tgs_name, &target_name);
+    krb5_free_principal(r->context, tgs_name);
     if (ret)
         return ret;
 

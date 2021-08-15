@@ -579,7 +579,7 @@ _kdc_gss_mk_pa_reply(astgs_request_t r,
         ret = _kdc_find_etype(r, kfe, req->req_body.etype.val,
                               req->req_body.etype.len, &enctype, NULL, NULL);
         if (ret)
-            goto out;
+            return ret;
 
         ret = _krb5_gss_pa_derive_key(r->context, gcp->context_handle,
                                       req->req_body.nonce,
@@ -587,7 +587,7 @@ _kdc_gss_mk_pa_reply(astgs_request_t r,
         if (ret) {
             kdc_log(r->context, r->config, 10,
                     "Failed to derive GSS reply key: %d", ret);
-            goto out;
+            return ret;
         }
 
         krb5_free_keyblock_contents(r->context, &r->reply_key);
@@ -596,27 +596,26 @@ _kdc_gss_mk_pa_reply(astgs_request_t r,
     } else if (gcp->major == GSS_S_CONTINUE_NEEDED) {
         ret = pa_gss_set_context_state(r, gcp);
         if (ret)
-            goto out;
+            return ret;
     }
 
     /* only return padata in error case if we have an error token */
     if (!GSS_ERROR(gcp->major) || gcp->output_token.length) {
-	ret = krb5_padata_add(r->context, &r->outpadata, KRB5_PADATA_GSS,
-			      gcp->output_token.value, gcp->output_token.length);
-	if (ret)
-	    goto out;
+        ret = krb5_padata_add(r->context, &r->outpadata, KRB5_PADATA_GSS,
+                              gcp->output_token.value, gcp->output_token.length);
+        if (ret)
+            return ret;
 
-	/* token is now owned by outpadata */
-	gcp->output_token.length = 0;
-	gcp->output_token.value = NULL;
+        /* token is now owned by outpadata */
+        gcp->output_token.length = 0;
+        gcp->output_token.value = NULL;
     }
 
     if (gcp->major == GSS_S_CONTINUE_NEEDED)
         ret = KRB5_KDC_ERR_MORE_PREAUTH_DATA_REQUIRED;
     else
-	ret = _krb5_gss_map_error(gcp->major, gcp->minor);
+        ret = _krb5_gss_map_error(gcp->major, gcp->minor);
 
-out:
     return ret;
 }
 

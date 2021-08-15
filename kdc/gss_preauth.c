@@ -41,8 +41,7 @@
 #include "gss_preauth_authorizer_plugin.h"
 
 struct gss_client_params {
-    OM_uint32 major_status;
-    OM_uint32 minor_status;
+    OM_uint32 major, minor;
     gss_ctx_id_t context_handle;
     gss_name_t initiator_name;
     gss_OID mech_type;
@@ -217,7 +216,7 @@ _kdc_gss_rd_padata(astgs_request_t r,
         goto out;
     }
 
-    gcp->major_status = GSS_S_NO_CONTEXT;
+    gcp->major = GSS_S_NO_CONTEXT;
 
     ret = pa_gss_get_context_state(r, gcp);
     if (ret)
@@ -247,10 +246,10 @@ _kdc_gss_rd_padata(astgs_request_t r,
                                    &gcp->lifetime,
                                    NULL); /* delegated_cred_handle */
 
-    gcp->major_status = major;
-    gcp->minor_status = minor;
+    gcp->major = major;
+    gcp->minor = minor;
 
-    if (GSS_ERROR(major)) {
+    if (GSS_ERROR(gcp->major)) {
         pa_gss_display_status(r, major, minor, gcp,
                               "Failed to accept GSS security context");
         ret = _krb5_gss_map_error(major, minor);
@@ -264,7 +263,7 @@ _kdc_gss_rd_padata(astgs_request_t r,
         goto out;
     }
 
-    *open = (gcp->major_status == GSS_S_COMPLETE);
+    *open = (gcp->major == GSS_S_COMPLETE);
 
 out:
     gss_release_cred(&minor, &cred);
@@ -575,7 +574,7 @@ _kdc_gss_mk_pa_reply(astgs_request_t r,
     krb5_error_code ret;
     const KDC_REQ *req = &r->req;
 
-    if (gcp->major_status == GSS_S_COMPLETE) {
+    if (gcp->major == GSS_S_COMPLETE) {
         krb5_enctype enctype;
         uint32_t kfe = 0;
         krb5_keyblock *reply_key = NULL;
@@ -600,28 +599,28 @@ _kdc_gss_mk_pa_reply(astgs_request_t r,
         krb5_free_keyblock_contents(r->context, &r->reply_key);
         r->reply_key = *reply_key;
         free(reply_key);
-    } else if (gcp->major_status == GSS_S_CONTINUE_NEEDED) {
+    } else if (gcp->major == GSS_S_CONTINUE_NEEDED) {
         ret = pa_gss_set_context_state(r, gcp);
         if (ret)
             goto out;
     }
 
     /* only return padata in error case if we have an error token */
-    if (!GSS_ERROR(gcp->major_status) || gcp->output_token.length) {
+    if (!GSS_ERROR(gcp->major) || gcp->output_token.length) {
 	ret = krb5_padata_add(r->context, &r->outpadata, KRB5_PADATA_GSS,
 			      gcp->output_token.value, gcp->output_token.length);
 	if (ret)
 	    goto out;
+
+	/* token is now owned by outpadata */
+	gcp->output_token.length = 0;
+	gcp->output_token.value = NULL;
     }
 
-    /* token is now owned by outpadata */
-    gcp->output_token.length = 0;
-    gcp->output_token.value = NULL;
-
-    if (gcp->major_status == GSS_S_CONTINUE_NEEDED)
+    if (gcp->major == GSS_S_CONTINUE_NEEDED)
         ret = KRB5_KDC_ERR_MORE_PREAUTH_DATA_REQUIRED;
     else
-	ret = _krb5_gss_map_error(gcp->major_status, gcp->minor_status);
+	ret = _krb5_gss_map_error(gcp->major, gcp->minor);
 
 out:
     return ret;

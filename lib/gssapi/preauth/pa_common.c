@@ -148,7 +148,8 @@ _krb5_gss_pa_unparse_name(krb5_context context,
 	} else if (principal->name.name_type == KRB5_NT_PRINCIPAL) {
 	    flags = KRB5_PRINCIPAL_UNPARSE_SHORT;
 	    name_type = GSS_C_NT_USER_NAME;
-	} else if (principal->name.name_type == KRB5_NT_SRV_INST &&
+	} else if ((principal->name.name_type == KRB5_NT_SRV_HST ||
+		    principal->name.name_type == KRB5_NT_SRV_INST) &&
 	    principal->name.name_string.len == 2) {
 	    flags = KRB5_PRINCIPAL_UNPARSE_NO_REALM;
 	    name_type = GSS_C_NT_HOSTBASED_SERVICE;

@@ -514,14 +514,11 @@ pa_gss_validate(astgs_request_t r, const PA_DATA *pa)
     gss_client_params *gcp = NULL;
     char *client_name = NULL;
     krb5_error_code ret;
-    int open;
+    int open = 0;
 
     ret = _kdc_gss_rd_padata(r, pa, &gcp, &open);
-    if (ret) {
-	_kdc_r_log(r, 4, "Failed to decode GSS PA-DATA -- %s",
-		   r->cname);
-	goto out;
-    }
+    if (ret && gcp == NULL)
+	return ret;
 
     if (open) {
 	ret = _kdc_gss_check_client(r, gcp, &client_name);

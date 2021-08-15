@@ -120,7 +120,6 @@ _krb5_gss_pa_unparse_name(krb5_context context,
 
     OM_uint32 major, minor;
     gss_buffer_desc name_buf;
-    gss_OID name_type;
 
     *namep = GSS_C_NO_NAME;
 
@@ -138,16 +137,42 @@ _krb5_gss_pa_unparse_name(krb5_context context,
     name_buf.length = strlen(name);
     name_buf.value = name;
 
-    if (principal->name.name_type == KRB5_NT_ENTERPRISE_PRINCIPAL)
-        name_type = GSS_C_NT_USER_NAME;
-    else
-        name_type = GSS_KRB5_NT_PRINCIPAL_NAME;
+    major = gss_import_name(&minor, &name_buf,
+			    GSS_KRB5_NT_PRINCIPAL_NAME, namep);
+    if (major == GSS_S_BAD_NAMETYPE) {
+	gss_OID name_type = GSS_C_NO_OID;
+	int flags = 0;
 
-    major = gss_import_name(&minor, &name_buf, name_type, namep);
-    if (major == GSS_S_BAD_NAMETYPE &&
-        gss_oid_equal(name_type, GSS_KRB5_NT_PRINCIPAL_NAME)) {
-        major = gss_import_name(&minor, &name_buf,
-                                GSS_C_NT_USER_NAME, namep);
+	if (principal->name.name_type == KRB5_NT_ENTERPRISE_PRINCIPAL) {
+	    name_type = GSS_C_NT_USER_NAME;
+	} else if (principal->name.name_type == KRB5_NT_PRINCIPAL) {
+	    flags = KRB5_PRINCIPAL_UNPARSE_SHORT;
+	    name_type = GSS_C_NT_USER_NAME;
+	} else if (principal->name.name_type == KRB5_NT_SRV_INST &&
+	    principal->name.name_string.len == 2) {
+	    flags = KRB5_PRINCIPAL_UNPARSE_NO_REALM;
+	    name_type = GSS_C_NT_HOSTBASED_SERVICE;
+	}
+
+	if (flags) {
+	    krb5_xfree(name);
+
+	    ret = krb5_unparse_name_flags(context, principal, flags, &name);
+	    if (ret)
+		return ret;
+
+	    if (gss_oid_equal(name_type, GSS_C_NT_HOSTBASED_SERVICE)) {
+		char *inst = strchr(name, '/');
+		if (inst)
+		    *inst = '@';
+	    }
+
+	    name_buf.length = strlen(name);
+	    name_buf.value = name;
+	}
+
+	if (name_type)
+	    major = gss_import_name(&minor, &name_buf, name_type, namep);
     }
 
     if (name != principal->name.name_string.val[0])

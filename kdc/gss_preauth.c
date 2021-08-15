@@ -190,7 +190,7 @@ _kdc_gss_rd_padata(astgs_request_t r,
     krb5_error_code ret;
     size_t size;
 
-    OM_uint32 major, minor;
+    OM_uint32 minor;
     gss_client_params *gcp = NULL;
     gss_cred_id_t cred = GSS_C_NO_CREDENTIAL;
     gss_buffer_desc input_token = GSS_C_EMPTY_BUFFER;
@@ -216,6 +216,7 @@ _kdc_gss_rd_padata(astgs_request_t r,
         goto out;
     }
 
+    /* errors are fast fail until gss_accept_sec_context() is called */
     gcp->major = GSS_S_NO_CONTEXT;
 
     ret = pa_gss_get_context_state(r, gcp);
@@ -234,42 +235,35 @@ _kdc_gss_rd_padata(astgs_request_t r,
     heim_assert(ret || size == cb.application_data.length,
                 "internal asn1 encoder error");
 
-    major = gss_accept_sec_context(&minor,
-                                   &gcp->context_handle,
-                                   cred,
-                                   &input_token,
-                                   &cb,
-                                   &gcp->initiator_name,
-                                   &gcp->mech_type,
-                                   &gcp->output_token,
-                                   &gcp->flags,
-                                   &gcp->lifetime,
-                                   NULL); /* delegated_cred_handle */
+    gcp->major = gss_accept_sec_context(&gcp->minor,
+                                        &gcp->context_handle,
+                                        cred,
+                                        &input_token,
+                                        &cb,
+                                        &gcp->initiator_name,
+                                        &gcp->mech_type,
+                                        &gcp->output_token,
+                                        &gcp->flags,
+                                        &gcp->lifetime,
+                                        NULL); /* delegated_cred_handle */
 
-    gcp->major = major;
-    gcp->minor = minor;
+    ret = _krb5_gss_map_error(gcp->major, gcp->minor);
 
     if (GSS_ERROR(gcp->major)) {
-        pa_gss_display_status(r, major, minor, gcp,
+        pa_gss_display_status(r, gcp->major, gcp->minor, gcp,
                               "Failed to accept GSS security context");
-        ret = _krb5_gss_map_error(major, minor);
-        goto out;
-    }
-
-    if ((gcp->flags & GSS_C_ANON_FLAG) && !_kdc_is_anon_request(&r->req)) {
+    } else if ((gcp->flags & GSS_C_ANON_FLAG) && !_kdc_is_anon_request(&r->req)) {
         kdc_log(r->context, r->config, 2,
                 "Anonymous GSS pre-authentication request w/o anonymous flag");
         ret = KRB5KDC_ERR_BADOPTION;
-        goto out;
-    }
-
-    *open = (gcp->major == GSS_S_COMPLETE);
+    } else
+        *open = (gcp->major == GSS_S_COMPLETE);
 
 out:
     gss_release_cred(&minor, &cred);
     gss_release_buffer(&minor, &cb.application_data);
 
-    if (ret == 0)
+    if (gcp->major != GSS_S_NO_CONTEXT)
         *pgcp = gcp;
     else
         _kdc_gss_free_client_param(r, gcp);

@@ -34,6 +34,7 @@
 #include "mech_locl.h"
 
 #include <gssapi/gssapi_preauth.h>
+#include <heimntlm.h>
 
 #include <preauth/pa-private.h>
 
@@ -56,10 +57,19 @@ _krb5_gss_map_error(OM_uint32 major, OM_uint32 minor)
     case GSS_S_BAD_NAMETYPE:
         ret = KRB5_PRINC_NOMATCH;
         break;
+    case GSS_S_NO_CRED:
+	ret = KRB5_CC_NOTFOUND;
+	break;
     case GSS_S_BAD_MIC:
+    case GSS_S_DEFECTIVE_CREDENTIAL:
         ret = KRB5KRB_AP_ERR_BAD_INTEGRITY;
         break;
     case GSS_S_FAILURE:
+	if (minor == KRB5KRB_AP_ERR_BAD_INTEGRITY ||
+	    minor == HNTLM_ERR_AUTH) {
+	    ret = KRB5KRB_AP_ERR_BAD_INTEGRITY;
+	    break;
+	}
     default:
         ret = KRB5KDC_ERR_PREAUTH_FAILED;
         break;

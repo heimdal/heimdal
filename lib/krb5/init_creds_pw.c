@@ -1489,15 +1489,17 @@ gss_pa_data_to_key(krb5_context context,
     if (ret)
 	goto out;
 
-    if (krb5_principal_is_federated(context, creds->client)) {
-	/* replace the wellknown federated name with the initiator name */
+    if (krb5_principal_is_federated(context, ctx->cred.client)) {
+	/*
+	 * The well-known federated name will be replaced with the cname
+	 * in the AS-REP, but save the locally mapped initiator name in the
+	 * cred for logging.
+	 */
 	krb5_free_principal(context, creds->client);
 	creds->client = cname;
 	cname = NULL;
 
-	/* allow the KDC to canonicalize the name */
-	if (ctx->flags.canonicalize)
-	    ctx->ic_flags |= KRB5_INIT_CREDS_NO_C_CANON_CHECK;
+	ctx->ic_flags |= KRB5_INIT_CREDS_NO_C_CANON_CHECK;
     }
 
 out:

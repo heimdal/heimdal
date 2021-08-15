@@ -263,7 +263,7 @@ out:
     gss_release_cred(&minor, &cred);
     gss_release_buffer(&minor, &cb.application_data);
 
-    if (gcp->major != GSS_S_NO_CONTEXT)
+    if (gcp && gcp->major != GSS_S_NO_CONTEXT)
         *pgcp = gcp;
     else
         _kdc_gss_free_client_param(r, gcp);

@@ -620,6 +620,7 @@ EXPORTS
 	krb5_set_home_dir_access
 	krb5_set_ignore_addresses
 	krb5_set_kdc_sec_offset
+	krb5_set_log_dest
 	krb5_set_max_time_skew
 	krb5_set_password
 	krb5_set_password_using_ccache

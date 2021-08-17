@@ -169,7 +169,6 @@ static krb5_error_code KRB5_LIB_CALL
 pa_gss_finish(krb5_context context,
               krb5_gss_init_ctx gssic,
               const krb5_creds *kcred,
-              gss_ctx_id_t ctx,
               krb5int32 nonce,
               krb5_enctype enctype,
               krb5_principal *client_p,

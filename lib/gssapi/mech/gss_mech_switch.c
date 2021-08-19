@@ -451,7 +451,8 @@ _gss_load_mech(void)
 			free((char *)m->gm_mech.gm_name);
 			free(m);
 		}
-		dlclose(so);
+		if (so != NULL)
+			dlclose(so);
 		continue;
 	}
 	fclose(fp);

@@ -81,6 +81,7 @@ int pk_use_enckey	= 0;
 int pk_anon_fast_armor	= 0;
 char *gss_preauth_mech	= NULL;
 char *gss_preauth_name	= NULL;
+char *kdc_hostname	= NULL;
 static int canonicalize_flag = 0;
 static int enterprise_flag = 0;
 static int ok_as_delegate_flag = 0;
@@ -196,6 +197,9 @@ static struct getargs args[] = {
 
     { "gss-name",   0,	arg_string, &gss_preauth_name,
       NP_("use distinct GSS identity for pre-authentication", ""), NULL },
+
+    { "kdc-hostname",	0,  arg_string, &kdc_hostname,
+      NP_("KDC host name", ""), "hostname" },
 
 #ifndef NO_NTLM
     { "ntlm-domain",	0,  arg_string, &ntlm_domain,
@@ -920,6 +924,14 @@ get_new_tickets(krb5_context context,
 	ret = krb5_init_creds_set_service(context, ctx, server_str);
 	if (ret) {
 	    krb5_warn(context, ret, "krb5_init_creds_set_service");
+	    goto out;
+	}
+    }
+
+    if (kdc_hostname) {
+	ret = krb5_init_creds_set_kdc_hostname(context, ctx, kdc_hostname);
+	if (ret) {
+	    krb5_warn(context, ret, "krb5_init_creds_set_kdc_hostname");
 	    goto out;
 	}
     }

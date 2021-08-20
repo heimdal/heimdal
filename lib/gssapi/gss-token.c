@@ -31,7 +31,7 @@
 #include <errno.h>
 #ifdef __APPLE__
 #include <malloc/malloc.h>
-#else
+#elif HAVE_MALLOC_H
 #include <malloc.h>
 #endif
 #include <stdio.h>

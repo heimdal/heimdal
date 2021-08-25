@@ -225,6 +225,10 @@ AttributeTypeAndValue ::= SEQUENCE {
 -- for RDNs that aren't strings, and d) the non-string attributes from TCG that
 -- are used in SubjectDirectoryAttributes will never be used here (so we hope).
 --
+-- Until we fix this lib/hx509 cannot support name attributes whose type isn't
+-- DirectoryString.  For example, the UID attribute is broken at this time, as
+-- that wants NumericString.
+--
 RelativeDistinguishedName ::= SET OF AttributeTypeAndValue -- XXX SingleAttribute
 
 RDNSequence ::= SEQUENCE OF RelativeDistinguishedName

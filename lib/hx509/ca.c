@@ -1752,10 +1752,30 @@ ca_sign(hx509_context context,
 	goto out;
     }
     /* validity             Validity, */
-    tbsc->validity.notBefore.element = choice_Time_generalTime;
-    tbsc->validity.notBefore.u.generalTime = notBefore;
-    tbsc->validity.notAfter.element = choice_Time_generalTime;
-    tbsc->validity.notAfter.u.generalTime = notAfter;
+    {
+        /*
+         * From RFC 5280, section 4.1.2.5:
+         *
+         *    CAs conforming to this profile MUST always encode certificate
+         *    validity dates through the year 2049 as UTCTime; certificate validity
+         *    dates in 2050 or later MUST be encoded as GeneralizedTime.
+         *    Conforming applications MUST be able to process validity dates that
+         *    are encoded in either UTCTime or GeneralizedTime.
+         *
+         * 2524608000 is seconds since the epoch for 2050-01-01T00:00:00Z.
+         */
+        if (notBefore < 1 || (int64_t)notBefore < 2524608000)
+            tbsc->validity.notBefore.element = choice_Time_utcTime;
+        else
+            tbsc->validity.notBefore.element = choice_Time_generalTime;
+        tbsc->validity.notBefore.u.generalTime = notBefore;
+
+        if (notAfter < 1 || (int64_t)notBefore < 2524608000)
+            tbsc->validity.notAfter.element = choice_Time_utcTime;
+        else
+            tbsc->validity.notAfter.element = choice_Time_generalTime;
+        tbsc->validity.notAfter.u.generalTime = notAfter;
+    }
     /* subject              Name, */
     if (tbs->flags.proxy) {
 	ret = build_proxy_prefix(context, &tbsc->issuer, &tbsc->subject);

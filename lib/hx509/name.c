@@ -64,6 +64,7 @@
 static const struct {
     const char *n;
     const heim_oid *o;
+    int type_choice; /* Preference for DirectoryString choice; 0 -> no pref */
     wind_profile_flags flags;
     /*
      * RFC52380 imposes maximum lengths for some strings in Names.  These are
@@ -72,25 +73,35 @@ static const struct {
      * maximum character counts, and we encode and enforce them here.
      *
      * 0 -> no max
+     *
+     * Some of these attributes aren't of type DirectoryString, so our
+     * type_choice isn't really correct.  We're not really set up for
+     * attributes whose types aren't DirectoryString or one of its choice arms'
+     * type, much less are we set up for non-string attribute value types.
      */
     size_t max_bytes;
 } no[] = {
-    { "C", &asn1_oid_id_at_countryName, 0, 2 },
-    { "CN", &asn1_oid_id_at_commonName, 0, ub_common_name },
-    { "DC", &asn1_oid_id_domainComponent, 0, 63 }, /* DNS label */
-    { "L", &asn1_oid_id_at_localityName, 0, ub_locality_name },
-    { "O", &asn1_oid_id_at_organizationName, 0, ub_organization_name },
-    { "OU", &asn1_oid_id_at_organizationalUnitName, 0, ub_organizational_unit_name },
-    { "S", &asn1_oid_id_at_stateOrProvinceName, 0, ub_state_name },
-    { "STREET", &asn1_oid_id_at_streetAddress, 0, 0 }, /* ENOTSUP */
-    { "UID", &asn1_oid_id_Userid, 0, ub_numeric_user_id_length },
-    { "emailAddress", &asn1_oid_id_pkcs9_emailAddress, 0, ub_emailaddress_length },
+    { "C", &asn1_oid_id_at_countryName,
+        choice_DirectoryString_printableString, 0, 2 },
+    { "CN", &asn1_oid_id_at_commonName, 0, 0, ub_common_name },
+    { "DC", &asn1_oid_id_domainComponent, choice_DirectoryString_ia5String,
+        0, 63 }, /* DNS label */
+    { "L", &asn1_oid_id_at_localityName, 0, 0, ub_locality_name },
+    { "O", &asn1_oid_id_at_organizationName, 0, 0, ub_organization_name },
+    { "OU", &asn1_oid_id_at_organizationalUnitName, 0, 0,
+        ub_organizational_unit_name },
+    { "S", &asn1_oid_id_at_stateOrProvinceName, 0, 0, ub_state_name },
+    { "STREET", &asn1_oid_id_at_streetAddress, 0, 0, 0 }, /* ENOTSUP */
+    { "UID", &asn1_oid_id_Userid, 0, 0, ub_numeric_user_id_length },
+    { "emailAddress", &asn1_oid_id_pkcs9_emailAddress,
+        choice_DirectoryString_ia5String, 0, ub_emailaddress_length },
     /* This is for DevID certificates and maybe others */
-    { "serialNumber", &asn1_oid_id_at_serialNumber, 0, ub_serial_number },
+    { "serialNumber", &asn1_oid_id_at_serialNumber, 0, 0, ub_serial_number },
     /* These are for TPM 2.0 Endorsement Key Certificates (EKCerts) */
-    { "TPMManufacturer", &asn1_oid_tcg_at_tpmManufacturer, 0, ub_emailaddress_length },
-    { "TPMModel", &asn1_oid_tcg_at_tpmModel, 0, ub_emailaddress_length },
-    { "TPMVersion", &asn1_oid_tcg_at_tpmVersion, 0, ub_emailaddress_length },
+    { "TPMManufacturer", &asn1_oid_tcg_at_tpmManufacturer, 0, 0,
+        ub_emailaddress_length },
+    { "TPMModel", &asn1_oid_tcg_at_tpmModel, 0, 0, ub_emailaddress_length },
+    { "TPMVersion", &asn1_oid_tcg_at_tpmVersion, 0, 0, ub_emailaddress_length },
 };
 
 static char *
@@ -156,14 +167,20 @@ append_string(char **str, size_t *total_len, const char *ss,
 }
 
 static char *
-oidtostring(const heim_oid *type)
+oidtostring(const heim_oid *type, int *type_choice)
 {
     char *s;
     size_t i;
 
+    if (type_choice)
+        *type_choice = choice_DirectoryString_utf8String;
+
     for (i = 0; i < sizeof(no)/sizeof(no[0]); i++) {
-	if (der_heim_oid_cmp(no[i].o, type) == 0)
+	if (der_heim_oid_cmp(no[i].o, type) == 0) {
+            if (type_choice && no[i].type_choice)
+                *type_choice = no[i].type_choice;
 	    return strdup(no[i].n);
+        }
     }
     if (der_print_heim_oid(type, '.', &s) != 0)
 	return NULL;
@@ -243,7 +260,7 @@ _hx509_Name_to_string(const Name *n, char **str)
 	    char *oidname;
 	    char *ss;
 
-	    oidname = oidtostring(&n->u.rdnSequence.val[i].val[j].type);
+	    oidname = oidtostring(&n->u.rdnSequence.val[i].val[j].type, NULL);
 
 	    switch(ds->element) {
 	    case choice_DirectoryString_ia5String:
@@ -562,7 +579,9 @@ _hx509_name_modify(hx509_context context,
 {
     RelativeDistinguishedName rdn;
     size_t max_len = oidtomaxlen(oid);
-    int ret;
+    int type_choice, ret;
+    const char *a = oidtostring(oid, &type_choice);
+    char *s = NULL;
 
     /*
      * Check string length upper bounds.
@@ -572,8 +591,6 @@ _hx509_name_modify(hx509_context context,
      * here.
      */
     if (max_len && strlen(str) > max_len) {
-        const char *a = oidtostring(oid);
-
         ret = HX509_PARSING_NAME_FAILED;
         hx509_set_error_string(context, 0, ret, "RDN attribute %s value too "
                                "long (max %llu): %s", a ? a : "<unknown>",
@@ -587,13 +604,63 @@ _hx509_name_modify(hx509_context context,
 	return ENOMEM;
     }
     rdn.len = 1;
-    rdn.val[0].value.element = choice_DirectoryString_utf8String;
-    if ((rdn.val[0].value.u.utf8String = strdup(str)) == NULL ||
+
+    /*
+     * How best to pick a type for this attribute value?
+     *
+     * Options:
+     *
+     * 1) the API deals only in UTF-8, let the callers convert to/from UTF-8
+     *    and whatever the current locale wants
+     *
+     * 2) use the best type for the codeset of the current locale.
+     *
+     * We choose (1).
+     *
+     * However, for some cases we really should prefer other types when the
+     * input string is all printable ASCII.
+     */
+    rdn.val[0].value.element = type_choice;
+    if ((s = strdup(str)) == NULL ||
         (ret = der_copy_oid(oid, &rdn.val[0].type))) {
-	hx509_set_error_string(context, 0, ENOMEM, "Out of memory");
-        free(rdn.val[0].value.u.utf8String);
         free(rdn.val);
-	return ENOMEM;
+        free(s);
+	return hx509_enomem(context);
+    }
+    switch (rdn.val[0].value.element) {
+    /* C strings: */
+    case choice_DirectoryString_utf8String:
+        rdn.val[0].value.u.utf8String = s;
+        break;
+    case choice_DirectoryString_teletexString:
+        rdn.val[0].value.u.teletexString = s;
+        break;
+
+    /* Length and pointer */
+    case choice_DirectoryString_ia5String:
+        rdn.val[0].value.u.ia5String.data = s;
+        rdn.val[0].value.u.ia5String.length = strlen(s);
+        break;
+    case choice_DirectoryString_printableString:
+        rdn.val[0].value.u.printableString.data = s;
+        rdn.val[0].value.u.printableString.length = strlen(s);
+        break;
+    case choice_DirectoryString_universalString:
+        free(s);
+        free(rdn.val);
+	hx509_set_error_string(context, 0, ENOTSUP, "UniversalString not supported");
+        return ENOTSUP;
+    case choice_DirectoryString_bmpString:
+        free(s);
+        free(rdn.val);
+	hx509_set_error_string(context, 0, ENOTSUP, "BMPString not supported");
+        return ENOTSUP;
+    default:
+        free(s);
+        free(rdn.val);
+	hx509_set_error_string(context, 0, ENOTSUP,
+                               "Internal error; unknown DirectoryString choice");
+        return ENOTSUP;
     }
 
     /* Append RDN.  If the caller wanted to prepend instead, we'll rotate. */
@@ -826,23 +893,51 @@ hx509_name_expand(hx509_context context,
 	    */
 	    DirectoryString *ds = &n->u.rdnSequence.val[i].val[j].value;
             heim_oid *type = &n->u.rdnSequence.val[i].val[j].type;
+            const char *sval = NULL;
 	    char *p, *p2;
+            char *s = NULL;
 	    struct rk_strpool *strpool = NULL;
 
-	    if (ds->element != choice_DirectoryString_utf8String) {
-		hx509_set_error_string(context, 0, EINVAL, "unsupported type");
-		return EINVAL;
-	    }
-	    p = strstr(ds->u.utf8String, "${");
+            switch (ds->element) {
+            case choice_DirectoryString_utf8String:
+                sval = ds->u.utf8String;
+                break;
+            case choice_DirectoryString_teletexString:
+                sval = ds->u.utf8String;
+                break;
+            case choice_DirectoryString_ia5String:
+                s = strndup(ds->u.ia5String.data,
+                            ds->u.ia5String.length);
+                break;
+            case choice_DirectoryString_printableString:
+                s = strndup(ds->u.printableString.data,
+                            ds->u.printableString.length);
+                break;
+            case choice_DirectoryString_universalString:
+                hx509_set_error_string(context, 0, ENOTSUP, "UniversalString not supported");
+                return ENOTSUP;
+            case choice_DirectoryString_bmpString:
+                hx509_set_error_string(context, 0, ENOTSUP, "BMPString not supported");
+                return ENOTSUP;
+            }
+            if (sval == NULL && s == NULL)
+                return hx509_enomem(context);
+            if (s)
+                sval = s;
+
+	    p = strstr(sval, "${");
 	    if (p) {
-		strpool = rk_strpoolprintf(strpool, "%.*s",
-					   (int)(p - ds->u.utf8String),
-					   ds->u.utf8String);
+		strpool = rk_strpoolprintf(strpool, "%.*s", (int)(p - sval), sval);
 		if (strpool == NULL) {
 		    hx509_set_error_string(context, 0, ENOMEM, "out of memory");
+                    free(s);
 		    return ENOMEM;
 		}
 	    }
+            free(s);
+            sval = NULL;
+            s = NULL;
+
 	    while (p != NULL) {
 		/* expand variables */
 		const char *value;
@@ -882,17 +977,40 @@ hx509_name_expand(hx509_context context,
 	    if (strpool) {
                 size_t max_bytes;
 
-		free(ds->u.utf8String);
-		ds->u.utf8String = rk_strpoolcollect(strpool);
-		if (ds->u.utf8String == NULL) {
-		    hx509_set_error_string(context, 0, ENOMEM, "out of memory");
-		    return ENOMEM;
-		}
+                if ((s = rk_strpoolcollect(strpool)) == NULL) {
+                    hx509_set_error_string(context, 0, ENOMEM, "out of memory");
+                    return ENOMEM;
+                }
 
                 /* Check upper bounds! */
-                if ((max_bytes = oidtomaxlen(type)) &&
-                    strlen(ds->u.utf8String) > max_bytes)
+                if ((max_bytes = oidtomaxlen(type)) && strlen(s) > max_bytes)
                     bounds_check = 0;
+
+                switch (ds->element) {
+                /* C strings: */
+                case choice_DirectoryString_utf8String:
+                    free(ds->u.utf8String);
+                    ds->u.utf8String = s;
+                    break;
+                case choice_DirectoryString_teletexString:
+                    free(ds->u.teletexString);
+                    ds->u.teletexString = s;
+                    break;
+
+                /* Length and pointer */
+                case choice_DirectoryString_ia5String:
+                    free(ds->u.ia5String.data);
+                    ds->u.ia5String.data = s;
+                    ds->u.ia5String.length = strlen(s);
+                    break;
+                case choice_DirectoryString_printableString:
+                    free(ds->u.printableString.data);
+                    ds->u.printableString.data = s;
+                    ds->u.printableString.length = strlen(s);
+                    break;
+                default:
+                    break; /* Handled above */
+                }
 	    }
 	}
     }

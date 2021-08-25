@@ -145,7 +145,6 @@ pa_gss_step(krb5_context context,
     _krb5_init_creds_set_gss_context(context, gssic, ctx);
 
     _krb5_gss_buffer_to_data(&output_token, out);
-    _mg_buffer_zero(&output_token);
 
     if (major == GSS_S_COMPLETE) {
         if ((ret_flags & GSS_C_MUTUAL_FLAG) == 0)
@@ -159,7 +158,6 @@ pa_gss_step(krb5_context context,
 
 out:
     gss_release_name(&minor, &target_name);
-    gss_release_buffer(&minor, &output_token);
     krb5_free_principal(context, tgs_name);
 
     return ret;

@@ -157,6 +157,7 @@ pa_gss_step(krb5_context context,
         ret = _krb5_gss_map_error(major, minor);
 
 out:
+    gss_release_buffer(&minor, &output_token);
     gss_release_name(&minor, &target_name);
     krb5_free_principal(context, tgs_name);
 

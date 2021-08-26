@@ -1763,6 +1763,8 @@ ca_sign(hx509_context context,
          *    are encoded in either UTCTime or GeneralizedTime.
          *
          * 2524608000 is seconds since the epoch for 2050-01-01T00:00:00Z.
+         *
+         * Both, ...u.generalTime and ...u..utcTime are time_t.
          */
         if (notBefore < 1 || (int64_t)notBefore < 2524608000)
             tbsc->validity.notBefore.element = choice_Time_utcTime;
@@ -1770,7 +1772,7 @@ ca_sign(hx509_context context,
             tbsc->validity.notBefore.element = choice_Time_generalTime;
         tbsc->validity.notBefore.u.generalTime = notBefore;
 
-        if (notAfter < 1 || (int64_t)notBefore < 2524608000)
+        if (notAfter < 1 || (int64_t)notAfter < 2524608000)
             tbsc->validity.notAfter.element = choice_Time_utcTime;
         else
             tbsc->validity.notAfter.element = choice_Time_generalTime;

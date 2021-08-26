@@ -2014,21 +2014,13 @@ server_lookup:
     }
 
     {
-        krb5_data verified_cas;
+        krb5_data synthetic_client;
 
-        /*
-         * If the client doesn't exist in the HDB but has a TGT and it's
-         * obtained with PKINIT then we assume it's a synthetic client -- that
-         * is, a client whose name was vouched for by a CA using a PKINIT SAN,
-         * but which doesn't exist in the HDB proper.  We'll allow such a
-         * client to do TGT requests even though normally we'd reject all
-         * clients that don't exist in the HDB.
-         */
         ret = krb5_ticket_get_authorization_data_type(context, ticket,
-                                                      KRB5_AUTHDATA_INITIAL_VERIFIED_CAS,
-                                                      &verified_cas);
+                                                      KRB5_AUTHDATA_SYNTHETIC_CLIENT,
+                                                      &synthetic_client);
         if (ret == 0) {
-            krb5_data_free(&verified_cas);
+            krb5_data_free(&synthetic_client);
             flags |= HDB_F_SYNTHETIC_OK;
         }
     }

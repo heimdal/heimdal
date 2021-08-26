@@ -1010,6 +1010,23 @@ log_patypes(astgs_request_t r, METHOD_DATA *padata)
 }
 
 /*
+ * Add a placeholder authorization data indicating we validated
+ * the use of a synthetic client.
+ */
+static krb5_error_code
+add_synthetic_client_ad(astgs_request_t r)
+{
+    krb5_data data;
+
+    krb5_data_zero(&data);
+
+    return _kdc_tkt_add_if_relevant_ad(r->context,
+				       &r->et,
+				       KRB5_AUTHDATA_SYNTHETIC_CLIENT,
+				       &data);
+}
+
+/*
  *
  */
 
@@ -2506,6 +2523,9 @@ _kdc_as_rep(astgs_request_t r)
     if (send_pac_p(context, req) && !r->et.flags.anonymous) {
 	generate_pac(r, skey);
     }
+
+    if (r->client->entry.flags.synthetic)
+	add_synthetic_client_ad(r);
 
     _kdc_log_timestamp(r, "AS-REQ", r->et.authtime,
 		       r->et.starttime, r->et.endtime,

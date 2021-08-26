@@ -219,11 +219,12 @@ AUTHDATA-TYPE ::= INTEGER {
         -- N.B. these assignments have not been confirmed yet.
         --
         -- DO NOT USE in production yet!
+	KRB5-AUTHDATA-SYNTHETIC-CLIENT(-18),  -- client synthesized by KDC
 	KRB5-AUTHDATA-ON-BEHALF-OF(580),      -- UTF8String princ name
 	KRB5-AUTHDATA-BEARER-TOKEN-JWT(581),  -- JWT token
 	KRB5-AUTHDATA-BEARER-TOKEN-SAML(582), -- SAML token
 	KRB5-AUTHDATA-BEARER-TOKEN-OIDC(583), -- OIDC token
-	KRB5-AUTHDATA-CSR-AUTHORIZED(584),     -- Proxy has authorized client
+	KRB5-AUTHDATA-CSR-AUTHORIZED(584),    -- Proxy has authorized client
                                               -- to requested exts in CSR
 	KRB5-AUTHDATA-GSS-COMPOSITE-NAME(655) -- gss_export_name_composite
 }

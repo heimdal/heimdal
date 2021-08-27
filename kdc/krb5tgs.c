@@ -1701,7 +1701,7 @@ tgs_build_reply(astgs_request_t priv,
 	r = adtkt.crealm;
     } else if (s == NULL) {
 	ret = KRB5KDC_ERR_S_PRINCIPAL_UNKNOWN;
-	_kdc_set_e_text(r, "No server in request");
+	_kdc_set_e_text(priv, "No server in request");
 	goto out;
     }
 

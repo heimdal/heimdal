@@ -97,7 +97,8 @@ der_print_generalized_time(const time_t *t, int flags)
     char str[sizeof("1970-01-01T00:00:00Z")];
 
 #ifdef WIN32
-    if (strftime(str, sizeof(str), "%Y-%m-%dT%H:%M:%SZ", gmtime_s(&tms, t)) == 0)
+    if (gmtime_s(&tms, t) != 0 ||
+        strftime(str, sizeof(str), "%Y-%m-%dT%H:%M:%SZ", &tms) == 0)
         return NULL;
 #else
     if (strftime(str, sizeof(str), "%Y-%m-%dT%H:%M:%SZ", gmtime_r(t, &tms)) == 0)
@@ -113,7 +114,8 @@ der_print_utctime(const time_t *t, int flags)
     char str[sizeof("1970-01-01T00:00:00Z")];
 
 #ifdef WIN32
-    if (strftime(str, sizeof(str), "%Y-%m-%dT%H:%M:%SZ", gmtime_s(&tms, t)) == 0)
+    if (gmtime_s(&tms, t) != 0 ||
+        strftime(str, sizeof(str), "%Y-%m-%dT%H:%M:%SZ", &tms) == 0)
         return NULL;
 #else
     if (strftime(str, sizeof(str), "%Y-%m-%dT%H:%M:%SZ", gmtime_r(t, &tms)) == 0)

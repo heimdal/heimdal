@@ -1973,7 +1973,7 @@ _kdc_as_rep(astgs_request_t r)
 	flags |= HDB_F_CANON;
 
     if (b->sname == NULL) {
-	ret = KRB5KRB_ERR_GENERIC;
+	ret = KRB5KDC_ERR_S_PRINCIPAL_UNKNOWN;
 	_kdc_set_e_text(r, "No server in request");
 	goto out;
     }
@@ -1989,7 +1989,7 @@ _kdc_as_rep(astgs_request_t r)
     }
 
     if (b->cname == NULL) {
-	ret = KRB5KRB_ERR_GENERIC;
+	ret = KRB5KDC_ERR_C_PRINCIPAL_UNKNOWN;
 	_kdc_set_e_text(r, "No client in request");
 	goto out;
     }

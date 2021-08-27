@@ -1699,6 +1699,10 @@ tgs_build_reply(astgs_request_t priv,
 
 	s = &adtkt.cname;
 	r = adtkt.crealm;
+    } else if (s == NULL) {
+	ret = KRB5KDC_ERR_S_PRINCIPAL_UNKNOWN;
+	_kdc_set_e_text(r, "No server in request");
+	goto out;
     }
 
     _krb5_principalname2krb5_principal(context, &sp, *s, r);

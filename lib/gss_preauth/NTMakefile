@@ -1,20 +1,20 @@
 ########################################################################
 #
-# Copyright (c) 2009-2016, Secure Endpoints Inc.
+# Copyright (c) 2021, Secure Endpoints Inc.
 # All rights reserved.
-# 
+#
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
 # are met:
-# 
+#
 # - Redistributions of source code must retain the above copyright
 #   notice, this list of conditions and the following disclaimer.
-# 
+#
 # - Redistributions in binary form must reproduce the above copyright
 #   notice, this list of conditions and the following disclaimer in
 #   the documentation and/or other materials provided with the
 #   distribution.
-# 
+#
 # THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 # "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 # LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
@@ -27,53 +27,44 @@
 # LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
-# 
+#
 
+RELDIR=lib\gss_preauth
 
-!ifdef OTP
-dir_otp = otp
-!endif
-!ifdef DCE
-dir_dce = kdfs
-!endif
+intcflags=-I$(SRCDIR)		    \
+    -I$(SRCDIR)\..\krb5		    \
+    -I$(SRCDIR)\..\gssapi	    \
+    -I$(SRCDIR)\..\gssapi\mech	    \
+    -I$(OBJ)			    \
+    -I$(OBJDIR)\lib\gssapi	    \
+    -I$(OBJDIR)\lib\gssapi\gssapi   \
+    -I$(INCDIR)			    \
+    -I$(INCDIR)\gssapi		    \
 
-# Third party plugins must be added to the assembly
-# Permit third party assembly scripts
+!include ../../windows/NTMakefile.w32
 
-!if exist(..\thirdparty\plugin\NTMakefile)
-plugin=..\thirdparty\plugin
-!endif
+INCFILES=				\
+	$(OBJ)\gss-preauth-protos.h	\
+	$(OBJ)\gss-preauth-private.h
 
-!if exist(..\thirdparty\assembly\NTMakefile)
-assembly=..\thirdparty\assembly
-!else
-assembly=..\packages\windows\assembly
-!endif
+libgss_preauth_SOURCES =	\
+	pa_client.c		\
+	pa_common.c
 
-SUBDIRS = roken vers com_err base sl wind asn1 sqlite \
-	hcrypto hx509 krb5 heimdal ntlm kafs gssapi gss_preauth \
-	hdb kadm5 $(dir_otp) $(dir_dce) $(plugin) $(assembly)
+libgss_preauth_OBJS =		\
+	$(OBJ)\pa_client.obj	\
+	$(OBJ)\pa_common.obj
 
-!include ../windows/NTMakefile.w32
+$(LIBGSS_PREAUTH): $(libgss_preauth_OBJS)
+	$(LIBCON)
 
-# We can't build some of the lib tools until after we have LIBHEIMDAL.
-# So we build tools in a separate build step:
+$(OBJ)\gss-preauth-protos.h: $(libgss_preauth_SOURCES)
+	$(PERL) ..\..\cf\make-proto.pl -E KRB5_LIB -q -P remove -o $(OBJ)\gss-preauth-protos.h $(libgss_preauth_SOURCES) || $(RM) -f $(OBJ)\gss-preauth-protos.h
 
-all:: all-tools
+$(OBJ)\gss-preauth-private.h: $(libgss_preauth_SOURCES)
+	$(PERL) ..\..\cf\make-proto.pl -q -P remove -p $(OBJ)\gss-preauth-private.h $(libgss_preauth_SOURCES) || $(RM) -f $(OBJ)\gss-preauth-private.h
 
-all-tools:: asn1-tools hx509-tools krb5-tools kadm5-tools gss-tools
+all:: $(INCFILES) $(LIBGSS_PREAUTH)
 
-asn1-tools:
-	@( cd asn1 && $(RMAKE) all-tools && cd .. ) || exit /b 1
-
-hx509-tools:
-	@( cd hx509 && $(RMAKE) all-tools && cd .. ) || exit /b 1
-
-krb5-tools:
-	@( cd krb5 && $(RMAKE) all-tools && cd .. ) || exit /b 1
-
-kadm5-tools:
-	@( cd kadm5 && $(RMAKE) all-tools && cd .. ) || exit /b 1
-
-gss-tools:
-	@( cd gssapi && $(RMAKE) all-tools && cd ..) || exit /b 1
+clean::
+	-$(RM) $(INCFILES) $(LIBGSS_PREAUTH)

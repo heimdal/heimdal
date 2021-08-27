@@ -151,6 +151,7 @@ libkdc_la_LDFLAGS = -version-info 2:0:0
 if versionscript
 libkdc_la_LDFLAGS += $(LDFLAGS_VERSION_SCRIPT)$(srcdir)/version-script.map
 endif
+
 $(libkdc_la_OBJECTS): $(srcdir)/version-script.map
 
 $(srcdir)/kdc-protos.h: $(libkdc_la_SOURCES)
@@ -187,6 +188,7 @@ libkdc_la_LIBADD = \
 	$(top_builddir)/lib/hdb/libhdb.la \
 	$(top_builddir)/lib/krb5/libkrb5.la \
 	$(top_builddir)/lib/gssapi/libgssapi.la \
+	$(top_builddir)/lib/gss_preauth/libgss_preauth.la \
 	$(LIB_kdb)  \
 	$(top_builddir)/lib/ntlm/libheimntlm.la \
 	$(LIB_hcrypto) \

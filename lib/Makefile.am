@@ -41,6 +41,7 @@ SUBDIRS = \
 	ntlm \
 	$(dir_afs) \
 	gssapi \
+	gss_preauth \
 	hdb \
 	kadm5 \
 	$(dir_otp) \

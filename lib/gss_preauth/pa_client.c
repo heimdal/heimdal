@@ -30,12 +30,11 @@
  * SUCH DAMAGE.
  */
 
-#include "krb5_locl.h"
-#include "mech_locl.h"
+#include <krb5_locl.h>
+#include <mech_locl.h>
 
-#include <gssapi/gssapi_preauth.h>
-
-#include <preauth/pa-private.h>
+#include "gss-preauth-protos.h"
+#include "gss-preauth-private.h"
 
 static krb5_error_code
 pa_gss_acquire_initiator_cred(krb5_context context,
@@ -239,7 +238,7 @@ pa_gss_release_cred(krb5_context context,
     gss_release_cred(&minor, &cred);
 }
 
-GSSAPI_LIB_FUNCTION krb5_error_code GSSAPI_LIB_CALL
+krb5_error_code
 krb5_gss_set_init_creds(krb5_context context,
                         krb5_init_creds_context ctx,
                         gss_const_cred_id_t gss_cred,

@@ -261,10 +261,6 @@ sanonsrc = \
 	sanon/release_cred.c \
 	sanon/release_name.c
 
-preauthsrc = \
-	preauth/pa_client.c \
-	preauth/pa_common.c
-
 $(OBJ)\ntlm\ntlm-private.h: $(ntlmsrc)
 	$(PERL) ../../cf/make-proto.pl -q -P remove -p $@ $(ntlmsrc)
 
@@ -276,9 +272,6 @@ $(OBJ)\spnego\spnego-private.h: $(spnegosrc)
 
 $(OBJ)\sanon\sanon-private.h: $(sanonsrc)
 	$(PERL) ../../cf/make-proto.pl -q -P remove -p $@ $(sanonsrc)
-
-$(OBJ)\preauth\pa-private.h: $(preauthsrc)
-	$(PERL) ../../cf/make-proto.pl -q -P remove -p $@ $(preauthsrc)
 
 gssapi_files = $(OBJ)\gssapi\asn1_gssapi_asn1.x
 
@@ -320,12 +313,10 @@ INCFILES=				\
     $(INCDIR)\gssapi\gssapi_oid.h	\
     $(INCDIR)\gssapi\gssapi_ntlm.h	\
     $(INCDIR)\gssapi\gssapi_spnego.h	\
-    $(INCDIR)\gssapi\gssapi_preauth.h	\
     $(INCDIR)\gssapi\gkrb5_err.h	\
     $(OBJ)\ntlm\ntlm-private.h		\
     $(OBJ)\spnego\spnego-private.h	\
     $(OBJ)\sanon\sanon-private.h	\
-    $(OBJ)\preauth\pa-private.h		\
     $(OBJ)\krb5\gsskrb5-private.h	\
     $(OBJ)\gkrb5_err.h			\
     $(OBJ)\negoex_err.h			\
@@ -542,8 +533,6 @@ libgssapi_OBJs = \
 	$(OBJ)\sanon/process_context_token.obj \
 	$(OBJ)\sanon/release_cred.obj \
 	$(OBJ)\sanon/release_name.obj \
-	$(OBJ)\preauth/pa_client.obj \
-	$(OBJ)\preauth/pa_common.obj \
 	$(OBJ)\gkrb5_err.obj \
 	$(OBJ)\negoex_err.obj \
 	$(spnego_files:.x=.obj) \
@@ -580,12 +569,6 @@ GCOPTS=-I$(SRCDIR) -I$(OBJ) -Igssapi -DBUILD_GSSAPI_LIB
 
 {sanon}.c{$(OBJ)\sanon}.obj::
 	$(C2OBJ_NP) -Fo$(OBJ)\sanon\ -Fd$(OBJ)\sanon\ -I$(OBJ)\sanon -I$(OBJ) -I$(OBJ)\krb5 -I$(OBJ)\gssapi -Ikrb5 -Imech -Igssapi $(GCOPTS) -DASN1_LIB
-
-{$(OBJ)\preauth}.c{$(OBJ)\preauth}.obj::
-	$(C2OBJ_NP) -Fo$(OBJ)\preauth\ -Fd$(OBJ)\preauth\ -I$(OBJ)\preauth -I$(OBJ) -I$(OBJ)\krb5 -I$(OBJ)\gssapi -Ikrb5 -Imech -Igssapi $(GCOPTS)
-
-{preauth}.c{$(OBJ)\preauth}.obj::
-	$(C2OBJ_NP) -Fo$(OBJ)\preauth\ -Fd$(OBJ)\preauth\ -I$(OBJ)\preauth -I$(OBJ) -I$(OBJ)\krb5 -I$(OBJ)\gssapi -Ikrb5 -Imech -Igssapi $(GCOPTS) -DASN1_LIB
 
 {$(OBJ)\gssapi}.c{$(OBJ)\gssapi}.obj::
 	$(C2OBJ_NP) -Fo$(OBJ)\gssapi\ -Fd$(OBJ)\gssapi\ -I$(OBJ)\gssapi $(GCOPTS)
@@ -677,9 +660,6 @@ mkdirs-gss:
 !if !exist($(OBJ)\gssapi)
 	$(MKDIR) $(OBJ)\gssapi
 !endif
-!if !exist($(OBJ)\preauth)
-	$(MKDIR) $(OBJ)\preauth
-!endif
 
 clean::
 	-$(RM) $(OBJ)\ntlm\*.*
@@ -688,7 +668,6 @@ clean::
 	-$(RM) $(OBJ)\mech\*.*
 	-$(RM) $(OBJ)\sanon\*.*
 	-$(RM) $(OBJ)\gssapi\*.*
-	-$(RM) $(OBJ)\preauth\*.*
 
 all-tools:: $(BINDIR)\gsstool.exe
 

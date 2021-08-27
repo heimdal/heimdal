@@ -709,6 +709,7 @@ AC_CONFIG_FILES(Makefile 		\
 	lib/sqlite/Makefile		\
 	lib/vers/Makefile		\
 	lib/wind/Makefile		\
+	lib/gss_preauth/Makefile	\
 	po/Makefile			\
 	kuser/Makefile			\
 	kpasswd/Makefile		\

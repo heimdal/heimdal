@@ -117,7 +117,6 @@ HEIMDAL_GSS_2.0 {
 		gsskrb5_set_send_to_kdc;
 		gsskrb5_set_time_offset;
 		krb5_gss_register_acceptor_identity;
-		krb5_gss_set_init_creds;
 		gss_display_mech_attr;
 		gss_inquire_attrs_for_mech;
 		gss_indicate_mechs_by_attrs;
@@ -134,13 +133,6 @@ HEIMDAL_GSS_2.0 {
 		# then now to make testing easier.
 		_gsskrb5cfx_wrap_length_cfx;
 		_gssapi_wrap_size_cfx;
-
-		_krb5_gss_data_to_buffer;
-		_krb5_gss_buffer_to_data;
-		_krb5_gss_map_error;
-		_krb5_gss_pa_parse_name;
-		_krb5_gss_pa_unparse_name;
-		_krb5_gss_pa_derive_key;
 
 		__gss_krb5_copy_ccache_x_oid_desc;
 		__gss_krb5_get_tkt_flags_x_oid_desc;

@@ -33,7 +33,7 @@ RELDIR=kdc
 
 !include ../windows/NTMakefile.w32 
 
-intcflags=-I$(OBJ) -I$(SRC)\lib\gssapi -I$(OBJDIR)\lib\gssapi
+intcflags=-I$(OBJ) -I$(SRC)\lib\gssapi -I$(OBJDIR)\lib\gssapi -I$(OBJDIR)\lib\gss_preauth
 
 BINPROGRAMS=$(BINDIR)\string2key.exe
 
@@ -61,7 +61,6 @@ clean::
 
 BIN_LIBS=\
 	$(LIBHDB)	\
-	$(LIBGSSAPI)	\
 	$(LIBHEIMDAL)	\
 	$(LIBROKEN)	\
 	$(LIBVERS)
@@ -115,6 +114,7 @@ LIBKDC_OBJS=\
 
 LIBKDC_LIBS=\
 	$(LIBHDB)		\
+	$(LIBGSS_PREAUTH)	\
 	$(LIBGSSAPI)		\
 	$(LIBHEIMBASE)		\
 	$(LIBHEIMDAL)		\

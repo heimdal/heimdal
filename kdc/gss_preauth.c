@@ -36,7 +36,9 @@
 
 #include <gssapi/gssapi.h>
 #include <gssapi_mech.h>
-#include "../lib/gssapi/preauth/pa-private.h"
+
+#include <gss-preauth-protos.h>
+#include <gss-preauth-private.h>
 
 #include "gss_preauth_authorizer_plugin.h"
 

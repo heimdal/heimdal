@@ -206,6 +206,8 @@ tags
 /lib/gssapi/test_names
 /lib/gssapi/test_ntlm
 /lib/gssapi/test_oid
+/lib/gss_preauth/gss-preauth-protos.h
+/lib/gss_preauth/gss-preauth-private.h
 /lib/hcrypto/crypto-test
 /lib/hcrypto/crypto-test2
 /lib/hcrypto/destest

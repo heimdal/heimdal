@@ -577,6 +577,7 @@ LIBASN1	    =$(LIBDIR)\libasn1.lib
 LIBCOMERR   =$(LIBDIR)\libcom_err.lib
 LIBEDITLINE =$(LIBDIR)\libeditline.lib
 LIBGSSAPI   =$(LIBDIR)\libgssapi.lib
+LIBGSS_PREAUTH=$(LIBDIR)\libgss_preauth.lib
 LIBHCRYPTO  =$(LIBDIR)\libhcrypto.lib
 LIBHDB	    =$(LIBDIR)\libhdb.lib
 LIBHEIMBASE =$(LIBDIR)\libheimbase.lib

@@ -30,13 +30,12 @@
  * SUCH DAMAGE.
  */
 
-#include "krb5_locl.h"
-#include "mech_locl.h"
-
-#include <gssapi/gssapi_preauth.h>
+#include <krb5_locl.h>
+#include <mech_locl.h>
 #include <heimntlm.h>
 
-#include <preauth/pa-private.h>
+#include "gss-preauth-protos.h"
+#include "gss-preauth-private.h"
 
 krb5_error_code
 _krb5_gss_map_error(OM_uint32 major, OM_uint32 minor)
@@ -58,18 +57,18 @@ _krb5_gss_map_error(OM_uint32 major, OM_uint32 minor)
         ret = KRB5_PRINC_NOMATCH;
         break;
     case GSS_S_NO_CRED:
-	ret = KRB5_CC_NOTFOUND;
-	break;
+        ret = KRB5_CC_NOTFOUND;
+        break;
     case GSS_S_BAD_MIC:
     case GSS_S_DEFECTIVE_CREDENTIAL:
         ret = KRB5KRB_AP_ERR_BAD_INTEGRITY;
         break;
     case GSS_S_FAILURE:
-	if (minor == (OM_uint32)KRB5KRB_AP_ERR_BAD_INTEGRITY ||
-	    minor == (OM_uint32)HNTLM_ERR_AUTH) {
-	    ret = KRB5KRB_AP_ERR_BAD_INTEGRITY;
-	    break;
-	}
+        if (minor == (OM_uint32)KRB5KRB_AP_ERR_BAD_INTEGRITY ||
+            minor == (OM_uint32)HNTLM_ERR_AUTH) {
+            ret = KRB5KRB_AP_ERR_BAD_INTEGRITY;
+            break;
+        }
     default:
         ret = KRB5KDC_ERR_PREAUTH_FAILED;
         break;
@@ -99,7 +98,10 @@ _krb5_gss_pa_derive_key(krb5_context context,
     if (ret)
         return ret;
 
-    _gss_mg_encode_le_uint32(nonce, &saltdata[8]);
+    saltdata[ 8] = (nonce >> 0 ) & 0xFF;
+    saltdata[ 9] = (nonce >> 8 ) & 0xFF;
+    saltdata[10] = (nonce >> 16) & 0xFF;
+    saltdata[11] = (nonce >> 24) & 0xFF;
 
     salt.value = saltdata;
     salt.length = sizeof(saltdata);
@@ -115,7 +117,10 @@ _krb5_gss_pa_derive_key(krb5_context context,
 
     ret = krb5_copy_keyblock(context, &kdkey, keyblock);
 
-    _gss_secure_release_buffer(&minor, &dkey);
+    if (dkey.value) {
+        memset_s(dkey.value, dkey.length, 0, dkey.length);
+        gss_release_buffer(&minor, &dkey);
+    }
 
     return ret;
 }
@@ -148,42 +153,42 @@ _krb5_gss_pa_unparse_name(krb5_context context,
     name_buf.value = name;
 
     major = gss_import_name(&minor, &name_buf,
-			    GSS_KRB5_NT_PRINCIPAL_NAME, namep);
+                            GSS_KRB5_NT_PRINCIPAL_NAME, namep);
     if (major == GSS_S_BAD_NAMETYPE) {
-	gss_OID name_type = GSS_C_NO_OID;
-	int flags = 0;
+        gss_OID name_type = GSS_C_NO_OID;
+        int flags = 0;
 
-	if (principal->name.name_type == KRB5_NT_ENTERPRISE_PRINCIPAL) {
-	    name_type = GSS_C_NT_USER_NAME;
-	} else if (principal->name.name_type == KRB5_NT_PRINCIPAL) {
-	    flags = KRB5_PRINCIPAL_UNPARSE_SHORT;
-	    name_type = GSS_C_NT_USER_NAME;
-	} else if ((principal->name.name_type == KRB5_NT_SRV_HST ||
-		    principal->name.name_type == KRB5_NT_SRV_INST) &&
-	    principal->name.name_string.len == 2) {
-	    flags = KRB5_PRINCIPAL_UNPARSE_NO_REALM;
-	    name_type = GSS_C_NT_HOSTBASED_SERVICE;
-	}
+        if (principal->name.name_type == KRB5_NT_ENTERPRISE_PRINCIPAL) {
+            name_type = GSS_C_NT_USER_NAME;
+        } else if (principal->name.name_type == KRB5_NT_PRINCIPAL) {
+            flags = KRB5_PRINCIPAL_UNPARSE_SHORT;
+            name_type = GSS_C_NT_USER_NAME;
+        } else if ((principal->name.name_type == KRB5_NT_SRV_HST ||
+                    principal->name.name_type == KRB5_NT_SRV_INST) &&
+            principal->name.name_string.len == 2) {
+            flags = KRB5_PRINCIPAL_UNPARSE_NO_REALM;
+            name_type = GSS_C_NT_HOSTBASED_SERVICE;
+        }
 
-	if (flags) {
-	    krb5_xfree(name);
+        if (flags) {
+            krb5_xfree(name);
 
-	    ret = krb5_unparse_name_flags(context, principal, flags, &name);
-	    if (ret)
-		return ret;
+            ret = krb5_unparse_name_flags(context, principal, flags, &name);
+            if (ret)
+                return ret;
 
-	    if (gss_oid_equal(name_type, GSS_C_NT_HOSTBASED_SERVICE)) {
-		char *inst = strchr(name, '/');
-		if (inst)
-		    *inst = '@';
-	    }
+            if (gss_oid_equal(name_type, GSS_C_NT_HOSTBASED_SERVICE)) {
+                char *inst = strchr(name, '/');
+                if (inst)
+                    *inst = '@';
+            }
 
-	    name_buf.length = strlen(name);
-	    name_buf.value = name;
-	}
+            name_buf.length = strlen(name);
+            name_buf.value = name;
+        }
 
-	if (name_type)
-	    major = gss_import_name(&minor, &name_buf, name_type, namep);
+        if (name_type)
+            major = gss_import_name(&minor, &name_buf, name_type, namep);
     }
 
     if (name != principal->name.name_string.val[0])

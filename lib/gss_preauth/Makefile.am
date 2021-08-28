@@ -14,6 +14,8 @@ include_HEADERS = $(srcdir)/gss-preauth-protos.h $(srcdir)/gss-preauth-private.h
 
 libgss_preauth_la_SOURCES = pa_client.c pa_common.c
 
+ALL_OBJECTS = $(include_HEADERS) $(libgss_preauth_la_OBJECTS)
+
 $(srcdir)/gss-preauth-protos.h: $(libgss_preauth_la_SOURCES)
 	cd $(srcdir); perl ../../cf/make-proto.pl -q -P comment -o gss-preauth-protos.h $(libgss_preauth_la_SOURCES) || rm -f gss-preauth-protos.h
 

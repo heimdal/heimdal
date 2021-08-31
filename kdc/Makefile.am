@@ -10,6 +10,10 @@ lib_LTLIBRARIES = simple_csr_authorizer.la  ipc_csr_authorizer.la \
 if HAVE_CJWT
 lib_LTLIBRARIES += cjwt_token_validator.la
 endif
+if OPENLDAP
+lib_LTLIBRARIES += altsecid_gss_preauth_authorizer.la
+endif
+
 
 bin_PROGRAMS = string2key
 
@@ -98,6 +102,15 @@ ipc_csr_authorizer_la_LDFLAGS = -module	\
 				$(top_builddir)/lib/hx509/libhx509.la \
 				$(top_builddir)/lib/ipc/libheim-ipcc.la \
 				$(top_builddir)/lib/roken/libroken.la
+
+# GSS-API authorization plugins
+if OPENLDAP
+altsecid_gss_preauth_authorizer_la_SOURCES = altsecid_gss_preauth_authorizer.c
+altsecid_gss_preauth_authorizer_la_LDFLAGS = -module \
+					     $(top_builddir)/lib/gssapi/libgssapi.la \
+					     $(top_builddir)/lib/krb5/libkrb5.la \
+					     $(LIB_openldap)
+endif
 
 libkdc_la_SOURCES = 		\
 	default_config.c 	\

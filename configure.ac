@@ -129,6 +129,7 @@ rk_TEST_PACKAGE(openldap,
 [#include <lber.h>
 #include <ldap.h>],
 [-lldap -llber],,,OPENLDAP)
+AM_CONDITIONAL(OPENLDAP, test "$with_openldap" != "no")
 
 AC_ARG_ENABLE(hdb-openldap-module, 
 	AS_HELP_STRING([--enable-hdb-openldap-module],

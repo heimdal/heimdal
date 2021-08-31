@@ -201,7 +201,7 @@ ad_connect(krb5_context context,
     }
 
 #ifdef LDAP_OPT_X_SASL_GSS_CREDS
-    if (server->gss_cred != GSS_C_NO_CREDENTIAL) {
+    if (server->gss_cred == GSS_C_NO_CREDENTIAL) {
         ret = ad_acquire_cred(context, realm, server);
         if (ret)
             goto out;

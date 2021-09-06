@@ -294,23 +294,6 @@ _gsskrb5_set_sec_context_option
 	*minor_status = EINVAL;
 	return GSS_S_FAILURE;
 
-    } else if (gss_oid_equal(desired_object, GSS_KRB5_CCACHE_NAME_X)) {
-	char *str;
-
-	maj_stat = get_string(minor_status, value, &str);
-	if (maj_stat != GSS_S_COMPLETE)
-	    return maj_stat;
-	if (str == NULL) {
-	    *minor_status = 0;
-	    return GSS_S_CALL_INACCESSIBLE_READ;
-	}
-
-	*minor_status = krb5_cc_set_default_name(context, str);
-	free(str);
-	if (*minor_status)
-	    return GSS_S_FAILURE;
-
-	return GSS_S_COMPLETE;
     } else if (gss_oid_equal(desired_object, GSS_KRB5_SET_TIME_OFFSET_X)) {
 	OM_uint32 offset;
 	time_t t;
@@ -352,6 +335,15 @@ _gsskrb5_set_sec_context_option
 
 	*minor_status = 0;
 	return GSS_S_COMPLETE;
+    } else if (gss_oid_equal(desired_object, GSS_KRB5_CCACHE_NAME_X)) {
+	struct gsskrb5_ccache_name_args *args = value->value;
+
+	if (value->length != sizeof(*args)) {
+	    *minor_status = EINVAL;
+	    return GSS_S_FAILURE;
+	}
+
+	return _gsskrb5_krb5_ccache_name(minor_status, args->name, &args->out_name);
     } else if (gss_oid_equal(desired_object, GSS_KRB5_IMPORT_RFC4121_CONTEXT_X)) {
 	return make_rfc4121_context(minor_status, context, context_handle, value);
     }

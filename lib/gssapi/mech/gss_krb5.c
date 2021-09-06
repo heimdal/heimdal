@@ -487,26 +487,42 @@ gss_krb5_ccache_name(OM_uint32 *minor_status,
 {
     struct _gss_mech_switch *m;
     gss_buffer_desc buffer = GSS_C_EMPTY_BUFFER;
-    OM_uint32 junk;
+    OM_uint32 major_status;
+    struct gsskrb5_ccache_name_args args;
 
     _gss_load_mech();
+
+    *minor_status = 0;
 
     if (out_name)
 	*out_name = NULL;
 
-    buffer.value = rk_UNCONST(name);
-    if (name) {
-	buffer.length = strlen(name);
-    }
+    args.name = name;
+    args.out_name = NULL;
+
+    buffer.value = &args;
+    buffer.length = sizeof(args);
+
+    major_status = GSS_S_UNAVAILABLE;
 
     HEIM_TAILQ_FOREACH(m, &_gss_mechs, gm_link) {
+	OM_uint32 mech_major, mech_minor;
+
 	if (m->gm_mech.gm_set_sec_context_option == NULL)
 	    continue;
-	m->gm_mech.gm_set_sec_context_option(&junk, NULL,
-	    GSS_KRB5_CCACHE_NAME_X, &buffer);
+
+	mech_major = m->gm_mech.gm_set_sec_context_option(&mech_minor,
+	    NULL, GSS_KRB5_CCACHE_NAME_X, &buffer);
+	if (mech_major != GSS_S_UNAVAILABLE) {
+	    major_status = mech_major;
+	    *minor_status = mech_minor;
+	    break;
+	}
     }
 
-    return (GSS_S_COMPLETE);
+    *out_name = args.out_name;
+
+    return major_status;
 }
 
 

@@ -145,4 +145,9 @@ extern HEIMDAL_MUTEX gssapi_keytab_mutex;
 #define SC_ORDER          0x0080
 #define SC_AUTHENTICATOR  0x0100
 
+struct gsskrb5_ccache_name_args {
+    const char *name;
+    const char *out_name;
+};
+
 #endif

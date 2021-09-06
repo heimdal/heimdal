@@ -718,6 +718,9 @@ out:
 /**
  * Encodes an ntlm_type1 message.
  *
+ *     [MS-NLMP] 2.2.1.1 NEGOTIATE_MESSAGE
+ *     https://docs.microsoft.com/en-us/openspecs/windows_protocols/ms-nlmp/
+ *
  * @param type1 the ntlm_type1 message to encode.
  * @param data is the return buffer with the encoded message, should be
  * freed with heim_ntlm_free_buf().
@@ -738,38 +741,37 @@ heim_ntlm_encode_type1(const struct ntlm_type1 *type1, struct ntlm_buf *data)
     int ucs2 = 0;
 
     flags = type1->flags;
-    base = 16;
+    base = 16 + 2 * SIZE_SEC_BUFFER;
 
     if (flags & NTLM_NEG_UNICODE)
 	ucs2 = 1;
 
-    if (type1->domain) {
-	base += SIZE_SEC_BUFFER;
-	flags |= NTLM_OEM_SUPPLIED_DOMAIN;
-    }
-    if (type1->hostname) {
-	base += SIZE_SEC_BUFFER;
-	flags |= NTLM_OEM_SUPPLIED_WORKSTATION;
-    }
     if (flags & NTLM_NEG_VERSION)
 	base += SIZE_OS_VERSION; /* os */
 
+    /*
+     * Note that [MS-NLMP] 2.2.1.1 specifies that the offset of
+     * of domain and hostname must point to where the data would
+     * be in the payload if it were present.  That is: the offset
+     * must be valid regardless of whether the data is present.
+     */
+
+    domain.offset = base;
     if (type1->domain) {
-	domain.offset = base;
+	flags |= NTLM_OEM_SUPPLIED_DOMAIN;
 	domain.length = len_string(ucs2, type1->domain);
 	domain.allocated = domain.length;
     } else {
-	domain.offset = 0;
 	domain.length = 0;
 	domain.allocated = 0;
     }
 
+    hostname.offset = domain.allocated + domain.offset;
     if (type1->hostname) {
-	hostname.offset = domain.allocated + domain.offset;
+	flags |= NTLM_OEM_SUPPLIED_WORKSTATION;
 	hostname.length = len_string(ucs2, type1->hostname);
 	hostname.allocated = hostname.length;
     } else {
-	hostname.offset = 0;
 	hostname.length = 0;
 	hostname.allocated = 0;
     }

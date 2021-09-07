@@ -1211,6 +1211,7 @@ gss_pa_step(krb5_context context,
     krb5_data req_body;
     PA_DATA *pa;
     krb5_data *input_token;
+    KDC_REQ_BODY kdc_req_body;
 
     krb5_data_zero(&req_body);
     krb5_data_zero(output_token);
@@ -1238,8 +1239,16 @@ gss_pa_step(krb5_context context,
 	goto out;
     }
 
+    /*
+     * Zero the nonce before encoding, as the nonce may change between
+     * AS-REQs and we don't know which step the GSS mechanism will
+     * honor the channel binding data.
+     */
+    kdc_req_body = ctx->as_req.req_body;
+    kdc_req_body.nonce = 0;
+
     ASN1_MALLOC_ENCODE(KDC_REQ_BODY, req_body.data, req_body.length,
-		       &ctx->as_req.req_body, &len, ret);
+		       &kdc_req_body, &len, ret);
     if (ret)
 	goto out;
     heim_assert(req_body.length == len, "ASN.1 internal error");

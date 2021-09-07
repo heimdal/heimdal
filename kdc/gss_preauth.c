@@ -191,6 +191,7 @@ _kdc_gss_rd_padata(astgs_request_t r,
 {
     krb5_error_code ret;
     size_t size;
+    KDC_REQ_BODY kdc_req_body;
 
     OM_uint32 minor;
     gss_client_params *gcp = NULL;
@@ -231,8 +232,11 @@ _kdc_gss_rd_padata(astgs_request_t r,
 
     _krb5_gss_data_to_buffer(&pa->padata_value, &input_token);
 
+    kdc_req_body = r->req.req_body;
+    kdc_req_body.nonce = 0;
+
     ASN1_MALLOC_ENCODE(KDC_REQ_BODY, cb.application_data.value,
-                       cb.application_data.length, &r->req.req_body,
+                       cb.application_data.length, &kdc_req_body,
                        &size, ret);
     heim_assert(ret || size == cb.application_data.length,
                 "internal asn1 encoder error");

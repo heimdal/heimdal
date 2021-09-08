@@ -4,5 +4,5 @@
 
 Build and install instructions are located here:
 
-@url{https://github.com/heimdal/heimdal/wiki/Building-and-installing}
+@url{https://github.com/heimdal/heimdal/wiki}
 

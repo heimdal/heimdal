@@ -52,6 +52,7 @@ static Type *new_type (Typetype t);
 static struct constraint_spec *new_constraint_spec(enum ctype);
 static Type *new_tag(int tagclass, int tagvalue, int tagenv, Type *oldtype);
 void yyerror (const char *);
+#define yyerror yyerror
 static struct objid *new_objid(const char *label, int value);
 static void add_oid_to_tail(struct objid *, struct objid *);
 static void fix_labels(Symbol *s);

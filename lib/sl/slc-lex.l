@@ -80,7 +80,7 @@ error_message (const char *format, ...)
 }
 
 void
-yyerror (char *s)
+yyerror (const char *s)
 {
     error_message("%s\n", s);
 }

@@ -51,5 +51,6 @@ extern char *filename;
 extern int error_flag;
 void error_message (const char *format, ...);
 int yylex(void);
-void yyerror (char *s);
+void yyerror (const char *s);
+#define yyerror yyerror
 extern unsigned lineno;

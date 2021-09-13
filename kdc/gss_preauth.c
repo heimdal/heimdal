@@ -50,6 +50,7 @@ struct gss_client_params {
     gss_buffer_desc output_token;
     OM_uint32 flags;
     OM_uint32 lifetime;
+    krb5_checksum req_body_checksum;
 };
 
 static void
@@ -65,6 +66,135 @@ pa_gss_display_name(gss_name_t name,
                     gss_const_buffer_t *namebuf_p);
 
 /*
+ * Create a checksum over KDC-REQ-BODY (without the nonce), used to
+ * assert the request is invariant within the preauth conversation.
+ */
+static krb5_error_code
+pa_gss_create_req_body_checksum(astgs_request_t r,
+                                krb5_checksum *checksum)
+{
+    krb5_error_code ret;
+    KDC_REQ_BODY b = r->req.req_body;
+    krb5_data data;
+    size_t size;
+
+    b.nonce = 0;
+
+    ASN1_MALLOC_ENCODE(KDC_REQ_BODY, data.data, data.length, &b, &size, ret);
+    heim_assert(ret || data.length,
+                "internal asn1 encoder error");
+
+    ret = krb5_create_checksum(r->context, NULL, 0, CKSUMTYPE_SHA256,
+                               data.data, data.length, checksum);
+    krb5_data_free(&data);
+
+    return ret;
+}
+
+/*
+ * Verify a checksum over KDC-REQ-BODY (without the nonce), used to
+ * assert the request is invariant within the preauth conversation.
+ */
+static krb5_error_code
+pa_gss_verify_req_body_checksum(astgs_request_t r,
+                                krb5_checksum *checksum)
+{
+    krb5_error_code ret;
+    KDC_REQ_BODY b = r->req.req_body;
+    krb5_data data;
+    size_t size;
+
+    b.nonce = 0;
+
+    ASN1_MALLOC_ENCODE(KDC_REQ_BODY, data.data, data.length, &b, &size, ret);
+    heim_assert(ret || data.length,
+                "internal asn1 encoder error");
+
+    ret = krb5_verify_checksum(r->context, NULL, 0,
+                               data.data, data.length, checksum);
+    krb5_data_free(&data);
+
+    return ret;
+}
+
+/*
+ * Decode the FX-COOKIE context state, consisting of the exported
+ * GSS context token concatenated with the checksum of the initial
+ * KDC-REQ-BODY.
+ */
+static krb5_error_code
+pa_gss_decode_context_state(astgs_request_t r,
+                            const krb5_data *state,
+                            gss_buffer_t sec_context_token,
+                            krb5_checksum *req_body_checksum)
+{
+    krb5_error_code ret;
+    krb5_storage *sp;
+    size_t cksumsize;
+    krb5_data data;
+
+    memset(req_body_checksum, 0, sizeof(*req_body_checksum));
+    sec_context_token->length = 0;
+    sec_context_token->value = NULL;
+
+    krb5_data_zero(&data);
+
+    sp = krb5_storage_from_readonly_mem(state->data, state->length);
+    if (sp == NULL) {
+        ret = krb5_enomem(r->context);
+	goto out;
+    }
+
+    krb5_storage_set_eof_code(sp, KRB5_BAD_MSIZE);
+    krb5_storage_set_byteorder(sp, KRB5_STORAGE_BYTEORDER_PACKED);
+
+    ret = krb5_ret_data(sp, &data);
+    if (ret)
+        goto out;
+
+    ret = krb5_ret_int32(sp, &req_body_checksum->cksumtype);
+    if (ret)
+        goto out;
+
+    if (req_body_checksum->cksumtype == CKSUMTYPE_NONE ||
+	krb5_checksum_is_keyed(r->context, req_body_checksum->cksumtype)) {
+	ret = KRB5KDC_ERR_SUMTYPE_NOSUPP;
+	goto out;
+    }
+
+    ret = krb5_checksumsize(r->context, req_body_checksum->cksumtype,
+			    &cksumsize);
+    if (ret)
+        goto out;
+
+    req_body_checksum->checksum.data = malloc(cksumsize);
+    if (req_body_checksum->checksum.data == NULL) {
+        ret = krb5_enomem(r->context);
+        goto out;
+    }
+
+    if (krb5_storage_read(sp, req_body_checksum->checksum.data,
+                          cksumsize) != cksumsize) {
+        ret = KRB5_BAD_MSIZE;
+        goto out;
+    }
+
+    req_body_checksum->checksum.length = cksumsize;
+
+    _krb5_gss_data_to_buffer(&data, sec_context_token);
+
+out:
+    if (ret) {
+        krb5_data_free(&data);
+        free_Checksum(req_body_checksum);
+        memset(req_body_checksum, 0, sizeof(*req_body_checksum));
+    }
+    krb5_storage_free(sp);
+
+    return ret;
+}
+
+/*
  * Deserialize a GSS-API security context from the FAST cookie.
  */
 static krb5_error_code
@@ -73,25 +203,89 @@ pa_gss_get_context_state(astgs_request_t r,
 {
     int idx = 0;
     PA_DATA *fast_pa;
+    krb5_error_code ret;
+
+    OM_uint32 major, minor;
+    gss_buffer_desc sec_context_token;
 
     fast_pa = krb5_find_padata(r->fast.fast_state.val,
                                r->fast.fast_state.len,
                                KRB5_PADATA_GSS, &idx);
-    if (fast_pa) {
-        gss_buffer_desc sec_context_token;
-        OM_uint32 major, minor;
+    if (fast_pa == NULL)
+        return 0;
 
-        _krb5_gss_data_to_buffer(&fast_pa->padata_value, &sec_context_token);
-        major = gss_import_sec_context(&minor, &sec_context_token,
-                                       &gcp->context_handle);
-        if (GSS_ERROR(major))
-            pa_gss_display_status(r, major, minor, gcp,
-                                  "Failed to import GSS pre-authentication context");
+    ret = pa_gss_decode_context_state(r, &fast_pa->padata_value,
+                                      &sec_context_token,
+                                      &gcp->req_body_checksum);
+    if (ret)
+        return ret;
 
-        return _krb5_gss_map_error(major, minor);
+    ret = pa_gss_verify_req_body_checksum(r, &gcp->req_body_checksum);
+    if (ret)
+        return ret;
+
+    major = gss_import_sec_context(&minor, &sec_context_token,
+                                   &gcp->context_handle);
+    if (GSS_ERROR(major)) {
+        pa_gss_display_status(r, major, minor, gcp,
+                              "Failed to import GSS pre-authentication context");
+	ret = _krb5_gss_map_error(major, minor);
+    } else
+	ret = 0;
+
+    gss_release_buffer(&minor, &sec_context_token);
+
+    return ret;
+}
+
+/*
+ * Encode the FX-COOKIE context state, consisting of the exported
+ * GSS context token concatenated with the checksum of the initial
+ * KDC-REQ-BODY.
+ */
+static krb5_error_code
+pa_gss_encode_context_state(astgs_request_t r,
+                            gss_const_buffer_t sec_context_token,
+                            const krb5_checksum *req_body_checksum,
+                            krb5_data *state)
+{
+    krb5_error_code ret;
+    krb5_storage *sp;
+    krb5_data data;
+
+    krb5_data_zero(state);
+
+    sp = krb5_storage_emem();
+    if (sp == NULL) {
+        ret = krb5_enomem(r->context);
+	goto out;
     }
 
-    return 0;
+    krb5_storage_set_byteorder(sp, KRB5_STORAGE_BYTEORDER_PACKED);
+
+    _krb5_gss_buffer_to_data(sec_context_token, &data);
+
+    ret = krb5_store_data(sp, data);
+    if (ret)
+        goto out;
+
+    ret = krb5_store_int32(sp, req_body_checksum->cksumtype);
+    if (ret)
+        goto out;
+
+    ret = krb5_store_bytes(sp, req_body_checksum->checksum.data,
+                           req_body_checksum->checksum.length);
+    if (ret)
+        goto out;
+
+    ret = krb5_storage_to_data(sp, state);
+    if (ret)
+        goto out;
+
+out:
+    krb5_storage_free(sp);
+
+    return ret;
 }
 
 /*
@@ -104,9 +298,21 @@ pa_gss_set_context_state(astgs_request_t r,
     krb5_error_code ret;
     PA_DATA *fast_pa;
     int idx = 0;
+    krb5_data state;
 
     OM_uint32 major, minor;
     gss_buffer_desc sec_context_token = GSS_C_EMPTY_BUFFER;
+
+    /*
+     * On second and subsequent responses, we can recycle the checksum
+     * from the request as it is validated and invariant. This saves
+     * re-encoding the request body again.
+     */
+    if (gcp->req_body_checksum.cksumtype == CKSUMTYPE_NONE) {
+        ret = pa_gss_create_req_body_checksum(r, &gcp->req_body_checksum);
+        if (ret)
+            return ret;
+    }
 
     major = gss_export_sec_context(&minor, &gcp->context_handle,
                                    &sec_context_token);
@@ -116,25 +322,27 @@ pa_gss_set_context_state(astgs_request_t r,
         return _krb5_gss_map_error(major, minor);
     }
 
+    ret = pa_gss_encode_context_state(r, &sec_context_token,
+                                      &gcp->req_body_checksum, &state);
+    gss_release_buffer(&minor, &sec_context_token);
+    if (ret)
+        return ret;
+
     fast_pa = krb5_find_padata(r->fast.fast_state.val,
                                r->fast.fast_state.len,
                                KRB5_PADATA_GSS, &idx);
     if (fast_pa) {
         krb5_data_free(&fast_pa->padata_value);
-        _krb5_gss_buffer_to_data(&sec_context_token, &fast_pa->padata_value);
+        fast_pa->padata_value = state;
     } else {
-        ret = krb5_padata_add(r->context,
-                              &r->fast.fast_state,
+        ret = krb5_padata_add(r->context, &r->fast.fast_state,
                               KRB5_PADATA_GSS,
-                              sec_context_token.value,
-                              sec_context_token.length);
-        if (ret) {
-            gss_release_buffer(&minor, &sec_context_token);
-            return ret;
-        }
+                              state.data, state.length);
+        if (ret)
+            krb5_data_free(&state);
     }
 
-    return 0;
+    return ret;
 }
 
 static krb5_error_code
@@ -656,6 +864,7 @@ _kdc_gss_free_client_param(astgs_request_t r,
     gss_delete_sec_context(&minor, &gcp->context_handle, GSS_C_NO_BUFFER);
     gss_release_name(&minor, &gcp->initiator_name);
     gss_release_buffer(&minor, &gcp->output_token);
+    free_Checksum(&gcp->req_body_checksum);
     memset(gcp, 0, sizeof(*gcp));
     free(gcp);
 }

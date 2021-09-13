@@ -134,7 +134,7 @@ TDB__get(krb5_context context, HDB *db, krb5_data key, krb5_data *reply)
 {
     krb5_error_code ret = 0;
     TEST_HDB *tdb = (void *)db;
-    heim_object_t k, v;
+    heim_object_t k, v = NULL;
 
     if ((k = heim_data_create(key.data, key.length)) == NULL)
         ret = krb5_enomem(context);
@@ -479,12 +479,14 @@ fetch_entries(krb5_context context,
               int must_fail)
 {
     krb5_error_code ret = 0;
-    krb5_principal p;
+    krb5_principal p = NULL;
     krb5_keyblock base_key, dk;
     hdb_entry_ex *ep;
     hdb_entry_ex no;
     size_t i, b;
-    int toffset;
+    int toffset = 0;
+
+    memset(&base_key, 0, sizeof(base_key));
 
     /* Work out offset of first entry in `e[]' */
     assert(kr < sizeof(krs) / sizeof(krs[0]));
@@ -808,7 +810,7 @@ main(int argc, char **argv)
     krb5_error_code ret;
     krb5_context context;
     size_t i;
-    HDB *db;
+    HDB *db = NULL;
 
     setprogname(argv[0]);
     memset(e, 0, sizeof(e));

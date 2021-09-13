@@ -145,15 +145,16 @@ loop(gss_OID mechoid,
     int server_done = 0, client_done = 0;
     int num_loops = 0;
     OM_uint32 maj_stat, min_stat;
-    gss_name_t gss_target_name, src_name;
-    gss_buffer_desc input_token, output_token;
+    gss_name_t gss_target_name, src_name = GSS_C_NO_NAME;
+    gss_buffer_desc input_token = GSS_C_EMPTY_BUFFER;
+    gss_buffer_desc output_token = GSS_C_EMPTY_BUFFER;
 #ifdef DO_IMPORT_EXPORT_OF_CLIENT_CONTEXT
     gss_buffer_desc cctx_tok = GSS_C_EMPTY_BUFFER;
 #endif
     gss_buffer_desc sctx_tok = GSS_C_EMPTY_BUFFER;
-    OM_uint32 flags = 0, ret_cflags, ret_sflags;
-    gss_OID actual_mech_client;
-    gss_OID actual_mech_server;
+    OM_uint32 flags = 0, ret_cflags = 0, ret_sflags = 0;
+    gss_OID actual_mech_client = GSS_C_NO_OID;
+    gss_OID actual_mech_server = GSS_C_NO_OID;
     struct gss_channel_bindings_struct i_channel_bindings_data = {0};
     struct gss_channel_bindings_struct a_channel_bindings_data = {0};
     gss_channel_bindings_t i_channel_bindings_p = GSS_C_NO_CHANNEL_BINDINGS;

@@ -356,7 +356,6 @@ _kdc_fast_unwrap_request(kdc_request_t r)
     krb5_keyblock armorkey;
     krb5_error_code ret;
     krb5_ap_req ap_req;
-    unsigned char *buf = NULL;
     KrbFastReq fastreq;
     size_t len, size;
     krb5_data data;
@@ -483,18 +482,10 @@ _kdc_fast_unwrap_request(kdc_request_t r)
     krb5_free_keyblock_contents(r->context, &armorkey);
 
     /* verify req-checksum of the outer body */
-
-    ASN1_MALLOC_ENCODE(KDC_REQ_BODY, buf, len, &r->req.req_body, &size, ret);
-    if (ret)
-	goto out;
-    if (size != len) {
-	ret = KRB5KDC_ERR_PREAUTH_FAILED;
-	goto out;
-    }
-
     ret = krb5_verify_checksum(r->context, r->armor_crypto,
 			       KRB5_KU_FAST_REQ_CHKSUM,
-			       buf, len, 
+			       r->req.req_body._save.data,
+			       r->req.req_body._save.length,
 			       &fxreq.u.armored_data.req_checksum);
     if (ret) {
 	kdc_log(r->context, r->config, 0,

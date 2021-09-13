@@ -248,6 +248,7 @@ init_generate (const char *filename, const char *base)
 	  "    (BL) = length_##T((S));                                    \\\n"
 	  "    (B) = malloc((BL));                                        \\\n"
 	  "    if((B) == NULL) {                                          \\\n"
+	  "      *(L) = 0;                                                \\\n"
 	  "      (R) = ENOMEM;                                            \\\n"
 	  "    } else {                                                   \\\n"
 	  "      (R) = encode_##T(((unsigned char*)(B)) + (BL) - 1, (BL), \\\n"
@@ -255,6 +256,7 @@ init_generate (const char *filename, const char *base)
 	  "      if((R) != 0) {                                           \\\n"
 	  "        free((B));                                             \\\n"
 	  "        (B) = NULL;                                            \\\n"
+	  "        *(L) = 0;                                              \\\n"
 	  "      }                                                        \\\n"
 	  "    }                                                          \\\n"
 	  "  } while (0)\n\n",

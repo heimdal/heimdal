@@ -167,22 +167,44 @@ _key_schedule(krb5_context context,
  ************************************************************/
 
 static krb5_error_code
-SHA1_checksum(krb5_context context,
-	      krb5_crypto crypto,
-	      struct _krb5_key_data *key,
-	      unsigned usage,
-	      const struct krb5_crypto_iov *iov,
-	      int niov,
-	      Checksum *C)
+EVP_unkeyed_checksum(krb5_context context,
+		     krb5_crypto crypto,
+		     struct _krb5_key_data *key,
+		     unsigned usage,
+		     const struct krb5_crypto_iov *iov,
+		     int niov,
+		     Checksum *C,
+		     const EVP_MD *md)
 {
     if (_krb5_evp_digest_iov(crypto,
 			     iov, niov,
 			     C->checksum.data, NULL,
-			     EVP_sha1(), NULL) != 1)
-	krb5_abortx(context, "sha1 checksum failed");
+			     md, NULL) != 1)
+	krb5_abortx(context, "unkeyed checksum failed");
 
     return 0;
 }
+
+#define EVP_SHA_CHECKSUM(name)				    \
+							    \
+    static krb5_error_code				    \
+    SHA ## name ##_checksum(krb5_context context,	    \
+		       krb5_crypto crypto,		    \
+		       struct _krb5_key_data *key,	    \
+		       unsigned usage,			    \
+		       const struct krb5_crypto_iov *iov,   \
+		       int niov,			    \
+		       Checksum *C)			    \
+    {							    \
+	return EVP_unkeyed_checksum(context, crypto, key,   \
+				    usage, iov, niov,	    \
+				    C, EVP_sha##name());    \
+    }
+
+EVP_SHA_CHECKSUM(1)
+EVP_SHA_CHECKSUM(256)
+EVP_SHA_CHECKSUM(384)
+EVP_SHA_CHECKSUM(512)
 
 /* HMAC according to RFC2104 */
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
@@ -369,15 +391,21 @@ _krb5_SP_HMAC_SHA1_verify(krb5_context context,
     return 0;
 }
 
-struct _krb5_checksum_type _krb5_checksum_sha1 = {
-    CKSUMTYPE_SHA1,
-    "sha1",
-    64,
-    20,
-    F_CPROOF,
-    SHA1_checksum,
-    NULL
-};
+#define SHA_CHECKSUM(name, blocksize, outputsize)	    \
+    struct _krb5_checksum_type _krb5_checksum_sha##name = { \
+	CKSUMTYPE_SHA##name,				    \
+	"sha" #name,					    \
+	blocksize,					    \
+	outputsize,					    \
+	F_CPROOF,					    \
+	SHA##name##_checksum,				    \
+	NULL						    \
+    };
+
+SHA_CHECKSUM(1,   64,  20);
+SHA_CHECKSUM(256, 64,  32);
+SHA_CHECKSUM(384, 128, 48);
+SHA_CHECKSUM(512, 128, 64);
 
 KRB5_LIB_FUNCTION struct _krb5_checksum_type * KRB5_LIB_CALL
 _krb5_find_checksum(krb5_cksumtype type)

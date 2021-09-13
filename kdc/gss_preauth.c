@@ -190,7 +190,6 @@ _kdc_gss_rd_padata(astgs_request_t r,
                    int *open)
 {
     krb5_error_code ret;
-    size_t size;
 
     OM_uint32 minor;
     gss_client_params *gcp = NULL;
@@ -230,12 +229,7 @@ _kdc_gss_rd_padata(astgs_request_t r,
         goto out;
 
     _krb5_gss_data_to_buffer(&pa->padata_value, &input_token);
-
-    ASN1_MALLOC_ENCODE(KDC_REQ_BODY, cb.application_data.value,
-                       cb.application_data.length, &r->req.req_body,
-                       &size, ret);
-    heim_assert(ret || size == cb.application_data.length,
-                "internal asn1 encoder error");
+    _krb5_gss_data_to_buffer(&r->req.req_body._save, &cb.application_data);
 
     gcp->major = gss_accept_sec_context(&gcp->minor,
                                         &gcp->context_handle,
@@ -263,7 +257,6 @@ _kdc_gss_rd_padata(astgs_request_t r,
 
 out:
     gss_release_cred(&minor, &cred);
-    gss_release_buffer(&minor, &cb.application_data);
 
     if (gcp && gcp->major != GSS_S_NO_CONTEXT)
         *pgcp = gcp;

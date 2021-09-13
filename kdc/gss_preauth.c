@@ -221,8 +221,10 @@ pa_gss_get_context_state(astgs_request_t r,
         return ret;
 
     ret = pa_gss_verify_req_body_checksum(r, &gcp->req_body_checksum);
-    if (ret)
+    if (ret) {
+        gss_release_buffer(&minor, &sec_context_token);
         return ret;
+    }
 
     major = gss_import_sec_context(&minor, &sec_context_token,
                                    &gcp->context_handle);

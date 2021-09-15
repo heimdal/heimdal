@@ -1081,6 +1081,11 @@ ext-SubjectInfoAccessSyntax _EXTENSION ::= {
     &Critical FALSE,
     &ExtnType SubjectInfoAccessSyntax
 }
+ext-ProxyCertInfo _EXTENSION ::= {
+    &id id-pkix-pe-proxyCertInfo,
+    &Critical FALSE,
+    &ExtnType ProxyCertInfo
+}
 HeimPkinitPrincMaxLifeSecs ::= INTEGER (0..4294967295)
 ext-HeimPkinitPrincMaxLife _EXTENSION ::= {
     &id id-heim-ce-pkinit-princ-max-life,
@@ -1106,6 +1111,7 @@ CertExtensions _EXTENSION ::= {
   | ext-FreshestCRL
   | ext-AuthorityInfoAccess
   | ext-SubjectInfoAccessSyntax
+  | ext-ProxyCertInfo
   | ext-HeimPkinitPrincMaxLife
 }
 

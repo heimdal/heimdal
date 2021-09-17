@@ -260,6 +260,8 @@ krb5_verify_authenticator_checksum(krb5_context context,
     ret = krb5_crypto_init(context, key, 0, &crypto);
     if (ret)
 	goto out;
+
+    _krb5_crypto_set_flags(context, crypto, KRB5_CRYPTO_FLAG_ALLOW_UNKEYED_CHECKSUM);
     ret = krb5_verify_checksum(context, crypto,
                                KRB5_KU_AP_REQ_AUTH_CKSUM,
                                data, len, authenticator->cksum);

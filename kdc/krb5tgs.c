@@ -809,16 +809,8 @@ tgs_check_authenticator(krb5_context context,
 	ret = KRB5KRB_AP_ERR_INAPP_CKSUM;
 	goto out;
     }
-    /*
-     * according to RFC1510 it doesn't need to be keyed,
-     * but according to the latest draft it needs to.
-     */
-    if (
-#if 0
-!krb5_checksum_is_keyed(context, auth->cksum->cksumtype)
-	||
-#endif
- !krb5_checksum_is_collision_proof(context, auth->cksum->cksumtype)) {
+
+    if (!krb5_checksum_is_collision_proof(context, auth->cksum->cksumtype)) {
 	kdc_log(context, config, 4, "Bad checksum type in authenticator: %d",
 		auth->cksum->cksumtype);
 	ret =  KRB5KRB_AP_ERR_INAPP_CKSUM;
@@ -832,6 +824,12 @@ tgs_check_authenticator(krb5_context context,
 	krb5_free_error_message(context, msg);
 	goto out;
     }
+
+    /*
+     * RFC4120 says the checksum must be collision-proof, but it does
+     * not require it to be keyed (as the authenticator is encrypted).
+     */
+    _krb5_crypto_set_flags(context, crypto, KRB5_CRYPTO_FLAG_ALLOW_UNKEYED_CHECKSUM);
     ret = krb5_verify_checksum(context,
 			       crypto,
 			       KRB5_KU_TGS_REQ_AUTH_CKSUM,

@@ -218,6 +218,13 @@ struct krb5_crypto_data {
     HMAC_CTX *hmacctx;
     int num_key_usage;
     struct _krb5_key_usage *key_usage;
+    krb5_flags flags;
 };
+
+/*
+ * Allow generation and verification of unkeyed checksums even when
+ * key material is available.
+ */
+#define KRB5_CRYPTO_FLAG_ALLOW_UNKEYED_CHECKSUM		    0x01
 
 #endif

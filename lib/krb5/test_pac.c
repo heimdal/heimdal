@@ -762,8 +762,7 @@ t_err(krb5_context context,
       const char *func,
       krb5_error_code error)
 {
-   fprintf(stderr, "test %s failed\n", test);
-   krb5_err(context, 1, error, func);
+   krb5_err(context, 1, error, "test %s failed in %s", test, func);
 }
 
 static krb5_boolean

@@ -110,8 +110,7 @@ pa_gss_verify_req_body_checksum(astgs_request_t r,
     heim_assert(ret || data.length,
                 "internal asn1 encoder error");
 
-    ret = krb5_verify_checksum(r->context, NULL, 0,
-                               data.data, data.length, checksum);
+    ret = _kdc_verify_checksum(r->context, NULL, 0, &data, checksum);
     krb5_data_free(&data);
 
     return ret;

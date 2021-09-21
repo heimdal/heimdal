@@ -791,6 +791,24 @@ out:
     return ret;
 }
 
+krb5_error_code
+_kdc_verify_checksum(krb5_context context,
+		     krb5_crypto crypto,
+		     krb5_key_usage usage,
+		     const krb5_data *data,
+		     Checksum *cksum)
+{
+    krb5_error_code ret;
+
+    ret = krb5_verify_checksum(context, crypto, usage,
+			       data->data, data->length,
+			       cksum);
+    if (ret == KRB5_PROG_SUMTYPE_NOSUPP)
+	ret = KRB5KDC_ERR_SUMTYPE_NOSUPP;
+
+    return ret;
+}
+
 static krb5_error_code
 tgs_check_authenticator(krb5_context context,
 			krb5_kdc_configuration *config,
@@ -830,11 +848,10 @@ tgs_check_authenticator(krb5_context context,
      * not require it to be keyed (as the authenticator is encrypted).
      */
     _krb5_crypto_set_flags(context, crypto, KRB5_CRYPTO_FLAG_ALLOW_UNKEYED_CHECKSUM);
-    ret = krb5_verify_checksum(context,
+    ret = _kdc_verify_checksum(context,
 			       crypto,
 			       KRB5_KU_TGS_REQ_AUTH_CKSUM,
-			       b->_save.data,
-			       b->_save.length,
+			       &b->_save,
 			       auth->cksum);
     krb5_crypto_destroy(context, crypto);
     if(ret){
@@ -1862,11 +1879,10 @@ server_lookup:
 		    ret = KRB5KRB_AP_ERR_BAD_INTEGRITY;
 	    }
 	    else {
-		ret = krb5_verify_checksum(context,
+		ret = _kdc_verify_checksum(context,
 					   crypto,
 					   KRB5_KU_OTHER_CKSUM,
-					   datack.data,
-					   datack.length,
+					   &datack,
 					   &self.cksum);
 	    }
 	    krb5_data_free(&datack);

@@ -475,10 +475,9 @@ fast_unwrap_request(astgs_request_t r)
     krb5_free_keyblock_contents(r->context, &armorkey);
 
     /* verify req-checksum of the outer body */
-    ret = krb5_verify_checksum(r->context, r->armor_crypto,
+    ret = _kdc_verify_checksum(r->context, r->armor_crypto,
 			       KRB5_KU_FAST_REQ_CHKSUM,
-			       r->req.req_body._save.data,
-			       r->req.req_body._save.length,
+			       &r->req.req_body._save,
 			       &fxreq.u.armored_data.req_checksum);
     if (ret) {
 	kdc_log(r->context, r->config, 2,

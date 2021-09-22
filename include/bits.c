@@ -303,7 +303,8 @@ int main(int argc, char **argv)
     fprintf(f, "#endif\n\n");
 
     fprintf(f, "#endif /* %s */\n", hb);
-
+    char *hb_tmp=hb;
+    free(ht_tmp);
     if (f != stdout)
 	fclose(f);
     return 0;

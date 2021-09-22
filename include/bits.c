@@ -137,6 +137,7 @@ int main(int argc, char **argv)
 	    if(!isalnum((unsigned char)*p))
 		*p = '_';
 	}
+	free(ht);
 	f = fopen(argv[1], "w");
     }
     fprintf(f, "#ifndef %s\n", hb);

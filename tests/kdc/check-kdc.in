@@ -903,6 +903,14 @@ ${kimpersonate} -s ${ps} -c bar@${R} -t ${aesenctype} || \
 ${kgetcred} --out-cache=${o2cache} --delegation-credential-cache=${ocache} ${server}@${R} > /dev/null 2>/dev/null && \
 	{ ec=1 ; eval "${testfailed}"; }
 
+echo "test constrained delegation evidence (evidence from AS)"; > messages.log
+# This fails because we don't add PAC ticket-signature in AS-REP (as Windows).
+${kinit} --cache=${ocache} --password-file=${objdir}/barpassword \
+	--forwardable --server=${ps} bar@${R} || \
+        { ec=1 ; eval "${testfailed}"; }
+${kgetcred} --delegation-credential-cache=${ocache} ${server}@${R} && \
+	{ ec=1 ; eval "${testfailed}"; }
+
 echo "test constrained delegation impersonation (missing PAC)"; > messages.log
 rm -f ocache.krb5
 ${kimpersonate} -s ${ps} -c bar@${R} -t ${aesenctype} -f forwardable || \

@@ -58,10 +58,13 @@ kinit="${kinit} -c $cache ${afs_no_afslog}"
 klist="${klist} -c $cache"
 kgetcred="${kgetcred} -c $cache"
 kdestroy="${kdestroy} -c $cache ${afs_no_unlog}"
+keytabfile=${objdir}/server.keytab
+keytab="FILE:${keytabfile}"
 
 KRB5_CONFIG="${objdir}/krb5.conf"
 export KRB5_CONFIG
 
+rm -f ${keytabfile}
 rm -f current-db*
 rm -f out-*
 rm -f mkey.file*
@@ -92,6 +95,8 @@ ${kadmin} add -p foo --use-defaults 'baz\@realm.foo@'${R} || exit 1
 
 ${kadmin} add -p cross1 --use-defaults krbtgt/${R2}@${R} || exit 1
 ${kadmin} add -p cross2 --use-defaults krbtgt/${R}@${R2} || exit 1
+
+${kadmin} ext -k ${keytab} krbtgt/${R}@${R} || exit 1
 
 echo "Doing database check"
 ${kadmin} check ${R} || exit 1
@@ -143,6 +148,9 @@ ${kinit} --canonicalize --enterprise \
 echo "checking that we got back right principal"
 ${klist} | grep "Principal: foo@${R}" > /dev/null || \
 	{ ec=1 ; eval "${testfailed}"; }
+echo "checking that we got back right principal inside the PAC"
+${test_ap_req} krbtgt/${R}@${R} ${keytab} ${cache} || \
+	{ ec=1 ; eval "${testfailed}"; }
 ${kdestroy}
 
 echo "Getting client alias1 tickets"; > messages.log
@@ -151,6 +159,9 @@ ${kinit} --canonicalize --enterprise \
 	{ ec=1 ; eval "${testfailed}"; }
 echo "checking that we got back right principal"
 ${klist} | grep "Principal: foo@${R}" > /dev/null || \
+	{ ec=1 ; eval "${testfailed}"; }
+echo "checking that we got back right principal inside the PAC"
+${test_ap_req} krbtgt/${R}@${R} ${keytab} ${cache} || \
 	{ ec=1 ; eval "${testfailed}"; }
 ${kdestroy}
 
@@ -162,11 +173,19 @@ ${kinit} --canonicalize --enterprise \
 echo "checking that we got back right principal"
 ${klist} | grep "Principal: foo@${R}" > /dev/null || \
 	{ ec=1 ; eval "${testfailed}"; }
+echo "checking that we got back right principal inside the PAC"
+${test_ap_req} krbtgt/${R}@${R} ${keytab} ${cache} || \
+	{ ec=1 ; eval "${testfailed}"; }
 ${kdestroy}
 
 echo "Getting client alias1 tickets (non canon case)"; > messages.log
-${kinit} --password-file=${objdir}/foopassword \
-	alias1@${R}@${R} > /dev/null 2>/dev/null && \
+${kinit} --password-file=${objdir}/foopassword alias1@${R} || \
+	{ ec=1 ; eval "${testfailed}"; }
+echo "checking that we got back right principal"
+${klist} | grep "Principal: alias1@${R}" > /dev/null || \
+	{ ec=1 ; eval "${testfailed}"; }
+echo "checking that we got back right principal inside the PAC"
+${test_ap_req} krbtgt/${R}@${R} ${keytab} ${cache} || \
 	{ ec=1 ; eval "${testfailed}"; }
 
 echo "Getting client alias2 tickets (removed)"; > messages.log

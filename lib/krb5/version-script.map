@@ -814,6 +814,7 @@ HEIMDAL_KRB5_2.0 {
 		_krb5_get_int;
 		_krb5_get_int64;
 		_krb5_pac_sign;
+		_krb5_pac_get_canon_principal;
 		_krb5_kdc_pac_sign_ticket;
 		_krb5_kdc_pac_ticket_parse;
 		_kdc_tkt_insert_pac;

@@ -1823,3 +1823,99 @@ cleanup:
     }
     return ret;
 }
+
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
+_krb5_ret_data_at_offset(krb5_storage *sp,
+			 size_t offset,
+			 size_t length,
+			 krb5_data *data)
+{
+    krb5_error_code ret;
+    off_t cur, size;
+
+    krb5_data_zero(data);
+
+    cur = sp->seek(sp, 0, SEEK_CUR);
+    if (cur < 0)
+	return HEIM_ERR_NOT_SEEKABLE;
+
+    size = sp->seek(sp, 0, SEEK_END);
+    if (offset + length > size) {
+	ret = ERANGE;
+	goto cleanup;
+    }
+
+    ret = krb5_data_alloc(data, length);
+    if (ret)
+	goto cleanup;
+
+    if (length) {
+	sp->seek(sp, offset, SEEK_SET);
+
+	size = sp->fetch(sp, data->data, length);
+	heim_assert(size == length, "incomplete buffer fetched");
+    }
+
+cleanup:
+    sp->seek(sp, cur, SEEK_SET);
+
+    return ret;
+}
+
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
+_krb5_ret_utf8_from_ucs2le_at_offset(krb5_storage *sp,
+				     size_t offset,
+				     size_t length,
+				     char **utf8)
+{
+    krb5_error_code ret;
+    krb5_data data;
+    size_t ucs2len = length / 2;
+    uint16_t *ucs2 = NULL;
+    size_t u8len;
+    unsigned int flags = WIND_RW_LE;
+
+    *utf8 = NULL;
+
+    krb5_data_zero(&data);
+
+    ret = _krb5_ret_data_at_offset(sp, offset, length, &data);
+    if (ret)
+	goto out;
+
+    ucs2 = malloc(sizeof(ucs2[0]) * ucs2len);
+    if (ucs2 == NULL) {
+	ret = ENOMEM;
+	goto out;
+    }
+
+    ret = wind_ucs2read(data.data, data.length, &flags, ucs2, &ucs2len);
+    if (ret)
+	goto out;
+
+    ret = wind_ucs2utf8_length(ucs2, ucs2len, &u8len);
+    if (ret)
+	goto out;
+
+    u8len += 1; /* Add space for NUL */
+
+    *utf8 = malloc(u8len);
+    if (*utf8 == NULL) {
+	ret = ENOMEM;
+	goto out;
+    }
+
+    ret = wind_ucs2utf8(ucs2, ucs2len, *utf8, &u8len);
+    if (ret)
+	goto out;
+
+out:
+    if (ret && *utf8) {
+	free(*utf8);
+	*utf8 = NULL;
+    }
+    free(ucs2);
+    krb5_data_free(&data);
+
+    return ret;
+}

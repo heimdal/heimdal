@@ -100,6 +100,7 @@ ${ktutil} -k ${keytab} rename --no-delete host/short@${R} host/long.test.h5l.se@
 ${kadmin} add -p kaka --use-defaults digest/${R}@${R} || exit 1
 
 ${kadmin} add -p u1 --use-defaults user1@${R} || exit 1
+${kadmin} mod --alias=user1.alias user1@${R} || exit 1
 
 # Create a server principal with no AES
 ${kadmin} add -p p1 --use-defaults host/no-aes.test.h5l.se@${R} || exit 1
@@ -311,6 +312,22 @@ for mech in krb5 spnego; do
 done
 
 rm ${keytabfile}.new
+
+echo "====== test PAC-based name canonicalization"
+
+${kdestroy}
+${kinit} --password-file=${objdir}/foopassword user1.alias@${R} || \
+	{ eval "$testfailed"; }
+
+for mech in krb5 spnego; do
+	KRB5_CONFIG="${objdir}/new_clients_k5.conf" ${context} -v \
+		--mech-type=$mech host@lucid.test.h5l.se > name-canon.log || \
+		{ eval "$testfailed"; }
+	grep "client name:" name-canon.log | grep "user1.alias@TEST.H5L.SE" > /dev/null && \
+		{ echo "client name not canonicalized"; eval "$testfailed"; }
+	grep "client name:" name-canon.log | grep "user1@TEST.H5L.SE" > /dev/null || \
+		{ echo "wrong client name"; eval "$testfailed"; }
+done
 
 echo "====== test channel-bindings."
 

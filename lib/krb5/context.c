@@ -240,6 +240,7 @@ init_context_from_config_file(krb5_context context)
     INIT_FLAG(context, flags, KRB5_CTX_F_DNS_CANONICALIZE_HOSTNAME, TRUE, "dns_canonicalize_hostname");
     INIT_FLAG(context, flags, KRB5_CTX_F_CHECK_PAC, TRUE, "check_pac");
     INIT_FLAG(context, flags, KRB5_CTX_F_ENFORCE_OK_AS_DELEGATE, FALSE, "enforce_ok_as_delegate");
+    INIT_FLAG(context, flags, KRB5_CTX_F_REPORT_CANONICAL_CLIENT_NAME, FALSE, "report_canonical_client_name");
 
     if (context->default_cc_name)
 	free(context->default_cc_name);

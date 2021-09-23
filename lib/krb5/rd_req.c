@@ -1042,6 +1042,17 @@ krb5_rd_req_ctx(krb5_context context,
 				  o->ticket->client,
 				  o->keyblock,
 				  NULL);
+	    if (ret == 0 && (context->flags & KRB5_CTX_F_REPORT_CANONICAL_CLIENT_NAME)) {
+		krb5_error_code ret2;
+		krb5_principal canon_name;
+
+		ret2 = _krb5_pac_get_canon_principal(context, pac, &canon_name);
+		if (ret2 == 0) {
+		    krb5_free_principal(context, o->ticket->client);
+		    o->ticket->client = canon_name;
+		} else if (ret2 != ENOENT)
+		    ret = ret2;
+	    }
 	    krb5_pac_free(context, pac);
 	    if (ret)
 		goto out;

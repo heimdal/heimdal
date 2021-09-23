@@ -53,8 +53,15 @@ struct krb5_pac_data {
     struct PAC_INFO_BUFFER *server_checksum;
     struct PAC_INFO_BUFFER *privsvr_checksum;
     struct PAC_INFO_BUFFER *logon_name;
+    struct PAC_INFO_BUFFER *upn_dns_info;
     struct PAC_INFO_BUFFER *ticket_checksum;
     krb5_data ticket_sign_data;
+
+    /* parsed upn_dns_info, krb5_pac_verify only */
+    krb5_principal upn_princ;
+    uint32_t upn_flags;
+    krb5_principal canon_princ;
+    krb5_data sid;
 };
 
 #define PAC_ALIGNMENT			8
@@ -66,7 +73,12 @@ struct krb5_pac_data {
 #define PAC_PRIVSVR_CHECKSUM		7
 #define PAC_LOGON_NAME			10
 #define PAC_CONSTRAINED_DELEGATION	11
+#define PAC_UPN_DNS_INFO		12
 #define PAC_TICKET_CHECKSUM		16
+
+/* Flag in PAC_UPN_DNS_INFO, _krb5_pac_get_upn_dns_info() */
+#define PAC_EXTRA_LOGON_INFO_FLAGS_UPN_DEFAULTED	0x1
+#define PAC_EXTRA_LOGON_INFO_FLAGS_HAS_SAM_NAME_AND_SID	0x2
 
 #define CHECK(r,f,l)						\
 	do {							\
@@ -242,6 +254,14 @@ krb5_pac_parse(krb5_context context, const void *ptr, size_t len,
 		goto out;
 	    }
 	    p->logon_name = &p->pac->buffers[i];
+	} else if (p->pac->buffers[i].type == PAC_UPN_DNS_INFO) {
+	    if (p->upn_dns_info) {
+		ret = EINVAL;
+		krb5_set_error_message(context, ret,
+				       N_("PAC has multiple UPN DNS info buffers", ""));
+		goto out;
+	    }
+	    p->upn_dns_info = &p->pac->buffers[i];
 	} else if (p->pac->buffers[i].type == PAC_TICKET_CHECKSUM) {
 	    if (p->ticket_checksum) {
 		ret = EINVAL;
@@ -445,6 +465,11 @@ krb5_pac_free(krb5_context context, krb5_pac pac)
 	return;
     krb5_data_free(&pac->data);
     krb5_data_free(&pac->ticket_sign_data);
+
+    krb5_free_principal(context, pac->upn_princ);
+    krb5_free_principal(context, pac->canon_princ);
+    krb5_data_free(&pac->sid);
+
     free(pac->pac);
     free(pac);
 }
@@ -604,6 +629,185 @@ create_checksum(krb5_context context,
     return 0;
 }
 
+static krb5_error_code
+parse_upn_dns_info(krb5_context context,
+		   const struct PAC_INFO_BUFFER *upndnsinfo,
+		   const krb5_data *data,
+		   krb5_principal *upn_princ,
+		   uint32_t *flags,
+		   krb5_principal *sam_name_princ,
+		   krb5_data *sid)
+{
+    krb5_error_code ret;
+    krb5_storage *sp = NULL;
+    uint16_t upn_length, upn_offset;
+    uint16_t dns_domain_name_length, dns_domain_name_offset;
+    uint16_t sam_name_length, sam_name_offset;
+    uint16_t sid_length, sid_offset;
+    char *upn = NULL;
+    char *dns_domain_name = NULL;
+    char *sam_name = NULL;
+
+    *upn_princ = NULL;
+    *flags = 0;
+    *sam_name_princ = NULL;
+    krb5_data_zero(sid);
+
+    sp = krb5_storage_from_readonly_mem((const char *)data->data + upndnsinfo->offset_lo,
+					upndnsinfo->buffersize);
+    if (sp == NULL)
+	return krb5_enomem(context);
+
+    krb5_storage_set_flags(sp, KRB5_STORAGE_BYTEORDER_LE);
+
+    CHECK(ret, krb5_ret_uint16(sp, &upn_length), out);
+    CHECK(ret, krb5_ret_uint16(sp, &upn_offset), out);
+    CHECK(ret, krb5_ret_uint16(sp, &dns_domain_name_length), out);
+    CHECK(ret, krb5_ret_uint16(sp, &dns_domain_name_offset), out);
+    CHECK(ret, krb5_ret_uint32(sp, flags), out);
+
+    if (*flags & PAC_EXTRA_LOGON_INFO_FLAGS_HAS_SAM_NAME_AND_SID) {
+	CHECK(ret, krb5_ret_uint16(sp, &sam_name_length), out);
+	CHECK(ret, krb5_ret_uint16(sp, &sam_name_offset), out);
+	CHECK(ret, krb5_ret_uint16(sp, &sid_length), out);
+	CHECK(ret, krb5_ret_uint16(sp, &sid_offset), out);
+    }
+
+    CHECK(ret, _krb5_ret_utf8_from_ucs2le_at_offset(sp, upn_offset,
+						    upn_length, &upn), out);
+    CHECK(ret, _krb5_ret_utf8_from_ucs2le_at_offset(sp, dns_domain_name_offset,
+						    dns_domain_name_length, &dns_domain_name), out);
+    if (*flags & PAC_EXTRA_LOGON_INFO_FLAGS_HAS_SAM_NAME_AND_SID) {
+	CHECK(ret, _krb5_ret_utf8_from_ucs2le_at_offset(sp, sam_name_offset,
+							sam_name_length, &sam_name), out);
+    }
+
+    if (upn_length) {
+	ret = krb5_parse_name_flags(context,
+				    upn,
+				    KRB5_PRINCIPAL_PARSE_ENTERPRISE |
+				    KRB5_PRINCIPAL_PARSE_NO_DEF_REALM,
+				    upn_princ);
+	if (ret)
+	    goto out;
+
+	ret = krb5_principal_set_realm(context, *upn_princ, dns_domain_name);
+	if (ret)
+	    goto out;
+    }
+
+    if (*flags & PAC_EXTRA_LOGON_INFO_FLAGS_HAS_SAM_NAME_AND_SID) {
+	ret = krb5_parse_name_flags(context,
+				    sam_name,
+				    KRB5_PRINCIPAL_PARSE_NO_REALM |
+				    KRB5_PRINCIPAL_PARSE_NO_DEF_REALM,
+				    sam_name_princ);
+	if (ret)
+	    goto out;
+
+	ret = krb5_principal_set_realm(context, *sam_name_princ, dns_domain_name);
+	if (ret)
+	    goto out;
+
+	CHECK(ret, _krb5_ret_data_at_offset(sp, sid_offset, sid_length, sid), out);
+    }
+
+out:
+    free(upn);
+    free(dns_domain_name);
+    free(sam_name);
+
+    krb5_storage_free(sp);
+    return ret;
+}
+
+#define UPN_DNS_INFO_EX_LENGTH	20
+
+static krb5_error_code
+build_upn_dns_info(krb5_context context,
+		   krb5_const_principal upn_princ,
+		   krb5_const_principal canon_princ,
+		   krb5_data *upn_dns_info)
+{
+    krb5_error_code ret;
+    krb5_storage *sp = NULL;
+    char *upn_princ_name = NULL;
+    char *canon_princ_name = NULL;
+    uint32_t flags;
+    krb5_const_realm realm;
+
+    sp = krb5_storage_emem();
+    if (sp == NULL) {
+	ret = krb5_enomem(context);
+	goto out;
+    }
+
+    krb5_storage_set_flags(sp, KRB5_STORAGE_BYTEORDER_LE);
+
+    if (upn_princ) {
+	ret = krb5_unparse_name_flags(context, upn_princ,
+				      KRB5_PRINCIPAL_UNPARSE_DISPLAY,
+				      &upn_princ_name);
+	if (ret)
+	    goto out;
+    }
+
+    ret = krb5_storage_truncate(sp, UPN_DNS_INFO_EX_LENGTH);
+    if (ret)
+	goto out;
+
+    ret = _krb5_store_utf8_as_ucs2le_at_offset(sp, (off_t)-1, upn_princ_name);
+    if (ret)
+	goto out;
+
+    if (canon_princ) {
+	ret = krb5_unparse_name_flags(context, canon_princ,
+				      KRB5_PRINCIPAL_UNPARSE_NO_REALM |
+				      KRB5_PRINCIPAL_UNPARSE_DISPLAY,
+				      &canon_princ_name);
+	if (ret)
+	    goto out;
+    }
+
+    if (canon_princ)
+	realm = canon_princ->realm;
+    else if (upn_princ)
+	realm = upn_princ->realm;
+    else
+	realm = NULL;
+
+    ret = _krb5_store_utf8_as_ucs2le_at_offset(sp, (off_t)-1, realm);
+    if (ret)
+	goto out;
+
+    flags = 0;
+    if (upn_princ)
+	flags |= PAC_EXTRA_LOGON_INFO_FLAGS_UPN_DEFAULTED;
+    if (canon_princ)
+	flags |= PAC_EXTRA_LOGON_INFO_FLAGS_HAS_SAM_NAME_AND_SID;
+
+    ret = krb5_store_uint32(sp, flags);
+    if (ret)
+	goto out;
+
+    ret = _krb5_store_utf8_as_ucs2le_at_offset(sp, (off_t)-1,
+					       canon_princ_name);
+    if (ret)
+	goto out;
+
+    ret = krb5_storage_to_data(sp, upn_dns_info);
+    if (ret)
+	goto out;
+
+out:
+    if (ret)
+	krb5_data_free(upn_dns_info);
+
+    krb5_xfree(canon_princ_name);
+    krb5_xfree(upn_princ_name);
+
+    return ret;
+}
 
 /*
  *
@@ -628,7 +832,7 @@ verify_logonname(krb5_context context,
 {
     krb5_error_code ret;
     uint32_t time1, time2;
-    krb5_storage *sp;
+    krb5_storage *sp = NULL;
     uint16_t len;
     char *s = NULL;
     char *principal_string = NULL;
@@ -734,6 +938,7 @@ verify_logonname(krb5_context context,
     free(principal_string);
     return ret;
 out:
+    krb5_storage_free(sp);
     return ret;
 }
 
@@ -949,6 +1154,20 @@ krb5_pac_verify(krb5_context context,
 	}
     }
 
+    if (pac->upn_dns_info &&
+	pac->upn_princ == NULL && pac->canon_princ == NULL && pac->sid.data == NULL) {
+	ret = parse_upn_dns_info(context, pac->upn_dns_info, &pac->data,
+				 &pac->upn_princ, &pac->upn_flags,
+				 &pac->canon_princ, &pac->sid);
+	if (ret)
+	    return ret;
+
+	if (pac->canon_princ &&
+	    !krb5_realm_compare(context, principal, pac->canon_princ)) {
+	    return KRB5KRB_AP_ERR_MODIFIED;
+	}
+    }
+
     return 0;
 }
 
@@ -1012,10 +1231,12 @@ KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 _krb5_pac_sign(krb5_context context,
 	       krb5_pac p,
 	       time_t authtime,
-	       krb5_principal principal,
+	       krb5_const_principal principal,
 	       const krb5_keyblock *server_key,
 	       const krb5_keyblock *priv_key,
 	       uint16_t rodc_id,
+	       krb5_const_principal upn_princ,
+	       krb5_const_principal canon_princ,
 	       krb5_data *data)
 {
     krb5_error_code ret;
@@ -1027,9 +1248,11 @@ _krb5_pac_sign(krb5_context context,
     int num = 0;
     size_t i, sz;
     krb5_data logon, d;
+    krb5_data upn_dns_info;
 
     krb5_data_zero(&d);
     krb5_data_zero(&logon);
+    krb5_data_zero(&upn_dns_info);
 
     for (i = 0; i < p->pac->numbuffers; i++) {
 	if (p->pac->buffers[i].type == PAC_SERVER_CHECKSUM) {
@@ -1062,6 +1285,16 @@ _krb5_pac_sign(krb5_context context,
 				       N_("PAC has multiple logon names", ""));
 		goto out;
 	    }
+	} else if (p->pac->buffers[i].type == PAC_UPN_DNS_INFO) {
+	    if (p->upn_dns_info == NULL) {
+		p->upn_dns_info = &p->pac->buffers[i];
+	    }
+	    if (p->upn_dns_info != &p->pac->buffers[i]) {
+		ret = KRB5KDC_ERR_BADOPTION;
+		krb5_set_error_message(context, ret,
+				       N_("PAC has multiple UPN DNS info buffers", ""));
+		goto out;
+	    }
 	} else if (p->pac->buffers[i].type == PAC_TICKET_CHECKSUM) {
 	    if (p->ticket_checksum == NULL) {
 		p->ticket_checksum = &p->pac->buffers[i];
@@ -1080,6 +1313,8 @@ _krb5_pac_sign(krb5_context context,
     if (p->server_checksum == NULL)
 	num++;
     if (p->privsvr_checksum == NULL)
+	num++;
+    if ((upn_princ || canon_princ) && p->upn_dns_info == NULL)
 	num++;
     if (p->ticket_sign_data.length != 0 && p->ticket_checksum == NULL)
 	num++;
@@ -1110,9 +1345,14 @@ _krb5_pac_sign(krb5_context context,
 	    memset(p->privsvr_checksum, 0, sizeof(*p->privsvr_checksum));
 	    p->privsvr_checksum->type = PAC_PRIVSVR_CHECKSUM;
 	}
+	if ((upn_princ || canon_princ) && p->upn_dns_info == NULL) {
+	    p->upn_dns_info = &p->pac->buffers[p->pac->numbuffers++];
+	    memset(p->upn_dns_info, 0, sizeof(*p->upn_dns_info));
+	    p->upn_dns_info->type = PAC_UPN_DNS_INFO;
+	}
 	if (p->ticket_sign_data.length != 0 && p->ticket_checksum == NULL) {
 	    p->ticket_checksum = &p->pac->buffers[p->pac->numbuffers++];
-	    memset(p->ticket_checksum, 0, sizeof(*p->privsvr_checksum));
+	    memset(p->ticket_checksum, 0, sizeof(*p->ticket_checksum));
 	    p->ticket_checksum->type = PAC_TICKET_CHECKSUM;
 	}
     }
@@ -1126,6 +1366,9 @@ _krb5_pac_sign(krb5_context context,
 
     if (ret == 0)
         ret = pac_checksum(context, priv_key, &priv_cksumtype, &priv_size);
+
+    if (upn_princ || canon_princ)
+	ret = build_upn_dns_info(context, upn_princ, canon_princ, &upn_dns_info);
 
     /* Encode PAC */
     if (ret == 0) {
@@ -1187,6 +1430,13 @@ _krb5_pac_sign(krb5_context context,
 	} else if (p->pac->buffers[i].type == PAC_LOGON_NAME) {
 	    len = krb5_storage_write(spdata, logon.data, logon.length);
 	    if (logon.length != len) {
+		ret = KRB5KDC_ERR_BADOPTION;
+		goto out;
+	    }
+	} else if ((upn_princ || canon_princ) &&
+		   p->pac->buffers[i].type == PAC_UPN_DNS_INFO) {
+	    len = krb5_storage_write(spdata, upn_dns_info.data, upn_dns_info.length);
+	    if (upn_dns_info.length != len) {
 		ret = KRB5KDC_ERR_BADOPTION;
 		goto out;
 	    }
@@ -1279,6 +1529,7 @@ _krb5_pac_sign(krb5_context context,
     *data = d;
 
     krb5_data_free(&logon);
+    krb5_data_free(&upn_dns_info);
     krb5_storage_free(sp);
     krb5_storage_free(spdata);
 
@@ -1286,6 +1537,7 @@ _krb5_pac_sign(krb5_context context,
 out:
     krb5_data_free(&d);
     krb5_data_free(&logon);
+    krb5_data_free(&upn_dns_info);
     if (sp)
 	krb5_storage_free(sp);
     if (spdata)
@@ -1345,6 +1597,20 @@ out:
     krb5_storage_free(sp);
 
     return ret;
+}
+
+
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
+_krb5_pac_get_canon_principal(krb5_context context,
+			      krb5_pac pac,
+			      krb5_principal *canon_princ)
+{
+    *canon_princ = NULL;
+
+    if (pac->canon_princ == NULL)
+	return ENOENT;
+
+    return krb5_copy_principal(context, pac->canon_princ, canon_princ);
 }
 
 static unsigned char single_zero = '\0';
@@ -1470,12 +1736,14 @@ out:
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 _krb5_kdc_pac_sign_ticket(krb5_context context,
 			  const krb5_pac pac,
-			  krb5_principal client,
+			  krb5_const_principal client,
 			  const krb5_keyblock *server_key,
 			  const krb5_keyblock *kdc_key,
 			  uint16_t rodc_id,
 			  krb5_boolean add_ticket_sig,
-			  EncTicketPart *tkt)
+			  EncTicketPart *tkt,
+			  krb5_const_principal upn,
+			  krb5_const_principal canon_name)
 {
     krb5_error_code ret;
     krb5_data tkt_data;
@@ -1510,7 +1778,7 @@ _krb5_kdc_pac_sign_ticket(krb5_context context,
     }
 
     ret = _krb5_pac_sign(context, pac, tkt->authtime, client, server_key,
-			 kdc_key, rodc_id, &rspac);
+			 kdc_key, rodc_id, upn, canon_name, &rspac);
     if (ret == 0)
         ret = _kdc_tkt_insert_pac(context, tkt, &rspac);
     krb5_data_free(&rspac);

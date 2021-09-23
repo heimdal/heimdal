@@ -102,8 +102,11 @@ split_spec(const char *spec, char **host, int *port, char **path, int def_port)
     if(p) {
 	if(path) {
 	    *path = strdup(p);
-	    if (*path == NULL)
+	    if (*path == NULL) {
+		free(*host);
+		*host = NULL;
 		return -1;
+	    }
 	}
 	*p = '\0';
     }else

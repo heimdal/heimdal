@@ -6,15 +6,6 @@ but with some simplifications to the protocol.
 
 The following text assumes the reader is familiar with the draft.
 
-## Protocol changes
-
-  - The pre-authentication type KRB5-PADATA-GSS is 655
-  - Pre-authentication data is the raw context token rather than being
-    wrapped in another ASN.1 type
-  - Acceptor GSS state is stored in FX-COOKIE rather than alongside the
-    context token
-  - Key derivation salt is the string "KRB-GSS\0" || nonce
-
 ## Client side
 
 Because libkrb5 cannot have a recursive dependency on libgssapi, it instead

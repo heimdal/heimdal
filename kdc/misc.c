@@ -304,3 +304,20 @@ _kdc_get_preferred_key(krb5_context context,
     return EINVAL; /* XXX */
 }
 
+krb5_error_code
+_kdc_verify_checksum(krb5_context context,
+		     krb5_crypto crypto,
+		     krb5_key_usage usage,
+		     const krb5_data *data,
+		     Checksum *cksum)
+{
+    krb5_error_code ret;
+
+    ret = krb5_verify_checksum(context, crypto, usage,
+			       data->data, data->length,
+			       cksum);
+    if (ret == KRB5_PROG_SUMTYPE_NOSUPP)
+	ret = KRB5KDC_ERR_SUMTYPE_NOSUPP;
+
+    return ret;
+}

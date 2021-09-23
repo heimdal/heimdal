@@ -1821,6 +1821,7 @@ generate_pac(astgs_request_t r, Key *skey)
     krb5_pac p = NULL;
     krb5_data data;
     uint16_t rodc_id;
+    krb5_principal client;
 
     ret = _kdc_pac_generate(r->context, r->client, &p);
     if (ret) {
@@ -1833,12 +1834,21 @@ generate_pac(astgs_request_t r, Key *skey)
 
     rodc_id = r->server->entry.kvno >> 16;
 
+    /* libkrb5 expects ticket and PAC client names to match */
+    ret = _krb5_principalname2krb5_principal(r->context, &client,
+					     r->et.cname, r->et.crealm);
+    if (ret) {
+	krb5_pac_free(r->context, p);
+	return ret;
+    }
+
     ret = _krb5_pac_sign(r->context, p, r->et.authtime,
-			 r->client->entry.principal,
+			 client,
 			 &skey->key, /* Server key */
 			 &skey->key, /* FIXME: should be krbtgt key */
 			 rodc_id,
 			 &data);
+    krb5_free_principal(r->context, client);
     krb5_pac_free(r->context, p);
     if (ret) {
 	_kdc_r_log(r, 4, "PAC signing failed for -- %s",

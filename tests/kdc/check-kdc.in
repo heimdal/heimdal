@@ -865,11 +865,14 @@ ${kinit} --cache=${icache} --forwardable --password-file=${objdir}/barpassword b
         { ec=1 ; eval "${testfailed}"; }
 ${kgetcred} --cache=${icache} --out-cache=${ocache} ${ps} || \
 	{ ec=1 ; eval "${testfailed}"; }
+# Bug #816 have a regular ticket in ${cache} for ${server} see that it isn't used
+${kgetcred} ${server}@${R} || { ec=1 ; eval "${testfailed}"; }
 ${kgetcred} \
 	--out-cache=${o2cache} \
 	--delegation-credential-cache=${ocache} \
 	${server}@${R} || \
 	{ ec=1 ; eval "${testfailed}"; }
+klist -c $o2cache | grep "Default principal: bar@${R}" || { ec=1 ; eval "${testfailed}"; }
 echo "  try using the credential"
 ${test_ap_req} ${server}@${R} ${keytab} ${o2cache} || \
 	{ ec=1 ; eval "${testfailed}"; }
@@ -892,6 +895,7 @@ ${kgetcred} \
 	--delegation-credential-cache=${ocache} \
 	${server}@${R} || \
 	{ ec=1 ; eval "${testfailed}"; }
+klist -c $o2cache | grep "Default principal: foo@${R2}" || { ec=1 ; eval "${testfailed}"; }
 echo "  try using the credential"
 ${test_ap_req} ${server}@${R} ${keytab} ${o2cache} || \
 	{ ec=1 ; eval "${testfailed}"; }
@@ -933,6 +937,7 @@ ${kgetcred} \
 	--delegation-credential-cache=${ocache} \
 	${server}@${R} || \
 	{ ec=1 ; eval "${testfailed}"; }
+klist -c $o2cache | grep "Default principal: bar@${R}" || { ec=1 ; eval "${testfailed}"; }
 ${test_ap_req} ${server}@${R} ${keytab} ${o2cache} || \
 	{ ec=1 ; eval "${testfailed}"; }
 

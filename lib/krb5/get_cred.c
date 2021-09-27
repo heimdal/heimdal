@@ -1067,7 +1067,7 @@ get_cred_kdc_referral(krb5_context context,
 	char *referral_realm;
 
 	/* Use cache if we are not doing impersonation or contrained deleg */
-	if (impersonate_principal == NULL || flags.b.cname_in_addl_tkt) {
+	if (impersonate_principal == NULL && !flags.b.cname_in_addl_tkt) {
 	    krb5_cc_clear_mcred(&mcreds);
 	    mcreds.server = referral.server;
 	    krb5_timeofday(context, &mcreds.times.endtime);
@@ -1621,13 +1621,15 @@ next_rule:
 	goto out;
     }
 
-    ret = check_cc(context, options, ccache, &in_creds, res_creds);
-    if (ret == 0) {
-	*out_creds = res_creds;
-        res_creds = NULL;
-	goto out;
-    } else if (ret != KRB5_CC_END) {
-	goto out;
+    if ((options & KRB5_GC_CONSTRAINED_DELEGATION) == 0) {
+	ret = check_cc(context, options, ccache, &in_creds, res_creds);
+	if (ret == 0) {
+	    *out_creds = res_creds;
+	    res_creds = NULL;
+	    goto out;
+	} else if (ret != KRB5_CC_END) {
+	    goto out;
+	}
     }
     if (options & KRB5_GC_CACHED)
 	goto next_rule;

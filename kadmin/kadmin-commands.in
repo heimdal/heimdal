@@ -610,6 +610,20 @@ command = {
 	help = "Modifies some attributes of the specified principal."
 }
 command = {
+	name = "add_alias"
+        function = "add_alias"
+	argument = "principal"
+	min_args = "2"
+	help = "Add one or more aliases to the given principal."
+}
+command = {
+	name = "del_alias"
+        function = "del_alias"
+	argument = "principal"
+	min_args = "1"
+	help = "Delete one or more aliases without deleting their canonical principals."
+}
+command = {
 	name = "prune"
 	argument = "principal"
 	option = {

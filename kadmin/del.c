@@ -97,3 +97,117 @@ del_namespace(void *opt, int argc, char **argv)
     }
     return ret != 0;
 }
+
+int
+del_alias(void *opt, int argc, char **argv)
+{
+    krb5_error_code ret;
+    size_t i;
+
+
+    if (argc < 1) {
+        krb5_warnx(context, "No aliases given");
+        return 1;
+    }
+
+    for (; argc; argc--, argv++) {
+        kadm5_principal_ent_rec princ;
+        krb5_principal p;
+        HDB_Ext_Aliases *a;
+        HDB_extension ext;
+        krb5_tl_data *tl;
+        krb5_data d;
+
+        if ((ret = krb5_parse_name(context, argv[0], &p))) {
+            krb5_warn(context, ret, "Invalid principal: %s", argv[0]);
+            return 1;
+        }
+
+        memset(&princ, 0, sizeof(princ));
+        ret = kadm5_get_principal(kadm_handle, p, &princ,
+                                  KADM5_PRINCIPAL_NORMAL_MASK | KADM5_TL_DATA);
+        if (ret) {
+            krb5_warn(context, ret, "Principal alias not found %s", argv[0]);
+            continue;
+        }
+
+        if (krb5_principal_compare(context, p, princ.principal)) {
+            krb5_warn(context, ret, "Not deleting principal %s because it is "
+                      "not an alias; use 'delete' to delete the principal",
+                      argv[0]);
+            continue;
+        }
+
+        a = &ext.data.u.aliases;
+        a->case_insensitive = 0;
+        a->aliases.len = 0;
+        a->aliases.val = 0;
+        if ((tl = get_tl(&princ, KRB5_TL_ALIASES)) == NULL) {
+            krb5_warnx(context, "kadm5_get_principal() found principal %s but "
+                       "not its aliases", argv[0]);
+            kadm5_free_principal_ent(kadm_handle, &princ);
+            krb5_free_principal(context, p);
+            return 1;
+        }
+
+        ret = decode_HDB_Ext_Aliases(tl->tl_data_contents, tl->tl_data_length,
+                                     a, NULL);
+        if (ret) {
+            krb5_warn(context, ret, "Principal alias list could not be decoded");
+            kadm5_free_principal_ent(kadm_handle, &princ);
+            krb5_free_principal(context, p);
+            return 1;
+        }
+
+        /*
+         * Remove alias, but also, don't assume it appears only once in aliases
+         * list.
+         */
+        i = 0;
+        while (i < a->aliases.len) {
+            if (!krb5_principal_compare(context, p, &a->aliases.val[i])) {
+                i++;
+                continue;
+            }
+            free_Principal(&a->aliases.val[i]);
+            if (i + 1 < a->aliases.len)
+                memmove(&a->aliases.val[i],
+                        &a->aliases.val[i + 1],
+                        sizeof(a->aliases.val[i]) * (a->aliases.len - (i + 1)));
+            if (a->aliases.len)
+                a->aliases.len--;
+            continue;
+        }
+
+        krb5_data_zero(&d);
+        ext.data.element = choice_HDB_extension_data_aliases;
+        ext.mandatory = 0;
+        if (ret == 0)
+            ASN1_MALLOC_ENCODE(HDB_extension, d.data, d.length, &ext, &i, ret);
+        free_HDB_Ext_Aliases(a);
+        if (ret == 0) {
+            int16_t len = d.length;
+
+            if (len < 0 || d.length != (size_t)len) {
+                krb5_warnx(context, "Too many aliases; does not fit in 32767 bytes");
+                ret = EOVERFLOW;
+            } else  {
+                add_tl(&princ, KRB5_TL_EXTENSION, &d);
+                krb5_data_zero(&d);
+            }
+        }
+        if (ret == 0) {
+            ret = kadm5_modify_principal(kadm_handle, &princ,
+                                         KADM5_PRINCIPAL | KADM5_TL_DATA);
+            if (ret)
+                krb5_warn(context, ret, "kadm5_modify_principal");
+        }
+
+        kadm5_free_principal_ent(kadm_handle, &princ);
+        krb5_free_principal(context, p);
+        krb5_data_free(&d);
+        p = NULL;
+    }
+
+    return ret == 0 ? 0 : 1;
+}

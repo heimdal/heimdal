@@ -70,7 +70,14 @@ ${kadmin} modify --alias=foo-alias1@${R} --alias=foo-alias2@${R} foo@${R} || exi
 
 echo "Adding bar"
 ${kadmin} add -p foo --use-defaults  bar@${R} || exit 1
-${kadmin} modify --alias=bar-alias1@${R} bar@${R} || exit 1
+${kadmin} add_alias bar@${R} bar-alias1@${R} bar-alias2@${R} || exit 1
+${kadmin} add_alias bar@${R} bar-alias4@${R} bar-alias3@${R} || exit 1
+${kadmin} get -o principal bar@${R} | grep "Principal:.bar@${R}" >/dev/null || exit 1
+${kadmin} get -o principal bar-alias1@${R} | grep "Principal:.bar@${R}" >/dev/null || exit 1
+${kadmin} get -o aliases bar@${R} | grep "Aliases:.*bar-alias1@${R}" >/dev/null || exit 1
+${kadmin} get -o aliases bar@${R} | grep "Aliases:.*bar-alias2@${R}" >/dev/null || exit 1
+${kadmin} get -o aliases bar@${R} | grep "Aliases:.*bar-alias3@${R}" >/dev/null || exit 1
+${kadmin} get -o aliases bar@${R} | grep "Aliases:.*bar-alias4@${R}" >/dev/null || exit 1
 
 echo "Baz does not exists"
 
@@ -85,10 +92,18 @@ ${kadmin} rename bar${R} foo${R} 2>/dev/null && exit 1
 ${kadmin} rename baz${R} foo-alias1${R} 2>/dev/null && exit 1
 ${kadmin} rename baz${R} foo${R} 2>/dev/null && exit 1
 
-echo "Delete alias"
+echo "Delete alias (must fail)"
 ${kadmin} delete foo-alias1${R} 2>/dev/null && exit 1
 ${kadmin} delete bar-alias1${R} 2>/dev/null && exit 1
 ${kadmin} delete baz-alias1${R} 2>/dev/null && exit 1
+
+echo "Delete aliases with del_alias (must succeed)"
+${kadmin} del_alias bar-alias2@${R} bar-alias3@${R} bar-alias4@${R} || exit 1
+${kadmin} get -o principal bar@${R} | grep "Principal:.bar@${R}" >/dev/null || exit 1
+${kadmin} get -o aliases bar@${R} | grep "Aliases:.*bar-alias1@${R}" >/dev/null || exit 1
+${kadmin} get -o aliases bar@${R} | grep "Aliases:.*bar-alias2@${R}" >/dev/null && exit 1
+${kadmin} get -o aliases bar@${R} | grep "Aliases:.*bar-alias3@${R}" >/dev/null && exit 1
+${kadmin} get -o aliases bar@${R} | grep "Aliases:.*bar-alias4@${R}" >/dev/null && exit 1
 
 echo "Delete"
 ${kadmin} delete bar@${R} || exit 1
@@ -99,6 +114,13 @@ echo "Add alias to deleted name"
 ${kadmin} modify --alias=bar-alias1@${R} foo@${R} || exit 1
 ${kadmin} modify --alias=bar@${R} foo@${R} || exit 1
 ${kadmin} modify --alias=bar@${R} --alias=baz@${R} foo@${R} || exit 1
+${kadmin} get -o principal foo@${R} | grep "Principal:.foo@${R}" >/dev/null || exit 1
+${kadmin} get -o principal bar@${R} | grep "Principal:.foo@${R}" >/dev/null || exit 1
+${kadmin} get -o principal baz@${R} | grep "Principal:.foo@${R}" >/dev/null || exit 1
+${kadmin} get -o aliases foo@${R} |grep "Aliases:.*bar@${R}" >/dev/null || exit 1
+${kadmin} get -o aliases foo@${R} |grep "Aliases:.*baz@${R}" >/dev/null || exit 1
+${kadmin} get -o aliases foo@${R} |grep "Aliases:.*bar-alias1@${R}" >/dev/null && exit 1
+${kadmin} get bar-alias1@${R} 2>/dev/null && exit 1
 
 echo "Rename over self alias key"
 ${kadmin} rename foo@${R} foo-alias1@${R} 2>/dev/null && exit 1
@@ -109,5 +131,4 @@ ${kadmin} modify --alias=foo foo-alias1@${R} || exit 1
 echo "Doing database check"
 ${kadmin} check ${R} || exit 1
 
-
-exit $ec
+exit 0

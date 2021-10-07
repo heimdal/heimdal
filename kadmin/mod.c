@@ -45,6 +45,9 @@ add_tl(kadm5_principal_ent_rec *princ, int type, krb5_data *data)
     tl->tl_data_length = data->length;
     tl->tl_data_contents = data->data;
 
+    if (tl->tl_data_length < 0 || data->length != (size_t)tl->tl_data_length)
+        errx(1, "TL data overflow");
+
     princ->n_tl_data++;
     ptl = &princ->tl_data;
     while (*ptl != NULL)
@@ -52,6 +55,20 @@ add_tl(kadm5_principal_ent_rec *princ, int type, krb5_data *data)
     *ptl = tl;
 
     return;
+}
+
+/*
+ * Find a TL data of type KRB5_TL_EXTENSION that has an extension of type
+ * `etype' in it.
+ */
+krb5_tl_data *
+get_tl(kadm5_principal_ent_rec *princ, int type)
+{
+    krb5_tl_data *tl = princ->tl_data;
+
+    while (tl && tl->tl_data_type != type)
+        tl = tl->tl_data_next;
+    return tl;
 }
 
 static void
@@ -655,4 +672,146 @@ modify_ns_kr(struct modify_namespace_key_rotation_options *opt,
     }
     return ret != 0;
     return 0;
+}
+
+#define princ_realm(P) ((P)->realm)
+#define princ_num_comp(P) ((P)->name.name_string.len)
+#define princ_ncomp(P, N) ((P)->name.name_string.val[(N)])
+
+static int
+princ_cmp(const void *a, const void *b)
+{
+    krb5_const_principal pa = a;
+    krb5_const_principal pb = b;
+    size_t i;
+    int r;
+
+    r = strcmp(princ_realm(pa), princ_realm(pb));
+    if (r == 0)
+        r = princ_num_comp(pa) - princ_num_comp(pb);
+    for (i = 0; r == 0 && i < princ_num_comp(pa); i++)
+        r = strcmp(princ_ncomp(pa, i), princ_ncomp(pb, i));
+    return r;
+}
+
+/* Sort and remove dups */
+static void
+uniq(HDB_Ext_Aliases *a)
+{
+    size_t i = 0;
+
+    qsort(a->aliases.val, a->aliases.len, sizeof(a->aliases.val[0]),
+          princ_cmp);
+
+    /* While there are at least two principals left to look at... */
+    while (i + 1 < a->aliases.len) {
+        if (princ_cmp(&a->aliases.val[i], &a->aliases.val[i + 1])) {
+            /* ...if they are different, increment i and loop */
+            i++;
+            continue;
+        }
+        /* ...else drop the one on the right and loop w/o incrementing i */
+        free_Principal(&a->aliases.val[i + 1]);
+        if (i + 2 < a->aliases.len)
+            memmove(&a->aliases.val[i + 1],
+                    &a->aliases.val[i + 2],
+                    sizeof(a->aliases.val[i + 1]) * (a->aliases.len - (i + 2)));
+        a->aliases.len--;
+    }
+}
+
+int
+add_alias(void *opt, int argc, char **argv)
+{
+    kadm5_principal_ent_rec princ;
+    krb5_error_code ret;
+    krb5_principal p = NULL;
+    HDB_Ext_Aliases *a;
+    HDB_extension ext;
+    krb5_tl_data *tl = NULL;
+    krb5_data d;
+    size_t i;
+
+    memset(&princ, 0, sizeof(princ));
+    krb5_data_zero(&d);
+
+    if (argc < 2) {
+        krb5_warnx(context, "Principal not given");
+        return 1;
+    }
+    ret = krb5_parse_name(context, argv[0], &p);
+    if (ret) {
+        krb5_warn(context, ret, "Invalid principal: %s", argv[0]);
+        return 1;
+    }
+
+    ret = kadm5_get_principal(kadm_handle, p, &princ,
+			      KADM5_PRINCIPAL_NORMAL_MASK | KADM5_TL_DATA);
+    if (ret) {
+	krb5_warn(context, ret, "Principal not found %s", argv[0]);
+        return 1;
+    }
+    krb5_free_principal(context, p);
+    p = NULL;
+
+    a = &ext.data.u.aliases;
+    a->case_insensitive = 0;
+    a->aliases.len = 0;
+    a->aliases.val = 0;
+    if ((tl = get_tl(&princ, KRB5_TL_ALIASES))) {
+        ret = decode_HDB_Ext_Aliases(tl->tl_data_contents, tl->tl_data_length,
+                                     a, NULL);
+        if (ret) {
+            kadm5_free_principal_ent(kadm_handle, &princ);
+            krb5_warn(context, ret, "Principal has invalid aliases extension "
+                      "contents: %s", argv[0]);
+            return 1;
+        }
+    }
+
+    argv++;
+    argc--;
+
+    a->aliases.val = realloc(a->aliases.val,
+                            sizeof(a->aliases.val[0]) * (a->aliases.len + argc));
+    if (a->aliases.val == NULL)
+        krb5_err(context, 1, errno, "Out of memory");
+    for (i = 0; ret == 0 && i < argc; i++) {
+        ret = krb5_parse_name(context, argv[i], &p);
+        if (ret) {
+            krb5_warn(context, ret, "krb5_parse_name");
+            break;
+        }
+        ret = copy_Principal(p, &a->aliases.val[a->aliases.len]);
+        krb5_free_principal(context, p);
+        if (ret == 0)
+            a->aliases.len++;
+    }
+    uniq(a);
+
+    ext.data.element = choice_HDB_extension_data_aliases;
+    ext.mandatory = 0;
+    if (ret == 0)
+        ASN1_MALLOC_ENCODE(HDB_extension, d.data, d.length, &ext, &i, ret);
+    free_HDB_extension(&ext);
+    if (ret == 0) {
+        int16_t len = d.length;
+
+        if (len < 0 || d.length != (size_t)len) {
+            krb5_warnx(context, "Too many aliases; does not fit in 32767 bytes");
+            ret = EOVERFLOW;
+        }
+    }
+    if (ret == 0) {
+        add_tl(&princ, KRB5_TL_EXTENSION, &d);
+        krb5_data_zero(&d);
+        ret = kadm5_modify_principal(kadm_handle, &princ,
+                                     KADM5_PRINCIPAL | KADM5_TL_DATA);
+        if (ret)
+            krb5_warn(context, ret, "kadm5_modify_principal");
+    }
+
+    kadm5_free_principal_ent(kadm_handle, &princ);
+    krb5_data_free(&d);
+    return ret == 0 ? 0 : 1;
 }

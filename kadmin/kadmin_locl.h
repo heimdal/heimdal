@@ -161,4 +161,7 @@ handle_mit(krb5_context, void *, size_t, int, int);
 void
 add_tl(kadm5_principal_ent_rec *, int, krb5_data *);
 
+krb5_tl_data *
+get_tl(kadm5_principal_ent_rec *, int);
+
 #endif /* __ADMIN_LOCL_H__ */

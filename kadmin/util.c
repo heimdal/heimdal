@@ -635,8 +635,8 @@ foreach_principal(const char *exp_str,
 	}
 	ret = (*func)(princ_ent, data);
 	if(ret) {
-	    krb5_clear_error_message(context);
 	    krb5_warn(context, ret, "%s %s", funcname, princs[i]);
+	    krb5_clear_error_message(context);
 	    if (saved_ret == 0)
 		saved_ret = ret;
 	}

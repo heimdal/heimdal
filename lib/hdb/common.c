@@ -1476,6 +1476,9 @@ hdb_fetch_kvno(krb5_context context,
     ret = fetch_it(context, db, principal, flags, t, etype, kvno, h);
     if (ret == HDB_ERR_NOENTRY)
 	krb5_set_error_message(context, ret, "no such entry found in hdb");
+    if (ret == 0 && !(flags & HDB_F_ADMIN_DATA) &&
+        !krb5_realm_compare(context, principal, h->entry.principal))
+            ret = HDB_ERR_WRONG_REALM;
     return ret;
 }
 

@@ -93,6 +93,7 @@ rps="restricted-proxy-service@${R}"
 aesenctype="aes256-cts-hmac-sha1-96"
 
 kinit="${kinit} -c $cache ${afs_no_afslog}"
+klist2="${klist} -c $o2cache"
 klist="${klist} -c $cache"
 kgetcred="${kgetcred} -c $cache"
 kgetcred_imp="${kgetcred} -c $cache --out-cache=${ocache}"
@@ -872,7 +873,7 @@ ${kgetcred} \
 	--delegation-credential-cache=${ocache} \
 	${server}@${R} || \
 	{ ec=1 ; eval "${testfailed}"; }
-klist -c $o2cache | grep "Default principal: bar@${R}" || { ec=1 ; eval "${testfailed}"; }
+${klist2} | grep "Principal: bar@${R}" || { ec=1 ; eval "${testfailed}"; }
 echo "  try using the credential"
 ${test_ap_req} ${server}@${R} ${keytab} ${o2cache} || \
 	{ ec=1 ; eval "${testfailed}"; }
@@ -895,7 +896,7 @@ ${kgetcred} \
 	--delegation-credential-cache=${ocache} \
 	${server}@${R} || \
 	{ ec=1 ; eval "${testfailed}"; }
-klist -c $o2cache | grep "Default principal: foo@${R2}" || { ec=1 ; eval "${testfailed}"; }
+${klist2} | grep "Principal: foo@${R2}" || { ec=1 ; eval "${testfailed}"; }
 echo "  try using the credential"
 ${test_ap_req} ${server}@${R} ${keytab} ${o2cache} || \
 	{ ec=1 ; eval "${testfailed}"; }
@@ -937,7 +938,7 @@ ${kgetcred} \
 	--delegation-credential-cache=${ocache} \
 	${server}@${R} || \
 	{ ec=1 ; eval "${testfailed}"; }
-klist -c $o2cache | grep "Default principal: bar@${R}" || { ec=1 ; eval "${testfailed}"; }
+${klist2} | grep "Principal: bar@${R}" || { ec=1 ; eval "${testfailed}"; }
 ${test_ap_req} ${server}@${R} ${keytab} ${o2cache} || \
 	{ ec=1 ; eval "${testfailed}"; }
 

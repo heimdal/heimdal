@@ -823,9 +823,9 @@ check_ticket_signature(krb5_context context,
     if (ret)
 	t_err(context, tkt->name, "krb5_pac_verify ticket-sig", ret);
 
-    ret = _krb5_pac_get_kdc_checksum_info(context, pac, &cstype, &rodc_id);
+    ret = krb5_pac_get_kdc_checksum_info(context, pac, &cstype, &rodc_id);
     if (ret)
-	t_err(context, tkt->name, "_krb5_pac_get_kdc_checksum_info", ret);
+	t_err(context, tkt->name, "krb5_pac_get_kdc_checksum_info", ret);
 
     heim_assert(cstype == CKSUMTYPE_HMAC_MD5, "Wrong checksum type");
     heim_assert(rodc_id == tkt->rodc_id, "Wrong RODCIdentifier");
@@ -874,9 +874,9 @@ check_ticket_signature(krb5_context context,
     if (ret)
 	t_err(context, tkt->name, "krb5_pac_verify ticket-sig 2", ret);
 
-    ret = _krb5_pac_get_kdc_checksum_info(context, pac, &cstype, &rodc_id);
+    ret = krb5_pac_get_kdc_checksum_info(context, pac, &cstype, &rodc_id);
     if (ret)
-	t_err(context, tkt->name, "_krb5_pac_get_kdc_checksum_info 2", ret);
+	t_err(context, tkt->name, "krb5_pac_get_kdc_checksum_info 2", ret);
 
     heim_assert(cstype == CKSUMTYPE_HMAC_MD5, "Wrong checksum type 2");
     heim_assert(rodc_id == tkt->rodc_id, "Wrong RODCIdentifier 2");

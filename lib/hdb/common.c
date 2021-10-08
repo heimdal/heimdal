@@ -541,34 +541,41 @@ _hdb_remove(krb5_context context, HDB *db,
             unsigned flags, krb5_const_principal principal)
 {
     krb5_data key, value;
+    HDB_EntryOrAlias eoa;
+    int is_alias = -1;
     int code;
 
+    /*
+     * We only allow deletion of entries by canonical name.  To remove an
+     * alias use kadm5_modify_principal().
+     *
+     * We need to determine if this is an alias.  We decode as a
+     * HDB_EntryOrAlias, which is expensive -- we could decode as a
+     * HDB_entry_alias instead and assume it's an entry if decoding fails...
+     */
+
     hdb_principal2key(context, principal, &key);
+    code = db->hdb__get(context, db, key, &value);
+    if (code == 0) {
+        code = decode_HDB_EntryOrAlias(value.data, value.length, &eoa, NULL);
+        krb5_data_free(&value);
+    }
+    if (code == 0) {
+        is_alias = eoa.element == choice_HDB_EntryOrAlias_entry ? 0 : 1;
+        free_HDB_EntryOrAlias(&eoa);
+    }
 
     if ((flags & HDB_F_PRECHECK)) {
-        /*
-         * We don't check that we can delete the aliases because we
-         * assume that the DB is consistent.  If we did check for alias
-         * consistency we'd also have to provide a way to fsck the DB,
-         * otherwise admins would have no way to recover -- papering
-         * over this here is less work, but we really ought to provide
-         * an HDB fsck.
-         */
-        code = db->hdb__get(context, db, key, &value);
+        if (code == 0 && is_alias)
+            krb5_set_error_message(context, code = HDB_ERR_NOENTRY,
+                                   "Cannot delete alias of principal");
         krb5_data_free(&key);
-        if (code == 0) {
-            krb5_data_free(&value);
-            return 0;
-        }
         return code;
     }
 
     code = hdb_remove_aliases(context, db, &key);
-    if (code) {
-	krb5_data_free(&key);
-	return code;
-    }
-    code = db->hdb__del(context, db, key);
+    if (code == 0)
+        code = db->hdb__del(context, db, key);
     krb5_data_free(&key);
     return code;
 }

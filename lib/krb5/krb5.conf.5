@@ -521,6 +521,21 @@ The default value is false.
 .El
 .It Li [domain_realm]
 This is a list of mappings from DNS domain to Kerberos realm.
+.Pp
+It is used by the client and the TGS both to determine the realm
+of host-based service principal names based on the principal's
+hostname component.
+.Pp
+The client may try DNS to determine a host's realm; see the
+`dns_lookup_realm' parameter, and see below.
+.Pp
+The TGS will issue a referral when a host-based service does not
+exist in the requested realm but can be mapped with these rules
+to a different realm.
+The TGS will also issue a referral when a host-based service
+exists in the requested realm as an alias of a service in another
+realm.
+.Pp
 Each binding in this section looks like:
 .Pp
 .Dl domain = realm

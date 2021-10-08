@@ -86,17 +86,16 @@ perform_tl_data(krb5_context context,
 	ret = hdb_entry_set_password(context, db, &ent->entry, pw);
 
     } else if (tl_data->tl_data_type == KRB5_TL_LAST_PWD_CHANGE) {
+        unsigned long t;
 	unsigned char *s;
-	time_t t;
 
 	if (tl_data->tl_data_length != 4)
 	    return KADM5_BAD_TL_TYPE;
 
 	s = tl_data->tl_data_contents;
 
-	t = s[0] | (s[1] << 8) | (s[2] << 16) | (s[3] << 24);
-
-	ret = hdb_entry_set_pw_change_time(context, &ent->entry, t);
+        (void) _krb5_get_int(s, &t, tl_data->tl_data_length);
+        ret = hdb_entry_set_pw_change_time(context, &ent->entry, t);
 
     } else if (tl_data->tl_data_type == KRB5_TL_KEY_ROTATION) {
         HDB_Ext_KeyRotation *prev_kr = 0;

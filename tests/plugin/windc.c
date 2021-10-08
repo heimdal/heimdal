@@ -64,7 +64,7 @@ pac_verify(void *ctx, krb5_context context,
 	return ret;
     krb5_data_free(&data);
 
-    ret = _krb5_pac_get_kdc_checksum_info(context, *pac, &cstype, &rodc_id);
+    ret = krb5_pac_get_kdc_checksum_info(context, *pac, &cstype, &rodc_id);
     if (ret)
 	return ret;
 

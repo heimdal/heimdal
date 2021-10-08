@@ -155,6 +155,8 @@ perform_tl_data(krb5_context context,
                                          ent->entry.etypes, NULL);
 	if (ret)
 	    return KADM5_BAD_TL_TYPE;
+    } else if (tl_data->tl_data_type == KRB5_TL_ALIASES) {
+        return 0;
     } else {
 	return KADM5_BAD_TL_TYPE;
     }

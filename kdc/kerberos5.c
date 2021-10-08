@@ -1166,34 +1166,6 @@ _kdc_encode_reply(krb5_context context,
 }
 
 /*
- * Return 1 if the client have only older enctypes, this is for
- * determining if the server should send ETYPE_INFO2 or not.
- */
-
-static int
-older_enctype(krb5_enctype enctype)
-{
-    switch (enctype) {
-    case ETYPE_DES_CBC_CRC:
-    case ETYPE_DES_CBC_MD4:
-    case ETYPE_DES_CBC_MD5:
-    case ETYPE_DES3_CBC_SHA1:
-    case ETYPE_ARCFOUR_HMAC_MD5:
-    case ETYPE_ARCFOUR_HMAC_MD5_56:
-    /*
-     * The following three is "old" windows enctypes and is needed for
-     * windows 2000 hosts.
-     */
-    case ETYPE_ARCFOUR_MD4:
-    case ETYPE_ARCFOUR_HMAC_OLD:
-    case ETYPE_ARCFOUR_HMAC_OLD_EXP:
-	return 1;
-    default:
-	return 0;
-    }
-}
-
-/*
  *
  */
 
@@ -1407,13 +1379,19 @@ get_pa_etype_info2(krb5_context context,
     return 0;
 }
 
+/*
+ * Return 0 if the client have only older enctypes, this is for
+ * determining if the server should send ETYPE_INFO2 or not.
+ */
+
 static int
-newer_enctype_present(struct KDC_REQ_BODY_etype *etype_list)
+newer_enctype_present(krb5_context context,
+		      struct KDC_REQ_BODY_etype *etype_list)
 {
     size_t i;
 
     for (i = 0; i < etype_list->len; i++) {
-	if (!older_enctype(etype_list->val[i]))
+	if (!krb5_is_enctype_old(context, etype_list->val[i]))
 	    return 1;
     }
     return 0;
@@ -1462,7 +1440,7 @@ get_pa_etype_info_both(krb5_context context,
     if (ret)
 	return ret;
 
-    if (!newer_enctype_present(etype_list))
+    if (!newer_enctype_present(context, etype_list))
 	ret = get_pa_etype_info(context, config, md, ckey, include_salt);
 
     return ret;

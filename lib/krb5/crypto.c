@@ -2848,6 +2848,26 @@ krb5_is_enctype_weak(krb5_context context, krb5_enctype enctype)
 }
 
 /**
+ * Returns whether the encryption type is new or old
+ *
+ * @param context Kerberos 5 context
+ * @param enctype encryption type to probe
+ *
+ * @return Returns true if encryption type is old or is not supported.
+ *
+ * @ingroup krb5_crypto
+ */
+
+KRB5_LIB_FUNCTION krb5_boolean KRB5_LIB_CALL
+krb5_is_enctype_old(krb5_context context, krb5_enctype enctype)
+{
+    struct _krb5_encryption_type *et = _krb5_find_enctype(enctype);
+    if (!et  || (et->flags & F_OLD))
+	return TRUE;
+    return FALSE;
+}
+
+/**
  * Returns whether the encryption type should use randomly generated salts
  *
  * @param context Kerberos 5 context

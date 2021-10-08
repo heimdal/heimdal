@@ -910,8 +910,7 @@ for
 .It Li enable_gss_preauth = Va boolean
 Enables pre-authentication using a GSS-API mechanism supported by the client and KDC.
 The GSS-API initiator and AS request client names must match, unless the
-.Li
-WELLKNOWN/FEDERATED
+.Li WELLKNOWN/FEDERATED
 name was used in the AS request, in which case the AS reply will contain the
 GSS-API initiator name. Authorization and mapping behavior may be customized
 by plugins. If synthetic clients are enabled, then the GSS-API initiator need

@@ -52,6 +52,7 @@ struct _krb5_key_usage;
 #define F_PSEUDO		0x0010	/* not a real protocol type */
 #define F_DISABLED		0x0020	/* enctype/checksum disabled */
 #define F_WEAK			0x0040	/* enctype is considered weak */
+#define F_OLD			0x0080	/* enctype is old */
 
 #define F_RFC3961_ENC		0x0100	/* RFC3961 simplified profile */
 #define F_SPECIAL		0x0200	/* backwards */

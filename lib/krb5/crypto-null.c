@@ -95,7 +95,7 @@ struct _krb5_encryption_type _krb5_enctype_null = {
     &keytype_null,
     &_krb5_checksum_none,
     NULL,
-    F_DISABLED,
+    F_DISABLED | F_OLD,
     NULL_encrypt,
     NULL,
     0,

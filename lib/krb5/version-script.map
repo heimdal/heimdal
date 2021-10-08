@@ -395,6 +395,7 @@ HEIMDAL_KRB5_2.0 {
 		krb5_init_ets;
 		krb5_initlog;
 		krb5_is_config_principal;
+		krb5_is_enctype_old;
 		krb5_is_enctype_weak;
 		krb5_is_thread_safe;
 		krb5_kcm_call;

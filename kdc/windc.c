@@ -199,20 +199,15 @@ krb5_error_code
 _kdc_check_access(astgs_request_t r, KDC_REQ *req, METHOD_DATA *method_data)
 {
     krb5_context context = r->context;
-    krb5_kdc_configuration *config = r->config;
-    hdb_entry_ex *client_ex = r->client;
-    const char *client_name = r->cname;
-    hdb_entry_ex *server_ex = r->server;
-    const char *server_name = r->sname;
     krb5_error_code ret = KRB5_PLUGIN_NO_HANDLE;
     struct check_uc uc;
 
     if (have_plugin) {
-        uc.config = config;
-        uc.client_ex = client_ex;
-        uc.client_name = client_name;
-        uc.server_ex = server_ex;
-        uc.server_name = server_name;
+        uc.config = r->config;
+        uc.client_ex = r->client;
+        uc.client_name = r->cname;
+        uc.server_ex = r->server;
+        uc.server_name = r->sname;
         uc.req = req;
         uc.method_data = method_data;
 
@@ -221,7 +216,8 @@ _kdc_check_access(astgs_request_t r, KDC_REQ *req, METHOD_DATA *method_data)
     }
 
     if (ret == KRB5_PLUGIN_NO_HANDLE)
-	return kdc_check_flags(r, req->msg_type == krb_as_req);
+        return kdc_check_flags(r, req->msg_type == krb_as_req,
+                               r->client, r->server);
     return ret;
 }
 

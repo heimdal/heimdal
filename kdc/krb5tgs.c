@@ -1805,7 +1805,6 @@ server_lookup:
 
 	sdata = _kdc_find_padata(req, &i, KRB5_PADATA_FOR_USER);
 	if (sdata) {
-	    struct astgs_request_desc imp_req;
 	    krb5_crypto crypto;
 	    krb5_data datack;
 	    PA_S4U2Self self;
@@ -1930,11 +1929,7 @@ server_lookup:
 	    free(s4u2self_impersonated_client->entry.pw_end);
 	    s4u2self_impersonated_client->entry.pw_end = NULL;
 
-	    imp_req = *priv;
-	    imp_req.client = s4u2self_impersonated_client;
-	    imp_req.client_princ = tp;
-
-	    ret = kdc_check_flags(&imp_req, FALSE);
+	    ret = kdc_check_flags(priv, FALSE, s4u2self_impersonated_client, priv->server);
 	    if (ret)
 		goto out; /* kdc_check_flags() calls _kdc_audit_addreason() */
 
@@ -2093,13 +2088,7 @@ server_lookup:
 	    goto out;
 
 	if (adclient != NULL) {
-	    struct astgs_request_desc deleg_req;
-
-	    deleg_req = *priv;
-	    deleg_req.client = adclient;
-	    deleg_req.client_princ = tp;
-
-	    ret = kdc_check_flags(&deleg_req, FALSE);
+	    ret = kdc_check_flags(priv, FALSE, adclient, priv->server);
 	    if (ret) {
 		_kdc_free_ent(context, adclient);
 		goto out;
@@ -2145,7 +2134,7 @@ server_lookup:
      * Check flags
      */
 
-    ret = kdc_check_flags(priv, FALSE);
+    ret = kdc_check_flags(priv, FALSE, priv->client, priv->server);
     if(ret)
 	goto out;
 

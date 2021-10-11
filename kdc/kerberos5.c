@@ -1597,13 +1597,14 @@ _log_astgs_req(astgs_request_t r, krb5_enctype setype)
  */
 
 krb5_error_code
-kdc_check_flags(astgs_request_t r, krb5_boolean is_as_req)
+kdc_check_flags(astgs_request_t r,
+                krb5_boolean is_as_req,
+                hdb_entry_ex *client_ex,
+                hdb_entry_ex *server_ex)
 {
     krb5_context context = r->context;
-    hdb_entry_ex *client_ex = r->client;
-    hdb_entry_ex *server_ex = r->server;
 
-    if(client_ex != NULL) {
+    if (client_ex != NULL) {
 	hdb_entry *client = &client_ex->entry;
 
 	/* check client */

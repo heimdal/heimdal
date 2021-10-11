@@ -689,8 +689,11 @@ fmtkv(int flags, const char *k, const char *fmt, va_list ap)
         if (flags & HEIM_SVC_AUDIT_VIS)
             vis_flags |= VIS_WHITE;
 	buf3 = malloc((j + 1) * 4 + 1);
-	strvisx(buf3, buf2, j, vis_flags);
+        if (buf3)
+            strvisx(buf3, buf2, j, vis_flags);
 	free(buf2);
+        if (buf3 == NULL)
+            return NULL;
     } else
 	buf3 = buf2;
 
@@ -721,12 +724,11 @@ heim_audit_vaddreason(heim_svc_req_desc r, const char *fmt, va_list ap)
                                               heim_string_get_utf8(str),
                                               heim_string_get_utf8(r->reason));
         if (str2) {
-            heim_release(r->reason);
             heim_release(str);
-            r->reason = str2;
-        } /* else the earlier reason is likely better than the newer one */
-        return;
+            str = str2;
+        }
     }
+    heim_release(r->reason);
     r->reason = str;
 }
 

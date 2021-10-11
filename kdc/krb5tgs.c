@@ -1481,6 +1481,10 @@ tgs_build_reply(astgs_request_t priv,
      */
 
 server_lookup:
+    priv->server = NULL;
+    if (server)
+        _kdc_free_ent(context, server);
+    server = NULL;
     ret = _kdc_db_fetch(context, config, sp,
                         HDB_F_GET_SERVER | HDB_F_DELAY_NEW_KEYS | flags,
 			NULL, NULL, &server);

@@ -526,9 +526,15 @@ OM_uint32 GSSAPI_CALLCONV _gss_spnego_set_sec_context_option
 
     *minor_status = 0;
 
-    if (context_handle == NULL || *context_handle == GSS_C_NO_CONTEXT) {
-	return GSS_S_NO_CONTEXT;
-    }
+    /*
+     * Return GSS_S_UNAVAILABLE with a NULL context handle as at
+     * present no context options can be set globally on SPNEGO
+     * itself. Global mechanism context options are set directly
+     * on the mechanism; per-context context options are set below
+     * if ctx->negotiated_ctx_id != GSS_C_NO_CONTEXT.
+     */
+    if (context_handle == NULL || *context_handle == GSS_C_NO_CONTEXT)
+	return GSS_S_UNAVAILABLE;
 
     ctx = (gssspnego_ctx)*context_handle;
 

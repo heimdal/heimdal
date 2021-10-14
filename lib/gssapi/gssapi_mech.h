@@ -450,6 +450,17 @@ _gss_acquire_cred_from_t(OM_uint32 *minor_status,
 			 OM_uint32 *time_rec);
 
 typedef OM_uint32 GSSAPI_CALLCONV
+_gss_acquire_cred_impersonate_name_t(OM_uint32 *minor_status,
+				     gss_const_cred_id_t icred,
+				     gss_const_name_t desired_name,
+				     OM_uint32 time_req,
+				     gss_OID_set desired_mechs,
+				     gss_cred_usage_t cred_usage,
+				     gss_cred_id_t *output_cred_handle,
+				     gss_OID_set *actual_mechs,
+				     OM_uint32 *time_rec);
+
+typedef OM_uint32 GSSAPI_CALLCONV
 _gss_add_cred_from_t(OM_uint32 *minor_status,
 		     gss_cred_id_t input_cred_handle,
 		     gss_const_name_t desired_name,
@@ -601,6 +612,7 @@ typedef struct gssapi_mech_interface_desc {
 	_gss_export_cred_t		*gm_export_cred;
 	_gss_import_cred_t		*gm_import_cred;
 	_gss_acquire_cred_from_t	*gm_acquire_cred_from; /* was acquire_cred_ext */
+	_gss_acquire_cred_impersonate_name_t	*gm_acquire_cred_impersonate_name;
 	_gss_iter_creds_t		*gm_iter_creds;
 	_gss_destroy_cred_t		*gm_destroy_cred;
 	_gss_cred_hold_t		*gm_cred_hold;

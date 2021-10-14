@@ -81,6 +81,7 @@ static gssapi_mech_interface_desc netlogon_mech = {
     NULL, /* gm_export_cred */
     NULL, /* gm_import_cred */
     NULL, /* gm_acquire_cred_from */
+    NULL, /* gm_acquire_cred_impersonate_name */
     NULL, /* gm_iter_creds */
     NULL, /* gm_destroy_cred */
     NULL, /* gm_cred_hold */

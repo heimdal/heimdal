@@ -1243,6 +1243,23 @@ gss_destroy_cred(OM_uint32 *minor_status,
 GSSAPI_LIB_FUNCTION uintptr_t GSSAPI_CALLCONV
 gss_get_instance(const char *libname);
 
+/*
+ * S4UProxy and S4USelf extensions.
+ */
+
+GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_CALLCONV
+gss_acquire_cred_impersonate_name(
+    OM_uint32 * /* minor_status */,
+    gss_const_cred_id_t /* icred */,
+    gss_const_name_t /* desired_name */,
+    OM_uint32 /* time_req */,
+    gss_OID_set /* desired_mechs */,
+    gss_cred_usage_t /* cred_usage */,
+    gss_cred_id_t * /* output_cred */,
+    gss_OID_set * /* actual_mechs */,
+    OM_uint32 * /* time_rec */
+    );
+
 GSSAPI_CPP_END
 
 #if defined(__APPLE__) && (defined(__ppc__) || defined(__ppc64__) || defined(__i386__) || defined(__x86_64__))

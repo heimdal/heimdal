@@ -130,6 +130,7 @@ static gssapi_mech_interface_desc spnego_mech = {
     NULL, /* gm_export_cred */
     NULL, /* gm_import_cred */
     NULL, /* gm_acquire_cred_from */
+    NULL, /* gm_acquire_cred_impersonate_name */
     NULL,
     NULL,
     NULL,

@@ -372,6 +372,7 @@ static gssapi_mech_interface_desc krb5_mech = {
     _gsskrb5_export_cred,
     _gsskrb5_import_cred,
     _gsskrb5_acquire_cred_from,
+    NULL, /* gm_acquire_cred_impersonate_name */
     NULL,
     NULL,
     NULL,

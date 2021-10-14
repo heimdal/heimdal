@@ -236,6 +236,7 @@ static gssapi_mech_interface_desc sanon_mech = {
     _gss_sanon_export_cred,
     _gss_sanon_import_cred,
     _gss_sanon_acquire_cred_from,
+    NULL, /* gm_acquire_cred_impersonate_name */
     NULL,
     NULL,
     NULL,

@@ -224,12 +224,12 @@ hx509_ca_tbs_template_units(void)
 }
 
 /**
- * Initialize the to-be-signed certificate object from a template certifiate.
+ * Initialize the to-be-signed certificate object from a template certificate.
  *
  * @param context A hx509 context.
  * @param tbs object to be signed.
  * @param flags bit field selecting what to copy from the template
- * certifiate.
+ * certificate.
  * @param cert template certificate.
  *
  * @return An hx509 error code, see hx509_get_error_string().
@@ -1294,7 +1294,8 @@ hx509_ca_tbs_add_san_hardwareModuleName_string(hx509_context context,
     p = strchr(freeme, ':');
     if (!p) {
         hx509_set_error_string(context, 0, EINVAL,
-                               "Invalid HardwareModuleName string (should be \"<oid>:<serial>\")",
+                               "Invalid HardwareModuleName string (should be "
+                               "\"<oid>:<serial>\")",
                                oidstr);
         free(freeme);
         return EINVAL;
@@ -1739,7 +1740,7 @@ ca_sign(hx509_context context,
     /* signature            AlgorithmIdentifier, */
     ret = copy_AlgorithmIdentifier(sigalg, &tbsc->signature);
     if (ret) {
-	hx509_set_error_string(context, 0, ret, "Failed to copy sigature alg");
+	hx509_set_error_string(context, 0, ret, "Failed to copy signature alg");
 	goto out;
     }
     /* issuer               Name, */
@@ -2568,11 +2569,11 @@ get_cf(hx509_context context,
         ret = 0;
     if (ret) {
         heim_log_msg(context->hcontext, logf, 3, NULL,
-                     "No configuration for %s %s certificates realm "
+                     "No configuration for %s %s certificate's realm "
                      "-> %s -> kx509 -> %s%s%s", def, label, realm, label,
                      svc ? " -> " : "", svc ? svc : "");
         hx509_set_error_string(context, 0, EACCES,
-                "No configuration for %s %s certificates realm "
+                "No configuration for %s %s certificate's realm "
                 "-> %s -> kx509 -> %s%s%s", def, label, realm, label,
                 svc ? " -> " : "", svc ? svc : "");
     }

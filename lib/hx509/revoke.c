@@ -40,7 +40,7 @@
  * revocation for destroyed private keys too (smartcard broken), but
  * that should not be a problem.
  *
- * CRL is a list of certifiates that have expired.
+ * CRL is a list of certificates that have expired.
  *
  * OCSP is an online checking method where the requestor sends a list
  * of certificates to the OCSP server to return a signed reply if they
@@ -217,7 +217,7 @@ verify_ocsp(hx509_context context,
 	ret = _hx509_cert_is_parent_cmp(s, p, 0);
 	if (ret != 0) {
 	    ret = HX509_PARENT_NOT_CA;
-	    hx509_set_error_string(context, 0, ret, "Revoke OCSP signer is "
+	    hx509_set_error_string(context, 0, ret, "Revoke OCSP signer "
 				   "doesn't have CA as signer certificate");
 	    goto out;
 	}
@@ -550,7 +550,7 @@ verify_crl(hx509_context context,
 	signer = crl_parent;
 	if (ret) {
 	    hx509_set_error_string(context, HX509_ERROR_APPEND, ret,
-				   "Failed to verify revoke "
+				   "Failed to verify revocation "
 				   "status of CRL signer");
 	    goto out;
 	}
@@ -647,7 +647,7 @@ hx509_revoke_add_crl(hx509_context context,
 
     if (strncmp(path, "FILE:", 5) != 0) {
 	hx509_set_error_string(context, 0, HX509_UNSUPPORTED_OPERATION,
-			       "unsupport type in %s", path);
+			       "unsupported type in %s", path);
 	return HX509_UNSUPPORTED_OPERATION;
     }
 
@@ -879,8 +879,7 @@ hx509_revoke_verify(hx509_context context,
 	return 0;
     hx509_set_error_string(context, HX509_ERROR_APPEND,
 			   HX509_REVOKE_STATUS_MISSING,
-			   "No revoke status found for "
-			   "certificates");
+			   "No revocation status found for certificates");
     return HX509_REVOKE_STATUS_MISSING;
 }
 

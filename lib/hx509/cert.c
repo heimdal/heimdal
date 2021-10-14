@@ -981,7 +981,7 @@ check_key_usage(hx509_context context, const Certificate *cert,
 	if (req_present) {
 	    hx509_set_error_string(context, 0, HX509_KU_CERT_MISSING,
 				   "Required extension key "
-				   "usage missing from certifiate");
+				   "usage missing from certificate");
 	    return HX509_KU_CERT_MISSING;
 	}
 	return 0;
@@ -999,7 +999,7 @@ check_key_usage(hx509_context context, const Certificate *cert,
 	_hx509_unparse_Name(&cert->tbsCertificate.subject, &name);
 	hx509_set_error_string(context, 0, HX509_KU_CERT_MISSING,
 			       "Key usage %s required but missing "
-			       "from certifiate %s", buf,
+			       "from certificate %s", buf,
                                name ? name : "<unknown>");
 	free(name);
 	return HX509_KU_CERT_MISSING;
@@ -1578,8 +1578,8 @@ hx509_cert_get_base_subject(hx509_context context, hx509_cert c,
     if (is_proxy_cert(context, c->data, NULL) == 0) {
 	int ret = HX509_PROXY_CERTIFICATE_NOT_CANONICALIZED;
 	hx509_set_error_string(context, 0, ret,
-			       "Proxy certificate have not been "
-			       "canonicalize yet, no base name");
+			       "Proxy certificate has not been "
+			       "canonicalized yet: no base name");
 	return ret;
     }
     return _hx509_name_from_Name(&c->data->tbsCertificate.subject, name);
@@ -1752,7 +1752,7 @@ get_x_unique_id(hx509_context context, const char *name,
 
     if (cert == NULL) {
 	ret = HX509_EXTENSION_NOT_FOUND;
-	hx509_set_error_string(context, 0, ret, "%s unique id doesn't exists", name);
+	hx509_set_error_string(context, 0, ret, "%s unique id doesn't exist", name);
 	return ret;
     }
     ret = der_copy_bit_string(cert, subject);
@@ -2173,7 +2173,7 @@ check_name_constraints(hx509_context context,
 	    /* allow null subjectNames, they wont matches anything */
 	    if (match == 0 && !subject_null_p(c)) {
 		hx509_set_error_string(context, 0, HX509_VERIFY_CONSTRAINTS,
-				       "Error verify constraints, "
+				       "Error verifying constraints: "
 				       "certificate didn't match any "
 				       "permitted subtree");
 		return HX509_VERIFY_CONSTRAINTS;
@@ -2188,7 +2188,7 @@ check_name_constraints(hx509_context context,
 	    }
 	    if (match) {
 		hx509_set_error_string(context, 0, HX509_VERIFY_CONSTRAINTS,
-				       "Error verify constraints, "
+				       "Error verifying constraints: "
 				       "certificate included in excluded "
 				       "subtree");
 		return HX509_VERIFY_CONSTRAINTS;
@@ -2245,7 +2245,7 @@ hx509_verify_path(hx509_context context,
 	ret = HX509_PROXY_CERT_INVALID;
 	hx509_set_error_string(context, 0, ret,
 			       "Proxy certificate is not allowed as an EE "
-			       "certificae if proxy certificate is disabled");
+			       "certificate if proxy certificate is disabled");
 	return ret;
     }
 
@@ -2346,7 +2346,7 @@ hx509_verify_path(hx509_context context,
 		    ret = HX509_PATH_TOO_LONG;
 		    hx509_set_error_string(context, 0, ret,
 					   "Proxy certificate chain "
-					   "longer then allowed");
+					   "longer than allowed");
 		    goto out;
 		}
 		/* XXX MUST check info.proxyPolicy */
@@ -2356,7 +2356,7 @@ hx509_verify_path(hx509_context context,
 		if (find_extension(c, &asn1_oid_id_x509_ce_subjectAltName, &j)) {
 		    ret = HX509_PROXY_CERT_INVALID;
 		    hx509_set_error_string(context, 0, ret,
-					   "Proxy certificate have explicitly "
+					   "Proxy certificate has explicitly "
 					   "forbidden subjectAltName");
 		    goto out;
 		}
@@ -2365,7 +2365,7 @@ hx509_verify_path(hx509_context context,
 		if (find_extension(c, &asn1_oid_id_x509_ce_issuerAltName, &j)) {
 		    ret = HX509_PROXY_CERT_INVALID;
 		    hx509_set_error_string(context, 0, ret,
-					   "Proxy certificate have explicitly "
+					   "Proxy certificate has explicitly "
 					   "forbidden issuerAltName");
 		    goto out;
 		}
@@ -3453,7 +3453,7 @@ hx509_query_unparse_stats(hx509_context context, int printtype, FILE *out)
 	return;
     f = fopen(context->querystat, "r");
     if (f == NULL) {
-	fprintf(out, "No statistic file %s: %s.\n",
+	fprintf(out, "No statistics file %s: %s.\n",
 		context->querystat, strerror(errno));
 	return;
     }

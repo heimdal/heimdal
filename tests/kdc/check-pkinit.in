@@ -102,7 +102,7 @@ ${kadmin} add -p foo --use-defaults foo@${R} || exit 1
 ${kadmin} add -p bar --use-defaults bar@${R} || exit 1
 ${kadmin} add -p baz --use-defaults baz@${R} || exit 1
 ${kadmin} add -p foo --use-defaults host/server.test.h5l.se@${R} || exit 1
-${kadmin} modify --alias=baz2@test.h5l.se baz@${R} || exit 1
+${kadmin} modify --alias=baz2\\@test.h5l.se@${R} baz@${R} || exit 1
 ${kadmin} modify --pkinit-acl="CN=baz,DC=test,DC=h5l,DC=se" baz@${R} || exit 1
 
 ${kadmin} add -p kaka --use-defaults ${server}@${R} || exit 1
@@ -184,7 +184,7 @@ echo "issue user 3 certificate (ms san, baz2)"
 ${hxtool} issue-certificate \
 	  --ca-certificate=FILE:$objdir/ca.crt,${keyfile} \
 	  --type="pkinit-client" \
-          --ms-upn="baz2@test.h5l.se" \
+          --ms-upn="baz2\\@test.h5l.se@${R}" \
 	  --req="PKCS10:req-pkinit2.der" \
 	  --certificate="FILE:pkinit4.crt" || exit 1
 
@@ -261,10 +261,8 @@ ${hxtool} issue-certificate \
           --pkinit-max-life=7d \
 	  --certificate="FILE:pkinit.crt" || exit 1
 base="${objdir}"
-set -vx
 ${kinit} --lifetime=5d -C FILE:${base}/pkinit.crt,${keyfile2} bar@${R} || \
 	{ ec=1 ; eval "${testfailed}"; }
-set +vx
 ${kgetcred} ${server}@${R} || { ec=1 ; eval "${testfailed}"; }
 ${klist}
 if jq --version >/dev/null 2>&1 && jq -ne true >/dev/null 2>&1; then
@@ -304,7 +302,7 @@ ${kdestroy}
 
 echo "Trying pk-init (ms upn, enterprise)"; > messages.log
 ${kinit}  --canonicalize --enterprise \
-	-C FILE:${base}/pkinit4.crt,${keyfile2} baz2@test.h5l.se@${R} || \
+	-C FILE:${base}/pkinit4.crt,${keyfile2} baz2@test.h5l.se || \
 	{ ec=1 ; eval "${testfailed}"; }
 ${kgetcred} ${server}@${R} || { ec=1 ; eval "${testfailed}"; }
 ${kdestroy}

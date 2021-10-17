@@ -1688,6 +1688,7 @@ struct krb5_get_creds_opt_data {
     krb5_flags options;
     krb5_enctype enctype;
     Ticket *ticket;
+    krb5_deltat lifetime;
 };
 
 
@@ -1775,6 +1776,13 @@ krb5_get_creds_opt_set_ticket(krb5_context context,
     return 0;
 }
 
+KRB5_LIB_FUNCTION void KRB5_LIB_CALL
+krb5_get_creds_opt_set_lifetime(krb5_context context,
+				krb5_get_creds_opt opt,
+				krb5_deltat lifetime)
+{
+    opt->lifetime = lifetime;
+}
 
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_get_creds(krb5_context context,
@@ -1793,6 +1801,7 @@ krb5_get_creds(krb5_context context,
     krb5_const_principal try_princ = NULL;
     krb5_name_canon_iterator name_canon_iter = NULL;
     krb5_name_canon_rule_options rule_opts;
+    krb5_timestamp now;
     int i;
     int type;
     const char *comp;
@@ -1841,6 +1850,12 @@ krb5_get_creds(krb5_context context,
     if (opt && opt->enctype) {
 	in_creds.session.keytype = opt->enctype;
 	options |= KRB5_TC_MATCH_KEYTYPE;
+    }
+
+    if (opt && opt->lifetime > 0) {
+	krb5_timeofday(context, &now);
+	in_creds.times.endtime = now + opt->lifetime;
+	options |= KRB5_TC_MATCH_TIMES;
     }
 
     ret = krb5_name_canon_iterator_start(context, in_creds.server,

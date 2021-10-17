@@ -469,6 +469,7 @@ test_binaries =				\
 	$(OBJ)\test_crypto_wrapping.exe	\
 	$(OBJ)\test_forward.exe		\
 	$(OBJ)\test_get_addrs.exe	\
+	$(OBJ)\test_get_creds.exe	\
 	$(OBJ)\test_hostname.exe	\
 	$(OBJ)\test_keytab.exe		\
 	$(OBJ)\test_kuserok.exe		\

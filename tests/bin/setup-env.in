@@ -60,6 +60,7 @@ test_set_kvno0="${TESTS_ENVIRONMENT} ${top_builddir}/lib/krb5/test_set_kvno0"
 test_alname="${TESTS_ENVIRONMENT} ${top_builddir}/lib/krb5/test_alname"
 test_kuserok="${TESTS_ENVIRONMENT} ${top_builddir}/lib/krb5/test_kuserok"
 test_mkforwardable="${TESTS_ENVIRONMENT} ${top_builddir}/lib/krb5/test_mkforwardable"
+test_get_creds="${TESTS_ENVIRONMENT} ${top_builddir}/lib/krb5/test_get_creds"
 
 # misc apps
 have_db="${top_builddir}/tests/db/have-db"

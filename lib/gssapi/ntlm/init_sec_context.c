@@ -365,7 +365,7 @@ _gss_ntlm_init_sec_context
 
 	type3.username = ctx->client->username;
 	type3.flags = type2.flags;
-	type3.targetname = type2.targetname;
+	type3.targetname = name->domain;
 	type3.ws = rk_UNCONST("workstation");
 
 	/*

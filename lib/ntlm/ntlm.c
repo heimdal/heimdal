@@ -1283,7 +1283,7 @@ heim_ntlm_calculate_ntlm1(void *key, size_t len,
 }
 
 int
-heim_ntlm_v1_base_session(void *key, size_t len,
+heim_ntlm_v1_base_session(const void *key, size_t len,
 			  struct ntlm_buf *session)
 {
     EVP_MD_CTX *m;
@@ -1417,6 +1417,60 @@ heim_ntlm_build_ntlm1_master(void *key, size_t len,
 
     ret = heim_ntlm_keyex_wrap(&sess, session, master);
     heim_ntlm_free_buf(&sess);
+
+    return ret;
+}
+
+/**
+ * Generates an NTLM2 Extended Security session random with
+ * associated session master key.
+ *
+ * @param clnt_nonce client nonce
+ * @param svr_chal server challage
+ * @param ntlm_hash ntlm hash
+ * @param session generated random session key,
+ *        should be freed with heim_ntlm_free_buf().
+ * @param master encrypted session master key,
+ *        should be freed with heim_ntlm_free_buf().
+ *
+ * @return In case of success 0 is return, an errors, a errno in what
+ * went wrong.
+ */
+int
+heim_ntlm_build_ntlm2_extended_security_master(
+        const unsigned char clnt_nonce[8],
+        const unsigned char svr_chal[8],
+        const unsigned char ntlm_hash[16],
+        struct ntlm_buf *session,
+        struct ntlm_buf *master)
+{
+    int ret;
+    /* NTLMv1 User Session Key*/
+    struct ntlm_buf ntlm1_usk;
+    /* NTLM2 Session Response User Session Key. */
+    struct ntlm_buf ntlm2_sr_usk;
+
+    ret = heim_ntlm_v1_base_session(ntlm_hash, 16, &ntlm1_usk);
+    if (ret)
+        return ret;
+
+    ntlm2_sr_usk.length = NTLM_USER_SESSION_KEY_LENGTH;
+    ntlm2_sr_usk.data = malloc(ntlm2_sr_usk.length);
+    if (ntlm2_sr_usk.data == NULL) {
+        ntlm2_sr_usk.length = 0;
+        heim_ntlm_free_buf(&ntlm1_usk);
+        return ENOMEM;
+    }
+
+    /* NTLM2 (not v2) aka Extended Security. */
+    heim_ntlm_derive_ntlm2_sess(ntlm1_usk.data,
+                                clnt_nonce, 8,
+                                svr_chal,
+                                ntlm2_sr_usk.data);
+    heim_ntlm_free_buf(&ntlm1_usk);
+
+    ret = heim_ntlm_keyex_wrap(&ntlm2_sr_usk, session, master);
+    heim_ntlm_free_buf(&ntlm2_sr_usk);
 
     return ret;
 }

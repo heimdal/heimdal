@@ -89,6 +89,9 @@ struct ntlm_buf {
 #define NTLM_NEG_KEYEX			0x40000000
 #define NTLM_ENC_56			0x80000000
 
+/* AKA SessionBaseKey in [MS-NLMP] */
+#define NTLM_USER_SESSION_KEY_LENGTH 16
+
 /**
  * Struct for the NTLM target info, the strings is assumed to be in
  * UTF8.  When filled in by the library it should be freed with

@@ -84,6 +84,7 @@ typedef struct krb5_kdc_configuration {
     krb5_boolean strict_nametypes;
     enum krb5_kdc_trpolicy trpolicy;
 
+    krb5_boolean require_pac;
     krb5_boolean enable_armored_pa_enc_timestamp;
     krb5_boolean enable_unarmored_pa_enc_timestamp;
 

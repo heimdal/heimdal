@@ -100,6 +100,7 @@ krb5_kdc_get_config(krb5_context context, krb5_kdc_configuration **config)
     c->historical_anon_realm = FALSE;
     c->strict_nametypes = FALSE;
     c->trpolicy = TRPOLICY_ALWAYS_CHECK;
+    c->require_pac = FALSE;
     c->enable_armored_pa_enc_timestamp = TRUE;
     c->enable_unarmored_pa_enc_timestamp = TRUE;
     c->enable_pkinit = FALSE;
@@ -252,6 +253,14 @@ krb5_kdc_get_config(krb5_context context, krb5_kdc_configuration **config)
 	krb5_config_get_time_default (context, NULL,
 				      c->kdc_warn_pwexpire,
 				      "kdc", "kdc_warn_pwexpire", NULL);
+
+    c->require_pac =
+	krb5_config_get_bool_default(context,
+				     NULL,
+				     c->require_pac,
+				     "kdc",
+				     "require_pac",
+				     NULL);
 
     c->enable_armored_pa_enc_timestamp =
 	krb5_config_get_bool_default(context,

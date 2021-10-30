@@ -138,6 +138,10 @@ The
 behavior is the default if none of these are given.
 The only policy supported by Heimdal servers is
 .Ql default .
+.Pp
+This command has the following aliases:
+.Nm ank ,
+.Nm add_new_key .
 .Ed
 .Pp
 .Nm add_alias
@@ -218,6 +222,9 @@ The default key rotation period is
 The default enctypes is as for the
 .Nm add
 command.
+.Pp
+This command has the following alias:
+.Nm add_ns .
 .Ed
 .Pp
 .Nm add_enctype
@@ -246,6 +253,10 @@ the principal to get its canonical name and then delete that.
 .Ar alias...
 .Bd -ragged -offset indent
 Deletes the given aliases, but not their canonical principals.
+.Pp
+This command has the following aliases:
+.Nm del ,
+.Nm del_entry .
 .Ed
 .Pp
 .Nm del_enctype
@@ -417,6 +428,9 @@ Possible attributes are:
 Attributes may be negated with a "-", e.g.,
 .Pp
 kadmin -l modify -a -disallow-proxiable user
+.Pp
+This command has the following alias:
+.Nm mod .
 .Ed
 .Pp
 .Nm passwd
@@ -450,6 +464,10 @@ is given then all old keys are kept.  If
 The
 .Fl Fl keepold
 behavior is the default if none of these are given.
+.Pp
+This command has the following aliases:
+.Nm cpw ,
+.Nm change_password .
 .Ed
 .Pp
 .Nm verify-password-quality
@@ -467,6 +485,9 @@ verify-quality-password will cause an update to the password
 database meaning that merely verifying the quality of the password
 using verify-quality-password invalidates the use of that
 principal/password in the future.
+.Pp
+This command has the following alias:
+.Nm pwq .
 .Ed
 .Pp
 .Nm privileges
@@ -482,6 +503,9 @@ Lists the operations you are allowed to perform. These include
 .Li list ,
 and
 .Li modify .
+.Pp
+This command has the following alias:
+.Nm privs .
 .Ed
 .Pp
 .Nm rename
@@ -556,6 +580,18 @@ but just modifies the database with the entries in the dump file.
 .Op Fl Fl master-key-fd= Ns Ar fd
 .Bd -ragged -offset indent
 Writes the Kerberos master key to a file used by the KDC.
+.Pp
+This command has the following alias:
+.Nm kstash .
+.Ed
+.Pp
+.Nm exit
+.Bd -ragged -offset indent
+Exits
+.Nm kadmin .
+.Pp
+This command has the following alias:
+.Nm quit .
 .Ed
 .\".Sh ENVIRONMENT
 .\".Sh FILES

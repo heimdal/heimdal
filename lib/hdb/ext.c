@@ -169,9 +169,11 @@ hdb_clear_extension(krb5_context context,
     if (entry->extensions == NULL)
 	return 0;
 
-    for (i = 0; i < entry->extensions->len; i++) {
+    for (i = 0; i < entry->extensions->len; ) {
 	if (entry->extensions->val[i].data.element == (unsigned)type)
             (void) remove_HDB_extensions(entry->extensions, i);
+        else
+            i++;
     }
     if (entry->extensions->len == 0) {
 	free(entry->extensions->val);

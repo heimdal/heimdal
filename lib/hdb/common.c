@@ -995,6 +995,8 @@ derive_keys(krb5_context context,
 
         /* Installing keys invalidates `ckr', so we copy it */
         ret = hdb_entry_get_key_rotation(context, &h->entry, &ckr);
+        if (!ckr)
+            return ret;
         if (ret == 0)
             ret = copy_HDB_Ext_KeyRotation(ckr, &kr);
     }

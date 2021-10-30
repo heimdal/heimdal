@@ -246,6 +246,9 @@ hdb_remove_base_keys(krb5_context context,
     size_t i, k;
 
     ret = hdb_entry_get_key_rotation(context, e, &ckr);
+    if (!ckr)
+        return 0;
+
     if (ret == 0) {
         /*
          * Changing the entry's extensions invalidates extensions obtained

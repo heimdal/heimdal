@@ -977,11 +977,11 @@ kadm5_log_create(kadm5_server_context *context, hdb_entry *entry)
     hdb_entry_ex ent, existing;
     kadm5_log_context *log_context = &context->log_context;
 
+    memset(&existing, 0, sizeof(existing));
     memset(&ent, 0, sizeof(ent));
     ent.ctx = 0;
     ent.free_entry = 0;
     ent.entry = *entry;
-    existing = ent;
 
     /*
      * Do not allow creation of concrete entries within namespaces unless

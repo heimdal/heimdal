@@ -456,11 +456,10 @@ select_mech(OM_uint32 *minor_status,
 	ret = acceptor_approved(minor_status, ctx, name, cred, selected_mech);
 
 	gss_release_name(&junk, &name);
-    }
-
-    /* Stash optimistic mech for use by _gss_spnego_require_mechlist_mic() */
-    if (ret == GSS_S_COMPLETE && !verify_p)
+    } else {
+        /* Stash optimistic mech for use by _gss_spnego_require_mechlist_mic() */
 	ret = gss_duplicate_oid(minor_status, &oid, &ctx->preferred_mech_type);
+    }
 
     if (ret == GSS_S_COMPLETE) {
 	*minor_status = 0;
@@ -767,7 +766,8 @@ acceptor_start
 			      1, /* not optimistic token */
 			      &advertised_mech);
 	    if (ret == GSS_S_COMPLETE) {
-		_gss_spnego_log_mech("acceptor selected non-opportunistic mech", ctx->selected_mech_type);
+		_gss_spnego_log_mech("acceptor selected non-opportunistic mech",
+                                     ctx->selected_mech_type);
 		break;
 	    }
 	}
@@ -778,17 +778,14 @@ acceptor_start
         goto out;
     }
 
-    /*
-     * The initial token always have a response
-     */
-
-    ret = send_accept (minor_status,
-		       ctx,
-		       first_ok,
-		       &mech_output_token,
-		       advertised_mech,
-		       get_mic ? &ctx->NegTokenInit_mech_types : NULL,
-		       output_token);
+    /* The initial token always has a response */
+    ret = send_accept(minor_status,
+		      ctx,
+		      first_ok,
+		      &mech_output_token,
+		      advertised_mech,
+		      get_mic ? &ctx->NegTokenInit_mech_types : NULL,
+		      output_token);
     if (ret)
 	goto out;
 

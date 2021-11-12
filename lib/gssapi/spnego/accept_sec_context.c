@@ -754,7 +754,7 @@ acceptor_start
      * If opportunistic token failed, lets try the other mechs.
      */
 
-    if (!first_ok && ni->mechToken != NULL) {
+    if (!first_ok) {
 	size_t j;
 
 	/* Call glue layer to find first mech we support */
@@ -771,11 +771,11 @@ acceptor_start
 		break;
 	    }
 	}
-	if (ctx->selected_mech_type == GSS_C_NO_OID) {
-	    heim_assert(ret != GSS_S_COMPLETE, "no oid and no error code?");
-	    *minor_status = junk;
-	    goto out;
-	}
+    }
+    if (ctx->selected_mech_type == GSS_C_NO_OID) {
+        heim_assert(ret != GSS_S_COMPLETE, "no oid and no error code?");
+        *minor_status = junk;
+        goto out;
     }
 
     /*

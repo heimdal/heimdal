@@ -982,11 +982,6 @@ derive_keys(krb5_context context,
     if (!h_is_namespace && !h->entry.flags.virtual_keys)
         return 0;
     h->entry.flags.virtual = 1;
-    if (h_is_namespace) {
-        /* Set the entry's principal name */
-        free_Principal(h->entry.principal);
-        ret = copy_Principal(princ, h->entry.principal);
-    }
 
     kr.len = 0;
     kr.val = 0;
@@ -1019,7 +1014,7 @@ derive_keys(krb5_context context,
     }
 
     /* The principal name will be used in key derivation and error messages */
-    if (ret == 0 && h_is_namespace)
+    if (ret == 0)
         ret = krb5_unparse_name(context, princ, &p);
 
     /* Sanity check key rotations, determine current & last kr */
@@ -1153,6 +1148,10 @@ derive_keys(krb5_context context,
 }
 
 /*
+ * Pick a best kvno for the given principal at the given time.
+ *
+ * Implements the [hdb] new_service_key_delay configuration parameter.
+ *
  * In order for disparate keytab provisioning systems such as OSKT and our own
  * kadmin ext_keytab and httpkadmind's get-keys to coexist, we need to be able
  * to force keys set by the former to not become current keys until users of
@@ -1163,9 +1162,9 @@ derive_keys(krb5_context context,
  * The context is that OSKT's krb5_keytab is very happy to change keys in a way
  * that requires all members of a cluster to rekey together.  If one also
  * wishes to have cluster members that opt out of this and just fetch current,
- * past, and future keys periodically, then the keys set by OSKT need to not
- * come into effect until all the opt-out members have had a chance to fetch
- * the new keys.
+ * past, and future keys periodically, then the keys set by OSKT must not come
+ * into effect until all the opt-out members have had a chance to fetch the new
+ * keys.
  *
  * The assumption is that services will fetch new keys periodically, say, every
  * four hours.  Then one can set `[hdb] new_service_key_delay = 8h' in the
@@ -1175,12 +1174,12 @@ derive_keys(krb5_context context,
  * Naturally, this applies only to concrete principals with concrete keys.
  */
 static krb5_error_code
-fix_keys(krb5_context context,
-         HDB *db,
-         unsigned flags,
-         krb5_timestamp now,
-         krb5uint32 kvno,
-         hdb_entry_ex *h)
+pick_kvno(krb5_context context,
+          HDB *db,
+          unsigned flags,
+          krb5_timestamp now,
+          krb5uint32 kvno,
+          hdb_entry_ex *h)
 {
     HDB_extension *ext;
     HDB_Ext_KeySet keys;
@@ -1296,7 +1295,7 @@ make_namespace_princ(krb5_context context,
 
     /* First go around, need a namespace princ.  Make it! */
     ret = krb5_build_principal(context, namespace, strlen(realm),
-                                realm, "WELLKNOWN",
+                                realm, KRB5_WELLKNOWN_NAME,
                                 HDB_WK_NAMESPACE, comp0, NULL);
     if (ret == 0)
         ret = krb5_principal_set_comp_string(context, *namespace, 3, comp1);
@@ -1304,6 +1303,138 @@ make_namespace_princ(krb5_context context,
         /* Support domain-based names */
         ret = krb5_principal_set_comp_string(context, *namespace, 4, comp2);
     /* Caller frees `*namespace' on error */
+    return ret;
+}
+
+static int
+is_namespace_princ_p(krb5_context context,
+                     krb5_const_principal princ)
+{
+    return
+        krb5_principal_get_num_comp(context, princ) >= 4
+        && strcmp(krb5_principal_get_comp_string(context, princ, 0),
+                  KRB5_WELLKNOWN_NAME) == 0
+        && strcmp(krb5_principal_get_comp_string(context, princ, 1),
+                  HDB_WK_NAMESPACE) == 0;
+}
+
+/* See call site */
+static krb5_error_code
+rewrite_hostname(krb5_context context,
+                 krb5_const_principal wanted_princ,
+                 krb5_const_principal ns_princ,
+                 krb5_const_principal found_ns_princ,
+                 char **s)
+{
+    const char *ns_host_part, *wanted_host_part, *found_host_part;
+    const char *p, *r;
+    size_t ns_host_part_len, wanted_host_part_len;
+
+    wanted_host_part = krb5_principal_get_comp_string(context, wanted_princ, 1);
+    wanted_host_part_len = strlen(wanted_host_part);
+    if (wanted_host_part_len > 256) {
+	krb5_set_error_message(context, HDB_ERR_NOENTRY,
+                               "Aliases of host-based principals longer than "
+                               "256 bytes not supported");
+        return HDB_ERR_NOENTRY;
+    }
+
+    ns_host_part = krb5_principal_get_comp_string(context, ns_princ, 3);
+    ns_host_part_len = strlen(ns_host_part);
+
+    /* Find `ns_host_part' as the tail of `wanted_host_part' */
+    for (r = p = strstr(wanted_host_part, ns_host_part);
+         r && strnlen(r, ns_host_part_len + 1) > ns_host_part_len;
+         p = (r = strstr(r, ns_host_part)) ? r : p)
+        ;
+    if (!p || strnlen(p, ns_host_part_len + 1) != ns_host_part_len)
+        return HDB_ERR_NOENTRY; /* Can't happen */
+    if (p == wanted_host_part || p[-1] != '.')
+        return HDB_ERR_NOENTRY;
+
+    found_host_part =
+        krb5_principal_get_comp_string(context, found_ns_princ, 3);
+    return
+        asprintf(s, "%.*s%s", (int)(p - wanted_host_part), wanted_host_part,
+                 found_host_part) < 0 ||
+        *s == NULL ? krb5_enomem(context) : 0;
+}
+
+/*
+ * Fix `h->entry.principal' to match the desired `princ' in the namespace
+ * `nsprinc' (which is either the same as `h->entry.principal' or an alias
+ * of it).
+ */
+static krb5_error_code
+fix_princ_name(krb5_context context,
+               krb5_const_principal princ,
+               krb5_const_principal nsprinc,
+               hdb_entry_ex *h)
+{
+    krb5_error_code ret = 0;
+    char *s = NULL;
+
+    if (!nsprinc)
+        return 0;
+    if (krb5_principal_get_num_comp(context, princ) < 2)
+        return HDB_ERR_NOENTRY;
+
+    /* `nsprinc' must be a namespace principal */
+
+    if (krb5_principal_compare(context, nsprinc, h->entry.principal)) {
+        /*
+         * `h' is the HDB entry for `nsprinc', and `nsprinc' is its canonical
+         * name.
+         *
+         * Set the entry's principal name to the desired name.  The keys will
+         * be fixed next (upstairs, but don't forget to!).
+         */
+        free_Principal(h->entry.principal);
+        return copy_Principal(princ, h->entry.principal);
+    }
+
+    if (!is_namespace_princ_p(context, h->entry.principal)) {
+        /*
+         * The alias is a namespace, but the canonical name is not.  WAT.
+         *
+         * Well, the KDC will just issue a referral anyways, so we can leave
+         * `h->entry.principal' as is...
+         *
+         * Remove all of `h->entry's keys just in case, and leave
+         * `h->entry.principal' as-is.
+         */
+        free_Keys(&h->entry.keys);
+        (void) hdb_entry_clear_password(context, &h->entry);
+        return hdb_clear_extension(context, &h->entry,
+                                   choice_HDB_extension_data_hist_keys);
+    }
+
+    /*
+     * A namespace alias of a namespace entry.
+     *
+     * We'll want to rewrite the original principal accordingly.
+     *
+     * E.g., if the caller wanted host/foo.ns.test.h5l.se and we
+     * found WELLKNOWN/HOSTBASED-NAMESPACE/ns.test.h5l.se is an
+     * alias of WELLKNOWN/HOSTBASED-NAMESPACE/ns.example.org, then
+     * we'll want to treat host/foo.ns.test.h5l.se as an alias of
+     * host/foo.ns.example.org.
+     */
+    if (krb5_principal_get_num_comp(context, h->entry.principal) !=
+        2 + krb5_principal_get_num_comp(context, princ))
+        ret = HDB_ERR_NOENTRY; /* Only host-based services for now */
+    if (ret == 0)
+        ret = rewrite_hostname(context, princ, nsprinc, h->entry.principal, &s);
+    if (ret == 0) {
+        krb5_free_principal(context, h->entry.principal);
+        h->entry.principal = NULL;
+        ret = krb5_make_principal(context, &h->entry.principal,
+                                  krb5_principal_get_realm(context, princ),
+                                  krb5_principal_get_comp_string(context,
+                                                                 princ, 0),
+                                  s,
+                                  NULL);
+    }
     return ret;
 }
 
@@ -1319,7 +1450,7 @@ fetch_it(krb5_context context,
          hdb_entry_ex *ent)
 {
     krb5_const_principal tmpprinc = princ;
-    krb5_principal baseprinc = NULL;
+    krb5_principal nsprinc = NULL;
     krb5_error_code ret = 0;
     const char *comp0 = krb5_principal_get_comp_string(context, princ, 0);
     const char *comp1 = krb5_principal_get_comp_string(context, princ, 1);
@@ -1331,7 +1462,7 @@ fetch_it(krb5_context context,
     int do_search = 0;
 
     if (db->enable_virtual_hostbased_princs && comp1 &&
-        strcmp("krbtgt", comp0) != 0 && strcmp("WELLKNOWN", comp0) != 0) {
+        strcmp("krbtgt", comp0) != 0 && strcmp(KRB5_WELLKNOWN_NAME, comp0) != 0) {
         char *htmp;
 
         if ((host = strdup(comp1)) == NULL)
@@ -1358,7 +1489,7 @@ fetch_it(krb5_context context,
     }
 
     tmp = host ? host : comp1;
-    for (ret = HDB_ERR_NOENTRY; ret == HDB_ERR_NOENTRY; tmpprinc = baseprinc) {
+    for (ret = HDB_ERR_NOENTRY; ret == HDB_ERR_NOENTRY; tmpprinc = nsprinc) {
         krb5_error_code ret2 = 0;
 
         /*
@@ -1376,7 +1507,7 @@ fetch_it(krb5_context context,
 	ret = db->hdb_fetch_kvno(context, db, tmpprinc, flags, kvno, ent);
 	if (ret != HDB_ERR_NOENTRY || hdots == 0 || hdots < mindots || !tmp ||
             !do_search)
-	    break;
+            break;
 
         /*
          * Breadcrumb:
@@ -1403,12 +1534,13 @@ fetch_it(krb5_context context,
             hdots--;
         }
 
-        if (baseprinc == NULL)
+        if (nsprinc == NULL)
             /* First go around, need a namespace princ.  Make it! */
-            ret2 = make_namespace_princ(context, db, tmpprinc, &baseprinc);
-            /* Update the hostname component */
+            ret2 = make_namespace_princ(context, db, tmpprinc, &nsprinc);
+
+        /* Update the hostname component of the namespace principal */
         if (ret2 == 0)
-            ret2 = krb5_principal_set_comp_string(context, baseprinc, 3, tmp);
+            ret2 = krb5_principal_set_comp_string(context, nsprinc, 3, tmp);
         if (ret2)
             ret = ret2;
 
@@ -1425,14 +1557,20 @@ fetch_it(krb5_context context,
      * key derivation to do, but that's decided in derive_keys().
      */
     if (ret == 0) {
-        ret = derive_keys(context, flags, princ, !!baseprinc, t, etype, kvno,
-                          ent);
+        /* Fix the principal name if namespaced */
+        ret = fix_princ_name(context, princ, nsprinc, ent);
+
+        /* Derive keys if namespaced or virtual */
         if (ret == 0)
-            ret = fix_keys(context, db, flags, t, kvno, ent);
-        if (ret)
-            hdb_free_entry(context, ent);
+            ret = derive_keys(context, flags, princ, !!nsprinc, t, etype, kvno,
+                              ent);
+        /* Pick the best kvno for this principal at the given time */
+        if (ret == 0)
+            ret = pick_kvno(context, db, flags, t, kvno, ent);
     }
-    krb5_free_principal(context, baseprinc);
+    if (ret)
+        hdb_free_entry(context, ent);
+    krb5_free_principal(context, nsprinc);
     free(host);
     return ret;
 }

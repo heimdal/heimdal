@@ -506,6 +506,7 @@ fetch_entries(krb5_context context,
 
     for (i = 0; ret == 0 && i < sizeof(expected) / sizeof(expected[0]); i++) {
         ep = &e[b + i];
+        memset(ep, 0, sizeof(*ep));
         if (ret == 0)
             ret = krb5_parse_name(context, expected[i], &p);
         if (ret == 0 && i == 0) {
@@ -569,6 +570,7 @@ fetch_entries(krb5_context context,
         krb5_err(context, 1, ret, "virtual principal test failed");
 
     for (i = 0; i < sizeof(unexpected) / sizeof(unexpected[0]); i++) {
+        memset(&no, 0, sizeof(no));
         if (ret == 0)
             ret = krb5_parse_name(context, unexpected[i], &p);
         if (ret == 0)

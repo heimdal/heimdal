@@ -804,7 +804,7 @@ if test "$pkinit" = yes -a "$rsa" = yes ; then
 	    { ec=1 ; eval "${testfailed}"; }
 	${kgetcred} ${server}@${R} || { ec=1 ; eval "${testfailed}"; }
 	${kdestroy}
-	grep 'PK-INIT using ecdh' messages.log > /dev/null || \
+	grep 'PKINIT using ecdh' messages.log > /dev/null || \
 	    { ec=1 ; eval "${testfailed}"; }
     fi
 

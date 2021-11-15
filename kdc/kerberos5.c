@@ -119,6 +119,23 @@ is_default_salt_p(const krb5_salt *default_salt, const Key *key)
     return TRUE;
 }
 
+/*
+ * Detect if `key' is the using the the precomputed `default_salt'
+ * (for des-cbc-crc) or any salt otherwise.
+ *
+ * This is for avoiding Kerberos v4 (yes really) keys in AS-REQ as
+ * that salt is strange, and a buggy client will try to use the
+ * principal as the salt and not the returned value.
+ */
+
+static krb5_boolean
+is_good_salt_p(const krb5_salt *default_salt, const Key *key)
+{
+    if (key->key.keytype == KRB5_ENCTYPE_DES_CBC_CRC)
+	return is_default_salt_p(default_salt, key);
+
+    return TRUE;
+}
 
 krb5_boolean
 _kdc_is_anon_request(const KDC_REQ *req)
@@ -277,7 +294,7 @@ _kdc_find_etype(astgs_request_t r, uint32_t flags,
                         enctype = p[i];
                         ret = 0;
                         if (is_preauth && ret_key != NULL &&
-                            !is_default_salt_p(&def_salt, key))
+                            !is_good_salt_p(&def_salt, key))
                             continue;
                     }
                 }
@@ -310,7 +327,7 @@ _kdc_find_etype(astgs_request_t r, uint32_t flags,
                 enctype = etypes[i];
 		ret = 0;
 		if (is_preauth && ret_key != NULL &&
-		    !is_default_salt_p(&def_salt, key))
+		    !is_good_salt_p(&def_salt, key))
 		    continue;
 	    }
 	}

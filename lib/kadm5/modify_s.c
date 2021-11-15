@@ -104,7 +104,7 @@ modify_principal(void *server_handle,
 
     if((mask & forbidden_mask))
 	return KADM5_BAD_MASK;
-    if((mask & KADM5_POLICY) && strcmp(princ->policy, "default"))
+    if((mask & KADM5_POLICY) && strcmp(princ->policy, "default") != 0)
 	return KADM5_UNK_POLICY;
 
     if (!context->keep_open) {

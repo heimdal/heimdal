@@ -837,7 +837,7 @@ good_ext_keytab(kadmin_request_desc r)
     if (!r->keytab_name || !(p = strchr(r->keytab_name, ':')))
         return bad_503(r, EINVAL, "Internal error (no keytab produced)");
     p++;
-    if (strncmp(p, cache_dir, strlen(cache_dir)))
+    if (strncmp(p, cache_dir, strlen(cache_dir)) != 0)
         return bad_503(r, EINVAL, "Internal error");
     ret = rk_undumpdata(p, &body, &bodylen);
     if (ret)

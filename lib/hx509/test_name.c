@@ -367,15 +367,15 @@ test_pkinit_san(hx509_context context, const char *p, const char *realm, ...)
         ret = decode_KRB5PrincipalName(gn.u.otherName.value.data,
                                        gn.u.otherName.value.length, &kn, &sz);
     if (ret)
-        return ret;
-    if (strcmp(realm, kn.realm))
-        return ret;
+        return 1;
+    if (strcmp(realm, kn.realm) != 0)
+        return 1;
 
     va_start(ap, realm);
     for (i = 0; i < kn.principalName.name_string.len; i++) {
         const char *s = va_arg(ap, const char *);
 
-        if (s == NULL || strcmp(kn.principalName.name_string.val[i], s))
+        if (s == NULL || strcmp(kn.principalName.name_string.val[i], s) != 0)
             return 1;
     }
     if (va_arg(ap, const char *) != NULL)
@@ -393,7 +393,7 @@ test_pkinit_san(hx509_context context, const char *p, const char *realm, ...)
     if (strncmp(round_trip, "otherName: 1.3.6.1.5.2.2 KerberosPrincipalName ",
                 sizeof("otherName: 1.3.6.1.5.2.2 KerberosPrincipalName ") - 1))
         return 1;
-    if (ret || strcmp(round_trip + sizeof("otherName: 1.3.6.1.5.2.2 KerberosPrincipalName ") - 1, p))
+    if (ret || strcmp(round_trip + sizeof("otherName: 1.3.6.1.5.2.2 KerberosPrincipalName ") - 1, p) != 0)
         return 1;
     free_KRB5PrincipalName(&kn);
     free_GeneralName(&gn);

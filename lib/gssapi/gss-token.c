@@ -272,7 +272,7 @@ read_token(gss_buffer_t in, int negotiate)
 
 	tmp = inbuf;
 	if (negotiate) {
-		if (strncasecmp("Negotiate ", inbuf, 10)) {
+		if (strncasecmp("Negotiate ", inbuf, 10) != 0) {
 			fprintf(stderr, "Token doesn't begin with "
 			    "\"Negotiate \"\n");
 			ret = -1;

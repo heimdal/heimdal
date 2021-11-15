@@ -883,24 +883,24 @@ test_heim_oid_format_same(const char *str, const heim_oid *oid)
 	printf("fail to print oid: %s\n", str);
 	return 1;
     }
-    ret = strcmp(p, str);
-    if (ret) {
+
+    if (strcmp(p, str) != 0) {
 	printf("oid %s != formated oid %s\n", str, p);
 	free(p);
-	return ret;
+	return 1;
     }
 
     ret = der_parse_heim_oid(p, " ", &o2);
     if (ret) {
 	printf("failed to parse %s\n", p);
 	free(p);
-	return ret;
+	return 1;
     }
     free(p);
     ret = der_heim_oid_cmp(&o2, oid);
     der_free_oid(&o2);
 
-    return ret;
+    return 0;
 }
 
 static unsigned sha1_oid_tree[] = { 1, 3, 14, 3, 2, 26 };

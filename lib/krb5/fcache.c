@@ -1210,7 +1210,7 @@ my_basename(const char *fn)
 {
     const char *base, *p;
 
-    if (strncmp(fn, "FILE:", sizeof("FILE:") - 1))
+    if (strncmp(fn, "FILE:", sizeof("FILE:") - 1) != 0)
         return "";
     fn += sizeof("FILE:") - 1;
     for (p = base = fn; *p; p++) {

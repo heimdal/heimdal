@@ -446,7 +446,8 @@ fix_transited_encoding(krb5_context context,
      * If the realm of the presented tgt is neither the client nor the server
      * realm, it is a transit realm and must be added to transited set.
      */
-    if(strcmp(client_realm, tgt_realm) && strcmp(server_realm, tgt_realm)) {
+    if (strcmp(client_realm, tgt_realm) != 0 &&
+        strcmp(server_realm, tgt_realm) != 0) {
 	if (num_realms + 1 > UINT_MAX/sizeof(*realms)) {
 	    ret = ERANGE;
 	    goto free_realms;
@@ -465,7 +466,7 @@ fix_transited_encoding(krb5_context context,
 	num_realms++;
     }
     if(num_realms == 0) {
-	if(strcmp(client_realm, server_realm))
+	if (strcmp(client_realm, server_realm) != 0)
 	    kdc_log(context, config, 4,
 		    "cross-realm %s -> %s", client_realm, server_realm);
     } else {

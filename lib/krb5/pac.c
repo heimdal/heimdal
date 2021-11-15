@@ -725,8 +725,7 @@ verify_logonname(krb5_context context,
 	return ret;
     }
 
-    ret = strcmp(logon_string, principal_string);
-    if (ret != 0) {
+    if (strcmp(logon_string, principal_string) != 0) {
 	ret = EINVAL;
 	krb5_set_error_message(context, ret, "PAC logon name [%s] mismatch principal name [%s]",
 			       logon_string, principal_string);

@@ -194,7 +194,7 @@ my_mdb_env_create_and_open(krb5_context context,
     HEIMDAL_MUTEX_lock(&keep_them_open_lock);
     locked = 1;
     for (p = keep_them_open; p; p = p->next) {
-        if (strcmp(p->path, path))
+        if (strcmp(p->path, path) != 0)
             continue;
         if (p->mapsize > mapsize)
             /* Always increase mapsize */
@@ -282,8 +282,8 @@ my_mdb_env_close(krb5_context context,
     for (p = keep_them_open; !refs_seen && p; ) {
         /* We're the last close */
         if (p->refs ||
-            strncmp(db_name, p->path, slen) ||
-            strcmp(p->path + slen, ".mdb")) {
+            strncmp(db_name, p->path, slen) != 0 ||
+            strcmp(p->path + slen, ".mdb") != 0) {
 
             /* Not us; this keep_it_open stays */
             prev = &p->next;

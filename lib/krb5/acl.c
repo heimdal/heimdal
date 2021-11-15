@@ -119,7 +119,7 @@ acl_match_field(krb5_context context,
 		struct acl_field *field)
 {
     if(field->type == acl_string) {
-	return !strcmp(field->u.cstr, string);
+	return strcmp(field->u.cstr, string) == 0;
     } else if(field->type == acl_fnmatch) {
 	return !fnmatch(field->u.cstr, string, 0);
     } else if(field->type == acl_retval) {

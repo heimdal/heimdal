@@ -990,7 +990,7 @@ get_open_type_defn_fields(const Type *t,
     }
     /* Look for the type ID member identified in the previous loop */
     HEIM_TAILQ_FOREACH(m, t->members, members) {
-        if (!m->type->subtype || strcmp(m->name, idmembername))
+        if (!m->type->subtype || strcmp(m->name, idmembername) != 0)
             continue;
         if (m->type->constraint &&
             m->type->constraint->ctype == CT_TABLE_CONSTRAINT)
@@ -1040,7 +1040,7 @@ define_open_type(int level, const char *newbasename, const char *name, const cha
             newbasename);
     for (i = 0; i < nobjs; i++) {
         HEIM_TAILQ_FOREACH(of, objects[i]->objfields, objfields) {
-            if (strcmp(of->name, typeidfield->name))
+            if (strcmp(of->name, typeidfield->name) != 0)
                 continue;
             if (!of->value || !of->value->s)
                 errx(1, "Unknown value in value field %s of object %s",
@@ -1060,7 +1060,7 @@ define_open_type(int level, const char *newbasename, const char *name, const cha
         HEIM_TAILQ_FOREACH(of, objects[i]->objfields, objfields) {
             char *n = NULL;
 
-            if (strcmp(of->name, opentypefield->name))
+            if (strcmp(of->name, opentypefield->name) != 0)
                 continue;
             if (!of->type || (!of->type->symbol && of->type->type != TTag) ||
                 of->type->tag.tagclass != ASN1_C_UNIV) {
@@ -1631,7 +1631,8 @@ generate_type_header (const Symbol *s)
                 t = s->type->symbol->type;
         }
 
-        if (t->type == TType && t->symbol && strcmp(t->symbol->name, "HEIM_ANY")) {
+        if (t->type == TType && t->symbol &&
+            strcmp(t->symbol->name, "HEIM_ANY") != 0) {
             /*
              * This type is ultimately an alias of an imported type, so we don't
              * know its outermost tag here.

@@ -494,7 +494,7 @@ dict_db_open(void *plug, const char *dbtype, const char *dbname,
 
     if (error)
 	*error = NULL;
-    if (dbtype && *dbtype && strcmp(dbtype, "dictdb"))
+    if (dbtype && *dbtype && strcmp(dbtype, "dictdb") != 0)
 	return EINVAL;
     if (dbname && *dbname && strcmp(dbname, "MEMORY") != 0)
 	return EINVAL;
@@ -646,12 +646,13 @@ test_db_iter(heim_data_t k, heim_data_t v, void *arg)
     vptr = heim_data_get_ptr(v);
     vlen = heim_data_get_length(v);
 
-    if (klen == strlen("msg") && !strncmp(kptr, "msg", strlen("msg")) &&
-	vlen == strlen("abc") && !strncmp(vptr, "abc", strlen("abc")))
+    if (klen == strlen("msg") && strncmp(kptr, "msg", strlen("msg")) == 0 &&
+	vlen == strlen("abc") && strncmp(vptr, "abc", strlen("abc")) == 0)
 	*ret &= ~(1);
     else if (klen == strlen("msg2") &&
-	!strncmp(kptr, "msg2", strlen("msg2")) &&
-	vlen == strlen("FooBar") && !strncmp(vptr, "FooBar", strlen("FooBar")))
+	strncmp(kptr, "msg2", strlen("msg2")) == 0 &&
+	vlen == strlen("FooBar") &&
+        strncmp(vptr, "FooBar", strlen("FooBar")) == 0)
 	*ret &= ~(2);
     else
 	*ret |= 4;

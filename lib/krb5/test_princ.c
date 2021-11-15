@@ -59,7 +59,7 @@ test_princ(krb5_context context)
     if (ret)
 	krb5_err(context, 1, ret, "krb5_parse_name");
 
-    if (strcmp(princ, princ_unparsed)) {
+    if (strcmp(princ, princ_unparsed) != 0) {
 	krb5_errx(context, 1, "%s != %s", princ, princ_unparsed);
     }
 
@@ -71,7 +71,7 @@ test_princ(krb5_context context)
     if (ret)
 	krb5_err(context, 1, ret, "krb5_parse_name");
 
-    if (strcmp(princ_short, princ_unparsed))
+    if (strcmp(princ_short, princ_unparsed) != 0)
 	krb5_errx(context, 1, "%s != %s", princ_short, princ_unparsed);
     free(princ_unparsed);
 
@@ -101,7 +101,7 @@ test_princ(krb5_context context)
     if (ret)
 	krb5_err(context, 1, ret, "krb5_parse_name");
 
-    if (strcmp(princ_short, princ_unparsed))
+    if (strcmp(princ_short, princ_unparsed) != 0)
 	krb5_errx(context, 1, "'%s' != '%s'", princ_short, princ_unparsed);
     free(princ_unparsed);
 
@@ -117,7 +117,7 @@ test_princ(krb5_context context)
     if (ret)
 	krb5_err(context, 1, ret, "krb5_parse_name");
 
-    if (strcmp(princ, princ_unparsed))
+    if (strcmp(princ, princ_unparsed) != 0)
 	krb5_errx(context, 1, "'%s' != '%s'", princ, princ_unparsed);
     free(princ_unparsed);
 
@@ -156,7 +156,7 @@ test_princ(krb5_context context)
     if (ret)
 	krb5_err(context, 1, ret, "krb5_parse_name");
 
-    if (strcmp(princ, princ_unparsed))
+    if (strcmp(princ, princ_unparsed) != 0)
 	krb5_errx(context, 1, "'%s' != '%s'", princ, princ_unparsed);
     free(princ_unparsed);
 
@@ -176,7 +176,7 @@ test_princ(krb5_context context)
     if (ret)
 	krb5_err(context, 1, ret, "krb5_unparse_name_short");
 
-    if (strcmp(princ, princ_unparsed))
+    if (strcmp(princ, princ_unparsed) != 0)
 	krb5_errx(context, 1, "'%s' != '%s'", princ, princ_unparsed);
     free(princ_unparsed);
 
@@ -200,7 +200,7 @@ test_princ(krb5_context context)
     if (ret)
 	krb5_err(context, 1, ret, "krb5_unparse_name_norealm");
 
-    if (strcmp(princ_short, princ_unparsed))
+    if (strcmp(princ_short, princ_unparsed) != 0)
 	krb5_errx(context, 1, "'%s' != '%s'", princ_short, princ_unparsed);
     free(princ_unparsed);
 
@@ -227,7 +227,7 @@ test_princ(krb5_context context)
     if (ret)
 	krb5_err(context, 1, ret, "krb5_unparse_name_norealm");
 
-    if (strcmp(princ_short, princ_unparsed))
+    if (strcmp(princ_short, princ_unparsed) != 0)
 	krb5_errx(context, 1, "'%s' != '%s'", princ_short, princ_unparsed);
     free(princ_unparsed);
 
@@ -246,7 +246,7 @@ test_princ(krb5_context context)
     if (ret)
 	krb5_err(context, 1, ret, "krb5_unparse_name_flags");
 
-    if (strcmp(princ, princ_unparsed))
+    if (strcmp(princ, princ_unparsed) != 0)
 	krb5_errx(context, 1, "q '%s' != '%s'", princ, princ_unparsed);
     free(princ_unparsed);
 
@@ -255,7 +255,7 @@ test_princ(krb5_context context)
     if (ret)
 	krb5_err(context, 1, ret, "krb5_unparse_name_flags");
 
-    if (strcmp(noquote, princ_unparsed))
+    if (strcmp(noquote, princ_unparsed) != 0)
 	krb5_errx(context, 1, "nq '%s' != '%s'", noquote, princ_unparsed);
     free(princ_unparsed);
 

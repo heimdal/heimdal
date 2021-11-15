@@ -277,7 +277,7 @@ proto (int sock, const char *hostname, const char *svc,
     }
     krb5_data_free (&data);
 
-    return(strcmp(message, "ok"));
+    return strcmp(message, "ok") != 0;
 }
 
 static int

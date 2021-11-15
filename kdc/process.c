@@ -164,7 +164,7 @@ _kdc_audit_trail(kdc_request_t r, krb5_error_code ret)
 
     /* Let's save a few bytes */
 #define PREFIX "KRB5KDC_"
-    if (retname && !strncmp(PREFIX, retname, strlen(PREFIX)))
+    if (retname && strncmp(PREFIX, retname, strlen(PREFIX)) == 0)
 	retname += strlen(PREFIX);
 #undef PREFIX
 

@@ -557,7 +557,7 @@ rk_snprintf (char *str, size_t sz, const char *format, ...)
 	va_start(args, format);
 	ret2 = vsprintf (tmp, format, args);
 	va_end(args);
-	if (ret != ret2 || strcmp(str, tmp))
+	if (ret != ret2 || strcmp(str, tmp) != 0)
 	    abort ();
 	free (tmp);
     }
@@ -589,7 +589,7 @@ rk_asprintf (char **ret, const char *format, ...)
 	va_start(args, format);
 	ret2 = vsprintf (tmp, format, args);
 	va_end(args);
-	if (val != ret2 || strcmp(*ret, tmp))
+	if (val != ret2 || strcmp(*ret, tmp) != 0)
 	    abort ();
 	free (tmp);
     }
@@ -618,7 +618,7 @@ rk_asnprintf (char **ret, size_t max_sz, const char *format, ...)
 	    abort ();
 
 	ret2 = vsprintf (tmp, format, args);
-	if (val != ret2 || strcmp(*ret, tmp))
+	if (val != ret2 || strcmp(*ret, tmp) != 0)
 	    abort ();
 	free (tmp);
     }

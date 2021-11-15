@@ -53,7 +53,7 @@ gss_compare_name(OM_uint32 *minor_status,
 			*name_equal = 0;
 		} else if (name1->gn_value.length != name2->gn_value.length ||
 		    memcmp(name1->gn_value.value, name2->gn_value.value,
-			name1->gn_value.length)) {
+			name1->gn_value.length) != 0) {
 			*name_equal = 0;
 		}
 	} else {

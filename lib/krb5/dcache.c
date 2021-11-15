@@ -107,7 +107,7 @@ is_filename_cacheish(const char *name)
 {
     size_t i;
 
-    if (strncmp(name, "tkt", sizeof("tkt") - 1))
+    if (strncmp(name, "tkt", sizeof("tkt") - 1) != 0)
         return 0;
     for (i = sizeof("tkt") - 1; name[i]; i++)
         if (ISPATHSEP(name[i]))
@@ -318,7 +318,7 @@ get_default_dir(krb5_context context, char **res)
 
     if ((ret = dcc_get_default_name(context, &s)))
         return ret;
-    if (strncmp(s, "DIR:", sizeof("DIR:") - 1)) {
+    if (strncmp(s, "DIR:", sizeof("DIR:") - 1) != 0) {
         *res = s;
         s = NULL;
     } else if ((*res = strdup(s + sizeof("DIR:") - 1)) == NULL) {
@@ -780,7 +780,7 @@ dcc_get_default_name(krb5_context context, char **str)
                                        NULL);
 
     /* [libdefaults] default_cc_collection is for testing */
-    if (strncmp(def_cc_colname, "DIR:", sizeof("DIR:") - 1))
+    if (strncmp(def_cc_colname, "DIR:", sizeof("DIR:") - 1) != 0)
         def_cc_colname = KRB5_DEFAULT_CCNAME_DIR;
     return _krb5_expand_default_cc_name(context, def_cc_colname, str);
 }

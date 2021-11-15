@@ -163,8 +163,8 @@ int k5dcesession(luid, pname, tgt, ppag, tflags)
 /*
  * (but root has the ffffffff which we are not interested in)
  */
-    if (!strncmp(direntp->d_name,"dcecred_",8)
-         && (strlen(direntp->d_name) == 16)) {
+    if (strncmp(direntp->d_name,"dcecred_",8) == 0 &&
+        (strlen(direntp->d_name) == 16)) {
 
       /* looks like a cache name, lets do the stat, etc */
 
@@ -246,7 +246,7 @@ int k5dcematch(luid, pname, ccname, sizep, tgt)
 
   /* DEEDEBUG2("k5dcematch called: cache=%s\n",ccname+38); */
 
-  if (!strncmp(ccname,"FILE:",5)) {
+  if (strncmp(ccname,"FILE:",5) == 0) {
 
     strcpy(ccdata,ccname+5);
     strcat(ccdata,".data");
@@ -343,7 +343,7 @@ int k5dcegettgt(pcache, ccname, pname, tgt)
 
   DEEDEBUG2("Unparsed to \"%s\"\n", kusername);
   DEEDEBUG2("pname is \"%s\"\n", pname);
-  if (strcmp(kusername, pname)) {
+  if (strcmp(kusername, pname) != 0) {
    DEEDEBUG("Principals not equal\n");
    goto return1;
   }
@@ -574,7 +574,7 @@ int k5dcecreate(luid, luser, pname, krbtgt)
     }
 
 
-    if (!strcmp(urealm,defrealm)) {
+    if (strcmp(urealm,defrealm) == 0) {
         strcpy(username,pname);
     } else {
         strcpy(username,"/.../");

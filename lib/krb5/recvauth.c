@@ -138,7 +138,7 @@ krb5_recvauth_match_version(krb5_context context,
 	len = ntohl(len);
 	if (len != sizeof(her_version)
 	    || krb5_net_read (context, p_fd, her_version, len) != len
-	    || strncmp (version, her_version, len)) {
+	    || strncmp (version, her_version, len) != 0) {
 	    repl = 1;
 	    krb5_net_write (context, p_fd, &repl, 1);
 	    krb5_clear_error_message (context);

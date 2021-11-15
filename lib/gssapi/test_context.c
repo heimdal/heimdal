@@ -362,7 +362,7 @@ loop(gss_OID mechoid,
             printf("localname: %.*s\n", (int)lname.length,
                    (char *)lname.value);
         if (lname.length != strlen(localname_string) ||
-            strncmp(localname_string, lname.value, lname.length))
+            strncmp(localname_string, lname.value, lname.length) != 0)
             errx(1, "localname: expected \"%s\", got \"%.*s\" (1)",
                  localname_string, (int)lname.length, (char *)lname.value);
         gss_release_buffer(&min_stat, &lname);
@@ -372,7 +372,7 @@ loop(gss_OID mechoid,
             errx(1, "localname: %s",
                  gssapi_err(maj_stat, min_stat, actual_mech_server));
         if (lname.length != strlen(localname_string) ||
-            strncmp(localname_string, lname.value, lname.length))
+            strncmp(localname_string, lname.value, lname.length) != 0)
             errx(1, "localname: expected \"%s\", got \"%.*s\" (2)",
                  localname_string, (int)lname.length, (char *)lname.value);
         gss_release_buffer(&min_stat, &lname);

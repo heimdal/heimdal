@@ -291,7 +291,7 @@ static struct s2i syslogvals[] = {
 static int
 find_value(const char *s, struct s2i *table)
 {
-    while(table->s && strcasecmp(table->s, s))
+    while (table->s && strcasecmp(table->s, s) != 0)
 	table++;
     return table->val;
 }

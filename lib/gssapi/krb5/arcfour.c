@@ -365,7 +365,7 @@ _gssapi_verify_mic_arcfour(OM_uint32 * minor_status,
 	return GSS_S_FAILURE;
     }
 
-    cmp = ct_memcmp(cksum_data, p + 8, 8);
+    cmp = (ct_memcmp(cksum_data, p + 8, 8) != 0);
     if (cmp) {
 	*minor_status = 0;
 	return GSS_S_BAD_MIC;
@@ -385,7 +385,7 @@ _gssapi_verify_mic_arcfour(OM_uint32 * minor_status,
     _gsskrb5_decode_be_om_uint32(SND_SEQ, &seq_number);
 
     if (context_handle->more_flags & LOCAL)
-	cmp = memcmp(&SND_SEQ[4], "\xff\xff\xff\xff", 4);
+	cmp = (memcmp(&SND_SEQ[4], "\xff\xff\xff\xff", 4) != 0);
     else
 	cmp = (memcmp(&SND_SEQ[4], "\x00\x00\x00\x00", 4) != 0);
 
@@ -656,7 +656,7 @@ OM_uint32 _gssapi_unwrap_arcfour(OM_uint32 *minor_status,
     _gsskrb5_decode_be_om_uint32(SND_SEQ, &seq_number);
 
     if (context_handle->more_flags & LOCAL)
-	cmp = memcmp(&SND_SEQ[4], "\xff\xff\xff\xff", 4);
+	cmp = (memcmp(&SND_SEQ[4], "\xff\xff\xff\xff", 4) != 0);
     else
 	cmp = (memcmp(&SND_SEQ[4], "\x00\x00\x00\x00", 4) != 0);
 
@@ -1274,7 +1274,7 @@ _gssapi_unwrap_iov_arcfour(OM_uint32 *minor_status,
     _gsskrb5_decode_be_om_uint32(snd_seq, &seq_number);
 
     if (ctx->more_flags & LOCAL) {
-	cmp = memcmp(&snd_seq[4], "\xff\xff\xff\xff", 4);
+	cmp = (memcmp(&snd_seq[4], "\xff\xff\xff\xff", 4) != 0);
     } else {
 	cmp = (memcmp(&snd_seq[4], "\x00\x00\x00\x00", 4) != 0);
     }
@@ -1351,8 +1351,8 @@ _gssapi_unwrap_iov_arcfour(OM_uint32 *minor_status,
 	return GSS_S_FAILURE;
     }
 
-    cmp = memcmp(cksum_data, p0 + 16, 8); /* SGN_CKSUM */
-    if (cmp != 0) {
+    cmp = (memcmp(cksum_data, p0 + 16, 8) != 0); /* SGN_CKSUM */
+    if (cmp) {
 	*minor_status = 0;
 	return GSS_S_BAD_MIC;
     }

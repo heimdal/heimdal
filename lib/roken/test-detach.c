@@ -61,7 +61,7 @@ int main(int argc, char **argv)
     pid_t parent = getpid();
     pid_t child;
 
-    if (argc == 2 && strcmp(argv[1], "--reexec"))
+    if (argc == 2 && strcmp(argv[1], "--reexec") != 0)
         errx(1, "Usage: test-detach [--reexec] [--daemon-child FD]");
     if (argc == 3 || argc == 4) {
         parent = getppid();

@@ -471,7 +471,7 @@ dotype(unsigned char *buf, size_t len, char **argv, size_t *size)
                 ret = sorted_types[i].encode(der + (sz - 1), sz, v, &sz);
                 if (ret != 0)
                     errx(1, "Encoding failed");
-                if (memcmp(buf, der, sz))
+                if (memcmp(buf, der, sz) != 0)
                     errx(1, "Encoding did not round trip");
                 free(der);
             }
@@ -490,7 +490,7 @@ dotype(unsigned char *buf, size_t len, char **argv, size_t *size)
                     ret = sorted_types[i].encode(der + (sz - 1), sz, vcpy, &sz);
                     if (ret != 0)
                         errx(1, "Encoding of copy failed");
-                    if (memcmp(buf, der, sz))
+                    if (memcmp(buf, der, sz) != 0)
                         errx(1, "Encoding of copy did not round trip");
                     free(der);
                 }

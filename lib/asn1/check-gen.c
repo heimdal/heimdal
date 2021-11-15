@@ -2367,7 +2367,7 @@ test_ios(void)
     s = print_Certificate(&c0, 0);
     if (!s)
         return 1;
-    if (strcmp(s, cert_json))
+    if (strcmp(s, cert_json) != 0)
         return 1;
     free(s);
 

@@ -44,19 +44,20 @@ try (const char *format, ...)
     va_list ap;
     char buf1[256], buf2[256];
 
-    va_start (ap, format);
-    ret = rk_vsnprintf (buf1, sizeof(buf1), format, ap);
+    va_start(ap, format);
+    ret = rk_vsnprintf(buf1, sizeof(buf1), format, ap);
     if (ret >= sizeof(buf1))
-	errx (1, "increase buf and try again");
-    va_end (ap);
-    va_start (ap, format);
-    vsprintf (buf2, format, ap);
-    ret = strcmp (buf1, buf2);
-    if (ret)
-	printf ("failed: format = \"%s\", \"%s\" != \"%s\"\n",
-		format, buf1, buf2);
-    va_end (ap);
-    return ret;
+	errx(1, "increase buf and try again");
+    va_end(ap);
+    va_start(ap, format);
+    vsprintf(buf2, format, ap);
+    va_end(ap);
+    if (strcmp(buf1, buf2) != 0) {
+	printf("failed: format = \"%s\", \"%s\" != \"%s\"\n",
+               format, buf1, buf2);
+        return 1;
+    }
+    return 0;
 }
 
 static int

@@ -426,7 +426,7 @@ gen_priv_key(krb5_context context,
     krb5_error_code ret;
 
     _krb5_debug(context, 1, "kx509: gen priv key");
-    if (strcmp(gen_type, "rsa")) {
+    if (strcmp(gen_type, "rsa") != 0) {
         krb5_set_error_message(context, ENOTSUP, "Key type %s is not "
                                "supported for kx509; only \"rsa\" is "
                                "supported for kx509 at this time",

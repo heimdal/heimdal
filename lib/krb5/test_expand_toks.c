@@ -95,7 +95,7 @@ main(int argc, char **argv)
 #define EXPANDED_SHOULD_BE "/tmp/abc/dcefgh/x"
 #endif
 
-    if (strcmp(expanded, EXPANDED_SHOULD_BE))
+    if (strcmp(expanded, EXPANDED_SHOULD_BE) != 0)
         krb5_errx(context, 1, "Token expansion incorrect");
 
     krb5_free_context(context);

@@ -260,8 +260,8 @@ resolve_origin(const char *di, const char *module)
     const char *dname;
     char *path, *p;
 
-    if (strncmp(di, "$ORIGIN/", sizeof("$ORIGIN/") - 1) &&
-        strcmp(di, "$ORIGIN"))
+    if (strncmp(di, "$ORIGIN/", sizeof("$ORIGIN/") - 1) != 0 &&
+        strcmp(di, "$ORIGIN") != 0)
         return strdup(di);
 
     di += sizeof("$ORIGIN") - 1;
@@ -293,8 +293,8 @@ resolve_origin(const char *di, const char *module)
 #else
     char *s = NULL;
 
-    if (strncmp(di, "$ORIGIN/", sizeof("$ORIGIN/") - 1) &&
-        strcmp(di, "$ORIGIN"))
+    if (strncmp(di, "$ORIGIN/", sizeof("$ORIGIN/") - 1) != 0 &&
+        strcmp(di, "$ORIGIN") != 0)
         return strdup(di);
     if (asprintf(&s, LIBDIR "/plugin/%s", module) == -1)
         return NULL;
@@ -392,10 +392,10 @@ heim_load_plugins(heim_context context,
             {
                 char *ext;
 
-                if (strnicmp(n, plugin_prefix, plugin_prefix_len))
+                if (strnicmp(n, plugin_prefix, plugin_prefix_len) != 0)
                     continue;
                 ext = strrchr(n, '.');
-                if (ext == NULL || stricmp(ext, ".dll"))
+                if (ext == NULL || stricmp(ext, ".dll") != 0)
                      continue;
 
                 ret = asprintf(&path, "%s\\%s", dirname, n);

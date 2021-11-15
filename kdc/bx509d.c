@@ -176,7 +176,7 @@ audit_trail(bx509_request_desc r, krb5_error_code ret)
     }
 
     /* Let's save a few bytes */
-    if (retname && !strncmp("KRB5KDC_", retname, sizeof("KRB5KDC_") - 1))
+    if (retname && strncmp("KRB5KDC_", retname, sizeof("KRB5KDC_") - 1) == 0)
         retname += sizeof("KRB5KDC_") - 1;
 #undef PREFIX
     heim_audit_trail((heim_svc_req_desc)r, ret, retname);
@@ -299,7 +299,7 @@ generate_key(hx509_context context,
     hx509_cert cert = NULL;
     int ret;
 
-    if (strcmp(gen_type, "rsa"))
+    if (strcmp(gen_type, "rsa") != 0)
         errx(1, "Only RSA keys are supported at this time");
 
     if (asprintf(fn, "PEM-FILE:%s/.%s_priv_key.pem",
@@ -1569,8 +1569,8 @@ bnegotiate_get_target(struct bx509_request_desc *r)
         return bad_403(r, EACCES,
                        "Redirect request without Referer header nor allowed");
 
-    if (strncmp(referer, "https://", sizeof("https://") - 1) ||
-        strncmp(redir, "https://", sizeof("https://") - 1))
+    if (strncmp(referer, "https://", sizeof("https://") - 1) != 0 ||
+        strncmp(redir, "https://", sizeof("https://") - 1) != 0)
         return bad_403(r, EACCES,
                        "Redirect requests permitted only for https referrers");
 
@@ -1590,7 +1590,7 @@ bnegotiate_get_target(struct bx509_request_desc *r)
     }
 
     /* Both must match */
-    if (strcasecmp(s1, s2)) {
+    if (strcasecmp(s1, s2) != 0) {
         free(s2);
         free(s1);
         return bad_403(r, EACCES, "Redirect request does not match referer");

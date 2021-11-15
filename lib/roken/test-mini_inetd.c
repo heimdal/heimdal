@@ -195,7 +195,7 @@ test_simple_echo_socket(void)
 				getprogname(), srv, rv);
 		}
 
-		if (!strcmp(buf, "exit")) {
+		if (strcmp(buf, "exit") == 0) {
 		    fprintf(stderr, "[%s] Exiting...\n", prog);
 		    shutdown(s, SD_SEND);
 		    rk_closesocket(s);
@@ -234,7 +234,7 @@ test_simple_echo(void)
 	    while (gets(buf)) {
 		fprintf(stderr, "[%s] Received [%s]\n", prog, buf);
 
-		if (!strcmp(buf, "exit"))
+		if (strcmp(buf, "exit") == 0)
 		    return 0;
 
 		/* simple echo */

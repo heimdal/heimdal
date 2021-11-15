@@ -626,7 +626,7 @@ fetch_entries(krb5_context context,
             dk.keyvalue.length)
             krb5_errx(context, 1, "key length mismatch!");
         if (memcmp(ep->entry.keys.val[0].key.keyvalue.data,
-                   dk.keyvalue.data, dk.keyvalue.length))
+                   dk.keyvalue.data, dk.keyvalue.length) != 0)
             krb5_errx(context, 1, "key mismatch!");
         if (memcmp(ep->entry.keys.val[0].key.keyvalue.data,
                    e[b + i - 1].entry.keys.val[0].key.keyvalue.data,
@@ -678,7 +678,7 @@ check_kvnos(krb5_context context)
                         keysets.val[m].keys.val[0].key.keyvalue.length ||
                         memcmp(ep->entry.keys.val[0].key.keyvalue.data,
                                keysets.val[m].keys.val[0].key.keyvalue.data,
-                               ep->entry.keys.val[0].key.keyvalue.length))
+                               ep->entry.keys.val[0].key.keyvalue.length) != 0)
                         krb5_errx(context, 1,
                                   "key mismatch for same princ & kvno");
                     match = 1;
@@ -712,7 +712,7 @@ check_kvnos(krb5_context context)
                             keysets.val[m].keys.val[0].key.keyvalue.length ||
                             memcmp(ep->entry.keys.val[0].key.keyvalue.data,
                                    keysets.val[m].keys.val[0].key.keyvalue.data,
-                                   ep->entry.keys.val[0].key.keyvalue.length))
+                                   ep->entry.keys.val[0].key.keyvalue.length) != 0)
                             krb5_errx(context, 1,
                                       "key mismatch for same princ & kvno");
                 }

@@ -759,7 +759,7 @@ rk_getifaddrs(struct ifaddrs **ifap)
 	  }
 	  if (ifamap.address_len != ifamap.local_len ||
 	      (ifamap.address != NULL &&
-	       memcmp(ifamap.address, ifamap.local, ifamap.address_len))) {
+	       memcmp(ifamap.address, ifamap.local, ifamap.address_len) != 0)) {
 	    /* p2p; address is peer and local is ours */
 	    ifamap.broadcast = ifamap.address;
 	    ifamap.broadcast_len = ifamap.address_len;

@@ -169,13 +169,13 @@ mit_prop_dump(void *arg, const char *file)
 	if(strncmp(line, "kdb5_util", strlen("kdb5_util")) == 0) {
 	    int major;
             q = nexttoken(&p);
-            if (strcmp(q, "kdb5_util"))
+            if (strcmp(q, "kdb5_util") != 0)
                 errx(1, "line %d: unknown version", lineno);
 	    q = nexttoken(&p); /* load_dump */
-	    if (strcmp(q, "load_dump"))
+	    if (strcmp(q, "load_dump") != 0)
 		errx(1, "line %d: unknown version", lineno);
 	    q = nexttoken(&p); /* load_dump */
-	    if (strcmp(q, "version"))
+	    if (strcmp(q, "version") != 0)
 		errx(1, "line %d: unknown version", lineno);
 	    q = nexttoken(&p); /* x.0 */
 	    if (sscanf(q, "%d", &major) != 1)

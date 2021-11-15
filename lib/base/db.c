@@ -1327,7 +1327,7 @@ json_db_open(void *plug, const char *dbtype, const char *dbname,
 
     if (error)
 	*error = NULL;
-    if (dbtype && *dbtype && strcmp(dbtype, "json"))
+    if (dbtype && *dbtype && strcmp(dbtype, "json") != 0)
 	return HEIM_ERROR(error, EINVAL, (EINVAL, N_("Wrong DB type", "")));
     if (dbname && *dbname && strcmp(dbname, "MEMORY") != 0) {
 	char *ext = strrchr(dbname, '.');

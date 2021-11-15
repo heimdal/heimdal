@@ -2367,7 +2367,7 @@ test_ios(void)
     s = print_Certificate(&c0, 0);
     if (!s)
         return 1;
-    if (strcmp(s, cert_json))
+    if (strcmp(s, cert_json) != 0)
         return 1;
     free(s);
 
@@ -2407,7 +2407,7 @@ test_ios(void)
         return 1;
     if (os.length != size || size != sizeof(encoded_sample))
         return 1;
-    if (memcmp(os.data, encoded_sample, os.length))
+    if (memcmp(os.data, encoded_sample, os.length) != 0)
         return 1;
     der_free_octet_string(&os);
 
@@ -2424,7 +2424,7 @@ test_ios(void)
         return 1;
     if (os.length != size || size != sizeof(encoded_sample))
         return 1;
-    if (memcmp(os.data, encoded_sample, os.length))
+    if (memcmp(os.data, encoded_sample, os.length) != 0)
         return 1;
     der_free_octet_string(&os);
 
@@ -2440,7 +2440,7 @@ test_ios(void)
         return 1;
     if (os.length != size || size != sizeof(encoded_sample))
         return 1;
-    if (memcmp(os.data, encoded_sample, os.length))
+    if (memcmp(os.data, encoded_sample, os.length) != 0)
         return 1;
     der_free_octet_string(&os);
 

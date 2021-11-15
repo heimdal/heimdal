@@ -1945,7 +1945,7 @@ validate_object_set(IOSObjectSet *os)
         sort_object_set(os, cf, &objects, &nobjs);
         for (i = 0; i < nobjs; i++) {
             HEIM_TAILQ_FOREACH(of, objects[i]->objfields, objfields) {
-                if (strcmp(cf->name, of->name))
+                if (strcmp(cf->name, of->name) != 0)
                     continue;
                 if (!of->value)
                     errx(1, "Value not specified for required UNIQUE field %s of object %s",
@@ -1970,7 +1970,7 @@ validate_object_set(IOSObjectSet *os)
             int specified = 0;
 
             HEIM_TAILQ_FOREACH(of, o->objfields, objfields) {
-                if (strcmp(of->name, cf->name))
+                if (strcmp(of->name, cf->name) != 0)
                     continue;
                 if (of->value)
                     specified = 1;

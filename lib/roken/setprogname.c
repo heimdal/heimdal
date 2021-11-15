@@ -74,7 +74,7 @@ setprogname(const char *argv0)
 
         strlwr(fn);
         ext = strrchr(fn, '.');
-        if (ext != NULL && !strcmp(ext, ".exe"))
+        if (ext != NULL && strcmp(ext, ".exe") == 0)
             *ext = '\0';
 
         __progname = fn;

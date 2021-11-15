@@ -370,7 +370,7 @@ tlist_cmp(const struct tlist *tl, const struct tlist *ql)
     if (tl == ql)
         return 0;
     ret = strcmp(tl->header, ql->header);
-    if (ret) return ret;
+    if (ret != 0) return ret;
 
     q = HEIM_TAILQ_FIRST(&ql->template);
     HEIM_TAILQ_FOREACH(t, &tl->template, members) {
@@ -378,13 +378,13 @@ tlist_cmp(const struct tlist *tl, const struct tlist *ql)
 
 	if (t->ptr == NULL || q->ptr == NULL) {
 	    ret = strcmp(t->line, q->line);
-	    if (ret) return ret;
+	    if (ret != 0) return ret;
 	} else {
 	    ret = strcmp(t->tt, q->tt);
-	    if (ret) return ret;
+	    if (ret != 0) return ret;
 
 	    ret = strcmp(t->offset, q->offset);
-	    if (ret) return ret;
+	    if (ret != 0) return ret;
 
 	    if ((ret = strcmp(t->ptr, q->ptr)) != 0 ||
 		(ret = tlist_cmp_name(t->ptr, q->ptr)) != 0)

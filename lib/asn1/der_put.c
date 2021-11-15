@@ -650,7 +650,7 @@ _heim_der_set_sort(const void *a1, const void *a2)
 
     ret = memcmp(s1->data, s2->data,
 		 s1->length < s2->length ? s1->length : s2->length);
-    if(ret)
+    if (ret != 0)
 	return ret;
     return (int)(s1->length - s2->length);
 }

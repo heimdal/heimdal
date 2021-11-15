@@ -254,7 +254,7 @@ check(struct assignment *as)
     struct assignment *a;
     int ret = 0;
     for(a = as; a != NULL; a = a->next) {
-	if(strcmp(a->name, "command")) {
+	if (strcmp(a->name, "command") != 0) {
 	    fprintf(stderr, "unknown type %s line %d\n", a->name, a->lineno);
 	    ret++;
 	    continue;

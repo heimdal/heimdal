@@ -937,7 +937,7 @@ get_cred_kdc_capath(krb5_context context,
         try_realm = krb5_config_get_string(context, NULL, "capaths",
                                            client_realm, server_realm, NULL);
 
-        if (try_realm != NULL && strcmp(try_realm, client_realm)) {
+        if (try_realm != NULL && strcmp(try_realm, client_realm) != 0) {
             ret = get_cred_kdc_capath_worker(context, flags, ccache, in_creds,
                                              try_realm, impersonate_principal,
                                              second_ticket, out_creds, ret_tgts);

@@ -1455,7 +1455,10 @@ tgs_build_reply(astgs_request_t priv,
 	    ret = KRB5KDC_ERR_POLICY;
 	    goto out;
 	}
-	_krb5_principalname2krb5_principal(context, &p, t->sname, t->realm);
+	ret = _krb5_principalname2krb5_principal(context, &p, t->sname, t->realm);
+	if (ret)
+	    goto out;
+
 	ret = krb5_unparse_name(context, p, &tpn);
 	if (ret)
 		goto out;

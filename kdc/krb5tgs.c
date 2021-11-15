@@ -1666,6 +1666,46 @@ server_lookup:
 	rsp = sp;
 
     /*
+     * Now refetch the primary krbtgt, and get the current kvno (the
+     * sign check may have been on an old kvno, and the server may
+     * have been an incoming trust)
+     */
+
+    ret = krb5_make_principal(context,
+                              &krbtgt_out_principal,
+                              our_realm,
+                              KRB5_TGS_NAME,
+                              our_realm,
+                              NULL);
+    if (ret) {
+        kdc_log(context, config, 4,
+                "Failed to make krbtgt principal name object for "
+                "authz-data signatures");
+        goto out;
+    }
+    ret = krb5_unparse_name(context, krbtgt_out_principal, &krbtgt_out_n);
+    if (ret) {
+        kdc_log(context, config, 4,
+                "Failed to make krbtgt principal name object for "
+                "authz-data signatures");
+        goto out;
+    }
+
+    ret = _kdc_db_fetch(context, config, krbtgt_out_principal,
+			HDB_F_GET_KRBTGT, NULL, NULL, &krbtgt_out);
+    if (ret) {
+	char *ktpn = NULL;
+	ret = krb5_unparse_name(context, krbtgt->entry.principal, &ktpn);
+	kdc_log(context, config, 4,
+		"No such principal %s (needed for authz-data signature keys) "
+		"while processing TGS-REQ for service %s with krbtg %s",
+		krbtgt_out_n, spn, (ret == 0) ? ktpn : "<unknown>");
+	free(ktpn);
+	ret = KRB5KRB_AP_ERR_NOT_US;
+	goto out;
+    }
+
+    /*
      * Select enctype, return key and kvno.
      */
 
@@ -1726,46 +1766,6 @@ server_lookup:
      * not the same, it's someone that is using a uni-directional trust
      * backward.
      */
-
-    /* 
-     * Now refetch the primary krbtgt, and get the current kvno (the
-     * sign check may have been on an old kvno, and the server may
-     * have been an incoming trust)
-     */
-    
-    ret = krb5_make_principal(context,
-                              &krbtgt_out_principal,
-                              our_realm,
-                              KRB5_TGS_NAME,
-                              our_realm,
-                              NULL);
-    if (ret) {
-        kdc_log(context, config, 4,
-                "Failed to make krbtgt principal name object for "
-                "authz-data signatures");
-        goto out;
-    }
-    ret = krb5_unparse_name(context, krbtgt_out_principal, &krbtgt_out_n);
-    if (ret) {
-        kdc_log(context, config, 4,
-                "Failed to make krbtgt principal name object for "
-                "authz-data signatures");
-        goto out;
-    }
-
-    ret = _kdc_db_fetch(context, config, krbtgt_out_principal,
-			HDB_F_GET_KRBTGT, NULL, NULL, &krbtgt_out);
-    if (ret) {
-	char *ktpn = NULL;
-	ret = krb5_unparse_name(context, krbtgt->entry.principal, &ktpn);
-	kdc_log(context, config, 4,
-		"No such principal %s (needed for authz-data signature keys) "
-		"while processing TGS-REQ for service %s with krbtg %s",
-		krbtgt_out_n, spn, (ret == 0) ? ktpn : "<unknown>");
-	free(ktpn);
-	ret = KRB5KRB_AP_ERR_NOT_US;
-	goto out;
-    }
 
     /* 
      * The first realm is the realm of the service, the second is

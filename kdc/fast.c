@@ -384,7 +384,6 @@ _kdc_fast_mk_error(astgs_request_t r,
 	    return ret;
 	}
 
-	outer_error = KRB5_KDC_ERR_MORE_PREAUTH_DATA_REQUIRED;
 	e_text = NULL;
 	if (r->fast.flags.requested_hidden_names) {
 	    error_client = NULL;

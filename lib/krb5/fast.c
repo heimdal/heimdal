@@ -605,9 +605,6 @@ _krb5_fast_unwrap_error(krb5_context context,
 
     memset(&fastrep, 0, sizeof(fastrep));
 
-    if (error->error_code != KRB5_KDC_ERR_MORE_PREAUTH_DATA_REQUIRED)
-	_krb5_debug(context, 10, "using FAST without FAST outer error code");
-
     idx = 0;
     pa = krb5_find_padata(md->val, md->len, KRB5_PADATA_FX_FAST, &idx);
     if (pa == NULL) {

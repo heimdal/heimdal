@@ -292,9 +292,9 @@ typedef struct HDB {
     krb5_error_code (*hdb_check_pkinit_ms_upn_match)(krb5_context, struct HDB *, hdb_entry_ex *, krb5_const_principal);
 
     /**
-     * Check if s4u2self is allowed from this client to this server
+     * Check if s4u2self is allowed from this client to this server or the SPN is a valid SPN of this client (for user2user)
      */
-    krb5_error_code (*hdb_check_s4u2self)(krb5_context, struct HDB *, hdb_entry_ex *, hdb_entry_ex *);
+    krb5_error_code (*hdb_check_client_matches_target_service)(krb5_context, struct HDB *, hdb_entry_ex *, hdb_entry_ex *);
 
     /**
      * Enable/disable synchronous updates

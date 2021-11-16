@@ -349,17 +349,23 @@ check_constrained_delegation(krb5_context context,
 /*
  * Determine if s4u2self is allowed from this client to this server
  *
+ * also:
+ *
+ * Check that the client (user2user TGT, enc-tkt-in-skey) hosts the
+ * service given by the client.
+ *
  * For example, regardless of the principal being impersonated, if the
- * 'client' and 'server' (target) are the same, then it's safe.
+ * 'client' and 'server' (target) are the same, or server is an SPN
+ * alias of client, then it's safe.
  */
 
 static krb5_error_code
-check_s4u2self(krb5_context context,
-	       krb5_kdc_configuration *config,
-	       HDB *clientdb,
-	       hdb_entry_ex *client,
-	       hdb_entry_ex *target_server,
-	       krb5_const_principal target_server_principal)
+check_client_matches_target_service(krb5_context context,
+				    krb5_kdc_configuration *config,
+				    HDB *clientdb,
+				    hdb_entry_ex *client,
+				    hdb_entry_ex *target_server,
+				    krb5_const_principal target_server_principal)
 {
     krb5_error_code ret;
 
@@ -368,11 +374,11 @@ check_s4u2self(krb5_context context,
      * policy or audit check and can look into the DB records
      * directly
      */
-    if (clientdb->hdb_check_s4u2self) {
-	ret = clientdb->hdb_check_s4u2self(context,
-					   clientdb,
-					   client,
-					   target_server);
+    if (clientdb->hdb_check_client_matches_target_service) {
+	ret = clientdb->hdb_check_client_matches_target_service(context,
+								clientdb,
+								client,
+								target_server);
 	if (ret == 0)
 	    return 0;
     } else if (krb5_principal_compare(context,
@@ -1314,6 +1320,10 @@ eout:
     return ENOMEM;
 }
 
+/*
+ * This function is intended to be used when failure to find the client is
+ * acceptable.
+ */
 static krb5_error_code
 db_fetch_client(krb5_context context,
 		krb5_kdc_configuration *config,
@@ -1382,9 +1392,12 @@ tgs_build_reply(astgs_request_t priv,
     krb5_error_code ret, ret2;
     krb5_principal cp = NULL, sp = NULL, rsp = NULL, tp = NULL, dp = NULL;
     krb5_principal krbtgt_out_principal = NULL;
+    krb5_principal user2user_princ = NULL;
     char *spn = NULL, *cpn = NULL, *tpn = NULL, *dpn = NULL, *krbtgt_out_n = NULL;
+    char *user2user_name = NULL;
     hdb_entry_ex *server = NULL, *client = NULL, *s4u2self_impersonated_client = NULL;
     HDB *clientdb, *s4u2self_impersonated_clientdb;
+    HDB *serverdb = NULL;
     krb5_realm ref_realm = NULL;
     EncTicketPart *tgt = &ticket->ticket;
     const EncryptionKey *ekey;
@@ -1467,7 +1480,7 @@ server_lookup:
     server = NULL;
     ret = _kdc_db_fetch(context, config, sp,
                         HDB_F_GET_SERVER | HDB_F_DELAY_NEW_KEYS | flags,
-			NULL, NULL, &server);
+			NULL, &serverdb, &server);
     priv->server = server;
     if (ret == HDB_ERR_NOT_FOUND_HERE) {
 	kdc_log(context, config, 5, "target %s does not have secrets at this KDC, need to proxy", spn);
@@ -1646,6 +1659,7 @@ server_lookup:
 	    krb5uint32 second_kvno = 0;
 	    krb5uint32 *kvno_ptr = NULL;
 	    size_t i;
+	    hdb_entry_ex *user2user_client = NULL;
 
 	    if(b->additional_tickets == NULL ||
 	       b->additional_tickets->len == 0){
@@ -1710,6 +1724,66 @@ server_lookup:
 				     "User-to-user TGT expired or invalid");
 		goto out;
 	    }
+
+	    /* Fetch the name from the TGT. */
+	    ret = _krb5_principalname2krb5_principal(context, &user2user_princ,
+						     adtkt.cname, adtkt.crealm);
+	    if (ret)
+		goto out;
+
+	    ret = krb5_unparse_name(context, user2user_princ, &user2user_name);
+	    if (ret)
+		goto out;
+
+	    /*
+	     * Look up the name given in the TGT in the database. The user
+	     * claims to have a ticket-granting-ticket to our KDC, so we should
+	     * fail hard if we can't find the user - otherwise we can't do
+	     * proper checks.
+	     */
+	    ret = _kdc_db_fetch(context, config, user2user_princ,
+				HDB_F_GET_CLIENT | flags,
+				NULL, NULL, &user2user_client);
+	    if (ret == HDB_ERR_NOENTRY)
+		ret = KRB5KDC_ERR_C_PRINCIPAL_UNKNOWN;
+	    if (ret)
+		goto out;
+
+	    /*
+	     * The account is present in the database, now check the
+	     * account flags.
+	     *
+	     * We check this as a client (because the purpose of
+	     * user2user is that the server flag is not set, because
+	     * the long-term key is not strong, but this does mean
+	     * that a client with an expired password can't get accept
+	     * a user2user ticket.
+	     */
+	    ret = kdc_check_flags(priv,
+				  FALSE,
+				  user2user_client,
+				  NULL);
+	    if (ret) {
+		_kdc_free_ent(context, user2user_client);
+		goto out;
+	    }
+
+	    /*
+	     * Also check that the account is the same one specified in the
+	     * request.
+	     */
+	    ret = check_client_matches_target_service(context,
+						      config,
+						      serverdb,
+						      server,
+						      user2user_client,
+						      user2user_princ);
+	    if (ret) {
+		_kdc_free_ent(context, user2user_client);
+		goto out;
+	    }
+
+	    _kdc_free_ent(context, user2user_client);
 
 	    ekey = &adtkt.key;
 	    for(i = 0; i < b->etype.len; i++)
@@ -2003,7 +2077,12 @@ server_lookup:
 	     * Check that service doing the impersonating is
 	     * requesting a ticket to it-self.
 	     */
-	    ret = check_s4u2self(context, config, clientdb, client, server, sp);
+	    ret = check_client_matches_target_service(context,
+						      config,
+						      clientdb,
+						      client,
+						      server,
+						      sp);
 	    if (ret) {
 		kdc_log(context, config, 4, "S4U2Self: %s is not allowed "
 			"to impersonate to service "
@@ -2299,6 +2378,7 @@ server_lookup:
 			 &enc_pa_data);
 
 out:
+    free(user2user_name);
     if (tpn != cpn)
 	    free(tpn);
     free(dpn);
@@ -2315,6 +2395,7 @@ out:
     if(s4u2self_impersonated_client)
 	_kdc_free_ent(context, s4u2self_impersonated_client);
 
+    krb5_free_principal(context, user2user_princ);
     if (tp && tp != cp)
 	krb5_free_principal(context, tp);
     krb5_free_principal(context, cp);

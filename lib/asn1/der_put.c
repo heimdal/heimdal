@@ -43,7 +43,7 @@ RCSID("$Id$");
  * The return value is 0 or an error.
  */
 
-int
+int ASN1CALL
 der_put_unsigned (unsigned char *p, size_t len, const unsigned *v, size_t *size)
 {
     unsigned char *base = p;
@@ -75,7 +75,7 @@ der_put_unsigned (unsigned char *p, size_t len, const unsigned *v, size_t *size)
     }
 }
 
-int
+int ASN1CALL
 der_put_unsigned64 (unsigned char *p, size_t len, const uint64_t *v, size_t *size)
 {
     unsigned char *base = p;
@@ -107,7 +107,7 @@ der_put_unsigned64 (unsigned char *p, size_t len, const uint64_t *v, size_t *siz
     }
 }
 
-int
+int ASN1CALL
 der_put_integer (unsigned char *p, size_t len, const int *v, size_t *size)
 {
     unsigned char *base = p;
@@ -147,7 +147,7 @@ der_put_integer (unsigned char *p, size_t len, const int *v, size_t *size)
     return 0;
 }
 
-int
+int ASN1CALL
 der_put_integer64 (unsigned char *p, size_t len, const int64_t *v, size_t *size)
 {
     unsigned char *base = p;
@@ -188,7 +188,7 @@ der_put_integer64 (unsigned char *p, size_t len, const int64_t *v, size_t *size)
 }
 
 
-int
+int ASN1CALL
 der_put_length (unsigned char *p, size_t len, size_t val, size_t *size)
 {
     if (len < 1)
@@ -215,7 +215,7 @@ der_put_length (unsigned char *p, size_t len, size_t val, size_t *size)
     return 0;
 }
 
-int
+int ASN1CALL
 der_put_boolean(unsigned char *p, size_t len, const int *data, size_t *size)
 {
     if(len < 1)
@@ -228,7 +228,7 @@ der_put_boolean(unsigned char *p, size_t len, const int *data, size_t *size)
     return 0;
 }
 
-int
+int ASN1CALL
 der_put_general_string (unsigned char *p, size_t len,
 			const heim_general_string *str, size_t *size)
 {
@@ -242,28 +242,28 @@ der_put_general_string (unsigned char *p, size_t len,
     return 0;
 }
 
-int
+int ASN1CALL
 der_put_utf8string (unsigned char *p, size_t len,
 		    const heim_utf8_string *str, size_t *size)
 {
     return der_put_general_string(p, len, str, size);
 }
 
-int
+int ASN1CALL
 der_put_printable_string (unsigned char *p, size_t len,
 			  const heim_printable_string *str, size_t *size)
 {
     return der_put_octet_string(p, len, str, size);
 }
 
-int
+int ASN1CALL
 der_put_ia5_string (unsigned char *p, size_t len,
 		    const heim_ia5_string *str, size_t *size)
 {
     return der_put_octet_string(p, len, str, size);
 }
 
-int
+int ASN1CALL
 der_put_bmp_string (unsigned char *p, size_t len,
 		    const heim_bmp_string *data, size_t *size)
 {
@@ -280,7 +280,7 @@ der_put_bmp_string (unsigned char *p, size_t len,
     return 0;
 }
 
-int
+int ASN1CALL
 der_put_universal_string (unsigned char *p, size_t len,
 			  const heim_universal_string *data, size_t *size)
 {
@@ -299,14 +299,14 @@ der_put_universal_string (unsigned char *p, size_t len,
     return 0;
 }
 
-int
+int ASN1CALL
 der_put_visible_string (unsigned char *p, size_t len,
 			 const heim_visible_string *str, size_t *size)
 {
     return der_put_general_string(p, len, str, size);
 }
 
-int
+int ASN1CALL
 der_put_octet_string (unsigned char *p, size_t len,
 		      const heim_octet_string *data, size_t *size)
 {
@@ -318,7 +318,7 @@ der_put_octet_string (unsigned char *p, size_t len,
     return 0;
 }
 
-int
+int ASN1CALL
 der_put_heim_integer (unsigned char *p, size_t len,
 		     const heim_integer *data, size_t *size)
 {
@@ -371,7 +371,7 @@ der_put_heim_integer (unsigned char *p, size_t len,
     return 0;
 }
 
-int
+int ASN1CALL
 der_put_generalized_time (unsigned char *p, size_t len,
 			  const time_t *data, size_t *size)
 {
@@ -391,7 +391,7 @@ der_put_generalized_time (unsigned char *p, size_t len,
     return 0;
 }
 
-int
+int ASN1CALL
 der_put_utctime (unsigned char *p, size_t len,
 		 const time_t *data, size_t *size)
 {
@@ -411,7 +411,7 @@ der_put_utctime (unsigned char *p, size_t len,
     return 0;
 }
 
-int
+int ASN1CALL
 der_put_oid (unsigned char *p, size_t len,
 	     const heim_oid *data, size_t *size)
 {
@@ -447,7 +447,7 @@ der_put_oid (unsigned char *p, size_t len,
  * This is used in the implementation of IMPLICIT tags in generated decoder
  * functions.
  */
-int
+int ASN1CALL
 der_replace_tag(const unsigned char *p, size_t len,
                 unsigned char **out, size_t *outlen,
                 Der_class class, Der_type type,
@@ -491,7 +491,7 @@ der_replace_tag(const unsigned char *p, size_t len,
 }
 
 #if 0
-int
+int ASN1CALL
 der_encode_implicit(unsigned char *p, size_t len,
                     asn1_generic_encoder_f encoder,
                     void *obj, size_t *size,
@@ -539,7 +539,7 @@ der_encode_implicit(unsigned char *p, size_t len,
 }
 #endif
 
-int
+int ASN1CALL
 der_put_tag (unsigned char *p, size_t len, Der_class class, Der_type type,
 	     unsigned int tag, size_t *size)
 {
@@ -570,7 +570,7 @@ der_put_tag (unsigned char *p, size_t len, Der_class class, Der_type type,
     return 0;
 }
 
-int
+int ASN1CALL
 der_put_length_and_tag (unsigned char *p, size_t len, size_t len_val,
 			Der_class class, Der_type type,
 			unsigned int tag, size_t *size)
@@ -624,7 +624,7 @@ _heim_time2generalizedtime (time_t t, heim_octet_string *s, int gtimep)
      return 0;
 }
 
-int
+int ASN1CALL
 der_put_bit_string (unsigned char *p, size_t len,
 		    const heim_bit_string *data, size_t *size)
 {

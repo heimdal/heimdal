@@ -33,7 +33,7 @@
 
 #include "der_locl.h"
 
-int
+int ASN1CALL
 der_heim_oid_cmp(const heim_oid *p, const heim_oid *q)
 {
     int c;
@@ -58,7 +58,7 @@ der_heim_oid_cmp(const heim_oid *p, const heim_oid *q)
     return c;
 }
 
-int
+int ASN1CALL
 der_heim_octet_string_cmp(const heim_octet_string *p,
 			  const heim_octet_string *q)
 {
@@ -76,21 +76,21 @@ der_heim_octet_string_cmp(const heim_octet_string *p,
     return c;
 }
 
-int
+int ASN1CALL
 der_printable_string_cmp(const heim_printable_string *p,
 			 const heim_printable_string *q)
 {
     return der_heim_octet_string_cmp(p, q);
 }
 
-int
+int ASN1CALL
 der_ia5_string_cmp(const heim_ia5_string *p,
 		   const heim_ia5_string *q)
 {
     return der_heim_octet_string_cmp(p, q);
 }
 
-int
+int ASN1CALL
 der_heim_bit_string_cmp(const heim_bit_string *p,
 			const heim_bit_string *q)
 {
@@ -112,7 +112,7 @@ der_heim_bit_string_cmp(const heim_bit_string *p,
     return r1 - r2;
 }
 
-int
+int ASN1CALL
 der_heim_integer_cmp(const heim_integer *p,
 		     const heim_integer *q)
 {
@@ -123,7 +123,7 @@ der_heim_integer_cmp(const heim_integer *p,
     return memcmp(p->data, q->data, p->length);
 }
 
-int
+int ASN1CALL
 der_heim_bmp_string_cmp(const heim_bmp_string *p, const heim_bmp_string *q)
 {
     int c;
@@ -140,7 +140,7 @@ der_heim_bmp_string_cmp(const heim_bmp_string *p, const heim_bmp_string *q)
     return c;
 }
 
-int
+int ASN1CALL
 der_heim_universal_string_cmp(const heim_universal_string *p,
 			      const heim_universal_string *q)
 {

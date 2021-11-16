@@ -2147,6 +2147,8 @@ _kdc_as_rep(astgs_request_t r)
 		continue;
 	    if (r->armor_crypto == NULL && (pat[n].flags & PA_REQ_FAST))
 		continue;
+	    if (r->armor_crypto != NULL && (pat[n].flags & PA_NOT_IN_FAST))
+		continue;
 
 	    kdc_log(context, config, 5,
 		    "Looking for %s pa-data -- %s", pat[n].name, r->cname);

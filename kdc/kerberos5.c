@@ -637,7 +637,12 @@ pa_enc_chal_validate(astgs_request_t r, const PA_DATA *pa)
 	    krb5_error_code ret2;
 	    char *str = NULL;
 
+	    krb5_crypto_destroy(r->context, longtermcrypto);
+
 	    invalidPassword = (ret == KRB5KRB_AP_ERR_BAD_INTEGRITY);
+	    if (!invalidPassword) {
+		goto out;
+	    }
 
 	    ret2 = krb5_enctype_to_string(r->context, k->key.keytype, &str);
 	    if (ret2)
@@ -648,7 +653,6 @@ pa_enc_chal_validate(astgs_request_t r, const PA_DATA *pa)
 	    krb5_free_error_message(r->context, msg);
 	    free(str);
 
-	    krb5_crypto_destroy(r->context, longtermcrypto);
 	    continue;
 	}
     

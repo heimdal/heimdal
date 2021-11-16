@@ -38,19 +38,19 @@
 
 RCSID("$Id$");
 
-char *
+char * ASN1CALL
 der_print_general_string(const heim_general_string *str, int flags)
 {
     return strdup(*str);
 }
 
-char *
+char * ASN1CALL
 der_print_boolean(const int *i, int flags)
 {
     return *i ? strdup("true") : strdup("false");
 }
 
-char *
+char * ASN1CALL
 der_print_integer(const int *i, int flags)
 {
     char *s = NULL;
@@ -60,7 +60,7 @@ der_print_integer(const int *i, int flags)
     return s;
 }
 
-char *
+char * ASN1CALL
 der_print_integer64(const int64_t *i, int flags)
 {
     char *s = NULL;
@@ -70,7 +70,7 @@ der_print_integer64(const int64_t *i, int flags)
     return s;
 }
 
-char *
+char * ASN1CALL
 der_print_unsigned(const unsigned *u, int flags)
 {
     char *s = NULL;
@@ -80,7 +80,7 @@ der_print_unsigned(const unsigned *u, int flags)
     return s;
 }
 
-char *
+char * ASN1CALL
 der_print_unsigned64(const uint64_t *u, int flags)
 {
     char *s = NULL;
@@ -90,7 +90,7 @@ der_print_unsigned64(const uint64_t *u, int flags)
     return s;
 }
 
-char *
+char * ASN1CALL
 der_print_generalized_time(const time_t *t, int flags)
 {
     struct tm tms;
@@ -107,7 +107,7 @@ der_print_generalized_time(const time_t *t, int flags)
     return strdup(str);
 }
 
-char *
+char * ASN1CALL
 der_print_utctime(const time_t *t, int flags)
 {
     struct tm tms;
@@ -125,43 +125,43 @@ der_print_utctime(const time_t *t, int flags)
 }
 
 
-char *
+char * ASN1CALL
 der_print_utf8string(const heim_utf8_string *str, int flags)
 {
     return strdup(*str);
 }
 
-char *
+char * ASN1CALL
 der_print_printable_string(const heim_printable_string *str, int flags)
 {
     return strndup(str->data, str->length);
 }
 
-char *
+char * ASN1CALL
 der_print_ia5_string(const heim_ia5_string *str, int flags)
 {
     return strndup(str->data, str->length);
 }
 
-char *
+char * ASN1CALL
 der_print_bmp_string(const heim_bmp_string *k, int flags)
 {
     return strdup("<BMPString-not-supported>");
 }
 
-char *
+char * ASN1CALL
 der_print_universal_string(const heim_universal_string *k, int flags)
 {
     return strdup("<UniversalString-not-supported>");
 }
 
-char *
+char * ASN1CALL
 der_print_visible_string(const heim_visible_string *str, int flags)
 {
     return strdup(*str);
 }
 
-char *
+char * ASN1CALL
 der_print_octet_string(const heim_octet_string *k, int flags)
 {
     char *s = NULL;
@@ -170,7 +170,7 @@ der_print_octet_string(const heim_octet_string *k, int flags)
     return s;
 }
 
-char *
+char * ASN1CALL
 der_print_heim_integer(const heim_integer *k, int flags)
 {
     char *s = NULL;
@@ -179,7 +179,7 @@ der_print_heim_integer(const heim_integer *k, int flags)
     return s;
 }
 
-char *
+char * ASN1CALL
 der_print_oid(const heim_oid *k, int flags)
 {
     struct rk_strpool *r = NULL;
@@ -215,7 +215,7 @@ der_print_oid(const heim_oid *k, int flags)
     return rk_strpoolcollect(r);
 }
 
-char *
+char * ASN1CALL
 der_print_bit_string(const heim_bit_string *k, int flags)
 {
     char *s2 = NULL;

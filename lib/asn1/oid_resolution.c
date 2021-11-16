@@ -196,7 +196,7 @@ fix_oid_name(const char **namep, char **freeme)
     return 0;
 }
 
-int
+int ASN1CALL
 der_find_heim_oid_by_name(const char *str, const heim_oid **oid)
 {
     size_t right = num_sym_oids - 1;
@@ -235,7 +235,7 @@ der_find_heim_oid_by_name(const char *str, const heim_oid **oid)
     return -1;
 }
 
-int
+int ASN1CALL
 der_find_or_parse_heim_oid(const char *str, const char *sep, heim_oid *oid)
 {
     const heim_oid *found = NULL;
@@ -247,7 +247,7 @@ der_find_or_parse_heim_oid(const char *str, const char *sep, heim_oid *oid)
     }
 }
 
-int
+int ASN1CALL
 der_find_heim_oid_by_oid(const heim_oid *oid, const char **name)
 {
     size_t right = num_sym_oids;
@@ -279,7 +279,7 @@ der_find_heim_oid_by_oid(const heim_oid *oid, const char **name)
     return -1;
 }
 
-int
+int ASN1CALL
 der_match_heim_oid_by_name(const char *str, int *c, const heim_oid **oid)
 {
     size_t i;
@@ -313,7 +313,7 @@ der_match_heim_oid_by_name(const char *str, int *c, const heim_oid **oid)
 
 /* Warning: der_print_heim_oid_sym() will not round-trip */
 
-int
+int ASN1CALL
 der_print_heim_oid_sym(const heim_oid *oid, char delim, char **strp)
 {
     const char *sym;

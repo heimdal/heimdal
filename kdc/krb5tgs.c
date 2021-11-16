@@ -1199,11 +1199,11 @@ next_kvno:
 	    ret = KRB5KRB_AP_ERR_BAD_INTEGRITY; /* ? */
 	    goto out;
 	}
-
-	ret = validate_fast_ad(r, *auth_data);
-	if (ret)
-	    goto out;
     }
+
+    ret = validate_fast_ad(r, (*ticket)->ticket.authorization_data);
+    if (ret)
+	goto out;
 
     
     /*
